@@ -1,0 +1,16 @@
+current	equal	32	64	1	4.580	136	3
+seq-lcm	equal	32	64	1	5.149	136	3
+balanced-lcm	equal	32	64	1	4.009	136	3
+balanced-add	equal	32	64	1	16.349	3448	34
+current	equal	128	128	1	23.808	7328	387
+seq-lcm	equal	128	128	1	30.588	12432	642
+balanced-lcm	equal	128	128	1	28.609	12976	707
+balanced-add	equal	128	128	1	22.559	15624	260
+current	equal	256	512	1	61.735	59696	899
+seq-lcm	equal	256	512	1	115.182	137392	2049
+balanced-lcm	equal	256	512	1	95.203	145584	2212
+balanced-add	equal	256	512	1	84.384	101464	1391
+current	dyadic	32	64	1	3.210	104	1
+seq-lcm	dyadic	32	64	1	5.480	104	1
+balanced-lcm	dyadic	32	64	1	6.999	104	1
+balanced-add	dyadic	32	64	1	10.549	3432	33

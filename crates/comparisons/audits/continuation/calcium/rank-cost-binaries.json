@@ -1,0 +1,26 @@
+{
+  "baseline-cpu": {
+    "path": "/tmp/calcium-rank-costs.lbsszv/baseline-cpu",
+    "sha256": "c159ea7b013d23e4ca584013cb8d6a7babe9a1023056553700da5ff31621d56b",
+    "bytes": 2731648,
+    "size": "text\t   data\t    bss\t    dec\t    hex\tfilename\n1976777\t 223608\t   4856\t2205241\t 21a639\t/tmp/calcium-rank-costs.lbsszv/baseline-cpu"
+  },
+  "baseline-allocation": {
+    "path": "/tmp/calcium-rank-costs.lbsszv/baseline-allocation",
+    "sha256": "dddaf82d2b30f46a0c44c8525c98fbd717d582ec02087fcd61c4cc41b75b05ca",
+    "bytes": 2735840,
+    "size": "text\t   data\t    bss\t    dec\t    hex\tfilename\n1979617\t 223616\t   2032\t2205265\t 21a651\t/tmp/calcium-rank-costs.lbsszv/baseline-allocation"
+  },
+  "candidate-cpu": {
+    "path": "/tmp/calcium-rank-costs.lbsszv/candidate-cpu",
+    "sha256": "698b77b4cb1c2f7fb3f698885b190d3023405aa8a73f474d3f91a29bbe8e163a",
+    "bytes": 2731336,
+    "size": "text\t   data\t    bss\t    dec\t    hex\tfilename\n1976361\t 223608\t   5272\t2205241\t 21a639\t/tmp/calcium-rank-costs.lbsszv/candidate-cpu"
+  },
+  "candidate-allocation": {
+    "path": "/tmp/calcium-rank-costs.lbsszv/candidate-allocation",
+    "sha256": "20ff991591c4bbcaf76cd05abe321cfd335f7690769db69cff0900f5f1f6d854",
+    "bytes": 2735544,
+    "size": "text\t   data\t    bss\t    dec\t    hex\tfilename\n1979201\t 223616\t   2448\t2205265\t 21a651\t/tmp/calcium-rank-costs.lbsszv/candidate-allocation"
+  }
+}

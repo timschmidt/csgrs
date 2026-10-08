@@ -1,0 +1,28 @@
+{
+  "returncode": 0,
+  "elapsed_seconds": 0.03163154501817189,
+  "normal_library_sha256": "476ce4085af4463f86d6182e476e0fa13af9266727aaefa54be4b0293d704b2a",
+  "log": "selected-point-frame-replay-replay-matrix-run.log",
+  "source": "region-overlap-correspondence-replay-matrix.rs",
+  "command": [
+    "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustc",
+    "--edition=2024",
+    "-O",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/region-overlap-correspondence-replay-matrix.rs",
+    "--extern",
+    "hypercurve=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypercurve-930b1fe968ca3c94.rlib",
+    "-L",
+    "dependency=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps",
+    "-o",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/selected-point-frame-replay-replay-matrix-run"
+  ],
+  "source_sha256": "536885405f3576cdbdd0dfdb3d991d7e1951cd4c0c297fee40996ed86407d8ef",
+  "executable_sha256": "43ec4181b173de8692726a92b5db3af674218e49980a6acfdad204ba8d1f91e6",
+  "counts": {
+    "queries": 420,
+    "restrictions": 60,
+    "point_replays": 160,
+    "repeated_restrictions": 160,
+    "region_reports_after_inputs_dropped": 4
+  }
+}

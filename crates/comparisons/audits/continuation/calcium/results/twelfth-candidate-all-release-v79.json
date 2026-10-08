@@ -1,0 +1,24 @@
+{
+  "tag": "twelfth-candidate-all-release-v79",
+  "started": "2026-09-12T00:30:38.810Z",
+  "finished": "2026-09-12T00:31:25.385Z",
+  "elapsedSeconds": 46.572975786,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/twelfth-revision-candidate-v79/hyperreal",
+  "command": "env",
+  "args": [
+    "CARGO_TARGET_DIR=/tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse",
+    "CARGO_INCREMENTAL=0",
+    "CARGO_PROFILE_DEV_DEBUG=0",
+    "CARGO_BUILD_JOBS=2",
+    "cargo",
+    "test",
+    "--locked",
+    "--offline",
+    "--release",
+    "--all-features",
+    "--lib",
+    "--tests"
+  ],
+  "code": 0,
+  "signal": null
+}

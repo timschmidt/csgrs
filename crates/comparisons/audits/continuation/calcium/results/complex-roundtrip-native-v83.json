@@ -1,0 +1,18 @@
+{
+  "tag": "complex-roundtrip-native-v83",
+  "started": "2026-09-12T03:42:59.897Z",
+  "finished": "2026-09-12T03:43:00.123Z",
+  "elapsedSeconds": 0.224244154,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "timeout",
+  "args": [
+    "120s",
+    "prlimit",
+    "--as=1073741824",
+    "--cpu=90",
+    "--",
+    "/tmp/calcium-symbolic-boundary-v83.JuGH8X/components"
+  ],
+  "code": 0,
+  "signal": null
+}

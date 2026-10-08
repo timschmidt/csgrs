@@ -1,0 +1,2 @@
+{"field":"Q(sqrt(2),sqrt(3))","transcendentalRelation":"sin(e-pi)^2 + cos(e-pi)^2 = 1","status":"pass"}
+{"status":"all-values-decoded","values":10664,"limits":"Exact decoding only; root arithmetic and interval certificate checks remain separate."}

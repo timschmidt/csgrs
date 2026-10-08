@@ -1,0 +1,42 @@
+[
+  {
+    "label": "parent",
+    "cases": [
+      {
+        "name": "curve_corner_chain::tests::extended_fillet_circle_endpoints_obey_the_exact_radius_bound",
+        "returncode": 0,
+        "elapsed_seconds": 0.0035657649859786034,
+        "log": "fillet-companion-chart-20260923-focused1-parent-case-0.log"
+      },
+      {
+        "name": "curve_corner_chain::tests::extended_fillet_region_classifies_both_sides_of_its_companion",
+        "returncode": 0,
+        "elapsed_seconds": 0.003553136019036174,
+        "log": "fillet-companion-chart-20260923-focused1-parent-case-1.log"
+      }
+    ],
+    "binary_sha256": "11b50944711eca877c3ae67f56401768de87735380814373ca1e325c797ee5a8",
+    "sources_unchanged": true,
+    "all_processes_reaped": true
+  },
+  {
+    "label": "candidate",
+    "cases": [
+      {
+        "name": "curve_corner_chain::tests::extended_fillet_circle_endpoints_obey_the_exact_radius_bound",
+        "returncode": 0,
+        "elapsed_seconds": 0.003524977946653962,
+        "log": "fillet-companion-chart-20260923-focused1-candidate-case-0.log"
+      },
+      {
+        "name": "curve_corner_chain::tests::extended_fillet_region_classifies_both_sides_of_its_companion",
+        "returncode": 0,
+        "elapsed_seconds": 0.003496890072710812,
+        "log": "fillet-companion-chart-20260923-focused1-candidate-case-1.log"
+      }
+    ],
+    "binary_sha256": "b2a81ef72921953afde118756729eb146aa4a677942109e36f22ce41a745937e",
+    "sources_unchanged": true,
+    "all_processes_reaped": true
+  }
+]

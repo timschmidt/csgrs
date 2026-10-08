@@ -1,0 +1,10 @@
+{
+  "base": "b1f07b35d8a43ba6d5ce85b11a11ea18582ef51e",
+  "files": {
+    "src/bspline.rs": "e23c48d1b137563940deb67c3a59098fc2e2a69e2362828687e35d9d290cbab8",
+    "src/nurbs.rs": "390e388c9f933e80af9cbe4b0f6462b75eab8f8fbdd9bd379ed5acced3913d9b",
+    "src/polynomial_spline.rs": "a57e77b85559383f7f88a6846570cf5c94199aca78dc7c46069e1ba99ab078ac",
+    "tests/hypercurve_nurbs.rs": "b0e24d3c428aab56aa1b09f3c1486c2b7dbf250aaf170b555bd97545dd45bfce"
+  },
+  "commit": "444d8fa30cc5d5798b965d7ded2779ed27e580f1"
+}

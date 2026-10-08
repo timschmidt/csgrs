@@ -1,0 +1,11 @@
+inv	checks=220	failures=0
+marcsin	checks=220	failures=0
+marctan	checks=220	failures=0
+mcos	checks=220	failures=0
+mexp	checks=220	failures=0
+mln	checks=220	failures=0
+mlni	checks=220	failures=0
+msin	checks=220	failures=0
+pi/32	checks=32	failures=0
+pi/4	checks=28	failures=0
+PASS matching exact product/root/float/history=238; min/max=2

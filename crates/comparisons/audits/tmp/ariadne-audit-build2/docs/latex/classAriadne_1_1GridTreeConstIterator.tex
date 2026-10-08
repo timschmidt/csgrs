@@ -1,0 +1,39 @@
+\doxysubsection{Grid\+Tree\+Const\+Iterator Class Reference}
+\hypertarget{classAriadne_1_1GridTreeConstIterator}{}\label{classAriadne_1_1GridTreeConstIterator}\index{GridTreeConstIterator@{GridTreeConstIterator}}
+
+
+{\ttfamily \#include $<$grid\+\_\+paving.\+hpp$>$}
+
+
+
+\doxysubsubsection{Description}
+This class allows to iterate through the enabled leaf nodes of Grid\+Tree\+Subset. The return objects for this \doxylink{classAriadne_1_1Expansion}{Iterator} are constant Grid\+Cells. \doxysubsubsubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1GridTreeConstIterator_ae5685dbdba6ae5b52341756cab412d7d}\label{classAriadne_1_1GridTreeConstIterator_ae5685dbdba6ae5b52341756cab412d7d} 
+\mbox{\hyperlink{classAriadne_1_1GridTreeConstIterator}{Grid\+Tree\+Const\+Iterator}} \& {\bfseries operator=} (const \mbox{\hyperlink{classAriadne_1_1GridTreeConstIterator}{Grid\+Tree\+Const\+Iterator}} \&the\+Grid\+Paving\+Iter)=default
+\begin{DoxyCompactList}\small\item\em An assignment operator that copies the current state by copying the underlying \doxylink{classAriadne_1_1GridTreeCursor}{Grid\+Tree\+Cursor}. The latter is copied by it\textquotesingle{}s assignment operator. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1GridTreeConstIterator_a602ee9fa70d268a515b74a80ca248ee5}\label{classAriadne_1_1GridTreeConstIterator_a602ee9fa70d268a515b74a80ca248ee5} 
+{\bfseries \texorpdfstring{$\sim$}{\string~}\+Grid\+Tree\+Const\+Iterator} ()=default
+\begin{DoxyCompactList}\small\item\em This destructor only deallocates the \doxylink{classAriadne_1_1GridTreeCursor}{Grid\+Tree\+Cursor}, note that the latter one does not deallocate the enclosed sub paving. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\begin{Indent}\textbf{ Constructors}\par
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1GridTreeConstIterator_abf698fe9efa20c5ac930e3f26c911083}\label{classAriadne_1_1GridTreeConstIterator_abf698fe9efa20c5ac930e3f26c911083} 
+{\bfseries Grid\+Tree\+Const\+Iterator} ()
+\begin{DoxyCompactList}\small\item\em Default constructor constructs an invalid \doxylink{classAriadne_1_1Expansion}{Iterator}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1GridTreeConstIterator_aaaa32d73e4096b54c4886eba718f1f39}\label{classAriadne_1_1GridTreeConstIterator_aaaa32d73e4096b54c4886eba718f1f39} 
+{\bfseries Grid\+Tree\+Const\+Iterator} (const \mbox{\hyperlink{classAriadne_1_1GridTreeSubpaving}{Grid\+Tree\+Subpaving}} \texorpdfstring{$\ast$}{*}p\+Sub\+Paving, const \mbox{\hyperlink{classAriadne_1_1ValidatedKleenean}{Validated\+Kleenean}} first\+Last\+None)
+\begin{DoxyCompactList}\small\item\em The constructor that accepts the subpacing {\itshape p\+Sub\+Paving} to iterate on The paramerter {\itshape first\+Last\+None} indicatges whether we want to position the \doxylink{classAriadne_1_1Expansion}{Iterator} on the first enabled leaf node (first\+Last\+None == true) or the last one (first\+Last\+None == false) or we are constructing the "{}end Iterator"{} that does not point anywhere. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1GridTreeConstIterator_a092c6627beadb98d1c7b0c635fc01eab}\label{classAriadne_1_1GridTreeConstIterator_a092c6627beadb98d1c7b0c635fc01eab} 
+{\bfseries Grid\+Tree\+Const\+Iterator} (const \mbox{\hyperlink{classAriadne_1_1GridTreeConstIterator}{Grid\+Tree\+Const\+Iterator}} \&the\+Grid\+Paving\+Iter)=default
+\begin{DoxyCompactList}\small\item\em The copy constructor that copies the current state by copying the underlying \doxylink{classAriadne_1_1GridTreeCursor}{Grid\+Tree\+Cursor}. The latter is copied by it\textquotesingle{}s copy constructor. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\end{Indent}
+\begin{Indent}\textbf{ Get the cursor of the Iterator}\par
+\end{Indent}
+
+
+The documentation for this class was generated from the following files\+:\begin{DoxyCompactItemize}
+\item 
+source/geometry/\mbox{\hyperlink{grid__paving_8hpp}{grid\+\_\+paving.\+hpp}}\item 
+source/geometry/grid\+\_\+paving.\+cpp\end{DoxyCompactItemize}

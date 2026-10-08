@@ -1,0 +1,5 @@
+     Locking 36 packages to latest Rust 1.97.0 compatible versions
+   Compiling hyperreal v0.13.1 (/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/root-exp-proof-trial-hyperreal)
+   Compiling calcium-root-exp-proof-qualification v0.1.0 (/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/root-exp-proof-qualification)
+    Finished `dev` profile [unoptimized] target(s) in 2.70s
+     Running `/home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype/debug/calcium-root-exp-proof-qualification oracle`

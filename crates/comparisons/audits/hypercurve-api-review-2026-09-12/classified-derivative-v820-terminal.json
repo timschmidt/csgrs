@@ -1,0 +1,1217 @@
+{
+  "normal_production_build": true,
+  "source_manifest": "classified-derivative-v820-sources.json",
+  "source_directory": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/source-archives/classified-derivative-v820",
+  "builds": [
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "test",
+        "--lib",
+        "--test",
+        "hypercurve_bezier_algebraic_image",
+        "--test",
+        "hypercurve_curve_point",
+        "--test",
+        "hypercurve_bezier_algebraic_parameter",
+        "--test",
+        "hypercurve_bezier_split_materialization",
+        "--test",
+        "hypercurve_bezier_tangent_order",
+        "--test",
+        "hypercurve_bezier_arrangement",
+        "--test",
+        "hypercurve_curve_region_promotion",
+        "--test",
+        "hypercurve_rational_bezier",
+        "--test",
+        "hypercurve_bspline",
+        "--test",
+        "hypercurve_nurbs",
+        "--test",
+        "hypercurve_bezier_region",
+        "--release",
+        "--all-features",
+        "--locked",
+        "--offline",
+        "--no-run",
+        "--message-format=json"
+      ],
+      "returncode": 0,
+      "log": "classified-derivative-v820-hypercurve-build.log",
+      "elapsed_seconds": 203.3014146341011,
+      "binaries": {
+        "hypercurve_rational_bezier": {
+          "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/classified-derivative-v820-hypercurve_rational_bezier-tests",
+          "sha256": "0c06c1d57dc9e88d262cb8ef9c99fb8463de1ea135e70bc71a09e81fba5291cf"
+        },
+        "hypercurve_bezier_split_materialization": {
+          "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/classified-derivative-v820-hypercurve_bezier_split_materialization-tests",
+          "sha256": "efe78bb8648a46cb3b9f7dae17028a5f1f85c6f12cee75851961c43d29b570c8"
+        },
+        "hypercurve_bezier_tangent_order": {
+          "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/classified-derivative-v820-hypercurve_bezier_tangent_order-tests",
+          "sha256": "f9322229da86d676a770a159cd8330d12bcbe157116f69a24d982b8a79cb18d3"
+        },
+        "hypercurve_bspline": {
+          "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/classified-derivative-v820-hypercurve_bspline-tests",
+          "sha256": "251d564a625b377b7e04f3a55673981d5962c33ae222e4f7e953ed03ca6b68ea"
+        },
+        "hypercurve_bezier_arrangement": {
+          "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/classified-derivative-v820-hypercurve_bezier_arrangement-tests",
+          "sha256": "a722198576da71e975b36d514ecc6904d22b664129c39b8ace234520240780ec"
+        },
+        "hypercurve_curve_region_promotion": {
+          "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/classified-derivative-v820-hypercurve_curve_region_promotion-tests",
+          "sha256": "aefc814f71d28c8cf3b9a86ddbc1e9a8cb4a21ae3841ee5e842feeabfc09bb2f"
+        },
+        "hypercurve_nurbs": {
+          "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/classified-derivative-v820-hypercurve_nurbs-tests",
+          "sha256": "f38835ff6eaa3be6c4ce90053d6df50364d66f88f6cffec24902af0d55eb01e8"
+        },
+        "hypercurve_bezier_algebraic_parameter": {
+          "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/classified-derivative-v820-hypercurve_bezier_algebraic_parameter-tests",
+          "sha256": "2f1ebf46c01d5af5e5d79290ab6d6ca99a746bc083e6324bd149327a182b81ee"
+        },
+        "hypercurve_bezier_algebraic_image": {
+          "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/classified-derivative-v820-hypercurve_bezier_algebraic_image-tests",
+          "sha256": "c3e43247b151e9c706a2b7ca2360696fd23c1e1d250122c4a53ab0d9875840c9"
+        },
+        "hypercurve_curve_point": {
+          "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/classified-derivative-v820-hypercurve_curve_point-tests",
+          "sha256": "df32eca02580175212ee3f00c2abce624829813969482ebcf9c271fbd1ad847c"
+        },
+        "hypercurve_bezier_region": {
+          "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/classified-derivative-v820-hypercurve_bezier_region-tests",
+          "sha256": "f5084f2bcd4d75483b2aa9c1d733067a2bb506b1ea9e036058c8b622cf0d5fb2"
+        },
+        "hypercurve": {
+          "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/classified-derivative-v820-hypercurve-tests",
+          "sha256": "c2ab745c7b976be9fa5ad9e3085287bc3fd09bc4e5189399bd69b65d42fef4eb"
+        }
+      }
+    }
+  ],
+  "cases": [
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/classified-derivative-v820-hypercurve-tests",
+        "--exact",
+        "rational_bezier_general::tests::implicit_conic_contacts_exclude_projective_poles",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "classified-derivative-v820-implicit_conic_contacts_exclude_projective_poles-f7e21c625d.log",
+      "elapsed_seconds": 0.01565751782618463,
+      "target": "hypercurve",
+      "name": "rational_bezier_general::tests::implicit_conic_contacts_exclude_projective_poles",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/classified-derivative-v820-hypercurve-tests",
+        "--exact",
+        "bezier_algebraic_image::policy_tests::arithmetic_adapter_replays_close_nonrational_bounds_strictly",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "classified-derivative-v820-arithmetic_adapter_replays_close_nonrational_bounds_strictly-77b582c446.log",
+      "elapsed_seconds": 0.0035604960285127163,
+      "target": "hypercurve",
+      "name": "bezier_algebraic_image::policy_tests::arithmetic_adapter_replays_close_nonrational_bounds_strictly",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/classified-derivative-v820-hypercurve-tests",
+        "--exact",
+        "bezier_algebraic_image::policy_tests::coordinate_images_preserve_native_polynomial_point_values",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "classified-derivative-v820-coordinate_images_preserve_native_polynomial_point_values-3de5a26e30.log",
+      "elapsed_seconds": 0.003550647059455514,
+      "target": "hypercurve",
+      "name": "bezier_algebraic_image::policy_tests::coordinate_images_preserve_native_polynomial_point_values",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/classified-derivative-v820-hypercurve-tests",
+        "--exact",
+        "bezier_algebraic_image::policy_tests::exact_real_representation_preserves_native_point_payloads",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "classified-derivative-v820-exact_real_representation_preserves_native_point_payloads-ab6f226742.log",
+      "elapsed_seconds": 0.003596863942220807,
+      "target": "hypercurve",
+      "name": "bezier_algebraic_image::policy_tests::exact_real_representation_preserves_native_point_payloads",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/classified-derivative-v820-hypercurve-tests",
+        "--exact",
+        "bezier_algebraic_image::policy_tests::retained_constant_coordinates_do_not_require_scalar_parameter_images",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "classified-derivative-v820-retained_constant_coordinates_do_not_require_scalar_parameter_images-46b89500d1.log",
+      "elapsed_seconds": 0.003594554029405117,
+      "target": "hypercurve",
+      "name": "bezier_algebraic_image::policy_tests::retained_constant_coordinates_do_not_require_scalar_parameter_images",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/classified-derivative-v820-hypercurve-tests",
+        "--exact",
+        "bezier_offset::conversion_tests::algebraic_chord_retains_independent_endpoint_fields_under_both_policies",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "classified-derivative-v820-algebraic_chord_retains_independent_endpoint_fields_under_both_policies-9bd29ea45b.log",
+      "elapsed_seconds": 0.015615951037034392,
+      "target": "hypercurve",
+      "name": "bezier_offset::conversion_tests::algebraic_chord_retains_independent_endpoint_fields_under_both_policies",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/classified-derivative-v820-hypercurve-tests",
+        "--exact",
+        "bezier_offset::conversion_tests::algebraic_cusp_semicircle_intersects_independent_field_oblique_chords_exactly",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "classified-derivative-v820-algebraic_cusp_semicircle_intersects_independent_field_oblique_chords_exactly-c938886036.log",
+      "elapsed_seconds": 0.03167535085231066,
+      "target": "hypercurve",
+      "name": "bezier_offset::conversion_tests::algebraic_cusp_semicircle_intersects_independent_field_oblique_chords_exactly",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/classified-derivative-v820-hypercurve-tests",
+        "--exact",
+        "bezier_offset::conversion_tests::genuine_parallel_algebraic_ray_replays_the_unsquared_branch",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "classified-derivative-v820-genuine_parallel_algebraic_ray_replays_the_unsquared_branch-b451ec61b4.log",
+      "elapsed_seconds": 0.015636659925803542,
+      "target": "hypercurve",
+      "name": "bezier_offset::conversion_tests::genuine_parallel_algebraic_ray_replays_the_unsquared_branch",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/classified-derivative-v820-hypercurve-tests",
+        "--exact",
+        "bezier_offset::conversion_tests::independent_field_algebraic_chord_intersects_rational_curve_under_both_policies",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "classified-derivative-v820-independent_field_algebraic_chord_intersects_rational_curve_under_both_policies-d8f570c302.log",
+      "elapsed_seconds": 0.031742626801133156,
+      "target": "hypercurve",
+      "name": "bezier_offset::conversion_tests::independent_field_algebraic_chord_intersects_rational_curve_under_both_policies",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/classified-derivative-v820-hypercurve-tests",
+        "--exact",
+        "bezier_offset::conversion_tests::represented_circle_incidence_replays_retained_similarity_points",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "classified-derivative-v820-represented_circle_incidence_replays_retained_similarity_points-5b52f53990.log",
+      "elapsed_seconds": 0.0034856218844652176,
+      "target": "hypercurve",
+      "name": "bezier_offset::conversion_tests::represented_circle_incidence_replays_retained_similarity_points",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/classified-derivative-v820-hypercurve-tests",
+        "--exact",
+        "bezier_offset::conversion_tests::weighted_selected_center_tangent_line_stays_recursive",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "classified-derivative-v820-weighted_selected_center_tangent_line_stays_recursive-43de8c34ed.log",
+      "elapsed_seconds": 0.015614351024851203,
+      "target": "hypercurve",
+      "name": "bezier_offset::conversion_tests::weighted_selected_center_tangent_line_stays_recursive",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/classified-derivative-v820-hypercurve-tests",
+        "--exact",
+        "bezier_region::tests::algebraic_query_winding_mixes_genuine_parallel_and_native_fragments",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "classified-derivative-v820-algebraic_query_winding_mixes_genuine_parallel_and_native_fragments-ece31b5831.log",
+      "elapsed_seconds": 0.015622490085661411,
+      "target": "hypercurve",
+      "name": "bezier_region::tests::algebraic_query_winding_mixes_genuine_parallel_and_native_fragments",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/classified-derivative-v820-hypercurve-tests",
+        "--exact",
+        "bezier_region::tests::algebraic_retained_range_ray_winding_handles_crossing_multiplicity",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "classified-derivative-v820-algebraic_retained_range_ray_winding_handles_crossing_multiplicity-00e4e5af18.log",
+      "elapsed_seconds": 0.007593889953568578,
+      "target": "hypercurve",
+      "name": "bezier_region::tests::algebraic_retained_range_ray_winding_handles_crossing_multiplicity",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/classified-derivative-v820-hypercurve-tests",
+        "--exact",
+        "curve::curve_evaluation::tests::repeated_unit_chart_evaluation_reuses_selected_root_images",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "classified-derivative-v820-repeated_unit_chart_evaluation_reuses_selected_root_images-e0cfaf3e47.log",
+      "elapsed_seconds": 0.0035090898163616657,
+      "target": "hypercurve",
+      "name": "curve::curve_evaluation::tests::repeated_unit_chart_evaluation_reuses_selected_root_images",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/classified-derivative-v820-hypercurve-tests",
+        "--exact",
+        "curve_region_trim::tests::generated_chord_trim_preserves_holes_and_exact_endpoint_replay",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "classified-derivative-v820-generated_chord_trim_preserves_holes_and_exact_endpoint_replay-ca77ed69d9.log",
+      "elapsed_seconds": 0.4642988541163504,
+      "target": "hypercurve",
+      "name": "curve_region_trim::tests::generated_chord_trim_preserves_holes_and_exact_endpoint_replay",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/classified-derivative-v820-hypercurve-tests",
+        "--exact",
+        "rational_bezier_general::tests::deferred_parametric_point_reuses_source_polynomials_for_exact_equality",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "classified-derivative-v820-deferred_parametric_point_reuses_source_polynomials_for_exact_equality-e5e288f01e.log",
+      "elapsed_seconds": 0.0035816249437630177,
+      "target": "hypercurve",
+      "name": "rational_bezier_general::tests::deferred_parametric_point_reuses_source_polynomials_for_exact_equality",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/classified-derivative-v820-hypercurve-tests",
+        "--exact",
+        "rational_bezier_general::tests::exact_contact_evidence_reuses_a_retained_high_degree_image",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "classified-derivative-v820-exact_contact_evidence_reuses_a_retained_high_degree_image-ab454bdf07.log",
+      "elapsed_seconds": 0.0034616030752658844,
+      "target": "hypercurve",
+      "name": "rational_bezier_general::tests::exact_contact_evidence_reuses_a_retained_high_degree_image",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/classified-derivative-v820-hypercurve-tests",
+        "--exact",
+        "bezier_split_endpoint::tests::lazy_endpoint_images_preserve_affine_domain_blockers",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "classified-derivative-v820-lazy_endpoint_images_preserve_affine_domain_blockers-f038c27d50.log",
+      "elapsed_seconds": 0.003516639117151499,
+      "target": "hypercurve",
+      "name": "bezier_split_endpoint::tests::lazy_endpoint_images_preserve_affine_domain_blockers",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/classified-derivative-v820-hypercurve-tests",
+        "--exact",
+        "bezier_offset::conversion_tests::independent_oblique_chords_support_constrained_fillet_families",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "classified-derivative-v820-independent_oblique_chords_support_constrained_fillet_families-2e618b8f21.log",
+      "elapsed_seconds": 21.741479638032615,
+      "target": "hypercurve",
+      "name": "bezier_offset::conversion_tests::independent_oblique_chords_support_constrained_fillet_families",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/classified-derivative-v820-hypercurve-tests",
+        "--exact",
+        "curve::curve_fillet::stationary_continuous_family_regression::continuous_fillets_preserve_stationary_reparameterization",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "classified-derivative-v820-continuous_fillets_preserve_stationary_reparameterization-29d6a94148.log",
+      "elapsed_seconds": 8.474600271089002,
+      "target": "hypercurve",
+      "name": "curve::curve_fillet::stationary_continuous_family_regression::continuous_fillets_preserve_stationary_reparameterization",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/classified-derivative-v820-hypercurve-tests",
+        "--exact",
+        "curve::curve_fillet::tests::continuous_fillet_constraints_accept_arbitrary_exact_real_contacts",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "classified-derivative-v820-continuous_fillet_constraints_accept_arbitrary_exact_real_contacts-5a2623c2e3.log",
+      "elapsed_seconds": 0.031789513071998954,
+      "target": "hypercurve",
+      "name": "curve::curve_fillet::tests::continuous_fillet_constraints_accept_arbitrary_exact_real_contacts",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/classified-derivative-v820-hypercurve-tests",
+        "--exact",
+        "curve::curve_fillet::tests::joined_path_selects_and_replays_a_continuous_fillet_family",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "classified-derivative-v820-joined_path_selects_and_replays_a_continuous_fillet_family-917c82aef4.log",
+      "elapsed_seconds": 0.31410845508798957,
+      "target": "hypercurve",
+      "name": "curve::curve_fillet::tests::joined_path_selects_and_replays_a_continuous_fillet_family",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/classified-derivative-v820-hypercurve-tests",
+        "--exact",
+        "curve::curve_fillet::tests::normalized_region_selects_and_reuses_a_continuous_fillet_family",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "classified-derivative-v820-normalized_region_selects_and_reuses_a_continuous_fillet_family-48c0d2fec3.log",
+      "elapsed_seconds": 0.11385306483134627,
+      "target": "hypercurve",
+      "name": "curve::curve_fillet::tests::normalized_region_selects_and_reuses_a_continuous_fillet_family",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/classified-derivative-v820-hypercurve-tests",
+        "--exact",
+        "rational_bezier_general::tests::rational_contact_evidence_preserves_affine_domain_blockers",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "classified-derivative-v820-rational_contact_evidence_preserves_affine_domain_blockers-b4bb57a3c1.log",
+      "elapsed_seconds": 0.0035012809094041586,
+      "target": "hypercurve",
+      "name": "rational_bezier_general::tests::rational_contact_evidence_preserves_affine_domain_blockers",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/classified-derivative-v820-hypercurve-tests",
+        "--exact",
+        "bezier_offset::conversion_tests::contact_fallback_never_replaces_a_certified_pole",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "classified-derivative-v820-contact_fallback_never_replaces_a_certified_pole-b49c57f1a7.log",
+      "elapsed_seconds": 0.003569885855540633,
+      "target": "hypercurve",
+      "name": "bezier_offset::conversion_tests::contact_fallback_never_replaces_a_certified_pole",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/classified-derivative-v820-hypercurve-tests",
+        "--exact",
+        "bezier_offset::conversion_tests::algebraic_cusp_circle_rational_system_replays_shared_source_endpoint",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "classified-derivative-v820-algebraic_cusp_circle_rational_system_replays_shared_source_endpoint-0c12b36cd1.log",
+      "elapsed_seconds": 0.0637710951268673,
+      "target": "hypercurve",
+      "name": "bezier_offset::conversion_tests::algebraic_cusp_circle_rational_system_replays_shared_source_endpoint",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/classified-derivative-v820-hypercurve-tests",
+        "--exact",
+        "bezier_offset::conversion_tests::algebraic_cusp_semicircle_rational_contacts_distinguish_both_endpoints",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "classified-derivative-v820-algebraic_cusp_semicircle_rational_contacts_distinguish_both_endpoints-345337ba15.log",
+      "elapsed_seconds": 0.003528027795255184,
+      "target": "hypercurve",
+      "name": "bezier_offset::conversion_tests::algebraic_cusp_semicircle_rational_contacts_distinguish_both_endpoints",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/classified-derivative-v820-hypercurve-tests",
+        "--exact",
+        "bezier_offset::conversion_tests::algebraic_cusp_semicircle_replays_a_selected_circle_component",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "classified-derivative-v820-algebraic_cusp_semicircle_replays_a_selected_circle_component-5ad26bb65d.log",
+      "elapsed_seconds": 15.433821016922593,
+      "target": "hypercurve",
+      "name": "bezier_offset::conversion_tests::algebraic_cusp_semicircle_replays_a_selected_circle_component",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/classified-derivative-v820-hypercurve-tests",
+        "--exact",
+        "bezier_offset::conversion_tests::algebraic_cusp_semicircle_pair_maps_full_partial_and_endpoint_only_overlap",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "classified-derivative-v820-algebraic_cusp_semicircle_pair_maps_full_partial_and_endpoint_only_overlap-39b7f91709.log",
+      "elapsed_seconds": 0.031800362979993224,
+      "target": "hypercurve",
+      "name": "bezier_offset::conversion_tests::algebraic_cusp_semicircle_pair_maps_full_partial_and_endpoint_only_overlap",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/classified-derivative-v820-hypercurve-tests",
+        "--exact",
+        "bezier_offset::conversion_tests::rational_circle_overlap_preserves_an_isolated_parameter_visit",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "classified-derivative-v820-rational_circle_overlap_preserves_an_isolated_parameter_visit-5972d27ee1.log",
+      "elapsed_seconds": 0.06377998390235007,
+      "target": "hypercurve",
+      "name": "bezier_offset::conversion_tests::rational_circle_overlap_preserves_an_isolated_parameter_visit",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/classified-derivative-v820-hypercurve-tests",
+        "--exact",
+        "bezier_offset::conversion_tests::rank_independent_chord_normal_circle_partitions_rational_overlap",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "classified-derivative-v820-rank_independent_chord_normal_circle_partitions_rational_overlap-ac7ac2d4d1.log",
+      "elapsed_seconds": 2.1165100410580635,
+      "target": "hypercurve",
+      "name": "bezier_offset::conversion_tests::rank_independent_chord_normal_circle_partitions_rational_overlap",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/classified-derivative-v820-hypercurve-tests",
+        "--exact",
+        "bezier_offset::conversion_tests::rank_independent_chord_normal_circle_partitions_folded_rational_overlap",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "classified-derivative-v820-rank_independent_chord_normal_circle_partitions_folded_rational_overlap-18b3f8513e.log",
+      "elapsed_seconds": 1.015030609909445,
+      "target": "hypercurve",
+      "name": "bezier_offset::conversion_tests::rank_independent_chord_normal_circle_partitions_folded_rational_overlap",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/classified-derivative-v820-hypercurve-tests",
+        "--exact",
+        "bezier_offset::conversion_tests::selected_parallel_normal_circle_retains_general_rational_contacts_in_one_fiber",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "classified-derivative-v820-selected_parallel_normal_circle_retains_general_rational_contacts_in_one_fiber-dd4ae3b090.log",
+      "elapsed_seconds": 0.03175009693950415,
+      "target": "hypercurve",
+      "name": "bezier_offset::conversion_tests::selected_parallel_normal_circle_retains_general_rational_contacts_in_one_fiber",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/classified-derivative-v820-hypercurve-tests",
+        "--exact",
+        "bezier_offset::conversion_tests::selected_parallel_normal_circle_retains_general_rational_overlaps_in_one_fiber",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "classified-derivative-v820-selected_parallel_normal_circle_retains_general_rational_overlaps_in_one_fiber-f4fa966e17.log",
+      "elapsed_seconds": 0.015693485038354993,
+      "target": "hypercurve",
+      "name": "bezier_offset::conversion_tests::selected_parallel_normal_circle_retains_general_rational_overlaps_in_one_fiber",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/classified-derivative-v820-hypercurve-tests",
+        "--exact",
+        "bezier_offset::conversion_tests::incident_rational_parabola_circle_retains_the_pre_pole_contact",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "classified-derivative-v820-incident_rational_parabola_circle_retains_the_pre_pole_contact-50408f2f7b.log",
+      "elapsed_seconds": 0.0035182200372219086,
+      "target": "hypercurve",
+      "name": "bezier_offset::conversion_tests::incident_rational_parabola_circle_retains_the_pre_pole_contact",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/classified-derivative-v820-hypercurve-tests",
+        "--exact",
+        "bezier_offset::conversion_tests::selected_fiber_rational_circle_overlaps_complete_region_booleans",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "classified-derivative-v820-selected_fiber_rational_circle_overlaps_complete_region_booleans-e9f06222b7.log",
+      "elapsed_seconds": 0.06372666801325977,
+      "target": "hypercurve",
+      "name": "bezier_offset::conversion_tests::selected_fiber_rational_circle_overlaps_complete_region_booleans",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/classified-derivative-v820-hypercurve-tests",
+        "--exact",
+        "bezier_offset::conversion_tests::algebraic_cusp_semicircle_reoffsets_pair_mapped_lens",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "classified-derivative-v820-algebraic_cusp_semicircle_reoffsets_pair_mapped_lens-fa85e748bc.log",
+      "elapsed_seconds": 0.015605752123519778,
+      "target": "hypercurve",
+      "name": "bezier_offset::conversion_tests::algebraic_cusp_semicircle_reoffsets_pair_mapped_lens",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/classified-derivative-v820-hypercurve-tests",
+        "--exact",
+        "rational_bezier_general::tests::implicit_conic_contacts_retain_source_parameter_point_image_first",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "classified-derivative-v820-implicit_conic_contacts_retain_source_parameter_point_image_first-c82a2deab5.log",
+      "elapsed_seconds": 0.0034985109232366085,
+      "target": "hypercurve",
+      "name": "rational_bezier_general::tests::implicit_conic_contacts_retain_source_parameter_point_image_first",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/classified-derivative-v820-hypercurve-tests",
+        "--exact",
+        "rational_bezier_general::tests::shared_demo_conic_cubic_contacts_are_complete",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "classified-derivative-v820-shared_demo_conic_cubic_contacts_are_complete-bac689286d.log",
+      "elapsed_seconds": 0.015614931005984545,
+      "target": "hypercurve",
+      "name": "rational_bezier_general::tests::shared_demo_conic_cubic_contacts_are_complete",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/classified-derivative-v820-hypercurve-tests",
+        "--exact",
+        "bezier_arrangement::endpoint_adjacency_tests::lazy_polynomial_endpoint_derivatives_match_eager_images",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "classified-derivative-v820-lazy_polynomial_endpoint_derivatives_match_eager_images-ccadb2c07e.log",
+      "elapsed_seconds": 0.003492500865831971,
+      "target": "hypercurve",
+      "name": "bezier_arrangement::endpoint_adjacency_tests::lazy_polynomial_endpoint_derivatives_match_eager_images",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/classified-derivative-v820-hypercurve-tests",
+        "--exact",
+        "bezier_split_endpoint::tests::retained_derivatives_replay_nonrational_source_signs",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 101,
+      "log": "classified-derivative-v820-retained_derivatives_replay_nonrational_source_signs-e0ca3a3f85.log",
+      "elapsed_seconds": 0.00349854095838964,
+      "target": "hypercurve",
+      "name": "bezier_split_endpoint::tests::retained_derivatives_replay_nonrational_source_signs",
+      "passed": false
+    }
+  ],
+  "checks": [],
+  "test_listings": {
+    "hypercurve_rational_bezier": {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/classified-derivative-v820-hypercurve_rational_bezier-tests",
+        "--list"
+      ],
+      "returncode": 0,
+      "log": "classified-derivative-v820-hypercurve_rational_bezier-list.log",
+      "elapsed_seconds": 0.0035704360343515873
+    },
+    "hypercurve_bezier_split_materialization": {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/classified-derivative-v820-hypercurve_bezier_split_materialization-tests",
+        "--list"
+      ],
+      "returncode": 0,
+      "log": "classified-derivative-v820-hypercurve_bezier_split_materialization-list.log",
+      "elapsed_seconds": 0.0014151530340313911
+    },
+    "hypercurve_bezier_tangent_order": {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/classified-derivative-v820-hypercurve_bezier_tangent_order-tests",
+        "--list"
+      ],
+      "returncode": 0,
+      "log": "classified-derivative-v820-hypercurve_bezier_tangent_order-list.log",
+      "elapsed_seconds": 0.001426242059096694
+    },
+    "hypercurve_bspline": {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/classified-derivative-v820-hypercurve_bspline-tests",
+        "--list"
+      ],
+      "returncode": 0,
+      "log": "classified-derivative-v820-hypercurve_bspline-list.log",
+      "elapsed_seconds": 0.0014069532044231892
+    },
+    "hypercurve_bezier_arrangement": {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/classified-derivative-v820-hypercurve_bezier_arrangement-tests",
+        "--list"
+      ],
+      "returncode": 0,
+      "log": "classified-derivative-v820-hypercurve_bezier_arrangement-list.log",
+      "elapsed_seconds": 0.003461043117567897
+    },
+    "hypercurve_curve_region_promotion": {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/classified-derivative-v820-hypercurve_curve_region_promotion-tests",
+        "--list"
+      ],
+      "returncode": 0,
+      "log": "classified-derivative-v820-hypercurve_curve_region_promotion-list.log",
+      "elapsed_seconds": 0.003476472105830908
+    },
+    "hypercurve_nurbs": {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/classified-derivative-v820-hypercurve_nurbs-tests",
+        "--list"
+      ],
+      "returncode": 0,
+      "log": "classified-derivative-v820-hypercurve_nurbs-list.log",
+      "elapsed_seconds": 0.0014005738776177168
+    },
+    "hypercurve_bezier_algebraic_parameter": {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/classified-derivative-v820-hypercurve_bezier_algebraic_parameter-tests",
+        "--list"
+      ],
+      "returncode": 0,
+      "log": "classified-derivative-v820-hypercurve_bezier_algebraic_parameter-list.log",
+      "elapsed_seconds": 0.0013934848830103874
+    },
+    "hypercurve_bezier_algebraic_image": {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/classified-derivative-v820-hypercurve_bezier_algebraic_image-tests",
+        "--list"
+      ],
+      "returncode": 0,
+      "log": "classified-derivative-v820-hypercurve_bezier_algebraic_image-list.log",
+      "elapsed_seconds": 0.001376915955916047
+    },
+    "hypercurve_curve_point": {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/classified-derivative-v820-hypercurve_curve_point-tests",
+        "--list"
+      ],
+      "returncode": 0,
+      "log": "classified-derivative-v820-hypercurve_curve_point-list.log",
+      "elapsed_seconds": 0.0013989738654345274
+    },
+    "hypercurve_bezier_region": {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/classified-derivative-v820-hypercurve_bezier_region-tests",
+        "--list"
+      ],
+      "returncode": 0,
+      "log": "classified-derivative-v820-hypercurve_bezier_region-list.log",
+      "elapsed_seconds": 0.0014351210556924343
+    },
+    "hypercurve": {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/classified-derivative-v820-hypercurve-tests",
+        "--list"
+      ],
+      "returncode": 0,
+      "log": "classified-derivative-v820-hypercurve-list.log",
+      "elapsed_seconds": 0.007588190957903862
+    }
+  },
+  "expected_cases": {
+    "hypercurve": [
+      "rational_bezier_general::tests::implicit_conic_contacts_exclude_projective_poles",
+      "bezier_algebraic_image::policy_tests::arithmetic_adapter_replays_close_nonrational_bounds_strictly",
+      "bezier_algebraic_image::policy_tests::coordinate_images_preserve_native_polynomial_point_values",
+      "bezier_algebraic_image::policy_tests::exact_real_representation_preserves_native_point_payloads",
+      "bezier_algebraic_image::policy_tests::retained_constant_coordinates_do_not_require_scalar_parameter_images",
+      "bezier_offset::conversion_tests::algebraic_chord_retains_independent_endpoint_fields_under_both_policies",
+      "bezier_offset::conversion_tests::algebraic_cusp_semicircle_intersects_independent_field_oblique_chords_exactly",
+      "bezier_offset::conversion_tests::genuine_parallel_algebraic_ray_replays_the_unsquared_branch",
+      "bezier_offset::conversion_tests::independent_field_algebraic_chord_intersects_rational_curve_under_both_policies",
+      "bezier_offset::conversion_tests::represented_circle_incidence_replays_retained_similarity_points",
+      "bezier_offset::conversion_tests::weighted_selected_center_tangent_line_stays_recursive",
+      "bezier_region::tests::algebraic_query_winding_mixes_genuine_parallel_and_native_fragments",
+      "bezier_region::tests::algebraic_retained_range_ray_winding_handles_crossing_multiplicity",
+      "curve::curve_evaluation::tests::repeated_unit_chart_evaluation_reuses_selected_root_images",
+      "curve_region_trim::tests::generated_chord_trim_preserves_holes_and_exact_endpoint_replay",
+      "rational_bezier_general::tests::deferred_parametric_point_reuses_source_polynomials_for_exact_equality",
+      "rational_bezier_general::tests::exact_contact_evidence_reuses_a_retained_high_degree_image",
+      "bezier_split_endpoint::tests::lazy_endpoint_images_preserve_affine_domain_blockers",
+      "bezier_offset::conversion_tests::independent_oblique_chords_support_constrained_fillet_families",
+      "curve::curve_fillet::stationary_continuous_family_regression::continuous_fillets_preserve_stationary_reparameterization",
+      "curve::curve_fillet::tests::continuous_fillet_constraints_accept_arbitrary_exact_real_contacts",
+      "curve::curve_fillet::tests::joined_path_selects_and_replays_a_continuous_fillet_family",
+      "curve::curve_fillet::tests::normalized_region_selects_and_reuses_a_continuous_fillet_family",
+      "rational_bezier_general::tests::rational_contact_evidence_preserves_affine_domain_blockers",
+      "bezier_offset::conversion_tests::contact_fallback_never_replaces_a_certified_pole",
+      "bezier_offset::conversion_tests::algebraic_cusp_circle_rational_system_replays_shared_source_endpoint",
+      "bezier_offset::conversion_tests::algebraic_cusp_semicircle_rational_contacts_distinguish_both_endpoints",
+      "bezier_offset::conversion_tests::algebraic_cusp_semicircle_replays_a_selected_circle_component",
+      "bezier_offset::conversion_tests::algebraic_cusp_semicircle_pair_maps_full_partial_and_endpoint_only_overlap",
+      "bezier_offset::conversion_tests::rational_circle_overlap_preserves_an_isolated_parameter_visit",
+      "bezier_offset::conversion_tests::rank_independent_chord_normal_circle_partitions_rational_overlap",
+      "bezier_offset::conversion_tests::rank_independent_chord_normal_circle_partitions_folded_rational_overlap",
+      "bezier_offset::conversion_tests::selected_parallel_normal_circle_retains_general_rational_contacts_in_one_fiber",
+      "bezier_offset::conversion_tests::selected_parallel_normal_circle_retains_general_rational_overlaps_in_one_fiber",
+      "bezier_offset::conversion_tests::incident_rational_parabola_circle_retains_the_pre_pole_contact",
+      "bezier_offset::conversion_tests::selected_fiber_rational_circle_overlaps_complete_region_booleans",
+      "bezier_offset::conversion_tests::algebraic_cusp_semicircle_reoffsets_pair_mapped_lens",
+      "rational_bezier_general::tests::implicit_conic_contacts_retain_source_parameter_point_image_first",
+      "rational_bezier_general::tests::shared_demo_conic_cubic_contacts_are_complete",
+      "bezier_arrangement::endpoint_adjacency_tests::lazy_polynomial_endpoint_derivatives_match_eager_images",
+      "bezier_split_endpoint::tests::retained_derivatives_replay_nonrational_source_signs"
+    ],
+    "hypercurve_bezier_algebraic_image": [
+      "conic_point_images_reuse_exact_evaluation_across_weight_charts",
+      "cubic_point_and_tangent_images_use_power_basis_resultants",
+      "linear_coordinate_images_match_exact_midpoint_values",
+      "nonmonotone_coordinate_image_is_certified_without_sampling",
+      "polynomial_endpoint_derivatives_replay_exact_values_in_the_shared_carrier",
+      "polynomial_point_images_retain_nonrational_source_roots",
+      "polynomial_point_images_share_exact_replay_across_coefficient_domains",
+      "quadratic_point_and_tangent_images_retain_algebraic_coordinate_evidence",
+      "rational_derivative_images_require_finite_affine_domain",
+      "rational_image_cache_keeps_curve_family_certificate_shapes_distinct",
+      "rational_line_image_matches_exact_midpoint_values",
+      "rational_point_image_transforms_exact_real_linear_root",
+      "rational_point_images_require_finite_affine_coordinates",
+      "rational_quadratic_point_and_tangent_images_retain_quotient_evidence"
+    ],
+    "hypercurve_curve_point": [
+      "coordinate_view_accepts_arbitrary_exact_reals_and_preserves_certainty",
+      "independent_selected_charts_share_the_general_point_queries"
+    ],
+    "hypercurve_bezier_algebraic_parameter": [
+      "algebraic_parameter_is_a_clone_shared_handle",
+      "algebraic_parameter_recovers_represented_linear_root",
+      "algebraic_root_sign_change_tracks_multiplicity_parity",
+      "bernstein_conversion_preserves_high_degree_constant_identity",
+      "cubic_distance_stationary_quintic_isolates_all_five_candidates",
+      "endpoint_root_is_rejected_for_algebraic_isolators",
+      "endpoint_touching_singleton_isolators_have_strict_order",
+      "equivalent_irrational_roots_compare_equal_across_polynomials_and_isolators",
+      "exact_and_algebraic_parameters_compare_only_when_certified",
+      "finite_parameter_interval_contract::exterior_root_images_preserve_equations_and_native_curve_domains",
+      "finite_parameter_interval_contract::positive_unit_weights_do_not_admit_exterior_algebraic_poles",
+      "irrational_nonlinear_parameter_remains_algebraic",
+      "irrational_root_isolation_skips_rational_reconstruction_refinement",
+      "linear_integer_polynomials_count_at_most_one_root",
+      "linear_midpoint_root_is_a_valid_algebraic_parameter",
+      "multi_root_bracket_is_rejected_as_not_an_isolator",
+      "nonlinear_algebraic_parameter_reconstructs_exact_rational_root",
+      "nonrational_linear_parameter_uses_exact_point_api",
+      "nonrational_quartic_uses_exact_bernstein_root_certificates",
+      "oriented_parameter_range_retains_irrational_boundary",
+      "overlapping_distinct_parameters_compare_by_certified_refinement",
+      "parameter_range_promotes_represented_rational_boundary",
+      "parameter_range_rejects_equal_and_accepts_affine_extension_boundaries",
+      "quadratic_singleton_isolator_is_validated_by_sturm_count",
+      "quintic_root_isolation_trace_reuses_sturm_certificates",
+      "repeated_nonrational_quartic_falls_back_to_complete_sturm_isolation",
+      "represented_root_sign_change_tracks_high_multiplicity_parity",
+      "reversed_parameter_intervals_are_rejected",
+      "unit_root_isolation_has_no_fixed_dyadic_depth_limit",
+      "unit_root_isolation_orders_represented_and_algebraic_roots"
+    ],
+    "hypercurve_bezier_split_materialization": [
+      "algebraic_boundary_carries_endpoint_images_without_approximate_materialization",
+      "algebraic_endpoint_image_is_a_clone_shared_handle",
+      "algebraic_fragment_reversal_retains_source_evidence_and_toggles_traversal",
+      "broad_singleton_isolator_materializes_exact_endpoint_images",
+      "exact_cubic_subcurve_matches_original_endpoints_at_range_bounds",
+      "exact_quadratic_split_endpoints_match_original",
+      "exact_quadratic_split_materializes_native_subcurves",
+      "exact_rational_quadratic_split_preserves_conic_endpoint_evaluation",
+      "linear_algebraic_boundary_materializes_native_subcurves",
+      "rational_algebraic_boundary_carries_conic_endpoint_images",
+      "rational_algebraic_boundary_with_zero_denominator_returns_explicit_uncertainty",
+      "rational_algebraic_endpoint_retains_second_derivative_when_constructed",
+      "split_materialization_constructor_rejects_disconnected_materialized_fragments",
+      "split_materialization_constructor_rejects_duplicate_fragments",
+      "split_materialization_constructor_rejects_forged_algebraic_endpoint_evidence",
+      "split_materialization_constructor_rejects_incomplete_source_coverage",
+      "split_materialization_constructor_rejects_materialized_algebraic_range",
+      "split_materialization_constructor_rejects_noncontiguous_fragments"
+    ],
+    "hypercurve_bezier_tangent_order": [
+      "algebraic_same_tangent_order_rejects_equal_second_order_evidence",
+      "algebraic_same_tangent_order_uses_second_derivative_side_witness",
+      "algebraic_same_tangent_order_uses_third_derivative_after_zero_curvature",
+      "algebraic_tangent_order_evidence_same_direction_without_guessing",
+      "algebraic_tangent_order_handles_distinct_generators_with_disjoint_enclosures",
+      "algebraic_tangent_order_rejects_zero_tangent",
+      "algebraic_tangent_order_separates_opposite_half_turns",
+      "algebraic_tangent_order_uses_represented_cross_product_for_same_half",
+      "rational_algebraic_same_tangent_order_uses_second_derivative_side_witness"
+    ],
+    "hypercurve_bezier_arrangement": [
+      "algebraic_split_boundary_blocks_graph_traversal",
+      "arrangement_graph_accepts_adjacent_reused_source_fragment_ranges",
+      "arrangement_graph_rejects_duplicate_source_fragment_evidence",
+      "arrangement_graph_rejects_forged_algebraic_endpoint_image_evidence",
+      "arrangement_graph_rejects_invalid_unique_source_fragment_ranges",
+      "arrangement_graph_rejects_overlapping_reused_source_fragment_ranges",
+      "branch_vertex_is_explicit_uncertainty_not_arbitrary_successor",
+      "certified_overlap_evidence_replays_across_graph_clones",
+      "contact_parameters_follow_their_carrier_domains",
+      "empty_overlap_refinement_preserves_exact_unit_fragment",
+      "exact_endpoint_buckets_retain_symbolic_matches",
+      "exact_split_fragments_traverse_as_one_closed_bezier_chain",
+      "monotone_span_rejects_reversed_parameter_evidence",
+      "open_quadratic_chain_stays_one_nonclosed_chain",
+      "retained_arrangement_traversal_constructors_validate_fragment_ownership",
+      "retained_linear_overlap_refinement_evidence_reversed_span_orientation",
+      "retained_linear_overlap_split_graph_rejects_forged_orientation",
+      "retained_linear_overlap_split_graph_rejects_forged_resolved_provenance",
+      "retained_linear_overlap_split_graph_rejects_forged_split_evidence_geometry",
+      "retained_linear_overlap_split_graph_rejects_missing_refined_provenance",
+      "retained_linear_overlap_split_graph_rejects_missing_split_evidence_evidence",
+      "retained_linear_overlap_traversal_cancels_reversed_internal_span_in_loop",
+      "retained_linear_overlap_traversal_rejects_incomplete_refined_partition",
+      "retained_linear_overlap_traversal_rejects_indices_outside_refinement",
+      "retained_linear_overlap_traversal_splits_and_consumes_duplicate_span_in_loop",
+      "retained_overlap_evidence_constructor_rejects_unsorted_or_duplicate_pairs",
+      "retained_overlap_evidence_does_not_call_same_curve_image_a_line_split",
+      "retained_overlap_evidence_extracts_partial_line_image_split_ranges",
+      "retained_overlap_evidence_finds_identical_materialized_fragments",
+      "retained_overlap_evidence_finds_reversed_degree_elevated_same_image",
+      "retained_overlap_evidence_preserves_strict_rational_overlap_ranges",
+      "retained_overlap_evidence_recognizes_projectively_reversed_rational_fragments",
+      "retained_overlap_evidence_rejects_nonlinear_line_image_bezier_ranges",
+      "retained_overlap_evidence_separates_endpoint_touch_from_overlap",
+      "retained_overlap_pair_constructor_rejects_non_overlap_line_evidence",
+      "retained_overlap_pair_constructor_rejects_unordered_indices",
+      "retained_overlap_refined_fragment_constructor_validates_local_range",
+      "retained_overlap_split_constructors_reject_unordered_indices",
+      "retained_overlap_split_constructors_validate_range_evidence",
+      "retained_overlap_traversal_deduplicates_oriented_duplicate_loop_edges",
+      "retained_overlap_traversal_rejects_reversed_duplicate_as_ownership_boundary",
+      "retained_rational_overlap_promotes_represented_incidence_root",
+      "retained_rational_overlap_refinement_cancels_reversed_span",
+      "retained_resolved_overlap_constructor_rejects_unordered_indices",
+      "retained_tangent_order_rejects_equal_algebraic_successors",
+      "retained_tangent_order_transforms_reversed_algebraic_endpoints_and_tangents",
+      "retained_tangent_order_traverses_algebraic_branch_vertex",
+      "retained_tangent_order_uses_algebraic_second_order_for_equal_successors",
+      "retained_tangent_order_uses_algebraic_third_order_for_cubic_same_tangent_inflections",
+      "retained_tangent_order_uses_rational_algebraic_second_order_for_equal_successors",
+      "tangent_ordered_traversal_rejects_equal_rational_second_order_successors",
+      "tangent_ordered_traversal_rejects_equal_second_order_outgoing_tangents",
+      "tangent_ordered_traversal_rejects_equal_third_order_cubic_successors",
+      "tangent_ordered_traversal_resolves_simple_branch_vertex",
+      "tangent_ordered_traversal_uses_rational_second_order_for_equal_outgoing_tangents",
+      "tangent_ordered_traversal_uses_second_order_for_equal_outgoing_tangents",
+      "tangent_ordered_traversal_uses_third_order_for_cubic_same_tangent_inflections"
+    ],
+    "hypercurve_curve_region_promotion": [
+      "selected_algebraic_round_join_retains_a_general_minor_cut",
+      "selected_endpoint_chord_pairs_share_the_linear_fillet_kernel",
+      "selected_endpoint_chords_share_linear_arc_fillet_incidence",
+      "selected_endpoint_chords_share_linear_bezier_fillet_incidence"
+    ],
+    "hypercurve_rational_bezier": [
+      "degree_40_rational_monotonicity_does_not_depend_on_u64_binomials",
+      "direct_disjoint_conic_cubic_reports_no_candidates_or_contacts",
+      "every_bezier_family_retains_irrational_line_contacts",
+      "exact_line_contact_solver_distinguishes_hull_overlap_from_curve_contact",
+      "general_rational_contacts_recognize_projective_scale_and_reversal",
+      "general_rational_contacts_reject_disjoint_control_hulls",
+      "general_rational_cubic_certifies_obvious_axis_monotonicity",
+      "general_rational_cubic_evaluates_exactly",
+      "general_rational_derivative_is_exact_and_reuses_power_basis",
+      "general_rational_derivatives_are_not_truncated_at_bezier_degree",
+      "general_rational_line_contact_retains_exact_parameter_and_kind",
+      "general_rational_line_contact_retains_irrational_crossing_parameter",
+      "general_rational_line_relation_certifies_hull_miss_and_coincidence",
+      "general_rational_point_incidence_rechecks_full_homogeneous_image",
+      "general_rational_point_incidence_retains_endpoint_and_entire_curve_cases",
+      "general_rational_point_incidence_retains_nonlinear_algebraic_parameter",
+      "general_rational_split_preserves_join_and_degree",
+      "high_degree_nonuniform_rational_weights_preserve_axis_monotonicity",
+      "implicit_conic_route_does_not_certify_a_tangent_root_as_transverse",
+      "implicit_conic_route_replays_degree_elevated_line_contact_in_both_orders",
+      "implicit_conic_route_retains_an_interior_rational_quadratic_cubic_contact",
+      "independent_quadratic_tail_overlap_retains_one_exact_interval",
+      "independently_constructed_partial_overlap_reconstructs_rational_endpoints",
+      "independently_trimmed_projective_conics_retain_partial_overlap",
+      "line_image_overlap_accepts_monotone_parameterization_with_stationary_point",
+      "line_image_overlap_retains_irrational_algebraic_parameter_boundary",
+      "mixed_derivative_controls_use_exact_root_multiplicity_for_monotonicity",
+      "pi_weight_conic_replays_degree_elevated_horizontal_contact",
+      "polynomial_graph_overlap_retains_irrational_curved_boundary",
+      "polynomial_graph_replay_accepts_unequal_resultant_projection_counts",
+      "projectively_reparameterized_rational_quadratic_certifies_shared_conic",
+      "rational_bezier_clones_evaluate_identically",
+      "rational_bezier_clones_have_identical_point_incidence",
+      "rational_bezier_degree_elevation_preserves_exact_parameterized_image_and_lineage",
+      "rational_bezier_degree_elevation_preserves_projective_controls_and_poles",
+      "rational_contacts_replay_represented_resultant_candidates",
+      "rational_quadratic_exact_transcendental_pole_stays_projective",
+      "rational_quadratic_monotone_root_preserves_unequal_weight_quotient_derivative",
+      "rational_quadratic_monotone_root_retains_exact_transcendental_endpoint",
+      "rational_quadratic_rational_parameter_uses_exact_power_quotient",
+      "rational_resultant_certifies_disjoint_and_represented_crossing_parameters",
+      "rational_resultant_certifies_exact_partial_nonlinear_overlap_ranges",
+      "rational_resultant_replays_identical_and_reversed_full_image_overlap",
+      "rational_resultant_retains_algebraic_parameter_projections",
+      "represented_multi_split_materializes_connected_rational_fragments",
+      "resultant_replay_retains_an_interior_nonuniform_rational_cubic_contact",
+      "shared_cancellation_resolves_disjoint_rational_contact_blocker",
+      "shared_cancellation_resolves_rational_evaluation_and_bounds_blockers",
+      "shared_cancellation_resolves_rational_weight_monotonicity_blocker",
+      "top_level_general_rational_curve_preserves_family_and_native_geometry"
+    ],
+    "hypercurve_bspline": [
+      "affine_authoring_rejects_zero_weights_and_extraction_rejects_infinite_endpoints",
+      "bspline_constructor_rejects_degenerate_knot_vectors",
+      "cubic_bspline_extracts_spans_with_degree_multiplicity_at_internal_knot",
+      "equal_weight_quadratic_nurbs_matches_polynomial_bspline_spans",
+      "equal_weight_rational_cubic_spans_specialize_to_polynomial_cubics",
+      "equal_weight_retained_rational_cubic_matches_polynomial_cubic_spans",
+      "equal_weight_retained_rational_cubic_spans_feed_unified_region_area",
+      "extracted_bspline_spans_feed_unified_region_area",
+      "extracted_rational_bspline_spans_feed_conic_region_area",
+      "linear_bspline_spans_are_elevated_exactly",
+      "nonuniform_rational_cubic_spans_promote_without_degree_reduction",
+      "quadratic_bspline_extracts_bezier_spans_by_exact_knot_insertion",
+      "rational_linear_span_preserves_homogeneous_parameterization",
+      "rational_linear_span_retains_its_denominator_pole",
+      "rational_quadratic_bspline_extracts_homogeneous_bezier_spans",
+      "rational_quadratic_span_facts_certify_bounds_and_extrema",
+      "retained_bspline_span_facts_evidence_native_bounds_and_monotonicity",
+      "retained_degree_four_nurbs_span_certifies_stationary_monotone_axis",
+      "retained_rational_bspline_rejects_invalid_degree_and_zero_weight",
+      "retained_rational_cubic_bspline_extracts_bezier_span_evidence",
+      "retained_rational_cubic_span_facts_certify_control_hull_and_monotonicity",
+      "retained_rational_quadratic_span_facts_follow_refined_knot_windows",
+      "retained_rational_quadratic_spans_promote_to_native_conic_topology",
+      "unclamped_uniform_bspline_refines_active_domain_endpoints_exactly"
+    ],
+    "hypercurve_nurbs": [
+      "discontinuous_nurbs_knot_requires_explicit_point_side",
+      "higher_degree_nurbs_promotes_evaluates_and_splits_exactly",
+      "homogeneous_nurbs_elevation_remains_recomposable_and_refinable",
+      "homogeneous_nurbs_knot_insertion_retains_infinite_controls",
+      "homogeneous_nurbs_unclamped_and_discontinuous_edits_preserve_parameterization",
+      "invalid_nurbs_construction_returns_contextual_error",
+      "invalid_nurbs_split_and_trim_ranges_evidence_subdivision_context",
+      "linear_nurbs_evaluates_and_promotes_with_source_provenance",
+      "native_nurbs_spans_are_cached_and_borrowed",
+      "nonuniform_weighted_periodic_nurbs_supports_repeated_interior_knots",
+      "nurbs_batch_knot_refinement_projects_once_and_reuses_clone_shared_result",
+      "nurbs_batch_knot_refinement_retains_contextual_failure_without_mutating_source",
+      "nurbs_clones_share_one_retained_bezier_decomposition",
+      "nurbs_construction_obeys_terminal_policy_without_replacing_knots",
+      "nurbs_degree_elevation_retains_exact_span_image_intervals_and_source",
+      "nurbs_degree_elevation_retains_homogeneous_spans_and_actual_poles",
+      "nurbs_derivative_uses_authored_knot_parameter_and_shared_span_evaluators",
+      "nurbs_elevated_carrier_preserves_discontinuous_knot_sides",
+      "nurbs_elevated_carrier_preserves_image_source_and_source_continuity",
+      "nurbs_evaluation_reuses_decomposition_and_preserves_exact_coordinates",
+      "nurbs_exact_edits_isolate_terminal_policy_and_replay_retained_proofs",
+      "nurbs_higher_derivatives_use_each_authored_parameter_chain_power",
+      "nurbs_internal_corner_requires_explicit_derivative_side",
+      "nurbs_knot_insertion_preserves_exact_image_source_and_full_multiplicity_cache",
+      "nurbs_knot_removal_exactly_inverts_insertion_and_reuses_clone_shared_proof",
+      "nurbs_knot_removal_retains_exact_negative_result_and_contextual_domain_errors",
+      "nurbs_reversal_preserves_domain_source_and_exact_parameter_mapping",
+      "nurbs_split_and_subcurve_preserve_authored_parameters_and_exact_image",
+      "nurbs_subdivision_reconstruction_obeys_terminal_policy",
+      "out_of_domain_nurbs_evaluation_has_contextual_error",
+      "out_of_domain_nurbs_knot_insertion_has_contextual_error",
+      "periodic_nurbs_editing_preserves_period_only_for_whole_curve_operations",
+      "periodic_nurbs_elevated_carrier_preserves_wrapped_points_and_derivatives",
+      "periodic_nurbs_knot_removal_preserves_period_and_wrapped_image",
+      "periodic_nurbs_rejects_invalid_layout_and_nonperiodic_wrapping",
+      "periodic_nurbs_wrapping_obeys_terminal_policy",
+      "periodic_nurbs_wraps_exact_points_derivatives_and_retains_source",
+      "spline_parameter_search_preserves_every_discontinuous_knot_side",
+      "top_level_nurbs_retains_source_and_exact_geometry_under_explicit_policy",
+      "unclamped_nurbs_retains_active_endpoints_and_exact_editing",
+      "unclamped_weighted_nurbs_projects_homogeneous_endpoint_evidence",
+      "unequal_weight_cubic_nurbs_promotes_once_with_provenance"
+    ],
+    "hypercurve_bezier_region": [
+      "arrangement_admission_regularizes_crossings_and_canceled_seams",
+      "arrangement_admission_retains_selected_curve_evidence_for_reentry",
+      "closed_polynomial_arrangement_materializes_retained_region_with_exact_area",
+      "conic_area_rejects_uncertified_projective_denominator",
+      "conic_region_boundary_materializes_with_exact_area",
+      "empty_boundary_loops_do_not_certify_signed_area",
+      "equal_weight_rational_quadratic_area_matches_polynomial_exactly",
+      "exact_conic_splits_and_reversal_retain_denominator_and_area_facts",
+      "material_components_keep_recursive_hole_ownership_and_recompose_exactly",
+      "native_boundary_loop_constructor_rejects_open_fragment_cycle",
+      "open_arrangement_chain_does_not_materialize_region",
+      "quarter_circle_rational_conic_area_is_exact_symbolic_sector",
+      "rational_quadratic_area_is_invariant_under_negative_projective_scale",
+      "regularized_nonlinear_boundary_retains_roles_area_and_provenance",
+      "resolved_linear_overlap_traversal_materializes_unified_region",
+      "resolved_rational_overlap_traversal_materializes_unified_region",
+      "retained_algebraic_line_images_normalize_crossing_loops_under_both_policies",
+      "retained_boundary_loop_constructor_rejects_forged_materialized_range_order",
+      "retained_boundary_loop_constructor_rejects_forged_source_endpoint_image",
+      "retained_boundary_loop_constructor_rejects_incomplete_algebraic_endpoint_evidence",
+      "retained_boundary_loop_constructor_rejects_open_fragment_cycle",
+      "retained_boundary_loop_constructor_rejects_source_only_algebraic_endpoint_evidence",
+      "retained_certified_nonlinear_line_image_uses_authoritative_roles",
+      "retained_curve_envelope_includes_native_bezier_interior_extrema",
+      "retained_curve_envelope_uses_algebraic_endpoint_image_before_interval_hull",
+      "retained_curve_envelope_uses_algebraic_parameter_interval_hull",
+      "retained_curve_envelope_uses_source_bounds_for_algebraic_split_fragments",
+      "retained_exact_algebraic_endpoint_line_images_assign_roles",
+      "retained_exact_line_images_assign_nested_material_and_hole",
+      "retained_nonlinear_algebraic_carriers_classify_without_materialization",
+      "reversed_internal_overlap_traversal_materializes_union_boundary",
+      "symmetric_quadratic_lens_area_scales_exactly"
+    ]
+  },
+  "all_processes_reaped": true,
+  "probe_complete": false,
+  "qualification_complete": false,
+  "failure": "caller regression failed: bezier_split_endpoint::tests::retained_derivatives_replay_nonrational_source_signs"
+}

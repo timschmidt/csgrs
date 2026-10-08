@@ -1,0 +1,14 @@
+{
+  "tag": "sign-filter-output-check",
+  "started": "2026-09-09T17:37:22.387Z",
+  "finished": "2026-09-09T17:37:22.799Z",
+  "elapsedSeconds": 0.41000575199999995,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "node",
+  "args": [
+    "check-sign-filter.mjs",
+    "--sign-filter-summary"
+  ],
+  "code": 0,
+  "signal": null
+}

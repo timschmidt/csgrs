@@ -1,0 +1,8 @@
+{
+  "parent": "8f0ff9ad770f2596b85fba3897733a4460e92c2e",
+  "paths": {
+    "src/bezier_offset.rs": "5fe8186b83acfdebc738116bc1e3dabac8c71a2fe1fa1b4282fb3f38b508806d"
+  },
+  "rustfmt_check": 0,
+  "all_owned_processes_reaped": true
+}

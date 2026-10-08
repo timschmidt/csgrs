@@ -1,0 +1,50 @@
+{
+  "diagnostic_only": true,
+  "source_manifest": "retained-rational-domain-20260927-v509-sources.json",
+  "source_directory": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/source-archives/retained-rational-domain-20260927-v509",
+  "workspace_guard": "regular-pair-mixed-domains-20260927-v506-sources.json",
+  "fixture_sha256": "ee0941f587c449bc154146af10c2f9ae8635332cf4a23c2f6d779afbfe3ae99d",
+  "builds": [
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "test",
+        "--lib",
+        "--release",
+        "--all-features",
+        "--locked",
+        "--offline",
+        "--no-run",
+        "--message-format=json"
+      ],
+      "returncode": 0,
+      "log": "retained-rational-domain-20260927-v509-build.log",
+      "elapsed_seconds": 130.74436927214265,
+      "binary": {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-rational-domain-20260927-v509-tests",
+        "sha256": "fb48b6710d2d4443dc9658b1430c4a7e1d962df7d9ea2322ae7d78aa8f49a4b0"
+      }
+    }
+  ],
+  "cases": [
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-rational-domain-20260927-v509-tests",
+        "--exact",
+        "bezier_region::tests::pair_native_boolean_analytic_corner_publishes_a_third_generation_fillet",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 101,
+      "log": "retained-rational-domain-20260927-v509-pair_native_boolean_analytic_corner_publishes_a_third_generation_fillet.log",
+      "elapsed_seconds": 0.21402291604317725,
+      "name": "bezier_region::tests::pair_native_boolean_analytic_corner_publishes_a_third_generation_fillet",
+      "passed": false
+    }
+  ],
+  "expected_cases": [
+    "bezier_region::tests::pair_native_boolean_analytic_corner_publishes_a_third_generation_fillet"
+  ],
+  "all_processes_reaped": true,
+  "probe_complete": true
+}

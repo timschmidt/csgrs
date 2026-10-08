@@ -1,0 +1,22 @@
+{
+  "baseline-cpu": {
+    "path": "/tmp/calcium-power-sums.2CGTky/baseline-cpu",
+    "bytes": 2691008,
+    "sha256": "374a2020c46eda1bf4bc999c4c0d79935a05317f9b1a0e312a21f9b6a501d838"
+  },
+  "baseline-allocation": {
+    "path": "/tmp/calcium-power-sums.2CGTky/baseline-allocation",
+    "bytes": 2700056,
+    "sha256": "41acdfcd1962341a97066997dbf298c2447017748bc74edd991088c5d01c9360"
+  },
+  "candidate-cpu": {
+    "path": "/tmp/calcium-power-sums.2CGTky/candidate-cpu",
+    "bytes": 2706032,
+    "sha256": "6c4e9ab96742727e3b87c6502129dc51655835b1ccb99f73eaf73ebe55f95ac6"
+  },
+  "candidate-allocation": {
+    "path": "/tmp/calcium-power-sums.2CGTky/candidate-allocation",
+    "bytes": 2715032,
+    "sha256": "9d3d627f061edca7f67cce5aa7007b80c1cee73e5306688f534e2a8ddc2947cf"
+  }
+}

@@ -1,0 +1,88 @@
+\doxysubsection{Space\texorpdfstring{$<$}{<} T \texorpdfstring{$>$}{>} Class Template Reference}
+\hypertarget{classAriadne_1_1Space}{}\label{classAriadne_1_1Space}\index{Space$<$ T $>$@{Space$<$ T $>$}}
+
+
+{\ttfamily \#include $<$space.\+hpp$>$}
+
+
+
+\doxysubsubsection{Description}
+\subsubsection*{template$<$class T$>$\newline
+class Ariadne\+::\+Space$<$ T $>$}
+A space defined as a list of named variables of type {\itshape T}. Allows conversion between the indexed space {\itshape T\textsuperscript{n}} and the space {\itshape T\textsuperscript{V}} defined by named variables {\itshape V}. 
+
+Ariadne\textquotesingle{}s main computational functionality is based around Euclidean space $\R^n$. However, it is more convenient to define sets and functions symbolically in terms of named variables. A \doxylink{classAriadne_1_1Space}{Space$<$\+Real$>$} provides an ordering of variables which allows conversion between the two kinds of representation.
+
+The main conversion allowed is between \doxylink{classAriadne_1_1Valuation}{Valuation} of type {\itshape T\textsuperscript{V}} for a set of {\itshape n} variables {\itshape V}, and a \doxylink{classAriadne_1_1Vector}{Vector} or type {\itshape T\textsuperscript{n}}. It also allows conversion between sets defined in terms of named variables and those defined in terms of numbered indices, such as \doxylink{classAriadne_1_1VariablesBox}{Variables\+Box} and \doxylink{classAriadne_1_1Box}{Box}. In general, the conversion operations are provided by the symbolic class.
+
+{\bfseries{Example}} 
+\begin{DoxyCodeInclude}{0}
+
+\end{DoxyCodeInclude}
+ \begin{DoxySeeAlso}{See also}
+\doxylink{classAriadne_1_1Variable}{Variable} 
+\end{DoxySeeAlso}
+\doxysubsubsubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1Space_a717a253f16b94d51bba687bd1d6492cb}\label{classAriadne_1_1Space_a717a253f16b94d51bba687bd1d6492cb} 
+{\bfseries Space} ()
+\begin{DoxyCompactList}\small\item\em The trivial space $T^0$. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Space_a0472c48c2838a924eac36b19cbe017d0}\label{classAriadne_1_1Space_a0472c48c2838a924eac36b19cbe017d0} 
+Size\+Type {\bfseries size} () const
+\begin{DoxyCompactList}\small\item\em The dimension of the space. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Space_afd85b532996c4982f7e55e6a45f3aef1}\label{classAriadne_1_1Space_afd85b532996c4982f7e55e6a45f3aef1} 
+Size\+Type {\bfseries dimension} () const
+\begin{DoxyCompactList}\small\item\em The dimension of the space. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Space_a399389ff7ff2f7778d53a6567efddf78}\label{classAriadne_1_1Space_a399389ff7ff2f7778d53a6567efddf78} 
+const \mbox{\hyperlink{classAriadne_1_1Variable}{Variable\+Type}} {\bfseries operator\mbox{[}$\,$\mbox{]}} (Size\+Type i) const
+\begin{DoxyCompactList}\small\item\em The {\itshape i\textsuperscript{th}} named variable. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Space_aa143e0c131a47bcada422e1ee1589392}\label{classAriadne_1_1Space_aa143e0c131a47bcada422e1ee1589392} 
+const \mbox{\hyperlink{classAriadne_1_1Variable}{Variable\+Type}} {\bfseries variable} (Size\+Type i) const
+\begin{DoxyCompactList}\small\item\em The {\itshape i\textsuperscript{th}} named variable. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Space_afd1e4077867ed4805a736ae7bdb52a6f}\label{classAriadne_1_1Space_afd1e4077867ed4805a736ae7bdb52a6f} 
+\mbox{\hyperlink{classAriadne_1_1List}{List}}$<$ \mbox{\hyperlink{classAriadne_1_1Identifier}{Identifier}} $>$ {\bfseries variable\+\_\+names} () const
+\begin{DoxyCompactList}\small\item\em A list giving ordered variables. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Space_af5cffd55364b5023169735a161ca0c60}\label{classAriadne_1_1Space_af5cffd55364b5023169735a161ca0c60} 
+\mbox{\hyperlink{classAriadne_1_1List}{List}}$<$ \mbox{\hyperlink{classAriadne_1_1Variable}{Variable\+Type}} $>$ {\bfseries variables} () const
+\begin{DoxyCompactList}\small\item\em A list giving ordered variables. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Space_a73946ab2b993967f281434b8462e2088}\label{classAriadne_1_1Space_a73946ab2b993967f281434b8462e2088} 
+\mbox{\hyperlink{classAriadne_1_1Map}{Map}}$<$ \mbox{\hyperlink{classAriadne_1_1Identifier}{Identifier}}, Size\+Type $>$ {\bfseries indices\+\_\+from\+\_\+names} () const
+\begin{DoxyCompactList}\small\item\em A map giving the index of a given variable. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Space_abc0744b72e6f19ef890361f5de4a1bf7}\label{classAriadne_1_1Space_abc0744b72e6f19ef890361f5de4a1bf7} 
+\mbox{\hyperlink{classAriadne_1_1Map}{Map}}$<$ \mbox{\hyperlink{classAriadne_1_1Variable}{Variable\+Type}}, Size\+Type $>$ {\bfseries indices} () const
+\begin{DoxyCompactList}\small\item\em A map giving the index of a given variable. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Space_a7e1208299e65fb98de4b24658296654e}\label{classAriadne_1_1Space_a7e1208299e65fb98de4b24658296654e} 
+\mbox{\hyperlink{namespaceAriadne_a76a8b016e5ad61faf9062cc387df5016}{Bool}} {\bfseries contains} (const \mbox{\hyperlink{classAriadne_1_1Variable}{Variable\+Type}} \&v) const
+\begin{DoxyCompactList}\small\item\em Tests if the variable {\itshape v} is in the space. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Space_a0ad635ce1fdda45fdea8f72286fac339}\label{classAriadne_1_1Space_a0ad635ce1fdda45fdea8f72286fac339} 
+\mbox{\hyperlink{namespaceAriadne_a76a8b016e5ad61faf9062cc387df5016}{Bool}} {\bfseries contains} (const \mbox{\hyperlink{classAriadne_1_1Set}{Set}}$<$ \mbox{\hyperlink{classAriadne_1_1Variable}{Variable\+Type}} $>$ \&vs) const
+\begin{DoxyCompactList}\small\item\em Tests if all the variables {\itshape vs} is in the space. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Space_a539643a96768c77435a359fb8ee40cd2}\label{classAriadne_1_1Space_a539643a96768c77435a359fb8ee40cd2} 
+Size\+Type {\bfseries operator\mbox{[}$\,$\mbox{]}} (const \mbox{\hyperlink{classAriadne_1_1Variable}{Variable\+Type}} \&v) const
+\begin{DoxyCompactList}\small\item\em The index of the named variable {\itshape v}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Space_ab6565e4ec0d222d18369268035604955}\label{classAriadne_1_1Space_ab6565e4ec0d222d18369268035604955} 
+Size\+Type {\bfseries index} (const \mbox{\hyperlink{classAriadne_1_1Variable}{Variable\+Type}} \&v) const
+\begin{DoxyCompactList}\small\item\em The index of the named variable {\itshape v}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Space_aac876a93057c405e99b15af7a804ab16}\label{classAriadne_1_1Space_aac876a93057c405e99b15af7a804ab16} 
+\mbox{\hyperlink{classAriadne_1_1Space}{Space}}$<$ T $>$ \& {\bfseries insert} (const \mbox{\hyperlink{classAriadne_1_1Variable}{Variable\+Type}} \&v)
+\begin{DoxyCompactList}\small\item\em Append the named variable {\itshape v} to the variables defining the space; ignores if the variable is already in the space. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Space_a5d3e53ba70071f56809152df89253269}\label{classAriadne_1_1Space_a5d3e53ba70071f56809152df89253269} 
+\mbox{\hyperlink{classAriadne_1_1Space}{Space}}$<$ T $>$ \& {\bfseries adjoin} (const \mbox{\hyperlink{classAriadne_1_1Space}{Space}}$<$ T $>$ \&spc)
+\begin{DoxyCompactList}\small\item\em Adjoins the variables in {\itshape spc}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Space_a46eae58c61be14a84496990ec4f5000e}\label{classAriadne_1_1Space_a46eae58c61be14a84496990ec4f5000e} 
+\mbox{\hyperlink{classAriadne_1_1Space}{Space}}$<$ T $>$ \& {\bfseries append} (const \mbox{\hyperlink{classAriadne_1_1Variable}{Variable\+Type}} \&v)
+\begin{DoxyCompactList}\small\item\em Append the named variable {\itshape v} to the variables defining the space. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsubsection*{Related Types and Functions}
+(Note that these are not member symbols.) \begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1Space_a8eb806d40ed8a0a0e2e598b1fd78de48}\label{classAriadne_1_1Space_a8eb806d40ed8a0a0e2e598b1fd78de48} 
+typedef \mbox{\hyperlink{classAriadne_1_1Space}{Space}}$<$ \mbox{\hyperlink{classAriadne_1_1Real}{Real}} $>$ {\bfseries Real\+Space}
+\begin{DoxyCompactList}\small\item\em A space defined as a list of real variables. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+The documentation for this class was generated from the following files\+:\begin{DoxyCompactItemize}
+\item 
+source/dynamics/\mbox{\hyperlink{enclosure_8hpp}{enclosure.\+hpp}}\item 
+source/symbolic/\mbox{\hyperlink{space_8hpp}{space.\+hpp}}\item 
+source/symbolic/\mbox{\hyperlink{space_8cpp}{space.\+cpp}}\end{DoxyCompactItemize}

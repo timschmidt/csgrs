@@ -1,0 +1,37 @@
+{
+  "checks": [
+    {
+      "label": "fmt",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustfmt",
+        "--edition",
+        "2024",
+        "--check",
+        "src/bezier_offset.rs"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 2.390323251951486,
+      "log": "retained-parallel-expression-20260924-v1-fmt.log"
+    }
+  ],
+  "cases": [
+    {
+      "label": "recursive_parallel_expression_signs_keep_the_selected_speed_sheet",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-parallel-expression-20260924-v1-libtest",
+        "--exact",
+        "bezier_offset::conversion_tests::recursive_parallel_expression_signs_keep_the_selected_speed_sheet",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 101,
+      "elapsed_seconds": 0.2816535219317302,
+      "log": "retained-parallel-expression-20260924-v1-recursive_parallel_expression_signs_keep_the_selected_speed_sheet.log"
+    }
+  ],
+  "all_processes_reaped": true,
+  "binary_sha256": "812adf6ff640dfd8ca9d1f7e1a496c7ffe217674b26936818943b26de8684f12",
+  "all_sources_unchanged": true
+}

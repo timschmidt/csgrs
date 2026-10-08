@@ -1,0 +1,17 @@
+{
+  "args": [
+    "--tool=memcheck",
+    "--error-exitcode=97",
+    "--leak-check=no",
+    "/home/tim/Documents/GitHub/workspace/exact-real-references/ruffini-qualification/cache-public-pilot/memcheck-v1/cache-tests",
+    "cache_rescale_",
+    "--test-threads=1"
+  ],
+  "begin": "2026-09-07T05:59:43.411Z",
+  "end": "2026-09-07T05:59:43.461Z",
+  "status": 1,
+  "signal": null,
+  "error": null,
+  "stdout": "",
+  "stderr": "==1186322== Memcheck, a memory error detector\n==1186322== Copyright (C) 2002-2026, and GNU GPL'd, by Julian Seward et al.\n==1186322== Using Valgrind-3.27.1 and LibVEX; rerun with -h for copyright info\n==1186322== Command: /home/tim/Documents/GitHub/workspace/exact-real-references/ruffini-qualification/cache-public-pilot/memcheck-v1/cache-tests cache_rescale_ --test-threads=1\n==1186322== \n==1186322== error writing 48 bytes to shared mem /tmp/vgdb-pipe-shared-mem-vgdb-1186322-by-tim-on-fedora\n"
+}

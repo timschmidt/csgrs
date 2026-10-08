@@ -1,0 +1,847 @@
+{
+  "schema": "hypercurve.performance-checkpoint.v1",
+  "captured_on": "2026-09-04",
+  "captured_utc": "2026-09-05",
+  "checkpoint": "authoritative scalar polynomial evaluation without curve-local wrappers",
+  "baseline_revisions": {
+    "hypercurve": "a395d68",
+    "hyperreal": "3f57867"
+  },
+  "implementation_revisions": {
+    "hypercurve": "7182fcb",
+    "hyperreal": "c2d147c"
+  },
+  "final_dependency_heads": {
+    "hyperlimit": "7bf9261",
+    "hyperlattice": "d783af0",
+    "hypertri": "6a2092c",
+    "hypersolve": "a20be23",
+    "hypermesh": "d9db5c45"
+  },
+  "retained_change": "Delete evaluate_coefficients and polynomial_evaluate and call Real::eval_poly directly from retained parameters, algebraic images and offsets. The scalar kernel now owns endpoint identities, fused rational Horner updates and a certified normalized quadratic-root residual. Its existing symbolic-coefficient splitting and balanced even/odd power ladder become available to all migrated curve callers.",
+  "exactness": {
+    "before_change_failure": "The new represented nested-quadratic-root regression was run against the unchanged scalar evaluator and failed: certified_sign_until returned None instead of Some(Zero). Blindly redirecting the curve callers would therefore lose an existing root certificate.",
+    "certificate": "For a nonrational argument and a mixed quadratic, checked division forms v=-b/(2a) and c/a. The existing Computable::square kernel preserves the represented radical when evaluating (x-v)^2. Only a structural proof that (x-v)^2-(v^2-c/a) is exactly zero returns Real::zero(). Every nonzero or still-unproved residual falls through to native fused Horner. No floating tolerance can create a zero certificate.",
+    "tests": {
+      "new_scalar_tests": 5,
+      "nested_roots": 8,
+      "nonzero_600_bit_root_perturbations": 16,
+      "factored_root_expressions": 30,
+      "factored_root_assertion": "Reject false nonzero classifications and retain every direct fused-Horner zero certificate; the independent reference must supply at least 13 such certificates. This does not claim complete zero recognition for every computable expression.",
+      "independent_wide_rational_horner_cases": 42,
+      "endpoint_empty_constant_and_zero_leading_forms": true,
+      "ill_conditioned_nonroot": "A 2^2000 coefficient scale and a sin(1)/2^4000 argument retain a positive sign at precision -64.",
+      "existing_balanced_degree_128_exact_decomposition": true
+    },
+    "public_api_added": false,
+    "compatibility_shims_added": false,
+    "obsolete_helpers_remaining": false
+  },
+  "source_size": {
+    "hypercurve_implementation_files_including_existing_tests_delta_lines": -77,
+    "hyperreal_implementation_delta_lines": 28,
+    "new_hyperreal_test_delta_lines": 117,
+    "public_benchmark_delta_lines": 62,
+    "combined_rust_delta_lines": 130,
+    "prefix_accounting": "The parameter and offset prefixes before their conversion-test modules shrink by 61 and 13 lines; the image file is line-neutral. These implementation prefixes plus Hyperreal therefore shrink by 46 lines. Three additional removed lines are formatting within existing curve tests. New regression coverage and benchmark code account for the net total-source increase.",
+    "authoritative_scalar_source_sha256": "a63a592796f236f331923d312e5e43b29a4d9f6df3c6ec2243cea874f6db1eb9",
+    "curve_source_sha256": {
+      "src/bezier_parameter.rs": "4a7bb3c4e4b3910ed418399ad24537b60af86031a182d428c3b2e12860710b13",
+      "src/bezier_algebraic_image.rs": "639f85e64a734dedc94bf45b52f0d778bd5a6cdfbc3a6ccd9f15d367dcffb9c2",
+      "src/bezier_offset.rs": "6239d5e61481f73c68667484b53e3f5d97e59c1be6e9c2a20463b9056387e087"
+    }
+  },
+  "measurement": {
+    "compiler": "rustc 1.97.0 (2d8144b78 2026-07-07)",
+    "profile": "release",
+    "features": "all",
+    "frozen_dependency_revisions": {
+      "hyperreal": "93c44ab",
+      "hyperlimit": "7bf9261",
+      "hyperlattice": "d783af0",
+      "hypersolve": "1a742c6",
+      "hypertri": "6a2092c"
+    },
+    "method": "The archived six-repository workspace freezes all dependencies. Identical evaluation benchmark code was added before preserving the baseline executable. Only the scalar evaluator and three curve implementation diffs were then applied. Both benchmark compiler-artifact records report fresh:false. The parameter baseline is the preserved post-Sturm-consolidation executable with the unchanged nine-row driver. Five runs per variant alternate order on logical CPU 7.",
+    "benchmark_source_sha256": {
+      "evaluation": "d116f61fbc4db7f495bb8b50cd00e6a544c88d5621be076e03244feca4d2a803",
+      "parameter": "58fc4e230631c19955d7e3abeee38104e1fc33a1335575f46cf22f0f5b566b71"
+    },
+    "source_note": "Only rustfmt line wrapping differs between the frozen benchmark sources and their checked-in counterparts. The frozen scalar implementation file exactly matches c2d147c.",
+    "semantic_checks": "Every new polynomial evaluation constructs its value and requests a certified interval at precision -128. Each iteration asserts overlap with an independently constructed monomial-sum reference at -160. All fixed iteration/certificate counts and all existing root, ordering, reconstruction and image checksums are preserved.",
+    "load_control": "An initial five-pair batch overlapped heavy builds and received only 58-97 percent CPU across drivers; it is retained as diagnostic data, not the headline comparison. Before the quieter repeated batch, CPU 7 was 93.07 percent idle and sibling CPU 15 was 95 percent idle. Every quieter timed process received 96-97 percent CPU. The host was not exclusive.",
+    "interpretation": "The tested symbolic, nested-root and long-polynomial lanes improve materially; rational evaluation and the direct quadratic/cubic controls are effectively flat. Several parameter workloads improve while some short lanes are slightly slower, including a 57-to-63 ns rational-image lane. No blanket speedup or full competitive-performance claim is made.",
+    "benchmark_medians": [
+      {
+        "driver": "evaluation",
+        "label": "bezier_evaluation_quadratic",
+        "baseline_ns": 439,
+        "candidate_ns": 426,
+        "speedup": 1.0305164319248827
+      },
+      {
+        "driver": "evaluation",
+        "label": "bezier_evaluation_cubic",
+        "baseline_ns": 768,
+        "candidate_ns": 775,
+        "speedup": 0.9909677419354839
+      },
+      {
+        "driver": "evaluation",
+        "label": "bezier_polynomial_evaluation_rational_32",
+        "baseline_ns": 5924,
+        "candidate_ns": 5962,
+        "speedup": 0.9936262998993626
+      },
+      {
+        "driver": "evaluation",
+        "label": "bezier_polynomial_evaluation_symbolic_32",
+        "baseline_ns": 199783,
+        "candidate_ns": 30112,
+        "speedup": 6.634663921360255
+      },
+      {
+        "driver": "evaluation",
+        "label": "bezier_polynomial_evaluation_nested_quadratic",
+        "baseline_ns": 3009,
+        "candidate_ns": 1874,
+        "speedup": 1.6056563500533618
+      },
+      {
+        "driver": "evaluation",
+        "label": "bezier_polynomial_evaluation_balanced_128",
+        "baseline_ns": 4038417,
+        "candidate_ns": 23951,
+        "speedup": 168.61162373178573
+      },
+      {
+        "driver": "parameter",
+        "label": "bezier_parameter_bernstein_32_to_power",
+        "baseline_ns": 22908,
+        "candidate_ns": 23782,
+        "speedup": 0.9632495164410058
+      },
+      {
+        "driver": "parameter",
+        "label": "bezier_algebraic_parameter_sturm",
+        "baseline_ns": 4311,
+        "candidate_ns": 4531,
+        "speedup": 0.9514455969984551
+      },
+      {
+        "driver": "parameter",
+        "label": "bezier_algebraic_parameter_refined_ordering",
+        "baseline_ns": 14042,
+        "candidate_ns": 14349,
+        "speedup": 0.9786047808209631
+      },
+      {
+        "driver": "parameter",
+        "label": "bezier_algebraic_parameter_refined_even_root_ordering",
+        "baseline_ns": 70244,
+        "candidate_ns": 50639,
+        "speedup": 1.3871521949485575
+      },
+      {
+        "driver": "parameter",
+        "label": "bezier_parameter_quintic_unit_isolation",
+        "baseline_ns": 46880,
+        "candidate_ns": 33410,
+        "speedup": 1.4031727027835976
+      },
+      {
+        "driver": "parameter",
+        "label": "bezier_parameter_boundary_root_isolation",
+        "baseline_ns": 55407,
+        "candidate_ns": 48179,
+        "speedup": 1.1500238693206584
+      },
+      {
+        "driver": "parameter",
+        "label": "bezier_algebraic_parameter_exact_rational_reconstruction",
+        "baseline_ns": 36,
+        "candidate_ns": 36,
+        "speedup": 1
+      },
+      {
+        "driver": "parameter",
+        "label": "bezier_algebraic_point_tangent_image",
+        "baseline_ns": 2661,
+        "candidate_ns": 2724,
+        "speedup": 0.9768722466960352
+      },
+      {
+        "driver": "parameter",
+        "label": "rational_bezier_algebraic_point_tangent_image",
+        "baseline_ns": 57,
+        "candidate_ns": 63,
+        "speedup": 0.9047619047619048
+      }
+    ],
+    "whole_driver_medians": [
+      {
+        "driver": "evaluation",
+        "baseline_user_seconds": 8.89,
+        "candidate_user_seconds": 0.81,
+        "baseline_rss_kib": 4372,
+        "candidate_rss_kib": 3916,
+        "cpu_percent_range": [
+          96,
+          97
+        ]
+      },
+      {
+        "driver": "parameter",
+        "baseline_user_seconds": 1.6,
+        "candidate_user_seconds": 1.39,
+        "baseline_rss_kib": 4652,
+        "candidate_rss_kib": 4540,
+        "cpu_percent_range": [
+          96,
+          97
+        ]
+      }
+    ],
+    "quieter_samples": [
+      {
+        "variant": "baseline",
+        "driver": "evaluation",
+        "run": 1,
+        "ns_per_iteration": {
+          "bezier_evaluation_quadratic": 454,
+          "bezier_evaluation_cubic": 780,
+          "bezier_polynomial_evaluation_rational_32": 5914,
+          "bezier_polynomial_evaluation_symbolic_32": 206229,
+          "bezier_polynomial_evaluation_nested_quadratic": 3086,
+          "bezier_polynomial_evaluation_balanced_128": 4044367.0000000005
+        },
+        "user_seconds": 8.93,
+        "peak_rss_kib": 4372,
+        "cpu_percent": 96
+      },
+      {
+        "variant": "baseline",
+        "driver": "evaluation",
+        "run": 2,
+        "ns_per_iteration": {
+          "bezier_evaluation_quadratic": 426,
+          "bezier_evaluation_cubic": 768,
+          "bezier_polynomial_evaluation_rational_32": 5924,
+          "bezier_polynomial_evaluation_symbolic_32": 203022,
+          "bezier_polynomial_evaluation_nested_quadratic": 2987,
+          "bezier_polynomial_evaluation_balanced_128": 4019438
+        },
+        "user_seconds": 8.87,
+        "peak_rss_kib": 4212,
+        "cpu_percent": 96
+      },
+      {
+        "variant": "baseline",
+        "driver": "evaluation",
+        "run": 3,
+        "ns_per_iteration": {
+          "bezier_evaluation_quadratic": 427,
+          "bezier_evaluation_cubic": 755,
+          "bezier_polynomial_evaluation_rational_32": 5946,
+          "bezier_polynomial_evaluation_symbolic_32": 197687,
+          "bezier_polynomial_evaluation_nested_quadratic": 3032,
+          "bezier_polynomial_evaluation_balanced_128": 4038417
+        },
+        "user_seconds": 8.89,
+        "peak_rss_kib": 4416,
+        "cpu_percent": 96
+      },
+      {
+        "variant": "baseline",
+        "driver": "evaluation",
+        "run": 4,
+        "ns_per_iteration": {
+          "bezier_evaluation_quadratic": 439,
+          "bezier_evaluation_cubic": 751,
+          "bezier_polynomial_evaluation_rational_32": 5926,
+          "bezier_polynomial_evaluation_symbolic_32": 199783,
+          "bezier_polynomial_evaluation_nested_quadratic": 2958,
+          "bezier_polynomial_evaluation_balanced_128": 4052116
+        },
+        "user_seconds": 8.9,
+        "peak_rss_kib": 4292,
+        "cpu_percent": 96
+      },
+      {
+        "variant": "baseline",
+        "driver": "evaluation",
+        "run": 5,
+        "ns_per_iteration": {
+          "bezier_evaluation_quadratic": 462,
+          "bezier_evaluation_cubic": 813,
+          "bezier_polynomial_evaluation_rational_32": 5867,
+          "bezier_polynomial_evaluation_symbolic_32": 197254,
+          "bezier_polynomial_evaluation_nested_quadratic": 3009,
+          "bezier_polynomial_evaluation_balanced_128": 3989439
+        },
+        "user_seconds": 8.84,
+        "peak_rss_kib": 4500,
+        "cpu_percent": 96
+      },
+      {
+        "variant": "baseline",
+        "driver": "parameter",
+        "run": 1,
+        "ns_per_iteration": {
+          "bezier_parameter_bernstein_32_to_power": 23465,
+          "bezier_algebraic_parameter_sturm": 4278,
+          "bezier_algebraic_parameter_refined_ordering": 14357,
+          "bezier_algebraic_parameter_refined_even_root_ordering": 72166,
+          "bezier_parameter_quintic_unit_isolation": 46880,
+          "bezier_parameter_boundary_root_isolation": 56431,
+          "bezier_algebraic_parameter_exact_rational_reconstruction": 36,
+          "bezier_algebraic_point_tangent_image": 2682,
+          "rational_bezier_algebraic_point_tangent_image": 76
+        },
+        "user_seconds": 1.64,
+        "peak_rss_kib": 4652,
+        "cpu_percent": 96
+      },
+      {
+        "variant": "baseline",
+        "driver": "parameter",
+        "run": 2,
+        "ns_per_iteration": {
+          "bezier_parameter_bernstein_32_to_power": 22860,
+          "bezier_algebraic_parameter_sturm": 4302,
+          "bezier_algebraic_parameter_refined_ordering": 13835,
+          "bezier_algebraic_parameter_refined_even_root_ordering": 70203,
+          "bezier_parameter_quintic_unit_isolation": 45693,
+          "bezier_parameter_boundary_root_isolation": 55371,
+          "bezier_algebraic_parameter_exact_rational_reconstruction": 36,
+          "bezier_algebraic_point_tangent_image": 2558,
+          "rational_bezier_algebraic_point_tangent_image": 57
+        },
+        "user_seconds": 1.6,
+        "peak_rss_kib": 4668,
+        "cpu_percent": 96
+      },
+      {
+        "variant": "baseline",
+        "driver": "parameter",
+        "run": 3,
+        "ns_per_iteration": {
+          "bezier_parameter_bernstein_32_to_power": 22908,
+          "bezier_algebraic_parameter_sturm": 4468,
+          "bezier_algebraic_parameter_refined_ordering": 14042,
+          "bezier_algebraic_parameter_refined_even_root_ordering": 70453,
+          "bezier_parameter_quintic_unit_isolation": 45635,
+          "bezier_parameter_boundary_root_isolation": 55407,
+          "bezier_algebraic_parameter_exact_rational_reconstruction": 36,
+          "bezier_algebraic_point_tangent_image": 2661,
+          "rational_bezier_algebraic_point_tangent_image": 57
+        },
+        "user_seconds": 1.6,
+        "peak_rss_kib": 4616,
+        "cpu_percent": 96
+      },
+      {
+        "variant": "baseline",
+        "driver": "parameter",
+        "run": 4,
+        "ns_per_iteration": {
+          "bezier_parameter_bernstein_32_to_power": 33474,
+          "bezier_algebraic_parameter_sturm": 4311,
+          "bezier_algebraic_parameter_refined_ordering": 14334,
+          "bezier_algebraic_parameter_refined_even_root_ordering": 70244,
+          "bezier_parameter_quintic_unit_isolation": 47948,
+          "bezier_parameter_boundary_root_isolation": 57282,
+          "bezier_algebraic_parameter_exact_rational_reconstruction": 36,
+          "bezier_algebraic_point_tangent_image": 2689,
+          "rational_bezier_algebraic_point_tangent_image": 57
+        },
+        "user_seconds": 1.81,
+        "peak_rss_kib": 4564,
+        "cpu_percent": 96
+      },
+      {
+        "variant": "baseline",
+        "driver": "parameter",
+        "run": 5,
+        "ns_per_iteration": {
+          "bezier_parameter_bernstein_32_to_power": 22695,
+          "bezier_algebraic_parameter_sturm": 4322,
+          "bezier_algebraic_parameter_refined_ordering": 13933,
+          "bezier_algebraic_parameter_refined_even_root_ordering": 69218,
+          "bezier_parameter_quintic_unit_isolation": 47698,
+          "bezier_parameter_boundary_root_isolation": 54265,
+          "bezier_algebraic_parameter_exact_rational_reconstruction": 34,
+          "bezier_algebraic_point_tangent_image": 2615,
+          "rational_bezier_algebraic_point_tangent_image": 57
+        },
+        "user_seconds": 1.59,
+        "peak_rss_kib": 4740,
+        "cpu_percent": 97
+      },
+      {
+        "variant": "candidate",
+        "driver": "evaluation",
+        "run": 1,
+        "ns_per_iteration": {
+          "bezier_evaluation_quadratic": 426,
+          "bezier_evaluation_cubic": 767,
+          "bezier_polynomial_evaluation_rational_32": 5962,
+          "bezier_polynomial_evaluation_symbolic_32": 29928,
+          "bezier_polynomial_evaluation_nested_quadratic": 1899,
+          "bezier_polynomial_evaluation_balanced_128": 23611
+        },
+        "user_seconds": 0.81,
+        "peak_rss_kib": 3928,
+        "cpu_percent": 96
+      },
+      {
+        "variant": "candidate",
+        "driver": "evaluation",
+        "run": 2,
+        "ns_per_iteration": {
+          "bezier_evaluation_quadratic": 431,
+          "bezier_evaluation_cubic": 775,
+          "bezier_polynomial_evaluation_rational_32": 5897,
+          "bezier_polynomial_evaluation_symbolic_32": 31252,
+          "bezier_polynomial_evaluation_nested_quadratic": 1903,
+          "bezier_polynomial_evaluation_balanced_128": 24128
+        },
+        "user_seconds": 0.82,
+        "peak_rss_kib": 3916,
+        "cpu_percent": 96
+      },
+      {
+        "variant": "candidate",
+        "driver": "evaluation",
+        "run": 3,
+        "ns_per_iteration": {
+          "bezier_evaluation_quadratic": 426,
+          "bezier_evaluation_cubic": 797,
+          "bezier_polynomial_evaluation_rational_32": 6024,
+          "bezier_polynomial_evaluation_symbolic_32": 30149,
+          "bezier_polynomial_evaluation_nested_quadratic": 1848,
+          "bezier_polynomial_evaluation_balanced_128": 24015
+        },
+        "user_seconds": 0.82,
+        "peak_rss_kib": 3832,
+        "cpu_percent": 96
+      },
+      {
+        "variant": "candidate",
+        "driver": "evaluation",
+        "run": 4,
+        "ns_per_iteration": {
+          "bezier_evaluation_quadratic": 421,
+          "bezier_evaluation_cubic": 781,
+          "bezier_polynomial_evaluation_rational_32": 5971,
+          "bezier_polynomial_evaluation_symbolic_32": 30112,
+          "bezier_polynomial_evaluation_nested_quadratic": 1839,
+          "bezier_polynomial_evaluation_balanced_128": 23951
+        },
+        "user_seconds": 0.81,
+        "peak_rss_kib": 4012,
+        "cpu_percent": 96
+      },
+      {
+        "variant": "candidate",
+        "driver": "evaluation",
+        "run": 5,
+        "ns_per_iteration": {
+          "bezier_evaluation_quadratic": 431,
+          "bezier_evaluation_cubic": 759,
+          "bezier_polynomial_evaluation_rational_32": 5842,
+          "bezier_polynomial_evaluation_symbolic_32": 29328,
+          "bezier_polynomial_evaluation_nested_quadratic": 1874,
+          "bezier_polynomial_evaluation_balanced_128": 23193
+        },
+        "user_seconds": 0.81,
+        "peak_rss_kib": 3832,
+        "cpu_percent": 97
+      },
+      {
+        "variant": "candidate",
+        "driver": "parameter",
+        "run": 1,
+        "ns_per_iteration": {
+          "bezier_parameter_bernstein_32_to_power": 23551,
+          "bezier_algebraic_parameter_sturm": 4205,
+          "bezier_algebraic_parameter_refined_ordering": 14206,
+          "bezier_algebraic_parameter_refined_even_root_ordering": 51842,
+          "bezier_parameter_quintic_unit_isolation": 34203,
+          "bezier_parameter_boundary_root_isolation": 49328,
+          "bezier_algebraic_parameter_exact_rational_reconstruction": 36,
+          "bezier_algebraic_point_tangent_image": 2724,
+          "rational_bezier_algebraic_point_tangent_image": 63
+        },
+        "user_seconds": 1.4,
+        "peak_rss_kib": 4540,
+        "cpu_percent": 96
+      },
+      {
+        "variant": "candidate",
+        "driver": "parameter",
+        "run": 2,
+        "ns_per_iteration": {
+          "bezier_parameter_bernstein_32_to_power": 24425,
+          "bezier_algebraic_parameter_sturm": 4758,
+          "bezier_algebraic_parameter_refined_ordering": 15948,
+          "bezier_algebraic_parameter_refined_even_root_ordering": 53557,
+          "bezier_parameter_quintic_unit_isolation": 35423,
+          "bezier_parameter_boundary_root_isolation": 50976,
+          "bezier_algebraic_parameter_exact_rational_reconstruction": 37,
+          "bezier_algebraic_point_tangent_image": 2759,
+          "rational_bezier_algebraic_point_tangent_image": 73
+        },
+        "user_seconds": 1.47,
+        "peak_rss_kib": 4472,
+        "cpu_percent": 96
+      },
+      {
+        "variant": "candidate",
+        "driver": "parameter",
+        "run": 3,
+        "ns_per_iteration": {
+          "bezier_parameter_bernstein_32_to_power": 23782,
+          "bezier_algebraic_parameter_sturm": 4531,
+          "bezier_algebraic_parameter_refined_ordering": 14349,
+          "bezier_algebraic_parameter_refined_even_root_ordering": 50639,
+          "bezier_parameter_quintic_unit_isolation": 33410,
+          "bezier_parameter_boundary_root_isolation": 48179,
+          "bezier_algebraic_parameter_exact_rational_reconstruction": 34,
+          "bezier_algebraic_point_tangent_image": 2738,
+          "rational_bezier_algebraic_point_tangent_image": 57
+        },
+        "user_seconds": 1.39,
+        "peak_rss_kib": 4572,
+        "cpu_percent": 96
+      },
+      {
+        "variant": "candidate",
+        "driver": "parameter",
+        "run": 4,
+        "ns_per_iteration": {
+          "bezier_parameter_bernstein_32_to_power": 23868,
+          "bezier_algebraic_parameter_sturm": 4473,
+          "bezier_algebraic_parameter_refined_ordering": 14355,
+          "bezier_algebraic_parameter_refined_even_root_ordering": 50325,
+          "bezier_parameter_quintic_unit_isolation": 32637.999999999996,
+          "bezier_parameter_boundary_root_isolation": 48014,
+          "bezier_algebraic_parameter_exact_rational_reconstruction": 36,
+          "bezier_algebraic_point_tangent_image": 2693,
+          "rational_bezier_algebraic_point_tangent_image": 71
+        },
+        "user_seconds": 1.39,
+        "peak_rss_kib": 4564,
+        "cpu_percent": 96
+      },
+      {
+        "variant": "candidate",
+        "driver": "parameter",
+        "run": 5,
+        "ns_per_iteration": {
+          "bezier_parameter_bernstein_32_to_power": 23444,
+          "bezier_algebraic_parameter_sturm": 5075,
+          "bezier_algebraic_parameter_refined_ordering": 13735,
+          "bezier_algebraic_parameter_refined_even_root_ordering": 50356,
+          "bezier_parameter_quintic_unit_isolation": 32488,
+          "bezier_parameter_boundary_root_isolation": 47993,
+          "bezier_algebraic_parameter_exact_rational_reconstruction": 37,
+          "bezier_algebraic_point_tangent_image": 2665,
+          "rational_bezier_algebraic_point_tangent_image": 57
+        },
+        "user_seconds": 1.39,
+        "peak_rss_kib": 4452,
+        "cpu_percent": 97
+      }
+    ],
+    "loaded_batch_medians": [
+      {
+        "driver": "evaluation",
+        "label": "bezier_evaluation_quadratic",
+        "baseline_ns": 809,
+        "candidate_ns": 873,
+        "speedup": 0.9266895761741123
+      },
+      {
+        "driver": "evaluation",
+        "label": "bezier_evaluation_cubic",
+        "baseline_ns": 1360,
+        "candidate_ns": 1607,
+        "speedup": 0.8462974486621033
+      },
+      {
+        "driver": "evaluation",
+        "label": "bezier_polynomial_evaluation_rational_32",
+        "baseline_ns": 9276,
+        "candidate_ns": 9336,
+        "speedup": 0.993573264781491
+      },
+      {
+        "driver": "evaluation",
+        "label": "bezier_polynomial_evaluation_symbolic_32",
+        "baseline_ns": 328543,
+        "candidate_ns": 59824,
+        "speedup": 5.491826023000803
+      },
+      {
+        "driver": "evaluation",
+        "label": "bezier_polynomial_evaluation_nested_quadratic",
+        "baseline_ns": 6009,
+        "candidate_ns": 4066,
+        "speedup": 1.4778652238071814
+      },
+      {
+        "driver": "evaluation",
+        "label": "bezier_polynomial_evaluation_balanced_128",
+        "baseline_ns": 6783661,
+        "candidate_ns": 49308,
+        "speedup": 137.5772896892999
+      },
+      {
+        "driver": "evaluation",
+        "baseline_user_seconds": 12.34,
+        "candidate_user_seconds": 1.48,
+        "baseline_rss_kib": 4388,
+        "candidate_rss_kib": 3924,
+        "cpu_percent_range": [
+          75,
+          96
+        ]
+      },
+      {
+        "driver": "parameter",
+        "label": "bezier_parameter_bernstein_32_to_power",
+        "baseline_ns": 44460,
+        "candidate_ns": 40240,
+        "speedup": 1.1048707753479126
+      },
+      {
+        "driver": "parameter",
+        "label": "bezier_algebraic_parameter_sturm",
+        "baseline_ns": 8204,
+        "candidate_ns": 4843,
+        "speedup": 1.6939913276894487
+      },
+      {
+        "driver": "parameter",
+        "label": "bezier_algebraic_parameter_refined_ordering",
+        "baseline_ns": 30239,
+        "candidate_ns": 25211,
+        "speedup": 1.1994367537979453
+      },
+      {
+        "driver": "parameter",
+        "label": "bezier_algebraic_parameter_refined_even_root_ordering",
+        "baseline_ns": 135528,
+        "candidate_ns": 87005,
+        "speedup": 1.5577035802540085
+      },
+      {
+        "driver": "parameter",
+        "label": "bezier_parameter_quintic_unit_isolation",
+        "baseline_ns": 86357,
+        "candidate_ns": 53055,
+        "speedup": 1.627688248044482
+      },
+      {
+        "driver": "parameter",
+        "label": "bezier_parameter_boundary_root_isolation",
+        "baseline_ns": 115320,
+        "candidate_ns": 77399,
+        "speedup": 1.489941730513314
+      },
+      {
+        "driver": "parameter",
+        "label": "bezier_algebraic_parameter_exact_rational_reconstruction",
+        "baseline_ns": 41,
+        "candidate_ns": 39,
+        "speedup": 1.0512820512820513
+      },
+      {
+        "driver": "parameter",
+        "label": "bezier_algebraic_point_tangent_image",
+        "baseline_ns": 5282,
+        "candidate_ns": 3343,
+        "speedup": 1.5800179479509422
+      },
+      {
+        "driver": "parameter",
+        "label": "rational_bezier_algebraic_point_tangent_image",
+        "baseline_ns": 117,
+        "candidate_ns": 63,
+        "speedup": 1.8571428571428572
+      },
+      {
+        "driver": "parameter",
+        "baseline_user_seconds": 3.04,
+        "candidate_user_seconds": 2.03,
+        "baseline_rss_kib": 4636,
+        "candidate_rss_kib": 4560,
+        "cpu_percent_range": [
+          58,
+          97
+        ]
+      }
+    ],
+    "linked_allocated_bytes": {
+      "evaluation": {
+        "baseline": 2946034,
+        "candidate": 2954206,
+        "delta": 8172
+      },
+      "parameter": {
+        "baseline": 3969934,
+        "candidate": 3990426,
+        "delta": 20492
+      },
+      "method": "GNU size text+data+bss on matched public benchmark executables; these are allocated ELF sections, not file sizes or whole-library size guarantees.",
+      "interpretation": "Both binaries grow by less than one percent. The exactness/completeness and measured runtime improvements take priority over this size cost."
+    }
+  },
+  "qualification": {
+    "hyperreal": {
+      "default": {
+        "passed": 686,
+        "failed": 0,
+        "ignored": 0,
+        "libtest_target_runs": 18,
+        "log": "/tmp/hyperreal-authoritative-polynomial-default-final.log"
+      },
+      "all_features": {
+        "passed": 785,
+        "failed": 0,
+        "ignored": 0,
+        "libtest_target_runs": 19,
+        "log": "/tmp/hyperreal-authoritative-polynomial-all-features-final.log"
+      },
+      "representation_layouts": {
+        "passed": 22,
+        "failed": 0,
+        "ignored": 0,
+        "libtest_target_runs": 5,
+        "log": "/tmp/hyperreal-authoritative-polynomial-representations-final.log"
+      },
+      "other_gates": "Default/all-feature strict Clippy, all-target check, fuzz-bin check, warning-denied all-feature rustdoc and formatting pass. All-target tests also execute the registered benchmark harnesses with report writes disabled. The existing allocation report completes; named shared constants can retain warmed caches, so its nonzero retained-cache rows are not described as zero-lifetime deltas."
+    },
+    "hypersolve": {
+      "initial_committed_head": "1273a7a",
+      "committed_head_all_features": {
+        "passed": 773,
+        "failed": 0,
+        "ignored": 0,
+        "libtest_target_runs": 9,
+        "log": "/tmp/hypersolve-authoritative-polynomial-all-features-final.log"
+      },
+      "committed_head_minimal": {
+        "passed": 770,
+        "failed": 0,
+        "ignored": 0,
+        "libtest_target_runs": 7,
+        "log": "/tmp/hypersolve-authoritative-polynomial-minimal-final.log"
+      },
+      "representation_layouts": {
+        "passed": 16,
+        "failed": 0,
+        "ignored": 0,
+        "libtest_target_runs": 4,
+        "log": "/tmp/hypersolve-authoritative-polynomial-representations-final.log"
+      },
+      "other_gates": "Strict all-target/all-feature Clippy/check, fuzz-bin check, representation fuzz Clippy, warning-denied rustdoc, formatting and the allocation driver pass.",
+      "allocation": {
+        "solver_allocation_pairs": 66,
+        "end_live_deltas": [
+          0
+        ]
+      },
+      "concurrent_work": {
+        "commit": "a20be23",
+        "note": "The independently edited interval.rs inverse-kernel work was preserved and subsequently committed separately as a20be23. Its final source hash matches the version requalified here by all-target/all-feature tests, minimal tests and strict Clippy. Full curve feature-suite runs began at different snapshots of that concurrent work; this checkpoint is not a claim that every moving dependency snapshot received every gate.",
+        "interval_source_sha256": "5999f2a62264ae4d564153deb09399a34e12bd83627c1353134c9b7d4e3a9e72",
+        "all_features": {
+          "passed": 775,
+          "failed": 0,
+          "ignored": 0,
+          "libtest_target_runs": 9,
+          "log": "/tmp/hypersolve-authoritative-polynomial-concurrent-all-features.log"
+        },
+        "minimal": {
+          "passed": 772,
+          "failed": 0,
+          "ignored": 0,
+          "libtest_target_runs": 7,
+          "log": "/tmp/hypersolve-authoritative-polynomial-concurrent-minimal.log"
+        }
+      }
+    },
+    "hypercurve": {
+      "all_features": {
+        "passed": 1721,
+        "failed": 0,
+        "ignored": 9,
+        "libtest_target_runs": 45,
+        "log": "/tmp/hypercurve-authoritative-polynomial-all-features.log"
+      },
+      "minimal": {
+        "passed": 1692,
+        "failed": 0,
+        "ignored": 4,
+        "libtest_target_runs": 45,
+        "log": "/tmp/hypercurve-authoritative-polynomial-minimal.log"
+      },
+      "explicit_opt_in_units": {
+        "passed": 6,
+        "failed": 0,
+        "ignored": 0,
+        "libtest_target_runs": 1,
+        "log": "/tmp/hypercurve-authoritative-polynomial-ignored-units.log",
+        "seconds": 102.47
+      },
+      "explicit_opt_in_stroke": {
+        "passed": 3,
+        "failed": 0,
+        "ignored": 0,
+        "libtest_target_runs": 1,
+        "log": "/tmp/hypercurve-authoritative-polynomial-ignored-stroke.log",
+        "seconds": 57.35
+      },
+      "parameter_units": 31,
+      "parameter_integrations": 28,
+      "ui": {
+        "passed": 37,
+        "failed": 0,
+        "ignored": 0,
+        "libtest_target_runs": 1,
+        "log": "/tmp/hypercurve-authoritative-polynomial-ui-tests.log"
+      },
+      "other_gates": "Strict all-target/all-feature Clippy, all-feature benchmark compilation, fuzz-bin check, warning-denied rustdoc, formatting, UI Clippy and release Trunk build pass."
+    },
+    "hypermesh": {
+      "default": {
+        "passed": 221,
+        "failed": 0,
+        "ignored": 7,
+        "libtest_target_runs": 8,
+        "log": "/tmp/hypermesh-authoritative-polynomial-default.log"
+      },
+      "all_features": {
+        "passed": 222,
+        "failed": 0,
+        "ignored": 7,
+        "libtest_target_runs": 8,
+        "log": "/tmp/hypermesh-authoritative-polynomial-all-features.log"
+      },
+      "stress": {
+        "passed": 1,
+        "failed": 0,
+        "ignored": 0,
+        "libtest_target_runs": 1,
+        "log": "/tmp/hypermesh-authoritative-polynomial-stress.log",
+        "seconds": 137.19,
+        "fixture": "1,572 triangles and 16,900 crossings; exact policy equality"
+      },
+      "other_gates": "No-default check, strict all-target/all-feature Clippy, warning-denied docs, benchmark compilation, fuzz-bin check, formatting, native/WASM size builds and release Trunk demo pass.",
+      "limitation": "The six other opt-in mesh cases were not rerun."
+    }
+  },
+  "milestone_note": "ExactCorelib idea mining/uplift remains closed per the audit ledger. This checkpoint completes the polynomial-kernel consolidation and its listed local gates, not the entire Hypercurve release-readiness goal. Registry dependency-release coordination was not rechecked; no push or publication occurred."
+}

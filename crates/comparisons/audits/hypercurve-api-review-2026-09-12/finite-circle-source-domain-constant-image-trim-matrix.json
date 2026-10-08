@@ -1,0 +1,31 @@
+{
+  "returncode": 0,
+  "elapsed_seconds": 0.06380570400506258,
+  "normal_library_sha256": "2664818a3d8832ddbf1351350562e105a7fd486401f71db0f2cd3661e4180048",
+  "log": "finite-circle-source-domain-constant-image-trim-matrix.log",
+  "source": "constant-image-trim-matrix.rs",
+  "command": [
+    "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustc",
+    "--edition=2024",
+    "-O",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/constant-image-trim-matrix.rs",
+    "--extern",
+    "hypercurve=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypercurve-3abe3d9bfe83911d.rlib",
+    "-L",
+    "dependency=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps",
+    "-o",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-circle-source-domain-constant-image-trim-matrix"
+  ],
+  "run_command": [
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-circle-source-domain-constant-image-trim-matrix"
+  ],
+  "source_sha256": "bcd29d1363d76e24c531a2a6b6a87be834e4146b28f689fbcd6f997f565d04a2",
+  "executable_sha256": "220fe40a54d4254073c6d463044e836d924479d79c05b1bafcf22f29b557b1c2",
+  "counts": {
+    "empty_clips": 280,
+    "path_clips": 56,
+    "replayed_paths": 252,
+    "clipped_spline_paths": 32,
+    "spline_endpoint_replays": 128
+  }
+}

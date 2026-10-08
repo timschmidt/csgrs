@@ -1,0 +1,15 @@
+# Direction-aware circle correspondence
+
+The candidate replaces the private overlap-authority helper with one direction-aware map identity and directly migrates every caller. The same exact source chart, target chart, orientation and retained policy determine one parameter map: each half-circle chart is injective. Pair enumeration order and overlap boundary labels do not change that map. Boundary labels continue to identify endpoint evidence and the separately retained finite overlap domain.
+
+Mapped-cut equality and ordering align source and destination charts. Endpoint-only PairOverlap identities still require ordered charts, equal endpoint labels and the same owning side. No equality is inferred from coincident supporting circles alone.
+
+Certified inverse cancellation now runs before full-overlap transport. Previously a full reversed overlap wrapped an already mapped cut in another complement before checking inverse identity; repeated inverse operations accumulated proof wrappers. Cancellation returns the original source evidence directly, preserving its allocation identity and bounded history.
+
+The expanded regression reconstructs the overlap in both operand orders, under both policies and traversal directions. Independent unit-circle geometry gives parameter 3/4 at point (-4/5, 3/5), parameter 1/3 in the chart rotated by pi/2, and 2/3 in its reversal. Eight successive forward/inverse full-half-circle transports must preserve the original mapped Arc. The focused normalized candidate also passes the complete smooth-seam chamfer fixture that previously failed Ordering, and the existing full/partial/endpoint overlap fixture.
+
+Focused qualification is terminal/reaped: circle-map-direction-20260923-focused1, binary b0ce87c55063663f5a19c479d9485dbbaabe28b56006c553f47ee8b55bf61e5b. The final production qualification excludes the unqualified mandatory-normalization change. Its sources are frozen and bound under circle-map-direction-20260923-final1 and circle-map-direction-20260923-final-candidate.json. The fresh executable is 97756af7df908515bf2620c17453a45c33e68bac8490e2ec706c5c051a29715f. Both all-target feature checks pass; the full 1,216-case run is still active as session 89276. No final qualification claim or commit is made until its terminal comparison is inspected and the session reaped.
+
+Mandatory normalization remains a separate, unqualified change. The major-arc fixture now reaches probe/chord-rational replay and returns Ordering before winding. Source-bound diagnostic trace 5 establishes the exact carrier pair; trace 6 is prepared but inactive while qualification runs. Other-session Hyperreal work is neither edited nor built. The full implementation goal remains active.
+
+Final qualification is terminal/reaped. All 1,216 cases were attempted: 1,192 passed, six ignored, 18 unchanged baseline nonpasses; no new or changed nonpasses. Both feature checks passed. Committed `d00fa186b720f4224e512d9185bc859c624b4608` with exact qualified/staged/HEAD source bindings. The unqualified region file remains unchanged and unstaged.

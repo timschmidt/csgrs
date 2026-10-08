@@ -1,0 +1,18 @@
+    Finished `release` profile [optimized] target(s) in 0.06s
+     Running unittests src/lib.rs (target/release/deps/hypersolve-f165f92bff40da5b)
+
+running 1 test
+
+thread 'algebraic_fiber::tests::local_field_replays_stale_root_payloads_before_constant_fiber_shortcuts' (48) panicked at src/algebraic_fiber.rs:4113:17:
+assertion failed: LocalAlgebraicField::new(&invalid, policy).is_err()
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+test algebraic_fiber::tests::local_field_replays_stale_root_payloads_before_constant_fiber_shortcuts ... FAILED
+
+failures:
+
+failures:
+    algebraic_fiber::tests::local_field_replays_stale_root_payloads_before_constant_fiber_shortcuts
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 423 filtered out; finished in 0.00s
+
+error: test failed, to rerun pass `--lib`

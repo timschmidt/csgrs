@@ -1,0 +1,13 @@
+{
+  "tag": "twelfth-cost-evidence-v78",
+  "started": "2026-09-12T00:06:26.095Z",
+  "finished": "2026-09-12T00:06:59.557Z",
+  "elapsedSeconds": 33.459305746000005,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "node",
+  "args": [
+    "twelfth-cost-evidence-v78.mjs"
+  ],
+  "code": 0,
+  "signal": null
+}

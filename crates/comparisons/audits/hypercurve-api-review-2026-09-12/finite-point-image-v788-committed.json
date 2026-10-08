@@ -1,0 +1,38 @@
+{
+  "repos": {
+    "hypercurve": {
+      "commit": "5d98e008f27b8f7e57c21e6c70fb7e25f9b837b4",
+      "parent": "c73b7faae2071c7e5b334afe46a21b703c7c2f1f",
+      "paths": {
+        "benches/bezier_algebraic_parameter.rs": "838d5193eeb9a7f534de3eb338f9225f65ec692559ccfd79c7195c299e28a3b8",
+        "benches/comparative.rs": "331bf4c1b59ffabb14734f9cdb8cfca23f22f1417c92825037f9d75128a18cd5",
+        "benches/editing.rs": "80245f8d9a93ceddc0e77516e5b6a095c26875cafe0406f9e2d2b650890c2049",
+        "fuzz/fuzz_targets/bezier_algebraic_image.rs": "dc5f0e7f3cad10b1354910bf454195a8dc3301b5edcd093ed9dacb17a2212745",
+        "src/bezier_algebraic_image.rs": "76c6ead575ba1a0db0ba4e68a70c69f58b20bf2ef0b53e9abf9f18409b679dd1",
+        "src/bezier_arrangement.rs": "c1c557b325093a7b51069ab7aa3f846dbe65215478891ce5562c6cde33c7e171",
+        "src/bezier_offset.rs": "85bd9001f30bc94149ce4677f820738049e933247a15ea5984ce85bb04e3b71a",
+        "src/bezier_region.rs": "831e8efc440a609fa24114681e2fee6e81c309d4409fa6d36dc6be9a4037247c",
+        "src/bezier_retained_measure.rs": "d3d2d6d0c8f9dbe7ed0a4d445af611956f15719edf18e04f77abdd89231b0420",
+        "src/bezier_split.rs": "6c698ae1cedd579dd12d9bd38cfce3ca280f02f93f158fdd6ba5d39c183587a1",
+        "src/bezier_split_endpoint.rs": "34e4f49696aac7248d7001f7a5500f8d98d02e1da6cb69efe542ac167143df08",
+        "src/curve.rs": "da138d593b3f753485599157cc2f632c39059bccc3ebd79119b5b64c18bfbe90",
+        "src/curve_evaluation.rs": "a3a69d17af6d297ec5ecb0addfac5ce803300c640f53094155b91b0dd275b35c",
+        "src/curve_region_boolean.rs": "92247dac311e5f6dc8b226a3c99adfd62b13ee4289f6ba34172cd148e7bcf490",
+        "src/curve_region_trim.rs": "cc8058f73a6104d956cb472fc052a865b82972965c3cef297ac51e26fca102f7",
+        "src/lib.rs": "513c888cb25af3ec61fd4a7422b583471e1b4b3499537849a85561f3be472298",
+        "src/rational_bezier_general.rs": "a1d9e3bcf8fb87e993250930a92e380b11838e15a1365c540352dad8f677e99b",
+        "tests/hypercurve_bezier_algebraic_image.rs": "b6415cebde8c1ccd95f83f0a593120b93193c581bb73dfa3005dd2165cbf33e8",
+        "tests/hypercurve_bezier_algebraic_parameter.rs": "2c93d63310513b9543bbd48a73999a1818e2e6e3866f2f9d06a5c2e2e7187d28",
+        "tests/hypercurve_bezier_arrangement.rs": "bf310743cee423ecc80295e2c66968a68c38285310f7d11fc6288c158954dc1e",
+        "tests/hypercurve_bezier_split_materialization.rs": "18c6b75855e5bd2d99828cc882eb5df9f76171fd0f0e4b8000587b2d692116fe",
+        "tests/hypercurve_bezier_tangent_order.rs": "0fe8df30d86b210347f3258076dd178d643fa29b5a997f618bc416a0e3e799bd",
+        "tests/hypercurve_curve_point.rs": "f75cafd51c7c639c8bf9fb83273d5f1a6e041c0c6060aea014a1c096d22c264c",
+        "tests/hypercurve_curve_region_promotion.rs": "74322aa830ea742f15becf14666c406fbaf94c03cdb78c9062ee2f3f20b021ea",
+        "tests/hypercurve_rational_bezier.rs": "22389bf6485023546a850335d47a27835c7c967b8cde5b5a11725e4579a87e86"
+      }
+    }
+  },
+  "qualification": "finite-point-image-v788-terminal.json",
+  "verified_source_files": 2048,
+  "clean_repositories": 30
+}

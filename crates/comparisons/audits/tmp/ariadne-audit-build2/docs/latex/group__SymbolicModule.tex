@@ -1,0 +1,36 @@
+\doxysubsubsection{Symbolic Module }
+\hypertarget{group__SymbolicModule}{}\label{group__SymbolicModule}\index{Symbolic Module@{Symbolic Module}}
+
+
+\doxysubsubsubsection{Description}
+Symbolic expressions in named variables. 
+
+In this module, expressions in named variables can defined. These form the building blocks for defining hybrid systems. \doxysubsubsubsubsection*{Classes}
+\begin{DoxyCompactItemize}
+\item 
+class \mbox{\hyperlink{classAriadne_1_1Assignment}{Assignment$<$ V, E $>$}}
+\begin{DoxyCompactList}\small\item\em An assignment statement of the form $v:=e$. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1Constant}{Constant$<$ T $>$}}
+\begin{DoxyCompactList}\small\item\em A named constant of type {\itshape T}. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1Expression}{Expression$<$ T $>$}}
+\begin{DoxyCompactList}\small\item\em A simple expression in named variables. Ariadne supports expressions of type \doxylink{classAriadne_1_1Boolean}{Boolean}, \doxylink{classAriadne_1_1Kleenean}{Kleenean}, \doxylink{classAriadne_1_1String}{String}, \doxylink{classAriadne_1_1Integer}{Integer} and \doxylink{classAriadne_1_1Real}{Real}. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1Identifier}{Identifier}}
+\begin{DoxyCompactList}\small\item\em A class representing the name of a constant or variable. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1Space}{Space$<$ T $>$}}
+\begin{DoxyCompactList}\small\item\em A space defined as a list of named variables of type {\itshape T}. Allows conversion between the indexed space {\itshape T\textsuperscript{n}} and the space {\itshape T\textsuperscript{V}} defined by named variables {\itshape V}. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1Valuation}{Valuation$<$ T, X $>$}}
+\begin{DoxyCompactList}\small\item\em A valuation of named variables of mathematical type {\itshape T}, with values represented by values of concrete type {\itshape X}, where X defaults to {\itshape T}. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1UntypedVariable}{Untyped\+Variable}}
+\begin{DoxyCompactList}\small\item\em A named variable of unknown type. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1Variable}{Variable$<$ T $>$}}
+\begin{DoxyCompactList}\small\item\em A named variable of type {\itshape T}. Ariadne supports variables of type \doxylink{classAriadne_1_1Boolean}{Boolean}, \doxylink{classAriadne_1_1Kleenean}{Kleenean}, \doxylink{classAriadne_1_1String}{String}, \doxylink{classAriadne_1_1Integer}{Integer} and \doxylink{classAriadne_1_1Real}{Real}. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1TimeVariable}{Time\+Variable}}
+\begin{DoxyCompactList}\small\item\em A special variable representing time. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1Variables}{Variables$<$ T $>$}}
+\begin{DoxyCompactList}\small\item\em A list of variables of type {\itshape T}, with a common base name and an index. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1LetVariable}{Let\+Variable$<$ T $>$}}
+\begin{DoxyCompactList}\small\item\em A named variable of type {\itshape T} to be used on the left-\/hand-\/side of an assignment denoting an algebraic equation. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1PrimedVariable}{Primed\+Variable$<$ T $>$}}
+\begin{DoxyCompactList}\small\item\em A named variable of type {\itshape T} decorated by a prime representing a value after a discrete jump. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1DottedVariable}{Dotted\+Variable$<$ T $>$}}
+\begin{DoxyCompactList}\small\item\em A named variable of type {\itshape T} decorated by a dot representing differentiation with respect to time. \end{DoxyCompactList}\end{DoxyCompactItemize}

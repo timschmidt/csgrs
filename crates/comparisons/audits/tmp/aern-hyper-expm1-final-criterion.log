@@ -1,0 +1,28 @@
+    Blocking waiting for file lock on build directory
+   Compiling hyperreal v0.13.1 (/tmp/aern-hyper-exp.PdU63J/hyperreal-expm1)
+    Finished `bench` profile [optimized] target(s) in 25.43s
+     Running benches/numerical_micro.rs (target/release/deps/numerical_micro-af79510a35c1baa0)
+Benchmarking computable_transcendentals/expm1_tiny_cold_p128
+Benchmarking computable_transcendentals/expm1_tiny_cold_p128: Warming up for 200.00 ms
+Benchmarking computable_transcendentals/expm1_tiny_cold_p128: Collecting 30 samples in estimated 500.03 ms (547k iterations)
+Benchmarking computable_transcendentals/expm1_tiny_cold_p128: Analyzing
+computable_transcendentals/expm1_tiny_cold_p128
+                        time:   [870.38 ns 892.78 ns 911.21 ns]
+Benchmarking computable_transcendentals/expm1_coarse_cold_p1
+Benchmarking computable_transcendentals/expm1_coarse_cold_p1: Warming up for 200.00 ms
+Benchmarking computable_transcendentals/expm1_coarse_cold_p1: Collecting 30 samples in estimated 500.96 ms (173k iterations)
+Benchmarking computable_transcendentals/expm1_coarse_cold_p1: Analyzing
+computable_transcendentals/expm1_coarse_cold_p1
+                        time:   [2.9049 µs 2.9097 µs 2.9150 µs]
+Found 4 outliers among 30 measurements (13.33%)
+  4 (13.33%) high severe
+Benchmarking computable_transcendentals/expm1_coarse_negative_cold_p1
+Benchmarking computable_transcendentals/expm1_coarse_negative_cold_p1: Warming up for 200.00 ms
+Benchmarking computable_transcendentals/expm1_coarse_negative_cold_p1: Collecting 30 samples in estimated 500.01 ms (3.4M iterations)
+Benchmarking computable_transcendentals/expm1_coarse_negative_cold_p1: Analyzing
+computable_transcendentals/expm1_coarse_negative_cold_p1
+                        time:   [45.513 ns 45.932 ns 46.453 ns]
+Found 5 outliers among 30 measurements (16.67%)
+  5 (16.67%) low mild
+
+updated /tmp/aern-hyper-exp.PdU63J/hyperreal-expm1/benchmarks.md from 3 Criterion rows, 0 comparisons, and 10 benchmark suites

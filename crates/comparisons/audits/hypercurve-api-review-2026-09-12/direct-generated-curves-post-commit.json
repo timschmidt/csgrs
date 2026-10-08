@@ -1,0 +1,18 @@
+{
+  "commit": "1f77b667e06dc5e40bd048692e604e730a1d962e",
+  "files": [
+    {
+      "file": "src/curve.rs",
+      "sha256": "850628ff6722d0499cbdd6c3357decd06b72df9937c2b4ec2e14a89789ba4379"
+    },
+    {
+      "file": "tests/hypercurve_path_closure.rs",
+      "sha256": "160cf404e607ff921c6e378efd1ca12523f318aabab740da02afd4f21b8acbe5"
+    },
+    {
+      "file": "tests/hypercurve_curve_intersection.rs",
+      "sha256": "05c0d11244e4ec31ce1bf1c6fdef2744303547786b73af78c0dc73464296af7a"
+    }
+  ],
+  "status": " M src/bezier_offset.rs\n"
+}

@@ -1,0 +1,122 @@
+{
+  "checks": [
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "clippy",
+        "--all-targets",
+        "--all-features",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "returncode": 0,
+      "log": "conic-owned-contact-20260924-v4-check-0.log"
+    },
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "clippy",
+        "--all-targets",
+        "--no-default-features",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "returncode": 0,
+      "log": "conic-owned-contact-20260924-v4-check-1.log"
+    }
+  ],
+  "command": [
+    "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+    "test",
+    "--lib",
+    "--release",
+    "--all-features",
+    "--no-run",
+    "--message-format=json",
+    "--locked",
+    "--offline"
+  ],
+  "cases": [
+    {
+      "name": "bezier_offset::conversion_tests::conic_owned_endpoint_reuses_local_evidence_on_finite_ranges",
+      "returncode": 0,
+      "passed": true,
+      "elapsed_seconds": 0.28637808992061764,
+      "limit_seconds": 60,
+      "log": "conic-owned-contact-20260924-v4-case-0.log"
+    },
+    {
+      "name": "bezier_offset::conversion_tests::conic_owned_endpoint_preserves_a_second_interior_contact",
+      "returncode": 0,
+      "passed": true,
+      "elapsed_seconds": 0.28035644395276904,
+      "limit_seconds": 60,
+      "log": "conic-owned-contact-20260924-v4-case-1.log"
+    },
+    {
+      "name": "bezier_offset::conversion_tests::conic_owned_endpoint_degree_guard_preserves_cubic_crossings",
+      "returncode": 0,
+      "passed": true,
+      "elapsed_seconds": 0.2736068069934845,
+      "limit_seconds": 60,
+      "log": "conic-owned-contact-20260924-v4-case-2.log"
+    },
+    {
+      "name": "bezier_offset::conversion_tests::conic_owned_endpoint_still_requires_a_pole_free_range",
+      "returncode": 0,
+      "passed": true,
+      "elapsed_seconds": 0.27941653796005994,
+      "limit_seconds": 60,
+      "log": "conic-owned-contact-20260924-v4-case-3.log"
+    },
+    {
+      "name": "bezier_offset::conversion_tests::chord_rational_contact_ownership_preserves_selected_fiber_parameters",
+      "returncode": 0,
+      "passed": true,
+      "elapsed_seconds": 0.2884045320097357,
+      "limit_seconds": 60,
+      "log": "conic-owned-contact-20260924-v4-case-4.log"
+    },
+    {
+      "name": "bezier_offset::conversion_tests::selected_fiber_points_reuse_projective_roots_without_global_promotion",
+      "returncode": 0,
+      "passed": true,
+      "elapsed_seconds": 0.3826631880365312,
+      "limit_seconds": 60,
+      "log": "conic-owned-contact-20260924-v4-case-5.log"
+    },
+    {
+      "name": "curve_region_boolean::certified_successor_tests::monotone_parallel_ranges_remove_only_proven_unary_pairs",
+      "returncode": 0,
+      "passed": true,
+      "elapsed_seconds": 1.7318322949577123,
+      "limit_seconds": 60,
+      "log": "conic-owned-contact-20260924-v4-case-6.log"
+    },
+    {
+      "name": "bezier_region::tests::nonlinear_selected_corner_chamfers_through_retained_fixed_distance_image",
+      "returncode": "timeout",
+      "passed": false,
+      "elapsed_seconds": 76.17234011902474,
+      "limit_seconds": 75,
+      "log": "conic-owned-contact-20260924-v4-case-7.log"
+    },
+    {
+      "name": "bezier_region::curve_corner_chain::tests::extended_fillet_region_classifies_both_sides_of_its_companion",
+      "returncode": "timeout",
+      "passed": false,
+      "elapsed_seconds": 75.26533686893526,
+      "limit_seconds": 75,
+      "log": "conic-owned-contact-20260924-v4-case-8.log"
+    }
+  ],
+  "binary_sha256": "bd4ead10ec7de7a35382f3d06b469e818e843fd68bd3e2621927733771edeb2f",
+  "all_sources_unchanged": true,
+  "all_processes_reaped": true
+}

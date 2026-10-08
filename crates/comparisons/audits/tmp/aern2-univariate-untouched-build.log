@@ -1,0 +1,36 @@
+
+Error: [S-4804]
+       Stack failed to construct a build plan.
+       
+       While constructing the build plan, Stack encountered the following errors. The 'Stack
+       configuration' refers to the set of package versions specified by the snapshot (after any
+       dropped packages, or pruned GHC boot packages; if a boot package is replaced, Stack prunes
+       all other such packages that depend on it) and any extra-deps:
+       
+       In the dependencies for aern2-fun-univariate-0.1.0.0:
+         * aern2-fun must match >=0.1 && <0.2, but aern2-fun-0.2.9.0 is in the Stack configuration
+           (no matching package and version found. Perhaps there is an error in the specification of
+           a package's dependencies or build-tools (Hpack) or build-depends, build-tools or
+           build-tool-depends (Cabal file) or an omission from the packages list in
+           /tmp/aern2-audit/univariate-stack.yaml (project-level configuration).)
+         * aern2-mp must match >=0.1 && <0.2, but aern2-mp-0.2.16.2 is in the Stack configuration
+           (latest matching version is 0.1.4).
+         * aern2-real must match >=0.1 && <0.2, but aern2-real-0.2.16.1 is in the Stack
+           configuration (latest matching version is 0.1.2).
+         * memoize needed, but no version is in the Stack configuration (latest matching version is
+           1.1.2).
+       The above is/are needed since aern2-fun-univariate is a build target.
+       
+       Some different approaches to resolving some or all of this:
+       
+         * To ignore certain version constraints and build anyway, pass --allow-newer, or, in
+           /tmp/aern2-stack.ryVCFK/config.yaml (global configuration) or
+           /tmp/aern2-audit/univariate-stack.yaml (project-level configuration), set allow-newer:
+           true and add these package names under allow-newer-deps: aern2-fun-univariate.
+         
+         * Recommended action: try adding the following to your extra-deps in
+           /tmp/aern2-audit/univariate-stack.yaml (project-level configuration):
+           
+           - aern2-mp-0.1.4@sha256:caeeef83aff6ab841241e51ab16b7eee3aec8b40590ec7bc0a81c003b59d38b1,3196
+           - aern2-real-0.1.2@sha256:86951d65f03d51ce7e3944b8fa0602d0d22da5e3217115958cb761b7e06422c6,3615
+           - memoize-1.1.2@sha256:d7701b55ed63434d1e8b507d0a76bb58f2fe31b7ce329132e1ca808c7001da49,1928

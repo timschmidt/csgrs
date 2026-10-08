@@ -1,0 +1,274 @@
+\doxysubsection{Grid\+Tree\+Subpaving Class Reference}
+\hypertarget{classAriadne_1_1GridTreeSubpaving}{}\label{classAriadne_1_1GridTreeSubpaving}\index{GridTreeSubpaving@{GridTreeSubpaving}}
+
+
+{\ttfamily \#include $<$grid\+\_\+paving.\+hpp$>$}
+
+
+
+\doxysubsubsection{Description}
+This class represents a subpaving of a paving. Note that, the subtree enclosed into this class is just a pointer to the node in the tree of some paving. This class is not responsible for deallocation of that original tree. Inheritance diagram for Grid\+Tree\+Subpaving\+:\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[height=3.181818cm]{classAriadne_1_1GridTreeSubpaving}
+\end{center}
+\end{figure}
+\doxysubsubsubsection*{Public Types}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1GridTreeSubpaving_ab65687c8f0611b8bc2cf1b36bed10a4d}\label{classAriadne_1_1GridTreeSubpaving_ab65687c8f0611b8bc2cf1b36bed10a4d} 
+typedef \mbox{\hyperlink{classAriadne_1_1GridTreeConstIterator}{Grid\+Tree\+Const\+Iterator}} {\bfseries Const\+Iterator}
+\begin{DoxyCompactList}\small\item\em A short name for the constant \doxylink{classAriadne_1_1Expansion}{Iterator}. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxyparagraph*{Public Types inherited from \mbox{\hyperlink{classAriadne_1_1SetInterfaceBase}{Set\+Interface\+Base$<$ Real\+Vector $>$}}}
+\begin{DoxyCompactItemize}
+\item 
+typedef \mbox{\hyperlink{group__LinearAlgebraSubModule_ga00e69bf76ffebd1f3ba573f4662134bc}{Real\+Vector}} {\bfseries Element\+Type}
+\begin{DoxyCompactList}\small\item\em The type of element of the set. \end{DoxyCompactList}\item 
+typedef Set\+Traits$<$ \mbox{\hyperlink{group__LinearAlgebraSubModule_ga00e69bf76ffebd1f3ba573f4662134bc}{Real\+Vector}} $>$\+::\+Dimension\+Type {\bfseries Dimension\+Type}
+\begin{DoxyCompactList}\small\item\em The type representing the dimension of the set. \end{DoxyCompactList}\item 
+typedef Set\+Traits$<$ \mbox{\hyperlink{group__LinearAlgebraSubModule_ga00e69bf76ffebd1f3ba573f4662134bc}{Real\+Vector}} $>$\+::\+Basic\+Set\+Type {\bfseries Basic\+Set\+Type}
+\begin{DoxyCompactList}\small\item\em The type of basic set in the space. \end{DoxyCompactList}\item 
+typedef Set\+Traits$<$ \mbox{\hyperlink{group__LinearAlgebraSubModule_ga00e69bf76ffebd1f3ba573f4662134bc}{Real\+Vector}} $>$\+::\+Bounding\+Set\+Type {\bfseries Bounding\+Set\+Type}
+\begin{DoxyCompactList}\small\item\em The type of basic set in the space. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1GridTreeSubpaving_ab704e194bedf7a09d02209fcd9512423}\label{classAriadne_1_1GridTreeSubpaving_ab704e194bedf7a09d02209fcd9512423} 
+virtual {\bfseries \texorpdfstring{$\sim$}{\string~}\+Grid\+Tree\+Subpaving} () override
+\begin{DoxyCompactList}\small\item\em Virtual destructor. The destructor needs to be virtual since Grid\+Tree\+Set is a subclass with different memory management. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\begin{Indent}\textbf{ Constructors}\par
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1GridTreeSubpaving_a0d6e62e78160599997e8058e3773d2ef}\label{classAriadne_1_1GridTreeSubpaving_a0d6e62e78160599997e8058e3773d2ef} 
+{\bfseries Grid\+Tree\+Subpaving} (const \mbox{\hyperlink{classAriadne_1_1Grid}{Grid}} \&the\+Grid, const \mbox{\hyperlink{namespaceAriadne_aae901a69a841b1a085a0dfe218e38fe9}{Nat}} the\+Extent, const \mbox{\hyperlink{classAriadne_1_1BinaryWord}{Binary\+Word}} \&the\+Word, \mbox{\hyperlink{classAriadne_1_1BinaryTreeNode}{Binary\+Tree\+Node}} \texorpdfstring{$\ast$}{*}p\+Root\+Tree\+Node)
+\begin{DoxyCompactList}\small\item\em The new root node can only be constructed from the existing tree node. Here, {\itshape p\+Root\+Tree\+Node} is not copied, we simply store its pointer inside this class. Note that, {\itshape p\+Root\+Tree\+Node} should correspond to the sub-\/paving root node. Thus, {\itshape the\+Extent} defines the extent of the primary root cell of the Grid\+Tree\+Set (Remember that every Grid\+Tree\+Subset is just a reference to a subtree of a Grid\+Tree\+Set). {\itshape the\+Word} defines the path to the {\itshape p\+Root\+Tree\+Node} node from the primary root cell of the corresponding Grid\+Tree\+Set. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1GridTreeSubpaving_a13ec5c7e13cdfbf18606abe14739ceb1}\label{classAriadne_1_1GridTreeSubpaving_a13ec5c7e13cdfbf18606abe14739ceb1} 
+{\bfseries Grid\+Tree\+Subpaving} (const \mbox{\hyperlink{classAriadne_1_1GridTreeSubpaving}{Grid\+Tree\+Subpaving}} \&other\+Subset)
+\begin{DoxyCompactList}\small\item\em A copy constructor that only copies the pointer to the root of the binary tree and the cell. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1GridTreeSubpaving_ae103a55b22bb1c0147a23b475593a34c}\label{classAriadne_1_1GridTreeSubpaving_ae103a55b22bb1c0147a23b475593a34c} 
+virtual \mbox{\hyperlink{classAriadne_1_1GridTreeSubpaving}{Grid\+Tree\+Subpaving}} \texorpdfstring{$\ast$}{*} {\bfseries clone} () const override
+\begin{DoxyCompactList}\small\item\em Make a dynamically-\/allocated copy as a Grid\+Tree\+Set. Required for \doxylink{classAriadne_1_1Drawable2dInterface}{Drawable2d\+Interface}. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\end{Indent}
+\begin{Indent}\textbf{ Properties}\par
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1GridTreeSubpaving_a60f83295a1ff69a9e80c8dccbe125b3f}\label{classAriadne_1_1GridTreeSubpaving_a60f83295a1ff69a9e80c8dccbe125b3f} 
+\mbox{\hyperlink{namespaceAriadne_a76a8b016e5ad61faf9062cc387df5016}{Bool}} {\bfseries is\+\_\+empty} () const
+\begin{DoxyCompactList}\small\item\em True if the set is empty. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1GridTreeSubpaving_a67429cce73f5ba4d81fb2c56502d1cff}\label{classAriadne_1_1GridTreeSubpaving_a67429cce73f5ba4d81fb2c56502d1cff} 
+virtual Size\+Type {\bfseries size} () const override
+\begin{DoxyCompactList}\small\item\em The number of activated cells in the set. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1GridTreeSubpaving_a92c497b6e7ed3bafb7f483c87a8bf85b}\label{classAriadne_1_1GridTreeSubpaving_a92c497b6e7ed3bafb7f483c87a8bf85b} 
+virtual Dimension\+Type {\bfseries dimension} () const override
+\begin{DoxyCompactList}\small\item\em The dimension of the set. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1GridTreeSubpaving_a77516fac8eff167984d43ea08abadfa7}\label{classAriadne_1_1GridTreeSubpaving_a77516fac8eff167984d43ea08abadfa7} 
+virtual const \mbox{\hyperlink{classAriadne_1_1Grid}{Grid}} \& {\bfseries grid} () const override
+\begin{DoxyCompactList}\small\item\em Returns a constant reference to the underlying grid. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1GridTreeSubpaving_ad532f5e9b94ca81af490ffbff8ce4a43}\label{classAriadne_1_1GridTreeSubpaving_ad532f5e9b94ca81af490ffbff8ce4a43} 
+const \mbox{\hyperlink{classAriadne_1_1BinaryTreeNode}{Binary\+Tree\+Node}} \texorpdfstring{$\ast$}{*} {\bfseries binary\+\_\+tree} () const
+\begin{DoxyCompactList}\small\item\em Returns the const pointer to the root \doxylink{classAriadne_1_1BinaryTreeNode}{Binary\+Tree\+Node} of the Sub\+Paving\texorpdfstring{$\ast$}{*}/. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1GridTreeSubpaving_ad7fb706eed72c78c6232547e7cc17338}\label{classAriadne_1_1GridTreeSubpaving_ad7fb706eed72c78c6232547e7cc17338} 
+\mbox{\hyperlink{namespaceAriadne_aae901a69a841b1a085a0dfe218e38fe9}{Nat}} {\bfseries tree\+\_\+depth} () const
+\begin{DoxyCompactList}\small\item\em Recalculate the depth of the tree rooted at {\itshape \+\_\+p\+Root\+Tree\+Node}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1GridTreeSubpaving_adfd981c7deede4b98d789f82802514bd}\label{classAriadne_1_1GridTreeSubpaving_adfd981c7deede4b98d789f82802514bd} 
+Float\+DPApproximation {\bfseries measure} () const
+\begin{DoxyCompactList}\small\item\em The measure (area, volume) of the set in Euclidean space. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1GridTreeSubpaving_ae06f76e2f29a5578db88fe730957df05}\label{classAriadne_1_1GridTreeSubpaving_ae06f76e2f29a5578db88fe730957df05} 
+\mbox{\hyperlink{classAriadne_1_1GridTreeSubpaving}{Grid\+Tree\+Subpaving}} {\bfseries branch} (\mbox{\hyperlink{namespaceAriadne_a76a8b016e5ad61faf9062cc387df5016}{Bool}} left\+\_\+or\+\_\+right) const
+\begin{DoxyCompactList}\small\item\em The a branch along the binary tree. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1GridTreeSubpaving_af49165b42660a5c5a354456c20003e73}\label{classAriadne_1_1GridTreeSubpaving_af49165b42660a5c5a354456c20003e73} 
+virtual \mbox{\hyperlink{classAriadne_1_1GridCell}{Grid\+Cell}} {\bfseries root\+\_\+cell} () const override
+\begin{DoxyCompactList}\small\item\em Returns the {\itshape \doxylink{classAriadne_1_1GridCell}{Grid\+Cell}} corresponding to the ROOT NODE of this {\itshape Grid\+Tree\+Subset} WARNING\+: It is NOT the primary cell of the paving! \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1GridTreeSubpaving_a7d8d2aadc11174ba762427368efce582}\label{classAriadne_1_1GridTreeSubpaving_a7d8d2aadc11174ba762427368efce582} 
+virtual \mbox{\hyperlink{group__FunctionModule_gadb510bd9aa076e5ae44245b498901ca6}{Upper\+Box\+Type}} {\bfseries bounding\+\_\+box} () const override
+\begin{DoxyCompactList}\small\item\em Computes a bounding box for a grid set. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1GridTreeSubpaving_ae64bea94df0980cedec8744798e48001}\label{classAriadne_1_1GridTreeSubpaving_ae64bea94df0980cedec8744798e48001} 
+\mbox{\hyperlink{namespaceAriadne_a76a8b016e5ad61faf9062cc387df5016}{Bool}} {\bfseries operator==} (const \mbox{\hyperlink{classAriadne_1_1GridTreeSubpaving}{Grid\+Tree\+Subpaving}} \&another\+Grid\+Tree\+Subset) const
+\begin{DoxyCompactList}\small\item\em Allows to test if the two subpavings are "{}equal"{}. The method returns true if the grida are equal and the binary trees are equal. Note that, only in case both Grid\+Tree\+Subset objects are recombines, this method is guaranteed to tell you that the two Grid\+Tree\+Subset represent equal sets. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\end{Indent}
+\begin{Indent}\textbf{ Modifying operations}\par
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1GridTreeSubpaving_a0a428072eefd1e56792c2fa7a384ccce}\label{classAriadne_1_1GridTreeSubpaving_a0a428072eefd1e56792c2fa7a384ccce} 
+virtual \mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} {\bfseries set\+\_\+root\+\_\+cell} (\mbox{\hyperlink{namespaceAriadne_a76a8b016e5ad61faf9062cc387df5016}{Bool}} enabled\+\_\+or\+\_\+disabled) override
+\begin{DoxyCompactList}\small\item\em Sets the ROOT NODE of this {\itshape Grid\+Tree\+Subset} to either enabled (true) or disabled (false). \end{DoxyCompactList}\end{DoxyCompactItemize}
+\end{Indent}
+\begin{Indent}\textbf{ Subdivisions}\par
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1GridTreeSubpaving_a884b33ebff76c75e33c0508e6f2670e2}\label{classAriadne_1_1GridTreeSubpaving_a884b33ebff76c75e33c0508e6f2670e2} 
+virtual \mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} {\bfseries mince} (\mbox{\hyperlink{namespaceAriadne_aae901a69a841b1a085a0dfe218e38fe9}{Nat}} num\+Subdiv\+In\+Dim) override
+\begin{DoxyCompactList}\small\item\em Subdivides the tree in such a way that it\textquotesingle{}s total depth becomes ( extent + num\+Subdiv\+In\+Dim ) \texorpdfstring{$\ast$}{*} D Where extent is the height in each dimension of the primary cell to which the tree is rooted, {\itshape num\+Subdiv\+In\+Dim} is the number of subdivisions in each dimension, and D is the number of dimensions of our space. Note that, in case the subset is already subdivided to the required depth then nothing is done. The latter can happen if the root cell of the subset is below the depth ( extent + num\+Subdiv\+In\+Dim ) \texorpdfstring{$\ast$}{*} D. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1GridTreeSubpaving_a87c44bdede72d1b4060bc0829a7a3d0b}\label{classAriadne_1_1GridTreeSubpaving_a87c44bdede72d1b4060bc0829a7a3d0b} 
+\mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} {\bfseries mince\+\_\+to\+\_\+depth} (const \mbox{\hyperlink{namespaceAriadne_aae901a69a841b1a085a0dfe218e38fe9}{Nat}} the\+New\+Depth)
+\begin{DoxyCompactList}\small\item\em Subdivides the set up to the depth specified by the parameter. Note that the depth is measured from the unit cell and thus the subdivision is done relative to it but not to the root of the original paving. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1GridTreeSubpaving_a281a99bfd9f2308c305c55ca09ef1bc0}\label{classAriadne_1_1GridTreeSubpaving_a281a99bfd9f2308c305c55ca09ef1bc0} 
+\mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} {\bfseries mince\+\_\+to\+\_\+tree\+\_\+depth} (const \mbox{\hyperlink{namespaceAriadne_aae901a69a841b1a085a0dfe218e38fe9}{Nat}} the\+New\+Tree\+Depth)
+\begin{DoxyCompactList}\small\item\em Subdivides the tree up to the depth specified by the parameter. Note that, we start from the root of the sub-\/paving and thus the subdivision is done relative to it but not to the root of the original paving. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1GridTreeSubpaving_a6dd4d91573306d1bab3836cbbdb43f81}\label{classAriadne_1_1GridTreeSubpaving_a6dd4d91573306d1bab3836cbbdb43f81} 
+\mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} {\bfseries subdivide} (\mbox{\hyperlink{classAriadne_1_1ApproximateDouble}{Approximate\+Double}} the\+Max\+Cell\+Width)
+\begin{DoxyCompactList}\small\item\em Subdivide the paving until the smallest depth such that the leaf cells size is \texorpdfstring{$<$}{<}= {\itshape the\+Max\+Cell\+Width}. Note that, the disabled cells are not subdivided. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1GridTreeSubpaving_afc3b2382412c8a92de08f7d14bdca3cd}\label{classAriadne_1_1GridTreeSubpaving_afc3b2382412c8a92de08f7d14bdca3cd} 
+virtual \mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} {\bfseries recombine} () override
+\begin{DoxyCompactList}\small\item\em Recombines the subdivisions, for instance if all subcells of a cell are enabled/disabled then they are put together. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\end{Indent}
+\begin{Indent}\textbf{ Iterators}\par
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1GridTreeSubpaving_a37f60f4bea83509522947b1b952c08f3}\label{classAriadne_1_1GridTreeSubpaving_a37f60f4bea83509522947b1b952c08f3} 
+\mbox{\hyperlink{classAriadne_1_1GridTreeSubpaving_ab65687c8f0611b8bc2cf1b36bed10a4d}{Const\+Iterator}} {\bfseries begin} () const
+\begin{DoxyCompactList}\small\item\em A constant \doxylink{classAriadne_1_1Expansion}{Iterator} through the enabled leaf nodes of the subpaving. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1GridTreeSubpaving_a16d0cc8405489692f6fdeac1d578b13c}\label{classAriadne_1_1GridTreeSubpaving_a16d0cc8405489692f6fdeac1d578b13c} 
+\mbox{\hyperlink{classAriadne_1_1GridTreeSubpaving_ab65687c8f0611b8bc2cf1b36bed10a4d}{Const\+Iterator}} {\bfseries end} () const
+\begin{DoxyCompactList}\small\item\em A constant \doxylink{classAriadne_1_1Expansion}{Iterator} to the end of the enabled leaf nodes of the subpaving. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\end{Indent}
+\begin{Indent}\textbf{ Conversions}\par
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1GridTreeSubpaving_a18f730d1f9f758b9fcac8becf7bbfe67}\label{classAriadne_1_1GridTreeSubpaving_a18f730d1f9f758b9fcac8becf7bbfe67} 
+\mbox{\hyperlink{classAriadne_1_1GridTreeSubpaving}{Grid\+Tree\+Subpaving}} \& {\bfseries operator=} (const \mbox{\hyperlink{classAriadne_1_1GridTreeSubpaving}{Grid\+Tree\+Subpaving}} \&other\+Subset)
+\begin{DoxyCompactList}\small\item\em An assignment operator that only copies the pointer to the root of the binary tree and the cell. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1GridTreeSubpaving_a4bc7fd0806909f3233680f02149ecbda}\label{classAriadne_1_1GridTreeSubpaving_a4bc7fd0806909f3233680f02149ecbda} 
+{\bfseries operator List\+Set$<$ Exact\+Box\+Type $>$} () const
+\begin{DoxyCompactList}\small\item\em Convert to a list of ordinary boxes, unrelated to the grid. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\end{Indent}
+\doxyparagraph*{Public Member Functions inherited from \mbox{\hyperlink{classAriadne_1_1SubPavingInterface}{Sub\+Paving\+Interface}}}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\hyperlink{classAriadne_1_1ForwardConstantIteratorHandle}{Forward\+Constant\+Iterator\+Handle}}$<$ \mbox{\hyperlink{classAriadne_1_1GridCell}{Grid\+Cell}} $>$ {\bfseries begin} () const
+\begin{DoxyCompactList}\small\item\em A constant \doxylink{classAriadne_1_1Expansion}{Iterator} through the cells of the paving. \end{DoxyCompactList}\item 
+\mbox{\hyperlink{classAriadne_1_1SubPavingHandle}{Sub\+Paving\+Handle}} {\bfseries branch} (\mbox{\hyperlink{namespaceAriadne_a76a8b016e5ad61faf9062cc387df5016}{Bool}} left\+\_\+or\+\_\+right) const
+\begin{DoxyCompactList}\small\item\em A sub-\/paving obtained by considering one of the immediate subcells of the root cell. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxyparagraph*{Public Member Functions inherited from \mbox{\hyperlink{classAriadne_1_1OvertSetInterface}{Overt\+Set\+Interface$<$ Validated\+Tag, Real\+Vector $>$}}}
+\begin{DoxyCompactItemize}
+\item 
+virtual Lower\+Kleenean\+Type$<$ \mbox{\hyperlink{structAriadne_1_1ValidatedTag}{Validated\+Tag}} $>$ {\bfseries overlaps} (const \mbox{\hyperlink{classAriadne_1_1SetInterfaceBase_a621a6488ff988ea56df9398b55b4241f}{Basic\+Set\+Type}} \&bx) const=0
+\begin{DoxyCompactList}\small\item\em Tests if the set overlaps {\itshape bx}. Sets {\itshape A} and {\itshape B} {\itshape overlap} if the interiors of {\itshape A} and {\itshape B} intersect. Sets $A$ and $B$ {\itshape overlap} if $A^\circ \cap B^\circ \neq \emptyset$. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxyparagraph*{Public Member Functions inherited from \mbox{\hyperlink{classAriadne_1_1SetInterfaceBase}{Set\+Interface\+Base$<$ Real\+Vector $>$}}}
+\begin{DoxyCompactItemize}
+\item 
+virtual {\bfseries \texorpdfstring{$\sim$}{\string~}\+Set\+Interface\+Base} ()=default
+\begin{DoxyCompactList}\small\item\em Virtual destructor. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxyparagraph*{Public Member Functions inherited from \mbox{\hyperlink{classAriadne_1_1BoundedSetInterface}{Bounded\+Set\+Interface$<$ Validated\+Tag, Real\+Vector $>$}}}
+\begin{DoxyCompactItemize}
+\item 
+virtual Lower\+Kleenean\+Type$<$ \mbox{\hyperlink{structAriadne_1_1ValidatedTag}{Validated\+Tag}} $>$ {\bfseries inside} (const \mbox{\hyperlink{classAriadne_1_1SetInterfaceBase_a621a6488ff988ea56df9398b55b4241f}{Basic\+Set\+Type}} \&bx) const=0
+\begin{DoxyCompactList}\small\item\em Tests if the set is a inside of {\itshape bx}. A set {\itshape A} is {\itshape inside} {\itshape B} if the closure of {\itshape A} is a subset of the interior of {\itshape B}. A set $A$ is {\itshape inside} $B$ if $\,\overline{\!A} \subset B^\circ$. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxyparagraph*{Public Member Functions inherited from \mbox{\hyperlink{classAriadne_1_1ClosedSetInterface}{Closed\+Set\+Interface$<$ Validated\+Tag, Real\+Vector $>$}}}
+\begin{DoxyCompactItemize}
+\item 
+virtual Lower\+Kleenean\+Type$<$ \mbox{\hyperlink{structAriadne_1_1ValidatedTag}{Validated\+Tag}} $>$ {\bfseries separated} (const \mbox{\hyperlink{classAriadne_1_1SetInterfaceBase_a621a6488ff988ea56df9398b55b4241f}{Basic\+Set\+Type}} \&bx) const=0
+\begin{DoxyCompactList}\small\item\em Tests if the set is separated from {\itshape bx}. A set {\itshape A} is {\itshape separated} from {\itshape B} if the closures of {\itshape A} and {\itshape B} are disjoint. A set $A$ is {\itshape separated} from $B$ if $\,\overline{\!A} \cap \overline{B} = \emptyset$. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxyparagraph*{Public Member Functions inherited from \mbox{\hyperlink{classAriadne_1_1Drawable2dInterface}{Drawable2d\+Interface}}}
+\begin{DoxyCompactItemize}
+\item 
+virtual {\bfseries \texorpdfstring{$\sim$}{\string~}\+Drawable2d\+Interface} ()=default
+\begin{DoxyCompactList}\small\item\em brief Virtual destructor. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsubsection*{Protected Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1GridTreeSubpaving_ada9abe9625e6ed170161dbc7454e0722}\label{classAriadne_1_1GridTreeSubpaving_ada9abe9625e6ed170161dbc7454e0722} 
+\mbox{\hyperlink{namespaceAriadne_aae901a69a841b1a085a0dfe218e38fe9}{Nat}} {\bfseries compute\+\_\+number\+\_\+subdiv} (Float\+DP the\+Width, const Float\+DP the\+Max\+Width) const
+\begin{DoxyCompactList}\small\item\em this function takes the interval width and computes how many binary subdivisions one has to make in order to have sub-\/intervals of the width \texorpdfstring{$<$}{<}= {\itshape the\+Max\+Width} \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1GridTreeSubpaving_ae363bbd162071406dee33a0fbb027133}\label{classAriadne_1_1GridTreeSubpaving_ae363bbd162071406dee33a0fbb027133} 
+\mbox{\hyperlink{namespaceAriadne_aae901a69a841b1a085a0dfe218e38fe9}{Nat}} {\bfseries zero\+\_\+cell\+\_\+subdivisions\+\_\+to\+\_\+tree\+\_\+subdivisions} (const \mbox{\hyperlink{namespaceAriadne_aae901a69a841b1a085a0dfe218e38fe9}{Nat}} num\+Subdiv\+In\+Dim, const \mbox{\hyperlink{namespaceAriadne_aae901a69a841b1a085a0dfe218e38fe9}{Nat}} primary\+Cell\+Extent, const \mbox{\hyperlink{namespaceAriadne_aae901a69a841b1a085a0dfe218e38fe9}{Nat}} primary\+To\+Root\+Cell\+Path\+Length) const
+\begin{DoxyCompactList}\small\item\em Allow to convert the number of subdivisions in each dimension, i.\+e. {\itshape num\+Subdiv\+In\+Dim}, starting from the zero cell into the number of subdivisions that have to be done in a subpaving rooted to the primary cell of the extent {\itshape primary\+Cell\+Extent} and having a length of the path from the primary cell to the root cell of length {\itshape primary\+To\+Root\+Cell\+Path\+Length}. Returns zero if the binary tree already has a sufficient number of subdivisions due to its root cell being smaller than the cells obtained when subdividing {\itshape num\+Subdiv\+In\+Dim} times in each dimension starting from the zero-\/cell level. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsubsection*{Static Protected Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1GridTreeSubpaving_a9c3a75a689748226ca58653634da3fd7}\label{classAriadne_1_1GridTreeSubpaving_a9c3a75a689748226ca58653634da3fd7} 
+static \mbox{\hyperlink{classAriadne_1_1ValidatedKleenean}{Validated\+Kleenean}} {\bfseries \+\_\+superset} (const \mbox{\hyperlink{classAriadne_1_1BinaryTreeNode}{Binary\+Tree\+Node}} \texorpdfstring{$\ast$}{*}p\+Current\+Node, const \mbox{\hyperlink{classAriadne_1_1Grid}{Grid}} \&the\+Grid, const \mbox{\hyperlink{namespaceAriadne_aae901a69a841b1a085a0dfe218e38fe9}{Nat}} the\+Extent, \mbox{\hyperlink{classAriadne_1_1BinaryWord}{Binary\+Word}} \&the\+Word, const \mbox{\hyperlink{group__FunctionModule_gafdd31b4d01081cd09aad2ce11117f867}{Exact\+Box\+Type}} \&the\+Box\+Type)
+\begin{DoxyCompactList}\small\item\em This method checks whether the set defined by {\itshape p\+Current\+Node} is a superset of {\itshape the\+Box\+Type}, in case when it is known that the cell corresponding to the root of p\+Current\+Node \mbox{[}and defined by {\itshape the\+Grid}, the primary cell ({\itshape the\+Extent}) to which this tree is (virtually) rooted via the path the\+Word\mbox{]} encloses {\itshape the\+Box\+Type}. This is a recursive procedure and it returns true only if there are no disabled cells in {\itshape p\+Current\+Node} that intersect with the\+Box\+Type. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1GridTreeSubpaving_a1a19911d1f126f0c7320953380647883}\label{classAriadne_1_1GridTreeSubpaving_a1a19911d1f126f0c7320953380647883} 
+static \mbox{\hyperlink{classAriadne_1_1ValidatedKleenean}{Validated\+Kleenean}} {\bfseries \+\_\+subset} (const \mbox{\hyperlink{classAriadne_1_1BinaryTreeNode}{Binary\+Tree\+Node}} \texorpdfstring{$\ast$}{*}p\+Current\+Node, const \mbox{\hyperlink{classAriadne_1_1Grid}{Grid}} \&the\+Grid, const \mbox{\hyperlink{namespaceAriadne_aae901a69a841b1a085a0dfe218e38fe9}{Nat}} the\+Extent, \mbox{\hyperlink{classAriadne_1_1BinaryWord}{Binary\+Word}} \&the\+Word, const \mbox{\hyperlink{group__FunctionModule_gafdd31b4d01081cd09aad2ce11117f867}{Exact\+Box\+Type}} \&the\+Box\+Type)
+\begin{DoxyCompactList}\small\item\em This method checks whether the set defined by {\itshape p\+Current\+Node} is a subset of {\itshape the\+Box\+Type}. The set of {\itshape p\+Current\+Node} is defined by {\itshape the\+Grid}, the primary cell ({\itshape the\+Extent}) to which this tree is (virtually) rooted via the path the\+Word. This is a recursive procedure and it returns true only if all enabled sub-\/cells of {\itshape p\+Current\+Node} are sub-\/sets of {\itshape the\+Box\+Type}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1GridTreeSubpaving_a31a7ae88bc018c7555afeb3cbdc9f623}\label{classAriadne_1_1GridTreeSubpaving_a31a7ae88bc018c7555afeb3cbdc9f623} 
+static \mbox{\hyperlink{classAriadne_1_1ValidatedKleenean}{Validated\+Kleenean}} {\bfseries \+\_\+disjoint} (const \mbox{\hyperlink{classAriadne_1_1BinaryTreeNode}{Binary\+Tree\+Node}} \texorpdfstring{$\ast$}{*}p\+Current\+Node, const \mbox{\hyperlink{classAriadne_1_1Grid}{Grid}} \&the\+Grid, const \mbox{\hyperlink{namespaceAriadne_aae901a69a841b1a085a0dfe218e38fe9}{Nat}} the\+Extent, \mbox{\hyperlink{classAriadne_1_1BinaryWord}{Binary\+Word}} \&the\+Word, const \mbox{\hyperlink{group__FunctionModule_gafdd31b4d01081cd09aad2ce11117f867}{Exact\+Box\+Type}} \&the\+Box\+Type)
+\begin{DoxyCompactList}\small\item\em This method checks whether {\itshape the\+Box\+Type} is disjoint from the set defined by {\itshape p\+Current\+Node}, {\itshape the\+Grid}, the primary cell ({\itshape the\+Extent}) to which this tree is (virtually) rooted via the path the\+Word. This is done using the recursive procedure by checking the cells of the tree that intersect with the box and going down to the leaves. When reaching a leaf node that is enabled we conclude that we have an intersection. If there are no such nodes then there is no intersection, and the sets are disjoint. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1GridTreeSubpaving_ac15d53f49fddf8c8e34223c3ba24118f}\label{classAriadne_1_1GridTreeSubpaving_ac15d53f49fddf8c8e34223c3ba24118f} 
+static \mbox{\hyperlink{classAriadne_1_1ValidatedKleenean}{Validated\+Kleenean}} {\bfseries \+\_\+intersects} (const \mbox{\hyperlink{classAriadne_1_1BinaryTreeNode}{Binary\+Tree\+Node}} \texorpdfstring{$\ast$}{*}p\+Current\+Node, const \mbox{\hyperlink{classAriadne_1_1Grid}{Grid}} \&the\+Grid, const \mbox{\hyperlink{namespaceAriadne_aae901a69a841b1a085a0dfe218e38fe9}{Nat}} the\+Extent, \mbox{\hyperlink{classAriadne_1_1BinaryWord}{Binary\+Word}} \&the\+Word, const \mbox{\hyperlink{group__FunctionModule_gafdd31b4d01081cd09aad2ce11117f867}{Exact\+Box\+Type}} \&the\+Box\+Type)
+\begin{DoxyCompactList}\small\item\em This method checks whether {\itshape the\+Box\+Type} overlaps the set defined by {\itshape p\+Current\+Node}, {\itshape the\+Grid}, the primary cell ({\itshape the\+Extent}) to which this tree is (virtually) rooted via the path the\+Word. This is done using the recursive procedure by checking the cells of the tree that overlap the box and going down to the leaves. When reaching a leaf node that is enabled we conclude that we have an overlap. If there are no such nodes then there is no overlap. Note that this method cannot be implemented using disjoint since disjoint tests if the closures are disjoint, and overlaps tests if the interiors are not disjoint. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsubsection*{Protected Attributes}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1GridTreeSubpaving_a5e06bf4d849369141f3106bfd42b4a34}\label{classAriadne_1_1GridTreeSubpaving_a5e06bf4d849369141f3106bfd42b4a34} 
+\mbox{\hyperlink{classAriadne_1_1BinaryTreeNode}{Binary\+Tree\+Node}} \texorpdfstring{$\ast$}{*} {\bfseries \+\_\+p\+Root\+Tree\+Node}
+\begin{DoxyCompactList}\small\item\em The pointer to the root node of the subpaving tree. Note that, this is not necessarily the root node of the corresponding paving tree. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1GridTreeSubpaving_a1d43433174574b9787b4724320ee404a}\label{classAriadne_1_1GridTreeSubpaving_a1d43433174574b9787b4724320ee404a} 
+\mbox{\hyperlink{classAriadne_1_1GridCell}{Grid\+Cell}} {\bfseries \+\_\+the\+Grid\+Cell}
+\begin{DoxyCompactList}\small\item\em The paving cell corresponding to the root node of the Sub\+Paving.\texorpdfstring{$\ast$}{*}/. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsubsection*{Geometric Predicates}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1GridTreeSubpaving_a548dd555324be0d0de4bf57d14912c29}\label{classAriadne_1_1GridTreeSubpaving_a548dd555324be0d0de4bf57d14912c29} 
+\mbox{\hyperlink{namespaceAriadne_a76a8b016e5ad61faf9062cc387df5016}{Bool}} {\bfseries subset} (const \mbox{\hyperlink{classAriadne_1_1GridCell}{Grid\+Cell}} \&the\+Cell, const \mbox{\hyperlink{classAriadne_1_1GridTreeSubpaving}{Grid\+Tree\+Subpaving}} \&the\+Set)
+\begin{DoxyCompactList}\small\item\em Tests if a cell is a subset of a set. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1GridTreeSubpaving_aae9315ce077b4a7763dffc6448c97c82}\label{classAriadne_1_1GridTreeSubpaving_aae9315ce077b4a7763dffc6448c97c82} 
+\mbox{\hyperlink{namespaceAriadne_a76a8b016e5ad61faf9062cc387df5016}{Bool}} {\bfseries intersect} (const \mbox{\hyperlink{classAriadne_1_1GridCell}{Grid\+Cell}} \&the\+Cell, const \mbox{\hyperlink{classAriadne_1_1GridTreeSubpaving}{Grid\+Tree\+Subpaving}} \&the\+Set)
+\begin{DoxyCompactList}\small\item\em Tests if a cell intersect (as an open set) a paving set. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1GridTreeSubpaving_aa709517e7eb98a760d04ad8a40e91cc7}\label{classAriadne_1_1GridTreeSubpaving_aa709517e7eb98a760d04ad8a40e91cc7} 
+\mbox{\hyperlink{namespaceAriadne_a76a8b016e5ad61faf9062cc387df5016}{Bool}} {\bfseries subset} (const \mbox{\hyperlink{classAriadne_1_1GridTreeSubpaving}{Grid\+Tree\+Subpaving}} \&the\+Set1, const \mbox{\hyperlink{classAriadne_1_1GridTreeSubpaving}{Grid\+Tree\+Subpaving}} \&the\+Set2)
+\begin{DoxyCompactList}\small\item\em Tests if a grid set {\itshape the\+Set1} is a subset of {\itshape the\+Set2}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1GridTreeSubpaving_a055628415da7737ee8b9bd6dbc3b32c3}\label{classAriadne_1_1GridTreeSubpaving_a055628415da7737ee8b9bd6dbc3b32c3} 
+\mbox{\hyperlink{classAriadne_1_1GridTreePaving}{Grid\+Tree\+Paving}} {\bfseries join} (const \mbox{\hyperlink{classAriadne_1_1GridTreeSubpaving}{Grid\+Tree\+Subpaving}} \&the\+Set1, const \mbox{\hyperlink{classAriadne_1_1GridTreeSubpaving}{Grid\+Tree\+Subpaving}} \&the\+Set2)
+\begin{DoxyCompactList}\small\item\em Join (make union of) two grid paving sets. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1GridTreeSubpaving_a70e78fcbed43f9d95002319c88bc8b6e}\label{classAriadne_1_1GridTreeSubpaving_a70e78fcbed43f9d95002319c88bc8b6e} 
+\mbox{\hyperlink{classAriadne_1_1GridTreePaving}{Grid\+Tree\+Paving}} {\bfseries intersection} (const \mbox{\hyperlink{classAriadne_1_1GridTreeSubpaving}{Grid\+Tree\+Subpaving}} \&the\+Set1, const \mbox{\hyperlink{classAriadne_1_1GridTreeSubpaving}{Grid\+Tree\+Subpaving}} \&the\+Set2)
+\begin{DoxyCompactList}\small\item\em The intersection of two grid paving sets. Points only lying on the intersection of the boundaries of the two sets are not included in the result. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1GridTreeSubpaving_a857ed17263f1858ec46ff20ec6f20953}\label{classAriadne_1_1GridTreeSubpaving_a857ed17263f1858ec46ff20ec6f20953} 
+\mbox{\hyperlink{classAriadne_1_1GridTreePaving}{Grid\+Tree\+Paving}} {\bfseries difference} (const \mbox{\hyperlink{classAriadne_1_1GridTreeSubpaving}{Grid\+Tree\+Subpaving}} \&the\+Set1, const \mbox{\hyperlink{classAriadne_1_1GridTreeSubpaving}{Grid\+Tree\+Subpaving}} \&the\+Set2)
+\begin{DoxyCompactList}\small\item\em The difference of two grid paving sets. (Results in the\+Set1 minus the\+Set2) \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1GridTreeSubpaving_a151d72de0ca19e3ff2ce469e54376525}\label{classAriadne_1_1GridTreeSubpaving_a151d72de0ca19e3ff2ce469e54376525} 
+\mbox{\hyperlink{namespaceAriadne_a76a8b016e5ad61faf9062cc387df5016}{Bool}} {\bfseries intersect} (const \mbox{\hyperlink{classAriadne_1_1GridTreeSubpaving}{Grid\+Tree\+Subpaving}} \&the\+Set1, const \mbox{\hyperlink{classAriadne_1_1GridTreeSubpaving}{Grid\+Tree\+Subpaving}} \&the\+Set2)
+\begin{DoxyCompactList}\small\item\em Tests if two grid paving sets intersect (as open sets) If at least one of the Grid\+Tree\+Subsets represents an empty set, then the result is false. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1GridTreeSubpaving_a073f39f82145ac29273f8eaa05a7967f}\label{classAriadne_1_1GridTreeSubpaving_a073f39f82145ac29273f8eaa05a7967f} 
+virtual \mbox{\hyperlink{namespaceAriadne_a76a8b016e5ad61faf9062cc387df5016}{Bool}} {\bfseries equals} (const \mbox{\hyperlink{classAriadne_1_1SubPavingInterface}{Sub\+Paving\+Interface}} \&) const override
+\begin{DoxyCompactList}\small\item\em Tests if a grid set equals another paving. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1GridTreeSubpaving_a65467135032000c0661ea98bedb231a7}\label{classAriadne_1_1GridTreeSubpaving_a65467135032000c0661ea98bedb231a7} 
+virtual \mbox{\hyperlink{namespaceAriadne_a76a8b016e5ad61faf9062cc387df5016}{Bool}} {\bfseries subset} (const \mbox{\hyperlink{classAriadne_1_1SubPavingInterface}{Sub\+Paving\+Interface}} \&) const override
+\begin{DoxyCompactList}\small\item\em Tests if a grid set is a subset of another paving. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1GridTreeSubpaving_a2fbd46156771feb5aa5217f6aede5e0e}\label{classAriadne_1_1GridTreeSubpaving_a2fbd46156771feb5aa5217f6aede5e0e} 
+virtual \mbox{\hyperlink{namespaceAriadne_a76a8b016e5ad61faf9062cc387df5016}{Bool}} {\bfseries intersects} (const \mbox{\hyperlink{classAriadne_1_1SubPavingInterface}{Sub\+Paving\+Interface}} \&) const override
+\begin{DoxyCompactList}\small\item\em Tests if a grid set intersects another paving. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1GridTreeSubpaving_a50d456ad65f28852ca20d567108e89fc}\label{classAriadne_1_1GridTreeSubpaving_a50d456ad65f28852ca20d567108e89fc} 
+virtual \mbox{\hyperlink{namespaceAriadne_a76a8b016e5ad61faf9062cc387df5016}{Bool}} {\bfseries superset} (const \mbox{\hyperlink{classAriadne_1_1GridCell}{Grid\+Cell}} \&the\+Cell) const override
+\begin{DoxyCompactList}\small\item\em Tests if a cell is a subset of the set. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1GridTreeSubpaving_a9b9e4d91820c1c9192700dcdfb100e76}\label{classAriadne_1_1GridTreeSubpaving_a9b9e4d91820c1c9192700dcdfb100e76} 
+\mbox{\hyperlink{namespaceAriadne_a76a8b016e5ad61faf9062cc387df5016}{Bool}} {\bfseries subset} (const \mbox{\hyperlink{group__FunctionModule_gafdd31b4d01081cd09aad2ce11117f867}{Exact\+Box\+Type}} \&the\+Box\+Type) const
+\begin{DoxyCompactList}\small\item\em Tests if a grid set is a subset of a box. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1GridTreeSubpaving_a0bd2b747b04a0d839210435790574ec7}\label{classAriadne_1_1GridTreeSubpaving_a0bd2b747b04a0d839210435790574ec7} 
+\mbox{\hyperlink{namespaceAriadne_a76a8b016e5ad61faf9062cc387df5016}{Bool}} {\bfseries superset} (const \mbox{\hyperlink{group__FunctionModule_gafdd31b4d01081cd09aad2ce11117f867}{Exact\+Box\+Type}} \&the\+Box\+Type) const
+\begin{DoxyCompactList}\small\item\em Tests if a grid set is a superset of a box. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1GridTreeSubpaving_a874984aa20155b451bde805c83534413}\label{classAriadne_1_1GridTreeSubpaving_a874984aa20155b451bde805c83534413} 
+\mbox{\hyperlink{namespaceAriadne_a76a8b016e5ad61faf9062cc387df5016}{Bool}} {\bfseries intersects} (const \mbox{\hyperlink{group__FunctionModule_gafdd31b4d01081cd09aad2ce11117f867}{Exact\+Box\+Type}} \&the\+Box\+Type) const
+\begin{DoxyCompactList}\small\item\em Tests if a grid set intersects (the interior) of a box. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1GridTreeSubpaving_a901188831516b806f4564ef6a2bafff1}\label{classAriadne_1_1GridTreeSubpaving_a901188831516b806f4564ef6a2bafff1} 
+\mbox{\hyperlink{namespaceAriadne_a76a8b016e5ad61faf9062cc387df5016}{Bool}} {\bfseries disjoint} (const \mbox{\hyperlink{group__FunctionModule_gafdd31b4d01081cd09aad2ce11117f867}{Exact\+Box\+Type}} \&the\+Box\+Type) const
+\begin{DoxyCompactList}\small\item\em Tests if a grid set is disjoint from (the interior of) box. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1GridTreeSubpaving_ac0d60542072396cd7ac20561cd333e6a}\label{classAriadne_1_1GridTreeSubpaving_ac0d60542072396cd7ac20561cd333e6a} 
+\mbox{\hyperlink{classAriadne_1_1ValidatedLowerKleenean}{Validated\+Lower\+Kleenean}} {\bfseries covers} (const \mbox{\hyperlink{group__FunctionModule_gafdd31b4d01081cd09aad2ce11117f867}{Exact\+Box\+Type}} \&the\+Box\+Type) const
+\begin{DoxyCompactList}\small\item\em Tests if the interior of a grid set is a superset of a box. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1GridTreeSubpaving_a11cee0eb8c37e6e30e8910e9d09ad99b}\label{classAriadne_1_1GridTreeSubpaving_a11cee0eb8c37e6e30e8910e9d09ad99b} 
+virtual \mbox{\hyperlink{classAriadne_1_1ValidatedLowerKleenean}{Validated\+Lower\+Kleenean}} {\bfseries inside} (const \mbox{\hyperlink{group__FunctionModule_gafdd31b4d01081cd09aad2ce11117f867}{Exact\+Box\+Type}} \&the\+Box\+Type) const override
+\begin{DoxyCompactList}\small\item\em Tests if (the closure of) a grid set is a subset of the interior of box. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1GridTreeSubpaving_a950b48ab5ba1673648f43dbbd9a58a55}\label{classAriadne_1_1GridTreeSubpaving_a950b48ab5ba1673648f43dbbd9a58a55} 
+virtual \mbox{\hyperlink{classAriadne_1_1ValidatedLowerKleenean}{Validated\+Lower\+Kleenean}} {\bfseries separated} (const \mbox{\hyperlink{group__FunctionModule_gafdd31b4d01081cd09aad2ce11117f867}{Exact\+Box\+Type}} \&the\+Box\+Type) const override
+\begin{DoxyCompactList}\small\item\em Tests if (the closure of) a grid set is disjoint from (the closure of) a box. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1GridTreeSubpaving_ae0d379f4f935fac34081d4fd4f51ee47}\label{classAriadne_1_1GridTreeSubpaving_ae0d379f4f935fac34081d4fd4f51ee47} 
+virtual \mbox{\hyperlink{classAriadne_1_1ValidatedLowerKleenean}{Validated\+Lower\+Kleenean}} {\bfseries overlaps} (const \mbox{\hyperlink{group__FunctionModule_gafdd31b4d01081cd09aad2ce11117f867}{Exact\+Box\+Type}} \&the\+Box\+Type) const override
+\begin{DoxyCompactList}\small\item\em Tests if a grid set overlaps (intersects the interior of) a box. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsubsection*{Input/\+Output}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1GridTreeSubpaving_a088dc02cf48a4c1089849dd41ae46548}\label{classAriadne_1_1GridTreeSubpaving_a088dc02cf48a4c1089849dd41ae46548} 
+virtual \mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} {\bfseries draw} (\mbox{\hyperlink{classAriadne_1_1CanvasInterface}{Canvas\+Interface}} \&canvas, const Projection2d \&projection) const override
+\begin{DoxyCompactList}\small\item\em Draw on a two-\/dimensional canvas. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1GridTreeSubpaving_ac7b4e4c2bfba8df731d221eaa97a132e}\label{classAriadne_1_1GridTreeSubpaving_ac7b4e4c2bfba8df731d221eaa97a132e} 
+virtual \mbox{\hyperlink{namespaceAriadne_acbb98ddc4385af4599070e65a1a47ec1}{Output\+Stream}} \& {\bfseries \+\_\+write} (\mbox{\hyperlink{namespaceAriadne_acbb98ddc4385af4599070e65a1a47ec1}{Output\+Stream}} \&os) const override
+\begin{DoxyCompactList}\small\item\em Write to an output stream. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+The documentation for this class was generated from the following files\+:\begin{DoxyCompactItemize}
+\item 
+source/geometry/\mbox{\hyperlink{grid__paving_8hpp}{grid\+\_\+paving.\+hpp}}\item 
+source/geometry/grid\+\_\+paving.\+cpp\end{DoxyCompactItemize}

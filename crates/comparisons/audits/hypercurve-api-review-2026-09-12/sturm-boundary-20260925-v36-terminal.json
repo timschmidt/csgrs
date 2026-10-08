@@ -1,0 +1,115 @@
+{
+  "checks": [
+    {
+      "label": "fmt",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustfmt",
+        "--edition",
+        "2024",
+        "--check",
+        "src/root_isolation.rs"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.3634292349452153,
+      "log": "sturm-boundary-20260925-v36-fmt.log"
+    },
+    {
+      "label": "clippy-1",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "clippy",
+        "--all-targets",
+        "--all-features",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 11.255103759933263,
+      "log": "sturm-boundary-20260925-v36-clippy-1.log"
+    },
+    {
+      "label": "clippy-2",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "clippy",
+        "--all-targets",
+        "--no-default-features",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 10.810797063983046,
+      "log": "sturm-boundary-20260925-v36-clippy-2.log"
+    }
+  ],
+  "cases": [
+    {
+      "label": "sturm_counts_repeated_roots_at_owned_partition_boundaries",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/sturm-boundary-20260925-v36-libtest",
+        "--exact",
+        "root_isolation::tests::sturm_counts_repeated_roots_at_owned_partition_boundaries",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.2890046800021082,
+      "log": "sturm-boundary-20260925-v36-sturm_counts_repeated_roots_at_owned_partition_boundaries.log"
+    },
+    {
+      "label": "nonzero_constant_sturm_chains_need_no_derivative",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/sturm-boundary-20260925-v36-libtest",
+        "--exact",
+        "root_isolation::tests::nonzero_constant_sturm_chains_need_no_derivative",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.28204338904470205,
+      "log": "sturm-boundary-20260925-v36-nonzero_constant_sturm_chains_need_no_derivative.log"
+    },
+    {
+      "label": "isolated_interval_refinement_preserves_generated_repeated_root_carriers",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/sturm-boundary-20260925-v36-libtest",
+        "--exact",
+        "root_isolation::tests::isolated_interval_refinement_preserves_generated_repeated_root_carriers",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.3066226219525561,
+      "log": "sturm-boundary-20260925-v36-isolated_interval_refinement_preserves_generated_repeated_root_carriers.log"
+    },
+    {
+      "label": "full-library",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/sturm-boundary-20260925-v36-libtest",
+        "--test-threads=2",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 2.9053654689341784,
+      "log": "sturm-boundary-20260925-v36-full-library.log"
+    }
+  ],
+  "all_processes_reaped": true,
+  "plan": "sturm-boundary-20260925-v36-plan.json",
+  "binary": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/sturm-boundary-20260925-v36-libtest",
+  "binary_sha256": "c746d1cc258993f2e1596a090c13a510c981bec10b17d4c14b42505d3d4cbf81",
+  "library_case_count": 510,
+  "passed": 510,
+  "ignored": 0,
+  "all_sources_unchanged": true
+}

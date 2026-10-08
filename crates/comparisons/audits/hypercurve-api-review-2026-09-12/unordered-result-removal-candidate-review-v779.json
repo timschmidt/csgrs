@@ -1,0 +1,10 @@
+{
+  "removed_benchmark_call": [
+    "    bench_region_arrangement_immediate_replay(100_000)?;\n"
+  ],
+  "corrections": [
+    "remove obsolete report-field replay benchmark",
+    "remove duplicated empty assertion",
+    "use bounded area assertion diagnostics"
+  ]
+}

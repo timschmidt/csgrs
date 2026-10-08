@@ -1,0 +1,34 @@
+{
+  "source_manifest": "fillet-reoffset-diagnostic-20260926-v237-sources.json",
+  "source_directory": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/source-archives/fillet-reoffset-diagnostic-20260926-v237",
+  "workspace_guard": "public-fillet-families-full-20260926-v236-sources.json",
+  "baseline_commit": "8b18d3f90252200a6216834e788a8c65ee720581",
+  "cases": [
+    {
+      "name": "approximate_512_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions",
+      "returncode": 101,
+      "log": "fillet-reoffset-diagnostic-20260926-v237-approximate_512_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions.log",
+      "elapsed_seconds": 55.98518444295041
+    }
+  ],
+  "all_processes_reaped": true,
+  "command": [
+    "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+    "test",
+    "--test",
+    "hypercurve_curve_region_promotion",
+    "--release",
+    "--all-features",
+    "--no-run",
+    "--message-format=json",
+    "--locked",
+    "--offline"
+  ],
+  "build_returncode": 0,
+  "build_elapsed_seconds": 82.37532373296563,
+  "binary": {
+    "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/fillet-reoffset-diagnostic-20260926-v237-hypercurve_curve_region_promotion",
+    "sha256": "8a98db0a961e23da5d3c6f3a66b5b6de28a7b46fb70bda2b8821b0671c1710c0"
+  },
+  "all_sources_unchanged": true
+}

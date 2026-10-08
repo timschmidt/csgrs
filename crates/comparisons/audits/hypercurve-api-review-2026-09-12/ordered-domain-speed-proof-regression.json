@@ -1,0 +1,25 @@
+{
+  "status": "repaired and qualified",
+  "unit_speed_polynomial": [
+    "1/3",
+    "-1",
+    "1"
+  ],
+  "minimum_on_unit_interval": "1/12",
+  "unit_Bernstein_coefficients": [
+    "1/3",
+    "-1/6",
+    "1/3"
+  ],
+  "meaning": "The polynomial is strictly positive, but its unit Bernstein control hull straddles zero. Declining this cheap proof must not discard the existing PH root-free unit certificate.",
+  "observed": "Two existing PH corner tests exceeded 60 seconds. A captured stack showed the general radical-pair fallback doing incident resultant root isolation. The superseded run was stopped with one library test still active.",
+  "profile": "ordered-domain-slow-test-stacks.txt",
+  "superseded_release_log": "ordered-domain-release-before-speed-proof-reuse.log",
+  "repair": "Speed sign replay now belongs to the PH certificate, reuses its unit root exclusion, and falls back to finite root isolation when an exterior Bernstein bound is inconclusive.",
+  "focused_after": {
+    "log": "ordered-domain-ph-proof-reuse-after.log",
+    "passed": 13,
+    "seconds": 5.47
+  },
+  "qualification": "ordered-domain-qualification.json"
+}

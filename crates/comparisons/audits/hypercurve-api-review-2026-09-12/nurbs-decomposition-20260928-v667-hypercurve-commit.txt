@@ -1,0 +1,5 @@
+Use the exact spline extraction directly for NURBS decomposition
+
+Remove NurbsBezierDecomposition2, which wrapped one RationalBSplineBezierExtraction2 and forwarded five queries. The existing policy-aware decomposition cache now retains and returns that extraction directly. Its homogeneous controls, source knot intervals, native-span promotion and retained span facts remain on the same result. Update the module and export without an alias or compatibility interface.
+
+Validation: 137 release cases across four pinned binaries, including the complete NURBS, B-spline and public Curve integration inventories, plus six lint/format/fuzz/docs/downstream checks. Existing tests cover policy isolation, shared caches, periodicity, knot edits, infinite homogeneous controls, genuine denominator poles and exact native promotion. A 30-repository caller audit found no named uses outside the owning module and export.

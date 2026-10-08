@@ -1,0 +1,337 @@
+/***************************************************************************
+ *            python_module_demonstrations.dox
+ *
+ *  Copyright  2009-21  Pieter Collins
+ *
+ ****************************************************************************/
+
+/*
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; either version 2 of the License, or
+ *  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Library General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program; if not, write to the Free Software
+ *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+ */
+
+/*!
+ * \file python_module_demonstrations.dox
+ * \brief Documentation for the demonstrations of Ariadne's Python modules
+ */
+
+namespace Ariadne {
+
+/*!
+
+\page python_module_demonstrations_page Python Module Demonstrations
+
+On this page, we illustrate how to use %Ariadne via the Python interface.
+The focus is on the syntax used (which may be different from the C++ syntax) and not on how to use %Ariadne to solve problems, for which examples can be found on the \ref rigorous_numerics_tutorial_page page and the \ref python_module_tutorials_page page.
+
+First, a brief overview of the numerical types and linear algebra operations are given in the \ref python_numerical_demonstration and \ref python_linear_algebra_demonstration sections. A guide to the nonlinear functions available is given in \ref python_function_demonstration, including a guide to the use of polynomial function calculus in \ref python_taylor_function_calculus_demonstration.
+A guide to working with sets and geometry is given in \ref python_geometry_demonstration.
+Solving algebraic and differential equations, and optimisation problems is handled in \ref python_solvers_demonstration.
+
+The full code of the demonstrations are given in the following files in the \ref python/tutorials/ directory:
+\link python/tutorials/numeric_demonstration.py numeric_demonstration.py\endlink,
+\link python/tutorials/algebra_demonstration.py algebra_demonstration.py\endlink,
+\link python/tutorials/function_demonstration.py function_demonstration.py\endlink,
+\link python/tutorials/geometry_demonstration.py geometry_demonstration.py\endlink and
+\link python/tutorials/solver_demonstration.py solver_demonstration.py\endlink.
+
+Links are given to the main classes used in the demonstrations.
+The documentation for these classes is automatically generated from comments in the C++ code.
+To help Python users unfamiliar with C++ understand this documentation, a guide on the main differences between C++ and Python can be found on the \ref python_interface_page page.
+
+\section python_introspection_demonstration The Ariadne module.
+
+First, import the %Ariadne module. For ease-of-use, the <tt>from</tt> version of <tt>import</tt> is recommended:
+\code from pyariadne import * \endcode
+To see all the classes and functions available in %Ariadne, type:
+\code print(dir(ariadne)) \endcode
+
+
+\section python_numerical_demonstration Numerical Types
+
+\dontinclude python/tutorials/numeric_demonstration.py
+
+The full code of this demonstration is given in the file \ref python/tutorials/numeric_demonstration.py.
+
+
+%Ariadne supports several basic numerical types, including core \ref Natural, \ref Integer, \ref Dyadic, \ref Decimal, \ref Rational and \ref Real classes, which store numbers exactly. These number types are good for problem specification, but may be inefficient for actual numerical computations.
+
+
+The \ref Integer class supports integers of arbitrary size.
+\skipline Integer
+
+The \ref Dyadic class supports numbers of the form \f$p/2^q\f$ where \f$p\f$ and \f$q\f$ are integers; equivalently, numbers with a terminating binary expansion.
+These include all numbers of binary floating-point types and are useful as computational intermediates.
+\skip Dyadic
+\until two
+
+The \ref Decimal class supports exact representation of decimal numbers.
+Numbers can be constructed from floating-point values up to around 9 decimal places; for more accuracy a string literal must be used:
+\skipline Decimal
+\skipline Decimal
+\skipline Decimal
+
+The \ref Rational class supports exact representation of rational numbers.
+\skipline Rational
+\skipline Rational
+\skipline Rational
+
+The \ref Real number class represents general real numbers
+\skipline Real
+
+All numeric classes support standard arithmetical operators
+\skipline +r
+named versions of these arithmetical operations,
+\skipline pos
+and other arithmetical operations, including halving <tt>hlf</tt> and reciprocal <tt>rec</tt>.
+\skipline nul
+elementary functions (root, exponential, logarithm and trigonometric)
+\skipline sqrt
+lattice operations
+\skipline abs
+comparisons
+\skipline r<=
+and the distance function
+\skipline dist
+A full list of these operations is given in the list of \ref supported_operations "supported operations".
+
+\subsection python_floating_point Floating-point numbers
+
+Computations in %Ariadne are usually most efficiently performed using floating-point number types. %Ariadne internally supports the \ref FloatDP and \ref FloatMP types, which are respectively based on builtin IEEE double-precision floating-point numbers, and multiple-precision floating-point numbers from the MPFR library.
+
+Since Python's builtin <tt>float</tt> class uses rounded arithmetic, such numbers may not be an exact representation of a value, leading to unsafe computation. If a Python <tt>float</tt> is indeed an exact value, (e.g. 1.375 is an exact double-precision floating-point number), this must first be converted to an %Ariadne \ref ExactDouble class:
+\skipline ExactDouble
+\skipline exact
+Numbers which are not exactly representable in double-precision should be converted to the \ref Decimal class instead.
+
+%Ariadne uses C++/Python's built-in floating-point types to provide a double-precision floating-point number class \ref FloatDP, and the MPFR library to provide a multiple-precision floating-point type \ref FloatMP. Each type has a corresponding precision:
+\skipline DoublePrecision
+\skipline double_precision
+\skipline MultiplePrecision
+Floating-point numbers can be constructed from integers and dyadic numbers by supplying the precision:
+\skipline FloatDP
+\skipline FloatMP
+
+Raw floating-point numbers only support rounded arithmetic, so are best avoided in user code. Instead, they can be used in safe correctly-rounded generic types  \ref Value "Value<F>", \ref Ball "Ball<F,FE>", \ref Bounds "Bounds<F>", \ref UpperBound "UpperBound<F>", \ref LowerBound "LowerBound<F>" and \ref Approximation "Approximation<F>".
+In Python, this template parameter is appended to the class name, so \ref FloatDP::FloatDPBounds "FloatDPBounds" is the Python name for \ref Bounds "Bounds<FloatDP>", and \ref FloatMP::FloatMPBounds "FloatMPBounds" is the name for \ref Bounds "Bounds<FloatMP>".
+
+For example, the \ref Bounds classes support outward-rounded interval arithmetic
+\skipline =FloatDPBounds
+\skipline =FloatDPBounds
+\skipline =FloatMPBounds
+\skipline =FloatMPBounds
+\skipline =FloatMPBounds
+and the \ref Approximation classes support approximate arithmetic.
+\skipline =FloatDPApproximation
+\skipline =FloatMPApproximation
+\skipline =FloatMPApproximation
+
+\sa \ref NumericModule
+
+
+
+\section python_linear_algebra_demonstration Linear Algebra
+
+\dontinclude python/tutorials/algebra_demonstration.py
+
+%Ariadne supports linear algebra operations based on Vector and Matrix classes. In the C++ library, these types are parameterised by the scalar type (e.g. \ref Rational, \ref FloatDP::FloatDPBounds "FloatDPBounds"). In Python, this gives class names such as \ref Vector::RationalVector "RationalVector" and \ref Matrix::FloatDPBoundsMatrix "FloatDPBoundsMatrix".
+
+%Vector and matrix classes can be constructed using Python lists.
+\skipline Vector
+\skipline RationalMatrix
+\skipline Matrix
+
+As well as matrix and vector arithmetic, %Ariadne provides a \c solve routine for solving systems of linear equations:
+\skipline solve
+
+\sa \ref LinearAlgebraSubModule
+
+
+
+\section python_function_demonstration Function Calculus
+
+\dontinclude python/tutorials/function_demonstration.py
+
+%Ariadne's \ref Function class supports nonlinear functions by means of templated abstract classes, with template parameters indicating the argument and result times.
+These include \ref Function::EffectiveScalarMultivariateFunction "EffectiveScalarMultivariateFunction" for scalar functions \f$f:\R^m\rightarrow\R\f$
+\skipline EffectiveScalarMultivariateFunction
+\skipline sf=
+\skipline =sf(
+\skipline =sf(
+and the \ref Function::EffectiveVectorMultivariateFunction "EffectiveVectorMultivariateFunction" for functions \f$f:\R^m\rightarrow\R^n\f$.
+\skipline EffectiveVectorMultivariateFunction
+\skipline vf=
+\skipline =vf(
+\skipline =evaluate(vf,
+and functions of a scalar argument \ref Function::EffectiveScalarUnivariateFunction "EffectiveScalarUnivariateFunction" for functions \f$f:\R\rightarrow\R\f$, \ref Function::EffectiveVectorUnivariateFunction "EffectiveVectorUnivariateFunction" for \f$f:\R\rightarrow\R^n\f$.
+
+These functions can be differentiated with respect to their coordinates.
+\skipline =derivative(
+
+The \ref Polynomial "Polynomial<X>" class provides concrete implementations of the function calculus. For example, \ref Polynomial::FloatDPApproximationMultivariatePolynomial "FloatDPApproximationMultivariatePolynomial" class defines a polynomial in multiple variables with coefficients of type \ref FloatDP::FloatDPApproximation "FloatDPApproximation".
+A polynomial can be created by using the <tt>coordinate(n,j)</tt> static method, which creates the polynomial \f$p(x)=x_j\f$ for \f$x\in\R^n\f$:
+\skipline p0=FloatDPApproximationMultivariatePolynomial
+\skipline p1=FloatDPApproximationMultivariatePolynomial
+The standard arithmetical operations are available for polynomial expressions:
+\skipline q=
+
+\sa \ref FunctionModule
+
+
+\subsection python_taylor_function_calculus_demonstration Taylor Function Calculus
+
+The generic function interfaces cannot generally be directly manipulated. Instead, they can be converted to numerical \ref ValidatedScalarMultivariateTaylorFunctionModelDP and \ref ValidatedVectorMultivariateTaylorFunctionModelDP types which can then be worked with.
+
+The core type is a \ref ScalarMultivariateTaylorFunctionModel "ScalarMultivariateTaylorFunctionModel<P,F>", which is a polynomial \a p precomposed by a scaling \a s<sup>-1</sup> of a function \a f on a box \a D in Euclidean space with uniform error \a e:
+\f$ f(x) = p(s^{-1}(x))\pm e \text{ for } x\in D . \f$
+
+To construct a Taylor function model, we need to give the domain and a "sweeper" which controls the accuracy.
+\skipline BoxDomainType(
+\skipline ThresholdSweeperDP(
+
+Constant and coordinated functions can easily be created
+\skipline ValidatedScalarMultivariateTaylorFunctionModelDP.constant(
+\skipline ValidatedScalarMultivariateTaylorFunctionModelDP.coordinate(
+and a general function can be converted to a Taylor function model
+\skipline EffectiveScalarMultivariateFunction.coordinate(
+\skipline ValidatedScalarMultivariateTaylorFunctionModelDP(
+
+We can extract the domain of the functions, and over-approximations to the codomain/range
+\skipline domain(
+\skipline codomain(
+\skipline range(
+
+Taylor function models support arithmetic
+\skipline tx+ty
+and mixed arithmetic with numerical types
+\skipline tx+c
+\skipline c+tx
+They also support lattice operations,
+\skipline min
+standard named arithmetical operations,
+\skipline neg
+\skipline rec
+\skipline sqr
+\skipline pow
+and roots, exponentials, logarithms and trigonometric functions
+\skipline sqrt
+\skipline exp
+\skipline sin
+In-place operations are also provided
+\skipline +=
+\skipline +=
+
+We can compute antiderivatives (indefinite integrals) with respect to the coordinates
+\skipline =antiderivative(
+specifying an optional base-point
+\skipline =antiderivative(
+
+For higher accuracy, the approximation can be restricted to a subdomain
+\skipline =restriction(
+
+Standard function operations are provided, including direct sum (join) \f$x\mapsto[f(x),g(x)]\f$ and product (combine) \f$[x,y]\mapsto[f(x),g(y)]\f$.
+\skipline =join(
+\skipline =combine(
+
+Taylor function models can be post-composition by a generic function
+\skipline =compose(
+\skipline =compose(
+or composed with another Taylor function model
+\skipline =compose(
+\skipline =compose(
+
+
+Since Taylor function models provide a set of possibilities for the actual function, we can test whether two computations are inconsistent (disjoint) or if one refines another, and compute the common refinement
+\skipline =inconsistent(
+\skipline =refines(
+\skipline =refinement(
+
+
+
+\section python_geometry_demonstration Sets and Geometry
+
+\dontinclude python/tutorials/geometry_demonstration.py
+
+%Ariadne supports a \ref Interval<UB> class with different types for the endpoints, such as \ref Interval::RationalInterval "RationalInterval" and \ref Interval::FloatDPUpperInterval "FloatDPUpperInterval", the latter being \ref Interval "Interval<FloatDPUpperBound>".
+\skipline RationalInterval
+\skipline FloatDPUpperInterval
+A \ref Box is the Cartesian product of intervals, and can be created from a list of intervals
+\skipline RealBox
+
+Standard geometric predicates are supported
+\skipline subset
+\skipline disjoint
+
+Sets can also be defined based on constraints, such as \ref ConstraintSet.
+\skipline ConstraintSet
+
+The intersections of a box and a set based on constraints is guaranteed to be bounded, with type \ref BoundedConstraintSet
+\skipline intersection
+\skipline intersection
+and we can compute its image under a continuous function yielding a \ref ConstrainedImageSet.
+\skipline image
+\skipline image
+
+Sets can be discretised on a grid to obtain a \ref GridTreePaving comprised of \ref GridCell objects.
+\skipline outer_approximation
+
+The projection onto a two-dimensional coordinate space can be plotted
+\skipline plot
+
+\sa \ref GeometryModule
+
+
+
+\section python_solvers_demonstration Solvers for Algebraic and Differential Equations
+
+\dontinclude python/tutorials/solver_demonstration.py
+
+%Ariadne uses %Solver classes for complicated operations such as solving algebraic or differential equations.
+
+\subsection python_algebraic_solvers_demonstration Solving Algebraic Equations
+
+We can solve parameterised algebraic equations using the operator \c implicit of a \a Solver class, such as \ref IntervalNewtonSolver or \ref KrawczykSolver/
+If \f$f:D_1\times D_2\rightarrow \R^n\f$ with \f$D_2\subset\R^n\f$ then the operator \c implicit(f) attempts to compute a function \f$h:D_1\to\R^n\f$ such that \f$f(x,h(x))=0\f$ for \f$x\in D_m\f$. The function \f$h\f$ must satisfy \f$h(D_1)\subset D_2\f$.
+
+\skipline slv=
+\skipline f=
+\skipline slv.implicit
+\skipline g=
+\skipline slv.implicit
+
+
+\subsection python_differential_equation_solvers_demonstration Solving Differential Equations
+
+We can solve differential equations using the operator \c flow of an \a Integrator class, such as \ref TaylorPicardIntegrator or \ref GradedTaylorSeriesIntegrator.
+If \f$:\R^n\to\R^n\f$, \f$D\subset\R^n\f$ and \f$h>0\f$, then the operator \c flow(f,D,h) computes a function \f$\phi:D\times[0,h]\to\R^n\f$ satisfying \f$\dot{\phi}(x,t)=f(\phi(x,t))\f$ and \f$\phi(x,0)=x\f$.
+
+\skipline integrator=
+\skipline f=
+\skipline integrator.flow
+
+\sa \ref SolverModule
+
+*/
+
+} // namespace Ariadne
+
+/*!
+
+\example python/tutorials/numeric_demonstration.py A demonstration of the functionality of the Numeric module.
+\example python/tutorials/algebra_demonstration.py A demonstration of the functionality of the Algebra module.
+\example python/tutorials/function_demonstration.py A demonstration of the functionality of the Function module.
+\example python/tutorials/geometry_demonstration.py A demonstration of the geometryality of the Geometry module.
+\example python/tutorials/solver_demonstration.py A demonstration of the functionality of the Solver module.
+
+*/

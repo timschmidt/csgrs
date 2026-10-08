@@ -1,0 +1,7 @@
+{
+  "status": "Prepared, unrun. No failure claimed.",
+  "construction": "P(t)=4*t^3-pi. A(t)=(P(t),t*P(t)); B(u)=(P(u^2),u^2*P(u^2)+P(u^2)^2). Both trimmed from their selected positive zero to one.",
+  "selection": "alpha is the positive root of 4*t^3-pi; beta is the positive root of 4*u^6-pi, so alpha=beta^2, with both in (0,1).",
+  "oracle": "For the positive charts x=P(t)>0 and t=u^2, B_y-A_y=x^2>0. Counter-clockwise traversal from the incoming positive horizontal must choose A first: chains [0,1], [2].",
+  "coefficient_conversion": "Degree-twelve Bernstein controls use u^j = sum_k (choose(k,j)/choose(12,j))*B_k^12(u). All coefficient construction is exact."
+}

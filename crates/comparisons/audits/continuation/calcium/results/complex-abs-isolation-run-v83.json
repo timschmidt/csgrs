@@ -1,0 +1,13 @@
+{
+  "tag": "complex-abs-isolation-run-v83",
+  "started": "2026-09-12T03:52:17.844Z",
+  "finished": "2026-09-12T03:52:21.882Z",
+  "elapsedSeconds": 4.035524663,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "node",
+  "args": [
+    "run-complex-abs-isolation-v83.mjs"
+  ],
+  "code": 0,
+  "signal": null
+}

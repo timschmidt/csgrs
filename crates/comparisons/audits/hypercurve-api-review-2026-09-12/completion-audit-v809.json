@@ -1,0 +1,11 @@
+{
+  "classification": "progress",
+  "goal_status": "active",
+  "commits": [
+    "69b8de1644de4dd423af5e73f5d44d3685512756",
+    "1f210047efcdae2fa6f62140be2b360b8261b899"
+  ],
+  "baseline": "polynomial-point-v806",
+  "active_drivers": [],
+  "next": "Audit and unify polynomial derivative evidence using the V809 counterexample; preserve derivative demand and exact replay."
+}

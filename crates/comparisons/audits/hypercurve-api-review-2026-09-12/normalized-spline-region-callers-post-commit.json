@@ -1,0 +1,18 @@
+{
+  "commit": "06733b0c86b10d9bdba81e1b8b4609b742b8dde1",
+  "files": [
+    {
+      "file": "tests/hypercurve_bspline.rs",
+      "sha256": "b23781e1c416176158c803222b7e0f91cfbf3f1f4a0824bf4e11e7624f871a78"
+    },
+    {
+      "file": "benches/bezier_region.rs",
+      "sha256": "3a1f7c948dff1c8fa4457b3aeffe66bf86924826cac56ccdced2961a49d8f1e3"
+    },
+    {
+      "file": "fuzz/fuzz_targets/bezier_region.rs",
+      "sha256": "27233ffa7c4f1693eb0cf4ad4fa2580c9b78b765c6e90809225363757f1113cb"
+    }
+  ],
+  "status": " M src/bezier_offset.rs\n"
+}

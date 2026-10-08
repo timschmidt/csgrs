@@ -1,0 +1,27 @@
+{
+  "source_manifest": "common-point-classification-v726-r1-csgrs-sources.json",
+  "production_manifest": "retained-point-exterior-20260928-v720-sources.json",
+  "source_directory": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/source-archives/common-point-classification-v726-r1-csgrs",
+  "candidate": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/common-point-classification-candidate-v722",
+  "crate": "csgrs",
+  "all_processes_reaped": true,
+  "compile_passed": false,
+  "check": {
+    "command": [
+      "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+      "check",
+      "--all-targets",
+      "--keep-going",
+      "--all-features",
+      "--locked",
+      "--offline",
+      "--message-format=json"
+    ],
+    "log": "common-point-classification-v726-r1-csgrs-check.log",
+    "returncode": 101,
+    "elapsed_seconds": 66.25926195085049
+  },
+  "errors": 2,
+  "warnings": 0,
+  "diagnostics": "common-point-classification-v726-r1-csgrs-diagnostics.json"
+}

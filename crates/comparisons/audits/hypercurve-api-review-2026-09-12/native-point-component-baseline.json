@@ -1,0 +1,21 @@
+{
+  "returncode": 0,
+  "elapsed_seconds": 0.0035237889969721437,
+  "command": [
+    "rustc",
+    "--edition=2024",
+    "-O",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/native-point-component-baseline.rs",
+    "--extern",
+    "hypercurve=/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/libhypercurve-2c7ff6f3fbe07653.rlib",
+    "-L",
+    "dependency=/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps",
+    "-o",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/native-point-component-baseline"
+  ],
+  "source_sha256": "870d6d5bf93abdc2567a21604ca34bfdb23fe42415c3e454eb667683f1d47de3",
+  "executable_sha256": "32e032ca6d370c113bf4ac38af06ccf2ab08dc5d55a74b69c433b9b1d6e27301",
+  "normal_library_sha256": "85e42999ed5b1bfd5cc18db3eb8bcc325f98e6d73ee9c02408d6eb7d9e4d1628",
+  "baseline_commit": "6b05bf1fcebfe49442e47c5aff55facca5ba4f38",
+  "source_manifest": "analytic-common-dispatch-source-before-tests.json"
+}

@@ -1,0 +1,15 @@
+{
+  "repos": {
+    "hypercurve": {
+      "commit": "7cdde2aff667aaf1fb19e0472f3efddd9592396f",
+      "parent": "aabcd7946bc212912136203f1e2664ce41a5997b",
+      "paths": {
+        "src/bezier_arrangement.rs": "42f6eab5173cf1e822d048ef82a3fce4c9869eaa817c9def2ff4908559dd7d8f",
+        "tests/hypercurve_bezier_arrangement.rs": "174159cfa07646ecb628cd789bd5c49919888158f51edfb84de57a6ba919eba1"
+      }
+    }
+  },
+  "qualification": "mixed-endpoint-order-v877-terminal.json",
+  "verified_source_files": 2048,
+  "clean_repositories": 30
+}

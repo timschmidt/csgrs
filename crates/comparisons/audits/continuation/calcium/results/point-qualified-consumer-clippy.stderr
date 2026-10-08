@@ -1,0 +1,7 @@
+    Checking hyperreal v0.13.1 (/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/point-image-qualified-candidate/hyperreal)
+    Checking hyperlattice v0.6.1 (/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/point-image-qualified-candidate/hyperlattice)
+    Checking hyperlimit v0.4.1 (/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/point-image-qualified-candidate/hyperlimit)
+    Checking hypersolve v0.3.1 (/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/point-image-qualified-candidate/hypersolve)
+    Checking hypertri v0.4.1 (/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/point-image-qualified-candidate/hypertri)
+    Checking hypercurve v0.3.1 (/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/point-image-qualified-candidate/hypercurve)
+    Finished `dev` profile [unoptimized] target(s) in 31.17s

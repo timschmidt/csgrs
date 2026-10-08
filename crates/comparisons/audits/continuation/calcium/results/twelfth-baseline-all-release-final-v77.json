@@ -1,0 +1,24 @@
+{
+  "tag": "twelfth-baseline-all-release-final-v77",
+  "started": "2026-09-11T23:04:24.162Z",
+  "finished": "2026-09-11T23:05:09.036Z",
+  "elapsedSeconds": 44.871237217,
+  "cwd": "/home/tim/Documents/GitHub/workspace/hyperreal",
+  "command": "env",
+  "args": [
+    "CARGO_TARGET_DIR=/tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse",
+    "CARGO_INCREMENTAL=0",
+    "CARGO_PROFILE_DEV_DEBUG=0",
+    "CARGO_BUILD_JOBS=2",
+    "cargo",
+    "test",
+    "--locked",
+    "--offline",
+    "--release",
+    "--all-features",
+    "--lib",
+    "--tests"
+  ],
+  "code": 0,
+  "signal": null
+}

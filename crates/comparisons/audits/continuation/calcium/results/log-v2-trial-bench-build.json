@@ -1,0 +1,22 @@
+{
+  "tag": "log-v2-trial-bench-build",
+  "started": "2026-09-08T09:23:56.132Z",
+  "finished": "2026-09-08T09:24:03.053Z",
+  "elapsedSeconds": 6.919110107000001,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison",
+  "command": "env",
+  "args": [
+    "TMPDIR=/home/tim/Documents/GitHub/workspace/calcium-build-tmp.gVX5v4",
+    "CARGO_INCREMENTAL=0",
+    "cargo",
+    "build",
+    "--offline",
+    "--release",
+    "--manifest-path",
+    "audits/continuation/calcium/trial-bench/Cargo.toml",
+    "--target-dir",
+    "/home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype"
+  ],
+  "code": 101,
+  "signal": null
+}

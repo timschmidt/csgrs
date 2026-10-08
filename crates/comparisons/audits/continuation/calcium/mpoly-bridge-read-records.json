@@ -1,0 +1,630 @@
+[
+  {
+    "repo": "calcium",
+    "path": "fexpr/get_fmpz_mpoly_q.c",
+    "ranges": [
+      [
+        1,
+        149
+      ]
+    ],
+    "note": "Checkpoint47: Formal recursive interpreter for integer leaves, arithmetic and integer powers, exact terminal lookup and explicit conversion status. No algebraic independence proof. Both generations differ only in license/include scaffolding; malformed/failure-output paths are source-read but unexecuted."
+  },
+  {
+    "repo": "calcium",
+    "path": "fexpr/set_fmpz_mpoly_q.c",
+    "ranges": [
+      [
+        1,
+        36
+      ]
+    ],
+    "note": "Checkpoint47: Unit denominator emits polynomial directly; otherwise expression Div of emitted numerator/denominator. Does not recover authored domain obligations."
+  },
+  {
+    "repo": "calcium",
+    "path": "fmpz_mpoly_q.h",
+    "ranges": [
+      [
+        1,
+        309
+      ]
+    ],
+    "note": "Checkpoint47: Entire archived API, pair representation, signed wrappers, bounded scalar content/GCD helper, successful-GCD prerequisite, exact-division dispatch and zero content one convention. Current header was already read at46."
+  },
+  {
+    "repo": "calcium",
+    "path": "fmpz_mpoly_q/add.c",
+    "ranges": [
+      [
+        1,
+        360
+      ]
+    ],
+    "note": "Checkpoint47: All denominator cases, staged denominator-GCD and second cancellation restricted to that GCD, scalar-content routes, temporaries and whole-object alias routes. Mechanism already exists in Hyper integer rational addition."
+  },
+  {
+    "repo": "calcium",
+    "path": "fmpz_mpoly_q/add_fmpq.c",
+    "ranges": [
+      [
+        1,
+        164
+      ]
+    ],
+    "note": "Checkpoint47: Equal/unit denominator cases and content GCD reduction; residual content restricted to old GCD. Archived TODO for integer denominator specialization."
+  },
+  {
+    "repo": "calcium",
+    "path": "fmpz_mpoly_q/add_fmpz.c",
+    "ranges": [
+      [
+        1,
+        24
+      ]
+    ],
+    "note": "Checkpoint47: Integer wrapper passes immediate denominator one to rational-scalar addition."
+  },
+  {
+    "repo": "calcium",
+    "path": "fmpz_mpoly_q/canonicalise.c",
+    "ranges": [
+      [
+        1,
+        83
+      ]
+    ],
+    "note": "Checkpoint47: Unit/zero/scalar shortcuts followed by exact polynomial GCD cancellation and denominator leading-sign convention."
+  },
+  {
+    "repo": "calcium",
+    "path": "fmpz_mpoly_q/clear.c",
+    "ranges": [
+      [
+        1,
+        20
+      ]
+    ],
+    "note": "Checkpoint47: Clear two owned polynomials."
+  },
+  {
+    "repo": "calcium",
+    "path": "fmpz_mpoly_q/div.c",
+    "ranges": [
+      [
+        1,
+        64
+      ]
+    ],
+    "note": "Checkpoint47: Zero divisor checked before zero dividend; reciprocal multiplication, temporary for right alias and leading-denominator sign repair. Redundant second zero-divisor check is not a new mathematical feature."
+  },
+  {
+    "repo": "calcium",
+    "path": "fmpz_mpoly_q/div_fmpq.c",
+    "ranges": [
+      [
+        1,
+        49
+      ]
+    ],
+    "note": "Checkpoint47: Nonzero rational divisor; reciprocal scalar multiplication with negative-sign normalization."
+  },
+  {
+    "repo": "calcium",
+    "path": "fmpz_mpoly_q/div_fmpz.c",
+    "ranges": [
+      [
+        1,
+        51
+      ]
+    ],
+    "note": "Checkpoint47: Nonzero integer divisor; immediate signed-one temporary and sign-normalized reciprocal."
+  },
+  {
+    "repo": "calcium",
+    "path": "fmpz_mpoly_q/equal.c",
+    "ranges": [
+      [
+        1,
+        20
+      ]
+    ],
+    "note": "Checkpoint47: Exact structural canonical-pair equality in the formal fraction field, not total computable-real equality."
+  },
+  {
+    "repo": "calcium",
+    "path": "fmpz_mpoly_q/evaluate_acb.c",
+    "ranges": [
+      [
+        1,
+        97
+      ]
+    ],
+    "note": "Checkpoint47: Archived polynomial evaluator sums coefficient-weighted monomials with word exponents and per-variable powers; zero/constant shortcuts. Rational evaluator checks denominator enclosure first and returns indeterminate when it contains zero. No caching or Horner strategy; no archived runtime or large-exponent qualification."
+  },
+  {
+    "repo": "calcium",
+    "path": "fmpz_mpoly_q/init.c",
+    "ranges": [
+      [
+        1,
+        21
+      ]
+    ],
+    "note": "Checkpoint47: Initialize two polynomial owners and denominator one."
+  },
+  {
+    "repo": "calcium",
+    "path": "fmpz_mpoly_q/inlines.c",
+    "ranges": [
+      [
+        1,
+        14
+      ]
+    ],
+    "note": "Checkpoint47: Single translation-unit emission of inline definitions."
+  },
+  {
+    "repo": "calcium",
+    "path": "fmpz_mpoly_q/inv.c",
+    "ranges": [
+      [
+        1,
+        34
+      ]
+    ],
+    "note": "Checkpoint47: Nonzero input requirement, copy only when distinct, pair swap and positive-leading-denominator sign repair."
+  },
+  {
+    "repo": "calcium",
+    "path": "fmpz_mpoly_q/is_canonical.c",
+    "ranges": [
+      [
+        1,
+        41
+      ]
+    ],
+    "note": "Checkpoint47: Term canonicality, nonzero positive-leading denominator and coprime pair via same GCD backend; not an independent oracle."
+  },
+  {
+    "repo": "calcium",
+    "path": "fmpz_mpoly_q/mul.c",
+    "ranges": [
+      [
+        1,
+        155
+      ]
+    ],
+    "note": "Checkpoint47: Opposite-side GCD pre-cancellation and equal-denominator shortcut under canonical inputs; archived scalar-denominator TODO is implemented in current FLINT. No new Hyper transfer demonstrated."
+  },
+  {
+    "repo": "calcium",
+    "path": "fmpz_mpoly_q/mul_fmpq.c",
+    "ranges": [
+      [
+        1,
+        145
+      ]
+    ],
+    "note": "Checkpoint47: Scalar content pre-cancellation against opposite numerator/denominator, unit/equal denominator and zero shortcuts, two-content case."
+  },
+  {
+    "repo": "calcium",
+    "path": "fmpz_mpoly_q/mul_fmpz.c",
+    "ranges": [
+      [
+        1,
+        24
+      ]
+    ],
+    "note": "Checkpoint47: Integer wrapper passes immediate denominator one to rational-scalar multiplication."
+  },
+  {
+    "repo": "calcium",
+    "path": "fmpz_mpoly_q/neg.c",
+    "ranges": [
+      [
+        1,
+        20
+      ]
+    ],
+    "note": "Checkpoint47: Numerator negation and denominator copy including whole-object alias."
+  },
+  {
+    "repo": "calcium",
+    "path": "fmpz_mpoly_q/print_pretty.c",
+    "ranges": [
+      [
+        1,
+        37
+      ]
+    ],
+    "note": "Checkpoint47: Denominator-aware direct printing; archived API has no generic string parser."
+  },
+  {
+    "repo": "calcium",
+    "path": "fmpz_mpoly_q/randtest.c",
+    "ranges": [
+      [
+        1,
+        42
+      ]
+    ],
+    "note": "Checkpoint47: Bias toward unit/scalar denominator, replace generated zero denominator with one, canonicalize. Shared canonicality backend."
+  },
+  {
+    "repo": "calcium",
+    "path": "fmpz_mpoly_q/set.c",
+    "ranges": [
+      [
+        1,
+        23
+      ]
+    ],
+    "note": "Checkpoint47: Self-copy guard and pair copying."
+  },
+  {
+    "repo": "calcium",
+    "path": "fmpz_mpoly_q/set_fmpq.c",
+    "ranges": [
+      [
+        1,
+        20
+      ]
+    ],
+    "note": "Checkpoint47: Import canonical rational pair without extra normalization."
+  },
+  {
+    "repo": "calcium",
+    "path": "fmpz_mpoly_q/set_fmpz.c",
+    "ranges": [
+      [
+        1,
+        20
+      ]
+    ],
+    "note": "Checkpoint47: Integer numerator and unit denominator."
+  },
+  {
+    "repo": "calcium",
+    "path": "fmpz_mpoly_q/set_si.c",
+    "ranges": [
+      [
+        1,
+        20
+      ]
+    ],
+    "note": "Checkpoint47: Signed integer numerator and unit denominator."
+  },
+  {
+    "repo": "calcium",
+    "path": "fmpz_mpoly_q/sub.c",
+    "ranges": [
+      [
+        1,
+        361
+      ]
+    ],
+    "note": "Checkpoint47: All signed difference cases and reversed scalar-denominator route with final negation. Same staged denominator/content cancellation and alias constraints as addition."
+  },
+  {
+    "repo": "calcium",
+    "path": "fmpz_mpoly_q/sub_fmpq.c",
+    "ranges": [
+      [
+        1,
+        165
+      ]
+    ],
+    "note": "Checkpoint47: Signed rational-scalar counterpart; zero right operand first, negative result for zero left, content/GCD and alias temporaries."
+  },
+  {
+    "repo": "calcium",
+    "path": "fmpz_mpoly_q/sub_fmpz.c",
+    "ranges": [
+      [
+        1,
+        24
+      ]
+    ],
+    "note": "Checkpoint47: Integer wrapper passes immediate denominator one to rational-scalar subtraction."
+  },
+  {
+    "repo": "calcium",
+    "path": "fmpz_mpoly_q/swap.c",
+    "ranges": [
+      [
+        1,
+        20
+      ]
+    ],
+    "note": "Checkpoint47: Swap both polynomial owners."
+  },
+  {
+    "repo": "calcium",
+    "path": "fmpz_mpoly_q/test/t-add.c",
+    "ranges": [
+      [
+        1,
+        97
+      ]
+    ],
+    "note": "Checkpoint47: Complete random lex-only arithmetic test with shared polynomial/GCD canonical reference and one randomly selected whole-object alias. Nonzero divisor generation for division."
+  },
+  {
+    "repo": "calcium",
+    "path": "fmpz_mpoly_q/test/t-add_fmpq.c",
+    "ranges": [
+      [
+        1,
+        68
+      ]
+    ],
+    "note": "Checkpoint47: Complete lex-only scalar-wrapper test with shared generic arithmetic or polynomial canonicalization reference; no explicit in-place output case for the tested scalar wrapper."
+  },
+  {
+    "repo": "calcium",
+    "path": "fmpz_mpoly_q/test/t-add_fmpz.c",
+    "ranges": [
+      [
+        1,
+        68
+      ]
+    ],
+    "note": "Checkpoint47: Complete lex-only scalar-wrapper test with shared generic arithmetic or polynomial canonicalization reference; no explicit in-place output case for the tested scalar wrapper."
+  },
+  {
+    "repo": "calcium",
+    "path": "fmpz_mpoly_q/test/t-div.c",
+    "ranges": [
+      [
+        1,
+        91
+      ]
+    ],
+    "note": "Checkpoint47: Complete random lex-only arithmetic test with shared polynomial/GCD canonical reference and one randomly selected whole-object alias. Nonzero divisor generation for division."
+  },
+  {
+    "repo": "calcium",
+    "path": "fmpz_mpoly_q/test/t-div_fmpq.c",
+    "ranges": [
+      [
+        1,
+        69
+      ]
+    ],
+    "note": "Checkpoint47: Complete lex-only scalar-wrapper test with shared generic arithmetic or polynomial canonicalization reference; no explicit in-place output case for the tested scalar wrapper."
+  },
+  {
+    "repo": "calcium",
+    "path": "fmpz_mpoly_q/test/t-div_fmpz.c",
+    "ranges": [
+      [
+        1,
+        69
+      ]
+    ],
+    "note": "Checkpoint47: Complete lex-only scalar-wrapper test with shared generic arithmetic or polynomial canonicalization reference; no explicit in-place output case for the tested scalar wrapper."
+  },
+  {
+    "repo": "calcium",
+    "path": "fmpz_mpoly_q/test/t-inv.c",
+    "ranges": [
+      [
+        1,
+        71
+      ]
+    ],
+    "note": "Checkpoint47: Random lex-only inverse/inverse and canonicality checks; random in-place second inversion, nonzero input."
+  },
+  {
+    "repo": "calcium",
+    "path": "fmpz_mpoly_q/test/t-mul.c",
+    "ranges": [
+      [
+        1,
+        89
+      ]
+    ],
+    "note": "Checkpoint47: Complete random lex-only arithmetic test with shared polynomial/GCD canonical reference and one randomly selected whole-object alias. Nonzero divisor generation for division."
+  },
+  {
+    "repo": "calcium",
+    "path": "fmpz_mpoly_q/test/t-mul_fmpq.c",
+    "ranges": [
+      [
+        1,
+        69
+      ]
+    ],
+    "note": "Checkpoint47: Complete lex-only scalar-wrapper test with shared generic arithmetic or polynomial canonicalization reference; no explicit in-place output case for the tested scalar wrapper."
+  },
+  {
+    "repo": "calcium",
+    "path": "fmpz_mpoly_q/test/t-mul_fmpz.c",
+    "ranges": [
+      [
+        1,
+        69
+      ]
+    ],
+    "note": "Checkpoint47: Complete lex-only scalar-wrapper test with shared generic arithmetic or polynomial canonicalization reference; no explicit in-place output case for the tested scalar wrapper."
+  },
+  {
+    "repo": "calcium",
+    "path": "fmpz_mpoly_q/test/t-randtest.c",
+    "ranges": [
+      [
+        1,
+        56
+      ]
+    ],
+    "note": "Checkpoint47: Random lex-only canonicality check sharing normalization backend."
+  },
+  {
+    "repo": "calcium",
+    "path": "fmpz_mpoly_q/test/t-sub.c",
+    "ranges": [
+      [
+        1,
+        97
+      ]
+    ],
+    "note": "Checkpoint47: Complete random lex-only arithmetic test with shared polynomial/GCD canonical reference and one randomly selected whole-object alias. Nonzero divisor generation for division."
+  },
+  {
+    "repo": "calcium",
+    "path": "fmpz_mpoly_q/test/t-sub_fmpq.c",
+    "ranges": [
+      [
+        1,
+        68
+      ]
+    ],
+    "note": "Checkpoint47: Complete lex-only scalar-wrapper test with shared generic arithmetic or polynomial canonicalization reference; no explicit in-place output case for the tested scalar wrapper."
+  },
+  {
+    "repo": "calcium",
+    "path": "fmpz_mpoly_q/test/t-sub_fmpz.c",
+    "ranges": [
+      [
+        1,
+        68
+      ]
+    ],
+    "note": "Checkpoint47: Complete lex-only scalar-wrapper test with shared generic arithmetic or polynomial canonicalization reference; no explicit in-place output case for the tested scalar wrapper."
+  },
+  {
+    "repo": "calcium",
+    "path": "fmpz_mpoly_q/used_vars.c",
+    "ranges": [
+      [
+        1,
+        88
+      ]
+    ],
+    "note": "Checkpoint47: Constant/one-variable shortcuts, degree-based OR union and public zeroed masks. Private AND comment disagrees with OR implementation; same harmless mismatch persists current."
+  },
+  {
+    "repo": "flint",
+    "path": "src/fexpr/arithmetic_nodes.c",
+    "ranges": [
+      [
+        1,
+        59
+      ]
+    ],
+    "note": "Checkpoint47: Recursive traversal skips integer leaves, descends through arithmetic and integer powers, inserts all other expressions uniquely without semantic relations."
+  },
+  {
+    "repo": "flint",
+    "path": "src/fexpr/expanded_normal_form.c",
+    "ranges": [
+      [
+        1,
+        44
+      ]
+    ],
+    "note": "Checkpoint47: Collect/sort formal leaves, build rational function, emit normalized expression on success and preserve original expression on conversion failure. Flags reserved; all-integer fmpq shortcut is still TODO."
+  },
+  {
+    "repo": "flint",
+    "path": "src/fexpr/get_fmpz_mpoly_q.c",
+    "ranges": [
+      [
+        1,
+        150
+      ]
+    ],
+    "note": "Checkpoint47: Formal recursive interpreter for integer leaves, arithmetic and integer powers, exact terminal lookup and explicit conversion status. No algebraic independence proof. Both generations differ only in license/include scaffolding; malformed/failure-output paths are source-read but unexecuted."
+  },
+  {
+    "repo": "flint",
+    "path": "src/fexpr/is_arithmetic_operation.c",
+    "ranges": [
+      [
+        1,
+        41
+      ]
+    ],
+    "note": "Checkpoint47: Recognizes Pos/Neg/Add/Sub/Mul/Div heads in inline and general call layouts; separate from arity validation."
+  },
+  {
+    "repo": "flint",
+    "path": "src/fexpr/set_fmpz_mpoly.c",
+    "ranges": [
+      [
+        1,
+        133
+      ]
+    ],
+    "note": "Checkpoint47: Expanded polynomial-to-expression conversion, constant/zero and default-symbol cases, per-term factor lists and word-exponent powers; shared array-allocation TODO. No giant-variable or exponent qualification."
+  },
+  {
+    "repo": "flint",
+    "path": "src/fexpr/set_fmpz_mpoly_q.c",
+    "ranges": [
+      [
+        1,
+        37
+      ]
+    ],
+    "note": "Checkpoint47: Unit denominator emits polynomial directly; otherwise expression Div of emitted numerator/denominator. Does not recover authored domain obligations."
+  },
+  {
+    "repo": "flint",
+    "path": "src/gr/fmpz_mpoly_q.c",
+    "ranges": [
+      [
+        1,
+        636
+      ]
+    ],
+    "note": "Checkpoint47: Entire generic-ring adapter: shared polynomial context helpers, exact truth predicates, field metadata, arithmetic wrappers, domain versus inability statuses, signed powers, numerator/denominator projection, balanced-addition string hook and method registration. Disabled square-root/factor blocks are not active implementations. Shared helpers/default dispatch/parser internals remain open; no blanket thread-safety qualification."
+  },
+  {
+    "repo": "flint",
+    "path": "src/gr/test/t-fmpz_mpoly_q.c",
+    "ranges": [
+      [
+        1,
+        32
+      ]
+    ],
+    "note": "Checkpoint47: Ten random 0/1/2-variable contexts and random monomial orders delegate to gr_test_ring with100 iterations and flags0. Source-read only; generic suite internals not newly read or run."
+  },
+  {
+    "repo": "flint",
+    "path": "doc/source/fexpr.rst",
+    "ranges": [
+      [
+        490,
+        585
+      ]
+    ],
+    "note": "Checkpoint47: exact formal-indeterminate conversion contract and warning that related leaves may cause implicit division by zero; equal variable/context lengths, conversion statuses, no-simplification constructors, normal-form pipeline and vector initialization."
+  },
+  {
+    "repo": "flint",
+    "path": "src/gr.h",
+    "ranges": [
+      [
+        1038,
+        1045
+      ],
+      [
+        1080,
+        1095
+      ],
+      [
+        1210,
+        1227
+      ],
+      [
+        1600,
+        1609
+      ]
+    ],
+    "note": "Checkpoint47: generic context/element lifecycle, numerator/denominator and power method wrappers and rational-function context declaration. Only these52 lines, not remaining header/default dispatch."
+  }
+]

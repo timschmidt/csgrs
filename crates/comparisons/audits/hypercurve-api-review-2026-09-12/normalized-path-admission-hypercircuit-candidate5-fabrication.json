@@ -1,0 +1,19 @@
+{
+  "target": "fabrication",
+  "command": [
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/normalized-path-admission-hypercircuit-candidate5-binaries/fabrication-5bc4eb16c7abd999",
+    "--test-threads=2",
+    "--color",
+    "never"
+  ],
+  "binary_sha256": "c57587c2434a216bcca2fe359c568ec2a46a09aed35fb980f27366d7d752ef3a",
+  "returncode": 0,
+  "elapsed_seconds": 0.05361653500585817,
+  "log": "normalized-path-admission-hypercircuit-candidate5-fabrication.log",
+  "passed": [
+    "certified_layer_images_emit_x2_copper_and_plated_excellon_files",
+    "pad_and_artwork_intent_emit_unit_aware_mask_paste_and_legend_images"
+  ],
+  "failed": [],
+  "ignored": []
+}

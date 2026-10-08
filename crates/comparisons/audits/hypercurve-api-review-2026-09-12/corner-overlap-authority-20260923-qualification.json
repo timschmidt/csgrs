@@ -1,0 +1,36 @@
+{
+  "base_head": "fc0197e60fbe79b37a8d144a338828f76d531b03",
+  "files": {
+    "src/bezier_offset.rs": "f6f224096b0e388fb9187a978cfa85a52c743b7bc3316fc4a95b56f05fa45423",
+    "src/rational_bezier_general.rs": "7354f4500a3c9eea3dff4e33bddffe250563ea976d96dc0ffd4fe8a00e2e1a50"
+  },
+  "preserved_unqualified_region_sha256": "1bc26463270fbe520873708bc6909db19a7af36356367f8bbc366b92696ed720",
+  "library_cases": 1216,
+  "passed": 1192,
+  "ignored": 6,
+  "existing_nonpasses": 18,
+  "new_nonpasses": 0,
+  "changed_existing_nonpasses": 0,
+  "all_target_checks": [
+    [
+      "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+      "check",
+      "--all-targets",
+      "--all-features",
+      "--locked",
+      "--offline"
+    ],
+    [
+      "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+      "check",
+      "--all-targets",
+      "--no-default-features",
+      "--locked",
+      "--offline"
+    ]
+  ],
+  "qualified_binary_sha256": "78e4fbbb4abf317b177160b116e3a4711b5bf727e5ce2527875ddbdf287cab69",
+  "all_owned_processes_reaped": true,
+  "hyperreal_inputs": "pinned immutable snapshots; other-session working changes untouched",
+  "normalization_candidate": "unqualified; focused fixtures advanced but still encounter later Ordering blockers"
+}

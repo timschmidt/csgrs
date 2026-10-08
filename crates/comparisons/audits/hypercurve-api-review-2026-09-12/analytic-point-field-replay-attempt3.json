@@ -1,0 +1,44 @@
+{
+  "build_command": [
+    "cargo",
+    "test",
+    "--release",
+    "--all-features",
+    "--lib",
+    "--no-run",
+    "--offline",
+    "--message-format=json",
+    "-j",
+    "2"
+  ],
+  "build_returncode": 0,
+  "build_elapsed_seconds": 110.41892602600274,
+  "source_sha256": {
+    "src/curve_region_boolean.rs": "63d87ae4c1b139677ac126b504391c2160fc032005a1c4ba4a97f53e9a2ec6bf",
+    "src/bezier_offset.rs": "0c848f7ffe425b1db03750d57edd83d005aac1decd1f45112e897f6d6fd5e2ac"
+  },
+  "tests": [
+    {
+      "test": "algebraic_chord_analytic_parallel_pair_replays_contacts_and_overlap",
+      "returncode": 0,
+      "elapsed_seconds": 0.16389264700410422,
+      "timeout_seconds": 120,
+      "log": "analytic-point-field-replay-attempt3-algebraic_chord_analytic_parallel_pair_replays_contacts_and_overlap.log"
+    },
+    {
+      "test": "analytic_point_equality_replays_algebraic_source_and_normal_sheet",
+      "returncode": 0,
+      "elapsed_seconds": 0.031641554000088945,
+      "timeout_seconds": 120,
+      "log": "analytic-point-field-replay-attempt3-analytic_point_equality_replays_algebraic_source_and_normal_sheet.log"
+    },
+    {
+      "test": "analytic_axis_order_reuses_polynomial_speed_across_reduced_tangent_fields",
+      "returncode": 0,
+      "elapsed_seconds": 0.015531365992501378,
+      "timeout_seconds": 120,
+      "log": "analytic-point-field-replay-attempt3-analytic_axis_order_reuses_polynomial_speed_across_reduced_tangent_fields.log"
+    }
+  ],
+  "binary_sha256": "bf62940879e93afb30f3163053fba6fe27ed93e7a1c613be426b95f20c3787f8"
+}

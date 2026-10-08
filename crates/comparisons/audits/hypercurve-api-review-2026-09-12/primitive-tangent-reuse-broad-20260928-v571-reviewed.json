@@ -1,0 +1,19 @@
+{
+  "qualification": "primitive-tangent-reuse-broad-20260928-v571-terminal.json",
+  "source_manifest": "primitive-tangent-reuse-broad-20260928-v571-sources.json",
+  "outer_session_reaped": 30604,
+  "validated_files": 2047,
+  "selected_geometry_tests": 452,
+  "checks": 6,
+  "repos": {
+    "hypercurve": {
+      "parent": "1897673878f154a938c03c31b39327262841df71",
+      "paths": {
+        "src/bezier_offset.rs": "5f887a1afe3ee81a37cc39b22bfbbe66a3f8c5f978a5e05b77f9a9a6df23111d"
+      }
+    }
+  },
+  "scope": "One strict source hodograph factorization and its oriented fields are shared across distances and regular source cells; unavailable proofs remain retryable; full goal remains active",
+  "performance_changes": [],
+  "workload_changes": []
+}

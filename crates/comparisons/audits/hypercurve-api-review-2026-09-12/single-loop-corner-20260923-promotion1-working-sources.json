@@ -1,0 +1,26 @@
+[
+  {
+    "file": "hypercurve/src/bezier_offset.rs",
+    "sha256": "bd93cb2ecf918e25bd51301c93b68fb4b09735bc5ad6999b06fb53308d98cc1a"
+  },
+  {
+    "file": "hypercurve/src/bezier_region.rs",
+    "sha256": "dd4fe3e440751434578ce9203d85235b8141521879a53a21b695d721a42133f5"
+  },
+  {
+    "file": "hypercurve/src/curve.rs",
+    "sha256": "c0571627c09826eb636ebbbad1441d656c419c2a96b69c0afd5f8b08407183f0"
+  },
+  {
+    "file": "hypercurve/src/curve_corner_chain.rs",
+    "sha256": "09b5e9add7df82e46ea65273c0de516764a022e8283d34146c229f4b9ad5fb69"
+  },
+  {
+    "file": "hypercurve/src/curve_region_boolean.rs",
+    "sha256": "54b2b0183521d7802a8a3c93948bed751621936205d6eb440c6b0da0711186b1"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_curve_region_promotion.rs",
+    "sha256": "f33b46a5a05a0a99acf3f296b0ef5bd5a7c2f3fd3bda2374b95c2e1df102f62c"
+  }
+]

@@ -1,0 +1,18 @@
+{
+  "head": "1cf070a5d1ec2ebf2796177da784a2d5a0494ee2",
+  "parent": "3bf8ae4ec3587c6953ffc542d4d20755c8c1bd02",
+  "files": {
+    "src/bezier_offset.rs": "1553dad503a1cef888ef735417a52c1c6adbf50d956e46ce0ad587b40950a27d",
+    "src/bezier_region.rs": "e794ac0c36fa52d24585acc5ddace9a2a7f43876e08e7eb2811dc3bb66bdfd49",
+    "src/curve.rs": "c726fab4337d84f10ce696104ffe8c325022eb455419fcf45824dcca47ee4218",
+    "src/curve_evaluation.rs": "4c4c94d86ce9994919a68c7d3e9b8b002bd25c3ed5ba570c12327bb6e2bda693",
+    "src/curve_region_boolean.rs": "6fb3c83951f494511c5ce4c4cc5b1e65210794339f7f241e64ea275529dcc545",
+    "src/curve_support_intersection.rs": "d176f308a910dd9f8efbb78362d1530d04a3ed85b934ceec923397ef442855a1"
+  },
+  "repository_count": 30,
+  "all_repositories_clean": true,
+  "all_2044_inputs_match": true,
+  "all_owned_processes_reaped": true,
+  "pushed": false,
+  "full_goal_complete": false
+}

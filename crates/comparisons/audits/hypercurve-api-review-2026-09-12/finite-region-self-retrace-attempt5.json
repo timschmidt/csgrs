@@ -1,0 +1,23 @@
+{
+  "returncode": 101,
+  "elapsed_seconds": 0.015599390986608341,
+  "source": "finite-region-self-retrace-public.rs",
+  "source_sha256": "9813c7863594cd854538b5415ee03bac41c1c3149c16c29dd7a806646b9d73d0",
+  "normal_library": "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/libhypercurve-2c7ff6f3fbe07653.rlib",
+  "normal_library_sha256": "6ad223de9ecd1a4c523ee7a6e72fff3da23c69ba937750c563c9703c48a1ca3c",
+  "executable_sha256": "f64be169a415cad77b8f79f66f57e0e72fb85e4675d51524b38d19f5df1ba0e4",
+  "log": "finite-region-self-retrace-attempt5.log",
+  "command": [
+    "rustc",
+    "--edition=2024",
+    "-O",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-region-self-retrace-public.rs",
+    "--extern",
+    "hypercurve=/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/libhypercurve-2c7ff6f3fbe07653.rlib",
+    "-L",
+    "dependency=/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps",
+    "-o",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-region-self-retrace-attempt5"
+  ],
+  "commit": "84956dabadf9afcef4704f5b2dee880a282f1939"
+}

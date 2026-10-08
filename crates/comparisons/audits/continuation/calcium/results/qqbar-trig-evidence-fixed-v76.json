@@ -1,0 +1,13 @@
+{
+  "tag": "qqbar-trig-evidence-fixed-v76",
+  "started": "2026-09-11T22:35:37.403Z",
+  "finished": "2026-09-11T22:35:44.525Z",
+  "elapsedSeconds": 7.120047882,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "node",
+  "args": [
+    "check-qqbar-trig-evidence-fixed-v76.mjs"
+  ],
+  "code": 0,
+  "signal": null
+}

@@ -1,0 +1,28 @@
+FAIL mexp -1/2 bits=8 got=0.41796875 reference=0.38940039153570244
+FAIL mexp -1/2 bits=16 got=0.41705322265625 reference=0.38940039153570244
+FAIL msin -15/16 bits=32 got=-0.22588535631075501 reference=-0.2258857357458419
+FAIL msin -15/16 bits=64 got=-0.22588535626410208 reference=-0.2258857357458419
+FAIL mcos -15/16 bits=16 got=0.4465484619140625 reference=0.4460668496834972
+FAIL mcos -15/16 bits=32 got=0.44655000092461705 reference=0.4460668496834972
+FAIL marctan -15/16 bits=32 got=-0.21916827955283225 reference=-0.21916827992897892
+FAIL marctan -15/16 bits=64 got=-0.21916827959270385 reference=-0.21916827992897892
+FAIL marcsin 1/2 bits=64 got=0.126340127571039 reference=0.12634012757103932
+FAIL marcsin 3/4 bits=16 got=0.1908111572265625 reference=0.19219838724781954
+FAIL mlni -1/2 bits=8 got=0.5546875 reference=0.5753641449035618
+FAIL mlni -1/2 bits=16 got=0.5565185546875 reference=0.5753641449035618
+FAIL mln -1/2 bits=8 got=-0.27734375 reference=-0.2876820724517809
+FAIL mln -1/2 bits=16 got=-0.27825927734375 reference=-0.2876820724517809
+FAIL inv -1/2 bits=8 got=0.42578125 reference=0.4
+FAIL inv -1/2 bits=16 got=0.4250030517578125 reference=0.4
+FAIL pi/4 0/1 bits=32 got=0.7853984837420285 reference=0.7853981633974483
+FAIL pi/4 0/1 bits=64 got=0.7853984837120643 reference=0.7853981633974483
+inv	checks=55	failures=15
+marcsin	checks=55	failures=7
+marctan	checks=55	failures=10
+mcos	checks=55	failures=26
+mexp	checks=55	failures=15
+mln	checks=55	failures=14
+mlni	checks=55	failures=14
+msin	checks=55	failures=10
+pi/32	checks=8	failures=0
+pi/4	checks=7	failures=4

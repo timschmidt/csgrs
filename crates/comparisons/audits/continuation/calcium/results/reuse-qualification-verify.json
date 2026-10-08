@@ -1,0 +1,13 @@
+{
+  "tag": "reuse-qualification-verify",
+  "started": "2026-09-08T22:11:44.862Z",
+  "finished": "2026-09-08T22:11:47.959Z",
+  "elapsedSeconds": 3.0946596010000005,
+  "cwd": "/home/tim/Documents/GitHub/workspace",
+  "command": "node",
+  "args": [
+    "exactcore-hyper-comparison/audits/continuation/calcium/verify-reuse-qualification-checkpoint.mjs"
+  ],
+  "code": 0,
+  "signal": null
+}

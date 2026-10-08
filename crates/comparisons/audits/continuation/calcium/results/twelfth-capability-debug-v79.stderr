@@ -1,0 +1,4 @@
+   Compiling hyperreal v0.13.1 (/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/twelfth-revision-candidate-v79/hyperreal)
+   Compiling twelfth-capability-v79 v0.1.0 (/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/twelfth-capability-v79)
+    Finished `dev` profile [unoptimized] target(s) in 2.58s
+     Running `/tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/debug/twelfth-capability-v79`

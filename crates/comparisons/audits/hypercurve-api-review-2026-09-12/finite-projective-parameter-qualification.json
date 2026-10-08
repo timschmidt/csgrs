@@ -1,0 +1,172 @@
+{
+  "status": "passed within the recorded broad qualification scope",
+  "goal_status": "active",
+  "previous_commit": "1daed206b1748b84bfe8e038a1b969c5ea46f703",
+  "commit": "8977b811b66efcaeee00c9d8005f97ca6d788e28",
+  "targets": 49,
+  "passed": 2313,
+  "passed_by_repo": {
+    "hypercurve": 2081,
+    "hyperbrep": 232
+  },
+  "known_failed": [
+    "approximate_512_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions",
+    "non_ph_bezier_pair_projective_fillet_retains_algebraic_extensions",
+    "nonconvex_algebraic_chord_expansion_is_exact_and_local_collapse_is_explicit",
+    "strict_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions",
+    "unified_mixed_line_arc_erosion_splits_after_a_curved_neck_collapse"
+  ],
+  "new_failures": [],
+  "ignored": 9,
+  "expensive_previously_unqualified_exclusions": 8,
+  "timeouts_in_broad_run": 0,
+  "builds": [
+    {
+      "repository": "hypercurve",
+      "kind": "check",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "check",
+        "--all-targets",
+        "--no-default-features",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 22.7102032090188,
+      "log": "finite-projective-parameter-check.log"
+    },
+    {
+      "repository": "hypercurve",
+      "kind": "test-build",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "test",
+        "--release",
+        "--all-features",
+        "--locked",
+        "--offline",
+        "--lib",
+        "--tests",
+        "--no-run",
+        "--message-format=json"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 261.20106877500075,
+      "log": "finite-projective-parameter-test-build.log"
+    },
+    {
+      "repository": "hyperbrep",
+      "kind": "check",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "check",
+        "--all-targets",
+        "--no-default-features",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 19.342269574000966,
+      "log": "finite-projective-parameter-hyperbrep-check.log"
+    },
+    {
+      "repository": "hyperbrep",
+      "kind": "test-build",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "test",
+        "--release",
+        "--all-features",
+        "--locked",
+        "--offline",
+        "--lib",
+        "--tests",
+        "--no-run",
+        "--message-format=json"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 135.56072512900573,
+      "log": "finite-projective-parameter-hyperbrep-test-build.log"
+    }
+  ],
+  "focused_checks": 24,
+  "public_matrices_and_probes": [
+    "finite-projective-parameter-admission-region-entry.json",
+    "finite-projective-parameter-affine-parallel-replay.json",
+    "finite-projective-parameter-affine-public.json",
+    "finite-projective-parameter-analytic-probe.json",
+    "finite-projective-parameter-analytic-public.json",
+    "finite-projective-parameter-baseline-recheck.json",
+    "finite-projective-parameter-bounds-public.json",
+    "finite-projective-parameter-circle-matrix.json",
+    "finite-projective-parameter-completed-probe.json",
+    "finite-projective-parameter-completed.json",
+    "finite-projective-parameter-constant-image-trim-matrix.json",
+    "finite-projective-parameter-constructor-public.json",
+    "finite-projective-parameter-cubic-replay.json",
+    "finite-projective-parameter-endpoint-probe.json",
+    "finite-projective-parameter-exterior-completed.json",
+    "finite-projective-parameter-family-matrix.json",
+    "finite-projective-parameter-finite-circle-probe.json",
+    "finite-projective-parameter-finite-matrix.json",
+    "finite-projective-parameter-general-trim-matrix.json",
+    "finite-projective-parameter-native-poles-public.json",
+    "finite-projective-parameter-poles-public.json",
+    "finite-projective-parameter-previous-pairs.json",
+    "finite-projective-parameter-probe-final.json",
+    "finite-projective-parameter-public-replay.json",
+    "finite-projective-parameter-rational-public.json",
+    "finite-projective-parameter-region-carrier-matrix.json",
+    "finite-projective-parameter-region-entry.json",
+    "finite-projective-parameter-region-explicit.json",
+    "finite-projective-parameter-region-public.json",
+    "finite-projective-parameter-replay-matrix-run.json",
+    "finite-projective-parameter-retained-chord-matrix.json",
+    "finite-projective-parameter-retrace-public.json",
+    "finite-projective-parameter-self-public.json",
+    "finite-projective-parameter-tangent-matrix.json",
+    "finite-projective-parameter-trim-public.json",
+    "finite-projective-parameter-unit-replay.json",
+    "finite-projective-parameter-winding-public.json"
+  ],
+  "parent_private_baseline": "mapped-point-inverse-baseline.json",
+  "selected_source_files": [
+    "src/bezier_parameter.rs",
+    "src/bezier_split.rs",
+    "src/rational_bezier_general.rs"
+  ],
+  "new_projective_regressions": 1,
+  "expanded_oriented_range_shifts": [
+    -2,
+    0,
+    2
+  ],
+  "public_chart_cases": 16,
+  "public_chart_point_replays": 64,
+  "public_integration_cases": 16,
+  "additional_public_chart_executions": 4,
+  "previous_fixed_distance_cases": 32,
+  "previous_fixed_distance_point_replays": 176,
+  "baseline_scope": "The nonmaterialized-center circle fixture passes four native cases and fails during exterior overlap construction before inverse lookup. It does not establish an inverse regression.",
+  "computational_scope": "Shared finite projective transport composes an ordinary selected polynomial and refines its isolator away from unused poles. Incident-ray and overlap consumers retain that authority and clip on the actual target range. No global image-root enumeration or Cartesian construction is required. No general throughput or full closure claim.",
+  "source_files_verified": {
+    "working": 396,
+    "isolated": 1006
+  },
+  "dependency_commits": "finite-projective-parameter-snapshot.json",
+  "pinned_dependency_commits": "finite-parallel-pruning-isolated-sources.json",
+  "isolated_dependency_sources": true,
+  "hypersolve_qualification": "fiber-subresultant-local-qualification.json",
+  "excluded_working_file": "src/bezier_offset.rs",
+  "excluded_scope": "Mapped-point consolidation and its required analytic normal-sheet regression remain unfinished outside this commit; the snapshot uses the parent offset source and tests. No broad-run test exclusions were added.",
+  "workspace_clean_claim": false,
+  "other_session_owns": "Hyperreal verified/ and verification/ changes; left untouched",
+  "normal_library": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypercurve-1201b30e361703ad.rlib",
+  "normal_library_sha256": "5cc578428c0ecd41b54f2dca195f416779e365698dcb4ad46588dd84bd0ef96a",
+  "archived_library": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-projective-parameter-libraries/libhypercurve-1201b30e361703ad.rlib",
+  "libtest_sha256": "6c944d5671050ac6f4c11415952e1ba3a39a0bac46bf5d9690b7cf52e51897a1",
+  "toolchain": "finite-parallel-pruning-toolchain.json",
+  "evidence_audit": "finite-projective-parameter-worklog.md",
+  "remaining": "General mapped-source carrier-intersection consolidation, compact selected source-point inversion, requalification of the separately observed nonmaterialized-center exterior overlap construction failure, unsupported retained point kinds, source-cusp frames, normalized public-region construction, finite/extension corner degeneracies, known failures/exclusions and broader algebraic/computational consolidation."
+}

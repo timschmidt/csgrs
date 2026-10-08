@@ -1,0 +1,1 @@
+{"checkpoint":82,"status":"prepared-files-confirmed","recorded":"2026-09-12T03:11:20.864Z","files":4,"lines":644,"cases":775,"dir":"/tmp/calcium-quadratic-extraction-v82.oqquqM","note":"Exclusive preparation is not replayed. Its zero-exit empty stdout is unusable as a result record; independently validate all written files and the captured preparation time."}

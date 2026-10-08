@@ -1,0 +1,25 @@
+{
+  "qualification": "retained-linear-component-replay-20260927-v407-terminal.json",
+  "source_manifest": "retained-linear-component-replay-20260927-v407-sources.json",
+  "outer_session_reaped": 20622,
+  "validated_files": 2046,
+  "selected_geometry_tests": 239,
+  "checks": 6,
+  "reused_runs": [
+    "retained-linear-component-replay-20260927-v406-terminal.json"
+  ],
+  "repos": {
+    "hypercurve": {
+      "parent": "46f278dacb5b8556b4196a09e22d1721b20695cb",
+      "paths": {
+        "src/bezier_offset.rs": "cb17dadc69d47263c16f2fafceb79474ef9cf173984567000d752466c1a4f07e",
+        "src/curve.rs": "226427917b260a4404dfeed0e42672d517dabc1e8f02821fc4665c7886203619",
+        "src/curve_fillet.rs": "62de1e662a8a3e1555ed3a03e7ce5e7e96fa81a60e427a0bcef82204aa5f74f6"
+      }
+    }
+  },
+  "known_unresolved": [
+    "strict_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions",
+    "approximate_512_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions"
+  ]
+}

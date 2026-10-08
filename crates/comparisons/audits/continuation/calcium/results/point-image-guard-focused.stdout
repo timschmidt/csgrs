@@ -1,0 +1,29 @@
+
+running 24 tests
+test algebraic_binary::tests::binary_constructs_difference_of_independent_square_roots ... ok
+test algebraic_binary::tests::binary_constructs_product_of_independent_cubic_roots ... ok
+test algebraic_binary::tests::binary_constructs_product_of_independent_square_roots ... ok
+test algebraic_binary::tests::binary_constructs_quotient_of_independent_square_roots ... ok
+test algebraic_binary::tests::binary_constructs_sum_of_independent_square_roots ... ok
+test algebraic_binary::tests::binary_interval_division_reuses_policy_nonzero_endpoints ... ok
+test algebraic_binary::tests::binary_keeps_the_resultant_cap_after_square_free_reduction ... ok
+test algebraic_binary::tests::binary_point_images_do_not_change_half_open_ownership ... ok
+test algebraic_binary::tests::binary_point_images_do_not_promote_approximately_chosen_extrema ... ok
+test algebraic_binary::tests::binary_point_images_preserve_nonrational_witnesses ... ok
+test algebraic_binary::tests::binary_point_images_preserve_rational_witnesses ... ok
+test algebraic_binary::tests::binary_point_images_preserve_zero_products_with_wide_inputs ... ok
+test algebraic_binary::tests::binary_point_images_require_certified_extrema_for_a_symmetric_product ... ok
+test algebraic_binary::tests::binary_point_images_require_strict_equality_even_under_approximate_policy ... ok
+test algebraic_binary::tests::binary_point_images_still_replay_the_polynomial ... ok
+test algebraic_binary::tests::binary_refuses_division_when_denominator_interval_may_contain_zero ... ok
+test algebraic_binary::tests::binary_rejects_nonisolating_image_interval ... ok
+test algebraic_binary::tests::binary_replays_source_validation_instead_of_trusting_stale_status ... ok
+test algebraic_binary::tests::binary_resultant_clears_source_denominators_before_elimination ... ok
+test algebraic_binary::tests::binary_reuses_a_shared_square_free_carrier_for_distinct_conjugates ... ok
+test algebraic_binary::tests::binary_reuses_square_free_sources_beyond_the_stored_degree_cap ... ok
+test algebraic_binary::tests::exact_rational_resultant_trimming_fails_closed ... ok
+test algebraic_binary::tests::generated_signed_unit_linear_compositions_evaluate_exactly ... ok
+test algebraic_binary::tests::generated_square_root_products_match_expected_resultant_shape ... ok
+
+test result: ok. 24 passed; 0 failed; 0 ignored; 0 measured; 422 filtered out; finished in 0.17s
+

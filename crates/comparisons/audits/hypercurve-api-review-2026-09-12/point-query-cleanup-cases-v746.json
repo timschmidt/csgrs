@@ -1,0 +1,52 @@
+{
+  "hypercurve": [
+    "bezier_region::retained_point_classification_tests::analytic_parallel_points_classify_on_exact_rectangle_oracles",
+    "bezier_region::retained_point_classification_tests::chord_normal_points_classify_on_exact_rectangle_oracles",
+    "bezier_region::retained_point_classification_tests::generated_point_queries_preserve_the_boundary_of_a_retraced_path",
+    "bezier_region::retained_point_classification_tests::generated_point_queries_reenter_an_exact_parabolic_offset",
+    "bezier_region::retained_point_classification_tests::lazy_endpoint_points_classify_on_exact_rectangle_oracles",
+    "bezier_region::retained_point_classification_tests::public_point_queries_preserve_nested_islands_holes_and_empty_regions",
+    "bezier_region::retained_point_classification_tests::similarity_points_classify_on_exact_rectangle_oracles",
+    "bezier_region::tests::algebraic_retained_ray_vertices_use_spatial_endpoint_ownership",
+    "curve::tests::boundary_cache_revalidates_approximate_internal_path_joins",
+    "native_region_tests::batched_classifier_and_structural_facts_use_the_unified_surface",
+    "native_region_tests::borrowed_unordered_lines_and_segments_have_identical_semantics",
+    "native_region_tests::boundary_contour_nesting_assigns_disjoint_nested_roles",
+    "native_region_tests::boundary_contour_nesting_rejects_crossing_or_touching_loops",
+    "native_region_tests::contour_profiles_group_holes_with_their_exact_material_owner",
+    "native_region_tests::contour_profiles_remove_holes_without_a_material_owner",
+    "native_region_tests::contour_projection_closes_finite_ring_without_owning_topology",
+    "native_region_tests::curve_string_projection_rejects_nonfinite_arc_samples",
+    "native_region_tests::curve_string_projection_subdivides_arcs_and_keeps_exact_endpoints",
+    "native_region_tests::empty_region_classifies_everything_outside",
+    "native_region_tests::filled_area_is_exact_for_center_defined_circle",
+    "native_region_tests::filled_area_uses_roles_not_orientation_and_counts_nested_islands",
+    "native_region_tests::finite_projection_checked_measurements_reject_nonfinite_or_overflow",
+    "native_region_tests::generated_rectangle_hole_area_uses_roles_not_orientation",
+    "native_region_tests::generated_unordered_line_arc_semicircles_build_unified_regions",
+    "native_region_tests::generated_unordered_line_rectangles_build_unified_regions",
+    "native_region_tests::material_contour_classifies_inside_outside_and_boundary",
+    "native_region_tests::material_island_inside_hole_adds_depth_back",
+    "native_region_tests::native_overlap_regularizes_empty_and_open_crossings_remain_blocked",
+    "native_region_tests::similarity_transform_preserves_arcs_and_reflection_flips_orientation",
+    "native_region_tests::sparse_region_classification_and_hole_depth_are_exact",
+    "native_region_tests::strict_and_approximate_512_share_the_unified_policy_terminal",
+    "native_region_tests::unified_finite_profiles_preserve_material_hole_bins_and_ownership",
+    "native_region_tests::unordered_crossing_and_overlapping_lines_remain_explicit_blockers",
+    "native_region_tests::unordered_crossing_walks_are_regularized_by_global_parity",
+    "native_region_tests::unordered_line_arc_segments_recover_the_exact_native_view",
+    "native_region_tests::unordered_lines_materialize_one_authoritative_region",
+    "native_region_tests::unordered_native_arrangement_obeys_the_approximate_512_terminal",
+    "native_region_tests::unordered_open_lines_retain_a_boundary_blocker",
+    "native_region_tests::unordered_self_crossing_walk_uses_the_authoritative_curve_arrangement",
+    "native_region_tests::unordered_single_full_circle_is_a_closed_walk"
+  ],
+  "hypercurve_curve_region_promotion": [
+    "native_contour_constructors_and_signed_depth_need_no_region_wrapper"
+  ],
+  "hyperbrep": [
+    "boolean::tests::intersection_graph_clips_plane_extrusion_curves_in_both_parameter_spaces",
+    "boolean::tests::axial_cone_rays_partition_an_exact_half_frustum_cut",
+    "builder::tests::planar_path_nesting_preserves_generated_offset_endpoints"
+  ]
+}

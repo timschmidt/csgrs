@@ -1,0 +1,11 @@
+{
+  "tag": "solve-certificate-native",
+  "started": "2026-09-09T02:57:06.534Z",
+  "finished": "2026-09-09T02:57:06.692Z",
+  "elapsedSeconds": 0.15495573,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison",
+  "command": "/tmp/calcium-charpoly-solves.lbZlN8/flint-solve-certificate",
+  "args": [],
+  "code": 0,
+  "signal": null
+}

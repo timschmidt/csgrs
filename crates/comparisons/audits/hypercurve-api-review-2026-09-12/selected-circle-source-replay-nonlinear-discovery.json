@@ -1,0 +1,29 @@
+{
+  "returncode": 0,
+  "elapsed_seconds": 0.06374944499111734,
+  "source": "finite-circle-nonlinear-next.rs",
+  "source_sha256": "0a39c2db4bfce09f2f22957bddbae293c8823730a72db9a79e89f5b7e8799989",
+  "executable_sha256": "1f6e622a5c47efb154bdd439b6dd7646ab226277abe12e75fcb5951ff0c414a1",
+  "normal_library_sha256": "2b3bafdc18066bab093760e4a78652e8452801d21cf8fe7cf5d134673708c6e8",
+  "commit": "63dc97aba4fe578ceb11dee3bdc50ee2307f3884",
+  "command": [
+    "rustc",
+    "--edition=2024",
+    "-O",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-circle-nonlinear-next.rs",
+    "--extern",
+    "hypercurve=/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/libhypercurve-2c7ff6f3fbe07653.rlib",
+    "-L",
+    "dependency=/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps",
+    "-o",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/selected-circle-source-replay-nonlinear-discovery"
+  ],
+  "log": "selected-circle-source-replay-nonlinear-discovery.log",
+  "counts": {
+    "complete": 4,
+    "incomplete": 4,
+    "point_replays": 8,
+    "unresolved_replays": 0,
+    "topologies": 4
+  }
+}

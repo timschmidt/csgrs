@@ -1,0 +1,27 @@
+{
+  "source_manifest": "independent-oblique-fillet-20260927-v436-sources.json",
+  "source_directory": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/source-archives/independent-oblique-fillet-20260927-v436",
+  "binary": {
+    "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/independent-oblique-fillet-20260927-v436-hypercurve_curve_region_promotion",
+    "sha256": "afd9050199fb9b41ac167dc5791ea8a1bf8a6f8e5073233afe301abcbae448ca"
+  },
+  "cases": [
+    {
+      "name": "strict_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions",
+      "returncode": 124,
+      "one_test_passed": false,
+      "elapsed_seconds": 240.0342237940058,
+      "log": "retained-wide-field-reoffset-20260927-v437-strict_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions.log"
+    },
+    {
+      "name": "approximate_512_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions",
+      "returncode": 124,
+      "one_test_passed": false,
+      "elapsed_seconds": 240.03316497709602,
+      "log": "retained-wide-field-reoffset-20260927-v437-approximate_512_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions.log"
+    }
+  ],
+  "all_processes_reaped": true,
+  "all_sources_unchanged": true,
+  "all_cases_passed": false
+}

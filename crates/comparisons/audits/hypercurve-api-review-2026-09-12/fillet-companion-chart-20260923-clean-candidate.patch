@@ -1,0 +1,218 @@
+--- a/src/curve_corner_chain.rs
++++ b/src/curve_corner_chain.rs
+@@ -2956,6 +2956,29 @@
+                         previous_promoted_parallel,
+                     )
+                 };
++            // Canonicalization transports the cut parameter into its replacement
++            // chart. Use that same chart for the companion point and tangent;
++            // pairing the new parameter with the authored support changes the
++            // point while leaving an apparently certified circle contact.
++            let replacement_companion =
++                other_cut
++                    .replacement
++                    .as_ref()
++                    .map(|replacement| match replacement {
++                        CornerReplacement2::Curve(curve) => BezierSplitFragment2::Materialized {
++                            start: BezierParameter2::Exact(Real::zero()),
++                            end: BezierParameter2::Exact(Real::one()),
++                            curve: curve.clone(),
++                        },
++                        CornerReplacement2::AnalyticParallel { fragment, .. } => {
++                            BezierSplitFragment2::AnalyticParallel(fragment.clone())
++                        }
++                        CornerReplacement2::SelectedFiber { fragment, .. } => {
++                            BezierSplitFragment2::SelectedFiber(fragment.as_ref().clone())
++                        }
++                    });
++            let other_fragment = replacement_companion.as_ref().unwrap_or(other_fragment);
++            let allow_boundary_contact = allow_boundary_contact || replacement_companion.is_some();
+             let canonical_anchor_tangent = if matches!(
+                 &frame.radial_frame,
+                 RetainedFilletRadialFrame2::ParallelNormal { .. }
+@@ -2984,21 +3007,6 @@
+             {
+                 anchor_cut.replacement = Some(CornerReplacement2::Curve(
+                     BezierSubcurve2::Rational(replacement),
+-                ));
+-            }
+-            if !matches!(
+-                other_fragment,
+-                BezierSplitFragment2::RetainedBezier { .. }
+-                    | BezierSplitFragment2::AlgebraicCuspSemicircle(_)
+-                    | BezierSplitFragment2::AlgebraicChord(_)
+-                    | BezierSplitFragment2::AnalyticParallel(_)
+-                    | BezierSplitFragment2::SelectedFiber(_)
+-                    | BezierSplitFragment2::Materialized { .. }
+-            ) {
+-                return Err(ExactCurveError::blocked(
+-                    CurveOperation2::Fillet,
+-                    CurveFamily2::RationalBezier,
+-                    UncertaintyReason::Unsupported,
+                 ));
+             }
+             let fillet_clockwise = if frame.anchor_is_previous {
+@@ -3848,4 +3856,163 @@
+             }
+         }
+     }
++
++    fn nonph_extended_fillet_path(closed: bool) -> crate::CurvePath2 {
++        let q = |n: i64, d: i64| (Real::from(n) / Real::from(d)).unwrap();
++        let end = Point2::new(-q(14, 65), q(196, 325));
++        let mut curves = vec![
++            Curve2::from(QuadraticBezier2::new(
++                Point2::from_values(0, 0),
++                Point2::new(q(1, 2), Real::zero()),
++                Point2::from_values(1, 1),
++            )),
++            Curve2::from(QuadraticBezier2::new(
++                Point2::from_values(1, 1),
++                Point2::new(q(99, 130), q(282, 325)),
++                end.clone(),
++            )),
++        ];
++        if closed {
++            curves.push(Curve2::from(
++                LineSeg2::try_new(end, Point2::from_values(0, 0)).unwrap(),
++            ));
++        }
++        crate::CurvePath2::try_new(curves).unwrap()
++    }
++
++    #[test]
++    fn extended_fillet_circle_endpoints_obey_the_exact_radius_bound() {
++        let q = |n: i64, d: i64| (Real::from(n) / Real::from(d)).unwrap();
++        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
++            for reversed in [false, true] {
++                let source = nonph_extended_fillet_path(false);
++                let source = if reversed {
++                    source.reversed(&policy).unwrap().into_value()
++                } else {
++                    source
++                };
++                let outcome = source
++                    .fillet_vertex_by_radius(1, q(2, 5), CurveCornerMode2::TrimOrExtend, &policy)
++                    .unwrap();
++                assert_eq!(outcome.certainty, crate::CurveCertainty::Certified);
++                let candidates = match outcome.value {
++                    CurveCornerSolutions2::Unique(candidate) => vec![candidate],
++                    CurveCornerSolutions2::Multiple(candidates) => candidates,
++                    CurveCornerSolutions2::NoSolution(reason) => {
++                        panic!("exact extended fillet: {reason:?}")
++                    }
++                };
++                let mut checked = 0;
++                for candidate in candidates {
++                    for curve in candidate.curves() {
++                        let Some(BezierSplitFragment2::AlgebraicCuspSemicircle(fragment)) =
++                            curve.retained_fragment()
++                        else {
++                            continue;
++                        };
++                        let Classification::Decided(center) = fragment
++                            .semicircle()
++                            .center_point_evidence(&policy)
++                            .unwrap()
++                        else {
++                            panic!("retained center");
++                        };
++                        // Independent metric bound: C_y > 3/2 and r = 2/5
++                        // imply every circle point has y > 11/10. The old
++                        // companion chart produced an endpoint with y < 1.
++                        let center_order = center
++                            .compare_coordinate(
++                                &CurvePoint2::from(Point2::new(Real::zero(), q(3, 2))),
++                                crate::Axis2::Y,
++                                &policy,
++                            )
++                            .unwrap();
++                        assert_eq!(center_order.certainty, crate::CurveCertainty::Certified);
++                        assert_eq!(
++                            center_order.value,
++                            Classification::Decided(std::cmp::Ordering::Greater)
++                        );
++                        for parameter in [
++                            curve.parameter_domain().start(),
++                            curve.parameter_domain().end(),
++                        ] {
++                            let point = curve.point_at(parameter, &policy).unwrap();
++                            assert_eq!(point.certainty, crate::CurveCertainty::Certified);
++                            let order = point
++                                .value
++                                .compare_coordinate(
++                                    &CurvePoint2::from(Point2::new(Real::zero(), q(11, 10))),
++                                    crate::Axis2::Y,
++                                    &policy,
++                                )
++                                .unwrap();
++                            assert_eq!(order.certainty, crate::CurveCertainty::Certified);
++                            assert_eq!(
++                                order.value,
++                                Classification::Decided(std::cmp::Ordering::Greater),
++                                "reversed={reversed}, policy={policy:?}"
++                            );
++                            checked += 1;
++                        }
++                    }
++                }
++                assert!(checked >= 2);
++            }
++        }
++    }
++
++    #[test]
++    fn extended_fillet_region_classifies_both_sides_of_its_companion() {
++        let q = |n: i64, d: i64| (Real::from(n) / Real::from(d)).unwrap();
++        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
++            for reversed in [false, true] {
++                let source = nonph_extended_fillet_path(true);
++                let source = if reversed {
++                    source.reversed(&policy).unwrap().into_value()
++                } else {
++                    source
++                };
++                let region = CurveRegion2::try_from_boundary_paths(&[source], &policy)
++                    .unwrap()
++                    .into_value();
++                let outcome = region
++                    .fillet_loop_vertex_by_radius(
++                        0,
++                        if reversed { 2 } else { 1 },
++                        q(2, 5),
++                        CurveCornerMode2::TrimOrExtend,
++                        &policy,
++                    )
++                    .unwrap();
++                assert_eq!(outcome.certainty, crate::CurveCertainty::Certified);
++                let candidates = match outcome.value {
++                    CurveCornerSolutions2::Unique(candidate) => vec![candidate],
++                    CurveCornerSolutions2::Multiple(candidates) => candidates,
++                    CurveCornerSolutions2::NoSolution(reason) => {
++                        panic!("exact extended fillet: {reason:?}")
++                    }
++                };
++                for candidate in candidates {
++                    // At original companion parameter -1/4 the point is
++                    // (279/260, 5501/5200). At this height the other Bezier
++                    // crosses at x=sqrt(5501/5200), to its left; the circle
++                    // lies entirely above 11/10. These two rational offsets
++                    // therefore lie inside and outside the small lens.
++                    for (shift, expected) in [
++                        (-1, RegionPointLocation::Inside),
++                        (1, RegionPointLocation::Outside),
++                    ] {
++                        let point = Point2::new(q(279, 260) + q(shift, 10400), q(5501, 5200));
++                        let classification = candidate.classify_point(&point, &policy).unwrap();
++                        assert_eq!(classification.certainty, crate::CurveCertainty::Certified);
++                        assert_eq!(
++                            classification.value,
++                            Classification::Decided(expected),
++                            "reversed={reversed}, shift={shift}, policy={policy:?}"
++                        );
++                    }
++                }
++            }
++        }
++    }
+ }

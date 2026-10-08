@@ -1,0 +1,69 @@
+{
+  "status": "committed; original goal remains active",
+  "goal_status": "active",
+  "base_commits": {
+    "hypercurve": "d4eda85eb95ee167efaad463ace09b93e589b1a0",
+    "hyperbrep": "051850ab555ed17885986c6c7748b0a097b466e7"
+  },
+  "change": [
+    "Replace CurveIntersectionParameter2 and exact_curve_parameter with CurveLocation2 retaining CurveParameter2 and demand-driven authored chart transport.",
+    "Use CurveParameterRange2 for public overlap ranges and migrate all controlled callers directly; no compatibility API.",
+    "Expose CurveParameter2::compare with operation certainty; retain private raw equality for geometry kernels.",
+    "Use general parameter comparison for HyperBREP wire/profile seams. Keep explicit scalar guards at the existing spatial trace and isoparametric pcurve consumers.",
+    "Generalize and share HyperBREP planar classification error handling."
+  ],
+  "regressions": {
+    "selected_location_cases": 64,
+    "dimensions": "Four representations x two traversal directions x two operand orders x two policies x curve/open-path results. x(t)=t^2 intersects x=1/2; non-unit spline domains [2,5]. Exact parameter comparison, point evaluation and subdivision check the independent root and point.",
+    "selected_authority_probe": "general-intersection-location-authority-probe.json (earlier build; all 32 curve cases retain non-scalar local and public parameters)",
+    "certainty_test": "APPROXIMATE_512 reports consumed terminal equality; a subsequent STRICT comparison stays uncertain, and shared identity certifies under STRICT."
+  },
+  "qualification": {
+    "results": "general-intersection-location-full-results.json",
+    "targets": 49,
+    "passed": 2157,
+    "failed": 9,
+    "ignored": 9,
+    "new_failures": 0,
+    "hypercurve_passed": 1925,
+    "hyperbrep_passed": 232,
+    "remaining_failures": [
+      "approximate_512_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions",
+      "arc_parabola_fillet_recovers_exact_complement_contacts",
+      "axis_aligned_algebraic_chords_reenter_exact_region_offsets",
+      "line_parabola_fillet_extends_the_regular_incident_cell_exactly",
+      "nonconvex_algebraic_chord_expansion_is_exact_and_local_collapse_is_explicit",
+      "non_ph_bezier_pair_projective_fillet_retains_algebraic_extensions",
+      "strict_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions",
+      "unified_mixed_line_arc_erosion_splits_after_a_curved_neck_collapse",
+      "unified_region_non_miter_erosions_split_after_neck_collapse"
+    ],
+    "previously_unqualified_expensive_cases": 8,
+    "timeouts": 0,
+    "full_suite_passing": false,
+    "all_target_checks": true,
+    "immutable_sources": true,
+    "source_manifest": "general-intersection-location-source-before-tests.json",
+    "formatting_and_whitespace_checks": true,
+    "caller_audit": "general-intersection-location-caller-audit.json"
+  },
+  "layout": {
+    "prior_location_bytes": 152,
+    "general_location_bytes": 160,
+    "bezier_parameter_bytes": 48,
+    "general_parameter_bytes": 56,
+    "rlib_sha256": "e1de6af8f9104297e792ad94ec42e7590ecad78e948eca9aaf0023133dcc80a9",
+    "prior_layout": "private baseline field types mirrored on the same compiler and target; not a Rust ABI guarantee",
+    "scope": "stack layout only; no throughput or allocation claim"
+  },
+  "remaining": [
+    "Curve2 pair dispatch still requires rational evaluators and does not yet consume generated chamfer chords or retained tails.",
+    "Curve/path topology still stores native Bezier split materializations; the broader geometry/domain pair-kernel extraction remains unfinished.",
+    "Nine pre-existing promotion failures, eight expensive unqualified cases, and the original broader review goal remain."
+  ],
+  "commits": {
+    "hypercurve": "349c4bad9c5e0a1355fce05d7e8d096d4a1e30b5",
+    "hyperbrep": "d7fa29cee735ba430caaef0a0e587687a6660abd"
+  },
+  "remaining_generated_pair_probe": "general-intersection-location-generated-pairs-probe.json"
+}

@@ -1,0 +1,10 @@
+[
+  {"repo":"calcium","path":"ca_poly/test/t-atan_series.c"},
+  {"repo":"calcium","path":"ca_poly/test/t-compose.c"},
+  {"repo":"calcium","path":"ca_poly/test/t-compose_divconquer.c"},
+  {"repo":"calcium","path":"ca_poly/test/t-compose_horner.c"},
+  {"repo":"calcium","path":"ca_poly/test/t-pow_ui.c"},
+  {"repo":"flint","path":"src/ca_poly/test/main.c"},
+  {"repo":"flint","path":"src/ca_poly/test/t-compose.c"},
+  {"repo":"flint","path":"src/ca_poly/test/t-pow_ui.c"}
+]

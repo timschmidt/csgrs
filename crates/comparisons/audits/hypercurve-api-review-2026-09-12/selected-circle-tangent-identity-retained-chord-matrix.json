@@ -1,0 +1,26 @@
+{
+  "returncode": 0,
+  "elapsed_seconds": 0.03166659100679681,
+  "normal_library_sha256": "120d642b35bdeafbd22da08cb7297559ee10a429c46d668e78773f44ce8737cf",
+  "log": "selected-circle-tangent-identity-retained-chord-matrix.log",
+  "source": "finite-domain-chord-matrix.rs",
+  "command": [
+    "rustc",
+    "--edition=2024",
+    "-O",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-domain-chord-matrix.rs",
+    "--extern",
+    "hypercurve=/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/libhypercurve-2c7ff6f3fbe07653.rlib",
+    "-L",
+    "dependency=/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps",
+    "-o",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/selected-circle-tangent-identity-retained-chord-matrix"
+  ],
+  "source_sha256": "4e86f5ef8ff09819960f7b93a635dac2180830329d506dae7f14cbddb887a840",
+  "executable_sha256": "7ddafa76aa06d267b5422bee40573e4c0c5a1067f7dc5503326b5039d3d5c110",
+  "counts": {
+    "queries": 144,
+    "point_replays": 480,
+    "restrictions": 16
+  }
+}

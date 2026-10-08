@@ -1,0 +1,3002 @@
+{
+  "normal_production_build": true,
+  "source_manifest": "projection-overlap-20260928-v695-sources.json",
+  "source_directory": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/source-archives/projection-overlap-20260928-v695",
+  "builds": [
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "test",
+        "--lib",
+        "--test",
+        "hypercurve_curve",
+        "--test",
+        "hypercurve_curve_intersection",
+        "--test",
+        "hypercurve_analytic_parallel_region",
+        "--test",
+        "hypercurve_stationary_fillets",
+        "--release",
+        "--all-features",
+        "--locked",
+        "--offline",
+        "--no-run",
+        "--message-format=json"
+      ],
+      "returncode": 0,
+      "log": "projection-overlap-20260928-v695-hypercurve-build.log",
+      "elapsed_seconds": 200.92095106188208,
+      "binaries": {
+        "hypercurve_analytic_parallel_region": {
+          "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/projection-overlap-20260928-v695-hypercurve_analytic_parallel_region-tests",
+          "sha256": "ce708d60737fa71b7b5352b8d4ab3ed45ea2e10e2729617d847c4a80e78fdf5c"
+        },
+        "hypercurve_stationary_fillets": {
+          "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/projection-overlap-20260928-v695-hypercurve_stationary_fillets-tests",
+          "sha256": "0c1aa1fe0865289047419a2449300ce3a894e103d15c50149e0df1f19a939093"
+        },
+        "hypercurve_curve": {
+          "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/projection-overlap-20260928-v695-hypercurve_curve-tests",
+          "sha256": "e9a0cff6bea1a3c482d2070e51e62ec49cb8bedb80a0d0bdb818cd66387b9fa6"
+        },
+        "hypercurve_curve_intersection": {
+          "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/projection-overlap-20260928-v695-hypercurve_curve_intersection-tests",
+          "sha256": "1b7d7d041fd9281f8e32dc19635d95aed6200ba64c8fc7170713da90ab78fc0f"
+        },
+        "hypercurve": {
+          "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/projection-overlap-20260928-v695-hypercurve-tests",
+          "sha256": "75c4c6f2698922f292f6bd1114d54df4f2c21828e0b7885e1be676bde0d0cb2c"
+        }
+      }
+    }
+  ],
+  "cases": [
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/projection-overlap-20260928-v695-hypercurve-tests",
+        "--exact",
+        "bezier_offset::conversion_tests::selected_structural_parallel_overlap_replays_off_diagonal_contacts",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "projection-overlap-20260928-v695-selected_structural_parallel_overlap_replays_off_diagonal_contacts-77ac9fa62c.log",
+      "elapsed_seconds": 0.6645843600854278,
+      "target": "hypercurve",
+      "name": "bezier_offset::conversion_tests::selected_structural_parallel_overlap_replays_off_diagonal_contacts",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/projection-overlap-20260928-v695-hypercurve-tests",
+        "--exact",
+        "bezier_offset::retained_structural_pair_domain_regression::retained_structural_correspondence_preserves_off_diagonal_contact_domains",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "projection-overlap-20260928-v695-retained_structural_correspondence_preserves_off_diagonal_contact_domains-1d1cde8edf.log",
+      "elapsed_seconds": 1.1654481429141015,
+      "target": "hypercurve",
+      "name": "bezier_offset::retained_structural_pair_domain_regression::retained_structural_correspondence_preserves_off_diagonal_contact_domains",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/projection-overlap-20260928-v695-hypercurve-tests",
+        "--exact",
+        "bezier_offset::conversion_tests::non_source_parallel_overlap_replays_the_radical_component",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "projection-overlap-20260928-v695-non_source_parallel_overlap_replays_the_radical_component-f3adfe7f5e.log",
+      "elapsed_seconds": 0.0037469309754669666,
+      "target": "hypercurve",
+      "name": "bezier_offset::conversion_tests::non_source_parallel_overlap_replays_the_radical_component",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/projection-overlap-20260928-v695-hypercurve-tests",
+        "--exact",
+        "bezier_offset::conversion_tests::radical_component_saturation_retains_norm_intersections",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "projection-overlap-20260928-v695-radical_component_saturation_retains_norm_intersections-09112d16bf.log",
+      "elapsed_seconds": 0.0035541141405701637,
+      "target": "hypercurve",
+      "name": "bezier_offset::conversion_tests::radical_component_saturation_retains_norm_intersections",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/projection-overlap-20260928-v695-hypercurve-tests",
+        "--exact",
+        "bezier_offset::conversion_tests::analytic_parallel_self_intersection_removes_the_parameter_diagonal",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "projection-overlap-20260928-v695-analytic_parallel_self_intersection_removes_the_parameter_diagonal-eea25ea7bb.log",
+      "elapsed_seconds": 1.0149883981794119,
+      "target": "hypercurve",
+      "name": "bezier_offset::conversion_tests::analytic_parallel_self_intersection_removes_the_parameter_diagonal",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/projection-overlap-20260928-v695-hypercurve-tests",
+        "--exact",
+        "bezier_offset::conversion_tests::exact_rational_parallel_self_intersections_reuse_rational_authority",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "projection-overlap-20260928-v695-exact_rational_parallel_self_intersections_reuse_rational_authority-106ff5da1e.log",
+      "elapsed_seconds": 0.007706257048994303,
+      "target": "hypercurve",
+      "name": "bezier_offset::conversion_tests::exact_rational_parallel_self_intersections_reuse_rational_authority",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/projection-overlap-20260928-v695-hypercurve-tests",
+        "--exact",
+        "bezier_offset::conversion_tests::ordered_self_contact_domains_retain_axis_roles_after_restriction",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "projection-overlap-20260928-v695-ordered_self_contact_domains_retain_axis_roles_after_restriction-69f6fe52b8.log",
+      "elapsed_seconds": 0.015683505916967988,
+      "target": "hypercurve",
+      "name": "bezier_offset::conversion_tests::ordered_self_contact_domains_retain_axis_roles_after_restriction",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/projection-overlap-20260928-v695-hypercurve-tests",
+        "--exact",
+        "bezier_offset::conversion_tests::incident_pair_projection_accepts_a_non_source_radical_component",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "projection-overlap-20260928-v695-incident_pair_projection_accepts_a_non_source_radical_component-cdb7944e48.log",
+      "elapsed_seconds": 0.007569175912067294,
+      "target": "hypercurve",
+      "name": "bezier_offset::conversion_tests::incident_pair_projection_accepts_a_non_source_radical_component",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/projection-overlap-20260928-v695-hypercurve-tests",
+        "--exact",
+        "bezier_offset::conversion_tests::incident_non_source_parallel_overlap_reaches_the_common_projection",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "projection-overlap-20260928-v695-incident_non_source_parallel_overlap_reaches_the_common_projection-518b932458.log",
+      "elapsed_seconds": 0.007564186817035079,
+      "target": "hypercurve",
+      "name": "bezier_offset::conversion_tests::incident_non_source_parallel_overlap_reaches_the_common_projection",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/projection-overlap-20260928-v695-hypercurve-tests",
+        "--exact",
+        "curve_region_boolean::certified_successor_tests::finite_parallel_self_contacts_retain_active_domain",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "projection-overlap-20260928-v695-finite_parallel_self_contacts_retain_active_domain-da5e3b9aa0.log",
+      "elapsed_seconds": 0.0035163869615644217,
+      "target": "hypercurve",
+      "name": "curve_region_boolean::certified_successor_tests::finite_parallel_self_contacts_retain_active_domain",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/projection-overlap-20260928-v695-hypercurve-tests",
+        "--exact",
+        "bezier_offset::conversion_tests::odd_source_cusp_branches_do_not_saturate_a_false_source_diagonal",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "projection-overlap-20260928-v695-odd_source_cusp_branches_do_not_saturate_a_false_source_diagonal-219e7965a1.log",
+      "elapsed_seconds": 0.11380685889162123,
+      "target": "hypercurve",
+      "name": "bezier_offset::conversion_tests::odd_source_cusp_branches_do_not_saturate_a_false_source_diagonal",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/projection-overlap-20260928-v695-hypercurve-tests",
+        "--exact",
+        "bezier_offset::conversion_tests::regular_ph_branch_pairs_retain_exact_cusp_incidence",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "projection-overlap-20260928-v695-regular_ph_branch_pairs_retain_exact_cusp_incidence-bb5f625684.log",
+      "elapsed_seconds": 0.36418641405180097,
+      "target": "hypercurve",
+      "name": "bezier_offset::conversion_tests::regular_ph_branch_pairs_retain_exact_cusp_incidence",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/projection-overlap-20260928-v695-hypercurve-tests",
+        "--exact",
+        "bezier_offset::conversion_tests::nonzero_parallel_domains_exclude_undefined_normals_and_poles",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "projection-overlap-20260928-v695-nonzero_parallel_domains_exclude_undefined_normals_and_poles-2cf9a8343e.log",
+      "elapsed_seconds": 0.03182952897623181,
+      "target": "hypercurve",
+      "name": "bezier_offset::conversion_tests::nonzero_parallel_domains_exclude_undefined_normals_and_poles",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/projection-overlap-20260928-v695-hypercurve-tests",
+        "--exact",
+        "bezier_offset::conversion_tests::nonzero_parallel_domains_partition_poles_on_components",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "projection-overlap-20260928-v695-nonzero_parallel_domains_partition_poles_on_components-8d39f051ed.log",
+      "elapsed_seconds": 0.007653579814359546,
+      "target": "hypercurve",
+      "name": "bezier_offset::conversion_tests::nonzero_parallel_domains_partition_poles_on_components",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/projection-overlap-20260928-v695-hypercurve-tests",
+        "--exact",
+        "bezier_offset::regular_parallel_contact_tests::stationary_component_queries_keep_one_sided_endpoints_and_exact_constraints",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "projection-overlap-20260928-v695-stationary_component_queries_keep_one_sided_endpoints_and_exact_constraints-7ef2d044c8.log",
+      "elapsed_seconds": 1.8662241010461003,
+      "target": "hypercurve",
+      "name": "bezier_offset::regular_parallel_contact_tests::stationary_component_queries_keep_one_sided_endpoints_and_exact_constraints",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/projection-overlap-20260928-v695-hypercurve-tests",
+        "--exact",
+        "bezier_offset::regular_parallel_contact_tests::regular_source_cells_preserve_reversed_and_algebraic_range_boundaries",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "projection-overlap-20260928-v695-regular_source_cells_preserve_reversed_and_algebraic_range_boundaries-55659b1c04.log",
+      "elapsed_seconds": 0.01573807210661471,
+      "target": "hypercurve",
+      "name": "bezier_offset::regular_parallel_contact_tests::regular_source_cells_preserve_reversed_and_algebraic_range_boundaries",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/projection-overlap-20260928-v695-hypercurve-tests",
+        "--exact",
+        "bezier_offset::regular_parallel_contact_tests::regular_source_frame_keeps_contact_scale_across_a_center_cusp",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "projection-overlap-20260928-v695-regular_source_frame_keeps_contact_scale_across_a_center_cusp-03b3f5d50b.log",
+      "elapsed_seconds": 0.015701703960075974,
+      "target": "hypercurve",
+      "name": "bezier_offset::regular_parallel_contact_tests::regular_source_frame_keeps_contact_scale_across_a_center_cusp",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/projection-overlap-20260928-v695-hypercurve-tests",
+        "--exact",
+        "bezier_offset::regular_parallel_contact_tests::exterior_regular_pair_keeps_contacts_outside_ancestral_bounds",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "projection-overlap-20260928-v695-exterior_regular_pair_keeps_contacts_outside_ancestral_bounds-321323f83c.log",
+      "elapsed_seconds": 1.6659969368483871,
+      "target": "hypercurve",
+      "name": "bezier_offset::regular_parallel_contact_tests::exterior_regular_pair_keeps_contacts_outside_ancestral_bounds",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/projection-overlap-20260928-v695-hypercurve-tests",
+        "--exact",
+        "bezier_offset::structural_overlap_trace_regression::monotone_reparameterization_preserves_structural_pair_crossings_strict",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "projection-overlap-20260928-v695-monotone_reparameterization_preserves_structural_pair_crossings_strict-b1b6dd2839.log",
+      "elapsed_seconds": 48.679485796019435,
+      "target": "hypercurve",
+      "name": "bezier_offset::structural_overlap_trace_regression::monotone_reparameterization_preserves_structural_pair_crossings_strict",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/projection-overlap-20260928-v695-hypercurve-tests",
+        "--exact",
+        "bezier_offset::structural_overlap_trace_regression::monotone_reparameterization_preserves_structural_pair_crossings_approximate",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "projection-overlap-20260928-v695-monotone_reparameterization_preserves_structural_pair_crossings_approximate-86e02f75a5.log",
+      "elapsed_seconds": 47.92769193602726,
+      "target": "hypercurve",
+      "name": "bezier_offset::structural_overlap_trace_regression::monotone_reparameterization_preserves_structural_pair_crossings_approximate",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/projection-overlap-20260928-v695-hypercurve-tests",
+        "--exact",
+        "bezier_offset::structural_overlap_trace_regression::reversed_monotone_reparameterization_preserves_structural_pair_crossings_strict",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "projection-overlap-20260928-v695-reversed_monotone_reparameterization_preserves_structural_pair_crossings_strict-cb1c3f5c33.log",
+      "elapsed_seconds": 49.02837413805537,
+      "target": "hypercurve",
+      "name": "bezier_offset::structural_overlap_trace_regression::reversed_monotone_reparameterization_preserves_structural_pair_crossings_strict",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/projection-overlap-20260928-v695-hypercurve-tests",
+        "--exact",
+        "bezier_offset::structural_overlap_trace_regression::reversed_monotone_reparameterization_preserves_structural_pair_crossings_approximate",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "projection-overlap-20260928-v695-reversed_monotone_reparameterization_preserves_structural_pair_crossings_approximate-f7af86079c.log",
+      "elapsed_seconds": 48.828610352938995,
+      "target": "hypercurve",
+      "name": "bezier_offset::structural_overlap_trace_regression::reversed_monotone_reparameterization_preserves_structural_pair_crossings_approximate",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/projection-overlap-20260928-v695-hypercurve-tests",
+        "--exact",
+        "bezier_offset::conversion_tests::displaced_algebraic_point_incidence_reuses_its_retained_field",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "projection-overlap-20260928-v695-displaced_algebraic_point_incidence_reuses_its_retained_field-2ec9298ffe.log",
+      "elapsed_seconds": 0.007661679992452264,
+      "target": "hypercurve",
+      "name": "bezier_offset::conversion_tests::displaced_algebraic_point_incidence_reuses_its_retained_field",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/projection-overlap-20260928-v695-hypercurve-tests",
+        "--exact",
+        "curve::curve_fillet::incident_parallel_cusp_nonlinear_regression::incident_parallel_cusp_fillet_retains_nonlinear_partner_contact",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "projection-overlap-20260928-v695-incident_parallel_cusp_fillet_retains_nonlinear_partner_contact-a73bb9d2d6.log",
+      "elapsed_seconds": 0.015667247120290995,
+      "target": "hypercurve",
+      "name": "curve::curve_fillet::incident_parallel_cusp_nonlinear_regression::incident_parallel_cusp_fillet_retains_nonlinear_partner_contact",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/projection-overlap-20260928-v695-hypercurve-tests",
+        "--exact",
+        "curve::curve_fillet::constrained_regular_loop_fillet_regression::point_constraint_preserves_distinct_regular_loop_contacts",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "projection-overlap-20260928-v695-point_constraint_preserves_distinct_regular_loop_contacts-31dc565cc8.log",
+      "elapsed_seconds": 2.8674399708397686,
+      "target": "hypercurve",
+      "name": "curve::curve_fillet::constrained_regular_loop_fillet_regression::point_constraint_preserves_distinct_regular_loop_contacts",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/projection-overlap-20260928-v695-hypercurve_curve-tests",
+        "--exact",
+        "automatic_corner_solver_obeys_strict_and_approximate_512_once",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "projection-overlap-20260928-v695-automatic_corner_solver_obeys_strict_and_approximate_512_once-cc7724ed90.log",
+      "elapsed_seconds": 0.003572602989152074,
+      "target": "hypercurve_curve",
+      "name": "automatic_corner_solver_obeys_strict_and_approximate_512_once",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/projection-overlap-20260928-v695-hypercurve_curve-tests",
+        "--exact",
+        "automatic_corner_solver_reconstructs_selected_pairs",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "projection-overlap-20260928-v695-automatic_corner_solver_reconstructs_selected_pairs-16cdb2e19f.log",
+      "elapsed_seconds": 0.3641872238367796,
+      "target": "hypercurve_curve",
+      "name": "automatic_corner_solver_reconstructs_selected_pairs",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/projection-overlap-20260928-v695-hypercurve_curve-tests",
+        "--exact",
+        "clamped_splines_preserve_discontinuous_knot_sides_and_span_images",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "projection-overlap-20260928-v695-clamped_splines_preserve_discontinuous_knot_sides_and_span_images-9ba02d7db8.log",
+      "elapsed_seconds": 0.0035948220174759626,
+      "target": "hypercurve_curve",
+      "name": "clamped_splines_preserve_discontinuous_knot_sides_and_span_images",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/projection-overlap-20260928-v695-hypercurve_curve-tests",
+        "--exact",
+        "closed_curve_path_corner_edits_support_the_start_end_seam",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "projection-overlap-20260928-v695-closed_curve_path_corner_edits_support_the_start_end_seam-3852c66479.log",
+      "elapsed_seconds": 0.003555063856765628,
+      "target": "hypercurve_curve",
+      "name": "closed_curve_path_corner_edits_support_the_start_end_seam",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/projection-overlap-20260928-v695-hypercurve_curve-tests",
+        "--exact",
+        "curve_path_boundary_and_classification_report_terminal_closure",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "projection-overlap-20260928-v695-curve_path_boundary_and_classification_report_terminal_closure-e70f5e36ce.log",
+      "elapsed_seconds": 0.0034965481609106064,
+      "target": "hypercurve_curve",
+      "name": "curve_path_boundary_and_classification_report_terminal_closure",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/projection-overlap-20260928-v695-hypercurve_curve-tests",
+        "--exact",
+        "direct_bezier_pair_fillet_retains_both_incident_extensions",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "projection-overlap-20260928-v695-direct_bezier_pair_fillet_retains_both_incident_extensions-545216a419.log",
+      "elapsed_seconds": 7.173280039103702,
+      "target": "hypercurve_curve",
+      "name": "direct_bezier_pair_fillet_retains_both_incident_extensions",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/projection-overlap-20260928-v695-hypercurve_curve-tests",
+        "--exact",
+        "exact_arc_chamfer_solver_preserves_both_major_sweep_cuts",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "projection-overlap-20260928-v695-exact_arc_chamfer_solver_preserves_both_major_sweep_cuts-f8d000f664.log",
+      "elapsed_seconds": 0.0036058910191059113,
+      "target": "hypercurve_curve",
+      "name": "exact_arc_chamfer_solver_preserves_both_major_sweep_cuts",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/projection-overlap-20260928-v695-hypercurve_curve-tests",
+        "--exact",
+        "exact_chamfer_solver_handles_native_line_arc_and_arc_arc_carriers",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "projection-overlap-20260928-v695-exact_chamfer_solver_handles_native_line_arc_and_arc_arc_carriers-7c61bf7e59.log",
+      "elapsed_seconds": 0.003533395007252693,
+      "target": "hypercurve_curve",
+      "name": "exact_chamfer_solver_handles_native_line_arc_and_arc_arc_carriers",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/projection-overlap-20260928-v695-hypercurve_curve-tests",
+        "--exact",
+        "exact_line_arc_fillets_retain_rational_radius_across_source_scales",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "projection-overlap-20260928-v695-exact_line_arc_fillets_retain_rational_radius_across_source_scales-ae7d82afeb.log",
+      "elapsed_seconds": 0.03168755886144936,
+      "target": "hypercurve_curve",
+      "name": "exact_line_arc_fillets_retain_rational_radius_across_source_scales",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/projection-overlap-20260928-v695-hypercurve_curve-tests",
+        "--exact",
+        "exact_line_corner_design_edits_hold_across_source_lengths",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "projection-overlap-20260928-v695-exact_line_corner_design_edits_hold_across_source_lengths-cab79160fe.log",
+      "elapsed_seconds": 0.007567876949906349,
+      "target": "hypercurve_curve",
+      "name": "exact_line_corner_design_edits_hold_across_source_lengths",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/projection-overlap-20260928-v695-hypercurve_curve-tests",
+        "--exact",
+        "exact_native_arc_fillet_solver_classifies_collapsed_and_coincident_offsets",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "projection-overlap-20260928-v695-exact_native_arc_fillet_solver_classifies_collapsed_and_coincident_offsets-de83235d0b.log",
+      "elapsed_seconds": 0.003508426947519183,
+      "target": "hypercurve_curve",
+      "name": "exact_native_arc_fillet_solver_classifies_collapsed_and_coincident_offsets",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/projection-overlap-20260928-v695-hypercurve_curve-tests",
+        "--exact",
+        "exact_native_arc_fillet_solver_handles_every_native_pair_order",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "projection-overlap-20260928-v695-exact_native_arc_fillet_solver_handles_every_native_pair_order-7efb9edf36.log",
+      "elapsed_seconds": 0.007579335942864418,
+      "target": "hypercurve_curve",
+      "name": "exact_native_arc_fillet_solver_handles_every_native_pair_order",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/projection-overlap-20260928-v695-hypercurve_curve-tests",
+        "--exact",
+        "exact_native_arc_fillet_uses_only_the_shared_approximate_terminal",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "projection-overlap-20260928-v695-exact_native_arc_fillet_uses_only_the_shared_approximate_terminal-51aff8c7a2.log",
+      "elapsed_seconds": 0.0034966380335390568,
+      "target": "hypercurve_curve",
+      "name": "exact_native_arc_fillet_uses_only_the_shared_approximate_terminal",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/projection-overlap-20260928-v695-hypercurve_curve-tests",
+        "--exact",
+        "independently_parameterized_bezier_continuation_is_an_incident_fillet_component",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "projection-overlap-20260928-v695-independently_parameterized_bezier_continuation_is_an_incident_fillet_component-1a81b397fc.log",
+      "elapsed_seconds": 0.03171477699652314,
+      "target": "hypercurve_curve",
+      "name": "independently_parameterized_bezier_continuation_is_an_incident_fillet_component",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/projection-overlap-20260928-v695-hypercurve_curve-tests",
+        "--exact",
+        "line_corner_solvers_derive_unique_trimmed_fillet_and_chamfer",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "projection-overlap-20260928-v695-line_corner_solvers_derive_unique_trimmed_fillet_and_chamfer-6acc5b6692.log",
+      "elapsed_seconds": 0.003510858165100217,
+      "target": "hypercurve_curve",
+      "name": "line_corner_solvers_derive_unique_trimmed_fillet_and_chamfer",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/projection-overlap-20260928-v695-hypercurve_curve-tests",
+        "--exact",
+        "line_corner_solvers_enumerate_extensions_deterministically",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "projection-overlap-20260928-v695-line_corner_solvers_enumerate_extensions_deterministically-debb730c91.log",
+      "elapsed_seconds": 0.0035550249740481377,
+      "target": "hypercurve_curve",
+      "name": "line_corner_solvers_enumerate_extensions_deterministically",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/projection-overlap-20260928-v695-hypercurve_curve-tests",
+        "--exact",
+        "line_corner_solvers_report_exact_no_solution_and_invalid_options",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "projection-overlap-20260928-v695-line_corner_solvers_report_exact_no_solution_and_invalid_options-4930d17996.log",
+      "elapsed_seconds": 0.0035506240092217922,
+      "target": "hypercurve_curve",
+      "name": "line_corner_solvers_report_exact_no_solution_and_invalid_options",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/projection-overlap-20260928-v695-hypercurve_curve-tests",
+        "--exact",
+        "line_parabola_mixed_exact_algebraic_fillet_is_an_exact_open_path",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "projection-overlap-20260928-v695-line_parabola_mixed_exact_algebraic_fillet_is_an_exact_open_path-513db93192.log",
+      "elapsed_seconds": 0.06379927787929773,
+      "target": "hypercurve_curve",
+      "name": "line_parabola_mixed_exact_algebraic_fillet_is_an_exact_open_path",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/projection-overlap-20260928-v695-hypercurve_curve-tests",
+        "--exact",
+        "mixed_curve_path_fillet_accepts_every_non_arc_family_pair",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "projection-overlap-20260928-v695-mixed_curve_path_fillet_accepts_every_non_arc_family_pair-f05cc7d4f3.log",
+      "elapsed_seconds": 0.03174407500773668,
+      "target": "hypercurve_curve",
+      "name": "mixed_curve_path_fillet_accepts_every_non_arc_family_pair",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/projection-overlap-20260928-v695-hypercurve_curve-tests",
+        "--exact",
+        "mixed_curve_path_fillet_preserves_arc_family_and_exact_tangency",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "projection-overlap-20260928-v695-mixed_curve_path_fillet_preserves_arc_family_and_exact_tangency-63c69435da.log",
+      "elapsed_seconds": 0.003514337120577693,
+      "target": "hypercurve_curve",
+      "name": "mixed_curve_path_fillet_preserves_arc_family_and_exact_tangency",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/projection-overlap-20260928-v695-hypercurve_curve-tests",
+        "--exact",
+        "oblique_line_corner_solvers_preserve_exact_orientation",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "projection-overlap-20260928-v695-oblique_line_corner_solvers_preserve_exact_orientation-b73e357935.log",
+      "elapsed_seconds": 0.003504907013848424,
+      "target": "hypercurve_curve",
+      "name": "oblique_line_corner_solvers_preserve_exact_orientation",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/projection-overlap-20260928-v695-hypercurve_curve-tests",
+        "--exact",
+        "one_curve_closed_spline_corner_edits_retain_one_middle_interval",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "projection-overlap-20260928-v695-one_curve_closed_spline_corner_edits_retain_one_middle_interval-0293a23255.log",
+      "elapsed_seconds": 0.015691343927755952,
+      "target": "hypercurve_curve",
+      "name": "one_curve_closed_spline_corner_edits_retain_one_middle_interval",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/projection-overlap-20260928-v695-hypercurve_curve-tests",
+        "--exact",
+        "one_curve_closed_spline_extensions_materialize_each_cell_once",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "projection-overlap-20260928-v695-one_curve_closed_spline_extensions_materialize_each_cell_once-0f180d7586.log",
+      "elapsed_seconds": 0.06374453194439411,
+      "target": "hypercurve_curve",
+      "name": "one_curve_closed_spline_extensions_materialize_each_cell_once",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/projection-overlap-20260928-v695-hypercurve_curve-tests",
+        "--exact",
+        "polynomial_chamfer_materializes_represented_incident_extension",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "projection-overlap-20260928-v695-polynomial_chamfer_materializes_represented_incident_extension-16a6b7ce2c.log",
+      "elapsed_seconds": 0.0035022678785026073,
+      "target": "hypercurve_curve",
+      "name": "polynomial_chamfer_materializes_represented_incident_extension",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/projection-overlap-20260928-v695-hypercurve_curve-tests",
+        "--exact",
+        "radical_line_image_fillets_preserve_retained_families",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "projection-overlap-20260928-v695-radical_line_image_fillets_preserve_retained_families-8bcd5ceccb.log",
+      "elapsed_seconds": 0.003474449971690774,
+      "target": "hypercurve_curve",
+      "name": "radical_line_image_fillets_preserve_retained_families",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/projection-overlap-20260928-v695-hypercurve_curve-tests",
+        "--exact",
+        "rational_chamfer_materializes_the_incident_projective_cell",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "projection-overlap-20260928-v695-rational_chamfer_materializes_the_incident_projective_cell-208379fe6d.log",
+      "elapsed_seconds": 0.003547244006767869,
+      "target": "hypercurve_curve",
+      "name": "rational_chamfer_materializes_the_incident_projective_cell",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/projection-overlap-20260928-v695-hypercurve_curve-tests",
+        "--exact",
+        "represented_arc_bezier_fillets_use_circle_incidence",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "projection-overlap-20260928-v695-represented_arc_bezier_fillets_use_circle_incidence-4d963af29f.log",
+      "elapsed_seconds": 0.015638317912817,
+      "target": "hypercurve_curve",
+      "name": "represented_arc_bezier_fillets_use_circle_incidence",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/projection-overlap-20260928-v695-hypercurve_curve-tests",
+        "--exact",
+        "represented_bezier_chamfer_retains_more_than_two_exact_cuts",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "projection-overlap-20260928-v695-represented_bezier_chamfer_retains_more_than_two_exact_cuts-39a9fbde58.log",
+      "elapsed_seconds": 0.0035444549284875393,
+      "target": "hypercurve_curve",
+      "name": "represented_bezier_chamfer_retains_more_than_two_exact_cuts",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/projection-overlap-20260928-v695-hypercurve_curve-tests",
+        "--exact",
+        "represented_bezier_corner_incidence_uses_the_shared_approximate_terminal",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "projection-overlap-20260928-v695-represented_bezier_corner_incidence_uses_the_shared_approximate_terminal-0d51f32c35.log",
+      "elapsed_seconds": 0.007570086978375912,
+      "target": "hypercurve_curve",
+      "name": "represented_bezier_corner_incidence_uses_the_shared_approximate_terminal",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/projection-overlap-20260928-v695-hypercurve_curve-tests",
+        "--exact",
+        "represented_bezier_pairs_use_independent_chamfer_and_exact_ph_fillet_routes",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "projection-overlap-20260928-v695-represented_bezier_pairs_use_independent_chamfer_and_exact_ph_fillet_routes-e6037e7999.log",
+      "elapsed_seconds": 0.003496058052405715,
+      "target": "hypercurve_curve",
+      "name": "represented_bezier_pairs_use_independent_chamfer_and_exact_ph_fillet_routes",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/projection-overlap-20260928-v695-hypercurve_curve-tests",
+        "--exact",
+        "represented_line_bezier_corners_use_the_general_incidence_kernel",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "projection-overlap-20260928-v695-represented_line_bezier_corners_use_the_general_incidence_kernel-a0b223f529.log",
+      "elapsed_seconds": 0.0076748591382056475,
+      "target": "hypercurve_curve",
+      "name": "represented_line_bezier_corners_use_the_general_incidence_kernel",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/projection-overlap-20260928-v695-hypercurve_curve-tests",
+        "--exact",
+        "retained_circular_conic_pairs_extend_on_native_supports",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "projection-overlap-20260928-v695-retained_circular_conic_pairs_extend_on_native_supports-beb95f41fc.log",
+      "elapsed_seconds": 0.11385287716984749,
+      "target": "hypercurve_curve",
+      "name": "retained_circular_conic_pairs_extend_on_native_supports",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/projection-overlap-20260928-v695-hypercurve_curve-tests",
+        "--exact",
+        "retained_circular_conics_share_the_native_corner_kernel",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "projection-overlap-20260928-v695-retained_circular_conics_share_the_native_corner_kernel-b1e9282d50.log",
+      "elapsed_seconds": 0.007579255849123001,
+      "target": "hypercurve_curve",
+      "name": "retained_circular_conics_share_the_native_corner_kernel",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/projection-overlap-20260928-v695-hypercurve_curve-tests",
+        "--exact",
+        "retained_circular_corner_recognition_uses_the_shared_approximate_terminal",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "projection-overlap-20260928-v695-retained_circular_corner_recognition_uses_the_shared_approximate_terminal-1b4b88b2c3.log",
+      "elapsed_seconds": 0.0035476339980959892,
+      "target": "hypercurve_curve",
+      "name": "retained_circular_corner_recognition_uses_the_shared_approximate_terminal",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/projection-overlap-20260928-v695-hypercurve_curve-tests",
+        "--exact",
+        "same_bezier_support_fillet_removes_the_projective_parameter_diagonal",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "projection-overlap-20260928-v695-same_bezier_support_fillet_removes_the_projective_parameter_diagonal-44a8cd6ad8.log",
+      "elapsed_seconds": 7.2234878179151565,
+      "target": "hypercurve_curve",
+      "name": "same_bezier_support_fillet_removes_the_projective_parameter_diagonal",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/projection-overlap-20260928-v695-hypercurve_curve-tests",
+        "--exact",
+        "same_ph_bezier_support_fillet_reuses_rational_projective_self_contact",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "projection-overlap-20260928-v695-same_ph_bezier_support_fillet_reuses_rational_projective_self_contact-1c7ec3a5f0.log",
+      "elapsed_seconds": 0.06385848391801119,
+      "target": "hypercurve_curve",
+      "name": "same_ph_bezier_support_fillet_reuses_rational_projective_self_contact",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/projection-overlap-20260928-v695-hypercurve_curve-tests",
+        "--exact",
+        "spline_chamfer_materializes_only_the_incident_extension_cell",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "projection-overlap-20260928-v695-spline_chamfer_materializes_only_the_incident_extension_cell-8ac2d8b29c.log",
+      "elapsed_seconds": 0.003613000037148595,
+      "target": "hypercurve_curve",
+      "name": "spline_chamfer_materializes_only_the_incident_extension_cell",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/projection-overlap-20260928-v695-hypercurve_curve-tests",
+        "--exact",
+        "spline_corner_incidence_uses_the_shared_approximate_terminal",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "projection-overlap-20260928-v695-spline_corner_incidence_uses_the_shared_approximate_terminal-c25528588a.log",
+      "elapsed_seconds": 0.01566633698530495,
+      "target": "hypercurve_curve",
+      "name": "spline_corner_incidence_uses_the_shared_approximate_terminal",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/projection-overlap-20260928-v695-hypercurve_curve-tests",
+        "--exact",
+        "spline_incident_span_pairs_reuse_exact_ph_fillet_fast_path",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "projection-overlap-20260928-v695-spline_incident_span_pairs_reuse_exact_ph_fillet_fast_path-6bb76d9462.log",
+      "elapsed_seconds": 0.007633692119270563,
+      "target": "hypercurve_curve",
+      "name": "spline_incident_span_pairs_reuse_exact_ph_fillet_fast_path",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/projection-overlap-20260928-v695-hypercurve_curve-tests",
+        "--exact",
+        "spline_incident_spans_reuse_represented_bezier_corner_incidence",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "projection-overlap-20260928-v695-spline_incident_spans_reuse_represented_bezier_corner_incidence-33190d6cd2.log",
+      "elapsed_seconds": 0.0076301321387290955,
+      "target": "hypercurve_curve",
+      "name": "spline_incident_spans_reuse_represented_bezier_corner_incidence",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/projection-overlap-20260928-v695-hypercurve_curve-tests",
+        "--exact",
+        "spline_line_fillet_preserves_the_authored_spline_and_adds_its_incident_cell",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "projection-overlap-20260928-v695-spline_line_fillet_preserves_the_authored_spline_and_adds_its_incident_cell-95843c37be.log",
+      "elapsed_seconds": 0.0034710599575191736,
+      "target": "hypercurve_curve",
+      "name": "spline_line_fillet_preserves_the_authored_spline_and_adds_its_incident_cell",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/projection-overlap-20260928-v695-hypercurve_curve-tests",
+        "--exact",
+        "top_level_curve_carries_every_public_family",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "projection-overlap-20260928-v695-top_level_curve_carries_every_public_family-47d6f57da5.log",
+      "elapsed_seconds": 0.0035515448544174433,
+      "target": "hypercurve_curve",
+      "name": "top_level_curve_carries_every_public_family",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/projection-overlap-20260928-v695-hypercurve_curve-tests",
+        "--exact",
+        "top_level_curve_derivatives_preserve_parameter_domains_and_share_evaluators",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "projection-overlap-20260928-v695-top_level_curve_derivatives_preserve_parameter_domains_and_share_evaluators-eb37ce8045.log",
+      "elapsed_seconds": 0.003513527102768421,
+      "target": "hypercurve_curve",
+      "name": "top_level_curve_derivatives_preserve_parameter_domains_and_share_evaluators",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/projection-overlap-20260928-v695-hypercurve_curve-tests",
+        "--exact",
+        "top_level_curve_evaluates_native_and_spline_parameters",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "projection-overlap-20260928-v695-top_level_curve_evaluates_native_and_spline_parameters-ef32e8c1d7.log",
+      "elapsed_seconds": 0.003553324146196246,
+      "target": "hypercurve_curve",
+      "name": "top_level_curve_evaluates_native_and_spline_parameters",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/projection-overlap-20260928-v695-hypercurve_curve-tests",
+        "--exact",
+        "top_level_curve_exposes_exact_higher_derivatives",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "projection-overlap-20260928-v695-top_level_curve_exposes_exact_higher_derivatives-df7b1939cb.log",
+      "elapsed_seconds": 0.003564842976629734,
+      "target": "hypercurve_curve",
+      "name": "top_level_curve_exposes_exact_higher_derivatives",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/projection-overlap-20260928-v695-hypercurve_curve-tests",
+        "--exact",
+        "top_level_curve_region_classifies_points_and_shares_results",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "projection-overlap-20260928-v695-top_level_curve_region_classifies_points_and_shares_results-a661a948a9.log",
+      "elapsed_seconds": 0.0035225660540163517,
+      "target": "hypercurve_curve",
+      "name": "top_level_curve_region_classifies_points_and_shares_results",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/projection-overlap-20260928-v695-hypercurve_curve-tests",
+        "--exact",
+        "top_level_curve_region_rejects_open_boundary_paths_with_context",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "projection-overlap-20260928-v695-top_level_curve_region_rejects_open_boundary_paths_with_context-7ea1f212f3.log",
+      "elapsed_seconds": 0.0035154270008206367,
+      "target": "hypercurve_curve",
+      "name": "top_level_curve_region_rejects_open_boundary_paths_with_context",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/projection-overlap-20260928-v695-hypercurve_curve-tests",
+        "--exact",
+        "top_level_curve_reuses_retained_native_endpoints",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "projection-overlap-20260928-v695-top_level_curve_reuses_retained_native_endpoints-14532dee4d.log",
+      "elapsed_seconds": 0.0035484940744936466,
+      "target": "hypercurve_curve",
+      "name": "top_level_curve_reuses_retained_native_endpoints",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/projection-overlap-20260928-v695-hypercurve_curve_intersection-tests",
+        "--exact",
+        "curve_and_path_intersections_report_terminal_use_without_upgrading_arc_caches",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "projection-overlap-20260928-v695-curve_and_path_intersections_report_terminal_use_without_upgrading_arc_caches-2da1cb0f69.log",
+      "elapsed_seconds": 0.0075338289607316256,
+      "target": "hypercurve_curve_intersection",
+      "name": "curve_and_path_intersections_report_terminal_use_without_upgrading_arc_caches",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/projection-overlap-20260928-v695-hypercurve_curve_intersection-tests",
+        "--exact",
+        "curve_parameter_comparison_reports_terminal_certainty",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "projection-overlap-20260928-v695-curve_parameter_comparison_reports_terminal_certainty-e0431c265c.log",
+      "elapsed_seconds": 0.0034919180907309055,
+      "target": "hypercurve_curve_intersection",
+      "name": "curve_parameter_comparison_reports_terminal_certainty",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/projection-overlap-20260928-v695-hypercurve_curve_intersection-tests",
+        "--exact",
+        "equivalent_top_level_families_complete_independent_region_booleans",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "projection-overlap-20260928-v695-equivalent_top_level_families_complete_independent_region_booleans-7ff701aea2.log",
+      "elapsed_seconds": 0.015660066856071353,
+      "target": "hypercurve_curve_intersection",
+      "name": "equivalent_top_level_families_complete_independent_region_booleans",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/projection-overlap-20260928-v695-hypercurve_curve_intersection-tests",
+        "--exact",
+        "finite_selected_circle_domains::retained_fillet_intersects_finite_analytic_parallel_in_all_charts",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "projection-overlap-20260928-v695-retained_fillet_intersects_finite_analytic_parallel_in_all_charts-e2d89152b8.log",
+      "elapsed_seconds": 5.420935424044728,
+      "target": "hypercurve_curve_intersection",
+      "name": "finite_selected_circle_domains::retained_fillet_intersects_finite_analytic_parallel_in_all_charts",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/projection-overlap-20260928-v695-hypercurve_curve_intersection-tests",
+        "--exact",
+        "generated_chamfer_tails_reuse_paired_overlap_boundaries",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "projection-overlap-20260928-v695-generated_chamfer_tails_reuse_paired_overlap_boundaries-8746202185.log",
+      "elapsed_seconds": 0.01572891278192401,
+      "target": "hypercurve_curve_intersection",
+      "name": "generated_chamfer_tails_reuse_paired_overlap_boundaries",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/projection-overlap-20260928-v695-hypercurve_curve_intersection-tests",
+        "--exact",
+        "generated_chord_cuts_reenter_collinear_endpoint_intersections",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "projection-overlap-20260928-v695-generated_chord_cuts_reenter_collinear_endpoint_intersections-d50582521a.log",
+      "elapsed_seconds": 2.0164041249081492,
+      "target": "hypercurve_curve_intersection",
+      "name": "generated_chord_cuts_reenter_collinear_endpoint_intersections",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/projection-overlap-20260928-v695-hypercurve_curve_intersection-tests",
+        "--exact",
+        "generated_chord_overlaps_retain_independent_and_selected_boundaries",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "projection-overlap-20260928-v695-generated_chord_overlaps_retain_independent_and_selected_boundaries-07d7756141.log",
+      "elapsed_seconds": 0.8648397221695632,
+      "target": "hypercurve_curve_intersection",
+      "name": "generated_chord_overlaps_retain_independent_and_selected_boundaries",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/projection-overlap-20260928-v695-hypercurve_curve_intersection-tests",
+        "--exact",
+        "generated_chord_topology_publishes_reusable_curve_pieces",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "projection-overlap-20260928-v695-generated_chord_topology_publishes_reusable_curve_pieces-717ea670ab.log",
+      "elapsed_seconds": 1.7660453389398754,
+      "target": "hypercurve_curve_intersection",
+      "name": "generated_chord_topology_publishes_reusable_curve_pieces",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/projection-overlap-20260928-v695-hypercurve_curve_intersection-tests",
+        "--exact",
+        "generated_chords_keep_open_contacts_and_general_locations",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "projection-overlap-20260928-v695-generated_chords_keep_open_contacts_and_general_locations-b1ccaf7637.log",
+      "elapsed_seconds": 2.917667947942391,
+      "target": "hypercurve_curve_intersection",
+      "name": "generated_chords_keep_open_contacts_and_general_locations",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/projection-overlap-20260928-v695-hypercurve_curve_intersection-tests",
+        "--exact",
+        "generated_fillet_arcs_intersect_themselves_after_restriction_and_reversal",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "projection-overlap-20260928-v695-generated_fillet_arcs_intersect_themselves_after_restriction_and_reversal-97deff5811.log",
+      "elapsed_seconds": 0.003604450961574912,
+      "target": "hypercurve_curve_intersection",
+      "name": "generated_fillet_arcs_intersect_themselves_after_restriction_and_reversal",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/projection-overlap-20260928-v695-hypercurve_curve_intersection-tests",
+        "--exact",
+        "generated_fillet_arcs_keep_tangent_contacts_with_their_trimmed_neighbors",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "projection-overlap-20260928-v695-generated_fillet_arcs_keep_tangent_contacts_with_their_trimmed_neighbors-503a504bf9.log",
+      "elapsed_seconds": 0.031734906136989594,
+      "target": "hypercurve_curve_intersection",
+      "name": "generated_fillet_arcs_keep_tangent_contacts_with_their_trimmed_neighbors",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/projection-overlap-20260928-v695-hypercurve_curve_intersection-tests",
+        "--exact",
+        "independently_rebuilt_degree_elevated_rational_image_is_a_complete_overlap",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "projection-overlap-20260928-v695-independently_rebuilt_degree_elevated_rational_image_is_a_complete_overlap-28854f96f1.log",
+      "elapsed_seconds": 0.0035641829017549753,
+      "target": "hypercurve_curve_intersection",
+      "name": "independently_rebuilt_degree_elevated_rational_image_is_a_complete_overlap",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/projection-overlap-20260928-v695-hypercurve_curve_intersection-tests",
+        "--exact",
+        "native_arc_dispatch_retains_partial_same_circle_overlap_ranges",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "projection-overlap-20260928-v695-native_arc_dispatch_retains_partial_same_circle_overlap_ranges-08af682d13.log",
+      "elapsed_seconds": 0.0035221560392528772,
+      "target": "hypercurve_curve_intersection",
+      "name": "native_arc_dispatch_retains_partial_same_circle_overlap_ranges",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/projection-overlap-20260928-v695-hypercurve_curve_intersection-tests",
+        "--exact",
+        "native_line_arc_dispatch_preserves_operand_order_and_exact_parameters",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "projection-overlap-20260928-v695-native_line_arc_dispatch_preserves_operand_order_and_exact_parameters-48d3fd4366.log",
+      "elapsed_seconds": 0.0035130868200212717,
+      "target": "hypercurve_curve_intersection",
+      "name": "native_line_arc_dispatch_preserves_operand_order_and_exact_parameters",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/projection-overlap-20260928-v695-hypercurve_curve_intersection-tests",
+        "--exact",
+        "native_line_dispatch_retains_partial_overlap_ranges_and_split_endpoints",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "projection-overlap-20260928-v695-native_line_dispatch_retains_partial_overlap_ranges_and_split_endpoints-f28b6db252.log",
+      "elapsed_seconds": 0.003503698157146573,
+      "target": "hypercurve_curve_intersection",
+      "name": "native_line_dispatch_retains_partial_overlap_ranges_and_split_endpoints",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/projection-overlap-20260928-v695-hypercurve_curve_intersection-tests",
+        "--exact",
+        "native_nodal_overlap_keeps_transverse_parameter_pairs_and_topology",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "projection-overlap-20260928-v695-native_nodal_overlap_keeps_transverse_parameter_pairs_and_topology-8176e8b4db.log",
+      "elapsed_seconds": 0.015631189104169607,
+      "target": "hypercurve_curve_intersection",
+      "name": "native_nodal_overlap_keeps_transverse_parameter_pairs_and_topology",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/projection-overlap-20260928-v695-hypercurve_curve_intersection-tests",
+        "--exact",
+        "native_nodal_spline_contacts_retain_authored_charts",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "projection-overlap-20260928-v695-native_nodal_spline_contacts_retain_authored_charts-add72388ea.log",
+      "elapsed_seconds": 0.0075440788641572,
+      "target": "hypercurve_curve_intersection",
+      "name": "native_nodal_spline_contacts_retain_authored_charts",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/projection-overlap-20260928-v695-hypercurve_curve_intersection-tests",
+        "--exact",
+        "native_retraced_overlaps_survive_independent_restriction",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "projection-overlap-20260928-v695-native_retraced_overlaps_survive_independent_restriction-bacff6996d.log",
+      "elapsed_seconds": 0.00758309499360621,
+      "target": "hypercurve_curve_intersection",
+      "name": "native_retraced_overlaps_survive_independent_restriction",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/projection-overlap-20260928-v695-hypercurve_curve_intersection-tests",
+        "--exact",
+        "path_difference_and_xor_reverse_algebraic_parabola_contacts_exactly",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "projection-overlap-20260928-v695-path_difference_and_xor_reverse_algebraic_parabola_contacts_exactly-87c87782f5.log",
+      "elapsed_seconds": 0.007582186022773385,
+      "target": "hypercurve_curve_intersection",
+      "name": "path_difference_and_xor_reverse_algebraic_parabola_contacts_exactly",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/projection-overlap-20260928-v695-hypercurve_curve_intersection-tests",
+        "--exact",
+        "path_overlap_orientation_feeds_canonical_region_boolean_side_logic",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "projection-overlap-20260928-v695-path_overlap_orientation_feeds_canonical_region_boolean_side_logic-fbd6571ae4.log",
+      "elapsed_seconds": 0.0035304161719977856,
+      "target": "hypercurve_curve_intersection",
+      "name": "path_overlap_orientation_feeds_canonical_region_boolean_side_logic",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/projection-overlap-20260928-v695-hypercurve_curve_intersection-tests",
+        "--exact",
+        "path_pair_immediate_topology_splits_each_authored_curve_once",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "projection-overlap-20260928-v695-path_pair_immediate_topology_splits_each_authored_curve_once-03ad8bd8be.log",
+      "elapsed_seconds": 0.003537585027515888,
+      "target": "hypercurve_curve_intersection",
+      "name": "path_pair_immediate_topology_splits_each_authored_curve_once",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/projection-overlap-20260928-v695-hypercurve_curve_intersection-tests",
+        "--exact",
+        "promoted_region_boolean_consumes_algebraic_line_image_overlap_boundary",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "projection-overlap-20260928-v695-promoted_region_boolean_consumes_algebraic_line_image_overlap_boundary-2c25f6ce66.log",
+      "elapsed_seconds": 0.0035240959841758013,
+      "target": "hypercurve_curve_intersection",
+      "name": "promoted_region_boolean_consumes_algebraic_line_image_overlap_boundary",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/projection-overlap-20260928-v695-hypercurve_curve_intersection-tests",
+        "--exact",
+        "promoted_region_boolean_consumes_complete_shared_boundaries",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "projection-overlap-20260928-v695-promoted_region_boolean_consumes_complete_shared_boundaries-2638fabafb.log",
+      "elapsed_seconds": 0.0034880388993769884,
+      "target": "hypercurve_curve_intersection",
+      "name": "promoted_region_boolean_consumes_complete_shared_boundaries",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/projection-overlap-20260928-v695-hypercurve_curve_intersection-tests",
+        "--exact",
+        "promoted_region_boolean_consumes_irrational_polynomial_graph_overlap",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "projection-overlap-20260928-v695-promoted_region_boolean_consumes_irrational_polynomial_graph_overlap-c3691c4570.log",
+      "elapsed_seconds": 0.007586346007883549,
+      "target": "hypercurve_curve_intersection",
+      "name": "promoted_region_boolean_consumes_irrational_polynomial_graph_overlap",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/projection-overlap-20260928-v695-hypercurve_curve_intersection-tests",
+        "--exact",
+        "promoted_region_boolean_consumes_partial_nonlinear_shared_boundary",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "projection-overlap-20260928-v695-promoted_region_boolean_consumes_partial_nonlinear_shared_boundary-c930f7e8bd.log",
+      "elapsed_seconds": 0.007579796016216278,
+      "target": "hypercurve_curve_intersection",
+      "name": "promoted_region_boolean_consumes_partial_nonlinear_shared_boundary",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/projection-overlap-20260928-v695-hypercurve_curve_intersection-tests",
+        "--exact",
+        "promoted_region_boolean_materializes_exact_regularized_operation_matrix",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "projection-overlap-20260928-v695-promoted_region_boolean_materializes_exact_regularized_operation_matrix-6555662c8b.log",
+      "elapsed_seconds": 0.0035315058194100857,
+      "target": "hypercurve_curve_intersection",
+      "name": "promoted_region_boolean_materializes_exact_regularized_operation_matrix",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/projection-overlap-20260928-v695-hypercurve_curve_intersection-tests",
+        "--exact",
+        "promoted_region_boolean_preserves_disjoint_exact_conic_boundaries",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "projection-overlap-20260928-v695-promoted_region_boolean_preserves_disjoint_exact_conic_boundaries-d4b1ebbad5.log",
+      "elapsed_seconds": 0.0035329849924892187,
+      "target": "hypercurve_curve_intersection",
+      "name": "promoted_region_boolean_preserves_disjoint_exact_conic_boundaries",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/projection-overlap-20260928-v695-hypercurve_curve_intersection-tests",
+        "--exact",
+        "promoted_region_boolean_resolves_partial_reversed_shared_line_boundaries",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "projection-overlap-20260928-v695-promoted_region_boolean_resolves_partial_reversed_shared_line_boundaries-3c97aaa9f0.log",
+      "elapsed_seconds": 0.0035317859146744013,
+      "target": "hypercurve_curve_intersection",
+      "name": "promoted_region_boolean_resolves_partial_reversed_shared_line_boundaries",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/projection-overlap-20260928-v695-hypercurve_curve_intersection-tests",
+        "--exact",
+        "promoted_region_boolean_resolves_partial_same_circle_arc_boundaries",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "projection-overlap-20260928-v695-promoted_region_boolean_resolves_partial_same_circle_arc_boundaries-e73fc8d839.log",
+      "elapsed_seconds": 0.007591804023832083,
+      "target": "hypercurve_curve_intersection",
+      "name": "promoted_region_boolean_resolves_partial_same_circle_arc_boundaries",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/projection-overlap-20260928-v695-hypercurve_curve_intersection-tests",
+        "--exact",
+        "promoted_region_boolean_traverses_overlapping_circles_with_exact_radical_splits",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "projection-overlap-20260928-v695-promoted_region_boolean_traverses_overlapping_circles_with_exact_radical_splits-342c4f3507.log",
+      "elapsed_seconds": 0.0076136039569973946,
+      "target": "hypercurve_curve_intersection",
+      "name": "promoted_region_boolean_traverses_overlapping_circles_with_exact_radical_splits",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/projection-overlap-20260928-v695-hypercurve_curve_intersection-tests",
+        "--exact",
+        "region_boolean_reports_terminal_use_after_explicit_path_promotion",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "projection-overlap-20260928-v695-region_boolean_reports_terminal_use_after_explicit_path_promotion-541f08e10a.log",
+      "elapsed_seconds": 0.0075640869326889515,
+      "target": "hypercurve_curve_intersection",
+      "name": "region_boolean_reports_terminal_use_after_explicit_path_promotion",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/projection-overlap-20260928-v695-hypercurve_curve_intersection-tests",
+        "--exact",
+        "retained_noninjective_domains_keep_off_diagonal_contacts_and_traversal_signs",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "projection-overlap-20260928-v695-retained_noninjective_domains_keep_off_diagonal_contacts_and_traversal_signs-8ad5209186.log",
+      "elapsed_seconds": 0.06380789703689516,
+      "target": "hypercurve_curve_intersection",
+      "name": "retained_noninjective_domains_keep_off_diagonal_contacts_and_traversal_signs",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/projection-overlap-20260928-v695-hypercurve_curve_intersection-tests",
+        "--exact",
+        "retained_retraced_domains_retain_every_parameter_component",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "projection-overlap-20260928-v695-retained_retraced_domains_retain_every_parameter_component-4d15e0ac5d.log",
+      "elapsed_seconds": 0.031787171959877014,
+      "target": "hypercurve_curve_intersection",
+      "name": "retained_retraced_domains_retain_every_parameter_component",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/projection-overlap-20260928-v695-hypercurve_curve_intersection-tests",
+        "--exact",
+        "retained_source_intersections_clip_contacts_and_reuse_selected_locations",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "projection-overlap-20260928-v695-retained_source_intersections_clip_contacts_and_reuse_selected_locations-bfe8c93bcf.log",
+      "elapsed_seconds": 0.015701633878052235,
+      "target": "hypercurve_curve_intersection",
+      "name": "retained_source_intersections_clip_contacts_and_reuse_selected_locations",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/projection-overlap-20260928-v695-hypercurve_curve_intersection-tests",
+        "--exact",
+        "retained_source_overlaps_preserve_independent_ranges_and_singleton_contacts",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "projection-overlap-20260928-v695-retained_source_overlaps_preserve_independent_ranges_and_singleton_contacts-bee133befa.log",
+      "elapsed_seconds": 0.015760099980980158,
+      "target": "hypercurve_curve_intersection",
+      "name": "retained_source_overlaps_preserve_independent_ranges_and_singleton_contacts",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/projection-overlap-20260928-v695-hypercurve_curve_intersection-tests",
+        "--exact",
+        "reversed_retained_spline_charts_deduplicate_seams_and_map_interior_contacts",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "projection-overlap-20260928-v695-reversed_retained_spline_charts_deduplicate_seams_and_map_interior_contacts-4a78a94fc8.log",
+      "elapsed_seconds": 0.0035312259569764137,
+      "target": "hypercurve_curve_intersection",
+      "name": "reversed_retained_spline_charts_deduplicate_seams_and_map_interior_contacts",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/projection-overlap-20260928-v695-hypercurve_curve_intersection-tests",
+        "--exact",
+        "selected_circle_crossings_replay_the_retained_rational_source",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "projection-overlap-20260928-v695-selected_circle_crossings_replay_the_retained_rational_source-53be5648fa.log",
+      "elapsed_seconds": 0.2640873270574957,
+      "target": "hypercurve_curve_intersection",
+      "name": "selected_circle_crossings_replay_the_retained_rational_source",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/projection-overlap-20260928-v695-hypercurve_curve_intersection-tests",
+        "--exact",
+        "selected_circle_tangency_reuses_retained_normal_evidence",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "projection-overlap-20260928-v695-selected_circle_tangency_reuses_retained_normal_evidence-43bf67c5d5.log",
+      "elapsed_seconds": 0.11396573903039098,
+      "target": "hypercurve_curve_intersection",
+      "name": "selected_circle_tangency_reuses_retained_normal_evidence",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/projection-overlap-20260928-v695-hypercurve_curve_intersection-tests",
+        "--exact",
+        "selected_intersection_locations_reenter_evaluation_and_subdivision",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "projection-overlap-20260928-v695-selected_intersection_locations_reenter_evaluation_and_subdivision-1a065e655a.log",
+      "elapsed_seconds": 0.015746311051771045,
+      "target": "hypercurve_curve_intersection",
+      "name": "selected_intersection_locations_reenter_evaluation_and_subdivision",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/projection-overlap-20260928-v695-hypercurve_curve_intersection-tests",
+        "--exact",
+        "selected_tail_topology_keeps_reversed_and_nonunit_source_charts",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "projection-overlap-20260928-v695-selected_tail_topology_keeps_reversed_and_nonunit_source_charts-aab4d5a6c2.log",
+      "elapsed_seconds": 0.015722112962976098,
+      "target": "hypercurve_curve_intersection",
+      "name": "selected_tail_topology_keeps_reversed_and_nonunit_source_charts",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/projection-overlap-20260928-v695-hypercurve_curve_intersection-tests",
+        "--exact",
+        "split_topology_preserves_both_sides_of_a_discontinuous_spline_knot",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "projection-overlap-20260928-v695-split_topology_preserves_both_sides_of_a_discontinuous_spline_knot-9a3fb0ea3b.log",
+      "elapsed_seconds": 0.007649360923096538,
+      "target": "hypercurve_curve_intersection",
+      "name": "split_topology_preserves_both_sides_of_a_discontinuous_spline_knot",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/projection-overlap-20260928-v695-hypercurve_curve_intersection-tests",
+        "--exact",
+        "top_level_arc_dispatch_filters_circle_witnesses_and_retains_exact_parameters",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "projection-overlap-20260928-v695-top_level_arc_dispatch_filters_circle_witnesses_and_retains_exact_parameters-b8d38db1f2.log",
+      "elapsed_seconds": 0.003496988210827112,
+      "target": "hypercurve_curve_intersection",
+      "name": "top_level_arc_dispatch_filters_circle_witnesses_and_retains_exact_parameters",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/projection-overlap-20260928-v695-hypercurve_curve_intersection-tests",
+        "--exact",
+        "top_level_disjoint_curves_produce_a_complete_empty_evidence",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "projection-overlap-20260928-v695-top_level_disjoint_curves_produce_a_complete_empty_evidence-85b12c16f6.log",
+      "elapsed_seconds": 0.0035153571516275406,
+      "target": "hypercurve_curve_intersection",
+      "name": "top_level_disjoint_curves_produce_a_complete_empty_evidence",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/projection-overlap-20260928-v695-hypercurve_curve_intersection-tests",
+        "--exact",
+        "top_level_intersection_retains_implicit_conic_transversality",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "projection-overlap-20260928-v695-top_level_intersection_retains_implicit_conic_transversality-301b9cd425.log",
+      "elapsed_seconds": 0.003529916051775217,
+      "target": "hypercurve_curve_intersection",
+      "name": "top_level_intersection_retains_implicit_conic_transversality",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/projection-overlap-20260928-v695-hypercurve_curve_intersection-tests",
+        "--exact",
+        "top_level_line_image_overlap_preserves_algebraic_split_boundary",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "projection-overlap-20260928-v695-top_level_line_image_overlap_preserves_algebraic_split_boundary-2d6db9d264.log",
+      "elapsed_seconds": 0.003515827003866434,
+      "target": "hypercurve_curve_intersection",
+      "name": "top_level_line_image_overlap_preserves_algebraic_split_boundary",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/projection-overlap-20260928-v695-hypercurve_curve_intersection-tests",
+        "--exact",
+        "top_level_nurbs_intersection_deduplicates_a_shared_knot_contact",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "projection-overlap-20260928-v695-top_level_nurbs_intersection_deduplicates_a_shared_knot_contact-5bcf053ed8.log",
+      "elapsed_seconds": 0.0035212859511375427,
+      "target": "hypercurve_curve_intersection",
+      "name": "top_level_nurbs_intersection_deduplicates_a_shared_knot_contact",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/projection-overlap-20260928-v695-hypercurve_curve_intersection-tests",
+        "--exact",
+        "top_level_partial_nonlinear_overlap_splits_at_retained_ranges",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "projection-overlap-20260928-v695-top_level_partial_nonlinear_overlap_splits_at_retained_ranges-d9de961ba5.log",
+      "elapsed_seconds": 0.003533746115863323,
+      "target": "hypercurve_curve_intersection",
+      "name": "top_level_partial_nonlinear_overlap_splits_at_retained_ranges",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/projection-overlap-20260928-v695-hypercurve_curve_intersection-tests",
+        "--exact",
+        "top_level_polynomial_trims_reuse_certified_source_lineage",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "projection-overlap-20260928-v695-top_level_polynomial_trims_reuse_certified_source_lineage-f61b0a2448.log",
+      "elapsed_seconds": 0.0035115869250148535,
+      "target": "hypercurve_curve_intersection",
+      "name": "top_level_polynomial_trims_reuse_certified_source_lineage",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/projection-overlap-20260928-v695-hypercurve_curve_intersection-tests",
+        "--exact",
+        "top_level_rational_intersection_immediately_returns_sources_and_topology",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "projection-overlap-20260928-v695-top_level_rational_intersection_immediately_returns_sources_and_topology-9ae395a7d5.log",
+      "elapsed_seconds": 0.003502268111333251,
+      "target": "hypercurve_curve_intersection",
+      "name": "top_level_rational_intersection_immediately_returns_sources_and_topology",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/projection-overlap-20260928-v695-hypercurve_curve_intersection-tests",
+        "--exact",
+        "top_level_retained_noninjective_overlap_keeps_isolated_branch_contacts",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "projection-overlap-20260928-v695-top_level_retained_noninjective_overlap_keeps_isolated_branch_contacts-d4cae4725c.log",
+      "elapsed_seconds": 0.007570027140900493,
+      "target": "hypercurve_curve_intersection",
+      "name": "top_level_retained_noninjective_overlap_keeps_isolated_branch_contacts",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/projection-overlap-20260928-v695-hypercurve_curve_intersection-tests",
+        "--exact",
+        "top_level_shared_component_retains_certified_overlap",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "projection-overlap-20260928-v695-top_level_shared_component_retains_certified_overlap-03645b6ab5.log",
+      "elapsed_seconds": 0.003504076972603798,
+      "target": "hypercurve_curve_intersection",
+      "name": "top_level_shared_component_retains_certified_overlap",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/projection-overlap-20260928-v695-hypercurve_analytic_parallel_region-tests",
+        "--exact",
+        "algebraic_endpoint_analytic_parallel_chamfers_replay_selected_distance",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "projection-overlap-20260928-v695-algebraic_endpoint_analytic_parallel_chamfers_replay_selected_distance-517b53a659.log",
+      "elapsed_seconds": 13.88215439580381,
+      "target": "hypercurve_analytic_parallel_region",
+      "name": "algebraic_endpoint_analytic_parallel_chamfers_replay_selected_distance",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/projection-overlap-20260928-v695-hypercurve_analytic_parallel_region-tests",
+        "--exact",
+        "analytic_parallel_chamfers_retain_normalized_cut_points",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "projection-overlap-20260928-v695-analytic_parallel_chamfers_retain_normalized_cut_points-e9d4d766b4.log",
+      "elapsed_seconds": 0.015694883884862065,
+      "target": "hypercurve_analytic_parallel_region",
+      "name": "analytic_parallel_chamfers_retain_normalized_cut_points",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/projection-overlap-20260928-v695-hypercurve_analytic_parallel_region-tests",
+        "--exact",
+        "analytic_parallel_circle_fast_path_excludes_other_support_contacts",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "projection-overlap-20260928-v695-analytic_parallel_circle_fast_path_excludes_other_support_contacts-39107f779e.log",
+      "elapsed_seconds": 0.003518427023664117,
+      "target": "hypercurve_analytic_parallel_region",
+      "name": "analytic_parallel_circle_fast_path_excludes_other_support_contacts",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/projection-overlap-20260928-v695-hypercurve_analytic_parallel_region-tests",
+        "--exact",
+        "analytic_parallel_circle_tangency_retains_zero_cross_evidence",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "projection-overlap-20260928-v695-analytic_parallel_circle_tangency_retains_zero_cross_evidence-037aedda2a.log",
+      "elapsed_seconds": 0.00757465697824955,
+      "target": "hypercurve_analytic_parallel_region",
+      "name": "analytic_parallel_circle_tangency_retains_zero_cross_evidence",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/projection-overlap-20260928-v695-hypercurve_analytic_parallel_region-tests",
+        "--exact",
+        "analytic_parallel_fragments_retain_exact_region_evidence_under_both_policies",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "projection-overlap-20260928-v695-analytic_parallel_fragments_retain_exact_region_evidence_under_both_policies-48008caac6.log",
+      "elapsed_seconds": 0.031769583001732826,
+      "target": "hypercurve_analytic_parallel_region",
+      "name": "analytic_parallel_fragments_retain_exact_region_evidence_under_both_policies",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/projection-overlap-20260928-v695-hypercurve_analytic_parallel_region-tests",
+        "--exact",
+        "analytic_parallel_intersects_independently_parameterized_circles_exactly",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "projection-overlap-20260928-v695-analytic_parallel_intersects_independently_parameterized_circles_exactly-dba277fbc8.log",
+      "elapsed_seconds": 0.015662016812711954,
+      "target": "hypercurve_analytic_parallel_region",
+      "name": "analytic_parallel_intersects_independently_parameterized_circles_exactly",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/projection-overlap-20260928-v695-hypercurve_analytic_parallel_region-tests",
+        "--exact",
+        "boundary_curves_reenter_boolean_without_native_conversion",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "projection-overlap-20260928-v695-boundary_curves_reenter_boolean_without_native_conversion-ecd472071e.log",
+      "elapsed_seconds": 0.007584186038002372,
+      "target": "hypercurve_analytic_parallel_region",
+      "name": "boundary_curves_reenter_boolean_without_native_conversion",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/projection-overlap-20260928-v695-hypercurve_analytic_parallel_region-tests",
+        "--exact",
+        "curve_trim_intersects_analytic_parallel_region_boundaries",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "projection-overlap-20260928-v695-curve_trim_intersects_analytic_parallel_region_boundaries-83fdd57620.log",
+      "elapsed_seconds": 0.007590765133500099,
+      "target": "hypercurve_analytic_parallel_region",
+      "name": "curve_trim_intersects_analytic_parallel_region_boundaries",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/projection-overlap-20260928-v695-hypercurve_analytic_parallel_region-tests",
+        "--exact",
+        "curve_trim_retains_an_analytic_parallel_boundary_overlap",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "projection-overlap-20260928-v695-curve_trim_retains_an_analytic_parallel_boundary_overlap-9944bbc5c3.log",
+      "elapsed_seconds": 0.007623682962730527,
+      "target": "hypercurve_analytic_parallel_region",
+      "name": "curve_trim_retains_an_analytic_parallel_boundary_overlap",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/projection-overlap-20260928-v695-hypercurve_analytic_parallel_region-tests",
+        "--exact",
+        "cusp_split_analytic_self_crossing_normalizes_at_admission",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "projection-overlap-20260928-v695-cusp_split_analytic_self_crossing_normalizes_at_admission-9405aa09f0.log",
+      "elapsed_seconds": 0.6145167730282992,
+      "target": "hypercurve_analytic_parallel_region",
+      "name": "cusp_split_analytic_self_crossing_normalizes_at_admission",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/projection-overlap-20260928-v695-hypercurve_analytic_parallel_region-tests",
+        "--exact",
+        "general_boundary_paths_preserve_analytic_carriers_and_boolean_reentry",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "projection-overlap-20260928-v695-general_boundary_paths_preserve_analytic_carriers_and_boolean_reentry-e6d6e1c2ef.log",
+      "elapsed_seconds": 0.031765182968229055,
+      "target": "hypercurve_analytic_parallel_region",
+      "name": "general_boundary_paths_preserve_analytic_carriers_and_boolean_reentry",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/projection-overlap-20260928-v695-hypercurve_analytic_parallel_region-tests",
+        "--exact",
+        "radical_parallel_cusp_offsets_exactly_under_both_policies",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "projection-overlap-20260928-v695-radical_parallel_cusp_offsets_exactly_under_both_policies-43879de14c.log",
+      "elapsed_seconds": 0.16394880204461515,
+      "target": "hypercurve_analytic_parallel_region",
+      "name": "radical_parallel_cusp_offsets_exactly_under_both_policies",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/projection-overlap-20260928-v695-hypercurve_analytic_parallel_region-tests",
+        "--exact",
+        "radical_parallel_cusp_spans_connect_under_both_policies",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "projection-overlap-20260928-v695-radical_parallel_cusp_spans_connect_under_both_policies-e10221ab83.log",
+      "elapsed_seconds": 0.015740882139652967,
+      "target": "hypercurve_analytic_parallel_region",
+      "name": "radical_parallel_cusp_spans_connect_under_both_policies",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/projection-overlap-20260928-v695-hypercurve_analytic_parallel_region-tests",
+        "--exact",
+        "retained_arc_fillet_preserves_past_center_tangent_orientation",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "projection-overlap-20260928-v695-retained_arc_fillet_preserves_past_center_tangent_orientation-a7e1a3f2c1.log",
+      "elapsed_seconds": 0.213997001061216,
+      "target": "hypercurve_analytic_parallel_region",
+      "name": "retained_arc_fillet_preserves_past_center_tangent_orientation",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/projection-overlap-20260928-v695-hypercurve_analytic_parallel_region-tests",
+        "--exact",
+        "retained_rational_arc_and_analytic_parallel_fillet_exactly",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "projection-overlap-20260928-v695-retained_rational_arc_and_analytic_parallel_fillet_exactly-ddb7cdb001.log",
+      "elapsed_seconds": 0.21407898515462875,
+      "target": "hypercurve_analytic_parallel_region",
+      "name": "retained_rational_arc_and_analytic_parallel_fillet_exactly",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/projection-overlap-20260928-v695-hypercurve_analytic_parallel_region-tests",
+        "--exact",
+        "retained_rational_arc_and_analytic_parallel_fillet_extends_exactly",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "projection-overlap-20260928-v695-retained_rational_arc_and_analytic_parallel_fillet_extends_exactly-753bb828ca.log",
+      "elapsed_seconds": 2.0666460301727057,
+      "target": "hypercurve_analytic_parallel_region",
+      "name": "retained_rational_arc_and_analytic_parallel_fillet_extends_exactly",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/projection-overlap-20260928-v695-hypercurve_stationary_fillets-tests",
+        "--exact",
+        "composition::stationary_fillet_offset_approximate",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "projection-overlap-20260928-v695-stationary_fillet_offset_approximate-1b4b154dcd.log",
+      "elapsed_seconds": 22.195106141036376,
+      "target": "hypercurve_stationary_fillets",
+      "name": "composition::stationary_fillet_offset_approximate",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/projection-overlap-20260928-v695-hypercurve_stationary_fillets-tests",
+        "--exact",
+        "composition::stationary_fillet_offset_strict",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "projection-overlap-20260928-v695-stationary_fillet_offset_strict-c04d1ae1a8.log",
+      "elapsed_seconds": 21.793419640045613,
+      "target": "hypercurve_stationary_fillets",
+      "name": "composition::stationary_fillet_offset_strict",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/projection-overlap-20260928-v695-hypercurve_stationary_fillets-tests",
+        "--exact",
+        "composition::stationary_fillet_region_approximate",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "projection-overlap-20260928-v695-stationary_fillet_region_approximate-da192129d8.log",
+      "elapsed_seconds": 0.007658230839297175,
+      "target": "hypercurve_stationary_fillets",
+      "name": "composition::stationary_fillet_region_approximate",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/projection-overlap-20260928-v695-hypercurve_stationary_fillets-tests",
+        "--exact",
+        "composition::stationary_fillet_region_strict",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "projection-overlap-20260928-v695-stationary_fillet_region_strict-591ad2eb23.log",
+      "elapsed_seconds": 0.007585606072098017,
+      "target": "hypercurve_stationary_fillets",
+      "name": "composition::stationary_fillet_region_strict",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/projection-overlap-20260928-v695-hypercurve_stationary_fillets-tests",
+        "--exact",
+        "contacts::interior_stationary_contact_approximate",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "projection-overlap-20260928-v695-interior_stationary_contact_approximate-d7c41ba66e.log",
+      "elapsed_seconds": 0.007578645832836628,
+      "target": "hypercurve_stationary_fillets",
+      "name": "contacts::interior_stationary_contact_approximate",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/projection-overlap-20260928-v695-hypercurve_stationary_fillets-tests",
+        "--exact",
+        "contacts::interior_stationary_contact_reversed_approximate",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "projection-overlap-20260928-v695-interior_stationary_contact_reversed_approximate-4cda9dfa19.log",
+      "elapsed_seconds": 0.007556077092885971,
+      "target": "hypercurve_stationary_fillets",
+      "name": "contacts::interior_stationary_contact_reversed_approximate",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/projection-overlap-20260928-v695-hypercurve_stationary_fillets-tests",
+        "--exact",
+        "contacts::interior_stationary_contact_reversed_strict",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "projection-overlap-20260928-v695-interior_stationary_contact_reversed_strict-17ff0e4afc.log",
+      "elapsed_seconds": 0.0075796861201524734,
+      "target": "hypercurve_stationary_fillets",
+      "name": "contacts::interior_stationary_contact_reversed_strict",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/projection-overlap-20260928-v695-hypercurve_stationary_fillets-tests",
+        "--exact",
+        "contacts::interior_stationary_contact_strict",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "projection-overlap-20260928-v695-interior_stationary_contact_strict-6ed82d95dc.log",
+      "elapsed_seconds": 0.007595804985612631,
+      "target": "hypercurve_stationary_fillets",
+      "name": "contacts::interior_stationary_contact_strict",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/projection-overlap-20260928-v695-hypercurve_stationary_fillets-tests",
+        "--exact",
+        "contacts::one_sided_cusp_approximate",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "projection-overlap-20260928-v695-one_sided_cusp_approximate-8dba4e809d.log",
+      "elapsed_seconds": 0.0035259260330349207,
+      "target": "hypercurve_stationary_fillets",
+      "name": "contacts::one_sided_cusp_approximate",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/projection-overlap-20260928-v695-hypercurve_stationary_fillets-tests",
+        "--exact",
+        "contacts::one_sided_cusp_reversed_approximate",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "projection-overlap-20260928-v695-one_sided_cusp_reversed_approximate-65336d0b65.log",
+      "elapsed_seconds": 0.0035024068783968687,
+      "target": "hypercurve_stationary_fillets",
+      "name": "contacts::one_sided_cusp_reversed_approximate",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/projection-overlap-20260928-v695-hypercurve_stationary_fillets-tests",
+        "--exact",
+        "contacts::one_sided_cusp_reversed_strict",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "projection-overlap-20260928-v695-one_sided_cusp_reversed_strict-1c9d78f1dc.log",
+      "elapsed_seconds": 0.0034787089098244905,
+      "target": "hypercurve_stationary_fillets",
+      "name": "contacts::one_sided_cusp_reversed_strict",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/projection-overlap-20260928-v695-hypercurve_stationary_fillets-tests",
+        "--exact",
+        "contacts::one_sided_cusp_strict",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "projection-overlap-20260928-v695-one_sided_cusp_strict-c04c786360.log",
+      "elapsed_seconds": 0.003504558000713587,
+      "target": "hypercurve_stationary_fillets",
+      "name": "contacts::one_sided_cusp_strict",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/projection-overlap-20260928-v695-hypercurve_stationary_fillets-tests",
+        "--exact",
+        "contacts::opposite_stationary_sheet_approximate",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "projection-overlap-20260928-v695-opposite_stationary_sheet_approximate-a25e4a6fd8.log",
+      "elapsed_seconds": 0.007593994960188866,
+      "target": "hypercurve_stationary_fillets",
+      "name": "contacts::opposite_stationary_sheet_approximate",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/projection-overlap-20260928-v695-hypercurve_stationary_fillets-tests",
+        "--exact",
+        "contacts::opposite_stationary_sheet_reversed_approximate",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "projection-overlap-20260928-v695-opposite_stationary_sheet_reversed_approximate-8c8e48b62d.log",
+      "elapsed_seconds": 0.007543697953224182,
+      "target": "hypercurve_stationary_fillets",
+      "name": "contacts::opposite_stationary_sheet_reversed_approximate",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/projection-overlap-20260928-v695-hypercurve_stationary_fillets-tests",
+        "--exact",
+        "contacts::opposite_stationary_sheet_reversed_strict",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "projection-overlap-20260928-v695-opposite_stationary_sheet_reversed_strict-0b74e912c0.log",
+      "elapsed_seconds": 0.007570426911115646,
+      "target": "hypercurve_stationary_fillets",
+      "name": "contacts::opposite_stationary_sheet_reversed_strict",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/projection-overlap-20260928-v695-hypercurve_stationary_fillets-tests",
+        "--exact",
+        "contacts::opposite_stationary_sheet_strict",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "projection-overlap-20260928-v695-opposite_stationary_sheet_strict-8422dc0f70.log",
+      "elapsed_seconds": 0.0034764690790325403,
+      "target": "hypercurve_stationary_fillets",
+      "name": "contacts::opposite_stationary_sheet_strict",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/projection-overlap-20260928-v695-hypercurve_stationary_fillets-tests",
+        "--exact",
+        "contacts::quadratic_line_interior_contacts_approximate",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "projection-overlap-20260928-v695-quadratic_line_interior_contacts_approximate-ab0030653e.log",
+      "elapsed_seconds": 0.16385274892672896,
+      "target": "hypercurve_stationary_fillets",
+      "name": "contacts::quadratic_line_interior_contacts_approximate",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/projection-overlap-20260928-v695-hypercurve_stationary_fillets-tests",
+        "--exact",
+        "contacts::quadratic_line_interior_contacts_strict",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "projection-overlap-20260928-v695-quadratic_line_interior_contacts_strict-86a17f0a8c.log",
+      "elapsed_seconds": 0.16390108596533537,
+      "target": "hypercurve_stationary_fillets",
+      "name": "contacts::quadratic_line_interior_contacts_strict",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/projection-overlap-20260928-v695-hypercurve_stationary_fillets-tests",
+        "--exact",
+        "contacts::quadratic_line_opposite_sheet_approximate",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "projection-overlap-20260928-v695-quadratic_line_opposite_sheet_approximate-7b95b0572a.log",
+      "elapsed_seconds": 0.031780421966686845,
+      "target": "hypercurve_stationary_fillets",
+      "name": "contacts::quadratic_line_opposite_sheet_approximate",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/projection-overlap-20260928-v695-hypercurve_stationary_fillets-tests",
+        "--exact",
+        "contacts::quadratic_line_opposite_sheet_strict",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "projection-overlap-20260928-v695-quadratic_line_opposite_sheet_strict-3972356d87.log",
+      "elapsed_seconds": 0.03172434587031603,
+      "target": "hypercurve_stationary_fillets",
+      "name": "contacts::quadratic_line_opposite_sheet_strict",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/projection-overlap-20260928-v695-hypercurve_stationary_fillets-tests",
+        "--exact",
+        "contacts::quadratic_line_preserves_stationary_contacts_approximate",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "projection-overlap-20260928-v695-quadratic_line_preserves_stationary_contacts_approximate-597188ea07.log",
+      "elapsed_seconds": 0.0317364449147135,
+      "target": "hypercurve_stationary_fillets",
+      "name": "contacts::quadratic_line_preserves_stationary_contacts_approximate",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/projection-overlap-20260928-v695-hypercurve_stationary_fillets-tests",
+        "--exact",
+        "contacts::quadratic_line_preserves_stationary_contacts_strict",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "projection-overlap-20260928-v695-quadratic_line_preserves_stationary_contacts_strict-a8e34e062a.log",
+      "elapsed_seconds": 0.031661069951951504,
+      "target": "hypercurve_stationary_fillets",
+      "name": "contacts::quadratic_line_preserves_stationary_contacts_strict",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/projection-overlap-20260928-v695-hypercurve_stationary_fillets-tests",
+        "--exact",
+        "contacts::regular_parabola_approximate",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "projection-overlap-20260928-v695-regular_parabola_approximate-17b3a02592.log",
+      "elapsed_seconds": 0.0035605940502136946,
+      "target": "hypercurve_stationary_fillets",
+      "name": "contacts::regular_parabola_approximate",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/projection-overlap-20260928-v695-hypercurve_stationary_fillets-tests",
+        "--exact",
+        "contacts::regular_parabola_strict",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "projection-overlap-20260928-v695-regular_parabola_strict-5d31e4516d.log",
+      "elapsed_seconds": 0.003522156970575452,
+      "target": "hypercurve_stationary_fillets",
+      "name": "contacts::regular_parabola_strict",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/projection-overlap-20260928-v695-hypercurve_stationary_fillets-tests",
+        "--exact",
+        "contacts::stationary_reparameterization_approximate",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "projection-overlap-20260928-v695-stationary_reparameterization_approximate-da05cebea4.log",
+      "elapsed_seconds": 0.01561310002580285,
+      "target": "hypercurve_stationary_fillets",
+      "name": "contacts::stationary_reparameterization_approximate",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/projection-overlap-20260928-v695-hypercurve_stationary_fillets-tests",
+        "--exact",
+        "contacts::stationary_reparameterization_reversed_approximate",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "projection-overlap-20260928-v695-stationary_reparameterization_reversed_approximate-e67b0dc5e8.log",
+      "elapsed_seconds": 0.06380385695956647,
+      "target": "hypercurve_stationary_fillets",
+      "name": "contacts::stationary_reparameterization_reversed_approximate",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/projection-overlap-20260928-v695-hypercurve_stationary_fillets-tests",
+        "--exact",
+        "contacts::stationary_reparameterization_reversed_strict",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "projection-overlap-20260928-v695-stationary_reparameterization_reversed_strict-0121663eba.log",
+      "elapsed_seconds": 0.06382750603370368,
+      "target": "hypercurve_stationary_fillets",
+      "name": "contacts::stationary_reparameterization_reversed_strict",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/projection-overlap-20260928-v695-hypercurve_stationary_fillets-tests",
+        "--exact",
+        "contacts::stationary_reparameterization_strict",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "projection-overlap-20260928-v695-stationary_reparameterization_strict-9a8a42f181.log",
+      "elapsed_seconds": 0.015643978025764227,
+      "target": "hypercurve_stationary_fillets",
+      "name": "contacts::stationary_reparameterization_strict",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/projection-overlap-20260928-v695-hypercurve_stationary_fillets-tests",
+        "--exact",
+        "exact_scalars::stationary_contact_exact_scalars_approximate",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "projection-overlap-20260928-v695-stationary_contact_exact_scalars_approximate-81d8271e5e.log",
+      "elapsed_seconds": 0.11389359412714839,
+      "target": "hypercurve_stationary_fillets",
+      "name": "exact_scalars::stationary_contact_exact_scalars_approximate",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/projection-overlap-20260928-v695-hypercurve_stationary_fillets-tests",
+        "--exact",
+        "exact_scalars::stationary_contact_exact_scalars_strict",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "projection-overlap-20260928-v695-stationary_contact_exact_scalars_strict-84b6f34ef3.log",
+      "elapsed_seconds": 0.11386420601047575,
+      "target": "hypercurve_stationary_fillets",
+      "name": "exact_scalars::stationary_contact_exact_scalars_strict",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/projection-overlap-20260928-v695-hypercurve_stationary_fillets-tests",
+        "--exact",
+        "retained_domains::retained_nonzero_parallel_range_approximate",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "projection-overlap-20260928-v695-retained_nonzero_parallel_range_approximate-981751d2ae.log",
+      "elapsed_seconds": 2.166666302829981,
+      "target": "hypercurve_stationary_fillets",
+      "name": "retained_domains::retained_nonzero_parallel_range_approximate",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/projection-overlap-20260928-v695-hypercurve_stationary_fillets-tests",
+        "--exact",
+        "retained_domains::retained_nonzero_parallel_range_strict",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "projection-overlap-20260928-v695-retained_nonzero_parallel_range_strict-0deb6b41e8.log",
+      "elapsed_seconds": 2.1669008070603013,
+      "target": "hypercurve_stationary_fillets",
+      "name": "retained_domains::retained_nonzero_parallel_range_strict",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/projection-overlap-20260928-v695-hypercurve_stationary_fillets-tests",
+        "--exact",
+        "retained_domains::retained_regular_source_range_approximate",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "projection-overlap-20260928-v695-retained_regular_source_range_approximate-bf2d2a0c61.log",
+      "elapsed_seconds": 0.007736645173281431,
+      "target": "hypercurve_stationary_fillets",
+      "name": "retained_domains::retained_regular_source_range_approximate",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/projection-overlap-20260928-v695-hypercurve_stationary_fillets-tests",
+        "--exact",
+        "retained_domains::retained_regular_source_range_strict",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "projection-overlap-20260928-v695-retained_regular_source_range_strict-d2e2368e29.log",
+      "elapsed_seconds": 0.007609053980559111,
+      "target": "hypercurve_stationary_fillets",
+      "name": "retained_domains::retained_regular_source_range_strict",
+      "passed": true
+    }
+  ],
+  "checks": [
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "clippy",
+        "--all-targets",
+        "--all-features",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "returncode": 0,
+      "log": "projection-overlap-20260928-v695-hypercurve-clippy-all-features.log",
+      "elapsed_seconds": 21.74834075802937,
+      "label": "hypercurve-clippy-all-features"
+    },
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "clippy",
+        "--all-targets",
+        "--no-default-features",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "returncode": 0,
+      "log": "projection-overlap-20260928-v695-hypercurve-clippy-no-default.log",
+      "elapsed_seconds": 21.046872166916728,
+      "label": "hypercurve-clippy-no-default"
+    },
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustfmt",
+        "--edition",
+        "2024",
+        "--config",
+        "skip_children=true",
+        "--check",
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/build-workspace-20260925/hypercurve/src/bezier_offset.rs"
+      ],
+      "returncode": 0,
+      "log": "projection-overlap-20260928-v695-format.log",
+      "elapsed_seconds": 2.216775248060003,
+      "label": "format"
+    },
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "check",
+        "--manifest-path",
+        "fuzz/Cargo.toml",
+        "--bin",
+        "curve_string_editing",
+        "--bin",
+        "bezier_arrangement",
+        "--bin",
+        "bezier_region",
+        "--bin",
+        "bezier_split_materialization",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "log": "projection-overlap-20260928-v695-fuzz-check.log",
+      "elapsed_seconds": 11.330409872811288,
+      "label": "fuzz-check"
+    },
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "doc",
+        "--no-deps",
+        "--all-features",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "log": "projection-overlap-20260928-v695-hypercurve-documentation.log",
+      "elapsed_seconds": 10.528666466940194,
+      "label": "hypercurve-documentation"
+    },
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "check",
+        "--all-targets",
+        "--all-features",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "log": "projection-overlap-20260928-v695-hyperbrep-check.log",
+      "elapsed_seconds": 15.035847081104293,
+      "label": "hyperbrep-check"
+    }
+  ],
+  "test_listings": {
+    "hypercurve_analytic_parallel_region": {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/projection-overlap-20260928-v695-hypercurve_analytic_parallel_region-tests",
+        "--list"
+      ],
+      "returncode": 0,
+      "log": "projection-overlap-20260928-v695-hypercurve_analytic_parallel_region-list.log",
+      "elapsed_seconds": 0.0035930308513343334
+    },
+    "hypercurve_stationary_fillets": {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/projection-overlap-20260928-v695-hypercurve_stationary_fillets-tests",
+        "--list"
+      ],
+      "returncode": 0,
+      "log": "projection-overlap-20260928-v695-hypercurve_stationary_fillets-list.log",
+      "elapsed_seconds": 0.001463499153032899
+    },
+    "hypercurve_curve": {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/projection-overlap-20260928-v695-hypercurve_curve-tests",
+        "--list"
+      ],
+      "returncode": 0,
+      "log": "projection-overlap-20260928-v695-hypercurve_curve-list.log",
+      "elapsed_seconds": 0.0035878808703273535
+    },
+    "hypercurve_curve_intersection": {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/projection-overlap-20260928-v695-hypercurve_curve_intersection-tests",
+        "--list"
+      ],
+      "returncode": 0,
+      "log": "projection-overlap-20260928-v695-hypercurve_curve_intersection-list.log",
+      "elapsed_seconds": 0.003529955865815282
+    },
+    "hypercurve": {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/projection-overlap-20260928-v695-hypercurve-tests",
+        "--list"
+      ],
+      "returncode": 0,
+      "log": "projection-overlap-20260928-v695-hypercurve-list.log",
+      "elapsed_seconds": 0.007597735151648521
+    }
+  },
+  "expected_cases": {
+    "hypercurve": [
+      "bezier_offset::conversion_tests::selected_structural_parallel_overlap_replays_off_diagonal_contacts",
+      "bezier_offset::retained_structural_pair_domain_regression::retained_structural_correspondence_preserves_off_diagonal_contact_domains",
+      "bezier_offset::conversion_tests::non_source_parallel_overlap_replays_the_radical_component",
+      "bezier_offset::conversion_tests::radical_component_saturation_retains_norm_intersections",
+      "bezier_offset::conversion_tests::analytic_parallel_self_intersection_removes_the_parameter_diagonal",
+      "bezier_offset::conversion_tests::exact_rational_parallel_self_intersections_reuse_rational_authority",
+      "bezier_offset::conversion_tests::ordered_self_contact_domains_retain_axis_roles_after_restriction",
+      "bezier_offset::conversion_tests::incident_pair_projection_accepts_a_non_source_radical_component",
+      "bezier_offset::conversion_tests::incident_non_source_parallel_overlap_reaches_the_common_projection",
+      "curve_region_boolean::certified_successor_tests::finite_parallel_self_contacts_retain_active_domain",
+      "bezier_offset::conversion_tests::odd_source_cusp_branches_do_not_saturate_a_false_source_diagonal",
+      "bezier_offset::conversion_tests::regular_ph_branch_pairs_retain_exact_cusp_incidence",
+      "bezier_offset::conversion_tests::nonzero_parallel_domains_exclude_undefined_normals_and_poles",
+      "bezier_offset::conversion_tests::nonzero_parallel_domains_partition_poles_on_components",
+      "bezier_offset::regular_parallel_contact_tests::stationary_component_queries_keep_one_sided_endpoints_and_exact_constraints",
+      "bezier_offset::regular_parallel_contact_tests::regular_source_cells_preserve_reversed_and_algebraic_range_boundaries",
+      "bezier_offset::regular_parallel_contact_tests::regular_source_frame_keeps_contact_scale_across_a_center_cusp",
+      "bezier_offset::regular_parallel_contact_tests::exterior_regular_pair_keeps_contacts_outside_ancestral_bounds",
+      "bezier_offset::structural_overlap_trace_regression::monotone_reparameterization_preserves_structural_pair_crossings_strict",
+      "bezier_offset::structural_overlap_trace_regression::monotone_reparameterization_preserves_structural_pair_crossings_approximate",
+      "bezier_offset::structural_overlap_trace_regression::reversed_monotone_reparameterization_preserves_structural_pair_crossings_strict",
+      "bezier_offset::structural_overlap_trace_regression::reversed_monotone_reparameterization_preserves_structural_pair_crossings_approximate",
+      "bezier_offset::conversion_tests::displaced_algebraic_point_incidence_reuses_its_retained_field",
+      "curve::curve_fillet::incident_parallel_cusp_nonlinear_regression::incident_parallel_cusp_fillet_retains_nonlinear_partner_contact",
+      "curve::curve_fillet::constrained_regular_loop_fillet_regression::point_constraint_preserves_distinct_regular_loop_contacts"
+    ],
+    "hypercurve_curve": [
+      "automatic_corner_solver_obeys_strict_and_approximate_512_once",
+      "automatic_corner_solver_reconstructs_selected_pairs",
+      "clamped_splines_preserve_discontinuous_knot_sides_and_span_images",
+      "closed_curve_path_corner_edits_support_the_start_end_seam",
+      "curve_path_boundary_and_classification_report_terminal_closure",
+      "direct_bezier_pair_fillet_retains_both_incident_extensions",
+      "exact_arc_chamfer_solver_preserves_both_major_sweep_cuts",
+      "exact_chamfer_solver_handles_native_line_arc_and_arc_arc_carriers",
+      "exact_line_arc_fillets_retain_rational_radius_across_source_scales",
+      "exact_line_corner_design_edits_hold_across_source_lengths",
+      "exact_native_arc_fillet_solver_classifies_collapsed_and_coincident_offsets",
+      "exact_native_arc_fillet_solver_handles_every_native_pair_order",
+      "exact_native_arc_fillet_uses_only_the_shared_approximate_terminal",
+      "independently_parameterized_bezier_continuation_is_an_incident_fillet_component",
+      "line_corner_solvers_derive_unique_trimmed_fillet_and_chamfer",
+      "line_corner_solvers_enumerate_extensions_deterministically",
+      "line_corner_solvers_report_exact_no_solution_and_invalid_options",
+      "line_parabola_mixed_exact_algebraic_fillet_is_an_exact_open_path",
+      "mixed_curve_path_fillet_accepts_every_non_arc_family_pair",
+      "mixed_curve_path_fillet_preserves_arc_family_and_exact_tangency",
+      "oblique_line_corner_solvers_preserve_exact_orientation",
+      "one_curve_closed_spline_corner_edits_retain_one_middle_interval",
+      "one_curve_closed_spline_extensions_materialize_each_cell_once",
+      "polynomial_chamfer_materializes_represented_incident_extension",
+      "radical_line_image_fillets_preserve_retained_families",
+      "rational_chamfer_materializes_the_incident_projective_cell",
+      "represented_arc_bezier_fillets_use_circle_incidence",
+      "represented_bezier_chamfer_retains_more_than_two_exact_cuts",
+      "represented_bezier_corner_incidence_uses_the_shared_approximate_terminal",
+      "represented_bezier_pairs_use_independent_chamfer_and_exact_ph_fillet_routes",
+      "represented_line_bezier_corners_use_the_general_incidence_kernel",
+      "retained_circular_conic_pairs_extend_on_native_supports",
+      "retained_circular_conics_share_the_native_corner_kernel",
+      "retained_circular_corner_recognition_uses_the_shared_approximate_terminal",
+      "same_bezier_support_fillet_removes_the_projective_parameter_diagonal",
+      "same_ph_bezier_support_fillet_reuses_rational_projective_self_contact",
+      "spline_chamfer_materializes_only_the_incident_extension_cell",
+      "spline_corner_incidence_uses_the_shared_approximate_terminal",
+      "spline_incident_span_pairs_reuse_exact_ph_fillet_fast_path",
+      "spline_incident_spans_reuse_represented_bezier_corner_incidence",
+      "spline_line_fillet_preserves_the_authored_spline_and_adds_its_incident_cell",
+      "top_level_curve_carries_every_public_family",
+      "top_level_curve_derivatives_preserve_parameter_domains_and_share_evaluators",
+      "top_level_curve_evaluates_native_and_spline_parameters",
+      "top_level_curve_exposes_exact_higher_derivatives",
+      "top_level_curve_region_classifies_points_and_shares_results",
+      "top_level_curve_region_rejects_open_boundary_paths_with_context",
+      "top_level_curve_reuses_retained_native_endpoints"
+    ],
+    "hypercurve_curve_intersection": [
+      "curve_and_path_intersections_report_terminal_use_without_upgrading_arc_caches",
+      "curve_parameter_comparison_reports_terminal_certainty",
+      "equivalent_top_level_families_complete_independent_region_booleans",
+      "finite_selected_circle_domains::retained_fillet_intersects_finite_analytic_parallel_in_all_charts",
+      "generated_chamfer_tails_reuse_paired_overlap_boundaries",
+      "generated_chord_cuts_reenter_collinear_endpoint_intersections",
+      "generated_chord_overlaps_retain_independent_and_selected_boundaries",
+      "generated_chord_topology_publishes_reusable_curve_pieces",
+      "generated_chords_keep_open_contacts_and_general_locations",
+      "generated_fillet_arcs_intersect_themselves_after_restriction_and_reversal",
+      "generated_fillet_arcs_keep_tangent_contacts_with_their_trimmed_neighbors",
+      "independently_rebuilt_degree_elevated_rational_image_is_a_complete_overlap",
+      "native_arc_dispatch_retains_partial_same_circle_overlap_ranges",
+      "native_line_arc_dispatch_preserves_operand_order_and_exact_parameters",
+      "native_line_dispatch_retains_partial_overlap_ranges_and_split_endpoints",
+      "native_nodal_overlap_keeps_transverse_parameter_pairs_and_topology",
+      "native_nodal_spline_contacts_retain_authored_charts",
+      "native_retraced_overlaps_survive_independent_restriction",
+      "path_difference_and_xor_reverse_algebraic_parabola_contacts_exactly",
+      "path_overlap_orientation_feeds_canonical_region_boolean_side_logic",
+      "path_pair_immediate_topology_splits_each_authored_curve_once",
+      "promoted_region_boolean_consumes_algebraic_line_image_overlap_boundary",
+      "promoted_region_boolean_consumes_complete_shared_boundaries",
+      "promoted_region_boolean_consumes_irrational_polynomial_graph_overlap",
+      "promoted_region_boolean_consumes_partial_nonlinear_shared_boundary",
+      "promoted_region_boolean_materializes_exact_regularized_operation_matrix",
+      "promoted_region_boolean_preserves_disjoint_exact_conic_boundaries",
+      "promoted_region_boolean_resolves_partial_reversed_shared_line_boundaries",
+      "promoted_region_boolean_resolves_partial_same_circle_arc_boundaries",
+      "promoted_region_boolean_traverses_overlapping_circles_with_exact_radical_splits",
+      "region_boolean_reports_terminal_use_after_explicit_path_promotion",
+      "retained_noninjective_domains_keep_off_diagonal_contacts_and_traversal_signs",
+      "retained_retraced_domains_retain_every_parameter_component",
+      "retained_source_intersections_clip_contacts_and_reuse_selected_locations",
+      "retained_source_overlaps_preserve_independent_ranges_and_singleton_contacts",
+      "reversed_retained_spline_charts_deduplicate_seams_and_map_interior_contacts",
+      "selected_circle_crossings_replay_the_retained_rational_source",
+      "selected_circle_tangency_reuses_retained_normal_evidence",
+      "selected_intersection_locations_reenter_evaluation_and_subdivision",
+      "selected_tail_topology_keeps_reversed_and_nonunit_source_charts",
+      "split_topology_preserves_both_sides_of_a_discontinuous_spline_knot",
+      "top_level_arc_dispatch_filters_circle_witnesses_and_retains_exact_parameters",
+      "top_level_disjoint_curves_produce_a_complete_empty_evidence",
+      "top_level_intersection_retains_implicit_conic_transversality",
+      "top_level_line_image_overlap_preserves_algebraic_split_boundary",
+      "top_level_nurbs_intersection_deduplicates_a_shared_knot_contact",
+      "top_level_partial_nonlinear_overlap_splits_at_retained_ranges",
+      "top_level_polynomial_trims_reuse_certified_source_lineage",
+      "top_level_rational_intersection_immediately_returns_sources_and_topology",
+      "top_level_retained_noninjective_overlap_keeps_isolated_branch_contacts",
+      "top_level_shared_component_retains_certified_overlap"
+    ],
+    "hypercurve_analytic_parallel_region": [
+      "algebraic_endpoint_analytic_parallel_chamfers_replay_selected_distance",
+      "analytic_parallel_chamfers_retain_normalized_cut_points",
+      "analytic_parallel_circle_fast_path_excludes_other_support_contacts",
+      "analytic_parallel_circle_tangency_retains_zero_cross_evidence",
+      "analytic_parallel_fragments_retain_exact_region_evidence_under_both_policies",
+      "analytic_parallel_intersects_independently_parameterized_circles_exactly",
+      "boundary_curves_reenter_boolean_without_native_conversion",
+      "curve_trim_intersects_analytic_parallel_region_boundaries",
+      "curve_trim_retains_an_analytic_parallel_boundary_overlap",
+      "cusp_split_analytic_self_crossing_normalizes_at_admission",
+      "general_boundary_paths_preserve_analytic_carriers_and_boolean_reentry",
+      "radical_parallel_cusp_offsets_exactly_under_both_policies",
+      "radical_parallel_cusp_spans_connect_under_both_policies",
+      "retained_arc_fillet_preserves_past_center_tangent_orientation",
+      "retained_rational_arc_and_analytic_parallel_fillet_exactly",
+      "retained_rational_arc_and_analytic_parallel_fillet_extends_exactly"
+    ],
+    "hypercurve_stationary_fillets": [
+      "composition::stationary_fillet_offset_approximate",
+      "composition::stationary_fillet_offset_strict",
+      "composition::stationary_fillet_region_approximate",
+      "composition::stationary_fillet_region_strict",
+      "contacts::interior_stationary_contact_approximate",
+      "contacts::interior_stationary_contact_reversed_approximate",
+      "contacts::interior_stationary_contact_reversed_strict",
+      "contacts::interior_stationary_contact_strict",
+      "contacts::one_sided_cusp_approximate",
+      "contacts::one_sided_cusp_reversed_approximate",
+      "contacts::one_sided_cusp_reversed_strict",
+      "contacts::one_sided_cusp_strict",
+      "contacts::opposite_stationary_sheet_approximate",
+      "contacts::opposite_stationary_sheet_reversed_approximate",
+      "contacts::opposite_stationary_sheet_reversed_strict",
+      "contacts::opposite_stationary_sheet_strict",
+      "contacts::quadratic_line_interior_contacts_approximate",
+      "contacts::quadratic_line_interior_contacts_strict",
+      "contacts::quadratic_line_opposite_sheet_approximate",
+      "contacts::quadratic_line_opposite_sheet_strict",
+      "contacts::quadratic_line_preserves_stationary_contacts_approximate",
+      "contacts::quadratic_line_preserves_stationary_contacts_strict",
+      "contacts::regular_parabola_approximate",
+      "contacts::regular_parabola_strict",
+      "contacts::stationary_reparameterization_approximate",
+      "contacts::stationary_reparameterization_reversed_approximate",
+      "contacts::stationary_reparameterization_reversed_strict",
+      "contacts::stationary_reparameterization_strict",
+      "exact_scalars::stationary_contact_exact_scalars_approximate",
+      "exact_scalars::stationary_contact_exact_scalars_strict",
+      "retained_domains::retained_nonzero_parallel_range_approximate",
+      "retained_domains::retained_nonzero_parallel_range_strict",
+      "retained_domains::retained_regular_source_range_approximate",
+      "retained_domains::retained_regular_source_range_strict"
+    ]
+  },
+  "all_processes_reaped": true,
+  "probe_complete": true,
+  "qualification_complete": true
+}

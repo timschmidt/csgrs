@@ -1,0 +1,151 @@
+{
+  "source_manifest": "component-contact-constraints-20260926-v290-sources.json",
+  "source_directory": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/source-archives/component-contact-constraints-20260926-v290",
+  "cases": [
+    {
+      "binary": "component-contact-constraints-20260926-v290-hypercurve",
+      "name": "bezier_offset::conversion_tests::complete_component_queries_keep_split_cells_and_residual_contacts",
+      "returncode": 0,
+      "log": "component-contact-constraints-20260926-v290-case-000.log",
+      "elapsed_seconds": 0.0035636660177260637
+    },
+    {
+      "binary": "component-contact-constraints-20260926-v290-hypercurve",
+      "name": "bezier_offset::parameter_component::tests::contact_constraints_distinguish_free_axes_from_empty_components",
+      "returncode": 0,
+      "log": "component-contact-constraints-20260926-v290-case-001.log",
+      "elapsed_seconds": 0.01206620188895613
+    },
+    {
+      "binary": "component-contact-constraints-20260926-v290-hypercurve",
+      "name": "bezier_offset::parameter_component::tests::incident_charts_keep_poles_and_finite_ownership_excluded",
+      "returncode": 0,
+      "log": "component-contact-constraints-20260926-v290-case-002.log",
+      "elapsed_seconds": 0.0035719949519261718
+    },
+    {
+      "binary": "component-contact-constraints-20260926-v290-hypercurve",
+      "name": "bezier_offset::parameter_component::tests::one_contact_replays_correspondence_through_both_source_charts",
+      "returncode": 0,
+      "log": "component-contact-constraints-20260926-v290-case-003.log",
+      "elapsed_seconds": 0.0035282770404592156
+    },
+    {
+      "binary": "component-contact-constraints-20260926-v290-hypercurve",
+      "name": "bezier_offset::parameter_component::tests::product_components_keep_fixed_axes_and_operand_roles",
+      "returncode": 0,
+      "log": "component-contact-constraints-20260926-v290-case-004.log",
+      "elapsed_seconds": 0.003517798031680286
+    },
+    {
+      "binary": "component-contact-constraints-20260926-v290-hypercurve",
+      "name": "curve::curve_fillet::tests::joined_path_selects_and_replays_a_continuous_fillet_family",
+      "returncode": 0,
+      "log": "component-contact-constraints-20260926-v290-case-005.log",
+      "elapsed_seconds": 0.21395995700731874
+    },
+    {
+      "binary": "component-contact-constraints-20260926-v290-hypercurve",
+      "name": "curve::curve_fillet::tests::normalized_region_selects_and_reuses_a_continuous_fillet_family",
+      "returncode": 0,
+      "log": "component-contact-constraints-20260926-v290-case-006.log",
+      "elapsed_seconds": 0.11389109306037426
+    },
+    {
+      "binary": "component-contact-constraints-20260926-v290-hypercurve",
+      "name": "curve::tests::distinct_parallel_sources_keep_a_shared_fillet_center_family",
+      "returncode": 0,
+      "log": "component-contact-constraints-20260926-v290-case-007.log",
+      "elapsed_seconds": 0.03175834100693464
+    }
+  ],
+  "builds": [
+    {
+      "crate": "hypercurve",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "test",
+        "--lib",
+        "--release",
+        "--all-features",
+        "--no-run",
+        "--message-format=json",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "log": "component-contact-constraints-20260926-v290-hypercurve-build.log",
+      "elapsed_seconds": 128.79341637005564,
+      "binary": {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/component-contact-constraints-20260926-v290-hypercurve",
+        "sha256": "da92d5ade95b52907ffab39db07ec450d3e4ba732c2cd7749f2f472559b92345"
+      }
+    }
+  ],
+  "all_processes_reaped": true,
+  "checks": [
+    {
+      "label": "format",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustfmt",
+        "--edition",
+        "2024",
+        "--config",
+        "skip_children=true",
+        "--check",
+        "src/bezier_offset.rs",
+        "src/curve_parameter_component.rs",
+        "src/curve_fillet.rs"
+      ],
+      "returncode": 0,
+      "log": "component-contact-constraints-20260926-v290-format.log",
+      "elapsed_seconds": 2.1165065550012514
+    },
+    {
+      "label": "clippy-all-features",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "clippy",
+        "--all-targets",
+        "--all-features",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "returncode": 0,
+      "log": "component-contact-constraints-20260926-v290-clippy-all-features.log",
+      "elapsed_seconds": 20.292603323003277
+    },
+    {
+      "label": "clippy-no-default",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "clippy",
+        "--all-targets",
+        "--no-default-features",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "returncode": 0,
+      "log": "component-contact-constraints-20260926-v290-clippy-no-default.log",
+      "elapsed_seconds": 19.442055691964924
+    }
+  ],
+  "qualification_scope": "Exact partial contact constraints on retained correspondences/products; existing complete component and public continuous fillet controls; both feature Clippy checks",
+  "expected_cases": [
+    "bezier_offset::conversion_tests::complete_component_queries_keep_split_cells_and_residual_contacts",
+    "bezier_offset::parameter_component::tests::contact_constraints_distinguish_free_axes_from_empty_components",
+    "bezier_offset::parameter_component::tests::incident_charts_keep_poles_and_finite_ownership_excluded",
+    "bezier_offset::parameter_component::tests::one_contact_replays_correspondence_through_both_source_charts",
+    "bezier_offset::parameter_component::tests::product_components_keep_fixed_axes_and_operand_roles",
+    "curve::curve_fillet::tests::joined_path_selects_and_replays_a_continuous_fillet_family",
+    "curve::curve_fillet::tests::normalized_region_selects_and_reuses_a_continuous_fillet_family",
+    "curve::tests::distinct_parallel_sources_keep_a_shared_fillet_center_family"
+  ],
+  "qualification_complete": true
+}

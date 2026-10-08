@@ -1,0 +1,13 @@
+{
+  "tag": "nfixed-controls-linked-libraries",
+  "started": "2026-09-09T16:41:36.867Z",
+  "finished": "2026-09-09T16:41:36.894Z",
+  "elapsedSeconds": 0.023588282000000006,
+  "cwd": "/home/tim/Documents/GitHub/workspace",
+  "command": "ldd",
+  "args": [
+    "/tmp/calcium-nfixed-controls.qZn5o6/nfixed-controls"
+  ],
+  "code": 0,
+  "signal": null
+}

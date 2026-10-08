@@ -1,0 +1,6 @@
+Exception in thread "main" java.lang.IllegalArgumentException: Modulus must be greater than 3
+	at dk.jonaslindstrom.ruffini.common.algorithms.BarrettReduction.<init>(BarrettReduction.java:20)
+	at dk.jonaslindstrom.ruffini.integers.structures.BigIntegersModuloN.<init>(BigIntegersModuloN.java:15)
+	at dk.jonaslindstrom.ruffini.finitefields.BigPrimeField.<init>(BigPrimeField.java:14)
+	at FiniteBoundaries.extensions(FiniteBoundaries.java:58)
+	at FiniteBoundaries.main(FiniteBoundaries.java:140)

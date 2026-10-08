@@ -1,0 +1,29 @@
+
+running 1 test
+test bezier_offset::conversion_tests::recursively_pair_radial_circle_intersects_a_genuine_analytic_parallel ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 884 filtered out; finished in 35.97s
+
+	Command being timed: "taskset -c 7 /tmp/hypercurve-owned-singleton-frozen-candidate-test bezier_offset::conversion_tests::recursively_pair_radial_circle_intersects_a_genuine_analytic_parallel --exact --nocapture"
+	User time (seconds): 34.93
+	System time (seconds): 0.05
+	Percent of CPU this job got: 97%
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:35.97
+	Average shared text size (kbytes): 0
+	Average unshared data size (kbytes): 0
+	Average stack size (kbytes): 0
+	Average total size (kbytes): 0
+	Maximum resident set size (kbytes): 48764
+	Average resident set size (kbytes): 0
+	Major (requiring I/O) page faults: 0
+	Minor (reclaiming a frame) page faults: 9169
+	Voluntary context switches: 3
+	Involuntary context switches: 1999
+	Swaps: 0
+	File system inputs: 0
+	File system outputs: 0
+	Socket messages sent: 0
+	Socket messages received: 0
+	Signals delivered: 0
+	Page size (bytes): 4096
+	Exit status: 0

@@ -1,0 +1,13 @@
+{
+  "tag": "zero-factor-public-run-v70",
+  "started": "2026-09-11T19:07:37.121Z",
+  "finished": "2026-09-11T19:07:37.488Z",
+  "elapsedSeconds": 0.36524541,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "/tmp/calcium-zero-factor.1YCn5a/public",
+  "args": [
+    "check"
+  ],
+  "code": 0,
+  "signal": null
+}

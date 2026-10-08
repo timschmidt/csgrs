@@ -1,0 +1,717 @@
+{
+  "checkpoint": 72,
+  "status": "abi-controls-pass",
+  "negativeControls": 76,
+  "positiveSequences": 4,
+  "additionalExpectedTraps": 2,
+  "originSha256": "1dd7f0debd9081fe571c6b378c80b177db0a9e291cff94e76c14a872658282ed",
+  "runtime": {
+    "metadata": [
+      {
+        "variant": "baseline",
+        "kind": "rational",
+        "path": "/tmp/calcium-zero-wasm.ATQP07/baseline-rational.wasm",
+        "bytes": 1292409,
+        "sha256": "24738af2d865c2c7c8a7fe4d494b358ea34d3467483c0eb0c03fa352d792b06b",
+        "imports": [],
+        "exports": [
+          {
+            "name": "memory",
+            "kind": "memory"
+          },
+          {
+            "name": "zf_batch",
+            "kind": "function"
+          },
+          {
+            "name": "zf_finish",
+            "kind": "function"
+          },
+          {
+            "name": "zf_init",
+            "kind": "function"
+          },
+          {
+            "name": "zf_input",
+            "kind": "function"
+          },
+          {
+            "name": "zf_output_ptr",
+            "kind": "function"
+          },
+          {
+            "name": "zf_prepare",
+            "kind": "function"
+          }
+        ]
+      },
+      {
+        "variant": "baseline",
+        "kind": "history",
+        "path": "/tmp/calcium-zero-wasm.ATQP07/baseline-history.wasm",
+        "bytes": 1615521,
+        "sha256": "1046d83678faa2f3383d8848fef7ea6c4cf71fec17bea67b68f8b97005fb668f",
+        "imports": [],
+        "exports": [
+          {
+            "name": "memory",
+            "kind": "memory"
+          },
+          {
+            "name": "history_batch",
+            "kind": "function"
+          },
+          {
+            "name": "history_finish",
+            "kind": "function"
+          },
+          {
+            "name": "history_output_ptr",
+            "kind": "function"
+          },
+          {
+            "name": "history_prepare",
+            "kind": "function"
+          }
+        ]
+      },
+      {
+        "variant": "candidate",
+        "kind": "rational",
+        "path": "/tmp/calcium-zero-wasm.ATQP07/candidate-rational.wasm",
+        "bytes": 1293885,
+        "sha256": "3f65f1b98fb8fc3d11fa7d56538633937e1288ab750c52ac2a447313ca771215",
+        "imports": [],
+        "exports": [
+          {
+            "name": "memory",
+            "kind": "memory"
+          },
+          {
+            "name": "zf_batch",
+            "kind": "function"
+          },
+          {
+            "name": "zf_finish",
+            "kind": "function"
+          },
+          {
+            "name": "zf_init",
+            "kind": "function"
+          },
+          {
+            "name": "zf_input",
+            "kind": "function"
+          },
+          {
+            "name": "zf_output_ptr",
+            "kind": "function"
+          },
+          {
+            "name": "zf_prepare",
+            "kind": "function"
+          }
+        ]
+      },
+      {
+        "variant": "candidate",
+        "kind": "history",
+        "path": "/tmp/calcium-zero-wasm.ATQP07/candidate-history.wasm",
+        "bytes": 1617066,
+        "sha256": "77cf0377cca08648a1a32ba2ce9d28c9bb212bfb8f698785cbfe29326d7a44e9",
+        "imports": [],
+        "exports": [
+          {
+            "name": "memory",
+            "kind": "memory"
+          },
+          {
+            "name": "history_batch",
+            "kind": "function"
+          },
+          {
+            "name": "history_finish",
+            "kind": "function"
+          },
+          {
+            "name": "history_output_ptr",
+            "kind": "function"
+          },
+          {
+            "name": "history_prepare",
+            "kind": "function"
+          }
+        ]
+      }
+    ],
+    "compiled": "2026-09-11T20:59:09.318Z",
+    "node": "v22.22.2",
+    "v8": "12.4.254.21-node.39",
+    "flags": [
+      "--expose-gc",
+      "--no-liftoff",
+      "--no-wasm-tier-up",
+      "--no-wasm-lazy-compilation"
+    ],
+    "affinity": "2"
+  },
+  "results": [
+    {
+      "variant": "baseline",
+      "kind": "rational",
+      "name": "input-zero",
+      "status": "expected-trap",
+      "error": "unreachable"
+    },
+    {
+      "variant": "baseline",
+      "kind": "rational",
+      "name": "input-over-bound",
+      "status": "expected-trap",
+      "error": "unreachable"
+    },
+    {
+      "variant": "baseline",
+      "kind": "rational",
+      "name": "input-negative-wasm-u32",
+      "status": "expected-trap",
+      "error": "unreachable"
+    },
+    {
+      "variant": "baseline",
+      "kind": "rational",
+      "name": "init-without-input",
+      "status": "expected-trap",
+      "error": "unreachable"
+    },
+    {
+      "variant": "baseline",
+      "kind": "rational",
+      "name": "duplicate-input",
+      "status": "expected-trap",
+      "error": "unreachable"
+    },
+    {
+      "variant": "baseline",
+      "kind": "rational",
+      "name": "input-after-init",
+      "status": "expected-trap",
+      "error": "unreachable"
+    },
+    {
+      "variant": "baseline",
+      "kind": "rational",
+      "name": "duplicate-init",
+      "status": "expected-trap",
+      "error": "unreachable"
+    },
+    {
+      "variant": "baseline",
+      "kind": "rational",
+      "name": "malformed-json",
+      "status": "expected-trap",
+      "error": "unreachable"
+    },
+    {
+      "variant": "baseline",
+      "kind": "rational",
+      "name": "truncated-json",
+      "status": "expected-trap",
+      "error": "unreachable"
+    },
+    {
+      "variant": "baseline",
+      "kind": "rational",
+      "name": "empty-cases",
+      "status": "expected-trap",
+      "error": "unreachable"
+    },
+    {
+      "variant": "baseline",
+      "kind": "rational",
+      "name": "noncontiguous-id",
+      "status": "expected-trap",
+      "error": "unreachable"
+    },
+    {
+      "variant": "baseline",
+      "kind": "rational",
+      "name": "prepare-before-init",
+      "status": "expected-trap",
+      "error": "unreachable"
+    },
+    {
+      "variant": "baseline",
+      "kind": "rational",
+      "name": "prepare-bad-case",
+      "status": "expected-trap",
+      "error": "unreachable"
+    },
+    {
+      "variant": "baseline",
+      "kind": "rational",
+      "name": "prepare-bad-policy",
+      "status": "expected-trap",
+      "error": "unreachable"
+    },
+    {
+      "variant": "baseline",
+      "kind": "rational",
+      "name": "prepare-bad-lifecycle",
+      "status": "expected-trap",
+      "error": "unreachable"
+    },
+    {
+      "variant": "baseline",
+      "kind": "rational",
+      "name": "prepare-twice",
+      "status": "expected-trap",
+      "error": "unreachable"
+    },
+    {
+      "variant": "baseline",
+      "kind": "rational",
+      "name": "prepare-malformed-scalar",
+      "status": "expected-trap",
+      "error": "unreachable"
+    },
+    {
+      "variant": "baseline",
+      "kind": "rational",
+      "name": "prepare-invalid-validation",
+      "status": "expected-trap",
+      "error": "unreachable"
+    },
+    {
+      "variant": "baseline",
+      "kind": "rational",
+      "name": "prepare-unknown-operation",
+      "status": "expected-trap",
+      "error": "unreachable"
+    },
+    {
+      "variant": "baseline",
+      "kind": "rational",
+      "name": "batch-before-init",
+      "status": "expected-trap",
+      "error": "unreachable"
+    },
+    {
+      "variant": "baseline",
+      "kind": "rational",
+      "name": "batch-before-prepare",
+      "status": "expected-trap",
+      "error": "unreachable"
+    },
+    {
+      "variant": "baseline",
+      "kind": "rational",
+      "name": "batch-zero",
+      "status": "expected-trap",
+      "error": "unreachable"
+    },
+    {
+      "variant": "baseline",
+      "kind": "rational",
+      "name": "batch-over-bound",
+      "status": "expected-trap",
+      "error": "unreachable"
+    },
+    {
+      "variant": "baseline",
+      "kind": "rational",
+      "name": "batch-twice",
+      "status": "expected-trap",
+      "error": "unreachable"
+    },
+    {
+      "variant": "baseline",
+      "kind": "rational",
+      "name": "finish-before-init",
+      "status": "expected-trap",
+      "error": "unreachable"
+    },
+    {
+      "variant": "baseline",
+      "kind": "rational",
+      "name": "finish-before-prepare",
+      "status": "expected-trap",
+      "error": "unreachable"
+    },
+    {
+      "variant": "baseline",
+      "kind": "rational",
+      "name": "finish-before-batch",
+      "status": "expected-trap",
+      "error": "unreachable"
+    },
+    {
+      "variant": "baseline",
+      "kind": "rational",
+      "name": "finish-twice",
+      "status": "expected-trap",
+      "error": "unreachable"
+    },
+    {
+      "variant": "baseline",
+      "kind": "history",
+      "name": "bad-case",
+      "status": "expected-trap",
+      "error": "unreachable"
+    },
+    {
+      "variant": "baseline",
+      "kind": "history",
+      "name": "bad-policy",
+      "status": "expected-trap",
+      "error": "unreachable"
+    },
+    {
+      "variant": "baseline",
+      "kind": "history",
+      "name": "bad-history",
+      "status": "expected-trap",
+      "error": "unreachable"
+    },
+    {
+      "variant": "baseline",
+      "kind": "history",
+      "name": "bad-lifecycle",
+      "status": "expected-trap",
+      "error": "unreachable"
+    },
+    {
+      "variant": "baseline",
+      "kind": "history",
+      "name": "prepare-twice",
+      "status": "expected-trap",
+      "error": "unreachable"
+    },
+    {
+      "variant": "baseline",
+      "kind": "history",
+      "name": "batch-before-prepare",
+      "status": "expected-trap",
+      "error": "unreachable"
+    },
+    {
+      "variant": "baseline",
+      "kind": "history",
+      "name": "batch-zero",
+      "status": "expected-trap",
+      "error": "unreachable"
+    },
+    {
+      "variant": "baseline",
+      "kind": "history",
+      "name": "batch-twice",
+      "status": "expected-trap",
+      "error": "unreachable"
+    },
+    {
+      "variant": "baseline",
+      "kind": "history",
+      "name": "finish-before-prepare",
+      "status": "expected-trap",
+      "error": "unreachable"
+    },
+    {
+      "variant": "baseline",
+      "kind": "history",
+      "name": "finish-before-batch",
+      "status": "expected-trap",
+      "error": "unreachable"
+    },
+    {
+      "variant": "baseline",
+      "kind": "rational",
+      "name": "two-complete-queries",
+      "status": "accepted"
+    },
+    {
+      "variant": "baseline",
+      "kind": "history",
+      "name": "repeat-finish-accepted-reprepare-traps",
+      "status": "accepted-with-expected-trap"
+    },
+    {
+      "variant": "candidate",
+      "kind": "rational",
+      "name": "input-zero",
+      "status": "expected-trap",
+      "error": "unreachable"
+    },
+    {
+      "variant": "candidate",
+      "kind": "rational",
+      "name": "input-over-bound",
+      "status": "expected-trap",
+      "error": "unreachable"
+    },
+    {
+      "variant": "candidate",
+      "kind": "rational",
+      "name": "input-negative-wasm-u32",
+      "status": "expected-trap",
+      "error": "unreachable"
+    },
+    {
+      "variant": "candidate",
+      "kind": "rational",
+      "name": "init-without-input",
+      "status": "expected-trap",
+      "error": "unreachable"
+    },
+    {
+      "variant": "candidate",
+      "kind": "rational",
+      "name": "duplicate-input",
+      "status": "expected-trap",
+      "error": "unreachable"
+    },
+    {
+      "variant": "candidate",
+      "kind": "rational",
+      "name": "input-after-init",
+      "status": "expected-trap",
+      "error": "unreachable"
+    },
+    {
+      "variant": "candidate",
+      "kind": "rational",
+      "name": "duplicate-init",
+      "status": "expected-trap",
+      "error": "unreachable"
+    },
+    {
+      "variant": "candidate",
+      "kind": "rational",
+      "name": "malformed-json",
+      "status": "expected-trap",
+      "error": "unreachable"
+    },
+    {
+      "variant": "candidate",
+      "kind": "rational",
+      "name": "truncated-json",
+      "status": "expected-trap",
+      "error": "unreachable"
+    },
+    {
+      "variant": "candidate",
+      "kind": "rational",
+      "name": "empty-cases",
+      "status": "expected-trap",
+      "error": "unreachable"
+    },
+    {
+      "variant": "candidate",
+      "kind": "rational",
+      "name": "noncontiguous-id",
+      "status": "expected-trap",
+      "error": "unreachable"
+    },
+    {
+      "variant": "candidate",
+      "kind": "rational",
+      "name": "prepare-before-init",
+      "status": "expected-trap",
+      "error": "unreachable"
+    },
+    {
+      "variant": "candidate",
+      "kind": "rational",
+      "name": "prepare-bad-case",
+      "status": "expected-trap",
+      "error": "unreachable"
+    },
+    {
+      "variant": "candidate",
+      "kind": "rational",
+      "name": "prepare-bad-policy",
+      "status": "expected-trap",
+      "error": "unreachable"
+    },
+    {
+      "variant": "candidate",
+      "kind": "rational",
+      "name": "prepare-bad-lifecycle",
+      "status": "expected-trap",
+      "error": "unreachable"
+    },
+    {
+      "variant": "candidate",
+      "kind": "rational",
+      "name": "prepare-twice",
+      "status": "expected-trap",
+      "error": "unreachable"
+    },
+    {
+      "variant": "candidate",
+      "kind": "rational",
+      "name": "prepare-malformed-scalar",
+      "status": "expected-trap",
+      "error": "unreachable"
+    },
+    {
+      "variant": "candidate",
+      "kind": "rational",
+      "name": "prepare-invalid-validation",
+      "status": "expected-trap",
+      "error": "unreachable"
+    },
+    {
+      "variant": "candidate",
+      "kind": "rational",
+      "name": "prepare-unknown-operation",
+      "status": "expected-trap",
+      "error": "unreachable"
+    },
+    {
+      "variant": "candidate",
+      "kind": "rational",
+      "name": "batch-before-init",
+      "status": "expected-trap",
+      "error": "unreachable"
+    },
+    {
+      "variant": "candidate",
+      "kind": "rational",
+      "name": "batch-before-prepare",
+      "status": "expected-trap",
+      "error": "unreachable"
+    },
+    {
+      "variant": "candidate",
+      "kind": "rational",
+      "name": "batch-zero",
+      "status": "expected-trap",
+      "error": "unreachable"
+    },
+    {
+      "variant": "candidate",
+      "kind": "rational",
+      "name": "batch-over-bound",
+      "status": "expected-trap",
+      "error": "unreachable"
+    },
+    {
+      "variant": "candidate",
+      "kind": "rational",
+      "name": "batch-twice",
+      "status": "expected-trap",
+      "error": "unreachable"
+    },
+    {
+      "variant": "candidate",
+      "kind": "rational",
+      "name": "finish-before-init",
+      "status": "expected-trap",
+      "error": "unreachable"
+    },
+    {
+      "variant": "candidate",
+      "kind": "rational",
+      "name": "finish-before-prepare",
+      "status": "expected-trap",
+      "error": "unreachable"
+    },
+    {
+      "variant": "candidate",
+      "kind": "rational",
+      "name": "finish-before-batch",
+      "status": "expected-trap",
+      "error": "unreachable"
+    },
+    {
+      "variant": "candidate",
+      "kind": "rational",
+      "name": "finish-twice",
+      "status": "expected-trap",
+      "error": "unreachable"
+    },
+    {
+      "variant": "candidate",
+      "kind": "history",
+      "name": "bad-case",
+      "status": "expected-trap",
+      "error": "unreachable"
+    },
+    {
+      "variant": "candidate",
+      "kind": "history",
+      "name": "bad-policy",
+      "status": "expected-trap",
+      "error": "unreachable"
+    },
+    {
+      "variant": "candidate",
+      "kind": "history",
+      "name": "bad-history",
+      "status": "expected-trap",
+      "error": "unreachable"
+    },
+    {
+      "variant": "candidate",
+      "kind": "history",
+      "name": "bad-lifecycle",
+      "status": "expected-trap",
+      "error": "unreachable"
+    },
+    {
+      "variant": "candidate",
+      "kind": "history",
+      "name": "prepare-twice",
+      "status": "expected-trap",
+      "error": "unreachable"
+    },
+    {
+      "variant": "candidate",
+      "kind": "history",
+      "name": "batch-before-prepare",
+      "status": "expected-trap",
+      "error": "unreachable"
+    },
+    {
+      "variant": "candidate",
+      "kind": "history",
+      "name": "batch-zero",
+      "status": "expected-trap",
+      "error": "unreachable"
+    },
+    {
+      "variant": "candidate",
+      "kind": "history",
+      "name": "batch-twice",
+      "status": "expected-trap",
+      "error": "unreachable"
+    },
+    {
+      "variant": "candidate",
+      "kind": "history",
+      "name": "finish-before-prepare",
+      "status": "expected-trap",
+      "error": "unreachable"
+    },
+    {
+      "variant": "candidate",
+      "kind": "history",
+      "name": "finish-before-batch",
+      "status": "expected-trap",
+      "error": "unreachable"
+    },
+    {
+      "variant": "candidate",
+      "kind": "rational",
+      "name": "two-complete-queries",
+      "status": "accepted"
+    },
+    {
+      "variant": "candidate",
+      "kind": "history",
+      "name": "repeat-finish-accepted-reprepare-traps",
+      "status": "accepted-with-expected-trap"
+    }
+  ],
+  "limits": "Test-collector ABI only, not hostile-input hardening of a production API. Each negative control uses a disposable instance. History finish remains repeatable; it has no rational-bridge batch maximum."
+}

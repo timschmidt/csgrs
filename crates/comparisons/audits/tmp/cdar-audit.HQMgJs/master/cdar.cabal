@@ -1,0 +1,123 @@
+cabal-version: 1.12
+
+-- This file has been generated from package.yaml by hpack version 0.31.1.
+--
+-- see: https://github.com/sol/hpack
+--
+-- hash: 6ccaf86f9eee638268be7bb7ea7b9cd29f7e8a582af3c0b816ed93ad2c14b8f0
+
+name:           cdar
+version:        0.1.0.0
+synopsis:       Exact real arithmetic using Centred Dyadic Approximations.
+description:    cdar provides Exact real arithmetic using Centred Dyadic Approximations.
+category:       Data
+author:         Jens Blanck
+maintainer:     jens.blanck@gmail.com
+license:        BSD3
+license-file:   LICENSE
+build-type:     Simple
+extra-source-files:
+    README.md
+
+library
+  exposed-modules:
+      Data.CDAR
+      Data.CDAR.Classes
+      Data.CDAR.Extended
+      Data.CDAR.Approx
+      Data.CDAR.Dyadic
+      Data.CDAR.IntegerLog
+  other-modules:
+      Paths_cdar
+  hs-source-dirs:
+      src/
+  ghc-options: -Wall -fno-warn-type-defaults -O2
+  build-depends:
+      base >= 4.15.1 && < 4.19
+    , containers >= 0.6.4 && < 0.7
+    , deepseq >= 1.4.5 && < 1.5
+    , integer-gmp >= 1.1 && < 1.2
+  default-language: Haskell2010
+
+executable examples
+  main-is: Main.hs
+  other-modules:
+      ExamplesRump
+  hs-source-dirs:
+      examples
+  ghc-options: -Wall -fno-warn-type-defaults -O2
+  build-depends:
+      base
+    , cdar
+    , containers
+    , deepseq
+    , integer-gmp
+  default-language: Haskell2010
+
+executable lll
+  main-is: examples/Lll.hs
+  other-modules:
+      Paths_cdar
+  ghc-options: -Wall -fno-warn-type-defaults -O2
+  build-depends:
+      base
+    , cdar
+    , containers
+    , deepseq
+    , integer-gmp
+    , mtl >= 2.2.2 && < 2.4
+    , parsec >= 3.1.14 && < 3.2
+  default-language: Haskell2010
+
+executable logistic
+  main-is: examples/Logistic.hs
+  other-modules:
+      Paths_cdar
+  ghc-options: -Wall -fno-warn-type-defaults -O2 -Wunused-top-binds
+  build-depends:
+      base
+    , cdar
+    , containers
+    , deepseq
+    , integer-gmp
+  default-language: Haskell2010
+
+test-suite test
+  type: exitcode-stdio-1.0
+  main-is: Test.hs
+  other-modules:
+      Paths_cdar
+  hs-source-dirs:
+      test/
+  ghc-options: -Wall -fno-warn-type-defaults -O2
+  build-depends:
+      QuickCheck
+    , base
+    , cdar
+    , containers
+    , deepseq
+    , integer-gmp
+    , smallcheck
+    , tasty
+    , tasty-hunit
+    , tasty-quickcheck
+    , tasty-smallcheck
+  default-language: Haskell2010
+
+benchmark bench
+  type: exitcode-stdio-1.0
+  main-is: bench.hs
+  other-modules:
+      Paths_cdar
+  hs-source-dirs:
+      bench/
+  ghc-options: -Wall -fno-warn-type-defaults -O2 -O2 -rtsopts
+  build-depends:
+      base
+    , cdar
+    , containers
+    , criterion
+    , deepseq
+    , integer-gmp
+    , parallel
+  default-language: Haskell2010

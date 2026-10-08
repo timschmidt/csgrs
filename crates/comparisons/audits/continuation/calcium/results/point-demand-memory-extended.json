@@ -1,0 +1,17 @@
+{
+  "tag": "point-demand-memory-extended",
+  "started": "2026-09-10T22:34:03.986Z",
+  "finished": "2026-09-10T22:34:08.448Z",
+  "elapsedSeconds": 4.459692685,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "valgrind",
+  "args": [
+    "--leak-check=full",
+    "--show-leak-kinds=all",
+    "--errors-for-leak-kinds=definite,indirect,possible",
+    "--error-exitcode=99",
+    "/tmp/calcium-point-demand.BLEmYy/extended"
+  ],
+  "code": 0,
+  "signal": null
+}

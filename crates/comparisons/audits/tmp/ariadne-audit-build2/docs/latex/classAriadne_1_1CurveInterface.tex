@@ -1,0 +1,44 @@
+\doxysubsection{Curve\+Interface Class Reference}
+\hypertarget{classAriadne_1_1CurveInterface}{}\label{classAriadne_1_1CurveInterface}\index{CurveInterface@{CurveInterface}}
+
+
+{\ttfamily \#include $<$curve.\+hpp$>$}
+
+
+
+\doxysubsubsection{Description}
+A curve in Euclidean space. Inheritance diagram for Curve\+Interface\+:\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[height=2.000000cm]{classAriadne_1_1CurveInterface}
+\end{center}
+\end{figure}
+\doxysubsubsubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1CurveInterface_ae0da2c877b310d6ba19686de8c582a8c}\label{classAriadne_1_1CurveInterface_ae0da2c877b310d6ba19686de8c582a8c} 
+virtual {\bfseries \texorpdfstring{$\sim$}{\string~}\+Curve\+Interface} ()=default
+\begin{DoxyCompactList}\small\item\em Destructor. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1CurveInterface_abf7617a053bfc303b709d1a452c76837}\label{classAriadne_1_1CurveInterface_abf7617a053bfc303b709d1a452c76837} 
+virtual \mbox{\hyperlink{classAriadne_1_1CurveInterface}{Curve\+Interface}} \texorpdfstring{$\ast$}{*} {\bfseries clone} () const =0
+\begin{DoxyCompactList}\small\item\em Return a new dynamically-\/allocated copy of the curve. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1CurveInterface_a20229d111f40efba6bd023a69794d261}\label{classAriadne_1_1CurveInterface_a20229d111f40efba6bd023a69794d261} 
+virtual Dimension\+Type {\bfseries dimension} () const =0
+\begin{DoxyCompactList}\small\item\em The dimension of the space the curve lies in. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1CurveInterface_ab76e582ad862fa91e142c7bed8081aad}\label{classAriadne_1_1CurveInterface_ab76e582ad862fa91e142c7bed8081aad} 
+virtual \mbox{\hyperlink{namespaceAriadne_a80311bc831cfc870fd65158180330a77}{Degree\+Type}} {\bfseries smoothness} () const =0
+\begin{DoxyCompactList}\small\item\em The smoothness of the curve. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1CurveInterface_ae4debe9d616bfc75d3a6cfe27c8ce45b}\label{classAriadne_1_1CurveInterface_ae4debe9d616bfc75d3a6cfe27c8ce45b} 
+virtual \mbox{\hyperlink{classAriadne_1_1Point}{Point\+Type}} {\bfseries value} (const Parameter\+Type \&s) const =0
+\begin{DoxyCompactList}\small\item\em The point on the curve at a parameter value. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1CurveInterface_a71206ccb2519cd2db5d6db5c90828f8f}\label{classAriadne_1_1CurveInterface_a71206ccb2519cd2db5d6db5c90828f8f} 
+virtual \mbox{\hyperlink{classAriadne_1_1Vector}{Tangent\+Vector\+Type}} {\bfseries tangent} (const Parameter\+Type \&s) const =0
+\begin{DoxyCompactList}\small\item\em The tangent vector to the curve at a parameter value. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1CurveInterface_a9d7f3502ac31c1ccfa6a119d651a521b}\label{classAriadne_1_1CurveInterface_a9d7f3502ac31c1ccfa6a119d651a521b} 
+virtual \mbox{\hyperlink{namespaceAriadne_acbb98ddc4385af4599070e65a1a47ec1}{Output\+Stream}} \& {\bfseries \+\_\+write} (\mbox{\hyperlink{namespaceAriadne_acbb98ddc4385af4599070e65a1a47ec1}{Output\+Stream}} \&os) const =0
+\begin{DoxyCompactList}\small\item\em Write to an output stream. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+The documentation for this class was generated from the following file\+:\begin{DoxyCompactItemize}
+\item 
+source/geometry/\mbox{\hyperlink{curve_8hpp}{curve.\+hpp}}\end{DoxyCompactItemize}

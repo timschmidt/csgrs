@@ -1,0 +1,13 @@
+{
+  "tag": "early-statistics-historical",
+  "started": "2026-09-11T02:12:43.329Z",
+  "finished": "2026-09-11T02:12:49.192Z",
+  "elapsedSeconds": 5.861309835,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "node",
+  "args": [
+    "verify-polynomial-decision.mjs"
+  ],
+  "code": 0,
+  "signal": null
+}

@@ -1,0 +1,15 @@
+{
+  "cases": [
+    {
+      "name": "bezier_region::tests::selected_circle_and_promoted_line_extend_through_the_chord_support_cell",
+      "returncode": "timeout",
+      "passed": false,
+      "limit_seconds": 60,
+      "elapsed_seconds": 60.13922755094245,
+      "log": "circle-line-normalization-20260923-trace1-case-0.log"
+    }
+  ],
+  "binary_sha256": "f6a1c168fd6b3e755e03c271fba6113bd888be9719b77b564306310054cd6aec",
+  "all_sources_unchanged": true,
+  "all_processes_reaped": true
+}

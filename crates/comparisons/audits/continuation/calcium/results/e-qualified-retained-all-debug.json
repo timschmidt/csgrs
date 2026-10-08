@@ -1,0 +1,25 @@
+{
+  "tag": "e-qualified-retained-all-debug",
+  "started": "2026-09-10T02:10:40.891Z",
+  "finished": "2026-09-10T02:10:58.087Z",
+  "elapsedSeconds": 17.194660799,
+  "cwd": "/home/tim/Documents/GitHub/workspace/hyperreal",
+  "command": "env",
+  "args": [
+    "CARGO_TARGET_DIR=/tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse",
+    "CARGO_INCREMENTAL=0",
+    "CARGO_PROFILE_DEV_DEBUG=0",
+    "CARGO_BUILD_JOBS=2",
+    "cargo",
+    "test",
+    "--locked",
+    "--offline",
+    "--all-features",
+    "--lib",
+    "--tests",
+    "--",
+    "--test-threads=4"
+  ],
+  "code": 0,
+  "signal": null
+}

@@ -1,0 +1,43 @@
+
+running 1 test
+approximate-512 consumed caller=src/bbox.rs:616
+   0: <hypercurve::policy::CurveContext>::observe_approximate_512
+   1: hypercurve::classify::compare_reals
+   2: hypercurve::bbox::include_coordinate
+   3: <hypercurve::bbox::Aabb2>::include_point
+   4: <hypercurve::bbox::Aabb2>::union
+   5: hypercurve::bezier_region::retained_loop_query_bounds
+   6: hypercurve::bezier_region::classify_point_against_retained_loop_with_fill_rule
+   7: hypercurve::bezier_region::classify_point_against_retained_loops
+   8: <hypercurve::bezier_region::CurveRegion2>::classify_point_raw
+   9: <hypercurve::curve_region_boolean::CurveRegionBooleanContext>::classify_point_evidence_off_boundary
+  10: <hypercurve::curve_region_boolean::CurveRegionBooleanContext>::fragment_location
+  11: <hypercurve::curve_region_boolean::CurveRegionBooleanContext>::build_boolean_topology
+  12: <hypercurve::curve_region_boolean::CurveRegionBooleanContext>::build_boolean_region
+  13: <hypercurve::bezier_region::CurveRegion2>::boolean_region_raw
+  14: <hypercurve::bezier_region::CurveRegion2>::offset::{closure#0}
+  15: <hypercurve::bezier_region::CurveRegion2>::offset
+  16: <hypercurve_curve_region_promotion::unified_region_non_miter_erosions_split_after_neck_collapse::{closure#0} as core::ops::function::FnOnce<()>>::call_once
+  17: test::__rust_begin_short_backtrace::<core::result::Result<(), alloc::string::String>, fn() -> core::result::Result<(), alloc::string::String>>
+  18: test::run_test::{closure#0}
+  19: std::sys::backtrace::__rust_begin_short_backtrace::<test::run_test::{closure#1}, ()>
+  20: <std::thread::lifecycle::spawn_unchecked<test::run_test::{closure#1}, ()>::{closure#1} as core::ops::function::FnOnce<()>>::call_once::{shim:vtable#0}
+  21: <std::sys::thread::unix::Thread>::new::thread_start
+  22: start_thread
+  23: __clone3
+
+
+thread 'unified_region_non_miter_erosions_split_after_neck_collapse' (37) panicked at tests/hypercurve_curve_region_promotion.rs:6506:13:
+assertion `left == right` failed
+  left: Approximate512Consumed
+ right: Certified
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+test unified_region_non_miter_erosions_split_after_neck_collapse ... FAILED
+
+failures:
+
+failures:
+    unified_region_non_miter_erosions_split_after_neck_collapse
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 99 filtered out; finished in 0.31s
+

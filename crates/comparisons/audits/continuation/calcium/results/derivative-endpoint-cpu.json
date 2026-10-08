@@ -1,0 +1,14 @@
+{
+  "tag": "derivative-endpoint-cpu",
+  "started": "2026-09-09T15:42:40.681Z",
+  "finished": "2026-09-09T15:42:54.111Z",
+  "elapsedSeconds": 13.427738328,
+  "cwd": "/home/tim/Documents/GitHub/workspace",
+  "command": "node",
+  "args": [
+    "exactcore-hyper-comparison/audits/continuation/calcium/run-derivative-endpoint.mjs",
+    "cpu"
+  ],
+  "code": 0,
+  "signal": null
+}

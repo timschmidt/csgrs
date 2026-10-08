@@ -1,0 +1,14 @@
+{
+  "tag": "run-root-exp-opaque-alloc",
+  "started": "2026-09-08T20:53:08.820Z",
+  "finished": "2026-09-08T20:53:26.925Z",
+  "elapsedSeconds": 18.102817067,
+  "cwd": "/home/tim/Documents/GitHub/workspace",
+  "command": "node",
+  "args": [
+    "exactcore-hyper-comparison/audits/continuation/calcium/run-root-exp-opaque-bench.mjs",
+    "alloc"
+  ],
+  "code": 0,
+  "signal": null
+}

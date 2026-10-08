@@ -1,0 +1,17 @@
+[
+  {
+    "target": "lib",
+    "filter": "recursively_pair_radial_rational_circle_component_maps_both_directions_exactly",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve-6e6572a45c5b177b",
+      "recursively_pair_radial_rational_circle_component_maps_both_directions_exactly",
+      "--test-threads=1",
+      "--nocapture"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.16388613599701785,
+    "log": "mixed-circle-components-final-recursively_pair_radial_rational_circle_component_maps_both_directions_exactly.log",
+    "binary": "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve-6e6572a45c5b177b",
+    "sha256": "45f799dc034081084d0545edaead54aaac2278890425b1babee7b1e274c2b640"
+  }
+]

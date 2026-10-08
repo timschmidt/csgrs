@@ -1,0 +1,10 @@
+{
+  "returncode": 1,
+  "stage": "compilation",
+  "errors": [
+    "mismatched types",
+    "mismatched types",
+    "`Option<f64>` doesn't implement `std::fmt::Display`"
+  ],
+  "all_processes_reaped": true
+}

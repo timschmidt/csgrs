@@ -1,0 +1,32 @@
+\doxysubsection{Constraint\+Solver\+Interface Class Reference}
+\hypertarget{classAriadne_1_1ConstraintSolverInterface}{}\label{classAriadne_1_1ConstraintSolverInterface}\index{ConstraintSolverInterface@{ConstraintSolverInterface}}
+
+
+{\ttfamily \#include $<$constraint\+\_\+solver.\+hpp$>$}
+
+
+
+\doxysubsubsection{Description}
+A class for finding solutions of systems of constraints of the form $g(y) \leq c$. Inheritance diagram for Constraint\+Solver\+Interface\+:\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[height=2.000000cm]{classAriadne_1_1ConstraintSolverInterface}
+\end{center}
+\end{figure}
+\doxysubsubsubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1ConstraintSolverInterface_a93df61796b0c230df328bfee522e4c62}\label{classAriadne_1_1ConstraintSolverInterface_a93df61796b0c230df328bfee522e4c62} 
+virtual \mbox{\hyperlink{namespaceAriadne_abbe0884d033ed6289d1f654576d7bb07}{Pair}}$<$ \mbox{\hyperlink{classAriadne_1_1ValidatedKleenean}{Validated\+Kleenean}}, \mbox{\hyperlink{classAriadne_1_1Point}{Exact\+Point\+Type}} $>$ {\bfseries feasible} (const \mbox{\hyperlink{group__FunctionModule_gafdd31b4d01081cd09aad2ce11117f867}{Exact\+Box\+Type}} \&domain, const Validated\+Vector\+Multivariate\+Function \&function, const \mbox{\hyperlink{group__FunctionModule_gafdd31b4d01081cd09aad2ce11117f867}{Exact\+Box\+Type}} \&codomain) const =0
+\begin{DoxyCompactList}\small\item\em Test if the image of the box {\itshape domain} under the function {\itshape function} intersects {\itshape codomain}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1ConstraintSolverInterface_a26a05094552542f6e0ce49c7786358dd}\label{classAriadne_1_1ConstraintSolverInterface_a26a05094552542f6e0ce49c7786358dd} 
+virtual \mbox{\hyperlink{classAriadne_1_1ValidatedKleenean}{Validated\+Kleenean}} {\bfseries check\+\_\+feasibility} (const \mbox{\hyperlink{group__FunctionModule_gafdd31b4d01081cd09aad2ce11117f867}{Exact\+Box\+Type}} \&domain, const Validated\+Vector\+Multivariate\+Function \&function, const \mbox{\hyperlink{group__FunctionModule_gafdd31b4d01081cd09aad2ce11117f867}{Exact\+Box\+Type}} \&codomain, const \mbox{\hyperlink{classAriadne_1_1Point}{Exact\+Point\+Type}} \&point) const =0
+\begin{DoxyCompactList}\small\item\em Test if {\itshape point} is in {\itshape domain} and the image of {\itshape point} under the function {\itshape function} lies in {\itshape codomain}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1ConstraintSolverInterface_af2f7d5beab2db5c8358aaafdd25cad74}\label{classAriadne_1_1ConstraintSolverInterface_af2f7d5beab2db5c8358aaafdd25cad74} 
+virtual \mbox{\hyperlink{namespaceAriadne_a76a8b016e5ad61faf9062cc387df5016}{Bool}} {\bfseries reduce} (\mbox{\hyperlink{group__FunctionModule_gadb510bd9aa076e5ae44245b498901ca6}{Upper\+Box\+Type}} \&domain, const Validated\+Vector\+Multivariate\+Function \&function, const \mbox{\hyperlink{group__FunctionModule_gafdd31b4d01081cd09aad2ce11117f867}{Exact\+Box\+Type}} \&codomain) const =0
+\begin{DoxyCompactList}\small\item\em Try to reduce the size of the domain by propagating interval constraints. Returns {\ttfamily true} if the reduced domain is empty. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+The documentation for this class was generated from the following file\+:\begin{DoxyCompactItemize}
+\item 
+source/solvers/\mbox{\hyperlink{constraint__solver_8hpp}{constraint\+\_\+solver.\+hpp}}\end{DoxyCompactItemize}

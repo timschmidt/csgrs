@@ -1,0 +1,10 @@
+[
+  {
+    "name": "bezier_region::tests::major_retained_rational_arc_and_general_chord_share_the_fillet_kernel",
+    "returncode": 101,
+    "passed": false,
+    "limit_seconds": 60,
+    "elapsed_seconds": 1.9540739529766142,
+    "log": "corner-publication-decision-sites-20260923-trace9-case-0.log"
+  }
+]

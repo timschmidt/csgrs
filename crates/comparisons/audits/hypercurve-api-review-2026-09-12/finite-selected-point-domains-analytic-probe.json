@@ -1,0 +1,29 @@
+{
+  "returncode": 0,
+  "elapsed_seconds": 1.0650548299890943,
+  "normal_library_sha256": "5ab0beb19caab2b6ecaf12007a8f07af332a198e59837ce063f5b418f4003187",
+  "log": "finite-selected-point-domains-analytic-probe.log",
+  "source": "analytic-common-dispatch-completed.rs",
+  "command": [
+    "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustc",
+    "--edition=2024",
+    "-O",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/analytic-common-dispatch-completed.rs",
+    "--extern",
+    "hypercurve=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypercurve-9eb8c540d8ca7826.rlib",
+    "-L",
+    "dependency=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps",
+    "-o",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-selected-point-domains-analytic-probe"
+  ],
+  "run_command": [
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-selected-point-domains-analytic-probe"
+  ],
+  "source_sha256": "435ca28d063a5d18fc1e613c263adb8c759297294a2b10300a4814b7859c5a44",
+  "executable_sha256": "33153ccf78c267b3b0d646a47669a242ec616e40c35492fecdd2b6fc3fe86823",
+  "counts": {
+    "completed_common_queries": 12,
+    "point_replays": 32,
+    "lower_kernels_complete": true
+  }
+}

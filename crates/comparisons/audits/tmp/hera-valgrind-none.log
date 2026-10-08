@@ -1,0 +1,7 @@
+==37== Nulgrind, the minimal Valgrind tool
+==37== Copyright (C) 2002-2024, and GNU GPL'd, by Nicholas Nethercote et al.
+==37== Using Valgrind-3.27.1 and LibVEX; rerun with -h for copyright info
+==37== Command: ./hera-kernel integer 1000
+==37== Parent PID: 36
+==37== 
+==37== 

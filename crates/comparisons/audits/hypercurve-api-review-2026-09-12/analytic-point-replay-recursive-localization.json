@@ -1,0 +1,21 @@
+{
+  "build_command": [
+    "cargo",
+    "test",
+    "--release",
+    "--all-features",
+    "--lib",
+    "--no-run",
+    "--message-format=json",
+    "-j",
+    "2"
+  ],
+  "build_returncode": 0,
+  "build_elapsed_seconds": 111.22313852400112,
+  "source_sha256": "0645dc2281e04582caf37dc4cfb1bf595ee6348bdf3c502defb3b5f33fac357b",
+  "binary_sha256": "2744cfd8f990995a28164362af5fe79e31ae89b7ab34fd3e1edfe96c34a48e41",
+  "test": "curve_region_boolean::certified_successor_tests::algebraic_chord_analytic_parallel_pair_replays_contacts_and_overlap",
+  "timeout_seconds": 45,
+  "returncode": 124,
+  "elapsed_seconds": 45.00128382201365
+}

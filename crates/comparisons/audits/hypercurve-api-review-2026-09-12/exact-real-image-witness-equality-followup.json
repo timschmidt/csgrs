@@ -1,0 +1,20 @@
+{
+  "status": "independent STRICT equality fixed by shared conic evaluation and quadratic basis conversion",
+  "goal_status": "active",
+  "fixture": "Rational quadratic controls (0,0),(2,4),(6,0), weights 1,2,3 at the exact-Real root 1/pi.",
+  "witness_retention": "Coordinate images retain exact nonrational Real witnesses; both compare equal to their retained witnesses under STRICT.",
+  "independent_equality": "The original 1/pi probe now returns Decided(Equal) for both independently evaluated coordinates under STRICT. Expanded coverage includes arbitrary exact controls and weights; general scalar identity beyond these shared evaluations is not claimed.",
+  "current_failure_log": "exact-real-image-independent-strict.log",
+  "baseline_commit": "b4a0d02d5b2237bb6168eb1fe0e5849f3df82f06",
+  "baseline_probe_source": "exact-real-image-independent-strict-probe.rs",
+  "baseline_binary": "exact-real-image-independent-strict-pre-box",
+  "baseline_binary_sha256": "36c7eacefae4dfb566c1a72e5aafaf15459db7725d8813b6af82a9cffd307aea",
+  "baseline_log": "exact-real-image-independent-strict-pre-box.log",
+  "baseline_exit_code": 101,
+  "passing_target_log": "exact-real-image-witness-expectation.log",
+  "passing_target_tests": 9,
+  "constraint": "Preserve exact witness identity and replay through the Hyper scalar/algebraic layers; do not replace this uncertainty with an unlabeled approximate equality.",
+  "test_commit": "39a0c88c6fd4e013c3ba4302f050a29aae4dd522",
+  "implementation_commit": "a3c843cbfa3ded3acd388dbd81371055fc40a633",
+  "qualification": "conic-exact-evaluation-qualification.json"
+}

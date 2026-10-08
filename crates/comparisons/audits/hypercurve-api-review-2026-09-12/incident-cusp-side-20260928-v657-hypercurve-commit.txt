@@ -1,0 +1,7 @@
+Retain surviving-side tangents for incident offset-cusp fillets
+
+A regular source can have an offset cusp beyond the authored corner. Its surviving side supplies an exact nonzero contact tangent even though the pointwise offset derivative vanishes. Reuse the existing Taylor-sign theorem for that original contact side in fillet selection, orientation and regular source frames. Keep the center-locus derivative pointwise and preserve undefined source-normal, pole and collapsed-curve exclusions.
+
+Normal component evidence carries its side and source axis through operand swaps, negative affine maps and reversed incident charts. The ordinary nonzero derivative path is unchanged. All callers migrate directly; no compatibility interfaces are added.
+
+Validation: 58 release cases across two pinned binaries plus six lint/caller/format/fuzz/docs/downstream checks. Independent rational cusp fixtures exercise center, exact parameter and exact point constraints, both policies, reversed traversal and native/polynomial line partners. Additional guards cover chart reversal, source poles, undefined normals, collapsed derivatives, and existing stationary fillet compositions.

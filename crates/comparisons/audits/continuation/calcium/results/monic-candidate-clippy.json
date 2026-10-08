@@ -1,0 +1,25 @@
+{
+  "tag": "monic-candidate-clippy",
+  "started": "2026-09-09T00:47:14.369Z",
+  "finished": "2026-09-09T00:47:25.683Z",
+  "elapsedSeconds": 11.311891049,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/polynomial-monic-trial/hypersolve",
+  "command": "env",
+  "args": [
+    "CARGO_TARGET_DIR=/tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse",
+    "CARGO_INCREMENTAL=0",
+    "CARGO_PROFILE_DEV_DEBUG=0",
+    "CARGO_BUILD_JOBS=2",
+    "cargo",
+    "clippy",
+    "--offline",
+    "--locked",
+    "--all-features",
+    "--all-targets",
+    "--",
+    "-D",
+    "warnings"
+  ],
+  "code": 0,
+  "signal": null
+}

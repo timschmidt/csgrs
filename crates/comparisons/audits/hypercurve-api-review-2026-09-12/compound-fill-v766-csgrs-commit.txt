@@ -1,0 +1,5 @@
+Use explicit even-odd fill for exact boundary paths
+
+Pass EvenOdd at both controlled boundary-path admission calls to retain their existing semantics under Hypercurve's global-winding API. No compatibility interface is retained.
+
+Validation: all 17 selected exact-curve release regressions, the all-target/all-feature check and repository-format checks pass with the qualified Hypercurve change.

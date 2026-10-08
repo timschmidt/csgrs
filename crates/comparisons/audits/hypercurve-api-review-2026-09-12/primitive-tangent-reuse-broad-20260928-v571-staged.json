@@ -1,0 +1,12 @@
+{
+  "repos": {
+    "hypercurve": {
+      "parent": "1897673878f154a938c03c31b39327262841df71",
+      "paths": {
+        "src/bezier_offset.rs": "5f887a1afe3ee81a37cc39b22bfbbe66a3f8c5f978a5e05b77f9a9a6df23111d"
+      }
+    }
+  },
+  "qualification": "primitive-tangent-reuse-broad-20260928-v571-terminal.json",
+  "verified_source_files": 2047
+}

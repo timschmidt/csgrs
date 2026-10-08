@@ -1,0 +1,17 @@
+[
+  {
+    "label": "0-before-asin-rational",
+    "args": [
+      "asin",
+      "rational",
+      "256"
+    ],
+    "status": 0,
+    "error": "EPERM",
+    "signal": null,
+    "stdout": "asin\trational\t256\t2425226\t3566036\t20178\t1237720\t4901665716729041920\n",
+    "stderr": "",
+    "sha256": "a6445ed8b7bc6af34869a243a2e5a1b3291b127f51481baf931bc9a9dbb51f50",
+    "source": "62c0679bf765377d72300d99b1d7ed61fa6ab08640d8d7010f01411553094d8c"
+  }
+]

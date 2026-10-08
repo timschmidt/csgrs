@@ -1,0 +1,70 @@
+[
+  {
+    "repository": "hypercurve",
+    "kind": "check",
+    "command": [
+      "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+      "check",
+      "--all-targets",
+      "--no-default-features",
+      "--locked",
+      "--offline"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 6.574588442017557,
+    "log": "finite-circle-projection-check.log"
+  },
+  {
+    "repository": "hypercurve",
+    "kind": "test-build",
+    "command": [
+      "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+      "test",
+      "--release",
+      "--all-features",
+      "--locked",
+      "--offline",
+      "--lib",
+      "--tests",
+      "--no-run",
+      "--message-format=json"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 236.7645778770093,
+    "log": "finite-circle-projection-test-build.log"
+  },
+  {
+    "repository": "hyperbrep",
+    "kind": "check",
+    "command": [
+      "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+      "check",
+      "--all-targets",
+      "--no-default-features",
+      "--locked",
+      "--offline"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 4.324473385990132,
+    "log": "finite-circle-projection-hyperbrep-check.log"
+  },
+  {
+    "repository": "hyperbrep",
+    "kind": "test-build",
+    "command": [
+      "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+      "test",
+      "--release",
+      "--all-features",
+      "--locked",
+      "--offline",
+      "--lib",
+      "--tests",
+      "--no-run",
+      "--message-format=json"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 124.07898162299534,
+    "log": "finite-circle-projection-hyperbrep-test-build.log"
+  }
+]

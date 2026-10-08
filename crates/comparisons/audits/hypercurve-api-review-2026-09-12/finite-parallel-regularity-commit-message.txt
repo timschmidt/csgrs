@@ -1,0 +1,11 @@
+Scope analytic parallel regularity to exact finite ranges
+
+Require an explicit exact range for singularity analysis and retain that range
+in its evidence. Share finite-domain root membership for poles, source roots,
+and selected-sheet cusp candidates, including the exact quadratic fast path.
+Retained offset and tangent callers now supply their own domains; update all
+other callers to explicit unit ranges without a compatibility interface.
+
+Expose construction of the existing exact range value and test exterior and
+native charts, endpoint ownership, reversed traversal, negative gauges,
+source singularities, excluded poles, and selected endpoint authorities.

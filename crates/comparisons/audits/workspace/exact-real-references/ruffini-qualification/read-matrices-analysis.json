@@ -1,0 +1,45 @@
+{
+  "sourceSha256": "a84f4a42ea3fd091b7c397ef741fcb0bd497506223bf8342097b77a2e870f6c7",
+  "oracleControls": 120,
+  "matrices": [
+    {
+      "name": "matrix00",
+      "n": 2,
+      "physicalLines": 4,
+      "sha256": "6624762c19cdd986d02aca57ad05f1af7290c9fec2941b1e364cc20704cea48a",
+      "finalNewline": false,
+      "testedMinors": 5,
+      "allDeterminantsUnitsModuloAdvertisedModulus": true
+    },
+    {
+      "name": "matrix01",
+      "n": 3,
+      "physicalLines": 9,
+      "sha256": "3291d0ac76977bdf7ee35ff47a6d6cd0c92415086b9148b9dc5a5810c32d82ef",
+      "finalNewline": false,
+      "testedMinors": 19,
+      "allDeterminantsUnitsModuloAdvertisedModulus": true
+    },
+    {
+      "name": "matrix02",
+      "n": 4,
+      "physicalLines": 16,
+      "sha256": "c6a8be4b3c5fad86d14f0d073bfcfc3ab4035bcc1ab6bede9d139f170756fe4b",
+      "finalNewline": false,
+      "testedMinors": 69,
+      "allDeterminantsUnitsModuloAdvertisedModulus": true
+    },
+    {
+      "name": "matrix03",
+      "n": 5,
+      "physicalLines": 25,
+      "sha256": "5187f28126a6282857665d45a777684810e13859dc42091ab6ebcb019201a9d4",
+      "finalNewline": false,
+      "testedMinors": 251,
+      "allDeterminantsUnitsModuloAdvertisedModulus": true
+    }
+  ],
+  "totalReadEntries": 54,
+  "totalTestedMinors": 344,
+  "scope": "only four explicitly read matrix resources; no primality, cryptographic or unread-data qualification claimed"
+}

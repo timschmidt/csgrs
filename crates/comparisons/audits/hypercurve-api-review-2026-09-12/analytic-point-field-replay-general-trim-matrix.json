@@ -1,0 +1,25 @@
+{
+  "returncode": 0,
+  "elapsed_seconds": 0.5143540259887232,
+  "normal_library_sha256": "71ce67bd166701aac15ea302f64d5c2bf15e92468ecc755567a4cecced1ecc23",
+  "log": "analytic-point-field-replay-general-trim-matrix.log",
+  "source": "general-trim-matrix.rs",
+  "command": [
+    "rustc",
+    "--edition=2024",
+    "-O",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/general-trim-matrix.rs",
+    "--extern",
+    "hypercurve=/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/libhypercurve-2c7ff6f3fbe07653.rlib",
+    "-L",
+    "dependency=/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps",
+    "-o",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/analytic-point-field-replay-general-trim-matrix"
+  ],
+  "counts": {
+    "queries": 448,
+    "endpoint_replays": 2208,
+    "repeated_path_trims": 1008,
+    "certainty": "Certified"
+  }
+}

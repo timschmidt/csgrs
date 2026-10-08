@@ -1,0 +1,11 @@
+correlated affine add: 22500/22500
+correlated affine sub: 22500/22500
+correlated affine mul: 22500/22500
+correlated affine div: 22500/22500
+affine normalization: 22500/22500
+affine exact shared subtraction: 180/180
+affine lower precision: 22500/22500
+term cap diagnostic exp: (2,3)
+term cap diagnostic sqrt: (2,3)
+term cap diagnostic sin: (2,3)
+term cap diagnostic cos: (2,3)

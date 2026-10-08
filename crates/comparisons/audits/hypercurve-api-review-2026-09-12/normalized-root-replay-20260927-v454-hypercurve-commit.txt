@@ -1,0 +1,5 @@
+Check retained fillet charts across all regularized loops
+
+An extended fillet can regularize into a separate loop. The reflected candidates put that loop on opposite sides of the boundary ordering, so counting only the first loop falsely rejects one result. Check the inserted circle charts across the full normalized region.
+
+Validation: 933 Hyperreal and 898 Hypersolve tests, 323 selected Hypercurve release tests, three independently proved captured root queries, Clippy, formatting, denied-warning docs, editing fuzz compilation, and Hyperbrep compilation. The two original extended-fillet re-offset tests remain unresolved and are excluded from the passing geometry scope.

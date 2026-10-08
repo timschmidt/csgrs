@@ -1,0 +1,42 @@
+{
+  "parents": {
+    "hypercurve": "11c5e0faaf13846869bc8d447aaadfea539b86e7",
+    "hypersolve": "42308d704df777b3e627aa344424afa3f215e456",
+    "hyperreal": "0cb5f29aee065c73e234e0ebb0a9e106398515bb"
+  },
+  "workspace_guard": "fillet-normal-components-20260926-v211-sources.json",
+  "source_manifest": "fillet-normal-components-20260926-v211-sources.json",
+  "source_directory": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/source-archives/fillet-normal-components-20260926-v211",
+  "build_source_directory": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/build-workspace-20260925",
+  "cases": [],
+  "all_processes_reaped": true,
+  "checks": [
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustfmt",
+        "--edition",
+        "2024",
+        "--check",
+        "src/bezier_offset.rs",
+        "src/curve.rs"
+      ],
+      "returncode": 0,
+      "log": "fillet-normal-components-20260926-v211-check-0.log"
+    },
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "clippy",
+        "--all-targets",
+        "--all-features",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "returncode": 101,
+      "log": "fillet-normal-components-20260926-v211-check-1.log"
+    }
+  ]
+}

@@ -1,0 +1,12 @@
+     Locking 12 packages to latest Rust 1.97.0 compatible versions
+   Compiling calcium-polynomial-decision-baseline-bench v0.1.0 (/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/polynomial-decision-baseline-bench)
+warning: function `main` is never used
+  --> ../polynomial-decision-probe.rs:28:4
+   |
+28 | fn main() {
+   |    ^^^^
+   |
+   = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+warning: `calcium-polynomial-decision-baseline-bench` (bin "calcium-polynomial-decision-baseline-bench") generated 1 warning
+    Finished `release` profile [optimized] target(s) in 0.40s

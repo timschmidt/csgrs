@@ -1,0 +1,32 @@
+\doxysubsection{source/symbolic/valuation.hpp File Reference}
+\hypertarget{valuation_8hpp}{}\label{valuation_8hpp}\index{source/symbolic/valuation.hpp@{source/symbolic/valuation.hpp}}
+
+
+\doxysubsubsection{Description}
+Valuations over named variables. 
+
+{\ttfamily \#include $<$cstdarg$>$}\newline
+{\ttfamily \#include $<$iostream$>$}\newline
+{\ttfamily \#include $<$string$>$}\newline
+{\ttfamily \#include "{}utility/macros.\+hpp"{}}\newline
+{\ttfamily \#include "{}utility/container.\+hpp"{}}\newline
+{\ttfamily \#include "{}utility/tribool.\+hpp"{}}\newline
+{\ttfamily \#include "{}numeric/integer.\+hpp"{}}\newline
+{\ttfamily \#include "{}symbolic/variable.\+hpp"{}}\newline
+{\ttfamily \#include "{}symbolic/expression.\+hpp"{}}\newline
+\doxysubsubsubsection*{Classes}
+\begin{DoxyCompactItemize}
+\item 
+class \mbox{\hyperlink{classAriadne_1_1Valuation}{Valuation$<$ T, X $>$}}
+\begin{DoxyCompactList}\small\item\em A valuation of named variables of mathematical type {\itshape T}, with values represented by values of concrete type {\itshape X}, where X defaults to {\itshape T}. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1DiscreteValuation}{Discrete\+Valuation}}
+\begin{DoxyCompactList}\small\item\em A valuation of named variables taking \doxylink{classAriadne_1_1String}{String} or \doxylink{classAriadne_1_1Integer}{Integer} values. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1ContinuousValuation}{Continuous\+Valuation$<$ X $>$}}
+\begin{DoxyCompactList}\small\item\em A valuation of named real variables taking values of concrete class {\itshape X}. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1HybridValuation}{Hybrid\+Valuation$<$ X $>$}}
+\begin{DoxyCompactList}\small\item\em A valuation of named variables of \doxylink{classAriadne_1_1String}{String}, \doxylink{classAriadne_1_1Integer}{Integer} and \doxylink{classAriadne_1_1Real}{Real} quantities, with the real variables taking values in concrete type {\itshape X}. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsubsection*{Namespaces}
+\begin{DoxyCompactItemize}
+\item 
+namespace \mbox{\hyperlink{namespaceAriadne}{Ariadne}}
+\begin{DoxyCompactList}\small\item\em Top-\/level Ariadne namespace. \end{DoxyCompactList}\end{DoxyCompactItemize}

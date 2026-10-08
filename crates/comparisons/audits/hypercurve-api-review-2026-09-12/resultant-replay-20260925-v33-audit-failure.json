@@ -1,0 +1,10 @@
+{
+  "commit": "721920c8695e78ec9a435282401ccb3f1fb63e8b",
+  "tested_manifest": "local-chord-complete-replay-20260924-v33-sources.json",
+  "terminal": "resultant-replay-20260925-v33-terminal.json",
+  "full_tests_passed": 509,
+  "repository_audit_passed": false,
+  "reason": "rustfmt src/lib.rs also reformatted src/root_isolation.rs, outside the planned file list; sequential orchestration did not stop after the failed audit",
+  "recovery": "Restored whitespace-only root_isolation edit after all processes reaped. Corrected module documentation and repeat full qualification with v34 before continuing. No qualification or staged receipt was published for v33.",
+  "all_processes_reaped": true
+}

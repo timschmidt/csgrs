@@ -1,0 +1,14 @@
+{
+  "commit": "08ca2e24c2658d2b50d2c10f1e2e0e2779dab417",
+  "hyperbrep_commit": "878fcb441b281ab1b44051ca4420b28092c3c2ed",
+  "source_files_verified": {
+    "working": 396,
+    "isolated": 1005
+  },
+  "hypercurve_clean": true,
+  "hyperbrep_clean": true,
+  "whole_workspace_clean_claim": false,
+  "other_session_hyperreal_untouched": true,
+  "goal_status": "active",
+  "qualification": "finite-circle-inverse-domains-qualification.json"
+}

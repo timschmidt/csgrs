@@ -1,0 +1,13 @@
+{
+  "command": "/home/tim/Documents/GitHub/workspace/exact-real-references/ruffini-qualification/cache-rescale-pilot/evidence-v1/debug",
+  "args": [
+    "public-boundary"
+  ],
+  "begin": "2026-09-07T04:55:35.764Z",
+  "end": "2026-09-07T04:55:35.767Z",
+  "status": 0,
+  "signal": null,
+  "error": null,
+  "stdout": "{\"mode\":\"public-boundary\",\"result\":\"panic\"}\n",
+  "stderr": "\nthread 'main' (1127430) panicked at /home/tim/Documents/GitHub/workspace/hyperreal/src/computable/node/representation.rs:197:46:\nattempt to subtract with overflow\nnote: run with `RUST_BACKTRACE=1` environment variable to display a backtrace\n"
+}

@@ -1,0 +1,10 @@
+{
+  "head": "0e5f50abf7dcd2e21f4a54a11bbd16909e139f5e",
+  "files": {
+    "src/computable/node/quadratic_tower.rs": "90e9c6f314037614b6d2b0c4426e28987ee2a207a8262629f21fc9baa01c34d7",
+    "src/real/arithmetic/quadratic_tower_sign.rs": "652f9092c0059461f52e5b8d33997018a368b2572999d0fad4dc8694cac8e099"
+  },
+  "clean": true,
+  "all_owned_processes_reaped": true,
+  "full_goal_complete": false
+}

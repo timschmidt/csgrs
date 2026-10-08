@@ -1,0 +1,157 @@
+{
+  "status": "passed within the recorded broad qualification scope",
+  "goal_status": "active",
+  "previous_commit": "fedd740a91a89456b7e655db32f94dd8f702136c",
+  "commit": "34ae22f1ca9059356b2a6a1fcb3f9263b2c46577",
+  "targets": 49,
+  "passed": 2303,
+  "passed_by_repo": {
+    "hypercurve": 2071,
+    "hyperbrep": 232
+  },
+  "known_failed": [
+    "approximate_512_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions",
+    "non_ph_bezier_pair_projective_fillet_retains_algebraic_extensions",
+    "nonconvex_algebraic_chord_expansion_is_exact_and_local_collapse_is_explicit",
+    "strict_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions",
+    "unified_mixed_line_arc_erosion_splits_after_a_curved_neck_collapse"
+  ],
+  "new_failures": [],
+  "ignored": 9,
+  "expensive_previously_unqualified_exclusions": 8,
+  "timeouts_in_broad_run": 0,
+  "builds": [
+    {
+      "repository": "hypercurve",
+      "kind": "check",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "check",
+        "--all-targets",
+        "--no-default-features",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 7.576843784976518,
+      "log": "finite-fixed-distance-domains-check.log"
+    },
+    {
+      "repository": "hypercurve",
+      "kind": "test-build",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "test",
+        "--release",
+        "--all-features",
+        "--locked",
+        "--offline",
+        "--lib",
+        "--tests",
+        "--no-run",
+        "--message-format=json"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 266.2809640459891,
+      "log": "finite-fixed-distance-domains-test-build.log"
+    },
+    {
+      "repository": "hyperbrep",
+      "kind": "check",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "check",
+        "--all-targets",
+        "--no-default-features",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 4.520678118016804,
+      "log": "finite-fixed-distance-domains-hyperbrep-check.log"
+    },
+    {
+      "repository": "hyperbrep",
+      "kind": "test-build",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "test",
+        "--release",
+        "--all-features",
+        "--locked",
+        "--offline",
+        "--lib",
+        "--tests",
+        "--no-run",
+        "--message-format=json"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 129.48862742399797,
+      "log": "finite-fixed-distance-domains-hyperbrep-test-build.log"
+    }
+  ],
+  "focused_checks": 18,
+  "public_matrices_and_probes": [
+    "finite-fixed-distance-domains-admission-region-entry.json",
+    "finite-fixed-distance-domains-affine-parallel-replay.json",
+    "finite-fixed-distance-domains-affine-public.json",
+    "finite-fixed-distance-domains-analytic-probe.json",
+    "finite-fixed-distance-domains-analytic-public.json",
+    "finite-fixed-distance-domains-baseline-recheck.json",
+    "finite-fixed-distance-domains-bounds-public.json",
+    "finite-fixed-distance-domains-circle-matrix.json",
+    "finite-fixed-distance-domains-completed-probe.json",
+    "finite-fixed-distance-domains-completed.json",
+    "finite-fixed-distance-domains-constant-image-trim-matrix.json",
+    "finite-fixed-distance-domains-constructor-public.json",
+    "finite-fixed-distance-domains-cubic-replay.json",
+    "finite-fixed-distance-domains-endpoint-probe.json",
+    "finite-fixed-distance-domains-exterior-completed.json",
+    "finite-fixed-distance-domains-family-matrix.json",
+    "finite-fixed-distance-domains-finite-circle-probe.json",
+    "finite-fixed-distance-domains-finite-matrix.json",
+    "finite-fixed-distance-domains-general-trim-matrix.json",
+    "finite-fixed-distance-domains-native-poles-public.json",
+    "finite-fixed-distance-domains-poles-public.json",
+    "finite-fixed-distance-domains-previous-pairs.json",
+    "finite-fixed-distance-domains-probe-final.json",
+    "finite-fixed-distance-domains-public-replay.json",
+    "finite-fixed-distance-domains-rational-public.json",
+    "finite-fixed-distance-domains-region-carrier-matrix.json",
+    "finite-fixed-distance-domains-region-entry.json",
+    "finite-fixed-distance-domains-region-explicit.json",
+    "finite-fixed-distance-domains-region-public.json",
+    "finite-fixed-distance-domains-replay-matrix-run.json",
+    "finite-fixed-distance-domains-retained-chord-matrix.json",
+    "finite-fixed-distance-domains-retrace-public.json",
+    "finite-fixed-distance-domains-self-public.json",
+    "finite-fixed-distance-domains-tangent-matrix.json",
+    "finite-fixed-distance-domains-trim-public.json",
+    "finite-fixed-distance-domains-unit-replay.json",
+    "finite-fixed-distance-domains-winding-public.json"
+  ],
+  "parent_public_baseline": "finite-fixed-distance-baseline.json",
+  "public_chart_cases": 32,
+  "public_chart_point_replays": 176,
+  "public_integration_cases": 32,
+  "additional_public_chart_executions": 8,
+  "attempts": [
+    "finite-fixed-distance-domains-initial-attempt1"
+  ],
+  "computational_scope": "Generic finite ranges replace unit substitution and endpoint promotion. Local center proofs replace native source admission. One polynomial-speed selector serves retained parameter kinds; ordinary algebraic centers project the unsquared polynomial relation when both speeds are polynomial, avoiding repeated radical replay. The first attempt timed out on this expanded regression; final qualification retains the regression. No general throughput or memory improvement claim.",
+  "source_files_verified": {
+    "working": 396,
+    "isolated": 1005
+  },
+  "dependency_commits": "finite-parallel-pruning-isolated-sources.json",
+  "isolated_dependency_sources": true,
+  "workspace_clean_claim": false,
+  "other_session_owns": "Hyperreal verified/ and verification/ changes; left untouched",
+  "normal_library": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypercurve-96140573e602b0b0.rlib",
+  "normal_library_sha256": "714b601f333b40798493e6ce128734b3d2364e200468ebb07c5e34bf947b443d",
+  "archived_library": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-fixed-distance-domains-libraries/libhypercurve-96140573e602b0b0.rlib",
+  "libtest_sha256": "0a31aca6b9d4f3413f09062facd93ba1c0a2ed03240a01f0a88aa7fa9d61e749",
+  "toolchain": "finite-parallel-pruning-toolchain.json",
+  "evidence_audit": "finite-fixed-distance-domains-worklog.md",
+  "remaining": "Selected-point finite incidence, one-sided source-cusp frames, normalized public-region construction, independent inverse replay, known failures/exclusions and broader algebraic/computational consolidation."
+}

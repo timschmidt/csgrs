@@ -1,0 +1,195 @@
+{
+  "observations": 198,
+  "afterWarmup": 176,
+  "checkedOutputs": 41508,
+  "paired": [
+    {
+      "family": "asin-tiny",
+      "count": 256,
+      "cpuNsBefore": 590465.5,
+      "cpuNsAfter": 507217.5,
+      "pairedCpuSpeedupMedian": 1.0050551272124408,
+      "pairedBootstrap95": [
+        0.925772440310512,
+        1.1450401199336153
+      ],
+      "callsBefore": 4288,
+      "callsAfter": 3520,
+      "bytesBefore": 138752,
+      "bytesAfter": 126464,
+      "identicalOutputChecksum": true
+    },
+    {
+      "family": "asin-radical",
+      "count": 256,
+      "cpuNsBefore": 753358,
+      "cpuNsAfter": 801553,
+      "pairedCpuSpeedupMedian": 0.9681690835522467,
+      "pairedBootstrap95": [
+        0.8422582980939172,
+        1.0875050016594654
+      ],
+      "callsBefore": 8448,
+      "callsAfter": 7552,
+      "bytesBefore": 326656,
+      "bytesAfter": 312832,
+      "identicalOutputChecksum": true
+    },
+    {
+      "family": "asin-opaque",
+      "count": 256,
+      "cpuNsBefore": 5939287,
+      "cpuNsAfter": 5340910.5,
+      "pairedCpuSpeedupMedian": 1.0092622177182236,
+      "pairedBootstrap95": [
+        0.9739832440130104,
+        1.0667604278779066
+      ],
+      "callsBefore": 49293,
+      "callsAfter": 49293,
+      "bytesBefore": 2043480,
+      "bytesAfter": 2043480,
+      "identicalOutputChecksum": true
+    },
+    {
+      "family": "asin-large",
+      "count": 256,
+      "cpuNsBefore": 6079429,
+      "cpuNsAfter": 5983087.5,
+      "pairedCpuSpeedupMedian": 1.0118280770608337,
+      "pairedBootstrap95": [
+        0.9732947727032873,
+        1.1002368409290895
+      ],
+      "callsBefore": 48990,
+      "callsAfter": 48990,
+      "bytesBefore": 3240432,
+      "bytesAfter": 3240432,
+      "identicalOutputChecksum": true
+    },
+    {
+      "family": "asinh-tiny",
+      "count": 256,
+      "cpuNsBefore": 538510,
+      "cpuNsAfter": 666504.5,
+      "pairedCpuSpeedupMedian": 0.98926903142756,
+      "pairedBootstrap95": [
+        0.9228822234375219,
+        0.9992580098499192
+      ],
+      "callsBefore": 4807,
+      "callsAfter": 4039,
+      "bytesBefore": 167416,
+      "bytesAfter": 155128,
+      "identicalOutputChecksum": true
+    },
+    {
+      "family": "asinh-radical",
+      "count": 256,
+      "cpuNsBefore": 1642333,
+      "cpuNsAfter": 2653744,
+      "pairedCpuSpeedupMedian": 0.9714544649449653,
+      "pairedBootstrap95": [
+        0.6005005453082722,
+        0.9843506228697779
+      ],
+      "callsBefore": 24449,
+      "callsAfter": 24449,
+      "bytesBefore": 914536,
+      "bytesAfter": 914536,
+      "identicalOutputChecksum": true
+    },
+    {
+      "family": "asinh-opaque",
+      "count": 256,
+      "cpuNsBefore": 6562374.5,
+      "cpuNsAfter": 6005466.5,
+      "pairedCpuSpeedupMedian": 1.0064856315234212,
+      "pairedBootstrap95": [
+        0.9355763243678806,
+        1.1233179955744124
+      ],
+      "callsBefore": 46873,
+      "callsAfter": 46873,
+      "bytesBefore": 1572032,
+      "bytesAfter": 1572032,
+      "identicalOutputChecksum": true
+    },
+    {
+      "family": "asinh-large",
+      "count": 256,
+      "cpuNsBefore": 2208071,
+      "cpuNsAfter": 2342759.5,
+      "pairedCpuSpeedupMedian": 1.0050560316546693,
+      "pairedBootstrap95": [
+        0.9318254676418567,
+        1.0575086791921267
+      ],
+      "callsBefore": 24457,
+      "callsAfter": 22857,
+      "bytesBefore": 813256,
+      "bytesAfter": 787144,
+      "identicalOutputChecksum": true
+    },
+    {
+      "family": "atanh-tiny",
+      "count": 256,
+      "cpuNsBefore": 618479,
+      "cpuNsAfter": 619498.5,
+      "pairedCpuSpeedupMedian": 1.0222920800786268,
+      "pairedBootstrap95": [
+        0.9789608624605852,
+        1.050678465886361
+      ],
+      "callsBefore": 4935,
+      "callsAfter": 4935,
+      "bytesBefore": 172536,
+      "bytesAfter": 172536,
+      "identicalOutputChecksum": true
+    },
+    {
+      "family": "asin-high",
+      "count": 1,
+      "cpuNsBefore": 347153614,
+      "cpuNsAfter": 278127937,
+      "pairedCpuSpeedupMedian": 1.1732102908845163,
+      "pairedBootstrap95": [
+        1.0445154475493923,
+        1.239600282462184
+      ],
+      "callsBefore": 68995,
+      "callsAfter": 46001,
+      "bytesBefore": 1323590176,
+      "bytesAfter": 1058953032,
+      "identicalOutputChecksum": true
+    },
+    {
+      "family": "asinh-high",
+      "count": 1,
+      "cpuNsBefore": 287431261.5,
+      "cpuNsAfter": 295124885,
+      "pairedCpuSpeedupMedian": 1.0123510486094434,
+      "pairedBootstrap95": [
+        0.9852516458925522,
+        1.117135242180589
+      ],
+      "callsBefore": 68995,
+      "callsAfter": 46001,
+      "bytesBefore": 1323590176,
+      "bytesAfter": 1058953032,
+      "identicalOutputChecksum": true
+    }
+  ],
+  "binaryFileBytes": {
+    "before": 2216984,
+    "after": 2218048
+  },
+  "limitations": [
+    "One host, CPU6-pinned fresh processes; eight post-warmup pairs per family, alternating order.",
+    "Concurrent system work was not excluded; intervals are descriptive, not a universal throughput claim.",
+    "Allocator counters are inside timings; allocated bytes are cumulative requests, not peak memory.",
+    "Inputs are preconstructed. Timed work includes clone, function construction and approximation.",
+    "Every output is enclosed by directed MPFR outside timing: 4096 oracle bits for 32/128-bit ordinary requests, 184256 for 184000-bit high requests.",
+    "Only mathematically correct baseline requests are timed; no ratio uses the frozen incorrect 192000-bit baseline."
+  ]
+}

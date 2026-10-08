@@ -1,0 +1,29 @@
+{
+  "returncode": 0,
+  "elapsed_seconds": 20.590543351019733,
+  "command": [
+    "rustc",
+    "--edition=2024",
+    "-O",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-circle-rational-domains-curves.rs",
+    "--extern",
+    "hypercurve=/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/libhypercurve-2c7ff6f3fbe07653.rlib",
+    "-L",
+    "dependency=/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps",
+    "-o",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-circle-rational-domains-curves-run"
+  ],
+  "source": "finite-circle-rational-domains-curves.rs",
+  "source_sha256": "5de6a9a24875392e7673cb08b2fbbe90e039d6d5bfd4c81a650d1de249a3b6ec",
+  "executable_sha256": "64b76c52203b9665b0a1c4337015e1d3e440df055e9a6ef741d5515238e302d0",
+  "normal_library_sha256": "8e690ff897af0a8cac5d88eaa0e04b6f5572b031f288de19099938069dc4ae62",
+  "library": "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/libhypercurve-2c7ff6f3fbe07653.rlib",
+  "log": "finite-circle-rational-domains-curves-run.log",
+  "counts": {
+    "queries": 48,
+    "point_replays": 96,
+    "topologies": 48,
+    "splits": 96,
+    "child_queries": 192
+  }
+}

@@ -1,0 +1,7 @@
+{
+  "src/boolean.rs": "f7857e22f246b803fbfa4dc44baf2ab6c5210a78fa379edc553bc532647c7386",
+  "src/builder.rs": "de2047a16b1eb9d0ef758f9822b60a271bd0510877fc8d07ddfcef1563f40d61",
+  "src/geometry.rs": "0b5a6146a4c1688c568a0daa56888f10cd1b44d0b65e6e2c26d1fa6acccc9b4c",
+  "src/model.rs": "575bd5868cfcca5398345495d6559d4780744889b6fe0543cb489304cc5c093b",
+  "src/persistence.rs": "e3602838c6cf4fefe56f99c5db5d2e3fcac9399912abf776dbea33f280982a91"
+}

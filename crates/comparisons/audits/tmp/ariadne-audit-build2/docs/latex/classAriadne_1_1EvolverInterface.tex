@@ -1,0 +1,60 @@
+\doxysubsection{Evolver\+Interface\texorpdfstring{$<$}{<} SYS, ES, TRM \texorpdfstring{$>$}{>} Class Template Reference}
+\hypertarget{classAriadne_1_1EvolverInterface}{}\label{classAriadne_1_1EvolverInterface}\index{EvolverInterface$<$ SYS, ES, TRM $>$@{EvolverInterface$<$ SYS, ES, TRM $>$}}
+
+
+{\ttfamily \#include $<$evolver\+\_\+interface.\+hpp$>$}
+
+
+
+\doxysubsubsection{Description}
+\subsubsection*{template$<$class SYS, class ES, class TRM$>$\newline
+class Ariadne\+::\+Evolver\+Interface$<$ SYS, ES, TRM $>$}
+Interface for evolving a dynamic system. 
+
+\begin{DoxySeeAlso}{See also}
+\doxylink{classAriadne_1_1HybridEvolverInterface}{Hybrid\+Evolver\+Interface} 
+
+\doxylink{classAriadne_1_1ReachabilityAnalyserInterface}{Reachability\+Analyser\+Interface} 
+\end{DoxySeeAlso}
+\doxysubsubsubsection*{Public Types}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1EvolverInterface_a95af9278082cc58957aa0fb8ef7d3ebb}\label{classAriadne_1_1EvolverInterface_a95af9278082cc58957aa0fb8ef7d3ebb} 
+typedef SYS {\bfseries System\+Type}
+\begin{DoxyCompactList}\small\item\em The type of system the evolver can compute the behaviour of. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1EvolverInterface_a8f6e80667df93252f5afdc6ee1dc48a9}\label{classAriadne_1_1EvolverInterface_a8f6e80667df93252f5afdc6ee1dc48a9} 
+typedef System\+Type\+::\+Time\+Type {\bfseries Time\+Type}
+\begin{DoxyCompactList}\small\item\em The type used to represent the evolution time of the system. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1EvolverInterface_afaf8d55b202cc690926f7f660b302e96}\label{classAriadne_1_1EvolverInterface_afaf8d55b202cc690926f7f660b302e96} 
+typedef TRM {\bfseries Termination\+Type}
+\begin{DoxyCompactList}\small\item\em The type used to represent conditions under which system evolution may be terminated. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1EvolverInterface_a3eee62b15617b80a9cd7a2f4ba905cff}\label{classAriadne_1_1EvolverInterface_a3eee62b15617b80a9cd7a2f4ba905cff} 
+typedef ES {\bfseries Enclosure\+Type}
+\begin{DoxyCompactList}\small\item\em The type of set used to enclose the flow tubes. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1EvolverInterface_ab1819f78fd741cd36a6d1fa8aa281577}\label{classAriadne_1_1EvolverInterface_ab1819f78fd741cd36a6d1fa8aa281577} 
+typedef \mbox{\hyperlink{classAriadne_1_1ListSet}{List\+Set}}$<$ \mbox{\hyperlink{classAriadne_1_1EvolverInterface_a3eee62b15617b80a9cd7a2f4ba905cff}{Enclosure\+Type}} $>$ {\bfseries Enclosure\+List\+Type}
+\begin{DoxyCompactList}\small\item\em The type of a list of enclosure sets. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1EvolverInterface_a0e2f7b02d0498f9f5931ce16f7b5f90f}\label{classAriadne_1_1EvolverInterface_a0e2f7b02d0498f9f5931ce16f7b5f90f} 
+virtual {\bfseries \texorpdfstring{$\sim$}{\string~}\+Evolver\+Interface} ()=default
+\begin{DoxyCompactList}\small\item\em Virtual destructor. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1EvolverInterface_a59d501e98bfa01fa17fc61ab549206d5}\label{classAriadne_1_1EvolverInterface_a59d501e98bfa01fa17fc61ab549206d5} 
+virtual \mbox{\hyperlink{classAriadne_1_1EvolverInterface}{Evolver\+Interface}}$<$ \mbox{\hyperlink{classAriadne_1_1EvolverInterface_a95af9278082cc58957aa0fb8ef7d3ebb}{System\+Type}}, \mbox{\hyperlink{classAriadne_1_1EvolverInterface_a3eee62b15617b80a9cd7a2f4ba905cff}{Enclosure\+Type}}, \mbox{\hyperlink{classAriadne_1_1EvolverInterface_afaf8d55b202cc690926f7f660b302e96}{Termination\+Type}} $>$ \texorpdfstring{$\ast$}{*} {\bfseries clone} () const =0
+\begin{DoxyCompactList}\small\item\em Cloning operator. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1EvolverInterface_ae75d07134dc6931ab5604d48435ae145}\label{classAriadne_1_1EvolverInterface_ae75d07134dc6931ab5604d48435ae145} 
+virtual const \mbox{\hyperlink{classAriadne_1_1EvolverInterface_a95af9278082cc58957aa0fb8ef7d3ebb}{System\+Type}} \& {\bfseries system} () const =0
+\begin{DoxyCompactList}\small\item\em Gets the system associated with the evolver. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\begin{Indent}\textbf{ Main evolution functions.}\par
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1EvolverInterface_a204fd5290d7549e97747b1a044ed00cd}\label{classAriadne_1_1EvolverInterface_a204fd5290d7549e97747b1a044ed00cd} 
+virtual \mbox{\hyperlink{classAriadne_1_1Orbit}{Orbit}}$<$ \mbox{\hyperlink{classAriadne_1_1EvolverInterface_a3eee62b15617b80a9cd7a2f4ba905cff}{Enclosure\+Type}} $>$ {\bfseries orbit} (const \mbox{\hyperlink{classAriadne_1_1EvolverInterface_a3eee62b15617b80a9cd7a2f4ba905cff}{Enclosure\+Type}} \&initial\+\_\+set, const \mbox{\hyperlink{classAriadne_1_1EvolverInterface_afaf8d55b202cc690926f7f660b302e96}{Termination\+Type}} \&time, \mbox{\hyperlink{group__DynamicsModule_gafd43cf1b14dd42f7ac8ca23dcc3837b3}{Semantics}} semantics) const =0
+\begin{DoxyCompactList}\small\item\em Compute an approximation to the evolved set under the given semantics. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\end{Indent}
+
+
+The documentation for this class was generated from the following file\+:\begin{DoxyCompactItemize}
+\item 
+source/dynamics/\mbox{\hyperlink{evolver__interface_8hpp}{evolver\+\_\+interface.\+hpp}}\end{DoxyCompactItemize}

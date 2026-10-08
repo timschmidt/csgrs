@@ -1,0 +1,22 @@
+{
+  "hypercurve": [
+    "benches/comparative.rs",
+    "benches/editing.rs",
+    "src/bezier_region.rs",
+    "tests/hypercurve_adversarial_polygons.rs",
+    "tests/hypercurve_analytic_parallel_region.rs",
+    "tests/hypercurve_arc_bezier.rs",
+    "tests/hypercurve_curve.rs",
+    "tests/hypercurve_curve_region_boolean.rs",
+    "tests/hypercurve_curve_region_promotion.rs",
+    "tests/hypercurve_curve_region_stroke.rs",
+    "tests/hypercurve_svg.rs",
+    "src/bezier_offset.rs"
+  ],
+  "hyperbrep": [
+    "src/builder.rs"
+  ],
+  "csgrs": [
+    "examples/readme_renders.rs"
+  ]
+}

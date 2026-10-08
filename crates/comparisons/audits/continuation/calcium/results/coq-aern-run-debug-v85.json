@@ -1,0 +1,14 @@
+{
+  "tag": "coq-aern-run-debug-v85",
+  "started": "2026-09-12T05:36:20.818Z",
+  "finished": "2026-09-12T05:36:20.870Z",
+  "elapsedSeconds": 0.049473489999999995,
+  "cwd": "/home/tim/Documents/GitHub/workspace",
+  "command": "timeout",
+  "args": [
+    "300s",
+    "/tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/debug/coq-aern-hyper-v85"
+  ],
+  "code": 0,
+  "signal": null
+}

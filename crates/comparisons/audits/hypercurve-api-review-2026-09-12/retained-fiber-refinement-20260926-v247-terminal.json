@@ -1,0 +1,468 @@
+{
+  "source_manifest": "retained-fiber-refinement-20260926-v247-sources.json",
+  "source_directory": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/source-archives/retained-fiber-refinement-20260926-v247",
+  "cases": [
+    {
+      "binary": "retained-fiber-refinement-20260926-v247-hypersolve",
+      "name": "algebraic_fiber::tests::selected_fiber_refines_nonrational_coefficients_before_subdividing_clusters",
+      "returncode": 0,
+      "log": "retained-fiber-refinement-20260926-v247-case-000.log",
+      "elapsed_seconds": 0.015631365939043462
+    },
+    {
+      "binary": "retained-fiber-refinement-20260926-v247-hypersolve",
+      "name": "algebraic_fiber::tests::selected_fiber_accepts_exact_real_base_coefficients",
+      "returncode": 0,
+      "log": "retained-fiber-refinement-20260926-v247-case-001.log",
+      "elapsed_seconds": 0.0035227079642936587
+    },
+    {
+      "binary": "retained-fiber-refinement-20260926-v247-hypersolve",
+      "name": "algebraic_fiber::refinement::tests::refiner_replays_point_witnesses_and_rejects_stale_or_ambiguous_ownership",
+      "returncode": 0,
+      "log": "retained-fiber-refinement-20260926-v247-case-002.log",
+      "elapsed_seconds": 0.003557946067303419
+    },
+    {
+      "binary": "retained-fiber-refinement-20260926-v247-hypersolve",
+      "name": "algebraic_fiber::refinement::tests::repeated_root_refinement_reuses_one_sequence_across_roots_and_requests",
+      "returncode": 0,
+      "log": "retained-fiber-refinement-20260926-v247-case-003.log",
+      "elapsed_seconds": 0.015631046961061656
+    },
+    {
+      "binary": "retained-fiber-refinement-20260926-v247-hypersolve",
+      "name": "algebraic_fiber::refinement::tests::simple_refinement_preserves_exact_base_coefficients_without_sturm",
+      "returncode": 0,
+      "log": "retained-fiber-refinement-20260926-v247-case-004.log",
+      "elapsed_seconds": 0.0035058490466326475
+    },
+    {
+      "binary": "retained-fiber-refinement-20260926-v247-hypersolve",
+      "name": "algebraic_fiber::subresultant::tests::fiber_determinants_keep_zero_divisors_without_scalar_units",
+      "returncode": 0,
+      "log": "retained-fiber-refinement-20260926-v247-case-005.log",
+      "elapsed_seconds": 0.003505739034153521
+    },
+    {
+      "binary": "retained-fiber-refinement-20260926-v247-hypersolve",
+      "name": "algebraic_fiber::subresultant::tests::fiber_determinants_preserve_all_row_and_column_permutation_signs",
+      "returncode": 0,
+      "log": "retained-fiber-refinement-20260926-v247-case-006.log",
+      "elapsed_seconds": 0.00350061000790447
+    },
+    {
+      "binary": "retained-fiber-refinement-20260926-v247-hypersolve",
+      "name": "algebraic_fiber::subresultant::tests::subresultants_preserve_one_scale_across_all_target_coefficients",
+      "returncode": 0,
+      "log": "retained-fiber-refinement-20260926-v247-case-007.log",
+      "elapsed_seconds": 0.003517978941090405
+    },
+    {
+      "binary": "retained-fiber-refinement-20260926-v247-hypersolve",
+      "name": "algebraic_fiber::subresultant::tests::subresultants_reduce_source_conjugates_without_global_projection",
+      "returncode": 0,
+      "log": "retained-fiber-refinement-20260926-v247-case-008.log",
+      "elapsed_seconds": 0.003533686976879835
+    },
+    {
+      "binary": "retained-fiber-refinement-20260926-v247-hypersolve",
+      "name": "algebraic_fiber::tests::certified_nonzero_signs_distinguish_small_values_from_selected_zeros",
+      "returncode": 0,
+      "log": "retained-fiber-refinement-20260926-v247-case-009.log",
+      "elapsed_seconds": 0.003506189095787704
+    },
+    {
+      "binary": "retained-fiber-refinement-20260926-v247-hypersolve",
+      "name": "algebraic_fiber::tests::certified_nonzero_signs_share_the_refined_degree_41_endpoint",
+      "returncode": 0,
+      "log": "retained-fiber-refinement-20260926-v247-case-010.log",
+      "elapsed_seconds": 0.8648213290143758
+    },
+    {
+      "binary": "retained-fiber-refinement-20260926-v247-hypersolve",
+      "name": "algebraic_fiber::tests::diagonal_fiber_deflation_removes_the_exact_local_multiplicity",
+      "returncode": 0,
+      "log": "retained-fiber-refinement-20260926-v247-case-011.log",
+      "elapsed_seconds": 0.0036857168888673186
+    },
+    {
+      "binary": "retained-fiber-refinement-20260926-v247-hypersolve",
+      "name": "algebraic_fiber::tests::local_constant_signs_keep_the_unresolved_native_fact_fallback",
+      "returncode": 0,
+      "log": "retained-fiber-refinement-20260926-v247-case-012.log",
+      "elapsed_seconds": 0.003533527022227645
+    },
+    {
+      "binary": "retained-fiber-refinement-20260926-v247-hypersolve",
+      "name": "algebraic_fiber::tests::local_constant_signs_reuse_native_proofs_without_field_cache_entries",
+      "returncode": 0,
+      "log": "retained-fiber-refinement-20260926-v247-case-013.log",
+      "elapsed_seconds": 0.0035460860235616565
+    },
+    {
+      "binary": "retained-fiber-refinement-20260926-v247-hypersolve",
+      "name": "algebraic_fiber::tests::local_division_preserves_arbitrary_exact_base_coefficients",
+      "returncode": 0,
+      "log": "retained-fiber-refinement-20260926-v247-case-014.log",
+      "elapsed_seconds": 0.0035348470555618405
+    },
+    {
+      "binary": "retained-fiber-refinement-20260926-v247-hypersolve",
+      "name": "algebraic_fiber::tests::local_division_preserves_wide_exact_quotients_beyond_modular_reconstruction",
+      "returncode": 0,
+      "log": "retained-fiber-refinement-20260926-v247-case-015.log",
+      "elapsed_seconds": 0.16389131406322122
+    },
+    {
+      "binary": "retained-fiber-refinement-20260926-v247-hypersolve",
+      "name": "algebraic_fiber::tests::local_division_removes_only_foreign_factors_and_reuses_older_values",
+      "returncode": 0,
+      "log": "retained-fiber-refinement-20260926-v247-case-016.log",
+      "elapsed_seconds": 0.003503820043988526
+    },
+    {
+      "binary": "retained-fiber-refinement-20260926-v247-hypersolve",
+      "name": "algebraic_fiber::tests::local_exact_division_preserves_skipped_degrees_and_reduced_coefficients",
+      "returncode": 0,
+      "log": "retained-fiber-refinement-20260926-v247-case-017.log",
+      "elapsed_seconds": 0.003511199029162526
+    },
+    {
+      "binary": "retained-fiber-refinement-20260926-v247-hypersolve",
+      "name": "algebraic_fiber::tests::local_fiber_count_preserves_half_open_selected_root_ownership",
+      "returncode": 0,
+      "log": "retained-fiber-refinement-20260926-v247-case-018.log",
+      "elapsed_seconds": 0.0035541559336706996
+    },
+    {
+      "binary": "retained-fiber-refinement-20260926-v247-hypersolve",
+      "name": "algebraic_fiber::tests::local_fiber_count_preserves_uncached_singleton_identities",
+      "returncode": 0,
+      "log": "retained-fiber-refinement-20260926-v247-case-019.log",
+      "elapsed_seconds": 0.0034932600101456046
+    },
+    {
+      "binary": "retained-fiber-refinement-20260926-v247-hypersolve",
+      "name": "algebraic_fiber::tests::local_fiber_export_moves_ragged_coefficients_in_both_orientations",
+      "returncode": 0,
+      "log": "retained-fiber-refinement-20260926-v247-case-020.log",
+      "elapsed_seconds": 0.003509389003738761
+    },
+    {
+      "binary": "retained-fiber-refinement-20260926-v247-hypersolve",
+      "name": "algebraic_fiber::tests::local_field_gcd_handles_specialized_degree_drops_in_both_orientations",
+      "returncode": 0,
+      "log": "retained-fiber-refinement-20260926-v247-case-021.log",
+      "elapsed_seconds": 0.003539936034940183
+    },
+    {
+      "binary": "retained-fiber-refinement-20260926-v247-hypersolve",
+      "name": "algebraic_fiber::tests::local_field_replays_stale_root_payloads_before_constant_fiber_shortcuts",
+      "returncode": 0,
+      "log": "retained-fiber-refinement-20260926-v247-case-022.log",
+      "elapsed_seconds": 0.0035409469855949283
+    },
+    {
+      "binary": "retained-fiber-refinement-20260926-v247-hypersolve",
+      "name": "algebraic_fiber::tests::local_field_sturm_batches_candidate_intervals_without_changing_reports",
+      "returncode": 0,
+      "log": "retained-fiber-refinement-20260926-v247-case-023.log",
+      "elapsed_seconds": 0.003544656909070909
+    },
+    {
+      "binary": "retained-fiber-refinement-20260926-v247-hypersolve",
+      "name": "algebraic_fiber::tests::local_field_sturm_batches_preserve_endpoint_reports_in_both_orientations",
+      "returncode": 0,
+      "log": "retained-fiber-refinement-20260926-v247-case-024.log",
+      "elapsed_seconds": 0.003519408986903727
+    },
+    {
+      "binary": "retained-fiber-refinement-20260926-v247-hypersolve",
+      "name": "algebraic_fiber::tests::local_field_sturm_counts_even_multiplicity_in_both_orientations",
+      "returncode": 0,
+      "log": "retained-fiber-refinement-20260926-v247-case-025.log",
+      "elapsed_seconds": 0.0035127190640196204
+    },
+    {
+      "binary": "retained-fiber-refinement-20260926-v247-hypersolve",
+      "name": "algebraic_fiber::tests::local_field_sturm_handles_a_reducible_defining_polynomial",
+      "returncode": 0,
+      "log": "retained-fiber-refinement-20260926-v247-case-026.log",
+      "elapsed_seconds": 0.0034803010057657957
+    },
+    {
+      "binary": "retained-fiber-refinement-20260926-v247-hypersolve",
+      "name": "algebraic_fiber::tests::local_field_sturm_reports_an_identically_zero_specialization",
+      "returncode": 0,
+      "log": "retained-fiber-refinement-20260926-v247-case-027.log",
+      "elapsed_seconds": 0.003502189996652305
+    },
+    {
+      "binary": "retained-fiber-refinement-20260926-v247-hypersolve",
+      "name": "algebraic_fiber::tests::local_field_sturm_reports_rational_endpoint_roots_and_input_boundaries",
+      "returncode": 0,
+      "log": "retained-fiber-refinement-20260926-v247-case-028.log",
+      "elapsed_seconds": 0.003508109017275274
+    },
+    {
+      "binary": "retained-fiber-refinement-20260926-v247-hypersolve",
+      "name": "algebraic_fiber::tests::local_field_zero_test_recognizes_an_uncached_singleton",
+      "returncode": 0,
+      "log": "retained-fiber-refinement-20260926-v247-case-029.log",
+      "elapsed_seconds": 0.0037105849478393793
+    },
+    {
+      "binary": "retained-fiber-refinement-20260926-v247-hypersolve",
+      "name": "algebraic_fiber::tests::local_image_convolution_preserves_sparse_zero_slots",
+      "returncode": 0,
+      "log": "retained-fiber-refinement-20260926-v247-case-030.log",
+      "elapsed_seconds": 0.00352280808147043
+    },
+    {
+      "binary": "retained-fiber-refinement-20260926-v247-hypersolve",
+      "name": "algebraic_fiber::tests::local_refinement_preserves_exact_point_payloads",
+      "returncode": 0,
+      "log": "retained-fiber-refinement-20260926-v247-case-031.log",
+      "elapsed_seconds": 0.0035203080624341965
+    },
+    {
+      "binary": "retained-fiber-refinement-20260926-v247-hypersolve",
+      "name": "algebraic_fiber::tests::local_refinement_preserves_half_open_selected_root_ownership",
+      "returncode": 0,
+      "log": "retained-fiber-refinement-20260926-v247-case-032.log",
+      "elapsed_seconds": 0.0034877200378105044
+    },
+    {
+      "binary": "retained-fiber-refinement-20260926-v247-hypersolve",
+      "name": "algebraic_fiber::tests::local_sign_refinement_retains_nested_quadratic_root_certificates",
+      "returncode": 0,
+      "log": "retained-fiber-refinement-20260926-v247-case-033.log",
+      "elapsed_seconds": 0.0035467169946059585
+    },
+    {
+      "binary": "retained-fiber-refinement-20260926-v247-hypersolve",
+      "name": "algebraic_fiber::tests::local_small_determinant_preserves_row_major_orientation",
+      "returncode": 0,
+      "log": "retained-fiber-refinement-20260926-v247-case-034.log",
+      "elapsed_seconds": 0.003541837097145617
+    },
+    {
+      "binary": "retained-fiber-refinement-20260926-v247-hypersolve",
+      "name": "algebraic_fiber::tests::polynomial_fiber_image_preserves_a_degree_135_selected_tower",
+      "returncode": 0,
+      "log": "retained-fiber-refinement-20260926-v247-case-035.log",
+      "elapsed_seconds": 0.007639545947313309
+    },
+    {
+      "binary": "retained-fiber-refinement-20260926-v247-hypersolve",
+      "name": "algebraic_fiber::tests::polynomial_fiber_image_projects_a_nonsquare_radical_relation_directly",
+      "returncode": 0,
+      "log": "retained-fiber-refinement-20260926-v247-case-036.log",
+      "elapsed_seconds": 0.003526827087625861
+    },
+    {
+      "binary": "retained-fiber-refinement-20260926-v247-hypersolve",
+      "name": "algebraic_fiber::tests::polynomial_fiber_image_retains_base_parameter_axis",
+      "returncode": 0,
+      "log": "retained-fiber-refinement-20260926-v247-case-037.log",
+      "elapsed_seconds": 0.0035123879788443446
+    },
+    {
+      "binary": "retained-fiber-refinement-20260926-v247-hypersolve",
+      "name": "algebraic_fiber::tests::polynomial_fiber_image_saturates_a_fourfold_multicoefficient_component",
+      "returncode": 0,
+      "log": "retained-fiber-refinement-20260926-v247-case-038.log",
+      "elapsed_seconds": 0.03170666308142245
+    },
+    {
+      "binary": "retained-fiber-refinement-20260926-v247-hypersolve",
+      "name": "algebraic_fiber::tests::polynomial_fiber_image_saturates_an_identically_zero_source_conjugate",
+      "returncode": 0,
+      "log": "retained-fiber-refinement-20260926-v247-case-039.log",
+      "elapsed_seconds": 0.003542996011674404
+    },
+    {
+      "binary": "retained-fiber-refinement-20260926-v247-hypersolve",
+      "name": "algebraic_fiber::tests::polynomial_fiber_image_trims_only_strictly_exact_zero_degree",
+      "returncode": 0,
+      "log": "retained-fiber-refinement-20260926-v247-case-040.log",
+      "elapsed_seconds": 0.0035205880412831903
+    },
+    {
+      "binary": "retained-fiber-refinement-20260926-v247-hypersolve",
+      "name": "algebraic_fiber::tests::primitive_local_image_content_accepts_policy_certified_zero_remainders",
+      "returncode": 0,
+      "log": "retained-fiber-refinement-20260926-v247-case-041.log",
+      "elapsed_seconds": 0.0035205779131501913
+    },
+    {
+      "binary": "retained-fiber-refinement-20260926-v247-hypersolve",
+      "name": "algebraic_fiber::tests::primitive_local_image_content_rejects_unsupported_zero_remainders",
+      "returncode": 0,
+      "log": "retained-fiber-refinement-20260926-v247-case-042.log",
+      "elapsed_seconds": 0.0035109790042042732
+    },
+    {
+      "binary": "retained-fiber-refinement-20260926-v247-hypersolve",
+      "name": "algebraic_fiber::tests::quotient_ring_fiber_projection_obeys_an_explicit_degree_budget",
+      "returncode": 0,
+      "log": "retained-fiber-refinement-20260926-v247-case-043.log",
+      "elapsed_seconds": 0.0035366370575502515
+    },
+    {
+      "binary": "retained-fiber-refinement-20260926-v247-hypersolve",
+      "name": "algebraic_fiber::tests::quotient_ring_fiber_projection_retains_the_complete_norm_roots",
+      "returncode": 0,
+      "log": "retained-fiber-refinement-20260926-v247-case-044.log",
+      "elapsed_seconds": 0.0034768610494211316
+    },
+    {
+      "binary": "retained-fiber-refinement-20260926-v247-hypersolve",
+      "name": "algebraic_fiber::tests::quotient_ring_fiber_projection_shares_local_field_admission_in_both_orientations",
+      "returncode": 0,
+      "log": "retained-fiber-refinement-20260926-v247-case-045.log",
+      "elapsed_seconds": 0.0035150490002706647
+    },
+    {
+      "binary": "retained-fiber-refinement-20260926-v247-hypersolve",
+      "name": "algebraic_fiber::tests::rational_fiber_reduction_preserves_degree_fifteen_correlation",
+      "returncode": 0,
+      "log": "retained-fiber-refinement-20260926-v247-case-046.log",
+      "elapsed_seconds": 0.003562715952284634
+    },
+    {
+      "binary": "retained-fiber-refinement-20260926-v247-hypersolve",
+      "name": "algebraic_fiber::tests::rational_fiber_reduction_preserves_ragged_zero_and_dependent_residuals",
+      "returncode": 0,
+      "log": "retained-fiber-refinement-20260926-v247-case-047.log",
+      "elapsed_seconds": 0.0035295779816806316
+    },
+    {
+      "binary": "retained-fiber-refinement-20260926-v247-hypersolve",
+      "name": "algebraic_fiber::tests::rational_sturm_preserves_degree_changes_and_general_exact_coefficients",
+      "returncode": 0,
+      "log": "retained-fiber-refinement-20260926-v247-case-048.log",
+      "elapsed_seconds": 0.003517918987199664
+    },
+    {
+      "binary": "retained-fiber-refinement-20260926-v247-hypersolve",
+      "name": "algebraic_fiber::tests::rational_sturm_preserves_selected_multiplicity_and_negative_scales",
+      "returncode": 0,
+      "log": "retained-fiber-refinement-20260926-v247-case-049.log",
+      "elapsed_seconds": 0.003531366935931146
+    },
+    {
+      "binary": "retained-fiber-refinement-20260926-v247-hypersolve",
+      "name": "algebraic_fiber::tests::rational_subresultants_preserve_common_roots_across_degree_gaps",
+      "returncode": 0,
+      "log": "retained-fiber-refinement-20260926-v247-case-050.log",
+      "elapsed_seconds": 0.0035115389619022608
+    },
+    {
+      "binary": "retained-fiber-refinement-20260926-v247-hypersolve",
+      "name": "algebraic_fiber::tests::rational_subresultants_preserve_selected_degree_changes_and_exact_coefficients",
+      "returncode": 0,
+      "log": "retained-fiber-refinement-20260926-v247-case-051.log",
+      "elapsed_seconds": 0.003555156057700515
+    },
+    {
+      "binary": "retained-fiber-refinement-20260926-v247-hypersolve",
+      "name": "algebraic_fiber::tests::rational_subresultants_replay_degree_41_fillet_contact_in_both_orientations",
+      "returncode": 0,
+      "log": "retained-fiber-refinement-20260926-v247-case-052.log",
+      "elapsed_seconds": 2.1163902150001377
+    },
+    {
+      "binary": "retained-fiber-refinement-20260926-v247-hypersolve",
+      "name": "algebraic_fiber::tests::selected_algebraic_fiber_isolation_falls_back_for_repeated_irrational_root",
+      "returncode": 0,
+      "log": "retained-fiber-refinement-20260926-v247-case-053.log",
+      "elapsed_seconds": 0.003529447945766151
+    },
+    {
+      "binary": "retained-fiber-refinement-20260926-v247-hypersolve",
+      "name": "algebraic_fiber::tests::selected_algebraic_fiber_isolation_uses_division_free_bernstein_path",
+      "returncode": 0,
+      "log": "retained-fiber-refinement-20260926-v247-case-054.log",
+      "elapsed_seconds": 0.003564914921298623
+    },
+    {
+      "binary": "retained-fiber-refinement-20260926-v247-hypersolve",
+      "name": "algebraic_fiber::tests::selected_fiber_fallback_partitions_at_a_deflated_rational_root",
+      "returncode": 0,
+      "log": "retained-fiber-refinement-20260926-v247-case-055.log",
+      "elapsed_seconds": 0.003521478036418557
+    },
+    {
+      "binary": "retained-fiber-refinement-20260926-v247-hypersolve",
+      "name": "algebraic_fiber::tests::selected_fiber_repeated_and_rational_roots_complete",
+      "returncode": 0,
+      "log": "retained-fiber-refinement-20260926-v247-case-056.log",
+      "elapsed_seconds": 0.015660993987694383
+    },
+    {
+      "binary": "retained-fiber-refinement-20260926-v247-hypersolve",
+      "name": "algebraic_fiber::tests::sturm_rows_preserve_variations_and_repeated_roots",
+      "returncode": 0,
+      "log": "retained-fiber-refinement-20260926-v247-case-057.log",
+      "elapsed_seconds": 0.0035205880412831903
+    },
+    {
+      "binary": "retained-fiber-refinement-20260926-v247-hypercurve_curve_region_promotion",
+      "name": "strict_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions",
+      "returncode": 124,
+      "log": "retained-fiber-refinement-20260926-v247-case-058.log",
+      "elapsed_seconds": 240.0212140980875
+    }
+  ],
+  "builds": [
+    {
+      "crate": "hypersolve",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "test",
+        "--lib",
+        "--release",
+        "--all-features",
+        "--no-run",
+        "--message-format=json",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "log": "retained-fiber-refinement-20260926-v247-hypersolve-build.log",
+      "elapsed_seconds": 53.53519810701255,
+      "binary": {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-fiber-refinement-20260926-v247-hypersolve",
+        "sha256": "173e52b3cbaa4c35b189dcf36a29f3207f170310583dea9e85506131c73c0b9e"
+      }
+    },
+    {
+      "crate": "hypercurve",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "test",
+        "--test",
+        "hypercurve_curve_region_promotion",
+        "--release",
+        "--all-features",
+        "--no-run",
+        "--message-format=json",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "log": "retained-fiber-refinement-20260926-v247-hypercurve-build.log",
+      "elapsed_seconds": 111.01406375295483,
+      "binary": {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-fiber-refinement-20260926-v247-hypercurve_curve_region_promotion",
+        "sha256": "73ddcba298a2b1e305b3567b4802eff93e04ae54bac92f1f701954df156913dc"
+      }
+    }
+  ],
+  "all_processes_reaped": true,
+  "failure": "case failure",
+  "passed": 58,
+  "qualification_complete": false
+}

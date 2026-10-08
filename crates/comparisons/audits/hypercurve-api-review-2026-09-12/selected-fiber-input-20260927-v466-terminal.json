@@ -1,0 +1,58 @@
+{
+  "diagnostic_only": true,
+  "source_manifest": "selected-fiber-input-20260927-v466-sources.json",
+  "source_directory": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/source-archives/selected-fiber-input-20260927-v466",
+  "cases": [
+    {
+      "binary": "selected-fiber-input-20260927-v466-hypercurve_curve_region_promotion",
+      "name": "strict_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions",
+      "returncode": 124,
+      "log": "selected-fiber-input-20260927-v466-case-000.log",
+      "elapsed_seconds": 240.0309389049653
+    }
+  ],
+  "builds": [
+    {
+      "crate": "hypercurve",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "test",
+        "--test",
+        "hypercurve_curve_region_promotion",
+        "--release",
+        "--all-features",
+        "--no-run",
+        "--message-format=json",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "log": "selected-fiber-input-20260927-v466-hypercurve_curve_region_promotion-build.log",
+      "elapsed_seconds": 112.17501968611032,
+      "binary": {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/selected-fiber-input-20260927-v466-hypercurve_curve_region_promotion",
+        "sha256": "0144cb572464f0c4e5fa7b36b2dfb153d119a6ed9c8d6e410c679cc21a609cfe"
+      }
+    }
+  ],
+  "trial": {
+    "hyperreal/src/real/arithmetic/quadratic_tower_sign.rs": "11d3038fb7fb6d6e2a6d729ce455c323f8a4f39abf0b396e19d2bbd02c533f2b",
+    "hypersolve/src/algebraic_fiber.rs": "698edaf9e4557ca37a02ce3493cf2c478561af46f00aee0d5a47217136d8d462"
+  },
+  "all_processes_reaped": true,
+  "checks": [],
+  "qualification_scope": "Exact common-fiber input capture at the later local-field GCD; a timed diagnostic stop is not a passing test",
+  "expected_cases": {
+    "hypercurve_curve_region_promotion": [
+      "strict_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions"
+    ]
+  },
+  "capture_complete": true,
+  "qualification_complete": false,
+  "captures": [
+    {
+      "file": "query-000.json",
+      "sha256": "93f8cd5bca8627c62f971af74f7ce01c9a6c6b8ecd84b251e830975b1cc85a63"
+    }
+  ]
+}

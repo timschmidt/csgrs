@@ -1,0 +1,40 @@
+{
+  "status": "committed; qualified against the documented baseline",
+  "goal_status": "active",
+  "previous_commit": "678414f0c2e2f18987f5fe682c3fafa4cdd27930",
+  "commit": "41c645b169dbcf420cd1800e436fbf5468b4ed81",
+  "targets": 49,
+  "passed": 2196,
+  "passed_by_repo": {
+    "hypercurve": 1964,
+    "hyperbrep": 232
+  },
+  "known_failed": [
+    "approximate_512_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions",
+    "non_ph_bezier_pair_projective_fillet_retains_algebraic_extensions",
+    "nonconvex_algebraic_chord_expansion_is_exact_and_local_collapse_is_explicit",
+    "strict_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions",
+    "unified_mixed_line_arc_erosion_splits_after_a_curved_neck_collapse"
+  ],
+  "new_failures": [],
+  "ignored": 9,
+  "expensive_previously_unqualified_exclusions": 8,
+  "timeouts": 0,
+  "focused_passed": 33,
+  "builds_and_checks": {
+    "-check": 0,
+    "-test-build": 0,
+    "-hyperbrep-check": 0,
+    "-hyperbrep-test-build": 0
+  },
+  "formatting_and_whitespace": "passed on unchanged qualification sources",
+  "source_verification": "constant-image-trim-source-verification.json",
+  "normal_library_sha256": "e2d6f1301f07dcc321496c3be77c9da3a6629831bcc1d4fe65ece4c0c0879729",
+  "independent_matrix": "constant-image-trim-matrix.json",
+  "independent_regression_matrix": "constant-image-trim-regression-matrix.json",
+  "degeneracy_probe": "constant-image-trim-degenerate-probe.json",
+  "initial_fixture_failures": "constant-image-trim-initial-tests.log",
+  "evidence_audit": "constant-image-trim-evidence-audit.md",
+  "performance_claim": null,
+  "remaining": "Selected-circle/parallel common curve-pair dispatch, five promotion failures, eight expensive unqualified cases, normalized public-region construction and broader architecture work remain open."
+}

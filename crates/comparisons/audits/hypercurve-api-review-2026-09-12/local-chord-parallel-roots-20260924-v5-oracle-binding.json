@@ -1,0 +1,6 @@
+{
+  "baseline": "local-chord-parallel-roots-20260924-v4",
+  "both_new_regressions_byte_identical": true,
+  "existing_endpoint_fillet_assertions_unchanged": true,
+  "failure_trace_only": true
+}

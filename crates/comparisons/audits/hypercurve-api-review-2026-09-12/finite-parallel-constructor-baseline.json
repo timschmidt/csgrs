@@ -1,0 +1,21 @@
+{
+  "returncode": 101,
+  "elapsed_seconds": 0.0034683730045799166,
+  "command": [
+    "rustc",
+    "--edition=2024",
+    "-O",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-parallel-constructor-public.rs",
+    "--extern",
+    "hypercurve=/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-region-self-domain-libraries/libhypercurve-2c7ff6f3fbe07653.rlib",
+    "-L",
+    "dependency=/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps",
+    "-o",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-parallel-constructor-baseline"
+  ],
+  "source": "finite-parallel-constructor-public.rs",
+  "source_sha256": "ec4dc34c4eed9daf6dadb9bfe6bc353f6577fc620c7dec79333f1a0b12c74a4d",
+  "normal_library_sha256": "cd5d6b626821a5b86802f09cda7c6bbae3aad4c370057db70dc65aaef0ecfcd3",
+  "executable_sha256": "d1e409d94e911ab7f4422c0b29fd4ae519db4972d684b3efcd99de49b5770ef7",
+  "log": "finite-parallel-constructor-baseline.log"
+}

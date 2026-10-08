@@ -1,0 +1,120 @@
+{
+  "normal_production_checks": true,
+  "source_manifest": "overlap-orientation-20260928-v709-sources.json",
+  "source_directory": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/source-archives/overlap-orientation-20260928-v709",
+  "checks": [
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "clippy",
+        "--all-targets",
+        "--all-features",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "returncode": 0,
+      "log": "overlap-orientation-20260928-v709-hypercurve-clippy-all-features.log",
+      "elapsed_seconds": 20.945382375037298,
+      "label": "hypercurve-clippy-all-features"
+    },
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "clippy",
+        "--all-targets",
+        "--no-default-features",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "returncode": 0,
+      "log": "overlap-orientation-20260928-v709-hypercurve-clippy-no-default.log",
+      "elapsed_seconds": 20.2441130860243,
+      "label": "hypercurve-clippy-no-default"
+    },
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustfmt",
+        "--edition",
+        "2024",
+        "--config",
+        "skip_children=true",
+        "--check",
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/build-workspace-20260925/hypercurve/src/bezier_offset.rs",
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/build-workspace-20260925/hypercurve/src/bezier_retained_overlap.rs",
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/build-workspace-20260925/hypercurve/src/curve_intersection.rs",
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/build-workspace-20260925/hypercurve/src/curve_region_boolean.rs",
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/build-workspace-20260925/hypercurve/src/curve_support_intersection.rs",
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/build-workspace-20260925/hypercurve/src/lib.rs",
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/build-workspace-20260925/hypercurve/src/rational_bezier_general.rs",
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/build-workspace-20260925/hypercurve/tests/hypercurve_bezier_arrangement.rs",
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/build-workspace-20260925/hypercurve/tests/hypercurve_bezier_fit_offset.rs",
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/build-workspace-20260925/hypercurve/tests/hypercurve_curve.rs",
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/build-workspace-20260925/hypercurve/tests/hypercurve_curve_intersection.rs",
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/build-workspace-20260925/hypercurve/tests/hypercurve_rational_bezier.rs"
+      ],
+      "returncode": 0,
+      "log": "overlap-orientation-20260928-v709-format.log",
+      "elapsed_seconds": 2.767803812865168,
+      "label": "format"
+    },
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "check",
+        "--manifest-path",
+        "fuzz/Cargo.toml",
+        "--bin",
+        "bezier_arrangement",
+        "--bin",
+        "bezier_region",
+        "--bin",
+        "retained_import",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "log": "overlap-orientation-20260928-v709-fuzz-check.log",
+      "elapsed_seconds": 11.229792496887967,
+      "label": "fuzz-check"
+    },
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "doc",
+        "--no-deps",
+        "--all-features",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "log": "overlap-orientation-20260928-v709-hypercurve-documentation.log",
+      "elapsed_seconds": 10.528295763069764,
+      "label": "hypercurve-documentation"
+    },
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "clippy",
+        "--all-targets",
+        "--all-features",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "returncode": 0,
+      "log": "overlap-orientation-20260928-v709-hyperbrep-clippy.log",
+      "elapsed_seconds": 15.4355513821356,
+      "label": "hyperbrep-clippy"
+    }
+  ],
+  "all_processes_reaped": true,
+  "qualification_complete": true
+}

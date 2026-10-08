@@ -1,0 +1,15 @@
+{
+  "tag": "prototype-statistics-inventory-qualified",
+  "started": "2026-09-11T01:56:01.879Z",
+  "finished": "2026-09-11T01:56:02.248Z",
+  "elapsedSeconds": 0.36660222699999995,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "node",
+  "args": [
+    "--input-type=module",
+    "-e",
+    "import {verifyInventory} from \"./prototype-statistics-inventory-v63.mjs\"; import {json} from \"./point-demand-sources.mjs\"; console.log(JSON.stringify(verifyInventory(json(\"prototype-statistics-v63-inventory-corrected.json\"))));"
+  ],
+  "code": 0,
+  "signal": null
+}

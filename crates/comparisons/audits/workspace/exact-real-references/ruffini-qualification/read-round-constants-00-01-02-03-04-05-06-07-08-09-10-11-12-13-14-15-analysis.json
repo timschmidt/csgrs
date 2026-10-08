@@ -1,0 +1,186 @@
+{
+  "scriptSHA256": "351a5dc4a34164a740673706fb3036af8dcbc70a34856d560f2a8cf73e9ccca2",
+  "loaderSHA256": "e8d4dcbf37d53c451b0244dfe136ab5c0e0b7632148a2d71c511c80f23b829c8",
+  "files": [
+    {
+      "name": "constants00",
+      "sha256": "6f792d5f4ed813895ada421c38c0e74c0f5c7f7c75abe89248260dda2ce2a77e",
+      "bytes": 9918,
+      "physicalLines": 128,
+      "coordinates": 2,
+      "fullRounds": 8,
+      "partialRounds": 56,
+      "finalNewline": false,
+      "canonicalDecimalAndRange": true
+    },
+    {
+      "name": "constants01",
+      "sha256": "df08646e8af0a0afe4ffc9cb72df8f9182ab44f3532087f1b992ca0746b51a50",
+      "bytes": 15101,
+      "physicalLines": 195,
+      "coordinates": 3,
+      "fullRounds": 8,
+      "partialRounds": 57,
+      "finalNewline": false,
+      "canonicalDecimalAndRange": true
+    },
+    {
+      "name": "constants02",
+      "sha256": "c22faac10da1f00f61ea24cd48456266f3e7491cb1dda064dd496ebfb1312b88",
+      "bytes": 19841,
+      "physicalLines": 256,
+      "coordinates": 4,
+      "fullRounds": 8,
+      "partialRounds": 56,
+      "finalNewline": false,
+      "canonicalDecimalAndRange": true
+    },
+    {
+      "name": "constants03",
+      "sha256": "02bd1dd931dd45aca6408c17334b8e03e0ef497ac71e01157f6fe22fb02b7f56",
+      "bytes": 26333,
+      "physicalLines": 340,
+      "coordinates": 5,
+      "fullRounds": 8,
+      "partialRounds": 60,
+      "finalNewline": false,
+      "canonicalDecimalAndRange": true
+    },
+    {
+      "name": "constants04",
+      "sha256": "a35b1e3140018871383ba81bb56a285cd68fbe7778443be72b59f490374ede58",
+      "bytes": 31638,
+      "physicalLines": 408,
+      "coordinates": 6,
+      "fullRounds": 8,
+      "partialRounds": 60,
+      "finalNewline": false,
+      "canonicalDecimalAndRange": true
+    },
+    {
+      "name": "constants05",
+      "sha256": "210390dced4d61234d3f0eb82e774ebac17dad27a1adaf20a14b12dbf85b54b5",
+      "bytes": 38508,
+      "physicalLines": 497,
+      "coordinates": 7,
+      "fullRounds": 8,
+      "partialRounds": 63,
+      "finalNewline": false,
+      "canonicalDecimalAndRange": true
+    },
+    {
+      "name": "constants06",
+      "sha256": "18e5e9555229f746ab5a47e3d016109e5101dc04b41759f84a429107c575501a",
+      "bytes": 44635,
+      "physicalLines": 576,
+      "coordinates": 8,
+      "fullRounds": 8,
+      "partialRounds": 64,
+      "finalNewline": false,
+      "canonicalDecimalAndRange": true
+    },
+    {
+      "name": "constants07",
+      "sha256": "3d8e77d6355527d5f98c5336fe6db9b1e0e899c713d3fa6bfa8a4cbe83a26e52",
+      "bytes": 49541,
+      "physicalLines": 639,
+      "coordinates": 9,
+      "fullRounds": 8,
+      "partialRounds": 63,
+      "finalNewline": false,
+      "canonicalDecimalAndRange": true
+    },
+    {
+      "name": "constants08",
+      "sha256": "1d023b7bca575ccbdb528aec60df99bc9a19c31df80a6e88a4edb2b22efd18e8",
+      "bytes": 52694,
+      "physicalLines": 680,
+      "coordinates": 10,
+      "fullRounds": 8,
+      "partialRounds": 60,
+      "finalNewline": false,
+      "canonicalDecimalAndRange": true
+    },
+    {
+      "name": "constants09",
+      "sha256": "6ac075895b13b93b6c034aac5eb6c99bf8051032e917bf48ea7b94194893c281",
+      "bytes": 63117,
+      "physicalLines": 814,
+      "coordinates": 11,
+      "fullRounds": 8,
+      "partialRounds": 66,
+      "finalNewline": false,
+      "canonicalDecimalAndRange": true
+    },
+    {
+      "name": "constants10",
+      "sha256": "d12a5f3588dc0b524567cba698ec3ee46c222ad01994064c10101d7ed04a32cc",
+      "bytes": 63234,
+      "physicalLines": 816,
+      "coordinates": 12,
+      "fullRounds": 8,
+      "partialRounds": 60,
+      "finalNewline": false,
+      "canonicalDecimalAndRange": true
+    },
+    {
+      "name": "constants11",
+      "sha256": "0130e38264fd330502c9fb9d147dd2639b750bef73a90e575f271852df037840",
+      "bytes": 73533,
+      "physicalLines": 949,
+      "coordinates": 13,
+      "fullRounds": 8,
+      "partialRounds": 65,
+      "finalNewline": false,
+      "canonicalDecimalAndRange": true
+    },
+    {
+      "name": "constants12",
+      "sha256": "9d01e7907f581a16ff99fc7593b76372a3b05b160e821ec29d025535d063bc0a",
+      "bytes": 84627,
+      "physicalLines": 1092,
+      "coordinates": 14,
+      "fullRounds": 8,
+      "partialRounds": 70,
+      "finalNewline": false,
+      "canonicalDecimalAndRange": true
+    },
+    {
+      "name": "constants13",
+      "sha256": "2641b09a3fda29e2dc78b310be7ee61a31154e26bbb7d99481cfecb07db2d11a",
+      "bytes": 79046,
+      "physicalLines": 1020,
+      "coordinates": 15,
+      "fullRounds": 8,
+      "partialRounds": 60,
+      "finalNewline": false,
+      "canonicalDecimalAndRange": true
+    },
+    {
+      "name": "constants14",
+      "sha256": "4d34d4c30256c83c62e9f3af9ed410fe1d220c1f33364cacd0abdc457984b870",
+      "bytes": 89282,
+      "physicalLines": 1152,
+      "coordinates": 16,
+      "fullRounds": 8,
+      "partialRounds": 64,
+      "finalNewline": false,
+      "canonicalDecimalAndRange": true
+    },
+    {
+      "name": "constants15",
+      "sha256": "393c3add5df373fd506d119da8f24d77c401ab27b9f42565fd36d0ff0331b07a",
+      "bytes": 100113,
+      "physicalLines": 1292,
+      "coordinates": 17,
+      "fullRounds": 8,
+      "partialRounds": 68,
+      "finalNewline": false,
+      "canonicalDecimalAndRange": true
+    }
+  ],
+  "totalEntries": 10854,
+  "predicateControls": 18,
+  "independentPredicatesAgree": true,
+  "scope": "Only explicitly requested, already-read resources. Shape, canonical decimal and modulus range, not generating-procedure, cryptographic or performance qualification; no unread-file credit."
+}

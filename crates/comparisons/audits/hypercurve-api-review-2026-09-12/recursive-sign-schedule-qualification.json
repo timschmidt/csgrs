@@ -1,0 +1,40 @@
+{
+  "status": "implemented, qualified, committed; original goal active",
+  "commit": "c9ed51dae567dccf1e3de315841f4a59b3449b05",
+  "preceding_commit": "68e188a73eb442b2c4da60bba9990cd5b447ed87",
+  "change": "Recursive scalar signs use an interval prefix through 16 refinements, then replay retained exact Real witnesses before deeper tensor work. Bounded predicates can decline there; complete predicates retain the remaining 32-through-512 interval schedule and their exact fallback. The optional witness helper likewise tries its scalar witness before deeper interval work.",
+  "machinery_reduction": "Removed the duplicate compact_sign wrapper and the default interval wrapper. One explicit refinement-range method replaces the two interval methods; all private callers were migrated directly.",
+  "api_changes": "Private methods only; no compatibility layer or new cache fields.",
+  "tests": {
+    "hypercurve_library": 1027,
+    "hypercurve_integration": 413,
+    "hyperbrep_library": 232,
+    "unique_total": 1672,
+    "library_ignored": 6,
+    "established_expensive_library_exclusions": 4
+  },
+  "logs": [
+    "recursive-sign-schedule-release.log",
+    "recursive-sign-schedule-hyperbrep-release.log",
+    "recursive-sign-schedule-all-targets.log",
+    "recursive-sign-schedule-hyperbrep-all-targets.log"
+  ],
+  "regression": "For the retained positive root alpha^2=1/2, alpha-sqrt(1/2) +/- 2^-256 has an exact compact sign although the short independent interval pass cannot separate it. Both signs certify under both contexts and bounded/full passes; dispatch must consume the retained scalar witness.",
+  "baseline": "The scheduling assertion fails on parent 68e188a in recursive-sign-schedule-parent-test.log; the corrected regression and focused geometry/replay cases pass in recursive-sign-schedule-focused-tests.log.",
+  "formatting": "Changed Rust formatting and git diff --check passed.",
+  "source_sha256": {
+    "src/bezier_offset.rs": "db5341d1ab1c96df05bff0df924efad0df439cf721509d56dd78f0bfee43008e"
+  },
+  "diagnostics": {
+    "log": "stationary-ph-offset-inspect-sign-schedule.log",
+    "timeout_seconds": 60,
+    "result": "First inward offset Certified with the degree-five source, about 3.93 seconds; no second result before the total timeout. These are diagnostic observations, not a controlled benchmark.",
+    "stack": "stationary-ph-sign-schedule-stack.log",
+    "binary": "stationary-ph-offset-inspect-sign-schedule",
+    "binary_sha256": "39e0b90727a2340ab6e5186bf2aebd7bab4110b7764c07d8a80461acea80925f",
+    "finding": "The new sample reaches complete coordinate promotion: axis_oriented_side -> represented_coordinates -> compute_recursive_projective_point -> promoted_bezier_parameter_complete -> polynomial promoted_parameter -> represented root refinement. The previous sample was in a bounded finite-chord predicate. The inward closure problem remains open."
+  },
+  "workspace_status": "recursive-sign-schedule-workspace-after-commit.json",
+  "clean_repository_count": 30,
+  "goal_status": "active"
+}

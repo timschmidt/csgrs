@@ -1,0 +1,14 @@
+[
+  {
+    "test": "unified_region_native_chamfer_uses_arc_sweep_evidence",
+    "returncode": 0,
+    "seconds": 0.03164279100019485,
+    "log": "corner-semantic-closure-baseline-unified_region_native_chamfer_uses_arc_sweep_evidence.log"
+  },
+  {
+    "test": "unified_region_native_fillet_retains_certified_arc_contacts",
+    "returncode": 0,
+    "seconds": 0.03159848399809562,
+    "log": "corner-semantic-closure-baseline-unified_region_native_fillet_retains_certified_arc_contacts.log"
+  }
+]

@@ -1,0 +1,19 @@
+     Locking 20 packages to latest Rust 1.97.0 compatible versions
+   Compiling twelfth-cost-v78 v0.1.0 (/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/twelfth-cost-baseline-app-v78)
+warning: unused import: `Rational`
+ --> ../twelfth-cost-v78.rs:1:40
+  |
+1 | use hyperreal::{CertifiedRealEquality, Rational, Real};
+  |                                        ^^^^^^^^
+  |
+  = note: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default
+
+warning: unused import: `num::BigInt`
+ --> ../twelfth-cost-v78.rs:2:5
+  |
+2 | use num::BigInt;
+  |     ^^^^^^^^^^^
+
+warning: `twelfth-cost-v78` (bin "twelfth-cpu-v78") generated 2 warnings (2 duplicates)
+warning: `twelfth-cost-v78` (bin "twelfth-allocation-v78") generated 2 warnings (run `cargo fix --bin "twelfth-allocation-v78" -p twelfth-cost-v78` to apply 2 suggestions)
+    Finished `release` profile [optimized] target(s) in 1.43s

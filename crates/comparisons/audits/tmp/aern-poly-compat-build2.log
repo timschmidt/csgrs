@@ -1,0 +1,92 @@
+aern-poly> build (lib) with ghc-9.6.7
+Preprocessing library for aern-poly-0.5.0..
+Building library for aern-poly-0.5.0..
+[ 4 of 21] Compiling Numeric.AERN.Poly.IntPoly.New
+
+/tmp/aern-audit.zp9Mzz/source/aern-poly/src/Numeric/AERN/Poly/IntPoly/New.hs:281:5: warning: [GHC-06201] [-Wmissing-methods]
+    • No explicit implementation for
+        ‘renameVars’
+    • In the instance declaration for
+        ‘CanRenameVariables (IntPoly var cf)’
+    |
+281 |     (Ord var, Show var, Show cf, Show (SizeLimits cf),
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^...
+
+/tmp/aern-audit.zp9Mzz/source/aern-poly/src/Numeric/AERN/Poly/IntPoly/New.hs:327:9: warning: [GHC-62161] [-Wincomplete-uni-patterns]
+    Pattern match(es) are non-exhaustive
+    In a pattern binding: Patterns of type ‘[cf]’ not matched: []
+    |
+327 |         (sampleCF : _)  = domains
+    |         ^^^^^^^^^^^^^^^^^^^^^^^^^
+[ 5 of 21] Compiling Numeric.AERN.Poly.IntPoly.Reduction
+
+/tmp/aern-audit.zp9Mzz/source/aern-poly/src/Numeric/AERN/Poly/IntPoly/Reduction.hs:59:5: error:
+    • Illegal use of type family ‘Imprecision’
+        in the constraint ‘NumOrd.PartialComparison (Imprecision cf)’
+      (Use UndecidableInstances to permit this)
+    • In the instance declaration for
+        ‘(CanChangeSizeLimits (IntPoly var cf))’
+   |
+59 |     (Ord var, Show var, Show cf,
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^...
+[ 6 of 21] Compiling Numeric.AERN.Poly.IntPoly.Differentiation
+[10 of 21] Compiling Numeric.AERN.Poly.IntPoly.Evaluation
+
+/tmp/aern-audit.zp9Mzz/source/aern-poly/src/Numeric/AERN/Poly/IntPoly/Evaluation.hs:67:5: error:
+    • Illegal use of type family ‘SizeLimits’
+        in the constraint ‘Show (SizeLimits cf)’
+      (Use UndecidableInstances to permit this)
+    • In the instance declaration for
+        ‘CanEvaluateOtherType (IntPoly var cf)’
+   |
+67 |     (Ord var, Show var, Show cf, Show (SizeLimits cf),
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^...
+
+/tmp/aern-audit.zp9Mzz/source/aern-poly/src/Numeric/AERN/Poly/IntPoly/Evaluation.hs:88:5: error:
+    • Illegal use of type family ‘SizeLimits’
+        in the constraint ‘Show (SizeLimits cf)’
+      (Use UndecidableInstances to permit this)
+    • In the instance declaration for
+        ‘CanEvaluateOtherTypeInner (IntPoly var cf)’
+   |
+88 |     (Ord var, Show var, Show cf, Show (SizeLimits cf),
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^...
+
+/tmp/aern-audit.zp9Mzz/source/aern-poly/src/Numeric/AERN/Poly/IntPoly/Evaluation.hs:133:5: error:
+    • Illegal use of type family ‘SizeLimits’
+        in the constraint ‘Show (SizeLimits cf)’
+      (Use UndecidableInstances to permit this)
+    • In the instance declaration for ‘CanEvaluate (IntPoly var cf)’
+    |
+133 |     (Ord var, Show var, Show cf, Show (SizeLimits cf),
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^...
+
+/tmp/aern-audit.zp9Mzz/source/aern-poly/src/Numeric/AERN/Poly/IntPoly/Evaluation.hs:293:5: error:
+    • Illegal use of type family ‘SizeLimits’
+        in the constraint ‘Show (SizeLimits cf)’
+      (Use UndecidableInstances to permit this)
+    • In the instance declaration for ‘(HasDistance (IntPoly var cf))’
+    |
+293 |     (Ord var, Show var, Show cf, Show (SizeLimits cf),
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^...
+
+/tmp/aern-audit.zp9Mzz/source/aern-poly/src/Numeric/AERN/Poly/IntPoly/Evaluation.hs:319:5: error:
+    • Illegal use of type family ‘SizeLimits’
+        in the constraint ‘Show (SizeLimits cf)’
+      (Use UndecidableInstances to permit this)
+    • In the instance declaration for
+        ‘(HasImprecision (IntPoly var cf))’
+    |
+319 |     (Ord var, Show var, Show cf, Show (SizeLimits cf),
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^...
+[18 of 21] Compiling Numeric.AERN.Poly.IntPoly.SpecialConst
+
+Error: [S-7282]
+       Stack failed to execute the build plan.
+       
+       While executing the build plan, Stack encountered the error:
+       
+       [S-7011]
+       While building package aern-poly-0.5.0 (scroll up to its section to see the error) using:
+       /tmp/aern2-stack.ryVCFK/setup-exe-cache/x86_64-linux-tinfo6/Cabal-simple_O_vy6YIf_3.10.3.0_ghc-9.6.7 --verbose=1 --builddir=.stack-work/dist/x86_64-linux-tinfo6/ghc-9.6.7 build lib:aern-poly --ghc-options ""
+       Process exited with code: ExitFailure 1 

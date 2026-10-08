@@ -1,0 +1,3 @@
+EQUALITY	nontransitive	true	true	false	true
+HASH	same-integer	true	460141989	1163157915	2
+CACHE	call-count	1	2	2	12

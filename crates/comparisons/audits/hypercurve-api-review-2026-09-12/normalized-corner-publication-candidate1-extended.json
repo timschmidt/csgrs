@@ -1,0 +1,50 @@
+[
+  {
+    "name": "arc_parabola_fillet_recovers_exact_complement_contacts",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/normalized-corner-publication-candidate1-libraries/candidate-build",
+      "--exact",
+      "arc_parabola_fillet_recovers_exact_complement_contacts",
+      "--test-threads=1",
+      "--nocapture",
+      "--color",
+      "never"
+    ],
+    "returncode": "timeout",
+    "elapsed_seconds": 300.01450565099367,
+    "log": "normalized-corner-publication-candidate1-extended-arc_parabola_fillet_recovers_exact_complement_contacts.log",
+    "binary_sha256": "c4b48619d9cc7160f5f3723001fae6a6fcd6a08513f25ef4e2f24737cfd42b40"
+  },
+  {
+    "name": "line_parabola_fillet_extends_the_regular_incident_cell_exactly",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/normalized-corner-publication-candidate1-libraries/candidate-build",
+      "--exact",
+      "line_parabola_fillet_extends_the_regular_incident_cell_exactly",
+      "--test-threads=1",
+      "--nocapture",
+      "--color",
+      "never"
+    ],
+    "returncode": "timeout",
+    "elapsed_seconds": 300.0012788969907,
+    "log": "normalized-corner-publication-candidate1-extended-line_parabola_fillet_extends_the_regular_incident_cell_exactly.log",
+    "binary_sha256": "c4b48619d9cc7160f5f3723001fae6a6fcd6a08513f25ef4e2f24737cfd42b40"
+  },
+  {
+    "name": "non_ph_bezier_pair_projective_fillet_retains_algebraic_extensions",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/normalized-corner-publication-candidate1-libraries/candidate-build",
+      "--exact",
+      "non_ph_bezier_pair_projective_fillet_retains_algebraic_extensions",
+      "--test-threads=1",
+      "--nocapture",
+      "--color",
+      "never"
+    ],
+    "returncode": "timeout",
+    "elapsed_seconds": 300.00430905498797,
+    "log": "normalized-corner-publication-candidate1-extended-non_ph_bezier_pair_projective_fillet_retains_algebraic_extensions.log",
+    "binary_sha256": "c4b48619d9cc7160f5f3723001fae6a6fcd6a08513f25ef4e2f24737cfd42b40"
+  }
+]

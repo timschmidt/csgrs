@@ -1,0 +1,1321 @@
+{
+  "criterion": [
+    {
+      "file": "aern2-fnreps/benchresults/range.html",
+      "rows": [
+        {
+          "name": "12RootsAccuracy/20",
+          "samples": 11,
+          "mean": 0.07060536157955308,
+          "meanCI": [
+            0.06953355263345029,
+            0.07246127444829362
+          ],
+          "ols": 0.0697587327363594,
+          "rSquared": 0.9974010225548817,
+          "outlierVariance": {
+            "ovFraction": 0.0826446280991734,
+            "ovDesc": "slight",
+            "ovEffect": "Slight"
+          }
+        },
+        {
+          "name": "12RootsAccuracy/40",
+          "samples": 10,
+          "mean": 0.08300786980785066,
+          "meanCI": [
+            0.08222118703044264,
+            0.08401062739134715
+          ],
+          "ols": 0.08340871210878538,
+          "rSquared": 0.998432984852029,
+          "outlierVariance": {
+            "ovFraction": 0.09,
+            "ovDesc": "slight",
+            "ovEffect": "Slight"
+          }
+        },
+        {
+          "name": "12RootsAccuracy/60",
+          "samples": 9,
+          "mean": 0.09469891571343732,
+          "meanCI": [
+            0.09424132943991943,
+            0.09518042472665408
+          ],
+          "ols": 0.09532858616633642,
+          "rSquared": 0.9998576201509002,
+          "outlierVariance": {
+            "ovFraction": 0.09876543209876541,
+            "ovDesc": "slight",
+            "ovEffect": "Slight"
+          }
+        },
+        {
+          "name": "12RootsAccuracy/80",
+          "samples": 9,
+          "mean": 0.10920312116471201,
+          "meanCI": [
+            0.1083871885810559,
+            0.11029557325177065
+          ],
+          "ols": 0.10981333988262719,
+          "rSquared": 0.9991758568939103,
+          "outlierVariance": {
+            "ovFraction": 0.09876543209876543,
+            "ovDesc": "slight",
+            "ovEffect": "Slight"
+          }
+        },
+        {
+          "name": "rootMultiSetSize/4",
+          "samples": 47,
+          "mean": 0.003588990880924131,
+          "meanCI": [
+            0.0035365943739475015,
+            0.0037185331851791103
+          ],
+          "ols": 0.0036033563128950105,
+          "rSquared": 0.9942435049993764,
+          "outlierVariance": {
+            "ovFraction": 0.41062678112641093,
+            "ovDesc": "moderate",
+            "ovEffect": "Moderate"
+          }
+        },
+        {
+          "name": "rootMultiSetSize/6",
+          "samples": 33,
+          "mean": 0.008125785858460804,
+          "meanCI": [
+            0.008032749457253878,
+            0.008314822061007436
+          ],
+          "ols": 0.007957921789196415,
+          "rSquared": 0.9942184190903278,
+          "outlierVariance": {
+            "ovFraction": 0.2018369056824093,
+            "ovDesc": "moderate",
+            "ovEffect": "Moderate"
+          }
+        },
+        {
+          "name": "rootMultiSetSize/8",
+          "samples": 24,
+          "mean": 0.01631783915627747,
+          "meanCI": [
+            0.016278138541087846,
+            0.016369736186690614
+          ],
+          "ols": 0.016315741973706565,
+          "rSquared": 0.9998180363699374,
+          "outlierVariance": {
+            "ovFraction": 0.03993055555555548,
+            "ovDesc": "slight",
+            "ovEffect": "Slight"
+          }
+        },
+        {
+          "name": "rootMultiSetSize/10",
+          "samples": 19,
+          "mean": 0.026028713636537217,
+          "meanCI": [
+            0.025658577332141736,
+            0.026577537404206323
+          ],
+          "ols": 0.026086085763381554,
+          "rSquared": 0.9932330225501029,
+          "outlierVariance": {
+            "ovFraction": 0.09912015978843629,
+            "ovDesc": "slight",
+            "ovEffect": "Slight"
+          }
+        },
+        {
+          "name": "rootMultiSetSize/12",
+          "samples": 9,
+          "mean": 0.11230606634121625,
+          "meanCI": [
+            0.09815333156989862,
+            0.13347516832903486
+          ],
+          "ols": 0.09176051704998817,
+          "rSquared": 0.8270955206986603,
+          "outlierVariance": {
+            "ovFraction": 0.6526945699541951,
+            "ovDesc": "severe",
+            "ovEffect": "Severe"
+          }
+        },
+        {
+          "name": "rootSetSize/4",
+          "samples": 47,
+          "mean": 0.0035785197363336963,
+          "meanCI": [
+            0.0035460350875216504,
+            0.003631749871485708
+          ],
+          "ols": 0.0037395886180756417,
+          "rSquared": 0.9934642017971479,
+          "outlierVariance": {
+            "ovFraction": 0.1820452695062664,
+            "ovDesc": "moderate",
+            "ovEffect": "Moderate"
+          }
+        },
+        {
+          "name": "rootSetSize/6",
+          "samples": 31,
+          "mean": 0.009779494176392331,
+          "meanCI": [
+            0.009637840491810868,
+            0.010126847879984201
+          ],
+          "ols": 0.009621252377644943,
+          "rSquared": 0.9904712771893144,
+          "outlierVariance": {
+            "ovFraction": 0.2769623249178813,
+            "ovDesc": "moderate",
+            "ovEffect": "Moderate"
+          }
+        },
+        {
+          "name": "rootSetSize/8",
+          "samples": 13,
+          "mean": 0.053823319933643976,
+          "meanCI": [
+            0.05329948246984131,
+            0.055721029652124165
+          ],
+          "ols": 0.05378250252713091,
+          "rSquared": 0.996393200712919,
+          "outlierVariance": {
+            "ovFraction": 0.07100591715976323,
+            "ovDesc": "slight",
+            "ovEffect": "Slight"
+          }
+        },
+        {
+          "name": "rootSetSize/10",
+          "samples": 11,
+          "mean": 0.07502742301066409,
+          "meanCI": [
+            0.07330935563604431,
+            0.07683650826482015
+          ],
+          "ols": 0.0724734098179562,
+          "rSquared": 0.9959606262716232,
+          "outlierVariance": {
+            "ovFraction": 0.0834035044272377,
+            "ovDesc": "slight",
+            "ovEffect": "Slight"
+          }
+        },
+        {
+          "name": "rootSetSize/12",
+          "samples": 9,
+          "mean": 0.09957892668506163,
+          "meanCI": [
+            0.0972645724153651,
+            0.10351363630958138
+          ],
+          "ols": 0.10372204968322564,
+          "rSquared": 0.9930554496677957,
+          "outlierVariance": {
+            "ovFraction": 0.10160991281195526,
+            "ovDesc": "moderate",
+            "ovEffect": "Moderate"
+          }
+        },
+        {
+          "name": "oneNRoot2OneRoots/2",
+          "samples": 46,
+          "mean": 0.003690643441254975,
+          "meanCI": [
+            0.003664260060531329,
+            0.0037241103443079546
+          ],
+          "ols": 0.0037103530888335542,
+          "rSquared": 0.9973067130324796,
+          "outlierVariance": {
+            "ovFraction": 0.10267767303385963,
+            "ovDesc": "moderate",
+            "ovEffect": "Moderate"
+          }
+        },
+        {
+          "name": "oneNRoot2OneRoots/4",
+          "samples": 33,
+          "mean": 0.00812471720452339,
+          "meanCI": [
+            0.00801768390619261,
+            0.008442320877879083
+          ],
+          "ols": 0.007901587845884716,
+          "rSquared": 0.9956684237410325,
+          "outlierVariance": {
+            "ovFraction": 0.31822678029230417,
+            "ovDesc": "moderate",
+            "ovEffect": "Moderate"
+          }
+        },
+        {
+          "name": "oneNRoot2OneRoots/6",
+          "samples": 24,
+          "mean": 0.015805196605731483,
+          "meanCI": [
+            0.015709640676565318,
+            0.01593790086812945
+          ],
+          "ols": 0.015520993926256207,
+          "rSquared": 0.9998841029818668,
+          "outlierVariance": {
+            "ovFraction": 0.03993055555555548,
+            "ovDesc": "slight",
+            "ovEffect": "Slight"
+          }
+        },
+        {
+          "name": "oneNRoot2OneRoots/8",
+          "samples": 20,
+          "mean": 0.023346693891202648,
+          "meanCI": [
+            0.02328281265899671,
+            0.02342995777073268
+          ],
+          "ols": 0.02350064208710266,
+          "rSquared": 0.9997656148243452,
+          "outlierVariance": {
+            "ovFraction": 0.0475,
+            "ovDesc": "slight",
+            "ovEffect": "Slight"
+          }
+        },
+        {
+          "name": "oneNRoot2OneRoots/10",
+          "samples": 15,
+          "mean": 0.04147124513894395,
+          "meanCI": [
+            0.041248651709319,
+            0.041659835052033856
+          ],
+          "ols": 0.04146202907504631,
+          "rSquared": 0.999557311004332,
+          "outlierVariance": {
+            "ovFraction": 0.062222222222222213,
+            "ovDesc": "slight",
+            "ovEffect": "Slight"
+          }
+        },
+        {
+          "name": "oneNRootNOneRoots/2",
+          "samples": 47,
+          "mean": 0.003582331332895201,
+          "meanCI": [
+            0.003564810282649241,
+            0.0035995548996430905
+          ],
+          "ols": 0.0035929158620057263,
+          "rSquared": 0.9995346094164113,
+          "outlierVariance": {
+            "ovFraction": 0.020823902218198118,
+            "ovDesc": "slight",
+            "ovEffect": "Slight"
+          }
+        },
+        {
+          "name": "oneNRootNOneRoots/3",
+          "samples": 34,
+          "mean": 0.007927055695887182,
+          "meanCI": [
+            0.007886983943172535,
+            0.007970988741808583
+          ],
+          "ols": 0.007930793964461317,
+          "rSquared": 0.9996099807166751,
+          "outlierVariance": {
+            "ovFraction": 0.028546712802768385,
+            "ovDesc": "slight",
+            "ovEffect": "Slight"
+          }
+        },
+        {
+          "name": "oneNRootNOneRoots/4",
+          "samples": 24,
+          "mean": 0.01605779793867238,
+          "meanCI": [
+            0.015995104074441407,
+            0.016126226503961446
+          ],
+          "ols": 0.016170201459425163,
+          "rSquared": 0.9996108799113284,
+          "outlierVariance": {
+            "ovFraction": 0.039930555555555365,
+            "ovDesc": "slight",
+            "ovEffect": "Slight"
+          }
+        },
+        {
+          "name": "oneNRootNOneRoots/5",
+          "samples": 19,
+          "mean": 0.024836244003202623,
+          "meanCI": [
+            0.024682961538407808,
+            0.025081942067627712
+          ],
+          "ols": 0.025302533263171067,
+          "rSquared": 0.9991147302286624,
+          "outlierVariance": {
+            "ovFraction": 0.04986149584487535,
+            "ovDesc": "slight",
+            "ovEffect": "Slight"
+          }
+        },
+        {
+          "name": "oneNRootNOneRoots/6",
+          "samples": 14,
+          "mean": 0.04549541102669278,
+          "meanCI": [
+            0.04523895083868458,
+            0.04577921854915679
+          ],
+          "ols": 0.04534579585945993,
+          "rSquared": 0.9993450360221675,
+          "outlierVariance": {
+            "ovFraction": 0.06632653061224487,
+            "ovDesc": "slight",
+            "ovEffect": "Slight"
+          }
+        }
+      ]
+    },
+    {
+      "file": "aern2-fnreps/benchresults/rootIsolation.html",
+      "rows": [
+        {
+          "name": "12RootsCoeffPrec/20",
+          "samples": 25,
+          "mean": 0.014580128700443383,
+          "meanCI": [
+            0.014383414270126283,
+            0.014863464335371777
+          ],
+          "ols": 0.014710455266136997,
+          "rSquared": 0.9930415707013116,
+          "outlierVariance": {
+            "ovFraction": 0.15033928730469373,
+            "ovDesc": "moderate",
+            "ovEffect": "Moderate"
+          }
+        },
+        {
+          "name": "12RootsCoeffPrec/30",
+          "samples": 24,
+          "mean": 0.01651450450343112,
+          "meanCI": [
+            0.01646092466464332,
+            0.01654523955594023
+          ],
+          "ols": 0.016503092171339537,
+          "rSquared": 0.9999609865926683,
+          "outlierVariance": {
+            "ovFraction": 0.03993055555555544,
+            "ovDesc": "slight",
+            "ovEffect": "Slight"
+          }
+        },
+        {
+          "name": "12RootsCoeffPrec/40",
+          "samples": 22,
+          "mean": 0.01834161749603813,
+          "meanCI": [
+            0.01827836227867048,
+            0.01841664779704118
+          ],
+          "ols": 0.018545712523440314,
+          "rSquared": 0.9997792296743035,
+          "outlierVariance": {
+            "ovFraction": 0.04338842975206612,
+            "ovDesc": "slight",
+            "ovEffect": "Slight"
+          }
+        },
+        {
+          "name": "12RootsCoeffPrec/50",
+          "samples": 21,
+          "mean": 0.021022786508077346,
+          "meanCI": [
+            0.020951316868073628,
+            0.021125760900709445
+          ],
+          "ols": 0.020843747567494846,
+          "rSquared": 0.9998354691051137,
+          "outlierVariance": {
+            "ovFraction": 0.04535147392290238,
+            "ovDesc": "slight",
+            "ovEffect": "Slight"
+          }
+        },
+        {
+          "name": "12RootsCoeffPrec/60",
+          "samples": 20,
+          "mean": 0.02293468028524779,
+          "meanCI": [
+            0.022896606211020642,
+            0.022993385851996607
+          ],
+          "ols": 0.022907628724045163,
+          "rSquared": 0.9999760372182434,
+          "outlierVariance": {
+            "ovFraction": 0.047499999999999994,
+            "ovDesc": "slight",
+            "ovEffect": "Slight"
+          }
+        },
+        {
+          "name": "12RootsCoeffPrec/70",
+          "samples": 19,
+          "mean": 0.026151797263898505,
+          "meanCI": [
+            0.026053783509988482,
+            0.0262369407734924
+          ],
+          "ols": 0.02632203377017918,
+          "rSquared": 0.9998858875226427,
+          "outlierVariance": {
+            "ovFraction": 0.04986149584487534,
+            "ovDesc": "slight",
+            "ovEffect": "Slight"
+          }
+        },
+        {
+          "name": "12RootsCoeffPrec/80",
+          "samples": 18,
+          "mean": 0.028705963816479885,
+          "meanCI": [
+            0.028598073025651028,
+            0.028837068697868153
+          ],
+          "ols": 0.02889840005364968,
+          "rSquared": 0.9997027476877277,
+          "outlierVariance": {
+            "ovFraction": 0.052469135802468904,
+            "ovDesc": "slight",
+            "ovEffect": "Slight"
+          }
+        },
+        {
+          "name": "rootMultiSetSize/4",
+          "samples": 83,
+          "mean": 0.0005304434602404833,
+          "meanCI": [
+            0.0005291239565261643,
+            0.0005318836531437345
+          ],
+          "ols": 0.0005316138382447608,
+          "rSquared": 0.9999068358434706,
+          "outlierVariance": {
+            "ovFraction": 0.011903033822035053,
+            "ovDesc": "slight",
+            "ovEffect": "Slight"
+          }
+        },
+        {
+          "name": "rootMultiSetSize/6",
+          "samples": 66,
+          "mean": 0.0012557408169110796,
+          "meanCI": [
+            0.0012528581782801484,
+            0.0012593617283567665
+          ],
+          "ols": 0.001254798983498857,
+          "rSquared": 0.9998584349181234,
+          "outlierVariance": {
+            "ovFraction": 0.014921946740128502,
+            "ovDesc": "slight",
+            "ovEffect": "Slight"
+          }
+        },
+        {
+          "name": "rootMultiSetSize/8",
+          "samples": 49,
+          "mean": 0.003168497907314586,
+          "meanCI": [
+            0.003143213750536471,
+            0.0032433616094071577
+          ],
+          "ols": 0.0032361944522604985,
+          "rSquared": 0.9913457996812138,
+          "outlierVariance": {
+            "ovFraction": 0.2730172534180514,
+            "ovDesc": "moderate",
+            "ovEffect": "Moderate"
+          }
+        },
+        {
+          "name": "rootMultiSetSize/10",
+          "samples": 30,
+          "mean": 0.010032183808147735,
+          "meanCI": [
+            0.009966885395034127,
+            0.010136655578587865
+          ],
+          "ols": 0.010141769156883298,
+          "rSquared": 0.9979154767418585,
+          "outlierVariance": {
+            "ovFraction": 0.03222222222222203,
+            "ovDesc": "slight",
+            "ovEffect": "Slight"
+          }
+        },
+        {
+          "name": "rootMultiSetSize/12",
+          "samples": 20,
+          "mean": 0.02300270936014452,
+          "meanCI": [
+            0.022964511478215762,
+            0.023078697256467263
+          ],
+          "ols": 0.022943540830103866,
+          "rSquared": 0.9999351431528307,
+          "outlierVariance": {
+            "ovFraction": 0.0475,
+            "ovDesc": "slight",
+            "ovEffect": "Slight"
+          }
+        },
+        {
+          "name": "rootSetSize/4",
+          "samples": 102,
+          "mean": 0.00020826446357929238,
+          "meanCI": [
+            0.0002079828541414802,
+            0.00020865430077697417
+          ],
+          "ols": 0.0002081976512758953,
+          "rSquared": 0.9999640063195235,
+          "outlierVariance": {
+            "ovFraction": 0.009707804690503492,
+            "ovDesc": "no",
+            "ovEffect": "Unaffected"
+          }
+        },
+        {
+          "name": "rootSetSize/6",
+          "samples": 78,
+          "mean": 0.0007009082935820555,
+          "meanCI": [
+            0.0007001004424967116,
+            0.0007018498611596235
+          ],
+          "ols": 0.0007009608828097648,
+          "rSquared": 0.9999812453198581,
+          "outlierVariance": {
+            "ovFraction": 0.012656147271531885,
+            "ovDesc": "slight",
+            "ovEffect": "Slight"
+          }
+        },
+        {
+          "name": "rootSetSize/8",
+          "samples": 56,
+          "mean": 0.0022093364245575463,
+          "meanCI": [
+            0.0022054531546974675,
+            0.002214316359211966
+          ],
+          "ols": 0.0022081144791136326,
+          "rSquared": 0.9999341392884253,
+          "outlierVariance": {
+            "ovFraction": 0.017538265306122274,
+            "ovDesc": "slight",
+            "ovEffect": "Slight"
+          }
+        },
+        {
+          "name": "rootSetSize/10",
+          "samples": 36,
+          "mean": 0.006678101693789241,
+          "meanCI": [
+            0.006668450296169594,
+            0.006688206361339578
+          ],
+          "ols": 0.006667043106847269,
+          "rSquared": 0.9999595251997088,
+          "outlierVariance": {
+            "ovFraction": 0.02700617283950617,
+            "ovDesc": "slight",
+            "ovEffect": "Slight"
+          }
+        },
+        {
+          "name": "rootSetSize/12",
+          "samples": 24,
+          "mean": 0.015571608515142265,
+          "meanCI": [
+            0.015529740495886376,
+            0.01565471828543173
+          ],
+          "ols": 0.0156581929680079,
+          "rSquared": 0.9997734635891934,
+          "outlierVariance": {
+            "ovFraction": 0.039930555555555206,
+            "ovDesc": "slight",
+            "ovEffect": "Slight"
+          }
+        },
+        {
+          "name": "oneNRoot2OneRoots/2",
+          "samples": 84,
+          "mean": 0.0005047890134936928,
+          "meanCI": [
+            0.0005030993119192461,
+            0.0005082327456184578
+          ],
+          "ols": 0.0005072118979556536,
+          "rSquared": 0.9995593596817307,
+          "outlierVariance": {
+            "ovFraction": 0.0673306595993458,
+            "ovDesc": "slight",
+            "ovEffect": "Slight"
+          }
+        },
+        {
+          "name": "oneNRoot2OneRoots/4",
+          "samples": 78,
+          "mean": 0.0007076438238745802,
+          "meanCI": [
+            0.000700942980786291,
+            0.0007164833994388577
+          ],
+          "ols": 0.0006939338744920637,
+          "rSquared": 0.9987295638930217,
+          "outlierVariance": {
+            "ovFraction": 0.29446842780411203,
+            "ovDesc": "moderate",
+            "ovEffect": "Moderate"
+          }
+        },
+        {
+          "name": "oneNRoot2OneRoots/6",
+          "samples": 66,
+          "mean": 0.0012928068166091473,
+          "meanCI": [
+            0.0012833967074667564,
+            0.0013123045253554842
+          ],
+          "ols": 0.001320791258416393,
+          "rSquared": 0.9941381390545887,
+          "outlierVariance": {
+            "ovFraction": 0.23106876573227642,
+            "ovDesc": "moderate",
+            "ovEffect": "Moderate"
+          }
+        },
+        {
+          "name": "oneNRoot2OneRoots/8",
+          "samples": 52,
+          "mean": 0.002693090566874192,
+          "meanCI": [
+            0.0026793026387344956,
+            0.002712791131129915
+          ],
+          "ols": 0.0026742822946282797,
+          "rSquared": 0.9994609251808989,
+          "outlierVariance": {
+            "ovFraction": 0.0722692936717735,
+            "ovDesc": "slight",
+            "ovEffect": "Slight"
+          }
+        },
+        {
+          "name": "oneNRoot2OneRoots/10",
+          "samples": 40,
+          "mean": 0.005555494520765147,
+          "meanCI": [
+            0.005407421438781502,
+            0.005901958790202654
+          ],
+          "ols": 0.0052468584269424875,
+          "rSquared": 0.9895311134225562,
+          "outlierVariance": {
+            "ovFraction": 0.6604486487923403,
+            "ovDesc": "severe",
+            "ovEffect": "Severe"
+          }
+        },
+        {
+          "name": "oneNRootNOneRoots/2",
+          "samples": 84,
+          "mean": 0.0005036850167526267,
+          "meanCI": [
+            0.0005026195332562339,
+            0.0005049985310611421
+          ],
+          "ols": 0.0005024139990152376,
+          "rSquared": 0.9999430988367164,
+          "outlierVariance": {
+            "ovFraction": 0.011763038548752845,
+            "ovDesc": "slight",
+            "ovEffect": "Slight"
+          }
+        },
+        {
+          "name": "oneNRootNOneRoots/3",
+          "samples": 74,
+          "mean": 0.0008365685128553618,
+          "meanCI": [
+            0.0008351599370219551,
+            0.0008381618525338951
+          ],
+          "ols": 0.0008358993681262869,
+          "rSquared": 0.9999657591465482,
+          "outlierVariance": {
+            "ovFraction": 0.013330898466033442,
+            "ovDesc": "slight",
+            "ovEffect": "Slight"
+          }
+        },
+        {
+          "name": "oneNRootNOneRoots/4",
+          "samples": 58,
+          "mean": 0.001918086336850122,
+          "meanCI": [
+            0.0019148673743187947,
+            0.0019228711094418894
+          ],
+          "ols": 0.0019159546239720614,
+          "rSquared": 0.9999667948830001,
+          "outlierVariance": {
+            "ovFraction": 0.016944114149821637,
+            "ovDesc": "slight",
+            "ovEffect": "Slight"
+          }
+        },
+        {
+          "name": "oneNRootNOneRoots/5",
+          "samples": 41,
+          "mean": 0.004919483754921242,
+          "meanCI": [
+            0.004910940111083061,
+            0.0049310003009946065
+          ],
+          "ols": 0.004932282253344803,
+          "rSquared": 0.999879987357698,
+          "outlierVariance": {
+            "ovFraction": 0.023795359904818545,
+            "ovDesc": "slight",
+            "ovEffect": "Slight"
+          }
+        },
+        {
+          "name": "oneNRootNOneRoots/6",
+          "samples": 29,
+          "mean": 0.010793540655647145,
+          "meanCI": [
+            0.010776478387809053,
+            0.010816560004498056
+          ],
+          "ols": 0.010789199052788745,
+          "rSquared": 0.9999044281806899,
+          "outlierVariance": {
+            "ovFraction": 0.03329369797859691,
+            "ovDesc": "slight",
+            "ovEffect": "Slight"
+          }
+        }
+      ]
+    }
+  ],
+  "csv": [
+    {
+      "file": "aern2-fnreps/benchresults/results-ppoly-test-chp-cdar.csv",
+      "rows": 4,
+      "shortfalls": 2,
+      "worstShortfalls": [
+        {
+          "Time": "Sat  8 Jun 23:08:42 BST 2019",
+          "Op": "max",
+          "Fn": "fracSinSC",
+          "FnRepr": "ppoly",
+          "Parameters": "10",
+          "Accuracy(bits)": "9",
+          "UTime(s)": "294.44",
+          "STime(s)": "0.36",
+          "Mem(kB)": "58984"
+        },
+        {
+          "Time": "Sat  8 Jun 23:24:41 BST 2019",
+          "Op": "max",
+          "Fn": "fracSinSC",
+          "FnRepr": "ppoly",
+          "Parameters": "15",
+          "Accuracy(bits)": "14",
+          "UTime(s)": "958.65",
+          "STime(s)": "0.77",
+          "Mem(kB)": "137076"
+        }
+      ]
+    },
+    {
+      "file": "aern2-fnreps/benchresults/results-ppoly-test-chp-mpfr.csv",
+      "rows": 4,
+      "shortfalls": 2,
+      "worstShortfalls": [
+        {
+          "Time": "Sat  8 Jun 23:42:21 BST 2019",
+          "Op": "max",
+          "Fn": "fracSinSC",
+          "FnRepr": "ppoly",
+          "Parameters": "10",
+          "Accuracy(bits)": "9",
+          "UTime(s)": "149.91",
+          "STime(s)": "0.73",
+          "Mem(kB)": "58172"
+        },
+        {
+          "Time": "Sat  8 Jun 23:46:34 BST 2019",
+          "Op": "max",
+          "Fn": "fracSinSC",
+          "FnRepr": "ppoly",
+          "Parameters": "15",
+          "Accuracy(bits)": "14",
+          "UTime(s)": "251.58",
+          "STime(s)": "1.25",
+          "Mem(kB)": "131108"
+        }
+      ]
+    },
+    {
+      "file": "aern2-fnreps/benchresults/results-ppoly-test-chpbnds-cdar.csv",
+      "rows": 4,
+      "shortfalls": 2,
+      "worstShortfalls": [
+        {
+          "Time": "Wed 12 Jun 00:16:39 BST 2019",
+          "Op": "max",
+          "Fn": "fracSinSC",
+          "FnRepr": "ppoly",
+          "Parameters": "10",
+          "Accuracy(bits)": "9",
+          "UTime(s)": "303.92",
+          "STime(s)": "0.32",
+          "Mem(kB)": "57644"
+        },
+        {
+          "Time": "Wed 12 Jun 00:33:01 BST 2019",
+          "Op": "max",
+          "Fn": "fracSinSC",
+          "FnRepr": "ppoly",
+          "Parameters": "15",
+          "Accuracy(bits)": "14",
+          "UTime(s)": "980.81",
+          "STime(s)": "0.77",
+          "Mem(kB)": "145068"
+        }
+      ]
+    },
+    {
+      "file": "aern2-fnreps/benchresults/results-ppoly-test-chpbnds-mpfr.csv",
+      "rows": 4,
+      "shortfalls": 2,
+      "worstShortfalls": [
+        {
+          "Time": "Tue 11 Jun 23:31:47 BST 2019",
+          "Op": "max",
+          "Fn": "fracSinSC",
+          "FnRepr": "ppoly",
+          "Parameters": "10",
+          "Accuracy(bits)": "9",
+          "UTime(s)": "152.73",
+          "STime(s)": "0.81",
+          "Mem(kB)": "59232"
+        },
+        {
+          "Time": "Tue 11 Jun 23:36:10 BST 2019",
+          "Op": "max",
+          "Fn": "fracSinSC",
+          "FnRepr": "ppoly",
+          "Parameters": "15",
+          "Accuracy(bits)": "14",
+          "UTime(s)": "261.65",
+          "STime(s)": "1.33",
+          "Mem(kB)": "154592"
+        }
+      ]
+    },
+    {
+      "file": "aern2-fnreps/benchresults/results-ppoly-test-pb-cdar.csv",
+      "rows": 4,
+      "shortfalls": 2,
+      "worstShortfalls": [
+        {
+          "Time": "Sat  8 Jun 08:44:08 BST 2019",
+          "Op": "max",
+          "Fn": "fracSinSC",
+          "FnRepr": "ppoly",
+          "Parameters": "10",
+          "Accuracy(bits)": "9",
+          "UTime(s)": "287.06",
+          "STime(s)": "0.27",
+          "Mem(kB)": "59100"
+        },
+        {
+          "Time": "Sat  8 Jun 08:59:53 BST 2019",
+          "Op": "max",
+          "Fn": "fracSinSC",
+          "FnRepr": "ppoly",
+          "Parameters": "15",
+          "Accuracy(bits)": "14",
+          "UTime(s)": "944.51",
+          "STime(s)": "0.77",
+          "Mem(kB)": "150364"
+        }
+      ]
+    },
+    {
+      "file": "aern2-fnreps/benchresults/results-ppoly-test-pb-mpfr.csv",
+      "rows": 4,
+      "shortfalls": 2,
+      "worstShortfalls": [
+        {
+          "Time": "Sat  8 Jun 01:40:05 BST 2019",
+          "Op": "max",
+          "Fn": "fracSinSC",
+          "FnRepr": "ppoly",
+          "Parameters": "10",
+          "Accuracy(bits)": "9",
+          "UTime(s)": "141.94",
+          "STime(s)": "1.56",
+          "Mem(kB)": "60772"
+        },
+        {
+          "Time": "Sat  8 Jun 01:43:56 BST 2019",
+          "Op": "max",
+          "Fn": "fracSinSC",
+          "FnRepr": "ppoly",
+          "Parameters": "15",
+          "Accuracy(bits)": "14",
+          "UTime(s)": "230.03",
+          "STime(s)": "1.36",
+          "Mem(kB)": "134340"
+        }
+      ]
+    },
+    {
+      "file": "aern2-fnreps/benchresults/results-test.csv",
+      "rows": 449,
+      "shortfalls": 59,
+      "worstShortfalls": [
+        {
+          "Time": "Fri Aug  4 14:34:02 BST 2017",
+          "Op": "integrate",
+          "Fn": "bumpy",
+          "FnRepr": "lppoly",
+          "Parameters": "100",
+          "Accuracy(bits)": "6",
+          "UTime(s)": "8.81",
+          "STime(s)": "0.05",
+          "Mem(kB)": "21672"
+        },
+        {
+          "Time": "Fri Aug  4 14:34:02 BST 2017",
+          "Op": "integrate",
+          "Fn": "bumpy",
+          "FnRepr": "lppoly",
+          "Parameters": "80",
+          "Accuracy(bits)": "6",
+          "UTime(s)": "5.60",
+          "STime(s)": "0.04",
+          "Mem(kB)": "19952"
+        },
+        {
+          "Time": "Fri Aug  4 14:34:02 BST 2017",
+          "Op": "integrate",
+          "Fn": "bumpy",
+          "FnRepr": "lppoly",
+          "Parameters": "60",
+          "Accuracy(bits)": "4",
+          "UTime(s)": "3.09",
+          "STime(s)": "0.01",
+          "Mem(kB)": "17700"
+        },
+        {
+          "Time": "Fri Aug  4 14:34:02 BST 2017",
+          "Op": "integrate",
+          "Fn": "bumpy",
+          "FnRepr": "lppoly",
+          "Parameters": "40",
+          "Accuracy(bits)": "3",
+          "UTime(s)": "1.54",
+          "STime(s)": "0.01",
+          "Mem(kB)": "15400"
+        },
+        {
+          "Time": "Fri Aug  4 14:34:00 BST 2017",
+          "Op": "integrate",
+          "Fn": "rungeSC",
+          "FnRepr": "frac",
+          "Parameters": "30",
+          "Accuracy(bits)": "1",
+          "UTime(s)": "9.47",
+          "STime(s)": "0.05",
+          "Mem(kB)": "100564"
+        },
+        {
+          "Time": "Fri Aug  4 14:33:59 BST 2017",
+          "Op": "integrate",
+          "Fn": "sine+cos",
+          "FnRepr": "poly",
+          "Parameters": "50",
+          "Accuracy(bits)": "32",
+          "UTime(s)": "0.30",
+          "STime(s)": "0.01",
+          "Mem(kB)": "39072"
+        }
+      ]
+    },
+    {
+      "file": "aern2-fnreps/benchresults/results.csv",
+      "rows": 337,
+      "shortfalls": 44,
+      "worstShortfalls": [
+        {
+          "Time": "Fri 19 Jul 16:15:07 BST 2019",
+          "Op": "integrate",
+          "Fn": "sine+cospi",
+          "FnRepr": "poly",
+          "Parameters": "70",
+          "Accuracy(bits)": "40",
+          "UTime(s)": "0.53",
+          "STime(s)": "0.01",
+          "Mem(kB)": "13728"
+        },
+        {
+          "Time": "Fri 19 Jul 16:15:07 BST 2019",
+          "Op": "integrate",
+          "Fn": "sine+cospi",
+          "FnRepr": "poly",
+          "Parameters": "90",
+          "Accuracy(bits)": "60",
+          "UTime(s)": "0.68",
+          "STime(s)": "0.01",
+          "Mem(kB)": "13464"
+        },
+        {
+          "Time": "Fri 19 Jul 16:15:07 BST 2019",
+          "Op": "integrate",
+          "Fn": "sine+cospi",
+          "FnRepr": "poly",
+          "Parameters": "110",
+          "Accuracy(bits)": "80",
+          "UTime(s)": "0.87",
+          "STime(s)": "0.01",
+          "Mem(kB)": "14416"
+        },
+        {
+          "Time": "Fri 19 Jul 16:15:07 BST 2019",
+          "Op": "max",
+          "Fn": "sine+cospi",
+          "FnRepr": "poly",
+          "Parameters": "70",
+          "Accuracy(bits)": "41",
+          "UTime(s)": "4.70",
+          "STime(s)": "0.01",
+          "Mem(kB)": "14324"
+        },
+        {
+          "Time": "Fri 19 Jul 16:15:07 BST 2019",
+          "Op": "max",
+          "Fn": "sine+cospi",
+          "FnRepr": "poly",
+          "Parameters": "90",
+          "Accuracy(bits)": "61",
+          "UTime(s)": "6.66",
+          "STime(s)": "0.01",
+          "Mem(kB)": "16696"
+        },
+        {
+          "Time": "Fri 19 Jul 16:15:07 BST 2019",
+          "Op": "max",
+          "Fn": "sine+cospi",
+          "FnRepr": "poly",
+          "Parameters": "110",
+          "Accuracy(bits)": "81",
+          "UTime(s)": "9.38",
+          "STime(s)": "0.02",
+          "Mem(kB)": "17440"
+        }
+      ],
+      "logMatches": 337,
+      "missingLogs": [],
+      "mismatches": []
+    },
+    {
+      "file": "aern2-net/bench/fieldops.csv",
+      "rows": 30,
+      "shortfalls": 0,
+      "worstShortfalls": []
+    },
+    {
+      "file": "aern2-net/bench/ireal/fieldops.csv",
+      "rows": 30,
+      "shortfalls": 0,
+      "worstShortfalls": []
+    },
+    {
+      "file": "aern2-net/bench/ireal/logistic.csv",
+      "rows": 20,
+      "shortfalls": 0,
+      "worstShortfalls": []
+    },
+    {
+      "file": "aern2-net/bench/ireal/ops.csv",
+      "rows": 70,
+      "shortfalls": 0,
+      "worstShortfalls": []
+    },
+    {
+      "file": "aern2-net/bench/logistic.csv",
+      "rows": 20,
+      "shortfalls": 0,
+      "worstShortfalls": []
+    },
+    {
+      "file": "aern2-net/bench/native/fieldops.csv",
+      "rows": 30,
+      "shortfalls": 0,
+      "worstShortfalls": []
+    },
+    {
+      "file": "aern2-net/bench/native/logistic.csv",
+      "rows": 20,
+      "shortfalls": 0,
+      "worstShortfalls": []
+    },
+    {
+      "file": "aern2-net/bench/ops.csv",
+      "rows": 70,
+      "shortfalls": 0,
+      "worstShortfalls": []
+    }
+  ],
+  "matrix": {
+    "rows": 315,
+    "logMatches": 315
+  },
+  "netlogs": [
+    {
+      "file": "aern2-net/tools/visualise-netlog/fft-mp-par-n4/netlog.js",
+      "events": 144,
+      "nodes": 32,
+      "types": {
+        "QANetLogCreate": 32,
+        "QANetLogQuery": 56,
+        "QANetLogAnswer": 56
+      },
+      "queries": 56,
+      "answers": 56,
+      "cacheDescriptions": {
+        "cache empty": 41,
+        "query: Precision 3290; cache: Just ([0 ± 0],Precision 3290)": 7,
+        "query: Precision 3290; cache: Just ([3 ± 0],Precision 3290)": 2,
+        "query: Precision 3290; cache: Just ([1 ± 0],Precision 3290)": 1,
+        "query: Precision 3290; cache: Just ([4 ± 0],Precision 3290)": 2,
+        "query: Precision 3290; cache: Just ([2 ± 0],Precision 3290)": 1,
+        "query: Precision 3290; cache: Just ([-2 ± 0],Precision 3290)": 1,
+        "query: Precision 3290; cache: Just ([6 ± 0],Precision 3290)": 1
+      },
+      "outstanding": [],
+      "errors": []
+    },
+    {
+      "file": "aern2-net/tools/visualise-netlog/fft-n2/netlog.js",
+      "events": 42,
+      "nodes": 10,
+      "types": {
+        "QANetLogCreate": 10,
+        "QANetLogQuery": 16,
+        "QANetLogAnswer": 16
+      },
+      "queries": 16,
+      "answers": 16,
+      "cacheDescriptions": {
+        "not used cache (cache empty)": 10,
+        "used cache (query: bitsSG 10 100; cache: (ac=Exact) Just ([2 ± 0],bitsSG 10 100))": 2,
+        "used cache (query: bitsSG 10 100; cache: (ac=Exact) Just ([0 ± 0],bitsSG 10 100))": 3,
+        "used cache (query: bitsSG 10 100; cache: (ac=Exact) Just ([1 ± 0],bitsSG 10 100))": 1
+      },
+      "outstanding": [],
+      "errors": []
+    },
+    {
+      "file": "aern2-net/tools/visualise-netlog/fft-n4/netlog.js",
+      "events": 144,
+      "nodes": 32,
+      "types": {
+        "QANetLogCreate": 32,
+        "QANetLogQuery": 56,
+        "QANetLogAnswer": 56
+      },
+      "queries": 56,
+      "answers": 56,
+      "cacheDescriptions": {
+        "not used cache (cache empty)": 32,
+        "used cache (query: bitsSG 10 100; cache: (ac=Exact) Just ([4 ± 0],bitsSG 10 100))": 3,
+        "used cache (query: bitsSG 10 100; cache: (ac=Exact) Just ([0 ± 0],bitsSG 10 100))": 11,
+        "used cache (query: bitsSG 10 100; cache: (ac=Exact) Just ([3 ± 0],bitsSG 10 100))": 2,
+        "used cache (query: bitsSG 10 100; cache: (ac=Exact) Just ([6 ± 0],bitsSG 10 100))": 2,
+        "used cache (query: bitsSG 10 100; cache: (ac=Exact) Just ([1 ± 0],bitsSG 10 100))": 1,
+        "used cache (query: bitsSG 10 100; cache: (ac=Exact) Just ([2 ± 0],bitsSG 10 100))": 1,
+        "used cache (query: bitsSG 10 100; cache: (ac=Exact) Just ([-2 ± 0],bitsSG 10 100))": 2,
+        "used cache (query: bitsSG 10 100; cache: (ac=bits 103) Just ([2.465190328815662e-32 ± <2^(-103)],bitsSG 10 100))": 1,
+        "used cache (query: bitsSG 10 100; cache: (ac=bits 102) Just ([2 ± <2^(-102)],bitsSG 10 100))": 1
+      },
+      "outstanding": [],
+      "errors": []
+    },
+    {
+      "file": "aern2-net/tools/visualise-netlog/fft-par-n2/netlog.js",
+      "events": 42,
+      "nodes": 10,
+      "types": {
+        "QANetLogCreate": 10,
+        "QANetLogQuery": 16,
+        "QANetLogAnswer": 16
+      },
+      "queries": 16,
+      "answers": 16,
+      "cacheDescriptions": {
+        "query: bitsSG 10 100; cache: (ac=Exact) Just ([2 ± 0],bitsSG 10 100)": 1,
+        "cache empty": 12,
+        "query: bitsSG 10 100; cache: (ac=Exact) Just ([0 ± 0],bitsSG 10 100)": 2,
+        "query: bitsSG 10 100; cache: (ac=Exact) Just ([1 ± 0],bitsSG 10 100)": 1
+      },
+      "outstanding": [],
+      "errors": []
+    },
+    {
+      "file": "aern2-net/tools/visualise-netlog/fft-par-n4/netlog.js",
+      "events": 144,
+      "nodes": 32,
+      "types": {
+        "QANetLogCreate": 32,
+        "QANetLogQuery": 56,
+        "QANetLogAnswer": 56
+      },
+      "queries": 56,
+      "answers": 56,
+      "cacheDescriptions": {
+        "cache empty": 47,
+        "query: bitsSG 10 100; cache: (ac=Exact) Just ([1 ± 0],bitsSG 10 100)": 1,
+        "query: bitsSG 10 100; cache: (ac=Exact) Just ([3 ± 0],bitsSG 10 100)": 1,
+        "query: bitsSG 10 100; cache: (ac=Exact) Just ([2 ± 0],bitsSG 10 100)": 1,
+        "query: bitsSG 10 100; cache: (ac=Exact) Just ([0 ± 0],bitsSG 10 100)": 5,
+        "query: bitsSG 10 100; cache: (ac=Exact) Just ([4 ± 0],bitsSG 10 100)": 1
+      },
+      "outstanding": [],
+      "errors": []
+    }
+  ]
+}

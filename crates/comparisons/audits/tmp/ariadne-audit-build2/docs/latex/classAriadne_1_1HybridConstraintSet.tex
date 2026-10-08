@@ -1,0 +1,48 @@
+\doxysubsection{Hybrid\+Constraint\+Set Class Reference}
+\hypertarget{classAriadne_1_1HybridConstraintSet}{}\label{classAriadne_1_1HybridConstraintSet}\index{HybridConstraintSet@{HybridConstraintSet}}
+
+
+{\ttfamily \#include $<$hybrid\+\_\+expression\+\_\+set.\+hpp$>$}
+
+
+
+\doxysubsubsection{Description}
+A hybrid set defined by a constraint system in each location. NOTE\+: If a location is not specified, the set is considered empty. This may be changed in future to the set being considered unconstrained (entire). Inheritance diagram for Hybrid\+Constraint\+Set\+:\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[height=2.000000cm]{classAriadne_1_1HybridConstraintSet}
+\end{center}
+\end{figure}
+\doxysubsubsubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1HybridConstraintSet_afeb345deaabc67ec71b4ae69193c01f0}\label{classAriadne_1_1HybridConstraintSet_afeb345deaabc67ec71b4ae69193c01f0} 
+{\bfseries Hybrid\+Constraint\+Set} (const \mbox{\hyperlink{classAriadne_1_1DiscreteLocation}{Discrete\+Location}} \&location, const \mbox{\hyperlink{classAriadne_1_1List}{List}}$<$ \mbox{\hyperlink{classAriadne_1_1Expression}{Continuous\+Predicate}} $>$ \&constraints)
+\begin{DoxyCompactList}\small\item\em Construct a set in a single {\itshape location} with a list of {\itshape bounds} on the variables and nonlinear {\itshape constraints}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1HybridConstraintSet_a5d1d56572394456aa9bb6071065b9a89}\label{classAriadne_1_1HybridConstraintSet_a5d1d56572394456aa9bb6071065b9a89} 
+\mbox{\hyperlink{classAriadne_1_1HybridConstraintSet}{Hybrid\+Constraint\+Set}} \& {\bfseries adjoin} (const \mbox{\hyperlink{classAriadne_1_1DiscreteLocation}{Discrete\+Location}} \&location, const \mbox{\hyperlink{classAriadne_1_1List}{List}}$<$ \mbox{\hyperlink{classAriadne_1_1Expression}{Continuous\+Predicate}} $>$ \&set)
+\begin{DoxyCompactList}\small\item\em Adjoin the set defined by {\itshape constraints} in {\itshape location}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1HybridConstraintSet_a01618894e44f5f067f6f6dcbff0332ba}\label{classAriadne_1_1HybridConstraintSet_a01618894e44f5f067f6f6dcbff0332ba} 
+\mbox{\hyperlink{classAriadne_1_1Set}{Set}}$<$ \mbox{\hyperlink{classAriadne_1_1DiscreteLocation}{Discrete\+Location}} $>$ {\bfseries locations} () const
+\begin{DoxyCompactList}\small\item\em The set of locations in which the set is nonempty. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1HybridConstraintSet_a651af073cd8356f9ab54f8b8179878c6}\label{classAriadne_1_1HybridConstraintSet_a651af073cd8356f9ab54f8b8179878c6} 
+virtual \mbox{\hyperlink{classAriadne_1_1Set}{Set}}$<$ \mbox{\hyperlink{classAriadne_1_1Variable}{Real\+Variable}} $>$ {\bfseries variables} (\mbox{\hyperlink{classAriadne_1_1DiscreteLocation}{Discrete\+Location}} loc) const override
+\begin{DoxyCompactList}\small\item\em The active variables in the location {\itshape loc}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1HybridConstraintSet_a13409f34f9ed7c1fe09c357411656ff7}\label{classAriadne_1_1HybridConstraintSet_a13409f34f9ed7c1fe09c357411656ff7} 
+\mbox{\hyperlink{classAriadne_1_1RealExpressionConstraintSet}{Real\+Expression\+Constraint\+Set}} const \& {\bfseries continuous\+\_\+set} (\mbox{\hyperlink{classAriadne_1_1DiscreteLocation}{Discrete\+Location}} loc) const
+\begin{DoxyCompactList}\small\item\em The subset of $\mathbb{R}^V$ obtained by restricting to location {\itshape loc}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1HybridConstraintSet_afbd015c334e85cb3664088c615798097}\label{classAriadne_1_1HybridConstraintSet_afbd015c334e85cb3664088c615798097} 
+\mbox{\hyperlink{classAriadne_1_1ConstraintSet}{Constraint\+Set}} const {\bfseries euclidean\+\_\+set} (\mbox{\hyperlink{classAriadne_1_1DiscreteLocation}{Discrete\+Location}} loc, \mbox{\hyperlink{classAriadne_1_1Space}{Real\+Space}} spc) const
+\begin{DoxyCompactList}\small\item\em The subset of $\mathbb{R}^n$ obtained by restricting to location {\itshape loc} and ordering the variables as defined by {\itshape spc}. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsubsection*{Friends}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1HybridConstraintSet_a23573c06a8b5ce0065f8bc377af31815}\label{classAriadne_1_1HybridConstraintSet_a23573c06a8b5ce0065f8bc377af31815} 
+\mbox{\hyperlink{classAriadne_1_1HybridBoundedConstraintSet}{Hybrid\+Bounded\+Constraint\+Set}} {\bfseries intersection} (const Hybrid\+Boxes\+Set \&bounds, \mbox{\hyperlink{classAriadne_1_1HybridConstraintSet}{Hybrid\+Constraint\+Set}} const \&constraints)
+\begin{DoxyCompactList}\small\item\em Intersect with a set of boxes, one in each location, to form a bounded set. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+The documentation for this class was generated from the following files\+:\begin{DoxyCompactItemize}
+\item 
+source/hybrid/\mbox{\hyperlink{hybrid__expression__set_8hpp}{hybrid\+\_\+expression\+\_\+set.\+hpp}}\item 
+source/hybrid/hybrid\+\_\+set.\+cpp\end{DoxyCompactItemize}

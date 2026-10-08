@@ -1,0 +1,41 @@
+{
+  "outer_session": 41707,
+  "outer_exit_code": 1,
+  "all_processes_reaped": true,
+  "qualification_complete": false,
+  "confirmed": "12 generated-point constraints are Unsupported despite independent exact Cartesian coincidence",
+  "measurements": [
+    {
+      "name": "curve::curve_fillet::stationary_recursive_point_constraint_regression::stationary_fillet_family_accepts_independent_recursive_point_constraints",
+      "elapsed_seconds": 11.02909768302925,
+      "measurements": []
+    },
+    {
+      "name": "curve::curve_fillet::tests::joined_path_selects_and_replays_a_continuous_fillet_family",
+      "elapsed_seconds": 5.471527335932478,
+      "measurements": [
+        "SOURCE_CELL_WORK direction_schedule calls=136 seconds=0.007053",
+        "SOURCE_CELL_WORK pair_source_cells calls=1060 seconds=0.036660",
+        "SOURCE_CELL_WORK pair_cell_selection calls=2120 seconds=0.010939"
+      ]
+    },
+    {
+      "name": "curve::curve_fillet::stationary_continuous_family_regression::continuous_fillets_preserve_stationary_reparameterization",
+      "elapsed_seconds": 33.96244190214202,
+      "measurements": [
+        "SOURCE_CELL_WORK direction_schedule calls=48 seconds=0.003080",
+        "SOURCE_CELL_WORK pair_source_cells calls=356 seconds=0.018749",
+        "SOURCE_CELL_WORK pair_cell_selection calls=712 seconds=0.002690"
+      ]
+    },
+    {
+      "name": "curve::curve_fillet::stationary_family_composition_regression::normalized_region_selects_and_reuses_a_stationary_fillet_family",
+      "elapsed_seconds": 1.9665145890321583,
+      "measurements": [
+        "SOURCE_CELL_WORK direction_schedule calls=8 seconds=0.000946",
+        "SOURCE_CELL_WORK pair_source_cells calls=12 seconds=0.001172",
+        "SOURCE_CELL_WORK pair_cell_selection calls=12 seconds=0.000100"
+      ]
+    }
+  ]
+}

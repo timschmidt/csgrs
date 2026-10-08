@@ -1,0 +1,13 @@
+{
+  "fmt_returncode": 0,
+  "all_features_clippy_returncode": 0,
+  "no_default_features_clippy_returncode": 0,
+  "release_build_success": false,
+  "cargo_returncode": 101,
+  "cause": "Disk quota exceeded during hypersolve release compilation",
+  "outer_handle": 51266,
+  "outer_exit_code": 1,
+  "all_processes_reaped": true,
+  "all_2044_sources_unchanged": true,
+  "runtime_tests_attempted": 0
+}

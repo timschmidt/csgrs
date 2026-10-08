@@ -1,0 +1,25 @@
+   Compiling numbers-qualification v0.0.0 (/home/tim/Documents/GitHub/workspace/exact-real-references/numbers-qualification)
+error[E0624]: method `shift_right` is private
+    --> atan_controls.rs:38:45
+     |
+  38 |             let mut x=c(&Q::from(5)).sqrt().shift_right(3);
+     |                                             ^^^^^^^^^^^ private method
+     |
+    ::: /home/tim/Documents/GitHub/workspace/hyperreal/src/computable/node/algebra.rs:1246:5
+     |
+1246 |     fn shift_right(self, n: i32) -> Self {
+     |     ------------------------------------ private method defined here
+
+error[E0624]: method `shift_right` is private
+    --> atan_controls.rs:39:44
+     |
+  39 |             let term=c(&Q::from(7)).sqrt().shift_right(6);
+     |                                            ^^^^^^^^^^^ private method
+     |
+    ::: /home/tim/Documents/GitHub/workspace/hyperreal/src/computable/node/algebra.rs:1246:5
+     |
+1246 |     fn shift_right(self, n: i32) -> Self {
+     |     ------------------------------------ private method defined here
+
+For more information about this error, try `rustc --explain E0624`.
+error: could not compile `numbers-qualification` (bin "numbers_atan_controls") due to 2 previous errors

@@ -1,0 +1,947 @@
+{
+  "normal_production_build": true,
+  "source_manifest": "signed-depth-removal-v748-sources.json",
+  "source_directory": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/source-archives/signed-depth-removal-v748",
+  "builds": [
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "test",
+        "--lib",
+        "--test",
+        "hypercurve_curve_region_promotion",
+        "--release",
+        "--all-features",
+        "--locked",
+        "--offline",
+        "--no-run",
+        "--message-format=json"
+      ],
+      "returncode": 0,
+      "log": "signed-depth-removal-v748-hypercurve-build.log",
+      "elapsed_seconds": 191.74059439799748,
+      "binaries": {
+        "hypercurve_curve_region_promotion": {
+          "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/signed-depth-removal-v748-hypercurve_curve_region_promotion-tests",
+          "sha256": "c06f00004e9bc6d9880771381469f213a9b8d5c22280a193f685fadfbcdc783c"
+        },
+        "hypercurve": {
+          "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/signed-depth-removal-v748-hypercurve-tests",
+          "sha256": "7a3d04d9bd33f5ababad2676519c34df72ab9a289da1aa8cda8d251bacb4a5a3"
+        }
+      }
+    }
+  ],
+  "cases": [
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/signed-depth-removal-v748-hypercurve-tests",
+        "--exact",
+        "bezier_region::retained_point_classification_tests::analytic_parallel_points_classify_on_exact_rectangle_oracles",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "signed-depth-removal-v748-analytic_parallel_points_classify_on_exact_rectangle_oracles-7fa252d40a.log",
+      "elapsed_seconds": 0.06378130195662379,
+      "target": "hypercurve",
+      "name": "bezier_region::retained_point_classification_tests::analytic_parallel_points_classify_on_exact_rectangle_oracles",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/signed-depth-removal-v748-hypercurve-tests",
+        "--exact",
+        "bezier_region::retained_point_classification_tests::chord_normal_points_classify_on_exact_rectangle_oracles",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "signed-depth-removal-v748-chord_normal_points_classify_on_exact_rectangle_oracles-d8d1d1c7ef.log",
+      "elapsed_seconds": 0.0637666629627347,
+      "target": "hypercurve",
+      "name": "bezier_region::retained_point_classification_tests::chord_normal_points_classify_on_exact_rectangle_oracles",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/signed-depth-removal-v748-hypercurve-tests",
+        "--exact",
+        "bezier_region::retained_point_classification_tests::generated_point_queries_preserve_the_boundary_of_a_retraced_path",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "signed-depth-removal-v748-generated_point_queries_preserve_the_boundary_of_a_retraced_path-83d21798bb.log",
+      "elapsed_seconds": 0.007581620942801237,
+      "target": "hypercurve",
+      "name": "bezier_region::retained_point_classification_tests::generated_point_queries_preserve_the_boundary_of_a_retraced_path",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/signed-depth-removal-v748-hypercurve-tests",
+        "--exact",
+        "bezier_region::retained_point_classification_tests::generated_point_queries_reenter_an_exact_parabolic_offset",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "signed-depth-removal-v748-generated_point_queries_reenter_an_exact_parabolic_offset-9c05d43ea4.log",
+      "elapsed_seconds": 0.031729456037282944,
+      "target": "hypercurve",
+      "name": "bezier_region::retained_point_classification_tests::generated_point_queries_reenter_an_exact_parabolic_offset",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/signed-depth-removal-v748-hypercurve-tests",
+        "--exact",
+        "bezier_region::retained_point_classification_tests::lazy_endpoint_points_classify_on_exact_rectangle_oracles",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "signed-depth-removal-v748-lazy_endpoint_points_classify_on_exact_rectangle_oracles-61620bc0fc.log",
+      "elapsed_seconds": 0.0638043088838458,
+      "target": "hypercurve",
+      "name": "bezier_region::retained_point_classification_tests::lazy_endpoint_points_classify_on_exact_rectangle_oracles",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/signed-depth-removal-v748-hypercurve-tests",
+        "--exact",
+        "bezier_region::retained_point_classification_tests::public_point_queries_preserve_nested_islands_holes_and_empty_regions",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "signed-depth-removal-v748-public_point_queries_preserve_nested_islands_holes_and_empty_regions-6bbcef3853.log",
+      "elapsed_seconds": 0.06377226207405329,
+      "target": "hypercurve",
+      "name": "bezier_region::retained_point_classification_tests::public_point_queries_preserve_nested_islands_holes_and_empty_regions",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/signed-depth-removal-v748-hypercurve-tests",
+        "--exact",
+        "bezier_region::retained_point_classification_tests::similarity_points_classify_on_exact_rectangle_oracles",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "signed-depth-removal-v748-similarity_points_classify_on_exact_rectangle_oracles-08f67b2723.log",
+      "elapsed_seconds": 0.06376988207921386,
+      "target": "hypercurve",
+      "name": "bezier_region::retained_point_classification_tests::similarity_points_classify_on_exact_rectangle_oracles",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/signed-depth-removal-v748-hypercurve-tests",
+        "--exact",
+        "bezier_region::tests::algebraic_retained_ray_vertices_use_spatial_endpoint_ownership",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "signed-depth-removal-v748-algebraic_retained_ray_vertices_use_spatial_endpoint_ownership-4c5fa02d67.log",
+      "elapsed_seconds": 0.01568049588240683,
+      "target": "hypercurve",
+      "name": "bezier_region::tests::algebraic_retained_ray_vertices_use_spatial_endpoint_ownership",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/signed-depth-removal-v748-hypercurve-tests",
+        "--exact",
+        "curve::tests::boundary_cache_revalidates_approximate_internal_path_joins",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "signed-depth-removal-v748-boundary_cache_revalidates_approximate_internal_path_joins-0d3f791ea9.log",
+      "elapsed_seconds": 0.003517880104482174,
+      "target": "hypercurve",
+      "name": "curve::tests::boundary_cache_revalidates_approximate_internal_path_joins",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/signed-depth-removal-v748-hypercurve-tests",
+        "--exact",
+        "native_region_tests::batched_classifier_and_structural_facts_use_the_unified_surface",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "signed-depth-removal-v748-batched_classifier_and_structural_facts_use_the_unified_surface-0054d680c5.log",
+      "elapsed_seconds": 0.0035860140342265368,
+      "target": "hypercurve",
+      "name": "native_region_tests::batched_classifier_and_structural_facts_use_the_unified_surface",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/signed-depth-removal-v748-hypercurve-tests",
+        "--exact",
+        "native_region_tests::borrowed_unordered_lines_and_segments_have_identical_semantics",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "signed-depth-removal-v748-borrowed_unordered_lines_and_segments_have_identical_semantics-7626281eeb.log",
+      "elapsed_seconds": 0.003563605947420001,
+      "target": "hypercurve",
+      "name": "native_region_tests::borrowed_unordered_lines_and_segments_have_identical_semantics",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/signed-depth-removal-v748-hypercurve-tests",
+        "--exact",
+        "native_region_tests::boundary_contour_nesting_assigns_disjoint_nested_roles",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "signed-depth-removal-v748-boundary_contour_nesting_assigns_disjoint_nested_roles-63d2ef143d.log",
+      "elapsed_seconds": 0.003527988912537694,
+      "target": "hypercurve",
+      "name": "native_region_tests::boundary_contour_nesting_assigns_disjoint_nested_roles",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/signed-depth-removal-v748-hypercurve-tests",
+        "--exact",
+        "native_region_tests::boundary_contour_nesting_rejects_crossing_or_touching_loops",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "signed-depth-removal-v748-boundary_contour_nesting_rejects_crossing_or_touching_loops-3fe502a3d1.log",
+      "elapsed_seconds": 0.0035333780106157064,
+      "target": "hypercurve",
+      "name": "native_region_tests::boundary_contour_nesting_rejects_crossing_or_touching_loops",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/signed-depth-removal-v748-hypercurve-tests",
+        "--exact",
+        "native_region_tests::contour_profiles_group_holes_with_their_exact_material_owner",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "signed-depth-removal-v748-contour_profiles_group_holes_with_their_exact_material_owner-0baa7e72a2.log",
+      "elapsed_seconds": 0.003549007000401616,
+      "target": "hypercurve",
+      "name": "native_region_tests::contour_profiles_group_holes_with_their_exact_material_owner",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/signed-depth-removal-v748-hypercurve-tests",
+        "--exact",
+        "native_region_tests::contour_profiles_remove_holes_without_a_material_owner",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "signed-depth-removal-v748-contour_profiles_remove_holes_without_a_material_owner-a62a51781c.log",
+      "elapsed_seconds": 0.0035499560181051493,
+      "target": "hypercurve",
+      "name": "native_region_tests::contour_profiles_remove_holes_without_a_material_owner",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/signed-depth-removal-v748-hypercurve-tests",
+        "--exact",
+        "native_region_tests::contour_projection_closes_finite_ring_without_owning_topology",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "signed-depth-removal-v748-contour_projection_closes_finite_ring_without_owning_topology-5c15c45f80.log",
+      "elapsed_seconds": 0.0035526070278137922,
+      "target": "hypercurve",
+      "name": "native_region_tests::contour_projection_closes_finite_ring_without_owning_topology",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/signed-depth-removal-v748-hypercurve-tests",
+        "--exact",
+        "native_region_tests::curve_string_projection_rejects_nonfinite_arc_samples",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "signed-depth-removal-v748-curve_string_projection_rejects_nonfinite_arc_samples-13816819a2.log",
+      "elapsed_seconds": 0.0036318909842520952,
+      "target": "hypercurve",
+      "name": "native_region_tests::curve_string_projection_rejects_nonfinite_arc_samples",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/signed-depth-removal-v748-hypercurve-tests",
+        "--exact",
+        "native_region_tests::curve_string_projection_subdivides_arcs_and_keeps_exact_endpoints",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "signed-depth-removal-v748-curve_string_projection_subdivides_arcs_and_keeps_exact_endpoints-7691948cdd.log",
+      "elapsed_seconds": 0.0035409568808972836,
+      "target": "hypercurve",
+      "name": "native_region_tests::curve_string_projection_subdivides_arcs_and_keeps_exact_endpoints",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/signed-depth-removal-v748-hypercurve-tests",
+        "--exact",
+        "native_region_tests::empty_region_classifies_everything_outside",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "signed-depth-removal-v748-empty_region_classifies_everything_outside-aa6d8d55b8.log",
+      "elapsed_seconds": 0.0035312578547745943,
+      "target": "hypercurve",
+      "name": "native_region_tests::empty_region_classifies_everything_outside",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/signed-depth-removal-v748-hypercurve-tests",
+        "--exact",
+        "native_region_tests::filled_area_is_exact_for_center_defined_circle",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "signed-depth-removal-v748-filled_area_is_exact_for_center_defined_circle-f23e71e798.log",
+      "elapsed_seconds": 0.0035246789921075106,
+      "target": "hypercurve",
+      "name": "native_region_tests::filled_area_is_exact_for_center_defined_circle",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/signed-depth-removal-v748-hypercurve-tests",
+        "--exact",
+        "native_region_tests::filled_area_uses_roles_not_orientation_and_counts_nested_islands",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "signed-depth-removal-v748-filled_area_uses_roles_not_orientation_and_counts_nested_islands-555c9921e0.log",
+      "elapsed_seconds": 0.0035157690290361643,
+      "target": "hypercurve",
+      "name": "native_region_tests::filled_area_uses_roles_not_orientation_and_counts_nested_islands",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/signed-depth-removal-v748-hypercurve-tests",
+        "--exact",
+        "native_region_tests::finite_projection_checked_measurements_reject_nonfinite_or_overflow",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "signed-depth-removal-v748-finite_projection_checked_measurements_reject_nonfinite_or_overflow-77e84c63eb.log",
+      "elapsed_seconds": 0.0035579961258918047,
+      "target": "hypercurve",
+      "name": "native_region_tests::finite_projection_checked_measurements_reject_nonfinite_or_overflow",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/signed-depth-removal-v748-hypercurve-tests",
+        "--exact",
+        "native_region_tests::generated_rectangle_hole_area_uses_roles_not_orientation",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "signed-depth-removal-v748-generated_rectangle_hole_area_uses_roles_not_orientation-fb2893175d.log",
+      "elapsed_seconds": 0.11383949313312769,
+      "target": "hypercurve",
+      "name": "native_region_tests::generated_rectangle_hole_area_uses_roles_not_orientation",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/signed-depth-removal-v748-hypercurve-tests",
+        "--exact",
+        "native_region_tests::generated_unordered_line_arc_semicircles_build_unified_regions",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "signed-depth-removal-v748-generated_unordered_line_arc_semicircles_build_unified_regions-bdfa76829b.log",
+      "elapsed_seconds": 0.06372022605501115,
+      "target": "hypercurve",
+      "name": "native_region_tests::generated_unordered_line_arc_semicircles_build_unified_regions",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/signed-depth-removal-v748-hypercurve-tests",
+        "--exact",
+        "native_region_tests::generated_unordered_line_rectangles_build_unified_regions",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "signed-depth-removal-v748-generated_unordered_line_rectangles_build_unified_regions-ed39b01206.log",
+      "elapsed_seconds": 0.03172811702825129,
+      "target": "hypercurve",
+      "name": "native_region_tests::generated_unordered_line_rectangles_build_unified_regions",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/signed-depth-removal-v748-hypercurve-tests",
+        "--exact",
+        "native_region_tests::material_contour_classifies_inside_outside_and_boundary",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "signed-depth-removal-v748-material_contour_classifies_inside_outside_and_boundary-3292e13e4f.log",
+      "elapsed_seconds": 0.0035628960467875004,
+      "target": "hypercurve",
+      "name": "native_region_tests::material_contour_classifies_inside_outside_and_boundary",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/signed-depth-removal-v748-hypercurve-tests",
+        "--exact",
+        "native_region_tests::material_island_inside_hole_restores_membership",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "signed-depth-removal-v748-material_island_inside_hole_restores_membership-5c404e4543.log",
+      "elapsed_seconds": 0.003518579062074423,
+      "target": "hypercurve",
+      "name": "native_region_tests::material_island_inside_hole_restores_membership",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/signed-depth-removal-v748-hypercurve-tests",
+        "--exact",
+        "native_region_tests::native_overlap_regularizes_empty_and_open_crossings_remain_blocked",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "signed-depth-removal-v748-native_overlap_regularizes_empty_and_open_crossings_remain_blocked-5474e53aba.log",
+      "elapsed_seconds": 0.0034760520793497562,
+      "target": "hypercurve",
+      "name": "native_region_tests::native_overlap_regularizes_empty_and_open_crossings_remain_blocked",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/signed-depth-removal-v748-hypercurve-tests",
+        "--exact",
+        "native_region_tests::similarity_transform_preserves_arcs_and_reflection_flips_orientation",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "signed-depth-removal-v748-similarity_transform_preserves_arcs_and_reflection_flips_orientation-542e74a3d7.log",
+      "elapsed_seconds": 0.003506300039589405,
+      "target": "hypercurve",
+      "name": "native_region_tests::similarity_transform_preserves_arcs_and_reflection_flips_orientation",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/signed-depth-removal-v748-hypercurve-tests",
+        "--exact",
+        "native_region_tests::sparse_region_and_hole_classification_are_exact",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "signed-depth-removal-v748-sparse_region_and_hole_classification_are_exact-e0ee337fdb.log",
+      "elapsed_seconds": 0.0035915940534323454,
+      "target": "hypercurve",
+      "name": "native_region_tests::sparse_region_and_hole_classification_are_exact",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/signed-depth-removal-v748-hypercurve-tests",
+        "--exact",
+        "native_region_tests::strict_and_approximate_512_share_the_unified_policy_terminal",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "signed-depth-removal-v748-strict_and_approximate_512_share_the_unified_policy_terminal-8c1860adaf.log",
+      "elapsed_seconds": 0.0035331780090928078,
+      "target": "hypercurve",
+      "name": "native_region_tests::strict_and_approximate_512_share_the_unified_policy_terminal",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/signed-depth-removal-v748-hypercurve-tests",
+        "--exact",
+        "native_region_tests::unified_finite_profiles_preserve_material_hole_bins_and_ownership",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "signed-depth-removal-v748-unified_finite_profiles_preserve_material_hole_bins_and_ownership-bd11689ed8.log",
+      "elapsed_seconds": 0.0035332280676811934,
+      "target": "hypercurve",
+      "name": "native_region_tests::unified_finite_profiles_preserve_material_hole_bins_and_ownership",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/signed-depth-removal-v748-hypercurve-tests",
+        "--exact",
+        "native_region_tests::unordered_crossing_and_overlapping_lines_remain_explicit_blockers",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "signed-depth-removal-v748-unordered_crossing_and_overlapping_lines_remain_explicit_blockers-85516fdeb0.log",
+      "elapsed_seconds": 0.003620712086558342,
+      "target": "hypercurve",
+      "name": "native_region_tests::unordered_crossing_and_overlapping_lines_remain_explicit_blockers",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/signed-depth-removal-v748-hypercurve-tests",
+        "--exact",
+        "native_region_tests::unordered_crossing_walks_are_regularized_by_global_parity",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "signed-depth-removal-v748-unordered_crossing_walks_are_regularized_by_global_parity-06492e8201.log",
+      "elapsed_seconds": 0.0035741948522627354,
+      "target": "hypercurve",
+      "name": "native_region_tests::unordered_crossing_walks_are_regularized_by_global_parity",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/signed-depth-removal-v748-hypercurve-tests",
+        "--exact",
+        "native_region_tests::unordered_line_arc_segments_recover_the_exact_native_view",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "signed-depth-removal-v748-unordered_line_arc_segments_recover_the_exact_native_view-062c8b74a2.log",
+      "elapsed_seconds": 0.003553926944732666,
+      "target": "hypercurve",
+      "name": "native_region_tests::unordered_line_arc_segments_recover_the_exact_native_view",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/signed-depth-removal-v748-hypercurve-tests",
+        "--exact",
+        "native_region_tests::unordered_lines_materialize_one_authoritative_region",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "signed-depth-removal-v748-unordered_lines_materialize_one_authoritative_region-152d322edf.log",
+      "elapsed_seconds": 0.003478502156212926,
+      "target": "hypercurve",
+      "name": "native_region_tests::unordered_lines_materialize_one_authoritative_region",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/signed-depth-removal-v748-hypercurve-tests",
+        "--exact",
+        "native_region_tests::unordered_native_arrangement_obeys_the_approximate_512_terminal",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "signed-depth-removal-v748-unordered_native_arrangement_obeys_the_approximate_512_terminal-c5b00a5e37.log",
+      "elapsed_seconds": 0.0035286080092191696,
+      "target": "hypercurve",
+      "name": "native_region_tests::unordered_native_arrangement_obeys_the_approximate_512_terminal",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/signed-depth-removal-v748-hypercurve-tests",
+        "--exact",
+        "native_region_tests::unordered_open_lines_retain_a_boundary_blocker",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "signed-depth-removal-v748-unordered_open_lines_retain_a_boundary_blocker-9beec3fb78.log",
+      "elapsed_seconds": 0.0035259081050753593,
+      "target": "hypercurve",
+      "name": "native_region_tests::unordered_open_lines_retain_a_boundary_blocker",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/signed-depth-removal-v748-hypercurve-tests",
+        "--exact",
+        "native_region_tests::unordered_self_crossing_walk_uses_the_authoritative_curve_arrangement",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "signed-depth-removal-v748-unordered_self_crossing_walk_uses_the_authoritative_curve_arrangement-66092b7aa0.log",
+      "elapsed_seconds": 0.0035244980826973915,
+      "target": "hypercurve",
+      "name": "native_region_tests::unordered_self_crossing_walk_uses_the_authoritative_curve_arrangement",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/signed-depth-removal-v748-hypercurve-tests",
+        "--exact",
+        "native_region_tests::unordered_single_full_circle_is_a_closed_walk",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "signed-depth-removal-v748-unordered_single_full_circle_is_a_closed_walk-04ac05c8fd.log",
+      "elapsed_seconds": 0.003552326001226902,
+      "target": "hypercurve",
+      "name": "native_region_tests::unordered_single_full_circle_is_a_closed_walk",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/signed-depth-removal-v748-hypercurve-tests",
+        "--exact",
+        "bezier_region::tests::explicit_signed_loops_classify_after_regularization",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "signed-depth-removal-v748-explicit_signed_loops_classify_after_regularization-d9297061f1.log",
+      "elapsed_seconds": 0.0035726360511034727,
+      "target": "hypercurve",
+      "name": "bezier_region::tests::explicit_signed_loops_classify_after_regularization",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/signed-depth-removal-v748-hypercurve_curve_region_promotion-tests",
+        "--exact",
+        "native_contour_constructors_publish_regularized_membership",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "signed-depth-removal-v748-native_contour_constructors_publish_regularized_membership-7d1c93858b.log",
+      "elapsed_seconds": 0.0035193790681660175,
+      "target": "hypercurve_curve_region_promotion",
+      "name": "native_contour_constructors_publish_regularized_membership",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/signed-depth-removal-v748-hypercurve_curve_region_promotion-tests",
+        "--exact",
+        "authored_loop_semantics_drive_nonzero_and_even_odd_classification",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "signed-depth-removal-v748-authored_loop_semantics_drive_nonzero_and_even_odd_classification-4a1668f98d.log",
+      "elapsed_seconds": 0.0035390181001275778,
+      "target": "hypercurve_curve_region_promotion",
+      "name": "authored_loop_semantics_drive_nonzero_and_even_odd_classification",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/signed-depth-removal-v748-hypercurve_curve_region_promotion-tests",
+        "--exact",
+        "nonlinear_curved_winding_honors_authored_fill_rules_exactly",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "signed-depth-removal-v748-nonlinear_curved_winding_honors_authored_fill_rules_exactly-af2911f4ee.log",
+      "elapsed_seconds": 0.007516884943470359,
+      "target": "hypercurve_curve_region_promotion",
+      "name": "nonlinear_curved_winding_honors_authored_fill_rules_exactly",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/signed-depth-removal-v748-hypercurve_curve_region_promotion-tests",
+        "--exact",
+        "nonperiodic_self_contact_does_not_claim_a_green_integral_as_filled_area",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "signed-depth-removal-v748-nonperiodic_self_contact_does_not_claim_a_green_integral_as_filled_area-53888c071e.log",
+      "elapsed_seconds": 0.003481891006231308,
+      "target": "hypercurve_curve_region_promotion",
+      "name": "nonperiodic_self_contact_does_not_claim_a_green_integral_as_filled_area",
+      "passed": true
+    }
+  ],
+  "checks": [
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "clippy",
+        "--all-targets",
+        "--all-features",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "returncode": 0,
+      "log": "signed-depth-removal-v748-hypercurve-clippy-all-features.log",
+      "elapsed_seconds": 21.095574518898502,
+      "label": "hypercurve-clippy-all-features"
+    },
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "clippy",
+        "--all-targets",
+        "--no-default-features",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "returncode": 0,
+      "log": "signed-depth-removal-v748-hypercurve-clippy-no-default.log",
+      "elapsed_seconds": 20.244232039898634,
+      "label": "hypercurve-clippy-no-default"
+    },
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustfmt",
+        "--edition",
+        "2024",
+        "--config",
+        "skip_children=true",
+        "--check",
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/build-workspace-20260925/hypercurve/benches/bezier_region.rs",
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/build-workspace-20260925/hypercurve/src/bezier_region.rs",
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/build-workspace-20260925/hypercurve/src/native_region_tests.rs",
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/build-workspace-20260925/hypercurve/src/region.rs",
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/build-workspace-20260925/hypercurve/tests/hypercurve_curve_region_promotion.rs"
+      ],
+      "returncode": 0,
+      "log": "signed-depth-removal-v748-format.log",
+      "elapsed_seconds": 0.4644002828281373,
+      "label": "format"
+    },
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "check",
+        "--manifest-path",
+        "fuzz/Cargo.toml",
+        "--bin",
+        "region_boolean",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "log": "signed-depth-removal-v748-fuzz-check.log",
+      "elapsed_seconds": 10.92908259597607,
+      "label": "fuzz-check"
+    },
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "doc",
+        "--no-deps",
+        "--all-features",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "log": "signed-depth-removal-v748-hypercurve-documentation.log",
+      "elapsed_seconds": 10.578784826910123,
+      "label": "hypercurve-documentation"
+    },
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "clippy",
+        "--all-targets",
+        "--all-features",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "returncode": 0,
+      "log": "signed-depth-removal-v748-hyperbrep-clippy.log",
+      "elapsed_seconds": 15.285330435959622,
+      "label": "hyperbrep-clippy"
+    },
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "check",
+        "--all-targets",
+        "--all-features",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "log": "signed-depth-removal-v748-csgrs-check.log",
+      "elapsed_seconds": 14.334632669808343,
+      "label": "csgrs-check"
+    }
+  ],
+  "test_listings": {
+    "hypercurve_curve_region_promotion": {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/signed-depth-removal-v748-hypercurve_curve_region_promotion-tests",
+        "--list"
+      ],
+      "returncode": 0,
+      "log": "signed-depth-removal-v748-hypercurve_curve_region_promotion-list.log",
+      "elapsed_seconds": 0.0035481969825923443
+    },
+    "hypercurve": {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/signed-depth-removal-v748-hypercurve-tests",
+        "--list"
+      ],
+      "returncode": 0,
+      "log": "signed-depth-removal-v748-hypercurve-list.log",
+      "elapsed_seconds": 0.0075910200830549
+    }
+  },
+  "expected_cases": {
+    "hypercurve": [
+      "bezier_region::retained_point_classification_tests::analytic_parallel_points_classify_on_exact_rectangle_oracles",
+      "bezier_region::retained_point_classification_tests::chord_normal_points_classify_on_exact_rectangle_oracles",
+      "bezier_region::retained_point_classification_tests::generated_point_queries_preserve_the_boundary_of_a_retraced_path",
+      "bezier_region::retained_point_classification_tests::generated_point_queries_reenter_an_exact_parabolic_offset",
+      "bezier_region::retained_point_classification_tests::lazy_endpoint_points_classify_on_exact_rectangle_oracles",
+      "bezier_region::retained_point_classification_tests::public_point_queries_preserve_nested_islands_holes_and_empty_regions",
+      "bezier_region::retained_point_classification_tests::similarity_points_classify_on_exact_rectangle_oracles",
+      "bezier_region::tests::algebraic_retained_ray_vertices_use_spatial_endpoint_ownership",
+      "curve::tests::boundary_cache_revalidates_approximate_internal_path_joins",
+      "native_region_tests::batched_classifier_and_structural_facts_use_the_unified_surface",
+      "native_region_tests::borrowed_unordered_lines_and_segments_have_identical_semantics",
+      "native_region_tests::boundary_contour_nesting_assigns_disjoint_nested_roles",
+      "native_region_tests::boundary_contour_nesting_rejects_crossing_or_touching_loops",
+      "native_region_tests::contour_profiles_group_holes_with_their_exact_material_owner",
+      "native_region_tests::contour_profiles_remove_holes_without_a_material_owner",
+      "native_region_tests::contour_projection_closes_finite_ring_without_owning_topology",
+      "native_region_tests::curve_string_projection_rejects_nonfinite_arc_samples",
+      "native_region_tests::curve_string_projection_subdivides_arcs_and_keeps_exact_endpoints",
+      "native_region_tests::empty_region_classifies_everything_outside",
+      "native_region_tests::filled_area_is_exact_for_center_defined_circle",
+      "native_region_tests::filled_area_uses_roles_not_orientation_and_counts_nested_islands",
+      "native_region_tests::finite_projection_checked_measurements_reject_nonfinite_or_overflow",
+      "native_region_tests::generated_rectangle_hole_area_uses_roles_not_orientation",
+      "native_region_tests::generated_unordered_line_arc_semicircles_build_unified_regions",
+      "native_region_tests::generated_unordered_line_rectangles_build_unified_regions",
+      "native_region_tests::material_contour_classifies_inside_outside_and_boundary",
+      "native_region_tests::material_island_inside_hole_restores_membership",
+      "native_region_tests::native_overlap_regularizes_empty_and_open_crossings_remain_blocked",
+      "native_region_tests::similarity_transform_preserves_arcs_and_reflection_flips_orientation",
+      "native_region_tests::sparse_region_and_hole_classification_are_exact",
+      "native_region_tests::strict_and_approximate_512_share_the_unified_policy_terminal",
+      "native_region_tests::unified_finite_profiles_preserve_material_hole_bins_and_ownership",
+      "native_region_tests::unordered_crossing_and_overlapping_lines_remain_explicit_blockers",
+      "native_region_tests::unordered_crossing_walks_are_regularized_by_global_parity",
+      "native_region_tests::unordered_line_arc_segments_recover_the_exact_native_view",
+      "native_region_tests::unordered_lines_materialize_one_authoritative_region",
+      "native_region_tests::unordered_native_arrangement_obeys_the_approximate_512_terminal",
+      "native_region_tests::unordered_open_lines_retain_a_boundary_blocker",
+      "native_region_tests::unordered_self_crossing_walk_uses_the_authoritative_curve_arrangement",
+      "native_region_tests::unordered_single_full_circle_is_a_closed_walk",
+      "bezier_region::tests::explicit_signed_loops_classify_after_regularization"
+    ],
+    "hypercurve_curve_region_promotion": [
+      "native_contour_constructors_publish_regularized_membership",
+      "authored_loop_semantics_drive_nonzero_and_even_odd_classification",
+      "nonlinear_curved_winding_honors_authored_fill_rules_exactly",
+      "nonperiodic_self_contact_does_not_claim_a_green_integral_as_filled_area"
+    ]
+  },
+  "all_processes_reaped": true,
+  "probe_complete": true,
+  "qualification_complete": true
+}

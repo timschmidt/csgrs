@@ -1,0 +1,46 @@
+[
+  {
+    "name": "build",
+    "command": "javac",
+    "args": [
+      "--release",
+      "16",
+      "-encoding",
+      "UTF-8",
+      "-cp",
+      "/home/tim/Documents/GitHub/workspace/.audit-ruffini-build.LmZgYM/finite-boundaries-v2:/home/tim/Documents/GitHub/workspace/.audit-ruffini-build.LmZgYM/finite-boundaries-v1:/home/tim/Documents/GitHub/workspace/.audit-ruffini-build.LmZgYM/polynomial:/home/tim/Documents/GitHub/workspace/.audit-ruffini-build.LmZgYM/matrix:/home/tim/Documents/GitHub/workspace/.audit-ruffini-build.LmZgYM/classes:/home/tim/Documents/GitHub/workspace/.audit-ruffini-build.LmZgYM/deps/*",
+      "-d",
+      "/home/tim/Documents/GitHub/workspace/.audit-ruffini-build.LmZgYM/finite-boundaries-v2",
+      "/home/tim/Documents/GitHub/workspace/exact-real-references/ruffini-qualification/FiniteBoundariesV2.java"
+    ],
+    "started": "2026-09-07T03:21:03.593Z",
+    "finished": "2026-09-07T03:21:04.089Z",
+    "capMs": 60000,
+    "status": 0,
+    "error": null,
+    "signal": null,
+    "file": "finite-boundaries-v2-build.log",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "sourceSha256": "e173b04d7c685ecdab9dc74f6f800bc7a65f7c8fea267fca64064f6ee53d44d6",
+    "runnerSha256": "483f2ad30d1f528d1f4330fba3ab5ba900a0ebc8614ce6c7b7efc87c4ea6563a",
+    "dependencies": [
+      [
+        "native-build-manifest.json",
+        "00763b9eca620f1ac67486bbe43f087366b2871d767f489110e4045e48096844"
+      ],
+      [
+        "matrix-build-manifest.json",
+        "0ac8a19300c1fe575051ee4975f352a9ce620c5b8e45e1813d9bd4fb1e1b76cd"
+      ],
+      [
+        "polynomial-build-manifest.json",
+        "a3473385f5920dcd88d18c15aedd430b65f8f516424ae12b28e5b65fbbe1dfec"
+      ],
+      [
+        "finite-boundaries-build-manifest.json",
+        "1eb73fb1b087d16dec50a783592f5e5556170f169c340ccdf41eb5876734ae9c"
+      ]
+    ]
+  }
+]

@@ -1,0 +1,4 @@
+resolver: lts-22.44
+packages:
+- haskell-fast-reals
+- /home/tim/Documents/GitHub/workspace/exact-real-references/haskell-mpfr

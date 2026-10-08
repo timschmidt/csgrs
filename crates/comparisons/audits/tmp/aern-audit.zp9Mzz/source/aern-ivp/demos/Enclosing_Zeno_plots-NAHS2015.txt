@@ -1,0 +1,53 @@
+This file describes how to reproduce the hybrid system enclosure plots in the journal paper:
+
+"Enclosing the Behavior of a Hybrid Automaton up to and Beyond a Zeno Point"
+by
+Michal Konečný, Walid Taha, Ferenc A. Bartha, Jan Duracz, Adam Duracz, Aaron D. Ames
+
+published in "Nonlinear Analysis: Hybrid Systems" in 2015.
+
+The plots produced by the commands below are essentially the same as those in the paper. Nevertheless, there are minor differences due to changes made to the plotting code in the course of making revisions to the paper.
+
+Figure 4 (a)
+    command:
+        simple-events bouncingBall 3.5 "PlotGraph[True](0,3.5,0,5)" GUI locate evtree 12 12 3 20 0 0
+    approx computation time: 4 minutes
+Figure 4 (b)
+    command:
+        simple-events twoTanks 2.5 "PlotGraph[True,True](0,2.5,0,2)" GUI locate evtree 17 17 1 10 0 0
+    approx computation time: 12 minutes
+Figure 4 (c)
+    command:
+        simple-events bouncingBallEnergy 3.5 "PlotGraph[True](0,3.5,0,5)" GUI locate evtree 12 12 3 20 0 0
+    approx computation time: 39 minutes
+Figure 4 (d)
+    command:
+        simple-events twoTanksSum 2.5 "PlotGraph[True,True,True](0,2.5,0,2)" GUI locate evtree 17 17 1 10 0 0
+    approx computation time: 27 minutes
+
+Figure 10 top:
+    command:
+        simple-events bouncingBallNewtonianGravityEnergy 2.8 "PlotGraph[True,True](0,3,-7,7)" GUI locate evtree 12 12 5 20 3 0
+    approx computation time: 26 minutes
+Figure 10 bottom:
+    command:
+        simple-events bouncingBallNewtonianGravityEnergy 2.8 "PlotGraph[True,True](0,3,-7,7)" GUI locate evtree 6 6 5 20 3 0
+    approx computation time: 6 minutes
+
+Figure 11 top:
+    command:
+        simple-events bouncingBallDragEnergy 2.7 "PlotGraph[True,True](0,3,-7,7)" GUI locate evtree 12 12 5 20 3 0
+    approx computation time: 20 minutes
+Figure 11 bottom:
+    command:
+        simple-events bouncingBallDragEnergy 2.7 "PlotGraph[True,True](0,3,-7,7)" GUI locate evtree 6 6 5 20 3 0
+    approx computation time: 4 minutes
+
+Figure 12 top:
+    command:
+        simple-events bouncingBallDragNewtonianGravityEnergy 2.5 "PlotGraph[True,True](0,3,-7,7)" GUI locate evtree 12 12 5 20 3 0
+    approx computation time: 17 minutes
+Figure 12 bottom:
+    command:
+        simple-events bouncingBallDragNewtonianGravityEnergy 2.5 "PlotGraph[True,True](0,3,-7,7)" GUI locate evtree 6 6 5 20 3 0
+    approx computation time: 6 minutes

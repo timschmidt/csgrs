@@ -1,0 +1,82 @@
+{
+  "status": "implemented, qualified, committed; original goal active",
+  "commits": {
+    "hypercurve": "49692e2751a3f53693530af1479d6ec7d16c7e2b",
+    "hypersolve": "c0742ace4a762d701df6241bdfa919c313e6cec4",
+    "hyperbrep": "8a84ee7db02fd2720ac89a1a6a227ee4ec2a8171"
+  },
+  "preceding_hypercurve_commit": "9b9060cfca5cce47f114e654a5c82afda4c7f6f6",
+  "implementation": [
+    "One borrowed-coefficient sign interface replaces the owned-vector and optional normalized-polynomial entry points. Empty coefficients denote zero. The retired signed_polynomial_at_root and direct_signed_coefficients_at_parameter names have no remaining source references.",
+    "The existing exact Bernstein certificate on the retained bracket runs before algebraic normalization and selected-root replay. No extra root refinement precedes difficult signs or equality. Complete exact replay and subsequent refinement remain before any permitted approximation.",
+    "All callers were migrated directly across five files. Coefficient clones used only to transfer ownership were removed. The separate point-predicate dispatch now delegates to the shared schedule.",
+    "Ten caller-side polynomial constructions used only for signs were removed. Degree decisions remain where the caller actually needs root isolation or another polynomial capability. Circle inverse charts retain nonzero proofs at the requested contacts and decline empty contact sets.",
+    "Production source prefixes shrink by 88 lines. No compatibility shim, replacement root carrier or new cache was added."
+  ],
+  "caller_migration": "unified-polynomial-sign-caller-migration.json records 109 original call expressions, including tests and the removed internal trampoline; it is not a claim of 109 production callers.",
+  "baseline": "unified-polynomial-sign-baseline.log: a sign already separated on the retained interval invokes one exact selected-root query, violating the new no-remainder-work invariant.",
+  "focused": "unified-polynomial-sign-focused.log: all five focused tests pass in 0.00 seconds.",
+  "regressions": [
+    "Mixed power coefficients of +/- (1-t+t^2), scaled by 1 or pi, sign directly on simple and repeated cubic-root brackets in both contexts without a selected-root remainder query or defining Sturm sequence.",
+    "Queries with leading coefficient 1-cos(2^-600) retain exact signs despite unknown degree, at exact and algebraic parameters. Empty queries and exact-point cancellation remain zero.",
+    "The existing +/-2^-600 selected-root relation queries, repeated roots, boundary ownership and beyond-256-refinement sign case remain exact and retain their existing root evidence."
+  ],
+  "tests": {
+    "hypercurve": {
+      "passed": 1456,
+      "targets": 13,
+      "ignored": 6,
+      "log": "unified-polynomial-sign-hypercurve-tests.log",
+      "exit_code": 0,
+      "fresh": true
+    },
+    "hyperbrep": {
+      "passed": 232,
+      "targets": 1,
+      "ignored": 0,
+      "log": "unified-polynomial-sign-hyperbrep-tests.log",
+      "exit_code": 0,
+      "fresh": true
+    },
+    "hypersolve": {
+      "passed": 489,
+      "targets": 1,
+      "ignored": 0,
+      "log": "deflated-root-authority-hypersolve-tests.log",
+      "exit_code": 0,
+      "fresh": false,
+      "unchanged_commit": "c0742ace4a762d701df6241bdfa919c313e6cec4"
+    }
+  },
+  "freshly_run_total": 1688,
+  "qualified_total_including_unchanged_hypersolve": 2177,
+  "established_expensive_hypercurve_exclusions": 4,
+  "checks": [
+    "unified-polynomial-sign-hypercurve-check.log: exit 0",
+    "unified-polynomial-sign-hyperbrep-check.log: exit 0",
+    "changed-file rustfmt --check and git diff --check: exit 0",
+    "no references to retired sign entry points remain in repository source"
+  ],
+  "source_sha256": {
+    "hypercurve/src/bezier_parameter.rs": "6347c983e1b8ebf2075af6130ac5fea3a2b2511bdbab018b57b10df07a4f9e06",
+    "hypercurve/src/bezier_algebraic_image.rs": "cb5931494fd12b5193faa304ece992a6f6a9a653d9df48b57548cf6d393f81f6",
+    "hypercurve/src/bezier_offset.rs": "bec55c716d987246eb08ecf95ffb8a5048878892b54d29ff1fe1c4882a79c791",
+    "hypercurve/src/bezier_split.rs": "aa60eb4cea1d5e0efc4755aa209cc456b6ab98af5ce06a34a7da3afd7686f598",
+    "hypercurve/src/rational_bezier_general.rs": "1f93186a5ca1b1dc907a7f19b701771e7727e6bc5c7dd5cd62aa8db6b22dcfca"
+  },
+  "diagnostics": {
+    "binary": "stationary-ph-offset-unified-polynomial-sign",
+    "binary_sha256": "ac7bbbcddc96150e20f652307115f20b42f3f4fe7ec86cf2977512c6967e8878",
+    "log": "stationary-ph-offset-unified-polynomial-sign.log",
+    "timeout_seconds": 60,
+    "exit_code": 124,
+    "first_offset": "Certified with degree-five analytic source, 3.771806253 seconds.",
+    "second_offset": "No result before total timeout; no inward composition repair or application speedup claimed.",
+    "stack": "stationary-ph-unified-polynomial-sign-stack.log",
+    "finding": "Difficult coefficient signs still reach integer primitive pseudo-remainder content during local polynomial refinement, now through the consolidated polynomial_sign_by_algebraic_replay path.",
+    "timing_scope": "Final timeout probe ran after qualification finished. Earlier profiling overlapped qualification; the 97.91-second library duration is not a controlled benchmark."
+  },
+  "clean_repository_count": 30,
+  "workspace_state": "unified-polynomial-sign-workspace-after-commit.json",
+  "goal_status": "active"
+}

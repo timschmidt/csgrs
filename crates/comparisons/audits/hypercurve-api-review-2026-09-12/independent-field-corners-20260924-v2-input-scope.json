@@ -1,0 +1,12 @@
+{
+  "hypercurve_parent": "c13778eb15662d3b12093a54e518e9fb137c39d1",
+  "changed_files": [
+    "hypercurve/src/bezier_offset.rs",
+    "hypercurve/src/bezier_region.rs",
+    "hypercurve/src/curve.rs",
+    "hypercurve/src/curve_region_boolean.rs"
+  ],
+  "bindings": 2044,
+  "immutable_snapshot": "/tmp/hypercurve-independent-field-corners-v2-20260924",
+  "production_change": "unify selected-circle fragment point containment"
+}

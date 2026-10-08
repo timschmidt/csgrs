@@ -1,0 +1,14 @@
+{
+  "tag": "monic-cost-allocation-run",
+  "started": "2026-09-09T00:37:25.665Z",
+  "finished": "2026-09-09T00:37:33.661Z",
+  "elapsedSeconds": 7.992786306,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison",
+  "command": "node",
+  "args": [
+    "audits/continuation/calcium/run-monic-costs.mjs",
+    "allocation"
+  ],
+  "code": 0,
+  "signal": null
+}

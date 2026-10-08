@@ -1,0 +1,21 @@
+{
+  "returncode": 0,
+  "elapsed_seconds": 0.0075329339888412505,
+  "normal_library_sha256": "ac087dcc452fada528c2564ba2c289aa0b5bd7d1eeeabc4b5e9db6e2ce224d75",
+  "log": "region-overlap-correspondence-probe-final.log",
+  "source": "circle-common-dispatch-baseline.rs",
+  "command": [
+    "rustc",
+    "--edition=2024",
+    "-O",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/circle-common-dispatch-baseline.rs",
+    "--extern",
+    "hypercurve=/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/libhypercurve-2c7ff6f3fbe07653.rlib",
+    "-L",
+    "dependency=/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps",
+    "-o",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/region-overlap-correspondence-probe-final"
+  ],
+  "source_sha256": "43fd661cca1f5a4ea052a03f8c01e7a17b22ca732d38addd201dafcc86d9360b",
+  "executable_sha256": "a10cda1c0b2632024c12b6dd6f468149d608723fa6835ef93946e61f677ac932"
+}

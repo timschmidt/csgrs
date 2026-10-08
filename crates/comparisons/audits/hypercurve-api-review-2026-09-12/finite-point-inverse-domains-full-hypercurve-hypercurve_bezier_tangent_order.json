@@ -1,0 +1,34 @@
+{
+  "repo": "hypercurve",
+  "target": "hypercurve_bezier_tangent_order",
+  "binary": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve_bezier_tangent_order-019f7f964f1b5ce8",
+  "command": [
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve_bezier_tangent_order-019f7f964f1b5ce8",
+    "--test-threads=4",
+    "--color",
+    "never"
+  ],
+  "sha256": "0d774ceeedc655a69beebb99f47d1ffcbf50051ddeca5e3f7f8a3936ebf5774e",
+  "returncode": 0,
+  "timed_out": false,
+  "elapsed_seconds": 0.0034227350261062384,
+  "log": "finite-point-inverse-domains-full-hypercurve-hypercurve_bezier_tangent_order.log",
+  "passed": [
+    "algebraic_same_tangent_order_uses_second_derivative_side_witness",
+    "algebraic_tangent_order_evidence_same_direction_without_guessing",
+    "algebraic_same_tangent_order_rejects_equal_second_order_evidence",
+    "algebraic_same_tangent_order_uses_third_derivative_after_zero_curvature",
+    "algebraic_tangent_order_rejects_zero_tangent",
+    "algebraic_tangent_order_separates_opposite_half_turns",
+    "algebraic_tangent_order_uses_represented_cross_product_for_same_half",
+    "algebraic_tangent_order_handles_distinct_generators_with_disjoint_enclosures",
+    "rational_algebraic_same_tangent_order_uses_second_derivative_side_witness"
+  ],
+  "failed": [],
+  "ignored": [],
+  "summaries": [
+    "test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s"
+  ],
+  "new_failures": [],
+  "known_failures": []
+}

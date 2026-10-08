@@ -1,0 +1,74 @@
+hyperbrep/src/geometry.rs:5729:        .trim_inside_region_with_parameters(&region, &CurveContext::STRICT)?
+hyperbrep/src/geometry.rs:7089:        .trim_inside_region_with_parameters(&region, &CurveContext::STRICT)?
+hyperbrep/src/geometry.rs:14307:                .trim_inside_region_with_parameters(&trim_region, &CurveContext::STRICT)
+hyperbrep/src/boolean.rs:3237:                .trim_inside_region(region, &CurveContext::STRICT)
+hyperbrep/src/boolean.rs:3838:            .trim_inside_region_with_parameters(&region, &CurveContext::STRICT)
+hyperbrep/src/boolean.rs:4320:        let trimmed = match source.trim_inside_region(&region, &policy) {
+hyperbrep/src/boolean.rs:6461:            match planar.trim_inside_region_with_parameters(&region, &CurveContext::STRICT) {
+hypercurve/src/curve_region_trim.rs:75:pub struct CurveRegionTrimFragment2 {
+hypercurve/src/curve_region_trim.rs:88:    fragment: CurveRegionTrimFragment2,
+hypercurve/src/curve_region_trim.rs:98:    pub const fn trim_fragment(&self) -> &CurveRegionTrimFragment2 {
+hypercurve/src/curve_region_trim.rs:103:    pub fn into_trim_fragment(self) -> CurveRegionTrimFragment2 {
+hypercurve/src/curve_region_trim.rs:110:pub struct CurvePathRegionTrim2 {
+hypercurve/src/curve_region_trim.rs:114:impl CurvePathRegionTrim2 {
+hypercurve/src/curve_region_trim.rs:126:impl CurveRegionTrimFragment2 {
+hypercurve/src/curve_region_trim.rs:217:    pub fn trim_inside_region(
+hypercurve/src/curve_region_trim.rs:223:            self.trim_inside_region_with_parameters_raw(region, attempt)
+hypercurve/src/curve_region_trim.rs:227:                        .map(CurveRegionTrimFragment2::into_curve)
+hypercurve/src/curve_region_trim.rs:239:    /// [`CurveRegionTrimFragment2::represented_parameter_range`] succeeds only
+hypercurve/src/curve_region_trim.rs:241:    pub fn trim_inside_region_with_parameters(
+hypercurve/src/curve_region_trim.rs:245:    ) -> ExactCurveResult<CurveOutcome<Vec<CurveRegionTrimFragment2>>> {
+hypercurve/src/curve_region_trim.rs:247:            self.trim_inside_region_with_parameters_raw(region, attempt)
+hypercurve/src/curve_region_trim.rs:251:    pub(crate) fn trim_inside_region_with_parameters_raw(
+hypercurve/src/curve_region_trim.rs:255:    ) -> ExactCurveResult<Vec<CurveRegionTrimFragment2>> {
+hypercurve/src/curve_region_trim.rs:497:                    retained.push(CurveRegionTrimFragment2 {
+hypercurve/src/curve_region_trim.rs:518:    pub fn trim_inside_region(
+hypercurve/src/curve_region_trim.rs:522:    ) -> ExactCurveResult<CurveOutcome<Vec<CurvePathRegionTrim2>>> {
+hypercurve/src/curve_region_trim.rs:524:            self.trim_inside_region_raw(region, attempt)
+hypercurve/src/curve_region_trim.rs:528:    fn trim_inside_region_raw(
+hypercurve/src/curve_region_trim.rs:532:    ) -> ExactCurveResult<Vec<CurvePathRegionTrim2>> {
+hypercurve/src/curve_region_trim.rs:538:            let fragments = source_curve.trim_inside_region_with_parameters_raw(region, policy)?;
+hypercurve/src/curve_region_trim.rs:564:            .map(|fragments| CurvePathRegionTrim2 {
+hypercurve/src/curve_region_trim.rs:665:    current: &CurveRegionTrimFragment2,
+hypercurve/src/curve_region_trim.rs:696:    previous: &CurveRegionTrimFragment2,
+hypercurve/src/curve_region_trim.rs:697:    current: &CurveRegionTrimFragment2,
+hypercurve/src/curve_region_trim.rs:728:    fragment: &CurveRegionTrimFragment2,
+hypercurve/src/curve_region_trim.rs:962:            .trim_inside_region_with_parameters(&region, &CurveContext::APPROXIMATE_512)
+hypercurve/src/curve_region_trim.rs:986:            .trim_inside_region(&region, &CurveContext::STRICT)
+hypercurve/src/curve_region_trim.rs:1007:            .trim_inside_region(&region, &CurveContext::STRICT)
+hypercurve/src/curve_region_trim.rs:1029:            .trim_inside_region(&region, &CurveContext::STRICT)
+hypercurve/src/curve_region_trim.rs:1065:            .trim_inside_region(&region, &CurveContext::APPROXIMATE_512)
+hypercurve/src/curve_region_trim.rs:1086:                .trim_inside_region(&region, &CurveContext::STRICT)
+hypercurve/src/curve_region_trim.rs:1099:            .trim_inside_region(&region, &CurveContext::STRICT)
+hypercurve/src/curve_region_trim.rs:1113:                .trim_inside_region_with_parameters(&region, &policy)
+hypercurve/src/curve_region_trim.rs:1145:                .trim_inside_region(&region, &policy)
+hypercurve/src/curve_region_trim.rs:1160:            .trim_inside_region_with_parameters(&region, &CurveContext::STRICT)
+hypercurve/src/curve_region_trim.rs:1192:            .trim_inside_region(&region, &CurveContext::STRICT)
+hypercurve/src/curve_region_trim.rs:1221:            .trim_inside_region_with_parameters(&region, &CurveContext::STRICT)
+hypercurve/src/curve_region_trim.rs:1265:                    .trim_inside_region_with_parameters(&region, &policy)
+hypercurve/src/curve_region_trim.rs:1318:                let again = piece.curve().trim_inside_region(&smaller, &policy).unwrap();
+hypercurve/src/curve_region_trim.rs:1362:                    let result = path.trim_inside_region(&region, &policy).unwrap();
+hypercurve/src/curve_region_trim.rs:1404:            let result = path.trim_inside_region(&region, &policy).unwrap();
+hypercurve/fuzz/fuzz_targets/curve_string_editing.rs:105:        let _ = curve.trim_inside_region(&region, &policy);
+hypercurve/src/lib.rs:204:    CurvePathRegionTrim2, CurvePathRegionTrimFragment2, CurveRegionBoundaryContact2,
+hypercurve/src/lib.rs:205:    CurveRegionBoundaryKind2, CurveRegionTrimFragment2,
+hypercurve/src/curve_region_boolean.rs:17712:        trimmed: &crate::CurveRegionTrimFragment2,
+hypercurve/src/curve_region_boolean.rs:17755:                .trim_inside_region_with_parameters(&region, &policy)
+hypercurve/src/curve_region_boolean.rs:17808:                    .trim_inside_region_with_parameters(&region, &policy)
+hypercurve/tests/hypercurve_curve_string.rs:3:    CurvePathRegionTrim2, CurveRegion2, CurveString2, CurveStringEndpoint2, CurveStringTrimPoint2,
+hypercurve/tests/hypercurve_curve_string.rs:50:fn assert_trim_path_line(path: &CurvePathRegionTrim2, start: Point2, end: Point2) {
+hypercurve/tests/hypercurve_curve_string.rs:762:fn curve_string_trim_inside_region_splits_disconnected_inside_windows() {
+hypercurve/tests/hypercurve_curve_string.rs:772:        .trim_inside_region(&region, &policy())
+hypercurve/tests/hypercurve_curve_string.rs:782:fn curve_string_trim_inside_region_respects_holes() {
+hypercurve/tests/hypercurve_curve_string.rs:793:        .trim_inside_region(&region, &policy())
+hypercurve/tests/hypercurve_curve_string.rs:802:fn curve_string_trim_inside_region_retains_boundary_overlap() {
+hypercurve/tests/hypercurve_curve_string.rs:807:        .trim_inside_region(&region, &policy())
+hypercurve/benches/editing.rs:218:            .trim_inside_region(&region, &policy)
+hypercurve/tests/hypercurve_analytic_parallel_region.rs:1042:        let outcome = source.trim_inside_region(&region, &policy).unwrap();
+hypercurve/tests/hypercurve_analytic_parallel_region.rs:1057:        let outcome = source.trim_inside_region(&region, &policy).unwrap();
+hypercurve/src/curve_string.rs:15:    CurvePath2, CurvePathRegionTrim2, CurveRegion2, CurveResult, ExactCurveResult,
+hypercurve/src/curve_string.rs:504:    pub fn trim_inside_region(
+hypercurve/src/curve_string.rs:508:    ) -> ExactCurveResult<crate::CurveOutcome<Vec<CurvePathRegionTrim2>>> {
+hypercurve/src/curve_string.rs:517:        CurvePath2::try_new(curves)?.trim_inside_region(region, policy)
+hypercurve/src/bezier_offset.rs:149174:                .trim_inside_region_with_parameters(&region, &policy)
+hypercurve/src/bezier_offset.rs:149208:                    .trim_inside_region_with_parameters(&region, &policy)

@@ -1,0 +1,671 @@
+{
+  "hypersolve_head": "60a4e609d382c681ee98a1de6b4bdb7673487d37",
+  "diagnostic_only": true,
+  "parent": "190adc7a1d3a94263f87a9ade8a68b588f54527a",
+  "source_manifest": "local-chord-complete-replay-20260924-v112-sources.json",
+  "source_directory": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/source-archives/hypercurve-local-chord-complete-replay-v112-20260924",
+  "build_source_directory": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/build-workspace-20260925",
+  "checks": [
+    {
+      "label": "hyperreal-fmt",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "fmt",
+        "--all",
+        "--",
+        "--check"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.882378201931715,
+      "log": "compact-quadratic-full-20260925-v112-hyperreal-fmt.log"
+    },
+    {
+      "label": "hyperreal-clippy-all",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "clippy",
+        "--all-targets",
+        "--all-features",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.5828244499862194,
+      "log": "compact-quadratic-full-20260925-v112-hyperreal-clippy-all.log"
+    },
+    {
+      "label": "hyperreal-clippy-minimal",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "clippy",
+        "--all-targets",
+        "--no-default-features",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.5329429899575189,
+      "log": "compact-quadratic-full-20260925-v112-hyperreal-clippy-minimal.log"
+    }
+  ],
+  "binaries": {
+    "hyperreal_numerical_cross_reference_test": {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/compact-quadratic-full-20260925-v112-hyperreal_numerical_cross_reference_test",
+      "sha256": "cee60058f9f71776dd3c5799420ccab17a0d45b4be118d851a9ae405e0a60cf5"
+    },
+    "hyperreal_exact_quadratic_normal_form_test": {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/compact-quadratic-full-20260925-v112-hyperreal_exact_quadratic_normal_form_test",
+      "sha256": "bfb483ff52c2efc49ce60c67658a250129fd0f1a13ad302e7e345ddb986d3c19"
+    },
+    "hyperreal_readme_test": {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/compact-quadratic-full-20260925-v112-hyperreal_readme_test",
+      "sha256": "1ce82438af2d47962b0c6467278690b0c008bb769c2e975184791ce8960ad5fe"
+    },
+    "hyperreal_readme_metadata_test": {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/compact-quadratic-full-20260925-v112-hyperreal_readme_metadata_test",
+      "sha256": "751fa95ffb5316db7ebeae314fc13cca979ffb44df640102b895c049d57a5772"
+    },
+    "hyperreal_precision_limits_test": {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/compact-quadratic-full-20260925-v112-hyperreal_precision_limits_test",
+      "sha256": "bb0bf5d49c4c7e140f9de2ee6453d29f71d940d285e8c581bb857e147b801eec"
+    },
+    "hyperreal_numeric_roundtrip_formats_test": {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/compact-quadratic-full-20260925-v112-hyperreal_numeric_roundtrip_formats_test",
+      "sha256": "fc54bf9e2a4dc088a8879ecef04167bc101197216080bcd1f558114373e513af"
+    },
+    "hyperreal_gmp_api_coverage_test": {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/compact-quadratic-full-20260925-v112-hyperreal_gmp_api_coverage_test",
+      "sha256": "2b3f402a5795149bbf9bf13cc6b619653dedf1917863f93273803ed0e88e520a"
+    },
+    "hyperreal_adversarial_props_test": {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/compact-quadratic-full-20260925-v112-hyperreal_adversarial_props_test",
+      "sha256": "96da58bbd8d84dd50a796c3d818d776e3022fcfc8f5390cbfdebd2020aae27fb"
+    },
+    "hyperreal_public_numeric_semantics_test": {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/compact-quadratic-full-20260925-v112-hyperreal_public_numeric_semantics_test",
+      "sha256": "ed8fea42f5442b5c53164156468ac2c4c1f910aa52c957283d12208f14fcb7cd"
+    },
+    "hyperreal_hyperreal_bin": {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/compact-quadratic-full-20260925-v112-hyperreal_hyperreal_bin",
+      "sha256": "5a829937fa9933f6fed41a82606161f070bb6fdc53fdd88f236dcd3a373fa717"
+    },
+    "hyperreal_adversarial_regressions_test": {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/compact-quadratic-full-20260925-v112-hyperreal_adversarial_regressions_test",
+      "sha256": "97f182b787a148dcaf12745f3efdbe36246237ff179e4d73336bebcdd872b909"
+    },
+    "hyperreal_rational_oracle_test": {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/compact-quadratic-full-20260925-v112-hyperreal_rational_oracle_test",
+      "sha256": "ae722538b94e9806ba863e653ede324307a82f1f4d976fc981eda832eb186297"
+    },
+    "hyperreal_adversarial_semantics_test": {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/compact-quadratic-full-20260925-v112-hyperreal_adversarial_semantics_test",
+      "sha256": "a0ff2715af737f81402bcf8cc66c00244c19ab547c01066735ddd33ebf5c6ea4"
+    },
+    "hyperreal_multiquadratic_normal_form_test": {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/compact-quadratic-full-20260925-v112-hyperreal_multiquadratic_normal_form_test",
+      "sha256": "64f00dd0e38d074f23ba7cabb0d932080101637e15747f732eecf8bade305067"
+    },
+    "hyperreal_cli_test": {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/compact-quadratic-full-20260925-v112-hyperreal_cli_test",
+      "sha256": "1fba37a68e0e75b60bbb6d8237bbcc72dc0c585670fa8c313ec22a77de9fb6b5"
+    },
+    "hyperreal_real_representations_test": {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/compact-quadratic-full-20260925-v112-hyperreal_real_representations_test",
+      "sha256": "a4462f792c0d07a4b56b01d46fe9171a7fbcdaaa6c0c88c6da5842c8ce49919c"
+    },
+    "hyperreal_hyperreal_lib": {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/compact-quadratic-full-20260925-v112-hyperreal_hyperreal_lib",
+      "sha256": "2dd6b50ce8bfcd497dd8b609dc65f00e24a1d414f0c44647c563e8070a1d5e22"
+    },
+    "hypersolve": {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/compact-quadratic-full-20260925-v112-hypersolve",
+      "sha256": "9827c0ad0595908eedfe49b864682fe98dce2d231541a3ed4f742ef23b489a64"
+    },
+    "hypercurve_curve": {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/compact-quadratic-full-20260925-v112-hypercurve_curve",
+      "sha256": "e309574d238cd9a8b3a3d55d6610708607b386bf3b548c2db62223f5771076ca"
+    },
+    "hypercurve_analytic_parallel_region": {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/compact-quadratic-full-20260925-v112-hypercurve_analytic_parallel_region",
+      "sha256": "6bc9f88af2cded5bd098a43aa972a985550cfb3199b4b02215561fc1c306d3fd"
+    }
+  },
+  "cases": [
+    {
+      "label": "hyperreal_numerical_cross_reference_test",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/compact-quadratic-full-20260925-v112-hyperreal_numerical_cross_reference_test",
+        "--test-threads=2",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.5875464559067041,
+      "log": "compact-quadratic-full-20260925-v112-hyperreal_numerical_cross_reference_test.log",
+      "target": "hyperreal_numerical_cross_reference_test",
+      "name": "full"
+    },
+    {
+      "label": "hyperreal_exact_quadratic_normal_form_test",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/compact-quadratic-full-20260925-v112-hyperreal_exact_quadratic_normal_form_test",
+        "--test-threads=2",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.41885960195213556,
+      "log": "compact-quadratic-full-20260925-v112-hyperreal_exact_quadratic_normal_form_test.log",
+      "target": "hyperreal_exact_quadratic_normal_form_test",
+      "name": "full"
+    },
+    {
+      "label": "hyperreal_readme_test",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/compact-quadratic-full-20260925-v112-hyperreal_readme_test",
+        "--test-threads=2",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.419497707975097,
+      "log": "compact-quadratic-full-20260925-v112-hyperreal_readme_test.log",
+      "target": "hyperreal_readme_test",
+      "name": "full"
+    },
+    {
+      "label": "hyperreal_readme_metadata_test",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/compact-quadratic-full-20260925-v112-hyperreal_readme_metadata_test",
+        "--test-threads=2",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.42622549703810364,
+      "log": "compact-quadratic-full-20260925-v112-hyperreal_readme_metadata_test.log",
+      "target": "hyperreal_readme_metadata_test",
+      "name": "full"
+    },
+    {
+      "label": "hyperreal_precision_limits_test",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/compact-quadratic-full-20260925-v112-hyperreal_precision_limits_test",
+        "--test-threads=2",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.4104207509662956,
+      "log": "compact-quadratic-full-20260925-v112-hyperreal_precision_limits_test.log",
+      "target": "hyperreal_precision_limits_test",
+      "name": "full"
+    },
+    {
+      "label": "hyperreal_numeric_roundtrip_formats_test",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/compact-quadratic-full-20260925-v112-hyperreal_numeric_roundtrip_formats_test",
+        "--test-threads=2",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.42276330396998674,
+      "log": "compact-quadratic-full-20260925-v112-hyperreal_numeric_roundtrip_formats_test.log",
+      "target": "hyperreal_numeric_roundtrip_formats_test",
+      "name": "full"
+    },
+    {
+      "label": "hyperreal_gmp_api_coverage_test",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/compact-quadratic-full-20260925-v112-hyperreal_gmp_api_coverage_test",
+        "--test-threads=2",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.439751649973914,
+      "log": "compact-quadratic-full-20260925-v112-hyperreal_gmp_api_coverage_test.log",
+      "target": "hyperreal_gmp_api_coverage_test",
+      "name": "full"
+    },
+    {
+      "label": "hyperreal_adversarial_props_test",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/compact-quadratic-full-20260925-v112-hyperreal_adversarial_props_test",
+        "--test-threads=2",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.4330045720562339,
+      "log": "compact-quadratic-full-20260925-v112-hyperreal_adversarial_props_test.log",
+      "target": "hyperreal_adversarial_props_test",
+      "name": "full"
+    },
+    {
+      "label": "hyperreal_public_numeric_semantics_test",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/compact-quadratic-full-20260925-v112-hyperreal_public_numeric_semantics_test",
+        "--test-threads=2",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.41413437598384917,
+      "log": "compact-quadratic-full-20260925-v112-hyperreal_public_numeric_semantics_test.log",
+      "target": "hyperreal_public_numeric_semantics_test",
+      "name": "full"
+    },
+    {
+      "label": "hyperreal_hyperreal_bin",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/compact-quadratic-full-20260925-v112-hyperreal_hyperreal_bin",
+        "--test-threads=2",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.40251672198064625,
+      "log": "compact-quadratic-full-20260925-v112-hyperreal_hyperreal_bin.log",
+      "target": "hyperreal_hyperreal_bin",
+      "name": "full"
+    },
+    {
+      "label": "hyperreal_adversarial_regressions_test",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/compact-quadratic-full-20260925-v112-hyperreal_adversarial_regressions_test",
+        "--test-threads=2",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.4239218250149861,
+      "log": "compact-quadratic-full-20260925-v112-hyperreal_adversarial_regressions_test.log",
+      "target": "hyperreal_adversarial_regressions_test",
+      "name": "full"
+    },
+    {
+      "label": "hyperreal_rational_oracle_test",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/compact-quadratic-full-20260925-v112-hyperreal_rational_oracle_test",
+        "--test-threads=2",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.44921402097679675,
+      "log": "compact-quadratic-full-20260925-v112-hyperreal_rational_oracle_test.log",
+      "target": "hyperreal_rational_oracle_test",
+      "name": "full"
+    },
+    {
+      "label": "hyperreal_adversarial_semantics_test",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/compact-quadratic-full-20260925-v112-hyperreal_adversarial_semantics_test",
+        "--test-threads=2",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.4020786420442164,
+      "log": "compact-quadratic-full-20260925-v112-hyperreal_adversarial_semantics_test.log",
+      "target": "hyperreal_adversarial_semantics_test",
+      "name": "full"
+    },
+    {
+      "label": "hyperreal_multiquadratic_normal_form_test",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/compact-quadratic-full-20260925-v112-hyperreal_multiquadratic_normal_form_test",
+        "--test-threads=2",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.4062742649111897,
+      "log": "compact-quadratic-full-20260925-v112-hyperreal_multiquadratic_normal_form_test.log",
+      "target": "hyperreal_multiquadratic_normal_form_test",
+      "name": "full"
+    },
+    {
+      "label": "hyperreal_cli_test",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/compact-quadratic-full-20260925-v112-hyperreal_cli_test",
+        "--test-threads=2",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.40987143793608993,
+      "log": "compact-quadratic-full-20260925-v112-hyperreal_cli_test.log",
+      "target": "hyperreal_cli_test",
+      "name": "full"
+    },
+    {
+      "label": "hyperreal_real_representations_test",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/compact-quadratic-full-20260925-v112-hyperreal_real_representations_test",
+        "--test-threads=2",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.4583095069974661,
+      "log": "compact-quadratic-full-20260925-v112-hyperreal_real_representations_test.log",
+      "target": "hyperreal_real_representations_test",
+      "name": "full"
+    },
+    {
+      "label": "hyperreal_hyperreal_lib",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/compact-quadratic-full-20260925-v112-hyperreal_hyperreal_lib",
+        "--test-threads=2",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 3.881660392973572,
+      "log": "compact-quadratic-full-20260925-v112-hyperreal_hyperreal_lib.log",
+      "target": "hyperreal_hyperreal_lib",
+      "name": "full"
+    },
+    {
+      "label": "nonrational_local_coefficients_preserve_repeated_fiber_roots",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/compact-quadratic-full-20260925-v112-hypersolve",
+        "--exact",
+        "algebraic_fiber::tests::nonrational_local_coefficients_preserve_repeated_fiber_roots",
+        "--test-threads=1",
+        "--nocapture"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.41853376396466047,
+      "log": "compact-quadratic-full-20260925-v112-nonrational_local_coefficients_preserve_repeated_fiber_roots.log",
+      "target": "hypersolve",
+      "name": "algebraic_fiber::tests::nonrational_local_coefficients_preserve_repeated_fiber_roots"
+    },
+    {
+      "label": "local_division_preserves_arbitrary_exact_base_coefficients",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/compact-quadratic-full-20260925-v112-hypersolve",
+        "--exact",
+        "algebraic_fiber::tests::local_division_preserves_arbitrary_exact_base_coefficients",
+        "--test-threads=1",
+        "--nocapture"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.41608539200387895,
+      "log": "compact-quadratic-full-20260925-v112-local_division_preserves_arbitrary_exact_base_coefficients.log",
+      "target": "hypersolve",
+      "name": "algebraic_fiber::tests::local_division_preserves_arbitrary_exact_base_coefficients"
+    },
+    {
+      "label": "local_division_preserves_wide_exact_quotients_beyond_modular_reconstruction",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/compact-quadratic-full-20260925-v112-hypersolve",
+        "--exact",
+        "algebraic_fiber::tests::local_division_preserves_wide_exact_quotients_beyond_modular_reconstruction",
+        "--test-threads=1",
+        "--nocapture"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.5702752909855917,
+      "log": "compact-quadratic-full-20260925-v112-local_division_preserves_wide_exact_quotients_beyond_modular_reconstruction.log",
+      "target": "hypersolve",
+      "name": "algebraic_fiber::tests::local_division_preserves_wide_exact_quotients_beyond_modular_reconstruction"
+    },
+    {
+      "label": "local_division_removes_only_foreign_factors_and_reuses_older_values",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/compact-quadratic-full-20260925-v112-hypersolve",
+        "--exact",
+        "algebraic_fiber::tests::local_division_removes_only_foreign_factors_and_reuses_older_values",
+        "--test-threads=1",
+        "--nocapture"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.4075833950191736,
+      "log": "compact-quadratic-full-20260925-v112-local_division_removes_only_foreign_factors_and_reuses_older_values.log",
+      "target": "hypersolve",
+      "name": "algebraic_fiber::tests::local_division_removes_only_foreign_factors_and_reuses_older_values"
+    },
+    {
+      "label": "hypersolve-full",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/compact-quadratic-full-20260925-v112-hypersolve",
+        "--test-threads=2",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 2.7869112719781697,
+      "log": "compact-quadratic-full-20260925-v112-hypersolve-full.log",
+      "target": "hypersolve",
+      "name": "full-library"
+    },
+    {
+      "label": "direct_bezier_pair_fillet_retains_both_incident_extensions",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/compact-quadratic-full-20260925-v112-hypercurve_curve",
+        "--exact",
+        "direct_bezier_pair_fillet_retains_both_incident_extensions",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 8.700803691055626,
+      "log": "compact-quadratic-full-20260925-v112-direct_bezier_pair_fillet_retains_both_incident_extensions.log",
+      "target": "hypercurve_curve",
+      "name": "direct_bezier_pair_fillet_retains_both_incident_extensions"
+    },
+    {
+      "label": "line_parabola_mixed_exact_algebraic_fillet_is_an_exact_open_path",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/compact-quadratic-full-20260925-v112-hypercurve_curve",
+        "--exact",
+        "line_parabola_mixed_exact_algebraic_fillet_is_an_exact_open_path",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.8354659780161455,
+      "log": "compact-quadratic-full-20260925-v112-line_parabola_mixed_exact_algebraic_fillet_is_an_exact_open_path.log",
+      "target": "hypercurve_curve",
+      "name": "line_parabola_mixed_exact_algebraic_fillet_is_an_exact_open_path"
+    },
+    {
+      "label": "one_curve_closed_spline_extensions_materialize_each_cell_once",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/compact-quadratic-full-20260925-v112-hypercurve_curve",
+        "--exact",
+        "one_curve_closed_spline_extensions_materialize_each_cell_once",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.4299473708961159,
+      "log": "compact-quadratic-full-20260925-v112-one_curve_closed_spline_extensions_materialize_each_cell_once.log",
+      "target": "hypercurve_curve",
+      "name": "one_curve_closed_spline_extensions_materialize_each_cell_once"
+    },
+    {
+      "label": "polynomial_chamfer_materializes_represented_incident_extension",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/compact-quadratic-full-20260925-v112-hypercurve_curve",
+        "--exact",
+        "polynomial_chamfer_materializes_represented_incident_extension",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.400666358997114,
+      "log": "compact-quadratic-full-20260925-v112-polynomial_chamfer_materializes_represented_incident_extension.log",
+      "target": "hypercurve_curve",
+      "name": "polynomial_chamfer_materializes_represented_incident_extension"
+    },
+    {
+      "label": "rational_chamfer_materializes_the_incident_projective_cell",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/compact-quadratic-full-20260925-v112-hypercurve_curve",
+        "--exact",
+        "rational_chamfer_materializes_the_incident_projective_cell",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.40151931100990623,
+      "log": "compact-quadratic-full-20260925-v112-rational_chamfer_materializes_the_incident_projective_cell.log",
+      "target": "hypercurve_curve",
+      "name": "rational_chamfer_materializes_the_incident_projective_cell"
+    },
+    {
+      "label": "spline_chamfer_materializes_only_the_incident_extension_cell",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/compact-quadratic-full-20260925-v112-hypercurve_curve",
+        "--exact",
+        "spline_chamfer_materializes_only_the_incident_extension_cell",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.41176098899450153,
+      "log": "compact-quadratic-full-20260925-v112-spline_chamfer_materializes_only_the_incident_extension_cell.log",
+      "target": "hypercurve_curve",
+      "name": "spline_chamfer_materializes_only_the_incident_extension_cell"
+    },
+    {
+      "label": "spline_line_fillet_preserves_the_authored_spline_and_adds_its_incident_cell",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/compact-quadratic-full-20260925-v112-hypercurve_curve",
+        "--exact",
+        "spline_line_fillet_preserves_the_authored_spline_and_adds_its_incident_cell",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.4072251400211826,
+      "log": "compact-quadratic-full-20260925-v112-spline_line_fillet_preserves_the_authored_spline_and_adds_its_incident_cell.log",
+      "target": "hypercurve_curve",
+      "name": "spline_line_fillet_preserves_the_authored_spline_and_adds_its_incident_cell"
+    },
+    {
+      "label": "retained_arc_fillet_preserves_past_center_tangent_orientation",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/compact-quadratic-full-20260925-v112-hypercurve_analytic_parallel_region",
+        "--exact",
+        "retained_arc_fillet_preserves_past_center_tangent_orientation",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": "timeout",
+      "elapsed_seconds": 75.43186274904292,
+      "log": "compact-quadratic-full-20260925-v112-retained_arc_fillet_preserves_past_center_tangent_orientation.log",
+      "target": "hypercurve_analytic_parallel_region",
+      "name": "retained_arc_fillet_preserves_past_center_tangent_orientation"
+    },
+    {
+      "label": "retained_rational_arc_and_analytic_parallel_fillet_exactly",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/compact-quadratic-full-20260925-v112-hypercurve_analytic_parallel_region",
+        "--exact",
+        "retained_rational_arc_and_analytic_parallel_fillet_exactly",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": "timeout",
+      "elapsed_seconds": 75.42206453101244,
+      "log": "compact-quadratic-full-20260925-v112-retained_rational_arc_and_analytic_parallel_fillet_exactly.log",
+      "target": "hypercurve_analytic_parallel_region",
+      "name": "retained_rational_arc_and_analytic_parallel_fillet_exactly"
+    },
+    {
+      "label": "retained_rational_arc_and_analytic_parallel_fillet_extends_exactly",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/compact-quadratic-full-20260925-v112-hypercurve_analytic_parallel_region",
+        "--exact",
+        "retained_rational_arc_and_analytic_parallel_fillet_extends_exactly",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": "timeout",
+      "elapsed_seconds": 75.42444072791841,
+      "log": "compact-quadratic-full-20260925-v112-retained_rational_arc_and_analytic_parallel_fillet_extends_exactly.log",
+      "target": "hypercurve_analytic_parallel_region",
+      "name": "retained_rational_arc_and_analytic_parallel_fillet_extends_exactly"
+    }
+  ],
+  "all_processes_reaped": true,
+  "hyperreal_build_returncode": 0,
+  "build_resume": "outer 17271 reaped exit 1: package-id selection error after successful cargo build",
+  "all_sources_unchanged": true,
+  "hypersolve_build_returncode": 0,
+  "build_returncode": 0,
+  "selection": [
+    [
+      "hypercurve_curve",
+      "direct_bezier_pair_fillet_retains_both_incident_extensions"
+    ],
+    [
+      "hypercurve_curve",
+      "line_parabola_mixed_exact_algebraic_fillet_is_an_exact_open_path"
+    ],
+    [
+      "hypercurve_curve",
+      "one_curve_closed_spline_extensions_materialize_each_cell_once"
+    ],
+    [
+      "hypercurve_curve",
+      "polynomial_chamfer_materializes_represented_incident_extension"
+    ],
+    [
+      "hypercurve_curve",
+      "rational_chamfer_materializes_the_incident_projective_cell"
+    ],
+    [
+      "hypercurve_curve",
+      "spline_chamfer_materializes_only_the_incident_extension_cell"
+    ],
+    [
+      "hypercurve_curve",
+      "spline_line_fillet_preserves_the_authored_spline_and_adds_its_incident_cell"
+    ],
+    [
+      "hypercurve_analytic_parallel_region",
+      "retained_arc_fillet_preserves_past_center_tangent_orientation"
+    ],
+    [
+      "hypercurve_analytic_parallel_region",
+      "retained_rational_arc_and_analytic_parallel_fillet_exactly"
+    ],
+    [
+      "hypercurve_analytic_parallel_region",
+      "retained_rational_arc_and_analytic_parallel_fillet_extends_exactly"
+    ]
+  ]
+}

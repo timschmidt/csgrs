@@ -1,0 +1,216 @@
+ The Role of the Interval Domain
+in Modern Exact Real Airthmetic
+
+      Andrej Bauer        Iztok Kavkler
+
+        Faculty of Mathematics and Physics
+         University of Ljubljana, Slovenia
+
+
+            Domains VIII &
+Computability over Continuous Data Types
+     Novosibirsk, September 2007
+Teaching theoreticians a lesson
+   Recently I have been told by an anonymous referee that
+       “Theoreticians do not like to be taught lessons.”
+
+   and by a friend that
+       “You should stop competing with programmers.”
+
+   In defiance of this advice, I shall talk about the lessons I
+   learned, as a theoretician, in programming exact real arithmetic.
+The spectrum of real number computation
+  slow                                                                   fast
+   Formally verified,            Cauchy sequences     iRRAM
+   extracted from          streams of signed digits
+   proofs                                             RealLib   floating point
+                       Moebius transformtions
+                  continued fractions                 Mathematica
+
+  "theoretical"                                                   "practical"
+
+    I Common features:
+          I   Reals are represented by successive approximations.
+          I   Approximations may be computed to any desired accuracy.
+    I State of the art, as far as speed is concerned:
+          I   iRRAM by Norbert Müller,
+          I   RealLib by Branimir Lambov.
+What makes iRRAM and ReaLib fast?
+    I Reals are represented by sequences of dyadic intervals
+      (endpoints are rationals of the form m/2k ).
+    I The approximating sequences need not be nested chains of
+      intervals.
+    I No guarantee on speed of converge, but arbitrarily fast
+      convergence is possible.
+    I Previous approximations are not stored and not reused
+      when the next approximation is computed.
+    I Each next approximation roughly doubles the amount of
+      work done.
+The theory behind iRRAM and RealLib
+    I Theoretical models used to design iRRAM and RealLib:
+        I Type Two Effectivity
+        I a version of Real RAM machines
+        I Type I representations
+
+    I The authors explicitly reject domain theory as a suitable
+      computational model.
+        I For example, because representing reals as nested chains of
+          intervals is a bad idea.
+        I They seem to have convinced even some high priests of
+
+          domain theory.
+Our goal
+    I There is usually a significant gap between a theoretical
+      model and the actual practical implementation.
+    I We wanted exact real arithmetic that was both efficient and
+      easily formalizable:
+        I   Extract specification from the theory—automatically.
+        I   Leave the programmer freedom to produce fast
+            implementation.
+    I We needed a tool that could extract specifications from
+      formal descriptions of mathematical theories.
+Representations and realizability
+    I There are many kinds of representations:
+        I Numbered sets (Eršov)
+        I Type Two Representations (Weihrauch)
+        I Domain representations (Blanck)
+
+      These are useful in the theory of computability.
+    I Programmers use representations by real-world programs.
+
+    I In a related project, Chris Stone and Andrej Bauer built a
+      tool RZ which translates first-order constructive theories
+      into Objective Caml representations.
+    I RZ uses the realizability interpretation, and handles
+      first-order logic, dependent types, and more.
+Construction of reals
+    I We axiomatized the following theories (constructively):
+        I the ring of integers Z,
+        I the “approximate field” of dyadic rational numbers D,
+        I the poset of dyadic intervals ID,
+
+        I ω-cpos as completions of their bases,
+        I the interval domain IR as the completion of ID,
+        I the field of real numbers R as the maximal elements of IR.
+
+    I We ran RZ on these to obtain specifications for Objective
+      Caml (given as module signatures with logical assertions).
+    I We implemented the specifications by hand.
+
+    I We hope our implementation satisfies all the assertions . . .
+
+    I Logical reverse-engineering: which logical theory does RZ
+      translate to a specification for exact real arithmetic in the
+      style of iRRAM and RealLib?
+    I Initially, we did not expect domain theory to play a
+      prominent role.
+Integers
+    I The integers are axiomatized as:
+           I decidable ordered commutative ring with unit,
+           I induction principle for natural numbers,
+           I integer division,
+
+           I shift operations shl (n) = 2k · n and shr (n) = bn/2k c,
+                                 k                    k
+           I binary logarithm n 7→ dlog ne.
+                                        2
+    I We used efficient implementations of large integer
+      arithmetic:
+           I   Numerix by Gabriel Quercia
+           I   GNU Multiple Precision Library
+Dyadic rationals
+    I Dyadic rationals D form a decidable ordered ring.
+
+    I Only approximate division:
+
+
+         ∀k ∈ N. ∀x, y ∈ D. (y 6= 0 =⇒ ∃z ∈ D. |x/y − z| < 2−k )
+
+    I In fact, we need approximate versions of all ring
+      operations, e.g.:
+
+               ∀k ∈ N. ∀x, y ∈ D. ∃z ∈ D. |(x + y) − z| < 2−k
+
+    I This allows us to control the size of dyadic numbers
+      involved in interval arithmetic.
+    I Implementation:
+        I   our own Ocaml implementation using integers,
+        I   with MPFR about threefold speedup.
+Dyadic intervals
+   The poset of dyadic intervals ID:
+     I A dyadic interval [c − r, c + r] is represented by its
+       center c ∈ D and radius r ∈ D.
+     I No need to have very precise c when r is large.
+
+     I No need to have very precise r.
+
+     I So we always normalize intervals to have r with small
+       numerator (e.g. 32 bits) and suitably rounded c. This trades
+       a little bit of precision for quite a bit of space and time.
+ω-cpos
+    I We formalize ω-cpos generated from a base.
+
+    I Take care to get continuous domains, not algebraic ones,
+      and consider only chains, rather than general directed sets.
+    I Crucial: how do we say that P ⊆ D is a base for domain D?
+         I Inefficient: every x ∈ D is the supremum of a chain in P.
+         I Broken: every x ∈ D is the supremum of a sequence in P.
+         I Right: for every x ∈ D there exists (a ) ∈ P such that
+                                                 k k
+
+                ∀k ∈ N. ak ≤ x and    limk ak = x (in Scott topology)
+
+             (For D = IR and P = ID this condition was given by
+             Lambov, without using domains explicitly.)
+Reals as maximal elements of the interval domain
+    I The interval domain IR is the completion of ID.
+
+    I The reals are a Cauchy-complete, Archimedean ordered
+      field.
+    I IR is a domain model for R.
+    I Avoiding explict rates of convergence:
+        I   RZ translates the Archimedean axiom
+            ∀x ∈ R. ∀k ∈ N. ∃d ∈ D. |x − d| < 2−k to specification for
+
+                         approx : real → int → dyadic
+
+            computing d from x and k such that |x − d| < 2−k .
+        I   The axiom stating that IR is generated by ID yields
+
+                    stage : real → int → dyadicInterval
+
+            such that stage x is a sequence of intervals converging
+            to x, without a prescribed speed of convergence.
+In conclusion
+    I Other issues not discussed:
+         I Strict linear order < on R as a map into the ω-cpo of partial
+           booleans.
+         I How do we represent continuous real maps?
+
+    I Statistics:
+         I 503 lines of formal theories in RZ.
+         I 1022 lines of Ocaml implementation.
+         I 10 times slower than iRRAM for basic arithmetic.
+
+    I Lessons learned:
+         I Domain theory does play a role in state-of-the-art exact real
+           arithmetic.
+         I Theoreticians’ sense of elegance can harm efficiency.
+
+         I Don’t compete with programmers—teach them new ideas!
+Future directions
+    I Implement something new—it will be horribly inefficient:
+        I   the next big step is to implement locally non-compact
+            spaces, e.g., Banach spaces C (k) (R), Lp , `p , . . .
+    I Invent new ways of computing with real numbers, higher
+      types and hyperspaces.
+    I A promising direction is “computation with quantifiers”:
+        I Paul Taylor’s Abstract Stone Duality (ASD) and use of
+          ∃x ∈ R and ∀x : [a, b] in real analysis.
+        I The Russian version of ASD seems to be Σ-definability
+
+          (with ∀K ), but ASD has more of a programming flavor.
+        I Martin Escardó’s implementation of ∀K in Haskell is
+
+          surprisingly efficient.
+

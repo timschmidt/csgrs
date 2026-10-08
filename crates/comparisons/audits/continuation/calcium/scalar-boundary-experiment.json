@@ -1,0 +1,34 @@
+{
+  "schema": 1,
+  "recorded": "2026-09-08T13:29:05.960Z",
+  "donorCommit": "e269d38061d7a42070ddcffe6eb114466ed4aa7e",
+  "phase": {
+    "controls": 30,
+    "failures": 8
+  },
+  "binary64": {
+    "controls": 10013,
+    "failures": 0
+  },
+  "rounding": {
+    "controls": 84,
+    "failures": 0
+  },
+  "sourceHashes": {
+    "flint-scalar-boundary-probe.c": "c9a0a9083ec5cdfebb6ed5a5a0361e5d17b077edb4583860e2c08f868b4dc214",
+    "bind-scalar-boundary-experiment.mjs": "12b6f0d9e7038893e20b93916a8a9dc0355d5fe39c53c8b7f82756a64ea1b4b1",
+    "verify-scalar-boundary-checkpoint.mjs": "c253caa2df5a74fcca2580a7c8556808f834a3a37676ef5390245f08e1082b15"
+  },
+  "evidenceHashes": {
+    "results/scalar-boundary-compile.json": "59d55e9fe7082c7a97c4f62fb53cfbb294db0daacdd1551de3e7b21f207012c1",
+    "results/scalar-boundary-compile.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/scalar-boundary-compile.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/scalar-boundary-native.json": "c4c74fb394e2cd69a64ba75e6dfbf68086ba9bea5f745ae1f91852aa3c8be080",
+    "results/scalar-boundary-native.stdout": "794ec6f1f1849e8276b10d75937bfe7a803291d7ce41b4d1a4984f17810ec1ea",
+    "results/scalar-boundary-native.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/scalar-boundary-memcheck.json": "11c391d06389ffbdc5c56c77b031abbde70b3cadf3b7e3885026bdc1ff9a40d7",
+    "results/scalar-boundary-memcheck.stdout": "794ec6f1f1849e8276b10d75937bfe7a803291d7ce41b4d1a4984f17810ec1ea",
+    "results/scalar-boundary-memcheck.stderr": "27d6fdefb341b1cef5b95d3570d9ce37f4fbec63486873c4dc673fa6d6c26ba9"
+  },
+  "limits": "Current FLINT native build executed; archived code has the same phase mechanism but was not executed. Phase oracle uses documented principal range, rational pi fractions and special-state contracts. Binary64 oracle uses independent GMP exact conversion, not decimal printing. Rounding covers simple exact dyadics and finite imaginary components only. Memcheck success is not mathematical correctness. No donor patch, external report, Hyper production change or performance improvement claimed."
+}

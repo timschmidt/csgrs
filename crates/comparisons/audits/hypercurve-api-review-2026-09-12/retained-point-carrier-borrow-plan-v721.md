@@ -1,0 +1,7 @@
+# Retained point boundary carrier borrowing
+
+The common point-probe helper filters and clone-collects boundary carriers for every query. Every context constructor already stores first-operand carriers before second-operand carriers and records first_carrier_count; core cross-pair scheduling relies on that same invariant. The nested probe constructor likewise stores its one probe first, then rewritten second-operand boundary carriers.
+
+Borrow the existing operand partition directly. Remove the intermediate allocation, carrier/root/domain Arc clones and copied OnceLocks; queries reuse intrinsic bounds/injectivity facts on the original owners. Probe construction, ordering, ownership and correspondence algorithms remain unchanged. No new public abstraction or global cache is needed. Test the existing semantic point/nesting/crossing guards and measure repeated-query allocation work if practical; do not claim an unmeasured speedup.
+
+V721 is one isolated copied file, currently unformatted/unbuilt/unpromoted. Its base includes the pending V720 exterior-point repair. V720 exact outer13217 owns production/mirror/archive/driver; do not format/promote/build this candidate until that driver is exactly reaped and the repair committed/sealed. Verify its base hash again before promotion. This can accompany the future public classification migration, but does not itself implement that migration. NextunusedV722.

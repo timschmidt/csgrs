@@ -1,0 +1,161 @@
+/***************************************************************************
+ *            real_numbers.dox
+ *
+ *  Copyright  2004-20  Pieter Collins
+ *
+ ****************************************************************************/
+
+/*
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; either version 2 of the License, or
+ *  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Library General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program; if not, write to the Free Software
+ *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+ */
+
+
+
+/*! \file real_numbers.dox
+ *  \brief Documentation on effective real number
+ */
+
+namespace Ariadne {
+
+/*!
+
+\page real_numbers_page %Computable %Real Numbers
+
+This page describes the theory of computable real numbers.
+For details on how this is implemented in %Ariadne, see the \ref NumericModule documentation.
+
+For information on the underlying theory of ordered and metric spaces, see the \ref topology_page.
+For information on logic for real number computation, see the \ref logic_page.
+
+\section algebraicnumbers Algebraic Numbers
+
+The algebraic numbers \f$\mathbb{A}\f$ are those which are the solution of polynomial equations with integer (equivalently, rational) coefficients. They characterised by exact arithmetical operations and decidable comparisons. Well known sub-classes of algebraic numbers are the integers \f$\mathbb{Z}\f$ and the rationals \f$\mathbb{Q}\f$. The dyadic (rational) numbers \f$\mathbb{Q}_2\f$ have the form \f$p/2^q\f$ for integers p, q, and are important in computation, since they can be expressed exactly as binary expansions. Further, they are the "simplest" dense set of algebraic numbers closed under addition, subtraction and multiplication. The dyadic numbers do not in general support exact division. The exception is that division by a power of \f$2\f$ yields an exact answer.
+
+Elements of a countable set of numbers, such as integer, dyadic, rational or algebraic numbers, may be stored using a finite amount of data, though the size of the data depends on the element used. Hence in an array of an exact arithmetic type, each element needs to be dynamically allocated, which is expensive in terms of spacial overhead. Since these sets are typically closed under arithmetical operations, arithmetic can be performed exactly for these types. Hence these types are appropriate where time and space overhead are not at a premium.
+
+Since these types require arbitrarily large amounts of memory which is typically dynamically allocated, and hardware support for arithmetic does not exist, they are typically less efficient than the fixed-precision and multiple-precision types, described later.
+
+
+\section realnumbers Real Numbers
+
+Classically, real numbers are either defined axiomatically, or constructed using Dedekind cuts or Cauchy sequences.
+
+A Dedekind cut is a pair of sets \f$(L,U)\f$ such that
+ - \f$L,U \subset \mathbb{Q}\f$ and \f$L \cap U = \emptyset\f$
+ - \f$ l\in L \implies \forall l'<l,\ l' \in L \f$ and \f$ u \in U \implies \forall u'>u,\ u' \in U \f$
+ - \f$ \forall l \in L, \exists l' \in L,\ l'>l \f$ and \f$ \forall u \in U,\ \exists u'\in U, u'<u \f$
+ - \f$ l < u \implies l\in L \vee u \in U \f$
+
+A sequence \f$(q_n)\f$ of (dyadic) rationals is a Cauchy sequence if
+ - \f$ \forall \epsilon>0,\ \exists N\in\mathbb{N},\ \forall m,n>N,\ d(q_m,q_n)<\epsilon\f$.
+
+%Two Cauchy sequences \f$(p_n)\f$, \f$(q_n)\f$ are equivalent if
+ -\f$ \forall \epsilon>0,\ \exists N\in\mathbb{N},\ \forall n>N,\ d(p_n,q_n)<\epsilon\f$.
+
+In both the above definitions, it is possible to use dyadics instead of rationals.
+
+Unfortunately, without knowledge of the convergence rate, no information about the limit can be obtained from an initial part of a Cauchy sequence.
+For this reason, real numbers defined as Cauchy sequences of (dyadic) rationals are known as "Naive" reals, which we shall denote \f$\mathbb{R}_?\f$.
+
+Instead, the computable or effective real numbers \f$\mathbb{R}\f$ are defined as (equivalence classes of) fast converging Cauchy sequences, which satisfy
+ - \f$ \forall m,n \in \mathbb{N},\ d(q_m,q_n)<2^{-\max(m,n)}\f$.
+
+There are many equivalent representations of computable real numbers.
+An alternative is that of <em>nested intervals</em> \f$[\underline{q}_n\!:\!\overline{q}_n]\f$ such that
+ - \f$\underline{q}_n \leq \underline{q}_{n+1} \leq \overline{q}_{n+1} \leq \overline{q}_n\f$ and
+ - \f$\bigcap_{n\in\mathbb{N}}[\underline{q}_n\!:\!\overline{q}_n]=\{q\}\f$.
+.
+Alternatively, we may consider <em>strictly nested</em> intervals
+ - \f$\underline{q}_n < \underline{q}_{n+1} < \overline{q}_{n+1} < \overline{q}_n\f$.
+These representations are essentially equivalent to the Dedekind reals.
+
+The computable reals support the standard arithmetical operations and elementary functions.
+Further, one can compute bounds to any given accuracy.
+However, comparisons are undecidable, since given two computable reals which happen to be equal, equality cannot be proved by finite-precision approximations, no matter how accurate.
+For this reason, comparison returns an object of the %Kleenean logical type \f$\mathbb{K}\f$.
+
+Weaker information is given by the <em>lower reals</em> \f$\mathbb{R}_<\f$, defined by bounded increasing sequences of (dyadic) rationals \f$(\underline{q}_n)\f$, which satisfy
+ - \f$\underline{q}_n \leq \underline{q}_{n+1}\f$ and
+ - \f$ q = \lim_{n\to\infty} \underline{q}_n = \sup_{n\in\mathbb{N}}\underline{q}_n\f$
+
+and the <em>upper reals</em> \f$\mathbb{R}_>\f$, defined by bounded decreasing sequences of (dyadic) rationals \f$(\overline{q}_n)\f$, which satisfy
+ - \f$ \overline{q}_n \leq \overline{q}_{n+1}\f$ and
+ - \f$ q = \lim_{n\to\infty} \overline{q}_n = \inf_{n\in\mathbb{N}}\overline{q}_n \f$.
+
+Note that negation reverses lower and upper real types, and multiplication is not supported,
+since e.g. given approximations \f$q_1 > r_1\f$ and \f$q_2 > r_2\f$, one cannot deduce \f$q_1 \times q_2 \geq r_1 \times r_2\f$.
+For we have \f$2>-3\f$ and \f$3>-5\f$, but \f$ 6 = 2\times 3 \not\geq 15 = (-3)\times(-5)\f$.
+However, multiplication and division of <em>positive</em> lower/upper reals is possible e.g. \f$\R^+_> \div \R^+_< : \R^+_>\f$.
+Also, upper/lower reals can be multiplied by positive reals e.g. \f$\R_> \times \R^+ : \R_>\f$.
+
+The full overloads for multiplication are
+\f[ \R_>\!\times\R^+,\;\R^+\!\times\R_>:\R_>; \quad \R\times\R:\R; \qquad \R^+_>\times\R^+_>:\R^+_>; \quad \R^+\!\times\R^+:\R^+ . \f]
+Note that the dispatch for \f$\R\times\R^+\f$ (and for \f$\R^+\!\times\R\f$) is ambiguous, but that \f$\R\times\R:\R\f$ is better than \f$\R_>\times\R^+:\R_>\f$.
+
+An implementation of the computable real number type may store a number in a form so that it can be recovered to any desired precision.
+This is typically acheived by expressing the number as a formula in terms of other arbitrary-precision or exact number types.
+However, the high computational overhead of such numbers makes them impractical for describing higher-order types, such as matrices or sets.
+
+When specifying a real number by a symbolic formula, such as <tt>x = exp(2/3)</tt>, there may be many ways of computing the operations used in the definition.
+Currently, %Ariadne uses a default calculus of elementary functions (based on the MPFR package), and any real number defined in terms of such functions can be computed directly. However, if we wish to use an alternative implementation of the elementary functions, or compute with more complicated operations, we need to use an evaluator class to perform the required calculus.
+
+\section floatingpointarithmetic Floating-Point Arithmetic
+
+In numerical analysis, real numbers are traditionally described by floating-point types float and double.
+The set of elements which can be represented by these types is finite.
+Arithmetic operations can only be performed approximately to maximal precision determined by the data type.
+However, these types have the advantage of requiring a known amount of memory, which means they can be statically allocated, and having hardware-supported arithmetical approximations.
+This makes them especially suitable in situations where execution speed and memory usage are more important than a knowledge of the computational accuracy.
+
+If we have a problem for which a fixed-precision type is not sufficient to obtain an accurate answer, we can switch to a multiple-precision type.
+The semantics of arithmetic on multiple-precision types is mostly the same as that of a fixed-precision type; arithmetic is approximate, and the default is to return an interval.
+However, a multiple-precision type can use arbitrarily high precison; in particular, the set of all such numbers is the dyadic numbers.
+However, the precision provides a grading of the type into sets \f$\mathbb{F}_p\f$ with \f$\mathbb{F}_{p_1} \subset \mathbb{F}_{p_2}\f$ for \f$p_1\leq p_2\f$, and \f$\bigcup_{p\in\mathbb{N}}\mathbb{F}_p = \mathbb{Q}_2\f$.
+Using a higher precision yields a more accurate answer. Further, the result of an arithmetic operation is guarenteed to converge as the precision is increased.
+For efficiency, all elements of an array of a multiple precision type
+
+An arbitrary precision floating-point type is a template class whose precision is a template parameter.
+Such a class can be implemented using a multiple-precision type, but has the advantage that it does not need to dynamically-allocate memory.
+
+For a package such as %Ariadne, in which we are concerned with keeping track of numerical errors, it is dangerous to use a <tt>Float</tt> type directly.
+However, in low-level code it is appropriate to use these types.
+Instead, we provide four different arithmetic operations for the same type.
+We can specify that the result can be rounded \em up or \em down, or that the result should be rounded to the \em nearest representable value.
+Algebraic and transcendental functions are provided with both rounded and interval versions. For example, multiplication with upward rounding is defined by add(up,x,y).
+
+Currently, %Ariadne supports the double-precision floating-point type, and a multiple-precision type based on the MPFR package.
+Currently, there are no arbitrary-precision floating-point types.
+
+Alternatives to using rounded builtin floating-point arithmetic exists, which may be more effiucient on some processors.
+Examples include Dekker's {Fast2Sum}, Møller & Knuths {TwoSum} the {TwoMulFMA} and Kahan's algorithm for \a ad=bc. and Pichat, Ogita, Rump and Oishi's algorithm for the sum.
+
+\section intervalarithmetic Interval Arithmetic
+
+Since keeping track of rounding is tedious and error-prone, rigorous arithmetic using floating-point numbers is typically performed using interval arithmetic.
+Here, computation of a real number \f$x\f$ yields an interval \f$[\underline{x}\!:\!\overline{x}]\f$ such that \f$ \underline{x} \leq x \leq \overline{x}\f$.
+Arithmetical operations \f$\star\f$ are defined to preserve inclusion, so that
+e.g. \f$ x\in [\underline{x}\!:\!\overline{x}] \wedge y\in [\underline{y}\!:\!\overline{y}] \implies x \star y \in [\underline{x}\!:\!\overline{x}] \star [\underline{y}\!:\!\overline{y}] \f$.
+%Interval arithmetic can be implemented in terms of rounded arithmetic. e.g. \f$[\underline{x}\!:\!\overline{x}] - [\underline{y}\!:\!\overline{y}]=[\underline{x}-_\downarrow \overline{y}:\overline{x}-^\uparrow\!\underline{y}]\f$.
+
+In %Ariadne, we use a <tt>Bounds<F></tt> class rather than <tt>Interval<F></tt> for interval arithmetic, since %Interval is reserved for geometric intervals (sets), rather than information about points.
+
+Finite precision interval operations satisfy the mathematical postcondition \f$ \forall x\in [\underline{x}\!:\!\overline{x}],\ f(x)\in f([\underline{x}\!:\!\overline{x}])\f$.
+Multiple-precision interval functions follow the same conditions as fixed-precision interval functions,
+together with the convergence criterion that the length of \f$f([\underline{x}\!:\!\overline{x}])\f$ approaches \f$0\f$ as the width of \f$[\underline{x}\!:\!\overline{x}]\f$ approaches \f$0\f$.
+In particular, if \f$[\underline{x}\!:\!\overline{x}]\f$ is a sequence of intervals with nonempty interior whose radius approaches \f$0\f$, then the radius of \f$f([\underline{x}\!:\!\overline{x}])\f$ approaches \f$0\f$.
+
+*/
+
+} // namespace Ariadne

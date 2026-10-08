@@ -1,0 +1,14 @@
+{
+  "command": [
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve-edd5583ad867dd28",
+    "finite_point_inverse_replays_nonrepresented_center_cuts",
+    "--nocapture",
+    "--test-threads=1"
+  ],
+  "returncode": 101,
+  "elapsed_seconds": 0.4026287730084732,
+  "parent": "1daed206b1748b84bfe8e038a1b969c5ea46f703",
+  "source_sha256": "2ca6869f70597b38bb40a654693867649da6c9e4fe392c6709236b3c986b7ad2",
+  "binary_sha256": "04b244d18ecd9717cf75482cb16de01f8c0b748c57e2b898bbc4feda7bffbcd7",
+  "binary": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve-edd5583ad867dd28"
+}

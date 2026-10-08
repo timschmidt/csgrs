@@ -1,0 +1,21 @@
+{
+  "build_command": [
+    "cargo",
+    "test",
+    "--release",
+    "--all-features",
+    "--lib",
+    "--no-run",
+    "--offline",
+    "--message-format=json",
+    "-j",
+    "2"
+  ],
+  "build_returncode": 101,
+  "build_elapsed_seconds": 16.286516184991342,
+  "source_sha256": {
+    "src/curve_region_boolean.rs": "63d87ae4c1b139677ac126b504391c2160fc032005a1c4ba4a97f53e9a2ec6bf",
+    "src/bezier_offset.rs": "1e3bf9bec2a8bfae3f36404d2c531aa9c8f3910b20d5c46344a9eeea57e6f232"
+  },
+  "tests": []
+}

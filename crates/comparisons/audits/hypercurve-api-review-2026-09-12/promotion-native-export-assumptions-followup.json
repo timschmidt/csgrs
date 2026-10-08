@@ -1,0 +1,30 @@
+{
+  "status": "completed direct test migration with independent geometry and Boolean/readmission oracles",
+  "finding": "Two promotion tests successfully produce Unique chamfer/fillet CurveRegion2 results and then fail when requesting native_contours_fast_path. Their Unsupported failure is at optional native export, not at the corner operation itself.",
+  "tests": [
+    "unified_region_native_chamfer_uses_arc_sweep_evidence",
+    "unified_region_native_fillet_retains_certified_arc_contacts"
+  ],
+  "source": "hypercurve/tests/hypercurve_curve_region_promotion.rs:1085 and :1143",
+  "related_stale_assertion": "unified_region_corners_use_rational_circular_carriers requires an exact CurveFamily2::RationalQuadraticBezier variant after general boundary-path export; the user explicitly does not require carrier/API preservation.",
+  "next": "Migrate operation tests to independent exact geometry and lossless boundary-path readmission. Keep any genuine native-conversion requirement in a separate optional-conversion test; do not add compatibility carriers to satisfy historical storage assertions.",
+  "independent_chamfer_geometry": {
+    "previous_cut": "(7/2,0)",
+    "next_cut": "(4+sqrt(3)/2,1/2)",
+    "next_arc_center": "(4,1)",
+    "next_arc_end": "(5,1)",
+    "chord_setback_squared": "1"
+  },
+  "independent_fillet_geometry": {
+    "center": "(1-sqrt(2),1/2)",
+    "radius_squared": "1/4",
+    "line_contact": "(1-sqrt(2),0)",
+    "circle_contact": "(1-2*sqrt(2)/3,1/3)",
+    "original_arc_center": "(1,0)",
+    "original_arc_radius_squared": "1"
+  },
+  "constraint": "Do not merely delete failing assertions or assert a new carrier family. Validate independent coordinates, incidence/tangency, region-set behavior, and subsequent operations; preserve any newly exposed uncertainty as an unresolved closure gap.",
+  "commit": "281368bacaa0f11586d895e84e1af4da5703f3e5",
+  "qualification": "corner-semantic-closure-qualification.json",
+  "additional_full_support_finding": "The old corner can legitimately remain on an extended support as a smooth boundary point; replacement checks verify chosen setback contacts and the exact region set."
+}

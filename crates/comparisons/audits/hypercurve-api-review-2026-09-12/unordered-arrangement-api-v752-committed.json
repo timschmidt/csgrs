@@ -1,0 +1,18 @@
+{
+  "repos": {
+    "hypercurve": {
+      "commit": "bda20dbd6c1275813e8415209c0a968e909f3dfd",
+      "parent": "e0f42174074a53a2c933c290494e733633759ede",
+      "paths": {
+        "benches/editing.rs": "c1ea739632f28acc8ce37072975eb8347c910af0101e052c7e467fbbd8eee4f4",
+        "examples/arrangement.rs": "c593bfc2366ff721dd3f0611ef4e610b5ce42d533aba0c8b313f33e33edf6cbf",
+        "src/bezier_region.rs": "b6c669813a17e1b0cfbcda63b1db980ac4ad28df506279a8fb184939d6e49b34",
+        "src/native_region_tests.rs": "22964ae3336b7c988c33a361c6224cb9404c5cfc301bd5a71576bdb908244f1b",
+        "tests/hypercurve_curve_region_promotion.rs": "05e23ff80631214b9ce50d50a3f6739a12d0a92ece138994ec99870b36931f1f"
+      }
+    }
+  },
+  "qualification": "unordered-arrangement-api-v752-terminal.json",
+  "verified_source_files": 2048,
+  "clean_repositories": 30
+}

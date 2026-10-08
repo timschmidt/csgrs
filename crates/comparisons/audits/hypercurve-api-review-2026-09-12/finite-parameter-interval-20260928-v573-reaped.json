@@ -1,0 +1,6 @@
+{
+  "outer_session_reaped": 3438,
+  "exit_code": 1,
+  "cause": "New importer test omitted constraint_index; no geometry test ran.",
+  "replacement": "finite-parameter-interval-20260928-v577"
+}

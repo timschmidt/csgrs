@@ -1,0 +1,19 @@
+{
+  "tag": "ca-domain-memcheck",
+  "started": "2026-09-09T03:02:18.627Z",
+  "finished": "2026-09-09T03:02:20.294Z",
+  "elapsedSeconds": 1.664818666,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison",
+  "command": "valgrind",
+  "args": [
+    "--vgdb=no",
+    "--tool=memcheck",
+    "--error-exitcode=97",
+    "--leak-check=full",
+    "--show-leak-kinds=all",
+    "--errors-for-leak-kinds=definite,indirect,possible",
+    "/tmp/calcium-charpoly-solves.lbZlN8/flint-ca-domain"
+  ],
+  "code": 1,
+  "signal": null
+}

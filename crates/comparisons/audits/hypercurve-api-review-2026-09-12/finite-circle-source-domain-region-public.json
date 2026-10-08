@@ -1,0 +1,33 @@
+{
+  "returncode": 0,
+  "elapsed_seconds": 23.05155654301052,
+  "normal_library_sha256": "2664818a3d8832ddbf1351350562e105a7fd486401f71db0f2cd3661e4180048",
+  "log": "finite-circle-source-domain-region-public.log",
+  "source": "finite-circle-rational-domains-public.rs",
+  "command": [
+    "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustc",
+    "--edition=2024",
+    "-O",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-circle-rational-domains-public.rs",
+    "--extern",
+    "hypercurve=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypercurve-3abe3d9bfe83911d.rlib",
+    "-L",
+    "dependency=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps",
+    "-o",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-circle-source-domain-region-public"
+  ],
+  "run_command": [
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-circle-source-domain-region-public"
+  ],
+  "source_sha256": "c9ddfb41cb7a077523ca9b35bdbed81886b9fe5b3957e3973ae881dd65a67bef",
+  "executable_sha256": "c9da1a537ed87e8521bc8fa65dc1390939ded82d72798dba934d655e7cb5170c",
+  "counts": {
+    "queries": 48,
+    "point_replays": 96,
+    "topologies": 48,
+    "splits": 96,
+    "child_queries": 192,
+    "region_queries": 12,
+    "boolean_reentries": 12
+  }
+}

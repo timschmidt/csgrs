@@ -1,0 +1,11 @@
+integer-point-miss original=-18446744073709551617 rounded=-18446744073709551618
+integer-point-miss original=18446744073709551617 rounded=18446744073709551616
+integer-point-miss original=-18446744073709551633 rounded=-18446744073709551634
+integer-point-miss original=18446744073709551633 rounded=18446744073709551632
+integer-policy checks=90 point-misses=36 MPFR-directed-failures=0
+abs-upper-miss abs(-5) > 4 at p=2
+abs-upper-miss abs(-7) > 6 at p=2
+abs-upper-miss abs(-9) > 8 at p=2
+abs-upper-miss abs(-10) > 8 at p=2
+interval-abs-policy checks=1542 upper-misses=580
+declared-exponent-bound checks=257 failures=256

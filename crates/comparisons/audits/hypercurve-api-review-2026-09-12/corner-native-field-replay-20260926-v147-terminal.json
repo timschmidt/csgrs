@@ -1,0 +1,239 @@
+{
+  "parents": {
+    "hypercurve": "7dbb1b89aadd491ed1b4de27c3761392dd617162",
+    "hypersolve": "41855c3604cbd18605a020d60758c8e5c489b629",
+    "hyperreal": "0cb5f29aee065c73e234e0ebb0a9e106398515bb"
+  },
+  "source_manifest": "corner-native-field-replay-20260926-v147-sources.json",
+  "source_directory": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/source-archives/corner-native-field-replay-20260926-v147",
+  "build_source_directory": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/build-workspace-20260925",
+  "workspace_guard": "local-chord-complete-replay-20260924-v147-sources.json",
+  "checks": [
+    {
+      "repo": "hypercurve",
+      "label": "clippy-0",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "clippy",
+        "--all-targets",
+        "--all-features",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 22.50159005995374,
+      "log": "corner-native-field-replay-20260926-v147-clippy-0.log"
+    },
+    {
+      "repo": "hypercurve",
+      "label": "clippy-1",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "clippy",
+        "--all-targets",
+        "--no-default-features",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 20.948135257000104,
+      "log": "corner-native-field-replay-20260926-v147-clippy-1.log"
+    },
+    {
+      "repo": "hypercurve",
+      "label": "fmt",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustfmt",
+        "--edition",
+        "2024",
+        "--check",
+        "src/bezier_offset.rs",
+        "src/bezier_region.rs",
+        "src/curve.rs",
+        "src/curve_corner_chain.rs",
+        "src/curve_support.rs",
+        "src/curve_region_boolean.rs"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 3.1185997070278972,
+      "log": "corner-native-field-replay-20260926-v147-fmt.log"
+    },
+    {
+      "repo": "hyperbrep",
+      "label": "check",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "check",
+        "--all-targets",
+        "--all-features",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 17.79542437393684,
+      "log": "corner-native-field-replay-20260926-v147-check.log"
+    }
+  ],
+  "cases": [
+    {
+      "repo": "hypercurve",
+      "label": "case-00",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/corner-native-field-replay-20260926-v147-hypercurve",
+        "--exact",
+        "curve_support::tests::parallel_injectivity_requires_regularity_on_the_requested_range",
+        "--test-threads=1",
+        "--nocapture",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.007570071960799396,
+      "log": "corner-native-field-replay-20260926-v147-case-00.log",
+      "name": "curve_support::tests::parallel_injectivity_requires_regularity_on_the_requested_range"
+    },
+    {
+      "repo": "hypercurve",
+      "label": "case-01",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/corner-native-field-replay-20260926-v147-hypercurve",
+        "--exact",
+        "bezier_offset::conversion_tests::formula_roots_compare_in_their_existing_native_coefficient_field",
+        "--test-threads=1",
+        "--nocapture",
+        "--color",
+        "never"
+      ],
+      "returncode": 101,
+      "elapsed_seconds": 0.0035484570544213057,
+      "log": "corner-native-field-replay-20260926-v147-case-01.log",
+      "name": "bezier_offset::conversion_tests::formula_roots_compare_in_their_existing_native_coefficient_field"
+    },
+    {
+      "repo": "hypercurve",
+      "label": "case-02",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/corner-native-field-replay-20260926-v147-hypercurve",
+        "--exact",
+        "bezier_region::tests::one_fragment_materialized_loop_extends_algebraic_chamfer_cuts_once",
+        "--test-threads=1",
+        "--nocapture",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 2.617648991988972,
+      "log": "corner-native-field-replay-20260926-v147-case-02.log",
+      "name": "bezier_region::tests::one_fragment_materialized_loop_extends_algebraic_chamfer_cuts_once"
+    },
+    {
+      "repo": "hypercurve",
+      "label": "case-03",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/corner-native-field-replay-20260926-v147-hypercurve",
+        "--exact",
+        "bezier_region::tests::one_fragment_selected_loop_extends_chamfer_cuts_on_its_analytic_carrier",
+        "--test-threads=1",
+        "--nocapture",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 5.121317842975259,
+      "log": "corner-native-field-replay-20260926-v147-case-03.log",
+      "name": "bezier_region::tests::one_fragment_selected_loop_extends_chamfer_cuts_on_its_analytic_carrier"
+    },
+    {
+      "repo": "hypercurve",
+      "label": "case-04",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/corner-native-field-replay-20260926-v147-hypercurve",
+        "--exact",
+        "bezier_offset::conversion_tests::local_parallel_endpoint_clipping_reuses_a_coefficient_root",
+        "--test-threads=1",
+        "--nocapture",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.007747650030069053,
+      "log": "corner-native-field-replay-20260926-v147-case-04.log",
+      "name": "bezier_offset::conversion_tests::local_parallel_endpoint_clipping_reuses_a_coefficient_root"
+    },
+    {
+      "repo": "hypercurve",
+      "label": "case-05",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/corner-native-field-replay-20260926-v147-hypercurve",
+        "--exact",
+        "bezier_offset::conversion_tests::split_chord_linear_tangents_reuse_the_oriented_support",
+        "--test-threads=1",
+        "--nocapture",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.0035497969947755337,
+      "log": "corner-native-field-replay-20260926-v147-case-05.log",
+      "name": "bezier_offset::conversion_tests::split_chord_linear_tangents_reuse_the_oriented_support"
+    },
+    {
+      "repo": "hypercurve",
+      "label": "case-06",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/corner-native-field-replay-20260926-v147-hypercurve",
+        "--exact",
+        "bezier_offset::conversion_tests::recursive_chord_parallel_retains_owned_roots_across_exterior_ranges",
+        "--test-threads=1",
+        "--nocapture",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.0638558289501816,
+      "log": "corner-native-field-replay-20260926-v147-case-06.log",
+      "name": "bezier_offset::conversion_tests::recursive_chord_parallel_retains_owned_roots_across_exterior_ranges"
+    },
+    {
+      "repo": "hypercurve",
+      "label": "case-07",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/corner-native-field-replay-20260926-v147-hypercurve",
+        "--exact",
+        "bezier_offset::conversion_tests::translated_parallel_endpoint_does_not_certify_source_incidence",
+        "--test-threads=1",
+        "--nocapture",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.0036169830709695816,
+      "log": "corner-native-field-replay-20260926-v147-case-07.log",
+      "name": "bezier_offset::conversion_tests::translated_parallel_endpoint_does_not_certify_source_incidence"
+    }
+  ],
+  "binaries": {
+    "hypercurve": {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/corner-native-field-replay-20260926-v147-hypercurve",
+      "sha256": "8488392883e44e963aced9bd83615651f92a5e9258ca0ca36606989e90ae94a4"
+    }
+  },
+  "all_processes_reaped": true,
+  "diagnostic_only": false,
+  "hypercurve_build_returncode": 0,
+  "pre_resume_failures": [
+    {
+      "outer_session": 6047,
+      "exit_code": 1,
+      "reason": "Five test names used tests instead of conversion_tests; no tests executed before selection assertion. All four checks and the fresh release build passed."
+    }
+  ],
+  "all_sources_unchanged": true,
+  "qualification_complete": false
+}

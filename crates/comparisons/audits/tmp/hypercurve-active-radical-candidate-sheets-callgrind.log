@@ -1,0 +1,18 @@
+==36== Callgrind, a call-graph generating cache profiler
+==36== Copyright (C) 2002-2017, and GNU GPL'd, by Josef Weidendorfer et al.
+==36== Using Valgrind-3.27.1 and LibVEX; rerun with -h for copyright info
+==36== Command: /tmp/hypercurve-active-radical-candidate-test chord_normal_dense_sheet_replay --nocapture --test-threads=1
+==36== 
+==36== For interactive control, run 'callgrind_control -h'.
+
+running 2 tests
+test bezier_offset::conversion_tests::chord_normal_dense_sheet_replay_keeps_even_roots_and_zero_components ... ok
+test bezier_offset::conversion_tests::chord_normal_dense_sheet_replay_rejects_conjugate_roots ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 889 filtered out; finished in 0.22s
+
+==36== 
+==36== Events    : Ir
+==36== Collected : 5500535
+==36== 
+==36== I   refs:      5,500,535

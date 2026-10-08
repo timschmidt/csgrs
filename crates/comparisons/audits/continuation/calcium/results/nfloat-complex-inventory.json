@@ -1,0 +1,14 @@
+{
+  "tag": "nfloat-complex-inventory",
+  "started": "2026-09-09T17:08:22.690Z",
+  "finished": "2026-09-09T17:08:23.145Z",
+  "elapsedSeconds": 0.452351959,
+  "cwd": "/home/tim/Documents/GitHub/workspace",
+  "command": "node",
+  "args": [
+    "exactcore-hyper-comparison/audits/continuation/calcium/inventory.mjs",
+    "verify"
+  ],
+  "code": 0,
+  "signal": null
+}

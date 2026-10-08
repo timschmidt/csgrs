@@ -1,0 +1,13 @@
+{
+  "command": [
+    "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve_curve_intersection-e3a50a789eb6a53e",
+    "selected_circle_crossings_replay_the_retained_rational_source",
+    "--test-threads=1",
+    "--nocapture",
+    "--color",
+    "never"
+  ],
+  "returncode": 0,
+  "elapsed_seconds": 0.1139089999924181,
+  "sha256": "e9e4cdd979ec2f43ed46cfef4e953739ffd7e31f472373d02a6f57a1bc72a3dd"
+}

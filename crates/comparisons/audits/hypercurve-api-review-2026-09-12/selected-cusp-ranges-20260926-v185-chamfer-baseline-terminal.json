@@ -1,0 +1,15 @@
+{
+  "workspace_guard": "local-chord-complete-replay-20260924-v184-sources.json",
+  "parent_qualification": "retained-circle-parallel-isolated-20260926-v180-terminal.json",
+  "current_qualification": "selected-cusp-ranges-isolated-20260926-v185-terminal.json",
+  "test_file_unchanged": true,
+  "binary": {
+    "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/selected-cusp-ranges-20260926-v185-chamfer-baseline-test",
+    "sha256": "af171a11839ea2b6898cc67661a994417f994c4944eff047f68b27a2c8ea630f"
+  },
+  "name": "algebraic_endpoint_analytic_parallel_chamfers_replay_selected_distance",
+  "all_processes_reaped": true,
+  "returncode": "timeout",
+  "elapsed_seconds": 180.63727354095317,
+  "all_sources_and_binaries_unchanged": true
+}

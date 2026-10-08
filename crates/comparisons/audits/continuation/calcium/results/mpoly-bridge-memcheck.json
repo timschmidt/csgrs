@@ -1,0 +1,19 @@
+{
+  "tag": "mpoly-bridge-memcheck",
+  "started": "2026-09-10T04:43:16.662Z",
+  "finished": "2026-09-10T04:43:19.739Z",
+  "elapsedSeconds": 3.0740926589999997,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison",
+  "command": "valgrind",
+  "args": [
+    "--vgdb=no",
+    "--tool=memcheck",
+    "--error-exitcode=97",
+    "--leak-check=full",
+    "--show-leak-kinds=all",
+    "--errors-for-leak-kinds=definite,indirect,possible",
+    "/tmp/calcium-mpoly-bridge.7pQl1d/controls"
+  ],
+  "code": 0,
+  "signal": null
+}

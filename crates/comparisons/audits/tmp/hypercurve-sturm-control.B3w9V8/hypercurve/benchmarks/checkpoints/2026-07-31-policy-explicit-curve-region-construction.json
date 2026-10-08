@@ -1,0 +1,74 @@
+{
+  "schema": 1,
+  "captured_on": "2026-07-31",
+  "checkpoint": "policy-explicit-curve-region2-construction",
+  "source_revision": "07f2244d2b821734782273ab0b39f3cd0b509995",
+  "parent_revision": "e282158b06b2be13213b76717a19b6d7eeff93e5",
+  "frozen_baseline_revision": "dfc4ec5f9546560765bd33d4a88292581869adb8",
+  "baseline": "../baselines/2026-07-31/baseline.json",
+  "semantic_evidence": {
+    "curve_region_boundary_path_construction_requires_context": true,
+    "native_and_retained_loop_validation_requires_context": true,
+    "arrangement_traversal_materialization_requires_context": true,
+    "retained_signed_area_and_nesting_evidence_requires_context": true,
+    "canonical_boundary_path_construction_avoids_policy_free_cached_boundary": true,
+    "strict_symbolic_closure_result": "typed Construction/RealSign blocker",
+    "approximate_512_symbolic_closure_result": "decided",
+    "approximate_512_terminal_consumption_observed": true,
+    "construction_coordinates_remain_exact_real_values": true,
+    "compatibility_shims_added": false,
+    "production_hidden_strict_construction_sites_removed_from_bezier_region": 7,
+    "remaining_production_strict_sites_in_bezier_region": {
+      "count": 2,
+      "scope": "conservative rational-line symbolic-area capability probes; not CurveRegion2 construction",
+      "planned_resolution": "policy-explicit measurement/evaluation API tranche"
+    }
+  },
+  "verification": {
+    "cargo_test_all_features": "pass",
+    "unit_tests": 251,
+    "exact_curve_region2_fuzz_seconds": 167.01,
+    "pathological_operations": "268/268 decided with no blockers",
+    "cargo_clippy_all_features_all_targets_deny_warnings": "pass",
+    "cargo_check_no_default_features_all_targets": "pass",
+    "cargo_clippy_no_default_features_lib_tests_deny_warnings": "pass",
+    "cargo_check_fuzz_all_targets": "pass",
+    "standalone_ui_affected_tests": "corner-region construction and torture-region generation pass",
+    "standalone_ui_clippy_deny_warnings": "pass",
+    "cargo_doc_all_features_deny_warnings": "pass",
+    "cargo_fmt_hypercurve_package": "pass",
+    "git_diff_check": "pass"
+  },
+  "pathological_curve_region2": {
+    "command": "HYPERCURVE_PATHOLOGICAL_MODE=boolean HYPERCURVE_PATHOLOGICAL_CELL_LIMIT=67 target/release/deps/pathological_regions-*",
+    "method": "five independent candidate processes compared with the immediately preceding checkpoint median",
+    "cells": 67,
+    "operations": 268,
+    "completed_operations": 268,
+    "blockers": 0,
+    "checksum": 6,
+    "candidate_pairs": 603,
+    "retained_fragments": 3248,
+    "point_classifications": 134,
+    "parent_checkpoint_median_ms": 473.040715,
+    "candidate_all_four_native_booleans_ms": [
+      468.014904,
+      470.730858,
+      471.492876,
+      465.890780,
+      478.296899
+    ],
+    "candidate_median_ms": 470.730858,
+    "median_change_percent": -0.4883,
+    "interpretation": "overlapping timing ranges, identical deterministic topology, and no measurable regression"
+  },
+  "release_pathological_binary": {
+    "parent_checkpoint_bytes": 5531345,
+    "candidate_bytes": 5523149,
+    "delta_bytes": -8196,
+    "delta_percent": -0.1482,
+    "frozen_baseline_bytes": 5531293,
+    "delta_from_frozen_baseline_bytes": -8144,
+    "delta_from_frozen_baseline_percent": -0.1472
+  }
+}

@@ -1,0 +1,20 @@
+    Blocking waiting for file lock on build directory
+    Finished `release` profile [optimized] target(s) in 11.10s
+     Running `/tmp/aern-hyper-exp.PdU63J/target/release/aern-hyper-exp-probe expm1`
+expm1(3/2) p=1: actual=0, error=1.740845 ulps
+expm1(4/2) p=1: actual=0, error=3.194528 ulps
+expm1(5/2) p=1: actual=0, error=5.591247 ulps
+expm1(6/2) p=4: actual=0, error=1.192846 ulps
+expm1(6/2) p=1: actual=0, error=9.542768 ulps
+expm1(7/2) p=4: actual=0, error=2.007216 ulps
+expm1(7/2) p=1: actual=0, error=16.057726 ulps
+expm1(8/2) p=4: actual=0, error=3.349884 ulps
+expm1(8/2) p=1: actual=0, error=26.799075 ulps
+expm1(9/2) p=4: actual=0, error=5.563571 ulps
+expm1(9/2) p=1: actual=0, error=44.508566 ulps
+expm1(10/2) p=4: actual=0, error=9.213322 ulps
+expm1(10/2) p=1: actual=0, error=73.706580 ulps
+expm1(11/2) p=4: actual=0, error=15.230746 ulps
+expm1(11/2) p=1: actual=0, error=121.845966 ulps
+expm1(12/2) p=4: actual=0, error=25.151800 ulps
+operation=expm1, cases=4068, one-ulp violations=342

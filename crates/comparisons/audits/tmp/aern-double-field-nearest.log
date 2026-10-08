@@ -1,0 +1,3 @@
+add initial=ToNearest: 5408 directed checks; invalid=0
+multiply initial=ToNearest: 5408 directed checks; invalid=0
+divide initial=ToNearest: 5304 directed checks; invalid=0

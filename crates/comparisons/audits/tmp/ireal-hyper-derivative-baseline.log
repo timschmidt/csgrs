@@ -1,0 +1,13 @@
+INCOMPLETE t=0 order=63: Blocked(ExactCurveBlocker { operation: Evaluation, family: RationalBezier, reason: Unsupported })
+INCOMPLETE t=0 order=64: Blocked(ExactCurveBlocker { operation: Evaluation, family: RationalBezier, reason: Unsupported })
+INCOMPLETE t=0 order=68: Blocked(ExactCurveBlocker { operation: Evaluation, family: RationalBezier, reason: Unsupported })
+INCOMPLETE t=0 order=80: Blocked(ExactCurveBlocker { operation: Evaluation, family: RationalBezier, reason: Unsupported })
+INCOMPLETE t=1/2 order=63: Blocked(ExactCurveBlocker { operation: Evaluation, family: RationalBezier, reason: Unsupported })
+INCOMPLETE t=1/2 order=64: Blocked(ExactCurveBlocker { operation: Evaluation, family: RationalBezier, reason: Unsupported })
+INCOMPLETE t=1/2 order=68: Blocked(ExactCurveBlocker { operation: Evaluation, family: RationalBezier, reason: Unsupported })
+INCOMPLETE t=1/2 order=80: Blocked(ExactCurveBlocker { operation: Evaluation, family: RationalBezier, reason: Unsupported })
+INCOMPLETE t=1 order=63: Blocked(ExactCurveBlocker { operation: Evaluation, family: RationalBezier, reason: Unsupported })
+INCOMPLETE t=1 order=64: Blocked(ExactCurveBlocker { operation: Evaluation, family: RationalBezier, reason: Unsupported })
+INCOMPLETE t=1 order=68: Blocked(ExactCurveBlocker { operation: Evaluation, family: RationalBezier, reason: Unsupported })
+INCOMPLETE t=1 order=80: Blocked(ExactCurveBlocker { operation: Evaluation, family: RationalBezier, reason: Unsupported })
+TOTAL PASS 33 INCOMPLETE 12

@@ -1,0 +1,19 @@
+[
+  {
+    "file": "hypercurve/tests/hypercurve_rational_bezier.rs",
+    "before_sha256": "4545ebd08984b5cf8b7a241525deb0deb9ed72f0c5893e4ef32c1961f123959f",
+    "after_sha256": "646deece3aa2148f13f6114243e4773cf34fe88dbb097dd820e888cb2ea8c1c3",
+    "deletions": [
+      {
+        "byte_start": 8225,
+        "byte_end": 8232,
+        "old": "&policy"
+      },
+      {
+        "byte_start": 48135,
+        "byte_end": 48156,
+        "old": "&CurveContext::STRICT"
+      }
+    ]
+  }
+]

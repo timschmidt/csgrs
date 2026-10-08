@@ -1,0 +1,409 @@
+{
+  "schema": 1,
+  "checkpoint": 49,
+  "recorded": "2026-09-10T05:26:25.933Z",
+  "files": {
+    "record-fexpr-formatting-reads.mjs": "8b5d9289dce5b32b7d615a51f35316a1e7dd35b7f688c5d53bd647348c2f808a",
+    "verify-fexpr-formatting.mjs": "5810e7e5839cb84e1a07e38f18b08a7f9968fc8d12b239c514dddf08f579b3de",
+    "check-fexpr-formatting-metadata.mjs": "6b8926f667ba9def132d1b491813ce27fbaa1b3c97c06fbf06fb0384ec6bb764",
+    "fexpr-formatting-findings.md": "d5cdbd04609c967dfc619d6c25b110ee9b7ba0ddf412ab29310a351bb5f33b56",
+    "fexpr-formatting-read-records.json": "f057175b61f0a761977bbb48ef7464d0ebd0bfe5a80283d462098a5e66d9204a",
+    "fexpr-representation-manifest.json": "4acaf8778ab60d923bb75efe81111d55c41ce72868321f11258e7baaef600f6f",
+    "inventory.json": "5f9ef82294df7476427acc0acfc72ce525808dcaf47ea9162c9abc2733162f95",
+    "effective-coverage.mjs": "b884fd5eb462ede70cb9b3c2bed2cfad14d5700301e92e37156c7ec5104b17e0",
+    "results/fexpr-representation-verify.json": "6bb5dce10449bedf92bddc05ada7ad66a7811d155a11410b3ea0739cb462b786",
+    "results/fexpr-representation-verify.stdout": "8e4c5380edb21500b0da6ff9a8dacd64cfaa732031a859634836cdd89aa2f12b",
+    "results/fexpr-representation-verify.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "donorSources": {
+    "calcium:calcium.h": "70dd6b67d16ba75e9bcd812c1cbd78a39b9a023b784fe25369d5b045b2843b54",
+    "calcium:calcium/func_name.c": "e51ba4af0a9b3f4e5c58b6ba2a560c4353294a3d9d7c9d83a0a87e90c1419a26",
+    "calcium:calcium/test_multiplier.c": "9edecc8b476b617fadbd3d3fe7b1cd2c30507b5373b7920d126f792a4475a302",
+    "calcium:calcium/version.c": "ac1d63a2937c75239919da67f57199e99b44b8e1d98faeb74916dfb2d44020f7",
+    "calcium:calcium/write.c": "0e65f1ca33f9d8fd0e486ee40f22cc5b89236800f5338140bc71b93fedc61f0f",
+    "calcium:calcium/write_acb.c": "42f1f802cdbf3d7a9801d4593f18246c4d3adbe3d39364127901aa7b5122b1b3",
+    "calcium:calcium/write_si.c": "5e8c6b6f9eb65de6847cd363a4d343f4277d1153c7f5918b32cd4f20d16abcc2",
+    "calcium:doc/source/fexpr_builtin.rst": "8370dde85770cba45f2e0baa3907d46a2bb8b9e2cd9b6b04f5c4a134014fe899",
+    "calcium:fexpr/write_latex.c": "ba2a0ec9a61fa0f9fe3454563244579fb9db28a96ff545e1ec5044411bae0627",
+    "calcium:fexpr_builtin.h": "f57f579fb08cd8c22995aca6887240d91f6723f117d9e56a12d162b7fdc0049e",
+    "calcium:fexpr_builtin/inlines.c": "e1c337ab665537257550f20a68c5d602f90eda38d3ccc8890788b96896f09610",
+    "calcium:fexpr_builtin/lookup.c": "6f09bc2b9c6f093fe700b4fdb3309ef468a5adbe8bb49e58eb31d49dcfe1a68c",
+    "calcium:fexpr_builtin/table.c": "cd85500321e6d11c5bd26a12230eca0b1b8a8bdfe9965d98d735035b9632a405",
+    "flint:doc/source/fexpr_builtin.rst": "02f693ff6246b797f08030bd9280867b6b0bd3e28c3056284d0b01ea86c528c5",
+    "flint:src/calcium/fmpz_hash.c": "d1042a2df2b4b5e2e0425c28d664f2dcaaad92d47718310a54824de1f23cefdf",
+    "flint:src/calcium/func_name.c": "65350d0d96ce84d7b2550ad9b76f52ff408c264a8860f8ef941e8d6983819783",
+    "flint:src/calcium/io.c": "6adc06ba6d3b312c391746bc5b7fee0d2c9e8270e25fbcf948cd25ded0a399a0",
+    "flint:src/calcium/write.c": "743f3571eac6de01566c6532e0a31d8ad7efdcd07bb44559082f500beb7e969d",
+    "flint:src/calcium/write_acb.c": "e67b383a92fbfcc6763c48a66cc67f1b21c995b9dc32c060a76d6a1d81da8c35",
+    "flint:src/calcium/write_si.c": "d6088746149a2b4512343fd2edc6633044493e12c67e183c327d44ba622f5bae",
+    "flint:src/fexpr/write_latex.c": "7129028fb5ce654d36a88bca950a35ef6ab5c28a0faef21e3d0d0901856c8b83",
+    "flint:src/fexpr_builtin.h": "699ae5829dc9268d146b649ba253cd8ad82cf2a46952a6cfbcbffe6553744e86",
+    "flint:src/fexpr_builtin/inlines.c": "89ed531d126573de3d055c56a068f0cd2f787da26ec4f2b86623e0212406c6ff",
+    "flint:src/fexpr_builtin/lookup.c": "09d1e5b4c5b8ca1a0a8ec0d570be50e9348b72e21f3a5ca8b179dd062112ef59",
+    "flint:src/fexpr_builtin/table.c": "23119ac44a97935aab36dbfaa619af5593fd88ee8032fb27e1b16d3ea28fa9f6"
+  },
+  "readRecords": [
+    {
+      "repo": "calcium",
+      "path": "calcium.h",
+      "ranges": [
+        [
+          1,
+          75
+        ],
+        [
+          109,
+          183
+        ]
+      ],
+      "note": "Checkpoint49: Complete archived global/version, stream lifecycle, three-valued truth, function-code enum and integer hash header. Previously read76..108 excluded from new credit."
+    },
+    {
+      "repo": "calcium",
+      "path": "calcium/func_name.c",
+      "ranges": [
+        [
+          1,
+          69
+        ]
+      ],
+      "note": "Checkpoint49: Entire function-code/name switch and unknown fallback; separate from the474-entry expression vocabulary."
+    },
+    {
+      "repo": "calcium",
+      "path": "calcium/test_multiplier.c",
+      "ranges": [
+        [
+          1,
+          38
+        ]
+      ],
+      "note": "Checkpoint49: Archived lazy environment test multiplier, accepted0..1000 range and default1 fallback. Source-read only; no tests newly executed."
+    },
+    {
+      "repo": "calcium",
+      "path": "calcium/version.c",
+      "ranges": [
+        [
+          1,
+          20
+        ]
+      ],
+      "note": "Checkpoint49: Archived version string access; header patchlevel and version text differ, no runtime compatibility claim."
+    },
+    {
+      "repo": "calcium",
+      "path": "calcium/write.c",
+      "ranges": [
+        [
+          1,
+          39
+        ]
+      ],
+      "note": "Checkpoint49: File-backed formatting API versus geometrically growing literal string buffer; do not transplant as arbitrary-text-safe output. No runtime issue reproduction."
+    },
+    {
+      "repo": "calcium",
+      "path": "calcium/write_acb.c",
+      "ranges": [
+        [
+          1,
+          115
+        ]
+      ],
+      "note": "Checkpoint49: Real/imaginary display and sign extraction, exact/NO_RADIUS distinctions. Archived compatibility text rewrite versus current direct Arb string API; no new numerical or formatting accuracy gate."
+    },
+    {
+      "repo": "calcium",
+      "path": "calcium/write_si.c",
+      "ranges": [
+        [
+          1,
+          30
+        ]
+      ],
+      "note": "Checkpoint49: Machine-integer file formatting and22-byte stack temporary for string route, current WORD_FMT versus archived size dispatch."
+    },
+    {
+      "repo": "calcium",
+      "path": "doc/source/fexpr_builtin.rst",
+      "ranges": [
+        [
+          1,
+          1293
+        ]
+      ],
+      "note": "Checkpoint49: Entire builtin manual: binding forms, logic/equality/cases, exact and extended number vocabulary, declaration-only calculus/special functions, nonsemantic display markup and explicit normalization-cost warning."
+    },
+    {
+      "repo": "calcium",
+      "path": "fexpr/write_latex.c",
+      "ranges": [
+        [
+          1,
+          4096
+        ]
+      ],
+      "note": "Checkpoint49: Entire formatter: structural precedence/signs/powers, calculus/logic/collections/matrices, endpoint substitutions, decimal text, polynomial/root notation, explicit normal-form evaluation, symbol and generic dispatch, optional derivatives and stream entry points. Display is not proof/serialization; source ownership/text-output concerns unexecuted."
+    },
+    {
+      "repo": "calcium",
+      "path": "fexpr_builtin.h",
+      "ranges": [
+        [
+          1,
+          551
+        ]
+      ],
+      "note": "Checkpoint49: Entire alphabetical symbol enum, table record layout, display callback pointer, inline name/length and packed arithmetic identifiers. Vocabulary is not implemented semantic support."
+    },
+    {
+      "repo": "calcium",
+      "path": "fexpr_builtin/inlines.c",
+      "ranges": [
+        [
+          1,
+          14
+        ]
+      ],
+      "note": "Checkpoint49: Complete translation-unit inline-definition emission."
+    },
+    {
+      "repo": "calcium",
+      "path": "fexpr_builtin/lookup.c",
+      "ranges": [
+        [
+          1,
+          38
+        ]
+      ],
+      "note": "Checkpoint49: Entire alphabetically indexed binary string search returning-1 for absent names. Immutable metadata, no retained mutable lookup cache."
+    },
+    {
+      "repo": "calcium",
+      "path": "fexpr_builtin/table.c",
+      "ranges": [
+        [
+          1,
+          490
+        ]
+      ],
+      "note": "Checkpoint49: Every474 table rows read, including display text and callback mapping. Lookup and presentation share one static metadata table; no measured binary-size claim."
+    },
+    {
+      "repo": "flint",
+      "path": "doc/source/fexpr_builtin.rst",
+      "ranges": [
+        [
+          1,
+          1293
+        ]
+      ],
+      "note": "Checkpoint49: Entire builtin manual: binding forms, logic/equality/cases, exact and extended number vocabulary, declaration-only calculus/special functions, nonsemantic display markup and explicit normalization-cost warning."
+    },
+    {
+      "repo": "flint",
+      "path": "src/calcium/fmpz_hash.c",
+      "ranges": [
+        [
+          1,
+          26
+        ]
+      ],
+      "note": "Checkpoint49: Current immediate/least-limb signed integer hash; no semantic or adversarial hash-performance claim."
+    },
+    {
+      "repo": "flint",
+      "path": "src/calcium/func_name.c",
+      "ranges": [
+        [
+          1,
+          68
+        ]
+      ],
+      "note": "Checkpoint49: Entire function-code/name switch and unknown fallback; separate from the474-entry expression vocabulary."
+    },
+    {
+      "repo": "flint",
+      "path": "src/calcium/io.c",
+      "ranges": [
+        [
+          1,
+          19
+        ]
+      ],
+      "note": "Checkpoint49: Current file-stream initialization with opaque FILE pointer and null string owner."
+    },
+    {
+      "repo": "flint",
+      "path": "src/calcium/write.c",
+      "ranges": [
+        [
+          1,
+          40
+        ]
+      ],
+      "note": "Checkpoint49: File-backed formatting API versus geometrically growing literal string buffer; do not transplant as arbitrary-text-safe output. No runtime issue reproduction."
+    },
+    {
+      "repo": "flint",
+      "path": "src/calcium/write_acb.c",
+      "ranges": [
+        [
+          1,
+          55
+        ]
+      ],
+      "note": "Checkpoint49: Real/imaginary display and sign extraction, exact/NO_RADIUS distinctions. Archived compatibility text rewrite versus current direct Arb string API; no new numerical or formatting accuracy gate."
+    },
+    {
+      "repo": "flint",
+      "path": "src/calcium/write_si.c",
+      "ranges": [
+        [
+          1,
+          28
+        ]
+      ],
+      "note": "Checkpoint49: Machine-integer file formatting and22-byte stack temporary for string route, current WORD_FMT versus archived size dispatch."
+    },
+    {
+      "repo": "flint",
+      "path": "src/fexpr/write_latex.c",
+      "ranges": [
+        [
+          1,
+          4103
+        ]
+      ],
+      "note": "Checkpoint49: Entire formatter: structural precedence/signs/powers, calculus/logic/collections/matrices, endpoint substitutions, decimal text, polynomial/root notation, explicit normal-form evaluation, symbol and generic dispatch, optional derivatives and stream entry points. Display is not proof/serialization; source ownership/text-output concerns unexecuted."
+    },
+    {
+      "repo": "flint",
+      "path": "src/fexpr_builtin.h",
+      "ranges": [
+        [
+          1,
+          550
+        ]
+      ],
+      "note": "Checkpoint49: Entire alphabetical symbol enum, table record layout, display callback pointer, inline name/length and packed arithmetic identifiers. Vocabulary is not implemented semantic support."
+    },
+    {
+      "repo": "flint",
+      "path": "src/fexpr_builtin/inlines.c",
+      "ranges": [
+        [
+          1,
+          13
+        ]
+      ],
+      "note": "Checkpoint49: Complete translation-unit inline-definition emission."
+    },
+    {
+      "repo": "flint",
+      "path": "src/fexpr_builtin/lookup.c",
+      "ranges": [
+        [
+          1,
+          39
+        ]
+      ],
+      "note": "Checkpoint49: Entire alphabetically indexed binary string search returning-1 for absent names. Immutable metadata, no retained mutable lookup cache."
+    },
+    {
+      "repo": "flint",
+      "path": "src/fexpr_builtin/table.c",
+      "ranges": [
+        [
+          1,
+          490
+        ]
+      ],
+      "note": "Checkpoint49: Every474 table rows read, including display text and callback mapping. Lookup and presentation share one static metadata table; no measured binary-size claim."
+    }
+  ],
+  "newDonorLines": 13667,
+  "newFiles": 24,
+  "completedPartialFiles": 1,
+  "coverageBefore": [
+    {
+      "repo": "calcium",
+      "reviewed": 467,
+      "complete": 466,
+      "partial": 1,
+      "readLines": 45368
+    },
+    {
+      "repo": "flint",
+      "reviewed": 798,
+      "complete": 778,
+      "partial": 20,
+      "readLines": 108749
+    }
+  ],
+  "coverageAtBinding": [
+    {
+      "repo": "calcium",
+      "reviewed": 479,
+      "complete": 479,
+      "partial": 0,
+      "readLines": 52311
+    },
+    {
+      "repo": "flint",
+      "reviewed": 810,
+      "complete": 790,
+      "partial": 20,
+      "readLines": 115473
+    }
+  ],
+  "auxiliarySources": {
+    "exact-real-references/flint/src/config.h": "b3a8d2423549888d3e9f1ea4503dffff43175f52d63c9ff443f8bd5bf718457b",
+    "exact-real-references/flint/src/config.h.in": "04e512bc027a33738c0abc4bd5c0c71e8d6b217694db2ccf56d3a2428fe5e487"
+  },
+  "auxiliaryReadRanges": {
+    "exact-real-references/flint/src/config.h": [
+      [
+        201,
+        227
+      ]
+    ],
+    "exact-real-references/flint/src/config.h.in": [
+      [
+        200,
+        226
+      ]
+    ]
+  },
+  "hyperReadRanges": {
+    "hyperreal/src/computable/format.rs": [
+      [
+        1,
+        330
+      ]
+    ],
+    "hyperreal/src/real/arithmetic/format_parse.rs": [
+      [
+        1,
+        106
+      ]
+    ]
+  },
+  "previousManifest": "fexpr-representation-manifest.json",
+  "previousLiveFiles": 956,
+  "checks": {
+    "kind": "static-source-metadata-consistency",
+    "repositories": 2,
+    "symbolsPerRepository": 474,
+    "exactPairedTableEntries": 474,
+    "explicitLatexCallbacks": 35,
+    "callbackRows": 269,
+    "documentedSymbolsPerRepository": 405,
+    "normalizedTableSha256": "b2a0ae5ae1bb301461058a15846111aeb755f86672fadbb0c91e9743f09197ad",
+    "limits": "Checks enum/table names and indexes, lexical order, paired metadata identity, documented-name membership and callback definition presence. Does not test numerical support, formatting output, memory safety, linkage size or runtime."
+  },
+  "qualification": "Static metadata and source/recorded-evidence integrity only. No new donor runtime, numerical, Memcheck, benchmark or full47 historical chain rerun.",
+  "production": "No production/donor edit, new retained transfer, /tmp build or file, cleanup/deletion, commit, push or external report.",
+  "scope": "Both fexpr and fexpr_builtin directories, their headers/manuals and both calcium support directories/headers source-read. Recursive support, algebraic paths and full original ecosystem remain incomplete."
+}

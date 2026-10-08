@@ -1,0 +1,11 @@
+{
+  "tag": "spectral-native",
+  "started": "2026-09-09T03:30:47.790Z",
+  "finished": "2026-09-09T03:30:47.893Z",
+  "elapsedSeconds": 0.101247149,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison",
+  "command": "/tmp/calcium-spectral.nqRkRT/flint-spectral",
+  "args": [],
+  "code": 0,
+  "signal": null
+}

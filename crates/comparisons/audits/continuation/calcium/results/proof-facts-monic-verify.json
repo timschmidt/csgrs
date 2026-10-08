@@ -1,0 +1,13 @@
+{
+  "tag": "proof-facts-monic-verify",
+  "started": "2026-09-11T01:38:15.965Z",
+  "finished": "2026-09-11T01:38:44.027Z",
+  "elapsedSeconds": 28.060223045,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "node",
+  "args": [
+    "verify-proof-facts-monic-v62.mjs"
+  ],
+  "code": 0,
+  "signal": null
+}

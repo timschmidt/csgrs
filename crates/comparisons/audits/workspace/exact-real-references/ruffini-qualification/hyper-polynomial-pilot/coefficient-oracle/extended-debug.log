@@ -1,0 +1,4 @@
+PASS	coefficient-export-shapes	2880
+PASS	coefficient-export-cost-density-lifetimes	1800
+PASS	coefficient-export-zero-boundaries	225
+SUMMARY	4905

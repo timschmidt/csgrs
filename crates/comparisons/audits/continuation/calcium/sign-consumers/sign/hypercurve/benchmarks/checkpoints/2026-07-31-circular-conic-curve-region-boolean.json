@@ -1,0 +1,188 @@
+{
+  "schema": 1,
+  "captured_on": "2026-07-31",
+  "checkpoint": "circular-conic-curve-region-boolean-shared-support",
+  "source_revision": "a1baebdc31415408034f392b3f430fa4956495fd",
+  "matched_behavior_control_revision": "fb0640dc172e5a3512df7a21167c250ac7ea5f99",
+  "frozen_baseline": "../baselines/2026-07-31/baseline.json",
+  "scope": {
+    "canonical_batch": "CurveRegion2::boolean_regions on two nonempty, nonidentical regions whose materialized carriers are retained circular conics",
+    "historical_control": "four independent CurveRegion2::boolean_region calls through the retained native circular-arc engine",
+    "single_operation_contract": "unchanged native fast path",
+    "general_pair_specialization": "one exact CircleCircleRelation is computed per retained circle-support pair and reused by every rational-quadratic span pair in the canonical arrangement",
+    "output": "exact regularized CurveRegion2 loops; conic publication remains span-granular pending a zero-overhead certified compactor"
+  },
+  "semantic_evidence": {
+    "all_four_operations_share_one_candidate_schedule": true,
+    "all_four_operations_share_one_split_graph": true,
+    "all_four_operations_share_propagated_fragment_classifications": true,
+    "full_circle_decomposition_shares_one_implicit_conic": true,
+    "full_circle_decomposition_shares_one_circle_support": true,
+    "sixteen_span_pair_contexts_cache_one_support_relation": true,
+    "shared_matches_native_dense_half_grid_point_classifications": true,
+    "shared_matches_native_all_four_operations": true,
+    "historical_fragment_counts": {
+      "union": 4,
+      "intersection": 4,
+      "difference": 4,
+      "xor": 8
+    },
+    "shared_span_granular_fragment_counts": {
+      "union": 8,
+      "intersection": 4,
+      "difference": 6,
+      "xor": 12
+    },
+    "lower_dimensional_contacts_and_coincident_overlaps_remain_in_intersection_evidence": true
+  },
+  "policy_evidence": {
+    "strict_symbolic_reordered_center_equivalence": "typed blocker",
+    "approximate_512_symbolic_reordered_center_equivalence": "exact returned regions with Approximate512Consumed",
+    "difference_and_xor_for_equivalent_symbolic_circles": "empty",
+    "finite_coordinate_replacement": false,
+    "terminal_observed_once_by_outer_operation": true
+  },
+  "paired_release_benchmark": {
+    "command": "taskset -c 9 HYPERCURVE_CURVE_REGION_BATCH_FIXTURE=circles HYPERCURVE_CURVE_REGION_BATCH_ITERATIONS=1000 target/release/deps/curve_region_boolean_batch-*",
+    "method": "fifteen processes; historical-control-first and shared-first order alternated; both public contracts measured in the same release executable",
+    "iterations_per_process_per_contract": 1000,
+    "historical_four_independent_ns_per_batch": [
+      1083604,
+      1166421,
+      1158564,
+      1112676,
+      1086511,
+      1086445,
+      1126670,
+      1131220,
+      1111656,
+      1070904,
+      1105396,
+      1143205,
+      1136465,
+      1075927,
+      1124849
+    ],
+    "shared_arrangement_ns_per_batch": [
+      1146454,
+      1228629,
+      1156662,
+      1179557,
+      1177536,
+      1118245,
+      1169242,
+      1164937,
+      1153346,
+      1123110,
+      1130798,
+      1167191,
+      1159976,
+      1146169,
+      1186102
+    ],
+    "historical_median_ns_per_batch": 1112676,
+    "shared_median_ns_per_batch": 1159976,
+    "median_change_percent": 4.251013,
+    "historical_to_shared_ratio": 0.959223,
+    "interpretation": "the authoritative circular-conic batch is near parity but currently 4.25 percent slower than four native calls; unlike the historical route it computes one shared topology and materially reduces operation-scale allocations"
+  },
+  "heaptrack": {
+    "command": "HYPERCURVE_CURVE_REGION_BATCH_FIXTURE=circles HYPERCURVE_CURVE_REGION_BATCH_ITERATIONS=100 HYPERCURVE_CURVE_REGION_BATCH_MODE={independent,shared} heaptrack --record-only target/release/deps/curve_region_boolean_batch-*",
+    "measured_batches": 100,
+    "historical_allocation_calls": 1504098,
+    "shared_allocation_calls": 1446199,
+    "eliminated_allocation_calls": 57899,
+    "allocation_change_percent": -3.84942,
+    "eliminated_allocation_calls_per_batch": 578.99,
+    "historical_temporary_allocations": 129892,
+    "shared_temporary_allocations": 50992,
+    "eliminated_temporary_allocations": 78900,
+    "temporary_allocation_change_percent": -60.7428,
+    "eliminated_temporary_allocations_per_batch": 789,
+    "peak_heap_historical": "269.06K",
+    "peak_heap_shared": "269.89K",
+    "peak_rss_historical": "13.26M",
+    "peak_rss_shared": "12.85M",
+    "instrumented_historical_ns_per_batch": 8207116,
+    "instrumented_shared_ns_per_batch": 7356960,
+    "interpretation": "the raw uninstrumented timing remains authoritative; heaptrack demonstrates substantially less allocator traffic, while process peak heap is effectively unchanged and dominated by setup/profiler state"
+  },
+  "matched_release_pathological_binary": {
+    "command": "cargo bench --bench pathological_regions --no-run; size; strip --strip-all",
+    "control_debug_file_bytes": 7000336,
+    "candidate_debug_file_bytes": 6994432,
+    "debug_file_delta_bytes": -5904,
+    "debug_file_delta_percent": -0.084339,
+    "control_stripped_file_bytes": 5561520,
+    "candidate_stripped_file_bytes": 5561792,
+    "stripped_file_delta_bytes": 272,
+    "stripped_file_delta_percent": 0.004891,
+    "control_size": {
+      "text": 5291509,
+      "data": 266128,
+      "bss": 2368,
+      "total_loadable": 5560005
+    },
+    "candidate_size": {
+      "text": 5291881,
+      "data": 266032,
+      "bss": 2096,
+      "total_loadable": 5560009
+    },
+    "total_loadable_delta_bytes": 4,
+    "total_loadable_delta_percent": 0.000072,
+    "interpretation": "the linked image is load-byte neutral to measurement precision; deletion of the historical engine remains the larger Phase 6 size opportunity"
+  },
+  "static_callgraph": {
+    "command": "tools/hyper-callgraph/target/release/hyper-callgraph --root /home/tim/Documents/GitHub/workspace --out-dir /tmp/hypercurve-circular-conic-boolean-callgraph --crate-name hypercurve --include-examples --include-tests --include-bench --include-fuzz --format json",
+    "nodes": 22894,
+    "edges": 39361,
+    "previous_checkpoint_nodes": 22833,
+    "previous_checkpoint_edges": 39274,
+    "node_delta": 61,
+    "edge_delta": 87,
+    "artifact": "/tmp/hypercurve-circular-conic-boolean-callgraph/callgraph.json",
+    "canonical_batch_node_present": true,
+    "batch_circle_support_cache_node_present": true,
+    "shared_circle_relation_node_present": true,
+    "policy_aware_conic_span_context_node_present": true
+  },
+  "rejected_hot_paths": {
+    "per_span_native_arc_reconstruction": "about 1.94 ms per batch and repeated support work; removed",
+    "eager_exact_conic_publication_compaction": "about 4.5 to 8 ms per batch versus about 1.15 ms span-granular publication; removed",
+    "compaction_shape_if_free": {
+      "union": 4,
+      "intersection": 2,
+      "difference": 3,
+      "xor": 6
+    },
+    "follow_up": "derive lazy or construction-time certified span runs so compact publication does not reconstruct native roles or replay exact predicates"
+  },
+  "competitive_context": {
+    "current_exact_native_rectangle_union_ns": 4886.7,
+    "current_cavalier_rectangle_union_ns": 916.4,
+    "current_i_overlay_rectangle_union_ns": 1017.7,
+    "current_geo_rectangle_union_ns": 1236.0,
+    "contract_note": "these finite polygon controls do not provide Hypercurve's exact circular-conic or STRICT/APPROXIMATE_512 contract; a dedicated curved competitive lane is the next benchmark addition"
+  },
+  "verification": {
+    "cargo_test_all_features": "pass",
+    "unit_tests": "266/266 pass",
+    "generated_curve_region_boolean_tests": "7/7 pass",
+    "pathological_operations": "268/268 decided with no blockers",
+    "cargo_clippy_all_features_all_targets_deny_warnings": "pass",
+    "cargo_clippy_no_default_features_all_targets_deny_warnings": "pass",
+    "cargo_check_all_features": "pass",
+    "cargo_check_no_default_features": "pass",
+    "cargo_fmt_check": "pass",
+    "git_diff_check": "pass",
+    "hypermesh_modified": false
+  },
+  "next_boundary": {
+    "phase": "unified CurveRegion2 arrangement",
+    "next_interactions": "line/circular-conic followed by line/general, conic/general, and general/general pair matrices",
+    "publication": "retain span-granular exact output until compact circular publication is demonstrably faster or allocation-neutral",
+    "legacy_deletion": "remove historical batch machinery only after all interaction families and degeneracies use the canonical arrangement",
+    "offset_fillet_chamfer": "pending on the authoritative arrangement and exact parallel-curve substrate"
+  }
+}

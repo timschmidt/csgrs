@@ -1,0 +1,106 @@
+[
+  {
+    "name": "bezier_region::tests::retained_selected_corner_trim_keeps_distinct_bounded_fields_local",
+    "returncode": 0,
+    "passed": true,
+    "limit_seconds": 75,
+    "elapsed_seconds": 0.1436327329138294,
+    "log": "consumed-corner-ranges-20260923-focused2-case-0.log"
+  },
+  {
+    "name": "bezier_region::tests::corner_trims_drop_consumed_ranges_without_dropping_closed_traces",
+    "returncode": 0,
+    "passed": true,
+    "limit_seconds": 75,
+    "elapsed_seconds": 0.14071975299157202,
+    "log": "consumed-corner-ranges-20260923-focused2-case-1.log"
+  },
+  {
+    "name": "bezier_region::tests::analytic_corner_restrictions_keep_common_scalar_cuts_and_one_source",
+    "returncode": 0,
+    "passed": true,
+    "limit_seconds": 75,
+    "elapsed_seconds": 0.1487353229895234,
+    "log": "consumed-corner-ranges-20260923-focused2-case-2.log"
+  },
+  {
+    "name": "bezier_region::tests::native_corner_intervals_retain_general_cuts_and_replay_after_trimming",
+    "returncode": 0,
+    "passed": true,
+    "limit_seconds": 75,
+    "elapsed_seconds": 0.1446362140122801,
+    "log": "consumed-corner-ranges-20260923-focused2-case-3.log"
+  },
+  {
+    "name": "bezier_region::tests::repeated_circle_corner_restrictions_preserve_only_outer_tangency",
+    "returncode": 0,
+    "passed": true,
+    "limit_seconds": 75,
+    "elapsed_seconds": 0.1441892550792545,
+    "log": "consumed-corner-ranges-20260923-focused2-case-4.log"
+  },
+  {
+    "name": "bezier_region::tests::selected_circle_fillet_owns_exact_smooth_run_seam_endpoint",
+    "returncode": 0,
+    "passed": true,
+    "limit_seconds": 75,
+    "elapsed_seconds": 0.19838001590687782,
+    "log": "consumed-corner-ranges-20260923-focused2-case-5.log"
+  },
+  {
+    "name": "bezier_region::tests::selected_circle_fillet_crosses_an_independently_reframed_run",
+    "returncode": 0,
+    "passed": true,
+    "limit_seconds": 75,
+    "elapsed_seconds": 0.3020693010184914,
+    "log": "consumed-corner-ranges-20260923-focused2-case-6.log"
+  },
+  {
+    "name": "bezier_region::tests::selected_circle_pair_fillets_extend_over_both_full_supports",
+    "returncode": 0,
+    "passed": true,
+    "limit_seconds": 75,
+    "elapsed_seconds": 0.30011488404124975,
+    "log": "consumed-corner-ranges-20260923-focused2-case-7.log"
+  },
+  {
+    "name": "bezier_region::tests::independent_selected_circle_pair_fillets_extend_over_both_full_supports",
+    "returncode": 0,
+    "passed": true,
+    "limit_seconds": 75,
+    "elapsed_seconds": 6.958938956959173,
+    "log": "consumed-corner-ranges-20260923-focused2-case-8.log"
+  },
+  {
+    "name": "bezier_region::tests::nonrepresented_chord_line_corner_fillets_through_shared_carriers",
+    "returncode": 0,
+    "passed": true,
+    "limit_seconds": 75,
+    "elapsed_seconds": 0.35371614701580256,
+    "log": "consumed-corner-ranges-20260923-focused2-case-9.log"
+  },
+  {
+    "name": "bezier_region::tests::nonrepresented_chord_parallel_corner_fillets_without_reintersection",
+    "returncode": 0,
+    "passed": true,
+    "limit_seconds": 75,
+    "elapsed_seconds": 14.121714625041932,
+    "log": "consumed-corner-ranges-20260923-focused2-case-10.log"
+  },
+  {
+    "name": "bezier_region::single_loop_corner_publication_tests::selected_circle_corner_candidates_publish_normalized_single_loops",
+    "returncode": 0,
+    "passed": true,
+    "limit_seconds": 75,
+    "elapsed_seconds": 0.16795349400490522,
+    "log": "consumed-corner-ranges-20260923-focused2-case-11.log"
+  },
+  {
+    "name": "bezier_region::tests::independent_oblique_chord_pair_fillets_extend_on_infinite_supports",
+    "returncode": 0,
+    "passed": true,
+    "limit_seconds": 75,
+    "elapsed_seconds": 0.8495271819410846,
+    "log": "consumed-corner-ranges-20260923-focused2-case-12.log"
+  }
+]

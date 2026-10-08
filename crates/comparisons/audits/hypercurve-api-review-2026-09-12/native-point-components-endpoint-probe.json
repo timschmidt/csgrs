@@ -1,0 +1,25 @@
+{
+  "returncode": 0,
+  "elapsed_seconds": 0.0034803919988917187,
+  "normal_library_sha256": "0546f89b7cd883affba68150e6bab6683dd4d4d6efb69d670ed8d75a38bb20dd",
+  "log": "native-point-components-endpoint-probe.log",
+  "source": "singleton-endpoint-parameter-completed.rs",
+  "command": [
+    "rustc",
+    "--edition=2024",
+    "-O",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/singleton-endpoint-parameter-completed.rs",
+    "--extern",
+    "hypercurve=/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/libhypercurve-2c7ff6f3fbe07653.rlib",
+    "-L",
+    "dependency=/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps",
+    "-o",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/native-point-components-endpoint-probe"
+  ],
+  "source_sha256": "7fe239b2f4d8b0577cdbd11311f6e9c8dcdf8ae9e7bbb6d1fd3ba9493a68b63f",
+  "executable_sha256": "01fb954dbf07f41fe8b026b08947f5bc002b58ab89e819cdb6e66aefb1f4cffb",
+  "counts": {
+    "queries": 4,
+    "parameter_visits": 8
+  }
+}

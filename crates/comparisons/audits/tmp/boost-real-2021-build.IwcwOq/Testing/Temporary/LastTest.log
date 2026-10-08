@@ -1,0 +1,507 @@
+Start testing: Sep 04 14:48 EDT
+----------------------------------------------------------
+1/28 Testing: conv_test
+1/28 Test: conv_test
+Command: "/tmp/boost-real-2021-build.IwcwOq/test/conv_test"
+Directory: /tmp/boost-real-2021-build.IwcwOq/test
+"conv_test" start time: Sep 04 14:48 EDT
+Output:
+----------------------------------------------------------
+===============================================================================
+All tests passed (12 assertions in 7 test cases)
+
+<end of output>
+Test time =   0.00 sec
+----------------------------------------------------------
+Test Passed.
+"conv_test" end time: Sep 04 14:48 EDT
+"conv_test" time elapsed: 00:00:00
+----------------------------------------------------------
+
+3/28 Testing: number_from_string_test
+3/28 Test: number_from_string_test
+Command: "/tmp/boost-real-2021-build.IwcwOq/test/number_from_string_test"
+Directory: /tmp/boost-real-2021-build.IwcwOq/test
+"number_from_string_test" start time: Sep 04 14:48 EDT
+Output:
+----------------------------------------------------------
+===============================================================================
+All tests passed (4 assertions in 1 test case)
+
+<end of output>
+Test time =   0.00 sec
+----------------------------------------------------------
+Test Passed.
+"number_from_string_test" end time: Sep 04 14:48 EDT
+"number_from_string_test" time elapsed: 00:00:00
+----------------------------------------------------------
+
+4/28 Testing: real_algorithm_iterator_unit_test
+4/28 Test: real_algorithm_iterator_unit_test
+Command: "/tmp/boost-real-2021-build.IwcwOq/test/real_algorithm_iterator_unit_test"
+Directory: /tmp/boost-real-2021-build.IwcwOq/test
+"real_algorithm_iterator_unit_test" start time: Sep 04 14:48 EDT
+Output:
+----------------------------------------------------------
+===============================================================================
+All tests passed (136 assertions in 2 test cases)
+
+<end of output>
+Test time =   0.00 sec
+----------------------------------------------------------
+Test Passed.
+"real_algorithm_iterator_unit_test" end time: Sep 04 14:48 EDT
+"real_algorithm_iterator_unit_test" time elapsed: 00:00:00
+----------------------------------------------------------
+
+2/28 Testing: integer_number_test
+2/28 Test: integer_number_test
+Command: "/tmp/boost-real-2021-build.IwcwOq/test/integer_number_test"
+Directory: /tmp/boost-real-2021-build.IwcwOq/test
+"integer_number_test" start time: Sep 04 14:48 EDT
+Output:
+----------------------------------------------------------
+===============================================================================
+All tests passed (284 assertions in 31 test cases)
+
+<end of output>
+Test time =   0.01 sec
+----------------------------------------------------------
+Test Passed.
+"integer_number_test" end time: Sep 04 14:48 EDT
+"integer_number_test" time elapsed: 00:00:00
+----------------------------------------------------------
+
+6/28 Testing: real_explicit_constructors_unit_test
+6/28 Test: real_explicit_constructors_unit_test
+Command: "/tmp/boost-real-2021-build.IwcwOq/test/real_explicit_constructors_unit_test"
+Directory: /tmp/boost-real-2021-build.IwcwOq/test
+"real_explicit_constructors_unit_test" start time: Sep 04 14:48 EDT
+Output:
+----------------------------------------------------------
+===============================================================================
+All tests passed (276 assertions in 1 test case)
+
+<end of output>
+Test time =   0.00 sec
+----------------------------------------------------------
+Test Passed.
+"real_explicit_constructors_unit_test" end time: Sep 04 14:48 EDT
+"real_explicit_constructors_unit_test" time elapsed: 00:00:00
+----------------------------------------------------------
+
+7/28 Testing: real_explicit_iterator_unit_test
+7/28 Test: real_explicit_iterator_unit_test
+Command: "/tmp/boost-real-2021-build.IwcwOq/test/real_explicit_iterator_unit_test"
+Directory: /tmp/boost-real-2021-build.IwcwOq/test
+"real_explicit_iterator_unit_test" start time: Sep 04 14:48 EDT
+Output:
+----------------------------------------------------------
+===============================================================================
+All tests passed (60 assertions in 6 test cases)
+
+<end of output>
+Test time =   0.02 sec
+----------------------------------------------------------
+Test Passed.
+"real_explicit_iterator_unit_test" end time: Sep 04 14:48 EDT
+"real_explicit_iterator_unit_test" time elapsed: 00:00:00
+----------------------------------------------------------
+
+8/28 Testing: real_greater_than_operator_test
+8/28 Test: real_greater_than_operator_test
+Command: "/tmp/boost-real-2021-build.IwcwOq/test/real_greater_than_operator_test"
+Directory: /tmp/boost-real-2021-build.IwcwOq/test
+"real_greater_than_operator_test" start time: Sep 04 14:48 EDT
+Output:
+----------------------------------------------------------
+===============================================================================
+All tests passed (285 assertions in 3 test cases)
+
+<end of output>
+Test time =   4.27 sec
+----------------------------------------------------------
+Test Passed.
+"real_greater_than_operator_test" end time: Sep 04 14:48 EDT
+"real_greater_than_operator_test" time elapsed: 00:00:04
+----------------------------------------------------------
+
+5/28 Testing: real_eq_operator_test
+5/28 Test: real_eq_operator_test
+Command: "/tmp/boost-real-2021-build.IwcwOq/test/real_eq_operator_test"
+Directory: /tmp/boost-real-2021-build.IwcwOq/test
+"real_eq_operator_test" start time: Sep 04 14:48 EDT
+Output:
+----------------------------------------------------------
+===============================================================================
+All tests passed (309 assertions in 3 test cases)
+
+<end of output>
+Test time =   4.79 sec
+----------------------------------------------------------
+Test Passed.
+"real_eq_operator_test" end time: Sep 04 14:48 EDT
+"real_eq_operator_test" time elapsed: 00:00:04
+----------------------------------------------------------
+
+10/28 Testing: real_iterator_addition_addition_test
+10/28 Test: real_iterator_addition_addition_test
+Command: "/tmp/boost-real-2021-build.IwcwOq/test/real_iterator_addition_addition_test"
+Directory: /tmp/boost-real-2021-build.IwcwOq/test
+"real_iterator_addition_addition_test" start time: Sep 04 14:48 EDT
+Output:
+----------------------------------------------------------
+===============================================================================
+All tests passed (42 assertions in 3 test cases)
+
+<end of output>
+Test time =   0.00 sec
+----------------------------------------------------------
+Test Passed.
+"real_iterator_addition_addition_test" end time: Sep 04 14:48 EDT
+"real_iterator_addition_addition_test" time elapsed: 00:00:00
+----------------------------------------------------------
+
+11/28 Testing: real_iterator_addition_multiplication_test
+11/28 Test: real_iterator_addition_multiplication_test
+Command: "/tmp/boost-real-2021-build.IwcwOq/test/real_iterator_addition_multiplication_test"
+Directory: /tmp/boost-real-2021-build.IwcwOq/test
+"real_iterator_addition_multiplication_test" start time: Sep 04 14:48 EDT
+Output:
+----------------------------------------------------------
+===============================================================================
+All tests passed (60 assertions in 3 test cases)
+
+<end of output>
+Test time =   0.00 sec
+----------------------------------------------------------
+Test Passed.
+"real_iterator_addition_multiplication_test" end time: Sep 04 14:48 EDT
+"real_iterator_addition_multiplication_test" time elapsed: 00:00:00
+----------------------------------------------------------
+
+12/28 Testing: real_iterator_addition_subtraction_test
+12/28 Test: real_iterator_addition_subtraction_test
+Command: "/tmp/boost-real-2021-build.IwcwOq/test/real_iterator_addition_subtraction_test"
+Directory: /tmp/boost-real-2021-build.IwcwOq/test
+"real_iterator_addition_subtraction_test" start time: Sep 04 14:48 EDT
+Output:
+----------------------------------------------------------
+===============================================================================
+All tests passed (42 assertions in 3 test cases)
+
+<end of output>
+Test time =   0.00 sec
+----------------------------------------------------------
+Test Passed.
+"real_iterator_addition_subtraction_test" end time: Sep 04 14:48 EDT
+"real_iterator_addition_subtraction_test" time elapsed: 00:00:00
+----------------------------------------------------------
+
+13/28 Testing: real_iterator_addition_test
+13/28 Test: real_iterator_addition_test
+Command: "/tmp/boost-real-2021-build.IwcwOq/test/real_iterator_addition_test"
+Directory: /tmp/boost-real-2021-build.IwcwOq/test
+"real_iterator_addition_test" start time: Sep 04 14:48 EDT
+Output:
+----------------------------------------------------------
+===============================================================================
+All tests passed (288 assertions in 1 test case)
+
+<end of output>
+Test time =   0.02 sec
+----------------------------------------------------------
+Test Passed.
+"real_iterator_addition_test" end time: Sep 04 14:48 EDT
+"real_iterator_addition_test" time elapsed: 00:00:00
+----------------------------------------------------------
+
+14/28 Testing: real_iterator_division_test
+14/28 Test: real_iterator_division_test
+Command: "/tmp/boost-real-2021-build.IwcwOq/test/real_iterator_division_test"
+Directory: /tmp/boost-real-2021-build.IwcwOq/test
+"real_iterator_division_test" start time: Sep 04 14:48 EDT
+Output:
+----------------------------------------------------------
+===============================================================================
+All tests passed (216 assertions in 3 test cases)
+
+<end of output>
+Test time =   0.10 sec
+----------------------------------------------------------
+Test Passed.
+"real_iterator_division_test" end time: Sep 04 14:48 EDT
+"real_iterator_division_test" time elapsed: 00:00:00
+----------------------------------------------------------
+
+15/28 Testing: real_iterator_multiplication_addition_test
+15/28 Test: real_iterator_multiplication_addition_test
+Command: "/tmp/boost-real-2021-build.IwcwOq/test/real_iterator_multiplication_addition_test"
+Directory: /tmp/boost-real-2021-build.IwcwOq/test
+"real_iterator_multiplication_addition_test" start time: Sep 04 14:48 EDT
+Output:
+----------------------------------------------------------
+===============================================================================
+All tests passed (60 assertions in 3 test cases)
+
+<end of output>
+Test time =   0.00 sec
+----------------------------------------------------------
+Test Passed.
+"real_iterator_multiplication_addition_test" end time: Sep 04 14:48 EDT
+"real_iterator_multiplication_addition_test" time elapsed: 00:00:00
+----------------------------------------------------------
+
+16/28 Testing: real_iterator_multiplication_multiplication_test
+16/28 Test: real_iterator_multiplication_multiplication_test
+Command: "/tmp/boost-real-2021-build.IwcwOq/test/real_iterator_multiplication_multiplication_test"
+Directory: /tmp/boost-real-2021-build.IwcwOq/test
+"real_iterator_multiplication_multiplication_test" start time: Sep 04 14:48 EDT
+Output:
+----------------------------------------------------------
+===============================================================================
+All tests passed (42 assertions in 3 test cases)
+
+<end of output>
+Test time =   0.00 sec
+----------------------------------------------------------
+Test Passed.
+"real_iterator_multiplication_multiplication_test" end time: Sep 04 14:48 EDT
+"real_iterator_multiplication_multiplication_test" time elapsed: 00:00:00
+----------------------------------------------------------
+
+17/28 Testing: real_iterator_multiplication_subtraction_test
+17/28 Test: real_iterator_multiplication_subtraction_test
+Command: "/tmp/boost-real-2021-build.IwcwOq/test/real_iterator_multiplication_subtraction_test"
+Directory: /tmp/boost-real-2021-build.IwcwOq/test
+"real_iterator_multiplication_subtraction_test" start time: Sep 04 14:48 EDT
+Output:
+----------------------------------------------------------
+===============================================================================
+All tests passed (60 assertions in 3 test cases)
+
+<end of output>
+Test time =   0.00 sec
+----------------------------------------------------------
+Test Passed.
+"real_iterator_multiplication_subtraction_test" end time: Sep 04 14:48 EDT
+"real_iterator_multiplication_subtraction_test" time elapsed: 00:00:00
+----------------------------------------------------------
+
+18/28 Testing: real_iterator_multiplication_test
+18/28 Test: real_iterator_multiplication_test
+Command: "/tmp/boost-real-2021-build.IwcwOq/test/real_iterator_multiplication_test"
+Directory: /tmp/boost-real-2021-build.IwcwOq/test
+"real_iterator_multiplication_test" start time: Sep 04 14:48 EDT
+Output:
+----------------------------------------------------------
+===============================================================================
+All tests passed (288 assertions in 1 test case)
+
+<end of output>
+Test time =   0.02 sec
+----------------------------------------------------------
+Test Passed.
+"real_iterator_multiplication_test" end time: Sep 04 14:48 EDT
+"real_iterator_multiplication_test" time elapsed: 00:00:00
+----------------------------------------------------------
+
+19/28 Testing: real_iterator_subtraction_addition_test
+19/28 Test: real_iterator_subtraction_addition_test
+Command: "/tmp/boost-real-2021-build.IwcwOq/test/real_iterator_subtraction_addition_test"
+Directory: /tmp/boost-real-2021-build.IwcwOq/test
+"real_iterator_subtraction_addition_test" start time: Sep 04 14:48 EDT
+Output:
+----------------------------------------------------------
+===============================================================================
+All tests passed (42 assertions in 3 test cases)
+
+<end of output>
+Test time =   0.00 sec
+----------------------------------------------------------
+Test Passed.
+"real_iterator_subtraction_addition_test" end time: Sep 04 14:48 EDT
+"real_iterator_subtraction_addition_test" time elapsed: 00:00:00
+----------------------------------------------------------
+
+20/28 Testing: real_iterator_subtraction_multiplication_test
+20/28 Test: real_iterator_subtraction_multiplication_test
+Command: "/tmp/boost-real-2021-build.IwcwOq/test/real_iterator_subtraction_multiplication_test"
+Directory: /tmp/boost-real-2021-build.IwcwOq/test
+"real_iterator_subtraction_multiplication_test" start time: Sep 04 14:48 EDT
+Output:
+----------------------------------------------------------
+===============================================================================
+All tests passed (20 assertions in 1 test case)
+
+<end of output>
+Test time =   0.00 sec
+----------------------------------------------------------
+Test Passed.
+"real_iterator_subtraction_multiplication_test" end time: Sep 04 14:48 EDT
+"real_iterator_subtraction_multiplication_test" time elapsed: 00:00:00
+----------------------------------------------------------
+
+21/28 Testing: real_iterator_subtraction_subtraction_test
+21/28 Test: real_iterator_subtraction_subtraction_test
+Command: "/tmp/boost-real-2021-build.IwcwOq/test/real_iterator_subtraction_subtraction_test"
+Directory: /tmp/boost-real-2021-build.IwcwOq/test
+"real_iterator_subtraction_subtraction_test" start time: Sep 04 14:48 EDT
+Output:
+----------------------------------------------------------
+===============================================================================
+All tests passed (42 assertions in 3 test cases)
+
+<end of output>
+Test time =   0.00 sec
+----------------------------------------------------------
+Test Passed.
+"real_iterator_subtraction_subtraction_test" end time: Sep 04 14:48 EDT
+"real_iterator_subtraction_subtraction_test" time elapsed: 00:00:00
+----------------------------------------------------------
+
+22/28 Testing: real_iterator_subtraction_test
+22/28 Test: real_iterator_subtraction_test
+Command: "/tmp/boost-real-2021-build.IwcwOq/test/real_iterator_subtraction_test"
+Directory: /tmp/boost-real-2021-build.IwcwOq/test
+"real_iterator_subtraction_test" start time: Sep 04 14:48 EDT
+Output:
+----------------------------------------------------------
+===============================================================================
+All tests passed (288 assertions in 1 test case)
+
+<end of output>
+Test time =   0.02 sec
+----------------------------------------------------------
+Test Passed.
+"real_iterator_subtraction_test" end time: Sep 04 14:48 EDT
+"real_iterator_subtraction_test" time elapsed: 00:00:00
+----------------------------------------------------------
+
+9/28 Testing: real_irrational_test
+9/28 Test: real_irrational_test
+Command: "/tmp/boost-real-2021-build.IwcwOq/test/real_irrational_test"
+Directory: /tmp/boost-real-2021-build.IwcwOq/test
+"real_irrational_test" start time: Sep 04 14:48 EDT
+Output:
+----------------------------------------------------------
+===============================================================================
+All tests passed (330 assertions in 1 test case)
+
+<end of output>
+Test time =   1.15 sec
+----------------------------------------------------------
+Test Passed.
+"real_irrational_test" end time: Sep 04 14:48 EDT
+"real_irrational_test" time elapsed: 00:00:01
+----------------------------------------------------------
+
+23/28 Testing: real_lower_than_operator_test
+23/28 Test: real_lower_than_operator_test
+Command: "/tmp/boost-real-2021-build.IwcwOq/test/real_lower_than_operator_test"
+Directory: /tmp/boost-real-2021-build.IwcwOq/test
+"real_lower_than_operator_test" start time: Sep 04 14:48 EDT
+Output:
+----------------------------------------------------------
+===============================================================================
+All tests passed (285 assertions in 3 test cases)
+
+<end of output>
+Test time =   4.28 sec
+----------------------------------------------------------
+Test Passed.
+"real_lower_than_operator_test" end time: Sep 04 14:48 EDT
+"real_lower_than_operator_test" time elapsed: 00:00:04
+----------------------------------------------------------
+
+25/28 Testing: real_optimization_test
+25/28 Test: real_optimization_test
+Command: "/tmp/boost-real-2021-build.IwcwOq/test/real_optimization_test"
+Directory: /tmp/boost-real-2021-build.IwcwOq/test
+"real_optimization_test" start time: Sep 04 14:48 EDT
+Output:
+----------------------------------------------------------
+===============================================================================
+All tests passed (106 assertions in 1 test case)
+
+<end of output>
+Test time =   0.00 sec
+----------------------------------------------------------
+Test Passed.
+"real_optimization_test" end time: Sep 04 14:48 EDT
+"real_optimization_test" time elapsed: 00:00:00
+----------------------------------------------------------
+
+26/28 Testing: real_power_test
+26/28 Test: real_power_test
+Command: "/tmp/boost-real-2021-build.IwcwOq/test/real_power_test"
+Directory: /tmp/boost-real-2021-build.IwcwOq/test
+"real_power_test" start time: Sep 04 14:48 EDT
+Output:
+----------------------------------------------------------
+===============================================================================
+All tests passed (101 assertions in 4 test cases)
+
+<end of output>
+Test time =   3.42 sec
+----------------------------------------------------------
+Test Passed.
+"real_power_test" end time: Sep 04 14:48 EDT
+"real_power_test" time elapsed: 00:00:03
+----------------------------------------------------------
+
+27/28 Testing: real_rational_test
+27/28 Test: real_rational_test
+Command: "/tmp/boost-real-2021-build.IwcwOq/test/real_rational_test"
+Directory: /tmp/boost-real-2021-build.IwcwOq/test
+"real_rational_test" start time: Sep 04 14:48 EDT
+Output:
+----------------------------------------------------------
+===============================================================================
+All tests passed (852 assertions in 54 test cases)
+
+<end of output>
+Test time =   0.12 sec
+----------------------------------------------------------
+Test Passed.
+"real_rational_test" end time: Sep 04 14:48 EDT
+"real_rational_test" time elapsed: 00:00:00
+----------------------------------------------------------
+
+28/28 Testing: vector_helpers_test
+28/28 Test: vector_helpers_test
+Command: "/tmp/boost-real-2021-build.IwcwOq/test/vector_helpers_test"
+Directory: /tmp/boost-real-2021-build.IwcwOq/test
+"vector_helpers_test" start time: Sep 04 14:48 EDT
+Output:
+----------------------------------------------------------
+===============================================================================
+All tests passed (180 assertions in 1 test case)
+
+<end of output>
+Test time =   0.00 sec
+----------------------------------------------------------
+Test Passed.
+"vector_helpers_test" end time: Sep 04 14:48 EDT
+"vector_helpers_test" time elapsed: 00:00:00
+----------------------------------------------------------
+
+24/28 Testing: real_math_test
+24/28 Test: real_math_test
+Command: "/tmp/boost-real-2021-build.IwcwOq/test/real_math_test"
+Directory: /tmp/boost-real-2021-build.IwcwOq/test
+"real_math_test" start time: Sep 04 14:48 EDT
+Output:
+----------------------------------------------------------
+===============================================================================
+All tests passed (345 assertions in 4 test cases)
+
+<end of output>
+Test time =   9.67 sec
+----------------------------------------------------------
+Test Passed.
+"real_math_test" end time: Sep 04 14:48 EDT
+"real_math_test" time elapsed: 00:00:09
+----------------------------------------------------------
+
+End testing: Sep 04 14:48 EDT

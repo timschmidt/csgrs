@@ -1,0 +1,87 @@
+{
+  "checks": [
+    {
+      "label": "fmt",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustfmt",
+        "--edition",
+        "2024",
+        "--check",
+        "src/bezier_offset.rs",
+        "src/bezier_parameter.rs"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 2.4278168720193207,
+      "log": "local-chord-complete-replay-20260924-v5-fmt.log"
+    },
+    {
+      "label": "clippy-1",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "clippy",
+        "--all-targets",
+        "--all-features",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 25.72530987393111,
+      "log": "local-chord-complete-replay-20260924-v5-clippy-1.log"
+    },
+    {
+      "label": "clippy-2",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "clippy",
+        "--all-targets",
+        "--no-default-features",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 24.86501732596662,
+      "log": "local-chord-complete-replay-20260924-v5-clippy-2.log"
+    }
+  ],
+  "cases": [
+    {
+      "label": "closed_parallel_turn_certificate_retains_only_the_seam",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/local-chord-complete-replay-20260924-v5-libtest",
+        "--exact",
+        "bezier_offset::conversion_tests::closed_parallel_turn_certificate_retains_only_the_seam",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.2788248680299148,
+      "log": "local-chord-complete-replay-20260924-v5-closed_parallel_turn_certificate_retains_only_the_seam.log"
+    },
+    {
+      "label": "closed_parallel_turn_certificate_rejects_multiple_traversal",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/local-chord-complete-replay-20260924-v5-libtest",
+        "--exact",
+        "bezier_offset::conversion_tests::closed_parallel_turn_certificate_rejects_multiple_traversal",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 101,
+      "elapsed_seconds": 0.2579090530052781,
+      "log": "local-chord-complete-replay-20260924-v5-closed_parallel_turn_certificate_rejects_multiple_traversal.log"
+    }
+  ],
+  "all_processes_reaped": true,
+  "binary_sha256": "ca7a0435cc1175c74041cc395adb92f826ca638eba4187e587bfb9f3d2c87522",
+  "all_sources_unchanged": true
+}

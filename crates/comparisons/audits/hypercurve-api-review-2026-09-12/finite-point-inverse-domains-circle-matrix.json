@@ -1,0 +1,31 @@
+{
+  "returncode": 0,
+  "elapsed_seconds": 0.9148573169950396,
+  "normal_library_sha256": "68b7eb07dd682f6f27b42ea8f5bf32ff3fb0e3d96d09c29889738e18190708f9",
+  "log": "finite-point-inverse-domains-circle-matrix.log",
+  "source": "circle-common-dispatch-matrix.rs",
+  "command": [
+    "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustc",
+    "--edition=2024",
+    "-O",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/circle-common-dispatch-matrix.rs",
+    "--extern",
+    "hypercurve=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypercurve-e19f31178f76cad1.rlib",
+    "-L",
+    "dependency=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps",
+    "-o",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-point-inverse-domains-circle-matrix"
+  ],
+  "run_command": [
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-point-inverse-domains-circle-matrix"
+  ],
+  "source_sha256": "bfd9b0972efff9c5e3b12c4e7e6bcbd584e86cbe85b691a10c7c51ac083b65d3",
+  "executable_sha256": "510eadda55bb700cd7550113e65dac16efcb2421e9b67b314b5c6d2fecb44363",
+  "counts": {
+    "cases": 48,
+    "pair_queries": 912,
+    "point_replays": 1536,
+    "topology_queries": 96,
+    "repeated_intersections": 384
+  }
+}

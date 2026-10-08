@@ -1,0 +1,18 @@
+Share exact selected-circle intersections and overlap evidence
+
+Generated fillet circles now reenter common curve/path intersections with
+circles, rational spans, retained chords and analytic parallels. Reuse
+selected roots, parameter maps and endpoint witnesses across restrictions,
+reversals and tangent contacts. Remove the separate region circle clipping
+adapters and publish consistently paired overlap endpoints.
+
+Certify source frames at the selected point, reject undefined zero-offset
+normals and reduce redundant fixed-distance norms when an offset vanishes.
+Retain the original branch and tangent predicates.
+
+Validation: both all-target no-default-features checks and 49 release
+all-features test targets; 2,206 passes, five unchanged known failures,
+nine ignored and eight previously unqualified expensive cases excluded.
+No new failures or timeouts. Independent circle, general-trim and
+constant-image matrices pass, including 912 circle pair queries and 1,536
+exact contact replays. All 396 qualification source hashes are unchanged.

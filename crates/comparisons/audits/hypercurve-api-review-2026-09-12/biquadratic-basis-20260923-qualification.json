@@ -1,0 +1,153 @@
+{
+  "parents": {
+    "hyperreal": "0e5f50abf7dcd2e21f4a54a11bbd16909e139f5e",
+    "hypercurve": "3276fb05c176e045e4e24b7b8052b1342c198a46"
+  },
+  "files": {
+    "hyperreal": {
+      "src/computable/node/quadratic_tower.rs": "8634bb290e85681a8da18da30e2586c7477190b5d693ef475b73b07feeafca90",
+      "src/real/arithmetic/quadratic_tower_sign.rs": "690ea47b1e5fd346bc24fafaa11e3764a6570caa04647f59c8a87c0746143c13"
+    },
+    "hypercurve": {
+      "src/bezier_algebraic_image.rs": "bb853ec9c69bfe0c37473b1abcc241899f2f87ca84cb17bab495fe061137085c",
+      "src/bezier_offset.rs": "9ceb87cc9666c8ad56b096f39bce3d22817fa386b47f6042025af06ac0fe7401"
+    }
+  },
+  "main_files_verified": {
+    "hyperreal": 356,
+    "hypercurve": 368
+  },
+  "snapshot_files_verified": {
+    "v3": 2044,
+    "v5": 2044
+  },
+  "hyperreal_tests_passed": 828,
+  "hyperlimit_tests_passed": 252,
+  "hypersolve_tests_passed": 507,
+  "hypercurve_regression_attempted": 1205,
+  "hypercurve_unique_passes": 1202,
+  "hypercurve_ignored": 6,
+  "hypercurve_existing_nonpass": {
+    "name": "bezier_offset::conversion_tests::selected_fiber_transverse_mapped_cut_inverts_by_point",
+    "returncode": 101,
+    "passed": false,
+    "limit_seconds": 180,
+    "elapsed_seconds": 4.218450131942518,
+    "log": "biquadratic-basis-20260923-v5-hypercurve-case-1.log"
+  },
+  "hypercurve_existing_nonpasses_not_repeated": [
+    {
+      "name": "bezier_offset::conversion_tests::selected_parallel_normal_circle_intersects_genuinely_analytic_parallel_in_one_fiber",
+      "passed": false,
+      "ignored": false
+    },
+    {
+      "name": "bezier_region::curve_corner_chain::tests::extended_fillet_region_classifies_both_sides_of_its_companion",
+      "passed": false,
+      "ignored": false
+    },
+    {
+      "name": "bezier_region::tests::algebraic_endpoint_images_reenter_shared_corner_carriers",
+      "passed": false,
+      "ignored": false
+    },
+    {
+      "name": "bezier_region::tests::nonlinear_algebraic_endpoint_fillet_uses_complete_incident_domain",
+      "passed": false,
+      "ignored": false
+    },
+    {
+      "name": "bezier_region::tests::nonlinear_selected_corner_chamfers_through_retained_fixed_distance_image",
+      "passed": false,
+      "ignored": false
+    },
+    {
+      "name": "bezier_region::tests::nonrepresented_chord_and_selected_circle_complete_the_fillet_kernel",
+      "passed": false,
+      "ignored": false
+    },
+    {
+      "name": "bezier_region::tests::one_fragment_materialized_loop_chamfers_to_one_middle_interval",
+      "passed": false,
+      "ignored": false
+    },
+    {
+      "name": "bezier_region::tests::one_fragment_materialized_loop_extends_algebraic_chamfer_cuts_once",
+      "passed": false,
+      "ignored": false
+    },
+    {
+      "name": "bezier_region::tests::one_fragment_nonzero_parallel_loop_extends_chamfer_cuts_on_one_finite_envelope",
+      "passed": false,
+      "ignored": false
+    },
+    {
+      "name": "bezier_region::tests::one_fragment_ph_loop_fillets_through_rational_self_contact",
+      "passed": false,
+      "ignored": false
+    },
+    {
+      "name": "bezier_region::tests::one_fragment_ph_loop_projective_corners_retain_one_extended_interval",
+      "passed": false,
+      "ignored": false
+    },
+    {
+      "name": "bezier_region::tests::one_fragment_selected_loop_chamfers_from_one_interval",
+      "passed": false,
+      "ignored": false
+    },
+    {
+      "name": "bezier_region::tests::one_fragment_selected_loop_extends_chamfer_cuts_on_its_analytic_carrier",
+      "passed": false,
+      "ignored": false
+    },
+    {
+      "name": "bezier_region::tests::pair_native_boolean_algebraic_chord_corner_publishes_a_third_generation_fillet",
+      "passed": false,
+      "ignored": false
+    },
+    {
+      "name": "bezier_region::tests::retained_algebraic_straights_trim_or_extend_chamfer_and_fillet",
+      "passed": false,
+      "ignored": false
+    },
+    {
+      "name": "bezier_region::tests::retained_analytic_multifragment_corner_extends_chamfer_and_fillet",
+      "passed": false,
+      "ignored": false
+    },
+    {
+      "name": "bezier_region::tests::selected_parallel_companion_fillets_without_range_promotion",
+      "passed": false,
+      "ignored": false
+    }
+  ],
+  "hypercurve_final_cases": [
+    {
+      "name": "bezier_algebraic_image::policy_tests::arithmetic_adapter_replays_close_nonrational_bounds_strictly",
+      "returncode": 0,
+      "passed": true,
+      "limit_seconds": 120,
+      "elapsed_seconds": 0.1470430699409917,
+      "log": "biquadratic-basis-20260923-v5-hypercurve-case-0.log"
+    },
+    {
+      "name": "bezier_offset::conversion_tests::selected_fiber_transverse_mapped_cut_inverts_by_point",
+      "returncode": 101,
+      "passed": false,
+      "limit_seconds": 180,
+      "elapsed_seconds": 4.218450131942518,
+      "log": "biquadratic-basis-20260923-v5-hypercurve-case-1.log"
+    }
+  ],
+  "hypercurve_production_unchanged": true,
+  "binaries": {
+    "hyperreal": "4fed02967c25e6b96b1b44bdebdc725ca3dbc5bec0d9a2d24688c0b304ae3754",
+    "hyperlimit": "a3b8d83cd8e9407e9793fef069abcf07ee0b3d252e87e20d5e718d71b951411b",
+    "hypersolve": "e06ecaa88f53d2fdd66ac17488ff473802169140e8c5c2e18c44d6a27485ae3d",
+    "hypercurve_sweep": "f8353eec614140b64b87bab9c0719ffae221c24a39bc0c18f98dd039a0fbb537",
+    "hypercurve_final": "0e2c08aa9a4ea7214b11fad11d9e0ee4f2c2f347ecfdcea323e90215a0057559"
+  },
+  "all_owned_processes_reaped": true,
+  "full_goal_complete": false
+}

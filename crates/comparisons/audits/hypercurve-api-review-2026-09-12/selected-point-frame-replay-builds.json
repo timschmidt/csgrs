@@ -1,0 +1,70 @@
+[
+  {
+    "repository": "hypercurve",
+    "kind": "check",
+    "command": [
+      "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+      "check",
+      "--all-targets",
+      "--no-default-features",
+      "--locked",
+      "--offline"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 25.05191264898167,
+    "log": "selected-point-frame-replay-check.log"
+  },
+  {
+    "repository": "hypercurve",
+    "kind": "test-build",
+    "command": [
+      "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+      "test",
+      "--release",
+      "--all-features",
+      "--locked",
+      "--offline",
+      "--lib",
+      "--tests",
+      "--no-run",
+      "--message-format=json"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 265.92170631999034,
+    "log": "selected-point-frame-replay-test-build.log"
+  },
+  {
+    "repository": "hyperbrep",
+    "kind": "check",
+    "command": [
+      "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+      "check",
+      "--all-targets",
+      "--no-default-features",
+      "--locked",
+      "--offline"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 23.2020034820016,
+    "log": "selected-point-frame-replay-hyperbrep-check.log"
+  },
+  {
+    "repository": "hyperbrep",
+    "kind": "test-build",
+    "command": [
+      "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+      "test",
+      "--release",
+      "--all-features",
+      "--locked",
+      "--offline",
+      "--lib",
+      "--tests",
+      "--no-run",
+      "--message-format=json"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 140.52618404800887,
+    "log": "selected-point-frame-replay-hyperbrep-test-build.log"
+  }
+]

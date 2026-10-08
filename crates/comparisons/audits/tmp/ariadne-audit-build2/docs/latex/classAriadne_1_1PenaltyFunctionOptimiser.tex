@@ -1,0 +1,63 @@
+\doxysubsection{Penalty\+Function\+Optimiser Class Reference}
+\hypertarget{classAriadne_1_1PenaltyFunctionOptimiser}{}\label{classAriadne_1_1PenaltyFunctionOptimiser}\index{PenaltyFunctionOptimiser@{PenaltyFunctionOptimiser}}
+
+
+{\ttfamily \#include $<$nonlinear\+\_\+programming.\+hpp$>$}
+
+
+
+\doxysubsubsection{Description}
+Solver for feasibility problems based on a penalty-\/function approach. 
+
+For the feasibility problem $x\in D,\ g(x)\in C,\ h(x)=0$ where $D$ is bounded and $D,C$ have nonempty interiors. Introduce slack variable $w=g(x)$, and minimise \[ \sum_{j} (g_j(x)-w_j)^2 + \sum_k h_k(x)^2 \] with $x\in D$ and $w\in C$. Since the minimiser is not unique, we need to add penalty terms $-\mu/2(\log(x_u-x)+log(x-x_l))$ and $-\nu/2(\log(w_u-w)+log(w-w_l))$. It suffices to add a penalty in $x$. Inheritance diagram for Penalty\+Function\+Optimiser\+:\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[height=3.000000cm]{classAriadne_1_1PenaltyFunctionOptimiser}
+\end{center}
+\end{figure}
+\doxysubsubsubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1PenaltyFunctionOptimiser_a1a6978d399a809fd39c18fb36ecd6ae2}\label{classAriadne_1_1PenaltyFunctionOptimiser_a1a6978d399a809fd39c18fb36ecd6ae2} 
+virtual \mbox{\hyperlink{classAriadne_1_1PenaltyFunctionOptimiser}{Penalty\+Function\+Optimiser}} \texorpdfstring{$\ast$}{*} {\bfseries clone} () const
+\begin{DoxyCompactList}\small\item\em Create a dynamically-\/allocated copy. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1PenaltyFunctionOptimiser_aedb3e26c293b5374b3ec5f62c8a1ac91}\label{classAriadne_1_1PenaltyFunctionOptimiser_aedb3e26c293b5374b3ec5f62c8a1ac91} 
+virtual \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ Validated\+Numeric\+Type $>$ {\bfseries minimise} (Validated\+Scalar\+Multivariate\+Function f, \mbox{\hyperlink{group__FunctionModule_gafdd31b4d01081cd09aad2ce11117f867}{Exact\+Box\+Type}} D, Validated\+Vector\+Multivariate\+Function g, \mbox{\hyperlink{group__FunctionModule_gafdd31b4d01081cd09aad2ce11117f867}{Exact\+Box\+Type}} C) const
+\begin{DoxyCompactList}\small\item\em Solve the general nonlinear programming problem $\min f(x) \text{ such that } x\in D \text{ and } g(x)\in C$. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1PenaltyFunctionOptimiser_a3677a3f6402329a06c9482d1aabad02a}\label{classAriadne_1_1PenaltyFunctionOptimiser_a3677a3f6402329a06c9482d1aabad02a} 
+virtual \mbox{\hyperlink{classAriadne_1_1ValidatedKleenean}{Validated\+Kleenean}} {\bfseries feasible} (\mbox{\hyperlink{group__FunctionModule_gafdd31b4d01081cd09aad2ce11117f867}{Exact\+Box\+Type}} D, Validated\+Vector\+Multivariate\+Function g, \mbox{\hyperlink{group__FunctionModule_gafdd31b4d01081cd09aad2ce11117f867}{Exact\+Box\+Type}} C) const
+\begin{DoxyCompactList}\small\item\em Tests is the general nonlinear feasibility problem $x\in D \text{ and } g(x)\in C$ is feasible. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1PenaltyFunctionOptimiser_afe41fd5b278e6009b41fa23adaa67a60}\label{classAriadne_1_1PenaltyFunctionOptimiser_afe41fd5b278e6009b41fa23adaa67a60} 
+virtual \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ Validated\+Numeric\+Type $>$ {\bfseries minimise} (Validated\+Scalar\+Multivariate\+Function f, \mbox{\hyperlink{group__FunctionModule_gafdd31b4d01081cd09aad2ce11117f867}{Exact\+Box\+Type}} D, Validated\+Vector\+Multivariate\+Function g, Validated\+Vector\+Multivariate\+Function h) const
+\begin{DoxyCompactList}\small\item\em Solve the standard nonlinear programming problem $\min f(x) \text{ such that } x\in D,\ g(x)\leq 0  \text{ and } h(x) = 0$. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1PenaltyFunctionOptimiser_a7e3a322623c17d3dc2a307b2b04275ae}\label{classAriadne_1_1PenaltyFunctionOptimiser_a7e3a322623c17d3dc2a307b2b04275ae} 
+virtual \mbox{\hyperlink{classAriadne_1_1ValidatedKleenean}{Validated\+Kleenean}} {\bfseries feasible} (\mbox{\hyperlink{group__FunctionModule_gafdd31b4d01081cd09aad2ce11117f867}{Exact\+Box\+Type}} D, Validated\+Vector\+Multivariate\+Function g, Validated\+Vector\+Multivariate\+Function h) const
+\begin{DoxyCompactList}\small\item\em Tests is the standard nonlinear feasibility problem $x\in D,\ g(x)\leq 0 \text{ and } h(x) = 0$ is feasible. Assumes $D$ is bounded with nonempty interior. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxyparagraph*{Public Member Functions inherited from \mbox{\hyperlink{classAriadne_1_1OptimiserBase}{Optimiser\+Base}}}
+\begin{DoxyCompactItemize}
+\item 
+virtual \mbox{\hyperlink{namespaceAriadne_a76a8b016e5ad61faf9062cc387df5016}{Bool}} {\bfseries validate\+\_\+feasibility} (\mbox{\hyperlink{group__FunctionModule_gafdd31b4d01081cd09aad2ce11117f867}{Exact\+Box\+Type}} D, Validated\+Vector\+Multivariate\+Function g, \mbox{\hyperlink{group__FunctionModule_gafdd31b4d01081cd09aad2ce11117f867}{Exact\+Box\+Type}} C, \mbox{\hyperlink{classAriadne_1_1Vector}{Exact\+Vector\+Type}} x) const
+\begin{DoxyCompactList}\small\item\em Tests if the point {\itshape x} is near feasible. \end{DoxyCompactList}\item 
+virtual \mbox{\hyperlink{namespaceAriadne_a76a8b016e5ad61faf9062cc387df5016}{Bool}} {\bfseries validate\+\_\+feasibility} (\mbox{\hyperlink{group__FunctionModule_gafdd31b4d01081cd09aad2ce11117f867}{Exact\+Box\+Type}} D, Validated\+Vector\+Multivariate\+Function g, \mbox{\hyperlink{group__FunctionModule_gafdd31b4d01081cd09aad2ce11117f867}{Exact\+Box\+Type}} C, \mbox{\hyperlink{classAriadne_1_1Vector}{Exact\+Vector\+Type}} x, \mbox{\hyperlink{classAriadne_1_1Vector}{Exact\+Vector\+Type}} y) const
+\begin{DoxyCompactList}\small\item\em Tests if the point {\itshape x} is near feasible, using approximate multipliers {\itshape y} to guide the search. \end{DoxyCompactList}\item 
+virtual \mbox{\hyperlink{namespaceAriadne_a76a8b016e5ad61faf9062cc387df5016}{Bool}} {\bfseries validate\+\_\+infeasibility} (\mbox{\hyperlink{group__FunctionModule_gafdd31b4d01081cd09aad2ce11117f867}{Exact\+Box\+Type}} D, Validated\+Vector\+Multivariate\+Function g, \mbox{\hyperlink{group__FunctionModule_gafdd31b4d01081cd09aad2ce11117f867}{Exact\+Box\+Type}} C, \mbox{\hyperlink{classAriadne_1_1Vector}{Exact\+Vector\+Type}} x, \mbox{\hyperlink{classAriadne_1_1Vector}{Exact\+Vector\+Type}} y) const
+\begin{DoxyCompactList}\small\item\em Tests if the feasibility problem is definitely unsolvable, using multipliers {\itshape y} and local centering point {\itshape x}. \end{DoxyCompactList}\item 
+virtual \mbox{\hyperlink{namespaceAriadne_a76a8b016e5ad61faf9062cc387df5016}{Bool}} {\bfseries is\+\_\+infeasibility\+\_\+certificate} (\mbox{\hyperlink{group__FunctionModule_gafdd31b4d01081cd09aad2ce11117f867}{Exact\+Box\+Type}} D, Validated\+Vector\+Multivariate\+Function g, \mbox{\hyperlink{group__FunctionModule_gafdd31b4d01081cd09aad2ce11117f867}{Exact\+Box\+Type}} C, \mbox{\hyperlink{classAriadne_1_1Vector}{Exact\+Vector\+Type}} lambda) const
+\begin{DoxyCompactList}\small\item\em Tests if the Lagrange multipliers {\itshape y} are a certificate of infeasiblity. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxyparagraph*{Public Member Functions inherited from \mbox{\hyperlink{classAriadne_1_1OptimiserInterface}{Optimiser\+Interface}}}
+\begin{DoxyCompactItemize}
+\item 
+virtual {\bfseries \texorpdfstring{$\sim$}{\string~}\+Optimiser\+Interface} ()=default
+\begin{DoxyCompactList}\small\item\em Virtual destructor. \end{DoxyCompactList}\item 
+virtual \mbox{\hyperlink{namespaceAriadne_a76a8b016e5ad61faf9062cc387df5016}{Bool}} {\bfseries almost\+\_\+feasible\+\_\+point} (\mbox{\hyperlink{group__FunctionModule_gafdd31b4d01081cd09aad2ce11117f867}{Exact\+Box\+Type}} D, Validated\+Vector\+Multivariate\+Function g, \mbox{\hyperlink{group__FunctionModule_gafdd31b4d01081cd09aad2ce11117f867}{Exact\+Box\+Type}} C, \mbox{\hyperlink{classAriadne_1_1Vector}{Float\+DPApproximation\+Vector}} x, Float\+DPApproximation eps) const =0
+\begin{DoxyCompactList}\small\item\em Tests if the point {\itshape x} is feasible, in that $x\in D$ and $g(x)\in N_\epsilon(C)$. \end{DoxyCompactList}\item 
+virtual \mbox{\hyperlink{namespaceAriadne_a76a8b016e5ad61faf9062cc387df5016}{Bool}} {\bfseries is\+\_\+feasible\+\_\+point} (\mbox{\hyperlink{group__FunctionModule_gafdd31b4d01081cd09aad2ce11117f867}{Exact\+Box\+Type}} D, Validated\+Vector\+Multivariate\+Function g, \mbox{\hyperlink{group__FunctionModule_gafdd31b4d01081cd09aad2ce11117f867}{Exact\+Box\+Type}} C, Float\+DPVector x) const =0
+\begin{DoxyCompactList}\small\item\em Tests if the point {\itshape x} is feasible. \end{DoxyCompactList}\item 
+virtual \mbox{\hyperlink{classAriadne_1_1ValidatedKleenean}{Validated\+Kleenean}} {\bfseries contains\+\_\+feasible\+\_\+point} (\mbox{\hyperlink{group__FunctionModule_gafdd31b4d01081cd09aad2ce11117f867}{Exact\+Box\+Type}} D, Validated\+Vector\+Multivariate\+Function g, \mbox{\hyperlink{group__FunctionModule_gafdd31b4d01081cd09aad2ce11117f867}{Exact\+Box\+Type}} C, \mbox{\hyperlink{classAriadne_1_1Vector}{Float\+DPBounds\+Vector}} X) const =0
+\begin{DoxyCompactList}\small\item\em Tests if the box {\itshape X} definitely containss a feasible point. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+The documentation for this class was generated from the following files\+:\begin{DoxyCompactItemize}
+\item 
+source/solvers/\mbox{\hyperlink{nonlinear__programming_8hpp}{nonlinear\+\_\+programming.\+hpp}}\item 
+source/solvers/nonlinear\+\_\+programming.\+cpp\end{DoxyCompactItemize}

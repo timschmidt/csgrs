@@ -1,0 +1,13 @@
+{
+  "tag": "point-history-campaign",
+  "started": "2026-09-10T21:57:01.122Z",
+  "finished": "2026-09-10T22:03:33.420Z",
+  "elapsedSeconds": 392.295549159,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "node",
+  "args": [
+    "run-point-history-campaign.mjs"
+  ],
+  "code": 0,
+  "signal": null
+}

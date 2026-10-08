@@ -1,0 +1,25 @@
+[package]
+name = "published-reals-audit"
+version = "0.0.0"
+edition = "2024"
+
+[dependencies]
+computable-real = { path = "/home/tim/Documents/GitHub/workspace/exact-real-references/computable-real-0.3.0" }
+reals = { path = "/home/tim/Documents/GitHub/workspace/exact-real-references/reals-0.4.0" }
+hyperreal = { path = "/home/tim/Documents/GitHub/workspace/hyperreal" }
+num = "0.4.3"
+num-bigint = "=0.4.8"
+num-integer = "=0.1.47"
+num-iter = "=0.1.46"
+rug = { version = "1.30.0", default-features = false, features = ["float", "rational", "std"] }
+
+[patch.crates-io]
+computable-real = { path = "/home/tim/Documents/GitHub/workspace/exact-real-references/computable-real-0.3.0" }
+
+[[bin]]
+name = "numerical"
+path = "numerical.rs"
+
+[[bin]]
+name = "performance"
+path = "performance.rs"

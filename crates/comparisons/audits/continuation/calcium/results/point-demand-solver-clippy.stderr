@@ -1,0 +1,5 @@
+    Checking hyperreal v0.13.1 (/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/e-plan-qualified-candidate/hyperreal)
+    Checking hyperlattice v0.6.1 (/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/e-plan-qualified-candidate/hyperlattice)
+    Checking hyperlimit v0.4.1 (/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/e-plan-qualified-candidate/hyperlimit)
+    Checking hypersolve v0.3.1 (/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/point-demand-candidate/hypersolve)
+    Finished `dev` profile [unoptimized] target(s) in 10.92s

@@ -1,0 +1,43 @@
+{
+  "status": "repaired and qualified",
+  "source_derivative": "(t-29/12)(1-t^2,2t)",
+  "unit_speed_polynomial": "(29/12-t)(1+t^2)",
+  "distance": "25/12",
+  "parameters": [
+    "0",
+    "3"
+  ],
+  "cached_rational_points": [
+    [
+      "0",
+      "-25/12"
+    ],
+    [
+      "0",
+      "-25/12"
+    ]
+  ],
+  "actual_parallel_points": [
+    [
+      "0",
+      "-25/12"
+    ],
+    [
+      "-5/2",
+      "-65/12"
+    ]
+  ],
+  "cached_curve_tangent_cross": "105/16",
+  "finite_domains": [
+    [
+      "-1/16",
+      "1/16"
+    ],
+    [
+      "47/16",
+      "49/16"
+    ]
+  ],
+  "expected": "Complete empty intersection of the two actual regular offset intervals; cached opposite-normal contact excluded.",
+  "qualification": "ordered-domain-qualification.json"
+}

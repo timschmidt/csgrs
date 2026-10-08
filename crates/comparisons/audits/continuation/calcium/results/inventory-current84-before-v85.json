@@ -1,0 +1,13 @@
+{
+  "tag": "inventory-current84-before-v85",
+  "started": "2026-09-12T05:18:17.715Z",
+  "finished": "2026-09-12T05:18:20.784Z",
+  "elapsedSeconds": 3.066671754,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "node",
+  "args": [
+    "verify-qqbar-remainder-v84.mjs"
+  ],
+  "code": 0,
+  "signal": null
+}

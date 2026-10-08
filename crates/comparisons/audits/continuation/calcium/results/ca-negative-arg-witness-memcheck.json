@@ -1,0 +1,19 @@
+{
+  "tag": "ca-negative-arg-witness-memcheck",
+  "started": "2026-09-09T03:12:05.469Z",
+  "finished": "2026-09-09T03:12:06.409Z",
+  "elapsedSeconds": 0.9380195229999999,
+  "cwd": "/home/tim/Documents/GitHub/workspace",
+  "command": "valgrind",
+  "args": [
+    "--vgdb=no",
+    "--tool=memcheck",
+    "--error-exitcode=97",
+    "--leak-check=full",
+    "--show-leak-kinds=all",
+    "--errors-for-leak-kinds=definite,indirect,possible",
+    "/tmp/calcium-charpoly-solves.lbZlN8/flint-ca-negative-arg-witness"
+  ],
+  "code": 0,
+  "signal": null
+}

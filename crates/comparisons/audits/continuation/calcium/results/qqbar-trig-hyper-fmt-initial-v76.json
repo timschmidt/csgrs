@@ -1,0 +1,15 @@
+{
+  "tag": "qqbar-trig-hyper-fmt-initial-v76",
+  "started": "2026-09-11T22:27:31.342Z",
+  "finished": "2026-09-11T22:27:31.394Z",
+  "elapsedSeconds": 0.04928174299999999,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/qqbar-trig-hyper-v76",
+  "command": "cargo",
+  "args": [
+    "fmt",
+    "--",
+    "--check"
+  ],
+  "code": 1,
+  "signal": null
+}

@@ -1,0 +1,14 @@
+{
+  "tag": "mag-series-inventory",
+  "started": "2026-09-10T00:07:07.733Z",
+  "finished": "2026-09-10T00:07:08.202Z",
+  "elapsedSeconds": 0.46680542,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "node",
+  "args": [
+    "inventory.mjs",
+    "verify"
+  ],
+  "code": 0,
+  "signal": null
+}

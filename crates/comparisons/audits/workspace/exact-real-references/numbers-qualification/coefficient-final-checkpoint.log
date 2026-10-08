@@ -1,0 +1,21 @@
+{
+  "status": "qualified-retained",
+  "independentHighPrecisionProbes": 16,
+  "counts": {
+    "hyperreal-debug-final": 746,
+    "hyperreal-release-all-features-final": 853,
+    "hyperlattice": 19,
+    "hyperlimit": 242,
+    "hypertri": 3,
+    "hypersolve": 432
+  },
+  "memcheckErrors": 0,
+  "hypercurve": {
+    "passed": 898,
+    "failed": 2,
+    "ignored": 1,
+    "twoFailuresReproduceWithoutRepair": true,
+    "laterUserEditNotQualified": true
+  },
+  "scope": "coefficient defect only; full Numbers/donor and ecosystem audit remain OPEN"
+}

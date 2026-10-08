@@ -1,0 +1,25 @@
+{
+  "returncode": 0,
+  "elapsed_seconds": 0.016347939003026113,
+  "normal_library_sha256": "8e690ff897af0a8cac5d88eaa0e04b6f5572b031f288de19099938069dc4ae62",
+  "log": "finite-circle-rational-domains-unit-replay.log",
+  "source": "native-rational-publication-unit-replay.rs",
+  "command": [
+    "rustc",
+    "--edition=2024",
+    "-O",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/native-rational-publication-unit-replay.rs",
+    "--extern",
+    "hypercurve=/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/libhypercurve-2c7ff6f3fbe07653.rlib",
+    "-L",
+    "dependency=/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps",
+    "-o",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-circle-rational-domains-unit-replay"
+  ],
+  "source_sha256": "2dd9c8f13fdcf587936d6e5885c9015cb75c093dfb1e27b0a6519d7405adba21",
+  "executable_sha256": "e4e46555069503c4bff2196392688217f1cbb03813d6c8e50a82eea3dfbf4631",
+  "counts": {
+    "complete_queries": 4,
+    "retraced_selected_domain_queries": 2
+  }
+}

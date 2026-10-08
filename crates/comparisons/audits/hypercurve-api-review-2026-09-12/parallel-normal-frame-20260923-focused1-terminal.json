@@ -1,0 +1,6 @@
+{
+  "returncode": 1,
+  "stage": "compilation",
+  "reason": "test borrowed half after sqrt consumed it",
+  "all_processes_reaped": true
+}

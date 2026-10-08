@@ -1,0 +1,12 @@
+{
+  "command": [
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve_curve_region_promotion-e523831f2638d8ff",
+    "--exact",
+    "region_constructors_remove_canceled_boundaries_and_filled_seams",
+    "--test-threads=1",
+    "--nocapture"
+  ],
+  "returncode": 0,
+  "elapsed_seconds": 0.015530845004832372,
+  "binary_sha256": "983790e9879d8966f7c01d339513b6b327f93c25d3987603083701716671f541"
+}

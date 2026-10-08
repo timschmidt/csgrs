@@ -1,0 +1,10 @@
+[
+  {
+    "name": "bezier_offset::conversion_tests::selected_fiber_transverse_mapped_cut_inverts_by_point",
+    "returncode": 101,
+    "passed": false,
+    "limit_seconds": 120,
+    "elapsed_seconds": 4.156321092974395,
+    "log": "similarity-point-20260923-probe2-case-0.log"
+  }
+]

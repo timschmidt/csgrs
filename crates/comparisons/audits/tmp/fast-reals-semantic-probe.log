@@ -1,0 +1,6 @@
+first-Lipschitz-bound	(1.0,0.0,False)
+second-Lipschitz-bound	(1.0,0.0,False)
+partial-force	(0,True,False)
+partial-force	(1,True,False)
+partial-force	(16,True,False)
+partial-force	(256,True,False)

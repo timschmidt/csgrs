@@ -1,0 +1,4 @@
+   Compiling plume-qualification v0.0.0 (/home/tim/Documents/GitHub/workspace/exact-real-references/plume-qualification)
+    Finished `release` profile [optimized] target(s) in 0.35s
+     Running `.audit-targets/ireal-derivative-18555/release/late_oracle selfcheck`
+PASS directed-interval oracle against exact rational recurrence=91

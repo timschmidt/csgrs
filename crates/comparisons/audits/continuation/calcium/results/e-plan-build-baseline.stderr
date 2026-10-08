@@ -1,0 +1,70 @@
+     Locking 36 packages to latest Rust 1.97.0 compatible versions
+   Compiling rug v1.30.0
+   Compiling calcium-e-plan-baseline v0.0.0 (/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/e-plan-app-baseline)
+error[E0277]: the trait bound `rug::Float: Assign<rug::integer::arith::SubI32Incomplete<'_>>` is not satisfied
+   --> ../e-plan-check.rs:19:40
+    |
+ 19 |     let bottom = Float::with_val(prec, &a - 1);
+    |                  ---------------       ^^^^^^ the trait `AssignRound<rug::integer::arith::SubI32Incomplete<'_>>` is not implemented for `rug::Float`
+    |                  |
+    |                  required by a bound introduced by this call
+    |
+    = help: `rug::Float` implements trait `AssignRound<Src>`:
+              AssignRound<&MiniFloat>
+              AssignRound<&SmallFloat>
+              AssignRound<&Special>
+              AssignRound<&bool>
+              AssignRound<&f32>
+              AssignRound<&f64>
+              AssignRound<&i128>
+              AssignRound<&i16>
+            and 331 others
+    = note: required for `rug::Float` to implement `Assign<rug::integer::arith::SubI32Incomplete<'_>>`
+note: required by a bound in `rug::Float::with_val`
+   --> /home/tim/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/rug-1.30.0/src/float/big.rs:342:16
+    |
+340 |     pub fn with_val<T>(prec: u32, val: T) -> Self
+    |            -------- required by a bound in this associated function
+341 |     where
+342 |         Float: Assign<T>,
+    |                ^^^^^^^^^ required by this bound in `Float::with_val`
+
+error[E0277]: the trait bound `rug::Float: Assign<rug::integer::arith::AddI32Incomplete<'_>>` is not satisfied
+   --> ../e-plan-check.rs:20:37
+    |
+ 20 |     let top = Float::with_val(prec, &a + 1);
+    |               ---------------       ^^^^^^ the trait `AssignRound<rug::integer::arith::AddI32Incomplete<'_>>` is not implemented for `rug::Float`
+    |               |
+    |               required by a bound introduced by this call
+    |
+    = help: `rug::Float` implements trait `AssignRound<Src>`:
+              AssignRound<&MiniFloat>
+              AssignRound<&SmallFloat>
+              AssignRound<&Special>
+              AssignRound<&bool>
+              AssignRound<&f32>
+              AssignRound<&f64>
+              AssignRound<&i128>
+              AssignRound<&i16>
+            and 331 others
+    = note: required for `rug::Float` to implement `Assign<rug::integer::arith::AddI32Incomplete<'_>>`
+note: required by a bound in `rug::Float::with_val`
+   --> /home/tim/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/rug-1.30.0/src/float/big.rs:342:16
+    |
+340 |     pub fn with_val<T>(prec: u32, val: T) -> Self
+    |            -------- required by a bound in this associated function
+341 |     where
+342 |         Float: Assign<T>,
+    |                ^^^^^^^^^ required by this bound in `Float::with_val`
+
+warning: unused import: `One`
+ --> ../e-plan-check.rs:2:19
+  |
+2 | use num::{BigInt, One};
+  |                   ^^^
+  |
+  = note: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default
+
+For more information about this error, try `rustc --explain E0277`.
+warning: `calcium-e-plan-baseline` (bin "e-plan-baseline-check") generated 1 warning
+error: could not compile `calcium-e-plan-baseline` (bin "e-plan-baseline-check") due to 2 previous errors; 1 warning emitted

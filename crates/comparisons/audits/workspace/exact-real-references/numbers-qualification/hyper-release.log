@@ -1,0 +1,12 @@
+acos	checks=112	failures=0
+acosh	checks=64	failures=0
+asin	checks=112	failures=0
+asinh	checks=80	failures=0
+atan	checks=208	failures=0
+atanh	checks=80	failures=0
+cos	checks=112	failures=0
+exp	checks=112	failures=0
+log	checks=112	failures=0
+sin	checks=112	failures=0
+sqrt	checks=80	failures=0
+TOTAL hyper	checks=1184	failures=0

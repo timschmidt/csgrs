@@ -1,0 +1,37 @@
+{
+  "cases": [
+    {
+      "name": "bezier_offset::conversion_tests::selected_fiber_transverse_mapped_cut_inverts_by_point",
+      "returncode": 101,
+      "passed": false,
+      "log": "similarity-point-20260923-probe4-case-0.log",
+      "elapsed_seconds": 4.2163341148989275
+    }
+  ],
+  "dependencies": [
+    {
+      "crate": "hyperreal",
+      "package_id": "path+file:///tmp/hypercurve-similarity-point-probe4-2026-09-23/hyperreal#0.13.1",
+      "physical_manifest": "/tmp/hypercurve-biquadratic-basis-v5-2026-09-23/hyperreal/Cargo.toml"
+    },
+    {
+      "crate": "hyperlattice",
+      "package_id": "path+file:///tmp/hypercurve-similarity-point-probe4-2026-09-23/hyperlattice#0.6.1",
+      "physical_manifest": "/tmp/hypercurve-biquadratic-basis-v5-2026-09-23/hyperlattice/Cargo.toml"
+    },
+    {
+      "crate": "hyperlimit",
+      "package_id": "path+file:///tmp/hypercurve-similarity-point-probe4-2026-09-23/hyperlimit#0.4.1",
+      "physical_manifest": "/tmp/hypercurve-biquadratic-basis-v5-2026-09-23/hyperlimit/Cargo.toml"
+    },
+    {
+      "crate": "hypersolve",
+      "package_id": "path+file:///tmp/hypercurve-similarity-point-probe4-2026-09-23/hypersolve#0.3.1",
+      "physical_manifest": "/tmp/hypercurve-biquadratic-basis-v5-2026-09-23/hypersolve/Cargo.toml"
+    }
+  ],
+  "binary_sha256": "529390666b8d939a037e879941a2abd0966a549ab324afd39bb0de290560b3be",
+  "all_processes_reaped": true,
+  "all_sources_unchanged": true,
+  "initial_runner_failure": "Cargo retains logical symlink paths in package IDs; replay verifies resolved manifests and every source byte instead."
+}

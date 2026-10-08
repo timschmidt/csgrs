@@ -1,0 +1,126 @@
+/***************************************************************************
+ *            evoluation.h
+ *
+ *  Copyright  2007  Pieter Collins
+ *
+ ****************************************************************************/
+
+/*
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; either version 2 of the License, or
+ *  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Library General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program; if not, write to the Free Software
+ *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+ */
+
+/*! 
+
+\file evolution.dox
+\brief Documentation evolution of dynamic systems
+
+
+\page evolution_page System Evolution
+
+\section reachabilityanalysis Reachability and Viability Analysis
+
+The infinite-time reachable set of a discrete-time dynamical system (automaton) is defined as
+\f[ \mathrm{reach}(f,X_0) := \bigcup_{n=0}^{\infty} f^n(X_0) . \f]
+As shown in Collins (2005, <em>Theor. Comput. Sci.</em>) it is not possible to compute convergent over-approximations to the reachable set.
+Instead, we consider the <em> chain-reachable set</em>, which is defined as
+\f[ \mathrm{chain\;\!reach}(f,X_0) := \bigcap_{n=0}^{\infty} \{ U\in\mathcal{O}(X) \mid X_0\cup f(\mathrm{cl}(U))\subset U \} . \f]
+Note that \f$\mathrm{chain\;\!reach}(f,X_0)\f$ is closed, and \f$\mathrm{reach}(f,X_0)\subset \mathrm{chain\;\!reach}(f,X_0)\f$.
+If the chain-reachable set is compact, then it is possible to compute a convergent sequence of over-approximations, and the chain-reachable set is the smallest computable over-approximation to the reachable set.
+If the chain-reachable set is not compact, then may not be possible to approximate, even in a bounded region.
+
+
+
+
+
+The <em>viability kernel</em> of \f$S\f$ under a system \f$f\f$ is defined as
+\f[ \mathrm{viab}(f,S) := \bigcup_{n=0}^{\infty} f^{-n}(S). \f]
+The viability kernel is the set of initial points for which the evolution remains in \f$A\f$ for all time.
+If \f$S\f$ is compact, then it is possible to compute convergent over-approximations to \f$\mathrm{viab}(f,S)\f$.
+
+
+\section safetyverification Safety Verification
+
+The <em>safety verification problem</em> is to decide whether \f$\mathrm{reach}(f,X_0)\subset S\f$ for some set \f$S\f$.
+We assume that \f$S\f$ is bounded and <em>regular</em> which means that we can compute both over- and under-approximations to \f$S\f$.
+We assume that \f$X_0\f$ is compact, so we can compute lower-approximations and over-approximations to \f$X_0\f$.
+
+If \f$\mathrm{reach}(f,X_0)\not\subset \overline{S}\f$, then we can find a point in \f$X_0\f$ which leaves \f$S\f$, and hence prove that \f$\mathrm{reach}(f,X_0)\not\subset S\f$.
+ If \f$\mathrm{chain\;\!reach}(f,X_0)\subset S^\circ\f$, then we can find an over-approximation to \f$\mathrm{chain\;\!reach}(f,X_0)\f$ which is a subset of \f$S\f$, and hence prove that \f$\mathrm{reach}(f,X_0)\subset S\f$.
+ However, if \f$\mathrm{reach}(f,X_0)\subset \overline{S}\f$ but \f$\mathrm{chain\;\!reach}(f,X_0)\not\subset S^\circ\f$, then it is <em>impossible</em> to decide whether \f$\mathrm{reach}(f,X_0)\subset S\f$ using approximative numerical methods.
+
+Since \f$ \mathrm{reach}(f,X_0) \subset S \iff X_0 \subset \mathrm{viab}(f,S) , \f$ we can test for \f$\mathrm{reach}(f,X_0) \not\subset S\f$ by checking \f$X_0 \not\subset \mathrm{viab}(f,S)\f$, which may be computationally easier as over-approximations are usually easier to work with than lower-approximations.
+
+
+\section discretetimeevolution Evolution of Discrete-Time Systems
+
+To evolve a system in %Ariadne, we require a number of core methods
+ - A method evaluate an over-approximation of the image of a %BasicSet type.
+ - A method to subdivide the %BasicSet type.
+ - A method to approximate the %BasicSet type on a grid.
+
+The computation of over-approximations to forward iterates and reachable sets proceeds as follows: 
+First, the set to be evolved is approximated as a union of basic sets.
+Then each basic set is evolved for a number of evolution time steps.
+This evolution should use higher-order methods to preserve accuracy.
+If the basic set becomes too large, the error in the evolution step becomes large, and the basic set may be subdivided to avoid catastrophic loss of accuracy.
+Finally, after a specified number of time steps, the evolved sets are over-approximated or "locked" back to the grid.
+Locking to the grid causes a loss of accuracy since the operation is zero-order, but allows previously evaluated traces to be re-used.
+
+\image html evolve.jpg
+\image latex evolve.eps
+
+The best basic set type to use depends on the smoothness of the system. For differentiable maps, a zonotope is usually a good choice, as it gives first-order accuracy in space. 
+For higher-order accuracy, <em>Taylor sets</em> may be used; these are polynomial images of cuboids.
+
+\section continuoustimeevolution Evolution of Continuous-Time Systems
+
+The basic method for integrating a continuous-time system is similar to that for a discrete-time system.
+The time step is adaptively determined, between user-specified minimum and maximum values.
+However, care must be taking when setting the lock-to-grid time, since locking to the grid causes loss of accuracy. Setting the lock-to-grid time too low will probably result in the entire state space to be covered.
+A good choice for the lock-to-grid time is the average recurrence time of the system.
+
+There are essentially two methods to compute reachable sets \f$\mathrm{reach}(f,X_0,T) := \Phi_{[0,T]}(X_0)\f$, where \f$\Phi_t\f$ is the flow of \f$f\f$.
+We either have
+\f[ \Phi_{[0,T]}(X_0) =  \bigcup_{n=0}^{N-1} \Phi^n_{T/N}\bigl(\Phi_{[0,T/N]}(X_0)\bigr) \f]
+or
+\f[ \Phi_{[0,T]}(X_0) = \Phi_{[0,T/N]}\Biggl( \bigcup_{n=0}^{N-1} \Phi^n_{T/N}(X_0)  \Biggr) . \f]
+In other words, we either first integrate \f$N-1\f$ times with a time step of \f$T/N\f$ and finally perform a reachability step, or first perform a reachability step and then integrate the resulting set \f$N-1\f$ times.
+
+Similar considerations hold for infinite-time reachable sets.
+
+
+\internal 
+
+Ideally, the accuracy parameters should be automatically determined. It would be nice to fully automate the time step, the maximum allowable basic set size and the lock-to-grid time. 
+
+We should maybe experiment to see which reachability method is most efficient.
+
+\section hybridtimeevolution Evolution of Hybrid-Time Systems
+
+For hybrid systems, there are two semantics of evolution, <em>lower semantics</em> and <em>upper semantics</em>.
+In most cases, there is no difference between the two.
+However, where the system exhibits <em>grazing</em> (tangential contact between a flow line and a guard set) or <em>multiply-enabled transistion</em> (such as on the boundary of two different guard sets) the semantics differ. 
+With lower semantics, the system evolution <em>blocks</em> if it is not possible to determine which course of action to follow. (For grazing behaviour, this would mean that trajectories near the grazing orbit block, since numerical errors will make it impossible to determine whether the guard set is crossed or not.)
+With upper semantics, the system evolves <em>nondeterministically</em> with both courses of action being taken.
+This means that we use lower semantics if we want to prove that it is possible to reach a given set, and upper semantics if we want to prove that the evolution remains inside a given set.
+See Collins & Lygeros (2005) for more details.
+
+The simplest way to compute the chain-reachable set of a hybrid system is to alternate discrete transitions with computing the chain-reachable set in each mode.
+\internal Currently, %Ariadne only implements upper semantics.
+
+
+
+
+*/

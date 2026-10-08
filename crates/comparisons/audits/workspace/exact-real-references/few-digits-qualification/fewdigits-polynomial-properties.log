@@ -1,0 +1,30 @@
+
+Data/Multinomial.hs:1:17: warning: [-Wdeprecated-flags]
+    -fglasgow-exts is deprecated: Use individual extensions instead
+  |
+1 | {-# OPTIONS_GHC -fglasgow-exts #-}
+  |                 ^^^^^^^^^^^^^^
+
+Data/Interval.hs:1:17: warning: [-Wdeprecated-flags]
+    -fglasgow-exts is deprecated: Use individual extensions instead
+  |
+1 | {-# OPTIONS_GHC -fglasgow-exts #-}
+  |                 ^^^^^^^^^^^^^^
++++ OK, passed 1 test.
++++ OK, passed 1 test.
+*** Failed! (after 1 test):
+Exception:
+  Prelude.tail: empty list
+  CallStack (from HasCallStack):
+    error, called at libraries/base/GHC/List.hs:1644:3 in base:GHC.List
+    errorEmptyList, called at libraries/base/GHC/List.hs:130:28 in base:GHC.List
+    tail, called at Data/Multinomial.hs:148:75 in main:Data.Multinomial
+*** Failed! (after 1 test):
+Exception:
+  Prelude.tail: empty list
+  CallStack (from HasCallStack):
+    error, called at libraries/base/GHC/List.hs:1644:3 in base:GHC.List
+    errorEmptyList, called at libraries/base/GHC/List.hs:130:28 in base:GHC.List
+    tail, called at Data/Multinomial.hs:148:75 in main:Data.Multinomial
++++ OK, passed 300 tests; 411 discarded.
++++ OK, passed 300 tests; 1756 discarded.

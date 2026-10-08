@@ -1,0 +1,17 @@
+{
+  "tag": "twelfth-private-fmt-final-v77",
+  "started": "2026-09-11T23:01:33.509Z",
+  "finished": "2026-09-11T23:01:33.543Z",
+  "elapsedSeconds": 0.03184100699999999,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/twelfth-relation-candidate-v77/hyperreal",
+  "command": "rustfmt",
+  "args": [
+    "--edition",
+    "2024",
+    "--check",
+    "src/computable/node/twelfth_relation.rs",
+    "src/computable/node/twelfth_relation_tests.rs"
+  ],
+  "code": 0,
+  "signal": null
+}

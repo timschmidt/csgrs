@@ -1,0 +1,78 @@
+{
+  "turn_status": "progress",
+  "full_goal_status": "active",
+  "commits": {
+    "hypercurve": "32f76f6cf4041ed9a909f7bfc3458482d63ff5d5",
+    "hypersolve": "8bbcddab1aad867b16662d413075161ce42ed66f"
+  },
+  "latest_baseline": "affine-field-v910",
+  "verified_source_files": 2048,
+  "clean_repositories": 30,
+  "release_cases": 504,
+  "hypersolve_cases": 157,
+  "hypercurve_cases": 347,
+  "pinned_test_binaries": 13,
+  "checks": 9,
+  "repaired_public_traversals": 2,
+  "repaired_refined_field_imports": 1,
+  "unchanged_public_replay_requests": 4,
+  "reflected_and_swapped_traversal_cases": 16,
+  "active_drivers": [],
+  "outstanding_production_edits": [],
+  "next_unused_version": 915,
+  "receipts": {
+    "affine-field-v910-committed.json": "3ffbda0b291c08072455ea93b029cdea4d2067dde8372de12b48a5da312b9ff9",
+    "affine-field-v910-reviewed.json": "82e0a1cfb7ca7cfccb0ec2008a976ebccdcfc26fb4767558becb9a6cbf11dcd7",
+    "affine-field-v910-reaped.json": "3768b618e768e72d7ca6ea7d04533965688e90c805f193ff99d471d8478fee55",
+    "affine-field-v910-review-reaped.json": "792a560b3898b8e970e550919aa2503f27a9c4f8c9550eb9ea44cb74b567e999",
+    "affine-field-v910-terminal.json": "b9c4d9fbe3ecd7f64efa6b88894c55e35f545530d504ad7288c77ffa56e2505d",
+    "affine-field-proof-v910.md": "0d7acfab46311f289cab819d52f2b0b7c32088a93068e07c6f724948ca922edb",
+    "affine-field-v897-reaped.json": "73018862bc71da6864882b0a168e2383191b7e27011dde7b88a0dfe6c58a930a",
+    "affine-field-v898-reaped.json": "8904c09cfe898efd187116a074df63a46c02ed4c8191cf9b72e0b79412a0c870",
+    "affine-field-v901-reaped.json": "8b4c50586865e5f6d24ed50139c31a00598cac802f5301457d371f715789d288",
+    "affine-field-v902-reaped.json": "3b2e93cd66e26b98a08ddf2422f91196f54a3dc803fcfa2d83040ae400f9dea4",
+    "affine-field-v903-reaped.json": "4cf83f4bb57523be8d1ee2a083c919f0e86a32bb8d2b00680ee75719db0337cc",
+    "affine-field-v905-reaped.json": "d0cd94aa152cc7b12ca3215313e7c01f238a8371a16734fd4e10bdfceed5637c",
+    "affine-inference-probe-v899-reaped.json": "a33053876be449a4c0d6ef1ead27e82deedd46f287c102fa3cbf3102f51ca4a6",
+    "affine-inference-probe-v900-reaped.json": "9d35c77de1ea1f62599daa2cf5a79e808797cf666acf992f2a3e77711ac4c0cb",
+    "affine-inference-probe-v900-terminal.json": "5404b5e2c5755b35f188e0244db54fa7ddfb5a1b9bf6d66d45e39de2db57bf6d",
+    "refined-field-transport-probe-v909-terminal.json": "4123c44da67aeb22533ac2fd5a08eb5fb0084438c79ea6c06752ac9a1e907385",
+    "refined-field-transport-probe-v909-reaped.json": "ce6cf94e703fc48f050614a359bcbb8cb4522d2897a2605420cbc26c05b2fcf4",
+    "affine-field-replay-v911-terminal.json": "eb88c8aab0ae79f394724c7cf7d22601710cee67e52e42e10d53e001d67e1c1c",
+    "affine-field-replay-v911-reaped.json": "e6047bee3d1027a0914f4c84b9e7a08292a946dc6a7b2a4e4715e6b2b8ce24a8",
+    "refined-field-replay-v912-terminal.json": "11ea91932a2164261bbc5b54eac27c52fc81b395ec4551bfa2f2a360db974d9e",
+    "refined-field-replay-v912-reaped.json": "b5025a3fbb054a67eacea75eae165354dc15ecf88a94bb2d73d96fd5461cf952",
+    "nonlinear-source-scalar-probe-v913-terminal.json": "aeb92e27a38f5a099647f1ee1b75cd11fb851e9c49b9f89db46c85fb5a3ab518",
+    "nonlinear-source-scalar-probe-v913-reaped.json": "54016cfd2ed59b23952d07b267522c8236722099484b6dd1e9e454649057e031",
+    "nonlinear-source-scalar-oracle-v913.json": "bd1347708538ff61bc65dcf40bb8151a45779f6dc8aba2f2ecfe30291c669932"
+  },
+  "next_verified_gap": {
+    "status": "Public probe completed against committed V910 normal release libraries; exact outer32183 reaped0",
+    "construction": "P(t)=4*t^3-pi. A(t)=(P(t),t*P(t)); B(u)=(P(u^2),u^2*P(u^2)+P(u^2)^2). Both trimmed from their selected positive zero to one.",
+    "selection": "alpha is the positive root of 4*t^3-pi; beta is the positive root of 4*u^6-pi, so alpha=beta^2, with both in (0,1).",
+    "oracle": "For the positive charts x=P(t)>0 and t=u^2, B_y-A_y=x^2>0. Counter-clockwise traversal from the incoming positive horizontal must choose A first: chains [0,1], [2].",
+    "coefficient_conversion": "Degree-twelve Bernstein controls use u^j = sum_k (choose(k,j)/choose(12,j))*B_k^12(u). All coefficient construction is exact.",
+    "baseline": "affine-field-v910",
+    "source": "nonlinear-source-scalar-probe-v907.rs",
+    "result": {
+      "requests": 2,
+      "blocked": 2,
+      "classification": "RealSign under STRICT and APPROXIMATE_512",
+      "represented_points": 4,
+      "retained_unprojected_tangents": 4
+    },
+    "source_audit": "The owned field currently certifies identity and affine parameter transport. The selected generators here have degrees three and six, with alpha=beta^2. A reusable verified polynomial embedding and a common field capable of representing both parameters are needed; root identity must not be relaxed. This is source-based analysis, not an internal dispatch trace."
+  },
+  "limits": [
+    "Full semantic, representational, evidentiary and computational closure remains unachieved.",
+    "Nonaffine selected-parameter embeddings, stationary/arbitrary higher-jet ordering and the earlier degree-six monotone-overlap workload remain open.",
+    "The new counterexample is a public arrangement traversal; no new closed-region Boolean counterexample is asserted.",
+    "No universal coefficient-size bound or measured uniform speedup is claimed."
+  ],
+  "next_work": [
+    "Use the unchanged V913 public nonlinear-chart counterexample as the next regression baseline.",
+    "Examine existing Hypersolve polynomial-image, fiber and tensor proof machinery for reusable certified parameter embeddings, preserving selected-root and denominator evidence.",
+    "Represent alpha and beta in a common field that can retain alpha=beta^2; keep their numeric identities distinct. Prefer retaining/replaying known algebraic structure over rebuilding independent eliminants.",
+    "Preserve the affine/native fast paths, bounded retained values and scoped successful-proof caches."
+  ]
+}

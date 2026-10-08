@@ -1,0 +1,16 @@
+approxBase-exact-error-and-dyadic	checks=12240	failures=0
+sumBase-and-powers	checks=930	failures=0
+interval-plus	checks=314721	failures=0
+interval-mult	checks=314721	failures=0
+interval-recip	checks=272	failures=0
+interval-power	checks=5049	failures=0
+CReal-add-regular-inputs	checks=900	failures=0
+CReal-sub-regular-inputs	checks=900	failures=0
+CReal-mult-regular-inputs	checks=900	failures=0
+CReal-div-regular-inputs	checks=720	failures=0
+CReal-abs	checks=75	failures=0
+CReal-positive-sqrt-exact-square	checks=45	failures=0
+polynomial-evaluation-derivative	checks=180	failures=0
+Bernstein-bounds-exact-samples	checks=3672	failures=0
+completion-unary-moduli	checks=81	failures=0
+constant-map-laziness	checks=9	failures=0

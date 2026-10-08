@@ -1,0 +1,2263 @@
+use hypercurve::{
+    BezierAlgebraicEndpointImage2, BezierAlgebraicParameter2, BezierArrangementChain2,
+    BezierArrangementGraph2, BezierArrangementTraversal2, BezierGraphContact, BezierLineContact,
+    BezierLineContactKind, BezierMonotoneSpan, BezierParameter2, BezierParameterInterval,
+    BezierParameterPolynomial, BezierRetainedLineOverlapSplit2, BezierRetainedLinearOverlapSplit2,
+    BezierRetainedLinearOverlapSplitGraph2, BezierRetainedLinearOverlapTraversal2,
+    BezierRetainedOverlap2, BezierRetainedOverlapEvidence2, BezierRetainedOverlapExtent2,
+    BezierRetainedOverlapOrientation2, BezierRetainedOverlapRefinedFragment2,
+    BezierRetainedOverlapRelation2, BezierRetainedResolvedLinearOverlap2, BezierSplitFragment2,
+    BezierSubcurve2, Classification, CubicBezier2, CurveContext, CurveError, IntersectionKind,
+    LineLineIntersection, LineSeg2, ParamRange, Point2, QuadraticBezier2, RationalBezier2,
+    RationalBezierOverlapOrientation2, RationalQuadraticBezier2, Real, UncertaintyReason,
+};
+use proptest::prelude::*;
+
+fn r(value: i32) -> Real {
+    value.into()
+}
+
+fn q(numerator: i32, denominator: i32) -> Real {
+    (Real::from(numerator) / Real::from(denominator)).unwrap()
+}
+
+fn p(x: i32, y: i32) -> Point2 {
+    Point2::new(r(x), r(y))
+}
+
+fn partial_line_overlap_graph() -> BezierArrangementGraph2 {
+    let first = BezierSplitFragment2::Materialized {
+        start: exact(r(0)),
+        end: exact(r(1)),
+        curve: BezierSubcurve2::Quadratic(QuadraticBezier2::new(p(0, 0), p(2, 0), p(4, 0))),
+    };
+    let second = BezierSplitFragment2::Materialized {
+        start: exact(r(0)),
+        end: exact(r(1)),
+        curve: BezierSubcurve2::Quadratic(QuadraticBezier2::new(p(2, 0), p(4, 0), p(6, 0))),
+    };
+    graph(vec![
+        hypercurve::BezierArrangementFragment2::new(0, 0, first),
+        hypercurve::BezierArrangementFragment2::new(1, 0, second),
+    ])
+}
+
+fn policy() -> CurveContext {
+    CurveContext::STRICT
+}
+
+fn decided<T>(classification: Classification<T>) -> T {
+    match classification {
+        Classification::Decided(value) => value,
+        Classification::Uncertain(reason) => panic!("unexpected uncertainty: {reason:?}"),
+    }
+}
+
+fn assert_topology_error<T>(result: Result<T, CurveError>) {
+    assert!(matches!(result, Err(CurveError::Topology(_))));
+}
+
+fn graph(fragments: Vec<hypercurve::BezierArrangementFragment2>) -> BezierArrangementGraph2 {
+    BezierArrangementGraph2::new(fragments).unwrap()
+}
+
+#[test]
+fn arrangement_graph_rejects_duplicate_source_fragment_evidence() {
+    let fragment = BezierSplitFragment2::Materialized {
+        start: exact(r(0)),
+        end: exact(r(1)),
+        curve: BezierSubcurve2::Quadratic(QuadraticBezier2::new(p(0, 0), p(1, 1), p(2, 0))),
+    };
+
+    assert_topology_error(BezierArrangementGraph2::new(vec![
+        hypercurve::BezierArrangementFragment2::new(0, 0, fragment.clone()),
+        hypercurve::BezierArrangementFragment2::new(0, 0, fragment),
+    ]));
+}
+
+#[test]
+fn arrangement_graph_rejects_invalid_unique_source_fragment_ranges() {
+    let curve = BezierSubcurve2::Quadratic(QuadraticBezier2::new(p(0, 0), p(1, 1), p(2, 0)));
+
+    assert_topology_error(BezierArrangementGraph2::new(vec![
+        hypercurve::BezierArrangementFragment2::new(
+            0,
+            0,
+            BezierSplitFragment2::Materialized {
+                start: exact(r(1)),
+                end: exact(r(0)),
+                curve: curve.clone(),
+            },
+        ),
+    ]));
+    assert_topology_error(BezierArrangementGraph2::new(vec![
+        hypercurve::BezierArrangementFragment2::new(
+            1,
+            0,
+            BezierSplitFragment2::Materialized {
+                start: exact(q(1, 2)),
+                end: exact(q(1, 2)),
+                curve,
+            },
+        ),
+    ]));
+}
+
+#[test]
+fn arrangement_graph_rejects_forged_algebraic_endpoint_image_evidence() {
+    let parameter = algebraic_midpoint_parameter();
+    let algebraic = BezierParameter2::algebraic(parameter.clone());
+    let source_curve = QuadraticBezier2::new(p(0, 0), p(1, 0), p(2, 0));
+    let forged_image = algebraic_endpoint_image(
+        &QuadraticBezier2::new(p(0, 1), p(1, 1), p(2, 1)),
+        &parameter,
+    );
+
+    assert_topology_error(BezierArrangementGraph2::new(vec![
+        hypercurve::BezierArrangementFragment2::new(
+            0,
+            0,
+            BezierSplitFragment2::AlgebraicEndpointImages {
+                reversed: false,
+                start: exact(r(0)),
+                end: algebraic.clone(),
+                source_curve: BezierSubcurve2::Quadratic(source_curve),
+                start_image: None,
+                end_image: Some(forged_image.clone()),
+            },
+        ),
+    ]));
+    assert_topology_error(BezierArrangementGraph2::new(vec![
+        hypercurve::BezierArrangementFragment2::new(
+            1,
+            0,
+            BezierSplitFragment2::AlgebraicEndpointImages {
+                reversed: false,
+                start: exact(r(0)),
+                end: exact(r(1)),
+                source_curve: BezierSubcurve2::Quadratic(QuadraticBezier2::new(
+                    p(0, 0),
+                    p(1, 0),
+                    p(2, 0),
+                )),
+                start_image: Some(forged_image),
+                end_image: None,
+            },
+        ),
+    ]));
+}
+
+#[test]
+fn arrangement_graph_accepts_adjacent_reused_source_fragment_ranges() {
+    let first = BezierSplitFragment2::Materialized {
+        start: exact(r(0)),
+        end: exact(q(1, 2)),
+        curve: BezierSubcurve2::Quadratic(QuadraticBezier2::new(p(0, 0), p(1, 0), p(2, 0))),
+    };
+    let second = BezierSplitFragment2::Materialized {
+        start: exact(q(1, 2)),
+        end: exact(r(1)),
+        curve: BezierSubcurve2::Quadratic(QuadraticBezier2::new(p(2, 0), p(3, 0), p(4, 0))),
+    };
+
+    BezierArrangementGraph2::new(vec![
+        hypercurve::BezierArrangementFragment2::new(0, 0, first),
+        hypercurve::BezierArrangementFragment2::new(0, 0, second),
+    ])
+    .unwrap();
+}
+
+#[test]
+fn exact_endpoint_buckets_retain_symbolic_matches() {
+    let symbolic = Real::pi();
+    assert!(symbolic.exact_rational_ref().is_none());
+    let first = BezierSplitFragment2::Materialized {
+        start: exact(r(0)),
+        end: exact(r(1)),
+        curve: BezierSubcurve2::Quadratic(QuadraticBezier2::new(
+            Point2::new(&symbolic - r(2), r(0)),
+            Point2::new(&symbolic - r(1), r(0)),
+            Point2::new(symbolic.clone(), r(0)),
+        )),
+    };
+    let second = BezierSplitFragment2::Materialized {
+        start: exact(r(0)),
+        end: exact(r(1)),
+        curve: BezierSubcurve2::Quadratic(QuadraticBezier2::new(
+            Point2::new(symbolic.clone(), r(0)),
+            Point2::new(&symbolic + r(1), r(0)),
+            Point2::new(&symbolic + r(2), r(0)),
+        )),
+    };
+    let mut fragments = vec![
+        hypercurve::BezierArrangementFragment2::new(0, 0, first),
+        hypercurve::BezierArrangementFragment2::new(1, 0, second),
+    ];
+    for index in 0..14 {
+        let x = 100 + index * 3;
+        fragments.push(hypercurve::BezierArrangementFragment2::new(
+            usize::try_from(index + 2).unwrap(),
+            0,
+            BezierSplitFragment2::Materialized {
+                start: exact(r(0)),
+                end: exact(r(1)),
+                curve: BezierSubcurve2::Quadratic(QuadraticBezier2::new(
+                    p(x, 0),
+                    p(x + 1, 0),
+                    p(x + 2, 0),
+                )),
+            },
+        ));
+    }
+    let graph = graph(fragments);
+
+    let branch_free = decided(graph.traverse_branch_free(&policy()));
+    assert_eq!(branch_free.len(), 15);
+    assert_eq!(branch_free.chains()[0].fragment_indices(), &[0, 1]);
+
+    let tangent_ordered = decided(graph.traverse_with_tangent_order(&policy()));
+    assert_eq!(tangent_ordered.len(), 15);
+    assert_eq!(tangent_ordered.chains()[0].fragment_indices(), &[0, 1]);
+}
+
+#[test]
+fn arrangement_graph_rejects_overlapping_reused_source_fragment_ranges() {
+    let first = BezierSplitFragment2::Materialized {
+        start: exact(r(0)),
+        end: exact(q(3, 4)),
+        curve: BezierSubcurve2::Quadratic(QuadraticBezier2::new(p(0, 0), p(1, 0), p(3, 0))),
+    };
+    let second = BezierSplitFragment2::Materialized {
+        start: exact(q(1, 2)),
+        end: exact(r(1)),
+        curve: BezierSubcurve2::Quadratic(QuadraticBezier2::new(p(2, 0), p(3, 0), p(4, 0))),
+    };
+
+    assert_topology_error(BezierArrangementGraph2::new(vec![
+        hypercurve::BezierArrangementFragment2::new(0, 0, first),
+        hypercurve::BezierArrangementFragment2::new(0, 0, second),
+    ]));
+}
+
+#[test]
+fn monotone_span_rejects_reversed_parameter_evidence() {
+    assert_topology_error(BezierMonotoneSpan::new(r(1), r(0)));
+}
+
+#[test]
+fn contact_constructors_reject_out_of_domain_parameter_evidence() {
+    assert_topology_error(BezierGraphContact::new(
+        r(-1),
+        BezierLineContactKind::Crossing,
+    ));
+    assert_topology_error(BezierLineContact::new(
+        BezierParameter2::Exact(r(2)),
+        BezierLineContactKind::Tangent,
+    ));
+}
+
+fn exact(value: Real) -> BezierParameter2 {
+    decided(BezierParameter2::exact(value, &policy()).unwrap())
+}
+
+fn algebraic_sqrt_half() -> BezierParameter2 {
+    let polynomial = decided(
+        BezierParameterPolynomial::try_new_power_basis(vec![r(-1), r(0), r(2)], &policy()).unwrap(),
+    );
+    let interval = decided(BezierParameterInterval::try_new(q(2, 3), q(3, 4), &policy()).unwrap());
+    BezierParameter2::algebraic(decided(
+        BezierAlgebraicParameter2::try_isolate(polynomial, interval, &policy()).unwrap(),
+    ))
+}
+
+fn algebraic_midpoint_parameter() -> BezierAlgebraicParameter2 {
+    let polynomial = decided(
+        BezierParameterPolynomial::try_new_power_basis(vec![r(-1), r(2)], &policy()).unwrap(),
+    );
+    let interval = decided(BezierParameterInterval::try_new(q(2, 5), q(3, 5), &policy()).unwrap());
+    decided(BezierAlgebraicParameter2::try_isolate(polynomial, interval, &policy()).unwrap())
+}
+
+fn through_origin_with_midpoint_tangent(dx: i32, dy: i32) -> QuadraticBezier2 {
+    QuadraticBezier2::new(p(-dx, -dy), p(0, 0), p(dx, dy))
+}
+
+fn through_origin_with_horizontal_midpoint_tangent(curvature: i32) -> QuadraticBezier2 {
+    QuadraticBezier2::new(
+        Point2::new(r(-1), r(curvature)),
+        Point2::new(r(0), r(-curvature)),
+        Point2::new(r(1), r(curvature)),
+    )
+}
+
+fn through_origin_with_horizontal_midpoint_tangent_and_third_order(third_y: i32) -> CubicBezier2 {
+    CubicBezier2::new(
+        Point2::new(q(-1, 2), q(-third_y, 8)),
+        Point2::new(q(-1, 6), q(third_y, 8)),
+        Point2::new(q(1, 6), q(-third_y, 8)),
+        Point2::new(q(1, 2), q(third_y, 8)),
+    )
+}
+
+fn rational_through_origin_with_horizontal_midpoint_tangent(
+    curvature: i32,
+) -> RationalQuadraticBezier2 {
+    RationalQuadraticBezier2::try_new(
+        Point2::new(r(-1), r(curvature)),
+        Point2::new(r(0), r(-curvature)),
+        Point2::new(r(1), r(curvature)),
+        r(1),
+        r(1),
+        r(1),
+    )
+    .unwrap()
+}
+
+fn algebraic_endpoint_image(
+    curve: &QuadraticBezier2,
+    parameter: &BezierAlgebraicParameter2,
+) -> BezierAlgebraicEndpointImage2 {
+    BezierAlgebraicEndpointImage2::quadratic(curve, parameter, &policy()).unwrap()
+}
+
+fn algebraic_cubic_endpoint_image(
+    curve: &CubicBezier2,
+    parameter: &BezierAlgebraicParameter2,
+) -> BezierAlgebraicEndpointImage2 {
+    BezierAlgebraicEndpointImage2::cubic(curve, parameter, &policy()).unwrap()
+}
+
+fn algebraic_rational_endpoint_image(
+    curve: &RationalQuadraticBezier2,
+    parameter: &BezierAlgebraicParameter2,
+) -> BezierAlgebraicEndpointImage2 {
+    BezierAlgebraicEndpointImage2::rational_quadratic(curve, parameter, &policy()).unwrap()
+}
+
+#[test]
+fn exact_split_fragments_traverse_as_one_closed_bezier_chain() {
+    let upper = QuadraticBezier2::new(p(0, 0), p(2, 4), p(4, 0));
+    let lower = QuadraticBezier2::new(p(4, 0), p(2, -4), p(0, 0));
+    let upper_split = decided(
+        upper
+            .split_at_parameters(&[exact(q(1, 2))], &policy())
+            .unwrap(),
+    );
+    let lower_split = decided(
+        lower
+            .split_at_parameters(&[exact(q(1, 2))], &policy())
+            .unwrap(),
+    );
+
+    let graph =
+        BezierArrangementGraph2::from_split_materializations(&[upper_split, lower_split]).unwrap();
+    let traversal = decided(graph.traverse_branch_free(&policy()));
+
+    assert_eq!(graph.len(), 4);
+    assert_eq!(traversal.len(), 1);
+    assert_eq!(traversal.closed_count(), 1);
+    assert_eq!(traversal.chains()[0].fragment_indices(), &[0, 1, 2, 3]);
+}
+
+#[test]
+fn branch_vertex_is_explicit_uncertainty_not_arbitrary_successor() {
+    let first = BezierSplitFragment2::Materialized {
+        start: exact(r(0)),
+        end: exact(r(1)),
+        curve: BezierSubcurve2::Quadratic(QuadraticBezier2::new(p(0, 0), p(1, 1), p(2, 0))),
+    };
+    let second = BezierSplitFragment2::Materialized {
+        start: exact(r(0)),
+        end: exact(r(1)),
+        curve: BezierSubcurve2::Cubic(CubicBezier2::new(p(2, 0), p(3, 1), p(4, 1), p(5, 0))),
+    };
+    let third = BezierSplitFragment2::Materialized {
+        start: exact(r(0)),
+        end: exact(r(1)),
+        curve: BezierSubcurve2::Quadratic(QuadraticBezier2::new(p(2, 0), p(3, -1), p(4, 0))),
+    };
+    let graph = graph(vec![
+        hypercurve::BezierArrangementFragment2::new(0, 0, first),
+        hypercurve::BezierArrangementFragment2::new(1, 0, second),
+        hypercurve::BezierArrangementFragment2::new(2, 0, third),
+    ]);
+
+    assert_eq!(
+        graph.traverse_branch_free(&policy()),
+        Classification::Uncertain(UncertaintyReason::Boundary)
+    );
+}
+
+#[test]
+fn tangent_ordered_traversal_resolves_simple_branch_vertex() {
+    let first = BezierSplitFragment2::Materialized {
+        start: exact(r(0)),
+        end: exact(r(1)),
+        curve: BezierSubcurve2::Quadratic(QuadraticBezier2::new(p(0, 0), p(1, 1), p(2, 0))),
+    };
+    let upward = BezierSplitFragment2::Materialized {
+        start: exact(r(0)),
+        end: exact(r(1)),
+        curve: BezierSubcurve2::Cubic(CubicBezier2::new(p(2, 0), p(3, 1), p(4, 1), p(5, 0))),
+    };
+    let straightest = BezierSplitFragment2::Materialized {
+        start: exact(r(0)),
+        end: exact(r(1)),
+        curve: BezierSubcurve2::Quadratic(QuadraticBezier2::new(p(2, 0), p(3, -1), p(4, 0))),
+    };
+    let graph = graph(vec![
+        hypercurve::BezierArrangementFragment2::new(0, 0, first),
+        hypercurve::BezierArrangementFragment2::new(1, 0, upward),
+        hypercurve::BezierArrangementFragment2::new(2, 0, straightest),
+    ]);
+    let traversal = decided(graph.traverse_with_tangent_order(&policy()));
+
+    assert_eq!(traversal.len(), 2);
+    assert_eq!(traversal.chains()[0].fragment_indices(), &[0, 2]);
+    assert_eq!(traversal.chains()[1].fragment_indices(), &[1]);
+}
+
+#[test]
+fn tangent_ordered_traversal_uses_second_order_for_equal_outgoing_tangents() {
+    let first = BezierSplitFragment2::Materialized {
+        start: exact(r(0)),
+        end: exact(r(1)),
+        curve: BezierSubcurve2::Quadratic(QuadraticBezier2::new(p(0, 0), p(1, 0), p(2, 0))),
+    };
+    let first_out = BezierSplitFragment2::Materialized {
+        start: exact(r(0)),
+        end: exact(r(1)),
+        curve: BezierSubcurve2::Quadratic(QuadraticBezier2::new(p(2, 0), p(3, 1), p(4, 0))),
+    };
+    let second_out = BezierSplitFragment2::Materialized {
+        start: exact(r(0)),
+        end: exact(r(1)),
+        curve: BezierSubcurve2::Quadratic(QuadraticBezier2::new(p(2, 0), p(4, 2), p(5, 0))),
+    };
+    let graph = graph(vec![
+        hypercurve::BezierArrangementFragment2::new(0, 0, first),
+        hypercurve::BezierArrangementFragment2::new(1, 0, first_out),
+        hypercurve::BezierArrangementFragment2::new(2, 0, second_out),
+    ]);
+
+    let traversal = decided(graph.traverse_with_tangent_order(&policy()));
+    assert_eq!(traversal.len(), 2);
+    assert_eq!(traversal.chains()[0].fragment_indices(), &[0, 2]);
+    assert_eq!(traversal.chains()[1].fragment_indices(), &[1]);
+
+    let retained_traversal = decided(graph.traverse_retained_with_tangent_order(&policy()));
+    assert_eq!(retained_traversal.len(), 2);
+    assert_eq!(retained_traversal.chains()[0].fragment_indices(), &[0, 2]);
+    assert_eq!(retained_traversal.chains()[1].fragment_indices(), &[1]);
+}
+
+#[test]
+fn tangent_ordered_traversal_rejects_equal_second_order_outgoing_tangents() {
+    let first = BezierSplitFragment2::Materialized {
+        start: exact(r(0)),
+        end: exact(r(1)),
+        curve: BezierSubcurve2::Quadratic(QuadraticBezier2::new(p(0, 0), p(1, 0), p(2, 0))),
+    };
+    let first_out = BezierSplitFragment2::Materialized {
+        start: exact(r(0)),
+        end: exact(r(1)),
+        curve: BezierSubcurve2::Quadratic(QuadraticBezier2::new(p(2, 0), p(3, 1), p(4, 0))),
+    };
+    let second_out = BezierSplitFragment2::Materialized {
+        start: exact(r(0)),
+        end: exact(r(1)),
+        curve: BezierSubcurve2::Quadratic(QuadraticBezier2::new(p(2, 0), p(3, 1), p(4, 0))),
+    };
+    let graph = graph(vec![
+        hypercurve::BezierArrangementFragment2::new(0, 0, first),
+        hypercurve::BezierArrangementFragment2::new(1, 0, first_out),
+        hypercurve::BezierArrangementFragment2::new(2, 0, second_out),
+    ]);
+
+    assert_eq!(
+        graph.traverse_with_tangent_order(&policy()),
+        Classification::Uncertain(UncertaintyReason::Boundary)
+    );
+    assert_eq!(
+        graph.traverse_retained_with_tangent_order(&policy()),
+        Classification::Uncertain(UncertaintyReason::Boundary)
+    );
+}
+
+#[test]
+fn tangent_ordered_traversal_uses_rational_second_order_for_equal_outgoing_tangents() {
+    let first = BezierSplitFragment2::Materialized {
+        start: exact(r(0)),
+        end: exact(r(1)),
+        curve: BezierSubcurve2::Quadratic(QuadraticBezier2::new(p(0, 0), p(1, 0), p(2, 0))),
+    };
+    let upward = BezierSplitFragment2::Materialized {
+        start: exact(r(0)),
+        end: exact(r(1)),
+        curve: BezierSubcurve2::RationalQuadratic(
+            RationalQuadraticBezier2::try_new(p(2, 0), p(3, 0), p(4, 1), r(1), r(2), r(3)).unwrap(),
+        ),
+    };
+    let downward = BezierSplitFragment2::Materialized {
+        start: exact(r(0)),
+        end: exact(r(1)),
+        curve: BezierSubcurve2::RationalQuadratic(
+            RationalQuadraticBezier2::try_new(p(2, 0), p(3, 0), p(4, -1), r(1), r(2), r(3))
+                .unwrap(),
+        ),
+    };
+    let graph = graph(vec![
+        hypercurve::BezierArrangementFragment2::new(0, 0, first),
+        hypercurve::BezierArrangementFragment2::new(1, 0, upward),
+        hypercurve::BezierArrangementFragment2::new(2, 0, downward),
+    ]);
+
+    let traversal = decided(graph.traverse_with_tangent_order(&policy()));
+    assert_eq!(traversal.len(), 2);
+    assert_eq!(traversal.chains()[0].fragment_indices(), &[0, 1]);
+    assert_eq!(traversal.chains()[1].fragment_indices(), &[2]);
+
+    let retained_traversal = decided(graph.traverse_retained_with_tangent_order(&policy()));
+    assert_eq!(retained_traversal.len(), 2);
+    assert_eq!(retained_traversal.chains()[0].fragment_indices(), &[0, 1]);
+    assert_eq!(retained_traversal.chains()[1].fragment_indices(), &[2]);
+}
+
+#[test]
+fn tangent_ordered_traversal_rejects_equal_rational_second_order_successors() {
+    let first = BezierSplitFragment2::Materialized {
+        start: exact(r(0)),
+        end: exact(r(1)),
+        curve: BezierSubcurve2::Quadratic(QuadraticBezier2::new(p(0, 0), p(1, 0), p(2, 0))),
+    };
+    let first_out = BezierSplitFragment2::Materialized {
+        start: exact(r(0)),
+        end: exact(r(1)),
+        curve: BezierSubcurve2::RationalQuadratic(
+            RationalQuadraticBezier2::try_new(p(2, 0), p(3, 0), p(4, 1), r(1), r(2), r(3)).unwrap(),
+        ),
+    };
+    let second_out = BezierSplitFragment2::Materialized {
+        start: exact(r(0)),
+        end: exact(r(1)),
+        curve: BezierSubcurve2::RationalQuadratic(
+            RationalQuadraticBezier2::try_new(p(2, 0), p(3, 0), p(4, 1), r(1), r(2), r(3)).unwrap(),
+        ),
+    };
+    let graph = graph(vec![
+        hypercurve::BezierArrangementFragment2::new(0, 0, first),
+        hypercurve::BezierArrangementFragment2::new(1, 0, first_out),
+        hypercurve::BezierArrangementFragment2::new(2, 0, second_out),
+    ]);
+
+    assert_eq!(
+        graph.traverse_with_tangent_order(&policy()),
+        Classification::Uncertain(UncertaintyReason::Boundary)
+    );
+    assert_eq!(
+        graph.traverse_retained_with_tangent_order(&policy()),
+        Classification::Uncertain(UncertaintyReason::Boundary)
+    );
+}
+
+#[test]
+fn tangent_ordered_traversal_uses_third_order_for_cubic_same_tangent_inflections() {
+    let first = BezierSplitFragment2::Materialized {
+        start: exact(r(0)),
+        end: exact(r(1)),
+        curve: BezierSubcurve2::Quadratic(QuadraticBezier2::new(p(0, 0), p(1, 0), p(2, 0))),
+    };
+    let upward = BezierSplitFragment2::Materialized {
+        start: exact(r(0)),
+        end: exact(r(1)),
+        curve: BezierSubcurve2::Cubic(CubicBezier2::new(p(2, 0), p(3, 0), p(4, 0), p(5, 1))),
+    };
+    let downward = BezierSplitFragment2::Materialized {
+        start: exact(r(0)),
+        end: exact(r(1)),
+        curve: BezierSubcurve2::Cubic(CubicBezier2::new(p(2, 0), p(3, 0), p(4, 0), p(5, -1))),
+    };
+    let graph = graph(vec![
+        hypercurve::BezierArrangementFragment2::new(0, 0, first),
+        hypercurve::BezierArrangementFragment2::new(1, 0, upward),
+        hypercurve::BezierArrangementFragment2::new(2, 0, downward),
+    ]);
+
+    let traversal = decided(graph.traverse_with_tangent_order(&policy()));
+    assert_eq!(traversal.len(), 2);
+    assert_eq!(traversal.chains()[0].fragment_indices(), &[0, 1]);
+    assert_eq!(traversal.chains()[1].fragment_indices(), &[2]);
+
+    let retained_traversal = decided(graph.traverse_retained_with_tangent_order(&policy()));
+    assert_eq!(retained_traversal.len(), 2);
+    assert_eq!(retained_traversal.chains()[0].fragment_indices(), &[0, 1]);
+    assert_eq!(retained_traversal.chains()[1].fragment_indices(), &[2]);
+}
+
+#[test]
+fn tangent_ordered_traversal_rejects_equal_third_order_cubic_successors() {
+    let first = BezierSplitFragment2::Materialized {
+        start: exact(r(0)),
+        end: exact(r(1)),
+        curve: BezierSubcurve2::Quadratic(QuadraticBezier2::new(p(0, 0), p(1, 0), p(2, 0))),
+    };
+    let first_out = BezierSplitFragment2::Materialized {
+        start: exact(r(0)),
+        end: exact(r(1)),
+        curve: BezierSubcurve2::Cubic(CubicBezier2::new(p(2, 0), p(3, 0), p(4, 0), p(5, 1))),
+    };
+    let second_out = BezierSplitFragment2::Materialized {
+        start: exact(r(0)),
+        end: exact(r(1)),
+        curve: BezierSubcurve2::Cubic(CubicBezier2::new(p(2, 0), p(3, 0), p(4, 0), p(5, 1))),
+    };
+    let graph = graph(vec![
+        hypercurve::BezierArrangementFragment2::new(0, 0, first),
+        hypercurve::BezierArrangementFragment2::new(1, 0, first_out),
+        hypercurve::BezierArrangementFragment2::new(2, 0, second_out),
+    ]);
+
+    assert_eq!(
+        graph.traverse_with_tangent_order(&policy()),
+        Classification::Uncertain(UncertaintyReason::Boundary)
+    );
+    assert_eq!(
+        graph.traverse_retained_with_tangent_order(&policy()),
+        Classification::Uncertain(UncertaintyReason::Boundary)
+    );
+}
+
+#[test]
+fn algebraic_split_boundary_blocks_graph_traversal() {
+    let curve = QuadraticBezier2::new(p(0, 0), p(2, 4), p(4, 0));
+    let split = decided(
+        curve
+            .split_at_parameters(&[algebraic_sqrt_half(), exact(q(4, 5))], &policy())
+            .unwrap(),
+    );
+    let graph = BezierArrangementGraph2::from_split_materializations(&[split]).unwrap();
+
+    assert_eq!(
+        graph.traverse_branch_free(&policy()),
+        Classification::Uncertain(UncertaintyReason::Boundary)
+    );
+}
+
+#[test]
+fn retained_tangent_order_traverses_algebraic_branch_vertex() {
+    let parameter = algebraic_midpoint_parameter();
+    let algebraic = BezierParameter2::algebraic(parameter.clone());
+    let incoming_curve = through_origin_with_midpoint_tangent(1, 0);
+    let upward_curve = through_origin_with_midpoint_tangent(0, 1);
+    let downward_curve = through_origin_with_midpoint_tangent(0, -1);
+    let incoming = BezierSplitFragment2::AlgebraicEndpointImages {
+        reversed: false,
+        start: exact(r(0)),
+        end: algebraic.clone(),
+        source_curve: BezierSubcurve2::Quadratic(incoming_curve.clone()),
+        start_image: None,
+        end_image: Some(algebraic_endpoint_image(&incoming_curve, &parameter)),
+    };
+    let upward = BezierSplitFragment2::AlgebraicEndpointImages {
+        reversed: false,
+        start: algebraic.clone(),
+        end: exact(r(1)),
+        source_curve: BezierSubcurve2::Quadratic(upward_curve.clone()),
+        start_image: Some(algebraic_endpoint_image(&upward_curve, &parameter)),
+        end_image: None,
+    };
+    let downward = BezierSplitFragment2::AlgebraicEndpointImages {
+        reversed: false,
+        start: algebraic,
+        end: exact(r(1)),
+        source_curve: BezierSubcurve2::Quadratic(downward_curve.clone()),
+        start_image: Some(algebraic_endpoint_image(&downward_curve, &parameter)),
+        end_image: None,
+    };
+    let graph = graph(vec![
+        hypercurve::BezierArrangementFragment2::new(0, 0, incoming),
+        hypercurve::BezierArrangementFragment2::new(1, 0, upward),
+        hypercurve::BezierArrangementFragment2::new(2, 0, downward),
+    ]);
+
+    assert_eq!(
+        graph.traverse_with_tangent_order(&policy()),
+        Classification::Uncertain(UncertaintyReason::Boundary)
+    );
+    let traversal = decided(graph.traverse_retained_with_tangent_order(&policy()));
+
+    assert_eq!(traversal.len(), 2);
+    assert_eq!(traversal.chains()[0].fragment_indices(), &[0, 1]);
+    assert_eq!(traversal.chains()[1].fragment_indices(), &[2]);
+}
+
+#[test]
+fn retained_tangent_order_transforms_reversed_algebraic_endpoints_and_tangents() {
+    let parameter = algebraic_midpoint_parameter();
+    let algebraic = BezierParameter2::algebraic(parameter.clone());
+    let incoming_curve = through_origin_with_midpoint_tangent(1, 0);
+    let source_downward_curve = through_origin_with_midpoint_tangent(0, -1);
+    let source_upward_curve = through_origin_with_midpoint_tangent(0, 1);
+    let incoming = BezierSplitFragment2::AlgebraicEndpointImages {
+        reversed: false,
+        start: exact(r(0)),
+        end: algebraic.clone(),
+        source_curve: BezierSubcurve2::Quadratic(incoming_curve.clone()),
+        start_image: None,
+        end_image: Some(algebraic_endpoint_image(&incoming_curve, &parameter)),
+    };
+    let upward = BezierSplitFragment2::AlgebraicEndpointImages {
+        reversed: false,
+        start: exact(r(0)),
+        end: algebraic.clone(),
+        source_curve: BezierSubcurve2::Quadratic(source_downward_curve.clone()),
+        start_image: None,
+        end_image: Some(algebraic_endpoint_image(&source_downward_curve, &parameter)),
+    }
+    .reversed()
+    .unwrap();
+    let downward = BezierSplitFragment2::AlgebraicEndpointImages {
+        reversed: false,
+        start: exact(r(0)),
+        end: algebraic,
+        source_curve: BezierSubcurve2::Quadratic(source_upward_curve.clone()),
+        start_image: None,
+        end_image: Some(algebraic_endpoint_image(&source_upward_curve, &parameter)),
+    }
+    .reversed()
+    .unwrap();
+    let graph = graph(vec![
+        hypercurve::BezierArrangementFragment2::new(0, 0, incoming),
+        hypercurve::BezierArrangementFragment2::new(1, 0, upward),
+        hypercurve::BezierArrangementFragment2::new(2, 0, downward),
+    ]);
+
+    let traversal = decided(graph.traverse_retained_with_tangent_order(&policy()));
+    assert_eq!(traversal.len(), 2);
+    assert_eq!(traversal.chains()[0].fragment_indices(), &[0, 1]);
+    assert_eq!(traversal.chains()[1].fragment_indices(), &[2]);
+}
+
+#[test]
+fn retained_tangent_order_rejects_equal_algebraic_successors() {
+    let parameter = algebraic_midpoint_parameter();
+    let algebraic = BezierParameter2::algebraic(parameter.clone());
+    let incoming_curve = through_origin_with_midpoint_tangent(1, 0);
+    let first_curve = through_origin_with_midpoint_tangent(0, 1);
+    let second_curve = through_origin_with_midpoint_tangent(0, 1);
+    let incoming = BezierSplitFragment2::AlgebraicEndpointImages {
+        reversed: false,
+        start: exact(r(0)),
+        end: algebraic.clone(),
+        source_curve: BezierSubcurve2::Quadratic(incoming_curve.clone()),
+        start_image: None,
+        end_image: Some(algebraic_endpoint_image(&incoming_curve, &parameter)),
+    };
+    let first = BezierSplitFragment2::AlgebraicEndpointImages {
+        reversed: false,
+        start: algebraic.clone(),
+        end: exact(r(1)),
+        source_curve: BezierSubcurve2::Quadratic(first_curve.clone()),
+        start_image: Some(algebraic_endpoint_image(&first_curve, &parameter)),
+        end_image: None,
+    };
+    let second = BezierSplitFragment2::AlgebraicEndpointImages {
+        reversed: false,
+        start: algebraic,
+        end: exact(r(1)),
+        source_curve: BezierSubcurve2::Quadratic(second_curve.clone()),
+        start_image: Some(algebraic_endpoint_image(&second_curve, &parameter)),
+        end_image: None,
+    };
+    let graph = graph(vec![
+        hypercurve::BezierArrangementFragment2::new(0, 0, incoming),
+        hypercurve::BezierArrangementFragment2::new(1, 0, first),
+        hypercurve::BezierArrangementFragment2::new(2, 0, second),
+    ]);
+
+    assert_eq!(
+        graph.traverse_retained_with_tangent_order(&policy()),
+        Classification::Uncertain(UncertaintyReason::Boundary)
+    );
+}
+
+#[test]
+fn retained_tangent_order_uses_algebraic_second_order_for_equal_successors() {
+    let parameter = algebraic_midpoint_parameter();
+    let algebraic = BezierParameter2::algebraic(parameter.clone());
+    let incoming_curve = through_origin_with_midpoint_tangent(1, 0);
+    let upward_curve = through_origin_with_horizontal_midpoint_tangent(1);
+    let downward_curve = through_origin_with_horizontal_midpoint_tangent(-1);
+    let incoming = BezierSplitFragment2::AlgebraicEndpointImages {
+        reversed: false,
+        start: exact(r(0)),
+        end: algebraic.clone(),
+        source_curve: BezierSubcurve2::Quadratic(incoming_curve.clone()),
+        start_image: None,
+        end_image: Some(algebraic_endpoint_image(&incoming_curve, &parameter)),
+    };
+    let upward = BezierSplitFragment2::AlgebraicEndpointImages {
+        reversed: false,
+        start: algebraic.clone(),
+        end: exact(r(1)),
+        source_curve: BezierSubcurve2::Quadratic(upward_curve.clone()),
+        start_image: Some(algebraic_endpoint_image(&upward_curve, &parameter)),
+        end_image: None,
+    };
+    let downward = BezierSplitFragment2::AlgebraicEndpointImages {
+        reversed: false,
+        start: algebraic,
+        end: exact(r(1)),
+        source_curve: BezierSubcurve2::Quadratic(downward_curve.clone()),
+        start_image: Some(algebraic_endpoint_image(&downward_curve, &parameter)),
+        end_image: None,
+    };
+    let graph = graph(vec![
+        hypercurve::BezierArrangementFragment2::new(0, 0, incoming),
+        hypercurve::BezierArrangementFragment2::new(1, 0, upward),
+        hypercurve::BezierArrangementFragment2::new(2, 0, downward),
+    ]);
+
+    let traversal = decided(graph.traverse_retained_with_tangent_order(&policy()));
+    assert_eq!(traversal.len(), 2);
+    assert_eq!(traversal.chains()[0].fragment_indices(), &[0, 1]);
+    assert_eq!(traversal.chains()[1].fragment_indices(), &[2]);
+}
+
+#[test]
+fn retained_tangent_order_uses_rational_algebraic_second_order_for_equal_successors() {
+    let parameter = algebraic_midpoint_parameter();
+    let algebraic = BezierParameter2::algebraic(parameter.clone());
+    let incoming_curve = through_origin_with_midpoint_tangent(1, 0);
+    let upward_curve = rational_through_origin_with_horizontal_midpoint_tangent(1);
+    let downward_curve = rational_through_origin_with_horizontal_midpoint_tangent(-1);
+    let incoming = BezierSplitFragment2::AlgebraicEndpointImages {
+        reversed: false,
+        start: exact(r(0)),
+        end: algebraic.clone(),
+        source_curve: BezierSubcurve2::Quadratic(incoming_curve.clone()),
+        start_image: None,
+        end_image: Some(algebraic_endpoint_image(&incoming_curve, &parameter)),
+    };
+    let upward = BezierSplitFragment2::AlgebraicEndpointImages {
+        reversed: false,
+        start: algebraic.clone(),
+        end: exact(r(1)),
+        source_curve: BezierSubcurve2::RationalQuadratic(upward_curve.clone()),
+        start_image: Some(algebraic_rational_endpoint_image(&upward_curve, &parameter)),
+        end_image: None,
+    };
+    let downward = BezierSplitFragment2::AlgebraicEndpointImages {
+        reversed: false,
+        start: algebraic,
+        end: exact(r(1)),
+        source_curve: BezierSubcurve2::RationalQuadratic(downward_curve.clone()),
+        start_image: Some(algebraic_rational_endpoint_image(
+            &downward_curve,
+            &parameter,
+        )),
+        end_image: None,
+    };
+    let graph = graph(vec![
+        hypercurve::BezierArrangementFragment2::new(0, 0, incoming),
+        hypercurve::BezierArrangementFragment2::new(1, 0, upward),
+        hypercurve::BezierArrangementFragment2::new(2, 0, downward),
+    ]);
+
+    let traversal = decided(graph.traverse_retained_with_tangent_order(&policy()));
+    assert_eq!(traversal.len(), 2);
+    assert_eq!(traversal.chains()[0].fragment_indices(), &[0, 1]);
+    assert_eq!(traversal.chains()[1].fragment_indices(), &[2]);
+}
+
+#[test]
+fn retained_tangent_order_uses_algebraic_third_order_for_cubic_same_tangent_inflections() {
+    let parameter = algebraic_midpoint_parameter();
+    let algebraic = BezierParameter2::algebraic(parameter.clone());
+    let incoming_curve = through_origin_with_midpoint_tangent(1, 0);
+    let upward_curve = through_origin_with_horizontal_midpoint_tangent_and_third_order(8);
+    let downward_curve = through_origin_with_horizontal_midpoint_tangent_and_third_order(-8);
+    let incoming = BezierSplitFragment2::AlgebraicEndpointImages {
+        reversed: false,
+        start: exact(r(0)),
+        end: algebraic.clone(),
+        source_curve: BezierSubcurve2::Quadratic(incoming_curve.clone()),
+        start_image: None,
+        end_image: Some(algebraic_endpoint_image(&incoming_curve, &parameter)),
+    };
+    let upward = BezierSplitFragment2::AlgebraicEndpointImages {
+        reversed: false,
+        start: algebraic.clone(),
+        end: exact(r(1)),
+        source_curve: BezierSubcurve2::Cubic(upward_curve.clone()),
+        start_image: Some(algebraic_cubic_endpoint_image(&upward_curve, &parameter)),
+        end_image: None,
+    };
+    let downward = BezierSplitFragment2::AlgebraicEndpointImages {
+        reversed: false,
+        start: algebraic,
+        end: exact(r(1)),
+        source_curve: BezierSubcurve2::Cubic(downward_curve.clone()),
+        start_image: Some(algebraic_cubic_endpoint_image(&downward_curve, &parameter)),
+        end_image: None,
+    };
+    let graph = graph(vec![
+        hypercurve::BezierArrangementFragment2::new(0, 0, incoming),
+        hypercurve::BezierArrangementFragment2::new(1, 0, upward),
+        hypercurve::BezierArrangementFragment2::new(2, 0, downward),
+    ]);
+
+    assert_eq!(
+        graph.traverse_with_tangent_order(&policy()),
+        Classification::Uncertain(UncertaintyReason::Boundary)
+    );
+    let traversal = decided(graph.traverse_retained_with_tangent_order(&policy()));
+    assert_eq!(traversal.len(), 2);
+    assert_eq!(traversal.chains()[0].fragment_indices(), &[0, 1]);
+    assert_eq!(traversal.chains()[1].fragment_indices(), &[2]);
+}
+
+#[test]
+fn retained_overlap_evidence_finds_identical_materialized_fragments() {
+    let curve = QuadraticBezier2::new(p(0, 0), p(1, 2), p(2, 0));
+    let first = BezierSplitFragment2::Materialized {
+        start: exact(r(0)),
+        end: exact(r(1)),
+        curve: BezierSubcurve2::Quadratic(curve.clone()),
+    };
+    let second = BezierSplitFragment2::Materialized {
+        start: exact(r(0)),
+        end: exact(r(1)),
+        curve: BezierSubcurve2::Quadratic(curve),
+    };
+    let graph = graph(vec![
+        hypercurve::BezierArrangementFragment2::new(0, 0, first),
+        hypercurve::BezierArrangementFragment2::new(1, 0, second),
+    ]);
+
+    let evidence = decided(BezierRetainedOverlapEvidence2::from_graph(
+        &graph,
+        &policy(),
+    ));
+
+    assert_eq!(evidence.len(), 1);
+    assert_eq!(evidence.overlaps()[0].first_fragment_index(), 0);
+    assert_eq!(evidence.overlaps()[0].second_fragment_index(), 1);
+    assert!(matches!(
+        evidence.overlaps()[0].relation(),
+        BezierRetainedOverlapRelation2::SameControlPolygon
+    ));
+}
+
+#[test]
+fn certified_overlap_evidence_replays_across_graph_clones() {
+    let graph = partial_line_overlap_graph();
+
+    let evidence = BezierRetainedOverlapEvidence2::from_graph(&graph, &policy());
+    assert!(evidence.is_decided());
+
+    let cloned = graph.clone();
+    assert_eq!(
+        BezierRetainedOverlapEvidence2::from_graph(&cloned, &policy()),
+        evidence
+    );
+}
+
+#[test]
+fn empty_overlap_refinement_preserves_exact_unit_fragment() {
+    let graph = graph(vec![hypercurve::BezierArrangementFragment2::new(
+        0,
+        0,
+        BezierSplitFragment2::Materialized {
+            start: exact(r(0)),
+            end: exact(r(1)),
+            curve: BezierSubcurve2::Quadratic(QuadraticBezier2::new(p(0, 0), p(1, 1), p(2, 0))),
+        },
+    )]);
+
+    let linear = decided(graph.split_retained_linear_overlaps(&policy()));
+    assert_eq!(linear.graph(), &graph);
+    assert!(linear.overlap_splits().is_empty());
+    assert!(linear.resolved_overlaps().is_empty());
+    assert_eq!(linear.refined_fragments().len(), 1);
+    assert_eq!(
+        linear.refined_fragments()[0].local_range(),
+        &ParamRange::new(r(0), r(1))
+    );
+
+    let rational = decided(graph.split_retained_rational_overlaps(&policy()));
+    assert_eq!(rational.graph(), &graph);
+    assert!(rational.overlap_splits().is_empty());
+    assert!(rational.resolved_overlaps().is_empty());
+    assert_eq!(rational.refined_fragments().len(), 1);
+    assert_eq!(
+        rational.refined_fragments()[0].local_range(),
+        &ParamRange::new(r(0), r(1))
+    );
+}
+
+#[test]
+fn retained_overlap_evidence_recognizes_projectively_reversed_rational_fragments() {
+    let curve = RationalBezier2::try_new(
+        vec![p(0, 0), p(1, 3), p(3, 3), p(4, 0)],
+        vec![r(1), r(2), r(3), r(4)],
+    )
+    .unwrap();
+    let scaled_reversed = RationalBezier2::try_new(
+        vec![p(4, 0), p(3, 3), p(1, 3), p(0, 0)],
+        vec![r(8), r(6), r(4), r(2)],
+    )
+    .unwrap();
+    let graph = graph(vec![
+        hypercurve::BezierArrangementFragment2::new(
+            0,
+            0,
+            BezierSplitFragment2::Materialized {
+                start: exact(r(0)),
+                end: exact(r(1)),
+                curve: BezierSubcurve2::Rational(curve),
+            },
+        ),
+        hypercurve::BezierArrangementFragment2::new(
+            1,
+            0,
+            BezierSplitFragment2::Materialized {
+                start: exact(r(0)),
+                end: exact(r(1)),
+                curve: BezierSubcurve2::Rational(scaled_reversed),
+            },
+        ),
+    ]);
+
+    let evidence = decided(BezierRetainedOverlapEvidence2::from_graph(
+        &graph,
+        &policy(),
+    ));
+
+    assert_eq!(evidence.len(), 1);
+    assert!(matches!(
+        evidence.overlaps()[0].relation(),
+        BezierRetainedOverlapRelation2::SameCurveImage
+    ));
+}
+
+#[test]
+fn retained_overlap_evidence_preserves_strict_rational_overlap_ranges() {
+    let curve = RationalBezier2::try_new(
+        vec![Point2::new(r(0), r(0)), Point2::new(q(1, 2), r(0)), p(1, 1)],
+        vec![r(1), r(1), r(1)],
+    )
+    .unwrap();
+    let tail = decided(
+        curve
+            .subcurve_between_exact(&q(1, 2), &r(1), &policy())
+            .unwrap(),
+    );
+    let graph = graph(vec![
+        hypercurve::BezierArrangementFragment2::new(
+            0,
+            0,
+            BezierSplitFragment2::Materialized {
+                start: exact(r(0)),
+                end: exact(r(1)),
+                curve: BezierSubcurve2::Rational(curve),
+            },
+        ),
+        hypercurve::BezierArrangementFragment2::new(
+            1,
+            0,
+            BezierSplitFragment2::Materialized {
+                start: exact(r(0)),
+                end: exact(r(1)),
+                curve: BezierSubcurve2::Rational(tail),
+            },
+        ),
+    ]);
+
+    let evidence = decided(BezierRetainedOverlapEvidence2::from_graph(
+        &graph,
+        &policy(),
+    ));
+
+    assert_eq!(evidence.len(), 1);
+    let BezierRetainedOverlapRelation2::RationalBezierOverlap { overlap } =
+        evidence.overlaps()[0].relation()
+    else {
+        panic!("strict rational overlap was mislabeled as a whole-image duplicate");
+    };
+    assert_eq!(overlap.first_range(), &ParamRange::new(q(1, 2), r(1)));
+    assert_eq!(overlap.second_range(), &ParamRange::new(r(0), r(1)));
+    assert_eq!(
+        overlap.orientation(),
+        RationalBezierOverlapOrientation2::Same
+    );
+    assert_eq!(
+        graph.traverse_retained_deduplicating_materialized_overlaps(&policy()),
+        Classification::Uncertain(UncertaintyReason::Boundary)
+    );
+
+    let overlap_splits = decided(evidence.rational_bezier_overlap_splits(&policy()));
+    assert_eq!(overlap_splits.len(), 1);
+    assert_eq!(
+        overlap_splits[0].first_bezier_range(),
+        &ParamRange::new(q(1, 2), r(1))
+    );
+    assert_eq!(
+        overlap_splits[0].second_bezier_range(),
+        &ParamRange::new(r(0), r(1))
+    );
+    assert_eq!(
+        overlap_splits[0].orientation(),
+        RationalBezierOverlapOrientation2::Same
+    );
+    assert_eq!(
+        overlap_splits[0].extent(),
+        BezierRetainedOverlapExtent2::PartialFirstFullSecond
+    );
+
+    let refinement = decided(graph.split_retained_rational_overlaps(&policy()));
+    assert_eq!(refinement.graph().len(), 3);
+    assert_eq!(refinement.refined_fragments().len(), 3);
+    assert_eq!(refinement.overlap_splits(), overlap_splits);
+    assert_eq!(refinement.resolved_overlaps().len(), 1);
+    let resolved = &refinement.resolved_overlaps()[0];
+    assert_eq!(resolved.first_refined_fragment_index(), 1);
+    assert_eq!(resolved.second_refined_fragment_index(), 2);
+    assert_eq!(resolved.first_original_fragment_index(), 0);
+    assert_eq!(resolved.second_original_fragment_index(), 1);
+    assert_eq!(
+        resolved.orientation(),
+        RationalBezierOverlapOrientation2::Same
+    );
+
+    let traversal = decided(graph.traverse_retained_splitting_rational_overlaps(&policy()));
+    assert_eq!(
+        traversal.refined_traversal().shadowed_fragment_indices(),
+        &[2]
+    );
+    assert_eq!(traversal.traversal().len(), 1);
+    assert_eq!(
+        traversal.traversal().chains()[0].fragment_indices(),
+        &[0, 1]
+    );
+}
+
+#[test]
+fn retained_rational_overlap_refinement_cancels_reversed_span() {
+    let curve = RationalBezier2::try_new(
+        vec![Point2::new(r(0), r(0)), Point2::new(q(1, 2), r(0)), p(1, 1)],
+        vec![r(1), r(1), r(1)],
+    )
+    .unwrap();
+    let tail = decided(
+        curve
+            .subcurve_between_exact(&q(1, 2), &r(1), &policy())
+            .unwrap(),
+    )
+    .reversed();
+    let graph = graph(vec![
+        hypercurve::BezierArrangementFragment2::new(
+            0,
+            0,
+            BezierSplitFragment2::Materialized {
+                start: exact(r(0)),
+                end: exact(r(1)),
+                curve: BezierSubcurve2::Rational(curve),
+            },
+        ),
+        hypercurve::BezierArrangementFragment2::new(
+            1,
+            0,
+            BezierSplitFragment2::Materialized {
+                start: exact(r(0)),
+                end: exact(r(1)),
+                curve: BezierSubcurve2::Rational(tail),
+            },
+        ),
+    ]);
+
+    let refinement = decided(graph.split_retained_rational_overlaps(&policy()));
+
+    assert_eq!(refinement.graph().len(), 3);
+    assert_eq!(refinement.resolved_overlaps().len(), 1);
+    let resolved = &refinement.resolved_overlaps()[0];
+    assert_eq!(resolved.second_local_range(), &ParamRange::new(r(1), r(0)));
+    assert_eq!(
+        resolved.orientation(),
+        RationalBezierOverlapOrientation2::Reversed
+    );
+    let traversal = decided(graph.traverse_retained_splitting_rational_overlaps(&policy()));
+    assert_eq!(
+        traversal.refined_traversal().shadowed_fragment_indices(),
+        &[1, 2]
+    );
+    assert_eq!(traversal.traversal().len(), 1);
+    assert_eq!(traversal.traversal().chains()[0].fragment_indices(), &[0]);
+}
+
+#[test]
+fn retained_rational_overlap_promotes_represented_incidence_root() {
+    let nonlinear_line = RationalBezier2::try_new(
+        vec![p(0, 0), Point2::new(q(1, 4), r(0)), p(1, 0)],
+        vec![r(1), r(1), r(1)],
+    )
+    .unwrap();
+    let affine_tail = RationalBezier2::try_new(
+        vec![
+            Point2::new(q(3, 8), r(0)),
+            Point2::new(q(11, 16), r(0)),
+            p(1, 0),
+        ],
+        vec![r(1), r(1), r(1)],
+    )
+    .unwrap();
+    let graph = graph(vec![
+        hypercurve::BezierArrangementFragment2::new(
+            0,
+            0,
+            BezierSplitFragment2::Materialized {
+                start: exact(r(0)),
+                end: exact(r(1)),
+                curve: BezierSubcurve2::Rational(nonlinear_line),
+            },
+        ),
+        hypercurve::BezierArrangementFragment2::new(
+            1,
+            0,
+            BezierSplitFragment2::Materialized {
+                start: exact(r(0)),
+                end: exact(r(1)),
+                curve: BezierSubcurve2::Rational(affine_tail),
+            },
+        ),
+    ]);
+
+    let evidence = decided(BezierRetainedOverlapEvidence2::from_graph(
+        &graph,
+        &policy(),
+    ));
+    let splits = decided(evidence.rational_bezier_overlap_splits(&policy()));
+
+    assert_eq!(splits.len(), 1);
+    assert_eq!(
+        splits[0].first_bezier_range(),
+        &ParamRange::new(q(1, 2), r(1))
+    );
+    assert_eq!(
+        splits[0].second_bezier_range(),
+        &ParamRange::new(r(0), r(1))
+    );
+    let traversal = decided(graph.traverse_retained_splitting_rational_overlaps(&policy()));
+    assert_eq!(
+        traversal.refined_traversal().shadowed_fragment_indices(),
+        &[2]
+    );
+    assert_eq!(
+        traversal.traversal().chains()[0].fragment_indices(),
+        &[0, 1]
+    );
+}
+
+#[test]
+fn retained_overlap_pair_constructor_rejects_unordered_indices() {
+    assert_topology_error(BezierRetainedOverlap2::new(
+        0,
+        0,
+        BezierRetainedOverlapRelation2::SameControlPolygon,
+    ));
+    assert_topology_error(BezierRetainedOverlap2::new(
+        2,
+        1,
+        BezierRetainedOverlapRelation2::SameControlPolygon,
+    ));
+}
+
+#[test]
+fn retained_overlap_pair_constructor_rejects_non_overlap_line_evidence() {
+    assert_topology_error(BezierRetainedOverlap2::new(
+        0,
+        1,
+        BezierRetainedOverlapRelation2::LineSegmentOverlap {
+            intersection: Box::new(LineLineIntersection::Point {
+                point: p(1, 0),
+                a_param: r(1),
+                b_param: r(0),
+                kind: IntersectionKind::Endpoint,
+            }),
+        },
+    ));
+
+    assert_topology_error(BezierRetainedOverlap2::new(
+        0,
+        1,
+        BezierRetainedOverlapRelation2::LineSegmentOverlap {
+            intersection: Box::new(LineLineIntersection::Overlap {
+                segment: LineSeg2::try_new(p(0, 0), p(1, 0)).unwrap(),
+                a_range: ParamRange::new(q(1, 2), q(1, 2)),
+                b_range: ParamRange::new(r(0), r(1)),
+            }),
+        },
+    ));
+
+    assert_topology_error(BezierRetainedOverlap2::new(
+        0,
+        1,
+        BezierRetainedOverlapRelation2::LineSegmentOverlap {
+            intersection: Box::new(LineLineIntersection::Overlap {
+                segment: LineSeg2::new_unchecked(p(0, 0), p(0, 0)),
+                a_range: ParamRange::new(r(0), r(1)),
+                b_range: ParamRange::new(r(0), r(1)),
+            }),
+        },
+    ));
+}
+
+#[test]
+fn retained_overlap_evidence_constructor_rejects_unsorted_or_duplicate_pairs() {
+    let first =
+        BezierRetainedOverlap2::new(0, 1, BezierRetainedOverlapRelation2::SameControlPolygon)
+            .unwrap();
+    let second =
+        BezierRetainedOverlap2::new(0, 2, BezierRetainedOverlapRelation2::SameControlPolygon)
+            .unwrap();
+
+    BezierRetainedOverlapEvidence2::new(vec![first.clone(), second.clone()]).unwrap();
+    assert_topology_error(BezierRetainedOverlapEvidence2::new(vec![
+        second,
+        first.clone(),
+    ]));
+    assert_topology_error(BezierRetainedOverlapEvidence2::new(vec![
+        first.clone(),
+        first,
+    ]));
+}
+
+#[test]
+fn retained_arrangement_traversal_constructors_validate_fragment_ownership() {
+    assert_topology_error(BezierArrangementChain2::new(Vec::new(), false));
+    assert_topology_error(BezierArrangementChain2::new(vec![0, 0], true));
+
+    let first = BezierArrangementChain2::new(vec![0], false).unwrap();
+    let second = BezierArrangementChain2::new(vec![1], false).unwrap();
+    BezierArrangementTraversal2::new(vec![first.clone(), second]).unwrap();
+
+    let duplicate = BezierArrangementChain2::new(vec![0], true).unwrap();
+    assert_topology_error(BezierArrangementTraversal2::new(vec![first, duplicate]));
+}
+
+#[test]
+fn retained_overlap_split_constructors_reject_unordered_indices() {
+    let overlap_segment = LineSeg2::try_new(p(0, 0), p(1, 0)).unwrap();
+    let first_range = ParamRange::new(r(0), r(1));
+    let second_range = ParamRange::new(r(0), r(1));
+
+    assert_topology_error(BezierRetainedLineOverlapSplit2::new(
+        1,
+        1,
+        overlap_segment.clone(),
+        first_range.clone(),
+        second_range.clone(),
+        BezierRetainedOverlapExtent2::FullBoth,
+    ));
+    assert_topology_error(BezierRetainedLinearOverlapSplit2::new(
+        3,
+        2,
+        overlap_segment,
+        first_range,
+        second_range,
+        BezierRetainedOverlapExtent2::FullBoth,
+    ));
+}
+
+#[test]
+fn retained_overlap_split_constructors_validate_range_evidence() {
+    let overlap_segment = LineSeg2::try_new(p(0, 0), p(1, 0)).unwrap();
+    let full = ParamRange::new(r(0), r(1));
+    let reversed_full = ParamRange::new(r(1), r(0));
+    let zero = ParamRange::new(q(1, 2), q(1, 2));
+    let outside_unit = ParamRange::new(r(-1), r(1));
+    let partial = ParamRange::new(r(0), q(1, 2));
+    let zero_segment = LineSeg2::new_unchecked(p(0, 0), p(0, 0));
+
+    BezierRetainedLineOverlapSplit2::new(
+        0,
+        1,
+        overlap_segment.clone(),
+        full.clone(),
+        reversed_full.clone(),
+        BezierRetainedOverlapExtent2::FullBoth,
+    )
+    .unwrap();
+    assert_topology_error(BezierRetainedLineOverlapSplit2::new(
+        0,
+        1,
+        zero_segment.clone(),
+        full.clone(),
+        reversed_full.clone(),
+        BezierRetainedOverlapExtent2::FullBoth,
+    ));
+    assert_topology_error(BezierRetainedLinearOverlapSplit2::new(
+        0,
+        1,
+        zero_segment.clone(),
+        full.clone(),
+        reversed_full,
+        BezierRetainedOverlapExtent2::FullBoth,
+    ));
+    assert_topology_error(BezierRetainedLineOverlapSplit2::new(
+        0,
+        1,
+        overlap_segment.clone(),
+        zero,
+        full.clone(),
+        BezierRetainedOverlapExtent2::PartialFirstFullSecond,
+    ));
+    assert_topology_error(BezierRetainedLinearOverlapSplit2::new(
+        0,
+        1,
+        overlap_segment.clone(),
+        outside_unit,
+        full.clone(),
+        BezierRetainedOverlapExtent2::PartialFirstFullSecond,
+    ));
+    assert_topology_error(BezierRetainedResolvedLinearOverlap2::new(
+        0,
+        1,
+        0,
+        1,
+        partial,
+        full,
+        overlap_segment,
+        BezierRetainedOverlapOrientation2::Same,
+        BezierRetainedOverlapExtent2::FullBoth,
+    ));
+    assert_topology_error(BezierRetainedResolvedLinearOverlap2::new(
+        0,
+        1,
+        0,
+        1,
+        ParamRange::new(r(0), r(1)),
+        ParamRange::new(r(0), r(1)),
+        zero_segment,
+        BezierRetainedOverlapOrientation2::Same,
+        BezierRetainedOverlapExtent2::FullBoth,
+    ));
+}
+
+#[test]
+fn retained_overlap_refined_fragment_constructor_validates_local_range() {
+    BezierRetainedOverlapRefinedFragment2::new(0, ParamRange::new(r(0), r(1))).unwrap();
+    assert_topology_error(BezierRetainedOverlapRefinedFragment2::new(
+        0,
+        ParamRange::new(r(1), r(0)),
+    ));
+    assert_topology_error(BezierRetainedOverlapRefinedFragment2::new(
+        0,
+        ParamRange::new(q(1, 2), q(1, 2)),
+    ));
+    assert_topology_error(BezierRetainedOverlapRefinedFragment2::new(
+        0,
+        ParamRange::new(r(-1), r(1)),
+    ));
+}
+
+#[test]
+fn retained_linear_overlap_split_graph_rejects_missing_refined_provenance() {
+    let fragment = BezierSplitFragment2::Materialized {
+        start: exact(r(0)),
+        end: exact(r(1)),
+        curve: BezierSubcurve2::Quadratic(QuadraticBezier2::new(p(0, 0), p(1, 0), p(2, 0))),
+    };
+    let graph = graph(vec![hypercurve::BezierArrangementFragment2::new(
+        0, 0, fragment,
+    )]);
+
+    assert_topology_error(BezierRetainedLinearOverlapSplitGraph2::new(
+        graph,
+        Vec::new(),
+        BezierRetainedOverlapEvidence2::new(Vec::new()).unwrap(),
+        Vec::new(),
+        Vec::new(),
+    ));
+}
+
+#[test]
+fn retained_resolved_overlap_constructor_rejects_unordered_indices() {
+    let overlap_segment = LineSeg2::try_new(p(0, 0), p(1, 0)).unwrap();
+    let first_range = ParamRange::new(r(0), r(1));
+    let second_range = ParamRange::new(r(0), r(1));
+
+    assert_topology_error(BezierRetainedResolvedLinearOverlap2::new(
+        1,
+        1,
+        0,
+        1,
+        first_range.clone(),
+        second_range.clone(),
+        overlap_segment.clone(),
+        BezierRetainedOverlapOrientation2::Same,
+        BezierRetainedOverlapExtent2::FullBoth,
+    ));
+    assert_topology_error(BezierRetainedResolvedLinearOverlap2::new(
+        1,
+        2,
+        4,
+        3,
+        first_range,
+        second_range,
+        overlap_segment,
+        BezierRetainedOverlapOrientation2::Same,
+        BezierRetainedOverlapExtent2::FullBoth,
+    ));
+}
+
+#[test]
+fn retained_linear_overlap_split_graph_rejects_forged_resolved_provenance() {
+    let graph = partial_line_overlap_graph();
+    let refinement = decided(graph.split_retained_linear_overlaps(&policy()));
+    let (refined_graph, refined_fragments, overlap_evidence, overlap_splits, _) =
+        refinement.clone().into_parts();
+    let split = &overlap_splits[0];
+    let forged = BezierRetainedResolvedLinearOverlap2::new(
+        0,
+        2,
+        split.first_fragment_index(),
+        split.second_fragment_index(),
+        split.first_bezier_range().clone(),
+        split.second_bezier_range().clone(),
+        split.overlap_segment().clone(),
+        BezierRetainedOverlapOrientation2::Same,
+        split.extent(),
+    )
+    .unwrap();
+
+    assert_topology_error(BezierRetainedLinearOverlapSplitGraph2::new(
+        refined_graph,
+        refined_fragments,
+        overlap_evidence,
+        overlap_splits,
+        vec![forged],
+    ));
+}
+
+#[test]
+fn retained_linear_overlap_split_graph_rejects_forged_orientation() {
+    let graph = partial_line_overlap_graph();
+    let refinement = decided(graph.split_retained_linear_overlaps(&policy()));
+    let (refined_graph, refined_fragments, overlap_evidence, overlap_splits, resolved_overlaps) =
+        refinement.into_parts();
+    let resolved = &resolved_overlaps[0];
+    assert_eq!(
+        resolved.orientation(),
+        BezierRetainedOverlapOrientation2::Same
+    );
+    let forged = BezierRetainedResolvedLinearOverlap2::new(
+        resolved.first_refined_fragment_index(),
+        resolved.second_refined_fragment_index(),
+        resolved.first_original_fragment_index(),
+        resolved.second_original_fragment_index(),
+        resolved.first_local_range().clone(),
+        resolved.second_local_range().clone(),
+        resolved.overlap_segment().clone(),
+        BezierRetainedOverlapOrientation2::Opposite,
+        resolved.extent(),
+    )
+    .unwrap();
+
+    assert_topology_error(BezierRetainedLinearOverlapSplitGraph2::new(
+        refined_graph,
+        refined_fragments,
+        overlap_evidence,
+        overlap_splits,
+        vec![forged],
+    ));
+}
+
+#[test]
+fn retained_linear_overlap_split_graph_rejects_missing_split_evidence_evidence() {
+    let graph = partial_line_overlap_graph();
+    let refinement = decided(graph.split_retained_linear_overlaps(&policy()));
+    let (refined_graph, refined_fragments, _, overlap_splits, resolved_overlaps) =
+        refinement.into_parts();
+
+    assert_topology_error(BezierRetainedLinearOverlapSplitGraph2::new(
+        refined_graph,
+        refined_fragments,
+        BezierRetainedOverlapEvidence2::new(Vec::new()).unwrap(),
+        overlap_splits,
+        resolved_overlaps,
+    ));
+}
+
+#[test]
+fn retained_linear_overlap_split_graph_rejects_forged_split_evidence_geometry() {
+    let graph = partial_line_overlap_graph();
+    let refinement = decided(graph.split_retained_linear_overlaps(&policy()));
+    let (refined_graph, refined_fragments, overlap_evidence, overlap_splits, resolved_overlaps) =
+        refinement.into_parts();
+    let split = &overlap_splits[0];
+    let resolved = &resolved_overlaps[0];
+    let forged_segment = LineSeg2::try_new(p(10, 0), p(12, 0)).unwrap();
+    let forged_split = BezierRetainedLinearOverlapSplit2::new(
+        split.first_fragment_index(),
+        split.second_fragment_index(),
+        forged_segment.clone(),
+        split.first_bezier_range().clone(),
+        split.second_bezier_range().clone(),
+        split.extent(),
+    )
+    .unwrap();
+    let forged_resolved = BezierRetainedResolvedLinearOverlap2::new(
+        resolved.first_refined_fragment_index(),
+        resolved.second_refined_fragment_index(),
+        resolved.first_original_fragment_index(),
+        resolved.second_original_fragment_index(),
+        resolved.first_local_range().clone(),
+        resolved.second_local_range().clone(),
+        forged_segment,
+        resolved.orientation(),
+        resolved.extent(),
+    )
+    .unwrap();
+
+    assert_topology_error(BezierRetainedLinearOverlapSplitGraph2::new(
+        refined_graph,
+        refined_fragments,
+        overlap_evidence,
+        vec![forged_split],
+        vec![forged_resolved],
+    ));
+}
+
+#[test]
+fn retained_linear_overlap_traversal_rejects_indices_outside_refinement() {
+    let fragment = BezierSplitFragment2::Materialized {
+        start: exact(r(0)),
+        end: exact(r(1)),
+        curve: BezierSubcurve2::Quadratic(QuadraticBezier2::new(p(0, 0), p(1, 0), p(2, 0))),
+    };
+    let graph = graph(vec![hypercurve::BezierArrangementFragment2::new(
+        0, 0, fragment,
+    )]);
+    let traversal = decided(graph.traverse_retained_deduplicating_materialized_overlaps(&policy()));
+    let empty_refinement = BezierRetainedLinearOverlapSplitGraph2::new(
+        BezierArrangementGraph2::new(Vec::new()).unwrap(),
+        Vec::<BezierRetainedOverlapRefinedFragment2>::new(),
+        BezierRetainedOverlapEvidence2::new(Vec::new()).unwrap(),
+        Vec::new(),
+        Vec::new(),
+    )
+    .unwrap();
+
+    assert_topology_error(BezierRetainedLinearOverlapTraversal2::new(
+        empty_refinement,
+        traversal,
+    ));
+}
+
+#[test]
+fn retained_linear_overlap_traversal_rejects_incomplete_refined_partition() {
+    let refinement =
+        decided(partial_line_overlap_graph().split_retained_linear_overlaps(&policy()));
+    assert_eq!(refinement.graph().len(), 4);
+
+    let unrelated_fragment = BezierSplitFragment2::Materialized {
+        start: exact(r(0)),
+        end: exact(r(1)),
+        curve: BezierSubcurve2::Quadratic(QuadraticBezier2::new(p(0, 0), p(1, 0), p(2, 0))),
+    };
+    let unrelated_graph = graph(vec![hypercurve::BezierArrangementFragment2::new(
+        10,
+        0,
+        unrelated_fragment,
+    )]);
+    let unrelated_traversal =
+        decided(unrelated_graph.traverse_retained_deduplicating_materialized_overlaps(&policy()));
+    assert_eq!(
+        unrelated_traversal.traversal().chains()[0].fragment_indices(),
+        &[0]
+    );
+
+    assert_topology_error(BezierRetainedLinearOverlapTraversal2::new(
+        refinement,
+        unrelated_traversal,
+    ));
+}
+
+#[test]
+fn retained_overlap_evidence_finds_reversed_degree_elevated_same_image() {
+    let quadratic = QuadraticBezier2::new(p(0, 0), p(2, 4), p(4, 0));
+    let cubic_reversed = CubicBezier2::new(
+        p(4, 0),
+        Point2::new(q(8, 3), q(8, 3)),
+        Point2::new(q(4, 3), q(8, 3)),
+        p(0, 0),
+    );
+    let graph = graph(vec![
+        hypercurve::BezierArrangementFragment2::new(
+            0,
+            0,
+            BezierSplitFragment2::Materialized {
+                start: exact(r(0)),
+                end: exact(r(1)),
+                curve: BezierSubcurve2::Quadratic(quadratic),
+            },
+        ),
+        hypercurve::BezierArrangementFragment2::new(
+            1,
+            0,
+            BezierSplitFragment2::Materialized {
+                start: exact(r(0)),
+                end: exact(r(1)),
+                curve: BezierSubcurve2::Cubic(cubic_reversed),
+            },
+        ),
+    ]);
+
+    let evidence = decided(BezierRetainedOverlapEvidence2::from_graph(
+        &graph,
+        &policy(),
+    ));
+
+    assert_eq!(evidence.len(), 1);
+    assert!(matches!(
+        evidence.overlaps()[0].relation(),
+        BezierRetainedOverlapRelation2::SameCurveImage
+    ));
+}
+
+#[test]
+fn retained_overlap_evidence_separates_endpoint_touch_from_overlap() {
+    let first = BezierSplitFragment2::Materialized {
+        start: exact(r(0)),
+        end: exact(r(1)),
+        curve: BezierSubcurve2::Quadratic(QuadraticBezier2::new(p(0, 0), p(1, 1), p(2, 0))),
+    };
+    let second = BezierSplitFragment2::Materialized {
+        start: exact(r(0)),
+        end: exact(r(1)),
+        curve: BezierSubcurve2::Quadratic(QuadraticBezier2::new(p(2, 0), p(3, -1), p(4, 0))),
+    };
+    let graph = graph(vec![
+        hypercurve::BezierArrangementFragment2::new(0, 0, first),
+        hypercurve::BezierArrangementFragment2::new(1, 0, second),
+    ]);
+
+    let evidence = decided(BezierRetainedOverlapEvidence2::from_graph(
+        &graph,
+        &policy(),
+    ));
+
+    assert!(evidence.is_empty());
+}
+
+#[test]
+fn retained_overlap_evidence_extracts_partial_line_image_split_ranges() {
+    let first = BezierSplitFragment2::Materialized {
+        start: exact(r(0)),
+        end: exact(r(1)),
+        curve: BezierSubcurve2::Quadratic(QuadraticBezier2::new(p(0, 0), p(2, 0), p(4, 0))),
+    };
+    let second = BezierSplitFragment2::Materialized {
+        start: exact(r(0)),
+        end: exact(r(1)),
+        curve: BezierSubcurve2::Quadratic(QuadraticBezier2::new(p(2, 0), p(4, 0), p(6, 0))),
+    };
+    let graph = graph(vec![
+        hypercurve::BezierArrangementFragment2::new(0, 0, first),
+        hypercurve::BezierArrangementFragment2::new(1, 0, second),
+    ]);
+    let evidence = decided(BezierRetainedOverlapEvidence2::from_graph(
+        &graph,
+        &policy(),
+    ));
+
+    let splits = decided(evidence.line_overlap_splits(&policy()));
+
+    assert_eq!(splits.len(), 1);
+    assert_eq!(splits[0].first_fragment_index(), 0);
+    assert_eq!(splits[0].second_fragment_index(), 1);
+    assert_eq!(splits[0].overlap_segment().start(), &p(2, 0));
+    assert_eq!(splits[0].overlap_segment().end(), &p(4, 0));
+    assert_eq!(splits[0].first_line_range().start(), &q(1, 2));
+    assert_eq!(splits[0].first_line_range().end(), &r(1));
+    assert_eq!(splits[0].second_line_range().start(), &r(0));
+    assert_eq!(splits[0].second_line_range().end(), &q(1, 2));
+    assert_eq!(
+        splits[0].extent(),
+        BezierRetainedOverlapExtent2::PartialBoth
+    );
+    assert_eq!(
+        graph.traverse_retained_deduplicating_materialized_overlaps(&policy()),
+        Classification::Uncertain(UncertaintyReason::Boundary)
+    );
+
+    let bezier_splits = decided(evidence.linear_bezier_overlap_splits(&graph, &policy()));
+    assert_eq!(bezier_splits.len(), 1);
+    assert_eq!(bezier_splits[0].first_bezier_range().start(), &q(1, 2));
+    assert_eq!(bezier_splits[0].first_bezier_range().end(), &r(1));
+    assert_eq!(bezier_splits[0].second_bezier_range().start(), &r(0));
+    assert_eq!(bezier_splits[0].second_bezier_range().end(), &q(1, 2));
+    assert_eq!(
+        bezier_splits[0].extent(),
+        BezierRetainedOverlapExtent2::PartialBoth
+    );
+
+    let forged_overlap = BezierRetainedOverlap2::new(
+        0,
+        1,
+        BezierRetainedOverlapRelation2::LineSegmentOverlap {
+            intersection: Box::new(LineLineIntersection::Overlap {
+                segment: LineSeg2::try_new(p(0, 0), p(1, 0)).unwrap(),
+                a_range: ParamRange::new(q(1, 2), r(1)),
+                b_range: ParamRange::new(r(0), q(1, 2)),
+            }),
+        },
+    )
+    .unwrap();
+    let forged_evidence = BezierRetainedOverlapEvidence2::new(vec![forged_overlap]).unwrap();
+    assert_eq!(
+        decided(forged_evidence.line_overlap_splits(&policy())).len(),
+        1
+    );
+    assert_eq!(
+        forged_evidence.linear_bezier_overlap_splits(&graph, &policy()),
+        Classification::Uncertain(UncertaintyReason::Unsupported)
+    );
+
+    let refinement = decided(graph.split_retained_linear_overlaps(&policy()));
+    assert_eq!(refinement.overlap_evidence().len(), 1);
+    assert_eq!(refinement.overlap_splits().len(), 1);
+    assert_eq!(refinement.resolved_overlaps().len(), 1);
+    assert_eq!(refinement.graph().len(), 4);
+    assert_eq!(refinement.refined_fragments().len(), 4);
+    assert_eq!(
+        refinement.resolved_overlaps()[0].first_refined_fragment_index(),
+        1
+    );
+    assert_eq!(
+        refinement.resolved_overlaps()[0].second_refined_fragment_index(),
+        2
+    );
+    assert_eq!(
+        refinement.resolved_overlaps()[0].orientation(),
+        BezierRetainedOverlapOrientation2::Same
+    );
+    assert_eq!(
+        refinement.refined_fragments()[0].original_fragment_index(),
+        0
+    );
+    assert_eq!(
+        refinement.refined_fragments()[0].local_range(),
+        &hypercurve::ParamRange::new(r(0), q(1, 2))
+    );
+    assert_eq!(
+        refinement.refined_fragments()[1].original_fragment_index(),
+        0
+    );
+    assert_eq!(
+        refinement.refined_fragments()[1].local_range(),
+        &hypercurve::ParamRange::new(q(1, 2), r(1))
+    );
+    assert_eq!(
+        refinement.refined_fragments()[2].original_fragment_index(),
+        1
+    );
+    assert_eq!(
+        refinement.refined_fragments()[2].local_range(),
+        &hypercurve::ParamRange::new(r(0), q(1, 2))
+    );
+    assert_eq!(
+        refinement.refined_fragments()[3].original_fragment_index(),
+        1
+    );
+    assert_eq!(
+        refinement.refined_fragments()[3].local_range(),
+        &hypercurve::ParamRange::new(q(1, 2), r(1))
+    );
+    let refined = refinement.graph().fragments();
+    let BezierSplitFragment2::Materialized {
+        start,
+        end,
+        curve: BezierSubcurve2::Quadratic(overlap_from_first),
+    } = refined[1].fragment()
+    else {
+        panic!("expected exact quadratic overlap fragment from first curve");
+    };
+    assert_eq!(start, &exact(q(1, 2)));
+    assert_eq!(end, &exact(r(1)));
+    assert_eq!(overlap_from_first.start(), &p(2, 0));
+    assert_eq!(overlap_from_first.end(), &p(4, 0));
+    let BezierSplitFragment2::Materialized {
+        start,
+        end,
+        curve: BezierSubcurve2::Quadratic(overlap_from_second),
+    } = refined[2].fragment()
+    else {
+        panic!("expected exact quadratic overlap fragment from second curve");
+    };
+    assert_eq!(start, &exact(r(0)));
+    assert_eq!(end, &exact(q(1, 2)));
+    assert_eq!(overlap_from_second.start(), &p(2, 0));
+    assert_eq!(overlap_from_second.end(), &p(4, 0));
+}
+
+#[test]
+fn retained_linear_overlap_refinement_evidence_reversed_span_orientation() {
+    let first = BezierSplitFragment2::Materialized {
+        start: exact(r(0)),
+        end: exact(r(1)),
+        curve: BezierSubcurve2::Quadratic(QuadraticBezier2::new(p(0, 0), p(2, 0), p(4, 0))),
+    };
+    let reversed_overlap = BezierSplitFragment2::Materialized {
+        start: exact(r(0)),
+        end: exact(r(1)),
+        curve: BezierSubcurve2::Quadratic(QuadraticBezier2::new(p(4, 0), p(3, 0), p(2, 0))),
+    };
+    let graph = graph(vec![
+        hypercurve::BezierArrangementFragment2::new(0, 0, first),
+        hypercurve::BezierArrangementFragment2::new(1, 0, reversed_overlap),
+    ]);
+
+    let refinement = decided(graph.split_retained_linear_overlaps(&policy()));
+
+    assert_eq!(refinement.graph().len(), 3);
+    assert_eq!(refinement.resolved_overlaps().len(), 1);
+    let resolved = &refinement.resolved_overlaps()[0];
+    assert_eq!(resolved.first_refined_fragment_index(), 1);
+    assert_eq!(resolved.second_refined_fragment_index(), 2);
+    assert_eq!(resolved.first_original_fragment_index(), 0);
+    assert_eq!(resolved.second_original_fragment_index(), 1);
+    assert_eq!(
+        resolved.first_local_range(),
+        &hypercurve::ParamRange::new(q(1, 2), r(1))
+    );
+    assert_eq!(
+        resolved.second_local_range(),
+        &hypercurve::ParamRange::new(r(1), r(0))
+    );
+    assert_eq!(resolved.overlap_segment().start(), &p(2, 0));
+    assert_eq!(resolved.overlap_segment().end(), &p(4, 0));
+    assert_eq!(
+        resolved.orientation(),
+        BezierRetainedOverlapOrientation2::Opposite
+    );
+    assert_eq!(
+        resolved.extent(),
+        BezierRetainedOverlapExtent2::PartialFirstFullSecond
+    );
+    let traversal = decided(graph.traverse_retained_splitting_linear_overlaps(&policy()));
+    assert_eq!(
+        traversal.refined_traversal().shadowed_fragment_indices(),
+        &[1, 2]
+    );
+    assert_eq!(traversal.traversal().len(), 1);
+    assert_eq!(traversal.traversal().closed_count(), 0);
+    assert_eq!(traversal.traversal().chains()[0].fragment_indices(), &[0]);
+}
+
+#[test]
+fn retained_linear_overlap_traversal_splits_and_consumes_duplicate_span_in_loop() {
+    let bottom = BezierSplitFragment2::Materialized {
+        start: exact(r(0)),
+        end: exact(r(1)),
+        curve: BezierSubcurve2::Quadratic(QuadraticBezier2::new(p(0, 0), p(2, 0), p(4, 0))),
+    };
+    let overlapping_bottom_tail = BezierSplitFragment2::Materialized {
+        start: exact(r(0)),
+        end: exact(r(1)),
+        curve: BezierSubcurve2::Quadratic(QuadraticBezier2::new(p(2, 0), p(3, 0), p(4, 0))),
+    };
+    let right = BezierSplitFragment2::Materialized {
+        start: exact(r(0)),
+        end: exact(r(1)),
+        curve: BezierSubcurve2::Quadratic(QuadraticBezier2::new(p(4, 0), p(4, 1), p(4, 2))),
+    };
+    let top = BezierSplitFragment2::Materialized {
+        start: exact(r(0)),
+        end: exact(r(1)),
+        curve: BezierSubcurve2::Quadratic(QuadraticBezier2::new(p(4, 2), p(2, 2), p(0, 2))),
+    };
+    let left = BezierSplitFragment2::Materialized {
+        start: exact(r(0)),
+        end: exact(r(1)),
+        curve: BezierSubcurve2::Quadratic(QuadraticBezier2::new(p(0, 2), p(0, 1), p(0, 0))),
+    };
+    let graph = graph(vec![
+        hypercurve::BezierArrangementFragment2::new(0, 0, bottom),
+        hypercurve::BezierArrangementFragment2::new(1, 0, overlapping_bottom_tail),
+        hypercurve::BezierArrangementFragment2::new(2, 0, right),
+        hypercurve::BezierArrangementFragment2::new(3, 0, top),
+        hypercurve::BezierArrangementFragment2::new(4, 0, left),
+    ]);
+
+    assert_eq!(
+        graph.traverse_retained_deduplicating_materialized_overlaps(&policy()),
+        Classification::Uncertain(UncertaintyReason::Boundary)
+    );
+    let traversal = decided(graph.traverse_retained_splitting_linear_overlaps(&policy()));
+
+    assert_eq!(traversal.refinement().graph().len(), 6);
+    assert_eq!(traversal.refinement().overlap_splits().len(), 1);
+    assert_eq!(traversal.refinement().resolved_overlaps().len(), 1);
+    assert_eq!(
+        traversal.refinement().resolved_overlaps()[0].orientation(),
+        BezierRetainedOverlapOrientation2::Same
+    );
+    assert_eq!(
+        traversal.refined_traversal().shadowed_fragment_indices(),
+        &[2]
+    );
+    assert_eq!(traversal.traversal().len(), 1);
+    assert_eq!(traversal.traversal().closed_count(), 1);
+    assert_eq!(
+        traversal.traversal().chains()[0].fragment_indices(),
+        &[0, 1, 3, 4, 5]
+    );
+    assert_eq!(
+        traversal.refinement().refined_fragments()[1].local_range(),
+        &hypercurve::ParamRange::new(q(1, 2), r(1))
+    );
+    assert_eq!(
+        traversal.refinement().refined_fragments()[2].local_range(),
+        &hypercurve::ParamRange::new(r(0), r(1))
+    );
+}
+
+#[test]
+fn retained_linear_overlap_traversal_cancels_reversed_internal_span_in_loop() {
+    let left_bottom = BezierSplitFragment2::Materialized {
+        start: exact(r(0)),
+        end: exact(r(1)),
+        curve: BezierSubcurve2::Quadratic(QuadraticBezier2::new(p(0, 0), p(1, 0), p(2, 0))),
+    };
+    let shared_up = BezierSplitFragment2::Materialized {
+        start: exact(r(0)),
+        end: exact(r(1)),
+        curve: BezierSubcurve2::Quadratic(QuadraticBezier2::new(p(2, 0), p(2, 1), p(2, 2))),
+    };
+    let left_top = BezierSplitFragment2::Materialized {
+        start: exact(r(0)),
+        end: exact(r(1)),
+        curve: BezierSubcurve2::Quadratic(QuadraticBezier2::new(p(2, 2), p(1, 2), p(0, 2))),
+    };
+    let left_edge = BezierSplitFragment2::Materialized {
+        start: exact(r(0)),
+        end: exact(r(1)),
+        curve: BezierSubcurve2::Quadratic(QuadraticBezier2::new(p(0, 2), p(0, 1), p(0, 0))),
+    };
+    let right_bottom = BezierSplitFragment2::Materialized {
+        start: exact(r(0)),
+        end: exact(r(1)),
+        curve: BezierSubcurve2::Quadratic(QuadraticBezier2::new(p(2, 0), p(3, 0), p(4, 0))),
+    };
+    let right_edge = BezierSplitFragment2::Materialized {
+        start: exact(r(0)),
+        end: exact(r(1)),
+        curve: BezierSubcurve2::Quadratic(QuadraticBezier2::new(p(4, 0), p(4, 1), p(4, 2))),
+    };
+    let right_top = BezierSplitFragment2::Materialized {
+        start: exact(r(0)),
+        end: exact(r(1)),
+        curve: BezierSubcurve2::Quadratic(QuadraticBezier2::new(p(4, 2), p(3, 2), p(2, 2))),
+    };
+    let shared_down = BezierSplitFragment2::Materialized {
+        start: exact(r(0)),
+        end: exact(r(1)),
+        curve: BezierSubcurve2::Quadratic(QuadraticBezier2::new(p(2, 2), p(2, 1), p(2, 0))),
+    };
+    let graph = graph(vec![
+        hypercurve::BezierArrangementFragment2::new(0, 0, left_bottom),
+        hypercurve::BezierArrangementFragment2::new(0, 1, shared_up),
+        hypercurve::BezierArrangementFragment2::new(0, 2, left_top),
+        hypercurve::BezierArrangementFragment2::new(0, 3, left_edge),
+        hypercurve::BezierArrangementFragment2::new(1, 0, right_bottom),
+        hypercurve::BezierArrangementFragment2::new(1, 1, right_edge),
+        hypercurve::BezierArrangementFragment2::new(1, 2, right_top),
+        hypercurve::BezierArrangementFragment2::new(1, 3, shared_down),
+    ]);
+
+    assert_eq!(
+        graph.traverse_retained_deduplicating_materialized_overlaps(&policy()),
+        Classification::Uncertain(UncertaintyReason::Boundary)
+    );
+    let traversal = decided(graph.traverse_retained_splitting_linear_overlaps(&policy()));
+
+    assert_eq!(traversal.refinement().overlap_evidence().len(), 1);
+    assert!(traversal.refinement().resolved_overlaps().is_empty());
+    assert_eq!(
+        traversal.refined_traversal().shadowed_fragment_indices(),
+        &[1, 7]
+    );
+    assert_eq!(traversal.traversal().len(), 1);
+    assert_eq!(traversal.traversal().closed_count(), 1);
+    assert_eq!(
+        traversal.traversal().chains()[0].fragment_indices(),
+        &[0, 4, 5, 6, 2, 3]
+    );
+}
+
+#[test]
+fn retained_overlap_evidence_does_not_call_same_curve_image_a_line_split() {
+    let curve = QuadraticBezier2::new(p(0, 0), p(1, 2), p(2, 0));
+    let graph = graph(vec![
+        hypercurve::BezierArrangementFragment2::new(
+            0,
+            0,
+            BezierSplitFragment2::Materialized {
+                start: exact(r(0)),
+                end: exact(r(1)),
+                curve: BezierSubcurve2::Quadratic(curve.clone()),
+            },
+        ),
+        hypercurve::BezierArrangementFragment2::new(
+            1,
+            0,
+            BezierSplitFragment2::Materialized {
+                start: exact(r(0)),
+                end: exact(r(1)),
+                curve: BezierSubcurve2::Quadratic(curve),
+            },
+        ),
+    ]);
+    let evidence = decided(BezierRetainedOverlapEvidence2::from_graph(
+        &graph,
+        &policy(),
+    ));
+
+    assert!(decided(evidence.line_overlap_splits(&policy())).is_empty());
+}
+
+#[test]
+fn retained_overlap_evidence_rejects_nonlinear_line_image_bezier_ranges() {
+    let first = BezierSplitFragment2::Materialized {
+        start: exact(r(0)),
+        end: exact(r(1)),
+        curve: BezierSubcurve2::Quadratic(QuadraticBezier2::new(p(0, 0), p(1, 0), p(4, 0))),
+    };
+    let second = BezierSplitFragment2::Materialized {
+        start: exact(r(0)),
+        end: exact(r(1)),
+        curve: BezierSubcurve2::Quadratic(QuadraticBezier2::new(p(1, 0), p(3, 0), p(5, 0))),
+    };
+    let graph = graph(vec![
+        hypercurve::BezierArrangementFragment2::new(0, 0, first),
+        hypercurve::BezierArrangementFragment2::new(1, 0, second),
+    ]);
+    let evidence = decided(BezierRetainedOverlapEvidence2::from_graph(
+        &graph,
+        &policy(),
+    ));
+
+    assert_eq!(decided(evidence.line_overlap_splits(&policy())).len(), 1);
+    assert_eq!(
+        evidence.linear_bezier_overlap_splits(&graph, &policy()),
+        Classification::Uncertain(UncertaintyReason::Unsupported)
+    );
+    assert_eq!(
+        graph.split_retained_linear_overlaps(&policy()),
+        Classification::Uncertain(UncertaintyReason::Unsupported)
+    );
+}
+
+#[test]
+fn retained_overlap_traversal_deduplicates_oriented_duplicate_loop_edges() {
+    let edges = [
+        QuadraticBezier2::new(p(0, 0), p(1, 0), p(2, 0)),
+        QuadraticBezier2::new(p(2, 0), p(2, 1), p(2, 2)),
+        QuadraticBezier2::new(p(2, 2), p(1, 2), p(0, 2)),
+        QuadraticBezier2::new(p(0, 2), p(0, 1), p(0, 0)),
+    ];
+    let mut fragments = Vec::new();
+    for (edge_index, edge) in edges.iter().cloned().enumerate() {
+        for duplicate_index in 0..2 {
+            fragments.push(hypercurve::BezierArrangementFragment2::new(
+                edge_index,
+                duplicate_index,
+                BezierSplitFragment2::Materialized {
+                    start: exact(r(0)),
+                    end: exact(r(1)),
+                    curve: BezierSubcurve2::Quadratic(edge.clone()),
+                },
+            ));
+        }
+    }
+    let graph = graph(fragments);
+
+    assert_eq!(
+        graph.traverse_retained_with_tangent_order(&policy()),
+        Classification::Uncertain(UncertaintyReason::Boundary)
+    );
+    let overlap_traversal =
+        decided(graph.traverse_retained_deduplicating_materialized_overlaps(&policy()));
+
+    assert_eq!(overlap_traversal.overlap_evidence().len(), 4);
+    assert_eq!(overlap_traversal.shadowed_fragment_indices(), &[1, 3, 5, 7]);
+    assert_eq!(overlap_traversal.traversal().len(), 1);
+    assert_eq!(overlap_traversal.traversal().closed_count(), 1);
+    assert_eq!(
+        overlap_traversal.traversal().chains()[0].fragment_indices(),
+        &[0, 2, 4, 6]
+    );
+}
+
+#[test]
+fn retained_overlap_traversal_rejects_reversed_duplicate_as_ownership_boundary() {
+    let forward = QuadraticBezier2::new(p(0, 0), p(1, 2), p(2, 0));
+    let reversed = QuadraticBezier2::new(p(2, 0), p(1, 2), p(0, 0));
+    let graph = graph(vec![
+        hypercurve::BezierArrangementFragment2::new(
+            0,
+            0,
+            BezierSplitFragment2::Materialized {
+                start: exact(r(0)),
+                end: exact(r(1)),
+                curve: BezierSubcurve2::Quadratic(forward),
+            },
+        ),
+        hypercurve::BezierArrangementFragment2::new(
+            1,
+            0,
+            BezierSplitFragment2::Materialized {
+                start: exact(r(0)),
+                end: exact(r(1)),
+                curve: BezierSubcurve2::Quadratic(reversed),
+            },
+        ),
+    ]);
+
+    let evidence = decided(BezierRetainedOverlapEvidence2::from_graph(
+        &graph,
+        &policy(),
+    ));
+    assert_eq!(evidence.len(), 1);
+    assert_eq!(
+        graph.traverse_retained_deduplicating_materialized_overlaps(&policy()),
+        Classification::Uncertain(UncertaintyReason::Boundary)
+    );
+}
+
+proptest! {
+    #[test]
+    fn open_quadratic_chain_stays_one_nonclosed_chain(
+        middle_y in -16_i32..=16,
+    ) {
+        let first = QuadraticBezier2::new(p(0, 0), p(1, middle_y), p(2, 0));
+        let second = QuadraticBezier2::new(p(2, 0), p(3, -middle_y), p(4, 0));
+        let first_split = decided(first.split_at_parameters(&[], &policy()).unwrap());
+        let second_split = decided(second.split_at_parameters(&[], &policy()).unwrap());
+        let graph =
+            BezierArrangementGraph2::from_split_materializations(&[first_split, second_split])
+                .unwrap();
+        let traversal = match graph.traverse_branch_free(&policy()) {
+            Classification::Decided(value) => value,
+            Classification::Uncertain(reason) => {
+                return Err(TestCaseError::fail(format!("unexpected uncertainty: {reason:?}")));
+            }
+        };
+
+        prop_assert_eq!(traversal.len(), 1);
+        prop_assert_eq!(traversal.closed_count(), 0);
+        prop_assert_eq!(traversal.chains()[0].fragment_indices(), &[0, 1]);
+    }
+}

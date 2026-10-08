@@ -1,0 +1,441 @@
+/***************************************************************************
+ *            linear_programming.dox
+ *
+ *  Copyright  2004-7  Pieter Collins
+ *
+ ****************************************************************************/
+
+/*
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; either version 2 of the License, or
+ *  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Library General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program; if not, write to the Free Software
+ *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+ */
+
+
+/*!
+
+\file linear_programming.dox
+\brief Documentation on linear programming
+
+
+
+\page linear_programming_page Linear Programming
+
+\section standardprimaldual Standard primal and dual problems
+
+The standard linear programming problem is
+\f[ \text{(P)} \qquad \min cx \text{ s.t. } Ax=b;\ x\geq0.  \f]
+Without loss of generality we can take \f$b\geq0\f$.
+We let \f$x^*\f$ be an optimal point.
+
+The dual to the standard problem is
+\f[ \text{(D)} \qquad \max yb \text{ s.t. } yA\leq c \f]
+or alternatively
+\f[ \text{(D)} \qquad \max yb \text{ s.t. } yA+z=c;\ z\geq 0. \f]
+The variables \f$y\f$ are called <em>dual variables</em> and the variables \f$z\f$ are <em>slack variables</em>.
+
+<b>Theorem</b> If \f$x\f$ is feasible for (P) and \f$y\f$ is feasible for (D), then \f[cx \geq yb.\f]
+Further, if \f$x^*\f$ is optimal for (P) and \f$(y^*,z^*)\f$ is optimal for (D), then \f[cx^* =y^*b \qquad \text{and} \qquad  z^*\!\cdot\!x^*=0 .\f]
+
+The second condition is called <em>complementary slackness</em>.
+
+
+\subsection optimalbasis Basic solutions
+
+A basic solution is given by a set of column indices \f$B\f$ such that the square matrix \f$A_B\f$ formed by the \f$B\f$ columns of \f$A\f$ is nonsingular.
+Then
+\f[x_B=A_B^{-1}b, \ x_N=0; \quad y=c_BA_B^{-1}; \quad z_B=0, \ z_N=c_N-c_BA_B^{-1}A_N. \f]
+Hence
+\f[ cx = c_BA_B^{-1}b = c_B(A_B)^{-1}b = yb . \f]
+Suppose \f$x^*\f$ is optimal. Then \f$x_B\geq0\f$ and \f[cx = c_B x_B + c_N x_N = c_BA_B^{-1}(b-A_Nx_N)+c_Nx_N = c_BA_B^{-1}b + (c_N-c_BA_B^{-1}A_N)x_N = cx^* + (c_N-c_BA_B^{-1}A_N)x_N,\f] and hence \f$z_N=c_N-c_BA_B^{-1}A_N\geq0\f$.
+
+
+\section boundedoptimisation  Lower and upper bounds on variables
+
+The constrained primal linear programming problem is
+\f[ \text{(CP)} \qquad \min cx \text{ s.t. } Ax=b;\ l\leq x\leq u . \f]
+Given lower bounded variables \f$x_L\f$ and upper bounded variables \f$x_U\f$, the problem becomes
+\f[ \min cx \text{ s.t. } Ax=b;\ x_L\geq l_L;\ x_U\leq u_U\f]
+and the dual problem is
+\f[ \text{(DCP)} \qquad \max\ y(b - A_Ll_L - A_Uu_U)+c_Ll_L + c_Uu_U \ \text{ s.t. }\  yA_L\leq c_L;\ yA_U\geq c_U . \f]
+Note that the objective function can be written \f$yb +(c_L - yA_L)l_L + (c_U - yA_U)u_U\f$
+
+To define a basic solution, we need to split the variables \f$x\f$ into three sets, the basic variables \f$B\f$, the lower bounded variables \f$L\f$ and upper bounded variables \f$U\f$.
+A basic solution then satisfies
+\f[ x_L=l_L, \ x_U=u_U, \ x_B=A_B^{-1}(b-A_Ll_L-A_Uu_U); \quad y=c_B^{-1}A_B; \quad z_B=0,\ z_N=c_N-c_BA_B^{-1}A_N. \f]
+
+\section constraintboundedoptimisation  Lower and upper bounds on variables and constraints
+
+The most general form of the linear programming problem is
+\f[ \text{(GCP)} \qquad \min cx \text{ s.t. } b_L \leq A_Cx \leq b_U;\ A_E = b_E;\ d_L\leq x\leq d_U . \f]
+Define auxiliary variables \f$w = w_C = A_C x\f$, and \f$w_E=A_E x = b_E\f$.
+The primal and auxiliary variables can be either \em basic , \em lower, \em upper  or \em fixed.
+A lower or upper variable satisfies \f$x_N=d_{L/U}\f$ or \f$w_N=b_{L/U}\f$, and a fixed variable satisfies \f$w_E=b_E\f$ (alternatively, \f$w=b_L=b_U\f$.
+
+After the introduction of auxiliary variables, the system can be written in the form (CP) above, with equations
+\f[ \begin{pmatrix} A_C & -I \\ A_E & 0 \end{pmatrix} \begin{pmatrix} x \\ w \end{pmatrix} = \begin{pmatrix} 0 \\ b_E \end{pmatrix} \f]
+
+If there are \f$m\f$ variables, \f$n_C\f$ inequality constraints and \f$n_E\f$ equality constraints, then the total number of basic variables \f$\#x_B+\#w_B=n_C+n_E\f$, since there are \f$n_C+n_E\f$ equations \f$A_Cx=w_C\f$ and \f$A_Ex=b_E\f$.
+
+Given a basic solution, we can split the equations and variables into
+The basic variables \f$x_B\f$ are therefore given by
+\f[ \begin{pmatrix} A_{BB} & A_{BN} & -I & 0 \\ A_{NB} & A_{NN} & 0 & -I \\ A_{EB} & A_{EN} & 0 & 0 \end{pmatrix}
+       \begin{pmatrix} x_B \\ x_N \\ w_B \\ w_N \end{pmatrix} = \begin{pmatrix} 0 \\ 0 \\b_E \end{pmatrix} \f]
+
+have the equations
+\f[ \begin{aligned} w_B &= A_{BB} x_B + A_{BN} x_N \\ A_{NB} x_B &= w_N - A_{NN} x_N \\ A_{EB} x_B &= b_E - A_{EN} x_N \end{aligned} \f]
+The basic variables \f$x_B\f$ are therefore given by
+\f[ x_B = {\begin{pmatrix}A_{NB}\\A_{EB}\end{pmatrix}}^{-1} \begin{pmatrix}w_N - A_{NN} x_N \\ b_E - A_{EN} x_N \end{pmatrix} \f]
+Write
+\f[  B = {\begin{pmatrix}A_{NB}\\A_{EB}\end{pmatrix}}^{-1} = \begin{pmatrix} B_{BN} & B_{BE} \end{pmatrix}
+        = {\begin{pmatrix}A^{-\dag}_{BN} & A^{-\dag}_{BE}\end{pmatrix}} \f]
+Since the objective function is given by \f$cx\f$, we have
+\f[ \begin{aligned} cx &= c_B x_B + c_N x_N = c_B A_{BN}^{-\dag} (w_N - A_{NN} x_N) + c_B A_{BE}^{-\dag}(b_E - A_{EN} x_N) \\
+       &= c_B A_{BE}^{\dag} b_E \ + \ c_B A_{BN}^{-\dag} w_N \ +\ \bigl(c_N - c_B (A_{BN}^{-\dag} A_{NN} + A_{BE}^{-\dag} A_{EN} ) \bigr) x_N \\
+       &= c_B A_{BE}^{\dag} b_E \ + \ c_B A_{BN}^{-\dag} w_N \ +\ (c_N - c_B A_{{}^N_E B}^{-1} A_{{}^N_E N} ) x_N \end{aligned} \f]
+Set dual variables
+\f[ \begin{aligned} y_N &= c_B A_{BN}^{-\dag}  \\ y_E &= c_B A_{BE}^{-\dag} \end{aligned} \f]
+Then
+\f[ \begin{aligned} cx &= c_B A_{BE}^{-\dag} b_E \ + \ y_N w_N \ +\ (c_N - (y_N A_{NN} + y_E A_{EN}) ) x_N \\
+                       &= c_B A_{BE}^{-\dag} b_E \ + \ y_N w_N \ +\ (c_N - y_{{}^N_E} A_{{}^N_EN} ) x_N \end{aligned} \f]
+This shows how the objective changes with changes in \f$x_N\f$ and \f$w_N\f$.
+The main difficulty performing an update is that the number of basic \f$x\f$ variables may change during an algorithm.
+
+
+\section feasibleprimaldual Primal and dual feasibility problems
+
+ - The primal feasibility problem is
+   \f[ \text{(PF)} \qquad Ax=b;\ x\geq0.  \f]
+
+ - The dual feasibility problem is
+   \f[ \text{(DF)} \qquad yA\leq c. \f]
+
+ - The constrained feasibility problem is
+   \f[ \text{(CF)} \qquad Ax=b; \ l\leq x\leq u. \f]
+
+\section dualcertificate Certificates of infeasibility / Farka's Lemma
+
+ - A certificate of infeasibility of \f$Ax=b;\ x\geq0\f$ is a vector \f$y\f$ such that \f$yA\leq0\f$ and \f$yb>0\f$.
+   For then \f$0\geq yAx = yb > 0\f$, a contradiction.
+
+ - A certificate of infeasibility of \f$yA\leq c\f$ is a vector \f$x\geq0\f$ such that \f$Ax=0\f$ and \f$cx<0\f$.
+   For then \f$0=yAx \leq cx < 0\f$, a contradiction.
+
+ - A certificate of infeasibility of \f$Ax=b;\ l\leq x\leq u\f$ partition into lower and upper variables \f$x_L\f$ and \f$x_U\f$, and a vector \f$y\f$ such that \f$yA_L\leq0\f$, \f$yA_U\geq0\f$ and \f$y(b-A_Ll_L-A_Uu_U)>0\f$.
+   For then \f[0\geq yA_L(x_L-l_L) - yA_U(u_U-x_U) = yA_Lx_L+A_Ux_U-yA_Ll_L-yA_Uu_U = yAx -yA_Ll_L-yA_Uu_U = yb-yA_Ll_L-yA_Uu_U = y(b-A_Ll_L-A_Uu_U) > 0 .\f]
+
+ - Alternatively, a certificate of infeasibility of \f$Ax=b;\ l\leq x\leq u\f$ partition into lower, upper and basic variables \f$x_L\f$, \f$x_U\f$ and \f$x_B\f$, and a vector \f$y\f$ such that \f$yA_B=0\f$, \f$yA_L\leq0\f$, \f$yA_U\geq0\f$ and \f$y(b-A_Ll_L-A_Uu_U)>0\f$.
+   For then \f[0\geq (yA_L)(x_L-l_L) + (yA_U)(x_U-u_U) + (yA_B)x_B = yA_Lx_L+A_Ux_U+yA_Bx_B-yA_Ll_L-yA_Uu_U = y(A_Lx_L+A_Ux_U+A_Bx_B) -yA_Ll_L-yA_Uu_U = yAx-yA_Ll_L-yA_Uu_U = yb-yA_Ll_L-yA_Uu_U = y(b-A_Ll_L-A_Uu_U) > 0 .\f]
+
+
+\section basicfeasibility Basic feasibility testing
+
+Given a partition of variables into upper, lower and basic, we can test for a solution of the constrained feasibility problem.
+ - Set \f$x_L=l_L\f$, \f$x_U=u_U\f$ and \f$x_B=A_B^{-1}(b-A_Nx_N)\f$.
+ - If \f$l_B \leq x_B \leq u_B\f$, then the basis gives a feasible solution.
+ - Otherwise, define \f$c\f$ such that \f$c_j=-1\f$ if \f$x_j<l_j\f$, \f$c_j=+1\f$ if \f$x_j>u_j\f$ and \f$c_j=0\f$ otherwise.
+ - Set \f$y=c_BA_B^{-1}\f$ and \f$z_N=c_N-yA_N\f$.
+ - If \f$z_L\geq0\f$ and \f$z_U\leq0\f$, then there is no feasible solution.
+ - Note that \f$z_B=c_B\f$, so we can extend the variable sets taking \f$L'=\{ j\mid x_j\leq l_j\}\f$ and \f$U'=\{j\mid x_j\geq u_j\}\f$
+The correctness of the validation of feasibility is immediate. To prove correctness of the infeasibility validation, suppose \f$\hat{x}\f$ is a feasible point. Then \f$c\hat{x}<cx\f$, but
+\f[ 0 > c\hat{x}-cx = c_BA_B^{-1}(b-A_N\hat{x}_N)+c_N\hat{x}_N - c_BA_B^{-1}(b-A_Nx_N) - c_Nx_N = (c_N-c_BA_B^{-1}A_N) (\hat{x}_N-x_N) = z_N(\hat{x}_N-x_N) = z_L(\hat{x}_L-x_L) + z_U(\hat{x}_U-x_U) \geq 0\f] since \f$z_L,\hat{x}_L-x_L\geq0\f$ and \f$z_U,\hat{x}_U-x_U\leq0\f$.
+
+\section robustfeasibility Robust feasibility problems
+
+Due to numerical errors, the solution to a feasibility problem may be inaccurate. It is therefore important to be able to validate solutions to feasibility problems. One approach is to use rational arithmetic, but this is frequently too expensive. The alternative is to use interval arithmetic. For this, we need our problems to be <em>robustly</em> solvable.
+
+Note that robustly solving an inequality is straightforward; we merely change \f$\leq\f$ to \f$<\f$. To robustly solve a system of linear equalities, we need to choose a basis and express the basic variables in terms of the non-basic variables.
+
+ - The primal feasibility problem is robustly solvable if there exists a basis \f$B\f$ and non-basic values \f$x_N>0\f$ such that \f$x_B=A_B^{-1}A_Nx_B>0\f$. A certificate of robust infeasibility is a vector \f$y\f$ such that \f$yA<0\f$ and \f$yb>0\f$.
+
+ - The dual feasibility problem is robustly solvable if there exists \f$y\f$ such that \f$yA<c\f$. A certificate of robust infeasibility is a basis \f$B\f$ and an \f$x_N>0\f$ such that \f$x_B=A_B^{-1}A_Nx_N>0\f$ and \f$cx<0\f$.
+
+ - The constrained feasibility problem is robustly solvable if there exists a basis \f$B\f$ and non-basic values \f$x_N\f$ such that \f$x_B=A_B^{-1}A_Nx_B\f$ and \f$l<x<u\f$. A certificate of robust infeasibility is a subdivision into lower and upper variables, and a vector \f$y\f$ such that \f$yA_L<0\f$, \f$yA_U>0\f$ and \f$y(b-A_Ll_L-A_Uu_U)>0\f$.
+
+
+\section solvingrobustfeasibility Robust basic solutions
+
+Given a basis \f$B\f$, and if necessary lower and upper variables \f$L\f$ and \f$U\f$, we can attempt to solve robust feasibility problems by finding a robust basis. We can also set the nonbasic variables to the exact values, as long as the basic variables robustly satisfy the constraints.
+In order to check that a basis gives a solution to the robust dual feasibility problem,
+
+
+ - Given a basis \f$B\f$ for the primal feasibility problem \f$Ax=b,\ x\geq0\f$, we can take \f$x_B=A_B^{-1}b\f$.
+   - If some of the variables are still undetermined, we can (optionally) compute \f$A_B^{-1}A_N\f$, and try adding positive linear combinations of columns of this matrix.
+ - To prove infeasibility, we take values \f$x_B\f$ which are negative, and show that they cannot be increased. Suppose \f$x_i<0\f$. Take \f$c=e_i\f$, the corresponding unit basic vector, and try \f$y=cA_B^{-1}\f$.
+
+ - Given a basis \f$B\f$ for the dual feasibility problem \f$yA<c\f$ take \f$y=c_BA_B^{-1}\f$.
+ - To prove infeasibility, find some \f$i\in N\f$ such that \f$(yA)_i>c_i\f$ and \f$x_N=e_i\f$.
+
+<b>TODO:</b> It is not clear whether a robustly solvable problem has a robust basic solution.
+
+
+
+\section robustcertificate Certificates of robust (in)feasibility
+
+A robust certificate for the primal feasibility problem \f$Ax=b;\ x\geq0\f$ is a base \f$B\f$ such that \f$A_B\f$ is nonsingular, and an \f$x_N>0\f$ such that \f$-A_B^{-1}A_Nx_N>0\f$; this is equivalent to \f$Ax=b;\ x>0\f$.
+A robust certificate of infeasibility is a point \f$y\f$ such that \f$A^Ty<0\f$ and \f$b^Ty>0\f$.
+
+<b>Theorem</b>
+Suppose \f$Ax=b;\ x\geq0\f$ is robust. Then either \f$A\f$ has full row rank and there exists \f$x>0\f$ such that \f$Ax=b\f$, or there exists \f$y\f$ such that \f$A^T<0\f$ and \f$b^Ty>0\f$.
+
+A robust certificate for the dual feasibility problem \f$A^Ty\leq c\f$ is a point \f$y\f$ such that \f$A^Ty<c\f$.
+A robust certificate of infeasibility is a base \f$B\f$ such that \f$A_B\f$ is nonsingular, and a vector \f$x>0\f$ such that \f$Ax=0\f$ and \f$c^Tx<0\f$.
+We prove \f$Ax=0\f$ by setting \f$x_B=-A_B^{-1}A_Nx_N\f$, so that \f$Ax=A_Bx_B+A_Nx_N=-A_BA_B^{-1}A_Bx_N+A_Nx_n=0\f$.
+
+<b>Theorem</b>
+Suppose \f$A^Ty\leq c\f$ is robust. Then either there exists \f$y\f$ such that \f$A^Ty<c\f$, or \f$A\f$ has full row rank and there exists \f$x>0\f$ such that \f$Ax=0\f$ and \f$c^Tx<0\f$.
+
+<i>Proof</i>
+If \f$A^Ty<c\f$, then this holds also for perturbations of \f$y\f$.
+If \f$Ax=0\f$ and \f$A_B\f$ is nonsingular, then \f$x_B=-x_NA_NA_B^{-1}\f$.
+Perturbing \f$A,b\f$ and keeping \f$x_N\f$ constant, we obtain a perturbation of \f$x_B\f$, and hence a certificate for the perturbed problem.
+<br>
+Conversely, suppose the problem is robustly solvable.
+Then the problem \f$A^Ty\leq c-\epsilon p\f$ is solvable for \f$p>0\f$ and \f$\epsilon\f$ sufficiently small. Hence there exists \f$y\f$ such that \f$A^Ty<c\f$.
+<br>
+Suppose the problem is robustly unsolvable
+Let \f$P\f$ be a matrix with all positive entries. Since \f$A^Ty\leq c\f$ is robustly unsolvable, \f$(I+\epsilon P)^T A^Ty\leq (I+\epsilon P)^T c\f$ is unsolvable for some \f$\epsilon>0\f$. Then there exists \f$x_\epsilon\f$ such that \f$A(I+\epsilon P)x_\epsilon=0\f$, \f$x_\epsilon\geq0\f$ and \f$(I+\epsilon P)x_\epsilon c<0\f$. Then if \f$x=(I+\epsilon P)x_\epsilon\f$, then \f$Ax=0\f$, \f$c^Tx<0\f$ and \f$x>0\f$ since \f$x_\epsilon\geq0;\ x_\epsilon\neq0\f$ and \f$(I+\epsilon P)>0\f$.
+
+
+\section robustsolve Converting robust feasibility problems to feasibility problems
+
+To solve the robust primal feasibility problem,
+\f[ \text{(RPF)} \qquad Ax=b;\ x>0;\ A_B\ \text{nonsingular} \f]
+we choose a vector \f$p>0\f$ and consider the problem
+\f[ \min -s \text{ s.t. } Ax + Ap\,s = b;\ x,s\geq0 .\f]
+Let \f$\hat{x}^T=(x\;s)\f$, \f$\hat{A}=(A\;Ap)\f$ and \f$\hat{c}^T=(0\;\mbox{}-\!1)\f$.
+Then we obtain the standard primal optimisation problem
+\f$ \min \hat{c}^T\hat{x} \text{ s.t. } \hat{A}\hat{x} = b;\ \hat{x}\geq0 . \f$
+If the optimal value is negative, then we have found \f$x^*,s^*\f$ such that \f$A(x^*+ps^*)=b; \ x^*\geq0,\ s^*>0\f$, so taking \f$\tilde{x}=x^*+ps^*\f$, we have \f$A\tilde{x}=b;\ \tilde{x} = x^*+s^*p \geq s^*p > 0\f$.
+If the optimal value is non-negative, then we can attempt to solve the dual robust optimisation problem
+\f$ \max yb \text{ s.t. } yA<0 \f$.
+Since if this problem is feasible, it has unbounded solutions, we can instead choose \f$q>0\f$ look for a positive optimal value of
+\f[ \max yb \text{ s.t. } Ay\leq-q . \f]
+
+To solve the robust dual feasibility problem,
+\f[ \text{(RDF)} \qquad A^T y + z = c; \ z>0 \quad \text{or} \quad  A^Ty < c, \f]
+we choose \f$q>0\f$ and consider the problem
+\f[ \max t \text{ s.t. } A^T y + qt \leq c . \f]
+Let \f$ \hat{A}^T = (A^T \; q)\f$, \f$\hat{b}^T = (0^T \; 1)\f$ and \f$\hat{y}^T = ( y^T\;t )\f$.
+Then we obtain the standard dual optimisation problem
+\f$ \max \hat{b}^T \hat{y} \text{ s.t. } \hat{A}^T \hat{y} \leq c; \f$
+If the optimal value is positive, then we have found \f$y^*,t^*\f$ such that \f$A^Ty^*\leq c-t^*q < c\f$.
+If the optimal value is zero or negative, then we can attempt to solve the primal robust feasibility problem
+\f$ \min b^T x \text{ s.t. } A x = 0, \ q^T x = 1, \ x\geq 0 . \f$
+However, even if the dual feasibility problem is unsolvable (i.e. \f$t^* < 0\f$), the primal may become solvable by a perturbation of \f$A\f$.
+We therefore consider a robust version
+\f$ \min b^T x \text{ s.t. } A x = 0,\ x>0 . \f$
+and introduce \f$p>0\f$ to make a problem
+\f$ \min b^T x \text{ s.t. } A x = 0,\ x-p\geq0 . \f$
+Note that if this problem has negative value, then we have found \f$x^*\f$ such that \f$b^Tx^*<0\f$, \f$Ax^*=0\f$ and \f$x^*>0\f$, which implies that the original dual problem has no solution.
+Taking \f$\tilde{x} = x-p\f$, we obtain
+\f[ \min b^T \tilde{x} + b^T p \text{ s.t. } A\tilde{x} = -Ap,\ \tilde{x}\geq 0 . \f]
+
+
+
+
+\section simplexalgorithm The simplex algorithm
+
+  Suppose we wish to update a basis of the standard linear programming problem.
+   - The current point \f$x_B=A_B^{-1} (b - A_N x_N)\f$ (with \f$x_N=0\f$), and satisfies \f$x_B\geq0\f$.
+       - If lower and upper constraints are being used, the non-basic variables are \f$x_L=l_L\f$ and \f$x_U=u_U\f$.
+   - The current dual variables are \f$y={(A_B^T)}^{-1}c_B;\ y^T = c_B^T A_B^{-1}\f$.
+   - The reduced costs are \f$z_N=c_N-A_N^T y; \ z_N^T = c_N^T - y^T A_N\f$.
+   - If the reduced costs are all positive, the optimum has been found and the algorithm terminates. Otherwise, select \f$s\f$ such that \f$z_s<0\f$.
+   - The direction to move the basic variables is \f$d=A_B^{-1}a_{s}\f$ where \f$a_{s}\f$ is the \f$s^\textrm{th}\f$ column of \f$A\f$.
+   - Choose \f$t\f$ maximal so that \f$x_B-td\geq 0\f$; if the update is being used for feasibility, constraints violated by \f$v\f$ may be violated by \f$v-td\f$. Choose \f$r\f$ corresponding to a newly saturated constraint.
+       - If lower and upper constraints are being used, we must be careful not to violate constraints on the new basic variable. The change in the new basic variable is \f$t\f$, and we must have \f$0 \leq |t| \leq u_s-l_s\f$, with \f$t\leq0\f$ if \f$x_s=u_s\f$, and \f$t\geq0\f$ if \f$x_s=u_s\f$.
+   - Replace \f$x_r\f$ by \f$x_s\f$ to obtain new basic \f$B'\f$, and update \f$A_B^{-1}\f$.
+     - We have \f$A_B^{-1} A_B = I\f$ and \f$A_B^{-1}a_s=d\f$ and we want \f$A_{B'}^{-1}a_s = e_r\f$ if \f$x_r\f$ is the \f$r^\mathrm{th}\f$ basis variable..
+     - Let \f$d=A_{B}^{-1} a_s\f$ where \f$a_s\f$ is the \f$s^\mathrm{th}\f$ column of \f$A\f$.
+     - For \f$p\neq r\f$, subtract \f$\mathrm{B}_{rq}\,d_p/d_r\f$ from \f$\mathrm{B}_{pq}\f$ for all \f$q\f$.
+     - Then divide \f$\mathrm{B}_{rq}\f$ by \f$d_r\f$ for all \f$q\f$.
+     <br>
+     - Succinctly, \f$A_{B'}^{-1} := A_B^{-1} - (d-e_r) \delta^T / d_r\f$ where \f$d=A_B^{-1}a_s\f$ and \f$\delta^T=e_r^T A_B^{-1}\f$.
+     <br>
+     - The new value \f$x_s\f$ is given by \f$x_s'=x_s+t\f$. The other basic variables \f$x_i\f$ are given by \f$x_i'=x_i-t d_i\f$.
+
+In general, if \f$A' = A + a \alpha\f$, then
+\f[ (A')^{-1} = A^{-1} - \frac{ A^{-1} a \; \alpha A^{-1} }{1+\alpha A^{-1} a} \f]
+
+\section dualsimplexalgorithm The dual revised simplex algorithm
+
+  Suppose we wish to update a dual feasible basis of the standard linear programming problem; note that the reduced costs satisfy satisfy \f$z_N\geq0\f$.
+   - If the current point is positive, the algorithm terminates. Otherwise, select \f$r\f$ such that \f$x_r<0\f$.
+   - The direction to move the primal variables is \f$d=a_{r}A_B^{-1}\f$ where \f$a_{r}\f$ is the \f$r^\textrm{th}\f$ row of \f$A\f$.
+   - Choose \f$t\f$ maximal so that \f$z_N-td_N\geq 0\f$; if the update is being used for feasibility, constraints violated by \f$v\f$ may be violated by \f$v-td\f$. Choose \f$r\f$ corresponding to a newly saturated constraint.
+   - Replace \f$x_r\f$ by \f$x_s\f$ to obtain new basis \f$B'\f$, and update \f$A_B^{-1}\f$.
+
+\section simplexalgorithmconstrainst The simplex algorithm with constraints
+
+  Suppose we wish to update a basis of the standard linear programming problem.
+   - The current point \f$x_B=A_B^{-1} (b - A_N x_N) = A_B^{-1}(b-A_Ll_L-A_Uu_U) \f$ (with \f$x_L=l_L; x_U=u_U\f$).
+   - The current dual variables are \f$y={(A_B^T)}^{-1}c_B;\ y^T = c_B^T A_B^{-1}\f$.
+
+\section feasibilityalgorithms Algorithms for feasibility
+
+ - We solve primal feasibility problems by trying to solve the dual feasibility problem \f$A^Ty\leq0\f$, \f$-b^Ty\leq -1\f$.
+If the dual problem has a solution, then the primal problem has no solution, and vice-versa.
+    <br><br>
+    An alternative approach is to add constraints. We start with a basic feasible solution to \f$Ax=b\f$ and want to introduce the constraint \f$c^Tx=d\f$.
+    Assume \f$c^Tx<d\f$. Introduce slack variable \f$z\f$ and try to minimise \f$z\f$ such that \f$Ax+0z=b\f$, \f$c^Tx+z=d\f$.
+    If a solution with \f$z=0\f$ is found, then the new constraint can be introduced.
+    <br><br>
+    A third approach is to start with a basic solution \f$x_B=A_B^{-1}b\f$ and gradually imposing the constraints \f$x_B\geq0\f$ by maximising \f$x_j\f$ without breaking \f$x_i\geq0\f$ for \f$i<j\f$.
+
+  - We solve dual feasibility problems by gradually adding constraints:<br>
+Suppose we have a basic feasible solution \f$y\f$ of \f$A^Ty\leq c\f$ and we wish to add the constraint \f$ b^Ty\leq d\f$.
+    -# Try to maximise \f$-b^Ty\f$ while satisfying the other constraints. This can be done by solving the linear programming problem \f$ \min c^T x \text{ s.t. } Ax=b \f$. We start with a dual feasible problem and aim to find a primal feasible problem using the dual simplex algorithm.
+    -# If a value of \f$y\f$ is found with \f$b^Ty\leq d\f$, the new constraint can be added.
+    <br><br>
+    An alternative approach is to consider the primal problem \f$ \min c^T x \text{ s.t. } Ax=0; x\geq 0 \f$. If an unbounded feasible solution to the primal exists, then the dual is infeasible.
+
+ - Constrained feasibility problem with equalities  \f$ Ax=b;\ l\leq x\leq u\ (m\leq n)\f$.<br>
+   Find a set of basic variables \f$B\f$ so that \f$ A_B\f$ is nonsingular, where \f$ A_B\f$ is the matrix formed from the columns of \f$A\f$ in \f$B\f$.
+   Initialise \f$x_N\f$ to \f$l\f$ for non-basic variables, and set \f$x_B=A_B^{-1}(b-A_Nx_N)\f$. Then \f$Ax=b\f$, but possibly not \f$l_B\leq x_B\leq u_B\f$.
+   <br>
+   Let \f$c_i=-1\f$ if \f$x_i<l_i\f$ and \f$c_i=+1\f$ if \f$x_i>u_i\f$.
+   Now minimise \f$c^Tx\f$, but relax the currently violated constraints.
+
+   \b Remark: Since we do not assume the existence of \f$\pm\infty\f$ in our number types, we use \f$l=0,\ u=-1\f$ for the constraint \f$x\geq0\f$; this is the only unbounded constraint we allow.
+
+   See Chvatal [Chapter 8, pp 129] for more details on constrained feasibility.
+
+
+\section simplexefficiency Efficiency of the simplex algorithm
+
+For a linear programming problem of standard form, with \f$A\f$ an \f$m\times n\f$ matrix, the number of iterations of the simplex algorithm for practical problems grows approximately as \f$m\log n\f$.
+
+
+
+\section homogeneousselfdualalgorithm The homogeneous self-dual algorithm
+
+The homogeneous self-dual algorithm is a method for simultaneously computing optimality and feasibility.
+Consider the primal and dual problems
+\f[ \text{(P)}\ \min c^T x \mid Ax=b,\ x\geq 0; \qquad \text{(D)}\max b^Ty \mid A^Ty\leq c \f]
+The homogeneous self-dual problem is
+\f[ \text{(HSD)} \begin{gathered}
+      \min (n+1)\theta \\ Ax - b\tau + (b-A\textbf{1})\theta = 0 \\ -A^Ty +c\tau - (c-\mathbf{1})\theta\geq 0 \\
+      b^Ty - c^T x + (c^T\mathbf{1}+1)\theta \geq 0 \\ -(b-A\mathbf{1})^Ty + (c-\mathbf{1})^Tx - (c^T\mathbf{1}+1)\tau = -(n+1) \\
+      x_j,\tau\geq 0; \ y_i,\theta\in\R .
+    \end{gathered} \f]
+A feasible point is always given by \f$x=\mathbf{1},\ y=0,\ \tau=1,\ \theta=1\f$.
+When \f$\tau=1,\ \theta=0\f$, the first three equations reduce to \f$Ax=b\f$, \f$A^Ty\leq c\f$ and \f$c^Tx=b^Ty\f$.
+If \f$z\f$ and \f$\kappa\f$ denote the slack variables, the final constraint becomes
+\f[ \mathbf{1}^Tx + \mathbf{1}^Tz + \tau + \kappa - (n+1)\theta = (n+1) \f]
+
+We have the following result:
+ - Problem (HSD) has an optimal solution, and the set of optimal points is bounded (compact).
+ - The optimal value is zero, and for any feasible point, we have \f$(n+1)\theta = x^Ts + \tau\kappa\f$.
+ - There is an optimal solution with \f$\theta^*=0\f$ such that \f$x^*+z^*>0\f$ and \f$\tau^*+\kappa^*>0\f$.
+
+To relate (HSD) to (P) and (D), we have:
+ - The primal problem has a bounded feasible solution if, and only if, \f$\tau^*>0\f$.
+   In this case, \f$x^* / \tau^*\f$ is primal optimal, and \f$y^* / \tau^*\f$ is dual optimal.
+ - There is no solution if, and only if, \f$\kappa^*>0\f$.
+   In this case, if \f$c^Tx^*<0\f$, then the dual problem is infeasible,
+   and if \f$b^Ty^*<0\f$, then the primal problem is infeasible,
+
+To related (HSD) to the central path, we have:
+ - For any \f$\mu>0\f$, there is a strictly feasible point such that \f$x_j  z_j = \mu\f$ and \f$\tau \kappa = \mu\f$.
+   The initial point \f$x=z=\mathbf{1}\f$, \f$y=\mathbf{0}\f$ and \f$\tau=\kappa=\theta=1\f$ is the solution for \f$\mu=1\f$.
+
+A potential function is given by
+\f[ \psi_{n+1+\rho}(x,\tau,z,\kappa) = (n+1+\rho)\log(x^Tz+\tau\kappa)-\sum_j \log(x_jz_j) -\log(\tau\kappa) \f]
+
+
+See: David G. Luenberger and Yinyu Ye "Linear and nonlinear programming".
+
+
+\section geometricfeasibility Feasibility problems for geometric operations
+
+In the Geometry module, we need to solve the following linear programming problems to test intersection.
+\f[ \begin{array}{|l||c|c|c|c|}\hline
+      &\text{Polyhedron}&\text{Polytope}&\text{Zonotope}\\\hline\hline
+      \text{Point} & Ap\leq b & p=Vs;\ 1\!\cdot\!s=1;\ s\geq0 & p=c+Ge;\ -1\leq e\leq1 \\\hline
+      \text{Rectangle} & Ax\leq b;\ l\leq x\leq u & x=Vs;\ 1\!\cdot\!s=1;\ l\leq x\leq u;\ s\geq0 & x=c+Ge;\ l\leq x\leq u; \ -1\leq e\leq1 \\\hline
+      \text{Zonotope} & A(c+Ge)\leq b;\ -1\leq e\leq 1 & Vs=c+Ge;\ 1\!\cdot s=1;\ -1\leq e\leq1;\ s\geq0 & c_1+G_1e_1=c_2+G_2e_2;\ -1\leq e_1,e_2\leq1 \\\hline
+      \text{Polytope} & AVs\leq b;\ 1\!\cdot\!s=1;\ s\geq0 & V_1s_1=V_2s_2;\ 1\!\cdot s_1=1;\ 1\cdot s_2=1;\ s_1,s_2\geq0 & \\\hline
+      \text{Polyhedron} & A_1x\leq b_1;\ A_2x\leq b_2 & & \\\hline
+    \end{array}
+\f]
+We notice that by introducing slack variables, we can convert all problems into a standard linear programming problem with constraints.
+ - Standard primal feasibility problem \f$ Ax=b;\ x\geq 0\f$
+ - Constrained primal feasibility problem \f$ Ax=b;\ l\leq x\leq u\f$
+
+ - Standard dual feasibility problem \f$ Ax\leq b\f$
+ - Constrained dual feasibility problem \f$ Ax\leq b;\ l\leq x\leq u\f$
+
+We can convert the standard dual feasibility problem into a primal linear programming problem \f$\min b^Ty\text{ s.t. } A^Ty=0\f$, but it is not so straightforward to convert a constrained dual feasibility problem into its dual. Instead we add slack variables and solve
+\f$ Ax+z=b;\ l\leq x\leq u\f$. We can use the reduced simplex algorithm to take advantage of sparseness.
+
+
+
+\section interiorfeasibility Feasibility using Interior Point Methods
+
+\subsection constraineddualfeasibility Constrained Dual Feasibility
+
+We shall be most concerned with the following problem:
+
+ - Find \f$y\f$ such that \f$A^Ty \leq c\f$ and \f$l \leq y \leq u\f$, or show that such a \f$y\f$ does not exist.
+
+Without the bounds on \f$y\f$, it is easy to show that no solution exists if there exists \f$x\f$ such that \f$Ax=0\f$, \f$e^Tx=1\f$, \f$x\geq0\f$ and \f$c^Tx<0\f$.
+
+To solve the problem, introduce extended variables \f$x_L,x_U\f$, slack variables \f$s,s_L,s_U\f$ and a value \f$v\f$.
+The original (dual) feasibility problem becomes
+\f[ \max v \text{ s.t. } A^Ty + et + s = c; \ -y+t+s_L = -l; y+t+s_U = u; s,s_L,s_U \geq 0 \f]
+whereas the prime feasibility problem becomes
+\f[ \min c^Tx + l^Tx_L + u^Tx_U \text{ s.t. } Ax - x_L + x_U = 0; e^Tx+e^Tx_L+e^Tx_U = 1; x,x_L,x_U \geq 0\f].
+The original problem is feasible if the optimum value \f$t\f$ is positive, and infeasible if it is negative.
+
+Robust primal and dual basic feasible solutions are easily found.
+Take \f$x=1\f$, and \f$x_L,x_U>0\f$ such that \f$Ax=x_L-x_U\f$. Finally, scale so that the sum is equal to \f$1\f$.
+Take \f$y=0\f$, \f$t=\min(c_i,-l_i,u_i)-1\f$ and \f$s=c-et\f$, \f$s_L=-l-t\f$ and \f$s_U=u-t\f$
+
+We can now apply the standard interior point update.
+Although the matrix \f$A\f$ has been augmented, we can still recover a problem such that we only need to invert a matrix with only one extra row.
+Hence the dimension of the matrix inversion problem is equal to the dimension of the underlying space plus one.
+
+
+\subsection generalfeasibility General feasibility problem
+
+Consider feasibility of the linear programming problem
+\f[ Ax=b; \quad Cx\leq d . \f]
+Special cases of this occur in, for example testing whether the image of a constraint set intersects another constraint set.
+
+Introduce slack variables \f$r\f$ to transform the problem to
+\f[ Ax=b; \quad Cx+r=d; \quad r\geq 0 . \f]
+
+The duality conditions are
+\f[ A^T y + C^T s = 0 \f]
+and the value function is
+\f[ b^T y + d^T s . \f]
+The complementary slackness conditions are
+\f[ r\cdot s = 0; \quad r,s\geq 0 . \f]
+
+Consider a step updating the variables in an attempt to solve the complementarity system.
+The Newton equations are
+\f[ \left(\begin{matrix} A & 0 & 0 & 0 \\ C & 0 & I & 0 \\ 0 & A^T & 0 & C^T \\ 0 & 0 & S & R \end{matrix} \right) \left(\begin{matrix} \Delta x \\ \Delta y \\ \Delta r \\ \Delta s \end{matrix}\right) = \left(\begin{matrix} 0 \\  \rho_r \\ \rho_ s \\ \tau \end{matrix}\right)  \f]
+where \f$\rho_r\f$ and \f$\rho_s\f$ are the residuals \f$\rho_r=Cx+r-d\f$ and \f$\rho_s=A^Ty + C^T s\f$ which are typically zero.
+
+Assuming the residuals are zero, we have \f[\Delta r=-C\Delta x, \f] \f[\Delta s = R^{-1}(\tau-S\Delta r) = R^{-1}\tau + R^{-1}SC\Delta x\f] and
+hence \f$A^T\Delta y + C^T(R^{-1}\tau + R^{-1}SC\Delta x) = 0\f$ so \f$C^TR^{-1}SC\Delta x + A^T \Delta y = -C^TR^{-1}\tau \f$.
+Combined with the equation \f$A^T\Delta x=0\f$, we obtain the system
+\f[ \left(\begin{matrix} C^TR^{-1}SC & A^T \\ A & 0 \end{matrix}\right) \; \left(\begin{matrix} \Delta x \\ \Delta y \end{matrix}\right) = \left(\begin{matrix} -C^TR^{-1}\tau \\ 0 \end{matrix}\right) . \f]
+The left-hand matrix is symmetric, so can be (fairly) easily factorised. Further, the \f$A\f$ matrix is independent of the problem, so the initial part of the factorisation can be pre-computed.
+
+Indeed, it may be better to completely eliminate \f$A\f$ at the start of the problem by explicitly solving for some variables of \a x.
+If we have a square submatrix \f$A_B\f$ of \f$A\f$ which is invertible, then \f[x_B = A_B^{-1} (b-A_Nx_N)\f] and the inequalities for \f$x\f$ become \f[(C_N-C_BA_B^{-1}A_N)x_N \leq d-A_B^{-1}b\f].
+
+
+*/

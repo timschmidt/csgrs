@@ -1,0 +1,8 @@
+    Blocking waiting for file lock on build directory
+    Checking hyperreal v0.13.1 (/home/tim/Documents/GitHub/workspace/hyperreal)
+    Checking hyperlattice v0.6.1 (/home/tim/Documents/GitHub/workspace/hyperlattice)
+    Checking hyperlimit v0.4.1 (/home/tim/Documents/GitHub/workspace/hyperlimit)
+    Checking hypersolve v0.3.1 (/home/tim/Documents/GitHub/workspace/hypersolve)
+    Checking hypertri v0.4.1 (/home/tim/Documents/GitHub/workspace/hypertri)
+    Checking hypercurve v0.3.1 (/home/tim/Documents/GitHub/workspace/hypercurve)
+    Finished `release` profile [optimized] target(s) in 1m 05s

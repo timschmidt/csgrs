@@ -1,0 +1,118 @@
+{
+  "status": "committed; qualified against the documented baseline with the separate equality stress follow-up retained",
+  "goal_status": "active",
+  "previous_commit": "fbac724475efbac90ff0df08fc77e2f8e4693868",
+  "commit": "7faa8340e1bf79c823e618f78feedc186213eda9",
+  "targets": 49,
+  "passed": 2209,
+  "passed_by_repo": {
+    "hypercurve": 1977,
+    "hyperbrep": 232
+  },
+  "known_failed": [
+    "approximate_512_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions",
+    "non_ph_bezier_pair_projective_fillet_retains_algebraic_extensions",
+    "nonconvex_algebraic_chord_expansion_is_exact_and_local_collapse_is_explicit",
+    "strict_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions",
+    "unified_mixed_line_arc_erosion_splits_after_a_curved_neck_collapse"
+  ],
+  "new_failures": [],
+  "ignored": 9,
+  "expensive_previously_unqualified_exclusions": 8,
+  "timeouts": 0,
+  "builds_and_checks": {
+    "-check": 0,
+    "-test-build": 0,
+    "-final-lib-build": 0,
+    "-hyperbrep-check": 0,
+    "-hyperbrep-test-build": 0
+  },
+  "formatting_and_whitespace": "passed on final frozen qualification sources",
+  "formatted_files": {
+    "hypercurve": [
+      "benches/bezier_split_materialization.rs",
+      "examples/hypercurve_ui/src/geometry.rs",
+      "fuzz/fuzz_targets/bezier_split_materialization.rs",
+      "src/bezier_arrangement.rs",
+      "src/bezier_offset.rs",
+      "src/bezier_region.rs",
+      "src/bezier_retained_measure.rs",
+      "src/bezier_retained_overlap.rs",
+      "src/bezier_split.rs",
+      "src/curve.rs",
+      "src/curve_corner_chain.rs",
+      "src/curve_evaluation.rs",
+      "src/curve_region_boolean.rs",
+      "src/curve_region_trim.rs",
+      "src/curve_support.rs",
+      "src/finite_projection.rs",
+      "src/lib.rs",
+      "tests/hypercurve_analytic_parallel_region.rs",
+      "tests/hypercurve_bezier_arrangement.rs",
+      "tests/hypercurve_bezier_region.rs",
+      "tests/hypercurve_bezier_split_materialization.rs",
+      "tests/hypercurve_curve_region_boolean.rs",
+      "tests/hypercurve_curve_region_boolean_fuzz.rs",
+      "tests/hypercurve_curve_region_promotion.rs",
+      "tests/hypercurve_curve_string.rs",
+      "tests/hypercurve_rational_bezier.rs"
+    ],
+    "hyperbrep": [
+      "src/boolean.rs"
+    ]
+  },
+  "additional_caller_checks": [
+    {
+      "target": "fuzz",
+      "command": [
+        "cargo",
+        "check",
+        "--manifest-path",
+        "fuzz/Cargo.toml",
+        "--all-targets",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 9.177189367997926,
+      "log": "region-carrier-evidence-fuzz-check.log"
+    },
+    {
+      "target": "ui",
+      "command": [
+        "cargo",
+        "check",
+        "--manifest-path",
+        "examples/hypercurve_ui/Cargo.toml",
+        "--all-targets",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 9.528462959002354,
+      "log": "region-carrier-evidence-ui-check.log"
+    }
+  ],
+  "test_only_adjustment": "region-carrier-evidence-test-only-adjustment.json",
+  "additional_unqualified_stress_reproducer": "region-carrier-evidence-equality-stress/reproducer.json",
+  "source_verification": "region-carrier-evidence-source-verification.json",
+  "normal_library_sha256": "f551a11d28cdb89c52b47a0bc2009066f78c99659ab275ce54adb47ff741f4b7",
+  "independent_probes_and_matrices": [
+    "region-carrier-evidence-probe-final.json",
+    "region-carrier-evidence-circle-matrix.json",
+    "region-carrier-evidence-matrix.json",
+    "region-carrier-evidence-general-trim-matrix.json",
+    "region-carrier-evidence-constant-image-trim-matrix.json"
+  ],
+  "regression_baseline": "region-carrier-evidence-baseline.json",
+  "regression_fixed": "region-carrier-evidence-full-hypercurve-hypercurve_curve_region_boolean.json",
+  "evidence_audit": "region-carrier-evidence-evidence-audit.md",
+  "performance_claim": null,
+  "remaining": "Localize and remove the added analytic point replay/equality stress timeout; parallel/rational, parallel/chord and parallel/parallel common dispatch; finite exterior and retraced domains; normalized public region construction; five promotion failures; eight unqualified expensive tests; broader original architecture goal.",
+  "caller_commits": {
+    "hyperbrep": "878fcb441b281ab1b44051ca4420b28092c3c2ed"
+  },
+  "all_repositories_clean": true,
+  "postcommit_repositories": "region-carrier-evidence-postcommit-repositories.json",
+  "postcommit_source_files_checked": 396
+}

@@ -1,0 +1,31 @@
+{
+  "returncode": 0,
+  "elapsed_seconds": 0.06378115399274975,
+  "normal_library_sha256": "714b601f333b40798493e6ce128734b3d2364e200468ebb07c5e34bf947b443d",
+  "log": "finite-fixed-distance-domains-replay-matrix-run.log",
+  "source": "region-overlap-correspondence-replay-matrix.rs",
+  "command": [
+    "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustc",
+    "--edition=2024",
+    "-O",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/region-overlap-correspondence-replay-matrix.rs",
+    "--extern",
+    "hypercurve=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypercurve-96140573e602b0b0.rlib",
+    "-L",
+    "dependency=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps",
+    "-o",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-fixed-distance-domains-replay-matrix-run"
+  ],
+  "run_command": [
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-fixed-distance-domains-replay-matrix-run"
+  ],
+  "source_sha256": "536885405f3576cdbdd0dfdb3d991d7e1951cd4c0c297fee40996ed86407d8ef",
+  "executable_sha256": "66bc42be8c72b98747b5ceece5ea5ab077be3740ede5f8d403b2c273b8c6d096",
+  "counts": {
+    "queries": 420,
+    "restrictions": 60,
+    "point_replays": 160,
+    "repeated_restrictions": 160,
+    "region_reports_after_inputs_dropped": 4
+  }
+}

@@ -1,0 +1,42 @@
+{
+  "status": "PROGRESS; full ecosystem audit OPEN",
+  "results": [
+    {
+      "mode": "jit",
+      "returned": 133,
+      "confirmedIterationExhaustions": 110,
+      "confirmedNullErrors": 6,
+      "highSquareOverflowConfirmed": true,
+      "highFrames": [
+        "dk.jonaslindstrom.ruffini.common.algorithms.Power.apply(Power.java:49)",
+        "dk.jonaslindstrom.ruffini.common.algorithms.Power.apply(Power.java:49)",
+        "dk.jonaslindstrom.ruffini.common.algorithms.Power.apply(Power.java:49)"
+      ],
+      "outputSha256": "7897257b55d3b78f397d4eb4b3556cc62ea09e8d99332ee1eee9dc6648e678c4"
+    },
+    {
+      "mode": "interpreter",
+      "returned": 133,
+      "confirmedIterationExhaustions": 110,
+      "confirmedNullErrors": 6,
+      "highSquareOverflowConfirmed": true,
+      "highFrames": [
+        "java.base/java.lang.Number.<init>(Number.java:59)",
+        "java.base/java.lang.Integer.<init>(Integer.java:1029)",
+        "java.base/java.lang.Integer.valueOf(Integer.java:1006)"
+      ],
+      "outputSha256": "df92307b0f999e601ff5b83bc9bfd624fc5dafd662bf4e9832a4aea369a4e5b3"
+    }
+  ],
+  "currentHyperSnapshotFiles": 397,
+  "currentDrift": [],
+  "coverage": {
+    "files": 235,
+    "physicalLines": 17768,
+    "totalFiles": 245,
+    "totalPhysicalLines": 26234
+  },
+  "sourceSha256": "3f102f9da8fe8f674ac1964fbbf9400c26491ba4b7bd775ff5937d32cea18e79",
+  "numericalValidatorSha256": "8b6fd6b841551644368fea8d1ec9c5620a5019ed5406324037c9955de8e2aa56",
+  "newProductionChanges": 0
+}

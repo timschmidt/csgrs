@@ -1,0 +1,10 @@
+{
+  "changes": [
+    "Remove unused LineArcRegion2::classify_points and RegionView2::classify_points; shared native RegionQuery2 is now prepared directly by the public common batch.",
+    "Author benchmark query as CurvePoint2 before its timed loop."
+  ],
+  "files": [
+    "hypercurve/src/region.rs",
+    "hypercurve/benches/curve_path.rs"
+  ]
+}

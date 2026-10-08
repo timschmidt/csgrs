@@ -1,0 +1,11 @@
+{
+  "tag": "nfloat-complex-native",
+  "started": "2026-09-09T17:05:00.629Z",
+  "finished": "2026-09-09T17:05:01.374Z",
+  "elapsedSeconds": 0.743061062,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison",
+  "command": "/tmp/calcium-complex-controls.8yAaAz/nfloat-complex-controls",
+  "args": [],
+  "code": 0,
+  "signal": null
+}

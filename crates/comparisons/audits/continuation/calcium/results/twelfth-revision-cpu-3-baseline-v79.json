@@ -1,0 +1,18 @@
+{
+  "tag": "twelfth-revision-cpu-3-baseline-v79",
+  "started": "2026-09-12T00:52:28.322Z",
+  "finished": "2026-09-12T00:52:29.126Z",
+  "elapsedSeconds": 0.8012174660000001,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "taskset",
+  "args": [
+    "-c",
+    "2",
+    "/tmp/calcium-twelfth-cost-v78.5Fhn5H/baseline-cpu",
+    "cpu",
+    "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/twelfth-cost-input-v78.json",
+    "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/twelfth-revision-cpu-3-baseline-v79-plan.json"
+  ],
+  "code": 0,
+  "signal": null
+}

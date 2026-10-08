@@ -1,0 +1,336 @@
+\doxysubsubsection{Numeric Module }
+\hypertarget{group__NumericModule}{}\label{group__NumericModule}\index{Numeric Module@{Numeric Module}}
+
+
+\doxysubsubsubsection{Description}
+Numerical types, including \doxylink{classAriadne_1_1Natural}{Natural}, \doxylink{classAriadne_1_1Integer}{Integer}, \doxylink{classAriadne_1_1Dyadic}{Dyadic}, \doxylink{classAriadne_1_1Decimal}{Decimal}, \doxylink{classAriadne_1_1Rational}{Rational} and \doxylink{classAriadne_1_1Real}{Real} types, generic types \doxylink{classAriadne_1_1Number}{Number}, double/multiple precision floating-\/point types \doxylink{classAriadne_1_1Float_3_01DP_01_4}{Float$<$\+DP$>$} and \doxylink{classAriadne_1_1Float_3_01MP_01_4}{Float$<$\+MP$>$} (with shorthands \doxylink{namespaceAriadne_af915b9f1459c9691328efa71c6f39c6e}{Float\+DP} and \doxylink{namespaceAriadne_a07966b67e613cc8779412beecb60651d}{Float\+MP}), and correctly-\/rounded types \doxylink{classAriadne_1_1Ball}{Ball\texorpdfstring{$<$}{<}F,FE\texorpdfstring{$>$}{>}}, \doxylink{classAriadne_1_1Bounds}{Bounds\texorpdfstring{$<$}{<}F\texorpdfstring{$>$}{>}} \doxylink{classAriadne_1_1UpperBound}{Upper\+Bound\texorpdfstring{$<$}{<}F\texorpdfstring{$>$}{>}}, \doxylink{classAriadne_1_1LowerBound}{Lower\+Bound\texorpdfstring{$<$}{<}F\texorpdfstring{$>$}{>}} and \doxylink{classAriadne_1_1Approximation}{Approximation\texorpdfstring{$<$}{<}F\texorpdfstring{$>$}{>}}. 
+
+{\itshape For the mathematical theory of computability on real numbers, see the \doxysectlink{real_numbers_page}{Computable Real Numbers}{0} Page.}
+
+In this module, we define Ariadne\textquotesingle{}s base numerical types, including support for interval arithmetic via balls and bounds. The main concrete algebraic number types are \doxylink{classAriadne_1_1Integer}{Integer}, \doxylink{classAriadne_1_1Dyadic}{Dyadic}, and \doxylink{classAriadne_1_1Rational}{Rational}. A \doxylink{classAriadne_1_1Decimal}{Decimal} number class is provided for user input. The main real number type is \doxylink{classAriadne_1_1Real}{Real}, with directed versions \doxylink{classAriadne_1_1LowerReal}{Lower\+Real} and \doxylink{classAriadne_1_1UpperReal}{Upper\+Real}. Generic numbers are defined using the \doxylink{classAriadne_1_1Number}{Number} templates, with typedefs e.\+g. Effective\+Number for \doxylink{classAriadne_1_1Number}{Number}\texorpdfstring{$<$}{<}\doxylink{structAriadne_1_1EffectiveTag}{Effective\+Tag}\texorpdfstring{$>$}{>}. Validated and approximate versions of real numbers are given by \doxylink{classAriadne_1_1ValidatedReal}{Validated\+Real} and \doxylink{classAriadne_1_1ApproximateReal}{Approximate\+Real}, and convergent sequences without error bounds by \doxylink{classAriadne_1_1NaiveReal}{Naive\+Real}.
+
+Concrete numerical types are defined in terms of the \doxylink{namespaceAriadne_af915b9f1459c9691328efa71c6f39c6e}{Float\+DP} and \doxylink{namespaceAriadne_a07966b67e613cc8779412beecb60651d}{Float\+MP} floating-\/point number classes. These support rounded arithmetic and elementary functions using the \doxylink{group__NumericModule_ga54a3e0b3f2deed7e8fb80c5211414f2e}{down} and \doxylink{group__NumericModule_gaf2afab3884f1860d5e0ba6f8004a132f}{up} tags (equivalantly, \doxylink{group__NumericModule_ga6e90b4c1e041590cd9713739bd662aab}{downward} and \doxylink{group__NumericModule_gaf5c792cfa75f61390a4d3e51efb223e5}{upward}). Rounding to nearest is specified by the \doxylink{group__NumericModule_ga0ae8cc613c31723d1122d0627a20152a}{near} (equivalently, \doxylink{group__NumericModule_ga8fe1087fba3fafcf0af365dfd7e4d7c9}{to\+\_\+nearest}) tag. Approximate arithmetic without control of the rounding mode can be specified by the \doxylink{group__NumericModule_ga95ba69cd782bab325c6b504b58ad7771}{approx} rounding type. Comparisons are performed considering these numbers as exact values, and must be decidable. This means that these "{}raw"{} floating-\/point types should not be used directly, but wrapped in one of the validated concrete approximation classes listed below.
+
+Types supporting exact or rounded arithmetic may be used to define (validated) approximations to numbers via the classes Value\texorpdfstring{$<$}{<}F\texorpdfstring{$>$}{>}, \doxylink{classAriadne_1_1Ball}{Ball\texorpdfstring{$<$}{<}F,FE\texorpdfstring{$>$}{>}}, \doxylink{classAriadne_1_1Bounds}{Bounds\texorpdfstring{$<$}{<}F\texorpdfstring{$>$}{>}} \doxylink{classAriadne_1_1UpperBound}{Upper\+Bound\texorpdfstring{$<$}{<}F\texorpdfstring{$>$}{>}}, \doxylink{classAriadne_1_1LowerBound}{Lower\+Bound\texorpdfstring{$<$}{<}F\texorpdfstring{$>$}{>}} and \doxylink{classAriadne_1_1Approximation}{Approximation\texorpdfstring{$<$}{<}F\texorpdfstring{$>$}{>}}.
+
+Note that to prevent accidental calls to approximate functions, all non-\/exact operations (except explicitly-\/rounded operations on raw values) must yield an \doxylink{classAriadne_1_1Approximation}{Approximation} value.
+
+Positive numbers can be defined using the \doxylink{classAriadne_1_1Positive}{Positive\texorpdfstring{$<$}{<}X\texorpdfstring{$>$}{>}} template. A \doxylink{classAriadne_1_1Natural}{Natural} is a \doxylink{classAriadne_1_1Positive}{Positive}\texorpdfstring{$<$}{<}\doxylink{classAriadne_1_1Integer}{Integer}\texorpdfstring{$>$}{>}.
+
+\label{group__NumericModule_supported_operations_anchor}%
+\Hypertarget{group__NumericModule_supported_operations_anchor}%
+The following aliases are used for arithmetical operations\+: 
+\begin{DoxyDescription}
+\item[]\hfill \\
+{\ttfamily nul(x)} is equivalent to {\ttfamily 0\texorpdfstring{$\ast$}{*}x} 
+\item[]\hfill \\
+{\ttfamily pos(x)} is equivalent to {\ttfamily +x} 
+\item[]\hfill \\
+{\ttfamily neg(x)} is equivalent to {\ttfamily -\/x} 
+\item[]\hfill \\
+{\ttfamily sqr(x)} is equivalent to {\ttfamily x\texorpdfstring{$^\wedge$}{\string^}2}, the {\itshape square} operation 
+\item[]\hfill \\
+{\ttfamily hlf(x)} is equivalent to {\ttfamily x/2} 
+\item[]\hfill \\
+{\ttfamily rec(x)} is equivalent to {\ttfamily 1/x}, the {\itshape reciprocal} operation. 
+\item[]\hfill \\
+{\ttfamily add(x,y)} is equivalent to {\ttfamily x+y} 
+\item[]\hfill \\
+{\ttfamily sub(x,y)} is equivalent to {\ttfamily x-\/y} 
+\item[]\hfill \\
+{\ttfamily mul(x,y)} is equivalent to {\ttfamily x\texorpdfstring{$\ast$}{*}y} 
+\item[]\hfill \\
+{\ttfamily div(x,y)} is equivalent to {\ttfamily x/y} 
+\item[]\hfill \\
+{\ttfamily pow(x,n)} is equivalent to {\ttfamily x\texorpdfstring{$^\wedge$}{\string^}n} 
+\item[]\hfill \\
+{\ttfamily fma(x,y,z)} is equivalent to {\ttfamily x\texorpdfstring{$\ast$}{*}y+z}, the {\itshape fused-\/multiply-\/and-\/add} operation. 
+\end{DoxyDescription}Note that C++ does not support the power operator {\ttfamily \texorpdfstring{$^\wedge$}{\string^}}. In Python, the power operator is denoted {\ttfamily \texorpdfstring{$\ast$}{*}\texorpdfstring{$\ast$}{*}}. In Ariadne, only integer exponents {\itshape n} are supported; for general powers use the identity $x^y=e^{x\log(y)}$ and write {\ttfamily exp(y\texorpdfstring{$\ast$}{*}log(x))}.
+
+The following non-\/arithmetical elementary functions are provided\+: 
+\begin{DoxyDescription}
+\item[]\hfill \\
+{\ttfamily sqrt(x)}, the square-\/root function $\sqrt{x}$ 
+\item[]\hfill \\
+{\ttfamily exp(x)}, the natural exponent $e^x$ 
+\item[]\hfill \\
+{\ttfamily log(x)}, the natural logarithm $\log(x)$ (sometimes written $\ln(x)$). 
+\item[]\hfill \\
+{\ttfamily sin(x)}, the sine function $\sin(x)$, with argument in {\itshape radians}. 
+\item[]\hfill \\
+{\ttfamily cos(x)}, the cosine function $\cos(x)$, with argument in {\itshape radians}. 
+\item[]\hfill \\
+{\ttfamily tan(x)}, the tangent function $\tan(x)$, with argument in {\itshape radians}. 
+\item[]\hfill \\
+{\ttfamily atan(x)}, the inverse tangent function $\arctan(x)$ or $\tan^{-1}(x)$, returning princial value in the open interval $(-\pi/2\!:\!+\pi/2)$ 
+\end{DoxyDescription}
+
+The following lattice operations are provided\+: 
+\begin{DoxyDescription}
+\item[]\hfill \\
+{\ttfamily abs(x)}, the absolute-\/value $|x|$ 
+\item[]\hfill \\
+{\ttfamily max(x,y)}, the maximum $\max(x,y)$ 
+\item[]\hfill \\
+{\ttfamily min(x,y)}, the minimum $\min(x,y)$ 
+\end{DoxyDescription}
+
+We have the following operations on floating-\/point types
+\begin{DoxyItemize}
+\item Exact arithmetic where possible\+: 
+\begin{DoxyDescription}
+\item[]\hfill \\
+{\ttfamily Float neg(\+Float);} 
+\item[]\hfill \\
+{\ttfamily Float abs(\+Float);} 
+\item[]\hfill \\
+{\ttfamily Float max(\+Float,\+Float);} 
+\end{DoxyDescription}
+\item Approximate and rounded arithmetic\+: 
+\begin{DoxyDescription}
+\item[]\hfill \\
+{\ttfamily Float add(near,\+Float,\+Float);} 
+\item[]\hfill \\
+{\ttfamily Float add(down,\+Float,\+Float);} 
+\item[]\hfill \\
+{\ttfamily Float add(up,\+Float,\+Float);} 
+\end{DoxyDescription}
+\item Arithmetic in the {\itshape current rounding mode}, or {\itshape opposite} rounding mode\+: 
+\begin{DoxyDescription}
+\item[]\hfill \\
+{\ttfamily Float add(rnd,\+Float,\+Float);} 
+\item[]\hfill \\
+{\ttfamily Float add(opp,\+Float,\+Float);} 
+\end{DoxyDescription}
+\end{DoxyItemize}
+
+We use the following abbreviations for template parameters for classes and concepts in this module\+:
+\begin{DoxyItemize}
+\item {\bfseries{Z\+:}} Integer
+\item {\bfseries{W\+:}} Dyadic
+\item {\bfseries{Q\+:}} Rational
+\item {\bfseries{R\+:}} Real
+\item {\bfseries{Y\+:}} Generic Number
+\item {\bfseries{PR\+:}} Precision
+\item {\bfseries{F\+:}} Float
+\item {\bfseries{X\+:}} Concrete Number
+\end{DoxyItemize}
+
+See the page \doxysectlink{real_numbers_page}{Computable Real Numbers}{0} for more information. \doxysubsubsubsubsection*{Topics}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\hyperlink{group__ExtendedLiteralsSubModule}{Extended numeric literals}}
+\begin{DoxyCompactList}\small\item\em Extended numeric literals. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsubsubsection*{Classes}
+\begin{DoxyCompactItemize}
+\item 
+class \mbox{\hyperlink{classAriadne_1_1Accuracy}{Accuracy}}
+\begin{DoxyCompactList}\small\item\em The accuracy of a computation of a value in a metric space. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1ApproximateReal}{Approximate\+Real}}
+\begin{DoxyCompactList}\small\item\em A generic class representing an approximation to a real number of unknown accuracy. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1ApproximateDouble}{Approximate\+Double}}
+\begin{DoxyCompactList}\small\item\em A wrapper around a builtin double-\/precision floating-\/point number, indicating that the stored value is an {\itshape approximation} to the value of a real quantity. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1ExactDouble}{Exact\+Double}}
+\begin{DoxyCompactList}\small\item\em A wrapper around a builtin double-\/precision floating-\/point number, indicating that the stored value is the {\itshape exact} value of a real quantity. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1Complex}{Complex$<$ X $>$}}
+\begin{DoxyCompactList}\small\item\em Complex number type over real numbers {\itshape X} supporting basic arithmetic and exponential functions. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1Decimal}{Decimal}}
+\begin{DoxyCompactList}\small\item\em A decimal number. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1Dyadic}{Dyadic}}
+\begin{DoxyCompactList}\small\item\em A dyadic number of the form $p/2^q$ for integers $p$, $q$; equivalently, a number with a finite binary expansion. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1ExtendedOperations}{Extended\+Operations$<$ X $>$}}
+\begin{DoxyCompactList}\small\item\em A number of type {\itshape X}, extended with infinite and not-\/a-\/number values. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1Approximation}{Approximation$<$ X $>$}}
+\begin{DoxyCompactList}\small\item\em Floating point number approximations to real numbers supporting approxiamate arithmetic. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1Ball}{Ball$<$ F, FE $>$}}
+\begin{DoxyCompactList}\small\item\em Floating point approximations to a real number with guaranteed error bounds. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1Bounds}{Bounds$<$ F $>$}}
+\begin{DoxyCompactList}\small\item\em \doxylink{classAriadne_1_1Concepts_1_1Validated}{Validated} bounds on a number with floating-\/point endpoints supporting outwardly-\/rounded arithmetic. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1Error}{Error$<$ F $>$}}
+\begin{DoxyCompactList}\small\item\em Floating-\/point upper bounds for positive real numbers, suitable for use as an upper bound for an error in a metric space. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1LowerBound}{Lower\+Bound$<$ X $>$}}
+\begin{DoxyCompactList}\small\item\em Floating-\/point lower bounds for real numbers. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1UpperBound}{Upper\+Bound$<$ X $>$}}
+\begin{DoxyCompactList}\small\item\em Floating-\/point upper bounds for real numbers. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1DoublePrecision}{Double\+Precision}}
+\begin{DoxyCompactList}\small\item\em The precision of a \doxylink{namespaceAriadne_af915b9f1459c9691328efa71c6f39c6e}{Float\+DP} object. Since this is fixed, the class is only a tag; all objects are equal. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1Float_3_01DP_01_4}{Float$<$ DP $>$}}
+\begin{DoxyCompactList}\small\item\em Floating point numbers (double precision) using rounded arithmetic. Abbreviation Flobber\+::Float\+DP. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1MultiplePrecision}{Multiple\+Precision}}
+\begin{DoxyCompactList}\small\item\em The precision of a \doxylink{namespaceAriadne_a07966b67e613cc8779412beecb60651d}{Float\+MP} object. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1Float_3_01MP_01_4}{Float$<$ MP $>$}}
+\begin{DoxyCompactList}\small\item\em Multiple-\/precision floating-\/point numbers. Abbreviation \doxylink{namespaceAriadne_a07966b67e613cc8779412beecb60651d}{Float\+MP}. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1Integer}{Integer}}
+\begin{DoxyCompactList}\small\item\em Arbitrarily-\/sized integers. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1LowerNumber}{Lower\+Number$<$ P $>$}}
+\begin{DoxyCompactList}\small\item\em Generic lower (real) numbers with computational paradigm {\itshape P}, which may be Effective\+Tag or Validated\+Tag. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1LowerReal}{Lower\+Real}}
+\begin{DoxyCompactList}\small\item\em \doxylink{classAriadne_1_1Concepts_1_1Lower}{Lower} real number type $\R_<$. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1NaiveReal}{Naive\+Real}}
+\begin{DoxyCompactList}\small\item\em Real number type defined as limits of convergent sequences of (dyadic) rationals, without bounds on the convergence rate. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1Positive}{Positive$<$ X $>$}}
+\begin{DoxyCompactList}\small\item\em A modifier declaring that a number is positive. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1Number}{Number$<$ P $>$}}
+\begin{DoxyCompactList}\small\item\em Generic numbers with computational paradigm {\itshape P}, which may be Effective\+Tag, Validated\+Tag, Upper\+Tag, Lower\+Tag or Approximate\+Tag. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1Rational}{Rational}}
+\begin{DoxyCompactList}\small\item\em Rational numbers. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1Real}{Real}}
+\begin{DoxyCompactList}\small\item\em Real number type $\R$ supporting elementary functions, comparisons and limits. \end{DoxyCompactList}\item 
+struct \mbox{\hyperlink{structAriadne_1_1RoundDownward}{Round\+Downward}}
+\begin{DoxyCompactList}\small\item\em Tag class for downward rounding. Constants \doxylink{group__NumericModule_ga6e90b4c1e041590cd9713739bd662aab}{downward}, \doxylink{group__NumericModule_ga54a3e0b3f2deed7e8fb80c5211414f2e}{down}. \end{DoxyCompactList}\item 
+struct \mbox{\hyperlink{structAriadne_1_1RoundToNearest}{Round\+To\+Nearest}}
+\begin{DoxyCompactList}\small\item\em Tag class for rounding to nearest. Constants \doxylink{group__NumericModule_ga8fe1087fba3fafcf0af365dfd7e4d7c9}{to\+\_\+nearest}, \doxylink{group__NumericModule_ga0ae8cc613c31723d1122d0627a20152a}{near}. \end{DoxyCompactList}\item 
+struct \mbox{\hyperlink{structAriadne_1_1RoundUpward}{Round\+Upward}}
+\begin{DoxyCompactList}\small\item\em Tag class for upward rounding. Constants \doxylink{group__NumericModule_gaf5c792cfa75f61390a4d3e51efb223e5}{upward}, \doxylink{group__NumericModule_gaf2afab3884f1860d5e0ba6f8004a132f}{up}. \end{DoxyCompactList}\item 
+struct \mbox{\hyperlink{structAriadne_1_1RoundTowardZero}{Round\+Toward\+Zero}}
+\begin{DoxyCompactList}\small\item\em Tag class for rounding towards zero. Constant \doxylink{group__NumericModule_gab65a9658e18313d6f8e2532daddb7948}{toward\+\_\+zero}. \end{DoxyCompactList}\item 
+struct \mbox{\hyperlink{structAriadne_1_1RoundApproximately}{Round\+Approximately}}
+\begin{DoxyCompactList}\small\item\em Tag class for approximate rounding. Constant \doxylink{group__NumericModule_ga95ba69cd782bab325c6b504b58ad7771}{approx}. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1Rounding}{Rounding}}
+\begin{DoxyCompactList}\small\item\em General rounding mode class. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1TwoExp}{Two\+Exp}}
+\begin{DoxyCompactList}\small\item\em A class representing a number of the form {\ttfamily 2\textsuperscript{{\itshape n}}} for some {\itshape n}. Useful since floating-\/point numbers can be exactly multiplied and divided by powers of {\ttfamily 2}. \end{DoxyCompactList}\item 
+struct \mbox{\hyperlink{structAriadne_1_1Two}{Two}}
+\begin{DoxyCompactList}\small\item\em The integer constant 2. Only used for creating dyadic numbers. TODO\+: Should not be a subtype of std\+::integral\+\_\+constant$<$uint,2u$>$ to avoid conversion to builtin integers yielding e.\+g. 1/two=0. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1UpperNumber}{Upper\+Number$<$ P $>$}}
+\begin{DoxyCompactList}\small\item\em Generic upper (real) numbers with computational paradigm {\itshape P}, which may be Effective\+Tag or Validated\+Tag. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1UpperReal}{Upper\+Real}}
+\begin{DoxyCompactList}\small\item\em \doxylink{classAriadne_1_1Concepts_1_1Upper}{Upper} real number type $\R_>$. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1ValidatedReal}{Validated\+Real}}
+\begin{DoxyCompactList}\small\item\em A generic class representing rigorous bounds on a real number. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsubsubsection*{Typedefs}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{group__NumericModule_gaf4b5a9eac703ef774384bd41492a3157}\label{group__NumericModule_gaf4b5a9eac703ef774384bd41492a3157} 
+using {\bfseries Rational\+Bounds} = \mbox{\hyperlink{classAriadne_1_1Bounds}{Bounds}}$<$\mbox{\hyperlink{classAriadne_1_1Rational}{Rational}}$>$
+\begin{DoxyCompactList}\small\item\em Alias for rational bounds on a number. //!\texorpdfstring{$<$}{<}. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsubsubsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{group__NumericModule_ga47c300a1454dd5ab7505ba048f15d197}\label{group__NumericModule_ga47c300a1454dd5ab7505ba048f15d197} 
+\mbox{\hyperlink{classAriadne_1_1ApproximateDouble}{Approximate\+Double}} {\bfseries operator"{}"{}\+\_\+a} (long double lx)
+\begin{DoxyCompactList}\small\item\em Indicate that a floating-\/point literal only represents an double-\/precision approximation to a number. \end{DoxyCompactList}\item 
+\Hypertarget{group__NumericModule_ga75c9c8aa1140ae9012a9ac9d599d53e3}\label{group__NumericModule_ga75c9c8aa1140ae9012a9ac9d599d53e3} 
+{\footnotesize template$<$class R, class A$>$ }\\R {\bfseries numeric\+\_\+cast} (const A \&a)
+\begin{DoxyCompactList}\small\item\em Cast one Ariadne numerical type or builtin numerical type to another. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsubsubsection*{Type shorthands}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{group__NumericModule_gad8d641e86f517dc6189876d9d1a6345a}\label{group__NumericModule_gad8d641e86f517dc6189876d9d1a6345a} 
+{\footnotesize template$<$class PR$>$ }\\using {\bfseries Float\+Approximation} = \mbox{\hyperlink{classAriadne_1_1Approximation}{Approximation}}$<$Raw\+Float\+Type$<$PR$>$$>$
+\item 
+\Hypertarget{group__NumericModule_ga8bd8b01d0fc30b704584b0b69f35de7b}\label{group__NumericModule_ga8bd8b01d0fc30b704584b0b69f35de7b} 
+{\footnotesize template$<$class PR$>$ }\\using {\bfseries Float\+Lower\+Bound} = \mbox{\hyperlink{classAriadne_1_1LowerBound}{Lower\+Bound}}$<$Raw\+Float\+Type$<$PR$>$$>$
+\item 
+\Hypertarget{group__NumericModule_gab30197a2ca1ee1affaa99bc5a96be024}\label{group__NumericModule_gab30197a2ca1ee1affaa99bc5a96be024} 
+{\footnotesize template$<$class PR$>$ }\\using {\bfseries Float\+Upper\+Bound} = \mbox{\hyperlink{classAriadne_1_1UpperBound}{Upper\+Bound}}$<$Raw\+Float\+Type$<$PR$>$$>$
+\item 
+\Hypertarget{group__NumericModule_ga1e049524e162af01e451c9183315a982}\label{group__NumericModule_ga1e049524e162af01e451c9183315a982} 
+{\footnotesize template$<$class PR$>$ }\\using {\bfseries Float\+Bounds} = \mbox{\hyperlink{classAriadne_1_1Bounds}{Bounds}}$<$Raw\+Float\+Type$<$PR$>$$>$
+\item 
+\Hypertarget{group__NumericModule_ga49fc5a890aaa0ef24118a0b964bbd076}\label{group__NumericModule_ga49fc5a890aaa0ef24118a0b964bbd076} 
+{\footnotesize template$<$class PR, class PRE = PR$>$ }\\using {\bfseries Float\+Ball} = \mbox{\hyperlink{classAriadne_1_1Ball}{Ball}}$<$Raw\+Float\+Type$<$PR$>$,Raw\+Float\+Type$<$PRE$>$$>$
+\item 
+\Hypertarget{group__NumericModule_ga475130b5a81f7bcef00c6e976ffd1d9d}\label{group__NumericModule_ga475130b5a81f7bcef00c6e976ffd1d9d} 
+{\footnotesize template$<$class PR$>$ }\\using {\bfseries Positive\+Float\+Approximation} = \mbox{\hyperlink{classAriadne_1_1Positive}{Positive}}$<$\mbox{\hyperlink{group__NumericModule_gad8d641e86f517dc6189876d9d1a6345a}{Float\+Approximation}}$<$PR$>$$>$
+\item 
+\Hypertarget{group__NumericModule_gada51f41c51c94bf20e781f029610cb47}\label{group__NumericModule_gada51f41c51c94bf20e781f029610cb47} 
+{\footnotesize template$<$class PR$>$ }\\using {\bfseries Positive\+Float\+Lower\+Bound} = \mbox{\hyperlink{classAriadne_1_1Positive}{Positive}}$<$\mbox{\hyperlink{group__NumericModule_ga8bd8b01d0fc30b704584b0b69f35de7b}{Float\+Lower\+Bound}}$<$PR$>$$>$
+\item 
+\Hypertarget{group__NumericModule_gae7903f1fd8b962c19092b48e9c9e834b}\label{group__NumericModule_gae7903f1fd8b962c19092b48e9c9e834b} 
+{\footnotesize template$<$class PR$>$ }\\using {\bfseries Positive\+Float\+Upper\+Bound} = \mbox{\hyperlink{classAriadne_1_1Positive}{Positive}}$<$\mbox{\hyperlink{group__NumericModule_gab30197a2ca1ee1affaa99bc5a96be024}{Float\+Upper\+Bound}}$<$PR$>$$>$
+\item 
+\Hypertarget{group__NumericModule_gaeba9cc8d8e0e101fb8254792061faa5e}\label{group__NumericModule_gaeba9cc8d8e0e101fb8254792061faa5e} 
+{\footnotesize template$<$class PR$>$ }\\using {\bfseries Positive\+Float\+Bounds} = \mbox{\hyperlink{classAriadne_1_1Positive}{Positive}}$<$\mbox{\hyperlink{group__NumericModule_ga1e049524e162af01e451c9183315a982}{Float\+Bounds}}$<$PR$>$$>$
+\item 
+\Hypertarget{group__NumericModule_ga06cc4b12fc5089c33edd09b978214c09}\label{group__NumericModule_ga06cc4b12fc5089c33edd09b978214c09} 
+{\footnotesize template$<$class PR, class PRE = PR$>$ }\\using {\bfseries Positive\+Float\+Ball} = \mbox{\hyperlink{classAriadne_1_1Positive}{Positive}}$<$\mbox{\hyperlink{group__NumericModule_ga49fc5a890aaa0ef24118a0b964bbd076}{Float\+Ball}}$<$PR,PRE$>$$>$
+\item 
+\Hypertarget{group__NumericModule_ga6a2e5fe08db2f022fbc0f91161bede83}\label{group__NumericModule_ga6a2e5fe08db2f022fbc0f91161bede83} 
+{\footnotesize template$<$class PR$>$ }\\using {\bfseries Positive\+Float} = \mbox{\hyperlink{classAriadne_1_1Positive}{Positive}}$<$Float$<$PR$>$$>$
+\item 
+\Hypertarget{group__NumericModule_ga2d7b4d661aad7a5326e75e0f5e380de4}\label{group__NumericModule_ga2d7b4d661aad7a5326e75e0f5e380de4} 
+{\footnotesize template$<$class PR$>$ }\\using {\bfseries Float\+Error} = \mbox{\hyperlink{classAriadne_1_1Error}{Error}}$<$Raw\+Float\+Type$<$PR$>$$>$
+\end{DoxyCompactItemize}
+\doxysubsubsubsubsection*{Rounding mode control}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{group__NumericModule_ga9ef803f7cbcf4c5678b44c56cbc31319}\label{group__NumericModule_ga9ef803f7cbcf4c5678b44c56cbc31319} 
+typedef rounding\+\_\+mode\+\_\+t {\bfseries Builtin\+Rounding\+Mode\+Type}
+\begin{DoxyCompactList}\small\item\em The rounding mode type used for builtin floating-\/point objects such as \doxylink{namespaceAriadne_af915b9f1459c9691328efa71c6f39c6e}{Float\+DP}. \end{DoxyCompactList}\item 
+\Hypertarget{group__NumericModule_ga199e562096d4ccb4fdf0c19823005b28}\label{group__NumericModule_ga199e562096d4ccb4fdf0c19823005b28} 
+typedef mpfr\+\_\+rnd\+\_\+t {\bfseries MPFRRounding\+Mode\+Type}
+\begin{DoxyCompactList}\small\item\em The rounding mode type used for multiple-\/precision floating-\/point objects such as \doxylink{namespaceAriadne_a07966b67e613cc8779412beecb60651d}{Float\+MP}. \end{DoxyCompactList}\item 
+\Hypertarget{group__NumericModule_gac2dd89423f04c22da56665f90e1a3003}\label{group__NumericModule_gac2dd89423f04c22da56665f90e1a3003} 
+using {\bfseries Round\+Approx} = \mbox{\hyperlink{structAriadne_1_1RoundApproximately}{Round\+Approximately}}
+\item 
+\Hypertarget{group__NumericModule_ga6e90b4c1e041590cd9713739bd662aab}\label{group__NumericModule_ga6e90b4c1e041590cd9713739bd662aab} 
+const \mbox{\hyperlink{structAriadne_1_1RoundDownward}{Round\+Downward}} {\bfseries downward} = \mbox{\hyperlink{structAriadne_1_1RoundDownward}{Round\+Downward}}()
+\begin{DoxyCompactList}\small\item\em Round exact answer downward to a representable value. Synonymous with \doxylink{group__NumericModule_ga54a3e0b3f2deed7e8fb80c5211414f2e}{down}. \end{DoxyCompactList}\item 
+\Hypertarget{group__NumericModule_ga8fe1087fba3fafcf0af365dfd7e4d7c9}\label{group__NumericModule_ga8fe1087fba3fafcf0af365dfd7e4d7c9} 
+const \mbox{\hyperlink{structAriadne_1_1RoundToNearest}{Round\+To\+Nearest}} {\bfseries to\+\_\+nearest} = \mbox{\hyperlink{structAriadne_1_1RoundToNearest}{Round\+To\+Nearest}}()
+\begin{DoxyCompactList}\small\item\em Round exact answer to a nearest representable value. Synonymous with \doxylink{group__NumericModule_ga0ae8cc613c31723d1122d0627a20152a}{near}. \end{DoxyCompactList}\item 
+\Hypertarget{group__NumericModule_gaf5c792cfa75f61390a4d3e51efb223e5}\label{group__NumericModule_gaf5c792cfa75f61390a4d3e51efb223e5} 
+const \mbox{\hyperlink{structAriadne_1_1RoundUpward}{Round\+Upward}} {\bfseries upward} = \mbox{\hyperlink{structAriadne_1_1RoundUpward}{Round\+Upward}}()
+\begin{DoxyCompactList}\small\item\em Round exact answer upward to a representable value. Synonymous with \doxylink{group__NumericModule_gaf2afab3884f1860d5e0ba6f8004a132f}{up}. \end{DoxyCompactList}\item 
+\Hypertarget{group__NumericModule_gab65a9658e18313d6f8e2532daddb7948}\label{group__NumericModule_gab65a9658e18313d6f8e2532daddb7948} 
+const \mbox{\hyperlink{structAriadne_1_1RoundTowardZero}{Round\+Toward\+Zero}} {\bfseries toward\+\_\+zero} = \mbox{\hyperlink{structAriadne_1_1RoundTowardZero}{Round\+Toward\+Zero}}()
+\begin{DoxyCompactList}\small\item\em Round exact answer to a representable value at least as close to zero. \end{DoxyCompactList}\item 
+\Hypertarget{group__NumericModule_ga174f298c7d9af8f77665406e25d67e18}\label{group__NumericModule_ga174f298c7d9af8f77665406e25d67e18} 
+const \mbox{\hyperlink{structAriadne_1_1RoundApproximately}{Round\+Approximately}} {\bfseries approximately} = \mbox{\hyperlink{structAriadne_1_1RoundApproximately}{Round\+Approximately}}()
+\begin{DoxyCompactList}\small\item\em Round exact answer to some close representable value, which need not be the nearest. Synonymous with \doxylink{group__NumericModule_ga95ba69cd782bab325c6b504b58ad7771}{approx}. \end{DoxyCompactList}\item 
+\Hypertarget{group__NumericModule_ga54a3e0b3f2deed7e8fb80c5211414f2e}\label{group__NumericModule_ga54a3e0b3f2deed7e8fb80c5211414f2e} 
+const \mbox{\hyperlink{structAriadne_1_1RoundDownward}{Round\+Downward}} {\bfseries down} = \mbox{\hyperlink{group__NumericModule_ga6e90b4c1e041590cd9713739bd662aab}{downward}}
+\begin{DoxyCompactList}\small\item\em Round exact answer downward to a representable value. Synonymous with \doxylink{group__NumericModule_ga6e90b4c1e041590cd9713739bd662aab}{downward}. \end{DoxyCompactList}\item 
+\Hypertarget{group__NumericModule_ga0ae8cc613c31723d1122d0627a20152a}\label{group__NumericModule_ga0ae8cc613c31723d1122d0627a20152a} 
+const \mbox{\hyperlink{structAriadne_1_1RoundToNearest}{Round\+To\+Nearest}} {\bfseries near} = \mbox{\hyperlink{group__NumericModule_ga8fe1087fba3fafcf0af365dfd7e4d7c9}{to\+\_\+nearest}}
+\begin{DoxyCompactList}\small\item\em Round exact answer to a nearest representable value. Synonymous with \doxylink{group__NumericModule_ga8fe1087fba3fafcf0af365dfd7e4d7c9}{to\+\_\+nearest}. \end{DoxyCompactList}\item 
+\Hypertarget{group__NumericModule_gaf2afab3884f1860d5e0ba6f8004a132f}\label{group__NumericModule_gaf2afab3884f1860d5e0ba6f8004a132f} 
+const \mbox{\hyperlink{structAriadne_1_1RoundUpward}{Round\+Upward}} {\bfseries up} = \mbox{\hyperlink{group__NumericModule_gaf5c792cfa75f61390a4d3e51efb223e5}{upward}}
+\begin{DoxyCompactList}\small\item\em Round exact answer upward to a representable value. Synonymous with \doxylink{group__NumericModule_gaf5c792cfa75f61390a4d3e51efb223e5}{upward}. \end{DoxyCompactList}\item 
+\Hypertarget{group__NumericModule_ga95ba69cd782bab325c6b504b58ad7771}\label{group__NumericModule_ga95ba69cd782bab325c6b504b58ad7771} 
+const \mbox{\hyperlink{structAriadne_1_1RoundApproximately}{Round\+Approximately}} {\bfseries approx} = \mbox{\hyperlink{group__NumericModule_ga174f298c7d9af8f77665406e25d67e18}{approximately}}
+\begin{DoxyCompactList}\small\item\em Round exact answer to some close representable value, which need not be the nearest. Synonymous with \doxylink{group__NumericModule_ga174f298c7d9af8f77665406e25d67e18}{approximately}. \end{DoxyCompactList}\item 
+\Hypertarget{group__NumericModule_gacf3ae61e4ca27171a1ea97fbbfa0c970}\label{group__NumericModule_gacf3ae61e4ca27171a1ea97fbbfa0c970} 
+const rounding\+\_\+mode\+\_\+t {\bfseries ROUND\+\_\+\+TO\+\_\+\+NEAREST} = 0000
+\begin{DoxyCompactList}\small\item\em The floating-\/point environment value for rounding arithmetic to the nearest exactly-\/representable value. \end{DoxyCompactList}\item 
+\Hypertarget{group__NumericModule_ga5c3e8dcf54d250549f814b27c72e9c53}\label{group__NumericModule_ga5c3e8dcf54d250549f814b27c72e9c53} 
+const rounding\+\_\+mode\+\_\+t {\bfseries ROUND\+\_\+\+DOWNWARD} = 1024
+\begin{DoxyCompactList}\small\item\em The floating-\/point environment value for upwards-\/rounded arithmetic. \end{DoxyCompactList}\item 
+\Hypertarget{group__NumericModule_gab0a805b4f89b4eff017590f46ec182a8}\label{group__NumericModule_gab0a805b4f89b4eff017590f46ec182a8} 
+const rounding\+\_\+mode\+\_\+t {\bfseries ROUND\+\_\+\+UPWARD} = 2048
+\begin{DoxyCompactList}\small\item\em The floating-\/point environment value for downwards-\/rounded arithmetic. \end{DoxyCompactList}\item 
+\Hypertarget{group__NumericModule_gafce5f3c210c155fb2721d7f9bd28552d}\label{group__NumericModule_gafce5f3c210c155fb2721d7f9bd28552d} 
+const rounding\+\_\+mode\+\_\+t {\bfseries ROUND\+\_\+\+TOWARD\+\_\+\+ZERO} = 3072
+\begin{DoxyCompactList}\small\item\em The floating-\/point environment value for rounding arithmetic to zero. \end{DoxyCompactList}\item 
+\Hypertarget{group__NumericModule_ga1e6b3854f1a3b3521a3a3c90d4ee3a7e}\label{group__NumericModule_ga1e6b3854f1a3b3521a3a3c90d4ee3a7e} 
+void {\bfseries set\+\_\+builtin\+\_\+rounding\+\_\+mode} (\mbox{\hyperlink{group__NumericModule_ga9ef803f7cbcf4c5678b44c56cbc31319}{Builtin\+Rounding\+Mode\+Type}} rnd)
+\begin{DoxyCompactList}\small\item\em \doxylink{classAriadne_1_1Set}{Set} the builtin rounding mode. \end{DoxyCompactList}\item 
+\Hypertarget{group__NumericModule_ga7945f7d166da84ddaf20e523035e4947}\label{group__NumericModule_ga7945f7d166da84ddaf20e523035e4947} 
+rounding\+\_\+mode\+\_\+t {\bfseries get\+\_\+builtin\+\_\+rounding\+\_\+mode} ()
+\begin{DoxyCompactList}\small\item\em Get the current rounding mode. \end{DoxyCompactList}\item 
+\Hypertarget{group__NumericModule_ga826fe0fad771b00e3607e5cb79175043}\label{group__NumericModule_ga826fe0fad771b00e3607e5cb79175043} 
+void {\bfseries set\+\_\+builtin\+\_\+rounding\+\_\+to\+\_\+nearest} ()
+\begin{DoxyCompactList}\small\item\em \doxylink{classAriadne_1_1Set}{Set} the rounding mode to nearest. \end{DoxyCompactList}\item 
+\Hypertarget{group__NumericModule_gaa35e5e0ab2bcce96bb09d6cfea0b0a2e}\label{group__NumericModule_gaa35e5e0ab2bcce96bb09d6cfea0b0a2e} 
+void {\bfseries set\+\_\+builtin\+\_\+rounding\+\_\+downward} ()
+\begin{DoxyCompactList}\small\item\em \doxylink{classAriadne_1_1Set}{Set} the rounding mode to downwards rounding. \end{DoxyCompactList}\item 
+\Hypertarget{group__NumericModule_gaa133d15782740801670ae775f3fd16ab}\label{group__NumericModule_gaa133d15782740801670ae775f3fd16ab} 
+void {\bfseries set\+\_\+builtin\+\_\+rounding\+\_\+upward} ()
+\begin{DoxyCompactList}\small\item\em \doxylink{classAriadne_1_1Set}{Set} the rounding mode to upwards rounding. \end{DoxyCompactList}\item 
+\Hypertarget{group__NumericModule_ga21fe73e07e999694cc05bcac8e007e3c}\label{group__NumericModule_ga21fe73e07e999694cc05bcac8e007e3c} 
+void {\bfseries set\+\_\+builtin\+\_\+rounding\+\_\+toward\+\_\+zero} ()
+\begin{DoxyCompactList}\small\item\em \doxylink{classAriadne_1_1Set}{Set} the rounding mode to towards-\/zero rounding. \end{DoxyCompactList}\item 
+\Hypertarget{group__NumericModule_ga56b57da9a83b8d8914bb9c216026a300}\label{group__NumericModule_ga56b57da9a83b8d8914bb9c216026a300} 
+\mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} {\bfseries set\+\_\+default\+\_\+builtin\+\_\+rounding} ()
+\begin{DoxyCompactList}\small\item\em \doxylink{classAriadne_1_1Set}{Set} the rounding mode to the expected default rounding mode. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsubsubsection*{Type extraction}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{group__NumericModule_ga0756eee202fefdde4a5e2ec4fe30bb5b}\label{group__NumericModule_ga0756eee202fefdde4a5e2ec4fe30bb5b} 
+{\footnotesize template$<$class PR$>$ }\\typedef {\bfseries Raw\+Float\+Type}
+\begin{DoxyCompactList}\small\item\em The raw floating-\/point number type corresponding to precision {\itshape PR}. \end{DoxyCompactList}\item 
+\Hypertarget{group__NumericModule_ga1673e0494a9b80845c3a4912c4cb8dd8}\label{group__NumericModule_ga1673e0494a9b80845c3a4912c4cb8dd8} 
+{\footnotesize template$<$class PR$>$ }\\typedef {\bfseries Raw\+Float}
+\begin{DoxyCompactList}\small\item\em The raw floating-\/point number type corresponding to precision {\itshape PR}. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\input{group__ExtendedLiteralsSubModule}

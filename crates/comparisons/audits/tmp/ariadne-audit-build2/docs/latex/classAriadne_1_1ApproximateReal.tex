@@ -1,0 +1,37 @@
+\doxysubsection{Approximate\+Real Class Reference}
+\hypertarget{classAriadne_1_1ApproximateReal}{}\label{classAriadne_1_1ApproximateReal}\index{ApproximateReal@{ApproximateReal}}
+
+
+{\ttfamily \#include $<$approximate\+\_\+real.\+hpp$>$}
+
+
+
+\doxysubsubsection{Description}
+A generic class representing an approximation to a real number of unknown accuracy. 
+
+\begin{DoxySeeAlso}{See also}
+\doxylink{classAriadne_1_1Real}{Real}, \doxylink{classAriadne_1_1ValidatedReal}{Validated\+Real} 
+\end{DoxySeeAlso}
+\doxysubsubsubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1ApproximateReal_a41bb406d746a88f8d17e76adbab563c3}\label{classAriadne_1_1ApproximateReal_a41bb406d746a88f8d17e76adbab563c3} 
+Dyadic\+Approximation {\bfseries get} () const
+\begin{DoxyCompactList}\small\item\em Get a dyadic approximation to the number. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1ApproximateReal_a85ae4902af881b91a04e4c0edd38693d}\label{classAriadne_1_1ApproximateReal_a85ae4902af881b91a04e4c0edd38693d} 
+Float\+DPApproximation {\bfseries get} (\mbox{\hyperlink{classAriadne_1_1DoublePrecision}{Double\+Precision}}) const
+\begin{DoxyCompactList}\small\item\em Get the approximation to the number, converting to double-\/precision. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1ApproximateReal_ad1c048cf5fc0c199b93f867a89f20d08}\label{classAriadne_1_1ApproximateReal_ad1c048cf5fc0c199b93f867a89f20d08} 
+Float\+MPApproximation {\bfseries get} (\mbox{\hyperlink{classAriadne_1_1MultiplePrecision}{Multiple\+Precision}} pr) const
+\begin{DoxyCompactList}\small\item\em Get the approximation to the number, converting to a representation with precision {\itshape pr}. Note that increasing the precision typically does not yield arbitrarily accurate approximation, as the object already has some error. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsubsection*{Friends}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1ApproximateReal_ae87b5c5081acf5ebde7c03c7feeffe87}\label{classAriadne_1_1ApproximateReal_ae87b5c5081acf5ebde7c03c7feeffe87} 
+\mbox{\hyperlink{namespaceAriadne_acbb98ddc4385af4599070e65a1a47ec1}{Output\+Stream}} \& {\bfseries operator$<$$<$} (\mbox{\hyperlink{namespaceAriadne_acbb98ddc4385af4599070e65a1a47ec1}{Output\+Stream}} \&, \mbox{\hyperlink{classAriadne_1_1ApproximateReal}{Approximate\+Real}} const \&)
+\begin{DoxyCompactList}\small\item\em Write to an output stream. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+The documentation for this class was generated from the following file\+:\begin{DoxyCompactItemize}
+\item 
+source/numeric/approximate\+\_\+real.\+hpp\end{DoxyCompactItemize}

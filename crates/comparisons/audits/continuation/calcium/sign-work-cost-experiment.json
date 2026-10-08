@@ -1,0 +1,67 @@
+{
+  "schema": 1,
+  "recorded": "2026-09-08T20:56:26.144Z",
+  "status": "Sign candidate remains isolated pending repeated opaque-comparison reuse; no live production transfer.",
+  "hypercurve": {
+    "suites": 45,
+    "passedPerVariant": 1761,
+    "ignoredPerVariant": 9
+  },
+  "totalCompletedConsumerTestsPerVariant": 3309,
+  "opaque": {
+    "depths": [
+      1,
+      8,
+      32,
+      128
+    ],
+    "groups": 16,
+    "cpuObservations": 768,
+    "allocationObservations": 192
+  },
+  "sourceHashes": {
+    "sign-consumer-experiment.json": "740e4c5e5bb9e49b50ae8dd428ce67f499172bf28f93296da5f0e4789e2f31c2",
+    "root-exp-opaque-query-bench.rs": "28e0a4144dd82580f76b7a32149c181b53c07fbf2e9d4c6cc70ec6205d6a520c",
+    "run-root-exp-opaque-bench.mjs": "7aecde5f22774f4c3e881bb0a34c35f588ade0f057b2572d8fe24a7d16e32eb4",
+    "bind-sign-work-cost-experiment.mjs": "7e425e67e8652d681245593b9c7380aa9f61cdafc8e52f748a98a4fde32c9b3a",
+    "verify-sign-work-cost-checkpoint.mjs": "165498bf4312500895fcd07df95ece72d29f3417f46bd5aef2e58be793632369",
+    "root-exp-opaque-baseline-bench/Cargo.toml": "bcb3b1fe4a9f62cab0cfb0f59353b20f75047ee6abde6a842a1cab8a2cae2e85",
+    "root-exp-opaque-baseline-bench/Cargo.lock": "ecb441a3aea903ab924b154d9093cb6237c9ba5012df1aa1676e1e55e49558ab",
+    "root-exp-opaque-sign-bench/Cargo.toml": "8097b62eada7b3189b80f110f27cd6ee98b3f1fa296e56d5d402c1e0f3b453ee",
+    "root-exp-opaque-sign-bench/Cargo.lock": "b4a5e69e8c47b9a6ad44601d965cdaae8ea4fac757e03b62ed4e16f70972ddd7"
+  },
+  "evidenceHashes": {
+    "results/sign-consumer-hypercurve-baseline-debug.json": "26be4b8bf54202da968e517720a8911badc7f592443445d7e319833821f0e25a",
+    "results/sign-consumer-hypercurve-baseline-debug.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/sign-consumer-hypercurve-baseline-debug.stderr": "858edc5b6c9a1d263df7f228aa38813c0c476a43a036abc417ebb269223b910d",
+    "results/sign-consumer-hypercurve-baseline-debug-storage-retry.json": "6fbd38058831c79839cfe4d92c26d3e05fa9fc228e07cbfd4dcbc3a22605815c",
+    "results/sign-consumer-hypercurve-baseline-debug-storage-retry.stdout": "8e3599bceb2f32a400e4f4949807ccaf1e51e9c39470b1b1ad2302de7360e06a",
+    "results/sign-consumer-hypercurve-baseline-debug-storage-retry.stderr": "732e565a7c647c3be3570ce46cce31bb1af8d3f32b205e14d1b650ce8e92ebdb",
+    "results/sign-consumer-hypercurve-sign-debug.json": "48dd6695999cddd9a06d80ed057a068731ca19bec917d74c87f4b0ec355a2453",
+    "results/sign-consumer-hypercurve-sign-debug.stdout": "11889483d98271b90bc48e3b13e017346f9458a7f632444a6921977a44abf181",
+    "results/sign-consumer-hypercurve-sign-debug.stderr": "ba92f589c0352f15cf92c61a63d48d808aca565ad353bd8ff2c129edcbb97557",
+    "results/run-root-exp-opaque-cpu.json": "e9dc2d73246e70dcdbf5788d601cbc74ccf53a61d4afe44d969653453756d589",
+    "results/run-root-exp-opaque-cpu.stdout": "4468ee9ed2cc2b13f53f6bbecf7499096323010592b28bf5d66966e0ce1a0b6f",
+    "results/run-root-exp-opaque-cpu.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/root-exp-opaque-baseline-build-cpu.json": "6a9bf5e2c497f71b11a61a8a8180727b05ddb8063944eec22956714a96bd586c",
+    "results/root-exp-opaque-baseline-build-cpu.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/root-exp-opaque-baseline-build-cpu.stderr": "4130b39f28ca979a81f43d3fb12fa41f5a4c8b1dc84552dfb7ba829fd067a375",
+    "results/root-exp-opaque-sign-build-cpu.json": "c2433999847425a8400a2c0df3054de6e68f775d04956142aa19985b71747407",
+    "results/root-exp-opaque-sign-build-cpu.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/root-exp-opaque-sign-build-cpu.stderr": "557138e9623dda0884e72737ce1f60333ab9456ef00301017b8661c40978ac2c",
+    "results/run-root-exp-opaque-alloc.json": "324f9e52db82028cff37a60facd81405f09bc1e1534ffa34ecb47000482199a7",
+    "results/run-root-exp-opaque-alloc.stdout": "bf2f3ebd9daf6fe8c7996a395459e83a793867266e3f93853ab2a6b1cfec7afa",
+    "results/run-root-exp-opaque-alloc.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/root-exp-opaque-baseline-build-alloc.json": "105b204bc57cbafa592dc75a63256032e4df50973ce993a58f29e142b4d4a45a",
+    "results/root-exp-opaque-baseline-build-alloc.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/root-exp-opaque-baseline-build-alloc.stderr": "53358710bad60e85068bcc11ba176283a2c74b12ea2fb88aa413e799e05273fb",
+    "results/root-exp-opaque-sign-build-alloc.json": "f0eb83ab39acd143db0d8e382c12cedcd73d40d3e6b2e2d85d86c4375bd202b8",
+    "results/root-exp-opaque-sign-build-alloc.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/root-exp-opaque-sign-build-alloc.stderr": "9fb6c3e4df2f4a0c1fe3ad7a7a304cbdd40cb0798091275e34c008c8a5309bfc",
+    "results/root-exp-opaque-cpu.jsonl": "da3a48526ee94bf62ed91ccc7026a26373c62d067db6097691afd623d7acf016",
+    "root-exp-opaque-cpu-summary.json": "11b6e823d583f866ffa16574afd3d3a1f5ebbb9e42dfb80cbe81a160a68aad04",
+    "results/root-exp-opaque-alloc.jsonl": "5441224509e42d638e72f3a8bb15b74a8d757a9c16a8378e05404d5159ab3a66",
+    "root-exp-opaque-alloc-summary.json": "34c5593d58422fccffec322c1c8de7d514cf5143a9fa26a8f1d54d78d8823f05"
+  },
+  "limits": "Consumer tests were not synchronized CPU benchmarks; nine pre-existing Hypercurve ignored tests remain unrun (six benchmark drivers and three long stroke regressions). No full CI or both-profile consumer qualification. Opaque benchmark uses independently reconstructed nested-sine arguments, warm operands or retained differences, not every DAG sharing pattern. Requested allocation bytes are cumulative, not peak heap. Collector128 visits and16 terms do not bound every opaque node-pair comparison or arbitrary-size atom payload. Full donor and ecosystem audit remains incomplete."
+}

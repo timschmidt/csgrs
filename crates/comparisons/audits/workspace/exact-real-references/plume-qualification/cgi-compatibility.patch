@@ -1,0 +1,21 @@
+--- a/Alex.hs
++++ b/Alex.hs
+@@ -25,7 +25,7 @@
+ 
+ module Alex where
+ 
+-import Array
++import Data.Array
+ 
+ 
+ 
+@@ -346,7 +346,7 @@
+ 
+ 	dp_out df ar = (bounds ar,[(c,n)| (c,n)<-assocs ar, n/=df])
+ 
+ load_dfa:: [(String,f)] -> f -> DFADump -> DFA f
+-load_dfa al df dmp = map f (recover_dfa dmp)
++load_dfa al df dmp = fmap f (recover_dfa dmp)
+ 	where
+ 	f (St clr accs dflt ar) = St clr (map g accs) dflt ar
+ 

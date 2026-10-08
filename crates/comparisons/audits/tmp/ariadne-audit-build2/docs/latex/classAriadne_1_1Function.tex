@@ -1,0 +1,369 @@
+\doxysubsection{Function\texorpdfstring{$<$}{<} P, SIG \texorpdfstring{$>$}{>} Class Template Reference}
+\hypertarget{classAriadne_1_1Function}{}\label{classAriadne_1_1Function}\index{Function$<$ P, SIG $>$@{Function$<$ P, SIG $>$}}
+
+
+{\ttfamily \#include $<$function.\+hpp$>$}
+
+
+
+\doxysubsubsection{Description}
+\subsubsection*{template$<$class P, class SIG$>$\newline
+class Ariadne\+::\+Function$<$ P, SIG $>$}
+A generic continuous function. 
+
+
+\begin{DoxyTemplParams}{Template Parameters}
+{\em P} & The {\itshape \doxylink{group__InformationSubModule_information_section}{information paradigm}} tag, which can be either \doxylink{structAriadne_1_1ExactTag}{Exact\+Tag}, \doxylink{structAriadne_1_1EffectiveTag}{Effective\+Tag}, \doxylink{structAriadne_1_1ValidatedTag}{Validated\+Tag}, or \doxylink{structAriadne_1_1ApproximateTag}{Approximate\+Tag}. \\
+\hline
+{\em SIG} & The {\itshape \doxysectlink{group__FunctionModule_function_signature_section}{signature}{2}}, which has the standard C++ form {\ttfamily RES(\+ARG)}, so signature {\ttfamily Real(\+Real\+Vector)} indicates a function $f:\R^n\rightarrow\R$.\\
+\hline
+\end{DoxyTemplParams}
+Class representing general continuous functions . Inheritance diagram for Function\texorpdfstring{$<$}{<} P, SIG \texorpdfstring{$>$}{>}\+:\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[height=1.549101cm]{classAriadne_1_1Function}
+\end{center}
+\end{figure}
+\doxysubsubsubsection*{Public Types}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1Function_a43a4e07f4ca581adb0c9753566b93e28}\label{classAriadne_1_1Function_a43a4e07f4ca581adb0c9753566b93e28} 
+typedef P {\bfseries Information\+Tag}
+\begin{DoxyCompactList}\small\item\em The type of information (Exact, \doxylink{classAriadne_1_1Concepts_1_1Effective}{Effective}, \doxylink{classAriadne_1_1Concepts_1_1Validated}{Validated} or \doxylink{classAriadne_1_1Concepts_1_1Approximate}{Approximate}) provided by the function implementation. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Function_a1a6fe7e64a160714c4a685ec4cd708c5}\label{classAriadne_1_1Function_a1a6fe7e64a160714c4a685ec4cd708c5} 
+typedef D {\bfseries Domain\+Type}
+\begin{DoxyCompactList}\small\item\em The type of the domain. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Function_afc45dbb264451ec2eb2a5d39281bf5c6}\label{classAriadne_1_1Function_afc45dbb264451ec2eb2a5d39281bf5c6} 
+typedef C {\bfseries Codomain\+Type}
+\begin{DoxyCompactList}\small\item\em The type of the codomain. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Function_a73863019780a1e9fbee96350c87bf011}\label{classAriadne_1_1Function_a73863019780a1e9fbee96350c87bf011} 
+typedef \mbox{\hyperlink{classAriadne_1_1Number}{Number}}$<$ P $>$ {\bfseries Numeric\+Type}
+\begin{DoxyCompactList}\small\item\em The numeric type required to construct a constant scalar function. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Function_ab754216d4c1879e7902f5f756e7269b1}\label{classAriadne_1_1Function_ab754216d4c1879e7902f5f756e7269b1} 
+typedef Signature\+Traits$<$ SIG $>$\+::\+Argument\+Space\+Type {\bfseries Argument\+Space\+Type}
+\begin{DoxyCompactList}\small\item\em The type used to descibe an ordered set of argument variables. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Function_a3e5233e188c3031aec3ce7e0b97974ae}\label{classAriadne_1_1Function_a3e5233e188c3031aec3ce7e0b97974ae} 
+typedef Signature\+Traits$<$ SIG $>$\+::\+Argument\+Size\+Type {\bfseries Argument\+Size\+Type}
+\begin{DoxyCompactList}\small\item\em The type used to descibe the size of an element of the domain. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Function_a53dccb83c77c0653f8173e00ebf6ceee}\label{classAriadne_1_1Function_a53dccb83c77c0653f8173e00ebf6ceee} 
+typedef Signature\+Traits$<$ SIG $>$\+::\+Result\+Size\+Type {\bfseries Result\+Size\+Type}
+\begin{DoxyCompactList}\small\item\em The type used to descibe the size of an element of the codomain. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Function_aa09e33b98c0cceda7fa8b0fafbf3247b}\label{classAriadne_1_1Function_aa09e33b98c0cceda7fa8b0fafbf3247b} 
+typedef Signature\+Traits$<$ SIG $>$\+::\+Argument\+Index\+Type {\bfseries Argument\+Index\+Type}
+\begin{DoxyCompactList}\small\item\em The type used to descibe an index into an element of the domain. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Function_a9fe46901dbe233bec0b5b351a5f60a9a}\label{classAriadne_1_1Function_a9fe46901dbe233bec0b5b351a5f60a9a} 
+typedef Signature\+Traits$<$ SIG $>$\+::\+Result\+Index\+Type {\bfseries Result\+Index\+Type}
+\begin{DoxyCompactList}\small\item\em The type used to descibe an index into an element of the codomain. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Function_a4162608ba08851336cf67bac1dfcbd11}\label{classAriadne_1_1Function_a4162608ba08851336cf67bac1dfcbd11} 
+{\footnotesize template$<$class \mbox{\hyperlink{classAriadne_1_1Number}{Y}}$>$ }\\using {\bfseries Argument} = typename Signature\+Traits$<$SIG$>$\+::template \mbox{\hyperlink{classAriadne_1_1Function_a4162608ba08851336cf67bac1dfcbd11}{Argument}}$<$\mbox{\hyperlink{classAriadne_1_1Number}{Y}}$>$
+\begin{DoxyCompactList}\small\item\em The type of an argument to the function whose scalar type is {\itshape Y}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Function_a5c0f07f2ec8d19e46287d9ccce35736a}\label{classAriadne_1_1Function_a5c0f07f2ec8d19e46287d9ccce35736a} 
+{\footnotesize template$<$class \mbox{\hyperlink{classAriadne_1_1Number}{Y}}$>$ }\\using {\bfseries Result} = typename Signature\+Traits$<$SIG$>$\+::template \mbox{\hyperlink{classAriadne_1_1Function_a5c0f07f2ec8d19e46287d9ccce35736a}{Result}}$<$\mbox{\hyperlink{classAriadne_1_1Number}{Y}}$>$
+\begin{DoxyCompactList}\small\item\em The type for the result of calling the function whose scalar type is {\itshape Y}. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsubsection*{Public Member Functions}
+\begin{Indent}\textbf{ User constructors.}\par
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1Function_a5540107ca1990466048dea0ce7c355fe}\label{classAriadne_1_1Function_a5540107ca1990466048dea0ce7c355fe} 
+{\bfseries Function} (\mbox{\hyperlink{classAriadne_1_1Function_a53dccb83c77c0653f8173e00ebf6ceee}{Result\+Size\+Type}} rs, \mbox{\hyperlink{classAriadne_1_1Function_a3e5233e188c3031aec3ce7e0b97974ae}{Argument\+Size\+Type}} as)
+\begin{DoxyCompactList}\small\item\em Construct the zero function with the given number of argument variables {\itshape as} and result variables {\itshape rs}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Function_a3c79de6f0d44b28ec3f297189439ba9f}\label{classAriadne_1_1Function_a3c79de6f0d44b28ec3f297189439ba9f} 
+{\bfseries Function} (\mbox{\hyperlink{classAriadne_1_1Function_a1a6fe7e64a160714c4a685ec4cd708c5}{Domain\+Type}} dom)
+\begin{DoxyCompactList}\small\item\em Construct the zero function with the given domain {\itshape dom} and default codomain (Zero-\/dimensional for a vector function, one-\/dimensional for a scalar function). \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Function_a1323d413fded2c165e6eb98aeabccb83}\label{classAriadne_1_1Function_a1323d413fded2c165e6eb98aeabccb83} 
+{\bfseries Function} (\mbox{\hyperlink{classAriadne_1_1Function_a53dccb83c77c0653f8173e00ebf6ceee}{Result\+Size\+Type}} rs, \mbox{\hyperlink{classAriadne_1_1Function_a1a6fe7e64a160714c4a685ec4cd708c5}{Domain\+Type}} dom)
+\begin{DoxyCompactList}\small\item\em Construct the zero function with the given domain {\itshape dom} and number of result variables {\itshape rs}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Function_ae8709a95dcc7a187249dada659129504}\label{classAriadne_1_1Function_ae8709a95dcc7a187249dada659129504} 
+{\bfseries Function} (\mbox{\hyperlink{classAriadne_1_1Function_a1a6fe7e64a160714c4a685ec4cd708c5}{Domain\+Type}} dom, \mbox{\hyperlink{classAriadne_1_1Function_a5c0f07f2ec8d19e46287d9ccce35736a}{Result}}$<$ \mbox{\hyperlink{classAriadne_1_1Formula}{Formula}}$<$ \mbox{\hyperlink{classAriadne_1_1Number}{Y}} $>$ $>$const \&e)
+\begin{DoxyCompactList}\small\item\em Construct a function with the given domain {\itshape dom} and number of result variables {\itshape rs}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Function_af5ab8e3f5cb5c8c3f5ea680518adc3cd}\label{classAriadne_1_1Function_af5ab8e3f5cb5c8c3f5ea680518adc3cd} 
+{\bfseries Function} (\mbox{\hyperlink{classAriadne_1_1Function_a53dccb83c77c0653f8173e00ebf6ceee}{Result\+Size\+Type}} rs, \mbox{\hyperlink{group__FunctionModule_ga97dec0be54bdb27609f9925b055e35dc}{Scalar\+Function}}$<$ P, ARG $>$ sf)
+\begin{DoxyCompactList}\small\item\em Construct a function each of whose components are {\itshape sf} with the given domain {\itshape dom}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Function_a189b4224a2cb5ba96084f843765c5d09}\label{classAriadne_1_1Function_a189b4224a2cb5ba96084f843765c5d09} 
+{\bfseries Function} (\mbox{\hyperlink{classAriadne_1_1Function_ab754216d4c1879e7902f5f756e7269b1}{Argument\+Space\+Type}} const \&spc, \mbox{\hyperlink{classAriadne_1_1Function_a5c0f07f2ec8d19e46287d9ccce35736a}{Result}}$<$ \mbox{\hyperlink{classAriadne_1_1Expression}{Real\+Expression}} $>$const \&e)
+\begin{DoxyCompactList}\small\item\em Construct from argument variable(s) {\itshape spc} and expression(s) {\itshape e} in terms of these variables. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Function_a1fdd40980005431b4fc25f467fa45305}\label{classAriadne_1_1Function_a1fdd40980005431b4fc25f467fa45305} 
+{\bfseries Function} (\mbox{\hyperlink{namespaceAriadne_a8d51a34ecd8621e992f2470124281c93}{Initializer\+List}}$<$ \mbox{\hyperlink{group__FunctionModule_ga97dec0be54bdb27609f9925b055e35dc}{Scalar\+Function}}$<$ P, ARG $>$ $>$ const \&lsf)
+\begin{DoxyCompactList}\small\item\em Create a vector function from an initializer list of scalar functions. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Function_aab9a32f6dc03c5897640b4cb3d3d5f6f}\label{classAriadne_1_1Function_aab9a32f6dc03c5897640b4cb3d3d5f6f} 
+{\bfseries Function} (\mbox{\hyperlink{classAriadne_1_1List}{List}}$<$ \mbox{\hyperlink{group__FunctionModule_ga97dec0be54bdb27609f9925b055e35dc}{Scalar\+Function}}$<$ P, ARG $>$ $>$ const \&lsf)
+\begin{DoxyCompactList}\small\item\em Create a vector function from a list of scalar functions. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Function_abcb5ca11898bc0c7bfa52c88ce7e7fdb}\label{classAriadne_1_1Function_abcb5ca11898bc0c7bfa52c88ce7e7fdb} 
+{\bfseries Function} (\mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ \mbox{\hyperlink{group__FunctionModule_ga97dec0be54bdb27609f9925b055e35dc}{Scalar\+Function}}$<$ P, ARG $>$ $>$ const \&lsf)
+\begin{DoxyCompactList}\small\item\em Create a vector function from a vector of scalar functions. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\end{Indent}
+\begin{Indent}\textbf{ Prototype constructors.}\par
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1Function_a844dc3031b543cf6e8c2c5495bfca4ff}\label{classAriadne_1_1Function_a844dc3031b543cf6e8c2c5495bfca4ff} 
+\mbox{\hyperlink{group__FunctionModule_ga97dec0be54bdb27609f9925b055e35dc}{Scalar\+Function}}$<$ P, ARG $>$ {\bfseries create\+\_\+zero} () const
+\begin{DoxyCompactList}\small\item\em Construct a zero scalar function with the same domain. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Function_ab2a0fe0a68ae5632290436e70aaf20eb}\label{classAriadne_1_1Function_ab2a0fe0a68ae5632290436e70aaf20eb} 
+\mbox{\hyperlink{group__FunctionModule_ga97dec0be54bdb27609f9925b055e35dc}{Scalar\+Function}}$<$ P, ARG $>$ {\bfseries create\+\_\+constant} (\mbox{\hyperlink{classAriadne_1_1Function_a73863019780a1e9fbee96350c87bf011}{Numeric\+Type}} c) const
+\begin{DoxyCompactList}\small\item\em Construct a scalar constant function with value {\itshape c} and the same domain. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Function_a47e01a3d2c2bc9675cc68e1af6fda3d1}\label{classAriadne_1_1Function_a47e01a3d2c2bc9675cc68e1af6fda3d1} 
+\mbox{\hyperlink{group__FunctionModule_ga97dec0be54bdb27609f9925b055e35dc}{Scalar\+Function}}$<$ P, ARG $>$ {\bfseries create\+\_\+coordinate} (\mbox{\hyperlink{classAriadne_1_1Function_aa09e33b98c0cceda7fa8b0fafbf3247b}{Argument\+Index\+Type}} j) const
+\begin{DoxyCompactList}\small\item\em Construct the scalar coordinate function for the index {\itshape j}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Function_af89bce3a3a2251a917dcfeeae9aa6f5c}\label{classAriadne_1_1Function_af89bce3a3a2251a917dcfeeae9aa6f5c} 
+\mbox{\hyperlink{group__FunctionModule_gae5d2f69ea172c6a2dfa7d2f12f700737}{Vector\+Function}}$<$ P, ARG $>$ {\bfseries create\+\_\+constant} (\mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ \mbox{\hyperlink{classAriadne_1_1Function_a73863019780a1e9fbee96350c87bf011}{Numeric\+Type}} $>$ c) const
+\begin{DoxyCompactList}\small\item\em Construct the vector constant function with values {\itshape c}. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\end{Indent}
+\begin{Indent}\textbf{ Handle-\/interface methods.}\par
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1Function_aa61125691a5b694a46ce9f6a0fbe5093}\label{classAriadne_1_1Function_aa61125691a5b694a46ce9f6a0fbe5093} 
+{\bfseries Function} ()
+\begin{DoxyCompactList}\small\item\em Create an invalid (null) function. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\end{Indent}
+\begin{Indent}\textbf{ Conversions and assignment.}\par
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1Function_adf629a7dc0dc3d62a2068d5f6c231d6d}\label{classAriadne_1_1Function_adf629a7dc0dc3d62a2068d5f6c231d6d} 
+{\bfseries Function} (const \mbox{\hyperlink{classAriadne_1_1Function}{Function}}$<$ P, SIG $>$ \&f)=default
+\begin{DoxyCompactList}\small\item\em Copy constructor. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Function_a04c68ec1a3bbf0a7ed0176aeff31e62c}\label{classAriadne_1_1Function_a04c68ec1a3bbf0a7ed0176aeff31e62c} 
+{\footnotesize template$<$Stronger\+Than$<$ P $>$ PP$>$ }\\{\bfseries Function} (const \mbox{\hyperlink{classAriadne_1_1Function}{Function}}$<$ PP, SIG $>$ \&f)
+\begin{DoxyCompactList}\small\item\em Convert from a function class specifying more information. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Function_ae9bb1d5ab5a7b2fc2d679b2ece45758f}\label{classAriadne_1_1Function_ae9bb1d5ab5a7b2fc2d679b2ece45758f} 
+\mbox{\hyperlink{classAriadne_1_1Function}{Function}}$<$ P, SIG $>$ \& {\bfseries operator=} (const \mbox{\hyperlink{classAriadne_1_1Function}{Function}}$<$ P, SIG $>$ \&f)=default
+\begin{DoxyCompactList}\small\item\em Copy assignment. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Function_a611ef1a62d21b967965318a09f4253ef}\label{classAriadne_1_1Function_a611ef1a62d21b967965318a09f4253ef} 
+{\footnotesize template$<$Stronger\+Than$<$ P $>$ PP$>$ }\\\mbox{\hyperlink{classAriadne_1_1Function}{Function}}$<$ P, SIG $>$ \& {\bfseries operator=} (\mbox{\hyperlink{classAriadne_1_1Function_a5c0f07f2ec8d19e46287d9ccce35736a}{Result}}$<$ \mbox{\hyperlink{classAriadne_1_1Function_a73863019780a1e9fbee96350c87bf011}{Numeric\+Type}} $>$ const \&c)
+\begin{DoxyCompactList}\small\item\em Assign from a function class specifying more information. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Function_a96f9fdaffa1c784dafebfc5c4a77a70a}\label{classAriadne_1_1Function_a96f9fdaffa1c784dafebfc5c4a77a70a} 
+\mbox{\hyperlink{classAriadne_1_1Function}{Function}}$<$ P, SIG $>$ \& {\bfseries operator=} (const \mbox{\hyperlink{classAriadne_1_1Function_a5c0f07f2ec8d19e46287d9ccce35736a}{Result}}$<$ \mbox{\hyperlink{classAriadne_1_1Function_a73863019780a1e9fbee96350c87bf011}{Numeric\+Type}} $>$ \&c)
+\begin{DoxyCompactList}\small\item\em \doxylink{classAriadne_1_1Set}{Set} equal to the constant value {\itshape c}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Function_aaaaf17839ab2358d22763d89c884df9a}\label{classAriadne_1_1Function_aaaaf17839ab2358d22763d89c884df9a} 
+{\footnotesize template$<$class F$>$ \newline
+requires (not Is\+Function\+Class$<$F,SIG$>$) and AFunction$<$F,P,SIG$>$}\\{\bfseries Function} (F const \&f)
+\begin{DoxyCompactList}\small\item\em Construct from a class satisfying the function concept. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\end{Indent}
+\begin{Indent}\textbf{ Query domain and codomain.}\par
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1Function_a135572aec12241a9bb3e87554d91d80a}\label{classAriadne_1_1Function_a135572aec12241a9bb3e87554d91d80a} 
+\mbox{\hyperlink{classAriadne_1_1Function_a1a6fe7e64a160714c4a685ec4cd708c5}{Domain\+Type}} {\bfseries domain} () const
+\begin{DoxyCompactList}\small\item\em The domain of the function. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Function_adf0adda1c22aef6800501d51bb78e1ed}\label{classAriadne_1_1Function_adf0adda1c22aef6800501d51bb78e1ed} 
+\mbox{\hyperlink{classAriadne_1_1Function_afc45dbb264451ec2eb2a5d39281bf5c6}{Codomain\+Type}} {\bfseries codomain} () const
+\begin{DoxyCompactList}\small\item\em The codomain of the function. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Function_ae8ba799ffd79fb8e84f9f82fa5f9e1f4}\label{classAriadne_1_1Function_ae8ba799ffd79fb8e84f9f82fa5f9e1f4} 
+\mbox{\hyperlink{classAriadne_1_1Function_a3e5233e188c3031aec3ce7e0b97974ae}{Argument\+Size\+Type}} {\bfseries argument\+\_\+size} () const
+\begin{DoxyCompactList}\small\item\em The number of scalar variables in the argument. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Function_af65e6fd3bef0178b5c01521d5d3744d8}\label{classAriadne_1_1Function_af65e6fd3bef0178b5c01521d5d3744d8} 
+\mbox{\hyperlink{classAriadne_1_1Function_a53dccb83c77c0653f8173e00ebf6ceee}{Result\+Size\+Type}} {\bfseries result\+\_\+size} () const
+\begin{DoxyCompactList}\small\item\em The number of scalar variables in the result. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\end{Indent}
+\begin{Indent}\textbf{ Call/evaluate}\par
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1Function_a16b9f3dc1755e7bd68c7ba041ff7d6be}\label{classAriadne_1_1Function_a16b9f3dc1755e7bd68c7ba041ff7d6be} 
+{\footnotesize template$<$class X$>$ }\\auto {\bfseries operator()} (const \mbox{\hyperlink{classAriadne_1_1Function_a4162608ba08851336cf67bac1dfcbd11}{Argument}}$<$ X $>$ \&x) const -\/$>$ decltype(this-\/$>$reference().\+\_\+call(x))
+\begin{DoxyCompactList}\small\item\em Call the function on an argument of concrete scalar type {\itshape X}. \end{DoxyCompactList}\item 
+{\footnotesize template$<$class X$>$ }\\auto \mbox{\hyperlink{classAriadne_1_1Function_aafac36a9da98f46cc4214f68d512917f}{evaluate}} (const \mbox{\hyperlink{classAriadne_1_1Function_a4162608ba08851336cf67bac1dfcbd11}{Argument}}$<$ X $>$ \&x) const -\/$>$ decltype(this-\/$>$reference().\+\_\+call(x))
+\begin{DoxyCompactList}\small\item\em Call the function on an argument of concrete scalar type {\itshape X}. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\end{Indent}
+\begin{Indent}\textbf{ Differential function operations.}\par
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1Function_ab5e9e55832f36e90bdc1b429556b4205}\label{classAriadne_1_1Function_ab5e9e55832f36e90bdc1b429556b4205} 
+{\footnotesize template$<$class X$>$ }\\decltype(auto) {\bfseries differential} (const \mbox{\hyperlink{classAriadne_1_1Function_a4162608ba08851336cf67bac1dfcbd11}{Argument}}$<$ X $>$ \&x, \mbox{\hyperlink{namespaceAriadne_a80311bc831cfc870fd65158180330a77}{Degree\+Type}} d) const
+\begin{DoxyCompactList}\small\item\em The differential (partial derivatives) of the function at the point {\itshape x}, computed to degree {\itshape d}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Function_a1b12880142f88415c481b2d900b9266b}\label{classAriadne_1_1Function_a1b12880142f88415c481b2d900b9266b} 
+\mbox{\hyperlink{classAriadne_1_1Function}{Function}}$<$ P, SIG $>$ {\bfseries derivative} (Element\+Index\+Type$<$ D $>$ k) const
+\begin{DoxyCompactList}\small\item\em The derivative of the function with respect to the {\itshape k} -\/th variable. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\end{Indent}
+\begin{Indent}\textbf{ Vector (indexing) operations.}\par
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1Function_ae61ccaccae6d839cc696a96145095854}\label{classAriadne_1_1Function_ae61ccaccae6d839cc696a96145095854} 
+\mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} {\bfseries set} (Size\+Type i, \mbox{\hyperlink{group__FunctionModule_ga97dec0be54bdb27609f9925b055e35dc}{Scalar\+Function}}$<$ P, ARG $>$ f)
+\begin{DoxyCompactList}\small\item\em \doxylink{classAriadne_1_1Set}{Set} the {\itshape i} -\/th component of a vector function to {\itshape f}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Function_ae9cd16e34519d43308a003c1ab489315}\label{classAriadne_1_1Function_ae9cd16e34519d43308a003c1ab489315} 
+\mbox{\hyperlink{classAriadne_1_1Function}{Function}}$<$ P, \mbox{\hyperlink{classAriadne_1_1Real}{Real}}(ARG)$>$ {\bfseries get} (Size\+Type i) const
+\begin{DoxyCompactList}\small\item\em Get the {\itshape i} -\/th component of a vector function. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Function_a2af2b796100c08ebb344a301c689c7b2}\label{classAriadne_1_1Function_a2af2b796100c08ebb344a301c689c7b2} 
+const \mbox{\hyperlink{classAriadne_1_1Function}{Function}}$<$ P, \mbox{\hyperlink{classAriadne_1_1Real}{Real}}(ARG)$>$ {\bfseries operator\mbox{[}$\,$\mbox{]}} (Size\+Type i) const
+\begin{DoxyCompactList}\small\item\em Get the {\itshape i} -\/th component of a vector function. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Function_aada2f4805f8aebd39ac584b8afc78a5d}\label{classAriadne_1_1Function_aada2f4805f8aebd39ac584b8afc78a5d} 
+const \mbox{\hyperlink{classAriadne_1_1Function}{Function}}$<$ P, \mbox{\hyperlink{group__LinearAlgebraSubModule_ga00e69bf76ffebd1f3ba573f4662134bc}{Real\+Vector}}(ARG)$>$ {\bfseries operator\mbox{[}$\,$\mbox{]}} (\mbox{\hyperlink{classAriadne_1_1Range}{Range}} rng) const
+\begin{DoxyCompactList}\small\item\em Get the components of a specified by {\itshape rng} function. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Function_a6277297f68ffebd6681a594efcfa663e}\label{classAriadne_1_1Function_a6277297f68ffebd6681a594efcfa663e} 
+\mbox{\hyperlink{structAriadne_1_1VectorFunctionElementReference}{Vector\+Function\+Element\+Reference}}$<$ P, ARG $>$ {\bfseries operator\mbox{[}$\,$\mbox{]}} (Size\+Type i)
+\begin{DoxyCompactList}\small\item\em A reference to the {\itshape i} -\/th component of a vector function. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\end{Indent}
+\doxysubsubsubsection*{Friends}
+\begin{Indent}\textbf{ Evaluation and differentiation}\par
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1Function_a67841144ad442ab6c14c4bbad47e8778}\label{classAriadne_1_1Function_a67841144ad442ab6c14c4bbad47e8778} 
+{\footnotesize template$<$class X$>$ }\\\mbox{\hyperlink{classAriadne_1_1Function_a5c0f07f2ec8d19e46287d9ccce35736a}{Result}}$<$ X $>$ {\bfseries evaluate} (const \mbox{\hyperlink{classAriadne_1_1Function}{Function}}$<$ P, SIG $>$ \&f, const \mbox{\hyperlink{classAriadne_1_1Function_a4162608ba08851336cf67bac1dfcbd11}{Argument}}$<$ X $>$ \&x) const
+\begin{DoxyCompactList}\small\item\em Call the function on an argument of concrete scalar type {\itshape X}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Function_a761b16469f23a560bb8f9f28e2f1320f}\label{classAriadne_1_1Function_a761b16469f23a560bb8f9f28e2f1320f} 
+{\footnotesize template$<$class X$>$ }\\\mbox{\hyperlink{classAriadne_1_1Function_a5c0f07f2ec8d19e46287d9ccce35736a}{Result}}$<$ \mbox{\hyperlink{classAriadne_1_1Differential}{Differential}}$<$ X $>$ $>$ {\bfseries differential} (const \mbox{\hyperlink{classAriadne_1_1Function}{Function}}$<$ P, SIG $>$ \&f, const \mbox{\hyperlink{classAriadne_1_1Function_a4162608ba08851336cf67bac1dfcbd11}{Argument}}$<$ X $>$ \&x, \mbox{\hyperlink{namespaceAriadne_a80311bc831cfc870fd65158180330a77}{Degree\+Type}} d) const
+\begin{DoxyCompactList}\small\item\em The differential (partial derivatives) of the function at the point {\itshape x}, computed to degree {\itshape d}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Function_ab97491a63b9290f1cfb2586ef1e8b2e5}\label{classAriadne_1_1Function_ab97491a63b9290f1cfb2586ef1e8b2e5} 
+\mbox{\hyperlink{classAriadne_1_1Function}{Function}}$<$ P, SIG $>$ {\bfseries derivative} (\mbox{\hyperlink{classAriadne_1_1Function}{Function}}$<$ P, SIG $>$ const \&f, Element\+Index\+Type$<$ D $>$ k)
+\begin{DoxyCompactList}\small\item\em The derivative of the function {\itshape f} with respect to the {\itshape k} -\/th variable. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\end{Indent}
+\begin{Indent}\textbf{ Input/output operations.}\par
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1Function_ab6c9cdb4f762d2771878064a3b303fef}\label{classAriadne_1_1Function_ab6c9cdb4f762d2771878064a3b303fef} 
+\mbox{\hyperlink{namespaceAriadne_acbb98ddc4385af4599070e65a1a47ec1}{Output\+Stream}} \& {\bfseries operator$<$$<$} (\mbox{\hyperlink{namespaceAriadne_acbb98ddc4385af4599070e65a1a47ec1}{Output\+Stream}} \&os, \mbox{\hyperlink{classAriadne_1_1Function}{Function}}$<$ P, SIG $>$ const \&f)
+\begin{DoxyCompactList}\small\item\em Write to an output stream. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\end{Indent}
+\doxysubsubsubsection*{Related Types and Functions}
+(Note that these are not member symbols.) \begin{Indent}\textbf{ Type synonyms for function classes}\par
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1Function_af3c18419cbfc2523485220cd9fe63aa0}\label{classAriadne_1_1Function_af3c18419cbfc2523485220cd9fe63aa0} 
+using {\bfseries Approximate\+Scalar\+Univariate\+Function} = \mbox{\hyperlink{group__FunctionModule_ga4a215a0a287e522d9422c606425448ec}{Scalar\+Univariate\+Function}}$<$\mbox{\hyperlink{structAriadne_1_1ApproximateTag}{Approximate\+Tag}}$>$
+\item 
+\Hypertarget{classAriadne_1_1Function_a42f43c561f5a503fa565565906b59536}\label{classAriadne_1_1Function_a42f43c561f5a503fa565565906b59536} 
+using {\bfseries Validated\+Scalar\+Univariate\+Function} = \mbox{\hyperlink{group__FunctionModule_ga4a215a0a287e522d9422c606425448ec}{Scalar\+Univariate\+Function}}$<$\mbox{\hyperlink{structAriadne_1_1ValidatedTag}{Validated\+Tag}}$>$
+\item 
+\Hypertarget{classAriadne_1_1Function_a91c3811cfb016061f1d24582b89bede1}\label{classAriadne_1_1Function_a91c3811cfb016061f1d24582b89bede1} 
+using {\bfseries Effective\+Scalar\+Univariate\+Function} = \mbox{\hyperlink{group__FunctionModule_ga4a215a0a287e522d9422c606425448ec}{Scalar\+Univariate\+Function}}$<$\mbox{\hyperlink{structAriadne_1_1EffectiveTag}{Effective\+Tag}}$>$
+\item 
+\Hypertarget{classAriadne_1_1Function_a7ed9aea39ee38d9e7be3fa9a0deef1ef}\label{classAriadne_1_1Function_a7ed9aea39ee38d9e7be3fa9a0deef1ef} 
+using {\bfseries Approximate\+Scalar\+Multivariate\+Function} = \mbox{\hyperlink{group__FunctionModule_gaec600ea23399c725519b926e6b012451}{Scalar\+Multivariate\+Function}}$<$\mbox{\hyperlink{structAriadne_1_1ApproximateTag}{Approximate\+Tag}}$>$
+\item 
+\Hypertarget{classAriadne_1_1Function_abce2a55c2a2d9c2cd48a8777650dc3f5}\label{classAriadne_1_1Function_abce2a55c2a2d9c2cd48a8777650dc3f5} 
+using {\bfseries Validated\+Scalar\+Multivariate\+Function} = \mbox{\hyperlink{group__FunctionModule_gaec600ea23399c725519b926e6b012451}{Scalar\+Multivariate\+Function}}$<$\mbox{\hyperlink{structAriadne_1_1ValidatedTag}{Validated\+Tag}}$>$
+\item 
+\Hypertarget{classAriadne_1_1Function_a80f5bd6125c3c06ec3a4b760854eef4f}\label{classAriadne_1_1Function_a80f5bd6125c3c06ec3a4b760854eef4f} 
+using {\bfseries Effective\+Scalar\+Multivariate\+Function} = \mbox{\hyperlink{group__FunctionModule_gaec600ea23399c725519b926e6b012451}{Scalar\+Multivariate\+Function}}$<$\mbox{\hyperlink{structAriadne_1_1EffectiveTag}{Effective\+Tag}}$>$
+\item 
+\Hypertarget{classAriadne_1_1Function_a2e2ed3f198a8a942ab8b238bb5fa3e21}\label{classAriadne_1_1Function_a2e2ed3f198a8a942ab8b238bb5fa3e21} 
+using {\bfseries Approximate\+Vector\+Univariate\+Function} = \mbox{\hyperlink{group__FunctionModule_ga80b7b96539d5ad6d733df84d41bd259d}{Vector\+Univariate\+Function}}$<$\mbox{\hyperlink{structAriadne_1_1ApproximateTag}{Approximate\+Tag}}$>$
+\item 
+\Hypertarget{classAriadne_1_1Function_af51da441b26b7ca2e253d5c94e455c8f}\label{classAriadne_1_1Function_af51da441b26b7ca2e253d5c94e455c8f} 
+using {\bfseries Validated\+Vector\+Univariate\+Function} = \mbox{\hyperlink{group__FunctionModule_ga80b7b96539d5ad6d733df84d41bd259d}{Vector\+Univariate\+Function}}$<$\mbox{\hyperlink{structAriadne_1_1ValidatedTag}{Validated\+Tag}}$>$
+\item 
+\Hypertarget{classAriadne_1_1Function_a52deafdf4bacb66638681a3c34475c95}\label{classAriadne_1_1Function_a52deafdf4bacb66638681a3c34475c95} 
+using {\bfseries Effective\+Vector\+Univariate\+Function} = \mbox{\hyperlink{group__FunctionModule_ga80b7b96539d5ad6d733df84d41bd259d}{Vector\+Univariate\+Function}}$<$\mbox{\hyperlink{structAriadne_1_1EffectiveTag}{Effective\+Tag}}$>$
+\item 
+\Hypertarget{classAriadne_1_1Function_a100b1899789e72e70ec921c173c529bd}\label{classAriadne_1_1Function_a100b1899789e72e70ec921c173c529bd} 
+using {\bfseries Approximate\+Vector\+Multivariate\+Function} = \mbox{\hyperlink{group__FunctionModule_ga1abdce965f7ad2f9aa70af013de6b045}{Vector\+Multivariate\+Function}}$<$\mbox{\hyperlink{structAriadne_1_1ApproximateTag}{Approximate\+Tag}}$>$
+\item 
+\Hypertarget{classAriadne_1_1Function_a4a6b1e31aa6066e35d6b623905025393}\label{classAriadne_1_1Function_a4a6b1e31aa6066e35d6b623905025393} 
+using {\bfseries Validated\+Vector\+Multivariate\+Function} = \mbox{\hyperlink{group__FunctionModule_ga1abdce965f7ad2f9aa70af013de6b045}{Vector\+Multivariate\+Function}}$<$\mbox{\hyperlink{structAriadne_1_1ValidatedTag}{Validated\+Tag}}$>$
+\item 
+\Hypertarget{classAriadne_1_1Function_a551c88efdfac0e1bb62698081921e0db}\label{classAriadne_1_1Function_a551c88efdfac0e1bb62698081921e0db} 
+using {\bfseries Effective\+Vector\+Multivariate\+Function} = \mbox{\hyperlink{group__FunctionModule_ga1abdce965f7ad2f9aa70af013de6b045}{Vector\+Multivariate\+Function}}$<$\mbox{\hyperlink{structAriadne_1_1EffectiveTag}{Effective\+Tag}}$>$
+\item 
+\Hypertarget{classAriadne_1_1Function_a705d407e136bf4d354151ff2cde3b194}\label{classAriadne_1_1Function_a705d407e136bf4d354151ff2cde3b194} 
+using {\bfseries Real\+Scalar\+Univariate\+Function} = \mbox{\hyperlink{classAriadne_1_1Function_a91c3811cfb016061f1d24582b89bede1}{Effective\+Scalar\+Univariate\+Function}}
+\begin{DoxyCompactList}\small\item\em DEPRECATED. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Function_a54e762e1d2b9deafa58c91bdde6721ea}\label{classAriadne_1_1Function_a54e762e1d2b9deafa58c91bdde6721ea} 
+using {\bfseries Real\+Scalar\+Multivariate\+Function} = \mbox{\hyperlink{classAriadne_1_1Function_a80f5bd6125c3c06ec3a4b760854eef4f}{Effective\+Scalar\+Multivariate\+Function}}
+\begin{DoxyCompactList}\small\item\em DEPRECATED. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Function_a973fb4736f229cb8fc821636f14a524a}\label{classAriadne_1_1Function_a973fb4736f229cb8fc821636f14a524a} 
+using {\bfseries Real\+Vector\+Univariate\+Function} = \mbox{\hyperlink{classAriadne_1_1Function_a52deafdf4bacb66638681a3c34475c95}{Effective\+Vector\+Univariate\+Function}}
+\begin{DoxyCompactList}\small\item\em DEPRECATED. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Function_ad84ade70e187ba89e87dc7b68e33b4f5}\label{classAriadne_1_1Function_ad84ade70e187ba89e87dc7b68e33b4f5} 
+using {\bfseries Real\+Vector\+Multivariate\+Function} = \mbox{\hyperlink{classAriadne_1_1Function_a551c88efdfac0e1bb62698081921e0db}{Effective\+Vector\+Multivariate\+Function}}
+\begin{DoxyCompactList}\small\item\em DEPRECATED. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\end{Indent}
+\begin{Indent}\textbf{ Function template deduction guides}\par
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1Function_a818be52a77af7ccea6720d3c49d606ec}\label{classAriadne_1_1Function_a818be52a77af7ccea6720d3c49d606ec} 
+{\bfseries Function} (\mbox{\hyperlink{classAriadne_1_1Variable}{Real\+Variable}} const \&s, \mbox{\hyperlink{group__LinearAlgebraSubModule_gae7361678c2db840945614997d06994b4}{Scalar}}$<$ \mbox{\hyperlink{classAriadne_1_1Expression}{Real\+Expression}} $>$ const \&e) -\/$>$ \mbox{\hyperlink{classAriadne_1_1Function}{Function}}$<$ \mbox{\hyperlink{structAriadne_1_1EffectiveTag}{Effective\+Tag}}, \mbox{\hyperlink{group__LinearAlgebraSubModule_ga7a29a46d50b613534f91019281b45309}{Real\+Scalar}}(\mbox{\hyperlink{group__LinearAlgebraSubModule_ga7a29a46d50b613534f91019281b45309}{Real\+Scalar}})$>$
+\begin{DoxyCompactList}\small\item\em Deduction guide for constructing scalar univariate functions from an expression. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Function_a16a4c986c0333cd4b8594949917f90d1}\label{classAriadne_1_1Function_a16a4c986c0333cd4b8594949917f90d1} 
+{\bfseries Function} (\mbox{\hyperlink{classAriadne_1_1Variable}{Real\+Variable}} const \&s, \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ \mbox{\hyperlink{classAriadne_1_1Expression}{Real\+Expression}} $>$ const \&e) -\/$>$ \mbox{\hyperlink{classAriadne_1_1Function}{Function}}$<$ \mbox{\hyperlink{structAriadne_1_1EffectiveTag}{Effective\+Tag}}, \mbox{\hyperlink{group__LinearAlgebraSubModule_ga00e69bf76ffebd1f3ba573f4662134bc}{Real\+Vector}}(\mbox{\hyperlink{group__LinearAlgebraSubModule_ga7a29a46d50b613534f91019281b45309}{Real\+Scalar}})$>$
+\begin{DoxyCompactList}\small\item\em Deduction guide for constructing vector univariate functions from expressions. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Function_a83bba84bb86ca0e3807b756c81ba5420}\label{classAriadne_1_1Function_a83bba84bb86ca0e3807b756c81ba5420} 
+{\bfseries Function} (\mbox{\hyperlink{classAriadne_1_1Space}{Real\+Space}} const \&s, \mbox{\hyperlink{group__LinearAlgebraSubModule_gae7361678c2db840945614997d06994b4}{Scalar}}$<$ \mbox{\hyperlink{classAriadne_1_1Expression}{Real\+Expression}} $>$ const \&e) -\/$>$ \mbox{\hyperlink{classAriadne_1_1Function}{Function}}$<$ \mbox{\hyperlink{structAriadne_1_1EffectiveTag}{Effective\+Tag}}, \mbox{\hyperlink{group__LinearAlgebraSubModule_ga7a29a46d50b613534f91019281b45309}{Real\+Scalar}}(\mbox{\hyperlink{group__LinearAlgebraSubModule_ga00e69bf76ffebd1f3ba573f4662134bc}{Real\+Vector}})$>$
+\begin{DoxyCompactList}\small\item\em Deduction guide for constructing scalar multivariate functions from an expression. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Function_a46e432e9e35796bff8840814128d7e5b}\label{classAriadne_1_1Function_a46e432e9e35796bff8840814128d7e5b} 
+{\bfseries Function} (\mbox{\hyperlink{classAriadne_1_1Space}{Real\+Space}} const \&s, \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ \mbox{\hyperlink{classAriadne_1_1Expression}{Real\+Expression}} $>$ const \&e) -\/$>$ \mbox{\hyperlink{classAriadne_1_1Function}{Function}}$<$ \mbox{\hyperlink{structAriadne_1_1EffectiveTag}{Effective\+Tag}}, \mbox{\hyperlink{group__LinearAlgebraSubModule_ga00e69bf76ffebd1f3ba573f4662134bc}{Real\+Vector}}(\mbox{\hyperlink{group__LinearAlgebraSubModule_ga00e69bf76ffebd1f3ba573f4662134bc}{Real\+Vector}})$>$
+\begin{DoxyCompactList}\small\item\em Deduction guide for constructing vector multivariate functions from expressions. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\end{Indent}
+\doxysubsubsubsection*{Additional Inherited Members}
+\doxyparagraph*{Static Public Member Functions inherited from \mbox{\hyperlink{classAriadne_1_1FunctionConstructors}{Function\+Constructors$<$ P $>$}}}
+\begin{DoxyCompactItemize}
+\item 
+static \mbox{\hyperlink{group__FunctionModule_gaec600ea23399c725519b926e6b012451}{Scalar\+Multivariate\+Function}}$<$ P $>$ {\bfseries zero} (Size\+Type as)
+\begin{DoxyCompactList}\small\item\em Constant scalar function zero in {\itshape as} arguments. \end{DoxyCompactList}\item 
+static \mbox{\hyperlink{group__FunctionModule_gaec600ea23399c725519b926e6b012451}{Scalar\+Multivariate\+Function}}$<$ P $>$ {\bfseries constant} (Size\+Type as, \mbox{\hyperlink{classAriadne_1_1Number}{Numeric\+Type}} c)
+\begin{DoxyCompactList}\small\item\em Constant scalar function {\itshape c} in {\itshape as} arguments. \end{DoxyCompactList}\item 
+static \mbox{\hyperlink{group__FunctionModule_gaec600ea23399c725519b926e6b012451}{Scalar\+Multivariate\+Function}}$<$ P $>$ {\bfseries coordinate} (Size\+Type as, Size\+Type j)
+\begin{DoxyCompactList}\small\item\em Coordinate function taking {\itshape j} -\/th index in {\itshape as} arguments. \end{DoxyCompactList}\item 
+static \mbox{\hyperlink{classAriadne_1_1List}{List}}$<$ \mbox{\hyperlink{group__FunctionModule_gaec600ea23399c725519b926e6b012451}{Scalar\+Multivariate\+Function}}$<$ P $>$ $>$ {\bfseries coordinates} (Size\+Type ns)
+\begin{DoxyCompactList}\small\item\em All coordinates over {\itshape ns} variables. \end{DoxyCompactList}\item 
+static \mbox{\hyperlink{group__FunctionModule_ga1abdce965f7ad2f9aa70af013de6b045}{Vector\+Multivariate\+Function}}$<$ P $>$ {\bfseries zeros} (Size\+Type rs, Size\+Type as)
+\begin{DoxyCompactList}\small\item\em The zero function over {\itshape as} variables returning a result of size {\itshape rs}. \end{DoxyCompactList}\item 
+static \mbox{\hyperlink{group__FunctionModule_ga1abdce965f7ad2f9aa70af013de6b045}{Vector\+Multivariate\+Function}}$<$ P $>$ {\bfseries constant} (Size\+Type as, \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ \mbox{\hyperlink{classAriadne_1_1Number}{Numeric\+Type}} $>$ c)
+\begin{DoxyCompactList}\small\item\em Constant vector function {\itshape c} in {\itshape as} arguments. \end{DoxyCompactList}\item 
+static \mbox{\hyperlink{group__FunctionModule_ga1abdce965f7ad2f9aa70af013de6b045}{Vector\+Multivariate\+Function}}$<$ P $>$ {\bfseries identity} (Size\+Type ns)
+\begin{DoxyCompactList}\small\item\em The identity over {\itshape ns} variables. \end{DoxyCompactList}\item 
+static \mbox{\hyperlink{group__FunctionModule_gaec600ea23399c725519b926e6b012451}{Scalar\+Multivariate\+Function}}$<$ P $>$ {\bfseries zero} (\mbox{\hyperlink{classAriadne_1_1EuclideanDomain}{Vector\+Domain\+Type}} dom)
+\begin{DoxyCompactList}\small\item\em Constant scalar function zero over domain {\itshape dom}. \end{DoxyCompactList}\item 
+static \mbox{\hyperlink{group__FunctionModule_gaec600ea23399c725519b926e6b012451}{Scalar\+Multivariate\+Function}}$<$ P $>$ {\bfseries constant} (\mbox{\hyperlink{classAriadne_1_1EuclideanDomain}{Vector\+Domain\+Type}} dom, \mbox{\hyperlink{classAriadne_1_1Number}{Numeric\+Type}} c)
+\begin{DoxyCompactList}\small\item\em Constant function {\itshape c} over domain {\itshape dom}. \end{DoxyCompactList}\item 
+static \mbox{\hyperlink{group__FunctionModule_gaec600ea23399c725519b926e6b012451}{Scalar\+Multivariate\+Function}}$<$ P $>$ {\bfseries coordinate} (\mbox{\hyperlink{classAriadne_1_1EuclideanDomain}{Vector\+Domain\+Type}} dom, Size\+Type j)
+\begin{DoxyCompactList}\small\item\em Coordinate function taking {\itshape j} -\/th index over domain {\itshape dom}. \end{DoxyCompactList}\item 
+static \mbox{\hyperlink{classAriadne_1_1List}{List}}$<$ \mbox{\hyperlink{group__FunctionModule_gaec600ea23399c725519b926e6b012451}{Scalar\+Multivariate\+Function}}$<$ P $>$ $>$ {\bfseries coordinates} (\mbox{\hyperlink{classAriadne_1_1EuclideanDomain}{Vector\+Domain\+Type}} dom)
+\begin{DoxyCompactList}\small\item\em List of all coordinate functions over domain {\itshape dom}. \end{DoxyCompactList}\item 
+static \mbox{\hyperlink{group__FunctionModule_ga1abdce965f7ad2f9aa70af013de6b045}{Vector\+Multivariate\+Function}}$<$ P $>$ {\bfseries zeros} (Size\+Type rs, \mbox{\hyperlink{classAriadne_1_1EuclideanDomain}{Vector\+Domain\+Type}} dom)
+\begin{DoxyCompactList}\small\item\em Zero function over domain {\itshape dom} returning a result of size {\itshape rs}. \end{DoxyCompactList}\item 
+static \mbox{\hyperlink{group__FunctionModule_ga1abdce965f7ad2f9aa70af013de6b045}{Vector\+Multivariate\+Function}}$<$ P $>$ {\bfseries constant} (\mbox{\hyperlink{classAriadne_1_1EuclideanDomain}{Vector\+Domain\+Type}} dom, \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ \mbox{\hyperlink{classAriadne_1_1Number}{Numeric\+Type}} $>$ c)
+\begin{DoxyCompactList}\small\item\em \doxylink{classAriadne_1_1Constant}{Constant} function over domain {\itshape dom} taking values {\itshape c}. \end{DoxyCompactList}\item 
+static \mbox{\hyperlink{group__FunctionModule_ga1abdce965f7ad2f9aa70af013de6b045}{Vector\+Multivariate\+Function}}$<$ P $>$ {\bfseries identity} (\mbox{\hyperlink{classAriadne_1_1EuclideanDomain}{Vector\+Domain\+Type}} dom)
+\begin{DoxyCompactList}\small\item\em Identity function over domain {\itshape dom}. \end{DoxyCompactList}\item 
+static \mbox{\hyperlink{group__FunctionModule_ga4a215a0a287e522d9422c606425448ec}{Scalar\+Univariate\+Function}}$<$ P $>$ {\bfseries zero} ()
+\begin{DoxyCompactList}\small\item\em Constant scalar univariate function zero. \end{DoxyCompactList}\item 
+static \mbox{\hyperlink{group__FunctionModule_ga4a215a0a287e522d9422c606425448ec}{Scalar\+Univariate\+Function}}$<$ P $>$ {\bfseries constant} (\mbox{\hyperlink{classAriadne_1_1Number}{Numeric\+Type}} c)
+\begin{DoxyCompactList}\small\item\em Constant scalar univariate function with value {\itshape c}. \end{DoxyCompactList}\item 
+static \mbox{\hyperlink{group__FunctionModule_ga4a215a0a287e522d9422c606425448ec}{Scalar\+Univariate\+Function}}$<$ P $>$ {\bfseries coordinate} ()
+\begin{DoxyCompactList}\small\item\em Scalar univariate coordinate function. \end{DoxyCompactList}\item 
+static \mbox{\hyperlink{group__FunctionModule_ga80b7b96539d5ad6d733df84d41bd259d}{Vector\+Univariate\+Function}}$<$ P $>$ {\bfseries zeros} (Size\+Type rs)
+\begin{DoxyCompactList}\small\item\em Constant vector univariate function zero returning a result of size {\itshape rs}. \end{DoxyCompactList}\item 
+static \mbox{\hyperlink{group__FunctionModule_ga80b7b96539d5ad6d733df84d41bd259d}{Vector\+Univariate\+Function}}$<$ P $>$ {\bfseries constant} (\mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ \mbox{\hyperlink{classAriadne_1_1Number}{Numeric\+Type}} $>$ c)
+\begin{DoxyCompactList}\small\item\em \doxylink{classAriadne_1_1Constant}{Constant} univariate function taking values {\itshape c}. \end{DoxyCompactList}\item 
+static \mbox{\hyperlink{group__FunctionModule_ga4a215a0a287e522d9422c606425448ec}{Scalar\+Univariate\+Function}}$<$ P $>$ {\bfseries identity} ()
+\begin{DoxyCompactList}\small\item\em Scalar univariate identity function. \end{DoxyCompactList}\item 
+static \mbox{\hyperlink{group__FunctionModule_ga4a215a0a287e522d9422c606425448ec}{Scalar\+Univariate\+Function}}$<$ P $>$ {\bfseries zero} (\mbox{\hyperlink{classAriadne_1_1RealDomain}{Scalar\+Domain\+Type}} dom)
+\begin{DoxyCompactList}\small\item\em Constant scalar function zero over domain {\itshape dom}. \end{DoxyCompactList}\item 
+static \mbox{\hyperlink{group__FunctionModule_ga4a215a0a287e522d9422c606425448ec}{Scalar\+Univariate\+Function}}$<$ P $>$ {\bfseries constant} (\mbox{\hyperlink{classAriadne_1_1RealDomain}{Scalar\+Domain\+Type}} dom, \mbox{\hyperlink{classAriadne_1_1Number}{Numeric\+Type}} c)
+\begin{DoxyCompactList}\small\item\em Constant scalar function {\itshape c} over domain {\itshape dom}. \end{DoxyCompactList}\item 
+static \mbox{\hyperlink{group__FunctionModule_ga4a215a0a287e522d9422c606425448ec}{Scalar\+Univariate\+Function}}$<$ P $>$ {\bfseries coordinate} (\mbox{\hyperlink{classAriadne_1_1RealDomain}{Scalar\+Domain\+Type}} dom, \mbox{\hyperlink{structAriadne_1_1IndexZero}{Index\+Zero}} j)
+\begin{DoxyCompactList}\small\item\em Coordinate function over domain {\itshape dom}. \end{DoxyCompactList}\item 
+static \mbox{\hyperlink{group__FunctionModule_ga4a215a0a287e522d9422c606425448ec}{Scalar\+Univariate\+Function}}$<$ P $>$ {\bfseries coordinate} (\mbox{\hyperlink{classAriadne_1_1RealDomain}{Scalar\+Domain\+Type}} dom)
+\begin{DoxyCompactList}\small\item\em Coordinate function over domain {\itshape dom}. \end{DoxyCompactList}\item 
+static \mbox{\hyperlink{group__FunctionModule_ga80b7b96539d5ad6d733df84d41bd259d}{Vector\+Univariate\+Function}}$<$ P $>$ {\bfseries zeros} (Size\+Type rs, \mbox{\hyperlink{classAriadne_1_1RealDomain}{Scalar\+Domain\+Type}} dom)
+\begin{DoxyCompactList}\small\item\em Zero vector function over domain {\itshape dom} returning a result of size {\itshape rs}. \end{DoxyCompactList}\item 
+static \mbox{\hyperlink{group__FunctionModule_ga80b7b96539d5ad6d733df84d41bd259d}{Vector\+Univariate\+Function}}$<$ P $>$ {\bfseries constant} (\mbox{\hyperlink{classAriadne_1_1RealDomain}{Scalar\+Domain\+Type}} dom, \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ \mbox{\hyperlink{classAriadne_1_1Number}{Numeric\+Type}} $>$ c)
+\begin{DoxyCompactList}\small\item\em \doxylink{classAriadne_1_1Constant}{Constant} function over domain {\itshape dom} taking values {\itshape c}. \end{DoxyCompactList}\item 
+static \mbox{\hyperlink{group__FunctionModule_ga4a215a0a287e522d9422c606425448ec}{Scalar\+Univariate\+Function}}$<$ P $>$ {\bfseries identity} (\mbox{\hyperlink{classAriadne_1_1RealDomain}{Scalar\+Domain\+Type}} dom)
+\begin{DoxyCompactList}\small\item\em Identity function over domain {\itshape dom}. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\label{doc-func-members}
+\Hypertarget{classAriadne_1_1Function_doc-func-members}
+\doxysubsubsection{Member Function Documentation}
+\Hypertarget{classAriadne_1_1Function_aafac36a9da98f46cc4214f68d512917f}\index{Function$<$ P, SIG $>$@{Function$<$ P, SIG $>$}!evaluate@{evaluate}}
+\index{evaluate@{evaluate}!Function$<$ P, SIG $>$@{Function$<$ P, SIG $>$}}
+\doxyparagraph{\texorpdfstring{evaluate()}{evaluate()}}
+{\footnotesize\ttfamily \label{classAriadne_1_1Function_aafac36a9da98f46cc4214f68d512917f} 
+template$<$class P, class SIG$>$ \\
+template$<$class X$>$ \\
+auto evaluate (\begin{DoxyParamCaption}\item[{const \mbox{\hyperlink{classAriadne_1_1Function_a4162608ba08851336cf67bac1dfcbd11}{Argument}}$<$ X $>$ \&}]{x}{}\end{DoxyParamCaption}) const -\/$>$ decltype(this-\/$>$reference().\+\_\+call(x)) \hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Call the function on an argument of concrete scalar type {\itshape X}. 
+
+\begin{DoxyRefDesc}{Deprecated}
+\item[\mbox{\hyperlink{deprecated__deprecated000001}{Deprecated}}]\end{DoxyRefDesc}
+
+
+The documentation for this class was generated from the following files\+:\begin{DoxyCompactItemize}
+\item 
+source/function/\mbox{\hyperlink{function_8decl_8hpp}{function.\+decl.\+hpp}}\item 
+source/function/\mbox{\hyperlink{function_8hpp}{function.\+hpp}}\item 
+source/function/function.\+cpp\item 
+source/function/function\+\_\+wrapper.\+hpp\end{DoxyCompactItemize}

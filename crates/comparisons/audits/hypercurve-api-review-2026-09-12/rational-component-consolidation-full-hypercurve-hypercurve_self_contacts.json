@@ -1,0 +1,30 @@
+{
+  "repo": "hypercurve",
+  "target": "hypercurve_self_contacts",
+  "binary": "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve_self_contacts-9e7a3c925f6dbf2b",
+  "command": [
+    "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve_self_contacts-9e7a3c925f6dbf2b",
+    "--test-threads=4",
+    "--color",
+    "never"
+  ],
+  "sha256": "0a19560399f701427ffd74f055cfd0b7ba5edc06a22475e9d679b78c98e0d2a5",
+  "returncode": 0,
+  "timed_out": false,
+  "elapsed_seconds": 0.0034429040097165853,
+  "log": "rational-component-consolidation-full-hypercurve-hypercurve_self_contacts.log",
+  "passed": [
+    "curve_string_self_contact_detector_does_not_ignore_closing_endpoint",
+    "self_contact_detector_finds_nonadjacent_crossing",
+    "self_contact_detector_finds_adjacent_line_arc_crossing_beyond_shared_endpoint",
+    "self_contact_detector_finds_nonadjacent_line_arc_crossing",
+    "self_contact_detector_finds_repeated_nonadjacent_endpoint"
+  ],
+  "failed": [],
+  "ignored": [],
+  "summaries": [
+    "test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s"
+  ],
+  "new_failures": [],
+  "known_failures": []
+}

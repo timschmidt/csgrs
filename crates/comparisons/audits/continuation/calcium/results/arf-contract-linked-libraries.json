@@ -1,0 +1,13 @@
+{
+  "tag": "arf-contract-linked-libraries",
+  "started": "2026-09-10T02:45:34.483Z",
+  "finished": "2026-09-10T02:45:34.509Z",
+  "elapsedSeconds": 0.024295907,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison",
+  "command": "ldd",
+  "args": [
+    "/tmp/calcium-arf-contracts.PNgYf4/controls"
+  ],
+  "code": 0,
+  "signal": null
+}

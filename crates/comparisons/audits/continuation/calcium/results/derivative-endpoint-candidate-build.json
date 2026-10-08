@@ -1,0 +1,21 @@
+{
+  "tag": "derivative-endpoint-candidate-build",
+  "started": "2026-09-09T15:36:12.578Z",
+  "finished": "2026-09-09T15:36:50.862Z",
+  "elapsedSeconds": 38.280745888000006,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/derivative-endpoint-candidate",
+  "command": "env",
+  "args": [
+    "CARGO_TARGET_DIR=/tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse",
+    "CARGO_INCREMENTAL=0",
+    "CARGO_PROFILE_DEV_DEBUG=0",
+    "CARGO_BUILD_JOBS=2",
+    "cargo",
+    "build",
+    "--offline",
+    "--release",
+    "--bins"
+  ],
+  "code": 101,
+  "signal": null
+}

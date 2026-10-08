@@ -1,0 +1,30 @@
+{
+  "tag": "root-exp-flint-compile",
+  "started": "2026-09-08T11:13:35.952Z",
+  "finished": "2026-09-08T11:13:36.074Z",
+  "elapsedSeconds": 0.11897902399999999,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison",
+  "command": "gcc",
+  "args": [
+    "-O2",
+    "-g0",
+    "-Wall",
+    "-Wextra",
+    "-Werror",
+    "-isystem",
+    "../exact-real-references/flint/src",
+    "audits/continuation/calcium/flint-root-exp-probe.c",
+    "-L",
+    "../exact-real-references/flint",
+    "-Wl,-rpath,/home/tim/Documents/GitHub/workspace/exact-real-references/flint",
+    "-lflint",
+    "-lmpfr",
+    "-lgmp",
+    "-lm",
+    "-lpthread",
+    "-o",
+    "/home/tim/Documents/GitHub/workspace/.audit-builds/calcium-flint-root-exp-probe"
+  ],
+  "code": 0,
+  "signal": null
+}

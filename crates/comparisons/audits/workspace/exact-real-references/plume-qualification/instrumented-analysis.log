@@ -1,0 +1,641 @@
+{
+  "source_files_verified": 174,
+  "versioned_perform_files_read": 36,
+  "versioned_perform_lines_read": 4365,
+  "probe_sha256": "af10ffbec882d11aa60a2290a3e803f187e0833b88cd2d53d101b756b3bdfd2b",
+  "optimized_unoptimized_outputs_identical": true,
+  "grids": {
+    "arithmetic": {
+      "checks": 200017,
+      "failures": 3841,
+      "exceptions": 0
+    },
+    "extra": {
+      "checks": 1498,
+      "failures": 266,
+      "exceptions": 0
+    }
+  },
+  "demand": {
+    "rows": 152700,
+    "operations": {
+      "average": {
+        "checks": 19683,
+        "under": 0,
+        "over": 0,
+        "excess_sum": 8748,
+        "max_excess": 1,
+        "mean_excess": 0.4444444444444444
+      },
+      "average3": {
+        "checks": 19683,
+        "under": 0,
+        "over": 0,
+        "excess_sum": 19683,
+        "max_excess": 1,
+        "mean_excess": 1
+      },
+      "add": {
+        "checks": 17301,
+        "under": 0,
+        "over": 0,
+        "excess_sum": 24841,
+        "max_excess": 2,
+        "mean_excess": 1.4358129587885093
+      },
+      "subtract": {
+        "checks": 17301,
+        "under": 0,
+        "over": 0,
+        "excess_sum": 24841,
+        "max_excess": 2,
+        "mean_excess": 1.4358129587885093
+      },
+      "multiply": {
+        "checks": 19683,
+        "under": 486,
+        "over": 0,
+        "excess_sum": 32246,
+        "max_excess": 5,
+        "mean_excess": 1.638266524411929
+      },
+      "cross-multiply": {
+        "checks": 19683,
+        "under": 0,
+        "over": 0,
+        "excess_sum": 39366,
+        "max_excess": 2,
+        "mean_excess": 2
+      },
+      "min": {
+        "checks": 19683,
+        "under": 0,
+        "over": 0,
+        "excess_sum": 0,
+        "max_excess": 0,
+        "mean_excess": 0
+      },
+      "max": {
+        "checks": 19683,
+        "under": 0,
+        "over": 0,
+        "excess_sum": 0,
+        "max_excess": 0,
+        "mean_excess": 0
+      }
+    }
+  },
+  "elementary": {
+    "requests": 108,
+    "finite": 100,
+    "mpfr_failures": 20,
+    "heap_limits": 6,
+    "timeouts": 2
+  },
+  "benchmark_observations": 216,
+  "warmup_observations": 24,
+  "final_observations": 192,
+  "benchmark": [
+    {
+      "family": "dense",
+      "bits": 32,
+      "variants": [
+        {
+          "op": "average",
+          "cpu_ms": {
+            "median": 0.32887350000000004,
+            "min": 0.306955,
+            "max": 0.556264,
+            "mean": 0.391168875
+          },
+          "allocated_bytes": {
+            "median": 2507104,
+            "min": 2507104,
+            "max": 2507104,
+            "mean": 2507104
+          }
+        },
+        {
+          "op": "carry-average",
+          "cpu_ms": {
+            "median": 0.2536035,
+            "min": 0.237181,
+            "max": 0.413275,
+            "mean": 0.27455225
+          },
+          "allocated_bytes": {
+            "median": 1801360,
+            "min": 1801360,
+            "max": 1801360,
+            "mean": 1801360
+          }
+        }
+      ],
+      "paired_cpu_ratio_average_over_carry": {
+        "median": 1.3243710149268608,
+        "min": 1.2368739170729741,
+        "max": 2.0205225439236925,
+        "mean": 1.4247792314958336
+      },
+      "median_cpu_ratio_average_over_carry": 1.2968018974501538,
+      "allocation_ratio_average_over_carry": 1.3917839854332281
+    },
+    {
+      "family": "dense",
+      "bits": 64,
+      "variants": [
+        {
+          "op": "average",
+          "cpu_ms": {
+            "median": 0.6880275,
+            "min": 0.642976,
+            "max": 1.296452,
+            "mean": 0.814413375
+          },
+          "allocated_bytes": {
+            "median": 5204160,
+            "min": 5204160,
+            "max": 5204160,
+            "mean": 5204160
+          }
+        },
+        {
+          "op": "carry-average",
+          "cpu_ms": {
+            "median": 0.5468895,
+            "min": 0.47875,
+            "max": 1.039843,
+            "mean": 0.626931375
+          },
+          "allocated_bytes": {
+            "median": 3646448,
+            "min": 3646448,
+            "max": 3646448,
+            "mean": 3646448
+          }
+        }
+      ],
+      "paired_cpu_ratio_average_over_carry": {
+        "median": 1.2806598345908302,
+        "min": 1.1017786511091816,
+        "max": 1.5914949587021356,
+        "mean": 1.310744562622247
+      },
+      "median_cpu_ratio_average_over_carry": 1.2580740716360435,
+      "allocation_ratio_average_over_carry": 1.4271861274314073
+    },
+    {
+      "family": "dense",
+      "bits": 128,
+      "variants": [
+        {
+          "op": "average",
+          "cpu_ms": {
+            "median": 1.8956465,
+            "min": 1.715466,
+            "max": 3.064137,
+            "mean": 2.02821
+          },
+          "allocated_bytes": {
+            "median": 11796464,
+            "min": 11796464,
+            "max": 11796464,
+            "mean": 11796464
+          }
+        },
+        {
+          "op": "carry-average",
+          "cpu_ms": {
+            "median": 1.6065115,
+            "min": 1.344339,
+            "max": 1.983865,
+            "mean": 1.626170875
+          },
+          "allocated_bytes": {
+            "median": 8534816,
+            "min": 8534816,
+            "max": 8534816,
+            "mean": 8534816
+          }
+        }
+      ],
+      "paired_cpu_ratio_average_over_carry": {
+        "median": 1.2132357545098649,
+        "min": 0.8647090401816656,
+        "max": 1.845820073118676,
+        "mean": 1.2598897448803745
+      },
+      "median_cpu_ratio_average_over_carry": 1.1799769251573984,
+      "allocation_ratio_average_over_carry": 1.3821579750518347
+    },
+    {
+      "family": "dense",
+      "bits": 256,
+      "variants": [
+        {
+          "op": "average",
+          "cpu_ms": {
+            "median": 4.7067185,
+            "min": 3.887305,
+            "max": 5.420827,
+            "mean": 4.712725250000001
+          },
+          "allocated_bytes": {
+            "median": 25803840,
+            "min": 25803840,
+            "max": 25803840,
+            "mean": 25803840
+          }
+        },
+        {
+          "op": "carry-average",
+          "cpu_ms": {
+            "median": 3.6131884999999997,
+            "min": 3.164289,
+            "max": 5.358674,
+            "mean": 3.818054375
+          },
+          "allocated_bytes": {
+            "median": 19134320,
+            "min": 19134320,
+            "max": 19134320,
+            "mean": 19134320
+          }
+        }
+      ],
+      "paired_cpu_ratio_average_over_carry": {
+        "median": 1.2683001822680884,
+        "min": 1.0086678159559623,
+        "max": 1.4372760764615196,
+        "mean": 1.2516184415850544
+      },
+      "median_cpu_ratio_average_over_carry": 1.3026495849856714,
+      "allocation_ratio_average_over_carry": 1.3485632099808094
+    },
+    {
+      "family": "sparse",
+      "bits": 32,
+      "variants": [
+        {
+          "op": "average",
+          "cpu_ms": {
+            "median": 0.29103599999999996,
+            "min": 0.274518,
+            "max": 0.503708,
+            "mean": 0.326601625
+          },
+          "allocated_bytes": {
+            "median": 2040192,
+            "min": 2040192,
+            "max": 2040192,
+            "mean": 2040192
+          }
+        },
+        {
+          "op": "carry-average",
+          "cpu_ms": {
+            "median": 0.252524,
+            "min": 0.24059,
+            "max": 0.440035,
+            "mean": 0.28911624999999996
+          },
+          "allocated_bytes": {
+            "median": 1806448,
+            "min": 1806448,
+            "max": 1806448,
+            "mean": 1806448
+          }
+        }
+      ],
+      "paired_cpu_ratio_average_over_carry": {
+        "median": 1.150608377436039,
+        "min": 0.7974388400922654,
+        "max": 2.0161303879698527,
+        "mean": 1.1802821836697603
+      },
+      "median_cpu_ratio_average_over_carry": 1.1525082764410508,
+      "allocation_ratio_average_over_carry": 1.1293942587885175
+    },
+    {
+      "family": "sparse",
+      "bits": 64,
+      "variants": [
+        {
+          "op": "average",
+          "cpu_ms": {
+            "median": 0.6184890000000001,
+            "min": 0.554794,
+            "max": 0.706911,
+            "mean": 0.625845625
+          },
+          "allocated_bytes": {
+            "median": 3934472,
+            "min": 3934472,
+            "max": 3934472,
+            "mean": 3934472
+          }
+        },
+        {
+          "op": "carry-average",
+          "cpu_ms": {
+            "median": 0.504618,
+            "min": 0.483001,
+            "max": 1.108017,
+            "mean": 0.61335525
+          },
+          "allocated_bytes": {
+            "median": 3651576,
+            "min": 3651576,
+            "max": 3651576,
+            "mean": 3651576
+          }
+        }
+      ],
+      "paired_cpu_ratio_average_over_carry": {
+        "median": 1.146963629677765,
+        "min": 0.5797086145790182,
+        "max": 1.4471054247697033,
+        "mean": 1.1085283176251879
+      },
+      "median_cpu_ratio_average_over_carry": 1.2256578243344471,
+      "allocation_ratio_average_over_carry": 1.0774723023702641
+    },
+    {
+      "family": "sparse",
+      "bits": 128,
+      "variants": [
+        {
+          "op": "average",
+          "cpu_ms": {
+            "median": 1.7241265000000001,
+            "min": 1.547232,
+            "max": 3.39176,
+            "mean": 1.9602060000000001
+          },
+          "allocated_bytes": {
+            "median": 8664360,
+            "min": 8664360,
+            "max": 8664360,
+            "mean": 8664360
+          }
+        },
+        {
+          "op": "carry-average",
+          "cpu_ms": {
+            "median": 1.5736240000000001,
+            "min": 1.417214,
+            "max": 2.52961,
+            "mean": 1.73059475
+          },
+          "allocated_bytes": {
+            "median": 8513464,
+            "min": 8513464,
+            "max": 8513464,
+            "mean": 8513464
+          }
+        }
+      ],
+      "paired_cpu_ratio_average_over_carry": {
+        "median": 1.0662137099333644,
+        "min": 0.8539304477765347,
+        "max": 1.604493657023728,
+        "mean": 1.1352879127031115
+      },
+      "median_cpu_ratio_average_over_carry": 1.0956406994301053,
+      "allocation_ratio_average_over_carry": 1.0177243951463235
+    },
+    {
+      "family": "sparse",
+      "bits": 256,
+      "variants": [
+        {
+          "op": "average",
+          "cpu_ms": {
+            "median": 3.7034875,
+            "min": 3.24709,
+            "max": 5.593742,
+            "mean": 3.9776188749999997
+          },
+          "allocated_bytes": {
+            "median": 18745880,
+            "min": 18745880,
+            "max": 18745880,
+            "mean": 18745880
+          }
+        },
+        {
+          "op": "carry-average",
+          "cpu_ms": {
+            "median": 4.4384605,
+            "min": 3.463163,
+            "max": 6.027459,
+            "mean": 4.371161750000001
+          },
+          "allocated_bytes": {
+            "median": 19106896,
+            "min": 19106896,
+            "max": 19106896,
+            "mean": 19106896
+          }
+        }
+      ],
+      "paired_cpu_ratio_average_over_carry": {
+        "median": 0.9428682498445355,
+        "min": 0.7237846021951222,
+        "max": 1.0288054882640423,
+        "mean": 0.9131821839971308
+      },
+      "median_cpu_ratio_average_over_carry": 0.8344081241682787,
+      "allocation_ratio_average_over_carry": 0.981105460562511
+    },
+    {
+      "family": "terminating",
+      "bits": 32,
+      "variants": [
+        {
+          "op": "average",
+          "cpu_ms": {
+            "median": 0.349116,
+            "min": 0.247699,
+            "max": 0.559253,
+            "mean": 0.366794375
+          },
+          "allocated_bytes": {
+            "median": 1739208,
+            "min": 1739208,
+            "max": 1739208,
+            "mean": 1739208
+          }
+        },
+        {
+          "op": "carry-average",
+          "cpu_ms": {
+            "median": 0.27826700000000004,
+            "min": 0.222471,
+            "max": 0.551184,
+            "mean": 0.321004625
+          },
+          "allocated_bytes": {
+            "median": 1587672,
+            "min": 1587672,
+            "max": 1587672,
+            "mean": 1587672
+          }
+        }
+      ],
+      "paired_cpu_ratio_average_over_carry": {
+        "median": 1.1697446668364695,
+        "min": 0.8507521989027258,
+        "max": 1.389397413489246,
+        "mean": 1.1775982311041893
+      },
+      "median_cpu_ratio_average_over_carry": 1.254607984417843,
+      "allocation_ratio_average_over_carry": 1.0954454068598551
+    },
+    {
+      "family": "terminating",
+      "bits": 64,
+      "variants": [
+        {
+          "op": "average",
+          "cpu_ms": {
+            "median": 0.706902,
+            "min": 0.490769,
+            "max": 1.542962,
+            "mean": 0.7891360000000001
+          },
+          "allocated_bytes": {
+            "median": 3320856,
+            "min": 3320856,
+            "max": 3320856,
+            "mean": 3320856
+          }
+        },
+        {
+          "op": "carry-average",
+          "cpu_ms": {
+            "median": 0.6475515000000001,
+            "min": 0.435673,
+            "max": 1.015475,
+            "mean": 0.6401118749999999
+          },
+          "allocated_bytes": {
+            "median": 3103784,
+            "min": 3103784,
+            "max": 3103784,
+            "mean": 3103784
+          }
+        }
+      ],
+      "paired_cpu_ratio_average_over_carry": {
+        "median": 1.1152952112872858,
+        "min": 0.7641174858433131,
+        "max": 2.2701899464513837,
+        "mean": 1.2500590079038685
+      },
+      "median_cpu_ratio_average_over_carry": 1.0916537140289226,
+      "allocation_ratio_average_over_carry": 1.0699378565003235
+    },
+    {
+      "family": "terminating",
+      "bits": 128,
+      "variants": [
+        {
+          "op": "average",
+          "cpu_ms": {
+            "median": 1.2864775,
+            "min": 1.189661,
+            "max": 1.648012,
+            "mean": 1.3526157499999998
+          },
+          "allocated_bytes": {
+            "median": 7096272,
+            "min": 7096272,
+            "max": 7096272,
+            "mean": 7096272
+          }
+        },
+        {
+          "op": "carry-average",
+          "cpu_ms": {
+            "median": 1.5089145,
+            "min": 1.312371,
+            "max": 2.435449,
+            "mean": 1.62782225
+          },
+          "allocated_bytes": {
+            "median": 6748128,
+            "min": 6748128,
+            "max": 6748128,
+            "mean": 6748128
+          }
+        }
+      ],
+      "paired_cpu_ratio_average_over_carry": {
+        "median": 0.9035844703185497,
+        "min": 0.5254037345885707,
+        "max": 0.9348120803161094,
+        "mean": 0.85349141016939
+      },
+      "median_cpu_ratio_average_over_carry": 0.8525847554649385,
+      "allocation_ratio_average_over_carry": 1.0515911968474811
+    },
+    {
+      "family": "terminating",
+      "bits": 256,
+      "variants": [
+        {
+          "op": "average",
+          "cpu_ms": {
+            "median": 3.4235885,
+            "min": 3.10583,
+            "max": 3.755697,
+            "mean": 3.399992875
+          },
+          "allocated_bytes": {
+            "median": 15078512,
+            "min": 15078512,
+            "max": 15078512,
+            "mean": 15078512
+          }
+        },
+        {
+          "op": "carry-average",
+          "cpu_ms": {
+            "median": 3.1690424999999998,
+            "min": 2.753212,
+            "max": 5.367283,
+            "mean": 3.38437925
+          },
+          "allocated_bytes": {
+            "median": 14468224,
+            "min": 14468224,
+            "max": 14468224,
+            "mean": 14468224
+          }
+        }
+      ],
+      "paired_cpu_ratio_average_over_carry": {
+        "median": 1.0965518435830157,
+        "min": 0.6385644282218769,
+        "max": 1.1813605369338551,
+        "mean": 1.0407459572762043
+      },
+      "median_cpu_ratio_average_over_carry": 1.0803226842177094,
+      "allocation_ratio_average_over_carry": 1.042181265648085
+    }
+  ],
+  "hyper": {
+    "head": "bd92d87f0e107fda0b31b93463cc8e0cc5e26d7c",
+    "decimal_checks": 1170,
+    "debug_tests": 28,
+    "release_tests": 28,
+    "new_production_changes": 0
+  },
+  "limitations": [
+    "Finite demand grid measures numeric values, not list spines, execution time or a universal dependency bound.",
+    "Averaging benchmarks use instrumented Haskell objects with pre-forced inputs; no Hyper speed or retained-RSS comparison.",
+    "Submillisecond timings and variable host load limit conclusions; all min/max and paired ratios retained.",
+    "Separate archive copies, CGI, remaining report and broader ecosystem audit are still open."
+  ]
+}

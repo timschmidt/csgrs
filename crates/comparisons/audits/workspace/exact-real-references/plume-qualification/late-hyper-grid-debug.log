@@ -1,0 +1,4 @@
+   Compiling plume-qualification v0.0.0 (/home/tim/Documents/GitHub/workspace/exact-real-references/plume-qualification)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.19s
+     Running `.audit-targets/ireal-derivative-18555/debug/late_oracle hyper-grid`
+PASS Hyper logistic interval/history checks=160; 40 input/iteration cases

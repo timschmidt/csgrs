@@ -1,0 +1,104 @@
+{
+  "checkpoint": 78,
+  "valid": 1,
+  "rejected": 12,
+  "group": {
+    "case": 0,
+    "precision": -64,
+    "lifecycle": "fresh",
+    "iterations": 1
+  },
+  "records": [
+    {
+      "name": "valid",
+      "path": "results/twelfth-control-valid-v78.jsonl",
+      "sha256": "9257b457f5a7790d543ea70b89a005ada307da60a79875bc55f600155bd98f93",
+      "accepted": true,
+      "error": null
+    },
+    {
+      "name": "false-equality",
+      "path": "results/twelfth-control-false-equality-v78.jsonl",
+      "sha256": "ad88b9c3757014b9db4b8a9b5d24cce7e7f1f29cb61ce0bfb77dbc01251e897d",
+      "accepted": false,
+      "error": "Expected values to be strictly equal:\n\n0 !== 2\n"
+    },
+    {
+      "name": "wrong-case",
+      "path": "results/twelfth-control-wrong-case-v78.jsonl",
+      "sha256": "10fddc42daa4abed6ba950e0f3043a4dd5ce856f101c0c72d3839407aa1d40f4",
+      "accepted": false,
+      "error": "group 0 case\n\n1 !== 0\n"
+    },
+    {
+      "name": "wrong-precision",
+      "path": "results/twelfth-control-wrong-precision-v78.jsonl",
+      "sha256": "3f467469b38822d0a4ac21984de683167d39edaba7ba7051daa01679c5152935",
+      "accepted": false,
+      "error": "group 0 precision\n\n-256 !== -64\n"
+    },
+    {
+      "name": "wrong-lifecycle",
+      "path": "results/twelfth-control-wrong-lifecycle-v78.jsonl",
+      "sha256": "676a34a5c571e74739f8e587ee685058e5d1d5e79f1d5615090c9f9ed276d420",
+      "accepted": false,
+      "error": "group 0 lifecycle\n+ actual - expected\n\n+ 'retained'\n- 'fresh'\n"
+    },
+    {
+      "name": "wrong-counts",
+      "path": "results/twelfth-control-wrong-counts-v78.jsonl",
+      "sha256": "a61136f77522920a883a1f8ae1e47bae6ac5c451fbdc7b118b42a26c35b2f701",
+      "accepted": false,
+      "error": "Expected values to be strictly deep-equal:\n+ actual - expected\n\n  [\n    0,\n    0,\n+   2\n-   1\n  ]\n"
+    },
+    {
+      "name": "zero-time",
+      "path": "results/twelfth-control-zero-time-v78.jsonl",
+      "sha256": "980c06c01c33f2230548ab7339ece0c5f5547b44a0f7f8f76ce866ee663d24b4",
+      "accepted": false,
+      "error": "The expression evaluated to a falsy value:\n\n  assert(Number.isSafeInteger(r.elapsed_ns)&&r.elapsed_ns>0)\n"
+    },
+    {
+      "name": "reverse-clock",
+      "path": "results/twelfth-control-reverse-clock-v78.jsonl",
+      "sha256": "84cbc34a72d5fa5df19218ef43d5b98b8e76bfd89ca9afe7d78fa8fe3ac2ebad",
+      "accepted": false,
+      "error": "The expression evaluated to a falsy value:\n\n  assert(begin>=previousEnd&&end>=begin&&end-begin>=BigInt(r.elapsed_ns))\n"
+    },
+    {
+      "name": "cpu-instrumented",
+      "path": "results/twelfth-control-cpu-instrumented-v78.jsonl",
+      "sha256": "744ba34a14fb92beb8bd608faafd4f5b3163d087ad139e693f779f554e8b2b7d",
+      "accepted": false,
+      "error": "Expected values to be strictly equal:\n\n1 !== 0\n"
+    },
+    {
+      "name": "false-certificate",
+      "path": "results/twelfth-control-false-certificate-v78.jsonl",
+      "sha256": "9d8a1e3ab7b6c5f4c5674a520b8922299c99cc19602a403f692e7b67874838c4",
+      "accepted": false,
+      "error": "The expression evaluated to a falsy value:\n\n  assert(typeof r.certificate==='string'&&r.certificate.startsWith(['Equal','NotEqual','Unknown'][r.outcome]))\n"
+    },
+    {
+      "name": "truncated",
+      "path": "results/twelfth-control-truncated-v78.jsonl",
+      "sha256": "a1adfc2bff4da02e782503672872a16ed970b0bba7d814bf01ca55414ea0df13",
+      "accepted": false,
+      "error": "Expected values to be strictly equal:\n\n1 !== 2\n"
+    },
+    {
+      "name": "duplicate",
+      "path": "results/twelfth-control-duplicate-v78.jsonl",
+      "sha256": "2aafade72ebbfc81089398064ca5e88d7ee086ba3b030f000d6f2be83d7917d8",
+      "accepted": false,
+      "error": "Expected values to be strictly equal:\n\n3 !== 2\n"
+    },
+    {
+      "name": "terminal-count",
+      "path": "results/twelfth-control-terminal-count-v78.jsonl",
+      "sha256": "9d075640277123863a4eb7d34f62a0e048123a9a96e77ae45d019a208785fe13",
+      "accepted": false,
+      "error": "Expected values to be strictly deep-equal:\n+ actual - expected\n\n  {\n+   groups: 2,\n-   groups: 1,\n    mode: 'cpu',\n    terminal: true\n  }\n"
+    }
+  ]
+}

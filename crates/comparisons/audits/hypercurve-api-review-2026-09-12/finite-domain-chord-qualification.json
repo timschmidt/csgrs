@@ -1,0 +1,110 @@
+{
+  "status": "committed and qualified against the documented baseline",
+  "goal_status": "active",
+  "previous_commit": "dfc8ff21c6f86f4feb8e75f90da010cd5c0f3bf2",
+  "commit": "047aa3540c27e0ba1ef8f020de8154a6f92ed5ac",
+  "targets": 49,
+  "passed": 2231,
+  "passed_by_repo": {
+    "hypercurve": 1999,
+    "hyperbrep": 232
+  },
+  "known_failed": [
+    "approximate_512_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions",
+    "non_ph_bezier_pair_projective_fillet_retains_algebraic_extensions",
+    "nonconvex_algebraic_chord_expansion_is_exact_and_local_collapse_is_explicit",
+    "strict_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions",
+    "unified_mixed_line_arc_erosion_splits_after_a_curved_neck_collapse"
+  ],
+  "new_failures": [],
+  "ignored": 9,
+  "expensive_previously_unqualified_exclusions": 8,
+  "timeouts": 0,
+  "builds_and_checks": {
+    "-check": 0,
+    "-test-build": 0,
+    "-hyperbrep-check": 0,
+    "-hyperbrep-test-build": 0
+  },
+  "formatting_and_whitespace": "passed on final frozen qualification sources",
+  "formatted_files": {
+    "hypercurve": [
+      "src/bezier_offset.rs",
+      "src/bezier_region.rs",
+      "src/bezier_split.rs",
+      "src/curve_region_boolean.rs",
+      "src/curve_support_intersection.rs"
+    ],
+    "hyperbrep": []
+  },
+  "additional_caller_checks": [
+    {
+      "target": "fuzz",
+      "command": [
+        "cargo",
+        "check",
+        "--manifest-path",
+        "fuzz/Cargo.toml",
+        "--all-targets",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 5.422361559991259,
+      "log": "finite-domain-chord-fuzz-check.log"
+    },
+    {
+      "target": "ui",
+      "command": [
+        "cargo",
+        "check",
+        "--manifest-path",
+        "examples/hypercurve_ui/Cargo.toml",
+        "--all-targets",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 5.62272257800214,
+      "log": "finite-domain-chord-ui-check.log"
+    },
+    {
+      "target": "hyperbrep-fuzz",
+      "command": [
+        "cargo",
+        "check",
+        "--manifest-path",
+        "fuzz/Cargo.toml",
+        "--all-targets",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 5.923010409998824,
+      "log": "finite-domain-chord-hyperbrep-fuzz-check.log"
+    }
+  ],
+  "source_verification": "finite-domain-chord-source-verification.json",
+  "focused_regression_checks": "finite-domain-chord-final-focused.json",
+  "initial_qualification_regressions_preserved": "finite-domain-chord-attempt5-qualification/",
+  "normal_library_sha256": "b31e267304078990dc38fc5317e3aa398a08854447338a9a676dc537a5956d8e",
+  "independent_probes_and_matrices": [
+    "finite-domain-chord-finite-matrix.json",
+    "finite-domain-chord-cubic-replay.json",
+    "finite-domain-chord-baseline-recheck.json",
+    "finite-domain-chord-replay-matrix-run.json",
+    "finite-domain-chord-analytic-probe.json",
+    "finite-domain-chord-endpoint-probe.json",
+    "finite-domain-chord-completed-probe.json",
+    "finite-domain-chord-probe-final.json",
+    "finite-domain-chord-circle-matrix.json",
+    "finite-domain-chord-region-carrier-matrix.json",
+    "finite-domain-chord-general-trim-matrix.json",
+    "finite-domain-chord-constant-image-trim-matrix.json"
+  ],
+  "regression_baseline": "native-point-components-qualification.json",
+  "affected_regression_results": "finite-domain-chord-full-hypercurve-lib.json",
+  "evidence_audit": "finite-domain-chord-evidence-audit.md",
+  "performance_claim": null,
+  "remaining": "Complete finite exterior and retraced domains; normalized public region construction; five promotion failures; eight unqualified expensive tests; broader algebraic consolidation, computational measurements, and original architecture goal."
+}

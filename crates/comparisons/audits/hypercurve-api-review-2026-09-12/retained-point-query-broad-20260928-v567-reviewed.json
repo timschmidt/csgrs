@@ -1,0 +1,20 @@
+{
+  "qualification": "retained-point-query-broad-20260928-v567-terminal.json",
+  "source_manifest": "retained-point-query-broad-20260928-v567-sources.json",
+  "outer_session_reaped": 46660,
+  "validated_files": 2047,
+  "selected_geometry_tests": 451,
+  "checks": 6,
+  "repos": {
+    "hypercurve": {
+      "parent": "9baa94d8a52803bf67fd3806cc5fd1da32545f01",
+      "paths": {
+        "src/bezier_offset.rs": "d89fd5372110757754f7a5808958ea8dc7cab45b890d81117b4a0c559f5dfa25",
+        "src/curve_fillet.rs": "42e8f1217b6b12bc4d98c8a3f527e039042d811d45cc6476f90cc6f96963908f"
+      }
+    }
+  },
+  "scope": "Membership and winding share a borrowed algebraic point query; retained center/contact constraints reuse the owned regular source normal; full implementation goal remains active",
+  "performance_changes": [],
+  "workload_changes": []
+}

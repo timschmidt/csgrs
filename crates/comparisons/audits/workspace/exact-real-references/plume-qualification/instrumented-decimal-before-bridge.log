@@ -1,0 +1,54 @@
+[1 of 5] Compiling LookInt          ( /home/tim/Documents/GitHub/workspace/.audit-plume-perform.LVoj1D/compat/LookInt.hs, nothing )
+
+/home/tim/Documents/GitHub/workspace/.audit-plume-perform.LVoj1D/compat/LookInt.hs:2:1: warning: [GHC-94817] [-Wtabs]
+    Tab character found here, and in 36 further locations.
+    Suggested fix: Please use spaces instead.
+  |
+2 |                liglist, lignewl,
+  | ^^^^^^^^
+[2 of 5] Compiling Utils            ( /home/tim/Documents/GitHub/workspace/.audit-plume-perform.LVoj1D/compat/Utils.hs, nothing )
+
+/home/tim/Documents/GitHub/workspace/.audit-plume-perform.LVoj1D/compat/Utils.hs:7:1: warning: [GHC-94817] [-Wtabs]
+    Tab character found here.
+    Suggested fix: Please use spaces instead.
+  |
+7 |          where
+  | ^^^^^^^^
+[3 of 5] Compiling SBinStreamM      ( /home/tim/Documents/GitHub/workspace/.audit-plume-perform.LVoj1D/compat/SBinStreamM.hs, nothing )
+
+/home/tim/Documents/GitHub/workspace/.audit-plume-perform.LVoj1D/compat/SBinStreamM.hs:36:33: warning: [GHC-47854] [-Wduplicate-exports]
+    ‘sbMul’ is exported by ‘sbMul’ and ‘sbMul’
+   |
+36 | sbAdd3, sbSub3, sbAv3, sbAv3Ny, sbMul,
+   |                                 ^^^^^
+
+/home/tim/Documents/GitHub/workspace/.audit-plume-perform.LVoj1D/compat/SBinStreamM.hs:45:1: warning: [GHC-94817] [-Wtabs]
+    Tab character found here, and in 80 further locations.
+    Suggested fix: Please use spaces instead.
+   |
+45 |         where
+   | ^^^^^^^^
+[4 of 5] Compiling SBinFloatM       ( /home/tim/Documents/GitHub/workspace/.audit-plume-perform.LVoj1D/compat/SBinFloatM.hs, nothing )
+
+/home/tim/Documents/GitHub/workspace/.audit-plume-perform.LVoj1D/compat/SBinFloatM.hs:28:2: warning: [GHC-94817] [-Wtabs]
+    Tab character found here, and in three further locations.
+    Suggested fix: Please use spaces instead.
+   |
+28 | )       where
+   |  ^^^^^^^
+[5 of 5] Compiling SBinDec          ( .audit-plume-perform.LVoj1D/compat/SBinDecM.hs, nothing )
+
+.audit-plume-perform.LVoj1D/compat/SBinDecM.hs:321:38: error: [GHC-83865]
+    • Couldn't match type ‘Int’ with ‘Lookint’
+      Expected: SBinStream
+        Actual: [Int]
+    • In the expression: sbDecs m (n + ((fromInteger e) `quot` 4))
+      In the first argument of ‘sbfRawOut’, namely
+        ‘(e, sbDecs m (n + ((fromInteger e) `quot` 4)))’
+      In the first argument of ‘(++)’, namely
+        ‘sbfRawOut
+           (e, sbDecs m (n + ((fromInteger e) `quot` 4)))
+           (4 * n + (fromInteger e))’
+    |
+321 | sbfDecOut x@(e,m) n  =  sbfRawOut (e,sbDecs m (n+((fromInteger e) `quot` 4)))
+    |                                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

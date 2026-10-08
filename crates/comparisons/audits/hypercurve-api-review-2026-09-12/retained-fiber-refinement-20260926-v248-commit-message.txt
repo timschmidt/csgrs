@@ -1,0 +1,15 @@
+Refine retained parameters during exact fiber subdivision
+
+When a nonrational coefficient interval is ambiguous, narrow the selected
+base root as well as the fiber interval. Share that certified refinement
+across subsequent coefficients while preserving the bounded Bernstein
+attempt and the repeated-root Sturm fallback.
+
+Validate close simple roots, repeated roots, exact nonrational coefficients
+and unchanged caller evidence under both predicate policies.
+
+Validation: 522 release library tests; exact degree-20 scalar reproducer
+now isolates two roots with no Sturm sequence in 10.4 seconds (previously
+Undecided after 61.7 seconds); formatting and all-target Clippy with both
+all features and no default features. Full Hypercurve re-offset closure
+remains unresolved; the broader diagnostic run reached its test limit.

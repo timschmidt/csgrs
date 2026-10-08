@@ -1,0 +1,75 @@
+{
+  "checks": [
+    {
+      "label": "fmt",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustfmt",
+        "--edition",
+        "2024",
+        "--check",
+        "src/bezier_offset.rs",
+        "src/bezier_parameter.rs",
+        "src/bezier_region.rs",
+        "src/curve.rs",
+        "src/curve_corner_chain.rs"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 3.194101248984225,
+      "log": "local-chord-complete-replay-20260924-v42-fmt.log"
+    },
+    {
+      "label": "clippy-1",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "clippy",
+        "--all-targets",
+        "--all-features",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 28.851885053911246,
+      "log": "local-chord-complete-replay-20260924-v42-clippy-1.log"
+    },
+    {
+      "label": "clippy-2",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "clippy",
+        "--all-targets",
+        "--no-default-features",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 30.330556274042465,
+      "log": "local-chord-complete-replay-20260924-v42-clippy-2.log"
+    }
+  ],
+  "cases": [
+    {
+      "label": "selected_source_range_retains_incident_endpoint_and_contacts_locally",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/local-chord-complete-replay-20260924-v42-libtest",
+        "--exact",
+        "bezier_offset::conversion_tests::selected_source_range_retains_incident_endpoint_and_contacts_locally",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 101,
+      "elapsed_seconds": 0.2647432670928538,
+      "log": "local-chord-complete-replay-20260924-v42-selected_source_range_retains_incident_endpoint_and_contacts_locally.log"
+    }
+  ],
+  "all_processes_reaped": true,
+  "binary_sha256": "41f54f6c06850ba3fd7752cda6aa8376899ba3349ab41c3ac65d32af39b0b824",
+  "all_sources_unchanged": true
+}

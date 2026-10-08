@@ -1,0 +1,9 @@
+   Compiling num-traits v0.2.19
+    Checking num-integer v0.1.46
+    Checking num-complex v0.4.6
+    Checking num-bigint v0.4.6
+    Checking num-iter v0.1.45
+    Checking num-rational v0.4.2
+    Checking num v0.4.3
+    Checking hyperreal v0.13.1 (/home/tim/Documents/GitHub/workspace/hyperreal)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 4.40s

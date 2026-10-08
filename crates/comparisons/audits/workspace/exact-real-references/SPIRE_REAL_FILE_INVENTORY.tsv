@@ -1,0 +1,6 @@
+path\trole\tlines\tsha256\tread_status
+core/src/main/scala/spire/math/Real.scala\tcomputable-real scalar\t688\te08a94c6b1d202c01fc81a9650075b4b0c9f186271030c2d2ddcc6ff04093277\tcomplete
+core/src/main/scala/spire/math/Algebraic.scala\texact algebraic scalar\t1604\td48ae31ec92c28ff18f55eb935b725d1cd7c0f3a5baa332dca269282d659bee1\tcomplete
+core/src/main/scala/spire/algebra/IsReal.scala\ttypeclass/API\t87\t28c27cc7a7692279a9c113a1a00a6b93e9df4ff0d06ee4b1be337654ecda3dcf\tcomplete
+tests/shared/src/test/scala/spire/math/RealScalaCheckSuite.scala\tproperty tests\t240\t0b7d775d73c2c1f2a9df5cc3ed61285ab02ebc285eef58dd614f25f78f545fdb\tcomplete
+tests/shared/src/test/scala/spire/math/AlgebraicScalaCheckSuite.scala\tproperty tests\t340\t0750b828b16469d9b741ff37c59e19e0bd71268db7c9f035809999dd69c996e5\tcomplete

@@ -1,0 +1,192 @@
+{
+  "schema": "hypercurve.performance-checkpoint.v1",
+  "captured_on": "2026-08-02",
+  "checkpoint": "partial algebraic-cusp overlap clipping in the authoritative CurveRegion2 arrangement",
+  "source_revision": "bf5b6c6cfe26d0d1fdadd4ec1614004d581dbef5",
+  "comparison_revision": "9b0c1c105f84d7572ab484676f4a51f1b02a3f07",
+  "historical_revision": "7854387497bc41dc814e092a4290636826e1c6fa",
+  "dependency_revisions": {
+    "hyperreal": "6c7b8325382135e424dfdb1d7442d454c9665d75",
+    "hyperlattice": "d11ca2f0e825d8e26048cfda5d1101df21dcfef0",
+    "hyperlimit": "bb1c5e7c418bb8af25701c8201f833fa485b9e9a",
+    "hypersolve": "514160ac02c2aaf98d1ff0a7975c1901d7428a11",
+    "hypertri": "c47601266e0b9b17d0c5a0764fa22b18168ada73"
+  },
+  "scope": {
+    "included": [
+      "exact clipping of full, reversed, rotated, and oblique coincident algebraic-cusp semicircle overlaps against both retained carrier ranges",
+      "one shared overlap correspondence with compact mapped cuts instead of a primitive-element scalar tower",
+      "exact radial-dot/radial-cross Mobius parameter ordering over the two selected cusp roots",
+      "nested retained-cut bracketing and inverse-map comparison under the selected predicate policy",
+      "topology-vertex canonicalization of overlap endpoints and independently retained contact proofs on injective cusp carriers",
+      "exact-rational representative-image fast path for Boolean face classification",
+      "intersection plus all four CurveRegion2 Booleans under STRICT and APPROXIMATE_512",
+      "matched performance, allocation, linked-size, competitive, and call-graph evidence"
+    ],
+    "excluded": [
+      "selected positive-dimensional analytic radical overlap replay",
+      "general algebraic-point versus curved-region classification when the representative does not reduce to an exact Point2",
+      "distinct-carrier general algebraic outer joins",
+      "finite projection and export of algebraic cusp carriers",
+      "solver-driven fillet and chamfer",
+      "hypermesh"
+    ]
+  },
+  "mathematical_contract": {
+    "parameter_map": "For a represented source parameter u, the target half-circle parameter is ordered by comparing its strictly monotone target radial coordinate against (A(u) dot(Rs,Rt) + B(u) turn(s) cross(Rs,Rt)) / D(u). The retained bivariate dot, cross, incidence, and positive squared-radius denominator keep the predicate in the two selected cusp roots without constructing a primitive element.",
+    "nested_cut": "A mapped cut stores one overlap pointer, the source cut, and its source side. Rational brackets map through the monotone correspondence; full aligned overlaps reuse the cut and reversed full overlaps use its exact unit complement. Mapping back through the same correspondence collapses to the original proof.",
+    "clipping": "The overlap is clipped on the first carrier, mapped to the second, clipped there, and mapped back only when the second carrier shortens it. Every mapped point is therefore known to lie on both selected half circles.",
+    "topology": "Corresponding overlap endpoints receive one arrangement vertex. Existing authored/contact vertices are unioned first; each injective carrier then keeps its already-authoritative local parameter proof, so STRICT never equates unrelated algebraic encodings by approximation.",
+    "policy": "STRICT accepts only exact correlated predicates or topology identity. APPROXIMATE_512 follows the same exact graph and may terminate only at the shared 512-bit scalar equality boundary; no approximate geometry is emitted."
+  },
+  "capability": {
+    "comparison_revision": "Coincident cusp semicircles publish exact overlap ranges, but any overlap requiring clipping against a cusp subfragment exits as Unsupported because the generic Bezier correspondence cannot consume cusp-local parameters.",
+    "source_revision": "A correlated rotated overlap is clipped on both cusp carriers, published by intersect_region, split through one topology, and consumed by union, intersection, difference, and xor under both policies.",
+    "fixture": "Two exact circular-segment regions share a strict subarc. One clipped endpoint is also found independently as a cusp/chord contact, exercising cross-proof topology canonicalization rather than only direct map arithmetic.",
+    "historical_exact_peer": false
+  },
+  "benchmark": {
+    "host": "AMD Ryzen 7 5800X3D",
+    "toolchain": "rustc 1.97.0, LLVM 22.1.6, x86_64-unknown-linux-gnu",
+    "primary_method": "release executables pinned to CPU 11; seven perf-stat process repetitions; deterministic instruction and branch counts are authoritative",
+    "new_capability": {
+      "workload": "construct two correlated algebraic-cusp circular-segment regions; clip their strict shared subarc; publish intersections; execute all four Booleans under STRICT and APPROXIMATE_512",
+      "command": "taskset -c 11 perf stat -x, -r 7 -e task-clock,cycles,instructions,branches,branch-misses target/release/deps/hypercurve-cea7a58e3205c173 --exact bezier_offset::conversion_tests::curve_region_boolean_clips_correlated_partial_cusp_overlaps",
+      "task_clock_ms": 145.24,
+      "cycles": 593104254,
+      "instructions": 1481077389,
+      "branches": 274852532,
+      "branch_misses": 1262880,
+      "historical_exact_peer": false
+    },
+    "matched_existing_guard": {
+      "workload": "algebraic_cusp_semicircle_intersects_a_general_analytic_parallel_exactly",
+      "current_instructions": 28776078,
+      "historical_instructions": 28719271,
+      "instruction_change_percent": 0.1978,
+      "current_branches": 5420063,
+      "historical_branches": 5410714,
+      "branch_change_percent": 0.1728,
+      "interpretation": "The deterministic delta includes two additional registered tests and remains below 0.2%; the existing cusp/parallel kernel is effectively neutral."
+    },
+    "fixed_work_historical_controls": {
+      "line_arc_capsule_inward": {
+        "iterations": 10000,
+        "current_instructions": 1984486878,
+        "historical_instructions": 1984555406,
+        "instruction_change_percent": -0.003453,
+        "current_branches": 402581211,
+        "historical_branches": 402394063,
+        "branch_change_percent": 0.046509
+      },
+      "certified_open_cubic_offset": {
+        "iterations": 10,
+        "current_instructions": 3447698469,
+        "historical_instructions": 3447292753,
+        "instruction_change_percent": 0.011769,
+        "current_branches": 649672453,
+        "historical_branches": 649583887,
+        "branch_change_percent": 0.013634
+      },
+      "interpretation": "Both unrelated production controls remain instruction-neutral."
+    },
+    "competitive_context": {
+      "method": "current release comparative executable pinned to CPU 11; eleven samples targeted at 100 ms; fixture construction excluded",
+      "open_cubic": {
+        "hypercurve_certified_median_ns": 30701602.2,
+        "hypercurve_chord_fallback_median_ns": 1010035.9,
+        "curvo_heuristic_median_ns": 8877.6
+      },
+      "line_arc_capsule_inward": {
+        "hypercurve_exact_median_ns": 18482.3,
+        "cavalier_contours_median_ns": 924.0
+      },
+      "direct_guarantee_equivalent": false,
+      "interpretation": "Curvo and Cavalier use finite binary64 geometry and remain throughput targets rather than exactness peers."
+    }
+  },
+  "memory": {
+    "tool": "Heaptrack direct release-unit-test traces",
+    "new_capability": {
+      "profile": "/tmp/heaptrack.hypercurve-cusp-overlap-bf5b6c6.zst",
+      "allocation_calls": 2796336,
+      "temporary_allocations": 255254,
+      "peak_heap_kib": 395.35,
+      "recorder_peak_rss_mib": 18.00,
+      "instrumented_runtime_seconds": 1.473,
+      "interpretation": "Correlated predicate replay is allocation-heavy but bounded; peak retained heap remains below 0.4 MiB."
+    },
+    "matched_existing_guard": {
+      "profile": "/tmp/heaptrack.hypercurve-guard-bf5b6c6.zst",
+      "current_allocation_calls": 39201,
+      "comparison_allocation_calls": 39179,
+      "current_temporary_allocations": 2777,
+      "comparison_temporary_allocations": 2777,
+      "current_peak_heap_kib": 317.45,
+      "comparison_peak_heap_kib": 316.74,
+      "interpretation": "The unchanged guard adds only 22 harness-level calls and 0.71 KiB peak heap."
+    }
+  },
+  "release_size": {
+    "method": "matched curve_region_boolean_batch release executables at this and the immediately preceding arrangement checkpoint",
+    "default_features": {
+      "current_file_bytes": 7999240,
+      "comparison_file_bytes": 7955160,
+      "file_change_percent": 0.554106,
+      "current_text_bytes": 6089969,
+      "comparison_text_bytes": 6054109,
+      "text_change_percent": 0.592325,
+      "current_data_bytes": 267952,
+      "current_bss_bytes": 4912
+    },
+    "no_default_features": {
+      "current_file_bytes": 7821456,
+      "comparison_file_bytes": 7769360,
+      "file_change_percent": 0.670531,
+      "current_text_bytes": 5938305,
+      "comparison_text_bytes": 5900553,
+      "text_change_percent": 0.639804,
+      "current_data_bytes": 266960,
+      "current_bss_bytes": 1920
+    },
+    "interpretation": "The complete exact correspondence and topology path adds measurable linked text. It introduces no compatibility shim or second engine; cold outlining and common clip-code consolidation remain size debt."
+  },
+  "static_callgraph": {
+    "tool": "tools/hyper-callgraph",
+    "artifact": "/tmp/hypercurve-callgraph-cusp-overlap-bf5b6c6/callgraph.json",
+    "discovered_crates": 11,
+    "nodes": 32700,
+    "edges": 60671,
+    "confirmed_paths": [
+      "CurveRegionBooleanContext::clipped_overlap_ranges -> clip_cusp_parameter_overlap",
+      "clip_cusp_parameter_overlap -> BezierAlgebraicCuspSemicirclePairOverlap2::map_parameter",
+      "BezierAlgebraicCuspSemicirclePairOverlap2::mapped_parameter_bracket -> mapped_exact_parameter_bracket -> mapped_exact_parameter_order_to_real",
+      "mapped_exact_parameter_order_to_real -> algebraic_cusp_correlated_predicate_sign",
+      "CurveRegionBooleanContext::build_split_topology -> cusp-overlap endpoint topology union",
+      "CurveRegionBooleanContext::fragment_representative -> exact cusp point-image reduction",
+      "curve_region_boolean_clips_correlated_partial_cusp_overlaps -> intersect_region -> boolean_regions"
+    ]
+  },
+  "verification": {
+    "hypercurve_all_features_library": "passed: 379 tests",
+    "hypercurve_no_default_features_library": "passed: 319 tests",
+    "hypercurve_all_features_integration_compile_matrix": "passed every test target",
+    "hypercurve_no_default_features_integration_compile_matrix": "passed every test target",
+    "hypercurve_clippy_all_features": "passed with -D warnings",
+    "hypercurve_clippy_no_default_features": "passed with -D warnings",
+    "strict_and_approximate": "passed direct map, reversed map, two-sided clipping, intersection publication, topology canonicalization, and all four Booleans",
+    "format": "passed",
+    "diff_check": "passed"
+  },
+  "remaining": [
+    "replay selected positive-dimensional analytic radical overlaps before accepting or rejecting coincident support",
+    "classify retained general algebraic representative points against curved regions without finite demotion",
+    "construct exact distinct-carrier algebraic joins in the sole raw-offset graph",
+    "reduce correlated-predicate bigint and allocation churn",
+    "complete expansion, erosion, collapse, cusp, and offset self-contact differential coverage",
+    "complete finite projection and export for exact analytic and algebraic offsets",
+    "implement radius-driven fillet and corner-option chamfer solving through Hypersolve",
+    "delete displaced historical Boolean, offset, and editing machinery after differential coverage closes",
+    "outline cold correspondence paths and repay the measured linked-text debt"
+  ]
+}

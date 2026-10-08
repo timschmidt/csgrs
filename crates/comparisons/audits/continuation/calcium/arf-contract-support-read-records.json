@@ -1,0 +1,24 @@
+[
+  {
+    "repo": "flint",
+    "path": "src/ulong_extras.h",
+    "ranges": [
+      [
+        70,
+        126
+      ]
+    ],
+    "note": "Checkpoint44 support read. Lines74..80 prove random upper limits1/4 use a bitmask and exclude the purported alias/nearest default branches. Also read adjacent exact-word divisibility/preinverse division contracts; no new numerical campaign or transfer for these helpers."
+  },
+  {
+    "repo": "flint",
+    "path": "src/ulong_extras/randomisation.c",
+    "ranges": [
+      [
+        35,
+        43
+      ]
+    ],
+    "note": "Checkpoint44 support read. Public n_randint/n_urandint forward to the header helper. Establishes the source-level unreachable branches without executing random exceptional/large-exponent tests."
+  }
+]

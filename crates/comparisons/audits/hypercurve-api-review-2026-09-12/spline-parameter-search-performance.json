@@ -1,0 +1,383 @@
+{
+  "baseline_commit": "b1f07b35d8a43ba6d5ce85b11a11ea18582ef51e",
+  "cpu_affinity": 0,
+  "iterations": 101,
+  "repeats": 7,
+  "ordering": "alternating",
+  "workload": "Unchanged existing NURBS-only benchmark body, with no concurrent test/build processes.",
+  "source_hashes": {
+    "src/bspline.rs": "e23c48d1b137563940deb67c3a59098fc2e2a69e2362828687e35d9d290cbab8",
+    "src/nurbs.rs": "390e388c9f933e80af9cbe4b0f6462b75eab8f8fbdd9bd379ed5acced3913d9b",
+    "src/polynomial_spline.rs": "a57e77b85559383f7f88a6846570cf5c94199aca78dc7c46069e1ba99ab078ac",
+    "tests/hypercurve_nurbs.rs": "b0e24d3c428aab56aa1b09f3c1486c2b7dbf250aaf170b555bd97545dd45bfce"
+  },
+  "summary": [
+    {
+      "controls": 64,
+      "linear_cold_seconds": 0.000248757,
+      "ordered_cold_seconds": 0.00024858,
+      "cold_seconds_ordered_over_linear": 0.9992884622342285,
+      "linear_cached_evaluation_seconds": 2.452e-06,
+      "ordered_cached_evaluation_seconds": 9.200000000000001e-07,
+      "cached_evaluation_seconds_ordered_over_linear": 0.37520391517128876
+    },
+    {
+      "controls": 256,
+      "linear_cold_seconds": 0.00136124,
+      "ordered_cold_seconds": 0.001375906,
+      "cold_seconds_ordered_over_linear": 1.01077400017631,
+      "linear_cached_evaluation_seconds": 7.227999999999999e-06,
+      "ordered_cached_evaluation_seconds": 9.26e-07,
+      "cached_evaluation_seconds_ordered_over_linear": 0.12811289429994469
+    },
+    {
+      "controls": 1024,
+      "linear_cold_seconds": 0.007461134,
+      "ordered_cold_seconds": 0.007516029,
+      "cold_seconds_ordered_over_linear": 1.0073574606755487,
+      "linear_cached_evaluation_seconds": 2.6699e-05,
+      "ordered_cached_evaluation_seconds": 9.73e-07,
+      "cached_evaluation_seconds_ordered_over_linear": 0.03644331248361362
+    }
+  ],
+  "samples": [
+    {
+      "implementation": "linear",
+      "controls": 64,
+      "repeat": 0,
+      "cold_seconds": 0.00024834,
+      "cached_evaluation_seconds": 2.452e-06,
+      "stdout": "nurbs_large_cold_decomposition_64_controls: 101 iterations in 25.082346ms (248.34\u00b5s/iter), checksum=61\nnurbs_large_cached_evaluation_64_controls: 101 iterations in 247.743\u00b5s (2.452\u00b5s/iter), checksum=4629597209445409314\n"
+    },
+    {
+      "implementation": "ordered",
+      "controls": 64,
+      "repeat": 0,
+      "cold_seconds": 0.000249477,
+      "cached_evaluation_seconds": 9.310000000000001e-07,
+      "stdout": "nurbs_large_cold_decomposition_64_controls: 101 iterations in 25.197269ms (249.477\u00b5s/iter), checksum=61\nnurbs_large_cached_evaluation_64_controls: 101 iterations in 94.034\u00b5s (931ns/iter), checksum=4629597209445409314\n"
+    },
+    {
+      "implementation": "ordered",
+      "controls": 64,
+      "repeat": 1,
+      "cold_seconds": 0.00024858,
+      "cached_evaluation_seconds": 9.800000000000001e-07,
+      "stdout": "nurbs_large_cold_decomposition_64_controls: 101 iterations in 25.106645ms (248.58\u00b5s/iter), checksum=61\nnurbs_large_cached_evaluation_64_controls: 101 iterations in 99.023\u00b5s (980ns/iter), checksum=4629597209445409314\n"
+    },
+    {
+      "implementation": "linear",
+      "controls": 64,
+      "repeat": 1,
+      "cold_seconds": 0.000251198,
+      "cached_evaluation_seconds": 2.447e-06,
+      "stdout": "nurbs_large_cold_decomposition_64_controls: 101 iterations in 25.371066ms (251.198\u00b5s/iter), checksum=61\nnurbs_large_cached_evaluation_64_controls: 101 iterations in 247.233\u00b5s (2.447\u00b5s/iter), checksum=4629597209445409314\n"
+    },
+    {
+      "implementation": "linear",
+      "controls": 64,
+      "repeat": 2,
+      "cold_seconds": 0.000248055,
+      "cached_evaluation_seconds": 2.4149999999999997e-06,
+      "stdout": "nurbs_large_cold_decomposition_64_controls: 101 iterations in 25.053568ms (248.055\u00b5s/iter), checksum=61\nnurbs_large_cached_evaluation_64_controls: 101 iterations in 243.973\u00b5s (2.415\u00b5s/iter), checksum=4629597209445409314\n"
+    },
+    {
+      "implementation": "ordered",
+      "controls": 64,
+      "repeat": 2,
+      "cold_seconds": 0.00026042700000000003,
+      "cached_evaluation_seconds": 9.450000000000001e-07,
+      "stdout": "nurbs_large_cold_decomposition_64_controls: 101 iterations in 26.303213ms (260.427\u00b5s/iter), checksum=61\nnurbs_large_cached_evaluation_64_controls: 101 iterations in 95.464\u00b5s (945ns/iter), checksum=4629597209445409314\n"
+    },
+    {
+      "implementation": "ordered",
+      "controls": 64,
+      "repeat": 3,
+      "cold_seconds": 0.000247687,
+      "cached_evaluation_seconds": 9.130000000000001e-07,
+      "stdout": "nurbs_large_cold_decomposition_64_controls: 101 iterations in 25.016391ms (247.687\u00b5s/iter), checksum=61\nnurbs_large_cached_evaluation_64_controls: 101 iterations in 92.213\u00b5s (913ns/iter), checksum=4629597209445409314\n"
+    },
+    {
+      "implementation": "linear",
+      "controls": 64,
+      "repeat": 3,
+      "cold_seconds": 0.000251788,
+      "cached_evaluation_seconds": 2.464e-06,
+      "stdout": "nurbs_large_cold_decomposition_64_controls: 101 iterations in 25.430672ms (251.788\u00b5s/iter), checksum=61\nnurbs_large_cached_evaluation_64_controls: 101 iterations in 248.882\u00b5s (2.464\u00b5s/iter), checksum=4629597209445409314\n"
+    },
+    {
+      "implementation": "linear",
+      "controls": 64,
+      "repeat": 4,
+      "cold_seconds": 0.00025225299999999997,
+      "cached_evaluation_seconds": 2.4100000000000002e-06,
+      "stdout": "nurbs_large_cold_decomposition_64_controls: 101 iterations in 25.477559ms (252.253\u00b5s/iter), checksum=61\nnurbs_large_cached_evaluation_64_controls: 101 iterations in 243.493\u00b5s (2.41\u00b5s/iter), checksum=4629597209445409314\n"
+    },
+    {
+      "implementation": "ordered",
+      "controls": 64,
+      "repeat": 4,
+      "cold_seconds": 0.000245753,
+      "cached_evaluation_seconds": 9.200000000000001e-07,
+      "stdout": "nurbs_large_cold_decomposition_64_controls: 101 iterations in 24.821084ms (245.753\u00b5s/iter), checksum=61\nnurbs_large_cached_evaluation_64_controls: 101 iterations in 93.013\u00b5s (920ns/iter), checksum=4629597209445409314\n"
+    },
+    {
+      "implementation": "ordered",
+      "controls": 64,
+      "repeat": 5,
+      "cold_seconds": 0.00024867199999999997,
+      "cached_evaluation_seconds": 9.19e-07,
+      "stdout": "nurbs_large_cold_decomposition_64_controls: 101 iterations in 25.115944ms (248.672\u00b5s/iter), checksum=61\nnurbs_large_cached_evaluation_64_controls: 101 iterations in 92.894\u00b5s (919ns/iter), checksum=4629597209445409314\n"
+    },
+    {
+      "implementation": "linear",
+      "controls": 64,
+      "repeat": 5,
+      "cold_seconds": 0.000248757,
+      "cached_evaluation_seconds": 2.512e-06,
+      "stdout": "nurbs_large_cold_decomposition_64_controls: 101 iterations in 25.124494ms (248.757\u00b5s/iter), checksum=61\nnurbs_large_cached_evaluation_64_controls: 101 iterations in 253.782\u00b5s (2.512\u00b5s/iter), checksum=4629597209445409314\n"
+    },
+    {
+      "implementation": "linear",
+      "controls": 64,
+      "repeat": 6,
+      "cold_seconds": 0.000248239,
+      "cached_evaluation_seconds": 2.489e-06,
+      "stdout": "nurbs_large_cold_decomposition_64_controls: 101 iterations in 25.072148ms (248.239\u00b5s/iter), checksum=61\nnurbs_large_cached_evaluation_64_controls: 101 iterations in 251.443\u00b5s (2.489\u00b5s/iter), checksum=4629597209445409314\n"
+    },
+    {
+      "implementation": "ordered",
+      "controls": 64,
+      "repeat": 6,
+      "cold_seconds": 0.000247915,
+      "cached_evaluation_seconds": 9.19e-07,
+      "stdout": "nurbs_large_cold_decomposition_64_controls: 101 iterations in 25.03945ms (247.915\u00b5s/iter), checksum=61\nnurbs_large_cached_evaluation_64_controls: 101 iterations in 92.883\u00b5s (919ns/iter), checksum=4629597209445409314\n"
+    },
+    {
+      "implementation": "linear",
+      "controls": 256,
+      "repeat": 0,
+      "cold_seconds": 0.00135676,
+      "cached_evaluation_seconds": 7.1809999999999995e-06,
+      "stdout": "nurbs_large_cold_decomposition_256_controls: 101 iterations in 137.032844ms (1.35676ms/iter), checksum=253\nnurbs_large_cached_evaluation_256_controls: 101 iterations in 725.29\u00b5s (7.181\u00b5s/iter), checksum=4638679133604681826\n"
+    },
+    {
+      "implementation": "ordered",
+      "controls": 256,
+      "repeat": 0,
+      "cold_seconds": 0.0013879930000000001,
+      "cached_evaluation_seconds": 9.520000000000001e-07,
+      "stdout": "nurbs_large_cold_decomposition_256_controls: 101 iterations in 140.187317ms (1.387993ms/iter), checksum=253\nnurbs_large_cached_evaluation_256_controls: 101 iterations in 96.243\u00b5s (952ns/iter), checksum=4638679133604681826\n"
+    },
+    {
+      "implementation": "ordered",
+      "controls": 256,
+      "repeat": 1,
+      "cold_seconds": 0.001428744,
+      "cached_evaluation_seconds": 9.08e-07,
+      "stdout": "nurbs_large_cold_decomposition_256_controls: 101 iterations in 144.303214ms (1.428744ms/iter), checksum=253\nnurbs_large_cached_evaluation_256_controls: 101 iterations in 91.743\u00b5s (908ns/iter), checksum=4638679133604681826\n"
+    },
+    {
+      "implementation": "linear",
+      "controls": 256,
+      "repeat": 1,
+      "cold_seconds": 0.001430681,
+      "cached_evaluation_seconds": 1.3721999999999998e-05,
+      "stdout": "nurbs_large_cold_decomposition_256_controls: 101 iterations in 144.49881ms (1.430681ms/iter), checksum=253\nnurbs_large_cached_evaluation_256_controls: 101 iterations in 1.385945ms (13.722\u00b5s/iter), checksum=4638679133604681826\n"
+    },
+    {
+      "implementation": "linear",
+      "controls": 256,
+      "repeat": 2,
+      "cold_seconds": 0.0013722060000000002,
+      "cached_evaluation_seconds": 7.174e-06,
+      "stdout": "nurbs_large_cold_decomposition_256_controls: 101 iterations in 138.592846ms (1.372206ms/iter), checksum=253\nnurbs_large_cached_evaluation_256_controls: 101 iterations in 724.62\u00b5s (7.174\u00b5s/iter), checksum=4638679133604681826\n"
+    },
+    {
+      "implementation": "ordered",
+      "controls": 256,
+      "repeat": 2,
+      "cold_seconds": 0.001376208,
+      "cached_evaluation_seconds": 9.130000000000001e-07,
+      "stdout": "nurbs_large_cold_decomposition_256_controls: 101 iterations in 138.997018ms (1.376208ms/iter), checksum=253\nnurbs_large_cached_evaluation_256_controls: 101 iterations in 92.304\u00b5s (913ns/iter), checksum=4638679133604681826\n"
+    },
+    {
+      "implementation": "ordered",
+      "controls": 256,
+      "repeat": 3,
+      "cold_seconds": 0.001375906,
+      "cached_evaluation_seconds": 8.97e-07,
+      "stdout": "nurbs_large_cold_decomposition_256_controls: 101 iterations in 138.96656ms (1.375906ms/iter), checksum=253\nnurbs_large_cached_evaluation_256_controls: 101 iterations in 90.684\u00b5s (897ns/iter), checksum=4638679133604681826\n"
+    },
+    {
+      "implementation": "linear",
+      "controls": 256,
+      "repeat": 3,
+      "cold_seconds": 0.001364401,
+      "cached_evaluation_seconds": 7.226e-06,
+      "stdout": "nurbs_large_cold_decomposition_256_controls: 101 iterations in 137.804601ms (1.364401ms/iter), checksum=253\nnurbs_large_cached_evaluation_256_controls: 101 iterations in 729.84\u00b5s (7.226\u00b5s/iter), checksum=4638679133604681826\n"
+    },
+    {
+      "implementation": "linear",
+      "controls": 256,
+      "repeat": 4,
+      "cold_seconds": 0.0013566860000000002,
+      "cached_evaluation_seconds": 7.258e-06,
+      "stdout": "nurbs_large_cold_decomposition_256_controls: 101 iterations in 137.025334ms (1.356686ms/iter), checksum=253\nnurbs_large_cached_evaluation_256_controls: 101 iterations in 733.089\u00b5s (7.258\u00b5s/iter), checksum=4638679133604681826\n"
+    },
+    {
+      "implementation": "ordered",
+      "controls": 256,
+      "repeat": 4,
+      "cold_seconds": 0.001374909,
+      "cached_evaluation_seconds": 9.380000000000001e-07,
+      "stdout": "nurbs_large_cold_decomposition_256_controls: 101 iterations in 138.865837ms (1.374909ms/iter), checksum=253\nnurbs_large_cached_evaluation_256_controls: 101 iterations in 94.794\u00b5s (938ns/iter), checksum=4638679133604681826\n"
+    },
+    {
+      "implementation": "ordered",
+      "controls": 256,
+      "repeat": 5,
+      "cold_seconds": 0.0013713439999999998,
+      "cached_evaluation_seconds": 9.26e-07,
+      "stdout": "nurbs_large_cold_decomposition_256_controls: 101 iterations in 138.505763ms (1.371344ms/iter), checksum=253\nnurbs_large_cached_evaluation_256_controls: 101 iterations in 93.584\u00b5s (926ns/iter), checksum=4638679133604681826\n"
+    },
+    {
+      "implementation": "linear",
+      "controls": 256,
+      "repeat": 5,
+      "cold_seconds": 0.001358125,
+      "cached_evaluation_seconds": 7.3169999999999996e-06,
+      "stdout": "nurbs_large_cold_decomposition_256_controls: 101 iterations in 137.170715ms (1.358125ms/iter), checksum=253\nnurbs_large_cached_evaluation_256_controls: 101 iterations in 739.069\u00b5s (7.317\u00b5s/iter), checksum=4638679133604681826\n"
+    },
+    {
+      "implementation": "linear",
+      "controls": 256,
+      "repeat": 6,
+      "cold_seconds": 0.00136124,
+      "cached_evaluation_seconds": 7.227999999999999e-06,
+      "stdout": "nurbs_large_cold_decomposition_256_controls: 101 iterations in 137.485243ms (1.36124ms/iter), checksum=253\nnurbs_large_cached_evaluation_256_controls: 101 iterations in 730.089\u00b5s (7.228\u00b5s/iter), checksum=4638679133604681826\n"
+    },
+    {
+      "implementation": "ordered",
+      "controls": 256,
+      "repeat": 6,
+      "cold_seconds": 0.001365626,
+      "cached_evaluation_seconds": 9.73e-07,
+      "stdout": "nurbs_large_cold_decomposition_256_controls: 101 iterations in 137.928302ms (1.365626ms/iter), checksum=253\nnurbs_large_cached_evaluation_256_controls: 101 iterations in 98.313\u00b5s (973ns/iter), checksum=4638679133604681826\n"
+    },
+    {
+      "implementation": "linear",
+      "controls": 1024,
+      "repeat": 0,
+      "cold_seconds": 0.007461134,
+      "cached_evaluation_seconds": 2.6699e-05,
+      "stdout": "nurbs_large_cold_decomposition_1024_controls: 101 iterations in 753.574537ms (7.461134ms/iter), checksum=1021\nnurbs_large_cached_evaluation_1024_controls: 101 iterations in 2.696655ms (26.699\u00b5s/iter), checksum=4647708364978135586\n"
+    },
+    {
+      "implementation": "ordered",
+      "controls": 1024,
+      "repeat": 0,
+      "cold_seconds": 0.007688833,
+      "cached_evaluation_seconds": 9.65e-07,
+      "stdout": "nurbs_large_cold_decomposition_1024_controls: 101 iterations in 776.572216ms (7.688833ms/iter), checksum=1021\nnurbs_large_cached_evaluation_1024_controls: 101 iterations in 97.513\u00b5s (965ns/iter), checksum=4647708364978135586\n"
+    },
+    {
+      "implementation": "ordered",
+      "controls": 1024,
+      "repeat": 1,
+      "cold_seconds": 0.007568961,
+      "cached_evaluation_seconds": 9.76e-07,
+      "stdout": "nurbs_large_cold_decomposition_1024_controls: 101 iterations in 764.465148ms (7.568961ms/iter), checksum=1021\nnurbs_large_cached_evaluation_1024_controls: 101 iterations in 98.673\u00b5s (976ns/iter), checksum=4647708364978135586\n"
+    },
+    {
+      "implementation": "linear",
+      "controls": 1024,
+      "repeat": 1,
+      "cold_seconds": 0.007517655000000001,
+      "cached_evaluation_seconds": 2.6661e-05,
+      "stdout": "nurbs_large_cold_decomposition_1024_controls: 101 iterations in 759.283235ms (7.517655ms/iter), checksum=1021\nnurbs_large_cached_evaluation_1024_controls: 101 iterations in 2.692854ms (26.661\u00b5s/iter), checksum=4647708364978135586\n"
+    },
+    {
+      "implementation": "linear",
+      "controls": 1024,
+      "repeat": 2,
+      "cold_seconds": 0.007602575,
+      "cached_evaluation_seconds": 2.6818e-05,
+      "stdout": "nurbs_large_cold_decomposition_1024_controls: 101 iterations in 767.860146ms (7.602575ms/iter), checksum=1021\nnurbs_large_cached_evaluation_1024_controls: 101 iterations in 2.708703ms (26.818\u00b5s/iter), checksum=4647708364978135586\n"
+    },
+    {
+      "implementation": "ordered",
+      "controls": 1024,
+      "repeat": 2,
+      "cold_seconds": 0.00772038,
+      "cached_evaluation_seconds": 9.7e-07,
+      "stdout": "nurbs_large_cold_decomposition_1024_controls: 101 iterations in 779.758398ms (7.72038ms/iter), checksum=1021\nnurbs_large_cached_evaluation_1024_controls: 101 iterations in 97.993\u00b5s (970ns/iter), checksum=4647708364978135586\n"
+    },
+    {
+      "implementation": "ordered",
+      "controls": 1024,
+      "repeat": 3,
+      "cold_seconds": 0.0075091970000000004,
+      "cached_evaluation_seconds": 9.73e-07,
+      "stdout": "nurbs_large_cold_decomposition_1024_controls: 101 iterations in 758.428913ms (7.509197ms/iter), checksum=1021\nnurbs_large_cached_evaluation_1024_controls: 101 iterations in 98.313\u00b5s (973ns/iter), checksum=4647708364978135586\n"
+    },
+    {
+      "implementation": "linear",
+      "controls": 1024,
+      "repeat": 3,
+      "cold_seconds": 0.007391129000000001,
+      "cached_evaluation_seconds": 2.6768e-05,
+      "stdout": "nurbs_large_cold_decomposition_1024_controls: 101 iterations in 746.504063ms (7.391129ms/iter), checksum=1021\nnurbs_large_cached_evaluation_1024_controls: 101 iterations in 2.703644ms (26.768\u00b5s/iter), checksum=4647708364978135586\n"
+    },
+    {
+      "implementation": "linear",
+      "controls": 1024,
+      "repeat": 4,
+      "cold_seconds": 0.007452022000000001,
+      "cached_evaluation_seconds": 2.6565e-05,
+      "stdout": "nurbs_large_cold_decomposition_1024_controls: 101 iterations in 752.65428ms (7.452022ms/iter), checksum=1021\nnurbs_large_cached_evaluation_1024_controls: 101 iterations in 2.683145ms (26.565\u00b5s/iter), checksum=4647708364978135586\n"
+    },
+    {
+      "implementation": "ordered",
+      "controls": 1024,
+      "repeat": 4,
+      "cold_seconds": 0.007516029,
+      "cached_evaluation_seconds": 9.76e-07,
+      "stdout": "nurbs_large_cold_decomposition_1024_controls: 101 iterations in 759.119016ms (7.516029ms/iter), checksum=1021\nnurbs_large_cached_evaluation_1024_controls: 101 iterations in 98.633\u00b5s (976ns/iter), checksum=4647708364978135586\n"
+    },
+    {
+      "implementation": "ordered",
+      "controls": 1024,
+      "repeat": 5,
+      "cold_seconds": 0.007476702000000001,
+      "cached_evaluation_seconds": 9.87e-07,
+      "stdout": "nurbs_large_cold_decomposition_1024_controls: 101 iterations in 755.146979ms (7.476702ms/iter), checksum=1021\nnurbs_large_cached_evaluation_1024_controls: 101 iterations in 99.723\u00b5s (987ns/iter), checksum=4647708364978135586\n"
+    },
+    {
+      "implementation": "linear",
+      "controls": 1024,
+      "repeat": 5,
+      "cold_seconds": 0.0074648909999999995,
+      "cached_evaluation_seconds": 2.7710999999999996e-05,
+      "stdout": "nurbs_large_cold_decomposition_1024_controls: 101 iterations in 753.954051ms (7.464891ms/iter), checksum=1021\nnurbs_large_cached_evaluation_1024_controls: 101 iterations in 2.798848ms (27.711\u00b5s/iter), checksum=4647708364978135586\n"
+    },
+    {
+      "implementation": "linear",
+      "controls": 1024,
+      "repeat": 6,
+      "cold_seconds": 0.0074492000000000004,
+      "cached_evaluation_seconds": 2.6694999999999998e-05,
+      "stdout": "nurbs_large_cold_decomposition_1024_controls: 101 iterations in 752.3692ms (7.4492ms/iter), checksum=1021\nnurbs_large_cached_evaluation_1024_controls: 101 iterations in 2.696294ms (26.695\u00b5s/iter), checksum=4647708364978135586\n"
+    },
+    {
+      "implementation": "ordered",
+      "controls": 1024,
+      "repeat": 6,
+      "cold_seconds": 0.007495538,
+      "cached_evaluation_seconds": 9.68e-07,
+      "stdout": "nurbs_large_cold_decomposition_1024_controls: 101 iterations in 757.049378ms (7.495538ms/iter), checksum=1021\nnurbs_large_cached_evaluation_1024_controls: 101 iterations in 97.853\u00b5s (968ns/iter), checksum=4647708364978135586\n"
+    }
+  ],
+  "commit": "444d8fa30cc5d5798b965d7ded2779ed27e580f1",
+  "qualification": "spline-parameter-search-qualification.json"
+}

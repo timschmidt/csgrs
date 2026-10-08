@@ -1,0 +1,12 @@
+{
+  "repos": {
+    "hypercurve": {
+      "parent": "e932c8c8dc1fc82b6d986e2c45b070e8af7f835b",
+      "paths": {
+        "src/bezier_offset.rs": "9dd7c4330ce1caa5a69dc8ac00885419d8a99f1a9215f6113f72e1210375e327"
+      }
+    }
+  },
+  "qualification": "regular-cell-ordering-20260927-v528-terminal.json",
+  "verified_source_files": 2047
+}

@@ -1,0 +1,14 @@
+{
+  "repos": {
+    "hypercurve": {
+      "commit": "374dcfb8bd888ce00adcfe64de9a9925b8148576",
+      "parent": "061585222021cfbf56a531d4ef9a9dd3804e692b",
+      "paths": {
+        "tests/hypercurve_stationary_fillets.rs": "fa9bba6a9c0b331913d5196c7332593d8945df4a521c7406cb2e118f19c69b35"
+      }
+    }
+  },
+  "qualification": "stationary-fillet-public-20260927-v525-terminal.json",
+  "verified_source_files": 2047,
+  "clean_repositories": 30
+}

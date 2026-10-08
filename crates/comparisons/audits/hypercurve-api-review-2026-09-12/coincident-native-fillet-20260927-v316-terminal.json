@@ -1,0 +1,11 @@
+{
+  "source_manifest": "borrowed-fillet-components-20260927-v315-sources.json",
+  "source_sha256": "6c4f78264208807e4e873e4c3a7f50046d7ba2b07a6f3dd727456b394ac13366",
+  "library": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypercurve-85a9105cd1c82df7.rlib",
+  "library_sha256": "f82607406e88de4d02c8fbfef05c96c4c266c6d5edf88a024720e81be6d38558",
+  "all_processes_reaped": true,
+  "build_returncode": 0,
+  "binary_sha256": "84927efd1c6ad2bd2274a690a70b063a72519a448448812aae72b654cc63f3d7",
+  "returncode": 0,
+  "elapsed_seconds": 0.0037223249673843384
+}

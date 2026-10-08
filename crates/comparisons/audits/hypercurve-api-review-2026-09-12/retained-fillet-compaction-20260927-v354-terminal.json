@@ -1,0 +1,35 @@
+{
+  "source_manifest": "retained-fillet-compaction-20260927-v354-sources.json",
+  "source_directory": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/source-archives/retained-fillet-compaction-20260927-v354",
+  "workspace_guard": "cached-tower-approximation-20260927-v352-sources.json",
+  "parent_commit": "1bd0348bb7b848e85f9085932a30033675f59e2f",
+  "hypersolve_commit": "539eb997d21c2193b759172862667f4bb4e555bd",
+  "cases": [
+    {
+      "name": "strict_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions",
+      "returncode": 124,
+      "log": "retained-fillet-compaction-20260927-v354-strict_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions.log",
+      "elapsed_seconds": 90.03567660099361
+    }
+  ],
+  "all_processes_reaped": true,
+  "command": [
+    "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+    "test",
+    "--test",
+    "hypercurve_curve_region_promotion",
+    "--release",
+    "--all-features",
+    "--no-run",
+    "--message-format=json",
+    "--locked",
+    "--offline"
+  ],
+  "build_returncode": 0,
+  "build_elapsed_seconds": 115.07986268901732,
+  "binary": {
+    "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-fillet-compaction-20260927-v354-hypercurve_curve_region_promotion",
+    "sha256": "157da85d2ff67ff15bdac139a7cad097c356034b3d576a1e6960a9c134402638"
+  },
+  "all_sources_unchanged": true
+}

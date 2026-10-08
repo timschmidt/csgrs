@@ -1,0 +1,53 @@
+{
+  "binary": {
+    "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-contact-replay-20260926-v125-hypercurve",
+    "sha256": "84a0d3e241fe6f2d28cd395cda3c8c47db9555a9996e07db8cdcad50ba315e92"
+  },
+  "source_manifest": "local-chord-complete-replay-20260924-v125-sources.json",
+  "diagnostic_only": true,
+  "cases": [
+    {
+      "name": "bezier_region::tests::one_fragment_nonzero_parallel_loop_extends_chamfer_cuts_on_one_finite_envelope",
+      "log": "retained-contact-replay-20260926-v125-stack2-0.log",
+      "command": [
+        "/usr/bin/gdb",
+        "-nx",
+        "-nh",
+        "--batch",
+        "-ex",
+        "set pagination off",
+        "-ex",
+        "set confirm off",
+        "-ex",
+        "set debuginfod enabled off",
+        "-ex",
+        "set print frame-arguments none",
+        "-ex",
+        "set print entry-values no",
+        "-ex",
+        "run",
+        "-ex",
+        "thread apply all bt 12",
+        "-ex",
+        "thread apply all bt -45",
+        "-ex",
+        "kill",
+        "-ex",
+        "quit",
+        "--args",
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-contact-replay-20260926-v125-hypercurve",
+        "--exact",
+        "bezier_region::tests::one_fragment_nonzero_parallel_loop_extends_chamfer_cuts_on_one_finite_envelope",
+        "--test-threads=1",
+        "--nocapture"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 20.072810846031643,
+      "interrupted": true,
+      "sample_obtained": true,
+      "debugger_reaped": true
+    }
+  ],
+  "all_processes_reaped": true,
+  "all_sources_unchanged": true
+}

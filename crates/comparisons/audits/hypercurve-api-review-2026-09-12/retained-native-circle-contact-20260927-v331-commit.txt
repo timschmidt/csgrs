@@ -1,0 +1,25 @@
+Preserve selected contacts in native circular fillets
+
+Accept retained exact contact points on native circles and reconstruct their
+trims, extensions, and fillet sweeps through the existing rational circle
+charts. Keep selected endpoint and inverse-parameter evidence, preserve the
+complete authored circle for two cuts, and avoid global/local parameter
+round trips. Native deferred parameters no longer affect spline charts.
+
+Reject crossed cuts on a single closed circle before reconstruction. Keep
+optional compact rational overlap correspondences strictly certified so
+recognition cannot weaken certified region normalization.
+
+Regression coverage includes independent selected contact fields, major and
+full circles, extensions, traversal reversal, crossed native/retained cuts,
+and certified normalization with an independent Boolean set witness.
+
+Validation: 197 selected release tests across seven binaries; all-target
+Clippy with all features and without defaults; rustfmt; editing fuzz build;
+denied-warning documentation; Hyperbrep all targets/features. V331 receipts
+bind all 2,046 source inputs and seven executable hashes.
+
+The two prior full extended-fillet re-offset timeouts remain excluded. The
+expanded chamfer scope also reproduced a 240-second quartic parallel timeout
+on both this change and committed baseline 00650940 (V327/V328). This commit
+does not claim full computational or operation-composition closure.

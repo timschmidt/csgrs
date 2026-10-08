@@ -1,0 +1,24 @@
+{
+  "returncode": 0,
+  "elapsed_seconds": 0.003464053006609902,
+  "normal_library_sha256": "714b601f333b40798493e6ce128734b3d2364e200468ebb07c5e34bf947b443d",
+  "log": "finite-fixed-distance-domains-winding-public.log",
+  "source": "finite-region-winding-public.rs",
+  "command": [
+    "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustc",
+    "--edition=2024",
+    "-O",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-region-winding-public.rs",
+    "--extern",
+    "hypercurve=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypercurve-96140573e602b0b0.rlib",
+    "-L",
+    "dependency=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps",
+    "-o",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-fixed-distance-domains-winding-public"
+  ],
+  "run_command": [
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-fixed-distance-domains-winding-public"
+  ],
+  "source_sha256": "556f33cdfb31390813934e671f2103efecca7fd93fa5c559ab3e8d2927a95d68",
+  "executable_sha256": "3918259b5a12b0e930222435a2f9c865539f4483f32740b6a9cb77c255c4a2d1"
+}

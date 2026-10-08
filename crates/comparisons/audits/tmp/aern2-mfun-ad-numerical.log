@@ -1,0 +1,17 @@
+jets ring+division p=24: 100/100
+jets integer powers p=24: 300/300
+jets polynomial powers at zero p=24 [(0,False),(1,False),(2,False),(3,True),(4,True),(5,True)]
+elementary jets exact special values p=24: 48/48
+Rosenbrock value/gradient/Hessian p=24: 24/25
+jets ring+division p=53: 100/100
+jets integer powers p=53: 300/300
+jets polynomial powers at zero p=53 [(0,False),(1,False),(2,False),(3,True),(4,True),(5,True)]
+elementary jets exact special values p=53: 48/48
+Rosenbrock value/gradient/Hessian p=53: 24/25
+jets ring+division p=100: 100/100
+jets integer powers p=100: 300/300
+jets polynomial powers at zero p=100 [(0,False),(1,False),(2,False),(3,True),(4,True),(5,True)]
+elementary jets exact special values p=100: 48/48
+Rosenbrock value/gradient/Hessian p=100: 24/25
+vector norm encloses exact max-absolute 3: False
+mixed vector reported accuracy: Exact; entries: [Exact,bits 2]

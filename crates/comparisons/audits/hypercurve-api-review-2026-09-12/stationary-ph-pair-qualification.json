@@ -1,0 +1,47 @@
+{
+  "status": "implemented, qualified, committed; original goal active",
+  "commit": "e226446925e62af7e75c7bac9644ac3c3a475089",
+  "preceding_commit": "9f688be6447eadf933e1cfd8b3e9fce605a810f0",
+  "change": "Keep analytic parallel supports and use their exact regular-range PH components only for rational finite-domain pair replay. Return complete isolated results; preserve the general positive-dimensional overlap and uncertainty fallback. Existing global/native specializations run first.",
+  "api_changes": false,
+  "retained_source_representation_changed": false,
+  "new_cache_fields": false,
+  "tests": {
+    "hypercurve_library": 1023,
+    "hypercurve_integration": 412,
+    "hyperbrep_library": 232,
+    "unique_total": 1667,
+    "library_ignored": 6,
+    "established_expensive_library_exclusions": 4
+  },
+  "logs": [
+    "stationary-ph-pair-release.log",
+    "stationary-ph-pair-hyperbrep-release.log",
+    "stationary-ph-pair-all-targets.log",
+    "stationary-ph-pair-hyperbrep-all-targets.log"
+  ],
+  "regression": "Regular PH branch pairs, exact cusp incidence and disjoint restrictions, both contexts and traversals; requires exact source-parameter identity and the rational-domain trace.",
+  "formatting": "changed Rust and git diff checks passed",
+  "source_sha256": {
+    "src/bezier_offset.rs": "f2615ba2bde74b94c4aae8955da9a565415d898c90ffd062a24fcb35442865ee",
+    "src/bezier_region.rs": "69f3f58f77f56ddee87f08b97218bd71ed1616d7c21cbedd7f6a180f9a34085d",
+    "src/curve_region_boolean.rs": "9db95dbe56e40b073801ef028f651bd64e910b381f65b13e6135f67e3873ab7a",
+    "tests/hypercurve_bezier_fit_offset.rs": "b2cd2c65a69ca4a8eef27ad7c77721e7f53d891ddde1cd0a53c2e435af923dea"
+  },
+  "diagnostics": {
+    "stack": "stationary-ph-retained-stack.log",
+    "first_offset_observations_seconds": [
+      116.802871512,
+      115.115744355,
+      3.729496005
+    ],
+    "timing_limit": "Diagnostic wall-clock observations, not controlled benchmarks. The 3.729s binary has the new domain shortcut before the existing global prefix; final qualification moves it after that prefix to preserve native fast paths.",
+    "eager_materialization": "Investigated and discarded. It accelerated the first offset but replaced the retained source with a richer rational curve. The candidate is preserved in stationary-ph-eager-rational-candidate.patch.",
+    "self_dispatch": "Investigated and discarded; profiling identified pair intersections as the expensive phase. Patch preserved in stationary-ph-self-dispatch-candidate.patch.",
+    "stale_library": "stationary-ph-offset-composition-stale-library.log is an accidentally stale diagnostic, explicitly excluded from fixed-code evidence."
+  },
+  "followup": "stationary-ph-composition-followup.json",
+  "goal_status": "active",
+  "workspace_status": "stationary-ph-pair-workspace-after-commit.json",
+  "clean_repository_count": 30
+}

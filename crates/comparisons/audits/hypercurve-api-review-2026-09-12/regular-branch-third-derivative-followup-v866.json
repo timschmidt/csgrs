@@ -1,0 +1,23 @@
+{
+  "baseline": "same-side-reflection-v864-sources.json",
+  "status": "read-only mathematical follow-up; no candidate or new public region failure",
+  "finding": "Equal nonzero curvature cannot use the zero-curvature third-order witness. A general regular-branch graph derivative also contains tangential acceleration, and its sign can be compared after clearing positive integer powers without squaring.",
+  "derivation": {
+    "definitions": "v=C1, a=C2, j=C3, S=v dot v>0, A=cross(v,a), J=S*cross(v,j)-3*A*(v dot a). Use the common positive tangent direction as the x-axis.",
+    "graph_derivatives": "d2y/dx2=A/S^(3/2); d3y/dx3=J/S^3.",
+    "reparameterization": "Under a positive source chart derivative lambda, S scales by lambda^2 and J by lambda^6; acceleration terms cancel. Thus J/S^3 is parameter-invariant.",
+    "zero_curvature": "A=0 reduces the third derivative to cross(v,j)/S^2, consistent with the corrected squared magnitude denominator S^4.",
+    "signed_comparison": "For the same side, compare J1*S2^3-J2*S1^3 directly. Preserve the angular cut and any base-direction conventions when adapting this to traversal."
+  },
+  "counterexample_family": "C_a(u)=(u+a*u^2,(u+a*u^2)^2) gives A=2, v dot a=2a, cross(v,j)=12a, hence J=0 for every a. This is the same parabola and is covered by V861.",
+  "requirements": [
+    "Trace all ordering/evidence consumers before replacing report types. The saved curvature signs now enforce a real theorem prerequisite.",
+    "Reuse retained source polynomial/vector signs and selected-root identity instead of requiring independent coordinate elimination.",
+    "Retain demand-driven derivative construction and certified successor shortcuts; obtain a bounded public composed-region counterexample before attributing a completeness limit to low-order helpers.",
+    "Stationary parameters and higher-order equal jets need separate branch/multiplicity evidence; this regular first-derivative formula alone does not cover them."
+  ],
+  "source_sha256": {
+    "hypercurve/src/bezier_arrangement.rs": "a5a3c8e7c8da1f5a82c6e14411ec06bafb430a34368c740aa104e7222b51a33e",
+    "hypercurve/src/bezier_tangent_order.rs": "a08b3515e518119cf3a6f5cce417b260ac5042a82ff5c52a5973b24ad84b0d54"
+  }
+}

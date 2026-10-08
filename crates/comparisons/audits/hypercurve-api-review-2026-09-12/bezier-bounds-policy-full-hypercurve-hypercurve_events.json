@@ -1,0 +1,38 @@
+{
+  "repo": "hypercurve",
+  "target": "hypercurve_events",
+  "binary": "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve_events-a08b7c705268b82d",
+  "command": [
+    "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve_events-a08b7c705268b82d",
+    "--test-threads=4",
+    "--color",
+    "never"
+  ],
+  "sha256": "b15abf034f04172e64712f190ceff0573e801917d97ae7422b7d58ac00148140",
+  "returncode": 0,
+  "timed_out": false,
+  "elapsed_seconds": 0.0033961369990720414,
+  "log": "bezier-bounds-policy-full-hypercurve-hypercurve_events.log",
+  "passed": [
+    "contour_event_broad_phase_skips_decided_disjoint_boxes",
+    "contour_event_broad_phase_keeps_edge_touching_boxes",
+    "contour_event_kinds_are_carried_to_point_events",
+    "contour_events_preserve_line_overlap",
+    "contour_events_sort_points_by_first_segment_parameter",
+    "contour_intersection_set_constructor_rejects_duplicate_events",
+    "contour_events_sort_line_arc_hits_by_second_segment_parameter",
+    "contour_events_preserve_arc_overlap",
+    "contour_intersection_set_constructor_validates_event_parameters",
+    "contour_self_events_ignore_ordinary_connectivity",
+    "contour_self_events_keep_adjacent_line_arc_crossing_but_drop_shared_endpoint",
+    "point_event_storage_does_not_inline_overlap_geometry",
+    "contour_self_events_keep_nonadjacent_line_arc_crossing"
+  ],
+  "failed": [],
+  "ignored": [],
+  "summaries": [
+    "test result: ok. 13 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s"
+  ],
+  "new_failures": [],
+  "known_failures": []
+}

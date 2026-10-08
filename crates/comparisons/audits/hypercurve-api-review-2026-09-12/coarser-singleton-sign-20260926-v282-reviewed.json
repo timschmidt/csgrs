@@ -1,0 +1,9 @@
+{
+  "manifest": "coarser-singleton-sign-20260926-v282-sources.json",
+  "validated_files": 2046,
+  "tests": 525,
+  "qualification": "coarser-singleton-sign-followup-20260926-v283-terminal.json",
+  "hypersolve_parent": "72691085d1f4d4079741a3030ae369b90440edba",
+  "path": "src/root_sign.rs",
+  "sha256": "3ff6c625a774bcf03ad2e7d7fe827651d8de8240c0764c6acfa9cc106b973b74"
+}

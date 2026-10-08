@@ -1,0 +1,49 @@
+   Compiling hyperreal v0.13.1 (/home/tim/Documents/GitHub/workspace/hyperreal)
+   Compiling hyperlattice v0.6.1 (/home/tim/Documents/GitHub/workspace/hyperlattice)
+   Compiling hyperlimit v0.4.1 (/home/tim/Documents/GitHub/workspace/hyperlimit)
+   Compiling hypertri v0.4.1 (/home/tim/Documents/GitHub/workspace/hypertri)
+   Compiling hypersolve v0.3.1 (/home/tim/Documents/GitHub/workspace/hypersolve)
+   Compiling hypercurve v0.3.1 (/home/tim/Documents/GitHub/workspace/hypercurve)
+    Finished `release` profile [optimized] target(s) in 1m 21s
+     Running tests/hypercurve_curve_region_promotion.rs (target/release/deps/hypercurve_curve_region_promotion-2922d8dd6e249918)
+
+running 1 test
+approximate-512 consumed caller=src/bezier_offset.rs:86049
+   0: <hypercurve::policy::CurveContext>::observe_approximate_512
+   1: hypercurve::bezier_offset::algebraic_chord_point_linear_order_to_exact
+   2: <hypercurve::bezier_offset::BezierAlgebraicChord2>::has_non_collinear_support_with_exact_line
+   3: <hypercurve::bezier_offset::BezierAlgebraicChord2>::support_collinearity
+   4: <hypercurve::bezier_offset::BezierAlgebraicChord2>::chord_intersections_once
+   5: <hypercurve::bezier_offset::BezierAlgebraicChord2>::chord_intersections
+   6: <hypercurve::curve_region_boolean::CurveRegionBooleanContext>::pair_result
+   7: <hypercurve::curve_region_boolean::CurveRegionBooleanContext>::build_split_topology
+   8: <hypercurve::curve_region_boolean::CurveRegionBooleanContext>::build_regularized_region
+   9: <hypercurve::bezier_region::CurveRegion2>::regularized_region_raw
+  10: hypercurve::bezier_region::regularized_exact_offset_band_arrangement
+  11: <hypercurve::bezier_region::CurveRegion2>::offset::{closure#0}
+  12: <hypercurve::bezier_region::CurveRegion2>::offset
+  13: <hypercurve_curve_region_promotion::rotated_algebraic_chord_erosion_splits_a_collapsed_neck_exactly::{closure#0} as core::ops::function::FnOnce<()>>::call_once
+  14: test::__rust_begin_short_backtrace::<core::result::Result<(), alloc::string::String>, fn() -> core::result::Result<(), alloc::string::String>>
+  15: test::run_test::{closure#0}
+  16: std::sys::backtrace::__rust_begin_short_backtrace::<test::run_test::{closure#1}, ()>
+  17: <std::thread::lifecycle::spawn_unchecked<test::run_test::{closure#1}, ()>::{closure#1} as core::ops::function::FnOnce<()>>::call_once::{shim:vtable#0}
+  18: <std::sys::thread::unix::Thread>::new::thread_start
+  19: start_thread
+  20: __clone3
+
+
+thread 'rotated_algebraic_chord_erosion_splits_a_collapsed_neck_exactly' (338) panicked at tests/hypercurve_curve_region_promotion.rs:5932:9:
+assertion `left == right` failed
+  left: Approximate512Consumed
+ right: Certified
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+test rotated_algebraic_chord_erosion_splits_a_collapsed_neck_exactly ... FAILED
+
+failures:
+
+failures:
+    rotated_algebraic_chord_erosion_splits_a_collapsed_neck_exactly
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 99 filtered out; finished in 8.44s
+
+error: test failed, to rerun pass `--test hypercurve_curve_region_promotion`

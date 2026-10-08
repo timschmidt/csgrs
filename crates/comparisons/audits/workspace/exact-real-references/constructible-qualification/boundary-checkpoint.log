@@ -1,0 +1,22 @@
+{
+  "native": {
+    "perBuild": 109,
+    "passed": 99,
+    "failed": 10,
+    "builds": [
+      "O0",
+      "O2"
+    ]
+  },
+  "hyper": {
+    "perBuild": 31,
+    "passed": 31,
+    "builds": [
+      "debug",
+      "release"
+    ]
+  },
+  "selectedDependencyReadLines": 466,
+  "productionChanges": 0,
+  "fullNativeBenchmarkAndTransferAudit": "OPEN"
+}

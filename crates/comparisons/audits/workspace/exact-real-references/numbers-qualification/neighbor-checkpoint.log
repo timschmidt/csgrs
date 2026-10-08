@@ -1,0 +1,250 @@
+{
+  "observations": 270,
+  "afterWarmup": 240,
+  "samplesPerProcess": 256,
+  "paired": [
+    {
+      "op": "asin",
+      "family": "rational",
+      "cpuNsBefore": 2214130.5,
+      "cpuNsAfter": 2698805,
+      "pairedCpuSpeedupMedian": 0.9898490185562947,
+      "pairedBootstrap95": [
+        0.6668109683612742,
+        1.0381035081936671
+      ],
+      "callsBefore": 20178,
+      "callsAfter": 20178,
+      "bytesBefore": 1237720,
+      "bytesAfter": 1237720
+    },
+    {
+      "op": "asin",
+      "family": "known-small",
+      "cpuNsBefore": 577427.5,
+      "cpuNsAfter": 589880.5,
+      "pairedCpuSpeedupMedian": 0.9972480763048316,
+      "pairedBootstrap95": [
+        0.949548250833934,
+        1.0163397712290834
+      ],
+      "callsBefore": 8064,
+      "callsAfter": 8064,
+      "bytesBefore": 308224,
+      "bytesAfter": 308224
+    },
+    {
+      "op": "asin",
+      "family": "known-negative",
+      "cpuNsBefore": 658635.5,
+      "cpuNsAfter": 641822,
+      "pairedCpuSpeedupMedian": 1.0228461212661806,
+      "pairedBootstrap95": [
+        0.9673466425721201,
+        1.0551579298170048
+      ],
+      "callsBefore": 8704,
+      "callsAfter": 8704,
+      "bytesBefore": 343040,
+      "bytesAfter": 343040
+    },
+    {
+      "op": "asin",
+      "family": "opaque-small",
+      "cpuNsBefore": 4929790,
+      "cpuNsAfter": 5495437.5,
+      "pairedCpuSpeedupMedian": 0.9952988882423357,
+      "pairedBootstrap95": [
+        0.8607528933066517,
+        1.0439256758744508
+      ],
+      "callsBefore": 49293,
+      "callsAfter": 49293,
+      "bytesBefore": 2043480,
+      "bytesAfter": 2043480
+    },
+    {
+      "op": "asin",
+      "family": "warm-small",
+      "cpuNsBefore": 411795.5,
+      "cpuNsAfter": 377313.5,
+      "pairedCpuSpeedupMedian": 1.0308083885352537,
+      "pairedBootstrap95": [
+        0.9673249111396021,
+        1.179894846377129
+      ],
+      "callsBefore": 5504,
+      "callsAfter": 5504,
+      "bytesBefore": 211456,
+      "bytesAfter": 211456
+    },
+    {
+      "op": "asin",
+      "family": "hint-small",
+      "cpuNsBefore": 1541486,
+      "cpuNsAfter": 1444849,
+      "pairedCpuSpeedupMedian": 1.0249308597915103,
+      "pairedBootstrap95": [
+        0.8754005097570082,
+        1.0975334567589246
+      ],
+      "callsBefore": 16384,
+      "callsAfter": 16384,
+      "bytesBefore": 735232,
+      "bytesAfter": 735232
+    },
+    {
+      "op": "asin",
+      "family": "hint-medium",
+      "cpuNsBefore": 6524192,
+      "cpuNsAfter": 6567699.5,
+      "pairedCpuSpeedupMedian": 0.9920792827734888,
+      "pairedBootstrap95": [
+        0.891108201545577,
+        1.073995358830215
+      ],
+      "callsBefore": 71040,
+      "callsAfter": 71040,
+      "bytesBefore": 7562240,
+      "bytesAfter": 7562240
+    },
+    {
+      "op": "atanh",
+      "family": "rational",
+      "cpuNsBefore": 385832.5,
+      "cpuNsAfter": 360520,
+      "pairedCpuSpeedupMedian": 1.0666444789936365,
+      "pairedBootstrap95": [
+        1.014554143008424,
+        1.0717039663195214
+      ],
+      "callsBefore": 4293,
+      "callsAfter": 4293,
+      "bytesBefore": 210128,
+      "bytesAfter": 210128
+    },
+    {
+      "op": "atanh",
+      "family": "known-small",
+      "cpuNsBefore": 612199,
+      "cpuNsAfter": 612484,
+      "pairedCpuSpeedupMedian": 1.0075648971945297,
+      "pairedBootstrap95": [
+        0.998906995068427,
+        1.0615000289109564
+      ],
+      "callsBefore": 8320,
+      "callsAfter": 8320,
+      "bytesBefore": 318464,
+      "bytesAfter": 318464
+    },
+    {
+      "op": "atanh",
+      "family": "known-negative",
+      "cpuNsBefore": 680298,
+      "cpuNsAfter": 676563.5,
+      "pairedCpuSpeedupMedian": 1.0060469635003182,
+      "pairedBootstrap95": [
+        0.9884404911648428,
+        1.0289968835672612
+      ],
+      "callsBefore": 8960,
+      "callsAfter": 8960,
+      "bytesBefore": 353280,
+      "bytesAfter": 353280
+    },
+    {
+      "op": "atanh",
+      "family": "opaque-small",
+      "cpuNsBefore": 2969958,
+      "cpuNsAfter": 2909969,
+      "pairedCpuSpeedupMedian": 0.9978909026569676,
+      "pairedBootstrap95": [
+        0.9152339906253484,
+        1.0487568792291742
+      ],
+      "callsBefore": 26022,
+      "callsAfter": 26022,
+      "bytesBefore": 1168640,
+      "bytesAfter": 1168640
+    },
+    {
+      "op": "atanh",
+      "family": "warm-small",
+      "cpuNsBefore": 446908.5,
+      "cpuNsAfter": 392997,
+      "pairedCpuSpeedupMedian": 1.0460003280015941,
+      "pairedBootstrap95": [
+        0.9402166218320827,
+        1.1583044005259264
+      ],
+      "callsBefore": 5696,
+      "callsAfter": 5696,
+      "bytesBefore": 217600,
+      "bytesAfter": 217600
+    },
+    {
+      "op": "atanh",
+      "family": "hint-small",
+      "cpuNsBefore": 1575034.5,
+      "cpuNsAfter": 1609805.5,
+      "pairedCpuSpeedupMedian": 0.9836368954569554,
+      "pairedBootstrap95": [
+        0.9223844149217284,
+        1.02934431258308
+      ],
+      "callsBefore": 16256,
+      "callsAfter": 16256,
+      "bytesBefore": 733184,
+      "bytesAfter": 733184
+    },
+    {
+      "op": "atanh",
+      "family": "hint-medium",
+      "cpuNsBefore": 6606379.5,
+      "cpuNsAfter": 6442428,
+      "pairedCpuSpeedupMedian": 1.0052100921884153,
+      "pairedBootstrap95": [
+        0.9788577398288987,
+        1.0317942057903893
+      ],
+      "callsBefore": 71168,
+      "callsAfter": 71168,
+      "bytesBefore": 7570432,
+      "bytesAfter": 7570432
+    }
+  ],
+  "repaired": [
+    {
+      "op": "asin",
+      "cpuNs": 250367848,
+      "calls": 2540676,
+      "bytes": 427684256,
+      "baseline": "Numerically incorrect; no timing ratio claimed."
+    },
+    {
+      "op": "atanh",
+      "cpuNs": 167531812.5,
+      "calls": 1672095,
+      "bytes": 293956968,
+      "baseline": "Numerically incorrect; no timing ratio claimed."
+    }
+  ],
+  "limitations": [
+    "One host, CPU6-pinned fresh processes; eight post-warmup pairs per family.",
+    "Concurrent system work was not excluded; medians and paired bootstrap intervals are reported, not a universal throughput claim.",
+    "Timings include allocator counters; allocated bytes are cumulative requests, not peak memory.",
+    "Inputs are preconstructed; timed work includes clone, function construction and approximation. Every output is independently enclosed by directed 4096-bit MPFR outside timing."
+  ]
+}
+{
+  "qualified": "sample-reusing asin/atanh series-domain guards",
+  "debugPasses": 735,
+  "releaseAllFeaturePasses": 841,
+  "directedMpfrBoundaryChecksPerBuild": 46674,
+  "frozenPublicRequestsPerBuild": 80,
+  "downstreamLibraryPasses": 696,
+  "memcheckErrors": 0,
+  "remaining": "ln_1p repair and final-source Hypercurve rerun remain separately tracked in the root ledger; numbers and ecosystem audits are OPEN.",
+  "scope": "This validator credits frozen scalar-source snapshots only, not later worktree changes."
+}

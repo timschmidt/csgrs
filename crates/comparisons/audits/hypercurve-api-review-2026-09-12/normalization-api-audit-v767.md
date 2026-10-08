@@ -1,0 +1,7 @@
+# Normalization surface follow-up (read-only; no candidate)
+
+V766 inventory finds50public regularized_region references in13HC files; no downstream callers. Do not remove it merely because exact public construction already normalizes. Policy replay is substantive: tests/hypercurve_curve_region_boolean.rs checks that Approximate512Consumed topology retains that requirement, and strict replay rejects an independently certified gap. Preserving that evidence is required by the implementation goal. A replacement is not warranted by this inventory alone.
+
+The explicit authored interior-side constructor is a separate potential simplification. try_from_boundary_paths_with_loop_topology stores caller-supplied side flags without independently validating their truth. Unary carrier preparation does not require those flags, but certified_simple_single_loop_filled_side can use them as a shortcut after checking geometry is simple. A bounded follow-up should compare a simple exact square with correct/reversed side hints under fixed material/fill semantics, including normalized winding/role/query results. Wrong hints may be treated as invalid input by the public contract; they must not certify contradictory output. This is a source-level hypothesis, not a demonstrated defect.
+
+Even if removable, preserve private side certificates produced by exact operations and measure representative nonuniform-rational/retained cases: removing valid evidence purely for fewer lines would violate the priorities. No public-topology API or certificates have been changed by V766.

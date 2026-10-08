@@ -1,0 +1,3577 @@
+{
+  "schema": 1,
+  "checkpoint": 50,
+  "recorded": "2026-09-10T05:49:12.644Z",
+  "files": {
+    "flint-qqbar-decision-controls.c": "bd44a5cff7c17859e90249cd99e2de7aa845e8e1d7b94d34f7c4900aadf609c5",
+    "check-qqbar-decisions.mjs": "ccd46abdd03cdaa00d12ae0531b0a16a20136ab3247d1f3f40ae99f29766cfc3",
+    "record-qqbar-decisions.mjs": "704d07637a67413de091134892735bbc2a07e40ed48b820e449d4cd2a98bd47e",
+    "verify-qqbar-decisions.mjs": "9d7d58187cc6054f9af30155c07e573424024a61ce15db9d913520fb2673e415",
+    "qqbar-decisions-findings.md": "7b8e300907037591d4e20bba3411e57f09da48e3a597dd075e7bda1dab83b0d4",
+    "qqbar-decisions-read-records.json": "52e644296bc9c0d75ba2241cec6fbac16d2b8cca528dbe2ac9269fad3851244f",
+    "capture.mjs": "aaf6df6bbd73025a8541617ce83731ae5ea3fd2272bd98c15e3c4c12b713ce23",
+    "inventory.json": "5f9ef82294df7476427acc0acfc72ce525808dcaf47ea9162c9abc2733162f95",
+    "effective-coverage.mjs": "b884fd5eb462ede70cb9b3c2bed2cfad14d5700301e92e37156c7ec5104b17e0",
+    "fexpr-formatting-manifest.json": "94bca2c028927332b5461c8ba42773f2923324bbd8335d18a454e25c086150d6",
+    "results/fexpr-formatting-verify.json": "4fed3f937de78dd661e1e476bd3447d4a4f0eaf78cf5c891ae1d9552e04612af",
+    "results/fexpr-formatting-verify.stdout": "e9e2801de0deb5101cd2bd7a101d16df9f3746981159034a9214ce3c8b7f3678",
+    "results/fexpr-formatting-verify.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/qqbar-decisions-compile.json": "e4f560b8befad2286478dd6fae72dac7e64152b003aa60720ead84c9cfe42e2c",
+    "results/qqbar-decisions-compile.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/qqbar-decisions-compile.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/qqbar-decisions-native.json": "53fdeb234a3b15bb2b4b13f2d797ef1e62c8ff74103466af255c825fac578a91",
+    "results/qqbar-decisions-native.stdout": "01f25afa78ee03b48b82a11b654dc592cdf25f92fa5d6b30b40f2ea98b2454d7",
+    "results/qqbar-decisions-native.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/qqbar-decisions-check.json": "49a4d049c8761906fd5e643fbe8399db467215456741d57cdf9ff93b95d81154",
+    "results/qqbar-decisions-check.stdout": "d78939bdb1139c6c5358ab7f7ac6d708a56a576b100f09f412271c8af693bcc2",
+    "results/qqbar-decisions-check.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/qqbar-decisions-memcheck.json": "832ba822f0a2b6dd9e73d0b5e4a08396bca125ed58d604984c721b3072b44834",
+    "results/qqbar-decisions-memcheck.stdout": "01f25afa78ee03b48b82a11b654dc592cdf25f92fa5d6b30b40f2ea98b2454d7",
+    "results/qqbar-decisions-memcheck.stderr": "39592ecacc38c1484f46cfa5cceb8d47c07a23f4d5ccdce9edbe9fbd4adf98b6",
+    "results/qqbar-decisions-linked.json": "141fadd6628239f331fa07f18d760c0a2fe8ffbedaab84bb5f7064ea4ef89157",
+    "results/qqbar-decisions-linked.stdout": "f838e9872aec5c82272a88cb361d8a80c7111d51fc033b9e802c09df1f54c131",
+    "results/qqbar-decisions-linked.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "record-qqbar-decisions.initial.mjs": "d541407de1f8ac8b3cf662002b36407bf7b6b4a54915da3e129f4e028e592e5c",
+    "verify-qqbar-decisions.initial.mjs": "9f7618bb73fb4c10f8977ffb4646461434dda1a9ab1739d46512fb9d175bf76a",
+    "results/qqbar-decisions-record-initial.json": "43c8ced40b034c28bfbcee9bec1455a902128d0f031dc045b14549ded185e971",
+    "results/qqbar-decisions-record-initial.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/qqbar-decisions-record-initial.stderr": "2c3712e865bec4054ff469542df5bb111bfdfb24a83419ff3bce2df4b804a318"
+  },
+  "donorSources": {
+    "calcium:qqbar.h": "84187aa10fcf1b1a2dc74c8a9cd7427467a5176f1db3da4265ddb24b1b7ce18b",
+    "calcium:doc/source/qqbar.rst": "6cdf7c39968285124e5966f46a558548a00a8bc570b9e3c453264a2b0691b17f",
+    "calcium:qqbar/validate_enclosure.c": "d5300f2b8d7a668f3b51bd9a3608fd897b91e29667271a353ebe84b3ab7c595b",
+    "calcium:qqbar/enclosure_raw.c": "98425a3510d0fa2c5fd23f29761d128cfa87fab61e211446aa531920157f25b5",
+    "calcium:qqbar/equal.c": "082240c2ef20e5164393c7b145b11a8e7db3dc69e7ec0cc808fd4a0bc49a0085",
+    "calcium:qqbar/sgn_re.c": "51f04f1ea440c6e2a18069328ae60fae26129e9dbfaed456d73a76af95b51433",
+    "calcium:qqbar/sgn_im.c": "15cedc44c29e249d4fdb7d1cb9d83513ee012374f6875df44554fbe26ec36b49",
+    "calcium:qqbar/cmp_re.c": "5bc3a1df9190eafe92fcdc6fbd1155877a7fa7cfa5ae217927bc97517a3f39f2",
+    "calcium:qqbar/cmp_im.c": "617b5c88c2f300d18282adddd32e0078ee04b412a2fa566d675524988ee4dd7f",
+    "calcium:qqbar/cmp_root_order.c": "3e9598e143856fd65792a8e41db1f92b02cff0e20f7181b5de05867b77ab69d9",
+    "calcium:qqbar/cmpabs.c": "4fc53d79803f4b707f1d6781f482a385d4065179f7c5ad18b175910cd0fe3628",
+    "calcium:qqbar/cmpabs_re.c": "366a617269a8b5e4028189033cd08846b902b5ec1df4aeff8af33541f40946f8",
+    "calcium:qqbar/cmpabs_im.c": "637aa17595d4667a5f6e3e137b0deb5d37049ed157a5db2b96b8423778adf5a5",
+    "calcium:qqbar/get_acb.c": "716d9d32d27145e3e685ff9b8807ea16ed0b973ec5d4e98697121ca5b570a495",
+    "calcium:qqbar/cache_enclosure.c": "ddd082eab8c0dd6270e01b3b48cba5e5c27dbbbc0a0abc47d14d8bcdd07d48b5",
+    "calcium:qqbar/init.c": "f88f558ac6f7f56001309f46bb1a59b992c40346cb093755ce856e04b36a8d05",
+    "calcium:qqbar/clear.c": "b889264b0d2355b29620a0f40697cafbc9ca9c33ecac40085256a5e5fad3fb7c",
+    "calcium:qqbar/set.c": "2f8279d7980bc05c3a71b7354b81f7ee6e6b179641d16e937766158dc97a9bf5",
+    "calcium:qqbar/set_si.c": "fd5c94a12f7237a5a6bf69319bf11c7bda2cf0bbce51b2b7b24db5123617d361",
+    "calcium:qqbar/set_ui.c": "4843118655d84fa7da5a6d288f08537ee7016f52f59de84088dfebb8c180b7ca",
+    "calcium:qqbar/set_fmpq.c": "ce9818bd97b09bbce695b5cb395d65aca41d064e5c089283bcffaf1a690b1736",
+    "calcium:qqbar/set_fmpz.c": "04ff0874329813d9bcb2b92c10b0df76d39556267a58a3b5e9d611df2362f085",
+    "calcium:qqbar/set_re_im.c": "6c49f378b6d7c554ec1c051c5f03d149cf7766c8dfae978a1537779f9ce0996e",
+    "calcium:qqbar/conj.c": "15c55041f9fc28c05c54da610464a9c0cd5e1786c4516dfb10325c8b808c0a10",
+    "calcium:qqbar/neg.c": "5d870864c2072d36c7e71fec9d6e555a12f5ba05d91bc9a43cb1634e23d7e36f",
+    "calcium:qqbar/abs2.c": "1b14eb0c8be950f60b986323a3898a3576a964d6726fd7b8c2bd5f99d47a0720",
+    "calcium:qqbar/hash.c": "27cfdf46262a70e8f63df2c8a6dc78552c889567806081fe8534621af60e13d6",
+    "calcium:qqbar/csgn.c": "13adae467b59a827b64fde8439b90b3cc139ad9365f924bb5014d061507cebb9",
+    "calcium:qqbar/root_ui.c": "b6375a5358b49568ae608c6e8f39bfd3bae75dac56172c76e0c3d9ee6fc91fcb",
+    "calcium:qqbar/fmpq_root_ui.c": "1dd6edbd78c2e34d7c94755ac1ff867f28b440da5c30d6d83f763a1305d4e00d",
+    "calcium:qqbar/i.c": "a38c8cb468326d49d4bc5ed60ebc1a887456c83617ee7135915f1cc1d4357478",
+    "calcium:qqbar/get_arb.c": "e072df56f0e2153277d524040d0fa9ed3647fa7b449be2a30f6ee48ceeebc1b7",
+    "calcium:qqbar/get_arb_re.c": "33747d7ffd4ae1dc1fec57d640bf53f49e30d6fcb2612227956a4502d97746a6",
+    "calcium:qqbar/get_arb_im.c": "2bb1aabd7fd4d11aba9dad0ed854151fcdc883be92eaea68bb871ef720dd836a",
+    "calcium:qqbar/roots_fmpz_poly.c": "ed0fea4f0c5a569166b9ae8ca5f2a798ca2f8b3a33e67d9967d33f2f124e1b75",
+    "calcium:qqbar/conjugates.c": "31f6f357feba1951845d8f299be90b8d72fe28c6f527c460a41b4bb2733d32a1",
+    "calcium:qqbar/test/t-cmp_re.c": "5534cd8107ae1616d5425dd09f715d0fe9aa46f5424f693563a83a69bfa4f39d",
+    "calcium:qqbar/test/t-cmp_im.c": "855524061ea7adb7bebe67416dfb385739ba4fd418c6850ad8c149b48ef4e6c8",
+    "calcium:qqbar/test/t-cmpabs.c": "fb75028d7530472fc3e2fe55a6f3f38da6403e66d6f1f61ba6b6746aa95203d0",
+    "calcium:qqbar/test/t-cmpabs_re.c": "f9f2ab58bcfa7526e069b1a1b95922a4dac29374a54b21d7c05c1043f3e6de1f",
+    "calcium:qqbar/test/t-cmpabs_im.c": "6f0c634209fba8f175c03eeb25f4355db8a8367cfaf1aaa7e60992ddf0fc1385",
+    "calcium:qqbar/test/t-sgn_re.c": "67f519e997d53c2f795361918b7b062d98fb387f6033c005a0ab340d0aaadcee",
+    "calcium:qqbar/test/t-csgn.c": "acb514240e02b560188439d0ba238ca1e5f8f7424eb24f8b9e7c601faf4f6930",
+    "calcium:qqbar/test/t-get_acb.c": "cd1280d83c98a1c3d37fc8a8d79c98b3497930c7ab35ed337f223066e3ed52bb",
+    "calcium:qqbar/test/t-roots_fmpz_poly.c": "235adb8b9c19425a87bd9c9d4ab387a506c0b2cacf01c0f7c8e6958f8636a399",
+    "calcium:qqbar/test/t-conjugates.c": "cd7dfe27b0206e8a597e121a65e5e1638be7b5496e3c4070650fe16a61b4c18f",
+    "flint:src/qqbar.h": "adb4ffd2d50de4ada2069f248e32e9fb19ae8bba4953015621464d9ad30ab787",
+    "flint:doc/source/qqbar.rst": "2fcf9149baad1e687150f24d695073063fd54022d8e4c295d75372348be1e5c2",
+    "flint:src/qqbar/validate_enclosure.c": "b9ea61e8f881d29a1b40d8d0e52cfeff44b9cb6f8b7b2530cd8f31fb6197fb8b",
+    "flint:src/qqbar/enclosure_raw.c": "46e8e6efd5d54e418951a5dde82808ce13c4efcc9c0f4b24a5f971357c8340d7",
+    "flint:src/qqbar/equal.c": "d130cbe0f5685600515e81fe46482b45ba50ba414cbe848125b50bad8b1d4d4f",
+    "flint:src/qqbar/sgn_re.c": "ffa4a3cb9e940395a5526633e2a7587c65806e31aea22b0cf852b35e61cf5f69",
+    "flint:src/qqbar/sgn_im.c": "f567bb0ffadf6a36027d641f13fe4a3ad30f698a18a65d82406764b6cc65eda8",
+    "flint:src/qqbar/cmp_re.c": "18c7ee82c44ba1f1da64465b8355d74e5b6bcb1edb17b13a3d5ad1b8c97ad58d",
+    "flint:src/qqbar/cmp_im.c": "9551a3d2857bca1146cb907ed0c9cfe20ddcd663089e7b27d844d2b97f96918f",
+    "flint:src/qqbar/cmp_root_order.c": "92b742f42d128b3f7793bfeac10e5cf185d2fbcf7a31df7e3228043d153321fc",
+    "flint:src/qqbar/cmpabs.c": "450e99e1f8d6f577fa802a5de11f8ae842225371008b17057a3ae75d2bb0ec85",
+    "flint:src/qqbar/cmpabs_re.c": "6e4e36b41573a6730dcd709b4d68cde0014264d4a3e0f0eb204ddb2e5cdbcd9c",
+    "flint:src/qqbar/cmpabs_im.c": "627630816c50245eb3659819d90fc1e2a55cb65781fa8d7747436a764940f9be",
+    "flint:src/qqbar/get_acb.c": "fa8b1773d8ae55d33508518fb38db57629f8878080eeb20055714db8dd52903b",
+    "flint:src/qqbar/cache_enclosure.c": "8011569b0d1ea08e8a05d562d98684c965ae05dd014c5259304abea0a502e248",
+    "flint:src/qqbar/init.c": "cf6fa1c7f83ebce334d931b78a2e31bf75ee5c4a9716014866f89731515ed3f1",
+    "flint:src/qqbar/clear.c": "b67a010a4b681b4e566c7f92de39fd12dd12a0253f0f71bc5a7e41214afaa154",
+    "flint:src/qqbar/set.c": "ee35158fdf36021bb877f879a20aae82077a0796e4b12e896a9898f1953091af",
+    "flint:src/qqbar/set_si.c": "f0cc0cfc0641f34cf43e0a1d45ffeffc286fe8d05776252dc1ed51fdc4434cee",
+    "flint:src/qqbar/set_ui.c": "678c664a9e35211816aa169ee2fdc116aff7b31b3b00b035b6f1e87e3cd91e47",
+    "flint:src/qqbar/set_fmpq.c": "e3c4d2e382ade1bdd8c8a67b2f9d963700054ca5d054deedbd5ee525ad2f98fa",
+    "flint:src/qqbar/set_fmpz.c": "3622086aa65bd26abf994fa0683f882964d760a87cd21868b5003744078075d1",
+    "flint:src/qqbar/set_re_im.c": "a0c2543e2b7f03dbdc35a97be088289042a51a71a710a681a527adda69f2938a",
+    "flint:src/qqbar/conj.c": "532753ad7485e3f67fdc23f925e5c4dae6186f8afccc49a4e541c2cdd8851008",
+    "flint:src/qqbar/neg.c": "3784336689feb6669e60d3091ab945b71623ac8dee4600b20394d00cc6135d14",
+    "flint:src/qqbar/abs2.c": "98bbabf51eeb47a606e26176a78eb2be96f0dba5fbaea67dbbaebfe3ec62c736",
+    "flint:src/qqbar/hash.c": "e596f526979a73e8426e2b5d909a83d7d0d4e1dcb9292679b0864a944cae37f8",
+    "flint:src/qqbar/csgn.c": "35ab4593574c20aa1d7ce2a98f7742725e4a772379b2c0b12aa6643b8cf12431",
+    "flint:src/qqbar/root_ui.c": "04d34abdd29ec11c2a3f98b5c5bd371b579da77c881d1dc28651823bf978247b",
+    "flint:src/qqbar/fmpq_root_ui.c": "9ec64f37d18f86a8addf23588139fc1ae87f894c6150bd7123ade6e63e29650a",
+    "flint:src/qqbar/i.c": "7298fd9749fd73a255aaa76d3266a958a530bccf34c55663220a05f9d9a7aa03",
+    "flint:src/qqbar/get_arb.c": "a763d6d757f43c1c5bb57797ac9aab3192a15018a13b736538082c29040ae9b7",
+    "flint:src/qqbar/get_arb_re.c": "661d49e31ee964ddd63e08c738fdea1567e9e68cc7175562049085f8b9e79b15",
+    "flint:src/qqbar/get_arb_im.c": "e910a058d84f0535a92347dcaaca830f140e709eb59c115cf1d2c655b2f9c972",
+    "flint:src/qqbar/roots_fmpz_poly.c": "ca0e09303c0db8f0199853480133ae6db74009998964810e6945d26cf8f8b57c",
+    "flint:src/qqbar/conjugates.c": "be1817afd3f938391dd5416205acf90cdbf3e5c7179da585ba20cffec1b1751a",
+    "flint:src/qqbar/test/t-cmp_re.c": "a82b7059c581df1f6c4e19de96ae7415949ca52b61b927c393c82ec9c52756cc",
+    "flint:src/qqbar/test/t-cmp_im.c": "4401482da4c8ef712961e3a5446d74bd28d0e1d2dbb1e4cac0513d1f10db8b8b",
+    "flint:src/qqbar/test/t-cmpabs.c": "64fb9ce9b9aad6a6aa7203f237b4f4e758ea502f628106336bfaddcb21e235b4",
+    "flint:src/qqbar/test/t-cmpabs_re.c": "5f18a97b6490c973ea6df693090340d3a45b153212e4d53c711bac6e9a5f4127",
+    "flint:src/qqbar/test/t-cmpabs_im.c": "16f74b9e09fa762a3526fe909f839f965483c1c395eb737cd8e8ebf5ac42ebde",
+    "flint:src/qqbar/test/t-sgn_re.c": "c65a308160d28a2f5b2933ddd1e7ac7de1e9655a2d8f69730d8981b1abbe55e5",
+    "flint:src/qqbar/test/t-csgn.c": "fa1f8568276632e045df4175a51a48afba1927ae3dcaeffa7edf5752c83ff43a",
+    "flint:src/qqbar/test/t-get_acb.c": "82be5c1fa9cefe896a99ef234e4b996627e6261abaa69000d7aac222f38730d1",
+    "flint:src/qqbar/test/t-roots_fmpz_poly.c": "177d75e578f085882dff97dd3f2cfb85b42959b8c28bcbe7d2efc64da11643ae",
+    "flint:src/qqbar/test/t-conjugates.c": "cc24222342e577c92a6a662b97e3d6950cd4b143fd9f721f258fa3dbcf510b6c"
+  },
+  "readRecords": [
+    {
+      "repo": "calcium",
+      "path": "qqbar.h",
+      "ranges": [
+        [
+          1,
+          480
+        ]
+      ],
+      "note": "Checkpoint50: Entire algebraic object layout, inline canonical-polynomial predicates, limits, arithmetic/root/decision/enclosure/expression interfaces. No general computable-real equality contract."
+    },
+    {
+      "repo": "calcium",
+      "path": "doc/source/qqbar.rst",
+      "ranges": [
+        [
+          1,
+          1018
+        ]
+      ],
+      "note": "Checkpoint50: Entire manual: minimal-polynomial/isolation invariant, expensive arithmetic, exact component polish and explicit cache contracts, canonical root ordering, heuristic versus certified relation APIs, trusted serialization and unimplemented formula flags."
+    },
+    {
+      "repo": "calcium",
+      "path": "qqbar/validate_enclosure.c",
+      "ranges": [
+        [
+          1,
+          197
+        ]
+      ],
+      "note": "Checkpoint50: Both interval-Newton validators; existence premise and inflated uniqueness differ from existence-and-uniqueness with axis checks. Source contracts, not arbitrary-ball qualification."
+    },
+    {
+      "repo": "calcium",
+      "path": "qqbar/enclosure_raw.c",
+      "ranges": [
+        [
+          1,
+          155
+        ]
+      ],
+      "note": "Checkpoint50: Whole cached-accuracy return, rational solve, iterative Newton/fallback all-conjugate recomputation; current real-specialized route absent in archive. Recursive numerical kernels remain open."
+    },
+    {
+      "repo": "calcium",
+      "path": "qqbar/equal.c",
+      "ranges": [
+        [
+          1,
+          73
+        ]
+      ],
+      "note": "Checkpoint50: Whole canonical polynomial, disjointness/containment, iterative refinement and unique-union equality algorithm; depends on representation invariant."
+    },
+    {
+      "repo": "calcium",
+      "path": "qqbar/sgn_re.c",
+      "ranges": [
+        [
+          1,
+          76
+        ]
+      ],
+      "note": "Checkpoint50: Whole rational/exact/separated-component shortcuts, odd-coefficient axis filter and existence-certified zero real part."
+    },
+    {
+      "repo": "calcium",
+      "path": "qqbar/sgn_im.c",
+      "ranges": [
+        [
+          1,
+          70
+        ]
+      ],
+      "note": "Checkpoint50: Whole rational/exact/separated-component shortcuts, refinement and existence-certified real axis; disabled alternative also read."
+    },
+    {
+      "repo": "calcium",
+      "path": "qqbar/cmp_re.c",
+      "ranges": [
+        [
+          1,
+          113
+        ]
+      ],
+      "note": "Checkpoint50: Whole real interval/rational/conjugacy shortcuts, refinement, delayed exact difference for nonreal equal components; readonly refined work not saved."
+    },
+    {
+      "repo": "calcium",
+      "path": "qqbar/cmp_im.c",
+      "ranges": [
+        [
+          1,
+          82
+        ]
+      ],
+      "note": "Checkpoint50: Whole imaginary interval/sign/equality/reflected-conjugate shortcuts, refinement and delayed exact-difference fallback."
+    },
+    {
+      "repo": "calcium",
+      "path": "qqbar/cmp_root_order.c",
+      "ranges": [
+        [
+          1,
+          34
+        ]
+      ],
+      "note": "Checkpoint50: Whole real-first, descending real, ascending imaginary magnitude and final sign tie-break. Equal-nonreal comparator contract checked independently, not sorting stress."
+    },
+    {
+      "repo": "calcium",
+      "path": "qqbar/cmpabs.c",
+      "ranges": [
+        [
+          1,
+          75
+        ]
+      ],
+      "note": "Checkpoint50: Whole axis special cases, numerical magnitude separation, delayed exact squared-magnitude comparison."
+    },
+    {
+      "repo": "calcium",
+      "path": "qqbar/cmpabs_re.c",
+      "ranges": [
+        [
+          1,
+          73
+        ]
+      ],
+      "note": "Checkpoint50: Whole borrowed temporary absolute-enclosure view and sign-conditioned exact real-component comparisons."
+    },
+    {
+      "repo": "calcium",
+      "path": "qqbar/cmpabs_im.c",
+      "ranges": [
+        [
+          1,
+          73
+        ]
+      ],
+      "note": "Checkpoint50: Whole borrowed temporary absolute-enclosure view and sign-conditioned exact imaginary-component comparisons."
+    },
+    {
+      "repo": "calcium",
+      "path": "qqbar/get_acb.c",
+      "ranges": [
+        [
+          1,
+          94
+        ]
+      ],
+      "note": "Checkpoint50: Whole rational output and component-sign polishing, precision growth, attempted dyadic reconstruction and final rounding. Exact-component failure independently recorded; containment passes stated corpus."
+    },
+    {
+      "repo": "calcium",
+      "path": "qqbar/cache_enclosure.c",
+      "ranges": [
+        [
+          1,
+          30
+        ]
+      ],
+      "note": "Checkpoint50: Whole explicit extra-precision polish and containment-only cache swap; not automatic readonly-query memoization."
+    },
+    {
+      "repo": "calcium",
+      "path": "qqbar/init.c",
+      "ranges": [
+        [
+          1,
+          21
+        ]
+      ],
+      "note": "Checkpoint50: Whole polynomial/enclosure initialization to exact zero."
+    },
+    {
+      "repo": "calcium",
+      "path": "qqbar/clear.c",
+      "ranges": [
+        [
+          1,
+          20
+        ]
+      ],
+      "note": "Checkpoint50: Whole owned polynomial/enclosure release."
+    },
+    {
+      "repo": "calcium",
+      "path": "qqbar/set.c",
+      "ranges": [
+        [
+          1,
+          20
+        ]
+      ],
+      "note": "Checkpoint50: Whole deep polynomial/enclosure copy, not shared expression-DAG identity."
+    },
+    {
+      "repo": "calcium",
+      "path": "qqbar/set_si.c",
+      "ranges": [
+        [
+          1,
+          22
+        ]
+      ],
+      "note": "Checkpoint50: Whole signed machine integer temporary and integer constructor."
+    },
+    {
+      "repo": "calcium",
+      "path": "qqbar/set_ui.c",
+      "ranges": [
+        [
+          1,
+          22
+        ]
+      ],
+      "note": "Checkpoint50: Whole unsigned machine integer temporary and integer constructor."
+    },
+    {
+      "repo": "calcium",
+      "path": "qqbar/set_fmpq.c",
+      "ranges": [
+        [
+          1,
+          22
+        ]
+      ],
+      "note": "Checkpoint50: Whole linear canonical rational polynomial and default-precision enclosure."
+    },
+    {
+      "repo": "calcium",
+      "path": "qqbar/set_fmpz.c",
+      "ranges": [
+        [
+          1,
+          22
+        ]
+      ],
+      "note": "Checkpoint50: Whole linear integer polynomial and default-precision enclosure."
+    },
+    {
+      "repo": "calcium",
+      "path": "qqbar/set_re_im.c",
+      "ranges": [
+        [
+          1,
+          36
+        ]
+      ],
+      "note": "Checkpoint50: Whole zero-imaginary shortcut and temporary-owned arithmetic construction of x+i*y."
+    },
+    {
+      "repo": "calcium",
+      "path": "qqbar/conj.c",
+      "ranges": [
+        [
+          1,
+          20
+        ]
+      ],
+      "note": "Checkpoint50: Whole unchanged minimal polynomial and conjugated enclosure."
+    },
+    {
+      "repo": "calcium",
+      "path": "qqbar/neg.c",
+      "ranges": [
+        [
+          1,
+          25
+        ]
+      ],
+      "note": "Checkpoint50: Whole parity-selected polynomial coefficient negation and enclosure negation."
+    },
+    {
+      "repo": "calcium",
+      "path": "qqbar/abs2.c",
+      "ranges": [
+        [
+          1,
+          47
+        ]
+      ],
+      "note": "Checkpoint50: Whole real/root-of-unity/pure-imaginary/conjugate-product routes and exact zero imaginary component."
+    },
+    {
+      "repo": "calcium",
+      "path": "qqbar/hash.c",
+      "ranges": [
+        [
+          1,
+          32
+        ]
+      ],
+      "note": "Checkpoint50: Whole minimal-polynomial-only integer hash, intentional conjugate collisions; not equality evidence."
+    },
+    {
+      "repo": "calcium",
+      "path": "qqbar/csgn.c",
+      "ranges": [
+        [
+          1,
+          23
+        ]
+      ],
+      "note": "Checkpoint50: Whole real-component sign followed by imaginary-axis sign."
+    },
+    {
+      "repo": "calcium",
+      "path": "qqbar/root_ui.c",
+      "ranges": [
+        [
+          1,
+          166
+        ]
+      ],
+      "note": "Checkpoint50: Whole principal-surd fast detection, rational/root-of-unity routes, factored annihilator and unique-root selection. Invalid/resource boundary branches read, not probed."
+    },
+    {
+      "repo": "calcium",
+      "path": "qqbar/fmpq_root_ui.c",
+      "ranges": [
+        [
+          1,
+          126
+        ]
+      ],
+      "note": "Checkpoint50: Whole square/root reduction of rational numerator and denominator, principal negative-input delegation and positive surd construction. Only bounded positive square roots executed here."
+    },
+    {
+      "repo": "calcium",
+      "path": "qqbar/i.c",
+      "ranges": [
+        [
+          1,
+          22
+        ]
+      ],
+      "note": "Checkpoint50: Whole canonical x^2+1 polynomial and exact positive imaginary-unit enclosure."
+    },
+    {
+      "repo": "calcium",
+      "path": "qqbar/get_arb.c",
+      "ranges": [
+        [
+          1,
+          29
+        ]
+      ],
+      "note": "Checkpoint50: Whole real admission and polished complex extraction, otherwise indeterminate output."
+    },
+    {
+      "repo": "calcium",
+      "path": "qqbar/get_arb_re.c",
+      "ranges": [
+        [
+          1,
+          29
+        ]
+      ],
+      "note": "Checkpoint50: Whole exact zero real shortcut or polished component extraction."
+    },
+    {
+      "repo": "calcium",
+      "path": "qqbar/get_arb_im.c",
+      "ranges": [
+        [
+          1,
+          29
+        ]
+      ],
+      "note": "Checkpoint50: Whole exact zero imaginary shortcut or polished component extraction."
+    },
+    {
+      "repo": "calcium",
+      "path": "qqbar/roots_fmpz_poly.c",
+      "ranges": [
+        [
+          1,
+          116
+        ]
+      ],
+      "note": "Checkpoint50: Whole factor/content/root-isolation paths, multiplicity expansion before final qsort. No new root-list numerical or sorting-failure claim."
+    },
+    {
+      "repo": "calcium",
+      "path": "qqbar/conjugates.c",
+      "ranges": [
+        [
+          1,
+          22
+        ]
+      ],
+      "note": "Checkpoint50: Whole rational copy or irreducible-minimal-polynomial root enumeration."
+    },
+    {
+      "repo": "calcium",
+      "path": "qqbar/test/t-cmp_re.c",
+      "ranges": [
+        [
+          1,
+          79
+        ]
+      ],
+      "note": "Checkpoint50: Entire t-cmp_re.c source: shared-backend reference/control flow, random cases, failure checks and cleanup. Read only, not newly executed; independent corpus has separate oracle and stated scope."
+    },
+    {
+      "repo": "calcium",
+      "path": "qqbar/test/t-cmp_im.c",
+      "ranges": [
+        [
+          1,
+          78
+        ]
+      ],
+      "note": "Checkpoint50: Entire t-cmp_im.c source: shared-backend reference/control flow, random cases, failure checks and cleanup. Read only, not newly executed; independent corpus has separate oracle and stated scope."
+    },
+    {
+      "repo": "calcium",
+      "path": "qqbar/test/t-cmpabs.c",
+      "ranges": [
+        [
+          1,
+          66
+        ]
+      ],
+      "note": "Checkpoint50: Entire t-cmpabs.c source: shared-backend reference/control flow, random cases, failure checks and cleanup. Read only, not newly executed; independent corpus has separate oracle and stated scope."
+    },
+    {
+      "repo": "calcium",
+      "path": "qqbar/test/t-cmpabs_re.c",
+      "ranges": [
+        [
+          1,
+          76
+        ]
+      ],
+      "note": "Checkpoint50: Entire t-cmpabs_re.c source: shared-backend reference/control flow, random cases, failure checks and cleanup. Read only, not newly executed; independent corpus has separate oracle and stated scope."
+    },
+    {
+      "repo": "calcium",
+      "path": "qqbar/test/t-cmpabs_im.c",
+      "ranges": [
+        [
+          1,
+          83
+        ]
+      ],
+      "note": "Checkpoint50: Entire t-cmpabs_im.c source: shared-backend reference/control flow, random cases, failure checks and cleanup. Read only, not newly executed; independent corpus has separate oracle and stated scope."
+    },
+    {
+      "repo": "calcium",
+      "path": "qqbar/test/t-sgn_re.c",
+      "ranges": [
+        [
+          1,
+          108
+        ]
+      ],
+      "note": "Checkpoint50: Entire t-sgn_re.c source: shared-backend reference/control flow, random cases, failure checks and cleanup. Read only, not newly executed; independent corpus has separate oracle and stated scope."
+    },
+    {
+      "repo": "calcium",
+      "path": "qqbar/test/t-csgn.c",
+      "ranges": [
+        [
+          1,
+          66
+        ]
+      ],
+      "note": "Checkpoint50: Entire t-csgn.c source: shared-backend reference/control flow, random cases, failure checks and cleanup. Read only, not newly executed; independent corpus has separate oracle and stated scope."
+    },
+    {
+      "repo": "calcium",
+      "path": "qqbar/test/t-get_acb.c",
+      "ranges": [
+        [
+          1,
+          92
+        ]
+      ],
+      "note": "Checkpoint50: Entire t-get_acb.c source: shared-backend reference/control flow, random cases, failure checks and cleanup. Read only, not newly executed; independent corpus has separate oracle and stated scope."
+    },
+    {
+      "repo": "calcium",
+      "path": "qqbar/test/t-roots_fmpz_poly.c",
+      "ranges": [
+        [
+          1,
+          83
+        ]
+      ],
+      "note": "Checkpoint50: Entire t-roots_fmpz_poly.c source: shared-backend reference/control flow, random cases, failure checks and cleanup. Read only, not newly executed; independent corpus has separate oracle and stated scope."
+    },
+    {
+      "repo": "calcium",
+      "path": "qqbar/test/t-conjugates.c",
+      "ranges": [
+        [
+          1,
+          76
+        ]
+      ],
+      "note": "Checkpoint50: Entire t-conjugates.c source: shared-backend reference/control flow, random cases, failure checks and cleanup. Read only, not newly executed; independent corpus has separate oracle and stated scope."
+    },
+    {
+      "repo": "flint",
+      "path": "src/qqbar.h",
+      "ranges": [
+        [
+          1,
+          405
+        ]
+      ],
+      "note": "Checkpoint50: Entire algebraic object layout, inline canonical-polynomial predicates, limits, arithmetic/root/decision/enclosure/expression interfaces. No general computable-real equality contract."
+    },
+    {
+      "repo": "flint",
+      "path": "doc/source/qqbar.rst",
+      "ranges": [
+        [
+          1,
+          1053
+        ]
+      ],
+      "note": "Checkpoint50: Entire manual: minimal-polynomial/isolation invariant, expensive arithmetic, exact component polish and explicit cache contracts, canonical root ordering, heuristic versus certified relation APIs, trusted serialization and unimplemented formula flags."
+    },
+    {
+      "repo": "flint",
+      "path": "src/qqbar/validate_enclosure.c",
+      "ranges": [
+        [
+          1,
+          197
+        ]
+      ],
+      "note": "Checkpoint50: Both interval-Newton validators; existence premise and inflated uniqueness differ from existence-and-uniqueness with axis checks. Source contracts, not arbitrary-ball qualification."
+    },
+    {
+      "repo": "flint",
+      "path": "src/qqbar/enclosure_raw.c",
+      "ranges": [
+        [
+          1,
+          159
+        ]
+      ],
+      "note": "Checkpoint50: Whole cached-accuracy return, rational solve, iterative Newton/fallback all-conjugate recomputation; current real-specialized route absent in archive. Recursive numerical kernels remain open."
+    },
+    {
+      "repo": "flint",
+      "path": "src/qqbar/equal.c",
+      "ranges": [
+        [
+          1,
+          73
+        ]
+      ],
+      "note": "Checkpoint50: Whole canonical polynomial, disjointness/containment, iterative refinement and unique-union equality algorithm; depends on representation invariant."
+    },
+    {
+      "repo": "flint",
+      "path": "src/qqbar/sgn_re.c",
+      "ranges": [
+        [
+          1,
+          76
+        ]
+      ],
+      "note": "Checkpoint50: Whole rational/exact/separated-component shortcuts, odd-coefficient axis filter and existence-certified zero real part."
+    },
+    {
+      "repo": "flint",
+      "path": "src/qqbar/sgn_im.c",
+      "ranges": [
+        [
+          1,
+          70
+        ]
+      ],
+      "note": "Checkpoint50: Whole rational/exact/separated-component shortcuts, refinement and existence-certified real axis; disabled alternative also read."
+    },
+    {
+      "repo": "flint",
+      "path": "src/qqbar/cmp_re.c",
+      "ranges": [
+        [
+          1,
+          115
+        ]
+      ],
+      "note": "Checkpoint50: Whole real interval/rational/conjugacy shortcuts, refinement, delayed exact difference for nonreal equal components; readonly refined work not saved."
+    },
+    {
+      "repo": "flint",
+      "path": "src/qqbar/cmp_im.c",
+      "ranges": [
+        [
+          1,
+          81
+        ]
+      ],
+      "note": "Checkpoint50: Whole imaginary interval/sign/equality/reflected-conjugate shortcuts, refinement and delayed exact-difference fallback."
+    },
+    {
+      "repo": "flint",
+      "path": "src/qqbar/cmp_root_order.c",
+      "ranges": [
+        [
+          1,
+          34
+        ]
+      ],
+      "note": "Checkpoint50: Whole real-first, descending real, ascending imaginary magnitude and final sign tie-break. Equal-nonreal comparator contract checked independently, not sorting stress."
+    },
+    {
+      "repo": "flint",
+      "path": "src/qqbar/cmpabs.c",
+      "ranges": [
+        [
+          1,
+          74
+        ]
+      ],
+      "note": "Checkpoint50: Whole axis special cases, numerical magnitude separation, delayed exact squared-magnitude comparison."
+    },
+    {
+      "repo": "flint",
+      "path": "src/qqbar/cmpabs_re.c",
+      "ranges": [
+        [
+          1,
+          73
+        ]
+      ],
+      "note": "Checkpoint50: Whole borrowed temporary absolute-enclosure view and sign-conditioned exact real-component comparisons."
+    },
+    {
+      "repo": "flint",
+      "path": "src/qqbar/cmpabs_im.c",
+      "ranges": [
+        [
+          1,
+          73
+        ]
+      ],
+      "note": "Checkpoint50: Whole borrowed temporary absolute-enclosure view and sign-conditioned exact imaginary-component comparisons."
+    },
+    {
+      "repo": "flint",
+      "path": "src/qqbar/get_acb.c",
+      "ranges": [
+        [
+          1,
+          93
+        ]
+      ],
+      "note": "Checkpoint50: Whole rational output and component-sign polishing, precision growth, attempted dyadic reconstruction and final rounding. Exact-component failure independently recorded; containment passes stated corpus."
+    },
+    {
+      "repo": "flint",
+      "path": "src/qqbar/cache_enclosure.c",
+      "ranges": [
+        [
+          1,
+          29
+        ]
+      ],
+      "note": "Checkpoint50: Whole explicit extra-precision polish and containment-only cache swap; not automatic readonly-query memoization."
+    },
+    {
+      "repo": "flint",
+      "path": "src/qqbar/init.c",
+      "ranges": [
+        [
+          1,
+          21
+        ]
+      ],
+      "note": "Checkpoint50: Whole polynomial/enclosure initialization to exact zero."
+    },
+    {
+      "repo": "flint",
+      "path": "src/qqbar/clear.c",
+      "ranges": [
+        [
+          1,
+          20
+        ]
+      ],
+      "note": "Checkpoint50: Whole owned polynomial/enclosure release."
+    },
+    {
+      "repo": "flint",
+      "path": "src/qqbar/set.c",
+      "ranges": [
+        [
+          1,
+          20
+        ]
+      ],
+      "note": "Checkpoint50: Whole deep polynomial/enclosure copy, not shared expression-DAG identity."
+    },
+    {
+      "repo": "flint",
+      "path": "src/qqbar/set_si.c",
+      "ranges": [
+        [
+          1,
+          21
+        ]
+      ],
+      "note": "Checkpoint50: Whole signed machine integer temporary and integer constructor."
+    },
+    {
+      "repo": "flint",
+      "path": "src/qqbar/set_ui.c",
+      "ranges": [
+        [
+          1,
+          21
+        ]
+      ],
+      "note": "Checkpoint50: Whole unsigned machine integer temporary and integer constructor."
+    },
+    {
+      "repo": "flint",
+      "path": "src/qqbar/set_fmpq.c",
+      "ranges": [
+        [
+          1,
+          23
+        ]
+      ],
+      "note": "Checkpoint50: Whole linear canonical rational polynomial and default-precision enclosure."
+    },
+    {
+      "repo": "flint",
+      "path": "src/qqbar/set_fmpz.c",
+      "ranges": [
+        [
+          1,
+          22
+        ]
+      ],
+      "note": "Checkpoint50: Whole linear integer polynomial and default-precision enclosure."
+    },
+    {
+      "repo": "flint",
+      "path": "src/qqbar/set_re_im.c",
+      "ranges": [
+        [
+          1,
+          35
+        ]
+      ],
+      "note": "Checkpoint50: Whole zero-imaginary shortcut and temporary-owned arithmetic construction of x+i*y."
+    },
+    {
+      "repo": "flint",
+      "path": "src/qqbar/conj.c",
+      "ranges": [
+        [
+          1,
+          20
+        ]
+      ],
+      "note": "Checkpoint50: Whole unchanged minimal polynomial and conjugated enclosure."
+    },
+    {
+      "repo": "flint",
+      "path": "src/qqbar/neg.c",
+      "ranges": [
+        [
+          1,
+          25
+        ]
+      ],
+      "note": "Checkpoint50: Whole parity-selected polynomial coefficient negation and enclosure negation."
+    },
+    {
+      "repo": "flint",
+      "path": "src/qqbar/abs2.c",
+      "ranges": [
+        [
+          1,
+          47
+        ]
+      ],
+      "note": "Checkpoint50: Whole real/root-of-unity/pure-imaginary/conjugate-product routes and exact zero imaginary component."
+    },
+    {
+      "repo": "flint",
+      "path": "src/qqbar/hash.c",
+      "ranges": [
+        [
+          1,
+          33
+        ]
+      ],
+      "note": "Checkpoint50: Whole minimal-polynomial-only integer hash, intentional conjugate collisions; not equality evidence."
+    },
+    {
+      "repo": "flint",
+      "path": "src/qqbar/csgn.c",
+      "ranges": [
+        [
+          1,
+          23
+        ]
+      ],
+      "note": "Checkpoint50: Whole real-component sign followed by imaginary-axis sign."
+    },
+    {
+      "repo": "flint",
+      "path": "src/qqbar/root_ui.c",
+      "ranges": [
+        [
+          1,
+          168
+        ]
+      ],
+      "note": "Checkpoint50: Whole principal-surd fast detection, rational/root-of-unity routes, factored annihilator and unique-root selection. Invalid/resource boundary branches read, not probed."
+    },
+    {
+      "repo": "flint",
+      "path": "src/qqbar/fmpq_root_ui.c",
+      "ranges": [
+        [
+          1,
+          128
+        ]
+      ],
+      "note": "Checkpoint50: Whole square/root reduction of rational numerator and denominator, principal negative-input delegation and positive surd construction. Only bounded positive square roots executed here."
+    },
+    {
+      "repo": "flint",
+      "path": "src/qqbar/i.c",
+      "ranges": [
+        [
+          1,
+          22
+        ]
+      ],
+      "note": "Checkpoint50: Whole canonical x^2+1 polynomial and exact positive imaginary-unit enclosure."
+    },
+    {
+      "repo": "flint",
+      "path": "src/qqbar/get_arb.c",
+      "ranges": [
+        [
+          1,
+          29
+        ]
+      ],
+      "note": "Checkpoint50: Whole real admission and polished complex extraction, otherwise indeterminate output."
+    },
+    {
+      "repo": "flint",
+      "path": "src/qqbar/get_arb_re.c",
+      "ranges": [
+        [
+          1,
+          29
+        ]
+      ],
+      "note": "Checkpoint50: Whole exact zero real shortcut or polished component extraction."
+    },
+    {
+      "repo": "flint",
+      "path": "src/qqbar/get_arb_im.c",
+      "ranges": [
+        [
+          1,
+          29
+        ]
+      ],
+      "note": "Checkpoint50: Whole exact zero imaginary shortcut or polished component extraction."
+    },
+    {
+      "repo": "flint",
+      "path": "src/qqbar/roots_fmpz_poly.c",
+      "ranges": [
+        [
+          1,
+          119
+        ]
+      ],
+      "note": "Checkpoint50: Whole factor/content/root-isolation paths, multiplicity expansion before final qsort. No new root-list numerical or sorting-failure claim."
+    },
+    {
+      "repo": "flint",
+      "path": "src/qqbar/conjugates.c",
+      "ranges": [
+        [
+          1,
+          21
+        ]
+      ],
+      "note": "Checkpoint50: Whole rational copy or irreducible-minimal-polynomial root enumeration."
+    },
+    {
+      "repo": "flint",
+      "path": "src/qqbar/test/t-cmp_re.c",
+      "ranges": [
+        [
+          1,
+          70
+        ]
+      ],
+      "note": "Checkpoint50: Entire t-cmp_re.c source: shared-backend reference/control flow, random cases, failure checks and cleanup. Read only, not newly executed; independent corpus has separate oracle and stated scope."
+    },
+    {
+      "repo": "flint",
+      "path": "src/qqbar/test/t-cmp_im.c",
+      "ranges": [
+        [
+          1,
+          190
+        ]
+      ],
+      "note": "Checkpoint50: Entire t-cmp_im.c source: shared-backend reference/control flow, random cases, failure checks and cleanup. Read only, not newly executed; independent corpus has separate oracle and stated scope."
+    },
+    {
+      "repo": "flint",
+      "path": "src/qqbar/test/t-cmpabs.c",
+      "ranges": [
+        [
+          1,
+          63
+        ]
+      ],
+      "note": "Checkpoint50: Entire t-cmpabs.c source: shared-backend reference/control flow, random cases, failure checks and cleanup. Read only, not newly executed; independent corpus has separate oracle and stated scope."
+    },
+    {
+      "repo": "flint",
+      "path": "src/qqbar/test/t-cmpabs_re.c",
+      "ranges": [
+        [
+          1,
+          67
+        ]
+      ],
+      "note": "Checkpoint50: Entire t-cmpabs_re.c source: shared-backend reference/control flow, random cases, failure checks and cleanup. Read only, not newly executed; independent corpus has separate oracle and stated scope."
+    },
+    {
+      "repo": "flint",
+      "path": "src/qqbar/test/t-cmpabs_im.c",
+      "ranges": [
+        [
+          1,
+          74
+        ]
+      ],
+      "note": "Checkpoint50: Entire t-cmpabs_im.c source: shared-backend reference/control flow, random cases, failure checks and cleanup. Read only, not newly executed; independent corpus has separate oracle and stated scope."
+    },
+    {
+      "repo": "flint",
+      "path": "src/qqbar/test/t-sgn_re.c",
+      "ranges": [
+        [
+          1,
+          99
+        ]
+      ],
+      "note": "Checkpoint50: Entire t-sgn_re.c source: shared-backend reference/control flow, random cases, failure checks and cleanup. Read only, not newly executed; independent corpus has separate oracle and stated scope."
+    },
+    {
+      "repo": "flint",
+      "path": "src/qqbar/test/t-csgn.c",
+      "ranges": [
+        [
+          1,
+          57
+        ]
+      ],
+      "note": "Checkpoint50: Entire t-csgn.c source: shared-backend reference/control flow, random cases, failure checks and cleanup. Read only, not newly executed; independent corpus has separate oracle and stated scope."
+    },
+    {
+      "repo": "flint",
+      "path": "src/qqbar/test/t-get_acb.c",
+      "ranges": [
+        [
+          1,
+          82
+        ]
+      ],
+      "note": "Checkpoint50: Entire t-get_acb.c source: shared-backend reference/control flow, random cases, failure checks and cleanup. Read only, not newly executed; independent corpus has separate oracle and stated scope."
+    },
+    {
+      "repo": "flint",
+      "path": "src/qqbar/test/t-roots_fmpz_poly.c",
+      "ranges": [
+        [
+          1,
+          74
+        ]
+      ],
+      "note": "Checkpoint50: Entire t-roots_fmpz_poly.c source: shared-backend reference/control flow, random cases, failure checks and cleanup. Read only, not newly executed; independent corpus has separate oracle and stated scope."
+    },
+    {
+      "repo": "flint",
+      "path": "src/qqbar/test/t-conjugates.c",
+      "ranges": [
+        [
+          1,
+          68
+        ]
+      ],
+      "note": "Checkpoint50: Entire t-conjugates.c source: shared-backend reference/control flow, random cases, failure checks and cleanup. Read only, not newly executed; independent corpus has separate oracle and stated scope."
+    }
+  ],
+  "newDonorLines": 8646,
+  "coverageBefore": [
+    {
+      "repo": "calcium",
+      "reviewed": 479,
+      "complete": 479,
+      "partial": 0,
+      "readLines": 52311
+    },
+    {
+      "repo": "flint",
+      "reviewed": 810,
+      "complete": 790,
+      "partial": 20,
+      "readLines": 115473
+    }
+  ],
+  "coverageAtBinding": [
+    {
+      "repo": "calcium",
+      "reviewed": 525,
+      "complete": 525,
+      "partial": 0,
+      "readLines": 56632
+    },
+    {
+      "repo": "flint",
+      "reviewed": 856,
+      "complete": 836,
+      "partial": 20,
+      "readLines": 119798
+    }
+  ],
+  "previousManifest": "fexpr-formatting-manifest.json",
+  "liveSourceManifest": "mpoly-bridge-experiment.json",
+  "liveFileCount": 956,
+  "hyperReadRanges": {
+    "hyperreal/src/computable/node/structural_analysis.rs": [
+      [
+        1,
+        270
+      ]
+    ],
+    "hyperreal/src/computable/node/approximation_queries.rs": [
+      [
+        330,
+        460
+      ]
+    ],
+    "hyperreal/src/real/arithmetic/comparison.rs": [
+      [
+        1,
+        81
+      ]
+    ],
+    "hypersolve/src/algebraic.rs": [
+      [
+        365,
+        940
+      ],
+      [
+        3570,
+        3645
+      ]
+    ]
+  },
+  "libraries": {
+    "/home/tim/Documents/GitHub/workspace/exact-real-references/flint/libflint.so.25": "8dcdbb4aa08d67712b14febd006d1392d07737b1ad8c1f8f5930a152701e0032",
+    "/lib64/libmpfr.so.6": "62278d7f4fe622b139cefe5888092ae658dbbc56269cf70c70a25d9556ed4844",
+    "/lib64/libgmp.so.10": "8f1fc44cabf3551e781faa4cfda37999059a7107bafecf81c2e7a6741001b648",
+    "/lib64/libm.so.6": "3606f83c1488dc9c5ce0ae3e7ba2184f9d3c1a60cd5435c68b2898fd556920b4",
+    "/lib64/libc.so.6": "72e64de106dd417510a2e23a9168edd46868f7cf80abdd6913378ab6c2b2845b"
+  },
+  "configurationFiles": {
+    "/home/tim/Documents/GitHub/workspace/exact-real-references/flint/src/flint-config.h": "6ef577733c03e8e569f0987b203a97b3db17e33318931657f2bc7c2219f687f0"
+  },
+  "binaries": [
+    {
+      "path": "/tmp/calcium-qqbar-decisions.xUeflv/controls",
+      "sha256": "d0e238edf14f8435667b39f64eeb4438eccf54a878e98948793bc10f5c1f27c1",
+      "bytes": 18152
+    }
+  ],
+  "gates": [
+    "qqbar-decisions-compile",
+    "qqbar-decisions-native",
+    "qqbar-decisions-check",
+    "qqbar-decisions-memcheck",
+    "qqbar-decisions-linked"
+  ],
+  "checks": {
+    "kind": "independent-signed-square-root-coordinate-oracle",
+    "status": "mathematical-contract-fail",
+    "counts": {
+      "unary": 98,
+      "pair": 4802,
+      "enclosure": 294,
+      "preserved": 98,
+      "terminal": 1
+    },
+    "checks": {
+      "signRe": 98,
+      "signIm": 98,
+      "complexSign": 98,
+      "copyEqual": 98,
+      "copyRootOrder": 98,
+      "copyHashEqual": 98,
+      "contains-real": 294,
+      "accuracy-real": 294,
+      "contains-imag": 294,
+      "accuracy-imag": 294,
+      "equal": 4802,
+      "compareRe": 4802,
+      "compareIm": 4802,
+      "compareAbsRe": 4802,
+      "compareAbsIm": 4802,
+      "compareAbs": 4802,
+      "rootOrder": 4802,
+      "exact-dyadic-imag": 126,
+      "exact-dyadic-real": 126,
+      "preservedPolynomial": 98,
+      "preservedEnclosure": 98
+    },
+    "totalChecks": 35826,
+    "failedByCheck": {
+      "copyRootOrder": 84,
+      "rootOrder": 84,
+      "exact-dyadic-imag": 48,
+      "exact-dyadic-real": 48
+    },
+    "failures": [
+      {
+        "type": "unary",
+        "phase": 0,
+        "i": 0,
+        "name": "copyRootOrder",
+        "actual": -1,
+        "expected": 0
+      },
+      {
+        "type": "pair",
+        "phase": 0,
+        "i": 0,
+        "j": 0,
+        "name": "rootOrder",
+        "actual": -1,
+        "expected": 0
+      },
+      {
+        "type": "unary",
+        "phase": 0,
+        "i": 1,
+        "name": "copyRootOrder",
+        "actual": -1,
+        "expected": 0
+      },
+      {
+        "type": "pair",
+        "phase": 0,
+        "i": 1,
+        "j": 1,
+        "name": "rootOrder",
+        "actual": -1,
+        "expected": 0
+      },
+      {
+        "type": "unary",
+        "phase": 0,
+        "i": 2,
+        "name": "copyRootOrder",
+        "actual": -1,
+        "expected": 0
+      },
+      {
+        "type": "enclosure",
+        "phase": 0,
+        "i": 2,
+        "prec": 32,
+        "name": "exact-dyadic-imag",
+        "actual": 0,
+        "expected": 1
+      },
+      {
+        "type": "enclosure",
+        "phase": 0,
+        "i": 2,
+        "prec": 128,
+        "name": "exact-dyadic-imag",
+        "actual": 0,
+        "expected": 1
+      },
+      {
+        "type": "enclosure",
+        "phase": 0,
+        "i": 2,
+        "prec": 512,
+        "name": "exact-dyadic-imag",
+        "actual": 0,
+        "expected": 1
+      },
+      {
+        "type": "pair",
+        "phase": 0,
+        "i": 2,
+        "j": 2,
+        "name": "rootOrder",
+        "actual": -1,
+        "expected": 0
+      },
+      {
+        "type": "unary",
+        "phase": 0,
+        "i": 4,
+        "name": "copyRootOrder",
+        "actual": 1,
+        "expected": 0
+      },
+      {
+        "type": "enclosure",
+        "phase": 0,
+        "i": 4,
+        "prec": 32,
+        "name": "exact-dyadic-imag",
+        "actual": 0,
+        "expected": 1
+      },
+      {
+        "type": "enclosure",
+        "phase": 0,
+        "i": 4,
+        "prec": 128,
+        "name": "exact-dyadic-imag",
+        "actual": 0,
+        "expected": 1
+      },
+      {
+        "type": "enclosure",
+        "phase": 0,
+        "i": 4,
+        "prec": 512,
+        "name": "exact-dyadic-imag",
+        "actual": 0,
+        "expected": 1
+      },
+      {
+        "type": "pair",
+        "phase": 0,
+        "i": 4,
+        "j": 4,
+        "name": "rootOrder",
+        "actual": 1,
+        "expected": 0
+      },
+      {
+        "type": "unary",
+        "phase": 0,
+        "i": 5,
+        "name": "copyRootOrder",
+        "actual": 1,
+        "expected": 0
+      },
+      {
+        "type": "pair",
+        "phase": 0,
+        "i": 5,
+        "j": 5,
+        "name": "rootOrder",
+        "actual": 1,
+        "expected": 0
+      },
+      {
+        "type": "unary",
+        "phase": 0,
+        "i": 6,
+        "name": "copyRootOrder",
+        "actual": 1,
+        "expected": 0
+      },
+      {
+        "type": "pair",
+        "phase": 0,
+        "i": 6,
+        "j": 6,
+        "name": "rootOrder",
+        "actual": 1,
+        "expected": 0
+      },
+      {
+        "type": "unary",
+        "phase": 0,
+        "i": 7,
+        "name": "copyRootOrder",
+        "actual": -1,
+        "expected": 0
+      },
+      {
+        "type": "pair",
+        "phase": 0,
+        "i": 7,
+        "j": 7,
+        "name": "rootOrder",
+        "actual": -1,
+        "expected": 0
+      },
+      {
+        "type": "unary",
+        "phase": 0,
+        "i": 8,
+        "name": "copyRootOrder",
+        "actual": -1,
+        "expected": 0
+      },
+      {
+        "type": "pair",
+        "phase": 0,
+        "i": 8,
+        "j": 8,
+        "name": "rootOrder",
+        "actual": -1,
+        "expected": 0
+      },
+      {
+        "type": "unary",
+        "phase": 0,
+        "i": 9,
+        "name": "copyRootOrder",
+        "actual": -1,
+        "expected": 0
+      },
+      {
+        "type": "enclosure",
+        "phase": 0,
+        "i": 9,
+        "prec": 32,
+        "name": "exact-dyadic-imag",
+        "actual": 0,
+        "expected": 1
+      },
+      {
+        "type": "enclosure",
+        "phase": 0,
+        "i": 9,
+        "prec": 128,
+        "name": "exact-dyadic-imag",
+        "actual": 0,
+        "expected": 1
+      },
+      {
+        "type": "enclosure",
+        "phase": 0,
+        "i": 9,
+        "prec": 512,
+        "name": "exact-dyadic-imag",
+        "actual": 0,
+        "expected": 1
+      },
+      {
+        "type": "pair",
+        "phase": 0,
+        "i": 9,
+        "j": 9,
+        "name": "rootOrder",
+        "actual": -1,
+        "expected": 0
+      },
+      {
+        "type": "unary",
+        "phase": 0,
+        "i": 11,
+        "name": "copyRootOrder",
+        "actual": 1,
+        "expected": 0
+      },
+      {
+        "type": "enclosure",
+        "phase": 0,
+        "i": 11,
+        "prec": 32,
+        "name": "exact-dyadic-imag",
+        "actual": 0,
+        "expected": 1
+      },
+      {
+        "type": "enclosure",
+        "phase": 0,
+        "i": 11,
+        "prec": 128,
+        "name": "exact-dyadic-imag",
+        "actual": 0,
+        "expected": 1
+      },
+      {
+        "type": "enclosure",
+        "phase": 0,
+        "i": 11,
+        "prec": 512,
+        "name": "exact-dyadic-imag",
+        "actual": 0,
+        "expected": 1
+      },
+      {
+        "type": "pair",
+        "phase": 0,
+        "i": 11,
+        "j": 11,
+        "name": "rootOrder",
+        "actual": 1,
+        "expected": 0
+      },
+      {
+        "type": "unary",
+        "phase": 0,
+        "i": 12,
+        "name": "copyRootOrder",
+        "actual": 1,
+        "expected": 0
+      },
+      {
+        "type": "pair",
+        "phase": 0,
+        "i": 12,
+        "j": 12,
+        "name": "rootOrder",
+        "actual": 1,
+        "expected": 0
+      },
+      {
+        "type": "unary",
+        "phase": 0,
+        "i": 13,
+        "name": "copyRootOrder",
+        "actual": 1,
+        "expected": 0
+      },
+      {
+        "type": "pair",
+        "phase": 0,
+        "i": 13,
+        "j": 13,
+        "name": "rootOrder",
+        "actual": 1,
+        "expected": 0
+      },
+      {
+        "type": "unary",
+        "phase": 0,
+        "i": 14,
+        "name": "copyRootOrder",
+        "actual": -1,
+        "expected": 0
+      },
+      {
+        "type": "enclosure",
+        "phase": 0,
+        "i": 14,
+        "prec": 32,
+        "name": "exact-dyadic-real",
+        "actual": 0,
+        "expected": 1
+      },
+      {
+        "type": "enclosure",
+        "phase": 0,
+        "i": 14,
+        "prec": 128,
+        "name": "exact-dyadic-real",
+        "actual": 0,
+        "expected": 1
+      },
+      {
+        "type": "enclosure",
+        "phase": 0,
+        "i": 14,
+        "prec": 512,
+        "name": "exact-dyadic-real",
+        "actual": 0,
+        "expected": 1
+      },
+      {
+        "type": "pair",
+        "phase": 0,
+        "i": 14,
+        "j": 14,
+        "name": "rootOrder",
+        "actual": -1,
+        "expected": 0
+      },
+      {
+        "type": "unary",
+        "phase": 0,
+        "i": 15,
+        "name": "copyRootOrder",
+        "actual": -1,
+        "expected": 0
+      },
+      {
+        "type": "enclosure",
+        "phase": 0,
+        "i": 15,
+        "prec": 32,
+        "name": "exact-dyadic-real",
+        "actual": 0,
+        "expected": 1
+      },
+      {
+        "type": "enclosure",
+        "phase": 0,
+        "i": 15,
+        "prec": 128,
+        "name": "exact-dyadic-real",
+        "actual": 0,
+        "expected": 1
+      },
+      {
+        "type": "enclosure",
+        "phase": 0,
+        "i": 15,
+        "prec": 512,
+        "name": "exact-dyadic-real",
+        "actual": 0,
+        "expected": 1
+      },
+      {
+        "type": "pair",
+        "phase": 0,
+        "i": 15,
+        "j": 15,
+        "name": "rootOrder",
+        "actual": -1,
+        "expected": 0
+      },
+      {
+        "type": "unary",
+        "phase": 0,
+        "i": 16,
+        "name": "copyRootOrder",
+        "actual": -1,
+        "expected": 0
+      },
+      {
+        "type": "pair",
+        "phase": 0,
+        "i": 16,
+        "j": 16,
+        "name": "rootOrder",
+        "actual": -1,
+        "expected": 0
+      },
+      {
+        "type": "unary",
+        "phase": 0,
+        "i": 18,
+        "name": "copyRootOrder",
+        "actual": 1,
+        "expected": 0
+      },
+      {
+        "type": "pair",
+        "phase": 0,
+        "i": 18,
+        "j": 18,
+        "name": "rootOrder",
+        "actual": 1,
+        "expected": 0
+      },
+      {
+        "type": "unary",
+        "phase": 0,
+        "i": 19,
+        "name": "copyRootOrder",
+        "actual": 1,
+        "expected": 0
+      },
+      {
+        "type": "enclosure",
+        "phase": 0,
+        "i": 19,
+        "prec": 32,
+        "name": "exact-dyadic-real",
+        "actual": 0,
+        "expected": 1
+      },
+      {
+        "type": "enclosure",
+        "phase": 0,
+        "i": 19,
+        "prec": 128,
+        "name": "exact-dyadic-real",
+        "actual": 0,
+        "expected": 1
+      },
+      {
+        "type": "enclosure",
+        "phase": 0,
+        "i": 19,
+        "prec": 512,
+        "name": "exact-dyadic-real",
+        "actual": 0,
+        "expected": 1
+      },
+      {
+        "type": "pair",
+        "phase": 0,
+        "i": 19,
+        "j": 19,
+        "name": "rootOrder",
+        "actual": 1,
+        "expected": 0
+      },
+      {
+        "type": "unary",
+        "phase": 0,
+        "i": 20,
+        "name": "copyRootOrder",
+        "actual": 1,
+        "expected": 0
+      },
+      {
+        "type": "enclosure",
+        "phase": 0,
+        "i": 20,
+        "prec": 32,
+        "name": "exact-dyadic-real",
+        "actual": 0,
+        "expected": 1
+      },
+      {
+        "type": "enclosure",
+        "phase": 0,
+        "i": 20,
+        "prec": 128,
+        "name": "exact-dyadic-real",
+        "actual": 0,
+        "expected": 1
+      },
+      {
+        "type": "enclosure",
+        "phase": 0,
+        "i": 20,
+        "prec": 512,
+        "name": "exact-dyadic-real",
+        "actual": 0,
+        "expected": 1
+      },
+      {
+        "type": "pair",
+        "phase": 0,
+        "i": 20,
+        "j": 20,
+        "name": "rootOrder",
+        "actual": 1,
+        "expected": 0
+      },
+      {
+        "type": "unary",
+        "phase": 0,
+        "i": 21,
+        "name": "copyRootOrder",
+        "actual": -1,
+        "expected": 0
+      },
+      {
+        "type": "pair",
+        "phase": 0,
+        "i": 21,
+        "j": 21,
+        "name": "rootOrder",
+        "actual": -1,
+        "expected": 0
+      },
+      {
+        "type": "unary",
+        "phase": 0,
+        "i": 22,
+        "name": "copyRootOrder",
+        "actual": -1,
+        "expected": 0
+      },
+      {
+        "type": "pair",
+        "phase": 0,
+        "i": 22,
+        "j": 22,
+        "name": "rootOrder",
+        "actual": -1,
+        "expected": 0
+      },
+      {
+        "type": "unary",
+        "phase": 0,
+        "i": 23,
+        "name": "copyRootOrder",
+        "actual": -1,
+        "expected": 0
+      },
+      {
+        "type": "pair",
+        "phase": 0,
+        "i": 23,
+        "j": 23,
+        "name": "rootOrder",
+        "actual": -1,
+        "expected": 0
+      },
+      {
+        "type": "unary",
+        "phase": 0,
+        "i": 25,
+        "name": "copyRootOrder",
+        "actual": 1,
+        "expected": 0
+      },
+      {
+        "type": "pair",
+        "phase": 0,
+        "i": 25,
+        "j": 25,
+        "name": "rootOrder",
+        "actual": 1,
+        "expected": 0
+      },
+      {
+        "type": "unary",
+        "phase": 0,
+        "i": 26,
+        "name": "copyRootOrder",
+        "actual": 1,
+        "expected": 0
+      },
+      {
+        "type": "pair",
+        "phase": 0,
+        "i": 26,
+        "j": 26,
+        "name": "rootOrder",
+        "actual": 1,
+        "expected": 0
+      },
+      {
+        "type": "unary",
+        "phase": 0,
+        "i": 27,
+        "name": "copyRootOrder",
+        "actual": 1,
+        "expected": 0
+      },
+      {
+        "type": "pair",
+        "phase": 0,
+        "i": 27,
+        "j": 27,
+        "name": "rootOrder",
+        "actual": 1,
+        "expected": 0
+      },
+      {
+        "type": "unary",
+        "phase": 0,
+        "i": 28,
+        "name": "copyRootOrder",
+        "actual": -1,
+        "expected": 0
+      },
+      {
+        "type": "enclosure",
+        "phase": 0,
+        "i": 28,
+        "prec": 32,
+        "name": "exact-dyadic-real",
+        "actual": 0,
+        "expected": 1
+      },
+      {
+        "type": "enclosure",
+        "phase": 0,
+        "i": 28,
+        "prec": 128,
+        "name": "exact-dyadic-real",
+        "actual": 0,
+        "expected": 1
+      },
+      {
+        "type": "enclosure",
+        "phase": 0,
+        "i": 28,
+        "prec": 512,
+        "name": "exact-dyadic-real",
+        "actual": 0,
+        "expected": 1
+      },
+      {
+        "type": "pair",
+        "phase": 0,
+        "i": 28,
+        "j": 28,
+        "name": "rootOrder",
+        "actual": -1,
+        "expected": 0
+      },
+      {
+        "type": "unary",
+        "phase": 0,
+        "i": 29,
+        "name": "copyRootOrder",
+        "actual": -1,
+        "expected": 0
+      },
+      {
+        "type": "enclosure",
+        "phase": 0,
+        "i": 29,
+        "prec": 32,
+        "name": "exact-dyadic-real",
+        "actual": 0,
+        "expected": 1
+      },
+      {
+        "type": "enclosure",
+        "phase": 0,
+        "i": 29,
+        "prec": 128,
+        "name": "exact-dyadic-real",
+        "actual": 0,
+        "expected": 1
+      },
+      {
+        "type": "enclosure",
+        "phase": 0,
+        "i": 29,
+        "prec": 512,
+        "name": "exact-dyadic-real",
+        "actual": 0,
+        "expected": 1
+      },
+      {
+        "type": "pair",
+        "phase": 0,
+        "i": 29,
+        "j": 29,
+        "name": "rootOrder",
+        "actual": -1,
+        "expected": 0
+      },
+      {
+        "type": "unary",
+        "phase": 0,
+        "i": 30,
+        "name": "copyRootOrder",
+        "actual": -1,
+        "expected": 0
+      },
+      {
+        "type": "pair",
+        "phase": 0,
+        "i": 30,
+        "j": 30,
+        "name": "rootOrder",
+        "actual": -1,
+        "expected": 0
+      },
+      {
+        "type": "unary",
+        "phase": 0,
+        "i": 32,
+        "name": "copyRootOrder",
+        "actual": 1,
+        "expected": 0
+      },
+      {
+        "type": "pair",
+        "phase": 0,
+        "i": 32,
+        "j": 32,
+        "name": "rootOrder",
+        "actual": 1,
+        "expected": 0
+      },
+      {
+        "type": "unary",
+        "phase": 0,
+        "i": 33,
+        "name": "copyRootOrder",
+        "actual": 1,
+        "expected": 0
+      },
+      {
+        "type": "enclosure",
+        "phase": 0,
+        "i": 33,
+        "prec": 32,
+        "name": "exact-dyadic-real",
+        "actual": 0,
+        "expected": 1
+      },
+      {
+        "type": "enclosure",
+        "phase": 0,
+        "i": 33,
+        "prec": 128,
+        "name": "exact-dyadic-real",
+        "actual": 0,
+        "expected": 1
+      },
+      {
+        "type": "enclosure",
+        "phase": 0,
+        "i": 33,
+        "prec": 512,
+        "name": "exact-dyadic-real",
+        "actual": 0,
+        "expected": 1
+      },
+      {
+        "type": "pair",
+        "phase": 0,
+        "i": 33,
+        "j": 33,
+        "name": "rootOrder",
+        "actual": 1,
+        "expected": 0
+      },
+      {
+        "type": "unary",
+        "phase": 0,
+        "i": 34,
+        "name": "copyRootOrder",
+        "actual": 1,
+        "expected": 0
+      },
+      {
+        "type": "enclosure",
+        "phase": 0,
+        "i": 34,
+        "prec": 32,
+        "name": "exact-dyadic-real",
+        "actual": 0,
+        "expected": 1
+      },
+      {
+        "type": "enclosure",
+        "phase": 0,
+        "i": 34,
+        "prec": 128,
+        "name": "exact-dyadic-real",
+        "actual": 0,
+        "expected": 1
+      },
+      {
+        "type": "enclosure",
+        "phase": 0,
+        "i": 34,
+        "prec": 512,
+        "name": "exact-dyadic-real",
+        "actual": 0,
+        "expected": 1
+      },
+      {
+        "type": "pair",
+        "phase": 0,
+        "i": 34,
+        "j": 34,
+        "name": "rootOrder",
+        "actual": 1,
+        "expected": 0
+      },
+      {
+        "type": "unary",
+        "phase": 0,
+        "i": 35,
+        "name": "copyRootOrder",
+        "actual": -1,
+        "expected": 0
+      },
+      {
+        "type": "pair",
+        "phase": 0,
+        "i": 35,
+        "j": 35,
+        "name": "rootOrder",
+        "actual": -1,
+        "expected": 0
+      },
+      {
+        "type": "unary",
+        "phase": 0,
+        "i": 36,
+        "name": "copyRootOrder",
+        "actual": -1,
+        "expected": 0
+      },
+      {
+        "type": "pair",
+        "phase": 0,
+        "i": 36,
+        "j": 36,
+        "name": "rootOrder",
+        "actual": -1,
+        "expected": 0
+      },
+      {
+        "type": "unary",
+        "phase": 0,
+        "i": 37,
+        "name": "copyRootOrder",
+        "actual": -1,
+        "expected": 0
+      },
+      {
+        "type": "enclosure",
+        "phase": 0,
+        "i": 37,
+        "prec": 32,
+        "name": "exact-dyadic-imag",
+        "actual": 0,
+        "expected": 1
+      },
+      {
+        "type": "enclosure",
+        "phase": 0,
+        "i": 37,
+        "prec": 128,
+        "name": "exact-dyadic-imag",
+        "actual": 0,
+        "expected": 1
+      },
+      {
+        "type": "enclosure",
+        "phase": 0,
+        "i": 37,
+        "prec": 512,
+        "name": "exact-dyadic-imag",
+        "actual": 0,
+        "expected": 1
+      },
+      {
+        "type": "pair",
+        "phase": 0,
+        "i": 37,
+        "j": 37,
+        "name": "rootOrder",
+        "actual": -1,
+        "expected": 0
+      },
+      {
+        "type": "unary",
+        "phase": 0,
+        "i": 39,
+        "name": "copyRootOrder",
+        "actual": 1,
+        "expected": 0
+      },
+      {
+        "type": "enclosure",
+        "phase": 0,
+        "i": 39,
+        "prec": 32,
+        "name": "exact-dyadic-imag",
+        "actual": 0,
+        "expected": 1
+      },
+      {
+        "type": "enclosure",
+        "phase": 0,
+        "i": 39,
+        "prec": 128,
+        "name": "exact-dyadic-imag",
+        "actual": 0,
+        "expected": 1
+      },
+      {
+        "type": "enclosure",
+        "phase": 0,
+        "i": 39,
+        "prec": 512,
+        "name": "exact-dyadic-imag",
+        "actual": 0,
+        "expected": 1
+      },
+      {
+        "type": "pair",
+        "phase": 0,
+        "i": 39,
+        "j": 39,
+        "name": "rootOrder",
+        "actual": 1,
+        "expected": 0
+      },
+      {
+        "type": "unary",
+        "phase": 0,
+        "i": 40,
+        "name": "copyRootOrder",
+        "actual": 1,
+        "expected": 0
+      },
+      {
+        "type": "pair",
+        "phase": 0,
+        "i": 40,
+        "j": 40,
+        "name": "rootOrder",
+        "actual": 1,
+        "expected": 0
+      },
+      {
+        "type": "unary",
+        "phase": 0,
+        "i": 41,
+        "name": "copyRootOrder",
+        "actual": 1,
+        "expected": 0
+      },
+      {
+        "type": "pair",
+        "phase": 0,
+        "i": 41,
+        "j": 41,
+        "name": "rootOrder",
+        "actual": 1,
+        "expected": 0
+      },
+      {
+        "type": "unary",
+        "phase": 0,
+        "i": 42,
+        "name": "copyRootOrder",
+        "actual": -1,
+        "expected": 0
+      },
+      {
+        "type": "pair",
+        "phase": 0,
+        "i": 42,
+        "j": 42,
+        "name": "rootOrder",
+        "actual": -1,
+        "expected": 0
+      },
+      {
+        "type": "unary",
+        "phase": 0,
+        "i": 43,
+        "name": "copyRootOrder",
+        "actual": -1,
+        "expected": 0
+      },
+      {
+        "type": "pair",
+        "phase": 0,
+        "i": 43,
+        "j": 43,
+        "name": "rootOrder",
+        "actual": -1,
+        "expected": 0
+      },
+      {
+        "type": "unary",
+        "phase": 0,
+        "i": 44,
+        "name": "copyRootOrder",
+        "actual": -1,
+        "expected": 0
+      },
+      {
+        "type": "enclosure",
+        "phase": 0,
+        "i": 44,
+        "prec": 32,
+        "name": "exact-dyadic-imag",
+        "actual": 0,
+        "expected": 1
+      },
+      {
+        "type": "enclosure",
+        "phase": 0,
+        "i": 44,
+        "prec": 128,
+        "name": "exact-dyadic-imag",
+        "actual": 0,
+        "expected": 1
+      },
+      {
+        "type": "enclosure",
+        "phase": 0,
+        "i": 44,
+        "prec": 512,
+        "name": "exact-dyadic-imag",
+        "actual": 0,
+        "expected": 1
+      },
+      {
+        "type": "pair",
+        "phase": 0,
+        "i": 44,
+        "j": 44,
+        "name": "rootOrder",
+        "actual": -1,
+        "expected": 0
+      },
+      {
+        "type": "unary",
+        "phase": 0,
+        "i": 46,
+        "name": "copyRootOrder",
+        "actual": 1,
+        "expected": 0
+      },
+      {
+        "type": "enclosure",
+        "phase": 0,
+        "i": 46,
+        "prec": 32,
+        "name": "exact-dyadic-imag",
+        "actual": 0,
+        "expected": 1
+      },
+      {
+        "type": "enclosure",
+        "phase": 0,
+        "i": 46,
+        "prec": 128,
+        "name": "exact-dyadic-imag",
+        "actual": 0,
+        "expected": 1
+      },
+      {
+        "type": "enclosure",
+        "phase": 0,
+        "i": 46,
+        "prec": 512,
+        "name": "exact-dyadic-imag",
+        "actual": 0,
+        "expected": 1
+      },
+      {
+        "type": "pair",
+        "phase": 0,
+        "i": 46,
+        "j": 46,
+        "name": "rootOrder",
+        "actual": 1,
+        "expected": 0
+      },
+      {
+        "type": "unary",
+        "phase": 0,
+        "i": 47,
+        "name": "copyRootOrder",
+        "actual": 1,
+        "expected": 0
+      },
+      {
+        "type": "pair",
+        "phase": 0,
+        "i": 47,
+        "j": 47,
+        "name": "rootOrder",
+        "actual": 1,
+        "expected": 0
+      },
+      {
+        "type": "unary",
+        "phase": 0,
+        "i": 48,
+        "name": "copyRootOrder",
+        "actual": 1,
+        "expected": 0
+      },
+      {
+        "type": "pair",
+        "phase": 0,
+        "i": 48,
+        "j": 48,
+        "name": "rootOrder",
+        "actual": 1,
+        "expected": 0
+      },
+      {
+        "type": "unary",
+        "phase": 1,
+        "i": 0,
+        "name": "copyRootOrder",
+        "actual": -1,
+        "expected": 0
+      },
+      {
+        "type": "pair",
+        "phase": 1,
+        "i": 0,
+        "j": 0,
+        "name": "rootOrder",
+        "actual": -1,
+        "expected": 0
+      },
+      {
+        "type": "unary",
+        "phase": 1,
+        "i": 1,
+        "name": "copyRootOrder",
+        "actual": -1,
+        "expected": 0
+      },
+      {
+        "type": "pair",
+        "phase": 1,
+        "i": 1,
+        "j": 1,
+        "name": "rootOrder",
+        "actual": -1,
+        "expected": 0
+      },
+      {
+        "type": "unary",
+        "phase": 1,
+        "i": 2,
+        "name": "copyRootOrder",
+        "actual": -1,
+        "expected": 0
+      },
+      {
+        "type": "enclosure",
+        "phase": 1,
+        "i": 2,
+        "prec": 32,
+        "name": "exact-dyadic-imag",
+        "actual": 0,
+        "expected": 1
+      },
+      {
+        "type": "enclosure",
+        "phase": 1,
+        "i": 2,
+        "prec": 128,
+        "name": "exact-dyadic-imag",
+        "actual": 0,
+        "expected": 1
+      },
+      {
+        "type": "enclosure",
+        "phase": 1,
+        "i": 2,
+        "prec": 512,
+        "name": "exact-dyadic-imag",
+        "actual": 0,
+        "expected": 1
+      },
+      {
+        "type": "pair",
+        "phase": 1,
+        "i": 2,
+        "j": 2,
+        "name": "rootOrder",
+        "actual": -1,
+        "expected": 0
+      },
+      {
+        "type": "unary",
+        "phase": 1,
+        "i": 4,
+        "name": "copyRootOrder",
+        "actual": 1,
+        "expected": 0
+      },
+      {
+        "type": "enclosure",
+        "phase": 1,
+        "i": 4,
+        "prec": 32,
+        "name": "exact-dyadic-imag",
+        "actual": 0,
+        "expected": 1
+      },
+      {
+        "type": "enclosure",
+        "phase": 1,
+        "i": 4,
+        "prec": 128,
+        "name": "exact-dyadic-imag",
+        "actual": 0,
+        "expected": 1
+      },
+      {
+        "type": "enclosure",
+        "phase": 1,
+        "i": 4,
+        "prec": 512,
+        "name": "exact-dyadic-imag",
+        "actual": 0,
+        "expected": 1
+      },
+      {
+        "type": "pair",
+        "phase": 1,
+        "i": 4,
+        "j": 4,
+        "name": "rootOrder",
+        "actual": 1,
+        "expected": 0
+      },
+      {
+        "type": "unary",
+        "phase": 1,
+        "i": 5,
+        "name": "copyRootOrder",
+        "actual": 1,
+        "expected": 0
+      },
+      {
+        "type": "pair",
+        "phase": 1,
+        "i": 5,
+        "j": 5,
+        "name": "rootOrder",
+        "actual": 1,
+        "expected": 0
+      },
+      {
+        "type": "unary",
+        "phase": 1,
+        "i": 6,
+        "name": "copyRootOrder",
+        "actual": 1,
+        "expected": 0
+      },
+      {
+        "type": "pair",
+        "phase": 1,
+        "i": 6,
+        "j": 6,
+        "name": "rootOrder",
+        "actual": 1,
+        "expected": 0
+      },
+      {
+        "type": "unary",
+        "phase": 1,
+        "i": 7,
+        "name": "copyRootOrder",
+        "actual": -1,
+        "expected": 0
+      },
+      {
+        "type": "pair",
+        "phase": 1,
+        "i": 7,
+        "j": 7,
+        "name": "rootOrder",
+        "actual": -1,
+        "expected": 0
+      },
+      {
+        "type": "unary",
+        "phase": 1,
+        "i": 8,
+        "name": "copyRootOrder",
+        "actual": -1,
+        "expected": 0
+      },
+      {
+        "type": "pair",
+        "phase": 1,
+        "i": 8,
+        "j": 8,
+        "name": "rootOrder",
+        "actual": -1,
+        "expected": 0
+      },
+      {
+        "type": "unary",
+        "phase": 1,
+        "i": 9,
+        "name": "copyRootOrder",
+        "actual": -1,
+        "expected": 0
+      },
+      {
+        "type": "enclosure",
+        "phase": 1,
+        "i": 9,
+        "prec": 32,
+        "name": "exact-dyadic-imag",
+        "actual": 0,
+        "expected": 1
+      },
+      {
+        "type": "enclosure",
+        "phase": 1,
+        "i": 9,
+        "prec": 128,
+        "name": "exact-dyadic-imag",
+        "actual": 0,
+        "expected": 1
+      },
+      {
+        "type": "enclosure",
+        "phase": 1,
+        "i": 9,
+        "prec": 512,
+        "name": "exact-dyadic-imag",
+        "actual": 0,
+        "expected": 1
+      },
+      {
+        "type": "pair",
+        "phase": 1,
+        "i": 9,
+        "j": 9,
+        "name": "rootOrder",
+        "actual": -1,
+        "expected": 0
+      },
+      {
+        "type": "unary",
+        "phase": 1,
+        "i": 11,
+        "name": "copyRootOrder",
+        "actual": 1,
+        "expected": 0
+      },
+      {
+        "type": "enclosure",
+        "phase": 1,
+        "i": 11,
+        "prec": 32,
+        "name": "exact-dyadic-imag",
+        "actual": 0,
+        "expected": 1
+      },
+      {
+        "type": "enclosure",
+        "phase": 1,
+        "i": 11,
+        "prec": 128,
+        "name": "exact-dyadic-imag",
+        "actual": 0,
+        "expected": 1
+      },
+      {
+        "type": "enclosure",
+        "phase": 1,
+        "i": 11,
+        "prec": 512,
+        "name": "exact-dyadic-imag",
+        "actual": 0,
+        "expected": 1
+      },
+      {
+        "type": "pair",
+        "phase": 1,
+        "i": 11,
+        "j": 11,
+        "name": "rootOrder",
+        "actual": 1,
+        "expected": 0
+      },
+      {
+        "type": "unary",
+        "phase": 1,
+        "i": 12,
+        "name": "copyRootOrder",
+        "actual": 1,
+        "expected": 0
+      },
+      {
+        "type": "pair",
+        "phase": 1,
+        "i": 12,
+        "j": 12,
+        "name": "rootOrder",
+        "actual": 1,
+        "expected": 0
+      },
+      {
+        "type": "unary",
+        "phase": 1,
+        "i": 13,
+        "name": "copyRootOrder",
+        "actual": 1,
+        "expected": 0
+      },
+      {
+        "type": "pair",
+        "phase": 1,
+        "i": 13,
+        "j": 13,
+        "name": "rootOrder",
+        "actual": 1,
+        "expected": 0
+      },
+      {
+        "type": "unary",
+        "phase": 1,
+        "i": 14,
+        "name": "copyRootOrder",
+        "actual": -1,
+        "expected": 0
+      },
+      {
+        "type": "enclosure",
+        "phase": 1,
+        "i": 14,
+        "prec": 32,
+        "name": "exact-dyadic-real",
+        "actual": 0,
+        "expected": 1
+      },
+      {
+        "type": "enclosure",
+        "phase": 1,
+        "i": 14,
+        "prec": 128,
+        "name": "exact-dyadic-real",
+        "actual": 0,
+        "expected": 1
+      },
+      {
+        "type": "enclosure",
+        "phase": 1,
+        "i": 14,
+        "prec": 512,
+        "name": "exact-dyadic-real",
+        "actual": 0,
+        "expected": 1
+      },
+      {
+        "type": "pair",
+        "phase": 1,
+        "i": 14,
+        "j": 14,
+        "name": "rootOrder",
+        "actual": -1,
+        "expected": 0
+      },
+      {
+        "type": "unary",
+        "phase": 1,
+        "i": 15,
+        "name": "copyRootOrder",
+        "actual": -1,
+        "expected": 0
+      },
+      {
+        "type": "enclosure",
+        "phase": 1,
+        "i": 15,
+        "prec": 32,
+        "name": "exact-dyadic-real",
+        "actual": 0,
+        "expected": 1
+      },
+      {
+        "type": "enclosure",
+        "phase": 1,
+        "i": 15,
+        "prec": 128,
+        "name": "exact-dyadic-real",
+        "actual": 0,
+        "expected": 1
+      },
+      {
+        "type": "enclosure",
+        "phase": 1,
+        "i": 15,
+        "prec": 512,
+        "name": "exact-dyadic-real",
+        "actual": 0,
+        "expected": 1
+      },
+      {
+        "type": "pair",
+        "phase": 1,
+        "i": 15,
+        "j": 15,
+        "name": "rootOrder",
+        "actual": -1,
+        "expected": 0
+      },
+      {
+        "type": "unary",
+        "phase": 1,
+        "i": 16,
+        "name": "copyRootOrder",
+        "actual": -1,
+        "expected": 0
+      },
+      {
+        "type": "pair",
+        "phase": 1,
+        "i": 16,
+        "j": 16,
+        "name": "rootOrder",
+        "actual": -1,
+        "expected": 0
+      },
+      {
+        "type": "unary",
+        "phase": 1,
+        "i": 18,
+        "name": "copyRootOrder",
+        "actual": 1,
+        "expected": 0
+      },
+      {
+        "type": "pair",
+        "phase": 1,
+        "i": 18,
+        "j": 18,
+        "name": "rootOrder",
+        "actual": 1,
+        "expected": 0
+      },
+      {
+        "type": "unary",
+        "phase": 1,
+        "i": 19,
+        "name": "copyRootOrder",
+        "actual": 1,
+        "expected": 0
+      },
+      {
+        "type": "enclosure",
+        "phase": 1,
+        "i": 19,
+        "prec": 32,
+        "name": "exact-dyadic-real",
+        "actual": 0,
+        "expected": 1
+      },
+      {
+        "type": "enclosure",
+        "phase": 1,
+        "i": 19,
+        "prec": 128,
+        "name": "exact-dyadic-real",
+        "actual": 0,
+        "expected": 1
+      },
+      {
+        "type": "enclosure",
+        "phase": 1,
+        "i": 19,
+        "prec": 512,
+        "name": "exact-dyadic-real",
+        "actual": 0,
+        "expected": 1
+      },
+      {
+        "type": "pair",
+        "phase": 1,
+        "i": 19,
+        "j": 19,
+        "name": "rootOrder",
+        "actual": 1,
+        "expected": 0
+      },
+      {
+        "type": "unary",
+        "phase": 1,
+        "i": 20,
+        "name": "copyRootOrder",
+        "actual": 1,
+        "expected": 0
+      },
+      {
+        "type": "enclosure",
+        "phase": 1,
+        "i": 20,
+        "prec": 32,
+        "name": "exact-dyadic-real",
+        "actual": 0,
+        "expected": 1
+      },
+      {
+        "type": "enclosure",
+        "phase": 1,
+        "i": 20,
+        "prec": 128,
+        "name": "exact-dyadic-real",
+        "actual": 0,
+        "expected": 1
+      },
+      {
+        "type": "enclosure",
+        "phase": 1,
+        "i": 20,
+        "prec": 512,
+        "name": "exact-dyadic-real",
+        "actual": 0,
+        "expected": 1
+      },
+      {
+        "type": "pair",
+        "phase": 1,
+        "i": 20,
+        "j": 20,
+        "name": "rootOrder",
+        "actual": 1,
+        "expected": 0
+      },
+      {
+        "type": "unary",
+        "phase": 1,
+        "i": 21,
+        "name": "copyRootOrder",
+        "actual": -1,
+        "expected": 0
+      },
+      {
+        "type": "pair",
+        "phase": 1,
+        "i": 21,
+        "j": 21,
+        "name": "rootOrder",
+        "actual": -1,
+        "expected": 0
+      },
+      {
+        "type": "unary",
+        "phase": 1,
+        "i": 22,
+        "name": "copyRootOrder",
+        "actual": -1,
+        "expected": 0
+      },
+      {
+        "type": "pair",
+        "phase": 1,
+        "i": 22,
+        "j": 22,
+        "name": "rootOrder",
+        "actual": -1,
+        "expected": 0
+      },
+      {
+        "type": "unary",
+        "phase": 1,
+        "i": 23,
+        "name": "copyRootOrder",
+        "actual": -1,
+        "expected": 0
+      },
+      {
+        "type": "pair",
+        "phase": 1,
+        "i": 23,
+        "j": 23,
+        "name": "rootOrder",
+        "actual": -1,
+        "expected": 0
+      },
+      {
+        "type": "unary",
+        "phase": 1,
+        "i": 25,
+        "name": "copyRootOrder",
+        "actual": 1,
+        "expected": 0
+      },
+      {
+        "type": "pair",
+        "phase": 1,
+        "i": 25,
+        "j": 25,
+        "name": "rootOrder",
+        "actual": 1,
+        "expected": 0
+      },
+      {
+        "type": "unary",
+        "phase": 1,
+        "i": 26,
+        "name": "copyRootOrder",
+        "actual": 1,
+        "expected": 0
+      },
+      {
+        "type": "pair",
+        "phase": 1,
+        "i": 26,
+        "j": 26,
+        "name": "rootOrder",
+        "actual": 1,
+        "expected": 0
+      },
+      {
+        "type": "unary",
+        "phase": 1,
+        "i": 27,
+        "name": "copyRootOrder",
+        "actual": 1,
+        "expected": 0
+      },
+      {
+        "type": "pair",
+        "phase": 1,
+        "i": 27,
+        "j": 27,
+        "name": "rootOrder",
+        "actual": 1,
+        "expected": 0
+      },
+      {
+        "type": "unary",
+        "phase": 1,
+        "i": 28,
+        "name": "copyRootOrder",
+        "actual": -1,
+        "expected": 0
+      },
+      {
+        "type": "enclosure",
+        "phase": 1,
+        "i": 28,
+        "prec": 32,
+        "name": "exact-dyadic-real",
+        "actual": 0,
+        "expected": 1
+      },
+      {
+        "type": "enclosure",
+        "phase": 1,
+        "i": 28,
+        "prec": 128,
+        "name": "exact-dyadic-real",
+        "actual": 0,
+        "expected": 1
+      },
+      {
+        "type": "enclosure",
+        "phase": 1,
+        "i": 28,
+        "prec": 512,
+        "name": "exact-dyadic-real",
+        "actual": 0,
+        "expected": 1
+      },
+      {
+        "type": "pair",
+        "phase": 1,
+        "i": 28,
+        "j": 28,
+        "name": "rootOrder",
+        "actual": -1,
+        "expected": 0
+      },
+      {
+        "type": "unary",
+        "phase": 1,
+        "i": 29,
+        "name": "copyRootOrder",
+        "actual": -1,
+        "expected": 0
+      },
+      {
+        "type": "enclosure",
+        "phase": 1,
+        "i": 29,
+        "prec": 32,
+        "name": "exact-dyadic-real",
+        "actual": 0,
+        "expected": 1
+      },
+      {
+        "type": "enclosure",
+        "phase": 1,
+        "i": 29,
+        "prec": 128,
+        "name": "exact-dyadic-real",
+        "actual": 0,
+        "expected": 1
+      },
+      {
+        "type": "enclosure",
+        "phase": 1,
+        "i": 29,
+        "prec": 512,
+        "name": "exact-dyadic-real",
+        "actual": 0,
+        "expected": 1
+      },
+      {
+        "type": "pair",
+        "phase": 1,
+        "i": 29,
+        "j": 29,
+        "name": "rootOrder",
+        "actual": -1,
+        "expected": 0
+      },
+      {
+        "type": "unary",
+        "phase": 1,
+        "i": 30,
+        "name": "copyRootOrder",
+        "actual": -1,
+        "expected": 0
+      },
+      {
+        "type": "pair",
+        "phase": 1,
+        "i": 30,
+        "j": 30,
+        "name": "rootOrder",
+        "actual": -1,
+        "expected": 0
+      },
+      {
+        "type": "unary",
+        "phase": 1,
+        "i": 32,
+        "name": "copyRootOrder",
+        "actual": 1,
+        "expected": 0
+      },
+      {
+        "type": "pair",
+        "phase": 1,
+        "i": 32,
+        "j": 32,
+        "name": "rootOrder",
+        "actual": 1,
+        "expected": 0
+      },
+      {
+        "type": "unary",
+        "phase": 1,
+        "i": 33,
+        "name": "copyRootOrder",
+        "actual": 1,
+        "expected": 0
+      },
+      {
+        "type": "enclosure",
+        "phase": 1,
+        "i": 33,
+        "prec": 32,
+        "name": "exact-dyadic-real",
+        "actual": 0,
+        "expected": 1
+      },
+      {
+        "type": "enclosure",
+        "phase": 1,
+        "i": 33,
+        "prec": 128,
+        "name": "exact-dyadic-real",
+        "actual": 0,
+        "expected": 1
+      },
+      {
+        "type": "enclosure",
+        "phase": 1,
+        "i": 33,
+        "prec": 512,
+        "name": "exact-dyadic-real",
+        "actual": 0,
+        "expected": 1
+      },
+      {
+        "type": "pair",
+        "phase": 1,
+        "i": 33,
+        "j": 33,
+        "name": "rootOrder",
+        "actual": 1,
+        "expected": 0
+      },
+      {
+        "type": "unary",
+        "phase": 1,
+        "i": 34,
+        "name": "copyRootOrder",
+        "actual": 1,
+        "expected": 0
+      },
+      {
+        "type": "enclosure",
+        "phase": 1,
+        "i": 34,
+        "prec": 32,
+        "name": "exact-dyadic-real",
+        "actual": 0,
+        "expected": 1
+      },
+      {
+        "type": "enclosure",
+        "phase": 1,
+        "i": 34,
+        "prec": 128,
+        "name": "exact-dyadic-real",
+        "actual": 0,
+        "expected": 1
+      },
+      {
+        "type": "enclosure",
+        "phase": 1,
+        "i": 34,
+        "prec": 512,
+        "name": "exact-dyadic-real",
+        "actual": 0,
+        "expected": 1
+      },
+      {
+        "type": "pair",
+        "phase": 1,
+        "i": 34,
+        "j": 34,
+        "name": "rootOrder",
+        "actual": 1,
+        "expected": 0
+      },
+      {
+        "type": "unary",
+        "phase": 1,
+        "i": 35,
+        "name": "copyRootOrder",
+        "actual": -1,
+        "expected": 0
+      },
+      {
+        "type": "pair",
+        "phase": 1,
+        "i": 35,
+        "j": 35,
+        "name": "rootOrder",
+        "actual": -1,
+        "expected": 0
+      },
+      {
+        "type": "unary",
+        "phase": 1,
+        "i": 36,
+        "name": "copyRootOrder",
+        "actual": -1,
+        "expected": 0
+      },
+      {
+        "type": "pair",
+        "phase": 1,
+        "i": 36,
+        "j": 36,
+        "name": "rootOrder",
+        "actual": -1,
+        "expected": 0
+      },
+      {
+        "type": "unary",
+        "phase": 1,
+        "i": 37,
+        "name": "copyRootOrder",
+        "actual": -1,
+        "expected": 0
+      },
+      {
+        "type": "enclosure",
+        "phase": 1,
+        "i": 37,
+        "prec": 32,
+        "name": "exact-dyadic-imag",
+        "actual": 0,
+        "expected": 1
+      },
+      {
+        "type": "enclosure",
+        "phase": 1,
+        "i": 37,
+        "prec": 128,
+        "name": "exact-dyadic-imag",
+        "actual": 0,
+        "expected": 1
+      },
+      {
+        "type": "enclosure",
+        "phase": 1,
+        "i": 37,
+        "prec": 512,
+        "name": "exact-dyadic-imag",
+        "actual": 0,
+        "expected": 1
+      },
+      {
+        "type": "pair",
+        "phase": 1,
+        "i": 37,
+        "j": 37,
+        "name": "rootOrder",
+        "actual": -1,
+        "expected": 0
+      },
+      {
+        "type": "unary",
+        "phase": 1,
+        "i": 39,
+        "name": "copyRootOrder",
+        "actual": 1,
+        "expected": 0
+      },
+      {
+        "type": "enclosure",
+        "phase": 1,
+        "i": 39,
+        "prec": 32,
+        "name": "exact-dyadic-imag",
+        "actual": 0,
+        "expected": 1
+      },
+      {
+        "type": "enclosure",
+        "phase": 1,
+        "i": 39,
+        "prec": 128,
+        "name": "exact-dyadic-imag",
+        "actual": 0,
+        "expected": 1
+      },
+      {
+        "type": "enclosure",
+        "phase": 1,
+        "i": 39,
+        "prec": 512,
+        "name": "exact-dyadic-imag",
+        "actual": 0,
+        "expected": 1
+      },
+      {
+        "type": "pair",
+        "phase": 1,
+        "i": 39,
+        "j": 39,
+        "name": "rootOrder",
+        "actual": 1,
+        "expected": 0
+      },
+      {
+        "type": "unary",
+        "phase": 1,
+        "i": 40,
+        "name": "copyRootOrder",
+        "actual": 1,
+        "expected": 0
+      },
+      {
+        "type": "pair",
+        "phase": 1,
+        "i": 40,
+        "j": 40,
+        "name": "rootOrder",
+        "actual": 1,
+        "expected": 0
+      },
+      {
+        "type": "unary",
+        "phase": 1,
+        "i": 41,
+        "name": "copyRootOrder",
+        "actual": 1,
+        "expected": 0
+      },
+      {
+        "type": "pair",
+        "phase": 1,
+        "i": 41,
+        "j": 41,
+        "name": "rootOrder",
+        "actual": 1,
+        "expected": 0
+      },
+      {
+        "type": "unary",
+        "phase": 1,
+        "i": 42,
+        "name": "copyRootOrder",
+        "actual": -1,
+        "expected": 0
+      },
+      {
+        "type": "pair",
+        "phase": 1,
+        "i": 42,
+        "j": 42,
+        "name": "rootOrder",
+        "actual": -1,
+        "expected": 0
+      },
+      {
+        "type": "unary",
+        "phase": 1,
+        "i": 43,
+        "name": "copyRootOrder",
+        "actual": -1,
+        "expected": 0
+      },
+      {
+        "type": "pair",
+        "phase": 1,
+        "i": 43,
+        "j": 43,
+        "name": "rootOrder",
+        "actual": -1,
+        "expected": 0
+      },
+      {
+        "type": "unary",
+        "phase": 1,
+        "i": 44,
+        "name": "copyRootOrder",
+        "actual": -1,
+        "expected": 0
+      },
+      {
+        "type": "enclosure",
+        "phase": 1,
+        "i": 44,
+        "prec": 32,
+        "name": "exact-dyadic-imag",
+        "actual": 0,
+        "expected": 1
+      },
+      {
+        "type": "enclosure",
+        "phase": 1,
+        "i": 44,
+        "prec": 128,
+        "name": "exact-dyadic-imag",
+        "actual": 0,
+        "expected": 1
+      },
+      {
+        "type": "enclosure",
+        "phase": 1,
+        "i": 44,
+        "prec": 512,
+        "name": "exact-dyadic-imag",
+        "actual": 0,
+        "expected": 1
+      },
+      {
+        "type": "pair",
+        "phase": 1,
+        "i": 44,
+        "j": 44,
+        "name": "rootOrder",
+        "actual": -1,
+        "expected": 0
+      },
+      {
+        "type": "unary",
+        "phase": 1,
+        "i": 46,
+        "name": "copyRootOrder",
+        "actual": 1,
+        "expected": 0
+      },
+      {
+        "type": "enclosure",
+        "phase": 1,
+        "i": 46,
+        "prec": 32,
+        "name": "exact-dyadic-imag",
+        "actual": 0,
+        "expected": 1
+      },
+      {
+        "type": "enclosure",
+        "phase": 1,
+        "i": 46,
+        "prec": 128,
+        "name": "exact-dyadic-imag",
+        "actual": 0,
+        "expected": 1
+      },
+      {
+        "type": "enclosure",
+        "phase": 1,
+        "i": 46,
+        "prec": 512,
+        "name": "exact-dyadic-imag",
+        "actual": 0,
+        "expected": 1
+      },
+      {
+        "type": "pair",
+        "phase": 1,
+        "i": 46,
+        "j": 46,
+        "name": "rootOrder",
+        "actual": 1,
+        "expected": 0
+      },
+      {
+        "type": "unary",
+        "phase": 1,
+        "i": 47,
+        "name": "copyRootOrder",
+        "actual": 1,
+        "expected": 0
+      },
+      {
+        "type": "pair",
+        "phase": 1,
+        "i": 47,
+        "j": 47,
+        "name": "rootOrder",
+        "actual": 1,
+        "expected": 0
+      },
+      {
+        "type": "unary",
+        "phase": 1,
+        "i": 48,
+        "name": "copyRootOrder",
+        "actual": 1,
+        "expected": 0
+      },
+      {
+        "type": "pair",
+        "phase": 1,
+        "i": 48,
+        "j": 48,
+        "name": "rootOrder",
+        "actual": 1,
+        "expected": 0
+      }
+    ],
+    "limits": "49 degree-at-most-four valid values, two cache states, all ordered pairs, three enclosure precisions. Exact BigInt endpoint tests and independent order formulas. No general root isolation/LLL, archive execution, malformed input, benchmark or universal memory claim."
+  },
+  "qualification": "Independent valid-input mathematical gate fails264 assertions across two contract issues; containment/accuracy/ordinary decisions pass stated corpus. Focused Memcheck clean. Source/evidence integrity success is not mathematical success or a full47-chain rerun.",
+  "production": "No new Hyper/donor change, candidate or matched benchmark. One18152-byte executable reuses existing libraries; no broad build, cleanup/deletion, external report, commit or push.",
+  "scope": "92 new complete qqbar header/manual/implementation/test reads. Algebraic arithmetic/relations, recursive kernels and full original ecosystem remain incomplete."
+}

@@ -1,0 +1,11 @@
+{
+  "commit": "deeed31d92f07cc6d7ffc8b93bc89061630c094d",
+  "files": {
+    "src/curve_corner_chain.rs": "6ca2f00e00d09f06de7b221ea8f4da8dc9b8c1c498f4e17fbc79a4f47fbebe04"
+  },
+  "qualified_bytes_match": true,
+  "excluded_region_unchanged": true,
+  "remaining_changes": [
+    "src/bezier_region.rs"
+  ]
+}

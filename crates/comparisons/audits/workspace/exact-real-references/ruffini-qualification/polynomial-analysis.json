@@ -1,0 +1,79 @@
+{
+  "nativeProbesPerMode": 2960,
+  "native": {
+    "arithmetic": {
+      "multiply/PASS": 640,
+      "karatsuba/PASS": 640,
+      "evaluate/PASS": 420,
+      "inversion/PASS": 480,
+      "division/PASS": 225,
+      "fastdivision/PASS": 225
+    },
+    "boundaries": {
+      "sparse-equality-zero/WRONG": 1,
+      "sparse-equality-nonzero/WRONG": 1,
+      "trailing-zero-equality/WRONG": 1,
+      "constant-derivative-zero/EXCEPTION/NoSuchElementException": 1,
+      "empty-polynomial-zero/EXCEPTION/NoSuchElementException": 1,
+      "builder-snapshot/WRONG": 1,
+      "copy-snapshot/WRONG": 1,
+      "fastdivision-monomial/WRONG": 1,
+      "field-division-nonmonic-control/PASS": 1,
+      "karatsuba-field-division-nonmonic/WRONG": 1,
+      "batch-zero/PASS": 4,
+      "batch-sparse/EXCEPTION/NullPointerException": 4,
+      "batch-zero/EXCEPTION/IllegalArgumentException": 1,
+      "batch-sparse/EXCEPTION/IllegalArgumentException": 1,
+      "tree-interpolation/PASS": 2,
+      "lagrange-control/PASS": 4,
+      "tree-interpolation/EXCEPTION/NullPointerException": 2,
+      "fft-cyclic-not-polynomial/WRONG": 1,
+      "fft-oversize-import/WRONG": 1,
+      "fft-zero-polynomial/EXCEPTION/NoSuchElementException": 1,
+      "multivariate-leading-coefficient/WRONG": 1,
+      "multivariate-snapshot/WRONG": 1,
+      "multivariate-equality-explicit-zero/PASS": 1,
+      "monomial-array-snapshot/WRONG": 1,
+      "recursive-add-alias/WRONG": 1
+    },
+    "parser": {
+      "parser/PASS": 8,
+      "parser/WRONG": 3,
+      "parser/EXCEPTION/EvaluationException": 1,
+      "parser-malformed-)/EXCEPTION/NullPointerException": 1,
+      "parser-malformed/EXCEPTION/NullPointerException": 1,
+      "parser-malformed-(1/PASS": 1,
+      "integer-polynomial-repeated-power/WRONG": 1,
+      "integer-polynomial-negative-implicit/EXCEPTION/NumberFormatException": 1
+    },
+    "permutations": {
+      "uniform/PASS": 1,
+      "uniform/WRONG": 5,
+      "permutation-array-snapshot/WRONG": 1
+    },
+    "fields": {
+      "finite-inverse/PASS": 6,
+      "finite-inverse/WRONG": 62,
+      "base-prime-inverse/PASS": 68
+    },
+    "bigfields": {
+      "big-finite-inverse/PASS": 5,
+      "normalized-extension-inverse/PASS": 66,
+      "big-finite-inverse/WRONG": 61
+    },
+    "gaussian": {
+      "gaussian-generator-square/EXCEPTION/ArithmeticException": 1
+    },
+    "quadratic": {
+      "quadratic-generator-square/EXCEPTION/ArithmeticException": 1
+    }
+  },
+  "originalJUnitPassPerMode": 10,
+  "boundedTimeoutsPerMode": 2,
+  "verifiedProgressPrefixesPerMode": 2,
+  "verifiedPrefixObservationsPerPath": 1025,
+  "hyperChecksPerMode": 1520,
+  "hyperSnapshotFiles": 201,
+  "newProductionChanges": 0,
+  "status": "qualified partial polynomial checkpoint"
+}

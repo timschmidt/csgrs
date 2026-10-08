@@ -1,0 +1,15 @@
+{
+  "tag": "run-root-exp-proof-numeric-cpu",
+  "started": "2026-09-08T12:57:47.970Z",
+  "finished": "2026-09-08T12:58:21.902Z",
+  "elapsedSeconds": 33.929545904,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison",
+  "command": "node",
+  "args": [
+    "audits/continuation/calcium/run-root-exp-proof-bench.mjs",
+    "numeric",
+    "cpu"
+  ],
+  "code": 0,
+  "signal": null
+}

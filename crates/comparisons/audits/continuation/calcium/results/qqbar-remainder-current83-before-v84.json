@@ -1,0 +1,13 @@
+{
+  "tag": "qqbar-remainder-current83-before-v84",
+  "started": "2026-09-12T04:07:42.688Z",
+  "finished": "2026-09-12T04:07:46.390Z",
+  "elapsedSeconds": 3.699419947,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "node",
+  "args": [
+    "verify-symbolic-boundary-v83.mjs"
+  ],
+  "code": 0,
+  "signal": null
+}

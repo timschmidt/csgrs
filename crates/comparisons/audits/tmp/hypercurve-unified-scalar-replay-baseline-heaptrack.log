@@ -1,0 +1,18 @@
+heaptrack output will be written to "/tmp/hypercurve-unified-scalar-replay-baseline.heap.zst"
+starting application, this might take some time...
+NOTE: heaptrack detected DEBUGINFOD_URLS but will disable it to prevent 
+unintended network delays during recording
+If you really want to use DEBUGINFOD, export HEAPTRACK_ENABLE_DEBUGINFOD=1
+
+running 1 test
+test bezier_offset::conversion_tests::recursive_scalar_native_replay_preserves_selected_source_authority ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 894 filtered out; finished in 0.04s
+
+heaptrack stats:
+	allocations:          	2101
+	leaked allocations:   	129
+	temporary allocations:	142
+Heaptrack finished! Now run the following to investigate the data:
+
+  heaptrack --analyze "/tmp/hypercurve-unified-scalar-replay-baseline.heap.zst"

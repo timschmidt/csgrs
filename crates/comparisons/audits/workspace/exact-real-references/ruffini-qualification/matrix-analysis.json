@@ -1,0 +1,50 @@
+{
+  "native": {
+    "arithmetic": {
+      "mul/PASS": 1296,
+      "strassen/PASS": 186,
+      "strassen/EXCEPTION/NullPointerException": 78,
+      "gram/PASS": 128,
+      "det/PASS": 120,
+      "det-empty-lazy/WRONG": 1
+    },
+    "boundaries": {
+      "matrix-equals/PASS": 8,
+      "collapse-columns/PASS": 8,
+      "matrix-equals/EXCEPTION/IndexOutOfBoundsException": 12,
+      "collapse-columns/WRONG": 12,
+      "matrix-equals/EXCEPTION/ArrayIndexOutOfBoundsException": 12,
+      "collapse-columns/EXCEPTION/IndexOutOfBoundsException": 6,
+      "collapse-columns/EXCEPTION/ArrayIndexOutOfBoundsException": 6,
+      "complex-identity-inverse/EXCEPTION/IllegalArgumentException": 1,
+      "real-identity-inverse/PASS": 1,
+      "sparse-builder-snapshot/WRONG": 1,
+      "mutable-copy-is-independent/PASS": 1,
+      "vector-unequal-length/WRONG": 1,
+      "vector-shorter-right/EXCEPTION/IndexOutOfBoundsException": 1,
+      "complex-projection/WRONG": 1,
+      "qr-tall/EXCEPTION/ArrayIndexOutOfBoundsException": 1,
+      "ksubsets-list/WRONG": 1,
+      "ksubsets-array-control/PASS": 1,
+      "multidimensional-width-constructor/WRONG": 1,
+      "multidimensional-shape-control/PASS": 1,
+      "congruence/PASS": 36,
+      "congruence/WRONG": 408,
+      "modsqrt/PASS": 58,
+      "modsqrt/EXCEPTION/IllegalArgumentException": 17,
+      "limb-carry/WRONG": 1,
+      "limb-multiply/WRONG": 1,
+      "int-min-norm/WRONG": 1,
+      "int-division-overflow/WRONG": 1
+    },
+    "transforms": {
+      "dft/PASS": 69
+    }
+  },
+  "nativeProbesPerMode": 2477,
+  "originalIntegerJUnitPassPerMode": 2,
+  "hyperChecksPerMode": 420,
+  "hyperSnapshotFiles": 201,
+  "newProductionChanges": 0,
+  "status": "qualified partial matrix checkpoint"
+}

@@ -1,0 +1,15 @@
+{
+  "tag": "run-root-exp-sign-numeric-alloc",
+  "started": "2026-09-08T13:40:43.177Z",
+  "finished": "2026-09-08T13:40:47.886Z",
+  "elapsedSeconds": 4.70713384,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison",
+  "command": "node",
+  "args": [
+    "audits/continuation/calcium/run-root-exp-sign-bench.mjs",
+    "numeric",
+    "alloc"
+  ],
+  "code": 0,
+  "signal": null
+}

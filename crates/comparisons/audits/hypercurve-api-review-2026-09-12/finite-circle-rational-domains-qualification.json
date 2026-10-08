@@ -1,0 +1,134 @@
+{
+  "status": "committed and qualified against the documented baseline",
+  "goal_status": "active",
+  "previous_commit": "5c47fb199ddcd687ef030811221acdf76db8a624",
+  "commit": "df5e6a9a7376edb8106bde381dbbbdcdbe01d9ed",
+  "targets": 49,
+  "reused_identical_executables": 0,
+  "passed": 2259,
+  "passed_by_repo": {
+    "hypercurve": 2027,
+    "hyperbrep": 232
+  },
+  "known_failed": [
+    "approximate_512_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions",
+    "non_ph_bezier_pair_projective_fillet_retains_algebraic_extensions",
+    "nonconvex_algebraic_chord_expansion_is_exact_and_local_collapse_is_explicit",
+    "strict_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions",
+    "unified_mixed_line_arc_erosion_splits_after_a_curved_neck_collapse"
+  ],
+  "new_failures": [],
+  "ignored": 9,
+  "expensive_previously_unqualified_exclusions": 8,
+  "timeouts": 0,
+  "builds_and_checks": {
+    "-check": 0,
+    "-test-build": 0,
+    "-hyperbrep-check": 0,
+    "-hyperbrep-test-build": 0
+  },
+  "formatting_and_whitespace": "passed on final frozen qualification sources",
+  "formatted_files": {
+    "hypercurve": [
+      "src/arc_bezier.rs",
+      "src/bezier_flatten.rs",
+      "src/bezier_moment.rs",
+      "src/bezier_offset.rs",
+      "src/bezier_region.rs",
+      "src/curve.rs",
+      "src/curve_region_boolean.rs",
+      "src/curve_support_intersection.rs",
+      "src/rational_bezier_general.rs"
+    ],
+    "hyperbrep": []
+  },
+  "additional_caller_checks": [
+    {
+      "target": "fuzz",
+      "command": [
+        "cargo",
+        "check",
+        "--manifest-path",
+        "fuzz/Cargo.toml",
+        "--all-targets",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 6.774289449997013,
+      "log": "finite-circle-rational-domains-fuzz-check.log"
+    },
+    {
+      "target": "ui",
+      "command": [
+        "cargo",
+        "check",
+        "--manifest-path",
+        "examples/hypercurve_ui/Cargo.toml",
+        "--all-targets",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 6.87451884499751,
+      "log": "finite-circle-rational-domains-ui-check.log"
+    },
+    {
+      "target": "hyperbrep-fuzz",
+      "command": [
+        "cargo",
+        "check",
+        "--manifest-path",
+        "fuzz/Cargo.toml",
+        "--all-targets",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 7.02475968102226,
+      "log": "finite-circle-rational-domains-hyperbrep-fuzz-check.log"
+    }
+  ],
+  "source_verification": "finite-circle-rational-domains-source-verification.json",
+  "focused_regression_checks": "finite-circle-rational-domains-final-focused.json",
+  "discovery_probe": "finite-circle-nonlinear-domain-baseline.json",
+  "failed_qualification_attempt": "finite-circle-rational-domains-attempt7-failure/finite-circle-rational-domains-full-results.json",
+  "repair_focused_checks": "finite-circle-domain-attempt11-focused.json",
+  "additional_preexisting_region_failure": {
+    "control": "finite-circle-rational-domains-control-boolean.json",
+    "initial_discovery": "finite-circle-nonlinear-domain-attempt6-public-matrix.json",
+    "current_discovery": "finite-circle-rational-domains-region-recheck.json",
+    "description": "The same unit-chart region intersection returns Blocked(Boolean, Line, Unsupported) on parent 5c47fb1, attempt 6, and the final frozen sources; this precedes the explicit Boolean call and is separate from the five suite failures."
+  },
+  "normal_library_sha256": "8e690ff897af0a8cac5d88eaa0e04b6f5572b031f288de19099938069dc4ae62",
+  "independent_probes_and_matrices": [
+    "finite-circle-rational-domains-public-replay.json",
+    "finite-circle-rational-domains-affine-parallel-replay.json",
+    "finite-circle-rational-domains-exterior-completed.json",
+    "finite-circle-rational-domains-tangent-matrix.json",
+    "finite-circle-rational-domains-finite-circle-probe.json",
+    "finite-circle-rational-domains-family-matrix.json",
+    "finite-circle-rational-domains-completed.json",
+    "finite-circle-rational-domains-unit-replay.json",
+    "finite-circle-rational-domains-retained-chord-matrix.json",
+    "finite-circle-rational-domains-finite-matrix.json",
+    "finite-circle-rational-domains-cubic-replay.json",
+    "finite-circle-rational-domains-baseline-recheck.json",
+    "finite-circle-rational-domains-replay-matrix-run.json",
+    "finite-circle-rational-domains-analytic-probe.json",
+    "finite-circle-rational-domains-endpoint-probe.json",
+    "finite-circle-rational-domains-completed-probe.json",
+    "finite-circle-rational-domains-probe-final.json",
+    "finite-circle-rational-domains-circle-matrix.json",
+    "finite-circle-rational-domains-region-carrier-matrix.json",
+    "finite-circle-rational-domains-general-trim-matrix.json",
+    "finite-circle-rational-domains-constant-image-trim-matrix.json",
+    "finite-circle-rational-domains-curves-run.json"
+  ],
+  "regression_baseline": "circle-closed-clipping-qualification.json",
+  "affected_regression_results": "finite-circle-rational-domains-full-hypercurve-lib.json",
+  "evidence_audit": "finite-circle-rational-domains-evidence-audit.md",
+  "performance_claim": null,
+  "remaining": "Cold finite circle inverse replay between independent mapped-point/tangent authorities; circle/parallel, parallel/rational and parallel/parallel finite discovery; the separately reproduced region intersection failure; normalized public region construction; five promotion failures; eight unqualified expensive tests; broader algebraic consolidation, computational measurements, and original architecture goal.",
+  "post_commit_verification": "finite-circle-rational-domains-post-commit.json"
+}

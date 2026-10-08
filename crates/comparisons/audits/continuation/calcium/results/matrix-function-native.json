@@ -1,0 +1,11 @@
+{
+  "tag": "matrix-function-native",
+  "started": "2026-09-09T03:31:31.738Z",
+  "finished": "2026-09-09T03:31:32.299Z",
+  "elapsedSeconds": 0.558682863,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison",
+  "command": "/tmp/calcium-spectral.nqRkRT/flint-matrix-function",
+  "args": [],
+  "code": 1,
+  "signal": null
+}

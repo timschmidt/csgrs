@@ -1,0 +1,1631 @@
+{
+  "schema": 1,
+  "checkpoint": 59,
+  "recorded": "2026-09-11T00:02:00.314Z",
+  "previousManifest": "point-cold-manifest.json",
+  "files": {
+    "point-wasm-findings.md": "88a558e379445230c10f0134c0ec1b0b45e2a6148c4533d79808b0f13b74f59a",
+    "point-wasm-evidence.mjs": "9d6d1803f199376e0d5d51bc543cd71b42da9783079551a15d9d74b181248ed5",
+    "record-point-wasm.mjs": "bc2bc5a8ae98c504049063ce7786c40d55ae982115f3c2a5c7c645144d493d52",
+    "verify-point-wasm.mjs": "1d10b00461ec9d76b6f5e44c5b1ac5895871a14fb89f5153bbc834094d0f96c9",
+    "prepare-point-wasm.mjs": "7746f97b81757927d813611a75f31eceda25d354a334c3c1bbc691e232b726de",
+    "point-wasm-work.rs": "4b64c97b339c7e00dffb918df53daff71ffe5383f9f8e2dd794ed07874b4bc02",
+    "point-wasm-platform.rs": "3c87c984248513a8da7960377a794665af3f6bd93480b9392bde3271ac10d2f3",
+    "build-point-wasm.mjs": "14f532ebedb98089aeadccc329888efab47c960da90bfd8fb2d6cdb994b3c077",
+    "point-wasm-origin.json": "1e77eb0e03ae193af21deaaa1c9910e2c70dc80cb9ff8775229919f1114de0e5",
+    "point-wasm-binaries.json": "91ebf24a36d7e7c12f5d5bc4d47e57700a24c7639004b9ef4322f5ca57d1eced",
+    "point-wasm-protocol.mjs": "ac1de0f9e155e78b0270507d3dfd055153084f7dc3a929dbcaf5170a4763af9b",
+    "qualify-point-wasm.mjs": "2cabe839753c18f38d24a45861a1f2ab8a86c7bfc91033d0dffcf22a9a7a34b5",
+    "check-point-wasm-qualification.mjs": "6e0269a9b705112f70756ccc1995a66f7f8a3ca8d8c2f5851051fae6fb91773a",
+    "check-point-wasm-costs.mjs": "0e73d745e6d93e2a4f7bdc566ad62cff6ea3f30a8b2ad9f284340cc72065e16c",
+    "run-point-wasm-costs.mjs": "b16b74795a015a4e26292cf8966300bc20a5930c377219c5cb2ab5ffa762e449",
+    "run-point-wasm-campaign.mjs": "2a6731aee8cd9d0fe3440936d8689a1e10bb48bb8871ba2939b21c6c769dec76",
+    "point-wasm-qualification.json": "16a7f9687b68c1c6ef7b5db0432b2406be116ed51a7188243e2e82e6f515787c",
+    "point-wasm-cost-summary.json": "6f528311ed24c7e19858379e00a3c8d2879866b591caf3d49d79b2058085d322",
+    "point-cold-manifest.json": "8412cb92c6533f8236244f16913f2e9341a2c676fe6be557808b1fc91d79d870",
+    "point-demand-source-binding.json": "d5472beb99abd3f0526d978f4e27fb0446a1ac425dfd52fe3265bdccca4ba80f",
+    "point-demand-sources.mjs": "6c10d4c9a336971b3018373508999cd1fe37635d8a336d8b337f2c1997f37700",
+    "point-cold-protocol.mjs": "7bbf86ba4a21b368ae043260e58e1251819feb601fb43fff14a91f79290e77d7",
+    "point-history-base.rs": "5db127b416d4cb39a2faed2426f883a3d2b3cb5d8e74ca014f3de28f4e4df9a6",
+    "point-history-work.rs": "194791cab390fd063aa57388e4b36bdc24e3d1cf0fc64e0e49c640f581ba6527",
+    "point-history-protocol.mjs": "ed7fd8958b7af7d506375b760f9eb725cb3d2252d708225031f8f91dd5cc82c6",
+    "point-demand-cost-protocol.mjs": "a624da7e771af6d0b61dc13a8ff83583f0ade9842e1f8796ed9bf1632565bfa9",
+    "point-extended-field.mjs": "795154da44b1502c04db4aaa880adb470eec16a4970e2d928410d44ffa6b6424",
+    "check-point-extended.mjs": "925384f7417d82a808907b34b7866bee5239559d42c08fb86daf284255cc09b1",
+    "point-qualified-capture.mjs": "8b574f18a85c470ef47f9eafc780c462a93e811ebe15695f0950cfef17ada66e",
+    "capture.mjs": "aaf6df6bbd73025a8541617ce83731ae5ea3fd2272bd98c15e3c4c12b713ce23",
+    "point-image-cost-environment.mjs": "54672f2e3be42be42f5b798d621a5180af769754ee93afb5e473b8897014e20b",
+    "point-wasm-baseline/Cargo.toml": "2455dff776b6df7b87152634009d1c4f38388b07eabb2a5bcb65e69fcf85d6a9",
+    "point-wasm-baseline/Cargo.lock": "2ac604735cdadb238606f4355a59e7a73e85eaa81847240960e1a602ed3d0644",
+    "point-wasm-eager/Cargo.toml": "647821da00268d14df30ea482b022233d52c3ea11683f87f3470b5c4879f7356",
+    "point-wasm-eager/Cargo.lock": "f532b52c293d780b5c0870ba38aa95987be03a9cc1fe206805603f3c99f383ac",
+    "point-wasm-demand/Cargo.toml": "660913a53de105efce43dc5d49b7fa97a45bbb0a9ff0fcaa2dbf84f9cae0c6e1",
+    "point-wasm-demand/Cargo.lock": "688006b068a5070e5443290031714996a483fd35e85e6807275f445342bcb451",
+    "results/point-history-qualification.jsonl": "445343515f82d1d64a6281834d24b10f4c75f8f627d00c2a79d701c58a13574f",
+    "results/point-demand-history.jsonl": "260d264890c96fdea2e475d94fbc23913a5394939fb22850794adbcde4c842d0",
+    "results/point-wasm-qualification.jsonl": "d8eca336ef686fbc910b68bfb03340478856071247429b6612b98f8812d86ea9",
+    "results/point-wasm-qualification-failures.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/point-wasm-cost.jsonl": "32b104fe0b30518a2ff1a50658b40149093fb5a6b6291776a4ae7c1c9f305ddb",
+    "results/point-wasm-cost-pilots.jsonl": "d0d1c6b7067e15f6044270fb436cdd30d8dd1a2a585be2122546b10bed23808e",
+    "results/point-wasm-cost-failures.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/point-cold-verify.json": "7a26da485900705e795426ab41f330f2c985132f5fb4adca7c9528e56c26bd84",
+    "results/point-cold-verify.stdout": "4fd72320fe56f98c94541f36367a1a7e51a66c72dfd9cfef50512a89705881d6",
+    "results/point-cold-verify.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/point-wasm-build.json": "d9b85cc93f40980fc10ebef7f120d3ddb842981ed2fce1817ac1bad2bdba5eca",
+    "results/point-wasm-build.stdout": "20e8b603c46f15307f8af30069bf71c54d2e27911d6caad51ee22bde3babc6c1",
+    "results/point-wasm-build.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/point-wasm-baseline-lock.json": "da4563f008b4247d2e9cdcf248ede3eee18d2c100587e04917868fd3080d4f56",
+    "results/point-wasm-baseline-lock.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/point-wasm-baseline-lock.stderr": "e6be2fc21f61ee2ca9174470fbbef09ec82d1768d4642489a358e3e3a667848a",
+    "results/point-wasm-baseline-build.json": "2d788f011bb3bfbbaa744350a4f165be7412e5bf7e07c9ed5934f0d4b20cacc6",
+    "results/point-wasm-baseline-build.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/point-wasm-baseline-build.stderr": "d6b950ee3119960ad4676079378120edc8643e163bbec47644d432b8e5b0ee60",
+    "results/point-wasm-baseline-clippy.json": "d5242d7ce636534a890a037353033899411650139a9f929dbb25f953dfcc0a62",
+    "results/point-wasm-baseline-clippy.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/point-wasm-baseline-clippy.stderr": "ad66c724ff25280f32e0d2fb3889fc8f32dc87418589c9ea8ccbc9cf5cddc846",
+    "results/point-wasm-eager-lock.json": "d062d139bda6f24bfb7ebe62198b0c48805f395f32309cd7224edb156912f319",
+    "results/point-wasm-eager-lock.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/point-wasm-eager-lock.stderr": "e6be2fc21f61ee2ca9174470fbbef09ec82d1768d4642489a358e3e3a667848a",
+    "results/point-wasm-eager-build.json": "8a7470ad139a6c2c9e0250e12ff709329db83ee2f96678e46fb608f20a05bb67",
+    "results/point-wasm-eager-build.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/point-wasm-eager-build.stderr": "797ca70f5a73285c0bb9bd5334096f07ce49dbde40abcc6e6a5f47c0e542d7ad",
+    "results/point-wasm-eager-clippy.json": "4443a9d5d1c4a9041be8582a108bbea6f2c05f06334ce41d17adeed81dcd0937",
+    "results/point-wasm-eager-clippy.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/point-wasm-eager-clippy.stderr": "52bdd600dd9d782d83ad8b8bad1198ba8342abe89f1f311c06499f5be92d01e9",
+    "results/point-wasm-demand-lock.json": "177a464ff643a8efd4e12439c429193042e8cda2107f787d371e9f40d4dbbda0",
+    "results/point-wasm-demand-lock.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/point-wasm-demand-lock.stderr": "e6be2fc21f61ee2ca9174470fbbef09ec82d1768d4642489a358e3e3a667848a",
+    "results/point-wasm-demand-build.json": "92485aa0cbc47c8f6c6ee62ef5d9ad2cd072a36e321520c77934133583f287a9",
+    "results/point-wasm-demand-build.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/point-wasm-demand-build.stderr": "61c4f3e2b02fb1eaaeeace65f29de3cd165cc90cfe26f684d66fc5aad1bfbf9a",
+    "results/point-wasm-demand-clippy.json": "55319c895b25cebefeeb10cd30a0a1a465252065536d2c6a725cde00b85089b4",
+    "results/point-wasm-demand-clippy.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/point-wasm-demand-clippy.stderr": "77780ae23f166c3f4adab8caa37447d0f67a00dcf83294b65fd7275dc41e2c0c",
+    "results/point-wasm-qualify.json": "1c9af236fd780d2a6b8c7c6e76f5b105030db52b80779157b1ec68ed2a45e2aa",
+    "results/point-wasm-qualify.stdout": "2dd9a1841991af8cab0eea473e6ac84446d493810237e29d33c61b9ec7698c7b",
+    "results/point-wasm-qualify.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/point-wasm-qualification-check.json": "4fea54c847e53923c1bc255faa9b7612b08408db90a0c4ee6e870fa73cd2d526",
+    "results/point-wasm-qualification-check.stdout": "dcc329e994755672eee5786d3d06523e352de9ed86f74907704bf6b0e8bd59ba",
+    "results/point-wasm-qualification-check.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/point-wasm-campaign.json": "ddef27f5bb2827dd83ef66927b48298c7183754ebf83134f4d7721908b9d1dc7",
+    "results/point-wasm-campaign.stdout": "2cec5256fa3b0097ea2fa41f0841557f7be757f70e1ad330a18b15d7795bfdb4",
+    "results/point-wasm-campaign.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/point-wasm-cost.json": "29be5b22a12943be98c7971124b8c54e270e266159c105d4f6577a7371428031",
+    "results/point-wasm-cost.stdout": "d8505705b3003363e1e612106c70910b8bfb87d0cf40a379bf57ca7642154183",
+    "results/point-wasm-cost.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/point-wasm-environment.json": "12d033de696677ea02e9ed06eeb4cf600da993699856a201473088e497ec2713",
+    "results/point-wasm-environment.stdout": "b52ad6099978dc0db294e2df7e94cd30a2a8e026949779f4cd6785f626d0d4ec",
+    "results/point-wasm-environment.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/point-wasm-environment-after.json": "0983c0463fac5b84cf1afe20d0a4d22280bfb0a696141d9fa98858f43f07e8db",
+    "results/point-wasm-environment-after.stdout": "551d8e1a806ac2c7a824ee4ad2b97c83972bfaf90b54177d6b04f2f12165a66c",
+    "results/point-wasm-environment-after.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/point-wasm-capacity.json": "fdc4966f2400e7fae862d2686d1723659aff91181b970ed522747dafb5a1fdad",
+    "results/point-wasm-capacity.stdout": "e8f3a1758689ee7f293d65cd80ad1cb89ee0769b4de915797bd31566891b797a",
+    "results/point-wasm-capacity.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/point-wasm-cost-check.json": "17e9d4a7234c861f5b489a815564eb2448d9bf26ea7ddfe2f7064fdf146d88ef",
+    "results/point-wasm-cost-check.stdout": "6a3af93ceacd1558a6f45c3f4a6dd05ad931abca05ad82a57496e44e7c433e5d",
+    "results/point-wasm-cost-check.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/point-wasm-format.json": "8157362efee14e148ba1b15fda55308d9ec28899f2fc60be08dadc14c2465687",
+    "results/point-wasm-format.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/point-wasm-format.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "gates": [
+    "point-wasm-build",
+    "point-wasm-baseline-lock",
+    "point-wasm-baseline-build",
+    "point-wasm-baseline-clippy",
+    "point-wasm-eager-lock",
+    "point-wasm-eager-build",
+    "point-wasm-eager-clippy",
+    "point-wasm-demand-lock",
+    "point-wasm-demand-build",
+    "point-wasm-demand-clippy",
+    "point-wasm-qualify",
+    "point-wasm-qualification-check",
+    "point-wasm-campaign",
+    "point-wasm-cost",
+    "point-wasm-environment",
+    "point-wasm-environment-after",
+    "point-wasm-capacity",
+    "point-wasm-cost-check",
+    "point-wasm-format"
+  ],
+  "sourceBindingSha256": "d5472beb99abd3f0526d978f4e27fb0446a1ac425dfd52fe3265bdccca4ba80f",
+  "sourceFiles": 175,
+  "artifacts": [
+    {
+      "variant": "baseline",
+      "path": "/tmp/calcium-point-wasm.jPk2WY/baseline.wasm",
+      "bytes": 1614156,
+      "sha256": "f9dc6f45bdb901e9386de7d8ad509a373bf03ce0babaa1805cb306d059d0e877"
+    },
+    {
+      "variant": "eager",
+      "path": "/tmp/calcium-point-wasm.jPk2WY/eager.wasm",
+      "bytes": 1614371,
+      "sha256": "05ba21965eef756746b54fa05ed38802c7663904cad027a2ed70cd9699c41d1c"
+    },
+    {
+      "variant": "demand",
+      "path": "/tmp/calcium-point-wasm.jPk2WY/demand.wasm",
+      "bytes": 1614858,
+      "sha256": "122381ac7e6cf469605119a8d89f331ab9c3d7dc2faafa0c002efcb2148067c2"
+    }
+  ],
+  "dedicatedBytes": 4843385,
+  "rawBytes": 222399157,
+  "qualification": {
+    "status": "pass",
+    "started": "2026-09-10T23:37:40.576Z",
+    "finished": "2026-09-10T23:38:14.858Z",
+    "config": {
+      "cpu": 6,
+      "cases": 48,
+      "policies": 2,
+      "histories": 4,
+      "lifecycles": [
+        "retained",
+        "fresh"
+      ],
+      "preconditioningCalls": 9,
+      "cpuPilotIterations": 16,
+      "targetBatchNs": 4000000,
+      "minIterations": 4,
+      "maxIterations": 4096,
+      "cpuBlocks": 12,
+      "allocationBlocks": 3,
+      "allocationIterations": 8,
+      "qualificationIterations": {
+        "cpu": 1,
+        "allocation": 8
+      },
+      "variants": [
+        "baseline",
+        "eager",
+        "demand"
+      ],
+      "cpuOrder": "six permutations each followed by its reverse, repeated twice",
+      "allocationOrder": "three rotations",
+      "platform": "wasm32-unknown-unknown",
+      "flags": [
+        "--expose-gc",
+        "--no-liftoff",
+        "--no-wasm-tier-up",
+        "--no-wasm-lazy-compilation"
+      ],
+      "qualificationBatchSizes": [
+        1,
+        8
+      ],
+      "gcEvery": 8,
+      "clock": "process.hrtime.bigint around one history_batch call",
+      "instance": "fresh per observation"
+    },
+    "groups": 768,
+    "observations": 4608,
+    "checks": {
+      "left-exact-rational-carrier": 4608,
+      "left-metadata": 4608,
+      "left-ordered": 4608,
+      "left-selected-value-contained": 4608,
+      "left-full-polynomial": 4608,
+      "left-polynomial-vanishing": 4608,
+      "left-exact-witness": 1920,
+      "left-witness-vanishing": 1920,
+      "left-distinct-root-count": 4608,
+      "right-exact-rational-carrier": 4608,
+      "right-metadata": 4608,
+      "right-ordered": 4608,
+      "right-selected-value-contained": 4608,
+      "right-full-polynomial": 4608,
+      "right-polynomial-vanishing": 4608,
+      "right-exact-witness": 3456,
+      "right-witness-vanishing": 3456,
+      "right-distinct-root-count": 4608,
+      "left-authored-interval": 4608,
+      "right-authored-interval": 4608,
+      "operation": 4608,
+      "no-result-on-failure": 1328,
+      "known-failure-status": 1328,
+      "successful-report": 3280,
+      "nonzero-divisor": 3280,
+      "output-exact-rational-carrier": 3280,
+      "output-metadata": 3280,
+      "output-ordered": 3280,
+      "output-selected-value-contained": 3280,
+      "output-full-polynomial": 3280,
+      "output-polynomial-vanishing": 3280,
+      "output-exact-witness": 2512,
+      "output-witness-vanishing": 2512,
+      "output-distinct-root-count": 3280,
+      "refined-image-contained": 3280,
+      "denominator-guard": 288
+    },
+    "totalChecks": 129856,
+    "statuses": {
+      "InvalidTransformedEvidence": 512,
+      "Transformed": 3280,
+      "DenominatorMayContainZero": 288,
+      "Undecided": 72,
+      "NonIsolatingImageInterval": 72,
+      "InvalidEvidence": 384
+    },
+    "binariesSha256": "91ebf24a36d7e7c12f5d5bc4d47e57700a24c7639004b9ef4322f5ca57d1eced",
+    "nativeReferenceSha256": "445343515f82d1d64a6281834d24b10f4c75f8f627d00c2a79d701c58a13574f",
+    "demandReferenceSha256": "260d264890c96fdea2e475d94fbc23913a5394939fb22850794adbcde4c842d0",
+    "rowsSha256": "d8eca336ef686fbc910b68bfb03340478856071247429b6612b98f8812d86ea9",
+    "failuresSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "runtime": {
+      "node": "v22.22.2",
+      "v8": "12.4.254.21-node.39",
+      "execArgv": [
+        "--expose-gc",
+        "--no-liftoff",
+        "--no-wasm-tier-up",
+        "--no-wasm-lazy-compilation"
+      ],
+      "affinity": "6",
+      "modules": [
+        {
+          "variant": "baseline",
+          "path": "/tmp/calcium-point-wasm.jPk2WY/baseline.wasm",
+          "bytes": 1614156,
+          "sha256": "f9dc6f45bdb901e9386de7d8ad509a373bf03ce0babaa1805cb306d059d0e877",
+          "imports": [],
+          "exports": [
+            {
+              "name": "memory",
+              "kind": "memory"
+            },
+            {
+              "name": "history_batch",
+              "kind": "function"
+            },
+            {
+              "name": "history_finish",
+              "kind": "function"
+            },
+            {
+              "name": "history_output_ptr",
+              "kind": "function"
+            },
+            {
+              "name": "history_prepare",
+              "kind": "function"
+            }
+          ]
+        },
+        {
+          "variant": "eager",
+          "path": "/tmp/calcium-point-wasm.jPk2WY/eager.wasm",
+          "bytes": 1614371,
+          "sha256": "05ba21965eef756746b54fa05ed38802c7663904cad027a2ed70cd9699c41d1c",
+          "imports": [],
+          "exports": [
+            {
+              "name": "memory",
+              "kind": "memory"
+            },
+            {
+              "name": "history_batch",
+              "kind": "function"
+            },
+            {
+              "name": "history_finish",
+              "kind": "function"
+            },
+            {
+              "name": "history_output_ptr",
+              "kind": "function"
+            },
+            {
+              "name": "history_prepare",
+              "kind": "function"
+            }
+          ]
+        },
+        {
+          "variant": "demand",
+          "path": "/tmp/calcium-point-wasm.jPk2WY/demand.wasm",
+          "bytes": 1614858,
+          "sha256": "122381ac7e6cf469605119a8d89f331ab9c3d7dc2faafa0c002efcb2148067c2",
+          "imports": [],
+          "exports": [
+            {
+              "name": "memory",
+              "kind": "memory"
+            },
+            {
+              "name": "history_batch",
+              "kind": "function"
+            },
+            {
+              "name": "history_finish",
+              "kind": "function"
+            },
+            {
+              "name": "history_output_ptr",
+              "kind": "function"
+            },
+            {
+              "name": "history_prepare",
+              "kind": "function"
+            }
+          ]
+        }
+      ],
+      "compiled": "2026-09-10T23:37:43.292Z",
+      "observations": 4608,
+      "gcs": 576,
+      "gcEvery": 8,
+      "limits": "Optimizing V8 compiler selected before module compilation; import-free fresh instance per observation. Host boundary and uncontended state bookkeeping are timed. No module compile, instance/setup/JSON/verification/host GC is timed. Linear memory samples are not per-query allocation/peak/RSS metrics."
+    },
+    "limits": "Full final records independently checked at one/eight iterations after nine preconditioning calls, and compared with qualified native records. Intermediate batch iterations use a polynomial-length checksum. These qualification elapsed fields are not the balanced cost campaign."
+  },
+  "costs": {
+    "status": "pass",
+    "qualificationObservations": 4608,
+    "independentQualificationChecks": 129856,
+    "groups": 768,
+    "cpuObservations": 55296,
+    "cpuPilots": 2304,
+    "comparisons": {
+      "baseline": {
+        "sameResult": {
+          "groups": 512,
+          "pairedMedianRatioRange": [
+            0.8010263473478969,
+            1.3359905104505496
+          ],
+          "ciWhollyBelowOne": 165,
+          "ciWhollyAboveOne": 34,
+          "fastest": [
+            {
+              "case": 12,
+              "policy": 0,
+              "history": 2,
+              "lifecycle": "retained",
+              "statuses": {
+                "baseline": "Transformed",
+                "eager": "Transformed",
+                "demand": "Transformed"
+              },
+              "ratio": 0.8010263473478969,
+              "ci": [
+                0.5337415923138549,
+                0.9816862620437894
+              ],
+              "ns": {
+                "baseline": 24217.6935483871,
+                "eager": 24204.629032258064,
+                "demand": 23813.419354838712
+              }
+            },
+            {
+              "case": 24,
+              "policy": 1,
+              "history": 2,
+              "lifecycle": "retained",
+              "statuses": {
+                "baseline": "Transformed",
+                "eager": "Transformed",
+                "demand": "Transformed"
+              },
+              "ratio": 0.8284657902673405,
+              "ci": [
+                0.6765811344540704,
+                1.006769546991832
+              ],
+              "ns": {
+                "baseline": 3844.313209494324,
+                "eager": 4181.230650154799,
+                "demand": 3790.313209494324
+              }
+            },
+            {
+              "case": 17,
+              "policy": 0,
+              "history": 3,
+              "lifecycle": "fresh",
+              "statuses": {
+                "baseline": "Transformed",
+                "eager": "Transformed",
+                "demand": "Transformed"
+              },
+              "ratio": 0.8345293309251839,
+              "ci": [
+                0.6027140534524322,
+                0.9849457634970155
+              ],
+              "ns": {
+                "baseline": 101923.27631578947,
+                "eager": 100780.72368421053,
+                "demand": 100277.73684210527
+              }
+            },
+            {
+              "case": 21,
+              "policy": 0,
+              "history": 2,
+              "lifecycle": "retained",
+              "statuses": {
+                "baseline": "Transformed",
+                "eager": "Transformed",
+                "demand": "Transformed"
+              },
+              "ratio": 0.8363976748123026,
+              "ci": [
+                0.744818222519324,
+                0.9867817235386338
+              ],
+              "ns": {
+                "baseline": 35843.925742574254,
+                "eager": 36896.72772277228,
+                "demand": 34899.9405940594
+              }
+            },
+            {
+              "case": 35,
+              "policy": 1,
+              "history": 1,
+              "lifecycle": "fresh",
+              "statuses": {
+                "baseline": "Transformed",
+                "eager": "Transformed",
+                "demand": "Transformed"
+              },
+              "ratio": 0.8433272800128615,
+              "ci": [
+                0.7644546949237775,
+                0.9270819980538486
+              ],
+              "ns": {
+                "baseline": 39287.166666666664,
+                "eager": 37646.63725490196,
+                "demand": 35131.367647058825
+              }
+            }
+          ],
+          "slowest": [
+            {
+              "case": 44,
+              "policy": 1,
+              "history": 3,
+              "lifecycle": "retained",
+              "statuses": {
+                "baseline": "InvalidEvidence",
+                "eager": "InvalidEvidence",
+                "demand": "InvalidEvidence"
+              },
+              "ratio": 1.3359905104505496,
+              "ci": [
+                0.9942496979674377,
+                1.6712174965748696
+              ],
+              "ns": {
+                "baseline": 10112.866233766235,
+                "eager": 10092.97012987013,
+                "demand": 10137.201298701299
+              }
+            },
+            {
+              "case": 29,
+              "policy": 0,
+              "history": 0,
+              "lifecycle": "fresh",
+              "statuses": {
+                "baseline": "Transformed",
+                "eager": "Transformed",
+                "demand": "Transformed"
+              },
+              "ratio": 1.2213873713512664,
+              "ci": [
+                0.9942182783499394,
+                1.4726739081674722
+              ],
+              "ns": {
+                "baseline": 6630.078014184397,
+                "eager": 6652.797872340425,
+                "demand": 6669.1533687943265
+              }
+            },
+            {
+              "case": 17,
+              "policy": 0,
+              "history": 2,
+              "lifecycle": "fresh",
+              "statuses": {
+                "baseline": "Transformed",
+                "eager": "Transformed",
+                "demand": "Transformed"
+              },
+              "ratio": 1.2175735603757363,
+              "ci": [
+                1.1073693768771489,
+                1.3330053744978319
+              ],
+              "ns": {
+                "baseline": 121078.76470588235,
+                "eager": 120298.5294117647,
+                "demand": 119464.44117647059
+              }
+            },
+            {
+              "case": 25,
+              "policy": 1,
+              "history": 0,
+              "lifecycle": "fresh",
+              "statuses": {
+                "baseline": "Transformed",
+                "eager": "Transformed",
+                "demand": "Transformed"
+              },
+              "ratio": 1.2154699921180454,
+              "ci": [
+                0.9776795146705142,
+                1.3755876497837742
+              ],
+              "ns": {
+                "baseline": 4971.271952817824,
+                "eager": 5102.231979030144,
+                "demand": 5111.753604193971
+              }
+            },
+            {
+              "case": 13,
+              "policy": 1,
+              "history": 3,
+              "lifecycle": "retained",
+              "statuses": {
+                "baseline": "Transformed",
+                "eager": "Transformed",
+                "demand": "Transformed"
+              },
+              "ratio": 1.1781714462948143,
+              "ci": [
+                1.0036462514181181,
+                1.2897726839711743
+              ],
+              "ns": {
+                "baseline": 21066.217741935485,
+                "eager": 21261.983870967742,
+                "demand": 21203.68010752688
+              }
+            }
+          ],
+          "slowestConfirmed": [
+            {
+              "case": 17,
+              "policy": 0,
+              "history": 2,
+              "lifecycle": "fresh",
+              "statuses": {
+                "baseline": "Transformed",
+                "eager": "Transformed",
+                "demand": "Transformed"
+              },
+              "ratio": 1.2175735603757363,
+              "ci": [
+                1.1073693768771489,
+                1.3330053744978319
+              ],
+              "ns": {
+                "baseline": 121078.76470588235,
+                "eager": 120298.5294117647,
+                "demand": 119464.44117647059
+              }
+            },
+            {
+              "case": 13,
+              "policy": 1,
+              "history": 3,
+              "lifecycle": "retained",
+              "statuses": {
+                "baseline": "Transformed",
+                "eager": "Transformed",
+                "demand": "Transformed"
+              },
+              "ratio": 1.1781714462948143,
+              "ci": [
+                1.0036462514181181,
+                1.2897726839711743
+              ],
+              "ns": {
+                "baseline": 21066.217741935485,
+                "eager": 21261.983870967742,
+                "demand": 21203.68010752688
+              }
+            },
+            {
+              "case": 37,
+              "policy": 0,
+              "history": 0,
+              "lifecycle": "fresh",
+              "statuses": {
+                "baseline": "Undecided",
+                "eager": "Undecided",
+                "demand": "Undecided"
+              },
+              "ratio": 1.1775923453532804,
+              "ci": [
+                1.009235623197476,
+                1.4108245679875748
+              ],
+              "ns": {
+                "baseline": 180616.47727272726,
+                "eager": 186954.68181818182,
+                "demand": 182324.31818181818
+              }
+            },
+            {
+              "case": 28,
+              "policy": 1,
+              "history": 1,
+              "lifecycle": "retained",
+              "statuses": {
+                "baseline": "Transformed",
+                "eager": "Transformed",
+                "demand": "Transformed"
+              },
+              "ratio": 1.159541538613718,
+              "ci": [
+                1.0094654931636549,
+                1.3767351439847038
+              ],
+              "ns": {
+                "baseline": 6260.710412147506,
+                "eager": 6300.654013015184,
+                "demand": 6286.239696312365
+              }
+            },
+            {
+              "case": 28,
+              "policy": 1,
+              "history": 0,
+              "lifecycle": "fresh",
+              "statuses": {
+                "baseline": "Transformed",
+                "eager": "Transformed",
+                "demand": "Transformed"
+              },
+              "ratio": 1.1514084559539415,
+              "ci": [
+                1.0193750814702678,
+                1.347837621377632
+              ],
+              "ns": {
+                "baseline": 6794.426763110308,
+                "eager": 6914.102169981917,
+                "demand": 6772.727848101265
+              }
+            }
+          ]
+        },
+        "changedResult": {
+          "groups": 256,
+          "pairedMedianRatioRange": [
+            0.9120814267555851,
+            3.9603504679521
+          ],
+          "ciWhollyBelowOne": 8,
+          "ciWhollyAboveOne": 163,
+          "fastest": [
+            {
+              "case": 38,
+              "policy": 0,
+              "history": 0,
+              "lifecycle": "retained",
+              "statuses": {
+                "baseline": "InvalidTransformedEvidence",
+                "eager": "Transformed",
+                "demand": "Transformed"
+              },
+              "ratio": 0.9120814267555851,
+              "ci": [
+                0.6655093913843092,
+                1.02290350022627
+              ],
+              "ns": {
+                "baseline": 9619.656565656565,
+                "eager": 9572.210858585859,
+                "demand": 9752.160353535353
+              }
+            },
+            {
+              "case": 1,
+              "policy": 0,
+              "history": 2,
+              "lifecycle": "retained",
+              "statuses": {
+                "baseline": "InvalidTransformedEvidence",
+                "eager": "Transformed",
+                "demand": "Transformed"
+              },
+              "ratio": 0.9234671132781542,
+              "ci": [
+                0.8051697796036151,
+                1.0791122809385536
+              ],
+              "ns": {
+                "baseline": 11677.61645962733,
+                "eager": 12007.701863354036,
+                "demand": 11939.58695652174
+              }
+            },
+            {
+              "case": 1,
+              "policy": 0,
+              "history": 3,
+              "lifecycle": "fresh",
+              "statuses": {
+                "baseline": "InvalidTransformedEvidence",
+                "eager": "Transformed",
+                "demand": "Transformed"
+              },
+              "ratio": 0.9298256757787702,
+              "ci": [
+                0.6308104866375122,
+                0.9701509114352361
+              ],
+              "ns": {
+                "baseline": 28795.111510791365,
+                "eager": 28126.453237410075,
+                "demand": 28030.41726618705
+              }
+            },
+            {
+              "case": 1,
+              "policy": 0,
+              "history": 1,
+              "lifecycle": "fresh",
+              "statuses": {
+                "baseline": "InvalidTransformedEvidence",
+                "eager": "Transformed",
+                "demand": "Transformed"
+              },
+              "ratio": 0.9463628863051551,
+              "ci": [
+                0.7151728023251663,
+                0.9963793594819061
+              ],
+              "ns": {
+                "baseline": 22395.68803418803,
+                "eager": 22543.581196581195,
+                "demand": 21835.25641025641
+              }
+            },
+            {
+              "case": 0,
+              "policy": 0,
+              "history": 3,
+              "lifecycle": "fresh",
+              "statuses": {
+                "baseline": "InvalidTransformedEvidence",
+                "eager": "Transformed",
+                "demand": "Transformed"
+              },
+              "ratio": 0.9472729596005989,
+              "ci": [
+                0.8355284399799995,
+                1.0907761635600852
+              ],
+              "ns": {
+                "baseline": 28784.654761904763,
+                "eager": 30654.682539682537,
+                "demand": 30976.091269841272
+              }
+            }
+          ],
+          "slowest": [
+            {
+              "case": 5,
+              "policy": 1,
+              "history": 3,
+              "lifecycle": "retained",
+              "statuses": {
+                "baseline": "InvalidTransformedEvidence",
+                "eager": "Transformed",
+                "demand": "Transformed"
+              },
+              "ratio": 3.9603504679521,
+              "ci": [
+                3.7162041582046617,
+                5.437035613567829
+              ],
+              "ns": {
+                "baseline": 12922.231707317074,
+                "eager": 47879.7743902439,
+                "demand": 47852.634146341465
+              }
+            },
+            {
+              "case": 5,
+              "policy": 0,
+              "history": 0,
+              "lifecycle": "fresh",
+              "statuses": {
+                "baseline": "InvalidTransformedEvidence",
+                "eager": "Transformed",
+                "demand": "Transformed"
+              },
+              "ratio": 3.9078160954303796,
+              "ci": [
+                3.416362388398305,
+                4.20782044083534
+              ],
+              "ns": {
+                "baseline": 14066.9125,
+                "eager": 47599.925,
+                "demand": 48931.95625
+              }
+            },
+            {
+              "case": 4,
+              "policy": 0,
+              "history": 0,
+              "lifecycle": "retained",
+              "statuses": {
+                "baseline": "InvalidTransformedEvidence",
+                "eager": "Transformed",
+                "demand": "Transformed"
+              },
+              "ratio": 3.8007316957174555,
+              "ci": [
+                3.7665934764030724,
+                4.302813119491452
+              ],
+              "ns": {
+                "baseline": 12691.417721518988,
+                "eager": 46841.41139240506,
+                "demand": 47780.26582278481
+              }
+            },
+            {
+              "case": 4,
+              "policy": 0,
+              "history": 2,
+              "lifecycle": "retained",
+              "statuses": {
+                "baseline": "InvalidTransformedEvidence",
+                "eager": "Transformed",
+                "demand": "Transformed"
+              },
+              "ratio": 3.8006603689943663,
+              "ci": [
+                3.7479075712763,
+                3.8399752041019735
+              ],
+              "ns": {
+                "baseline": 12620.02380952381,
+                "eager": 47439.01190476191,
+                "demand": 47772.02380952381
+              }
+            },
+            {
+              "case": 5,
+              "policy": 0,
+              "history": 1,
+              "lifecycle": "retained",
+              "statuses": {
+                "baseline": "InvalidTransformedEvidence",
+                "eager": "Transformed",
+                "demand": "Transformed"
+              },
+              "ratio": 3.789792753044387,
+              "ci": [
+                3.652267881702138,
+                4.567665548004506
+              ],
+              "ns": {
+                "baseline": 12494.987951807228,
+                "eager": 45718.2469879518,
+                "demand": 46529.46385542169
+              }
+            }
+          ],
+          "slowestConfirmed": [
+            {
+              "case": 5,
+              "policy": 1,
+              "history": 3,
+              "lifecycle": "retained",
+              "statuses": {
+                "baseline": "InvalidTransformedEvidence",
+                "eager": "Transformed",
+                "demand": "Transformed"
+              },
+              "ratio": 3.9603504679521,
+              "ci": [
+                3.7162041582046617,
+                5.437035613567829
+              ],
+              "ns": {
+                "baseline": 12922.231707317074,
+                "eager": 47879.7743902439,
+                "demand": 47852.634146341465
+              }
+            },
+            {
+              "case": 5,
+              "policy": 0,
+              "history": 0,
+              "lifecycle": "fresh",
+              "statuses": {
+                "baseline": "InvalidTransformedEvidence",
+                "eager": "Transformed",
+                "demand": "Transformed"
+              },
+              "ratio": 3.9078160954303796,
+              "ci": [
+                3.416362388398305,
+                4.20782044083534
+              ],
+              "ns": {
+                "baseline": 14066.9125,
+                "eager": 47599.925,
+                "demand": 48931.95625
+              }
+            },
+            {
+              "case": 4,
+              "policy": 0,
+              "history": 0,
+              "lifecycle": "retained",
+              "statuses": {
+                "baseline": "InvalidTransformedEvidence",
+                "eager": "Transformed",
+                "demand": "Transformed"
+              },
+              "ratio": 3.8007316957174555,
+              "ci": [
+                3.7665934764030724,
+                4.302813119491452
+              ],
+              "ns": {
+                "baseline": 12691.417721518988,
+                "eager": 46841.41139240506,
+                "demand": 47780.26582278481
+              }
+            },
+            {
+              "case": 4,
+              "policy": 0,
+              "history": 2,
+              "lifecycle": "retained",
+              "statuses": {
+                "baseline": "InvalidTransformedEvidence",
+                "eager": "Transformed",
+                "demand": "Transformed"
+              },
+              "ratio": 3.8006603689943663,
+              "ci": [
+                3.7479075712763,
+                3.8399752041019735
+              ],
+              "ns": {
+                "baseline": 12620.02380952381,
+                "eager": 47439.01190476191,
+                "demand": 47772.02380952381
+              }
+            },
+            {
+              "case": 5,
+              "policy": 0,
+              "history": 1,
+              "lifecycle": "retained",
+              "statuses": {
+                "baseline": "InvalidTransformedEvidence",
+                "eager": "Transformed",
+                "demand": "Transformed"
+              },
+              "ratio": 3.789792753044387,
+              "ci": [
+                3.652267881702138,
+                4.567665548004506
+              ],
+              "ns": {
+                "baseline": 12494.987951807228,
+                "eager": 45718.2469879518,
+                "demand": 46529.46385542169
+              }
+            }
+          ]
+        }
+      },
+      "eager": {
+        "sameResult": {
+          "groups": 768,
+          "pairedMedianRatioRange": [
+            0.7526527131027644,
+            1.2348676617455268
+          ],
+          "ciWhollyBelowOne": 159,
+          "ciWhollyAboveOne": 33,
+          "fastest": [
+            {
+              "case": 37,
+              "policy": 1,
+              "history": 3,
+              "lifecycle": "retained",
+              "statuses": {
+                "baseline": "NonIsolatingImageInterval",
+                "eager": "NonIsolatingImageInterval",
+                "demand": "NonIsolatingImageInterval"
+              },
+              "ratio": 0.7526527131027644,
+              "ci": [
+                0.6851068619737845,
+                1.0466566656201615
+              ],
+              "ns": {
+                "baseline": 26799.09292035398,
+                "eager": 34761.82300884956,
+                "demand": 26623.442477876106
+              }
+            },
+            {
+              "case": 36,
+              "policy": 1,
+              "history": 0,
+              "lifecycle": "retained",
+              "statuses": {
+                "baseline": "NonIsolatingImageInterval",
+                "eager": "NonIsolatingImageInterval",
+                "demand": "NonIsolatingImageInterval"
+              },
+              "ratio": 0.7644877576607727,
+              "ci": [
+                0.6118786339467324,
+                0.7697230044405887
+              ],
+              "ns": {
+                "baseline": 24851.42682926829,
+                "eager": 32248.39837398374,
+                "demand": 24647.865853658535
+              }
+            },
+            {
+              "case": 37,
+              "policy": 1,
+              "history": 0,
+              "lifecycle": "retained",
+              "statuses": {
+                "baseline": "NonIsolatingImageInterval",
+                "eager": "NonIsolatingImageInterval",
+                "demand": "NonIsolatingImageInterval"
+              },
+              "ratio": 0.7672865034025587,
+              "ci": [
+                0.7369605581164049,
+                0.782960254897077
+              ],
+              "ns": {
+                "baseline": 25103.800000000003,
+                "eager": 32330.667999999998,
+                "demand": 24881.896
+              }
+            },
+            {
+              "case": 36,
+              "policy": 1,
+              "history": 1,
+              "lifecycle": "retained",
+              "statuses": {
+                "baseline": "NonIsolatingImageInterval",
+                "eager": "NonIsolatingImageInterval",
+                "demand": "NonIsolatingImageInterval"
+              },
+              "ratio": 0.7762548344973579,
+              "ci": [
+                0.6835701585821204,
+                0.8960331642914346
+              ],
+              "ns": {
+                "baseline": 24828.58,
+                "eager": 32126.68,
+                "demand": 24869.696
+              }
+            },
+            {
+              "case": 37,
+              "policy": 1,
+              "history": 1,
+              "lifecycle": "retained",
+              "statuses": {
+                "baseline": "NonIsolatingImageInterval",
+                "eager": "NonIsolatingImageInterval",
+                "demand": "NonIsolatingImageInterval"
+              },
+              "ratio": 0.7855820148132884,
+              "ci": [
+                0.6433980021321952,
+                1.3371964659969646
+              ],
+              "ns": {
+                "baseline": 24818.135245901638,
+                "eager": 31913.30737704918,
+                "demand": 24969.52049180328
+              }
+            }
+          ],
+          "slowest": [
+            {
+              "case": 44,
+              "policy": 1,
+              "history": 3,
+              "lifecycle": "retained",
+              "statuses": {
+                "baseline": "InvalidEvidence",
+                "eager": "InvalidEvidence",
+                "demand": "InvalidEvidence"
+              },
+              "ratio": 1.2348676617455268,
+              "ci": [
+                0.8483493068274692,
+                1.6956719594602738
+              ],
+              "ns": {
+                "baseline": 10112.866233766235,
+                "eager": 10092.97012987013,
+                "demand": 10137.201298701299
+              }
+            },
+            {
+              "case": 15,
+              "policy": 1,
+              "history": 3,
+              "lifecycle": "retained",
+              "statuses": {
+                "baseline": "Transformed",
+                "eager": "Transformed",
+                "demand": "Transformed"
+              },
+              "ratio": 1.1957934730378952,
+              "ci": [
+                0.9206102417099115,
+                1.4981986558206284
+              ],
+              "ns": {
+                "baseline": 10011.575971731449,
+                "eager": 9747.282685512368,
+                "demand": 10313.833922261485
+              }
+            },
+            {
+              "case": 19,
+              "policy": 0,
+              "history": 1,
+              "lifecycle": "retained",
+              "statuses": {
+                "baseline": "Transformed",
+                "eager": "Transformed",
+                "demand": "Transformed"
+              },
+              "ratio": 1.1614596276736366,
+              "ci": [
+                0.7545201934217767,
+                1.6770266653807677
+              ],
+              "ns": {
+                "baseline": 122442.1,
+                "eager": 126879.85,
+                "demand": 121571.7
+              }
+            },
+            {
+              "case": 31,
+              "policy": 1,
+              "history": 0,
+              "lifecycle": "fresh",
+              "statuses": {
+                "baseline": "InvalidTransformedEvidence",
+                "eager": "Transformed",
+                "demand": "Transformed"
+              },
+              "ratio": 1.1458304445924334,
+              "ci": [
+                0.9123626752953283,
+                1.252601996327643
+              ],
+              "ns": {
+                "baseline": 4763.149725274725,
+                "eager": 5302.541895604396,
+                "demand": 5416.7376373626375
+              }
+            },
+            {
+              "case": 29,
+              "policy": 0,
+              "history": 0,
+              "lifecycle": "fresh",
+              "statuses": {
+                "baseline": "Transformed",
+                "eager": "Transformed",
+                "demand": "Transformed"
+              },
+              "ratio": 1.1322871281001026,
+              "ci": [
+                0.952440741196289,
+                1.526725950524296
+              ],
+              "ns": {
+                "baseline": 6630.078014184397,
+                "eager": 6652.797872340425,
+                "demand": 6669.1533687943265
+              }
+            }
+          ],
+          "slowestConfirmed": [
+            {
+              "case": 3,
+              "policy": 1,
+              "history": 3,
+              "lifecycle": "retained",
+              "statuses": {
+                "baseline": "InvalidTransformedEvidence",
+                "eager": "Transformed",
+                "demand": "Transformed"
+              },
+              "ratio": 1.0811982965046467,
+              "ci": [
+                1.0273561734801706,
+                1.1954731611476586
+              ],
+              "ns": {
+                "baseline": 12527.917670682731,
+                "eager": 15387.779116465863,
+                "demand": 15883.048192771084
+              }
+            },
+            {
+              "case": 10,
+              "policy": 0,
+              "history": 2,
+              "lifecycle": "fresh",
+              "statuses": {
+                "baseline": "InvalidTransformedEvidence",
+                "eager": "Transformed",
+                "demand": "Transformed"
+              },
+              "ratio": 1.0737931680468213,
+              "ci": [
+                1.0169102366136382,
+                1.795682490186949
+              ],
+              "ns": {
+                "baseline": 94807.5,
+                "eager": 98736.7,
+                "demand": 100849.6
+              }
+            },
+            {
+              "case": 10,
+              "policy": 0,
+              "history": 2,
+              "lifecycle": "retained",
+              "statuses": {
+                "baseline": "InvalidTransformedEvidence",
+                "eager": "Transformed",
+                "demand": "Transformed"
+              },
+              "ratio": 1.0531581430997004,
+              "ci": [
+                1.033229115566733,
+                1.1199644090600858
+              ],
+              "ns": {
+                "baseline": 6407.312227074235,
+                "eager": 8145.555676855895,
+                "demand": 8528.085152838426
+              }
+            },
+            {
+              "case": 42,
+              "policy": 1,
+              "history": 2,
+              "lifecycle": "retained",
+              "statuses": {
+                "baseline": "InvalidTransformedEvidence",
+                "eager": "Transformed",
+                "demand": "Transformed"
+              },
+              "ratio": 1.053050186785436,
+              "ci": [
+                1.0386180699511498,
+                1.0688950629108374
+              ],
+              "ns": {
+                "baseline": 1673.6938541068353,
+                "eager": 2024.7923607122343,
+                "demand": 2125.2624928202185
+              }
+            },
+            {
+              "case": 10,
+              "policy": 0,
+              "history": 1,
+              "lifecycle": "retained",
+              "statuses": {
+                "baseline": "InvalidTransformedEvidence",
+                "eager": "Transformed",
+                "demand": "Transformed"
+              },
+              "ratio": 1.0461692386472676,
+              "ci": [
+                1.0352899225693373,
+                1.2796402843913794
+              ],
+              "ns": {
+                "baseline": 6324.177489177489,
+                "eager": 8179.126623376624,
+                "demand": 8546.428571428572
+              }
+            }
+          ]
+        },
+        "changedResult": {
+          "groups": 0
+        }
+      }
+    },
+    "runtime": {
+      "node": "v22.22.2",
+      "v8": "12.4.254.21-node.39",
+      "execArgv": [
+        "--expose-gc",
+        "--no-liftoff",
+        "--no-wasm-tier-up",
+        "--no-wasm-lazy-compilation"
+      ],
+      "affinity": "6",
+      "modules": [
+        {
+          "variant": "baseline",
+          "path": "/tmp/calcium-point-wasm.jPk2WY/baseline.wasm",
+          "bytes": 1614156,
+          "sha256": "f9dc6f45bdb901e9386de7d8ad509a373bf03ce0babaa1805cb306d059d0e877",
+          "imports": [],
+          "exports": [
+            {
+              "name": "memory",
+              "kind": "memory"
+            },
+            {
+              "name": "history_batch",
+              "kind": "function"
+            },
+            {
+              "name": "history_finish",
+              "kind": "function"
+            },
+            {
+              "name": "history_output_ptr",
+              "kind": "function"
+            },
+            {
+              "name": "history_prepare",
+              "kind": "function"
+            }
+          ]
+        },
+        {
+          "variant": "eager",
+          "path": "/tmp/calcium-point-wasm.jPk2WY/eager.wasm",
+          "bytes": 1614371,
+          "sha256": "05ba21965eef756746b54fa05ed38802c7663904cad027a2ed70cd9699c41d1c",
+          "imports": [],
+          "exports": [
+            {
+              "name": "memory",
+              "kind": "memory"
+            },
+            {
+              "name": "history_batch",
+              "kind": "function"
+            },
+            {
+              "name": "history_finish",
+              "kind": "function"
+            },
+            {
+              "name": "history_output_ptr",
+              "kind": "function"
+            },
+            {
+              "name": "history_prepare",
+              "kind": "function"
+            }
+          ]
+        },
+        {
+          "variant": "demand",
+          "path": "/tmp/calcium-point-wasm.jPk2WY/demand.wasm",
+          "bytes": 1614858,
+          "sha256": "122381ac7e6cf469605119a8d89f331ab9c3d7dc2faafa0c002efcb2148067c2",
+          "imports": [],
+          "exports": [
+            {
+              "name": "memory",
+              "kind": "memory"
+            },
+            {
+              "name": "history_batch",
+              "kind": "function"
+            },
+            {
+              "name": "history_finish",
+              "kind": "function"
+            },
+            {
+              "name": "history_output_ptr",
+              "kind": "function"
+            },
+            {
+              "name": "history_prepare",
+              "kind": "function"
+            }
+          ]
+        }
+      ],
+      "compiled": "2026-09-10T23:48:12.166Z",
+      "observations": 57600,
+      "gcs": 7200,
+      "gcEvery": 8,
+      "limits": "Optimizing V8 compiler selected before module compilation; import-free fresh instance per observation. Host boundary and uncontended state bookkeeping are timed. No module compile, instance/setup/JSON/verification/host GC is timed. Linear memory samples are not per-query allocation/peak/RSS metrics."
+    },
+    "limits": "Direct three-variant optimized-tier WASM comparison, 768 authored groups, common calibration and twelve balanced palindromic blocks. Fresh instance and nine preconditioning queries precede each timed batch. Retained/fresh workload exactly matches the native HistoryWork prefix; fresh mode also retains its initial reference roots, as native does. Final report stays alive; host call/bookkeeping are timed, final drop/serialization/checking/GC/compilation/setup are not. Intermediate iterations only have a checksum. Core 6 affinity, no fixed-frequency/idle-host guarantee. Individual bootstrap CIs are unadjusted for multiplicity. Newly successful versus baseline queries are different work. Not a default-tier/browser/whole-application benchmark or a memory/retention claim."
+  },
+  "environments": [
+    {
+      "recorded": "2026-09-10T23:48:08.651Z",
+      "platform": "linux",
+      "release": "7.1.8-100.fc43.x86_64",
+      "arch": "x64",
+      "cpuCount": 16,
+      "cpu6": {
+        "model": "AMD Ryzen 7 5800X3D 8-Core Processor",
+        "speed": 3440,
+        "times": {
+          "user": 70560000,
+          "nice": 28880,
+          "sys": 13689170,
+          "idle": 315758350,
+          "irq": 1267990
+        }
+      },
+      "totalMemory": 134976348160,
+      "freeMemory": 59171438592,
+      "loadAverage": [
+        0.9,
+        0.79,
+        0.97
+      ],
+      "node": {
+        "node": "22.22.2",
+        "acorn": "8.15.0",
+        "ada": "2.9.2",
+        "amaro": "1.1.5",
+        "ares": "1.34.5",
+        "brotli": "1.2.0",
+        "cjs_module_lexer": "2.2.0",
+        "cldr": "48.0",
+        "icu": "78.2",
+        "llhttp": "9.3.0",
+        "modules": "127",
+        "napi": "10",
+        "nbytes": "0.1.1",
+        "ncrypto": "0.0.1",
+        "nghttp2": "1.68.1",
+        "openssl": "3.5.7",
+        "simdjson": "4.2.4",
+        "simdutf": "6.4.2",
+        "sqlite": "3.50.2",
+        "tz": "2025c",
+        "undici": "6.24.1",
+        "unicode": "17.0",
+        "uv": "1.51.0",
+        "uvwasi": "0.0.23",
+        "v8": "12.4.254.21-node.39",
+        "zlib": "1.3.1.zlib-ng",
+        "zstd": "1.5.7"
+      },
+      "governor": "powersave",
+      "siblingCPUs": "6,14",
+      "note": "Host snapshot only; not a guarantee of no external load or fixed frequency. No environment secrets collected."
+    },
+    {
+      "recorded": "2026-09-10T23:57:47.943Z",
+      "platform": "linux",
+      "release": "7.1.8-100.fc43.x86_64",
+      "arch": "x64",
+      "cpuCount": 16,
+      "cpu6": {
+        "model": "AMD Ryzen 7 5800X3D 8-Core Processor",
+        "speed": 3463,
+        "times": {
+          "user": 71125750,
+          "nice": 28880,
+          "sys": 13699690,
+          "idle": 315758350,
+          "irq": 1270270
+        }
+      },
+      "totalMemory": 134976348160,
+      "freeMemory": 59218640896,
+      "loadAverage": [
+        3.12,
+        3.04,
+        2.15
+      ],
+      "node": {
+        "node": "22.22.2",
+        "acorn": "8.15.0",
+        "ada": "2.9.2",
+        "amaro": "1.1.5",
+        "ares": "1.34.5",
+        "brotli": "1.2.0",
+        "cjs_module_lexer": "2.2.0",
+        "cldr": "48.0",
+        "icu": "78.2",
+        "llhttp": "9.3.0",
+        "modules": "127",
+        "napi": "10",
+        "nbytes": "0.1.1",
+        "ncrypto": "0.0.1",
+        "nghttp2": "1.68.1",
+        "openssl": "3.5.7",
+        "simdjson": "4.2.4",
+        "simdutf": "6.4.2",
+        "sqlite": "3.50.2",
+        "tz": "2025c",
+        "undici": "6.24.1",
+        "unicode": "17.0",
+        "uv": "1.51.0",
+        "uvwasi": "0.0.23",
+        "v8": "12.4.254.21-node.39",
+        "zlib": "1.3.1.zlib-ng",
+        "zstd": "1.5.7"
+      },
+      "governor": "powersave",
+      "siblingCPUs": "6,14",
+      "note": "Host snapshot only; not a guarantee of no external load or fixed frequency. No environment secrets collected."
+    }
+  ],
+  "next": "Extended optimized-tier WASM costs are measured, not inferred from correctness. Investigate volatile paired/marginal discrepancies with a bounded diagnostic replay of both unfavorable and favorable controls, preserving all original samples; do not attribute them to the algorithm yet. Then qualify final consumers and representative sizes for the selected demand version before retention. Separate power-sum work and all remaining original references/support reads and inventory reconciliation remain open.",
+  "coverageBefore": [
+    {
+      "repo": "calcium",
+      "reviewed": 552,
+      "complete": 552,
+      "partial": 0,
+      "readLines": 60286
+    },
+    {
+      "repo": "flint",
+      "reviewed": 883,
+      "complete": 863,
+      "partial": 20,
+      "readLines": 123367
+    }
+  ],
+  "coverageAtBinding": [
+    {
+      "repo": "calcium",
+      "reviewed": 552,
+      "complete": 552,
+      "partial": 0,
+      "readLines": 60286
+    },
+    {
+      "repo": "flint",
+      "reviewed": 883,
+      "complete": 863,
+      "partial": 20,
+      "readLines": 123367
+    }
+  ],
+  "newDonorLines": 0,
+  "liveFiles": 956,
+  "production": "Unchanged isolated demand candidate; no live production/donor edit, new algorithm revision, retained transfer, source snapshot copy, cleanup/deletion, commit, push or external report. Five retained transfers and all 956 live identities unchanged.",
+  "scope": "Optimized-tier Node/V8 WASM qualification and matched costs, not a default-tier/browser/whole-application claim. No new allocator/Memcheck/final-consumer/representative-size qualification. Full ecosystem audit and separate power-sum work remain incomplete."
+}

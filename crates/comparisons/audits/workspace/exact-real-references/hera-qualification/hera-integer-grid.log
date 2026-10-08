@@ -1,0 +1,4 @@
+Num-fromInteger-grid	checks=160	failures=32
+  (1024,-17,-1,32)
+  (1024,-17,1,32)
+  (1024,-1,-1,32)

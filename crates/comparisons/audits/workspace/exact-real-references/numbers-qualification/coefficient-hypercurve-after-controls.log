@@ -1,0 +1,28 @@
+
+running 2 tests
+test bezier_offset::conversion_tests::nonrepresented_center_nonrational_chamfer_inverts_with_retained_authority ... FAILED
+test bezier_offset::conversion_tests::nonrepresented_center_transverse_chamfer_inverts_by_correlated_point ... FAILED
+
+failures:
+
+---- bezier_offset::conversion_tests::nonrepresented_center_nonrational_chamfer_inverts_with_retained_authority stdout ----
+
+thread 'bezier_offset::conversion_tests::nonrepresented_center_nonrational_chamfer_inverts_with_retained_authority' (10) panicked at src/bezier_offset.rs:141400:9:
+assertion failed: std::mem::size_of::<BezierAlgebraicCuspSemicircleParameterCacheEntry2>() <=
+    std::mem::size_of::<(BezierParameter2, Option<Real>)>()
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+---- bezier_offset::conversion_tests::nonrepresented_center_transverse_chamfer_inverts_by_correlated_point stdout ----
+
+thread 'bezier_offset::conversion_tests::nonrepresented_center_transverse_chamfer_inverts_by_correlated_point' (11) panicked at src/bezier_offset.rs:141390:17:
+assertion `left == right` failed
+  left: Uncertain(Predicate)
+ right: Decided(Greater)
+
+
+failures:
+    bezier_offset::conversion_tests::nonrepresented_center_nonrational_chamfer_inverts_with_retained_authority
+    bezier_offset::conversion_tests::nonrepresented_center_transverse_chamfer_inverts_by_correlated_point
+
+test result: FAILED. 0 passed; 2 failed; 0 ignored; 0 measured; 899 filtered out; finished in 0.32s
+

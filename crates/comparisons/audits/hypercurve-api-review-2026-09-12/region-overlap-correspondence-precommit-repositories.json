@@ -1,0 +1,152 @@
+[
+  {
+    "repository": "ExactCalculator",
+    "status": "",
+    "head": "7265aa3a922a7e7c0389dae4b26cca562aa777a6"
+  },
+  {
+    "repository": "NURBS_BREP_kernel",
+    "status": "",
+    "head": "1aef37b12a92c993c2046f7886593bb0a555c414"
+  },
+  {
+    "repository": "alumina-firmware",
+    "status": "",
+    "head": "bdee397d0b80841f16bf17e7bcd029b4feb2c212"
+  },
+  {
+    "repository": "alumina-interface",
+    "status": "",
+    "head": "59a18251cdfe2312e40b194e857d85cd59b6087f"
+  },
+  {
+    "repository": "citizen-builder",
+    "status": "",
+    "head": "c4230238e28fd88fc8156fceb2c43698e67c27ca"
+  },
+  {
+    "repository": "crcalc",
+    "status": "",
+    "head": "4f398d699c9d498deb45520ea7ebb020627bc640"
+  },
+  {
+    "repository": "csgrs",
+    "status": "",
+    "head": "0fc51dc52279bc363a42b32e52b9873e8f3a6a5b"
+  },
+  {
+    "repository": "csgrs-ffi",
+    "status": "",
+    "head": "6057435ce4c0b37bac99aec29922b90e6652c575"
+  },
+  {
+    "repository": "exactcore-hyper-comparison",
+    "status": "",
+    "head": "74b90b328f720997d38da80af5620f167b3b0619"
+  },
+  {
+    "repository": "hyperbrep",
+    "status": "",
+    "head": "878fcb441b281ab1b44051ca4420b28092c3c2ed"
+  },
+  {
+    "repository": "hypercircuit",
+    "status": "",
+    "head": "c9cea1584d5ef1f5ff7a1a417aaa20886ffaf544"
+  },
+  {
+    "repository": "hypercurve",
+    "status": " M src/bezier_offset.rs\n M src/curve_intersection.rs\n M src/curve_region_boolean.rs\n M src/curve_region_trim.rs\n M src/curve_support_intersection.rs\n M tests/hypercurve_curve_region_boolean.rs\n",
+    "head": "ddf739955d5586ac5257888433d35c8e09614538"
+  },
+  {
+    "repository": "hyperdrc",
+    "status": "",
+    "head": "5c9d3a509be606f1a0825dcfb31f8b178f335cd1"
+  },
+  {
+    "repository": "hyperevolution",
+    "status": "",
+    "head": "99645e3cefb7eea3af86abc15db68f7fcb31ca95"
+  },
+  {
+    "repository": "hypergraphics",
+    "status": "",
+    "head": "75219dede7a2387ab30c84664b1293ec71d736d2"
+  },
+  {
+    "repository": "hyperlattice",
+    "status": "",
+    "head": "53427ce89f8c82c016e69a04e035787e2753adc8"
+  },
+  {
+    "repository": "hyperlimit",
+    "status": "",
+    "head": "d64c3b897e2832e879b01e53e46c57260d071d4c"
+  },
+  {
+    "repository": "hypermesh",
+    "status": "",
+    "head": "d9db5c45a0cecc2307aa66a6f7f1b0396350e4ee"
+  },
+  {
+    "repository": "hyperpack",
+    "status": "",
+    "head": "34857861561d643d7578753b8f8314d0fbca2c5b"
+  },
+  {
+    "repository": "hyperparts",
+    "status": "",
+    "head": "d8626e9d36256afc4a8eb0380ae94c9ed5619107"
+  },
+  {
+    "repository": "hyperpath",
+    "status": "",
+    "head": "cfe50de3e370ea75a49b916eb70a7b19d31a58fa"
+  },
+  {
+    "repository": "hyperphysics",
+    "status": "",
+    "head": "dcbc7cf3489a1299de16a946fd7f5e5658b6f15f"
+  },
+  {
+    "repository": "hyperreal",
+    "status": "",
+    "head": "a2da8e2b5de9a1a4653d3662f2f05cb6533fd7ef"
+  },
+  {
+    "repository": "hypersdf",
+    "status": "",
+    "head": "b37825900457420cb64da385b8525acab33e31c5"
+  },
+  {
+    "repository": "hypersolve",
+    "status": "",
+    "head": "3ac2e7510936a11c7bf2eac5dfbe3f9f851afe55"
+  },
+  {
+    "repository": "hypertri",
+    "status": "",
+    "head": "6a2092c066964f3b7528299a72ef0ed1af4b1ff0"
+  },
+  {
+    "repository": "hypervoxel",
+    "status": "",
+    "head": "0486b1465a249a04973520a4138a39395ded2f23"
+  },
+  {
+    "repository": "openscad-rs",
+    "status": "",
+    "head": "f21b39486a6b35403ee8af9e7fba7cb62a045a5a"
+  },
+  {
+    "repository": "synaps-cad",
+    "status": "",
+    "head": "355abf16c3aaef73fb1f3e1b94e021d658c88ed5"
+  },
+  {
+    "repository": "videos",
+    "status": "",
+    "head": "4209b983cc0d937981f22a6fa7df384303fcc8bd"
+  }
+]

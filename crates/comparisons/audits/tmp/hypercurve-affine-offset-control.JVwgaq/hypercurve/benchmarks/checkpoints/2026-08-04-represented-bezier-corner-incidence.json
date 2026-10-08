@@ -1,0 +1,333 @@
+{
+  "schema": 1,
+  "captured_on": "2026-08-04",
+  "checkpoint": "represented-bezier-corner-incidence",
+  "source_revision": "07ef15b29630c4554a35cbc75dd18546e48462ba",
+  "implementation_revision": "d529ac416ddc4f901dc5db025e906dcdcb57f2cf",
+  "benchmark_revision": "07ef15b29630c4554a35cbc75dd18546e48462ba",
+  "preceding_evidence_revision": "8f26fe4",
+  "preceding_semantic_revision": "9b1ff393342b9ce0d091b96c9149427836c39faf",
+  "dependency_snapshot": {
+    "hyperreal": "3582c1e6061c8ae2aeca3e3d7f570fc3bc55eaf4",
+    "hyperlattice": "a475bb752c1e0fb0cfdb80f4db74a56caa6962c0",
+    "hyperlimit": "76281a340160f30ab86aa1f59b0fff4762d51dea",
+    "hypersolve": "c99eeb6007dfaface1240b212e21e544893494aa",
+    "hypertri": "73a3d9e34ee92c280731b4fcc1abb6e5515a3b5c",
+    "hyperbrep": "6336697cd124ef6ef8384166b1f90ef2fceb6663",
+    "hypermesh": "209b2d22d34b02b53b4ac2d77ed765a4a17a6c47",
+    "hypermesh_modified_by_checkpoint": false,
+    "hypermesh_note": "snapshot only; Hypermesh remained outside the work while its concurrent work advanced"
+  },
+  "semantic_evidence": {
+    "authoritative_chamfer_solver": "solve_exact_chamfer_corner",
+    "authoritative_fillet_solver": "solve_exact_fillet_corner",
+    "new_direct_carriers": [
+      "QuadraticBezier2",
+      "CubicBezier2",
+      "noncircular RationalQuadraticBezier2",
+      "arbitrary-degree RationalBezier2"
+    ],
+    "chamfer_route": "complete BezierParallel2 circle incidence at zero distance against each exact setback circle",
+    "mixed_line_fillet_route": "complete BezierParallel2 supporting-line incidence against the signed line offset",
+    "mixed_arc_fillet_route": "complete BezierParallel2 circle incidence against the signed native-arc offset circle",
+    "bezier_pair_fillet_route": "bounded structural or exact-rational parallel prefix shared with the complete arrangement kernel; exact PH offsets are a positive supported case",
+    "general_arrangement_authority": "BezierParallel2::parallel_intersections remains complete and continues through general projection and Hypersolve replay after the extracted fast prefix",
+    "corner_materialization_boundary": "an admissible nonendpoint algebraic BezierParameter2 remains typed Unsupported because Curve2 subdivision cannot yet retain that parameter; it is never rounded or omitted",
+    "source_family_retention": "successful CurvePath2 and CurveRegion2 edits preserve the original direct Bezier family and public parameter lineage",
+    "region_route": "CurveRegion2 retains its native contour acceleration but every higher-order fallback invokes the same CurvePath2 carrier solver and exact region reconstruction",
+    "candidate_storage": "two heap-free inline slots plus an overflow Vec; a regular cubic regression retains three exact chamfer cuts in deterministic parameter order",
+    "carrier_layout_bytes_on_64_bit": 16,
+    "native_hot_path_carrier_allocation": false,
+    "bezier_carrier_storage": "one borrowed Curve2 pointer; the analytic parallel is constructed once at the requested distance rather than constructing and redistancing a zero-distance temporary",
+    "zero_design_values": "zero fillet radius and double-zero chamfer setbacks return ZeroDesignValue before unsupported-carrier or extension routing",
+    "trim_only": "implemented for directly represented Bezier contacts",
+    "trim_or_extend": "typed Unsupported for direct Beziers until projective extension domains and algebraic parameters are authoritative",
+    "strict_policy": "the same exact incidence, parameter-order, tangency, trim, and degeneracy proof graph runs without a finite fallback; unresolved decisions return typed blockers",
+    "approximate_512_policy": "the exact proof graph runs first and only Hyperlimit's shared terminal may consume a 512-bit equality decision",
+    "approximate_terminal_regression": "an expression-undecidable quadratic perturbation blocks under STRICT and completes with Approximate512Consumed under APPROXIMATE_512",
+    "returned_geometry_remains_hyperreal_exact": true,
+    "compatibility_shim_added": false
+  },
+  "historical_behavior": {
+    "at_revision": "9b1ff393342b9ce0d091b96c9149427836c39faf",
+    "direct_noncircular_bezier_chamfer": "Unsupported",
+    "direct_noncircular_bezier_fillet": "Unsupported",
+    "capability_change": "the supported represented-contact fixtures now complete; no finite historical throughput existed for those operations",
+    "development_general_pair_probe": {
+      "fixture": "non-PH quadratic/quadratic fillet with an admissible algebraic contact",
+      "release_wall_seconds": 21.36,
+      "outcome": "typed Unsupported at public algebraic materialization",
+      "decision": "corner editing invokes only the bounded structural/exact-rational prefix until the algebraic public carrier exists; complete arrangements retain the Hypersolve route"
+    }
+  },
+  "mathematical_paths_covered": [
+    "line/direct-Bezier and direct-Bezier/line fillet in both operand orders",
+    "line/direct-Bezier and direct-Bezier/line chamfer in both operand orders",
+    "arc/direct-Bezier and direct-Bezier/arc fillet in both operand orders",
+    "quadratic/quadratic independent setback-circle chamfer",
+    "cubic-PH/cubic-PH exact-rational parallel fillet",
+    "Quadratic, degree-elevated Cubic, uniform RationalQuadratic, and degree-five RationalBezier source-family matrix",
+    "regular cubic with three exact interior setback-circle contacts",
+    "CurvePath2 and closed CurveRegion2 materialization",
+    "exact rational contacts, algebraic interior blockers, unsupported spline carriers, and zero design values",
+    "STRICT and APPROXIMATE_512 execution through one proof graph",
+    "actual shared 512-bit terminal consumption"
+  ],
+  "verification": {
+    "cargo_test_all_features": "pass after implementation; library unit component 445 passed",
+    "cargo_test_no_default_features_lib": "320 passed at source revision",
+    "cargo_test_all_features_hypercurve_curve": "35 passed at source revision",
+    "cargo_test_no_default_features_hypercurve_curve": "29 passed at source revision",
+    "cargo_test_all_features_hypercurve_curve_region_promotion": "49 passed",
+    "cargo_test_no_default_features_hypercurve_curve_region_promotion": "46 passed",
+    "cargo_check_all_features": "pass",
+    "cargo_check_no_default_features": "pass",
+    "cargo_check_all_features_editing_benchmark": "pass",
+    "cargo_check_no_default_features_editing_benchmark": "pass at source revision",
+    "cargo_clippy_all_features_all_targets_no_deps_deny_warnings": "Hypercurve pass; external Hypertri emitted its pre-existing ExactKernel::sub dead-code warning",
+    "cargo_fmt_all_check": "pass",
+    "git_diff_check": "pass",
+    "hypercurve_worktree_before_checkpoint_file": "clean"
+  },
+  "benchmark_method": {
+    "cpu": 11,
+    "iterations_per_repeat": 20000,
+    "repeats": 3,
+    "selector": "HYPERCURVE_EDIT_BENCH=represented-bezier-corner",
+    "counter_command": "taskset -c 11 perf stat -r 3 -x, -e instructions,branches env HYPERCURVE_EDIT_BENCH=represented-bezier-corner HYPERCURVE_EDIT_CORNER_LANE=<lane> HYPERCURVE_EDIT_ITERATIONS=20000 <editing-binary>",
+    "primary_metric": "retired instructions",
+    "wall_time_note": "wall samples are contextual; several repeats were visibly preempted by concurrent host load while retired instructions and branches remained stable",
+    "benchmark_executable": "target/release/deps/editing-1429e5261074e42b",
+    "benchmark_executable_sha256": "b0681724f401d9a58f38f64f8b50b0aeaf53eb90fcf5bc0a34e2fc7c2abc4e58",
+    "benchmark_executable_file_bytes": 8904096,
+    "benchmark_executable_text_bytes": 5141159,
+    "benchmark_source_sha256": "b79840e28b9309a482bc8004faf4bae844c2f1815c14f9b9e787d5d2a9e7b147",
+    "artifact_build_revision": "07ef15b29630c4554a35cbc75dd18546e48462ba"
+  },
+  "current_performance": {
+    "curve_path_line_quadratic_design_chamfer": {
+      "instructions": 13028713608,
+      "instructions_per_operation": 651435.6804,
+      "branches": 2446190914,
+      "branches_per_operation": 122309.5457,
+      "wall_us_samples": [55.192, 55.776, 55.283]
+    },
+    "curve_path_line_quadratic_design_fillet": {
+      "instructions": 9183806398,
+      "instructions_per_operation": 459190.3199,
+      "branches": 1812831368,
+      "branches_per_operation": 90641.5684,
+      "wall_us_samples": [43.686, 66.958, 295.370],
+      "wall_time_note": "second and third repeats were host-preempted; counters remained stable"
+    },
+    "curve_path_line_degree5_rational_design_chamfer": {
+      "instructions": 19510482424,
+      "instructions_per_operation": 975524.1212,
+      "branches": 3691920870,
+      "branches_per_operation": 184596.0435,
+      "wall_us_samples": [253.551, 99.349, 86.816],
+      "wall_time_note": "first repeat was host-preempted"
+    },
+    "curve_path_line_degree5_rational_design_fillet": {
+      "instructions": 14017003646,
+      "instructions_per_operation": 700850.1823,
+      "branches": 2708875713,
+      "branches_per_operation": 135443.78565,
+      "wall_us_samples": [73.084, 66.706, 68.119]
+    },
+    "curve_path_arc_quadratic_design_fillet": {
+      "instructions": 53394001959,
+      "instructions_per_operation": 2669700.09795,
+      "branches": 9804948788,
+      "branches_per_operation": 490247.4394,
+      "wall_us_samples": [684.885, 241.233, 236.460],
+      "wall_time_note": "first repeat was host-preempted"
+    },
+    "curve_region_line_quadratic_design_chamfer": {
+      "instructions": 14981261291,
+      "instructions_per_operation": 749063.06455,
+      "branches": 2842811034,
+      "branches_per_operation": 142140.5517,
+      "wall_us_samples": [70.962, 72.171, 70.391]
+    },
+    "curve_region_line_quadratic_design_fillet": {
+      "instructions": 11246742672,
+      "instructions_per_operation": 562337.1336,
+      "branches": 2222493946,
+      "branches_per_operation": 111124.6973,
+      "wall_us_samples": [62.209, 62.332, 62.780]
+    },
+    "curve_path_cubic_ph_pair_design_fillet": {
+      "instructions": 42068586789,
+      "instructions_per_operation": 2103429.33945,
+      "branches": 8628509060,
+      "branches_per_operation": 431425.453,
+      "wall_us_samples": [223.650, 221.283, 221.626]
+    }
+  },
+  "native_hot_path_regression": {
+    "fillet_baseline": "2026-08-04-retained-rational-circle-corner-carriers.json",
+    "chamfer_baseline": "2026-08-04-native-arc-chamfer-solver.json; comparison therefore includes the retained-circle checkpoint as well as this checkpoint",
+    "curve_path_line_arc_design_fillet": {
+      "instructions": 25615059947,
+      "branches": 5407544491,
+      "instruction_change_percent": 0.071750,
+      "branch_change_percent": 0.069768
+    },
+    "curve_path_arc_arc_design_fillet": {
+      "instructions": 64967511224,
+      "branches": 13614074694,
+      "instruction_change_percent": 0.023718,
+      "branch_change_percent": 0.028134
+    },
+    "curve_region_line_arc_design_fillet": {
+      "instructions": 35979614439,
+      "branches": 7891753064,
+      "instruction_change_percent": 0.065639,
+      "branch_change_percent": 0.055105
+    },
+    "curve_region_arc_arc_design_fillet": {
+      "instructions": 61729502973,
+      "branches": 13404819381,
+      "instruction_change_percent": 0.030258,
+      "branch_change_percent": 0.033175
+    },
+    "curve_path_line_arc_design_chamfer": {
+      "instructions": 12336582854,
+      "branches": 2705801090,
+      "instruction_change_percent": 0.370097,
+      "branch_change_percent": 0.266815
+    },
+    "curve_path_arc_arc_design_chamfer": {
+      "instructions": 18599929694,
+      "branches": 4080833396,
+      "instruction_change_percent": 0.411578,
+      "branch_change_percent": 0.287577
+    },
+    "curve_region_line_arc_design_chamfer": {
+      "instructions": 25634141852,
+      "branches": 5602808034,
+      "instruction_change_percent": 0.165873,
+      "branch_change_percent": 0.113977
+    },
+    "interpretation": "native fillets remain effectively neutral; arbitrary-candidate chamfer storage stays below a 0.42% instruction change while removing the invalid two-cut assumption"
+  },
+  "represented_vs_native_context": {
+    "line_quadratic_fillet_instruction_change_percent_vs_line_arc": -10.367120,
+    "region_line_quadratic_fillet_instruction_change_percent_vs_region_line_arc": -21.853369,
+    "line_quadratic_chamfer_instruction_change_percent_vs_line_arc": 164.025982,
+    "region_line_quadratic_chamfer_instruction_change_percent_vs_region_line_arc": 46.106522,
+    "interpretation": "the low-degree supporting-line incidence is cheaper than native line/circle fillet support solving on this fixture; complete setback-circle root isolation is costlier than the native analytic chamfer"
+  },
+  "heaptrack_1000_operations": {
+    "method": "Heaptrack record-only direct final release benchmark processes; heaptrack_print summaries are authoritative and include fixed process plus fixture construction",
+    "line_quadratic_chamfer": {
+      "allocation_calls": 1086680,
+      "temporary_allocations": 179015,
+      "peak_heap_kib": 123.41
+    },
+    "line_quadratic_fillet": {
+      "allocation_calls": 843592,
+      "temporary_allocations": 92015,
+      "peak_heap_kib": 116.33
+    },
+    "degree5_rational_chamfer": {
+      "allocation_calls": 1175767,
+      "temporary_allocations": 179039,
+      "peak_heap_kib": 128.38
+    },
+    "degree5_rational_fillet": {
+      "allocation_calls": 949685,
+      "temporary_allocations": 92039,
+      "peak_heap_kib": 122.11
+    },
+    "arc_quadratic_fillet": {
+      "allocation_calls": 3700101,
+      "temporary_allocations": 670109,
+      "peak_heap_kib": 196.80
+    },
+    "region_line_quadratic_chamfer": {
+      "allocation_calls": 1143743,
+      "temporary_allocations": 182015,
+      "peak_heap_kib": 131.12
+    },
+    "region_line_quadratic_fillet": {
+      "allocation_calls": 917699,
+      "temporary_allocations": 95015,
+      "peak_heap_kib": 132.04
+    },
+    "cubic_ph_pair_fillet": {
+      "allocation_calls": 1672837,
+      "temporary_allocations": 168003,
+      "peak_heap_kib": 149.61
+    },
+    "next_optimization_target": "arc/Bezier circle incidence dominates both instruction and allocation cost; root isolation and radical-coefficient arithmetic are the measured targets"
+  },
+  "representative_linked_size": {
+    "benchmark": "curve_region_boolean_batch",
+    "baseline": "2026-08-04-retained-rational-circle-corner-carriers.json",
+    "all_features": {
+      "artifact": "target/release/deps/curve_region_boolean_batch-873fdf750dbe978a",
+      "artifact_sha256": "f890ead15997bcefbbf93b282bdf57ae43eb7ecf26edf0c0017fb13128222845",
+      "candidate_text_bytes": 4982231,
+      "text_change_bytes": -10000,
+      "text_change_percent": -0.200311,
+      "candidate_file_bytes": 8673456,
+      "file_change_bytes": -17856,
+      "file_change_percent": -0.205447
+    },
+    "no_default_features": {
+      "artifact": "target/release/deps/curve_region_boolean_batch-ec1852ae82ff67f7",
+      "artifact_sha256": "99c53ade28021df25e3c8daf7484e4df0e01ab2ecfba54f82e8b599f06b2a260",
+      "candidate_text_bytes": 4542535,
+      "text_change_bytes": 464,
+      "text_change_percent": 0.010216,
+      "candidate_file_bytes": 7958136,
+      "file_change_bytes": -408,
+      "file_change_percent": -0.005127
+    },
+    "dependency_note": "Hypertri advanced concurrently but is not on this representative benchmark's retained corner route; Hyperreal, Hyperlattice, Hyperlimit, and Hypersolve match the baseline snapshot"
+  },
+  "static_callgraph": {
+    "command": "tools/hyper-callgraph/target/release/hyper-callgraph --root hypercurve --out-dir hypercurve/target/callgraph-hypercurve-represented-bezier-07ef15b --crate-name hypercurve --include-tests --format json --per-library",
+    "artifact": "target/callgraph-hypercurve-represented-bezier-07ef15b/callgraph.json",
+    "nodes": 24436,
+    "edges": 46579,
+    "curve_path_route": "CurvePath chamfer/fillet -> exact_corner_carrier -> solve_exact_chamfer_corner/solve_exact_fillet_corner",
+    "curve_region_route": "CurveRegion native acceleration or materialized CurvePath fallback -> the same shared solver authority",
+    "mixed_routes": "fillet_offset_centers -> supporting_line_incidence or circle_incidence",
+    "pair_route": "fillet_offset_centers -> parallel_intersections_fast_path -> structural overlap or exact rational/PH intersection",
+    "complete_arrangement_route_preserved": "parallel_intersections -> the same fast prefix -> general projection and Hypersolve replay",
+    "historical_higher_order_corner_engine_present": false
+  },
+  "competitive_context": {
+    "exact_peer_available": false,
+    "line_arc_offset_control": {
+      "command": "taskset -c 11 env HYPERCURVE_COMPARE_SAMPLES=11 HYPERCURVE_COMPARE_SAMPLE_MS=100 HYPERCURVE_COMPARE_GROUP=line_arc_offset/capsule_inward target/release/deps/comparative-68819996ab3fdf67",
+      "hypercurve_exact_median_ns": 20265.4,
+      "cavalier_contours_f64_median_ns": 936.6,
+      "hypercurve_to_cavalier_ratio": 21.637198
+    },
+    "open_cubic_offset_control": {
+      "command": "taskset -c 11 env HYPERCURVE_COMPARE_SAMPLES=11 HYPERCURVE_COMPARE_SAMPLE_MS=100 HYPERCURVE_COMPARE_GROUP=bezier_offset/open_cubic target/release/deps/comparative-68819996ab3fdf67",
+      "hypercurve_certified_median_ns": 30845968.0,
+      "hypercurve_chord_fallback_median_ns": 1018416.5,
+      "curvo_heuristic_median_ns": 8671.6,
+      "certified_to_curvo_ratio": 3557.125329,
+      "chord_fallback_to_curvo_ratio": 117.442744
+    },
+    "benchmark_executable_sha256": "ed750e35f2d0e98051313abb403da190b24df0a9f062efcc4a5acdb0fa397f49",
+    "scope_note": "Cavalier and Curvo are finite-throughput optimization targets, not correctness-equivalent peers: neither returns canonical-Real exact trims, complete algebraic candidates, CurveRegion2 topology, or STRICT/APPROXIMATE_512 evidence"
+  },
+  "remaining_scope": [
+    "public algebraic parameter and point carriers so admissible non-rational general-pair contacts can materialize without rounding",
+    "bounded complete non-PH parallel-pair corner solving through the existing Hypersolve authority without the measured 21-second rejected path",
+    "polynomial spline and NURBS span delegation with exact public-domain parameter transport",
+    "projective TrimOrExtend semantics for retained conics and direct rational carriers",
+    "complete singularity, pole, cusp, coincident, and multi-contact branch matrices under both policies",
+    "arc/Bezier circle-incidence allocation and root-isolation optimization",
+    "single authoritative CurveRegion2 offset engine",
+    "single authoritative CurveRegion2 Boolean engine and historical engine deletion",
+    "caller migration without compatibility shims"
+  ]
+}

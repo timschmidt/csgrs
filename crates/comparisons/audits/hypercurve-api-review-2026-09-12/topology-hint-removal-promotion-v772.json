@@ -1,0 +1,185 @@
+{
+  "candidates": {
+    "hypercurve/benches/bezier_region.rs": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/topology-hint-removal-candidate-v772/hypercurve/benches/bezier_region.rs",
+    "hypercurve/benches/comparative.rs": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/topology-hint-removal-candidate-v772/hypercurve/benches/comparative.rs",
+    "hypercurve/benches/curve_path.rs": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/topology-hint-removal-candidate-v772/hypercurve/benches/curve_path.rs",
+    "hypercurve/benches/curve_region_boolean_batch.rs": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/topology-hint-removal-candidate-v772/hypercurve/benches/curve_region_boolean_batch.rs",
+    "hypercurve/benches/editing.rs": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/topology-hint-removal-candidate-v772/hypercurve/benches/editing.rs",
+    "hypercurve/benches/offset.rs": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/topology-hint-removal-candidate-v772/hypercurve/benches/offset.rs",
+    "hypercurve/src/bezier_region.rs": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/topology-hint-removal-candidate-v772/hypercurve/src/bezier_region.rs",
+    "hypercurve/src/curve_region_boolean.rs": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/topology-hint-removal-candidate-v772/hypercurve/src/curve_region_boolean.rs",
+    "hypercurve/src/curve_region_trim.rs": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/topology-hint-removal-candidate-v772/hypercurve/src/curve_region_trim.rs",
+    "hypercurve/tests/hypercurve_analytic_parallel_region.rs": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/topology-hint-removal-candidate-v772/hypercurve/tests/hypercurve_analytic_parallel_region.rs",
+    "hypercurve/tests/hypercurve_bezier_region.rs": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/topology-hint-removal-candidate-v772/hypercurve/tests/hypercurve_bezier_region.rs",
+    "hypercurve/tests/hypercurve_curve_intersection.rs": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/topology-hint-removal-candidate-v772/hypercurve/tests/hypercurve_curve_intersection.rs",
+    "hypercurve/tests/hypercurve_curve_region_boolean.rs": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/topology-hint-removal-candidate-v772/hypercurve/tests/hypercurve_curve_region_boolean.rs",
+    "hypercurve/tests/hypercurve_curve_region_boolean_fuzz.rs": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/topology-hint-removal-candidate-v772/hypercurve/tests/hypercurve_curve_region_boolean_fuzz.rs",
+    "hypercurve/tests/hypercurve_curve_region_promotion.rs": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/topology-hint-removal-candidate-v772/hypercurve/tests/hypercurve_curve_region_promotion.rs",
+    "hypercurve/src/lib.rs": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/topology-hint-removal-candidate-v772/hypercurve/src/lib.rs",
+    "hypercurve/README.md": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/topology-hint-removal-candidate-v772/hypercurve/README.md",
+    "hypercurve/src/bezier_offset.rs": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/topology-hint-removal-candidate-v772/hypercurve/src/bezier_offset.rs"
+  },
+  "base": {
+    "hypercurve/benches/bezier_region.rs": "5faf6095a3e729123a9bbcd4fb75a5fa5ca6c4c46ddc8a4748ea2d0dadf33410",
+    "hypercurve/benches/comparative.rs": "16b8ab23c42d029192aad79ee62980c6be863d3de1523cdb56b8a876c1ed4b30",
+    "hypercurve/benches/curve_path.rs": "2a2d16bbe5656f0be4f7f1f12d7d0b073d48b9cd37e93a28f0cf3a0a495eb89c",
+    "hypercurve/benches/curve_region_boolean_batch.rs": "db707b49823f9854fb1138829e241dbc708ca4d9a00d16a5867475a0538c5390",
+    "hypercurve/benches/editing.rs": "6f7735e63b8569ee38e416b62171e1e44861cfe2871d77e271d1da43a835cc6a",
+    "hypercurve/benches/offset.rs": "e1455d495f8dfa161dd331731a0063a85dbae1167b27f55c6cfe705b846412f5",
+    "hypercurve/src/bezier_region.rs": "f40395306e3164ecb72e046323e4096cf5b9c107f093170312c2bc47158b016f",
+    "hypercurve/src/curve_region_boolean.rs": "8dab39b80747380017117e7250b4090214ed23e79764e017a26280d8f9573b1e",
+    "hypercurve/src/curve_region_trim.rs": "b24e3c78a62a1f1acbfc58d4587eb082aa3afdbefae37b3af1d61c4d45e8048e",
+    "hypercurve/tests/hypercurve_analytic_parallel_region.rs": "e57b69490893122980dfd9d9becaa03ad8be81f0cb020a33145ca771e51b68ff",
+    "hypercurve/tests/hypercurve_bezier_region.rs": "05265cf0478b3864fc77e56a81c03b92ac4200bce063e4156a303555d063905d",
+    "hypercurve/tests/hypercurve_curve_intersection.rs": "1a84dccfefdce58cbd90e47689e71567a85e8def469d07b2892da35d832b26b4",
+    "hypercurve/tests/hypercurve_curve_region_boolean.rs": "3c573635fe01046d8140fc2a9e7baac4a85de33f865c0761f294ac22480b128a",
+    "hypercurve/tests/hypercurve_curve_region_boolean_fuzz.rs": "a8925a496b1936ff5a5d49f89addc428ce10bd96a6ba7a56d8b4bb54b34e314d",
+    "hypercurve/tests/hypercurve_curve_region_promotion.rs": "5b3c78ccd200ed0ad6a3138f320c94ccaad333b37647ad34cdcde43369d432e9",
+    "hypercurve/src/lib.rs": "0cfe54aab6be15c27d4ac8e7ad545d378ad57d7a75134eeaff9d5a5f87796e2d",
+    "hypercurve/README.md": "f21786668743903e2ab8cebcc72168829cd7c085dbbc11ccb63335f01430c705",
+    "hypercurve/src/bezier_offset.rs": "81ac6e6b0ec7c2081b94841be51e71903af9d542a174b64e2d2cf264af639a05"
+  },
+  "promoted": {
+    "hypercurve/benches/bezier_region.rs": "7f902d724c0eb9abec685dbef5e58e2503c4a3abb263e0ac01ec29b53ae2145f",
+    "hypercurve/benches/comparative.rs": "1973bb22ffd813346fc83af7ffa89369875aca9c6e780668f91a94dfdab1714e",
+    "hypercurve/benches/curve_path.rs": "b1acd1cbea4603f2b00f1a3c1169191e8cf4e33227b6e00ecce0c06eaed1d25c",
+    "hypercurve/benches/curve_region_boolean_batch.rs": "d5d814d872b4da2127cc6ece536696708f6de19d8d4d50791685c4f53a947b88",
+    "hypercurve/benches/editing.rs": "22398ddda7d5f434bf6ffc91fec633a956606eae3f62261717b8c17d76db2f10",
+    "hypercurve/benches/offset.rs": "fd4c00390f655849cbb8e54c82d1e2314d2d71fe45b3086e1f20156c6add6987",
+    "hypercurve/src/bezier_region.rs": "9cdf18c9ca0093b1b919c5c47021e7fb3b46263c56b3971b9ee0503ef18b2161",
+    "hypercurve/src/curve_region_boolean.rs": "9844f30375ffee9e3dd6cc473fe09f56694d6818936128ff14b4aa23785e53f0",
+    "hypercurve/src/curve_region_trim.rs": "1165057bcc0e7250bbb6602bfb04f565d36987e2e6b51458f2f416648a75104b",
+    "hypercurve/tests/hypercurve_analytic_parallel_region.rs": "aab8df95077fe8e5269d7a203241b569968b604c25b2543810f92194a22a4b04",
+    "hypercurve/tests/hypercurve_bezier_region.rs": "f4d1524bf25262e932a518cb53b132871f808e35738d7618425debff4e25a77b",
+    "hypercurve/tests/hypercurve_curve_intersection.rs": "f643ba013028b10d0f74fd946cacb735397f487a063cf17cf919b885e7653b08",
+    "hypercurve/tests/hypercurve_curve_region_boolean.rs": "1593408fdc69563a662574ccfa7fe3090188f75f80bae97983304be9affb5121",
+    "hypercurve/tests/hypercurve_curve_region_boolean_fuzz.rs": "0059f6c0340b3ec1d900b9ec438cc441595eea89ae825a7b237ba8747c03ee61",
+    "hypercurve/tests/hypercurve_curve_region_promotion.rs": "ad4fcf4dfeb4654cf0efd21376d62a4fdbd5cb80f92be1d8c8b8be6faf1fb1d5",
+    "hypercurve/src/lib.rs": "6f76ec1b8c3dcd2ed81da67307539536dddee7c81caee561162602c555a6954e",
+    "hypercurve/README.md": "4b70917b0a5f4ce1b1a955dde68635b08841795c0c72e7b26763265f0c67355f",
+    "hypercurve/src/bezier_offset.rs": "d6e4cd5a587dabd8f22920886f5710e33e277d8b546f108422bf8181afe2cc98"
+  },
+  "parents": {
+    "ExactCalculator": {
+      "head": "7265aa3a922a7e7c0389dae4b26cca562aa777a6",
+      "status": ""
+    },
+    "NURBS_BREP_kernel": {
+      "head": "1aef37b12a92c993c2046f7886593bb0a555c414",
+      "status": ""
+    },
+    "alumina-firmware": {
+      "head": "bdee397d0b80841f16bf17e7bcd029b4feb2c212",
+      "status": ""
+    },
+    "alumina-interface": {
+      "head": "b21c9214c59d41e8272b8644dd436b44b7e15e89",
+      "status": ""
+    },
+    "citizen-builder": {
+      "head": "c4230238e28fd88fc8156fceb2c43698e67c27ca",
+      "status": ""
+    },
+    "crcalc": {
+      "head": "4f398d699c9d498deb45520ea7ebb020627bc640",
+      "status": ""
+    },
+    "csgrs": {
+      "head": "87245cca303b105b4c8044e6a1e9663af3292472",
+      "status": ""
+    },
+    "csgrs-ffi": {
+      "head": "6057435ce4c0b37bac99aec29922b90e6652c575",
+      "status": ""
+    },
+    "exactcore-hyper-comparison": {
+      "head": "74b90b328f720997d38da80af5620f167b3b0619",
+      "status": ""
+    },
+    "hyperbrep": {
+      "head": "817593f3c17f4eb3f02d7174dc1691e2bf6ee0f3",
+      "status": ""
+    },
+    "hypercircuit": {
+      "head": "ad421497ce6e88fe936818ec198c8a1b779776c7",
+      "status": ""
+    },
+    "hypercurve": {
+      "head": "e9864c4768a508edf51fd844299ea0274cf7bfa7",
+      "status": ""
+    },
+    "hyperdrc": {
+      "head": "ce49bba5d16f78ae8559a0eabe3e4478b72fd4bf",
+      "status": ""
+    },
+    "hyperevolution": {
+      "head": "99645e3cefb7eea3af86abc15db68f7fcb31ca95",
+      "status": ""
+    },
+    "hypergraphics": {
+      "head": "75219dede7a2387ab30c84664b1293ec71d736d2",
+      "status": ""
+    },
+    "hyperlattice": {
+      "head": "035a8c822ca60e30daf0e3143843a65be0e6aedb",
+      "status": ""
+    },
+    "hyperlimit": {
+      "head": "d80f53329d7cab4130c62c2cbd4ec2d9f73c7c43",
+      "status": ""
+    },
+    "hypermesh": {
+      "head": "55cc20ada8bc502f1b3c1651b422f0a040239060",
+      "status": ""
+    },
+    "hyperpack": {
+      "head": "34857861561d643d7578753b8f8314d0fbca2c5b",
+      "status": ""
+    },
+    "hyperparts": {
+      "head": "d8626e9d36256afc4a8eb0380ae94c9ed5619107",
+      "status": ""
+    },
+    "hyperpath": {
+      "head": "96d03475ba4c5e971943a775898cbc697a132154",
+      "status": ""
+    },
+    "hyperphysics": {
+      "head": "dcbc7cf3489a1299de16a946fd7f5e5658b6f15f",
+      "status": ""
+    },
+    "hyperreal": {
+      "head": "a4b5a570155cb3bccbbe4679522b5cd3f962c174",
+      "status": ""
+    },
+    "hypersdf": {
+      "head": "b37825900457420cb64da385b8525acab33e31c5",
+      "status": ""
+    },
+    "hypersolve": {
+      "head": "106130aa5c45672fe170386635ad7e94741097d7",
+      "status": ""
+    },
+    "hypertri": {
+      "head": "6a2092c066964f3b7528299a72ef0ed1af4b1ff0",
+      "status": ""
+    },
+    "hypervoxel": {
+      "head": "0486b1465a249a04973520a4138a39395ded2f23",
+      "status": ""
+    },
+    "openscad-rs": {
+      "head": "f21b39486a6b35403ee8af9e7fba7cb62a045a5a",
+      "status": ""
+    },
+    "synaps-cad": {
+      "head": "da8da78636e573c04f8a5c4cd8cc900162b781ba",
+      "status": ""
+    },
+    "videos": {
+      "head": "4209b983cc0d937981f22a6fa7df384303fcc8bd",
+      "status": ""
+    }
+  },
+  "prior_failed_qualification": "topology-hint-removal-v771-terminal.json"
+}

@@ -1,0 +1,39 @@
+{
+  "baseline": "nesting-result-removal-v757-sources.json",
+  "rlib": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypercurve-85a9105cd1c82df7.rlib",
+  "rlib_sha256": "9e6b346b029ee63c8fb0d3697152e88d32d446e6c3cade02740e92d00ca980a8",
+  "source_sha256": "6d6bba909a7707085a34a3688345f28c0090ede2f88b9898c7ece09a9868e7bf",
+  "processes": [
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustc",
+        "--edition=2024",
+        "--crate-name",
+        "region_admission_probe",
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/region-admission-probe-v761.rs",
+        "--extern",
+        "hypercurve=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypercurve-85a9105cd1c82df7.rlib",
+        "-L",
+        "dependency=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps",
+        "-C",
+        "opt-level=3",
+        "-o",
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/region-admission-probe-v761-binary"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.3142651589587331,
+      "log": "region-admission-probe-v761-compile.log"
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/region-admission-probe-v761-binary"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.00357753480784595,
+      "log": "region-admission-probe-v761-run.log"
+    }
+  ],
+  "all_processes_reaped": true,
+  "binary_sha256": "d6e1ab7e94f9b3e9708c37d5365983b8c27606d5963c68b82c929aab9be9c4c9",
+  "reproduced_empty_offset_and_raw_recovery_defects": true
+}

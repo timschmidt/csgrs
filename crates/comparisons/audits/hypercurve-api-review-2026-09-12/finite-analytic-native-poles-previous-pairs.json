@@ -1,0 +1,26 @@
+{
+  "returncode": 0,
+  "elapsed_seconds": 0.11384762500529177,
+  "normal_library_sha256": "80e20958e5d3b5d992cd8a64349c236522867b1c89147c36fd889e417c5c85ba",
+  "log": "finite-analytic-native-poles-previous-pairs.log",
+  "source": "finite-analytic-pair-domains-public.rs",
+  "command": [
+    "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustc",
+    "--edition=2024",
+    "-O",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-analytic-pair-domains-public.rs",
+    "--extern",
+    "hypercurve=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypercurve-49e17f22910a7047.rlib",
+    "-L",
+    "dependency=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps",
+    "-o",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-analytic-native-poles-previous-pairs"
+  ],
+  "source_sha256": "1454fbfaa47cf90e8312b20bc4f6d255d7e2145646ec96e8ccdae85071f71046",
+  "executable_sha256": "c9656d90f48744b38413e02661540c435b7b4ec6ed6af239b2d62caa71bc23e6",
+  "counts": {
+    "cases": 128,
+    "exact_contacts": 128,
+    "failures": 0
+  }
+}

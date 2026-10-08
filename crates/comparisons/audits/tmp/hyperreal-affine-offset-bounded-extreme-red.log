@@ -1,0 +1,19 @@
+   Compiling hyperreal v0.13.1 (/home/tim/Documents/GitHub/workspace/hyperreal)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 2.38s
+     Running unittests src/lib.rs (target/debug/deps/hyperreal-99435bbe0ce6f1f3)
+
+running 1 test
+
+thread 'computable::node::tests::affine_offset_scaling_keeps_extreme_binary_exponents_exact' (331) panicked at src/computable/node/algebra.rs:1229:45:
+attempt to add with overflow
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+test computable::node::tests::affine_offset_scaling_keeps_extreme_binary_exponents_exact ... FAILED
+
+failures:
+
+failures:
+    computable::node::tests::affine_offset_scaling_keeps_extreme_binary_exponents_exact
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 724 filtered out; finished in 0.00s
+
+error: test failed, to rerun pass `--lib`

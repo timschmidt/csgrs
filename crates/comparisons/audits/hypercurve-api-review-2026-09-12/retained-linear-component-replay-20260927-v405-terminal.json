@@ -1,0 +1,273 @@
+{
+  "source_manifest": "retained-linear-component-replay-20260927-v405-sources.json",
+  "source_directory": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/source-archives/retained-linear-component-replay-20260927-v405",
+  "cases": [
+    {
+      "binary": "retained-linear-component-replay-20260927-v405-hypercurve",
+      "name": "bezier_offset::conversion_tests::bivariate_products_accept_empty_zero_coefficients",
+      "returncode": 0,
+      "log": "retained-linear-component-replay-20260927-v405-case-000.log",
+      "elapsed_seconds": 0.003553386079147458
+    },
+    {
+      "binary": "retained-linear-component-replay-20260927-v405-hypercurve",
+      "name": "curve::curve_fillet::tests::nonlinear_linear_fillet_components_retain_unique_contacts_and_tangents",
+      "returncode": 0,
+      "log": "retained-linear-component-replay-20260927-v405-case-001.log",
+      "elapsed_seconds": 2.817271249135956
+    },
+    {
+      "binary": "retained-linear-component-replay-20260927-v405-hypercurve",
+      "name": "curve::curve_fillet::tests::coincident_circular_fillet_families_use_the_surviving_rational_intervals",
+      "returncode": 0,
+      "log": "retained-linear-component-replay-20260927-v405-case-002.log",
+      "elapsed_seconds": 0.01568833994679153
+    },
+    {
+      "binary": "retained-linear-component-replay-20260927-v405-hypercurve",
+      "name": "curve::curve_fillet::tests::coincident_circular_fillet_constraints_complete_the_authored_chart_solutions",
+      "returncode": 0,
+      "log": "retained-linear-component-replay-20260927-v405-case-003.log",
+      "elapsed_seconds": 1.0651007120031863
+    },
+    {
+      "binary": "retained-linear-component-replay-20260927-v405-hypercurve",
+      "name": "curve::curve_fillet::tests::coincident_circular_fillet_domains_distinguish_families_and_isolated_contacts",
+      "returncode": 0,
+      "log": "retained-linear-component-replay-20260927-v405-case-004.log",
+      "elapsed_seconds": 0.0036345100961625576
+    },
+    {
+      "binary": "retained-linear-component-replay-20260927-v405-hypercurve",
+      "name": "curve::curve_fillet::tests::collapsed_selected_circle_fillet_crosses_seams_and_reenters_region_editing",
+      "returncode": 0,
+      "log": "retained-linear-component-replay-20260927-v405-case-005.log",
+      "elapsed_seconds": 16.184531959006563
+    },
+    {
+      "binary": "retained-linear-component-replay-20260927-v405-hypercurve",
+      "name": "curve::curve_fillet::tests::collapsed_selected_circle_fillet_reuses_constrained_contacts_and_support",
+      "returncode": 0,
+      "log": "retained-linear-component-replay-20260927-v405-case-006.log",
+      "elapsed_seconds": 40.66595495515503
+    },
+    {
+      "binary": "retained-linear-component-replay-20260927-v405-hypercurve",
+      "name": "curve::curve_fillet::tests::native_circle_fillet_retains_selected_contacts_through_reconstruction",
+      "returncode": 0,
+      "log": "retained-linear-component-replay-20260927-v405-case-007.log",
+      "elapsed_seconds": 0.21400222880765796
+    },
+    {
+      "binary": "retained-linear-component-replay-20260927-v405-hypercurve",
+      "name": "curve::curve_fillet::tests::coincident_line_fillet_constraints_complete_the_authored_chart_solutions",
+      "returncode": 0,
+      "log": "retained-linear-component-replay-20260927-v405-case-008.log",
+      "elapsed_seconds": 0.11385512305423617
+    },
+    {
+      "binary": "retained-linear-component-replay-20260927-v405-hypercurve",
+      "name": "curve::curve_fillet::tests::coincident_linear_fillet_domains_exclude_remote_endpoints",
+      "returncode": 0,
+      "log": "retained-linear-component-replay-20260927-v405-case-009.log",
+      "elapsed_seconds": 0.0075898971408605576
+    },
+    {
+      "binary": "retained-linear-component-replay-20260927-v405-hypercurve",
+      "name": "curve::curve_fillet::tests::coincident_retained_line_fillet_keeps_independent_endpoint_fields",
+      "returncode": 0,
+      "log": "retained-linear-component-replay-20260927-v405-case-010.log",
+      "elapsed_seconds": 0.11385242315009236
+    },
+    {
+      "binary": "retained-linear-component-replay-20260927-v405-hypercurve",
+      "name": "curve::curve_fillet::tests::collapsed_parallel_fillet_requires_the_original_circle_normal",
+      "returncode": 0,
+      "log": "retained-linear-component-replay-20260927-v405-case-011.log",
+      "elapsed_seconds": 0.007627324899658561
+    },
+    {
+      "binary": "retained-linear-component-replay-20260927-v405-hypercurve",
+      "name": "curve::curve_fillet::tests::collapsed_circle_parallel_fillet_replays_contacts_and_normal_sheets",
+      "returncode": 0,
+      "log": "retained-linear-component-replay-20260927-v405-case-012.log",
+      "elapsed_seconds": 0.03165192110463977
+    },
+    {
+      "binary": "retained-linear-component-replay-20260927-v405-hypercurve",
+      "name": "curve::curve_fillet::tests::collapsed_fillet_point_contacts_preserve_distinct_bezier_preimages",
+      "returncode": 0,
+      "log": "retained-linear-component-replay-20260927-v405-case-013.log",
+      "elapsed_seconds": 0.007562709040939808
+    },
+    {
+      "binary": "retained-linear-component-replay-20260927-v405-hypercurve",
+      "name": "curve::curve_fillet::tests::collapsed_circle_fillet_requires_each_free_contact_and_preserves_exact_trims",
+      "returncode": 0,
+      "log": "retained-linear-component-replay-20260927-v405-case-014.log",
+      "elapsed_seconds": 0.03174201492220163
+    },
+    {
+      "binary": "retained-linear-component-replay-20260927-v405-hypercurve",
+      "name": "curve::curve_fillet::tests::collapsed_circular_spline_fillets_keep_authored_contact_parameters",
+      "returncode": 0,
+      "log": "retained-linear-component-replay-20260927-v405-case-015.log",
+      "elapsed_seconds": 0.00757473916746676
+    },
+    {
+      "binary": "retained-linear-component-replay-20260927-v405-hypercurve",
+      "name": "bezier_offset::parameter_component::tests::contact_constraints_distinguish_free_axes_from_empty_components",
+      "returncode": 0,
+      "log": "retained-linear-component-replay-20260927-v405-case-016.log",
+      "elapsed_seconds": 0.0035285968333482742
+    },
+    {
+      "binary": "retained-linear-component-replay-20260927-v405-hypercurve",
+      "name": "bezier_offset::parameter_component::tests::incident_charts_keep_poles_and_finite_ownership_excluded",
+      "returncode": 0,
+      "log": "retained-linear-component-replay-20260927-v405-case-017.log",
+      "elapsed_seconds": 0.0035377659369260073
+    },
+    {
+      "binary": "retained-linear-component-replay-20260927-v405-hypercurve",
+      "name": "bezier_offset::parameter_component::tests::one_contact_replays_correspondence_through_both_source_charts",
+      "returncode": 0,
+      "log": "retained-linear-component-replay-20260927-v405-case-018.log",
+      "elapsed_seconds": 0.003557685064151883
+    },
+    {
+      "binary": "retained-linear-component-replay-20260927-v405-hypercurve",
+      "name": "bezier_offset::parameter_component::tests::product_components_keep_fixed_axes_and_operand_roles",
+      "returncode": 0,
+      "log": "retained-linear-component-replay-20260927-v405-case-019.log",
+      "elapsed_seconds": 0.003527637105435133
+    },
+    {
+      "binary": "retained-linear-component-replay-20260927-v405-hypercurve",
+      "name": "curve::curve_fillet::tests::circular_spline_contact_parameters_distinguish_repeated_point_visits",
+      "returncode": 0,
+      "log": "retained-linear-component-replay-20260927-v405-case-020.log",
+      "elapsed_seconds": 0.007565628970041871
+    },
+    {
+      "binary": "retained-linear-component-replay-20260927-v405-hypercurve",
+      "name": "curve::curve_fillet::tests::continuous_fillet_constraints_accept_arbitrary_exact_real_contacts",
+      "returncode": 0,
+      "log": "retained-linear-component-replay-20260927-v405-case-021.log",
+      "elapsed_seconds": 0.21398367010988295
+    },
+    {
+      "binary": "retained-linear-component-replay-20260927-v405-hypercurve",
+      "name": "curve::curve_fillet::tests::fillet_contacts_use_authored_spline_knots_across_multiple_charts",
+      "returncode": 0,
+      "log": "retained-linear-component-replay-20260927-v405-case-022.log",
+      "elapsed_seconds": 0.0036142522003501654
+    },
+    {
+      "binary": "retained-linear-component-replay-20260927-v405-hypercurve",
+      "name": "curve::curve_fillet::tests::isolated_fillet_constraints_are_conjunctive_and_use_input_parameters",
+      "returncode": 0,
+      "log": "retained-linear-component-replay-20260927-v405-case-023.log",
+      "elapsed_seconds": 0.003523366991430521
+    },
+    {
+      "binary": "retained-linear-component-replay-20260927-v405-hypercurve",
+      "name": "curve::curve_fillet::tests::joined_path_selects_and_replays_a_continuous_fillet_family",
+      "returncode": 0,
+      "log": "retained-linear-component-replay-20260927-v405-case-024.log",
+      "elapsed_seconds": 2.967456939863041
+    },
+    {
+      "binary": "retained-linear-component-replay-20260927-v405-hypercurve",
+      "name": "curve::curve_fillet::tests::normalized_region_selects_and_reuses_a_continuous_fillet_family",
+      "returncode": 0,
+      "log": "retained-linear-component-replay-20260927-v405-case-025.log",
+      "elapsed_seconds": 0.11394427693448961
+    },
+    {
+      "binary": "retained-linear-component-replay-20260927-v405-hypercurve",
+      "name": "curve::curve_fillet::tests::promoted_line_contact_constraints_keep_the_nonlinear_source_chart",
+      "returncode": 0,
+      "log": "retained-linear-component-replay-20260927-v405-case-026.log",
+      "elapsed_seconds": 0.003703925060108304
+    },
+    {
+      "binary": "retained-linear-component-replay-20260927-v405-hypercurve",
+      "name": "bezier_offset::conversion_tests::selected_parallel_normal_incident_circle_selects_the_positive_speed_component",
+      "returncode": 0,
+      "log": "retained-linear-component-replay-20260927-v405-case-027.log",
+      "elapsed_seconds": 0.007648703875020146
+    },
+    {
+      "binary": "retained-linear-component-replay-20260927-v405-hypercurve",
+      "name": "bezier_offset::conversion_tests::selected_parallel_normal_positive_dimensional_projection_rejects_conjugate_components",
+      "returncode": 0,
+      "log": "retained-linear-component-replay-20260927-v405-case-028.log",
+      "elapsed_seconds": 0.003551685018464923
+    }
+  ],
+  "builds": [
+    {
+      "crate": "hypercurve",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "test",
+        "--lib",
+        "--release",
+        "--all-features",
+        "--no-run",
+        "--message-format=json",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "log": "retained-linear-component-replay-20260927-v405-hypercurve-build.log",
+      "elapsed_seconds": 129.69324709894136,
+      "binary": {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-linear-component-replay-20260927-v405-hypercurve",
+        "sha256": "9785f497d7446b50d30aa4c31a9834c1e4da5633ef0edea4ef3cc977b266b5c6"
+      }
+    }
+  ],
+  "all_processes_reaped": true,
+  "checks": [],
+  "qualification_scope": "Retained chords use an exact affine solve chart and retain original output locations",
+  "expected_cases": {
+    "hypercurve": [
+      "bezier_offset::conversion_tests::bivariate_products_accept_empty_zero_coefficients",
+      "curve::curve_fillet::tests::nonlinear_linear_fillet_components_retain_unique_contacts_and_tangents",
+      "curve::curve_fillet::tests::coincident_circular_fillet_families_use_the_surviving_rational_intervals",
+      "curve::curve_fillet::tests::coincident_circular_fillet_constraints_complete_the_authored_chart_solutions",
+      "curve::curve_fillet::tests::coincident_circular_fillet_domains_distinguish_families_and_isolated_contacts",
+      "curve::curve_fillet::tests::collapsed_selected_circle_fillet_crosses_seams_and_reenters_region_editing",
+      "curve::curve_fillet::tests::collapsed_selected_circle_fillet_reuses_constrained_contacts_and_support",
+      "curve::curve_fillet::tests::native_circle_fillet_retains_selected_contacts_through_reconstruction",
+      "curve::curve_fillet::tests::coincident_line_fillet_constraints_complete_the_authored_chart_solutions",
+      "curve::curve_fillet::tests::coincident_linear_fillet_domains_exclude_remote_endpoints",
+      "curve::curve_fillet::tests::coincident_retained_line_fillet_keeps_independent_endpoint_fields",
+      "curve::curve_fillet::tests::collapsed_parallel_fillet_requires_the_original_circle_normal",
+      "curve::curve_fillet::tests::collapsed_circle_parallel_fillet_replays_contacts_and_normal_sheets",
+      "curve::curve_fillet::tests::collapsed_fillet_point_contacts_preserve_distinct_bezier_preimages",
+      "curve::curve_fillet::tests::collapsed_circle_fillet_requires_each_free_contact_and_preserves_exact_trims",
+      "curve::curve_fillet::tests::collapsed_circular_spline_fillets_keep_authored_contact_parameters",
+      "bezier_offset::parameter_component::tests::contact_constraints_distinguish_free_axes_from_empty_components",
+      "bezier_offset::parameter_component::tests::incident_charts_keep_poles_and_finite_ownership_excluded",
+      "bezier_offset::parameter_component::tests::one_contact_replays_correspondence_through_both_source_charts",
+      "bezier_offset::parameter_component::tests::product_components_keep_fixed_axes_and_operand_roles",
+      "curve::curve_fillet::tests::circular_spline_contact_parameters_distinguish_repeated_point_visits",
+      "curve::curve_fillet::tests::continuous_fillet_constraints_accept_arbitrary_exact_real_contacts",
+      "curve::curve_fillet::tests::fillet_contacts_use_authored_spline_knots_across_multiple_charts",
+      "curve::curve_fillet::tests::isolated_fillet_constraints_are_conjunctive_and_use_input_parameters",
+      "curve::curve_fillet::tests::joined_path_selects_and_replays_a_continuous_fillet_family",
+      "curve::curve_fillet::tests::normalized_region_selects_and_reuses_a_continuous_fillet_family",
+      "curve::curve_fillet::tests::promoted_line_contact_constraints_keep_the_nonlinear_source_chart",
+      "bezier_offset::conversion_tests::selected_parallel_normal_incident_circle_selects_the_positive_speed_component",
+      "bezier_offset::conversion_tests::selected_parallel_normal_positive_dimensional_projection_rejects_conjugate_components"
+    ]
+  },
+  "known_unresolved": [
+    "strict_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions",
+    "approximate_512_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions"
+  ],
+  "qualification_complete": true
+}

@@ -1,0 +1,13 @@
+{
+  "tag": "point-cold-verify",
+  "started": "2026-09-10T23:21:33.421Z",
+  "finished": "2026-09-10T23:22:40.971Z",
+  "elapsedSeconds": 67.547886206,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "node",
+  "args": [
+    "verify-point-cold.mjs"
+  ],
+  "code": 0,
+  "signal": null
+}

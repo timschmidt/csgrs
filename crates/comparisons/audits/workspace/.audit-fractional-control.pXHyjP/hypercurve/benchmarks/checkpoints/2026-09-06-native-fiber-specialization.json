@@ -1,0 +1,2710 @@
+{
+  "schema_version": 1,
+  "title": "Authoritative native fiber specialization and full selected-fiber allocation accounting",
+  "completed_at": "2026-09-06 05:01:40 UTC",
+  "finalized_at": "2026-09-06 05:05:43 UTC",
+  "artifact_integrity_audit": {"verified_files":175,"exit":0,"log":"/home/tim/Documents/GitHub/workspace/hypercurve/target/native-fiber-profile.brJ3C6/artifact-sha256-audit.log","sha256":"76344cee493c2ac498355daf3425e557310112c11a2e2424c00e83ab47a49aa6"},
+  "status": "Implementation and local qualification complete and retained for native exact certificates, evaluator deduplication, and modest slow-fixture/size improvements. Nonuniform performance is explicitly recorded. Full Hypercurve release readiness and the overarching objective remain open.",
+  "objective_status": "active",
+  "exactcorelib_mining_and_idea_uplift": "Already closed by preceding checkpoints; this follow-on kernel cleanup does not newly close that milestone.",
+  "commits": {
+    "hypercurve_parent": "9227a7b1b205bb23fdd517bcdb2ebf1b4c4804ba",
+    "hypercurve_kernel": "79e7b3a5ea286673f56b70e818360cbd20c90c62",
+    "hypercurve_fuzz": "065e9daa8962f413dece391ed34d0aaeabb835ea",
+    "live_hyperreal": "bd92d87f0e107fda0b31b93463cc8e0cc5e26d7c",
+    "other_dependency_heads": {
+      "hyperlimit": "dd79d4770a3dfa1e0cfc0e1f0da19d15bd1ef9e5",
+      "hyperlattice": "53427ce89f8c82c016e69a04e035787e2753adc8",
+      "hypertri": "6a2092c066964f3b7528299a72ef0ed1af4b1ff0",
+      "hypersolve": "d9e21c6f0639bc0d92afe929e7c392a475c0e094",
+      "hypermesh": "d9db5c45a0cecc2307aa66a6f7f1b0396350e4ee"
+    }
+  },
+  "change": {
+    "scalar_authority": "Real::eval_poly owns exact polynomial evaluation and its native certificates.",
+    "geometry_authority": "Existing bivariate_specialize_second and the rank-preserving dense last-axis specialization feed the existing CurveRegion2 machinery.",
+    "removed_private_helper": "bivariate_exact_second_fiber",
+    "redirected_call_sites": 9,
+    "public_api_changes": 0,
+    "compatibility_interfaces_added": 0,
+    "production_line_delta": -14,
+    "test_line_delta": 81,
+    "tests": [
+      {
+        "name": "fiber_specialization_retains_native_quadratic_root_certificates",
+        "before": "Legacy evaluator returned Unknown for a reconstructed quadratic root.",
+        "after": "ZeroKnowledge::Zero for both roots and three signed symbolic scales through bivariate and dense specialization.",
+        "scope": "Certificate preservation, not a claim that the old numerical value was wrong or that a previously observed end-to-end Boolean blocker was fixed."
+      },
+      {
+        "name": "fiber_specialization_preserves_axis_order_and_ragged_zero_rows",
+        "before": "Passed after correcting the independent oracle's zero-to-zero power convention.",
+        "after": "Passed; ragged zero/constant rows and rank-preserving [2,3,4] -> [2,3,1] specialization agree with a power-sum oracle."
+      }
+    ],
+    "dense_contract": "Retains the last axis at width one. Hypersolve's private substitute_axis_value removes an axis, so it was not exposed or wrapped as a replacement.",
+    "fuzz_oracle": "Existing nonmonotone_coordinate_image_is_certified_without_sampling regression proves the complete image. The stale fuzz assertion expecting XImageFailed is replaced with Transformed plus exact coordinate coefficients and strict bounds.",
+    "fuzz_formatting_only_files": [
+      "fuzz/fuzz_targets/bezier_algebraic_parameter.rs",
+      "fuzz/fuzz_targets/bezier_region.rs",
+      "fuzz/fuzz_targets/bezier_split_materialization.rs",
+      "fuzz/fuzz_targets/curve_string_editing.rs",
+      "fuzz/fuzz_targets/straight_skeleton.rs"
+    ],
+    "total_rust_line_delta": 56,
+    "fuzz_line_delta": -11
+  },
+  "validation": {
+    "all_feature_release_including_ignored": {
+      "suites": 46,
+      "passed": 1749,
+      "failed": 0,
+      "ignored": 0
+    },
+    "minimal_release": {
+      "suites": 46,
+      "passed": 1711,
+      "failed": 0,
+      "ignored": 4
+    },
+    "ui": {
+      "tests": 37,
+      "clippy": "passed",
+      "wasm": "passed"
+    },
+    "sanitizer_fuzz": {
+      "seed": 20260906,
+      "runs": 1024,
+      "seed_corpus_files": 626,
+      "exact_failure_replay": "passed",
+      "initial_failure_artifact": "crash-77bb59b523c01fd308495e8a551d39ae5b243c9d",
+      "initial_input_base64": "dHR0QWBgmg==",
+      "final_seed_corpus_files": 626,
+      "final_runs": 1024
+    },
+    "live_all_feature_release_including_ignored": {
+      "suites": 46,
+      "passed": 1749,
+      "failed": 0,
+      "ignored": 0
+    },
+    "live_minimal_release": {
+      "suites": 46,
+      "passed": 1711,
+      "failed": 0,
+      "ignored": 4
+    },
+    "passed_gates": [
+      {
+        "gate": "All-feature release, including ignored, 46 suites",
+        "log": "candidate-live-all-feature-including-ignored.log",
+        "exit": 0
+      },
+      {
+        "gate": "Minimal release, 46 suites; four opt-in cases covered in all-feature run",
+        "log": "candidate-live-minimal-suite.log",
+        "exit": 0
+      },
+      {
+        "gate": "All-target/all-feature warning-denied Clippy",
+        "log": "candidate-live-clippy.log",
+        "exit": 0
+      },
+      {
+        "gate": "All-target minimal warning-denied Clippy",
+        "log": "candidate-minimal-clippy.log",
+        "exit": 0
+      },
+      {
+        "gate": "Warning-denied all-feature documentation",
+        "log": "candidate-docs.log",
+        "exit": 0
+      },
+      {
+        "gate": "All fuzz binaries compile",
+        "log": "candidate-live-fuzz-check.log",
+        "exit": 0
+      },
+      {
+        "gate": "Changed fuzz target warning-denied Clippy",
+        "log": "candidate-live-fuzz-image-clippy.log",
+        "exit": 0
+      },
+      {
+        "gate": "Root Rust formatting",
+        "log": "candidate-final-fmt.log",
+        "exit": 0
+      },
+      {
+        "gate": "Fuzz-package Rust formatting after cleanup",
+        "log": "candidate-fuzz-final-fmt.log",
+        "exit": 0
+      },
+      {
+        "gate": "UI release tests, 37 passed",
+        "log": "candidate-live-ui-tests.log",
+        "exit": 0
+      },
+      {
+        "gate": "UI warning-denied Clippy",
+        "log": "candidate-live-ui-clippy.log",
+        "exit": 0
+      },
+      {
+        "gate": "UI release WASM, restored current-workspace artifact",
+        "log": "candidate-live-ui-wasm.log",
+        "exit": 0
+      },
+      {
+        "gate": "Sanitizer-enabled saved-input replay",
+        "log": "candidate-fuzz-final-replay.log",
+        "exit": 0
+      },
+      {
+        "gate": "Sanitizer-enabled deterministic fuzz smoke, 1024 runs",
+        "log": "candidate-fuzz-final-run.log",
+        "exit": 0
+      }
+    ]
+  },
+  "memory": {
+    "workload": "bezier_offset::conversion_tests::selected_fiber_genuinely_analytic_contacts_complete_region_booleans",
+    "includes": "Entire successful libtest process; requested heap bytes, including initialization, test harness, and process-lifetime caches. Not allocator usable-size, stack memory, or a leak diagnosis.",
+    "baseline": {
+      "format": 3,
+      "records": 2876968085,
+      "allocations": 1438323054,
+      "frees": 1438309487,
+      "untracked_frees": 2,
+      "temporary_allocations": 314900632,
+      "allocated_bytes": 55945825188,
+      "peak_live_bytes": 1822814,
+      "end_live_bytes": 993904,
+      "peak_live_allocations": 22745,
+      "end_live_allocations": 13567,
+      "trace_count": 175962,
+      "duration_ms": 806711,
+      "page_size": 4096,
+      "recorded_peak_rss_pages": 7543,
+      "record_counts": {
+        "+": 1438323054,
+        "-": 1438309489,
+        "I": 1,
+        "R": 79783,
+        "X": 1,
+        "c": 79783,
+        "m": 10,
+        "t": 175962,
+        "v": 1,
+        "x": 1
+      }
+    },
+    "candidate": {
+      "format": 3,
+      "records": 2876966408,
+      "allocations": 1438323054,
+      "frees": 1438309487,
+      "untracked_frees": 2,
+      "temporary_allocations": 314900632,
+      "allocated_bytes": 55945825493,
+      "peak_live_bytes": 1822815,
+      "end_live_bytes": 993904,
+      "peak_live_allocations": 22745,
+      "end_live_allocations": 13567,
+      "trace_count": 175961,
+      "duration_ms": 913954,
+      "page_size": 4096,
+      "recorded_peak_rss_pages": 7144,
+      "record_counts": {
+        "+": 1438323054,
+        "-": 1438309489,
+        "I": 1,
+        "R": 78945,
+        "X": 1,
+        "c": 78945,
+        "m": 10,
+        "t": 175961,
+        "v": 1,
+        "x": 1
+      }
+    },
+    "method": "Heaptrack --raw --record-only, followed by validated streaming event accounting. Both complete decompression/accounting pipelines exited 0.",
+    "recorder_seconds": {
+      "baseline": 806.71,
+      "candidate": 913.95
+    },
+    "recorder_timing_limitation": "Instrumented durations are not A/B wall-clock performance evidence; builds and failed interpreter attempts overlapped recording.",
+    "analysis_max_rss_kib": {
+      "baseline": 14236,
+      "candidate": 14204
+    },
+    "raw_temporary_definition": "An allocation whose pointer is the next freed pointer before any other allocation/free; matches Heaptrack 1.5 interpreter, not necessarily its printer's allocation-index-based temporary count.",
+    "counter_validation": {
+      "synthetic": {
+        "allocations": 3,
+        "frees": 2,
+        "untracked_frees": 1,
+        "temporary": 1,
+        "allocated_bytes": 35,
+        "peak_live_bytes": 30,
+        "end_live_bytes": 5,
+        "peak_live_allocations": 2,
+        "end_live_allocations": 1
+      },
+      "complete_small_workload": {
+        "allocations": 1207,
+        "allocated_bytes": 324936,
+        "peak_live_bytes": 245679,
+        "end_live_bytes": 27696,
+        "end_live_allocations": 425,
+        "temporary_interpreter_and_counter": 59,
+        "temporary_printer": 60
+      },
+      "independent_checks": "Heaptrack interpreter counts and end-live blocks agree exactly; Heaptrack histogram weighted size total and count agree exactly. Printer peak/end-live byte display agrees at its published precision."
+    },
+    "interpreter_failures": {
+      "ordinary": "Two global OOM kills, at 61,521,036 and 62,998,448 KiB anonymous RSS.",
+      "bounded_symbol_free": "Hard 12 GiB address-space cap stopped a symbol-free retry with bad_alloc.",
+      "diagnostic": "GDB caught allocation failure in AllocationInfoSet's robin_hash rehash; no application failure is inferred.",
+      "treatment": "All partial interpreted files excluded from successful memory evidence."
+    },
+    "top_stack": "A highest-count leaf allocation trace passes through BigUint division/reduction, Rational addition, LocalAlgebraicField::add_polynomials, and local-field Bernstein root isolation during selected-parameter promotion. This is not an aggregate function-dominance claim.",
+    "event_counter_source": "// Local evidence tool: streaming accounting for Heaptrack 1.5 raw format 3.\n// It does not symbolize or intern (size, trace) pairs; retained state is bounded\n// by trace definitions and currently live allocations, not allocation history.\n#include <algorithm>\n#include <array>\n#include <charconv>\n#include <cstdint>\n#include <iomanip>\n#include <iostream>\n#include <limits>\n#include <stdexcept>\n#include <string>\n#include <unordered_map>\n#include <vector>\n\nusing U = std::uint64_t;\nstruct Trace { U ip, parent, calls = 0, bytes = 0, temporary = 0; };\nstruct Allocation { U size, trace; };\n\nU number(const std::string& line, std::size_t& cursor) {\n    while (cursor < line.size() && line[cursor] == ' ') ++cursor;\n    U value = 0;\n    const auto result = std::from_chars(line.data() + cursor,\n                                        line.data() + line.size(), value, 16);\n    if (result.ec != std::errc{}) throw std::runtime_error(\"invalid hex field\");\n    cursor = result.ptr - line.data();\n    return value;\n}\nvoid add(U& total, U value) {\n    if (value > std::numeric_limits<U>::max() - total)\n        throw std::runtime_error(\"counter overflow\");\n    total += value;\n}\n\nint main() {\n    std::ios::sync_with_stdio(false);\n    std::vector<Trace> traces(1);\n    std::unordered_map<U, Allocation> live;\n    live.reserve(16384);\n    std::vector<std::string> modules;\n    std::array<U, 256> modes{};\n    U allocations = 0, frees = 0, unknown_frees = 0, temporary = 0;\n    U traffic = 0, heap = 0, peak = 0, peak_blocks = 0, last = 0;\n    U page_size = 0, peak_rss_pages = 0, duration_ms = 0, lines = 0;\n    bool version = false;\n    std::string line;\n    try {\n        while (std::getline(std::cin, line)) {\n            ++lines;\n            if (line.empty()) throw std::runtime_error(\"empty record\");\n            const auto mode = static_cast<unsigned char>(line[0]);\n            ++modes[mode];\n            std::size_t cursor = 1;\n            switch (mode) {\n            case 'v':\n                (void)number(line, cursor);\n                if (number(line, cursor) != 3 || version || lines != 1)\n                    throw std::runtime_error(\"expected one format-3 header\");\n                version = true;\n                break;\n            case 't': {\n                const U ip = number(line, cursor), parent = number(line, cursor);\n                if (!version || parent >= traces.size())\n                    throw std::runtime_error(\"invalid trace parent\");\n                traces.push_back({ip, parent});\n                break;\n            }\n            case '+': {\n                const U size = number(line, cursor), trace = number(line, cursor);\n                const U pointer = number(line, cursor);\n                if (!version || trace == 0 || trace >= traces.size() || pointer == 0)\n                    throw std::runtime_error(\"invalid allocation\");\n                if (!live.emplace(pointer, Allocation{size, trace}).second)\n                    throw std::runtime_error(\"duplicate live pointer\");\n                add(allocations, 1);\n                add(traffic, size);\n                add(heap, size);\n                peak = std::max(peak, heap);\n                peak_blocks = std::max(peak_blocks, static_cast<U>(live.size()));\n                add(traces[trace].calls, 1);\n                add(traces[trace].bytes, size);\n                last = pointer;\n                break;\n            }\n            case '-': {\n                const U pointer = number(line, cursor);\n                const bool is_temporary = last == pointer;\n                last = 0;\n                const auto found = live.find(pointer);\n                if (found == live.end()) {\n                    add(unknown_frees, 1);\n                    break;\n                }\n                if (is_temporary) {\n                    add(temporary, 1);\n                    add(traces[found->second.trace].temporary, 1);\n                }\n                if (found->second.size > heap)\n                    throw std::runtime_error(\"heap underflow\");\n                heap -= found->second.size;\n                live.erase(found);\n                add(frees, 1);\n                break;\n            }\n            case 'I':\n                page_size = number(line, cursor);\n                (void)number(line, cursor);\n                break;\n            case 'R':\n                peak_rss_pages = std::max(peak_rss_pages, number(line, cursor));\n                break;\n            case 'c':\n                duration_ms = std::max(duration_ms, number(line, cursor));\n                break;\n            case 'm':\n                modules.push_back(line);\n                break;\n            case 'x': case 'X': case '#':\n                break;\n            default:\n                throw std::runtime_error(\"unsupported raw record mode\");\n            }\n        }\n        if (!std::cin.eof() || !version)\n            throw std::runtime_error(\"incomplete input read\");\n        U live_sum = 0;\n        for (const auto& [pointer, allocation] : live) add(live_sum, allocation.size);\n        if (live_sum != heap || allocations - frees != live.size())\n            throw std::runtime_error(\"final live-state invariant failed\");\n        std::vector<std::size_t> order;\n        for (std::size_t i = 1; i < traces.size(); ++i)\n            if (traces[i].calls) order.push_back(i);\n        std::sort(order.begin(), order.end(), [&](auto a, auto b) {\n            if (traces[a].calls != traces[b].calls) return traces[a].calls > traces[b].calls;\n            return a < b;\n        });\n        std::cout << \"{\\n\\\"format\\\":3,\\\"records\\\":\" << lines\n                  << \",\\\"allocations\\\":\" << allocations << \",\\\"frees\\\":\" << frees\n                  << \",\\\"untracked_frees\\\":\" << unknown_frees\n                  << \",\\\"temporary_allocations\\\":\" << temporary\n                  << \",\\\"allocated_bytes\\\":\" << traffic\n                  << \",\\\"peak_live_bytes\\\":\" << peak\n                  << \",\\\"end_live_bytes\\\":\" << heap\n                  << \",\\\"peak_live_allocations\\\":\" << peak_blocks\n                  << \",\\\"end_live_allocations\\\":\" << live.size()\n                  << \",\\\"trace_count\\\":\" << traces.size() - 1\n                  << \",\\\"duration_ms\\\":\" << duration_ms\n                  << \",\\\"page_size\\\":\" << page_size\n                  << \",\\\"recorded_peak_rss_pages\\\":\" << peak_rss_pages\n                  << \",\\n\\\"record_counts\\\":{\";\n        bool comma = false;\n        for (std::size_t i = 0; i < modes.size(); ++i) if (modes[i]) {\n            if (comma) std::cout << ',';\n            comma = true;\n            std::cout << std::quoted(std::string(1, static_cast<char>(i))) << ':' << modes[i];\n        }\n        std::cout << \"},\\n\\\"module_records\\\":[\";\n        for (std::size_t i = 0; i < modules.size(); ++i) {\n            if (i) std::cout << ',';\n            std::cout << std::quoted(modules[i]);\n        }\n        std::cout << \"],\\n\\\"top_allocation_traces\\\":[\";\n        order.resize(std::min<std::size_t>(32, order.size()));\n        for (std::size_t rank = 0; rank < order.size(); ++rank) {\n            if (rank) std::cout << ',';\n            auto index = order[rank];\n            const auto& trace = traces[index];\n            std::cout << \"\\n{\\\"trace\\\":\" << index << \",\\\"allocations\\\":\" << trace.calls\n                      << \",\\\"bytes\\\":\" << trace.bytes << \",\\\"temporary\\\":\" << trace.temporary\n                      << \",\\\"ips\\\":[\";\n            bool separated = false;\n            while (index) {\n                if (separated) std::cout << ',';\n                separated = true;\n                std::cout << '\"' << std::hex << traces[index].ip << std::dec << '\"';\n                index = traces[index].parent;\n            }\n            std::cout << \"]}\";\n        }\n        std::cout << \"]\\n}\\n\";\n    } catch (const std::exception& error) {\n        std::cerr << \"Raw accounting rejected input at line \" << lines\n                  << \": \" << error.what() << '\\n';\n        return 1;\n    }\n}\n",
+    "format_reference": "https://github.com/KDE/heaptrack/blob/v1.5.0/src/interpret/heaptrack_interpret.cpp"
+  },
+  "timing": {
+    "status": "complete",
+    "cpu": 7,
+    "initial_invocations": 48,
+    "initial_per_lane_measurements": 282,
+    "initial_alternating_pairs": 3,
+    "initial_process_medians": [
+      {
+        "fixture": "bezier_region",
+        "baseline_seconds": [
+          5.73,
+          5.84,
+          5.9
+        ],
+        "candidate_seconds": [
+          5.93,
+          5.79,
+          5.78
+        ],
+        "baseline_median_seconds": 5.84,
+        "candidate_median_seconds": 5.79,
+        "delta_percent": -0.8561643835616417
+      },
+      {
+        "fixture": "selected",
+        "baseline_seconds": [
+          53.55,
+          54.06,
+          53.86
+        ],
+        "candidate_seconds": [
+          51.91,
+          52.28,
+          52.49
+        ],
+        "baseline_median_seconds": 53.86,
+        "candidate_median_seconds": 52.28,
+        "delta_percent": -2.9335313776457483
+      },
+      {
+        "fixture": "rational_bezier",
+        "baseline_seconds": [
+          0.31,
+          0.32,
+          0.31
+        ],
+        "candidate_seconds": [
+          0.32,
+          0.32,
+          0.32
+        ],
+        "baseline_median_seconds": 0.31,
+        "candidate_median_seconds": 0.32,
+        "delta_percent": 3.2258064516129004
+      },
+      {
+        "fixture": "radial",
+        "baseline_seconds": [
+          31.53,
+          31.2,
+          30.81
+        ],
+        "candidate_seconds": [
+          29.93,
+          30.39,
+          29.9
+        ],
+        "baseline_median_seconds": 31.2,
+        "candidate_median_seconds": 29.93,
+        "delta_percent": -4.070512820512818
+      },
+      {
+        "fixture": "chord",
+        "baseline_seconds": [
+          16.98,
+          16.94,
+          17.21
+        ],
+        "candidate_seconds": [
+          16.92,
+          16.77,
+          16.87
+        ],
+        "baseline_median_seconds": 16.98,
+        "candidate_median_seconds": 16.87,
+        "delta_percent": -0.6478209658421608
+      }
+    ],
+    "initial_benchmark_medians": [
+      {
+        "fixture": "circles",
+        "name": "curve_region_boolean_four_independent",
+        "baseline_ns": 8996402.103,
+        "candidate_ns": 9039241.89,
+        "delta_percent": 0.476187997262989,
+        "checksum": "0",
+        "baseline_samples_ns": [
+          9140362.156,
+          8920776.488,
+          8996402.103
+        ],
+        "candidate_samples_ns": [
+          9288366.495,
+          8942970.69,
+          9039241.89
+        ]
+      },
+      {
+        "fixture": "circles",
+        "name": "curve_region_boolean_shared_all_four",
+        "baseline_ns": 4457770.644,
+        "candidate_ns": 4552345.93,
+        "delta_percent": 2.121582592574489,
+        "checksum": "0",
+        "baseline_samples_ns": [
+          4522710.163,
+          4421606.015,
+          4457770.644
+        ],
+        "candidate_samples_ns": [
+          4629160.046,
+          4438493.118,
+          4552345.93
+        ]
+      },
+      {
+        "fixture": "rational_bezier",
+        "name": "rational_bezier_exact_mixed_axis_monotonicity",
+        "baseline_ns": 9749.612,
+        "candidate_ns": 9857.204,
+        "delta_percent": 1.103551608002462,
+        "checksum": "250",
+        "baseline_samples_ns": [
+          9700.736,
+          9749.612,
+          9789.688
+        ],
+        "candidate_samples_ns": [
+          9735.856,
+          10036.352,
+          9857.204
+        ]
+      },
+      {
+        "fixture": "rational_bezier",
+        "name": "rational_bezier_exact_degree_12_axis_monotonicity",
+        "baseline_ns": 555.764,
+        "candidate_ns": 552.6,
+        "delta_percent": -0.5693063962401324,
+        "checksum": "250",
+        "baseline_samples_ns": [
+          536.644,
+          555.764,
+          559.604
+        ],
+        "candidate_samples_ns": [
+          552.6,
+          588.48,
+          548.68
+        ]
+      },
+      {
+        "fixture": "rational_bezier",
+        "name": "rational_bezier_retained_mixed_axis_monotonicity",
+        "baseline_ns": 4.26101,
+        "candidate_ns": 4.31491,
+        "delta_percent": 1.2649583080067917,
+        "checksum": "100000",
+        "baseline_samples_ns": [
+          4.23581,
+          4.26101,
+          4.30801
+        ],
+        "candidate_samples_ns": [
+          4.4332,
+          4.31491,
+          4.3101
+        ]
+      },
+      {
+        "fixture": "rational_bezier",
+        "name": "rational_bezier_endpoint_sign_reversal_monotonicity",
+        "baseline_ns": 2371.508,
+        "candidate_ns": 2419.6695,
+        "delta_percent": 2.030838605646701,
+        "checksum": "0",
+        "baseline_samples_ns": [
+          2283.194,
+          2371.508,
+          2463.151
+        ],
+        "candidate_samples_ns": [
+          2388.0315,
+          2486.9845,
+          2419.6695
+        ]
+      },
+      {
+        "fixture": "rational_bezier",
+        "name": "rational_bezier_cached_point_incidence",
+        "baseline_ns": 146.248,
+        "candidate_ns": 173.444,
+        "delta_percent": 18.59580985722882,
+        "checksum": "5000",
+        "baseline_samples_ns": [
+          147.238,
+          143.9202,
+          146.248
+        ],
+        "candidate_samples_ns": [
+          170.9142,
+          173.444,
+          182.2736
+        ]
+      },
+      {
+        "fixture": "rational_bezier",
+        "name": "rational_bezier_retained_lineage_partial_overlap",
+        "baseline_ns": 3674.6586,
+        "candidate_ns": 3697.431,
+        "delta_percent": 0.6197147130892589,
+        "checksum": "5000",
+        "baseline_samples_ns": [
+          3674.6586,
+          3657.1938,
+          3865.4714
+        ],
+        "candidate_samples_ns": [
+          3763.0404,
+          3660.0354,
+          3697.431
+        ]
+      },
+      {
+        "fixture": "rational_bezier",
+        "name": "rational_bezier_algebraic_line_image_overlap",
+        "baseline_ns": 11004.628,
+        "candidate_ns": 11320.286,
+        "delta_percent": 2.8684113629283914,
+        "checksum": "500",
+        "baseline_samples_ns": [
+          11018.566,
+          10936.052,
+          11004.628
+        ],
+        "candidate_samples_ns": [
+          11320.286,
+          11195.112,
+          11321.806
+        ]
+      },
+      {
+        "fixture": "rational_bezier",
+        "name": "rational_bezier_algebraic_polynomial_graph_overlap",
+        "baseline_ns": 260725.63200000004,
+        "candidate_ns": 264471.372,
+        "delta_percent": 1.436659668352025,
+        "checksum": "250",
+        "baseline_samples_ns": [
+          257855.46799999996,
+          260725.63200000004,
+          269434.952
+        ],
+        "candidate_samples_ns": [
+          266573.748,
+          264471.372,
+          262717.81600000005
+        ]
+      },
+      {
+        "fixture": "rational_bezier",
+        "name": "rational_bezier_cached_basis_resultant",
+        "baseline_ns": 21006.242,
+        "candidate_ns": 20680.384,
+        "delta_percent": -1.5512436731900947,
+        "checksum": "1000",
+        "baseline_samples_ns": [
+          20398.704,
+          21006.242,
+          21249.806
+        ],
+        "candidate_samples_ns": [
+          22772.982,
+          20680.384,
+          20465.258
+        ]
+      },
+      {
+        "fixture": "rational_bezier",
+        "name": "rational_bezier_algebraic_contact_replay",
+        "baseline_ns": 19626.376,
+        "candidate_ns": 19586.14,
+        "delta_percent": -0.20500982962927683,
+        "checksum": "250",
+        "baseline_samples_ns": [
+          20597.708,
+          19242.684,
+          19626.376
+        ],
+        "candidate_samples_ns": [
+          19580.7,
+          20197.5,
+          19586.14
+        ]
+      },
+      {
+        "fixture": "rational_bezier",
+        "name": "rational_bezier_pi_conic_cubic_contacts",
+        "baseline_ns": 179565.91,
+        "candidate_ns": 176237.03,
+        "delta_percent": -1.8538485395139914,
+        "checksum": "100",
+        "baseline_samples_ns": [
+          179664.7,
+          178242.8,
+          179565.91
+        ],
+        "candidate_samples_ns": [
+          181334.99,
+          175628.27,
+          176237.03
+        ]
+      },
+      {
+        "fixture": "rational_bezier",
+        "name": "rational_bezier_algebraic_derivatives_1_through_3",
+        "baseline_ns": 181.224,
+        "candidate_ns": 180.828,
+        "delta_percent": -0.2185141040921712,
+        "checksum": "750",
+        "baseline_samples_ns": [
+          179.108,
+          181.224,
+          183.264
+        ],
+        "candidate_samples_ns": [
+          180.988,
+          180.828,
+          180.708
+        ]
+      },
+      {
+        "fixture": "rational_bezier",
+        "name": "rational_bezier_exact_derivatives_1_through_3",
+        "baseline_ns": 5615.98305,
+        "candidate_ns": 5756.71045,
+        "delta_percent": 2.5058373351037666,
+        "checksum": "60000",
+        "baseline_samples_ns": [
+          5615.98305,
+          5560.78385,
+          5703.96
+        ],
+        "candidate_samples_ns": [
+          5752.71465,
+          5756.71045,
+          5779.59285
+        ]
+      },
+      {
+        "fixture": "rational_bezier",
+        "name": "rational_bezier_disjoint_conic_cubic_candidates",
+        "baseline_ns": 346.896,
+        "candidate_ns": 358.1255,
+        "delta_percent": 3.2371373552880334,
+        "checksum": "2000",
+        "baseline_samples_ns": [
+          343.2315,
+          368.245,
+          346.896
+        ],
+        "candidate_samples_ns": [
+          358.1255,
+          358.4305,
+          356.2455
+        ]
+      },
+      {
+        "fixture": "rational_bezier",
+        "name": "rational_bezier_disjoint_conic_cubic_cold_contacts",
+        "baseline_ns": 369.9495,
+        "candidate_ns": 360.3405,
+        "delta_percent": -2.5973815345067264,
+        "checksum": "2000",
+        "baseline_samples_ns": [
+          369.9495,
+          354.6755,
+          371.0195
+        ],
+        "candidate_samples_ns": [
+          362.7005,
+          360.3405,
+          356.9805
+        ]
+      },
+      {
+        "fixture": "rational_bezier",
+        "name": "rational_bezier_immediate_contacts",
+        "baseline_ns": 19332.956,
+        "candidate_ns": 19391.196,
+        "delta_percent": 0.3012472588258097,
+        "checksum": "250",
+        "baseline_samples_ns": [
+          19382.392,
+          19230.844,
+          19332.956
+        ],
+        "candidate_samples_ns": [
+          19206.408,
+          19391.196,
+          19427.188
+        ]
+      },
+      {
+        "fixture": "rational_bezier",
+        "name": "rational_bezier_immediate_topology",
+        "baseline_ns": 71925.836,
+        "candidate_ns": 72087.944,
+        "delta_percent": 0.22538215614207324,
+        "checksum": "2000",
+        "baseline_samples_ns": [
+          71925.836,
+          70718.72,
+          73666.396
+        ],
+        "candidate_samples_ns": [
+          72203.976,
+          71731.252,
+          72087.944
+        ]
+      },
+      {
+        "fixture": "rational_bezier",
+        "name": "rational_bezier_exact_degree_elevation",
+        "baseline_ns": 24571.628,
+        "candidate_ns": 24661.382,
+        "delta_percent": 0.3652749423033841,
+        "checksum": "8000",
+        "baseline_samples_ns": [
+          24413.158,
+          24571.628,
+          25099.562
+        ],
+        "candidate_samples_ns": [
+          24661.382,
+          24691.14,
+          24366.262
+        ]
+      },
+      {
+        "fixture": "rational_bezier",
+        "name": "rational_bezier_retained_degree_elevation",
+        "baseline_ns": 12.60754,
+        "candidate_ns": 12.67743,
+        "delta_percent": 0.5543508091189864,
+        "checksum": "800000",
+        "baseline_samples_ns": [
+          12.60754,
+          12.58534,
+          12.68953
+        ],
+        "candidate_samples_ns": [
+          12.68313,
+          12.64574,
+          12.67743
+        ]
+      },
+      {
+        "fixture": "rational_bezier",
+        "name": "rational_bezier_large_cold_evaluation_64_controls",
+        "baseline_ns": 700835,
+        "candidate_ns": 691898.7,
+        "delta_percent": -1.2750932815855487,
+        "checksum": "0",
+        "baseline_samples_ns": [
+          705412.7,
+          695516.4,
+          700835
+        ],
+        "candidate_samples_ns": [
+          691628.6,
+          691898.7,
+          709589.4
+        ]
+      },
+      {
+        "fixture": "rational_bezier",
+        "name": "rational_bezier_large_cached_evaluation_64_controls",
+        "baseline_ns": 11852.2,
+        "candidate_ns": 11842.2,
+        "delta_percent": -0.08437252155717445,
+        "checksum": "0",
+        "baseline_samples_ns": [
+          11852.2,
+          11326.2,
+          11937.2
+        ],
+        "candidate_samples_ns": [
+          11842.2,
+          11794.2,
+          12306.1
+        ]
+      },
+      {
+        "fixture": "rational_bezier",
+        "name": "rational_bezier_large_exact_split_64_controls",
+        "baseline_ns": 637691.4,
+        "candidate_ns": 647871.7,
+        "delta_percent": 1.5964304991411105,
+        "checksum": "0",
+        "baseline_samples_ns": [
+          637691.4,
+          643991.9,
+          635415.5
+        ],
+        "candidate_samples_ns": [
+          647133.7,
+          647871.7,
+          650357.5
+        ]
+      },
+      {
+        "fixture": "capsules",
+        "name": "curve_region_boolean_four_independent",
+        "baseline_ns": 3383287.385,
+        "candidate_ns": 3346352.652,
+        "delta_percent": -1.0916818111211035,
+        "checksum": "0",
+        "baseline_samples_ns": [
+          3357912.241,
+          3384746.913,
+          3383287.385
+        ],
+        "candidate_samples_ns": [
+          3413200.367,
+          3324266.394,
+          3346352.652
+        ]
+      },
+      {
+        "fixture": "capsules",
+        "name": "curve_region_boolean_shared_all_four",
+        "baseline_ns": 1087610.567,
+        "candidate_ns": 1098614.203,
+        "delta_percent": 1.0117257347316722,
+        "checksum": "0",
+        "baseline_samples_ns": [
+          1082034.548,
+          1087610.567,
+          1098766.276
+        ],
+        "candidate_samples_ns": [
+          1101029.732,
+          1098614.203,
+          1084285.224
+        ]
+      },
+      {
+        "fixture": "bezier_region",
+        "name": "curve_region_clone",
+        "baseline_ns": 3.599113,
+        "candidate_ns": 3.383939,
+        "delta_percent": -5.978528598574151,
+        "checksum": "1000000",
+        "baseline_samples_ns": [
+          3.616693,
+          3.50533,
+          3.599113
+        ],
+        "candidate_samples_ns": [
+          3.509929,
+          3.383939,
+          3.378119
+        ]
+      },
+      {
+        "fixture": "bezier_region",
+        "name": "curve_region_empty",
+        "baseline_ns": 3.013144,
+        "candidate_ns": 3.119316,
+        "delta_percent": 3.5236284757714786,
+        "checksum": "0",
+        "baseline_samples_ns": [
+          3.013144,
+          2.943449,
+          3.131286
+        ],
+        "candidate_samples_ns": [
+          3.281116,
+          3.119316,
+          3.097708
+        ]
+      },
+      {
+        "fixture": "bezier_region",
+        "name": "cubic_bezier_exact_area_moments",
+        "baseline_ns": 13188.0537,
+        "candidate_ns": 13385.142200000002,
+        "delta_percent": 1.494447205655547,
+        "checksum": null,
+        "baseline_samples_ns": [
+          12937.8138,
+          13188.0537,
+          13398.9102
+        ],
+        "candidate_samples_ns": [
+          13619.0726,
+          13326.468700000001,
+          13385.142200000002
+        ]
+      },
+      {
+        "fixture": "bezier_region",
+        "name": "cubic_bezier_prefix_area_moments",
+        "baseline_ns": 17205.4951,
+        "candidate_ns": 17595.49245,
+        "delta_percent": 2.2667022816448945,
+        "checksum": null,
+        "baseline_samples_ns": [
+          17202.3849,
+          17362.7369,
+          17205.4951
+        ],
+        "candidate_samples_ns": [
+          18003.14795,
+          17595.49245,
+          17379.2498
+        ]
+      },
+      {
+        "fixture": "bezier_region",
+        "name": "cubic_bezier_prefix_length_bounds",
+        "baseline_ns": 3793.37185,
+        "candidate_ns": 3823.06225,
+        "delta_percent": 0.7826915254828037,
+        "checksum": null,
+        "baseline_samples_ns": [
+          3793.37185,
+          3835.119,
+          3744.1827
+        ],
+        "candidate_samples_ns": [
+          3975.0579,
+          3823.06225,
+          3810.0547
+        ]
+      },
+      {
+        "fixture": "bezier_region",
+        "name": "curve_region_boolean_immediate_union",
+        "baseline_ns": 173356.452,
+        "candidate_ns": 172936.252,
+        "delta_percent": -0.24239074759097035,
+        "checksum": "0",
+        "baseline_samples_ns": [
+          175560.042,
+          170732.942,
+          173356.452
+        ],
+        "candidate_samples_ns": [
+          181549.361,
+          170825.106,
+          172936.252
+        ]
+      },
+      {
+        "fixture": "bezier_region",
+        "name": "curve_region_boolean_immediate_all_ops",
+        "baseline_ns": 346138.414,
+        "candidate_ns": 347510.671,
+        "delta_percent": 0.3964474743332058,
+        "checksum": "0",
+        "baseline_samples_ns": [
+          346138.414,
+          340374.209,
+          347146.624
+        ],
+        "candidate_samples_ns": [
+          362463.566,
+          342933.464,
+          347510.671
+        ]
+      },
+      {
+        "fixture": "bezier_region",
+        "name": "curve_region_boolean_retained_algebraic_all_ops",
+        "baseline_ns": 215352.86,
+        "candidate_ns": 214242.63,
+        "delta_percent": -0.515539937570364,
+        "checksum": "1100",
+        "baseline_samples_ns": [
+          215352.86,
+          208193.25,
+          216646.07
+        ],
+        "candidate_samples_ns": [
+          222950.64,
+          206345.57,
+          214242.63
+        ]
+      },
+      {
+        "fixture": "bezier_region",
+        "name": "bezier_region_algebraic_ray_classification",
+        "baseline_ns": 54642.659,
+        "candidate_ns": 55008.0895,
+        "delta_percent": 0.6687641243812825,
+        "checksum": "4000",
+        "baseline_samples_ns": [
+          57958.9675,
+          53572.168,
+          54642.659
+        ],
+        "candidate_samples_ns": [
+          57496.649,
+          55008.0895,
+          54703.235
+        ]
+      },
+      {
+        "fixture": "bezier_region",
+        "name": "bezier_region_materialization",
+        "baseline_ns": 2915.5754,
+        "candidate_ns": 2884.52,
+        "delta_percent": -1.0651550976867319,
+        "checksum": "0",
+        "baseline_samples_ns": [
+          2915.5754,
+          2856.1315,
+          2951.42045
+        ],
+        "candidate_samples_ns": [
+          2953.7308,
+          2813.1004,
+          2884.52
+        ]
+      },
+      {
+        "fixture": "bezier_region",
+        "name": "curve_region_cached_classification",
+        "baseline_ns": 34058.7635,
+        "candidate_ns": 34790.9435,
+        "delta_percent": 2.1497550843265323,
+        "checksum": "4000",
+        "baseline_samples_ns": [
+          34058.7635,
+          33972.0095,
+          34750.566
+        ],
+        "candidate_samples_ns": [
+          35859.61,
+          33872.421,
+          34790.9435
+        ]
+      },
+      {
+        "fixture": "bezier_region",
+        "name": "curve_region_immediate_native_signed_depth",
+        "baseline_ns": 890.504,
+        "candidate_ns": 839.5075,
+        "delta_percent": -5.7267008345835535,
+        "checksum": "2000",
+        "baseline_samples_ns": [
+          857.7315,
+          890.504,
+          895.714
+        ],
+        "candidate_samples_ns": [
+          839.5075,
+          841.0825,
+          837.0925
+        ]
+      },
+      {
+        "fixture": "bezier_region",
+        "name": "bezier_retained_region_materialization",
+        "baseline_ns": 11595.7912,
+        "candidate_ns": 11419.0343,
+        "delta_percent": -1.5243194444549912,
+        "checksum": "0",
+        "baseline_samples_ns": [
+          11595.7912,
+          11571.34985,
+          11638.5787
+        ],
+        "candidate_samples_ns": [
+          11691.1426,
+          11240.10855,
+          11419.0343
+        ]
+      },
+      {
+        "fixture": "bezier_region",
+        "name": "curve_region_cached_algebraic_classification",
+        "baseline_ns": 44612.161,
+        "candidate_ns": 44788.429,
+        "delta_percent": 0.39511199648005757,
+        "checksum": "4000",
+        "baseline_samples_ns": [
+          44612.161,
+          43779.613,
+          45292.199
+        ],
+        "candidate_samples_ns": [
+          45903.4675,
+          43907.509,
+          44788.429
+        ]
+      },
+      {
+        "fixture": "bezier_region",
+        "name": "bezier_retained_algebraic_source_envelope",
+        "baseline_ns": 13244.37835,
+        "candidate_ns": 13160.4726,
+        "delta_percent": -0.6335197302786311,
+        "checksum": "0",
+        "baseline_samples_ns": [
+          13244.37835,
+          12958.515399999998,
+          13296.72615
+        ],
+        "candidate_samples_ns": [
+          13507.8012,
+          13095.979500000001,
+          13160.4726
+        ]
+      },
+      {
+        "fixture": "bezier_region",
+        "name": "bezier_retained_algebraic_exact_endpoint_envelope",
+        "baseline_ns": 5719.61395,
+        "candidate_ns": 5716.90915,
+        "delta_percent": -0.047289904941916205,
+        "checksum": "0",
+        "baseline_samples_ns": [
+          5750.80735,
+          5595.58595,
+          5719.61395
+        ],
+        "candidate_samples_ns": [
+          5807.1179,
+          5716.90915,
+          5632.1524
+        ]
+      },
+      {
+        "fixture": "bezier_region",
+        "name": "bezier_retained_algebraic_line_authoritative_roles",
+        "baseline_ns": 134532.38475,
+        "candidate_ns": 132847.2018,
+        "delta_percent": -1.252622521433444,
+        "checksum": "0",
+        "baseline_samples_ns": [
+          134591.64035,
+          130897.93025,
+          134532.38475
+        ],
+        "candidate_samples_ns": [
+          134778.47685,
+          132847.2018,
+          131781.76925
+        ]
+      },
+      {
+        "fixture": "bezier_region",
+        "name": "bezier_resolved_overlap_region_materialization",
+        "baseline_ns": 23227.33395,
+        "candidate_ns": 23222.1733,
+        "delta_percent": -0.022218004059826324,
+        "checksum": "0",
+        "baseline_samples_ns": [
+          23227.33395,
+          23126.76435,
+          24757.3166
+        ],
+        "candidate_samples_ns": [
+          23590.8319,
+          22932.03515,
+          23222.1733
+        ]
+      },
+      {
+        "fixture": "bezier_region",
+        "name": "bezier_conic_region_exact_area",
+        "baseline_ns": 25566.36885,
+        "candidate_ns": 25736.87165,
+        "delta_percent": 0.6669026837575309,
+        "checksum": "0",
+        "baseline_samples_ns": [
+          25566.36885,
+          25262.8541,
+          26779.5706
+        ],
+        "candidate_samples_ns": [
+          25758.011549999996,
+          25611.9757,
+          25736.87165
+        ]
+      },
+      {
+        "fixture": "rectangles",
+        "name": "curve_region_boolean_four_independent",
+        "baseline_ns": 704308.526,
+        "candidate_ns": 699940.035,
+        "delta_percent": -0.6202524658916242,
+        "checksum": "0",
+        "baseline_samples_ns": [
+          704308.526,
+          698297.078,
+          706085.85
+        ],
+        "candidate_samples_ns": [
+          699940.035,
+          691712.298,
+          706155.105
+        ]
+      },
+      {
+        "fixture": "rectangles",
+        "name": "curve_region_boolean_shared_all_four",
+        "baseline_ns": 344858.39,
+        "candidate_ns": 338774.769,
+        "delta_percent": -1.764092501852732,
+        "checksum": "0",
+        "baseline_samples_ns": [
+          344884.371,
+          341469.564,
+          344858.39
+        ],
+        "candidate_samples_ns": [
+          338774.769,
+          338119.494,
+          349401.89
+        ]
+      }
+    ],
+    "extended_rational": {
+      "pairs": 7,
+      "invocations": 14,
+      "measurements": 308,
+      "medians": [
+        {
+          "name": "rational_bezier_exact_mixed_axis_monotonicity",
+          "baseline_samples_ns": [
+            9855.524,
+            9979.4,
+            9956.84,
+            15104.208,
+            10380.608,
+            11030.328,
+            14543.324
+          ],
+          "candidate_samples_ns": [
+            11114.44,
+            9952.48,
+            10441.964,
+            10259.336,
+            10214.82,
+            10101.028,
+            10403.928
+          ],
+          "baseline_ns": 10380.608,
+          "candidate_ns": 10259.336,
+          "delta_percent": -1.1682552698262016,
+          "checksum": "250"
+        },
+        {
+          "name": "rational_bezier_exact_degree_12_axis_monotonicity",
+          "baseline_samples_ns": [
+            547.684,
+            539.724,
+            568.04,
+            866.58,
+            569.12,
+            558.924,
+            963.652
+          ],
+          "candidate_samples_ns": [
+            764.748,
+            554.4,
+            1001.012,
+            583.8,
+            559.12,
+            553.524,
+            550.084
+          ],
+          "baseline_ns": 568.04,
+          "candidate_ns": 559.12,
+          "delta_percent": -1.5703119498626794,
+          "checksum": "250"
+        },
+        {
+          "name": "rational_bezier_retained_mixed_axis_monotonicity",
+          "baseline_samples_ns": [
+            4.3626,
+            4.26071,
+            4.68728,
+            6.61215,
+            4.3119,
+            4.31191,
+            6.12108
+          ],
+          "candidate_samples_ns": [
+            4.61658,
+            4.3318,
+            4.3896,
+            4.28631,
+            4.3718,
+            4.28621,
+            4.18631
+          ],
+          "baseline_ns": 4.3626,
+          "candidate_ns": 4.3318,
+          "delta_percent": -0.7060010085728541,
+          "checksum": "100000"
+        },
+        {
+          "name": "rational_bezier_endpoint_sign_reversal_monotonicity",
+          "baseline_samples_ns": [
+            2633.7995,
+            2351.684,
+            2335.825,
+            3726.055,
+            2295.293,
+            2396.911,
+            2940.2335
+          ],
+          "candidate_samples_ns": [
+            2654.3635,
+            2380.1475,
+            2515.428,
+            2569.544,
+            2452.8325,
+            2536.8765,
+            2513.028
+          ],
+          "baseline_ns": 2396.911,
+          "candidate_ns": 2515.428,
+          "delta_percent": 4.944572410072801,
+          "checksum": "0"
+        },
+        {
+          "name": "rational_bezier_cached_point_incidence",
+          "baseline_samples_ns": [
+            147.012,
+            148.1038,
+            145.4322,
+            218.765,
+            147.518,
+            149.4338,
+            165.7866
+          ],
+          "candidate_samples_ns": [
+            270.7354,
+            184.0114,
+            176.752,
+            174.3102,
+            185.0674,
+            173.3782,
+            169.8644
+          ],
+          "baseline_ns": 148.1038,
+          "candidate_ns": 176.752,
+          "delta_percent": 19.343325424465817,
+          "checksum": "5000"
+        },
+        {
+          "name": "rational_bezier_retained_lineage_partial_overlap",
+          "baseline_samples_ns": [
+            3779.1112,
+            3738.47,
+            4030.9,
+            6111.1818,
+            3708.2962,
+            4323.022,
+            4963.0622
+          ],
+          "candidate_samples_ns": [
+            4016.683,
+            3708.598,
+            3952.4596,
+            3743.8456,
+            3704.8044,
+            3716.1594,
+            3957.3572
+          ],
+          "baseline_ns": 4030.9,
+          "candidate_ns": 3743.8456,
+          "delta_percent": -7.121347589868265,
+          "checksum": "5000"
+        },
+        {
+          "name": "rational_bezier_algebraic_line_image_overlap",
+          "baseline_samples_ns": [
+            11985.998,
+            11227.03,
+            11263.03,
+            17547.94,
+            11077.582,
+            11419.938,
+            17465.164
+          ],
+          "candidate_samples_ns": [
+            11878.326,
+            11152.836,
+            11521.55,
+            11594.786,
+            11282.726,
+            11425.078,
+            11925.584
+          ],
+          "baseline_ns": 11419.938,
+          "candidate_ns": 11521.55,
+          "delta_percent": 0.8897771599110094,
+          "checksum": "500"
+        },
+        {
+          "name": "rational_bezier_algebraic_polynomial_graph_overlap",
+          "baseline_samples_ns": [
+            266031.108,
+            266184.056,
+            290451.636,
+            296056.532,
+            320974.504,
+            280924.208,
+            335628.944
+          ],
+          "candidate_samples_ns": [
+            293101.696,
+            263937.73199999996,
+            284716.108,
+            267935.456,
+            266083.26,
+            271654.84,
+            268173.80000000005
+          ],
+          "baseline_ns": 290451.636,
+          "candidate_ns": 268173.80000000005,
+          "delta_percent": -7.6700673154410985,
+          "checksum": "250"
+        },
+        {
+          "name": "rational_bezier_cached_basis_resultant",
+          "baseline_samples_ns": [
+            20730.34,
+            21331.96,
+            21295.34,
+            22080.708,
+            29554.836,
+            20676.624,
+            26327.318
+          ],
+          "candidate_samples_ns": [
+            21833.124,
+            21376.958,
+            21732.392,
+            20819.554,
+            21084.198,
+            21262.004,
+            20981.564
+          ],
+          "baseline_ns": 21331.96,
+          "candidate_ns": 21262.004,
+          "delta_percent": -0.32793986112855666,
+          "checksum": "1000"
+        },
+        {
+          "name": "rational_bezier_algebraic_contact_replay",
+          "baseline_samples_ns": [
+            20320.808,
+            20065.068,
+            20073.864,
+            20497.556,
+            20882.732,
+            20136.26,
+            26518.624
+          ],
+          "candidate_samples_ns": [
+            21755.752,
+            20195.336,
+            22227.796,
+            20353.208,
+            20694.344,
+            20498.276,
+            20217.416
+          ],
+          "baseline_ns": 20320.808,
+          "candidate_ns": 20498.276,
+          "delta_percent": 0.8733314147744586,
+          "checksum": "250"
+        },
+        {
+          "name": "rational_bezier_pi_conic_cubic_contacts",
+          "baseline_samples_ns": [
+            180609.34,
+            184423.87,
+            183400.15,
+            187908.14,
+            185172.02,
+            209473.06,
+            231249.97
+          ],
+          "candidate_samples_ns": [
+            189676.91,
+            187524.87,
+            185659.79,
+            180439.54,
+            177661.14,
+            184351.07,
+            181513.47
+          ],
+          "baseline_ns": 185172.02,
+          "candidate_ns": 184351.07,
+          "delta_percent": -0.44334451824847854,
+          "checksum": "100"
+        },
+        {
+          "name": "rational_bezier_algebraic_derivatives_1_through_3",
+          "baseline_samples_ns": [
+            181.788,
+            190.228,
+            213.704,
+            182.788,
+            182.468,
+            186.504,
+            223.704
+          ],
+          "candidate_samples_ns": [
+            189.344,
+            186.388,
+            184.988,
+            183.788,
+            183.708,
+            193.308,
+            184.908
+          ],
+          "baseline_ns": 186.504,
+          "candidate_ns": 184.988,
+          "delta_percent": -0.8128511989018983,
+          "checksum": "750"
+        },
+        {
+          "name": "rational_bezier_exact_derivatives_1_through_3",
+          "baseline_samples_ns": [
+            5946.1149,
+            5654.61385,
+            5798.20855,
+            5829.64885,
+            6813.69405,
+            5696.483,
+            7263.49725
+          ],
+          "candidate_samples_ns": [
+            6455.854549999999,
+            5756.1409,
+            6135.7219,
+            5861.26675,
+            5831.41175,
+            5992.44375,
+            5938.81745
+          ],
+          "baseline_ns": 5829.64885,
+          "candidate_ns": 5938.81745,
+          "delta_percent": 1.8726445247212453,
+          "checksum": "60000"
+        },
+        {
+          "name": "rational_bezier_disjoint_conic_cubic_candidates",
+          "baseline_samples_ns": [
+            346.4415,
+            349.801,
+            346.186,
+            548.1825,
+            354.8455,
+            348.426,
+            365.9795
+          ],
+          "candidate_samples_ns": [
+            362.86,
+            368.84,
+            352.901,
+            351.956,
+            349.9365,
+            358.5455,
+            360.1255
+          ],
+          "baseline_ns": 349.801,
+          "candidate_ns": 358.5455,
+          "delta_percent": 2.499849914665764,
+          "checksum": "2000"
+        },
+        {
+          "name": "rational_bezier_disjoint_conic_cubic_cold_contacts",
+          "baseline_samples_ns": [
+            351.3055,
+            359.3005,
+            352.346,
+            530.789,
+            350.276,
+            360.71,
+            493.1915
+          ],
+          "candidate_samples_ns": [
+            379.714,
+            409.827,
+            364.3,
+            360.545,
+            358.5605,
+            369.6845,
+            361.1905
+          ],
+          "baseline_ns": 359.3005,
+          "candidate_ns": 364.3,
+          "delta_percent": 1.3914536717872572,
+          "checksum": "2000"
+        },
+        {
+          "name": "rational_bezier_immediate_contacts",
+          "baseline_samples_ns": [
+            20026.352,
+            19496.904,
+            19231,
+            19904.64,
+            19487.064,
+            19541.624,
+            30825.892
+          ],
+          "candidate_samples_ns": [
+            20395.924,
+            23996.956,
+            21750.388,
+            19501.784,
+            21024.04,
+            20251.492,
+            21821.664
+          ],
+          "baseline_ns": 19541.624,
+          "candidate_ns": 21024.04,
+          "delta_percent": 7.585940656723311,
+          "checksum": "250"
+        },
+        {
+          "name": "rational_bezier_immediate_topology",
+          "baseline_samples_ns": [
+            73218.428,
+            72395.884,
+            94889.424,
+            74942.668,
+            79882.408,
+            74241.876,
+            71425.072
+          ],
+          "candidate_samples_ns": [
+            78581.224,
+            74873.792,
+            74666.208,
+            75279.128,
+            75700.976,
+            74444.864,
+            77014.768
+          ],
+          "baseline_ns": 74241.876,
+          "candidate_ns": 75279.128,
+          "delta_percent": 1.3971252558326874,
+          "checksum": "2000"
+        },
+        {
+          "name": "rational_bezier_exact_degree_elevation",
+          "baseline_samples_ns": [
+            24901.986,
+            25990.711,
+            30521.67,
+            25556.25,
+            26371.145,
+            24965.13,
+            25193.416
+          ],
+          "candidate_samples_ns": [
+            28445.072,
+            25884.228,
+            25488.655,
+            24865.388,
+            25297.639,
+            25745.638,
+            26436.63
+          ],
+          "baseline_ns": 25556.25,
+          "candidate_ns": 25745.638,
+          "delta_percent": 0.7410633406700784,
+          "checksum": "8000"
+        },
+        {
+          "name": "rational_bezier_retained_degree_elevation",
+          "baseline_samples_ns": [
+            12.88252,
+            12.88522,
+            12.71613,
+            12.69633,
+            13.153,
+            12.83362,
+            12.75163
+          ],
+          "candidate_samples_ns": [
+            12.93452,
+            12.66284,
+            12.35196,
+            12.68043,
+            13.31299,
+            14.11333,
+            12.84882
+          ],
+          "baseline_ns": 12.83362,
+          "candidate_ns": 12.84882,
+          "delta_percent": 0.11843891279312846,
+          "checksum": "800000"
+        },
+        {
+          "name": "rational_bezier_large_cold_evaluation_64_controls",
+          "baseline_samples_ns": [
+            705217.7,
+            724824.4,
+            931992.2,
+            732651.8,
+            740248.3,
+            706616.6,
+            701828.9
+          ],
+          "candidate_samples_ns": [
+            747395.8,
+            763423.8,
+            712544.2,
+            704740.8,
+            702020,
+            850117.8,
+            747876.8
+          ],
+          "baseline_ns": 724824.4,
+          "candidate_ns": 747395.8,
+          "delta_percent": 3.114050796303225,
+          "checksum": "0"
+        },
+        {
+          "name": "rational_bezier_large_cached_evaluation_64_controls",
+          "baseline_samples_ns": [
+            12806.1,
+            12435.1,
+            11269.2,
+            11768.2,
+            11889.2,
+            11839.2,
+            11750.2
+          ],
+          "candidate_samples_ns": [
+            11695.2,
+            11758.2,
+            12372.1,
+            16579.9,
+            13455.1,
+            11914.2,
+            11735.2
+          ],
+          "baseline_ns": 11839.2,
+          "candidate_ns": 11914.2,
+          "delta_percent": 0.6334887492398078,
+          "checksum": "0"
+        },
+        {
+          "name": "rational_bezier_large_exact_split_64_controls",
+          "baseline_samples_ns": [
+            634273.5,
+            635086.5,
+            746215.9,
+            662678.7,
+            655049.1,
+            636464.5,
+            627712
+          ],
+          "candidate_samples_ns": [
+            649035.5,
+            701365,
+            667747.3,
+            643301,
+            638194.3,
+            668131.3,
+            738350.4
+          ],
+          "baseline_ns": 636464.5,
+          "candidate_ns": 667747.3,
+          "delta_percent": 4.915089529738115,
+          "checksum": "0"
+        }
+      ]
+    },
+    "observed_regression": "Cached rational point incidence repeats at 148.1038 -> 176.752 ns (+19.34%, +28.6482 ns). Retained as an explicit performance cost, not dismissed as noise.",
+    "instruction_controls": {
+      "iterations": 20,
+      "includes": "Whole process, fixture construction, both warm-ups, and measured independent/shared all-four Boolean batches.",
+      "rows": [
+        {
+          "fixture": "rectangles",
+          "baseline": 233407652,
+          "candidate": 233211902,
+          "delta_percent": -0.08386614505679901
+        },
+        {
+          "fixture": "circles",
+          "candidate": 2418704773,
+          "baseline": 2417623231,
+          "delta_percent": 0.04473575477486058
+        },
+        {
+          "fixture": "capsules",
+          "candidate": 870894044,
+          "baseline": 871159315,
+          "delta_percent": -0.030450343058086027
+        }
+      ],
+      "caveat": "Circles increase 0.04474%; this is not a strict no-instruction-regression pass."
+    },
+    "checksum_caveat": "Checksums agree as strings, but zero/XOR accumulators are not independent geometry-correctness proofs.",
+    "driver_source": "#!/usr/bin/env bash\nset -euo pipefail\nfiber_evidence=\"/home/tim/Documents/GitHub/workspace/hypercurve/target/native-fiber-profile.brJ3C6\"\nfiber_frozen=\"/tmp/hypercurve-native-fiber.ibZ6fB\"\nfor fiber_round in 1 2 3; do\n    if (( fiber_round % 2 )); then\n        fiber_order=\"baseline candidate\"\n    else\n        fiber_order=\"candidate baseline\"\n    fi\n    for fiber_case in selected chord radial; do\n        case \"$fiber_case\" in\n            selected) fiber_test=\"bezier_offset::conversion_tests::selected_fiber_genuinely_analytic_contacts_complete_region_booleans\" ;;\n            chord) fiber_test=\"bezier_offset::conversion_tests::recursive_selected_radial_diameter_chord_intersects_a_rational_quadratic_strict\" ;;\n            radial) fiber_test=\"bezier_offset::conversion_tests::recursively_pair_radial_circle_intersects_a_genuine_analytic_parallel\" ;;\n        esac\n        for fiber_variant in $fiber_order; do\n            /usr/bin/time -f 'elapsed_s=%e user_s=%U system_s=%S max_rss_kib=%M exit=%x' \\\n                -o \"$fiber_evidence/wall-$fiber_case-$fiber_round-$fiber_variant.time\" \\\n                taskset -c 7 \"$fiber_frozen/$fiber_variant-test\" \"$fiber_test\" \\\n                --exact --include-ignored --test-threads=1 \\\n                > \"$fiber_evidence/wall-$fiber_case-$fiber_round-$fiber_variant.log\" 2>&1\n        done\n    done\n    for fiber_bench in bezier_region rational_bezier; do\n        for fiber_variant in $fiber_order; do\n            /usr/bin/time -f 'elapsed_s=%e user_s=%U system_s=%S max_rss_kib=%M exit=%x' \\\n                -o \"$fiber_evidence/wall-$fiber_bench-$fiber_round-$fiber_variant.time\" \\\n                taskset -c 7 \"$fiber_evidence/$fiber_variant-$fiber_bench\" \\\n                > \"$fiber_evidence/wall-$fiber_bench-$fiber_round-$fiber_variant.log\" 2>&1\n        done\n    done\n    for fiber_fixture in rectangles circles capsules; do\n        unset HYPERCURVE_CURVE_REGION_BATCH_FIXTURE\n        if [[ \"$fiber_fixture\" != rectangles ]]; then\n            export HYPERCURVE_CURVE_REGION_BATCH_FIXTURE=\"$fiber_fixture\"\n        fi\n        for fiber_variant in $fiber_order; do\n            HYPERCURVE_CURVE_REGION_BATCH_ITERATIONS=1000 \\\n                taskset -c 7 \"$fiber_evidence/$fiber_variant-curve_region_boolean_batch\" \\\n                > \"$fiber_evidence/wall-$fiber_fixture-$fiber_round-$fiber_variant.log\" 2>&1\n        done\n    done\ndone\n",
+    "retention_reason": "Native certificate preservation/completeness takes priority over the small absolute cache-path cost; production evaluator and linked code shrink, while all three slow-fixture medians improve. Uniform performance is not claimed."
+  },
+  "size": {
+    "matched_snapshot": "/home/tim/Documents/GitHub/workspace/hypercurve/target/native-fiber-profile.brJ3C6/baseline.9uWeOi",
+    "wasm_bytes": {
+      "baseline": 17046730,
+      "candidate": 17044449,
+      "delta": -2281
+    },
+    "note": "Both WASM builds and native benchmark pairs use the same source directory and Cargo target directory; the isolated snapshot was changed only after baseline artifacts were frozen.",
+    "native_sections": [
+      {
+        "benchmark": "bezier_region",
+        "baseline": {
+          ".rodata": 208592,
+          ".text": 9403239,
+          ".data": 197688,
+          ".bss": 232
+        },
+        "candidate": {
+          ".rodata": 208592,
+          ".text": 9401223,
+          ".data": 197688,
+          ".bss": 232
+        }
+      },
+      {
+        "benchmark": "rational_bezier",
+        "baseline": {
+          ".rodata": 161872,
+          ".text": 6109847,
+          ".data": 197304,
+          ".bss": 232
+        },
+        "candidate": {
+          ".rodata": 161872,
+          ".text": 6107831,
+          ".data": 197304,
+          ".bss": 232
+        }
+      },
+      {
+        "benchmark": "curve_region_boolean_batch",
+        "baseline": {
+          ".rodata": 198992,
+          ".text": 8998919,
+          ".data": 197688,
+          ".bss": 232
+        },
+        "candidate": {
+          ".rodata": 198992,
+          ".text": 8996903,
+          ".data": 197688,
+          ".bss": 232
+        }
+      }
+    ],
+    "native_text_delta_each": -2016,
+    "native_file_deltas": {
+      "bezier_region": -3632,
+      "rational_bezier": -3480,
+      "curve_region_boolean_batch": -3584
+    },
+    "unit_binary_caveat": "The candidate libtest binary adds two tests and is 58,224 bytes larger; it is not used as a production size comparison.",
+    "no_layout_change": "No production carrier fields or public types changed."
+  },
+  "earlier_invalid_attempts": [
+    "Initial /tmp Heaptrack recordings failed under disk quota exhaustion; only exact owned producer PIDs were terminated after their consumers had exited.",
+    "An all-feature test log in /tmp was quota-truncated and exit 101 was inconclusive; the complete workspace-filesystem rerun passed.",
+    "The first independent polynomial test oracle attempted 0^0. Its constant term was corrected before the authoritative before/after regression replay."
+  ],
+  "artifacts": {
+    "evidence_directory": "/home/tim/Documents/GitHub/workspace/hypercurve/target/native-fiber-profile.brJ3C6",
+    "frozen_unit_binaries": "/tmp/hypercurve-native-fiber.ibZ6fB",
+    "manifest": [
+      {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/native-fiber-profile.brJ3C6/candidate-fuzz-final-run.log",
+        "sha256": "eea2f3df2c81d57370347ad36629b73d8cd5b0b86392280272a540d8e28b885c"
+      },
+      {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/native-fiber-profile.brJ3C6/raw-accounting-validation-interpret.log",
+        "sha256": "3d830478ed8b6d094baf832bde6138b322cddcd3c653940a31e249f9430e6d26"
+      },
+      {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/native-fiber-profile.brJ3C6/candidate-fuzz-image-build.log",
+        "sha256": "7276ad91843cacd815110e1b2ad2c65c7b84eb13477c67d8bfce65a36b49ab2f"
+      },
+      {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/native-fiber-profile.brJ3C6/wall-selected-1-baseline.log",
+        "sha256": "1dfcd04af1aceb8b6e912ba7509067269ef2d66e65a27f9704aee81183546227"
+      },
+      {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/native-fiber-profile.brJ3C6/wall-rational_bezier-2-baseline.time",
+        "sha256": "37d3a051c677aa5efc612fc2e29cd47756d2ec2c2f6f26dac8e2f40cf82499bf"
+      },
+      {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/native-fiber-profile.brJ3C6/raw-accounting-test.json",
+        "sha256": "36a953e18b88e64b74107f1d5186848f785cb216f3210c3a55b360027a853965"
+      },
+      {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/native-fiber-profile.brJ3C6/wall-radial-1-baseline.log",
+        "sha256": "dd56769f0a54f81490440683f4b3f1d5740e46929075aabc9d337637470f0411"
+      },
+      {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/native-fiber-profile.brJ3C6/candidate-ui-tests.log",
+        "sha256": "65dc1a6687953e9156c3322f22cc685098c111a04ba8a897f497c83e231ef6bb"
+      },
+      {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/native-fiber-profile.brJ3C6/baseline-bench-build.log",
+        "sha256": "93482979abc168030a47fe0b7544f42da99e51d0637c0bcbb1c19f7f75fbb010"
+      },
+      {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/native-fiber-profile.brJ3C6/wall-radial-1-candidate.time",
+        "sha256": "3c47ac3c231f878790edd6a0fb7223db3a47a9822c3a9e2dc3a7502bd0df431e"
+      },
+      {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/native-fiber-profile.brJ3C6/wall-radial-3-candidate.log",
+        "sha256": "c3c85397a5c6fcf56af38e259911cf980e25af2f6fbb5079f6aaa4d7b0146278"
+      },
+      {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/native-fiber-profile.brJ3C6/wall-bezier_region-2-candidate.time",
+        "sha256": "beb0668149d7f49d143f8e991b3915d715c15e2aad6e3f68d20472e3097cde84"
+      },
+      {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/native-fiber-profile.brJ3C6/baseline-ui-wasm-build.log",
+        "sha256": "4dae8b0983d6245951f8081e2b3dd06c7644284ccf43ccea6c9fadfdfc09eb51"
+      },
+      {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/native-fiber-profile.brJ3C6/candidate-clippy.log",
+        "sha256": "5dd88db1859b8420db30cf988ae7b1921323db192c4fdbfc5849b15b77196a31"
+      },
+      {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/native-fiber-profile.brJ3C6/raw-accounting-validation-histogram.tsv",
+        "sha256": "c7db52de5da652851be7dcb5f349a353637569aa051176f8444b48a23686bb9a"
+      },
+      {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/native-fiber-profile.brJ3C6/wall-rational_bezier-2-baseline.log",
+        "sha256": "d35cecff570e7c27149855c0aa208defbd5103f8b374fd75842605760bd17fdf"
+      },
+      {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/native-fiber-profile.brJ3C6/candidate-selected-heaptrack.log",
+        "sha256": "25aed128b71396d40e62b904873190d1f9dbb0f9ba6dbc9866b32f3b682482bb"
+      },
+      {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/native-fiber-profile.brJ3C6/baseline-bench-build.jsonl",
+        "sha256": "c6e764200724f23232fc27d228eea41b0ba18c96d3b041569e5729fb81488c7c"
+      },
+      {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/native-fiber-profile.brJ3C6/wall-rational_bezier-2-candidate.log",
+        "sha256": "376b385b7f44be8929693450ce5d5cb0510ed16804805eea173fca48f9eea300"
+      },
+      {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/native-fiber-profile.brJ3C6/baseline-regressions-initial-oracle-error.log",
+        "sha256": "91f425164284f675af91c4eb75dd098f564f3d5f53c43761beec2220b14c5cd4"
+      },
+      {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/native-fiber-profile.brJ3C6/wall-capsules-1-candidate.log",
+        "sha256": "6bf1dd01f342a1c2a1687225f60d082b92d37835298949d77c1a53866626fdf8"
+      },
+      {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/native-fiber-profile.brJ3C6/extended-rational-results.json",
+        "sha256": "30c01779299547e3d51802ab9259901d8c75a1c6479fb6e6429844621f12b345"
+      },
+      {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/native-fiber-profile.brJ3C6/wall-rational_bezier-3-candidate.time",
+        "sha256": "3e74ff8d0d0f03a19b0e0f18d289d5c632e50ce3de8d7ca5b06899b7164d5c3a"
+      },
+      {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/native-fiber-profile.brJ3C6/wall-bezier_region-2-candidate.log",
+        "sha256": "88948fe0b62c8b2efc84b578521806c4265dd51531dbe0987935f6ff331e941b"
+      },
+      {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/native-fiber-profile.brJ3C6/repeat-rational-2-candidate.log",
+        "sha256": "632d28497d096ec978dd4f61b684b3f53ce8424a65b189a58061ebbe0a3362c1"
+      },
+      {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/native-fiber-profile.brJ3C6/wall-rectangles-2-candidate.log",
+        "sha256": "ad2a93aeb28b1fe6650b1b84c894ace8507c1e2e2cee9783c4b148840503231b"
+      },
+      {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/native-fiber-profile.brJ3C6/wall-chord-2-baseline.time",
+        "sha256": "d5799b6865f04203d3aeee18bfc0e1a53bca521935073c9042517eb02ee65af7"
+      },
+      {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/native-fiber-profile.brJ3C6/baseline-selected-host-interpret.log",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/native-fiber-profile.brJ3C6/instructions-capsules-baseline.log",
+        "sha256": "eb0302ab774347e7a79a09c1b95005b0254f4e9bd9be3aaf2ac8b84998d7695a"
+      },
+      {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/native-fiber-profile.brJ3C6/wall-rectangles-1-candidate.log",
+        "sha256": "7ddea0f76ef1462b0e1a945f248b13078f88c27483bc67212ffb9e3ea2710293"
+      },
+      {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/native-fiber-profile.brJ3C6/candidate-bench-build.jsonl",
+        "sha256": "032dfb6e8e82d7fd80d2f8ec024d6d939cd0a110fcfb764f913040223711df1e"
+      },
+      {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/native-fiber-profile.brJ3C6/wall-rectangles-3-baseline.log",
+        "sha256": "3acfb5a6c627ed07b72bbb1b552c37f5d0b7355bcbf4167cfb2dcbd8b93093ea"
+      },
+      {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/native-fiber-profile.brJ3C6/wall-rational_bezier-3-baseline.time",
+        "sha256": "8df7cd535e6015f3d93985a318c86f7cb4fe1ffdc5a97810c82f0986af554a7c"
+      },
+      {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/native-fiber-profile.brJ3C6/wall-radial-2-candidate.log",
+        "sha256": "880e2474f17c4311cbc49a17cf4cbd3416d746404cf203bf5d68a529aec1b8ad"
+      },
+      {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/native-fiber-profile.brJ3C6/wall-rational_bezier-1-baseline.time",
+        "sha256": "add269cdbdf50446a624ea028e109cfe458fd510215f12427d238c362a0e7a52"
+      },
+      {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/native-fiber-profile.brJ3C6/wall-radial-2-candidate.time",
+        "sha256": "eb314b8e49e37a26b9935894845b12947feb389aa0d1fc2778eef873132213af"
+      },
+      {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/native-fiber-profile.brJ3C6/repeat-rational-5-baseline.log",
+        "sha256": "9c0038072e67aa19a2b5b42e8fdd30f4546cb1998ebc4c8e5ca8f63ba36da564"
+      },
+      {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/native-fiber-profile.brJ3C6/candidate-minimal-clippy.log",
+        "sha256": "2d879e67f2e471856518f715b4a4075a21ebee5810660f8c39b58d17f40d59d3"
+      },
+      {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/native-fiber-profile.brJ3C6/wall-bezier_region-2-baseline.time",
+        "sha256": "8c9fb65d238538746df349b86251f6e1473fcbf3613884a1834d4dd5464895c1"
+      },
+      {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/native-fiber-profile.brJ3C6/candidate-bench-build.log",
+        "sha256": "139abae272c55d1bb732178ccb2652be3a3abd74037e4cd81dce066aeb7730fc"
+      },
+      {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/native-fiber-profile.brJ3C6/candidate-live-fuzz-check.log",
+        "sha256": "226e5090dc9a5338b04f4ba7b15b8034e7bbeaed03c552bfd1fffb07fb7da3d9"
+      },
+      {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/native-fiber-profile.brJ3C6/candidate-ui-wasm.log",
+        "sha256": "6ad7e191f1fd9d3b954b65ac6e4d90fbc64fb17345f5bbc12b6a5d749e95357d"
+      },
+      {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/native-fiber-profile.brJ3C6/candidate-live-ui-tests.log",
+        "sha256": "237c6d09b8d5cea6f8178e521a6d0856c387db8f03b0d84795d9fc9968d892ff"
+      },
+      {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/native-fiber-profile.brJ3C6/wall-chord-1-baseline.log",
+        "sha256": "c9b53972c9a2b45636e98192c0d98345cab51662818fafe18b4aaa0dc440366b"
+      },
+      {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/native-fiber-profile.brJ3C6/wall-bezier_region-1-baseline.log",
+        "sha256": "8535c3dc3df0844df83d4081ffec539fadb2bf1855a4394023fd6a3cb2ec139e"
+      },
+      {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/native-fiber-profile.brJ3C6/candidate-ui-clippy.log",
+        "sha256": "e2c529385bbec46936320ee32d7d83903bf3170c6025e76c834ae9ddce4bbf08"
+      },
+      {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/native-fiber-profile.brJ3C6/candidate-all-feature-including-ignored.log",
+        "sha256": "0fb557c822d4c349cbea44dc8877e4597ccf5e8ebe12ef474b570ed90076961f"
+      },
+      {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/native-fiber-profile.brJ3C6/repeat-rational-4-candidate.log",
+        "sha256": "1994fc02c788991a5bfe07bcdb321d09fe0492277d03603d75c11f45cfc2bd25"
+      },
+      {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/native-fiber-profile.brJ3C6/candidate-live-all-feature-including-ignored.log",
+        "sha256": "d162272246a64556f0c6048dbfeccf46a5c49204d4602f9de1db5aca6f3be1ac"
+      },
+      {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/native-fiber-profile.brJ3C6/wall-selected-3-candidate.time",
+        "sha256": "e764f1747a15227cd3f0c7af8474304a1f8c8b6b45543555b0766fcd3e43b929"
+      },
+      {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/native-fiber-profile.brJ3C6/candidate-fuzz-image-fixed-run.log",
+        "sha256": "444b2ffe1d362f4d96b9e6975ac363971426882dedef87e100275a6507e4b78f"
+      },
+      {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/native-fiber-profile.brJ3C6/instructions-circles-baseline.log",
+        "sha256": "c5add3b5beab3266c3c0d1a3abf0aaeb725a082ec67fcd5b159a61e0a08528ea"
+      },
+      {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/native-fiber-profile.brJ3C6/candidate-live-ui-clippy.log",
+        "sha256": "f4403412cb20dc7d8a0a94c08c9c8853e4bac9b3e8489158834f30512311ed97"
+      },
+      {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/native-fiber-profile.brJ3C6/wall-bezier_region-3-baseline.log",
+        "sha256": "ee63ec3b65ee2907ae04d7472313870f7fc4136f2631d4a8fa9b5669e9420d6d"
+      },
+      {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/native-fiber-profile.brJ3C6/wall-circles-2-baseline.log",
+        "sha256": "c67c3b141cac226edbc8ed4ee2ecca3e2f5f0bcbe0e355f34497f78dabb883d6"
+      },
+      {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/native-fiber-profile.brJ3C6/raw-accounting.cpp",
+        "sha256": "55f54a5610e0e51ce928a8ac50cfd1c59a7ca83a8d6c2dbfb0feec591478ffc4"
+      },
+      {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/native-fiber-profile.brJ3C6/wall-radial-1-baseline.time",
+        "sha256": "9e5646939fe1b8c62b3528a34b203b5ebc2fa64ba3435fb227123c5dc44d2db4"
+      },
+      {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/native-fiber-profile.brJ3C6/wall-selected-2-baseline.time",
+        "sha256": "82982ca18b0481f19a3d019998a0ba4da3cab48866939b600d286b94c15b29b9"
+      },
+      {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/native-fiber-profile.brJ3C6/repeat-rational-4-baseline.log",
+        "sha256": "6af8529dad7704f55c8529dad34bb274810071b725e877d9c802a35c26db99da"
+      },
+      {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/native-fiber-profile.brJ3C6/wall-rational_bezier-1-candidate.time",
+        "sha256": "b5c694d88e507cf0de178fc21e46d9fc378860b5c8a8e5dace67976c5c828252"
+      },
+      {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/native-fiber-profile.brJ3C6/baseline-selected-raw-accounting.log",
+        "sha256": "8fb2cf103c291acaec2284843c702e9bcaf77703aad156bcce6773cc167d099b"
+      },
+      {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/native-fiber-profile.brJ3C6/baseline-regressions-corrected.log",
+        "sha256": "41b06fc602c858159614f4948cb44119bc1be338f67cb64f6939eef06d8f4612"
+      },
+      {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/native-fiber-profile.brJ3C6/wall-chord-2-baseline.log",
+        "sha256": "b964df0a1d0f29175ce191275772440cfaf00499d350971a1e21936ec44df6ff"
+      },
+      {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/native-fiber-profile.brJ3C6/candidate-selected-raw-accounting.json",
+        "sha256": "f1c5e89c5fae76c572c1821960213a4f901585689322a74e541775321f9d509c"
+      },
+      {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/native-fiber-profile.brJ3C6/wall-rectangles-3-candidate.log",
+        "sha256": "f7b2504820744aa2831a4e482d26e6bd862cb228b0d5a188d2da629c916a4cd0"
+      },
+      {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/native-fiber-profile.brJ3C6/instructions-rectangles-baseline.log",
+        "sha256": "b5c178b7888e4e2a85e025b3c792ca9ab6ec3bf65129fec4cb76624c06d2cb57"
+      },
+      {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/native-fiber-profile.brJ3C6/raw-accounting-validation-record.log",
+        "sha256": "e1e317c5f33266c57649a4b3b0611688d2fbee0ca69e66bf170617f455503f3b"
+      },
+      {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/native-fiber-profile.brJ3C6/wall-selected-3-baseline.log",
+        "sha256": "ed49e0b52015efb58bd254e37f7b13df0b949cec92d3e635d6cbeaddcc4f8e7b"
+      },
+      {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/native-fiber-profile.brJ3C6/repeat-rational-6-baseline.log",
+        "sha256": "05177a612b40441b3043bd3e17258cab7391e3b0b3da274e3d35b85e74ede7c2"
+      },
+      {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/native-fiber-profile.brJ3C6/wall-circles-3-candidate.log",
+        "sha256": "eb57cce658e8e7fda686c5e6f1aa4c146aebda81351b0e31813689b1b392e69d"
+      },
+      {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/native-fiber-profile.brJ3C6/wall-bezier_region-1-candidate.log",
+        "sha256": "747dde64bd37ebb62976713f25027b62331dcc8ffb9722dbc2a8a3315fc1aa21"
+      },
+      {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/native-fiber-profile.brJ3C6/candidate-fuzz-final-fmt.log",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/native-fiber-profile.brJ3C6/wall-bezier_region-1-candidate.time",
+        "sha256": "5b3c6fac0f4d05524379145c9421bdbf0b3fdfc347f6fbf029a4d10a8dd0b0ff"
+      },
+      {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/native-fiber-profile.brJ3C6/repeat-rational-1-candidate.log",
+        "sha256": "a64390404ff5c12935f3052750c0b12a2c931d678a017936150d23583dada2b5"
+      },
+      {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/native-fiber-profile.brJ3C6/candidate-ui-matched-wasm-build.log",
+        "sha256": "a067b7f6cb4da00506c7b50f6e2ce049a725c8f6383e2a0f3f284fd850c90431"
+      },
+      {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/native-fiber-profile.brJ3C6/candidate-fuzz-image-fixed-replay.log",
+        "sha256": "16ff245831688c94439aaaf1673cf77e26f8690d72a4af6ccdb072c6b8d55e29"
+      },
+      {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/native-fiber-profile.brJ3C6/wall-selected-2-baseline.log",
+        "sha256": "9e602229e0ec82517c4b2fd6b16d65a8a0dd0a5c35a1b0be8abb0713b2215709"
+      },
+      {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/native-fiber-profile.brJ3C6/run-matched-wall.sh",
+        "sha256": "27c04c883548a0dea29470e237b271a37dcf41f84dbb18172ec30e09c3b32af6"
+      },
+      {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/native-fiber-profile.brJ3C6/wall-bezier_region-3-candidate.time",
+        "sha256": "c8f03fbaa900584e53b15f63b6b25dc87c74bd2ecff416289121cd2a4ab05a17"
+      },
+      {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/native-fiber-profile.brJ3C6/wall-chord-3-candidate.log",
+        "sha256": "fe260e597eb23110071cb1d8a69d5f32650eb9500260d542f5a6b9f7b3dd7619"
+      },
+      {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/native-fiber-profile.brJ3C6/candidate-live-clippy.log",
+        "sha256": "d7dae192715495fa89ccbe279af3efb9792c1dae1768228e369035e68a1df673"
+      },
+      {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/native-fiber-profile.brJ3C6/wall-rational_bezier-3-candidate.log",
+        "sha256": "7a025712ff2acb38ad7733017869d8b69a3b085fbd8505c1617eb14318f92a3a"
+      },
+      {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/native-fiber-profile.brJ3C6/run-instruction-controls.sh",
+        "sha256": "c9a1580db51f5200e4937b9b98c0972121b8e4d5b586681865655143db85a227"
+      },
+      {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/native-fiber-profile.brJ3C6/repeat-rational-2-baseline.log",
+        "sha256": "185b483bf47f951971aeac4a0438fbca1e6a7b72fb1da747740cf7d177b5b717"
+      },
+      {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/native-fiber-profile.brJ3C6/wall-chord-1-candidate.log",
+        "sha256": "9abf1e3d67a0070938be37f07696f931525023e35fa85c656ee408947d3014fe"
+      },
+      {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/native-fiber-profile.brJ3C6/baseline-selected-interpret.log",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/native-fiber-profile.brJ3C6/wall-rational_bezier-3-baseline.log",
+        "sha256": "fa521f9cc057bc3f95f05d62b1ab9a7a896beaadaebabdf21b8b91a3d850e498"
+      },
+      {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/native-fiber-profile.brJ3C6/baseline-selected-symbol-free-interpret.log",
+        "sha256": "9ce656e28eab7dd59782d53960fa3f691ef646741dbf9f542d62d78cf0bcb352"
+      },
+      {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/native-fiber-profile.brJ3C6/wall-capsules-3-baseline.log",
+        "sha256": "1eeb50003abdcf2bfcbba5cdc3031b3e41b0286c1ea9c40a227fd46cc300cb1f"
+      },
+      {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/native-fiber-profile.brJ3C6/wall-capsules-2-candidate.log",
+        "sha256": "30a7772e4788ef3594a14a90379fd66387109d8e17dff5ee81a3a81c372ebac0"
+      },
+      {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/native-fiber-profile.brJ3C6/wall-chord-1-candidate.time",
+        "sha256": "7f16dd17ccf5961dfb7df5507ab9414e660ff1f42d811818e764a1fae3d11516"
+      },
+      {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/native-fiber-profile.brJ3C6/wall-chord-1-baseline.time",
+        "sha256": "195c80f731fcab87bc088da563273668b4638fb88ac303b52d3d60809e97a868"
+      },
+      {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/native-fiber-profile.brJ3C6/candidate-docs.log",
+        "sha256": "50eaa90529f75a8264ceb6e7e7d7147500e28987ce6ccefb32fa9a64700ac27f"
+      },
+      {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/native-fiber-profile.brJ3C6/candidate-live-minimal-suite.log",
+        "sha256": "f97a4cf8e5e9541d993b27f6e7454756578415b148fe99138de6a1e659266a25"
+      },
+      {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/native-fiber-profile.brJ3C6/wall-chord-3-baseline.log",
+        "sha256": "461f040647226de5253f6553c44957366aaa2e34e3f97b92e62964abb369a403"
+      },
+      {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/native-fiber-profile.brJ3C6/repeat-rational-7-baseline.log",
+        "sha256": "10e215d96e6bcc811b5fc6a17d621d1944a693f8bdedd73afc9f83008e3e43b9"
+      },
+      {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/native-fiber-profile.brJ3C6/candidate-minimal-suite.log",
+        "sha256": "b79a180168193c67cad70bcceb81e62fdad04fa99a0a6da27bb531ee2577538f"
+      },
+      {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/native-fiber-profile.brJ3C6/wall-bezier_region-2-baseline.log",
+        "sha256": "28da5e2e3661d14d773eb3335ef353bb14b7da0d814c1f7fdc4eac0832377c1f"
+      },
+      {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/native-fiber-profile.brJ3C6/wall-selected-1-baseline.time",
+        "sha256": "4e3b6da6d905c45e1ff679f40152503b5b07e9904212126b1a66858883c552c2"
+      },
+      {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/native-fiber-profile.brJ3C6/repeat-rational-7-candidate.log",
+        "sha256": "2e97577ecbae81674928326c643184bcd5a37816ec2b4acfb05dd3a524fc66bc"
+      },
+      {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/native-fiber-profile.brJ3C6/candidate-fuzz-image-fixed-build.log",
+        "sha256": "5a85c35f07c7c787c5cbc2a287cc44b599fd66525439fa8022c9fb31faf24bb4"
+      },
+      {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/native-fiber-profile.brJ3C6/raw-accounting-validation-print.log",
+        "sha256": "0fbd45577fd9a85732963212ab7f9b4d6203a4e112b4832301ff44608166911f"
+      },
+      {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/native-fiber-profile.brJ3C6/matched-wall-results.json",
+        "sha256": "94d65e21d7f5f4104b8a7460f757d2a731dbf214e47d6baaecd66c7e83a3c77b"
+      },
+      {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/native-fiber-profile.brJ3C6/repeat-rational-5-candidate.log",
+        "sha256": "8c6031e56b9b872fcada6d587b7dfe100d1e7377a497a8755143e9b05698b9e1"
+      },
+      {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/native-fiber-profile.brJ3C6/candidate-regressions.log",
+        "sha256": "9f35cbbd7aa54ba13c88161a0dcb79a9e19aed22dd996dff46c3808ea4d4067f"
+      },
+      {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/native-fiber-profile.brJ3C6/candidate-fuzz-check.log",
+        "sha256": "767546dce595c82aaf415477e166e4c16026a645e05f3c53b0616e1d90a8e093"
+      },
+      {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/native-fiber-profile.brJ3C6/candidate-fuzz-final-build.log",
+        "sha256": "715b4e446039ae9fd01e30f54a81c12e5a3a881db80b9bae97a3022d112bca0c"
+      },
+      {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/native-fiber-profile.brJ3C6/wall-capsules-2-baseline.log",
+        "sha256": "e344226caede187f988b5264d1bd45d2c3aec3d49c32d6b4e3c878ad898b5622"
+      },
+      {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/native-fiber-profile.brJ3C6/repeat-rational-1-baseline.log",
+        "sha256": "7f34d497a48f9228ef5c99bc1df6e107b9b1009797c24326e57dcda8bc42db03"
+      },
+      {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/native-fiber-profile.brJ3C6/candidate-final-fmt.log",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/native-fiber-profile.brJ3C6/baseline-top-allocation-stack.log",
+        "sha256": "ffdf30df2ff9986b9e2c5df65dca4933a264f7a7259d8230cacc874466e5af5b"
+      },
+      {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/native-fiber-profile.brJ3C6/wall-chord-3-candidate.time",
+        "sha256": "72c06a8ffb398850b03160c33975cf563b6933e7b955b37b1ca7b5965a59460c"
+      },
+      {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/native-fiber-profile.brJ3C6/candidate-live-fuzz-image-clippy.log",
+        "sha256": "bc863e666988f21bd1e0b75e72605fa9035907a15857eb2608c605e514d24c06"
+      },
+      {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/native-fiber-profile.brJ3C6/wall-rectangles-2-baseline.log",
+        "sha256": "6d291ad3fe72610fcde111dbbc0989ab892e287441044c62bf72add16a90b912"
+      },
+      {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/native-fiber-profile.brJ3C6/wall-radial-3-candidate.time",
+        "sha256": "5689b8eb39edb1b8fd05d21a186377a40ca9e52f4c745b9dacee2798d0c44f22"
+      },
+      {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/native-fiber-profile.brJ3C6/wall-chord-3-baseline.time",
+        "sha256": "b42ccb8331a0520c73eda83a0747798ffe0a0b59a610d857b6323e8088c81e2c"
+      },
+      {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/native-fiber-profile.brJ3C6/candidate-live-ui-wasm.log",
+        "sha256": "343c13e7f6f2d320993b573f830525e33b59b3c32656ef426e015b1e30f3fdc2"
+      },
+      {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/native-fiber-profile.brJ3C6/wall-rectangles-1-baseline.log",
+        "sha256": "47072eed850d3add8fac45908b9fef602cd6f127e85a5436bbaae2346606535b"
+      },
+      {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/native-fiber-profile.brJ3C6/repeat-rational-6-candidate.log",
+        "sha256": "c02c8d88c6e4877be004e225f42b7d3b803e5d58db0ccd0699b6ce28de801506"
+      },
+      {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/native-fiber-profile.brJ3C6/instructions-rectangles-candidate.log",
+        "sha256": "f0a30e5d4b36083380f545aefb6da4e728b9dbd827ef120c64c3842308e811d2"
+      },
+      {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/native-fiber-profile.brJ3C6/repeat-rational-3-candidate.log",
+        "sha256": "fef47f4065fb1c840f6e1652b8bb1b6fb761f319734599a942eb53572c988508"
+      },
+      {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/native-fiber-profile.brJ3C6/baseline-selected-raw-accounting.json",
+        "sha256": "f43bfdc56162d922e137634cc49c6844b8b76771f5c5fa6ba9ec0152297a6147"
+      },
+      {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/native-fiber-profile.brJ3C6/wall-selected-1-candidate.log",
+        "sha256": "04c6168bc480c5a78fc36214c1af2f5af28564e7ba33e8b7044bb401dc31f052"
+      },
+      {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/native-fiber-profile.brJ3C6/baseline-selected-heaptrack.log",
+        "sha256": "f2a56bb3b746cad705522bb6e25d31fa578df5b5a0fa850ac9e67ea9e5e22364"
+      },
+      {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/native-fiber-profile.brJ3C6/wall-selected-2-candidate.log",
+        "sha256": "e54fab2d9eacc064ce6227b6afeda037e7eb9aaa039adc9c520f6e71972aa6f5"
+      },
+      {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/native-fiber-profile.brJ3C6/wall-rational_bezier-1-candidate.log",
+        "sha256": "0c68764a7af1cdfd1c39bc024bcd4a781c2f8a13713a3969efb283b67cf20f69"
+      },
+      {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/native-fiber-profile.brJ3C6/wall-bezier_region-3-baseline.time",
+        "sha256": "9a5826b98350e4f56fb6b03da167207ff0d1644ba3a1f78532107169d278ce12"
+      },
+      {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/native-fiber-profile.brJ3C6/candidate-fuzz-image-clippy.log",
+        "sha256": "06cde4d48909bf53a17fe1292f67709daa830d15d8ec9b6f03478404ffd3a737"
+      },
+      {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/native-fiber-profile.brJ3C6/baseline-interpreter-gdb.log",
+        "sha256": "4ab4d9fb9a3be2761c9cf3fbcbb227deee5d3bc4f0dc64b8940d135e1fdcaf3f"
+      },
+      {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/native-fiber-profile.brJ3C6/wall-bezier_region-1-baseline.time",
+        "sha256": "f8623fb5573b46cf8b8a025d28d2a4ac2ce9d50113d8d3a4eee54b02699eab6c"
+      },
+      {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/native-fiber-profile.brJ3C6/wall-radial-3-baseline.log",
+        "sha256": "2fcec8c29b524eed7bf4d9817ef9194509c508c20e8205f96f18ce976947f2ad"
+      },
+      {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/native-fiber-profile.brJ3C6/candidate-fuzz-image-run.log",
+        "sha256": "cc417f014e8fde4b2665bdde32c05355e5bdd7885238e948e1b97b0abdbb0911"
+      },
+      {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/native-fiber-profile.brJ3C6/wall-radial-3-baseline.time",
+        "sha256": "eb424e669ce6fd06257fc3702c186fbaae6aa651bf36c6e06afefd3e34088912"
+      },
+      {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/native-fiber-profile.brJ3C6/wall-rational_bezier-1-baseline.log",
+        "sha256": "52dc30923dbbe0fffab91cda7b5c3b5ebc13f8c34c48e8d97508cd853cc38172"
+      },
+      {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/native-fiber-profile.brJ3C6/candidate-minimal-regressions.log",
+        "sha256": "85979eb2846c3986bf3729b11516052f9f2ec0600c821d076f78acb21bfa4dcf"
+      },
+      {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/native-fiber-profile.brJ3C6/candidate-selected-raw-accounting.log",
+        "sha256": "dbd8a0609cf64c39b40390e96280b6cb198585999ca550609471fd8d1caab103"
+      },
+      {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/native-fiber-profile.brJ3C6/repeat-rational-3-baseline.log",
+        "sha256": "2cdb9c1c8bcb0084532599a1ade51855ce7ea1f8fe0a2050ea0b434b48bfc9f4"
+      },
+      {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/native-fiber-profile.brJ3C6/wall-circles-3-baseline.log",
+        "sha256": "9f1e93e004a0f07cf9280071e345c6b02b55aae8ace6198c15a366bdfdbb7d3a"
+      },
+      {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/native-fiber-profile.brJ3C6/wall-chord-2-candidate.time",
+        "sha256": "720ba6887d3819a7ce21e569898ba418298d1d0e48613ccb90ad0d3e3b60d519"
+      },
+      {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/native-fiber-profile.brJ3C6/wall-circles-2-candidate.log",
+        "sha256": "e9905a20138fd045d2e8080e76016b2a572cab942d113caf44b3b585f8d9e65a"
+      },
+      {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/native-fiber-profile.brJ3C6/wall-radial-2-baseline.log",
+        "sha256": "3e40917bce0d4ddbad61c526a4fb73c1053fe630d90d165e1f721bb18f46c6d0"
+      },
+      {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/native-fiber-profile.brJ3C6/wall-selected-3-candidate.log",
+        "sha256": "086bcfc0de2ed79c17f62f4e9f1735fe3a493102a943dda300e3074c40f35fe1"
+      },
+      {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/native-fiber-profile.brJ3C6/instructions-capsules-candidate.log",
+        "sha256": "db6a9d40eade61be9a8f41660db5fbee9cdcf6f0c5f118f0d9f8a580ead4d70e"
+      },
+      {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/native-fiber-profile.brJ3C6/wall-circles-1-candidate.log",
+        "sha256": "1c66d116d7daf4ae6c69421580ef9fe6b8d35900cb4e3e0387f9beccbd689bd4"
+      },
+      {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/native-fiber-profile.brJ3C6/raw-accounting-validation.json",
+        "sha256": "543c606e807f1479c973ff5f5fa9690a851f967759b431b18c0e9e83654867bc"
+      },
+      {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/native-fiber-profile.brJ3C6/wall-chord-2-candidate.log",
+        "sha256": "1560a7c7a5fe5f86e000ebc30190894e03d4b05d43532ab7c78ee439fa02305c"
+      },
+      {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/native-fiber-profile.brJ3C6/wall-radial-2-baseline.time",
+        "sha256": "7e132582c18c1075899f20f703a175c8e7784256517f2ccc355abdd7972ba1fe"
+      },
+      {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/native-fiber-profile.brJ3C6/wall-selected-1-candidate.time",
+        "sha256": "be1f8d4c803e5859da659d794de526665d75143d829ac46400b8a98e0bd7637c"
+      },
+      {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/native-fiber-profile.brJ3C6/candidate-fuzz-final-replay.log",
+        "sha256": "b8e74f8bef2532cc270b30b9da2676e97d7a82bde30a874538588535406faefa"
+      },
+      {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/native-fiber-profile.brJ3C6/wall-selected-2-candidate.time",
+        "sha256": "1ec25cb6e2799ff5ad04a38f754e2e70e7c103198e009563e36fa7c2458ad324"
+      },
+      {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/native-fiber-profile.brJ3C6/wall-bezier_region-3-candidate.log",
+        "sha256": "3c2bfad6badc51729128dd3d3bfe047f44c9a2601142cef1c7ea6d8cd1b6e515"
+      },
+      {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/native-fiber-profile.brJ3C6/wall-capsules-1-baseline.log",
+        "sha256": "0d92dbae464221d45d4963de87ab17088b98689b2e0e51ac16ca3a952870d2d6"
+      },
+      {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/native-fiber-profile.brJ3C6/wall-capsules-3-candidate.log",
+        "sha256": "6b1ca8d868cfc916b5237d89e99b24681a401bdfac5f439cdff7d482a5424854"
+      },
+      {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/native-fiber-profile.brJ3C6/wall-rational_bezier-2-candidate.time",
+        "sha256": "c544a61a539ec2c9b250a684e2050b75d9cad842d212acef21bbdf2c373d2bad"
+      },
+      {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/native-fiber-profile.brJ3C6/instructions-circles-candidate.log",
+        "sha256": "5dae6860be618d741bf2032e180e8a7335529dd5038c8971a95dad87fba42613"
+      },
+      {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/native-fiber-profile.brJ3C6/candidate-fuzz-format-cleanup.log",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/native-fiber-profile.brJ3C6/wall-circles-1-baseline.log",
+        "sha256": "65b6ba32f10e2d0358ae12c524f8b4c8b6ce19030a057fc49629b28cd49d54fc"
+      },
+      {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/native-fiber-profile.brJ3C6/wall-radial-1-candidate.log",
+        "sha256": "ea755fc9795279017d7ddaf089980f4ad8e19d1f3f633dff7759157d9f9c5f62"
+      },
+      {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/native-fiber-profile.brJ3C6/wall-selected-3-baseline.time",
+        "sha256": "8bdb3259559e54e10ab9291e0dee7469faf4bd36da9b8fe37044b42e5dd6b6ac"
+      },
+      {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/native-fiber-profile.brJ3C6/candidate-fuzz-fmt.log",
+        "sha256": "98a5da327f2a3c024cf5f366b3be3a0980875f7d7b15fe6ee206bb9120fd564f"
+      },
+      {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/native-fiber-profile.brJ3C6/raw-accounting-validation-histogram.log",
+        "sha256": "0fbd45577fd9a85732963212ab7f9b4d6203a4e112b4832301ff44608166911f"
+      },
+      {
+        "path": "/tmp/hypercurve-native-fiber.ibZ6fB/baseline-test",
+        "sha256": "76ea25d6ffb4c71fcd7ef35d5ed67bacd835fdcae0de92eef152f4e86683a05e"
+      },
+      {
+        "path": "/tmp/hypercurve-native-fiber.ibZ6fB/candidate-test",
+        "sha256": "4c5892be047884e9aa43e6bb097dc20de98777c25f5e4f7726e13ca91bb725d8"
+      },
+      {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/native-fiber-profile.brJ3C6/baseline-bezier_region",
+        "sha256": "cfffdb425cd51e7c7ba5aa557943590dfa897be8921a85efd1299a1444267765"
+      },
+      {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/native-fiber-profile.brJ3C6/baseline-rational_bezier",
+        "sha256": "3b2836b9250fcd5f5cfffbdfbf30d70cfab98e5e5be708b6f7dc87cc3909d6e6"
+      },
+      {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/native-fiber-profile.brJ3C6/baseline-curve_region_boolean_batch",
+        "sha256": "a240ab3fe03a9f40a2f294fa0c9b8912b2ce2a57c7bce664f4ec2f073b35ebfe"
+      },
+      {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/native-fiber-profile.brJ3C6/candidate-bezier_region",
+        "sha256": "ca49e1f06c3e6c6fcca8278eef0a659049f5eb23959d3706b33fa2fdf380bc5d"
+      },
+      {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/native-fiber-profile.brJ3C6/candidate-rational_bezier",
+        "sha256": "6d09b703833059929d90353c2d852d083f6aa6a29da520d745510a04820748c8"
+      },
+      {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/native-fiber-profile.brJ3C6/candidate-curve_region_boolean_batch",
+        "sha256": "5b869ccf6c29d3375cb6133c246790572d5057b8f1dd22c8fb66e3f3ce926558"
+      },
+      {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/native-fiber-profile.brJ3C6/baseline-ui-matched.wasm",
+        "sha256": "fc05fe548e57849a8aa61bc6ea87f3a6d4423ae05f4ad7cac037a176313e94ae"
+      },
+      {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/native-fiber-profile.brJ3C6/candidate-ui-matched.wasm",
+        "sha256": "1cdf70c1b40bf1424166c503c6a061779be3be5c56b0b470875c4714e26c9d9f"
+      },
+      {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/native-fiber-profile.brJ3C6/raw-accounting",
+        "sha256": "65ae6db1439699a192be8ec83c4390627d3565bad6a16171e11612c4ee682ada"
+      },
+      {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/native-fiber-profile.brJ3C6/crash-77bb59b523c01fd308495e8a551d39ae5b243c9d",
+        "sha256": "c92c2d58e826b1d1b0df88396bbbbe787dc52ca1222982c0fdeb373f23d1c937"
+      },
+      {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/native-fiber-profile.brJ3C6/baseline-selected.heap.raw.zst",
+        "sha256": "a23cb2eafd08fc48633c40efb5f8942fde7eb281ff1ac4f7a4ff567f787690bf"
+      },
+      {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/native-fiber-profile.brJ3C6/candidate-selected.heap.raw.zst",
+        "sha256": "d919689cbe950a9c4972008e83b768553a37467b62f0c8fd3a12755f6361858d"
+      }
+    ],
+    "sizes": [
+      {
+        "bytes": 28016536,
+        "path": "/tmp/hypercurve-native-fiber.ibZ6fB/baseline-test"
+      },
+      {
+        "bytes": 28074760,
+        "path": "/tmp/hypercurve-native-fiber.ibZ6fB/candidate-test"
+      },
+      {
+        "bytes": 14880192,
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/native-fiber-profile.brJ3C6/baseline-bezier_region"
+      },
+      {
+        "bytes": 10508144,
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/native-fiber-profile.brJ3C6/baseline-rational_bezier"
+      },
+      {
+        "bytes": 14317384,
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/native-fiber-profile.brJ3C6/baseline-curve_region_boolean_batch"
+      },
+      {
+        "bytes": 14876560,
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/native-fiber-profile.brJ3C6/candidate-bezier_region"
+      },
+      {
+        "bytes": 10504664,
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/native-fiber-profile.brJ3C6/candidate-rational_bezier"
+      },
+      {
+        "bytes": 14313800,
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/native-fiber-profile.brJ3C6/candidate-curve_region_boolean_batch"
+      },
+      {
+        "bytes": 17046730,
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/native-fiber-profile.brJ3C6/baseline-ui-matched.wasm"
+      },
+      {
+        "bytes": 17044449,
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/native-fiber-profile.brJ3C6/candidate-ui-matched.wasm"
+      },
+      {
+        "bytes": 39640,
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/native-fiber-profile.brJ3C6/raw-accounting"
+      },
+      {
+        "bytes": 7,
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/native-fiber-profile.brJ3C6/crash-77bb59b523c01fd308495e8a551d39ae5b243c9d"
+      },
+      {
+        "bytes": 5931566547,
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/native-fiber-profile.brJ3C6/baseline-selected.heap.raw.zst"
+      },
+      {
+        "bytes": 5932656169,
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve/target/native-fiber-profile.brJ3C6/candidate-selected.heap.raw.zst"
+      }
+    ]
+  },
+  "remaining": [
+    "Full Hypercurve release readiness and uniform geometry performance remain open.",
+    "This is complete memory accounting for one slow fixture, not every long-running fixture or the pathological retained-input matrix.",
+    "Caller source scanning is not downstream caller build/corpus qualification.",
+    "No push, publication, deployment, browser run, or coverage campaign is claimed.",
+    "Cached-incidence latency and the small circle instruction increase remain performance follow-ups; inspect inclusive allocation attribution before changing local-field root isolation or promotion."
+  ],
+  "dependency_provenance": {
+    "unit_and_full_heap_pair": {
+      "hyperreal": "21e76ead8351f5f770f9c97165606ec969310cf9",
+      "baseline_binary_mtime": "2026-09-05 22:20:28.660263857 -0400",
+      "candidate_binary_mtime": "2026-09-05 23:25:43.260439451 -0400",
+      "evidence": "Initial dependency worktrees were clean at the recorded heads. Both frozen unit binaries predate the new Hyperreal source edits at 23:40:48-49 and commit at 23:45:28."
+    },
+    "production_benchmark_and_wasm_pairs": {
+      "hyperreal": "bd92d87f0e107fda0b31b93463cc8e0cc5e26d7c",
+      "evidence": "Both sides built sequentially in one isolated Hypercurve source directory after the concurrent dependency commit; only Hypercurve rebuilt for the candidate."
+    },
+    "live_gate": {
+      "hyperreal": "bd92d87f0e107fda0b31b93463cc8e0cc5e26d7c",
+      "evidence": "All-feature/minimal suites and UI were rerun after detecting the new dependency commit."
+    },
+    "limitation": "Do not compare levels between these different fixture/feature/dependency pairs or attribute the concurrent Hyperreal change to this Hypercurve commit."
+  },
+  "source_hashes": [
+    {
+      "path": "Cargo.toml",
+      "sha256": "e6fa04394c7417807b4b5fcfa609fa1ce0e7b23b1519cd5e6cc325cf48c9d934"
+    },
+    {
+      "path": "Cargo.lock",
+      "sha256": "dd5d29eaf1ab3a6ca6f7d1362ad75f68e6045b124eb3c5033f379c3ab77cc05a"
+    },
+    {
+      "path": "src/bezier_offset.rs",
+      "sha256": "97b99d1528161ea92fbebed21c82ece1936f75a042b36c525208a023f7b980dc"
+    },
+    {
+      "path": "fuzz/Cargo.toml",
+      "sha256": "0087b0225d7e049c1069f12281ddd3c5f3ec7701bc3efe371e075eebe81b3de5"
+    },
+    {
+      "path": "fuzz/Cargo.lock",
+      "sha256": "7c4a84b0b03daa9d548c1938df5420ebd42f8e32571170dd47f4b87baf362df2"
+    },
+    {
+      "path": "fuzz/fuzz_targets/bezier_algebraic_image.rs",
+      "sha256": "b79952c309efb084be81f140df8c9bbf5ca5cdb4bf332bebecea840fa219a0e0"
+    },
+    {
+      "path": "fuzz/fuzz_targets/bezier_algebraic_parameter.rs",
+      "sha256": "7a647701e367237714645901e152d5c30324d14b2a782cc66127c6ba1e664713"
+    },
+    {
+      "path": "fuzz/fuzz_targets/bezier_region.rs",
+      "sha256": "3c698c3fb2aa1c9e48c55fa2eea48d936368e2a1b696ee922101b81b35a44bfa"
+    },
+    {
+      "path": "fuzz/fuzz_targets/bezier_split_materialization.rs",
+      "sha256": "7cf39f922a2936f0ebc303cc3c393dd4ef6e25f16f39785393bc78dac5dd9600"
+    },
+    {
+      "path": "fuzz/fuzz_targets/curve_string_editing.rs",
+      "sha256": "7b76e01a5ceb61fe9e69686674016b48618cf91b99824bf8425867a3cb819900"
+    },
+    {
+      "path": "fuzz/fuzz_targets/straight_skeleton.rs",
+      "sha256": "70d797e4e6ad50195508496e884127b740375e2b5e65cb131929cc0573ab9c16"
+    },
+    {
+      "path": "examples/hypercurve_ui/Cargo.toml",
+      "sha256": "d8f31ef9003f88344ad9a6a8ee9efb250922d96400f0a63c4abfcfe1bb61a6ee"
+    },
+    {
+      "path": "examples/hypercurve_ui/Cargo.lock",
+      "sha256": "1b4253c544d02e231b1dec89557b98c9a692aff8092cecda4aa7d1fc79af2891"
+    }
+  ],
+  "tool_versions": "rustc 1.97.0 (2d8144b78 2026-07-07)\nbinary: rustc\ncommit-hash: 2d8144b7880597b6e6d3dfd63a9a9efae3f533d3\ncommit-date: 2026-07-07\nhost: x86_64-unknown-linux-gnu\nrelease: 1.97.0\nLLVM version: 22.1.6\ncargo 1.97.0 (c980f4866 2026-06-30)\nheaptrack 1.5.0\nvalgrind-3.27.1\n"
+}

@@ -1,0 +1,176 @@
+{
+  "checks": [
+    {
+      "label": "fmt",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustfmt",
+        "--edition",
+        "2024",
+        "--check",
+        "src/bezier_offset.rs"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 2.398522520903498,
+      "log": "represented-circle-incidence-20260924-v2-fmt.log"
+    },
+    {
+      "label": "clippy-1",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "clippy",
+        "--all-targets",
+        "--all-features",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 26.482126178918406,
+      "log": "represented-circle-incidence-20260924-v2-clippy-1.log"
+    },
+    {
+      "label": "clippy-2",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "clippy",
+        "--all-targets",
+        "--no-default-features",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 25.281000765040517,
+      "log": "represented-circle-incidence-20260924-v2-clippy-2.log"
+    }
+  ],
+  "cases": [
+    {
+      "label": "represented_circle_incidence_replays_retained_similarity_points",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/represented-circle-incidence-20260924-v2-libtest",
+        "--exact",
+        "bezier_offset::conversion_tests::represented_circle_incidence_replays_retained_similarity_points",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.2796869189478457,
+      "log": "represented-circle-incidence-20260924-v2-represented_circle_incidence_replays_retained_similarity_points.log"
+    },
+    {
+      "label": "represented_circle_retained_point_incidence_observes_requested_policy",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/represented-circle-incidence-20260924-v2-libtest",
+        "--exact",
+        "bezier_offset::conversion_tests::represented_circle_retained_point_incidence_observes_requested_policy",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.2798263590084389,
+      "log": "represented-circle-incidence-20260924-v2-represented_circle_retained_point_incidence_observes_requested_policy.log"
+    },
+    {
+      "label": "independent_field_corner_edits_preserve_normalized_sets",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/represented-circle-incidence-20260924-v2-libtest",
+        "--exact",
+        "bezier_region::tests::independent_field_corner_edits_preserve_normalized_sets",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.8478922699578106,
+      "log": "represented-circle-incidence-20260924-v2-independent_field_corner_edits_preserve_normalized_sets.log"
+    },
+    {
+      "label": "retained_analytic_corners_preserve_normalized_sets",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/represented-circle-incidence-20260924-v2-libtest",
+        "--exact",
+        "bezier_region::tests::retained_analytic_corners_preserve_normalized_sets",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 10.09622403793037,
+      "log": "represented-circle-incidence-20260924-v2-retained_analytic_corners_preserve_normalized_sets.log"
+    },
+    {
+      "label": "recursive_projective_kernel_imports_similarity_of_algebraic_endpoints",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/represented-circle-incidence-20260924-v2-libtest",
+        "--exact",
+        "bezier_offset::conversion_tests::recursive_projective_kernel_imports_similarity_of_algebraic_endpoints",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.27226347802206874,
+      "log": "represented-circle-incidence-20260924-v2-recursive_projective_kernel_imports_similarity_of_algebraic_endpoints.log"
+    },
+    {
+      "label": "retained_chord_derived_queries_match_exact_affine_oracles_and_requested_policy",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/represented-circle-incidence-20260924-v2-libtest",
+        "--exact",
+        "bezier_offset::conversion_tests::retained_chord_derived_queries_match_exact_affine_oracles_and_requested_policy",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.5888642040081322,
+      "log": "represented-circle-incidence-20260924-v2-retained_chord_derived_queries_match_exact_affine_oracles_and_requested_policy.log"
+    },
+    {
+      "label": "retained_chord_coordinate_and_linear_queries_observe_requested_policy",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/represented-circle-incidence-20260924-v2-libtest",
+        "--exact",
+        "bezier_offset::conversion_tests::retained_chord_coordinate_and_linear_queries_observe_requested_policy",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.3897597360191867,
+      "log": "represented-circle-incidence-20260924-v2-retained_chord_coordinate_and_linear_queries_observe_requested_policy.log"
+    },
+    {
+      "label": "closed_ph_corner_edits_preserve_both_normalized_source_lobes",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/represented-circle-incidence-20260924-v2-libtest",
+        "--exact",
+        "bezier_region::tests::closed_ph_corner_edits_preserve_both_normalized_source_lobes",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.42946315195877105,
+      "log": "represented-circle-incidence-20260924-v2-closed_ph_corner_edits_preserve_both_normalized_source_lobes.log"
+    }
+  ],
+  "all_processes_reaped": true,
+  "binary_sha256": "108e226d76050af7cc052ee3ae40b7d690cf2299ac9c3165f393977aee88a566",
+  "all_sources_unchanged": true
+}

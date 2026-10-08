@@ -1,0 +1,25 @@
+{
+  "repos": {
+    "hypercurve": {
+      "commit": "32f76f6cf4041ed9a909f7bfc3458482d63ff5d5",
+      "parent": "68e72280b1200871d0f539d90bdb3d1450958b99",
+      "paths": {
+        "src/bezier_offset.rs": "f759961166d9ff7241ba9551cf41829f29d36b7f71feb22a499c132a82510a70",
+        "src/bezier_tangent_order.rs": "5b5de1a0d743ee96cebe4464ef90378c83a5afe39d62bb782414e4c0462c30fc",
+        "tests/hypercurve_bezier_arrangement.rs": "a68c6fd3c77a0030e94ca3e161166b270e3bef2dd15f2563bb644cb37de64d32"
+      }
+    },
+    "hypersolve": {
+      "commit": "8bbcddab1aad867b16662d413075161ce42ed66f",
+      "parent": "0befc6a22ee866cd0364cd8aac7127f703bce453",
+      "paths": {
+        "src/algebraic.rs": "1bf3d6296328f2857061cf057e37e0ba9c482ad28d3f557b3b535c5db070a58a",
+        "src/algebraic_fiber.rs": "b93541474e4ecbfecbc300568f2cf1bab31166d6494f1601f63d622121c054bc",
+        "src/algebraic_tensor_image.rs": "d87e9bf0f601a07efe7d2317a45ac6baf5a0737af1a6cfdfa8a92cb19e93724e"
+      }
+    }
+  },
+  "qualification": "affine-field-v910-terminal.json",
+  "verified_source_files": 2048,
+  "clean_repositories": 30
+}

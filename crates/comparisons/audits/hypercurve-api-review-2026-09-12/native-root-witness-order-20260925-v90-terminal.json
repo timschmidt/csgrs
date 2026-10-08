@@ -1,0 +1,42 @@
+{
+  "diagnostic_only": true,
+  "workspace_guard": "local-chord-complete-replay-20260924-v89-sources.json",
+  "source_manifest": "native-root-witness-order-20260925-v90-sources.json",
+  "source_directory": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/source-archives/native-root-witness-order-20260925-v90",
+  "build_source_directory": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/build-workspace-20260925",
+  "checks": [],
+  "binaries": {
+    "hypercurve_curve": {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/native-root-witness-order-20260925-v90-hypercurve_curve",
+      "sha256": "b0c91175d1a5d2753f888b6ef10797258be28380d24f6b1fbda82e2cfc35f43b"
+    }
+  },
+  "cases": [
+    {
+      "label": "direct_bezier_pair_fillet_retains_both_incident_extensions",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/native-root-witness-order-20260925-v90-hypercurve_curve",
+        "--exact",
+        "direct_bezier_pair_fillet_retains_both_incident_extensions",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 101,
+      "elapsed_seconds": 3.9471552530303597,
+      "log": "native-root-witness-order-20260925-v90-direct_bezier_pair_fillet_retains_both_incident_extensions.log",
+      "target": "hypercurve_curve",
+      "name": "direct_bezier_pair_fillet_retains_both_incident_extensions"
+    }
+  ],
+  "all_processes_reaped": true,
+  "build_returncode": 0,
+  "selection": [
+    [
+      "hypercurve_curve",
+      "direct_bezier_pair_fillet_retains_both_incident_extensions"
+    ]
+  ],
+  "all_sources_unchanged": true
+}

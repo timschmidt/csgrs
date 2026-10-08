@@ -1,0 +1,56 @@
+{
+  "normal_production_build": true,
+  "source_manifest": "stationary-pair-cells-diagnostic-20260927-v530-sources.json",
+  "source_directory": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/source-archives/stationary-pair-cells-diagnostic-20260927-v530",
+  "builds": [
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "test",
+        "--lib",
+        "--release",
+        "--all-features",
+        "--locked",
+        "--offline",
+        "--no-run",
+        "--message-format=json"
+      ],
+      "returncode": 0,
+      "log": "stationary-pair-cells-diagnostic-20260927-v530-build.log",
+      "elapsed_seconds": 133.098235107027,
+      "binaries": {
+        "hypercurve": {
+          "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/stationary-pair-cells-diagnostic-20260927-v530-hypercurve-tests",
+          "sha256": "f37d2ea3e010b1d7c9ee3ce417bfc7babd20864052f4c03eeb3a5bd1055ad81a"
+        }
+      }
+    }
+  ],
+  "cases": [
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/stationary-pair-cells-diagnostic-20260927-v530-hypercurve-tests",
+        "--exact",
+        "curve::curve_fillet::tests::joined_path_selects_and_replays_a_continuous_fillet_family",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 101,
+      "log": "stationary-pair-cells-diagnostic-20260927-v530-joined_path_selects_and_replays_a_continuous_fillet_family.log",
+      "elapsed_seconds": 0.16399516793899238,
+      "target": "hypercurve",
+      "name": "curve::curve_fillet::tests::joined_path_selects_and_replays_a_continuous_fillet_family",
+      "passed": false
+    }
+  ],
+  "checks": [],
+  "expected_cases": {
+    "hypercurve": [
+      "curve::curve_fillet::tests::joined_path_selects_and_replays_a_continuous_fillet_family"
+    ]
+  },
+  "all_processes_reaped": true,
+  "probe_complete": true,
+  "qualification_complete": false,
+  "failure": "focused regression failure"
+}

@@ -1,0 +1,11 @@
+{
+  "tag": "complex-product-trace-candidate",
+  "started": "2026-09-09T21:40:41.907Z",
+  "finished": "2026-09-09T21:45:43.356Z",
+  "elapsedSeconds": 301.44657048,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "/tmp/calcium-complex-product.0bkAWH/candidate-trace",
+  "args": [],
+  "code": 0,
+  "signal": null
+}

@@ -1,0 +1,154 @@
+{
+  "observations": 126,
+  "postwarmup": 112,
+  "checks": 1103040,
+  "result": [
+    {
+      "group": "quadratic",
+      "rounds": 16,
+      "checks_per_observation": 18688,
+      "pairs": 8,
+      "hyper_over_native_cpu_median": 0.22422477932922547,
+      "cpu_bootstrap_95": [
+        0.18894856238136554,
+        0.23689727696245047
+      ],
+      "hyper_over_native_wall_median": 0.22419937984916036,
+      "wall_bootstrap_95": [
+        0.18883641092393982,
+        0.23700681893413372
+      ],
+      "native_cpu_ms": 312.733556,
+      "hyper_cpu_ms": 71.77847,
+      "native_rss_kib": 10280,
+      "hyper_rss_kib": 3688,
+      "native_heap_bytes": 1368145320
+    },
+    {
+      "group": "tower-1",
+      "rounds": 400,
+      "checks_per_observation": 11200,
+      "pairs": 8,
+      "hyper_over_native_cpu_median": 0.21358555297266835,
+      "cpu_bootstrap_95": [
+        0.2076962819477025,
+        0.23563046943273208
+      ],
+      "hyper_over_native_wall_median": 0.21345115675631315,
+      "wall_bootstrap_95": [
+        0.2076081555627939,
+        0.2357017673782604
+      ],
+      "native_cpu_ms": 256.233348,
+      "hyper_cpu_ms": 54.458141499999996,
+      "native_rss_kib": 11018,
+      "hyper_rss_kib": 3498,
+      "native_heap_bytes": 1089320008
+    },
+    {
+      "group": "tower-2",
+      "rounds": 300,
+      "checks_per_observation": 8400,
+      "pairs": 8,
+      "hyper_over_native_cpu_median": 0.6600158867999613,
+      "cpu_bootstrap_95": [
+        0.6365956631037264,
+        0.7130701514002965
+      ],
+      "hyper_over_native_wall_median": 0.6602521553804943,
+      "wall_bootstrap_95": [
+        0.6370000281896111,
+        0.7125852794353961
+      ],
+      "native_cpu_ms": 300.9092095,
+      "hyper_cpu_ms": 198.335086,
+      "native_rss_kib": 10238,
+      "hyper_rss_kib": 3520,
+      "native_heap_bytes": 1144067624
+    },
+    {
+      "group": "tower-3",
+      "rounds": 200,
+      "checks_per_observation": 5600,
+      "pairs": 8,
+      "hyper_over_native_cpu_median": 0.8111444156710661,
+      "cpu_bootstrap_95": [
+        0.7523252482193913,
+        0.8464877688914312
+      ],
+      "hyper_over_native_wall_median": 0.8108154856902587,
+      "wall_bootstrap_95": [
+        0.7515184001728537,
+        0.8458131212815478
+      ],
+      "native_cpu_ms": 350.127904,
+      "hyper_cpu_ms": 286.811474,
+      "native_rss_kib": 10088,
+      "hyper_rss_kib": 3524,
+      "native_heap_bytes": 1052117120
+    },
+    {
+      "group": "tower-4",
+      "rounds": 100,
+      "checks_per_observation": 2800,
+      "pairs": 8,
+      "hyper_over_native_cpu_median": 1.2068626037844954,
+      "cpu_bootstrap_95": [
+        1.1702800407335545,
+        1.3024443193940782
+      ],
+      "hyper_over_native_wall_median": 1.2064820373856926,
+      "wall_bootstrap_95": [
+        1.168584357392227,
+        1.301470309028255
+      ],
+      "native_cpu_ms": 284.14201,
+      "hyper_cpu_ms": 345.5104675,
+      "native_rss_kib": 10222,
+      "hyper_rss_kib": 3630,
+      "native_heap_bytes": 736410840
+    },
+    {
+      "group": "tower-5",
+      "rounds": 64,
+      "checks_per_observation": 1792,
+      "pairs": 8,
+      "hyper_over_native_cpu_median": 2.086231030862562,
+      "cpu_bootstrap_95": [
+        1.9739232367162107,
+        2.221629072581979
+      ],
+      "hyper_over_native_wall_median": 2.0844827874234353,
+      "wall_bootstrap_95": [
+        1.9727447078918425,
+        2.219766862418432
+      ],
+      "native_cpu_ms": 328.6935155,
+      "hyper_cpu_ms": 687.765542,
+      "native_rss_kib": 10224,
+      "hyper_rss_kib": 3658,
+      "native_heap_bytes": 678160552
+    },
+    {
+      "group": "independent",
+      "rounds": 800,
+      "checks_per_observation": 12800,
+      "pairs": 8,
+      "hyper_over_native_cpu_median": 0.36370148991727946,
+      "cpu_bootstrap_95": [
+        0.3514238353833234,
+        0.3765166582547792
+      ],
+      "hyper_over_native_wall_median": 0.3633942124291535,
+      "wall_bootstrap_95": [
+        0.35119943208065163,
+        0.37624430558309363
+      ],
+      "native_cpu_ms": 321.293044,
+      "hyper_cpu_ms": 116.3774825,
+      "native_rss_kib": 11840,
+      "hyper_rss_kib": 3496,
+      "native_heap_bytes": 1131826176
+    }
+  ]
+}

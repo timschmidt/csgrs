@@ -1,0 +1,13 @@
+{
+  "tag": "verify-root-exp-checkpoint-unsandboxed",
+  "started": "2026-09-08T11:47:24.156Z",
+  "finished": "2026-09-08T11:47:24.371Z",
+  "elapsedSeconds": 0.21282656100000003,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison",
+  "command": "node",
+  "args": [
+    "audits/continuation/calcium/verify-root-exp-checkpoint.mjs"
+  ],
+  "code": 0,
+  "signal": null
+}

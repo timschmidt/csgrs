@@ -1,0 +1,7 @@
+{
+  "root": "/tmp/calcium-point-wasm.jPk2WY",
+  "recorded": "2026-09-10T23:31:29.271Z",
+  "predecessor": "point-cold-manifest.json",
+  "predecessorSha256": "8412cb92c6533f8236244f16913f2e9341a2c676fe6be557808b1fc91d79d870",
+  "sourceBindingSha256": "d5472beb99abd3f0526d978f4e27fb0446a1ac425dfd52fe3265bdccca4ba80f"
+}

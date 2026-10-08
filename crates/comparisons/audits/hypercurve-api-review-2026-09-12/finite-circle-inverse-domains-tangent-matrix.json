@@ -1,0 +1,30 @@
+{
+  "returncode": 0,
+  "elapsed_seconds": 5.020531147980364,
+  "normal_library_sha256": "4ae0b00c4bf9f0a4ee9000958e1f829e194b27d588a0b848d0c353038c6ecff5",
+  "log": "finite-circle-inverse-domains-tangent-matrix.log",
+  "source": "selected-circle-tangent-identity-matrix.rs",
+  "command": [
+    "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustc",
+    "--edition=2024",
+    "-O",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/selected-circle-tangent-identity-matrix.rs",
+    "--extern",
+    "hypercurve=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypercurve-96f69e9a655f1fb5.rlib",
+    "-L",
+    "dependency=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps",
+    "-o",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-circle-inverse-domains-tangent-matrix"
+  ],
+  "run_command": [
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-circle-inverse-domains-tangent-matrix"
+  ],
+  "source_sha256": "005a451f7b9e9c4bd551360b7ab627d150c6ad4ed8e0794e17c059c751a6bef5",
+  "executable_sha256": "cde8bf8610cc0be2a815fc9d18f6d125719d2a4f53aefc6b851a84b328a5eb4a",
+  "counts": {
+    "tangent_queries": 120,
+    "opposite_tangent_exclusions": 40,
+    "point_replays": 240,
+    "topologies": 120
+  }
+}

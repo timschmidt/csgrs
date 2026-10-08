@@ -1,0 +1,74 @@
+{
+  "parent": "a0e82b27d33eb74fa611677f237a15278289048f",
+  "main_files_verified": 356,
+  "files": {
+    "src/computable/node/quadratic_tower.rs": "90e9c6f314037614b6d2b0c4426e28987ee2a207a8262629f21fc9baa01c34d7",
+    "src/real/arithmetic/quadratic_tower_sign.rs": "652f9092c0059461f52e5b8d33997018a368b2572999d0fad4dc8694cac8e099"
+  },
+  "hyperreal_tests": {
+    "returncode": 0,
+    "elapsed_seconds": 21.77053276100196,
+    "binary_sha256": "5b2fc2ca878dcded0ef6df0b44bb3304ebcc5e1be64b0f67af566478d9dee68f",
+    "all_sources_unchanged": true,
+    "all_processes_reaped": true
+  },
+  "hyperreal_checks": [
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "check",
+        "--all-targets",
+        "--all-features",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "log": "chord-normal-products-20260923-layers1-check-0.log"
+    },
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "check",
+        "--all-targets",
+        "--no-default-features",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "log": "chord-normal-products-20260923-layers1-check-1.log"
+    }
+  ],
+  "dependent_tests": {
+    "hyperlimit": {
+      "returncode": 0,
+      "elapsed_seconds": 1.555577759980224,
+      "binary_sha256": "1745f889a9cb4d38072c633b2add2e4434ca4100e8ec30954199efd43104f7c4",
+      "hyperreal_package_ids": [
+        "path+file:///tmp/hyper-chord-normal-products-layers-2026-09-23/hyperreal#0.13.1"
+      ]
+    },
+    "hypersolve": {
+      "returncode": 0,
+      "elapsed_seconds": 30.296877334010787,
+      "binary_sha256": "1de91d2b47ac73dda30c95aeb79b30f9005b782ee674564dfa929f029998ca07",
+      "hyperreal_package_ids": [
+        "path+file:///tmp/hyper-chord-normal-products-layers-2026-09-23/hyperreal#0.13.1"
+      ]
+    },
+    "all_sources_unchanged": true,
+    "all_processes_reaped": true
+  },
+  "parent_regression": {
+    "parent": {
+      "returncode": 101,
+      "elapsed_seconds": 0.08147414692211896,
+      "binary_sha256": "95712e9f52a512eea453405e51882f2b6809fae4814dc3c6754b533ba7acfb6d",
+      "log": "chord-normal-products-20260923-parent2-parent-tests.log"
+    },
+    "all_sources_unchanged": true,
+    "all_processes_reaped": true
+  },
+  "hypercurve_minimal_regression": "chord-normal-products-20260923-minimal-debug1-terminal.json",
+  "all_owned_processes_reaped": true,
+  "full_goal_complete": false
+}

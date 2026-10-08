@@ -1,0 +1,132 @@
+{
+  "RATIONAL_CONTEXT:2891": {
+    "file": "src/rational_bezier_general.rs",
+    "original_line": 2891,
+    "context": "            let contacts = match contacts {\n                Classification::Decided(contacts) => contacts,\n                Classification::Uncertain(reason) => {\n                    return Ok(Classification::Uncertain(reason));\n                }\n            };\n            let candidates = intersection_candidates_from_contacts(&contacts);\n"
+  },
+  "RATIONAL_CONTEXT:2917": {
+    "file": "src/rational_bezier_general.rs",
+    "original_line": 2917,
+    "context": "            let contacts = match contacts {\n                Classification::Decided(contacts) => contacts,\n                Classification::Uncertain(reason) => {\n                    return Ok(Classification::Uncertain(reason));\n                }\n            };\n            let candidates = intersection_candidates_from_contacts(&contacts);\n"
+  },
+  "RATIONAL_CONTEXT:2937": {
+    "file": "src/rational_bezier_general.rs",
+    "original_line": 2937,
+    "context": "            let contacts = match contacts {\n                Classification::Decided(contacts) => contacts,\n                Classification::Uncertain(reason) => {\n                    return Ok(Classification::Uncertain(reason));\n                }\n            };\n            let candidates = intersection_candidates_from_contacts(&contacts);\n"
+  },
+  "RATIONAL_CONTEXT:3053": {
+    "file": "src/rational_bezier_general.rs",
+    "original_line": 3053,
+    "context": "                    }));\n                }\n                Classification::Uncertain(reason) => {\n                    return Ok(Classification::Uncertain(reason));\n                }\n            }\n        }\n"
+  },
+  "RATIONAL_CONTEXT:3094": {
+    "file": "src/rational_bezier_general.rs",
+    "original_line": 3094,
+    "context": "                    },\n                }))\n            }\n            Classification::Uncertain(reason) => Ok(Classification::Uncertain(reason)),\n        }\n    }\n"
+  },
+  "OVERLAP_RESTRICT:2523": {
+    "file": "src/curve_intersection.rs",
+    "original_line": 2523,
+    "context": "        let first = match clip(&self.first_range, first)? {\n            Classification::Decided(Some(range)) => range,\n            Classification::Decided(None) => return Ok(Classification::Decided(None)),\n            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),\n        };\n        let second = match clip(&self.second_range, second)? {\n            Classification::Decided(Some(range)) => range,\n"
+  },
+  "OVERLAP_RESTRICT:2528": {
+    "file": "src/curve_intersection.rs",
+    "original_line": 2528,
+    "context": "        let second = match clip(&self.second_range, second)? {\n            Classification::Decided(Some(range)) => range,\n            Classification::Decided(None) => return Ok(Classification::Decided(None)),\n            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),\n        };\n        let same_bounds = |a: &CurveParameterRange2, b: &CurveParameterRange2| {\n            a == b || (a.start() == b.end() && a.end() == b.start())\n"
+  },
+  "OVERLAP_RESTRICT:2540": {
+    "file": "src/curve_intersection.rs",
+    "original_line": 2540,
+    "context": "        let (mut first, mut second) = match source.clipped_ranges(&first, &second, policy)? {\n            Classification::Decided(Some(ranges)) => ranges,\n            Classification::Decided(None) => return Ok(Classification::Decided(None)),\n            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),\n        };\n        let order = match self\n            .first_range\n"
+  },
+  "OVERLAP_RESTRICT:2548": {
+    "file": "src/curve_intersection.rs",
+    "original_line": 2548,
+    "context": "            .cmp_by_refinement(self.first_range.end(), policy)?\n        {\n            Classification::Decided(order) => order,\n            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),\n        };\n        let clipped_order = match first.start().cmp_by_refinement(first.end(), policy)? {\n            Classification::Decided(order) => order,\n"
+  },
+  "OVERLAP_RESTRICT:2552": {
+    "file": "src/curve_intersection.rs",
+    "original_line": 2552,
+    "context": "        };\n        let clipped_order = match first.start().cmp_by_refinement(first.end(), policy)? {\n            Classification::Decided(order) => order,\n            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),\n        };\n        if order != clipped_order {\n            first = CurveParameterRange2::new_validated(first.end().clone(), first.start().clone());\n"
+  },
+  "PARAMETER_CLIP:985": {
+    "file": "src/bezier_split.rs",
+    "original_line": 985,
+    "context": "        match intersect_parameter_ranges(first_fragment, first_overlap, policy)? {\n            Classification::Decided(Some(bounds)) => bounds,\n            Classification::Decided(None) => return Ok(Classification::Decided(None)),\n            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),\n        };\n    let mapped_start = match map_first_to_second(&first_start)? {\n        Classification::Decided(Some(parameter)) => parameter,\n"
+  },
+  "PARAMETER_CLIP:994": {
+    "file": "src/bezier_split.rs",
+    "original_line": 994,
+    "context": "                \"a certified overlap omitted its forward parameter correspondence\".into(),\n            ));\n        }\n        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),\n    };\n    let mapped_end = match map_first_to_second(&first_end)? {\n        Classification::Decided(Some(parameter)) => parameter,\n"
+  },
+  "PARAMETER_CLIP:1003": {
+    "file": "src/bezier_split.rs",
+    "original_line": 1003,
+    "context": "                \"a certified overlap omitted its forward parameter correspondence\".into(),\n            ));\n        }\n        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),\n    };\n    let mapped_order = match mapped_start.cmp_by_refinement(&mapped_end, policy)? {\n        Classification::Decided(Ordering::Equal) => return Ok(Classification::Decided(None)),\n"
+  },
+  "PARAMETER_CLIP:1008": {
+    "file": "src/bezier_split.rs",
+    "original_line": 1008,
+    "context": "    let mapped_order = match mapped_start.cmp_by_refinement(&mapped_end, policy)? {\n        Classification::Decided(Ordering::Equal) => return Ok(Classification::Decided(None)),\n        Classification::Decided(order) => order,\n        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),\n    };\n    let mapped_range =\n        CurveParameterRange2::new_validated(mapped_start.clone(), mapped_end.clone());\n"
+  },
+  "PARAMETER_CLIP:1016": {
+    "file": "src/bezier_split.rs",
+    "original_line": 1016,
+    "context": "        match intersect_parameter_ranges(&mapped_range, second_overlap, policy)? {\n            Classification::Decided(Some(bounds)) => bounds,\n            Classification::Decided(None) => return Ok(Classification::Decided(None)),\n            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),\n        };\n    let second_candidate = CurveParameterRange2::new_validated(second_low, second_high);\n    let [second_low, second_high] =\n"
+  },
+  "PARAMETER_CLIP:1023": {
+    "file": "src/bezier_split.rs",
+    "original_line": 1023,
+    "context": "        match intersect_parameter_ranges(second_fragment, &second_candidate, policy)? {\n            Classification::Decided(Some(bounds)) => bounds,\n            Classification::Decided(None) => return Ok(Classification::Decided(None)),\n            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),\n        };\n    let (second_start, second_end) = if mapped_order == Ordering::Less {\n        (second_low, second_high)\n"
+  },
+  "PARAMETER_CLIP:1101": {
+    "file": "src/bezier_split.rs",
+    "original_line": 1101,
+    "context": "    )? {\n        Classification::Decided(Some(clipped)) => clipped,\n        Classification::Decided(None) => return Ok(Classification::Decided(None)),\n        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),\n    };\n    let mut lift = |second: &CurveParameter2,\n                    mapped: &CurveParameter2,\n"
+  },
+  "PARAMETER_CLIP:1112": {
+    "file": "src/bezier_split.rs",
+    "original_line": 1112,
+    "context": "                Classification::Decided(Some(original.clone()))\n            }\n            Classification::Decided(_) => map_second_to_first(second)?,\n            Classification::Uncertain(reason) => Classification::Uncertain(reason),\n        })\n    };\n    let first_start = match lift(&second_start, &mapped_start, &first_start)? {\n"
+  },
+  "PARAMETER_CLIP:1122": {
+    "file": "src/bezier_split.rs",
+    "original_line": 1122,
+    "context": "                \"a certified overlap omitted its inverse parameter correspondence\".into(),\n            ));\n        }\n        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),\n    };\n    let first_end = match lift(&second_end, &mapped_end, &first_end)? {\n        Classification::Decided(Some(parameter)) => parameter,\n"
+  },
+  "PARAMETER_CLIP:1131": {
+    "file": "src/bezier_split.rs",
+    "original_line": 1131,
+    "context": "                \"a certified overlap omitted its inverse parameter correspondence\".into(),\n            ));\n        }\n        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),\n    };\n    match first_start.cmp_by_refinement(&first_end, policy)? {\n        Classification::Decided(Ordering::Less) => {}\n"
+  },
+  "PARAMETER_CLIP:1138": {
+    "file": "src/bezier_split.rs",
+    "original_line": 1138,
+    "context": "        Classification::Decided(Ordering::Equal | Ordering::Greater) => {\n            return Ok(Classification::Decided(None));\n        }\n        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),\n    }\n    Ok(Classification::Decided(Some((\n        CurveParameterRange2::new_validated(first_start, first_end),\n"
+  },
+  "PARAMETER_CLIP:1153": {
+    "file": "src/bezier_split.rs",
+    "original_line": 1153,
+    "context": ") -> CurveResult<Classification<Option<[CurveParameter2; 2]>>> {\n    let [first_low, first_high] = match first.ordered_endpoints(policy)? {\n        Classification::Decided(bounds) => bounds,\n        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),\n    };\n    let [second_low, second_high] = match second.ordered_endpoints(policy)? {\n        Classification::Decided(bounds) => bounds,\n"
+  },
+  "PARAMETER_CLIP:1157": {
+    "file": "src/bezier_split.rs",
+    "original_line": 1157,
+    "context": "    };\n    let [second_low, second_high] = match second.ordered_endpoints(policy)? {\n        Classification::Decided(bounds) => bounds,\n        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),\n    };\n    let low = match first_low.cmp_by_refinement(second_low, policy)? {\n        Classification::Decided(Ordering::Less) => second_low,\n"
+  },
+  "PARAMETER_CLIP:1169": {
+    "file": "src/bezier_split.rs",
+    "original_line": 1169,
+    "context": "            }\n        }\n        Classification::Decided(Ordering::Greater) => first_low,\n        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),\n    };\n    let high = match first_high.cmp_by_refinement(second_high, policy)? {\n        Classification::Decided(Ordering::Greater) => second_high,\n"
+  },
+  "PARAMETER_CLIP:1181": {
+    "file": "src/bezier_split.rs",
+    "original_line": 1181,
+    "context": "            }\n        }\n        Classification::Decided(Ordering::Less) => first_high,\n        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),\n    };\n    Ok(match low.cmp_by_refinement(high, policy)? {\n        Classification::Decided(Ordering::Less) => {\n"
+  },
+  "PARAMETER_CLIP:1190": {
+    "file": "src/bezier_split.rs",
+    "original_line": 1190,
+    "context": "        Classification::Decided(Ordering::Equal | Ordering::Greater) => {\n            Classification::Decided(None)\n        }\n        Classification::Uncertain(reason) => Classification::Uncertain(reason),\n    })\n}\n"
+  }
+}

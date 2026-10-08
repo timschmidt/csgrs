@@ -1,0 +1,5 @@
+   Compiling hyperreal v0.13.1 (/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/sign-filter-candidate/hyperreal)
+   Compiling hyperlattice v0.6.1 (/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/sign-filter-candidate/hyperlattice)
+   Compiling hyperlimit v0.4.1 (/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/sign-filter-candidate/hyperlimit)
+    Finished `test` profile [unoptimized] target(s) in 5.61s
+     Running unittests src/lib.rs (/tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/debug/deps/hyperlimit-724fa2369f35e611)

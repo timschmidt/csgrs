@@ -1,0 +1,103 @@
+{
+  "name": "main",
+  "commit": {
+    "sha": "2f2aa72457d14f2363a741af1ebb52932a48d6ec",
+    "node_id": "C_kwDONKJh-doAKDJmMmFhNzI0NTdkMTRmMjM2M2E3NDFhZjFlYmI1MjkzMmE0OGQ2ZWM",
+    "commit": {
+      "author": {
+        "name": "Martin Escardo",
+        "email": "m.escardo@cs.bham.ac.uk",
+        "date": "2026-09-04T11:43:49Z"
+      },
+      "committer": {
+        "name": "Martin Escardo",
+        "email": "m.escardo@cs.bham.ac.uk",
+        "date": "2026-09-04T11:43:49Z"
+      },
+      "message": "update publications",
+      "tree": {
+        "sha": "06dc5f3ceea059320cc8a58f3cb0afb1c0fb2c62",
+        "url": "https://api.github.com/repos/martinescardo/martinescardo.github.io/git/trees/06dc5f3ceea059320cc8a58f3cb0afb1c0fb2c62"
+      },
+      "url": "https://api.github.com/repos/martinescardo/martinescardo.github.io/git/commits/2f2aa72457d14f2363a741af1ebb52932a48d6ec",
+      "comment_count": 0,
+      "verification": {
+        "verified": false,
+        "reason": "unsigned",
+        "signature": null,
+        "payload": null,
+        "verified_at": null
+      }
+    },
+    "url": "https://api.github.com/repos/martinescardo/martinescardo.github.io/commits/2f2aa72457d14f2363a741af1ebb52932a48d6ec",
+    "html_url": "https://github.com/martinescardo/martinescardo.github.io/commit/2f2aa72457d14f2363a741af1ebb52932a48d6ec",
+    "comments_url": "https://api.github.com/repos/martinescardo/martinescardo.github.io/commits/2f2aa72457d14f2363a741af1ebb52932a48d6ec/comments",
+    "author": {
+      "login": "martinescardo",
+      "id": 4268051,
+      "node_id": "MDQ6VXNlcjQyNjgwNTE=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/4268051?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/martinescardo",
+      "html_url": "https://github.com/martinescardo",
+      "followers_url": "https://api.github.com/users/martinescardo/followers",
+      "following_url": "https://api.github.com/users/martinescardo/following{/other_user}",
+      "gists_url": "https://api.github.com/users/martinescardo/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/martinescardo/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/martinescardo/subscriptions",
+      "organizations_url": "https://api.github.com/users/martinescardo/orgs",
+      "repos_url": "https://api.github.com/users/martinescardo/repos",
+      "events_url": "https://api.github.com/users/martinescardo/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/martinescardo/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "committer": {
+      "login": "martinescardo",
+      "id": 4268051,
+      "node_id": "MDQ6VXNlcjQyNjgwNTE=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/4268051?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/martinescardo",
+      "html_url": "https://github.com/martinescardo",
+      "followers_url": "https://api.github.com/users/martinescardo/followers",
+      "following_url": "https://api.github.com/users/martinescardo/following{/other_user}",
+      "gists_url": "https://api.github.com/users/martinescardo/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/martinescardo/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/martinescardo/subscriptions",
+      "organizations_url": "https://api.github.com/users/martinescardo/orgs",
+      "repos_url": "https://api.github.com/users/martinescardo/repos",
+      "events_url": "https://api.github.com/users/martinescardo/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/martinescardo/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "parents": [
+      {
+        "sha": "9462efc429d61f9d30edddb929cfb60b7cb8f881",
+        "url": "https://api.github.com/repos/martinescardo/martinescardo.github.io/commits/9462efc429d61f9d30edddb929cfb60b7cb8f881",
+        "html_url": "https://github.com/martinescardo/martinescardo.github.io/commit/9462efc429d61f9d30edddb929cfb60b7cb8f881"
+      }
+    ]
+  },
+  "_links": {
+    "self": "https://api.github.com/repos/martinescardo/martinescardo.github.io/branches/main",
+    "html": "https://github.com/martinescardo/martinescardo.github.io/tree/main"
+  },
+  "protected": false,
+  "protection": {
+    "enabled": false,
+    "required_status_checks": {
+      "enforcement_level": "off",
+      "contexts": [
+
+      ],
+      "checks": [
+
+      ]
+    }
+  },
+  "protection_url": "https://api.github.com/repos/martinescardo/martinescardo.github.io/branches/main/protection"
+}

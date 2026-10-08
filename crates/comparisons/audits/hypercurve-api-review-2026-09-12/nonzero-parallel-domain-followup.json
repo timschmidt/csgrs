@@ -1,0 +1,50 @@
+{
+  "status": "kernel regression reproduced, repaired and qualified",
+  "first_source": "P(t)=(t/(1-2t),0)",
+  "first_domain": "[2,3]",
+  "second_source": "Q(u)=(-5/12,u-2)",
+  "second_domain": "[1,3]",
+  "signed_distances": [
+    "1/4",
+    "1/4"
+  ],
+  "expected_parameters": [
+    "2",
+    "9/4"
+  ],
+  "expected_point": [
+    "-2/3",
+    "1/4"
+  ],
+  "source_weight_at_contact": "-3",
+  "source_weight_at_unit_origin": "1",
+  "homogeneous_tangents": [
+    [
+      "1",
+      "0"
+    ],
+    [
+      "0",
+      "1"
+    ]
+  ],
+  "homogeneous_delta": [
+    "-3/4",
+    "-3/4"
+  ],
+  "equations": "Both squared projection equations and the norm residual are zero at the exact pair.",
+  "qualification": "nonzero-parallel-domain-qualification.json",
+  "baseline_source_findings": [
+    "parallel_pair_equation_system_with_tangent_fields certifies each original unit source before considering use_unit_domain_bounds.",
+    "The unit source P has a pole at t=1/2 although P is finite and regular on [2,3].",
+    "The stored weight_sign comes from the two weights at parameter zero; it is positive here although their product is negative at the contact.",
+    "The current branch predicate would expect positive projection signs at this contact if only the original unit finiteness gate were bypassed; both actual projections are negative."
+  ],
+  "completed_followup": [
+    "Add the direct nonzero-pair regression and reproduce its kernel failure before changing the implementation.",
+    "Let the requested domain own finiteness and normal regularity for nonunit queries.",
+    "Retain and replay the actual homogeneous denominator product, or an equally exact domain certificate; a unit-origin sign is insufficient.",
+    "Exclude poles and undefined nonzero normals in selected component and isolated-contact replay, including transformed incident charts.",
+    "Preserve finite-unit rational/PH fast paths and strict reusable evidence."
+  ]
+}

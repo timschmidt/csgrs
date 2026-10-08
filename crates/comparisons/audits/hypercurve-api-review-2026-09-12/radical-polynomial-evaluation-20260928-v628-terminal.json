@@ -1,0 +1,55 @@
+{
+  "normal_production_build": false,
+  "source_manifest": "radical-polynomial-evaluation-20260928-v628-sources.json",
+  "source_directory": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/source-archives/radical-polynomial-evaluation-20260928-v628",
+  "builds": [
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "test",
+        "--lib",
+        "--release",
+        "--all-features",
+        "--locked",
+        "--offline",
+        "--no-run",
+        "--message-format=json"
+      ],
+      "returncode": 0,
+      "log": "radical-polynomial-evaluation-20260928-v628-build.log",
+      "elapsed_seconds": 29.956761806970462,
+      "binaries": {
+        "hyperreal": {
+          "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/radical-polynomial-evaluation-20260928-v628-hyperreal-tests",
+          "sha256": "08e7543168854f1295b5073aa6107c0189fab9aacaa6ce474bae004fee099764"
+        }
+      }
+    }
+  ],
+  "cases": [
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/radical-polynomial-evaluation-20260928-v628-hyperreal-tests",
+        "--exact",
+        "real::arithmetic::radical_polynomial_evaluation_probe::cusp_boundary_polynomial_preserves_exact_radical_identity",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "radical-polynomial-evaluation-20260928-v628-scalar-identity.log",
+      "elapsed_seconds": 0.0036074030213057995,
+      "target": "hyperreal",
+      "name": "real::arithmetic::radical_polynomial_evaluation_probe::cusp_boundary_polynomial_preserves_exact_radical_identity",
+      "passed": true
+    }
+  ],
+  "checks": [],
+  "expected_cases": {
+    "hyperreal": [
+      "real::arithmetic::radical_polynomial_evaluation_probe::cusp_boundary_polynomial_preserves_exact_radical_identity"
+    ]
+  },
+  "all_processes_reaped": true,
+  "probe_complete": true,
+  "qualification_complete": false
+}

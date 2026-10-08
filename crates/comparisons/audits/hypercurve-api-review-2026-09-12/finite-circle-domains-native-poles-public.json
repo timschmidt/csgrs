@@ -1,0 +1,26 @@
+{
+  "returncode": 0,
+  "elapsed_seconds": 0.03164195400313474,
+  "normal_library_sha256": "8eb7cd1fbaa241bf01e599e07ca251959c800c77c62a8091232bad9d52006638",
+  "log": "finite-circle-domains-native-poles-public.log",
+  "source": "finite-analytic-native-poles-public.rs",
+  "command": [
+    "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustc",
+    "--edition=2024",
+    "-O",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-analytic-native-poles-public.rs",
+    "--extern",
+    "hypercurve=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypercurve-ee303709bdb4cb6a.rlib",
+    "-L",
+    "dependency=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps",
+    "-o",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-circle-domains-native-poles-public"
+  ],
+  "source_sha256": "ec10467bfcc46c94a0722084d1fbd30bb13be43bd643af4f9c7405a407a9f655",
+  "executable_sha256": "658523ba8ca6092e2cce4ebe5227123c5c7f2b19cc2cc0daf54871191869d4db",
+  "counts": {
+    "cases": 128,
+    "contacts": 128,
+    "failures": 0
+  }
+}

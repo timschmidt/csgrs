@@ -1,0 +1,22 @@
+{
+  "tag": "qqbar-cleanup-cubic-native-4-128-v84",
+  "started": "2026-09-12T04:42:10.895Z",
+  "finished": "2026-09-12T04:42:10.909Z",
+  "elapsedSeconds": 0.012814391999999997,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "timeout",
+  "args": [
+    "20s",
+    "prlimit",
+    "--core=0",
+    "--as=1073741824",
+    "--cpu=10",
+    "--",
+    "/tmp/calcium-qqbar-remainder-v84.1aubRO/cleanup-cubic",
+    "cleanup",
+    "4",
+    "128"
+  ],
+  "code": 0,
+  "signal": null
+}

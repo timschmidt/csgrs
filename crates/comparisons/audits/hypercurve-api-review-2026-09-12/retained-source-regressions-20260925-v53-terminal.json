@@ -1,0 +1,60 @@
+{
+  "diagnostic_only": true,
+  "checks": [],
+  "binaries": {
+    "hypercurve": {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-source-regressions-20260925-v53-hypercurve",
+      "sha256": "949aaf46a2bef53a4623de007637d7e8ebb117f638ab6fe6cf54e463bf4787f0"
+    }
+  },
+  "cases": [
+    {
+      "label": "retained_polynomial_chamfer_extends_exact_and_algebraic_incident_roots",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-source-regressions-20260925-v53-hypercurve",
+        "--exact",
+        "bezier_region::tests::retained_polynomial_chamfer_extends_exact_and_algebraic_incident_roots",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 101,
+      "elapsed_seconds": 0.37824279197957367,
+      "log": "retained-source-regressions-20260925-v53-retained_polynomial_chamfer_extends_exact_and_algebraic_incident_roots.log"
+    },
+    {
+      "label": "retained_rational_chamfer_extends_exact_and_algebraic_pre_pole_roots",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-source-regressions-20260925-v53-hypercurve",
+        "--exact",
+        "bezier_region::tests::retained_rational_chamfer_extends_exact_and_algebraic_pre_pole_roots",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 101,
+      "elapsed_seconds": 0.42886664893012494,
+      "log": "retained-source-regressions-20260925-v53-retained_rational_chamfer_extends_exact_and_algebraic_pre_pole_roots.log"
+    },
+    {
+      "label": "resource_blocked_selected_corner_chamfers_in_its_affine_fiber",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-source-regressions-20260925-v53-hypercurve",
+        "--exact",
+        "bezier_region::tests::resource_blocked_selected_corner_chamfers_in_its_affine_fiber",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 101,
+      "elapsed_seconds": 21.11705067497678,
+      "log": "retained-source-regressions-20260925-v53-resource_blocked_selected_corner_chamfers_in_its_affine_fiber.log"
+    }
+  ],
+  "all_processes_reaped": true,
+  "build_returncode": 0,
+  "all_sources_unchanged": true
+}

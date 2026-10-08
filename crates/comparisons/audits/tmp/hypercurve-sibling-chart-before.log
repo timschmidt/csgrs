@@ -1,0 +1,21 @@
+   Compiling hypercurve v0.3.1 (/home/tim/Documents/GitHub/workspace/hypercurve)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 9.15s
+     Running unittests src/lib.rs (target/debug/deps/hypercurve-504e20b4b2cf05d2)
+
+running 1 test
+
+thread 'curve_region_boolean::certified_successor_tests::sibling_circle_tangency_preserves_half_chart_and_finite_range_ownership' (331) panicked at src/curve_region_boolean.rs:17301:29:
+assertion `left == right` failed: policy=CurveContext(0) source=(0,1,false) complementary=false clipped=false reversed=false
+  left: 0
+ right: 1
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+test curve_region_boolean::certified_successor_tests::sibling_circle_tangency_preserves_half_chart_and_finite_range_ownership ... FAILED
+
+failures:
+
+failures:
+    curve_region_boolean::certified_successor_tests::sibling_circle_tangency_preserves_half_chart_and_finite_range_ownership
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 876 filtered out; finished in 0.00s
+
+error: test failed, to rerun pass `--lib`

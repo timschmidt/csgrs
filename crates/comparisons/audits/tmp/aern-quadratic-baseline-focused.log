@@ -1,0 +1,109 @@
+   Compiling autocfg v1.5.0
+   Compiling proc-macro2 v1.0.106
+   Compiling quote v1.0.45
+   Compiling unicode-ident v1.0.24
+   Compiling libc v0.2.186
+   Compiling cfg-if v1.0.4
+   Compiling zerocopy v0.8.48
+   Compiling getrandom v0.3.4
+   Compiling crossbeam-utils v0.8.21
+   Compiling serde_core v1.0.228
+   Compiling zmij v1.0.21
+   Compiling serde v1.0.228
+   Compiling rustix v1.1.4
+   Compiling getrandom v0.4.2
+   Compiling linux-raw-sys v0.12.1
+   Compiling regex-syntax v0.8.10
+   Compiling once_cell v1.21.4
+   Compiling either v1.15.0
+   Compiling rayon-core v1.13.0
+   Compiling bytemuck v1.25.2
+   Compiling bitflags v2.11.1
+   Compiling serde_json v1.0.149
+   Compiling anstyle v1.0.14
+   Compiling memchr v2.8.0
+   Compiling plotters-backend v0.3.7
+   Compiling clap_lex v1.1.0
+   Compiling num-traits v0.2.19
+   Compiling matrixmultiply v0.3.11
+   Compiling safe_arch v1.2.0
+   Compiling itoa v1.0.18
+   Compiling ciborium-io v0.2.2
+   Compiling fastrand v2.4.1
+   Compiling clap_builder v4.6.0
+   Compiling crossbeam-epoch v0.9.18
+   Compiling plotters-svg v0.3.7
+   Compiling itertools v0.10.5
+   Compiling quick-error v1.2.3
+   Compiling rawpointer v0.2.1
+   Compiling same-file v1.0.6
+   Compiling bit-vec v0.8.0
+   Compiling fnv v1.0.7
+   Compiling cast v0.3.0
+   Compiling wide v1.7.0
+   Compiling walkdir v2.5.0
+   Compiling crossbeam-deque v0.8.6
+   Compiling bit-set v0.8.0
+   Compiling syn v2.0.117
+   Compiling unarray v0.1.4
+   Compiling anes v0.1.6
+   Compiling oorandom v11.1.5
+   Compiling typenum v1.20.1
+   Compiling wait-timeout v0.2.1
+   Compiling is-terminal v0.4.17
+   Compiling roots v0.0.8
+   Compiling num-integer v0.1.46
+   Compiling num-complex v0.4.6
+   Compiling rand_core v0.9.5
+   Compiling approx v0.5.1
+   Compiling rayon v1.12.0
+   Compiling rand v0.9.4
+   Compiling rand_xorshift v0.4.0
+   Compiling plotters v0.3.7
+   Compiling num-bigint v0.4.6
+   Compiling num-iter v0.1.45
+   Compiling regex-automata v0.4.14
+   Compiling criterion-plot v0.5.0
+   Compiling tempfile v3.27.0
+   Compiling clap v4.6.1
+   Compiling rusty-fork v0.3.1
+   Compiling num-rational v0.4.2
+   Compiling num v0.4.3
+   Compiling hyperreal v0.13.1 (/tmp/aern-quadratic-fix.fsxgfP/hyperreal)
+   Compiling regex v1.12.3
+   Compiling zerocopy-derive v0.8.48
+   Compiling serde_derive v1.0.228
+   Compiling tinytemplate v1.2.1
+   Compiling simba v0.10.2
+   Compiling hyperlattice v0.6.1 (/tmp/aern-quadratic-fix.fsxgfP/hyperlattice)
+   Compiling half v2.7.1
+   Compiling ppv-lite86 v0.2.21
+   Compiling ciborium-ll v0.2.2
+   Compiling rand_chacha v0.9.0
+   Compiling ciborium v0.2.2
+   Compiling proptest v1.11.0
+   Compiling criterion v0.5.1
+   Compiling hyperlimit v0.4.1 (/tmp/aern-quadratic-fix.fsxgfP/hyperlimit)
+   Compiling nalgebra v0.35.0
+   Compiling hypersolve v0.3.1 (/tmp/aern-quadratic-fix.fsxgfP/hypersolve-baseline)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 35.09s
+     Running tests/quadratic_extraction.rs (target/debug/deps/quadratic_extraction-69da5f5b17390a2f)
+
+running 1 test
+test distinct_high_degrees_and_monomials_cannot_cancel ... FAILED
+
+failures:
+
+---- distinct_high_degrees_and_monomials_cannot_cancel stdout ----
+
+thread 'distinct_high_degrees_and_monomials_cannot_cancel' (2252) panicked at tests/quadratic_extraction.rs:32:9:
+assertion failed: UnivariateQuadraticResidual::from_expr(&expression, &problem).is_none()
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    distinct_high_degrees_and_monomials_cannot_cancel
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 5 filtered out; finished in 0.00s
+
+error: test failed, to rerun pass `--test quadratic_extraction`

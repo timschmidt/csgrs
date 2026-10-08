@@ -1,0 +1,22 @@
+==12== Memcheck, a memory error detector
+==12== Copyright (C) 2002-2026, and GNU GPL'd, by Julian Seward et al.
+==12== Using Valgrind-3.27.1 and LibVEX; rerun with -h for copyright info
+==12== Command: /tmp/realistic-hyper-sqrt-baseline hyper sqrt_cold 16 100
+==12== Parent PID: 2
+==12== 
+==12== 
+==12== HEAP SUMMARY:
+==12==     in use at exit: 704 bytes in 6 blocks
+==12==   total heap usage: 6,222 allocs, 6,216 frees, 253,697 bytes allocated
+==12== 
+==12== LEAK SUMMARY:
+==12==    definitely lost: 0 bytes in 0 blocks
+==12==    indirectly lost: 0 bytes in 0 blocks
+==12==      possibly lost: 0 bytes in 0 blocks
+==12==    still reachable: 704 bytes in 6 blocks
+==12==         suppressed: 0 bytes in 0 blocks
+==12== Reachable blocks (those to which a pointer was found) are not shown.
+==12== To see them, rerun with: --leak-check=full --show-leak-kinds=all
+==12== 
+==12== For lists of detected and suppressed errors, rerun with: -s
+==12== ERROR SUMMARY: 0 errors from 0 contexts (suppressed: 0 from 0)

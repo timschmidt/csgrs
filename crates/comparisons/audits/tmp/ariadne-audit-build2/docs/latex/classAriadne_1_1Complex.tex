@@ -1,0 +1,155 @@
+\doxysubsection{Complex\texorpdfstring{$<$}{<} X \texorpdfstring{$>$}{>} Class Template Reference}
+\hypertarget{classAriadne_1_1Complex}{}\label{classAriadne_1_1Complex}\index{Complex$<$ X $>$@{Complex$<$ X $>$}}
+
+
+{\ttfamily \#include $<$complex.\+hpp$>$}
+
+
+
+\doxysubsubsection{Description}
+\subsubsection*{template$<$class X$>$\newline
+class Ariadne\+::\+Complex$<$ X $>$}
+Complex number type over real numbers {\itshape X} supporting basic arithmetic and exponential functions. \doxysubsubsubsection*{Public Member Functions}
+\begin{Indent}\textbf{ Constructors}\par
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1Complex_aa323c3bc7cebbb8d43f37c9a28b99999}\label{classAriadne_1_1Complex_aa323c3bc7cebbb8d43f37c9a28b99999} 
+{\footnotesize template$<$class... PRS$>$ \newline
+requires Constructible$<$X,\mbox{\hyperlink{namespaceAriadne_aae901a69a841b1a085a0dfe218e38fe9}{Nat}},PRS...$>$}\\{\bfseries Complex} (PRS... prs)
+\begin{DoxyCompactList}\small\item\em Default constructor yields the number 0. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Complex_a31de557698df1ec571a55a1940601b69}\label{classAriadne_1_1Complex_a31de557698df1ec571a55a1940601b69} 
+{\bfseries Complex} (X const \&x)
+\begin{DoxyCompactList}\small\item\em Construct the number {\itshape x} + {\itshape i} {\itshape y}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Complex_a07e5e3aa6c5f92c600367e01bbfb4436}\label{classAriadne_1_1Complex_a07e5e3aa6c5f92c600367e01bbfb4436} 
+{\bfseries Complex} (X const \&x, X const \&y)
+\begin{DoxyCompactList}\small\item\em Construct the number {\itshape x} + {\itshape i} {\itshape y}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Complex_a6280b467b34784d69f8f6e08fbb7ebd2}\label{classAriadne_1_1Complex_a6280b467b34784d69f8f6e08fbb7ebd2} 
+{\bfseries Complex} (X const \&r, X const \&th, Polar\+Tag)
+\begin{DoxyCompactList}\small\item\em Construct the number {\itshape exp(r)\texorpdfstring{$\ast$}{*}}(cos(th)+i\texorpdfstring{$\ast$}{*}sin(th)). \end{DoxyCompactList}\end{DoxyCompactItemize}
+\end{Indent}
+\begin{Indent}\textbf{ Extract in Cartesian and polar coordinates}\par
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1Complex_abed93865af5dffd781faa3bb5c615ee2}\label{classAriadne_1_1Complex_abed93865af5dffd781faa3bb5c615ee2} 
+X const \& {\bfseries real\+\_\+part} () const
+\begin{DoxyCompactList}\small\item\em The real part {\itshape x} of {\itshape x+iy}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Complex_ae19ffbc2c9891b7c1bfb4f0c9ab7413f}\label{classAriadne_1_1Complex_ae19ffbc2c9891b7c1bfb4f0c9ab7413f} 
+X const \& {\bfseries imaginary\+\_\+part} () const
+\begin{DoxyCompactList}\small\item\em The imaginary part {\itshape y} of {\itshape x+iy}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Complex_a7b2ed0034d6bf1c9a9ca73ac86e4077f}\label{classAriadne_1_1Complex_a7b2ed0034d6bf1c9a9ca73ac86e4077f} 
+Modulus\+Type$<$ X $>$ {\bfseries modulus} () const
+\begin{DoxyCompactList}\small\item\em The modulus (absolute value) $r=\sqrt{x^2+y^2}$ of $x+iy$. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Complex_a41b0262dbcc7f378b0cc784113210b51}\label{classAriadne_1_1Complex_a41b0262dbcc7f378b0cc784113210b51} 
+Argument\+Type$<$ X $>$ {\bfseries argument} () const
+\begin{DoxyCompactList}\small\item\em The argument (absolute value) $\theta=\atan(y/x)$ of $x+iy$. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\end{Indent}
+\doxysubsubsubsection*{Friends}
+\begin{Indent}\textbf{ Standard arithmetic operators}\par
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1Complex_a1afe6f6bafabc0966ee7e07477d74ba5}\label{classAriadne_1_1Complex_a1afe6f6bafabc0966ee7e07477d74ba5} 
+\mbox{\hyperlink{classAriadne_1_1Complex}{Complex}}$<$ X $>$ {\bfseries operator+} (\mbox{\hyperlink{classAriadne_1_1Complex}{Complex}}$<$ X $>$ const \&z)
+\begin{DoxyCompactList}\small\item\em Unary plus. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Complex_a2538f55526489b181229865e639d1f9e}\label{classAriadne_1_1Complex_a2538f55526489b181229865e639d1f9e} 
+\mbox{\hyperlink{classAriadne_1_1Complex}{Complex}}$<$ X $>$ {\bfseries operator-\/} (\mbox{\hyperlink{classAriadne_1_1Complex}{Complex}}$<$ X $>$ const \&z)
+\begin{DoxyCompactList}\small\item\em Unary minus. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Complex_a3f22fe2061132799e54ad3cb90e8d262}\label{classAriadne_1_1Complex_a3f22fe2061132799e54ad3cb90e8d262} 
+\mbox{\hyperlink{classAriadne_1_1Complex}{Complex}}$<$ X $>$ {\bfseries operator+} (\mbox{\hyperlink{classAriadne_1_1Complex}{Complex}}$<$ X $>$ const \&z1, \mbox{\hyperlink{classAriadne_1_1Complex}{Complex}}$<$ X $>$ const \&z2)
+\begin{DoxyCompactList}\small\item\em Plus. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Complex_a3e734bc7d50233f0b8fa39dc2f0b22ed}\label{classAriadne_1_1Complex_a3e734bc7d50233f0b8fa39dc2f0b22ed} 
+\mbox{\hyperlink{classAriadne_1_1Complex}{Complex}}$<$ X $>$ {\bfseries operator-\/} (\mbox{\hyperlink{classAriadne_1_1Complex}{Complex}}$<$ X $>$ const \&z1, \mbox{\hyperlink{classAriadne_1_1Complex}{Complex}}$<$ X $>$ const \&z2)
+\begin{DoxyCompactList}\small\item\em Minus. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Complex_a4c3b71763a420f178cd389b25b9b4551}\label{classAriadne_1_1Complex_a4c3b71763a420f178cd389b25b9b4551} 
+\mbox{\hyperlink{classAriadne_1_1Complex}{Complex}}$<$ X $>$ {\bfseries operator\texorpdfstring{$\ast$}{*}} (\mbox{\hyperlink{classAriadne_1_1Complex}{Complex}}$<$ X $>$ const \&z1, \mbox{\hyperlink{classAriadne_1_1Complex}{Complex}}$<$ X $>$ const \&z2)
+\begin{DoxyCompactList}\small\item\em Times. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Complex_a300fdff5e4e9e3462fdc05e0ebf93cfa}\label{classAriadne_1_1Complex_a300fdff5e4e9e3462fdc05e0ebf93cfa} 
+\mbox{\hyperlink{classAriadne_1_1Complex}{Complex}}$<$ X $>$ {\bfseries operator/} (\mbox{\hyperlink{classAriadne_1_1Complex}{Complex}}$<$ X $>$ const \&z1, \mbox{\hyperlink{classAriadne_1_1Complex}{Complex}}$<$ X $>$ const \&z2)
+\begin{DoxyCompactList}\small\item\em Divides. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Complex_a0ddf41d47ce39fc7b9eba77cdf53e4b9}\label{classAriadne_1_1Complex_a0ddf41d47ce39fc7b9eba77cdf53e4b9} 
+\mbox{\hyperlink{classAriadne_1_1Complex}{Complex}}$<$ X $>$ \& {\bfseries operator+=} (\mbox{\hyperlink{classAriadne_1_1Complex}{Complex}}$<$ X $>$ \&z1, \mbox{\hyperlink{classAriadne_1_1Complex}{Complex}}$<$ X $>$ const \&z2)
+\begin{DoxyCompactList}\small\item\em Inplace plus. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Complex_a1095181825fecd1864bf2fa39184e18c}\label{classAriadne_1_1Complex_a1095181825fecd1864bf2fa39184e18c} 
+\mbox{\hyperlink{classAriadne_1_1Complex}{Complex}}$<$ X $>$ \& {\bfseries operator-\/=} (\mbox{\hyperlink{classAriadne_1_1Complex}{Complex}}$<$ X $>$ \&z1, \mbox{\hyperlink{classAriadne_1_1Complex}{Complex}}$<$ X $>$ const \&z2)
+\begin{DoxyCompactList}\small\item\em Inplace minus. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Complex_acb74f41c6605264a78694750849fe7ee}\label{classAriadne_1_1Complex_acb74f41c6605264a78694750849fe7ee} 
+\mbox{\hyperlink{classAriadne_1_1Complex}{Complex}}$<$ X $>$ \& {\bfseries operator\texorpdfstring{$\ast$}{*}=} (\mbox{\hyperlink{classAriadne_1_1Complex}{Complex}}$<$ X $>$ \&z1, \mbox{\hyperlink{classAriadne_1_1Complex}{Complex}}$<$ X $>$ const \&z2)
+\begin{DoxyCompactList}\small\item\em Inplace times. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Complex_a782f0ca98e3d64a4df2a78ff5d042b9f}\label{classAriadne_1_1Complex_a782f0ca98e3d64a4df2a78ff5d042b9f} 
+\mbox{\hyperlink{classAriadne_1_1Complex}{Complex}}$<$ X $>$ \& {\bfseries operator/=} (\mbox{\hyperlink{classAriadne_1_1Complex}{Complex}}$<$ X $>$ \&z1, \mbox{\hyperlink{classAriadne_1_1Complex}{Complex}}$<$ X $>$ const \&z2)
+\begin{DoxyCompactList}\small\item\em Inplace divides. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\end{Indent}
+\begin{Indent}\textbf{ Algebraic and transcendental functions}\par
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1Complex_ab3b22e02a184e10d317950237dfba7a9}\label{classAriadne_1_1Complex_ab3b22e02a184e10d317950237dfba7a9} 
+\mbox{\hyperlink{classAriadne_1_1Complex}{Complex}}$<$ X $>$ {\bfseries add} (\mbox{\hyperlink{classAriadne_1_1Complex}{Complex}}$<$ X $>$ const \&z1, \mbox{\hyperlink{classAriadne_1_1Complex}{Complex}}$<$ X $>$ const \&z2)
+\begin{DoxyCompactList}\small\item\em Sum {\itshape z1+z2}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Complex_a27baff6e7554865e9e8f58a51087817a}\label{classAriadne_1_1Complex_a27baff6e7554865e9e8f58a51087817a} 
+\mbox{\hyperlink{classAriadne_1_1Complex}{Complex}}$<$ X $>$ {\bfseries sub} (\mbox{\hyperlink{classAriadne_1_1Complex}{Complex}}$<$ X $>$ const \&z1, \mbox{\hyperlink{classAriadne_1_1Complex}{Complex}}$<$ X $>$ const \&z2)
+\begin{DoxyCompactList}\small\item\em Difference {\itshape z1-\/z2}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Complex_acd152091f9364c8c2707348ec95d8c96}\label{classAriadne_1_1Complex_acd152091f9364c8c2707348ec95d8c96} 
+\mbox{\hyperlink{classAriadne_1_1Complex}{Complex}}$<$ X $>$ {\bfseries mul} (\mbox{\hyperlink{classAriadne_1_1Complex}{Complex}}$<$ X $>$ const \&z1, \mbox{\hyperlink{classAriadne_1_1Complex}{Complex}}$<$ X $>$ const \&z2)
+\begin{DoxyCompactList}\small\item\em Product {\itshape z1×z2}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Complex_aae0c13004c5b8e01b3614166ff1af898}\label{classAriadne_1_1Complex_aae0c13004c5b8e01b3614166ff1af898} 
+\mbox{\hyperlink{classAriadne_1_1Complex}{Complex}}$<$ X $>$ {\bfseries div} (\mbox{\hyperlink{classAriadne_1_1Complex}{Complex}}$<$ X $>$ const \&z1, \mbox{\hyperlink{classAriadne_1_1Complex}{Complex}}$<$ X $>$ const \&z2)
+\begin{DoxyCompactList}\small\item\em Quotient {\itshape z1÷z2}. \end{DoxyCompactList}\item 
+\mbox{\hyperlink{classAriadne_1_1Complex}{Complex}}$<$ X $>$ \mbox{\hyperlink{classAriadne_1_1Complex_a318b73d1798d0b1fde3fd3c9f1964ab3}{sqrt}} (\mbox{\hyperlink{classAriadne_1_1Complex}{Complex}}$<$ X $>$ const \&z)
+\item 
+\Hypertarget{classAriadne_1_1Complex_a6b23995060d349846e17e609fc2acf4b}\label{classAriadne_1_1Complex_a6b23995060d349846e17e609fc2acf4b} 
+\mbox{\hyperlink{classAriadne_1_1Complex}{Complex}}$<$ X $>$ {\bfseries exp} (\mbox{\hyperlink{classAriadne_1_1Complex}{Complex}}$<$ X $>$ const \&z)
+\begin{DoxyCompactList}\small\item\em The natural exponent of {\itshape r}, {\itshape e\textsuperscript{r}}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Complex_ab7a24eeeebd2397505fd607990f1c3c0}\label{classAriadne_1_1Complex_ab7a24eeeebd2397505fd607990f1c3c0} 
+\mbox{\hyperlink{classAriadne_1_1Complex}{Complex}}$<$ X $>$ {\bfseries log} (\mbox{\hyperlink{classAriadne_1_1Complex}{Complex}}$<$ X $>$ const \&z)
+\begin{DoxyCompactList}\small\item\em The natural logarithm of {\itshape z}. Currently requires {\itshape Re(z)} ≥ 0. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\end{Indent}
+\begin{Indent}\textbf{ Special complex number functions}\par
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1Complex_a224e329c0c2565c1b812ec7548e2fc24}\label{classAriadne_1_1Complex_a224e329c0c2565c1b812ec7548e2fc24} 
+decltype(auto) {\bfseries mag} (\mbox{\hyperlink{classAriadne_1_1Complex}{Complex}}$<$ X $>$ const \&z)
+\begin{DoxyCompactList}\small\item\em Maximum possible absolute value {\itshape \texorpdfstring{$\vert$}{|}r\texorpdfstring{$\vert$}{|}}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Complex_a51cda066714dc7c5702ffc9889d1fd65}\label{classAriadne_1_1Complex_a51cda066714dc7c5702ffc9889d1fd65} 
+decltype(auto) {\bfseries mig} (\mbox{\hyperlink{classAriadne_1_1Complex}{Complex}}$<$ X $>$ const \&z)
+\begin{DoxyCompactList}\small\item\em Minimum possible absolute value {\itshape \texorpdfstring{$\vert$}{|}r\texorpdfstring{$\vert$}{|}}. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\end{Indent}
+\textbf{ }\par
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1Complex_aeac637cef989f535be997416a4da4496}\label{classAriadne_1_1Complex_aeac637cef989f535be997416a4da4496} 
+\mbox{\hyperlink{classAriadne_1_1Positive}{Positive}}$<$ X $>$ {\bfseries dist} (\mbox{\hyperlink{classAriadne_1_1Complex}{Complex}}$<$ X $>$ const \&z1, \mbox{\hyperlink{classAriadne_1_1Complex}{Complex}}$<$ X $>$ const \&z2)
+\begin{DoxyCompactList}\small\item\em Operations based on the metric structure. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+\begin{Indent}\textbf{ Operations on the representation.}\par
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1Complex_a3cdfe5c27d6b2d4c6a80cff287c73c67}\label{classAriadne_1_1Complex_a3cdfe5c27d6b2d4c6a80cff287c73c67} 
+\mbox{\hyperlink{namespaceAriadne_a76a8b016e5ad61faf9062cc387df5016}{Bool}} {\bfseries same} (\mbox{\hyperlink{classAriadne_1_1Complex}{Complex}}$<$ X $>$ const \&, \mbox{\hyperlink{classAriadne_1_1Complex}{Complex}}$<$ X $>$ const \&)
+\begin{DoxyCompactList}\small\item\em Test equivalence of representation. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\end{Indent}
+\begin{Indent}\textbf{ Input/output operations}\par
+\end{Indent}
+
+
+\label{doc-related-members}
+\Hypertarget{classAriadne_1_1Complex_doc-related-members}
+\doxysubsubsection{Friends And Related Symbol Documentation}
+\Hypertarget{classAriadne_1_1Complex_a318b73d1798d0b1fde3fd3c9f1964ab3}\index{Complex$<$ X $>$@{Complex$<$ X $>$}!sqrt@{sqrt}}
+\index{sqrt@{sqrt}!Complex$<$ X $>$@{Complex$<$ X $>$}}
+\doxyparagraph{\texorpdfstring{sqrt}{sqrt}}
+{\footnotesize\ttfamily \label{classAriadne_1_1Complex_a318b73d1798d0b1fde3fd3c9f1964ab3} 
+template$<$class X$>$ \\
+\mbox{\hyperlink{classAriadne_1_1Complex}{Complex}}$<$ X $>$ sqrt (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{classAriadne_1_1Complex}{Complex}}$<$ X $>$ const \&}]{z}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [friend]}}
+
+\texorpdfstring{$<$}{<} The square root of {\itshape r}, √{\itshape r}. Requires {\itshape r} ≥ 0.
+
+References \mbox{\hyperlink{classAriadne_1_1Complex_a41b0262dbcc7f378b0cc784113210b51}{argument()}}, \mbox{\hyperlink{classAriadne_1_1Complex_aa323c3bc7cebbb8d43f37c9a28b99999}{Complex()}}, \mbox{\hyperlink{classAriadne_1_1Complex_a7b2ed0034d6bf1c9a9ca73ac86e4077f}{modulus()}}, and \mbox{\hyperlink{classAriadne_1_1Complex_a318b73d1798d0b1fde3fd3c9f1964ab3}{sqrt}}.
+
+
+
+Referenced by \mbox{\hyperlink{classAriadne_1_1Complex_a224e329c0c2565c1b812ec7548e2fc24}{mag}}, \mbox{\hyperlink{classAriadne_1_1Complex_a51cda066714dc7c5702ffc9889d1fd65}{mig}}, \mbox{\hyperlink{classAriadne_1_1Complex_a7b2ed0034d6bf1c9a9ca73ac86e4077f}{modulus()}}, and \mbox{\hyperlink{classAriadne_1_1Complex_a318b73d1798d0b1fde3fd3c9f1964ab3}{sqrt}}.
+
+
+
+The documentation for this class was generated from the following file\+:\begin{DoxyCompactItemize}
+\item 
+source/numeric/\mbox{\hyperlink{complex_8hpp}{complex.\+hpp}}\end{DoxyCompactItemize}

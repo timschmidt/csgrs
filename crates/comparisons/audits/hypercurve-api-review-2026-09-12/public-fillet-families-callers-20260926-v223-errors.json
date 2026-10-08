@@ -1,0 +1,367 @@
+[
+  {
+    "rendered": "error[E0308]: mismatched types\n    --> tests/hypercurve_curve_intersection.rs:1734:13\n     |\n1734 |           let hypercurve::CurveCornerSolutions2::Unique(path) = path\n     |  _____________^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^___-\n     | |             |\n     | |             expected `CurveFilletSolutions2<CurvePath2, ...>`, found `CurveCornerSolutions2<_>`\n1735 | |             .fillet_vertex_by_radius(1, q(1, 4), hypercurve::CurveCornerMode2::TrimOnly, &policy)\n1736 | |             .unwrap()\n1737 | |             .into_value()\n     | |_________________________- this expression has type `CurveFilletSolutions2<hypercurve::CurvePath2, CurvePathFilletFamily2>`\n     |\n     = note: expected struct `CurveFilletSolutions2<hypercurve::CurvePath2, CurvePathFilletFamily2>`\n                  found enum `hypercurve::CurveCornerSolutions2<_>`\n\n",
+    "$message_type": "diagnostic",
+    "children": [
+      {
+        "children": [],
+        "code": null,
+        "level": "note",
+        "message": "expected struct `CurveFilletSolutions2<hypercurve::CurvePath2, CurvePathFilletFamily2>`\n     found enum `hypercurve::CurveCornerSolutions2<_>`",
+        "rendered": null,
+        "spans": []
+      }
+    ],
+    "level": "error",
+    "message": "mismatched types",
+    "spans": [
+      {
+        "byte_end": 77365,
+        "byte_start": 77318,
+        "column_end": 60,
+        "column_start": 13,
+        "expansion": null,
+        "file_name": "tests/hypercurve_curve_intersection.rs",
+        "is_primary": true,
+        "label": "expected `CurveFilletSolutions2<CurvePath2, ...>`, found `CurveCornerSolutions2<_>`",
+        "line_end": 1734,
+        "line_start": 1734,
+        "suggested_replacement": null,
+        "suggestion_applicability": null,
+        "text": [
+          {
+            "highlight_end": 60,
+            "highlight_start": 13,
+            "text": "        let hypercurve::CurveCornerSolutions2::Unique(path) = path"
+          }
+        ]
+      },
+      {
+        "byte_end": 77518,
+        "byte_start": 77368,
+        "column_end": 26,
+        "column_start": 63,
+        "expansion": null,
+        "file_name": "tests/hypercurve_curve_intersection.rs",
+        "is_primary": false,
+        "label": "this expression has type `CurveFilletSolutions2<hypercurve::CurvePath2, CurvePathFilletFamily2>`",
+        "line_end": 1737,
+        "line_start": 1734,
+        "suggested_replacement": null,
+        "suggestion_applicability": null,
+        "text": [
+          {
+            "highlight_end": 67,
+            "highlight_start": 63,
+            "text": "        let hypercurve::CurveCornerSolutions2::Unique(path) = path"
+          },
+          {
+            "highlight_end": 98,
+            "highlight_start": 1,
+            "text": "            .fillet_vertex_by_radius(1, q(1, 4), hypercurve::CurveCornerMode2::TrimOnly, &policy)"
+          },
+          {
+            "highlight_end": 22,
+            "highlight_start": 1,
+            "text": "            .unwrap()"
+          },
+          {
+            "highlight_end": 26,
+            "highlight_start": 1,
+            "text": "            .into_value()"
+          }
+        ]
+      }
+    ],
+    "code": {
+      "code": "E0308",
+      "explanation": "Expected type did not match the received type.\n\nErroneous code examples:\n\n```compile_fail,E0308\nfn plus_one(x: i32) -> i32 {\n    x + 1\n}\n\nplus_one(\"Not a number\");\n//       ^^^^^^^^^^^^^^ expected `i32`, found `&str`\n\nif \"Not a bool\" {\n// ^^^^^^^^^^^^ expected `bool`, found `&str`\n}\n\nlet x: f32 = \"Not a float\";\n//     ---   ^^^^^^^^^^^^^ expected `f32`, found `&str`\n//     |\n//     expected due to this\n```\n\nThis error occurs when an expression was used in a place where the compiler\nexpected an expression of a different type. It can occur in several cases, the\nmost common being when calling a function and passing an argument which has a\ndifferent type than the matching type in the function declaration.\n"
+    }
+  },
+  {
+    "rendered": "error[E0308]: mismatched types\n    --> tests/hypercurve_curve_intersection.rs:1795:13\n     |\n1795 |           let hypercurve::CurveCornerSolutions2::Unique(path) = path\n     |  _____________^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^___-\n     | |             |\n     | |             expected `CurveFilletSolutions2<CurvePath2, ...>`, found `CurveCornerSolutions2<_>`\n1796 | |             .fillet_vertex_by_radius(1, q(1, 4), hypercurve::CurveCornerMode2::TrimOnly, &policy)\n1797 | |             .unwrap()\n1798 | |             .into_value()\n     | |_________________________- this expression has type `CurveFilletSolutions2<hypercurve::CurvePath2, CurvePathFilletFamily2>`\n     |\n     = note: expected struct `CurveFilletSolutions2<hypercurve::CurvePath2, CurvePathFilletFamily2>`\n                  found enum `hypercurve::CurveCornerSolutions2<_>`\n\n",
+    "$message_type": "diagnostic",
+    "children": [
+      {
+        "children": [],
+        "code": null,
+        "level": "note",
+        "message": "expected struct `CurveFilletSolutions2<hypercurve::CurvePath2, CurvePathFilletFamily2>`\n     found enum `hypercurve::CurveCornerSolutions2<_>`",
+        "rendered": null,
+        "spans": []
+      }
+    ],
+    "level": "error",
+    "message": "mismatched types",
+    "spans": [
+      {
+        "byte_end": 80144,
+        "byte_start": 80097,
+        "column_end": 60,
+        "column_start": 13,
+        "expansion": null,
+        "file_name": "tests/hypercurve_curve_intersection.rs",
+        "is_primary": true,
+        "label": "expected `CurveFilletSolutions2<CurvePath2, ...>`, found `CurveCornerSolutions2<_>`",
+        "line_end": 1795,
+        "line_start": 1795,
+        "suggested_replacement": null,
+        "suggestion_applicability": null,
+        "text": [
+          {
+            "highlight_end": 60,
+            "highlight_start": 13,
+            "text": "        let hypercurve::CurveCornerSolutions2::Unique(path) = path"
+          }
+        ]
+      },
+      {
+        "byte_end": 80297,
+        "byte_start": 80147,
+        "column_end": 26,
+        "column_start": 63,
+        "expansion": null,
+        "file_name": "tests/hypercurve_curve_intersection.rs",
+        "is_primary": false,
+        "label": "this expression has type `CurveFilletSolutions2<hypercurve::CurvePath2, CurvePathFilletFamily2>`",
+        "line_end": 1798,
+        "line_start": 1795,
+        "suggested_replacement": null,
+        "suggestion_applicability": null,
+        "text": [
+          {
+            "highlight_end": 67,
+            "highlight_start": 63,
+            "text": "        let hypercurve::CurveCornerSolutions2::Unique(path) = path"
+          },
+          {
+            "highlight_end": 98,
+            "highlight_start": 1,
+            "text": "            .fillet_vertex_by_radius(1, q(1, 4), hypercurve::CurveCornerMode2::TrimOnly, &policy)"
+          },
+          {
+            "highlight_end": 22,
+            "highlight_start": 1,
+            "text": "            .unwrap()"
+          },
+          {
+            "highlight_end": 26,
+            "highlight_start": 1,
+            "text": "            .into_value()"
+          }
+        ]
+      }
+    ],
+    "code": {
+      "code": "E0308",
+      "explanation": "Expected type did not match the received type.\n\nErroneous code examples:\n\n```compile_fail,E0308\nfn plus_one(x: i32) -> i32 {\n    x + 1\n}\n\nplus_one(\"Not a number\");\n//       ^^^^^^^^^^^^^^ expected `i32`, found `&str`\n\nif \"Not a bool\" {\n// ^^^^^^^^^^^^ expected `bool`, found `&str`\n}\n\nlet x: f32 = \"Not a float\";\n//     ---   ^^^^^^^^^^^^^ expected `f32`, found `&str`\n//     |\n//     expected due to this\n```\n\nThis error occurs when an expression was used in a place where the compiler\nexpected an expression of a different type. It can occur in several cases, the\nmost common being when calling a function and passing an argument which has a\ndifferent type than the matching type in the function declaration.\n"
+    }
+  },
+  {
+    "rendered": "error[E0308]: mismatched types\n    --> tests/hypercurve_curve_intersection.rs:3530:13\n     |\n3530 |         let CurveCornerSolutions2::Unique(path) = fillet.value else {\n     |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^   ------------ this expression has type `CurveFilletSolutions2<hypercurve::CurvePath2, CurvePathFilletFamily2>`\n     |             |\n     |             expected `CurveFilletSolutions2<CurvePath2, ...>`, found `CurveCornerSolutions2<_>`\n     |\n     = note: expected struct `CurveFilletSolutions2<hypercurve::CurvePath2, CurvePathFilletFamily2>`\n                  found enum `hypercurve::CurveCornerSolutions2<_>`\n\n",
+    "$message_type": "diagnostic",
+    "children": [
+      {
+        "children": [],
+        "code": null,
+        "level": "note",
+        "message": "expected struct `CurveFilletSolutions2<hypercurve::CurvePath2, CurvePathFilletFamily2>`\n     found enum `hypercurve::CurveCornerSolutions2<_>`",
+        "rendered": null,
+        "spans": []
+      }
+    ],
+    "level": "error",
+    "message": "mismatched types",
+    "spans": [
+      {
+        "byte_end": 141310,
+        "byte_start": 141275,
+        "column_end": 48,
+        "column_start": 13,
+        "expansion": null,
+        "file_name": "tests/hypercurve_curve_intersection.rs",
+        "is_primary": true,
+        "label": "expected `CurveFilletSolutions2<CurvePath2, ...>`, found `CurveCornerSolutions2<_>`",
+        "line_end": 3530,
+        "line_start": 3530,
+        "suggested_replacement": null,
+        "suggestion_applicability": null,
+        "text": [
+          {
+            "highlight_end": 48,
+            "highlight_start": 13,
+            "text": "        let CurveCornerSolutions2::Unique(path) = fillet.value else {"
+          }
+        ]
+      },
+      {
+        "byte_end": 141325,
+        "byte_start": 141313,
+        "column_end": 63,
+        "column_start": 51,
+        "expansion": null,
+        "file_name": "tests/hypercurve_curve_intersection.rs",
+        "is_primary": false,
+        "label": "this expression has type `CurveFilletSolutions2<hypercurve::CurvePath2, CurvePathFilletFamily2>`",
+        "line_end": 3530,
+        "line_start": 3530,
+        "suggested_replacement": null,
+        "suggestion_applicability": null,
+        "text": [
+          {
+            "highlight_end": 63,
+            "highlight_start": 51,
+            "text": "        let CurveCornerSolutions2::Unique(path) = fillet.value else {"
+          }
+        ]
+      }
+    ],
+    "code": {
+      "code": "E0308",
+      "explanation": "Expected type did not match the received type.\n\nErroneous code examples:\n\n```compile_fail,E0308\nfn plus_one(x: i32) -> i32 {\n    x + 1\n}\n\nplus_one(\"Not a number\");\n//       ^^^^^^^^^^^^^^ expected `i32`, found `&str`\n\nif \"Not a bool\" {\n// ^^^^^^^^^^^^ expected `bool`, found `&str`\n}\n\nlet x: f32 = \"Not a float\";\n//     ---   ^^^^^^^^^^^^^ expected `f32`, found `&str`\n//     |\n//     expected due to this\n```\n\nThis error occurs when an expression was used in a place where the compiler\nexpected an expression of a different type. It can occur in several cases, the\nmost common being when calling a function and passing an argument which has a\ndifferent type than the matching type in the function declaration.\n"
+    }
+  },
+  {
+    "rendered": "error[E0308]: mismatched types\n    --> tests/hypercurve_curve_intersection.rs:3620:13\n     |\n3620 |         let CurveCornerSolutions2::Unique(path) = result.value else {\n     |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^   ------------ this expression has type `CurveFilletSolutions2<hypercurve::CurvePath2, CurvePathFilletFamily2>`\n     |             |\n     |             expected `CurveFilletSolutions2<CurvePath2, ...>`, found `CurveCornerSolutions2<_>`\n     |\n     = note: expected struct `CurveFilletSolutions2<hypercurve::CurvePath2, CurvePathFilletFamily2>`\n                  found enum `hypercurve::CurveCornerSolutions2<_>`\n\n",
+    "$message_type": "diagnostic",
+    "children": [
+      {
+        "children": [],
+        "code": null,
+        "level": "note",
+        "message": "expected struct `CurveFilletSolutions2<hypercurve::CurvePath2, CurvePathFilletFamily2>`\n     found enum `hypercurve::CurveCornerSolutions2<_>`",
+        "rendered": null,
+        "spans": []
+      }
+    ],
+    "level": "error",
+    "message": "mismatched types",
+    "spans": [
+      {
+        "byte_end": 145525,
+        "byte_start": 145490,
+        "column_end": 48,
+        "column_start": 13,
+        "expansion": null,
+        "file_name": "tests/hypercurve_curve_intersection.rs",
+        "is_primary": true,
+        "label": "expected `CurveFilletSolutions2<CurvePath2, ...>`, found `CurveCornerSolutions2<_>`",
+        "line_end": 3620,
+        "line_start": 3620,
+        "suggested_replacement": null,
+        "suggestion_applicability": null,
+        "text": [
+          {
+            "highlight_end": 48,
+            "highlight_start": 13,
+            "text": "        let CurveCornerSolutions2::Unique(path) = result.value else {"
+          }
+        ]
+      },
+      {
+        "byte_end": 145540,
+        "byte_start": 145528,
+        "column_end": 63,
+        "column_start": 51,
+        "expansion": null,
+        "file_name": "tests/hypercurve_curve_intersection.rs",
+        "is_primary": false,
+        "label": "this expression has type `CurveFilletSolutions2<hypercurve::CurvePath2, CurvePathFilletFamily2>`",
+        "line_end": 3620,
+        "line_start": 3620,
+        "suggested_replacement": null,
+        "suggestion_applicability": null,
+        "text": [
+          {
+            "highlight_end": 63,
+            "highlight_start": 51,
+            "text": "        let CurveCornerSolutions2::Unique(path) = result.value else {"
+          }
+        ]
+      }
+    ],
+    "code": {
+      "code": "E0308",
+      "explanation": "Expected type did not match the received type.\n\nErroneous code examples:\n\n```compile_fail,E0308\nfn plus_one(x: i32) -> i32 {\n    x + 1\n}\n\nplus_one(\"Not a number\");\n//       ^^^^^^^^^^^^^^ expected `i32`, found `&str`\n\nif \"Not a bool\" {\n// ^^^^^^^^^^^^ expected `bool`, found `&str`\n}\n\nlet x: f32 = \"Not a float\";\n//     ---   ^^^^^^^^^^^^^ expected `f32`, found `&str`\n//     |\n//     expected due to this\n```\n\nThis error occurs when an expression was used in a place where the compiler\nexpected an expression of a different type. It can occur in several cases, the\nmost common being when calling a function and passing an argument which has a\ndifferent type than the matching type in the function declaration.\n"
+    }
+  },
+  {
+    "rendered": "error[E0308]: mismatched types\n    --> tests/hypercurve_curve_intersection.rs:3709:13\n     |\n3709 |           let CurveCornerSolutions2::Unique(path) = certified(\n     |  _____________^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^___-\n     | |             |\n     | |             expected `CurveFilletSolutions2<CurvePath2, ...>`, found `CurveCornerSolutions2<_>`\n3710 | |             path.fillet_vertex_by_radius(1, q(1, 4), CurveCornerMode2::TrimOnly, policy)\n3711 | |                 .unwrap(),\n3712 | |         ) else {\n     | |_________- this expression has type `CurveFilletSolutions2<hypercurve::CurvePath2, CurvePathFilletFamily2>`\n     |\n     = note: expected struct `CurveFilletSolutions2<hypercurve::CurvePath2, CurvePathFilletFamily2>`\n                  found enum `hypercurve::CurveCornerSolutions2<_>`\n\n",
+    "$message_type": "diagnostic",
+    "children": [
+      {
+        "children": [],
+        "code": null,
+        "level": "note",
+        "message": "expected struct `CurveFilletSolutions2<hypercurve::CurvePath2, CurvePathFilletFamily2>`\n     found enum `hypercurve::CurveCornerSolutions2<_>`",
+        "rendered": null,
+        "spans": []
+      }
+    ],
+    "level": "error",
+    "message": "mismatched types",
+    "spans": [
+      {
+        "byte_end": 149212,
+        "byte_start": 149177,
+        "column_end": 48,
+        "column_start": 13,
+        "expansion": null,
+        "file_name": "tests/hypercurve_curve_intersection.rs",
+        "is_primary": true,
+        "label": "expected `CurveFilletSolutions2<CurvePath2, ...>`, found `CurveCornerSolutions2<_>`",
+        "line_end": 3709,
+        "line_start": 3709,
+        "suggested_replacement": null,
+        "suggestion_applicability": null,
+        "text": [
+          {
+            "highlight_end": 48,
+            "highlight_start": 13,
+            "text": "        let CurveCornerSolutions2::Unique(path) = certified("
+          }
+        ]
+      },
+      {
+        "byte_end": 149351,
+        "byte_start": 149215,
+        "column_end": 10,
+        "column_start": 51,
+        "expansion": null,
+        "file_name": "tests/hypercurve_curve_intersection.rs",
+        "is_primary": false,
+        "label": "this expression has type `CurveFilletSolutions2<hypercurve::CurvePath2, CurvePathFilletFamily2>`",
+        "line_end": 3712,
+        "line_start": 3709,
+        "suggested_replacement": null,
+        "suggestion_applicability": null,
+        "text": [
+          {
+            "highlight_end": 61,
+            "highlight_start": 51,
+            "text": "        let CurveCornerSolutions2::Unique(path) = certified("
+          },
+          {
+            "highlight_end": 89,
+            "highlight_start": 1,
+            "text": "            path.fillet_vertex_by_radius(1, q(1, 4), CurveCornerMode2::TrimOnly, policy)"
+          },
+          {
+            "highlight_end": 27,
+            "highlight_start": 1,
+            "text": "                .unwrap(),"
+          },
+          {
+            "highlight_end": 10,
+            "highlight_start": 1,
+            "text": "        ) else {"
+          }
+        ]
+      }
+    ],
+    "code": {
+      "code": "E0308",
+      "explanation": "Expected type did not match the received type.\n\nErroneous code examples:\n\n```compile_fail,E0308\nfn plus_one(x: i32) -> i32 {\n    x + 1\n}\n\nplus_one(\"Not a number\");\n//       ^^^^^^^^^^^^^^ expected `i32`, found `&str`\n\nif \"Not a bool\" {\n// ^^^^^^^^^^^^ expected `bool`, found `&str`\n}\n\nlet x: f32 = \"Not a float\";\n//     ---   ^^^^^^^^^^^^^ expected `f32`, found `&str`\n//     |\n//     expected due to this\n```\n\nThis error occurs when an expression was used in a place where the compiler\nexpected an expression of a different type. It can occur in several cases, the\nmost common being when calling a function and passing an argument which has a\ndifferent type than the matching type in the function declaration.\n"
+    }
+  }
+]

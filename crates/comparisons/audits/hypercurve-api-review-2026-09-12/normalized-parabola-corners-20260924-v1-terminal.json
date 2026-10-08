@@ -1,0 +1,131 @@
+{
+  "checks": [
+    {
+      "label": "fmt",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustfmt",
+        "--edition",
+        "2024",
+        "--check",
+        "src/bezier_region.rs"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.675157209043391,
+      "log": "normalized-parabola-corners-20260924-v1-fmt.log"
+    },
+    {
+      "label": "clippy-1",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "clippy",
+        "--all-targets",
+        "--all-features",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 44.651936164009385,
+      "log": "normalized-parabola-corners-20260924-v1-clippy-1.log"
+    },
+    {
+      "label": "clippy-2",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "clippy",
+        "--all-targets",
+        "--no-default-features",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 27.219306918093935,
+      "log": "normalized-parabola-corners-20260924-v1-clippy-2.log"
+    }
+  ],
+  "cases": [
+    {
+      "label": "retained_analytic_corners_preserve_normalized_sets",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/normalized-parabola-corners-20260924-v1-libtest",
+        "--exact",
+        "bezier_region::tests::retained_analytic_corners_preserve_normalized_sets",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 10.005959706031717,
+      "log": "normalized-parabola-corners-20260924-v1-retained_analytic_corners_preserve_normalized_sets.log"
+    },
+    {
+      "label": "retained_polynomial_chamfer_extends_exact_and_algebraic_incident_roots",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/normalized-parabola-corners-20260924-v1-libtest",
+        "--exact",
+        "bezier_region::tests::retained_polynomial_chamfer_extends_exact_and_algebraic_incident_roots",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.3087669259402901,
+      "log": "normalized-parabola-corners-20260924-v1-retained_polynomial_chamfer_extends_exact_and_algebraic_incident_roots.log"
+    },
+    {
+      "label": "retained_rational_chamfer_extends_exact_and_algebraic_pre_pole_roots",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/normalized-parabola-corners-20260924-v1-libtest",
+        "--exact",
+        "bezier_region::tests::retained_rational_chamfer_extends_exact_and_algebraic_pre_pole_roots",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.3446417150553316,
+      "log": "normalized-parabola-corners-20260924-v1-retained_rational_chamfer_extends_exact_and_algebraic_pre_pole_roots.log"
+    },
+    {
+      "label": "independent_field_corner_edits_preserve_normalized_sets",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/normalized-parabola-corners-20260924-v1-libtest",
+        "--exact",
+        "bezier_region::tests::independent_field_corner_edits_preserve_normalized_sets",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.8363349490100518,
+      "log": "normalized-parabola-corners-20260924-v1-independent_field_corner_edits_preserve_normalized_sets.log"
+    },
+    {
+      "label": "closed_ph_corner_edits_preserve_both_normalized_source_lobes",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/normalized-parabola-corners-20260924-v1-libtest",
+        "--exact",
+        "bezier_region::tests::closed_ph_corner_edits_preserve_both_normalized_source_lobes",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.38776585599407554,
+      "log": "normalized-parabola-corners-20260924-v1-closed_ph_corner_edits_preserve_both_normalized_source_lobes.log"
+    }
+  ],
+  "all_processes_reaped": true,
+  "binary_sha256": "ac92f5ba809f5231473f5e2fc345d6b136cfc7dde90c1f3590e7ac050c1fb3ab",
+  "all_sources_unchanged": true
+}

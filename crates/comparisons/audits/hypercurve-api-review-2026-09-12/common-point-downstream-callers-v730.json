@@ -1,0 +1,116 @@
+{
+  "compiler_edits": [
+    {
+      "file": "hyperbrep/src/model.rs",
+      "before": "project_point_to_surface_plane(&intersection, surface)?",
+      "after": "project_point_to_surface_plane(&intersection, surface)?.into()"
+    },
+    {
+      "file": "hyperbrep/src/model.rs",
+      "before": "project_point_to_surface_plane(point, surface)?",
+      "after": "project_point_to_surface_plane(point, surface)?.into()"
+    },
+    {
+      "file": "hyperbrep/src/model.rs",
+      "before": "&midpoint",
+      "after": "&midpoint.clone().into()"
+    },
+    {
+      "file": "hyperbrep/src/model.rs",
+      "before": "&contact",
+      "after": "&contact.clone().into()"
+    },
+    {
+      "file": "hyperbrep/src/model.rs",
+      "before": "(first_path.start())\n                                .coordinates()\n                                .ok_or(GeometryError::UnsupportedPcurveContour)?",
+      "after": "&first_path.start()"
+    },
+    {
+      "file": "hyperbrep/src/model.rs",
+      "before": "(second_path.start())\n                                .coordinates()\n                                .ok_or(GeometryError::UnsupportedPcurveContour)?",
+      "after": "&second_path.start()"
+    },
+    {
+      "file": "hyperbrep/src/model.rs",
+      "before": "(path.start())\n                        .coordinates()\n                        .ok_or(GeometryError::UnsupportedPcurveContour)?",
+      "after": "&path.start()"
+    },
+    {
+      "file": "hyperbrep/src/model.rs",
+      "before": "point",
+      "after": "&point.clone().into()"
+    },
+    {
+      "file": "hyperbrep/src/model.rs",
+      "before": "point",
+      "after": "&point.clone().into()"
+    },
+    {
+      "file": "hyperbrep/src/model.rs",
+      "before": "&planar",
+      "after": "&planar.clone().into()"
+    },
+    {
+      "file": "hyperbrep/src/model.rs",
+      "before": "&planar",
+      "after": "&planar.clone().into()"
+    },
+    {
+      "file": "hyperbrep/src/model.rs",
+      "before": "&planar",
+      "after": "&planar.clone().into()"
+    },
+    {
+      "file": "hyperbrep/src/model.rs",
+      "before": "representative",
+      "after": "&representative.clone().into()"
+    },
+    {
+      "file": "hyperbrep/src/model.rs",
+      "before": "representative",
+      "after": "&representative.clone().into()"
+    },
+    {
+      "file": "hyperbrep/src/model.rs",
+      "before": "point",
+      "after": "&point.clone().into()"
+    },
+    {
+      "file": "hyperbrep/src/model.rs",
+      "before": "point",
+      "after": "&point.clone().into()"
+    },
+    {
+      "file": "hyperbrep/src/boolean.rs",
+      "before": "&source.point_at(midpoint)",
+      "after": "&source.point_at(midpoint).into()"
+    },
+    {
+      "file": "hyperbrep/src/boolean.rs",
+      "before": "&parameter",
+      "after": "&parameter.clone().into()"
+    },
+    {
+      "file": "hyperbrep/src/boolean.rs",
+      "before": "&parameter",
+      "after": "&parameter.clone().into()"
+    },
+    {
+      "file": "hyperbrep/src/boolean.rs",
+      "before": "representative",
+      "after": "&representative.clone().into()"
+    },
+    {
+      "file": "hyperbrep/src/boolean.rs",
+      "before": "&parameter",
+      "after": "&parameter.clone().into()"
+    },
+    {
+      "file": "hyperbrep/src/builder.rs",
+      "before": "point",
+      "after": "&point.clone().into()"
+    }
+  ],
+  "additional_changes": "Private nesting closures consume retained endpoints directly; remove six more Cartesian projection gates and author the prism common point once before classifying its boundaries.",
+  "production_unchanged": true
+}

@@ -1,0 +1,13 @@
+{
+  "tag": "polynomial-facts-allocation-run",
+  "started": "2026-09-08T23:23:43.092Z",
+  "finished": "2026-09-08T23:23:47.984Z",
+  "elapsedSeconds": 4.890315004,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison",
+  "command": "node",
+  "args": [
+    "audits/continuation/calcium/run-polynomial-facts-allocation.mjs"
+  ],
+  "code": 1,
+  "signal": null
+}

@@ -1,0 +1,154 @@
+diff --git a/src/curve_region_boolean.rs b/src/curve_region_boolean.rs
+index 765b5c9..b71d196 100644
+--- a/src/curve_region_boolean.rs
++++ b/src/curve_region_boolean.rs
+@@ -287,6 +287,51 @@ struct RegionPairResult {
+ }
+ 
+ impl RegionPairResult {
++    fn from_rational_self(result: Classification<RationalBezierIntersectionContacts2>) -> Self {
++        let result = match result {
++            Classification::Decided(result) => result,
++            Classification::Uncertain(reason) => {
++                return Self {
++                    contacts: Vec::new(),
++                    overlaps: Vec::new(),
++                    blockers: vec![RegionPairBlocker::Uncertain(reason)],
++                };
++            }
++        };
++        let contact_evidence = |contact: &crate::RationalBezierIntersectionContact2| {
++            RegionPairContactEvidence::direct_bezier(
++                contact.first_parameter().clone(),
++                contact.second_parameter().clone(),
++                Some(contact.point().clone()),
++                contact.is_certified_transverse(),
++                contact.tangent_cross_sign(),
++            )
++        };
++        let (contacts, blockers) = match result {
++            RationalBezierIntersectionContacts2::NoIntersection => (Vec::new(), Vec::new()),
++            RationalBezierIntersectionContacts2::Contacts(contacts) => {
++                (contacts.iter().map(contact_evidence).collect(), Vec::new())
++            }
++            RationalBezierIntersectionContacts2::Incomplete { contacts, .. } => (
++                contacts.iter().map(contact_evidence).collect(),
++                vec![RegionPairBlocker::IncompleteReplay],
++            ),
++            RationalBezierIntersectionContacts2::ContactsAndOverlap { contacts, .. } => (
++                contacts.iter().map(contact_evidence).collect(),
++                vec![RegionPairBlocker::Uncertain(UncertaintyReason::Boundary)],
++            ),
++            RationalBezierIntersectionContacts2::Overlap(_)
++            | RationalBezierIntersectionContacts2::DegenerateResultant => (
++                Vec::new(),
++                vec![RegionPairBlocker::Uncertain(UncertaintyReason::Boundary)],
++            ),
++        };
++        Self {
++            contacts,
++            overlaps: Vec::new(),
++            blockers,
++        }
++    }
+     fn empty() -> Self {
+         Self {
+             contacts: Vec::new(),
+@@ -4397,56 +4442,10 @@ impl<'a> CurveRegionBooleanContext<'a> {
+                         .collect(),
+                 })
+             }
+-            RegionCarrierPairContext::BezierSelf => {
+-                let result = match self
+-                    .bezier_self_intersections(first.geometry.bezier())
+-                    .map_err(|cause| self.invalid(pair.first_carrier_index, cause))?
+-                {
+-                    Classification::Decided(result) => result,
+-                    Classification::Uncertain(reason) => {
+-                        return Ok(RegionPairResult {
+-                            contacts: Vec::new(),
+-                            overlaps: Vec::new(),
+-                            blockers: vec![RegionPairBlocker::Uncertain(reason)],
+-                        });
+-                    }
+-                };
+-                let contact_evidence = |contact: &crate::RationalBezierIntersectionContact2| {
+-                    RegionPairContactEvidence::direct_bezier(
+-                        contact.first_parameter().clone(),
+-                        contact.second_parameter().clone(),
+-                        Some(contact.point().clone()),
+-                        contact.is_certified_transverse(),
+-                        contact.tangent_cross_sign(),
+-                    )
+-                };
+-                let (contacts, blockers) = match result {
+-                    RationalBezierIntersectionContacts2::NoIntersection => (Vec::new(), Vec::new()),
+-                    RationalBezierIntersectionContacts2::Contacts(contacts) => {
+-                        (contacts.iter().map(contact_evidence).collect(), Vec::new())
+-                    }
+-                    RationalBezierIntersectionContacts2::Incomplete { contacts, .. } => (
+-                        contacts.iter().map(contact_evidence).collect(),
+-                        vec![RegionPairBlocker::IncompleteReplay],
+-                    ),
+-                    RationalBezierIntersectionContacts2::ContactsAndOverlap {
+-                        contacts, ..
+-                    } => (
+-                        contacts.iter().map(contact_evidence).collect(),
+-                        vec![RegionPairBlocker::Uncertain(UncertaintyReason::Boundary)],
+-                    ),
+-                    RationalBezierIntersectionContacts2::Overlap(_)
+-                    | RationalBezierIntersectionContacts2::DegenerateResultant => (
+-                        Vec::new(),
+-                        vec![RegionPairBlocker::Uncertain(UncertaintyReason::Boundary)],
+-                    ),
+-                };
+-                Ok(RegionPairResult {
+-                    contacts,
+-                    overlaps: Vec::new(),
+-                    blockers,
+-                })
+-            }
++            RegionCarrierPairContext::BezierSelf => Ok(RegionPairResult::from_rational_self(
++                self.bezier_self_intersections(first.geometry.bezier())
++                    .map_err(|cause| self.invalid(pair.first_carrier_index, cause))?,
++            )),
+             RegionCarrierPairContext::ParallelRational { parallel_is_first } => {
+                 let (parallel_carrier, parallel, parallel_index, curve) = if *parallel_is_first {
+                     (
+@@ -4656,6 +4655,36 @@ impl<'a> CurveRegionBooleanContext<'a> {
+                         }
+                     }
+                     RegionCarrierPairContext::ParallelSelf => {
++                        // The carrier already owns one regular branch. Its PH
++                        // component can use rational self-contact replay in the
++                        // same source parameter, including one-sided limits.
++                        // Keep the analytic carrier for output and subsequent
++                        // offset composition; the ordinary range filter below
++                        // excludes contacts on the component's global extension.
++                        let range = CurveParameterRange2::new_validated(
++                            first.start.clone(),
++                            first.end.clone(),
++                        );
++                        if let Ok(Classification::Decided(Some(component))) = parallel
++                            .exact_rational_parallel_component_on_regular_range(
++                                &range,
++                                &self.data.policy.strict_counterpart(),
++                            )
++                            && let Ok(result) = component
++                                .curve()
++                                .self_intersection_contacts_classified(&self.data.policy)
++                        {
++                            let result = RegionPairResult::from_rational_self(result);
++                            if result.blockers.is_empty() {
++                                #[cfg(feature = "dispatch-trace")]
++                                hyperreal::dispatch_trace::record(
++                                    "hypercurve",
++                                    "curve-region-parallel-self",
++                                    "regular-rational-component",
++                                );
++                                return Ok(result);
++                            }
++                        }
+                         self.parallel_self_intersections(parallel)
+                     }
+                     RegionCarrierPairContext::Bezier(_)

@@ -1,0 +1,15 @@
+{
+  "tag": "charpoly-domain-verify-draft",
+  "started": "2026-09-09T03:18:09.288Z",
+  "finished": "2026-09-09T03:18:17.750Z",
+  "elapsedSeconds": 8.460095201999998,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison",
+  "command": "node",
+  "args": [
+    "audits/continuation/calcium/verify-charpoly-domain.mjs",
+    "--draft-charpoly-domain",
+    "--monic-live"
+  ],
+  "code": 0,
+  "signal": null
+}

@@ -1,0 +1,14 @@
+{
+  "command": "cargo",
+  "args": [
+    "generate-lockfile",
+    "--offline"
+  ],
+  "begin": "2026-09-07T05:23:44.964Z",
+  "end": "2026-09-07T05:23:45.231Z",
+  "status": 0,
+  "signal": null,
+  "error": null,
+  "stdout": "",
+  "stderr": "     Locking 103 packages to latest Rust 1.97.0 compatible versions\n      Adding autocfg v1.5.0 (available: v1.5.1)\n      Adding criterion v0.5.1 (available: v0.7.0)\n      Adding num-bigint v0.4.6 (available: v0.4.8)\n      Adding num-integer v0.1.46 (available: v0.1.47)\n      Adding num-iter v0.1.45 (available: v0.1.46)\n"
+}

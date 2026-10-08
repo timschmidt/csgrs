@@ -1,0 +1,16 @@
+{
+  "tag": "e-qualified-app-baseline-hypercurve-arrangement-strip",
+  "started": "2026-09-10T01:40:05.953Z",
+  "finished": "2026-09-10T01:40:05.991Z",
+  "elapsedSeconds": 0.035777159999999995,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "strip",
+  "args": [
+    "--strip-all",
+    "-o",
+    "/tmp/calcium-e-qualified-apps.AHiwfn/baseline-hypercurve-arrangement.stripped",
+    "/tmp/calcium-e-qualified-apps.AHiwfn/baseline-hypercurve-arrangement"
+  ],
+  "code": 0,
+  "signal": null
+}

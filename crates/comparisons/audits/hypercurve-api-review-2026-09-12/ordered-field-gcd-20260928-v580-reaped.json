@@ -1,0 +1,6 @@
+{
+  "outer_exit_code": 1,
+  "children_spawned": false,
+  "failure": "source manifest guard rejected an incidental blank-line change caused by cargo fmt --all traversing a path dependency",
+  "repair": "reverted only the incidental Hyperlimit whitespace edit; qualification now formats only package hypersolve"
+}

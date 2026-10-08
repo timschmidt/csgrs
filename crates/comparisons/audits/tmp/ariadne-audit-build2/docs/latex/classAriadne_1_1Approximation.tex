@@ -1,0 +1,329 @@
+\doxysubsection{Approximation\texorpdfstring{$<$}{<} X \texorpdfstring{$>$}{>} Class Template Reference}
+\hypertarget{classAriadne_1_1Approximation}{}\label{classAriadne_1_1Approximation}\index{Approximation$<$ X $>$@{Approximation$<$ X $>$}}
+
+
+{\ttfamily \#include $<$float\+\_\+approximation.\+hpp$>$}
+
+
+
+\doxysubsubsection{Description}
+\subsubsection*{template$<$class X$>$\newline
+class Ariadne\+::\+Approximation$<$ X $>$}
+Floating point number approximations to real numbers supporting approxiamate arithmetic. 
+
+The {\ttfamily \doxylink{classAriadne_1_1Approximation}{Approximation$<$\+F$>$}} class represents approximate floating-\/point numbers. Operations are performed approximately, with no guarantees on the output. \begin{DoxySeeAlso}{See also}
+\doxylink{classAriadne_1_1Real}{Real}, \doxylink{classAriadne_1_1NaiveReal}{Naive\+Real}, \doxylink{namespaceAriadne_af915b9f1459c9691328efa71c6f39c6e}{Float\+DP}, \doxylink{namespaceAriadne_a07966b67e613cc8779412beecb60651d}{Float\+MP}, Float, \doxylink{classAriadne_1_1Ball}{Ball}, \doxylink{classAriadne_1_1Bounds}{Bounds}. 
+\end{DoxySeeAlso}
+\doxysubsubsubsection*{Public Types}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1Approximation_ab59d441ca621bc096d28b04b94f3cf08}\label{classAriadne_1_1Approximation_ab59d441ca621bc096d28b04b94f3cf08} 
+typedef \mbox{\hyperlink{structAriadne_1_1ApproximateTag}{Approximate\+Tag}} {\bfseries Paradigm}
+\item 
+\Hypertarget{classAriadne_1_1Approximation_a3da29e8800451c91b2508ba254871ead}\label{classAriadne_1_1Approximation_a3da29e8800451c91b2508ba254871ead} 
+typedef \mbox{\hyperlink{classAriadne_1_1Approximation}{Approximation}}$<$ F $>$ {\bfseries Numeric\+Type}
+\item 
+\Hypertarget{classAriadne_1_1Approximation_a1015d65681c03de7c7cbc2884c3a3c51}\label{classAriadne_1_1Approximation_a1015d65681c03de7c7cbc2884c3a3c51} 
+typedef Approximate\+Number {\bfseries Generic\+Type}
+\item 
+\Hypertarget{classAriadne_1_1Approximation_a9f44c412812f88eb23a7be7e44de50f2}\label{classAriadne_1_1Approximation_a9f44c412812f88eb23a7be7e44de50f2} 
+typedef F {\bfseries Raw\+Type}
+\item 
+\Hypertarget{classAriadne_1_1Approximation_ada08cc26488a5693eb7e60f9dda08200}\label{classAriadne_1_1Approximation_ada08cc26488a5693eb7e60f9dda08200} 
+typedef PR {\bfseries Precision\+Type}
+\item 
+\Hypertarget{classAriadne_1_1Approximation_a2f339bdd2edca4df6e4edf6ad3057f29}\label{classAriadne_1_1Approximation_a2f339bdd2edca4df6e4edf6ad3057f29} 
+typedef PR {\bfseries Characteristics\+Type}
+\end{DoxyCompactItemize}
+\doxysubsubsubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1Approximation_abc960bc73dcc7514bd8d1c513e36a237}\label{classAriadne_1_1Approximation_abc960bc73dcc7514bd8d1c513e36a237} 
+{\bfseries Approximation} (\mbox{\hyperlink{classAriadne_1_1Approximation_ada08cc26488a5693eb7e60f9dda08200}{Precision\+Type}} pr)
+\item 
+\Hypertarget{classAriadne_1_1Approximation_a16107c4318feb47509e37775f040b8ed}\label{classAriadne_1_1Approximation_a16107c4318feb47509e37775f040b8ed} 
+{\bfseries Approximation} (\mbox{\hyperlink{classAriadne_1_1Approximation_a9f44c412812f88eb23a7be7e44de50f2}{Raw\+Type}} const \&a)
+\item 
+\Hypertarget{classAriadne_1_1Approximation_a8da30b6904822fcec6ef0c2b3dfa1027}\label{classAriadne_1_1Approximation_a8da30b6904822fcec6ef0c2b3dfa1027} 
+{\bfseries Approximation} (const Approximate\+Number \&y, PR pr)
+\item 
+\Hypertarget{classAriadne_1_1Approximation_a9b989da6a27a73be7f2a1a3ede3d8c96}\label{classAriadne_1_1Approximation_a9b989da6a27a73be7f2a1a3ede3d8c96} 
+{\footnotesize template$<$class FF$>$ \newline
+requires Constructible$<$F,FF,RND,PR$>$}\\{\bfseries Approximation} (const \mbox{\hyperlink{classAriadne_1_1Approximation}{Approximation}}$<$ FF $>$ \&x, PR pr)
+\item 
+\Hypertarget{classAriadne_1_1Approximation_a44adf02a30a557f4a1775d6ad2ef39d8}\label{classAriadne_1_1Approximation_a44adf02a30a557f4a1775d6ad2ef39d8} 
+{\bfseries Approximation} (\mbox{\hyperlink{classAriadne_1_1Error}{Error}}$<$ F $>$ const \&x)
+\item 
+\Hypertarget{classAriadne_1_1Approximation_a16c40fcce9cccbdaba1bc9c38f5ba13d}\label{classAriadne_1_1Approximation_a16c40fcce9cccbdaba1bc9c38f5ba13d} 
+{\footnotesize template$<$class FE$>$ }\\{\bfseries Approximation} (\mbox{\hyperlink{classAriadne_1_1Ball}{Ball}}$<$ F, FE $>$ const \&x)
+\item 
+\Hypertarget{classAriadne_1_1Approximation_a380d76ecef98322246f32966432f0430}\label{classAriadne_1_1Approximation_a380d76ecef98322246f32966432f0430} 
+{\bfseries Approximation} (\mbox{\hyperlink{classAriadne_1_1Bounds}{Bounds}}$<$ F $>$ const \&x)
+\item 
+\Hypertarget{classAriadne_1_1Approximation_ab54c6f524aba37b0acec1cdf89c53086}\label{classAriadne_1_1Approximation_ab54c6f524aba37b0acec1cdf89c53086} 
+{\bfseries Approximation} (\mbox{\hyperlink{classAriadne_1_1UpperBound}{Upper\+Bound}}$<$ F $>$ const \&x)
+\item 
+\Hypertarget{classAriadne_1_1Approximation_a815633808d572fccd572a9868ccfb757}\label{classAriadne_1_1Approximation_a815633808d572fccd572a9868ccfb757} 
+{\bfseries Approximation} (\mbox{\hyperlink{classAriadne_1_1LowerBound}{Lower\+Bound}}$<$ F $>$ const \&x)
+\item 
+\Hypertarget{classAriadne_1_1Approximation_a1c4d1a4e1f32c436babfdd4a73a8dedd}\label{classAriadne_1_1Approximation_a1c4d1a4e1f32c436babfdd4a73a8dedd} 
+{\footnotesize template$<$Builtin\+Integral N$>$ }\\\mbox{\hyperlink{classAriadne_1_1Approximation}{Approximation}}$<$ F $>$ \& {\bfseries operator=} (N n)
+\item 
+\Hypertarget{classAriadne_1_1Approximation_ab1267a957f5aca4795d002e00eafdefa}\label{classAriadne_1_1Approximation_ab1267a957f5aca4795d002e00eafdefa} 
+{\footnotesize template$<$Builtin\+Floating\+Point D$>$ }\\\mbox{\hyperlink{classAriadne_1_1Approximation}{Approximation}}$<$ F $>$ \& {\bfseries operator=} (D x)
+\item 
+\Hypertarget{classAriadne_1_1Approximation_ae26010e8da0dcf113ee97f41ffa157b3}\label{classAriadne_1_1Approximation_ae26010e8da0dcf113ee97f41ffa157b3} 
+\mbox{\hyperlink{classAriadne_1_1Approximation}{Approximation}}$<$ F $>$ \& {\bfseries operator=} (const Approximate\+Number \&y)
+\item 
+\Hypertarget{classAriadne_1_1Approximation_a21de7150f009fa666386d5ccf90c3ade}\label{classAriadne_1_1Approximation_a21de7150f009fa666386d5ccf90c3ade} 
+\mbox{\hyperlink{classAriadne_1_1Approximation}{Approximation}}$<$ F $>$ {\bfseries create} (const Approximate\+Number \&y) const
+\item 
+\Hypertarget{classAriadne_1_1Approximation_a3548e08b2f712ea59a4e529cdb096ef0}\label{classAriadne_1_1Approximation_a3548e08b2f712ea59a4e529cdb096ef0} 
+{\bfseries operator Approximate\+Number} () const
+\item 
+\Hypertarget{classAriadne_1_1Approximation_ad6bf2be97424a4ac1b4d9f6ca1cc2324}\label{classAriadne_1_1Approximation_ad6bf2be97424a4ac1b4d9f6ca1cc2324} 
+\mbox{\hyperlink{classAriadne_1_1Approximation_ada08cc26488a5693eb7e60f9dda08200}{Precision\+Type}} {\bfseries precision} () const
+\item 
+\Hypertarget{classAriadne_1_1Approximation_a5d56faca91b250e16f0d60db804ded74}\label{classAriadne_1_1Approximation_a5d56faca91b250e16f0d60db804ded74} 
+\mbox{\hyperlink{classAriadne_1_1Approximation_a2f339bdd2edca4df6e4edf6ad3057f29}{Characteristics\+Type}} {\bfseries characteristics} () const
+\item 
+\Hypertarget{classAriadne_1_1Approximation_ab601937b3ff0b3b79f85ac57a6e6341c}\label{classAriadne_1_1Approximation_ab601937b3ff0b3b79f85ac57a6e6341c} 
+\mbox{\hyperlink{classAriadne_1_1Approximation_a1015d65681c03de7c7cbc2884c3a3c51}{Generic\+Type}} {\bfseries generic} () const
+\item 
+\Hypertarget{classAriadne_1_1Approximation_a327dbb67cac230a6869789c2c5a31edb}\label{classAriadne_1_1Approximation_a327dbb67cac230a6869789c2c5a31edb} 
+{\bfseries operator Raw\+Type} () const
+\item 
+\Hypertarget{classAriadne_1_1Approximation_ad27c3d124ac6df85b434505f7d0e4d33}\label{classAriadne_1_1Approximation_ad27c3d124ac6df85b434505f7d0e4d33} 
+{\bfseries operator Approximate\+Double} () const
+\item 
+\Hypertarget{classAriadne_1_1Approximation_a6eefd851f11b68b3d05c4cd611c7b19a}\label{classAriadne_1_1Approximation_a6eefd851f11b68b3d05c4cd611c7b19a} 
+\mbox{\hyperlink{classAriadne_1_1Approximation_a9f44c412812f88eb23a7be7e44de50f2}{Raw\+Type}} const \& {\bfseries raw} () const
+\item 
+\Hypertarget{classAriadne_1_1Approximation_abe52c91c0c0e2acd9ee49bb6fc8b3369}\label{classAriadne_1_1Approximation_abe52c91c0c0e2acd9ee49bb6fc8b3369} 
+\mbox{\hyperlink{classAriadne_1_1Approximation_a9f44c412812f88eb23a7be7e44de50f2}{Raw\+Type}} \& {\bfseries raw} ()
+\item 
+\Hypertarget{classAriadne_1_1Approximation_a4c0fda7346d15cc92f1aa5b2d3769e88}\label{classAriadne_1_1Approximation_a4c0fda7346d15cc92f1aa5b2d3769e88} 
+double {\bfseries get\+\_\+d} () const
+\begin{DoxyCompactList}\small\item\em DEPRECATED \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Approximation_a226edc4d6b7b7067d3be75ba29b045fe}\label{classAriadne_1_1Approximation_a226edc4d6b7b7067d3be75ba29b045fe} 
+\mbox{\hyperlink{classAriadne_1_1Approximation}{Approximation}}$<$ F $>$ {\bfseries pm} (\mbox{\hyperlink{classAriadne_1_1Approximation}{Approximation}}$<$ F $>$ \+\_\+e)
+\end{DoxyCompactItemize}
+\doxysubsubsubsection*{Static Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1Approximation_a18d4b6d2aa2c61e54c6e285573f10701}\label{classAriadne_1_1Approximation_a18d4b6d2aa2c61e54c6e285573f10701} 
+static \mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} {\bfseries set\+\_\+output\+\_\+places} (\mbox{\hyperlink{namespaceAriadne_aae901a69a841b1a085a0dfe218e38fe9}{Nat}} p)
+\end{DoxyCompactItemize}
+\doxysubsubsubsection*{Friends}
+\begin{Indent}\textbf{ Arithmetic operators}\par
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1Approximation_a77e33084d804fa783c9854583ccf9ea0}\label{classAriadne_1_1Approximation_a77e33084d804fa783c9854583ccf9ea0} 
+\mbox{\hyperlink{classAriadne_1_1Approximation}{Approximation}}$<$ F $>$ {\bfseries operator+} (\mbox{\hyperlink{classAriadne_1_1Approximation}{Approximation}}$<$ F $>$ const \&x)
+\item 
+\Hypertarget{classAriadne_1_1Approximation_adb5cab87ddf34a5165e179a3d32297fa}\label{classAriadne_1_1Approximation_adb5cab87ddf34a5165e179a3d32297fa} 
+\mbox{\hyperlink{classAriadne_1_1Approximation}{Approximation}}$<$ F $>$ {\bfseries operator-\/} (\mbox{\hyperlink{classAriadne_1_1Approximation}{Approximation}}$<$ F $>$ const \&x)
+\item 
+\Hypertarget{classAriadne_1_1Approximation_a672103fb8bde76f9e42c7d7d32bb74be}\label{classAriadne_1_1Approximation_a672103fb8bde76f9e42c7d7d32bb74be} 
+\mbox{\hyperlink{classAriadne_1_1Approximation}{Approximation}}$<$ F $>$ {\bfseries operator+} (\mbox{\hyperlink{classAriadne_1_1Approximation}{Approximation}}$<$ F $>$ const \&x1, \mbox{\hyperlink{classAriadne_1_1Approximation}{Approximation}}$<$ F $>$ const \&x2)
+\item 
+\Hypertarget{classAriadne_1_1Approximation_ad12735a8106c48e91697f1b950d1d756}\label{classAriadne_1_1Approximation_ad12735a8106c48e91697f1b950d1d756} 
+\mbox{\hyperlink{classAriadne_1_1Approximation}{Approximation}}$<$ F $>$ {\bfseries operator-\/} (\mbox{\hyperlink{classAriadne_1_1Approximation}{Approximation}}$<$ F $>$ const \&x1, \mbox{\hyperlink{classAriadne_1_1Approximation}{Approximation}}$<$ F $>$ const \&x2)
+\item 
+\Hypertarget{classAriadne_1_1Approximation_a75328b1d6eacb1ca26cbf9a933b33b48}\label{classAriadne_1_1Approximation_a75328b1d6eacb1ca26cbf9a933b33b48} 
+\mbox{\hyperlink{classAriadne_1_1Approximation}{Approximation}}$<$ F $>$ {\bfseries operator\texorpdfstring{$\ast$}{*}} (\mbox{\hyperlink{classAriadne_1_1Approximation}{Approximation}}$<$ F $>$ const \&x1, \mbox{\hyperlink{classAriadne_1_1Approximation}{Approximation}}$<$ F $>$ const \&x2)
+\item 
+\Hypertarget{classAriadne_1_1Approximation_ab2b8e8c836a3fea1e8750bd487f6133f}\label{classAriadne_1_1Approximation_ab2b8e8c836a3fea1e8750bd487f6133f} 
+\mbox{\hyperlink{classAriadne_1_1Approximation}{Approximation}}$<$ F $>$ {\bfseries operator/} (\mbox{\hyperlink{classAriadne_1_1Approximation}{Approximation}}$<$ F $>$ const \&x1, \mbox{\hyperlink{classAriadne_1_1Approximation}{Approximation}}$<$ F $>$ const \&x2)
+\item 
+\Hypertarget{classAriadne_1_1Approximation_a11a6383f3e731e0b256d975b383f2c75}\label{classAriadne_1_1Approximation_a11a6383f3e731e0b256d975b383f2c75} 
+\mbox{\hyperlink{classAriadne_1_1Approximation}{Approximation}}$<$ F $>$ \& {\bfseries operator+=} (\mbox{\hyperlink{classAriadne_1_1Approximation}{Approximation}}$<$ F $>$ \&x1, \mbox{\hyperlink{classAriadne_1_1Approximation}{Approximation}}$<$ F $>$ const \&x2)
+\item 
+\Hypertarget{classAriadne_1_1Approximation_a4d1eea2888bc49c17739457fb30a1fd9}\label{classAriadne_1_1Approximation_a4d1eea2888bc49c17739457fb30a1fd9} 
+\mbox{\hyperlink{classAriadne_1_1Approximation}{Approximation}}$<$ F $>$ \& {\bfseries operator-\/=} (\mbox{\hyperlink{classAriadne_1_1Approximation}{Approximation}}$<$ F $>$ \&x1, \mbox{\hyperlink{classAriadne_1_1Approximation}{Approximation}}$<$ F $>$ const \&x2)
+\item 
+\Hypertarget{classAriadne_1_1Approximation_aaa50a587b04664e524a816a803f2ba93}\label{classAriadne_1_1Approximation_aaa50a587b04664e524a816a803f2ba93} 
+\mbox{\hyperlink{classAriadne_1_1Approximation}{Approximation}}$<$ F $>$ \& {\bfseries operator\texorpdfstring{$\ast$}{*}=} (\mbox{\hyperlink{classAriadne_1_1Approximation}{Approximation}}$<$ F $>$ \&x1, \mbox{\hyperlink{classAriadne_1_1Approximation}{Approximation}}$<$ F $>$ const \&x2)
+\item 
+\Hypertarget{classAriadne_1_1Approximation_a51679d4d18285182844ae14c12eafbe3}\label{classAriadne_1_1Approximation_a51679d4d18285182844ae14c12eafbe3} 
+\mbox{\hyperlink{classAriadne_1_1Approximation}{Approximation}}$<$ F $>$ \& {\bfseries operator/=} (\mbox{\hyperlink{classAriadne_1_1Approximation}{Approximation}}$<$ F $>$ \&x1, \mbox{\hyperlink{classAriadne_1_1Approximation}{Approximation}}$<$ F $>$ const \&x2)
+\end{DoxyCompactItemize}
+\end{Indent}
+\begin{Indent}\textbf{ Comparison operators}\par
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1Approximation_ac9cbd3c10167b0307e32bc5afd1ee4f8}\label{classAriadne_1_1Approximation_ac9cbd3c10167b0307e32bc5afd1ee4f8} 
+\mbox{\hyperlink{classAriadne_1_1ApproximateKleenean}{Approximate\+Kleenean}} {\bfseries operator==} (\mbox{\hyperlink{classAriadne_1_1Approximation}{Approximation}}$<$ F $>$ const \&x1, \mbox{\hyperlink{classAriadne_1_1Approximation}{Approximation}}$<$ F $>$ const \&x2)
+\item 
+\Hypertarget{classAriadne_1_1Approximation_a33b423c9b0ffc6eb3e8dff3f33323f9c}\label{classAriadne_1_1Approximation_a33b423c9b0ffc6eb3e8dff3f33323f9c} 
+\mbox{\hyperlink{classAriadne_1_1ApproximateKleenean}{Approximate\+Kleenean}} {\bfseries operator!=} (\mbox{\hyperlink{classAriadne_1_1Approximation}{Approximation}}$<$ F $>$ const \&x1, \mbox{\hyperlink{classAriadne_1_1Approximation}{Approximation}}$<$ F $>$ const \&x2)
+\item 
+\Hypertarget{classAriadne_1_1Approximation_a30de2f8078b7e48839d5f37c29771f94}\label{classAriadne_1_1Approximation_a30de2f8078b7e48839d5f37c29771f94} 
+\mbox{\hyperlink{classAriadne_1_1ApproximateKleenean}{Approximate\+Kleenean}} {\bfseries operator$<$=} (\mbox{\hyperlink{classAriadne_1_1Approximation}{Approximation}}$<$ F $>$ const \&x1, \mbox{\hyperlink{classAriadne_1_1Approximation}{Approximation}}$<$ F $>$ const \&x2)
+\item 
+\Hypertarget{classAriadne_1_1Approximation_a3bd8a1e7a12e3f2dd321018dd381442f}\label{classAriadne_1_1Approximation_a3bd8a1e7a12e3f2dd321018dd381442f} 
+\mbox{\hyperlink{classAriadne_1_1ApproximateKleenean}{Approximate\+Kleenean}} {\bfseries operator$>$=} (\mbox{\hyperlink{classAriadne_1_1Approximation}{Approximation}}$<$ F $>$ const \&x1, \mbox{\hyperlink{classAriadne_1_1Approximation}{Approximation}}$<$ F $>$ const \&x2)
+\item 
+\Hypertarget{classAriadne_1_1Approximation_ad10f087f5aa7949f9836e6878717223e}\label{classAriadne_1_1Approximation_ad10f087f5aa7949f9836e6878717223e} 
+\mbox{\hyperlink{classAriadne_1_1ApproximateKleenean}{Approximate\+Kleenean}} {\bfseries operator$<$} (\mbox{\hyperlink{classAriadne_1_1Approximation}{Approximation}}$<$ F $>$ const \&x1, \mbox{\hyperlink{classAriadne_1_1Approximation}{Approximation}}$<$ F $>$ const \&x2)
+\item 
+\Hypertarget{classAriadne_1_1Approximation_ab769eac1a67f2f5e5c8a89f7fb9082c4}\label{classAriadne_1_1Approximation_ab769eac1a67f2f5e5c8a89f7fb9082c4} 
+\mbox{\hyperlink{classAriadne_1_1ApproximateKleenean}{Approximate\+Kleenean}} {\bfseries operator$>$} (\mbox{\hyperlink{classAriadne_1_1Approximation}{Approximation}}$<$ F $>$ const \&x1, \mbox{\hyperlink{classAriadne_1_1Approximation}{Approximation}}$<$ F $>$ const \&x2)
+\end{DoxyCompactItemize}
+\end{Indent}
+\begin{Indent}\textbf{ Arithmetic operations}\par
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1Approximation_a3b1492968bbd01aaf19ed18af7b86db1}\label{classAriadne_1_1Approximation_a3b1492968bbd01aaf19ed18af7b86db1} 
+\mbox{\hyperlink{classAriadne_1_1Approximation}{Approximation}}$<$ F $>$ {\bfseries nul} (\mbox{\hyperlink{classAriadne_1_1Approximation}{Approximation}}$<$ F $>$ const \&x)
+\item 
+\Hypertarget{classAriadne_1_1Approximation_aeb715099324d6eb780321093f9d728a4}\label{classAriadne_1_1Approximation_aeb715099324d6eb780321093f9d728a4} 
+\mbox{\hyperlink{classAriadne_1_1Approximation}{Approximation}}$<$ F $>$ {\bfseries pos} (\mbox{\hyperlink{classAriadne_1_1Approximation}{Approximation}}$<$ F $>$ const \&x)
+\item 
+\Hypertarget{classAriadne_1_1Approximation_aa27e4069507667c658eb059f6bd267c2}\label{classAriadne_1_1Approximation_aa27e4069507667c658eb059f6bd267c2} 
+\mbox{\hyperlink{classAriadne_1_1Approximation}{Approximation}}$<$ F $>$ {\bfseries neg} (\mbox{\hyperlink{classAriadne_1_1Approximation}{Approximation}}$<$ F $>$ const \&x)
+\item 
+\Hypertarget{classAriadne_1_1Approximation_a2c75491fff749b3db38094a3298c96cf}\label{classAriadne_1_1Approximation_a2c75491fff749b3db38094a3298c96cf} 
+\mbox{\hyperlink{classAriadne_1_1Approximation}{Approximation}}$<$ F $>$ {\bfseries hlf} (\mbox{\hyperlink{classAriadne_1_1Approximation}{Approximation}}$<$ F $>$ const \&x)
+\item 
+\Hypertarget{classAriadne_1_1Approximation_aa1de6d03e0f65900f16b5d832d61e535}\label{classAriadne_1_1Approximation_aa1de6d03e0f65900f16b5d832d61e535} 
+\mbox{\hyperlink{classAriadne_1_1Approximation}{Approximation}}$<$ F $>$ {\bfseries sqr} (\mbox{\hyperlink{classAriadne_1_1Approximation}{Approximation}}$<$ F $>$ const \&x)
+\item 
+\Hypertarget{classAriadne_1_1Approximation_ad7978c2091aa2dd6735d81d3bb494519}\label{classAriadne_1_1Approximation_ad7978c2091aa2dd6735d81d3bb494519} 
+\mbox{\hyperlink{classAriadne_1_1Approximation}{Approximation}}$<$ F $>$ {\bfseries rec} (\mbox{\hyperlink{classAriadne_1_1Approximation}{Approximation}}$<$ F $>$ const \&x)
+\item 
+\Hypertarget{classAriadne_1_1Approximation_a01508b3f6e715b092b34ba0e36038c67}\label{classAriadne_1_1Approximation_a01508b3f6e715b092b34ba0e36038c67} 
+\mbox{\hyperlink{classAriadne_1_1Approximation}{Approximation}}$<$ F $>$ {\bfseries add} (\mbox{\hyperlink{classAriadne_1_1Approximation}{Approximation}}$<$ F $>$ const \&x1, \mbox{\hyperlink{classAriadne_1_1Approximation}{Approximation}}$<$ F $>$ const \&x2)
+\item 
+\Hypertarget{classAriadne_1_1Approximation_a9129e8f4318bb47e26cd1c17105eea24}\label{classAriadne_1_1Approximation_a9129e8f4318bb47e26cd1c17105eea24} 
+\mbox{\hyperlink{classAriadne_1_1Approximation}{Approximation}}$<$ F $>$ {\bfseries sub} (\mbox{\hyperlink{classAriadne_1_1Approximation}{Approximation}}$<$ F $>$ const \&x1, \mbox{\hyperlink{classAriadne_1_1Approximation}{Approximation}}$<$ F $>$ const \&x2)
+\item 
+\Hypertarget{classAriadne_1_1Approximation_aaf2d0ac9a352b57a851fcea9f139b271}\label{classAriadne_1_1Approximation_aaf2d0ac9a352b57a851fcea9f139b271} 
+\mbox{\hyperlink{classAriadne_1_1Approximation}{Approximation}}$<$ F $>$ {\bfseries mul} (\mbox{\hyperlink{classAriadne_1_1Approximation}{Approximation}}$<$ F $>$ const \&x1, \mbox{\hyperlink{classAriadne_1_1Approximation}{Approximation}}$<$ F $>$ const \&x2)
+\item 
+\Hypertarget{classAriadne_1_1Approximation_a3ed145051e486f636befab7f427fe1a0}\label{classAriadne_1_1Approximation_a3ed145051e486f636befab7f427fe1a0} 
+\mbox{\hyperlink{classAriadne_1_1Approximation}{Approximation}}$<$ F $>$ {\bfseries div} (\mbox{\hyperlink{classAriadne_1_1Approximation}{Approximation}}$<$ F $>$ const \&x1, \mbox{\hyperlink{classAriadne_1_1Approximation}{Approximation}}$<$ F $>$ const \&x2)
+\item 
+\Hypertarget{classAriadne_1_1Approximation_a1071b04a1fb5d0b5e71616e6bec2851a}\label{classAriadne_1_1Approximation_a1071b04a1fb5d0b5e71616e6bec2851a} 
+\mbox{\hyperlink{classAriadne_1_1Approximation}{Approximation}}$<$ F $>$ {\bfseries fma} (\mbox{\hyperlink{classAriadne_1_1Approximation}{Approximation}}$<$ F $>$ const \&x1, \mbox{\hyperlink{classAriadne_1_1Approximation}{Approximation}}$<$ F $>$ const \&x2, \mbox{\hyperlink{classAriadne_1_1Approximation}{Approximation}}$<$ F $>$ const \&x3)
+\item 
+\Hypertarget{classAriadne_1_1Approximation_a3597855581496b91bfe10984d581885a}\label{classAriadne_1_1Approximation_a3597855581496b91bfe10984d581885a} 
+\mbox{\hyperlink{classAriadne_1_1Approximation}{Approximation}}$<$ F $>$ {\bfseries pow} (\mbox{\hyperlink{classAriadne_1_1Approximation}{Approximation}}$<$ F $>$ const \&x, \mbox{\hyperlink{namespaceAriadne_aae901a69a841b1a085a0dfe218e38fe9}{Nat}} m)
+\item 
+\Hypertarget{classAriadne_1_1Approximation_a784b9cddb1fbfc63e98c0028a65722df}\label{classAriadne_1_1Approximation_a784b9cddb1fbfc63e98c0028a65722df} 
+\mbox{\hyperlink{classAriadne_1_1Approximation}{Approximation}}$<$ F $>$ {\bfseries pow} (\mbox{\hyperlink{classAriadne_1_1Approximation}{Approximation}}$<$ F $>$ const \&x, \mbox{\hyperlink{namespaceAriadne_a008e7f6ae8f621fbb1d876061812b9b2}{Int}} n)
+\end{DoxyCompactItemize}
+\end{Indent}
+\begin{Indent}\textbf{ Algebraic and transcendental operations}\par
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1Approximation_a5d90654bd44189494ba5197ea2205fd5}\label{classAriadne_1_1Approximation_a5d90654bd44189494ba5197ea2205fd5} 
+\mbox{\hyperlink{classAriadne_1_1Approximation}{Approximation}}$<$ F $>$ {\bfseries sqrt} (\mbox{\hyperlink{classAriadne_1_1Approximation}{Approximation}}$<$ F $>$ const \&x)
+\item 
+\Hypertarget{classAriadne_1_1Approximation_a69d6df53980b8decda740ba76cd97589}\label{classAriadne_1_1Approximation_a69d6df53980b8decda740ba76cd97589} 
+\mbox{\hyperlink{classAriadne_1_1Approximation}{Approximation}}$<$ F $>$ {\bfseries exp} (\mbox{\hyperlink{classAriadne_1_1Approximation}{Approximation}}$<$ F $>$ const \&x)
+\item 
+\Hypertarget{classAriadne_1_1Approximation_a86314d9ae1679f934a31ef5eb172c32b}\label{classAriadne_1_1Approximation_a86314d9ae1679f934a31ef5eb172c32b} 
+\mbox{\hyperlink{classAriadne_1_1Approximation}{Approximation}}$<$ F $>$ {\bfseries log} (\mbox{\hyperlink{classAriadne_1_1Approximation}{Approximation}}$<$ F $>$ const \&x)
+\item 
+\Hypertarget{classAriadne_1_1Approximation_af4b6584d59edbc4545de79b5c109fe71}\label{classAriadne_1_1Approximation_af4b6584d59edbc4545de79b5c109fe71} 
+\mbox{\hyperlink{classAriadne_1_1Approximation}{Approximation}}$<$ F $>$ {\bfseries sin} (\mbox{\hyperlink{classAriadne_1_1Approximation}{Approximation}}$<$ F $>$ const \&x)
+\item 
+\Hypertarget{classAriadne_1_1Approximation_a0a14595bc06662b4fe79fa3a6750b9b3}\label{classAriadne_1_1Approximation_a0a14595bc06662b4fe79fa3a6750b9b3} 
+\mbox{\hyperlink{classAriadne_1_1Approximation}{Approximation}}$<$ F $>$ {\bfseries cos} (\mbox{\hyperlink{classAriadne_1_1Approximation}{Approximation}}$<$ F $>$ const \&x)
+\item 
+\Hypertarget{classAriadne_1_1Approximation_a4b8f99abac6555bf3fae0cc263d1c03f}\label{classAriadne_1_1Approximation_a4b8f99abac6555bf3fae0cc263d1c03f} 
+\mbox{\hyperlink{classAriadne_1_1Approximation}{Approximation}}$<$ F $>$ {\bfseries tan} (\mbox{\hyperlink{classAriadne_1_1Approximation}{Approximation}}$<$ F $>$ const \&x)
+\item 
+\Hypertarget{classAriadne_1_1Approximation_ae9abb50977a05745c4312a5d0a6c167f}\label{classAriadne_1_1Approximation_ae9abb50977a05745c4312a5d0a6c167f} 
+\mbox{\hyperlink{classAriadne_1_1Approximation}{Approximation}}$<$ F $>$ {\bfseries asin} (\mbox{\hyperlink{classAriadne_1_1Approximation}{Approximation}}$<$ F $>$ const \&x)
+\item 
+\Hypertarget{classAriadne_1_1Approximation_a3315a3f7707ad360f231d3325eeb7111}\label{classAriadne_1_1Approximation_a3315a3f7707ad360f231d3325eeb7111} 
+\mbox{\hyperlink{classAriadne_1_1Approximation}{Approximation}}$<$ F $>$ {\bfseries acos} (\mbox{\hyperlink{classAriadne_1_1Approximation}{Approximation}}$<$ F $>$ const \&x)
+\item 
+\Hypertarget{classAriadne_1_1Approximation_a41c56de43ba621163dc84dbd2993f182}\label{classAriadne_1_1Approximation_a41c56de43ba621163dc84dbd2993f182} 
+\mbox{\hyperlink{classAriadne_1_1Approximation}{Approximation}}$<$ F $>$ {\bfseries atan} (\mbox{\hyperlink{classAriadne_1_1Approximation}{Approximation}}$<$ F $>$ const \&x)
+\end{DoxyCompactItemize}
+\end{Indent}
+\begin{Indent}\textbf{ Lattice operations}\par
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1Approximation_a5efda19dba42f8326eb9e4e5d6660ab3}\label{classAriadne_1_1Approximation_a5efda19dba42f8326eb9e4e5d6660ab3} 
+\mbox{\hyperlink{classAriadne_1_1Approximation}{Approximation}}$<$ F $>$ {\bfseries abs} (\mbox{\hyperlink{classAriadne_1_1Approximation}{Approximation}}$<$ F $>$ const \&x)
+\item 
+\Hypertarget{classAriadne_1_1Approximation_a88fb2bb2a9488a89b0d30621086cacc2}\label{classAriadne_1_1Approximation_a88fb2bb2a9488a89b0d30621086cacc2} 
+\mbox{\hyperlink{classAriadne_1_1Approximation}{Approximation}}$<$ F $>$ {\bfseries max} (\mbox{\hyperlink{classAriadne_1_1Approximation}{Approximation}}$<$ F $>$ const \&x, \mbox{\hyperlink{classAriadne_1_1Approximation}{Approximation}}$<$ F $>$ const \&y)
+\item 
+\Hypertarget{classAriadne_1_1Approximation_aefcffe474c4ae44853b121791576656b}\label{classAriadne_1_1Approximation_aefcffe474c4ae44853b121791576656b} 
+\mbox{\hyperlink{classAriadne_1_1Approximation}{Approximation}}$<$ F $>$ {\bfseries min} (\mbox{\hyperlink{classAriadne_1_1Approximation}{Approximation}}$<$ F $>$ const \&x, \mbox{\hyperlink{classAriadne_1_1Approximation}{Approximation}}$<$ F $>$ const \&y)
+\item 
+\Hypertarget{classAriadne_1_1Approximation_aff9ecf91b8ce193afd7bf63d00478ba4}\label{classAriadne_1_1Approximation_aff9ecf91b8ce193afd7bf63d00478ba4} 
+Positive\+Approximation$<$ F $>$ {\bfseries mag} (\mbox{\hyperlink{classAriadne_1_1Approximation}{Approximation}}$<$ F $>$ const \&x)
+\item 
+\Hypertarget{classAriadne_1_1Approximation_ab2b7192ec03e7c83299b69e6c132b149}\label{classAriadne_1_1Approximation_ab2b7192ec03e7c83299b69e6c132b149} 
+Positive\+Approximation$<$ F $>$ {\bfseries mig} (\mbox{\hyperlink{classAriadne_1_1Approximation}{Approximation}}$<$ F $>$ const \&x)
+\end{DoxyCompactItemize}
+\end{Indent}
+\begin{Indent}\textbf{ Comparison operations}\par
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1Approximation_a699afa1de25ddcd0049fb72d135fd929}\label{classAriadne_1_1Approximation_a699afa1de25ddcd0049fb72d135fd929} 
+\mbox{\hyperlink{classAriadne_1_1ApproximateKleenean}{Approximate\+Kleenean}} {\bfseries sgn} (\mbox{\hyperlink{classAriadne_1_1Approximation}{Approximation}}$<$ F $>$ const \&x)
+\item 
+\Hypertarget{classAriadne_1_1Approximation_ab229f6ab94918e1bde332929c748eeee}\label{classAriadne_1_1Approximation_ab229f6ab94918e1bde332929c748eeee} 
+\mbox{\hyperlink{classAriadne_1_1ApproximateKleenean}{Approximate\+Kleenean}} {\bfseries eq} (\mbox{\hyperlink{classAriadne_1_1Approximation}{Approximation}}$<$ F $>$ const \&x1, \mbox{\hyperlink{classAriadne_1_1Approximation}{Approximation}}$<$ F $>$ const \&x2)
+\item 
+\Hypertarget{classAriadne_1_1Approximation_a0d4c33ebf7fa4f11a782219343336bd8}\label{classAriadne_1_1Approximation_a0d4c33ebf7fa4f11a782219343336bd8} 
+\mbox{\hyperlink{classAriadne_1_1ApproximateKleenean}{Approximate\+Kleenean}} {\bfseries lt} (\mbox{\hyperlink{classAriadne_1_1Approximation}{Approximation}}$<$ F $>$ const \&x1, \mbox{\hyperlink{classAriadne_1_1Approximation}{Approximation}}$<$ F $>$ const \&x2)
+\end{DoxyCompactItemize}
+\end{Indent}
+\begin{Indent}\textbf{ Rounding operations}\par
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1Approximation_a471b85b9f6b452624694460aab1c333c}\label{classAriadne_1_1Approximation_a471b85b9f6b452624694460aab1c333c} 
+\mbox{\hyperlink{classAriadne_1_1Approximation}{Approximation}}$<$ F $>$ {\bfseries floor} (\mbox{\hyperlink{classAriadne_1_1Approximation}{Approximation}}$<$ F $>$ const \&x)
+\item 
+\Hypertarget{classAriadne_1_1Approximation_a906ee924f4e77fb19fbf8da436e6241d}\label{classAriadne_1_1Approximation_a906ee924f4e77fb19fbf8da436e6241d} 
+\mbox{\hyperlink{classAriadne_1_1Approximation}{Approximation}}$<$ F $>$ {\bfseries ceil} (\mbox{\hyperlink{classAriadne_1_1Approximation}{Approximation}}$<$ F $>$ const \&x)
+\item 
+\Hypertarget{classAriadne_1_1Approximation_a15102e322a853f2cf696208188f3dacf}\label{classAriadne_1_1Approximation_a15102e322a853f2cf696208188f3dacf} 
+\mbox{\hyperlink{classAriadne_1_1Approximation}{Approximation}}$<$ F $>$ {\bfseries round} (\mbox{\hyperlink{classAriadne_1_1Approximation}{Approximation}}$<$ F $>$ const \&x)
+\item 
+\Hypertarget{classAriadne_1_1Approximation_a5c0c1d8406649feb7b2f67e861999105}\label{classAriadne_1_1Approximation_a5c0c1d8406649feb7b2f67e861999105} 
+\mbox{\hyperlink{classAriadne_1_1Integer}{Integer}} {\bfseries cast\+\_\+integer} (\mbox{\hyperlink{classAriadne_1_1Approximation}{Approximation}}$<$ F $>$ const \&x)
+\end{DoxyCompactItemize}
+\end{Indent}
+\begin{Indent}\textbf{ Special value tests}\par
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1Approximation_a5bf9c0210c11b277ecb09885cf1f7165}\label{classAriadne_1_1Approximation_a5bf9c0210c11b277ecb09885cf1f7165} 
+\mbox{\hyperlink{namespaceAriadne_a76a8b016e5ad61faf9062cc387df5016}{Bool}} {\bfseries is\+\_\+nan} (\mbox{\hyperlink{classAriadne_1_1Approximation}{Approximation}}$<$ F $>$ const \&x)
+\end{DoxyCompactItemize}
+\end{Indent}
+\begin{Indent}\textbf{ Approximate information tests}\par
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1Approximation_a215a5af65d48e71f8e4d631fb23e63ee}\label{classAriadne_1_1Approximation_a215a5af65d48e71f8e4d631fb23e63ee} 
+\mbox{\hyperlink{namespaceAriadne_a76a8b016e5ad61faf9062cc387df5016}{Bool}} {\bfseries same} (\mbox{\hyperlink{classAriadne_1_1Approximation}{Approximation}}$<$ F $>$ const \&x1, \mbox{\hyperlink{classAriadne_1_1Approximation}{Approximation}}$<$ F $>$ const \&x2)
+\begin{DoxyCompactList}\small\item\em Test if {\itshape x1} and {\itshape x2} are the same approximation. They might still possibly represent different numbers. \}. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\end{Indent}
+\begin{Indent}\textbf{ Input/output operations}\par
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1Approximation_ac9412b0c7978088cb1140b91c2465eba}\label{classAriadne_1_1Approximation_ac9412b0c7978088cb1140b91c2465eba} 
+\mbox{\hyperlink{namespaceAriadne_acbb98ddc4385af4599070e65a1a47ec1}{Output\+Stream}} \& {\bfseries operator$<$$<$} (\mbox{\hyperlink{namespaceAriadne_acbb98ddc4385af4599070e65a1a47ec1}{Output\+Stream}} \&os, \mbox{\hyperlink{classAriadne_1_1Approximation}{Approximation}}$<$ F $>$ const \&x)
+\begin{DoxyCompactList}\small\item\em Write to an output stream. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Approximation_a1460fc3e2df2ecc3f4c72e6d139ae62b}\label{classAriadne_1_1Approximation_a1460fc3e2df2ecc3f4c72e6d139ae62b} 
+\mbox{\hyperlink{namespaceAriadne_a3c42889d7ee562011f1dc63874e51d0e}{Input\+Stream}} \& {\bfseries operator$>$$>$} (\mbox{\hyperlink{namespaceAriadne_a3c42889d7ee562011f1dc63874e51d0e}{Input\+Stream}} \&is, \mbox{\hyperlink{classAriadne_1_1Approximation}{Approximation}}$<$ F $>$ \&x)
+\begin{DoxyCompactList}\small\item\em Read from an input stream. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\end{Indent}
+
+
+The documentation for this class was generated from the following files\+:\begin{DoxyCompactItemize}
+\item 
+source/numeric/\mbox{\hyperlink{float_8decl_8hpp}{float.\+decl.\+hpp}}\item 
+source/numeric/\mbox{\hyperlink{float__approximation_8hpp}{float\+\_\+approximation.\+hpp}}\item 
+source/numeric/floatdp.\+cpp\item 
+source/numeric/\mbox{\hyperlink{floatmp_8cpp}{floatmp.\+cpp}}\item 
+source/numeric/float\+\_\+approximation.\+tpl.\+hpp\item 
+tutorials/rigorous\+\_\+numerics/rigorous\+\_\+numerics\+\_\+tutorial.\+cpp\end{DoxyCompactItemize}

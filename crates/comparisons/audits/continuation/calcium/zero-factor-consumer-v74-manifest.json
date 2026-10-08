@@ -1,0 +1,442 @@
+{
+  "checkpoint": 74,
+  "status": "isolated-consumer-size-qualified",
+  "recorded": "2026-09-11T21:50:26.158Z",
+  "files": {
+    "check-zero-factor-consumer-v74.mjs": "aef627cd81e6ec66866b1095a667b4efa0d12a6bd36fb9947510156117d4e0fb",
+    "point-consumer-apps-v66.json": "98700d21ba7dc390c19b28952db4b48dc570cbe0fdd93c067e601d93c2bc1c61",
+    "point-consumer-binding-v66.json": "a3759278703e4c7b9a05f4eb8adf4468074c29fd1164325423dab63b1430e50d",
+    "point-qualified-environment.mjs": "51947315ab10dc3618c03e296e3c64ceed5ead142691ae9553460a016352efbb",
+    "point-retained-sources-v67.mjs": "b6eae97607c90db54509998d9486d2c3365d0467a2256d0073df6c22ac699c5b",
+    "qualify-zero-factor-consumer-v74.mjs": "0155781b75f6be3bfd7c54e9a95b4b897030c08b001327b0c0958270ba8421dc",
+    "results/point-consumer-environment-v66.stdout": "0c2e4e33c4a6b39ddeb0c5bcda9db299e0c95e854bd7d1b077358b84850bf5d9",
+    "results/point-consumer-release-v66.json": "7b8aef6b755dc7a5590ab66208ef2c7f59acd985d78ac2d8504cc0612d0dac62",
+    "results/point-consumer-release-v66.stderr": "256234fbd34a679586b0a4cbe8d85ce95a33388226996136a0fa4576deab8f68",
+    "results/point-consumer-release-v66.stdout": "0a5135f84c4517febd33c2c9d0b3bba2b644111e0dd62447022fc1702c989520",
+    "results/zero-factor-consumer-app-build-v74.json": "b382af6080a3b0d7d89f887c7b91a83c1c7e1c73c3d586f3adf2d48971c3d492",
+    "results/zero-factor-consumer-app-build-v74.stderr": "072f8f1cb415728eacb938a4d5658a474614d408558ff0f71c22a750d730c88a",
+    "results/zero-factor-consumer-app-build-v74.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/zero-factor-consumer-arrangement-baseline-run-v74.json": "9d60e0703c719a39429b1a720a3df86a444e4fc87d4c13b1a298c917d34a592f",
+    "results/zero-factor-consumer-arrangement-baseline-run-v74.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/zero-factor-consumer-arrangement-baseline-run-v74.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/zero-factor-consumer-arrangement-candidate-run-v74.json": "3e6b45403a5d80891f3bff194c6ecfe84d2cf8f0795bd269d91c5de434c2df5d",
+    "results/zero-factor-consumer-arrangement-candidate-run-v74.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/zero-factor-consumer-arrangement-candidate-run-v74.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/zero-factor-consumer-arrangement-size-v74.json": "9b747a2eae15efc78d16e15d4d089f063dddfa203a2aa8da01b64e0f84144fb8",
+    "results/zero-factor-consumer-arrangement-size-v74.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/zero-factor-consumer-arrangement-size-v74.stdout": "d47c9e46287c938c6480affe09e9f383b61ab72127d2d5b38a00b0fcd81409b3",
+    "results/zero-factor-consumer-arrangement-strip-v74.json": "460ea75e9beebf16edb204352f69048fca99353198bc6bda867e619b06284422",
+    "results/zero-factor-consumer-arrangement-strip-v74.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/zero-factor-consumer-arrangement-strip-v74.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/zero-factor-consumer-baseline-metadata-v74.json": "de03925030597d3fecf5ea62342621b32588e401aa02875aa6ae81bd50ddbf0f",
+    "results/zero-factor-consumer-baseline-metadata-v74.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/zero-factor-consumer-baseline-metadata-v74.stdout": "273bf3eb66b973aea3c9253fbc9fb600334350ffc8fd144db29218ceed6211b3",
+    "results/zero-factor-consumer-basic-baseline-run-v74.json": "c9a24d0b5700024fed7eeb10d3ae8bf20077c855232d09cc083820ae5ef8e19b",
+    "results/zero-factor-consumer-basic-baseline-run-v74.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/zero-factor-consumer-basic-baseline-run-v74.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/zero-factor-consumer-basic-candidate-run-v74.json": "1964a355a15ce4a49df9155eddc7bb3700cb814721ac16655efabbe5d5d42100",
+    "results/zero-factor-consumer-basic-candidate-run-v74.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/zero-factor-consumer-basic-candidate-run-v74.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/zero-factor-consumer-basic-size-v74.json": "9744934f17e55fcefe7566c33b303500ff7c6169d6442b4e24669c9d11373284",
+    "results/zero-factor-consumer-basic-size-v74.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/zero-factor-consumer-basic-size-v74.stdout": "b5f69f8e5dd85574b793d2817cba563718c932e35fe790861b84d827c6320bfe",
+    "results/zero-factor-consumer-basic-strip-v74.json": "85134362b7e857570d150f99f171df115da40d17260534ffa37334f1f2a83077",
+    "results/zero-factor-consumer-basic-strip-v74.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/zero-factor-consumer-basic-strip-v74.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/zero-factor-consumer-candidate-metadata-v74.json": "364a42d3dd3c3b16e38709a68f81475f0097891e99932d65cd9dd5a9939b9a46",
+    "results/zero-factor-consumer-candidate-metadata-v74.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/zero-factor-consumer-candidate-metadata-v74.stdout": "ba1c37e239fee1a3036c71a314940981dcfb03a0e867936c964f0d9fbda65ba6",
+    "results/zero-factor-consumer-check-v74.json": "165584efa642e2ff870ccf12a01ad8f0895e5561bb01a2b83983162e73942638",
+    "results/zero-factor-consumer-check-v74.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/zero-factor-consumer-check-v74.stdout": "4d65a57dd98dfc4592d12e471250b0512868b0498293963bd8c95096e231870f",
+    "results/zero-factor-consumer-clippy-v74.json": "5d7377d70b43f92a025baf90169e0ebc5844a70cc72d01c79210b31ee63d50ce",
+    "results/zero-factor-consumer-clippy-v74.stderr": "be214e8fae90666368167b4a2a6aa90d08ed6ca7d3e1a385b7820d2bae72a3cd",
+    "results/zero-factor-consumer-clippy-v74.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/zero-factor-consumer-environment-after-v74.json": "fab49927372d4309a12753ec33b5036ca1d29d0019e3a578f688e0b3759c674c",
+    "results/zero-factor-consumer-environment-after-v74.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/zero-factor-consumer-environment-after-v74.stdout": "16bf145cb28a2f63630c031a89bfa8494447653a98b71c7be6ed4b2f1fd6875d",
+    "results/zero-factor-consumer-environment-before-v74.json": "5a19fbcdde7cf80c0bf9abb519876391716eaf622709771d317b19eeede2c46a",
+    "results/zero-factor-consumer-environment-before-v74.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/zero-factor-consumer-environment-before-v74.stdout": "9bbc1408388b4359b8686b6779d64c32f4f64502503997d03339c841c22f4ed2",
+    "results/zero-factor-consumer-fmt-v74.json": "901a906381fc9641614d6b352f53f37d6ac80e9e93f28905b524008885141ec1",
+    "results/zero-factor-consumer-fmt-v74.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/zero-factor-consumer-fmt-v74.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/zero-factor-consumer-qualification-v74.json": "21c0c0ab9a26b34467e1fde1242618ef9e7b8771ce8a8de2e2017348d9e11f63",
+    "results/zero-factor-consumer-qualification-v74.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/zero-factor-consumer-qualification-v74.stdout": "0fbb8eb45848776e8ce7302e03b5e987e2acd32901db37b72c8d8ada05b74e43",
+    "results/zero-factor-consumer-release-v74.json": "54b1eedc16966d863518d8c2edf729528595c56d80d7751feba479d688773148",
+    "results/zero-factor-consumer-release-v74.stderr": "6e6ea9069907c16f18fa02f245edd059e3eb8b44a85a6ae09068585156885dc1",
+    "results/zero-factor-consumer-release-v74.stdout": "64a6107e62f248d39791d33ac53d724747d320b537625ef7e5398ba8bbd9c957",
+    "results/zero-factor-consumer-wasm-v74.json": "bc07f27651cd80799bcc93309b64436fda086022ce39340eb30dc828790bdedd",
+    "results/zero-factor-consumer-wasm-v74.stderr": "53bc72874c73668714d0ddfcc579fe29348eefc24f0c05651db13d3aa642754e",
+    "results/zero-factor-consumer-wasm-v74.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/zero-factor-wasm-cost-verify-v73.json": "b0daf88715f1cada694daf342656e03a51aea863ab0afeda65b00f0ac71b514f",
+    "results/zero-factor-wasm-cost-verify-v73.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/zero-factor-wasm-cost-verify-v73.stdout": "bcb474c8fb15201d399e4a132366933febbc24cf5026a0e05b2d6b98e69f219f",
+    "verify-zero-factor-consumer-v74.mjs": "ecd6a57ce2697ff8bd8a1381e1a401e47f4fcd4c504594e1a716b44f8b1ea327",
+    "zero-factor-consumer-app-origin-v74.json": "70fee863ccbd39e2211872a3f35a1b47da9298e1b8eaf589327ed1b0d5c513e9",
+    "zero-factor-consumer-apps-v74.json": "61888860de504d1c506b29d6f787f16fc134660eb5223c6026edef75e1f9e7f8",
+    "zero-factor-consumer-binding-v74.json": "940f44180edb35410b967d07f839f7e39afcdc8018631a250d527192642215a0",
+    "zero-factor-consumer-caller-review-v74.md": "da5e9e99212c472ffb7c0129b46afe7d2554d54791dcdbb9dcbb6803c8e3e69f",
+    "zero-factor-consumer-origin-v74.json": "02dc041a1032317da18f6d5d3eb6ea3bf76e058f705ff9d82db37aaa71fe16bc",
+    "zero-factor-consumer-protocol-v74.md": "0ad03cf0842743f5c932dbb8a6225cac5d10b538bf46fb40772986803e6c9d8b",
+    "zero-factor-consumer-run-origin-v74.json": "7a89a27f62a5e780224559c049583e5a4664190aa9947480586f804fdbdee68a",
+    "zero-factor-consumer-sources-v74.mjs": "4aa485d0723ee90b3e7e295fca18e546a593eaf9eda714f00c5d4c84e19ca94c",
+    "zero-factor-consumer-v74-findings.md": "7cd64b090aeafe4747d8cb43cbbb97f1f4386ee5e4ecb613d05eefa43672be2d",
+    "zero-factor-final-binding-v70.json": "93a8b6de487f3a85f877e5f74a79e1cd118831c434c4fc08ce864c933f8817c3",
+    "zero-factor-final-sources-v70.mjs": "98163e8deb534c27a02af157c69708e74cca0936cbd7a90f17fdfc677d980c40",
+    "zero-factor-wasm-cost-sources-v73.mjs": "06536f789e82b6fe9fd55bdf04cf07b7d32687d9ba1e79a189a9f3444e2f2b0a",
+    "zero-factor-wasm-cost-v73-manifest.json": "c6b38f94dc6d7b14739a3bf4af259ea648d7b47a2b9d5b212b1856bb48879d71"
+  },
+  "gates": [
+    "zero-factor-consumer-environment-before-v74",
+    "zero-factor-consumer-baseline-metadata-v74",
+    "zero-factor-consumer-candidate-metadata-v74",
+    "zero-factor-consumer-release-v74",
+    "zero-factor-consumer-fmt-v74",
+    "zero-factor-consumer-clippy-v74",
+    "zero-factor-consumer-wasm-v74",
+    "zero-factor-consumer-app-build-v74",
+    "zero-factor-consumer-basic-strip-v74",
+    "zero-factor-consumer-basic-baseline-run-v74",
+    "zero-factor-consumer-basic-candidate-run-v74",
+    "zero-factor-consumer-basic-size-v74",
+    "zero-factor-consumer-arrangement-strip-v74",
+    "zero-factor-consumer-arrangement-baseline-run-v74",
+    "zero-factor-consumer-arrangement-candidate-run-v74",
+    "zero-factor-consumer-arrangement-size-v74",
+    "zero-factor-consumer-environment-after-v74",
+    "zero-factor-consumer-qualification-v74",
+    "zero-factor-consumer-check-v74"
+  ],
+  "evidence": {
+    "checkpoint": 74,
+    "status": "isolated-consumer-size-qualified",
+    "sourceBindingSha256": "940f44180edb35410b967d07f839f7e39afcdc8018631a250d527192642215a0",
+    "liveFiles": 956,
+    "solverCandidateFiles": 176,
+    "consumerFiles": 355,
+    "copiedBytes": 23841619,
+    "gates": [
+      "zero-factor-consumer-environment-before-v74",
+      "zero-factor-consumer-baseline-metadata-v74",
+      "zero-factor-consumer-candidate-metadata-v74",
+      "zero-factor-consumer-release-v74",
+      "zero-factor-consumer-fmt-v74",
+      "zero-factor-consumer-clippy-v74",
+      "zero-factor-consumer-wasm-v74",
+      "zero-factor-consumer-app-build-v74",
+      "zero-factor-consumer-basic-strip-v74",
+      "zero-factor-consumer-basic-baseline-run-v74",
+      "zero-factor-consumer-basic-candidate-run-v74",
+      "zero-factor-consumer-basic-size-v74",
+      "zero-factor-consumer-arrangement-strip-v74",
+      "zero-factor-consumer-arrangement-baseline-run-v74",
+      "zero-factor-consumer-arrangement-candidate-run-v74",
+      "zero-factor-consumer-arrangement-size-v74",
+      "zero-factor-consumer-environment-after-v74",
+      "zero-factor-consumer-qualification-v74"
+    ],
+    "graph": {
+      "packages": 187,
+      "nodes": 187,
+      "oneOfEachHyper": [
+        "hypercurve",
+        "hyperreal",
+        "hyperlattice",
+        "hyperlimit",
+        "hypersolve",
+        "hypertri"
+      ],
+      "fullPathNormalizedMetadataEqual": true,
+      "lockEqual": true
+    },
+    "tests": {
+      "suites": 46,
+      "passed": 1764,
+      "ignored": 9,
+      "failed": 0,
+      "names": 1773,
+      "namesAndOutcomesUnchanged": true
+    },
+    "lint": "all targets/all features, warnings denied",
+    "wasm": "release library build only; triangulation,svg,hershey",
+    "sizes": [
+      {
+        "example": "basic",
+        "artifacts": [
+          {
+            "variant": "baseline",
+            "crate": "hypercurve",
+            "example": "basic",
+            "files": [
+              {
+                "path": "/tmp/calcium-point-consumer.qyV59b/demand-basic",
+                "bytes": 13495088,
+                "sha256": "4e2ae4baad0f776e0a6f34d103177527030eb8806fd012b532912d3adbffe7a5"
+              },
+              {
+                "path": "/tmp/calcium-point-consumer.qyV59b/demand-basic.stripped",
+                "bytes": 11014424,
+                "sha256": "55768aee0ef245254e9fed9b1e9a55389c8d136a9028fb9a4bdbe49434437b10"
+              }
+            ],
+            "reusedFrom": "point-consumer-apps-v66.json"
+          },
+          {
+            "variant": "candidate",
+            "crate": "hypercurve",
+            "example": "basic",
+            "files": [
+              {
+                "path": "/tmp/calcium-zero-consumer.LrNEZu/candidate-basic",
+                "bytes": 13504768,
+                "sha256": "1a39744f2ae47b072a0a4378fd6090a38ebb94419f0319c855d6bf7194c2ffa3"
+              },
+              {
+                "path": "/tmp/calcium-zero-consumer.LrNEZu/candidate-basic.stripped",
+                "bytes": 11020168,
+                "sha256": "8340ec1e8574258fec43fe2aa758303744214e4ee9d59e897a5b9a00bcebef19"
+              }
+            ]
+          }
+        ],
+        "deltas": [
+          9680,
+          5744
+        ],
+        "sections": [
+          {
+            "text": 10704011,
+            "data": 306488,
+            "bss": 5328,
+            "total": 11015827,
+            "path": "/tmp/calcium-point-consumer.qyV59b/demand-basic"
+          },
+          {
+            "text": 10704011,
+            "data": 306488,
+            "bss": 5328,
+            "total": 11015827,
+            "path": "/tmp/calcium-point-consumer.qyV59b/demand-basic.stripped"
+          },
+          {
+            "text": 10709607,
+            "data": 306632,
+            "bss": 3680,
+            "total": 11019919,
+            "path": "/tmp/calcium-zero-consumer.LrNEZu/candidate-basic"
+          },
+          {
+            "text": 10709607,
+            "data": 306632,
+            "bss": 3680,
+            "total": 11019919,
+            "path": "/tmp/calcium-zero-consumer.LrNEZu/candidate-basic.stripped"
+          }
+        ]
+      },
+      {
+        "example": "arrangement",
+        "artifacts": [
+          {
+            "variant": "baseline",
+            "crate": "hypercurve",
+            "example": "arrangement",
+            "files": [
+              {
+                "path": "/tmp/calcium-point-consumer.qyV59b/demand-arrangement",
+                "bytes": 14181744,
+                "sha256": "5a7a7f263667955956eb0143fa20487020cbebdc450666e541fb06d193644b2f"
+              },
+              {
+                "path": "/tmp/calcium-point-consumer.qyV59b/demand-arrangement.stripped",
+                "bytes": 11588728,
+                "sha256": "37c69ddb36ca0699f85faabec05a83b02956e31ee3c54db7b84d99948610402d"
+              }
+            ],
+            "reusedFrom": "point-consumer-apps-v66.json"
+          },
+          {
+            "variant": "candidate",
+            "crate": "hypercurve",
+            "example": "arrangement",
+            "files": [
+              {
+                "path": "/tmp/calcium-zero-consumer.LrNEZu/candidate-arrangement",
+                "bytes": 14191496,
+                "sha256": "1e036260abe7c23b5ea14b644f1ae1f5449c6ef79a6c4561529254835f0825cf"
+              },
+              {
+                "path": "/tmp/calcium-zero-consumer.LrNEZu/candidate-arrangement.stripped",
+                "bytes": 11594472,
+                "sha256": "c5ba63f0767f189460c9b0007aa4bd33160d36f8a01425c8b002686c904d064b"
+              }
+            ]
+          }
+        ],
+        "deltas": [
+          9752,
+          5744
+        ],
+        "sections": [
+          {
+            "text": 11267399,
+            "data": 317408,
+            "bss": 4552,
+            "total": 11589359,
+            "path": "/tmp/calcium-point-consumer.qyV59b/demand-arrangement"
+          },
+          {
+            "text": 11267399,
+            "data": 317408,
+            "bss": 4552,
+            "total": 11589359,
+            "path": "/tmp/calcium-point-consumer.qyV59b/demand-arrangement.stripped"
+          },
+          {
+            "text": 11272979,
+            "data": 317552,
+            "bss": 2904,
+            "total": 11593435,
+            "path": "/tmp/calcium-zero-consumer.LrNEZu/candidate-arrangement"
+          },
+          {
+            "text": 11272979,
+            "data": 317552,
+            "bss": 2904,
+            "total": 11593435,
+            "path": "/tmp/calcium-zero-consumer.LrNEZu/candidate-arrangement.stripped"
+          }
+        ]
+      }
+    ],
+    "callerReview": {
+      "path": "zero-factor-consumer-caller-review-v74.md",
+      "sha256": "da5e9e99212c472ffb7c0129b46afe7d2554d54791dcdbb9dcbb6803c8e3e69f",
+      "sources": {
+        "point-demand-candidate/hypersolve/src/algebraic.rs": "3602e3479b29a1900f803071929f1226d43262379c7e26f7e86417cdf494fdad",
+        "point-demand-candidate/hypersolve/src/algebraic_rational_image.rs": "b3979d43bcfd730228612cc10a613c2048e2e07291ccbb706f73bb052daa67ae",
+        "point-demand-consumer-v66/hypercurve/src/bezier_algebraic_image.rs": "d9508e4503131c3a5613b902e7d724a63e68b42a60d3aa2566325e45949faa34",
+        "point-demand-consumer-v66/hypercurve/src/bezier_offset.rs": "21c319102e4a5c75ffda907b0edad677c238b0fea70780271f16592826e5df4f",
+        "point-demand-consumer-v66/hypercurve/src/bezier_arrangement.rs": "7d7559be2cd2f528fa77ee7bbc89df7ac1a828fd4607ce98ff31c8694b1b7eb7",
+        "point-demand-consumer-v66/hypercurve/src/bezier_tangent_order.rs": "4f0f9f71578d30eb927482077786126b50eceea6abe5ffe6110a2a5644629532",
+        "point-demand-consumer-v66/hypercurve/examples/basic.rs": "0641fa285fd2550e83c2b6b3dc29e3161fb4d9954ca3c5010633aae25f4c5aa1",
+        "point-demand-consumer-v66/hypercurve/examples/arrangement.rs": "8671397787a16f3ed11cdd2ac2c07518a38b4af4f68cd6ce6206e82648324576"
+      },
+      "newDonorLines": 0
+    },
+    "dedicatedFiles": 4,
+    "dedicatedBytes": 50310904,
+    "environment": {
+      "before": {
+        "recorded": "2026-09-11T21:36:57.487Z",
+        "node": "v22.22.2",
+        "v8": "12.4.254.21-node.39",
+        "platform": "linux",
+        "arch": "x64",
+        "kernel": "7.1.8-100.fc43.x86_64",
+        "versions": [
+          {
+            "command": "rustc",
+            "args": [
+              "-vV"
+            ],
+            "stdout": "rustc 1.97.0 (2d8144b78 2026-07-07)\nbinary: rustc\ncommit-hash: 2d8144b7880597b6e6d3dfd63a9a9efae3f533d3\ncommit-date: 2026-07-07\nhost: x86_64-unknown-linux-gnu\nrelease: 1.97.0\nLLVM version: 22.1.6\n"
+          },
+          {
+            "command": "cargo",
+            "args": [
+              "-vV"
+            ],
+            "stdout": "cargo 1.97.0 (c980f4866 2026-06-30)\nrelease: 1.97.0\ncommit-hash: c980f4866141969fab6254a680546a277789d6f0\ncommit-date: 2026-06-30\nhost: x86_64-unknown-linux-gnu\nlibgit2: 1.9.2 (sys:0.20.4 vendored)\nlibcurl: 8.20.0-DEV (sys:0.4.88+curl-8.20.0 vendored ssl:OpenSSL/3.6.2)\nssl: OpenSSL 3.6.2 7 Apr 2026\nos: Fedora 43.0.0 (FortyThree) [64-bit]\n"
+          },
+          {
+            "command": "strip",
+            "args": [
+              "--version"
+            ],
+            "stdout": "GNU strip version 2.45.1-5.fc43\nCopyright (C) 2025 Free Software Foundation, Inc.\nThis program is free software; you may redistribute it under the terms of\nthe GNU General Public License version 3 or (at your option) any later version.\nThis program has absolutely no warranty.\n"
+          },
+          {
+            "command": "size",
+            "args": [
+              "--version"
+            ],
+            "stdout": "GNU size version 2.45.1-5.fc43\nCopyright (C) 2025 Free Software Foundation, Inc.\nThis program is free software; you may redistribute it under the terms of\nthe GNU General Public License version 3 or (at your option) any later version.\nThis program has absolutely no warranty.\n"
+          }
+        ],
+        "volumes": [
+          {
+            "path": "/tmp",
+            "totalBytes": 67488174080,
+            "availableBytes": 15003951104
+          },
+          {
+            "path": "/home/tim/Documents/GitHub/workspace",
+            "totalBytes": 1966167244800,
+            "availableBytes": 121544167424
+          }
+        ],
+        "limits": "Build/runtime identity and a post-build filesystem-capacity snapshot. No timing, allocator, peak-memory, fixed-frequency or idle-machine claim."
+      },
+      "after": {
+        "recorded": "2026-09-11T21:47:57.437Z",
+        "node": "v22.22.2",
+        "v8": "12.4.254.21-node.39",
+        "platform": "linux",
+        "arch": "x64",
+        "kernel": "7.1.8-100.fc43.x86_64",
+        "versions": [
+          {
+            "command": "rustc",
+            "args": [
+              "-vV"
+            ],
+            "stdout": "rustc 1.97.0 (2d8144b78 2026-07-07)\nbinary: rustc\ncommit-hash: 2d8144b7880597b6e6d3dfd63a9a9efae3f533d3\ncommit-date: 2026-07-07\nhost: x86_64-unknown-linux-gnu\nrelease: 1.97.0\nLLVM version: 22.1.6\n"
+          },
+          {
+            "command": "cargo",
+            "args": [
+              "-vV"
+            ],
+            "stdout": "cargo 1.97.0 (c980f4866 2026-06-30)\nrelease: 1.97.0\ncommit-hash: c980f4866141969fab6254a680546a277789d6f0\ncommit-date: 2026-06-30\nhost: x86_64-unknown-linux-gnu\nlibgit2: 1.9.2 (sys:0.20.4 vendored)\nlibcurl: 8.20.0-DEV (sys:0.4.88+curl-8.20.0 vendored ssl:OpenSSL/3.6.2)\nssl: OpenSSL 3.6.2 7 Apr 2026\nos: Fedora 43.0.0 (FortyThree) [64-bit]\n"
+          },
+          {
+            "command": "strip",
+            "args": [
+              "--version"
+            ],
+            "stdout": "GNU strip version 2.45.1-5.fc43\nCopyright (C) 2025 Free Software Foundation, Inc.\nThis program is free software; you may redistribute it under the terms of\nthe GNU General Public License version 3 or (at your option) any later version.\nThis program has absolutely no warranty.\n"
+          },
+          {
+            "command": "size",
+            "args": [
+              "--version"
+            ],
+            "stdout": "GNU size version 2.45.1-5.fc43\nCopyright (C) 2025 Free Software Foundation, Inc.\nThis program is free software; you may redistribute it under the terms of\nthe GNU General Public License version 3 or (at your option) any later version.\nThis program has absolutely no warranty.\n"
+          }
+        ],
+        "volumes": [
+          {
+            "path": "/tmp",
+            "totalBytes": 67488174080,
+            "availableBytes": 14190510080
+          },
+          {
+            "path": "/home/tim/Documents/GitHub/workspace",
+            "totalBytes": 1966167244800,
+            "availableBytes": 121540980736
+          }
+        ],
+        "limits": "Build/runtime identity and a post-build filesystem-capacity snapshot. No timing, allocator, peak-memory, fixed-frequency or idle-machine claim."
+      }
+    },
+    "baselineToolVersionsMatch": true,
+    "retainedContinuationTransfers": 6,
+    "limits": "Full consumer regression and representative default-feature examples; not a timing campaign or proof that these simple examples execute divisor deflation. Build paths/layout/dead-code selection affect sizes. No live adoption."
+  },
+  "retainedContinuationTransfers": 6,
+  "newDonorLines": 0,
+  "scope": "Isolated candidate consumer/size qualification. No live adoption; full remaining reference inventory and power sums stay open."
+}

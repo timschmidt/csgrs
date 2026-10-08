@@ -1,0 +1,11 @@
+[package]
+name = "twelfth-capability-v79"
+version = "0.1.0"
+edition = "2024"
+publish = false
+
+[workspace]
+
+[dependencies]
+hyperreal = { path = "../twelfth-revision-candidate-v79/hyperreal" }
+num = "0.4.3"

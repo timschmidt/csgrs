@@ -1,0 +1,5 @@
+     Locking 29 packages to latest Rust 1.97.0 compatible versions
+    Blocking waiting for file lock on build directory
+   Compiling hyperreal v0.13.1 (/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/e-plan-qualified-candidate/hyperreal)
+   Compiling calcium-e-qualified-wasm-candidate v0.0.0 (/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/e-qualified-wasm-candidate)
+    Finished `release` profile [optimized] target(s) in 1m 32s

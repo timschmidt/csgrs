@@ -1,0 +1,17 @@
+{
+  "head": "e99dfbd6902caf5b1bee89617d36ceeca4165082",
+  "source_sha256": "05d105a664d2b29d2ddb743b665d7b6ba5f900f7443aa978d0f394f198037715",
+  "build_exit": 0,
+  "build_seconds": 113.07740290201036,
+  "binary": "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve-6e6572a45c5b177b",
+  "binary_sha256": "37e0be3984d88b1586a059a27ad4bf46f350ca7c3d310fadff9f7b818a1e893a",
+  "test_exit": 101,
+  "test_seconds": 0.015565234003588557,
+  "initial_invocation_matched_no_tests": true,
+  "command": [
+    "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve-6e6572a45c5b177b",
+    "rational_circle_component_adapter_preserves_mixed_evidence_when_clipped",
+    "--nocapture",
+    "--test-threads=1"
+  ]
+}

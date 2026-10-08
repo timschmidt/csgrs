@@ -1,0 +1,37 @@
+\doxysubsection{source/geometry/grid\+\_\+cell.hpp File Reference}
+\hypertarget{grid__cell_8hpp}{}\label{grid__cell_8hpp}\index{source/geometry/grid\_cell.hpp@{source/geometry/grid\_cell.hpp}}
+
+
+\doxysubsubsection{Description}
+Cells on a grid defined by a binary word. 
+
+{\ttfamily \#include $<$iostream$>$}\newline
+{\ttfamily \#include $<$iomanip$>$}\newline
+{\ttfamily \#include $<$string$>$}\newline
+{\ttfamily \#include $<$memory$>$}\newline
+{\ttfamily \#include "{}utility/tribool.\+hpp"{}}\newline
+{\ttfamily \#include "{}utility/array.\+hpp"{}}\newline
+{\ttfamily \#include "{}utility/binary\+\_\+word.\+hpp"{}}\newline
+{\ttfamily \#include "{}utility/exceptions.\+hpp"{}}\newline
+{\ttfamily \#include "{}geometry/box.\+hpp"{}}\newline
+{\ttfamily \#include "{}geometry/point.\+hpp"{}}\newline
+{\ttfamily \#include "{}geometry/list\+\_\+set.\+hpp"{}}\newline
+{\ttfamily \#include "{}numeric/numeric.\+hpp"{}}\newline
+{\ttfamily \#include "{}geometry/set\+\_\+interface.\+hpp"{}}\newline
+{\ttfamily \#include "{}geometry/paving\+\_\+interface.\+hpp"{}}\newline
+{\ttfamily \#include "{}algebra/vector.\+hpp"{}}\newline
+{\ttfamily \#include "{}geometry/grid.\+hpp"{}}\newline
+\doxysubsubsubsection*{Classes}
+\begin{DoxyCompactItemize}
+\item 
+class \mbox{\hyperlink{classAriadne_1_1GridAbstractCell}{Grid\+Abstract\+Cell}}
+\begin{DoxyCompactList}\small\item\em An abstract cell of a grid paving. This class is the base of the \doxylink{classAriadne_1_1GridCell}{Grid\+Cell} -\/ a regular cell on the \doxylink{classAriadne_1_1Grid}{Grid} and the \doxylink{classAriadne_1_1GridOpenCell}{Grid\+Open\+Cell} -\/ an open cell on a \doxylink{classAriadne_1_1Grid}{Grid}. Here we only store common data and operations. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1GridCell}{Grid\+Cell}}
+\begin{DoxyCompactList}\small\item\em A cell of a grid paving. Note that this class represents the closed cell. It is uniquely defined by the path from the primary cell and is exactly on cell in a grid. This is different from the \doxylink{classAriadne_1_1GridOpenCell}{Grid\+Open\+Cell} which is open and the path from the root cell defines its lower left sub cell wheres the complete open cell is a union of 4 cells. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1GridOpenCell}{Grid\+Open\+Cell}}
+\begin{DoxyCompactList}\small\item\em An open cell of a grid paving. This cell is open and the path from the primary cell defines its lower left sub cell wheres the complete open cell is a union of 4 cells. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsubsection*{Namespaces}
+\begin{DoxyCompactItemize}
+\item 
+namespace \mbox{\hyperlink{namespaceAriadne}{Ariadne}}
+\begin{DoxyCompactList}\small\item\em Top-\/level Ariadne namespace. \end{DoxyCompactList}\end{DoxyCompactItemize}

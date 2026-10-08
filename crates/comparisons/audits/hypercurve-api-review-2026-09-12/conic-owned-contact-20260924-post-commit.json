@@ -1,0 +1,11 @@
+{
+  "head": "2e13ca8308747e25728af3c35ae35f39609418e3",
+  "paths": {
+    "src/bezier_offset.rs": "b72d92284f16958e0af0c2c883906fa8c1b45db4830bd80eb1ba08a323fc299a",
+    "src/bezier_region.rs": "a3ffd1072cb5d7b7ef24e424488d8235625c0b0cc1fed1263df44603ac5c37a1"
+  },
+  "all_repositories_clean": true,
+  "repository_count": 30,
+  "all_owned_processes_reaped": true,
+  "pushed": false
+}

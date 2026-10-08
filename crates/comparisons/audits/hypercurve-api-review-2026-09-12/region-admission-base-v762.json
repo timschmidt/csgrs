@@ -1,0 +1,7 @@
+{
+  "hypercurve/src/bezier_region.rs": "9d9aa33c3a15a52f3df285935e26b23aba883185cdd9fbbe8804e96756eedf48",
+  "hypercurve/src/native_region_tests.rs": "debc88eaec2019c3f294a26a5e2703b890600fa7e6dcd4777cf142d6a0be152d",
+  "hypercurve/src/reconstruct.rs": "857ab572fea41f0fed90cb9689199c690306665b51a54a1d24ef7114b8d029f7",
+  "hypercurve/tests/hypercurve_reconstruct.rs": "da7ca30682868bd5a11331556deeaa7d62a3f09149c95612ea04daca3b3ce0dd",
+  "hypercurve/README.md": "17a9387158be1a73213b38c9f5742331a58f3305eef0b7ea471e4d5e9defdde5"
+}

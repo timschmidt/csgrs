@@ -1,0 +1,65 @@
+{
+  "records": [
+    [
+      "00-hyperreal-debug.json",
+      "78253eac9f9d803d6eddff72a847a69c1375cd185cfa684133bb73165474c9f1"
+    ],
+    [
+      "01-hyperreal-release-all.json",
+      "80b88bc7697d6e44d7ec3ab3b8110732b0f61dba89f0231baeeff885b9758094"
+    ],
+    [
+      "02-hyperreal-clippy.json",
+      "c2d92274870c484f2e9d4ef757492d4525bad48541f4d61f86b90a6a08add81a"
+    ],
+    [
+      "03-hyperreal-wasm.json",
+      "2e0fc004cce0b79c02034039669382dcb5b60354427ac2f45599cf08f2374cea"
+    ],
+    [
+      "04-hyperreal-fmt.json",
+      "06b58eee629039835b1ea64fe4f9b9771b836b454270faf3dc040f5dd723dc4d"
+    ],
+    [
+      "05-cache-tests-fmt.json",
+      "a6d4a7937c352b12586436a419fbcc59b4b7b480624321056b3789f8a55c8ad2"
+    ],
+    [
+      "06-hyperlattice.json",
+      "334ea4b4078b3833db62d16cd3c5df5f21868cc537db1c0d7a1d95322efc57ed"
+    ],
+    [
+      "07-hyperlimit.json",
+      "c1c8c197184ae93cd54d90dbff21df52acbf7ef66c765746112eb3a1bc49420e"
+    ],
+    [
+      "08-hypertri.json",
+      "99dc0418b3033460af7e72f3c9d21be058d43606f0a9d4b24b36a8473bf27ee0"
+    ],
+    [
+      "09-hypersolve.json",
+      "152b56791d308761f93dbc761a77a80c28a365c2fa2749839542a3e9dd03967a"
+    ],
+    [
+      "10-hypercurve-lib.json",
+      "8f0dfa59df8a632d157f1d1f94f02aa2093cb763f752ae61e5be948bb1dd4068"
+    ]
+  ],
+  "sourceHashes": [
+    [
+      "src/computable/node.rs",
+      "c6cb5f5a1b1c8c471fedba18a7bb3e85b139c372fc65da3b033b39c4ecd49c6e"
+    ],
+    [
+      "src/computable/node/representation.rs",
+      "6901ebf2795947942eea4356b0031fa2a5794187f79e30c076e5c6a01351d940"
+    ],
+    [
+      "src/computable/node/cache_rescale_tests.rs",
+      "699c725764121e771a693c5cd9090f654442e40f15156c70e53ccc3c70572a0a"
+    ]
+  ],
+  "baselineHash": "bcfd719d324cf2570e63a0cdaaf12d9c9e224417ee5ef700e21165d576e60ca4",
+  "scriptHash": "b298d3da5fc6f507237594f5f164eafff14f0922093059f041af4a6c283c1db3",
+  "verifiedBaselineFiles": 947
+}

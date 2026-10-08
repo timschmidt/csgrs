@@ -1,0 +1,12 @@
+{
+  "parent": "1210fbd67a43d910652d9a8cf6d5a8ac4127484f",
+  "baseline_manifest": "retained-coordinate-identity-20260924-v5-sources.json",
+  "physical_snapshot": "/tmp/hypercurve-retained-parallel-expression-v2-20260924",
+  "all_original_tests_unchanged": true,
+  "first_regression_identical_to_failed_v1": true,
+  "new_tests": [
+    "recursive_parallel_expression_signs_keep_the_selected_speed_sheet",
+    "recursive_parallel_expression_signs_reject_poles_and_zero_speed"
+  ],
+  "production_change": "Evaluate nonconstant-speed expressions through retained polynomial signs; preserve native specialization; guard retained rational denominators and positive speed; share sign-combination logic with dense radical replay."
+}

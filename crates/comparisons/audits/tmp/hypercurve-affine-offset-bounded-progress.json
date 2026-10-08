@@ -1,0 +1,4446 @@
+{
+  "updated_at": "2026-09-06 01:36:46 UTC",
+  "phase": "Completed this checkpoint: source and evidence committed on main; all functional checks and all 82 matched timing runs pass; all owned workers finished. Full goal remains active.",
+  "frozen_workspace": "/tmp/hypercurve-affine-offset-control.JVwgaq",
+  "frozen_target": "/home/tim/Documents/GitHub/workspace/hypercurve/target/affine-offset-control",
+  "active_sessions": {
+    "frozen_build": "complete, exit 0",
+    "hyperreal_gates": "complete, exit 0",
+    "hypersolve_gates": "complete, exit 0",
+    "hypercurve_gates": "complete, exit 0",
+    "cross_stack": "complete, exit 0",
+    "isolated_hyperreal": "complete, exit 0 (793 tests; frozen baseline excludes two finite-conversion tests and the five concurrent scheduling tests)",
+    "final_timings": "complete, exit 0"
+  },
+  "source_hashes": [
+    {
+      "file": "hyperreal/src/computable/node/algebra.rs",
+      "sha256": "b794e918d4d50ece7adf1bb3568c68771ccf52af998aa88275bcbb610ec0e2b6",
+      "bytes": 75996,
+      "lines": 1926
+    },
+    {
+      "file": "hyperreal/src/computable/node/tests.rs",
+      "sha256": "9da992f212905747d9810d481f195578edf8aaad80087985889be3afa6461399",
+      "bytes": 126081,
+      "lines": 3301
+    },
+    {
+      "file": "hyperreal/src/real/arithmetic/tests.rs",
+      "sha256": "6548c58f212828662076daff0556c833f811771e3f9064b76fa744a70b541604",
+      "bytes": 97958,
+      "lines": 2606
+    },
+    {
+      "file": "hypersolve/src/algebraic_fiber.rs",
+      "sha256": "2ec1ccb96feeb2dff2f62753964ac666f840b6ca24a3b75ed8113dcff0b0c966",
+      "bytes": 235818,
+      "lines": 6027
+    },
+    {
+      "file": "hypercurve/src/bezier_offset.rs",
+      "sha256": "a69348fb7ac4b88ddc5175b22081b48988aaddbbab4caec487872a5d0c779376",
+      "bytes": 7313731,
+      "lines": 168166
+    },
+    {
+      "file": "hyperreal/src/computable/node.rs",
+      "sha256": "960643cea4262f45e47c4f577ea38d4bcf1f3ed6672470a4729c1adf9680de3a",
+      "bytes": 1158,
+      "lines": 34
+    },
+    {
+      "file": "hyperreal/src/computable/node/representation.rs",
+      "sha256": "d2eb416cc9595697584f9a1d714a41b6a8f7c4ddb8867b220b7e73883416c2ab",
+      "bytes": 19897,
+      "lines": 531
+    },
+    {
+      "file": "hyperreal/src/computable/node/approximation_queries.rs",
+      "sha256": "81b4a2fcb2303d35634a4c2f8136c5f968d43112303302bccd4a2cc6fe24a297",
+      "bytes": 37782,
+      "lines": 876
+    },
+    {
+      "file": "hyperreal/src/computable/node/linear_demand_tests.rs",
+      "sha256": "33e292ab9fbee54c0f04f38435732997d6e49e407db79d33bb33b87856c39816",
+      "bytes": 9347,
+      "lines": 226
+    }
+  ],
+  "own_files": [
+    "hyperreal/src/computable/node/algebra.rs",
+    "hyperreal/src/computable/node/tests.rs",
+    "hyperreal/src/real/arithmetic/tests.rs",
+    "hypersolve/src/algebraic_fiber.rs",
+    "hypercurve/src/bezier_offset.rs"
+  ],
+  "concurrent_files": [
+    "hyperreal/src/computable/node.rs",
+    "hyperreal/src/computable/node/representation.rs",
+    "hyperreal/src/computable/node/approximation_queries.rs",
+    "hyperreal/src/computable/node/linear_demand_tests.rs"
+  ],
+  "concurrent_work": "Committed as Hyperreal 21e76ead8351f5f770f9c97165606ec969310cf9. All nine qualified source hashes still match. All live validation includes this scheduling change; all frozen timing comparisons exclude it on both sides.",
+  "rejected_eager_micro": {
+    "baseline": [
+      {
+        "log": "/tmp/hyperreal-affine-offset-micro-baseline-1.log",
+        "repetition": 1,
+        "rows": [
+          {
+            "name": "nested_midpoint_conversion",
+            "iterations": 100000,
+            "nanoseconds_per_iteration": 1109.03136,
+            "checksum": "1005822192715632416"
+          },
+          {
+            "name": "opaque_midpoint_conversion",
+            "iterations": 100000,
+            "nanoseconds_per_iteration": 762.77901,
+            "checksum": "15592348946051803328"
+          },
+          {
+            "name": "unrelated_symbols",
+            "iterations": 100000,
+            "nanoseconds_per_iteration": 619.14365,
+            "checksum": "14127170764991393440"
+          },
+          {
+            "name": "unrelated_affine_bases",
+            "iterations": 100000,
+            "nanoseconds_per_iteration": 541.77935,
+            "checksum": "173030917332500000"
+          }
+        ]
+      },
+      {
+        "log": "/tmp/hyperreal-affine-offset-micro-baseline-2.log",
+        "repetition": 2,
+        "rows": [
+          {
+            "name": "nested_midpoint_conversion",
+            "iterations": 100000,
+            "nanoseconds_per_iteration": 1128.77202,
+            "checksum": "1005822192715632416"
+          },
+          {
+            "name": "opaque_midpoint_conversion",
+            "iterations": 100000,
+            "nanoseconds_per_iteration": 718.90132,
+            "checksum": "15592348946051803328"
+          },
+          {
+            "name": "unrelated_symbols",
+            "iterations": 100000,
+            "nanoseconds_per_iteration": 615.20532,
+            "checksum": "14127170764991393440"
+          },
+          {
+            "name": "unrelated_affine_bases",
+            "iterations": 100000,
+            "nanoseconds_per_iteration": 524.03527,
+            "checksum": "173030917332500000"
+          }
+        ]
+      },
+      {
+        "log": "/tmp/hyperreal-affine-offset-micro-baseline-3.log",
+        "repetition": 3,
+        "rows": [
+          {
+            "name": "nested_midpoint_conversion",
+            "iterations": 100000,
+            "nanoseconds_per_iteration": 1053.1142,
+            "checksum": "1005822192715632416"
+          },
+          {
+            "name": "opaque_midpoint_conversion",
+            "iterations": 100000,
+            "nanoseconds_per_iteration": 735.47837,
+            "checksum": "15592348946051803328"
+          },
+          {
+            "name": "unrelated_symbols",
+            "iterations": 100000,
+            "nanoseconds_per_iteration": 625.55511,
+            "checksum": "14127170764991393440"
+          },
+          {
+            "name": "unrelated_affine_bases",
+            "iterations": 100000,
+            "nanoseconds_per_iteration": 536.7905,
+            "checksum": "173030917332500000"
+          }
+        ]
+      },
+      {
+        "log": "/tmp/hyperreal-affine-offset-micro-baseline-4.log",
+        "repetition": 4,
+        "rows": [
+          {
+            "name": "nested_midpoint_conversion",
+            "iterations": 100000,
+            "nanoseconds_per_iteration": 1034.50197,
+            "checksum": "1005822192715632416"
+          },
+          {
+            "name": "opaque_midpoint_conversion",
+            "iterations": 100000,
+            "nanoseconds_per_iteration": 715.96542,
+            "checksum": "15592348946051803328"
+          },
+          {
+            "name": "unrelated_symbols",
+            "iterations": 100000,
+            "nanoseconds_per_iteration": 612.6372,
+            "checksum": "14127170764991393440"
+          },
+          {
+            "name": "unrelated_affine_bases",
+            "iterations": 100000,
+            "nanoseconds_per_iteration": 523.51301,
+            "checksum": "173030917332500000"
+          }
+        ]
+      },
+      {
+        "log": "/tmp/hyperreal-affine-offset-micro-baseline-5.log",
+        "repetition": 5,
+        "rows": [
+          {
+            "name": "nested_midpoint_conversion",
+            "iterations": 100000,
+            "nanoseconds_per_iteration": 1042.47713,
+            "checksum": "1005822192715632416"
+          },
+          {
+            "name": "opaque_midpoint_conversion",
+            "iterations": 100000,
+            "nanoseconds_per_iteration": 717.80699,
+            "checksum": "15592348946051803328"
+          },
+          {
+            "name": "unrelated_symbols",
+            "iterations": 100000,
+            "nanoseconds_per_iteration": 626.12728,
+            "checksum": "14127170764991393440"
+          },
+          {
+            "name": "unrelated_affine_bases",
+            "iterations": 100000,
+            "nanoseconds_per_iteration": 527.06006,
+            "checksum": "173030917332500000"
+          }
+        ]
+      }
+    ],
+    "candidate": [
+      {
+        "log": "/tmp/hyperreal-affine-offset-micro-candidate-1.log",
+        "repetition": 1,
+        "rows": [
+          {
+            "name": "nested_midpoint_conversion",
+            "iterations": 100000,
+            "nanoseconds_per_iteration": 2032.54715,
+            "checksum": "1005822192715632416"
+          },
+          {
+            "name": "opaque_midpoint_conversion",
+            "iterations": 100000,
+            "nanoseconds_per_iteration": 464.23897,
+            "checksum": "15592348946051803328"
+          },
+          {
+            "name": "unrelated_symbols",
+            "iterations": 100000,
+            "nanoseconds_per_iteration": 624.07592,
+            "checksum": "14127170764991393440"
+          },
+          {
+            "name": "unrelated_affine_bases",
+            "iterations": 100000,
+            "nanoseconds_per_iteration": 555.8013,
+            "checksum": "173030917332500000"
+          }
+        ]
+      },
+      {
+        "log": "/tmp/hyperreal-affine-offset-micro-candidate-2.log",
+        "repetition": 2,
+        "rows": [
+          {
+            "name": "nested_midpoint_conversion",
+            "iterations": 100000,
+            "nanoseconds_per_iteration": 2118.32907,
+            "checksum": "1005822192715632416"
+          },
+          {
+            "name": "opaque_midpoint_conversion",
+            "iterations": 100000,
+            "nanoseconds_per_iteration": 491.25082,
+            "checksum": "15592348946051803328"
+          },
+          {
+            "name": "unrelated_symbols",
+            "iterations": 100000,
+            "nanoseconds_per_iteration": 626.41056,
+            "checksum": "14127170764991393440"
+          },
+          {
+            "name": "unrelated_affine_bases",
+            "iterations": 100000,
+            "nanoseconds_per_iteration": 562.62613,
+            "checksum": "173030917332500000"
+          }
+        ]
+      },
+      {
+        "log": "/tmp/hyperreal-affine-offset-micro-candidate-3.log",
+        "repetition": 3,
+        "rows": [
+          {
+            "name": "nested_midpoint_conversion",
+            "iterations": 100000,
+            "nanoseconds_per_iteration": 2044.25015,
+            "checksum": "1005822192715632416"
+          },
+          {
+            "name": "opaque_midpoint_conversion",
+            "iterations": 100000,
+            "nanoseconds_per_iteration": 460.63742,
+            "checksum": "15592348946051803328"
+          },
+          {
+            "name": "unrelated_symbols",
+            "iterations": 100000,
+            "nanoseconds_per_iteration": 612.04903,
+            "checksum": "14127170764991393440"
+          },
+          {
+            "name": "unrelated_affine_bases",
+            "iterations": 100000,
+            "nanoseconds_per_iteration": 558.05394,
+            "checksum": "173030917332500000"
+          }
+        ]
+      },
+      {
+        "log": "/tmp/hyperreal-affine-offset-micro-candidate-4.log",
+        "repetition": 4,
+        "rows": [
+          {
+            "name": "nested_midpoint_conversion",
+            "iterations": 100000,
+            "nanoseconds_per_iteration": 2080.85325,
+            "checksum": "1005822192715632416"
+          },
+          {
+            "name": "opaque_midpoint_conversion",
+            "iterations": 100000,
+            "nanoseconds_per_iteration": 462.03342,
+            "checksum": "15592348946051803328"
+          },
+          {
+            "name": "unrelated_symbols",
+            "iterations": 100000,
+            "nanoseconds_per_iteration": 623.57995,
+            "checksum": "14127170764991393440"
+          },
+          {
+            "name": "unrelated_affine_bases",
+            "iterations": 100000,
+            "nanoseconds_per_iteration": 583.5148,
+            "checksum": "173030917332500000"
+          }
+        ]
+      },
+      {
+        "log": "/tmp/hyperreal-affine-offset-micro-candidate-5.log",
+        "repetition": 5,
+        "rows": [
+          {
+            "name": "nested_midpoint_conversion",
+            "iterations": 100000,
+            "nanoseconds_per_iteration": 2056.6562,
+            "checksum": "1005822192715632416"
+          },
+          {
+            "name": "opaque_midpoint_conversion",
+            "iterations": 100000,
+            "nanoseconds_per_iteration": 462.69238,
+            "checksum": "15592348946051803328"
+          },
+          {
+            "name": "unrelated_symbols",
+            "iterations": 100000,
+            "nanoseconds_per_iteration": 617.80905,
+            "checksum": "14127170764991393440"
+          },
+          {
+            "name": "unrelated_affine_bases",
+            "iterations": 100000,
+            "nanoseconds_per_iteration": 554.43579,
+            "checksum": "173030917332500000"
+          }
+        ]
+      }
+    ],
+    "median_rows": [
+      {
+        "name": "nested_midpoint_conversion",
+        "iterations": 100000,
+        "checksum": "1005822192715632416",
+        "baseline_nanoseconds": 1053.1142,
+        "candidate_nanoseconds": 2056.6562,
+        "change_percent": 95.29279920449272
+      },
+      {
+        "name": "opaque_midpoint_conversion",
+        "iterations": 100000,
+        "checksum": "15592348946051803328",
+        "baseline_nanoseconds": 718.90132,
+        "candidate_nanoseconds": 462.69238,
+        "change_percent": -35.638958070072825
+      },
+      {
+        "name": "unrelated_symbols",
+        "iterations": 100000,
+        "checksum": "14127170764991393440",
+        "baseline_nanoseconds": 619.14365,
+        "candidate_nanoseconds": 623.57995,
+        "change_percent": 0.7165219250815369
+      },
+      {
+        "name": "unrelated_affine_bases",
+        "iterations": 100000,
+        "checksum": "173030917332500000",
+        "baseline_nanoseconds": 527.06006,
+        "candidate_nanoseconds": 558.05394,
+        "change_percent": 5.880521472258771
+      }
+    ]
+  },
+  "demand_driven_pre_boundary_micro": {
+    "baseline": [
+      {
+        "log": "/tmp/hyperreal-affine-offset-demand-micro-baseline-1.log",
+        "repetition": 1,
+        "rows": [
+          {
+            "name": "nested_midpoint_conversion",
+            "iterations": 100000,
+            "nanoseconds_per_iteration": 1056.32554,
+            "checksum": "1005822192715632416"
+          },
+          {
+            "name": "opaque_midpoint_conversion",
+            "iterations": 100000,
+            "nanoseconds_per_iteration": 709.38381,
+            "checksum": "15592348946051803328"
+          },
+          {
+            "name": "unrelated_symbols",
+            "iterations": 100000,
+            "nanoseconds_per_iteration": 625.64895,
+            "checksum": "14127170764991393440"
+          },
+          {
+            "name": "unrelated_affine_bases",
+            "iterations": 100000,
+            "nanoseconds_per_iteration": 529.19185,
+            "checksum": "173030917332500000"
+          }
+        ]
+      },
+      {
+        "log": "/tmp/hyperreal-affine-offset-demand-micro-baseline-2.log",
+        "repetition": 2,
+        "rows": [
+          {
+            "name": "nested_midpoint_conversion",
+            "iterations": 100000,
+            "nanoseconds_per_iteration": 1049.45262,
+            "checksum": "1005822192715632416"
+          },
+          {
+            "name": "opaque_midpoint_conversion",
+            "iterations": 100000,
+            "nanoseconds_per_iteration": 727.64845,
+            "checksum": "15592348946051803328"
+          },
+          {
+            "name": "unrelated_symbols",
+            "iterations": 100000,
+            "nanoseconds_per_iteration": 625.96423,
+            "checksum": "14127170764991393440"
+          },
+          {
+            "name": "unrelated_affine_bases",
+            "iterations": 100000,
+            "nanoseconds_per_iteration": 536.83223,
+            "checksum": "173030917332500000"
+          }
+        ]
+      },
+      {
+        "log": "/tmp/hyperreal-affine-offset-demand-micro-baseline-3.log",
+        "repetition": 3,
+        "rows": [
+          {
+            "name": "nested_midpoint_conversion",
+            "iterations": 100000,
+            "nanoseconds_per_iteration": 1072.34994,
+            "checksum": "1005822192715632416"
+          },
+          {
+            "name": "opaque_midpoint_conversion",
+            "iterations": 100000,
+            "nanoseconds_per_iteration": 729.42844,
+            "checksum": "15592348946051803328"
+          },
+          {
+            "name": "unrelated_symbols",
+            "iterations": 100000,
+            "nanoseconds_per_iteration": 639.02543,
+            "checksum": "14127170764991393440"
+          },
+          {
+            "name": "unrelated_affine_bases",
+            "iterations": 100000,
+            "nanoseconds_per_iteration": 532.66461,
+            "checksum": "173030917332500000"
+          }
+        ]
+      },
+      {
+        "log": "/tmp/hyperreal-affine-offset-demand-micro-baseline-4.log",
+        "repetition": 4,
+        "rows": [
+          {
+            "name": "nested_midpoint_conversion",
+            "iterations": 100000,
+            "nanoseconds_per_iteration": 1049.24252,
+            "checksum": "1005822192715632416"
+          },
+          {
+            "name": "opaque_midpoint_conversion",
+            "iterations": 100000,
+            "nanoseconds_per_iteration": 728.37941,
+            "checksum": "15592348946051803328"
+          },
+          {
+            "name": "unrelated_symbols",
+            "iterations": 100000,
+            "nanoseconds_per_iteration": 630.46641,
+            "checksum": "14127170764991393440"
+          },
+          {
+            "name": "unrelated_affine_bases",
+            "iterations": 100000,
+            "nanoseconds_per_iteration": 540.43298,
+            "checksum": "173030917332500000"
+          }
+        ]
+      },
+      {
+        "log": "/tmp/hyperreal-affine-offset-demand-micro-baseline-5.log",
+        "repetition": 5,
+        "rows": [
+          {
+            "name": "nested_midpoint_conversion",
+            "iterations": 100000,
+            "nanoseconds_per_iteration": 1043.13135,
+            "checksum": "1005822192715632416"
+          },
+          {
+            "name": "opaque_midpoint_conversion",
+            "iterations": 100000,
+            "nanoseconds_per_iteration": 727.20898,
+            "checksum": "15592348946051803328"
+          },
+          {
+            "name": "unrelated_symbols",
+            "iterations": 100000,
+            "nanoseconds_per_iteration": 609.09137,
+            "checksum": "14127170764991393440"
+          },
+          {
+            "name": "unrelated_affine_bases",
+            "iterations": 100000,
+            "nanoseconds_per_iteration": 529.19285,
+            "checksum": "173030917332500000"
+          }
+        ]
+      }
+    ],
+    "candidate": [
+      {
+        "log": "/tmp/hyperreal-affine-offset-demand-micro-candidate-1.log",
+        "repetition": 1,
+        "rows": [
+          {
+            "name": "nested_midpoint_conversion",
+            "iterations": 100000,
+            "nanoseconds_per_iteration": 1071.24302,
+            "checksum": "1005822192715632416"
+          },
+          {
+            "name": "opaque_midpoint_conversion",
+            "iterations": 100000,
+            "nanoseconds_per_iteration": 740.80006,
+            "checksum": "15592348946051803328"
+          },
+          {
+            "name": "unrelated_symbols",
+            "iterations": 100000,
+            "nanoseconds_per_iteration": 624.29533,
+            "checksum": "14127170764991393440"
+          },
+          {
+            "name": "unrelated_affine_bases",
+            "iterations": 100000,
+            "nanoseconds_per_iteration": 540.71966,
+            "checksum": "173030917332500000"
+          }
+        ]
+      },
+      {
+        "log": "/tmp/hyperreal-affine-offset-demand-micro-candidate-2.log",
+        "repetition": 2,
+        "rows": [
+          {
+            "name": "nested_midpoint_conversion",
+            "iterations": 100000,
+            "nanoseconds_per_iteration": 1073.51576,
+            "checksum": "1005822192715632416"
+          },
+          {
+            "name": "opaque_midpoint_conversion",
+            "iterations": 100000,
+            "nanoseconds_per_iteration": 733.40397,
+            "checksum": "15592348946051803328"
+          },
+          {
+            "name": "unrelated_symbols",
+            "iterations": 100000,
+            "nanoseconds_per_iteration": 623.17061,
+            "checksum": "14127170764991393440"
+          },
+          {
+            "name": "unrelated_affine_bases",
+            "iterations": 100000,
+            "nanoseconds_per_iteration": 547.88557,
+            "checksum": "173030917332500000"
+          }
+        ]
+      },
+      {
+        "log": "/tmp/hyperreal-affine-offset-demand-micro-candidate-3.log",
+        "repetition": 3,
+        "rows": [
+          {
+            "name": "nested_midpoint_conversion",
+            "iterations": 100000,
+            "nanoseconds_per_iteration": 1111.11399,
+            "checksum": "1005822192715632416"
+          },
+          {
+            "name": "opaque_midpoint_conversion",
+            "iterations": 100000,
+            "nanoseconds_per_iteration": 752.45176,
+            "checksum": "15592348946051803328"
+          },
+          {
+            "name": "unrelated_symbols",
+            "iterations": 100000,
+            "nanoseconds_per_iteration": 632.0869,
+            "checksum": "14127170764991393440"
+          },
+          {
+            "name": "unrelated_affine_bases",
+            "iterations": 100000,
+            "nanoseconds_per_iteration": 548.51493,
+            "checksum": "173030917332500000"
+          }
+        ]
+      },
+      {
+        "log": "/tmp/hyperreal-affine-offset-demand-micro-candidate-4.log",
+        "repetition": 4,
+        "rows": [
+          {
+            "name": "nested_midpoint_conversion",
+            "iterations": 100000,
+            "nanoseconds_per_iteration": 1109.96727,
+            "checksum": "1005822192715632416"
+          },
+          {
+            "name": "opaque_midpoint_conversion",
+            "iterations": 100000,
+            "nanoseconds_per_iteration": 747.73498,
+            "checksum": "15592348946051803328"
+          },
+          {
+            "name": "unrelated_symbols",
+            "iterations": 100000,
+            "nanoseconds_per_iteration": 627.20904,
+            "checksum": "14127170764991393440"
+          },
+          {
+            "name": "unrelated_affine_bases",
+            "iterations": 100000,
+            "nanoseconds_per_iteration": 541.08924,
+            "checksum": "173030917332500000"
+          }
+        ]
+      },
+      {
+        "log": "/tmp/hyperreal-affine-offset-demand-micro-candidate-5.log",
+        "repetition": 5,
+        "rows": [
+          {
+            "name": "nested_midpoint_conversion",
+            "iterations": 100000,
+            "nanoseconds_per_iteration": 1181.91014,
+            "checksum": "1005822192715632416"
+          },
+          {
+            "name": "opaque_midpoint_conversion",
+            "iterations": 100000,
+            "nanoseconds_per_iteration": 768.15809,
+            "checksum": "15592348946051803328"
+          },
+          {
+            "name": "unrelated_symbols",
+            "iterations": 100000,
+            "nanoseconds_per_iteration": 631.32825,
+            "checksum": "14127170764991393440"
+          },
+          {
+            "name": "unrelated_affine_bases",
+            "iterations": 100000,
+            "nanoseconds_per_iteration": 547.384,
+            "checksum": "173030917332500000"
+          }
+        ]
+      }
+    ],
+    "median_rows": [
+      {
+        "name": "nested_midpoint_conversion",
+        "iterations": 100000,
+        "checksum": "1005822192715632416",
+        "baseline_nanoseconds": 1049.45262,
+        "candidate_nanoseconds": 1109.96727,
+        "change_percent": 5.766306057723702
+      },
+      {
+        "name": "opaque_midpoint_conversion",
+        "iterations": 100000,
+        "checksum": "15592348946051803328",
+        "baseline_nanoseconds": 727.64845,
+        "candidate_nanoseconds": 747.73498,
+        "change_percent": 2.760471763528116
+      },
+      {
+        "name": "unrelated_symbols",
+        "iterations": 100000,
+        "checksum": "14127170764991393440",
+        "baseline_nanoseconds": 625.96423,
+        "candidate_nanoseconds": 627.20904,
+        "change_percent": 0.19886280083447616
+      },
+      {
+        "name": "unrelated_affine_bases",
+        "iterations": 100000,
+        "checksum": "173030917332500000",
+        "baseline_nanoseconds": 532.66461,
+        "candidate_nanoseconds": 547.384,
+        "change_percent": 2.76335046925682
+      }
+    ]
+  },
+  "pre_boundary_broad_comparison": {
+    "session": 48930,
+    "exit_code": 143,
+    "reason": "Intentionally stopped after finding unchecked binary exponent addition. Eight invocations completed; next candidate chord interrupted. Not a complete paired sweep."
+  },
+  "boundary_red": "/tmp/hyperreal-affine-offset-bounded-extreme-red.log",
+  "boundary_green": "/tmp/hyperreal-affine-offset-bounded-affine-green.log",
+  "next": [
+    "Do not redo completed affine-offset qualification. The remaining public ZeroKnowledge as ZeroStatus export is the next concrete API cleanup; use the canonical name, without a replacement shim, and update its ten Rust consumers.",
+    "Continue authoritative CurveRegion2 kernel deduplication and completeness/performance work. ExactCorelib idea mining/uplift remains closed; full Hypercurve release readiness and slow-fixture memory accounting remain open.",
+    "Stay on main, preserve any new concurrent edits, and commit worthwhile verified changes. Do not mark the full goal complete or blocked based on this checkpoint."
+  ],
+  "final_artifacts": {
+    "binaries": {
+      "baseline": {
+        "test": {
+          "path": "/tmp/hypercurve-native-horner-frozen-candidate-test",
+          "bytes": 27859088,
+          "sha256": "1192c498330a54cec720455173368da2d0cb26a33ba3cecf51f1b240ea7d5a6f"
+        },
+        "region": {
+          "path": "/tmp/hypercurve-native-horner-frozen-candidate-region",
+          "bytes": 15418440,
+          "sha256": "c9945608f6f08de1656261aeda586c744c26ff8f02c60751ba53da0d9d41b7c6"
+        },
+        "rational": {
+          "path": "/tmp/hypercurve-native-horner-frozen-candidate-rational",
+          "bytes": 10960104,
+          "sha256": "c2ae6de960df0446a3739c3c7634e8631339ef4c1a816a5dabff50dd96044b71"
+        }
+      },
+      "candidate": {
+        "test": {
+          "path": "/tmp/hypercurve-affine-offset-bounded-frozen-candidate-test",
+          "bytes": 27931120,
+          "sha256": "2c33358477c5344724ac6590e0a39f3d59e917024c0822b1a0eea0f4115be9b9"
+        },
+        "region": {
+          "path": "/tmp/hypercurve-affine-offset-bounded-frozen-candidate-region",
+          "bytes": 15424272,
+          "sha256": "e5c0ff16f2da3ea0ba3c90b5f2eddc010c7438cdf4c153ce5636c15feea666ca"
+        },
+        "rational": {
+          "path": "/tmp/hypercurve-affine-offset-bounded-frozen-candidate-rational",
+          "bytes": 10965704,
+          "sha256": "2523ff158d53e2837a35153f4f5e751a570cd2e419d305ab9a284e09aa1bbf3f"
+        }
+      }
+    },
+    "memory": {
+      "small": {
+        "baseline": {
+          "allocations": 11963,
+          "temporary_allocations": 473,
+          "peak_heap_reported": "243.72K",
+          "end_live_heap_reported": "92.47K",
+          "recording": "/tmp/hypercurve-affine-offset-bounded-baseline-small.heap.zst",
+          "recording_sha256": "48438e6295e749a376a29b6b7894b96db6e928bc87b271a4dfec39b390ba4f68",
+          "summary": "/tmp/hypercurve-affine-offset-bounded-baseline-small-heap-summary.log"
+        },
+        "candidate": {
+          "allocations": 11963,
+          "temporary_allocations": 473,
+          "peak_heap_reported": "244.94K",
+          "end_live_heap_reported": "92.47K",
+          "recording": "/tmp/hypercurve-affine-offset-bounded-candidate-small.heap.zst",
+          "recording_sha256": "4c242b18c08467068af7dade580662590e725ba82a60b372197edc38f846ffac",
+          "summary": "/tmp/hypercurve-affine-offset-bounded-candidate-small-heap-summary.log"
+        }
+      },
+      "rational": {
+        "baseline": {
+          "allocations": 6192,
+          "temporary_allocations": 425,
+          "peak_heap_reported": "272.53K",
+          "end_live_heap_reported": "166.57K",
+          "recording": "/tmp/hypercurve-affine-offset-bounded-baseline-rational.heap.zst",
+          "recording_sha256": "a9d2e04c2ddd99a18bef18289871beb2c4aed78b97c4bfbca3e79e995d28f6d3",
+          "summary": "/tmp/hypercurve-affine-offset-bounded-baseline-rational-heap-summary.log"
+        },
+        "candidate": {
+          "allocations": 6192,
+          "temporary_allocations": 425,
+          "peak_heap_reported": "272.53K",
+          "end_live_heap_reported": "166.57K",
+          "recording": "/tmp/hypercurve-affine-offset-bounded-candidate-rational.heap.zst",
+          "recording_sha256": "faf0938c6913f179151bfa45a14e542e43287062efa0e14f0ad20693b1de755f",
+          "summary": "/tmp/hypercurve-affine-offset-bounded-candidate-rational-heap-summary.log"
+        }
+      }
+    },
+    "micro_memory": {
+      "4": {
+        "baseline": {
+          "allocations": 1132,
+          "temporary_allocations": 152,
+          "peak_heap_reported": "81.48K",
+          "end_live_heap_reported": "3.41K",
+          "recording": "/tmp/hyperreal-affine-offset-bounded-baseline-micro4.heap.zst",
+          "recording_sha256": "2f592d24c9bf84acee15ac974ea94ab170057190b59d452d2d09f540febbd6c6",
+          "summary": "/tmp/hyperreal-affine-offset-bounded-baseline-micro4-heap-summary.log"
+        },
+        "candidate": {
+          "allocations": 1139,
+          "temporary_allocations": 153,
+          "peak_heap_reported": "81.48K",
+          "end_live_heap_reported": "3.41K",
+          "recording": "/tmp/hyperreal-affine-offset-bounded-candidate-micro4.heap.zst",
+          "recording_sha256": "cd8866f215a7f0c763aa302f01816220bca00165e46de8108cc43487a9111faf",
+          "summary": "/tmp/hyperreal-affine-offset-bounded-candidate-micro4-heap-summary.log"
+        }
+      },
+      "16": {
+        "baseline": {
+          "allocations": 1720,
+          "temporary_allocations": 320,
+          "peak_heap_reported": "81.48K",
+          "end_live_heap_reported": "3.41K",
+          "recording": "/tmp/hyperreal-affine-offset-bounded-baseline-micro16.heap.zst",
+          "recording_sha256": "227cf2f682588efd6a52103868973eafefdf4ca2738f05d14dafc917521707f1",
+          "summary": "/tmp/hyperreal-affine-offset-bounded-baseline-micro16-heap-summary.log"
+        },
+        "candidate": {
+          "allocations": 1727,
+          "temporary_allocations": 321,
+          "peak_heap_reported": "81.48K",
+          "end_live_heap_reported": "3.41K",
+          "recording": "/tmp/hyperreal-affine-offset-bounded-candidate-micro16.heap.zst",
+          "recording_sha256": "7498c3fa036d497773a9a7c7212db82e87c715509b4a6339daa02fee537ad807",
+          "summary": "/tmp/hyperreal-affine-offset-bounded-candidate-micro16-heap-summary.log"
+        }
+      },
+      "64": {
+        "baseline": {
+          "allocations": 4072,
+          "temporary_allocations": 992,
+          "peak_heap_reported": "81.48K",
+          "end_live_heap_reported": "3.41K",
+          "recording": "/tmp/hyperreal-affine-offset-bounded-baseline-micro64.heap.zst",
+          "recording_sha256": "b88fbc3bfbef77243657fe682c99c7a52ea9198d8547909c94b4a9542bb7be6e",
+          "summary": "/tmp/hyperreal-affine-offset-bounded-baseline-micro64-heap-summary.log"
+        },
+        "candidate": {
+          "allocations": 4079,
+          "temporary_allocations": 993,
+          "peak_heap_reported": "81.48K",
+          "end_live_heap_reported": "3.41K",
+          "recording": "/tmp/hyperreal-affine-offset-bounded-candidate-micro64.heap.zst",
+          "recording_sha256": "2811ebb38f8339e54a702c267dc5a288708cc48e32ddb314c365528f1550570a",
+          "summary": "/tmp/hyperreal-affine-offset-bounded-candidate-micro64-heap-summary.log"
+        }
+      }
+    }
+  },
+  "frozen_source_diff": [
+    {
+      "file": "hyperreal/src/computable/node/algebra.rs",
+      "baseline_sha256": "a7cff21f30cc6ba38c39ef1f0a3c16eee7aa64aee869719c735647bb8b25c719",
+      "candidate_sha256": "b794e918d4d50ece7adf1bb3568c68771ccf52af998aa88275bcbb610ec0e2b6"
+    },
+    {
+      "file": "hyperreal/src/computable/node/tests.rs",
+      "baseline_sha256": "e7bb937d72aaf768683783ef4107296301f6baf23c367ee6409bcfd8399031c9",
+      "candidate_sha256": "9da992f212905747d9810d481f195578edf8aaad80087985889be3afa6461399"
+    },
+    {
+      "file": "hyperreal/src/real/arithmetic/tests.rs",
+      "baseline_sha256": "456bc575a2234aa7d7332489939b156bfdbcd9ce4664caf229406c4affeb884a",
+      "candidate_sha256": "6548c58f212828662076daff0556c833f811771e3f9064b76fa744a70b541604"
+    },
+    {
+      "file": "hypersolve/src/algebraic_fiber.rs",
+      "baseline_sha256": "f4c567e821e175ff61d35ae1e2bc3357a0bab597458717cdc88596239615b96c",
+      "candidate_sha256": "2ec1ccb96feeb2dff2f62753964ac666f840b6ca24a3b75ed8113dcff0b0c966"
+    },
+    {
+      "file": "hypercurve/src/bezier_offset.rs",
+      "baseline_sha256": "b1b71f834e01c61d683c28d4871b65f92d53a83366cbf5758132fd39f5577b0b",
+      "candidate_sha256": "a69348fb7ac4b88ddc5175b22081b48988aaddbbab4caec487872a5d0c779376"
+    }
+  ],
+  "commits": {
+    "hyperreal": "55e142fc8ba1dfae177edb08a9835d26b5de6c3c",
+    "hypersolve": "d9e21c6f0639bc0d92afe929e7c392a475c0e094",
+    "hypercurve": "75598e6915cab5d340e7e6660f410d94fe3ccecf",
+    "concurrent_hyperreal": "21e76ead8351f5f770f9c97165606ec969310cf9"
+  },
+  "final_qualification": {
+    "hyperreal-default": {
+      "path": "/tmp/hyperreal-affine-offset-bounded-default.log",
+      "targets": 18,
+      "passed": 702,
+      "failed": 0,
+      "ignored": 0,
+      "failures": [],
+      "longest_targets": [
+        {
+          "passed": 642,
+          "seconds": 5.64
+        },
+        {
+          "passed": 16,
+          "seconds": 2.15
+        },
+        {
+          "passed": 5,
+          "seconds": 1.22
+        },
+        {
+          "passed": 4,
+          "seconds": 0.5
+        },
+        {
+          "passed": 6,
+          "seconds": 0.13
+        },
+        {
+          "passed": 9,
+          "seconds": 0.08
+        }
+      ],
+      "tail": [
+        "test benchmark_report::tests::manifest_catalog_matches_registered_targets ... ok",
+        "",
+        "test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s"
+      ]
+    },
+    "hyperreal-all-targets": {
+      "path": "/tmp/hyperreal-affine-offset-bounded-all-targets.log",
+      "targets": 19,
+      "passed": 802,
+      "failed": 0,
+      "ignored": 0,
+      "failures": [],
+      "longest_targets": [
+        {
+          "passed": 725,
+          "seconds": 6.18
+        },
+        {
+          "passed": 16,
+          "seconds": 1.34
+        },
+        {
+          "passed": 6,
+          "seconds": 0.94
+        },
+        {
+          "passed": 5,
+          "seconds": 0.71
+        },
+        {
+          "passed": 10,
+          "seconds": 0.09
+        },
+        {
+          "passed": 9,
+          "seconds": 0.05
+        }
+      ],
+      "tail": [
+        "test benchmark_report::tests::manifest_catalog_matches_registered_targets ... ok",
+        "",
+        "test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s"
+      ]
+    },
+    "hyperreal-release": {
+      "path": "/tmp/hyperreal-affine-offset-bounded-release.log",
+      "targets": 14,
+      "passed": 800,
+      "failed": 0,
+      "ignored": 0,
+      "failures": [],
+      "longest_targets": [
+        {
+          "passed": 725,
+          "seconds": 0.7
+        },
+        {
+          "passed": 16,
+          "seconds": 0.1
+        },
+        {
+          "passed": 6,
+          "seconds": 0.03
+        },
+        {
+          "passed": 5,
+          "seconds": 0.02
+        },
+        {
+          "passed": 1,
+          "seconds": 0.01
+        },
+        {
+          "passed": 10,
+          "seconds": 0.01
+        }
+      ],
+      "tail": [
+        "test every_public_kind_and_private_optimized_certificate_crosses_scalar_dispatch ... ok",
+        "",
+        "test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.03s"
+      ]
+    },
+    "hyperreal-isolated-release": {
+      "path": "/tmp/hyperreal-affine-offset-bounded-isolated-release.log",
+      "targets": 14,
+      "passed": 793,
+      "failed": 0,
+      "ignored": 0,
+      "failures": [],
+      "longest_targets": [
+        {
+          "passed": 718,
+          "seconds": 0.62
+        },
+        {
+          "passed": 16,
+          "seconds": 0.09
+        },
+        {
+          "passed": 5,
+          "seconds": 0.02
+        },
+        {
+          "passed": 6,
+          "seconds": 0.02
+        },
+        {
+          "passed": 1,
+          "seconds": 0.01
+        },
+        {
+          "passed": 10,
+          "seconds": 0.01
+        }
+      ],
+      "tail": [
+        "test every_public_kind_and_private_optimized_certificate_crosses_scalar_dispatch ... ok",
+        "",
+        "test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s"
+      ]
+    },
+    "hypersolve-minimal": {
+      "path": "/tmp/hypersolve-affine-offset-bounded-minimal.log",
+      "targets": 8,
+      "passed": 793,
+      "failed": 0,
+      "ignored": 0,
+      "failures": [],
+      "longest_targets": [
+        {
+          "passed": 429,
+          "seconds": 6.78
+        },
+        {
+          "passed": 131,
+          "seconds": 5.86
+        },
+        {
+          "passed": 7,
+          "seconds": 0.67
+        },
+        {
+          "passed": 9,
+          "seconds": 0.14
+        },
+        {
+          "passed": 4,
+          "seconds": 0.12
+        },
+        {
+          "passed": 211,
+          "seconds": 0.05
+        }
+      ],
+      "tail": [
+        "running 0 tests",
+        "",
+        "test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s"
+      ]
+    },
+    "hypersolve-all-targets": {
+      "path": "/tmp/hypersolve-affine-offset-bounded-all-targets.log",
+      "targets": 10,
+      "passed": 796,
+      "failed": 0,
+      "ignored": 0,
+      "failures": [],
+      "longest_targets": [
+        {
+          "passed": 131,
+          "seconds": 6.22
+        },
+        {
+          "passed": 430,
+          "seconds": 4.39
+        },
+        {
+          "passed": 7,
+          "seconds": 0.6
+        },
+        {
+          "passed": 9,
+          "seconds": 0.15
+        },
+        {
+          "passed": 4,
+          "seconds": 0.1
+        },
+        {
+          "passed": 211,
+          "seconds": 0.08
+        }
+      ],
+      "tail": [
+        "test benchmark_report::tests::manifest_catalog_matches_registered_targets ... ok",
+        "",
+        "test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s"
+      ]
+    },
+    "hypersolve-release": {
+      "path": "/tmp/hypersolve-affine-offset-bounded-release.log",
+      "targets": 8,
+      "passed": 794,
+      "failed": 0,
+      "ignored": 0,
+      "failures": [],
+      "longest_targets": [
+        {
+          "passed": 131,
+          "seconds": 1.59
+        },
+        {
+          "passed": 430,
+          "seconds": 0.3
+        },
+        {
+          "passed": 9,
+          "seconds": 0.03
+        },
+        {
+          "passed": 7,
+          "seconds": 0.03
+        },
+        {
+          "passed": 211,
+          "seconds": 0.02
+        },
+        {
+          "passed": 4,
+          "seconds": 0.01
+        }
+      ],
+      "tail": [
+        "running 0 tests",
+        "",
+        "test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s"
+      ]
+    },
+    "hypercurve-all-features": {
+      "path": "/tmp/hypercurve-affine-offset-bounded-all-features.log",
+      "targets": 46,
+      "passed": 1737,
+      "failed": 0,
+      "ignored": 9,
+      "failures": [],
+      "longest_targets": [
+        {
+          "passed": 891,
+          "seconds": 168.26
+        },
+        {
+          "passed": 47,
+          "seconds": 50.49
+        },
+        {
+          "passed": 100,
+          "seconds": 44.8
+        },
+        {
+          "passed": 14,
+          "seconds": 10.59
+        },
+        {
+          "passed": 101,
+          "seconds": 9.34
+        },
+        {
+          "passed": 11,
+          "seconds": 3.77
+        }
+      ],
+      "tail": [
+        "running 0 tests",
+        "",
+        "test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s"
+      ]
+    },
+    "hypercurve-minimal": {
+      "path": "/tmp/hypercurve-affine-offset-bounded-minimal.log",
+      "targets": 46,
+      "passed": 1708,
+      "failed": 0,
+      "ignored": 4,
+      "failures": [],
+      "longest_targets": [
+        {
+          "passed": 887,
+          "seconds": 153.04
+        },
+        {
+          "passed": 47,
+          "seconds": 47.37
+        },
+        {
+          "passed": 100,
+          "seconds": 40.32
+        },
+        {
+          "passed": 101,
+          "seconds": 7.72
+        },
+        {
+          "passed": 14,
+          "seconds": 7.43
+        },
+        {
+          "passed": 11,
+          "seconds": 3.62
+        }
+      ],
+      "tail": [
+        "running 0 tests",
+        "",
+        "test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s"
+      ]
+    },
+    "hypercurve-ignored-units": {
+      "path": "/tmp/hypercurve-affine-offset-bounded-ignored-units.log",
+      "targets": 1,
+      "passed": 6,
+      "failed": 0,
+      "ignored": 0,
+      "failures": [],
+      "longest_targets": [
+        {
+          "passed": 6,
+          "seconds": 52
+        }
+      ],
+      "tail": [
+        "test bezier_offset::conversion_tests::selected_fiber_genuinely_analytic_contacts_complete_region_booleans ... ok",
+        "",
+        "test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 891 filtered out; finished in 52.00s"
+      ]
+    },
+    "hypercurve-ignored-stroke": {
+      "path": "/tmp/hypercurve-affine-offset-bounded-ignored-stroke.log",
+      "targets": 1,
+      "passed": 3,
+      "failed": 0,
+      "ignored": 0,
+      "failures": [],
+      "longest_targets": [
+        {
+          "passed": 3,
+          "seconds": 55.57
+        }
+      ],
+      "tail": [
+        "test exact_path_stroke_splits_an_interior_source_cusp ... ok",
+        "",
+        "test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 15 filtered out; finished in 55.57s"
+      ]
+    },
+    "hypercurve-ui-tests": {
+      "path": "/tmp/hypercurve-affine-offset-bounded-ui-tests.log",
+      "targets": 1,
+      "passed": 37,
+      "failed": 0,
+      "ignored": 0,
+      "failures": [],
+      "longest_targets": [
+        {
+          "passed": 37,
+          "seconds": 35.73
+        }
+      ],
+      "tail": [
+        "test scenes::tests::shared_polyline_boolean_state_resolves_all_boolean_modes ... ok",
+        "",
+        "test result: ok. 37 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 35.73s"
+      ]
+    },
+    "hypercurve-isolated-denominator": {
+      "path": "/tmp/hypercurve-affine-offset-bounded-isolated-denominator.log",
+      "targets": 1,
+      "passed": 1,
+      "failed": 0,
+      "ignored": 0,
+      "failures": [],
+      "longest_targets": [
+        {
+          "passed": 1,
+          "seconds": 0.01
+        }
+      ],
+      "tail": [
+        "test bezier_offset::conversion_tests::recursive_projective_bounds_reuse_positive_denominator_certificate ... ok",
+        "",
+        "test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 893 filtered out; finished in 0.01s"
+      ]
+    },
+    "hyperlimit-all-features": {
+      "path": "/tmp/hyperlimit-affine-offset-bounded-all-features.log",
+      "targets": 17,
+      "passed": 361,
+      "failed": 0,
+      "ignored": 0,
+      "failures": [],
+      "longest_targets": [
+        {
+          "passed": 252,
+          "seconds": 0.18
+        },
+        {
+          "passed": 19,
+          "seconds": 0.02
+        },
+        {
+          "passed": 3,
+          "seconds": 0.01
+        },
+        {
+          "passed": 6,
+          "seconds": 0.01
+        },
+        {
+          "passed": 10,
+          "seconds": 0
+        },
+        {
+          "passed": 14,
+          "seconds": 0
+        }
+      ],
+      "tail": [
+        "running 0 tests",
+        "",
+        "test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s"
+      ]
+    },
+    "hyperlattice-all-features": {
+      "path": "/tmp/hyperlattice-affine-offset-bounded-all-features.log",
+      "targets": 19,
+      "passed": 200,
+      "failed": 0,
+      "ignored": 0,
+      "failures": [],
+      "longest_targets": [
+        {
+          "passed": 4,
+          "seconds": 0.05
+        },
+        {
+          "passed": 8,
+          "seconds": 0.01
+        },
+        {
+          "passed": 19,
+          "seconds": 0
+        },
+        {
+          "passed": 5,
+          "seconds": 0
+        },
+        {
+          "passed": 5,
+          "seconds": 0
+        },
+        {
+          "passed": 6,
+          "seconds": 0
+        }
+      ],
+      "tail": [
+        "test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+        "",
+        "all doctests ran in 0.19s; merged doctests compilation took 0.19s"
+      ]
+    },
+    "hypertri-all-features": {
+      "path": "/tmp/hypertri-affine-offset-bounded-all-features.log",
+      "targets": 9,
+      "passed": 191,
+      "failed": 0,
+      "ignored": 0,
+      "failures": [],
+      "longest_targets": [
+        {
+          "passed": 8,
+          "seconds": 0.08
+        },
+        {
+          "passed": 10,
+          "seconds": 0.05
+        },
+        {
+          "passed": 30,
+          "seconds": 0.02
+        },
+        {
+          "passed": 119,
+          "seconds": 0.01
+        },
+        {
+          "passed": 7,
+          "seconds": 0
+        },
+        {
+          "passed": 6,
+          "seconds": 0
+        }
+      ],
+      "tail": [
+        "test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+        "",
+        "all doctests ran in 0.21s; merged doctests compilation took 0.21s"
+      ]
+    },
+    "hypermesh-all-features": {
+      "path": "/tmp/hypermesh-affine-offset-bounded-all-features.log",
+      "targets": 8,
+      "passed": 222,
+      "failed": 0,
+      "ignored": 7,
+      "failures": [],
+      "longest_targets": [
+        {
+          "passed": 13,
+          "seconds": 1.95
+        },
+        {
+          "passed": 10,
+          "seconds": 0.08
+        },
+        {
+          "passed": 17,
+          "seconds": 0.06
+        },
+        {
+          "passed": 168,
+          "seconds": 0.04
+        },
+        {
+          "passed": 3,
+          "seconds": 0.03
+        },
+        {
+          "passed": 9,
+          "seconds": 0
+        }
+      ],
+      "tail": [
+        "running 0 tests",
+        "",
+        "test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s"
+      ]
+    }
+  },
+  "final_micro": {
+    "baseline": [
+      {
+        "log": "/tmp/hyperreal-affine-offset-bounded-micro-baseline-1.log",
+        "repetition": 1,
+        "rows": [
+          {
+            "name": "nested_midpoint_conversion",
+            "iterations": 100000,
+            "nanoseconds_per_iteration": 1056.80507,
+            "checksum": "1005822192715632416"
+          },
+          {
+            "name": "opaque_midpoint_conversion",
+            "iterations": 100000,
+            "nanoseconds_per_iteration": 792.08762,
+            "checksum": "15592348946051803328"
+          },
+          {
+            "name": "unrelated_symbols",
+            "iterations": 100000,
+            "nanoseconds_per_iteration": 614.99605,
+            "checksum": "14127170764991393440"
+          },
+          {
+            "name": "unrelated_affine_bases",
+            "iterations": 100000,
+            "nanoseconds_per_iteration": 523.19374,
+            "checksum": "173030917332500000"
+          }
+        ]
+      },
+      {
+        "log": "/tmp/hyperreal-affine-offset-bounded-micro-baseline-2.log",
+        "repetition": 2,
+        "rows": [
+          {
+            "name": "nested_midpoint_conversion",
+            "iterations": 100000,
+            "nanoseconds_per_iteration": 1043.07211,
+            "checksum": "1005822192715632416"
+          },
+          {
+            "name": "opaque_midpoint_conversion",
+            "iterations": 100000,
+            "nanoseconds_per_iteration": 716.4524,
+            "checksum": "15592348946051803328"
+          },
+          {
+            "name": "unrelated_symbols",
+            "iterations": 100000,
+            "nanoseconds_per_iteration": 628.7461,
+            "checksum": "14127170764991393440"
+          },
+          {
+            "name": "unrelated_affine_bases",
+            "iterations": 100000,
+            "nanoseconds_per_iteration": 523.41813,
+            "checksum": "173030917332500000"
+          }
+        ]
+      },
+      {
+        "log": "/tmp/hyperreal-affine-offset-bounded-micro-baseline-3.log",
+        "repetition": 3,
+        "rows": [
+          {
+            "name": "nested_midpoint_conversion",
+            "iterations": 100000,
+            "nanoseconds_per_iteration": 1052.29819,
+            "checksum": "1005822192715632416"
+          },
+          {
+            "name": "opaque_midpoint_conversion",
+            "iterations": 100000,
+            "nanoseconds_per_iteration": 729.77578,
+            "checksum": "15592348946051803328"
+          },
+          {
+            "name": "unrelated_symbols",
+            "iterations": 100000,
+            "nanoseconds_per_iteration": 630.60749,
+            "checksum": "14127170764991393440"
+          },
+          {
+            "name": "unrelated_affine_bases",
+            "iterations": 100000,
+            "nanoseconds_per_iteration": 521.54815,
+            "checksum": "173030917332500000"
+          }
+        ]
+      },
+      {
+        "log": "/tmp/hyperreal-affine-offset-bounded-micro-baseline-4.log",
+        "repetition": 4,
+        "rows": [
+          {
+            "name": "nested_midpoint_conversion",
+            "iterations": 100000,
+            "nanoseconds_per_iteration": 1072.06163,
+            "checksum": "1005822192715632416"
+          },
+          {
+            "name": "opaque_midpoint_conversion",
+            "iterations": 100000,
+            "nanoseconds_per_iteration": 740.29496,
+            "checksum": "15592348946051803328"
+          },
+          {
+            "name": "unrelated_symbols",
+            "iterations": 100000,
+            "nanoseconds_per_iteration": 631.50632,
+            "checksum": "14127170764991393440"
+          },
+          {
+            "name": "unrelated_affine_bases",
+            "iterations": 100000,
+            "nanoseconds_per_iteration": 572.52566,
+            "checksum": "173030917332500000"
+          }
+        ]
+      },
+      {
+        "log": "/tmp/hyperreal-affine-offset-bounded-micro-baseline-5.log",
+        "repetition": 5,
+        "rows": [
+          {
+            "name": "nested_midpoint_conversion",
+            "iterations": 100000,
+            "nanoseconds_per_iteration": 1077.69505,
+            "checksum": "1005822192715632416"
+          },
+          {
+            "name": "opaque_midpoint_conversion",
+            "iterations": 100000,
+            "nanoseconds_per_iteration": 758.813,
+            "checksum": "15592348946051803328"
+          },
+          {
+            "name": "unrelated_symbols",
+            "iterations": 100000,
+            "nanoseconds_per_iteration": 625.04236,
+            "checksum": "14127170764991393440"
+          },
+          {
+            "name": "unrelated_affine_bases",
+            "iterations": 100000,
+            "nanoseconds_per_iteration": 525.69908,
+            "checksum": "173030917332500000"
+          }
+        ]
+      }
+    ],
+    "candidate": [
+      {
+        "log": "/tmp/hyperreal-affine-offset-bounded-micro-candidate-1.log",
+        "repetition": 1,
+        "rows": [
+          {
+            "name": "nested_midpoint_conversion",
+            "iterations": 100000,
+            "nanoseconds_per_iteration": 1050.52131,
+            "checksum": "1005822192715632416"
+          },
+          {
+            "name": "opaque_midpoint_conversion",
+            "iterations": 100000,
+            "nanoseconds_per_iteration": 737.27478,
+            "checksum": "15592348946051803328"
+          },
+          {
+            "name": "unrelated_symbols",
+            "iterations": 100000,
+            "nanoseconds_per_iteration": 636.15721,
+            "checksum": "14127170764991393440"
+          },
+          {
+            "name": "unrelated_affine_bases",
+            "iterations": 100000,
+            "nanoseconds_per_iteration": 543.37496,
+            "checksum": "173030917332500000"
+          }
+        ]
+      },
+      {
+        "log": "/tmp/hyperreal-affine-offset-bounded-micro-candidate-2.log",
+        "repetition": 2,
+        "rows": [
+          {
+            "name": "nested_midpoint_conversion",
+            "iterations": 100000,
+            "nanoseconds_per_iteration": 1064.86732,
+            "checksum": "1005822192715632416"
+          },
+          {
+            "name": "opaque_midpoint_conversion",
+            "iterations": 100000,
+            "nanoseconds_per_iteration": 782.67107,
+            "checksum": "15592348946051803328"
+          },
+          {
+            "name": "unrelated_symbols",
+            "iterations": 100000,
+            "nanoseconds_per_iteration": 663.40063,
+            "checksum": "14127170764991393440"
+          },
+          {
+            "name": "unrelated_affine_bases",
+            "iterations": 100000,
+            "nanoseconds_per_iteration": 549.09637,
+            "checksum": "173030917332500000"
+          }
+        ]
+      },
+      {
+        "log": "/tmp/hyperreal-affine-offset-bounded-micro-candidate-3.log",
+        "repetition": 3,
+        "rows": [
+          {
+            "name": "nested_midpoint_conversion",
+            "iterations": 100000,
+            "nanoseconds_per_iteration": 1054.8757,
+            "checksum": "1005822192715632416"
+          },
+          {
+            "name": "opaque_midpoint_conversion",
+            "iterations": 100000,
+            "nanoseconds_per_iteration": 754.19421,
+            "checksum": "15592348946051803328"
+          },
+          {
+            "name": "unrelated_symbols",
+            "iterations": 100000,
+            "nanoseconds_per_iteration": 652.63058,
+            "checksum": "14127170764991393440"
+          },
+          {
+            "name": "unrelated_affine_bases",
+            "iterations": 100000,
+            "nanoseconds_per_iteration": 622.73322,
+            "checksum": "173030917332500000"
+          }
+        ]
+      },
+      {
+        "log": "/tmp/hyperreal-affine-offset-bounded-micro-candidate-4.log",
+        "repetition": 4,
+        "rows": [
+          {
+            "name": "nested_midpoint_conversion",
+            "iterations": 100000,
+            "nanoseconds_per_iteration": 1071.67005,
+            "checksum": "1005822192715632416"
+          },
+          {
+            "name": "opaque_midpoint_conversion",
+            "iterations": 100000,
+            "nanoseconds_per_iteration": 757.07642,
+            "checksum": "15592348946051803328"
+          },
+          {
+            "name": "unrelated_symbols",
+            "iterations": 100000,
+            "nanoseconds_per_iteration": 645.70045,
+            "checksum": "14127170764991393440"
+          },
+          {
+            "name": "unrelated_affine_bases",
+            "iterations": 100000,
+            "nanoseconds_per_iteration": 552.69112,
+            "checksum": "173030917332500000"
+          }
+        ]
+      },
+      {
+        "log": "/tmp/hyperreal-affine-offset-bounded-micro-candidate-5.log",
+        "repetition": 5,
+        "rows": [
+          {
+            "name": "nested_midpoint_conversion",
+            "iterations": 100000,
+            "nanoseconds_per_iteration": 1052.98644,
+            "checksum": "1005822192715632416"
+          },
+          {
+            "name": "opaque_midpoint_conversion",
+            "iterations": 100000,
+            "nanoseconds_per_iteration": 738.11651,
+            "checksum": "15592348946051803328"
+          },
+          {
+            "name": "unrelated_symbols",
+            "iterations": 100000,
+            "nanoseconds_per_iteration": 637.88868,
+            "checksum": "14127170764991393440"
+          },
+          {
+            "name": "unrelated_affine_bases",
+            "iterations": 100000,
+            "nanoseconds_per_iteration": 542.14925,
+            "checksum": "173030917332500000"
+          }
+        ]
+      }
+    ],
+    "median_rows": [
+      {
+        "name": "nested_midpoint_conversion",
+        "iterations": 100000,
+        "checksum": "1005822192715632416",
+        "baseline_nanoseconds": 1056.80507,
+        "candidate_nanoseconds": 1054.8757,
+        "change_percent": -0.18256630808932695
+      },
+      {
+        "name": "opaque_midpoint_conversion",
+        "iterations": 100000,
+        "checksum": "15592348946051803328",
+        "baseline_nanoseconds": 740.29496,
+        "candidate_nanoseconds": 754.19421,
+        "change_percent": 1.8775286542542569
+      },
+      {
+        "name": "unrelated_symbols",
+        "iterations": 100000,
+        "checksum": "14127170764991393440",
+        "baseline_nanoseconds": 628.7461,
+        "candidate_nanoseconds": 645.70045,
+        "change_percent": 2.6965336246220994
+      },
+      {
+        "name": "unrelated_affine_bases",
+        "iterations": 100000,
+        "checksum": "173030917332500000",
+        "baseline_nanoseconds": 523.41813,
+        "candidate_nanoseconds": 549.09637,
+        "change_percent": 4.905875155680972
+      }
+    ]
+  },
+  "final_timing_worker_audit": {
+    "time": "2026-09-06 01:10:33 UTC",
+    "workers": []
+  },
+  "evidence_commit": "627ded8",
+  "checkpoint": "/home/tim/Documents/GitHub/workspace/hypercurve/benchmarks/checkpoints/2026-09-05-native-affine-offsets.json",
+  "final_broad": {
+    "selected": {
+      "baseline": [
+        {
+          "log": "/tmp/hypercurve-affine-offset-bounded-selected-baseline-1.log",
+          "repetition": 1,
+          "exit_status": 0,
+          "wall_seconds": 52.53,
+          "user_seconds": 52.23,
+          "system_seconds": 0.01,
+          "maximum_rss_kib": 18200,
+          "passed": 1
+        },
+        {
+          "log": "/tmp/hypercurve-affine-offset-bounded-selected-baseline-2.log",
+          "repetition": 2,
+          "exit_status": 0,
+          "wall_seconds": 54.16,
+          "user_seconds": 53.86,
+          "system_seconds": 0.01,
+          "maximum_rss_kib": 17884,
+          "passed": 1
+        },
+        {
+          "log": "/tmp/hypercurve-affine-offset-bounded-selected-baseline-3.log",
+          "repetition": 3,
+          "exit_status": 0,
+          "wall_seconds": 52.54,
+          "user_seconds": 52.24,
+          "system_seconds": 0.01,
+          "maximum_rss_kib": 18288,
+          "passed": 1
+        }
+      ],
+      "candidate": [
+        {
+          "log": "/tmp/hypercurve-affine-offset-bounded-selected-candidate-1.log",
+          "repetition": 1,
+          "exit_status": 0,
+          "wall_seconds": 54.23,
+          "user_seconds": 53.75,
+          "system_seconds": 0.04,
+          "maximum_rss_kib": 18016,
+          "passed": 1
+        },
+        {
+          "log": "/tmp/hypercurve-affine-offset-bounded-selected-candidate-2.log",
+          "repetition": 2,
+          "exit_status": 0,
+          "wall_seconds": 53.53,
+          "user_seconds": 53.24,
+          "system_seconds": 0.02,
+          "maximum_rss_kib": 17872,
+          "passed": 1
+        },
+        {
+          "log": "/tmp/hypercurve-affine-offset-bounded-selected-candidate-3.log",
+          "repetition": 3,
+          "exit_status": 0,
+          "wall_seconds": 53.2,
+          "user_seconds": 52.91,
+          "system_seconds": 0.01,
+          "maximum_rss_kib": 18496,
+          "passed": 1
+        }
+      ],
+      "median": {
+        "wall_seconds": {
+          "baseline": 52.54,
+          "candidate": 53.53,
+          "change_percent": 1.884278644842019
+        },
+        "user_seconds": {
+          "baseline": 52.24,
+          "candidate": 53.24,
+          "change_percent": 1.9142419601837712
+        },
+        "system_seconds": {
+          "baseline": 0.01,
+          "candidate": 0.02,
+          "change_percent": 100
+        },
+        "maximum_rss_kib": {
+          "baseline": 18200,
+          "candidate": 18016,
+          "change_percent": -1.0109890109890163
+        }
+      }
+    },
+    "chord": {
+      "baseline": [
+        {
+          "log": "/tmp/hypercurve-affine-offset-bounded-chord-baseline-1.log",
+          "repetition": 1,
+          "exit_status": 0,
+          "wall_seconds": 17.37,
+          "user_seconds": 17.25,
+          "system_seconds": 0.03,
+          "maximum_rss_kib": 45680,
+          "passed": 1
+        },
+        {
+          "log": "/tmp/hypercurve-affine-offset-bounded-chord-baseline-2.log",
+          "repetition": 2,
+          "exit_status": 0,
+          "wall_seconds": 17.49,
+          "user_seconds": 17.34,
+          "system_seconds": 0.04,
+          "maximum_rss_kib": 46284,
+          "passed": 1
+        },
+        {
+          "log": "/tmp/hypercurve-affine-offset-bounded-chord-baseline-3.log",
+          "repetition": 3,
+          "exit_status": 0,
+          "wall_seconds": 17.51,
+          "user_seconds": 17.36,
+          "system_seconds": 0.03,
+          "maximum_rss_kib": 45720,
+          "passed": 1
+        }
+      ],
+      "candidate": [
+        {
+          "log": "/tmp/hypercurve-affine-offset-bounded-chord-candidate-1.log",
+          "repetition": 1,
+          "exit_status": 0,
+          "wall_seconds": 17.02,
+          "user_seconds": 16.88,
+          "system_seconds": 0.04,
+          "maximum_rss_kib": 46232,
+          "passed": 1
+        },
+        {
+          "log": "/tmp/hypercurve-affine-offset-bounded-chord-candidate-2.log",
+          "repetition": 2,
+          "exit_status": 0,
+          "wall_seconds": 17.2,
+          "user_seconds": 17.06,
+          "system_seconds": 0.03,
+          "maximum_rss_kib": 46088,
+          "passed": 1
+        },
+        {
+          "log": "/tmp/hypercurve-affine-offset-bounded-chord-candidate-3.log",
+          "repetition": 3,
+          "exit_status": 0,
+          "wall_seconds": 17.04,
+          "user_seconds": 16.92,
+          "system_seconds": 0.03,
+          "maximum_rss_kib": 46188,
+          "passed": 1
+        }
+      ],
+      "median": {
+        "wall_seconds": {
+          "baseline": 17.49,
+          "candidate": 17.04,
+          "change_percent": -2.572898799313894
+        },
+        "user_seconds": {
+          "baseline": 17.34,
+          "candidate": 16.92,
+          "change_percent": -2.422145328719716
+        },
+        "system_seconds": {
+          "baseline": 0.03,
+          "candidate": 0.03,
+          "change_percent": 0
+        },
+        "maximum_rss_kib": {
+          "baseline": 45720,
+          "candidate": 46188,
+          "change_percent": 1.0236220472440882
+        }
+      }
+    },
+    "radial": {
+      "baseline": [
+        {
+          "log": "/tmp/hypercurve-affine-offset-bounded-radial-baseline-1.log",
+          "repetition": 1,
+          "exit_status": 0,
+          "wall_seconds": 30.57,
+          "user_seconds": 30.35,
+          "system_seconds": 0.04,
+          "maximum_rss_kib": 49112,
+          "passed": 1
+        },
+        {
+          "log": "/tmp/hypercurve-affine-offset-bounded-radial-baseline-2.log",
+          "repetition": 2,
+          "exit_status": 0,
+          "wall_seconds": 30.11,
+          "user_seconds": 29.91,
+          "system_seconds": 0.04,
+          "maximum_rss_kib": 48944,
+          "passed": 1
+        },
+        {
+          "log": "/tmp/hypercurve-affine-offset-bounded-radial-baseline-3.log",
+          "repetition": 3,
+          "exit_status": 0,
+          "wall_seconds": 30.38,
+          "user_seconds": 30.18,
+          "system_seconds": 0.04,
+          "maximum_rss_kib": 49116,
+          "passed": 1
+        }
+      ],
+      "candidate": [
+        {
+          "log": "/tmp/hypercurve-affine-offset-bounded-radial-candidate-1.log",
+          "repetition": 1,
+          "exit_status": 0,
+          "wall_seconds": 30.64,
+          "user_seconds": 30.45,
+          "system_seconds": 0.03,
+          "maximum_rss_kib": 49308,
+          "passed": 1
+        },
+        {
+          "log": "/tmp/hypercurve-affine-offset-bounded-radial-candidate-2.log",
+          "repetition": 2,
+          "exit_status": 0,
+          "wall_seconds": 30.72,
+          "user_seconds": 30.53,
+          "system_seconds": 0.04,
+          "maximum_rss_kib": 49160,
+          "passed": 1
+        },
+        {
+          "log": "/tmp/hypercurve-affine-offset-bounded-radial-candidate-3.log",
+          "repetition": 3,
+          "exit_status": 0,
+          "wall_seconds": 30.65,
+          "user_seconds": 30.45,
+          "system_seconds": 0.03,
+          "maximum_rss_kib": 48952,
+          "passed": 1
+        }
+      ],
+      "median": {
+        "wall_seconds": {
+          "baseline": 30.38,
+          "candidate": 30.65,
+          "change_percent": 0.8887425938117088
+        },
+        "user_seconds": {
+          "baseline": 30.18,
+          "candidate": 30.45,
+          "change_percent": 0.8946322067594492
+        },
+        "system_seconds": {
+          "baseline": 0.04,
+          "candidate": 0.03,
+          "change_percent": -25
+        },
+        "maximum_rss_kib": {
+          "baseline": 49112,
+          "candidate": 49160,
+          "change_percent": 0.09773578758756063
+        }
+      }
+    },
+    "region": {
+      "baseline": [
+        {
+          "log": "/tmp/hypercurve-affine-offset-bounded-region-baseline-1.log",
+          "repetition": 1,
+          "exit_status": 0,
+          "wall_seconds": 6.53,
+          "user_seconds": 6.49,
+          "system_seconds": 0,
+          "maximum_rss_kib": 10228,
+          "rows": [
+            {
+              "name": "curve_region_clone",
+              "iterations": 1000000,
+              "nanoseconds_per_iteration": 3.614872,
+              "checksum": "1000000"
+            },
+            {
+              "name": "curve_region_empty",
+              "iterations": 1000000,
+              "nanoseconds_per_iteration": 3.038672,
+              "checksum": "0"
+            },
+            {
+              "name": "cubic_bezier_exact_area_moments",
+              "iterations": 20000,
+              "nanoseconds_per_iteration": 15070.0692
+            },
+            {
+              "name": "cubic_bezier_prefix_area_moments",
+              "iterations": 20000,
+              "nanoseconds_per_iteration": 19970.08985
+            },
+            {
+              "name": "cubic_bezier_prefix_length_bounds",
+              "iterations": 20000,
+              "nanoseconds_per_iteration": 4094.67985
+            },
+            {
+              "name": "curve_region_boolean_immediate_union",
+              "iterations": 1000,
+              "nanoseconds_per_iteration": 198613.218,
+              "checksum": "0"
+            },
+            {
+              "name": "curve_region_boolean_immediate_all_ops",
+              "iterations": 1000,
+              "nanoseconds_per_iteration": 408130.659,
+              "checksum": "0"
+            },
+            {
+              "name": "curve_region_boolean_retained_algebraic_all_ops",
+              "iterations": 100,
+              "nanoseconds_per_iteration": 230626.99,
+              "checksum": "1100"
+            },
+            {
+              "name": "bezier_region_algebraic_ray_classification",
+              "iterations": 2000,
+              "nanoseconds_per_iteration": 58145.925,
+              "checksum": "4000"
+            },
+            {
+              "name": "bezier_region_materialization",
+              "iterations": 20000,
+              "nanoseconds_per_iteration": 3278.3038500000002,
+              "checksum": "0"
+            },
+            {
+              "name": "curve_region_cached_classification",
+              "iterations": 2000,
+              "nanoseconds_per_iteration": 38074.6655,
+              "checksum": "4000"
+            },
+            {
+              "name": "curve_region_immediate_native_signed_depth",
+              "iterations": 2000,
+              "nanoseconds_per_iteration": 904.093,
+              "checksum": "2000"
+            },
+            {
+              "name": "bezier_retained_region_materialization",
+              "iterations": 20000,
+              "nanoseconds_per_iteration": 12723.767,
+              "checksum": "0"
+            },
+            {
+              "name": "curve_region_cached_algebraic_classification",
+              "iterations": 2000,
+              "nanoseconds_per_iteration": 48929.277,
+              "checksum": "4000"
+            },
+            {
+              "name": "bezier_retained_algebraic_source_envelope",
+              "iterations": 20000,
+              "nanoseconds_per_iteration": 14651.1809,
+              "checksum": "0"
+            },
+            {
+              "name": "bezier_retained_algebraic_exact_endpoint_envelope",
+              "iterations": 20000,
+              "nanoseconds_per_iteration": 6987.22565,
+              "checksum": "0"
+            },
+            {
+              "name": "bezier_retained_algebraic_line_authoritative_roles",
+              "iterations": 20000,
+              "nanoseconds_per_iteration": 150641.49505,
+              "checksum": "0"
+            },
+            {
+              "name": "bezier_resolved_overlap_region_materialization",
+              "iterations": 20000,
+              "nanoseconds_per_iteration": 25794.205749999997,
+              "checksum": "0"
+            },
+            {
+              "name": "bezier_conic_region_exact_area",
+              "iterations": 20000,
+              "nanoseconds_per_iteration": 26898.93055,
+              "checksum": "0"
+            }
+          ]
+        },
+        {
+          "log": "/tmp/hypercurve-affine-offset-bounded-region-baseline-2.log",
+          "repetition": 2,
+          "exit_status": 0,
+          "wall_seconds": 6.46,
+          "user_seconds": 6.42,
+          "system_seconds": 0,
+          "maximum_rss_kib": 10236,
+          "rows": [
+            {
+              "name": "curve_region_clone",
+              "iterations": 1000000,
+              "nanoseconds_per_iteration": 3.595724,
+              "checksum": "1000000"
+            },
+            {
+              "name": "curve_region_empty",
+              "iterations": 1000000,
+              "nanoseconds_per_iteration": 3.013193,
+              "checksum": "0"
+            },
+            {
+              "name": "cubic_bezier_exact_area_moments",
+              "iterations": 20000,
+              "nanoseconds_per_iteration": 15168.45995
+            },
+            {
+              "name": "cubic_bezier_prefix_area_moments",
+              "iterations": 20000,
+              "nanoseconds_per_iteration": 19482.9328
+            },
+            {
+              "name": "cubic_bezier_prefix_length_bounds",
+              "iterations": 20000,
+              "nanoseconds_per_iteration": 4099.46805
+            },
+            {
+              "name": "curve_region_boolean_immediate_union",
+              "iterations": 1000,
+              "nanoseconds_per_iteration": 200746.452,
+              "checksum": "0"
+            },
+            {
+              "name": "curve_region_boolean_immediate_all_ops",
+              "iterations": 1000,
+              "nanoseconds_per_iteration": 396145.971,
+              "checksum": "0"
+            },
+            {
+              "name": "curve_region_boolean_retained_algebraic_all_ops",
+              "iterations": 100,
+              "nanoseconds_per_iteration": 230262.22,
+              "checksum": "1100"
+            },
+            {
+              "name": "bezier_region_algebraic_ray_classification",
+              "iterations": 2000,
+              "nanoseconds_per_iteration": 58215.5005,
+              "checksum": "4000"
+            },
+            {
+              "name": "bezier_region_materialization",
+              "iterations": 20000,
+              "nanoseconds_per_iteration": 3215.7106,
+              "checksum": "0"
+            },
+            {
+              "name": "curve_region_cached_classification",
+              "iterations": 2000,
+              "nanoseconds_per_iteration": 37833.777,
+              "checksum": "4000"
+            },
+            {
+              "name": "curve_region_immediate_native_signed_depth",
+              "iterations": 2000,
+              "nanoseconds_per_iteration": 896.6335,
+              "checksum": "2000"
+            },
+            {
+              "name": "bezier_retained_region_materialization",
+              "iterations": 20000,
+              "nanoseconds_per_iteration": 12612.5741,
+              "checksum": "0"
+            },
+            {
+              "name": "curve_region_cached_algebraic_classification",
+              "iterations": 2000,
+              "nanoseconds_per_iteration": 47959.168,
+              "checksum": "4000"
+            },
+            {
+              "name": "bezier_retained_algebraic_source_envelope",
+              "iterations": 20000,
+              "nanoseconds_per_iteration": 14683.43165,
+              "checksum": "0"
+            },
+            {
+              "name": "bezier_retained_algebraic_exact_endpoint_envelope",
+              "iterations": 20000,
+              "nanoseconds_per_iteration": 6187.213,
+              "checksum": "0"
+            },
+            {
+              "name": "bezier_retained_algebraic_line_authoritative_roles",
+              "iterations": 20000,
+              "nanoseconds_per_iteration": 148894.37725,
+              "checksum": "0"
+            },
+            {
+              "name": "bezier_resolved_overlap_region_materialization",
+              "iterations": 20000,
+              "nanoseconds_per_iteration": 25606.02515,
+              "checksum": "0"
+            },
+            {
+              "name": "bezier_conic_region_exact_area",
+              "iterations": 20000,
+              "nanoseconds_per_iteration": 27532.3071,
+              "checksum": "0"
+            }
+          ]
+        },
+        {
+          "log": "/tmp/hypercurve-affine-offset-bounded-region-baseline-3.log",
+          "repetition": 3,
+          "exit_status": 0,
+          "wall_seconds": 6.53,
+          "user_seconds": 6.5,
+          "system_seconds": 0,
+          "maximum_rss_kib": 10448,
+          "rows": [
+            {
+              "name": "curve_region_clone",
+              "iterations": 1000000,
+              "nanoseconds_per_iteration": 3.616512,
+              "checksum": "1000000"
+            },
+            {
+              "name": "curve_region_empty",
+              "iterations": 1000000,
+              "nanoseconds_per_iteration": 3.007944,
+              "checksum": "0"
+            },
+            {
+              "name": "cubic_bezier_exact_area_moments",
+              "iterations": 20000,
+              "nanoseconds_per_iteration": 15198.33895
+            },
+            {
+              "name": "cubic_bezier_prefix_area_moments",
+              "iterations": 20000,
+              "nanoseconds_per_iteration": 21409.71125
+            },
+            {
+              "name": "cubic_bezier_prefix_length_bounds",
+              "iterations": 20000,
+              "nanoseconds_per_iteration": 4544.66305
+            },
+            {
+              "name": "curve_region_boolean_immediate_union",
+              "iterations": 1000,
+              "nanoseconds_per_iteration": 221294.574,
+              "checksum": "0"
+            },
+            {
+              "name": "curve_region_boolean_immediate_all_ops",
+              "iterations": 1000,
+              "nanoseconds_per_iteration": 411558.974,
+              "checksum": "0"
+            },
+            {
+              "name": "curve_region_boolean_retained_algebraic_all_ops",
+              "iterations": 100,
+              "nanoseconds_per_iteration": 227815.39,
+              "checksum": "1100"
+            },
+            {
+              "name": "bezier_region_algebraic_ray_classification",
+              "iterations": 2000,
+              "nanoseconds_per_iteration": 58350.826,
+              "checksum": "4000"
+            },
+            {
+              "name": "bezier_region_materialization",
+              "iterations": 20000,
+              "nanoseconds_per_iteration": 3389.79865,
+              "checksum": "0"
+            },
+            {
+              "name": "curve_region_cached_classification",
+              "iterations": 2000,
+              "nanoseconds_per_iteration": 38813.2895,
+              "checksum": "4000"
+            },
+            {
+              "name": "curve_region_immediate_native_signed_depth",
+              "iterations": 2000,
+              "nanoseconds_per_iteration": 880.93,
+              "checksum": "2000"
+            },
+            {
+              "name": "bezier_retained_region_materialization",
+              "iterations": 20000,
+              "nanoseconds_per_iteration": 12752.8955,
+              "checksum": "0"
+            },
+            {
+              "name": "curve_region_cached_algebraic_classification",
+              "iterations": 2000,
+              "nanoseconds_per_iteration": 48043.7475,
+              "checksum": "4000"
+            },
+            {
+              "name": "bezier_retained_algebraic_source_envelope",
+              "iterations": 20000,
+              "nanoseconds_per_iteration": 14760.31545,
+              "checksum": "0"
+            },
+            {
+              "name": "bezier_retained_algebraic_exact_endpoint_envelope",
+              "iterations": 20000,
+              "nanoseconds_per_iteration": 6123.7863,
+              "checksum": "0"
+            },
+            {
+              "name": "bezier_retained_algebraic_line_authoritative_roles",
+              "iterations": 20000,
+              "nanoseconds_per_iteration": 146442.02785,
+              "checksum": "0"
+            },
+            {
+              "name": "bezier_resolved_overlap_region_materialization",
+              "iterations": 20000,
+              "nanoseconds_per_iteration": 27129.8277,
+              "checksum": "0"
+            },
+            {
+              "name": "bezier_conic_region_exact_area",
+              "iterations": 20000,
+              "nanoseconds_per_iteration": 27251.1994,
+              "checksum": "0"
+            }
+          ]
+        }
+      ],
+      "candidate": [
+        {
+          "log": "/tmp/hypercurve-affine-offset-bounded-region-candidate-1.log",
+          "repetition": 1,
+          "exit_status": 0,
+          "wall_seconds": 6.47,
+          "user_seconds": 6.43,
+          "system_seconds": 0,
+          "maximum_rss_kib": 10172,
+          "rows": [
+            {
+              "name": "curve_region_clone",
+              "iterations": 1000000,
+              "nanoseconds_per_iteration": 3.535477,
+              "checksum": "1000000"
+            },
+            {
+              "name": "curve_region_empty",
+              "iterations": 1000000,
+              "nanoseconds_per_iteration": 3.132615,
+              "checksum": "0"
+            },
+            {
+              "name": "cubic_bezier_exact_area_moments",
+              "iterations": 20000,
+              "nanoseconds_per_iteration": 14789.26695
+            },
+            {
+              "name": "cubic_bezier_prefix_area_moments",
+              "iterations": 20000,
+              "nanoseconds_per_iteration": 19539.6854
+            },
+            {
+              "name": "cubic_bezier_prefix_length_bounds",
+              "iterations": 20000,
+              "nanoseconds_per_iteration": 4086.6684
+            },
+            {
+              "name": "curve_region_boolean_immediate_union",
+              "iterations": 1000,
+              "nanoseconds_per_iteration": 195816.57,
+              "checksum": "0"
+            },
+            {
+              "name": "curve_region_boolean_immediate_all_ops",
+              "iterations": 1000,
+              "nanoseconds_per_iteration": 399878.705,
+              "checksum": "0"
+            },
+            {
+              "name": "curve_region_boolean_retained_algebraic_all_ops",
+              "iterations": 100,
+              "nanoseconds_per_iteration": 227511.11,
+              "checksum": "1100"
+            },
+            {
+              "name": "bezier_region_algebraic_ray_classification",
+              "iterations": 2000,
+              "nanoseconds_per_iteration": 59283.432,
+              "checksum": "4000"
+            },
+            {
+              "name": "bezier_region_materialization",
+              "iterations": 20000,
+              "nanoseconds_per_iteration": 3211.7159,
+              "checksum": "0"
+            },
+            {
+              "name": "curve_region_cached_classification",
+              "iterations": 2000,
+              "nanoseconds_per_iteration": 38792.7915,
+              "checksum": "4000"
+            },
+            {
+              "name": "curve_region_immediate_native_signed_depth",
+              "iterations": 2000,
+              "nanoseconds_per_iteration": 871.905,
+              "checksum": "2000"
+            },
+            {
+              "name": "bezier_retained_region_materialization",
+              "iterations": 20000,
+              "nanoseconds_per_iteration": 12456.06535,
+              "checksum": "0"
+            },
+            {
+              "name": "curve_region_cached_algebraic_classification",
+              "iterations": 2000,
+              "nanoseconds_per_iteration": 48243.5885,
+              "checksum": "4000"
+            },
+            {
+              "name": "bezier_retained_algebraic_source_envelope",
+              "iterations": 20000,
+              "nanoseconds_per_iteration": 14278.06645,
+              "checksum": "0"
+            },
+            {
+              "name": "bezier_retained_algebraic_exact_endpoint_envelope",
+              "iterations": 20000,
+              "nanoseconds_per_iteration": 6281.1465,
+              "checksum": "0"
+            },
+            {
+              "name": "bezier_retained_algebraic_line_authoritative_roles",
+              "iterations": 20000,
+              "nanoseconds_per_iteration": 150189.5095,
+              "checksum": "0"
+            },
+            {
+              "name": "bezier_resolved_overlap_region_materialization",
+              "iterations": 20000,
+              "nanoseconds_per_iteration": 25410.7445,
+              "checksum": "0"
+            },
+            {
+              "name": "bezier_conic_region_exact_area",
+              "iterations": 20000,
+              "nanoseconds_per_iteration": 27586.6024,
+              "checksum": "0"
+            }
+          ]
+        },
+        {
+          "log": "/tmp/hypercurve-affine-offset-bounded-region-candidate-2.log",
+          "repetition": 2,
+          "exit_status": 0,
+          "wall_seconds": 6.55,
+          "user_seconds": 6.5,
+          "system_seconds": 0,
+          "maximum_rss_kib": 10032,
+          "rows": [
+            {
+              "name": "curve_region_clone",
+              "iterations": 1000000,
+              "nanoseconds_per_iteration": 3.519689,
+              "checksum": "1000000"
+            },
+            {
+              "name": "curve_region_empty",
+              "iterations": 1000000,
+              "nanoseconds_per_iteration": 3.175832,
+              "checksum": "0"
+            },
+            {
+              "name": "cubic_bezier_exact_area_moments",
+              "iterations": 20000,
+              "nanoseconds_per_iteration": 15193.9867
+            },
+            {
+              "name": "cubic_bezier_prefix_area_moments",
+              "iterations": 20000,
+              "nanoseconds_per_iteration": 19687.9987
+            },
+            {
+              "name": "cubic_bezier_prefix_length_bounds",
+              "iterations": 20000,
+              "nanoseconds_per_iteration": 4094.42085
+            },
+            {
+              "name": "curve_region_boolean_immediate_union",
+              "iterations": 1000,
+              "nanoseconds_per_iteration": 192906.25,
+              "checksum": "0"
+            },
+            {
+              "name": "curve_region_boolean_immediate_all_ops",
+              "iterations": 1000,
+              "nanoseconds_per_iteration": 389843.993,
+              "checksum": "0"
+            },
+            {
+              "name": "curve_region_boolean_retained_algebraic_all_ops",
+              "iterations": 100,
+              "nanoseconds_per_iteration": 226035.21,
+              "checksum": "1100"
+            },
+            {
+              "name": "bezier_region_algebraic_ray_classification",
+              "iterations": 2000,
+              "nanoseconds_per_iteration": 58792.6155,
+              "checksum": "4000"
+            },
+            {
+              "name": "bezier_region_materialization",
+              "iterations": 20000,
+              "nanoseconds_per_iteration": 3222.2151500000004,
+              "checksum": "0"
+            },
+            {
+              "name": "curve_region_cached_classification",
+              "iterations": 2000,
+              "nanoseconds_per_iteration": 38023.7895,
+              "checksum": "4000"
+            },
+            {
+              "name": "curve_region_immediate_native_signed_depth",
+              "iterations": 2000,
+              "nanoseconds_per_iteration": 832.9125,
+              "checksum": "2000"
+            },
+            {
+              "name": "bezier_retained_region_materialization",
+              "iterations": 20000,
+              "nanoseconds_per_iteration": 12834.15845,
+              "checksum": "0"
+            },
+            {
+              "name": "curve_region_cached_algebraic_classification",
+              "iterations": 2000,
+              "nanoseconds_per_iteration": 54115.0015,
+              "checksum": "4000"
+            },
+            {
+              "name": "bezier_retained_algebraic_source_envelope",
+              "iterations": 20000,
+              "nanoseconds_per_iteration": 14061.5323,
+              "checksum": "0"
+            },
+            {
+              "name": "bezier_retained_algebraic_exact_endpoint_envelope",
+              "iterations": 20000,
+              "nanoseconds_per_iteration": 6013.3909,
+              "checksum": "0"
+            },
+            {
+              "name": "bezier_retained_algebraic_line_authoritative_roles",
+              "iterations": 20000,
+              "nanoseconds_per_iteration": 154031.8177,
+              "checksum": "0"
+            },
+            {
+              "name": "bezier_resolved_overlap_region_materialization",
+              "iterations": 20000,
+              "nanoseconds_per_iteration": 25592.83855,
+              "checksum": "0"
+            },
+            {
+              "name": "bezier_conic_region_exact_area",
+              "iterations": 20000,
+              "nanoseconds_per_iteration": 27027.6022,
+              "checksum": "0"
+            }
+          ]
+        },
+        {
+          "log": "/tmp/hypercurve-affine-offset-bounded-region-candidate-3.log",
+          "repetition": 3,
+          "exit_status": 0,
+          "wall_seconds": 6.47,
+          "user_seconds": 6.42,
+          "system_seconds": 0,
+          "maximum_rss_kib": 10176,
+          "rows": [
+            {
+              "name": "curve_region_clone",
+              "iterations": 1000000,
+              "nanoseconds_per_iteration": 3.584104,
+              "checksum": "1000000"
+            },
+            {
+              "name": "curve_region_empty",
+              "iterations": 1000000,
+              "nanoseconds_per_iteration": 3.091979,
+              "checksum": "0"
+            },
+            {
+              "name": "cubic_bezier_exact_area_moments",
+              "iterations": 20000,
+              "nanoseconds_per_iteration": 15014.5755
+            },
+            {
+              "name": "cubic_bezier_prefix_area_moments",
+              "iterations": 20000,
+              "nanoseconds_per_iteration": 19385.301
+            },
+            {
+              "name": "cubic_bezier_prefix_length_bounds",
+              "iterations": 20000,
+              "nanoseconds_per_iteration": 4145.3594
+            },
+            {
+              "name": "curve_region_boolean_immediate_union",
+              "iterations": 1000,
+              "nanoseconds_per_iteration": 195443.655,
+              "checksum": "0"
+            },
+            {
+              "name": "curve_region_boolean_immediate_all_ops",
+              "iterations": 1000,
+              "nanoseconds_per_iteration": 398781.38,
+              "checksum": "0"
+            },
+            {
+              "name": "curve_region_boolean_retained_algebraic_all_ops",
+              "iterations": 100,
+              "nanoseconds_per_iteration": 231119.56,
+              "checksum": "1100"
+            },
+            {
+              "name": "bezier_region_algebraic_ray_classification",
+              "iterations": 2000,
+              "nanoseconds_per_iteration": 60197.6495,
+              "checksum": "4000"
+            },
+            {
+              "name": "bezier_region_materialization",
+              "iterations": 20000,
+              "nanoseconds_per_iteration": 3227.77625,
+              "checksum": "0"
+            },
+            {
+              "name": "curve_region_cached_classification",
+              "iterations": 2000,
+              "nanoseconds_per_iteration": 38752.289,
+              "checksum": "4000"
+            },
+            {
+              "name": "curve_region_immediate_native_signed_depth",
+              "iterations": 2000,
+              "nanoseconds_per_iteration": 849.1865,
+              "checksum": "2000"
+            },
+            {
+              "name": "bezier_retained_region_materialization",
+              "iterations": 20000,
+              "nanoseconds_per_iteration": 12410.4865,
+              "checksum": "0"
+            },
+            {
+              "name": "curve_region_cached_algebraic_classification",
+              "iterations": 2000,
+              "nanoseconds_per_iteration": 49536.725,
+              "checksum": "4000"
+            },
+            {
+              "name": "bezier_retained_algebraic_source_envelope",
+              "iterations": 20000,
+              "nanoseconds_per_iteration": 14526.68095,
+              "checksum": "0"
+            },
+            {
+              "name": "bezier_retained_algebraic_exact_endpoint_envelope",
+              "iterations": 20000,
+              "nanoseconds_per_iteration": 6171.58205,
+              "checksum": "0"
+            },
+            {
+              "name": "bezier_retained_algebraic_line_authoritative_roles",
+              "iterations": 20000,
+              "nanoseconds_per_iteration": 149211.56555,
+              "checksum": "0"
+            },
+            {
+              "name": "bezier_resolved_overlap_region_materialization",
+              "iterations": 20000,
+              "nanoseconds_per_iteration": 25994.485500000003,
+              "checksum": "0"
+            },
+            {
+              "name": "bezier_conic_region_exact_area",
+              "iterations": 20000,
+              "nanoseconds_per_iteration": 27272.07995,
+              "checksum": "0"
+            }
+          ]
+        }
+      ],
+      "median": {
+        "wall_seconds": {
+          "baseline": 6.53,
+          "candidate": 6.47,
+          "change_percent": -0.9188361408882129
+        },
+        "user_seconds": {
+          "baseline": 6.49,
+          "candidate": 6.43,
+          "change_percent": -0.924499229583986
+        },
+        "system_seconds": {
+          "baseline": 0,
+          "candidate": 0,
+          "change_percent": null
+        },
+        "maximum_rss_kib": {
+          "baseline": 10236,
+          "candidate": 10172,
+          "change_percent": -0.6252442360296984
+        }
+      },
+      "median_rows": [
+        {
+          "name": "curve_region_clone",
+          "iterations": 1000000,
+          "checksum": "1000000",
+          "baseline_nanoseconds": 3.614872,
+          "candidate_nanoseconds": 3.535477,
+          "change_percent": -2.1963433283391454
+        },
+        {
+          "name": "curve_region_empty",
+          "iterations": 1000000,
+          "checksum": "0",
+          "baseline_nanoseconds": 3.013193,
+          "candidate_nanoseconds": 3.132615,
+          "change_percent": 3.963304043252469
+        },
+        {
+          "name": "cubic_bezier_exact_area_moments",
+          "iterations": 20000,
+          "baseline_nanoseconds": 15168.45995,
+          "candidate_nanoseconds": 15014.5755,
+          "change_percent": -1.0145027940031581
+        },
+        {
+          "name": "cubic_bezier_prefix_area_moments",
+          "iterations": 20000,
+          "baseline_nanoseconds": 19970.08985,
+          "candidate_nanoseconds": 19539.6854,
+          "change_percent": -2.15524543571346
+        },
+        {
+          "name": "cubic_bezier_prefix_length_bounds",
+          "iterations": 20000,
+          "baseline_nanoseconds": 4099.46805,
+          "candidate_nanoseconds": 4094.42085,
+          "change_percent": -0.12311841288774605
+        },
+        {
+          "name": "curve_region_boolean_immediate_union",
+          "iterations": 1000,
+          "checksum": "0",
+          "baseline_nanoseconds": 200746.452,
+          "candidate_nanoseconds": 195443.655,
+          "change_percent": -2.6415395874593073
+        },
+        {
+          "name": "curve_region_boolean_immediate_all_ops",
+          "iterations": 1000,
+          "checksum": "0",
+          "baseline_nanoseconds": 408130.659,
+          "candidate_nanoseconds": 398781.38,
+          "change_percent": -2.290756353102108
+        },
+        {
+          "name": "curve_region_boolean_retained_algebraic_all_ops",
+          "iterations": 100,
+          "checksum": "1100",
+          "baseline_nanoseconds": 230262.22,
+          "candidate_nanoseconds": 227511.11,
+          "change_percent": -1.1947726379082146
+        },
+        {
+          "name": "bezier_region_algebraic_ray_classification",
+          "iterations": 2000,
+          "checksum": "4000",
+          "baseline_nanoseconds": 58215.5005,
+          "candidate_nanoseconds": 59283.432,
+          "change_percent": 1.8344452780234999
+        },
+        {
+          "name": "bezier_region_materialization",
+          "iterations": 20000,
+          "checksum": "0",
+          "baseline_nanoseconds": 3278.3038500000002,
+          "candidate_nanoseconds": 3222.2151500000004,
+          "change_percent": -1.710906083339403
+        },
+        {
+          "name": "curve_region_cached_classification",
+          "iterations": 2000,
+          "checksum": "4000",
+          "baseline_nanoseconds": 38074.6655,
+          "candidate_nanoseconds": 38752.289,
+          "change_percent": 1.7797227923118442
+        },
+        {
+          "name": "curve_region_immediate_native_signed_depth",
+          "iterations": 2000,
+          "checksum": "2000",
+          "baseline_nanoseconds": 896.6335,
+          "candidate_nanoseconds": 849.1865,
+          "change_percent": -5.291682722093249
+        },
+        {
+          "name": "bezier_retained_region_materialization",
+          "iterations": 20000,
+          "checksum": "0",
+          "baseline_nanoseconds": 12723.767,
+          "candidate_nanoseconds": 12456.06535,
+          "change_percent": -2.103949640071212
+        },
+        {
+          "name": "curve_region_cached_algebraic_classification",
+          "iterations": 2000,
+          "checksum": "4000",
+          "baseline_nanoseconds": 48043.7475,
+          "candidate_nanoseconds": 49536.725,
+          "change_percent": 3.1075375625100765
+        },
+        {
+          "name": "bezier_retained_algebraic_source_envelope",
+          "iterations": 20000,
+          "checksum": "0",
+          "baseline_nanoseconds": 14683.43165,
+          "candidate_nanoseconds": 14278.06645,
+          "change_percent": -2.7606979734876913
+        },
+        {
+          "name": "bezier_retained_algebraic_exact_endpoint_envelope",
+          "iterations": 20000,
+          "checksum": "0",
+          "baseline_nanoseconds": 6187.213,
+          "candidate_nanoseconds": 6171.58205,
+          "change_percent": -0.2526331322357911
+        },
+        {
+          "name": "bezier_retained_algebraic_line_authoritative_roles",
+          "iterations": 20000,
+          "checksum": "0",
+          "baseline_nanoseconds": 148894.37725,
+          "candidate_nanoseconds": 150189.5095,
+          "change_percent": 0.8698328801398647
+        },
+        {
+          "name": "bezier_resolved_overlap_region_materialization",
+          "iterations": 20000,
+          "checksum": "0",
+          "baseline_nanoseconds": 25794.205749999997,
+          "candidate_nanoseconds": 25592.83855,
+          "change_percent": -0.7806683483557064
+        },
+        {
+          "name": "bezier_conic_region_exact_area",
+          "iterations": 20000,
+          "checksum": "0",
+          "baseline_nanoseconds": 27251.1994,
+          "candidate_nanoseconds": 27272.07995,
+          "change_percent": 0.07662249904494267
+        }
+      ]
+    },
+    "rational4": {
+      "baseline": [
+        {
+          "log": "/tmp/hypercurve-affine-offset-bounded-rational4-baseline-1.log",
+          "repetition": 1,
+          "exit_status": 0,
+          "wall_seconds": 0.04,
+          "user_seconds": 0.03,
+          "system_seconds": 0,
+          "maximum_rss_kib": 4452,
+          "rows": [
+            {
+              "name": "rational_bezier_large_cold_evaluation_4_controls",
+              "iterations": 10000,
+              "nanoseconds_per_iteration": 3026.1647,
+              "checksum": "0"
+            },
+            {
+              "name": "rational_bezier_large_cached_evaluation_4_controls",
+              "iterations": 10000,
+              "nanoseconds_per_iteration": 689.5827,
+              "checksum": "0"
+            }
+          ]
+        },
+        {
+          "log": "/tmp/hypercurve-affine-offset-bounded-rational4-baseline-2.log",
+          "repetition": 2,
+          "exit_status": 0,
+          "wall_seconds": 0.03,
+          "user_seconds": 0.03,
+          "system_seconds": 0,
+          "maximum_rss_kib": 4684,
+          "rows": [
+            {
+              "name": "rational_bezier_large_cold_evaluation_4_controls",
+              "iterations": 10000,
+              "nanoseconds_per_iteration": 2798.2732,
+              "checksum": "0"
+            },
+            {
+              "name": "rational_bezier_large_cached_evaluation_4_controls",
+              "iterations": 10000,
+              "nanoseconds_per_iteration": 622.6493,
+              "checksum": "0"
+            }
+          ]
+        },
+        {
+          "log": "/tmp/hypercurve-affine-offset-bounded-rational4-baseline-3.log",
+          "repetition": 3,
+          "exit_status": 0,
+          "wall_seconds": 0.03,
+          "user_seconds": 0.03,
+          "system_seconds": 0,
+          "maximum_rss_kib": 4864,
+          "rows": [
+            {
+              "name": "rational_bezier_large_cold_evaluation_4_controls",
+              "iterations": 10000,
+              "nanoseconds_per_iteration": 2647.8115,
+              "checksum": "0"
+            },
+            {
+              "name": "rational_bezier_large_cached_evaluation_4_controls",
+              "iterations": 10000,
+              "nanoseconds_per_iteration": 619.9025,
+              "checksum": "0"
+            }
+          ]
+        }
+      ],
+      "candidate": [
+        {
+          "log": "/tmp/hypercurve-affine-offset-bounded-rational4-candidate-1.log",
+          "repetition": 1,
+          "exit_status": 0,
+          "wall_seconds": 0.03,
+          "user_seconds": 0.03,
+          "system_seconds": 0,
+          "maximum_rss_kib": 4680,
+          "rows": [
+            {
+              "name": "rational_bezier_large_cold_evaluation_4_controls",
+              "iterations": 10000,
+              "nanoseconds_per_iteration": 2662.2365,
+              "checksum": "0"
+            },
+            {
+              "name": "rational_bezier_large_cached_evaluation_4_controls",
+              "iterations": 10000,
+              "nanoseconds_per_iteration": 623.7883,
+              "checksum": "0"
+            }
+          ]
+        },
+        {
+          "log": "/tmp/hypercurve-affine-offset-bounded-rational4-candidate-2.log",
+          "repetition": 2,
+          "exit_status": 0,
+          "wall_seconds": 0.03,
+          "user_seconds": 0.03,
+          "system_seconds": 0,
+          "maximum_rss_kib": 4708,
+          "rows": [
+            {
+              "name": "rational_bezier_large_cold_evaluation_4_controls",
+              "iterations": 10000,
+              "nanoseconds_per_iteration": 2832.0209,
+              "checksum": "0"
+            },
+            {
+              "name": "rational_bezier_large_cached_evaluation_4_controls",
+              "iterations": 10000,
+              "nanoseconds_per_iteration": 693.0805,
+              "checksum": "0"
+            }
+          ]
+        },
+        {
+          "log": "/tmp/hypercurve-affine-offset-bounded-rational4-candidate-3.log",
+          "repetition": 3,
+          "exit_status": 0,
+          "wall_seconds": 0.03,
+          "user_seconds": 0.03,
+          "system_seconds": 0,
+          "maximum_rss_kib": 4772,
+          "rows": [
+            {
+              "name": "rational_bezier_large_cold_evaluation_4_controls",
+              "iterations": 10000,
+              "nanoseconds_per_iteration": 2804.0068,
+              "checksum": "0"
+            },
+            {
+              "name": "rational_bezier_large_cached_evaluation_4_controls",
+              "iterations": 10000,
+              "nanoseconds_per_iteration": 650.8074,
+              "checksum": "0"
+            }
+          ]
+        }
+      ],
+      "median": {
+        "wall_seconds": {
+          "baseline": 0.03,
+          "candidate": 0.03,
+          "change_percent": 0
+        },
+        "user_seconds": {
+          "baseline": 0.03,
+          "candidate": 0.03,
+          "change_percent": 0
+        },
+        "system_seconds": {
+          "baseline": 0,
+          "candidate": 0,
+          "change_percent": null
+        },
+        "maximum_rss_kib": {
+          "baseline": 4684,
+          "candidate": 4708,
+          "change_percent": 0.5123825789923098
+        }
+      },
+      "median_rows": [
+        {
+          "name": "rational_bezier_large_cold_evaluation_4_controls",
+          "iterations": 10000,
+          "checksum": "0",
+          "baseline_nanoseconds": 2798.2732,
+          "candidate_nanoseconds": 2804.0068,
+          "change_percent": 0.20489779196684044
+        },
+        {
+          "name": "rational_bezier_large_cached_evaluation_4_controls",
+          "iterations": 10000,
+          "checksum": "0",
+          "baseline_nanoseconds": 622.6493,
+          "candidate_nanoseconds": 650.8074,
+          "change_percent": 4.522304931524057
+        }
+      ]
+    },
+    "rational16": {
+      "baseline": [
+        {
+          "log": "/tmp/hypercurve-affine-offset-bounded-rational16-baseline-1.log",
+          "repetition": 1,
+          "exit_status": 0,
+          "wall_seconds": 0.03,
+          "user_seconds": 0.03,
+          "system_seconds": 0,
+          "maximum_rss_kib": 4736,
+          "rows": [
+            {
+              "name": "rational_bezier_large_cold_evaluation_16_controls",
+              "iterations": 1000,
+              "nanoseconds_per_iteration": 29127.744,
+              "checksum": "0"
+            },
+            {
+              "name": "rational_bezier_large_cached_evaluation_16_controls",
+              "iterations": 1000,
+              "nanoseconds_per_iteration": 1638.058,
+              "checksum": "0"
+            }
+          ]
+        },
+        {
+          "log": "/tmp/hypercurve-affine-offset-bounded-rational16-baseline-2.log",
+          "repetition": 2,
+          "exit_status": 0,
+          "wall_seconds": 0.03,
+          "user_seconds": 0.03,
+          "system_seconds": 0,
+          "maximum_rss_kib": 4784,
+          "rows": [
+            {
+              "name": "rational_bezier_large_cold_evaluation_16_controls",
+              "iterations": 1000,
+              "nanoseconds_per_iteration": 29864.044,
+              "checksum": "0"
+            },
+            {
+              "name": "rational_bezier_large_cached_evaluation_16_controls",
+              "iterations": 1000,
+              "nanoseconds_per_iteration": 1582.572,
+              "checksum": "0"
+            }
+          ]
+        },
+        {
+          "log": "/tmp/hypercurve-affine-offset-bounded-rational16-baseline-3.log",
+          "repetition": 3,
+          "exit_status": 0,
+          "wall_seconds": 0.03,
+          "user_seconds": 0.03,
+          "system_seconds": 0,
+          "maximum_rss_kib": 4944,
+          "rows": [
+            {
+              "name": "rational_bezier_large_cold_evaluation_16_controls",
+              "iterations": 1000,
+              "nanoseconds_per_iteration": 29624.389,
+              "checksum": "0"
+            },
+            {
+              "name": "rational_bezier_large_cached_evaluation_16_controls",
+              "iterations": 1000,
+              "nanoseconds_per_iteration": 1591.861,
+              "checksum": "0"
+            }
+          ]
+        }
+      ],
+      "candidate": [
+        {
+          "log": "/tmp/hypercurve-affine-offset-bounded-rational16-candidate-1.log",
+          "repetition": 1,
+          "exit_status": 0,
+          "wall_seconds": 0.03,
+          "user_seconds": 0.03,
+          "system_seconds": 0,
+          "maximum_rss_kib": 4740,
+          "rows": [
+            {
+              "name": "rational_bezier_large_cold_evaluation_16_controls",
+              "iterations": 1000,
+              "nanoseconds_per_iteration": 29073.948,
+              "checksum": "0"
+            },
+            {
+              "name": "rational_bezier_large_cached_evaluation_16_controls",
+              "iterations": 1000,
+              "nanoseconds_per_iteration": 1585.851,
+              "checksum": "0"
+            }
+          ]
+        },
+        {
+          "log": "/tmp/hypercurve-affine-offset-bounded-rational16-candidate-2.log",
+          "repetition": 2,
+          "exit_status": 0,
+          "wall_seconds": 0.03,
+          "user_seconds": 0.03,
+          "system_seconds": 0,
+          "maximum_rss_kib": 4876,
+          "rows": [
+            {
+              "name": "rational_bezier_large_cold_evaluation_16_controls",
+              "iterations": 1000,
+              "nanoseconds_per_iteration": 30692.176,
+              "checksum": "0"
+            },
+            {
+              "name": "rational_bezier_large_cached_evaluation_16_controls",
+              "iterations": 1000,
+              "nanoseconds_per_iteration": 1551.444,
+              "checksum": "0"
+            }
+          ]
+        },
+        {
+          "log": "/tmp/hypercurve-affine-offset-bounded-rational16-candidate-3.log",
+          "repetition": 3,
+          "exit_status": 0,
+          "wall_seconds": 0.03,
+          "user_seconds": 0.03,
+          "system_seconds": 0,
+          "maximum_rss_kib": 4596,
+          "rows": [
+            {
+              "name": "rational_bezier_large_cold_evaluation_16_controls",
+              "iterations": 1000,
+              "nanoseconds_per_iteration": 29013.032,
+              "checksum": "0"
+            },
+            {
+              "name": "rational_bezier_large_cached_evaluation_16_controls",
+              "iterations": 1000,
+              "nanoseconds_per_iteration": 1579.412,
+              "checksum": "0"
+            }
+          ]
+        }
+      ],
+      "median": {
+        "wall_seconds": {
+          "baseline": 0.03,
+          "candidate": 0.03,
+          "change_percent": 0
+        },
+        "user_seconds": {
+          "baseline": 0.03,
+          "candidate": 0.03,
+          "change_percent": 0
+        },
+        "system_seconds": {
+          "baseline": 0,
+          "candidate": 0,
+          "change_percent": null
+        },
+        "maximum_rss_kib": {
+          "baseline": 4784,
+          "candidate": 4740,
+          "change_percent": -0.9197324414715768
+        }
+      },
+      "median_rows": [
+        {
+          "name": "rational_bezier_large_cold_evaluation_16_controls",
+          "iterations": 1000,
+          "checksum": "0",
+          "baseline_nanoseconds": 29624.389,
+          "candidate_nanoseconds": 29073.948,
+          "change_percent": -1.8580670136352784
+        },
+        {
+          "name": "rational_bezier_large_cached_evaluation_16_controls",
+          "iterations": 1000,
+          "checksum": "0",
+          "baseline_nanoseconds": 1591.861,
+          "candidate_nanoseconds": 1579.412,
+          "change_percent": -0.7820406429958404
+        }
+      ]
+    },
+    "rational64": {
+      "baseline": [
+        {
+          "log": "/tmp/hypercurve-affine-offset-bounded-rational64-baseline-1.log",
+          "repetition": 1,
+          "exit_status": 0,
+          "wall_seconds": 0.01,
+          "user_seconds": 0.01,
+          "system_seconds": 0,
+          "maximum_rss_kib": 10448,
+          "rows": [
+            {
+              "name": "rational_bezier_large_cold_evaluation_64_controls",
+              "iterations": 20,
+              "nanoseconds_per_iteration": 726701.2,
+              "checksum": "0"
+            },
+            {
+              "name": "rational_bezier_large_cached_evaluation_64_controls",
+              "iterations": 20,
+              "nanoseconds_per_iteration": 8502.9,
+              "checksum": "0"
+            }
+          ]
+        },
+        {
+          "log": "/tmp/hypercurve-affine-offset-bounded-rational64-baseline-2.log",
+          "repetition": 2,
+          "exit_status": 0,
+          "wall_seconds": 0.01,
+          "user_seconds": 0.01,
+          "system_seconds": 0,
+          "maximum_rss_kib": 10488,
+          "rows": [
+            {
+              "name": "rational_bezier_large_cold_evaluation_64_controls",
+              "iterations": 20,
+              "nanoseconds_per_iteration": 746595.3,
+              "checksum": "0"
+            },
+            {
+              "name": "rational_bezier_large_cached_evaluation_64_controls",
+              "iterations": 20,
+              "nanoseconds_per_iteration": 8429.95,
+              "checksum": "0"
+            }
+          ]
+        },
+        {
+          "log": "/tmp/hypercurve-affine-offset-bounded-rational64-baseline-3.log",
+          "repetition": 3,
+          "exit_status": 0,
+          "wall_seconds": 0.01,
+          "user_seconds": 0.01,
+          "system_seconds": 0,
+          "maximum_rss_kib": 10548,
+          "rows": [
+            {
+              "name": "rational_bezier_large_cold_evaluation_64_controls",
+              "iterations": 20,
+              "nanoseconds_per_iteration": 723738.4,
+              "checksum": "0"
+            },
+            {
+              "name": "rational_bezier_large_cached_evaluation_64_controls",
+              "iterations": 20,
+              "nanoseconds_per_iteration": 9544.85,
+              "checksum": "0"
+            }
+          ]
+        }
+      ],
+      "candidate": [
+        {
+          "log": "/tmp/hypercurve-affine-offset-bounded-rational64-candidate-1.log",
+          "repetition": 1,
+          "exit_status": 0,
+          "wall_seconds": 0.01,
+          "user_seconds": 0.01,
+          "system_seconds": 0,
+          "maximum_rss_kib": 10712,
+          "rows": [
+            {
+              "name": "rational_bezier_large_cold_evaluation_64_controls",
+              "iterations": 20,
+              "nanoseconds_per_iteration": 720195.1,
+              "checksum": "0"
+            },
+            {
+              "name": "rational_bezier_large_cached_evaluation_64_controls",
+              "iterations": 20,
+              "nanoseconds_per_iteration": 8436.9,
+              "checksum": "0"
+            }
+          ]
+        },
+        {
+          "log": "/tmp/hypercurve-affine-offset-bounded-rational64-candidate-2.log",
+          "repetition": 2,
+          "exit_status": 0,
+          "wall_seconds": 0.01,
+          "user_seconds": 0.01,
+          "system_seconds": 0,
+          "maximum_rss_kib": 10620,
+          "rows": [
+            {
+              "name": "rational_bezier_large_cold_evaluation_64_controls",
+              "iterations": 20,
+              "nanoseconds_per_iteration": 754821.3,
+              "checksum": "0"
+            },
+            {
+              "name": "rational_bezier_large_cached_evaluation_64_controls",
+              "iterations": 20,
+              "nanoseconds_per_iteration": 8621.9,
+              "checksum": "0"
+            }
+          ]
+        },
+        {
+          "log": "/tmp/hypercurve-affine-offset-bounded-rational64-candidate-3.log",
+          "repetition": 3,
+          "exit_status": 0,
+          "wall_seconds": 0.01,
+          "user_seconds": 0.01,
+          "system_seconds": 0,
+          "maximum_rss_kib": 10420,
+          "rows": [
+            {
+              "name": "rational_bezier_large_cold_evaluation_64_controls",
+              "iterations": 20,
+              "nanoseconds_per_iteration": 717282.35,
+              "checksum": "0"
+            },
+            {
+              "name": "rational_bezier_large_cached_evaluation_64_controls",
+              "iterations": 20,
+              "nanoseconds_per_iteration": 8355.95,
+              "checksum": "0"
+            }
+          ]
+        }
+      ],
+      "median": {
+        "wall_seconds": {
+          "baseline": 0.01,
+          "candidate": 0.01,
+          "change_percent": 0
+        },
+        "user_seconds": {
+          "baseline": 0.01,
+          "candidate": 0.01,
+          "change_percent": 0
+        },
+        "system_seconds": {
+          "baseline": 0,
+          "candidate": 0,
+          "change_percent": null
+        },
+        "maximum_rss_kib": {
+          "baseline": 10488,
+          "candidate": 10620,
+          "change_percent": 1.258581235697931
+        }
+      },
+      "median_rows": [
+        {
+          "name": "rational_bezier_large_cold_evaluation_64_controls",
+          "iterations": 20,
+          "checksum": "0",
+          "baseline_nanoseconds": 726701.2,
+          "candidate_nanoseconds": 720195.1,
+          "change_percent": -0.8952923154661008
+        },
+        {
+          "name": "rational_bezier_large_cached_evaluation_64_controls",
+          "iterations": 20,
+          "checksum": "0",
+          "baseline_nanoseconds": 8502.9,
+          "candidate_nanoseconds": 8436.9,
+          "change_percent": -0.7762057650919085
+        }
+      ]
+    }
+  },
+  "final_extended": {
+    "rational4": {
+      "baseline": [
+        {
+          "log": "/tmp/hypercurve-affine-offset-bounded-extended-rational4-baseline-1.log",
+          "repetition": 1,
+          "exit_status": 0,
+          "wall_seconds": 0.33,
+          "user_seconds": 0.33,
+          "system_seconds": 0,
+          "maximum_rss_kib": 4384,
+          "rows": [
+            {
+              "name": "rational_bezier_large_cold_evaluation_4_controls",
+              "iterations": 100000,
+              "nanoseconds_per_iteration": 2700.98409,
+              "checksum": "0"
+            },
+            {
+              "name": "rational_bezier_large_cached_evaluation_4_controls",
+              "iterations": 100000,
+              "nanoseconds_per_iteration": 629.42376,
+              "checksum": "0"
+            }
+          ]
+        },
+        {
+          "log": "/tmp/hypercurve-affine-offset-bounded-extended-rational4-baseline-2.log",
+          "repetition": 2,
+          "exit_status": 0,
+          "wall_seconds": 0.33,
+          "user_seconds": 0.33,
+          "system_seconds": 0,
+          "maximum_rss_kib": 4444,
+          "rows": [
+            {
+              "name": "rational_bezier_large_cold_evaluation_4_controls",
+              "iterations": 100000,
+              "nanoseconds_per_iteration": 2720.34097,
+              "checksum": "0"
+            },
+            {
+              "name": "rational_bezier_large_cached_evaluation_4_controls",
+              "iterations": 100000,
+              "nanoseconds_per_iteration": 637.5108,
+              "checksum": "0"
+            }
+          ]
+        },
+        {
+          "log": "/tmp/hypercurve-affine-offset-bounded-extended-rational4-baseline-3.log",
+          "repetition": 3,
+          "exit_status": 0,
+          "wall_seconds": 0.33,
+          "user_seconds": 0.32,
+          "system_seconds": 0,
+          "maximum_rss_kib": 4524,
+          "rows": [
+            {
+              "name": "rational_bezier_large_cold_evaluation_4_controls",
+              "iterations": 100000,
+              "nanoseconds_per_iteration": 2657.6732600000005,
+              "checksum": "0"
+            },
+            {
+              "name": "rational_bezier_large_cached_evaluation_4_controls",
+              "iterations": 100000,
+              "nanoseconds_per_iteration": 628.31464,
+              "checksum": "0"
+            }
+          ]
+        },
+        {
+          "log": "/tmp/hypercurve-affine-offset-bounded-extended-rational4-baseline-4.log",
+          "repetition": 4,
+          "exit_status": 0,
+          "wall_seconds": 0.33,
+          "user_seconds": 0.32,
+          "system_seconds": 0,
+          "maximum_rss_kib": 4584,
+          "rows": [
+            {
+              "name": "rational_bezier_large_cold_evaluation_4_controls",
+              "iterations": 100000,
+              "nanoseconds_per_iteration": 2677.83927,
+              "checksum": "0"
+            },
+            {
+              "name": "rational_bezier_large_cached_evaluation_4_controls",
+              "iterations": 100000,
+              "nanoseconds_per_iteration": 628.67621,
+              "checksum": "0"
+            }
+          ]
+        },
+        {
+          "log": "/tmp/hypercurve-affine-offset-bounded-extended-rational4-baseline-5.log",
+          "repetition": 5,
+          "exit_status": 0,
+          "wall_seconds": 0.33,
+          "user_seconds": 0.33,
+          "system_seconds": 0,
+          "maximum_rss_kib": 4552,
+          "rows": [
+            {
+              "name": "rational_bezier_large_cold_evaluation_4_controls",
+              "iterations": 100000,
+              "nanoseconds_per_iteration": 2722.7167,
+              "checksum": "0"
+            },
+            {
+              "name": "rational_bezier_large_cached_evaluation_4_controls",
+              "iterations": 100000,
+              "nanoseconds_per_iteration": 622.57754,
+              "checksum": "0"
+            }
+          ]
+        }
+      ],
+      "candidate": [
+        {
+          "log": "/tmp/hypercurve-affine-offset-bounded-extended-rational4-candidate-1.log",
+          "repetition": 1,
+          "exit_status": 0,
+          "wall_seconds": 0.33,
+          "user_seconds": 0.33,
+          "system_seconds": 0,
+          "maximum_rss_kib": 4564,
+          "rows": [
+            {
+              "name": "rational_bezier_large_cold_evaluation_4_controls",
+              "iterations": 100000,
+              "nanoseconds_per_iteration": 2656.44434,
+              "checksum": "0"
+            },
+            {
+              "name": "rational_bezier_large_cached_evaluation_4_controls",
+              "iterations": 100000,
+              "nanoseconds_per_iteration": 662.75638,
+              "checksum": "0"
+            }
+          ]
+        },
+        {
+          "log": "/tmp/hypercurve-affine-offset-bounded-extended-rational4-candidate-2.log",
+          "repetition": 2,
+          "exit_status": 0,
+          "wall_seconds": 0.33,
+          "user_seconds": 0.33,
+          "system_seconds": 0,
+          "maximum_rss_kib": 4644,
+          "rows": [
+            {
+              "name": "rational_bezier_large_cold_evaluation_4_controls",
+              "iterations": 100000,
+              "nanoseconds_per_iteration": 2687.8325,
+              "checksum": "0"
+            },
+            {
+              "name": "rational_bezier_large_cached_evaluation_4_controls",
+              "iterations": 100000,
+              "nanoseconds_per_iteration": 645.38427,
+              "checksum": "0"
+            }
+          ]
+        },
+        {
+          "log": "/tmp/hypercurve-affine-offset-bounded-extended-rational4-candidate-3.log",
+          "repetition": 3,
+          "exit_status": 0,
+          "wall_seconds": 0.34,
+          "user_seconds": 0.33,
+          "system_seconds": 0,
+          "maximum_rss_kib": 4832,
+          "rows": [
+            {
+              "name": "rational_bezier_large_cold_evaluation_4_controls",
+              "iterations": 100000,
+              "nanoseconds_per_iteration": 2742.24447,
+              "checksum": "0"
+            },
+            {
+              "name": "rational_bezier_large_cached_evaluation_4_controls",
+              "iterations": 100000,
+              "nanoseconds_per_iteration": 642.7800399999999,
+              "checksum": "0"
+            }
+          ]
+        },
+        {
+          "log": "/tmp/hypercurve-affine-offset-bounded-extended-rational4-candidate-4.log",
+          "repetition": 4,
+          "exit_status": 0,
+          "wall_seconds": 0.37,
+          "user_seconds": 0.37,
+          "system_seconds": 0,
+          "maximum_rss_kib": 4620,
+          "rows": [
+            {
+              "name": "rational_bezier_large_cold_evaluation_4_controls",
+              "iterations": 100000,
+              "nanoseconds_per_iteration": 2999.17286,
+              "checksum": "0"
+            },
+            {
+              "name": "rational_bezier_large_cached_evaluation_4_controls",
+              "iterations": 100000,
+              "nanoseconds_per_iteration": 755.37233,
+              "checksum": "0"
+            }
+          ]
+        },
+        {
+          "log": "/tmp/hypercurve-affine-offset-bounded-extended-rational4-candidate-5.log",
+          "repetition": 5,
+          "exit_status": 0,
+          "wall_seconds": 0.33,
+          "user_seconds": 0.32,
+          "system_seconds": 0,
+          "maximum_rss_kib": 4688,
+          "rows": [
+            {
+              "name": "rational_bezier_large_cold_evaluation_4_controls",
+              "iterations": 100000,
+              "nanoseconds_per_iteration": 2690.48431,
+              "checksum": "0"
+            },
+            {
+              "name": "rational_bezier_large_cached_evaluation_4_controls",
+              "iterations": 100000,
+              "nanoseconds_per_iteration": 631.55072,
+              "checksum": "0"
+            }
+          ]
+        }
+      ],
+      "median": {
+        "wall_seconds": {
+          "baseline": 0.33,
+          "candidate": 0.33,
+          "change_percent": 0
+        },
+        "user_seconds": {
+          "baseline": 0.33,
+          "candidate": 0.33,
+          "change_percent": 0
+        },
+        "system_seconds": {
+          "baseline": 0,
+          "candidate": 0,
+          "change_percent": null
+        },
+        "maximum_rss_kib": {
+          "baseline": 4524,
+          "candidate": 4644,
+          "change_percent": 2.652519893899208
+        }
+      },
+      "median_rows": [
+        {
+          "name": "rational_bezier_large_cold_evaluation_4_controls",
+          "iterations": 100000,
+          "checksum": "0",
+          "baseline_nanoseconds": 2700.98409,
+          "candidate_nanoseconds": 2690.48431,
+          "change_percent": -0.3887390539942137
+        },
+        {
+          "name": "rational_bezier_large_cached_evaluation_4_controls",
+          "iterations": 100000,
+          "checksum": "0",
+          "baseline_nanoseconds": 628.67621,
+          "candidate_nanoseconds": 645.38427,
+          "change_percent": 2.657657429092164
+        }
+      ]
+    },
+    "rational16": {
+      "baseline": [
+        {
+          "log": "/tmp/hypercurve-affine-offset-bounded-extended-rational16-baseline-1.log",
+          "repetition": 1,
+          "exit_status": 0,
+          "wall_seconds": 0.3,
+          "user_seconds": 0.3,
+          "system_seconds": 0,
+          "maximum_rss_kib": 4700,
+          "rows": [
+            {
+              "name": "rational_bezier_large_cold_evaluation_16_controls",
+              "iterations": 10000,
+              "nanoseconds_per_iteration": 29162.8243,
+              "checksum": "0"
+            },
+            {
+              "name": "rational_bezier_large_cached_evaluation_16_controls",
+              "iterations": 10000,
+              "nanoseconds_per_iteration": 1576.1029,
+              "checksum": "0"
+            }
+          ]
+        },
+        {
+          "log": "/tmp/hypercurve-affine-offset-bounded-extended-rational16-baseline-2.log",
+          "repetition": 2,
+          "exit_status": 0,
+          "wall_seconds": 0.3,
+          "user_seconds": 0.3,
+          "system_seconds": 0,
+          "maximum_rss_kib": 4692,
+          "rows": [
+            {
+              "name": "rational_bezier_large_cold_evaluation_16_controls",
+              "iterations": 10000,
+              "nanoseconds_per_iteration": 29126.4528,
+              "checksum": "0"
+            },
+            {
+              "name": "rational_bezier_large_cached_evaluation_16_controls",
+              "iterations": 10000,
+              "nanoseconds_per_iteration": 1595.9366,
+              "checksum": "0"
+            }
+          ]
+        },
+        {
+          "log": "/tmp/hypercurve-affine-offset-bounded-extended-rational16-baseline-3.log",
+          "repetition": 3,
+          "exit_status": 0,
+          "wall_seconds": 0.31,
+          "user_seconds": 0.3,
+          "system_seconds": 0,
+          "maximum_rss_kib": 4872,
+          "rows": [
+            {
+              "name": "rational_bezier_large_cold_evaluation_16_controls",
+              "iterations": 10000,
+              "nanoseconds_per_iteration": 29143.9866,
+              "checksum": "0"
+            },
+            {
+              "name": "rational_bezier_large_cached_evaluation_16_controls",
+              "iterations": 10000,
+              "nanoseconds_per_iteration": 1609.1867,
+              "checksum": "0"
+            }
+          ]
+        },
+        {
+          "log": "/tmp/hypercurve-affine-offset-bounded-extended-rational16-baseline-4.log",
+          "repetition": 4,
+          "exit_status": 0,
+          "wall_seconds": 0.31,
+          "user_seconds": 0.31,
+          "system_seconds": 0,
+          "maximum_rss_kib": 4752,
+          "rows": [
+            {
+              "name": "rational_bezier_large_cold_evaluation_16_controls",
+              "iterations": 10000,
+              "nanoseconds_per_iteration": 29389.8748,
+              "checksum": "0"
+            },
+            {
+              "name": "rational_bezier_large_cached_evaluation_16_controls",
+              "iterations": 10000,
+              "nanoseconds_per_iteration": 2072.7659,
+              "checksum": "0"
+            }
+          ]
+        },
+        {
+          "log": "/tmp/hypercurve-affine-offset-bounded-extended-rational16-baseline-5.log",
+          "repetition": 5,
+          "exit_status": 0,
+          "wall_seconds": 0.3,
+          "user_seconds": 0.3,
+          "system_seconds": 0,
+          "maximum_rss_kib": 4972,
+          "rows": [
+            {
+              "name": "rational_bezier_large_cold_evaluation_16_controls",
+              "iterations": 10000,
+              "nanoseconds_per_iteration": 28875.3511,
+              "checksum": "0"
+            },
+            {
+              "name": "rational_bezier_large_cached_evaluation_16_controls",
+              "iterations": 10000,
+              "nanoseconds_per_iteration": 1571.2593,
+              "checksum": "0"
+            }
+          ]
+        }
+      ],
+      "candidate": [
+        {
+          "log": "/tmp/hypercurve-affine-offset-bounded-extended-rational16-candidate-1.log",
+          "repetition": 1,
+          "exit_status": 0,
+          "wall_seconds": 0.3,
+          "user_seconds": 0.3,
+          "system_seconds": 0,
+          "maximum_rss_kib": 4684,
+          "rows": [
+            {
+              "name": "rational_bezier_large_cold_evaluation_16_controls",
+              "iterations": 10000,
+              "nanoseconds_per_iteration": 28922.8418,
+              "checksum": "0"
+            },
+            {
+              "name": "rational_bezier_large_cached_evaluation_16_controls",
+              "iterations": 10000,
+              "nanoseconds_per_iteration": 1548.1689,
+              "checksum": "0"
+            }
+          ]
+        },
+        {
+          "log": "/tmp/hypercurve-affine-offset-bounded-extended-rational16-candidate-2.log",
+          "repetition": 2,
+          "exit_status": 0,
+          "wall_seconds": 0.31,
+          "user_seconds": 0.3,
+          "system_seconds": 0,
+          "maximum_rss_kib": 4924,
+          "rows": [
+            {
+              "name": "rational_bezier_large_cold_evaluation_16_controls",
+              "iterations": 10000,
+              "nanoseconds_per_iteration": 29178.7543,
+              "checksum": "0"
+            },
+            {
+              "name": "rational_bezier_large_cached_evaluation_16_controls",
+              "iterations": 10000,
+              "nanoseconds_per_iteration": 1584.3924,
+              "checksum": "0"
+            }
+          ]
+        },
+        {
+          "log": "/tmp/hypercurve-affine-offset-bounded-extended-rational16-candidate-3.log",
+          "repetition": 3,
+          "exit_status": 0,
+          "wall_seconds": 0.31,
+          "user_seconds": 0.3,
+          "system_seconds": 0,
+          "maximum_rss_kib": 4868,
+          "rows": [
+            {
+              "name": "rational_bezier_large_cold_evaluation_16_controls",
+              "iterations": 10000,
+              "nanoseconds_per_iteration": 29259.0118,
+              "checksum": "0"
+            },
+            {
+              "name": "rational_bezier_large_cached_evaluation_16_controls",
+              "iterations": 10000,
+              "nanoseconds_per_iteration": 1554.4885,
+              "checksum": "0"
+            }
+          ]
+        },
+        {
+          "log": "/tmp/hypercurve-affine-offset-bounded-extended-rational16-candidate-4.log",
+          "repetition": 4,
+          "exit_status": 0,
+          "wall_seconds": 0.32,
+          "user_seconds": 0.32,
+          "system_seconds": 0,
+          "maximum_rss_kib": 4880,
+          "rows": [
+            {
+              "name": "rational_bezier_large_cold_evaluation_16_controls",
+              "iterations": 10000,
+              "nanoseconds_per_iteration": 30644.0049,
+              "checksum": "0"
+            },
+            {
+              "name": "rational_bezier_large_cached_evaluation_16_controls",
+              "iterations": 10000,
+              "nanoseconds_per_iteration": 1614.2574,
+              "checksum": "0"
+            }
+          ]
+        },
+        {
+          "log": "/tmp/hypercurve-affine-offset-bounded-extended-rational16-candidate-5.log",
+          "repetition": 5,
+          "exit_status": 0,
+          "wall_seconds": 0.3,
+          "user_seconds": 0.3,
+          "system_seconds": 0,
+          "maximum_rss_kib": 4936,
+          "rows": [
+            {
+              "name": "rational_bezier_large_cold_evaluation_16_controls",
+              "iterations": 10000,
+              "nanoseconds_per_iteration": 28670.5001,
+              "checksum": "0"
+            },
+            {
+              "name": "rational_bezier_large_cached_evaluation_16_controls",
+              "iterations": 10000,
+              "nanoseconds_per_iteration": 1545.389,
+              "checksum": "0"
+            }
+          ]
+        }
+      ],
+      "median": {
+        "wall_seconds": {
+          "baseline": 0.3,
+          "candidate": 0.31,
+          "change_percent": 3.3333333333333437
+        },
+        "user_seconds": {
+          "baseline": 0.3,
+          "candidate": 0.3,
+          "change_percent": 0
+        },
+        "system_seconds": {
+          "baseline": 0,
+          "candidate": 0,
+          "change_percent": null
+        },
+        "maximum_rss_kib": {
+          "baseline": 4752,
+          "candidate": 4880,
+          "change_percent": 2.6936026936027035
+        }
+      },
+      "median_rows": [
+        {
+          "name": "rational_bezier_large_cold_evaluation_16_controls",
+          "iterations": 10000,
+          "checksum": "0",
+          "baseline_nanoseconds": 29143.9866,
+          "candidate_nanoseconds": 29178.7543,
+          "change_percent": 0.11929630793887647
+        },
+        {
+          "name": "rational_bezier_large_cached_evaluation_16_controls",
+          "iterations": 10000,
+          "checksum": "0",
+          "baseline_nanoseconds": 1595.9366,
+          "candidate_nanoseconds": 1554.4885,
+          "change_percent": -2.5971019149507613
+        }
+      ]
+    },
+    "rational64": {
+      "baseline": [
+        {
+          "log": "/tmp/hypercurve-affine-offset-bounded-extended-rational64-baseline-1.log",
+          "repetition": 1,
+          "exit_status": 0,
+          "wall_seconds": 5.14,
+          "user_seconds": 5.1,
+          "system_seconds": 0,
+          "maximum_rss_kib": 11328,
+          "rows": [
+            {
+              "name": "rational_bezier_large_cold_evaluation_64_controls",
+              "iterations": 10000,
+              "nanoseconds_per_iteration": 508945.9941,
+              "checksum": "0"
+            },
+            {
+              "name": "rational_bezier_large_cached_evaluation_64_controls",
+              "iterations": 10000,
+              "nanoseconds_per_iteration": 4736.8893,
+              "checksum": "0"
+            }
+          ]
+        },
+        {
+          "log": "/tmp/hypercurve-affine-offset-bounded-extended-rational64-baseline-2.log",
+          "repetition": 2,
+          "exit_status": 0,
+          "wall_seconds": 5.18,
+          "user_seconds": 5.15,
+          "system_seconds": 0,
+          "maximum_rss_kib": 11328,
+          "rows": [
+            {
+              "name": "rational_bezier_large_cold_evaluation_64_controls",
+              "iterations": 10000,
+              "nanoseconds_per_iteration": 513556.8042,
+              "checksum": "0"
+            },
+            {
+              "name": "rational_bezier_large_cached_evaluation_64_controls",
+              "iterations": 10000,
+              "nanoseconds_per_iteration": 4754.1492,
+              "checksum": "0"
+            }
+          ]
+        },
+        {
+          "log": "/tmp/hypercurve-affine-offset-bounded-extended-rational64-baseline-3.log",
+          "repetition": 3,
+          "exit_status": 0,
+          "wall_seconds": 5.16,
+          "user_seconds": 5.13,
+          "system_seconds": 0,
+          "maximum_rss_kib": 11316,
+          "rows": [
+            {
+              "name": "rational_bezier_large_cold_evaluation_64_controls",
+              "iterations": 10000,
+              "nanoseconds_per_iteration": 511546.23,
+              "checksum": "0"
+            },
+            {
+              "name": "rational_bezier_large_cached_evaluation_64_controls",
+              "iterations": 10000,
+              "nanoseconds_per_iteration": 4587.8836,
+              "checksum": "0"
+            }
+          ]
+        },
+        {
+          "log": "/tmp/hypercurve-affine-offset-bounded-extended-rational64-baseline-4.log",
+          "repetition": 4,
+          "exit_status": 0,
+          "wall_seconds": 5.07,
+          "user_seconds": 5.04,
+          "system_seconds": 0,
+          "maximum_rss_kib": 11500,
+          "rows": [
+            {
+              "name": "rational_bezier_large_cold_evaluation_64_controls",
+              "iterations": 10000,
+              "nanoseconds_per_iteration": 502249.8921,
+              "checksum": "0"
+            },
+            {
+              "name": "rational_bezier_large_cached_evaluation_64_controls",
+              "iterations": 10000,
+              "nanoseconds_per_iteration": 4563.3313,
+              "checksum": "0"
+            }
+          ]
+        },
+        {
+          "log": "/tmp/hypercurve-affine-offset-bounded-extended-rational64-baseline-5.log",
+          "repetition": 5,
+          "exit_status": 0,
+          "wall_seconds": 5.12,
+          "user_seconds": 5.09,
+          "system_seconds": 0,
+          "maximum_rss_kib": 11376,
+          "rows": [
+            {
+              "name": "rational_bezier_large_cold_evaluation_64_controls",
+              "iterations": 10000,
+              "nanoseconds_per_iteration": 507703.3363,
+              "checksum": "0"
+            },
+            {
+              "name": "rational_bezier_large_cached_evaluation_64_controls",
+              "iterations": 10000,
+              "nanoseconds_per_iteration": 4626.501,
+              "checksum": "0"
+            }
+          ]
+        }
+      ],
+      "candidate": [
+        {
+          "log": "/tmp/hypercurve-affine-offset-bounded-extended-rational64-candidate-1.log",
+          "repetition": 1,
+          "exit_status": 0,
+          "wall_seconds": 5.19,
+          "user_seconds": 5.16,
+          "system_seconds": 0,
+          "maximum_rss_kib": 11480,
+          "rows": [
+            {
+              "name": "rational_bezier_large_cold_evaluation_64_controls",
+              "iterations": 10000,
+              "nanoseconds_per_iteration": 514032.5856,
+              "checksum": "0"
+            },
+            {
+              "name": "rational_bezier_large_cached_evaluation_64_controls",
+              "iterations": 10000,
+              "nanoseconds_per_iteration": 4645.8356,
+              "checksum": "0"
+            }
+          ]
+        },
+        {
+          "log": "/tmp/hypercurve-affine-offset-bounded-extended-rational64-candidate-2.log",
+          "repetition": 2,
+          "exit_status": 0,
+          "wall_seconds": 5.06,
+          "user_seconds": 5,
+          "system_seconds": 0.01,
+          "maximum_rss_kib": 11460,
+          "rows": [
+            {
+              "name": "rational_bezier_large_cold_evaluation_64_controls",
+              "iterations": 10000,
+              "nanoseconds_per_iteration": 501678.4063,
+              "checksum": "0"
+            },
+            {
+              "name": "rational_bezier_large_cached_evaluation_64_controls",
+              "iterations": 10000,
+              "nanoseconds_per_iteration": 4662.6025,
+              "checksum": "0"
+            }
+          ]
+        },
+        {
+          "log": "/tmp/hypercurve-affine-offset-bounded-extended-rational64-candidate-3.log",
+          "repetition": 3,
+          "exit_status": 0,
+          "wall_seconds": 5.01,
+          "user_seconds": 4.98,
+          "system_seconds": 0,
+          "maximum_rss_kib": 11264,
+          "rows": [
+            {
+              "name": "rational_bezier_large_cold_evaluation_64_controls",
+              "iterations": 10000,
+              "nanoseconds_per_iteration": 496748.6781,
+              "checksum": "0"
+            },
+            {
+              "name": "rational_bezier_large_cached_evaluation_64_controls",
+              "iterations": 10000,
+              "nanoseconds_per_iteration": 4651.8132,
+              "checksum": "0"
+            }
+          ]
+        },
+        {
+          "log": "/tmp/hypercurve-affine-offset-bounded-extended-rational64-candidate-4.log",
+          "repetition": 4,
+          "exit_status": 0,
+          "wall_seconds": 5.1,
+          "user_seconds": 5.05,
+          "system_seconds": 0,
+          "maximum_rss_kib": 11204,
+          "rows": [
+            {
+              "name": "rational_bezier_large_cold_evaluation_64_controls",
+              "iterations": 10000,
+              "nanoseconds_per_iteration": 505589.7182,
+              "checksum": "0"
+            },
+            {
+              "name": "rational_bezier_large_cached_evaluation_64_controls",
+              "iterations": 10000,
+              "nanoseconds_per_iteration": 4590.1714,
+              "checksum": "0"
+            }
+          ]
+        },
+        {
+          "log": "/tmp/hypercurve-affine-offset-bounded-extended-rational64-candidate-5.log",
+          "repetition": 5,
+          "exit_status": 0,
+          "wall_seconds": 5.04,
+          "user_seconds": 5.01,
+          "system_seconds": 0,
+          "maximum_rss_kib": 11288,
+          "rows": [
+            {
+              "name": "rational_bezier_large_cold_evaluation_64_controls",
+              "iterations": 10000,
+              "nanoseconds_per_iteration": 499208.6296,
+              "checksum": "0"
+            },
+            {
+              "name": "rational_bezier_large_cached_evaluation_64_controls",
+              "iterations": 10000,
+              "nanoseconds_per_iteration": 4720.6325,
+              "checksum": "0"
+            }
+          ]
+        }
+      ],
+      "median": {
+        "wall_seconds": {
+          "baseline": 5.14,
+          "candidate": 5.06,
+          "change_percent": -1.5564202334630406
+        },
+        "user_seconds": {
+          "baseline": 5.1,
+          "candidate": 5.01,
+          "change_percent": -1.764705882352935
+        },
+        "system_seconds": {
+          "baseline": 0,
+          "candidate": 0,
+          "change_percent": null
+        },
+        "maximum_rss_kib": {
+          "baseline": 11328,
+          "candidate": 11288,
+          "change_percent": -0.3531073446327637
+        }
+      },
+      "median_rows": [
+        {
+          "name": "rational_bezier_large_cold_evaluation_64_controls",
+          "iterations": 10000,
+          "checksum": "0",
+          "baseline_nanoseconds": 508945.9941,
+          "candidate_nanoseconds": 501678.4063,
+          "change_percent": -1.4279683668307008
+        },
+        {
+          "name": "rational_bezier_large_cached_evaluation_64_controls",
+          "iterations": 10000,
+          "checksum": "0",
+          "baseline_nanoseconds": 4626.501,
+          "candidate_nanoseconds": 4651.8132,
+          "change_percent": 0.547113250380793
+        }
+      ]
+    }
+  },
+  "final_worker_audit": {
+    "time": "2026-09-06 01:24:51 UTC",
+    "workers": []
+  }
+}

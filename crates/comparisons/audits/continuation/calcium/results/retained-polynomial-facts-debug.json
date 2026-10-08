@@ -1,0 +1,23 @@
+{
+  "tag": "retained-polynomial-facts-debug",
+  "started": "2026-09-08T23:45:24.879Z",
+  "finished": "2026-09-08T23:45:49.960Z",
+  "elapsedSeconds": 25.078492672999996,
+  "cwd": "/home/tim/Documents/GitHub/workspace/hypersolve",
+  "command": "env",
+  "args": [
+    "CARGO_TARGET_DIR=/tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse",
+    "CARGO_INCREMENTAL=0",
+    "CARGO_PROFILE_DEV_DEBUG=0",
+    "CARGO_BUILD_JOBS=2",
+    "cargo",
+    "test",
+    "--offline",
+    "--locked",
+    "--all-features",
+    "--lib",
+    "--tests"
+  ],
+  "code": 0,
+  "signal": null
+}

@@ -1,0 +1,13 @@
+{
+  "tag": "coq-aern-current85-before-approved-v86",
+  "started": "2026-09-12T06:00:27.023Z",
+  "finished": "2026-09-12T06:00:28.295Z",
+  "elapsedSeconds": 1.269288049,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/coq-aern",
+  "command": "node",
+  "args": [
+    "evidence-v85.mjs"
+  ],
+  "code": 0,
+  "signal": null
+}

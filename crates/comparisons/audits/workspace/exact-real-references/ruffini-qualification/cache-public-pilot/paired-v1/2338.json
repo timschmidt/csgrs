@@ -1,0 +1,21 @@
+{
+  "args": [
+    "-c",
+    "6",
+    "/home/tim/Documents/GitHub/workspace/exact-real-references/ruffini-qualification/cache-public-pilot/before-4NY2F6/memory",
+    "bench",
+    "rational",
+    "negative",
+    "cold",
+    "128",
+    "0",
+    "100"
+  ],
+  "begin": "2026-09-07T05:51:09.693Z",
+  "end": "2026-09-07T05:51:09.696Z",
+  "status": 0,
+  "signal": null,
+  "error": null,
+  "stdout": "{\"family\":\"rational\",\"negative\":true,\"mode\":\"cold\",\"bits\":128,\"gap\":0,\"reps\":100,\"cpu_ns\":40957,\"wall_ns\":42128,\"checksum\":12800,\"expected\":\"-113427455640312821154458202477256070485\",\"memory\":{\"calls\":1600,\"bytes\":97600,\"peak_extra_requested\":784,\"retained_delta\":0}}\n",
+  "stderr": ""
+}

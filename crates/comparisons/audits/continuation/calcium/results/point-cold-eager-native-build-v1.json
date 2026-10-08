@@ -1,0 +1,23 @@
+{
+  "tag": "point-cold-eager-native-build-v1",
+  "started": "2026-09-10T23:09:10.375Z",
+  "finished": "2026-09-10T23:09:11.387Z",
+  "elapsedSeconds": 1.009847874,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/point-cold-eager",
+  "command": "env",
+  "args": [
+    "CARGO_TARGET_DIR=/tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse",
+    "CARGO_INCREMENTAL=0",
+    "CARGO_PROFILE_DEV_DEBUG=0",
+    "CARGO_BUILD_JOBS=2",
+    "cargo",
+    "build",
+    "--locked",
+    "--offline",
+    "--release",
+    "--bin",
+    "point-cold-eager"
+  ],
+  "code": 0,
+  "signal": null
+}

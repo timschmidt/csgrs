@@ -1,0 +1,33 @@
+Oct 22 1999
+
+This is a collection of programs which exercise portions of the library.
+They should not necessarily been viewed as examples of good programming
+style.
+
+To compile any one of these tests you will need to change the
+variable GMPDIR in Makefile.
+
+In many, though not all cases, the arguments to the functions are as
+follows:
+
+tan_R <sign> <c> <n> <a> <b> <ndigits>
+
+where the first 5 arguments define a real number which is passed to
+tan_R and <ndigits> is the number of (binary) digits to be forced and
+printed (base 10) from the resulting real.
+
+The real is the <sign> followed by the list of digits coded as a
+characteristic pair <c> <n> (where <n>) is a number of digits followed
+by the vector continuation <a>/<b>.  The characteristic pair denotes the
+number <c> base 2^<n>.
+
+The <sign> argument is as follows:
+
+0 -> SZERO
+1 -> SINF
+2 -> SPOS
+3 -> SNEG
+4 -> SIGN_UNKN
+
+Lindsay
+

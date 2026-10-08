@@ -1,0 +1,12 @@
+[package]
+name = "calcium-rank-dominance-candidate"
+version = "0.1.0"
+edition = "2024"
+publish = false
+[workspace]
+[dependencies]
+hyperreal = { path = "../rank-dominance-trial/hyperreal" }
+hypersolve = { path = "../rank-dominance-trial/hypersolve" }
+[[bin]]
+name = "calcium-rank-dominance-candidate"
+path = "../rank-dominance-probe.rs"

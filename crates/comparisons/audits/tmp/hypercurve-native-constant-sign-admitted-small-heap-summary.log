@@ -1,0 +1,10 @@
+reading file "/tmp/hypercurve-native-constant-sign-admitted-small.heap.zst" - please wait, this might take some time...
+Debuggee command was: /tmp/hypercurve-native-constant-sign-admitted-test bezier_offset::conversion_tests::specialized_common_fiber_counts_even_multiplicity_in_a_coupled_system --exact --nocapture --test-threads=1
+finished reading file, now analyzing data:
+
+total runtime: 0.052000s.
+calls to allocation functions: 11671 (224442/s)
+temporary memory allocations: 471 (9057/s)
+peak heap memory consumption: 245.09K
+peak RSS (including heaptrack overhead): 13.82M
+total memory leaked: 90.14K

@@ -1,0 +1,14 @@
+{
+  "tag": "derivative-cost-allocation",
+  "started": "2026-09-09T04:20:19.625Z",
+  "finished": "2026-09-09T04:20:36.808Z",
+  "elapsedSeconds": 17.180688318,
+  "cwd": "/home/tim/Documents/GitHub/workspace",
+  "command": "node",
+  "args": [
+    "exactcore-hyper-comparison/audits/continuation/calcium/run-derivative-costs.mjs",
+    "allocation"
+  ],
+  "code": 0,
+  "signal": null
+}

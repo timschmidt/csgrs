@@ -1,0 +1,8 @@
+
+running 3 tests
+test resolve::sign_filter_summary_tests::sign_summary_exhaustive_short_sequences_match_independent_sign_table ... ok
+test resolve::sign_filter_summary_tests::sign_summary_keeps_complete_trace_counts_including_unknown_after_mixed ... ok
+test resolve::sign_filter_summary_tests::sign_summary_long_sequences_preserve_late_unknown_and_zero_cases ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 252 filtered out; finished in 1.24s
+

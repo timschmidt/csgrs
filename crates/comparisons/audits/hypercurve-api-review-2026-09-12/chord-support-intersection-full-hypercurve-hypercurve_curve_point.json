@@ -1,0 +1,27 @@
+{
+  "repo": "hypercurve",
+  "target": "hypercurve_curve_point",
+  "binary": "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve_curve_point-5793839a019359de",
+  "command": [
+    "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve_curve_point-5793839a019359de",
+    "--test-threads=4",
+    "--color",
+    "never"
+  ],
+  "sha256": "37bc9ed9fb6ee8c3a3e34b965c9e2797ffd6b84d2b9c4708a236451e61c7a5ed",
+  "returncode": 0,
+  "timed_out": false,
+  "elapsed_seconds": 0.0034618830104591325,
+  "log": "chord-support-intersection-full-hypercurve-hypercurve_curve_point.log",
+  "passed": [
+    "coordinate_view_accepts_arbitrary_exact_reals_and_preserves_certainty",
+    "independent_selected_charts_share_the_general_point_queries"
+  ],
+  "failed": [],
+  "ignored": [],
+  "summaries": [
+    "test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s"
+  ],
+  "new_failures": [],
+  "known_failures": []
+}

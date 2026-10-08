@@ -1,0 +1,13 @@
+{
+  "tag": "twelfth-native-environment-between-v78",
+  "started": "2026-09-11T23:50:59.685Z",
+  "finished": "2026-09-11T23:50:59.873Z",
+  "elapsedSeconds": 0.186324737,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "node",
+  "args": [
+    "twelfth-cost-environment-v78.mjs"
+  ],
+  "code": 0,
+  "signal": null
+}

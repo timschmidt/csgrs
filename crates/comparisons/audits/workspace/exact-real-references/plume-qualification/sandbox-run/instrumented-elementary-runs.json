@@ -1,0 +1,14 @@
+[
+  {
+    "op": "exp",
+    "a": -8,
+    "b": 1,
+    "bits": 8,
+    "status": 0,
+    "signal": null,
+    "error": "EPERM",
+    "elapsed_ns": "24887296",
+    "stdout": "exp -8 1 8 0 1 1 256\n",
+    "stderr": ""
+  }
+]

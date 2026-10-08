@@ -1,0 +1,43 @@
+{
+  "baseline_point_evaluator_unchanged_between_b4a0d02_and_281368b": true,
+  "builds": [
+    {
+      "label": "baseline",
+      "library": "/tmp/hypercurve-box-policy-baseline-b4a0d02/target/release/deps/libhypercurve-4d52d71dbd9ae0a9.rlib",
+      "library_sha256": "4e1adca68f300ddb70ffdfab40be91d0600f8c88c5057f5aabc1c8ef121cde28",
+      "binary": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/conic-exact-evaluation-bench-baseline",
+      "binary_sha256": "513253b44c03acb03dd19261b34715955a4dc93a1a9e008038bb57dc1e5ba0b5",
+      "command": [
+        "rustc",
+        "--edition=2024",
+        "-O",
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/conic-exact-evaluation-bench.rs",
+        "--extern",
+        "hypercurve=/tmp/hypercurve-box-policy-baseline-b4a0d02/target/release/deps/libhypercurve-4d52d71dbd9ae0a9.rlib",
+        "-L",
+        "dependency=/tmp/hypercurve-box-policy-baseline-b4a0d02/target/release/deps",
+        "-o",
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/conic-exact-evaluation-bench-baseline"
+      ]
+    },
+    {
+      "label": "current",
+      "library": "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/libhypercurve-2c7ff6f3fbe07653.rlib",
+      "library_sha256": "6ff5370c425188136425bbbcd4bc46df85caf8a9dc3caef76cb2b2eb17d52239",
+      "binary": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/conic-exact-evaluation-final-bench-current",
+      "binary_sha256": "955ee6e67700118b8dbfc312e36c21b7a1d9353c97f8a0a36a8584f763e88be4",
+      "command": [
+        "rustc",
+        "--edition=2024",
+        "-O",
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/conic-exact-evaluation-bench.rs",
+        "--extern",
+        "hypercurve=/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/libhypercurve-2c7ff6f3fbe07653.rlib",
+        "-L",
+        "dependency=/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps",
+        "-o",
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/conic-exact-evaluation-final-bench-current"
+      ]
+    }
+  ]
+}

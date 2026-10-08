@@ -1,0 +1,97 @@
+{
+  "goal_status": "active",
+  "next_local_frame_audit": {
+    "finding": "parallel_fixed_distance_system still certifies finite weight for the entire center source before using certified_center_parameter. The selected circle needs only a finite regular frame at that selected parameter.",
+    "evidence": "hypercurve/src/bezier_offset.rs: parallel_fixed_distance_system and selected_parallel_normal_parallel_system",
+    "status": "resolved and committed",
+    "direction": "Separate candidate-domain finiteness from selected-center frame certification. Keep full center-domain validation when no selected center parameter is supplied. Add a rational-source fixture with a remote pole, a finite regular selected center, and independent exact circle/line/parallel replay.",
+    "planned_fixture": {
+      "source": "P(t) = ((2 t^2 - 1)/(2 t - 1), 0)",
+      "quadratic_homogeneous_controls": [
+        [
+          -1,
+          0,
+          -1
+        ],
+        [
+          -1,
+          0,
+          0
+        ],
+        [
+          1,
+          0,
+          1
+        ]
+      ],
+      "selected_parameter": "alpha = positive root of 2 t^2 - 1, isolated in (1/2, 3/4)",
+      "center": "P(alpha) = (0, 0)",
+      "source_pole": "t = 1/2, where the numerator is -1/2",
+      "tangent_numerator": "4 t^2 - 4 t + 2 = 4 (t - 1/2)^2 + 1 > 0",
+      "expected_circle": "the radius-one counterclockwise left semicircle at the origin, using zero source offset",
+      "target": "the existing non-PH parallel of Q((-2, 0), (-1, 0), (0, 1)) by +1/8",
+      "qualification": "Executed under both policies with independent exact circle/line geometry, both non-PH parallel crossings, operand swaps and traversal reversals; selecting the source pole remains rejected."
+    },
+    "commit": "fbac724475efbac90ff0df08fc77e2f8e4693868",
+    "qualification": "selected-circle-local-frame-qualification.json",
+    "evidence_audit": "selected-circle-local-frame-evidence-audit.md"
+  },
+  "remaining_common_dispatch": [
+    "analytic parallel / rational span",
+    "analytic parallel / retained chord",
+    "analytic parallel / analytic parallel"
+  ],
+  "remaining_closure": [
+    "finite exterior source domains",
+    "complete non-injective and retraced parameter correspondence",
+    "normalized public CurveRegion2 construction",
+    "five existing promotion failures",
+    "eight expensive previously unqualified tests",
+    "broader selected-algebraic consolidation and computational-closure measurement"
+  ],
+  "qualification_pending": false,
+  "region_evidence_api": {
+    "finding": "CurveRegionCarrierRef2 identifies an original boundary fragment, but region preparation can replace a materialized linear image by a retained chord. The reported chord parameter is therefore not evaluable in the authored quadratic chart recovered from that fragment index.",
+    "evidence": "The full circle/quarter-circle overlap regression has one circular span and one straight span. Replaying the latter with Curve2::from_retained_fragment(original_fragment).point_at(reported_parameter) returns InvalidCurveParameter. The internal retained chord parameter owns the exact point and the paired endpoints match.",
+    "direction": "Retain an evaluable carrier/location authority in region intersection evidence, updating consumers directly. Avoid exposing a second ambiguous parameter convention or adding a compatibility adapter.",
+    "status": "resolved and committed",
+    "additional_source_findings": [
+      "Correction after inspecting the whole constructor: build_region_carrier refreshes family from the prepared geometry at its end. The chart mismatch is still real; the public reference identifies original boundary provenance without retaining the evaluable prepared curve. Circle/parallel support classification also differs from the general Curve2 family labels.",
+      "CurveSupport2::restrict_certified already publishes retained curve fragments from a support, range and endpoint authority. Reuse existing support/domain machinery when exposing a replayable public carrier, without forcing eager rational endpoint materialization.",
+      "Carrier identity, its evaluable parameter chart and authored boundary provenance should stay distinguishable. Replace duplicated family metadata with the actual curve family where appropriate; update callers directly."
+    ],
+    "qualification": "region-carrier-evidence-qualification.json",
+    "evidence_audit": "region-carrier-evidence-evidence-audit.md",
+    "resolution": "Reports and trim boundary contacts own an evaluable Curve2 through CurveRegionCarrier2; authored provenance stays distinct. Removed the metadata-only reference, duplicate family/index accessors and old algebraic-only Bezier range names; directly migrated all controlled callers.",
+    "commit": "7faa8340e1bf79c823e618f78feedc186213eda9",
+    "caller_commit": "878fcb441b281ab1b44051ca4420b28092c3c2ed"
+  },
+  "commit": "222e177628edbe07541e54c85a95ddf03b9cab8d",
+  "qualification": "circle-common-dispatch-qualification.json",
+  "next_active_work": "analytic_parallel_common_dispatch",
+  "analytic_point_equality_provenance": {
+    "status": "resolved and committed",
+    "reproducer": "region-carrier-evidence-equality-stress/reproducer.json",
+    "source": "region-carrier-evidence-equality-stress/curve_region_boolean.rs",
+    "test": "curve_region_boolean::certified_successor_tests::algebraic_chord_analytic_parallel_pair_replays_contacts_and_overlap",
+    "scope": "The shared helper now replays every contact and overlap endpoint through its published Curve2 and requires Certified equality. The formerly separate generic stress is included in the qualified library target. Forty independent positive/negative point comparisons also pass.",
+    "commit": "ef2114738d48439e9ce3f1ac787c974309b9d6e5",
+    "qualification": "analytic-point-field-replay-qualification.json",
+    "evidence_audit": "analytic-point-field-replay-evidence-audit.md",
+    "resolution": "Ordinary algebraic analytic points reuse the existing recursive projective equality authority, preserving the source parameter and positive normal speed. All shared chord/parallel contact and overlap endpoint replays now require Certified equality; the previously >300-second generic replay takes 0.11 seconds. The new 40-case normal-sheet/root/displacement matrix passes under both policies.",
+    "historical_scope": "The original test contract remains qualified. The extra all-contact/overlap endpoint point-replay/equality loop is preserved separately. New selected-exterior replay and three-field circle/chord replay pass. The independent 432 analytic replay matrix also passes.",
+    "completed_steps": [
+      "Identify the exact contact/overlap endpoint and stage: point evaluation, parameter order, or equality between independently retained point forms.",
+      "Audit analytic point equality before retained_point_evidence_equality_by_refinement; consider existing rational-component and source/frame/parameter certificates, preserving one-sided cusp branches and arbitrary selected fields.",
+      "Avoid adding a global Cartesian reconstruction or a compatibility interface; retain strict certainty and negative/foreign-root tests.",
+      "Continue shared parallel/rational, parallel/chord and parallel/parallel dispatch after the local evidence/performance issue is understood."
+    ]
+  },
+  "analytic_parallel_common_dispatch_audit": "analytic-common-dispatch-followup.json",
+  "shared_parameter_component_correspondence": {
+    "status": "resolved and committed",
+    "commit": "8b3573224c5b13fcf2a953e0f8cdae5c70d322a0",
+    "qualification": "shared-parameter-component-overlap-qualification.json",
+    "resolution": "Removed RegionPairOverlapSource::ParameterComponent and its separate clipping branch. Nonlinear components enter CurveOverlapCorrespondence2, sharing operand-order handling with circles."
+  }
+}

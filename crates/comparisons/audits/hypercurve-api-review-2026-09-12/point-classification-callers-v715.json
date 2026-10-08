@@ -1,0 +1,377 @@
+{
+  "scope": "Unresolved receiver-type inventory; includes native contour, 3D and other classifiers, so only type-resolved CurveRegion2/CurvePath2 callers should migrate",
+  "rows": [
+    {
+      "path": "csgrs/src/curve/native.rs",
+      "single": 1,
+      "batch": 0
+    },
+    {
+      "path": "csgrs/src/implicit/sdf.rs",
+      "single": 1,
+      "batch": 0
+    },
+    {
+      "path": "csgrs/src/solid.rs",
+      "single": 1,
+      "batch": 0
+    },
+    {
+      "path": "hyperbrep/benches/kernel.rs",
+      "single": 13,
+      "batch": 0
+    },
+    {
+      "path": "hyperbrep/fuzz/fuzz_targets/analytic_solid_roundtrip.rs",
+      "single": 1,
+      "batch": 0
+    },
+    {
+      "path": "hyperbrep/src/boolean.rs",
+      "single": 70,
+      "batch": 0
+    },
+    {
+      "path": "hyperbrep/src/builder.rs",
+      "single": 91,
+      "batch": 0
+    },
+    {
+      "path": "hyperbrep/src/model.rs",
+      "single": 28,
+      "batch": 0
+    },
+    {
+      "path": "hypercurve/benches/arc.rs",
+      "single": 4,
+      "batch": 0
+    },
+    {
+      "path": "hypercurve/benches/bezier_region.rs",
+      "single": 5,
+      "batch": 0
+    },
+    {
+      "path": "hypercurve/benches/containment.rs",
+      "single": 3,
+      "batch": 1
+    },
+    {
+      "path": "hypercurve/benches/curve_path.rs",
+      "single": 1,
+      "batch": 0
+    },
+    {
+      "path": "hypercurve/benches/dispatch_trace.rs",
+      "single": 1,
+      "batch": 0
+    },
+    {
+      "path": "hypercurve/examples/arrangement.rs",
+      "single": 1,
+      "batch": 0
+    },
+    {
+      "path": "hypercurve/examples/basic.rs",
+      "single": 1,
+      "batch": 0
+    },
+    {
+      "path": "hypercurve/fuzz/fuzz_targets/region_boolean.rs",
+      "single": 4,
+      "batch": 0
+    },
+    {
+      "path": "hypercurve/src/bezier_offset.rs",
+      "single": 14,
+      "batch": 0
+    },
+    {
+      "path": "hypercurve/src/bezier_parameter.rs",
+      "single": 1,
+      "batch": 0
+    },
+    {
+      "path": "hypercurve/src/bezier_region.rs",
+      "single": 49,
+      "batch": 1
+    },
+    {
+      "path": "hypercurve/src/contour.rs",
+      "single": 1,
+      "batch": 0
+    },
+    {
+      "path": "hypercurve/src/curve.rs",
+      "single": 4,
+      "batch": 0
+    },
+    {
+      "path": "hypercurve/src/curve_corner_chain.rs",
+      "single": 1,
+      "batch": 0
+    },
+    {
+      "path": "hypercurve/src/curve_fillet.rs",
+      "single": 1,
+      "batch": 0
+    },
+    {
+      "path": "hypercurve/src/curve_region_boolean.rs",
+      "single": 6,
+      "batch": 0
+    },
+    {
+      "path": "hypercurve/src/curve_region_trim.rs",
+      "single": 1,
+      "batch": 0
+    },
+    {
+      "path": "hypercurve/src/curve_string.rs",
+      "single": 2,
+      "batch": 0
+    },
+    {
+      "path": "hypercurve/src/curve_subdivision.rs",
+      "single": 2,
+      "batch": 0
+    },
+    {
+      "path": "hypercurve/src/curve_support_intersection.rs",
+      "single": 1,
+      "batch": 0
+    },
+    {
+      "path": "hypercurve/src/lib.rs",
+      "single": 3,
+      "batch": 0
+    },
+    {
+      "path": "hypercurve/src/native_region_tests.rs",
+      "single": 2,
+      "batch": 1
+    },
+    {
+      "path": "hypercurve/src/prepared.rs",
+      "single": 4,
+      "batch": 0
+    },
+    {
+      "path": "hypercurve/src/region.rs",
+      "single": 4,
+      "batch": 1
+    },
+    {
+      "path": "hypercurve/src/segment.rs",
+      "single": 1,
+      "batch": 0
+    },
+    {
+      "path": "hypercurve/src/translation_obstacle.rs",
+      "single": 1,
+      "batch": 0
+    },
+    {
+      "path": "hypercurve/tests/exact_structural_facts.rs",
+      "single": 1,
+      "batch": 0
+    },
+    {
+      "path": "hypercurve/tests/hypercurve_analytic_parallel_region.rs",
+      "single": 8,
+      "batch": 0
+    },
+    {
+      "path": "hypercurve/tests/hypercurve_bbox.rs",
+      "single": 1,
+      "batch": 0
+    },
+    {
+      "path": "hypercurve/tests/hypercurve_bezier_fit_offset.rs",
+      "single": 2,
+      "batch": 0
+    },
+    {
+      "path": "hypercurve/tests/hypercurve_bezier_region.rs",
+      "single": 19,
+      "batch": 0
+    },
+    {
+      "path": "hypercurve/tests/hypercurve_contour.rs",
+      "single": 10,
+      "batch": 0
+    },
+    {
+      "path": "hypercurve/tests/hypercurve_curve.rs",
+      "single": 8,
+      "batch": 0
+    },
+    {
+      "path": "hypercurve/tests/hypercurve_curve_intersection.rs",
+      "single": 4,
+      "batch": 0
+    },
+    {
+      "path": "hypercurve/tests/hypercurve_curve_region_boolean.rs",
+      "single": 18,
+      "batch": 0
+    },
+    {
+      "path": "hypercurve/tests/hypercurve_curve_region_promotion.rs",
+      "single": 123,
+      "batch": 0
+    },
+    {
+      "path": "hypercurve/tests/hypercurve_curve_region_stroke.rs",
+      "single": 1,
+      "batch": 0
+    },
+    {
+      "path": "hypercurve/tests/hypercurve_exact_closure.rs",
+      "single": 5,
+      "batch": 0
+    },
+    {
+      "path": "hypercurve/tests/hypercurve_geo_regressions.rs",
+      "single": 2,
+      "batch": 0
+    },
+    {
+      "path": "hypercurve/tests/hypercurve_path_closure.rs",
+      "single": 4,
+      "batch": 0
+    },
+    {
+      "path": "hypercurve/tests/hypercurve_pcb_boolean_regressions.rs",
+      "single": 1,
+      "batch": 0
+    },
+    {
+      "path": "hypercurve/tests/hypercurve_pr59_shape_regressions.rs",
+      "single": 1,
+      "batch": 0
+    },
+    {
+      "path": "hypercurve/tests/hypercurve_svg.rs",
+      "single": 1,
+      "batch": 0
+    },
+    {
+      "path": "hyperlimit/fuzz/fuzz_targets/predicate_invariants.rs",
+      "single": 1,
+      "batch": 0
+    },
+    {
+      "path": "hyperlimit/src/predicates/dop.rs",
+      "single": 3,
+      "batch": 0
+    },
+    {
+      "path": "hyperlimit/tests/support_dop.rs",
+      "single": 9,
+      "batch": 0
+    },
+    {
+      "path": "hyperphysics/benches/mass_properties.rs",
+      "single": 2,
+      "batch": 0
+    },
+    {
+      "path": "hyperphysics/fuzz/fuzz_targets/physics_invariants.rs",
+      "single": 3,
+      "batch": 0
+    },
+    {
+      "path": "hyperphysics/tests/dispatch_trace.rs",
+      "single": 1,
+      "batch": 0
+    },
+    {
+      "path": "hyperphysics/tests/shape_queries.rs",
+      "single": 12,
+      "batch": 0
+    },
+    {
+      "path": "hypersdf/benches/classification.rs",
+      "single": 17,
+      "batch": 1
+    },
+    {
+      "path": "hypersdf/examples/basic.rs",
+      "single": 3,
+      "batch": 0
+    },
+    {
+      "path": "hypersdf/fuzz/fuzz_targets/hyperreal_representations.rs",
+      "single": 1,
+      "batch": 1
+    },
+    {
+      "path": "hypersdf/src/lib.rs",
+      "single": 69,
+      "batch": 1
+    },
+    {
+      "path": "hypersdf/src/sdf.rs",
+      "single": 2,
+      "batch": 0
+    },
+    {
+      "path": "hypersdf/tests/adversarial.rs",
+      "single": 19,
+      "batch": 2
+    },
+    {
+      "path": "hypersdf/tests/dispatch_trace.rs",
+      "single": 1,
+      "batch": 0
+    },
+    {
+      "path": "hypersolve/src/curve_resultant.rs",
+      "single": 2,
+      "batch": 0
+    },
+    {
+      "path": "hypersolve/src/root_isolation.rs",
+      "single": 3,
+      "batch": 0
+    }
+  ],
+  "totals": {
+    "csgrs": [
+      3,
+      3,
+      0
+    ],
+    "hyperbrep": [
+      5,
+      203,
+      0
+    ],
+    "hypercurve": [
+      43,
+      327,
+      4
+    ],
+    "hyperlimit": [
+      3,
+      13,
+      0
+    ],
+    "hyperphysics": [
+      4,
+      18,
+      0
+    ],
+    "hypersdf": [
+      7,
+      112,
+      5
+    ],
+    "hypersolve": [
+      2,
+      5,
+      0
+    ]
+  }
+}

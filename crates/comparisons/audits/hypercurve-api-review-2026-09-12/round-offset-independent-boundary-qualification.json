@@ -1,0 +1,44 @@
+{
+  "status": "committed",
+  "goal_status": "active",
+  "base_commit": "753074a2a5c63455ee7e6583ee59f0bb272ecdcd",
+  "change": "Replace required circle/chord dispatch counts with independently authored exact rounded-rectangle boundaries; verify initial, repeated and contracted generated offsets by certified empty XOR in both operand orders. Existing rejection of expensive general-rational fallbacks is retained.",
+  "independent_oracle": "Four lines and four quarter circles authored directly with width sqrt(1/2), height one and the expected disk radius; no offset operation constructs the expected boundary.",
+  "exact_xor_checks": 20,
+  "policies": [
+    "STRICT",
+    "APPROXIMATE_512"
+  ],
+  "tests": {
+    "target": "hypercurve_curve_region_promotion",
+    "passed": 93,
+    "failed": 8,
+    "remaining_failures": [
+      "approximate_512_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions",
+      "arc_parabola_fillet_recovers_exact_complement_contacts",
+      "line_parabola_fillet_extends_the_regular_incident_cell_exactly",
+      "non_ph_bezier_pair_projective_fillet_retains_algebraic_extensions",
+      "nonconvex_algebraic_chord_expansion_is_exact_and_local_collapse_is_explicit",
+      "strict_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions",
+      "unified_mixed_line_arc_erosion_splits_after_a_curved_neck_collapse",
+      "unified_region_non_miter_erosions_split_after_neck_collapse"
+    ],
+    "new_failures": [],
+    "log": "round-offset-independent-boundary-promotion-tests.log",
+    "all_target_no_default_features_check": true,
+    "source_files": 367,
+    "source_immutability": true,
+    "formatting_and_whitespace": true,
+    "normal_library_sha256": "a71fa77b975a2f93d1e9160bfe99797a10cac804e223f6c4fbec3eb632acd868",
+    "production_library_unchanged": true,
+    "previous_production_qualification": "general-split-topology-qualification.json",
+    "other_targets_rerun": false,
+    "full_suite_passing": false,
+    "previously_unqualified_expensive_cases": 8,
+    "ignored_in_previous_full_qualification": 9,
+    "all_30_repositories_clean_after_commit": true
+  },
+  "probe": "round-offset-independent-boundary-probe.json",
+  "performance_claim": null,
+  "commit": "b5011ac7a6ab719e08eccccacb4de7d8fb27d6c4"
+}

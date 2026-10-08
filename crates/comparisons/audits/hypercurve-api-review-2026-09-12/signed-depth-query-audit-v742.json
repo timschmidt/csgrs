@@ -1,0 +1,80 @@
+{
+  "status": "Read-only unresolved receiver inventory; do not remove private native winding kernels. Investigate whether public CurveRegion2 signed_depth carries any information beyond point classification on its published regularized set. No implementation decision yet.",
+  "rows": [
+    {
+      "path": "hypercurve/benches/bezier_region.rs",
+      "line": 452,
+      "source": ".signed_depth(&depth_point, &policy)?"
+    },
+    {
+      "path": "hypercurve/benches/bezier_region.rs",
+      "line": 460,
+      "source": ".signed_depth(black_box(&depth_point), black_box(&policy))?"
+    },
+    {
+      "path": "hypercurve/src/bezier_region.rs",
+      "line": 13533,
+      "source": "return Ok(region.signed_depth(point, policy));"
+    },
+    {
+      "path": "hypercurve/src/bezier_region.rs",
+      "line": 33391,
+      "source": ".signed_depth(&p(2, 0), &policy)"
+    },
+    {
+      "path": "hypercurve/src/native_region_tests.rs",
+      "line": 69,
+      "source": "region.signed_depth(point, &policy()).unwrap().into_value()"
+    },
+    {
+      "path": "hypercurve/src/prepared.rs",
+      "line": 446,
+      "source": "let depth = match self.signed_depth(point, policy) {"
+    },
+    {
+      "path": "hypercurve/src/region.rs",
+      "line": 80,
+      "source": "self.as_view().signed_depth(point, policy)"
+    },
+    {
+      "path": "hypercurve/src/region.rs",
+      "line": 125,
+      "source": "let depth = match self.signed_depth(point, policy) {"
+    },
+    {
+      "path": "hypercurve/tests/hypercurve_curve_region_promotion.rs",
+      "line": 7925,
+      "source": "certified(region.signed_depth(&p(0, 2), &policy).unwrap()),"
+    },
+    {
+      "path": "hypercurve/tests/hypercurve_curve_region_promotion.rs",
+      "line": 7994,
+      "source": "certified(region.signed_depth(&p(1, 1), &policy).unwrap()),"
+    },
+    {
+      "path": "hypercurve/tests/hypercurve_curve_region_promotion.rs",
+      "line": 7998,
+      "source": "certified(region.signed_depth(&p(3, 3), &policy).unwrap()),"
+    },
+    {
+      "path": "hypercurve/tests/hypercurve_curve_region_promotion.rs",
+      "line": 8002,
+      "source": "certified(region.signed_depth(&p(5, 5), &policy).unwrap()),"
+    },
+    {
+      "path": "hypercurve/tests/hypercurve_curve_region_promotion.rs",
+      "line": 8006,
+      "source": "certified(region.signed_depth(&p(0, 5), &policy).unwrap()),"
+    },
+    {
+      "path": "hypercurve/tests/hypercurve_curve_region_promotion.rs",
+      "line": 8025,
+      "source": "certified(nested.signed_depth(&p(5, 5), &policy).unwrap()),"
+    },
+    {
+      "path": "hypercurve/tests/hypercurve_curve_region_promotion.rs",
+      "line": 8029,
+      "source": "certified(borrowed.signed_depth(&p(5, 5), &policy).unwrap()),"
+    }
+  ]
+}

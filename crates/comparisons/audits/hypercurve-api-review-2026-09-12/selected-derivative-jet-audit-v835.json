@@ -1,0 +1,18 @@
+{
+  "baseline": "derivative-denominator-v831-sources.json",
+  "source_hashes": {
+    "hypercurve/src/bezier_algebraic_image.rs": "b361d9a88aa622db02632d36e214f86df2fc935b0842c9feaad071ea749f9d64",
+    "hypercurve/src/rational_bezier_general.rs": "642b33465b5b11d78a83a264cc702626104a35a4c845bc686f19efe533b93d6c"
+  },
+  "finding": "The scalar Real derivative path already evaluates homogeneous derivative jets and solves the quotient via Leibniz recurrence. The selected-root image path still differentiates expanding full quotient numerators. Denominator reduction alone will not bound those numerator degrees.",
+  "existing_owner": "RationalBezier2::affine_derivative_values_at_with_endpoint uses source derivative values, exact_binomial, one nonzero D[0] predicate, and ignores certified zero tails above the source denominator degree.",
+  "potential_identity": "For C=N/D and C^(k)(alpha)=A_k(alpha)/D(alpha)^(k+1), A_k = N^(k) D^k - sum_{j=1..k} binomial(k,j) D^(j) A_(k-j) D^(j-1) at alpha, with A_0=N. This recurrence never differentiates A_j, so their selected-root remainders may be retained. Differentiate original source N and D, or evaluate their derivative jets, before reducing those source derivative values.",
+  "conditions": [
+    "Do not introduce an algebraic-field inverse requiring gcd(D,P)=1: the current reducible-source probe has gcd(D,P) nontrivial but D(alpha) nonzero at the selected root.",
+    "Preserve denominator-domain certification and selected-root identity, arbitrary exact Real coefficients, zero requested orders and zero derivative tails.",
+    "Compare allocation/time on the unchanged V829 workload; protect low-order demand and native polynomial shortcuts.",
+    "Reuse existing exact binomial/jet machinery where that is simpler, and do not introduce unchecked finite-domain flags."
+  ],
+  "candidate_prepared": false,
+  "runtime_counterexample": false
+}

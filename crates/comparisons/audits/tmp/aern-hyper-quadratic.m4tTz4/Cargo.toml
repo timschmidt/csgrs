@@ -1,0 +1,8 @@
+[package]
+name = "aern-hyper-quadratic-probe"
+version = "0.0.0"
+edition = "2024"
+
+[dependencies]
+hypersolve = { path = "/home/tim/Documents/GitHub/workspace/hypersolve" }
+hyperreal = { path = "/home/tim/Documents/GitHub/workspace/hyperreal", default-features = false }

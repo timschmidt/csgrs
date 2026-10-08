@@ -1,0 +1,31 @@
+{
+  "returncode": 0,
+  "elapsed_seconds": 0.0317272059910465,
+  "normal_library_sha256": "5cc578428c0ecd41b54f2dca195f416779e365698dcb4ad46588dd84bd0ef96a",
+  "log": "finite-projective-parameter-replay-matrix-run.log",
+  "source": "region-overlap-correspondence-replay-matrix.rs",
+  "command": [
+    "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustc",
+    "--edition=2024",
+    "-O",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/region-overlap-correspondence-replay-matrix.rs",
+    "--extern",
+    "hypercurve=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypercurve-1201b30e361703ad.rlib",
+    "-L",
+    "dependency=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps",
+    "-o",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-projective-parameter-replay-matrix-run"
+  ],
+  "run_command": [
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-projective-parameter-replay-matrix-run"
+  ],
+  "source_sha256": "536885405f3576cdbdd0dfdb3d991d7e1951cd4c0c297fee40996ed86407d8ef",
+  "executable_sha256": "0cf320a4f7c9b10fd279ffa58f00b8d82cfc4a736b5248e03e1d2871e358edef",
+  "counts": {
+    "queries": 420,
+    "restrictions": 60,
+    "point_replays": 160,
+    "repeated_restrictions": 160,
+    "region_reports_after_inputs_dropped": 4
+  }
+}

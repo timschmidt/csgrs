@@ -1,0 +1,48 @@
+\doxysubsection{Differential\+Inclusion Class Reference}
+\hypertarget{classAriadne_1_1DifferentialInclusion}{}\label{classAriadne_1_1DifferentialInclusion}\index{DifferentialInclusion@{DifferentialInclusion}}
+
+
+{\ttfamily \#include $<$differential\+\_\+inclusion.\+hpp$>$}
+
+
+
+\doxysubsubsection{Description}
+A differential inclusion in Euclidean space. \doxysubsubsubsection*{Public Types}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1DifferentialInclusion_aa7e10c5fd6c960b4f9238ffa5a1f95c4}\label{classAriadne_1_1DifferentialInclusion_aa7e10c5fd6c960b4f9238ffa5a1f95c4} 
+typedef \mbox{\hyperlink{classAriadne_1_1Real}{Real}} {\bfseries Time\+Type}
+\begin{DoxyCompactList}\small\item\em The type used to represent time. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1DifferentialInclusion_a2b50369331d699a7a8b1c3e3a481ce72}\label{classAriadne_1_1DifferentialInclusion_a2b50369331d699a7a8b1c3e3a481ce72} 
+typedef \mbox{\hyperlink{classAriadne_1_1Real}{Real}} {\bfseries Real\+Type}
+\begin{DoxyCompactList}\small\item\em The type used to represent real numbers. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1DifferentialInclusion_ab2aeaabe50a8dcc3b23ae7680d9eff21}\label{classAriadne_1_1DifferentialInclusion_ab2aeaabe50a8dcc3b23ae7680d9eff21} 
+typedef \mbox{\hyperlink{classAriadne_1_1EuclideanSpace}{Euclidean\+Space}} {\bfseries State\+Space\+Type}
+\begin{DoxyCompactList}\small\item\em The type used to describe the state space. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1DifferentialInclusion_a2ce00dd79def56b1e395349ca1405249}\label{classAriadne_1_1DifferentialInclusion_a2ce00dd79def56b1e395349ca1405249} 
+typedef Inclusion\+Vector\+Field\+Evolver {\bfseries Evolver\+Type}
+\begin{DoxyCompactList}\small\item\em The generic type used to compute the system evolution. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1DifferentialInclusion_a53299a621289022f77d9fe5e6828adde}\label{classAriadne_1_1DifferentialInclusion_a53299a621289022f77d9fe5e6828adde} 
+{\bfseries Differential\+Inclusion} (Dotted\+Real\+Assignments const \&dynamics, \mbox{\hyperlink{classAriadne_1_1VariablesBox}{Real\+Variables\+Box}} const \&inputs)
+\begin{DoxyCompactList}\small\item\em Construct from expressions with dotted {\itshape dynamics} and a given range for the {\itshape inputs}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1DifferentialInclusion_ad4f9103d3dd3328da4591844a286bef6}\label{classAriadne_1_1DifferentialInclusion_ad4f9103d3dd3328da4591844a286bef6} 
+\mbox{\hyperlink{namespaceAriadne_a76a8b016e5ad61faf9062cc387df5016}{Bool}} {\bfseries is\+\_\+input\+\_\+affine} () const
+\begin{DoxyCompactList}\small\item\em If the dynamics is affine in the inputs. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1DifferentialInclusion_a23cf92765bba0e96be4b7d7af93d81c2}\label{classAriadne_1_1DifferentialInclusion_a23cf92765bba0e96be4b7d7af93d81c2} 
+\mbox{\hyperlink{namespaceAriadne_a76a8b016e5ad61faf9062cc387df5016}{Bool}} {\bfseries is\+\_\+input\+\_\+additive} () const
+\begin{DoxyCompactList}\small\item\em If the inputs are additive (includes the case of constant multipliers). \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1DifferentialInclusion_a346ddc3f7c67d6441ccbccbaf5122960}\label{classAriadne_1_1DifferentialInclusion_a346ddc3f7c67d6441ccbccbaf5122960} 
+Effective\+Vector\+Multivariate\+Function {\bfseries noise\+\_\+independent\+\_\+component} () const
+\begin{DoxyCompactList}\small\item\em Return the dynamics component obtained by setting the input radius to zero. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1DifferentialInclusion_a8414ce30d8a24bb30326889734d6fdcf}\label{classAriadne_1_1DifferentialInclusion_a8414ce30d8a24bb30326889734d6fdcf} 
+\mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ Effective\+Vector\+Multivariate\+Function $>$ {\bfseries input\+\_\+derivatives} () const
+\begin{DoxyCompactList}\small\item\em Return the dynamics components given by the derivatives for each input. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+The documentation for this class was generated from the following files\+:\begin{DoxyCompactItemize}
+\item 
+source/dynamics/\mbox{\hyperlink{differential__inclusion_8hpp}{differential\+\_\+inclusion.\+hpp}}\item 
+source/dynamics/differential\+\_\+inclusion.\+cpp\end{DoxyCompactItemize}

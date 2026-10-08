@@ -1,0 +1,1035 @@
+{
+  "files": {
+    "hyperreal": {
+      "src/computable/node/quadratic_tower.rs": "a53bced00cef4cf3504c96c77f7811b9b57ab9b6f1a5777921115b83f3d9cd2e",
+      "src/rational/arithmetic/aggregate_products.rs": "d9b41df790ef9fac422ce9d7d6a7a70c5223fd72eba70b46b81ce2a8b72a2a66",
+      "src/rational/arithmetic/construction.rs": "ced48307f5f6d8e0b6d8605eea87c4f3f8b6827e507055d3f1e3c32c7392e76d",
+      "src/rational/arithmetic/ops.rs": "2458fd6b52d430739a11b04892cc63c69294c218138dc486fd79d6cf47839925",
+      "src/rational/arithmetic/queries_conversion.rs": "dd6e4f2aa4381dd9955d50179df042638a56f56b0e0c9472b756064cc46f739b",
+      "src/rational/arithmetic/tests.rs": "7b93ece807793e2aefc12faf195c09648e9b44e2bc4a104e3b2f38fe0d767651",
+      "src/real/arithmetic/linear_algebra.rs": "642e6aa0c79baa0d6939acb4bcb442643df1087e8fc11cec38f1e342efd2538a",
+      "src/real/arithmetic/tests.rs": "cee2f780946efe1bccea2ce2b9db70e60921d0d57d85083ba6b63aa45abe43c8",
+      "tests/gmp_api_coverage.rs": "629f233f8f62228e9983b5fb6be43f0513e24c39059032f14ec384e2fc8ce3b6"
+    },
+    "hypersolve": {
+      "src/algebraic_fiber.rs": "69eafcc5933094d605bc9837830e9f9a8a31453bb1e6fe953b9a936e75a9f70a",
+      "src/algebraic_tensor_image.rs": "492a583d7bc42b01a6e7e6aac11548bed4c9a01b863d92def56cddf8bd9de10a",
+      "src/integer_interpolation.rs": "6b2cc160a717f6a67b329ae1bcf644481780d778fbf543f5bc4026a209c3aa28",
+      "tests/tensor_remainder_scale.rs": "867e3944777b7d293a7c3fd81373e3f733f859cde9252456ca25b543065a405d"
+    }
+  },
+  "repositories": [
+    {
+      "name": "ExactCalculator",
+      "head": "7265aa3a922a7e7c0389dae4b26cca562aa777a6"
+    },
+    {
+      "name": "NURBS_BREP_kernel",
+      "head": "1aef37b12a92c993c2046f7886593bb0a555c414"
+    },
+    {
+      "name": "alumina-firmware",
+      "head": "bdee397d0b80841f16bf17e7bcd029b4feb2c212"
+    },
+    {
+      "name": "alumina-interface",
+      "head": "59a18251cdfe2312e40b194e857d85cd59b6087f"
+    },
+    {
+      "name": "citizen-builder",
+      "head": "c4230238e28fd88fc8156fceb2c43698e67c27ca"
+    },
+    {
+      "name": "crcalc",
+      "head": "4f398d699c9d498deb45520ea7ebb020627bc640"
+    },
+    {
+      "name": "csgrs",
+      "head": "d029e51b5d7324f0df785c5cd3cf2f6c7a3a2cca"
+    },
+    {
+      "name": "csgrs-ffi",
+      "head": "6057435ce4c0b37bac99aec29922b90e6652c575"
+    },
+    {
+      "name": "exactcore-hyper-comparison",
+      "head": "74b90b328f720997d38da80af5620f167b3b0619"
+    },
+    {
+      "name": "hyperbrep",
+      "head": "7874790863d210646338182e548d7eef1aa05c7c"
+    },
+    {
+      "name": "hypercircuit",
+      "head": "ad421497ce6e88fe936818ec198c8a1b779776c7"
+    },
+    {
+      "name": "hypercurve",
+      "head": "04b524382cdf80457c06f02c2bd2d0fa222d21b8"
+    },
+    {
+      "name": "hyperdrc",
+      "head": "ce49bba5d16f78ae8559a0eabe3e4478b72fd4bf"
+    },
+    {
+      "name": "hyperevolution",
+      "head": "99645e3cefb7eea3af86abc15db68f7fcb31ca95"
+    },
+    {
+      "name": "hypergraphics",
+      "head": "75219dede7a2387ab30c84664b1293ec71d736d2"
+    },
+    {
+      "name": "hyperlattice",
+      "head": "53427ce89f8c82c016e69a04e035787e2753adc8"
+    },
+    {
+      "name": "hyperlimit",
+      "head": "0b3226320a7ad6756c923d0d12cd52eb701f36ee"
+    },
+    {
+      "name": "hypermesh",
+      "head": "d9db5c45a0cecc2307aa66a6f7f1b0396350e4ee"
+    },
+    {
+      "name": "hyperpack",
+      "head": "34857861561d643d7578753b8f8314d0fbca2c5b"
+    },
+    {
+      "name": "hyperparts",
+      "head": "d8626e9d36256afc4a8eb0380ae94c9ed5619107"
+    },
+    {
+      "name": "hyperpath",
+      "head": "cfe50de3e370ea75a49b916eb70a7b19d31a58fa"
+    },
+    {
+      "name": "hyperphysics",
+      "head": "dcbc7cf3489a1299de16a946fd7f5e5658b6f15f"
+    },
+    {
+      "name": "hyperreal",
+      "head": "28eaac35e8c24006c532b25a393b7d430d03823c"
+    },
+    {
+      "name": "hypersdf",
+      "head": "b37825900457420cb64da385b8525acab33e31c5"
+    },
+    {
+      "name": "hypersolve",
+      "head": "d7cd3d9ffe33e6ef26c0c409dda986a88f16f7ef"
+    },
+    {
+      "name": "hypertri",
+      "head": "6a2092c066964f3b7528299a72ef0ed1af4b1ff0"
+    },
+    {
+      "name": "hypervoxel",
+      "head": "0486b1465a249a04973520a4138a39395ded2f23"
+    },
+    {
+      "name": "openscad-rs",
+      "head": "f21b39486a6b35403ee8af9e7fba7cb62a045a5a"
+    },
+    {
+      "name": "synaps-cad",
+      "head": "da8da78636e573c04f8a5c4cd8cc900162b781ba"
+    },
+    {
+      "name": "videos",
+      "head": "4209b983cc0d937981f22a6fa7df384303fcc8bd"
+    }
+  ],
+  "manifest": "rational-polynomial-20260924-v8-sources.json",
+  "all_2044_inputs_verified": true,
+  "all_owned_processes_reaped": true,
+  "full_attempted": 1359,
+  "full_passed": 1342,
+  "full_ignored": 6,
+  "unchanged_nonpasses": [
+    {
+      "target": "hypercurve",
+      "name": "bezier_region::tests::pair_native_boolean_algebraic_chord_corner_publishes_a_third_generation_fillet",
+      "returncode": "timeout",
+      "passed": false,
+      "ignored": false,
+      "elapsed_seconds": 75.28579426708166,
+      "limit_seconds": 75,
+      "log": "rational-polynomial-20260924-v8-dependents-hypercurve-case-6.log",
+      "reused_from": "rational-polynomial-20260924-v8-dependents-terminal.json",
+      "scheduling": "isolated"
+    },
+    {
+      "target": "hypercurve",
+      "name": "bezier_region::tests::algebraic_endpoint_images_reenter_shared_corner_carriers",
+      "returncode": 101,
+      "passed": false,
+      "ignored": false,
+      "elapsed_seconds": 0.06530423497315496,
+      "limit_seconds": 75,
+      "log": "rational-polynomial-20260924-v8-full-case-0640.log"
+    },
+    {
+      "target": "hypercurve",
+      "name": "bezier_offset::conversion_tests::selected_parallel_normal_circle_intersects_genuinely_analytic_parallel_in_one_fiber",
+      "returncode": "timeout",
+      "passed": false,
+      "ignored": false,
+      "elapsed_seconds": 75.05002358194906,
+      "limit_seconds": 75,
+      "log": "rational-polynomial-20260924-v8-full-case-0549.log"
+    },
+    {
+      "target": "hypercurve",
+      "name": "bezier_region::tests::nonlinear_algebraic_endpoint_fillet_uses_complete_incident_domain",
+      "returncode": "timeout",
+      "passed": false,
+      "ignored": false,
+      "elapsed_seconds": 75.00345475401264,
+      "limit_seconds": 75,
+      "log": "rational-polynomial-20260924-v8-full-case-0694.log"
+    },
+    {
+      "target": "hypercurve",
+      "name": "bezier_region::tests::one_fragment_materialized_loop_chamfers_to_one_middle_interval",
+      "returncode": "timeout",
+      "passed": false,
+      "ignored": false,
+      "elapsed_seconds": 75.03905584395397,
+      "limit_seconds": 75,
+      "log": "rational-polynomial-20260924-v8-full-case-0704.log"
+    },
+    {
+      "target": "hypercurve",
+      "name": "bezier_region::tests::one_fragment_materialized_loop_extends_algebraic_chamfer_cuts_once",
+      "returncode": "timeout",
+      "passed": false,
+      "ignored": false,
+      "elapsed_seconds": 75.03912294004112,
+      "limit_seconds": 75,
+      "log": "rational-polynomial-20260924-v8-full-case-0705.log"
+    },
+    {
+      "target": "hypercurve",
+      "name": "bezier_region::tests::one_fragment_ph_loop_projective_corners_retain_one_extended_interval",
+      "returncode": 101,
+      "passed": false,
+      "ignored": false,
+      "elapsed_seconds": 0.06545386498328298,
+      "limit_seconds": 75,
+      "log": "rational-polynomial-20260924-v8-full-case-0708.log"
+    },
+    {
+      "target": "hypercurve",
+      "name": "bezier_region::tests::one_fragment_nonzero_parallel_loop_extends_chamfer_cuts_on_one_finite_envelope",
+      "returncode": "timeout",
+      "passed": false,
+      "ignored": false,
+      "elapsed_seconds": 75.02247625996824,
+      "limit_seconds": 75,
+      "log": "rational-polynomial-20260924-v8-full-case-0706.log"
+    },
+    {
+      "target": "hypercurve",
+      "name": "bezier_region::tests::one_fragment_selected_loop_chamfers_from_one_interval",
+      "returncode": "timeout",
+      "passed": false,
+      "ignored": false,
+      "elapsed_seconds": 75.03555882396176,
+      "limit_seconds": 75,
+      "log": "rational-polynomial-20260924-v8-full-case-0710.log"
+    },
+    {
+      "target": "hypercurve",
+      "name": "bezier_region::tests::one_fragment_selected_loop_extends_chamfer_cuts_on_its_analytic_carrier",
+      "returncode": "timeout",
+      "passed": false,
+      "ignored": false,
+      "elapsed_seconds": 75.03483532508835,
+      "limit_seconds": 75,
+      "log": "rational-polynomial-20260924-v8-full-case-0711.log"
+    },
+    {
+      "target": "hypercurve",
+      "name": "bezier_region::tests::retained_analytic_multifragment_corner_extends_chamfer_and_fillet",
+      "returncode": 101,
+      "passed": false,
+      "ignored": false,
+      "elapsed_seconds": 0.009036720963194966,
+      "limit_seconds": 75,
+      "log": "rational-polynomial-20260924-v8-full-case-0741.log"
+    }
+  ],
+  "newly_passing": [
+    "bezier_region::curve_corner_chain::tests::extended_fillet_region_classifies_both_sides_of_its_companion",
+    "bezier_region::tests::selected_parallel_companion_fillets_without_range_promotion"
+  ],
+  "scalar_tests": [
+    {
+      "label": "canonical-reentry",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/rational-polynomial-20260924-v8-libtest",
+        "unreduced_arithmetic_preserves_canonical_queries_and_hashes",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.32080118695739657,
+      "log": "rational-polynomial-20260924-v8-canonical-reentry.log"
+    },
+    {
+      "label": "focused",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/rational-polynomial-20260924-v8-libtest",
+        "polynomial_evaluation",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.3087360430508852,
+      "log": "rational-polynomial-20260924-v8-focused.log"
+    },
+    {
+      "label": "all",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/rational-polynomial-20260924-v8-libtest",
+        "--test-threads=2",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 3.7082846980774775,
+      "log": "rational-polynomial-20260924-v8-all.log"
+    }
+  ],
+  "dependent_crates": [
+    {
+      "crate": "hyperlattice",
+      "checks": [
+        {
+          "command": [
+            "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+            "clippy",
+            "--all-targets",
+            "--all-features",
+            "--locked",
+            "--offline",
+            "--",
+            "-D",
+            "warnings"
+          ],
+          "returncode": 0,
+          "log": "rational-polynomial-20260924-v8-dependents-hyperlattice-clippy-0.log"
+        },
+        {
+          "command": [
+            "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+            "clippy",
+            "--all-targets",
+            "--no-default-features",
+            "--locked",
+            "--offline",
+            "--",
+            "-D",
+            "warnings"
+          ],
+          "returncode": 0,
+          "log": "rational-polynomial-20260924-v8-dependents-hyperlattice-clippy-1.log"
+        }
+      ],
+      "cases": [
+        {
+          "name": "all",
+          "returncode": 0,
+          "elapsed_seconds": 0.2782582100480795,
+          "limit_seconds": 180,
+          "log": "rational-polynomial-20260924-v8-dependents-hyperlattice-case-0.log"
+        }
+      ],
+      "hyperreal_artifacts": [
+        {
+          "reason": "compiler-artifact",
+          "package_id": "path+file:///tmp/hypercurve-rational-polynomial-v8-20260924/hyperreal#0.13.1",
+          "manifest_path": "/tmp/hypercurve-rational-polynomial-v8-20260924/hyperreal/Cargo.toml",
+          "target": {
+            "kind": [
+              "lib"
+            ],
+            "crate_types": [
+              "lib"
+            ],
+            "name": "hyperreal",
+            "src_path": "/tmp/hypercurve-rational-polynomial-v8-20260924/hyperreal/src/lib.rs",
+            "edition": "2024",
+            "doc": true,
+            "doctest": true,
+            "test": true
+          },
+          "profile": {
+            "opt_level": "3",
+            "debuginfo": 0,
+            "debug_assertions": false,
+            "overflow_checks": false,
+            "test": false
+          },
+          "features": [
+            "default",
+            "dispatch-trace",
+            "serde"
+          ],
+          "filenames": [
+            "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperreal-ad9c25d24acfbff0.rlib",
+            "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperreal-ad9c25d24acfbff0.rmeta"
+          ],
+          "executable": null,
+          "fresh": false
+        }
+      ],
+      "binary_sha256": "c572a49e3a62ff7229f799342d223fc788efe11a3176d177e784413e32e2952f"
+    },
+    {
+      "crate": "hyperlimit",
+      "checks": [
+        {
+          "command": [
+            "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+            "clippy",
+            "--all-targets",
+            "--all-features",
+            "--locked",
+            "--offline",
+            "--",
+            "-D",
+            "warnings"
+          ],
+          "returncode": 0,
+          "log": "rational-polynomial-20260924-v8-dependents-hyperlimit-clippy-0.log"
+        },
+        {
+          "command": [
+            "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+            "clippy",
+            "--all-targets",
+            "--no-default-features",
+            "--locked",
+            "--offline",
+            "--",
+            "-D",
+            "warnings"
+          ],
+          "returncode": 0,
+          "log": "rational-polynomial-20260924-v8-dependents-hyperlimit-clippy-1.log"
+        }
+      ],
+      "cases": [
+        {
+          "name": "all",
+          "returncode": 0,
+          "elapsed_seconds": 0.504700068035163,
+          "limit_seconds": 180,
+          "log": "rational-polynomial-20260924-v8-dependents-hyperlimit-case-0.log"
+        }
+      ],
+      "hyperreal_artifacts": [
+        {
+          "reason": "compiler-artifact",
+          "package_id": "path+file:///tmp/hypercurve-rational-polynomial-v8-20260924/hyperreal#0.13.1",
+          "manifest_path": "/tmp/hypercurve-rational-polynomial-v8-20260924/hyperreal/Cargo.toml",
+          "target": {
+            "kind": [
+              "lib"
+            ],
+            "crate_types": [
+              "lib"
+            ],
+            "name": "hyperreal",
+            "src_path": "/tmp/hypercurve-rational-polynomial-v8-20260924/hyperreal/src/lib.rs",
+            "edition": "2024",
+            "doc": true,
+            "doctest": true,
+            "test": true
+          },
+          "profile": {
+            "opt_level": "3",
+            "debuginfo": 0,
+            "debug_assertions": false,
+            "overflow_checks": false,
+            "test": false
+          },
+          "features": [
+            "default",
+            "dispatch-trace",
+            "serde"
+          ],
+          "filenames": [
+            "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperreal-9e1eeb27223f6f56.rlib",
+            "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperreal-9e1eeb27223f6f56.rmeta"
+          ],
+          "executable": null,
+          "fresh": false
+        }
+      ],
+      "binary_sha256": "450e76a4a215994fa71a1801cacecfa53ec184e76a03e1837ccf92e89a48201e"
+    },
+    {
+      "crate": "hypersolve",
+      "checks": [
+        {
+          "command": [
+            "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+            "clippy",
+            "--all-targets",
+            "--all-features",
+            "--locked",
+            "--offline",
+            "--",
+            "-D",
+            "warnings"
+          ],
+          "returncode": 0,
+          "log": "rational-polynomial-20260924-v8-dependents-hypersolve-clippy-0.log"
+        },
+        {
+          "command": [
+            "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+            "clippy",
+            "--all-targets",
+            "--no-default-features",
+            "--locked",
+            "--offline",
+            "--",
+            "-D",
+            "warnings"
+          ],
+          "returncode": 0,
+          "log": "rational-polynomial-20260924-v8-dependents-hypersolve-clippy-1.log"
+        }
+      ],
+      "cases": [
+        {
+          "name": "all",
+          "returncode": 0,
+          "elapsed_seconds": 2.751495420001447,
+          "limit_seconds": 180,
+          "log": "rational-polynomial-20260924-v8-dependents-hypersolve-case-0.log"
+        }
+      ],
+      "hyperreal_artifacts": [
+        {
+          "reason": "compiler-artifact",
+          "package_id": "path+file:///tmp/hypercurve-rational-polynomial-v8-20260924/hyperreal#0.13.1",
+          "manifest_path": "/tmp/hypercurve-rational-polynomial-v8-20260924/hyperreal/Cargo.toml",
+          "target": {
+            "kind": [
+              "lib"
+            ],
+            "crate_types": [
+              "lib"
+            ],
+            "name": "hyperreal",
+            "src_path": "/tmp/hypercurve-rational-polynomial-v8-20260924/hyperreal/src/lib.rs",
+            "edition": "2024",
+            "doc": true,
+            "doctest": true,
+            "test": true
+          },
+          "profile": {
+            "opt_level": "3",
+            "debuginfo": 0,
+            "debug_assertions": false,
+            "overflow_checks": false,
+            "test": false
+          },
+          "features": [
+            "default",
+            "dispatch-trace"
+          ],
+          "filenames": [
+            "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperreal-d5879cab17708e59.rlib",
+            "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperreal-d5879cab17708e59.rmeta"
+          ],
+          "executable": null,
+          "fresh": false
+        }
+      ],
+      "binary_sha256": "6b0b45c6ad280056530f6935966af9143c4f8f3335d3c5211d83b216126089b7"
+    },
+    {
+      "crate": "hypercurve",
+      "checks": [
+        {
+          "command": [
+            "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+            "clippy",
+            "--all-targets",
+            "--all-features",
+            "--locked",
+            "--offline",
+            "--",
+            "-D",
+            "warnings"
+          ],
+          "returncode": 0,
+          "log": "rational-polynomial-20260924-v8-dependents-hypercurve-clippy-0.log"
+        },
+        {
+          "command": [
+            "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+            "clippy",
+            "--all-targets",
+            "--no-default-features",
+            "--locked",
+            "--offline",
+            "--",
+            "-D",
+            "warnings"
+          ],
+          "returncode": 0,
+          "log": "rational-polynomial-20260924-v8-dependents-hypercurve-clippy-1.log"
+        }
+      ],
+      "cases": [
+        {
+          "name": "recursive_bounds_refine_each_shared_source_once",
+          "returncode": 0,
+          "elapsed_seconds": 0.28743360203225166,
+          "limit_seconds": 75,
+          "log": "rational-polynomial-20260924-v8-dependents-hypercurve-case-0.log"
+        },
+        {
+          "name": "nonlinear_selected_corner_chamfers_through_retained_fixed_distance_image",
+          "returncode": 0,
+          "elapsed_seconds": 5.2630961739923805,
+          "limit_seconds": 75,
+          "log": "rational-polynomial-20260924-v8-dependents-hypercurve-case-1.log"
+        },
+        {
+          "name": "recursive_selected_radial_projective_chamfer_reenters_corner_kernel",
+          "returncode": 0,
+          "elapsed_seconds": 61.55048904090654,
+          "limit_seconds": 75,
+          "log": "rational-polynomial-20260924-v8-dependents-hypercurve-case-2.log"
+        },
+        {
+          "name": "extended_fillet_region_classifies_both_sides_of_its_companion",
+          "returncode": 0,
+          "elapsed_seconds": 38.40239606006071,
+          "limit_seconds": 75,
+          "log": "rational-polynomial-20260924-v8-dependents-hypercurve-case-3.log"
+        },
+        {
+          "name": "nonrepresented_chord_and_selected_circle_complete_the_fillet_kernel",
+          "returncode": 0,
+          "elapsed_seconds": 147.5284957480617,
+          "limit_seconds": 180,
+          "log": "rational-polynomial-20260924-v8-dependents-hypercurve-case-4.log"
+        },
+        {
+          "name": "selected_parallel_companion_fillets_without_range_promotion",
+          "returncode": 0,
+          "elapsed_seconds": 0.6355131439631805,
+          "limit_seconds": 75,
+          "log": "rational-polynomial-20260924-v8-dependents-hypercurve-case-5.log"
+        },
+        {
+          "name": "pair_native_boolean_algebraic_chord_corner_publishes_a_third_generation_fillet",
+          "returncode": "timeout",
+          "elapsed_seconds": 75.28579426708166,
+          "limit_seconds": 75,
+          "log": "rational-polynomial-20260924-v8-dependents-hypercurve-case-6.log"
+        }
+      ],
+      "hyperreal_artifacts": [
+        {
+          "reason": "compiler-artifact",
+          "package_id": "path+file:///tmp/hypercurve-rational-polynomial-v8-20260924/hyperreal#0.13.1",
+          "manifest_path": "/tmp/hypercurve-rational-polynomial-v8-20260924/hyperreal/Cargo.toml",
+          "target": {
+            "kind": [
+              "lib"
+            ],
+            "crate_types": [
+              "lib"
+            ],
+            "name": "hyperreal",
+            "src_path": "/tmp/hypercurve-rational-polynomial-v8-20260924/hyperreal/src/lib.rs",
+            "edition": "2024",
+            "doc": true,
+            "doctest": true,
+            "test": true
+          },
+          "profile": {
+            "opt_level": "3",
+            "debuginfo": 0,
+            "debug_assertions": false,
+            "overflow_checks": false,
+            "test": false
+          },
+          "features": [
+            "default",
+            "dispatch-trace",
+            "serde"
+          ],
+          "filenames": [
+            "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperreal-20a2117808d8f159.rlib",
+            "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperreal-20a2117808d8f159.rmeta"
+          ],
+          "executable": null,
+          "fresh": false
+        }
+      ],
+      "binary_sha256": "256d429141a49465daf197d137c2480f847aea268a89efdd307396939ac609af"
+    }
+  ],
+  "scalar_public_targets": [
+    {
+      "crate": "hyperreal",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "test",
+        "--tests",
+        "--release",
+        "--all-features",
+        "--no-run",
+        "--message-format=json",
+        "--locked",
+        "--offline"
+      ],
+      "targets": [
+        {
+          "name": "exact_quadratic_normal_form",
+          "returncode": 0,
+          "elapsed_seconds": 0.00358805397991091,
+          "binary_sha256": "8c487c881413a3504c6f9ddcdbb405ea41fbd5b2418bbd68f11ea20d002f2b75",
+          "log": "rational-polynomial-20260924-v8-public-scalars-hyperreal-exact_quadratic_normal_form.log"
+        },
+        {
+          "name": "multiquadratic_normal_form",
+          "returncode": 0,
+          "elapsed_seconds": 0.0035550660686567426,
+          "binary_sha256": "a21bd018e7aae5f14685932f383fe86133da4afb97db730d9ded3f8ba6960852",
+          "log": "rational-polynomial-20260924-v8-public-scalars-hyperreal-multiquadratic_normal_form.log"
+        },
+        {
+          "name": "readme",
+          "returncode": 0,
+          "elapsed_seconds": 0.0036708080442622304,
+          "binary_sha256": "9090cfc6a4185acfde7bfca30754381ba7ee1f7b89a0ae599ce40e9a204640b6",
+          "log": "rational-polynomial-20260924-v8-public-scalars-hyperreal-readme.log"
+        },
+        {
+          "name": "readme_metadata",
+          "returncode": 0,
+          "elapsed_seconds": 0.003537458018399775,
+          "binary_sha256": "5030945497224064ee7b6ba7fe732cafe7ed1b9d53b7f64aa0317fc81a37749d",
+          "log": "rational-polynomial-20260924-v8-public-scalars-hyperreal-readme_metadata.log"
+        },
+        {
+          "name": "cli",
+          "returncode": 0,
+          "elapsed_seconds": 0.0035410269629210234,
+          "binary_sha256": "86ddc469a9562c8b432da2c1913e750c5dabac50a62671b7b304b988a8d81d8e",
+          "log": "rational-polynomial-20260924-v8-public-scalars-hyperreal-cli.log"
+        },
+        {
+          "name": "precision_limits",
+          "returncode": 0,
+          "elapsed_seconds": 0.007635437068529427,
+          "binary_sha256": "ea447413bdb3d4dfe8433532dacbfee2da896adb6598a1456d042d859b9a9597",
+          "log": "rational-polynomial-20260924-v8-public-scalars-hyperreal-precision_limits.log"
+        },
+        {
+          "name": "numerical_cross_reference",
+          "returncode": 0,
+          "elapsed_seconds": 0.16395948501303792,
+          "binary_sha256": "c28127e34f5feca56c9dd50b140eba4945bf73e5f014f5bd795484ddf2b00613",
+          "log": "rational-polynomial-20260924-v8-public-scalars-hyperreal-numerical_cross_reference.log"
+        },
+        {
+          "name": "public_numeric_semantics",
+          "returncode": 0,
+          "elapsed_seconds": 0.007617297931574285,
+          "binary_sha256": "dac24113869a083e8d27704cbcaa453eccc348a59d3e47ad8e86ccfd17931ca8",
+          "log": "rational-polynomial-20260924-v8-public-scalars-hyperreal-public_numeric_semantics.log"
+        },
+        {
+          "name": "gmp_api_coverage",
+          "returncode": 0,
+          "elapsed_seconds": 0.015719293034635484,
+          "binary_sha256": "348023e56e6449f178bf7de6a47b026bf133c67e50e72875475cba65cd7e8964",
+          "log": "rational-polynomial-20260924-v8-public-scalars-hyperreal-gmp_api_coverage.log"
+        },
+        {
+          "name": "adversarial_regressions",
+          "returncode": 0,
+          "elapsed_seconds": 0.003596573951654136,
+          "binary_sha256": "585ba8de0ac3469b2d9c7e8fb2f95c3d5f4904d91614b3bc44242e95d922caac",
+          "log": "rational-polynomial-20260924-v8-public-scalars-hyperreal-adversarial_regressions.log"
+        },
+        {
+          "name": "adversarial_props",
+          "returncode": 0,
+          "elapsed_seconds": 0.007618087925948203,
+          "binary_sha256": "1ed4f4237ffc1b1817c5fdfcf0395cc011728736ce6d823e9448449464adf3e6",
+          "log": "rational-polynomial-20260924-v8-public-scalars-hyperreal-adversarial_props.log"
+        },
+        {
+          "name": "adversarial_semantics",
+          "returncode": 0,
+          "elapsed_seconds": 0.0036008229944854975,
+          "binary_sha256": "fec68380525dbbc084431e0003a5e0d08189c66aef4ac6bd098adfd05b4124e9",
+          "log": "rational-polynomial-20260924-v8-public-scalars-hyperreal-adversarial_semantics.log"
+        },
+        {
+          "name": "real_representations",
+          "returncode": 0,
+          "elapsed_seconds": 0.031762244063429534,
+          "binary_sha256": "88452c4381e7c6e07b04f1091bd1750a173c38df96d215437a36c66aea1e433c",
+          "log": "rational-polynomial-20260924-v8-public-scalars-hyperreal-real_representations.log"
+        },
+        {
+          "name": "rational_oracle",
+          "returncode": 0,
+          "elapsed_seconds": 0.03176118398550898,
+          "binary_sha256": "c5480b6dbc966f1a9dd91cc47b2edbf9bb2ce05cae63837a7617233b0e13a2f5",
+          "log": "rational-polynomial-20260924-v8-public-scalars-hyperreal-rational_oracle.log"
+        },
+        {
+          "name": "numeric_roundtrip_formats",
+          "returncode": 0,
+          "elapsed_seconds": 0.015693665016442537,
+          "binary_sha256": "f2125523fa7dfaec40833e83278d67d54d568e87bd0f7b0c73b6c5eab94e81ea",
+          "log": "rational-polynomial-20260924-v8-public-scalars-hyperreal-numeric_roundtrip_formats.log"
+        }
+      ]
+    },
+    {
+      "crate": "hyperlattice",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "test",
+        "--tests",
+        "--release",
+        "--all-features",
+        "--no-run",
+        "--message-format=json",
+        "--locked",
+        "--offline"
+      ],
+      "targets": [
+        {
+          "name": "geometric",
+          "returncode": 0,
+          "elapsed_seconds": 0.0035263190511614084,
+          "binary_sha256": "2a2e118f5520cc5b11c4ad0031804e3ece356c5cd273da189cc6d21b35b7bb09",
+          "log": "rational-polynomial-20260924-v8-public-scalars-hyperlattice-geometric.log"
+        },
+        {
+          "name": "scalar",
+          "returncode": 0,
+          "elapsed_seconds": 0.003574094967916608,
+          "binary_sha256": "75cddda2b1caf02494f150f3ae457ad161d8020da963d86dee64c90cefc0a674",
+          "log": "rational-polynomial-20260924-v8-public-scalars-hyperlattice-scalar.log"
+        },
+        {
+          "name": "adversarial_constraint_props",
+          "returncode": 0,
+          "elapsed_seconds": 0.007624537916854024,
+          "binary_sha256": "7efda1a2bbd4192148f7f24d46f1c7e1a481793afbc81adbf391eb8c3da7de00",
+          "log": "rational-polynomial-20260924-v8-public-scalars-hyperlattice-adversarial_constraint_props.log"
+        },
+        {
+          "name": "vector",
+          "returncode": 0,
+          "elapsed_seconds": 0.003603552933782339,
+          "binary_sha256": "92e84ab173ca41e46ba74660af0d8925584f643aae9dbc31ef17d3cce610e1fc",
+          "log": "rational-polynomial-20260924-v8-public-scalars-hyperlattice-vector.log"
+        },
+        {
+          "name": "adversarial_regressions",
+          "returncode": 0,
+          "elapsed_seconds": 0.003545396961271763,
+          "binary_sha256": "d1f0067e2aa396c06ba13112236040d73b2e2e670f5432cdd8e70977001ec8df",
+          "log": "rational-polynomial-20260924-v8-public-scalars-hyperlattice-adversarial_regressions.log"
+        },
+        {
+          "name": "adversarial_props",
+          "returncode": 0,
+          "elapsed_seconds": 0.01568061497528106,
+          "binary_sha256": "5e26ef34e443145334c033f8043bfeb1d06f97c5a7e9c9588b7cfd1ace7bcaa2",
+          "log": "rational-polynomial-20260924-v8-public-scalars-hyperlattice-adversarial_props.log"
+        },
+        {
+          "name": "adversarial_borrowed_owned",
+          "returncode": 0,
+          "elapsed_seconds": 0.0035685349721461535,
+          "binary_sha256": "854d3a6bf3b9dbdf32e2e6ba7f71176dddd379e31cefef1898628f6cecdaa0d7",
+          "log": "rational-polynomial-20260924-v8-public-scalars-hyperlattice-adversarial_borrowed_owned.log"
+        },
+        {
+          "name": "readme",
+          "returncode": 0,
+          "elapsed_seconds": 0.0014483709819614887,
+          "binary_sha256": "3f7e64c5d1bbeec98810ba0ab66787888d1e6a86da3d58d7003f3727eb52df82",
+          "log": "rational-polynomial-20260924-v8-public-scalars-hyperlattice-readme.log"
+        },
+        {
+          "name": "real_representations",
+          "returncode": 0,
+          "elapsed_seconds": 0.03169412899296731,
+          "binary_sha256": "d5401736dcf46de1f4e62202d7c4367e3e934b2ee18a6527238bf5db0e8f3591",
+          "log": "rational-polynomial-20260924-v8-public-scalars-hyperlattice-real_representations.log"
+        },
+        {
+          "name": "gmp_benchmark_coverage",
+          "returncode": 0,
+          "elapsed_seconds": 0.0035943540278822184,
+          "binary_sha256": "55db1f8d07a83e6c05ea5eb0234a8321877f39eb1e69fa3e9cc6ec43fc489f49",
+          "log": "rational-polynomial-20260924-v8-public-scalars-hyperlattice-gmp_benchmark_coverage.log"
+        },
+        {
+          "name": "api_surface_coverage",
+          "returncode": 0,
+          "elapsed_seconds": 0.0035915339831262827,
+          "binary_sha256": "e03c81b4bf5cfc0729b9a7e58fe46287adb3d242856765dd29250c12b189e01a",
+          "log": "rational-polynomial-20260924-v8-public-scalars-hyperlattice-api_surface_coverage.log"
+        },
+        {
+          "name": "matrix",
+          "returncode": 0,
+          "elapsed_seconds": 0.0075790699338540435,
+          "binary_sha256": "75a16377f59d53394b24ef6ba2febaf194388aead10add264c05b0a05a9e37ae",
+          "log": "rational-polynomial-20260924-v8-public-scalars-hyperlattice-matrix.log"
+        },
+        {
+          "name": "matrix_api_surface_coverage",
+          "returncode": 0,
+          "elapsed_seconds": 0.007647465914487839,
+          "binary_sha256": "0515550d78072f16bc229f03824533a227fee872c2701176670970069e85e851",
+          "log": "rational-polynomial-20260924-v8-public-scalars-hyperlattice-matrix_api_surface_coverage.log"
+        },
+        {
+          "name": "adversarial_scalar_semantics",
+          "returncode": 0,
+          "elapsed_seconds": 0.003604983096010983,
+          "binary_sha256": "e1668023c6c848367c9a9617c35f6b570ec43f0e0e3118dec3c17b947afc438a",
+          "log": "rational-polynomial-20260924-v8-public-scalars-hyperlattice-adversarial_scalar_semantics.log"
+        },
+        {
+          "name": "borrowed_ops",
+          "returncode": 0,
+          "elapsed_seconds": 0.0035706559428945184,
+          "binary_sha256": "be5f9df09f15afbf5aff1170ec0e25209690e2e49f2aa9312f4191c255ea2ad3",
+          "log": "rational-polynomial-20260924-v8-public-scalars-hyperlattice-borrowed_ops.log"
+        },
+        {
+          "name": "adversarial_matrix_invariants",
+          "returncode": 0,
+          "elapsed_seconds": 0.0035556360380724072,
+          "binary_sha256": "6fae01f00c5c644f30559317709483399c4e703b2ae4785d51af9eb121fd4831",
+          "log": "rational-polynomial-20260924-v8-public-scalars-hyperlattice-adversarial_matrix_invariants.log"
+        },
+        {
+          "name": "complex",
+          "returncode": 0,
+          "elapsed_seconds": 0.003560205106623471,
+          "binary_sha256": "19db13a499bf1dab485cd29fc381eae5732f4dee8ca94551383f39f94c4865ab",
+          "log": "rational-polynomial-20260924-v8-public-scalars-hyperlattice-complex.log"
+        }
+      ]
+    },
+    {
+      "crate": "hypersolve",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "test",
+        "--tests",
+        "--release",
+        "--all-features",
+        "--no-run",
+        "--message-format=json",
+        "--locked",
+        "--offline"
+      ],
+      "targets": [
+        {
+          "name": "exact_value_root",
+          "returncode": 0,
+          "elapsed_seconds": 0.0036145630292594433,
+          "binary_sha256": "4e540a82525a8e903b83034c90fbb5e8a7afe27519fdb146d45b98fabb8156a6",
+          "log": "rational-polynomial-20260924-v8-public-scalars-hypersolve-exact_value_root.log"
+        },
+        {
+          "name": "tensor_remainder_scale",
+          "returncode": 0,
+          "elapsed_seconds": 0.0037103459471836686,
+          "binary_sha256": "fe10bdd21153a7b379112dfd050ac95c48582d13c03882f1242cca5a40a50fbd",
+          "log": "rational-polynomial-20260924-v8-public-scalars-hypersolve-tensor_remainder_scale.log"
+        },
+        {
+          "name": "quadratic_extraction",
+          "returncode": 0,
+          "elapsed_seconds": 0.0318034109659493,
+          "binary_sha256": "ea0cf0c86cb405c5a0c767149033143c2d9e64d49b80465b2fb95e026aac7812",
+          "log": "rational-polynomial-20260924-v8-public-scalars-hypersolve-quadratic_extraction.log"
+        },
+        {
+          "name": "real_representations",
+          "returncode": 0,
+          "elapsed_seconds": 0.015705093974247575,
+          "binary_sha256": "1087dde743eea2cba1e16241f6f9882f9f5e47287e383e283366b668276abce5",
+          "log": "rational-polynomial-20260924-v8-public-scalars-hypersolve-real_representations.log"
+        },
+        {
+          "name": "exactcore_root_families",
+          "returncode": 0,
+          "elapsed_seconds": 0.015675195958465338,
+          "binary_sha256": "a8e44cf150ba703a263fbbf8ab6d3d283df0988ddc488f3a01b1d8cad79cb8bc",
+          "log": "rational-polynomial-20260924-v8-public-scalars-hypersolve-exactcore_root_families.log"
+        },
+        {
+          "name": "square_free_growth",
+          "returncode": 0,
+          "elapsed_seconds": 0.06381082709413022,
+          "binary_sha256": "03739c394f6bf04ee807ee9db895211342de16401089bc0ae0ec2ddce7b8bd04",
+          "log": "rational-polynomial-20260924-v8-public-scalars-hypersolve-square_free_growth.log"
+        },
+        {
+          "name": "readme",
+          "returncode": 0,
+          "elapsed_seconds": 0.001494977972470224,
+          "binary_sha256": "c212f3051bd5e0d51a0837f28e098fd9abfaa983e469a41ac1ee5d89de904f05",
+          "log": "rational-polynomial-20260924-v8-public-scalars-hypersolve-readme.log"
+        },
+        {
+          "name": "smoke",
+          "returncode": 0,
+          "elapsed_seconds": 0.03176537400577217,
+          "binary_sha256": "b4bf7c50b89348742607c4dba617044ff835fef3b3f9d7bc6e57cceedd7e23f9",
+          "log": "rational-polynomial-20260924-v8-public-scalars-hypersolve-smoke.log"
+        },
+        {
+          "name": "residual_props",
+          "returncode": 0,
+          "elapsed_seconds": 2.2169170030392706,
+          "binary_sha256": "512b331a92b5c140a091b9b9affcf9ac294fec036a36f2eeecfbf529a46c8ef4",
+          "log": "rational-polynomial-20260924-v8-public-scalars-hypersolve-residual_props.log"
+        }
+      ]
+    }
+  ],
+  "canonical_reentry": {
+    "returncode": 0,
+    "stdout": "numeric_equal=true, canonical_parts=true, equal_hashes=true\n",
+    "stderr": "",
+    "source_sha256": "a26a24895e682d32ce21eb1d00acb115afcbb9cd571f8e140a45c3edf6d81d49",
+    "library": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/libhyperreal.rlib",
+    "library_sha256": "1f79c5055df2b43aabecc06fbc78cd8d419c6cf8b8f46788e4c76d6f073ba17b",
+    "binary_sha256": "ba360f828abf114d089a523f74354d93d8720cd9edf1382921814b26fb4ba41d",
+    "all_processes_reaped": true,
+    "all_sources_unchanged": true
+  },
+  "input_bridge": null
+}

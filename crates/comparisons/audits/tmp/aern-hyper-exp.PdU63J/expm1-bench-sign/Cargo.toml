@@ -1,0 +1,10 @@
+[package]
+name = "aern-expm1-bench"
+version = "0.0.0"
+edition = "2024"
+[dependencies]
+hyperreal = { path = "../hyperreal-expm1" }
+num-bigint = "=0.4.6"
+[[bin]]
+name = "aern-expm1-bench"
+path = "../expm1-bench.rs"

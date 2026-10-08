@@ -1,0 +1,7 @@
+{
+  "qualification_complete": false,
+  "all_processes_reaped": true,
+  "outer_session_reaped": 12070,
+  "preparation_failure": "New integration-test file was absent from mirror; driver read_bytes did not check exists before copying",
+  "child_processes_started": false
+}

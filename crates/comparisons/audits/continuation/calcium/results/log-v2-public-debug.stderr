@@ -1,0 +1,12 @@
+   Compiling autocfg v1.5.1
+   Compiling num-traits v0.2.19
+   Compiling num-integer v0.1.47
+   Compiling num-complex v0.4.6
+   Compiling num-bigint v0.4.8
+   Compiling num-iter v0.1.46
+   Compiling num-rational v0.4.2
+   Compiling num v0.4.3
+   Compiling hyperreal v0.13.1 (/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/trial-hyperreal)
+   Compiling calcium-hyper-trial-probe v0.1.0 (/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/trial-probe)
+    Finished `dev` profile [unoptimized] target(s) in 3.73s
+     Running `/home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype/debug/calcium-hyper-trial-probe`

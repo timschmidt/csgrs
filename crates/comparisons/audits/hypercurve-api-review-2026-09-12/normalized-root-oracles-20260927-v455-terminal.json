@@ -1,0 +1,68 @@
+{
+  "source_manifest": "normalized-root-oracles-20260927-v455-sources.json",
+  "source_directory": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/source-archives/normalized-root-oracles-20260927-v455",
+  "cases": [
+    {
+      "binary": "normalized-root-oracles-20260927-v455-hypersolve",
+      "name": "root_sign::captured_quadratic_field_queries::selected_root_query_002",
+      "returncode": 0,
+      "log": "normalized-root-oracles-20260927-v455-case-000.log",
+      "elapsed_seconds": 20.640006846981123
+    },
+    {
+      "binary": "normalized-root-oracles-20260927-v455-hypersolve",
+      "name": "root_sign::captured_quadratic_field_queries::selected_root_query_000",
+      "returncode": 0,
+      "log": "normalized-root-oracles-20260927-v455-case-001.log",
+      "elapsed_seconds": 4.319406909169629
+    },
+    {
+      "binary": "normalized-root-oracles-20260927-v455-hypersolve",
+      "name": "root_sign::captured_quadratic_field_queries::selected_root_query_001",
+      "returncode": 0,
+      "log": "normalized-root-oracles-20260927-v455-case-002.log",
+      "elapsed_seconds": 5.020127716008574
+    }
+  ],
+  "builds": [
+    {
+      "crate": "hypersolve",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "test",
+        "--lib",
+        "--release",
+        "--all-features",
+        "--no-run",
+        "--message-format=json",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "log": "normalized-root-oracles-20260927-v455-hypersolve-build.log",
+      "elapsed_seconds": 34.359927895944566,
+      "binary": {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/normalized-root-oracles-20260927-v455-hypersolve",
+        "sha256": "e51b559e6494c3eba7012ce3bcde7b7a671e08e887ca810c156c8e172090559d"
+      }
+    }
+  ],
+  "trial": {
+    "hypersolve/src/root_sign.rs": "d3b961b9448502db1cf0daffe571b8cd7f8dc78050b29e556d2b020a991cc8dd"
+  },
+  "all_processes_reaped": true,
+  "checks": [],
+  "qualification_scope": "Captured quartic-field root-sign queries against the qualified production implementation and independently proved signs",
+  "expected_cases": {
+    "hypersolve": [
+      "root_sign::captured_quadratic_field_queries::selected_root_query_002",
+      "root_sign::captured_quadratic_field_queries::selected_root_query_000",
+      "root_sign::captured_quadratic_field_queries::selected_root_query_001"
+    ]
+  },
+  "known_unresolved": [
+    "strict_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions",
+    "approximate_512_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions"
+  ],
+  "qualification_complete": true
+}

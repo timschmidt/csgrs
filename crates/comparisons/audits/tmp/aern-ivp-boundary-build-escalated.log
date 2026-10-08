@@ -1,0 +1,6 @@
+[1 of 6] Compiling Numeric.AERN.IVP.Solver.Events.Locate ( /tmp/aern-audit.zp9Mzz/source/aern-ivp/src/Numeric/AERN/IVP/Solver/Events/Locate.hs, /tmp/aern-audit.zp9Mzz/source/aern-ivp/src/Numeric/AERN/IVP/Solver/Events/Locate.o ) [Missing object file]
+[2 of 6] Compiling Numeric.AERN.IVP.Specification.Hybrid ( /tmp/aern-audit.zp9Mzz/source/aern-ivp/src/Numeric/AERN/IVP/Specification/Hybrid.hs, /tmp/aern-audit.zp9Mzz/source/aern-ivp/src/Numeric/AERN/IVP/Specification/Hybrid.o ) [Missing object file]
+[3 of 6] Compiling Numeric.AERN.IVP.Specification.ODE ( /tmp/aern-audit.zp9Mzz/source/aern-ivp/src/Numeric/AERN/IVP/Specification/ODE.hs, /tmp/aern-audit.zp9Mzz/source/aern-ivp/src/Numeric/AERN/IVP/Specification/ODE.o ) [Missing object file]
+[4 of 6] Compiling Numeric.AERN.IVP.Solver.Bisection ( /tmp/aern-audit.zp9Mzz/source/aern-ivp/src/Numeric/AERN/IVP/Solver/Bisection.hs, /tmp/aern-audit.zp9Mzz/source/aern-ivp/src/Numeric/AERN/IVP/Solver/Bisection.o )
+[5 of 6] Compiling Main             ( /tmp/aern-audit.zp9Mzz/IVPBoundaryProbe.hs, /tmp/aern-audit.zp9Mzz/IVPBoundaryProbe.o )
+[6 of 6] Linking /tmp/aern-audit.zp9Mzz/ivp-boundary-probe

@@ -1,0 +1,27 @@
+{
+  "returncode": 0,
+  "elapsed_seconds": 0.5142721690062899,
+  "normal_library_sha256": "8e690ff897af0a8cac5d88eaa0e04b6f5572b031f288de19099938069dc4ae62",
+  "log": "finite-circle-rational-domains-general-trim-matrix.log",
+  "source": "general-trim-matrix.rs",
+  "command": [
+    "rustc",
+    "--edition=2024",
+    "-O",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/general-trim-matrix.rs",
+    "--extern",
+    "hypercurve=/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/libhypercurve-2c7ff6f3fbe07653.rlib",
+    "-L",
+    "dependency=/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps",
+    "-o",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-circle-rational-domains-general-trim-matrix"
+  ],
+  "source_sha256": "7c6aa8ed342ad3be55d2ef71ef4d70bf78471e8155bcdac3047fe0f90147fe55",
+  "executable_sha256": "67934fda425c7222c9ea8f4e73590a1b224b75c2f4f8970e2db102a405dc2e45",
+  "counts": {
+    "queries": 448,
+    "endpoint_replays": 2208,
+    "repeated_path_trims": 1008,
+    "certainty": "Certified"
+  }
+}

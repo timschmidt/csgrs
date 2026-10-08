@@ -1,0 +1,40 @@
+{
+  "checks": [
+    {
+      "label": "fmt",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustfmt",
+        "--edition",
+        "2024",
+        "--check",
+        "src/bezier_offset.rs",
+        "src/bezier_region.rs",
+        "src/curve.rs",
+        "src/curve_region_boolean.rs"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 3.128861731966026,
+      "log": "local-chord-parallel-roots-20260924-v2-fmt.log"
+    },
+    {
+      "label": "clippy-1",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "clippy",
+        "--all-targets",
+        "--all-features",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "returncode": 101,
+      "elapsed_seconds": 25.41526008094661,
+      "log": "local-chord-parallel-roots-20260924-v2-clippy-1.log"
+    }
+  ],
+  "cases": [],
+  "all_processes_reaped": true,
+  "all_sources_unchanged": true
+}

@@ -1,0 +1,37 @@
+{
+  "reason": "Recover from EDQUOT in the owned temporary Cargo target",
+  "profiles_locked_exclusively": true,
+  "source_files_removed": false,
+  "audit_executables_removed": false,
+  "removed": [
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/debug/incremental",
+      "logical_bytes": 0
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/debug/build",
+      "logical_bytes": 1316017485
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/debug/examples",
+      "logical_bytes": 59138
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/debug/.fingerprint",
+      "logical_bytes": 5101225
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/debug/deps",
+      "logical_bytes": 3044587311
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/debug/.cargo-build-lock",
+      "logical_bytes": 0
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/examples",
+      "logical_bytes": 435032267
+    }
+  ],
+  "logical_bytes": 4800797426
+}

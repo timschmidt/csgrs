@@ -1,0 +1,2394 @@
+{
+  "normal_production_build": true,
+  "source_manifest": "nurbs-decomposition-20260928-v667-sources.json",
+  "source_directory": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/source-archives/nurbs-decomposition-20260928-v667",
+  "builds": [
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "test",
+        "--lib",
+        "--test",
+        "hypercurve_nurbs",
+        "--test",
+        "hypercurve_bspline",
+        "--test",
+        "hypercurve_curve",
+        "--release",
+        "--all-features",
+        "--locked",
+        "--offline",
+        "--no-run",
+        "--message-format=json"
+      ],
+      "returncode": 0,
+      "log": "nurbs-decomposition-20260928-v667-build.log",
+      "elapsed_seconds": 194.8590962830931,
+      "binaries": {
+        "hypercurve_nurbs": {
+          "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/nurbs-decomposition-20260928-v667-hypercurve_nurbs-tests",
+          "sha256": "a43c8970d618754b4041f710d8b17ad34239858dd932dfb49a8054d6f55dc082"
+        },
+        "hypercurve_bspline": {
+          "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/nurbs-decomposition-20260928-v667-hypercurve_bspline-tests",
+          "sha256": "a5f09ea660a691359c9d27a8babd173c295aecb9be3e74dfb9729ebb001d3930"
+        },
+        "hypercurve_curve": {
+          "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/nurbs-decomposition-20260928-v667-hypercurve_curve-tests",
+          "sha256": "cf73053a96877e5ff3dbaa08377e1603864c4dd56b5fa071930415e887f03cc6"
+        },
+        "hypercurve": {
+          "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/nurbs-decomposition-20260928-v667-hypercurve-tests",
+          "sha256": "d1bb5982767978b26478eb48bca6bfab6300b208e618f50c0e2545ee16c7ea07"
+        }
+      }
+    }
+  ],
+  "cases": [
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/nurbs-decomposition-20260928-v667-hypercurve-tests",
+        "--exact",
+        "bspline::tests::binary_knot_search_matches_complete_scan_on_large_repeated_vectors",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "nurbs-decomposition-20260928-v667-binary_knot_search_matches_complete_scan_on_large_repeated_vectors-4a0b00c022.log",
+      "elapsed_seconds": 0.06377349607646465,
+      "target": "hypercurve",
+      "name": "bspline::tests::binary_knot_search_matches_complete_scan_on_large_repeated_vectors",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/nurbs-decomposition-20260928-v667-hypercurve-tests",
+        "--exact",
+        "bspline::tests::retained_periodicity_rejects_a_period_different_from_the_active_domain",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "nurbs-decomposition-20260928-v667-retained_periodicity_rejects_a_period_different_from_the_active_domain-9a54a38239.log",
+      "elapsed_seconds": 0.0035841739736497402,
+      "target": "hypercurve",
+      "name": "bspline::tests::retained_periodicity_rejects_a_period_different_from_the_active_domain",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/nurbs-decomposition-20260928-v667-hypercurve-tests",
+        "--exact",
+        "bspline::tests::retained_periodicity_survives_knot_insertion",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "nurbs-decomposition-20260928-v667-retained_periodicity_survives_knot_insertion-8406d4173c.log",
+      "elapsed_seconds": 0.0035692949313670397,
+      "target": "hypercurve",
+      "name": "bspline::tests::retained_periodicity_survives_knot_insertion",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/nurbs-decomposition-20260928-v667-hypercurve-tests",
+        "--exact",
+        "curve::curve_evaluation::tests::selected_knot_evaluation_preserves_discontinuous_spline_side_rules",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "nurbs-decomposition-20260928-v667-selected_knot_evaluation_preserves_discontinuous_spline_side_rules-86c99ee881.log",
+      "elapsed_seconds": 0.0035462169907987118,
+      "target": "hypercurve",
+      "name": "curve::curve_evaluation::tests::selected_knot_evaluation_preserves_discontinuous_spline_side_rules",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/nurbs-decomposition-20260928-v667-hypercurve-tests",
+        "--exact",
+        "curve::curve_fillet::tests::circular_spline_contact_parameters_distinguish_repeated_point_visits",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "nurbs-decomposition-20260928-v667-circular_spline_contact_parameters_distinguish_repeated_point_visits-da26157a22.log",
+      "elapsed_seconds": 0.007600239012390375,
+      "target": "hypercurve",
+      "name": "curve::curve_fillet::tests::circular_spline_contact_parameters_distinguish_repeated_point_visits",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/nurbs-decomposition-20260928-v667-hypercurve-tests",
+        "--exact",
+        "curve::curve_fillet::tests::collapsed_circular_spline_fillets_keep_authored_contact_parameters",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "nurbs-decomposition-20260928-v667-collapsed_circular_spline_fillets_keep_authored_contact_parameters-7e6a7ab4e9.log",
+      "elapsed_seconds": 0.0076049878261983395,
+      "target": "hypercurve",
+      "name": "curve::curve_fillet::tests::collapsed_circular_spline_fillets_keep_authored_contact_parameters",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/nurbs-decomposition-20260928-v667-hypercurve-tests",
+        "--exact",
+        "curve::curve_fillet::tests::fillet_contacts_use_authored_spline_knots_across_multiple_charts",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "nurbs-decomposition-20260928-v667-fillet_contacts_use_authored_spline_knots_across_multiple_charts-6e2b42372f.log",
+      "elapsed_seconds": 0.003937189932912588,
+      "target": "hypercurve",
+      "name": "curve::curve_fillet::tests::fillet_contacts_use_authored_spline_knots_across_multiple_charts",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/nurbs-decomposition-20260928-v667-hypercurve-tests",
+        "--exact",
+        "curve::curve_subdivision::tests::circular_spline_extensions_preserve_complements_and_closed_endpoint_ownership",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "nurbs-decomposition-20260928-v667-circular_spline_extensions_preserve_complements_and_closed_endpoint_ownership-24491a0673.log",
+      "elapsed_seconds": 0.015657657058909535,
+      "target": "hypercurve",
+      "name": "curve::curve_subdivision::tests::circular_spline_extensions_preserve_complements_and_closed_endpoint_ownership",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/nurbs-decomposition-20260928-v667-hypercurve-tests",
+        "--exact",
+        "curve::curve_subdivision::tests::selected_spline_subdivision_preserves_jumps_and_one_sided_cuts",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "nurbs-decomposition-20260928-v667-selected_spline_subdivision_preserves_jumps_and_one_sided_cuts-f24b140bad.log",
+      "elapsed_seconds": 0.007587379077449441,
+      "target": "hypercurve",
+      "name": "curve::curve_subdivision::tests::selected_spline_subdivision_preserves_jumps_and_one_sided_cuts",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/nurbs-decomposition-20260928-v667-hypercurve-tests",
+        "--exact",
+        "curve::curve_subdivision::tests::source_domain_chamfers_cover_spline_knots_and_distinct_source_locations",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "nurbs-decomposition-20260928-v667-source_domain_chamfers_cover_spline_knots_and_distinct_source_locations-a0559abbf3.log",
+      "elapsed_seconds": 0.015664746053516865,
+      "target": "hypercurve",
+      "name": "curve::curve_subdivision::tests::source_domain_chamfers_cover_spline_knots_and_distinct_source_locations",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/nurbs-decomposition-20260928-v667-hypercurve-tests",
+        "--exact",
+        "curve::curve_subdivision::tests::source_domain_chamfers_reenter_paths_with_a_selected_spline_corner",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "nurbs-decomposition-20260928-v667-source_domain_chamfers_reenter_paths_with_a_selected_spline_corner-e5acae3445.log",
+      "elapsed_seconds": 0.5143330879509449,
+      "target": "hypercurve",
+      "name": "curve::curve_subdivision::tests::source_domain_chamfers_reenter_paths_with_a_selected_spline_corner",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/nurbs-decomposition-20260928-v667-hypercurve-tests",
+        "--exact",
+        "curve::curve_subdivision::tests::source_domain_fillets_map_selected_line_contacts_into_spline_charts",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "nurbs-decomposition-20260928-v667-source_domain_fillets_map_selected_line_contacts_into_spline_charts-6a6b0bd13c.log",
+      "elapsed_seconds": 0.015732720959931612,
+      "target": "hypercurve",
+      "name": "curve::curve_subdivision::tests::source_domain_fillets_map_selected_line_contacts_into_spline_charts",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/nurbs-decomposition-20260928-v667-hypercurve-tests",
+        "--exact",
+        "curve::curve_subdivision::tests::source_domain_fillets_own_surviving_spline_tangents_and_reenter_chamfers",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "nurbs-decomposition-20260928-v667-source_domain_fillets_own_surviving_spline_tangents_and_reenter_chamfers-1d6951a6a2.log",
+      "elapsed_seconds": 0.03176711103878915,
+      "target": "hypercurve",
+      "name": "curve::curve_subdivision::tests::source_domain_fillets_own_surviving_spline_tangents_and_reenter_chamfers",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/nurbs-decomposition-20260928-v667-hypercurve-tests",
+        "--exact",
+        "curve::tests::selected_spline_chamfer_cuts_reenter_the_authored_parameter_domain",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "nurbs-decomposition-20260928-v667-selected_spline_chamfer_cuts_reenter_the_authored_parameter_domain-0f75a884d8.log",
+      "elapsed_seconds": 0.007629456929862499,
+      "target": "hypercurve",
+      "name": "curve::tests::selected_spline_chamfer_cuts_reenter_the_authored_parameter_domain",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/nurbs-decomposition-20260928-v667-hypercurve-tests",
+        "--exact",
+        "curve::tests::selected_spline_fillet_cuts_reenter_the_authored_parameter_domain",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "nurbs-decomposition-20260928-v667-selected_spline_fillet_cuts_reenter_the_authored_parameter_domain-b9d366657a.log",
+      "elapsed_seconds": 0.0075963991694152355,
+      "target": "hypercurve",
+      "name": "curve::tests::selected_spline_fillet_cuts_reenter_the_authored_parameter_domain",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/nurbs-decomposition-20260928-v667-hypercurve-tests",
+        "--exact",
+        "curve_intersection::point_component_dispatch_tests::native_endpoint_shortcut_does_not_erase_retraced_or_spline_visits",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "nurbs-decomposition-20260928-v667-native_endpoint_shortcut_does_not_erase_retraced_or_spline_visits-a7ba08605c.log",
+      "elapsed_seconds": 0.0035309179220348597,
+      "target": "hypercurve",
+      "name": "curve_intersection::point_component_dispatch_tests::native_endpoint_shortcut_does_not_erase_retraced_or_spline_visits",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/nurbs-decomposition-20260928-v667-hypercurve-tests",
+        "--exact",
+        "curve_intersection::point_component_dispatch_tests::singleton_incidence_merges_spline_seams_but_keeps_distinct_visits",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "nurbs-decomposition-20260928-v667-singleton_incidence_merges_spline_seams_but_keeps_distinct_visits-49360aaa88.log",
+      "elapsed_seconds": 0.003536778036504984,
+      "target": "hypercurve",
+      "name": "curve_intersection::point_component_dispatch_tests::singleton_incidence_merges_spline_seams_but_keeps_distinct_visits",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/nurbs-decomposition-20260928-v667-hypercurve-tests",
+        "--exact",
+        "curve_region_trim::tests::constant_spline_jumps_do_not_join_coincident_retained_endpoints",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "nurbs-decomposition-20260928-v667-constant_spline_jumps_do_not_join_coincident_retained_endpoints-5b262df4a0.log",
+      "elapsed_seconds": 0.003544907085597515,
+      "target": "hypercurve",
+      "name": "curve_region_trim::tests::constant_spline_jumps_do_not_join_coincident_retained_endpoints",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/nurbs-decomposition-20260928-v667-hypercurve-tests",
+        "--exact",
+        "curve_region_trim::tests::constant_spline_spans_preserve_source_indices_charts_and_path_connectivity",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "nurbs-decomposition-20260928-v667-constant_spline_spans_preserve_source_indices_charts_and_path_connectivity-112c551440.log",
+      "elapsed_seconds": 0.007567060878500342,
+      "target": "hypercurve",
+      "name": "curve_region_trim::tests::constant_spline_spans_preserve_source_indices_charts_and_path_connectivity",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/nurbs-decomposition-20260928-v667-hypercurve-tests",
+        "--exact",
+        "curve_region_trim::tests::path_trim_separates_discontinuous_spline_spans_at_equal_knot_parameters",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "nurbs-decomposition-20260928-v667-path_trim_separates_discontinuous_spline_spans_at_equal_knot_parameters-0ebfd9194c.log",
+      "elapsed_seconds": 0.0035368180833756924,
+      "target": "hypercurve",
+      "name": "curve_region_trim::tests::path_trim_separates_discontinuous_spline_spans_at_equal_knot_parameters",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/nurbs-decomposition-20260928-v667-hypercurve-tests",
+        "--exact",
+        "nurbs::layout_tests::nurbs_carrier_keeps_compact_policy_aware_storage",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "nurbs-decomposition-20260928-v667-nurbs_carrier_keeps_compact_policy_aware_storage-ceb4e91672.log",
+      "elapsed_seconds": 0.003539048135280609,
+      "target": "hypercurve",
+      "name": "nurbs::layout_tests::nurbs_carrier_keeps_compact_policy_aware_storage",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/nurbs-decomposition-20260928-v667-hypercurve-tests",
+        "--exact",
+        "polynomial_spline::layout_tests::polynomial_spline_carrier_keeps_compact_policy_aware_storage",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "nurbs-decomposition-20260928-v667-polynomial_spline_carrier_keeps_compact_policy_aware_storage-f535da8c4b.log",
+      "elapsed_seconds": 0.0036140719894319773,
+      "target": "hypercurve",
+      "name": "polynomial_spline::layout_tests::polynomial_spline_carrier_keeps_compact_policy_aware_storage",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/nurbs-decomposition-20260928-v667-hypercurve-tests",
+        "--exact",
+        "spline_periodic::tests::adjacent_integer_remainder_resolves_opaque_half_boundaries",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "nurbs-decomposition-20260928-v667-adjacent_integer_remainder_resolves_opaque_half_boundaries-c794697858.log",
+      "elapsed_seconds": 0.003532957984134555,
+      "target": "hypercurve",
+      "name": "spline_periodic::tests::adjacent_integer_remainder_resolves_opaque_half_boundaries",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/nurbs-decomposition-20260928-v667-hypercurve_nurbs-tests",
+        "--exact",
+        "discontinuous_nurbs_knot_requires_explicit_point_side",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "nurbs-decomposition-20260928-v667-discontinuous_nurbs_knot_requires_explicit_point_side-7ff64b7931.log",
+      "elapsed_seconds": 0.003569304943084717,
+      "target": "hypercurve_nurbs",
+      "name": "discontinuous_nurbs_knot_requires_explicit_point_side",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/nurbs-decomposition-20260928-v667-hypercurve_nurbs-tests",
+        "--exact",
+        "higher_degree_nurbs_promotes_evaluates_and_splits_exactly",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "nurbs-decomposition-20260928-v667-higher_degree_nurbs_promotes_evaluates_and_splits_exactly-989761402f.log",
+      "elapsed_seconds": 0.003559645963832736,
+      "target": "hypercurve_nurbs",
+      "name": "higher_degree_nurbs_promotes_evaluates_and_splits_exactly",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/nurbs-decomposition-20260928-v667-hypercurve_nurbs-tests",
+        "--exact",
+        "homogeneous_nurbs_elevation_remains_recomposable_and_refinable",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "nurbs-decomposition-20260928-v667-homogeneous_nurbs_elevation_remains_recomposable_and_refinable-f5c40670ee.log",
+      "elapsed_seconds": 0.0034837909042835236,
+      "target": "hypercurve_nurbs",
+      "name": "homogeneous_nurbs_elevation_remains_recomposable_and_refinable",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/nurbs-decomposition-20260928-v667-hypercurve_nurbs-tests",
+        "--exact",
+        "homogeneous_nurbs_knot_insertion_retains_infinite_controls",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "nurbs-decomposition-20260928-v667-homogeneous_nurbs_knot_insertion_retains_infinite_controls-08f59a76ca.log",
+      "elapsed_seconds": 0.0035193779040127993,
+      "target": "hypercurve_nurbs",
+      "name": "homogeneous_nurbs_knot_insertion_retains_infinite_controls",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/nurbs-decomposition-20260928-v667-hypercurve_nurbs-tests",
+        "--exact",
+        "homogeneous_nurbs_unclamped_and_discontinuous_edits_preserve_parameterization",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "nurbs-decomposition-20260928-v667-homogeneous_nurbs_unclamped_and_discontinuous_edits_preserve_parameterization-358910c99c.log",
+      "elapsed_seconds": 0.0034903609193861485,
+      "target": "hypercurve_nurbs",
+      "name": "homogeneous_nurbs_unclamped_and_discontinuous_edits_preserve_parameterization",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/nurbs-decomposition-20260928-v667-hypercurve_nurbs-tests",
+        "--exact",
+        "invalid_nurbs_construction_returns_contextual_error",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "nurbs-decomposition-20260928-v667-invalid_nurbs_construction_returns_contextual_error-7e387a2062.log",
+      "elapsed_seconds": 0.0035087289288640022,
+      "target": "hypercurve_nurbs",
+      "name": "invalid_nurbs_construction_returns_contextual_error",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/nurbs-decomposition-20260928-v667-hypercurve_nurbs-tests",
+        "--exact",
+        "invalid_nurbs_split_and_trim_ranges_evidence_subdivision_context",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "nurbs-decomposition-20260928-v667-invalid_nurbs_split_and_trim_ranges_evidence_subdivision_context-429570af59.log",
+      "elapsed_seconds": 0.0036021429114043713,
+      "target": "hypercurve_nurbs",
+      "name": "invalid_nurbs_split_and_trim_ranges_evidence_subdivision_context",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/nurbs-decomposition-20260928-v667-hypercurve_nurbs-tests",
+        "--exact",
+        "linear_nurbs_evaluates_and_promotes_with_source_provenance",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "nurbs-decomposition-20260928-v667-linear_nurbs_evaluates_and_promotes_with_source_provenance-03e7c1645f.log",
+      "elapsed_seconds": 0.0035280478186905384,
+      "target": "hypercurve_nurbs",
+      "name": "linear_nurbs_evaluates_and_promotes_with_source_provenance",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/nurbs-decomposition-20260928-v667-hypercurve_nurbs-tests",
+        "--exact",
+        "native_nurbs_spans_are_cached_and_borrowed",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "nurbs-decomposition-20260928-v667-native_nurbs_spans_are_cached_and_borrowed-c41bcc0c84.log",
+      "elapsed_seconds": 0.003511629067361355,
+      "target": "hypercurve_nurbs",
+      "name": "native_nurbs_spans_are_cached_and_borrowed",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/nurbs-decomposition-20260928-v667-hypercurve_nurbs-tests",
+        "--exact",
+        "nonuniform_weighted_periodic_nurbs_supports_repeated_interior_knots",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "nurbs-decomposition-20260928-v667-nonuniform_weighted_periodic_nurbs_supports_repeated_interior_knots-b48a97402c.log",
+      "elapsed_seconds": 0.0035206389147788286,
+      "target": "hypercurve_nurbs",
+      "name": "nonuniform_weighted_periodic_nurbs_supports_repeated_interior_knots",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/nurbs-decomposition-20260928-v667-hypercurve_nurbs-tests",
+        "--exact",
+        "nurbs_batch_knot_refinement_projects_once_and_reuses_clone_shared_result",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "nurbs-decomposition-20260928-v667-nurbs_batch_knot_refinement_projects_once_and_reuses_clone_shared_result-897dd32dc9.log",
+      "elapsed_seconds": 0.0035281579475849867,
+      "target": "hypercurve_nurbs",
+      "name": "nurbs_batch_knot_refinement_projects_once_and_reuses_clone_shared_result",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/nurbs-decomposition-20260928-v667-hypercurve_nurbs-tests",
+        "--exact",
+        "nurbs_batch_knot_refinement_retains_contextual_failure_without_mutating_source",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "nurbs-decomposition-20260928-v667-nurbs_batch_knot_refinement_retains_contextual_failure_without_mutating_source-4b52f28399.log",
+      "elapsed_seconds": 0.0034981300123035908,
+      "target": "hypercurve_nurbs",
+      "name": "nurbs_batch_knot_refinement_retains_contextual_failure_without_mutating_source",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/nurbs-decomposition-20260928-v667-hypercurve_nurbs-tests",
+        "--exact",
+        "nurbs_clones_share_one_retained_bezier_decomposition",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "nurbs-decomposition-20260928-v667-nurbs_clones_share_one_retained_bezier_decomposition-d6ed2fbcb6.log",
+      "elapsed_seconds": 0.0014337108004838228,
+      "target": "hypercurve_nurbs",
+      "name": "nurbs_clones_share_one_retained_bezier_decomposition",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/nurbs-decomposition-20260928-v667-hypercurve_nurbs-tests",
+        "--exact",
+        "nurbs_construction_obeys_terminal_policy_without_replacing_knots",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "nurbs-decomposition-20260928-v667-nurbs_construction_obeys_terminal_policy_without_replacing_knots-eaea163f45.log",
+      "elapsed_seconds": 0.0035787438973784447,
+      "target": "hypercurve_nurbs",
+      "name": "nurbs_construction_obeys_terminal_policy_without_replacing_knots",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/nurbs-decomposition-20260928-v667-hypercurve_nurbs-tests",
+        "--exact",
+        "nurbs_degree_elevation_retains_exact_span_image_intervals_and_source",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "nurbs-decomposition-20260928-v667-nurbs_degree_elevation_retains_exact_span_image_intervals_and_source-d5645ebdef.log",
+      "elapsed_seconds": 0.0035422269720584154,
+      "target": "hypercurve_nurbs",
+      "name": "nurbs_degree_elevation_retains_exact_span_image_intervals_and_source",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/nurbs-decomposition-20260928-v667-hypercurve_nurbs-tests",
+        "--exact",
+        "nurbs_degree_elevation_retains_homogeneous_spans_and_actual_poles",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "nurbs-decomposition-20260928-v667-nurbs_degree_elevation_retains_homogeneous_spans_and_actual_poles-19e06fd787.log",
+      "elapsed_seconds": 0.0035621458664536476,
+      "target": "hypercurve_nurbs",
+      "name": "nurbs_degree_elevation_retains_homogeneous_spans_and_actual_poles",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/nurbs-decomposition-20260928-v667-hypercurve_nurbs-tests",
+        "--exact",
+        "nurbs_derivative_uses_authored_knot_parameter_and_shared_span_evaluators",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "nurbs-decomposition-20260928-v667-nurbs_derivative_uses_authored_knot_parameter_and_shared_span_evaluators-da86d35cc0.log",
+      "elapsed_seconds": 0.0035339968744665384,
+      "target": "hypercurve_nurbs",
+      "name": "nurbs_derivative_uses_authored_knot_parameter_and_shared_span_evaluators",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/nurbs-decomposition-20260928-v667-hypercurve_nurbs-tests",
+        "--exact",
+        "nurbs_elevated_carrier_preserves_discontinuous_knot_sides",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "nurbs-decomposition-20260928-v667-nurbs_elevated_carrier_preserves_discontinuous_knot_sides-8a33c784e7.log",
+      "elapsed_seconds": 0.0014267219230532646,
+      "target": "hypercurve_nurbs",
+      "name": "nurbs_elevated_carrier_preserves_discontinuous_knot_sides",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/nurbs-decomposition-20260928-v667-hypercurve_nurbs-tests",
+        "--exact",
+        "nurbs_elevated_carrier_preserves_image_source_and_source_continuity",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "nurbs-decomposition-20260928-v667-nurbs_elevated_carrier_preserves_image_source_and_source_continuity-4373891e49.log",
+      "elapsed_seconds": 0.0034780921414494514,
+      "target": "hypercurve_nurbs",
+      "name": "nurbs_elevated_carrier_preserves_image_source_and_source_continuity",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/nurbs-decomposition-20260928-v667-hypercurve_nurbs-tests",
+        "--exact",
+        "nurbs_evaluation_reuses_decomposition_and_preserves_exact_coordinates",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "nurbs-decomposition-20260928-v667-nurbs_evaluation_reuses_decomposition_and_preserves_exact_coordinates-0beb039ca5.log",
+      "elapsed_seconds": 0.0014287021476775408,
+      "target": "hypercurve_nurbs",
+      "name": "nurbs_evaluation_reuses_decomposition_and_preserves_exact_coordinates",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/nurbs-decomposition-20260928-v667-hypercurve_nurbs-tests",
+        "--exact",
+        "nurbs_exact_edits_isolate_terminal_policy_and_replay_retained_proofs",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "nurbs-decomposition-20260928-v667-nurbs_exact_edits_isolate_terminal_policy_and_replay_retained_proofs-f59113d8c0.log",
+      "elapsed_seconds": 0.0035077689681202173,
+      "target": "hypercurve_nurbs",
+      "name": "nurbs_exact_edits_isolate_terminal_policy_and_replay_retained_proofs",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/nurbs-decomposition-20260928-v667-hypercurve_nurbs-tests",
+        "--exact",
+        "nurbs_higher_derivatives_use_each_authored_parameter_chain_power",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "nurbs-decomposition-20260928-v667-nurbs_higher_derivatives_use_each_authored_parameter_chain_power-71edbb6a10.log",
+      "elapsed_seconds": 0.0014369909185916185,
+      "target": "hypercurve_nurbs",
+      "name": "nurbs_higher_derivatives_use_each_authored_parameter_chain_power",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/nurbs-decomposition-20260928-v667-hypercurve_nurbs-tests",
+        "--exact",
+        "nurbs_internal_corner_requires_explicit_derivative_side",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "nurbs-decomposition-20260928-v667-nurbs_internal_corner_requires_explicit_derivative_side-bb57afcc29.log",
+      "elapsed_seconds": 0.0034551729913800955,
+      "target": "hypercurve_nurbs",
+      "name": "nurbs_internal_corner_requires_explicit_derivative_side",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/nurbs-decomposition-20260928-v667-hypercurve_nurbs-tests",
+        "--exact",
+        "nurbs_knot_insertion_preserves_exact_image_source_and_full_multiplicity_cache",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "nurbs-decomposition-20260928-v667-nurbs_knot_insertion_preserves_exact_image_source_and_full_multiplicity_cache-0a0257efe6.log",
+      "elapsed_seconds": 0.0035184191074222326,
+      "target": "hypercurve_nurbs",
+      "name": "nurbs_knot_insertion_preserves_exact_image_source_and_full_multiplicity_cache",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/nurbs-decomposition-20260928-v667-hypercurve_nurbs-tests",
+        "--exact",
+        "nurbs_knot_removal_exactly_inverts_insertion_and_reuses_clone_shared_proof",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "nurbs-decomposition-20260928-v667-nurbs_knot_removal_exactly_inverts_insertion_and_reuses_clone_shared_proof-df240ab405.log",
+      "elapsed_seconds": 0.0035319270100444555,
+      "target": "hypercurve_nurbs",
+      "name": "nurbs_knot_removal_exactly_inverts_insertion_and_reuses_clone_shared_proof",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/nurbs-decomposition-20260928-v667-hypercurve_nurbs-tests",
+        "--exact",
+        "nurbs_knot_removal_retains_exact_negative_result_and_contextual_domain_errors",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "nurbs-decomposition-20260928-v667-nurbs_knot_removal_retains_exact_negative_result_and_contextual_domain_errors-352aaf4370.log",
+      "elapsed_seconds": 0.003592283930629492,
+      "target": "hypercurve_nurbs",
+      "name": "nurbs_knot_removal_retains_exact_negative_result_and_contextual_domain_errors",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/nurbs-decomposition-20260928-v667-hypercurve_nurbs-tests",
+        "--exact",
+        "nurbs_reversal_preserves_domain_source_and_exact_parameter_mapping",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "nurbs-decomposition-20260928-v667-nurbs_reversal_preserves_domain_source_and_exact_parameter_mapping-12eba58d6a.log",
+      "elapsed_seconds": 0.0035195089876651764,
+      "target": "hypercurve_nurbs",
+      "name": "nurbs_reversal_preserves_domain_source_and_exact_parameter_mapping",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/nurbs-decomposition-20260928-v667-hypercurve_nurbs-tests",
+        "--exact",
+        "nurbs_split_and_subcurve_preserve_authored_parameters_and_exact_image",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "nurbs-decomposition-20260928-v667-nurbs_split_and_subcurve_preserve_authored_parameters_and_exact_image-5176b7014e.log",
+      "elapsed_seconds": 0.0035012199077755213,
+      "target": "hypercurve_nurbs",
+      "name": "nurbs_split_and_subcurve_preserve_authored_parameters_and_exact_image",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/nurbs-decomposition-20260928-v667-hypercurve_nurbs-tests",
+        "--exact",
+        "nurbs_subdivision_reconstruction_obeys_terminal_policy",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "nurbs-decomposition-20260928-v667-nurbs_subdivision_reconstruction_obeys_terminal_policy-e85af45184.log",
+      "elapsed_seconds": 0.0034807610791176558,
+      "target": "hypercurve_nurbs",
+      "name": "nurbs_subdivision_reconstruction_obeys_terminal_policy",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/nurbs-decomposition-20260928-v667-hypercurve_nurbs-tests",
+        "--exact",
+        "out_of_domain_nurbs_evaluation_has_contextual_error",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "nurbs-decomposition-20260928-v667-out_of_domain_nurbs_evaluation_has_contextual_error-bfadebc9d1.log",
+      "elapsed_seconds": 0.0034531329292804003,
+      "target": "hypercurve_nurbs",
+      "name": "out_of_domain_nurbs_evaluation_has_contextual_error",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/nurbs-decomposition-20260928-v667-hypercurve_nurbs-tests",
+        "--exact",
+        "out_of_domain_nurbs_knot_insertion_has_contextual_error",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "nurbs-decomposition-20260928-v667-out_of_domain_nurbs_knot_insertion_has_contextual_error-32e9894a7b.log",
+      "elapsed_seconds": 0.003530678106471896,
+      "target": "hypercurve_nurbs",
+      "name": "out_of_domain_nurbs_knot_insertion_has_contextual_error",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/nurbs-decomposition-20260928-v667-hypercurve_nurbs-tests",
+        "--exact",
+        "periodic_nurbs_editing_preserves_period_only_for_whole_curve_operations",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "nurbs-decomposition-20260928-v667-periodic_nurbs_editing_preserves_period_only_for_whole_curve_operations-459521aa0f.log",
+      "elapsed_seconds": 0.0035002899821847677,
+      "target": "hypercurve_nurbs",
+      "name": "periodic_nurbs_editing_preserves_period_only_for_whole_curve_operations",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/nurbs-decomposition-20260928-v667-hypercurve_nurbs-tests",
+        "--exact",
+        "periodic_nurbs_elevated_carrier_preserves_wrapped_points_and_derivatives",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "nurbs-decomposition-20260928-v667-periodic_nurbs_elevated_carrier_preserves_wrapped_points_and_derivatives-2bc8b90c71.log",
+      "elapsed_seconds": 0.0034842309542000294,
+      "target": "hypercurve_nurbs",
+      "name": "periodic_nurbs_elevated_carrier_preserves_wrapped_points_and_derivatives",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/nurbs-decomposition-20260928-v667-hypercurve_nurbs-tests",
+        "--exact",
+        "periodic_nurbs_knot_removal_preserves_period_and_wrapped_image",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "nurbs-decomposition-20260928-v667-periodic_nurbs_knot_removal_preserves_period_and_wrapped_image-38baadfea7.log",
+      "elapsed_seconds": 0.0035211979411542416,
+      "target": "hypercurve_nurbs",
+      "name": "periodic_nurbs_knot_removal_preserves_period_and_wrapped_image",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/nurbs-decomposition-20260928-v667-hypercurve_nurbs-tests",
+        "--exact",
+        "periodic_nurbs_rejects_invalid_layout_and_nonperiodic_wrapping",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "nurbs-decomposition-20260928-v667-periodic_nurbs_rejects_invalid_layout_and_nonperiodic_wrapping-422585e775.log",
+      "elapsed_seconds": 0.0014787779655307531,
+      "target": "hypercurve_nurbs",
+      "name": "periodic_nurbs_rejects_invalid_layout_and_nonperiodic_wrapping",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/nurbs-decomposition-20260928-v667-hypercurve_nurbs-tests",
+        "--exact",
+        "periodic_nurbs_wrapping_obeys_terminal_policy",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "nurbs-decomposition-20260928-v667-periodic_nurbs_wrapping_obeys_terminal_policy-cbcfeffa8a.log",
+      "elapsed_seconds": 0.003512798110023141,
+      "target": "hypercurve_nurbs",
+      "name": "periodic_nurbs_wrapping_obeys_terminal_policy",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/nurbs-decomposition-20260928-v667-hypercurve_nurbs-tests",
+        "--exact",
+        "periodic_nurbs_wraps_exact_points_derivatives_and_retains_source",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "nurbs-decomposition-20260928-v667-periodic_nurbs_wraps_exact_points_derivatives_and_retains_source-24700c6a7b.log",
+      "elapsed_seconds": 0.0035177089739590883,
+      "target": "hypercurve_nurbs",
+      "name": "periodic_nurbs_wraps_exact_points_derivatives_and_retains_source",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/nurbs-decomposition-20260928-v667-hypercurve_nurbs-tests",
+        "--exact",
+        "spline_parameter_search_preserves_every_discontinuous_knot_side",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "nurbs-decomposition-20260928-v667-spline_parameter_search_preserves_every_discontinuous_knot_side-c318b5e9a6.log",
+      "elapsed_seconds": 0.007534634089097381,
+      "target": "hypercurve_nurbs",
+      "name": "spline_parameter_search_preserves_every_discontinuous_knot_side",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/nurbs-decomposition-20260928-v667-hypercurve_nurbs-tests",
+        "--exact",
+        "top_level_nurbs_retains_source_and_exact_geometry_under_explicit_policy",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "nurbs-decomposition-20260928-v667-top_level_nurbs_retains_source_and_exact_geometry_under_explicit_policy-b701d29257.log",
+      "elapsed_seconds": 0.0034888312220573425,
+      "target": "hypercurve_nurbs",
+      "name": "top_level_nurbs_retains_source_and_exact_geometry_under_explicit_policy",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/nurbs-decomposition-20260928-v667-hypercurve_nurbs-tests",
+        "--exact",
+        "unclamped_nurbs_retains_active_endpoints_and_exact_editing",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "nurbs-decomposition-20260928-v667-unclamped_nurbs_retains_active_endpoints_and_exact_editing-59bc6c6964.log",
+      "elapsed_seconds": 0.0035159389954060316,
+      "target": "hypercurve_nurbs",
+      "name": "unclamped_nurbs_retains_active_endpoints_and_exact_editing",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/nurbs-decomposition-20260928-v667-hypercurve_nurbs-tests",
+        "--exact",
+        "unclamped_weighted_nurbs_projects_homogeneous_endpoint_evidence",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "nurbs-decomposition-20260928-v667-unclamped_weighted_nurbs_projects_homogeneous_endpoint_evidence-80fb9bced4.log",
+      "elapsed_seconds": 0.003480041166767478,
+      "target": "hypercurve_nurbs",
+      "name": "unclamped_weighted_nurbs_projects_homogeneous_endpoint_evidence",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/nurbs-decomposition-20260928-v667-hypercurve_nurbs-tests",
+        "--exact",
+        "unequal_weight_cubic_nurbs_promotes_once_with_provenance",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "nurbs-decomposition-20260928-v667-unequal_weight_cubic_nurbs_promotes_once_with_provenance-f5e89cc404.log",
+      "elapsed_seconds": 0.0015093961264938116,
+      "target": "hypercurve_nurbs",
+      "name": "unequal_weight_cubic_nurbs_promotes_once_with_provenance",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/nurbs-decomposition-20260928-v667-hypercurve_bspline-tests",
+        "--exact",
+        "affine_authoring_rejects_zero_weights_and_extraction_rejects_infinite_endpoints",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "nurbs-decomposition-20260928-v667-affine_authoring_rejects_zero_weights_and_extraction_rejects_infinite_endpoints-b121d4f4ff.log",
+      "elapsed_seconds": 0.0035773448180407286,
+      "target": "hypercurve_bspline",
+      "name": "affine_authoring_rejects_zero_weights_and_extraction_rejects_infinite_endpoints",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/nurbs-decomposition-20260928-v667-hypercurve_bspline-tests",
+        "--exact",
+        "bspline_constructor_rejects_degenerate_knot_vectors",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "nurbs-decomposition-20260928-v667-bspline_constructor_rejects_degenerate_knot_vectors-5cc367b2e9.log",
+      "elapsed_seconds": 0.0035022490192204714,
+      "target": "hypercurve_bspline",
+      "name": "bspline_constructor_rejects_degenerate_knot_vectors",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/nurbs-decomposition-20260928-v667-hypercurve_bspline-tests",
+        "--exact",
+        "cubic_bspline_extracts_spans_with_degree_multiplicity_at_internal_knot",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "nurbs-decomposition-20260928-v667-cubic_bspline_extracts_spans_with_degree_multiplicity_at_internal_knot-a2e5dc1713.log",
+      "elapsed_seconds": 0.0034931600093841553,
+      "target": "hypercurve_bspline",
+      "name": "cubic_bspline_extracts_spans_with_degree_multiplicity_at_internal_knot",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/nurbs-decomposition-20260928-v667-hypercurve_bspline-tests",
+        "--exact",
+        "equal_weight_quadratic_nurbs_matches_polynomial_bspline_spans",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "nurbs-decomposition-20260928-v667-equal_weight_quadratic_nurbs_matches_polynomial_bspline_spans-0675fcfb61.log",
+      "elapsed_seconds": 0.003531648078933358,
+      "target": "hypercurve_bspline",
+      "name": "equal_weight_quadratic_nurbs_matches_polynomial_bspline_spans",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/nurbs-decomposition-20260928-v667-hypercurve_bspline-tests",
+        "--exact",
+        "equal_weight_rational_cubic_spans_specialize_to_polynomial_cubics",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "nurbs-decomposition-20260928-v667-equal_weight_rational_cubic_spans_specialize_to_polynomial_cubics-b088b26819.log",
+      "elapsed_seconds": 0.0014623499009758234,
+      "target": "hypercurve_bspline",
+      "name": "equal_weight_rational_cubic_spans_specialize_to_polynomial_cubics",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/nurbs-decomposition-20260928-v667-hypercurve_bspline-tests",
+        "--exact",
+        "equal_weight_retained_rational_cubic_matches_polynomial_cubic_spans",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "nurbs-decomposition-20260928-v667-equal_weight_retained_rational_cubic_matches_polynomial_cubic_spans-86534d444a.log",
+      "elapsed_seconds": 0.0014582599978893995,
+      "target": "hypercurve_bspline",
+      "name": "equal_weight_retained_rational_cubic_matches_polynomial_cubic_spans",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/nurbs-decomposition-20260928-v667-hypercurve_bspline-tests",
+        "--exact",
+        "equal_weight_retained_rational_cubic_spans_feed_unified_region_area",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "nurbs-decomposition-20260928-v667-equal_weight_retained_rational_cubic_spans_feed_unified_region_area-b6b13c4fbc.log",
+      "elapsed_seconds": 0.0035169990733265877,
+      "target": "hypercurve_bspline",
+      "name": "equal_weight_retained_rational_cubic_spans_feed_unified_region_area",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/nurbs-decomposition-20260928-v667-hypercurve_bspline-tests",
+        "--exact",
+        "extracted_bspline_spans_feed_unified_region_area",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "nurbs-decomposition-20260928-v667-extracted_bspline_spans_feed_unified_region_area-34f3d65d15.log",
+      "elapsed_seconds": 0.0034913700073957443,
+      "target": "hypercurve_bspline",
+      "name": "extracted_bspline_spans_feed_unified_region_area",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/nurbs-decomposition-20260928-v667-hypercurve_bspline-tests",
+        "--exact",
+        "extracted_rational_bspline_spans_feed_conic_region_area",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "nurbs-decomposition-20260928-v667-extracted_rational_bspline_spans_feed_conic_region_area-a697bd4e65.log",
+      "elapsed_seconds": 0.0035311970859766006,
+      "target": "hypercurve_bspline",
+      "name": "extracted_rational_bspline_spans_feed_conic_region_area",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/nurbs-decomposition-20260928-v667-hypercurve_bspline-tests",
+        "--exact",
+        "linear_bspline_spans_are_elevated_exactly",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "nurbs-decomposition-20260928-v667-linear_bspline_spans_are_elevated_exactly-ff9c0ecb1b.log",
+      "elapsed_seconds": 0.003498049918562174,
+      "target": "hypercurve_bspline",
+      "name": "linear_bspline_spans_are_elevated_exactly",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/nurbs-decomposition-20260928-v667-hypercurve_bspline-tests",
+        "--exact",
+        "nonuniform_rational_cubic_spans_promote_without_degree_reduction",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "nurbs-decomposition-20260928-v667-nonuniform_rational_cubic_spans_promote_without_degree_reduction-1cf9ebfb9d.log",
+      "elapsed_seconds": 0.00357794389128685,
+      "target": "hypercurve_bspline",
+      "name": "nonuniform_rational_cubic_spans_promote_without_degree_reduction",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/nurbs-decomposition-20260928-v667-hypercurve_bspline-tests",
+        "--exact",
+        "quadratic_bspline_extracts_bezier_spans_by_exact_knot_insertion",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "nurbs-decomposition-20260928-v667-quadratic_bspline_extracts_bezier_spans_by_exact_knot_insertion-a780fcfd90.log",
+      "elapsed_seconds": 0.0034904710482805967,
+      "target": "hypercurve_bspline",
+      "name": "quadratic_bspline_extracts_bezier_spans_by_exact_knot_insertion",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/nurbs-decomposition-20260928-v667-hypercurve_bspline-tests",
+        "--exact",
+        "rational_linear_span_preserves_homogeneous_parameterization",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "nurbs-decomposition-20260928-v667-rational_linear_span_preserves_homogeneous_parameterization-91fc70881b.log",
+      "elapsed_seconds": 0.0035105289425700903,
+      "target": "hypercurve_bspline",
+      "name": "rational_linear_span_preserves_homogeneous_parameterization",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/nurbs-decomposition-20260928-v667-hypercurve_bspline-tests",
+        "--exact",
+        "rational_linear_span_retains_its_denominator_pole",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "nurbs-decomposition-20260928-v667-rational_linear_span_retains_its_denominator_pole-a2cfb5feff.log",
+      "elapsed_seconds": 0.0034530539996922016,
+      "target": "hypercurve_bspline",
+      "name": "rational_linear_span_retains_its_denominator_pole",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/nurbs-decomposition-20260928-v667-hypercurve_bspline-tests",
+        "--exact",
+        "rational_quadratic_bspline_extracts_homogeneous_bezier_spans",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "nurbs-decomposition-20260928-v667-rational_quadratic_bspline_extracts_homogeneous_bezier_spans-c60dde7383.log",
+      "elapsed_seconds": 0.0035323980264365673,
+      "target": "hypercurve_bspline",
+      "name": "rational_quadratic_bspline_extracts_homogeneous_bezier_spans",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/nurbs-decomposition-20260928-v667-hypercurve_bspline-tests",
+        "--exact",
+        "rational_quadratic_span_facts_certify_bounds_and_extrema",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "nurbs-decomposition-20260928-v667-rational_quadratic_span_facts_certify_bounds_and_extrema-342787d6a0.log",
+      "elapsed_seconds": 0.0034933099523186684,
+      "target": "hypercurve_bspline",
+      "name": "rational_quadratic_span_facts_certify_bounds_and_extrema",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/nurbs-decomposition-20260928-v667-hypercurve_bspline-tests",
+        "--exact",
+        "retained_bspline_span_facts_evidence_native_bounds_and_monotonicity",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "nurbs-decomposition-20260928-v667-retained_bspline_span_facts_evidence_native_bounds_and_monotonicity-b09509a0d0.log",
+      "elapsed_seconds": 0.00350118987262249,
+      "target": "hypercurve_bspline",
+      "name": "retained_bspline_span_facts_evidence_native_bounds_and_monotonicity",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/nurbs-decomposition-20260928-v667-hypercurve_bspline-tests",
+        "--exact",
+        "retained_degree_four_nurbs_span_certifies_stationary_monotone_axis",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "nurbs-decomposition-20260928-v667-retained_degree_four_nurbs_span_certifies_stationary_monotone_axis-a9f553f4ea.log",
+      "elapsed_seconds": 0.003502100007608533,
+      "target": "hypercurve_bspline",
+      "name": "retained_degree_four_nurbs_span_certifies_stationary_monotone_axis",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/nurbs-decomposition-20260928-v667-hypercurve_bspline-tests",
+        "--exact",
+        "retained_rational_bspline_rejects_invalid_degree_and_zero_weight",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "nurbs-decomposition-20260928-v667-retained_rational_bspline_rejects_invalid_degree_and_zero_weight-98b3edc80b.log",
+      "elapsed_seconds": 0.0035740549210458994,
+      "target": "hypercurve_bspline",
+      "name": "retained_rational_bspline_rejects_invalid_degree_and_zero_weight",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/nurbs-decomposition-20260928-v667-hypercurve_bspline-tests",
+        "--exact",
+        "retained_rational_cubic_bspline_extracts_bezier_span_evidence",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "nurbs-decomposition-20260928-v667-retained_rational_cubic_bspline_extracts_bezier_span_evidence-7137c641e4.log",
+      "elapsed_seconds": 0.003461492946371436,
+      "target": "hypercurve_bspline",
+      "name": "retained_rational_cubic_bspline_extracts_bezier_span_evidence",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/nurbs-decomposition-20260928-v667-hypercurve_bspline-tests",
+        "--exact",
+        "retained_rational_cubic_span_facts_certify_control_hull_and_monotonicity",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "nurbs-decomposition-20260928-v667-retained_rational_cubic_span_facts_certify_control_hull_and_monotonicity-ca1042c176.log",
+      "elapsed_seconds": 0.003499580081552267,
+      "target": "hypercurve_bspline",
+      "name": "retained_rational_cubic_span_facts_certify_control_hull_and_monotonicity",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/nurbs-decomposition-20260928-v667-hypercurve_bspline-tests",
+        "--exact",
+        "retained_rational_quadratic_span_facts_follow_refined_knot_windows",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "nurbs-decomposition-20260928-v667-retained_rational_quadratic_span_facts_follow_refined_knot_windows-0926fd4139.log",
+      "elapsed_seconds": 0.003515389049425721,
+      "target": "hypercurve_bspline",
+      "name": "retained_rational_quadratic_span_facts_follow_refined_knot_windows",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/nurbs-decomposition-20260928-v667-hypercurve_bspline-tests",
+        "--exact",
+        "retained_rational_quadratic_spans_promote_to_native_conic_topology",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "nurbs-decomposition-20260928-v667-retained_rational_quadratic_spans_promote_to_native_conic_topology-d003c6d64c.log",
+      "elapsed_seconds": 0.0014532911591231823,
+      "target": "hypercurve_bspline",
+      "name": "retained_rational_quadratic_spans_promote_to_native_conic_topology",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/nurbs-decomposition-20260928-v667-hypercurve_bspline-tests",
+        "--exact",
+        "unclamped_uniform_bspline_refines_active_domain_endpoints_exactly",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "nurbs-decomposition-20260928-v667-unclamped_uniform_bspline_refines_active_domain_endpoints_exactly-dc71ac10cc.log",
+      "elapsed_seconds": 0.003529737936332822,
+      "target": "hypercurve_bspline",
+      "name": "unclamped_uniform_bspline_refines_active_domain_endpoints_exactly",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/nurbs-decomposition-20260928-v667-hypercurve_curve-tests",
+        "--exact",
+        "automatic_corner_solver_obeys_strict_and_approximate_512_once",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "nurbs-decomposition-20260928-v667-automatic_corner_solver_obeys_strict_and_approximate_512_once-cc7724ed90.log",
+      "elapsed_seconds": 0.003517238888889551,
+      "target": "hypercurve_curve",
+      "name": "automatic_corner_solver_obeys_strict_and_approximate_512_once",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/nurbs-decomposition-20260928-v667-hypercurve_curve-tests",
+        "--exact",
+        "automatic_corner_solver_reconstructs_selected_pairs",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "nurbs-decomposition-20260928-v667-automatic_corner_solver_reconstructs_selected_pairs-16cdb2e19f.log",
+      "elapsed_seconds": 0.3641182789579034,
+      "target": "hypercurve_curve",
+      "name": "automatic_corner_solver_reconstructs_selected_pairs",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/nurbs-decomposition-20260928-v667-hypercurve_curve-tests",
+        "--exact",
+        "clamped_splines_preserve_discontinuous_knot_sides_and_span_images",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "nurbs-decomposition-20260928-v667-clamped_splines_preserve_discontinuous_knot_sides_and_span_images-9ba02d7db8.log",
+      "elapsed_seconds": 0.00365696894004941,
+      "target": "hypercurve_curve",
+      "name": "clamped_splines_preserve_discontinuous_knot_sides_and_span_images",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/nurbs-decomposition-20260928-v667-hypercurve_curve-tests",
+        "--exact",
+        "closed_curve_path_corner_edits_support_the_start_end_seam",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "nurbs-decomposition-20260928-v667-closed_curve_path_corner_edits_support_the_start_end_seam-3852c66479.log",
+      "elapsed_seconds": 0.003575465176254511,
+      "target": "hypercurve_curve",
+      "name": "closed_curve_path_corner_edits_support_the_start_end_seam",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/nurbs-decomposition-20260928-v667-hypercurve_curve-tests",
+        "--exact",
+        "curve_path_boundary_and_classification_report_terminal_closure",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "nurbs-decomposition-20260928-v667-curve_path_boundary_and_classification_report_terminal_closure-e70f5e36ce.log",
+      "elapsed_seconds": 0.0035307679791003466,
+      "target": "hypercurve_curve",
+      "name": "curve_path_boundary_and_classification_report_terminal_closure",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/nurbs-decomposition-20260928-v667-hypercurve_curve-tests",
+        "--exact",
+        "direct_bezier_pair_fillet_retains_both_incident_extensions",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "nurbs-decomposition-20260928-v667-direct_bezier_pair_fillet_retains_both_incident_extensions-545216a419.log",
+      "elapsed_seconds": 7.123143810080364,
+      "target": "hypercurve_curve",
+      "name": "direct_bezier_pair_fillet_retains_both_incident_extensions",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/nurbs-decomposition-20260928-v667-hypercurve_curve-tests",
+        "--exact",
+        "exact_arc_chamfer_solver_preserves_both_major_sweep_cuts",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "nurbs-decomposition-20260928-v667-exact_arc_chamfer_solver_preserves_both_major_sweep_cuts-f8d000f664.log",
+      "elapsed_seconds": 0.0036546799819916487,
+      "target": "hypercurve_curve",
+      "name": "exact_arc_chamfer_solver_preserves_both_major_sweep_cuts",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/nurbs-decomposition-20260928-v667-hypercurve_curve-tests",
+        "--exact",
+        "exact_chamfer_solver_handles_native_line_arc_and_arc_arc_carriers",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "nurbs-decomposition-20260928-v667-exact_chamfer_solver_handles_native_line_arc_and_arc_arc_carriers-7c61bf7e59.log",
+      "elapsed_seconds": 0.0035630660131573677,
+      "target": "hypercurve_curve",
+      "name": "exact_chamfer_solver_handles_native_line_arc_and_arc_arc_carriers",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/nurbs-decomposition-20260928-v667-hypercurve_curve-tests",
+        "--exact",
+        "exact_line_arc_fillets_retain_rational_radius_across_source_scales",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "nurbs-decomposition-20260928-v667-exact_line_arc_fillets_retain_rational_radius_across_source_scales-ae7d82afeb.log",
+      "elapsed_seconds": 0.03170058596879244,
+      "target": "hypercurve_curve",
+      "name": "exact_line_arc_fillets_retain_rational_radius_across_source_scales",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/nurbs-decomposition-20260928-v667-hypercurve_curve-tests",
+        "--exact",
+        "exact_line_corner_design_edits_hold_across_source_lengths",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "nurbs-decomposition-20260928-v667-exact_line_corner_design_edits_hold_across_source_lengths-cab79160fe.log",
+      "elapsed_seconds": 0.007617196999490261,
+      "target": "hypercurve_curve",
+      "name": "exact_line_corner_design_edits_hold_across_source_lengths",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/nurbs-decomposition-20260928-v667-hypercurve_curve-tests",
+        "--exact",
+        "exact_native_arc_fillet_solver_classifies_collapsed_and_coincident_offsets",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "nurbs-decomposition-20260928-v667-exact_native_arc_fillet_solver_classifies_collapsed_and_coincident_offsets-de83235d0b.log",
+      "elapsed_seconds": 0.00351874902844429,
+      "target": "hypercurve_curve",
+      "name": "exact_native_arc_fillet_solver_classifies_collapsed_and_coincident_offsets",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/nurbs-decomposition-20260928-v667-hypercurve_curve-tests",
+        "--exact",
+        "exact_native_arc_fillet_solver_handles_every_native_pair_order",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "nurbs-decomposition-20260928-v667-exact_native_arc_fillet_solver_handles_every_native_pair_order-7efb9edf36.log",
+      "elapsed_seconds": 0.003528948174789548,
+      "target": "hypercurve_curve",
+      "name": "exact_native_arc_fillet_solver_handles_every_native_pair_order",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/nurbs-decomposition-20260928-v667-hypercurve_curve-tests",
+        "--exact",
+        "exact_native_arc_fillet_uses_only_the_shared_approximate_terminal",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "nurbs-decomposition-20260928-v667-exact_native_arc_fillet_uses_only_the_shared_approximate_terminal-51aff8c7a2.log",
+      "elapsed_seconds": 0.0035225381143391132,
+      "target": "hypercurve_curve",
+      "name": "exact_native_arc_fillet_uses_only_the_shared_approximate_terminal",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/nurbs-decomposition-20260928-v667-hypercurve_curve-tests",
+        "--exact",
+        "independently_parameterized_bezier_continuation_is_an_incident_fillet_component",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "nurbs-decomposition-20260928-v667-independently_parameterized_bezier_continuation_is_an_incident_fillet_component-1a81b397fc.log",
+      "elapsed_seconds": 0.03177188104018569,
+      "target": "hypercurve_curve",
+      "name": "independently_parameterized_bezier_continuation_is_an_incident_fillet_component",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/nurbs-decomposition-20260928-v667-hypercurve_curve-tests",
+        "--exact",
+        "line_corner_solvers_derive_unique_trimmed_fillet_and_chamfer",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "nurbs-decomposition-20260928-v667-line_corner_solvers_derive_unique_trimmed_fillet_and_chamfer-6acc5b6692.log",
+      "elapsed_seconds": 0.003499189857393503,
+      "target": "hypercurve_curve",
+      "name": "line_corner_solvers_derive_unique_trimmed_fillet_and_chamfer",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/nurbs-decomposition-20260928-v667-hypercurve_curve-tests",
+        "--exact",
+        "line_corner_solvers_enumerate_extensions_deterministically",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "nurbs-decomposition-20260928-v667-line_corner_solvers_enumerate_extensions_deterministically-debb730c91.log",
+      "elapsed_seconds": 0.0034974701702594757,
+      "target": "hypercurve_curve",
+      "name": "line_corner_solvers_enumerate_extensions_deterministically",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/nurbs-decomposition-20260928-v667-hypercurve_curve-tests",
+        "--exact",
+        "line_corner_solvers_report_exact_no_solution_and_invalid_options",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "nurbs-decomposition-20260928-v667-line_corner_solvers_report_exact_no_solution_and_invalid_options-4930d17996.log",
+      "elapsed_seconds": 0.0034934701398015022,
+      "target": "hypercurve_curve",
+      "name": "line_corner_solvers_report_exact_no_solution_and_invalid_options",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/nurbs-decomposition-20260928-v667-hypercurve_curve-tests",
+        "--exact",
+        "line_parabola_mixed_exact_algebraic_fillet_is_an_exact_open_path",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "nurbs-decomposition-20260928-v667-line_parabola_mixed_exact_algebraic_fillet_is_an_exact_open_path-513db93192.log",
+      "elapsed_seconds": 0.06377365603111684,
+      "target": "hypercurve_curve",
+      "name": "line_parabola_mixed_exact_algebraic_fillet_is_an_exact_open_path",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/nurbs-decomposition-20260928-v667-hypercurve_curve-tests",
+        "--exact",
+        "mixed_curve_path_fillet_accepts_every_non_arc_family_pair",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "nurbs-decomposition-20260928-v667-mixed_curve_path_fillet_accepts_every_non_arc_family_pair-f05cc7d4f3.log",
+      "elapsed_seconds": 0.031750033143907785,
+      "target": "hypercurve_curve",
+      "name": "mixed_curve_path_fillet_accepts_every_non_arc_family_pair",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/nurbs-decomposition-20260928-v667-hypercurve_curve-tests",
+        "--exact",
+        "mixed_curve_path_fillet_preserves_arc_family_and_exact_tangency",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "nurbs-decomposition-20260928-v667-mixed_curve_path_fillet_preserves_arc_family_and_exact_tangency-63c69435da.log",
+      "elapsed_seconds": 0.0035031300503760576,
+      "target": "hypercurve_curve",
+      "name": "mixed_curve_path_fillet_preserves_arc_family_and_exact_tangency",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/nurbs-decomposition-20260928-v667-hypercurve_curve-tests",
+        "--exact",
+        "oblique_line_corner_solvers_preserve_exact_orientation",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "nurbs-decomposition-20260928-v667-oblique_line_corner_solvers_preserve_exact_orientation-b73e357935.log",
+      "elapsed_seconds": 0.0035268377978354692,
+      "target": "hypercurve_curve",
+      "name": "oblique_line_corner_solvers_preserve_exact_orientation",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/nurbs-decomposition-20260928-v667-hypercurve_curve-tests",
+        "--exact",
+        "one_curve_closed_spline_corner_edits_retain_one_middle_interval",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "nurbs-decomposition-20260928-v667-one_curve_closed_spline_corner_edits_retain_one_middle_interval-0293a23255.log",
+      "elapsed_seconds": 0.015633228002116084,
+      "target": "hypercurve_curve",
+      "name": "one_curve_closed_spline_corner_edits_retain_one_middle_interval",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/nurbs-decomposition-20260928-v667-hypercurve_curve-tests",
+        "--exact",
+        "one_curve_closed_spline_extensions_materialize_each_cell_once",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "nurbs-decomposition-20260928-v667-one_curve_closed_spline_extensions_materialize_each_cell_once-0f180d7586.log",
+      "elapsed_seconds": 0.06375000812113285,
+      "target": "hypercurve_curve",
+      "name": "one_curve_closed_spline_extensions_materialize_each_cell_once",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/nurbs-decomposition-20260928-v667-hypercurve_curve-tests",
+        "--exact",
+        "polynomial_chamfer_materializes_represented_incident_extension",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "nurbs-decomposition-20260928-v667-polynomial_chamfer_materializes_represented_incident_extension-16a6b7ce2c.log",
+      "elapsed_seconds": 0.003491859883069992,
+      "target": "hypercurve_curve",
+      "name": "polynomial_chamfer_materializes_represented_incident_extension",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/nurbs-decomposition-20260928-v667-hypercurve_curve-tests",
+        "--exact",
+        "radical_line_image_fillets_preserve_retained_families",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "nurbs-decomposition-20260928-v667-radical_line_image_fillets_preserve_retained_families-8bcd5ceccb.log",
+      "elapsed_seconds": 0.0035500568337738514,
+      "target": "hypercurve_curve",
+      "name": "radical_line_image_fillets_preserve_retained_families",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/nurbs-decomposition-20260928-v667-hypercurve_curve-tests",
+        "--exact",
+        "rational_chamfer_materializes_the_incident_projective_cell",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "nurbs-decomposition-20260928-v667-rational_chamfer_materializes_the_incident_projective_cell-208379fe6d.log",
+      "elapsed_seconds": 0.0035196980461478233,
+      "target": "hypercurve_curve",
+      "name": "rational_chamfer_materializes_the_incident_projective_cell",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/nurbs-decomposition-20260928-v667-hypercurve_curve-tests",
+        "--exact",
+        "represented_arc_bezier_fillets_use_circle_incidence",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "nurbs-decomposition-20260928-v667-represented_arc_bezier_fillets_use_circle_incidence-4d963af29f.log",
+      "elapsed_seconds": 0.015647297026589513,
+      "target": "hypercurve_curve",
+      "name": "represented_arc_bezier_fillets_use_circle_incidence",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/nurbs-decomposition-20260928-v667-hypercurve_curve-tests",
+        "--exact",
+        "represented_bezier_chamfer_retains_more_than_two_exact_cuts",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "nurbs-decomposition-20260928-v667-represented_bezier_chamfer_retains_more_than_two_exact_cuts-39a9fbde58.log",
+      "elapsed_seconds": 0.003521038219332695,
+      "target": "hypercurve_curve",
+      "name": "represented_bezier_chamfer_retains_more_than_two_exact_cuts",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/nurbs-decomposition-20260928-v667-hypercurve_curve-tests",
+        "--exact",
+        "represented_bezier_corner_incidence_uses_the_shared_approximate_terminal",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "nurbs-decomposition-20260928-v667-represented_bezier_corner_incidence_uses_the_shared_approximate_terminal-0d51f32c35.log",
+      "elapsed_seconds": 0.007561740931123495,
+      "target": "hypercurve_curve",
+      "name": "represented_bezier_corner_incidence_uses_the_shared_approximate_terminal",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/nurbs-decomposition-20260928-v667-hypercurve_curve-tests",
+        "--exact",
+        "represented_bezier_pairs_use_independent_chamfer_and_exact_ph_fillet_routes",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "nurbs-decomposition-20260928-v667-represented_bezier_pairs_use_independent_chamfer_and_exact_ph_fillet_routes-e6037e7999.log",
+      "elapsed_seconds": 0.003557696007192135,
+      "target": "hypercurve_curve",
+      "name": "represented_bezier_pairs_use_independent_chamfer_and_exact_ph_fillet_routes",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/nurbs-decomposition-20260928-v667-hypercurve_curve-tests",
+        "--exact",
+        "represented_line_bezier_corners_use_the_general_incidence_kernel",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "nurbs-decomposition-20260928-v667-represented_line_bezier_corners_use_the_general_incidence_kernel-a0b223f529.log",
+      "elapsed_seconds": 0.007632756140083075,
+      "target": "hypercurve_curve",
+      "name": "represented_line_bezier_corners_use_the_general_incidence_kernel",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/nurbs-decomposition-20260928-v667-hypercurve_curve-tests",
+        "--exact",
+        "retained_circular_conic_pairs_extend_on_native_supports",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "nurbs-decomposition-20260928-v667-retained_circular_conic_pairs_extend_on_native_supports-beb95f41fc.log",
+      "elapsed_seconds": 0.11385831190273166,
+      "target": "hypercurve_curve",
+      "name": "retained_circular_conic_pairs_extend_on_native_supports",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/nurbs-decomposition-20260928-v667-hypercurve_curve-tests",
+        "--exact",
+        "retained_circular_conics_share_the_native_corner_kernel",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "nurbs-decomposition-20260928-v667-retained_circular_conics_share_the_native_corner_kernel-b1e9282d50.log",
+      "elapsed_seconds": 0.0076934220269322395,
+      "target": "hypercurve_curve",
+      "name": "retained_circular_conics_share_the_native_corner_kernel",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/nurbs-decomposition-20260928-v667-hypercurve_curve-tests",
+        "--exact",
+        "retained_circular_corner_recognition_uses_the_shared_approximate_terminal",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "nurbs-decomposition-20260928-v667-retained_circular_corner_recognition_uses_the_shared_approximate_terminal-1b4b88b2c3.log",
+      "elapsed_seconds": 0.0035365670919418335,
+      "target": "hypercurve_curve",
+      "name": "retained_circular_corner_recognition_uses_the_shared_approximate_terminal",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/nurbs-decomposition-20260928-v667-hypercurve_curve-tests",
+        "--exact",
+        "same_bezier_support_fillet_removes_the_projective_parameter_diagonal",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "nurbs-decomposition-20260928-v667-same_bezier_support_fillet_removes_the_projective_parameter_diagonal-44a8cd6ad8.log",
+      "elapsed_seconds": 7.273420334095135,
+      "target": "hypercurve_curve",
+      "name": "same_bezier_support_fillet_removes_the_projective_parameter_diagonal",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/nurbs-decomposition-20260928-v667-hypercurve_curve-tests",
+        "--exact",
+        "same_ph_bezier_support_fillet_reuses_rational_projective_self_contact",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "nurbs-decomposition-20260928-v667-same_ph_bezier_support_fillet_reuses_rational_projective_self_contact-1c7ec3a5f0.log",
+      "elapsed_seconds": 0.11396817397326231,
+      "target": "hypercurve_curve",
+      "name": "same_ph_bezier_support_fillet_reuses_rational_projective_self_contact",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/nurbs-decomposition-20260928-v667-hypercurve_curve-tests",
+        "--exact",
+        "spline_chamfer_materializes_only_the_incident_extension_cell",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "nurbs-decomposition-20260928-v667-spline_chamfer_materializes_only_the_incident_extension_cell-8ac2d8b29c.log",
+      "elapsed_seconds": 0.0036625289358198643,
+      "target": "hypercurve_curve",
+      "name": "spline_chamfer_materializes_only_the_incident_extension_cell",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/nurbs-decomposition-20260928-v667-hypercurve_curve-tests",
+        "--exact",
+        "spline_corner_incidence_uses_the_shared_approximate_terminal",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "nurbs-decomposition-20260928-v667-spline_corner_incidence_uses_the_shared_approximate_terminal-c25528588a.log",
+      "elapsed_seconds": 0.01565315597690642,
+      "target": "hypercurve_curve",
+      "name": "spline_corner_incidence_uses_the_shared_approximate_terminal",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/nurbs-decomposition-20260928-v667-hypercurve_curve-tests",
+        "--exact",
+        "spline_incident_span_pairs_reuse_exact_ph_fillet_fast_path",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "nurbs-decomposition-20260928-v667-spline_incident_span_pairs_reuse_exact_ph_fillet_fast_path-6bb76d9462.log",
+      "elapsed_seconds": 0.007625676924362779,
+      "target": "hypercurve_curve",
+      "name": "spline_incident_span_pairs_reuse_exact_ph_fillet_fast_path",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/nurbs-decomposition-20260928-v667-hypercurve_curve-tests",
+        "--exact",
+        "spline_incident_spans_reuse_represented_bezier_corner_incidence",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "nurbs-decomposition-20260928-v667-spline_incident_spans_reuse_represented_bezier_corner_incidence-33190d6cd2.log",
+      "elapsed_seconds": 0.007634846959263086,
+      "target": "hypercurve_curve",
+      "name": "spline_incident_spans_reuse_represented_bezier_corner_incidence",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/nurbs-decomposition-20260928-v667-hypercurve_curve-tests",
+        "--exact",
+        "spline_line_fillet_preserves_the_authored_spline_and_adds_its_incident_cell",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "nurbs-decomposition-20260928-v667-spline_line_fillet_preserves_the_authored_spline_and_adds_its_incident_cell-95843c37be.log",
+      "elapsed_seconds": 0.0035245579201728106,
+      "target": "hypercurve_curve",
+      "name": "spline_line_fillet_preserves_the_authored_spline_and_adds_its_incident_cell",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/nurbs-decomposition-20260928-v667-hypercurve_curve-tests",
+        "--exact",
+        "top_level_curve_carries_every_public_family",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "nurbs-decomposition-20260928-v667-top_level_curve_carries_every_public_family-47d6f57da5.log",
+      "elapsed_seconds": 0.0035329479724168777,
+      "target": "hypercurve_curve",
+      "name": "top_level_curve_carries_every_public_family",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/nurbs-decomposition-20260928-v667-hypercurve_curve-tests",
+        "--exact",
+        "top_level_curve_derivatives_preserve_parameter_domains_and_share_evaluators",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "nurbs-decomposition-20260928-v667-top_level_curve_derivatives_preserve_parameter_domains_and_share_evaluators-eb37ce8045.log",
+      "elapsed_seconds": 0.003501199884340167,
+      "target": "hypercurve_curve",
+      "name": "top_level_curve_derivatives_preserve_parameter_domains_and_share_evaluators",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/nurbs-decomposition-20260928-v667-hypercurve_curve-tests",
+        "--exact",
+        "top_level_curve_evaluates_native_and_spline_parameters",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "nurbs-decomposition-20260928-v667-top_level_curve_evaluates_native_and_spline_parameters-ef32e8c1d7.log",
+      "elapsed_seconds": 0.0034829210489988327,
+      "target": "hypercurve_curve",
+      "name": "top_level_curve_evaluates_native_and_spline_parameters",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/nurbs-decomposition-20260928-v667-hypercurve_curve-tests",
+        "--exact",
+        "top_level_curve_exposes_exact_higher_derivatives",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "nurbs-decomposition-20260928-v667-top_level_curve_exposes_exact_higher_derivatives-df7b1939cb.log",
+      "elapsed_seconds": 0.0034851511009037495,
+      "target": "hypercurve_curve",
+      "name": "top_level_curve_exposes_exact_higher_derivatives",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/nurbs-decomposition-20260928-v667-hypercurve_curve-tests",
+        "--exact",
+        "top_level_curve_region_classifies_points_and_shares_results",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "nurbs-decomposition-20260928-v667-top_level_curve_region_classifies_points_and_shares_results-a661a948a9.log",
+      "elapsed_seconds": 0.003451473079621792,
+      "target": "hypercurve_curve",
+      "name": "top_level_curve_region_classifies_points_and_shares_results",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/nurbs-decomposition-20260928-v667-hypercurve_curve-tests",
+        "--exact",
+        "top_level_curve_region_rejects_open_boundary_paths_with_context",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "nurbs-decomposition-20260928-v667-top_level_curve_region_rejects_open_boundary_paths_with_context-7ea1f212f3.log",
+      "elapsed_seconds": 0.0014047238510102034,
+      "target": "hypercurve_curve",
+      "name": "top_level_curve_region_rejects_open_boundary_paths_with_context",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/nurbs-decomposition-20260928-v667-hypercurve_curve-tests",
+        "--exact",
+        "top_level_curve_reuses_retained_native_endpoints",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "nurbs-decomposition-20260928-v667-top_level_curve_reuses_retained_native_endpoints-14532dee4d.log",
+      "elapsed_seconds": 0.0034711819607764482,
+      "target": "hypercurve_curve",
+      "name": "top_level_curve_reuses_retained_native_endpoints",
+      "passed": true
+    }
+  ],
+  "checks": [
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "clippy",
+        "--all-targets",
+        "--all-features",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "returncode": 0,
+      "log": "nurbs-decomposition-20260928-v667-hypercurve-clippy-all-features.log",
+      "elapsed_seconds": 21.697807158110663,
+      "label": "hypercurve-clippy-all-features"
+    },
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "clippy",
+        "--all-targets",
+        "--no-default-features",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "returncode": 0,
+      "log": "nurbs-decomposition-20260928-v667-hypercurve-clippy-no-default.log",
+      "elapsed_seconds": 20.796330090146512,
+      "label": "hypercurve-clippy-no-default"
+    },
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustfmt",
+        "--edition",
+        "2024",
+        "--config",
+        "skip_children=true",
+        "--check",
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/build-workspace-20260925/hypercurve/src/lib.rs",
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/build-workspace-20260925/hypercurve/src/nurbs.rs"
+      ],
+      "returncode": 0,
+      "log": "nurbs-decomposition-20260928-v667-format.log",
+      "elapsed_seconds": 0.031810088083148,
+      "label": "format"
+    },
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "check",
+        "--manifest-path",
+        "fuzz/Cargo.toml",
+        "--bin",
+        "bspline",
+        "--bin",
+        "curve_string_editing",
+        "--bin",
+        "bezier_region",
+        "--bin",
+        "bezier_split_materialization",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "log": "nurbs-decomposition-20260928-v667-fuzz-check.log",
+      "elapsed_seconds": 11.480532999150455,
+      "label": "fuzz-check"
+    },
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "doc",
+        "--no-deps",
+        "--all-features",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "log": "nurbs-decomposition-20260928-v667-hypercurve-documentation.log",
+      "elapsed_seconds": 10.279099019942805,
+      "label": "hypercurve-documentation"
+    },
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "check",
+        "--all-targets",
+        "--all-features",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "log": "nurbs-decomposition-20260928-v667-hyperbrep-check.log",
+      "elapsed_seconds": 15.286322214873508,
+      "label": "hyperbrep-check"
+    }
+  ],
+  "expected_cases": {
+    "hypercurve": [
+      "bspline::tests::binary_knot_search_matches_complete_scan_on_large_repeated_vectors",
+      "bspline::tests::retained_periodicity_rejects_a_period_different_from_the_active_domain",
+      "bspline::tests::retained_periodicity_survives_knot_insertion",
+      "curve::curve_evaluation::tests::selected_knot_evaluation_preserves_discontinuous_spline_side_rules",
+      "curve::curve_fillet::tests::circular_spline_contact_parameters_distinguish_repeated_point_visits",
+      "curve::curve_fillet::tests::collapsed_circular_spline_fillets_keep_authored_contact_parameters",
+      "curve::curve_fillet::tests::fillet_contacts_use_authored_spline_knots_across_multiple_charts",
+      "curve::curve_subdivision::tests::circular_spline_extensions_preserve_complements_and_closed_endpoint_ownership",
+      "curve::curve_subdivision::tests::selected_spline_subdivision_preserves_jumps_and_one_sided_cuts",
+      "curve::curve_subdivision::tests::source_domain_chamfers_cover_spline_knots_and_distinct_source_locations",
+      "curve::curve_subdivision::tests::source_domain_chamfers_reenter_paths_with_a_selected_spline_corner",
+      "curve::curve_subdivision::tests::source_domain_fillets_map_selected_line_contacts_into_spline_charts",
+      "curve::curve_subdivision::tests::source_domain_fillets_own_surviving_spline_tangents_and_reenter_chamfers",
+      "curve::tests::selected_spline_chamfer_cuts_reenter_the_authored_parameter_domain",
+      "curve::tests::selected_spline_fillet_cuts_reenter_the_authored_parameter_domain",
+      "curve_intersection::point_component_dispatch_tests::native_endpoint_shortcut_does_not_erase_retraced_or_spline_visits",
+      "curve_intersection::point_component_dispatch_tests::singleton_incidence_merges_spline_seams_but_keeps_distinct_visits",
+      "curve_region_trim::tests::constant_spline_jumps_do_not_join_coincident_retained_endpoints",
+      "curve_region_trim::tests::constant_spline_spans_preserve_source_indices_charts_and_path_connectivity",
+      "curve_region_trim::tests::path_trim_separates_discontinuous_spline_spans_at_equal_knot_parameters",
+      "nurbs::layout_tests::nurbs_carrier_keeps_compact_policy_aware_storage",
+      "polynomial_spline::layout_tests::polynomial_spline_carrier_keeps_compact_policy_aware_storage",
+      "spline_periodic::tests::adjacent_integer_remainder_resolves_opaque_half_boundaries"
+    ],
+    "hypercurve_nurbs": [
+      "discontinuous_nurbs_knot_requires_explicit_point_side",
+      "higher_degree_nurbs_promotes_evaluates_and_splits_exactly",
+      "homogeneous_nurbs_elevation_remains_recomposable_and_refinable",
+      "homogeneous_nurbs_knot_insertion_retains_infinite_controls",
+      "homogeneous_nurbs_unclamped_and_discontinuous_edits_preserve_parameterization",
+      "invalid_nurbs_construction_returns_contextual_error",
+      "invalid_nurbs_split_and_trim_ranges_evidence_subdivision_context",
+      "linear_nurbs_evaluates_and_promotes_with_source_provenance",
+      "native_nurbs_spans_are_cached_and_borrowed",
+      "nonuniform_weighted_periodic_nurbs_supports_repeated_interior_knots",
+      "nurbs_batch_knot_refinement_projects_once_and_reuses_clone_shared_result",
+      "nurbs_batch_knot_refinement_retains_contextual_failure_without_mutating_source",
+      "nurbs_clones_share_one_retained_bezier_decomposition",
+      "nurbs_construction_obeys_terminal_policy_without_replacing_knots",
+      "nurbs_degree_elevation_retains_exact_span_image_intervals_and_source",
+      "nurbs_degree_elevation_retains_homogeneous_spans_and_actual_poles",
+      "nurbs_derivative_uses_authored_knot_parameter_and_shared_span_evaluators",
+      "nurbs_elevated_carrier_preserves_discontinuous_knot_sides",
+      "nurbs_elevated_carrier_preserves_image_source_and_source_continuity",
+      "nurbs_evaluation_reuses_decomposition_and_preserves_exact_coordinates",
+      "nurbs_exact_edits_isolate_terminal_policy_and_replay_retained_proofs",
+      "nurbs_higher_derivatives_use_each_authored_parameter_chain_power",
+      "nurbs_internal_corner_requires_explicit_derivative_side",
+      "nurbs_knot_insertion_preserves_exact_image_source_and_full_multiplicity_cache",
+      "nurbs_knot_removal_exactly_inverts_insertion_and_reuses_clone_shared_proof",
+      "nurbs_knot_removal_retains_exact_negative_result_and_contextual_domain_errors",
+      "nurbs_reversal_preserves_domain_source_and_exact_parameter_mapping",
+      "nurbs_split_and_subcurve_preserve_authored_parameters_and_exact_image",
+      "nurbs_subdivision_reconstruction_obeys_terminal_policy",
+      "out_of_domain_nurbs_evaluation_has_contextual_error",
+      "out_of_domain_nurbs_knot_insertion_has_contextual_error",
+      "periodic_nurbs_editing_preserves_period_only_for_whole_curve_operations",
+      "periodic_nurbs_elevated_carrier_preserves_wrapped_points_and_derivatives",
+      "periodic_nurbs_knot_removal_preserves_period_and_wrapped_image",
+      "periodic_nurbs_rejects_invalid_layout_and_nonperiodic_wrapping",
+      "periodic_nurbs_wrapping_obeys_terminal_policy",
+      "periodic_nurbs_wraps_exact_points_derivatives_and_retains_source",
+      "spline_parameter_search_preserves_every_discontinuous_knot_side",
+      "top_level_nurbs_retains_source_and_exact_geometry_under_explicit_policy",
+      "unclamped_nurbs_retains_active_endpoints_and_exact_editing",
+      "unclamped_weighted_nurbs_projects_homogeneous_endpoint_evidence",
+      "unequal_weight_cubic_nurbs_promotes_once_with_provenance"
+    ],
+    "hypercurve_bspline": [
+      "affine_authoring_rejects_zero_weights_and_extraction_rejects_infinite_endpoints",
+      "bspline_constructor_rejects_degenerate_knot_vectors",
+      "cubic_bspline_extracts_spans_with_degree_multiplicity_at_internal_knot",
+      "equal_weight_quadratic_nurbs_matches_polynomial_bspline_spans",
+      "equal_weight_rational_cubic_spans_specialize_to_polynomial_cubics",
+      "equal_weight_retained_rational_cubic_matches_polynomial_cubic_spans",
+      "equal_weight_retained_rational_cubic_spans_feed_unified_region_area",
+      "extracted_bspline_spans_feed_unified_region_area",
+      "extracted_rational_bspline_spans_feed_conic_region_area",
+      "linear_bspline_spans_are_elevated_exactly",
+      "nonuniform_rational_cubic_spans_promote_without_degree_reduction",
+      "quadratic_bspline_extracts_bezier_spans_by_exact_knot_insertion",
+      "rational_linear_span_preserves_homogeneous_parameterization",
+      "rational_linear_span_retains_its_denominator_pole",
+      "rational_quadratic_bspline_extracts_homogeneous_bezier_spans",
+      "rational_quadratic_span_facts_certify_bounds_and_extrema",
+      "retained_bspline_span_facts_evidence_native_bounds_and_monotonicity",
+      "retained_degree_four_nurbs_span_certifies_stationary_monotone_axis",
+      "retained_rational_bspline_rejects_invalid_degree_and_zero_weight",
+      "retained_rational_cubic_bspline_extracts_bezier_span_evidence",
+      "retained_rational_cubic_span_facts_certify_control_hull_and_monotonicity",
+      "retained_rational_quadratic_span_facts_follow_refined_knot_windows",
+      "retained_rational_quadratic_spans_promote_to_native_conic_topology",
+      "unclamped_uniform_bspline_refines_active_domain_endpoints_exactly"
+    ],
+    "hypercurve_curve": [
+      "automatic_corner_solver_obeys_strict_and_approximate_512_once",
+      "automatic_corner_solver_reconstructs_selected_pairs",
+      "clamped_splines_preserve_discontinuous_knot_sides_and_span_images",
+      "closed_curve_path_corner_edits_support_the_start_end_seam",
+      "curve_path_boundary_and_classification_report_terminal_closure",
+      "direct_bezier_pair_fillet_retains_both_incident_extensions",
+      "exact_arc_chamfer_solver_preserves_both_major_sweep_cuts",
+      "exact_chamfer_solver_handles_native_line_arc_and_arc_arc_carriers",
+      "exact_line_arc_fillets_retain_rational_radius_across_source_scales",
+      "exact_line_corner_design_edits_hold_across_source_lengths",
+      "exact_native_arc_fillet_solver_classifies_collapsed_and_coincident_offsets",
+      "exact_native_arc_fillet_solver_handles_every_native_pair_order",
+      "exact_native_arc_fillet_uses_only_the_shared_approximate_terminal",
+      "independently_parameterized_bezier_continuation_is_an_incident_fillet_component",
+      "line_corner_solvers_derive_unique_trimmed_fillet_and_chamfer",
+      "line_corner_solvers_enumerate_extensions_deterministically",
+      "line_corner_solvers_report_exact_no_solution_and_invalid_options",
+      "line_parabola_mixed_exact_algebraic_fillet_is_an_exact_open_path",
+      "mixed_curve_path_fillet_accepts_every_non_arc_family_pair",
+      "mixed_curve_path_fillet_preserves_arc_family_and_exact_tangency",
+      "oblique_line_corner_solvers_preserve_exact_orientation",
+      "one_curve_closed_spline_corner_edits_retain_one_middle_interval",
+      "one_curve_closed_spline_extensions_materialize_each_cell_once",
+      "polynomial_chamfer_materializes_represented_incident_extension",
+      "radical_line_image_fillets_preserve_retained_families",
+      "rational_chamfer_materializes_the_incident_projective_cell",
+      "represented_arc_bezier_fillets_use_circle_incidence",
+      "represented_bezier_chamfer_retains_more_than_two_exact_cuts",
+      "represented_bezier_corner_incidence_uses_the_shared_approximate_terminal",
+      "represented_bezier_pairs_use_independent_chamfer_and_exact_ph_fillet_routes",
+      "represented_line_bezier_corners_use_the_general_incidence_kernel",
+      "retained_circular_conic_pairs_extend_on_native_supports",
+      "retained_circular_conics_share_the_native_corner_kernel",
+      "retained_circular_corner_recognition_uses_the_shared_approximate_terminal",
+      "same_bezier_support_fillet_removes_the_projective_parameter_diagonal",
+      "same_ph_bezier_support_fillet_reuses_rational_projective_self_contact",
+      "spline_chamfer_materializes_only_the_incident_extension_cell",
+      "spline_corner_incidence_uses_the_shared_approximate_terminal",
+      "spline_incident_span_pairs_reuse_exact_ph_fillet_fast_path",
+      "spline_incident_spans_reuse_represented_bezier_corner_incidence",
+      "spline_line_fillet_preserves_the_authored_spline_and_adds_its_incident_cell",
+      "top_level_curve_carries_every_public_family",
+      "top_level_curve_derivatives_preserve_parameter_domains_and_share_evaluators",
+      "top_level_curve_evaluates_native_and_spline_parameters",
+      "top_level_curve_exposes_exact_higher_derivatives",
+      "top_level_curve_region_classifies_points_and_shares_results",
+      "top_level_curve_region_rejects_open_boundary_paths_with_context",
+      "top_level_curve_reuses_retained_native_endpoints"
+    ]
+  },
+  "test_listings": {
+    "hypercurve": {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/nurbs-decomposition-20260928-v667-hypercurve-tests",
+        "--list"
+      ],
+      "returncode": 0,
+      "log": "nurbs-decomposition-20260928-v667-hypercurve-list.log",
+      "elapsed_seconds": 0.007676804205402732
+    },
+    "hypercurve_nurbs": {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/nurbs-decomposition-20260928-v667-hypercurve_nurbs-tests",
+        "--list"
+      ],
+      "returncode": 0,
+      "log": "nurbs-decomposition-20260928-v667-hypercurve_nurbs-list.log",
+      "elapsed_seconds": 0.003546146908774972
+    },
+    "hypercurve_bspline": {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/nurbs-decomposition-20260928-v667-hypercurve_bspline-tests",
+        "--list"
+      ],
+      "returncode": 0,
+      "log": "nurbs-decomposition-20260928-v667-hypercurve_bspline-list.log",
+      "elapsed_seconds": 0.001458670012652874
+    },
+    "hypercurve_curve": {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/nurbs-decomposition-20260928-v667-hypercurve_curve-tests",
+        "--list"
+      ],
+      "returncode": 0,
+      "log": "nurbs-decomposition-20260928-v667-hypercurve_curve-list.log",
+      "elapsed_seconds": 0.003513718955218792
+    }
+  },
+  "all_processes_reaped": true,
+  "probe_complete": true,
+  "qualification_complete": true
+}

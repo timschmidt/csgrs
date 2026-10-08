@@ -1,0 +1,16 @@
+{
+  "command": [
+    "cargo",
+    "test",
+    "--release",
+    "--all-features",
+    "--offline",
+    "--lib",
+    "chord_overlap_transport_tests",
+    "--",
+    "--test-threads=1",
+    "--nocapture"
+  ],
+  "returncode": 0,
+  "elapsed_seconds": 110.46840244698978
+}

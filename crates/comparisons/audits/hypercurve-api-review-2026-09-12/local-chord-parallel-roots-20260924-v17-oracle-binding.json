@@ -1,0 +1,7 @@
+{
+  "baseline": "v16",
+  "all_production_unchanged": true,
+  "all_five_new_regressions_unchanged": true,
+  "changed_test": "nonlinear_algebraic_endpoint_fillet_uses_complete_incident_domain",
+  "reason": "Accept local selected cuts by certifying their nonconstant quadratic source satisfies X*W=Y^2 at zero offset; require normalized filled-left topology and retain existing fillet/candidate assertions."
+}

@@ -1,0 +1,7 @@
+{
+  "session_id": 2428,
+  "exit_code": 1,
+  "all_processes_reaped": true,
+  "qualification_complete": false,
+  "cause": "The qualification driver added integration names to the library target while merging the prior report. All static checks and six focused cases passed before the selection assertion."
+}

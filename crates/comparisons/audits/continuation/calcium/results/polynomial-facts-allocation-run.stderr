@@ -1,0 +1,25 @@
+node:internal/modules/run_main:123
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
++ actual - expected
+
+  [
+    191800,
+    11472000,
++   2160
+-   2304
+  ]
+
+    at file:///home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/run-polynomial-facts-allocation.mjs:53:44
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5) {
+  generatedMessage: true,
+  code: 'ERR_ASSERTION',
+  actual: [ 191800, 11472000, 2160 ],
+  expected: [ 191800, 11472000, 2304 ],
+  operator: 'deepStrictEqual',
+  diff: 'simple'
+}
+
+Node.js v22.22.2

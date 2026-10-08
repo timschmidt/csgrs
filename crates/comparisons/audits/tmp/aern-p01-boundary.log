@@ -1,0 +1,4 @@
+H zero numerator/zero denominator: (Precision {runPrec = 50},[],<0>,<0>)
+H uncertain input bisection: EXCEPTION heap overflow
+S negative odd root: EXCEPTION <<timeout>>
+S zero root: EXCEPTION <<timeout>>

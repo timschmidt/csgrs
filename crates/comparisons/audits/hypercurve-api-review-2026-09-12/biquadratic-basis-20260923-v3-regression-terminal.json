@@ -1,0 +1,140 @@
+{
+  "attempted": 1205,
+  "passed": 1198,
+  "ignored": 6,
+  "failed": [
+    {
+      "name": "bezier_algebraic_image::policy_tests::arithmetic_adapter_rejects_evidence_that_does_not_replay_strictly",
+      "returncode": 101,
+      "passed": false,
+      "ignored": false,
+      "elapsed_seconds": 0.0036537289852276444,
+      "limit_seconds": 75,
+      "log": "biquadratic-basis-20260923-v3-regression-case-0009.log"
+    }
+  ],
+  "focused_cases": [
+    {
+      "name": "bezier_offset::conversion_tests::selected_fiber_transverse_mapped_cut_inverts_by_point",
+      "returncode": 101,
+      "passed": false,
+      "limit_seconds": 180,
+      "elapsed_seconds": 4.163434110931121,
+      "log": "biquadratic-basis-20260923-v3-hypercurve-case-0.log"
+    },
+    {
+      "name": "bezier_offset::conversion_tests::selected_fiber_analytic_transverse_cut_inverts_by_point",
+      "returncode": 0,
+      "passed": true,
+      "limit_seconds": 120,
+      "elapsed_seconds": 0.24982113006990403,
+      "log": "biquadratic-basis-20260923-v3-hypercurve-case-1.log"
+    },
+    {
+      "name": "bezier_offset::conversion_tests::selected_fiber_mapped_cut_inverts_on_analytic_overlap",
+      "returncode": 0,
+      "passed": true,
+      "limit_seconds": 120,
+      "elapsed_seconds": 0.2518510699737817,
+      "log": "biquadratic-basis-20260923-v3-hypercurve-case-2.log"
+    },
+    {
+      "name": "bezier_region::tests::nonrepresented_chord_and_retained_rational_arc_share_the_fillet_kernel",
+      "returncode": 0,
+      "passed": true,
+      "limit_seconds": 180,
+      "elapsed_seconds": 0.6559468240011483,
+      "log": "biquadratic-basis-20260923-v3-hypercurve-case-3.log"
+    }
+  ],
+  "not_repeated_existing_nonpasses": [
+    {
+      "name": "bezier_offset::conversion_tests::selected_parallel_normal_circle_intersects_genuinely_analytic_parallel_in_one_fiber",
+      "passed": false,
+      "ignored": false
+    },
+    {
+      "name": "bezier_region::curve_corner_chain::tests::extended_fillet_region_classifies_both_sides_of_its_companion",
+      "passed": false,
+      "ignored": false
+    },
+    {
+      "name": "bezier_region::tests::algebraic_endpoint_images_reenter_shared_corner_carriers",
+      "passed": false,
+      "ignored": false
+    },
+    {
+      "name": "bezier_region::tests::nonlinear_algebraic_endpoint_fillet_uses_complete_incident_domain",
+      "passed": false,
+      "ignored": false
+    },
+    {
+      "name": "bezier_region::tests::nonlinear_selected_corner_chamfers_through_retained_fixed_distance_image",
+      "passed": false,
+      "ignored": false
+    },
+    {
+      "name": "bezier_region::tests::nonrepresented_chord_and_selected_circle_complete_the_fillet_kernel",
+      "passed": false,
+      "ignored": false
+    },
+    {
+      "name": "bezier_region::tests::one_fragment_materialized_loop_chamfers_to_one_middle_interval",
+      "passed": false,
+      "ignored": false
+    },
+    {
+      "name": "bezier_region::tests::one_fragment_materialized_loop_extends_algebraic_chamfer_cuts_once",
+      "passed": false,
+      "ignored": false
+    },
+    {
+      "name": "bezier_region::tests::one_fragment_nonzero_parallel_loop_extends_chamfer_cuts_on_one_finite_envelope",
+      "passed": false,
+      "ignored": false
+    },
+    {
+      "name": "bezier_region::tests::one_fragment_ph_loop_fillets_through_rational_self_contact",
+      "passed": false,
+      "ignored": false
+    },
+    {
+      "name": "bezier_region::tests::one_fragment_ph_loop_projective_corners_retain_one_extended_interval",
+      "passed": false,
+      "ignored": false
+    },
+    {
+      "name": "bezier_region::tests::one_fragment_selected_loop_chamfers_from_one_interval",
+      "passed": false,
+      "ignored": false
+    },
+    {
+      "name": "bezier_region::tests::one_fragment_selected_loop_extends_chamfer_cuts_on_its_analytic_carrier",
+      "passed": false,
+      "ignored": false
+    },
+    {
+      "name": "bezier_region::tests::pair_native_boolean_algebraic_chord_corner_publishes_a_third_generation_fillet",
+      "passed": false,
+      "ignored": false
+    },
+    {
+      "name": "bezier_region::tests::retained_algebraic_straights_trim_or_extend_chamfer_and_fillet",
+      "passed": false,
+      "ignored": false
+    },
+    {
+      "name": "bezier_region::tests::retained_analytic_multifragment_corner_extends_chamfer_and_fillet",
+      "passed": false,
+      "ignored": false
+    },
+    {
+      "name": "bezier_region::tests::selected_parallel_companion_fillets_without_range_promotion",
+      "passed": false,
+      "ignored": false
+    }
+  ],
+  "binary_sha256": "f8353eec614140b64b87bab9c0719ffae221c24a39bc0c18f98dd039a0fbb537",
+  "all_sources_unchanged": true,
+  "all_processes_reaped": true
+}

@@ -1,0 +1,25 @@
+{
+  "status": "regression demonstrated, repaired, qualified and committed",
+  "source": "hypercurve/src/bezier_offset.rs: BezierRecursiveQuadraticValue2::normalize_positive_scale rebuild",
+  "finding": "A changed primitive tuple reconstructs Base and Extension nodes with fresh empty OnceLock<Real> witnesses. Unchanged tuples retain their original nodes and witnesses. An already known exact scalar witness could instead be transformed by the same certified positive rational scale, without rebuilding its root or radical projection.",
+  "proposed_regression": "Construct a coefficient tuple over retained base/extension fields whose exact scalar witnesses have already been materialized. Apply a nontrivial common rational scale and primitive normalization. Require field/generator identity, exact transformed scalar witnesses, shared-node reuse, and unchanged optional behavior for nonrational payloads. The current source appears to drop the known witnesses; verify before repairing.",
+  "constraints": [
+    "Do not carry the old unscaled scalar value onto the normalized coefficient.",
+    "Transform only already cached exact Real witnesses; do not eagerly materialize absent ones.",
+    "Use the one common positive scale; preserve shared rebuilt-node identity and atomic decline.",
+    "No additional carrier or independent cache."
+  ],
+  "runtime_scope": "Witness loss is repaired. No end-to-end speedup or inward closure is claimed; final unloaded second inward offset still exceeds the total 60-second limit.",
+  "observed_in_commits": {
+    "hypercurve": "f49145e59d52ef65b13c4d24c44317de5e1cd5e8",
+    "hypersolve": "ed9a599c75b6add0ed80722b868972f64c8629ca",
+    "hyperbrep": "8a84ee7db02fd2720ac89a1a6a227ee4ec2a8171"
+  },
+  "qualification_preceding_followup": "ordered-field-content-qualification.json",
+  "commits": {
+    "hypercurve": "6a69c9c71d96ac13a77c32aa7bf0281718ec7514",
+    "hypersolve": "ed9a599c75b6add0ed80722b868972f64c8629ca",
+    "hyperbrep": "8a84ee7db02fd2720ac89a1a6a227ee4ec2a8171"
+  },
+  "qualification": "normalized-field-witness-qualification.json"
+}

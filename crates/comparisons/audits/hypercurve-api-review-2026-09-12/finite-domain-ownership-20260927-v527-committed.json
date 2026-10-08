@@ -1,0 +1,17 @@
+{
+  "repos": {
+    "hypercurve": {
+      "commit": "e932c8c8dc1fc82b6d986e2c45b070e8af7f835b",
+      "parent": "a03c08bbd9e8ba119fe213be0e86e35e36f717b2",
+      "paths": {
+        "src/bezier_offset.rs": "f507932c95253d1f646a4846fcbb42e6d603d6a23fb6d00ff22128a2cb423a08",
+        "src/bezier_split.rs": "3949b2d8aaaaf29b6b024765a8d9c95f496810255b4412bbbc411fc00252951f",
+        "src/curve.rs": "f337b2b57f63240c85275dbd0882ecdfb96c1e2b6c756cde4828d4598284fdbd",
+        "src/curve_parameter_component.rs": "dd867646580754e74ea4c1e3e09df07bef27b7a97d2a7459e913f44fc01fbd45"
+      }
+    }
+  },
+  "qualification": "finite-domain-ownership-20260927-v527-terminal.json",
+  "verified_source_files": 2047,
+  "clean_repositories": 30
+}

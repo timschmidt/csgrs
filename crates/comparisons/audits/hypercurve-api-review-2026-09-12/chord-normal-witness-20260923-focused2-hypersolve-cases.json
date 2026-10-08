@@ -1,0 +1,186 @@
+[
+  {
+    "name": "algebraic_tensor_image::tests::direct_tag_difference_square_matches_tensor_arithmetic",
+    "returncode": 0,
+    "passed": true,
+    "limit_seconds": 75,
+    "elapsed_seconds": 0.14064573403447866,
+    "log": "chord-normal-witness-20260923-focused2-hypersolve-case-0.log"
+  },
+  {
+    "name": "algebraic_tensor_image::tests::exact_small_rational_image_candidates_require_exact_replay",
+    "returncode": 0,
+    "passed": true,
+    "limit_seconds": 75,
+    "elapsed_seconds": 0.14347826002631336,
+    "log": "chord-normal-witness-20260923-focused2-hypersolve-case-1.log"
+  },
+  {
+    "name": "algebraic_tensor_image::tests::flat_first_parameter_handoff_matches_public_primitive_component",
+    "returncode": 0,
+    "passed": true,
+    "limit_seconds": 75,
+    "elapsed_seconds": 0.13772059394977987,
+    "log": "chord-normal-witness-20260923-focused2-hypersolve-case-2.log"
+  },
+  {
+    "name": "algebraic_tensor_image::tests::selected_low_degree_witness_accepts_exact_nonrational_coefficients",
+    "returncode": 0,
+    "passed": true,
+    "limit_seconds": 75,
+    "elapsed_seconds": 0.14072864793706685,
+    "log": "chord-normal-witness-20260923-focused2-hypersolve-case-3.log"
+  },
+  {
+    "name": "algebraic_tensor_image::tests::selected_low_degree_witness_does_not_depend_on_interval_precision",
+    "returncode": 0,
+    "passed": true,
+    "limit_seconds": 75,
+    "elapsed_seconds": 0.140115290065296,
+    "log": "chord-normal-witness-20260923-focused2-hypersolve-case-4.log"
+  },
+  {
+    "name": "algebraic_tensor_image::tests::selected_quadratic_witness_preserves_repeated_and_endpoint_roots",
+    "returncode": 0,
+    "passed": true,
+    "limit_seconds": 75,
+    "elapsed_seconds": 0.1415875389939174,
+    "log": "chord-normal-witness-20260923-focused2-hypersolve-case-5.log"
+  },
+  {
+    "name": "algebraic_tensor_image::tests::selected_root_quadratic_compaction_requires_exact_factor",
+    "returncode": 0,
+    "passed": true,
+    "limit_seconds": 75,
+    "elapsed_seconds": 0.1435477250488475,
+    "log": "chord-normal-witness-20260923-focused2-hypersolve-case-6.log"
+  },
+  {
+    "name": "algebraic_tensor_image::tests::selected_root_rational_compaction_requires_exact_replay",
+    "returncode": 0,
+    "passed": true,
+    "limit_seconds": 75,
+    "elapsed_seconds": 0.13533966906834394,
+    "log": "chord-normal-witness-20260923-focused2-hypersolve-case-7.log"
+  },
+  {
+    "name": "algebraic_tensor_image::tests::tagged_norm_projects_nonzero_selected_fiber_past_foreign_wide_components",
+    "returncode": 0,
+    "passed": true,
+    "limit_seconds": 75,
+    "elapsed_seconds": 0.13734428095631301,
+    "log": "chord-normal-witness-20260923-focused2-hypersolve-case-8.log"
+  },
+  {
+    "name": "algebraic_tensor_image::tests::tagged_norm_reuses_a_square_free_exact_witness_carrier",
+    "returncode": 0,
+    "passed": true,
+    "limit_seconds": 75,
+    "elapsed_seconds": 0.13631745090242475,
+    "log": "chord-normal-witness-20260923-focused2-hypersolve-case-9.log"
+  },
+  {
+    "name": "algebraic_tensor_image::tests::tensor_image_collapses_certified_affine_selected_source_axes",
+    "returncode": 0,
+    "passed": true,
+    "limit_seconds": 75,
+    "elapsed_seconds": 0.13606293906923383,
+    "log": "chord-normal-witness-20260923-focused2-hypersolve-case-10.log"
+  },
+  {
+    "name": "algebraic_tensor_image::tests::tensor_image_counts_collapsed_axes_before_a_later_elimination_failure",
+    "returncode": 0,
+    "passed": true,
+    "limit_seconds": 75,
+    "elapsed_seconds": 0.13736505899578333,
+    "log": "chord-normal-witness-20260923-focused2-hypersolve-case-11.log"
+  },
+  {
+    "name": "algebraic_tensor_image::tests::tensor_image_does_not_select_an_extraneous_cardinal_conjugate_image",
+    "returncode": 0,
+    "passed": true,
+    "limit_seconds": 75,
+    "elapsed_seconds": 0.13521175703499466,
+    "log": "chord-normal-witness-20260923-focused2-hypersolve-case-12.log"
+  },
+  {
+    "name": "algebraic_tensor_image::tests::tensor_image_identifies_duplicate_selected_source_axes_exactly",
+    "returncode": 0,
+    "passed": true,
+    "limit_seconds": 75,
+    "elapsed_seconds": 0.1355645830044523,
+    "log": "chord-normal-witness-20260923-focused2-hypersolve-case-13.log"
+  },
+  {
+    "name": "algebraic_tensor_image::tests::tensor_image_materializes_a_unique_cardinal_factor_of_a_nonlinear_eliminant",
+    "returncode": 0,
+    "passed": true,
+    "limit_seconds": 75,
+    "elapsed_seconds": 0.13551712594926357,
+    "log": "chord-normal-witness-20260923-focused2-hypersolve-case-14.log"
+  },
+  {
+    "name": "algebraic_tensor_image::tests::tensor_image_materializes_an_enclosed_exact_linear_eliminant",
+    "returncode": 0,
+    "passed": true,
+    "limit_seconds": 75,
+    "elapsed_seconds": 0.1354070040397346,
+    "log": "chord-normal-witness-20260923-focused2-hypersolve-case-15.log"
+  },
+  {
+    "name": "algebraic_tensor_image::tests::tensor_image_rejects_nonisolating_and_misshaped_evidence",
+    "returncode": 0,
+    "passed": true,
+    "limit_seconds": 75,
+    "elapsed_seconds": 0.13591315899975598,
+    "log": "chord-normal-witness-20260923-focused2-hypersolve-case-16.log"
+  },
+  {
+    "name": "algebraic_tensor_image::tests::tensor_image_represents_four_correlated_selected_roots",
+    "returncode": 0,
+    "passed": true,
+    "limit_seconds": 75,
+    "elapsed_seconds": 0.1332593309925869,
+    "log": "chord-normal-witness-20260923-focused2-hypersolve-case-17.log"
+  },
+  {
+    "name": "algebraic_tensor_image::tests::tensor_image_retains_carriers_for_a_complete_nonrational_point_tuple",
+    "returncode": 0,
+    "passed": true,
+    "limit_seconds": 75,
+    "elapsed_seconds": 0.1351185729727149,
+    "log": "chord-normal-witness-20260923-focused2-hypersolve-case-18.log"
+  },
+  {
+    "name": "algebraic_tensor_image::tests::tensor_image_retains_exact_real_coefficient_fields",
+    "returncode": 0,
+    "passed": true,
+    "limit_seconds": 75,
+    "elapsed_seconds": 0.13328986894339323,
+    "log": "chord-normal-witness-20260923-focused2-hypersolve-case-19.log"
+  },
+  {
+    "name": "algebraic_tensor_image::tests::tensor_image_reuses_square_free_constraint_for_selected_conjugates",
+    "returncode": 0,
+    "passed": true,
+    "limit_seconds": 75,
+    "elapsed_seconds": 0.13423129497095942,
+    "log": "chord-normal-witness-20260923-focused2-hypersolve-case-20.log"
+  },
+  {
+    "name": "algebraic_tensor_image::tests::tensor_image_substitutes_exact_source_axes_before_elimination",
+    "returncode": 0,
+    "passed": true,
+    "limit_seconds": 75,
+    "elapsed_seconds": 0.13594486692454666,
+    "log": "chord-normal-witness-20260923-focused2-hypersolve-case-21.log"
+  },
+  {
+    "name": "algebraic_tensor_image::tests::tensor_images_remove_irrelevant_wide_rational_content",
+    "returncode": 0,
+    "passed": true,
+    "limit_seconds": 75,
+    "elapsed_seconds": 0.13792707095853984,
+    "log": "chord-normal-witness-20260923-focused2-hypersolve-case-22.log"
+  }
+]

@@ -1,0 +1,29 @@
+catalog shape/initial invariant: 2BeadColumnEnergy PASS
+catalog shape/initial invariant: 2BeadColumnEnergyVDiff PASS
+catalog shape/initial invariant: bouncingBall PASS
+catalog shape/initial invariant: bouncingBallCircle PASS
+catalog shape/initial invariant: bouncingBallCubicDrag PASS
+catalog shape/initial invariant: bouncingBallCubicDragEnergy PASS
+catalog shape/initial invariant: bouncingBallDrag PASS
+catalog shape/initial invariant: bouncingBallDragEnergy PASS
+catalog shape/initial invariant: bouncingBallDragNewtonianGravityEnergy PASS
+catalog shape/initial invariant: bouncingBallDragPosNeg PASS
+catalog shape/initial invariant: bouncingBallDragPosNegEnergy PASS
+catalog shape/initial invariant: bouncingBallDragPosNegNewtonianGravityEnergy PASS
+catalog shape/initial invariant: bouncingBallEnergy PASS
+catalog shape/initial invariant: bouncingBallEnergyRiseFall PASS
+catalog shape/initial invariant: bouncingBallFloorDropEnergy PASS
+catalog shape/initial invariant: bouncingBallFloorRise PASS
+catalog shape/initial invariant: bouncingBallFloorRiseEnergy PASS
+catalog shape/initial invariant: bouncingBallNewtonianGravityEnergy PASS
+catalog shape/initial invariant: bouncingBallRiseFall PASS
+catalog shape/initial invariant: pendulumDampened PASS
+catalog shape/initial invariant: twoTanks PASS
+catalog shape/initial invariant: twoTanksR PASS
+catalog shape/initial invariant: twoTanksSum PASS
+catalog shape/initial invariant: twoTanksSumR PASS
+energy: 135 independent rational collision checks PASS
+energy+velocity-difference: 135 independent rational collision checks PASS
+CLI formula swapped modes: union check=True, mode-wise check=False
+CLI formula missing vector: True
+TOTAL: 24 catalog checks, 270 rational collision cases, 2 checker witnesses

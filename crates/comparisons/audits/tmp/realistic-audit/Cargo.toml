@@ -1,0 +1,22 @@
+[package]
+name = "realistic-audit"
+version = "0.0.0"
+edition = "2024"
+
+[dependencies]
+realistic = { path = "/home/tim/Documents/GitHub/workspace/exact-real-references/realistic" }
+hyperreal = { path = "/home/tim/Documents/GitHub/workspace/hyperreal", features = ["simple"] }
+num = "0.4.3"
+num-bigint = "=0.4.6"
+num-integer = "=0.1.46"
+num-iter = "=0.1.45"
+autocfg = "=1.1.0"
+rug = { version = "1.30.0", default-features = false, features = ["float", "rational", "std"] }
+
+[[bin]]
+name = "numerical"
+path = "numerical.rs"
+
+[[bin]]
+name = "performance"
+path = "performance.rs"

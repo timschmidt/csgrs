@@ -1,0 +1,14 @@
+{
+  "tag": "sign-filter-mask-allocation",
+  "started": "2026-09-09T19:11:02.651Z",
+  "finished": "2026-09-09T19:11:04.792Z",
+  "elapsedSeconds": 2.138099338,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "node",
+  "args": [
+    "run-sign-filter-mask-costs.mjs",
+    "allocation"
+  ],
+  "code": 0,
+  "signal": null
+}

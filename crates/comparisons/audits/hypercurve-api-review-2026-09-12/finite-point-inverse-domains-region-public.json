@@ -1,0 +1,33 @@
+{
+  "returncode": 0,
+  "elapsed_seconds": 16.28489528701175,
+  "normal_library_sha256": "68b7eb07dd682f6f27b42ea8f5bf32ff3fb0e3d96d09c29889738e18190708f9",
+  "log": "finite-point-inverse-domains-region-public.log",
+  "source": "finite-circle-rational-domains-public.rs",
+  "command": [
+    "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustc",
+    "--edition=2024",
+    "-O",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-circle-rational-domains-public.rs",
+    "--extern",
+    "hypercurve=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypercurve-e19f31178f76cad1.rlib",
+    "-L",
+    "dependency=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps",
+    "-o",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-point-inverse-domains-region-public"
+  ],
+  "run_command": [
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-point-inverse-domains-region-public"
+  ],
+  "source_sha256": "c9ddfb41cb7a077523ca9b35bdbed81886b9fe5b3957e3973ae881dd65a67bef",
+  "executable_sha256": "6b806df9e214be81e1a11698031b0f909304c88f08d9473da64ada0f2e727b45",
+  "counts": {
+    "queries": 48,
+    "point_replays": 96,
+    "topologies": 48,
+    "splits": 96,
+    "child_queries": 192,
+    "region_queries": 12,
+    "boolean_reentries": 12
+  }
+}

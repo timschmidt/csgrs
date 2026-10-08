@@ -1,0 +1,25 @@
+{
+  "returncode": 0,
+  "elapsed_seconds": 0.06373070599511266,
+  "normal_library_sha256": "120d642b35bdeafbd22da08cb7297559ee10a429c46d668e78773f44ce8737cf",
+  "log": "selected-circle-tangent-identity-finite-circle-probe.log",
+  "source": "finite-circle-domain-next.rs",
+  "command": [
+    "rustc",
+    "--edition=2024",
+    "-O",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-circle-domain-next.rs",
+    "--extern",
+    "hypercurve=/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/libhypercurve-2c7ff6f3fbe07653.rlib",
+    "-L",
+    "dependency=/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps",
+    "-o",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/selected-circle-tangent-identity-finite-circle-probe"
+  ],
+  "source_sha256": "f427b563be65e95beaa9471b48ad919e3decaacc593810b7cb19910d91bad6dd",
+  "executable_sha256": "85be8a91bf2715fd3fd8048fcf666bf54d27fc0e5b04fedabde0d1c1eaee101e",
+  "counts": {
+    "complete": 4,
+    "incomplete": 4
+  }
+}

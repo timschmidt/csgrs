@@ -1,0 +1,102 @@
+[
+  {
+    "target": "bezier-region",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/private-region-factories-candidate3-libraries/hypercurve_bezier_region-95990204ab2cc359",
+      "--test-threads=2",
+      "--color",
+      "never"
+    ],
+    "returncode": 0,
+    "passed": true,
+    "expected": "34 passed;",
+    "elapsed_seconds": 0.11379539998597465,
+    "sha256": "999594c530522f0399c7945d0abc28ea89463a1d924a738eb7c56c2cdf424649",
+    "log": "private-region-factories-candidate3-bezier-region.log"
+  },
+  {
+    "target": "retained_region_constructor_rejects_reused_arrangement_sources_across_loops",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/private-region-factories-candidate3-libraries/hypercurve-0b4591d2a89c50f8",
+      "--exact",
+      "bezier_region::tests::retained_region_constructor_rejects_reused_arrangement_sources_across_loops",
+      "--test-threads=2",
+      "--color",
+      "never"
+    ],
+    "returncode": 0,
+    "passed": true,
+    "expected": "1 passed;",
+    "elapsed_seconds": 0.003456323000136763,
+    "sha256": "ee752c51e7ed9f0ca6c3b660b194072c0580b5bebf84167462821c5e7e8dbc72",
+    "log": "private-region-factories-candidate3-retained_region_constructor_rejects_reused_arrangement_sources_across_loops.log"
+  },
+  {
+    "target": "native_boundary_loops_convert_into_unified_region_validation",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/private-region-factories-candidate3-libraries/hypercurve-0b4591d2a89c50f8",
+      "--exact",
+      "bezier_region::tests::native_boundary_loops_convert_into_unified_region_validation",
+      "--test-threads=2",
+      "--color",
+      "never"
+    ],
+    "returncode": 0,
+    "passed": true,
+    "expected": "1 passed;",
+    "elapsed_seconds": 0.003469702001893893,
+    "sha256": "ee752c51e7ed9f0ca6c3b660b194072c0580b5bebf84167462821c5e7e8dbc72",
+    "log": "private-region-factories-candidate3-native_boundary_loops_convert_into_unified_region_validation.log"
+  },
+  {
+    "target": "retained_region_constructor_rejects_duplicate_boundary_loops",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/private-region-factories-candidate3-libraries/hypercurve-0b4591d2a89c50f8",
+      "--exact",
+      "bezier_region::tests::retained_region_constructor_rejects_duplicate_boundary_loops",
+      "--test-threads=2",
+      "--color",
+      "never"
+    ],
+    "returncode": 0,
+    "passed": true,
+    "expected": "1 passed;",
+    "elapsed_seconds": 0.003482561995042488,
+    "sha256": "ee752c51e7ed9f0ca6c3b660b194072c0580b5bebf84167462821c5e7e8dbc72",
+    "log": "private-region-factories-candidate3-retained_region_constructor_rejects_duplicate_boundary_loops.log"
+  },
+  {
+    "target": "selected_fiber_line_images_reuse_exact_real_endpoints_in_both_directions",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/private-region-factories-candidate3-libraries/hypercurve-0b4591d2a89c50f8",
+      "--exact",
+      "bezier_region::tests::selected_fiber_line_images_reuse_exact_real_endpoints_in_both_directions",
+      "--test-threads=2",
+      "--color",
+      "never"
+    ],
+    "returncode": 0,
+    "passed": true,
+    "expected": "1 passed;",
+    "elapsed_seconds": 0.0034574739984236658,
+    "sha256": "ee752c51e7ed9f0ca6c3b660b194072c0580b5bebf84167462821c5e7e8dbc72",
+    "log": "private-region-factories-candidate3-selected_fiber_line_images_reuse_exact_real_endpoints_in_both_directions.log"
+  },
+  {
+    "target": "selected_fiber_line_image_fit_rejects_nonmonotone_subrange_excursions",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/private-region-factories-candidate3-libraries/hypercurve-0b4591d2a89c50f8",
+      "--exact",
+      "bezier_region::tests::selected_fiber_line_image_fit_rejects_nonmonotone_subrange_excursions",
+      "--test-threads=2",
+      "--color",
+      "never"
+    ],
+    "returncode": 0,
+    "passed": true,
+    "expected": "1 passed;",
+    "elapsed_seconds": 0.0034688830201048404,
+    "sha256": "ee752c51e7ed9f0ca6c3b660b194072c0580b5bebf84167462821c5e7e8dbc72",
+    "log": "private-region-factories-candidate3-selected_fiber_line_image_fit_rejects_nonmonotone_subrange_excursions.log"
+  }
+]

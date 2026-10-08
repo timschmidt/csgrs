@@ -1,0 +1,30 @@
+{
+  "returncode": 0,
+  "elapsed_seconds": 21.84549815999344,
+  "normal_library_sha256": "80e20958e5d3b5d992cd8a64349c236522867b1c89147c36fd889e417c5c85ba",
+  "log": "finite-analytic-native-poles-region-explicit.log",
+  "source": "selected-fillet-region-normalization-explicit.rs",
+  "command": [
+    "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustc",
+    "--edition=2024",
+    "-O",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/selected-fillet-region-normalization-explicit.rs",
+    "--extern",
+    "hypercurve=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypercurve-49e17f22910a7047.rlib",
+    "-L",
+    "dependency=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps",
+    "-o",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-analytic-native-poles-region-explicit"
+  ],
+  "source_sha256": "20cd460a2d6a7f7b956dcf028a384aa3f29b8f302fb40440a059d4a0ba885dc3",
+  "executable_sha256": "8fef029bee1bb3ed5662054eb8adced1a12541a2301727f45741b6ffd22cbe5f",
+  "counts": {
+    "queries": 48,
+    "point_replays": 96,
+    "topologies": 48,
+    "splits": 96,
+    "child_queries": 192,
+    "region_queries": 12,
+    "boolean_reentries": 12
+  }
+}

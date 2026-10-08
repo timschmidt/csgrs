@@ -1,0 +1,27 @@
+{
+  "repo": "hypercurve",
+  "target": "hypercurve_bezier_evaluation",
+  "binary": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve_bezier_evaluation-e02af8116b823afd",
+  "command": [
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve_bezier_evaluation-e02af8116b823afd",
+    "--test-threads=4",
+    "--color",
+    "never"
+  ],
+  "sha256": "679d9c9e27869519bf0510ae6a37704222ffa2194a1cb610aab9c5989da1b5c6",
+  "returncode": 0,
+  "timed_out": false,
+  "elapsed_seconds": 0.003466153022600338,
+  "log": "finite-circle-source-domain-full-hypercurve-hypercurve_bezier_evaluation.log",
+  "passed": [
+    "optimized_polynomial_evaluation_matches_de_casteljau_exactly",
+    "certified_exact_scalar_segmentation_covers_rational_bezier_and_nurbs"
+  ],
+  "failed": [],
+  "ignored": [],
+  "summaries": [
+    "test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s"
+  ],
+  "new_failures": [],
+  "known_failures": []
+}

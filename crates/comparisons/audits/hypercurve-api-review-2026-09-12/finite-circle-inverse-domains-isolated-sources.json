@@ -1,0 +1,4022 @@
+[
+  {
+    "file": "hypercurve/.github/workflows/ci.yml",
+    "sha256": "d61e0e2f2b69d13c2d0bbed545d951826963975254e43db12509b3d31d47355c"
+  },
+  {
+    "file": "hypercurve/.github/workflows/deploy-ui-pages.yml",
+    "sha256": "3ef786f13158ff1ea3c5d48292ae57e270936b98abbabf1607782c54062e3f45"
+  },
+  {
+    "file": "hypercurve/.gitignore",
+    "sha256": "9ca2071742ab28ce90c8b77a3d06f4c563a7a422e071651fae1fff4f4a4679d5"
+  },
+  {
+    "file": "hypercurve/BLOCKER_REGRESSIONS.md",
+    "sha256": "0742a9587d6d908a1bf6ba178ca31925c017c496a4f2799fa4a35b2eb0066468"
+  },
+  {
+    "file": "hypercurve/COMPARATIVE_BENCHMARKS.md",
+    "sha256": "9a353fc57a5ab0eb0d3b6f04344a00a56aa224654f5375c18f850c1e6641e1e1"
+  },
+  {
+    "file": "hypercurve/Cargo.lock",
+    "sha256": "dd5d29eaf1ab3a6ca6f7d1362ad75f68e6045b124eb3c5033f379c3ab77cc05a"
+  },
+  {
+    "file": "hypercurve/Cargo.toml",
+    "sha256": "e6fa04394c7417807b4b5fcfa609fa1ce0e7b23b1519cd5e6cc325cf48c9d934"
+  },
+  {
+    "file": "hypercurve/LICENSE",
+    "sha256": "1bd6f730e72e7a1e04a3d4c28001efc23869d953c2d35a19f53935f6e55bd335"
+  },
+  {
+    "file": "hypercurve/PERFORMANCE.md",
+    "sha256": "a2203fa4798654ca112a334a3347da39241fe45be23a7bab5e7eca1ec2440849"
+  },
+  {
+    "file": "hypercurve/README.md",
+    "sha256": "542244ec7a982c7931ff5b7f33ee4dab2f8c0fcac8408fe38e2472fc6b7f2759"
+  },
+  {
+    "file": "hypercurve/audit.txt",
+    "sha256": "6eba0359bd095edb5b25518ba59805f2a6c2ef001602f3ff0f47ae6052496099"
+  },
+  {
+    "file": "hypercurve/benches/api_surface.rs",
+    "sha256": "9900544ea2991b2ae5b0a6e29fc017ec58e89d8d885086e9399ca57b753a1f84"
+  },
+  {
+    "file": "hypercurve/benches/arc.rs",
+    "sha256": "7d279ce68ef29ff3430759b9689d1e05eb942e66f6e7bd4128fd84628975934b"
+  },
+  {
+    "file": "hypercurve/benches/bezier_algebraic_parameter.rs",
+    "sha256": "6cac0534c8b3787357948f9d1182b1b698af2292144edc0b043f45d44294ea36"
+  },
+  {
+    "file": "hypercurve/benches/bezier_arrangement.rs",
+    "sha256": "0a1932fd58a8982334608f3032787069c0e87a49b29950ca52032e671e92903a"
+  },
+  {
+    "file": "hypercurve/benches/bezier_evaluation.rs",
+    "sha256": "b509bd49d20cfd1ba5d2eeacdaae99c2c49ac7f600a1b688fe969763db630d9f"
+  },
+  {
+    "file": "hypercurve/benches/bezier_rational_overlap.rs",
+    "sha256": "01f46acdeb68cc102395434af5f18649c53931fb1f1decc738304c79dad18950"
+  },
+  {
+    "file": "hypercurve/benches/bezier_region.rs",
+    "sha256": "96ec9739c6d244c4ee8b9ea926c7cfee463100f50e53090e5d9681835820ac03"
+  },
+  {
+    "file": "hypercurve/benches/bezier_split_materialization.rs",
+    "sha256": "e707f6d03ba7316ed8be5c68adff6d6d7320807b98e75fd05f508cb31885288f"
+  },
+  {
+    "file": "hypercurve/benches/bezier_tangent_order.rs",
+    "sha256": "6abc38ce01ff763fac5d7af83ca465acaa5d5278b44795c08ed670465b7e4701"
+  },
+  {
+    "file": "hypercurve/benches/bspline.rs",
+    "sha256": "132b7aa48528e7bef7cd1bdff19810c264108cc875cb059c89df6be7b17f8458"
+  },
+  {
+    "file": "hypercurve/benches/common/pathological.rs",
+    "sha256": "b9c464ac1ad6c1c31cdca92fa595ee8eed049d0ed25418a847a80d7bcea0b79f"
+  },
+  {
+    "file": "hypercurve/benches/comparative.rs",
+    "sha256": "0a9ba6d238280deba314e5f68b94ab61928662363f0c33d0d1f0d47cb8094da5"
+  },
+  {
+    "file": "hypercurve/benches/containment.rs",
+    "sha256": "56bcf16fcaf842859d386a3fec68aa4e799e68282be3a234af90eecba02f1881"
+  },
+  {
+    "file": "hypercurve/benches/curve_path.rs",
+    "sha256": "5ecc7f17e9fe7fc1e62d739e497b3513442515fc7544ebd2bd5a385d633cd7da"
+  },
+  {
+    "file": "hypercurve/benches/curve_region_boolean_batch.rs",
+    "sha256": "7bc6dafd2eb19f6a94cf7569c7fc0f2e638ab225f7c0c40bfdd929f9e0bcd2ba"
+  },
+  {
+    "file": "hypercurve/benches/dispatch_trace.rs",
+    "sha256": "5ce84055bda91cebb1998abd0f2a425d0f258de6e37fbb96033d3bc315869beb"
+  },
+  {
+    "file": "hypercurve/benches/editing.rs",
+    "sha256": "9db9db2ffc127bbc4b6cba56e63e6bd2548e5f848754eead7e2b8ac0621569f6"
+  },
+  {
+    "file": "hypercurve/benches/finite_projection.rs",
+    "sha256": "a3e4ba7e91db34cd6b1c1076637a889054ffdc35a5f39b47e3b141dff38f79cc"
+  },
+  {
+    "file": "hypercurve/benches/intersection.rs",
+    "sha256": "fac72764bf59809405db7b664a75e7e7a07e666d8650ee3e61710e527ed93e0d"
+  },
+  {
+    "file": "hypercurve/benches/intersection_sweep.rs",
+    "sha256": "3eafb59a8d6afe80a35b944062b1d6da45b400342b81ffca28bf976c855e75f1"
+  },
+  {
+    "file": "hypercurve/benches/offset.rs",
+    "sha256": "07583b53ef0cf738e20fbac8ebefcd0a547a5419384c877d6dadc6cf0d972502"
+  },
+  {
+    "file": "hypercurve/benches/pathological_regions.rs",
+    "sha256": "377ea7950752755064ca94628face7940f19e24dbaee683f6ec62111dc5bb5d5"
+  },
+  {
+    "file": "hypercurve/benches/rational_bezier.rs",
+    "sha256": "3041d10fef71dd9c2589e91006dcb13d0d42613596501a040fc00af8448583cf"
+  },
+  {
+    "file": "hypercurve/benches/reconstruction.rs",
+    "sha256": "359030970aa4f326b0233b28ed939c86b787b89cc9981270927e38dbb015b214"
+  },
+  {
+    "file": "hypercurve/benches/straight_skeleton.rs",
+    "sha256": "9708a98c5144edbd899422d21f82e0533f9354e9a21952288b009c1ad21e7162"
+  },
+  {
+    "file": "hypercurve/benchmarks/baselines/2026-07-31/README.md",
+    "sha256": "fd482f8d290bd37e0d0cadc74e50ef7f6827133a8cb7d9ec562bebb95e4c3284"
+  },
+  {
+    "file": "hypercurve/benchmarks/baselines/2026-07-31/baseline.json",
+    "sha256": "14f74982525888f6a99ef7bbb51edd707f8f82342721282d335e49ace008d87d"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-07-31-affine-curve-region-boolean.json",
+    "sha256": "9bbc5a656ccbbeefda4669bcc02c2e98108ffbbd6b0b4ea0bc357ead5c9cf6f6"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-07-31-authoritative-curve-region-boolean-batch.json",
+    "sha256": "0bb9aedfd285259a9ebc887b09514e61faad4752c1db6bc7805cd376579f2509"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-07-31-authoritative-line-image-boolean.json",
+    "sha256": "9e45e677bd58396b2b11d4872f29d41a3c8ddb36a2617db6e550da3e0eee4be0"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-07-31-circular-conic-curve-region-boolean.json",
+    "sha256": "1263b436b2d62b5416abbdf7a0ffad1d764fd9294ada639337cee2382cddf692"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-07-31-closed-curve-path-policy.json",
+    "sha256": "18b6f16d336c1f8688f3c5ff0c1fe9f910b7d5b6d5acf365e3db61ca94c1c629"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-07-31-compact-curve-region-carrier.json",
+    "sha256": "f9b546817ec798f280d4ea47b6bce50ba96d477370ea0e887ddf3ffff40921af"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-07-31-curve-intersection-policy.json",
+    "sha256": "dd08cf166fdc9c22c3c8cfb1cae5c2eb91b76ed5fdd92afc7a49ab04d1115301"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-07-31-curve-region-construction-outcomes.json",
+    "sha256": "b43e3fd419d4507ee5db6b644ad066712cee3259e60887d2f679958746a6df95"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-07-31-curve-region-measurement-outcomes.json",
+    "sha256": "20d6c97358a233aa4942676502038ba830940fe7ca31d9d85472e80db51221f1"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-07-31-curve-region-mutation-outcomes.json",
+    "sha256": "48c851734160914eba8618808bc935f10155ceb30b921fc3b93a92047c8ae4f0"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-07-31-curve-region-query-outcomes.json",
+    "sha256": "7c98ff0c700c9574e90a6b3c9a7bf4a9fc14efefb2c05f9bbbfd3667df20a60c"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-07-31-even-multiplicity-fiber-sturm.json",
+    "sha256": "484b0d1967e90159ac8fb2d010f3295226594f0c39c1c3dbe1092a9b0fe2776a"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-07-31-exact-rational-bezier-parallel-carrier.json",
+    "sha256": "6d92649850f13e39d35fa90c223f0707e0e59d211091230c5b8e26ece907113c"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-07-31-finite-projection-outcomes.json",
+    "sha256": "dc92ede31862f9e0d5c59914b14b5205744ef3537141700a8ecd20389e015d48"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-07-31-general-pair-curve-region-policy.json",
+    "sha256": "301fb623a00d61e5d83f9f62b7e723597fd9922836b54848a9c82fda64bd87b6"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-07-31-higher-order-edit-policy.json",
+    "sha256": "e7aa7e512e385dd8899bc66804b7d648511ad2f31966dcba153dd513cb4260f2"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-07-31-hypersolve-interpolation-policy-bridge.json",
+    "sha256": "4c4437abf16c10a5f072933554bedec1f303355214efd8b3c8031e5f0c68b166"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-07-31-lower-dimensional-boolean-ownership.json",
+    "sha256": "a874dfa8cf7f4020878acbf976233d7fe32cf4edbfa44cfcd0241b4c5f023526"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-07-31-materialized-boundary-policy.json",
+    "sha256": "8b9c710111057cb10e21cf084e86d0731f82777398cfa7f0d88e83a76f6df719"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-07-31-mixed-line-conic-curve-region-boolean.json",
+    "sha256": "ab01054e8cdc030dc9bd90a7b6b81548794bcca87fc653d73bd204da2c549964"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-07-31-multiple-turning-implicit-graphs.json",
+    "sha256": "21e45021e7491cff7aea70df553b87365342058ba31c12df2e8121ffd8cbd090"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-07-31-native-circular-boolean-publication.json",
+    "sha256": "2614222e1b2c4505ca49f445f622a32588b781030324aac5b438186822d5251b"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-07-31-native-curve-topology-policy.json",
+    "sha256": "2560b6ba271e17d0210739e3e1f29a23c99ccb27430b1df4eb9cc1ae5a3530e6"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-07-31-one-byte-curve-context.json",
+    "sha256": "20dd7573a6344a49cf6044a6b4863bc864c05e8e1941983c3953ee39b1a559c0"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-07-31-one-pass-certainty.json",
+    "sha256": "0e484e239fcac8c5458355e0eb0ad2606a4c65755ddf156dfc5e331a42193fd5"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-07-31-overlap-parameter-correspondence.json",
+    "sha256": "1ba109100eae035aefd9ca2233194873409e0274c4f921cfa266a11517062d62"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-07-31-parallel-contact-fiber-replay.json",
+    "sha256": "9b5fdd5ae104b1a22ffaa6e8b6f5b0cd5a205c55ee12c70d9046216c2b4cd32c"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-07-31-policy-explicit-curve-region-construction.json",
+    "sha256": "702fc79931db7e01cc8e26c6c10a9cded4e2ee1081028a990a0b943b221ab04b"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-07-31-projective-cubic-shared-component.json",
+    "sha256": "f78686bc0466d2381410d49d44fd2bb801715685fef75ca344f6d7951db9af44"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-07-31-rational-parallel-overlap.json",
+    "sha256": "b45b8c937847d049f5e8dcfc219492cc56d185e2e0a12392a8d75f250bb769bc"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-07-31-rational-parameter-component.json",
+    "sha256": "3be0e58eb19ca8cce75ccff0f91274924461e814912cf35e1a6d72bd23b470d5"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-07-31-regular-implicit-component-cells.json",
+    "sha256": "aa8fbd9af4483c9e5e6035c5a41bf2f23461e1621e003a46927e46ffa354f3d2"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-07-31-regular-implicit-parameter-components.json",
+    "sha256": "5dfea173de44ac565280ede1df383e55878531da691cc81932f1d4e0b55745b2"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-07-31-repeated-cubic-common-fibers.json",
+    "sha256": "d91cd85cefdf8d000580fd275e9dfbde301410b559681fd335d35982d8405cce"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-07-31-retained-overlap-clipping.json",
+    "sha256": "f70e40ef4ab562f0187e14d0ec4dcce8293a7429f06d3b22895b39942ca0b4cb"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-07-31-rootless-axis-saturation.json",
+    "sha256": "26b5261b2be0598841c3559cd07de46e83cb9f3694dc388726ac92144e04b71e"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-07-31-specialized-common-fiber.json",
+    "sha256": "6c9b4680301fcbc9fa61e2373185d615f4ebec9c2875d1e96a7ebfc2c3726402"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-07-31-spline-construction-interpolation-policy.json",
+    "sha256": "3036627493424e90bdf22e1acc1c43bf283c808ff1c748c44ed9dcacc8246874"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-07-31-spline-edit-policy.json",
+    "sha256": "ad2884f1095642927ba0068c076ee39f76e3cd5abdfab5fc3befffb4ce7fae2c"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-07-31-spline-evaluation-decomposition-policy.json",
+    "sha256": "e9dd89e51c02a432cf24cd372968f51c3601eb79ca82d7438fe19a57dbb2b786"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-07-31-spline-subdivision-policy.json",
+    "sha256": "cc9d2d261f2ff3d31b9f968ea42585c3e013ee07e2119428d242967a627bb5f9"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-07-31-split-quadratic-common-fibers.json",
+    "sha256": "23199b0b13565a4c08ca8eac485e14ef56093c3c20feb2e8f059a3db6004dcd1"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-07-31-split-rational-component-residual.json",
+    "sha256": "93d2ca3acc913fc523caef50f186afa9130b0277e5ea4df6d4a846cf5c651706"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-08-01-exact-parallel-similarity-export.json",
+    "sha256": "1fcf60f9de0c96b748206ed3b824370c5cf6147c85a9fcc9423e60ad40ca8548"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-08-01-isolated-branch-zero-partition.json",
+    "sha256": "8783ef9908bb3ececfb04fa176899fb7d22cca74304434cb4818e6d189b457b6"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-08-01-isolated-singular-implicit-vertices.json",
+    "sha256": "0f3016846c72d86a620c21de870f57071e2040586ca852bf19396ec215a71bdb"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-08-01-point-image-parameter-components.json",
+    "sha256": "df42db1f982b115011c554c749d1d5496b1522241c37d9bbb6f7d28eea70fb1c"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-08-01-smooth-implicit-component-cells.json",
+    "sha256": "e197ab9750b58e2b5294edbfe4096a7134286d1f67c400ba0aa71bd7d21f49d3"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-08-01-square-free-implicit-parameter-components.json",
+    "sha256": "2fa9160507c197fc93b9b2e13d1786963f882f8617ec26bcf5de11a113b6cd04"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-08-01-supported-nonrational-parameter-components.json",
+    "sha256": "e9cfb9c44e9a0d17ca6f15b2bca578f3692282dcc7361e64d30b2b01d0b63015"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-08-01-zero-selected-parameter-components.json",
+    "sha256": "831e8a39e13362d9e4be84744ffaa84b86e3b30b1d3438cf44c0ae4d74505f32"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-08-02-algebraic-cross-map-cusp-cuts.json",
+    "sha256": "9e3933126aaa169f69f7a9d8e478648d1a558ac9f3d81d86d8dfe8716894586a"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-08-02-algebraic-cusp-analytic-parallel-intersections.json",
+    "sha256": "6d6fccb92afbc70f9d10f09774eea0bf898533b3dba29d59c00ab1ae6a2d0b78"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-08-02-algebraic-cusp-arrangement-topology.json",
+    "sha256": "31b0e094e60114412f71566fb024d156fa2b25e462c4ec2a9e7c4f03f6957bce"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-08-02-algebraic-cusp-overlap-arrangement.json",
+    "sha256": "fbf3eb2d36b6a4373622313638577cdf023246c0472a9ee17de3432e48e6cc7b"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-08-02-algebraic-cusp-parallel-components.json",
+    "sha256": "57e7c3f353e40f7ca4678765216819bc3c1eb4c0a30f9a93c5028aa31c1a7e2e"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-08-02-algebraic-cusp-parallel-partial-clipping.json",
+    "sha256": "b07943ddb76239764617487e51229ff72ddf59f946810254b913e4f1c59db361"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-08-02-algebraic-cusp-rational-components.json",
+    "sha256": "8edd60e2798fcaaca01a31fde84d894128b10c2c9c222961dff0f46fa32cd6fe"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-08-02-algebraic-cusp-region-classification.json",
+    "sha256": "a86fb60f02328236344ed635f3336bee0f903e5cba38297732857cb3b089c0d6"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-08-02-algebraic-cusp-semicircle-overlaps.json",
+    "sha256": "eeec4561951a8d90079bffdeb8b4a84b53c14def75697c58691b5913255d385d"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-08-02-algebraic-cusp-semicircle-pairs.json",
+    "sha256": "78ddc2defadf921dbb86eaa1d402de978e00016f0313ca4ba2c7d3fcb240e3f2"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-08-02-algebraic-cusp-subfragment-winding.json",
+    "sha256": "e2fee35bcde2349dbf9eb2eada239a807657a4bef1fdd681dbe9078a3581bacc"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-08-02-algebraic-cusp-subfragments.json",
+    "sha256": "57da6b6ce08ec4b4bbec5611e2f03e91b87d2f4e506a3fed132c97b0006715dc"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-08-02-algebraic-parameter-policy-ordering.json",
+    "sha256": "c23bdad164e7ae1868dce55c00e5bcd300bf990bed1c304ce2708d5242050934"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-08-02-algebraic-partition-exact-offset.json",
+    "sha256": "f3a024b71eed726e220ca203799eacaa9c55d66b7fd4887f1a2e553321a899b3"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-08-02-analytic-parallel-curve-region-boolean.json",
+    "sha256": "428ce3cb5ac01dd6e15fbeaa040fa458d9431e30f70cac0c6f8e18c7d3d18d68"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-08-02-authoritative-exact-curve-region-offset.json",
+    "sha256": "b00956011f1f28439dd4e5df49487ba4d3a97feb8f036cb9aa60101afb1b222c"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-08-02-cyclic-algebraic-offset-seam.json",
+    "sha256": "71cc18a0238835ab5ee6f0fc61b46137098edf855c90e28765dee8136862c3d3"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-08-02-exact-parallel-pair-components.json",
+    "sha256": "256f2c7e0284d2cf7981c64996da004f5cf723d811a570a18eaaafe284203e3c"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-08-02-exact-rational-cross-field-cusp-cuts.json",
+    "sha256": "4dcc3e3d3fecd7c34634ff366be1e523c439a95fff156f3e3fbdd949d46a3a42"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-08-02-general-algebraic-cusp-point-images.json",
+    "sha256": "f093c1deb05bbadb7aa1246a3173e955bc70e3a265ccb7c066fc80e3077950d3"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-08-02-monotone-exact-offset-topology.json",
+    "sha256": "b9d67e52593df2fcddfbd41c9330d7e9f13e4ab2338207f679974aea3abf85dd"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-08-02-nonlinear-algebraic-region-classification.json",
+    "sha256": "e2de32ebe5bf0b77db40148451f7a4e5aa4044b4e7e6b12b4108fc67205e2f2f"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-08-02-radical-cusp-exact-offset-topology.json",
+    "sha256": "7ae232193c23a04e4aa71c198349495a53762a5e7ebfc31d1379e74ed9a4afe2"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-08-02-rational-bezier-self-regularization.json",
+    "sha256": "ce1f2e63bb41a0552d4e0ab774e97480967cd656c75233f4bdc2435d7d85cdf1"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-08-02-rational-image-interval-proof-performance.json",
+    "sha256": "96207cb75a980f3bc34061f34f690cf6150ce641cfe71d643827286496248bac"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-08-02-rational-image-map-reuse.json",
+    "sha256": "fdad33d3a11556188fc45c9ef23de82d49c604b34221122fc0a6d7f9e127605a"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-08-02-represented-range-repeated-exact-offset.json",
+    "sha256": "115f116635959ecac317211fb758fdef5ecdfb152907a14359c68880b429b9ef"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-08-02-stationary-algebraic-image-intervals.json",
+    "sha256": "04fd826da6e31198dfc992aaf67a1a410fb70353d8ec0897c699e1b2818cd9c7"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-08-02-topology-backed-carrier-aliases.json",
+    "sha256": "493dd480138ff7a4b84fc449d7d63a51923b29d188568fb3a80edcab7e3f6dd9"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-08-03-affine-distinct-field-winding.json",
+    "sha256": "8c3df5891e9f89930f7ea5931298d94365cf875eedfa8dd59879606c29af59b0"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-08-03-cusp-pair-overlap-rational-transport.json",
+    "sha256": "211cebd0916f5150b5a41f34b60455e4c8a15040c2ae2c41bae88e4a074687c1"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-08-03-distinct-field-algebraic-cusp-winding.json",
+    "sha256": "117c3c60cc7b75e0f7ef19d65b34c65400dc9536d230353ad47a05ef9e666e74"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-08-03-exact-quadratic-trivariate-factorization.json",
+    "sha256": "f43df08d123234f494b96ba83091e1f79012bd26c73eb50082c69f99baf1c89c"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-08-03-exact-quartic-trivariate-factorization.json",
+    "sha256": "f8459d3b7911f30e3a25cf5f0ebeac44f9f7afe1b77d279dc9a7c5b7086dd57f"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-08-03-exact-quintic-trivariate-factorization.json",
+    "sha256": "8e3f0a05fbb38dc4175e7181ae0589cf7a99a1aa5ae2bf190d09b5709378109d"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-08-03-exact-repeated-cubic-trivariate-factorization.json",
+    "sha256": "8597fee6045334353e671462eedff087ee135c55c2bcb77af200de3d32d47bdc"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-08-03-exact-septic-trivariate-factorization.json",
+    "sha256": "a96041ff5cf78db6d46d75c42fb58430fd76b8aa9eebb6cd67b1cc413eeb80cc"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-08-03-exact-sextic-trivariate-factorization.json",
+    "sha256": "aba679c58b606cc08bb84c4fdc5f2c54f43f81f97fc9ffa5d8e9508790fede7c"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-08-03-exact-square-free-cubic-trivariate-factorization.json",
+    "sha256": "00e4cd4e3501e54ffdb45f8cfdb63f43e146a469742466963122dc91429b087c"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-08-03-exact-trivariate-axis-content.json",
+    "sha256": "423fd5342e40d5677098615aa6bb8653fac8368ea618d37d43407910598f6d2d"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-08-03-independent-algebraic-cusp-winding.json",
+    "sha256": "0df1fbbd1aece79f938a4062b6e3df755e64ce3ca272cdec8769c42639ece006"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-08-03-linear-axis-distinct-field-winding.json",
+    "sha256": "03002f3fb6d30e328861792b33cbbbda25dd8f73dbbc712a2566056a804bffb2"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-08-03-nonlinear-analytic-cusp-map-transport.json",
+    "sha256": "f5178207de6781cfc69602158ff028067876aef9c99be817564cfda757e2dfbc"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-08-03-nonlinear-rational-cusp-map-transport.json",
+    "sha256": "fe2a38e75bb376467584f0a6daf6262163f3687563fda5f94a9db11a257a8748"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-08-03-resource-bounded-rational-multi-affine-factorization.json",
+    "sha256": "d299f42c11471fa20a1f8d6f4761e43056ab628ad9775e7c5f8b7a7e800059c5"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-08-03-selected-root-binary-relations.json",
+    "sha256": "632c0dc7b4899b1ad96e6c9044f308a1fdd249c9c4c91d265a11ed49399bd2ea"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-08-03-selected-root-quotient-reduction.json",
+    "sha256": "adc86b8e54726c38357d57999514844010d4272148e1d3bda49b3997748a9fc7"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-08-04-exact-line-corner-solver.json",
+    "sha256": "422c8983ac1445c2bb5a49ed4968f6d72f754ecab9bde176dd9bcdc48d390168"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-08-04-native-arc-chamfer-solver.json",
+    "sha256": "7c136a41012bc7e52fe60fa1106e38f3494f0fd6556b0971b8d192aadcd75b46"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-08-04-native-arc-fillet-solver.json",
+    "sha256": "02f94e18a0c22c23d0c384075e22840d724462db648f030608f693b26bdc904e"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-08-04-represented-bezier-corner-incidence.json",
+    "sha256": "4ca300041bb57d964669fe1e320fe8dbf04ea94bf5719631de1c1ef04c688347"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-08-04-retained-rational-circle-corner-carriers.json",
+    "sha256": "b44714e1a55d8e4bd40d5eb565d23be56fced6fa55c9afc7c497a6cec50be3f3"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-08-04-spline-corner-span-promotion.json",
+    "sha256": "40a98fcefcc1b1b72d8160d0890047ba390b2f880b0a9505a93398f231684a49"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-08-05-algebraic-chord-contact-regularization.json",
+    "sha256": "57f47823641748b28c69671bfc3b8f81cef4416a6e1d2d1ce9bd79f7f79f180c"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-08-05-algebraic-curve-region-boolean.json",
+    "sha256": "988704f9a5ade1aa8cd9fcfdbd63c34928a0d80ea1fb187d2e38e92ede940bb4"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-08-05-algebraic-curve-region-chamfer.json",
+    "sha256": "2dd52d61f5afb212517364182a7436025c74e888b6846d56126a9462928d05fa"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-08-05-axis-aligned-algebraic-chord-offset.json",
+    "sha256": "db0dc4300b1f73cdd0843b69cb512bec26bedac2ae226e32334fa863b71102c0"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-08-05-exact-orthogonal-algebraic-erosion.json",
+    "sha256": "445b4b01372ded9b9aee2c684ba90831a304bb7926ce38e2635550501c5b0f1d"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-08-05-independent-field-algebraic-chord-boolean.json",
+    "sha256": "57320a39d49c066163f3f695a851669042ec51ea6dec64cb4889e0fd72a36c93"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-08-05-noninjective-algebraic-chord-overlap.json",
+    "sha256": "82a95e45556f5de0e5aca5e0dbce87faa10a48a0cc7b7e28b582ead00c58d493"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-08-05-selected-algebraic-circle-chord-boolean.json",
+    "sha256": "9a567850d61a884b745b850811de5a9ce51883ad47a2f138211f3fc402a1beb4"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-08-05-selected-algebraic-round-offset.json",
+    "sha256": "c21c694e1cd69d60a697d1dd62098ec1294db11ea4d791096eb4f2f4fe26b820"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-08-05-strict-interior-algebraic-chord-boolean.json",
+    "sha256": "485c3582457d917e056abe5bce18da919ccef13a84be88315a21b4a54d648f83"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-08-06-correlated-endpoint-reentry-xor-reuse.json",
+    "sha256": "f810e5fbc28a87000ec32c6e9a28395f40e71871323a44d6a888c4e7fadad57d"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-08-06-shared-chord-circle-ordering.json",
+    "sha256": "0fbf507c3203f51c40be070b0453433b4c6e18f670dea12b83cf7e4aa6d9f3a1"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-08-06-shared-chord-collinear-reentry.json",
+    "sha256": "c3383c334c387c9d8c337b6fa1070c3be8df05c1c3a582795a4a281aeafaa87b"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-08-06-shared-chord-line-reentry.json",
+    "sha256": "78e5fa882c32141eda99c2a3bfa43af08d05387dfba0822e9e31a1d4bc5609a5"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-08-07-cardinal-convex-reoffset-regularization-bypass.json",
+    "sha256": "6f3990e5dc86962d0eceda61b1bab9941797e0382a96299c833f7cba8653594f"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-08-07-cardinal-selected-circle-endpoint-translation.json",
+    "sha256": "2f2cee9ed489de0a4f6155298d902f00abc59ca65e624d1fbd964758b320ddb0"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-08-07-correlated-chord-pair-transform-offset.json",
+    "sha256": "ea76b1c2ba2d3e4a3b3a7e51a61fd7b2226f80bce9f93005c6859093974fa8b2"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-08-07-correlated-circle-partition-offset.json",
+    "sha256": "b5122980c79a9fda844ed106fed5044b0a72a7613914e8d2df5a1f99f3c46c8b"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-08-07-cusp-chord-boundary-reoffset.json",
+    "sha256": "5d9ac14cd654d04830ee4904a222ac2e94437470ed31ded3e5f4683ae8eccebf"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-08-07-derived-circle-incidence-identity.json",
+    "sha256": "39917fae6cf2cbc1a6f0d38610a77d4ee17951e3ed31378f5f0d4d45e770f4be"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-08-07-general-oblique-cusp-chord-reoffset.json",
+    "sha256": "5bb9a6380b0f88bd7f2d4251a196145a79de296b94e3db6a0e4e2b670de60de4"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-08-07-mapped-circle-similarity-transport.json",
+    "sha256": "51dbe11870a7f20e3f195f270a518ff24ceb57b338df03e550b8f45ce55c4836"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-08-07-nonendpoint-analytic-parallel-mapped-reoffset.json",
+    "sha256": "e301e3a736c9efcc99ec2e4c8a2c0061feb3760f92334fb2b8426397887d5f98"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-08-07-nonendpoint-rational-mapped-cap-reoffset.json",
+    "sha256": "ec1fa1712aec2a7e09f50a69840388ed831b891253fe11a309bfa96a7de83f69"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-08-07-oblique-tensor-fusion.json",
+    "sha256": "dc2430235ee7b827734f351c65bae4df6f5974a9c173a82eac61b54934de10fc"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-08-07-retained-selected-circle-reoffset.json",
+    "sha256": "dc0b22744568ee8979875d4dad5902b2e34418a69f67cad2718ec53bcd927e18"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-08-08-circle-pair-mapped-lens-reoffset.json",
+    "sha256": "d9398b7a93fb8de42c92c39dab5b691b5a44be309c4de7a3e86f82ece7fc784d"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-08-08-nested-chord-mapped-cap-reoffset.json",
+    "sha256": "6a4c84d5d3deccab83eb2b4d36627c0840269c63f9972eff5e6e3ec00f10f051"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-08-08-nonendpoint-analytic-parallel-pair-mapped-reoffset.json",
+    "sha256": "a03dbdf28543844f3af9a9f24abca8649dc27ddb3ae8a1bf3bc41c259a389959"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-08-08-retained-oblique-chord-reoffset.json",
+    "sha256": "89060feb85fa9322c570e55efdaf35214ee27729bb774b00e457f50897de8479"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-09-02-exact-point-payload-alias-reconciliation.json",
+    "sha256": "0037b7b7b7bec0cf8a8615055018359bc897192fe067eff3f1cdf81617c5b69d"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-09-02-exact-real-algebraic-image-bridge.json",
+    "sha256": "949255ad1cba98dbc5be1ea042efdbb715c34739a04d5bef9ff8f580b2236555"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-09-04-authoritative-polynomial-evaluation.json",
+    "sha256": "c1371cd98b8e842c27cb98d9010b49638ef43e28bd1ce1c9a69f500e3ba784f5"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-09-04-retained-aabb-scheduling.json",
+    "sha256": "32e1475abb9e1561be7f3ea3dc1ba5228c00b5f33f8caa3e77c00e4146bcf77f"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-09-04-retained-sign-refinement.json",
+    "sha256": "99e3ead4ec152e405d25e58c186bebe02d8406cbd87cb93ed5795ed8b794b77b"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-09-04-shared-parameter-refinement.json",
+    "sha256": "ea14379c3c59caebc0032da43104a5240c40bd31b97418a8af1e03b24258b04c"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-09-04-sturm-reconstruction-reuse.json",
+    "sha256": "a0254f9ff8e9a989ae7659aa12675a807bac208efa5e9ccc597205e47384a78a"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-09-04-unbounded-sturm-isolation.json",
+    "sha256": "97a559cf515e89e76ff8bf27aedfd3f7d6c77f231407f6e138849f88fa76aa65"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-09-05-active-radical-projection.json",
+    "sha256": "da6091d0aea8df01f458359abec980562dfc5ffa0fa5cd1dd9635ccfc3303b22"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-09-05-certified-projective-scalar-bounds.json",
+    "sha256": "dfffe27eb26bb7705b19befbe3785a565bc40abdb9f78ce9ddbe2fa8df9abc1b"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-09-05-dyadic-bernstein-isolation.json",
+    "sha256": "80d1e2582257c0508b6cad12dd90735fcbe74cad0f46aeba8a4f339bdca78114"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-09-05-native-affine-offsets.json",
+    "sha256": "f9424c47088245cab79c3b580e1c5e9421765e1f91976de6923e0e04384f150a"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-09-05-native-local-field-signs.json",
+    "sha256": "0c730454598cd2373bb7a7450daa712b37f204766dc919307d1297fff9684ecb"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-09-05-native-polynomial-kernel.json",
+    "sha256": "37106c0e60adcbfd4a4140c1bf92aea067cc5845a7c184491ea533442e144933"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-09-05-native-scalar-api.json",
+    "sha256": "1931ddb8c6601c7c9ee4fc246be9798011bf81d4c34b914e3eb0e0b34f5a2c33"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-09-05-owned-local-field-identities.json",
+    "sha256": "af2b21c7285d94820c86f979027344ad76828b08c09d3b16e1df7a37a0efd74e"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-09-05-retained-normal-form-sign-proofs.json",
+    "sha256": "7155df68cabd83df763733fe3fe92c54474067615bd0c8e562571f02d03245ef"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-09-05-root-evidence-api.json",
+    "sha256": "b3aebc15951b6e27c98e26fe08d0d660d17421c85796efe9ee811f3c1d6a6b0b"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-09-06-angular-query-kernel.json",
+    "sha256": "a2643f4719acee2d5f94fb6e1a13bcb6369a2a1c0219e682de9e86445ef42454"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-09-06-authored-circle-components.json",
+    "sha256": "45ceb15ef02367105a57c0c8975c692ef1bdf05b6026776057582864f7017ac8"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-09-06-certified-contact-replay.json",
+    "sha256": "41163aa11c2e10e3af4406e3824e8effffe62fe982e8bfa01f186344627f8017"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-09-06-late-exact-fiber-refinement.json",
+    "sha256": "34de1cfd41fc8759716b88b7a53c55250ac0f49039f46a633bfbb48a8dcb8e6b"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-09-06-mapped-circle-policy.json",
+    "sha256": "9968c654c8a72ae251a89d2543e7fe8adddc6b0168decdbc93b1cbf617184a21"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-09-06-native-fiber-specialization.json",
+    "sha256": "a9521d1e340aafae90e7fa6a00cbe0f657f55ca0bce37b53219faf6920b8c9e0"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-09-06-ordered-field-subdivision.json",
+    "sha256": "646cd2e9e77a95380cd2b25d5b2a16f5daf99a3927ebc766f48f58c96a0e33cb"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-09-06-shared-fiber-seeding.json",
+    "sha256": "22fc88631cb99dba2ee38aad9bc55221110cc7b3acfcb0c624aa42aaa5c5a7d4"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-09-07-recursive-transformed-bounds.json",
+    "sha256": "bbcd76c3d422e80f93f3ffd960f6994a9f646e4548b9ea6ab6cdb5a139484cab"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-09-07-retained-chord-affine-kernel.json",
+    "sha256": "43f102fe692b4d71a1af3fd1ac535753dd6ccf6814d5745a932964b5694e60f7"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-09-08-selected-radial-affine-kernel.json",
+    "sha256": "6fd971efc00b05e7adea381612cc6b6c74f57604f8a986af389cb0ffb3361421"
+  },
+  {
+    "file": "hypercurve/doc/hypercurve.png",
+    "sha256": "65c55cd354669cd48e9ea30c0df430bda9d58b1e39fcfbdadb98a91f963532e8"
+  },
+  {
+    "file": "hypercurve/examples/arrangement.rs",
+    "sha256": "8671397787a16f3ed11cdd2ac2c07518a38b4af4f68cd6ce6206e82648324576"
+  },
+  {
+    "file": "hypercurve/examples/basic.rs",
+    "sha256": "0641fa285fd2550e83c2b6b3dc29e3161fb4d9954ca3c5010633aae25f4c5aa1"
+  },
+  {
+    "file": "hypercurve/examples/hypercurve_ui/.gitignore",
+    "sha256": "4b8448c63b5ca9a51b9c70b8147371d65bf5069f7a0eec32d5400b7ce14b80c0"
+  },
+  {
+    "file": "hypercurve/examples/hypercurve_ui/Cargo.lock",
+    "sha256": "1b4253c544d02e231b1dec89557b98c9a692aff8092cecda4aa7d1fc79af2891"
+  },
+  {
+    "file": "hypercurve/examples/hypercurve_ui/Cargo.toml",
+    "sha256": "d8f31ef9003f88344ad9a6a8ee9efb250922d96400f0a63c4abfcfe1bb61a6ee"
+  },
+  {
+    "file": "hypercurve/examples/hypercurve_ui/README.md",
+    "sha256": "1cfb63eb16ba50ac72082d280c8bd5691b703d6dcbc7fb142cdca8456e264ccd"
+  },
+  {
+    "file": "hypercurve/examples/hypercurve_ui/Trunk.toml",
+    "sha256": "e996a27c64e0601278f8a1382fdaa72e55abdddfabc0d37a5df0d463f2977f45"
+  },
+  {
+    "file": "hypercurve/examples/hypercurve_ui/index.html",
+    "sha256": "9da8ff3b31fd944f1b9ff6466ab42e868a10709576f7a8bea708fff6e019c65e"
+  },
+  {
+    "file": "hypercurve/examples/hypercurve_ui/proptest-regressions/geometry.txt",
+    "sha256": "cfa0c7b77386667773be9ad5a0bb3dd34c995b7b50f22df29cf0d448a2dac4c8"
+  },
+  {
+    "file": "hypercurve/examples/hypercurve_ui/src/app.rs",
+    "sha256": "857f82600e8c83d8b7616c23ab7f4e01eee0ea7139685cb0d6b4a5b0d9c7733c"
+  },
+  {
+    "file": "hypercurve/examples/hypercurve_ui/src/corner_scenes.rs",
+    "sha256": "db7b6833418684fcf3b8d121feaf397fdf760e1a2e347a13432bff5461d13385"
+  },
+  {
+    "file": "hypercurve/examples/hypercurve_ui/src/editor.rs",
+    "sha256": "6b577fde2684adf4e0a76ab374af26d047861b00d382cfc92a61e35ac1a23f91"
+  },
+  {
+    "file": "hypercurve/examples/hypercurve_ui/src/geometry.rs",
+    "sha256": "5194544b9b20ed028b2309c9e2fd772602865adb68200407ab3ced8dff2b62ab"
+  },
+  {
+    "file": "hypercurve/examples/hypercurve_ui/src/main.rs",
+    "sha256": "7d2615befce0e454ddc2dfd92b8232b3456db3fb70e39138eb746e14fa3f6257"
+  },
+  {
+    "file": "hypercurve/examples/hypercurve_ui/src/plotting.rs",
+    "sha256": "ef76a28686758dbf7f40a4e10c11168195d10f6b127486008e4b1584287b9806"
+  },
+  {
+    "file": "hypercurve/examples/hypercurve_ui/src/scenes.rs",
+    "sha256": "cb11dee22c3038692bbf2c02f74f94e4416f4a39bb6334fb91a023f6577b21c1"
+  },
+  {
+    "file": "hypercurve/examples/hypercurve_ui/src/share.rs",
+    "sha256": "104fd1cc6c0974e5e169a0c2291d8270810ab42ea0cae41f4d8f8312e48625a8"
+  },
+  {
+    "file": "hypercurve/examples/hypercurve_ui/src/theme.rs",
+    "sha256": "4687cc2280eaf24a16e60c893c2d5fa41f1b0fc44a6b7aa33b636d358bfdb69e"
+  },
+  {
+    "file": "hypercurve/examples/hypercurve_ui/src/torture_scene.rs",
+    "sha256": "b32f9ae2be097658da48a97e41c09194a1052f471372d5fe53edb5e98af1bec0"
+  },
+  {
+    "file": "hypercurve/fuzz/.gitignore",
+    "sha256": "aa955853301dfbb52525a6640a9c6bd64d3fc2d8d3c757145283513e6dfb9e39"
+  },
+  {
+    "file": "hypercurve/fuzz/Cargo.lock",
+    "sha256": "7c4a84b0b03daa9d548c1938df5420ebd42f8e32571170dd47f4b87baf362df2"
+  },
+  {
+    "file": "hypercurve/fuzz/Cargo.toml",
+    "sha256": "0087b0225d7e049c1069f12281ddd3c5f3ec7701bc3efe371e075eebe81b3de5"
+  },
+  {
+    "file": "hypercurve/fuzz/README.md",
+    "sha256": "f0542776a0bddfba8454eb60fcc19c0163aef99481d8070de2605da912d1941a"
+  },
+  {
+    "file": "hypercurve/fuzz/fuzz_targets/bezier_algebraic_image.rs",
+    "sha256": "b79952c309efb084be81f140df8c9bbf5ca5cdb4bf332bebecea840fa219a0e0"
+  },
+  {
+    "file": "hypercurve/fuzz/fuzz_targets/bezier_algebraic_parameter.rs",
+    "sha256": "7a647701e367237714645901e152d5c30324d14b2a782cc66127c6ba1e664713"
+  },
+  {
+    "file": "hypercurve/fuzz/fuzz_targets/bezier_arrangement.rs",
+    "sha256": "5b8d8bc433994a49f89a693108cfbd1b27f439d92d770486044567b06fd66f83"
+  },
+  {
+    "file": "hypercurve/fuzz/fuzz_targets/bezier_region.rs",
+    "sha256": "e88da846f867fa4eaeb42625500a9f184e2b68be2697a00d2eb6dcdad886ec50"
+  },
+  {
+    "file": "hypercurve/fuzz/fuzz_targets/bezier_split_materialization.rs",
+    "sha256": "6f08c82e2dd4f4079bd341cc555e44823c6f4352859f43e3eb643c910c3d2e21"
+  },
+  {
+    "file": "hypercurve/fuzz/fuzz_targets/bezier_tangent_order.rs",
+    "sha256": "6584c863ec522aaf131ae9a40c43fc7e7b6275337857415de2a0243027c9ba22"
+  },
+  {
+    "file": "hypercurve/fuzz/fuzz_targets/bspline.rs",
+    "sha256": "d211b59ef44d7693bbb0ab8149588eb759695087bbe4dfa67dd09ee3a2c8aef5"
+  },
+  {
+    "file": "hypercurve/fuzz/fuzz_targets/curve_string_editing.rs",
+    "sha256": "7b76e01a5ceb61fe9e69686674016b48618cf91b99824bf8425867a3cb819900"
+  },
+  {
+    "file": "hypercurve/fuzz/fuzz_targets/hyperreal_representations.rs",
+    "sha256": "2f952d72b5230be91f669175a9bfbcd743f39d577ea8a904228b5cbaf5c47285"
+  },
+  {
+    "file": "hypercurve/fuzz/fuzz_targets/region_boolean.rs",
+    "sha256": "8baea9e50baf9cdf6c403112d1344172c23c198e269b72b7da34d18eee90e2b5"
+  },
+  {
+    "file": "hypercurve/fuzz/fuzz_targets/retained_import.rs",
+    "sha256": "3cf2713c1670ba796f8199f21a3df4efcc4c72b18df39b152154f5a53b94f341"
+  },
+  {
+    "file": "hypercurve/fuzz/fuzz_targets/straight_skeleton.rs",
+    "sha256": "70d797e4e6ad50195508496e884127b740375e2b5e65cb131929cc0573ab9c16"
+  },
+  {
+    "file": "hypercurve/fuzz/fuzz_targets/svg.rs",
+    "sha256": "0f1627ac3bb3bd2cfbf88b45f212de45daf435f40661e7190fb171769a21fd29"
+  },
+  {
+    "file": "hypercurve/plan.txt",
+    "sha256": "af1b48f73a55980ad6199c909a9ed3838afa1121f06c38478feca4ee28057d87"
+  },
+  {
+    "file": "hypercurve/scripts/prepared-removal-all-hyper-gate.sh",
+    "sha256": "a33c1ccbd41286faa6d21b79a1ac21f3464b02866e422d8d88a4d93da5cffcba"
+  },
+  {
+    "file": "hypercurve/src/arc_bezier.rs",
+    "sha256": "e455084c2d7dd25cf2278425537a4a8da3eaf29de464b1bbcdd7b683ce713162"
+  },
+  {
+    "file": "hypercurve/src/bbox.rs",
+    "sha256": "53bd35590b0063494f2eaeccaf89d72597be88f57f64cb90a954bda461652943"
+  },
+  {
+    "file": "hypercurve/src/bezier.rs",
+    "sha256": "65f7967f1c2ff893f3e3e5648b6d1bd875feff85f0e12e0dbf2f4c8a97c84263"
+  },
+  {
+    "file": "hypercurve/src/bezier_algebraic_image.rs",
+    "sha256": "65a9880df92978d89a07dbfcdad3fd19b4c11a4aea15ea3637a547ccb2c008f2"
+  },
+  {
+    "file": "hypercurve/src/bezier_arrangement.rs",
+    "sha256": "75255a7affe1e88494b37c92fadd0e3e5af2093b494b44b89ae697ba06ba5f4a"
+  },
+  {
+    "file": "hypercurve/src/bezier_fit.rs",
+    "sha256": "71f21a7bce38a80996c397fa4c7e9533fda689b4efa73c1de4bc90800c29756d"
+  },
+  {
+    "file": "hypercurve/src/bezier_flatten.rs",
+    "sha256": "10800a19e4b37dee0481736c1d895b25befeafabbc33c6b3519b6cc8b82bbe6e"
+  },
+  {
+    "file": "hypercurve/src/bezier_metric.rs",
+    "sha256": "6fe148bd641dc300b0ab83e4a850bc14ed3783207d032a456fd0ce440173bebe"
+  },
+  {
+    "file": "hypercurve/src/bezier_moment.rs",
+    "sha256": "e1f80543e4cd0c24e8718ef32c084f41fef65ec68d0b0e5f562ef51da046d2bd"
+  },
+  {
+    "file": "hypercurve/src/bezier_offset.rs",
+    "sha256": "daf89716eb5b368b72c98aba5d62428185ec2c4eca9407fe443571d6f92abe7e"
+  },
+  {
+    "file": "hypercurve/src/bezier_parameter.rs",
+    "sha256": "99fa90c13bba6a7c641b5176775f10291f856e783082c417dc20e226b6f00e7c"
+  },
+  {
+    "file": "hypercurve/src/bezier_region.rs",
+    "sha256": "b4a01954f2965513b2125129307940a7fe3460c88fecf034e063c9f67edc994f"
+  },
+  {
+    "file": "hypercurve/src/bezier_retained_measure.rs",
+    "sha256": "32783cf2c5007e0dee1a596b5c65e02105490084472530ba070b3528f3992531"
+  },
+  {
+    "file": "hypercurve/src/bezier_retained_overlap.rs",
+    "sha256": "ed88ca4fdcb461a2e9d655f32b813a258c46be8e8ea7f68c8d787e6922041708"
+  },
+  {
+    "file": "hypercurve/src/bezier_split.rs",
+    "sha256": "70d51d548972afd41f5df761569866c9c1f8a61694f1fe0142cf2c734ed566ce"
+  },
+  {
+    "file": "hypercurve/src/bezier_split_endpoint.rs",
+    "sha256": "cdec17955b46ad365b75ddbb911b54c452291f59cf71fbc18509399ea171244f"
+  },
+  {
+    "file": "hypercurve/src/bezier_tangent_order.rs",
+    "sha256": "515d1af1e54271952d7f9eefdd3ecfb662d70eb84c31835e97300d5fd784ba24"
+  },
+  {
+    "file": "hypercurve/src/bezier_topology.rs",
+    "sha256": "1d5d2b9037cc1163d2237f2d13463ac85e33a072009ac5d59f98d3a3040c65bb"
+  },
+  {
+    "file": "hypercurve/src/boolean_op.rs",
+    "sha256": "75cc8f8a420981709e406d94489be115a791f0e8a5d95543474a328bf7a2c032"
+  },
+  {
+    "file": "hypercurve/src/bspline.rs",
+    "sha256": "6c691632bad9bca80d836293734dda37b9609dc912d1341061efe9c2c6f48919"
+  },
+  {
+    "file": "hypercurve/src/bulge.rs",
+    "sha256": "9b3929b17070e64462bc09cbf1de02f9831f2e63cebea9a0fd4ac824df2235b0"
+  },
+  {
+    "file": "hypercurve/src/classify.rs",
+    "sha256": "fa658a66f6cb345f4d4a3c76459375e727f3036310b79b28ab7bf0ec493921ad"
+  },
+  {
+    "file": "hypercurve/src/contour.rs",
+    "sha256": "252b8cef466749087edaed21f31ff1d603d463441445ef491ec1543480661024"
+  },
+  {
+    "file": "hypercurve/src/curve.rs",
+    "sha256": "1c73a4c4e4216c3ea3f2a5cec248b95c791f711827474943d0bf0a518a1c4f94"
+  },
+  {
+    "file": "hypercurve/src/curve_corner_chain.rs",
+    "sha256": "3ab966b40684b2adcec8e22ae81b90d7e30c90f57314e2eb79cf65c54508f9ae"
+  },
+  {
+    "file": "hypercurve/src/curve_corner_domain.rs",
+    "sha256": "6c6cc7e89b7554ccbc135b4a80b94dabf0f307e6dfd3bebb46b45dfc0cf343a8"
+  },
+  {
+    "file": "hypercurve/src/curve_corner_reconstruction.rs",
+    "sha256": "88cd7080badb52bc808e188a91aecf46ad420c0000be9da3573994b66d5b3b9f"
+  },
+  {
+    "file": "hypercurve/src/curve_evaluation.rs",
+    "sha256": "feb2183e30a317f8bf2469fba75dd620dec433e787a1e3325d0cdfffc53a4e65"
+  },
+  {
+    "file": "hypercurve/src/curve_intersection.rs",
+    "sha256": "cb82e94e242b4a1b2f20e70be0d95fcecc04cefc597eee41f5325810a4d5ad6d"
+  },
+  {
+    "file": "hypercurve/src/curve_path_intersection.rs",
+    "sha256": "c279614858fa672644c59b88e3f5d763bac0c6a5968ee1c81085a427b7a777a5"
+  },
+  {
+    "file": "hypercurve/src/curve_point.rs",
+    "sha256": "f028bd7d6c779016cc1ba4f021ccfc0618eab4a5ffbc90681ba2211ff0073b77"
+  },
+  {
+    "file": "hypercurve/src/curve_region_boolean.rs",
+    "sha256": "8887ecd4959ff8d6dabd3a6d098e163bc17db178f642b73025aee1a8934791e1"
+  },
+  {
+    "file": "hypercurve/src/curve_region_trim.rs",
+    "sha256": "29f53c1333cd82c3ac47c57c767b93716fe70b3b11067ef90dc8b59823cd9961"
+  },
+  {
+    "file": "hypercurve/src/curve_string.rs",
+    "sha256": "f0b82b24d64b5de37e3920400a68344839ce5ac036f80fa00f64ffe863449d0d"
+  },
+  {
+    "file": "hypercurve/src/curve_subdivision.rs",
+    "sha256": "ac1e7351eded776f84d77d639b94f39eeb969286eb2145caa276cbdb0c9f78ca"
+  },
+  {
+    "file": "hypercurve/src/curve_support.rs",
+    "sha256": "181da4c27b9a700fc914e3834bad79bd344482568e52e519e2474ef8d87731d5"
+  },
+  {
+    "file": "hypercurve/src/curve_support_intersection.rs",
+    "sha256": "0e1deb887055c25cbc695ecee416a3c089c1f1b88bba335e0333289f2ffb930f"
+  },
+  {
+    "file": "hypercurve/src/derivative_demand_tests.rs",
+    "sha256": "dfe0937088100bd1baf508825c24c3e8f42cbe9b630b5eee895a6f58c3a664eb"
+  },
+  {
+    "file": "hypercurve/src/direction.rs",
+    "sha256": "d058a5fddc8eeaa51fef12d519519b5b9d749f246e9d9242c918864f3122835d"
+  },
+  {
+    "file": "hypercurve/src/error.rs",
+    "sha256": "2b36969ab31c12b74994fdf9de0f66a94ddf2953ec99a869681796b411380658"
+  },
+  {
+    "file": "hypercurve/src/events.rs",
+    "sha256": "30fc94aecfe1146fab9d12af8e19151447d2c7c696829235064a459e81e202de"
+  },
+  {
+    "file": "hypercurve/src/facts.rs",
+    "sha256": "a0e4921c1aebde121d784a4c0d277982f69c62bc3d2ea969613173d8b15593f6"
+  },
+  {
+    "file": "hypercurve/src/finite_projection.rs",
+    "sha256": "68157fa4ceea2b383c6856b9c15715ef36be7804c7f0ef6a571b4a7933dadf1b"
+  },
+  {
+    "file": "hypercurve/src/fragment.rs",
+    "sha256": "97c3aa385d80b0c9263820ff87d4fc6818de1ea3ad588eaa77f61ef7f91c4c95"
+  },
+  {
+    "file": "hypercurve/src/hershey.rs",
+    "sha256": "95701beb8e6c616deee08a72ec9190bcd4a766be3c378fed23fdd22fe43576f5"
+  },
+  {
+    "file": "hypercurve/src/hershey_data.rs",
+    "sha256": "bad3e5cf2f5fd32344d723f9a7fc6a3efa3ef2bbc4044d67b66a654569aafc6b"
+  },
+  {
+    "file": "hypercurve/src/intersect.rs",
+    "sha256": "869f1d164683642ee7a8b5bb958ec479ebf90e9146b806ed6e0852be468b5271"
+  },
+  {
+    "file": "hypercurve/src/lib.rs",
+    "sha256": "7845274ec13b4d9f58e095b7e79508d04bf86a12d8d50f94cef032a420ff5e47"
+  },
+  {
+    "file": "hypercurve/src/native_region_tests.rs",
+    "sha256": "183535314908dfeec9d2a1b0c8f5a7dfbf7386e852a3d21c9948780c67f12871"
+  },
+  {
+    "file": "hypercurve/src/nurbs.rs",
+    "sha256": "390e388c9f933e80af9cbe4b0f6462b75eab8f8fbdd9bd379ed5acced3913d9b"
+  },
+  {
+    "file": "hypercurve/src/nurbs_interpolation.rs",
+    "sha256": "4aaf25e86a735666069a5e030d8d89dfbafee6bd1412868f72ad60a97df507d6"
+  },
+  {
+    "file": "hypercurve/src/offset.rs",
+    "sha256": "344e0651c32d99ac52faa83a26782c2cf8bf8b49e41a107d3f4d35be74753c47"
+  },
+  {
+    "file": "hypercurve/src/point.rs",
+    "sha256": "70de75e092d7596b5bb2ac9269ab4f06733c6c1aa0ac436463c2c2cc4f2168a6"
+  },
+  {
+    "file": "hypercurve/src/policy.rs",
+    "sha256": "3e7ac6f9b2d49b4984ec5dc49c255b744588a2aea489269060916b8901461200"
+  },
+  {
+    "file": "hypercurve/src/polynomial_spline.rs",
+    "sha256": "a57e77b85559383f7f88a6846570cf5c94199aca78dc7c46069e1ba99ab078ac"
+  },
+  {
+    "file": "hypercurve/src/prepared.rs",
+    "sha256": "ffbbd95841b916e0da1efde1cb66061b1a702063ec33bf432154b094cbfda8c8"
+  },
+  {
+    "file": "hypercurve/src/rational_bezier.rs",
+    "sha256": "dd60e6469357c7bd0eaa9e8b34646701d2b583995c1a95dd054bbc294899558e"
+  },
+  {
+    "file": "hypercurve/src/rational_bezier_general.rs",
+    "sha256": "60c6414769ec9e3ec4ba8d4466327db22ff5db73301fe659b317b48e0fce9e62"
+  },
+  {
+    "file": "hypercurve/src/reconstruct.rs",
+    "sha256": "857ab572fea41f0fed90cb9689199c690306665b51a54a1d24ef7114b8d029f7"
+  },
+  {
+    "file": "hypercurve/src/region.rs",
+    "sha256": "c5fac7f79c315b3974442aaa922500c66d5773eee163f20f0bbf333d0e3eadc7"
+  },
+  {
+    "file": "hypercurve/src/region_nesting.rs",
+    "sha256": "4c8810ba845469c63c6fb912c69668d7e497e43ea4b3dd38155f3576435b90d8"
+  },
+  {
+    "file": "hypercurve/src/retained_status.rs",
+    "sha256": "4514736a54304ff996274328c7bc5883e242eaff5adc3eff6022c667175dc90f"
+  },
+  {
+    "file": "hypercurve/src/segment.rs",
+    "sha256": "c76b46534cabfdb8b1e602dc862236b67433cedfcf91a56d32a68f3b1a81243a"
+  },
+  {
+    "file": "hypercurve/src/self_intersect.rs",
+    "sha256": "9e1d1b5b782b4d0b872c58e9cf4ba950a3cf6958d85626c49c06774b62a448fd"
+  },
+  {
+    "file": "hypercurve/src/spline_periodic.rs",
+    "sha256": "3f9cb5c28e93961b108c8648a4c47c0b9ceca175e7a504cd6227b26ad3820b7d"
+  },
+  {
+    "file": "hypercurve/src/split.rs",
+    "sha256": "2a29a5118c18669d5e33681d6a9bf85a9d66f3e8480884943ba06bb0f8ba5006"
+  },
+  {
+    "file": "hypercurve/src/straight_skeleton.rs",
+    "sha256": "b83727aa93f5aed5a2b2a642931e0c16c254086fcc64691125d2b55b830cad0a"
+  },
+  {
+    "file": "hypercurve/src/svg/exact.rs",
+    "sha256": "f25f1ece9ea0d2fcdb5e38972e3518b927e12e5064b027f6da36988d6359bdbd"
+  },
+  {
+    "file": "hypercurve/src/svg.rs",
+    "sha256": "1160e8168708c46243013e3bcf7aa4a4796c4e23636c92175d83a7e6ea7d0dc4"
+  },
+  {
+    "file": "hypercurve/src/transform.rs",
+    "sha256": "999c3f1fdd2cd7b1e8f03132a639f2ae42497a73a0423a4604788f4e999fbf5a"
+  },
+  {
+    "file": "hypercurve/src/translation_obstacle.rs",
+    "sha256": "fc8ce2b989bf15b5363b8e3a8d62c67ee89a32cebefc643a14d477305e47a34c"
+  },
+  {
+    "file": "hypercurve/src/triangulation.rs",
+    "sha256": "36f17f1345042b14f8ada3d6aed45e596a8719da8f7dcd2a2171d13ef252b709"
+  },
+  {
+    "file": "hypercurve/tests/exact_structural_facts.rs",
+    "sha256": "f5ad4b9e2f9972251a310e9afac04bd2130b44edcee24b97789ca42f16137756"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_adversarial_polygons.proptest-regressions",
+    "sha256": "598ba5b6d09a8cb08ca8722c178aa1b72783d99590b30370cf67973fc29124b2"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_adversarial_polygons.rs",
+    "sha256": "d6f33d5333ddcc2aafb4c1b8af69df5ab1485fb17f0d30dc425c86d0a89fe060"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_analytic_parallel_region.rs",
+    "sha256": "b1ab382fd0bd8ced8cfb8f488be92ef08558780d9586f8b0501d6b9574cc11ad"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_arc_bezier.rs",
+    "sha256": "7dfce925db8ac2a08e0ca0f4bbe893f676f293ce7298b1ef9813fdf0ad37e868"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_bbox.rs",
+    "sha256": "86051777097b50459477880338fcc69306dbea824b4c74984e98e190d78a849b"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_bezier.proptest-regressions",
+    "sha256": "602b7acac61583ed480cbe95af3b2a0b4c5274f992950ba2b86c7ed1ea4e444e"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_bezier_algebraic_image.proptest-regressions",
+    "sha256": "341aa43d1a9e7798efb56856290dcb0669a834f9417eed2ba0d6a84c8bf96c8f"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_bezier_algebraic_image.rs",
+    "sha256": "49f000f6edc48e9b6e688fd8811dcb82418e2cc987b6100e1d819d64a80d4a34"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_bezier_algebraic_parameter.rs",
+    "sha256": "b3e7e914eee4013757d416a75c8c628109b8964858e20cee9e7f81c9e3dbee9e"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_bezier_arrangement.rs",
+    "sha256": "808db9d453bdc182cde88ef51d93610341f11ebf837a5f005016c99763218e2b"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_bezier_evaluation.rs",
+    "sha256": "8df92dcabccc4bc707137cf714e0219e42f96b8878e520d477d3ebc3e355e901"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_bezier_fit_offset.proptest-regressions",
+    "sha256": "abdf2bd4be0a2cdd4c51abdeea3d4aa67864cd42b8988e4025dd48285a226952"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_bezier_fit_offset.rs",
+    "sha256": "c353167c3c51f1139f77ed05716af1279d75a3d40be9dbad9231cb399e9aef5b"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_bezier_region.rs",
+    "sha256": "f617740c701cd9b2e119166a5eb28357ebcb00e1cc5e2cdb412dc523d18cd706"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_bezier_split_materialization.rs",
+    "sha256": "ff9c86e1a3524afc52b49302dff41fde45ab6a7648b2dd524acae73ffcba36fd"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_bezier_tangent_order.rs",
+    "sha256": "8028112819b908d5eab4b3d21c5f8b26c30696238ad4d85573d78036e67c5609"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_bspline.rs",
+    "sha256": "11b79a740cab3be4de1e1747e2bdfc51af35c4b6a3e43645cd36063ece6e2e19"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_circle_predicates.rs",
+    "sha256": "c0a579bc53972c1c5e1ac6ded985ac9c465110127e2062c849bdf6519666f9c3"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_contour.rs",
+    "sha256": "f2adab28e9f92cd1980fb9682ab854f6313af7d8396a082d5be3350c95a8e239"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_curve.rs",
+    "sha256": "e38b56cd723ad83d41fc27e1ca21d68b249ab8aa1dc530905a501618314dab56"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_curve_intersection.rs",
+    "sha256": "8c5781f6281dae29ac030a2083a076e1e2ad9d45bd9d9b237e92b85c3e2f154f"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_curve_point.rs",
+    "sha256": "2fa2528af330fbff87324142526637916e5031d5816409e09091d3fca6648776"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_curve_region_boolean.rs",
+    "sha256": "60c81b36878b3214f7ab2204b1bb52ea19798254d29a2e9187caa88d644d3040"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_curve_region_boolean_fuzz.proptest-regressions",
+    "sha256": "50f4bd010f21a51db334aa626395fa74329b4fd9717e7a9a4e39cc75e71c6c3a"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_curve_region_boolean_fuzz.rs",
+    "sha256": "13b4155e98331ec0654d93526216e17d217dd0efb5d72410a3526e290c5580a1"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_curve_region_promotion.rs",
+    "sha256": "0b93abf4dd6f63121ac3c9d04b17bd674529e08cfe9e3e41c7ddbbd242d0985e"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_curve_region_stroke.rs",
+    "sha256": "ce170a9116017637150fa573e11ffc7cb92fda52420b8ad090780d5f9eb326bb"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_curve_string.rs",
+    "sha256": "7e535dddf8d6df7e5409c085a491ff50337649469cddce8dff8759e3851fbb03"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_derivative_completeness.rs",
+    "sha256": "f2c9064a080ee82f96e24faf239d9797e596be6785b2564bcf790532a31a42e8"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_dispatch_trace.rs",
+    "sha256": "1d5c83afdd36c50135d7f24d29e1a41c16d55b2b71b71a964015bd73ca12ba14"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_events.rs",
+    "sha256": "be6ef0a09e4ac304a3609f5fdd341c5f2e78efcfaa7b2b0e8824a01c1316130c"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_exact_closure.rs",
+    "sha256": "32d81fdec27c27e0ea5ba50dfb9144d5f22702b1f51beaa9efe520c0cdb03231"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_fragments.proptest-regressions",
+    "sha256": "ae7e0c2b828cc26e866c16ff3be8770441c49671e2bef42de2161482f831c6f4"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_fragments.rs",
+    "sha256": "63e5cee53155f7fd4003b197284cf32d289407af9de98a5a0e6f8403d2ab2a52"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_fuzz_invariants.proptest-regressions",
+    "sha256": "ff09f954eb820ff5db26a3a1055ac0793bd33916ecc567f49ecdbe353d07063e"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_fuzz_regressions.rs",
+    "sha256": "9711d09cb54dcc31cd46c744d195a0db2ece34183be1c1d50569f5bee7ae6e94"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_geo_regressions.rs",
+    "sha256": "8efe5e534e41404f14ef27961e5d05d2f05302a1fee69431332bfe91a217fd36"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_nurbs.rs",
+    "sha256": "25ad8f494be1228e9cb3ab9dcfa426d76474cc6f07176c989fc80d30605b6dfa"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_nurbs_interpolation.rs",
+    "sha256": "b0949a0e095edff7a988db2ff077657555e3cdd485a0b68fb699ad974233e520"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_offset.rs",
+    "sha256": "a26fd8c673e7e69724bc3320110c283084f7d0bc325211c20917ae874e92dd22"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_path_closure.rs",
+    "sha256": "ab4aa1cc6e0e3815553c5fa12d10c5db2832bce6478e6a200ce27b958e1cfb2e"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_pcb_boolean_regressions.rs",
+    "sha256": "89422d27cf9b71f439c257ea3a69d5897bf2e28a8f7fd0fc9a847ffad87b1f24"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_polynomial_spline.rs",
+    "sha256": "0cee4d5d55210a7f5c1612840ca14042bd0892a49dfa1c33d8f9d05bea7c4432"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_pr59_shape_regressions.rs",
+    "sha256": "69df0908e79193805ca93056f592b5e72fdd418e160f945e71ff50411932d468"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_rational_bezier.rs",
+    "sha256": "5a6b26e36ce4d0e173abf31387b36c9e657075ae61af72a8547e1d1b39e499f6"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_reconstruct.rs",
+    "sha256": "da7ca30682868bd5a11331556deeaa7d62a3f09149c95612ea04daca3b3ce0dd"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_self_contacts.rs",
+    "sha256": "272c2053c6a5962099a33d03c34f8e2a760761de0773089ae6edbaf2a119a805"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_split.rs",
+    "sha256": "27a3f4e8f30e68cffadf2abf7ea3c30af85f81370ecc6bf76e45216846005681"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_svg.rs",
+    "sha256": "22f68ba14ccc1571a65cb4433638e9a6ce2f64fa067e58e7c3a2e25eebf6b279"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_triangulation.rs",
+    "sha256": "d381f095a7b6ccacf6de42f99484a267bc6f1045f95549d938ef402422918646"
+  },
+  {
+    "file": "hypercurve/tests/line_constant_coordinates.rs",
+    "sha256": "7874d5f0c9d4e8a50a1334260d6d52cb32b337118fbe1001bd6054ebf24e2c47"
+  },
+  {
+    "file": "hypercurve/tests/pathological_benchmark_fixture.rs",
+    "sha256": "044a56bfae6a13e9195aa882c12e22205bca3eb26c898846c775c398dfd45e06"
+  },
+  {
+    "file": "hypercurve/tests/readme.rs",
+    "sha256": "5e48480c48e741d10906a54b00f008230f31dd2f6de1fcaaf29fb1b6e82bb149"
+  },
+  {
+    "file": "hypercurve/tests/support/mod.rs",
+    "sha256": "7dc9010188bf704bf90092c6eaccbecdcf13dadf91762f204253f3914dc5abaa"
+  },
+  {
+    "file": "hyperbrep/.gitignore",
+    "sha256": "44c92e3a70ad3307b7056871c2bdb096d8bfa9373f5bf06a79bb6324a20ff2fb"
+  },
+  {
+    "file": "hyperbrep/Cargo.lock",
+    "sha256": "61568670c40dc6b86aa1b10eb5d0d217cf486c3ced53559eb232bf78ed659770"
+  },
+  {
+    "file": "hyperbrep/Cargo.toml",
+    "sha256": "3c80594686e2079fa9fe14b5cf5caae0c985cec74ebd27a274bccd159efc8a0b"
+  },
+  {
+    "file": "hyperbrep/PERFORMANCE.md",
+    "sha256": "a49d62e87a4b16f1a98113b8bcf5eab1a91ac64de6063a71dcdcd4e45e6520f9"
+  },
+  {
+    "file": "hyperbrep/README.md",
+    "sha256": "b0aaf16c101ed2a9ba9683b86fc78c89bd3ea96665f2cb69e8937b82d16f2d10"
+  },
+  {
+    "file": "hyperbrep/benches/kernel.rs",
+    "sha256": "37b55d7d641c7c6b40e8360a43ee09e3315e6706f040d4033284c9dd35fbc036"
+  },
+  {
+    "file": "hyperbrep/docs/ARCHITECTURE.md",
+    "sha256": "6e3564d31623a460bebac882575cab1aff8822cd04837e7a1e50aaf664d546c7"
+  },
+  {
+    "file": "hyperbrep/docs/PHASE_0_INVENTORY.md",
+    "sha256": "e36d092f78d945d4b1999847b4a793d86e895b15bd6e3d25a8f9f7ebffd53160"
+  },
+  {
+    "file": "hyperbrep/docs/SUPPORT_MATRIX.md",
+    "sha256": "73d179cec19e6615ad63e6251db0a99e2e7391761d0b07a21d665c0a40c88fc1"
+  },
+  {
+    "file": "hyperbrep/docs/architecture/0001-exact-decision-contract.md",
+    "sha256": "e3963ab39196b0295fcfb85f550a7ab5939793c10372dc2e460996c6b16e0673"
+  },
+  {
+    "file": "hyperbrep/docs/architecture/0002-model-ownership-and-validity.md",
+    "sha256": "225039fda20a269901e2044b6f45bc352b31e09fed95b50c83726d75bb3e1195"
+  },
+  {
+    "file": "hyperbrep/examples/basic.rs",
+    "sha256": "6039bce68dbed19e15311f331e56a2c3cd71cb9925fd2d04c245d3607864c628"
+  },
+  {
+    "file": "hyperbrep/examples/path_extrusion.rs",
+    "sha256": "e280a6e2ae599b5784929c5734d947398921b8e45e41fd76b7868dac98b717a1"
+  },
+  {
+    "file": "hyperbrep/examples/planar_face.rs",
+    "sha256": "9e65fc06df2017fcd2dcbd129fccf8e71831984dd3c634f7cfec3731b2c46ff7"
+  },
+  {
+    "file": "hyperbrep/fuzz/.gitignore",
+    "sha256": "98d82ee4130b95c404bd9aa51fd5b75af36694f5a20fbc0d7694c8a19705f5b8"
+  },
+  {
+    "file": "hyperbrep/fuzz/Cargo.lock",
+    "sha256": "3aaefd83a91c2459192df38f2d1d05b4315afc8d82b9e0f25485643a30e1c64a"
+  },
+  {
+    "file": "hyperbrep/fuzz/Cargo.toml",
+    "sha256": "ca38588461c02bfe15a3242904a9225f6cc3a3288a94957e79b0eb0d5f4aaa21"
+  },
+  {
+    "file": "hyperbrep/fuzz/README.md",
+    "sha256": "89fe02a8dca245f47582e3f6da4e11374be961596f25da80b3e8e0e286dc0255"
+  },
+  {
+    "file": "hyperbrep/fuzz/fuzz_targets/analytic_solid_roundtrip.rs",
+    "sha256": "a6c71c1b96e478d3049b8ca2e3250aa3772fc7ff1535914a0694fa2ce24df279"
+  },
+  {
+    "file": "hyperbrep/fuzz/fuzz_targets/model_builder.rs",
+    "sha256": "c94d0fe0f96e5d3d986360af56201ab2434acf2224cc5af616b867dbd5967bb7"
+  },
+  {
+    "file": "hyperbrep/fuzz/fuzz_targets/topology_edit_roundtrip.rs",
+    "sha256": "99623a143cb9a68c951f276fe652518492f3d6d264524b59f2bd5edbf90ce994"
+  },
+  {
+    "file": "hyperbrep/src/boolean.rs",
+    "sha256": "c215910c4db6f85dbc7fd01889e94e0b04cac8740fcb82751a8024042bfe48fa"
+  },
+  {
+    "file": "hyperbrep/src/builder.rs",
+    "sha256": "ae32c41a5e349f7e5dfeb4de7a9d94ed054f080db640f402e6e89e72c44594e0"
+  },
+  {
+    "file": "hyperbrep/src/error.rs",
+    "sha256": "2cf6ca1ef249ad3c044d29b67399c6e95bef4a2c4b6e6cda024eb44e96a9ddc7"
+  },
+  {
+    "file": "hyperbrep/src/geometry.rs",
+    "sha256": "fbdcfa685a1dcf6a25fb8e86cfb88904814d840b001fac15ea97b265459029d3"
+  },
+  {
+    "file": "hyperbrep/src/lib.rs",
+    "sha256": "f0f0a9638cc16fc8c31665ff6ce564b8bb62910b0b05dfa57ca109a36a4b53fa"
+  },
+  {
+    "file": "hyperbrep/src/model.rs",
+    "sha256": "7ade6913a3a06cf04304730217c2795551a471db759d46559d3265dfe34bb821"
+  },
+  {
+    "file": "hyperbrep/src/persistence.rs",
+    "sha256": "015e358b5d4fb4b375295c13eedf51c54ec2704cbe3e093ebaae9e80b80e936a"
+  },
+  {
+    "file": "hyperbrep/src/tessellation.rs",
+    "sha256": "bd786e78950b853231d69a6b69164a608ea86494ba264f272849ab7d1c6c7343"
+  },
+  {
+    "file": "hyperlattice/.codex",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "file": "hyperlattice/.github/workflows/ci.yml",
+    "sha256": "b536f1e13252789ad27dc0e3c0369d6959c0716728187232744c01b84e083098"
+  },
+  {
+    "file": "hyperlattice/.gitignore",
+    "sha256": "d48e374fdd7717cf079507179be753943a462f833d1e76cd64858114d99cdf28"
+  },
+  {
+    "file": "hyperlattice/.symbolica-license.example",
+    "sha256": "1b762d571812cf5023b72c676e7631922c4bc597abce52aa81953428a60bc3dc"
+  },
+  {
+    "file": "hyperlattice/Cargo.lock",
+    "sha256": "5028a9aaa4a26c4e96736fb4ba236c9a0476a7de1b78c67df165ea2093f9d290"
+  },
+  {
+    "file": "hyperlattice/Cargo.toml",
+    "sha256": "f2e6f9d051560b5550e4326c354f96e65af66b38117743f7fa05fb2548df229d"
+  },
+  {
+    "file": "hyperlattice/LICENSE",
+    "sha256": "1bd6f730e72e7a1e04a3d4c28001efc23869d953c2d35a19f53935f6e55bd335"
+  },
+  {
+    "file": "hyperlattice/PERFORMANCE.md",
+    "sha256": "e451479dfa0820ecbd3f87a2bce9a0ff2a0f1dbaebb5d7f3decb140923476008"
+  },
+  {
+    "file": "hyperlattice/README.md",
+    "sha256": "cccdc019592faae5c6af61cdaf704b6be3c51faf94ce59d0af1213f642e7c638"
+  },
+  {
+    "file": "hyperlattice/api_dispatch_trace.md",
+    "sha256": "1181863fb83403e9284e95d68e8ae1fc86f50096cabfe079ac8e0be975876829"
+  },
+  {
+    "file": "hyperlattice/benches/api_dispatch_trace.rs",
+    "sha256": "8db84bcfb1e8841abc03f2b4d7c756503c8178d654bd707deef41c64452c3b87"
+  },
+  {
+    "file": "hyperlattice/benches/mathbench/borrowed_ops.rs",
+    "sha256": "1bfa36f518493dca3e5dbae66549020b290827d4243c3f3a903b171070ad2b82"
+  },
+  {
+    "file": "hyperlattice/benches/mathbench/comparisons.rs",
+    "sha256": "80751ea4e1039718149168a0a333418339a7c823e758dd5966b50c040de029e8"
+  },
+  {
+    "file": "hyperlattice/benches/mathbench/complex_ops.rs",
+    "sha256": "0b17ffe1ffc5251d7a7cac56bbac758379722229e41393870d97cd1bfd730f62"
+  },
+  {
+    "file": "hyperlattice/benches/mathbench/dispatch_trace.rs",
+    "sha256": "67e188f56a41ab534ed485e05235715c6f1ba6e374a5a972d775012161ead63a"
+  },
+  {
+    "file": "hyperlattice/benches/mathbench/engines.rs",
+    "sha256": "e725f33327a605661c7d11b5b313604788576e4cb4bdc6e3e3f095f2a8065c92"
+  },
+  {
+    "file": "hyperlattice/benches/mathbench/fixtures.rs",
+    "sha256": "2cdb0925c12e7fd61e56e88e4541f26efef427eb85c605b66e4bf181b81bd6c7"
+  },
+  {
+    "file": "hyperlattice/benches/mathbench/matrix_ops.rs",
+    "sha256": "cc310d3827481dd194e13a8a8860af7e9bd32cf61ae9c9e3436cf9f3c24a0fc2"
+  },
+  {
+    "file": "hyperlattice/benches/mathbench/report.rs",
+    "sha256": "0c91f6babe0a30cf00d578f72fa73696abeb5dbdb3ebfbb67cc607f34d2041bc"
+  },
+  {
+    "file": "hyperlattice/benches/mathbench/representation_ops.rs",
+    "sha256": "eeaa1f65f2353cdb104d96b0f7d0862149d4ac29328063f70b87dde3acff6882"
+  },
+  {
+    "file": "hyperlattice/benches/mathbench/scalar_ops.rs",
+    "sha256": "baf70d2de42e7f85b8b076e4c60b14219d15fdf0c89e15ff601f6011123988a0"
+  },
+  {
+    "file": "hyperlattice/benches/mathbench/vector_ops.rs",
+    "sha256": "cc29871fd1662d5bcf68071a39562bb758c04ea143a8d7357d487e5178d32e7d"
+  },
+  {
+    "file": "hyperlattice/benches/mathbench.rs",
+    "sha256": "dcb0a32d9a0238cf801c080c397ac9e2797dd602ac2def3043d852701741abbd"
+  },
+  {
+    "file": "hyperlattice/benches/regression_sentinels.rs",
+    "sha256": "42c3c458ccb70a9f23fa903c7fbee7fb84c9f3079ce7a8f85160cd76d9b7b299"
+  },
+  {
+    "file": "hyperlattice/benches/retained_fuzz.rs",
+    "sha256": "1b6804168300dfa2624dc0f9f25b4b26d0090a93716bc00014be0492d8ed7fec"
+  },
+  {
+    "file": "hyperlattice/benches/support/benchmark_report.rs",
+    "sha256": "d65356dfd8af1c658a4827e7bd7f482fa6e5e0390fac52f55c18427c9e5932fd"
+  },
+  {
+    "file": "hyperlattice/benches/support/retained_fuzz.rs",
+    "sha256": "812ace7f011bcdedcf3698a7c8e6eafbe8411bb3c3ba276d6d1395481fcc1062"
+  },
+  {
+    "file": "hyperlattice/benchmarks.md",
+    "sha256": "836ff1c2ad1969366bda3011f0e386c603b85785030156f745b70231fa9890f5"
+  },
+  {
+    "file": "hyperlattice/dispatch_trace.md",
+    "sha256": "85757edb9a530f8a21a9d3d21e72b21caac193fd7528ae05dd1148ed5eb2bb5d"
+  },
+  {
+    "file": "hyperlattice/doc/hyperlattice.png",
+    "sha256": "022a7d5fc7d8731ccbe6d62d8731b9415a82d4e7ec443977e91bb87a2b45ad76"
+  },
+  {
+    "file": "hyperlattice/examples/allocation_profile.rs",
+    "sha256": "8c866655d0b154bc69833e02fd302650c1355191943a0c42819f7786a1a4540b"
+  },
+  {
+    "file": "hyperlattice/examples/readme_quickstart.rs",
+    "sha256": "eaa92c86e6fc9fbe1ceb58e333a8305505530823ac6ea246b8c79bfcaa06c6ce"
+  },
+  {
+    "file": "hyperlattice/examples/write_benchmarks_md.rs",
+    "sha256": "a9237f07a400d36b497b1923154590dd86bc6fd6d5a54654f29f7618134c7e19"
+  },
+  {
+    "file": "hyperlattice/fuzz/.gitignore",
+    "sha256": "135f86f2e7ffe30c650654291a05d83cc06b13049346d70ab6a8b2db715e417a"
+  },
+  {
+    "file": "hyperlattice/fuzz/Cargo.toml",
+    "sha256": "1d6050fb3f55358f96df419bb80bb0e9e9dd2147d94a048bde7f683d1b45dcac"
+  },
+  {
+    "file": "hyperlattice/fuzz/README.md",
+    "sha256": "0ee4b6601d6f6fa2b4ce22cfa94b3654e8c7bb3ab903f82981d08c89d6e32475"
+  },
+  {
+    "file": "hyperlattice/fuzz/fuzz_targets/complex_ops.rs",
+    "sha256": "a616de88029f4eab7f2c344a3b7d252ae3de8a827ec8abf27db4f749147c21f4"
+  },
+  {
+    "file": "hyperlattice/fuzz/fuzz_targets/hyperreal_representations.rs",
+    "sha256": "2005a05c0c2797a0a2fc1d20dfc562b0a27b09f42e1a3afb3ecc4a1fa344a90a"
+  },
+  {
+    "file": "hyperlattice/fuzz/fuzz_targets/matrix_ops.rs",
+    "sha256": "5cb130cc969f30a8ee5e6faeb32337dbdecdd556f8776468ec63b2aec801ae03"
+  },
+  {
+    "file": "hyperlattice/fuzz/fuzz_targets/scalar_ops.rs",
+    "sha256": "ee2600cb3f17762a9584cb9f2399d10fd4136f00aa1fc0eefcbd89035be06447"
+  },
+  {
+    "file": "hyperlattice/fuzz/fuzz_targets/vector_ops.rs",
+    "sha256": "c43aea1258439fa3ce8c13be565898173e8bb84caadbd8803c92b3ab765d4623"
+  },
+  {
+    "file": "hyperlattice/fuzz/run_fuzzing.md",
+    "sha256": "aea0939fe60be79160e3d65285701333ce85e56c41992621662e2497958bfdd4"
+  },
+  {
+    "file": "hyperlattice/promoted_slow_offenders.txt",
+    "sha256": "fffc96ff681db166d6f0ed45cc79d472289e274face57a199198d031d6f41002"
+  },
+  {
+    "file": "hyperlattice/scripts/allocation_profile.sh",
+    "sha256": "81b35d89e5ef86f3376508682e71a23d7b1af5cdec4e1a4fcffa0e6725755303"
+  },
+  {
+    "file": "hyperlattice/scripts/coverage.sh",
+    "sha256": "19dbf6c2835a0b47bbee9cd5048b7b3a2f184910c76ed6abf1c1a0a4fde71817"
+  },
+  {
+    "file": "hyperlattice/scripts/representation_coverage.sh",
+    "sha256": "acfeef3bb7a7eaeb7a2f6688f6c1ff79e6883ff5ca06e83352531f021eac5ff3"
+  },
+  {
+    "file": "hyperlattice/slow_performers.txt",
+    "sha256": "b795f4391f6a334cd8dd6b61a8cea656fbb3bfff936ec8192c21b824314a7e3c"
+  },
+  {
+    "file": "hyperlattice/src/aabb.rs",
+    "sha256": "c0347d228df9ff2565a63acce1e931de88e7a32138197c027d6a60dbeb38d471"
+  },
+  {
+    "file": "hyperlattice/src/algebra2.rs",
+    "sha256": "6ad9dda4944fbb8104ba3b1c9e8139361ee9ae88423cabeeed95b7a02ce35c40"
+  },
+  {
+    "file": "hyperlattice/src/arbitrary_impls.rs",
+    "sha256": "e4c67cf9074f02bc6b7c480fe900198e418b558fdb3020a20d5a9ad082bd8ca9"
+  },
+  {
+    "file": "hyperlattice/src/complex.rs",
+    "sha256": "93977c0de29a4e1598f92e7437987a6b7fa4ba8eefb63864ef0e93ef1ba40923"
+  },
+  {
+    "file": "hyperlattice/src/error.rs",
+    "sha256": "2b6057c41002723df3b247c61894fa5d1ee509f53229351e9fa18e5a1839db92"
+  },
+  {
+    "file": "hyperlattice/src/kernels.rs",
+    "sha256": "31155015ef362d6d6ed5900eeebee7341270a907e8d75b67a08fedeaf6adf164"
+  },
+  {
+    "file": "hyperlattice/src/lib.rs",
+    "sha256": "e59f6a1c584b160b3ef5883c56a8f2d236cc06d0f52e68ad29d58b4fcca6b56b"
+  },
+  {
+    "file": "hyperlattice/src/matrix/batch.rs",
+    "sha256": "c9b90ccf9ef7adfbe5c4dda17e80da0fc09938812d43afa5037403787f567a94"
+  },
+  {
+    "file": "hyperlattice/src/matrix/core.rs",
+    "sha256": "021022c26871541d7118d5c2e0a68e98d5750cd5b2ecc0549f21ab81add5c1a8"
+  },
+  {
+    "file": "hyperlattice/src/matrix/determinant.rs",
+    "sha256": "027355124335e724cd4bc5d3315461005681e92f229ab34a72fc741bd7755064"
+  },
+  {
+    "file": "hyperlattice/src/matrix/inverse.rs",
+    "sha256": "741d77c21cf211181900ddf44b501a15edcab88215d2783e83940576ab193464"
+  },
+  {
+    "file": "hyperlattice/src/matrix/mod.rs",
+    "sha256": "0f037aaabdf82f0057dde52e9b3ec935a98edba1647e8fbabe5757542f66ea48"
+  },
+  {
+    "file": "hyperlattice/src/matrix/ops.rs",
+    "sha256": "f304a2efebdeb7138e7fe553935d50bb1eb9827496becd295abfb35113be2cbb"
+  },
+  {
+    "file": "hyperlattice/src/matrix/transform.rs",
+    "sha256": "ff23d65b0360d8ca1d4ae4a0efe17465b9b06a2923c004a1e3809d6fb9eb3771"
+  },
+  {
+    "file": "hyperlattice/src/matrix/types.rs",
+    "sha256": "f8b6797dc1b697caa2c4a4a8a5a4282962aa60710b14d81cfb81f96f364ad4e1"
+  },
+  {
+    "file": "hyperlattice/src/point.rs",
+    "sha256": "e96e5296bdc902b744d889fd85064194d56e8cd90badc1a750e6e16af21f176c"
+  },
+  {
+    "file": "hyperlattice/src/projective.rs",
+    "sha256": "7d012e76eb83876f95db5048cf8a0591346216d924629f70fbc32c4bdb09c2e4"
+  },
+  {
+    "file": "hyperlattice/src/scalar.rs",
+    "sha256": "d664754c28a243b6cb3450e91bed2f06cec33636e4b43105fa3d349864aec025"
+  },
+  {
+    "file": "hyperlattice/src/trace.rs",
+    "sha256": "3efb972b87365f4eeae9a3fdd6fc646659ea6ffc016e21037858851f11c31e7a"
+  },
+  {
+    "file": "hyperlattice/src/vector.rs",
+    "sha256": "10b40e2b9f5b7952586521b3de86ba9fac131e1144877db442afb5159d75b363"
+  },
+  {
+    "file": "hyperlattice/tests/adversarial_borrowed_owned.rs",
+    "sha256": "14fbcf1a8d7d2e8ae218f8935b73422d54d36baba0f08f7684f18ac77b51b639"
+  },
+  {
+    "file": "hyperlattice/tests/adversarial_constraint_props.rs",
+    "sha256": "86a1636cf41ff02e9dc6a2e233f82784cc1aef238a87786acff32366b55db4e9"
+  },
+  {
+    "file": "hyperlattice/tests/adversarial_matrix_invariants.rs",
+    "sha256": "df26a0cd4dbdd7ea606ea43a3f6430b0155c2124b90c3ef759296312534b50f0"
+  },
+  {
+    "file": "hyperlattice/tests/adversarial_props.rs",
+    "sha256": "3d87d1b4d0b7012bb3a6e9516794683ee0f7d1bbc44ee1c3c6afe42ccf68d8ca"
+  },
+  {
+    "file": "hyperlattice/tests/adversarial_regressions.rs",
+    "sha256": "51fe8413d5b123bc941a31441a18b414f1d8cae623748ec65c8c40760e076020"
+  },
+  {
+    "file": "hyperlattice/tests/adversarial_scalar_semantics.rs",
+    "sha256": "6b072ba071312480670371e3579f8e60890f72b3913b5a59bf9682cb86fa775e"
+  },
+  {
+    "file": "hyperlattice/tests/api_surface_coverage.rs",
+    "sha256": "f9e3740670fba398a02eb511f2082425360c48c161ca435830dc3151bdc7653e"
+  },
+  {
+    "file": "hyperlattice/tests/borrowed_ops.rs",
+    "sha256": "94bcb093299f67206c0ec4a12d396f07e0113e0bc1c06fc9e38a3750f85bce7c"
+  },
+  {
+    "file": "hyperlattice/tests/common/mod.rs",
+    "sha256": "ff601a882f3f04f9c8609e71e127e7c779c73ec8647fd06e6f6b0b23e44fa79b"
+  },
+  {
+    "file": "hyperlattice/tests/complex.rs",
+    "sha256": "62412bb08f3fe7d4b205b491435dafccb97475f71e0c5e30f978031a6452408f"
+  },
+  {
+    "file": "hyperlattice/tests/geometric.rs",
+    "sha256": "aad7ef6d7c6f7f1d42b7e34631b22500298a22e42c85497d4e50a1c77f3003bf"
+  },
+  {
+    "file": "hyperlattice/tests/gmp_benchmark_coverage.rs",
+    "sha256": "ac31c40d745f6e89510a1b9545a06f8f81699183ee778dfa230baff63dcd76c3"
+  },
+  {
+    "file": "hyperlattice/tests/matrix.rs",
+    "sha256": "5cd7bf49bc4d10d407e3997b96b51b1fb84a4c6427133fa8b137c1e02f1b4433"
+  },
+  {
+    "file": "hyperlattice/tests/matrix_api_surface_coverage.rs",
+    "sha256": "6ebc117d3ee4a77986804fe6361b0c252163f73fd6fd1d94b07d4cc3c3f73bba"
+  },
+  {
+    "file": "hyperlattice/tests/readme.rs",
+    "sha256": "12f5a1e558792c37a18534d312c094d555c467d3fe3a2f9730f7bc20307fa842"
+  },
+  {
+    "file": "hyperlattice/tests/real_representations.rs",
+    "sha256": "8ec3c981583837c433e188ed7e2148594d3003114e5f58def12d3e65fca6131c"
+  },
+  {
+    "file": "hyperlattice/tests/scalar.rs",
+    "sha256": "1905efd522ea3bcdd01ad02b3caa91b6ca71f89997e0b3b1b72c3a9665060a71"
+  },
+  {
+    "file": "hyperlattice/tests/vector.rs",
+    "sha256": "b32b33fa4a3193cde0df06474014dfd2f6086c38a29caf9ac832dbd82aed26ce"
+  },
+  {
+    "file": "hyperlimit/.gitignore",
+    "sha256": "53fc8cd8e41d64b78bd5f605ce2474458de53cf49f00501f0d4337b618b1c72d"
+  },
+  {
+    "file": "hyperlimit/Cargo.lock",
+    "sha256": "4cf83bb216a16c47b2894d748a7ef52ab22c9f6460e67ece710b6195130fe73f"
+  },
+  {
+    "file": "hyperlimit/Cargo.toml",
+    "sha256": "0c5b6e7b3d7460898971309d06d8b5c2f75b3d04d410fbc11df0ed1c671c4d6c"
+  },
+  {
+    "file": "hyperlimit/LICENSE",
+    "sha256": "1bd6f730e72e7a1e04a3d4c28001efc23869d953c2d35a19f53935f6e55bd335"
+  },
+  {
+    "file": "hyperlimit/PERFORMANCE.md",
+    "sha256": "fe89865bca42eb24d044433497a33d7d77c92495cab16a7307fc9e04075d8690"
+  },
+  {
+    "file": "hyperlimit/README.md",
+    "sha256": "6831ded7b4b62b6a97e960c23ab8c7e9663d11fa06b465e9ca849e1da8198f57"
+  },
+  {
+    "file": "hyperlimit/STACK_EXACTNESS_POLICY_FILE_AUDIT.md",
+    "sha256": "dcfcaa3d17890ecb0cb48b591f8150aec3bae913211711ce18007816b6174fae"
+  },
+  {
+    "file": "hyperlimit/STACK_PREDICATE_AUDIT.md",
+    "sha256": "d4e66c0a6742ed1953a376349ebf0067ecbb80a734fa01f8e83b05d896b1c7fc"
+  },
+  {
+    "file": "hyperlimit/STACK_RETAINED_FACT_AUDIT.md",
+    "sha256": "ea460c0199f3637ecb2f736b416d4c0ed08e2ef25ebc5964e346b1ccd16fad12"
+  },
+  {
+    "file": "hyperlimit/benches/benchmark_report.rs",
+    "sha256": "66000ad05f078a5087de72c088e78f32a9ef6f7a31ed7fd116433a16c7cdec17"
+  },
+  {
+    "file": "hyperlimit/benches/dispatch_trace.rs",
+    "sha256": "0915e3ccb65b49116da4e401f75655cb1156413fd070378f86806c312cf46fff"
+  },
+  {
+    "file": "hyperlimit/benches/predicates.rs",
+    "sha256": "bca55ea8ddc87c97a080ec4924dd26c594a728eb7b865ffea2364e55ca70c240"
+  },
+  {
+    "file": "hyperlimit/benches/retained_fuzz.rs",
+    "sha256": "8db5430913257bfcee01c8140d13a341f12ba61ee04f7ff0c699b383c497903d"
+  },
+  {
+    "file": "hyperlimit/benches/support/retained_fuzz.rs",
+    "sha256": "812ace7f011bcdedcf3698a7c8e6eafbe8411bb3c3ba276d6d1395481fcc1062"
+  },
+  {
+    "file": "hyperlimit/benchmarks.md",
+    "sha256": "d7b19a370bac1146badf713a1df5298d29b5ce6149abd1ae434f6efde5630d98"
+  },
+  {
+    "file": "hyperlimit/dispatch_trace.md",
+    "sha256": "0d332a2bac3058bd49fe130ad345f1833de1c390cef5aa9c664600b9d4e880ca"
+  },
+  {
+    "file": "hyperlimit/doc/hyperlimit.png",
+    "sha256": "332efaf3a2340fca257dae3c03e9d75044e255be1c6cf8540da034e331b90525"
+  },
+  {
+    "file": "hyperlimit/examples/allocation_profile.rs",
+    "sha256": "9d7ffc5972bf73342e3ab6974b2a3eb58e6beca4bf79773a4c510c84d5c88547"
+  },
+  {
+    "file": "hyperlimit/examples/readme_quickstart.rs",
+    "sha256": "54696d0a25ca0a00cefe58e7052512a53f1a0a92ecd24a09d7eb1f5b47825298"
+  },
+  {
+    "file": "hyperlimit/examples/write_benchmarks_md.rs",
+    "sha256": "fec2f9089b2fcab2aede5615a59457b69b9e273f0ec9c5e4de31a06a24e9d8b8"
+  },
+  {
+    "file": "hyperlimit/fuzz/Cargo.lock",
+    "sha256": "9151e718588e01519af68c2c074f3eb125b59e73c350618b360816632ef8bf03"
+  },
+  {
+    "file": "hyperlimit/fuzz/Cargo.toml",
+    "sha256": "d750994738b20539268368a551fd5b8ac1f4f544fe1866c9d1a6c29805f89168"
+  },
+  {
+    "file": "hyperlimit/fuzz/README.md",
+    "sha256": "dbc20dd0501d38f1f1584c353557850791e23e46d322ae2321ed951856019e23"
+  },
+  {
+    "file": "hyperlimit/fuzz/fuzz_targets/hyperreal_representations.rs",
+    "sha256": "bb7513d3005f55b42f1ff1085542d98c4aca590a76da8eee575edd80760a4561"
+  },
+  {
+    "file": "hyperlimit/fuzz/fuzz_targets/predicate_invariants.rs",
+    "sha256": "9716ecd44dd9189e9a26c5c8d29e2d6345078104406e030357853be586ad54e8"
+  },
+  {
+    "file": "hyperlimit/plots.md",
+    "sha256": "54d0a024562b21c0851282192348f56b6e7f37096b5639dc42b6d542e4534830"
+  },
+  {
+    "file": "hyperlimit/promoted_slow_offenders.txt",
+    "sha256": "f5004e462ada2e3ac2a618f7fdff9c8ee2f92acdad29144bb0cb73101e11401e"
+  },
+  {
+    "file": "hyperlimit/scripts/coverage.sh",
+    "sha256": "0191c85523011d4285a607e37798c0481933efe565e6eafc76e2ccfab2ee1431"
+  },
+  {
+    "file": "hyperlimit/scripts/generate_stack_exactness_file_audit.sh",
+    "sha256": "ab8d60b1f7059419a4e5b2a58133043d208db9eb9ddc162e7e574b6a058a5710"
+  },
+  {
+    "file": "hyperlimit/scripts/representation_coverage.sh",
+    "sha256": "a7258b8468b77e4b4aa7defb0690db3a16b5c9fa83b2f6864269d894fa36d312"
+  },
+  {
+    "file": "hyperlimit/slow_performers.txt",
+    "sha256": "04f7523df8cb2e2661ef75cc2fddbb7ad7af07c980dab6ebcbf5eeb12aa03355"
+  },
+  {
+    "file": "hyperlimit/src/batch.rs",
+    "sha256": "40e6919aaf16743c25493031bfa2da8254395fe80f8d516dbb6bfddbe06e4246"
+  },
+  {
+    "file": "hyperlimit/src/classify.rs",
+    "sha256": "3b78694bf47199a6a8aeefc35ada0c00f87b70820d00023713fbc213415116fc"
+  },
+  {
+    "file": "hyperlimit/src/error.rs",
+    "sha256": "bc2c5e74a90aa4bc249b7d77b2f2a3349268a79145da4a06629692129e12cb4e"
+  },
+  {
+    "file": "hyperlimit/src/geometry/facts.rs",
+    "sha256": "513c7790c65ca9fc9568c87cf9b6653aabbb91deca1440ee374690bd0479cd31"
+  },
+  {
+    "file": "hyperlimit/src/geometry/homogeneous.rs",
+    "sha256": "836190f54ad23419f148f448ddb78fc7564be02f3438a085a308519910c8260a"
+  },
+  {
+    "file": "hyperlimit/src/geometry/mod.rs",
+    "sha256": "a835471df2bb386c7bd26a0c5062c46aad21ef489fa4f1bb64afdb4da17b19e7"
+  },
+  {
+    "file": "hyperlimit/src/geometry/plane.rs",
+    "sha256": "489b2168ccb1aabb9eadf6f3b2cc49ccef40a61311b902f15d1623fdcbe56c5d"
+  },
+  {
+    "file": "hyperlimit/src/geometry/point.rs",
+    "sha256": "ce94417ac5feb9da21f76e5e4bda91121e1b5d12a9373411c43981feea5fa841"
+  },
+  {
+    "file": "hyperlimit/src/lib.rs",
+    "sha256": "e964032b948286eb47d6cd44d6037b859ea582bacf22ec690db9442c971d6d07"
+  },
+  {
+    "file": "hyperlimit/src/orient.rs",
+    "sha256": "b1ffc66e0f97b7ecb19fd22175f2c7870775b9bd97f91392ee729d067f289cd5"
+  },
+  {
+    "file": "hyperlimit/src/plane.rs",
+    "sha256": "c51322d286dbd378c0e385a8cd75c18d899b4cb1c7bd69d804eeb33f978a8499"
+  },
+  {
+    "file": "hyperlimit/src/predicate.rs",
+    "sha256": "352c97687c06be634a02a2d15cc9ca646b134f4192da3ba047b850342ceaf75d"
+  },
+  {
+    "file": "hyperlimit/src/predicates/aabb.rs",
+    "sha256": "6a73bc59ad4fc34a1e84e46d5cf5add3a3c8d57df51d3ffaaa59c533db715503"
+  },
+  {
+    "file": "hyperlimit/src/predicates/convex.rs",
+    "sha256": "1fcd6d91b261fb1298196da8bf7dadfe3c559a33786751e6e1128ec9f1d24491"
+  },
+  {
+    "file": "hyperlimit/src/predicates/coplanar.rs",
+    "sha256": "723f75709d1c967eb07374c8876acecd08bf3ebd878f6ab9093f15d2e7e1a659"
+  },
+  {
+    "file": "hyperlimit/src/predicates/distance.rs",
+    "sha256": "11bb12391572adfa19c4f9e0a23ed77dee39531858c5423b63a9a343ec517f5a"
+  },
+  {
+    "file": "hyperlimit/src/predicates/dop.rs",
+    "sha256": "756fd3f834bd09ad172c2edc613c83a02aebba79c6564bea70d7b26e3e92ff15"
+  },
+  {
+    "file": "hyperlimit/src/predicates/exact.rs",
+    "sha256": "8e8c479909c5fdcc889116bba913bac179af7d4d966c19cd982fdf14e25148eb"
+  },
+  {
+    "file": "hyperlimit/src/predicates/filters.rs",
+    "sha256": "0d808a1b9cd93bf503e2e7c1f76f609f3740b1b53728d28d7ae2f5dd0c6f51ac"
+  },
+  {
+    "file": "hyperlimit/src/predicates/halfspace.rs",
+    "sha256": "2a6fda86d0de4a3330ec4d65073ac900bc3da44f6894b485ba134d5e286d7064"
+  },
+  {
+    "file": "hyperlimit/src/predicates/interval.rs",
+    "sha256": "f7c28d07137e66c30a3aa55822cea264d62d80a7bd50adf2705123c4ef2e037f"
+  },
+  {
+    "file": "hyperlimit/src/predicates/mod.rs",
+    "sha256": "622eb4500e0a55d816e7a4007914552cebecb2f28e278c82dd51edf01e35cebd"
+  },
+  {
+    "file": "hyperlimit/src/predicates/nd.rs",
+    "sha256": "8d25c1864a0b0b6344b2b2f037eead588da125f7b5ee9697568ffe8504092fe3"
+  },
+  {
+    "file": "hyperlimit/src/predicates/order.rs",
+    "sha256": "b94f6eea82d4be07d60f0ace31aae6c4f07c581d4c7f3e2f7fe422c4ed0c91e0"
+  },
+  {
+    "file": "hyperlimit/src/predicates/orient.rs",
+    "sha256": "6d21a7b2026b92292272b9c0e087baf419a77c70f4da009f2d7bb6c999363e9a"
+  },
+  {
+    "file": "hyperlimit/src/predicates/ring.rs",
+    "sha256": "f2fbcd8b3fd134df6d3b7873041e66c373e961aec28493f79a152d9338da44b8"
+  },
+  {
+    "file": "hyperlimit/src/predicates/segment.rs",
+    "sha256": "a2a217c9d5b4fc115dc15f215968b7d55786600f13c981a9eb39268d9de71272"
+  },
+  {
+    "file": "hyperlimit/src/predicates/segment_plane.rs",
+    "sha256": "34efe3ecc31e9e7a210a6e645ca9bc9805404605817daa8abdd47172ed9a525c"
+  },
+  {
+    "file": "hyperlimit/src/predicates/triangle.rs",
+    "sha256": "793da1aac4f265df71fd80bdb70f0ae176a2f09fe8d40428798e84c27c4fca5c"
+  },
+  {
+    "file": "hyperlimit/src/predicates/triangle_triangle.rs",
+    "sha256": "0ef267796cdb7e472e6d96379cb367ce1a017f44561158e81a432c736de20313"
+  },
+  {
+    "file": "hyperlimit/src/real.rs",
+    "sha256": "4e63ee74273dda4ad70feacce91be8f7f4c0b65359a10bd86ccf37598318aca6"
+  },
+  {
+    "file": "hyperlimit/src/resolve.rs",
+    "sha256": "4060c23d616e58ab8bb12de5825b595910f3169335dba49d26506a2691e81d76"
+  },
+  {
+    "file": "hyperlimit/src/test_support.rs",
+    "sha256": "5dc5c03be43aacd2fe0a4fd3dfb7ccb7602329229b2429e44f83735bd188dffe"
+  },
+  {
+    "file": "hyperlimit/src/trace.rs",
+    "sha256": "e74ec37d43bde63e13daf45f93fd507518b4150e8307e2bb1a2fe8f3f49b7030"
+  },
+  {
+    "file": "hyperlimit/tests/adversarial_degeneracies.rs",
+    "sha256": "6d833096aacd16ae5eebb237ea1ef90de318d8c5468bf82f63dd8ef01078f4da"
+  },
+  {
+    "file": "hyperlimit/tests/adversarial_predicates.rs",
+    "sha256": "6c3bcf51e255e6c48f6c40d9aec8521c80c7843d1057a9021b8ff0e0a809a792"
+  },
+  {
+    "file": "hyperlimit/tests/adversarial_props.rs",
+    "sha256": "cc494b21fcc23e52f1538c9d5ceee9972d15233da53f1a41e50932c151c32bc8"
+  },
+  {
+    "file": "hyperlimit/tests/batch.rs",
+    "sha256": "39bc5658b424ab44fbcf6994fef2726b64eec5b443062458507e2d39b7dfe88b"
+  },
+  {
+    "file": "hyperlimit/tests/classification_contracts.rs",
+    "sha256": "ad2cc5b80a0f6418f50952951d2f5c126d9ce87198469ef8d7f1109b651ef443"
+  },
+  {
+    "file": "hyperlimit/tests/composite_policy.rs",
+    "sha256": "a30c17138a9add08dc73bd2900d078e247f8f43ec1f3d49f3ef9fed5d0751256"
+  },
+  {
+    "file": "hyperlimit/tests/exactcore_xinwei.rs",
+    "sha256": "c16e1731fc37b47be80b9f8a77120e0197e817061868a83dc89fe7074f963569"
+  },
+  {
+    "file": "hyperlimit/tests/halfspace_feasibility.rs",
+    "sha256": "acdb2e58410c3520b7a5fd9f33c9790c5abf185999d5300580fdb8c758e7d354"
+  },
+  {
+    "file": "hyperlimit/tests/nd_predicates.rs",
+    "sha256": "06c93b4552f7447e6934baed5ec9231949be3ddf0897af9c4db8937a2743de19"
+  },
+  {
+    "file": "hyperlimit/tests/promoted_mesh_helpers.rs",
+    "sha256": "31892533530a39a2228f732e217738e9c58e4988bf8ee1397ef084e8c4230f6e"
+  },
+  {
+    "file": "hyperlimit/tests/readme.rs",
+    "sha256": "12f5a1e558792c37a18534d312c094d555c467d3fe3a2f9730f7bc20307fa842"
+  },
+  {
+    "file": "hyperlimit/tests/real_representations.rs",
+    "sha256": "2197b438f9a0e1ebe4af303f6e5a206eee117bb9a22e3b1de94dd48976d06bce"
+  },
+  {
+    "file": "hyperlimit/tests/retained_report_contracts.rs",
+    "sha256": "56f047f9cb0c142f15a22de3d6b5f368041866c91785f6cc48199f229b65d6fe"
+  },
+  {
+    "file": "hyperlimit/tests/robust_parity.rs",
+    "sha256": "f9bafc47e1bb831f9b65ea415c610ac76f64b9d93f3e1f5a3d74974033253a93"
+  },
+  {
+    "file": "hyperlimit/tests/support_dop.rs",
+    "sha256": "0f04222d35523ff8d4b973d6fb08ab4e8d8f21eb866f45afef3023cfdd15ec6b"
+  },
+  {
+    "file": "hyperreal/.github/workflows/ci.yml",
+    "sha256": "d4aa6079053ea628cffa378233879124e699460d818bcc318a23a2d41db70402"
+  },
+  {
+    "file": "hyperreal/.gitignore",
+    "sha256": "bc0b99c9e84d9d3b82305c1df929f5119aac4391399ab491309bd0723c733674"
+  },
+  {
+    "file": "hyperreal/AGENTS.md",
+    "sha256": "8a5f7cff0d66947deca34eb54b366ec279897d6e38819bf34e2e1e54b8538039"
+  },
+  {
+    "file": "hyperreal/ALGORITHM_PARITY.md",
+    "sha256": "4e4c0631bfa8c093a06b1a987e84e015bc9af1bb31ab65bedbc13b568bcca464"
+  },
+  {
+    "file": "hyperreal/COVERAGE.md",
+    "sha256": "e15e70c06d7cc4983db6d958f3b2093d5a5f50298cab7b88663945f4f9902f08"
+  },
+  {
+    "file": "hyperreal/Cargo.lock",
+    "sha256": "1c8640884474caa19c0c6cf46cda6472a67aa6143fc0536d902d9a782eafb8c4"
+  },
+  {
+    "file": "hyperreal/Cargo.toml",
+    "sha256": "dacb1c2a948f09a75173b5a1891b282624d0a422abdf21f669a0cfaefdf949be"
+  },
+  {
+    "file": "hyperreal/LICENSE-MIT",
+    "sha256": "1bd6f730e72e7a1e04a3d4c28001efc23869d953c2d35a19f53935f6e55bd335"
+  },
+  {
+    "file": "hyperreal/LICENSE.txt",
+    "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30"
+  },
+  {
+    "file": "hyperreal/PERFORMANCE.md",
+    "sha256": "9eac348c25fd5cc0378f6edeed9e27e68c37d9087367c864307b322cfe33cc59"
+  },
+  {
+    "file": "hyperreal/README.md",
+    "sha256": "0add3904724cca5c7e95aee3a9a2d98c1e9dd09b075e00f9437a342325d20e3f"
+  },
+  {
+    "file": "hyperreal/benches/adversarial_library.rs",
+    "sha256": "eca33e6cc19e5a5a1781efea87903e7f6ed49f6f4f892939bebc5042f00f3300"
+  },
+  {
+    "file": "hyperreal/benches/adversarial_transcendentals.rs",
+    "sha256": "29cbbb7cd56fd937a9f8acf7f685b14b42d5766f67950a4d1cfa0f3ac784ddbc"
+  },
+  {
+    "file": "hyperreal/benches/borrowed_ops.rs",
+    "sha256": "22d4db664c2efa71633581688a788a6f2a985d3962398056c85aed0d24559320"
+  },
+  {
+    "file": "hyperreal/benches/dispatch_trace.rs",
+    "sha256": "c3bd3acaa85294b0148889efe2d97b17c615c64f0aca0245d3d5c73ad6e89d92"
+  },
+  {
+    "file": "hyperreal/benches/float_convert.rs",
+    "sha256": "001ed35345b387c217a77027355a1109b745a83ba48e2d0cead185d939ab359e"
+  },
+  {
+    "file": "hyperreal/benches/gmp_api.rs",
+    "sha256": "2d96d7765326b355ea9b07898ba045a48f3646280dad8ed31d075d90b93b1bd4"
+  },
+  {
+    "file": "hyperreal/benches/library_perf.rs",
+    "sha256": "fa25b10fcb02bac2178fe63fc9c66ead66bfc1a5cc25c8a6bf0982d9e52e11da"
+  },
+  {
+    "file": "hyperreal/benches/numerical_micro.rs",
+    "sha256": "3a77d8fc7596a2ce78d081b4e76b14bd903957c2439512b1358ff4d9222a5c6d"
+  },
+  {
+    "file": "hyperreal/benches/real_representations.rs",
+    "sha256": "4f4f0ecb3020bd7768680ff60573714ef208e57c79d03c3f77c6be87edf15dde"
+  },
+  {
+    "file": "hyperreal/benches/scalar_micro.rs",
+    "sha256": "dc7141ca7571333c32d7ee16fe01073e5f562c4f038d91406893ab29a0cca747"
+  },
+  {
+    "file": "hyperreal/benches/support/bench_docs.rs",
+    "sha256": "6b0070a2b32d421bf88d6461b422dba300bfc021c1ff0d4ad4b5263b5c9ae948"
+  },
+  {
+    "file": "hyperreal/benches/support/benchmark_report.rs",
+    "sha256": "e8085de2eda14b3ae2a86baaeac0abab41b88ad9b473c42c55e96a5e8f3fa9bd"
+  },
+  {
+    "file": "hyperreal/benchmarks/checkpoints/2026-09-06-rational-equality.json",
+    "sha256": "9ded5b6c3764538768c28309c38bc6cac660ed0426f2de4faba3d87673930b34"
+  },
+  {
+    "file": "hyperreal/benchmarks.md",
+    "sha256": "14cfd032be90c9f8018d6e281e08a60badb63cdb4be11b88cafbe3b431984b2b"
+  },
+  {
+    "file": "hyperreal/dispatch_trace.md",
+    "sha256": "ef7c18ed21b815a3077a2a01d31e4d661fef6dd01069e42d23d107cad3a29c3c"
+  },
+  {
+    "file": "hyperreal/doc/hyper.png",
+    "sha256": "5984b11832da2ab88267afcd9e9f3661e2cfe37f613286a73c99565cee54f89b"
+  },
+  {
+    "file": "hyperreal/examples/allocation_profile.rs",
+    "sha256": "305c7250bb21f1f8fe46d4318e1678574f339704509b112a075c9f29fa8a0802"
+  },
+  {
+    "file": "hyperreal/examples/computable_graphs.rs",
+    "sha256": "4008feb9f130a8fe7666832b43e63f233d284cead7d57eef36022895d34d8af6"
+  },
+  {
+    "file": "hyperreal/examples/computable_refinement_steps.rs",
+    "sha256": "dbefcb675ab5cce668363ef195715bd09d0688a62e5abc5e7ff5e33724eefa38"
+  },
+  {
+    "file": "hyperreal/examples/readme_quickstart.rs",
+    "sha256": "4edcdcc4e1011e95663826c13ab30e6f1203d8b05c181cd0820f55130bc7f882"
+  },
+  {
+    "file": "hyperreal/examples/write_benchmarks_md.rs",
+    "sha256": "a9237f07a400d36b497b1923154590dd86bc6fd6d5a54654f29f7618134c7e19"
+  },
+  {
+    "file": "hyperreal/fuzz/.gitignore",
+    "sha256": "370b4ddea7453b468c4915b6974c0fa49bd49cdf91b619d57dbd66629ea6abf2"
+  },
+  {
+    "file": "hyperreal/fuzz/Cargo.lock",
+    "sha256": "3400badd39271961d6a447ecf4c89a5cf51365ec03a26acd57450b3aa28a4828"
+  },
+  {
+    "file": "hyperreal/fuzz/Cargo.toml",
+    "sha256": "f148eef4a2d9e45f3e25275658dcfa3f1cbd6e9c5c436871ca3e55bdd24fd90f"
+  },
+  {
+    "file": "hyperreal/fuzz/README.md",
+    "sha256": "649577e25a34c3f141e79f4394a6ba868daa34da42abb6bb28369b814570c7b7"
+  },
+  {
+    "file": "hyperreal/fuzz/corpus/computable_approximation/seed",
+    "sha256": "343e5e20e286dac1872b65cc26fc875d6083f0724d359ba1b3ef47c2c7fe5aa4"
+  },
+  {
+    "file": "hyperreal/fuzz/corpus/rational_arithmetic/seed",
+    "sha256": "343e5e20e286dac1872b65cc26fc875d6083f0724d359ba1b3ef47c2c7fe5aa4"
+  },
+  {
+    "file": "hyperreal/fuzz/corpus/real_elementary/seed",
+    "sha256": "343e5e20e286dac1872b65cc26fc875d6083f0724d359ba1b3ef47c2c7fe5aa4"
+  },
+  {
+    "file": "hyperreal/fuzz/corpus/real_exact/seed",
+    "sha256": "343e5e20e286dac1872b65cc26fc875d6083f0724d359ba1b3ef47c2c7fe5aa4"
+  },
+  {
+    "file": "hyperreal/fuzz/corpus/string_parsing/decimal",
+    "sha256": "9947141cb19eae1d8e50f0697de47b63466e2c3882fd28c04245fb200805f308"
+  },
+  {
+    "file": "hyperreal/fuzz/corpus/string_parsing/fraction",
+    "sha256": "b6375616d181f0884d9b5a7abe5d13f8b5b68e1840001393cb9d08d6bab7e8a2"
+  },
+  {
+    "file": "hyperreal/fuzz/corpus/string_parsing/integer",
+    "sha256": "e869aef06bb4afcb75a12fce6787bd701a35caa820d882cab2f1e656f381d301"
+  },
+  {
+    "file": "hyperreal/fuzz/corpus/string_parsing/invalid",
+    "sha256": "ac2ef9e3dc139138fe7da9d1ca02b12be73e98d53e757840f82cd2c6fb2f75d4"
+  },
+  {
+    "file": "hyperreal/fuzz/corpus/string_parsing/scientific",
+    "sha256": "18171bb6951178ed30c6c7d66f876dd2feb43f23df1c2a4965d1e938347dddf1"
+  },
+  {
+    "file": "hyperreal/fuzz/corpus/string_parsing/seed",
+    "sha256": "5ef97af7ba8d1703eae18a40c7a31d65c619ef976873d3c6d21aa58d2d259bce"
+  },
+  {
+    "file": "hyperreal/fuzz/corpus/structural_representations/seed",
+    "sha256": "e4fbc0c2fd920b718ff85603731d90df12d689796641593d7aaab1f294103dab"
+  },
+  {
+    "file": "hyperreal/fuzz/corpus/structural_representations/stride_00",
+    "sha256": "ac96469638e152a73cadbf62d44e2f39517e1c31d41eb6206f138d0206444d7b"
+  },
+  {
+    "file": "hyperreal/fuzz/corpus/structural_representations/stride_01",
+    "sha256": "fafba0527c3953c4b6e0e5b5739ba83612f8053bcdc9466730193cd1d590b408"
+  },
+  {
+    "file": "hyperreal/fuzz/corpus/structural_representations/stride_02",
+    "sha256": "cdbcae15105d6b781e620813c79c7e868740d4e9cc53ce6f5fcbbc12387adf4b"
+  },
+  {
+    "file": "hyperreal/fuzz/corpus/structural_representations/stride_03",
+    "sha256": "4e3cf60495dca6411d155372c42aa62f07a6f0c5792f016cff361dd7a3965b20"
+  },
+  {
+    "file": "hyperreal/fuzz/corpus/structural_representations/stride_04",
+    "sha256": "beadba836315747fc95ae304452514b72fe122a6e345974638d70c4e8ebace6a"
+  },
+  {
+    "file": "hyperreal/fuzz/corpus/structural_representations/stride_05",
+    "sha256": "61d1954b9aba0c9aedb8d1338804e817c7262cfc36da94161dab8e3ed7a3a43a"
+  },
+  {
+    "file": "hyperreal/fuzz/corpus/structural_representations/stride_06",
+    "sha256": "eb4bd64f7014f7d42e9d358035802242741b974e8dfcd37c59f9c21ce29d781e"
+  },
+  {
+    "file": "hyperreal/fuzz/corpus/structural_representations/stride_07",
+    "sha256": "f465c3739385890c221dff1a05e578c6cae0d0430e46996d319db7439f884336"
+  },
+  {
+    "file": "hyperreal/fuzz/corpus/structural_representations/stride_08",
+    "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+  },
+  {
+    "file": "hyperreal/fuzz/corpus/structural_representations/stride_09",
+    "sha256": "4355a46b19d348dc2f57c046f8ef63d4538ebb936000f3c9ee954a27460dd865"
+  },
+  {
+    "file": "hyperreal/fuzz/corpus/structural_representations/stride_10",
+    "sha256": "53c234e5e8472b6ac51c1ae1cab3fe06fad053beb8ebfd8977b010655bfdd3c3"
+  },
+  {
+    "file": "hyperreal/fuzz/corpus/structural_representations/stride_11",
+    "sha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
+  },
+  {
+    "file": "hyperreal/fuzz/corpus/structural_representations/stride_12",
+    "sha256": "7de1555df0c2700329e815b93b32c571c3ea54dc967b89e81ab73b9972b72d1d"
+  },
+  {
+    "file": "hyperreal/fuzz/corpus/structural_representations/stride_13",
+    "sha256": "f0b5c2c2211c8d67ed15e75e656c7862d086e9245420892a7de62cd9ec582a06"
+  },
+  {
+    "file": "hyperreal/fuzz/corpus/structural_representations/stride_14",
+    "sha256": "06e9d52c1720fca412803e3b07c4b228ff113e303f4c7ab94665319d832bbfb7"
+  },
+  {
+    "file": "hyperreal/fuzz/corpus/structural_representations/stride_15",
+    "sha256": "10159baf262b43a92d95db59dae1f72c645127301661e0a3ce4e38b295a97c58"
+  },
+  {
+    "file": "hyperreal/fuzz/corpus/structural_representations/stride_16",
+    "sha256": "aa67a169b0bba217aa0aa88a65346920c84c42447c36ba5f7ea65f422c1fe5d8"
+  },
+  {
+    "file": "hyperreal/fuzz/corpus/structural_representations/stride_17",
+    "sha256": "2e6d31a5983a91251bfae5aefa1c0a19d8ba3cf601d0e8a706b4cfa9661a6b8a"
+  },
+  {
+    "file": "hyperreal/fuzz/corpus/structural_representations/stride_18",
+    "sha256": "f3743a0a18e53d13922cc21a70d783d875a12560c22ff8d28bda5f5ca9fe05c3"
+  },
+  {
+    "file": "hyperreal/fuzz/corpus/structural_representations/stride_19",
+    "sha256": "d8a957038679125d4840554fc43375697e662283121561afdefc2c3fbecaf729"
+  },
+  {
+    "file": "hyperreal/fuzz/fuzz_targets/computable_approximation.rs",
+    "sha256": "2b144f043fcf9433356f1bef14dfb5ab1c2a4537a9afc39dbe76f621f0b6c24f"
+  },
+  {
+    "file": "hyperreal/fuzz/fuzz_targets/rational_arithmetic.rs",
+    "sha256": "cbf5417fc118e07150fed2cc64bc621723bcd560bc55465855bca78e851dd50f"
+  },
+  {
+    "file": "hyperreal/fuzz/fuzz_targets/real_elementary.rs",
+    "sha256": "ade6ab9978c507f0e8b2bcd87f2abf557dc9acec03b67df577305c10212a7520"
+  },
+  {
+    "file": "hyperreal/fuzz/fuzz_targets/real_exact.rs",
+    "sha256": "cbfc092678f7e1f148d930f0ef22914e9778d13bec6125741e7d6cc11046efb2"
+  },
+  {
+    "file": "hyperreal/fuzz/fuzz_targets/string_parsing.rs",
+    "sha256": "f27329517cf29859f6749b43f0392a7db6c9941ddd8b745d3a86a0a079eda0d1"
+  },
+  {
+    "file": "hyperreal/fuzz/fuzz_targets/structural_representations.rs",
+    "sha256": "66dbfa9120ab29f9db14bdf8f75b3c6a6bde9f31afea5dc6cf39245ab27ab25c"
+  },
+  {
+    "file": "hyperreal/promoted_slow_offenders.txt",
+    "sha256": "b22c6b3fa588c0c6c4b81c72fe9d6fd81a93b7849e879773311bf6ab5748a435"
+  },
+  {
+    "file": "hyperreal/proptest-regressions/real/convert.txt",
+    "sha256": "52d7adf4ea8a7ea798fc65460675a77bd4664b6888a3a5a007beff33893048da"
+  },
+  {
+    "file": "hyperreal/scripts/coverage.sh",
+    "sha256": "147db4933a6c7a7bc71dff7dc21558fb2376e8a614769eb93aa884d915a73ff1"
+  },
+  {
+    "file": "hyperreal/scripts/memory_profile.sh",
+    "sha256": "000a8a8ee53728c677ba3be98e692fda92828652d4af7160a3fd0982c1d3f554"
+  },
+  {
+    "file": "hyperreal/scripts/representation_coverage.sh",
+    "sha256": "25cef25bf493a1c852d9962a0a58daccc69568fffd738633602edc5380ec6a75"
+  },
+  {
+    "file": "hyperreal/slow_performers.txt",
+    "sha256": "da7a469300ff7cbfd70e407fc52e47e34bc3b811084bd263f6d51b0f1f9ebaa6"
+  },
+  {
+    "file": "hyperreal/src/README.md",
+    "sha256": "f8c536b56f40b8a01aeb889d4501ef5693a8a267ccf8a6491f6c887c631e3aa6"
+  },
+  {
+    "file": "hyperreal/src/computable/README.md",
+    "sha256": "d7d9f6810876268f888da4b5d2dba48248541f7db20cd255651e8af20dd8ba68"
+  },
+  {
+    "file": "hyperreal/src/computable/approximation/arithmetic_kernels.rs",
+    "sha256": "edde03cb1586cc4fd6f8fb5a98fefc68c26e27b1235d013c55a63bad1cd207d0"
+  },
+  {
+    "file": "hyperreal/src/computable/approximation/constants.rs",
+    "sha256": "2b93f0f44a2f2ee6b7368ce1ef43f672a3fe7169527d077b769e5776b98c6397"
+  },
+  {
+    "file": "hyperreal/src/computable/approximation/dispatch.rs",
+    "sha256": "d29552a56c7a0b7b66faf3f73e415cb4d3e7fde5d23e9d4c8b8001bc3f1390e4"
+  },
+  {
+    "file": "hyperreal/src/computable/approximation/e_plan_tests.rs",
+    "sha256": "c439a7e066493e7ee613dcb38f695f75bfd35897eaf0a2ff1b3c16fa755395d7"
+  },
+  {
+    "file": "hyperreal/src/computable/approximation/exp_sqrt.rs",
+    "sha256": "8cd59dcc8923ccc0a7bdaf289773b951868f86c27ffcb2723af6489962c394f2"
+  },
+  {
+    "file": "hyperreal/src/computable/approximation/inverse_hyperbolic.rs",
+    "sha256": "dd28f60617c20bbf0a35ba9d2261726f349e52035f30b7d011a3a26858c25e43"
+  },
+  {
+    "file": "hyperreal/src/computable/approximation/inverse_trig.rs",
+    "sha256": "a4ee2646773a3cc1f7a934a7cf6dbf8cf6ef614e102123abb6d8595160f5bed1"
+  },
+  {
+    "file": "hyperreal/src/computable/approximation/logarithms.rs",
+    "sha256": "eb05426db39726dfc3b5e5e121850656fe7e6fd03c6bade0fe0533779319952b"
+  },
+  {
+    "file": "hyperreal/src/computable/approximation/representation.rs",
+    "sha256": "c18e32769063a4afb47c77f67591c31572ca28afcead8a3172073305f6bf54e8"
+  },
+  {
+    "file": "hyperreal/src/computable/approximation/statistics.rs",
+    "sha256": "7ea93b6099b0d2dd9e7ac51c8c7dc20f42fb1fa7dc62896b25ebebbe0a8faa3d"
+  },
+  {
+    "file": "hyperreal/src/computable/approximation/trig.rs",
+    "sha256": "52ef2bfad7e8823b2966f2613bee335231ca72af2626a1fa403a01a02f888fa0"
+  },
+  {
+    "file": "hyperreal/src/computable/approximation.rs",
+    "sha256": "1be083d5bf5f47ae86e87169b94db8eb8acd6e4dbeeea3e4ba1e384ba109e0f0"
+  },
+  {
+    "file": "hyperreal/src/computable/constants.rs",
+    "sha256": "85fb1a0f88654e990f6c4a9bf5eda3392db04f9b3f54f31207ca5d3206eba8a4"
+  },
+  {
+    "file": "hyperreal/src/computable/format.rs",
+    "sha256": "4b9d969fb4020b45f78d1feb38dc6d254233165f06d839e1ea144c4f3df916cf"
+  },
+  {
+    "file": "hyperreal/src/computable/mod.rs",
+    "sha256": "7680b7dc9c127292d1a5f2f9e93aa797fa39faf87ae0a5fdbd2e16aa2f548d49"
+  },
+  {
+    "file": "hyperreal/src/computable/node/algebra.rs",
+    "sha256": "308a2657870c79f5968a484ead9baa1713febd759f8018f7f5117698e784d4af"
+  },
+  {
+    "file": "hyperreal/src/computable/node/approximation_queries.rs",
+    "sha256": "81b4a2fcb2303d35634a4c2f8136c5f968d43112303302bccd4a2cc6fe24a297"
+  },
+  {
+    "file": "hyperreal/src/computable/node/bounds.rs",
+    "sha256": "ad1fe0556803c81f1a554bacff42e739e18dfdd63e76facb1bb4c173307f6c1d"
+  },
+  {
+    "file": "hyperreal/src/computable/node/cache_rescale_tests.rs",
+    "sha256": "699c725764121e771a693c5cd9090f654442e40f15156c70e53ccc3c70572a0a"
+  },
+  {
+    "file": "hyperreal/src/computable/node/exp_relation.rs",
+    "sha256": "f9f4cb450f83b91b94ba813c721a4410cba18bf9cec62c4c3e3468c62b106df2"
+  },
+  {
+    "file": "hyperreal/src/computable/node/exp_relation_reuse.rs",
+    "sha256": "49e099199c7c86f7a3c24e7b61b1743d85867863ec1f8b2356a0a09d7e762dcd"
+  },
+  {
+    "file": "hyperreal/src/computable/node/exp_relation_reuse_tests.rs",
+    "sha256": "7fe615354bb3c857b98fe67949ec8196d0f871b450ba3ca12d86aec287395790"
+  },
+  {
+    "file": "hyperreal/src/computable/node/exp_relation_tests.rs",
+    "sha256": "409f9fdc3522eb120665687e97047422c1394cd4dbded51311d4ec423101d7cd"
+  },
+  {
+    "file": "hyperreal/src/computable/node/exp_trig.rs",
+    "sha256": "28d4e515eb4f3412ff4936c06b327ab27399087d349b18694436caae14277b1d"
+  },
+  {
+    "file": "hyperreal/src/computable/node/fractional_separation_tests.rs",
+    "sha256": "a6aafd580f1afd4de6bd5e26a7f741a5bda9f3148cca61f7254c00737e883e26"
+  },
+  {
+    "file": "hyperreal/src/computable/node/linear_demand_tests.rs",
+    "sha256": "33e292ab9fbee54c0f04f38435732997d6e49e407db79d33bb33b87856c39816"
+  },
+  {
+    "file": "hyperreal/src/computable/node/logarithms.rs",
+    "sha256": "9874420245a129a67ab7e38fd2a87befa0bf418dcafa9b3f177600b30a2eb971"
+  },
+  {
+    "file": "hyperreal/src/computable/node/primitive_constructors.rs",
+    "sha256": "7261b2977216ed8dfee272a16d3a16ca679456ce88f4f7160f780f2bbb0b5a21"
+  },
+  {
+    "file": "hyperreal/src/computable/node/representation.rs",
+    "sha256": "6901ebf2795947942eea4356b0031fa2a5794187f79e30c076e5c6a01351d940"
+  },
+  {
+    "file": "hyperreal/src/computable/node/roots_inverse_hyperbolic.rs",
+    "sha256": "ec631190625f987238bf7d1f76a2f9e88633f42671c0e1870e63ad28f65282ae"
+  },
+  {
+    "file": "hyperreal/src/computable/node/scale.rs",
+    "sha256": "c020c7c953c8e2b78b967ed2dca62f42329c8465b5d8d8652439dbc185fc33e6"
+  },
+  {
+    "file": "hyperreal/src/computable/node/structural_analysis.rs",
+    "sha256": "12211dbda97ae24c55ba6d086b71a285f4cbd48675d567578dfd5bf55e76975b"
+  },
+  {
+    "file": "hyperreal/src/computable/node/tests.rs",
+    "sha256": "bafee0865639f035a4b481ba6cc1570c004267b2118b809da1b2581e0655363a"
+  },
+  {
+    "file": "hyperreal/src/computable/node.rs",
+    "sha256": "1ec53cf4d939461b1928fba6223ae96fb80779da3673b5f93bfc4d400f7ee57e"
+  },
+  {
+    "file": "hyperreal/src/dispatch_trace.rs",
+    "sha256": "3707c3b0c61ae8aca19c8f15eb435c5942ca806f609ae4fbf288ae16f22de126"
+  },
+  {
+    "file": "hyperreal/src/lib.rs",
+    "sha256": "af78064185c5bac4f143c68d39d7085e0ff03fcabf9691fa1af764021877db8f"
+  },
+  {
+    "file": "hyperreal/src/main.rs",
+    "sha256": "154c1a1483327a41c06565a266274d86af36fab6ce24377413ce53377477714e"
+  },
+  {
+    "file": "hyperreal/src/problem.rs",
+    "sha256": "5013551212b204189718104cea5a03924b6427c9c199aa17cb151caa1cbf37e5"
+  },
+  {
+    "file": "hyperreal/src/rational/README.md",
+    "sha256": "ff25a9391f13e4375f39ff47fedb77657f020362cd97bda356e92409d072b8f3"
+  },
+  {
+    "file": "hyperreal/src/rational/arithmetic/aggregate_products.rs",
+    "sha256": "a9000f037ea1fca439961ac4ad9989c808d5b5f922691514b768d499cbb9ea5b"
+  },
+  {
+    "file": "hyperreal/src/rational/arithmetic/algorithm_dispatch.rs",
+    "sha256": "d792bbfba44c09db2d174078a7a43f90c3fc91a71ad5da29eb4d2f4ad2310aa5"
+  },
+  {
+    "file": "hyperreal/src/rational/arithmetic/as_ref.rs",
+    "sha256": "6ab3b9bfed2d24687d7b682a05bafaa57443feaa370e0cfc8f09f73d69d6fe61"
+  },
+  {
+    "file": "hyperreal/src/rational/arithmetic/barrett_division.rs",
+    "sha256": "8e25f57908690d4312ed288a0604e4c947ce9347a550beb4261e54714f150e5d"
+  },
+  {
+    "file": "hyperreal/src/rational/arithmetic/comparison.rs",
+    "sha256": "8a4138fad668bdf364795642dd1fe3f53aaf64302cede47d49530c6cbaa99212"
+  },
+  {
+    "file": "hyperreal/src/rational/arithmetic/construction.rs",
+    "sha256": "847be7dcc52f5b2affe37aca4a0a8ab9876d31c589b09642fcab653497eae7e7"
+  },
+  {
+    "file": "hyperreal/src/rational/arithmetic/format_parse.rs",
+    "sha256": "650f92e47f72f9e6e55a9c599b14406da4a3eff341c11fb2528fafdf051d8d92"
+  },
+  {
+    "file": "hyperreal/src/rational/arithmetic/ntt_multiplication.rs",
+    "sha256": "307de84e93811bb77569abe1fb91a6e3fb6b32bcb6795af1144a88324da7cc3b"
+  },
+  {
+    "file": "hyperreal/src/rational/arithmetic/ops.rs",
+    "sha256": "cc7a03c09fc48be552defcf659e83df6e3274dec2baf0ef5161c192c33424783"
+  },
+  {
+    "file": "hyperreal/src/rational/arithmetic/queries_conversion.rs",
+    "sha256": "7ffc050aff312c793b8d46176524228eff06b5dcb84e2dc5e76417b54e608112"
+  },
+  {
+    "file": "hyperreal/src/rational/arithmetic/representation.rs",
+    "sha256": "186758b98318018ed83292edf23f3fc5078bb747c5548246cf31d81157fecfe9"
+  },
+  {
+    "file": "hyperreal/src/rational/arithmetic/squares_powers.rs",
+    "sha256": "3105cea7ca98cae95bd7a5a07e81de1447c038e0c949ffe72b70a8cfee6008a8"
+  },
+  {
+    "file": "hyperreal/src/rational/arithmetic/tests.rs",
+    "sha256": "3b44775d17020588cae0ee3ac8385b3fd4dfc6945f15c591b752bfadd994e5df"
+  },
+  {
+    "file": "hyperreal/src/rational/arithmetic/toom4_multiplication.rs",
+    "sha256": "880dd405c14506c1c9f1a7875d227cb9df73117ecca478792318e7e8ceedc7fe"
+  },
+  {
+    "file": "hyperreal/src/rational/arithmetic/toom6_multiplication.rs",
+    "sha256": "555d7d72d216fc511dc155fb258811700068420e1c812bd5576b6488f138036e"
+  },
+  {
+    "file": "hyperreal/src/rational/arithmetic/toom8_multiplication.rs",
+    "sha256": "47a99119a60ff8243cbd4646811f5247bc44c3a85d3271800bd65f285c53e931"
+  },
+  {
+    "file": "hyperreal/src/rational/arithmetic.rs",
+    "sha256": "6d0267b29263539a0e3e4efe4ccd460f3928f1985e116f437a7b0f7cecf4e3c9"
+  },
+  {
+    "file": "hyperreal/src/rational/convert.rs",
+    "sha256": "107e156c10f01889cd334eae73304f749e8ebfe3cd1355742176e2273c5dd419"
+  },
+  {
+    "file": "hyperreal/src/rational/mod.rs",
+    "sha256": "7359ce7238042faa9249f70eb70d2fffc6db9b8aa49d3ae0ab43e3ad6ab42b6c"
+  },
+  {
+    "file": "hyperreal/src/rational/parse.rs",
+    "sha256": "5fbef4663228b20089802845c86d23215fbbd6f9ba0d44500028efcf3081f4f9"
+  },
+  {
+    "file": "hyperreal/src/real/README.md",
+    "sha256": "fd9a5c12f1f075fcc1b6723514d70cc89358819b03072d313b681f4b0761a7b1"
+  },
+  {
+    "file": "hyperreal/src/real/approximation.rs",
+    "sha256": "87bc6ec38e9e21bb600a675a766ca9b471d1cd519756662180f1faa95186894d"
+  },
+  {
+    "file": "hyperreal/src/real/arithmetic/add_sub.rs",
+    "sha256": "1aa96da52677cafc6c7ceb82730ee319ef3ca1fae4c1e1cd7cd449228abe1f34"
+  },
+  {
+    "file": "hyperreal/src/real/arithmetic/canonical_constants.rs",
+    "sha256": "228139ba0bf111f6974d7142df717a9644782f44349407bf1d22febca7024b83"
+  },
+  {
+    "file": "hyperreal/src/real/arithmetic/classification.rs",
+    "sha256": "9f19b29b3464db83a6ae1f39a4c364133ee5f5a81676ce8396319b409aa59672"
+  },
+  {
+    "file": "hyperreal/src/real/arithmetic/comparison.rs",
+    "sha256": "ce02d790ba764b2a07a6aa1d884951d2dc7b31f49a2a411629262433a870658a"
+  },
+  {
+    "file": "hyperreal/src/real/arithmetic/elementary_functions.rs",
+    "sha256": "46e3e19125a205306982e3a054fdcf39bdbe8beb8cefc1a91194058490bf88db"
+  },
+  {
+    "file": "hyperreal/src/real/arithmetic/facts.rs",
+    "sha256": "bd6e4c39fecbd4ec815b0630dcab8062fb5e814fd3ce84e67b89e14d02330ce2"
+  },
+  {
+    "file": "hyperreal/src/real/arithmetic/format_parse.rs",
+    "sha256": "9f76c46e271fd9e96bc95257a7181606351c37012d8713a33c42b2321181b4cf"
+  },
+  {
+    "file": "hyperreal/src/real/arithmetic/inversion.rs",
+    "sha256": "83888fed4fc50322eb96228efe782623e5253af90f75d03561002c2f86735c46"
+  },
+  {
+    "file": "hyperreal/src/real/arithmetic/linear_algebra.rs",
+    "sha256": "86ec7550aa1bd3badd4cc4ca7c70b1fb3695e1567a15a623097d793697320474"
+  },
+  {
+    "file": "hyperreal/src/real/arithmetic/mul_div.rs",
+    "sha256": "0ec8e8570e24c027a2af7e48039b7551dba3012cfcc1d134b64705d7ef60b356"
+  },
+  {
+    "file": "hyperreal/src/real/arithmetic/representation.rs",
+    "sha256": "da14eee68ebdddabfe044b7252d0aa8d420213bda1d47b3603953e70d1a301e1"
+  },
+  {
+    "file": "hyperreal/src/real/arithmetic/structural_helpers.rs",
+    "sha256": "ab7ea957c8b46c21a321f832f2794172de717ba12c3ac35ab7b5b9caabb57568"
+  },
+  {
+    "file": "hyperreal/src/real/arithmetic/tests.rs",
+    "sha256": "6548c58f212828662076daff0556c833f811771e3f9064b76fa744a70b541604"
+  },
+  {
+    "file": "hyperreal/src/real/arithmetic.rs",
+    "sha256": "f847101ee6307f529a9fde6a750c3737293a1f8bd2ced8ee3cffceca89fb890e"
+  },
+  {
+    "file": "hyperreal/src/real/constructors.rs",
+    "sha256": "9df1f6461c721e2b8f601aef917707cf2bd1d9458b1a416ee8bc9fa840ec7a21"
+  },
+  {
+    "file": "hyperreal/src/real/convert.rs",
+    "sha256": "9b88bb5d23bb7ede24fd97bf39c1a4142f9704fff6bf6a1c1233aebcd9a22fdd"
+  },
+  {
+    "file": "hyperreal/src/real/exact_set.rs",
+    "sha256": "5696f1a19a2b2b3471357bd89b62f90cd777edac3fd9635460beace72e6d7f1f"
+  },
+  {
+    "file": "hyperreal/src/real/facts.rs",
+    "sha256": "748bc773c193cce377d89acbe9551a8f3c7e379778143bdd3941522193615174"
+  },
+  {
+    "file": "hyperreal/src/real/linear_combination.rs",
+    "sha256": "23a45ce96520d3f5f8c5214150ca07e89ede1983934bfb5cf823a9270071c21c"
+  },
+  {
+    "file": "hyperreal/src/real/mod.rs",
+    "sha256": "5038db252c0bf553ae85f8f6197b806e57d9b517f94fcb35e419313a78068471"
+  },
+  {
+    "file": "hyperreal/src/real/normal_reference.rs",
+    "sha256": "cbc1dc4caefc2d31fe0a664e681830f39261f728363be81ede22a54103dbecf7"
+  },
+  {
+    "file": "hyperreal/src/real/tests.rs",
+    "sha256": "b102886b88f9c6b91267e5078001523278a4db895a716bc9b713c7b84540c361"
+  },
+  {
+    "file": "hyperreal/src/serde.rs",
+    "sha256": "eb1652610ef810b2db067f2ae8b7064c248525c58788bbc154f264935f43b65f"
+  },
+  {
+    "file": "hyperreal/src/simple.rs",
+    "sha256": "a6a70cd37c7cf485b319a6c8141eae5adb68a41c0392e612e52a231c34e26931"
+  },
+  {
+    "file": "hyperreal/src/structural.rs",
+    "sha256": "8af0ac66ee34c4e240b64cce348394c136a64a7bf06a356f9cfc21d728b45259"
+  },
+  {
+    "file": "hyperreal/src/trace.rs",
+    "sha256": "379e1cc310d081c0cd7caae6ebcc59e059a0b65428c659cf0424a799f5a03222"
+  },
+  {
+    "file": "hyperreal/structural_facts.txt",
+    "sha256": "35929317175ccffb24903a45c3a1b0b2c950b5a4a1419c06469e351e66f7c98a"
+  },
+  {
+    "file": "hyperreal/tests/adversarial_props.rs",
+    "sha256": "844aaa28e2d62b922451bdad96cc0a217a315e70993e13353b375c401170ae9f"
+  },
+  {
+    "file": "hyperreal/tests/adversarial_regressions.rs",
+    "sha256": "c295a2bbca07d6ef308590ef7ee57fbb4b1b6f846ba4b55b82685f52d70c040f"
+  },
+  {
+    "file": "hyperreal/tests/adversarial_semantics.rs",
+    "sha256": "337c4a012a62aff633de1d67118c713f20d4241ac4644721ae6ad8c79e11cf49"
+  },
+  {
+    "file": "hyperreal/tests/cli.rs",
+    "sha256": "54e4243452826caabd95cd80c35ba27d4e634523a934d07ba69ba0b4ef6fefe6"
+  },
+  {
+    "file": "hyperreal/tests/exact_quadratic_normal_form.rs",
+    "sha256": "7901736922ecb63992ed78926ababa82ddc5bf40b0f13560031b53908280bf24"
+  },
+  {
+    "file": "hyperreal/tests/gmp_api_coverage.rs",
+    "sha256": "09d13ad6d8d7498b26319ba0df4fe078c88895830642c1111ba96cffd21c3bbc"
+  },
+  {
+    "file": "hyperreal/tests/multiquadratic_normal_form.rs",
+    "sha256": "837af31564fd6b4bfdc56ccb96936dc29d4e0d3859640dde6e04c56cdced3161"
+  },
+  {
+    "file": "hyperreal/tests/numeric_roundtrip_formats.rs",
+    "sha256": "3895b6dfc09bd3cbaf7bc13b1c91172ae5ef0d1312dfd910b4f04ffcf412b67c"
+  },
+  {
+    "file": "hyperreal/tests/numerical_cross_reference.rs",
+    "sha256": "c2e8b48c617261716e63c8dffab3e45a0197394d57c6ef2b186973fb123bce23"
+  },
+  {
+    "file": "hyperreal/tests/public_numeric_semantics.rs",
+    "sha256": "343affdf1a9dd1d08fd2c3654c536802088480c31ad34c42763c738f2262848c"
+  },
+  {
+    "file": "hyperreal/tests/rational_oracle.rs",
+    "sha256": "73cb737aed23202ccb7c6c64aa899924f9f19ab7de1499f488a0e064160fc179"
+  },
+  {
+    "file": "hyperreal/tests/readme.rs",
+    "sha256": "12f5a1e558792c37a18534d312c094d555c467d3fe3a2f9730f7bc20307fa842"
+  },
+  {
+    "file": "hyperreal/tests/readme_metadata.rs",
+    "sha256": "44e6b925f442c68f614934ca8f68e5e660a1da7695a6947108446fc0b6fcd47e"
+  },
+  {
+    "file": "hyperreal/tests/real_representations.rs",
+    "sha256": "538529bb8862b3565e259f36570454e5c021bb984f321f630e74ef69af7ae4cc"
+  },
+  {
+    "file": "hypersolve/.github/workflows/ci.yml",
+    "sha256": "35a18a2a64f4e2371a8e3f0caeddc3642691dc57a14916c8145f7e1f209ff86a"
+  },
+  {
+    "file": "hypersolve/.gitignore",
+    "sha256": "44c92e3a70ad3307b7056871c2bdb096d8bfa9373f5bf06a79bb6324a20ff2fb"
+  },
+  {
+    "file": "hypersolve/Cargo.lock",
+    "sha256": "a3bd1655b3b08ac34afd084b1c74392c107a06a243672180f2d3a986ff442e43"
+  },
+  {
+    "file": "hypersolve/Cargo.toml",
+    "sha256": "4240ea96fc7dfddd243fa47d19f65212773a4895ca5ac17aff4307479ef37dfd"
+  },
+  {
+    "file": "hypersolve/LICENSE",
+    "sha256": "1bd6f730e72e7a1e04a3d4c28001efc23869d953c2d35a19f53935f6e55bd335"
+  },
+  {
+    "file": "hypersolve/PERFORMANCE.md",
+    "sha256": "428ec24517f3e77bd386348275e41f06fdd2c877d8f4db7f95a59347a501e7b0"
+  },
+  {
+    "file": "hypersolve/README.md",
+    "sha256": "662adf5937139f110adb47d02ed33a8fe562b49065e22b381b428fdea4e59d5c"
+  },
+  {
+    "file": "hypersolve/algebraic_fiber_benchmarks.md",
+    "sha256": "dfcfdfe78c286892a0c83b81471164e5842f62aaa753b6b08713ba577653ef70"
+  },
+  {
+    "file": "hypersolve/benches/algebraic_fiber.rs",
+    "sha256": "530d52928103a4510f4d7c28fd413805e3e3a500ffbe64e4ffd44baf270c5b25"
+  },
+  {
+    "file": "hypersolve/benches/certification.rs",
+    "sha256": "37e2bb3320ca9fc5de8d64883c42d239183029497a4bc253e3b9f9326709ed85"
+  },
+  {
+    "file": "hypersolve/benches/competitive.rs",
+    "sha256": "60966a14248fc1b03a752bb3af50542e4f1c3b1789bb3aac8af232ba281698d3"
+  },
+  {
+    "file": "hypersolve/benches/competitors/cgal_quadratic.cpp",
+    "sha256": "26fce6f49141177da2856fa8a4548253024352274d80d4e79c089f53ed5e4ce2"
+  },
+  {
+    "file": "hypersolve/benches/competitors/run_cgal_quadratic.sh",
+    "sha256": "a8f704af281b46881db5a8956ea31b796f86f7779828d72a198bacde4c2fd097"
+  },
+  {
+    "file": "hypersolve/benches/dispatch_trace.rs",
+    "sha256": "ef139f56e37963dab5bf0aa069228dea0279a21faec20368b7aa6f9a1e273cf4"
+  },
+  {
+    "file": "hypersolve/benches/representations.rs",
+    "sha256": "ca01a8cc0f2364e28562d4fa10a05c41421b9d9800a7a03d6a2ffb6549b3cb80"
+  },
+  {
+    "file": "hypersolve/benches/retained_fuzz.rs",
+    "sha256": "02cfb5d83b193845eacc70beb0cefa4854ab95d896ebfa5529b7dd7bea7f2685"
+  },
+  {
+    "file": "hypersolve/benches/support/benchmark_report.rs",
+    "sha256": "920bfbd91b7ec314125914937947e32ce71581c71e2d4eaf8cdd2c290e2f177e"
+  },
+  {
+    "file": "hypersolve/benches/support/quadratic_extraction.rs",
+    "sha256": "8fe184992b1654064e119a278648716a6f89504911facdf231074d92d69fef78"
+  },
+  {
+    "file": "hypersolve/benches/support/retained_fuzz.rs",
+    "sha256": "812ace7f011bcdedcf3698a7c8e6eafbe8411bb3c3ba276d6d1395481fcc1062"
+  },
+  {
+    "file": "hypersolve/benchmarks.md",
+    "sha256": "102732aa14acea6a964b1e914dac3f9d155c8a983a18f80b2695dfbb27466359"
+  },
+  {
+    "file": "hypersolve/cgal_quadratic_benchmarks.md",
+    "sha256": "dc717cec112fd9a98347586ffdbf3ca17f27fead8e222c5605562982045801e8"
+  },
+  {
+    "file": "hypersolve/dispatch_trace.md",
+    "sha256": "96fca7cfc3c51483a09e4ab0f66c752cd8a0ef1ace43cf8ffd946487a8b2470e"
+  },
+  {
+    "file": "hypersolve/doc/hypersolve.png",
+    "sha256": "943f1155de10a083efdf33ad8015f6affd2f1e114165c003cd0b43eaae5a6c7a"
+  },
+  {
+    "file": "hypersolve/examples/allocation_profile.rs",
+    "sha256": "5fc8a30f86f12d9e4edfefc6ea597de911823756eaeb03157636060daac09f09"
+  },
+  {
+    "file": "hypersolve/examples/basic.rs",
+    "sha256": "2ef4849fcc6a9e41fbab92d0964e4b2b8a60776ba1e1a3b3ae5364ee650cf0d1"
+  },
+  {
+    "file": "hypersolve/examples/write_benchmarks_md.rs",
+    "sha256": "a9237f07a400d36b497b1923154590dd86bc6fd6d5a54654f29f7618134c7e19"
+  },
+  {
+    "file": "hypersolve/fuzz/.gitignore",
+    "sha256": "2273a7309e94699dca1d43ea86bd70ee4f39a1171820ac42126a08293329c46e"
+  },
+  {
+    "file": "hypersolve/fuzz/Cargo.lock",
+    "sha256": "d6450abd29349759b298940a6b179fa3e843e0554be092f8660c1afa5e44921c"
+  },
+  {
+    "file": "hypersolve/fuzz/Cargo.toml",
+    "sha256": "eb93223be244ef781d03c4dcbd328693ae2ba328b6c68d181641559267f1f5b2"
+  },
+  {
+    "file": "hypersolve/fuzz/README.md",
+    "sha256": "64eb7ae5edeb25a44acc96665a1f61ed749ccd3884a7838be78ec3556ed7990b"
+  },
+  {
+    "file": "hypersolve/fuzz/fuzz_targets/active_set_quadratic_regeneration.rs",
+    "sha256": "3e6a2c4f39f4cee7796cb53f48dac5391594a38e691d07965b9d20a3343d0378"
+  },
+  {
+    "file": "hypersolve/fuzz/fuzz_targets/algebraic_binary.rs",
+    "sha256": "0563eb883e21c29c829437bbf9b6f30e933c40372781d40aeb8657db1ca2fb7a"
+  },
+  {
+    "file": "hypersolve/fuzz/fuzz_targets/algebraic_difference_comparison.rs",
+    "sha256": "321d9d27cd74e0aeafafe99ebd473d780d3b3a3a40eacce36cac0c2da684292b"
+  },
+  {
+    "file": "hypersolve/fuzz/fuzz_targets/algebraic_mobius.rs",
+    "sha256": "e3364da2ec46e7e8b952d5fec168bca928dab33e99998b536b80593667983988"
+  },
+  {
+    "file": "hypersolve/fuzz/fuzz_targets/algebraic_polynomial_image.rs",
+    "sha256": "64a4cdd273be03ad992222feedf578899f13619fbaee99f802715c81546b63e7"
+  },
+  {
+    "file": "hypersolve/fuzz/fuzz_targets/algebraic_rational_image.rs",
+    "sha256": "b8cba8452bec58598e7b49ea9877def5a2a5ebfd4b2a453b43f9560704555c81"
+  },
+  {
+    "file": "hypersolve/fuzz/fuzz_targets/curve_resultant.rs",
+    "sha256": "74c199da972334c6614844c02d027a06a6e84d79ab9c5625d68a77819500657f"
+  },
+  {
+    "file": "hypersolve/fuzz/fuzz_targets/curve_substitution.rs",
+    "sha256": "7d87f283fb08b0b0d9830e26c3bf7783994bdcaed80fb7c67fd7a1a302d90d20"
+  },
+  {
+    "file": "hypersolve/fuzz/fuzz_targets/dense_bareiss_multi_rhs.rs",
+    "sha256": "ebdfd4dffe6d6403c7797bc3ce9861bebe2b349c3e27188059ea23650f6672fe"
+  },
+  {
+    "file": "hypersolve/fuzz/fuzz_targets/failed_constraint_minimal_removals.rs",
+    "sha256": "531fed1c31fbe7ae91902c37a81593318de10b6ae966ea0211c184f080950f21"
+  },
+  {
+    "file": "hypersolve/fuzz/fuzz_targets/hyperreal_representations.rs",
+    "sha256": "085e21d8d43f48cde4c5d715a88cb07b37a174297ab0c404e89534366ac030a4"
+  },
+  {
+    "file": "hypersolve/fuzz/fuzz_targets/modified_newton_bounded_quadratic_seed.rs",
+    "sha256": "b59dd00b9607f5e353f96ae9f0b6e69f71c89ce1083d4d30667d01662a7eb069"
+  },
+  {
+    "file": "hypersolve/fuzz/fuzz_targets/modified_newton_bounded_substitution_seed.rs",
+    "sha256": "155b76160030e56fea549b8d0bd6d95e3ac16198ebc40fb63472572fddc82452"
+  },
+  {
+    "file": "hypersolve/fuzz/fuzz_targets/sketch_arc_arc_tangent.rs",
+    "sha256": "2f79e1ed1fe92c9678f671b17db881f0e634e5947be8da2f0ae363baa4f09ba7"
+  },
+  {
+    "file": "hypersolve/fuzz/fuzz_targets/sketch_arc_cubic_second_order.rs",
+    "sha256": "8fde138b591d091d9f7e7df4ed40e3de857ddb94df847a8be4f17a41e3564237"
+  },
+  {
+    "file": "hypersolve/fuzz/fuzz_targets/sketch_arc_cubic_tangent.rs",
+    "sha256": "96970462f3ac15cd6746fa4eacf91adfdb82c96f42fac2e4edad193e281b59e9"
+  },
+  {
+    "file": "hypersolve/fuzz/fuzz_targets/sketch_arc_line_tangent.rs",
+    "sha256": "3b0c76f1c7ce51c49a3f77bbc675d61d68ad8bcef1f9eac971b305c22a4be81d"
+  },
+  {
+    "file": "hypersolve/fuzz/fuzz_targets/sketch_circle_circle_tangent.rs",
+    "sha256": "9f03324067de34bc312f0dc63f4a9016f0d2621f4377276ced9d5c52c9962d40"
+  },
+  {
+    "file": "hypersolve/fuzz/fuzz_targets/sketch_concentric.rs",
+    "sha256": "16dcdb0584af5345143ce95acc393cd201d264e79ed221828ad53bf0fdfa0c93"
+  },
+  {
+    "file": "hypersolve/fuzz/fuzz_targets/sketch_cubic_cubic_c2.rs",
+    "sha256": "dd40bda82fb35c11a8bd449e53319175500964ac56a3fa9ff5e1882560a07bfe"
+  },
+  {
+    "file": "hypersolve/fuzz/fuzz_targets/sketch_cubic_cubic_g2.rs",
+    "sha256": "600f8d68ff755887993ee57a6e4157acd7e080f9b2f5abc71c6adad5b48431d0"
+  },
+  {
+    "file": "hypersolve/fuzz/fuzz_targets/sketch_cubic_cubic_tangent.rs",
+    "sha256": "e6031ab27e600fc8f1f8d8c5e0824be00bacdc60a824d2711084a9655482db2f"
+  },
+  {
+    "file": "hypersolve/fuzz/fuzz_targets/sketch_cubic_line_tangent.rs",
+    "sha256": "c2a782f964e89c356cf3dcbd1cee04e9c91da820757fb590db885597592832b3"
+  },
+  {
+    "file": "hypersolve/fuzz/fuzz_targets/sketch_failed_constraints.rs",
+    "sha256": "58a65871227024d2a22baf51bf14f0418daea1541d24c1709506d2e43e2cafa6"
+  },
+  {
+    "file": "hypersolve/fuzz/fuzz_targets/sketch_line_arc_length.rs",
+    "sha256": "7179c382c6d34be9efc9f6203b0eceb9afa9e7fa88455005c5c4e59ba16bd246"
+  },
+  {
+    "file": "hypersolve/fuzz/fuzz_targets/sketch_line_arc_sweep_length.rs",
+    "sha256": "38cd8d06a394cc8d17edd34abd973e741a5a14f3acac49cfc006df92953a8ee5"
+  },
+  {
+    "file": "hypersolve/fuzz/fuzz_targets/sketch_oriented_angle.rs",
+    "sha256": "5931e181e3fcd6343dbc55e8596035922572feda24f557c66f240dfd8293200f"
+  },
+  {
+    "file": "hypersolve/fuzz/fuzz_targets/sketch_point_line_incidence.rs",
+    "sha256": "f6a6d7b0a1f4e6017f95266d9889c85c17bb2f7f8590209c8479c4e467dd750b"
+  },
+  {
+    "file": "hypersolve/fuzz/fuzz_targets/sketch_point_on_arc.rs",
+    "sha256": "ca54c7e28abc9a4e652984648a63f76c267ed04a933fac0d51b976ba61784c9f"
+  },
+  {
+    "file": "hypersolve/fuzz/fuzz_targets/sketch_point_on_cubic.rs",
+    "sha256": "117671a7f08906a2f44cb54afd726beb2814010d83a72f60654c6fe6d2282199"
+  },
+  {
+    "file": "hypersolve/fuzz/fuzz_targets/sketch_projected_arc_cubic_curve_second_order_contact.rs",
+    "sha256": "13fd2bf8bb9452cb60d55ae3116f183fd7e255b2f4f687311d0fe0ee44c27f64"
+  },
+  {
+    "file": "hypersolve/fuzz/fuzz_targets/sketch_projected_arc_cubic_curve_tangent.rs",
+    "sha256": "30e67a8e13188a738a2df5f15869b30496c8c33ab95c99c1a789216245e558c0"
+  },
+  {
+    "file": "hypersolve/fuzz/fuzz_targets/sketch_projected_arc_line_tangent.rs",
+    "sha256": "b17c38a2ce726771de810a8cefa1e3d95ff156740cd3b6108a7063b952328452"
+  },
+  {
+    "file": "hypersolve/fuzz/fuzz_targets/sketch_projected_cubic_curve_cubic_curve_c2.rs",
+    "sha256": "9fe46e197816c8355a88892ddbeb3dbc2cfab8b06e86cd458e934f1f7f9e98ba"
+  },
+  {
+    "file": "hypersolve/fuzz/fuzz_targets/sketch_projected_cubic_curve_cubic_curve_g2.rs",
+    "sha256": "d2155cca37e2a95a891af1103634444933f7715caa25a689ea4a98f513504868"
+  },
+  {
+    "file": "hypersolve/fuzz/fuzz_targets/sketch_projected_cubic_curve_cubic_curve_tangent.rs",
+    "sha256": "091e6ce109bfb5a00401fd299680580ffc53d6cb10014bcfc6b48eb9cabc5218"
+  },
+  {
+    "file": "hypersolve/fuzz/fuzz_targets/sketch_projected_cubic_curve_line_tangent.rs",
+    "sha256": "9ae8937a834953a0fdb01f87f98f0bffdd4b5bfc5fd6b166aec999611e48e5bf"
+  },
+  {
+    "file": "hypersolve/fuzz/fuzz_targets/sketch_projected_cubic_line_tangent.rs",
+    "sha256": "29d25a610791b39bd68a4bff0efae0590fd37cf4654d8e50afaeeaaf3cd4a18a"
+  },
+  {
+    "file": "hypersolve/fuzz/fuzz_targets/sketch_projected_distance.rs",
+    "sha256": "a58d80ca374e2ab29061a5d7f7654b1acb83a16a96ef7468fe4dc5adccd740f3"
+  },
+  {
+    "file": "hypersolve/fuzz/fuzz_targets/sketch_projected_distance_range.rs",
+    "sha256": "89cd574e57e64a2af143fe8a911a5b9c0099d3cdbd038969ecc6f5694a0981b0"
+  },
+  {
+    "file": "hypersolve/fuzz/fuzz_targets/sketch_projected_equal_length.rs",
+    "sha256": "cb6bb710b5969a9c9ad4312ac35b26b42de9be9ec212553b393426841c7e0d4f"
+  },
+  {
+    "file": "hypersolve/fuzz/fuzz_targets/sketch_projected_equal_point_distance_point_line_distance.rs",
+    "sha256": "0d0d9255dc30d9d8dc1b79185798efadaf3cad70a580e784a72165ca0c974c65"
+  },
+  {
+    "file": "hypersolve/fuzz/fuzz_targets/sketch_projected_equal_point_line_distances.rs",
+    "sha256": "ccc8073bc530ad187de48a92c771349abe1e9ca155052ac95669fe3488aaee99"
+  },
+  {
+    "file": "hypersolve/fuzz/fuzz_targets/sketch_projected_equal_point_point_distances.rs",
+    "sha256": "6805256b0f385d30ac3e9bdd8f5477bd0b21a669ea8c869383d8908b8ca95c05"
+  },
+  {
+    "file": "hypersolve/fuzz/fuzz_targets/sketch_projected_length_difference.rs",
+    "sha256": "584983fa618276540169bfb133eb8806fcd422d7109573c2f1e9f6701dbe5a84"
+  },
+  {
+    "file": "hypersolve/fuzz/fuzz_targets/sketch_projected_length_point_line_distance.rs",
+    "sha256": "49871e1211f20c0c7774bf079093fdfdd47f45dd1472e31e0cdf73d5663b306e"
+  },
+  {
+    "file": "hypersolve/fuzz/fuzz_targets/sketch_projected_length_ratio.rs",
+    "sha256": "ae2d56bcf9f0ccb95f3df2465f2b03bd74ea28eed048e07f9aa7aceeb05b502b"
+  },
+  {
+    "file": "hypersolve/fuzz/fuzz_targets/sketch_projected_line_arc_sweep_length.rs",
+    "sha256": "ae017031e581d634fa92f5548d41f417a0aa43a6c71f5e834e70f3721e8a34bd"
+  },
+  {
+    "file": "hypersolve/fuzz/fuzz_targets/sketch_projected_line_circle_tangent.rs",
+    "sha256": "9da2d9833ea356e52b901a65fbb59107447a50b1308160cf82bb6f6dfe225e42"
+  },
+  {
+    "file": "hypersolve/fuzz/fuzz_targets/sketch_projected_line_length_range.rs",
+    "sha256": "b84ee1cbe4252ef74d73388d005e0b4cca9d0249b2bdef173937c0e70c417c8e"
+  },
+  {
+    "file": "hypersolve/fuzz/fuzz_targets/sketch_projected_line_orientation.rs",
+    "sha256": "0aa91fa2d4fb3c9cfcd39c8f0e95b0ac6c8255f46979a1b9cca03c68ecb19c7c"
+  },
+  {
+    "file": "hypersolve/fuzz/fuzz_targets/sketch_projected_line_radius_equality.rs",
+    "sha256": "b34dcf0e76e353bfd3828aeb2ca329580dcf5f133830bd95ab5a9a91e5e59695"
+  },
+  {
+    "file": "hypersolve/fuzz/fuzz_targets/sketch_projected_line_symmetry.rs",
+    "sha256": "a04117546fc51d5903d2795fa07d75c4c1739bf8ac8ebd28e6ed1e2871f28cd9"
+  },
+  {
+    "file": "hypersolve/fuzz/fuzz_targets/sketch_projected_oriented_angle.rs",
+    "sha256": "bcf9f63461f01947f68c2d972572edc026d0eed24cb8ede296e2cec66d51642b"
+  },
+  {
+    "file": "hypersolve/fuzz/fuzz_targets/sketch_projected_point_concentric.rs",
+    "sha256": "d5d3ecc82e086329c822e223b2c9d2ae1c071f53c22e0be2a336b98bccc53721"
+  },
+  {
+    "file": "hypersolve/fuzz/fuzz_targets/sketch_projected_point_distance_difference.rs",
+    "sha256": "90cf7b28a4128a4be268bf9471279dba8003baffc05b6a06f8a2131a84398601"
+  },
+  {
+    "file": "hypersolve/fuzz/fuzz_targets/sketch_projected_point_distance_ratio.rs",
+    "sha256": "657bb941f07d6cd4b41c52d4604143bca8308908b532cad42d6bc1bf5c6f4f72"
+  },
+  {
+    "file": "hypersolve/fuzz/fuzz_targets/sketch_projected_point_line_distance.rs",
+    "sha256": "27832820bc08b5a6df6afafb12fa7efe2e99d07209946ee7590f6e567378f02a"
+  },
+  {
+    "file": "hypersolve/fuzz/fuzz_targets/sketch_projected_point_line_distance_range.rs",
+    "sha256": "dc6d68fd6eb1d4ba46c81f2ad65e8caadb9f41f393e7be0dd72837faa90dcd90"
+  },
+  {
+    "file": "hypersolve/fuzz/fuzz_targets/sketch_projected_point_line_radius_equality.rs",
+    "sha256": "0059f1cf61435109f6cb5d2f706fa4a65e68dea40ae4b17215b6718e730c8e85"
+  },
+  {
+    "file": "hypersolve/fuzz/fuzz_targets/sketch_projected_point_on_arc.rs",
+    "sha256": "fa84093b2438c76c3bb105c831f3cfdc98696dfbcb20abc7c9e24e77523bbb37"
+  },
+  {
+    "file": "hypersolve/fuzz/fuzz_targets/sketch_projected_point_on_circle.rs",
+    "sha256": "2ae4c6da4120d4433846bbc4d45bec4bc2a3bb2fe566d9ab897091047337409b"
+  },
+  {
+    "file": "hypersolve/fuzz/fuzz_targets/sketch_projected_point_on_cubic.rs",
+    "sha256": "c1736a5bdd7b75ce4a4f51e10d66bb11de0b5465b6ac8c0e8ea1c2d10727e320"
+  },
+  {
+    "file": "hypersolve/fuzz/fuzz_targets/sketch_projected_point_on_cubic_curve.rs",
+    "sha256": "36cb2bf61d9b91605f31df5662796c01cba0c90bad78c4c18500b9fe459b6729"
+  },
+  {
+    "file": "hypersolve/fuzz/fuzz_targets/sketch_projected_point_radius_equality.rs",
+    "sha256": "1706205a1e3125c930698015ede8f972e9212d5f289284dfd36f7faad4bfce92"
+  },
+  {
+    "file": "hypersolve/fuzz/fuzz_targets/sketch_workplane_symmetry.rs",
+    "sha256": "4d87e3b62a59458854512730b5853992975eec72cb2f6532c245b6342d7bc5b1"
+  },
+  {
+    "file": "hypersolve/fuzz/fuzz_targets/sparse_pattern_preserving_bareiss.rs",
+    "sha256": "4913c4e2e7ce7be7ae99a1e9815c5625783aa040c5e59f702ca1bc86aff61ed9"
+  },
+  {
+    "file": "hypersolve/promoted_slow_offenders.txt",
+    "sha256": "4bf76834701998bf50565a272002bd59d89e17dc86028ba2e0ee4338ee393847"
+  },
+  {
+    "file": "hypersolve/proptest-regressions/curve_resultant.txt",
+    "sha256": "4dc6a16ff6864522f5d553f993f6d378d82fbef724018af74f9cc02b53ebf9d6"
+  },
+  {
+    "file": "hypersolve/scripts/allocation_profile.sh",
+    "sha256": "21389a229b030b16fbdb438cb5cde0dca36cf52a4054f9c8fd3279468cdfcbf8"
+  },
+  {
+    "file": "hypersolve/scripts/coverage.sh",
+    "sha256": "565178766256ab740f03c5cf4ac2fa118debf82b1a81603d55cd23707ad2f89f"
+  },
+  {
+    "file": "hypersolve/scripts/representation_coverage.sh",
+    "sha256": "0676b2ca2d7311caadf95b86ae5947b9e71013c3d677f1965b41788a9a93315b"
+  },
+  {
+    "file": "hypersolve/slow_performers.txt",
+    "sha256": "66d9b4f18afc3144baa91bedb45a8d5df916a901fa6fc426899321434b19df03"
+  },
+  {
+    "file": "hypersolve/src/active_set.rs",
+    "sha256": "b9e56d6265828c5d2929c55ee149564c27185a4043ecb6538a5fc80610674aa7"
+  },
+  {
+    "file": "hypersolve/src/affine.rs",
+    "sha256": "f89c5efa8e17e3fd548461344d0a5590f0e2829f825ffe1989e8a7d4762f1802"
+  },
+  {
+    "file": "hypersolve/src/algebraic.rs",
+    "sha256": "ee9928a0350b5c4e4cf36171b65b1abc7b2032d3b37554852c8f7da8efc35a77"
+  },
+  {
+    "file": "hypersolve/src/algebraic_binary/zero_factor_tests.rs",
+    "sha256": "8f8e2b7617f9c9b993f1190139bbbe960a723309bf09989b5001d061f2c49961"
+  },
+  {
+    "file": "hypersolve/src/algebraic_binary.rs",
+    "sha256": "9b8a09a493bd69b3b57e7cd90bbea83c4c152d5c4207e9621ff164ef19bbf560"
+  },
+  {
+    "file": "hypersolve/src/algebraic_fiber/refinement.rs",
+    "sha256": "fb5015f512cab14521c5f56ee11951ebec8c9a940131f60ac64f1ee535c95b30"
+  },
+  {
+    "file": "hypersolve/src/algebraic_fiber.rs",
+    "sha256": "7a95383c46a6b8023fcbbb1a75d03eb8d5d3c058241fdf1c66fc333644155acf"
+  },
+  {
+    "file": "hypersolve/src/algebraic_mobius.rs",
+    "sha256": "88009db6be3f8e6bdafb3a9752a9f5a9677abd7572ec598f36245c3ae0bb1409"
+  },
+  {
+    "file": "hypersolve/src/algebraic_polynomial_image.rs",
+    "sha256": "0697cc99443637747de52cd58086a869138d95c264fe31c8fcf062c7135693bf"
+  },
+  {
+    "file": "hypersolve/src/algebraic_rational_image.rs",
+    "sha256": "481b47d5bdcff41371ed3d254b4205efee438c31b922b3ca76720d582b383d87"
+  },
+  {
+    "file": "hypersolve/src/algebraic_sqrt.rs",
+    "sha256": "c4b05c92b1c962894b4079a11c056f5ab6a8331218bf900e77e7825097210851"
+  },
+  {
+    "file": "hypersolve/src/algebraic_tensor_image.rs",
+    "sha256": "3e19da0494a000c348069e7869f15ffbfe69a15b777d827280cd83f6943a6458"
+  },
+  {
+    "file": "hypersolve/src/alpha.rs",
+    "sha256": "5bfd228d2db8baf4f91aba99c949ec0187a71f345dd8a3fc4cf2c4ff0bf0d990"
+  },
+  {
+    "file": "hypersolve/src/analysis.rs",
+    "sha256": "0b5da888a2c0a1a7a8989c9de24cac428d1108802b4bfe68bc499ba41b2bfde7"
+  },
+  {
+    "file": "hypersolve/src/bareiss.rs",
+    "sha256": "d7cede43be54284c4ac204121298fb4cb9ff6236790b38c5b7744ec41d349f53"
+  },
+  {
+    "file": "hypersolve/src/batch.rs",
+    "sha256": "637b2df93b970894c6c71174bc9f41aeb283e8472b08a42f115ea814998f50d5"
+  },
+  {
+    "file": "hypersolve/src/branches.rs",
+    "sha256": "ac399f084d8b482bc67a4e20be4c40a393b3d2026395a84f6a8f21e4e5d4ca9c"
+  },
+  {
+    "file": "hypersolve/src/certification.rs",
+    "sha256": "b6e316b908151587f31db5844851767a6f1c3a1a7b9d95ab9015d7921164e73a"
+  },
+  {
+    "file": "hypersolve/src/curve_resultant.rs",
+    "sha256": "bf56a55db436d29674c2ce701305ff5eb8453f3a7ea340fc970ff8e5b562e95e"
+  },
+  {
+    "file": "hypersolve/src/curve_substitution.rs",
+    "sha256": "6a6456ca9cd1b541d639186db4d5f908a0b1a9ac0b65cb6da514df6cb8f3fb29"
+  },
+  {
+    "file": "hypersolve/src/diagnostics.rs",
+    "sha256": "61f230cb75ede0df9b4c0351ec086353761949b9d3a4ce10c9aa268e7209ab9d"
+  },
+  {
+    "file": "hypersolve/src/direct.rs",
+    "sha256": "dfe23a2074e76220653650ed35abf14146837114fbdfb8b847b7efe0bcd65ea3"
+  },
+  {
+    "file": "hypersolve/src/domain/geometry.rs",
+    "sha256": "c753ee3283357568b4e253a3388e839a6c8ac6275c05432ff1910a423776348b"
+  },
+  {
+    "file": "hypersolve/src/domain/mod.rs",
+    "sha256": "f2f0fd74757dd02f022e80b4009c1bb1ce5bc49f1a7d717a7a67ed4172a64aba"
+  },
+  {
+    "file": "hypersolve/src/domain_certification.rs",
+    "sha256": "89f63ee2bbbe257d1c69c6b29855e915fc9841b86a6b0758db702ea29f8b2351"
+  },
+  {
+    "file": "hypersolve/src/eval.rs",
+    "sha256": "326fff79ad347a57e7b2d8ff7fc5c5d22b9489bcdf9fb6b69dc19d0b06ce6b75"
+  },
+  {
+    "file": "hypersolve/src/failed_constraints.rs",
+    "sha256": "c9c394540824901071d414cb78d66b9375c7c30d1ba8898a0c325d0396a98bbd"
+  },
+  {
+    "file": "hypersolve/src/integer_interpolation.rs",
+    "sha256": "f6fd80a63c4979332406d986f64013ee17bacdd53e74f7b4c51b19656866d191"
+  },
+  {
+    "file": "hypersolve/src/interval.rs",
+    "sha256": "ba4ecf1edd885bb33e887c10039ad82f8a2c5da5b3710c2c36b198d974396b41"
+  },
+  {
+    "file": "hypersolve/src/jacobian.rs",
+    "sha256": "cdea1bf69710a12d4e874fe17574f065ae9df1724aab48621f18184ff04e73be"
+  },
+  {
+    "file": "hypersolve/src/lib.rs",
+    "sha256": "5d8e9d33259f74804a663cd672cb5ac39092b4ec07fd8a132e4029c8647bdecb"
+  },
+  {
+    "file": "hypersolve/src/linalg.rs",
+    "sha256": "da8f72c85cf17760e2ad9df277972034673a5546cf1024eecb958b522de43681"
+  },
+  {
+    "file": "hypersolve/src/model.rs",
+    "sha256": "dad450a6888739bebecd505576a59035a718e10ae1883b6faf99d08baa200ac7"
+  },
+  {
+    "file": "hypersolve/src/ordered_field_roots.rs",
+    "sha256": "0446e1919f3524551b22dba9334ec3e733d5256d544fcce4dec88f9d0615a4c9"
+  },
+  {
+    "file": "hypersolve/src/policy_division.rs",
+    "sha256": "b773fdc3fb4730f46613814d190a973bae774b24ac25feb2186592203cb265f8"
+  },
+  {
+    "file": "hypersolve/src/polynomial.rs",
+    "sha256": "263840d2556d62c5b95a5f954bc9720bbf3c8798b640e474f5157b0a99688035"
+  },
+  {
+    "file": "hypersolve/src/predicates.rs",
+    "sha256": "01efa4da96b5814e5d72670beade34fb400e8c31e0b66210caab753e908f66b7"
+  },
+  {
+    "file": "hypersolve/src/rank.rs",
+    "sha256": "c0a877b1b135e1ce2ed955452bbea3a1c7fe5f2611655a216be85951f113c3b0"
+  },
+  {
+    "file": "hypersolve/src/residual_replay.rs",
+    "sha256": "93c921efb4b90973e03135b19f0ae12351b1c1345faebb3f5e90ad6d08e90d8b"
+  },
+  {
+    "file": "hypersolve/src/resultant.rs",
+    "sha256": "95b8863c5971bdcbf38c23cd600b946d86900fa4331e9f7e33d4674dc8c1d51b"
+  },
+  {
+    "file": "hypersolve/src/root_isolation.rs",
+    "sha256": "5f52df0495946767c8cc676cedfa80223773f06cd1acd976595d0824563e1021"
+  },
+  {
+    "file": "hypersolve/src/root_isolation_monic_tests.rs",
+    "sha256": "46c81a68fda4d58b56a4f821cf92c37bdb174b62281b438a178a9946e3ba3f0f"
+  },
+  {
+    "file": "hypersolve/src/root_sign.rs",
+    "sha256": "3b5a29028e28b8004535ed39128e78c4be49460bad2b0ab97779009f9affbeed"
+  },
+  {
+    "file": "hypersolve/src/simplex_projection.rs",
+    "sha256": "7dd0f5fbf06a42a44e24b3438330e1453327aca82cc2b1826f70b599ea078759"
+  },
+  {
+    "file": "hypersolve/src/sketch.rs",
+    "sha256": "e1a179c91a45ad3bec999744904f2cc444d0b08519249b2320cec7bdcb800aa8"
+  },
+  {
+    "file": "hypersolve/src/sketch_arc_incidence.rs",
+    "sha256": "2f4be241c2cfa69a6a8a26f7181caa1ef7e645e24e799e82e16098bfd3abc537"
+  },
+  {
+    "file": "hypersolve/src/sketch_arc_length.rs",
+    "sha256": "39b296b58069430ae2b093196e8e2aa4bd1397b054fd2a3b12de41eb883b589e"
+  },
+  {
+    "file": "hypersolve/src/sketch_arc_tangent.rs",
+    "sha256": "6b76a5411172c0714c5019bcbc1ade0c6e86b5ddd41757ace37e8bd27bf1358b"
+  },
+  {
+    "file": "hypersolve/src/sketch_builders.rs",
+    "sha256": "5d13b2f66fde6241f5b7d25e21f32f7ddeb22b8e0fcae9d74e199d519ce39cdd"
+  },
+  {
+    "file": "hypersolve/src/sketch_certificates.rs",
+    "sha256": "79f283a644f03671428f1ae6d3c2dcf467e9f6a7869e11532f90e54a8b649051"
+  },
+  {
+    "file": "hypersolve/src/sketch_circle_tangent.rs",
+    "sha256": "b1564b6b638453380b03f42a0a74504c9068ffce8def5cbe9bae162d5a490b0d"
+  },
+  {
+    "file": "hypersolve/src/sketch_cubic_tangent.rs",
+    "sha256": "8707fe70087f5f6af5a1c7c61e7154e65949c03e2d7da0afc25958cc4be43aba"
+  },
+  {
+    "file": "hypersolve/src/sketch_degeneracy.rs",
+    "sha256": "21b6cd26848eb0b0a1eca579ff18582643dc46ffc64350c7c718d8a8c2394aa4"
+  },
+  {
+    "file": "hypersolve/src/sketch_domains.rs",
+    "sha256": "a6c69703f1f5e8d3c653fc36da73bc460ee1ce0b75f0431e5d54c9ef100a71e8"
+  },
+  {
+    "file": "hypersolve/src/sketch_entity_domains.rs",
+    "sha256": "5440455e61b5a227bf7095cd0e658cc269fa3301a8ff206d76b43f093ab948ed"
+  },
+  {
+    "file": "hypersolve/src/sketch_failed_constraints.rs",
+    "sha256": "71583b151e7ef9d47f95723c183edb328c3bc3c614252a3545e7bfd38c1ab5b5"
+  },
+  {
+    "file": "hypersolve/src/sketch_fixtures.rs",
+    "sha256": "dd69b2efa633db2e6dfd5c3c2b3b5b5671fd2e460528a2587957f20b4f828250"
+  },
+  {
+    "file": "hypersolve/src/sketch_oriented_angle.rs",
+    "sha256": "88d9d15576494b67e8ee3c4d00d7c41828bf5f95a5734c12be0928c8dfe8cbb5"
+  },
+  {
+    "file": "hypersolve/src/sketch_projection.rs",
+    "sha256": "a2e7e0fc200de2c4a2c9350e84618c864814f5b9ce73b185ce5500f039fe8789"
+  },
+  {
+    "file": "hypersolve/src/sketch_units.rs",
+    "sha256": "7723275882b9316d7b921a6210c1283d377a1f7a922e7f7c4239ae59a4b8f5e6"
+  },
+  {
+    "file": "hypersolve/src/sketch_workplane_symmetry.rs",
+    "sha256": "6080f2ff1bd2a448aeace9b9db4d8302303f04fbcb0e000d9e865046197a305a"
+  },
+  {
+    "file": "hypersolve/src/sketch_workplanes.rs",
+    "sha256": "e718b215a5a67b526eb89284d8eafbf8429b648960d2b105f608e8d25e7d7976"
+  },
+  {
+    "file": "hypersolve/src/solver.rs",
+    "sha256": "a47c79d9d3ef1e7b4f9d4fb4a041a6962abbf3c4a4f6d205c5b71c413132944f"
+  },
+  {
+    "file": "hypersolve/src/solver_block.rs",
+    "sha256": "4f34417f5c3bce0ab4a037cc9e38960dcca1f7bc1edabd7181282fd3c1a5946d"
+  },
+  {
+    "file": "hypersolve/src/sparse_pattern.rs",
+    "sha256": "049ce62c7fdc05d31cbd096a1edfb73d5e8fe83aa89bab54b6ad04cc124ca379"
+  },
+  {
+    "file": "hypersolve/src/symbolic.rs",
+    "sha256": "9bac6fbd6130fa47784d9c87e695aed13750c6d1d2109ba73e2e50825e9eb0eb"
+  },
+  {
+    "file": "hypersolve/src/tensor_resultant.rs",
+    "sha256": "463d45ca33871c89ec9455e53cbf9f4c05a3277acf50ebf6a3b14e2e33f6ca3c"
+  },
+  {
+    "file": "hypersolve/src/test_support.rs",
+    "sha256": "0ff40206ef0c7196b825ede193f93babd433a7d49ce8f2af3bd140f492b6929e"
+  },
+  {
+    "file": "hypersolve/tests/exact_value_root.rs",
+    "sha256": "9765e6189de5bdb56b222b96b768dbfd7e2ac3ca44e117a14cdeef49248a50e6"
+  },
+  {
+    "file": "hypersolve/tests/exactcore_root_families.rs",
+    "sha256": "7e49d69e20f1e8df36394746b6b4717662c321cd2b37370caefead1c4add966c"
+  },
+  {
+    "file": "hypersolve/tests/quadratic_extraction.rs",
+    "sha256": "9cfc62a0efe58861170ca42bbd4769b5bfcd21f4c9ded602efcfff72065fb9e6"
+  },
+  {
+    "file": "hypersolve/tests/readme.rs",
+    "sha256": "4d5a226ea10546b60779ec14cb5a576c80c9dc973bfa5c7196b800f389a2dfb1"
+  },
+  {
+    "file": "hypersolve/tests/real_representations.rs",
+    "sha256": "70d9d346c522366fe66729b56caf7eedf6b4cbca1442d0c6bcd5d14a08c2e6c0"
+  },
+  {
+    "file": "hypersolve/tests/residual_props.proptest-regressions",
+    "sha256": "65bc7456d4a51ab84494cc32cd5f1b5a52fdc443a7bf4e8864aa63368a6a5944"
+  },
+  {
+    "file": "hypersolve/tests/residual_props.rs",
+    "sha256": "ef831504232084593e06493fdc64328aaa5c95fb253e9b0403b2c0528db320c8"
+  },
+  {
+    "file": "hypersolve/tests/smoke.rs",
+    "sha256": "b0b66a8fa6b51c625ffa62cb0b6786d0e851aef8f8b586efeb20b8f59e157427"
+  },
+  {
+    "file": "hypersolve/tests/square_free_growth.rs",
+    "sha256": "a23105472c7cabbd1b13ab95a1fa10c60863c8ba6bcb04398033303d3f22b4e6"
+  },
+  {
+    "file": "hypersolve/tests/tensor_remainder_scale.rs",
+    "sha256": "f372af82869d2816f1b9826a7ab2a10fe81bf8db001da2d37f0cfdcb3e1405a2"
+  },
+  {
+    "file": "hypertri/.github/workflows/ci.yml",
+    "sha256": "66bf1cdda632a4484e95872b8df7c567e0ac397ecefd32c8db6e79ad27c5bb63"
+  },
+  {
+    "file": "hypertri/.github/workflows/pages.yml",
+    "sha256": "b110c8cf01e2cbc26cf549babc9047b67daa2d6a7addea222bb45780de4e8b23"
+  },
+  {
+    "file": "hypertri/.gitignore",
+    "sha256": "82fc7bd68e9f192aa21e8d2ac223966a5849080dff2a8a6a2576384e1092f6cb"
+  },
+  {
+    "file": "hypertri/Cargo.lock",
+    "sha256": "359e116bfe5613b39b1b7da550c9bfdba7e26d84d8a83db234347bfceecf11a8"
+  },
+  {
+    "file": "hypertri/Cargo.toml",
+    "sha256": "12188eae885cdd8a203ed8335551fa3e73f3a18d010b080873ef879017fa3498"
+  },
+  {
+    "file": "hypertri/LICENSE",
+    "sha256": "1bd6f730e72e7a1e04a3d4c28001efc23869d953c2d35a19f53935f6e55bd335"
+  },
+  {
+    "file": "hypertri/PERFORMANCE.md",
+    "sha256": "cb8aca1380b6ea9f9ecfc1a02f910cd6a70c297a8c6e8bbb1591cb0b72fadf75"
+  },
+  {
+    "file": "hypertri/README.md",
+    "sha256": "6f94c63d218a7da722ed1214052d0f1fb182fe655da4d6b7480f167178bbe5e6"
+  },
+  {
+    "file": "hypertri/benches/competitive.rs",
+    "sha256": "9818dc4edd5f654135f0afb5aa701864b2530d28dabbd3b8e881059edb5ef170"
+  },
+  {
+    "file": "hypertri/benches/delaunay.rs",
+    "sha256": "2aa53b289145b3c3c8d0565c3bfbbcf625316580b9196ea9051b59dfdc0d8a68"
+  },
+  {
+    "file": "hypertri/benches/dispatch_trace.rs",
+    "sha256": "8335e48ffc311ebc82400a0bd443e7a0c9c3bd080eef72c7d12b7c6279499b56"
+  },
+  {
+    "file": "hypertri/benches/earcut.rs",
+    "sha256": "9c1edbd8c35549a8cb4eebcb1af0ad884dba3d1eed734ee5a50f64553f6ddb38"
+  },
+  {
+    "file": "hypertri/benches/exact.rs",
+    "sha256": "82f9810bcd3029513a3f09283b201b1b845493c918efa6d5d3ace047c1ac1ac4"
+  },
+  {
+    "file": "hypertri/benches/representations.rs",
+    "sha256": "b6536459b8eea48b6ad485ce2a56f0459982cb5fd3316937af65820f1d79c33d"
+  },
+  {
+    "file": "hypertri/benches/retained_fuzz.rs",
+    "sha256": "80339d88eecbf1e2618c1f5ad261fb94475c73bddf1d95356dc1a33537ec9d52"
+  },
+  {
+    "file": "hypertri/benches/support/benchmark_report.rs",
+    "sha256": "19207b5a53962c569b6fe27af45da5bd2bcfd35929ce15d5597089b5d5ab2c91"
+  },
+  {
+    "file": "hypertri/benches/support/retained_fuzz.rs",
+    "sha256": "812ace7f011bcdedcf3698a7c8e6eafbe8411bb3c3ba276d6d1395481fcc1062"
+  },
+  {
+    "file": "hypertri/benchmarks/baselines/cdt-path-completeness-2026-07-31.md",
+    "sha256": "fe720ca4244f19b0cc8e2f07a82e5057ab9b150db5689d31c728dbaf9ee9f43e"
+  },
+  {
+    "file": "hypertri/benchmarks/baselines/cdt-path-completeness-2026-07-31.toml",
+    "sha256": "58a05a77c44f67b40ca08196f9cd8dd7beb4ab27d6476fb6ede836611040db02"
+  },
+  {
+    "file": "hypertri/benchmarks/baselines/policy-context-2026-07-30.md",
+    "sha256": "af5b0d62a4fcb6032390f7e520be5639af38cb570ec038145a307c4954062b8b"
+  },
+  {
+    "file": "hypertri/benchmarks/baselines/policy-context-2026-07-30.toml",
+    "sha256": "4c78a15dc6be74fe278460a5cb856d9329f24dab7cb0f6868a94329f09b4a453"
+  },
+  {
+    "file": "hypertri/benchmarks/baselines/sparse-cdt-adjacency-2026-08-03.md",
+    "sha256": "915955c76bfd1e0512e60116cf39c8880361988fb0c4e8b936eb78a3643e4f9b"
+  },
+  {
+    "file": "hypertri/benchmarks/baselines/sparse-cdt-adjacency-2026-08-03.toml",
+    "sha256": "0287a068e82bc9b75700cc030553b833834bbec73ee0a8438ebf45e1e310dda0"
+  },
+  {
+    "file": "hypertri/benchmarks/size-harness/.gitignore",
+    "sha256": "306fd52e74fca6746e12acc750f232de15e71da917756a1270d74c91f5eb7368"
+  },
+  {
+    "file": "hypertri/benchmarks/size-harness/Cargo.lock",
+    "sha256": "83ec059ee4958c40fac919438d624e392984e8755fed354a8507b53aeb2e5f85"
+  },
+  {
+    "file": "hypertri/benchmarks/size-harness/Cargo.toml",
+    "sha256": "a5b162eaf3f799ada7972aaeb7474077f813dffc110f3671c15a67917be43f6d"
+  },
+  {
+    "file": "hypertri/benchmarks/size-harness/README.md",
+    "sha256": "ad00ef47f105a5a6e2916b16d71b4cfa488729390f66cea69e4063ab6396442c"
+  },
+  {
+    "file": "hypertri/benchmarks/size-harness/measure.sh",
+    "sha256": "a916abd1cd1134a13fc2636eca0d2b779b1d8e4a50f02d82f51cc407995ce8b0"
+  },
+  {
+    "file": "hypertri/benchmarks/size-harness/src/main.rs",
+    "sha256": "a961da3803f85dbd55d977ba38ed51cf7fbac6c8a0e9449a9c7a824943390b47"
+  },
+  {
+    "file": "hypertri/benchmarks.md",
+    "sha256": "2749ee6cbb1320a88cb5ceaae8bfee335b877c1e4a3921e30b8ad1855ceb994e"
+  },
+  {
+    "file": "hypertri/dispatch_trace.md",
+    "sha256": "f883975ea88f1ce6ddf767cefb93bb53796d3d4319af49972a5133d2c876af5a"
+  },
+  {
+    "file": "hypertri/doc/hypertri.png",
+    "sha256": "e0e5ca03a04c7c8ef540e86a05f5aafe2b0e061aa7726c341368b3dc64ae97d7"
+  },
+  {
+    "file": "hypertri/examples/allocation_profile.rs",
+    "sha256": "bee42a2ab34502fadfcf3469d984eb82bae5950749150d7c04239485493bbc17"
+  },
+  {
+    "file": "hypertri/examples/basic.rs",
+    "sha256": "1734a6b20c9a10d9699d5a42a218c85368175a95bc2f5055766f76273e01cc5f"
+  },
+  {
+    "file": "hypertri/examples/cdt.rs",
+    "sha256": "5e78e3d950d17cdd77de0e1bf9d70d08bbbd4e3267f1c142521834e6fadcf8ea"
+  },
+  {
+    "file": "hypertri/examples/hypertri_ui/.gitignore",
+    "sha256": "7518491a7d910baf174ace3f13c2d8ecd59e3960ee2e445b4736f5577ac2ef55"
+  },
+  {
+    "file": "hypertri/examples/hypertri_ui/Cargo.lock",
+    "sha256": "199eb97f978dc2c78f719af58a50d52b6a4cd2ae9aa9cb129913bbad3d7488f6"
+  },
+  {
+    "file": "hypertri/examples/hypertri_ui/Cargo.toml",
+    "sha256": "128ceec00d821d41f0a02747d2bfe4813cd42d41c2bd82679652fb871eececcc"
+  },
+  {
+    "file": "hypertri/examples/hypertri_ui/README.md",
+    "sha256": "0d2919d31f87bd2e003c3179a95233dc68ab7434fdda6e8542642c7bf92ef227"
+  },
+  {
+    "file": "hypertri/examples/hypertri_ui/Trunk.toml",
+    "sha256": "b3134ddc10d213682121b5f29b8a6420ca9867833dd8fc14081d75191af4db83"
+  },
+  {
+    "file": "hypertri/examples/hypertri_ui/index.html",
+    "sha256": "ac46d6bada62f65b4803098ad92a1fcff9b18067312310ed550ce997d8dfc959"
+  },
+  {
+    "file": "hypertri/examples/hypertri_ui/src/app.rs",
+    "sha256": "13573f7c75522fb35bcea303d4084e5728acd87be3251dcbe362467eb76b8244"
+  },
+  {
+    "file": "hypertri/examples/hypertri_ui/src/main.rs",
+    "sha256": "c19ab7274146ab0117cdc0ae6852d7817a085fdc1d8ad2ef2ee270ecbb2bdde1"
+  },
+  {
+    "file": "hypertri/examples/hypertri_ui/src/share.rs",
+    "sha256": "2c2682a3882c30a56e62f1a22a534150174f1d08f3077571c3210268286c29a5"
+  },
+  {
+    "file": "hypertri/examples/nd.rs",
+    "sha256": "0935ff3abf62a1c7bc8add963bacf2c470105010fc4470606a93fdb562a3f3dd"
+  },
+  {
+    "file": "hypertri/examples/write_benchmarks_md.rs",
+    "sha256": "a9237f07a400d36b497b1923154590dd86bc6fd6d5a54654f29f7618134c7e19"
+  },
+  {
+    "file": "hypertri/fuzz/.gitignore",
+    "sha256": "98d82ee4130b95c404bd9aa51fd5b75af36694f5a20fbc0d7694c8a19705f5b8"
+  },
+  {
+    "file": "hypertri/fuzz/Cargo.lock",
+    "sha256": "bd9053e6e330023a3d492ec654f04d501c1594fa43d1bd36b646e5f41f531910"
+  },
+  {
+    "file": "hypertri/fuzz/Cargo.toml",
+    "sha256": "84e6e24b743aa5ab003b55c8e5b93fbbc759c65a986d143bd4b8e1510ef94a25"
+  },
+  {
+    "file": "hypertri/fuzz/README.md",
+    "sha256": "9fc19439555d002ab60f61f470e40da40026437a622a05180a38204eda22a536"
+  },
+  {
+    "file": "hypertri/fuzz/fuzz_targets/hyperreal_representations.rs",
+    "sha256": "261527d95e36253d62069678a7752347f6bee3934c30451c5bb784c82b25b972"
+  },
+  {
+    "file": "hypertri/fuzz/fuzz_targets/topology_invariants.rs",
+    "sha256": "b8e1ab1725b64d57e73817693b40ed9777277f16510c0b15fbc5443747cee67a"
+  },
+  {
+    "file": "hypertri/promoted_slow_offenders.txt",
+    "sha256": "ab80cf88810d848f61850eaca2dff6eb8d94cb33da6eaa16bbceb63a804de0de"
+  },
+  {
+    "file": "hypertri/scripts/allocation_profile.sh",
+    "sha256": "8d8063600f9159a11be86e85fe3b548697a50d98dd4fcbdcbeeb7e5e301ebe45"
+  },
+  {
+    "file": "hypertri/scripts/coverage.sh",
+    "sha256": "214ea5b8b0b64e68a35eb2ff43a3fab536cb1e26ca36032bddc175469fadf341"
+  },
+  {
+    "file": "hypertri/scripts/representation_coverage.sh",
+    "sha256": "2cccdf66289ca158e1552e9b779c74afc04dfdd1d1fb372a5967e9b8a13565d3"
+  },
+  {
+    "file": "hypertri/slow_performers.txt",
+    "sha256": "2ea93d1ee9aaafd3d362d3a3a378e0c9513baf5c78aa09786ee5122972ee6702"
+  },
+  {
+    "file": "hypertri/src/cdt/topology.rs",
+    "sha256": "096b7398a083c8c0a6558fa67d0c12e0f5901d9e04eb3e1103368e06ad75d96b"
+  },
+  {
+    "file": "hypertri/src/cdt.rs",
+    "sha256": "0b34abc13baba1bdd80bc36fa358458807399cd064b50d1fe10867ee56821f18"
+  },
+  {
+    "file": "hypertri/src/cdt_constraints.rs",
+    "sha256": "bc915679470e203f85e6e9a134c53cb4c06808fe1ff4efa998fed015066ba607"
+  },
+  {
+    "file": "hypertri/src/cdt_insert.rs",
+    "sha256": "fdf8a92f61528537310e7e4f001150b27ea67ddd3081dab4023e9281a0bba3a8"
+  },
+  {
+    "file": "hypertri/src/cdt_validate.rs",
+    "sha256": "6d6250aa4e35a0ef00ca39caf4ab94c3acb3b059215962460ac6c9f7c10a1cd1"
+  },
+  {
+    "file": "hypertri/src/context.rs",
+    "sha256": "35e41011f34703f095a86ac3b6c7cf6a4dce6b6b13a1afb88d942bef8d249a63"
+  },
+  {
+    "file": "hypertri/src/earcut.rs",
+    "sha256": "ed56f265c99176d655755a65db62e567d4706a5325a7877f4a8311d89c493bc4"
+  },
+  {
+    "file": "hypertri/src/error.rs",
+    "sha256": "478995dca20eb394d8b1075d2d8afe271e59a8b5642b76bb3a30d1763900b762"
+  },
+  {
+    "file": "hypertri/src/f64.rs",
+    "sha256": "2156ef723389e29f87049b36e8f592e6bb19b6bb592aefa9d069039ea8318c2a"
+  },
+  {
+    "file": "hypertri/src/lib.rs",
+    "sha256": "8f814a47f80e01d411521dc768b7c32d349f41f2c4db6d9f46db8adae2068083"
+  },
+  {
+    "file": "hypertri/src/nd.rs",
+    "sha256": "50dc3463869838062ab82728b82ab3827b262c0e587981ba59328f1d46ff6097"
+  },
+  {
+    "file": "hypertri/src/polygon.rs",
+    "sha256": "1ca8215f7996dbb8506fcbc2b24483e878df5c0124d0bb609d7a837733d06e46"
+  },
+  {
+    "file": "hypertri/src/predicate_evaluator.rs",
+    "sha256": "f27a37aa74735a1aca99ea768e42b88bd56af6d318220fde04c9636382ae6f04"
+  },
+  {
+    "file": "hypertri/src/predicates.rs",
+    "sha256": "3b8df4b132de90f200a2f04f5477a26b153b7573bbedce18b0726c9d6d496eae"
+  },
+  {
+    "file": "hypertri/src/runtime.rs",
+    "sha256": "76a6132e0361814121e2058bca9a8eb59d3cfcac2cececf776c33acf7dc386e3"
+  },
+  {
+    "file": "hypertri/src/types.rs",
+    "sha256": "bebbdf9a95560556a8969db309ccc45d38d3069fa29d4a9459ffdb1a6540f090"
+  },
+  {
+    "file": "hypertri/tests/adversarial.rs",
+    "sha256": "9c5d8d1f84895e6e49dcffd2602a336d36d5ffc2b79e1ce8d37b8c3d64847d92"
+  },
+  {
+    "file": "hypertri/tests/api_surface_coverage.rs",
+    "sha256": "9bfa60bcf7c2528e1addf94c26820b5e21021d36bf7ef2d20c961f76564adc45"
+  },
+  {
+    "file": "hypertri/tests/earcutr_differential.rs",
+    "sha256": "6d19829792fb859d64002a9eb5b63ac2b29ae6ab808d40f1f2585a1ae4696d5a"
+  },
+  {
+    "file": "hypertri/tests/fuzz_properties.rs",
+    "sha256": "66248b1cc0d660571b9b1036bebf416a68ded93dcac781e897376c32acec645b"
+  },
+  {
+    "file": "hypertri/tests/predicate_policy.rs",
+    "sha256": "0669168d8df441df701eeb191d3b0eb08f683cb3c4b32579321811f08820a62c"
+  },
+  {
+    "file": "hypertri/tests/readme.rs",
+    "sha256": "76973982438fadbd10b4d18a5cf79609e69227de61b70b6b3248e5985f9eafb6"
+  },
+  {
+    "file": "hypertri/tests/real_representations.rs",
+    "sha256": "6c7e0ac680c11d53d55dc78e08cd70f1b453d6dceed4a224b90c5a111aad2a2c"
+  }
+]

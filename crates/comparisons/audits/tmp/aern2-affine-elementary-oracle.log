@@ -1,0 +1,13 @@
+cos/10: 375 pass, 0 fail, 0 indeterminate
+cos/100: 375 pass, 0 fail, 0 indeterminate
+cos/53: 375 pass, 0 fail, 0 indeterminate
+exp/10: 375 pass, 0 fail, 0 indeterminate
+exp/100: 375 pass, 0 fail, 0 indeterminate
+exp/53: 375 pass, 0 fail, 0 indeterminate
+sin/10: 375 pass, 0 fail, 0 indeterminate
+sin/100: 375 pass, 0 fail, 0 indeterminate
+sin/53: 375 pass, 0 fail, 0 indeterminate
+sqrt/10: 150 pass, 0 fail, 0 indeterminate
+sqrt/100: 150 pass, 0 fail, 0 indeterminate
+sqrt/53: 150 pass, 0 fail, 0 indeterminate
+TOTAL: 3825 pass, 0 fail, 0 indeterminate

@@ -1,0 +1,39 @@
+{
+  "cases": [
+    {
+      "name": "bezier_region::tests::major_retained_rational_arc_and_general_chord_share_the_fillet_kernel",
+      "returncode": 101,
+      "passed": false,
+      "limit_seconds": 90,
+      "elapsed_seconds": 11.212994774919935,
+      "log": "retained-fragment-witness-20260923-focused2-case-0.log"
+    },
+    {
+      "name": "bezier_region::single_loop_corner_publication_tests::selected_circle_corner_candidates_publish_normalized_single_loops",
+      "returncode": 0,
+      "passed": true,
+      "limit_seconds": 75,
+      "elapsed_seconds": 0.1644110770430416,
+      "log": "retained-fragment-witness-20260923-focused2-case-1.log"
+    },
+    {
+      "name": "bezier_region::tests::selected_circle_chamfer_crosses_one_sided_smooth_run_seam",
+      "returncode": 0,
+      "passed": true,
+      "limit_seconds": 75,
+      "elapsed_seconds": 1.853303840965964,
+      "log": "retained-fragment-witness-20260923-focused2-case-2.log"
+    },
+    {
+      "name": "bezier_offset::conversion_tests::exact_radial_chord_replays_a_retained_circle_endpoint_contact",
+      "returncode": 0,
+      "passed": true,
+      "limit_seconds": 60,
+      "elapsed_seconds": 0.141493370058015,
+      "log": "retained-fragment-witness-20260923-focused2-case-3.log"
+    }
+  ],
+  "binary_sha256": "87d1cbaa58f600c144066a70f7d7e8f6dba766bf5f3a8f537de419768b69d0f7",
+  "all_sources_unchanged": true,
+  "all_processes_reaped": true
+}

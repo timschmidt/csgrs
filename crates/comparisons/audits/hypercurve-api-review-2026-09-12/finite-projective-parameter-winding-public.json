@@ -1,0 +1,24 @@
+{
+  "returncode": 0,
+  "elapsed_seconds": 0.0034608129935804754,
+  "normal_library_sha256": "5cc578428c0ecd41b54f2dca195f416779e365698dcb4ad46588dd84bd0ef96a",
+  "log": "finite-projective-parameter-winding-public.log",
+  "source": "finite-region-winding-public.rs",
+  "command": [
+    "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustc",
+    "--edition=2024",
+    "-O",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-region-winding-public.rs",
+    "--extern",
+    "hypercurve=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypercurve-1201b30e361703ad.rlib",
+    "-L",
+    "dependency=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps",
+    "-o",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-projective-parameter-winding-public"
+  ],
+  "run_command": [
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-projective-parameter-winding-public"
+  ],
+  "source_sha256": "556f33cdfb31390813934e671f2103efecca7fd93fa5c559ab3e8d2927a95d68",
+  "executable_sha256": "60a6044cda0586f5ba1c56baa34bdbe703dfd7aecc76048727abcce9ebd70664"
+}

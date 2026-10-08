@@ -1,0 +1,4998 @@
+{
+  "phase": "numeric",
+  "mode": "cpu",
+  "cpu": 6,
+  "started": "2026-09-08T22:18:23.597Z",
+  "binaries": {
+    "baseline": {
+      "path": "/tmp/calcium-reuse-costs.73SR1w/numeric-cpu-baseline",
+      "bytes": 1603864,
+      "sha256": "5e0eb8c9d6a52bfaca91552e517fed7a7cc31a0fc0d26e4b3bd004fe6dfefda5",
+      "size": "text\t   data\t    bss\t    dec\t    hex\tfilename\n1119701\t 215848\t   3904\t1339453\t 14703d\t/tmp/calcium-reuse-costs.73SR1w/numeric-cpu-baseline"
+    },
+    "sign": {
+      "path": "/tmp/calcium-reuse-costs.73SR1w/numeric-cpu-sign",
+      "bytes": 1615136,
+      "sha256": "3ad78cc1a3b24e7ede014348a86d181c6e711aefa1100e790b96fa730492e03f",
+      "size": "text\t   data\t    bss\t    dec\t    hex\tfilename\n1129181\t 215912\t   2560\t1347653\t 149045\t/tmp/calcium-reuse-costs.73SR1w/numeric-cpu-sign"
+    },
+    "reuse": {
+      "path": "/tmp/calcium-reuse-costs.73SR1w/numeric-cpu-reuse",
+      "bytes": 1618176,
+      "sha256": "6adfcfa3d20a53d80c41d63bc2fb2477253ae23fc5b4d9d1f446a3299fcddbc6",
+      "size": "text\t   data\t    bss\t    dec\t    hex\tfilename\n1131445\t 216312\t   3984\t1351741\t 14a03d\t/tmp/calcium-reuse-costs.73SR1w/numeric-cpu-reuse"
+    }
+  },
+  "finished": "2026-09-08T22:19:14.766Z",
+  "summaries": [
+    {
+      "name": "exp-third",
+      "setting": "construct",
+      "iterations": 29330,
+      "observations": 72,
+      "pilots": [
+        {
+          "case": "exp-third",
+          "lifecycle": "construct",
+          "iterations": 20,
+          "elapsed_ns": 3960,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        {
+          "case": "exp-third",
+          "lifecycle": "construct",
+          "iterations": 20,
+          "elapsed_ns": 3820,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        {
+          "case": "exp-third",
+          "lifecycle": "construct",
+          "iterations": 20,
+          "elapsed_ns": 6819,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        }
+      ],
+      "comparisons": {
+        "baseline": {
+          "elapsed_ns": {
+            "pairedMedianRatio": 0.954486338811297,
+            "pairedMedianBootstrap95": [
+              0.8897806391492332,
+              1.0079724390712024
+            ]
+          }
+        },
+        "sign": {
+          "elapsed_ns": {
+            "pairedMedianRatio": 1.013373611125285,
+            "pairedMedianBootstrap95": [
+              0.9329073359152503,
+              1.152881440996623
+            ]
+          }
+        }
+      },
+      "measurements": {
+        "baseline": {
+          "elapsed_ns": 142.90922263893623,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        "sign": {
+          "elapsed_ns": 134.45923968632798,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        "reuse": {
+          "elapsed_ns": 134.3554210705762,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        }
+      }
+    },
+    {
+      "name": "exp-third",
+      "setting": "fresh",
+      "iterations": 488,
+      "observations": 72,
+      "pilots": [
+        {
+          "case": "exp-third",
+          "lifecycle": "fresh",
+          "iterations": 20,
+          "elapsed_ns": 397943,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        {
+          "case": "exp-third",
+          "lifecycle": "fresh",
+          "iterations": 20,
+          "elapsed_ns": 410581,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        {
+          "case": "exp-third",
+          "lifecycle": "fresh",
+          "iterations": 20,
+          "elapsed_ns": 390324,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        }
+      ],
+      "comparisons": {
+        "baseline": {
+          "elapsed_ns": {
+            "pairedMedianRatio": 0.989945799201816,
+            "pairedMedianBootstrap95": [
+              0.9830239671923611,
+              1.0163989495340298
+            ]
+          }
+        },
+        "sign": {
+          "elapsed_ns": {
+            "pairedMedianRatio": 0.9286972674185385,
+            "pairedMedianBootstrap95": [
+              0.9064929992876813,
+              0.9667453122933131
+            ]
+          }
+        }
+      },
+      "measurements": {
+        "baseline": {
+          "elapsed_ns": 18453.581967213115,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        "sign": {
+          "elapsed_ns": 19491.76844262295,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        "reuse": {
+          "elapsed_ns": 18278.35758196721,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        }
+      }
+    },
+    {
+      "name": "exp-third",
+      "setting": "warm",
+      "iterations": 100000,
+      "observations": 72,
+      "pilots": [
+        {
+          "case": "exp-third",
+          "lifecycle": "warm",
+          "iterations": 20,
+          "elapsed_ns": 920,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        {
+          "case": "exp-third",
+          "lifecycle": "warm",
+          "iterations": 20,
+          "elapsed_ns": 920,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        {
+          "case": "exp-third",
+          "lifecycle": "warm",
+          "iterations": 20,
+          "elapsed_ns": 980,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        }
+      ],
+      "comparisons": {
+        "baseline": {
+          "elapsed_ns": {
+            "pairedMedianRatio": 1.002448327835419,
+            "pairedMedianBootstrap95": [
+              0.9702400786360512,
+              1.0116600152915336
+            ]
+          }
+        },
+        "sign": {
+          "elapsed_ns": {
+            "pairedMedianRatio": 0.9777512250023812,
+            "pairedMedianBootstrap95": [
+              0.9641028725225222,
+              1.0127113568865254
+            ]
+          }
+        }
+      },
+      "measurements": {
+        "baseline": {
+          "elapsed_ns": 22.796484999999997,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        "sign": {
+          "elapsed_ns": 23.063119999999998,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        "reuse": {
+          "elapsed_ns": 22.87838,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        }
+      }
+    },
+    {
+      "name": "exp-third",
+      "setting": "refine",
+      "iterations": 183,
+      "observations": 72,
+      "pilots": [
+        {
+          "case": "exp-third",
+          "lifecycle": "refine",
+          "iterations": 20,
+          "elapsed_ns": 1096755,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        {
+          "case": "exp-third",
+          "lifecycle": "refine",
+          "iterations": 20,
+          "elapsed_ns": 981943,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        {
+          "case": "exp-third",
+          "lifecycle": "refine",
+          "iterations": 20,
+          "elapsed_ns": 932307,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        }
+      ],
+      "comparisons": {
+        "baseline": {
+          "elapsed_ns": {
+            "pairedMedianRatio": 0.9957362473689253,
+            "pairedMedianBootstrap95": [
+              0.9835898611025397,
+              1.0171181278326062
+            ]
+          }
+        },
+        "sign": {
+          "elapsed_ns": {
+            "pairedMedianRatio": 0.9704422364212402,
+            "pairedMedianBootstrap95": [
+              0.9638704071514279,
+              0.9893646233068181
+            ]
+          }
+        }
+      },
+      "measurements": {
+        "baseline": {
+          "elapsed_ns": 43126.43989071038,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        "sign": {
+          "elapsed_ns": 44074.928961748636,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        "reuse": {
+          "elapsed_ns": 42747.89071038252,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        }
+      }
+    },
+    {
+      "name": "exp-third",
+      "setting": "hot-operand",
+      "iterations": 6890,
+      "observations": 72,
+      "pilots": [
+        {
+          "case": "exp-third",
+          "lifecycle": "hot-operand",
+          "iterations": 20,
+          "elapsed_ns": 28968,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        {
+          "case": "exp-third",
+          "lifecycle": "hot-operand",
+          "iterations": 20,
+          "elapsed_ns": 29028,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        {
+          "case": "exp-third",
+          "lifecycle": "hot-operand",
+          "iterations": 20,
+          "elapsed_ns": 27698,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        }
+      ],
+      "comparisons": {
+        "baseline": {
+          "elapsed_ns": {
+            "pairedMedianRatio": 0.9933865781562009,
+            "pairedMedianBootstrap95": [
+              0.9741542725008919,
+              1.0170163082858077
+            ]
+          }
+        },
+        "sign": {
+          "elapsed_ns": {
+            "pairedMedianRatio": 0.9856286162488281,
+            "pairedMedianBootstrap95": [
+              0.946414198565408,
+              1.0195303377927043
+            ]
+          }
+        }
+      },
+      "measurements": {
+        "baseline": {
+          "elapsed_ns": 1192.6518867924528,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        "sign": {
+          "elapsed_ns": 1196.9375907111757,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        "reuse": {
+          "elapsed_ns": 1176.226342525399,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        }
+      }
+    },
+    {
+      "name": "exp-third",
+      "setting": "construct-hot",
+      "iterations": 100000,
+      "observations": 72,
+      "pilots": [
+        {
+          "case": "exp-third",
+          "lifecycle": "construct-hot",
+          "iterations": 20,
+          "elapsed_ns": 899,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        {
+          "case": "exp-third",
+          "lifecycle": "construct-hot",
+          "iterations": 20,
+          "elapsed_ns": 700,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        {
+          "case": "exp-third",
+          "lifecycle": "construct-hot",
+          "iterations": 20,
+          "elapsed_ns": 700,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        }
+      ],
+      "comparisons": {
+        "baseline": {
+          "elapsed_ns": {
+            "pairedMedianRatio": 0.9950525782427296,
+            "pairedMedianBootstrap95": [
+              0.9090886339422489,
+              1.0093035260356877
+            ]
+          }
+        },
+        "sign": {
+          "elapsed_ns": {
+            "pairedMedianRatio": 0.9948038819822097,
+            "pairedMedianBootstrap95": [
+              0.9066561006171131,
+              1.0388453837210065
+            ]
+          }
+        }
+      },
+      "measurements": {
+        "baseline": {
+          "elapsed_ns": 22.58845,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        "sign": {
+          "elapsed_ns": 22.60005,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        "reuse": {
+          "elapsed_ns": 22.379865,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        }
+      }
+    },
+    {
+      "name": "exp-sqrt2",
+      "setting": "construct",
+      "iterations": 33058,
+      "observations": 72,
+      "pilots": [
+        {
+          "case": "exp-sqrt2",
+          "lifecycle": "construct",
+          "iterations": 20,
+          "elapsed_ns": 6000,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        {
+          "case": "exp-sqrt2",
+          "lifecycle": "construct",
+          "iterations": 20,
+          "elapsed_ns": 5180,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        {
+          "case": "exp-sqrt2",
+          "lifecycle": "construct",
+          "iterations": 20,
+          "elapsed_ns": 6050,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        }
+      ],
+      "comparisons": {
+        "baseline": {
+          "elapsed_ns": {
+            "pairedMedianRatio": 0.96754614331097,
+            "pairedMedianBootstrap95": [
+              0.8898082904797051,
+              1.0614713935210178
+            ]
+          }
+        },
+        "sign": {
+          "elapsed_ns": {
+            "pairedMedianRatio": 0.9891806721095442,
+            "pairedMedianBootstrap95": [
+              0.8374960403404526,
+              1.024743918355256
+            ]
+          }
+        }
+      },
+      "measurements": {
+        "baseline": {
+          "elapsed_ns": 224.5850021174905,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        "sign": {
+          "elapsed_ns": 222.20042047310787,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        "reuse": {
+          "elapsed_ns": 220.34350232923953,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        }
+      }
+    },
+    {
+      "name": "exp-sqrt2",
+      "setting": "fresh",
+      "iterations": 466,
+      "observations": 72,
+      "pilots": [
+        {
+          "case": "exp-sqrt2",
+          "lifecycle": "fresh",
+          "iterations": 20,
+          "elapsed_ns": 429611,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        {
+          "case": "exp-sqrt2",
+          "lifecycle": "fresh",
+          "iterations": 20,
+          "elapsed_ns": 385524,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        {
+          "case": "exp-sqrt2",
+          "lifecycle": "fresh",
+          "iterations": 20,
+          "elapsed_ns": 353826,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        }
+      ],
+      "comparisons": {
+        "baseline": {
+          "elapsed_ns": {
+            "pairedMedianRatio": 1.0384193861706104,
+            "pairedMedianBootstrap95": [
+              0.9760572797724353,
+              1.0497993463088398
+            ]
+          }
+        },
+        "sign": {
+          "elapsed_ns": {
+            "pairedMedianRatio": 0.9703906528690356,
+            "pairedMedianBootstrap95": [
+              0.9032771912092477,
+              1.007290456122095
+            ]
+          }
+        }
+      },
+      "measurements": {
+        "baseline": {
+          "elapsed_ns": 16971.594420600857,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        "sign": {
+          "elapsed_ns": 17800.871244635193,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        "reuse": {
+          "elapsed_ns": 16529.756437768243,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        }
+      }
+    },
+    {
+      "name": "exp-sqrt2",
+      "setting": "warm",
+      "iterations": 100000,
+      "observations": 72,
+      "pilots": [
+        {
+          "case": "exp-sqrt2",
+          "lifecycle": "warm",
+          "iterations": 20,
+          "elapsed_ns": 1060,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        {
+          "case": "exp-sqrt2",
+          "lifecycle": "warm",
+          "iterations": 20,
+          "elapsed_ns": 980,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        {
+          "case": "exp-sqrt2",
+          "lifecycle": "warm",
+          "iterations": 20,
+          "elapsed_ns": 940,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        }
+      ],
+      "comparisons": {
+        "baseline": {
+          "elapsed_ns": {
+            "pairedMedianRatio": 1.0481514278523885,
+            "pairedMedianBootstrap95": [
+              1.0470477299242762,
+              1.1013629032999233
+            ]
+          }
+        },
+        "sign": {
+          "elapsed_ns": {
+            "pairedMedianRatio": 1.004787980275773,
+            "pairedMedianBootstrap95": [
+              0.9915158237436399,
+              1.065695641458761
+            ]
+          }
+        }
+      },
+      "measurements": {
+        "baseline": {
+          "elapsed_ns": 22.97598,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        "sign": {
+          "elapsed_ns": 24.0977,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        "reuse": {
+          "elapsed_ns": 24.15179,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        }
+      }
+    },
+    {
+      "name": "exp-sqrt2",
+      "setting": "refine",
+      "iterations": 163,
+      "observations": 72,
+      "pilots": [
+        {
+          "case": "exp-sqrt2",
+          "lifecycle": "refine",
+          "iterations": 20,
+          "elapsed_ns": 1231525,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        {
+          "case": "exp-sqrt2",
+          "lifecycle": "refine",
+          "iterations": 20,
+          "elapsed_ns": 969003,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        {
+          "case": "exp-sqrt2",
+          "lifecycle": "refine",
+          "iterations": 20,
+          "elapsed_ns": 934796,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        }
+      ],
+      "comparisons": {
+        "baseline": {
+          "elapsed_ns": {
+            "pairedMedianRatio": 1.0289281186308643,
+            "pairedMedianBootstrap95": [
+              1.0153072847212004,
+              1.053862170120919
+            ]
+          }
+        },
+        "sign": {
+          "elapsed_ns": {
+            "pairedMedianRatio": 1.01948907726924,
+            "pairedMedianBootstrap95": [
+              0.9973855028587769,
+              1.0494192860254696
+            ]
+          }
+        }
+      },
+      "measurements": {
+        "baseline": {
+          "elapsed_ns": 46126.315950920245,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        "sign": {
+          "elapsed_ns": 46847.42944785276,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        "reuse": {
+          "elapsed_ns": 46511.782208588964,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        }
+      }
+    },
+    {
+      "name": "exp-sqrt2",
+      "setting": "hot-operand",
+      "iterations": 6753,
+      "observations": 72,
+      "pilots": [
+        {
+          "case": "exp-sqrt2",
+          "lifecycle": "hot-operand",
+          "iterations": 20,
+          "elapsed_ns": 29618,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        {
+          "case": "exp-sqrt2",
+          "lifecycle": "hot-operand",
+          "iterations": 20,
+          "elapsed_ns": 29458,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        {
+          "case": "exp-sqrt2",
+          "lifecycle": "hot-operand",
+          "iterations": 20,
+          "elapsed_ns": 29078,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        }
+      ],
+      "comparisons": {
+        "baseline": {
+          "elapsed_ns": {
+            "pairedMedianRatio": 0.9530652935827633,
+            "pairedMedianBootstrap95": [
+              0.9367590003180166,
+              0.9673499332994118
+            ]
+          }
+        },
+        "sign": {
+          "elapsed_ns": {
+            "pairedMedianRatio": 0.9782669410425038,
+            "pairedMedianBootstrap95": [
+              0.9249052817299116,
+              1.0238919553397838
+            ]
+          }
+        }
+      },
+      "measurements": {
+        "baseline": {
+          "elapsed_ns": 1190.3470309492077,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        "sign": {
+          "elapsed_ns": 1195.0469420998074,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        "reuse": {
+          "elapsed_ns": 1181.93217829113,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        }
+      }
+    },
+    {
+      "name": "exp-sqrt2",
+      "setting": "construct-hot",
+      "iterations": 100000,
+      "observations": 72,
+      "pilots": [
+        {
+          "case": "exp-sqrt2",
+          "lifecycle": "construct-hot",
+          "iterations": 20,
+          "elapsed_ns": 880,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        {
+          "case": "exp-sqrt2",
+          "lifecycle": "construct-hot",
+          "iterations": 20,
+          "elapsed_ns": 870,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        {
+          "case": "exp-sqrt2",
+          "lifecycle": "construct-hot",
+          "iterations": 20,
+          "elapsed_ns": 830,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        }
+      ],
+      "comparisons": {
+        "baseline": {
+          "elapsed_ns": {
+            "pairedMedianRatio": 0.9854035089424876,
+            "pairedMedianBootstrap95": [
+              0.9195992262485501,
+              1.0207504418062319
+            ]
+          }
+        },
+        "sign": {
+          "elapsed_ns": {
+            "pairedMedianRatio": 0.9850467118648993,
+            "pairedMedianBootstrap95": [
+              0.8813912224228625,
+              1.0435711457095813
+            ]
+          }
+        }
+      },
+      "measurements": {
+        "baseline": {
+          "elapsed_ns": 22.899385,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        "sign": {
+          "elapsed_ns": 22.83663,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        "reuse": {
+          "elapsed_ns": 22.643795,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        }
+      }
+    },
+    {
+      "name": "exp-sine",
+      "setting": "construct",
+      "iterations": 3715,
+      "observations": 72,
+      "pilots": [
+        {
+          "case": "exp-sine",
+          "lifecycle": "construct",
+          "iterations": 20,
+          "elapsed_ns": 53846,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        {
+          "case": "exp-sine",
+          "lifecycle": "construct",
+          "iterations": 20,
+          "elapsed_ns": 44757,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        {
+          "case": "exp-sine",
+          "lifecycle": "construct",
+          "iterations": 20,
+          "elapsed_ns": 45847,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        }
+      ],
+      "comparisons": {
+        "baseline": {
+          "elapsed_ns": {
+            "pairedMedianRatio": 0.9957894790426682,
+            "pairedMedianBootstrap95": [
+              0.9767829253552058,
+              1.0154467163691563
+            ]
+          }
+        },
+        "sign": {
+          "elapsed_ns": {
+            "pairedMedianRatio": 1.0142801954916056,
+            "pairedMedianBootstrap95": [
+              1.005192479127911,
+              1.0426276983188325
+            ]
+          }
+        }
+      },
+      "measurements": {
+        "baseline": {
+          "elapsed_ns": 2185.614535666218,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        "sign": {
+          "elapsed_ns": 2124.67267833109,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        "reuse": {
+          "elapsed_ns": 2188.290040376851,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        }
+      }
+    },
+    {
+      "name": "exp-sine",
+      "setting": "fresh",
+      "iterations": 300,
+      "observations": 72,
+      "pilots": [
+        {
+          "case": "exp-sine",
+          "lifecycle": "fresh",
+          "iterations": 20,
+          "elapsed_ns": 667234,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        {
+          "case": "exp-sine",
+          "lifecycle": "fresh",
+          "iterations": 20,
+          "elapsed_ns": 607958,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        {
+          "case": "exp-sine",
+          "lifecycle": "fresh",
+          "iterations": 20,
+          "elapsed_ns": 564691,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        }
+      ],
+      "comparisons": {
+        "baseline": {
+          "elapsed_ns": {
+            "pairedMedianRatio": 0.9507123660373438,
+            "pairedMedianBootstrap95": [
+              0.9161848443974225,
+              0.9643184601985632
+            ]
+          }
+        },
+        "sign": {
+          "elapsed_ns": {
+            "pairedMedianRatio": 0.9069967574654624,
+            "pairedMedianBootstrap95": [
+              0.8414348350319041,
+              0.9273943688216205
+            ]
+          }
+        }
+      },
+      "measurements": {
+        "baseline": {
+          "elapsed_ns": 31016.455,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        "sign": {
+          "elapsed_ns": 32694.441666666666,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        "reuse": {
+          "elapsed_ns": 29189.39833333333,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        }
+      }
+    },
+    {
+      "name": "exp-sine",
+      "setting": "warm",
+      "iterations": 100000,
+      "observations": 72,
+      "pilots": [
+        {
+          "case": "exp-sine",
+          "lifecycle": "warm",
+          "iterations": 20,
+          "elapsed_ns": 1020,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        {
+          "case": "exp-sine",
+          "lifecycle": "warm",
+          "iterations": 20,
+          "elapsed_ns": 1060,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        {
+          "case": "exp-sine",
+          "lifecycle": "warm",
+          "iterations": 20,
+          "elapsed_ns": 750,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        }
+      ],
+      "comparisons": {
+        "baseline": {
+          "elapsed_ns": {
+            "pairedMedianRatio": 1.0083542143448014,
+            "pairedMedianBootstrap95": [
+              0.9703190013952214,
+              1.0447308889094202
+            ]
+          }
+        },
+        "sign": {
+          "elapsed_ns": {
+            "pairedMedianRatio": 0.9982300584042927,
+            "pairedMedianBootstrap95": [
+              0.980406557182641,
+              1.0579432218338818
+            ]
+          }
+        }
+      },
+      "measurements": {
+        "baseline": {
+          "elapsed_ns": 23.202165,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        "sign": {
+          "elapsed_ns": 23.374845,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        "reuse": {
+          "elapsed_ns": 23.048270000000002,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        }
+      }
+    },
+    {
+      "name": "exp-sine",
+      "setting": "refine",
+      "iterations": 134,
+      "observations": 72,
+      "pilots": [
+        {
+          "case": "exp-sine",
+          "lifecycle": "refine",
+          "iterations": 20,
+          "elapsed_ns": 1494458,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        {
+          "case": "exp-sine",
+          "lifecycle": "refine",
+          "iterations": 20,
+          "elapsed_ns": 1448191,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        {
+          "case": "exp-sine",
+          "lifecycle": "refine",
+          "iterations": 20,
+          "elapsed_ns": 1360547,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        }
+      ],
+      "comparisons": {
+        "baseline": {
+          "elapsed_ns": {
+            "pairedMedianRatio": 0.9420170564205689,
+            "pairedMedianBootstrap95": [
+              0.8602921145980044,
+              0.980341419611508
+            ]
+          }
+        },
+        "sign": {
+          "elapsed_ns": {
+            "pairedMedianRatio": 0.9573216013706961,
+            "pairedMedianBootstrap95": [
+              0.9380353492940826,
+              0.9886020732404861
+            ]
+          }
+        }
+      },
+      "measurements": {
+        "baseline": {
+          "elapsed_ns": 71400.73880597015,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        "sign": {
+          "elapsed_ns": 71763.39925373133,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        "reuse": {
+          "elapsed_ns": 69445.45895522388,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        }
+      }
+    },
+    {
+      "name": "exp-sine",
+      "setting": "hot-operand",
+      "iterations": 6794,
+      "observations": 72,
+      "pilots": [
+        {
+          "case": "exp-sine",
+          "lifecycle": "hot-operand",
+          "iterations": 20,
+          "elapsed_ns": 25728,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        {
+          "case": "exp-sine",
+          "lifecycle": "hot-operand",
+          "iterations": 20,
+          "elapsed_ns": 29268,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        {
+          "case": "exp-sine",
+          "lifecycle": "hot-operand",
+          "iterations": 20,
+          "elapsed_ns": 29438,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        }
+      ],
+      "comparisons": {
+        "baseline": {
+          "elapsed_ns": {
+            "pairedMedianRatio": 0.9798496794688533,
+            "pairedMedianBootstrap95": [
+              0.9647329381028839,
+              1.0062745198946352
+            ]
+          }
+        },
+        "sign": {
+          "elapsed_ns": {
+            "pairedMedianRatio": 0.9640064185954195,
+            "pairedMedianBootstrap95": [
+              0.9057560381705942,
+              1.0153672552589135
+            ]
+          }
+        }
+      },
+      "measurements": {
+        "baseline": {
+          "elapsed_ns": 1203.1563879894024,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        "sign": {
+          "elapsed_ns": 1206.9492198999117,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        "reuse": {
+          "elapsed_ns": 1172.658743008537,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        }
+      }
+    },
+    {
+      "name": "exp-sine",
+      "setting": "construct-hot",
+      "iterations": 100000,
+      "observations": 72,
+      "pilots": [
+        {
+          "case": "exp-sine",
+          "lifecycle": "construct-hot",
+          "iterations": 20,
+          "elapsed_ns": 790,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        {
+          "case": "exp-sine",
+          "lifecycle": "construct-hot",
+          "iterations": 20,
+          "elapsed_ns": 670,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        {
+          "case": "exp-sine",
+          "lifecycle": "construct-hot",
+          "iterations": 20,
+          "elapsed_ns": 690,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        }
+      ],
+      "comparisons": {
+        "baseline": {
+          "elapsed_ns": {
+            "pairedMedianRatio": 1.0058615887517712,
+            "pairedMedianBootstrap95": [
+              0.998538260083228,
+              1.0288688003441058
+            ]
+          }
+        },
+        "sign": {
+          "elapsed_ns": {
+            "pairedMedianRatio": 1.010178059523326,
+            "pairedMedianBootstrap95": [
+              0.9926359072374581,
+              1.023378778780951
+            ]
+          }
+        }
+      },
+      "measurements": {
+        "baseline": {
+          "elapsed_ns": 22.741045,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        "sign": {
+          "elapsed_ns": 22.769440000000003,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        "reuse": {
+          "elapsed_ns": 22.835985,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        }
+      }
+    },
+    {
+      "name": "exp-negative-sine",
+      "setting": "construct",
+      "iterations": 3543,
+      "observations": 72,
+      "pilots": [
+        {
+          "case": "exp-negative-sine",
+          "lifecycle": "construct",
+          "iterations": 20,
+          "elapsed_ns": 56456,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        {
+          "case": "exp-negative-sine",
+          "lifecycle": "construct",
+          "iterations": 20,
+          "elapsed_ns": 54356,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        {
+          "case": "exp-negative-sine",
+          "lifecycle": "construct",
+          "iterations": 20,
+          "elapsed_ns": 50007,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        }
+      ],
+      "comparisons": {
+        "baseline": {
+          "elapsed_ns": {
+            "pairedMedianRatio": 0.9932313280772955,
+            "pairedMedianBootstrap95": [
+              0.9710802967777352,
+              1.0494216477245524
+            ]
+          }
+        },
+        "sign": {
+          "elapsed_ns": {
+            "pairedMedianRatio": 0.9915557175551752,
+            "pairedMedianBootstrap95": [
+              0.9282282107549112,
+              1.0515912202793882
+            ]
+          }
+        }
+      },
+      "measurements": {
+        "baseline": {
+          "elapsed_ns": 2259.784081287045,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        "sign": {
+          "elapsed_ns": 2255.3674851820488,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        "reuse": {
+          "elapsed_ns": 2248.5345752187413,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        }
+      }
+    },
+    {
+      "name": "exp-negative-sine",
+      "setting": "fresh",
+      "iterations": 188,
+      "observations": 72,
+      "pilots": [
+        {
+          "case": "exp-negative-sine",
+          "lifecycle": "fresh",
+          "iterations": 20,
+          "elapsed_ns": 1067596,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        {
+          "case": "exp-negative-sine",
+          "lifecycle": "fresh",
+          "iterations": 20,
+          "elapsed_ns": 957055,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        {
+          "case": "exp-negative-sine",
+          "lifecycle": "fresh",
+          "iterations": 20,
+          "elapsed_ns": 855201,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        }
+      ],
+      "comparisons": {
+        "baseline": {
+          "elapsed_ns": {
+            "pairedMedianRatio": 0.9630395221401129,
+            "pairedMedianBootstrap95": [
+              0.9444604007654909,
+              1.0247894841337832
+            ]
+          }
+        },
+        "sign": {
+          "elapsed_ns": {
+            "pairedMedianRatio": 0.9249375869371717,
+            "pairedMedianBootstrap95": [
+              0.9005908398359186,
+              0.9412413756462761
+            ]
+          }
+        }
+      },
+      "measurements": {
+        "baseline": {
+          "elapsed_ns": 30426.664893617024,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        "sign": {
+          "elapsed_ns": 31668.279255319147,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        "reuse": {
+          "elapsed_ns": 29314.797872340423,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        }
+      }
+    },
+    {
+      "name": "exp-negative-sine",
+      "setting": "warm",
+      "iterations": 100000,
+      "observations": 72,
+      "pilots": [
+        {
+          "case": "exp-negative-sine",
+          "lifecycle": "warm",
+          "iterations": 20,
+          "elapsed_ns": 820,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        {
+          "case": "exp-negative-sine",
+          "lifecycle": "warm",
+          "iterations": 20,
+          "elapsed_ns": 950,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        {
+          "case": "exp-negative-sine",
+          "lifecycle": "warm",
+          "iterations": 20,
+          "elapsed_ns": 819,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        }
+      ],
+      "comparisons": {
+        "baseline": {
+          "elapsed_ns": {
+            "pairedMedianRatio": 1.0116342578419284,
+            "pairedMedianBootstrap95": [
+              0.9915292368781812,
+              1.0437187023435017
+            ]
+          }
+        },
+        "sign": {
+          "elapsed_ns": {
+            "pairedMedianRatio": 1.0001237423235936,
+            "pairedMedianBootstrap95": [
+              0.9953202914127702,
+              1.0231190857973116
+            ]
+          }
+        }
+      },
+      "measurements": {
+        "baseline": {
+          "elapsed_ns": 23.302505,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        "sign": {
+          "elapsed_ns": 23.379550000000002,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        "reuse": {
+          "elapsed_ns": 23.463594999999998,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        }
+      }
+    },
+    {
+      "name": "exp-negative-sine",
+      "setting": "refine",
+      "iterations": 134,
+      "observations": 72,
+      "pilots": [
+        {
+          "case": "exp-negative-sine",
+          "lifecycle": "refine",
+          "iterations": 20,
+          "elapsed_ns": 1501367,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        {
+          "case": "exp-negative-sine",
+          "lifecycle": "refine",
+          "iterations": 20,
+          "elapsed_ns": 1409304,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        {
+          "case": "exp-negative-sine",
+          "lifecycle": "refine",
+          "iterations": 20,
+          "elapsed_ns": 1397514,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        }
+      ],
+      "comparisons": {
+        "baseline": {
+          "elapsed_ns": {
+            "pairedMedianRatio": 0.949325778302019,
+            "pairedMedianBootstrap95": [
+              0.8593766946700918,
+              0.9846806645923458
+            ]
+          }
+        },
+        "sign": {
+          "elapsed_ns": {
+            "pairedMedianRatio": 0.9701177350599196,
+            "pairedMedianBootstrap95": [
+              0.9377074977545103,
+              1.0019656447406378
+            ]
+          }
+        }
+      },
+      "measurements": {
+        "baseline": {
+          "elapsed_ns": 73704.12313432836,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        "sign": {
+          "elapsed_ns": 72630.39179104478,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        "reuse": {
+          "elapsed_ns": 69566.38805970148,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        }
+      }
+    },
+    {
+      "name": "exp-negative-sine",
+      "setting": "hot-operand",
+      "iterations": 4757,
+      "observations": 72,
+      "pilots": [
+        {
+          "case": "exp-negative-sine",
+          "lifecycle": "hot-operand",
+          "iterations": 20,
+          "elapsed_ns": 23569,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        {
+          "case": "exp-negative-sine",
+          "lifecycle": "hot-operand",
+          "iterations": 20,
+          "elapsed_ns": 42047,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        {
+          "case": "exp-negative-sine",
+          "lifecycle": "hot-operand",
+          "iterations": 20,
+          "elapsed_ns": 41437,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        }
+      ],
+      "comparisons": {
+        "baseline": {
+          "elapsed_ns": {
+            "pairedMedianRatio": 0.9758963693015662,
+            "pairedMedianBootstrap95": [
+              0.8917810131642796,
+              1.0050225969824422
+            ]
+          }
+        },
+        "sign": {
+          "elapsed_ns": {
+            "pairedMedianRatio": 0.9710995237353754,
+            "pairedMedianBootstrap95": [
+              0.9203502958130947,
+              0.9986660706238153
+            ]
+          }
+        }
+      },
+      "measurements": {
+        "baseline": {
+          "elapsed_ns": 1120.398255202859,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        "sign": {
+          "elapsed_ns": 1117.0139793987807,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        "reuse": {
+          "elapsed_ns": 1092.3772335505569,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        }
+      }
+    },
+    {
+      "name": "exp-negative-sine",
+      "setting": "construct-hot",
+      "iterations": 100000,
+      "observations": 72,
+      "pilots": [
+        {
+          "case": "exp-negative-sine",
+          "lifecycle": "construct-hot",
+          "iterations": 20,
+          "elapsed_ns": 760,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        {
+          "case": "exp-negative-sine",
+          "lifecycle": "construct-hot",
+          "iterations": 20,
+          "elapsed_ns": 880,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        {
+          "case": "exp-negative-sine",
+          "lifecycle": "construct-hot",
+          "iterations": 20,
+          "elapsed_ns": 840,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        }
+      ],
+      "comparisons": {
+        "baseline": {
+          "elapsed_ns": {
+            "pairedMedianRatio": 1.001288543788955,
+            "pairedMedianBootstrap95": [
+              0.9918770291983475,
+              1.0234815959090098
+            ]
+          }
+        },
+        "sign": {
+          "elapsed_ns": {
+            "pairedMedianRatio": 1.0020924515295748,
+            "pairedMedianBootstrap95": [
+              0.9831514945836406,
+              1.0038383602913243
+            ]
+          }
+        }
+      },
+      "measurements": {
+        "baseline": {
+          "elapsed_ns": 22.54445,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        "sign": {
+          "elapsed_ns": 22.61035,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        "reuse": {
+          "elapsed_ns": 22.535854999999998,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        }
+      }
+    },
+    {
+      "name": "exp-multiradical",
+      "setting": "construct",
+      "iterations": 4113,
+      "observations": 72,
+      "pilots": [
+        {
+          "case": "exp-multiradical",
+          "lifecycle": "construct",
+          "iterations": 20,
+          "elapsed_ns": 41757,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        {
+          "case": "exp-multiradical",
+          "lifecycle": "construct",
+          "iterations": 20,
+          "elapsed_ns": 48637,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        {
+          "case": "exp-multiradical",
+          "lifecycle": "construct",
+          "iterations": 20,
+          "elapsed_ns": 41627,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        }
+      ],
+      "comparisons": {
+        "baseline": {
+          "elapsed_ns": {
+            "pairedMedianRatio": 0.9925436475756831,
+            "pairedMedianBootstrap95": [
+              0.9853289450127451,
+              1.0135584646668774
+            ]
+          }
+        },
+        "sign": {
+          "elapsed_ns": {
+            "pairedMedianRatio": 0.9729722751380966,
+            "pairedMedianBootstrap95": [
+              0.9477380969848258,
+              0.9859174327036724
+            ]
+          }
+        }
+      },
+      "measurements": {
+        "baseline": {
+          "elapsed_ns": 1943.8260393873084,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        "sign": {
+          "elapsed_ns": 1986.6714077315828,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        "reuse": {
+          "elapsed_ns": 1911.5573790420617,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        }
+      }
+    },
+    {
+      "name": "exp-multiradical",
+      "setting": "fresh",
+      "iterations": 305,
+      "observations": 72,
+      "pilots": [
+        {
+          "case": "exp-multiradical",
+          "lifecycle": "fresh",
+          "iterations": 20,
+          "elapsed_ns": 656555,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        {
+          "case": "exp-multiradical",
+          "lifecycle": "fresh",
+          "iterations": 20,
+          "elapsed_ns": 568171,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        {
+          "case": "exp-multiradical",
+          "lifecycle": "fresh",
+          "iterations": 20,
+          "elapsed_ns": 488457,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        }
+      ],
+      "comparisons": {
+        "baseline": {
+          "elapsed_ns": {
+            "pairedMedianRatio": 0.9651056887559548,
+            "pairedMedianBootstrap95": [
+              0.9290416956787931,
+              0.9941529752954091
+            ]
+          }
+        },
+        "sign": {
+          "elapsed_ns": {
+            "pairedMedianRatio": 0.9522520323483961,
+            "pairedMedianBootstrap95": [
+              0.9350062354510881,
+              0.972365280450199
+            ]
+          }
+        }
+      },
+      "measurements": {
+        "baseline": {
+          "elapsed_ns": 25266.90655737705,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        "sign": {
+          "elapsed_ns": 25840.78524590164,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        "reuse": {
+          "elapsed_ns": 24430.931147540985,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        }
+      }
+    },
+    {
+      "name": "exp-multiradical",
+      "setting": "warm",
+      "iterations": 100000,
+      "observations": 72,
+      "pilots": [
+        {
+          "case": "exp-multiradical",
+          "lifecycle": "warm",
+          "iterations": 20,
+          "elapsed_ns": 760,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        {
+          "case": "exp-multiradical",
+          "lifecycle": "warm",
+          "iterations": 20,
+          "elapsed_ns": 829,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        {
+          "case": "exp-multiradical",
+          "lifecycle": "warm",
+          "iterations": 20,
+          "elapsed_ns": 790,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        }
+      ],
+      "comparisons": {
+        "baseline": {
+          "elapsed_ns": {
+            "pairedMedianRatio": 1.0122323312673376,
+            "pairedMedianBootstrap95": [
+              0.9953845259278888,
+              1.017257540999117
+            ]
+          }
+        },
+        "sign": {
+          "elapsed_ns": {
+            "pairedMedianRatio": 1.0017587325404487,
+            "pairedMedianBootstrap95": [
+              0.9558768605654581,
+              1.0100309546701687
+            ]
+          }
+        }
+      },
+      "measurements": {
+        "baseline": {
+          "elapsed_ns": 22.98603,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        "sign": {
+          "elapsed_ns": 23.18301,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        "reuse": {
+          "elapsed_ns": 23.177509999999998,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        }
+      }
+    },
+    {
+      "name": "exp-multiradical",
+      "setting": "refine",
+      "iterations": 153,
+      "observations": 72,
+      "pilots": [
+        {
+          "case": "exp-multiradical",
+          "lifecycle": "refine",
+          "iterations": 20,
+          "elapsed_ns": 1310320,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        {
+          "case": "exp-multiradical",
+          "lifecycle": "refine",
+          "iterations": 20,
+          "elapsed_ns": 1283872,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        {
+          "case": "exp-multiradical",
+          "lifecycle": "refine",
+          "iterations": 20,
+          "elapsed_ns": 1226566,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        }
+      ],
+      "comparisons": {
+        "baseline": {
+          "elapsed_ns": {
+            "pairedMedianRatio": 0.971251646761339,
+            "pairedMedianBootstrap95": [
+              0.952098995303091,
+              0.9936092617735064
+            ]
+          }
+        },
+        "sign": {
+          "elapsed_ns": {
+            "pairedMedianRatio": 0.9759685233010551,
+            "pairedMedianBootstrap95": [
+              0.9664225952604624,
+              0.9934667410383538
+            ]
+          }
+        }
+      },
+      "measurements": {
+        "baseline": {
+          "elapsed_ns": 62058.16339869281,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        "sign": {
+          "elapsed_ns": 62074.50326797385,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        "reuse": {
+          "elapsed_ns": 60523.16666666667,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        }
+      }
+    },
+    {
+      "name": "exp-multiradical",
+      "setting": "hot-operand",
+      "iterations": 8161,
+      "observations": 72,
+      "pilots": [
+        {
+          "case": "exp-multiradical",
+          "lifecycle": "hot-operand",
+          "iterations": 20,
+          "elapsed_ns": 24509,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        {
+          "case": "exp-multiradical",
+          "lifecycle": "hot-operand",
+          "iterations": 20,
+          "elapsed_ns": 24068,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        {
+          "case": "exp-multiradical",
+          "lifecycle": "hot-operand",
+          "iterations": 20,
+          "elapsed_ns": 23569,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        }
+      ],
+      "comparisons": {
+        "baseline": {
+          "elapsed_ns": {
+            "pairedMedianRatio": 0.9814453344002214,
+            "pairedMedianBootstrap95": [
+              0.9260255442687216,
+              1.0029146422211614
+            ]
+          }
+        },
+        "sign": {
+          "elapsed_ns": {
+            "pairedMedianRatio": 0.9774815827313947,
+            "pairedMedianBootstrap95": [
+              0.9610646295984265,
+              0.9872438190334294
+            ]
+          }
+        }
+      },
+      "measurements": {
+        "baseline": {
+          "elapsed_ns": 1196.9752481313565,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        "sign": {
+          "elapsed_ns": 1212.209533145448,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        "reuse": {
+          "elapsed_ns": 1170.3302291385858,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        }
+      }
+    },
+    {
+      "name": "exp-multiradical",
+      "setting": "construct-hot",
+      "iterations": 100000,
+      "observations": 72,
+      "pilots": [
+        {
+          "case": "exp-multiradical",
+          "lifecycle": "construct-hot",
+          "iterations": 20,
+          "elapsed_ns": 859,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        {
+          "case": "exp-multiradical",
+          "lifecycle": "construct-hot",
+          "iterations": 20,
+          "elapsed_ns": 870,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        {
+          "case": "exp-multiradical",
+          "lifecycle": "construct-hot",
+          "iterations": 20,
+          "elapsed_ns": 860,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        }
+      ],
+      "comparisons": {
+        "baseline": {
+          "elapsed_ns": {
+            "pairedMedianRatio": 0.9905505103378698,
+            "pairedMedianBootstrap95": [
+              0.9663345494056267,
+              1.002185469740342
+            ]
+          }
+        },
+        "sign": {
+          "elapsed_ns": {
+            "pairedMedianRatio": 1.0028320477136325,
+            "pairedMedianBootstrap95": [
+              0.9802345136847306,
+              1.0152036643543036
+            ]
+          }
+        }
+      },
+      "measurements": {
+        "baseline": {
+          "elapsed_ns": 22.594250000000002,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        "sign": {
+          "elapsed_ns": 22.50305,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        "reuse": {
+          "elapsed_ns": 22.351215,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        }
+      }
+    },
+    {
+      "name": "exp-large",
+      "setting": "construct",
+      "iterations": 5333,
+      "observations": 72,
+      "pilots": [
+        {
+          "case": "exp-large",
+          "lifecycle": "construct",
+          "iterations": 20,
+          "elapsed_ns": 37508,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        {
+          "case": "exp-large",
+          "lifecycle": "construct",
+          "iterations": 20,
+          "elapsed_ns": 32288,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        {
+          "case": "exp-large",
+          "lifecycle": "construct",
+          "iterations": 20,
+          "elapsed_ns": 31578,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        }
+      ],
+      "comparisons": {
+        "baseline": {
+          "elapsed_ns": {
+            "pairedMedianRatio": 1.0071300337923712,
+            "pairedMedianBootstrap95": [
+              0.9543594814492443,
+              1.0426649955050689
+            ]
+          }
+        },
+        "sign": {
+          "elapsed_ns": {
+            "pairedMedianRatio": 1.0011947260050755,
+            "pairedMedianBootstrap95": [
+              0.971327644229998,
+              1.0381838427519114
+            ]
+          }
+        }
+      },
+      "measurements": {
+        "baseline": {
+          "elapsed_ns": 1488.7615788486783,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        "sign": {
+          "elapsed_ns": 1472.773579598725,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        "reuse": {
+          "elapsed_ns": 1506.690230639415,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        }
+      }
+    },
+    {
+      "name": "exp-large",
+      "setting": "fresh",
+      "iterations": 360,
+      "observations": 72,
+      "pilots": [
+        {
+          "case": "exp-large",
+          "lifecycle": "fresh",
+          "iterations": 20,
+          "elapsed_ns": 556622,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        {
+          "case": "exp-large",
+          "lifecycle": "fresh",
+          "iterations": 20,
+          "elapsed_ns": 553592,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        {
+          "case": "exp-large",
+          "lifecycle": "fresh",
+          "iterations": 20,
+          "elapsed_ns": 539273,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        }
+      ],
+      "comparisons": {
+        "baseline": {
+          "elapsed_ns": {
+            "pairedMedianRatio": 0.9880670437970864,
+            "pairedMedianBootstrap95": [
+              0.9793466871218985,
+              1.0123164909659288
+            ]
+          }
+        },
+        "sign": {
+          "elapsed_ns": {
+            "pairedMedianRatio": 0.985534130678439,
+            "pairedMedianBootstrap95": [
+              0.9732142632976959,
+              0.9951171701713184
+            ]
+          }
+        }
+      },
+      "measurements": {
+        "baseline": {
+          "elapsed_ns": 26799.204166666666,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        "sign": {
+          "elapsed_ns": 26912.07083333333,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        "reuse": {
+          "elapsed_ns": 26393.00972222222,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        }
+      }
+    },
+    {
+      "name": "exp-large",
+      "setting": "warm",
+      "iterations": 100000,
+      "observations": 72,
+      "pilots": [
+        {
+          "case": "exp-large",
+          "lifecycle": "warm",
+          "iterations": 20,
+          "elapsed_ns": 879,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        {
+          "case": "exp-large",
+          "lifecycle": "warm",
+          "iterations": 20,
+          "elapsed_ns": 970,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        {
+          "case": "exp-large",
+          "lifecycle": "warm",
+          "iterations": 20,
+          "elapsed_ns": 780,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        }
+      ],
+      "comparisons": {
+        "baseline": {
+          "elapsed_ns": {
+            "pairedMedianRatio": 1.0060956931464005,
+            "pairedMedianBootstrap95": [
+              0.9897982999041236,
+              1.0151359622143223
+            ]
+          }
+        },
+        "sign": {
+          "elapsed_ns": {
+            "pairedMedianRatio": 0.9760911692232718,
+            "pairedMedianBootstrap95": [
+              0.9556803282889422,
+              0.9952658923898658
+            ]
+          }
+        }
+      },
+      "measurements": {
+        "baseline": {
+          "elapsed_ns": 22.659844999999997,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        "sign": {
+          "elapsed_ns": 23.19316,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        "reuse": {
+          "elapsed_ns": 22.801935,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        }
+      }
+    },
+    {
+      "name": "exp-large",
+      "setting": "refine",
+      "iterations": 146,
+      "observations": 72,
+      "pilots": [
+        {
+          "case": "exp-large",
+          "lifecycle": "refine",
+          "iterations": 20,
+          "elapsed_ns": 1376835,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        {
+          "case": "exp-large",
+          "lifecycle": "refine",
+          "iterations": 20,
+          "elapsed_ns": 1336208,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        {
+          "case": "exp-large",
+          "lifecycle": "refine",
+          "iterations": 20,
+          "elapsed_ns": 1243765,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        }
+      ],
+      "comparisons": {
+        "baseline": {
+          "elapsed_ns": {
+            "pairedMedianRatio": 0.9879626081117256,
+            "pairedMedianBootstrap95": [
+              0.9614293502118266,
+              1.0016916861852663
+            ]
+          }
+        },
+        "sign": {
+          "elapsed_ns": {
+            "pairedMedianRatio": 0.9674499468290336,
+            "pairedMedianBootstrap95": [
+              0.959691981986568,
+              0.9833358099218253
+            ]
+          }
+        }
+      },
+      "measurements": {
+        "baseline": {
+          "elapsed_ns": 51226.520547945205,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        "sign": {
+          "elapsed_ns": 52165.36301369863,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        "reuse": {
+          "elapsed_ns": 50474.140410958906,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        }
+      }
+    },
+    {
+      "name": "exp-large",
+      "setting": "hot-operand",
+      "iterations": 6247,
+      "observations": 72,
+      "pilots": [
+        {
+          "case": "exp-large",
+          "lifecycle": "hot-operand",
+          "iterations": 20,
+          "elapsed_ns": 32018,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        {
+          "case": "exp-large",
+          "lifecycle": "hot-operand",
+          "iterations": 20,
+          "elapsed_ns": 26588,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        {
+          "case": "exp-large",
+          "lifecycle": "hot-operand",
+          "iterations": 20,
+          "elapsed_ns": 27478,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        }
+      ],
+      "comparisons": {
+        "baseline": {
+          "elapsed_ns": {
+            "pairedMedianRatio": 0.9723131599552004,
+            "pairedMedianBootstrap95": [
+              0.9481162049071831,
+              0.9762221921986955
+            ]
+          }
+        },
+        "sign": {
+          "elapsed_ns": {
+            "pairedMedianRatio": 0.994664516359801,
+            "pairedMedianBootstrap95": [
+              0.9910637384702878,
+              1.0006299088417285
+            ]
+          }
+        }
+      },
+      "measurements": {
+        "baseline": {
+          "elapsed_ns": 1242.7137025772372,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        "sign": {
+          "elapsed_ns": 1218.8525692332319,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        "reuse": {
+          "elapsed_ns": 1207.6281415079238,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        }
+      }
+    },
+    {
+      "name": "exp-large",
+      "setting": "construct-hot",
+      "iterations": 100000,
+      "observations": 72,
+      "pilots": [
+        {
+          "case": "exp-large",
+          "lifecycle": "construct-hot",
+          "iterations": 20,
+          "elapsed_ns": 860,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        {
+          "case": "exp-large",
+          "lifecycle": "construct-hot",
+          "iterations": 20,
+          "elapsed_ns": 720,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        {
+          "case": "exp-large",
+          "lifecycle": "construct-hot",
+          "iterations": 20,
+          "elapsed_ns": 740,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        }
+      ],
+      "comparisons": {
+        "baseline": {
+          "elapsed_ns": {
+            "pairedMedianRatio": 0.9880077313039672,
+            "pairedMedianBootstrap95": [
+              0.9798701060413074,
+              1.0310022773108412
+            ]
+          }
+        },
+        "sign": {
+          "elapsed_ns": {
+            "pairedMedianRatio": 0.9825862914086483,
+            "pairedMedianBootstrap95": [
+              0.8877080118325587,
+              1.0066211512881944
+            ]
+          }
+        }
+      },
+      "measurements": {
+        "baseline": {
+          "elapsed_ns": 22.72439,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        "sign": {
+          "elapsed_ns": 22.625895,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        "reuse": {
+          "elapsed_ns": 22.507759999999998,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        }
+      }
+    },
+    {
+      "name": "exp-tiny",
+      "setting": "construct",
+      "iterations": 45767,
+      "observations": 72,
+      "pilots": [
+        {
+          "case": "exp-tiny",
+          "lifecycle": "construct",
+          "iterations": 20,
+          "elapsed_ns": 4060,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        {
+          "case": "exp-tiny",
+          "lifecycle": "construct",
+          "iterations": 20,
+          "elapsed_ns": 4299,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        {
+          "case": "exp-tiny",
+          "lifecycle": "construct",
+          "iterations": 20,
+          "elapsed_ns": 4370,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        }
+      ],
+      "comparisons": {
+        "baseline": {
+          "elapsed_ns": {
+            "pairedMedianRatio": 1.0228356144466688,
+            "pairedMedianBootstrap95": [
+              0.9940874448013923,
+              1.0269482919363964
+            ]
+          }
+        },
+        "sign": {
+          "elapsed_ns": {
+            "pairedMedianRatio": 1.031142914174374,
+            "pairedMedianBootstrap95": [
+              1.015142860173663,
+              1.0462065910044953
+            ]
+          }
+        }
+      },
+      "measurements": {
+        "baseline": {
+          "elapsed_ns": 145.69116393908274,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        "sign": {
+          "elapsed_ns": 143.58989009548367,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        "reuse": {
+          "elapsed_ns": 147.7458976992156,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        }
+      }
+    },
+    {
+      "name": "exp-tiny",
+      "setting": "fresh",
+      "iterations": 4040,
+      "observations": 72,
+      "pilots": [
+        {
+          "case": "exp-tiny",
+          "lifecycle": "fresh",
+          "iterations": 20,
+          "elapsed_ns": 49506,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        {
+          "case": "exp-tiny",
+          "lifecycle": "fresh",
+          "iterations": 20,
+          "elapsed_ns": 41617,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        {
+          "case": "exp-tiny",
+          "lifecycle": "fresh",
+          "iterations": 20,
+          "elapsed_ns": 41887,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        }
+      ],
+      "comparisons": {
+        "baseline": {
+          "elapsed_ns": {
+            "pairedMedianRatio": 0.9832730767294793,
+            "pairedMedianBootstrap95": [
+              0.9737673406722149,
+              0.9902770186422531
+            ]
+          }
+        },
+        "sign": {
+          "elapsed_ns": {
+            "pairedMedianRatio": 0.9881247733566862,
+            "pairedMedianBootstrap95": [
+              0.984136248210721,
+              0.9917789005745064
+            ]
+          }
+        }
+      },
+      "measurements": {
+        "baseline": {
+          "elapsed_ns": 1967.337995049505,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        "sign": {
+          "elapsed_ns": 1961.7120049504952,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        "reuse": {
+          "elapsed_ns": 1939.4622524752476,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        }
+      }
+    },
+    {
+      "name": "exp-tiny",
+      "setting": "warm",
+      "iterations": 100000,
+      "observations": 72,
+      "pilots": [
+        {
+          "case": "exp-tiny",
+          "lifecycle": "warm",
+          "iterations": 20,
+          "elapsed_ns": 930,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        {
+          "case": "exp-tiny",
+          "lifecycle": "warm",
+          "iterations": 20,
+          "elapsed_ns": 999,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        {
+          "case": "exp-tiny",
+          "lifecycle": "warm",
+          "iterations": 20,
+          "elapsed_ns": 1120,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        }
+      ],
+      "comparisons": {
+        "baseline": {
+          "elapsed_ns": {
+            "pairedMedianRatio": 1.0003690215863268,
+            "pairedMedianBootstrap95": [
+              0.9740695989028635,
+              1.0120431946960737
+            ]
+          }
+        },
+        "sign": {
+          "elapsed_ns": {
+            "pairedMedianRatio": 0.9946531738911937,
+            "pairedMedianBootstrap95": [
+              0.9687778182171541,
+              1.0081739122497222
+            ]
+          }
+        }
+      },
+      "measurements": {
+        "baseline": {
+          "elapsed_ns": 23.095865,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        "sign": {
+          "elapsed_ns": 23.20016,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        "reuse": {
+          "elapsed_ns": 23.071765,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        }
+      }
+    },
+    {
+      "name": "exp-tiny",
+      "setting": "refine",
+      "iterations": 1103,
+      "observations": 72,
+      "pilots": [
+        {
+          "case": "exp-tiny",
+          "lifecycle": "refine",
+          "iterations": 20,
+          "elapsed_ns": 143860,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        {
+          "case": "exp-tiny",
+          "lifecycle": "refine",
+          "iterations": 20,
+          "elapsed_ns": 106913,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        {
+          "case": "exp-tiny",
+          "lifecycle": "refine",
+          "iterations": 20,
+          "elapsed_ns": 181467,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        }
+      ],
+      "comparisons": {
+        "baseline": {
+          "elapsed_ns": {
+            "pairedMedianRatio": 1.0052107941188297,
+            "pairedMedianBootstrap95": [
+              1.0018065931579372,
+              1.0607973502762214
+            ]
+          }
+        },
+        "sign": {
+          "elapsed_ns": {
+            "pairedMedianRatio": 1.017802606145684,
+            "pairedMedianBootstrap95": [
+              1.011597021756643,
+              1.0391901166317046
+            ]
+          }
+        }
+      },
+      "measurements": {
+        "baseline": {
+          "elapsed_ns": 4812.951949229375,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        "sign": {
+          "elapsed_ns": 4812.317316409792,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        "reuse": {
+          "elapsed_ns": 4852.006346328196,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        }
+      }
+    },
+    {
+      "name": "exp-tiny",
+      "setting": "hot-operand",
+      "iterations": 7340,
+      "observations": 72,
+      "pilots": [
+        {
+          "case": "exp-tiny",
+          "lifecycle": "hot-operand",
+          "iterations": 20,
+          "elapsed_ns": 27128,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        {
+          "case": "exp-tiny",
+          "lifecycle": "hot-operand",
+          "iterations": 20,
+          "elapsed_ns": 27248,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        {
+          "case": "exp-tiny",
+          "lifecycle": "hot-operand",
+          "iterations": 20,
+          "elapsed_ns": 22558,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        }
+      ],
+      "comparisons": {
+        "baseline": {
+          "elapsed_ns": {
+            "pairedMedianRatio": 0.9851414726918448,
+            "pairedMedianBootstrap95": [
+              0.9815585241337045,
+              1.0010913260133674
+            ]
+          }
+        },
+        "sign": {
+          "elapsed_ns": {
+            "pairedMedianRatio": 0.9549608303919834,
+            "pairedMedianBootstrap95": [
+              0.8838849548495558,
+              0.9951961802354357
+            ]
+          }
+        }
+      },
+      "measurements": {
+        "baseline": {
+          "elapsed_ns": 1082.8126021798366,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        "sign": {
+          "elapsed_ns": 1114.0802452316075,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        "reuse": {
+          "elapsed_ns": 1081.499386920981,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        }
+      }
+    },
+    {
+      "name": "exp-tiny",
+      "setting": "construct-hot",
+      "iterations": 100000,
+      "observations": 72,
+      "pilots": [
+        {
+          "case": "exp-tiny",
+          "lifecycle": "construct-hot",
+          "iterations": 20,
+          "elapsed_ns": 720,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        {
+          "case": "exp-tiny",
+          "lifecycle": "construct-hot",
+          "iterations": 20,
+          "elapsed_ns": 720,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        {
+          "case": "exp-tiny",
+          "lifecycle": "construct-hot",
+          "iterations": 20,
+          "elapsed_ns": 720,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        }
+      ],
+      "comparisons": {
+        "baseline": {
+          "elapsed_ns": {
+            "pairedMedianRatio": 0.9593729873896326,
+            "pairedMedianBootstrap95": [
+              0.9240729255396404,
+              0.9823986000448266
+            ]
+          }
+        },
+        "sign": {
+          "elapsed_ns": {
+            "pairedMedianRatio": 0.9973089449864521,
+            "pairedMedianBootstrap95": [
+              0.9113622955531095,
+              1.0207365421579633
+            ]
+          }
+        }
+      },
+      "measurements": {
+        "baseline": {
+          "elapsed_ns": 22.821735,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        "sign": {
+          "elapsed_ns": 22.944225000000003,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        "reuse": {
+          "elapsed_ns": 22.531109999999998,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        }
+      }
+    },
+    {
+      "name": "exp-offset",
+      "setting": "construct",
+      "iterations": 3425,
+      "observations": 72,
+      "pilots": [
+        {
+          "case": "exp-offset",
+          "lifecycle": "construct",
+          "iterations": 20,
+          "elapsed_ns": 48657,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        {
+          "case": "exp-offset",
+          "lifecycle": "construct",
+          "iterations": 20,
+          "elapsed_ns": 54776,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        {
+          "case": "exp-offset",
+          "lifecycle": "construct",
+          "iterations": 20,
+          "elapsed_ns": 58406,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        }
+      ],
+      "comparisons": {
+        "baseline": {
+          "elapsed_ns": {
+            "pairedMedianRatio": 0.985127483997436,
+            "pairedMedianBootstrap95": [
+              0.9185937485661029,
+              1.053450089390302
+            ]
+          }
+        },
+        "sign": {
+          "elapsed_ns": {
+            "pairedMedianRatio": 0.9875748140700897,
+            "pairedMedianBootstrap95": [
+              0.923449470896991,
+              1.08768272792254
+            ]
+          }
+        }
+      },
+      "measurements": {
+        "baseline": {
+          "elapsed_ns": 2307.263649635037,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        "sign": {
+          "elapsed_ns": 2281.3458394160584,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        "reuse": {
+          "elapsed_ns": 2231.366715328467,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        }
+      }
+    },
+    {
+      "name": "exp-offset",
+      "setting": "fresh",
+      "iterations": 241,
+      "observations": 72,
+      "pilots": [
+        {
+          "case": "exp-offset",
+          "lifecycle": "fresh",
+          "iterations": 20,
+          "elapsed_ns": 782316,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        {
+          "case": "exp-offset",
+          "lifecycle": "fresh",
+          "iterations": 20,
+          "elapsed_ns": 831533,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        {
+          "case": "exp-offset",
+          "lifecycle": "fresh",
+          "iterations": 20,
+          "elapsed_ns": 598129,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        }
+      ],
+      "comparisons": {
+        "baseline": {
+          "elapsed_ns": {
+            "pairedMedianRatio": 0.9650672391429744,
+            "pairedMedianBootstrap95": [
+              0.95718260860805,
+              0.9834567388440218
+            ]
+          }
+        },
+        "sign": {
+          "elapsed_ns": {
+            "pairedMedianRatio": 0.9476415580214363,
+            "pairedMedianBootstrap95": [
+              0.9272488687902155,
+              0.9583955593653571
+            ]
+          }
+        }
+      },
+      "measurements": {
+        "baseline": {
+          "elapsed_ns": 31201.510373443984,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        "sign": {
+          "elapsed_ns": 32650.5,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        "reuse": {
+          "elapsed_ns": 30505.022821576764,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        }
+      }
+    },
+    {
+      "name": "exp-offset",
+      "setting": "warm",
+      "iterations": 100000,
+      "observations": 72,
+      "pilots": [
+        {
+          "case": "exp-offset",
+          "lifecycle": "warm",
+          "iterations": 20,
+          "elapsed_ns": 1000,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        {
+          "case": "exp-offset",
+          "lifecycle": "warm",
+          "iterations": 20,
+          "elapsed_ns": 930,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        {
+          "case": "exp-offset",
+          "lifecycle": "warm",
+          "iterations": 20,
+          "elapsed_ns": 980,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        }
+      ],
+      "comparisons": {
+        "baseline": {
+          "elapsed_ns": {
+            "pairedMedianRatio": 0.9978933101167857,
+            "pairedMedianBootstrap95": [
+              0.9890927974803194,
+              1.0197239197926602
+            ]
+          }
+        },
+        "sign": {
+          "elapsed_ns": {
+            "pairedMedianRatio": 0.9915982477255233,
+            "pairedMedianBootstrap95": [
+              0.9815803915140009,
+              1.0064863077811985
+            ]
+          }
+        }
+      },
+      "measurements": {
+        "baseline": {
+          "elapsed_ns": 22.926180000000002,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        "sign": {
+          "elapsed_ns": 23.01437,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        "reuse": {
+          "elapsed_ns": 23.02047,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        }
+      }
+    },
+    {
+      "name": "exp-offset",
+      "setting": "refine",
+      "iterations": 133,
+      "observations": 72,
+      "pilots": [
+        {
+          "case": "exp-offset",
+          "lifecycle": "refine",
+          "iterations": 20,
+          "elapsed_ns": 1445821,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        {
+          "case": "exp-offset",
+          "lifecycle": "refine",
+          "iterations": 20,
+          "elapsed_ns": 1508396,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        {
+          "case": "exp-offset",
+          "lifecycle": "refine",
+          "iterations": 20,
+          "elapsed_ns": 1407913,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        }
+      ],
+      "comparisons": {
+        "baseline": {
+          "elapsed_ns": {
+            "pairedMedianRatio": 0.9810558733378993,
+            "pairedMedianBootstrap95": [
+              0.9483805909867206,
+              0.993694146690711
+            ]
+          }
+        },
+        "sign": {
+          "elapsed_ns": {
+            "pairedMedianRatio": 0.9720885399349091,
+            "pairedMedianBootstrap95": [
+              0.9507373906334367,
+              0.9916775152825199
+            ]
+          }
+        }
+      },
+      "measurements": {
+        "baseline": {
+          "elapsed_ns": 71102.7180451128,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        "sign": {
+          "elapsed_ns": 72185.1992481203,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        "reuse": {
+          "elapsed_ns": 69821.90601503759,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        }
+      }
+    },
+    {
+      "name": "exp-offset",
+      "setting": "hot-operand",
+      "iterations": 7428,
+      "observations": 72,
+      "pilots": [
+        {
+          "case": "exp-offset",
+          "lifecycle": "hot-operand",
+          "iterations": 20,
+          "elapsed_ns": 26928,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        {
+          "case": "exp-offset",
+          "lifecycle": "hot-operand",
+          "iterations": 20,
+          "elapsed_ns": 26438,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        {
+          "case": "exp-offset",
+          "lifecycle": "hot-operand",
+          "iterations": 20,
+          "elapsed_ns": 26528,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        }
+      ],
+      "comparisons": {
+        "baseline": {
+          "elapsed_ns": {
+            "pairedMedianRatio": 0.9936418383674597,
+            "pairedMedianBootstrap95": [
+              0.9470258563180214,
+              1.0405264365993827
+            ]
+          }
+        },
+        "sign": {
+          "elapsed_ns": {
+            "pairedMedianRatio": 0.9835126483146269,
+            "pairedMedianBootstrap95": [
+              0.9525363509524866,
+              1.0483081649150696
+            ]
+          }
+        }
+      },
+      "measurements": {
+        "baseline": {
+          "elapsed_ns": 1193.5941033925687,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        "sign": {
+          "elapsed_ns": 1183.7368066774366,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        "reuse": {
+          "elapsed_ns": 1170.4918551427031,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        }
+      }
+    },
+    {
+      "name": "exp-offset",
+      "setting": "construct-hot",
+      "iterations": 100000,
+      "observations": 72,
+      "pilots": [
+        {
+          "case": "exp-offset",
+          "lifecycle": "construct-hot",
+          "iterations": 20,
+          "elapsed_ns": 870,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        {
+          "case": "exp-offset",
+          "lifecycle": "construct-hot",
+          "iterations": 20,
+          "elapsed_ns": 710,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        {
+          "case": "exp-offset",
+          "lifecycle": "construct-hot",
+          "iterations": 20,
+          "elapsed_ns": 700,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        }
+      ],
+      "comparisons": {
+        "baseline": {
+          "elapsed_ns": {
+            "pairedMedianRatio": 0.9921716074323956,
+            "pairedMedianBootstrap95": [
+              0.9729593141476869,
+              1.0103093928148243
+            ]
+          }
+        },
+        "sign": {
+          "elapsed_ns": {
+            "pairedMedianRatio": 1.0104339631992247,
+            "pairedMedianBootstrap95": [
+              0.9780265720109629,
+              1.0386736547803364
+            ]
+          }
+        }
+      },
+      "measurements": {
+        "baseline": {
+          "elapsed_ns": 22.78539,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        "sign": {
+          "elapsed_ns": 22.6351,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        "reuse": {
+          "elapsed_ns": 22.559105000000002,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        }
+      }
+    },
+    {
+      "name": "exp-opaque-zero",
+      "setting": "construct",
+      "iterations": 1454,
+      "observations": 72,
+      "pilots": [
+        {
+          "case": "exp-opaque-zero",
+          "lifecycle": "construct",
+          "iterations": 20,
+          "elapsed_ns": 131791,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        {
+          "case": "exp-opaque-zero",
+          "lifecycle": "construct",
+          "iterations": 20,
+          "elapsed_ns": 137611,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        {
+          "case": "exp-opaque-zero",
+          "lifecycle": "construct",
+          "iterations": 20,
+          "elapsed_ns": 125651,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        }
+      ],
+      "comparisons": {
+        "baseline": {
+          "elapsed_ns": {
+            "pairedMedianRatio": 1.0127791039840968,
+            "pairedMedianBootstrap95": [
+              0.9949589617273239,
+              1.02892745082177
+            ]
+          }
+        },
+        "sign": {
+          "elapsed_ns": {
+            "pairedMedianRatio": 1.0189202289549772,
+            "pairedMedianBootstrap95": [
+              1.0085140408874018,
+              1.0354490866345207
+            ]
+          }
+        }
+      },
+      "measurements": {
+        "baseline": {
+          "elapsed_ns": 5887.415749656121,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        "sign": {
+          "elapsed_ns": 5829.675722145805,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        "reuse": {
+          "elapsed_ns": 5948.398899587345,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        }
+      }
+    },
+    {
+      "name": "exp-opaque-zero",
+      "setting": "fresh",
+      "iterations": 196,
+      "observations": 72,
+      "pilots": [
+        {
+          "case": "exp-opaque-zero",
+          "lifecycle": "fresh",
+          "iterations": 20,
+          "elapsed_ns": 595579,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        {
+          "case": "exp-opaque-zero",
+          "lifecycle": "fresh",
+          "iterations": 20,
+          "elapsed_ns": 1025299,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        {
+          "case": "exp-opaque-zero",
+          "lifecycle": "fresh",
+          "iterations": 20,
+          "elapsed_ns": 587270,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        }
+      ],
+      "comparisons": {
+        "baseline": {
+          "elapsed_ns": {
+            "pairedMedianRatio": 0.9761580086681342,
+            "pairedMedianBootstrap95": [
+              0.9572215931564185,
+              0.98044813200058
+            ]
+          }
+        },
+        "sign": {
+          "elapsed_ns": {
+            "pairedMedianRatio": 0.9624739315861833,
+            "pairedMedianBootstrap95": [
+              0.9486570462088644,
+              0.9812106766681645
+            ]
+          }
+        }
+      },
+      "measurements": {
+        "baseline": {
+          "elapsed_ns": 28944.826530612245,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        "sign": {
+          "elapsed_ns": 29017.168367346938,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        "reuse": {
+          "elapsed_ns": 28170.23724489796,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        }
+      }
+    },
+    {
+      "name": "exp-opaque-zero",
+      "setting": "warm",
+      "iterations": 100000,
+      "observations": 72,
+      "pilots": [
+        {
+          "case": "exp-opaque-zero",
+          "lifecycle": "warm",
+          "iterations": 20,
+          "elapsed_ns": 930,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        {
+          "case": "exp-opaque-zero",
+          "lifecycle": "warm",
+          "iterations": 20,
+          "elapsed_ns": 820,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        {
+          "case": "exp-opaque-zero",
+          "lifecycle": "warm",
+          "iterations": 20,
+          "elapsed_ns": 869,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        }
+      ],
+      "comparisons": {
+        "baseline": {
+          "elapsed_ns": {
+            "pairedMedianRatio": 1.022064273374506,
+            "pairedMedianBootstrap95": [
+              0.9884854808512588,
+              1.0534672389373907
+            ]
+          }
+        },
+        "sign": {
+          "elapsed_ns": {
+            "pairedMedianRatio": 1.0002269874330227,
+            "pairedMedianBootstrap95": [
+              0.9716301524157732,
+              1.029561828980547
+            ]
+          }
+        }
+      },
+      "measurements": {
+        "baseline": {
+          "elapsed_ns": 23.05977,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        "sign": {
+          "elapsed_ns": 23.760365,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        "reuse": {
+          "elapsed_ns": 23.103965000000002,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        }
+      }
+    },
+    {
+      "name": "exp-opaque-zero",
+      "setting": "refine",
+      "iterations": 113,
+      "observations": 72,
+      "pilots": [
+        {
+          "case": "exp-opaque-zero",
+          "lifecycle": "refine",
+          "iterations": 20,
+          "elapsed_ns": 1784148,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        {
+          "case": "exp-opaque-zero",
+          "lifecycle": "refine",
+          "iterations": 20,
+          "elapsed_ns": 1483908,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        {
+          "case": "exp-opaque-zero",
+          "lifecycle": "refine",
+          "iterations": 20,
+          "elapsed_ns": 1498127,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        }
+      ],
+      "comparisons": {
+        "baseline": {
+          "elapsed_ns": {
+            "pairedMedianRatio": 0.9773410778673832,
+            "pairedMedianBootstrap95": [
+              0.9705794701802569,
+              0.992630948055212
+            ]
+          }
+        },
+        "sign": {
+          "elapsed_ns": {
+            "pairedMedianRatio": 0.9709183937878494,
+            "pairedMedianBootstrap95": [
+              0.9485673478201767,
+              0.9822159314927066
+            ]
+          }
+        }
+      },
+      "measurements": {
+        "baseline": {
+          "elapsed_ns": 70416.80973451328,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        "sign": {
+          "elapsed_ns": 70572.33185840707,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        "reuse": {
+          "elapsed_ns": 67911.30973451328,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        }
+      }
+    },
+    {
+      "name": "exp-opaque-zero",
+      "setting": "hot-operand",
+      "iterations": 7290,
+      "observations": 72,
+      "pilots": [
+        {
+          "case": "exp-opaque-zero",
+          "lifecycle": "hot-operand",
+          "iterations": 20,
+          "elapsed_ns": 27338,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        {
+          "case": "exp-opaque-zero",
+          "lifecycle": "hot-operand",
+          "iterations": 20,
+          "elapsed_ns": 27438,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        {
+          "case": "exp-opaque-zero",
+          "lifecycle": "hot-operand",
+          "iterations": 20,
+          "elapsed_ns": 22469,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        }
+      ],
+      "comparisons": {
+        "baseline": {
+          "elapsed_ns": {
+            "pairedMedianRatio": 0.9846199853190555,
+            "pairedMedianBootstrap95": [
+              0.9600393288863469,
+              0.9999266321242201
+            ]
+          }
+        },
+        "sign": {
+          "elapsed_ns": {
+            "pairedMedianRatio": 0.9616895821832804,
+            "pairedMedianBootstrap95": [
+              0.9348793510619663,
+              0.9797414352896969
+            ]
+          }
+        }
+      },
+      "measurements": {
+        "baseline": {
+          "elapsed_ns": 1076.1648834019206,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        "sign": {
+          "elapsed_ns": 1092.8674897119342,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        "reuse": {
+          "elapsed_ns": 1065.2033607681756,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        }
+      }
+    },
+    {
+      "name": "exp-opaque-zero",
+      "setting": "construct-hot",
+      "iterations": 100000,
+      "observations": 72,
+      "pilots": [
+        {
+          "case": "exp-opaque-zero",
+          "lifecycle": "construct-hot",
+          "iterations": 20,
+          "elapsed_ns": 840,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        {
+          "case": "exp-opaque-zero",
+          "lifecycle": "construct-hot",
+          "iterations": 20,
+          "elapsed_ns": 740,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        {
+          "case": "exp-opaque-zero",
+          "lifecycle": "construct-hot",
+          "iterations": 20,
+          "elapsed_ns": 710,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        }
+      ],
+      "comparisons": {
+        "baseline": {
+          "elapsed_ns": {
+            "pairedMedianRatio": 1.008234758518725,
+            "pairedMedianBootstrap95": [
+              0.9974654528652175,
+              1.0186076139116182
+            ]
+          }
+        },
+        "sign": {
+          "elapsed_ns": {
+            "pairedMedianRatio": 0.9917834186565213,
+            "pairedMedianBootstrap95": [
+              0.9638523827928964,
+              1.0231217513409046
+            ]
+          }
+        }
+      },
+      "measurements": {
+        "baseline": {
+          "elapsed_ns": 22.584600000000002,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        "sign": {
+          "elapsed_ns": 22.578400000000002,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        "reuse": {
+          "elapsed_ns": 22.740740000000002,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        }
+      }
+    },
+    {
+      "name": "ordinary-sqrt",
+      "setting": "construct",
+      "iterations": 44455,
+      "observations": 72,
+      "pilots": [
+        {
+          "case": "ordinary-sqrt",
+          "lifecycle": "construct",
+          "iterations": 20,
+          "elapsed_ns": 4360,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        {
+          "case": "ordinary-sqrt",
+          "lifecycle": "construct",
+          "iterations": 20,
+          "elapsed_ns": 4209,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        {
+          "case": "ordinary-sqrt",
+          "lifecycle": "construct",
+          "iterations": 20,
+          "elapsed_ns": 4499,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        }
+      ],
+      "comparisons": {
+        "baseline": {
+          "elapsed_ns": {
+            "pairedMedianRatio": 1.0031233875701646,
+            "pairedMedianBootstrap95": [
+              0.9690432862426738,
+              1.0328207949317267
+            ]
+          }
+        },
+        "sign": {
+          "elapsed_ns": {
+            "pairedMedianRatio": 1.0202827964629653,
+            "pairedMedianBootstrap95": [
+              1.009540381246592,
+              1.0581342452474873
+            ]
+          }
+        }
+      },
+      "measurements": {
+        "baseline": {
+          "elapsed_ns": 163.60187830390282,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        "sign": {
+          "elapsed_ns": 162.3698121696097,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        "reuse": {
+          "elapsed_ns": 166.90993139129458,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        }
+      }
+    },
+    {
+      "name": "ordinary-sqrt",
+      "setting": "fresh",
+      "iterations": 6195,
+      "observations": 72,
+      "pilots": [
+        {
+          "case": "ordinary-sqrt",
+          "lifecycle": "fresh",
+          "iterations": 20,
+          "elapsed_ns": 32288,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        {
+          "case": "ordinary-sqrt",
+          "lifecycle": "fresh",
+          "iterations": 20,
+          "elapsed_ns": 32048,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        {
+          "case": "ordinary-sqrt",
+          "lifecycle": "fresh",
+          "iterations": 20,
+          "elapsed_ns": 31358,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        }
+      ],
+      "comparisons": {
+        "baseline": {
+          "elapsed_ns": {
+            "pairedMedianRatio": 0.974100413083985,
+            "pairedMedianBootstrap95": [
+              0.9104992647876534,
+              0.9975230134968327
+            ]
+          }
+        },
+        "sign": {
+          "elapsed_ns": {
+            "pairedMedianRatio": 0.9888413428917351,
+            "pairedMedianBootstrap95": [
+              0.9565841907035845,
+              1.0134620104024366
+            ]
+          }
+        }
+      },
+      "measurements": {
+        "baseline": {
+          "elapsed_ns": 1255.5370460048425,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        "sign": {
+          "elapsed_ns": 1221.7338175948344,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        "reuse": {
+          "elapsed_ns": 1217.0642453591606,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        }
+      }
+    },
+    {
+      "name": "ordinary-sqrt",
+      "setting": "warm",
+      "iterations": 100000,
+      "observations": 72,
+      "pilots": [
+        {
+          "case": "ordinary-sqrt",
+          "lifecycle": "warm",
+          "iterations": 20,
+          "elapsed_ns": 920,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        {
+          "case": "ordinary-sqrt",
+          "lifecycle": "warm",
+          "iterations": 20,
+          "elapsed_ns": 780,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        {
+          "case": "ordinary-sqrt",
+          "lifecycle": "warm",
+          "iterations": 20,
+          "elapsed_ns": 880,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        }
+      ],
+      "comparisons": {
+        "baseline": {
+          "elapsed_ns": {
+            "pairedMedianRatio": 1.0022351686173583,
+            "pairedMedianBootstrap95": [
+              0.9917131976296639,
+              1.16742602246586
+            ]
+          }
+        },
+        "sign": {
+          "elapsed_ns": {
+            "pairedMedianRatio": 0.9902753380332061,
+            "pairedMedianBootstrap95": [
+              0.9657672164820721,
+              1.13339932195333
+            ]
+          }
+        }
+      },
+      "measurements": {
+        "baseline": {
+          "elapsed_ns": 22.803335,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        "sign": {
+          "elapsed_ns": 23.293405,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        "reuse": {
+          "elapsed_ns": 23.05772,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        }
+      }
+    },
+    {
+      "name": "ordinary-sqrt",
+      "setting": "refine",
+      "iterations": 1779,
+      "observations": 72,
+      "pilots": [
+        {
+          "case": "ordinary-sqrt",
+          "lifecycle": "refine",
+          "iterations": 20,
+          "elapsed_ns": 112452,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        {
+          "case": "ordinary-sqrt",
+          "lifecycle": "refine",
+          "iterations": 20,
+          "elapsed_ns": 77924,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        {
+          "case": "ordinary-sqrt",
+          "lifecycle": "refine",
+          "iterations": 20,
+          "elapsed_ns": 67716,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        }
+      ],
+      "comparisons": {
+        "baseline": {
+          "elapsed_ns": {
+            "pairedMedianRatio": 0.9751185348569815,
+            "pairedMedianBootstrap95": [
+              0.9545180154532861,
+              0.990214180006024
+            ]
+          }
+        },
+        "sign": {
+          "elapsed_ns": {
+            "pairedMedianRatio": 0.9707157111247497,
+            "pairedMedianBootstrap95": [
+              0.9128286883958111,
+              0.9855459249169984
+            ]
+          }
+        }
+      },
+      "measurements": {
+        "baseline": {
+          "elapsed_ns": 2602.862563237774,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        "sign": {
+          "elapsed_ns": 2593.813378302417,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        "reuse": {
+          "elapsed_ns": 2571.5267003934796,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        }
+      }
+    },
+    {
+      "name": "ordinary-sqrt",
+      "setting": "hot-operand",
+      "iterations": 6652,
+      "observations": 72,
+      "pilots": [
+        {
+          "case": "ordinary-sqrt",
+          "lifecycle": "hot-operand",
+          "iterations": 20,
+          "elapsed_ns": 30068,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        {
+          "case": "ordinary-sqrt",
+          "lifecycle": "hot-operand",
+          "iterations": 20,
+          "elapsed_ns": 25568,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        {
+          "case": "ordinary-sqrt",
+          "lifecycle": "hot-operand",
+          "iterations": 20,
+          "elapsed_ns": 24978,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        }
+      ],
+      "comparisons": {
+        "baseline": {
+          "elapsed_ns": {
+            "pairedMedianRatio": 0.94232846139612,
+            "pairedMedianBootstrap95": [
+              0.8647185182462381,
+              1.1047974197322605
+            ]
+          }
+        },
+        "sign": {
+          "elapsed_ns": {
+            "pairedMedianRatio": 1.0089299541748085,
+            "pairedMedianBootstrap95": [
+              0.9572695140519434,
+              1.0298585023587183
+            ]
+          }
+        }
+      },
+      "measurements": {
+        "baseline": {
+          "elapsed_ns": 1203.5344257366205,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        "sign": {
+          "elapsed_ns": 1195.6682200841851,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        "reuse": {
+          "elapsed_ns": 1160.3466626578474,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        }
+      }
+    },
+    {
+      "name": "ordinary-sqrt",
+      "setting": "construct-hot",
+      "iterations": 60607,
+      "observations": 72,
+      "pilots": [
+        {
+          "case": "ordinary-sqrt",
+          "lifecycle": "construct-hot",
+          "iterations": 20,
+          "elapsed_ns": 2650,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        {
+          "case": "ordinary-sqrt",
+          "lifecycle": "construct-hot",
+          "iterations": 20,
+          "elapsed_ns": 2660,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        {
+          "case": "ordinary-sqrt",
+          "lifecycle": "construct-hot",
+          "iterations": 20,
+          "elapsed_ns": 3300,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        }
+      ],
+      "comparisons": {
+        "baseline": {
+          "elapsed_ns": {
+            "pairedMedianRatio": 1.0199459300827667,
+            "pairedMedianBootstrap95": [
+              0.9820294092739328,
+              1.0703179115176986
+            ]
+          }
+        },
+        "sign": {
+          "elapsed_ns": {
+            "pairedMedianRatio": 0.9926142994022418,
+            "pairedMedianBootstrap95": [
+              0.9447344912986122,
+              1.0271583229927728
+            ]
+          }
+        }
+      },
+      "measurements": {
+        "baseline": {
+          "elapsed_ns": 123.13863910109393,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        "sign": {
+          "elapsed_ns": 123.6967841998449,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        "reuse": {
+          "elapsed_ns": 125.37940336924777,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        }
+      }
+    },
+    {
+      "name": "ordinary-sine-root",
+      "setting": "construct",
+      "iterations": 16409,
+      "observations": 72,
+      "pilots": [
+        {
+          "case": "ordinary-sine-root",
+          "lifecycle": "construct",
+          "iterations": 20,
+          "elapsed_ns": 6829,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        {
+          "case": "ordinary-sine-root",
+          "lifecycle": "construct",
+          "iterations": 20,
+          "elapsed_ns": 9699,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        {
+          "case": "ordinary-sine-root",
+          "lifecycle": "construct",
+          "iterations": 20,
+          "elapsed_ns": 12189,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        }
+      ],
+      "comparisons": {
+        "baseline": {
+          "elapsed_ns": {
+            "pairedMedianRatio": 0.9708951062522635,
+            "pairedMedianBootstrap95": [
+              0.9075392830970093,
+              1.0172536169491395
+            ]
+          }
+        },
+        "sign": {
+          "elapsed_ns": {
+            "pairedMedianRatio": 0.9807221325412088,
+            "pairedMedianBootstrap95": [
+              0.9435803144278887,
+              1.0303386809959978
+            ]
+          }
+        }
+      },
+      "measurements": {
+        "baseline": {
+          "elapsed_ns": 245.96977268572124,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        "sign": {
+          "elapsed_ns": 242.84337863367665,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        "reuse": {
+          "elapsed_ns": 238.02041562557133,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        }
+      }
+    },
+    {
+      "name": "ordinary-sine-root",
+      "setting": "fresh",
+      "iterations": 658,
+      "observations": 72,
+      "pilots": [
+        {
+          "case": "ordinary-sine-root",
+          "lifecycle": "fresh",
+          "iterations": 20,
+          "elapsed_ns": 290510,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        {
+          "case": "ordinary-sine-root",
+          "lifecycle": "fresh",
+          "iterations": 20,
+          "elapsed_ns": 293179,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        {
+          "case": "ordinary-sine-root",
+          "lifecycle": "fresh",
+          "iterations": 20,
+          "elapsed_ns": 304139,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        }
+      ],
+      "comparisons": {
+        "baseline": {
+          "elapsed_ns": {
+            "pairedMedianRatio": 0.9266599710403229,
+            "pairedMedianBootstrap95": [
+              0.8008545082546228,
+              0.9554944418254936
+            ]
+          }
+        },
+        "sign": {
+          "elapsed_ns": {
+            "pairedMedianRatio": 0.9157545213555551,
+            "pairedMedianBootstrap95": [
+              0.8921919552186162,
+              0.9269236575408639
+            ]
+          }
+        }
+      },
+      "measurements": {
+        "baseline": {
+          "elapsed_ns": 12870.287993920974,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        "sign": {
+          "elapsed_ns": 13051.886018237083,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        "reuse": {
+          "elapsed_ns": 12130.718844984804,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        }
+      }
+    },
+    {
+      "name": "ordinary-sine-root",
+      "setting": "warm",
+      "iterations": 100000,
+      "observations": 72,
+      "pilots": [
+        {
+          "case": "ordinary-sine-root",
+          "lifecycle": "warm",
+          "iterations": 20,
+          "elapsed_ns": 1050,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        {
+          "case": "ordinary-sine-root",
+          "lifecycle": "warm",
+          "iterations": 20,
+          "elapsed_ns": 1130,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        {
+          "case": "ordinary-sine-root",
+          "lifecycle": "warm",
+          "iterations": 20,
+          "elapsed_ns": 970,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        }
+      ],
+      "comparisons": {
+        "baseline": {
+          "elapsed_ns": {
+            "pairedMedianRatio": 1.0018279892190605,
+            "pairedMedianBootstrap95": [
+              0.9937696794795938,
+              1.0449861875059536
+            ]
+          }
+        },
+        "sign": {
+          "elapsed_ns": {
+            "pairedMedianRatio": 1.0143694742160434,
+            "pairedMedianBootstrap95": [
+              0.949930867569525,
+              1.024868690765627
+            ]
+          }
+        }
+      },
+      "measurements": {
+        "baseline": {
+          "elapsed_ns": 24.15339,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        "sign": {
+          "elapsed_ns": 24.66216,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        "reuse": {
+          "elapsed_ns": 24.75275,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        }
+      }
+    },
+    {
+      "name": "ordinary-sine-root",
+      "setting": "refine",
+      "iterations": 304,
+      "observations": 72,
+      "pilots": [
+        {
+          "case": "ordinary-sine-root",
+          "lifecycle": "refine",
+          "iterations": 20,
+          "elapsed_ns": 644835,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        {
+          "case": "ordinary-sine-root",
+          "lifecycle": "refine",
+          "iterations": 20,
+          "elapsed_ns": 659055,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        {
+          "case": "ordinary-sine-root",
+          "lifecycle": "refine",
+          "iterations": 20,
+          "elapsed_ns": 634336,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        }
+      ],
+      "comparisons": {
+        "baseline": {
+          "elapsed_ns": {
+            "pairedMedianRatio": 0.9685606884434941,
+            "pairedMedianBootstrap95": [
+              0.8374608230569848,
+              1.0049878822664355
+            ]
+          }
+        },
+        "sign": {
+          "elapsed_ns": {
+            "pairedMedianRatio": 0.9715488217481104,
+            "pairedMedianBootstrap95": [
+              0.968401528567628,
+              1.0066912714388152
+            ]
+          }
+        }
+      },
+      "measurements": {
+        "baseline": {
+          "elapsed_ns": 32401.60855263158,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        "sign": {
+          "elapsed_ns": 31730.243421052633,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        "reuse": {
+          "elapsed_ns": 30733.50164473684,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        }
+      }
+    },
+    {
+      "name": "ordinary-sine-root",
+      "setting": "hot-operand",
+      "iterations": 2993,
+      "observations": 72,
+      "pilots": [
+        {
+          "case": "ordinary-sine-root",
+          "lifecycle": "hot-operand",
+          "iterations": 20,
+          "elapsed_ns": 31638,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        {
+          "case": "ordinary-sine-root",
+          "lifecycle": "hot-operand",
+          "iterations": 20,
+          "elapsed_ns": 66826,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        {
+          "case": "ordinary-sine-root",
+          "lifecycle": "hot-operand",
+          "iterations": 20,
+          "elapsed_ns": 31087,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        }
+      ],
+      "comparisons": {
+        "baseline": {
+          "elapsed_ns": {
+            "pairedMedianRatio": 0.9646335567772937,
+            "pairedMedianBootstrap95": [
+              0.9372154029231625,
+              0.9793209796977433
+            ]
+          }
+        },
+        "sign": {
+          "elapsed_ns": {
+            "pairedMedianRatio": 0.9864498840735647,
+            "pairedMedianBootstrap95": [
+              0.9463479701359436,
+              1.0129675272129601
+            ]
+          }
+        }
+      },
+      "measurements": {
+        "baseline": {
+          "elapsed_ns": 1202.0442699632476,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        "sign": {
+          "elapsed_ns": 1193.123788840628,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        "reuse": {
+          "elapsed_ns": 1179.5350818576678,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        }
+      }
+    },
+    {
+      "name": "ordinary-sine-root",
+      "setting": "construct-hot",
+      "iterations": 100000,
+      "observations": 72,
+      "pilots": [
+        {
+          "case": "ordinary-sine-root",
+          "lifecycle": "construct-hot",
+          "iterations": 20,
+          "elapsed_ns": 830,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        {
+          "case": "ordinary-sine-root",
+          "lifecycle": "construct-hot",
+          "iterations": 20,
+          "elapsed_ns": 800,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        {
+          "case": "ordinary-sine-root",
+          "lifecycle": "construct-hot",
+          "iterations": 20,
+          "elapsed_ns": 670,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        }
+      ],
+      "comparisons": {
+        "baseline": {
+          "elapsed_ns": {
+            "pairedMedianRatio": 1.0157405356013784,
+            "pairedMedianBootstrap95": [
+              0.9797456172945925,
+              1.0519038453036464
+            ]
+          }
+        },
+        "sign": {
+          "elapsed_ns": {
+            "pairedMedianRatio": 1.0124276666253387,
+            "pairedMedianBootstrap95": [
+              0.9756789992865171,
+              1.0602139014937404
+            ]
+          }
+        }
+      },
+      "measurements": {
+        "baseline": {
+          "elapsed_ns": 22.775685,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        "sign": {
+          "elapsed_ns": 22.79703,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        "reuse": {
+          "elapsed_ns": 22.913625,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        }
+      }
+    },
+    {
+      "name": "perfect-square",
+      "setting": "construct",
+      "iterations": 42644,
+      "observations": 72,
+      "pilots": [
+        {
+          "case": "perfect-square",
+          "lifecycle": "construct",
+          "iterations": 20,
+          "elapsed_ns": 4690,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        {
+          "case": "perfect-square",
+          "lifecycle": "construct",
+          "iterations": 20,
+          "elapsed_ns": 4689,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        {
+          "case": "perfect-square",
+          "lifecycle": "construct",
+          "iterations": 20,
+          "elapsed_ns": 4499,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        }
+      ],
+      "comparisons": {
+        "baseline": {
+          "elapsed_ns": {
+            "pairedMedianRatio": 1.0073264153144992,
+            "pairedMedianBootstrap95": [
+              0.9638115637435912,
+              1.0480381959014902
+            ]
+          }
+        },
+        "sign": {
+          "elapsed_ns": {
+            "pairedMedianRatio": 0.983968124166704,
+            "pairedMedianBootstrap95": [
+              0.9456305517586117,
+              1.0503388350235672
+            ]
+          }
+        }
+      },
+      "measurements": {
+        "baseline": {
+          "elapsed_ns": 179.83852359065753,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        "sign": {
+          "elapsed_ns": 179.3201857236657,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        "reuse": {
+          "elapsed_ns": 180.8657841665885,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        }
+      }
+    },
+    {
+      "name": "perfect-square",
+      "setting": "fresh",
+      "iterations": 36564,
+      "observations": 72,
+      "pilots": [
+        {
+          "case": "perfect-square",
+          "lifecycle": "fresh",
+          "iterations": 20,
+          "elapsed_ns": 5470,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        {
+          "case": "perfect-square",
+          "lifecycle": "fresh",
+          "iterations": 20,
+          "elapsed_ns": 5460,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        {
+          "case": "perfect-square",
+          "lifecycle": "fresh",
+          "iterations": 20,
+          "elapsed_ns": 4670,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        }
+      ],
+      "comparisons": {
+        "baseline": {
+          "elapsed_ns": {
+            "pairedMedianRatio": 0.991369690539845,
+            "pairedMedianBootstrap95": [
+              0.9646855208982125,
+              1.0342027282187478
+            ]
+          }
+        },
+        "sign": {
+          "elapsed_ns": {
+            "pairedMedianRatio": 1.0147160366798418,
+            "pairedMedianBootstrap95": [
+              0.9928381122361966,
+              1.0290476811516822
+            ]
+          }
+        }
+      },
+      "measurements": {
+        "baseline": {
+          "elapsed_ns": 214.66186686358168,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        "sign": {
+          "elapsed_ns": 212.9917678590964,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        "reuse": {
+          "elapsed_ns": 215.6519937643584,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        }
+      }
+    },
+    {
+      "name": "perfect-square",
+      "setting": "warm",
+      "iterations": 100000,
+      "observations": 72,
+      "pilots": [
+        {
+          "case": "perfect-square",
+          "lifecycle": "warm",
+          "iterations": 20,
+          "elapsed_ns": 1340,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        {
+          "case": "perfect-square",
+          "lifecycle": "warm",
+          "iterations": 20,
+          "elapsed_ns": 1060,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        {
+          "case": "perfect-square",
+          "lifecycle": "warm",
+          "iterations": 20,
+          "elapsed_ns": 910,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        }
+      ],
+      "comparisons": {
+        "baseline": {
+          "elapsed_ns": {
+            "pairedMedianRatio": 1.0125464474731336,
+            "pairedMedianBootstrap95": [
+              0.9797509369376414,
+              1.0150845915095728
+            ]
+          }
+        },
+        "sign": {
+          "elapsed_ns": {
+            "pairedMedianRatio": 1.0111791589429386,
+            "pairedMedianBootstrap95": [
+              1.0017136848788981,
+              1.0170485572252024
+            ]
+          }
+        }
+      },
+      "measurements": {
+        "baseline": {
+          "elapsed_ns": 34.644175000000004,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        "sign": {
+          "elapsed_ns": 35.003249999999994,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        "reuse": {
+          "elapsed_ns": 35.12224,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        }
+      }
+    },
+    {
+      "name": "perfect-square",
+      "setting": "refine",
+      "iterations": 27360,
+      "observations": 72,
+      "pilots": [
+        {
+          "case": "perfect-square",
+          "lifecycle": "refine",
+          "iterations": 20,
+          "elapsed_ns": 7310,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        {
+          "case": "perfect-square",
+          "lifecycle": "refine",
+          "iterations": 20,
+          "elapsed_ns": 7220,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        {
+          "case": "perfect-square",
+          "lifecycle": "refine",
+          "iterations": 20,
+          "elapsed_ns": 7220,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        }
+      ],
+      "comparisons": {
+        "baseline": {
+          "elapsed_ns": {
+            "pairedMedianRatio": 1.0026525524077794,
+            "pairedMedianBootstrap95": [
+              0.9759557074240435,
+              1.0184823066319173
+            ]
+          }
+        },
+        "sign": {
+          "elapsed_ns": {
+            "pairedMedianRatio": 0.9992054398653484,
+            "pairedMedianBootstrap95": [
+              0.9922312847631074,
+              1.0146673001350353
+            ]
+          }
+        }
+      },
+      "measurements": {
+        "baseline": {
+          "elapsed_ns": 274.760014619883,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        "sign": {
+          "elapsed_ns": 270.76195175438596,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        "reuse": {
+          "elapsed_ns": 273.3295869883041,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        }
+      }
+    },
+    {
+      "name": "perfect-square",
+      "setting": "hot-operand",
+      "iterations": 37384,
+      "observations": 72,
+      "pilots": [
+        {
+          "case": "perfect-square",
+          "lifecycle": "hot-operand",
+          "iterations": 20,
+          "elapsed_ns": 4450,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        {
+          "case": "perfect-square",
+          "lifecycle": "hot-operand",
+          "iterations": 20,
+          "elapsed_ns": 3890,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        {
+          "case": "perfect-square",
+          "lifecycle": "hot-operand",
+          "iterations": 20,
+          "elapsed_ns": 5350,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        }
+      ],
+      "comparisons": {
+        "baseline": {
+          "elapsed_ns": {
+            "pairedMedianRatio": 1.016052043888004,
+            "pairedMedianBootstrap95": [
+              0.9993708095552003,
+              1.0410198367731476
+            ]
+          }
+        },
+        "sign": {
+          "elapsed_ns": {
+            "pairedMedianRatio": 1.0315224301886552,
+            "pairedMedianBootstrap95": [
+              1.0080189914887487,
+              1.070417663439699
+            ]
+          }
+        }
+      },
+      "measurements": {
+        "baseline": {
+          "elapsed_ns": 171.10559330194735,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        "sign": {
+          "elapsed_ns": 169.7107051144875,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        "reuse": {
+          "elapsed_ns": 171.02495720094157,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        }
+      }
+    },
+    {
+      "name": "perfect-square",
+      "setting": "construct-hot",
+      "iterations": 67341,
+      "observations": 72,
+      "pilots": [
+        {
+          "case": "perfect-square",
+          "lifecycle": "construct-hot",
+          "iterations": 20,
+          "elapsed_ns": 2970,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        {
+          "case": "perfect-square",
+          "lifecycle": "construct-hot",
+          "iterations": 20,
+          "elapsed_ns": 2830,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        {
+          "case": "perfect-square",
+          "lifecycle": "construct-hot",
+          "iterations": 20,
+          "elapsed_ns": 2759,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        }
+      ],
+      "comparisons": {
+        "baseline": {
+          "elapsed_ns": {
+            "pairedMedianRatio": 1.00242790407837,
+            "pairedMedianBootstrap95": [
+              0.9530768465425602,
+              1.0078605838664743
+            ]
+          }
+        },
+        "sign": {
+          "elapsed_ns": {
+            "pairedMedianRatio": 1.0212583450240116,
+            "pairedMedianBootstrap95": [
+              1.0123240435684633,
+              1.0372111592550057
+            ]
+          }
+        }
+      },
+      "measurements": {
+        "baseline": {
+          "elapsed_ns": 136.92063527420146,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        "sign": {
+          "elapsed_ns": 135.12579260777238,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        "reuse": {
+          "elapsed_ns": 136.82895264400588,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        }
+      }
+    }
+  ],
+  "limits": "Same frozen numeric workload. First-touch operands/numeric caches and process constants preconditioned on parent; measured workers have fresh TLS, execute one first query then16 warm queries. Query clocks exclude thread start/exit; lifecycle clock includes17 queries and thread start/join/exit. Empty-clock samples reported without subtraction. Workers inherit CPU affinity and run sequentially. Shared/common-tail/independent graphs, not every collision or sharing pattern. Baseline Unknown versus candidate Equal is different work. Instrumented allocation clocks are not CPU evidence; requested Rust allocation bytes exclude native bookkeeping/allocator overhead. Snapshot binaries preserved separately by mode. Host/session confidence intervals, not universal bounds."
+}

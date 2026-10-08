@@ -1,0 +1,11 @@
+resolver: lts-22.44
+system-ghc: false
+packages:
+- /home/tim/Documents/GitHub/workspace/exact-real-references/aern2/aern2-mp
+- /home/tim/Documents/GitHub/workspace/exact-real-references/aern2/aern2-real
+- /home/tim/Documents/GitHub/workspace/exact-real-references/aern2/aern2-fun
+- /home/tim/Documents/GitHub/workspace/exact-real-references/aern2/aern2-mfun
+extra-deps:
+- cdar-mBound-0.1.0.4
+- collect-errors-0.1.6.0
+- mixed-types-num-0.6.2

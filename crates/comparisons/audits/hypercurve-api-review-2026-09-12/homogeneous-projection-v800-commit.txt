@@ -1,0 +1,15 @@
+Share deferred homogeneous projection across rational curves
+
+Use one private denominator-first projector for native and general rational
+Bezier evaluation, retained controls, spline endpoints, and split controls.
+Borrow stored coordinates and defer polynomial numerators until the weight
+is certified nonzero. Keep specialized quadratic-weight arithmetic intact.
+
+Preserve distinct scalar division blockers in projection, rational
+derivatives, and endpoint correspondence: unknown zero evidence is not
+a proved affine pole. Migrate all callers directly without new public APIs.
+
+Validation: 285 release cases across 11 pinned test binaries; both Hypercurve
+Clippy feature configurations, format, three fuzz targets, rustdoc, Hyperbrep
+Clippy, and csgrs all-target check. An unchanged exact cancellation probe
+replays the prior finite results for scalar and curve evaluation.

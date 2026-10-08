@@ -1,0 +1,73 @@
+[
+  {
+    "target": "hypercurve",
+    "command": [
+      "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve-0b4591d2a89c50f8",
+      "--test-threads=1",
+      "--color",
+      "never",
+      "retained_aabb_candidates_match_cartesian_pairs_in_authored_order",
+      "generated_unordered_line_arc_semicircles_build_unified_regions",
+      "unordered_line_arc_segments_recover_the_exact_native_view"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.11383463500533253,
+    "binary_sha256": "4d3d95e29c745a0ca46678e29559c96d6fea593526a5393e3403dad4c144ebd5",
+    "summaries": [
+      "test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 1187 filtered out; finished in 0.08s"
+    ],
+    "failures": []
+  },
+  {
+    "target": "hypercurve_bbox",
+    "command": [
+      "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve_bbox-2d77028f84b9791f",
+      "--test-threads=1",
+      "--color",
+      "never"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.0034955709998030216,
+    "binary_sha256": "2f433c9b347d5b245516e65601f7fcd59616172217dcd620880853d9651f71bb",
+    "summaries": [
+      "test result: ok. 10 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s"
+    ],
+    "failures": []
+  },
+  {
+    "target": "hypercurve_curve_region_promotion",
+    "command": [
+      "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve_curve_region_promotion-e523831f2638d8ff",
+      "--test-threads=1",
+      "--color",
+      "never",
+      "unified_region_chamfer_reenters_general_algebraic_chords",
+      "region_constructors_remove_canceled_boundaries_and_filled_seams"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.7146196219837293,
+    "binary_sha256": "060e9da4acbe1623a237b7a89c632c6e8757f55373e1fa09805c331e20a08d7b",
+    "summaries": [
+      "test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 100 filtered out; finished in 0.70s"
+    ],
+    "failures": []
+  },
+  {
+    "target": "hypercurve_pcb_boolean_regressions",
+    "command": [
+      "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve_pcb_boolean_regressions-b4967b20d1094e70",
+      "--test-threads=1",
+      "--color",
+      "never",
+      "pcb_process_image_hole_ownership_culls_sparse_materials",
+      "pcb_process_image_containment_regression_decides_exactly"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 11.431311474007089,
+    "binary_sha256": "f266e9caa3abd5d445737eef31687a030b411b03048535ea1a0368c2260f18a7",
+    "summaries": [
+      "test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 2 filtered out; finished in 11.40s"
+    ],
+    "failures": []
+  }
+]

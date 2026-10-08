@@ -1,0 +1,10 @@
+reading file "/tmp/hypercurve-native-eval-candidate-rational.heap.zst" - please wait, this might take some time...
+Debuggee command was: /tmp/hypercurve-native-eval-frozen-candidate-rational
+finished reading file, now analyzing data:
+
+total runtime: 0.046000s.
+calls to allocation functions: 5881 (127847/s)
+temporary memory allocations: 425 (9239/s)
+peak heap memory consumption: 251.00K
+peak RSS (including heaptrack overhead): 7.42M
+total memory leaked: 161.88K

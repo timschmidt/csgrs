@@ -1,0 +1,15 @@
+{
+  "repos": {
+    "hypercurve": {
+      "commit": "d78a8b30fc4a07fb799e32495b759cbfa923d97b",
+      "parent": "b770f24e37982b32c14cda4c2e7bc4c45876a2fd",
+      "paths": {
+        "src/bezier_algebraic_image.rs": "b361d9a88aa622db02632d36e214f86df2fc935b0842c9feaad071ea749f9d64",
+        "tests/hypercurve_bezier_algebraic_image.rs": "471d5a2f7af55e91c1928ba4ba183a4d3f2698e5bc902825b2b79667b14b95b5"
+      }
+    }
+  },
+  "qualification": "derivative-denominator-v836-terminal.json",
+  "verified_source_files": 2048,
+  "clean_repositories": 30
+}

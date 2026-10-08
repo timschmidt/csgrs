@@ -1,0 +1,22 @@
+{
+  "target": "curved_outline",
+  "command": [
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/normalized-path-admission-hypercircuit-candidate4-binaries/curved_outline-d83a20c12094a4e7",
+    "--test-threads=2",
+    "--color",
+    "never"
+  ],
+  "binary_sha256": "494e0533bbdb2935222b7151d953551476af4912faf4f8c7119a1d173ac2a894",
+  "returncode": 101,
+  "elapsed_seconds": 4.647772880998673,
+  "log": "normalized-path-admission-hypercircuit-candidate4-curved_outline.log",
+  "passed": [
+    "arc_board_profile_materializes_exactly_and_emits_cam_arcs",
+    "disconnected_mixed_contours_fail_structural_validation",
+    "cubic_board_profile_requires_an_explicit_cam_projection_policy"
+  ],
+  "failed": [
+    "mixed_curve_board_contours_round_trip_and_render_without_chord_loss"
+  ],
+  "ignored": []
+}

@@ -1,0 +1,54 @@
+\doxysubsection{Discrete\+Location Class Reference}
+\hypertarget{classAriadne_1_1DiscreteLocation}{}\label{classAriadne_1_1DiscreteLocation}\index{DiscreteLocation@{DiscreteLocation}}
+
+
+{\ttfamily \#include $<$discrete\+\_\+location.\+hpp$>$}
+
+
+
+\doxysubsubsection{Description}
+Type of a discrete location of a hybrid system. \begin{Desc}
+\item[Examples]\par
+\mbox{\hyperlink{tutorials_2hybrid_evolution_2hybrid_evolution_tutorial_8cpp-example}{tutorials/hybrid\+\_\+evolution/hybrid\+\_\+evolution\+\_\+tutorial.\+cpp}}.\end{Desc}
+\doxysubsubsubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1DiscreteLocation_a83a71f87d03790970f180373ebb980f1}\label{classAriadne_1_1DiscreteLocation_a83a71f87d03790970f180373ebb980f1} 
+{\bfseries Discrete\+Location} ()
+\begin{DoxyCompactList}\small\item\em Construct a location which does not set any discrete variables. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1DiscreteLocation_a1b1c31c2d8558980966a4304481e02cd}\label{classAriadne_1_1DiscreteLocation_a1b1c31c2d8558980966a4304481e02cd} 
+{\bfseries Discrete\+Location} (\mbox{\hyperlink{namespaceAriadne_a008e7f6ae8f621fbb1d876061812b9b2}{Int}} n)
+\begin{DoxyCompactList}\small\item\em Construct the location q\texorpdfstring{$\vert$}{|}n. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsubsection*{Related Types and Functions}
+(Note that these are not member symbols.) \begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1DiscreteLocation_ad74076f0c879fda48a5f4c795e809d5a}\label{classAriadne_1_1DiscreteLocation_ad74076f0c879fda48a5f4c795e809d5a} 
+\mbox{\hyperlink{classAriadne_1_1DiscreteLocation}{Discrete\+Location}} {\bfseries join} (const \mbox{\hyperlink{classAriadne_1_1DiscreteLocation}{Discrete\+Location}} \&loc1, const \mbox{\hyperlink{classAriadne_1_1DiscreteLocation}{Discrete\+Location}} \&loc2)
+\begin{DoxyCompactList}\small\item\em Combine the values of variables of two locations. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1DiscreteLocation_a880c84239bc031b5229405d08c83cdcf}\label{classAriadne_1_1DiscreteLocation_a880c84239bc031b5229405d08c83cdcf} 
+\mbox{\hyperlink{namespaceAriadne_a76a8b016e5ad61faf9062cc387df5016}{Bool}} {\bfseries operator==} (const \mbox{\hyperlink{classAriadne_1_1DiscreteLocation}{Discrete\+Location}} \&loc1, const \mbox{\hyperlink{classAriadne_1_1DiscreteLocation}{Discrete\+Location}} \&loc2)
+\begin{DoxyCompactList}\small\item\em Equality test. Throws an \doxylink{classAriadne_1_1IndistinguishableLocationsError}{Indistinguishable\+Locations\+Error} if the valuations are not identical but have no variable with distinct values. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1DiscreteLocation_a15317e03af2e769b8e07e0f7dd76b5d5}\label{classAriadne_1_1DiscreteLocation_a15317e03af2e769b8e07e0f7dd76b5d5} 
+\mbox{\hyperlink{namespaceAriadne_a76a8b016e5ad61faf9062cc387df5016}{Bool}} {\bfseries operator!=} (const \mbox{\hyperlink{classAriadne_1_1DiscreteLocation}{Discrete\+Location}} \&loc1, const \mbox{\hyperlink{classAriadne_1_1DiscreteLocation}{Discrete\+Location}} \&loc2)
+\begin{DoxyCompactList}\small\item\em Inequality test. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1DiscreteLocation_a96bec6fab8f7162b0f5081fb622cb517}\label{classAriadne_1_1DiscreteLocation_a96bec6fab8f7162b0f5081fb622cb517} 
+\mbox{\hyperlink{namespaceAriadne_a76a8b016e5ad61faf9062cc387df5016}{Bool}} {\bfseries operator$<$} (const \mbox{\hyperlink{classAriadne_1_1DiscreteLocation}{Discrete\+Location}} \&loc1, const \mbox{\hyperlink{classAriadne_1_1DiscreteLocation}{Discrete\+Location}} \&loc2)
+\begin{DoxyCompactList}\small\item\em A total order on \doxylink{classAriadne_1_1DiscreteLocation}{Discrete\+Location}, allowing comparison of non-\/distinuishable valuations. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1DiscreteLocation_a3d0e37eee21c545e955a0a3388f7732a}\label{classAriadne_1_1DiscreteLocation_a3d0e37eee21c545e955a0a3388f7732a} 
+\mbox{\hyperlink{namespaceAriadne_a76a8b016e5ad61faf9062cc387df5016}{Bool}} {\bfseries are\+\_\+distinguishable} (const \mbox{\hyperlink{classAriadne_1_1DiscreteLocation}{Discrete\+Location}} \&location1, const \mbox{\hyperlink{classAriadne_1_1DiscreteLocation}{Discrete\+Location}} \&location2)
+\begin{DoxyCompactList}\small\item\em Test if two locations are distinguishable i.\+e. specify a common variable which takes different values. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1DiscreteLocation_a0033cbcdae1f401ccc564d36eb0936a3}\label{classAriadne_1_1DiscreteLocation_a0033cbcdae1f401ccc564d36eb0936a3} 
+\mbox{\hyperlink{namespaceAriadne_a76a8b016e5ad61faf9062cc387df5016}{Bool}} {\bfseries are\+\_\+same} (const \mbox{\hyperlink{classAriadne_1_1DiscreteLocation}{Discrete\+Location}} \&location1, const \mbox{\hyperlink{classAriadne_1_1DiscreteLocation}{Discrete\+Location}} \&location2)
+\begin{DoxyCompactList}\small\item\em Test if {\itshape location1} and {\itshape location2} are the same i.\+e. define the same values. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1DiscreteLocation_aaf3214e66f0377158bd583031fbe1c42}\label{classAriadne_1_1DiscreteLocation_aaf3214e66f0377158bd583031fbe1c42} 
+\mbox{\hyperlink{namespaceAriadne_a76a8b016e5ad61faf9062cc387df5016}{Bool}} {\bfseries is\+\_\+restriction} (const \mbox{\hyperlink{classAriadne_1_1DiscreteLocation}{Discrete\+Location}} \&partial\+\_\+location, const \mbox{\hyperlink{classAriadne_1_1DiscreteLocation}{Discrete\+Location}} \&full\+\_\+location)
+\begin{DoxyCompactList}\small\item\em Test if {\itshape partial\+\_\+location} is defined by a restricted set of variables of {\itshape full\+\_\+location}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1DiscreteLocation_a475c1c7c5c4ca4008459b519e0da9e11}\label{classAriadne_1_1DiscreteLocation_a475c1c7c5c4ca4008459b519e0da9e11} 
+\mbox{\hyperlink{classAriadne_1_1DiscreteLocation}{Discrete\+Location}} {\bfseries restrict} (const \mbox{\hyperlink{classAriadne_1_1DiscreteLocation}{Discrete\+Location}} \&location, const \mbox{\hyperlink{classAriadne_1_1Set}{Set}}$<$ \mbox{\hyperlink{classAriadne_1_1Identifier}{Identifier}} $>$ \&variables)
+\begin{DoxyCompactList}\small\item\em Retrict the variables defined in {\itshape location} to those of {\itshape variables}. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+The documentation for this class was generated from the following files\+:\begin{DoxyCompactItemize}
+\item 
+source/hybrid/\mbox{\hyperlink{discrete__location_8hpp}{discrete\+\_\+location.\+hpp}}\item 
+source/hybrid/discrete\+\_\+location.\+cpp\end{DoxyCompactItemize}

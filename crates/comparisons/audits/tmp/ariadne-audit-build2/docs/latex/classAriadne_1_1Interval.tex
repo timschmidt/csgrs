@@ -1,0 +1,390 @@
+\doxysubsection{Interval\texorpdfstring{$<$}{<} U \texorpdfstring{$>$}{>} Class Template Reference}
+\hypertarget{classAriadne_1_1Interval}{}\label{classAriadne_1_1Interval}\index{Interval$<$ U $>$@{Interval$<$ U $>$}}
+
+
+{\ttfamily \#include $<$interval.\+hpp$>$}
+
+
+
+\doxysubsubsection{Description}
+\subsubsection*{template$<$class U$>$\newline
+class Ariadne\+::\+Interval$<$ U $>$}
+Intervals with upper endoint of type {\itshape U}. 
+
+Not intended for use in basic interval arithmetic; represents a {\itshape geometric} rather than a {\itshape numerical} object. \doxysubsubsubsection*{Public Types}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1Interval_a76d3a434788cef57d69694b17329dfbb}\label{classAriadne_1_1Interval_a76d3a434788cef57d69694b17329dfbb} 
+typedef \mbox{\hyperlink{structAriadne_1_1SizeOne}{Size\+One}} {\bfseries Dimension\+Type}
+\begin{DoxyCompactList}\small\item\em The type returned by the \doxylink{classAriadne_1_1Interval_a585c7e871ce1045751810e79b9a3844a}{dimension()} method. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Interval_a980476c72b14e019de0b57954c4f28da}\label{classAriadne_1_1Interval_a980476c72b14e019de0b57954c4f28da} 
+typedef P {\bfseries Paradigm}
+\begin{DoxyCompactList}\small\item\em The computational paradigm used by the interval. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Interval_a4286cd5cc35a0ad6929cb0d886b2d43a}\label{classAriadne_1_1Interval_a4286cd5cc35a0ad6929cb0d886b2d43a} 
+typedef L {\bfseries Lower\+Bound\+Type}
+\begin{DoxyCompactList}\small\item\em The type of the lower bound of the interval. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Interval_adecf34fdf13079532010db23a743294b}\label{classAriadne_1_1Interval_adecf34fdf13079532010db23a743294b} 
+typedef U {\bfseries Upper\+Bound\+Type}
+\begin{DoxyCompactList}\small\item\em The type of the upper bound of the interval. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Interval_ad9086687d8ee73c934e27ad4dbc74ccd}\label{classAriadne_1_1Interval_ad9086687d8ee73c934e27ad4dbc74ccd} 
+typedef C {\bfseries Centre\+Type}
+\begin{DoxyCompactList}\small\item\em The type returned by the \doxylink{classAriadne_1_1Interval_a0cce7ab82dacac0ce97fd63c29d357c8}{centre()} method. The result must contain the exact centre (mid-\/point) of the interval. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Interval_a59903095a9ddbb9fd4b9699c2f4cca65}\label{classAriadne_1_1Interval_a59903095a9ddbb9fd4b9699c2f4cca65} 
+typedef M {\bfseries Midpoint\+Type}
+\begin{DoxyCompactList}\small\item\em The type returned by the \doxylink{classAriadne_1_1Interval_afa8b51f378f9f7d88c6786c206bfb62f}{midpoint()} method. The result need not be the exact centre (mid-\/point) of the interval, but must be convertible to both the upper and lower bound types. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Interval_a081796bb006e007e6b101766329191f4}\label{classAriadne_1_1Interval_a081796bb006e007e6b101766329191f4} 
+typedef R {\bfseries Radius\+Type}
+\begin{DoxyCompactList}\small\item\em The type returned by the \doxylink{classAriadne_1_1Interval_aa92d042fc5e3c6ec7d094c917a6561c7}{radius()} methods. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Interval_a5bd178a0a7d47ff8b8835e3cd41c8e94}\label{classAriadne_1_1Interval_a5bd178a0a7d47ff8b8835e3cd41c8e94} 
+typedef W {\bfseries Width\+Type}
+\begin{DoxyCompactList}\small\item\em The type returned by the \doxylink{classAriadne_1_1Interval_a4b6b7451ac800adddc5aa1fc34941a19}{width()} methods. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1Interval_ab7982daa872e8d3ff6af99b244c7addd}\label{classAriadne_1_1Interval_ab7982daa872e8d3ff6af99b244c7addd} 
+\mbox{\hyperlink{classAriadne_1_1Interval}{Interval}}$<$ U $>$ {\bfseries create\+\_\+zero} () const
+\begin{DoxyCompactList}\small\item\em Create the interval which is the single point 0. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Interval_a34301e26364ca9be13bddd52cf77bb81}\label{classAriadne_1_1Interval_a34301e26364ca9be13bddd52cf77bb81} 
+{\bfseries Interval} ()
+\begin{DoxyCompactList}\small\item\em Construct an empty interval. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Interval_a6327cb2949095eb986c2b868e2b23ea0}\label{classAriadne_1_1Interval_a6327cb2949095eb986c2b868e2b23ea0} 
+{\bfseries Interval} (Empty\+Interval const \&)
+\begin{DoxyCompactList}\small\item\em Construct from an empty interval. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Interval_a06017178f0bd2ccd758c57cae5cd6443}\label{classAriadne_1_1Interval_a06017178f0bd2ccd758c57cae5cd6443} 
+{\bfseries Interval} (\mbox{\hyperlink{classAriadne_1_1UnitInterval}{Unit\+Interval}} const \&)
+\begin{DoxyCompactList}\small\item\em Construct from a unit interval. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Interval_a69029a5c1e0222fe88f6f4e19b9b5521}\label{classAriadne_1_1Interval_a69029a5c1e0222fe88f6f4e19b9b5521} 
+{\bfseries Interval} (Entire\+Interval const \&)
+\begin{DoxyCompactList}\small\item\em Construct from the entire real line. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Interval_ad76ae56c14b5633a49fd6bd89df7e720}\label{classAriadne_1_1Interval_ad76ae56c14b5633a49fd6bd89df7e720} 
+{\bfseries Interval} (\mbox{\hyperlink{classAriadne_1_1Interval_a4286cd5cc35a0ad6929cb0d886b2d43a}{Lower\+Bound\+Type}} l, \mbox{\hyperlink{classAriadne_1_1Interval_adecf34fdf13079532010db23a743294b}{Upper\+Bound\+Type}} u)
+\begin{DoxyCompactList}\small\item\em Construct an interval with the given lower and upper bounds. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Interval_ae5b89d2b36823a4f6a8334cfcfcaa0b2}\label{classAriadne_1_1Interval_ae5b89d2b36823a4f6a8334cfcfcaa0b2} 
+{\footnotesize template$<$class V$>$ \newline
+requires Constructible$<$L,V$>$ and Constructible$<$U,V$>$}\\{\bfseries Interval} (const V \&v)
+\begin{DoxyCompactList}\small\item\em Construct a singleton interval from a number. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Interval_a04c7823607318cd0bd1659d690c073b4}\label{classAriadne_1_1Interval_a04c7823607318cd0bd1659d690c073b4} 
+{\footnotesize template$<$class V$>$ \newline
+requires Assignable$<$L,V$>$ and Assignable$<$U,V$>$}\\\mbox{\hyperlink{classAriadne_1_1Interval}{Interval}}$<$ U $>$ \& {\bfseries operator=} (const V \&v)
+\begin{DoxyCompactList}\small\item\em Assign a singleton interval from a number. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Interval_ae6a0d6932681d822118040ce6c25c769}\label{classAriadne_1_1Interval_ae6a0d6932681d822118040ce6c25c769} 
+{\footnotesize template$<$class Y, class PR$>$ \newline
+requires Constructible$<$L,Y,PR$>$ and Constructible$<$U,Y,PR$>$}\\{\bfseries Interval} (const Y \&y, PR pr)
+\begin{DoxyCompactList}\small\item\em Construct a singleton interval from a number. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Interval_a535d01873ca648cd933cbf13c1c8b182}\label{classAriadne_1_1Interval_a535d01873ca648cd933cbf13c1c8b182} 
+{\footnotesize template$<$class UU$>$ \newline
+requires Convertible$<$UU,U$>$}\\{\bfseries Interval} (\mbox{\hyperlink{classAriadne_1_1Interval}{Interval}}$<$ UU $>$ const \&x)
+\begin{DoxyCompactList}\small\item\em Convert from an interval of a different type. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Interval_a3ec29bd4d8692fa90a6398b365c072d8}\label{classAriadne_1_1Interval_a3ec29bd4d8692fa90a6398b365c072d8} 
+{\footnotesize template$<$class UU$>$ \newline
+requires Constructible$<$U,UU$>$ and (not Convertible$<$UU,U$>$)}\\{\bfseries Interval} (\mbox{\hyperlink{classAriadne_1_1Interval}{Interval}}$<$ UU $>$ const \&x)
+\begin{DoxyCompactList}\small\item\em Construct from an interval of a different type. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Interval_a67ec08db2f4aa209ff9f803056b2f093}\label{classAriadne_1_1Interval_a67ec08db2f4aa209ff9f803056b2f093} 
+{\footnotesize template$<$class UU, class PR$>$ \newline
+requires Constructible$<$U,UU,PR$>$}\\{\bfseries Interval} (\mbox{\hyperlink{classAriadne_1_1Interval}{Interval}}$<$ UU $>$ const \&x, PR pr)
+\begin{DoxyCompactList}\small\item\em Construct from an interval of a different type using the given precision. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Interval_a4c0446b3b1ac19b9e8f5512ccce41d77}\label{classAriadne_1_1Interval_a4c0446b3b1ac19b9e8f5512ccce41d77} 
+{\footnotesize template$<$class UU$>$ \newline
+requires Constructible\+Given\+Default\+Precision$<$U,UU$>$ and (not Constructible$<$U,UU$>$)}\\{\bfseries Interval} (\mbox{\hyperlink{classAriadne_1_1Interval}{Interval}}$<$ UU $>$ const \&x)
+\begin{DoxyCompactList}\small\item\em Construct from an interval of a different type using a default precision. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Interval_a08ef082cfde052da926e7fa21859818b}\label{classAriadne_1_1Interval_a08ef082cfde052da926e7fa21859818b} 
+{\footnotesize template$<$class LL, class UU$>$ \newline
+requires Constructible\+Given\+Default\+Precision$<$L,LL$>$ and Constructible\+Given\+Default\+Precision$<$U,UU$>$ and ( not (Constructible$<$L,LL$>$ and Constructible$<$U,UU$>$) )}\\{\bfseries Interval} (LL const \&l, UU const \&u)
+\begin{DoxyCompactList}\small\item\em Construct from an interval of a different type using a default precision. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Interval_ac3a83e5085aa275cd56483a52b252f46}\label{classAriadne_1_1Interval_ac3a83e5085aa275cd56483a52b252f46} 
+{\footnotesize template$<$class LL, class UU$>$ \newline
+requires Constructible$<$L,LL$>$ and Constructible$<$U,UU$>$ and (not (Convertible$<$LL,L$>$ and Convertible$<$UU,U$>$)) and (not (Constructible$<$L,LL,UU$>$ and Constructible$<$U,LL,UU$>$))}\\{\bfseries Interval} (const LL \&l, const UU \&u)
+\begin{DoxyCompactList}\small\item\em Construct an interval with the lower and upper bounds. FIXME\+: Should be explicit, but this would clash with \doxylink{classAriadne_1_1Box}{Box} constructor from initializer list of double/\+Float\+DP. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Interval_a2c9c15a4ed51a9ef96e4188d19a58a16}\label{classAriadne_1_1Interval_a2c9c15a4ed51a9ef96e4188d19a58a16} 
+{\footnotesize template$<$class LL, class UU, class PR$>$ \newline
+requires Constructible$<$L,LL,PR$>$ and Constructible$<$U,UU,PR$>$}\\{\bfseries Interval} (const LL \&l, const UU \&u, PR pr)
+\begin{DoxyCompactList}\small\item\em Construct an interval with the lower and upper bounds using the given precision. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Interval_ae45c740083d1b35e266a6069414a8a3d}\label{classAriadne_1_1Interval_ae45c740083d1b35e266a6069414a8a3d} 
+{\footnotesize template$<$class UU$>$ \newline
+requires Assignable$<$U,UU$>$}\\\mbox{\hyperlink{classAriadne_1_1Interval}{Interval}}$<$ U $>$ \& {\bfseries operator=} (const \mbox{\hyperlink{classAriadne_1_1Interval}{Interval}}$<$ UU $>$ \&x)
+\begin{DoxyCompactList}\small\item\em Assign from an interval of a different type. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Interval_a585c7e871ce1045751810e79b9a3844a}\label{classAriadne_1_1Interval_a585c7e871ce1045751810e79b9a3844a} 
+\mbox{\hyperlink{structAriadne_1_1SizeOne}{Size\+One}} {\bfseries dimension} () const
+\begin{DoxyCompactList}\small\item\em The dimension of the set; statically returns size one. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Interval_ad0bc1be281cca14cc94437dcf7609b8f}\label{classAriadne_1_1Interval_ad0bc1be281cca14cc94437dcf7609b8f} 
+\mbox{\hyperlink{classAriadne_1_1Interval_a4286cd5cc35a0ad6929cb0d886b2d43a}{Lower\+Bound\+Type}} const \& {\bfseries lower\+\_\+bound} () const
+\begin{DoxyCompactList}\small\item\em The lower bound of the interval. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Interval_a35ba283ea1d37f2be4139a57f2eda1bc}\label{classAriadne_1_1Interval_a35ba283ea1d37f2be4139a57f2eda1bc} 
+\mbox{\hyperlink{classAriadne_1_1Interval_adecf34fdf13079532010db23a743294b}{Upper\+Bound\+Type}} const \& {\bfseries upper\+\_\+bound} () const
+\begin{DoxyCompactList}\small\item\em The upper bound of the interval. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Interval_a0cce7ab82dacac0ce97fd63c29d357c8}\label{classAriadne_1_1Interval_a0cce7ab82dacac0ce97fd63c29d357c8} 
+\mbox{\hyperlink{classAriadne_1_1Interval_ad9086687d8ee73c934e27ad4dbc74ccd}{Centre\+Type}} {\bfseries centre} () const
+\begin{DoxyCompactList}\small\item\em The centre of the interval, computed with whatever rounding is appropriate. \end{DoxyCompactList}\item 
+\mbox{\hyperlink{classAriadne_1_1Interval_a59903095a9ddbb9fd4b9699c2f4cca65}{Midpoint\+Type}} \mbox{\hyperlink{classAriadne_1_1Interval_afa8b51f378f9f7d88c6786c206bfb62f}{midpoint}} () const
+\begin{DoxyCompactList}\small\item\em The midpoint of the interval. Need not be the exact midpoint. \end{DoxyCompactList}\item 
+\mbox{\hyperlink{classAriadne_1_1Interval_a081796bb006e007e6b101766329191f4}{Radius\+Type}} \mbox{\hyperlink{classAriadne_1_1Interval_aa92d042fc5e3c6ec7d094c917a6561c7}{radius}} () const
+\begin{DoxyCompactList}\small\item\em The radius of the interval. In validated computation, must be an upper bound for the both {\ttfamily u-\/m} and {\ttfamily m-\/l}, where {\ttfamily m} is the midpoint. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Interval_a4b6b7451ac800adddc5aa1fc34941a19}\label{classAriadne_1_1Interval_a4b6b7451ac800adddc5aa1fc34941a19} 
+\mbox{\hyperlink{classAriadne_1_1Interval_a5bd178a0a7d47ff8b8835e3cd41c8e94}{Width\+Type}} {\bfseries width} () const
+\begin{DoxyCompactList}\small\item\em The width of the interval. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Interval_a87c33e7141f60fdb2300cd7ab595c4fc}\label{classAriadne_1_1Interval_a87c33e7141f60fdb2300cd7ab595c4fc} 
+auto {\bfseries is\+\_\+empty} () const -\/$>$ decltype(declval$<$ L $>$() $>$ declval$<$ U $>$())
+\begin{DoxyCompactList}\small\item\em Test if the interval is empty. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Interval_aa48478b2080acdee4e865dde6cdffe28}\label{classAriadne_1_1Interval_aa48478b2080acdee4e865dde6cdffe28} 
+auto {\bfseries is\+\_\+singleton} () const -\/$>$ decltype(declval$<$ L $>$()==declval$<$ U $>$())
+\begin{DoxyCompactList}\small\item\em Test if the interval is a singleton. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Interval_a7ecb55750fadcfa7f3ae97b6fa62a306}\label{classAriadne_1_1Interval_a7ecb55750fadcfa7f3ae97b6fa62a306} 
+auto {\bfseries is\+\_\+bounded} () const -\/$>$ decltype(declval$<$ U $>$()$<$ declval$<$ L $>$())
+\begin{DoxyCompactList}\small\item\em Test if the interval is bounded. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsubsection*{Static Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1Interval_a9daea2090f0b612f48ee56ccac43db80}\label{classAriadne_1_1Interval_a9daea2090f0b612f48ee56ccac43db80} 
+static \mbox{\hyperlink{classAriadne_1_1Interval}{Interval}}$<$ U $>$ {\bfseries empty\+\_\+interval} ()
+\begin{DoxyCompactList}\small\item\em Construct an empty interval. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Interval_aa80d6c4e3e1be1a23c73b10d3912fd51}\label{classAriadne_1_1Interval_aa80d6c4e3e1be1a23c73b10d3912fd51} 
+static \mbox{\hyperlink{classAriadne_1_1Interval}{Interval}}$<$ U $>$ {\bfseries unit\+\_\+interval} ()
+\begin{DoxyCompactList}\small\item\em Construct a unit interval. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Interval_abe83f7be9e67c6f81c8b41fff30d9178}\label{classAriadne_1_1Interval_abe83f7be9e67c6f81c8b41fff30d9178} 
+static \mbox{\hyperlink{classAriadne_1_1Interval}{Interval}}$<$ U $>$ {\bfseries biinfinite\+\_\+interval} ()
+\begin{DoxyCompactList}\small\item\em Construct a biinfinite interval. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Interval_a6a3569d60b7ad6d4e68d985d15000981}\label{classAriadne_1_1Interval_a6a3569d60b7ad6d4e68d985d15000981} 
+static \mbox{\hyperlink{classAriadne_1_1Interval}{Interval}}$<$ U $>$ {\bfseries singleton\+\_\+interval} (\mbox{\hyperlink{classAriadne_1_1Interval_a59903095a9ddbb9fd4b9699c2f4cca65}{Midpoint\+Type}} x)
+\begin{DoxyCompactList}\small\item\em Construct a zero interval. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsubsection*{Friends}
+\begin{Indent}\textbf{ Interval arithmeric}\par
+{\em Only defined for intervals {\ttfamily U=\doxylink{classAriadne_1_1UpperBound}{Upper\+Bound$<$\+F$>$}} or {\ttfamily U=\doxylink{classAriadne_1_1Approximation}{Approximation$<$\+F$>$}} . }\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1Interval_a024cca900cc12b4c98887c64e50f5c63}\label{classAriadne_1_1Interval_a024cca900cc12b4c98887c64e50f5c63} 
+\mbox{\hyperlink{classAriadne_1_1Interval}{Interval}}$<$ U $>$ {\bfseries operator\texorpdfstring{$\ast$}{*}} (\mbox{\hyperlink{classAriadne_1_1Interval}{Interval}}$<$ U $>$ ivl)
+\begin{DoxyCompactList}\small\item\em Unary operators {\itshape +},-\/. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Interval_afed6bbf9731f87e2d0b08dff23b875b4}\label{classAriadne_1_1Interval_afed6bbf9731f87e2d0b08dff23b875b4} 
+\mbox{\hyperlink{classAriadne_1_1Interval}{Interval}}$<$ U $>$ {\bfseries operator\texorpdfstring{$\ast$}{*}} (\mbox{\hyperlink{classAriadne_1_1Interval}{Interval}}$<$ U $>$ ivl1, \mbox{\hyperlink{classAriadne_1_1Interval}{Interval}}$<$ U $>$ ivl2)
+\begin{DoxyCompactList}\small\item\em Binary arithmetic operators {\itshape +},-\/,\texorpdfstring{$\ast$}{*},/. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Interval_ab8ede4f62ee6c84c4ec2620d2a4bd8c7}\label{classAriadne_1_1Interval_ab8ede4f62ee6c84c4ec2620d2a4bd8c7} 
+\mbox{\hyperlink{classAriadne_1_1Interval}{Interval}}$<$ U $>$ \& {\bfseries operator\texorpdfstring{$\ast$}{*}=} (\mbox{\hyperlink{classAriadne_1_1Interval}{Interval}}$<$ U $>$ \&ivl1, \mbox{\hyperlink{classAriadne_1_1Interval}{Interval}}$<$ U $>$ ivl2)
+\begin{DoxyCompactList}\small\item\em Inplace binary arithmetic operators {\itshape +=},-\/=,\texorpdfstring{$\ast$}{*}=,/=. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Interval_acbbfb3170db186f80890261a012c6a5b}\label{classAriadne_1_1Interval_acbbfb3170db186f80890261a012c6a5b} 
+decltype(auto) {\bfseries operator$<$=$>$} (\mbox{\hyperlink{classAriadne_1_1Interval}{Interval}}$<$ U $>$ ivl1, \mbox{\hyperlink{classAriadne_1_1Interval}{Interval}}$<$ U $>$ ivl2)
+\begin{DoxyCompactList}\small\item\em Rich comparison operators {\itshape ==},!=,\texorpdfstring{$<$}{<}=,\texorpdfstring{$>$}{>}=,\texorpdfstring{$<$}{<},\texorpdfstring{$>$}{>} \end{DoxyCompactList}\end{DoxyCompactItemize}
+\end{Indent}
+\doxysubsubsubsection*{Related Types and Functions}
+(Note that these are not member symbols.) \begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1Interval_ad8ea2ee29f0aa2e22c47362148974b1a}\label{classAriadne_1_1Interval_ad8ea2ee29f0aa2e22c47362148974b1a} 
+\mbox{\hyperlink{group__FunctionModule_ga7b38f183a458f335ba2f31e0bcdbadc9}{Upper\+Interval\+Type}} {\bfseries apply} (Validated\+Scalar\+Multivariate\+Function const \&f, \mbox{\hyperlink{group__FunctionModule_ga7b38f183a458f335ba2f31e0bcdbadc9}{Upper\+Interval\+Type}} const \&ivl)
+\begin{DoxyCompactList}\small\item\em Compute an over-\/approximation to the image $f(I) = \{ f(x) \mid x\in I \}$. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Interval_a06b12ad0f5af368fcd3135866fe8f777}\label{classAriadne_1_1Interval_a06b12ad0f5af368fcd3135866fe8f777} 
+\mbox{\hyperlink{group__FunctionModule_ga7b38f183a458f335ba2f31e0bcdbadc9}{Upper\+Interval\+Type}} {\bfseries image} (\mbox{\hyperlink{group__FunctionModule_ga7b38f183a458f335ba2f31e0bcdbadc9}{Upper\+Interval\+Type}} const \&ivl, Validated\+Scalar\+Univariate\+Function const \&f)
+\begin{DoxyCompactList}\small\item\em Compute an over-\/approximation to the image $f(I) = \{ f(x) \mid x\in I \}$. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Interval_a8622c671d66ce5bb813e0f1f3a3f1b3c}\label{classAriadne_1_1Interval_a8622c671d66ce5bb813e0f1f3a3f1b3c} 
+{\footnotesize template$<$class U$>$ }\\\mbox{\hyperlink{namespaceAriadne_acbb98ddc4385af4599070e65a1a47ec1}{Output\+Stream}} \& {\bfseries operator$<$$<$} (\mbox{\hyperlink{namespaceAriadne_acbb98ddc4385af4599070e65a1a47ec1}{Output\+Stream}} \&os, \mbox{\hyperlink{classAriadne_1_1Interval}{Interval}}$<$ U $>$ const \&ivl)
+\begin{DoxyCompactList}\small\item\em Write to an output stream. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Interval_a8691d20595623ec98af64f28548c2f8c}\label{classAriadne_1_1Interval_a8691d20595623ec98af64f28548c2f8c} 
+{\footnotesize template$<$class L, class U$>$ }\\\mbox{\hyperlink{classAriadne_1_1Interval}{Interval}}$<$ U $>$ {\bfseries make\+\_\+interval} (L l, U u)
+\begin{DoxyCompactList}\small\item\em Make an interval with the given lower and upper bounds. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Interval_ab970ee63a910b8c1dc647ca2f320785a}\label{classAriadne_1_1Interval_ab970ee63a910b8c1dc647ca2f320785a} 
+{\footnotesize template$<$class U$>$ }\\auto {\bfseries is\+\_\+empty} (\mbox{\hyperlink{classAriadne_1_1Interval}{Interval}}$<$ U $>$ const \&ivl) -\/$>$ decltype(ivl.\+lower\+\_\+bound()$>$ivl.\+upper\+\_\+bound())
+\begin{DoxyCompactList}\small\item\em Test if the interval is empty. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Interval_a8f046ea9d64831324ce449228de6bad3}\label{classAriadne_1_1Interval_a8f046ea9d64831324ce449228de6bad3} 
+{\footnotesize template$<$class U$>$ }\\auto {\bfseries is\+\_\+singleton} (\mbox{\hyperlink{classAriadne_1_1Interval}{Interval}}$<$ U $>$ const \&ivl) -\/$>$ decltype(ivl.\+lower\+\_\+bound()==ivl.\+upper\+\_\+bound())
+\begin{DoxyCompactList}\small\item\em Test if the interval is a singleton. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Interval_ad6609a0bc6b8c0188ad74ba08c21b484}\label{classAriadne_1_1Interval_ad6609a0bc6b8c0188ad74ba08c21b484} 
+{\footnotesize template$<$class U$>$ }\\auto {\bfseries is\+\_\+bounded} (\mbox{\hyperlink{classAriadne_1_1Interval}{Interval}}$<$ U $>$ const \&ivl) -\/$>$ decltype(ivl.\+upper\+\_\+bound()$<$ ivl.\+lower\+\_\+bound())
+\begin{DoxyCompactList}\small\item\em Test if the interval is bounded. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Interval_adafcd026eee313693b626ed14cdd0798}\label{classAriadne_1_1Interval_adafcd026eee313693b626ed14cdd0798} 
+{\footnotesize template$<$class U, class X$>$ }\\auto {\bfseries element} (X const \&x1, \mbox{\hyperlink{classAriadne_1_1Interval}{Interval}}$<$ U $>$ const \&ivl2) -\/$>$ decltype(ivl2.\+lower\+\_\+bound()$<$=x1 \&\&ivl2.\+upper\+\_\+bound()$>$=x1)
+\begin{DoxyCompactList}\small\item\em Test if {\itshape x1} is an element of the interval {\itshape ivl2}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Interval_a3bab7f40412a7249eb78fd6462ea3993}\label{classAriadne_1_1Interval_a3bab7f40412a7249eb78fd6462ea3993} 
+{\footnotesize template$<$class U, class X$>$ }\\auto {\bfseries contains} (\mbox{\hyperlink{classAriadne_1_1Interval}{Interval}}$<$ U $>$ const \&ivl1, X const \&x2) -\/$>$ decltype(ivl1.\+lower\+\_\+bound()$<$=x2 \&\&ivl1.\+upper\+\_\+bound()$>$=x2)
+\begin{DoxyCompactList}\small\item\em Test if the interval {\itshape ivl1} contains {\itshape x2}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Interval_af5e4329ee502ac8937a247ee52707267}\label{classAriadne_1_1Interval_af5e4329ee502ac8937a247ee52707267} 
+{\footnotesize template$<$class U$>$ }\\auto {\bfseries equal} (\mbox{\hyperlink{classAriadne_1_1Interval}{Interval}}$<$ U $>$ const \&ivl1, \mbox{\hyperlink{classAriadne_1_1Interval}{Interval}}$<$ U $>$ const \&ivl2) -\/$>$ decltype(ivl1.\+upper\+\_\+bound()==ivl2.\+upper\+\_\+bound())
+\begin{DoxyCompactList}\small\item\em Test if the interval {\itshape ivl1} is equal to {\itshape ivl2}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Interval_a790d2b420343076d8355f0c0d7ad7a40}\label{classAriadne_1_1Interval_a790d2b420343076d8355f0c0d7ad7a40} 
+{\footnotesize template$<$class U1, class U2$>$ }\\auto {\bfseries subset} (\mbox{\hyperlink{classAriadne_1_1Interval}{Interval}}$<$ U1 $>$ const \&ivl1, \mbox{\hyperlink{classAriadne_1_1Interval}{Interval}}$<$ U2 $>$ const \&ivl2) -\/$>$ decltype(ivl1.\+upper\+\_\+bound()$<$=ivl2.\+upper\+\_\+bound())
+\begin{DoxyCompactList}\small\item\em Test if the interval {\itshape ivl1} is a subset of {\itshape ivl2}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Interval_acfed77147a17ccd498980786ba85f4c1}\label{classAriadne_1_1Interval_acfed77147a17ccd498980786ba85f4c1} 
+{\footnotesize template$<$class U1, class U2$>$ }\\auto {\bfseries superset} (\mbox{\hyperlink{classAriadne_1_1Interval}{Interval}}$<$ U1 $>$ const \&ivl1, \mbox{\hyperlink{classAriadne_1_1Interval}{Interval}}$<$ U2 $>$ const \&ivl2) -\/$>$ decltype(ivl1.\+upper\+\_\+bound()$>$=ivl2.\+upper\+\_\+bound())
+\begin{DoxyCompactList}\small\item\em Test if the interval {\itshape ivl1} is a superset of {\itshape ivl2}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Interval_a098ae95274d6bf20fece62f21e8c5147}\label{classAriadne_1_1Interval_a098ae95274d6bf20fece62f21e8c5147} 
+{\footnotesize template$<$class U1, class U2$>$ }\\auto {\bfseries disjoint} (\mbox{\hyperlink{classAriadne_1_1Interval}{Interval}}$<$ U1 $>$ const \&ivl1, \mbox{\hyperlink{classAriadne_1_1Interval}{Interval}}$<$ U2 $>$ const \&ivl2) -\/$>$ decltype(ivl1.\+upper\+\_\+bound()$<$ ivl2.\+lower\+\_\+bound())
+\begin{DoxyCompactList}\small\item\em Test if the interval {\itshape ivl1} is disjoint from {\itshape ivl2}. Returns {\ttfamily false} even if the two intervals only have an endpoint in common. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Interval_ac50a8cd3566a83b4e4146623e19f73f6}\label{classAriadne_1_1Interval_ac50a8cd3566a83b4e4146623e19f73f6} 
+{\footnotesize template$<$class U1, class U2$>$ }\\auto {\bfseries intersect} (\mbox{\hyperlink{classAriadne_1_1Interval}{Interval}}$<$ U1 $>$ const \&ivl1, \mbox{\hyperlink{classAriadne_1_1Interval}{Interval}}$<$ U2 $>$ const \&ivl2) -\/$>$ decltype(ivl1.\+upper\+\_\+bound()$>$=ivl2.\+lower\+\_\+bound())
+\begin{DoxyCompactList}\small\item\em Test if the interval {\itshape ivl1} intersects {\itshape ivl2}. Returns {\ttfamily true} even if the two intervals only have an endpoint in common. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Interval_a82a41d75b93a9889437096d604ecb90c}\label{classAriadne_1_1Interval_a82a41d75b93a9889437096d604ecb90c} 
+{\footnotesize template$<$class U1, class U2$>$ }\\auto {\bfseries separated} (\mbox{\hyperlink{classAriadne_1_1Interval}{Interval}}$<$ U1 $>$ const \&ivl1, \mbox{\hyperlink{classAriadne_1_1Interval}{Interval}}$<$ U2 $>$ const \&ivl2) -\/$>$ decltype(ivl1.\+upper\+\_\+bound()$<$ ivl2.\+lower\+\_\+bound())
+\begin{DoxyCompactList}\small\item\em Test if the closed interval {\itshape ivl1} is disjoint from the closed interval {\itshape ivl2}. Returns {\ttfamily false} if the two intervals only have an endpoint in common. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Interval_a2afc8ee9d5a0b130491aacc889be94d5}\label{classAriadne_1_1Interval_a2afc8ee9d5a0b130491aacc889be94d5} 
+{\footnotesize template$<$class U1, class U2$>$ }\\auto {\bfseries overlap} (\mbox{\hyperlink{classAriadne_1_1Interval}{Interval}}$<$ U1 $>$ const \&ivl1, \mbox{\hyperlink{classAriadne_1_1Interval}{Interval}}$<$ U2 $>$ const \&ivl2) -\/$>$ decltype(ivl1.\+upper\+\_\+bound()$>$ivl2.\+lower\+\_\+bound())
+\begin{DoxyCompactList}\small\item\em Test if the interval {\itshape ivl1} overlaps {\itshape ivl2}. Returns {\ttfamily false} if the two intervals only have an endpoint in common. Returns {\ttfamily true} if one of the intervals is a singleton in the interior of the other. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Interval_a465cc0c281f9d758c2a1a7d77f683f3c}\label{classAriadne_1_1Interval_a465cc0c281f9d758c2a1a7d77f683f3c} 
+{\footnotesize template$<$class U1, class U2$>$ }\\auto {\bfseries inside} (\mbox{\hyperlink{classAriadne_1_1Interval}{Interval}}$<$ U1 $>$ const \&ivl1, \mbox{\hyperlink{classAriadne_1_1Interval}{Interval}}$<$ U2 $>$ const \&ivl2) -\/$>$ decltype(ivl1.\+upper\+\_\+bound()$<$ ivl2.\+upper\+\_\+bound())
+\begin{DoxyCompactList}\small\item\em Test if the (closed) interval {\itshape ivl1} is a subset of the interior of {\itshape ivl2}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Interval_a5db45eefd8381614c235b9d8867baa9c}\label{classAriadne_1_1Interval_a5db45eefd8381614c235b9d8867baa9c} 
+{\footnotesize template$<$class U1, class U2$>$ }\\auto {\bfseries covers} (\mbox{\hyperlink{classAriadne_1_1Interval}{Interval}}$<$ U1 $>$ const \&ivl1, \mbox{\hyperlink{classAriadne_1_1Interval}{Interval}}$<$ U2 $>$ const \&ivl2) -\/$>$ decltype(ivl1.\+upper\+\_\+bound()$>$ivl2.\+upper\+\_\+bound())
+\begin{DoxyCompactList}\small\item\em Test if the interior of the interval {\itshape ivl1} is a superset of the (closed) interval {\itshape ivl2}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Interval_a0f5cb8f0b3edb7902a4cb3f44468d9d4}\label{classAriadne_1_1Interval_a0f5cb8f0b3edb7902a4cb3f44468d9d4} 
+{\footnotesize template$<$class U1, class U2$>$ }\\auto {\bfseries intersection} (\mbox{\hyperlink{classAriadne_1_1Interval}{Interval}}$<$ U1 $>$ const \&ivl1, \mbox{\hyperlink{classAriadne_1_1Interval}{Interval}}$<$ U2 $>$ const \&ivl2) -\/$>$ \mbox{\hyperlink{classAriadne_1_1Interval}{Interval}}$<$ decltype(min(declval$<$ U1 $>$(), declval$<$ U2 $>$()))$>$
+\begin{DoxyCompactList}\small\item\em The intersection of two intervals. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Interval_a0f5eafd7559a08b3579e79f3a9e8dc2a}\label{classAriadne_1_1Interval_a0f5eafd7559a08b3579e79f3a9e8dc2a} 
+{\footnotesize template$<$class U1, class U2$>$ }\\auto {\bfseries hull} (\mbox{\hyperlink{classAriadne_1_1Interval}{Interval}}$<$ U1 $>$ const \&ivl1, \mbox{\hyperlink{classAriadne_1_1Interval}{Interval}}$<$ U2 $>$ const \&ivl2) -\/$>$ \mbox{\hyperlink{classAriadne_1_1Interval}{Interval}}$<$ decltype(max(declval$<$ U1 $>$(), declval$<$ U2 $>$()))$>$
+\begin{DoxyCompactList}\small\item\em The hull of two intervals, equal to the smallest interval containing both as subsets. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Interval_aa1fb9118e144a426843f2b2805232062}\label{classAriadne_1_1Interval_aa1fb9118e144a426843f2b2805232062} 
+{\footnotesize template$<$class U, class X$>$ }\\auto {\bfseries hull} (\mbox{\hyperlink{classAriadne_1_1Interval}{Interval}}$<$ U $>$ const \&ivl1, X x2) -\/$>$ \mbox{\hyperlink{classAriadne_1_1Interval}{Interval}}$<$ decltype(max(declval$<$ U $>$(), declval$<$ X $>$()))$>$
+\begin{DoxyCompactList}\small\item\em The hull of an interval and a point, equal to the smallest interval containing both. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Interval_a2af4647c0b0bb7b5bd4d105cc2641aee}\label{classAriadne_1_1Interval_a2af4647c0b0bb7b5bd4d105cc2641aee} 
+{\footnotesize template$<$class U, class X$>$ }\\auto {\bfseries hull} (X x1, \mbox{\hyperlink{classAriadne_1_1Interval}{Interval}}$<$ U $>$ const \&ivl2) -\/$>$ \mbox{\hyperlink{classAriadne_1_1Interval}{Interval}}$<$ decltype(max(declval$<$ U $>$(), declval$<$ X $>$()))$>$
+\begin{DoxyCompactList}\small\item\em The hull of a point and an interval, equal to the smallest interval containing both. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Interval_a118294278170775f16a850737eefc602}\label{classAriadne_1_1Interval_a118294278170775f16a850737eefc602} 
+{\footnotesize template$<$class U$>$ }\\auto {\bfseries split} (\mbox{\hyperlink{classAriadne_1_1Interval}{Interval}}$<$ U $>$ const \&ivl1, Split\+Part lmu) -\/$>$ \mbox{\hyperlink{classAriadne_1_1Interval}{Interval}}$<$ U $>$
+\begin{DoxyCompactList}\small\item\em Split an interval into its lower, middle or upper half. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Interval_a39dfb899ec9956230b420668dfcea0da}\label{classAriadne_1_1Interval_a39dfb899ec9956230b420668dfcea0da} 
+{\footnotesize template$<$class U$>$ }\\auto {\bfseries split} (\mbox{\hyperlink{classAriadne_1_1Interval}{Interval}}$<$ U $>$ const \&ivl) -\/$>$ \mbox{\hyperlink{namespaceAriadne_abbe0884d033ed6289d1f654576d7bb07}{Pair}}$<$ \mbox{\hyperlink{classAriadne_1_1Interval}{Interval}}$<$ U $>$, \mbox{\hyperlink{classAriadne_1_1Interval}{Interval}}$<$ U $>$ $>$
+\begin{DoxyCompactList}\small\item\em Split an interval into its lower and upper half. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Interval_a3c05def62ddb49bc85f5a872232a457e}\label{classAriadne_1_1Interval_a3c05def62ddb49bc85f5a872232a457e} 
+{\footnotesize template$<$class U$>$ }\\auto {\bfseries operator==} (\mbox{\hyperlink{classAriadne_1_1Interval}{Interval}}$<$ U $>$ const \&ivl1, \mbox{\hyperlink{classAriadne_1_1Interval}{Interval}}$<$ U $>$ const \&ivl2) -\/$>$ decltype(ivl1.\+upper\+\_\+bound()==ivl2.\+upper\+\_\+bound())
+\begin{DoxyCompactList}\small\item\em Equality operator. Tests equality of intervals as geometric objects given information on endpoints. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Interval_a397e56f1e165ecdf500280e28090ee11}\label{classAriadne_1_1Interval_a397e56f1e165ecdf500280e28090ee11} 
+{\footnotesize template$<$class U$>$ }\\auto {\bfseries operator!=} (\mbox{\hyperlink{classAriadne_1_1Interval}{Interval}}$<$ U $>$ const \&ivl1, \mbox{\hyperlink{classAriadne_1_1Interval}{Interval}}$<$ U $>$ const \&ivl2) -\/$>$ decltype(ivl1.\+upper\+\_\+bound()!=ivl2.\+upper\+\_\+bound())
+\begin{DoxyCompactList}\small\item\em Inequality operator. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Interval_ad3f241765032aaa3ecca452a072b19fc}\label{classAriadne_1_1Interval_ad3f241765032aaa3ecca452a072b19fc} 
+\mbox{\hyperlink{namespaceAriadne_a3c42889d7ee562011f1dc63874e51d0e}{Input\+Stream}} \& {\bfseries operator$>$$>$} (\mbox{\hyperlink{namespaceAriadne_a3c42889d7ee562011f1dc63874e51d0e}{Input\+Stream}} \&, \mbox{\hyperlink{classAriadne_1_1Interval}{Interval}}$<$ Float\+DP $>$ \&)
+\begin{DoxyCompactList}\small\item\em Read from an input stream. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\begin{Indent}\textbf{ Type shorthands}\par
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1Interval_ac5e3a2e58bb83391d7238308ef3d7ede}\label{classAriadne_1_1Interval_ac5e3a2e58bb83391d7238308ef3d7ede} 
+{\footnotesize template$<$class F$>$ }\\using {\bfseries Exact\+Interval} = \mbox{\hyperlink{classAriadne_1_1Interval}{Interval}}$<$F$>$
+\item 
+\Hypertarget{classAriadne_1_1Interval_aca56d6bc320030187bede417531dec8a}\label{classAriadne_1_1Interval_aca56d6bc320030187bede417531dec8a} 
+{\footnotesize template$<$class F$>$ }\\using {\bfseries Ball\+Interval} = \mbox{\hyperlink{classAriadne_1_1Interval}{Interval}}$<$\mbox{\hyperlink{classAriadne_1_1Ball}{Ball}}$<$F$>$$>$
+\item 
+\Hypertarget{classAriadne_1_1Interval_adf188cd79a9008c71d11d21a8e2234c1}\label{classAriadne_1_1Interval_adf188cd79a9008c71d11d21a8e2234c1} 
+{\footnotesize template$<$class F$>$ }\\using {\bfseries Bounds\+Interval} = \mbox{\hyperlink{classAriadne_1_1Interval}{Interval}}$<$\mbox{\hyperlink{classAriadne_1_1Bounds}{Bounds}}$<$F$>$$>$
+\item 
+\Hypertarget{classAriadne_1_1Interval_a6716e1e923b055b45ebe61ec6756324e}\label{classAriadne_1_1Interval_a6716e1e923b055b45ebe61ec6756324e} 
+{\footnotesize template$<$class F$>$ }\\using {\bfseries Upper\+Interval} = \mbox{\hyperlink{classAriadne_1_1Interval}{Interval}}$<$\mbox{\hyperlink{classAriadne_1_1UpperBound}{Upper\+Bound}}$<$F$>$$>$
+\item 
+\Hypertarget{classAriadne_1_1Interval_ae5b21029d8d1c3e016dc21253834de89}\label{classAriadne_1_1Interval_ae5b21029d8d1c3e016dc21253834de89} 
+{\footnotesize template$<$class F$>$ }\\using {\bfseries Lower\+Interval} = \mbox{\hyperlink{classAriadne_1_1Interval}{Interval}}$<$\mbox{\hyperlink{classAriadne_1_1LowerBound}{Lower\+Bound}}$<$F$>$$>$
+\item 
+\Hypertarget{classAriadne_1_1Interval_a2fd085639ead7b6ab9d75930ec4f6d78}\label{classAriadne_1_1Interval_a2fd085639ead7b6ab9d75930ec4f6d78} 
+{\footnotesize template$<$class F$>$ }\\using {\bfseries Approximate\+Interval} = \mbox{\hyperlink{classAriadne_1_1Interval}{Interval}}$<$\mbox{\hyperlink{classAriadne_1_1Approximation}{Approximation}}$<$F$>$$>$
+\item 
+\Hypertarget{classAriadne_1_1Interval_af962a5543336c7fcf6aa2e69425ff1c3}\label{classAriadne_1_1Interval_af962a5543336c7fcf6aa2e69425ff1c3} 
+{\footnotesize template$<$class PR$>$ }\\using {\bfseries Float\+Exact\+Interval} = \mbox{\hyperlink{classAriadne_1_1Interval}{Interval}}$<$Float$<$PR$>$$>$
+\item 
+\Hypertarget{classAriadne_1_1Interval_afb65c5ad4b87d7ca05cab62f16dc377c}\label{classAriadne_1_1Interval_afb65c5ad4b87d7ca05cab62f16dc377c} 
+{\footnotesize template$<$class PR$>$ }\\using {\bfseries Float\+Ball\+Interval} = \mbox{\hyperlink{classAriadne_1_1Interval}{Interval}}$<$\mbox{\hyperlink{group__NumericModule_ga49fc5a890aaa0ef24118a0b964bbd076}{Float\+Ball}}$<$PR$>$$>$
+\item 
+\Hypertarget{classAriadne_1_1Interval_a3e7d6081663a039ff9d2d839bee06991}\label{classAriadne_1_1Interval_a3e7d6081663a039ff9d2d839bee06991} 
+{\footnotesize template$<$class PR$>$ }\\using {\bfseries Float\+Bounds\+Interval} = \mbox{\hyperlink{classAriadne_1_1Interval}{Interval}}$<$\mbox{\hyperlink{group__NumericModule_ga1e049524e162af01e451c9183315a982}{Float\+Bounds}}$<$PR$>$$>$
+\item 
+\Hypertarget{classAriadne_1_1Interval_aaaeb0e1ea93307758378d529328e3e49}\label{classAriadne_1_1Interval_aaaeb0e1ea93307758378d529328e3e49} 
+{\footnotesize template$<$class PR$>$ }\\using {\bfseries Float\+Upper\+Interval} = \mbox{\hyperlink{classAriadne_1_1Interval}{Interval}}$<$\mbox{\hyperlink{group__NumericModule_gab30197a2ca1ee1affaa99bc5a96be024}{Float\+Upper\+Bound}}$<$PR$>$$>$
+\item 
+\Hypertarget{classAriadne_1_1Interval_aa2ccc73b9443ba65ac99950e4efe608c}\label{classAriadne_1_1Interval_aa2ccc73b9443ba65ac99950e4efe608c} 
+{\footnotesize template$<$class PR$>$ }\\using {\bfseries Float\+Lower\+Interval} = \mbox{\hyperlink{classAriadne_1_1Interval}{Interval}}$<$\mbox{\hyperlink{group__NumericModule_ga8bd8b01d0fc30b704584b0b69f35de7b}{Float\+Lower\+Bound}}$<$PR$>$$>$
+\item 
+\Hypertarget{classAriadne_1_1Interval_a1da87c20d079966801eac96a68501fd6}\label{classAriadne_1_1Interval_a1da87c20d079966801eac96a68501fd6} 
+{\footnotesize template$<$class PR$>$ }\\using {\bfseries Float\+Approximate\+Interval} = \mbox{\hyperlink{classAriadne_1_1Interval}{Interval}}$<$\mbox{\hyperlink{group__NumericModule_gad8d641e86f517dc6189876d9d1a6345a}{Float\+Approximation}}$<$PR$>$$>$
+\end{DoxyCompactItemize}
+\end{Indent}
+\begin{Indent}\textbf{ Type synonyms}\par
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1Interval_a83fc3fcb5bad0c002355ee03b12ae660}\label{classAriadne_1_1Interval_a83fc3fcb5bad0c002355ee03b12ae660} 
+using {\bfseries Dyadic\+Interval} = \mbox{\hyperlink{classAriadne_1_1Interval}{Interval}}$<$\mbox{\hyperlink{classAriadne_1_1Dyadic}{Dyadic}}$>$
+\item 
+\Hypertarget{classAriadne_1_1Interval_a1777b6a2776f00de2738921ae6f34238}\label{classAriadne_1_1Interval_a1777b6a2776f00de2738921ae6f34238} 
+using {\bfseries Decimal\+Interval} = \mbox{\hyperlink{classAriadne_1_1Interval}{Interval}}$<$\mbox{\hyperlink{classAriadne_1_1Decimal}{Decimal}}$>$
+\item 
+\Hypertarget{classAriadne_1_1Interval_a98bb44400914498b6b8a475167eee7c0}\label{classAriadne_1_1Interval_a98bb44400914498b6b8a475167eee7c0} 
+using {\bfseries Rational\+Interval} = \mbox{\hyperlink{classAriadne_1_1Interval}{Interval}}$<$\mbox{\hyperlink{classAriadne_1_1Rational}{Rational}}$>$
+\item 
+\Hypertarget{classAriadne_1_1Interval_a8fa6c8885a91d421e608ec4d6a01060e}\label{classAriadne_1_1Interval_a8fa6c8885a91d421e608ec4d6a01060e} 
+using {\bfseries Real\+Interval} = \mbox{\hyperlink{classAriadne_1_1Interval}{Interval}}$<$\mbox{\hyperlink{classAriadne_1_1Real}{Real}}$>$
+\item 
+\Hypertarget{classAriadne_1_1Interval_a01c19b7edf3bce63082ba0ea2ad809af}\label{classAriadne_1_1Interval_a01c19b7edf3bce63082ba0ea2ad809af} 
+using {\bfseries Float\+DPExact\+Interval} = \mbox{\hyperlink{classAriadne_1_1Interval_af962a5543336c7fcf6aa2e69425ff1c3}{Float\+Exact\+Interval}}$<$\mbox{\hyperlink{classAriadne_1_1DoublePrecision}{Double\+Precision}}$>$
+\item 
+\Hypertarget{classAriadne_1_1Interval_af2e4db5e2ace5e56751d12e7e42e8a9a}\label{classAriadne_1_1Interval_af2e4db5e2ace5e56751d12e7e42e8a9a} 
+using {\bfseries Float\+DPBall\+Interval} = \mbox{\hyperlink{classAriadne_1_1Interval_afb65c5ad4b87d7ca05cab62f16dc377c}{Float\+Ball\+Interval}}$<$\mbox{\hyperlink{classAriadne_1_1DoublePrecision}{Double\+Precision}}$>$
+\item 
+\Hypertarget{classAriadne_1_1Interval_a09371542da55d6cd40095df49e585893}\label{classAriadne_1_1Interval_a09371542da55d6cd40095df49e585893} 
+using {\bfseries Float\+DPBounds\+Interval} = \mbox{\hyperlink{classAriadne_1_1Interval_a3e7d6081663a039ff9d2d839bee06991}{Float\+Bounds\+Interval}}$<$\mbox{\hyperlink{classAriadne_1_1DoublePrecision}{Double\+Precision}}$>$
+\item 
+\Hypertarget{classAriadne_1_1Interval_abb502b218fc8893f092b34dc20d7a131}\label{classAriadne_1_1Interval_abb502b218fc8893f092b34dc20d7a131} 
+using {\bfseries Float\+DPUpper\+Interval} = \mbox{\hyperlink{classAriadne_1_1Interval_aaaeb0e1ea93307758378d529328e3e49}{Float\+Upper\+Interval}}$<$\mbox{\hyperlink{classAriadne_1_1DoublePrecision}{Double\+Precision}}$>$
+\item 
+\Hypertarget{classAriadne_1_1Interval_ad78e548520a8ee76b787788b162ae071}\label{classAriadne_1_1Interval_ad78e548520a8ee76b787788b162ae071} 
+using {\bfseries Float\+DPLower\+Interval} = \mbox{\hyperlink{classAriadne_1_1Interval_aa2ccc73b9443ba65ac99950e4efe608c}{Float\+Lower\+Interval}}$<$\mbox{\hyperlink{classAriadne_1_1DoublePrecision}{Double\+Precision}}$>$
+\item 
+\Hypertarget{classAriadne_1_1Interval_a0af4c3aaabea0bb1288c505e705e2126}\label{classAriadne_1_1Interval_a0af4c3aaabea0bb1288c505e705e2126} 
+using {\bfseries Float\+DPApproximate\+Interval} = \mbox{\hyperlink{classAriadne_1_1Interval_a1da87c20d079966801eac96a68501fd6}{Float\+Approximate\+Interval}}$<$\mbox{\hyperlink{classAriadne_1_1DoublePrecision}{Double\+Precision}}$>$
+\item 
+\Hypertarget{classAriadne_1_1Interval_a3966fa86f149eeefa86eed72f5bff12a}\label{classAriadne_1_1Interval_a3966fa86f149eeefa86eed72f5bff12a} 
+using {\bfseries Float\+MPExact\+Interval} = \mbox{\hyperlink{classAriadne_1_1Interval_af962a5543336c7fcf6aa2e69425ff1c3}{Float\+Exact\+Interval}}$<$\mbox{\hyperlink{classAriadne_1_1MultiplePrecision}{Multiple\+Precision}}$>$
+\item 
+\Hypertarget{classAriadne_1_1Interval_aa4ed598421e4cea161f7c44e82cd4563}\label{classAriadne_1_1Interval_aa4ed598421e4cea161f7c44e82cd4563} 
+using {\bfseries Float\+MPBall\+Interval} = \mbox{\hyperlink{classAriadne_1_1Interval_afb65c5ad4b87d7ca05cab62f16dc377c}{Float\+Ball\+Interval}}$<$\mbox{\hyperlink{classAriadne_1_1MultiplePrecision}{Multiple\+Precision}}$>$
+\item 
+\Hypertarget{classAriadne_1_1Interval_a6539cf4cc68245978579f74f2d4d2226}\label{classAriadne_1_1Interval_a6539cf4cc68245978579f74f2d4d2226} 
+using {\bfseries Float\+MPBounds\+Interval} = \mbox{\hyperlink{classAriadne_1_1Interval_a3e7d6081663a039ff9d2d839bee06991}{Float\+Bounds\+Interval}}$<$\mbox{\hyperlink{classAriadne_1_1MultiplePrecision}{Multiple\+Precision}}$>$
+\item 
+\Hypertarget{classAriadne_1_1Interval_a91de0a06002319643649c0eb20f66570}\label{classAriadne_1_1Interval_a91de0a06002319643649c0eb20f66570} 
+using {\bfseries Float\+MPUpper\+Interval} = \mbox{\hyperlink{classAriadne_1_1Interval_aaaeb0e1ea93307758378d529328e3e49}{Float\+Upper\+Interval}}$<$\mbox{\hyperlink{classAriadne_1_1MultiplePrecision}{Multiple\+Precision}}$>$
+\item 
+\Hypertarget{classAriadne_1_1Interval_a5bfc5d306f3417b8717020b32d5a9d51}\label{classAriadne_1_1Interval_a5bfc5d306f3417b8717020b32d5a9d51} 
+using {\bfseries Float\+MPLower\+Interval} = \mbox{\hyperlink{classAriadne_1_1Interval_aa2ccc73b9443ba65ac99950e4efe608c}{Float\+Lower\+Interval}}$<$\mbox{\hyperlink{classAriadne_1_1MultiplePrecision}{Multiple\+Precision}}$>$
+\item 
+\Hypertarget{classAriadne_1_1Interval_ab216fa7255efcbf33b32f9e0bb2eed8c}\label{classAriadne_1_1Interval_ab216fa7255efcbf33b32f9e0bb2eed8c} 
+using {\bfseries Float\+MPApproximate\+Interval} = \mbox{\hyperlink{classAriadne_1_1Interval_a1da87c20d079966801eac96a68501fd6}{Float\+Approximate\+Interval}}$<$\mbox{\hyperlink{classAriadne_1_1MultiplePrecision}{Multiple\+Precision}}$>$
+\end{DoxyCompactItemize}
+\end{Indent}
+
+
+\label{doc-func-members}
+\Hypertarget{classAriadne_1_1Interval_doc-func-members}
+\doxysubsubsection{Member Function Documentation}
+\Hypertarget{classAriadne_1_1Interval_afa8b51f378f9f7d88c6786c206bfb62f}\index{Interval$<$ U $>$@{Interval$<$ U $>$}!midpoint@{midpoint}}
+\index{midpoint@{midpoint}!Interval$<$ U $>$@{Interval$<$ U $>$}}
+\doxyparagraph{\texorpdfstring{midpoint()}{midpoint()}}
+{\footnotesize\ttfamily \label{classAriadne_1_1Interval_afa8b51f378f9f7d88c6786c206bfb62f} 
+template$<$class U$>$ \\
+auto midpoint (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption}) const}
+
+
+
+The midpoint of the interval. Need not be the exact midpoint. 
+
+\begin{DoxySeeAlso}{See also}
+\doxylink{classAriadne_1_1Interval_aa92d042fc5e3c6ec7d094c917a6561c7}{radius()} 
+\end{DoxySeeAlso}
+
+
+Referenced by \mbox{\hyperlink{classAriadne_1_1ConstraintSolver_a284750ea98b0bc17bebe95cadbb04f9c}{Constraint\+Solver\+::monotone\+\_\+reduce()}}, \mbox{\hyperlink{classAriadne_1_1Interval_aa92d042fc5e3c6ec7d094c917a6561c7}{radius()}}, and \mbox{\hyperlink{classAriadne_1_1ConstrainedImageSet_adc1b415b81d15f671912864030ed1d51}{Constrained\+Image\+Set\+::split()}}.
+
+\Hypertarget{classAriadne_1_1Interval_aa92d042fc5e3c6ec7d094c917a6561c7}\index{Interval$<$ U $>$@{Interval$<$ U $>$}!radius@{radius}}
+\index{radius@{radius}!Interval$<$ U $>$@{Interval$<$ U $>$}}
+\doxyparagraph{\texorpdfstring{radius()}{radius()}}
+{\footnotesize\ttfamily \label{classAriadne_1_1Interval_aa92d042fc5e3c6ec7d094c917a6561c7} 
+template$<$class U$>$ \\
+auto radius (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption}) const}
+
+
+
+The radius of the interval. In validated computation, must be an upper bound for the both {\ttfamily u-\/m} and {\ttfamily m-\/l}, where {\ttfamily m} is the midpoint. 
+
+\begin{DoxySeeAlso}{See also}
+\doxylink{classAriadne_1_1Interval_afa8b51f378f9f7d88c6786c206bfb62f}{midpoint()} 
+\end{DoxySeeAlso}
+
+
+References \mbox{\hyperlink{classAriadne_1_1Interval_ad0bc1be281cca14cc94437dcf7609b8f}{lower\+\_\+bound()}}, \mbox{\hyperlink{classAriadne_1_1Interval_afa8b51f378f9f7d88c6786c206bfb62f}{midpoint()}}, and \mbox{\hyperlink{classAriadne_1_1Interval_a35ba283ea1d37f2be4139a57f2eda1bc}{upper\+\_\+bound()}}.
+
+
+
+The documentation for this class was generated from the following files\+:\begin{DoxyCompactItemize}
+\item 
+source/geometry/interval.\+decl.\+hpp\item 
+source/geometry/\mbox{\hyperlink{interval_8hpp}{interval.\+hpp}}\item 
+source/geometry/\mbox{\hyperlink{box_8hpp}{box.\+hpp}}\item 
+source/geometry/interval.\+inl.\+hpp\end{DoxyCompactItemize}

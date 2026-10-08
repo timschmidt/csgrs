@@ -1,0 +1,10 @@
+{
+  "head": "4763c7ca97567a7fdfd14fac982019c390a248ce",
+  "files": {
+    "src/bezier_offset.rs": "5dd4e977dd884b6bc39a41d7019f2721e9dcf922e8702af78937c64ba9a187c7",
+    "src/curve_region_boolean.rs": "a1d9266a0ecd061aa3b07f9f01bc278818d391a0334d370e3fa99c8340a31979"
+  },
+  "status": " M src/bezier_region.rs\n",
+  "qualified_binary_sha256": "85dd2d619f2098d2e13fe9a62304d640403e2e58dccba08bdec477959d68ecb7",
+  "all_owned_processes_reaped": true
+}

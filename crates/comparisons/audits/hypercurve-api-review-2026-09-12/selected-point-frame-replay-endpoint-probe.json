@@ -1,0 +1,25 @@
+{
+  "returncode": 0,
+  "elapsed_seconds": 0.0034405739861540496,
+  "normal_library_sha256": "476ce4085af4463f86d6182e476e0fa13af9266727aaefa54be4b0293d704b2a",
+  "log": "selected-point-frame-replay-endpoint-probe.log",
+  "source": "singleton-endpoint-parameter-completed.rs",
+  "command": [
+    "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustc",
+    "--edition=2024",
+    "-O",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/singleton-endpoint-parameter-completed.rs",
+    "--extern",
+    "hypercurve=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypercurve-930b1fe968ca3c94.rlib",
+    "-L",
+    "dependency=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps",
+    "-o",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/selected-point-frame-replay-endpoint-probe"
+  ],
+  "source_sha256": "7fe239b2f4d8b0577cdbd11311f6e9c8dcdf8ae9e7bbb6d1fd3ba9493a68b63f",
+  "executable_sha256": "d207799784da2773fd3884661228ba66f52318a5e357da2a9cffaff8370f60c5",
+  "counts": {
+    "queries": 4,
+    "parameter_visits": 8
+  }
+}

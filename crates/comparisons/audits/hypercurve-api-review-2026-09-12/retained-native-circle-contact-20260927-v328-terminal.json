@@ -1,0 +1,10 @@
+{
+  "baseline": "coincident-linear-fillet-20260927-v318-terminal.json",
+  "current": "retained-native-circle-contact-20260927-v327-sources.json",
+  "binary": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/coincident-linear-fillet-20260927-v318-hypercurve",
+  "binary_sha256": "993583a290a5ad1fdb7ceda1d52ca42ffcb9c8bc1dd699db987e8e76ad4fce19",
+  "case": "bezier_region::tests::one_fragment_nonzero_parallel_loop_extends_chamfer_cuts_on_one_finite_envelope",
+  "all_processes_reaped": true,
+  "returncode": 124,
+  "elapsed_seconds": 240.45753871602938
+}

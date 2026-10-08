@@ -1,0 +1,19 @@
+[
+  "bezier_offset::parameter_component::tests::contact_constraints_distinguish_free_axes_from_empty_components",
+  "bezier_offset::parameter_component::tests::incident_charts_keep_poles_and_finite_ownership_excluded",
+  "bezier_offset::parameter_component::tests::one_contact_replays_correspondence_through_both_source_charts",
+  "bezier_offset::parameter_component::tests::product_components_keep_fixed_axes_and_operand_roles",
+  "curve::curve_fillet::tests::joined_path_selects_and_replays_a_continuous_fillet_family",
+  "curve::curve_fillet::tests::nonlinear_linear_fillet_components_retain_unique_contacts_and_tangents",
+  "bezier_region::tests::pair_native_boolean_analytic_corner_publishes_a_third_generation_fillet",
+  "bezier_offset::conversion_tests::finite_domain_admits_one_sided_source_cusp_contacts",
+  "bezier_offset::conversion_tests::original_parallel_normal_constraints_clip_finite_and_incident_components",
+  "bezier_offset::conversion_tests::parallel_projection_keeps_independent_finite_and_extension_domains",
+  "bezier_offset::conversion_tests::parallel_projection_owns_overlapping_domain_roots_once",
+  "bezier_offset::conversion_tests::parameter_domains_limit_component_charts",
+  "bezier_offset::conversion_tests::parameter_domains_retain_isolated_constraints",
+  "bezier_offset::conversion_tests::parameter_domains_retain_finite_residuals_without_unowned_components",
+  "bezier_offset::conversion_tests::parameter_domains_retain_chart_events_and_closed_finite_boundaries",
+  "bezier_offset::conversion_tests::incident_component_charts_clip_exact_regular_barriers",
+  "bezier_offset::conversion_tests::incident_component_charts_transport_an_isolated_selected_event"
+]

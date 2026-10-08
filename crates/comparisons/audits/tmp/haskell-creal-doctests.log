@@ -1,0 +1,7 @@
+exact-real> test (suite: doctests)
+
+Examples: 29  Tried: 29  Errors: 0  Failures: 0
+
+
+
+exact-real> Test suite doctests passed

@@ -1,0 +1,14 @@
+{
+  "tag": "twelfth-bind-final-v79",
+  "started": "2026-09-12T00:29:33.682Z",
+  "finished": "2026-09-12T00:29:34.383Z",
+  "elapsedSeconds": 0.698932408,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "node",
+  "args": [
+    "twelfth-revision-sources-v79.mjs",
+    "--record"
+  ],
+  "code": 0,
+  "signal": null
+}

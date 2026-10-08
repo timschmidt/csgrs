@@ -1,0 +1,46 @@
+[
+  {
+    "repo": "hypercurve",
+    "command": [
+      "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+      "check",
+      "--all-targets",
+      "--all-features",
+      "--locked",
+      "--offline"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.306458547944203,
+    "log": "boundary-api-20260923-check5-hypercurve.log"
+  },
+  {
+    "repo": "hyperbrep",
+    "command": [
+      "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+      "check",
+      "--all-targets",
+      "--all-features",
+      "--locked",
+      "--offline"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.20763898291625082,
+    "log": "boundary-api-20260923-check5-hyperbrep.log"
+  },
+  {
+    "repo": "csgrs",
+    "command": [
+      "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+      "check",
+      "--example",
+      "readme_renders",
+      "--features",
+      "offset",
+      "--locked",
+      "--offline"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.40779050101991743,
+    "log": "boundary-api-20260923-check5-csgrs.log"
+  }
+]

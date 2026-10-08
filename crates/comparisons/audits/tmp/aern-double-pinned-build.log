@@ -1,0 +1,283 @@
+OneTuple                           > using precompiled package
+Only                               > using precompiled package
+StateVar                           > using precompiled package
+assoc                              > using precompiled package
+base-compat                        > using precompiled package
+base-orphans                       > using precompiled package
+binary-orphans                     > using precompiled package
+code-page                          > using precompiled package
+colour                             > using precompiled package
+data-default-class                 > using precompiled package
+dlist                              > using precompiled package
+extensible-exceptions              > using precompiled package
+generically                        > using precompiled package
+hostname                           > using precompiled package
+indexed-traversable                > using precompiled package
+ieee-utils-tempfix                 > configure
+ieee-utils-tempfix                 > Warning: ieee-utils-tempfix.cabal:22:33: version operators used. To use
+ieee-utils-tempfix                 > version operators the package needs to specify at least 'cabal-version: >=
+ieee-utils-tempfix                 > 1.8'.
+ieee-utils-tempfix                 > Configuring ieee-utils-tempfix-0.4.0.1...
+integer-logarithms                 > using precompiled package
+js-chart                           > using precompiled package
+contravariant                      > using precompiled package
+old-locale                         > using precompiled package
+base-compat-batteries              > using precompiled package
+ieee-utils-tempfix                 > build with ghc-9.6.7
+ieee-utils-tempfix                 > Preprocessing library for ieee-utils-tempfix-0.4.0.1..
+ieee-utils-tempfix                 > Building library for ieee-utils-tempfix-0.4.0.1..
+ieee-utils-tempfix                 > [1 of 3] Compiling Numeric.IEEE.FloatExceptions
+os-string                          > using precompiled package
+ieee-utils-tempfix                 > 
+ieee-utils-tempfix                 > /tmp/stack-cc00123594d5bee1/ieee-utils-tempfix-0.4.0.1/src/Numeric/IEEE/FloatExceptions.hs:39:1: warning: [GHC-90177] [-Worphans]
+ieee-utils-tempfix                 >     Orphan instance: instance Enum ArithException
+ieee-utils-tempfix                 >     Suggested fix:
+ieee-utils-tempfix                 >       Move the instance declaration to the module of the class or of the type, or
+ieee-utils-tempfix                 >       wrap the type with a newtype and declare the instance on the new type.
+ieee-utils-tempfix                 >    |
+ieee-utils-tempfix                 > 39 | instance Enum ArithException where
+ieee-utils-tempfix                 >    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^...
+ieee-utils-tempfix                 > 
+ieee-utils-tempfix                 > /tmp/stack-cc00123594d5bee1/ieee-utils-tempfix-0.4.0.1/src/Numeric/IEEE/FloatExceptions.hs:40:3: warning: [GHC-62161] [-Wincomplete-patterns]
+ieee-utils-tempfix                 >     Pattern match(es) are non-exhaustive
+ieee-utils-tempfix                 >     In an equation for ‘toEnum’: Patterns of type ‘Int’ not matched: _
+ieee-utils-tempfix                 >    |
+ieee-utils-tempfix                 > 40 |   toEnum n
+ieee-utils-tempfix                 >    |   ^^^^^^^^...
+ieee-utils-tempfix                 > 
+ieee-utils-tempfix                 > /tmp/stack-cc00123594d5bee1/ieee-utils-tempfix-0.4.0.1/src/Numeric/IEEE/FloatExceptions.hs:46:3: warning: [GHC-62161] [-Wincomplete-patterns]
+ieee-utils-tempfix                 >     Pattern match(es) are non-exhaustive
+ieee-utils-tempfix                 >     In an equation for ‘fromEnum’:
+ieee-utils-tempfix                 >         Patterns of type ‘ArithException’ not matched: RatioZeroDenominator
+ieee-utils-tempfix                 >    |
+ieee-utils-tempfix                 > 46 |   fromEnum DivideByZero    = feDivByZero
+ieee-utils-tempfix                 >    |   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^...
+parallel                           > using precompiled package
+ieee-utils-tempfix                 > [2 of 3] Compiling Numeric.IEEE.RoundMode
+ieee-utils-tempfix                 > 
+ieee-utils-tempfix                 > /tmp/stack-cc00123594d5bee1/ieee-utils-tempfix-0.4.0.1/src/Numeric/IEEE/RoundMode.hs:42:3: warning: [GHC-62161] [-Wincomplete-patterns]
+ieee-utils-tempfix                 >     Pattern match(es) are non-exhaustive
+ieee-utils-tempfix                 >     In an equation for ‘toEnum’: Patterns of type ‘Int’ not matched: _
+ieee-utils-tempfix                 >    |
+ieee-utils-tempfix                 > 42 |   toEnum n
+ieee-utils-tempfix                 >    |   ^^^^^^^^...
+prettyprinter                      > using precompiled package
+ieee-utils-tempfix                 > [3 of 3] Compiling Numeric.IEEE.Monad
+ansi-terminal-types                > using precompiled package
+ieee-utils-tempfix                 > 
+ieee-utils-tempfix                 > /tmp/stack-cc00123594d5bee1/ieee-utils-tempfix-0.4.0.1/src/Numeric/IEEE/Monad.hs:24:1: warning: [-Wunused-imports]
+ieee-utils-tempfix                 >     The import of ‘Control.Applicative’ is redundant
+ieee-utils-tempfix                 >       except perhaps to import instances from ‘Control.Applicative’
+ieee-utils-tempfix                 >     To import instances alone, use: import Control.Applicative()
+ieee-utils-tempfix                 >    |
+ieee-utils-tempfix                 > 24 | import Control.Applicative
+ieee-utils-tempfix                 >    | ^^^^^^^^^^^^^^^^^^^^^^^^^^
+ieee-utils-tempfix                 > 
+ieee-utils-tempfix                 > /tmp/stack-cc00123594d5bee1/ieee-utils-tempfix-0.4.0.1/src/Numeric/IEEE/Monad.hs:27:1: warning: [-Wunused-imports]
+ieee-utils-tempfix                 >     The import of ‘Control.Monad’ is redundant
+ieee-utils-tempfix                 >       except perhaps to import instances from ‘Control.Monad’
+ieee-utils-tempfix                 >     To import instances alone, use: import Control.Monad()
+ieee-utils-tempfix                 >    |
+ieee-utils-tempfix                 > 27 | import Control.Monad
+ieee-utils-tempfix                 >    | ^^^^^^^^^^^^^^^^^^^^
+ieee-utils-tempfix                 > 
+ieee-utils-tempfix                 > /tmp/stack-cc00123594d5bee1/ieee-utils-tempfix-0.4.0.1/src/Numeric/IEEE/Monad.hs:63:3: warning: [GHC-81995] [-Wunused-do-bind]
+ieee-utils-tempfix                 >     A do-notation statement discarded a result of type ‘Bool’
+ieee-utils-tempfix                 >     Suggested fix:
+ieee-utils-tempfix                 >       Suppress this warning by saying
+ieee-utils-tempfix                 >         ‘_ <- getFloatExcepts >>= clearFloatExcepts’
+ieee-utils-tempfix                 >    |
+ieee-utils-tempfix                 > 63 |   getFloatExcepts >>= clearFloatExcepts
+ieee-utils-tempfix                 >    |   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ieee-utils-tempfix                 > 
+ieee-utils-tempfix                 > /tmp/stack-cc00123594d5bee1/ieee-utils-tempfix-0.4.0.1/src/Numeric/IEEE/Monad.hs:79:3: warning: [GHC-81995] [-Wunused-do-bind]
+ieee-utils-tempfix                 >     A do-notation statement discarded a result of type ‘Bool’
+ieee-utils-tempfix                 >     Suggested fix:
+ieee-utils-tempfix                 >       Suppress this warning by saying ‘_ <- setRound Upward’
+ieee-utils-tempfix                 >    |
+ieee-utils-tempfix                 > 79 |   setRound Upward
+ieee-utils-tempfix                 >    |   ^^^^^^^^^^^^^^^
+ieee-utils-tempfix                 > 
+ieee-utils-tempfix                 > /tmp/stack-cc00123594d5bee1/ieee-utils-tempfix-0.4.0.1/src/Numeric/IEEE/Monad.hs:81:3: warning: [GHC-81995] [-Wunused-do-bind]
+ieee-utils-tempfix                 >     A do-notation statement discarded a result of type ‘Bool’
+ieee-utils-tempfix                 >     Suggested fix:
+ieee-utils-tempfix                 >       Suppress this warning by saying ‘_ <- setRound Downward’
+ieee-utils-tempfix                 >    |
+ieee-utils-tempfix                 > 81 |   setRound Downward
+ieee-utils-tempfix                 >    |   ^^^^^^^^^^^^^^^^^
+ieee-utils-tempfix                 > 
+ieee-utils-tempfix                 > /tmp/stack-cc00123594d5bee1/ieee-utils-tempfix-0.4.0.1/src/Numeric/IEEE/Monad.hs:83:3: warning: [GHC-81995] [-Wunused-do-bind]
+ieee-utils-tempfix                 >     A do-notation statement discarded a result of type ‘Bool’
+ieee-utils-tempfix                 >     Suggested fix:
+ieee-utils-tempfix                 >       Suppress this warning by saying ‘_ <- setRound ToNearest’
+ieee-utils-tempfix                 >    |
+ieee-utils-tempfix                 > 83 |   setRound ToNearest
+ieee-utils-tempfix                 >    |   ^^^^^^^^^^^^^^^^^^
+ieee-utils-tempfix                 > 
+ieee-utils-tempfix                 > /tmp/stack-cc00123594d5bee1/ieee-utils-tempfix-0.4.0.1/src/Numeric/IEEE/Monad.hs:85:3: warning: [GHC-81995] [-Wunused-do-bind]
+ieee-utils-tempfix                 >     A do-notation statement discarded a result of type ‘Bool’
+ieee-utils-tempfix                 >     Suggested fix:
+ieee-utils-tempfix                 >       Suppress this warning by saying ‘_ <- setRound TowardZero’
+ieee-utils-tempfix                 >    |
+ieee-utils-tempfix                 > 85 |   setRound TowardZero
+ieee-utils-tempfix                 >    |   ^^^^^^^^^^^^^^^^^^^
+ieee-utils-tempfix                 > 
+ieee-utils-tempfix                 > /tmp/stack-cc00123594d5bee1/ieee-utils-tempfix-0.4.0.1/src/Numeric/IEEE/Monad.hs:87:3: warning: [GHC-81995] [-Wunused-do-bind]
+ieee-utils-tempfix                 >     A do-notation statement discarded a result of type ‘Bool’
+ieee-utils-tempfix                 >     Suggested fix: Suppress this warning by saying ‘_ <- setRound x’
+ieee-utils-tempfix                 >    |
+ieee-utils-tempfix                 > 87 |   setRound x
+ieee-utils-tempfix                 >    |   ^^^^^^^^^^
+primitive                          > using precompiled package
+regex-base                         > using precompiled package
+splitmix                           > using precompiled package
+tagged                             > using precompiled package
+th-abstraction                     > using precompiled package
+transformers-compat                > using precompiled package
+vector-stream                      > using precompiled package
+xml                                > using precompiled package
+hashable                           > using precompiled package
+ansi-terminal                      > using precompiled package
+regex-posix                        > using precompiled package
+ieee-utils-tempfix                 > copy/register
+ieee-utils-tempfix                 > Installing library in /tmp/aern2-stack.ryVCFK/snapshots/x86_64-linux-tinfo6/effe9db4e1826f16e57c1f5e1586c2e2ab2e78752f0899579eb1a29e688a5949/9.6.7/lib/x86_64-linux-ghc-9.6.7/ieee-utils-tempfix-0.4.0.1-AG8kRM6w0WtK800EyX7zCx
+random                             > using precompiled package
+ieee-utils-tempfix                 > Registering library for ieee-utils-tempfix-0.4.0.1..
+distributive                       > using precompiled package
+Glob                               > using precompiled package
+vector                             > using precompiled package
+async                              > using precompiled package
+data-fix                           > using precompiled package
+scientific                         > using precompiled package
+text-short                         > using precompiled package
+these                              > using precompiled package
+time-compat                        > using precompiled package
+unordered-containers               > using precompiled package
+prettyprinter-ansi-terminal        > using precompiled package
+QuickCheck                         > using precompiled package
+uuid-types                         > using precompiled package
+comonad                            > using precompiled package
+bitvec                             > using precompiled package
+math-functions                     > using precompiled package
+vector-binary-instances            > using precompiled package
+vector-th-unbox                    > using precompiled package
+attoparsec                         > using precompiled package
+strict                             > using precompiled package
+indexed-traversable-instances      > using precompiled package
+optparse-applicative               > using precompiled package
+prettyprinter-compat-ansi-wl-pprint> using precompiled package
+bifunctors                         > using precompiled package
+vector-algorithms                  > using precompiled package
+mwc-random                         > using precompiled package
+cassava                            > using precompiled package
+witherable                         > using precompiled package
+ansi-wl-pprint                     > using precompiled package
+semigroupoids                      > using precompiled package
+dense-linear-algebra               > using precompiled package
+test-framework                     > using precompiled package
+semialign                          > using precompiled package
+test-framework-quickcheck2         > using precompiled package
+aeson                              > using precompiled package
+criterion-measurement              > using precompiled package
+microstache                        > using precompiled package
+statistics                         > using precompiled package
+criterion                          > using precompiled package
+aern-order                         > configure (lib)
+aern-order                         > Configuring aern-order-0.5.0...
+aern-order                         > build (lib) with ghc-9.6.7
+aern-order                         > Preprocessing library for aern-order-0.5.0..
+aern-order                         > Building library for aern-order-0.5.0..
+aern-order                         > copy/register
+aern-order                         > Installing library in /tmp/aern-audit.zp9Mzz/.stack-work/install/x86_64-linux-tinfo6/effe9db4e1826f16e57c1f5e1586c2e2ab2e78752f0899579eb1a29e688a5949/9.6.7/lib/x86_64-linux-ghc-9.6.7/aern-order-0.5.0-H6cJcmLkc6YCnKhaf2zhqP
+aern-order                         > Registering library for aern-order-0.5.0..
+aern-real                          > configure (lib)
+aern-real                          > Configuring aern-real-0.5.0...
+aern-real                          > build (lib) with ghc-9.6.7
+aern-real                          > Preprocessing library for aern-real-0.5.0..
+aern-real                          > Building library for aern-real-0.5.0..
+aern-real                          > copy/register
+aern-real                          > Installing library in /tmp/aern-audit.zp9Mzz/.stack-work/install/x86_64-linux-tinfo6/effe9db4e1826f16e57c1f5e1586c2e2ab2e78752f0899579eb1a29e688a5949/9.6.7/lib/x86_64-linux-ghc-9.6.7/aern-real-0.5.0-2XCNQeqHIzXEvEojwxvf50
+aern-real                          > Registering library for aern-real-0.5.0..
+aern-interval                      > configure (lib)
+aern-interval                      > Configuring aern-interval-0.5.0...
+aern-interval                      > build (lib) with ghc-9.6.7
+aern-interval                      > Preprocessing library for aern-interval-0.5.0..
+aern-interval                      > Building library for aern-interval-0.5.0..
+aern-interval                      > copy/register
+aern-interval                      > Installing library in /tmp/aern-audit.zp9Mzz/.stack-work/install/x86_64-linux-tinfo6/effe9db4e1826f16e57c1f5e1586c2e2ab2e78752f0899579eb1a29e688a5949/9.6.7/lib/x86_64-linux-ghc-9.6.7/aern-interval-0.5.0-1HwUziHwpqEDIuL7qCev2C
+aern-interval                      > Registering library for aern-interval-0.5.0..
+aern-double                        > configure (lib)
+Configuring aern-double-0.5.0...
+aern-double                        > build (lib) with ghc-9.6.7
+Preprocessing library for aern-double-0.5.0..
+Building library for aern-double-0.5.0..
+[ 1 of 12] Compiling Numeric.AERN.RealArithmetic.Basis.Double.Conversion
+[ 2 of 12] Compiling Numeric.AERN.RealArithmetic.Basis.Double.NumericOrder
+[ 3 of 12] Compiling Numeric.AERN.RealArithmetic.Basis.Double.FieldOps
+[ 4 of 12] Compiling Numeric.AERN.RealArithmetic.Basis.Double.MixedFieldOps
+[ 5 of 12] Compiling Numeric.AERN.RealArithmetic.Basis.Double.ShowInternals
+[ 6 of 12] Compiling Numeric.AERN.RealArithmetic.Basis.Double.SpecialConst
+[ 7 of 12] Compiling Numeric.AERN.RealArithmetic.Interval.Double
+[ 8 of 12] Compiling Numeric.AERN.RealArithmetic.Basis.Double.Measures
+[ 9 of 12] Compiling Numeric.AERN.RealArithmetic.Basis.Double
+
+/tmp/aern-audit.zp9Mzz/source/aern-double/src/Numeric/AERN/RealArithmetic/Basis/Double.hs:38:10: warning: [GHC-06201] [-Wmissing-methods]
+    • No explicit implementation for
+        ‘rrEffortSelfMixedField’
+    • In the instance declaration for ‘RoundedReal Double’
+   |
+38 | instance RoundedReal Double where
+   |          ^^^^^^^^^^^^^^^^^^
+[10 of 12] Compiling Numeric.AERN.DoubleBasis.RealApprox
+
+/tmp/aern-audit.zp9Mzz/source/aern-double/src/Numeric/AERN/DoubleBasis/RealApprox.hs:121:17: error:
+    Ambiguous occurrence ‘<*>’
+    It could refer to
+       either ‘Prelude.<*>’,
+              imported from ‘Prelude’ at src/Numeric/AERN/DoubleBasis/RealApprox.hs:18:8-42
+              (and originally defined in ‘GHC.Base’)
+           or ‘Numeric.AERN.RealArithmetic.RefinementOrderRounding.<*>’,
+              imported from ‘Numeric.AERN.RealArithmetic.RefinementOrderRounding’ at src/Numeric/AERN/DoubleBasis/RealApprox.hs:(149,1)-(150,23)
+              (and originally defined in ‘aern-real-0.5.0:Numeric.AERN.RealArithmetic.RefinementOrderRounding.FieldOps’)
+    |
+121 |     (<+>),(<->),(<*>),(</>),
+    |                 ^^^^^
+[11 of 12] Compiling Numeric.AERN.DoubleBasis.RealIntervalApprox
+
+/tmp/aern-audit.zp9Mzz/source/aern-double/src/Numeric/AERN/DoubleBasis/RealIntervalApprox.hs:141:17: error:
+    Ambiguous occurrence ‘<*>’
+    It could refer to
+       either ‘Prelude.<*>’,
+              imported from ‘Prelude’ at src/Numeric/AERN/DoubleBasis/RealIntervalApprox.hs:19:8-50
+              (and originally defined in ‘GHC.Base’)
+           or ‘Numeric.AERN.RealArithmetic.RefinementOrderRounding.<*>’,
+              imported from ‘Numeric.AERN.RealArithmetic.RefinementOrderRounding’ at src/Numeric/AERN/DoubleBasis/RealIntervalApprox.hs:(210,1)-(211,30)
+              (and originally defined in ‘aern-real-0.5.0:Numeric.AERN.RealArithmetic.RefinementOrderRounding.FieldOps’)
+    |
+141 |     (<+>),(<->),(<*>),(</>),
+    |                 ^^^^^
+[12 of 12] Compiling Numeric.AERN.DoubleBasis.Interval
+
+/tmp/aern-audit.zp9Mzz/source/aern-double/src/Numeric/AERN/DoubleBasis/Interval.hs:136:17: error:
+    Ambiguous occurrence ‘<*>’
+    It could refer to
+       either ‘Prelude.<*>’,
+              imported from ‘Prelude’ at src/Numeric/AERN/DoubleBasis/Interval.hs:14:8-40
+              (and originally defined in ‘GHC.Base’)
+           or ‘Numeric.AERN.RealArithmetic.RefinementOrderRounding.<*>’,
+              imported from ‘Numeric.AERN.RealArithmetic.RefinementOrderRounding’ at src/Numeric/AERN/DoubleBasis/Interval.hs:(213,1)-(214,30)
+              (and originally defined in ‘aern-real-0.5.0:Numeric.AERN.RealArithmetic.RefinementOrderRounding.FieldOps’)
+    |
+136 |     (<+>),(<->),(<*>),(</>),
+    |                 ^^^^^
+Completed 80 action(s).
+
+Error: [S-7282]
+       Stack failed to execute the build plan.
+       
+       While executing the build plan, Stack encountered the error:
+       
+       [S-7011]
+       While building package aern-double-0.5.0 (scroll up to its section to see the error) using:
+       /tmp/aern2-stack.ryVCFK/setup-exe-cache/x86_64-linux-tinfo6/Cabal-simple_O_vy6YIf_3.10.3.0_ghc-9.6.7 --verbose=1 --builddir=.stack-work/dist/x86_64-linux-tinfo6/ghc-9.6.7 build lib:aern-double --ghc-options ""
+       Process exited with code: ExitFailure 1 

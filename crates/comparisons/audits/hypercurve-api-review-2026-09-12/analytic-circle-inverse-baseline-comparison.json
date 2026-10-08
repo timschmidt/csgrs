@@ -1,0 +1,27 @@
+{
+  "baseline": "bezier-bounds-policy-full-results.json",
+  "fixed_tests": [
+    "analytic_parallel_circle_tangency_retains_zero_cross_evidence",
+    "analytic_parallel_intersects_independently_parameterized_circles_exactly"
+  ],
+  "remaining_failed_tests": {
+    "hypercurve_curve_region_promotion": [
+      "approximate_512_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions",
+      "arc_parabola_fillet_recovers_exact_complement_contacts",
+      "axis_aligned_algebraic_chords_reenter_exact_region_offsets",
+      "line_parabola_fillet_extends_the_regular_incident_cell_exactly",
+      "nonconvex_algebraic_chord_expansion_is_exact_and_local_collapse_is_explicit",
+      "non_ph_bezier_pair_projective_fillet_retains_algebraic_extensions",
+      "retained_circular_regions_chamfer_over_the_full_support",
+      "strict_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions",
+      "unified_region_chamfer_joins_two_algebraic_bezier_cuts",
+      "unified_mixed_line_arc_erosion_splits_after_a_curved_neck_collapse",
+      "unified_region_chamfer_retains_algebraic_bezier_cut",
+      "unified_region_corners_use_rational_circular_carriers",
+      "unified_region_native_chamfer_uses_arc_sweep_evidence",
+      "unified_region_native_fillet_retains_certified_arc_contacts",
+      "unified_region_non_miter_erosions_split_after_neck_collapse"
+    ]
+  },
+  "new_failures": []
+}

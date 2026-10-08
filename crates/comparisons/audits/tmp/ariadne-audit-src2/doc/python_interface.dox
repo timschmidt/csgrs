@@ -1,0 +1,110 @@
+/***************************************************************************
+ *            python_interface.dox
+ *
+ *  Copyright  2020  Pieter Collins
+ *
+ ****************************************************************************/
+
+/*
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; either version 2 of the License, or
+ *  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Library General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program; if not, write to the Free Software
+ *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+ */
+
+/*! \file python_interface.dox
+ *  \brief Overview of the differences between the Python interface and the C++ API.
+ */
+
+namespace Ariadne {
+
+/*!
+
+\page python_interface_page Python Interface
+
+The Python interface provides Python bindings to %Ariadne's C++ library.
+It does not introduce new functionality; instead it merely makes the
+C++ classes, methods, functions and variables usable from a Python script.
+
+As far as possible, the Python interface mimics the C++ interface, so
+the C++ documentation is also applicable for Python users. However, there
+are some unavoidable differences, due to the differences between C++ and Python.
+The main differences that Python users consulting the C++ documentation
+should be aware of are given below:
+
+ - <em>Not all classes and methods are exported:</em> <br>
+To see which classes are exported, type:
+  \code python3 -c "import ariadne; print(dir(ariadne))" \endcode
+Missing classes may be
+added in a future release.
+
+ - <em>C++ templates:</em> <br>
+C++ allows classes to be defined which depend on other classes;
+such classes are called \em templates. For example, the template \ref Bounds "Bounds<X>"
+describes bounds on a quantity, where the lower and upper bounds are objects of class \a X.
+Thus Bounds<Dyadic> represents dyadic bounds on a real number,
+and Bounds<FloatMP> would represents multiple-precision floating-point bounds.
+Each instantiation of a C++ template yields a different class.
+<br/>
+Since Python does not have templates, in the Python interface,
+each instantiation is a separate class.
+The class name is derived from the template name and the class parameter.
+For example, \ref Bounds "Bounds<Dyadic>" translates to the Python class \ref Dyadic::DyadicBounds "DyadicBounds".
+The Python class name is available from C++ (and can be found in the documentation) as a C++ <tt>typedef</tt> class alias.
+<br/>
+For some C++ templates, the C++ class <tt>T\<X> </tt> is avalable in Python as <tt>T[X]</tt>.
+For example, the C++ template class \ref Float "Float<DP>", with Python class name \ref FloatDP,
+is also available in Python as <tt>Float[DP]</tt>,
+and the C++ template class \ref Bounds "Bounds<Float<DP>>" with python class name \ref FloatDPBounds,
+is also available in Python as <tt>Bounds[Float[DP]]</tt> or <tt>Bounds[FloatDP]</tt>.
+
+ - <em>Conversion:</em> <br>
+Conversions from a class <tt>F</tt> to a class <tt>T</tt> are defined by a constructor
+<tt>T(F)</tt> in class <tt>T</tt>, or by a conversion operator <tt>operator T()</tt>
+in class <tt>F</tt>. Such conversions may be automatically applied in the Python
+interface when dispatching functions, though the conversion applied may differ slighly from
+the C++ version. When in doubt, use an explicit constructor <tt>T(obj)</tt> to convert to
+type <tt>T</tt>.
+
+ - <em>Operators:</em> <br>
+In both C++ and Python, unary and binary mathematical operators represented by a symbol <tt>★</tt> can be defined, and are used by <tt>★x</tt> or <tt>x1★x2</tt>.
+  e.g. the addition operator is used by <tt>x1+x2</tt>.
+In Python, operators are defined by specially-named class methods.
+  e.g. addition is defined by the <tt>__add__</tt> method.
+In C++, the operator <tt>★</tt> is defined by the function with name <tt>operator★</tt>.
+  e.g. addition is defined by <tt>operator+(X1 x1, X2 x2)</tt>.
+To find the information about a Python operator with symbol <tt>★</tt>, you should look for <tt>operator★</tt> in the C++ API docmentation.
+<br>
+Note that C++ does
+not have a 'power' operator; <tt>operator^</tt> is 'bitwise exclusive or', and
+has a lower precedence than multiplication. In Python, the power operator is
+used by <tt>x1 ** x2</tt>.
+<br>
+Since Python does not allow user-defined logical operations <tt>and</tt>, <tt>or</tt> and <tt>not</tt>, these are implemented by the 'bitwise' operators <tt>&</tt>, <tt>|</tt> and <tt>~</tt>, and are used by <tt>b1&b2</tt>, <tt>b1|b2</tt> and <tt>~b2</tt>.
+
+ - <em>Printing:</em> <br>
+In C++, printing is achieved by defining <tt>OutputStream& operator<<(OutputStream& os, Class obj)</tt>.
+In Python, printing is performed by the <tt>print(obj)</tt> statement, or by converting to a string
+using <tt>str(obj)</tt> or <tt>repr(obj)</tt>. The Python output of <tt>repr</tt> typically differs
+from the C++ output or that of <tt>str</tt>, and is designed so that <tt>eval(repr(obj))</tt>
+yields an object equivalent to the original argument.
+
+ - <em>C++ extended literals:</em> <br>
+The C++ <tt>operator""</tt> can be used to define extended numeric and string literals.
+For example, \ref operator""_dy(long long double) can be used as <tt>1.375_dy</tt> to
+be interpreted as the Dyadic number \f$11/2^3\f$. Python does not support extended literals,
+but the same result may be obtained either by a constructor, or by using the literal tag as
+a function e.g. <tt>dy_(1.375)</tt>.
+
+*/
+
+} // namespace Ariadne

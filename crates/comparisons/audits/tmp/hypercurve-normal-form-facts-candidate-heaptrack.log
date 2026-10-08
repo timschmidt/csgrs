@@ -1,0 +1,26 @@
+heaptrack output will be written to "/tmp/hypercurve-normal-form-facts-candidate.heap.zst"
+starting application, this might take some time...
+NOTE: heaptrack detected DEBUGINFOD_URLS but will disable it to prevent 
+unintended network delays during recording
+If you really want to use DEBUGINFOD, export HEAPTRACK_ENABLE_DEBUGINFOD=1
+bezier_parameter_normal_form_zero_cold: 20000 iterations in 1.176124742s (58.806µs/iter), equal=20000
+bezier_parameter_normal_form_zero_reused: 20000 iterations in 953.405µs (47ns/iter), equal=20000
+bezier_parameter_bernstein_32_to_power: 20000 iterations in 1.956831527s (97.841µs/iter), degree_checksum=640000
+bezier_algebraic_parameter_sturm: 20000 iterations in 724.741139ms (36.237µs/iter), total=40000
+bezier_algebraic_parameter_refined_ordering: 10000 iterations in 794.153404ms (79.415µs/iter), ordered=10000
+bezier_algebraic_parameter_refined_even_root_ordering: 10000 iterations in 3.16403301s (316.403µs/iter), ordered=10000
+bezier_parameter_quintic_unit_isolation: 2000 iterations in 590.84718ms (295.423µs/iter), isolated=10000, sturm_builds=1, interval_counts=19, bisections=9, rational_refinements=0, max_depth=5
+bezier_parameter_boundary_root_isolation: 2000 iterations in 685.078076ms (342.539µs/iter), isolated=2000, interval_counts=263, bisections=130, max_depth=130
+bezier_algebraic_parameter_exact_rational_reconstruction: 500000 iterations in 17.769573ms (35ns/iter), reconstructed=500000
+bezier_algebraic_point_tangent_image: 20000 iterations in 118.720498ms (5.936µs/iter), transformed=40000
+rational_bezier_algebraic_point_tangent_image: 20000 iterations in 4.81523ms (240ns/iter), transformed=40000
+heaptrack stats:
+	allocations:          	33595169
+	leaked allocations:   	1558
+	temporary allocations:	1682449
+Heaptrack finished! Now run the following to investigate the data:
+
+  heaptrack --analyze "/tmp/hypercurve-normal-form-facts-candidate.heap.zst"
+
+heaptrack_gui detected, automatically opening the file...
+/usr/bin/heaptrack: line 288:    87 Aborted                    (core dumped) exit $EXIT_CODE

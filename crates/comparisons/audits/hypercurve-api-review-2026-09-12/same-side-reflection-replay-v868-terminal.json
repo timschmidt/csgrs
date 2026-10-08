@@ -1,0 +1,40 @@
+{
+  "baseline": "same-side-reflection-v867-sources.json",
+  "rlib": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypercurve-85a9105cd1c82df7.rlib",
+  "rlib_sha256": "f0bca607954fdd57721220620ef05cb78853f1d46abc35642e6ba89a84c9bb43",
+  "source_sha256": "d44b159740a52b745578715ac2ba8b9fdee70c9fea8499fb5fd5f71e670cdb26",
+  "processes": [
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustc",
+        "--edition=2024",
+        "--crate-name",
+        "same_side_reflection_probe",
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/same-side-reflection-probe-v863.rs",
+        "--extern",
+        "hypercurve=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypercurve-85a9105cd1c82df7.rlib",
+        "-L",
+        "dependency=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps",
+        "-C",
+        "opt-level=3",
+        "-o",
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/same-side-reflection-replay-v868-binary"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.46446445886977017,
+      "log": "same-side-reflection-replay-v868-compile.log"
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/same-side-reflection-replay-v868-binary"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.003554597031325102,
+      "log": "same-side-reflection-replay-v868-cases.log"
+    }
+  ],
+  "all_processes_reaped": true,
+  "binary_sha256": "ff25bca2fdd0dac410306c71770db8f7f4855e44e8840a07ead6285f29726d5e",
+  "output": "order=2 sign=1 swap=false policy=0 status=Ordered ordering=Some(FirstBeforeSecond) expected=FirstBeforeSecond matches=true\norder=2 sign=1 swap=true policy=0 status=Ordered ordering=Some(SecondBeforeFirst) expected=SecondBeforeFirst matches=true\norder=2 sign=-1 swap=false policy=0 status=Ordered ordering=Some(SecondBeforeFirst) expected=SecondBeforeFirst matches=true\norder=2 sign=-1 swap=true policy=0 status=Ordered ordering=Some(FirstBeforeSecond) expected=FirstBeforeSecond matches=true\norder=3 sign=1 swap=false policy=0 status=Ordered ordering=Some(FirstBeforeSecond) expected=FirstBeforeSecond matches=true\norder=3 sign=1 swap=true policy=0 status=Ordered ordering=Some(SecondBeforeFirst) expected=SecondBeforeFirst matches=true\norder=3 sign=-1 swap=false policy=0 status=Ordered ordering=Some(SecondBeforeFirst) expected=SecondBeforeFirst matches=true\norder=3 sign=-1 swap=true policy=0 status=Ordered ordering=Some(FirstBeforeSecond) expected=FirstBeforeSecond matches=true\norder=2 sign=1 swap=false policy=1 status=Ordered ordering=Some(FirstBeforeSecond) expected=FirstBeforeSecond matches=true\norder=2 sign=1 swap=true policy=1 status=Ordered ordering=Some(SecondBeforeFirst) expected=SecondBeforeFirst matches=true\norder=2 sign=-1 swap=false policy=1 status=Ordered ordering=Some(SecondBeforeFirst) expected=SecondBeforeFirst matches=true\norder=2 sign=-1 swap=true policy=1 status=Ordered ordering=Some(FirstBeforeSecond) expected=FirstBeforeSecond matches=true\norder=3 sign=1 swap=false policy=1 status=Ordered ordering=Some(FirstBeforeSecond) expected=FirstBeforeSecond matches=true\norder=3 sign=1 swap=true policy=1 status=Ordered ordering=Some(SecondBeforeFirst) expected=SecondBeforeFirst matches=true\norder=3 sign=-1 swap=false policy=1 status=Ordered ordering=Some(SecondBeforeFirst) expected=SecondBeforeFirst matches=true\norder=3 sign=-1 swap=true policy=1 status=Ordered ordering=Some(FirstBeforeSecond) expected=FirstBeforeSecond matches=true\ncomplete cases=16 mismatches=0\n",
+  "probe_complete": true
+}

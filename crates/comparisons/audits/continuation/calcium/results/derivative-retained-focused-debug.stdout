@@ -1,0 +1,8 @@
+
+running 3 tests
+test rational_bezier_general::derivative_demand_tests::derivative_demand_checked_capacity_and_exact_zero_tails ... ok
+test rational_bezier_general::derivative_demand_tests::derivative_demand_exact_monomial_oracles ... ok
+test rational_bezier_general::derivative_demand_tests::derivative_demand_preserves_all_rational_quotient_orders ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 911 filtered out; finished in 1.46s
+

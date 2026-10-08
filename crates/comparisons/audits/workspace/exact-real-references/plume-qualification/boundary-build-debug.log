@@ -1,0 +1,73 @@
+[ 1 of 10] Compiling DyDigit          ( /home/tim/Documents/GitHub/workspace/.audit-plume.SZHOs8/compat/DyDigit.hs, .audit-plume-boundary.XNOLY9/debug-build/DyDigit.o )
+
+/home/tim/Documents/GitHub/workspace/.audit-plume.SZHOs8/compat/DyDigit.hs:79:1: warning: [GHC-94817] [-Wtabs]
+    Tab character found here, and in 33 further locations.
+    Suggested fix: Please use spaces instead.
+   |
+79 |                    | otherwise = dydNormalise (a `div` 2, b - 1)
+   | ^^^^^^^^
+[ 2 of 10] Compiling DyStream         ( /home/tim/Documents/GitHub/workspace/.audit-plume.SZHOs8/compat/DyStream.hs, .audit-plume-boundary.XNOLY9/debug-build/DyStream.o )
+
+/home/tim/Documents/GitHub/workspace/.audit-plume.SZHOs8/compat/DyStream.hs:51:1: warning: [GHC-53633] [-Woverlapping-patterns]
+    Pattern match is redundant
+    In an equation for ‘dysDigAdd’: dysDigAdd d (h : x) = ...
+   |
+51 | dysDigAdd d    (h:x) = (a:dysDigAdd b x)
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^...
+
+/home/tim/Documents/GitHub/workspace/.audit-plume.SZHOs8/compat/DyStream.hs:77:1: warning: [GHC-94817] [-Wtabs]
+    Tab character found here, and in 8 further locations.
+    Suggested fix: Please use spaces instead.
+   |
+77 |                           else (n,x)
+   | ^^^^^^^^
+[ 3 of 10] Compiling DyFloat          ( /home/tim/Documents/GitHub/workspace/.audit-plume.SZHOs8/compat/DyFloat.hs, .audit-plume-boundary.XNOLY9/debug-build/DyFloat.o )
+
+/home/tim/Documents/GitHub/workspace/.audit-plume.SZHOs8/compat/DyFloat.hs:43:35: warning: [GHC-94817] [-Wtabs]
+    Tab character found here, and in 11 further locations.
+    Suggested fix: Please use spaces instead.
+   |
+43 | dyf_Half           = (0, dys_Half)         :: DyFloat
+   |                                   ^^^^^^
+[ 4 of 10] Compiling Utils            ( /home/tim/Documents/GitHub/workspace/.audit-plume.SZHOs8/compat/Utils.hs, .audit-plume-boundary.XNOLY9/debug-build/Utils.o )
+
+/home/tim/Documents/GitHub/workspace/.audit-plume.SZHOs8/compat/Utils.hs:7:1: warning: [GHC-94817] [-Wtabs]
+    Tab character found here.
+    Suggested fix: Please use spaces instead.
+  |
+7 |          where
+  | ^^^^^^^^
+[ 5 of 10] Compiling SBinStream       ( /home/tim/Documents/GitHub/workspace/.audit-plume.SZHOs8/compat/SBinStream.hs, .audit-plume-boundary.XNOLY9/debug-build/SBinStream.o )
+
+/home/tim/Documents/GitHub/workspace/.audit-plume.SZHOs8/compat/SBinStream.hs:38:1: warning: [GHC-94817] [-Wtabs]
+    Tab character found here, and in 59 further locations.
+    Suggested fix: Please use spaces instead.
+   |
+38 |         where
+   | ^^^^^^^^
+[ 6 of 10] Compiling SBinFloat        ( /home/tim/Documents/GitHub/workspace/.audit-plume.SZHOs8/compat/SBinFloat.hs, .audit-plume-boundary.XNOLY9/debug-build/SBinFloat.o )
+
+/home/tim/Documents/GitHub/workspace/.audit-plume.SZHOs8/compat/SBinFloat.hs:24:2: warning: [GHC-94817] [-Wtabs]
+    Tab character found here, and in three further locations.
+    Suggested fix: Please use spaces instead.
+   |
+24 | )       where
+   |  ^^^^^^^
+[ 7 of 10] Compiling Convert          ( /home/tim/Documents/GitHub/workspace/.audit-plume.SZHOs8/compat/Convert.hs, .audit-plume-boundary.XNOLY9/debug-build/Convert.o )
+
+/home/tim/Documents/GitHub/workspace/.audit-plume.SZHOs8/compat/Convert.hs:27:1: warning: [GHC-94817] [-Wtabs]
+    Tab character found here, and in 7 further locations.
+    Suggested fix: Please use spaces instead.
+   |
+27 |         | dydGTE c dyd_Quarter      =
+   | ^^^^^^^^
+[ 8 of 10] Compiling SBinDec          ( /home/tim/Documents/GitHub/workspace/.audit-plume.SZHOs8/compat/SBinDec.hs, .audit-plume-boundary.XNOLY9/debug-build/SBinDec.o )
+
+/home/tim/Documents/GitHub/workspace/.audit-plume.SZHOs8/compat/SBinDec.hs:20:1: warning: [GHC-94817] [-Wtabs]
+    Tab character found here, and in 87 further locations.
+    Suggested fix: Please use spaces instead.
+   |
+20 |             if (two_r <= -1.0) then (-1:(sbGen (two_r+1.0))) else
+   | ^^^^^^^^
+[ 9 of 10] Compiling Main             ( exact-real-references/plume-qualification/BoundaryProbe.hs, .audit-plume-boundary.XNOLY9/debug-build/Main.o )
+[10 of 10] Linking .audit-plume-boundary.XNOLY9/boundary-probe-debug

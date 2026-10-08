@@ -1,0 +1,148 @@
+    Finished `release` profile [optimized] target(s) in 0.18s
+     Running unittests src/lib.rs (target/release/deps/hyperreal-1cc0b97c8fd55e9c)
+
+running 58 tests
+test computable::format::tests::disp_almost_one_exp ... ok
+test computable::format::tests::digits_round_exp_false ... ok
+test computable::format::tests::exp_huge_neg ... ok
+test computable::format::tests::exp_two_thirds ... ok
+test computable::format::tests::exp_bigger ... ok
+test computable::format::tests::exp_smol ... ok
+test computable::format::tests::exp_pi ... ok
+test computable::node::tests::clones_share_immutable_expression_nodes ... ok
+test computable::node::tests::compare_to_accepts_clone_shared_composite_expression ... ok
+test computable::node::tests::deferred_exp_does_not_cache_an_aborted_range_check ... ok
+test computable::node::tests::endpoint_inverse_trig_computable_kernels_approximate_expected_values ... ok
+test computable::node::tests::exp_and_ln_round_trip ... ok
+test computable::node::tests::exp_large_argument_reduces_by_ln2 ... ok
+test computable::node::tests::exp_near_prescaled_limit_round_trip ... ok
+test computable::node::tests::exp_one_uses_dedicated_e_constant ... ok
+test computable::node::tests::cloned_expression_can_be_refined_concurrently ... ok
+test computable::node::tests::exp_range_filter_requires_exact_cached_magnitude ... ok
+test computable::node::tests::exp_negative_is_inverse ... ok
+test computable::node::tests::expm1_coarse_shortcut_requires_a_proven_range ... ok
+test computable::node::tests::expm1_preserves_small_argument_and_sign ... ok
+test computable::node::tests::independently_expanded_quadratic_products_cancel_exactly ... ok
+test computable::node::tests::integer_exp_uses_binary_power_only_through_the_retained_limit ... ok
+test computable::node::tests::inverse_trig_computable_kernels_approximate_expected_values ... ok
+test computable::node::tests::sign_normalization_exposes_scaled_product_cancellation ... ok
+test computable::node::tests::inverse_hyperbolic_computable_kernels_approximate_expected_values ... ok
+test rational::arithmetic::tests::affine_plane3_dyadic_stack_matches_expanded_determinants_and_falls_back ... ok
+test rational::arithmetic::tests::average_pair_matches_expanded_exact_arithmetic ... ok
+test rational::arithmetic::tests::large_power_of_two_square_extraction_splits_the_exponent ... ok
+test rational::arithmetic::tests::mean3_refs_matches_expanded_exact_arithmetic ... ok
+test rational::arithmetic::tests::mean_refs_matches_expanded_exact_arithmetic ... ok
+test rational::arithmetic::tests::scientific_notation_validates_grammar_and_bounds_expansion ... ok
+test real::convert::tests::borrowed_lossy_float_exports_are_repeatable ... ok
+test real::arithmetic::tests::rational_linear_form4_filter_exposes_positive_scale_normalization ... ok
+test real::tests::tests::base_two_and_ten_exponentials_match_binary64_for_irrational_exponents ... ok
+test real::tests::tests::exact_dyadic_parameterized_point_matches_expanded_arithmetic ... ok
+test real::arithmetic::tests::rational_linear_form4_normalization_handles_every_normal_exponent ... ok
+test real::tests::tests::base_two_and_ten_exponentials_preserve_exact_rational_powers ... ok
+test real::tests::tests::immediate_sign_never_walks_or_refines_an_opaque_expression ... ok
+test real::tests::tests::exp_pi ... ok
+test real::tests::tests::pi_exp_products_remain_symbolically_combinable ... ok
+test computable::node::tests::exp_of_shared_and_inexact_magnitude_nodes_matches_directed_mpfr ... ok
+test real::convert::tests::cached_f64_proposal_matches_uncached_f32_export ... ok
+test real::tests::tests::ln_scaled_exp_reduces_to_log_scale_plus_exponent ... ok
+test real::tests::tests::real_domain_accessors_expose_structural_certificates_without_refinement ... ok
+test simple::tests::exact_symbol_subexpressions ... ok
+test simple::tests::exp2_and_exp10_parse_and_preserve_exact_results ... ok
+test simple::tests::nested_exact_subexpressions ... ok
+test real::tests::tests::powi_i64_matches_arbitrary_precision_exponents ... ok
+test real::tests::tests::exact_dyadic_interpolated_point3_matches_expanded_arithmetic ... ok
+test computable::node::tests::pi_laurent_normal_form_declines_wide_opaque_expression_dags ... ok
+test real::tests::tests::fused_wide_dyadic_line_intersection_matches_expanded_exact_arithmetic ... ok
+test real::tests::tests::rational_linear_form4_filter_never_disagrees_across_wide_exponent_spans ... ok
+test real::tests::tests::retained_roots_and_rational_powers_have_exact_log_exp_round_trips ... ok
+test real::tests::tests::fused_exact_rational_line_intersection_matches_expanded_exact_arithmetic ... ok
+test real::tests::tests::fused_dyadic_line_intersection_matches_expanded_exact_arithmetic ... ok
+test computable::node::tests::bounded_integer_exp_matches_ln2_reduction ... ok
+test computable::node::tests::expm1_range_guard_and_cache_orders_match_directed_mpfr ... ok
+test computable::node::tests::exp_constructor_and_deferred_kernel_match_directed_mpfr ... ok
+
+test result: ok. 58 passed; 0 failed; 0 ignored; 0 measured; 657 filtered out; finished in 0.40s
+
+     Running unittests src/main.rs (target/release/deps/hyperreal-43af7134f8c78351)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/adversarial_props.rs (target/release/deps/adversarial_props-0a914a6d763ae199)
+
+running 1 test
+proptest: FileFailurePersistence::SourceParallel set, but failed to find lib.rs or main.rs
+test signed_product_sum_matches_expanded_3x3_determinant ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 6 filtered out; finished in 0.00s
+
+     Running tests/adversarial_regressions.rs (target/release/deps/adversarial_regressions-273fe10982cb5e17)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 10 filtered out; finished in 0.00s
+
+     Running tests/adversarial_semantics.rs (target/release/deps/adversarial_semantics-14367dc05f578772)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 5 filtered out; finished in 0.00s
+
+     Running tests/cli.rs (target/release/deps/cli-23b14ca2f4401b0f)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 2 filtered out; finished in 0.00s
+
+     Running tests/gmp_api_coverage.rs (target/release/deps/gmp_api_coverage-d8df9c4bb26c1855)
+
+running 1 test
+test every_public_numeric_api_is_benchmarked_or_explicitly_classified ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+     Running tests/numeric_roundtrip_formats.rs (target/release/deps/numeric_roundtrip_formats-fbd426c8e2a62e26)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 10 filtered out; finished in 0.00s
+
+     Running tests/numerical_cross_reference.rs (target/release/deps/numerical_cross_reference-a3ffb52df2574959)
+
+running 1 test
+test core2_zimmermann_exp_inputs_match_mpfr_at_256_bits ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 15 filtered out; finished in 0.00s
+
+     Running tests/public_numeric_semantics.rs (target/release/deps/public_numeric_semantics-7755a5724c4f9ae4)
+
+running 1 test
+test public_linear_algebra_helpers_match_expanded_arithmetic ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 8 filtered out; finished in 0.00s
+
+     Running tests/rational_oracle.rs (target/release/deps/rational_oracle-f8bd4ffe9a496bb8)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 5 filtered out; finished in 0.00s
+
+     Running tests/readme.rs (target/release/deps/readme-a5d82a86e474ebfb)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 2 filtered out; finished in 0.00s
+
+     Running tests/readme_metadata.rs (target/release/deps/readme_metadata-1ef4b92f6e81c221)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 2 filtered out; finished in 0.00s
+
+     Running tests/real_representations.rs (target/release/deps/real_representations-2c86d8dfe30d5b9f)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 6 filtered out; finished in 0.00s
+

@@ -1,0 +1,115 @@
+{
+  "checks": [
+    {
+      "label": "fmt",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustfmt",
+        "--edition",
+        "2024",
+        "--check",
+        "src/curve_resultant.rs"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.3813609320204705,
+      "log": "resultant-replay-20260925-v34-fmt.log"
+    },
+    {
+      "label": "clippy-1",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "clippy",
+        "--all-targets",
+        "--all-features",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 9.789652943029068,
+      "log": "resultant-replay-20260925-v34-clippy-1.log"
+    },
+    {
+      "label": "clippy-2",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "clippy",
+        "--all-targets",
+        "--no-default-features",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 9.449283827096224,
+      "log": "resultant-replay-20260925-v34-clippy-2.log"
+    }
+  ],
+  "cases": [
+    {
+      "label": "nonrational_resultant_preserves_specialized_degree_drop_identity",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/resultant-replay-20260925-v34-libtest",
+        "--exact",
+        "curve_resultant::tests::nonrational_resultant_preserves_specialized_degree_drop_identity",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.2748546809889376,
+      "log": "resultant-replay-20260925-v34-nonrational_resultant_preserves_specialized_degree_drop_identity.log"
+    },
+    {
+      "label": "rational_resultant_preserves_specialized_degree_drop_identity",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/resultant-replay-20260925-v34-libtest",
+        "--exact",
+        "curve_resultant::tests::rational_resultant_preserves_specialized_degree_drop_identity",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.26807474601082504,
+      "log": "resultant-replay-20260925-v34-rational_resultant_preserves_specialized_degree_drop_identity.log"
+    },
+    {
+      "label": "generated_polynomial_determinant_matches_scalar_permutation_expansion",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/resultant-replay-20260925-v34-libtest",
+        "--exact",
+        "curve_resultant::tests::generated_polynomial_determinant_matches_scalar_permutation_expansion",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.3880045668920502,
+      "log": "resultant-replay-20260925-v34-generated_polynomial_determinant_matches_scalar_permutation_expansion.log"
+    },
+    {
+      "label": "full-library",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/resultant-replay-20260925-v34-libtest",
+        "--test-threads=2",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 2.690431694034487,
+      "log": "resultant-replay-20260925-v34-full-library.log"
+    }
+  ],
+  "all_processes_reaped": true,
+  "plan": "resultant-replay-20260925-v34-plan.json",
+  "binary": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/resultant-replay-20260925-v34-libtest",
+  "binary_sha256": "69a24b9cffde12d22715e585e2de4c4f5b66ae9087db9a7f22c0b3d141a490e3",
+  "library_case_count": 509,
+  "passed": 509,
+  "ignored": 0,
+  "all_sources_unchanged": true
+}

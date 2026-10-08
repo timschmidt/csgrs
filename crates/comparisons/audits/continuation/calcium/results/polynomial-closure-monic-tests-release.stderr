@@ -1,0 +1,12 @@
+   Compiling hyperreal v0.13.1 (/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/polynomial-monic-trial/hyperreal)
+   Compiling hyperlattice v0.6.1 (/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/polynomial-monic-trial/hyperlattice)
+   Compiling hyperlimit v0.4.1 (/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/polynomial-monic-trial/hyperlimit)
+   Compiling hypersolve v0.3.1 (/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/polynomial-monic-trial/hypersolve)
+    Finished `release` profile [optimized] target(s) in 1m 23s
+     Running unittests src/lib.rs (/tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/release/deps/hypersolve-d023ba92f5e34721)
+     Running tests/exactcore_root_families.rs (/tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/release/deps/exactcore_root_families-c4c4087dd713d9f2)
+     Running tests/quadratic_extraction.rs (/tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/release/deps/quadratic_extraction-8b7dfe80e619cb89)
+     Running tests/readme.rs (/tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/release/deps/readme-4e798eb4182a7814)
+     Running tests/real_representations.rs (/tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/release/deps/real_representations-1d85dfc3874ad804)
+     Running tests/residual_props.rs (/tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/release/deps/residual_props-54ec657514df3733)
+     Running tests/smoke.rs (/tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/release/deps/smoke-23173f6c26d64e88)

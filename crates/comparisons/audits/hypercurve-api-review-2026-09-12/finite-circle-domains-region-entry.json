@@ -1,0 +1,21 @@
+{
+  "returncode": 0,
+  "elapsed_seconds": 0.03162068600067869,
+  "normal_library_sha256": "8eb7cd1fbaa241bf01e599e07ca251959c800c77c62a8091232bad9d52006638",
+  "log": "finite-circle-domains-region-entry.log",
+  "source": "finite-analytic-pair-domains-region-public.rs",
+  "command": [
+    "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustc",
+    "--edition=2024",
+    "-O",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-analytic-pair-domains-region-public.rs",
+    "--extern",
+    "hypercurve=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypercurve-ee303709bdb4cb6a.rlib",
+    "-L",
+    "dependency=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps",
+    "-o",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-circle-domains-region-entry"
+  ],
+  "source_sha256": "e76e8c46a5b3dcbcfbef576cc188fe7514c3e8374a03013cd5140bab69e21c2a",
+  "executable_sha256": "229ee2288782f3dcac7f7b06cef8c3dbe977df424807931040f443581f088fba"
+}

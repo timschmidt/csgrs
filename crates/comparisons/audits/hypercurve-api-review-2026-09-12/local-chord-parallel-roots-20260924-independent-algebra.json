@@ -1,0 +1,42 @@
+{
+  "norm_in_t_coefficients": [
+    -3,
+    0,
+    4,
+    0,
+    4,
+    0,
+    -4
+  ],
+  "cubic_in_t_squared_coefficients": [
+    -3,
+    4,
+    4,
+    -4
+  ],
+  "disjoint_v_root_intervals": [
+    {
+      "lower": "-1",
+      "upper": "0",
+      "lower_sign_value": "1",
+      "upper_sign_value": "-3"
+    },
+    {
+      "lower": "1/2",
+      "upper": "3/4",
+      "lower_sign_value": "-1/2",
+      "upper_sign_value": "9/16"
+    },
+    {
+      "lower": "1",
+      "upper": "2",
+      "lower_sign_value": "1",
+      "upper_sign_value": "-11"
+    }
+  ],
+  "degree_three_exhausts_roots": true,
+  "four_simple_real_t_roots_in_minus_two_to_two": true,
+  "positive_speed_accepts_exactly_t_squared_below_one": true,
+  "authored_contact_x_squared_lower_bound": "9/32",
+  "offset_derivative_scale_lower_bound": "3/4"
+}

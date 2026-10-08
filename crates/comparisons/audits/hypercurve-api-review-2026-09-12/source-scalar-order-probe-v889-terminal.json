@@ -1,0 +1,40 @@
+{
+  "baseline": "retained-vector-order-v886-sources.json",
+  "rlib": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypercurve-85a9105cd1c82df7.rlib",
+  "rlib_sha256": "4d5c80f6f95aceb19eea318719457a0fe2430924a382c3d133d048fad2c01acb",
+  "source_sha256": "1115ad93f6782a0ddb88241babb8acae3cfed389fbec8f7d49053f262abec7dc",
+  "processes": [
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustc",
+        "--edition=2024",
+        "--crate-name",
+        "source_scalar_order_probe",
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/source-scalar-order-probe-v889.rs",
+        "--extern",
+        "hypercurve=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypercurve-85a9105cd1c82df7.rlib",
+        "-L",
+        "dependency=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps",
+        "-C",
+        "opt-level=3",
+        "-o",
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/source-scalar-order-probe-v889-binary"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.6146330980118364,
+      "log": "source-scalar-order-probe-v889-compile.log"
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/source-scalar-order-probe-v889-binary"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.007629577070474625,
+      "log": "source-scalar-order-probe-v889-cases.log"
+    }
+  ],
+  "all_processes_reaped": true,
+  "binary_sha256": "f80cab6ff2ca5d3440a4829b526f5db9ebbc0d51f441f265d995e98d86efeba2",
+  "output": "policy=0 second=false point_represented=true retained_tangent=true vector_represented=false\npolicy=0 second=true point_represented=true retained_tangent=true vector_represented=false\npolicy=0 blocked=Unsupported\npolicy=1 second=false point_represented=true retained_tangent=true vector_represented=false\npolicy=1 second=true point_represented=true retained_tangent=true vector_represented=false\npolicy=1 blocked=Unsupported\ncomplete requests=2 blocked=2\n",
+  "probe_complete": true
+}

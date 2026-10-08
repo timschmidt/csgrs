@@ -1,0 +1,31 @@
+{
+  "repos": {
+    "hypercurve": {
+      "commit": "f5c1fda0cf25f12873cf83386446af18ea9c3b01",
+      "parent": "e9864c4768a508edf51fd844299ea0274cf7bfa7",
+      "paths": {
+        "README.md": "4b70917b0a5f4ce1b1a955dde68635b08841795c0c72e7b26763265f0c67355f",
+        "benches/bezier_region.rs": "7f902d724c0eb9abec685dbef5e58e2503c4a3abb263e0ac01ec29b53ae2145f",
+        "benches/comparative.rs": "1973bb22ffd813346fc83af7ffa89369875aca9c6e780668f91a94dfdab1714e",
+        "benches/curve_path.rs": "b1acd1cbea4603f2b00f1a3c1169191e8cf4e33227b6e00ecce0c06eaed1d25c",
+        "benches/curve_region_boolean_batch.rs": "d5d814d872b4da2127cc6ece536696708f6de19d8d4d50791685c4f53a947b88",
+        "benches/editing.rs": "22398ddda7d5f434bf6ffc91fec633a956606eae3f62261717b8c17d76db2f10",
+        "benches/offset.rs": "fd4c00390f655849cbb8e54c82d1e2314d2d71fe45b3086e1f20156c6add6987",
+        "src/bezier_offset.rs": "d6e4cd5a587dabd8f22920886f5710e33e277d8b546f108422bf8181afe2cc98",
+        "src/bezier_region.rs": "9cdf18c9ca0093b1b919c5c47021e7fb3b46263c56b3971b9ee0503ef18b2161",
+        "src/curve_region_boolean.rs": "9844f30375ffee9e3dd6cc473fe09f56694d6818936128ff14b4aa23785e53f0",
+        "src/curve_region_trim.rs": "1165057bcc0e7250bbb6602bfb04f565d36987e2e6b51458f2f416648a75104b",
+        "src/lib.rs": "6f76ec1b8c3dcd2ed81da67307539536dddee7c81caee561162602c555a6954e",
+        "tests/hypercurve_analytic_parallel_region.rs": "aab8df95077fe8e5269d7a203241b569968b604c25b2543810f92194a22a4b04",
+        "tests/hypercurve_bezier_region.rs": "f4d1524bf25262e932a518cb53b132871f808e35738d7618425debff4e25a77b",
+        "tests/hypercurve_curve_intersection.rs": "f643ba013028b10d0f74fd946cacb735397f487a063cf17cf919b885e7653b08",
+        "tests/hypercurve_curve_region_boolean.rs": "1593408fdc69563a662574ccfa7fe3090188f75f80bae97983304be9affb5121",
+        "tests/hypercurve_curve_region_boolean_fuzz.rs": "53c64d017f365ffe4aea3093820e90dfa930a6f66b706438438b95c3f0b5d75b",
+        "tests/hypercurve_curve_region_promotion.rs": "ad4fcf4dfeb4654cf0efd21376d62a4fdbd5cb80f92be1d8c8b8be6faf1fb1d5"
+      }
+    }
+  },
+  "qualification": "topology-hint-removal-v773-terminal.json",
+  "verified_source_files": 2048,
+  "clean_repositories": 30
+}

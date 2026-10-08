@@ -1,0 +1,16 @@
+{
+  "name": "bezier_region::tests::independent_selected_circle_pair_fillets_extend_over_both_full_supports",
+  "command": [
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/single-loop-corner-20260923-attempt1-libraries/parent-libtest",
+    "--exact",
+    "bezier_region::tests::independent_selected_circle_pair_fillets_extend_over_both_full_supports",
+    "--test-threads=1",
+    "--nocapture",
+    "--color",
+    "never"
+  ],
+  "returncode": 0,
+  "elapsed_seconds": 0.11524019506759942,
+  "binary_sha256": "08949cda980234983841e1696c33c6ccd16d2e2ff642ece106c6a09d6445c752",
+  "log": "corner-normalization-20260923-parent-replay2-independent_selected_circle_pair_fillets_extend_over_both_full_supports.log"
+}

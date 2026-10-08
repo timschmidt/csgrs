@@ -1,0 +1,13 @@
+{
+  "tag": "twelfth-capability-check-approved-v77",
+  "started": "2026-09-11T23:08:07.241Z",
+  "finished": "2026-09-11T23:08:07.376Z",
+  "elapsedSeconds": 0.13214561399999997,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "node",
+  "args": [
+    "check-twelfth-capability-v77.mjs"
+  ],
+  "code": 0,
+  "signal": null
+}

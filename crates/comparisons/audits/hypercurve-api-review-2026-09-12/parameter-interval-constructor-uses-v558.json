@@ -1,0 +1,707 @@
+[
+  [
+    "hypercurve/benches/bezier_algebraic_parameter.rs",
+    87,
+    "let left = decided(BezierParameterInterval::try_new(r(0), q(1, 4), &policy)?);"
+  ],
+  [
+    "hypercurve/benches/bezier_algebraic_parameter.rs",
+    88,
+    "let right = decided(BezierParameterInterval::try_new(q(3, 4), r(1), &policy)?);"
+  ],
+  [
+    "hypercurve/benches/bezier_algebraic_parameter.rs",
+    128,
+    "decided(BezierParameterInterval::try_new(q(2, 3), q(3, 4), &policy)?);"
+  ],
+  [
+    "hypercurve/benches/bezier_algebraic_parameter.rs",
+    209,
+    "let rational_interval = decided(BezierParameterInterval::try_new(q(1, 4), q(1, 2), &policy)?);"
+  ],
+  [
+    "hypercurve/benches/bezier_algebraic_parameter.rs",
+    233,
+    "let midpoint_interval = decided(BezierParameterInterval::try_new(q(2, 5), q(3, 5), &policy)?);"
+  ],
+  [
+    "hypercurve/benches/bezier_arrangement.rs",
+    322,
+    "decided(BezierParameterInterval::try_new(q(2, 5), q(3, 5), &policy)?),"
+  ],
+  [
+    "hypercurve/benches/bezier_region.rs",
+    138,
+    "let interval = decided(BezierParameterInterval::try_new("
+  ],
+  [
+    "hypercurve/benches/bezier_split_materialization.rs",
+    85,
+    "decided(BezierParameterInterval::try_new(q(2, 5), q(3, 5), &policy)?);"
+  ],
+  [
+    "hypercurve/benches/bezier_split_materialization.rs",
+    115,
+    "let algebraic_interval = decided(BezierParameterInterval::try_new(q(2, 3), q(3, 4), &policy)?);"
+  ],
+  [
+    "hypercurve/benches/bezier_tangent_order.rs",
+    98,
+    "decided(BezierParameterInterval::try_new(q(1, 2), r(1), &policy)?),"
+  ],
+  [
+    "hypercurve/benches/bezier_tangent_order.rs",
+    152,
+    "decided(BezierParameterInterval::try_new(q(2, 5), q(3, 5), &policy)?),"
+  ],
+  [
+    "hypercurve/benches/comparative.rs",
+    588,
+    "let interval = match BezierParameterInterval::try_new(Real::zero(), Real::one(), &policy)"
+  ],
+  [
+    "hypercurve/benches/editing.rs",
+    729,
+    "BezierParameterInterval::try_new(Real::zero(), Real::one(), policy)?,"
+  ],
+  [
+    "hypercurve/benches/offset.rs",
+    820,
+    "BezierParameterInterval::try_new(q(2, 3), q(3, 4), &policy)?"
+  ],
+  [
+    "hypercurve/fuzz/fuzz_targets/bezier_algebraic_image.rs",
+    71,
+    "let interval = match BezierParameterInterval::try_new(start, end, &policy) {"
+  ],
+  [
+    "hypercurve/fuzz/fuzz_targets/bezier_algebraic_parameter.rs",
+    42,
+    "let interval = match BezierParameterInterval::try_new(start, end, &policy) {"
+  ],
+  [
+    "hypercurve/fuzz/fuzz_targets/bezier_region.rs",
+    39,
+    "match BezierParameterInterval::try_new(rational(2, 3), rational(3, 4), policy).ok()? {"
+  ],
+  [
+    "hypercurve/fuzz/fuzz_targets/bezier_region.rs",
+    62,
+    "match BezierParameterInterval::try_new(rational(1, 3), rational(2, 5), policy).ok()? {"
+  ],
+  [
+    "hypercurve/fuzz/fuzz_targets/bezier_split_materialization.rs",
+    50,
+    "BezierParameterInterval::try_new(start, end, &policy)"
+  ],
+  [
+    "hypercurve/fuzz/fuzz_targets/bezier_split_materialization.rs",
+    63,
+    "&& let Ok(Classification::Decided(interval)) = BezierParameterInterval::try_new("
+  ],
+  [
+    "hypercurve/fuzz/fuzz_targets/bezier_tangent_order.rs",
+    74,
+    "let Ok(Classification::Decided(interval)) = BezierParameterInterval::try_new("
+  ],
+  [
+    "hypercurve/src/bezier_arrangement.rs",
+    1853,
+    "let interval = match crate::BezierParameterInterval::try_new("
+  ],
+  [
+    "hypercurve/src/bezier_offset.rs",
+    4208,
+    "BezierParameterInterval::try_new(Real::zero(), Real::one(), policy).unwrap()"
+  ],
+  [
+    "hypercurve/src/bezier_offset.rs",
+    4259,
+    "BezierParameterInterval::try_new(Real::zero(), Real::one(), policy).unwrap()"
+  ],
+  [
+    "hypercurve/src/bezier_offset.rs",
+    8520,
+    "match BezierParameterInterval::try_new_ordered(lower, upper, &CurveContext::STRICT)"
+  ],
+  [
+    "hypercurve/src/bezier_offset.rs",
+    21108,
+    "let interval = match BezierParameterInterval::try_new_ordered("
+  ],
+  [
+    "hypercurve/src/bezier_offset.rs",
+    28595,
+    "let interval = match BezierParameterInterval::try_new("
+  ],
+  [
+    "hypercurve/src/bezier_offset.rs",
+    41340,
+    "match BezierParameterInterval::try_new(start, end, &CurveContext::STRICT)? {"
+  ],
+  [
+    "hypercurve/src/bezier_offset.rs",
+    51145,
+    "match BezierParameterInterval::try_new(start, end, policy)? {"
+  ],
+  [
+    "hypercurve/src/bezier_offset.rs",
+    53387,
+    "match BezierParameterInterval::try_new(start, end, policy)? {"
+  ],
+  [
+    "hypercurve/src/bezier_offset.rs",
+    53507,
+    "match BezierParameterInterval::try_new(start, end, policy)? {"
+  ],
+  [
+    "hypercurve/src/bezier_offset.rs",
+    107517,
+    "let parameter_interval = match BezierParameterInterval::try_new_ordered("
+  ],
+  [
+    "hypercurve/src/bezier_offset.rs",
+    107919,
+    "let interval = match BezierParameterInterval::try_new_ordered("
+  ],
+  [
+    "hypercurve/src/bezier_offset.rs",
+    135032,
+    "let interval = match BezierParameterInterval::try_new_ordered("
+  ],
+  [
+    "hypercurve/src/bezier_offset.rs",
+    136464,
+    "BezierParameterInterval::try_new(lower, upper, &policy).unwrap()"
+  ],
+  [
+    "hypercurve/src/bezier_offset.rs",
+    137341,
+    "let interval = match BezierParameterInterval::try_new("
+  ],
+  [
+    "hypercurve/src/bezier_offset.rs",
+    137411,
+    "match BezierParameterInterval::try_new_ordered(half.clone(), Real::one(), &policy)"
+  ],
+  [
+    "hypercurve/src/bezier_offset.rs",
+    140027,
+    "BezierParameterInterval::try_new(Real::zero(), Real::one(), policy).unwrap()"
+  ],
+  [
+    "hypercurve/src/bezier_offset.rs",
+    141720,
+    "BezierParameterInterval::try_new(half.clone(), Real::one(), policy).unwrap()"
+  ],
+  [
+    "hypercurve/src/bezier_offset.rs",
+    157546,
+    "let Classification::Decided(interval) = BezierParameterInterval::try_new_ordered("
+  ],
+  [
+    "hypercurve/src/bezier_offset.rs",
+    158355,
+    "BezierParameterInterval::try_new(lower, upper, policy).unwrap()"
+  ],
+  [
+    "hypercurve/src/bezier_offset.rs",
+    158518,
+    "let Classification::Decided(interval) = BezierParameterInterval::try_new("
+  ],
+  [
+    "hypercurve/src/bezier_offset.rs",
+    160223,
+    "let Classification::Decided(interval) = BezierParameterInterval::try_new_ordered("
+  ],
+  [
+    "hypercurve/src/bezier_offset.rs",
+    165387,
+    "let interval = match BezierParameterInterval::try_new("
+  ],
+  [
+    "hypercurve/src/bezier_offset.rs",
+    166246,
+    "BezierParameterInterval::try_new(Real::zero(), Real::one(), &CurveContext::STRICT)"
+  ],
+  [
+    "hypercurve/src/bezier_offset.rs",
+    178962,
+    "BezierParameterInterval::try_new(Real::zero(), Real::one(), &CurveContext::STRICT)"
+  ],
+  [
+    "hypercurve/src/bezier_offset.rs",
+    180623,
+    "BezierParameterInterval::try_new(Real::zero(), Real::one(), &CurveContext::STRICT)"
+  ],
+  [
+    "hypercurve/src/bezier_offset.rs",
+    180687,
+    "BezierParameterInterval::try_new(Real::zero(), Real::one(), &CurveContext::STRICT)"
+  ],
+  [
+    "hypercurve/src/bezier_offset.rs",
+    180875,
+    "BezierParameterInterval::try_new(Real::zero(), Real::one(), &CurveContext::STRICT)"
+  ],
+  [
+    "hypercurve/src/bezier_offset.rs",
+    182145,
+    "BezierParameterInterval::try_new(Real::zero(), Real::one(), &policy).unwrap()"
+  ],
+  [
+    "hypercurve/src/bezier_offset.rs",
+    182701,
+    "BezierParameterInterval::try_new(half.clone(), Real::one(), &policy).unwrap()"
+  ],
+  [
+    "hypercurve/src/bezier_offset.rs",
+    183529,
+    "BezierParameterInterval::try_new(Real::zero(), Real::one(), &policy).unwrap()"
+  ],
+  [
+    "hypercurve/src/bezier_offset.rs",
+    183675,
+    "BezierParameterInterval::try_new(half.clone(), Real::one(), &policy).unwrap()"
+  ],
+  [
+    "hypercurve/src/bezier_offset.rs",
+    183827,
+    "BezierParameterInterval::try_new(half.clone(), Real::one(), &policy).unwrap()"
+  ],
+  [
+    "hypercurve/src/bezier_offset.rs",
+    184248,
+    "BezierParameterInterval::try_new(ratio(1, 2), Real::one(), &policy).unwrap()"
+  ],
+  [
+    "hypercurve/src/bezier_offset.rs",
+    184648,
+    "BezierParameterInterval::try_new(Real::zero(), half.clone(), &policy).unwrap()"
+  ],
+  [
+    "hypercurve/src/bezier_offset.rs",
+    184903,
+    "BezierParameterInterval::try_new(half.clone(), Real::one(), &policy).unwrap()"
+  ],
+  [
+    "hypercurve/src/bezier_offset.rs",
+    185026,
+    "BezierParameterInterval::try_new(Real::zero(), half.clone(), &policy).unwrap()"
+  ],
+  [
+    "hypercurve/src/bezier_offset.rs",
+    185554,
+    "BezierParameterInterval::try_new(Real::zero(), half.clone(), &policy).unwrap()"
+  ],
+  [
+    "hypercurve/src/bezier_offset.rs",
+    185723,
+    "BezierParameterInterval::try_new(Real::zero(), Real::one(), &policy).unwrap()"
+  ],
+  [
+    "hypercurve/src/bezier_offset.rs",
+    186875,
+    "BezierParameterInterval::try_new(Real::zero(), half.clone(), &policy).unwrap()"
+  ],
+  [
+    "hypercurve/src/bezier_offset.rs",
+    187332,
+    "BezierParameterInterval::try_new(Real::zero(), half.clone(), &policy).unwrap()"
+  ],
+  [
+    "hypercurve/src/bezier_offset.rs",
+    187524,
+    "BezierParameterInterval::try_new(Real::zero(), half.clone(), &policy).unwrap()"
+  ],
+  [
+    "hypercurve/src/bezier_offset.rs",
+    187689,
+    "BezierParameterInterval::try_new(Real::zero(), half.clone(), &policy).unwrap()"
+  ],
+  [
+    "hypercurve/src/bezier_offset.rs",
+    193453,
+    "BezierParameterInterval::try_new(Real::zero(), Real::one(), &policy).unwrap()"
+  ],
+  [
+    "hypercurve/src/bezier_offset.rs",
+    194261,
+    "decided(BezierParameterInterval::try_new(lower, upper, &policy).unwrap());"
+  ],
+  [
+    "hypercurve/src/bezier_offset.rs",
+    195177,
+    "decided(BezierParameterInterval::try_new(Real::zero(), Real::one(), policy).unwrap());"
+  ],
+  [
+    "hypercurve/src/bezier_offset.rs",
+    195537,
+    "let interval = decided(BezierParameterInterval::try_new_ordered("
+  ],
+  [
+    "hypercurve/src/bezier_offset.rs",
+    195609,
+    "let interval = decided(BezierParameterInterval::try_new_ordered("
+  ],
+  [
+    "hypercurve/src/bezier_parameter.rs",
+    844,
+    "let interval = match BezierParameterInterval::try_new_ordered("
+  ],
+  [
+    "hypercurve/src/bezier_parameter.rs",
+    1969,
+    "return BezierParameterInterval::try_new_ordered(value.clone(), value.clone(), policy);"
+  ],
+  [
+    "hypercurve/src/bezier_parameter.rs",
+    2222,
+    "BezierParameterInterval::try_new("
+  ],
+  [
+    "hypercurve/src/bezier_parameter.rs",
+    2228,
+    "BezierParameterInterval::try_new_ordered("
+  ],
+  [
+    "hypercurve/src/bezier_parameter.rs",
+    2512,
+    "let interval = match BezierParameterInterval::try_new_ordered(start, end, policy)? {"
+  ],
+  [
+    "hypercurve/src/bezier_parameter.rs",
+    3105,
+    "let interval = match BezierParameterInterval::try_new_ordered(start, end, policy).ok()? {"
+  ],
+  [
+    "hypercurve/src/bezier_parameter.rs",
+    3226,
+    "match BezierParameterInterval::try_new_ordered(start, end, policy)? {"
+  ],
+  [
+    "hypercurve/src/bezier_parameter.rs",
+    4008,
+    "let interval = match BezierParameterInterval::try_new_ordered("
+  ],
+  [
+    "hypercurve/src/bezier_parameter.rs",
+    4107,
+    "let interval = match BezierParameterInterval::try_new(start, end, policy)? {"
+  ],
+  [
+    "hypercurve/src/bezier_parameter.rs",
+    4244,
+    "let interval = match BezierParameterInterval::try_new(start, end, policy)? {"
+  ],
+  [
+    "hypercurve/src/bezier_parameter.rs",
+    4619,
+    "let interval = match BezierParameterInterval::try_new_ordered(start, end, policy)? {"
+  ],
+  [
+    "hypercurve/src/bezier_parameter.rs",
+    4957,
+    "match BezierParameterInterval::try_new(rational(1, 2), Real::one(), &policy).unwrap() {"
+  ],
+  [
+    "hypercurve/src/bezier_parameter.rs",
+    5187,
+    "BezierParameterInterval::try_new_ordered(Real::one(), Real::from(2), &policy)"
+  ],
+  [
+    "hypercurve/src/bezier_parameter.rs",
+    5267,
+    "let interval = BezierParameterInterval::try_new_ordered("
+  ],
+  [
+    "hypercurve/src/bezier_parameter.rs",
+    5376,
+    "let interval = match BezierParameterInterval::try_new("
+  ],
+  [
+    "hypercurve/src/bezier_parameter.rs",
+    6574,
+    "BezierParameterInterval::try_new_ordered("
+  ],
+  [
+    "hypercurve/src/bezier_parameter.rs",
+    7231,
+    "match BezierParameterInterval::try_new(Real::zero(), Real::one(), &policy).unwrap()"
+  ],
+  [
+    "hypercurve/src/bezier_parameter.rs",
+    7285,
+    "BezierParameterInterval::try_new(lower, upper, &policy).unwrap(),"
+  ],
+  [
+    "hypercurve/src/bezier_region.rs",
+    18185,
+    "BezierParameterInterval::try_new_ordered(lower, upper, &policy).unwrap(),"
+  ],
+  [
+    "hypercurve/src/bezier_region.rs",
+    18346,
+    "BezierParameterInterval::try_new(q(1, 2), Real::one(), &policy).unwrap()"
+  ],
+  [
+    "hypercurve/src/bezier_region.rs",
+    22180,
+    "let interval = BezierParameterInterval::try_new("
+  ],
+  [
+    "hypercurve/src/bezier_region.rs",
+    22206,
+    "let interval = BezierParameterInterval::try_new("
+  ],
+  [
+    "hypercurve/src/bezier_region.rs",
+    32535,
+    "let interval = BezierParameterInterval::try_new("
+  ],
+  [
+    "hypercurve/src/curve.rs",
+    14208,
+    "let interval = crate::BezierParameterInterval::try_new("
+  ],
+  [
+    "hypercurve/src/curve_evaluation.rs",
+    342,
+    "BezierParameterInterval::try_new("
+  ],
+  [
+    "hypercurve/src/curve_region_boolean.rs",
+    16038,
+    "crate::BezierParameterInterval::try_new("
+  ],
+  [
+    "hypercurve/src/curve_region_boolean.rs",
+    16500,
+    "crate::BezierParameterInterval::try_new("
+  ],
+  [
+    "hypercurve/src/curve_region_boolean.rs",
+    16525,
+    "crate::BezierParameterInterval::try_new("
+  ],
+  [
+    "hypercurve/src/curve_region_boolean.rs",
+    19589,
+    "crate::BezierParameterInterval::try_new(lower, upper, &policy)"
+  ],
+  [
+    "hypercurve/src/curve_region_boolean.rs",
+    20188,
+    "crate::BezierParameterInterval::try_new(Real::zero(), Real::one(), &policy)"
+  ],
+  [
+    "hypercurve/src/curve_region_boolean.rs",
+    20908,
+    "crate::BezierParameterInterval::try_new_ordered(q(7, 4), Real::from(2), &policy)"
+  ],
+  [
+    "hypercurve/src/curve_region_boolean.rs",
+    21423,
+    "crate::BezierParameterInterval::try_new("
+  ],
+  [
+    "hypercurve/src/curve_region_boolean.rs",
+    21451,
+    "crate::BezierParameterInterval::try_new(Real::zero(), Real::one(), policy)"
+  ],
+  [
+    "hypercurve/src/curve_region_trim.rs",
+    1561,
+    "decided(crate::BezierParameterInterval::try_new(q(2, 3), q(3, 4), policy).unwrap());"
+  ],
+  [
+    "hypercurve/src/curve_subdivision.rs",
+    3212,
+    "BezierParameterInterval::try_new(q(2, 3), q(3, 4), &policy).unwrap(),"
+  ],
+  [
+    "hypercurve/src/curve_subdivision.rs",
+    3362,
+    "BezierParameterInterval::try_new(q(2, 3), q(3, 4), &policy).unwrap(),"
+  ],
+  [
+    "hypercurve/src/curve_support.rs",
+    998,
+    "decided(BezierParameterInterval::try_new(q(1, 2), Real::one(), &policy).unwrap());"
+  ],
+  [
+    "hypercurve/src/curve_support_intersection.rs",
+    2388,
+    "exact(crate::BezierParameterInterval::try_new(q(1, 2), q(3, 4), policy).unwrap());"
+  ],
+  [
+    "hypercurve/src/curve_support_intersection.rs",
+    2627,
+    "crate::BezierParameterInterval::try_new_ordered("
+  ],
+  [
+    "hypercurve/src/curve_support_intersection.rs",
+    2757,
+    "crate::BezierParameterInterval::try_new_ordered(Real::one(), q(9, 8), &policy)"
+  ],
+  [
+    "hypercurve/src/curve_support_intersection.rs",
+    3314,
+    "exact(crate::BezierParameterInterval::try_new(q(1, 2), q(3, 4), &policy).unwrap());"
+  ],
+  [
+    "hypercurve/src/curve_support_intersection.rs",
+    4030,
+    "exact(crate::BezierParameterInterval::try_new(q(1, 2), q(3, 4), policy).unwrap());"
+  ],
+  [
+    "hypercurve/src/rational_bezier_general.rs",
+    8274,
+    "match BezierParameterInterval::try_new(Real::new(lower), Real::new(upper), policy)? {"
+  ],
+  [
+    "hypercurve/src/rational_bezier_general.rs",
+    10711,
+    "BezierParameterInterval::try_new(Real::zero(), Real::one(), &policy).unwrap()"
+  ],
+  [
+    "hypercurve/src/rational_bezier_general.rs",
+    10758,
+    "BezierParameterInterval::try_new(Real::zero(), Real::one(), &policy).unwrap()"
+  ],
+  [
+    "hypercurve/src/rational_bezier_general.rs",
+    11787,
+    "crate::BezierParameterInterval::try_new(Real::zero(), Real::one(), &policy).unwrap()"
+  ],
+  [
+    "hypercurve/src/rational_bezier_general.rs",
+    11838,
+    "crate::BezierParameterInterval::try_new(lower, upper, &policy).unwrap()"
+  ],
+  [
+    "hypercurve/src/rational_bezier_general.rs",
+    11901,
+    "crate::BezierParameterInterval::try_new(Real::zero(), Real::one(), &policy).unwrap()"
+  ],
+  [
+    "hypercurve/src/rational_bezier_general.rs",
+    11955,
+    "let Classification::Decided(source_interval) = BezierParameterInterval::try_new("
+  ],
+  [
+    "hypercurve/tests/hypercurve_bezier_algebraic_image.rs",
+    37,
+    "decided(BezierParameterInterval::try_new(start, end, &policy()).unwrap())"
+  ],
+  [
+    "hypercurve/tests/hypercurve_bezier_algebraic_parameter.rs",
+    278,
+    "match BezierParameterInterval::try_new(start, end, &policy()).unwrap() {"
+  ],
+  [
+    "hypercurve/tests/hypercurve_bezier_algebraic_parameter.rs",
+    500,
+    "let reversed = BezierParameterInterval::try_new(q(3, 4), q(1, 4), &policy())"
+  ],
+  [
+    "hypercurve/tests/hypercurve_bezier_algebraic_parameter.rs",
+    504,
+    "let outside = BezierParameterInterval::try_new(r(-1), q(1, 4), &policy())"
+  ],
+  [
+    "hypercurve/tests/hypercurve_bezier_algebraic_parameter.rs",
+    670,
+    "let interval = match BezierParameterInterval::try_new(q(start_n, 16), q(end_n, 16), &policy).unwrap() {"
+  ],
+  [
+    "hypercurve/tests/hypercurve_bezier_arrangement.rs",
+    269,
+    "let interval = decided(BezierParameterInterval::try_new(q(2, 3), q(3, 4), &policy()).unwrap());"
+  ],
+  [
+    "hypercurve/tests/hypercurve_bezier_arrangement.rs",
+    279,
+    "let interval = decided(BezierParameterInterval::try_new(q(2, 5), q(3, 5), &policy()).unwrap());"
+  ],
+  [
+    "hypercurve/tests/hypercurve_bezier_region.rs",
+    92,
+    "let interval = decided(BezierParameterInterval::try_new(q(2, 5), q(3, 5), &policy()).unwrap());"
+  ],
+  [
+    "hypercurve/tests/hypercurve_bezier_region.rs",
+    100,
+    "let interval = decided(BezierParameterInterval::try_new(q(2, 3), q(3, 4), &policy()).unwrap());"
+  ],
+  [
+    "hypercurve/tests/hypercurve_bezier_region.rs",
+    108,
+    "let interval = decided(BezierParameterInterval::try_new(q(1, 3), q(2, 5), &policy()).unwrap());"
+  ],
+  [
+    "hypercurve/tests/hypercurve_bezier_split_materialization.rs",
+    55,
+    "let interval = match BezierParameterInterval::try_new(start, end, &policy()).unwrap() {"
+  ],
+  [
+    "hypercurve/tests/hypercurve_bezier_split_materialization.rs",
+    81,
+    "let interval = match BezierParameterInterval::try_new(start, end, &policy()).unwrap() {"
+  ],
+  [
+    "hypercurve/tests/hypercurve_bezier_split_materialization.rs",
+    105,
+    "let interval = match BezierParameterInterval::try_new(q(2, 5), q(3, 5), &policy()).unwrap() {"
+  ],
+  [
+    "hypercurve/tests/hypercurve_bezier_tangent_order.rs",
+    43,
+    "decided(BezierParameterInterval::try_new(start, end, &policy()).unwrap())"
+  ],
+  [
+    "hypercurve/tests/hypercurve_curve_point.rs",
+    40,
+    "decided(BezierParameterInterval::try_new(Real::zero(), Real::one(), &policy).unwrap());"
+  ],
+  [
+    "hypercurve/tests/hypercurve_curve_region_promotion.rs",
+    410,
+    "decided(BezierParameterInterval::try_new(Real::zero(), Real::one(), policy).unwrap());"
+  ],
+  [
+    "hypercurve/tests/hypercurve_curve_region_promotion.rs",
+    673,
+    "decided(BezierParameterInterval::try_new(Real::zero(), Real::one(), policy).unwrap());"
+  ],
+  [
+    "hypercurve/tests/hypercurve_curve_region_promotion.rs",
+    801,
+    "decided(BezierParameterInterval::try_new(Real::zero(), Real::one(), policy).unwrap());"
+  ],
+  [
+    "hypercurve/tests/hypercurve_curve_region_promotion.rs",
+    866,
+    "decided(BezierParameterInterval::try_new(Real::zero(), Real::one(), policy).unwrap());"
+  ],
+  [
+    "hypercurve/tests/hypercurve_curve_region_promotion.rs",
+    2884,
+    "decided(BezierParameterInterval::try_new(Real::zero(), Real::one(), &policy).unwrap());"
+  ],
+  [
+    "hypercurve/tests/hypercurve_curve_region_promotion.rs",
+    4120,
+    "decided(BezierParameterInterval::try_new(Real::zero(), Real::one(), policy).unwrap());"
+  ],
+  [
+    "hypercurve/tests/hypercurve_curve_region_promotion.rs",
+    4235,
+    "decided(BezierParameterInterval::try_new(Real::zero(), Real::one(), policy).unwrap());"
+  ],
+  [
+    "hypercurve/tests/hypercurve_curve_region_promotion.rs",
+    4633,
+    "decided(BezierParameterInterval::try_new(Real::zero(), Real::one(), policy).unwrap());"
+  ]
+]

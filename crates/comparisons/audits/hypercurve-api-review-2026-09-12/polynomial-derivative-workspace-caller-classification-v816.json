@@ -1,0 +1,7 @@
+{
+  "repositories": 30,
+  "files": 35848,
+  "historical_snapshot_references": 2572,
+  "live_caller_hits": 0,
+  "classification": "Remaining tracked references occur only in self-contained historical source snapshots under exactcore-hyper-comparison/audits. Preserve evidence archives unchanged; they do not consume the active Hypercurve API."
+}

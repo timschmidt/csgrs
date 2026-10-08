@@ -1,0 +1,113 @@
+{
+  "normal_production_build": false,
+  "source_manifest": "finite-field-refinement-20260928-v559-sources.json",
+  "source_directory": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/source-archives/finite-field-refinement-20260928-v559",
+  "builds": [
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "test",
+        "--lib",
+        "--test",
+        "hypercurve_curve_region_promotion",
+        "--release",
+        "--all-features",
+        "--locked",
+        "--offline",
+        "--no-run",
+        "--message-format=json"
+      ],
+      "returncode": 0,
+      "log": "finite-field-refinement-20260928-v559-build.log",
+      "elapsed_seconds": 192.59950116602704,
+      "binaries": {
+        "hypercurve_curve_region_promotion": {
+          "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-field-refinement-20260928-v559-hypercurve_curve_region_promotion-tests",
+          "sha256": "0b817751736f77bcc8e5adbdf6ac5e714976ef1914ca32be57d5fcf52b9b05da"
+        },
+        "hypercurve": {
+          "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-field-refinement-20260928-v559-hypercurve-tests",
+          "sha256": "ea44741ffbcf57069eccf3160b61b4cb8f00bedbb57871e2a4b868fdda83a4af"
+        }
+      }
+    }
+  ],
+  "cases": [
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-field-refinement-20260928-v559-hypercurve-tests",
+        "--exact",
+        "bezier_parameter::finite_field_bernstein_regression::finite_field_isolation_reuses_original_polynomial_and_simple_root_proof",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "finite-field-refinement-20260928-v559-finite_field_isolation_reuses_original_polynomial_and_simple_root_proof.log",
+      "elapsed_seconds": 0.007662496063858271,
+      "target": "hypercurve",
+      "name": "bezier_parameter::finite_field_bernstein_regression::finite_field_isolation_reuses_original_polynomial_and_simple_root_proof",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-field-refinement-20260928-v559-hypercurve-tests",
+        "--exact",
+        "bezier_parameter::finite_field_bernstein_regression::finite_field_isolation_keeps_repeated_roots_and_closed_boundaries",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "finite-field-refinement-20260928-v559-finite_field_isolation_keeps_repeated_roots_and_closed_boundaries.log",
+      "elapsed_seconds": 0.00756456283852458,
+      "target": "hypercurve",
+      "name": "bezier_parameter::finite_field_bernstein_regression::finite_field_isolation_keeps_repeated_roots_and_closed_boundaries",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-field-refinement-20260928-v559-hypercurve-tests",
+        "--exact",
+        "curve::curve_fillet::stationary_family_composition_regression::normalized_region_selects_and_reuses_a_stationary_fillet_family",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "finite-field-refinement-20260928-v559-normalized_region_selects_and_reuses_a_stationary_fillet_family.log",
+      "elapsed_seconds": 1.9663241878151894,
+      "target": "hypercurve",
+      "name": "curve::curve_fillet::stationary_family_composition_regression::normalized_region_selects_and_reuses_a_stationary_fillet_family",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-field-refinement-20260928-v559-hypercurve_curve_region_promotion-tests",
+        "--exact",
+        "strict_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 124,
+      "log": "finite-field-refinement-20260928-v559-strict_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions.log",
+      "elapsed_seconds": 180.1410322659649,
+      "target": "hypercurve_curve_region_promotion",
+      "name": "strict_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions",
+      "passed": false
+    }
+  ],
+  "checks": [],
+  "expected_cases": {
+    "hypercurve": [
+      "bezier_parameter::finite_field_bernstein_regression::finite_field_isolation_reuses_original_polynomial_and_simple_root_proof",
+      "bezier_parameter::finite_field_bernstein_regression::finite_field_isolation_keeps_repeated_roots_and_closed_boundaries",
+      "curve::curve_fillet::stationary_family_composition_regression::normalized_region_selects_and_reuses_a_stationary_fillet_family"
+    ],
+    "hypercurve_curve_region_promotion": [
+      "strict_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions",
+      "approximate_512_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions"
+    ]
+  },
+  "all_processes_reaped": true,
+  "probe_complete": false,
+  "qualification_complete": false,
+  "failure": "refinement probe failed"
+}

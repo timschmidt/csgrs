@@ -1,0 +1,20 @@
+{
+  "command": "cargo",
+  "args": [
+    "check",
+    "--offline",
+    "--locked",
+    "--manifest-path",
+    "source/hyperreal/Cargo.toml",
+    "--lib",
+    "--target",
+    "wasm32-unknown-unknown"
+  ],
+  "begin": "2026-09-07T05:54:10.221Z",
+  "end": "2026-09-07T05:54:12.665Z",
+  "status": 0,
+  "signal": null,
+  "error": null,
+  "stdout": "",
+  "stderr": "   Compiling num-traits v0.2.19\n    Checking num-integer v0.1.46\n    Checking num-complex v0.4.6\n    Checking num-bigint v0.4.6\n    Checking num-iter v0.1.45\n    Checking num-rational v0.4.2\n    Checking num v0.4.3\n    Checking hyperreal v0.13.1 (/home/tim/Documents/GitHub/workspace/exact-real-references/ruffini-qualification/cache-public-pilot/source/hyperreal)\n    Finished `dev` profile [unoptimized] target(s) in 2.42s\n"
+}

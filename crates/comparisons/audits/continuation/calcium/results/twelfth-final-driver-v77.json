@@ -1,0 +1,13 @@
+{
+  "tag": "twelfth-final-driver-v77",
+  "started": "2026-09-11T23:01:26.006Z",
+  "finished": "2026-09-11T23:05:28.801Z",
+  "elapsedSeconds": 242.792580973,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "node",
+  "args": [
+    "run-twelfth-final-v77.mjs"
+  ],
+  "code": 0,
+  "signal": null
+}

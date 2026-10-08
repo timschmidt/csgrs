@@ -1,0 +1,43 @@
+\doxysubsection{source/solvers/integrator.hpp File Reference}
+\hypertarget{integrator_8hpp}{}\label{integrator_8hpp}\index{source/solvers/integrator.hpp@{source/solvers/integrator.hpp}}
+
+
+\doxysubsubsection{Description}
+Solver classes for differential equations. 
+
+{\ttfamily \#include $<$exception$>$}\newline
+{\ttfamily \#include $<$stdexcept$>$}\newline
+{\ttfamily \#include $<$string$>$}\newline
+{\ttfamily \#include "{}solvers/integrator\+\_\+interface.\+hpp"{}}\newline
+{\ttfamily \#include "{}solvers/bounder.\+hpp"{}}\newline
+{\ttfamily \#include "{}function/function\+\_\+interface.\+hpp"{}}\newline
+{\ttfamily \#include "{}utility/declarations.\+hpp"{}}\newline
+{\ttfamily \#include "{}utility/attribute.\+hpp"{}}\newline
+{\ttfamily \#include "{}numeric/dyadic.\+hpp"{}}\newline
+{\ttfamily \#include "{}conclog/logging.\+hpp"{}}\newline
+{\ttfamily \#include "{}utility/pointer.\+hpp"{}}\newline
+{\ttfamily \#include "{}function/affine.\+hpp"{}}\newline
+{\ttfamily \#include "{}algebra/sweeper.\+hpp"{}}\newline
+{\ttfamily \#include "{}function/function\+\_\+patch.\+hpp"{}}\newline
+\doxysubsubsubsection*{Classes}
+\begin{DoxyCompactItemize}
+\item 
+class \mbox{\hyperlink{classAriadne_1_1FlowStepModelType}{Flow\+Step\+Model\+Type}}
+\begin{DoxyCompactList}\small\item\em Class used for storing the result of a flow step. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1FlowModelType}{Flow\+Model\+Type}}
+\begin{DoxyCompactList}\small\item\em Class used for storing the result of a flow tube. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1TaylorPicardIntegrator}{Taylor\+Picard\+Integrator}}
+\begin{DoxyCompactList}\small\item\em An integrator which uses a validated Picard iteration on Taylor models. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1TaylorSeriesIntegrator}{Taylor\+Series\+Integrator}}
+\begin{DoxyCompactList}\small\item\em An integrator which computes the Taylor series of the flow function with remainder term. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1TaylorSeriesBounderIntegrator}{Taylor\+Series\+Bounder\+Integrator}}
+\begin{DoxyCompactList}\small\item\em An integrator which computes the Taylor series of the flow function with remainder term. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1GradedTaylorSeriesIntegrator}{Graded\+Taylor\+Series\+Integrator}}
+\begin{DoxyCompactList}\small\item\em An integrator which computes the Taylor series of the flow function with remainder term. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1AffineIntegrator}{Affine\+Integrator}}
+\begin{DoxyCompactList}\small\item\em An integrator computes a approximation to the flow which is affine in space. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsubsection*{Namespaces}
+\begin{DoxyCompactItemize}
+\item 
+namespace \mbox{\hyperlink{namespaceAriadne}{Ariadne}}
+\begin{DoxyCompactList}\small\item\em Top-\/level Ariadne namespace. \end{DoxyCompactList}\end{DoxyCompactItemize}

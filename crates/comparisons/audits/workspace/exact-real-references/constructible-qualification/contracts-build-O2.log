@@ -1,0 +1,24 @@
+[ 1 of 17] Compiling Data.Complex.Generic.Class ( exact-real-references/constructible-qualification/complex-generic-0.1.1.1/Data/Complex/Generic/Class.hs, .audit-constructible-build.l4UDoe/Data/Complex/Generic/Class.o, .audit-constructible-build.l4UDoe/Data/Complex/Generic/Class.dyn_o )
+[ 2 of 17] Compiling Data.Complex.Generic.Default ( exact-real-references/constructible-qualification/complex-generic-0.1.1.1/Data/Complex/Generic/Default.hs, .audit-constructible-build.l4UDoe/Data/Complex/Generic/Default.o, .audit-constructible-build.l4UDoe/Data/Complex/Generic/Default.dyn_o )
+[ 3 of 17] Compiling Data.Complex.Generic.TH ( exact-real-references/constructible-qualification/complex-generic-0.1.1.1/Data/Complex/Generic/TH.hs, .audit-constructible-build.l4UDoe/Data/Complex/Generic/TH.o, .audit-constructible-build.l4UDoe/Data/Complex/Generic/TH.dyn_o )
+[ 4 of 17] Compiling Data.Complex.Generic ( exact-real-references/constructible-qualification/complex-generic-0.1.1.1/Data/Complex/Generic.hs, .audit-constructible-build.l4UDoe/Data/Complex/Generic.o, .audit-constructible-build.l4UDoe/Data/Complex/Generic.dyn_o )
+[ 5 of 17] Compiling Math.NumberTheory.Primes.Small ( exact-real-references/constructible-qualification/integer-roots-1.0.4.0/Math/NumberTheory/Primes/Small.hs, .audit-constructible-build.l4UDoe/Math/NumberTheory/Primes/Small.o, .audit-constructible-build.l4UDoe/Math/NumberTheory/Primes/Small.dyn_o )
+[ 6 of 17] Compiling Math.NumberTheory.Roots.Squares.Internal ( exact-real-references/constructible-qualification/integer-roots-1.0.4.0/Math/NumberTheory/Roots/Squares/Internal.hs, .audit-constructible-build.l4UDoe/Math/NumberTheory/Roots/Squares/Internal.o, .audit-constructible-build.l4UDoe/Math/NumberTheory/Roots/Squares/Internal.dyn_o )
+[ 7 of 17] Compiling Math.NumberTheory.Utils.BitMask ( exact-real-references/constructible-qualification/integer-roots-1.0.4.0/Math/NumberTheory/Utils/BitMask.hs, .audit-constructible-build.l4UDoe/Math/NumberTheory/Utils/BitMask.o, .audit-constructible-build.l4UDoe/Math/NumberTheory/Utils/BitMask.dyn_o )
+[ 8 of 17] Compiling Math.NumberTheory.Roots.Squares ( exact-real-references/constructible-qualification/integer-roots-1.0.4.0/Math/NumberTheory/Roots/Squares.hs, .audit-constructible-build.l4UDoe/Math/NumberTheory/Roots/Squares.o, .audit-constructible-build.l4UDoe/Math/NumberTheory/Roots/Squares.dyn_o )
+[ 9 of 17] Compiling Math.NumberTheory.Roots.Fourth ( exact-real-references/constructible-qualification/integer-roots-1.0.4.0/Math/NumberTheory/Roots/Fourth.hs, .audit-constructible-build.l4UDoe/Math/NumberTheory/Roots/Fourth.o, .audit-constructible-build.l4UDoe/Math/NumberTheory/Roots/Fourth.dyn_o )
+[10 of 17] Compiling Math.NumberTheory.Roots.Cubes ( exact-real-references/constructible-qualification/integer-roots-1.0.4.0/Math/NumberTheory/Roots/Cubes.hs, .audit-constructible-build.l4UDoe/Math/NumberTheory/Roots/Cubes.o, .audit-constructible-build.l4UDoe/Math/NumberTheory/Roots/Cubes.dyn_o )
+[11 of 17] Compiling Math.NumberTheory.Utils.FromIntegral ( exact-real-references/constructible-qualification/integer-roots-1.0.4.0/Math/NumberTheory/Utils/FromIntegral.hs, .audit-constructible-build.l4UDoe/Math/NumberTheory/Utils/FromIntegral.o, .audit-constructible-build.l4UDoe/Math/NumberTheory/Utils/FromIntegral.dyn_o )
+[12 of 17] Compiling Math.NumberTheory.Roots.General ( exact-real-references/constructible-qualification/integer-roots-1.0.4.0/Math/NumberTheory/Roots/General.hs, .audit-constructible-build.l4UDoe/Math/NumberTheory/Roots/General.o, .audit-constructible-build.l4UDoe/Math/NumberTheory/Roots/General.dyn_o )
+[13 of 17] Compiling Math.NumberTheory.Roots ( exact-real-references/constructible-qualification/integer-roots-1.0.4.0/Math/NumberTheory/Roots.hs, .audit-constructible-build.l4UDoe/Math/NumberTheory/Roots.o, .audit-constructible-build.l4UDoe/Math/NumberTheory/Roots.dyn_o )
+[14 of 17] Compiling Numeric.Search.Integer ( exact-real-references/constructible-qualification/binary-search-0.0/Numeric/Search/Integer.hs, .audit-constructible-build.l4UDoe/Numeric/Search/Integer.o, .audit-constructible-build.l4UDoe/Numeric/Search/Integer.dyn_o )
+
+exact-real-references/constructible-qualification/binary-search-0.0/Numeric/Search/Integer.hs:17:1: warning: [GHC-94817] [-Wtabs]
+    Tab character found here, and in 26 further locations.
+    Suggested fix: Please use spaces instead.
+   |
+17 |         -- * One-dimensional searches
+   | ^^^^^^^^
+[15 of 17] Compiling Data.Real.Constructible ( exact-real-references/haskell-constructible/Data/Real/Constructible.hs, .audit-constructible-build.l4UDoe/Data/Real/Constructible.o )
+[16 of 17] Compiling Main             ( exact-real-references/constructible-qualification/ContractProbe.hs, .audit-constructible-build.l4UDoe/Main.o )
+[17 of 17] Linking .audit-constructible-build.l4UDoe/contracts-before-O2

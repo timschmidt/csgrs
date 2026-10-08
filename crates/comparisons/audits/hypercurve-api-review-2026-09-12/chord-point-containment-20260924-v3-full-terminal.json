@@ -1,0 +1,349 @@
+{
+  "reused_focused": [
+    {
+      "target": "hypercurve",
+      "name": "bezier_offset::conversion_tests::algebraic_chord_retains_independent_endpoint_fields_under_both_policies",
+      "returncode": 0,
+      "passed": true,
+      "ignored": false,
+      "elapsed_seconds": 0.2815384219866246,
+      "limit_seconds": 75,
+      "log": "chord-point-containment-20260924-v3-algebraic_chord_retains_independent_endpoint_fields_under_both_policies.log",
+      "reused_from": "chord-point-containment-20260924-v3-terminal.json"
+    },
+    {
+      "target": "hypercurve",
+      "name": "bezier_region::tests::independent_field_corner_edits_preserve_normalized_sets",
+      "returncode": 0,
+      "passed": true,
+      "ignored": false,
+      "elapsed_seconds": 0.8309612859738991,
+      "limit_seconds": 75,
+      "log": "chord-point-containment-20260924-v3-independent_field_corner_edits_preserve_normalized_sets.log",
+      "reused_from": "chord-point-containment-20260924-v3-terminal.json"
+    },
+    {
+      "target": "hypercurve",
+      "name": "bezier_region::tests::retained_analytic_corners_preserve_normalized_sets",
+      "returncode": 0,
+      "passed": true,
+      "ignored": false,
+      "elapsed_seconds": 10.042165773920715,
+      "limit_seconds": 75,
+      "log": "chord-point-containment-20260924-v3-retained_analytic_corners_preserve_normalized_sets.log",
+      "reused_from": "chord-point-containment-20260924-v3-terminal.json"
+    },
+    {
+      "target": "hypercurve",
+      "name": "bezier_offset::conversion_tests::retained_chord_incidence_replays_independently_allocated_coefficient_fields",
+      "returncode": 0,
+      "passed": true,
+      "ignored": false,
+      "elapsed_seconds": 0.2925353179452941,
+      "limit_seconds": 75,
+      "log": "chord-point-containment-20260924-v3-retained_chord_incidence_replays_independently_allocated_coefficient_fields.log",
+      "reused_from": "chord-point-containment-20260924-v3-terminal.json"
+    },
+    {
+      "target": "hypercurve",
+      "name": "bezier_offset::conversion_tests::independent_field_algebraic_chord_intersects_rational_curve_under_both_policies",
+      "returncode": 0,
+      "passed": true,
+      "ignored": false,
+      "elapsed_seconds": 0.305188890080899,
+      "limit_seconds": 75,
+      "log": "chord-point-containment-20260924-v3-independent_field_algebraic_chord_intersects_rational_curve_under_both_policies.log",
+      "reused_from": "chord-point-containment-20260924-v3-terminal.json"
+    },
+    {
+      "target": "hypercurve",
+      "name": "bezier_offset::conversion_tests::retained_chord_coordinate_and_linear_queries_observe_requested_policy",
+      "returncode": 0,
+      "passed": true,
+      "ignored": false,
+      "elapsed_seconds": 0.41052435303572565,
+      "limit_seconds": 75,
+      "log": "chord-point-containment-20260924-v3-retained_chord_coordinate_and_linear_queries_observe_requested_policy.log",
+      "reused_from": "chord-point-containment-20260924-v3-terminal.json"
+    },
+    {
+      "target": "hypercurve",
+      "name": "bezier_region::tests::boundary_side_rays_skip_retained_cusp_contacts_across_loops",
+      "returncode": 0,
+      "passed": true,
+      "ignored": false,
+      "elapsed_seconds": 0.27627176395617425,
+      "limit_seconds": 75,
+      "log": "chord-point-containment-20260924-v3-boundary_side_rays_skip_retained_cusp_contacts_across_loops.log",
+      "reused_from": "chord-point-containment-20260924-v3-terminal.json"
+    },
+    {
+      "target": "hypercurve",
+      "name": "bezier_offset::conversion_tests::provenance_support_represents_a_chord_between_correlated_cuts",
+      "returncode": 0,
+      "passed": true,
+      "ignored": false,
+      "elapsed_seconds": 0.26307260000612587,
+      "limit_seconds": 75,
+      "log": "chord-point-containment-20260924-v3-provenance_support_represents_a_chord_between_correlated_cuts.log",
+      "reused_from": "chord-point-containment-20260924-v3-terminal.json"
+    },
+    {
+      "target": "hypercurve",
+      "name": "bezier_offset::conversion_tests::algebraic_chord_source_incidence_deflates_only_the_retained_contact",
+      "returncode": 0,
+      "passed": true,
+      "ignored": false,
+      "elapsed_seconds": 0.2717935509281233,
+      "limit_seconds": 75,
+      "log": "chord-point-containment-20260924-v3-algebraic_chord_source_incidence_deflates_only_the_retained_contact.log",
+      "reused_from": "chord-point-containment-20260924-v3-terminal.json"
+    },
+    {
+      "target": "hypercurve",
+      "name": "bezier_region::tests::closed_ph_corner_edits_preserve_both_normalized_source_lobes",
+      "returncode": 0,
+      "passed": true,
+      "ignored": false,
+      "elapsed_seconds": 0.38701619603671134,
+      "limit_seconds": 75,
+      "log": "chord-point-containment-20260924-v3-closed_ph_corner_edits_preserve_both_normalized_source_lobes.log",
+      "reused_from": "chord-point-containment-20260924-v3-terminal.json"
+    }
+  ],
+  "isolated_jobs": [
+    [
+      638,
+      [
+        "hypercurve",
+        "bezier_region::curve_corner_chain::tests::extended_fillet_region_classifies_both_sides_of_its_companion"
+      ]
+    ],
+    [
+      703,
+      [
+        "hypercurve",
+        "bezier_region::tests::nonrepresented_chord_and_selected_circle_complete_the_fillet_kernel"
+      ]
+    ],
+    [
+      730,
+      [
+        "hypercurve",
+        "bezier_region::tests::recursive_selected_radial_projective_chamfer_reenters_corner_kernel"
+      ]
+    ]
+  ],
+  "remaining_workers": 2,
+  "checks": [
+    {
+      "label": "fmt",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustfmt",
+        "--edition",
+        "2024",
+        "--check",
+        "src/bezier_offset.rs",
+        "src/bezier_region.rs",
+        "src/curve.rs",
+        "src/curve_evaluation.rs",
+        "src/curve_region_boolean.rs",
+        "src/curve_support_intersection.rs"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 3.232623241026886,
+      "log": "chord-point-containment-20260924-v3-fmt.log"
+    },
+    {
+      "label": "clippy-1",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "clippy",
+        "--all-targets",
+        "--all-features",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 25.520869655068964,
+      "log": "chord-point-containment-20260924-v3-clippy-1.log"
+    },
+    {
+      "label": "clippy-2",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "clippy",
+        "--all-targets",
+        "--no-default-features",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 24.62763125996571,
+      "log": "chord-point-containment-20260924-v3-clippy-2.log"
+    }
+  ],
+  "command": [
+    "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+    "test",
+    "--release",
+    "--all-features",
+    "--no-run",
+    "--message-format=json",
+    "--locked",
+    "--offline",
+    "--test",
+    "hypercurve_path_closure",
+    "--test",
+    "hypercurve_curve_region_boolean",
+    "--test",
+    "hypercurve_bezier_arrangement",
+    "--test",
+    "hypercurve_curve_region_boolean_fuzz",
+    "--test",
+    "hypercurve_pcb_boolean_regressions",
+    "--test",
+    "hypercurve_curve",
+    "--test",
+    "hypercurve_curve_intersection",
+    "--test",
+    "hypercurve_curve_point",
+    "--test",
+    "hypercurve_curve_range"
+  ],
+  "binaries": {
+    "hypercurve": {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/chord-point-containment-20260924-v3-libtest",
+      "sha256": "f33d059a83ea291015f02a6b2b2da55526626423c28fb34ffaa4dc92a753c1a3"
+    },
+    "hypercurve_curve_region_boolean": {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/chord-point-containment-20260924-v3-full-hypercurve_curve_region_boolean",
+      "sha256": "b80669e287b8e8fc1e83deecd1ec6a07fbe403df8c5243cc919b9e0718d6219d"
+    },
+    "hypercurve_curve_region_boolean_fuzz": {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/chord-point-containment-20260924-v3-full-hypercurve_curve_region_boolean_fuzz",
+      "sha256": "2892ae273b5546aa7a10c334e98a4ed3aee7208f42ca06f5cbd3d8a631667b44"
+    },
+    "hypercurve_curve": {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/chord-point-containment-20260924-v3-full-hypercurve_curve",
+      "sha256": "ab028c61585a4e92047e415e0ec06a893e2cf5a1c1f1c38529c8d8a43bdbe88e"
+    },
+    "hypercurve_curve_range": {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/chord-point-containment-20260924-v3-full-hypercurve_curve_range",
+      "sha256": "59002e74f31b20d727dc00f6e8c524eb4da7747347c56471c7acdcde9d00cc51"
+    },
+    "hypercurve_pcb_boolean_regressions": {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/chord-point-containment-20260924-v3-full-hypercurve_pcb_boolean_regressions",
+      "sha256": "1f569567e4042265c4429fe917cec140763bb1a04b9f3445b03d068c4f511c86"
+    },
+    "hypercurve_curve_intersection": {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/chord-point-containment-20260924-v3-full-hypercurve_curve_intersection",
+      "sha256": "8af3fba6418da05f1f629cd35066cf6997895184c565dba7a19491dbedde5497"
+    },
+    "hypercurve_bezier_arrangement": {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/chord-point-containment-20260924-v3-full-hypercurve_bezier_arrangement",
+      "sha256": "dc0d3f70373cba9c05b8e57725e717fbe8440ff2fedda59d09c54ce319491c10"
+    },
+    "hypercurve_curve_point": {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/chord-point-containment-20260924-v3-full-hypercurve_curve_point",
+      "sha256": "eeafb7da199968ad30c561668a8704e54a07527765a2fb2ba94f78787ae53b37"
+    },
+    "hypercurve_path_closure": {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/chord-point-containment-20260924-v3-full-hypercurve_path_closure",
+      "sha256": "af38c8caa45e5b03bb0b6103dcfc60a881e1c7851c5da8bad967133400b7d1ae"
+    }
+  },
+  "attempted": 1465,
+  "passed": 1451,
+  "ignored": 6,
+  "nonpasses": [
+    {
+      "target": "hypercurve",
+      "name": "bezier_offset::conversion_tests::selected_parallel_normal_circle_intersects_genuinely_analytic_parallel_in_one_fiber",
+      "returncode": "timeout",
+      "passed": false,
+      "ignored": false,
+      "elapsed_seconds": 75.05321557505522,
+      "limit_seconds": 75,
+      "log": "chord-point-containment-20260924-v3-full-case-0550.log"
+    },
+    {
+      "target": "hypercurve",
+      "name": "bezier_region::tests::nonlinear_algebraic_endpoint_fillet_uses_complete_incident_domain",
+      "returncode": "timeout",
+      "passed": false,
+      "ignored": false,
+      "elapsed_seconds": 75.0032696609851,
+      "limit_seconds": 75,
+      "log": "chord-point-containment-20260924-v3-full-case-0697.log"
+    },
+    {
+      "target": "hypercurve",
+      "name": "bezier_region::tests::one_fragment_materialized_loop_chamfers_to_one_middle_interval",
+      "returncode": "timeout",
+      "passed": false,
+      "ignored": false,
+      "elapsed_seconds": 75.03522243001498,
+      "limit_seconds": 75,
+      "log": "chord-point-containment-20260924-v3-full-case-0707.log"
+    },
+    {
+      "target": "hypercurve",
+      "name": "bezier_region::tests::one_fragment_materialized_loop_extends_algebraic_chamfer_cuts_once",
+      "returncode": "timeout",
+      "passed": false,
+      "ignored": false,
+      "elapsed_seconds": 75.04252407804597,
+      "limit_seconds": 75,
+      "log": "chord-point-containment-20260924-v3-full-case-0708.log"
+    },
+    {
+      "target": "hypercurve",
+      "name": "bezier_region::tests::one_fragment_nonzero_parallel_loop_extends_chamfer_cuts_on_one_finite_envelope",
+      "returncode": "timeout",
+      "passed": false,
+      "ignored": false,
+      "elapsed_seconds": 75.0215860150056,
+      "limit_seconds": 75,
+      "log": "chord-point-containment-20260924-v3-full-case-0709.log"
+    },
+    {
+      "target": "hypercurve",
+      "name": "bezier_region::tests::one_fragment_selected_loop_chamfers_from_one_interval",
+      "returncode": "timeout",
+      "passed": false,
+      "ignored": false,
+      "elapsed_seconds": 75.04022128600627,
+      "limit_seconds": 75,
+      "log": "chord-point-containment-20260924-v3-full-case-0712.log"
+    },
+    {
+      "target": "hypercurve",
+      "name": "bezier_region::tests::one_fragment_selected_loop_extends_chamfer_cuts_on_its_analytic_carrier",
+      "returncode": "timeout",
+      "passed": false,
+      "ignored": false,
+      "elapsed_seconds": 75.04011475411244,
+      "limit_seconds": 75,
+      "log": "chord-point-containment-20260924-v3-full-case-0713.log"
+    },
+    {
+      "target": "hypercurve",
+      "name": "bezier_region::tests::pair_native_boolean_algebraic_chord_corner_publishes_a_third_generation_fillet",
+      "returncode": "timeout",
+      "passed": false,
+      "ignored": false,
+      "elapsed_seconds": 75.00356606196146,
+      "limit_seconds": 75,
+      "log": "chord-point-containment-20260924-v3-full-case-0718.log"
+    }
+  ],
+  "all_sources_unchanged": true,
+  "all_processes_reaped": true
+}

@@ -1,0 +1,30 @@
+{
+  "returncode": 0,
+  "elapsed_seconds": 3.369011621020036,
+  "normal_library_sha256": "afb7e837f49d41ad1dce4d9ab147b8080a87df90720cd11eb5dd2be9f57fdfd7",
+  "log": "mixed-circle-components-public-replay.log",
+  "source": "selected-circle-source-replay-public.rs",
+  "command": [
+    "rustc",
+    "--edition=2024",
+    "-O",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/selected-circle-source-replay-public.rs",
+    "--extern",
+    "hypercurve=/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/libhypercurve-2c7ff6f3fbe07653.rlib",
+    "-L",
+    "dependency=/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps",
+    "-o",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/mixed-circle-components-public-replay"
+  ],
+  "source_sha256": "99425adc8eb402a83c8eabb6fba7bb52098b3b1eb02f92033f7cd941af1a9716",
+  "executable_sha256": "725b6f34effeb247e75c27db35eb51d257cf4255e7187f0b2c22e05b711ccb42",
+  "counts": {
+    "queries": 80,
+    "point_replays": 160,
+    "equality_queries": 320,
+    "coordinate_orders": 640,
+    "topologies": 80,
+    "splits": 160,
+    "child_queries": 320
+  }
+}

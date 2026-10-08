@@ -1,0 +1,182 @@
+node:internal/child_process:1120
+    result.error = new ErrnoException(result.error, 'spawnSync ' + options.file);
+                   ^
+
+<ref *1> Error: spawnSync /usr/bin/node-22 EPERM
+    at Object.spawnSync (node:internal/child_process:1120:20)
+    at spawnSync (node:child_process:902:24)
+    at execFileSync (node:child_process:945:15)
+    at run (file:///home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/coq-aern/v87/evidence-v87.mjs:9:41)
+    at file:///home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/coq-aern/v87/evidence-v87.mjs:10:16
+    at ModuleJob.run (node:internal/modules/esm/module_job:343:25)
+    at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:665:26)
+    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5) {
+  errno: -1,
+  code: 'EPERM',
+  syscall: 'spawnSync /usr/bin/node-22',
+  path: '/usr/bin/node-22',
+  spawnargs: [ 'evidence-v86.mjs' ],
+  error: [Circular *1],
+  status: 1,
+  signal: null,
+  output: [
+    null,
+    '',
+    'node:internal/child_process:1120\n' +
+      "    result.error = new ErrnoException(result.error, 'spawnSync ' + options.file);\n" +
+      '                   ^\n' +
+      '\n' +
+      '<ref *1> Error: spawnSync /usr/bin/node-22 EPERM\n' +
+      '    at Object.spawnSync (node:internal/child_process:1120:20)\n' +
+      '    at spawnSync (node:child_process:902:24)\n' +
+      '    at execFileSync (node:child_process:945:15)\n' +
+      '    at run (file:///home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/coq-aern/v86/evidence-v86.mjs:9:41)\n' +
+      '    at file:///home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/coq-aern/v86/evidence-v86.mjs:10:16\n' +
+      '    at ModuleJob.run (node:internal/modules/esm/module_job:343:25)\n' +
+      '    at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:665:26)\n' +
+      '    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5) {\n' +
+      '  errno: -1,\n' +
+      "  code: 'EPERM',\n" +
+      "  syscall: 'spawnSync /usr/bin/node-22',\n" +
+      "  path: '/usr/bin/node-22',\n" +
+      "  spawnargs: [ 'evidence-v85.mjs' ],\n" +
+      '  error: [Circular *1],\n' +
+      '  status: 1,\n' +
+      '  signal: null,\n' +
+      '  output: [\n' +
+      '    null,\n' +
+      "    '',\n" +
+      "    'node:internal/modules/run_main:123\\n' +\n" +
+      "      '    triggerUncaughtException(\\n' +\n" +
+      "      '    ^\\n' +\n" +
+      "      '\\n' +\n" +
+      "      'AssertionError [ERR_ASSERTION]: live hypercurve/src/bezier_region.rs\\n' +\n" +
+      "      '+ actual - expected\\n' +\n" +
+      "      '\\n' +\n" +
+      `      "+ '879e3044458faa2ce088341ca76e93a5a68b341cbbbae6be0f8cadcf8178508c'\\n" +\n` +
+      `      "- '81f75094cf225e904f53463d649ecf87971a7c97d2eba3bf25ef61406e0c7ee4'\\n" +\n` +
+      "      '\\n' +\n" +
+      "      '    at file:///home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/coq-aern/evidence-v85.mjs:15:90\\n' +\n" +
+      "      '    at ModuleJob.run (node:internal/modules/esm/module_job:343:25)\\n' +\n" +
+      "      '    at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:665:26)\\n' +\n" +
+      "      '    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5) {\\n' +\n" +
+      "      '  generatedMessage: false,\\n' +\n" +
+      `      "  code: 'ERR_ASSERTION',\\n" +\n` +
+      `      "  actual: '879e3044458faa2ce088341ca76e93a5a68b341cbbbae6be0f8cadcf8178508c',\\n" +\n` +
+      `      "  expected: '81f75094cf225e904f53463d649ecf87971a7c97d2eba3bf25ef61406e0c7ee4',\\n" +\n` +
+      `      "  operator: 'strictEqual',\\n" +\n` +
+      `      "  diff: 'simple'\\n" +\n` +
+      "      '}\\n' +\n" +
+      "      '\\n' +\n" +
+      "      'Node.js v22.22.2\\n'\n" +
+      '  ],\n' +
+      '  pid: 60,\n' +
+      "  stdout: '',\n" +
+      "  stderr: 'node:internal/modules/run_main:123\\n' +\n" +
+      "    '    triggerUncaughtException(\\n' +\n" +
+      "    '    ^\\n' +\n" +
+      "    '\\n' +\n" +
+      "    'AssertionError [ERR_ASSERTION]: live hypercurve/src/bezier_region.rs\\n' +\n" +
+      "    '+ actual - expected\\n' +\n" +
+      "    '\\n' +\n" +
+      `    "+ '879e3044458faa2ce088341ca76e93a5a68b341cbbbae6be0f8cadcf8178508c'\\n" +\n` +
+      `    "- '81f75094cf225e904f53463d649ecf87971a7c97d2eba3bf25ef61406e0c7ee4'\\n" +\n` +
+      "    '\\n' +\n" +
+      "    '    at file:///home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/coq-aern/evidence-v85.mjs:15:90\\n' +\n" +
+      "    '    at ModuleJob.run (node:internal/modules/esm/module_job:343:25)\\n' +\n" +
+      "    '    at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:665:26)\\n' +\n" +
+      "    '    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5) {\\n' +\n" +
+      "    '  generatedMessage: false,\\n' +\n" +
+      `    "  code: 'ERR_ASSERTION',\\n" +\n` +
+      `    "  actual: '879e3044458faa2ce088341ca76e93a5a68b341cbbbae6be0f8cadcf8178508c',\\n" +\n` +
+      `    "  expected: '81f75094cf225e904f53463d649ecf87971a7c97d2eba3bf25ef61406e0c7ee4',\\n" +\n` +
+      `    "  operator: 'strictEqual',\\n" +\n` +
+      `    "  diff: 'simple'\\n" +\n` +
+      "    '}\\n' +\n" +
+      "    '\\n' +\n" +
+      "    'Node.js v22.22.2\\n'\n" +
+      '}\n' +
+      '\n' +
+      'Node.js v22.22.2\n'
+  ],
+  pid: 53,
+  stdout: '',
+  stderr: 'node:internal/child_process:1120\n' +
+    "    result.error = new ErrnoException(result.error, 'spawnSync ' + options.file);\n" +
+    '                   ^\n' +
+    '\n' +
+    '<ref *1> Error: spawnSync /usr/bin/node-22 EPERM\n' +
+    '    at Object.spawnSync (node:internal/child_process:1120:20)\n' +
+    '    at spawnSync (node:child_process:902:24)\n' +
+    '    at execFileSync (node:child_process:945:15)\n' +
+    '    at run (file:///home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/coq-aern/v86/evidence-v86.mjs:9:41)\n' +
+    '    at file:///home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/coq-aern/v86/evidence-v86.mjs:10:16\n' +
+    '    at ModuleJob.run (node:internal/modules/esm/module_job:343:25)\n' +
+    '    at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:665:26)\n' +
+    '    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5) {\n' +
+    '  errno: -1,\n' +
+    "  code: 'EPERM',\n" +
+    "  syscall: 'spawnSync /usr/bin/node-22',\n" +
+    "  path: '/usr/bin/node-22',\n" +
+    "  spawnargs: [ 'evidence-v85.mjs' ],\n" +
+    '  error: [Circular *1],\n' +
+    '  status: 1,\n' +
+    '  signal: null,\n' +
+    '  output: [\n' +
+    '    null,\n' +
+    "    '',\n" +
+    "    'node:internal/modules/run_main:123\\n' +\n" +
+    "      '    triggerUncaughtException(\\n' +\n" +
+    "      '    ^\\n' +\n" +
+    "      '\\n' +\n" +
+    "      'AssertionError [ERR_ASSERTION]: live hypercurve/src/bezier_region.rs\\n' +\n" +
+    "      '+ actual - expected\\n' +\n" +
+    "      '\\n' +\n" +
+    `      "+ '879e3044458faa2ce088341ca76e93a5a68b341cbbbae6be0f8cadcf8178508c'\\n" +\n` +
+    `      "- '81f75094cf225e904f53463d649ecf87971a7c97d2eba3bf25ef61406e0c7ee4'\\n" +\n` +
+    "      '\\n' +\n" +
+    "      '    at file:///home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/coq-aern/evidence-v85.mjs:15:90\\n' +\n" +
+    "      '    at ModuleJob.run (node:internal/modules/esm/module_job:343:25)\\n' +\n" +
+    "      '    at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:665:26)\\n' +\n" +
+    "      '    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5) {\\n' +\n" +
+    "      '  generatedMessage: false,\\n' +\n" +
+    `      "  code: 'ERR_ASSERTION',\\n" +\n` +
+    `      "  actual: '879e3044458faa2ce088341ca76e93a5a68b341cbbbae6be0f8cadcf8178508c',\\n" +\n` +
+    `      "  expected: '81f75094cf225e904f53463d649ecf87971a7c97d2eba3bf25ef61406e0c7ee4',\\n" +\n` +
+    `      "  operator: 'strictEqual',\\n" +\n` +
+    `      "  diff: 'simple'\\n" +\n` +
+    "      '}\\n' +\n" +
+    "      '\\n' +\n" +
+    "      'Node.js v22.22.2\\n'\n" +
+    '  ],\n' +
+    '  pid: 60,\n' +
+    "  stdout: '',\n" +
+    "  stderr: 'node:internal/modules/run_main:123\\n' +\n" +
+    "    '    triggerUncaughtException(\\n' +\n" +
+    "    '    ^\\n' +\n" +
+    "    '\\n' +\n" +
+    "    'AssertionError [ERR_ASSERTION]: live hypercurve/src/bezier_region.rs\\n' +\n" +
+    "    '+ actual - expected\\n' +\n" +
+    "    '\\n' +\n" +
+    `    "+ '879e3044458faa2ce088341ca76e93a5a68b341cbbbae6be0f8cadcf8178508c'\\n" +\n` +
+    `    "- '81f75094cf225e904f53463d649ecf87971a7c97d2eba3bf25ef61406e0c7ee4'\\n" +\n` +
+    "    '\\n' +\n" +
+    "    '    at file:///home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/coq-aern/evidence-v85.mjs:15:90\\n' +\n" +
+    "    '    at ModuleJob.run (node:internal/modules/esm/module_job:343:25)\\n' +\n" +
+    "    '    at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:665:26)\\n' +\n" +
+    "    '    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5) {\\n' +\n" +
+    "    '  generatedMessage: false,\\n' +\n" +
+    `    "  code: 'ERR_ASSERTION',\\n" +\n` +
+    `    "  actual: '879e3044458faa2ce088341ca76e93a5a68b341cbbbae6be0f8cadcf8178508c',\\n" +\n` +
+    `    "  expected: '81f75094cf225e904f53463d649ecf87971a7c97d2eba3bf25ef61406e0c7ee4',\\n" +\n` +
+    `    "  operator: 'strictEqual',\\n" +\n` +
+    `    "  diff: 'simple'\\n" +\n` +
+    "    '}\\n' +\n" +
+    "    '\\n' +\n" +
+    "    'Node.js v22.22.2\\n'\n" +
+    '}\n' +
+    '\n' +
+    'Node.js v22.22.2\n'
+}
+
+Node.js v22.22.2

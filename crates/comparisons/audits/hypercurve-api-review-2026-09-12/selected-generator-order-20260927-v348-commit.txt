@@ -1,0 +1,14 @@
+Reuse coefficient generators when ordering local roots
+
+Compare a selected polynomial root directly with an existing coefficient
+field generator, retaining exact boundary separation and the defining
+polynomial sign inside its isolator. Share the existing-axis import and
+avoid rebuilding the field or replaying a higher-degree native relation.
+
+Cover close distinct roots, equality, both orientations and policies, and
+duplicate selected axes. The extended nonzero parallel-loop chamfer now
+finishes in 113 seconds after previously exceeding 240 seconds.
+
+Validation: 232 selected release tests across seven binaries; all-target
+Clippy with all features and without defaults, formatting, editing fuzz
+compilation, denied-warning docs, and Hyperbrep all-target/all-feature check.

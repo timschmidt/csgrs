@@ -1,0 +1,9 @@
+{
+  "changed": [
+    "hypercurve/src/bezier_region.rs"
+  ],
+  "only_changed_function": "closed_ph_corner_edits_preserve_both_normalized_source_lobes",
+  "all_other_function_and_production_source_bytes_identical": true,
+  "production_qualification": "rational-polynomial-20260924-v8-qualification.json",
+  "hypercurve_parent": "04b524382cdf80457c06f02c2bd2d0fa222d21b8"
+}

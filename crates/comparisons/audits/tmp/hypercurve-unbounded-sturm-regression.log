@@ -1,0 +1,9 @@
+   Compiling hypercurve v0.3.1 (/home/tim/Documents/GitHub/workspace/hypercurve)
+    Finished `release` profile [optimized] target(s) in 1m 02s
+     Running tests/hypercurve_bezier_algebraic_parameter.rs (target/release/deps/hypercurve_bezier_algebraic_parameter-061049773273981c)
+
+running 1 test
+test unit_root_isolation_has_no_fixed_dyadic_depth_limit ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 27 filtered out; finished in 0.02s
+

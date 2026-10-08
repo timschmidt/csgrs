@@ -1,0 +1,24 @@
+{
+  "source_manifest": "coincident-linear-fillet-20260927-v318-sources.json",
+  "qualification": "coincident-linear-fillet-20260927-v318-terminal.json",
+  "outer_session_reaped": 41975,
+  "validated_files": 2046,
+  "passed_tests": 134,
+  "static_checks": 6,
+  "repos": {
+    "hypercurve": {
+      "parent": "41bec6d77f784288d3da68b4833aaa6cd0b1c385",
+      "paths": {
+        "src/curve.rs": "7b87837e866219e2167f1b919bcae473fb1b7f0243d2842b298e4317580b3946",
+        "src/curve_fillet.rs": "151a941bc7e09ad5073111e3cd4b4c04783615ac3367f73e8e4892dfde3a61a8"
+      },
+      "commit": "00650940024212c8909bb34f30fc0384121062ef"
+    }
+  },
+  "known_unresolved_not_requalified": [
+    "strict_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions",
+    "approximate_512_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions"
+  ],
+  "remaining_constraint_work": "General collapsed selected-circle contacts, native coincident circular supports, and mixed retained chord/parallel coincidence",
+  "repositories_clean": 30
+}

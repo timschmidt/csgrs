@@ -1,0 +1,140 @@
+\doxysubsection{Polyhedron Class Reference}
+\hypertarget{classAriadne_1_1Polyhedron}{}\label{classAriadne_1_1Polyhedron}\index{Polyhedron@{Polyhedron}}
+
+
+{\ttfamily \#include $<$polyhedron.\+hpp$>$}
+
+
+
+\doxysubsubsection{Description}
+A polyhedron (not necessarily is\+\_\+bounded polyhedral set) described by a system of linear inequalities. 
+
+The set is described as $ \{ x\in\mathbb{R}^d \mid Ax \leq b \} $ where $A$ is a $n\times d$ matrix and $b$ is a vector of size $n$. Inheritance diagram for Polyhedron\+:\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[height=5.000000cm]{classAriadne_1_1Polyhedron}
+\end{center}
+\end{figure}
+\doxysubsubsubsection*{Public Member Functions}
+\begin{Indent}\textbf{ Constructors and destructor}\par
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1Polyhedron_aac86ee29eca2d83801783a51097f95f4}\label{classAriadne_1_1Polyhedron_aac86ee29eca2d83801783a51097f95f4} 
+{\bfseries Polyhedron} ()
+\begin{DoxyCompactList}\small\item\em Default constructor constructs a polytope in zero dimensions with no constraints. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Polyhedron_ac6e4f1b4a61d37c7390242c3c4ca9b75}\label{classAriadne_1_1Polyhedron_ac6e4f1b4a61d37c7390242c3c4ca9b75} 
+{\bfseries Polyhedron} (Dimension\+Type n=0u)
+\begin{DoxyCompactList}\small\item\em Construct full Euclidean space of dimension {\itshape n}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Polyhedron_a8e35eead427451c890cf6508381b2d03}\label{classAriadne_1_1Polyhedron_a8e35eead427451c890cf6508381b2d03} 
+{\footnotesize template$<$class XX$>$ }\\{\bfseries Polyhedron} (Dimension\+Type d, Size\+Type nc, const XX \texorpdfstring{$\ast$}{*}data)
+\begin{DoxyCompactList}\small\item\em Construct a polyhedron of dimension {\itshape d} with {\itshape nc} constraints from the data in the \doxylink{classAriadne_1_1Array}{Array} beginning at {\itshape data}. The jth element of the ith constraint is stored in position i\texorpdfstring{$\ast$}{*}(d+1)+j, and the ith inhomogeneous term is stored in position i\texorpdfstring{$\ast$}{*}(d+1)+d. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Polyhedron_a9541979917df5546429dbbf5a161cc09}\label{classAriadne_1_1Polyhedron_a9541979917df5546429dbbf5a161cc09} 
+{\bfseries Polyhedron} (const \mbox{\hyperlink{classAriadne_1_1Matrix}{Matrix}}$<$ \mbox{\hyperlink{namespaceAriadne_af915b9f1459c9691328efa71c6f39c6e}{Float\+DP}} $>$ \&\mbox{\hyperlink{classAriadne_1_1Polyhedron_a8f48cf262f3eca549deb688b37668f38}{A}}, const \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ \mbox{\hyperlink{namespaceAriadne_af915b9f1459c9691328efa71c6f39c6e}{Float\+DP}} $>$ \&\mbox{\hyperlink{classAriadne_1_1Polyhedron_aa05a4f7c3c400b91f6a5028a682d4e26}{b}})
+\begin{DoxyCompactList}\small\item\em Construct the polyhedron defined by the matrix equations $Ax\leq b$. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Polyhedron_aedfa0cbf5078840ce8b5d90d7c5c5295}\label{classAriadne_1_1Polyhedron_aedfa0cbf5078840ce8b5d90d7c5c5295} 
+{\bfseries Polyhedron} (const \mbox{\hyperlink{group__FunctionModule_gafdd31b4d01081cd09aad2ce11117f867}{Exact\+Box\+Type}} \&bx)
+\begin{DoxyCompactList}\small\item\em Convert from a box. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Polyhedron_a6b86a396bafb79c656f68b795dffdf4c}\label{classAriadne_1_1Polyhedron_a6b86a396bafb79c656f68b795dffdf4c} 
+{\bfseries Polyhedron} (const \mbox{\hyperlink{classAriadne_1_1Polytope}{Polytope}} \&p)
+\begin{DoxyCompactList}\small\item\em Convert from a polytope. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Polyhedron_af622a25dc5315afd4f30c4904a4249ea}\label{classAriadne_1_1Polyhedron_af622a25dc5315afd4f30c4904a4249ea} 
+virtual \mbox{\hyperlink{classAriadne_1_1Polyhedron}{Polyhedron}} \texorpdfstring{$\ast$}{*} {\bfseries clone} () const
+\begin{DoxyCompactList}\small\item\em Create a dynamically-\/allocated copy. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\end{Indent}
+\begin{Indent}\textbf{ Data access}\par
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1Polyhedron_a4ee2c18be0864ad8e866ccc167b2a63a}\label{classAriadne_1_1Polyhedron_a4ee2c18be0864ad8e866ccc167b2a63a} 
+Size\+Type {\bfseries number\+\_\+of\+\_\+constraints} () const
+\begin{DoxyCompactList}\small\item\em The number of constraints. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Polyhedron_a8f48cf262f3eca549deb688b37668f38}\label{classAriadne_1_1Polyhedron_a8f48cf262f3eca549deb688b37668f38} 
+\mbox{\hyperlink{classAriadne_1_1Matrix}{Matrix}}$<$ \mbox{\hyperlink{namespaceAriadne_af915b9f1459c9691328efa71c6f39c6e}{Float\+DP}} $>$ {\bfseries A} () const
+\begin{DoxyCompactList}\small\item\em The matrix $A$ in the inequalities $Ax\leq b$. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Polyhedron_aa05a4f7c3c400b91f6a5028a682d4e26}\label{classAriadne_1_1Polyhedron_aa05a4f7c3c400b91f6a5028a682d4e26} 
+\mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ \mbox{\hyperlink{namespaceAriadne_af915b9f1459c9691328efa71c6f39c6e}{Float\+DP}} $>$ {\bfseries b} () const
+\begin{DoxyCompactList}\small\item\em The vector $b$ in the inequalities $Ax\leq b$. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\end{Indent}
+\begin{Indent}\textbf{ Input/output.}\par
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1Polyhedron_aec3050510f58e6f3fece416706247410}\label{classAriadne_1_1Polyhedron_aec3050510f58e6f3fece416706247410} 
+\mbox{\hyperlink{namespaceAriadne_acbb98ddc4385af4599070e65a1a47ec1}{Output\+Stream}} \& {\bfseries \+\_\+write} (\mbox{\hyperlink{namespaceAriadne_acbb98ddc4385af4599070e65a1a47ec1}{Output\+Stream}} \&os) const
+\begin{DoxyCompactList}\small\item\em Write to an output stream. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\end{Indent}
+\doxyparagraph*{Public Member Functions inherited from \mbox{\hyperlink{classAriadne_1_1OpenSetInterface}{Open\+Set\+Interface$<$ P, T $>$}}}
+\begin{DoxyCompactItemize}
+\item 
+virtual Lower\+Kleenean\+Type$<$ P $>$ {\bfseries covers} (const \mbox{\hyperlink{classAriadne_1_1SetInterfaceBase_a621a6488ff988ea56df9398b55b4241f}{Basic\+Set\+Type}} \&bx) const =0
+\begin{DoxyCompactList}\small\item\em Tests if the set covers of {\itshape bx}. A set {\itshape A} {\itshape covers} {\itshape B} if the interiors of {\itshape A} is a superset of the closure of {\itshape B}. A set $A$ {\itshape covers} $B$ if $A^\circ \supset \overline{B}$. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxyparagraph*{Public Member Functions inherited from \mbox{\hyperlink{classAriadne_1_1OvertSetInterface}{Overt\+Set\+Interface$<$ P, T $>$}}}
+\begin{DoxyCompactItemize}
+\item 
+virtual Lower\+Kleenean\+Type$<$ P $>$ {\bfseries overlaps} (const \mbox{\hyperlink{classAriadne_1_1SetInterfaceBase_a621a6488ff988ea56df9398b55b4241f}{Basic\+Set\+Type}} \&bx) const =0
+\begin{DoxyCompactList}\small\item\em Tests if the set overlaps {\itshape bx}. Sets {\itshape A} and {\itshape B} {\itshape overlap} if the interiors of {\itshape A} and {\itshape B} intersect. Sets $A$ and $B$ {\itshape overlap} if $A^\circ \cap B^\circ \neq \emptyset$. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxyparagraph*{Public Member Functions inherited from \mbox{\hyperlink{classAriadne_1_1SetInterfaceBase}{Set\+Interface\+Base$<$ T $>$}}}
+\begin{DoxyCompactItemize}
+\item 
+virtual {\bfseries \texorpdfstring{$\sim$}{\string~}\+Set\+Interface\+Base} ()=default
+\begin{DoxyCompactList}\small\item\em Virtual destructor. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxyparagraph*{Public Member Functions inherited from \mbox{\hyperlink{classAriadne_1_1ClosedSetInterface}{Closed\+Set\+Interface$<$ P, T $>$}}}
+\begin{DoxyCompactItemize}
+\item 
+virtual Lower\+Kleenean\+Type$<$ P $>$ {\bfseries separated} (const \mbox{\hyperlink{classAriadne_1_1SetInterfaceBase_a621a6488ff988ea56df9398b55b4241f}{Basic\+Set\+Type}} \&bx) const =0
+\begin{DoxyCompactList}\small\item\em Tests if the set is separated from {\itshape bx}. A set {\itshape A} is {\itshape separated} from {\itshape B} if the closures of {\itshape A} and {\itshape B} are disjoint. A set $A$ is {\itshape separated} from $B$ if $\,\overline{\!A} \cap \overline{B} = \emptyset$. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsubsection*{Geometric operations}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1Polyhedron_a3c1a15a3831a647991a6a2c5bbe1e029}\label{classAriadne_1_1Polyhedron_a3c1a15a3831a647991a6a2c5bbe1e029} 
+virtual Dimension\+Type {\bfseries dimension} () const
+\begin{DoxyCompactList}\small\item\em The dimension of the polyhedron. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Polyhedron_ad85f9ee31adab97098905970ce570911}\label{classAriadne_1_1Polyhedron_ad85f9ee31adab97098905970ce570911} 
+virtual \mbox{\hyperlink{classAriadne_1_1ValidatedKleenean}{Validated\+Kleenean}} {\bfseries empty} () const
+\begin{DoxyCompactList}\small\item\em Tests if the polyhedron is empty. (Not currently implemented.) \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Polyhedron_a89bfc0f5b06d6a521f589624ed469477}\label{classAriadne_1_1Polyhedron_a89bfc0f5b06d6a521f589624ed469477} 
+virtual \mbox{\hyperlink{classAriadne_1_1ValidatedKleenean}{Validated\+Kleenean}} {\bfseries is\+\_\+bounded} () const
+\begin{DoxyCompactList}\small\item\em Tests if the polyhedron is bounded. (Not currently implemented.) \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Polyhedron_a458be0c36f9bb28c84658b20267bd5bd}\label{classAriadne_1_1Polyhedron_a458be0c36f9bb28c84658b20267bd5bd} 
+virtual \mbox{\hyperlink{classAriadne_1_1ValidatedKleenean}{Validated\+Kleenean}} {\bfseries overlaps} (const \mbox{\hyperlink{group__FunctionModule_gafdd31b4d01081cd09aad2ce11117f867}{Exact\+Box\+Type}} \&bx) const
+\begin{DoxyCompactList}\small\item\em Tests if the polyhedron intersects a box. (Not currently implemented.) \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Polyhedron_a93e0058dd963820de16db8bf3a0be361}\label{classAriadne_1_1Polyhedron_a93e0058dd963820de16db8bf3a0be361} 
+virtual \mbox{\hyperlink{classAriadne_1_1ValidatedKleenean}{Validated\+Kleenean}} {\bfseries covers} (const \mbox{\hyperlink{group__FunctionModule_gafdd31b4d01081cd09aad2ce11117f867}{Exact\+Box\+Type}} \&bx) const
+\begin{DoxyCompactList}\small\item\em Tests if the polyhedron is a superset of a box. (Not currently implemented.) \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Polyhedron_a258cd9c89da4fed178fa7fb6cd3f1de6}\label{classAriadne_1_1Polyhedron_a258cd9c89da4fed178fa7fb6cd3f1de6} 
+virtual \mbox{\hyperlink{classAriadne_1_1ValidatedKleenean}{Validated\+Kleenean}} {\bfseries separated} (const \mbox{\hyperlink{group__FunctionModule_gafdd31b4d01081cd09aad2ce11117f867}{Exact\+Box\+Type}} \&bx) const
+\begin{DoxyCompactList}\small\item\em Tests if the polyhedron is disjoint from a box. (Not currently implemented.) \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Polyhedron_a14442825aff99d734e733ff805c4def3}\label{classAriadne_1_1Polyhedron_a14442825aff99d734e733ff805c4def3} 
+\mbox{\hyperlink{classAriadne_1_1Polyhedron}{Polyhedron}} {\bfseries halfspace} (Size\+Type i) const
+\begin{DoxyCompactList}\small\item\em The {\itshape i\textsuperscript{th}} defining halfspace. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Polyhedron_a14f3b022a2b8347479fac4d0d9970137}\label{classAriadne_1_1Polyhedron_a14f3b022a2b8347479fac4d0d9970137} 
+{\bfseries operator Polytope} () const
+\begin{DoxyCompactList}\small\item\em Convert to a polytope. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Polyhedron_a8bd6f49a2070f9a89a39abb898647092}\label{classAriadne_1_1Polyhedron_a8bd6f49a2070f9a89a39abb898647092} 
+\mbox{\hyperlink{classAriadne_1_1Polyhedron}{Polyhedron}} {\bfseries intersection} (const \mbox{\hyperlink{classAriadne_1_1Polyhedron}{Polyhedron}} \&p1, const \mbox{\hyperlink{classAriadne_1_1Polyhedron}{Polyhedron}} \&p2)
+\begin{DoxyCompactList}\small\item\em The intersection of two polyhedra. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Polyhedron_ae3276087c350e8f76cf4fae598bde4b3}\label{classAriadne_1_1Polyhedron_ae3276087c350e8f76cf4fae598bde4b3} 
+\mbox{\hyperlink{classAriadne_1_1Polyhedron}{Polyhedron}} {\bfseries polyhedron} (const \mbox{\hyperlink{group__FunctionModule_gafdd31b4d01081cd09aad2ce11117f867}{Exact\+Box\+Type}} \&p)
+\begin{DoxyCompactList}\small\item\em Convert a box to a polyhedron. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Polyhedron_aa680e471a248c0df33c194dca95a5325}\label{classAriadne_1_1Polyhedron_aa680e471a248c0df33c194dca95a5325} 
+\mbox{\hyperlink{classAriadne_1_1Polyhedron}{Polyhedron}} {\bfseries polyhedron} (const \mbox{\hyperlink{classAriadne_1_1Polytope}{Polytope}} \&p)
+\begin{DoxyCompactList}\small\item\em Convert a polytope to a polyhedron. (Not currently implemented) \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Polyhedron_a2a2c435d592102a3fd206bd1e5c61a7b}\label{classAriadne_1_1Polyhedron_a2a2c435d592102a3fd206bd1e5c61a7b} 
+\mbox{\hyperlink{classAriadne_1_1Polytope}{Polytope}} {\bfseries polytope} (const \mbox{\hyperlink{classAriadne_1_1Polyhedron}{Polyhedron}} \&p)
+\begin{DoxyCompactList}\small\item\em Convert a polyhedron to a polytope. (Not currently implemented) \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsubsection*{Additional Inherited Members}
+\doxyparagraph*{Public Types inherited from \mbox{\hyperlink{classAriadne_1_1SetInterfaceBase}{Set\+Interface\+Base$<$ T $>$}}}
+\begin{DoxyCompactItemize}
+\item 
+typedef T {\bfseries Element\+Type}
+\begin{DoxyCompactList}\small\item\em The type of element of the set. \end{DoxyCompactList}\item 
+typedef Set\+Traits$<$ T $>$\+::\+Dimension\+Type {\bfseries Dimension\+Type}
+\begin{DoxyCompactList}\small\item\em The type representing the dimension of the set. \end{DoxyCompactList}\item 
+typedef Set\+Traits$<$ T $>$\+::\+Basic\+Set\+Type {\bfseries Basic\+Set\+Type}
+\begin{DoxyCompactList}\small\item\em The type of basic set in the space. \end{DoxyCompactList}\item 
+typedef Set\+Traits$<$ T $>$\+::\+Bounding\+Set\+Type {\bfseries Bounding\+Set\+Type}
+\begin{DoxyCompactList}\small\item\em The type of basic set in the space. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+The documentation for this class was generated from the following files\+:\begin{DoxyCompactItemize}
+\item 
+source/geometry/\mbox{\hyperlink{polyhedron_8hpp}{polyhedron.\+hpp}}\item 
+source/geometry/polyhedron.\+cpp\end{DoxyCompactItemize}

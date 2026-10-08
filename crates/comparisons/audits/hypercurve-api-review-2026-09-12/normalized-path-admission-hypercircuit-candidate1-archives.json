@@ -1,0 +1,42 @@
+[
+  {
+    "repository": "hypercircuit",
+    "commit": "c9cea1584d5ef1f5ff7a1a417aaa20886ffaf544",
+    "archive_sha256": "d6bd437c4e10f87e756e120ebeb2340a87a44ce70337b57199a939f24229d297"
+  },
+  {
+    "repository": "hyperphysics",
+    "commit": "dcbc7cf3489a1299de16a946fd7f5e5658b6f15f",
+    "archive_sha256": "9451d9d42682e68448be0543154466b350bb4d2abbb8f20cba9401c7390f624d"
+  },
+  {
+    "repository": "hypermesh",
+    "commit": "d9db5c45a0cecc2307aa66a6f7f1b0396350e4ee",
+    "archive_sha256": "38c3c7bd892a54204000e1678280acb0c4ef9afca3b2d94f4fddd19dd00df473"
+  },
+  {
+    "repository": "hyperdrc",
+    "commit": "5c9d3a509be606f1a0825dcfb31f8b178f335cd1",
+    "archive_sha256": "2fa96084dc8d154e31d13612ea5c4f8d004d4244dc6a49c302727ea3f5084a29"
+  },
+  {
+    "repository": "hyperpath",
+    "commit": "cfe50de3e370ea75a49b916eb70a7b19d31a58fa",
+    "archive_sha256": "2b37719ad52f89ddd3ac97f6afc702c8b2ee7302be3d465457988b017e2b49f4"
+  },
+  {
+    "repository": "csgrs",
+    "commit": "0fc51dc52279bc363a42b32e52b9873e8f3a6a5b",
+    "archive_sha256": "52aa02d017056912840fe7155f339f91b6beef88b344cbb2cf5324923b6f40fa"
+  },
+  {
+    "repository": "hypersdf",
+    "commit": "b37825900457420cb64da385b8525acab33e31c5",
+    "archive_sha256": "1c6b2e970793e6372f57c38b326fc4a9da2cba4bafb6e0733dafe002cfd5c6f6"
+  },
+  {
+    "repository": "hypervoxel",
+    "commit": "0486b1465a249a04973520a4138a39395ded2f23",
+    "archive_sha256": "0944ace32c878341881119ddc4c87ab7123d54e79b75fd8f0939bfcdf61a4015"
+  }
+]

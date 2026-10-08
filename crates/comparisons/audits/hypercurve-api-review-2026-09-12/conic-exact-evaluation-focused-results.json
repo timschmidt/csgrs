@@ -1,0 +1,26 @@
+[
+  {
+    "target": "hypercurve_bezier_algebraic_image",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve_bezier_algebraic_image-518d6573f1a8e09f",
+      "--test-threads=4",
+      "--color",
+      "never"
+    ],
+    "binary_sha256": "e75699c1685212afd3f89faf4ed0759c87834a492bc37092da0a100120416866",
+    "returncode": 101,
+    "elapsed_seconds": 0.015526576004049275
+  },
+  {
+    "target": "hypercurve_rational_bezier",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve_rational_bezier-5ff38460208f9543",
+      "--test-threads=4",
+      "--color",
+      "never"
+    ],
+    "binary_sha256": "1f6c409b71cb5477751da4276001269a6cac38443983c820a921b6e00e851069",
+    "returncode": 101,
+    "elapsed_seconds": 0.03155234700534493
+  }
+]

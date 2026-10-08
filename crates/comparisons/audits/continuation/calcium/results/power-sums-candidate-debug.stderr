@@ -1,0 +1,9 @@
+   Compiling hypersolve v0.3.1 (/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/power-sums-candidate/hypersolve)
+    Finished `test` profile [unoptimized] target(s) in 9.01s
+     Running unittests src/lib.rs (/tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/debug/deps/hypersolve-cbd4fea4266e31e9)
+     Running tests/exactcore_root_families.rs (/tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/debug/deps/exactcore_root_families-6f812398ff995052)
+     Running tests/quadratic_extraction.rs (/tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/debug/deps/quadratic_extraction-25b586023fc9921d)
+     Running tests/readme.rs (/tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/debug/deps/readme-4d0805feaffb9de0)
+     Running tests/real_representations.rs (/tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/debug/deps/real_representations-b97880b3ea76a542)
+     Running tests/residual_props.rs (/tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/debug/deps/residual_props-201827901b2a0986)
+     Running tests/smoke.rs (/tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/debug/deps/smoke-e69a14872dca288a)

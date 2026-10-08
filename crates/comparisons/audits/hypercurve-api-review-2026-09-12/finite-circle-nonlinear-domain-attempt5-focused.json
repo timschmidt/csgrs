@@ -1,0 +1,30 @@
+[
+  {
+    "name": "finite_circle_components_replay_one_field_and_selected_inverses",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve-6e6572a45c5b177b",
+      "finite_circle_components_replay_one_field_and_selected_inverses",
+      "--nocapture",
+      "--test-threads=1"
+    ],
+    "binary": "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve-6e6572a45c5b177b",
+    "sha256": "506540f948b4567e179d276db1836c51a6a4f8f9ace4cfb0103f7342c8ff4b68",
+    "returncode": 0,
+    "elapsed_seconds": 0.06612799901631661,
+    "log": "finite-circle-nonlinear-domain-attempt5-finite_circle_components_replay_one_field_and_selected_inverses.log"
+  },
+  {
+    "name": "finite_circle_components_replay_chord_normal_and_represented_inverses",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve-6e6572a45c5b177b",
+      "finite_circle_components_replay_chord_normal_and_represented_inverses",
+      "--nocapture",
+      "--test-threads=1"
+    ],
+    "binary": "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve-6e6572a45c5b177b",
+    "sha256": "506540f948b4567e179d276db1836c51a6a4f8f9ace4cfb0103f7342c8ff4b68",
+    "returncode": 101,
+    "elapsed_seconds": 0.24562756999512203,
+    "log": "finite-circle-nonlinear-domain-attempt5-finite_circle_components_replay_chord_normal_and_represented_inverses.log"
+  }
+]

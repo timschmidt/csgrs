@@ -1,0 +1,52 @@
+dyadic-add	checks=86490	failures=26826
+  (Stage {precision = 0, rounding = RoundDown},-15*2^-3,-15*2^-3,-1*2^1,(-15) % 4)
+  (Stage {precision = 0, rounding = RoundDown},-15*2^-3,-15*2^0,-1*2^4,(-135) % 8)
+  (Stage {precision = 0, rounding = RoundDown},-15*2^-3,-15*2^3,-1*2^6,(-975) % 8)
+  (Stage {precision = 0, rounding = RoundDown},-15*2^-3,-14*2^-3,-1*2^1,(-29) % 8)
+dyadic-sub	checks=86490	failures=26826
+  (Stage {precision = 0, rounding = RoundDown},-15*2^-3,-13*2^-3,0*2^-2,(-1) % 4)
+  (Stage {precision = 0, rounding = RoundDown},-15*2^-3,-12*2^-3,-1*2^-2,(-3) % 8)
+  (Stage {precision = 0, rounding = RoundDown},-15*2^-3,-11*2^-3,0*2^-1,(-1) % 2)
+  (Stage {precision = 0, rounding = RoundDown},-15*2^-3,-10*2^-3,-1*2^-1,(-5) % 8)
+dyadic-mul	checks=86490	failures=25596
+  (Stage {precision = 0, rounding = RoundDown},-15*2^-3,1*2^-3,-1*2^-3,(-15) % 64)
+  (Stage {precision = 0, rounding = RoundDown},-15*2^-3,1*2^0,-1*2^0,(-15) % 8)
+  (Stage {precision = 0, rounding = RoundDown},-15*2^-3,1*2^3,-1*2^3,(-15) % 1)
+  (Stage {precision = 0, rounding = RoundDown},-15*2^-3,2*2^-3,-1*2^-2,(-15) % 32)
+dyadic-div	checks=83700	failures=0
+dyadic-inv	checks=900	failures=0
+dyadic-mul2	checks=4650	failures=855
+  (Stage {precision = 0, rounding = RoundDown},-15*2^-3,-8,-1*2^-8,(-15) % 2048)
+  (Stage {precision = 0, rounding = RoundDown},-15*2^-3,-1,-1*2^-1,(-15) % 16)
+  (Stage {precision = 0, rounding = RoundDown},-15*2^-3,0,-1*2^0,(-15) % 8)
+  (Stage {precision = 0, rounding = RoundDown},-15*2^-3,1,-1*2^1,(-15) % 4)
+proper-interval-add	checks=2025	failures=0
+proper-interval-sub	checks=2025	failures=0
+proper-interval-mul	checks=2025	failures=0
+proper-interval-div	checks=900	failures=228
+  ((-4,-4),(3,3),[-453709822561251284617832809909024281941*2^-128,-453709822561251284617832809909024281940*2^-128],[(-4) % 3,(-4) % 3,(-4) % 3,(-4) % 3])
+  ((-4,-4),(3,4),[-453709822561251284617832809909024281941*2^-128,-340282366920938463463374607431768211456*2^-128],[(-4) % 3,(-1) % 1,(-4) % 3,(-1) % 1])
+  ((-4,-3),(3,3),[-453709822561251284617832809909024281941*2^-128,-680564733841876926926749214863536422910*2^-129],[(-4) % 3,(-4) % 3,(-1) % 1,(-1) % 1])
+  ((-4,-3),(3,4),[-453709822561251284617832809909024281941*2^-128,-510423550381407695195061911147652317184*2^-129],[(-4) % 3,(-1) % 1,(-1) % 1,(-3) % 4])
+interval-abs-enclosure	checks=45	failures=0
+interval-abs-point-refinement	checks=36	failures=32
+  (-4,4,[0*2^1,4*2^0])
+  (-4,16,[0*2^1,4*2^0])
+  (-4,64,[0*2^1,4*2^0])
+  (-4,256,[0*2^1,4*2^0])
+dyadic-abs-infinity	checks=1	failures=1
+  -inf
+default-power-of-two	checks=10	failures=10
+  (3*2^0,-4,-12*2^0)
+  (3*2^0,-1,-3*2^0)
+  (3*2^0,0,0*2^0)
+  (3*2^0,1,3*2^0)
+completion-function-stage	checks=5	failures=0
+completion-list-stage	checks=5	failures=5
+  (0,1)
+  (1,2)
+  (2,3)
+  (10,11)
+identity-lift-stage	(RoundDown,12)
+identity-lift-stage	(RoundUp,12)
+wide-interval-Ord-reflexivity	(True,False,EQ)

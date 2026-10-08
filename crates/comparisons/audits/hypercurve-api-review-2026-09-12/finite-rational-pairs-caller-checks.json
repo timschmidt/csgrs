@@ -1,0 +1,47 @@
+[
+  {
+    "target": "fuzz",
+    "command": [
+      "cargo",
+      "check",
+      "--manifest-path",
+      "fuzz/Cargo.toml",
+      "--all-targets",
+      "--locked",
+      "--offline"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 11.931402211994282,
+    "log": "finite-rational-pairs-fuzz-check.log"
+  },
+  {
+    "target": "ui",
+    "command": [
+      "cargo",
+      "check",
+      "--manifest-path",
+      "examples/hypercurve_ui/Cargo.toml",
+      "--all-targets",
+      "--locked",
+      "--offline"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 12.733237872002064,
+    "log": "finite-rational-pairs-ui-check.log"
+  },
+  {
+    "target": "hyperbrep-fuzz",
+    "command": [
+      "cargo",
+      "check",
+      "--manifest-path",
+      "fuzz/Cargo.toml",
+      "--all-targets",
+      "--locked",
+      "--offline"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 15.13762184100051,
+    "log": "finite-rational-pairs-hyperbrep-fuzz-check.log"
+  }
+]

@@ -1,0 +1,22 @@
+{
+  "commit": "d74648a256a03494c247cb965158af09a49cae33",
+  "command": [
+    "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustc",
+    "--edition=2024",
+    "-O",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-analytic-pair-domains-public.rs",
+    "--extern",
+    "hypercurve=/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-parallel-admission-libraries/libhypercurve-cdcdcc6da422cc2c.rlib",
+    "-L",
+    "dependency=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps",
+    "-o",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-analytic-pair-domains-baseline"
+  ],
+  "returncode": 101,
+  "elapsed_seconds": 0.031629323988454416,
+  "source": "finite-analytic-pair-domains-public.rs",
+  "source_sha256": "1454fbfaa47cf90e8312b20bc4f6d255d7e2145646ec96e8ccdae85071f71046",
+  "binary_sha256": "0df781ea700bc3d98cbbdfe361d4fc12a6de761f8dfa854858b3d6c305dc745e",
+  "normal_library_sha256": "9ae1c520060940471e48c12e6100d86ee6ea9225a56e2ddd2281e5dd246c03f9",
+  "log": "finite-analytic-pair-domains-baseline.log"
+}

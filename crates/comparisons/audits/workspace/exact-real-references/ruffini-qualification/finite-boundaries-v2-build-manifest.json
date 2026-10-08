@@ -1,0 +1,29 @@
+{
+  "source": "/home/tim/Documents/GitHub/workspace/exact-real-references/ruffini-qualification/FiniteBoundariesV2.java",
+  "sourceSha256": "e173b04d7c685ecdab9dc74f6f800bc7a65f7c8fea267fca64064f6ee53d44d6",
+  "classes": [
+    [
+      "FiniteBoundariesV2.class",
+      "ed1deb2a73771ef6563756fccb1b0ed67fe11ad36118de735bfe4179021ad66d"
+    ]
+  ],
+  "dependencies": [
+    [
+      "native-build-manifest.json",
+      "00763b9eca620f1ac67486bbe43f087366b2871d767f489110e4045e48096844"
+    ],
+    [
+      "matrix-build-manifest.json",
+      "0ac8a19300c1fe575051ee4975f352a9ce620c5b8e45e1813d9bd4fb1e1b76cd"
+    ],
+    [
+      "polynomial-build-manifest.json",
+      "a3473385f5920dcd88d18c15aedd430b65f8f516424ae12b28e5b65fbbe1dfec"
+    ],
+    [
+      "finite-boundaries-build-manifest.json",
+      "1eb73fb1b087d16dec50a783592f5e5556170f169c340ccdf41eb5876734ae9c"
+    ]
+  ],
+  "release": 16
+}

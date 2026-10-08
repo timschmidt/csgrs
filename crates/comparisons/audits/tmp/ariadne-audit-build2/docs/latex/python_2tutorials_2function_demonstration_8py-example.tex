@@ -1,0 +1,226 @@
+\doxysubsection{python/tutorials/function\+\_\+demonstration.\+py}
+\hypertarget{python_2tutorials_2function_demonstration_8py-example}{}\label{python_2tutorials_2function_demonstration_8py-example}A demonstration of the functionality of the Function module.
+
+
+\begin{DoxyCodeInclude}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{\#!/usr/bin/python3}}
+\DoxyCodeLine{00002\ }
+\DoxyCodeLine{00003\ }
+\DoxyCodeLine{00008\ }
+\DoxyCodeLine{00009\ \textcolor{comment}{\#\ This\ file\ is\ part\ of\ Ariadne.}}
+\DoxyCodeLine{00010\ }
+\DoxyCodeLine{00011\ \textcolor{comment}{\#\ Ariadne\ is\ free\ software:\ you\ can\ redistribute\ it\ and/or\ modify}}
+\DoxyCodeLine{00012\ \textcolor{comment}{\#\ it\ under\ the\ terms\ of\ the\ GNU\ General\ Public\ License\ as\ published\ by}}
+\DoxyCodeLine{00013\ \textcolor{comment}{\#\ the\ Free\ Software\ Foundation,\ either\ version\ 3\ of\ the\ License,\ or}}
+\DoxyCodeLine{00014\ \textcolor{comment}{\#\ (at\ your\ option)\ any\ later\ version.}}
+\DoxyCodeLine{00015\ }
+\DoxyCodeLine{00016\ \textcolor{comment}{\#\ Ariadne\ is\ distributed\ in\ the\ hope\ that\ it\ will\ be\ useful,}}
+\DoxyCodeLine{00017\ \textcolor{comment}{\#\ but\ WITHOUT\ ANY\ WARRANTY;\ without\ even\ the\ implied\ warranty\ of}}
+\DoxyCodeLine{00018\ \textcolor{comment}{\#\ MERCHANTABILITY\ or\ FITNESS\ FOR\ A\ PARTICULAR\ PURPOSE.\ \ See\ the}}
+\DoxyCodeLine{00019\ \textcolor{comment}{\#\ GNU\ General\ Public\ License\ for\ more\ details.}}
+\DoxyCodeLine{00020\ }
+\DoxyCodeLine{00021\ \textcolor{comment}{\#\ You\ should\ have\ received\ a\ copy\ of\ the\ GNU\ General\ Public\ License}}
+\DoxyCodeLine{00022\ \textcolor{comment}{\#\ along\ with\ Ariadne.\ If\ not,\ see\ <https://www.gnu.org/licenses/>.}}
+\DoxyCodeLine{00023\ }
+\DoxyCodeLine{00024\ \textcolor{comment}{\#\ Import\ all\ classes\ in\ the\ ariadne\ module}}
+\DoxyCodeLine{00025\ \textcolor{keyword}{from}\ pyariadne\ \textcolor{keyword}{import}\ *}
+\DoxyCodeLine{00026\ }
+\DoxyCodeLine{00027\ }
+\DoxyCodeLine{00028\ \textcolor{keyword}{def\ }\mbox{\hyperlink{namespacefunction__demonstration}{function\_demonstration}}():}
+\DoxyCodeLine{00029\ \ \ \ \ \textcolor{comment}{\#!\ [Function\ demonstration]}}
+\DoxyCodeLine{00030\ }
+\DoxyCodeLine{00031\ \ \ \ \ \textcolor{comment}{\#\ Create\ a\ user-\/defined\ scalar-\/valued\ function}}
+\DoxyCodeLine{00032\ \ \ \ \ x=[EffectiveScalarMultivariateFunction.coordinate(2,index)\ \textcolor{keywordflow}{for}\ index\ \textcolor{keywordflow}{in}\ range(0,2)]}
+\DoxyCodeLine{00033\ \ \ \ \ sf=sqrt(sqr(x[0])+sqr(x[1]))}
+\DoxyCodeLine{00034\ \ \ \ \ print(\textcolor{stringliteral}{"{}sf:"{}},sf)}
+\DoxyCodeLine{00035\ \ \ \ \ a=FloatDPApproximationVector([4,3],dp)}
+\DoxyCodeLine{00036\ \ \ \ \ sfa=sf(a)}
+\DoxyCodeLine{00037\ \ \ \ \ print(\textcolor{stringliteral}{"{}sf(a):"{}},sfa)}
+\DoxyCodeLine{00038\ \ \ \ \ b=FloatDPBoundsVector([4,3],dp)}
+\DoxyCodeLine{00039\ \ \ \ \ sfb=sf(b)}
+\DoxyCodeLine{00040\ \ \ \ \ print(\textcolor{stringliteral}{"{}sf(b):"{}},sfb)}
+\DoxyCodeLine{00041\ }
+\DoxyCodeLine{00042\ \ \ \ \ x=EffectiveVectorMultivariateFunction.identity(3)}
+\DoxyCodeLine{00043\ \ \ \ \ vf=EffectiveVectorMultivariateFunction([sqrt(sqr(x[0])+sqr(x[1])),x[1]+x[2]])}
+\DoxyCodeLine{00044\ \ \ \ \ print(\textcolor{stringliteral}{"{}vf:"{}},vf)}
+\DoxyCodeLine{00045\ \ \ \ \ a=FloatDPApproximationVector([4,3,0],dp)}
+\DoxyCodeLine{00046\ \ \ \ \ vfa=vf(a)}
+\DoxyCodeLine{00047\ \ \ \ \ print(\textcolor{stringliteral}{"{}vf(a):"{}},vfa)}
+\DoxyCodeLine{00048\ \ \ \ \ b=FloatDPBoundsVector([4,3,0],dp)}
+\DoxyCodeLine{00049\ \ \ \ \ vfb=evaluate(vf,b)}
+\DoxyCodeLine{00050\ \ \ \ \ print(\textcolor{stringliteral}{"{}evaluate(vf,b):"{}},vfb)}
+\DoxyCodeLine{00051\ }
+\DoxyCodeLine{00052\ \ \ \ \ dsf0=derivative(sf,0);}
+\DoxyCodeLine{00053\ \ \ \ \ print(\textcolor{stringliteral}{"{}derivative(sf,0):"{}},dsf0);}
+\DoxyCodeLine{00054\ }
+\DoxyCodeLine{00055\ \ \ \ \ p0=FloatDPApproximationMultivariatePolynomial.coordinate(2,0,dp);}
+\DoxyCodeLine{00056\ \ \ \ \ p1=FloatDPApproximationMultivariatePolynomial.coordinate(2,1,dp);}
+\DoxyCodeLine{00057\ \ \ \ \ print(\textcolor{stringliteral}{"{}p1:"{}},p1)}
+\DoxyCodeLine{00058\ \ \ \ \ a3=FloatDPApproximation(3,dp)}
+\DoxyCodeLine{00059\ \ \ \ \ a5=FloatDPApproximation(5,dp)}
+\DoxyCodeLine{00060\ \ \ \ \ q=p0*(p0+p1*a3)+a5}
+\DoxyCodeLine{00061\ \ \ \ \ print(\textcolor{stringliteral}{"{}q:"{}},q)}
+\DoxyCodeLine{00062\ \ \ \ \ \textcolor{comment}{\#!\ [Function\ demonstration]}}
+\DoxyCodeLine{00063\ }
+\DoxyCodeLine{00064\ }
+\DoxyCodeLine{00065\ \textcolor{keyword}{def\ }calculus\_demonstration():}
+\DoxyCodeLine{00066\ \ \ \ \ \textcolor{comment}{\#!\ [Calculus\ demonstration]}}
+\DoxyCodeLine{00067\ }
+\DoxyCodeLine{00068\ \ \ \ \ \textcolor{comment}{\#\ Create\ a\ box\ to\ act\ as\ the\ domain\ of\ a\ Taylor\ function}}
+\DoxyCodeLine{00069\ \ \ \ \ dom=BoxDomainType([\{4:7\},\{1:6\},\{-\/1:+1\}])}
+\DoxyCodeLine{00070\ \ \ \ \ print(\textcolor{stringliteral}{"{}dom:"{}},dom)}
+\DoxyCodeLine{00071\ }
+\DoxyCodeLine{00072\ \ \ \ \ \textcolor{comment}{\#\ Create\ a\ sweeper\ to\ control\ the\ accuracy\ of\ a\ Taylor\ function}}
+\DoxyCodeLine{00073\ \ \ \ \ swp=ThresholdSweeperDP(dp,1e-\/8)}
+\DoxyCodeLine{00074\ \ \ \ \ \textcolor{comment}{\#swp=GradedSweeper(dp,6)}}
+\DoxyCodeLine{00075\ \ \ \ \ print(\textcolor{stringliteral}{"{}swp:"{}},swp)}
+\DoxyCodeLine{00076\ }
+\DoxyCodeLine{00077\ \ \ \ \ \textcolor{comment}{\#\ Create\ the\ scalar\ Taylor\ model\ representing\ a\ constant\ function\ with\ given\ value\ on\ the\ domain\ dom}}
+\DoxyCodeLine{00078\ \ \ \ \ tc=ValidatedScalarMultivariateTaylorFunctionModelDP.constant(dom,dec\_(4.2),swp)}
+\DoxyCodeLine{00079\ \ \ \ \ print(\textcolor{stringliteral}{"{}tc:"{}},tc,\textcolor{stringliteral}{"{}\(\backslash\)n"{}})}
+\DoxyCodeLine{00080\ }
+\DoxyCodeLine{00081\ \ \ \ \ \textcolor{comment}{\#\ Create\ the\ scalar\ Taylor\ model\ representing\ the\ function\ x1\ on\ the\ domain\ dom}}
+\DoxyCodeLine{00082\ \ \ \ \ t1=ValidatedScalarMultivariateTaylorFunctionModelDP.coordinate(dom,1,swp)}
+\DoxyCodeLine{00083\ \ \ \ \ print(\textcolor{stringliteral}{"{}t1:"{}},t1,\textcolor{stringliteral}{"{}\(\backslash\)n"{}})}
+\DoxyCodeLine{00084\ }
+\DoxyCodeLine{00085\ \ \ \ \ \textcolor{comment}{\#\ Create\ all\ Taylor\ variables\ on\ the\ domain\ dom}}
+\DoxyCodeLine{00086\ \ \ \ \ t=[ValidatedScalarMultivariateTaylorFunctionModelDP.coordinate(dom,i,swp)\ \textcolor{keywordflow}{for}\ i\ \textcolor{keywordflow}{in}\ range(0,3)]}
+\DoxyCodeLine{00087\ \ \ \ \ print(\textcolor{stringliteral}{"{}t[0]:"{}},t[0])}
+\DoxyCodeLine{00088\ \ \ \ \ print(\textcolor{stringliteral}{"{}t[1]:"{}},t[1])}
+\DoxyCodeLine{00089\ \ \ \ \ print(\textcolor{stringliteral}{"{}t[2]:"{}},t[2])}
+\DoxyCodeLine{00090\ }
+\DoxyCodeLine{00091\ \ \ \ \ \textcolor{comment}{\#\ Make\ shorthands\ for\ the\ variable\ names}}
+\DoxyCodeLine{00092\ \ \ \ \ tx=t[0]}
+\DoxyCodeLine{00093\ \ \ \ \ ty=t[1]}
+\DoxyCodeLine{00094\ \ \ \ \ tz=t[2]}
+\DoxyCodeLine{00095\ \ \ \ \ print(\textcolor{stringliteral}{"{}tx:"{}},tx)}
+\DoxyCodeLine{00096\ \ \ \ \ print(\textcolor{stringliteral}{"{}ty:"{}},ty)}
+\DoxyCodeLine{00097\ \ \ \ \ print(\textcolor{stringliteral}{"{}tz:"{}},tz)}
+\DoxyCodeLine{00098\ }
+\DoxyCodeLine{00099\ \ \ \ \ \textcolor{comment}{\#Create\ a\ ValidatedScalarMultivariateTaylorFunctionModelDP\ from\ a\ Function}}
+\DoxyCodeLine{00100\ \ \ \ \ p=EffectiveScalarMultivariateFunction.coordinate(3,0)}
+\DoxyCodeLine{00101\ \ \ \ \ tp=ValidatedScalarMultivariateTaylorFunctionModelDP(dom,p,swp)}
+\DoxyCodeLine{00102\ \ \ \ \ print(\textcolor{stringliteral}{"{}p:"{}},p)}
+\DoxyCodeLine{00103\ \ \ \ \ print(\textcolor{stringliteral}{"{}tp:"{}},tp)}
+\DoxyCodeLine{00104\ }
+\DoxyCodeLine{00105\ \ \ \ \ \textcolor{comment}{\#\ The\ domain\ D\ of\ tx.}}
+\DoxyCodeLine{00106\ \ \ \ \ print(\textcolor{stringliteral}{"{}tx.domain():"{}},tx.domain())}
+\DoxyCodeLine{00107\ \ \ \ \ \textcolor{comment}{\#\ A\ not-\/necessarily\ tight\ over-\/approximation\ to\ p(D)+/-\/e.}}
+\DoxyCodeLine{00108\ \ \ \ \ print(\textcolor{stringliteral}{"{}tx.codomain():"{}},tx.codomain())}
+\DoxyCodeLine{00109\ \ \ \ \ \textcolor{comment}{\#\ An\ over-\/approximation\ to\ p(D)+/-\/e.}}
+\DoxyCodeLine{00110\ \ \ \ \ print(\textcolor{stringliteral}{"{}tx.range():"{}},tx.range())}
+\DoxyCodeLine{00111\ }
+\DoxyCodeLine{00112\ \ \ \ \ \textcolor{comment}{\#\ Define\ some\ constants}}
+\DoxyCodeLine{00113\ \ \ \ \ n=int(3)}
+\DoxyCodeLine{00114\ \ \ \ \ c=FloatDP(exact(0.75),dp)}
+\DoxyCodeLine{00115\ \ \ \ \ b=FloatDPBounds(exact(0.625),exact(0.875),dp);}
+\DoxyCodeLine{00116\ }
+\DoxyCodeLine{00117\ \ \ \ \ \textcolor{comment}{\#\ Arithmetic\ on\ Taylor\ models}}
+\DoxyCodeLine{00118\ \ \ \ \ +tx;\ -\/tx;\ tx+ty;\ tx-\/ty;\ tx*ty;\ tx/ty;}
+\DoxyCodeLine{00119\ }
+\DoxyCodeLine{00120\ \ \ \ \ \textcolor{comment}{\#\ Mixed\ arithmetic}}
+\DoxyCodeLine{00121\ \ \ \ \ tx+c;\ tx-\/c;\ tx*c;\ tx/c;}
+\DoxyCodeLine{00122\ \ \ \ \ c+tx;\ c-\/tx;\ c*tx;\ c/tx;}
+\DoxyCodeLine{00123\ }
+\DoxyCodeLine{00124\ \ \ \ \ tx+b;\ tx-\/b;\ tx*b;\ tx/b;}
+\DoxyCodeLine{00125\ \ \ \ \ b+tx;\ b-\/tx;\ b*tx;\ b/tx;}
+\DoxyCodeLine{00126\ }
+\DoxyCodeLine{00127\ \ \ \ \ \textcolor{comment}{\#\ Lattice\ functions}}
+\DoxyCodeLine{00128\ \ \ \ \ min(tx,ty);\ max(tx,ty);\ abs(tx);}
+\DoxyCodeLine{00129\ }
+\DoxyCodeLine{00130\ \ \ \ \ \textcolor{comment}{\#\ Univariate\ arithmetical\ functions}}
+\DoxyCodeLine{00131\ \ \ \ \ neg(tx);}
+\DoxyCodeLine{00132\ \ \ \ \ rec(tx);}
+\DoxyCodeLine{00133\ \ \ \ \ sqr(tx);}
+\DoxyCodeLine{00134\ \ \ \ \ pow(tx,n);}
+\DoxyCodeLine{00135\ }
+\DoxyCodeLine{00136\ \ \ \ \ \textcolor{comment}{\#\ Algebraic\ and\ transcendental\ functions}}
+\DoxyCodeLine{00137\ \ \ \ \ sqrt(tx);}
+\DoxyCodeLine{00138\ \ \ \ \ exp(tx);\ log(tx);}
+\DoxyCodeLine{00139\ \ \ \ \ sin(tx),\ cos(tx),\ tan(tx/2)}
+\DoxyCodeLine{00140\ }
+\DoxyCodeLine{00141\ \ \ \ \ \textcolor{comment}{\#\ Inplace\ operations}}
+\DoxyCodeLine{00142\ \ \ \ \ tx+=ty;\ tx-\/=ty;}
+\DoxyCodeLine{00143\ \ \ \ \ tx+=c;\ tx-\/=c;\ tx*=c;\ tx/=c;}
+\DoxyCodeLine{00144\ \ \ \ \ tx+=b;\ tx-\/=b;\ tx*=b;\ tx/=b;}
+\DoxyCodeLine{00145\ }
+\DoxyCodeLine{00146\ \ \ \ \ \textcolor{comment}{\#\ Set\ coordinate\ functions\ tx0,\ tx1}}
+\DoxyCodeLine{00147\ \ \ \ \ dom=BoxDomainType([\{-\/1:+1\},\{-\/1:+1\}])}
+\DoxyCodeLine{00148\ \ \ \ \ tx0=ValidatedScalarMultivariateTaylorFunctionModelDP.coordinate(dom,0,swp);}
+\DoxyCodeLine{00149\ \ \ \ \ tx1=ValidatedScalarMultivariateTaylorFunctionModelDP.coordinate(dom,1,swp);}
+\DoxyCodeLine{00150\ }
+\DoxyCodeLine{00151\ \ \ \ \ tf=ValidatedScalarMultivariateTaylorFunctionModelDP(1+2*tx0+3*tx0*tx1+tx0*tx0)}
+\DoxyCodeLine{00152\ \ \ \ \ \textcolor{comment}{\#\ Compute\ an\ antiderivative\ of\ f\ with\ respect\ to\ x[0]\ whose\ value\ is\ zero\ at\ the\ midpoint\ of\ the\ domain\ of\ x[0]}}
+\DoxyCodeLine{00153\ \ \ \ \ Itf0=antiderivative(tf,0)}
+\DoxyCodeLine{00154\ \ \ \ \ \textcolor{comment}{\#\ Compute\ the\ antiderivative\ of\ f\ with\ respect\ to\ x[1]\ whose\ value\ is\ zero\ when\ x[1]=c}}
+\DoxyCodeLine{00155\ \ \ \ \ Itf1=antiderivative(tf,1,c)}
+\DoxyCodeLine{00156\ \ \ \ \ print(\textcolor{stringliteral}{"{}antiderivative(tf,0):"{}},Itf0)}
+\DoxyCodeLine{00157\ \ \ \ \ print(\textcolor{stringliteral}{"{}antiderivative(tf,1):"{}},Itf1)}
+\DoxyCodeLine{00158\ }
+\DoxyCodeLine{00159\ \ \ \ \ \textcolor{comment}{\#\ Restrict\ to\ a\ subdomain}}
+\DoxyCodeLine{00160\ \ \ \ \ subdom=BoxDomainType([\{exact(-\/0.125):exact(0.125)\},\{exact(0.5):exact(0.75)\}])}
+\DoxyCodeLine{00161\ \ \ \ \ w=tx0*tx1}
+\DoxyCodeLine{00162\ \ \ \ \ rw=restriction(w,subdom)}
+\DoxyCodeLine{00163\ \ \ \ \ print(\textcolor{stringliteral}{"{}restriction(w,subdom):"{}},rw)}
+\DoxyCodeLine{00164\ }
+\DoxyCodeLine{00165\ \ \ \ \ \textcolor{comment}{\#Join\ tf\ and\ tg\ into\ a\ VectorTaylorFunction\ x:-\/>[tf(x),tg(x)]}}
+\DoxyCodeLine{00166\ \ \ \ \ tg=ValidatedVectorMultivariateTaylorFunctionModelDP([exp(tx0)*cos(tx1)])}
+\DoxyCodeLine{00167\ \ \ \ \ tfg=join(tf,tg)}
+\DoxyCodeLine{00168\ \ \ \ \ print(\textcolor{stringliteral}{"{}join(tf,tg):"{}},tfg)}
+\DoxyCodeLine{00169\ }
+\DoxyCodeLine{00170\ \ \ \ \ \textcolor{comment}{\#\ Combine\ tf\ and\ tg\ into\ a\ VectorTaylorFunction\ (x,y):-\/>[tf(x),tg(y)]}}
+\DoxyCodeLine{00171\ \ \ \ \ tfg=combine(tf,tg)}
+\DoxyCodeLine{00172\ \ \ \ \ print(\textcolor{stringliteral}{"{}combine(tf,tg):"{}},tfg)}
+\DoxyCodeLine{00173\ }
+\DoxyCodeLine{00174\ \ \ \ \ \textcolor{comment}{\#\ Function\ composition}}
+\DoxyCodeLine{00175\ \ \ \ \ dom=BoxDomainType([\{4:7\},\{1:6\},\{-\/1:1\}])}
+\DoxyCodeLine{00176\ \ \ \ \ th=ValidatedVectorMultivariateTaylorFunctionModelDP.identity(dom,swp)}
+\DoxyCodeLine{00177\ \ \ \ \ cd=th.codomain()}
+\DoxyCodeLine{00178\ }
+\DoxyCodeLine{00179\ \ \ \ \ f=EffectiveScalarMultivariateFunction.coordinate(3,0)}
+\DoxyCodeLine{00180\ \ \ \ \ g=EffectiveVectorMultivariateFunction.zeros(2,3)}
+\DoxyCodeLine{00181\ }
+\DoxyCodeLine{00182\ \ \ \ \ tf=ValidatedScalarMultivariateTaylorFunctionModelDP(cd,f,swp)}
+\DoxyCodeLine{00183\ \ \ \ \ tg=ValidatedVectorMultivariateTaylorFunctionModelDP(cd,g,swp)}
+\DoxyCodeLine{00184\ }
+\DoxyCodeLine{00185\ \ \ \ \ \textcolor{comment}{\#\ Compose\ an\ scalar\ multivariate\ function\ and\ a\ vector\ Taylor\ function}}
+\DoxyCodeLine{00186\ \ \ \ \ fth=compose(f,th)}
+\DoxyCodeLine{00187\ \ \ \ \ print(\textcolor{stringliteral}{"{}compose(f,th):"{}},fth)}
+\DoxyCodeLine{00188\ }
+\DoxyCodeLine{00189\ \ \ \ \ \textcolor{comment}{\#\ Compose\ a\ vector\ multivariate\ function\ and\ a\ vector\ Taylor\ function}}
+\DoxyCodeLine{00190\ \ \ \ \ gth=compose(g,th)}
+\DoxyCodeLine{00191\ \ \ \ \ print(\textcolor{stringliteral}{"{}compose(g,th):"{}},gth)}
+\DoxyCodeLine{00192\ }
+\DoxyCodeLine{00193\ \ \ \ \ \textcolor{comment}{\#\ Compose\ a\ scalar\ and\ a\ vector\ Taylor\ function}}
+\DoxyCodeLine{00194\ \ \ \ \ assert(subset(th.codomain(),tf.domain()))}
+\DoxyCodeLine{00195\ \ \ \ \ tfh=compose(tf,th)}
+\DoxyCodeLine{00196\ \ \ \ \ print(\textcolor{stringliteral}{"{}compose(tf,th):"{}},tfh)}
+\DoxyCodeLine{00197\ }
+\DoxyCodeLine{00198\ \ \ \ \ \textcolor{comment}{\#\ Compose\ two\ vector\ Taylor\ functions}}
+\DoxyCodeLine{00199\ \ \ \ \ assert(subset(th.codomain(),tg.domain()))}
+\DoxyCodeLine{00200\ \ \ \ \ tgh=compose(tg,th)}
+\DoxyCodeLine{00201\ \ \ \ \ print(\textcolor{stringliteral}{"{}compose(tg,th):"{}},tgh)}
+\DoxyCodeLine{00202\ }
+\DoxyCodeLine{00203\ }
+\DoxyCodeLine{00204\ \ \ \ \ \textcolor{comment}{\#\ Consistency\ and\ refinement\ checking}}
+\DoxyCodeLine{00205\ \ \ \ \ dom=BoxDomainType([\{-\/1:+1\},\{-\/1:+1\}]);}
+\DoxyCodeLine{00206\ \ \ \ \ tf1=tx0+tx0*tx0/2}
+\DoxyCodeLine{00207\ \ \ \ \ tf2=tx0+FloatDPBounds(-\/1,1,dp)}
+\DoxyCodeLine{00208\ \ \ \ \ print(\textcolor{stringliteral}{"{}tf1:"{}},tf1)}
+\DoxyCodeLine{00209\ \ \ \ \ print(\textcolor{stringliteral}{"{}tf2:"{}},tf1)}
+\DoxyCodeLine{00210\ \ \ \ \ ic=inconsistent(tf1,tf2)}
+\DoxyCodeLine{00211\ \ \ \ \ print(\textcolor{stringliteral}{"{}inconsistent(tf1,tf2):"{}},ic)}
+\DoxyCodeLine{00212\ \ \ \ \ rf=refines(tf1,tf2)}
+\DoxyCodeLine{00213\ \ \ \ \ print(\textcolor{stringliteral}{"{}refines(tf1,tf2):"{}},rf)}
+\DoxyCodeLine{00214\ \ \ \ \ tf=refinement(tf1,tf2)}
+\DoxyCodeLine{00215\ \ \ \ \ print(\textcolor{stringliteral}{"{}refinement(tf1,tf2):"{}},tf)}
+\DoxyCodeLine{00216\ \ \ \ \ \textcolor{comment}{\#!\ [Calculus\ demonstration]}}
+\DoxyCodeLine{00217\ }
+\DoxyCodeLine{00218\ }
+\DoxyCodeLine{00219\ \textcolor{keywordflow}{if}\ \_\_name\_\_==\textcolor{stringliteral}{'\_\_main\_\_'}:}
+\DoxyCodeLine{00220\ \ \ \ \ \mbox{\hyperlink{namespacefunction__demonstration}{function\_demonstration}}()}
+\DoxyCodeLine{00221\ \ \ \ \ print()}
+\DoxyCodeLine{00222\ \ \ \ \ calculus\_demonstration()}
+
+\end{DoxyCodeInclude}
+ 

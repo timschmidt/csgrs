@@ -1,0 +1,14 @@
+Represent algebraic points with one explicit exact definition
+
+Replace the stored construction status and independent optional coordinate,
+expression and parametric payloads with an enum containing exactly one point
+definition. Coordinate images always arrive as a pair; the public status is
+derived from the selected representation instead of duplicating its state.
+
+Store retained-expression diagnostics as static text, removing their String
+allocation. Keep the active payload inline in the existing Arc and preserve
+lazy source resolution, coefficient reuse, root identity and strict non-pole
+construction. No caller compatibility interfaces are added.
+
+Replay the finite-point, root, split, arrangement, offset and constrained-fillet
+qualification, together with affected workspace build and lint checks.

@@ -1,0 +1,11 @@
+("ARITHMETIC total,failures",(337456,0))
+("signum ascending",[2,16,2],[0,65536,4],[((-1) % 4,1 % 4),(65535 % 65536,65537 % 65536),(3 % 4,5 % 4)])
+("signum ascending",[16,2,16],[65536,4,65536],[(65535 % 65536,65537 % 65536),(3 % 4,5 % 4),(65535 % 65536,65537 % 65536)])
+("atan2 tiny diagonal",[2,16,2],[0,51472,3],[((-1) % 4,1 % 4),(51471 % 65536,51473 % 65536),(1 % 2,1 % 1)])
+("atan2 tiny diagonal",[16,2,16],[51472,3,51472],[(51471 % 65536,51473 % 65536),(1 % 2,1 % 1),(51471 % 65536,51473 % 65536)])
+("CONVERGE plateau whose true limit is 1",0)
+("recip zero",Left heap overflow)
+("log zero",Left heap overflow)
+("sqrt negative",Left Sqrt applied to negative Integer
+CallStack (from HasCallStack):
+  error, called at /home/tim/Documents/GitHub/workspace/exact-real-references/haskell-exact-real/src/Data/CReal/Internal.hs:712:23 in main:Data.CReal.Internal)

@@ -1,0 +1,36 @@
+{
+  "src/bezier_topology.rs": [
+    "certified_bounds"
+  ],
+  "src/rational_bezier.rs": [
+    "certified_bounds"
+  ],
+  "src/rational_bezier_general.rs": [
+    "certified_bounds",
+    "certified_bounds_classified",
+    "unit_weight_sign",
+    "control_weight_sign"
+  ],
+  "src/bezier_flatten.rs": [
+    "certify_finite_domain"
+  ],
+  "src/bezier_offset.rs": [
+    "certified_bounds",
+    "conservative_bounds"
+  ],
+  "src/bezier_retained_measure.rs": [
+    "retained_curve_bounds"
+  ],
+  "src/bspline.rs": [
+    "subcurve_certified_bounds"
+  ],
+  "src/curve.rs": [
+    "decided_subcurve_bounds"
+  ],
+  "src/curve_support.rs": [
+    "subcurve_certified_outer_bounds"
+  ],
+  "src/bezier_split.rs": [
+    "conservative_bounds"
+  ]
+}

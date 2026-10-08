@@ -1,0 +1,18 @@
+{
+  "qualification": "point-definition-v790-terminal.json",
+  "source_manifest": "point-definition-v790-sources.json",
+  "outer_session_reaped": 67085,
+  "validated_files": 2048,
+  "tests": 152,
+  "checks": 7,
+  "repos": {
+    "hypercurve": {
+      "parent": "5d98e008f27b8f7e57c21e6c70fb7e25f9b837b4",
+      "paths": {
+        "src/bezier_algebraic_image.rs": "df0fa7888565586faba15f96e180ef6d58330dc05b303149f578e8558f651c13"
+      }
+    }
+  },
+  "scope": "Represent each rational point by exactly one coordinate,expression or parametric definition; derive status from that definition,remove optional payload combinations and static diagnostic String allocations; preserve algebraic transformations and replay kernels",
+  "unresolved": "The full exact-geometry implementation goal remains active; this cleanup does not claim full spatial BREP closure or a measured speedup."
+}

@@ -1,0 +1,90 @@
+Name:           aern-poly
+Version:        0.5.0
+Cabal-Version:  >= 1.8
+Build-Type:     Simple
+License:        BSD3
+License-File:   LICENCE
+Author:         Michal Konecny (Aston University)
+Copyright:      (c) 2010 Michal Konecny
+Maintainer:     mikkonecny@gmail.com
+Homepage:       http://code.google.com/p/aern/
+Stability:      experimental
+Category:       Data, Math
+Synopsis:       arbitrary precision real interval arithmetic
+Tested-with:    GHC==7.6.3
+Description:    Multi-variate polynomials with in-out-rounded point-wise arithmetic
+    and common operations for continous functions, including evalution,
+    composition and integration.
+    Any in-out-rounded real approximation can be used as coefficients.
+    (Typically the coefficients are intervals with Double or MPFR endpoints.)
+    .
+    These polynomials typically encode function enclosures with two polynomial
+    boundaries.
+
+Library
+  hs-source-dirs:   src
+  ghc-options:      -Wall -rtsopts
+  Build-Depends:    
+        base >= 4.4,
+        containers >= 0.3,
+        QuickCheck >= 2.4,
+        aern-order == 0.5.*,
+        aern-real == 0.5.*,
+        aern-interval == 0.5.*,
+        aern-realfn == 0.5.*
+  exposed-modules:  Numeric.AERN.Poly.IntPoly,
+                    Numeric.AERN.Poly.IntPoly.Interval
+  other-modules:    
+                    Numeric.AERN.Poly.IntPoly.Addition,
+                    Numeric.AERN.Poly.IntPoly.Composition,
+                    Numeric.AERN.Poly.IntPoly.Config,
+                    Numeric.AERN.Poly.IntPoly.Conversion,
+                    Numeric.AERN.Poly.IntPoly.Differentiation,
+                    Numeric.AERN.Poly.IntPoly.Evaluation,
+                    Numeric.AERN.Poly.IntPoly.IntPoly,
+                    Numeric.AERN.Poly.IntPoly.Integration,
+                    Numeric.AERN.Poly.IntPoly.Minmax,
+                    Numeric.AERN.Poly.IntPoly.Multiplication,
+                    Numeric.AERN.Poly.IntPoly.Division,
+                    Numeric.AERN.Poly.IntPoly.New,
+                    Numeric.AERN.Poly.IntPoly.NumericOrder,
+                    Numeric.AERN.Poly.IntPoly.Reduction,
+                    Numeric.AERN.Poly.IntPoly.RefinementOrder,
+                    Numeric.AERN.Poly.IntPoly.Show,
+                    Numeric.AERN.Poly.IntPoly.SpecialConst,
+                    Numeric.AERN.Poly.IntPoly.Elementary,
+                    Numeric.AERN.Poly.IntPoly.UpDnField
+
+executable testAERN-Poly
+  Build-Depends:   
+        base >= 4.4,
+        containers >= 0.3,
+        QuickCheck >= 2.4,
+        test-framework >= 0.3.3,
+        test-framework-quickcheck2 >= 0.2,
+        aern-order == 0.5.*,
+        aern-real == 0.5.*,
+        aern-interval == 0.5.*,
+        aern-double == 0.5.*,
+        aern-mpfr == 0.5.*,
+        aern-realfn == 0.5.*,
+        aern-poly == 0.5.*
+  hs-source-dirs:  tests
+  ghc-options:     -Wall -rtsopts
+  main-is:         Main.hs
+
+executable minimal
+  build-depends:   
+        base >= 4.4,
+        containers >= 0.3,
+        aern-order == 0.5.*,
+        aern-real == 0.5.*,
+        aern-interval == 0.5.*,
+        aern-double == 0.5.*,
+        aern-realfn == 0.5.*,
+        aern-poly == 0.5.*
+  hs-source-dirs:  
+                   demos
+  ghc-options:     -Wall -rtsopts
+  main-is:         minimal.hs
+

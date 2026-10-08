@@ -1,0 +1,28 @@
+{
+  "repo": "hypercurve",
+  "target": "hypercurve_dispatch_trace",
+  "binary": "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve_dispatch_trace-a8e4e8d2aa6193c0",
+  "command": [
+    "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve_dispatch_trace-a8e4e8d2aa6193c0",
+    "--test-threads=4",
+    "--color",
+    "never"
+  ],
+  "sha256": "3a103d49cb5e31256a4d5c48fe64cb6b247da46b809707fd474be29d86850462",
+  "returncode": 0,
+  "timed_out": false,
+  "elapsed_seconds": 0.003431174991419539,
+  "log": "analytic-point-field-replay-full-hypercurve-hypercurve_dispatch_trace.log",
+  "passed": [
+    "public_finite_ring_import_emits_correlated_exact_path_trace",
+    "public_curve_query_emits_correlated_exact_path_trace",
+    "public_straight_skeleton_emits_correlated_exact_path_trace"
+  ],
+  "failed": [],
+  "ignored": [],
+  "summaries": [
+    "test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s"
+  ],
+  "new_failures": [],
+  "known_failures": []
+}

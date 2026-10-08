@@ -1,0 +1,39 @@
+\doxysubsection{Hybrid\+Variables\+Boxes\texorpdfstring{$<$}{<} IVL \texorpdfstring{$>$}{>} Class Template Reference}
+\hypertarget{classAriadne_1_1HybridVariablesBoxes}{}\label{classAriadne_1_1HybridVariablesBoxes}\index{HybridVariablesBoxes$<$ IVL $>$@{HybridVariablesBoxes$<$ IVL $>$}}
+
+
+{\ttfamily \#include $<$hybrid\+\_\+expression\+\_\+set.\+hpp$>$}
+
+
+
+\doxysubsubsection{Description}
+\subsubsection*{template$<$class IVL$>$\newline
+class Ariadne\+::\+Hybrid\+Variables\+Boxes$<$ IVL $>$}
+A hybrid set defined by a box in each of a set of locations. 
+
+Does not assume a canonical order of the real variables. Inheritance diagram for Hybrid\+Variables\+Boxes\texorpdfstring{$<$}{<} IVL \texorpdfstring{$>$}{>}\+:\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[height=2.000000cm]{classAriadne_1_1HybridVariablesBoxes}
+\end{center}
+\end{figure}
+\doxysubsubsubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1HybridVariablesBoxes_a01618894e44f5f067f6f6dcbff0332ba}\label{classAriadne_1_1HybridVariablesBoxes_a01618894e44f5f067f6f6dcbff0332ba} 
+\mbox{\hyperlink{classAriadne_1_1Set}{Set}}$<$ \mbox{\hyperlink{classAriadne_1_1DiscreteLocation}{Discrete\+Location}} $>$ {\bfseries locations} () const
+\begin{DoxyCompactList}\small\item\em The location in which the box is defined. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1HybridVariablesBoxes_afc0e8d1469324a062564c79818400e32}\label{classAriadne_1_1HybridVariablesBoxes_afc0e8d1469324a062564c79818400e32} 
+\mbox{\hyperlink{classAriadne_1_1VariablesBox}{Variables\+Box}}$<$ IVL $>$ const \& {\bfseries continuous\+\_\+set} (\mbox{\hyperlink{classAriadne_1_1DiscreteLocation}{Discrete\+Location}} loc) const
+\begin{DoxyCompactList}\small\item\em The location in which the box is defined. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1HybridVariablesBoxes_a3be1f0181770d0a2a2f0df8eb74faf6a}\label{classAriadne_1_1HybridVariablesBoxes_a3be1f0181770d0a2a2f0df8eb74faf6a} 
+\mbox{\hyperlink{classAriadne_1_1Set}{Set}}$<$ \mbox{\hyperlink{classAriadne_1_1Variable}{Real\+Variable}} $>$ {\bfseries variables} (\mbox{\hyperlink{classAriadne_1_1DiscreteLocation}{Discrete\+Location}} loc) const
+\begin{DoxyCompactList}\small\item\em The active variables in the location {\itshape loc}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1HybridVariablesBoxes_a02a9abdf8b519c93ef299c6ec4353a5f}\label{classAriadne_1_1HybridVariablesBoxes_a02a9abdf8b519c93ef299c6ec4353a5f} 
+\mbox{\hyperlink{classAriadne_1_1Box}{Box}}$<$ IVL $>$ {\bfseries euclidean\+\_\+set} (\mbox{\hyperlink{classAriadne_1_1DiscreteLocation}{Discrete\+Location}} loc, const \mbox{\hyperlink{classAriadne_1_1Space}{Real\+Space}} \&spc) const
+\begin{DoxyCompactList}\small\item\em The subset of $\mathbb{R}^n$ obtained by ordering the variables as defined by {\itshape spc}. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+The documentation for this class was generated from the following file\+:\begin{DoxyCompactItemize}
+\item 
+source/hybrid/\mbox{\hyperlink{hybrid__expression__set_8hpp}{hybrid\+\_\+expression\+\_\+set.\+hpp}}\end{DoxyCompactItemize}

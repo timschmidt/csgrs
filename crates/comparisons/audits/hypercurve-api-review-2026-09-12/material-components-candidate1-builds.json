@@ -1,0 +1,97 @@
+[
+  {
+    "repo": "hypercurve",
+    "kind": "check",
+    "returncode": 0,
+    "elapsed_seconds": 18.044111501978477,
+    "command": [
+      "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+      "check",
+      "--all-targets",
+      "--no-default-features",
+      "--locked",
+      "--offline"
+    ]
+  },
+  {
+    "repo": "hypercurve",
+    "kind": "test-build",
+    "returncode": 0,
+    "elapsed_seconds": 185.79941088400665,
+    "command": [
+      "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+      "test",
+      "--release",
+      "--all-features",
+      "--lib",
+      "--no-run",
+      "--message-format=json",
+      "--test",
+      "hypercurve_bezier_region",
+      "--locked",
+      "--offline"
+    ]
+  },
+  {
+    "repo": "hyperbrep",
+    "kind": "check",
+    "returncode": 0,
+    "elapsed_seconds": 15.438501622003969,
+    "command": [
+      "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+      "check",
+      "--all-targets",
+      "--no-default-features",
+      "--locked",
+      "--offline"
+    ]
+  },
+  {
+    "repo": "hyperbrep",
+    "kind": "test-build",
+    "returncode": 0,
+    "elapsed_seconds": 117.61303652398055,
+    "command": [
+      "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+      "test",
+      "--release",
+      "--all-features",
+      "--lib",
+      "--no-run",
+      "--message-format=json",
+      "--locked",
+      "--offline"
+    ]
+  },
+  {
+    "repo": "hyperdrc",
+    "kind": "check",
+    "returncode": 0,
+    "elapsed_seconds": 34.37147589400411,
+    "command": [
+      "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+      "check",
+      "--all-targets",
+      "--no-default-features",
+      "--locked",
+      "--offline"
+    ]
+  },
+  {
+    "repo": "hyperdrc",
+    "kind": "test-build",
+    "returncode": 0,
+    "elapsed_seconds": 313.7049926840118,
+    "command": [
+      "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+      "test",
+      "--release",
+      "--all-features",
+      "--lib",
+      "--no-run",
+      "--message-format=json",
+      "--locked",
+      "--offline"
+    ]
+  }
+]

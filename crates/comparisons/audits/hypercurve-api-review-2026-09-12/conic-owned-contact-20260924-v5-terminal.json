@@ -1,0 +1,130 @@
+{
+  "checks": [
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "clippy",
+        "--all-targets",
+        "--all-features",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "returncode": 0,
+      "log": "conic-owned-contact-20260924-v5-check-0.log"
+    },
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "clippy",
+        "--all-targets",
+        "--no-default-features",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "returncode": 0,
+      "log": "conic-owned-contact-20260924-v5-check-1.log"
+    }
+  ],
+  "command": [
+    "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+    "test",
+    "--lib",
+    "--release",
+    "--all-features",
+    "--no-run",
+    "--message-format=json",
+    "--locked",
+    "--offline"
+  ],
+  "cases": [
+    {
+      "name": "bezier_offset::conversion_tests::chord_pair_bounds_refine_native_fibers_before_global_projection",
+      "returncode": 0,
+      "passed": true,
+      "elapsed_seconds": 0.27174766501411796,
+      "limit_seconds": 60,
+      "log": "conic-owned-contact-20260924-v5-case-0.log"
+    },
+    {
+      "name": "bezier_offset::conversion_tests::conic_owned_endpoint_reuses_local_evidence_on_finite_ranges",
+      "returncode": 0,
+      "passed": true,
+      "elapsed_seconds": 0.2800341269467026,
+      "limit_seconds": 60,
+      "log": "conic-owned-contact-20260924-v5-case-1.log"
+    },
+    {
+      "name": "bezier_offset::conversion_tests::conic_owned_endpoint_preserves_a_second_interior_contact",
+      "returncode": 0,
+      "passed": true,
+      "elapsed_seconds": 0.2759297179291025,
+      "limit_seconds": 60,
+      "log": "conic-owned-contact-20260924-v5-case-2.log"
+    },
+    {
+      "name": "bezier_offset::conversion_tests::conic_owned_endpoint_degree_guard_preserves_cubic_crossings",
+      "returncode": 0,
+      "passed": true,
+      "elapsed_seconds": 0.27508897602092475,
+      "limit_seconds": 60,
+      "log": "conic-owned-contact-20260924-v5-case-3.log"
+    },
+    {
+      "name": "bezier_offset::conversion_tests::conic_owned_endpoint_still_requires_a_pole_free_range",
+      "returncode": 0,
+      "passed": true,
+      "elapsed_seconds": 0.2742276550270617,
+      "limit_seconds": 60,
+      "log": "conic-owned-contact-20260924-v5-case-4.log"
+    },
+    {
+      "name": "bezier_offset::conversion_tests::chord_rational_contact_ownership_preserves_selected_fiber_parameters",
+      "returncode": 0,
+      "passed": true,
+      "elapsed_seconds": 0.27562204899732023,
+      "limit_seconds": 60,
+      "log": "conic-owned-contact-20260924-v5-case-5.log"
+    },
+    {
+      "name": "bezier_offset::conversion_tests::selected_fiber_points_reuse_projective_roots_without_global_promotion",
+      "returncode": 0,
+      "passed": true,
+      "elapsed_seconds": 0.32549908896908164,
+      "limit_seconds": 60,
+      "log": "conic-owned-contact-20260924-v5-case-6.log"
+    },
+    {
+      "name": "curve_region_boolean::certified_successor_tests::monotone_parallel_ranges_remove_only_proven_unary_pairs",
+      "returncode": 0,
+      "passed": true,
+      "elapsed_seconds": 1.7283691889606416,
+      "limit_seconds": 60,
+      "log": "conic-owned-contact-20260924-v5-case-7.log"
+    },
+    {
+      "name": "bezier_region::tests::nonlinear_selected_corner_chamfers_through_retained_fixed_distance_image",
+      "returncode": 0,
+      "passed": true,
+      "elapsed_seconds": 5.235840808949433,
+      "limit_seconds": 75,
+      "log": "conic-owned-contact-20260924-v5-case-8.log"
+    },
+    {
+      "name": "bezier_region::curve_corner_chain::tests::extended_fillet_region_classifies_both_sides_of_its_companion",
+      "returncode": "timeout",
+      "passed": false,
+      "elapsed_seconds": 75.2674559840234,
+      "limit_seconds": 75,
+      "log": "conic-owned-contact-20260924-v5-case-9.log"
+    }
+  ],
+  "binary_sha256": "0667528148dc401d89a4685e15512860e6ac52b05e3b6a819e8acf2a6bc21cdd",
+  "all_sources_unchanged": true,
+  "all_processes_reaped": true
+}

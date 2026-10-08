@@ -1,0 +1,14 @@
+{
+  "tag": "point-image-cost-cpu",
+  "started": "2026-09-10T19:54:12.392Z",
+  "finished": "2026-09-10T19:54:57.714Z",
+  "elapsedSeconds": 45.319989004,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "node",
+  "args": [
+    "run-point-image-costs.mjs",
+    "cpu"
+  ],
+  "code": 0,
+  "signal": null
+}

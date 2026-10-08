@@ -1,0 +1,7 @@
+{
+  "outer_session": null,
+  "outer_exit_code": 1,
+  "direct_exec_completed": true,
+  "build_started": false,
+  "failure": "Initial source guard rejected unreaped formatter mutation; no build or tests started."
+}

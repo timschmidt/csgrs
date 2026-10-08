@@ -1,0 +1,52 @@
+\doxysubsection{Hybrid\+Time Class Reference}
+\hypertarget{classAriadne_1_1HybridTime}{}\label{classAriadne_1_1HybridTime}\index{HybridTime@{HybridTime}}
+
+
+{\ttfamily \#include $<$hybrid\+\_\+time.\+hpp$>$}
+
+
+
+\doxysubsubsection{Description}
+A value in a hybrid time domain, being a pair comprising a real {\itshape continuous\+\_\+time} and an integer {\itshape discrete\+\_\+time}. 
+
+When a Hybrid\+Time is used to define a bound on a hybrid evolution, the evolution should stop when {\itshape either} the continuous time or the discrete time reaches the bounding value. This is to ensure that the evolution time is finite; in particular, that no Zeno behaviour occurs. \begin{Desc}
+\item[Examples]\par
+\mbox{\hyperlink{tutorials_2hybrid_evolution_2hybrid_evolution_tutorial_8cpp-example}{tutorials/hybrid\+\_\+evolution/hybrid\+\_\+evolution\+\_\+tutorial.\+cpp}}.\end{Desc}
+\doxysubsubsubsection*{Public Types}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1HybridTime_a86b471041a3db63eb657151991e4a680}\label{classAriadne_1_1HybridTime_a86b471041a3db63eb657151991e4a680} 
+typedef \mbox{\hyperlink{classAriadne_1_1Real}{Real}} {\bfseries Continuous\+Time\+Type}
+\begin{DoxyCompactList}\small\item\em The type used for continuous (real, physical) time. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1HybridTime_a5628e50c0659b33efe1fbb19e2f3c2d8}\label{classAriadne_1_1HybridTime_a5628e50c0659b33efe1fbb19e2f3c2d8} 
+typedef \mbox{\hyperlink{classAriadne_1_1Integer}{Integer}} {\bfseries Discrete\+Time\+Type}
+\begin{DoxyCompactList}\small\item\em The type used for discrete time (steps). \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1HybridTime_a35329cc491cde893c72ba182f40c0390}\label{classAriadne_1_1HybridTime_a35329cc491cde893c72ba182f40c0390} 
+const \mbox{\hyperlink{classAriadne_1_1HybridTime_a86b471041a3db63eb657151991e4a680}{Continuous\+Time\+Type}} \& {\bfseries continuous\+\_\+time} () const
+\begin{DoxyCompactList}\small\item\em The continuous (real, physical) time. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1HybridTime_ab6667c34f72a3122a074e365959f46a5}\label{classAriadne_1_1HybridTime_ab6667c34f72a3122a074e365959f46a5} 
+const \mbox{\hyperlink{classAriadne_1_1HybridTime_a5628e50c0659b33efe1fbb19e2f3c2d8}{Discrete\+Time\+Type}} \& {\bfseries discrete\+\_\+time} () const
+\begin{DoxyCompactList}\small\item\em The number of discrete steps taken. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1HybridTime_a9def0fec80b6820bf2732e8ea987b7b0}\label{classAriadne_1_1HybridTime_a9def0fec80b6820bf2732e8ea987b7b0} 
+{\bfseries Hybrid\+Time} (\mbox{\hyperlink{classAriadne_1_1Real}{Real}} t, \mbox{\hyperlink{classAriadne_1_1Integer}{Integer}} n)
+\begin{DoxyCompactList}\small\item\em Create the hybrid time moment with continuous-\/time {\itshape t} and discrete-\/time steps {\itshape n}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1HybridTime_ac007998ccb72618ed3d3dabd30c93774}\label{classAriadne_1_1HybridTime_ac007998ccb72618ed3d3dabd30c93774} 
+{\bfseries Hybrid\+Time} (\mbox{\hyperlink{classAriadne_1_1Integer}{Integer}} n, double t)=delete
+\begin{DoxyCompactList}\small\item\em The arguments for the \doxylink{classAriadne_1_1HybridTime}{Hybrid\+Time} constructor must be ordered continuous-\/time, then discrete-\/time. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsubsection*{Public Attributes}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1HybridTime_a14ac49b85865f6945db2971d3bdc841e}\label{classAriadne_1_1HybridTime_a14ac49b85865f6945db2971d3bdc841e} 
+\mbox{\hyperlink{classAriadne_1_1HybridTime_a86b471041a3db63eb657151991e4a680}{Continuous\+Time\+Type}} {\bfseries \+\_\+continuous\+\_\+time}
+\begin{DoxyCompactList}\small\item\em The continuous (real, physical) time. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1HybridTime_a364a74fc89663b746d9b14154053757c}\label{classAriadne_1_1HybridTime_a364a74fc89663b746d9b14154053757c} 
+\mbox{\hyperlink{classAriadne_1_1HybridTime_a5628e50c0659b33efe1fbb19e2f3c2d8}{Discrete\+Time\+Type}} {\bfseries \+\_\+discrete\+\_\+time}
+\begin{DoxyCompactList}\small\item\em The number of discrete steps taken. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+The documentation for this class was generated from the following file\+:\begin{DoxyCompactItemize}
+\item 
+source/hybrid/\mbox{\hyperlink{hybrid__time_8hpp}{hybrid\+\_\+time.\+hpp}}\end{DoxyCompactItemize}

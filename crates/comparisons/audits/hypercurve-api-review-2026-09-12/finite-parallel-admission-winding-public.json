@@ -1,0 +1,21 @@
+{
+  "returncode": 0,
+  "elapsed_seconds": 0.0035492070019245148,
+  "normal_library_sha256": "9ae1c520060940471e48c12e6100d86ee6ea9225a56e2ddd2281e5dd246c03f9",
+  "log": "finite-parallel-admission-winding-public.log",
+  "source": "finite-region-winding-public.rs",
+  "command": [
+    "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustc",
+    "--edition=2024",
+    "-O",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-region-winding-public.rs",
+    "--extern",
+    "hypercurve=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypercurve-cdcdcc6da422cc2c.rlib",
+    "-L",
+    "dependency=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps",
+    "-o",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-parallel-admission-winding-public"
+  ],
+  "source_sha256": "556f33cdfb31390813934e671f2103efecca7fd93fa5c559ab3e8d2927a95d68",
+  "executable_sha256": "b67eb0b0c51a0f533c8683e0d9b12c7b3f9f27665a74c92d19a44a3bac974e8a"
+}

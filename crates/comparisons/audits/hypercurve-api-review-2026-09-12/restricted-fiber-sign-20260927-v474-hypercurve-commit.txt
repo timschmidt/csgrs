@@ -1,0 +1,5 @@
+Reuse restricted boxes for exact selected-fiber signs
+
+A predicate can be strictly positive throughout a retained fiber box while direct power-basis interval evaluation still contains zero. Evaluate the polynomial already restricted to that box on the unit square before constructing the local-field GCD. This retains cancellations exposed by the exact affine substitution and reuses the existing interval machinery. Keep the cheap speculative fact checks, original root evidence, exact equality replay, and public API unchanged.
+
+Validation: 325 selected Hypercurve release tests, one independently proved captured fiber-box query, Clippy with all and no default features, formatting, denied-warning docs, editing fuzz compilation, and Hyperbrep compilation. Both complete STRICT and APPROXIMATE_512 extended-fillet re-offset regressions now pass; the earlier STRICT run timed out at 360 seconds.

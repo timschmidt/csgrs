@@ -1,0 +1,28 @@
+{
+  "returncode": 0,
+  "elapsed_seconds": 0.007522945001255721,
+  "normal_library_sha256": "5ab0beb19caab2b6ecaf12007a8f07af332a198e59837ce063f5b418f4003187",
+  "log": "finite-selected-point-domains-affine-public.log",
+  "source": "finite-parallel-affine-public.rs",
+  "command": [
+    "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustc",
+    "--edition=2024",
+    "-O",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-parallel-affine-public.rs",
+    "--extern",
+    "hypercurve=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypercurve-9eb8c540d8ca7826.rlib",
+    "-L",
+    "dependency=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps",
+    "-o",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-selected-point-domains-affine-public"
+  ],
+  "run_command": [
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-selected-point-domains-affine-public"
+  ],
+  "source_sha256": "fdb1c041bb096abd84b94247a19970625b3f06bb3ed020149a3cb7525065df8b",
+  "executable_sha256": "64407278c6d745335ad69ba36fc15c1a95bde74fb72d6c77d9ec3925c6467ffd",
+  "counts": {
+    "cusp_representations": 5,
+    "checks": 80
+  }
+}

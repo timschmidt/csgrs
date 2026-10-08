@@ -1,0 +1,29 @@
+{
+  "returncode": 0,
+  "elapsed_seconds": 1.4658625570009463,
+  "normal_library_sha256": "85e42999ed5b1bfd5cc18db3eb8bcc325f98e6d73ee9c02408d6eb7d9e4d1628",
+  "log": "analytic-common-dispatch-region-carrier-matrix.log",
+  "source": "region-carrier-evidence-matrix.rs",
+  "command": [
+    "rustc",
+    "--edition=2024",
+    "-O",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/region-carrier-evidence-matrix.rs",
+    "--extern",
+    "hypercurve=/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/libhypercurve-2c7ff6f3fbe07653.rlib",
+    "-L",
+    "dependency=/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps",
+    "-o",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/analytic-common-dispatch-region-carrier-matrix"
+  ],
+  "source_sha256": "534305b163a1294bba39e595f2cefa9ea01cbf82f4fb9be426a652e37733d682",
+  "executable_sha256": "b9e48d9e1c8f7fc85b4da5814b17319c77d73dd9c8b9e0d78a1bba226433e97d",
+  "counts": {
+    "boundary_replays": 2016,
+    "analytic_replays": 432,
+    "queries": 448,
+    "endpoint_replays": 2208,
+    "repeated_path_trims": 1008,
+    "certainty": "Certified"
+  }
+}

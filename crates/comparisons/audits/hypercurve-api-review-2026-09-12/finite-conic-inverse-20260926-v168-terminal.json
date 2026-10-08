@@ -1,0 +1,178 @@
+{
+  "parents": {
+    "hypercurve": "6989bdd4ba3d21cfededa8a72be5df8a0862e30b",
+    "hypersolve": "41855c3604cbd18605a020d60758c8e5c489b629",
+    "hyperreal": "0cb5f29aee065c73e234e0ebb0a9e106398515bb"
+  },
+  "source_manifest": "finite-conic-inverse-20260926-v168-sources.json",
+  "source_directory": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/source-archives/finite-conic-inverse-20260926-v168",
+  "build_source_directory": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/build-workspace-20260925",
+  "workspace_guard": "local-chord-complete-replay-20260924-v168-sources.json",
+  "checks": [],
+  "cases": [
+    {
+      "repo": "hypercurve",
+      "label": "case-00",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-conic-inverse-20260926-v168-hypercurve",
+        "--exact",
+        "bezier_offset::conversion_tests::projective_quadratic_conic_inverse_survives_elevation_and_reversal",
+        "--test-threads=1",
+        "--nocapture",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.0638703799340874,
+      "log": "finite-conic-inverse-20260926-v168-case-00.log",
+      "name": "bezier_offset::conversion_tests::projective_quadratic_conic_inverse_survives_elevation_and_reversal"
+    },
+    {
+      "repo": "hypercurve",
+      "label": "case-01",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-conic-inverse-20260926-v168-hypercurve",
+        "--exact",
+        "bezier_offset::conversion_tests::quadratic_conic_inverse_reuses_retained_point_field",
+        "--test-threads=1",
+        "--nocapture",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.0075740310130640864,
+      "log": "finite-conic-inverse-20260926-v168-case-01.log",
+      "name": "bezier_offset::conversion_tests::quadratic_conic_inverse_reuses_retained_point_field"
+    },
+    {
+      "repo": "hypercurve",
+      "label": "case-02",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-conic-inverse-20260926-v168-hypercurve",
+        "--exact",
+        "bezier_offset::conversion_tests::chord_normal_and_parallel_contacts_share_native_point_identity",
+        "--test-threads=1",
+        "--nocapture",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.003529467969201505,
+      "log": "finite-conic-inverse-20260926-v168-case-02.log",
+      "name": "bezier_offset::conversion_tests::chord_normal_and_parallel_contacts_share_native_point_identity"
+    },
+    {
+      "repo": "hypercurve",
+      "label": "case-03",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-conic-inverse-20260926-v168-hypercurve",
+        "--exact",
+        "curve_region_boolean::certified_successor_tests::parallel_arc_contacts_use_the_requested_exterior_range",
+        "--test-threads=1",
+        "--nocapture",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.0035151990596204996,
+      "log": "finite-conic-inverse-20260926-v168-case-03.log",
+      "name": "curve_region_boolean::certified_successor_tests::parallel_arc_contacts_use_the_requested_exterior_range"
+    },
+    {
+      "repo": "hypercurve",
+      "label": "case-04",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-conic-inverse-20260926-v168-hypercurve",
+        "--exact",
+        "bezier_offset::conversion_tests::analytic_tangent_unit_direction_cancels_shared_point_fields",
+        "--test-threads=1",
+        "--nocapture",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.007523393956944346,
+      "log": "finite-conic-inverse-20260926-v168-case-04.log",
+      "name": "bezier_offset::conversion_tests::analytic_tangent_unit_direction_cancels_shared_point_fields"
+    },
+    {
+      "repo": "hypercurve",
+      "label": "case-05",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-conic-inverse-20260926-v168-hypercurve",
+        "--exact",
+        "curve_region_boolean::certified_successor_tests::selected_parallel_arrangement_splits_interior_cusps",
+        "--test-threads=1",
+        "--nocapture",
+        "--color",
+        "never"
+      ],
+      "returncode": 101,
+      "elapsed_seconds": 43.26908861508127,
+      "log": "finite-conic-inverse-20260926-v168-case-05.log",
+      "name": "curve_region_boolean::certified_successor_tests::selected_parallel_arrangement_splits_interior_cusps"
+    },
+    {
+      "repo": "hypercurve",
+      "label": "case-06",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-conic-inverse-20260926-v168-hypercurve",
+        "--exact",
+        "bezier_region::tests::one_fragment_materialized_loop_extends_algebraic_chamfer_cuts_once",
+        "--test-threads=1",
+        "--nocapture",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 2.817403021035716,
+      "log": "finite-conic-inverse-20260926-v168-case-06.log",
+      "name": "bezier_region::tests::one_fragment_materialized_loop_extends_algebraic_chamfer_cuts_once"
+    },
+    {
+      "repo": "hypercurve",
+      "label": "case-07",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-conic-inverse-20260926-v168-hypercurve",
+        "--exact",
+        "bezier_region::tests::one_fragment_selected_loop_extends_chamfer_cuts_on_its_analytic_carrier",
+        "--test-threads=1",
+        "--nocapture",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 6.07149742601905,
+      "log": "finite-conic-inverse-20260926-v168-case-07.log",
+      "name": "bezier_region::tests::one_fragment_selected_loop_extends_chamfer_cuts_on_its_analytic_carrier"
+    },
+    {
+      "repo": "hypercurve",
+      "label": "case-08",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-conic-inverse-20260926-v168-hypercurve",
+        "--exact",
+        "curve_support::tests::parallel_injectivity_requires_regularity_on_the_requested_range",
+        "--test-threads=1",
+        "--nocapture",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.0036116630071774125,
+      "log": "finite-conic-inverse-20260926-v168-case-08.log",
+      "name": "curve_support::tests::parallel_injectivity_requires_regularity_on_the_requested_range"
+    }
+  ],
+  "binaries": {
+    "hypercurve": {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-conic-inverse-20260926-v168-hypercurve",
+      "sha256": "dad9c2003cee11b0c88e98f23d43b7cbe740934b958d2c480b7b1760a86ba09a"
+    }
+  },
+  "all_processes_reaped": true,
+  "diagnostic_only": false,
+  "hypercurve_build_returncode": 0,
+  "all_sources_unchanged": true,
+  "qualification_complete": false
+}

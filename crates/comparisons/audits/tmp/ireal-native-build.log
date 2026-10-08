@@ -1,0 +1,23 @@
+Cabal file warning in /tmp/ireal-audit.Sc4TzO/ireal/ireal.cabal@21:31: version operators used. To use version operators the package needs to specify at least 'cabal-version: >= 1.8'.
+ireal> configure (lib)
+Warning: ireal.cabal:21:31: version operators used. To use version operators
+the package needs to specify at least 'cabal-version: >= 1.8'.
+Configuring ireal-0.2.3...
+ireal> build (lib) with ghc-9.6.7
+Preprocessing library for ireal-0.2.3..
+Building library for ireal-0.2.3..
+[ 1 of 12] Compiling Data.Number.IReal.Auxiliary
+[ 2 of 12] Compiling Data.Number.IReal.Powers
+[ 3 of 12] Compiling Data.Number.IReal.IntegerInterval
+[ 4 of 12] Compiling Data.Number.IReal.Scalable
+[ 5 of 12] Compiling Data.Number.IReal.FAD
+[ 6 of 12] Compiling Data.Number.IReal.UnsafeMemo
+[ 7 of 12] Compiling Data.Number.IReal.IReal
+[ 8 of 12] Compiling Data.Number.IReal.IRealOperations
+[ 9 of 12] Compiling Data.Number.IReal.Generators
+[10 of 12] Compiling Data.Number.IReal.FoldB
+[11 of 12] Compiling Data.Number.IReal
+[12 of 12] Compiling Data.Number.IReal.Rounded
+ireal> copy/register
+Installing library in /tmp/ireal-audit.Sc4TzO/.stack-work/install/x86_64-linux-tinfo6/a9cdb111ba43c34a9894161df33edb1b290c1c61f1b004418a8411cbdf470c15/9.6.7/lib/x86_64-linux-ghc-9.6.7/ireal-0.2.3-1adEs5TQUyIfzTsanQTr7
+Registering library for ireal-0.2.3..

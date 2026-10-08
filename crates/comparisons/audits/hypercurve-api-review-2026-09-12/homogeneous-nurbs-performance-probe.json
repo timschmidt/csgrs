@@ -1,0 +1,56 @@
+[
+  {
+    "implementation": "parent",
+    "controls": 64,
+    "iterations": 1,
+    "elapsed_seconds": 0.002579282001534011,
+    "returncode": 0,
+    "stdout": "nurbs_large_cold_decomposition_64_controls: 1 iterations in 831.613\u00b5s (831.613\u00b5s/iter), checksum=61\nnurbs_large_cached_evaluation_64_controls: 1 iterations in 5.67\u00b5s (5.67\u00b5s/iter), checksum=4629597209445409314\n",
+    "stderr": ""
+  },
+  {
+    "implementation": "current",
+    "controls": 64,
+    "iterations": 1,
+    "elapsed_seconds": 0.0019789139987551607,
+    "returncode": 0,
+    "stdout": "nurbs_large_cold_decomposition_64_controls: 1 iterations in 564.321\u00b5s (564.321\u00b5s/iter), checksum=61\nnurbs_large_cached_evaluation_64_controls: 1 iterations in 6.76\u00b5s (6.76\u00b5s/iter), checksum=4629597209445409314\n",
+    "stderr": ""
+  },
+  {
+    "implementation": "parent",
+    "controls": 256,
+    "iterations": 1,
+    "elapsed_seconds": 0.006769194998923922,
+    "returncode": 0,
+    "stdout": "nurbs_large_cold_decomposition_256_controls: 1 iterations in 3.022842ms (3.022842ms/iter), checksum=253\nnurbs_large_cached_evaluation_256_controls: 1 iterations in 11.659\u00b5s (11.659\u00b5s/iter), checksum=4638679133604681826\n",
+    "stderr": ""
+  },
+  {
+    "implementation": "current",
+    "controls": 256,
+    "iterations": 1,
+    "elapsed_seconds": 0.005362251999031287,
+    "returncode": 0,
+    "stdout": "nurbs_large_cold_decomposition_256_controls: 1 iterations in 2.290853ms (2.290853ms/iter), checksum=253\nnurbs_large_cached_evaluation_256_controls: 1 iterations in 12.059\u00b5s (12.059\u00b5s/iter), checksum=4638679133604681826\n",
+    "stderr": ""
+  },
+  {
+    "implementation": "parent",
+    "controls": 1024,
+    "iterations": 1,
+    "elapsed_seconds": 0.02703400199970929,
+    "returncode": 0,
+    "stdout": "nurbs_large_cold_decomposition_1024_controls: 1 iterations in 12.837987ms (12.837987ms/iter), checksum=1021\nnurbs_large_cached_evaluation_1024_controls: 1 iterations in 29.618\u00b5s (29.618\u00b5s/iter), checksum=4647708364978135586\n",
+    "stderr": ""
+  },
+  {
+    "implementation": "current",
+    "controls": 1024,
+    "iterations": 1,
+    "elapsed_seconds": 0.021753895001893397,
+    "returncode": 0,
+    "stdout": "nurbs_large_cold_decomposition_1024_controls: 1 iterations in 10.652368ms (10.652368ms/iter), checksum=1021\nnurbs_large_cached_evaluation_1024_controls: 1 iterations in 36.068\u00b5s (36.068\u00b5s/iter), checksum=4647708364978135586\n",
+    "stderr": ""
+  }
+]

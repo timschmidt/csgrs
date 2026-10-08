@@ -1,0 +1,15 @@
+Preserve endpoint ownership when certifying algebraic images
+
+A closed polynomial or rational image enclosure could be treated as a
+half-open root isolator, excluding its actual lower root and selecting a
+foreign eliminant root. Separate enclosure bounds and endpoint ownership
+from certified IsolatedRootInterval evidence.
+
+Count each owned endpoint strictly before admitting an image. Preserve
+orientation for monotone maps, use closed bounds for interval arithmetic,
+canonicalize owned endpoint roots, and refine away excluded upper roots
+before returning a half-open isolator. Migrate internal callers directly;
+remove the obsolete sorting helper and one-sided ownership enum.
+
+Cover polynomial and rational zero images previously reported positive,
+reversed maps, repeated roots, each endpoint convention, and exact points.

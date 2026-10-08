@@ -1,0 +1,14 @@
+[package]
+name = "calcium-root-exp-opaque-baseline-bench"
+version = "0.1.0"
+edition = "2024"
+publish = false
+[workspace]
+[features]
+allocation-count = []
+[dependencies]
+hyperreal = { path = "../baseline-hyperreal" }
+num = "0.4.3"
+[[bin]]
+name = "calcium-root-exp-opaque-baseline-bench"
+path = "../root-exp-opaque-query-bench.rs"

@@ -1,0 +1,30 @@
+[
+  {
+    "source": "/tmp/hypercurve-head-fillets-20260925-v52",
+    "archive": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/source-archives/hypercurve-head-fillets-20260925-v52-incomplete-tmp",
+    "files": 1314,
+    "bytes": 132869557,
+    "all_hashes_verified": true
+  },
+  {
+    "source": "/tmp/hypercurve-local-chord-complete-replay-v49-20260924",
+    "archive": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/source-archives/hypercurve-local-chord-complete-replay-v49-20260924",
+    "files": 2044,
+    "bytes": 185372410,
+    "all_hashes_verified": true
+  },
+  {
+    "source": "/tmp/hypercurve-local-chord-complete-replay-v50-20260924",
+    "archive": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/source-archives/hypercurve-local-chord-complete-replay-v50-20260924",
+    "files": 2044,
+    "bytes": 185372575,
+    "all_hashes_verified": true
+  },
+  {
+    "source": "/tmp/hypercurve-local-chord-complete-replay-v51-20260924",
+    "archive": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/source-archives/hypercurve-local-chord-complete-replay-v51-20260924",
+    "files": 2044,
+    "bytes": 185382994,
+    "all_hashes_verified": true
+  }
+]

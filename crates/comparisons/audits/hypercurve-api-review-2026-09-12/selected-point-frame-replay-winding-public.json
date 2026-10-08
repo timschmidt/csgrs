@@ -1,0 +1,21 @@
+{
+  "returncode": 0,
+  "elapsed_seconds": 0.0035967639996670187,
+  "normal_library_sha256": "476ce4085af4463f86d6182e476e0fa13af9266727aaefa54be4b0293d704b2a",
+  "log": "selected-point-frame-replay-winding-public.log",
+  "source": "finite-region-winding-public.rs",
+  "command": [
+    "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustc",
+    "--edition=2024",
+    "-O",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-region-winding-public.rs",
+    "--extern",
+    "hypercurve=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypercurve-930b1fe968ca3c94.rlib",
+    "-L",
+    "dependency=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps",
+    "-o",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/selected-point-frame-replay-winding-public"
+  ],
+  "source_sha256": "556f33cdfb31390813934e671f2103efecca7fd93fa5c559ab3e8d2927a95d68",
+  "executable_sha256": "5d3fc6860bf7cc24a90a26def8cb14d5a68fcca925c7ef3a503bd864da7f3445"
+}

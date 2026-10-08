@@ -1,0 +1,46 @@
+{
+  "date": "2026-09-14",
+  "status": "qualified_parameter_migration_goal_active",
+  "commits": {
+    "hypercurve": "9dfb2ad",
+    "hyperbrep": "d82bc14"
+  },
+  "scope": "Return CurveParameter2 directly from every fixed-distance producer; remove the duplicate enum and point-conversion helper; share membership, chamfer placement, and point evidence while retaining native scalar and root-authority paths.",
+  "tests": {
+    "library_broad_passed": 976,
+    "integration_passed": 229,
+    "hyperbrep_path_passed": 19,
+    "focused_final_passed": 24,
+    "additional_unique_regressions": 1,
+    "total_unique_passed": 1225,
+    "failed": 0,
+    "library_ignored": 6,
+    "costly_exclusions": [
+      "selected_parallel_normal_circle_intersects_genuinely_analytic_parallel_in_one_fiber",
+      "independent_oblique_chord_pair_fillets_extend_on_infinite_supports",
+      "selected_circle_and_analytic_parallel_extend_on_full_supports",
+      "pair_native_boolean_algebraic_chord_corner_publishes_a_third_generation_fillet"
+    ]
+  },
+  "source_qualification": "Broad binaries use the final production source. The later test-only addition for reversed selected-fiber ranges passed in the final focused gate; it does not require repeating the broad runtime gate.",
+  "checks": {
+    "hypercurve_all_targets_all_features": "passed",
+    "hyperbrep_all_targets_all_features": "passed",
+    "hypercurve_ui_offline_all_targets": "passed",
+    "hypercurve_docs_broken_links_denied": "passed",
+    "changed_rust_files_formatting": "passed",
+    "staged_whitespace": "passed"
+  },
+  "logs": [
+    "fixed-distance-parameter-focused.log",
+    "fixed-distance-parameter-focused-final.log",
+    "fixed-distance-parameter-broad.log",
+    "fixed-distance-parameter-check-final.log",
+    "fixed-distance-parameter-hyperbrep-check.log",
+    "fixed-distance-parameter-hyperbrep-tests.log",
+    "fixed-distance-parameter-ui-check.log",
+    "fixed-distance-parameter-docs.log"
+  ],
+  "performance_claim": "No matched runtime benchmark. Shared placement rejects inadmissible candidates before constructing point evidence. Net source reduction is 167 lines including the new regression.",
+  "pushed": false
+}

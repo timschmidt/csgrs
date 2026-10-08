@@ -1,0 +1,72 @@
+\doxysubsection{Figure Class Reference}
+\hypertarget{classAriadne_1_1Figure}{}\label{classAriadne_1_1Figure}\index{Figure@{Figure}}
+
+
+{\ttfamily \#include $<$figure.\+hpp$>$}
+
+
+
+\doxysubsubsection{Description}
+Class for plotting figures. \begin{Desc}
+\item[Examples]\par
+\mbox{\hyperlink{tutorials_2rigorous_numerics_2rigorous_numerics_tutorial_8cpp-example}{tutorials/rigorous\+\_\+numerics/rigorous\+\_\+numerics\+\_\+tutorial.\+cpp}}.\end{Desc}
+Inheritance diagram for Figure\+:\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[height=2.000000cm]{classAriadne_1_1Figure}
+\end{center}
+\end{figure}
+\doxysubsubsubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1Figure_ac33bddbc58bc6b1a301d89f4b783f6db}\label{classAriadne_1_1Figure_ac33bddbc58bc6b1a301d89f4b783f6db} 
+{\bfseries Figure} (const Graphics\+Bounding\+Box\+Type \&bbx, const Projection2d \&proj)
+\begin{DoxyCompactList}\small\item\em Construct a figure projecting {\itshape bbx} onto the {\itshape proj} coordinates. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Figure_a01fb4e0b97f5a16df7aa2280d05e16fd}\label{classAriadne_1_1Figure_a01fb4e0b97f5a16df7aa2280d05e16fd} 
+{\bfseries Figure} (const Graphics\+Bounding\+Box\+Type \&bbx, Dimension\+Type ix, Dimension\+Type iy)
+\begin{DoxyCompactList}\small\item\em Construct a figure projecting {\itshape bbx} onto the ({\itshape ix}, {\itshape iy}) coordinates. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Figure_a9597883a9ecbe401ceaac552d59fde3c}\label{classAriadne_1_1Figure_a9597883a9ecbe401ceaac552d59fde3c} 
+{\bfseries Figure} (const Graphics\+Bounding\+Box\+Type \&bbx, \mbox{\hyperlink{namespaceAriadne_abbe0884d033ed6289d1f654576d7bb07}{Pair}}$<$ Dimension\+Type, Dimension\+Type $>$ ixy)
+\begin{DoxyCompactList}\small\item\em Construct a figure projecting {\itshape bbx} onto the ({\itshape ix}, {\itshape iy}) coordinates. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Figure_a21a02d890a1497f153fb91e1f6ea4385}\label{classAriadne_1_1Figure_a21a02d890a1497f153fb91e1f6ea4385} 
+\mbox{\hyperlink{classAriadne_1_1Figure}{Figure}} \& {\bfseries set\+\_\+projection} (Dimension\+Type i, Dimension\+Type j)
+\begin{DoxyCompactList}\small\item\em \doxylink{classAriadne_1_1Set}{Set} the displayed coordinates to ({\itshape i}, {\itshape j}) \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Figure_ae53e7697a4413a2e7ca3569d4a29086b}\label{classAriadne_1_1Figure_ae53e7697a4413a2e7ca3569d4a29086b} 
+\mbox{\hyperlink{classAriadne_1_1Figure}{Figure}} \& {\bfseries set\+\_\+dot\+\_\+radius} (\mbox{\hyperlink{namespaceAriadne_ae40247d5e2468d191aa408050de97663}{Dbl}})
+\begin{DoxyCompactList}\small\item\em \doxylink{classAriadne_1_1Set}{Set} the radiues to draw points (dots). \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Figure_a6d87a241be18492f6f23a68fcfe87bcc}\label{classAriadne_1_1Figure_a6d87a241be18492f6f23a68fcfe87bcc} 
+\mbox{\hyperlink{classAriadne_1_1Figure}{Figure}} \& {\bfseries set\+\_\+line\+\_\+width} (\mbox{\hyperlink{namespaceAriadne_ae40247d5e2468d191aa408050de97663}{Dbl}})
+\begin{DoxyCompactList}\small\item\em \doxylink{classAriadne_1_1Set}{Set} the width to draw lines. A width of 0 means no lines are drawn. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Figure_ab7c871dd2184708fe01ef387bad47bb9}\label{classAriadne_1_1Figure_ab7c871dd2184708fe01ef387bad47bb9} 
+\mbox{\hyperlink{classAriadne_1_1Figure}{Figure}} \& {\bfseries set\+\_\+line\+\_\+colour} (Colour)
+\begin{DoxyCompactList}\small\item\em \doxylink{classAriadne_1_1Set}{Set} the colour draw lines. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Figure_afceb67954ff3b8e96fa4a25262a53e6e}\label{classAriadne_1_1Figure_afceb67954ff3b8e96fa4a25262a53e6e} 
+\mbox{\hyperlink{classAriadne_1_1Figure}{Figure}} \& {\bfseries set\+\_\+fill\+\_\+colour} (Colour)
+\begin{DoxyCompactList}\small\item\em \doxylink{classAriadne_1_1Set}{Set} the colour to fill shapes. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Figure_abd5f3ebc12ac6d1fd8ae5d9a0dd1bc26}\label{classAriadne_1_1Figure_abd5f3ebc12ac6d1fd8ae5d9a0dd1bc26} 
+\mbox{\hyperlink{classAriadne_1_1Figure}{Figure}} \& {\bfseries set\+\_\+fill\+\_\+opacity} (\mbox{\hyperlink{namespaceAriadne_ae40247d5e2468d191aa408050de97663}{Dbl}})
+\begin{DoxyCompactList}\small\item\em \doxylink{classAriadne_1_1Set}{Set} the opacity of shapes. An opacity of 0 means no fill. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Figure_a1b44eda560b64bdd23f5664640d31cd9}\label{classAriadne_1_1Figure_a1b44eda560b64bdd23f5664640d31cd9} 
+\mbox{\hyperlink{classAriadne_1_1Figure}{Figure}} \& {\bfseries draw} (const \mbox{\hyperlink{classAriadne_1_1Drawable2dInterface}{Drawable2d\+Interface}} \&shape)
+\begin{DoxyCompactList}\small\item\em Add a set to draw onto the figure. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Figure_a4c17f49a0daa2bb606496665ddf7dbbb}\label{classAriadne_1_1Figure_a4c17f49a0daa2bb606496665ddf7dbbb} 
+\mbox{\hyperlink{classAriadne_1_1Figure}{Figure}} \& {\bfseries clear} ()
+\begin{DoxyCompactList}\small\item\em Clear the figure. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Figure_aa338592af5e112f2e146956fe7f4fd82}\label{classAriadne_1_1Figure_aa338592af5e112f2e146956fe7f4fd82} 
+\mbox{\hyperlink{classAriadne_1_1Figure}{Figure}} \& {\bfseries set\+\_\+animated} (\mbox{\hyperlink{namespaceAriadne_a76a8b016e5ad61faf9062cc387df5016}{Bool}} b)
+\begin{DoxyCompactList}\small\item\em \doxylink{classAriadne_1_1Set}{Set} animation. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Figure_a587dbb158c7df828f3cf758c7b12ccf2}\label{classAriadne_1_1Figure_a587dbb158c7df828f3cf758c7b12ccf2} 
+\mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} {\bfseries display} () const
+\begin{DoxyCompactList}\small\item\em Display the figure. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Figure_afe5aa076642fadbb4ce97cf281a9160c}\label{classAriadne_1_1Figure_afe5aa076642fadbb4ce97cf281a9160c} 
+\mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} {\bfseries write} (const \mbox{\hyperlink{namespaceAriadne_a1b0cafccc05c7c13545a6507648f6e75}{Char}} \texorpdfstring{$\ast$}{*}filename) const
+\begin{DoxyCompactList}\small\item\em Write to {\itshape filename}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Figure_a909dcde3be9f6a429b5424d4fbb3521b}\label{classAriadne_1_1Figure_a909dcde3be9f6a429b5424d4fbb3521b} 
+\mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} {\bfseries write} (const \mbox{\hyperlink{namespaceAriadne_a1b0cafccc05c7c13545a6507648f6e75}{Char}} \texorpdfstring{$\ast$}{*}filename, \mbox{\hyperlink{namespaceAriadne_aae901a69a841b1a085a0dfe218e38fe9}{Nat}} nx, \mbox{\hyperlink{namespaceAriadne_aae901a69a841b1a085a0dfe218e38fe9}{Nat}} ny) const
+\begin{DoxyCompactList}\small\item\em Write out to file, using width {\itshape nx} pixels, and height {\itshape ny} pixels. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+The documentation for this class was generated from the following files\+:\begin{DoxyCompactItemize}
+\item 
+source/io/\mbox{\hyperlink{figure_8hpp}{figure.\+hpp}}\item 
+source/io/figure.\+cpp\end{DoxyCompactItemize}

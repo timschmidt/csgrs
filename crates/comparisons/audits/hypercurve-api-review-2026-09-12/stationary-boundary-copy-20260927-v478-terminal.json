@@ -1,0 +1,53 @@
+{
+  "diagnostic_only": true,
+  "source_manifest": "restricted-fiber-sign-20260927-v474-sources.json",
+  "source_directory": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/source-archives/stationary-boundary-copy-20260927-v478",
+  "trial": {
+    "hypercurve/src/error.rs": "ac143b3004e6c1b3212b2c7405c3e07caaaf87d5fd17640dcb642d6c9ddac070"
+  },
+  "fixture_sha256": "abd7af6502bad5d9169e68dacd71d4fa75c7e03462b4570c57fd5676ac0db45b",
+  "checks": [
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "build",
+        "--lib",
+        "--release",
+        "--all-features",
+        "--locked",
+        "--offline",
+        "--message-format=json"
+      ],
+      "returncode": 0,
+      "log": "stationary-boundary-copy-20260927-v478-library-build.log",
+      "elapsed_seconds": 76.91921796603128
+    },
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustc",
+        "--edition=2024",
+        "--test",
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/source-archives/stationary-boundary-copy-20260927-v478/stationary-corner-contract.rs",
+        "-C",
+        "opt-level=3",
+        "-L",
+        "dependency=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release",
+        "--extern",
+        "hypercurve=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/libhypercurve.rlib",
+        "-o",
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/stationary-boundary-copy-20260927-v478-tests"
+      ],
+      "returncode": 1,
+      "log": "stationary-boundary-copy-20260927-v478-probe-build.log",
+      "elapsed_seconds": 0.03178467904217541
+    }
+  ],
+  "cases": [],
+  "all_processes_reaped": true,
+  "capture_complete": false,
+  "library": {
+    "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/libhypercurve.rlib",
+    "sha256": "c240d735322d2584a93322f7b58f96c23865b70727b40d315833f60247678093"
+  },
+  "failure": "diagnostic fixture build failed"
+}

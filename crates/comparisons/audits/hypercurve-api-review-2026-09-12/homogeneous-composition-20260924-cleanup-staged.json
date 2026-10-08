@@ -1,0 +1,17 @@
+{
+  "benches/editing.rs": "0f3b9be77038e3992814f2013d7c15436d59e42165f0ec94ca71b7a64aa25f88",
+  "src/bezier_offset.rs": "d6f478a75d5364bd589d390f337800d936e2273430d376f21e23f1902dd73d7a",
+  "src/bezier_parameter.rs": "cf674ff7e1ad50c8737ba7d059f7682582fea7add5d2f9d44e4a1f3a4b7688df",
+  "src/bezier_region.rs": "4626b527975fb51fafed4f480bd66ad24e4657a20033d3fb7eb659b8e11e3993",
+  "src/contour.rs": "6446130d8a3cccdf06086c6cb1d3d76e1f429d6b2dbf74f8c8b8a5366ba40dec",
+  "src/curve.rs": "6633fd92e7e56618afcf84f6f644118772eb9b5f29874f147fc5561c7e975074",
+  "src/curve_corner_chain.rs": "6b30cd383963ad20309c17775507dbb37d5181577977220f65acdd43e2c06746",
+  "src/curve_string.rs": "62f9b03f5787c5e1f25e78beca03285ca0ace27af63dc4273091b7ed73e84f88",
+  "src/curve_support.rs": "04415b74c8f86090457b3c791d85436d9513605bd74b24e00fca37421b6cb7b3",
+  "src/events.rs": "53d6fb2c66a9961491e54c7beef3ec26469612c8e7d8a7cda25f0ddc03e5c14b",
+  "src/prepared.rs": "1b97af2067d18d08bb47e67cd1d561c7b8aa2a29e3e071842229419e4010ca95",
+  "src/rational_bezier_general.rs": "dab7d0acb95f2f389a2994ff8d32fa1637d7c259d0208f396feff38257be30d5",
+  "src/self_intersect.rs": "5bb80c8a77d39b0e2c45505b459c30abd4912ea53a18008ed5c7582564bb21b1",
+  "tests/hypercurve_curve_intersection.rs": "bbbd52f629cbaafef3c830981e6e65b780d1a2bfd9262d2dfb2dd7db32bfe79e",
+  "tests/hypercurve_curve_region_promotion.rs": "63253737c006554507196a433c685a9572d07d99fc92b3febd17d359f6171ee9"
+}

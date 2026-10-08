@@ -1,0 +1,34 @@
+[
+  {
+    "kind": "check",
+    "command": [
+      "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+      "check",
+      "--all-targets",
+      "--no-default-features",
+      "--locked",
+      "--offline"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 17.09054193997872
+  },
+  {
+    "kind": "test-build",
+    "command": [
+      "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+      "test",
+      "--release",
+      "--all-features",
+      "--test",
+      "hypercurve_curve_range",
+      "--test",
+      "hypercurve_curve_region_boolean",
+      "--no-run",
+      "--message-format=json",
+      "--locked",
+      "--offline"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 82.39410563200363
+  }
+]

@@ -1,0 +1,16 @@
+{
+  "tag": "polynomial-closure-monic-fmt",
+  "started": "2026-09-09T00:19:16.722Z",
+  "finished": "2026-09-09T00:19:18.268Z",
+  "elapsedSeconds": 1.5426996099999999,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/polynomial-monic-trial/hypersolve",
+  "command": "cargo",
+  "args": [
+    "fmt",
+    "--all",
+    "--",
+    "--check"
+  ],
+  "code": 0,
+  "signal": null
+}

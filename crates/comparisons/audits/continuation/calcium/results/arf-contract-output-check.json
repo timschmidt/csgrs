@@ -1,0 +1,14 @@
+{
+  "tag": "arf-contract-output-check",
+  "started": "2026-09-10T02:47:44.475Z",
+  "finished": "2026-09-10T02:47:45.324Z",
+  "elapsedSeconds": 0.846408047,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "node",
+  "args": [
+    "check-arf-contracts.mjs",
+    "--arf-contract-summary"
+  ],
+  "code": 0,
+  "signal": null
+}

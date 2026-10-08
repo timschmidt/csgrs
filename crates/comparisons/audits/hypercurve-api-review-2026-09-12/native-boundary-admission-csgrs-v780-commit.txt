@@ -1,0 +1,7 @@
+Use explicit compound fill for Gerber boundary admission
+
+Migrate native region contours to the direct region result with even-odd
+fill. Remove the redundant nesting-classification branch and preserve
+nested parity through an exact import/export regression under both policies.
+
+Validated with the Hypercurve migration:46 release regressions and8 checks.

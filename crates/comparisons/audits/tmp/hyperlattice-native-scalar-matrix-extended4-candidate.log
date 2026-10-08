@@ -1,0 +1,90 @@
+Benchmarking matrix_ops/hyperreal/mat3 inverse_checked_abort
+Benchmarking matrix_ops/hyperreal/mat3 inverse_checked_abort: Warming up for 500.00 ms
+Benchmarking matrix_ops/hyperreal/mat3 inverse_checked_abort: Collecting 100 samples in estimated 2.0190 s (404k iterations)
+Benchmarking matrix_ops/hyperreal/mat3 inverse_checked_abort: Analyzing
+matrix_ops/hyperreal/mat3 inverse_checked_abort
+                        time:   [5.1568 µs 5.2209 µs 5.2882 µs]
+                        change: [+4.0693% +5.2567% +6.8443%] (p = 0.00 < 0.05)
+                        Performance has regressed.
+Found 7 outliers among 100 measurements (7.00%)
+  4 (4.00%) high mild
+  3 (3.00%) high severe
+Benchmarking matrix_ops/hyperreal/mat3 div_matrix_checked_abort
+Benchmarking matrix_ops/hyperreal/mat3 div_matrix_checked_abort: Warming up for 500.00 ms
+Benchmarking matrix_ops/hyperreal/mat3 div_matrix_checked_abort: Collecting 100 samples in estimated 2.1085 s (81k iterations)
+Benchmarking matrix_ops/hyperreal/mat3 div_matrix_checked_abort: Analyzing
+matrix_ops/hyperreal/mat3 div_matrix_checked_abort
+                        time:   [24.637 µs 24.717 µs 24.813 µs]
+                        change: [+2.0534% +2.9891% +4.4444%] (p = 0.00 < 0.05)
+                        Performance has regressed.
+Found 6 outliers among 100 measurements (6.00%)
+  2 (2.00%) high mild
+  4 (4.00%) high severe
+Benchmarking matrix_ops/hyperreal/mat4 inverse_checked_abort
+Benchmarking matrix_ops/hyperreal/mat4 inverse_checked_abort: Warming up for 500.00 ms
+Benchmarking matrix_ops/hyperreal/mat4 inverse_checked_abort: Collecting 100 samples in estimated 2.0373 s (268k iterations)
+Benchmarking matrix_ops/hyperreal/mat4 inverse_checked_abort: Analyzing
+matrix_ops/hyperreal/mat4 inverse_checked_abort
+                        time:   [7.8918 µs 8.0449 µs 8.1906 µs]
+                        change: [−2.6701% −0.6917% +1.1075%] (p = 0.50 > 0.05)
+                        No change in performance detected.
+Found 22 outliers among 100 measurements (22.00%)
+  3 (3.00%) high mild
+  19 (19.00%) high severe
+Benchmarking matrix_ops/hyperreal/mat4 div_matrix_checked_abort
+Benchmarking matrix_ops/hyperreal/mat4 div_matrix_checked_abort: Warming up for 500.00 ms
+Benchmarking matrix_ops/hyperreal/mat4 div_matrix_checked_abort: Collecting 100 samples in estimated 2.1596 s (50k iterations)
+Benchmarking matrix_ops/hyperreal/mat4 div_matrix_checked_abort: Analyzing
+matrix_ops/hyperreal/mat4 div_matrix_checked_abort
+                        time:   [42.030 µs 42.457 µs 42.884 µs]
+                        change: [+8.7374% +10.909% +13.187%] (p = 0.00 < 0.05)
+                        Performance has regressed.
+Found 4 outliers among 100 measurements (4.00%)
+  1 (1.00%) low mild
+  2 (2.00%) high mild
+  1 (1.00%) high severe
+Benchmarking matrix_ops/hyperreal-rational/mat3 inverse_checked_abort
+Benchmarking matrix_ops/hyperreal-rational/mat3 inverse_checked_abort: Warming up for 500.00 ms
+Benchmarking matrix_ops/hyperreal-rational/mat3 inverse_checked_abort: Collecting 100 samples in estimated 2.0027 s (662k iterations)
+Benchmarking matrix_ops/hyperreal-rational/mat3 inverse_checked_abort: Analyzing
+matrix_ops/hyperreal-rational/mat3 inverse_checked_abort
+                        time:   [2.9011 µs 2.9354 µs 2.9725 µs]
+                        change: [−7.8918% −5.6862% −3.5788%] (p = 0.00 < 0.05)
+                        Performance has improved.
+Found 10 outliers among 100 measurements (10.00%)
+  1 (1.00%) high mild
+  9 (9.00%) high severe
+Benchmarking matrix_ops/hyperreal-rational/mat3 div_matrix_checked_abort
+Benchmarking matrix_ops/hyperreal-rational/mat3 div_matrix_checked_abort: Warming up for 500.00 ms
+Benchmarking matrix_ops/hyperreal-rational/mat3 div_matrix_checked_abort: Collecting 100 samples in estimated 2.0144 s (313k iterations)
+Benchmarking matrix_ops/hyperreal-rational/mat3 div_matrix_checked_abort: Analyzing
+matrix_ops/hyperreal-rational/mat3 div_matrix_checked_abort
+                        time:   [6.2790 µs 6.4721 µs 6.7092 µs]
+                        change: [+6.1519% +8.5805% +11.311%] (p = 0.00 < 0.05)
+                        Performance has regressed.
+Found 12 outliers among 100 measurements (12.00%)
+  7 (7.00%) high mild
+  5 (5.00%) high severe
+Benchmarking matrix_ops/hyperreal-rational/mat4 inverse_checked_abort
+Benchmarking matrix_ops/hyperreal-rational/mat4 inverse_checked_abort: Warming up for 500.00 ms
+Benchmarking matrix_ops/hyperreal-rational/mat4 inverse_checked_abort: Collecting 100 samples in estimated 2.0105 s (313k iterations)
+Benchmarking matrix_ops/hyperreal-rational/mat4 inverse_checked_abort: Analyzing
+matrix_ops/hyperreal-rational/mat4 inverse_checked_abort
+                        time:   [6.3529 µs 6.3734 µs 6.3928 µs]
+                        change: [−0.4409% +0.9593% +2.3070%] (p = 0.17 > 0.05)
+                        No change in performance detected.
+Found 5 outliers among 100 measurements (5.00%)
+  1 (1.00%) high mild
+  4 (4.00%) high severe
+Benchmarking matrix_ops/hyperreal-rational/mat4 div_matrix_checked_abort
+Benchmarking matrix_ops/hyperreal-rational/mat4 div_matrix_checked_abort: Warming up for 500.00 ms
+Benchmarking matrix_ops/hyperreal-rational/mat4 div_matrix_checked_abort: Collecting 100 samples in estimated 2.0116 s (192k iterations)
+Benchmarking matrix_ops/hyperreal-rational/mat4 div_matrix_checked_abort: Analyzing
+matrix_ops/hyperreal-rational/mat4 div_matrix_checked_abort
+                        time:   [10.064 µs 10.173 µs 10.305 µs]
+                        change: [+5.4168% +7.6928% +10.012%] (p = 0.00 < 0.05)
+                        Performance has regressed.
+Found 8 outliers among 100 measurements (8.00%)
+  6 (6.00%) high mild
+  2 (2.00%) high severe
+

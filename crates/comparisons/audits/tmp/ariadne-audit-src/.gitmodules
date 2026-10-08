@@ -1,0 +1,12 @@
+[submodule "python/pybind11"]
+	path = python/pybind11
+	url = https://github.com/pybind/pybind11
+[submodule "submodules/conclog"]
+	path = submodules/conclog
+	url = https://github.com/ariadne-cps/conclog
+[submodule "submodules/betterthreads"]
+	path = submodules/betterthreads
+	url = https://github.com/ariadne-cps/betterthreads
+[submodule "submodules/helper"]
+	path = submodules/helper
+	url = https://github.com/ariadne-cps/helper

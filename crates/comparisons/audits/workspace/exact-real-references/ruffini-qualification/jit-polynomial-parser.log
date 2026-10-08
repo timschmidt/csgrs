@@ -1,0 +1,29 @@
+OBS	parser-1+2*3	7.0
+PASS	parser-0
+OBS	parser-(1+2)*3	9.0
+PASS	parser-1
+OBS	parser-8-3+1	6.0
+PASS	parser-2
+OBS	parser-8+3-1	10.0
+PASS	parser-3
+OBS	parser-12/3*2	8.0
+PASS	parser-4
+OBS	parser-12*3/2	18.0
+PASS	parser-5
+OBS	parser-2^3^2	64.0
+WRONG	parser-6
+OBS	parser-f(2)+3	25.0
+WRONG	parser-7
+OBS	parser-f(2)*3	36.0
+WRONG	parser-8
+EXCEPTION	parser-9	EvaluationException
+OBS	parser-1+(-2)	-1.0
+PASS	parser-10
+OBS	parser-2(3+4)	14.0
+PASS	parser-11
+EXCEPTION	parser-malformed-)	NullPointerException
+EXCEPTION	parser-malformed-1,2	NullPointerException
+PASS	parser-malformed-(1
+WRONG	integer-polynomial-repeated-power
+EXCEPTION	integer-polynomial-negative-implicit	NumberFormatException
+SUMMARY	17

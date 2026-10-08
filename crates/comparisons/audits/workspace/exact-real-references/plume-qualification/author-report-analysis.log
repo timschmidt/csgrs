@@ -1,0 +1,39 @@
+{
+  "alternateTextLinesIndependentlyRead": 4871,
+  "extractedLinesDiffering": [
+    564,
+    642,
+    643,
+    644,
+    646,
+    2370,
+    3323,
+    4693,
+    4694,
+    4696
+  ],
+  "alternatePdfPagesVisuallyRead": [
+    20,
+    21,
+    22,
+    65,
+    77,
+    78,
+    79,
+    80,
+    90,
+    104,
+    129
+  ],
+  "exactGeometricIdentityChecks": 1056,
+  "balancedDepthChecks": 512,
+  "leibniz100DigitClaimRejected": true,
+  "generatedHtmlSectionsIndexed": 147,
+  "generatedHtmlSectionsIndependentlyRead": 3,
+  "limitations": [
+    "Text and visual read credit are human-review assertions recorded in the coverage ledger, not proved by a hash check.",
+    "The 144 remaining generated HTML section bodies and 122 other alternate PDF pages are not credited as independently read.",
+    "Use the existing generated-artifact scope convention: primary report is fully read and visually checked; alternate text and all five extraction-difference pages are checked.",
+    "Finite identity/depth checks corroborate the written elementary proof; there is no 10^50-term execution or new performance result."
+  ]
+}

@@ -1,0 +1,244 @@
+{
+  "diagnostic_only": true,
+  "parent": "804b2ba2e619c5bb5b496ebe035164e43746f407",
+  "source_manifest": "local-chord-complete-replay-20260924-v91-sources.json",
+  "source_directory": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/source-archives/hypercurve-local-chord-complete-replay-v91-20260924",
+  "build_source_directory": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/build-workspace-20260925",
+  "checks": [
+    {
+      "label": "fmt",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustfmt",
+        "--edition",
+        "2024",
+        "--check",
+        "src/bezier_algebraic_image.rs",
+        "src/bezier_split.rs",
+        "src/bezier_offset.rs",
+        "src/bezier_parameter.rs",
+        "src/bezier_region.rs",
+        "src/curve.rs",
+        "src/curve_corner_chain.rs",
+        "src/curve_region_boolean.rs",
+        "tests/hypercurve_curve.rs"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 3.8013138809474185,
+      "log": "selected-frame-import-20260925-v91-fmt.log"
+    },
+    {
+      "label": "clippy-0",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "clippy",
+        "--all-targets",
+        "--all-features",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 23.229736195062287,
+      "log": "selected-frame-import-20260925-v91-clippy-0.log"
+    },
+    {
+      "label": "clippy-1",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "clippy",
+        "--all-targets",
+        "--no-default-features",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 22.525144090061076,
+      "log": "selected-frame-import-20260925-v91-clippy-1.log"
+    },
+    {
+      "label": "hyperbrep-check-all-targets",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "check",
+        "--manifest-path",
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/build-workspace-20260925/hyperbrep/Cargo.toml",
+        "--all-targets",
+        "--all-features",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 16.96934633201454,
+      "log": "selected-frame-import-20260925-v91-hyperbrep-check-all-targets.log"
+    }
+  ],
+  "binaries": {
+    "hypercurve": {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/selected-frame-import-20260925-v91-hypercurve",
+      "sha256": "e7147c62143923f7a54c023bd33a2cc47a9da63a2bca58126d94c068014694dd"
+    },
+    "hypercurve_curve": {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/selected-frame-import-20260925-v91-hypercurve_curve",
+      "sha256": "d7f3844cc2396e1208fb13ee2a69dd1ac67f807135638b2828850e48bb47c3a8"
+    }
+  },
+  "cases": [
+    {
+      "label": "translated_selected_contact_import_omits_the_unused_center",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/selected-frame-import-20260925-v91-hypercurve",
+        "--exact",
+        "bezier_offset::conversion_tests::translated_selected_contact_import_omits_the_unused_center",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.4367993340129033,
+      "log": "selected-frame-import-20260925-v91-translated_selected_contact_import_omits_the_unused_center.log",
+      "target": "hypercurve",
+      "name": "bezier_offset::conversion_tests::translated_selected_contact_import_omits_the_unused_center"
+    },
+    {
+      "label": "bounded_point_import_preserves_a_cached_local_field",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/selected-frame-import-20260925-v91-hypercurve",
+        "--exact",
+        "bezier_offset::conversion_tests::bounded_point_import_preserves_a_cached_local_field",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.43917102098930627,
+      "log": "selected-frame-import-20260925-v91-bounded_point_import_preserves_a_cached_local_field.log",
+      "target": "hypercurve",
+      "name": "bezier_offset::conversion_tests::bounded_point_import_preserves_a_cached_local_field"
+    },
+    {
+      "label": "bounded_point_import_reuses_certified_native_fiber_parameters",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/selected-frame-import-20260925-v91-hypercurve",
+        "--exact",
+        "bezier_offset::conversion_tests::bounded_point_import_reuses_certified_native_fiber_parameters",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.4315714529948309,
+      "log": "selected-frame-import-20260925-v91-bounded_point_import_reuses_certified_native_fiber_parameters.log",
+      "target": "hypercurve",
+      "name": "bezier_offset::conversion_tests::bounded_point_import_reuses_certified_native_fiber_parameters"
+    },
+    {
+      "label": "selected_fiber_points_reuse_projective_roots_without_global_promotion",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/selected-frame-import-20260925-v91-hypercurve",
+        "--exact",
+        "bezier_offset::conversion_tests::selected_fiber_points_reuse_projective_roots_without_global_promotion",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.48778350895736367,
+      "log": "selected-frame-import-20260925-v91-selected_fiber_points_reuse_projective_roots_without_global_promotion.log",
+      "target": "hypercurve",
+      "name": "bezier_offset::conversion_tests::selected_fiber_points_reuse_projective_roots_without_global_promotion"
+    },
+    {
+      "label": "selected_frame_import_preserves_every_independent_point",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/selected-frame-import-20260925-v91-hypercurve",
+        "--exact",
+        "bezier_offset::conversion_tests::selected_frame_import_preserves_every_independent_point",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.4309389559784904,
+      "log": "selected-frame-import-20260925-v91-selected_frame_import_preserves_every_independent_point.log",
+      "target": "hypercurve",
+      "name": "bezier_offset::conversion_tests::selected_frame_import_preserves_every_independent_point"
+    },
+    {
+      "label": "selected_radial_frame_joins_an_equivalent_recursive_point_base",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/selected-frame-import-20260925-v91-hypercurve",
+        "--exact",
+        "bezier_offset::conversion_tests::selected_radial_frame_joins_an_equivalent_recursive_point_base",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.4332119000609964,
+      "log": "selected-frame-import-20260925-v91-selected_radial_frame_joins_an_equivalent_recursive_point_base.log",
+      "target": "hypercurve",
+      "name": "bezier_offset::conversion_tests::selected_radial_frame_joins_an_equivalent_recursive_point_base"
+    },
+    {
+      "label": "direct_bezier_pair_fillet_retains_both_incident_extensions",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/selected-frame-import-20260925-v91-hypercurve_curve",
+        "--exact",
+        "direct_bezier_pair_fillet_retains_both_incident_extensions",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 101,
+      "elapsed_seconds": 4.758149812929332,
+      "log": "selected-frame-import-20260925-v91-direct_bezier_pair_fillet_retains_both_incident_extensions.log",
+      "target": "hypercurve_curve",
+      "name": "direct_bezier_pair_fillet_retains_both_incident_extensions"
+    }
+  ],
+  "all_processes_reaped": true,
+  "build_returncode": 0,
+  "selection": [
+    [
+      "hypercurve",
+      "bezier_offset::conversion_tests::translated_selected_contact_import_omits_the_unused_center"
+    ],
+    [
+      "hypercurve",
+      "bezier_offset::conversion_tests::bounded_point_import_preserves_a_cached_local_field"
+    ],
+    [
+      "hypercurve",
+      "bezier_offset::conversion_tests::bounded_point_import_reuses_certified_native_fiber_parameters"
+    ],
+    [
+      "hypercurve",
+      "bezier_offset::conversion_tests::selected_fiber_points_reuse_projective_roots_without_global_promotion"
+    ],
+    [
+      "hypercurve",
+      "bezier_offset::conversion_tests::selected_frame_import_preserves_every_independent_point"
+    ],
+    [
+      "hypercurve",
+      "bezier_offset::conversion_tests::selected_radial_frame_joins_an_equivalent_recursive_point_base"
+    ],
+    [
+      "hypercurve_curve",
+      "direct_bezier_pair_fillet_retains_both_incident_extensions"
+    ]
+  ],
+  "all_sources_unchanged": true
+}

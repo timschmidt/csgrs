@@ -1,0 +1,28 @@
+{
+  "returncode": 0,
+  "elapsed_seconds": 0.031682931003160775,
+  "normal_library_sha256": "4ae0b00c4bf9f0a4ee9000958e1f829e194b27d588a0b848d0c353038c6ecff5",
+  "log": "finite-circle-inverse-domains-finite-circle-probe.log",
+  "source": "finite-circle-domain-next.rs",
+  "command": [
+    "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustc",
+    "--edition=2024",
+    "-O",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-circle-domain-next.rs",
+    "--extern",
+    "hypercurve=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypercurve-96f69e9a655f1fb5.rlib",
+    "-L",
+    "dependency=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps",
+    "-o",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-circle-inverse-domains-finite-circle-probe"
+  ],
+  "run_command": [
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-circle-inverse-domains-finite-circle-probe"
+  ],
+  "source_sha256": "f427b563be65e95beaa9471b48ad919e3decaacc593810b7cb19910d91bad6dd",
+  "executable_sha256": "277581914fb1699dee08bf7c5bb0ae4890511c96a18c161b92d1a7ecc74e6d99",
+  "counts": {
+    "complete": 8,
+    "incomplete": 0
+  }
+}

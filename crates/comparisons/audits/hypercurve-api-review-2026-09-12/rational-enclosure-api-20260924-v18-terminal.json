@@ -1,0 +1,420 @@
+{
+  "checks": [
+    {
+      "label": "fmt",
+      "repo": "hyperreal",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "fmt",
+        "--all",
+        "--",
+        "--check"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.8017983010504395,
+      "log": "rational-enclosure-api-20260924-v18-fmt.log"
+    },
+    {
+      "label": "clippy-all-features",
+      "repo": "hyperreal",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "clippy",
+        "--all-targets",
+        "--all-features",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 5.227221127948724,
+      "log": "rational-enclosure-api-20260924-v18-clippy-all-features.log"
+    },
+    {
+      "label": "build-all-features",
+      "repo": "hyperreal",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "test",
+        "--release",
+        "--all-features",
+        "--no-run",
+        "--message-format=json",
+        "--locked",
+        "--offline",
+        "--lib",
+        "--test",
+        "gmp_api_coverage",
+        "--test",
+        "real_representations"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 41.27002851001453,
+      "log": "rational-enclosure-api-20260924-v18-build-all-features.log"
+    },
+    {
+      "label": "clippy-no-default-features",
+      "repo": "hyperreal",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "clippy",
+        "--all-targets",
+        "--no-default-features",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 4.475589834968559,
+      "log": "rational-enclosure-api-20260924-v18-clippy-no-default-features.log"
+    },
+    {
+      "label": "build-no-default-features",
+      "repo": "hyperreal",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "test",
+        "--release",
+        "--no-default-features",
+        "--no-run",
+        "--message-format=json",
+        "--locked",
+        "--offline",
+        "--lib"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 23.543334170011804,
+      "log": "rational-enclosure-api-20260924-v18-build-no-default-features.log"
+    },
+    {
+      "label": "hyperlattice-callers",
+      "repo": "hyperlattice",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "check",
+        "--all-targets",
+        "--all-features",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 4.4109258209355175,
+      "log": "rational-enclosure-api-20260924-v18-hyperlattice-callers.log"
+    },
+    {
+      "label": "hyperlimit-callers",
+      "repo": "hyperlimit",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "check",
+        "--all-targets",
+        "--all-features",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 4.602249604999088,
+      "log": "rational-enclosure-api-20260924-v18-hyperlimit-callers.log"
+    },
+    {
+      "label": "hypersolve-callers",
+      "repo": "hypersolve",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "check",
+        "--all-targets",
+        "--all-features",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 8.519516383996233,
+      "log": "rational-enclosure-api-20260924-v18-hypersolve-callers.log"
+    },
+    {
+      "label": "hypermesh-callers",
+      "repo": "hypermesh",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "check",
+        "--all-targets",
+        "--all-features",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 5.65527170104906,
+      "log": "rational-enclosure-api-20260924-v18-hypermesh-callers.log"
+    },
+    {
+      "label": "hyperpath-callers",
+      "repo": "hyperpath",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "check",
+        "--all-targets",
+        "--all-features",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 6.928527496987954,
+      "log": "rational-enclosure-api-20260924-v18-hyperpath-callers.log"
+    },
+    {
+      "label": "alumina-core-callers",
+      "repo": "alumina-interface",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "check",
+        "-p",
+        "alumina-interface-core",
+        "--all-targets",
+        "--all-features",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 20.284214308019727,
+      "log": "rational-enclosure-api-20260924-v18-alumina-core-callers.log"
+    },
+    {
+      "label": "hyperreal-fuzz-callers",
+      "repo": "hyperreal",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "check",
+        "--manifest-path",
+        "fuzz/Cargo.toml",
+        "--locked",
+        "--offline",
+        "--bin",
+        "real_exact",
+        "--bin",
+        "structural_representations"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 2.1047225719084963,
+      "log": "rational-enclosure-api-20260924-v18-hyperreal-fuzz-callers.log"
+    },
+    {
+      "label": "hyperlattice-fuzz-callers",
+      "repo": "hyperlattice",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "check",
+        "--manifest-path",
+        "fuzz/Cargo.toml",
+        "--locked",
+        "--offline",
+        "--bin",
+        "hyperreal_representations"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 2.555463357944973,
+      "log": "rational-enclosure-api-20260924-v18-hyperlattice-fuzz-callers.log"
+    },
+    {
+      "label": "hypersolve-fuzz-callers",
+      "repo": "hypersolve",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "check",
+        "--manifest-path",
+        "fuzz/Cargo.toml",
+        "--locked",
+        "--offline",
+        "--bin",
+        "hyperreal_representations"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 4.013539384002797,
+      "log": "rational-enclosure-api-20260924-v18-hypersolve-fuzz-callers.log"
+    },
+    {
+      "label": "hypermesh-fuzz-callers",
+      "repo": "hypermesh",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "check",
+        "--manifest-path",
+        "fuzz/Cargo.toml",
+        "--locked",
+        "--offline",
+        "--bin",
+        "boolean_hyperreal_representations"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 4.159872815012932,
+      "log": "rational-enclosure-api-20260924-v18-hypermesh-fuzz-callers.log"
+    },
+    {
+      "label": "hyperpath-fuzz-callers",
+      "repo": "hyperpath",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "check",
+        "--manifest-path",
+        "fuzz/Cargo.toml",
+        "--locked",
+        "--offline",
+        "--bin",
+        "hyperreal_representations"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 6.7616498860297725,
+      "log": "rational-enclosure-api-20260924-v18-hyperpath-fuzz-callers.log"
+    },
+    {
+      "label": "hypercurve-fuzz-callers",
+      "repo": "hypercurve",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "check",
+        "--manifest-path",
+        "fuzz/Cargo.toml",
+        "--locked",
+        "--offline",
+        "--bin",
+        "hyperreal_representations"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 17.147207414964214,
+      "log": "rational-enclosure-api-20260924-v18-hypercurve-fuzz-callers.log"
+    }
+  ],
+  "cases": [
+    {
+      "label": "all-features-dyadic_enclosure_rounds_outward_and_is_tight_on_its_grid",
+      "repo": "hyperreal",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/rational-enclosure-api-20260924-v18-all-features-hyperreal",
+        "--exact",
+        "rational::arithmetic::tests::dyadic_enclosure_rounds_outward_and_is_tight_on_its_grid",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.3522616730770096,
+      "log": "rational-enclosure-api-20260924-v18-all-features-dyadic_enclosure_rounds_outward_and_is_tight_on_its_grid.log"
+    },
+    {
+      "label": "all-features-certified_dyadic_interval_encloses_rational_points_and_scaled_computables",
+      "repo": "hyperreal",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/rational-enclosure-api-20260924-v18-all-features-hyperreal",
+        "--exact",
+        "real::tests::tests::certified_dyadic_interval_encloses_rational_points_and_scaled_computables",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.3360354059841484,
+      "log": "rational-enclosure-api-20260924-v18-all-features-certified_dyadic_interval_encloses_rational_points_and_scaled_computables.log"
+    },
+    {
+      "label": "all-features-certified_rational_interval_is_exact_for_rationals_and_bounds_symbolic_values",
+      "repo": "hyperreal",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/rational-enclosure-api-20260924-v18-all-features-hyperreal",
+        "--exact",
+        "real::tests::tests::certified_rational_interval_is_exact_for_rationals_and_bounds_symbolic_values",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.34099881490692496,
+      "log": "rational-enclosure-api-20260924-v18-all-features-certified_rational_interval_is_exact_for_rationals_and_bounds_symbolic_values.log"
+    },
+    {
+      "label": "all-features-gmp_api_coverage-tests",
+      "repo": "hyperreal",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/rational-enclosure-api-20260924-v18-all-features-gmp_api_coverage",
+        "--nocapture",
+        "--test-threads=2"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.36269153701141477,
+      "log": "rational-enclosure-api-20260924-v18-all-features-gmp_api_coverage-tests.log"
+    },
+    {
+      "label": "all-features-real_representations-tests",
+      "repo": "hyperreal",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/rational-enclosure-api-20260924-v18-all-features-real_representations",
+        "--nocapture",
+        "--test-threads=2"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.3721136909443885,
+      "log": "rational-enclosure-api-20260924-v18-all-features-real_representations-tests.log"
+    },
+    {
+      "label": "no-default-features-dyadic_enclosure_rounds_outward_and_is_tight_on_its_grid",
+      "repo": "hyperreal",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/rational-enclosure-api-20260924-v18-no-default-features-hyperreal",
+        "--exact",
+        "rational::arithmetic::tests::dyadic_enclosure_rounds_outward_and_is_tight_on_its_grid",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.3523959730518982,
+      "log": "rational-enclosure-api-20260924-v18-no-default-features-dyadic_enclosure_rounds_outward_and_is_tight_on_its_grid.log"
+    },
+    {
+      "label": "no-default-features-certified_dyadic_interval_encloses_rational_points_and_scaled_computables",
+      "repo": "hyperreal",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/rational-enclosure-api-20260924-v18-no-default-features-hyperreal",
+        "--exact",
+        "real::tests::tests::certified_dyadic_interval_encloses_rational_points_and_scaled_computables",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.3467296620365232,
+      "log": "rational-enclosure-api-20260924-v18-no-default-features-certified_dyadic_interval_encloses_rational_points_and_scaled_computables.log"
+    },
+    {
+      "label": "no-default-features-certified_rational_interval_is_exact_for_rationals_and_bounds_symbolic_values",
+      "repo": "hyperreal",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/rational-enclosure-api-20260924-v18-no-default-features-hyperreal",
+        "--exact",
+        "real::tests::tests::certified_rational_interval_is_exact_for_rationals_and_bounds_symbolic_values",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.3322869330877438,
+      "log": "rational-enclosure-api-20260924-v18-no-default-features-certified_rational_interval_is_exact_for_rationals_and_bounds_symbolic_values.log"
+    }
+  ],
+  "binaries": {
+    "all-features-real_representations": {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/rational-enclosure-api-20260924-v18-all-features-real_representations",
+      "sha256": "8d0676b23d611d75ddb2409f919ba32879c8cd9b4210d991e131768751c8bada"
+    },
+    "all-features-gmp_api_coverage": {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/rational-enclosure-api-20260924-v18-all-features-gmp_api_coverage",
+      "sha256": "e2b98e9701771478eb9a03f37278c5eed7947c91d866d1918ecc31c8d3370896"
+    },
+    "all-features-hyperreal": {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/rational-enclosure-api-20260924-v18-all-features-hyperreal",
+      "sha256": "b2d1f1e89f0ca8ac872f8eb02eb50dd75ff843731b2f92ee6c72874cbcb605cd"
+    },
+    "no-default-features-hyperreal": {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/rational-enclosure-api-20260924-v18-no-default-features-hyperreal",
+      "sha256": "b878826e270a5f96fa77de620a87661a46bed2700c87130071eaea4e00d47ac0"
+    }
+  },
+  "all_processes_reaped": true,
+  "all_sources_unchanged": true
+}

@@ -1,0 +1,37 @@
+[
+  {
+    "flags": [],
+    "exit_code": 0,
+    "seconds": 0.3936455829971237,
+    "rlib": "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/libhypercurve-2c7ff6f3fbe07653.rlib",
+    "rlib_sha256": "061ffa5fbc9c4534524e5225f67cb1e28dbc37482bee68de9a58c98854733e6f"
+  },
+  {
+    "flags": [
+      "reversed"
+    ],
+    "exit_code": 0,
+    "seconds": 0.4176996099995449,
+    "rlib": "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/libhypercurve-2c7ff6f3fbe07653.rlib",
+    "rlib_sha256": "061ffa5fbc9c4534524e5225f67cb1e28dbc37482bee68de9a58c98854733e6f"
+  },
+  {
+    "flags": [
+      "approximate"
+    ],
+    "exit_code": 0,
+    "seconds": 0.3946839519921923,
+    "rlib": "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/libhypercurve-2c7ff6f3fbe07653.rlib",
+    "rlib_sha256": "061ffa5fbc9c4534524e5225f67cb1e28dbc37482bee68de9a58c98854733e6f"
+  },
+  {
+    "flags": [
+      "approximate",
+      "reversed"
+    ],
+    "exit_code": 0,
+    "seconds": 0.4326185380050447,
+    "rlib": "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/libhypercurve-2c7ff6f3fbe07653.rlib",
+    "rlib_sha256": "061ffa5fbc9c4534524e5225f67cb1e28dbc37482bee68de9a58c98854733e6f"
+  }
+]

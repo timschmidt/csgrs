@@ -1,0 +1,96 @@
+diff --git a/src/bezier_offset.rs b/src/bezier_offset.rs
+index bd80f69..1ede49a 100644
+--- a/src/bezier_offset.rs
++++ b/src/bezier_offset.rs
+@@ -94714,6 +94714,17 @@ impl BezierAnalyticParallelPoint2 {
+         axis: Axis2,
+         policy: &CurveContext,
+     ) -> CurveResult<Classification<Option<std::cmp::Ordering>>> {
++        if std::env::var_os("HYPERCURVE_FIELD_REPLAY_DIAGNOSTIC").is_some() {
++            let kind = match &self.data.parameter {
++                BezierAnalyticParallelPointParameter2::Bezier(BezierParameter2::Exact(_)) => "exact",
++                BezierAnalyticParallelPointParameter2::Bezier(_) => "algebraic",
++                BezierAnalyticParallelPointParameter2::SelectedFiber(_) => "fiber",
++                BezierAnalyticParallelPointParameter2::RecursiveProjective(p) if p.polynomial_authority().is_some() => "local-polynomial",
++                BezierAnalyticParallelPointParameter2::RecursiveProjective(p) if p.monotone_authority().is_some() => "monotone",
++                BezierAnalyticParallelPointParameter2::RecursiveProjective(_) => "projective",
++            };
++            eprintln!("FIELD-SELF axis={axis:?} parameter={kind} accepted={} degree={} distance={:?} tangent={:?}", policy.accepts_retained_policy(self.data.policy), self.data.parallel.source_degree(), self.data.parallel.distance(), self.data.tangent_distance);
++        }
+         if !policy.accepts_retained_policy(self.data.policy)
+             || self.data.parallel.distance().zero_status() != ZeroKnowledge::Zero
+             || self.data.tangent_distance.zero_status() != ZeroKnowledge::Zero
+@@ -94728,12 +94739,36 @@ impl BezierAnalyticParallelPoint2 {
+         let Some(authority) = parameter.polynomial_authority() else {
+             return Ok(Classification::Decided(None));
+         };
++        let diagnostic = std::env::var_os("HYPERCURVE_FIELD_REPLAY_DIAGNOSTIC").is_some();
++        if diagnostic {
++            let kind = match &other.0 {
++                CurvePointData2::AnalyticParallel(p) => {
++                    let kind = match &p.data.parameter {
++                        BezierAnalyticParallelPointParameter2::Bezier(BezierParameter2::Exact(_)) => "exact",
++                        BezierAnalyticParallelPointParameter2::Bezier(_) => "algebraic",
++                        BezierAnalyticParallelPointParameter2::SelectedFiber(_) => "fiber",
++                        BezierAnalyticParallelPointParameter2::RecursiveProjective(p) if p.polynomial_authority().is_some() => "local-polynomial",
++                        BezierAnalyticParallelPointParameter2::RecursiveProjective(p) if p.monotone_authority().is_some() => "monotone",
++                        BezierAnalyticParallelPointParameter2::RecursiveProjective(_) => "projective",
++                    };
++                    eprintln!("FIELD-OTHER parameter={kind} cached={} degree={} distance={:?} tangent={:?}", p.data.recursive_projective_point.get().is_some(), p.data.parallel.source_degree(), p.data.parallel.distance(), p.data.tangent_distance);
++                    "analytic"
++                }
++                CurvePointData2::Algebraic(_) => "algebraic",
++                CurvePointData2::Exact(_) => "exact",
++                _ => "other",
++            };
++            let (base,path) = authority.field.base_and_extension_path();
++            eprintln!("FIELD-REPLAY entry axis={axis:?} bounded={} source-degree={} other={kind} field=({},{})", policy.has_bounded_exact_predicate_budget(), self.data.parallel.source_degree(), base.sources.len(), path.len());
++        }
+         // Only import the older point. Requiring a common field containing
+         // the query's Cartesian image would first forget the very local
+         // root/coefficient relation this predicate is meant to preserve.
+-        let other_source = match policy
+-            .bounded_exact_predicate_pass(|| recursive_projective_point_source(other, policy))?
+-        {
++        let source_result = policy.bounded_exact_predicate_pass(|| recursive_projective_point_source(other, policy))?;
++        if diagnostic {
++            eprintln!("FIELD-REPLAY import={:?}", match &source_result { Classification::Decided(Some(_)) => "some", Classification::Decided(None) => "none", Classification::Uncertain(_) => "uncertain" });
++        }
++        let other_source = match source_result {
+             Classification::Decided(Some(source)) => source,
+             Classification::Decided(None) => return Ok(Classification::Decided(None)),
+             Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+@@ -94741,8 +94776,20 @@ impl BezierAnalyticParallelPoint2 {
+         let Some(other_coordinates) =
+             recursive_projective_point_source_in_field(&authority.field, &other_source)
+         else {
++            if diagnostic {
++                eprintln!("FIELD-REPLAY embedding declined");
++                if let BezierRecursiveProjectivePointSource2::Recursive(point) = &other_source {
++                    let (first, path) = authority.field.base_and_extension_path();
++                    let (second, other_path) = point.denominator.field().base_and_extension_path();
++                    eprintln!("FIELD-SHAPE sources-equal={} source-count=({}, {}) path-depth=({}, {})", first.sources == second.sources, first.sources.len(), second.sources.len(), path.len(), other_path.len());
++                    for (label, polynomial) in [("target-first", &first.first_speed_squared), ("target-second", &first.second_speed_squared), ("other-first", &second.first_speed_squared), ("other-second", &second.second_speed_squared)] {
++                        eprintln!("FIELD-SPEED {label} dimensions={:?} coefficients={:?}", polynomial.dimensions(), polynomial.coefficients().iter().map(|v| v.to_f64_lossy()).collect::<Vec<_>>());
++                    }
++                }
++            }
+             return Ok(Classification::Decided(None));
+         };
++        if diagnostic { eprintln!("FIELD-REPLAY embedded"); }
+         let other_weight_sign = match recursive_projective_evidence_denominator_sign(other, policy)?
+         {
+             Classification::Decided(RealSign::Zero) => {
+@@ -94786,9 +94833,9 @@ impl BezierAnalyticParallelPoint2 {
+         let Some(difference) = difference else {
+             return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+         };
+-        Ok(parameter
+-            .recursive_polynomial_sign(&difference, policy)?
+-            .map(|sign| {
++        let sign_result = parameter.recursive_polynomial_sign(&difference, policy)?;
++        if diagnostic { eprintln!("FIELD-REPLAY sign={sign_result:?}"); }
++        Ok(sign_result.map(|sign| {
+                 #[cfg(feature = "dispatch-trace")]
+                 hyperreal::dispatch_trace::record(
+                     "hypercurve",

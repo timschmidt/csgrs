@@ -1,0 +1,9 @@
+{
+  "parent": "49713c89574dc17659362eafca94088e512db896",
+  "files": [
+    "src/root_isolation.rs"
+  ],
+  "source_manifest": "local-chord-complete-replay-20260924-v35-sources.json",
+  "hypercurve_uncommitted": true,
+  "phase": "counterexample_before_fix"
+}

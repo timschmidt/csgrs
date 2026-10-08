@@ -1,0 +1,67 @@
+{
+  "status": "committed",
+  "goal_status": "active",
+  "base_commit": "b5011ac7a6ab719e08eccccacb4de7d8fb27d6c4",
+  "changes": [
+    "Require a strict center-parameter domain enclosure before using the authored source box for a selected circle; exterior centers reuse the existing selected-center enclosure.",
+    "Convert boundary-traversal crossing certificates into increasing source-parameter order before rational/analytic line replay.",
+    "Replace selected-storage assumptions with complete exact parabola/arc overlap witnesses and endpoint-bounds checks.",
+    "Check normalized component preservation and subsequent set identity; keep the uncovered native line/arc ordering blocker explicit."
+  ],
+  "regressions": {
+    "new_unit_tests": [
+      "boundary_side_rays_preserve_winding_through_reversed_source_charts",
+      "selected_circle_bounds_cover_exterior_parallel_centers"
+    ],
+    "expanded_public_tests": [
+      "line_parabola_fillet_extends_the_regular_incident_cell_exactly",
+      "arc_parabola_fillet_recovers_exact_complement_contacts"
+    ],
+    "policies": [
+      "STRICT",
+      "APPROXIMATE_512"
+    ],
+    "oracles": [
+      "Signed winding of an independently authored quarter disk with two circle/ray contacts, native and retained sources, both traversals.",
+      "Independent Q(t)+(1/2)N(t), t=+/-sqrt(2), circle-axis extents.",
+      "Complete overlap with independently authored parabola and source arc; public bounds contain exact endpoints."
+    ],
+    "remaining_line_parabola_failure": "The represented fillet regularizes into three components and survives disjoint union/difference. XOR with its normalized form and self-intersection block with native line/arc parameter Ordering. Eight of 225 exported curve pairs reproduce the blocker."
+  },
+  "qualification": {
+    "results": "exterior-fillet-closure-full-results.json",
+    "targets": 49,
+    "passed": 2173,
+    "failed": 7,
+    "ignored": 9,
+    "new_failures": 0,
+    "hypercurve_passed": 1941,
+    "hyperbrep_passed": 232,
+    "remaining_failures": [
+      "approximate_512_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions",
+      "line_parabola_fillet_extends_the_regular_incident_cell_exactly",
+      "non_ph_bezier_pair_projective_fillet_retains_algebraic_extensions",
+      "nonconvex_algebraic_chord_expansion_is_exact_and_local_collapse_is_explicit",
+      "strict_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions",
+      "unified_mixed_line_arc_erosion_splits_after_a_curved_neck_collapse",
+      "unified_region_non_miter_erosions_split_after_neck_collapse"
+    ],
+    "timeouts": 0,
+    "all_target_checks": true,
+    "immutable_sources": true,
+    "source_files": 396,
+    "formatting_and_whitespace": true,
+    "full_suite_passing": false,
+    "previously_unqualified_expensive_cases": 8,
+    "normal_library_sha256": "00585b27e659128b8274966354aa68879c28bb8f0eaa7a43789b9fd7a40ca0a9",
+    "all_30_repositories_clean_after_commit": true
+  },
+  "evidence_audit": "exterior-fillet-closure-evidence-audit.md",
+  "performance_claim": null,
+  "remaining": [
+    "Native line/arc endpoint ordering during normalized fillet reentry.",
+    "Other seven promotion failures and eight expensive unqualified cases.",
+    "Full-family common intersection dispatch, general trimming, normalized public region admission and the broader architecture goal."
+  ],
+  "commit": "d6bcac5256ed576ca6a6d378a1d8c710bdadfd52"
+}

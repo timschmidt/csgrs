@@ -1,0 +1,145 @@
+[
+  {
+    "label": "0-before-asin-tiny",
+    "args": [
+      "asin",
+      "tiny"
+    ],
+    "status": 0,
+    "signal": null,
+    "stdout": "asin\ttiny\t256\t352801\t357275\t4288\t138752\t852157638319718208\n",
+    "stderr": "",
+    "sha256": "921104ff0c82ec7a36c581b4fef13e1070d7bccf2e2d4b13e6ca574b2052cdfd",
+    "source": "961561139b341c6b805e4e4e708ee8673a2c1f0fb93a4256b83f65368d427a64"
+  },
+  {
+    "label": "0-before-asin-radical",
+    "args": [
+      "asin",
+      "radical"
+    ],
+    "status": 0,
+    "signal": null,
+    "stdout": "asin\tradical\t256\t594221\t600139\t8448\t326656\t7502527341950205376\n",
+    "stderr": "",
+    "sha256": "921104ff0c82ec7a36c581b4fef13e1070d7bccf2e2d4b13e6ca574b2052cdfd",
+    "source": "961561139b341c6b805e4e4e708ee8673a2c1f0fb93a4256b83f65368d427a64"
+  },
+  {
+    "label": "0-before-asin-opaque",
+    "args": [
+      "asin",
+      "opaque"
+    ],
+    "status": 0,
+    "signal": null,
+    "stdout": "asin\topaque\t256\t6478210\t6509833\t49293\t2043480\t16573093986979924160\n",
+    "stderr": "",
+    "sha256": "921104ff0c82ec7a36c581b4fef13e1070d7bccf2e2d4b13e6ca574b2052cdfd",
+    "source": "961561139b341c6b805e4e4e708ee8673a2c1f0fb93a4256b83f65368d427a64"
+  },
+  {
+    "label": "0-before-asin-large",
+    "args": [
+      "asin",
+      "large"
+    ],
+    "status": 0,
+    "signal": null,
+    "stdout": "asin\tlarge\t256\t6723402\t6758896\t48990\t3240432\t5183258226451324992\n",
+    "stderr": "",
+    "sha256": "921104ff0c82ec7a36c581b4fef13e1070d7bccf2e2d4b13e6ca574b2052cdfd",
+    "source": "961561139b341c6b805e4e4e708ee8673a2c1f0fb93a4256b83f65368d427a64"
+  },
+  {
+    "label": "0-before-asinh-tiny",
+    "args": [
+      "asinh",
+      "tiny"
+    ],
+    "status": 0,
+    "signal": null,
+    "stdout": "asinh\ttiny\t256\t408016\t409962\t4807\t167416\t1530363273566478016\n",
+    "stderr": "",
+    "sha256": "921104ff0c82ec7a36c581b4fef13e1070d7bccf2e2d4b13e6ca574b2052cdfd",
+    "source": "961561139b341c6b805e4e4e708ee8673a2c1f0fb93a4256b83f65368d427a64"
+  },
+  {
+    "label": "0-before-asinh-radical",
+    "args": [
+      "asinh",
+      "radical"
+    ],
+    "status": 0,
+    "signal": null,
+    "stdout": "asinh\tradical\t256\t3033028\t3050961\t24449\t914536\t452397653759023360\n",
+    "stderr": "",
+    "sha256": "921104ff0c82ec7a36c581b4fef13e1070d7bccf2e2d4b13e6ca574b2052cdfd",
+    "source": "961561139b341c6b805e4e4e708ee8673a2c1f0fb93a4256b83f65368d427a64"
+  },
+  {
+    "label": "0-before-asinh-opaque",
+    "args": [
+      "asinh",
+      "opaque"
+    ],
+    "status": 0,
+    "signal": null,
+    "stdout": "asinh\topaque\t256\t4087009\t4105108\t46873\t1572032\t4413186091403717056\n",
+    "stderr": "",
+    "sha256": "921104ff0c82ec7a36c581b4fef13e1070d7bccf2e2d4b13e6ca574b2052cdfd",
+    "source": "961561139b341c6b805e4e4e708ee8673a2c1f0fb93a4256b83f65368d427a64"
+  },
+  {
+    "label": "0-before-asinh-large",
+    "args": [
+      "asinh",
+      "large"
+    ],
+    "status": 0,
+    "signal": null,
+    "stdout": "asinh\tlarge\t256\t2823515\t2836645\t24457\t813256\t11422446316510095424\n",
+    "stderr": "",
+    "sha256": "921104ff0c82ec7a36c581b4fef13e1070d7bccf2e2d4b13e6ca574b2052cdfd",
+    "source": "961561139b341c6b805e4e4e708ee8673a2c1f0fb93a4256b83f65368d427a64"
+  },
+  {
+    "label": "0-before-atanh-tiny",
+    "args": [
+      "atanh",
+      "tiny"
+    ],
+    "status": 0,
+    "signal": null,
+    "stdout": "atanh\ttiny\t256\t398107\t399793\t4935\t172536\t7215393242554931776\n",
+    "stderr": "",
+    "sha256": "921104ff0c82ec7a36c581b4fef13e1070d7bccf2e2d4b13e6ca574b2052cdfd",
+    "source": "961561139b341c6b805e4e4e708ee8673a2c1f0fb93a4256b83f65368d427a64"
+  },
+  {
+    "label": "0-before-asin-high",
+    "args": [
+      "asin",
+      "high"
+    ],
+    "status": 0,
+    "signal": null,
+    "stdout": "asin\thigh\t1\t281798173\t282791186\t68995\t1323590176\t15009651363148582487\n",
+    "stderr": "",
+    "sha256": "921104ff0c82ec7a36c581b4fef13e1070d7bccf2e2d4b13e6ca574b2052cdfd",
+    "source": "961561139b341c6b805e4e4e708ee8673a2c1f0fb93a4256b83f65368d427a64"
+  },
+  {
+    "label": "0-before-asinh-high",
+    "args": [
+      "asinh",
+      "high"
+    ],
+    "status": 0,
+    "signal": null,
+    "stdout": "asinh\thigh\t1\t300461861\t301595686\t68995\t1323590176\t732932091512242742\n",
+    "stderr": "",
+    "sha256": "921104ff0c82ec7a36c581b4fef13e1070d7bccf2e2d4b13e6ca574b2052cdfd",
+    "source": "961561139b341c6b805e4e4e708ee8673a2c1f0fb93a4256b83f65368d427a64"
+  }
+]

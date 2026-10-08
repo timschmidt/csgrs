@@ -1,0 +1,17 @@
+{
+  "tag": "randtest-canonical-memcheck",
+  "started": "2026-09-08T21:13:32.801Z",
+  "finished": "2026-09-08T21:13:33.231Z",
+  "elapsedSeconds": 0.427898004,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison",
+  "command": "valgrind",
+  "args": [
+    "--leak-check=full",
+    "--show-leak-kinds=all",
+    "--errors-for-leak-kinds=definite,indirect,possible",
+    "--error-exitcode=99",
+    "../.audit-builds/calcium-randtest-canonical-probe"
+  ],
+  "code": 1,
+  "signal": null
+}

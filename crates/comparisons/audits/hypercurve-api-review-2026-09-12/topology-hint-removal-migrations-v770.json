@@ -1,0 +1,17 @@
+{
+  "hypercurve/benches/bezier_region.rs": 1,
+  "hypercurve/benches/comparative.rs": 1,
+  "hypercurve/benches/curve_path.rs": 1,
+  "hypercurve/benches/curve_region_boolean_batch.rs": 3,
+  "hypercurve/benches/editing.rs": 6,
+  "hypercurve/benches/offset.rs": 1,
+  "hypercurve/src/bezier_region.rs": 1,
+  "hypercurve/src/curve_region_boolean.rs": 4,
+  "hypercurve/src/curve_region_trim.rs": 2,
+  "hypercurve/tests/hypercurve_analytic_parallel_region.rs": 6,
+  "hypercurve/tests/hypercurve_bezier_region.rs": 1,
+  "hypercurve/tests/hypercurve_curve_intersection.rs": 1,
+  "hypercurve/tests/hypercurve_curve_region_boolean.rs": 8,
+  "hypercurve/tests/hypercurve_curve_region_boolean_fuzz.rs": 6,
+  "hypercurve/tests/hypercurve_curve_region_promotion.rs": 13
+}

@@ -1,0 +1,16 @@
+[package]
+name = "ireal-hyper-derivative-audit"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+hypercurve = { path = "/home/tim/Documents/GitHub/workspace/hypercurve" }
+
+[profile.dev]
+debug = 0
+incremental = false
+
+[profile.release]
+debug = 0
+incremental = false
+codegen-units = 16

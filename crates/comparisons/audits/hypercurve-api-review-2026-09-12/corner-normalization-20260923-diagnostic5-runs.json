@@ -1,0 +1,18 @@
+[
+  {
+    "name": "bezier_region::tests::general_nonrepresented_chord_and_retained_rational_arc_complete_the_fillet_kernel",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/corner-normalization-20260923-diagnostic5-libtest",
+      "--exact",
+      "bezier_region::tests::general_nonrepresented_chord_and_retained_rational_arc_complete_the_fillet_kernel",
+      "--test-threads=1",
+      "--nocapture",
+      "--color",
+      "never"
+    ],
+    "returncode": "timeout",
+    "elapsed_seconds": 75.00299162999727,
+    "log": "corner-normalization-20260923-diagnostic5-general_nonrepresented_chord_and_retained_rational_arc_complete_the_fillet_kernel.log",
+    "binary_sha256": "b81260056681c493b31b7fa4085f5fdc997e318d0b81fbd30abbde1cd423b499"
+  }
+]

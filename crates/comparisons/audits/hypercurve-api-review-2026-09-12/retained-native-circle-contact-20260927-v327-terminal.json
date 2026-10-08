@@ -1,0 +1,572 @@
+{
+  "source_manifest": "retained-native-circle-contact-20260927-v327-sources.json",
+  "source_directory": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/source-archives/retained-native-circle-contact-20260927-v327",
+  "cases": [
+    {
+      "binary": "retained-native-circle-contact-20260927-v327-hypercurve",
+      "name": "curve::curve_fillet::tests::native_circle_fillet_retains_selected_contacts_through_reconstruction",
+      "returncode": 0,
+      "log": "retained-native-circle-contact-20260927-v327-case-000.log",
+      "elapsed_seconds": 0.2139933160506189
+    },
+    {
+      "binary": "retained-native-circle-contact-20260927-v327-hypercurve",
+      "name": "curve::curve_fillet::tests::coincident_line_fillet_constraints_complete_the_authored_chart_solutions",
+      "returncode": 0,
+      "log": "retained-native-circle-contact-20260927-v327-case-001.log",
+      "elapsed_seconds": 0.11391348903998733
+    },
+    {
+      "binary": "retained-native-circle-contact-20260927-v327-hypercurve",
+      "name": "curve::curve_fillet::tests::coincident_linear_fillet_domains_exclude_remote_endpoints",
+      "returncode": 0,
+      "log": "retained-native-circle-contact-20260927-v327-case-002.log",
+      "elapsed_seconds": 0.007666994002647698
+    },
+    {
+      "binary": "retained-native-circle-contact-20260927-v327-hypercurve",
+      "name": "curve::curve_fillet::tests::coincident_retained_line_fillet_keeps_independent_endpoint_fields",
+      "returncode": 0,
+      "log": "retained-native-circle-contact-20260927-v327-case-003.log",
+      "elapsed_seconds": 0.11398783302865922
+    },
+    {
+      "binary": "retained-native-circle-contact-20260927-v327-hypercurve",
+      "name": "bezier_offset::conversion_tests::point_incidence_checks_regular_frames_at_each_isolated_contact",
+      "returncode": 0,
+      "log": "retained-native-circle-contact-20260927-v327-case-004.log",
+      "elapsed_seconds": 0.0035551359178498387
+    },
+    {
+      "binary": "retained-native-circle-contact-20260927-v327-hypercurve",
+      "name": "curve::curve_fillet::tests::collapsed_parallel_fillet_requires_the_original_circle_normal",
+      "returncode": 0,
+      "log": "retained-native-circle-contact-20260927-v327-case-005.log",
+      "elapsed_seconds": 0.0076095780823379755
+    },
+    {
+      "binary": "retained-native-circle-contact-20260927-v327-hypercurve",
+      "name": "curve::curve_fillet::tests::collapsed_circle_parallel_fillet_replays_contacts_and_normal_sheets",
+      "returncode": 0,
+      "log": "retained-native-circle-contact-20260927-v327-case-006.log",
+      "elapsed_seconds": 0.03173879301175475
+    },
+    {
+      "binary": "retained-native-circle-contact-20260927-v327-hypercurve",
+      "name": "curve::curve_fillet::tests::collapsed_fillet_point_contacts_preserve_distinct_bezier_preimages",
+      "returncode": 0,
+      "log": "retained-native-circle-contact-20260927-v327-case-007.log",
+      "elapsed_seconds": 0.007609107997268438
+    },
+    {
+      "binary": "retained-native-circle-contact-20260927-v327-hypercurve",
+      "name": "curve::curve_fillet::tests::collapsed_circle_fillet_requires_each_free_contact_and_preserves_exact_trims",
+      "returncode": 0,
+      "log": "retained-native-circle-contact-20260927-v327-case-008.log",
+      "elapsed_seconds": 0.031750033027492464
+    },
+    {
+      "binary": "retained-native-circle-contact-20260927-v327-hypercurve",
+      "name": "curve::curve_fillet::tests::collapsed_circular_spline_fillets_keep_authored_contact_parameters",
+      "returncode": 0,
+      "log": "retained-native-circle-contact-20260927-v327-case-009.log",
+      "elapsed_seconds": 0.007674803026020527
+    },
+    {
+      "binary": "retained-native-circle-contact-20260927-v327-hypercurve",
+      "name": "bezier_region::tests::collapsed_pair_radial_fillet_rejects_the_excluded_contact",
+      "returncode": 0,
+      "log": "retained-native-circle-contact-20260927-v327-case-010.log",
+      "elapsed_seconds": 0.11389393999706954
+    },
+    {
+      "binary": "retained-native-circle-contact-20260927-v327-hypercurve",
+      "name": "bezier_offset::conversion_tests::algebraic_cusp_semicircle_point_incidence_selects_exactly_one_half",
+      "returncode": 0,
+      "log": "retained-native-circle-contact-20260927-v327-case-011.log",
+      "elapsed_seconds": 0.0035403670044615865
+    },
+    {
+      "binary": "retained-native-circle-contact-20260927-v327-hypercurve",
+      "name": "bezier_offset::conversion_tests::chamfer_transported_mapped_cusp_cut_inverts_on_analytic_overlap",
+      "returncode": 0,
+      "log": "retained-native-circle-contact-20260927-v327-case-012.log",
+      "elapsed_seconds": 0.3143099470762536
+    },
+    {
+      "binary": "retained-native-circle-contact-20260927-v327-hypercurve",
+      "name": "bezier_offset::conversion_tests::correlated_point_incidence_retains_exterior_contact_parameters",
+      "returncode": 0,
+      "log": "retained-native-circle-contact-20260927-v327-case-013.log",
+      "elapsed_seconds": 0.015675514936447144
+    },
+    {
+      "binary": "retained-native-circle-contact-20260927-v327-hypercurve",
+      "name": "bezier_offset::conversion_tests::nonrepresented_center_nonrational_chamfer_inverts_with_retained_authority",
+      "returncode": 0,
+      "log": "retained-native-circle-contact-20260927-v327-case-014.log",
+      "elapsed_seconds": 0.21401638502720743
+    },
+    {
+      "binary": "retained-native-circle-contact-20260927-v327-hypercurve",
+      "name": "bezier_offset::conversion_tests::nonrepresented_center_transverse_chamfer_inverts_by_correlated_point",
+      "returncode": 0,
+      "log": "retained-native-circle-contact-20260927-v327-case-015.log",
+      "elapsed_seconds": 0.06390362803358585
+    },
+    {
+      "binary": "retained-native-circle-contact-20260927-v327-hypercurve",
+      "name": "bezier_offset::conversion_tests::point_incidence_visits_a_collapsed_circle_as_a_complete_domain",
+      "returncode": 0,
+      "log": "retained-native-circle-contact-20260927-v327-case-016.log",
+      "elapsed_seconds": 0.007606607978232205
+    },
+    {
+      "binary": "retained-native-circle-contact-20260927-v327-hypercurve",
+      "name": "bezier_offset::conversion_tests::represented_circle_retained_point_incidence_observes_requested_policy",
+      "returncode": 0,
+      "log": "retained-native-circle-contact-20260927-v327-case-017.log",
+      "elapsed_seconds": 0.007614566944539547
+    },
+    {
+      "binary": "retained-native-circle-contact-20260927-v327-hypercurve",
+      "name": "bezier_offset::conversion_tests::retained_point_incidence_visits_all_preimages_and_can_stop_at_one",
+      "returncode": 0,
+      "log": "retained-native-circle-contact-20260927-v327-case-018.log",
+      "elapsed_seconds": 0.007592099020257592
+    },
+    {
+      "binary": "retained-native-circle-contact-20260927-v327-hypercurve",
+      "name": "bezier_offset::conversion_tests::transverse_chamfer_cut_inverts_by_radial_incidence",
+      "returncode": 0,
+      "log": "retained-native-circle-contact-20260927-v327-case-019.log",
+      "elapsed_seconds": 0.11391152907162905
+    },
+    {
+      "binary": "retained-native-circle-contact-20260927-v327-hypercurve",
+      "name": "bezier_offset::parameter_component::tests::contact_constraints_distinguish_free_axes_from_empty_components",
+      "returncode": 0,
+      "log": "retained-native-circle-contact-20260927-v327-case-020.log",
+      "elapsed_seconds": 0.003549227025359869
+    },
+    {
+      "binary": "retained-native-circle-contact-20260927-v327-hypercurve",
+      "name": "bezier_offset::parameter_component::tests::incident_charts_keep_poles_and_finite_ownership_excluded",
+      "returncode": 0,
+      "log": "retained-native-circle-contact-20260927-v327-case-021.log",
+      "elapsed_seconds": 0.00355308607686311
+    },
+    {
+      "binary": "retained-native-circle-contact-20260927-v327-hypercurve",
+      "name": "bezier_offset::parameter_component::tests::one_contact_replays_correspondence_through_both_source_charts",
+      "returncode": 0,
+      "log": "retained-native-circle-contact-20260927-v327-case-022.log",
+      "elapsed_seconds": 0.0035745049826800823
+    },
+    {
+      "binary": "retained-native-circle-contact-20260927-v327-hypercurve",
+      "name": "bezier_offset::parameter_component::tests::product_components_keep_fixed_axes_and_operand_roles",
+      "returncode": 0,
+      "log": "retained-native-circle-contact-20260927-v327-case-023.log",
+      "elapsed_seconds": 0.0035563759738579392
+    },
+    {
+      "binary": "retained-native-circle-contact-20260927-v327-hypercurve",
+      "name": "bezier_region::curve_corner_chain::tests::extended_fillet_circle_endpoints_obey_the_exact_radius_bound",
+      "returncode": 0,
+      "log": "retained-native-circle-contact-20260927-v327-case-024.log",
+      "elapsed_seconds": 5.329097918001935
+    },
+    {
+      "binary": "retained-native-circle-contact-20260927-v327-hypercurve",
+      "name": "bezier_region::curve_corner_chain::tests::extended_fillet_region_classifies_both_sides_of_its_companion",
+      "returncode": 0,
+      "log": "retained-native-circle-contact-20260927-v327-case-025.log",
+      "elapsed_seconds": 10.978212971938774
+    },
+    {
+      "binary": "retained-native-circle-contact-20260927-v327-hypercurve",
+      "name": "bezier_region::curve_corner_chain::tests::open_fillet_keeps_terminal_endpoints_and_exact_connectivity",
+      "returncode": 0,
+      "log": "retained-native-circle-contact-20260927-v327-case-026.log",
+      "elapsed_seconds": 0.003549237037077546
+    },
+    {
+      "binary": "retained-native-circle-contact-20260927-v327-hypercurve",
+      "name": "bezier_region::curve_corner_chain::tests::open_selected_chamfers_reenter_without_region_fill_semantics",
+      "returncode": 0,
+      "log": "retained-native-circle-contact-20260927-v327-case-027.log",
+      "elapsed_seconds": 0.0035565259167924523
+    },
+    {
+      "binary": "retained-native-circle-contact-20260927-v327-hypercurve",
+      "name": "bezier_region::tests::direct_mixed_and_retained_parallel_pairs_share_the_fillet_kernel",
+      "returncode": 0,
+      "log": "retained-native-circle-contact-20260927-v327-case-028.log",
+      "elapsed_seconds": 0.015695804031565785
+    },
+    {
+      "binary": "retained-native-circle-contact-20260927-v327-hypercurve",
+      "name": "bezier_region::tests::general_nonrepresented_chord_and_retained_rational_arc_complete_the_fillet_kernel",
+      "returncode": 0,
+      "log": "retained-native-circle-contact-20260927-v327-case-029.log",
+      "elapsed_seconds": 0.6646425949875265
+    },
+    {
+      "binary": "retained-native-circle-contact-20260927-v327-hypercurve",
+      "name": "bezier_region::tests::independent_oblique_chord_pair_fillet_crosses_a_rational_line_exactly",
+      "returncode": 0,
+      "log": "retained-native-circle-contact-20260927-v327-case-030.log",
+      "elapsed_seconds": 0.46437069796957076
+    },
+    {
+      "binary": "retained-native-circle-contact-20260927-v327-hypercurve",
+      "name": "bezier_region::tests::independent_oblique_chord_pair_fillet_crosses_algebraic_chords_exactly",
+      "returncode": 0,
+      "log": "retained-native-circle-contact-20260927-v327-case-031.log",
+      "elapsed_seconds": 0.36425807198975235
+    },
+    {
+      "binary": "retained-native-circle-contact-20260927-v327-hypercurve",
+      "name": "bezier_region::tests::independent_oblique_chord_pair_fillets_extend_on_infinite_supports",
+      "returncode": 0,
+      "log": "retained-native-circle-contact-20260927-v327-case-032.log",
+      "elapsed_seconds": 0.7146867431001738
+    },
+    {
+      "binary": "retained-native-circle-contact-20260927-v327-hypercurve",
+      "name": "bezier_region::tests::independent_pair_native_fillet_crosses_a_boolean_cutter",
+      "returncode": 0,
+      "log": "retained-native-circle-contact-20260927-v327-case-033.log",
+      "elapsed_seconds": 0.7647096730070189
+    },
+    {
+      "binary": "retained-native-circle-contact-20260927-v327-hypercurve",
+      "name": "bezier_region::tests::independent_selected_circle_pair_fillet_retains_pair_native_circle",
+      "returncode": 0,
+      "log": "retained-native-circle-contact-20260927-v327-case-034.log",
+      "elapsed_seconds": 0.11390837898943573
+    },
+    {
+      "binary": "retained-native-circle-contact-20260927-v327-hypercurve",
+      "name": "bezier_region::tests::independent_selected_circle_pair_fillets_extend_over_both_full_supports",
+      "returncode": 0,
+      "log": "retained-native-circle-contact-20260927-v327-case-035.log",
+      "elapsed_seconds": 2.7172504550544545
+    },
+    {
+      "binary": "retained-native-circle-contact-20260927-v327-hypercurve",
+      "name": "bezier_region::tests::major_retained_rational_arc_and_general_chord_share_the_fillet_kernel",
+      "returncode": 0,
+      "log": "retained-native-circle-contact-20260927-v327-case-036.log",
+      "elapsed_seconds": 2.767407375969924
+    },
+    {
+      "binary": "retained-native-circle-contact-20260927-v327-hypercurve",
+      "name": "bezier_region::tests::noncollapsed_pair_radial_fillet_reenters_the_corner_kernel",
+      "returncode": 0,
+      "log": "retained-native-circle-contact-20260927-v327-case-037.log",
+      "elapsed_seconds": 0.1139296080218628
+    },
+    {
+      "binary": "retained-native-circle-contact-20260927-v327-hypercurve",
+      "name": "bezier_region::tests::nonlinear_algebraic_endpoint_chamfer_uses_complete_incident_ray",
+      "returncode": 0,
+      "log": "retained-native-circle-contact-20260927-v327-case-038.log",
+      "elapsed_seconds": 2.617382704047486
+    },
+    {
+      "binary": "retained-native-circle-contact-20260927-v327-hypercurve",
+      "name": "bezier_region::tests::nonlinear_algebraic_endpoint_fillet_uses_complete_incident_domain",
+      "returncode": 0,
+      "log": "retained-native-circle-contact-20260927-v327-case-039.log",
+      "elapsed_seconds": 22.24248053901829
+    },
+    {
+      "binary": "retained-native-circle-contact-20260927-v327-hypercurve",
+      "name": "bezier_region::tests::nonlinear_selected_corner_chamfers_through_retained_fixed_distance_image",
+      "returncode": 0,
+      "log": "retained-native-circle-contact-20260927-v327-case-040.log",
+      "elapsed_seconds": 4.870466046966612
+    },
+    {
+      "binary": "retained-native-circle-contact-20260927-v327-hypercurve",
+      "name": "bezier_region::tests::nonrepresented_cardinal_chord_pair_fillets_through_shared_carriers",
+      "returncode": 0,
+      "log": "retained-native-circle-contact-20260927-v327-case-041.log",
+      "elapsed_seconds": 0.007634475943632424
+    },
+    {
+      "binary": "retained-native-circle-contact-20260927-v327-hypercurve",
+      "name": "bezier_region::tests::nonrepresented_chord_and_retained_rational_arc_share_the_fillet_kernel",
+      "returncode": 0,
+      "log": "retained-native-circle-contact-20260927-v327-case-042.log",
+      "elapsed_seconds": 0.564481322071515
+    },
+    {
+      "binary": "retained-native-circle-contact-20260927-v327-hypercurve",
+      "name": "bezier_region::tests::nonrepresented_chord_and_selected_circle_complete_the_fillet_kernel",
+      "returncode": 0,
+      "log": "retained-native-circle-contact-20260927-v327-case-043.log",
+      "elapsed_seconds": 0.9149813590338454
+    },
+    {
+      "binary": "retained-native-circle-contact-20260927-v327-hypercurve",
+      "name": "bezier_region::tests::nonrepresented_chord_line_corner_fillets_through_shared_carriers",
+      "returncode": 0,
+      "log": "retained-native-circle-contact-20260927-v327-case-044.log",
+      "elapsed_seconds": 0.21406516106799245
+    },
+    {
+      "binary": "retained-native-circle-contact-20260927-v327-hypercurve",
+      "name": "bezier_region::tests::nonrepresented_chord_parallel_corner_fillets_without_reintersection",
+      "returncode": 0,
+      "log": "retained-native-circle-contact-20260927-v327-case-045.log",
+      "elapsed_seconds": 0.6646197270601988
+    },
+    {
+      "binary": "retained-native-circle-contact-20260927-v327-hypercurve",
+      "name": "bezier_region::tests::one_fragment_materialized_loop_chamfers_to_one_middle_interval",
+      "returncode": 0,
+      "log": "retained-native-circle-contact-20260927-v327-case-046.log",
+      "elapsed_seconds": 0.16395414795260876
+    },
+    {
+      "binary": "retained-native-circle-contact-20260927-v327-hypercurve",
+      "name": "bezier_region::tests::one_fragment_materialized_loop_extends_algebraic_chamfer_cuts_once",
+      "returncode": 0,
+      "log": "retained-native-circle-contact-20260927-v327-case-047.log",
+      "elapsed_seconds": 9.426431100000627
+    },
+    {
+      "binary": "retained-native-circle-contact-20260927-v327-hypercurve",
+      "name": "bezier_region::tests::one_fragment_nonzero_parallel_loop_extends_chamfer_cuts_on_one_finite_envelope",
+      "returncode": 124,
+      "log": "retained-native-circle-contact-20260927-v327-case-048.log",
+      "elapsed_seconds": 240.00650896399748
+    }
+  ],
+  "builds": [
+    {
+      "crate": "hypercurve",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "test",
+        "--lib",
+        "--release",
+        "--all-features",
+        "--no-run",
+        "--message-format=json",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "log": "retained-native-circle-contact-20260927-v327-hypercurve-build.log",
+      "elapsed_seconds": 130.80998089001514,
+      "binary": {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-native-circle-contact-20260927-v327-hypercurve",
+        "sha256": "b7ecaaafa08b597eae44290de84e8a1d5656cb9ce3fd87948422f79377b2227e"
+      }
+    }
+  ],
+  "all_processes_reaped": true,
+  "checks": [
+    {
+      "label": "clippy-all-features",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "clippy",
+        "--all-targets",
+        "--all-features",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "returncode": 0,
+      "log": "retained-native-circle-contact-20260927-v327-clippy-all-features.log",
+      "elapsed_seconds": 21.24679472798016
+    },
+    {
+      "label": "clippy-no-default",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "clippy",
+        "--all-targets",
+        "--no-default-features",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "returncode": 0,
+      "log": "retained-native-circle-contact-20260927-v327-clippy-no-default.log",
+      "elapsed_seconds": 20.245335740037262
+    },
+    {
+      "label": "format",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustfmt",
+        "--edition",
+        "2024",
+        "--config",
+        "skip_children=true",
+        "--check",
+        "src/curve.rs",
+        "src/curve_corner_chain.rs",
+        "src/curve_corner_reconstruction.rs",
+        "src/curve_fillet.rs",
+        "src/rational_bezier_general.rs",
+        "src/segment.rs"
+      ],
+      "returncode": 0,
+      "log": "retained-native-circle-contact-20260927-v327-format.log",
+      "elapsed_seconds": 0.4142940700985491
+    }
+  ],
+  "qualification_scope": "Retained native-circle contacts, exact circular reconstruction, fillet and chamfer closure",
+  "known_unresolved_not_requalified": [
+    "strict_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions",
+    "approximate_512_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions"
+  ],
+  "expected_cases": {
+    "hypercurve": [
+      "curve::curve_fillet::tests::native_circle_fillet_retains_selected_contacts_through_reconstruction",
+      "curve::curve_fillet::tests::coincident_line_fillet_constraints_complete_the_authored_chart_solutions",
+      "curve::curve_fillet::tests::coincident_linear_fillet_domains_exclude_remote_endpoints",
+      "curve::curve_fillet::tests::coincident_retained_line_fillet_keeps_independent_endpoint_fields",
+      "bezier_offset::conversion_tests::point_incidence_checks_regular_frames_at_each_isolated_contact",
+      "curve::curve_fillet::tests::collapsed_parallel_fillet_requires_the_original_circle_normal",
+      "curve::curve_fillet::tests::collapsed_circle_parallel_fillet_replays_contacts_and_normal_sheets",
+      "curve::curve_fillet::tests::collapsed_fillet_point_contacts_preserve_distinct_bezier_preimages",
+      "curve::curve_fillet::tests::collapsed_circle_fillet_requires_each_free_contact_and_preserves_exact_trims",
+      "curve::curve_fillet::tests::collapsed_circular_spline_fillets_keep_authored_contact_parameters",
+      "bezier_region::tests::collapsed_pair_radial_fillet_rejects_the_excluded_contact",
+      "bezier_offset::conversion_tests::algebraic_cusp_semicircle_point_incidence_selects_exactly_one_half",
+      "bezier_offset::conversion_tests::chamfer_transported_mapped_cusp_cut_inverts_on_analytic_overlap",
+      "bezier_offset::conversion_tests::correlated_point_incidence_retains_exterior_contact_parameters",
+      "bezier_offset::conversion_tests::nonrepresented_center_nonrational_chamfer_inverts_with_retained_authority",
+      "bezier_offset::conversion_tests::nonrepresented_center_transverse_chamfer_inverts_by_correlated_point",
+      "bezier_offset::conversion_tests::point_incidence_visits_a_collapsed_circle_as_a_complete_domain",
+      "bezier_offset::conversion_tests::represented_circle_retained_point_incidence_observes_requested_policy",
+      "bezier_offset::conversion_tests::retained_point_incidence_visits_all_preimages_and_can_stop_at_one",
+      "bezier_offset::conversion_tests::transverse_chamfer_cut_inverts_by_radial_incidence",
+      "bezier_offset::parameter_component::tests::contact_constraints_distinguish_free_axes_from_empty_components",
+      "bezier_offset::parameter_component::tests::incident_charts_keep_poles_and_finite_ownership_excluded",
+      "bezier_offset::parameter_component::tests::one_contact_replays_correspondence_through_both_source_charts",
+      "bezier_offset::parameter_component::tests::product_components_keep_fixed_axes_and_operand_roles",
+      "bezier_region::curve_corner_chain::tests::extended_fillet_circle_endpoints_obey_the_exact_radius_bound",
+      "bezier_region::curve_corner_chain::tests::extended_fillet_region_classifies_both_sides_of_its_companion",
+      "bezier_region::curve_corner_chain::tests::open_fillet_keeps_terminal_endpoints_and_exact_connectivity",
+      "bezier_region::curve_corner_chain::tests::open_selected_chamfers_reenter_without_region_fill_semantics",
+      "bezier_region::tests::direct_mixed_and_retained_parallel_pairs_share_the_fillet_kernel",
+      "bezier_region::tests::general_nonrepresented_chord_and_retained_rational_arc_complete_the_fillet_kernel",
+      "bezier_region::tests::independent_oblique_chord_pair_fillet_crosses_a_rational_line_exactly",
+      "bezier_region::tests::independent_oblique_chord_pair_fillet_crosses_algebraic_chords_exactly",
+      "bezier_region::tests::independent_oblique_chord_pair_fillets_extend_on_infinite_supports",
+      "bezier_region::tests::independent_pair_native_fillet_crosses_a_boolean_cutter",
+      "bezier_region::tests::independent_selected_circle_pair_fillet_retains_pair_native_circle",
+      "bezier_region::tests::independent_selected_circle_pair_fillets_extend_over_both_full_supports",
+      "bezier_region::tests::major_retained_rational_arc_and_general_chord_share_the_fillet_kernel",
+      "bezier_region::tests::noncollapsed_pair_radial_fillet_reenters_the_corner_kernel",
+      "bezier_region::tests::nonlinear_algebraic_endpoint_chamfer_uses_complete_incident_ray",
+      "bezier_region::tests::nonlinear_algebraic_endpoint_fillet_uses_complete_incident_domain",
+      "bezier_region::tests::nonlinear_selected_corner_chamfers_through_retained_fixed_distance_image",
+      "bezier_region::tests::nonrepresented_cardinal_chord_pair_fillets_through_shared_carriers",
+      "bezier_region::tests::nonrepresented_chord_and_retained_rational_arc_share_the_fillet_kernel",
+      "bezier_region::tests::nonrepresented_chord_and_selected_circle_complete_the_fillet_kernel",
+      "bezier_region::tests::nonrepresented_chord_line_corner_fillets_through_shared_carriers",
+      "bezier_region::tests::nonrepresented_chord_parallel_corner_fillets_without_reintersection",
+      "bezier_region::tests::one_fragment_materialized_loop_chamfers_to_one_middle_interval",
+      "bezier_region::tests::one_fragment_materialized_loop_extends_algebraic_chamfer_cuts_once",
+      "bezier_region::tests::one_fragment_nonzero_parallel_loop_extends_chamfer_cuts_on_one_finite_envelope",
+      "bezier_region::tests::one_fragment_ph_loop_fillets_through_rational_self_contact",
+      "bezier_region::tests::one_fragment_retained_ph_loop_extends_fillet_on_one_analytic_carrier",
+      "bezier_region::tests::one_fragment_selected_loop_chamfers_from_one_interval",
+      "bezier_region::tests::one_fragment_selected_loop_extends_chamfer_cuts_on_its_analytic_carrier",
+      "bezier_region::tests::one_fragment_selected_loop_fillets_from_one_interval",
+      "bezier_region::tests::one_fragment_selected_loop_one_sided_chamfers_do_not_duplicate_the_source",
+      "bezier_region::tests::pair_native_boolean_algebraic_chord_corner_publishes_a_third_generation_fillet",
+      "bezier_region::tests::pair_native_boolean_analytic_corner_publishes_a_third_generation_fillet",
+      "bezier_region::tests::pair_native_boolean_corner_publishes_a_third_generation_fillet",
+      "bezier_region::tests::recursive_selected_radial_projective_chamfer_reenters_corner_kernel",
+      "bezier_region::tests::resource_blocked_selected_boundary_fillets_and_reconstructs_in_place",
+      "bezier_region::tests::resource_blocked_selected_corner_chamfers_in_its_affine_fiber",
+      "bezier_region::tests::resource_blocked_selected_range_enters_shared_fillet_kernel_directly",
+      "bezier_region::tests::retained_algebraic_straights_trim_or_extend_chamfer_and_fillet",
+      "bezier_region::tests::retained_polynomial_chamfer_extends_exact_and_algebraic_incident_roots",
+      "bezier_region::tests::retained_rational_chamfer_extends_exact_and_algebraic_pre_pole_roots",
+      "bezier_region::tests::selected_circle_and_analytic_parallel_fillet_exactly",
+      "bezier_region::tests::selected_circle_and_direct_bezier_share_the_parallel_fillet_kernel",
+      "bezier_region::tests::selected_circle_and_major_retained_rational_arc_fillet_exactly",
+      "bezier_region::tests::selected_circle_and_retained_rational_arc_chamfer_extend_exactly",
+      "bezier_region::tests::selected_circle_and_retained_rational_arc_fillet_exactly",
+      "bezier_region::tests::selected_circle_chamfer_crosses_one_sided_smooth_run_seam",
+      "bezier_region::tests::selected_circle_fillet_crosses_an_independently_reframed_run",
+      "bezier_region::tests::selected_circle_fillet_owns_exact_smooth_run_seam_endpoint",
+      "bezier_region::tests::selected_circle_mixed_fillet_crosses_one_sided_smooth_run_seam",
+      "bezier_region::tests::selected_circle_pair_fillets_extend_over_both_full_supports",
+      "bezier_region::tests::selected_circle_pair_with_rationalizable_support_fillet_exactly",
+      "bezier_region::tests::selected_parallel_companion_fillets_without_range_promotion",
+      "bezier_region::tests::selected_parallel_normal_circle_and_line_fillet_retains_recursive_contact",
+      "bezier_region::tests::translated_pair_native_circles_fillet_after_boolean_crossing",
+      "curve::curve_fillet::tests::circular_spline_contact_parameters_distinguish_repeated_point_visits",
+      "curve::curve_fillet::tests::continuous_fillet_constraints_accept_arbitrary_exact_real_contacts",
+      "curve::curve_fillet::tests::fillet_contacts_use_authored_spline_knots_across_multiple_charts",
+      "curve::curve_fillet::tests::isolated_fillet_constraints_are_conjunctive_and_use_input_parameters",
+      "curve::curve_fillet::tests::joined_path_selects_and_replays_a_continuous_fillet_family",
+      "curve::curve_fillet::tests::normalized_region_selects_and_reuses_a_continuous_fillet_family",
+      "curve::curve_fillet::tests::promoted_line_contact_constraints_keep_the_nonlinear_source_chart",
+      "curve::curve_subdivision::tests::finite_parallel_pair_fillets_keep_exterior_source_domains",
+      "curve::curve_subdivision::tests::selected_circular_chart_fillets_continue_across_projective_infinity",
+      "curve::curve_subdivision::tests::selected_circular_corner_chamfers_retain_the_incident_point_field",
+      "curve::curve_subdivision::tests::source_domain_chamfers_cover_spline_knots_and_distinct_source_locations",
+      "curve::curve_subdivision::tests::source_domain_chamfers_preserve_all_selected_major_arc_contacts",
+      "curve::curve_subdivision::tests::source_domain_chamfers_reenter_paths_with_a_selected_spline_corner",
+      "curve::curve_subdivision::tests::source_domain_chamfers_retain_selected_centers_across_different_charts",
+      "curve::curve_subdivision::tests::source_domain_circle_extensions_do_not_republish_authored_chamfer_contacts",
+      "curve::curve_subdivision::tests::source_domain_fillets_continue_circular_splines_across_projective_infinity",
+      "curve::curve_subdivision::tests::source_domain_fillets_map_selected_line_contacts_into_spline_charts",
+      "curve::curve_subdivision::tests::source_domain_fillets_own_surviving_spline_tangents_and_reenter_chamfers",
+      "curve::curve_subdivision::tests::source_domain_fillets_preserve_all_selected_major_arc_contacts",
+      "curve::curve_subdivision::tests::source_domain_fillets_preserve_one_closed_authored_interval",
+      "curve::curve_subdivision::tests::source_domain_fillets_preserve_unmarked_affine_bezier_contacts",
+      "curve::curve_subdivision::tests::source_domain_nonlinear_fillet_crosses_circular_chart_infinity",
+      "curve::tests::distinct_parallel_sources_keep_a_shared_fillet_center_family",
+      "curve::tests::fillet_center_contacts_keep_source_orientation_across_support_cusps",
+      "curve::tests::fillet_domains_control_each_circular_contact_independently",
+      "curve::tests::fillet_parallel_domains_expand_only_the_authorized_source",
+      "curve::tests::parallel_fillet_extension_keeps_contacts_across_source_cusps",
+      "curve::tests::parallel_fillet_frame_retains_selected_normal_and_radial_distance",
+      "curve::tests::rational_chamfer_solver_retains_pre_pole_extension",
+      "curve::tests::resource_blocked_selected_parallel_parameter_retains_local_fillet_frame",
+      "curve::tests::retained_parallel_and_direct_bezier_share_projective_fillet_extension",
+      "curve::tests::selected_circle_and_direct_bezier_share_projective_fillet_extension",
+      "curve::tests::selected_circle_and_native_line_share_projective_fillet_extension",
+      "curve::tests::selected_circular_fillet_overlap_is_clipped_to_the_finite_fragment",
+      "curve::tests::selected_parallel_fillet_clips_a_positive_dimensional_center_component_locally",
+      "curve::tests::selected_parallel_fillet_keeps_contacts_beyond_interior_cusps",
+      "curve::tests::selected_spline_chamfer_cuts_reenter_the_authored_parameter_domain",
+      "curve::tests::selected_spline_fillet_cuts_reenter_the_authored_parameter_domain",
+      "curve_intersection::curve_support_intersection::circle_dispatch_tests::selected_fillet_tangency_replays_an_exterior_affine_source_chart",
+      "curve_region_boolean::certified_successor_tests::boundary_probe_reuses_endpoint_incidence_and_keeps_residual_contacts",
+      "rational_bezier_general::tests::affine_subcurve_rejects_a_crossed_projective_pole",
+      "rational_bezier_general::tests::conic_parameter_primary_map_defers_fallback_image_polynomial",
+      "rational_bezier_general::tests::conic_parameter_refines_primary_map_before_constructing_fallback",
+      "rational_bezier_general::tests::endpoint_projective_cubic_correspondence_maps_both_orientations",
+      "rational_bezier_general::tests::exact_degree_elevated_line_recovers_linear_parameter_transport",
+      "rational_bezier_general::tests::exact_high_degree_rational_elevation_recovers_its_minimal_parameter_frame",
+      "rational_bezier_general::tests::implicit_conic_certificate_is_parameterization_independent_and_shared",
+      "rational_bezier_general::tests::implicit_conic_contacts_retain_source_parameter_point_image_first",
+      "rational_bezier_general::tests::injectivity_scope_preserves_every_parameter_of_a_collapsed_chart",
+      "rational_bezier_general::tests::mixed_weight_projective_overlap_preserves_the_finite_parameter_domain",
+      "rational_bezier_general::tests::range_projective_correspondence_maps_and_inverts_oriented_ranges",
+      "rational_bezier_general::tests::rational_parameter_image_map_reuses_quotient_authority_across_isolators",
+      "rational_bezier_general::tests::unit_weight_degree_one_curve_exposes_its_exact_line_parameterization"
+    ]
+  },
+  "failure": "case failure",
+  "qualification_complete": false
+}

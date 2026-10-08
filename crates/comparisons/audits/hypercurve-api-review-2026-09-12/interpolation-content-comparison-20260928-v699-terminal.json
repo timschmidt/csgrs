@@ -1,0 +1,74 @@
+{
+  "cases": [
+    {
+      "pair": 1,
+      "label": "baseline",
+      "returncode": 0,
+      "elapsed_seconds": 47.524575830902904,
+      "log": "interpolation-content-comparison-20260928-v699-1-baseline.log",
+      "passed": true
+    },
+    {
+      "pair": 1,
+      "label": "candidate",
+      "returncode": 0,
+      "elapsed_seconds": 45.82323097786866,
+      "log": "interpolation-content-comparison-20260928-v699-1-candidate.log",
+      "passed": true
+    },
+    {
+      "pair": 2,
+      "label": "candidate",
+      "returncode": 0,
+      "elapsed_seconds": 45.83372189803049,
+      "log": "interpolation-content-comparison-20260928-v699-2-candidate.log",
+      "passed": true
+    },
+    {
+      "pair": 2,
+      "label": "baseline",
+      "returncode": 0,
+      "elapsed_seconds": 47.87797054601833,
+      "log": "interpolation-content-comparison-20260928-v699-2-baseline.log",
+      "passed": true
+    },
+    {
+      "pair": 3,
+      "label": "baseline",
+      "returncode": 0,
+      "elapsed_seconds": 47.92854729807004,
+      "log": "interpolation-content-comparison-20260928-v699-3-baseline.log",
+      "passed": true
+    },
+    {
+      "pair": 3,
+      "label": "candidate",
+      "returncode": 0,
+      "elapsed_seconds": 46.02391707804054,
+      "log": "interpolation-content-comparison-20260928-v699-3-candidate.log",
+      "passed": true
+    }
+  ],
+  "all_processes_reaped": true,
+  "comparison_complete": true,
+  "workload": "bezier_offset::structural_overlap_trace_regression::monotone_reparameterization_preserves_structural_pair_crossings_strict",
+  "protocol": "Three serial paired runs, alternating pair order. Compare full distributions and median; no additional build or concurrent qualification.",
+  "summary": {
+    "baseline": {
+      "samples": [
+        47.524575830902904,
+        47.87797054601833,
+        47.92854729807004
+      ],
+      "median_seconds": 47.87797054601833
+    },
+    "candidate": {
+      "samples": [
+        45.82323097786866,
+        45.83372189803049,
+        46.02391707804054
+      ],
+      "median_seconds": 45.83372189803049
+    }
+  }
+}

@@ -1,0 +1,22 @@
+{
+  "commit": "e62b786e86212403eee59cf18cd6bca13a4cdd7d",
+  "files": [
+    {
+      "file": "benches/editing.rs",
+      "sha256": "0c0957378c247b1d835e4e94bf59037b3ccb2056991bd4c5d4e1b33423adb996"
+    },
+    {
+      "file": "benches/offset.rs",
+      "sha256": "085279136e68b5d626710a0c661bfcfceabc0b1c635ffce2c9b02764231bde85"
+    },
+    {
+      "file": "benches/comparative.rs",
+      "sha256": "8963677c607b30dce0a6b06220a9e495faf2f3fa9e9ed64ba49a0b1b444fca34"
+    },
+    {
+      "file": "benches/curve_region_boolean_batch.rs",
+      "sha256": "d289e19ea7a8a18d02642562455d161f81581cb430293f693a553784107a7c59"
+    }
+  ],
+  "status": " M src/bezier_offset.rs\n"
+}

@@ -1,0 +1,5 @@
+   Compiling hyperreal v0.13.1 (/tmp/aern-hyper-exp.PdU63J/hyperreal-candidate)
+   Compiling aern-hyper-exp-probe v0.0.0 (/tmp/aern-hyper-exp.PdU63J)
+    Finished `release` profile [optimized] target(s) in 7.10s
+     Running `/tmp/aern-hyper-exp.PdU63J/target/release/aern-hyper-exp-probe`
+cases=4068, one-ulp violations=0

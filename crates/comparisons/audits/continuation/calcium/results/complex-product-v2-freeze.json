@@ -1,0 +1,13 @@
+{
+  "tag": "complex-product-v2-freeze",
+  "started": "2026-09-09T22:01:15.406Z",
+  "finished": "2026-09-09T22:01:15.772Z",
+  "elapsedSeconds": 0.36347119499999997,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "node",
+  "args": [
+    "freeze-complex-product-v2.mjs"
+  ],
+  "code": 0,
+  "signal": null
+}

@@ -1,0 +1,69 @@
+\doxysubsection{LRUCache\texorpdfstring{$<$}{<} L, V \texorpdfstring{$>$}{>} Class Template Reference}
+\hypertarget{classAriadne_1_1LRUCache}{}\label{classAriadne_1_1LRUCache}\index{LRUCache$<$ L, V $>$@{LRUCache$<$ L, V $>$}}
+
+
+{\ttfamily \#include $<$lru\+\_\+cache.\+hpp$>$}
+
+
+
+\doxysubsubsection{Description}
+\subsubsection*{template$<$class L, class V$>$\newline
+class Ariadne\+::\+LRUCache$<$ L, V $>$}
+A Least Recently Used cache for holding a limited number of commonly-\/accessed objects of type {\itshape V} indexed by a label {\itshape L}. \doxysubsubsubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1LRUCache_a0970cfc653ff9d625ef33bb052d9efab}\label{classAriadne_1_1LRUCache_a0970cfc653ff9d625ef33bb052d9efab} 
+{\bfseries LRUCache} (Size\+Type \mbox{\hyperlink{classAriadne_1_1LRUCache_a695d1f91101c99ff3e3061c93628d1be}{maximum\+\_\+size}})
+\begin{DoxyCompactList}\small\item\em Construct with a given {\itshape maximum\+\_\+size}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1LRUCache_a1697d1dc620e8728ae025d3d9887bf0b}\label{classAriadne_1_1LRUCache_a1697d1dc620e8728ae025d3d9887bf0b} 
+\mbox{\hyperlink{namespaceAriadne_a76a8b016e5ad61faf9062cc387df5016}{Bool}} {\bfseries has\+\_\+label} (L const \&label)
+\begin{DoxyCompactList}\small\item\em Check whether the label is present. \end{DoxyCompactList}\item 
+V const \& \mbox{\hyperlink{classAriadne_1_1LRUCache_a183afcf4c2d7c4a2b96ad66ce7a17bef}{get}} (L const \&label)
+\begin{DoxyCompactList}\small\item\em Get the element identified with {\itshape label}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1LRUCache_a820664cee343745c1e6b6a057b509dd8}\label{classAriadne_1_1LRUCache_a820664cee343745c1e6b6a057b509dd8} 
+Size\+Type {\bfseries age} (L const \&label)
+\begin{DoxyCompactList}\small\item\em The age of a given {\itshape label} in the cache. \end{DoxyCompactList}\item 
+\mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} \mbox{\hyperlink{classAriadne_1_1LRUCache_aef146f90c206496c515297afee987f88}{put}} (L const \&label, V const \&val)
+\begin{DoxyCompactList}\small\item\em Insert the element. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1LRUCache_a43b22ce69f8081752ee5ca137c5ae250}\label{classAriadne_1_1LRUCache_a43b22ce69f8081752ee5ca137c5ae250} 
+Size\+Type {\bfseries current\+\_\+size} () const
+\begin{DoxyCompactList}\small\item\em The current size due to putting elements. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1LRUCache_a695d1f91101c99ff3e3061c93628d1be}\label{classAriadne_1_1LRUCache_a695d1f91101c99ff3e3061c93628d1be} 
+Size\+Type {\bfseries maximum\+\_\+size} () const
+\begin{DoxyCompactList}\small\item\em The maximum size as initially supplied. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\label{doc-func-members}
+\Hypertarget{classAriadne_1_1LRUCache_doc-func-members}
+\doxysubsubsection{Member Function Documentation}
+\Hypertarget{classAriadne_1_1LRUCache_a183afcf4c2d7c4a2b96ad66ce7a17bef}\index{LRUCache$<$ L, V $>$@{LRUCache$<$ L, V $>$}!get@{get}}
+\index{get@{get}!LRUCache$<$ L, V $>$@{LRUCache$<$ L, V $>$}}
+\doxyparagraph{\texorpdfstring{get()}{get()}}
+{\footnotesize\ttfamily \label{classAriadne_1_1LRUCache_a183afcf4c2d7c4a2b96ad66ce7a17bef} 
+template$<$class L, class V$>$ \\
+V const  \& get (\begin{DoxyParamCaption}\item[{L const \&}]{label}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Get the element identified with {\itshape label}. 
+
+Updates age accordingly \Hypertarget{classAriadne_1_1LRUCache_aef146f90c206496c515297afee987f88}\index{LRUCache$<$ L, V $>$@{LRUCache$<$ L, V $>$}!put@{put}}
+\index{put@{put}!LRUCache$<$ L, V $>$@{LRUCache$<$ L, V $>$}}
+\doxyparagraph{\texorpdfstring{put()}{put()}}
+{\footnotesize\ttfamily \label{classAriadne_1_1LRUCache_aef146f90c206496c515297afee987f88} 
+template$<$class L, class V$>$ \\
+\mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} put (\begin{DoxyParamCaption}\item[{L const \&}]{label}{, }\item[{V const \&}]{val}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Insert the element. 
+
+The element must not already exist; updates ages accordingly 
+
+References \mbox{\hyperlink{classAriadne_1_1LRUCache_a1697d1dc620e8728ae025d3d9887bf0b}{has\+\_\+label()}}.
+
+
+
+The documentation for this class was generated from the following file\+:\begin{DoxyCompactItemize}
+\item 
+source/utility/\mbox{\hyperlink{lru__cache_8hpp}{lru\+\_\+cache.\+hpp}}\end{DoxyCompactItemize}

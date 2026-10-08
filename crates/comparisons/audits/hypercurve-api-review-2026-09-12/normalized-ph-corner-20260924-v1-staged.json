@@ -1,0 +1,7 @@
+{
+  "parent": "04b524382cdf80457c06f02c2bd2d0fa222d21b8",
+  "files": {
+    "src/bezier_region.rs": "efc75b174a49db2523072ba3b5d2cb45ecd03eb23385baf4178fc11ce95de4d1"
+  },
+  "all_index_bytes_match_qualification": true
+}

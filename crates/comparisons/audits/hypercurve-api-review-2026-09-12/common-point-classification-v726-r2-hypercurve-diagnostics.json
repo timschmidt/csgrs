@@ -1,0 +1,144 @@
+[
+  {
+    "reason": "compiler-message",
+    "package_id": "path+file:///home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/build-workspace-20260925/hypercurve#0.3.1",
+    "manifest_path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/build-workspace-20260925/hypercurve/Cargo.toml",
+    "target": {
+      "kind": [
+        "lib"
+      ],
+      "crate_types": [
+        "lib"
+      ],
+      "name": "hypercurve",
+      "src_path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/build-workspace-20260925/hypercurve/src/lib.rs",
+      "edition": "2024",
+      "doc": true,
+      "doctest": true,
+      "test": true
+    },
+    "message": {
+      "rendered": "error[E0533]: expected value, found struct variant `crate::BezierSplitFragment2::Materialized`\n     --> src/curve.rs:14949:33\n      |\n14949 |             std::sync::Arc::new(crate::BezierSplitFragment2::Materialized(\n      |                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ not a value\n      |\nhelp: you might have meant to create a new value of the struct\n      |\n14949 -             std::sync::Arc::new(crate::BezierSplitFragment2::Materialized(\n14950 -                 crate::BezierSubcurve2::Quadratic(crate::QuadraticBezier2::new(\n14951 -                     coordinates.clone(),\n14952 -                     Point2::from_values(2, 1),\n14953 -                     Point2::from_values(3, 1),\n14954 -                 )),\n14955 -             )),\n14949 +             std::sync::Arc::new(crate::BezierSplitFragment2::Materialized { start: /* value */, end: /* value */, curve: /* value */ }),\n      |\n\n",
+      "$message_type": "diagnostic",
+      "children": [
+        {
+          "children": [],
+          "code": null,
+          "level": "help",
+          "message": "you might have meant to create a new value of the struct",
+          "rendered": null,
+          "spans": [
+            {
+              "byte_end": 620890,
+              "byte_start": 620640,
+              "column_end": 14,
+              "column_start": 74,
+              "expansion": null,
+              "file_name": "src/curve.rs",
+              "is_primary": true,
+              "label": null,
+              "line_end": 14955,
+              "line_start": 14949,
+              "suggested_replacement": " { start: /* value */, end: /* value */, curve: /* value */ }",
+              "suggestion_applicability": "HasPlaceholders",
+              "text": [
+                {
+                  "highlight_end": 75,
+                  "highlight_start": 74,
+                  "text": "            std::sync::Arc::new(crate::BezierSplitFragment2::Materialized("
+                },
+                {
+                  "highlight_end": 80,
+                  "highlight_start": 1,
+                  "text": "                crate::BezierSubcurve2::Quadratic(crate::QuadraticBezier2::new("
+                },
+                {
+                  "highlight_end": 41,
+                  "highlight_start": 1,
+                  "text": "                    coordinates.clone(),"
+                },
+                {
+                  "highlight_end": 47,
+                  "highlight_start": 1,
+                  "text": "                    Point2::from_values(2, 1),"
+                },
+                {
+                  "highlight_end": 47,
+                  "highlight_start": 1,
+                  "text": "                    Point2::from_values(3, 1),"
+                },
+                {
+                  "highlight_end": 20,
+                  "highlight_start": 1,
+                  "text": "                )),"
+                },
+                {
+                  "highlight_end": 14,
+                  "highlight_start": 1,
+                  "text": "            )),"
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "level": "error",
+      "message": "expected value, found struct variant `crate::BezierSplitFragment2::Materialized`",
+      "spans": [
+        {
+          "byte_end": 620640,
+          "byte_start": 620599,
+          "column_end": 74,
+          "column_start": 33,
+          "expansion": null,
+          "file_name": "src/curve.rs",
+          "is_primary": true,
+          "label": "not a value",
+          "line_end": 14949,
+          "line_start": 14949,
+          "suggested_replacement": null,
+          "suggestion_applicability": null,
+          "text": [
+            {
+              "highlight_end": 74,
+              "highlight_start": 33,
+              "text": "            std::sync::Arc::new(crate::BezierSplitFragment2::Materialized("
+            }
+          ]
+        }
+      ],
+      "code": {
+        "code": "E0533",
+        "explanation": "An item which isn't a unit struct, a variant, nor a constant has been used as a\nmatch pattern.\n\nErroneous code example:\n\n```compile_fail,E0533\nstruct Tortoise;\n\nimpl Tortoise {\n    fn turtle(&self) -> u32 { 0 }\n}\n\nmatch 0u32 {\n    Tortoise::turtle => {} // Error!\n    _ => {}\n}\nif let Tortoise::turtle = 0u32 {} // Same error!\n```\n\nIf you want to match against a value returned by a method, you need to bind the\nvalue first:\n\n```\nstruct Tortoise;\n\nimpl Tortoise {\n    fn turtle(&self) -> u32 { 0 }\n}\n\nmatch 0u32 {\n    x if x == Tortoise.turtle() => {} // Bound into `x` then we compare it!\n    _ => {}\n}\n```\n"
+      }
+    }
+  },
+  {
+    "reason": "compiler-message",
+    "package_id": "path+file:///home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/build-workspace-20260925/hypercurve#0.3.1",
+    "manifest_path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/build-workspace-20260925/hypercurve/Cargo.toml",
+    "target": {
+      "kind": [
+        "lib"
+      ],
+      "crate_types": [
+        "lib"
+      ],
+      "name": "hypercurve",
+      "src_path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/build-workspace-20260925/hypercurve/src/lib.rs",
+      "edition": "2024",
+      "doc": true,
+      "doctest": true,
+      "test": true
+    },
+    "message": {
+      "rendered": "For more information about this error, try `rustc --explain E0533`.\n",
+      "$message_type": "diagnostic",
+      "children": [],
+      "level": "failure-note",
+      "message": "For more information about this error, try `rustc --explain E0533`.",
+      "spans": [],
+      "code": null
+    }
+  }
+]

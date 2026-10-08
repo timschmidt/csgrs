@@ -1,0 +1,16 @@
+{
+  "returncode": 101,
+  "command": [
+    "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+    "check",
+    "--keep-going",
+    "--all-targets",
+    "--all-features",
+    "--locked",
+    "--offline",
+    "--message-format=json"
+  ],
+  "all_sources_unchanged": true,
+  "all_processes_reaped": true,
+  "elapsed_seconds": 18.091164476936683
+}

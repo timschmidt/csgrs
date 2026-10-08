@@ -1,0 +1,13 @@
+{
+  "tag": "erf-trial-state-release",
+  "started": "2026-09-08T10:58:04.210Z",
+  "finished": "2026-09-08T10:58:04.233Z",
+  "elapsedSeconds": 0.021497056999999997,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison",
+  "command": "/home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype/release/calcium-erf-trial-qualification",
+  "args": [
+    "state"
+  ],
+  "code": 0,
+  "signal": null
+}

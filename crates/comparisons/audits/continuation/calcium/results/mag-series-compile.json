@@ -1,0 +1,30 @@
+{
+  "tag": "mag-series-compile",
+  "started": "2026-09-09T23:59:16.199Z",
+  "finished": "2026-09-09T23:59:16.478Z",
+  "elapsedSeconds": 0.276954181,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison",
+  "command": "gcc",
+  "args": [
+    "-O2",
+    "-g0",
+    "-Wall",
+    "-Wextra",
+    "-Werror",
+    "-isystem",
+    "../exact-real-references/flint/src",
+    "audits/continuation/calcium/flint-mag-series-controls.c",
+    "-L",
+    "../exact-real-references/flint",
+    "-Wl,-rpath,/home/tim/Documents/GitHub/workspace/exact-real-references/flint",
+    "-lflint",
+    "-lmpfr",
+    "-lgmp",
+    "-lm",
+    "-lpthread",
+    "-o",
+    "/tmp/calcium-mag-series.o08QL0/mag-series-controls"
+  ],
+  "code": 0,
+  "signal": null
+}

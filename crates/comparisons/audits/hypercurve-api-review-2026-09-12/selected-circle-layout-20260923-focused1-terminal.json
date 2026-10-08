@@ -1,0 +1,15 @@
+{
+  "cases": [
+    {
+      "name": "bezier_region::tests::nonrepresented_chord_and_selected_circle_complete_the_fillet_kernel",
+      "returncode": 101,
+      "passed": false,
+      "limit_seconds": 90,
+      "elapsed_seconds": 48.671435676980764,
+      "log": "selected-circle-layout-20260923-focused1-case-0.log"
+    }
+  ],
+  "binary_sha256": "9760411b00010eba14fa159cc288cde96c3bced10026abf663977da6115c8036",
+  "all_sources_unchanged": true,
+  "all_processes_reaped": true
+}

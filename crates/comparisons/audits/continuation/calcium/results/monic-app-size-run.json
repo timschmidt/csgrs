@@ -1,0 +1,13 @@
+{
+  "tag": "monic-app-size-run",
+  "started": "2026-09-09T01:13:41.869Z",
+  "finished": "2026-09-09T01:15:14.501Z",
+  "elapsedSeconds": 92.629805454,
+  "cwd": "/home/tim/Documents/GitHub/workspace",
+  "command": "node",
+  "args": [
+    "exactcore-hyper-comparison/audits/continuation/calcium/measure-monic-app-size.mjs"
+  ],
+  "code": 0,
+  "signal": null
+}

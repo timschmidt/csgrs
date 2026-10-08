@@ -1,0 +1,14 @@
+{
+  "repos": {
+    "hypercurve": {
+      "commit": "0987b79aa72a020999a97125b2db5a15f6e32e7c",
+      "parent": "0d5a2c0ff0f80833fd37d9fc31eec9ffd4f923d0",
+      "paths": {
+        "src/bezier_offset.rs": "5d0c940155709699740e97fe713730c14c9a009abd8bcd2efecf7c6031649367"
+      }
+    }
+  },
+  "qualification": "restricted-fiber-sign-20260927-v474-terminal.json",
+  "verified_source_files": 2046,
+  "clean_repositories": 30
+}

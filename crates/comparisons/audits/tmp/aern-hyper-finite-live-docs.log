@@ -1,0 +1,33 @@
+    Blocking waiting for file lock on build directory
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 9.58s
+   Doc-tests hyperreal
+
+running 24 tests
+test src/computable/node/approximation_queries.rs - computable::node::Computable::approx (line 60) ... ok
+test src/rational/arithmetic/construction.rs - rational::arithmetic::Rational::is_integer (line 704) ... ok
+test src/rational/arithmetic/construction.rs - rational::arithmetic::Rational::inverse (line 663) ... ok
+test src/computable/node/approximation_queries.rs - computable::node::Computable::approx (line 70) ... ok
+test src/rational/arithmetic/representation.rs - rational::arithmetic::Rational (line 20) ... ok
+test src/real/arithmetic/inversion.rs - real::arithmetic::Real::inverse (line 302) ... ok
+test src/rational/arithmetic/queries_conversion.rs - rational::arithmetic::Rational::fract (line 158) ... ok
+test src/rational/arithmetic/queries_conversion.rs - rational::arithmetic::Rational::trunc (line 115) ... ok
+test src/rational/arithmetic/queries_conversion.rs - rational::arithmetic::Rational::prefer_fraction (line 632) ... ok
+test src/rational/arithmetic/queries_conversion.rs - rational::arithmetic::Rational::shifted_big_integer (line 659) ... ok
+test src/rational/arithmetic/representation.rs - rational::arithmetic::Rational (line 14) ... ok
+test src/serde.rs - serde::Real::to_bytes (line 26) ... ok
+test src/real/arithmetic/elementary_functions.rs - real::arithmetic::Real::atan2 (line 3203) ... ok
+test src/simple.rs - simple (line 30) ... ok
+test src/rational/arithmetic/representation.rs - rational::arithmetic::Rational (line 26) ... ok
+test src/real/arithmetic/representation.rs - real::arithmetic::Real (line 37) ... ok
+test src/rational/arithmetic/representation.rs - rational::arithmetic::Rational (line 33) ... ok
+test src/real/arithmetic/representation.rs - real::arithmetic::Real (line 26) ... ok
+test src/simple.rs - simple::Simple (line 188) ... ok
+test src/simple.rs - simple (line 10) ... ok
+test src/simple.rs - simple (line 20) ... ok
+test src/rational/arithmetic/queries_conversion.rs - rational::arithmetic::Rational::fract (line 151) ... ok
+test src/rational/arithmetic/queries_conversion.rs - rational::arithmetic::Rational::trunc (line 125) ... ok
+test src/real/arithmetic/representation.rs - real::arithmetic::Real (line 19) ... ok
+
+test result: ok. 24 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+all doctests ran in 0.35s; merged doctests compilation took 0.34s

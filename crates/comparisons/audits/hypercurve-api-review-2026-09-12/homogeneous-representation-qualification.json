@@ -1,0 +1,153 @@
+{
+  "status": "qualified homogeneous rational representation migration; original goal remains active",
+  "goal_status": "active",
+  "hypercurve_commit": "d52d725650e642f50edea33bd493ace993b74f70",
+  "hyperbrep_commit": "bfcc970b4886e7dc394462191008ac7198f7c3e1",
+  "hypercurve_release_targets": [
+    {
+      "target": "hypercurve::lib",
+      "status": "ok",
+      "passed": 1022,
+      "failed": 0,
+      "ignored": 6,
+      "filtered": 4,
+      "elapsed": "104.01s"
+    },
+    {
+      "target": "hypercurve::hypercurve_arc_bezier",
+      "status": "ok",
+      "passed": 12,
+      "failed": 0,
+      "ignored": 0,
+      "filtered": 0,
+      "elapsed": "0.00s"
+    },
+    {
+      "target": "hypercurve::hypercurve_bezier_arrangement",
+      "status": "ok",
+      "passed": 57,
+      "failed": 0,
+      "ignored": 0,
+      "filtered": 0,
+      "elapsed": "0.00s"
+    },
+    {
+      "target": "hypercurve::hypercurve_bezier_fit_offset",
+      "status": "ok",
+      "passed": 101,
+      "failed": 0,
+      "ignored": 0,
+      "filtered": 0,
+      "elapsed": "3.32s"
+    },
+    {
+      "target": "hypercurve::hypercurve_bspline",
+      "status": "ok",
+      "passed": 28,
+      "failed": 0,
+      "ignored": 0,
+      "filtered": 0,
+      "elapsed": "0.00s"
+    },
+    {
+      "target": "hypercurve::hypercurve_curve",
+      "status": "ok",
+      "passed": 48,
+      "failed": 0,
+      "ignored": 0,
+      "filtered": 0,
+      "elapsed": "48.01s"
+    },
+    {
+      "target": "hypercurve::hypercurve_curve_intersection",
+      "status": "ok",
+      "passed": 29,
+      "failed": 0,
+      "ignored": 0,
+      "filtered": 0,
+      "elapsed": "0.02s"
+    },
+    {
+      "target": "hypercurve::hypercurve_nurbs",
+      "status": "ok",
+      "passed": 38,
+      "failed": 0,
+      "ignored": 0,
+      "filtered": 0,
+      "elapsed": "0.00s"
+    },
+    {
+      "target": "hypercurve::hypercurve_path_closure",
+      "status": "ok",
+      "passed": 9,
+      "failed": 0,
+      "ignored": 0,
+      "filtered": 0,
+      "elapsed": "0.38s"
+    },
+    {
+      "target": "hypercurve::hypercurve_polynomial_spline",
+      "status": "ok",
+      "passed": 18,
+      "failed": 0,
+      "ignored": 0,
+      "filtered": 0,
+      "elapsed": "0.00s"
+    },
+    {
+      "target": "hypercurve::hypercurve_rational_bezier",
+      "status": "ok",
+      "passed": 48,
+      "failed": 0,
+      "ignored": 0,
+      "filtered": 0,
+      "elapsed": "0.03s"
+    },
+    {
+      "target": "hypercurve::hypercurve_svg",
+      "status": "ok",
+      "passed": 17,
+      "failed": 0,
+      "ignored": 0,
+      "filtered": 0,
+      "elapsed": "0.00s"
+    }
+  ],
+  "hypercurve_tests_passed": 1427,
+  "hypercurve_release_log": "homogeneous-representation-release-final.log",
+  "rational_integration_final_import_cleanup": "homogeneous-representation-rational-final.log",
+  "source_hashes": [
+    "homogeneous-representation-hypercurve-source-hashes.json",
+    "homogeneous-representation-hyperbrep-source-hashes.json"
+  ],
+  "build_checks": {
+    "hypercurve_all_targets": "homogeneous-representation-hypercurve-all-targets-clean.log",
+    "hyperbrep_all_targets": "homogeneous-representation-hyperbrep-all-targets-guard.log",
+    "ui_offline": "homogeneous-representation-ui-check.log",
+    "svg_fuzz_offline": "homogeneous-representation-svg-fuzz-check.log",
+    "documentation_broken_links_denied": "homogeneous-representation-docs.log",
+    "scope_note": "UI, fuzz and docs checks preceded the final degree-cache locking change and test-only cleanup; no API signatures changed in that final correction."
+  },
+  "established_expensive_exclusions": [
+    "selected_parallel_normal_circle_intersects_genuinely_analytic_parallel_in_one_fiber",
+    "independent_oblique_chord_pair_fillets_extend_on_infinite_supports",
+    "selected_circle_and_analytic_parallel_extend_on_full_supports",
+    "pair_native_boolean_algebraic_chord_corner_publishes_a_third_generation_fillet"
+  ],
+  "baselines": {
+    "three_homogeneous_regressions": "homogeneous-representation-before.log",
+    "elevation_cache_race_before": "elevation-cache-race-before.log",
+    "elevation_cache_race_after": "elevation-cache-race-after.log",
+    "semicircle_composed_probe": "homogeneous-semicircle-closure-composed.log"
+  },
+  "remaining_scope": "homogeneous-representation-next-closure.json",
+  "serialization": {
+    "hypercurve_svg_payload": "HCP2 / prefix 2:",
+    "hyperbrep_model_format": 7,
+    "compatibility_decoders_added": false
+  },
+  "hyperbrep_tests_passed": 231,
+  "hyperbrep_release_log": "homogeneous-representation-hyperbrep-release-guard.log",
+  "unique_selected_tests_passed": 1658,
+  "formatting": "rustfmt --edition 2024 --config skip_children=true --check on changed Rust files; git diff --check passed in both repositories"
+}

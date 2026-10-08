@@ -1,0 +1,29 @@
+{
+  "source_manifest": "constrained-fillet-api-20260926-v301-sources.json",
+  "source_directory": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/source-archives/constrained-fillet-api-20260926-v301",
+  "cases": [],
+  "builds": [],
+  "all_processes_reaped": true,
+  "checks": [
+    {
+      "label": "clippy-all-features",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "clippy",
+        "--all-targets",
+        "--all-features",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "returncode": 101,
+      "log": "constrained-fillet-api-20260926-v301-clippy-all-features.log",
+      "elapsed_seconds": 20.59603017894551
+    }
+  ],
+  "qualification_scope": "Constrained fillet public API and direct caller migration; authored parameter charts, isolated and continuous solutions, region compositions",
+  "failure": "clippy-all-features failed",
+  "qualification_complete": false
+}

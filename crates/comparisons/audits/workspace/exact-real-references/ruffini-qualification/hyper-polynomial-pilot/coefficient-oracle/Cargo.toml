@@ -1,0 +1,19 @@
+[package]
+name = "ruffini_hyper_polynomial_coefficient_oracle"
+version = "0.0.0"
+edition = "2024"
+publish = false
+
+[[bin]]
+name = "ruffini_hyper_polynomial_coefficient_oracle"
+path = "main.rs"
+
+[dependencies]
+hyperreal = { path = "../snapshot/hyperreal" }
+hyperlimit = { path = "../snapshot/hyperlimit" }
+num = "0.4.3"
+
+[features]
+allocation-profile = []
+
+[workspace]

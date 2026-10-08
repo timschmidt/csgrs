@@ -1,0 +1,14 @@
+{
+  "tag": "magnitude-inventory",
+  "started": "2026-09-09T23:08:34.250Z",
+  "finished": "2026-09-09T23:08:34.711Z",
+  "elapsedSeconds": 0.45843383699999996,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "node",
+  "args": [
+    "inventory.mjs",
+    "verify"
+  ],
+  "code": 0,
+  "signal": null
+}

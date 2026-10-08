@@ -1,0 +1,49 @@
+{
+  "checkpoint": 71,
+  "binaries": [
+    {
+      "variant": "baseline",
+      "mode": "cpu",
+      "path": "/tmp/calcium-zero-cost.cEHSth/baseline-cpu",
+      "bytes": 2822008,
+      "sha256": "34b0536fed82b8e5d755d0fd72fc89a0709bc882ddb2ec0b96ddd2ecf204aa75",
+      "allocatorSymbols": []
+    },
+    {
+      "variant": "baseline",
+      "mode": "allocation",
+      "path": "/tmp/calcium-zero-cost.cEHSth/baseline-allocation",
+      "bytes": 2827248,
+      "sha256": "da2b212903543245010f7f271ac0e6952ab7540dbddcdc07958b615c28d144ef",
+      "allocatorSymbols": [
+        "000000000022ee30 b zero_factor_allocation_v71::instrumentation::allocation::LIVE",
+        "000000000022ee38 b zero_factor_allocation_v71::instrumentation::allocation::PEAK",
+        "000000000022ee40 b zero_factor_allocation_v71::instrumentation::allocation::BYTES",
+        "000000000022ee48 b zero_factor_allocation_v71::instrumentation::allocation::CALLS"
+      ]
+    },
+    {
+      "variant": "candidate",
+      "mode": "cpu",
+      "path": "/tmp/calcium-zero-cost.cEHSth/candidate-cpu",
+      "bytes": 2825128,
+      "sha256": "1f67d28287278001e87dfd822b77b94f5bd7e35a98b273d1398fbe9158809af5",
+      "allocatorSymbols": []
+    },
+    {
+      "variant": "candidate",
+      "mode": "allocation",
+      "path": "/tmp/calcium-zero-cost.cEHSth/candidate-allocation",
+      "bytes": 2830232,
+      "sha256": "cd2f45ceced614cbd3f41c8f51da7ae107a0bcdf76785372b52185e33bc72adb",
+      "allocatorSymbols": [
+        "000000000022f608 b zero_factor_allocation_v71::instrumentation::allocation::LIVE",
+        "000000000022f610 b zero_factor_allocation_v71::instrumentation::allocation::PEAK",
+        "000000000022f618 b zero_factor_allocation_v71::instrumentation::allocation::BYTES",
+        "000000000022f620 b zero_factor_allocation_v71::instrumentation::allocation::CALLS"
+      ]
+    }
+  ],
+  "originSha256": "b9c021183a40d34e6acb829389bba46d27114c4f62edd1e2fff05ac56f6f92a3",
+  "recorded": "2026-09-11T19:27:30.992Z"
+}

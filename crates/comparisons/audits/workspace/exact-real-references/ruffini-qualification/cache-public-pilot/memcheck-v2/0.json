@@ -1,0 +1,18 @@
+{
+  "args": [
+    "--tool=memcheck",
+    "--vgdb=no",
+    "--error-exitcode=97",
+    "--leak-check=no",
+    "/home/tim/Documents/GitHub/workspace/exact-real-references/ruffini-qualification/cache-public-pilot/memcheck-v2/cache-tests",
+    "cache_rescale_",
+    "--test-threads=1"
+  ],
+  "begin": "2026-09-07T06:01:01.517Z",
+  "end": "2026-09-07T06:01:03.602Z",
+  "status": 0,
+  "signal": null,
+  "error": null,
+  "stdout": "\nrunning 5 tests\ntest computable::node::cache_rescale_tests::cache_rescale_concurrent_monotone_publication ... ok\ntest computable::node::cache_rescale_tests::cache_rescale_extreme_gaps ... ok\ntest computable::node::cache_rescale_tests::cache_rescale_limb_and_halfway_boundaries ... ok\ntest computable::node::cache_rescale_tests::cache_rescale_public_warmed_extreme ... ok\ntest computable::node::cache_rescale_tests::cache_rescale_rounding_and_misses ... ok\n\ntest result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 674 filtered out; finished in 1.29s\n\n",
+  "stderr": "==1186629== Memcheck, a memory error detector\n==1186629== Copyright (C) 2002-2026, and GNU GPL'd, by Julian Seward et al.\n==1186629== Using Valgrind-3.27.1 and LibVEX; rerun with -h for copyright info\n==1186629== Command: /home/tim/Documents/GitHub/workspace/exact-real-references/ruffini-qualification/cache-public-pilot/memcheck-v2/cache-tests cache_rescale_ --test-threads=1\n==1186629== \n==1186629== \n==1186629== HEAP SUMMARY:\n==1186629==     in use at exit: 976 bytes in 12 blocks\n==1186629==   total heap usage: 596,126 allocs, 596,114 frees, 12,485,325 bytes allocated\n==1186629== \n==1186629== For a detailed leak analysis, rerun with: --leak-check=full\n==1186629== \n==1186629== For lists of detected and suppressed errors, rerun with: -s\n==1186629== ERROR SUMMARY: 0 errors from 0 contexts (suppressed: 0 from 0)\n"
+}

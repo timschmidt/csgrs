@@ -1,0 +1,5 @@
+    Checking hyperreal v0.13.1 (/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/polynomial-monic-qualified-trial/hyperreal)
+    Checking hyperlattice v0.6.1 (/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/polynomial-monic-qualified-trial/hyperlattice)
+    Checking hyperlimit v0.4.1 (/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/polynomial-monic-qualified-trial/hyperlimit)
+    Checking hypersolve v0.3.1 (/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/polynomial-monic-qualified-trial/hypersolve)
+    Finished `dev` profile [unoptimized] target(s) in 4.75s

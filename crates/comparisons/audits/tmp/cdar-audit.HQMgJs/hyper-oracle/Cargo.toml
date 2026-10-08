@@ -1,0 +1,9 @@
+[package]
+name = "cdar-hyper-oracle"
+version = "0.0.0"
+edition = "2024"
+
+[dependencies]
+hyperreal = { path = "/home/tim/Documents/GitHub/workspace/hyperreal" }
+num-bigint = "=0.4.6"
+rug = { version = "1.30.0", default-features = false, features = ["float", "rational", "std"] }

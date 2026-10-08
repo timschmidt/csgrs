@@ -1,0 +1,15 @@
+[package]
+name = "calcium-rank-cost-baseline"
+version = "0.1.0"
+edition = "2024"
+publish = false
+[workspace]
+[dependencies]
+hyperreal = { path = "../polynomial-monic-qualified-trial/hyperreal" }
+hypersolve = { path = "../polynomial-monic-qualified-trial/hypersolve" }
+[[bin]]
+name = "calcium-rank-baseline-cpu"
+path = "../rank-cost-cpu.rs"
+[[bin]]
+name = "calcium-rank-baseline-allocation"
+path = "../rank-cost-allocation.rs"

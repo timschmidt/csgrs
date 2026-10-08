@@ -1,0 +1,17 @@
+Retain exact quadratic-field proofs across wide coefficients
+
+Remove coefficient-size gates from exact quadratic-field arithmetic, retained
+reductions and compaction. Wide intermediate values can cancel exactly and
+later scalar queries can reuse their shared rational coefficients instead of
+replaying numerical construction histories. Clone a reduction only when the
+cache will publish it; add no new public scalar representation.
+
+Keep the explicit binary-shift allocation guard, measuring new expansion after
+cancellation rather than rejecting already represented wide coefficients.
+Cover wide nested-radical cancellation, tiny signed perturbations, exported
+proofs and small shifts; existing huge-shift and concurrent-cache cases pass.
+
+Validation: Hyperreal and Hypersolve unit/integration suites, 232 selected
+Hypercurve release tests, all-target Clippy, formatting, editing fuzz, denied-
+warning docs and Hyperbrep checks. The two full extended-fillet re-offset
+performance cases remain unresolved and are excluded from this qualification.

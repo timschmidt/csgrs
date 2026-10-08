@@ -1,0 +1,5 @@
+   text	   data	    bss	    dec	    hex	filename
+10704011	 306488	   5328	11015827	 a81693	/tmp/calcium-point-consumer.qyV59b/demand-basic
+10704011	 306488	   5328	11015827	 a81693	/tmp/calcium-point-consumer.qyV59b/demand-basic.stripped
+10709607	 306632	   3680	11019919	 a8268f	/tmp/calcium-zero-consumer.LrNEZu/candidate-basic
+10709607	 306632	   3680	11019919	 a8268f	/tmp/calcium-zero-consumer.LrNEZu/candidate-basic.stripped

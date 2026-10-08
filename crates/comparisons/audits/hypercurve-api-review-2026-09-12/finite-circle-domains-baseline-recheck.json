@@ -1,0 +1,25 @@
+{
+  "returncode": 0,
+  "elapsed_seconds": 0.0075956700020469725,
+  "normal_library_sha256": "8eb7cd1fbaa241bf01e599e07ca251959c800c77c62a8091232bad9d52006638",
+  "log": "finite-circle-domains-baseline-recheck.log",
+  "source": "finite-domain-baseline.rs",
+  "command": [
+    "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustc",
+    "--edition=2024",
+    "-O",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-domain-baseline.rs",
+    "--extern",
+    "hypercurve=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypercurve-ee303709bdb4cb6a.rlib",
+    "-L",
+    "dependency=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps",
+    "-o",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-circle-domains-baseline-recheck"
+  ],
+  "source_sha256": "c032cc63c161d14b576b2264b3df28e4a78b35d9210200aaf51b829f64806e59",
+  "executable_sha256": "fbcb93d00729e5a8fd746ed6bf287a9911b9927864c5bc2e0dde9734490fa9fd",
+  "counts": {
+    "complete": 12,
+    "incomplete": 0
+  }
+}

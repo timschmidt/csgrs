@@ -1,0 +1,69 @@
+{
+  "turn_status": "progress",
+  "full_goal_status": "active",
+  "commits": {
+    "hypercurve": "68e72280b1200871d0f539d90bdb3d1450958b99",
+    "hypersolve": "0befc6a22ee866cd0364cd8aac7127f703bce453"
+  },
+  "latest_baseline": "selected-scalar-v893",
+  "verified_source_files": 2048,
+  "clean_repositories": 30,
+  "release_cases": 409,
+  "pinned_test_binaries": 13,
+  "checks": 9,
+  "repaired_public_probe_requests": 2,
+  "public_replay_requests": 2,
+  "reflected_and_swapped_traversal_cases": 8,
+  "active_drivers": [],
+  "outstanding_production_edits": [],
+  "next_unused_version": 897,
+  "receipts": {
+    "selected-scalar-v893-committed.json": "44eda4f15c3d15e221776dda989b4372a79b064ce6cb683af9cefd6bac1b4d07",
+    "selected-scalar-v893-reviewed.json": "89078e643c496efdcfd29a1dfb742c928e2683a4aab74d8008ec80b9417511f9",
+    "selected-scalar-v893-reaped.json": "c9b84891296fa28aae7494e98ac79f07b360c8a68f998e293239b0c227b08e0b",
+    "selected-scalar-v893-review-reaped.json": "b2743a79fa171c8724b84290a6a3c4e8d628002b9d928fd772f15a007cc157e2",
+    "selected-scalar-v893-review-correction.json": "aa633126ec89c8b73055487e2387aebc05bfcd56bbf47a2bc844547a9a057f29",
+    "selected-scalar-v893-terminal.json": "449ea1536af83c06ab5da0d28db14b7bde795963a5111536295e3324da4fed6d",
+    "selected-scalar-v892-terminal.json": "88748908bf902ae92cd90bf495a82b22f7b29a0034908dd1b6110ffcb1734426",
+    "selected-scalar-v892-reaped.json": "093c804d573cd72954c9194c48138937dfdf93717226681e5d48249b115c0534",
+    "selected-field-admission-probe-v891-terminal.json": "8c069b9af21ff02f2b3382f4771d0b3801843661da81d70ba50d591c1d5ec7a5",
+    "selected-field-admission-probe-v891-reaped.json": "1954aaaf0b9ecf5e4a2504d59ef10c8d15216a4a5fc7a53fa1adcbddb686a75f",
+    "selected-scalar-replay-v894-terminal.json": "60f21fb81adafc6813243f093c2640fdd37f926062e9d42c63b4090b377cfa66",
+    "selected-scalar-replay-v894-reaped.json": "0d465490a6cc743d4fe8b12bfb9365f847b0999d14bcaead36c2ffbc9e2f3ef8",
+    "selected-scalar-proof-v893.md": "323206c892bdca2554dd7cc13caa0f3c5420ec3293599cf948d132a67c9dae5c",
+    "affine-source-scalar-probe-v895-terminal.json": "861c043061a19f68da4b87922b2256349a514ac1c3176eb0465eee66976d9b1b",
+    "affine-source-scalar-probe-v895-reaped.json": "793eea23d92c598b69349ec9c76dfe4d3b496a64bc84bca7fd7f8bb7d76946f4",
+    "affine-source-scalar-oracle-v895.json": "93dca9e002483ee0dfbae10b7af9cd07da603be080e5f128ebf21f909b2affd2"
+  },
+  "next_verified_gap": {
+    "status": "Public probe completed against committed V893 normal release libraries; exact outer 51653 reaped 0",
+    "construction": "P(t)=4*t^3-pi. A(t)=(P(t),t P(t)); B(u)=(P(2u),2u P(2u)+P(2u)^2). A is trimmed from alpha to 1 and B from alpha/2 to 1/2, alpha selected in (0,1).",
+    "oracle": "At each common x=P(t)>0 the geometric ordinate difference remains x^2>0. Thus A must precede B in counter-clockwise traversal from the positive horizontal. The expected public chains remain [0,1] then [2].",
+    "hypothesis": "Distinct selected source parameters may still block source bilinear signs before normalization; a certified affine transport may be required. This is a source-based hypothesis until the public probe is run.",
+    "invariants": [
+      "Both source polynomials use exact Real coefficients, including pi.",
+      "No curve, point or parameter is sampled.",
+      "The relative geometric branch ordering and source trim are unchanged by the affine reparameterization."
+    ],
+    "result": {
+      "requests": 2,
+      "blocked": 2,
+      "classification": "RealSign under STRICT and APPROXIMATE_512",
+      "represented_points": 4,
+      "retained_unprojected_tangents": 4
+    },
+    "source_audit": "Hypersolve algebraic_root_affine_relation currently rejects any nonrational polynomial coefficient before candidate inference. Its transform_algebraic_root_affine already has an exact Real polynomial path. These are inspected-source facts; no explicit affine-transport replay has yet been run for this fixture."
+  },
+  "limits": [
+    "Full semantic/representational/evidentiary/computational operation closure is not achieved.",
+    "Selected-field normalization is now retained, but distinct selected parameters still require certified transport or extension arithmetic.",
+    "Stationary/arbitrary higher-jet branch ordering and the earlier degree-six monotone-overlap computational workload remain open.",
+    "No universal composition closure, uniform coefficient-size bound, or measured speedup is claimed."
+  ],
+  "next_work": [
+    "Use the exact V895 public baseline for affine reparameterization closure.",
+    "Examine the existing Hypersolve affine relation/transform authority; preserve root selection and strict replay while removing only unjustified coefficient restrictions.",
+    "Transport rational functions with an explicit proved substitution and preserve denominator domains. Never relax root identity by conflating alpha with alpha/2.",
+    "Use the owned selected-field values for source bilinear signs as well as normalization when common-parameter sign authority is insufficient. Preserve native fast paths and avoid persistent cache histories."
+  ]
+}

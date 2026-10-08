@@ -1,0 +1,11 @@
+{
+  "tag": "mpoly-bridge-native",
+  "started": "2026-09-10T04:42:50.026Z",
+  "finished": "2026-09-10T04:42:50.071Z",
+  "elapsedSeconds": 0.043581474999999995,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison",
+  "command": "/tmp/calcium-mpoly-bridge.7pQl1d/controls",
+  "args": [],
+  "code": 0,
+  "signal": null
+}

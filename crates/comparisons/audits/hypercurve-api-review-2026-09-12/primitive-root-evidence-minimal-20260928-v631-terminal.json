@@ -1,0 +1,79 @@
+{
+  "normal_production_build": false,
+  "source_manifest": "primitive-root-evidence-minimal-20260928-v631-sources.json",
+  "source_directory": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/source-archives/primitive-root-evidence-minimal-20260928-v631",
+  "builds": [
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "test",
+        "--test",
+        "hypercurve_analytic_parallel_region",
+        "--release",
+        "--all-features",
+        "--locked",
+        "--offline",
+        "--no-run",
+        "--message-format=json"
+      ],
+      "returncode": 0,
+      "log": "primitive-root-evidence-minimal-20260928-v631-build.log",
+      "elapsed_seconds": 80.82839527586475,
+      "binaries": {
+        "hypercurve_analytic_parallel_region": {
+          "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/primitive-root-evidence-minimal-20260928-v631-hypercurve_analytic_parallel_region-tests",
+          "sha256": "a60d36ee613c854d7180351485c350b0305e0d39627c5d0c3cc217e3d9035361"
+        }
+      }
+    }
+  ],
+  "cases": [
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/primitive-root-evidence-minimal-20260928-v631-hypercurve_analytic_parallel_region-tests",
+        "--exact",
+        "radical_parallel_cusp_offsets_exactly_under_both_policies",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "primitive-root-evidence-minimal-20260928-v631-radical_parallel_cusp_offsets_exactly_under_both_policies.log",
+      "elapsed_seconds": 0.1639444869942963,
+      "target": "hypercurve_analytic_parallel_region",
+      "name": "radical_parallel_cusp_offsets_exactly_under_both_policies",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/primitive-root-evidence-minimal-20260928-v631-hypercurve_analytic_parallel_region-tests",
+        "--exact",
+        "radical_parallel_cusp_spans_connect_under_both_policies",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "primitive-root-evidence-minimal-20260928-v631-radical_parallel_cusp_spans_connect_under_both_policies.log",
+      "elapsed_seconds": 0.015688964165747166,
+      "target": "hypercurve_analytic_parallel_region",
+      "name": "radical_parallel_cusp_spans_connect_under_both_policies",
+      "passed": true
+    }
+  ],
+  "checks": [],
+  "expected_cases": {
+    "hypercurve_analytic_parallel_region": [
+      "radical_parallel_cusp_offsets_exactly_under_both_policies",
+      "radical_parallel_cusp_spans_connect_under_both_policies"
+    ]
+  },
+  "all_processes_reaped": true,
+  "probe_complete": true,
+  "qualification_complete": false,
+  "performance": [
+    {
+      "name": "radical_parallel_cusp_offsets_exactly_under_both_policies",
+      "before": 62.99474022979848,
+      "after": 0.1639444869942963
+    }
+  ]
+}

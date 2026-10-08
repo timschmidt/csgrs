@@ -1,0 +1,20 @@
+
+Error: [S-4804]
+       Stack failed to construct a build plan.
+       
+       While constructing the build plan, Stack encountered the following errors. The 'Stack
+       configuration' refers to the set of package versions specified by the snapshot (after any
+       dropped packages, or pruned GHC boot packages; if a boot package is replaced, Stack prunes
+       all other such packages that depend on it) and any extra-deps:
+       
+       In the dependencies for aern-double-0.5.0:
+         * ieee-utils-tempfix must match >=0.4, but no version is in the Stack configuration (latest
+           matching version is 0.4.0.1).
+       The above is/are needed since aern-double is a build target.
+       
+       Some different approaches to resolving some or all of this:
+       
+         * Recommended action: try adding the following to your extra-deps in
+           /tmp/aern-audit.zp9Mzz/stack.yaml (project-level configuration):
+           
+           - ieee-utils-tempfix-0.4.0.1@sha256:435f35ed975e6562a9cd825008ffcdf56bddf105b87755aae4e297f0c4bddd57,1263

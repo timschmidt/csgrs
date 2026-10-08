@@ -1,0 +1,11 @@
+{
+  "source_manifest": "coincident-linear-fillet-20260927-v318-sources.json",
+  "source_sha256": "2444ee3af352d9b87286b6142ff68669d1c50b5523eeaf24390c384162376f9f",
+  "library": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypercurve-85a9105cd1c82df7.rlib",
+  "library_sha256": "e0af6116816b853c6546c5fc1ad081519c312a189317dc303e002c2cab0459a5",
+  "all_processes_reaped": true,
+  "build_returncode": 0,
+  "binary_sha256": "63fa5d1082ae09987155f58b1658e36b96cff9e6fa474d7204585ec2dcfb2eb5",
+  "returncode": 0,
+  "elapsed_seconds": 0.0036093430826440454
+}

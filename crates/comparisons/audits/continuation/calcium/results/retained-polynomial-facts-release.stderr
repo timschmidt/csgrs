@@ -1,0 +1,12 @@
+   Compiling hyperreal v0.13.1 (/home/tim/Documents/GitHub/workspace/hyperreal)
+   Compiling hyperlattice v0.6.1 (/home/tim/Documents/GitHub/workspace/hyperlattice)
+   Compiling hyperlimit v0.4.1 (/home/tim/Documents/GitHub/workspace/hyperlimit)
+   Compiling hypersolve v0.3.1 (/home/tim/Documents/GitHub/workspace/hypersolve)
+    Finished `release` profile [optimized] target(s) in 1m 27s
+     Running unittests src/lib.rs (/tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/release/deps/hypersolve-f165f92bff40da5b)
+     Running tests/exactcore_root_families.rs (/tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/release/deps/exactcore_root_families-7364eb1963db612a)
+     Running tests/quadratic_extraction.rs (/tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/release/deps/quadratic_extraction-173950e621371f34)
+     Running tests/readme.rs (/tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/release/deps/readme-44dddae31a26da4f)
+     Running tests/real_representations.rs (/tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/release/deps/real_representations-6da1189a59f14f9f)
+     Running tests/residual_props.rs (/tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/release/deps/residual_props-44ebe151724eb919)
+     Running tests/smoke.rs (/tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/release/deps/smoke-3c416432e806e8cf)

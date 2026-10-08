@@ -1,0 +1,30 @@
+{
+  "source_manifest": "compact-image-coefficients-20260926-v275-sources.json",
+  "source_directory": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/source-archives/compact-image-coefficients-20260926-v275",
+  "binary": {
+    "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/compact-image-coefficients-20260926-v275-hypercurve",
+    "sha256": "a73a028b037617b2798efa6e9e181228bd2df49ac970078cadac3541e67c46b5"
+  },
+  "cases": [
+    {
+      "name": "curve::curve_fillet::tests::joined_path_selects_and_replays_a_continuous_fillet_family",
+      "returncode": 0,
+      "log": "compact-image-family-controls-20260926-v276-0.log",
+      "elapsed_seconds": 0.2140064900740981
+    },
+    {
+      "name": "curve::curve_fillet::tests::normalized_region_selects_and_reuses_a_continuous_fillet_family",
+      "returncode": 0,
+      "log": "compact-image-family-controls-20260926-v276-1.log",
+      "elapsed_seconds": 0.11380378797184676
+    },
+    {
+      "name": "curve::tests::distinct_parallel_sources_keep_a_shared_fillet_center_family",
+      "returncode": 0,
+      "log": "compact-image-family-controls-20260926-v276-2.log",
+      "elapsed_seconds": 0.03163906803820282
+    }
+  ],
+  "all_processes_reaped": true,
+  "qualification_complete": true
+}

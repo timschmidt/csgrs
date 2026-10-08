@@ -1,0 +1,23 @@
+{
+  "tag": "log-baseline-bench-build",
+  "started": "2026-09-08T09:02:08.052Z",
+  "finished": "2026-09-08T09:02:17.174Z",
+  "elapsedSeconds": 9.119037407,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison",
+  "command": "env",
+  "args": [
+    "TMPDIR=/home/tim/Documents/GitHub/workspace/calcium-build-tmp.gVX5v4",
+    "CARGO_INCREMENTAL=0",
+    "cargo",
+    "build",
+    "-j4",
+    "--offline",
+    "--release",
+    "--manifest-path",
+    "audits/continuation/calcium/baseline-bench/Cargo.toml",
+    "--target-dir",
+    "/home/tim/Documents/GitHub/workspace/.audit-builds/calcium-baseline"
+  ],
+  "code": 0,
+  "signal": null
+}

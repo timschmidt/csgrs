@@ -1,0 +1,91 @@
+{
+  "status": "implemented and committed; no new failures in expanded qualification; original goal remains active",
+  "commits": {
+    "hypercurve": "330edacf73d34ef7524e2dd904d5ef3016821b83",
+    "hyperbrep": "051850ab555ed17885986c6c7748b0a097b466e7"
+  },
+  "base_commits": {
+    "hypercurve": "39a0c88c6fd4e013c3ba4302f050a29aae4dd522",
+    "hyperbrep": "c117ae1bdcaff2be4b1a02c01539c316ed9e5a99"
+  },
+  "implementation": [
+    "Certified primitive bounds and denominator/control-weight proofs no longer take topology context; all controlled callers migrate directly.",
+    "Polynomial bounds enumerate each axis independently, removing the bounds-only trait, joint root sort, monotone spans and repeated endpoint tests.",
+    "Equal nonzero conic weights use polynomial extrema; other common-sign conics use their affine hull; mixed-weight conics share homogeneous subdivision bounds.",
+    "Denominator sign uses one OnceLock of certified successes, never caching uncertainty. Common-sign proofs read homogeneous controls without allocating the affine weights view."
+  ],
+  "removed_context_parameters": 26,
+  "production_line_delta": -71,
+  "compiler_guided_migrations": [
+    {
+      "artifact": "bezier-bounds-policy-migration-1-applied.json",
+      "arguments_removed": 65
+    },
+    {
+      "artifact": "bezier-bounds-policy-migration-2-applied.json",
+      "arguments_removed": 2
+    },
+    {
+      "artifact": "bezier-bounds-policy-migration-3-applied.json",
+      "arguments_removed": 11
+    },
+    {
+      "artifact": "bezier-bounds-policy-migration-4-applied.json",
+      "arguments_removed": 1
+    },
+    {
+      "artifact": "bezier-bounds-policy-migration-5-applied.json",
+      "arguments_removed": 9
+    },
+    {
+      "artifact": "bezier-bounds-policy-migration-6-applied.json",
+      "arguments_removed": 1
+    },
+    {
+      "artifact": "bezier-bounds-policy-migration-7-applied.json",
+      "arguments_removed": 2
+    }
+  ],
+  "regressions": {
+    "baseline_log": "bezier-bounds-policy-baseline.log",
+    "baseline_failed": 3,
+    "baseline_passed": 1,
+    "focused_results": "bezier-bounds-policy-focused-results.json",
+    "new_passing_tests": 5,
+    "extrema_cases": 256,
+    "rules": "Rational extrema require a decided bound; nonrational exact comparisons may remain uncertain. Any returned enclosure is checked against independent endpoints and extrema, and no approximation may be consumed. Mixed-weight conic witnesses must lie outside the original affine hull; genuine poles must be rejected."
+  },
+  "full_qualification": {
+    "results": "bezier-bounds-policy-full-results.json",
+    "targets": 49,
+    "passed": 2144,
+    "hypercurve_passed": 1912,
+    "hyperbrep_passed": 232,
+    "failed": 17,
+    "ignored": 9,
+    "new_failures": 0,
+    "timed_out_targets": [],
+    "previously_unqualified_cases_excluded": 8,
+    "full_suite_passing": false,
+    "baseline_comparison": "box-policy-expanded-failure-targets.json, excluding the subsequently corrected exact-Real witness expectation"
+  },
+  "checks": {
+    "hypercurve_all_targets": "bezier-bounds-policy-migration-8.exit",
+    "hyperbrep_all_targets": "bezier-bounds-policy-hyperbrep-check.exit",
+    "immutable_sources_and_formatting": "bezier-bounds-policy-source-checks.json",
+    "source_hashes": "bezier-bounds-policy-source-before-tests.json"
+  },
+  "independent_false_bound_probe": {
+    "log": "bezier-extrema-certified-bounds-probe.log",
+    "outcome": "Both policies now decline Ordering rather than emitting the old false minimum enclosure."
+  },
+  "inward_composition": {
+    "builds": "bezier-bounds-policy-probe-builds.json",
+    "results": "bezier-bounds-policy-inward-probes.json",
+    "outcome": "Both sequential inward offsets remain Certified under both policies, with one output loop. STRICT total 25.096436027s; APPROXIMATE_512 total 23.649565282s. Unloaded observations, not a paired speedup claim."
+  },
+  "workspace": "bezier-bounds-policy-workspace-after-commit.json",
+  "clean_repositories": 30,
+  "next": "Investigate the independently parameterized analytic-circle closure gaps, beginning with the inverse chart radical-elimination guard and rational-component replay.",
+  "remaining_scope": "Original review plus the 17 baseline failures, eight expensive unqualified cases, and exact-Real independent equality followup. Do not mark the goal complete."
+}

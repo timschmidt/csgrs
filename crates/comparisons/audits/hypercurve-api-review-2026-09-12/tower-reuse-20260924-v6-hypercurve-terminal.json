@@ -1,0 +1,81 @@
+{
+  "checks": [
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "check",
+        "--all-targets",
+        "--all-features",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "log": "tower-reuse-20260924-v6-hypercurve-check-0.log"
+    },
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "check",
+        "--all-targets",
+        "--no-default-features",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "log": "tower-reuse-20260924-v6-hypercurve-check-1.log"
+    }
+  ],
+  "cases": [
+    {
+      "name": "bezier_offset::conversion_tests::selected_fiber_transverse_mapped_cut_inverts_by_point",
+      "returncode": 0,
+      "passed": true,
+      "limit_seconds": 180,
+      "elapsed_seconds": 4.8635178620461375,
+      "log": "tower-reuse-20260924-v6-hypercurve-case-0.log"
+    },
+    {
+      "name": "bezier_offset::conversion_tests::similarity_transported_mapped_cusp_cut_inverts_on_analytic_overlap",
+      "returncode": 0,
+      "passed": true,
+      "limit_seconds": 120,
+      "elapsed_seconds": 0.17701364296954125,
+      "log": "tower-reuse-20260924-v6-hypercurve-case-1.log"
+    },
+    {
+      "name": "bezier_offset::conversion_tests::similarity_transported_transverse_mapped_cut_inverts_by_point",
+      "returncode": 0,
+      "passed": true,
+      "limit_seconds": 120,
+      "elapsed_seconds": 0.15368390397634357,
+      "log": "tower-reuse-20260924-v6-hypercurve-case-2.log"
+    },
+    {
+      "name": "bezier_offset::conversion_tests::recursive_projective_kernel_imports_similarity_of_algebraic_endpoints",
+      "returncode": 0,
+      "passed": true,
+      "limit_seconds": 120,
+      "elapsed_seconds": 0.14551659405697137,
+      "log": "tower-reuse-20260924-v6-hypercurve-case-3.log"
+    },
+    {
+      "name": "bezier_offset::conversion_tests::mapped_compact_point_inverse_preserves_analytic_normal_sheet",
+      "returncode": 0,
+      "passed": true,
+      "limit_seconds": 120,
+      "elapsed_seconds": 0.4022970530204475,
+      "log": "tower-reuse-20260924-v6-hypercurve-case-4.log"
+    },
+    {
+      "name": "bezier_algebraic_image::policy_tests::arithmetic_adapter_replays_close_nonrational_bounds_strictly",
+      "returncode": 0,
+      "passed": true,
+      "limit_seconds": 120,
+      "elapsed_seconds": 0.14498743996955454,
+      "log": "tower-reuse-20260924-v6-hypercurve-case-5.log"
+    }
+  ],
+  "binary_sha256": "63a46cad2d8cb256fc22f6976818898caa0d38a1e1f8f1a2ff609f19009570a6",
+  "all_sources_unchanged": true,
+  "all_processes_reaped": true
+}

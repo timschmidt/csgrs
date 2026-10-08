@@ -1,0 +1,40 @@
+{
+  "baseline": "selected-scalar-v893-sources.json",
+  "rlib": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypercurve-85a9105cd1c82df7.rlib",
+  "rlib_sha256": "f08a53392dc35da39439d4dc99f6c777f84b7e05966d9e7c6299c8a84a1477a9",
+  "source_sha256": "1115ad93f6782a0ddb88241babb8acae3cfed389fbec8f7d49053f262abec7dc",
+  "processes": [
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustc",
+        "--edition=2024",
+        "--crate-name",
+        "selected_scalar_probe",
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/source-scalar-order-probe-v889.rs",
+        "--extern",
+        "hypercurve=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypercurve-85a9105cd1c82df7.rlib",
+        "-L",
+        "dependency=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps",
+        "-C",
+        "opt-level=3",
+        "-o",
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/selected-scalar-replay-v894-binary"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.6146007240749896,
+      "log": "selected-scalar-replay-v894-compile.log"
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/selected-scalar-replay-v894-binary"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.007686252938583493,
+      "log": "selected-scalar-replay-v894-cases.log"
+    }
+  ],
+  "all_processes_reaped": true,
+  "binary_sha256": "67097712bcbe41f0fd8bdb9d8e3ca16e0d27bb3e97dc8ede49bf61fc4e942995",
+  "output": "policy=0 second=false point_represented=true retained_tangent=true vector_represented=false\npolicy=0 second=true point_represented=true retained_tangent=true vector_represented=false\npolicy=0 decided=true\npolicy=1 second=false point_represented=true retained_tangent=true vector_represented=false\npolicy=1 second=true point_represented=true retained_tangent=true vector_represented=false\npolicy=1 decided=true\ncomplete requests=2 blocked=0\n",
+  "probe_complete": true
+}

@@ -1,0 +1,123 @@
+{
+  "status": "implemented, qualified and committed; subsequent enclosure repair adds the public inward regression; original goal active",
+  "commits": {
+    "hypercurve": "8006617e8605eacf20969b5c11fb19df1590a8f8",
+    "hypersolve": "3ac2e7510936a11c7bf2eac5dfbe3f9f851afe55",
+    "hyperreal": "a2da8e2b5de9a1a4653d3662f2f05cb6533fd7ef",
+    "hyperbrep": "8a84ee7db02fd2720ac89a1a6a227ee4ec2a8171"
+  },
+  "implementation": [
+    "Removed the history-specific recursive_composite gate and duplicated interval loop for coordinate order.",
+    "The common fallback retains short interval separation, native polynomial-parameter queries and the bounded-pass exit, then signs only the requested homogeneous coordinate in the existing least shared retained field before Cartesian publication.",
+    "Migrated all callers from coordinate_order_by_refinement to coordinate_order_fallback, and migrated the nested chamfer diagnostic assertion to the common interval event.",
+    "No new carrier, algebraic representation, cache or compatibility wrapper. Production code decreases by 27 lines."
+  ],
+  "regression": {
+    "test": "mixed_chord_pair_axis_order_keeps_oblique_supports_in_the_retained_field",
+    "baseline": "mixed-point-axis-order-baseline-trace.log",
+    "baseline_exit_code": 101,
+    "baseline_finding": "The equal first comparison reaches represented-cold-fallback once and leaves the reusable intersection field uninitialized.",
+    "coverage": "Nonzero normal +/-1/20 and tangent 1/30 on P(t)=(t,t^2) at sqrt(1/2); oblique support intersection, equality and +/-2^-600, both axes, both operand orders, both contexts; every result Certified without Cartesian publication.",
+    "focused_log": "mixed-point-axis-order-focused.log",
+    "focused_passed": 5
+  },
+  "input_capture": "mixed-point-axis-order-followup.json: guarded binary disassembly and runtime tags prove the actual inward Cartesian fallback compares ChordPair and AnalyticParallel.",
+  "initial_qualification_correction": {
+    "log": "mixed-point-axis-order-initial-hypercurve-tests.log",
+    "finding": "The only failure was an assertion of the retired interval dispatch name. The geometry/Certified checks passed. Migrated that caller and reran all selected HC/HB tests and both all-target checks.",
+    "reproduction": "mixed-point-axis-order-chamfer-regression.log"
+  },
+  "tests": {
+    "hypercurve": {
+      "passed": 1461,
+      "ignored": 6,
+      "targets": 13,
+      "fresh": true,
+      "log": "mixed-point-axis-order-hypercurve-tests.log",
+      "exit_code": 0
+    },
+    "hyperbrep": {
+      "passed": 232,
+      "ignored": 0,
+      "targets": 1,
+      "fresh": true,
+      "log": "mixed-point-axis-order-hyperbrep-tests.log",
+      "exit_code": 0
+    }
+  },
+  "freshly_run_total": 1693,
+  "unchanged_dependency_qualification": {
+    "hypersolve": {
+      "passed": 492,
+      "fresh": false,
+      "qualification": "shared-integer-gcd-qualification.json"
+    },
+    "hyperreal": {
+      "passed": 12,
+      "scope": "existing GCD tests",
+      "fresh": false,
+      "qualification": "shared-integer-gcd-qualification.json"
+    }
+  },
+  "checks": {
+    "hypercurve": {
+      "command": "cargo check --all-features --all-targets",
+      "log": "mixed-point-axis-order-hypercurve-check.log",
+      "exit_code": 0
+    },
+    "hyperbrep": {
+      "command": "cargo check --all-features --all-targets",
+      "log": "mixed-point-axis-order-hyperbrep-check.log",
+      "exit_code": 0
+    }
+  },
+  "source_sha256": {
+    "hypercurve/src/bezier_offset.rs": "88b780de17b8adc0dc18524199f04b00027beca4db8b2bf6dc5bc8e95e0fd181",
+    "hypercurve/src/bezier_region.rs": "179b690776db621c9acc8e2fea331c1b0304fedfb0d11d4fca84b8595f48be99",
+    "hypercurve/src/bbox.rs": "6394164ad5bf8e4a342039a706a602052f5ad63d8f37349bac51db86e76224ef",
+    "hypercurve/src/curve_region_boolean.rs": "5b66f18b9a607c93b5166c323337bd2df4248117edcc9b02d4c67f031728ba08",
+    "hypersolve/src/integer_interpolation.rs": "f6fd80a63c4979332406d986f64013ee17bacdd53e74f7b4c51b19656866d191",
+    "hyperreal/src/rational/arithmetic/aggregate_products.rs": "a9000f037ea1fca439961ac4ad9989c808d5b5f922691514b768d499cbb9ea5b"
+  },
+  "source_checks": "Changed-file rustfmt --check, git diff --check, live retired-name scan and unchanged source hashes pass.",
+  "held_out_retries": [
+    {
+      "log": "mixed-point-axis-order-heldout-1.log",
+      "timeout_seconds": 60,
+      "exit_code": 124
+    },
+    {
+      "log": "mixed-point-axis-order-heldout-2.log",
+      "timeout_seconds": 60,
+      "exit_code": 124
+    },
+    {
+      "log": "mixed-point-axis-order-heldout-3.log",
+      "timeout_seconds": 60,
+      "exit_code": 124
+    },
+    {
+      "log": "mixed-point-axis-order-heldout-4.log",
+      "timeout_seconds": 60,
+      "exit_code": 124
+    }
+  ],
+  "held_out_scope": "All four remain unqualified; sequential retries overlapped qualification. They precede the final trace-event/caller migration, which changes no geometry decision. No held-out speedup is claimed.",
+  "diagnostics": {
+    "binary": "stationary-ph-offset-mixed-point-axis-order",
+    "binary_sha256": "12ea946af6e5bde31cc92582b005ec007d398ee5b1028271d88581c2c00bda3f",
+    "library_sha256": "c8bba182c29692bd20e74184ba87eab29151ce8fda80b1eade1f4e588764f451",
+    "final_log": "stationary-ph-offset-mixed-point-axis-order.log",
+    "exit_code": 0,
+    "first_offset_seconds": 3.801227343,
+    "second_offset_seconds": 25.16122205,
+    "total_seconds": 28.962882613,
+    "result": "Both inward offsets Certified; second result has one boundary loop.",
+    "timing_scope": "Final unloaded probe began after all qualification, checks, profiling and held-out processes ended. Prior revision exceeded total 60 seconds. Independent public containment/regression qualification still to be added.",
+    "initial_stack": "stationary-ph-mixed-point-axis-order-stack.log",
+    "initial_binary": "stationary-ph-offset-mixed-point-axis-order-initial",
+    "remaining_cost": "Chord-pair interval enclosure reaches exact scalar normalization; see chord-pair-enclosure-followup.json."
+  },
+  "goal_status": "active",
+  "subsequent_qualification": "certified-chord-pair-enclosure-qualification.json"
+}

@@ -1,0 +1,42 @@
+{
+  "source_sha256": "89bd77306280bb66f590cf6acd28f4af355a1e57357ab17148165217771572e8",
+  "runs": [
+    {
+      "candidate": "parent",
+      "returncode": 0,
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustc",
+        "--edition=2024",
+        "-O",
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/direct-endpoints-20260924-admission-control.rs",
+        "-L",
+        "dependency=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps",
+        "--extern",
+        "hypercurve=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypercurve-48332fe4ef51e319.rlib",
+        "-o",
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/direct-endpoints-20260924-admission-control-parent"
+      ],
+      "library_sha256": "479c15e41988c3a9a9f3dd54f03a843dee0d93ea5c9911fed2c5aa4200a06f3d",
+      "binary_sha256": "eb6dcbb9b22c0fa04406ce4169357ef08e877d852fd1c4776f6a56c40ebc0d1c"
+    },
+    {
+      "candidate": "v2",
+      "returncode": 101,
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustc",
+        "--edition=2024",
+        "-O",
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/direct-endpoints-20260924-admission-control.rs",
+        "-L",
+        "dependency=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps",
+        "--extern",
+        "hypercurve=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypercurve-5ea48995826b8eaf.rlib",
+        "-o",
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/direct-endpoints-20260924-admission-control-v2"
+      ],
+      "library_sha256": "b9cc48468c2200f810d8a2377ca82d604aa0edfe07964461a3e08fdcdbf1e8ec",
+      "binary_sha256": "7874940b6e81fbc7f52dfd6e3b29c639bfe99f113241f3b764faaa2cf8a09633"
+    }
+  ],
+  "all_processes_reaped": true
+}

@@ -1,0 +1,40 @@
+{
+  "parent": "afa52c676b7712e3114fcf1132102b969f04f238",
+  "main_files_verified": 368,
+  "region_sha256": "bcaf66ff5f5ca7b19dea219413469f8adae5fdc39e64f0307d320bdd62bf6e1b",
+  "offset_sha256": "87b952575117b35cf8ffd3435824c5024b8f8c00f27cbe04c42752fedef46588",
+  "broad_binary_sha256": "0a7192ff7097e491fe81bce8b3c55a88065d1abc782196d38cf673804507d48f",
+  "broad_passed": 1197,
+  "ignored": 6,
+  "unchanged_nonpasses": 21,
+  "no_regressions": true,
+  "only_change_after_broad": "remove one unused import",
+  "final_checks": [
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "check",
+        "--all-targets",
+        "--all-features",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "log": "algebraic-query-ray-ownership-20260923-clean1-check-0.log"
+    },
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "check",
+        "--all-targets",
+        "--no-default-features",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "log": "algebraic-query-ray-ownership-20260923-clean1-check-1.log"
+    }
+  ],
+  "all_processes_reaped": true,
+  "full_goal_complete": false
+}

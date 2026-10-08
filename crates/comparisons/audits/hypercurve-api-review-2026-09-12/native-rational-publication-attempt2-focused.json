@@ -1,0 +1,70 @@
+[
+  {
+    "target": "hypercurve_curve_intersection",
+    "filter": "native_retraced_overlaps_survive_independent_restriction",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve_curve_intersection-e3a50a789eb6a53e",
+      "native_retraced_overlaps_survive_independent_restriction",
+      "--test-threads=2",
+      "--nocapture",
+      "--color",
+      "never"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.007513044998631813,
+    "log": "native-rational-publication-attempt2-native_retraced_overlaps_survive_independent_restriction.log",
+    "binary": "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve_curve_intersection-e3a50a789eb6a53e",
+    "sha256": "4b0d9ef5930bcf47aa1927d97f5f29acd75d944a78578e0442491c9b6892ea23"
+  },
+  {
+    "target": "hypercurve_curve_intersection",
+    "filter": "native_nodal_",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve_curve_intersection-e3a50a789eb6a53e",
+      "native_nodal_",
+      "--test-threads=2",
+      "--nocapture",
+      "--color",
+      "never"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.03165704100683797,
+    "log": "native-rational-publication-attempt2-native_nodal_.log",
+    "binary": "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve_curve_intersection-e3a50a789eb6a53e",
+    "sha256": "4b0d9ef5930bcf47aa1927d97f5f29acd75d944a78578e0442491c9b6892ea23"
+  },
+  {
+    "target": "lib",
+    "filter": "batch_cache_reuses_one_circle_support_relation_across_spans",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve-6e6572a45c5b177b",
+      "batch_cache_reuses_one_circle_support_relation_across_spans",
+      "--test-threads=2",
+      "--nocapture",
+      "--color",
+      "never"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.007490476986276917,
+    "log": "native-rational-publication-attempt2-batch_cache_reuses_one_circle_support_relation_across_spans.log",
+    "binary": "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve-6e6572a45c5b177b",
+    "sha256": "622551dc7da1cebebbd17a7d108b1289b075bcc590c45eeb3aad10172e391c43"
+  },
+  {
+    "target": "lib",
+    "filter": "curve_intersection::curve_support_intersection",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve-6e6572a45c5b177b",
+      "curve_intersection::curve_support_intersection",
+      "--test-threads=2",
+      "--nocapture",
+      "--color",
+      "never"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 20.190330429992173,
+    "log": "native-rational-publication-attempt2-curve_intersection-curve_support_intersection.log",
+    "binary": "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve-6e6572a45c5b177b",
+    "sha256": "622551dc7da1cebebbd17a7d108b1289b075bcc590c45eeb3aad10172e391c43"
+  }
+]

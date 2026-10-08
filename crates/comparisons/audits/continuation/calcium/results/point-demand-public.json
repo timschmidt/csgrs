@@ -1,0 +1,11 @@
+{
+  "tag": "point-demand-public",
+  "started": "2026-09-10T22:34:01.255Z",
+  "finished": "2026-09-10T22:34:01.595Z",
+  "elapsedSeconds": 0.33769945800000006,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "/tmp/calcium-point-demand.BLEmYy/public",
+  "args": [],
+  "code": 0,
+  "signal": null
+}

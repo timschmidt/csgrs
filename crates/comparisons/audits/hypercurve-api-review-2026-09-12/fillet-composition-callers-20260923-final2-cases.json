@@ -1,0 +1,10 @@
+[
+  {
+    "name": "non_ph_bezier_pair_projective_fillet_retains_algebraic_extensions",
+    "returncode": 0,
+    "passed": true,
+    "limit_seconds": 400,
+    "elapsed_seconds": 263.11874512198847,
+    "log": "fillet-composition-callers-20260923-final2-case-0.log"
+  }
+]

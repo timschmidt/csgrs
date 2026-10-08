@@ -1,0 +1,15 @@
+{
+  "tag": "spectral-verify-draft",
+  "started": "2026-09-09T03:41:06.916Z",
+  "finished": "2026-09-09T03:41:15.858Z",
+  "elapsedSeconds": 8.939660781999999,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison",
+  "command": "node",
+  "args": [
+    "audits/continuation/calcium/verify-spectral.mjs",
+    "--draft-spectral",
+    "--monic-live"
+  ],
+  "code": 0,
+  "signal": null
+}

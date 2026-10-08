@@ -1,0 +1,98 @@
+[
+  {
+    "name": "unified_region_chamfer_and_fillet_edit_higher_order_loops",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/normalized-corner-publication-diagnostic1-test",
+      "--exact",
+      "unified_region_chamfer_and_fillet_edit_higher_order_loops",
+      "--test-threads=1",
+      "--nocapture",
+      "--color",
+      "never"
+    ],
+    "returncode": 101,
+    "elapsed_seconds": 0.03205271600745618,
+    "log": "normalized-corner-publication-diagnostic1-unified_region_chamfer_and_fillet_edit_higher_order_loops.log",
+    "binary_sha256": "d3e220ace51f45fffce0dc87033ebaa86319473778dbe76389e77b094de9d0da"
+  },
+  {
+    "name": "retained_circular_regions_chamfer_over_the_full_support",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/normalized-corner-publication-diagnostic1-test",
+      "--exact",
+      "retained_circular_regions_chamfer_over_the_full_support",
+      "--test-threads=1",
+      "--nocapture",
+      "--color",
+      "never"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.6147411830024794,
+    "log": "normalized-corner-publication-diagnostic1-retained_circular_regions_chamfer_over_the_full_support.log",
+    "binary_sha256": "d3e220ace51f45fffce0dc87033ebaa86319473778dbe76389e77b094de9d0da"
+  },
+  {
+    "name": "unified_region_reuses_design_parameter_corner_solvers",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/normalized-corner-publication-diagnostic1-test",
+      "--exact",
+      "unified_region_reuses_design_parameter_corner_solvers",
+      "--test-threads=1",
+      "--nocapture",
+      "--color",
+      "never"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.007560363010270521,
+    "log": "normalized-corner-publication-diagnostic1-unified_region_reuses_design_parameter_corner_solvers.log",
+    "binary_sha256": "d3e220ace51f45fffce0dc87033ebaa86319473778dbe76389e77b094de9d0da"
+  },
+  {
+    "name": "line_parabola_fillet_extends_the_regular_incident_cell_exactly",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/normalized-corner-publication-diagnostic1-test",
+      "--exact",
+      "line_parabola_fillet_extends_the_regular_incident_cell_exactly",
+      "--test-threads=1",
+      "--nocapture",
+      "--color",
+      "never"
+    ],
+    "returncode": "timeout",
+    "elapsed_seconds": 120.00111558599747,
+    "log": "normalized-corner-publication-diagnostic1-line_parabola_fillet_extends_the_regular_incident_cell_exactly.log",
+    "binary_sha256": "d3e220ace51f45fffce0dc87033ebaa86319473778dbe76389e77b094de9d0da"
+  },
+  {
+    "name": "arc_parabola_fillet_recovers_exact_complement_contacts",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/normalized-corner-publication-diagnostic1-test",
+      "--exact",
+      "arc_parabola_fillet_recovers_exact_complement_contacts",
+      "--test-threads=1",
+      "--nocapture",
+      "--color",
+      "never"
+    ],
+    "returncode": "timeout",
+    "elapsed_seconds": 120.01260151201859,
+    "log": "normalized-corner-publication-diagnostic1-arc_parabola_fillet_recovers_exact_complement_contacts.log",
+    "binary_sha256": "d3e220ace51f45fffce0dc87033ebaa86319473778dbe76389e77b094de9d0da"
+  },
+  {
+    "name": "non_ph_bezier_pair_projective_fillet_retains_algebraic_extensions",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/normalized-corner-publication-diagnostic1-test",
+      "--exact",
+      "non_ph_bezier_pair_projective_fillet_retains_algebraic_extensions",
+      "--test-threads=1",
+      "--nocapture",
+      "--color",
+      "never"
+    ],
+    "returncode": "timeout",
+    "elapsed_seconds": 120.00339821199304,
+    "log": "normalized-corner-publication-diagnostic1-non_ph_bezier_pair_projective_fillet_retains_algebraic_extensions.log",
+    "binary_sha256": "d3e220ace51f45fffce0dc87033ebaa86319473778dbe76389e77b094de9d0da"
+  }
+]

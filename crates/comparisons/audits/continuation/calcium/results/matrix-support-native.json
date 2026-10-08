@@ -1,0 +1,11 @@
+{
+  "tag": "matrix-support-native",
+  "started": "2026-09-09T02:43:21.147Z",
+  "finished": "2026-09-09T02:43:21.216Z",
+  "elapsedSeconds": 0.067005987,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison",
+  "command": "/tmp/calcium-rank-costs.lbsszv/flint-matrix-support",
+  "args": [],
+  "code": 0,
+  "signal": null
+}

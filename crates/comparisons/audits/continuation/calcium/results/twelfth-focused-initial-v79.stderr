@@ -1,0 +1,75 @@
+   Compiling hyperreal v0.13.1 (/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/twelfth-revision-candidate-v79/hyperreal)
+error[E0599]: no associated function or constant named `sqrt2` found for struct `node::Computable` in the current scope
+   --> src/computable/node/twelfth_relation_reference_tests.rs:461:74
+    |
+461 |                         raw(Approximation::Add(trig.clone(), Computable::sqrt2())),
+    |                                                                          ^^^^^ associated function or constant not found in `node::Computable`
+    |
+   ::: src/computable/node/representation.rs:8:1
+    |
+  8 | pub struct Computable {
+    | --------------------- associated function or constant `sqrt2` not found for this struct
+    |
+note: if you're trying to build a new `node::Computable` consider using one of the following associated functions:
+      node::Computable::half
+      node::Computable::zero
+      node::Computable::one
+      node::Computable::pi
+      and 65 others
+   --> src/computable/node/primitive_constructors.rs:3:5
+    |
+  3 |     fn half() -> Self {
+    |     ^^^^^^^^^^^^^^^^^
+...
+283 |     pub fn zero() -> Computable {
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+...
+292 |     pub fn one() -> Computable {
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^
+...
+301 |     pub fn pi() -> Computable {
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^
+help: there is a method `sqrt` with a similar name
+    |
+461 -                         raw(Approximation::Add(trig.clone(), Computable::sqrt2())),
+461 +                         raw(Approximation::Add(trig.clone(), Computable::sqrt())),
+    |
+
+error[E0599]: no associated function or constant named `sqrt3` found for struct `node::Computable` in the current scope
+   --> src/computable/node/twelfth_relation_reference_tests.rs:462:79
+    |
+462 |                         raw(Approximation::Multiply(trig.clone(), Computable::sqrt3())),
+    |                                                                               ^^^^^ associated function or constant not found in `node::Computable`
+    |
+   ::: src/computable/node/representation.rs:8:1
+    |
+  8 | pub struct Computable {
+    | --------------------- associated function or constant `sqrt3` not found for this struct
+    |
+note: if you're trying to build a new `node::Computable` consider using one of the following associated functions:
+      node::Computable::half
+      node::Computable::zero
+      node::Computable::one
+      node::Computable::pi
+      and 65 others
+   --> src/computable/node/primitive_constructors.rs:3:5
+    |
+  3 |     fn half() -> Self {
+    |     ^^^^^^^^^^^^^^^^^
+...
+283 |     pub fn zero() -> Computable {
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+...
+292 |     pub fn one() -> Computable {
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^
+...
+301 |     pub fn pi() -> Computable {
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^
+help: there is a method `sqrt` with a similar name
+    |
+462 -                         raw(Approximation::Multiply(trig.clone(), Computable::sqrt3())),
+462 +                         raw(Approximation::Multiply(trig.clone(), Computable::sqrt())),
+    |
+
+For more information about this error, try `rustc --explain E0599`.
+error: could not compile `hyperreal` (lib test) due to 2 previous errors

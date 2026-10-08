@@ -1,0 +1,56 @@
+{
+  "normal_production_build": false,
+  "source_manifest": "incident-cusp-nonlinear-20260928-v659-sources.json",
+  "source_directory": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/source-archives/incident-cusp-nonlinear-20260928-v659",
+  "builds": [
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "test",
+        "--lib",
+        "--release",
+        "--all-features",
+        "--locked",
+        "--offline",
+        "--no-run",
+        "--message-format=json"
+      ],
+      "returncode": 0,
+      "log": "incident-cusp-nonlinear-20260928-v659-build.log",
+      "elapsed_seconds": 136.5093797640875,
+      "binaries": {
+        "hypercurve": {
+          "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/incident-cusp-nonlinear-20260928-v659-hypercurve-tests",
+          "sha256": "7cbbe61c0d58b610312555fd482d4c851d940cfb13fd9c71bededd161338847e"
+        }
+      }
+    }
+  ],
+  "cases": [
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/incident-cusp-nonlinear-20260928-v659-hypercurve-tests",
+        "--exact",
+        "curve::curve_fillet::incident_parallel_cusp_nonlinear_regression::incident_parallel_cusp_fillet_retains_nonlinear_partner_contact",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 124,
+      "log": "incident-cusp-nonlinear-20260928-v659-incident_parallel_cusp_fillet_retains_nonlinear_partner_contact.log",
+      "elapsed_seconds": 180.01561782788485,
+      "target": "hypercurve",
+      "name": "curve::curve_fillet::incident_parallel_cusp_nonlinear_regression::incident_parallel_cusp_fillet_retains_nonlinear_partner_contact",
+      "passed": false
+    }
+  ],
+  "checks": [],
+  "expected_cases": {
+    "hypercurve": [
+      "curve::curve_fillet::incident_parallel_cusp_nonlinear_regression::incident_parallel_cusp_fillet_retains_nonlinear_partner_contact"
+    ]
+  },
+  "all_processes_reaped": true,
+  "probe_complete": false,
+  "qualification_complete": false,
+  "failure": "focused regression failed: curve::curve_fillet::incident_parallel_cusp_nonlinear_regression::incident_parallel_cusp_fillet_retains_nonlinear_partner_contact"
+}

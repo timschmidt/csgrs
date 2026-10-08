@@ -1,0 +1,596 @@
+[
+  {
+    "repo": "calcium",
+    "path": "qqbar/affine_transform.c",
+    "ranges": [
+      [
+        1,
+        170
+      ]
+    ],
+    "note": "Checkpoint51: Full affine substitution, primitive normalization, rational/zero-slope paths and selected-root enclosure validation."
+  },
+  {
+    "repo": "calcium",
+    "path": "qqbar/composed_op.c",
+    "ranges": [
+      [
+        1,
+        364
+      ]
+    ],
+    "note": "Checkpoint51: Full power-sum/log-derivative, Borel/Hadamard reconstruction, factor/unique-root selection and exactly checked rational-guess fast path; disabled branches also read."
+  },
+  {
+    "repo": "calcium",
+    "path": "qqbar/add.c",
+    "ranges": [
+      [
+        1,
+        96
+      ]
+    ],
+    "note": "Checkpoint51: Full zero/rational/fused-affine and generic algebraic addition dispatch."
+  },
+  {
+    "repo": "calcium",
+    "path": "qqbar/sub.c",
+    "ranges": [
+      [
+        1,
+        145
+      ]
+    ],
+    "note": "Checkpoint51: Full zero/rational/fused-affine and generic algebraic subtraction dispatch."
+  },
+  {
+    "repo": "calcium",
+    "path": "qqbar/mul.c",
+    "ranges": [
+      [
+        1,
+        149
+      ]
+    ],
+    "note": "Checkpoint51: Full zero/unit/rational/equal-input square, positive-surd and general product paths."
+  },
+  {
+    "repo": "calcium",
+    "path": "qqbar/div.c",
+    "ranges": [
+      [
+        1,
+        191
+      ]
+    ],
+    "note": "Checkpoint51: Full nonzero-divisor precondition, zero/unit/rational/inverse/surd and general division paths; no invalid-input probes."
+  },
+  {
+    "repo": "calcium",
+    "path": "qqbar/inv.c",
+    "ranges": [
+      [
+        1,
+        79
+      ]
+    ],
+    "note": "Checkpoint51: Full rational inversion, coefficient reversal/sign normalization and reciprocal-enclosure certification."
+  },
+  {
+    "repo": "calcium",
+    "path": "qqbar/mul_2exp_si.c",
+    "ranges": [
+      [
+        1,
+        64
+      ]
+    ],
+    "note": "Checkpoint51: Full exact dyadic coefficient scaling and common two-valuation removal; resource guards read, not probed."
+  },
+  {
+    "repo": "calcium",
+    "path": "qqbar/pow.c",
+    "ranges": [
+      [
+        1,
+        337
+      ]
+    ],
+    "note": "Checkpoint51: Full rational/root-of-unity/deflation/square/surd/polynomial-evaluation paths and partial algebraic-exponent admission."
+  },
+  {
+    "repo": "calcium",
+    "path": "qqbar/fmpq_pow_si_ui.c",
+    "ranges": [
+      [
+        1,
+        49
+      ]
+    ],
+    "note": "Checkpoint51: Full rational-power helper, root/power order and sign-dependent reciprocal construction."
+  },
+  {
+    "repo": "calcium",
+    "path": "qqbar/evaluate_fmpq_poly.c",
+    "ranges": [
+      [
+        1,
+        177
+      ]
+    ],
+    "note": "Checkpoint51: Full rational/constant/affine/remainder and number-field multiplication-matrix minimal polynomial evaluation; enclosure selection and lifetime review."
+  },
+  {
+    "repo": "calcium",
+    "path": "qqbar/evaluate_fmpz_poly.c",
+    "ranges": [
+      [
+        1,
+        30
+      ]
+    ],
+    "note": "Checkpoint51: Full integer-polynomial evaluation wrapper with exact unit denominator."
+  },
+  {
+    "repo": "calcium",
+    "path": "qqbar/equal_fmpq_poly_val.c",
+    "ranges": [
+      [
+        1,
+        111
+      ]
+    ],
+    "note": "Checkpoint51: Full modular polynomial-composition identity check and interval-uniqueness embedding certificate."
+  },
+  {
+    "repo": "calcium",
+    "path": "qqbar/express_in_field.c",
+    "ranges": [
+      [
+        1,
+        64
+      ]
+    ],
+    "note": "Checkpoint51: Full numeric relation candidate, structural field filters and exact polynomial-value certificate; unused size/flags source observation, no direct LLL execution."
+  },
+  {
+    "repo": "calcium",
+    "path": "qqbar/guess.c",
+    "ranges": [
+      [
+        1,
+        124
+      ]
+    ],
+    "note": "Checkpoint51: Full numerical relation guessing, factor/height filters, existence/uniqueness attempt and overlap selection; heuristic result requires caller certification."
+  },
+  {
+    "repo": "calcium",
+    "path": "qqbar/acb_lindep.c",
+    "ranges": [
+      [
+        1,
+        150
+      ]
+    ],
+    "note": "Checkpoint51: Full finite-input/accuracy scaling, rounded lattice construction, LLL invocation and heuristic residual test; direct LLL qualification not performed."
+  },
+  {
+    "repo": "calcium",
+    "path": "qqbar/test/t-add.c",
+    "ranges": [
+      [
+        1,
+        185
+      ]
+    ],
+    "note": "Checkpoint51: Full upstream test source, including shared-backend identities, conditional assertions, alias calls and cleanup. Read only, not newly executed."
+  },
+  {
+    "repo": "calcium",
+    "path": "qqbar/test/t-sub.c",
+    "ranges": [
+      [
+        1,
+        185
+      ]
+    ],
+    "note": "Checkpoint51: Full upstream test source, including shared-backend identities, conditional assertions, alias calls and cleanup. Read only, not newly executed."
+  },
+  {
+    "repo": "calcium",
+    "path": "qqbar/test/t-mul.c",
+    "ranges": [
+      [
+        1,
+        236
+      ]
+    ],
+    "note": "Checkpoint51: Full upstream test source, including shared-backend identities, conditional assertions, alias calls and cleanup. Read only, not newly executed."
+  },
+  {
+    "repo": "calcium",
+    "path": "qqbar/test/t-div.c",
+    "ranges": [
+      [
+        1,
+        209
+      ]
+    ],
+    "note": "Checkpoint51: Full upstream test source, including shared-backend identities, conditional assertions, alias calls and cleanup. Read only, not newly executed."
+  },
+  {
+    "repo": "calcium",
+    "path": "qqbar/test/t-inv.c",
+    "ranges": [
+      [
+        1,
+        58
+      ]
+    ],
+    "note": "Checkpoint51: Full upstream test source, including shared-backend identities, conditional assertions, alias calls and cleanup. Read only, not newly executed."
+  },
+  {
+    "repo": "calcium",
+    "path": "qqbar/test/t-mul_2exp_si.c",
+    "ranges": [
+      [
+        1,
+        68
+      ]
+    ],
+    "note": "Checkpoint51: Full upstream test source, including shared-backend identities, conditional assertions, alias calls and cleanup. Read only, not newly executed."
+  },
+  {
+    "repo": "calcium",
+    "path": "qqbar/test/t-pow.c",
+    "ranges": [
+      [
+        1,
+        88
+      ]
+    ],
+    "note": "Checkpoint51: Full upstream test source, including shared-backend identities, conditional assertions, alias calls and cleanup. Read only, not newly executed."
+  },
+  {
+    "repo": "calcium",
+    "path": "qqbar/test/t-evaluate_fmpq_poly.c",
+    "ranges": [
+      [
+        1,
+        81
+      ]
+    ],
+    "note": "Checkpoint51: Full upstream test source, including shared-backend identities, conditional assertions, alias calls and cleanup. Read only, not newly executed."
+  },
+  {
+    "repo": "calcium",
+    "path": "qqbar/test/t-equal_fmpq_poly_val.c",
+    "ranges": [
+      [
+        1,
+        95
+      ]
+    ],
+    "note": "Checkpoint51: Full upstream test source, including shared-backend identities, conditional assertions, alias calls and cleanup. Read only, not newly executed."
+  },
+  {
+    "repo": "calcium",
+    "path": "qqbar/test/t-express_in_field.c",
+    "ranges": [
+      [
+        1,
+        81
+      ]
+    ],
+    "note": "Checkpoint51: Full upstream test source, including shared-backend identities, conditional assertions, alias calls and cleanup. Read only, not newly executed."
+  },
+  {
+    "repo": "calcium",
+    "path": "qqbar/test/t-guess.c",
+    "ranges": [
+      [
+        1,
+        68
+      ]
+    ],
+    "note": "Checkpoint51: Full upstream test source, including shared-backend identities, conditional assertions, alias calls and cleanup. Read only, not newly executed."
+  },
+  {
+    "repo": "flint",
+    "path": "src/qqbar/affine_transform.c",
+    "ranges": [
+      [
+        1,
+        171
+      ]
+    ],
+    "note": "Checkpoint51: Full affine substitution, primitive normalization, rational/zero-slope paths and selected-root enclosure validation."
+  },
+  {
+    "repo": "flint",
+    "path": "src/qqbar/composed_op.c",
+    "ranges": [
+      [
+        1,
+        364
+      ]
+    ],
+    "note": "Checkpoint51: Full power-sum/log-derivative, Borel/Hadamard reconstruction, factor/unique-root selection and exactly checked rational-guess fast path; disabled branches also read."
+  },
+  {
+    "repo": "flint",
+    "path": "src/qqbar/add.c",
+    "ranges": [
+      [
+        1,
+        95
+      ]
+    ],
+    "note": "Checkpoint51: Full zero/rational/fused-affine and generic algebraic addition dispatch."
+  },
+  {
+    "repo": "flint",
+    "path": "src/qqbar/sub.c",
+    "ranges": [
+      [
+        1,
+        145
+      ]
+    ],
+    "note": "Checkpoint51: Full zero/rational/fused-affine and generic algebraic subtraction dispatch."
+  },
+  {
+    "repo": "flint",
+    "path": "src/qqbar/mul.c",
+    "ranges": [
+      [
+        1,
+        150
+      ]
+    ],
+    "note": "Checkpoint51: Full zero/unit/rational/equal-input square, positive-surd and general product paths."
+  },
+  {
+    "repo": "flint",
+    "path": "src/qqbar/div.c",
+    "ranges": [
+      [
+        1,
+        191
+      ]
+    ],
+    "note": "Checkpoint51: Full nonzero-divisor precondition, zero/unit/rational/inverse/surd and general division paths; no invalid-input probes."
+  },
+  {
+    "repo": "flint",
+    "path": "src/qqbar/inv.c",
+    "ranges": [
+      [
+        1,
+        78
+      ]
+    ],
+    "note": "Checkpoint51: Full rational inversion, coefficient reversal/sign normalization and reciprocal-enclosure certification."
+  },
+  {
+    "repo": "flint",
+    "path": "src/qqbar/mul_2exp_si.c",
+    "ranges": [
+      [
+        1,
+        63
+      ]
+    ],
+    "note": "Checkpoint51: Full exact dyadic coefficient scaling and common two-valuation removal; resource guards read, not probed."
+  },
+  {
+    "repo": "flint",
+    "path": "src/qqbar/pow.c",
+    "ranges": [
+      [
+        1,
+        338
+      ]
+    ],
+    "note": "Checkpoint51: Full rational/root-of-unity/deflation/square/surd/polynomial-evaluation paths and partial algebraic-exponent admission."
+  },
+  {
+    "repo": "flint",
+    "path": "src/qqbar/fmpq_pow_si_ui.c",
+    "ranges": [
+      [
+        1,
+        50
+      ]
+    ],
+    "note": "Checkpoint51: Full rational-power helper, root/power order and sign-dependent reciprocal construction."
+  },
+  {
+    "repo": "flint",
+    "path": "src/qqbar/evaluate_fmpq_poly.c",
+    "ranges": [
+      [
+        1,
+        182
+      ]
+    ],
+    "note": "Checkpoint51: Full rational/constant/affine/remainder and number-field multiplication-matrix minimal polynomial evaluation; enclosure selection and lifetime review."
+  },
+  {
+    "repo": "flint",
+    "path": "src/qqbar/evaluate_fmpz_poly.c",
+    "ranges": [
+      [
+        1,
+        29
+      ]
+    ],
+    "note": "Checkpoint51: Full integer-polynomial evaluation wrapper with exact unit denominator."
+  },
+  {
+    "repo": "flint",
+    "path": "src/qqbar/equal_fmpq_poly_val.c",
+    "ranges": [
+      [
+        1,
+        112
+      ]
+    ],
+    "note": "Checkpoint51: Full modular polynomial-composition identity check and interval-uniqueness embedding certificate."
+  },
+  {
+    "repo": "flint",
+    "path": "src/qqbar/express_in_field.c",
+    "ranges": [
+      [
+        1,
+        65
+      ]
+    ],
+    "note": "Checkpoint51: Full numeric relation candidate, structural field filters and exact polynomial-value certificate; unused size/flags source observation, no direct LLL execution."
+  },
+  {
+    "repo": "flint",
+    "path": "src/qqbar/guess.c",
+    "ranges": [
+      [
+        1,
+        125
+      ]
+    ],
+    "note": "Checkpoint51: Full numerical relation guessing, factor/height filters, existence/uniqueness attempt and overlap selection; heuristic result requires caller certification."
+  },
+  {
+    "repo": "flint",
+    "path": "src/qqbar/acb_lindep.c",
+    "ranges": [
+      [
+        1,
+        151
+      ]
+    ],
+    "note": "Checkpoint51: Full finite-input/accuracy scaling, rounded lattice construction, LLL invocation and heuristic residual test; direct LLL qualification not performed."
+  },
+  {
+    "repo": "flint",
+    "path": "src/qqbar/test/t-add.c",
+    "ranges": [
+      [
+        1,
+        176
+      ]
+    ],
+    "note": "Checkpoint51: Full upstream test source, including shared-backend identities, conditional assertions, alias calls and cleanup. Read only, not newly executed."
+  },
+  {
+    "repo": "flint",
+    "path": "src/qqbar/test/t-sub.c",
+    "ranges": [
+      [
+        1,
+        176
+      ]
+    ],
+    "note": "Checkpoint51: Full upstream test source, including shared-backend identities, conditional assertions, alias calls and cleanup. Read only, not newly executed."
+  },
+  {
+    "repo": "flint",
+    "path": "src/qqbar/test/t-mul.c",
+    "ranges": [
+      [
+        1,
+        227
+      ]
+    ],
+    "note": "Checkpoint51: Full upstream test source, including shared-backend identities, conditional assertions, alias calls and cleanup. Read only, not newly executed."
+  },
+  {
+    "repo": "flint",
+    "path": "src/qqbar/test/t-div.c",
+    "ranges": [
+      [
+        1,
+        200
+      ]
+    ],
+    "note": "Checkpoint51: Full upstream test source, including shared-backend identities, conditional assertions, alias calls and cleanup. Read only, not newly executed."
+  },
+  {
+    "repo": "flint",
+    "path": "src/qqbar/test/t-inv.c",
+    "ranges": [
+      [
+        1,
+        49
+      ]
+    ],
+    "note": "Checkpoint51: Full upstream test source, including shared-backend identities, conditional assertions, alias calls and cleanup. Read only, not newly executed."
+  },
+  {
+    "repo": "flint",
+    "path": "src/qqbar/test/t-mul_2exp_si.c",
+    "ranges": [
+      [
+        1,
+        59
+      ]
+    ],
+    "note": "Checkpoint51: Full upstream test source, including shared-backend identities, conditional assertions, alias calls and cleanup. Read only, not newly executed."
+  },
+  {
+    "repo": "flint",
+    "path": "src/qqbar/test/t-pow.c",
+    "ranges": [
+      [
+        1,
+        79
+      ]
+    ],
+    "note": "Checkpoint51: Full upstream test source, including shared-backend identities, conditional assertions, alias calls and cleanup. Read only, not newly executed."
+  },
+  {
+    "repo": "flint",
+    "path": "src/qqbar/test/t-evaluate_fmpq_poly.c",
+    "ranges": [
+      [
+        1,
+        73
+      ]
+    ],
+    "note": "Checkpoint51: Full upstream test source, including shared-backend identities, conditional assertions, alias calls and cleanup. Read only, not newly executed."
+  },
+  {
+    "repo": "flint",
+    "path": "src/qqbar/test/t-equal_fmpq_poly_val.c",
+    "ranges": [
+      [
+        1,
+        88
+      ]
+    ],
+    "note": "Checkpoint51: Full upstream test source, including shared-backend identities, conditional assertions, alias calls and cleanup. Read only, not newly executed."
+  },
+  {
+    "repo": "flint",
+    "path": "src/qqbar/test/t-express_in_field.c",
+    "ranges": [
+      [
+        1,
+        74
+      ]
+    ],
+    "note": "Checkpoint51: Full upstream test source, including shared-backend identities, conditional assertions, alias calls and cleanup. Read only, not newly executed."
+  },
+  {
+    "repo": "flint",
+    "path": "src/qqbar/test/t-guess.c",
+    "ranges": [
+      [
+        1,
+        59
+      ]
+    ],
+    "note": "Checkpoint51: Full upstream test source, including shared-backend identities, conditional assertions, alias calls and cleanup. Read only, not newly executed."
+  }
+]

@@ -1,0 +1,13 @@
+{
+  "tag": "power-sums-public-baseline",
+  "started": "2026-09-10T18:37:17.870Z",
+  "finished": "2026-09-10T18:37:18.246Z",
+  "elapsedSeconds": 0.374174581,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison",
+  "command": "/tmp/calcium-power-sums.2CGTky/baseline-cpu",
+  "args": [
+    "check"
+  ],
+  "code": 0,
+  "signal": null
+}

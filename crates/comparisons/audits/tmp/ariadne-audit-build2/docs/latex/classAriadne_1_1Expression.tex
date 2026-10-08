@@ -1,0 +1,243 @@
+\doxysubsection{Expression\texorpdfstring{$<$}{<} T \texorpdfstring{$>$}{>} Class Template Reference}
+\hypertarget{classAriadne_1_1Expression}{}\label{classAriadne_1_1Expression}\index{Expression$<$ T $>$@{Expression$<$ T $>$}}
+
+
+{\ttfamily \#include $<$expression.\+hpp$>$}
+
+
+
+\doxysubsubsection{Description}
+\subsubsection*{template$<$class T$>$\newline
+class Ariadne\+::\+Expression$<$ T $>$}
+A simple expression in named variables. Ariadne supports expressions of type \doxylink{classAriadne_1_1Boolean}{Boolean}, \doxylink{classAriadne_1_1Kleenean}{Kleenean}, \doxylink{classAriadne_1_1String}{String}, \doxylink{classAriadne_1_1Integer}{Integer} and \doxylink{classAriadne_1_1Real}{Real}. 
+
+
+\begin{DoxyTemplParams}{Template Parameters}
+{\em T} & The type represented by the expression\\
+\hline
+\end{DoxyTemplParams}
+The independent variables are given string names, rather than an integer index. Expressions in different variables may be combined; the argument variables of the resulting expression are all variables occuring in all expression. Expressions may be manipulated symbolically.
+
+\begin{DoxyParagraph}{{\bfseries{Example}} }
+
+\begin{DoxyCodeInclude}{0}
+
+\end{DoxyCodeInclude}
+ 
+\end{DoxyParagraph}
+\begin{DoxySeeAlso}{See also}
+\doxylink{classAriadne_1_1Constant}{Constant}, \doxylink{classAriadne_1_1Variable}{Variable}, \doxylink{classAriadne_1_1Assignment}{Assignment} 
+\end{DoxySeeAlso}
+\doxysubsubsubsection*{Public Types}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1Expression_a215e2850ed819f54851fa725fdc8842c}\label{classAriadne_1_1Expression_a215e2850ed819f54851fa725fdc8842c} 
+typedef T {\bfseries Value\+Type}
+\begin{DoxyCompactList}\small\item\em The type represented by the expression. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1Expression_a74c998ba3dfcfd099f0416f3f711127c}\label{classAriadne_1_1Expression_a74c998ba3dfcfd099f0416f3f711127c} 
+{\bfseries Expression} ()
+\begin{DoxyCompactList}\small\item\em Default expression is a constant with default value. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Expression_a67488ee2ba9ed5cf821b79718733562c}\label{classAriadne_1_1Expression_a67488ee2ba9ed5cf821b79718733562c} 
+{\bfseries Expression} (const T \&c)
+\begin{DoxyCompactList}\small\item\em Construct an expression from a numerical value. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Expression_a453a6f8404b9498f8b0deee7daf3e114}\label{classAriadne_1_1Expression_a453a6f8404b9498f8b0deee7daf3e114} 
+{\bfseries Expression} (const \mbox{\hyperlink{classAriadne_1_1Constant}{Constant}}$<$ T $>$ \&c)
+\begin{DoxyCompactList}\small\item\em Construct an expression from a named constant. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Expression_a057d14e04e9be4fcfed584a73b04389b}\label{classAriadne_1_1Expression_a057d14e04e9be4fcfed584a73b04389b} 
+{\bfseries Expression} (const \mbox{\hyperlink{classAriadne_1_1Variable}{Variable}}$<$ T $>$ \&v)
+\begin{DoxyCompactList}\small\item\em Construct an expression from a variable. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Expression_a875ca018d3978f2c069dfc1fc04a56f8}\label{classAriadne_1_1Expression_a875ca018d3978f2c069dfc1fc04a56f8} 
+\mbox{\hyperlink{classAriadne_1_1Expression}{Expression}}$<$ T $>$ {\bfseries create\+\_\+zero} () const
+\begin{DoxyCompactList}\small\item\em Create the zero element. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Expression_a2a3b340ce76287beca300539fbb3dd23}\label{classAriadne_1_1Expression_a2a3b340ce76287beca300539fbb3dd23} 
+\mbox{\hyperlink{classAriadne_1_1Expression}{Expression}}$<$ T $>$ {\bfseries create\+\_\+constant} (T const \&t) const
+\begin{DoxyCompactList}\small\item\em Create a constant element. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Expression_acc7b48c85a95855d088ec99b77f17a3f}\label{classAriadne_1_1Expression_acc7b48c85a95855d088ec99b77f17a3f} 
+\mbox{\hyperlink{classAriadne_1_1Set}{Set}}$<$ \mbox{\hyperlink{classAriadne_1_1UntypedVariable}{Untyped\+Variable}} $>$ {\bfseries arguments} () const
+\begin{DoxyCompactList}\small\item\em The variables needed to compute the expression. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsubsection*{Static Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1Expression_a7ebb10419ce34ff856fc5286155cfc76}\label{classAriadne_1_1Expression_a7ebb10419ce34ff856fc5286155cfc76} 
+static \mbox{\hyperlink{classAriadne_1_1Expression}{Expression}}$<$ T $>$ {\bfseries constant} (const \mbox{\hyperlink{classAriadne_1_1Expression_a215e2850ed819f54851fa725fdc8842c}{Value\+Type}} \&c)
+\begin{DoxyCompactList}\small\item\em Construct a constant expression from a value. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Expression_a68bcbe40b41136dd3bc603980310c450}\label{classAriadne_1_1Expression_a68bcbe40b41136dd3bc603980310c450} 
+static \mbox{\hyperlink{classAriadne_1_1Expression}{Expression}}$<$ T $>$ {\bfseries constant} (const \mbox{\hyperlink{classAriadne_1_1Constant}{Constant}}$<$ \mbox{\hyperlink{classAriadne_1_1Expression_a215e2850ed819f54851fa725fdc8842c}{Value\+Type}} $>$ \&c)
+\begin{DoxyCompactList}\small\item\em Construct a constant expression from a named variable value. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Expression_a7182c7298918374459733088fbf1d822}\label{classAriadne_1_1Expression_a7182c7298918374459733088fbf1d822} 
+static \mbox{\hyperlink{classAriadne_1_1Expression}{Expression}}$<$ T $>$ {\bfseries variable} (const \mbox{\hyperlink{classAriadne_1_1Identifier}{Identifier}} \&c)
+\begin{DoxyCompactList}\small\item\em Construct an expression from a name. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsubsection*{Friends}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1Expression_ab8958efdadb7667ccbd938848eb5f05c}\label{classAriadne_1_1Expression_ab8958efdadb7667ccbd938848eb5f05c} 
+class {\bfseries Operation\+Expression\+Writer}
+\begin{DoxyCompactList}\small\item\em A writer for \doxylink{classAriadne_1_1Expression}{Expression} objects using prefix notation. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Expression_ad8a3233c9668de68e07be39de3aee28d}\label{classAriadne_1_1Expression_ad8a3233c9668de68e07be39de3aee28d} 
+class {\bfseries Operator\+Expression\+Writer}
+\begin{DoxyCompactList}\small\item\em A write for \doxylink{classAriadne_1_1Expression}{Expression} objects using infix notation. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Expression_a4a8b73e8594f8bf9a3474395a6f2a702}\label{classAriadne_1_1Expression_a4a8b73e8594f8bf9a3474395a6f2a702} 
+\mbox{\hyperlink{namespaceAriadne_acbb98ddc4385af4599070e65a1a47ec1}{Output\+Stream}} \& {\bfseries operator$<$$<$} (\mbox{\hyperlink{namespaceAriadne_acbb98ddc4385af4599070e65a1a47ec1}{Output\+Stream}} \&os, \mbox{\hyperlink{classAriadne_1_1Expression}{Expression}}$<$ T $>$ const \&e)
+\begin{DoxyCompactList}\small\item\em Write to an output stream. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsubsection*{Related Types and Functions}
+(Note that these are not member symbols.) \begin{Indent}\textbf{ Type synonyms}\par
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1Expression_a82a08bcee88e8526342355f5d7ec22a4}\label{classAriadne_1_1Expression_a82a08bcee88e8526342355f5d7ec22a4} 
+using {\bfseries Boolean\+Expression} = \mbox{\hyperlink{classAriadne_1_1Expression}{Expression}}$<$\mbox{\hyperlink{classAriadne_1_1Boolean}{Boolean}}$>$
+\item 
+\Hypertarget{classAriadne_1_1Expression_aa40e60c178c7f4405091c643e4ed5e86}\label{classAriadne_1_1Expression_aa40e60c178c7f4405091c643e4ed5e86} 
+using {\bfseries Kleenean\+Expression} = \mbox{\hyperlink{classAriadne_1_1Expression}{Expression}}$<$\mbox{\hyperlink{classAriadne_1_1Kleenean}{Kleenean}}$>$
+\item 
+\Hypertarget{classAriadne_1_1Expression_a28effe5dd4b400b82fa399c7af2ab07c}\label{classAriadne_1_1Expression_a28effe5dd4b400b82fa399c7af2ab07c} 
+using {\bfseries String\+Expression} = \mbox{\hyperlink{classAriadne_1_1Expression}{Expression}}$<$\mbox{\hyperlink{classAriadne_1_1String}{String}}$>$
+\item 
+\Hypertarget{classAriadne_1_1Expression_af9bdb4855f8ed1b3c85feea9fbeedd48}\label{classAriadne_1_1Expression_af9bdb4855f8ed1b3c85feea9fbeedd48} 
+using {\bfseries Integer\+Expression} = \mbox{\hyperlink{classAriadne_1_1Expression}{Expression}}$<$\mbox{\hyperlink{classAriadne_1_1Integer}{Integer}}$>$
+\item 
+\Hypertarget{classAriadne_1_1Expression_aab4b86b1673459af662c87c7a09a2e0d}\label{classAriadne_1_1Expression_aab4b86b1673459af662c87c7a09a2e0d} 
+using {\bfseries Real\+Expression} = \mbox{\hyperlink{classAriadne_1_1Expression}{Expression}}$<$\mbox{\hyperlink{classAriadne_1_1Real}{Real}}$>$
+\item 
+\Hypertarget{classAriadne_1_1Expression_a2cdb8472d09356b01317258250a59990}\label{classAriadne_1_1Expression_a2cdb8472d09356b01317258250a59990} 
+using {\bfseries Real\+Expressions} = \mbox{\hyperlink{classAriadne_1_1List}{List}}$<$\mbox{\hyperlink{classAriadne_1_1Expression}{Expression}}$<$\mbox{\hyperlink{classAriadne_1_1Real}{Real}}$>$$>$
+\item 
+\Hypertarget{classAriadne_1_1Expression_a0ec27d04fa826520016d76c560142e6a}\label{classAriadne_1_1Expression_a0ec27d04fa826520016d76c560142e6a} 
+using {\bfseries Real\+Expression\+Vector} = \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$\mbox{\hyperlink{classAriadne_1_1Expression}{Expression}}$<$\mbox{\hyperlink{classAriadne_1_1Real}{Real}}$>$$>$
+\item 
+\Hypertarget{classAriadne_1_1Expression_ab58f34aa4f02103a0c9e5fb027fc3068}\label{classAriadne_1_1Expression_ab58f34aa4f02103a0c9e5fb027fc3068} 
+using {\bfseries Discrete\+Predicate} = \mbox{\hyperlink{classAriadne_1_1Expression}{Expression}}$<$\mbox{\hyperlink{classAriadne_1_1Boolean}{Boolean}}$>$
+\begin{DoxyCompactList}\small\item\em A decidable predicate over discrete variables. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Expression_a36ad158b0c9a1e529f7d86d6d4060d87}\label{classAriadne_1_1Expression_a36ad158b0c9a1e529f7d86d6d4060d87} 
+using {\bfseries Continuous\+Predicate} = \mbox{\hyperlink{classAriadne_1_1Expression}{Expression}}$<$\mbox{\hyperlink{classAriadne_1_1Kleenean}{Kleenean}}$>$
+\begin{DoxyCompactList}\small\item\em A quasidecidable predicate over continuous variables. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\end{Indent}
+\begin{Indent}\textbf{ Methods for building expressions}\par
+\end{Indent}
+\begin{Indent}\textbf{ Evaluation and related operations.}\par
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1Expression_a86aa8ebe5bb5bf97a7c3d5b0b9f6d716}\label{classAriadne_1_1Expression_a86aa8ebe5bb5bf97a7c3d5b0b9f6d716} 
+{\footnotesize template$<$class T$>$ }\\Logic\+Type$<$ T $>$ {\bfseries evaluate} (const \mbox{\hyperlink{classAriadne_1_1Expression}{Expression}}$<$ Logic\+Type$<$ T $>$ $>$ \&e, const \mbox{\hyperlink{classAriadne_1_1Map}{Map}}$<$ \mbox{\hyperlink{classAriadne_1_1Identifier}{Identifier}}, T $>$ \&x)
+\begin{DoxyCompactList}\small\item\em Evaluate expression {\itshape e} on argument {\itshape x} which is a map of variable identifiers to values of type {\ttfamily A}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Expression_a3862a0f8c9db584198d05041bbdf3cf6}\label{classAriadne_1_1Expression_a3862a0f8c9db584198d05041bbdf3cf6} 
+{\footnotesize template$<$class T$>$ }\\T {\bfseries evaluate} (const \mbox{\hyperlink{classAriadne_1_1Expression}{Expression}}$<$ T $>$ \&e, const \mbox{\hyperlink{classAriadne_1_1Map}{Map}}$<$ \mbox{\hyperlink{classAriadne_1_1Identifier}{Identifier}}, T $>$ \&x)
+\begin{DoxyCompactList}\small\item\em Evaluate expression {\itshape e} on argument {\itshape x} which is a map of variable identifiers to values of type {\ttfamily A}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Expression_a76e1ede281071c0f070c53f4e2f98a45}\label{classAriadne_1_1Expression_a76e1ede281071c0f070c53f4e2f98a45} 
+{\footnotesize template$<$class T$>$ }\\\mbox{\hyperlink{classAriadne_1_1Set}{Set}}$<$ \mbox{\hyperlink{classAriadne_1_1Identifier}{Identifier}} $>$ {\bfseries arguments} (const \mbox{\hyperlink{classAriadne_1_1Expression}{Expression}}$<$ T $>$ \&e)
+\begin{DoxyCompactList}\small\item\em Extract the arguments of expression {\itshape e}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Expression_aa73e3c07350fec2267a2764d7182b9c2}\label{classAriadne_1_1Expression_aa73e3c07350fec2267a2764d7182b9c2} 
+{\footnotesize template$<$class T, class Y$>$ }\\\mbox{\hyperlink{classAriadne_1_1Expression}{Expression}}$<$ T $>$ {\bfseries substitute} (const \mbox{\hyperlink{classAriadne_1_1Expression}{Expression}}$<$ T $>$ \&e, const \mbox{\hyperlink{classAriadne_1_1Variable}{Variable}}$<$ Y $>$ \&v, const Y \&c)
+\begin{DoxyCompactList}\small\item\em Substitute all occurrences of variable {\itshape v} of type {\ttfamily Y} with constant value {\itshape c}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Expression_a992a7e9ccf615de56884df28a02efc00}\label{classAriadne_1_1Expression_a992a7e9ccf615de56884df28a02efc00} 
+{\footnotesize template$<$class T, class Y$>$ }\\\mbox{\hyperlink{classAriadne_1_1Expression}{Expression}}$<$ T $>$ {\bfseries substitute} (const \mbox{\hyperlink{classAriadne_1_1Expression}{Expression}}$<$ T $>$ \&e, const \mbox{\hyperlink{classAriadne_1_1List}{List}}$<$ \mbox{\hyperlink{classAriadne_1_1Assignment}{Assignment}}$<$ \mbox{\hyperlink{classAriadne_1_1Variable}{Variable}}$<$ Y $>$, \mbox{\hyperlink{classAriadne_1_1Expression}{Expression}}$<$ Y $>$ $>$ $>$ \&a)
+\begin{DoxyCompactList}\small\item\em Substitute all occurrences of variable {\itshape v} of type {\ttfamily Y} with expression value {\itshape se}. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\end{Indent}
+\begin{Indent}\textbf{ Operations on expressions.}\par
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1Expression_ab64ad350b1f58de4775231ce54d5dc98}\label{classAriadne_1_1Expression_ab64ad350b1f58de4775231ce54d5dc98} 
+\mbox{\hyperlink{classAriadne_1_1Expression}{Expression}}$<$ \mbox{\hyperlink{classAriadne_1_1Real}{Real}} $>$ {\bfseries indicator} (\mbox{\hyperlink{classAriadne_1_1Expression}{Expression}}$<$ \mbox{\hyperlink{classAriadne_1_1Kleenean}{Kleenean}} $>$ p, \mbox{\hyperlink{namespaceAriadne_aaed75bcf4435a6d8be243fbf9f2e375b}{Sign}} sign=Sign\+::\+POSITIVE)
+\begin{DoxyCompactList}\small\item\em Given {\itshape sign} when the predicate {\itshape p} is true. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Expression_ab2744f843f5f36431bfdeeb13eff19b6}\label{classAriadne_1_1Expression_ab2744f843f5f36431bfdeeb13eff19b6} 
+\mbox{\hyperlink{classAriadne_1_1Expression}{Expression}}$<$ \mbox{\hyperlink{classAriadne_1_1Real}{Real}} $>$ {\bfseries derivative} (const \mbox{\hyperlink{classAriadne_1_1Expression}{Expression}}$<$ \mbox{\hyperlink{classAriadne_1_1Real}{Real}} $>$ \&e, \mbox{\hyperlink{classAriadne_1_1Variable}{Variable}}$<$ \mbox{\hyperlink{classAriadne_1_1Real}{Real}} $>$ v)
+\begin{DoxyCompactList}\small\item\em The derivative of the expression {\itshape e} with respect to the variable {\itshape v}. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\end{Indent}
+\begin{Indent}\textbf{ Testing the form of expressions.}\par
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1Expression_a66b1218f39d112c121fcce48e3e41f5a}\label{classAriadne_1_1Expression_a66b1218f39d112c121fcce48e3e41f5a} 
+{\footnotesize template$<$class T$>$ }\\\mbox{\hyperlink{namespaceAriadne_a76a8b016e5ad61faf9062cc387df5016}{Bool}} {\bfseries is\+\_\+constant} (const \mbox{\hyperlink{classAriadne_1_1Expression}{Expression}}$<$ T $>$ \&e, const Self\+Type$<$ T $>$ \&c)
+\begin{DoxyCompactList}\small\item\em Returns {\itshape true} if the expression{\itshape e} is syntactically equal to the constant {\itshape c}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Expression_a5ea1d4d009c083e0e67134bccde3804b}\label{classAriadne_1_1Expression_a5ea1d4d009c083e0e67134bccde3804b} 
+{\footnotesize template$<$class T$>$ }\\\mbox{\hyperlink{namespaceAriadne_a76a8b016e5ad61faf9062cc387df5016}{Bool}} {\bfseries is\+\_\+variable} (const \mbox{\hyperlink{classAriadne_1_1Expression}{Expression}}$<$ T $>$ \&e, const \mbox{\hyperlink{classAriadne_1_1Identifier}{Identifier}} \&vn)
+\begin{DoxyCompactList}\small\item\em Returns {\itshape true} if the expression {\itshape e} is syntactically equal to the variable with name {\itshape vn}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Expression_a615f4a99ff44de9328d5f074bc135a1e}\label{classAriadne_1_1Expression_a615f4a99ff44de9328d5f074bc135a1e} 
+{\footnotesize template$<$class T$>$ }\\\mbox{\hyperlink{namespaceAriadne_a76a8b016e5ad61faf9062cc387df5016}{Bool}} {\bfseries is\+\_\+variable} (const \mbox{\hyperlink{classAriadne_1_1Expression}{Expression}}$<$ T $>$ \&e, const \mbox{\hyperlink{classAriadne_1_1Variable}{Variable}}$<$ T $>$ \&v)
+\begin{DoxyCompactList}\small\item\em Returns {\itshape true} if the expression {\itshape e} is syntactically equal to the variable {\itshape v}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Expression_a872419f209b4a358d670e0d12903820d}\label{classAriadne_1_1Expression_a872419f209b4a358d670e0d12903820d} 
+{\footnotesize template$<$class T$>$ }\\\mbox{\hyperlink{namespaceAriadne_a76a8b016e5ad61faf9062cc387df5016}{Bool}} {\bfseries is\+\_\+constant\+\_\+in} (const \mbox{\hyperlink{classAriadne_1_1Expression}{Expression}}$<$ T $>$ \&e, const \mbox{\hyperlink{classAriadne_1_1Set}{Set}}$<$ \mbox{\hyperlink{classAriadne_1_1Variable}{Variable}}$<$ T $>$ $>$ \&vs)
+\begin{DoxyCompactList}\small\item\em Returns {\itshape true} if the expression {\itshape e} is syntactically constant in the variables {\itshape vs}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Expression_a9fc4f8ab9846af8f3302eaac7d6de9f7}\label{classAriadne_1_1Expression_a9fc4f8ab9846af8f3302eaac7d6de9f7} 
+\mbox{\hyperlink{namespaceAriadne_a76a8b016e5ad61faf9062cc387df5016}{Bool}} {\bfseries is\+\_\+affine\+\_\+in} (const \mbox{\hyperlink{classAriadne_1_1Expression}{Expression}}$<$ \mbox{\hyperlink{classAriadne_1_1Real}{Real}} $>$ \&e, const \mbox{\hyperlink{classAriadne_1_1Set}{Set}}$<$ \mbox{\hyperlink{classAriadne_1_1Variable}{Variable}}$<$ \mbox{\hyperlink{classAriadne_1_1Real}{Real}} $>$ $>$ \&vs)
+\begin{DoxyCompactList}\small\item\em Returns {\itshape true} if the expression {\itshape e} is syntactically affine in the variables {\itshape vs}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Expression_a6017faa90b51c110adf182dc8fb21696}\label{classAriadne_1_1Expression_a6017faa90b51c110adf182dc8fb21696} 
+\mbox{\hyperlink{namespaceAriadne_a76a8b016e5ad61faf9062cc387df5016}{Bool}} {\bfseries is\+\_\+affine\+\_\+in} (const \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ \mbox{\hyperlink{classAriadne_1_1Expression}{Expression}}$<$ \mbox{\hyperlink{classAriadne_1_1Real}{Real}} $>$ $>$ \&e, const \mbox{\hyperlink{classAriadne_1_1Set}{Set}}$<$ \mbox{\hyperlink{classAriadne_1_1Variable}{Variable}}$<$ \mbox{\hyperlink{classAriadne_1_1Real}{Real}} $>$ $>$ \&vs)
+\begin{DoxyCompactList}\small\item\em Returns {\itshape true} if the vector of expressions {\itshape e} is syntactically affine in the variables {\itshape vs}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Expression_ac4d3c8c755db070d306194cc33d7cd7f}\label{classAriadne_1_1Expression_ac4d3c8c755db070d306194cc33d7cd7f} 
+\mbox{\hyperlink{namespaceAriadne_a76a8b016e5ad61faf9062cc387df5016}{Bool}} {\bfseries is\+\_\+affine\+\_\+in} (const \mbox{\hyperlink{classAriadne_1_1Expression}{Expression}}$<$ \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ \mbox{\hyperlink{classAriadne_1_1Real}{Real}} $>$ $>$ \&e, const \mbox{\hyperlink{classAriadne_1_1Set}{Set}}$<$ \mbox{\hyperlink{classAriadne_1_1Variable}{Variable}}$<$ \mbox{\hyperlink{classAriadne_1_1Real}{Real}} $>$ $>$ \&vs)
+\begin{DoxyCompactList}\small\item\em Returns {\itshape true} if the vector expression {\itshape e} is syntactically affine in the variables {\itshape vs}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Expression_afff77cfaa9079d6f1db6ecc8a35b5600}\label{classAriadne_1_1Expression_afff77cfaa9079d6f1db6ecc8a35b5600} 
+\mbox{\hyperlink{namespaceAriadne_a76a8b016e5ad61faf9062cc387df5016}{Bool}} {\bfseries is\+\_\+additive\+\_\+in} (const \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ \mbox{\hyperlink{classAriadne_1_1Expression}{Expression}}$<$ \mbox{\hyperlink{classAriadne_1_1Real}{Real}} $>$ $>$ \&e, const \mbox{\hyperlink{classAriadne_1_1Set}{Set}}$<$ \mbox{\hyperlink{classAriadne_1_1Variable}{Variable}}$<$ \mbox{\hyperlink{classAriadne_1_1Real}{Real}} $>$ $>$ \&vs)
+\begin{DoxyCompactList}\small\item\em Returns {\itshape true} if the vector expression {\itshape e} is syntactically additive (possibly with multipliers) in the variables {\itshape vs}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Expression_a6048f3b26d26cc4c35c73cbc8ae02928}\label{classAriadne_1_1Expression_a6048f3b26d26cc4c35c73cbc8ae02928} 
+\mbox{\hyperlink{namespaceAriadne_a76a8b016e5ad61faf9062cc387df5016}{Bool}} {\bfseries is\+\_\+polynomial\+\_\+in} (const \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ \mbox{\hyperlink{classAriadne_1_1Expression}{Expression}}$<$ \mbox{\hyperlink{classAriadne_1_1Real}{Real}} $>$ $>$ \&e, const \mbox{\hyperlink{classAriadne_1_1Set}{Set}}$<$ \mbox{\hyperlink{classAriadne_1_1Variable}{Variable}}$<$ \mbox{\hyperlink{classAriadne_1_1Real}{Real}} $>$ $>$ \&vs)
+\begin{DoxyCompactList}\small\item\em Returns {\itshape true} if the expression {\itshape e} is syntactically polynomial in the variables {\itshape vs}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Expression_a0b3c3d847beefbc6bd7cadbe79a308b1}\label{classAriadne_1_1Expression_a0b3c3d847beefbc6bd7cadbe79a308b1} 
+\mbox{\hyperlink{namespaceAriadne_a76a8b016e5ad61faf9062cc387df5016}{Bool}} {\bfseries opposite} (\mbox{\hyperlink{classAriadne_1_1Expression}{Expression}}$<$ \mbox{\hyperlink{classAriadne_1_1Kleenean}{Kleenean}} $>$ p, \mbox{\hyperlink{classAriadne_1_1Expression}{Expression}}$<$ \mbox{\hyperlink{classAriadne_1_1Kleenean}{Kleenean}} $>$ q)
+\begin{DoxyCompactList}\small\item\em Returns true if the expressions are mutual negations. ~\newline
+ Currently can only test for pairs of the form (a1\texorpdfstring{$<$}{<}=a2; a1\texorpdfstring{$>$}{>}=a2), (a1\texorpdfstring{$<$}{<}=a2; a2\texorpdfstring{$<$}{<}=a1) or (a1\texorpdfstring{$>$}{>}=a2; a2\texorpdfstring{$>$}{>}=a1). \end{DoxyCompactList}\end{DoxyCompactItemize}
+\end{Indent}
+\begin{Indent}\textbf{ Equality and ordering.}\par
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1Expression_adc9d997d8e74f090813f65876d56d10e}\label{classAriadne_1_1Expression_adc9d997d8e74f090813f65876d56d10e} 
+{\footnotesize template$<$class T$>$ }\\\mbox{\hyperlink{namespaceAriadne_a76a8b016e5ad61faf9062cc387df5016}{Bool}} {\bfseries identical} (const \mbox{\hyperlink{classAriadne_1_1Expression}{Expression}}$<$ T $>$ \&e1, const \mbox{\hyperlink{classAriadne_1_1Expression}{Expression}}$<$ T $>$ \&e2)
+\begin{DoxyCompactList}\small\item\em Tests whether two expressions are identical. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Expression_adf0f4b3ef3c24f7131230cc3b8b8bb2c}\label{classAriadne_1_1Expression_adf0f4b3ef3c24f7131230cc3b8b8bb2c} 
+{\footnotesize template$<$class T$>$ }\\\mbox{\hyperlink{namespaceAriadne_a76a8b016e5ad61faf9062cc387df5016}{Bool}} {\bfseries before} (\mbox{\hyperlink{classAriadne_1_1Expression}{Expression}}$<$ T $>$ const \&e1, \mbox{\hyperlink{classAriadne_1_1Expression}{Expression}}$<$ T $>$ const \&e2)
+\begin{DoxyCompactList}\small\item\em Check the ordering of two expressions {\itshape e1} and {\itshape e2}, by identifying whether {\itshape e1} precedes {\itshape e2}. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\end{Indent}
+\begin{Indent}\textbf{ Complexity checks and simplification.}\par
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1Expression_a754cc0edfc664a466c08694efa57bbce}\label{classAriadne_1_1Expression_a754cc0edfc664a466c08694efa57bbce} 
+{\footnotesize template$<$class T$>$ }\\Size\+Type {\bfseries count\+\_\+nodes} (const \mbox{\hyperlink{classAriadne_1_1Expression}{Expression}}$<$ T $>$ \&e)
+\begin{DoxyCompactList}\small\item\em Count the number of nodes in the expression {\itshape e}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Expression_ae7ef5880df966039ba40f6e11104571d}\label{classAriadne_1_1Expression_ae7ef5880df966039ba40f6e11104571d} 
+{\footnotesize template$<$class T$>$ }\\Size\+Type {\bfseries count\+\_\+distinct\+\_\+nodes} (const \mbox{\hyperlink{classAriadne_1_1Expression}{Expression}}$<$ T $>$ \&e)
+\begin{DoxyCompactList}\small\item\em Count the number of distinct (i.\+e., having identical representation) nodes in the expression {\itshape e}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Expression_a5c1c60c9756674d50fd414583fa84af7}\label{classAriadne_1_1Expression_a5c1c60c9756674d50fd414583fa84af7} 
+{\footnotesize template$<$class T$>$ }\\Size\+Type {\bfseries count\+\_\+distinct\+\_\+node\+\_\+pointers} (const \mbox{\hyperlink{classAriadne_1_1Expression}{Expression}}$<$ T $>$ \&e)
+\begin{DoxyCompactList}\small\item\em Count the number of distinct node pointers in the expression {\itshape e}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Expression_a69fa01047bef03e306819bd7a2a93351}\label{classAriadne_1_1Expression_a69fa01047bef03e306819bd7a2a93351} 
+{\footnotesize template$<$class T$>$ }\\\mbox{\hyperlink{classAriadne_1_1Expression}{Expression}}$<$ T $>$ {\bfseries simplify} (const \mbox{\hyperlink{classAriadne_1_1Expression}{Expression}}$<$ T $>$ \&e)
+\begin{DoxyCompactList}\small\item\em Simplify the expression {\itshape e}, such as by eliminating double negations $-(-e) \mapsto e$. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Expression_ac5a0064c9fbda63ddc9d247fce910486}\label{classAriadne_1_1Expression_ac5a0064c9fbda63ddc9d247fce910486} 
+{\footnotesize template$<$class T$>$ }\\\mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} {\bfseries eliminate\+\_\+common\+\_\+subexpressions} (\mbox{\hyperlink{classAriadne_1_1Expression}{Expression}}$<$ T $>$ \&e)
+\begin{DoxyCompactList}\small\item\em Eliminate common subexpression in {\itshape e} by replacing identical nodes. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\end{Indent}
+\begin{Indent}\textbf{ Conversion to/from functions and formulae.}\par
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1Expression_a87db077a2398da5d907505847e4c1223}\label{classAriadne_1_1Expression_a87db077a2398da5d907505847e4c1223} 
+\mbox{\hyperlink{classAriadne_1_1Formula}{Formula}}$<$ Effective\+Number $>$ {\bfseries make\+\_\+formula} (const \mbox{\hyperlink{classAriadne_1_1Expression}{Expression}}$<$ \mbox{\hyperlink{classAriadne_1_1Real}{Real}} $>$ \&e, const \mbox{\hyperlink{classAriadne_1_1Map}{Map}}$<$ \mbox{\hyperlink{classAriadne_1_1Identifier}{Identifier}}, Size\+Type $>$ \&v)
+\begin{DoxyCompactList}\small\item\em Make a formula in terms of numbered coordinates from an expression in named variables. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Expression_a0b993b202c917cf5d8f25ac90808034e}\label{classAriadne_1_1Expression_a0b993b202c917cf5d8f25ac90808034e} 
+\mbox{\hyperlink{group__FunctionModule_ga4a215a0a287e522d9422c606425448ec}{Scalar\+Univariate\+Function}}$<$ \mbox{\hyperlink{structAriadne_1_1EffectiveTag}{Effective\+Tag}} $>$ {\bfseries make\+\_\+function} (const \mbox{\hyperlink{classAriadne_1_1Variable}{Variable}}$<$ \mbox{\hyperlink{classAriadne_1_1Real}{Real}} $>$ \&v, const \mbox{\hyperlink{classAriadne_1_1Expression}{Expression}}$<$ \mbox{\hyperlink{classAriadne_1_1Real}{Real}} $>$ \&e)
+\begin{DoxyCompactList}\small\item\em Make a function on the real line given an expression in a single argument variable. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Expression_aff9bd9e80a6e1f8b4e62e79e196129f6}\label{classAriadne_1_1Expression_aff9bd9e80a6e1f8b4e62e79e196129f6} 
+\mbox{\hyperlink{group__FunctionModule_ga80b7b96539d5ad6d733df84d41bd259d}{Vector\+Univariate\+Function}}$<$ \mbox{\hyperlink{structAriadne_1_1EffectiveTag}{Effective\+Tag}} $>$ {\bfseries make\+\_\+function} (const \mbox{\hyperlink{classAriadne_1_1Variable}{Variable}}$<$ \mbox{\hyperlink{classAriadne_1_1Real}{Real}} $>$ \&v, const \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ \mbox{\hyperlink{classAriadne_1_1Expression}{Expression}}$<$ \mbox{\hyperlink{classAriadne_1_1Real}{Real}} $>$ $>$ \&e)
+\begin{DoxyCompactList}\small\item\em Make a vector function on the real line given a vector of expressions in a single argument variable. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Expression_a334776ab8df7c6961fadbb3e500c8bc5}\label{classAriadne_1_1Expression_a334776ab8df7c6961fadbb3e500c8bc5} 
+\mbox{\hyperlink{group__FunctionModule_gaec600ea23399c725519b926e6b012451}{Scalar\+Multivariate\+Function}}$<$ \mbox{\hyperlink{structAriadne_1_1EffectiveTag}{Effective\+Tag}} $>$ {\bfseries make\+\_\+function} (const \mbox{\hyperlink{classAriadne_1_1Space}{Space}}$<$ \mbox{\hyperlink{classAriadne_1_1Real}{Real}} $>$ \&s, const \mbox{\hyperlink{classAriadne_1_1Expression}{Expression}}$<$ \mbox{\hyperlink{classAriadne_1_1Real}{Real}} $>$ \&e)
+\begin{DoxyCompactList}\small\item\em Make a function on a Euclidean domain given an ordered list including all argument variables. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Expression_a5d21f4deccff8aa4644c7fe9315ef31b}\label{classAriadne_1_1Expression_a5d21f4deccff8aa4644c7fe9315ef31b} 
+\mbox{\hyperlink{group__FunctionModule_ga1abdce965f7ad2f9aa70af013de6b045}{Vector\+Multivariate\+Function}}$<$ \mbox{\hyperlink{structAriadne_1_1EffectiveTag}{Effective\+Tag}} $>$ {\bfseries make\+\_\+function} (const \mbox{\hyperlink{classAriadne_1_1Space}{Space}}$<$ \mbox{\hyperlink{classAriadne_1_1Real}{Real}} $>$ \&s, const \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ \mbox{\hyperlink{classAriadne_1_1Expression}{Expression}}$<$ \mbox{\hyperlink{classAriadne_1_1Real}{Real}} $>$ $>$ \&e)
+\begin{DoxyCompactList}\small\item\em Make a function on a Euclidean domain given an ordered list including all argument variables. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Expression_ab72e2fd4544ba000c588efefa972b34c}\label{classAriadne_1_1Expression_ab72e2fd4544ba000c588efefa972b34c} 
+\mbox{\hyperlink{classAriadne_1_1Expression}{Expression}}$<$ \mbox{\hyperlink{classAriadne_1_1Real}{Real}} $>$ {\bfseries make\+\_\+expression} (const \mbox{\hyperlink{group__FunctionModule_gaec600ea23399c725519b926e6b012451}{Scalar\+Multivariate\+Function}}$<$ \mbox{\hyperlink{structAriadne_1_1EffectiveTag}{Effective\+Tag}} $>$ \&f, const \mbox{\hyperlink{classAriadne_1_1Space}{Space}}$<$ \mbox{\hyperlink{classAriadne_1_1Real}{Real}} $>$ \&s)
+\begin{DoxyCompactList}\small\item\em Make a function on a Euclidean domain given an ordered list including all argument variables. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\end{Indent}
+
+
+The documentation for this class was generated from the following files\+:\begin{DoxyCompactItemize}
+\item 
+source/function/function.\+cpp\item 
+source/symbolic/\mbox{\hyperlink{expression_8decl_8hpp}{expression.\+decl.\+hpp}}\item 
+source/symbolic/\mbox{\hyperlink{expression_8hpp}{expression.\+hpp}}\item 
+source/symbolic/\mbox{\hyperlink{symbolic_2operations_8hpp}{operations.\+hpp}}\item 
+source/symbolic/expression.\+cpp\item 
+source/symbolic/expression.\+tpl.\+hpp\end{DoxyCompactItemize}

@@ -1,0 +1,12 @@
+[package]
+name = "calcium-rank-dominance-baseline"
+version = "0.1.0"
+edition = "2024"
+publish = false
+[workspace]
+[dependencies]
+hyperreal = { path = "../polynomial-monic-qualified-trial/hyperreal" }
+hypersolve = { path = "../polynomial-monic-qualified-trial/hypersolve" }
+[[bin]]
+name = "calcium-rank-dominance-baseline"
+path = "../rank-dominance-probe.rs"

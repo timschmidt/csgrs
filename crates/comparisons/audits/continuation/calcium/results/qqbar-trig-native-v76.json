@@ -1,0 +1,11 @@
+{
+  "tag": "qqbar-trig-native-v76",
+  "started": "2026-09-11T22:22:03.320Z",
+  "finished": "2026-09-11T22:22:03.410Z",
+  "elapsedSeconds": 0.08829775,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "/tmp/calcium-qqbar-trig-v76.xvGytz/controls",
+  "args": [],
+  "code": 0,
+  "signal": null
+}

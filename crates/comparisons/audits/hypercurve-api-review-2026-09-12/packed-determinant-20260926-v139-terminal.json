@@ -1,0 +1,59 @@
+{
+  "parent": "e479259c182835aa05d2a67308fd346699785f87",
+  "source_manifest": "local-chord-complete-replay-20260924-v139-sources.json",
+  "source_directory": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/source-archives/hypercurve-local-chord-complete-replay-v139-20260924",
+  "inputs": {
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/packed-determinant-20260926-v139.rs": "5a1ae9a7f0d629bca1652d3c4056b82ddbb08c45ddd8c64e5a54352b06bd461e",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/packed-determinant-20260926-v139-matrix.json": "7910f2ab37d8f73d2ca71b29f58244e1a9b992f892577f704781c52588e2b760",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libnum-4e6167d0c6b63d8a.rlib": "91a49bccfa0662b57af64373c8050f6e2d8002d50f89c81b5203593ac7e02345"
+  },
+  "old_function_sha256": "10361d166a6aa977dd6bdbbad2a9bce767077dda4287540d47ac49842a7cdd88",
+  "new_function_sha256": "05c631deb11f1e83e84caf6618f856d245eee7e04f0b078f4f86e98d45898bb4",
+  "cases": [
+    {
+      "label": "small-old",
+      "returncode": 0,
+      "elapsed_seconds": 0.0014063440030440688,
+      "output_sha256": "f6cf8bdf1919c398be100ca78b41c50bb3b5863198b0e8028e9b19cff60c6985",
+      "log": "packed-determinant-20260926-v139-small-old.log"
+    },
+    {
+      "label": "small-new",
+      "returncode": 0,
+      "elapsed_seconds": 0.0013642070116475224,
+      "output_sha256": "f6cf8bdf1919c398be100ca78b41c50bb3b5863198b0e8028e9b19cff60c6985",
+      "log": "packed-determinant-20260926-v139-small-new.log"
+    },
+    {
+      "label": "quartic-old",
+      "returncode": 0,
+      "elapsed_seconds": 0.46426770102698356,
+      "output_sha256": "bec0ccc4492f65ece8e97dbcf058b05ca25dad539613ccfeca9e824d96e0cc17",
+      "log": "packed-determinant-20260926-v139-quartic-old.log"
+    },
+    {
+      "label": "quartic-new",
+      "returncode": 0,
+      "elapsed_seconds": 0.31422202510293573,
+      "output_sha256": "bec0ccc4492f65ece8e97dbcf058b05ca25dad539613ccfeca9e824d96e0cc17",
+      "log": "packed-determinant-20260926-v139-quartic-new.log"
+    }
+  ],
+  "all_processes_reaped": true,
+  "diagnostic_only": true,
+  "compile_command": [
+    "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustc",
+    "--edition=2024",
+    "-O",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/packed-determinant-20260926-v139.rs",
+    "--extern",
+    "num=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libnum-4e6167d0c6b63d8a.rlib",
+    "-L",
+    "dependency=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps",
+    "-o",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/packed-determinant-20260926-v139"
+  ],
+  "compile_returncode": 0,
+  "binary_sha256": "6da83052258ec1f5a4ae8c70f814a9bfc23c7f6708007732c947b1de29ff3058",
+  "all_sources_and_executable_unchanged": true
+}

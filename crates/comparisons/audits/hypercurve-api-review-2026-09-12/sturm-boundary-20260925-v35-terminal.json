@@ -1,0 +1,73 @@
+{
+  "checks": [
+    {
+      "label": "fmt",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustfmt",
+        "--edition",
+        "2024",
+        "--check",
+        "src/root_isolation.rs"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.38455819396767765,
+      "log": "sturm-boundary-20260925-v35-fmt.log"
+    },
+    {
+      "label": "clippy-1",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "clippy",
+        "--all-targets",
+        "--all-features",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 11.118689078954048,
+      "log": "sturm-boundary-20260925-v35-clippy-1.log"
+    },
+    {
+      "label": "clippy-2",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "clippy",
+        "--all-targets",
+        "--no-default-features",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 10.410371758043766,
+      "log": "sturm-boundary-20260925-v35-clippy-2.log"
+    }
+  ],
+  "cases": [
+    {
+      "label": "sturm_counts_repeated_roots_at_owned_partition_boundaries",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/sturm-boundary-20260925-v35-libtest",
+        "--exact",
+        "root_isolation::tests::sturm_counts_repeated_roots_at_owned_partition_boundaries",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 101,
+      "elapsed_seconds": 0.2900855470215902,
+      "log": "sturm-boundary-20260925-v35-sturm_counts_repeated_roots_at_owned_partition_boundaries.log"
+    }
+  ],
+  "all_processes_reaped": true,
+  "plan": "sturm-boundary-20260925-v35-plan.json",
+  "binary": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/sturm-boundary-20260925-v35-libtest",
+  "binary_sha256": "a6a83c54a570be9830d377e3b74bc188210bc3f1f09450f6cc3677faf3d7ff58",
+  "library_case_count": 510,
+  "all_sources_unchanged": true
+}

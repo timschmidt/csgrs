@@ -1,0 +1,5 @@
+Include algebraic endpoint bridges in line-curve fillets
+
+A retained algebraic endpoint can lie before the represented anchor of its incident ray. Query the certified finite bridge along with the original finite range before adding the open ray, so an exact fillet contact in that gap is not reported as absent. Reuse the existing incident-domain expansion and keep original source-domain ownership for cut reconstruction.
+
+Validation: 81 focused release regressions across two binaries and six static/downstream checks. The independent parabola counterexample selects a known exact circle beyond an isolated sqrt(1/2) endpoint and before its chart anchor, checks both traversal directions and policies, and verifies the two exact contact junctions.

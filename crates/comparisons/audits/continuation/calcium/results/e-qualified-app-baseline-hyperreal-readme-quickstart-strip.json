@@ -1,0 +1,16 @@
+{
+  "tag": "e-qualified-app-baseline-hyperreal-readme-quickstart-strip",
+  "started": "2026-09-10T01:40:04.963Z",
+  "finished": "2026-09-10T01:40:04.986Z",
+  "elapsedSeconds": 0.020867631000000005,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "strip",
+  "args": [
+    "--strip-all",
+    "-o",
+    "/tmp/calcium-e-qualified-apps.AHiwfn/baseline-hyperreal-readme_quickstart.stripped",
+    "/tmp/calcium-e-qualified-apps.AHiwfn/baseline-hyperreal-readme_quickstart"
+  ],
+  "code": 0,
+  "signal": null
+}

@@ -1,0 +1,42 @@
+version 0.2.3:
+- Fixed bug causing Haskell comment to be inadvertently interpreted as Haddock annotation.
+
+version 0.2.2:
+- Handled name clash for name "scale" which is exported by Test.QuickCheck from version 2.8. 
+
+version 0.2.1:
+- Fixed bug in function convs in module Data.Number.IReal.FAD, which caused calls of derivs f e to become unproductive after a few derivatives when f involves sqrt, recip and tan.
+
+version 0.2:
+- Following advice received, changed the description in the synopsis "with not too inefficient exact arithmetic" to "with relatively efficient exact arithmetic", since our package is significantly faster than any other Haskell package we are aware of (but significantly slower than the best C/C++ packages).
+
+- Added the automatic differentiation module FAD to the package (was previously in directory applications at github). This is quite simple-minded (e.g., does not attempt to handle perturbation confusion), but is reasonably efficient (i.e., not exponential) for high order derivatives.
+
+This is in contrast to all packages which define derivatives of products using the standard calculus formula
+
+D (f*g) = Df * g + f * Dg,
+
+which is elegant but exponential in the order of differentiation. Furthermore, because the chain rule involves multiplication, this inefficiency permeates everywhere.
+
+- Added module Data.Number.IReal.Rounded which provides, using type-level literals, types Rounded <lit>, which contains real numbers and intervals with all computations limited to a precision of <lit> decimals. This is *not* multi-precision floating point numbers. An example illustrates the usage and properties of the type:
+
+> import Data.Number.IReal.FAD 
+> import Data.Number.IReal.Rounded
+> let f x = cos x * cos (2*x) + sin x * sin (2 * x)
+> :set +s
+> :set -XDataKinds
+> (deriv 200 f 1 :: Rounded 120) ? 40
+0.54030230586813971740[| 0803811043 .. 1069403842 |]
+(0.13 secs, 114501688 bytes)
+> (deriv 200 f 1 :: Rounded 150) ? 40
+0.5403023058681397174009366074429766037324
+(0.13 secs, 120063280 bytes)
+
+Note that function f is in fact an obfuscated version of the cosine function, using a trigonometric identity on cos (2x - x). So the derivatives are computed using the rules for differentiation, but we can check the result.
+
+We compute the 200'th  derivative of f, evaluated at 1 (i.e., cos 1) with 40 significant digits. First we try to do this at type Rounded 120, i.e. with 120 decimals in all intermediate computations. As we see, this is not precision enough; we get as result an interval of width circa 2e-22. Redoing it at type Rounded 150 gives sufficient precision. Thus, in contrast to multi-precision floating point numbers, the precision of the result is explicit (it is an interval enclosing the exact value).
+
+- Some minor bug-fixes and improvements.
+
+
+

@@ -1,0 +1,18 @@
+{
+  "name": "hypertri",
+  "command": "cargo",
+  "args": [
+    "test",
+    "--offline",
+    "--locked",
+    "--manifest-path",
+    "/home/tim/Documents/GitHub/workspace/hypertri/Cargo.toml"
+  ],
+  "begin": "2026-09-07T06:15:35.388Z",
+  "end": "2026-09-07T06:15:37.075Z",
+  "status": 0,
+  "signal": null,
+  "error": null,
+  "stdout": "\nrunning 3 tests\ntest context::tests::policy_context_and_certainty_remain_one_byte ... ok\ntest types::tests::polygon_input_facts_carry_symbolic_dependencies_without_exact_claims ... ok\ntest types::tests::polygon_input_facts_carry_exact_coordinate_summary ... ok\n\ntest result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s\n\n\nrunning 0 tests\n\ntest result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s\n\n\nrunning 0 tests\n\ntest result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s\n\n\nrunning 0 tests\n\ntest result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s\n\n\nrunning 0 tests\n\ntest result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s\n\n\nrunning 0 tests\n\ntest result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s\n\n\nrunning 2 tests\ntest readme_quickstart_matches_the_runnable_example ... ok\ntest readme_release_metadata_matches_the_manifest ... ok\n\ntest result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s\n\n\nrunning 2 tests\ntest unresolved_opaque_terminal_form_still_crosses_policy_boundary ... ok\ntest finite_real_certificate_inventory_is_current ... ok\n\ntest result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s\n\n\nrunning 0 tests\n\ntest result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s\n\n",
+  "stderr": "   Compiling earcutr v0.5.0\n   Compiling delaunator v1.1.0\n   Compiling hyperlimit v0.4.1 (/home/tim/Documents/GitHub/workspace/hyperlimit)\n   Compiling criterion v0.5.1\n   Compiling hypertri v0.4.1 (/home/tim/Documents/GitHub/workspace/hypertri)\n    Finished `test` profile [unoptimized] target(s) in 1.62s\n     Running unittests src/lib.rs (exact-real-references/ruffini-qualification/cache-public-pilot/target/debug/deps/hypertri-84c7f030106a97fb)\n     Running tests/adversarial.rs (exact-real-references/ruffini-qualification/cache-public-pilot/target/debug/deps/adversarial-665118f06ce5004f)\n     Running tests/api_surface_coverage.rs (exact-real-references/ruffini-qualification/cache-public-pilot/target/debug/deps/api_surface_coverage-8b83714c5b5be881)\n     Running tests/earcutr_differential.rs (exact-real-references/ruffini-qualification/cache-public-pilot/target/debug/deps/earcutr_differential-173cfccb546a9ae0)\n     Running tests/fuzz_properties.rs (exact-real-references/ruffini-qualification/cache-public-pilot/target/debug/deps/fuzz_properties-551567dbfe895a6e)\n     Running tests/predicate_policy.rs (exact-real-references/ruffini-qualification/cache-public-pilot/target/debug/deps/predicate_policy-43e7b34c1ad0540d)\n     Running tests/readme.rs (exact-real-references/ruffini-qualification/cache-public-pilot/target/debug/deps/readme-e453c71461e4042f)\n     Running tests/real_representations.rs (exact-real-references/ruffini-qualification/cache-public-pilot/target/debug/deps/real_representations-fdba03f4267249a5)\n   Doc-tests hypertri\n"
+}

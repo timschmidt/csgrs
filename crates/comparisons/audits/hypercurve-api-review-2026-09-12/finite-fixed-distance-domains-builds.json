@@ -1,0 +1,70 @@
+[
+  {
+    "repository": "hypercurve",
+    "kind": "check",
+    "command": [
+      "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+      "check",
+      "--all-targets",
+      "--no-default-features",
+      "--locked",
+      "--offline"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 7.576843784976518,
+    "log": "finite-fixed-distance-domains-check.log"
+  },
+  {
+    "repository": "hypercurve",
+    "kind": "test-build",
+    "command": [
+      "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+      "test",
+      "--release",
+      "--all-features",
+      "--locked",
+      "--offline",
+      "--lib",
+      "--tests",
+      "--no-run",
+      "--message-format=json"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 266.2809640459891,
+    "log": "finite-fixed-distance-domains-test-build.log"
+  },
+  {
+    "repository": "hyperbrep",
+    "kind": "check",
+    "command": [
+      "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+      "check",
+      "--all-targets",
+      "--no-default-features",
+      "--locked",
+      "--offline"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 4.520678118016804,
+    "log": "finite-fixed-distance-domains-hyperbrep-check.log"
+  },
+  {
+    "repository": "hyperbrep",
+    "kind": "test-build",
+    "command": [
+      "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+      "test",
+      "--release",
+      "--all-features",
+      "--locked",
+      "--offline",
+      "--lib",
+      "--tests",
+      "--no-run",
+      "--message-format=json"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 129.48862742399797,
+    "log": "finite-fixed-distance-domains-hyperbrep-test-build.log"
+  }
+]

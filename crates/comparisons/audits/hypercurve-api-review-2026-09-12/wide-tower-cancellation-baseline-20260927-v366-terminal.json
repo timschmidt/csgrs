@@ -1,0 +1,41 @@
+{
+  "source_manifest": "wide-tower-cancellation-baseline-20260927-v366-sources.json",
+  "source_directory": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/source-archives/wide-tower-cancellation-baseline-20260927-v366",
+  "cases": [
+    {
+      "binary": "wide-tower-cancellation-baseline-20260927-v366-hyperreal",
+      "name": "computable::node::quadratic_tower_tests::exact_tower_replay_allows_wide_intermediates_without_caching_them",
+      "returncode": 101,
+      "log": "wide-tower-cancellation-baseline-20260927-v366-case-000.log",
+      "elapsed_seconds": 0.003712664940394461
+    }
+  ],
+  "builds": [
+    {
+      "crate": "hyperreal",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "test",
+        "--lib",
+        "--release",
+        "--all-features",
+        "--no-run",
+        "--message-format=json",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "log": "wide-tower-cancellation-baseline-20260927-v366-hyperreal-build.log",
+      "elapsed_seconds": 30.611699773930013,
+      "binary": {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/wide-tower-cancellation-baseline-20260927-v366-hyperreal",
+        "sha256": "2cb19054a7c878ba12f979806371fd1e434b13f13f85aa174d4a50742fbdd941"
+      }
+    }
+  ],
+  "all_processes_reaped": true,
+  "checks": [],
+  "qualification_scope": "Baseline counterexample: exact cancellation through a retained field beyond its cache coefficient budget",
+  "failure": "case failure",
+  "qualification_complete": false
+}

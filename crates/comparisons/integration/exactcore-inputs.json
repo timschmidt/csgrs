@@ -1,0 +1,347 @@
+{
+  "scope": "External oracle source/header inputs; no exactCorelib source is redistributed here.",
+  "location": "EXACTCORE_ROOT or ../../../exactCorelib-main/trunk",
+  "compiler": "g++ (GCC) 15.3.1 20260722 (Red Hat 15.3.1-1)",
+  "files": [
+    {
+      "path": "src/CoreAux.cpp",
+      "sha256": "5f458048cf0caff3893725b56ca471f92ea79fb6d27b4d2c1a657d5114b622d5"
+    },
+    {
+      "path": "src/CoreDefs.cpp",
+      "sha256": "cc42b1cc237bfdee53230c5b5d1aa0705bc638c62125daa9a8bf9871c1043f55"
+    },
+    {
+      "path": "src/CoreIo.cpp",
+      "sha256": "4dbe4ee7b189889ea064434580d97887d6f5619d65396cc4d0c2cf7126a67524"
+    },
+    {
+      "path": "src/MpfrIO.cpp",
+      "sha256": "17255d1030540ce31d40d9d3cea309d79e507e308e15c6bec29251164c1850c4"
+    },
+    {
+      "path": "src/gmpxx/isfuns.cc",
+      "sha256": "1dc55092d79770c1281832a8dbe9e896d6f6ecc883ab37b08f6199b60be60202"
+    },
+    {
+      "path": "src/gmpxx/ismpf.cc",
+      "sha256": "8e11cae65e57d9e06d6d6f9bdc4975294afc4690d5a5aca8cb65d82fbc17b488"
+    },
+    {
+      "path": "src/gmpxx/ismpq.cc",
+      "sha256": "47bcf394fc5e55b81c8cfa116d7ef520d9ef53221380b2ff8ad3e1ab57fa69b5"
+    },
+    {
+      "path": "src/gmpxx/ismpz.cc",
+      "sha256": "e492762bb563c6120395ac85684ba8802c686507210b18bca402bea280942810"
+    },
+    {
+      "path": "inc/CORE/BFInterval.h",
+      "sha256": "30fb1e7cee3bba99a858f56ab0af3840672d90b54b363f8164170848e82b5ee1"
+    },
+    {
+      "path": "inc/CORE/BigFloat.h",
+      "sha256": "94118617dcaaee93fcb9d09670a8b702ebc1c6e3c6844d1df46f89ba972699a3"
+    },
+    {
+      "path": "inc/CORE/BigFloat.inl",
+      "sha256": "c4d4cd20049b4836e773c0604a3eea7831d57bd52f2f8827956fba76341782ef"
+    },
+    {
+      "path": "inc/CORE/BigFloat2.h",
+      "sha256": "5b133040ffad93753158e832e42e49a12fd11e92fcf0b2ad7db28b39a2ca5530"
+    },
+    {
+      "path": "inc/CORE/BigFloat2.inl",
+      "sha256": "f4e5f13ccd33908284c47dc21e4e3db696a089f845fd3160684b10e108ec1e77"
+    },
+    {
+      "path": "inc/CORE/BigInt.h",
+      "sha256": "b26be716356392d54fa3d5c2950f7f9b10ca37fe18a81ffef7e311c08926acd8"
+    },
+    {
+      "path": "inc/CORE/BigRat.h",
+      "sha256": "106564f285c804fa9c2b3d3dadd3884c370f1640b5b8cb97ddb48a6440a0d569"
+    },
+    {
+      "path": "inc/CORE/CORE.h",
+      "sha256": "54f09093aef49ad2054d9e6dce35b0c7dcfde2b16bc84e30f987291fa9d8c22e"
+    },
+    {
+      "path": "inc/CORE/ComplexT.h",
+      "sha256": "497055dc3213741116d4f704f1bb2edbb76fd5a5228637054fb4ee9f43173844"
+    },
+    {
+      "path": "inc/CORE/Config.h",
+      "sha256": "a57530c8e8fd78f017c6a12fbbc49e5aaad07a33316bf2105c5a06ebed2e0651"
+    },
+    {
+      "path": "inc/CORE/CoreAux.h",
+      "sha256": "70e7f16f59e2f22e81aa0d6ad57f8682c25d2c399b2d7aa2d219b53d1e589ddb"
+    },
+    {
+      "path": "inc/CORE/CoreDefs.h",
+      "sha256": "7bfde87f1f4a774528b627748e746a1f39d846e5d231363a3b38280a7b02b233"
+    },
+    {
+      "path": "inc/CORE/CoreIO.h",
+      "sha256": "1e77a64960f0784d0780c739aba5b9436b1db6d861c3eb741be7104ee54ad695"
+    },
+    {
+      "path": "inc/CORE/Expr.h",
+      "sha256": "833365a5442f72676adcd3d86630196aab205bae765db5621ce9fa136ad8c8c3"
+    },
+    {
+      "path": "inc/CORE/ExprRep.h",
+      "sha256": "517da82b25770345a867daf38ce0304e75b2fda0f77b9cfe4f67beea56b9f1f8"
+    },
+    {
+      "path": "inc/CORE/ExprRep.inl",
+      "sha256": "77f95edd15799661d972323e50e3997902e48dfcc05240a56a16bb8133fe8890"
+    },
+    {
+      "path": "inc/CORE/Filters.h",
+      "sha256": "f8d20584a9876d8ca2a134678ad198be24f89dcf6f7dd92ddb13cfbca28a1e55"
+    },
+    {
+      "path": "inc/CORE/Gmpq.h",
+      "sha256": "b12d2915adf318f2ba93cf053990a002c4798eba6e9558466ca9b4a60046aa83"
+    },
+    {
+      "path": "inc/CORE/Gmpz.h",
+      "sha256": "653bdb70759d7cccec98ea77a6e4c11c869010fd48236428371071a0dc3fdb79"
+    },
+    {
+      "path": "inc/CORE/IntervalT.h",
+      "sha256": "b74c8d239bd652f1c6596a1aa736de199e82a2df69daa32dd7bfb656051fbe78"
+    },
+    {
+      "path": "inc/CORE/Mpfr.h",
+      "sha256": "f7d2aa7cbb5543691d5008f69b8b22b7cf75c4727f4e4deb2e1ac0397409168c"
+    },
+    {
+      "path": "inc/CORE/Policies.h",
+      "sha256": "8451e22269095e77bb1dc81b34eb5561c1f492601ca2f420f55d48d1186854f5"
+    },
+    {
+      "path": "inc/CORE/Promote.h",
+      "sha256": "9bcb62d5a6a8b18b957608701baba20e7f5be1ab65fcf51172c2edba81c9e52b"
+    },
+    {
+      "path": "inc/CORE/RefCounting.h",
+      "sha256": "7e757b8acdb850a480cf5ff84470f12d2ab2cbc7815f82d1c7c44b972db2aef8"
+    },
+    {
+      "path": "inc/CORE/RootBounds.h",
+      "sha256": "0ebbeeb0274328012b255479a77c6911b1974107abc37e891954a9ce0f93b5c6"
+    },
+    {
+      "path": "inc/CORE/SupportT.h",
+      "sha256": "21ad680ed54f1280c39e1cbccd43cb3edc3190dc195394e6b4ed14875beb59c5"
+    },
+    {
+      "path": "inc/CORE/Timer.h",
+      "sha256": "be7da7c5985b231e2ad7dab3f0a03dd8a063a14b00ddd543e581d8bdb19689a9"
+    },
+    {
+      "path": "inc/CORE/VExpr.h",
+      "sha256": "55fd41706122fded023738a1f36fc87eaf55298c6a392b690cc3665dce83d390"
+    },
+    {
+      "path": "inc/CORE/VExprRep.h",
+      "sha256": "181c1803444f37ed3add23804f66dfdcf29a18537cc0a4a59f4e9cc189a7eb16"
+    },
+    {
+      "path": "inc/CORE/Wrappers.h",
+      "sha256": "e2fdcfd42ac023a1bc85718fd6ba136e7cc57ff7c6128b33984e0ecd7b0cd1db"
+    },
+    {
+      "path": "inc/CORE/geom2d/circle2d.h",
+      "sha256": "f1d4373ab73416a0bc26ac98252a9726d58a3d22852cf8b63d6b55abfda6d4b7"
+    },
+    {
+      "path": "inc/CORE/geom2d/line2d.h",
+      "sha256": "db83e90cf736e8055883d1b3356c29d975b0a9240b00cd8e2bdf23632538f286"
+    },
+    {
+      "path": "inc/CORE/geom2d/point2d.h",
+      "sha256": "e09a02861a2d03247e502d1fae48e3341ea7ea5aabb3cf0d030cbcfab72ca5be"
+    },
+    {
+      "path": "inc/CORE/geom2d/segment2d.h",
+      "sha256": "e8a188534e522060d6f074d86dd56df20a01a811c06e2037ae1b0bd2e0ee6547"
+    },
+    {
+      "path": "inc/CORE/geom3d/line3d.h",
+      "sha256": "44ddc2d75998eae8bb550443fabc6cf9737125d9c071245b154b9cd808431e63"
+    },
+    {
+      "path": "inc/CORE/geom3d/plane3d.h",
+      "sha256": "eb31cddd14db95663bfc75b10269f6a05aa5a653811faaab4b133650a34ee95e"
+    },
+    {
+      "path": "inc/CORE/geom3d/point3d.h",
+      "sha256": "e262ee390e21758b081d17815dd39767997104e93df588b7920f1b6944be6336"
+    },
+    {
+      "path": "inc/CORE/geom3d/polygon3d.h",
+      "sha256": "c2cdf9853b9d98073f53fc8ee35b4703c7ecd26830c0914ebef5a9c8c138d055"
+    },
+    {
+      "path": "inc/CORE/geom3d/segment3d.h",
+      "sha256": "c70c03ed3e60334a5e3f52c3543c8d0c7039458e166b516aa136d8325ae0a684"
+    },
+    {
+      "path": "inc/CORE/geom3d/triangle3d.h",
+      "sha256": "ffc144305eae2787aa50dd0b86be4b9c3346ff0d2b14f0f3cb7cf98c24d76a09"
+    },
+    {
+      "path": "inc/CORE/geombase.h",
+      "sha256": "e1a8130eff529f736fd28f635197d99c03855770709003b63e96d2e3ae1d69e3"
+    },
+    {
+      "path": "inc/CORE/geometry2d.h",
+      "sha256": "4c5cef7bac54b9e2b0578fc46346419caf2503e7cb8739b90cadab6b9da398b8"
+    },
+    {
+      "path": "inc/CORE/geometry3d.h",
+      "sha256": "6bcd1f84c2c7bc27ba7181504757d2b2a700f26fb11a49c2fce1294e1803f0b5"
+    },
+    {
+      "path": "inc/CORE/linearAlgebra.h",
+      "sha256": "e296696255475429763600feca9cbc9894b38a8059965096850a956273e47f87"
+    },
+    {
+      "path": "inc/CORE/linearAlgebraT.h",
+      "sha256": "0196977068e1f620d64907458a32bf39065587a96811e74538dee3ea4e7d4da9"
+    },
+    {
+      "path": "inc/CORE/poly/Curves.h",
+      "sha256": "33bfe6ada83d0792fb681d4d5ad76d9a07e78a5975db9e2ee1013dcc8c47bddb"
+    },
+    {
+      "path": "inc/CORE/poly/Curves.tcc",
+      "sha256": "d29808a05d3f0d34d02047e1360c1fb330f83e54c9eee4fb6d0c2947fac49b3b"
+    },
+    {
+      "path": "inc/CORE/poly/Descartes.h",
+      "sha256": "41d3a887c8c630040f211ccce31f5f58eeed100d9e84f1f910efd432ff754605"
+    },
+    {
+      "path": "inc/CORE/poly/Poly.h",
+      "sha256": "8ba6f31b662be8c1da1ec3897042acb9bccdfb919943dcde1abe8bb2f413b2bc"
+    },
+    {
+      "path": "inc/CORE/poly/PolyBase.h",
+      "sha256": "0725bc3d725ebb5c38d58b73f64183f5c5857d0562cddceb045ce167be5be459"
+    },
+    {
+      "path": "inc/CORE/poly/PolyFun.h",
+      "sha256": "fd5ce1d601cffad280f9a2d149c86c5fe15b62e486b3e4a47564e6845deeda22"
+    },
+    {
+      "path": "inc/CORE/poly/Sturm.h",
+      "sha256": "1ebdfd32847ce72c5d45a7bd737b274bfaf514bc03a14f0960f0905690b6b7db"
+    },
+    {
+      "path": "inc/CORE.h",
+      "sha256": "54f09093aef49ad2054d9e6dce35b0c7dcfde2b16bc84e30f987291fa9d8c22e"
+    },
+    {
+      "path": "ext/geom2d/circle2d.cpp",
+      "sha256": "6101e82eca0638a342cac408b9a4372f594bd179ac5116946626b1552e5d63f3"
+    },
+    {
+      "path": "ext/geom2d/line2d.cpp",
+      "sha256": "a417858884fc2a490f3f08b73fc42814cc1a882b0c9b6a1eaa2f9872bab0eac5"
+    },
+    {
+      "path": "ext/geom2d/point2d.cpp",
+      "sha256": "90d37f0ac44c079c2227e81284ab1ce3d94cee17f7661a43330f22a49dfb048b"
+    },
+    {
+      "path": "ext/geom2d/segment2d.cpp",
+      "sha256": "95aef68b4c9cb739fbe81742e9fec9d7a955eab398b30cc63b851e5f1ee7cb61"
+    },
+    {
+      "path": "ext/geom2d/test/pentagon.cpp",
+      "sha256": "bbe45ff273ad059905293c7e81a6e38f90f82a8a2b7b05b666b1edca7f39955c"
+    },
+    {
+      "path": "ext/geom2d/test/tGeom2d.cpp",
+      "sha256": "21b09ccd0f44d3241dbdc72e0c29749a64c3d70f67a19422ba85f9b7387c94db"
+    },
+    {
+      "path": "ext/geom2d/triangle2d.cpp",
+      "sha256": "c0e0706205d14331b96d7a135787deab1d8068d10c021b35b0964a2bbb8ddb69"
+    },
+    {
+      "path": "ext/geom3d/line3d.cpp",
+      "sha256": "c7afff2032ec86a799958f02b555ae9d653556659b42a9d6f09594928caa4fec"
+    },
+    {
+      "path": "ext/geom3d/plane3d.cpp",
+      "sha256": "b653f35b2af717a95f3ac37c959d51124b3f765b5e8e9b2c929a8886df70f0e5"
+    },
+    {
+      "path": "ext/geom3d/point3d.cpp",
+      "sha256": "3e31e4397a1c90125d95f7ac92d02e2d97128a427c7652ef7021debf99fc0eaa"
+    },
+    {
+      "path": "ext/geom3d/polygon3d.cpp",
+      "sha256": "1777ef0894826c20f86912e0956ff18ff390de2f534f6e80e9dc732e1f2dde85"
+    },
+    {
+      "path": "ext/geom3d/segment3d.cpp",
+      "sha256": "fe8411e75ba00e940ad74767dbe70d0d30f6a71ce649f94400974b87bccde888"
+    },
+    {
+      "path": "ext/geom3d/test/test.cpp",
+      "sha256": "b9ce810554f916d8a19e4a61eeb86db42ea23d2f378255b3a7d2e31c1881b309"
+    },
+    {
+      "path": "ext/geom3d/test/test2.cpp",
+      "sha256": "592a1eb0aa6e1150b723be82ddf498c2683f43c725b4f8abef17497cbade68b3"
+    },
+    {
+      "path": "ext/geom3d/triangle3d.cpp",
+      "sha256": "191cae591f91ce09f67bbfd5d1b5f7acfb2dcd59e3d41b5d05f58ac30252b190"
+    },
+    {
+      "path": "ext/geometry2d.cpp",
+      "sha256": "8824543343cbf042d68453498e1a66d52143e02f0485a303b798ff74a21a109f"
+    },
+    {
+      "path": "ext/geometry3d.cpp",
+      "sha256": "59dbc60ed7ec8ccaa814dc243dfc50f6f37721852e34ef8bc6e00708ff74b396"
+    },
+    {
+      "path": "ext/graphics/drawCurve.cpp",
+      "sha256": "7dda0e5fc13452f846e810bd09f254a7484d6c4fa756b77925d55bc157c48376"
+    },
+    {
+      "path": "ext/graphics/gluiExample.cpp",
+      "sha256": "bfc4d94e0ea0e58a896d0694533ad74d5a4958310a986c23108dbf0e236dd5c9"
+    },
+    {
+      "path": "ext/graphics/teapot.cpp",
+      "sha256": "288ecded0caf249aaacd6ab986af56945a3ca02c29108abf5064d58e308b2f97"
+    },
+    {
+      "path": "ext/graphics/teapot2.cpp",
+      "sha256": "a2ec97a7a2b8c1453614c42aa9c5f605a1b2c2020ee63dcd701907306a7aa206"
+    },
+    {
+      "path": "ext/graphics/teapot3.cpp",
+      "sha256": "c1b2dc271ad7dc71b5c9bf6ce9f12e04b9af85ac68d80225bcf5470aa93c7aea"
+    },
+    {
+      "path": "ext/graphics/teapot4.cpp",
+      "sha256": "54beea6dcc6f8f58b89e51b5bc971614ac038dc8558d78d4911b8063ddc660a6"
+    },
+    {
+      "path": "ext/linearAlgebra.cpp",
+      "sha256": "35566f3116cabdf70875fb662a7f3b1f02827c6901648192127e8ec1ac4b1e11"
+    }
+  ]
+}

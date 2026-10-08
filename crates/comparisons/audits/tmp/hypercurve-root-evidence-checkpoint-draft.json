@@ -1,0 +1,643 @@
+{
+  "schema_version": 1,
+  "title": "Remove redundant algebraic-root kind metadata",
+  "status": "source migration implemented and all local gates pass; quiet paired runtime controls in progress",
+  "commits": {
+    "hypersolve_baseline": "d897ff0a5d416daa16c83f1bfe32334077fd07de",
+    "hypercurve_baseline": "93ec28cc6b93df4829ce0a3f991176ed7abb3874",
+    "hypersolve_current_parent": "bb85085438e398b92ef56b0855332fc686403562"
+  },
+  "change": {
+    "removed": [
+      "AlgebraicRootKind public enum",
+      "AlgebraicRootRepresentation.kind public field",
+      "canonical_linear_value_representation_with_kind private forwarding helper",
+      "Hypercurve algebraic_root_kind_for_exact_point helper"
+    ],
+    "replacement_api": false,
+    "production_line_delta": -136,
+    "hypersolve_production_line_delta": -118,
+    "hypercurve_production_line_delta": -18,
+    "total_rust_line_delta": -275,
+    "files": 24,
+    "scope": "Only duplicated metadata and its maintenance are removed. Existing interval, point payload, validation and policy-based root decisions remain authoritative. Two clones used only for tag maintenance are replaced with moves. Real payload and interval assertions are preserved; no test is removed.",
+    "audit": "No direct kind-based production dispatch remains. Derived structural equality in tensor-axis elimination previously compared the tag incidentally; identity now compares the remaining root evidence, with the existing strict affine-relation fallback unchanged."
+  },
+  "native_production_counts": [
+    {
+      "file": "src/algebraic.rs",
+      "before": 3811,
+      "after": 3756,
+      "delta": -55
+    },
+    {
+      "file": "src/algebraic_binary.rs",
+      "before": 552,
+      "after": 546,
+      "delta": -6
+    },
+    {
+      "file": "src/algebraic_fiber.rs",
+      "before": 3809,
+      "after": 3799,
+      "delta": -10
+    },
+    {
+      "file": "src/algebraic_mobius.rs",
+      "before": 1115,
+      "after": 1101,
+      "delta": -14
+    },
+    {
+      "file": "src/algebraic_polynomial_image.rs",
+      "before": 688,
+      "after": 681,
+      "delta": -7
+    },
+    {
+      "file": "src/algebraic_rational_image.rs",
+      "before": 1797,
+      "after": 1792,
+      "delta": -5
+    },
+    {
+      "file": "src/algebraic_sqrt.rs",
+      "before": 388,
+      "after": 380,
+      "delta": -8
+    },
+    {
+      "file": "src/algebraic_tensor_image.rs",
+      "before": 933,
+      "after": 921,
+      "delta": -12
+    },
+    {
+      "file": "src/lib.rs",
+      "before": 394,
+      "after": 393,
+      "delta": -1
+    }
+  ],
+  "native_validation": {
+    "status": "passed",
+    "focused_algebraic_tests": 213,
+    "minimal_passed": 792,
+    "all_targets_passed": 795,
+    "release_passed": 793,
+    "representation_layouts": 4,
+    "representation_checks": 16,
+    "allocation_iterations": 4,
+    "coverage": {
+      "percent": 86.28,
+      "threshold_percent": 85,
+      "executable_lines": 38461,
+      "hit_lines": 33185,
+      "missed_lines": 5276
+    },
+    "script": "/tmp/hypersolve-root-evidence-gates.sh",
+    "coverage_script": "/tmp/hypersolve-root-evidence-coverage.sh",
+    "additional_checks": [
+      "all-target/all-feature check and strict clippy",
+      "all fuzz bins checked",
+      "strict clippy for all five changed algebraic fuzz targets and representation target",
+      "strict docs",
+      "format checks",
+      "all benchmark targets compiled"
+    ]
+  },
+  "qualification": {
+    "hypersolve-minimal": {
+      "path": "/tmp/hypersolve-root-evidence-minimal.log",
+      "targets": 8,
+      "passed": 792,
+      "failed": 0,
+      "ignored": 0,
+      "failures": [],
+      "longest_targets": [
+        {
+          "passed": 131,
+          "seconds": 5.21
+        },
+        {
+          "passed": 428,
+          "seconds": 4.06
+        },
+        {
+          "passed": 7,
+          "seconds": 0.41
+        },
+        {
+          "passed": 4,
+          "seconds": 0.1
+        },
+        {
+          "passed": 9,
+          "seconds": 0.08
+        },
+        {
+          "passed": 211,
+          "seconds": 0.05
+        }
+      ],
+      "tail": [
+        "running 0 tests",
+        "",
+        "test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s"
+      ]
+    },
+    "hypersolve-all-targets": {
+      "path": "/tmp/hypersolve-root-evidence-all-targets.log",
+      "targets": 10,
+      "passed": 795,
+      "failed": 0,
+      "ignored": 0,
+      "failures": [],
+      "longest_targets": [
+        {
+          "passed": 429,
+          "seconds": 9.3
+        },
+        {
+          "passed": 131,
+          "seconds": 9.25
+        },
+        {
+          "passed": 7,
+          "seconds": 2.91
+        },
+        {
+          "passed": 4,
+          "seconds": 0.65
+        },
+        {
+          "passed": 9,
+          "seconds": 0.4
+        },
+        {
+          "passed": 211,
+          "seconds": 0.05
+        }
+      ],
+      "tail": [
+        "test benchmark_report::tests::replacement_is_idempotent ... ok",
+        "",
+        "test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s"
+      ]
+    },
+    "hypersolve-release": {
+      "path": "/tmp/hypersolve-root-evidence-release.log",
+      "targets": 8,
+      "passed": 793,
+      "failed": 0,
+      "ignored": 0,
+      "failures": [],
+      "longest_targets": [
+        {
+          "passed": 131,
+          "seconds": 1.52
+        },
+        {
+          "passed": 429,
+          "seconds": 0.27
+        },
+        {
+          "passed": 7,
+          "seconds": 0.02
+        },
+        {
+          "passed": 211,
+          "seconds": 0.02
+        },
+        {
+          "passed": 9,
+          "seconds": 0.01
+        },
+        {
+          "passed": 4,
+          "seconds": 0.01
+        }
+      ],
+      "tail": [
+        "running 0 tests",
+        "",
+        "test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s"
+      ]
+    },
+    "hypercurve-all-features": {
+      "path": "/tmp/hypercurve-root-evidence-all-features.log",
+      "targets": 45,
+      "passed": 1731,
+      "failed": 0,
+      "ignored": 9,
+      "failures": [],
+      "longest_targets": [
+        {
+          "passed": 889,
+          "seconds": 184.02
+        },
+        {
+          "passed": 47,
+          "seconds": 65.96
+        },
+        {
+          "passed": 100,
+          "seconds": 57.16
+        },
+        {
+          "passed": 101,
+          "seconds": 9.84
+        },
+        {
+          "passed": 14,
+          "seconds": 7.83
+        },
+        {
+          "passed": 11,
+          "seconds": 6.45
+        }
+      ],
+      "tail": [
+        "running 0 tests",
+        "",
+        "test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s"
+      ]
+    },
+    "hypercurve-minimal": {
+      "path": "/tmp/hypercurve-root-evidence-minimal.log",
+      "targets": 45,
+      "passed": 1702,
+      "failed": 0,
+      "ignored": 4,
+      "failures": [],
+      "longest_targets": [
+        {
+          "passed": 885,
+          "seconds": 157.06
+        },
+        {
+          "passed": 47,
+          "seconds": 44.6
+        },
+        {
+          "passed": 100,
+          "seconds": 39.74
+        },
+        {
+          "passed": 101,
+          "seconds": 7.65
+        },
+        {
+          "passed": 14,
+          "seconds": 7.3
+        },
+        {
+          "passed": 11,
+          "seconds": 3.69
+        }
+      ],
+      "tail": [
+        "running 0 tests",
+        "",
+        "test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s"
+      ]
+    },
+    "hypercurve-ignored-units": {
+      "path": "/tmp/hypercurve-root-evidence-ignored-units.log",
+      "targets": 1,
+      "passed": 6,
+      "failed": 0,
+      "ignored": 0,
+      "failures": [],
+      "longest_targets": [
+        {
+          "passed": 6,
+          "seconds": 51.67
+        }
+      ],
+      "tail": [
+        "test bezier_offset::conversion_tests::selected_fiber_genuinely_analytic_contacts_complete_region_booleans ... ok",
+        "",
+        "test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 889 filtered out; finished in 51.67s"
+      ]
+    },
+    "hypercurve-ignored-stroke": {
+      "path": "/tmp/hypercurve-root-evidence-ignored-stroke.log",
+      "targets": 1,
+      "passed": 3,
+      "failed": 0,
+      "ignored": 0,
+      "failures": [],
+      "longest_targets": [
+        {
+          "passed": 3,
+          "seconds": 55.13
+        }
+      ],
+      "tail": [
+        "test exact_path_stroke_splits_an_interior_source_cusp ... ok",
+        "",
+        "test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 15 filtered out; finished in 55.13s"
+      ]
+    },
+    "hypercurve-ui-tests": {
+      "path": "/tmp/hypercurve-root-evidence-ui-tests.log",
+      "targets": 1,
+      "passed": 37,
+      "failed": 0,
+      "ignored": 0,
+      "failures": [],
+      "longest_targets": [
+        {
+          "passed": 37,
+          "seconds": 35.19
+        }
+      ],
+      "tail": [
+        "test scenes::tests::shared_polyline_boolean_state_resolves_all_boolean_modes ... ok",
+        "",
+        "test result: ok. 37 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 35.19s"
+      ]
+    }
+  },
+  "concurrent_hypersolve_work": {
+    "status": "committed separately on main",
+    "sha256": {
+      "src/polynomial.rs": "263840d2556d62c5b95a5f954bc9720bbf3c8798b640e474f5157b0a99688035",
+      "benches/support/quadratic_extraction.rs": "8fe184992b1654064e119a278648716a6f89504911facdf231074d92d69fef78",
+      "tests/quadratic_extraction.rs": "9cfc62a0efe58861170ca42bbd4769b5bfcd21f4c9ded602efcfff72065fb9e6"
+    },
+    "scope": "The separately committed production, benchmark and test hashes match the concurrent source covered by qualification. Its seven tests are included in the native counts. This work is absent from both frozen timing artifacts.",
+    "commit": "bb85085438e398b92ef56b0855332fc686403562"
+  },
+  "frozen_control": {
+    "workspace": "/tmp/hypercurve-dyadic-bernstein-control.a5ZKq2",
+    "hyperreal_production": "d219a350462357af07d035fd316cba3b1cc339c9",
+    "scope": "Both sides use the same frozen dependencies; concurrent Hyperreal 2808bc8 conversion changes and concurrent Hypersolve quadratic extraction are excluded. Live qualification uses the current workspace. The frozen Hypercurve offset and parameter files omit some newer inline tests on both sides; all pre-conversion-test source hashes match the live files, and live qualification includes those additional tests.",
+    "baseline_test": {
+      "path": "/tmp/hypercurve-owned-singleton-frozen-candidate-test",
+      "bytes": 27852504,
+      "sha256": "7b3fcff3f8556322519e8d08c17d64c2c644f2e5f4bbc72bc91071a301d6ca1b"
+    },
+    "candidate_test": {
+      "path": "/tmp/hypercurve-root-evidence-frozen-candidate-test",
+      "bytes": 27792128,
+      "sha256": "5198a559bb3617e8c0de8e0d1b472c17cfd241c73c4a9ce62e6c628e4cb57055"
+    },
+    "baseline_region": {
+      "path": "/tmp/hypercurve-owned-singleton-frozen-candidate-region",
+      "bytes": 15422704,
+      "sha256": "79a00f7222b9ffd3dae4585587b95af5f8d9cc600ac7b43749854cfd459e0f15",
+      "sections": {
+        "text": 12310494,
+        "data": 321616,
+        "bss": 1880,
+        "total": 12633990
+      }
+    },
+    "candidate_region": {
+      "path": "/tmp/hypercurve-root-evidence-frozen-candidate-region",
+      "bytes": 15426560,
+      "sha256": "7fddc61e58b0ed1d42e6104dab97420205d552d7b8bae421001c9de82b20b1be",
+      "sections": {
+        "text": 12313418,
+        "data": 321664,
+        "bss": 3016,
+        "total": 12638098
+      }
+    },
+    "binary_interpretation": "Test file shrinks 60,376 bytes, region file grows 3,856 bytes and its combined text/data/BSS grows 4,108 bytes. No uniform binary-size improvement is claimed."
+  },
+  "layouts": {
+    "alignment": 8,
+    "baseline_and_candidate_bytes": {
+      "AlgebraicRootRepresentation": 232,
+      "Option<AlgebraicRootRepresentation>": 232,
+      "AlgebraicRootPolynomialImageReport": 288,
+      "AlgebraicRootRationalImageReport": 1728,
+      "BezierAlgebraicCoordinateImage": 312,
+      "BezierAlgebraicPointImage2": 888,
+      "CurveRegion2": 8
+    },
+    "driver": "/tmp/hypercurve-dyadic-bernstein-control.a5ZKq2/hypercurve/examples/root_evidence_layout.rs",
+    "scope": "Measured release/all-feature native layouts. Removing the tag does not change padding or aggregate layouts in this build."
+  },
+  "allocation_control": {
+    "fixture": "bezier_offset::conversion_tests::specialized_common_fiber_counts_even_multiplicity_in_a_coupled_system",
+    "baseline_and_candidate": {
+      "calls": 11668,
+      "temporary_allocations": 471,
+      "peak_heap": "243.57K",
+      "end_live": "89.98K"
+    },
+    "script": "/tmp/hypercurve-root-evidence-small-heap-control.sh",
+    "scope": "Small fixture includes both policies and process startup. Not full slow-fixture accounting or a leak-freedom claim."
+  },
+  "matched_comparison": {
+    "status": "running",
+    "script": "/tmp/hypercurve-root-evidence-matched.sh",
+    "analysis": "/tmp/hypercurve-root-evidence-analyze.mjs",
+    "cpu": 7,
+    "order": [
+      "baseline-1",
+      "candidate-1",
+      "candidate-2",
+      "baseline-2",
+      "baseline-3",
+      "candidate-3"
+    ],
+    "session_id": 37396,
+    "start_audit": {
+      "current_time": "2026-09-05 20:41:12 UTC",
+      "workers": []
+    }
+  },
+  "remaining": [
+    "Finish paired runtime measurements and assess retention, then commit both API migrations and the evidence on main.",
+    "Full Hypercurve release readiness and uniformly competitive operation performance remain unproven.",
+    "Native Real::eval_poly reuse and the duplicate private root-isolation sign helper remain follow-up candidates.",
+    "No push, publication or hosted deployment was performed."
+  ],
+  "source_hashes": [
+    {
+      "path": "hypersolve/src/lib.rs",
+      "live": "113dd845a5952d48a27a9040fe8d4f0f59dcc75610c53514e4c231d8a5318419",
+      "frozen": "113dd845a5952d48a27a9040fe8d4f0f59dcc75610c53514e4c231d8a5318419",
+      "equal": true
+    },
+    {
+      "path": "hypersolve/src/algebraic.rs",
+      "live": "3602e3479b29a1900f803071929f1226d43262379c7e26f7e86417cdf494fdad",
+      "frozen": "3602e3479b29a1900f803071929f1226d43262379c7e26f7e86417cdf494fdad",
+      "equal": true
+    },
+    {
+      "path": "hypersolve/src/algebraic_binary.rs",
+      "live": "04aff1828f3a1af60aeb770f1b8ea848dc797c1256c6ee2247ee5c4565ec559d",
+      "frozen": "04aff1828f3a1af60aeb770f1b8ea848dc797c1256c6ee2247ee5c4565ec559d",
+      "equal": true
+    },
+    {
+      "path": "hypersolve/src/algebraic_fiber.rs",
+      "live": "6e6bab431bbd7e25b04389aac03d5fdb366e0017fdf9517f625b00cb6acb4c85",
+      "frozen": "6e6bab431bbd7e25b04389aac03d5fdb366e0017fdf9517f625b00cb6acb4c85",
+      "equal": true
+    },
+    {
+      "path": "hypersolve/src/algebraic_mobius.rs",
+      "live": "091a6c1d8ae48db2dc613b7a428e380a6544fc38486290625b7a6408b8bbe8e7",
+      "frozen": "091a6c1d8ae48db2dc613b7a428e380a6544fc38486290625b7a6408b8bbe8e7",
+      "equal": true
+    },
+    {
+      "path": "hypersolve/src/algebraic_polynomial_image.rs",
+      "live": "0697cc99443637747de52cd58086a869138d95c264fe31c8fcf062c7135693bf",
+      "frozen": "0697cc99443637747de52cd58086a869138d95c264fe31c8fcf062c7135693bf",
+      "equal": true
+    },
+    {
+      "path": "hypersolve/src/algebraic_rational_image.rs",
+      "live": "52ef0f9249cdfee38ec53157a298baa12bca019c686afcc97bfe57cc80324603",
+      "frozen": "52ef0f9249cdfee38ec53157a298baa12bca019c686afcc97bfe57cc80324603",
+      "equal": true
+    },
+    {
+      "path": "hypersolve/src/algebraic_sqrt.rs",
+      "live": "2ead2bd0cf4e04997788de5fca1621f727428ef72dded0e2f5fcf55538b9065b",
+      "frozen": "2ead2bd0cf4e04997788de5fca1621f727428ef72dded0e2f5fcf55538b9065b",
+      "equal": true
+    },
+    {
+      "path": "hypersolve/src/algebraic_tensor_image.rs",
+      "live": "17e5628762422c7ee4646f70cbdb62c3c3af47b90acef3cc5353b5a1592528e0",
+      "frozen": "17e5628762422c7ee4646f70cbdb62c3c3af47b90acef3cc5353b5a1592528e0",
+      "equal": true
+    },
+    {
+      "path": "hypercurve/src/bezier_algebraic_image.rs",
+      "live": "ab19c69e1179b1a350382be0d12b3d55e9226cbc654e86b299abde6be187f337",
+      "frozen": "ab19c69e1179b1a350382be0d12b3d55e9226cbc654e86b299abde6be187f337",
+      "equal": true
+    },
+    {
+      "path": "hypercurve/src/bezier_arrangement.rs",
+      "live": "1939d50cc497a418fe2e4f7d55952443be5fec913b7626ed7c99690f77bddbc8",
+      "frozen": "1939d50cc497a418fe2e4f7d55952443be5fec913b7626ed7c99690f77bddbc8",
+      "equal": true
+    },
+    {
+      "path": "hypercurve/src/bezier_offset.rs",
+      "live": "f1b06bf7ffe770aabcea223bf98c63a6be5111e685d58d5843b897b3bfbfe561",
+      "frozen": "b1b71f834e01c61d683c28d4871b65f92d53a83366cbf5758132fd39f5577b0b",
+      "equal": false,
+      "pre_conversion_tests_live": "2faeca5c869f6afa37949e861cf863e78e1d26918be03cdfd0a23a4f059cf444",
+      "pre_conversion_tests_frozen": "2faeca5c869f6afa37949e861cf863e78e1d26918be03cdfd0a23a4f059cf444",
+      "pre_conversion_tests_equal": true
+    },
+    {
+      "path": "hypercurve/src/bezier_parameter.rs",
+      "live": "9b969e8b4b412a11e705f117e42d97406920ab3de721825b829e31d70b5d7c90",
+      "frozen": "3ba24fc5b57cd216bf8616361a66db4865148caca79a348acdbf0ccbb7a55b88",
+      "equal": false,
+      "pre_conversion_tests_live": "0009367965ff63694736f591b09795fec7379733325bc91ee0121176b8df0bd4",
+      "pre_conversion_tests_frozen": "0009367965ff63694736f591b09795fec7379733325bc91ee0121176b8df0bd4",
+      "pre_conversion_tests_equal": true
+    },
+    {
+      "path": "hypercurve/src/bezier_tangent_order.rs",
+      "live": "4f0f9f71578d30eb927482077786126b50eceea6abe5ffe6110a2a5644629532",
+      "frozen": "4f0f9f71578d30eb927482077786126b50eceea6abe5ffe6110a2a5644629532",
+      "equal": true
+    }
+  ],
+  "downstream_validation": {
+    "status": "passed",
+    "script": "/tmp/hypercurve-root-evidence-gates.sh",
+    "all_features_passed": 1731,
+    "minimal_passed": 1702,
+    "ignored_units_passed": 6,
+    "ignored_units_seconds": 51.67,
+    "manual_drivers_complete": 5,
+    "ignored_stroke_passed": 3,
+    "ignored_stroke_seconds": 55.13,
+    "ui_tests_passed": 37,
+    "ui_tests_seconds": 35.19,
+    "benchmark_executables_built": 25,
+    "additional_checks": [
+      "strict all-target/all-feature clippy",
+      "all fuzz bins checked",
+      "strict docs",
+      "fmt",
+      "strict UI clippy",
+      "release UI WASM build"
+    ]
+  },
+  "local_pages": {
+    "status": "passed",
+    "dist": "/tmp/hypercurve-pages-root-evidence.xrVrhY",
+    "build_script": "/tmp/hypercurve-root-evidence-pages-build.sh",
+    "build_log": "/tmp/hypercurve-root-evidence-trunk.log",
+    "trunk_version": "0.21.14",
+    "concurrent": {
+      "src/polynomial.rs": "263840d2556d62c5b95a5f954bc9720bbf3c8798b640e474f5157b0a99688035",
+      "benches/support/quadratic_extraction.rs": "8fe184992b1654064e119a278648716a6f89504911facdf231074d92d69fef78",
+      "tests/quadratic_extraction.rs": "9cfc62a0efe58861170ca42bbd4769b5bfcd21f4c9ded602efcfff72065fb9e6"
+    },
+    "assets": [
+      {
+        "name": "index.html",
+        "bytes": 1691,
+        "sha256": "eab93bc00fa4b990907264abdfd7843b99756cc50ebbb7172d9f1feb8d4f6a9d"
+      },
+      {
+        "name": "hypercurve_ui.js",
+        "bytes": 72209,
+        "sha256": "941b5ce35852e0398c32572a64d5d6cd1e0044d8fe70907e739bd26868a37e7a"
+      },
+      {
+        "name": "hypercurve_ui_bg.wasm",
+        "bytes": 12422613,
+        "sha256": "bb2e21603b43d61c6533acee5ca738a4de1bf74613ed52fa928a83c2772f357c"
+      }
+    ],
+    "report": {
+      "passed": true,
+      "dist": "/tmp/hypercurve-pages-root-evidence.xrVrhY",
+      "profile": "/tmp/hypercurve-browser-profile.wOdv9l",
+      "state": {
+        "ready": true,
+        "title": "hypercurve UI",
+        "pathname": "/hypercurve/",
+        "baseURI": "http://127.0.0.1:42747/hypercurve/",
+        "width": 1100,
+        "height": 617
+      },
+      "requests": [
+        {
+          "pathname": "/hypercurve/",
+          "status": 200,
+          "bytes": 1691
+        },
+        {
+          "pathname": "/hypercurve/hypercurve_ui.js",
+          "status": 200,
+          "bytes": 72209
+        },
+        {
+          "pathname": "/hypercurve/hypercurve_ui_bg.wasm",
+          "status": 200,
+          "bytes": 12422613
+        }
+      ],
+      "exceptions": [],
+      "failures": [],
+      "consoleErrors": [],
+      "screenshot": "/tmp/hypercurve-root-evidence-pages-startup.png"
+    },
+    "screenshot_sha256": "70c7e48325ca9476f30710cc805d6fbed8db6ef2c6f975204b5a854c99db2cb1",
+    "previous_screenshot_equal": true,
+    "browser_script_sha256": "8debb07ddefd9b8214db568f1686c3c5fe96ad9d2d2d1cad511910fcdb0618d6",
+    "hyperreal_conversion_sha256": "7ffc050aff312c793b8d46176524228eff06b5dcb84e2dc5e76417b54e608112",
+    "scope": "Local startup and rendered default scene only, not all-tab interactive or hosted-deployment qualification."
+  }
+}

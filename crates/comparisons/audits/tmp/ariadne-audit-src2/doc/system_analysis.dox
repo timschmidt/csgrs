@@ -1,0 +1,151 @@
+/***************************************************************************
+ *            system_analysis.dox
+ *
+ *  Copyright  2009  Pieter Collins
+ *
+ ****************************************************************************/
+
+/*
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; either version 2 of the License, or
+ *  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Library General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program; if not, write to the Free Software
+ *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+ */
+
+/*!
+ * \file system_analysis.dox
+ * \brief Documentation on the Ariadne functionality for systems analysis.
+ */
+
+namespace Ariadne {
+
+/*!
+
+\page system_analysis_page Analysing a Dynamic System
+
+\todo This page has yet to be written. See the \ref system_analysis_page_0_4 page for how to analyse a dynamic system using %Ariadne 0.4.
+
+*/
+
+/*!
+
+\page system_analysis_page_0_4 Analysing a Dynamic System (version 0.4)
+
+Analysis of dynamic systems in %Ariadne is performed via \em evaluator classes, which perform certain tasks.
+%Ariadne currently supports three kinds of evaluators:
+ - \ref EvolverInterface "Evolver" Compute time evolution.
+ - \ref PaverInterface "Paver" Discreteise sets and orbits on a grid.
+ - \ref ReachabilityAnalyserInterface "ReachabilityAnalyser" Compute finite- and infinite-time reachable sets on a grid.
+
+System evolution is performed starting from an initial point or set of points. There are a number of ways of defining initial sets in %Ariadne, but the most general is using the \ref ImageSet class. Commonly used sets are provided for convenience, such as \ref Box and \ref Polytope classes.
+For analysing hybrid systems, a \ref HybridEnclosure class is also provided.
+
+Safety specifications are also defined by means of sets. The \ref ConstraintSet class is the most general way of given a specification, but the \ref Box and \ref Polyhedron classes can also be used. For hybrid systems, a \ref HybridEnclosure is also provided.
+
+\section system_analysis_evolution Evolution of systems
+
+ - \ref EvolverInterface::reach_evolve()
+
+
+Currently there are no facilities for simulation, but an approximation of the trajectory can be computed using the method
+ - <c>EvolverInterface::lower_reach(system, point, time, semantics)</c>
+
+\sa \ref IteratedMapEvolver, \ref VectorFieldEvolver, \ref HybridEvolverInterface
+
+
+
+\section system_analysis_discretisation Discretisation of sets and systems
+
+The DiscretiserInterface is mostly provided for interfacing with other systems tools. See the API documentation for details.
+
+
+\section system_analysis_reachability Reachability analysis
+
+Reachability analysis in %Ariadne is performed using the ReachabilityAnalyserInterface. %Ariadne can perform a number of analyses of system behaviour. The following core functionality is provided:
+ - \ref ReachabilityAnalyserInterface::lower_evolve "lower_evolve(system, initial_set, time)":
+    Compute the set of states which the system can reach at the specified time from the given initial set.
+ - \ref ReachabilityAnalyserInterface::upper_evolve "upper_evolve(system, initial_set, time)":
+    Compute the set of states which the system can reach at the specified time from the given initial set.
+
+ - <c>\ref ReachabilityAnalyserInterface::lower_reach "lower_reach(system, initial_set, time)"</c>:
+    Compute the set of states which the system can reach at times up to and including the specified time from the given initial set.
+ - \ref ReachabilityAnalyserInterface::upper_reach "upper_reach(system, initial_set, time)":
+    Compute the set of all states which the system can reach from the given initial set.
+ - <c>\ref ReachabilityAnalyserInterface::outer_chain_reach "outer_chain_reach(system, initial_set)"</c>:
+    Compute an over-approximation to the set of all states which the system can reach from the given initial set.
+
+ - <c>"viable(system, bounding_set)</c>:
+    Compute the set of states for which the evolution remains in the bounding set for all times.
+    (NOT CURRENTLY SUPPORTED)
+ - <c>\ref ReachabilityAnalyserInterface::verify_safety "verify_safety(system, initial_set, safe_set)"</c>:
+    Attempts to decide whether any evolution starting in the initial set remains in the bounding set for all times.
+
+The \c evolve, \c reach and \c viable operators each come in two flavours \c lower_ and \c upper_ , representing different "semantics of evolution". Hence \c lower_evolve computes a lower-approximation to the evolution, and \c upper_evolve computes an outer approximation. An outer approximation to the reachable set is also called \c chain_reach or \c chainreach, since the approximations need not converge to the reachable set itself.
+
+Currently, only lower and upper approximations to the evolution can be computed. In a future version, we hope to combine these computations to give an approximation to the evolved set with a known accuracy.
+
+\subsection tutorial_evaluation_parameters Evolution parameters and plugins
+
+The \c Evolver objects are function objects which support a wide variety of operations. The main rationale for having these operations as methods of some class, rather than as stand-along functions, is so that the parameters used to govern the accuracy can be stored in the data of the class and thus hidden from the caller. The novice user should be able to use the classes with "default parameters", and merely need to select a single "accuracy level" but the experienced user should have the flexibility to change the parameters describing the evolution method, or even the evolution method itself.
+
+All evolution methods rely on a number of core components:
+ - A fundamental data type, called a <em>basic set</em> which is updated at single step of the evolution.
+ - An approximation scheme for storing information about evolved sets.
+ - Methods for accurately computing the image of a basic set under a map or flow.
+ - Methods for checking satisfiability of constraints and for detecting crossings with guard sets (for hybrid systems).
+ - Methods for performing geometric operations on basic sets, such as subdividing into smaller pieces, or approximating basic sets which have a complex or numerically ill-conditioned description by simpler sets.
+ - Methods for converting between basic sets and finite approximations based on grids, polyhedral partitions or covers
+Additionally, for hybrid systems, we may wish to use different evolution methods, approximations or even different representations of sets in different modes of the system.
+
+In the current version of %Ariadne, different "plugin" classes can be used to provide different services. Each plugin is packaged to provide related services, which are combined in the evolution. The exact services provided by the plugins are not currently stable.
+
+
+
+\section chain_reach_example Example
+
+To compute the chain reachable set of the Henon map, the following code can be used:
+\code
+# Construct the henon map (builtin)
+henon = HenonMap(1.4,0.3)
+
+# Specify the initial set as the origin
+initial_set = RectangularSet( [0,0] )
+initial_set = ConstraintSet( IdentityFunction(2), Box([0,0]) )
+
+# Use default evolution parameters
+paramrters=EvolutionParameters()
+print parameters
+
+#Use Kuhn's algorithm for computing the image of sets
+applicator=KuhnApplicator(3)
+
+# Construct an object which can compute the evolution
+evolver = IteratedMapEvolver(parameters,applicator)
+
+# Compute the chain-reachable set
+chain_reachable_set = evolver.chain_reach(henon,initial_set)
+
+# Write the set to a postscript output
+eps = EpsPlot()
+eps.open( "henon_chainreach.eps", chain_reachable_set.bounding_box() )
+eps.set_fill_colour(cyan)
+eps.write(chain_reachable_set)
+eps.close()
+\endcode
+
+
+
+
+
+*/
+
+}

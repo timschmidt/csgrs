@@ -1,0 +1,50 @@
+{
+  "diagnostic_only": true,
+  "source_manifest": "empty-incident-components-20260927-v520-sources.json",
+  "source_directory": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/source-archives/empty-incident-components-20260927-v520",
+  "workspace_guard": "regular-pair-endpoint-tangents-20260927-v518-sources.json",
+  "fixture_sha256": "7caba10053eb4fdab956625e219dece3629fa727288ae7e7ec0a7616ab57595e",
+  "builds": [
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "test",
+        "--lib",
+        "--release",
+        "--all-features",
+        "--locked",
+        "--offline",
+        "--no-run",
+        "--message-format=json"
+      ],
+      "returncode": 0,
+      "log": "empty-incident-components-20260927-v520-build.log",
+      "elapsed_seconds": 129.54180658399127,
+      "binary": {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/empty-incident-components-20260927-v520-tests",
+        "sha256": "b52060db4906437d2cd110c3221ed875e6f1d8cf23d39d0670e335c82ecb09be"
+      }
+    }
+  ],
+  "cases": [
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/empty-incident-components-20260927-v520-tests",
+        "--exact",
+        "bezier_offset::empty_incident_component_tests::empty_incident_charts_preserve_finite_components_and_constraints",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 101,
+      "log": "empty-incident-components-20260927-v520-empty_incident_charts_preserve_finite_components_and_constraints.log",
+      "elapsed_seconds": 0.003533357987180352,
+      "name": "bezier_offset::empty_incident_component_tests::empty_incident_charts_preserve_finite_components_and_constraints",
+      "passed": false
+    }
+  ],
+  "expected_cases": [
+    "bezier_offset::empty_incident_component_tests::empty_incident_charts_preserve_finite_components_and_constraints"
+  ],
+  "all_processes_reaped": true,
+  "probe_complete": true
+}

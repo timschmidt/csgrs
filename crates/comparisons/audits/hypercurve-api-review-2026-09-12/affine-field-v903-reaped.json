@@ -1,0 +1,8 @@
+{
+  "outer_session": 60966,
+  "outer_exit_code": 1,
+  "formatter_session": 98262,
+  "formatter_exit_code": 0,
+  "failure": "caller regression failed: algebraic_tensor_image::tests::tensor_images_remove_irrelevant_wide_rational_content",
+  "passed_cases": 153
+}

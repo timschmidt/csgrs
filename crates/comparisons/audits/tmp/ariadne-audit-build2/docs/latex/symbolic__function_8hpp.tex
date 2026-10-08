@@ -1,0 +1,60 @@
+\doxysubsection{source/function/symbolic\+\_\+function.hpp File Reference}
+\hypertarget{symbolic__function_8hpp}{}\label{symbolic__function_8hpp}\index{source/function/symbolic\_function.hpp@{source/function/symbolic\_function.hpp}}
+
+
+\doxysubsubsection{Description}
+Symbolic functions. 
+
+{\ttfamily \#include $<$cstdarg$>$}\newline
+{\ttfamily \#include $<$iosfwd$>$}\newline
+{\ttfamily \#include $<$iostream$>$}\newline
+{\ttfamily \#include "{}function/function\+\_\+interface.\+hpp"{}}\newline
+{\ttfamily \#include "{}utility/macros.\+hpp"{}}\newline
+{\ttfamily \#include "{}utility/pointer.\+hpp"{}}\newline
+{\ttfamily \#include "{}utility/container.\+hpp"{}}\newline
+{\ttfamily \#include "{}helper/stlio.\+hpp"{}}\newline
+{\ttfamily \#include "{}utility/metaprogramming.\+hpp"{}}\newline
+{\ttfamily \#include "{}numeric/numeric.\+hpp"{}}\newline
+{\ttfamily \#include "{}numeric/operators.\+tpl.\+hpp"{}}\newline
+{\ttfamily \#include "{}algebra/vector.\+hpp"{}}\newline
+{\ttfamily \#include "{}function/function\+\_\+mixin.\+hpp"{}}\newline
+{\ttfamily \#include "{}function/function\+\_\+wrapper.\+hpp"{}}\newline
+{\ttfamily \#include "{}function/projection.\+hpp"{}}\newline
+{\ttfamily \#include "{}function/formula.\+hpp"{}}\newline
+\doxysubsubsubsection*{Classes}
+\begin{DoxyCompactItemize}
+\item 
+class \mbox{\hyperlink{classAriadne_1_1ScalarUnivariateFormulaFunction}{Scalar\+Univariate\+Formula\+Function$<$ Y $>$}}
+\begin{DoxyCompactList}\small\item\em A function defined by a formula. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1VectorUnivariateFormulaFunction}{Vector\+Univariate\+Formula\+Function$<$ Y $>$}}
+\begin{DoxyCompactList}\small\item\em A function defined by a formula. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1ScalarMultivariateFormulaFunction}{Scalar\+Multivariate\+Formula\+Function$<$ Y $>$}}
+\begin{DoxyCompactList}\small\item\em A function defined by a formula. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1VectorMultivariateFormulaFunction}{Vector\+Multivariate\+Formula\+Function$<$ Y $>$}}
+\begin{DoxyCompactList}\small\item\em A vector function defined by formulae. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1ConstantFunction}{Constant\+Function$<$ Y, ARGS $>$}}
+\begin{DoxyCompactList}\small\item\em A constant function f(x)=c. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1CoordinateFunction}{Coordinate\+Function$<$ P, ARGS $>$}}
+\begin{DoxyCompactList}\small\item\em A coordinate function $f:\R^n\rightarrow\R$ given by $f(x)=x_i$. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1UnaryFunction}{Unary\+Function$<$ P, ARGS $>$}}
+\begin{DoxyCompactList}\small\item\em The identity function $ x\mapsto x$ in $\R^n$. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsubsection*{Namespaces}
+\begin{DoxyCompactItemize}
+\item 
+namespace \mbox{\hyperlink{namespaceAriadne}{Ariadne}}
+\begin{DoxyCompactList}\small\item\em Top-\/level Ariadne namespace. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsubsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{namespaceAriadne_af811cd53622dcf6e36f0700e23fa079c}\label{namespaceAriadne_af811cd53622dcf6e36f0700e23fa079c} 
+{\footnotesize template$<$class Y$>$ }\\\mbox{\hyperlink{namespaceAriadne_a76a8b016e5ad61faf9062cc387df5016}{Bool}} {\bfseries is\+\_\+constant\+\_\+in} (const \mbox{\hyperlink{classAriadne_1_1ScalarMultivariateFormulaFunction}{Scalar\+Multivariate\+Formula\+Function}}$<$ Y $>$ \&f, const \mbox{\hyperlink{classAriadne_1_1Set}{Set}}$<$ \mbox{\hyperlink{namespaceAriadne_aae901a69a841b1a085a0dfe218e38fe9}{Nat}} $>$ \&is)
+\begin{DoxyCompactList}\small\item\em Returns {\itshape true} if the function {\itshape f} is syntactically constant in the indices {\itshape is}. \end{DoxyCompactList}\item 
+\Hypertarget{namespaceAriadne_aa97876f2442b1c6360a59e9c6237fb28}\label{namespaceAriadne_aa97876f2442b1c6360a59e9c6237fb28} 
+{\footnotesize template$<$class Y$>$ }\\\mbox{\hyperlink{namespaceAriadne_a76a8b016e5ad61faf9062cc387df5016}{Bool}} {\bfseries is\+\_\+affine\+\_\+in} (const \mbox{\hyperlink{classAriadne_1_1ScalarMultivariateFormulaFunction}{Scalar\+Multivariate\+Formula\+Function}}$<$ Y $>$ \&f, const \mbox{\hyperlink{classAriadne_1_1Set}{Set}}$<$ \mbox{\hyperlink{namespaceAriadne_aae901a69a841b1a085a0dfe218e38fe9}{Nat}} $>$ \&is)
+\begin{DoxyCompactList}\small\item\em Returns {\itshape true} if the function {\itshape f} is syntactically affine in the indices {\itshape is}. \end{DoxyCompactList}\item 
+\Hypertarget{namespaceAriadne_a2fc6c07cb7d19a0fd10e450d02862d49}\label{namespaceAriadne_a2fc6c07cb7d19a0fd10e450d02862d49} 
+{\footnotesize template$<$class Y$>$ }\\\mbox{\hyperlink{namespaceAriadne_a76a8b016e5ad61faf9062cc387df5016}{Bool}} {\bfseries is\+\_\+affine\+\_\+in} (const \mbox{\hyperlink{classAriadne_1_1VectorMultivariateFormulaFunction}{Vector\+Multivariate\+Formula\+Function}}$<$ Y $>$ \&f, const \mbox{\hyperlink{classAriadne_1_1Set}{Set}}$<$ \mbox{\hyperlink{namespaceAriadne_aae901a69a841b1a085a0dfe218e38fe9}{Nat}} $>$ \&is)
+\begin{DoxyCompactList}\small\item\em Returns {\itshape true} if the vector function {\itshape f} is syntactically affine in the indices {\itshape is}. \end{DoxyCompactList}\item 
+\Hypertarget{namespaceAriadne_aa9c0a0da9f4cd3ef106b60d3232fd758}\label{namespaceAriadne_aa9c0a0da9f4cd3ef106b60d3232fd758} 
+{\footnotesize template$<$class Y$>$ }\\\mbox{\hyperlink{namespaceAriadne_a76a8b016e5ad61faf9062cc387df5016}{Bool}} {\bfseries is\+\_\+additive\+\_\+in} (const \mbox{\hyperlink{classAriadne_1_1VectorMultivariateFormulaFunction}{Vector\+Multivariate\+Formula\+Function}}$<$ Y $>$ \&f, const \mbox{\hyperlink{classAriadne_1_1Set}{Set}}$<$ \mbox{\hyperlink{namespaceAriadne_aae901a69a841b1a085a0dfe218e38fe9}{Nat}} $>$ \&is)
+\begin{DoxyCompactList}\small\item\em Returns {\itshape true} if the vector function {\itshape f} is syntactically additive (possibly with multipliers) in the indices {\itshape is}. \end{DoxyCompactList}\end{DoxyCompactItemize}

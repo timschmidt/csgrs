@@ -1,0 +1,7 @@
+    Checking num-bigint v0.4.8
+    Checking num-complex v0.4.6
+    Checking num-rational v0.4.2
+    Checking num v0.4.3
+    Checking hyperreal v0.13.1 (/home/tim/Documents/GitHub/workspace/hyperreal)
+    Checking qqbar-trig-hyper-v76 v0.0.0 (/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/qqbar-trig-hyper-v76)
+    Finished `dev` profile [unoptimized] target(s) in 1.99s

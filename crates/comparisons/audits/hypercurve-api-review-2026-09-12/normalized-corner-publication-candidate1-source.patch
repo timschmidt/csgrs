@@ -1,0 +1,153 @@
+diff --git a/src/bezier_region.rs b/src/bezier_region.rs
+index cb73128..0867d78 100644
+--- a/src/bezier_region.rs
++++ b/src/bezier_region.rs
+@@ -12256,8 +12256,9 @@ impl CurveRegion2 {
+     /// polynomial or rational Bezier carriers use the same exact interaction
+     /// solver as open paths. Authored spline and NURBS boundaries are already
+     /// canonical native Bezier spans here, so they take that route without a
+-    /// second decomposition. Every candidate is rebuilt with this region's
+-    /// material/hole and fill semantics. Interior algebraic Bezier contacts
++    /// second decomposition. Every candidate is regularized with this region's
++    /// fill semantics; cuts can merge, split, or remove boundary loops.
++    /// Interior algebraic Bezier contacts
+     /// retain their selected parameters and exact point images, joined by one
+     /// compact algebraic chord instead of falling through to historical
+     /// contour machinery. `TrimOrExtend` keeps retained straight and direct
+@@ -12317,8 +12318,9 @@ impl CurveRegion2 {
+     /// Solves a boundary-loop circular fillet from an exact radius.
+     ///
+     /// Exact candidates come from the same carrier-interaction authority used
+-    /// by open [`CurvePath2`] editing and are rebuilt without changing loop role
+-    /// or fill rule. Represented direct and canonical spline/NURBS Bezier trims
++    /// by open [`CurvePath2`] editing. Edited boundaries are regularized with
++    /// this region's fill semantics before publication. Represented direct
++    /// and canonical spline/NURBS Bezier trims
+     /// use the retained path authority. Retained affine algebraic chords and
+     /// direct polynomial or rational Beziers paired with affine lines also
+     /// support exact exterior-ray fillet contacts. Direct Bezier incident
+@@ -12365,8 +12367,8 @@ impl CurveRegion2 {
+         // The corner solver owns the two trim/contact equalities, while the
+         // source loop owns every unaffected join. Retained selected fields can
+         // make either cut impossible to re-prove by independent Cartesian
+-        // endpoint comparison, so publish the already-certified chain instead
+-        // of discarding the pair-owned evidence here.
++        // endpoint comparison, so retain the already-certified chain while
++        // normalizing the edited boundaries.
+         let edited_loop = CurveRegionBoundaryLoop2::try_new_from_certified_connected_chain(
+             fragments, None, policy,
+         )
+@@ -12413,8 +12415,11 @@ impl CurveRegion2 {
+         };
+         let mut loops = self.data.boundary_loops.clone();
+         loops[loop_index] = edited_loop;
+-        Self::try_new_with_loop_topology(loops, roles, fill_rules, interior_sides)
+-            .map_err(|cause| curve_region_edit_error(operation, cause))
++        let edited = Self::try_new_with_loop_topology(loops, roles, fill_rules, interior_sides)
++            .map_err(|cause| curve_region_edit_error(operation, cause))?;
++        edited
++            .regularized_region_raw(policy)
++            .map_err(|error| error.with_operation(operation))
+     }
+ 
+     fn boundary_paths_for_operation(
+diff --git a/tests/hypercurve_curve_region_promotion.rs b/tests/hypercurve_curve_region_promotion.rs
+index b00a3ed..44a3e8a 100644
+--- a/tests/hypercurve_curve_region_promotion.rs
++++ b/tests/hypercurve_curve_region_promotion.rs
+@@ -8297,3 +8297,95 @@ fn region_constructors_remove_canceled_boundaries_and_filled_seams() {
+         }
+     }
+ }
++
++#[test]
++fn region_corner_edits_publish_normalized_hole_openings() {
++    let square_path = |a, b| {
++        let points = [p(a, a), p(b, a), p(b, b), p(a, b)];
++        CurvePath2::try_new(
++            (0..4)
++                .map(|i| {
++                    LineSeg2::try_new(points[i].clone(), points[(i + 1) % 4].clone())
++                        .unwrap()
++                        .into()
++                })
++                .collect(),
++        )
++        .unwrap()
++    };
++    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
++        for fillet in [false, true] {
++            let source = CurveRegion2::try_from_boundary_paths(
++                &[square_path(0, 8), square_path(1, 3)],
++                &policy,
++            )
++            .unwrap()
++            .into_value();
++            let (loop_index, vertex) = boundary_vertex_at(&source, &p(0, 0), &policy);
++            let outcome = if fillet {
++                source.fillet_loop_vertex_by_radius(
++                    loop_index,
++                    vertex,
++                    Real::from(5),
++                    CurveCornerMode2::TrimOnly,
++                    &policy,
++                )
++            } else {
++                source.chamfer_loop_vertex_by_setbacks(
++                    loop_index,
++                    vertex,
++                    Real::from(5),
++                    Real::from(5),
++                    CurveCornerMode2::TrimOnly,
++                    &policy,
++                )
++            }
++            .unwrap();
++            let CurveCornerSolutions2::Unique(region) = certified(outcome) else {
++                panic!("the square corner has one in-domain cut");
++            };
++            assert_eq!(region.len(), 1, "the corner cut opens the hole");
++            assert!(decided(region.filled_side_is_left(&policy).unwrap())[0]);
++            assert_eq!(
++                region.regularized_region(&policy).unwrap().into_value(),
++                region
++            );
++            let mut samples = vec![
++                (p(6, 6), RegionPointLocation::Inside),
++                (p(0, 6), RegionPointLocation::Boundary),
++            ];
++            if fillet {
++                let coordinate = Real::from(5) - Real::from(5) * q(1, 2).sqrt().unwrap();
++                samples.extend([
++                    (p(1, 1), RegionPointLocation::Outside),
++                    (
++                        Point2::new(coordinate.clone(), coordinate),
++                        RegionPointLocation::Outside,
++                    ),
++                    (p(1, 2), RegionPointLocation::Boundary),
++                    (p(2, 1), RegionPointLocation::Boundary),
++                ]);
++            } else {
++                // The surviving void is a half-unit triangle; the outer
++                // five-unit corner cut removes an area of 25/2.
++                assert_eq!(
++                    decided(region.filled_area(&policy).unwrap()),
++                    Some(Real::from(51))
++                );
++                samples.extend([
++                    (p(1, 2), RegionPointLocation::Outside),
++                    (p(2, 1), RegionPointLocation::Outside),
++                    (Point2::new(q(5, 2), q(5, 2)), RegionPointLocation::Outside),
++                    (p(2, 3), RegionPointLocation::Boundary),
++                    (p(3, 2), RegionPointLocation::Boundary),
++                ]);
++            }
++            for (point, expected) in samples {
++                assert_eq!(
++                    decided(region.classify_point(&point, &policy).unwrap()),
++                    expected
++                );
++            }
++        }
++    }
++}

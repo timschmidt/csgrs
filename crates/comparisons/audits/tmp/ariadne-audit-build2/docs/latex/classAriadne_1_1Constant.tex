@@ -1,0 +1,64 @@
+\doxysubsection{Constant\texorpdfstring{$<$}{<} T \texorpdfstring{$>$}{>} Class Template Reference}
+\hypertarget{classAriadne_1_1Constant}{}\label{classAriadne_1_1Constant}\index{Constant$<$ T $>$@{Constant$<$ T $>$}}
+
+
+{\ttfamily \#include $<$constant.\+hpp$>$}
+
+
+
+\doxysubsubsection{Description}
+\subsubsection*{template$<$class T$>$\newline
+class Ariadne\+::\+Constant$<$ T $>$}
+A named constant of type {\itshape T}. 
+
+\begin{DoxyParagraph}{{\bfseries{Example}} }
+
+\begin{DoxyCodeInclude}{0}
+
+\end{DoxyCodeInclude}
+ 
+\end{DoxyParagraph}
+\begin{DoxySeeAlso}{See also}
+\doxylink{classAriadne_1_1Variable}{Variable}, \doxylink{classAriadne_1_1Expression}{Expression} 
+\end{DoxySeeAlso}
+\doxysubsubsubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1Constant_a61d995ad45a48ced97a7a59b045570df}\label{classAriadne_1_1Constant_a61d995ad45a48ced97a7a59b045570df} 
+{\bfseries Constant} (const T \&\mbox{\hyperlink{classAriadne_1_1Constant_ab5d906b55180c260032ce43d6c5d4d06}{value}})
+\begin{DoxyCompactList}\small\item\em The constant with value {\itshape value}, displayed as the value itself. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Constant_a87fe57773641cfac1bc33ed09bb743b1}\label{classAriadne_1_1Constant_a87fe57773641cfac1bc33ed09bb743b1} 
+{\bfseries Constant} (const \mbox{\hyperlink{classAriadne_1_1Identifier}{Identifier}} \&\mbox{\hyperlink{classAriadne_1_1Constant_ab7f8fc1aca31a93631707c6a43975bf4}{name}}, const T \&\mbox{\hyperlink{classAriadne_1_1Constant_ab5d906b55180c260032ce43d6c5d4d06}{value}})
+\begin{DoxyCompactList}\small\item\em The constant with name {\itshape name} and value {\itshape value}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Constant_ab7f8fc1aca31a93631707c6a43975bf4}\label{classAriadne_1_1Constant_ab7f8fc1aca31a93631707c6a43975bf4} 
+const \mbox{\hyperlink{classAriadne_1_1Identifier}{Identifier}} \& {\bfseries name} () const
+\begin{DoxyCompactList}\small\item\em The name of the constant. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Constant_ab5d906b55180c260032ce43d6c5d4d06}\label{classAriadne_1_1Constant_ab5d906b55180c260032ce43d6c5d4d06} 
+const T \& {\bfseries value} () const
+\begin{DoxyCompactList}\small\item\em The value of the constant. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsubsection*{Friends}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1Constant_ae1a4751a47c4d20a7e4a28da9864a23c}\label{classAriadne_1_1Constant_ae1a4751a47c4d20a7e4a28da9864a23c} 
+\mbox{\hyperlink{namespaceAriadne_acbb98ddc4385af4599070e65a1a47ec1}{Output\+Stream}} \& {\bfseries operator$<$$<$} (\mbox{\hyperlink{namespaceAriadne_acbb98ddc4385af4599070e65a1a47ec1}{Output\+Stream}} \&os, \mbox{\hyperlink{classAriadne_1_1Constant}{Constant}}$<$ T $>$ const \&c)
+\begin{DoxyCompactList}\small\item\em Write to an output stream. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsubsection*{Related Types and Functions}
+(Note that these are not member symbols.) \begin{Indent}\textbf{ Type synonyms}\par
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1Constant_a482d879e82dc59aecc69ae61b0031545}\label{classAriadne_1_1Constant_a482d879e82dc59aecc69ae61b0031545} 
+using {\bfseries String\+Constant} = \mbox{\hyperlink{classAriadne_1_1Constant}{Constant}}$<$\mbox{\hyperlink{classAriadne_1_1String}{String}}$>$
+\item 
+\Hypertarget{classAriadne_1_1Constant_a62696a945c282ca2bd5c2da75e7d6786}\label{classAriadne_1_1Constant_a62696a945c282ca2bd5c2da75e7d6786} 
+using {\bfseries Integer\+Constant} = \mbox{\hyperlink{classAriadne_1_1Constant}{Constant}}$<$\mbox{\hyperlink{classAriadne_1_1Integer}{Integer}}$>$
+\item 
+\Hypertarget{classAriadne_1_1Constant_a4c22004afe003feee79876758b57d39d}\label{classAriadne_1_1Constant_a4c22004afe003feee79876758b57d39d} 
+using {\bfseries Real\+Constant} = \mbox{\hyperlink{classAriadne_1_1Constant}{Constant}}$<$\mbox{\hyperlink{classAriadne_1_1Real}{Real}}$>$
+\end{DoxyCompactItemize}
+\end{Indent}
+
+
+The documentation for this class was generated from the following files\+:\begin{DoxyCompactItemize}
+\item 
+source/symbolic/\mbox{\hyperlink{constant_8hpp}{constant.\+hpp}}\item 
+source/symbolic/\mbox{\hyperlink{expression_8decl_8hpp}{expression.\+decl.\+hpp}}\end{DoxyCompactItemize}

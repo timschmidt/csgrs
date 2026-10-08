@@ -1,0 +1,135 @@
+{
+  "status": "passed; downstream requalified against pinned committed dependencies",
+  "goal_status": "active",
+  "previous_commit": "2c16c30bb1aba38f08456bed462b5ea058bc5c71",
+  "commit": "4ac78841cc571f3f802296e0af1e19fd520544b4",
+  "targets": 49,
+  "passed": 2282,
+  "passed_by_repo": {
+    "hypercurve": 2050,
+    "hyperbrep": 232
+  },
+  "known_failed": [
+    "approximate_512_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions",
+    "non_ph_bezier_pair_projective_fillet_retains_algebraic_extensions",
+    "nonconvex_algebraic_chord_expansion_is_exact_and_local_collapse_is_explicit",
+    "strict_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions",
+    "unified_mixed_line_arc_erosion_splits_after_a_curved_neck_collapse"
+  ],
+  "new_failures": [],
+  "ignored": 9,
+  "expensive_previously_unqualified_exclusions": 8,
+  "timeouts": 0,
+  "builds_and_checks": {
+    "-check": 0,
+    "-test-build": 0,
+    "-hyperbrep-check": 0,
+    "-hyperbrep-test-build": 0
+  },
+  "formatting_and_whitespace": "passed on final frozen sources",
+  "formatted_files": {
+    "hypercurve": [
+      "src/bezier_offset.rs",
+      "src/curve_region_boolean.rs",
+      "src/curve_support.rs"
+    ],
+    "hyperbrep": []
+  },
+  "additional_caller_checks": [
+    {
+      "target": "fuzz",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "check",
+        "--manifest-path",
+        "fuzz/Cargo.toml",
+        "--all-targets",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 14.9863121160015,
+      "log": "finite-parallel-pruning-fuzz-check.log"
+    },
+    {
+      "target": "ui",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "check",
+        "--manifest-path",
+        "examples/hypercurve_ui/Cargo.toml",
+        "--all-targets",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 15.237245897995308,
+      "log": "finite-parallel-pruning-ui-check.log"
+    },
+    {
+      "target": "hyperbrep-fuzz",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "check",
+        "--manifest-path",
+        "fuzz/Cargo.toml",
+        "--all-targets",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 17.240452720987378,
+      "log": "finite-parallel-pruning-hyperbrep-fuzz-check.log"
+    }
+  ],
+  "source_verification": "finite-parallel-pruning-source-verification.json",
+  "focused_regression_checks": "finite-parallel-pruning-focused.json",
+  "normal_library": "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/libhypercurve-2c7ff6f3fbe07653.rlib",
+  "normal_library_sha256": "842f8912af49a9068c7457b99c37c39684a414c04f7b82ced8250d1dbfc90a09",
+  "archived_library": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-parallel-pruning-libraries/libhypercurve-2c7ff6f3fbe07653.rlib",
+  "independent_probes_and_matrices": [
+    "finite-parallel-pruning-public-replay.json",
+    "finite-parallel-pruning-affine-parallel-replay.json",
+    "finite-parallel-pruning-exterior-completed.json",
+    "finite-parallel-pruning-tangent-matrix.json",
+    "finite-parallel-pruning-finite-circle-probe.json",
+    "finite-parallel-pruning-family-matrix.json",
+    "finite-parallel-pruning-completed.json",
+    "finite-parallel-pruning-unit-replay.json",
+    "finite-parallel-pruning-retained-chord-matrix.json",
+    "finite-parallel-pruning-finite-matrix.json",
+    "finite-parallel-pruning-cubic-replay.json",
+    "finite-parallel-pruning-baseline-recheck.json",
+    "finite-parallel-pruning-replay-matrix-run.json",
+    "finite-parallel-pruning-analytic-probe.json",
+    "finite-parallel-pruning-endpoint-probe.json",
+    "finite-parallel-pruning-completed-probe.json",
+    "finite-parallel-pruning-probe-final.json",
+    "finite-parallel-pruning-circle-matrix.json",
+    "finite-parallel-pruning-region-carrier-matrix.json",
+    "finite-parallel-pruning-general-trim-matrix.json",
+    "finite-parallel-pruning-constant-image-trim-matrix.json",
+    "finite-parallel-pruning-region-public.json",
+    "finite-parallel-pruning-region-explicit.json",
+    "finite-parallel-pruning-bounds-public.json",
+    "finite-parallel-pruning-winding-public.json",
+    "finite-parallel-pruning-trim-public.json",
+    "finite-parallel-pruning-self-public.json",
+    "finite-parallel-pruning-retrace-public.json"
+  ],
+  "discovery_probes": [
+    "finite-parallel-pruning-baseline/finite-parallel-pruning-baseline-build-cusp_separated_parallel_contacts_are_not_declared_distinct.json"
+  ],
+  "prequalification_candidate": "finite-parallel-pruning-attempt1/",
+  "compile_only_attempts": [],
+  "evidence_audit": "finite-parallel-pruning-worklog.md",
+  "performance_claim": null,
+  "toolchain": "finite-parallel-pruning-toolchain.json",
+  "remaining": "Analytic fragment and boundary-loop finite admission (earlier public baseline remains open), affine analytic derivative replay; analytic finite pair discovery and incidence; normalized public region construction; independent inverse replay; five existing promotion failures; eight unqualified expensive tests; original algebraic and computational architecture goal.",
+  "dependency_state": "finite-parallel-pruning-external-dependency-state.json",
+  "concurrent_dependency_edits": true,
+  "workspace_clean_claim": false,
+  "isolated_downstream_qualification": "finite-parallel-pruning-isolated-qualification.json",
+  "dependency_qualification": "Hypercurve used the unchanged cached committed Hyperreal library. HyperBREP checks, fuzz checks and 232 tests were rerun against seven pinned repositories with only the final Hypercurve overlay. Original mixed-dependency HyperBREP results remain historical evidence.",
+  "isolated_setup_attempt": "finite-parallel-pruning-isolated-setup-attempt1/"
+}

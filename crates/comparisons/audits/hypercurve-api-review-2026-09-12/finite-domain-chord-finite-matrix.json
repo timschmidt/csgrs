@@ -1,0 +1,26 @@
+{
+  "returncode": 0,
+  "elapsed_seconds": 0.03168552000715863,
+  "normal_library_sha256": "b31e267304078990dc38fc5317e3aa398a08854447338a9a676dc537a5956d8e",
+  "log": "finite-domain-chord-finite-matrix.log",
+  "source": "finite-domain-chord-matrix.rs",
+  "command": [
+    "rustc",
+    "--edition=2024",
+    "-O",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-domain-chord-matrix.rs",
+    "--extern",
+    "hypercurve=/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/libhypercurve-2c7ff6f3fbe07653.rlib",
+    "-L",
+    "dependency=/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps",
+    "-o",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-domain-chord-finite-matrix"
+  ],
+  "source_sha256": "4e86f5ef8ff09819960f7b93a635dac2180830329d506dae7f14cbddb887a840",
+  "executable_sha256": "8585df048923d5c0ead3b0cb66252bdb1f63c69697857703dc875ae358215a09",
+  "counts": {
+    "queries": 144,
+    "point_replays": 480,
+    "restrictions": 16
+  }
+}

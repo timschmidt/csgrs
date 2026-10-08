@@ -1,0 +1,2978 @@
+Logical Methods in Computer Science
+Volume 20, Issue 2, 2024, pp. 17:1–17:55                                                                       Submitted        Jun. 08, 2021
+https://lmcs.episciences.org/                                                                                  Published        Jun. 24, 2024
+
+
+
+
+        SEMANTICS, SPECIFICATION LOGIC, AND HOARE LOGIC OF
+                     EXACT REAL COMPUTATION
+
+         SEWON PARK a , FRANZ BRAUSSE b , PIETER COLLINS c , SUNYOUNG KIM d ,
+       MICHAL KONEČNÝ e , GYESIK LEE  f
+                                          , NORBERT MÜLLER  g
+                                                               , EIKE NEUMANN h ,
+                     NORBERT PREINING , AND MARTIN ZIEGLER a
+                                       i
+
+
+
+
+   a
+        School of Computing, KAIST, Daejeon, Republic of Korea
+        e-mail address: swelite@kaist.ac.kr, ziegler@kaist.ac.kr
+
+
+    b
+        University of Manchester
+        e-mail address: franz.brausse@manchester.ac.uk
+
+
+    c
+        Maastricht University, Maastricht, The Netherlands
+        e-mail address: pieter.collins@maastrichtuniversity.nl
+
+
+   d
+        Yonsei University, Seoul, Republic of Korea
+        e-mail address: sy831@yonsei.ac.kr
+
+
+   e
+        Aston University, Birmingham, UK
+        e-mail address: m.konecny@aston.ac.uk
+
+
+   f
+        Hankyong National University, Anseong, Republic of Korea
+        e-mail address: gslee@hknu.ac.kr
+
+
+   g
+        Universität Trier, Trier, Germany
+        e-mail address: mueller@uni-trier.de
+
+
+   h
+        Swansea University, Swansea, UK
+        e-mail address: neumaef1@gmail.com
+
+
+    i
+        arXiv, Cornell Tech, Komatsu, Japan
+        e-mail address: norbert@preining.info
+
+
+
+
+  Key words and phrases: Computable Analysis, Reliable Numerics, Imperative Programming, Turing-
+Completeness, Decidability, Hoare Logic, Kleene Logic.
+
+
+
+l       LOGICAL METHODS
+        IN COMPUTER SCIENCE   DOI:10.46298/LMCS-20(2:17)2024
+                                                               © Park, Brauße, Collins, Kim, Konečný, Lee, Müller, Neumann, Preining, and Ziegler
+                                                               ⃝
+                                                               CC Creative Commons
+17:2   Park, Brauße, Collins, Kim, Konečný, Lee, Müller, Neumann, Preining, and Ziegler           Vol. 20:2
+
+
+
+
+       Abstract. We propose a simple imperative programming language, ERC, that features
+       arbitrary real numbers as primitive data type, exactly. Equipped with a denotational
+       semantics, ERC provides a formal programming language-theoretic foundation to the
+       algorithmic processing of real numbers. In order to capture multi-valuedness, which is
+       well-known to be essential to real number computation, we use a Plotkin powerdomain and
+       make our programming language semantics computable and complete: all and only real
+       functions computable in computable analysis can be realized in ERC. The base programming
+       language supports real arithmetic as well as implicit limits; expansions support additional
+       primitive operations (such as a user-defined exponential function). By restricting integers
+       to Presburger arithmetic and real coercion to the ‘precision’ embedding Z ∋ p 7→ 2p ∈ R, we
+       arrive at a first-order theory which we prove to be decidable and model-complete. Based on
+       said logic as specification language for preconditions and postconditions, we extend Hoare
+       logic to a sound (w.r.t. the denotational semantics) and expressive system for deriving
+       correct total correctness specifications. Various examples demonstrate the practicality and
+       convenience of our language and the extended Hoare logic.
+
+
+
+
+                                             Contents
+   1. Introduction                                                                                          3
+   1.1. Related Works                                                                                       3
+   1.2. Kleenean-valued Comparison and Nondeterminism                                                       4
+   1.3. Main Contributions and Overviews                                                                    5
+   2. Preliminaries                                                                                         7
+   2.1. Representations and Computable Partial Functions                                                    8
+   2.2. Computable Infinite Multi-valued functions                                                         10
+   2.3. Computable (Finite) Multi-valued functions and Plotkin Powerdomain                                 10
+   3. Formal Syntax and Typing Rules of Exact Real Computation                                             14
+   3.1. Syntax                                                                                             14
+   3.2. Typing Rules                                                                                       16
+   4. Denotational Semantics of Exact Real Computation                                                     18
+   4.1. Denotations of Terms                                                                               18
+   4.2. Denotations of Commands                                                                            20
+   4.3. Denotations of Programs                                                                            22
+   5. Programming in Exact Real Computation                                                                23
+   5.1. Programming Abbreviations                                                                          24
+   5.2. Example Programs                                                                                   26
+   5.3. Turing-Completeness                                                                                32
+   6. Logic of Exact Real Computation                                                                      37
+   6.1. Three-Sorted Structure with Decidable Theory                                                       37
+   6.2. Specification Language                                                                             39
+   6.3. Hoare Logic                                                                                        41
+   7. Example Formal Verification in Exact Real Computation                                                44
+   8. Conclusion and Future work                                                                           45
+   Acknowledgement                                                                                         46
+   References                                                                                              47
+   Appendix A. Proof of the Soundness of the Hoare Logic of ERC                                            50
+Vol. 20:2                           EXACT REAL COMPUTATION                                   17:3
+
+
+
+
+                                      1. Introduction
+Real numbers in computable analysis are expressed and manipulated exactly without
+rounding errors by using infinite representations [Wei00, PER89]. For example, a real
+number x is represented by an infinite sequence of integers ϕn such that |x − ϕn · 2−n | ≤ 2−n
+holds for all n. When we have correctly computed a real number x under this framework,
+we automatically get access to the real number x via any arbitrarily accurate precision.
+This property makes this approach promising for application domains where high-precision
+numerical results are required. Several implementations substantiate this approach of
+exact real number computation: AERN [KTD+ 13], Ariadne [CGC+ 20], Core2 [YYD+ 10],
+Cdar [Bla], iRRAM [Mül01], and realLib [Lam07] to name a few. They provide their own
+data types of real numbers to programmers keeping complicated infinite representations
+in their back-ends. Abstracting away such details, the programmers can deal with real
+numbers as they were abstract algebraic entities closely resembling the classical mathematical
+structure of real numbers with the absence of rounding errors. According to this observation,
+it is expected that reasoning about programs’ behaviours in this approach becomes more
+intuitive; cf. [KMP+ 08, Mel08, BFM09, BM11].
+     Imperative programming is a ubiquitous style of expressing computation that is widely
+adopted in numerical computations admitting rich theories of precondition-postcondition-
+based program verification methodologies [Hoa69, AO19, Rey02, NMB06] and their successful
+applications such as [FP13]. Hence, to conveniently achieve provably correct arbitrary
+accurate numerical computations, it is desired to extend them with exact real number
+computation. To make such an extension rigorous, we first acquire a formal programming
+language with exact real computation on which the extended verification methodologies are
+based. However, extending an existing formal programming language with exact real number
+computation, which is a seemingly simple quest, fails when it is done naı̈vely with the classical
+structure of real numbers as it is not identical, though resembles much thanks to exact
+operations, the computational structure of real numbers [Her99, Section 3]. For example,
+the real number comparison x < y as a binary mapping is only partially computable causing
+non-termination when x = y [Wei00, Theorem 4.1.16]. This property makes multi-valued
+functions and nondeterminism essential notions in exact real computation [Luc77]. We
+explain this in more detail later in Section 1.2.
+     The aim of this paper is to devise an imperative programming language ERC for exact
+real number computation that correctly deals with the partial and nondeterministic nature
+in the following sense. We formalize ERC’s formal domain-theoretic denotational semantics
+in such a way that precisely the computable partial real functions and integer multivalued
+functions in computable analysis can be defined in ERC. Based on the formal semantics,
+we devise a sound Hoare-style logic of ERC specifications. The language ERC is expressive
+enough to model core fragments of existing software and simple enough to stand as a
+design guideline for future exact real number computation software developments which
+wish to adopt the theory developed in this paper. For this purpose, we develop our language
+and theory relative to primitive operator extensions such that other frameworks providing
+richer sets of primitive operators can still benefit from ERC to analyze their real number
+computations.
+
+
+1.1. Related Works. In terms of formalizing programming languages for exact real number
+computation, this paper is deeply influenced by the following related works. Real PCF
+17:4   Park, Brauße, Collins, Kim, Konečný, Lee, Müller, Neumann, Preining, and Ziegler   Vol. 20:2
+
+
+
+
+[Esc96] is a pure functional language that is an extension of PCF [Plo77] with real numbers,
+computable real number operations, and a parallel conditional construct for nondeterminism.
+Its application in expressing integration demonstrated the usefulness of formalizing exact
+real number computation [EE00]. In [MRE07], a domain-theoretic denotational semantics
+of a variant language is defined but using the Hoare powerdomain which cannot express
+termination. There, it is observed that nondeterminism in computable analysis becomes
+continuous only with the Hoare powerdomain. In this paper, we avoid the continuity problem
+and use the Plotkin powerdomain instead such that we do not need to have a separate tool
+for reasoning programs’ termination. Later in Remark 2.5, we discuss more about using a
+different powerdomain.
+     When we focus on imperative programming languages for exact real number computation,
+the Blum-Cucker-Shub-Smale model [BCSS98] aka real RAM [PS85, §1.4] captures real
+numbers as algebraic structure: It supposes tests as total, and renders transcendental
+functions uncomputable. The feasible real RAM [BH98] is a computable variant of real RAM
+where the infeasible total real comparison test [Bra03] is replaced with a nondeterministic
+approximation to it. Its operational semantics influenced the design of iRRAM. Amongst
+further related works including [BC90, DGE13, ES14], WhileCC [TZ04], a simple imperative
+language extended with the computational structure of real numbers and a (countable)
+nondeterminism construct, which is suggested with its algebraic operational semantics, is
+close to our design. We proceed from there, suggest a different set of primitives, and further
+devise domain-theoretic computable denotational semantics, a specification language, and
+reasoning principles.
+
+
+
+1.2. Kleenean-valued Comparison and Nondeterminism. An inevitable side-effect of
+using infinite representations for exact operations is that the ordinary order relation of real
+numbers as a Boolean-valued function becomes partial. Comparing x < y does not terminate
+when x = y whichever specific representation is used [Wei00, Theorem 4.1.16]. Instead of
+making an entire procedure fail when the same numbers are compared, some frameworks,
+including AERN and iRRAM, introduce the concept of Kleenean K := {true, false, unknown},
+a lazy extension of Boolean. The third value unknown denotes an explicit state of non-
+termination that is delayed until tested. Consider the following Kleenean-valued comparison
+                                        
+                                        true
+                                                     if x < y,
+                               x ⋖ y := false         if y < x,                           (1.1)
+                                        
+                                          unknown otherwise,
+                                        
+
+as a replacement for the ordinary Boolean-valued comparison test. When x = y, the
+comparison x ⋖ y evaluates to unknown instead of diverging immediately. Though unknown
+is an admissible value that can be assigned to Kleenean-typed variables when later it is
+required to test if the value is true or false, for example as the condition of a loop statement,
+it then causes non-termination.
+     A remark worth making here is that the third truth value unknown is only denotational in
+the sense that an expression having unknown value cannot be observed during a computation.
+Though we can reason that x ⋖ y must be unknown when we know that x = y, we cannot
+observe x ⋖ y having its value unknown and conclude x = y. In other words, we cannot
+write a program that branches differently on the three values of K.
+Vol. 20:2                          EXACT REAL COMPUTATION                                  17:5
+
+
+
+
+      Due to the non-termination in comparisons, multi-valued functions and their nondeter-
+ministic computations become essential [Luc77] to compose a total but nondeterministic
+procedure from possibly non-terminating sub-procedures. Suppose we want to approximate
+x < y with a tolerance factor 2−n and consider the two Kleenean-valued comparisons
+x ⋖ y + 2−n and y ⋖ x + 2−n . We can test their truths in parallel until one turns out to be
+true. Even in the case when one of them is unknown, hence the test faces non-termination,
+it is promised that the other comparison evaluates to true. Therefore, the parallel procedure
+can terminate safely and inform us if x < y + 2−n or y < x + 2−n . When the two true
+conditions overlap y − 2−n < x < y + 2−n it becomes nondeterministic as it will depend
+on how the real numbers and the parallel procedure are implemented which we abstract
+away. We model this nondeterministic computation by a multi-valued function whose value
+is {true, false} at such inputs denoting the set of possible values of the nondeterministic
+computation.
+      As nondeterminism becomes essential, most exact real computation frameworks provide
+their users with various primitive constructs for nondeterminism. In iRRAM, an operator
+choose is provided that receives multiple Kleenean expressions and returns the index (counting
+from 0) of some expression which evaluates to true. See that the above example can be
+expressed by
+                            choose(x ⋖ y + 2−n , y ⋖ x + 2−n ) = 0.
+
+
+1.3. Main Contributions and Overviews. In this paper, we define an imperative pro-
+gramming language Exact Real Computation (ERC) providing three primitive data types K,
+Z, and R that denote the Kleene three-valued logic K = {true, false, unknown}, the set of
+integers Z, and the set of real numbers R, respectively. It is a simple imperative language
+with a strict hierarchy posed between its term language and command language where
+only the latter contains unbounded loops. Our language is carefully designed to ensure the
+computability (in the sense of computable analysis) of its domain-theoretic denotational
+semantics by adopting the Kleenean typed comparison ⋖ for real numbers replacing the
+ordinary total comparison and offering the nondeterminism construction choose(b0 , b1 , . . .).
+We define the denotations of terms and commands to be functions to Plotkin powerdomains
+[Plo76] to model nondeterministic computations. The definitions of computable partial
+(multi-valued) functions are reviewed in Section 2.
+     Construction of limits, which is an essential feature that makes exact real computation
+more expressive than algebraic computations [Bra03], is available in a restricted way in ERC.
+Instead of introducing an explicit operator for computing limits, which then requires the
+language to support constructions of nontrivial infinite sequences within its term language,
+ERC supports limits to be computed at the level of “programs”, another layer over commands
+representing (multi-valued) functions. A real-valued program is provided with access to
+an integer variable p such that when the program computes (possibly multi-valued) 2p
+approximations to a real number, the single-valued real number, which is the limit of the
+program as p → −∞, becomes the function value that of the program denotes. (A similar
+approach of equipping limits can be found in [TZ99, Section 9] and [TZ04, Definition 4.5.1].)
+Hence, in ERC, commands compose either an integer program expressing a partial integer
+multi-valued function or a real program expressing a partial real function where limit
+operations are taken by default. Later in Remark 5.5, we discuss more about this design
+choice.
+17:6   Park, Brauße, Collins, Kim, Konečný, Lee, Müller, Neumann, Preining, and Ziegler   Vol. 20:2
+
+
+
+
+     ERC is defined relative to primitive operator extensions such that it can be extended
+easily to other languages that provide further primitive operators. For each finite sets F of
+computable partial real functions and G of computable partial (finite) integer multi-valued
+functions, ERC(F, G) is defined. We simply write ERC if the underlying extension sets are
+obvious or irrelevant.
+     The base language without any extension ERC0 := ERC(∅, ∅) does not provide integer
+multiplications or the naı̈ve coercion Z ∋ z 7→ z ∈ R as its term constructs. Instead, it
+provides the precision embedding ı : Z ∋ p → 2p ∈ R as a way to convert an integer to
+real. Although this looks like a bit of restriction at first glance, since integer multiplication
+is expressible using a loop in our command language, we claim that our programming
+language itself is still expressive by showing its Turing-completeness in Theorem 5.3 and
+various examples in Section 5. This restriction and the strict hierarchy between ERC’s term
+language and command language are motivated by the specification language of ERC which
+for ERC0 ’s terms is adequate and admits a decidable theory.
+     We introduce a first-order language over the three types (sorts) expanded with (F, G)
+as the specification language of ERC. We show that the first-order language can define
+the semantics of our nondeterministic term language. Moreover, for the default language
+ERC0 , whose design is influenced by the structure suggested in [Dri85], the theory of the
+specification language becomes model-complete and decidable with regard to the canonical
+interpretation. Nonetheless, due to the fundamental trade-off, the specification language for
+ERC0 is not expressive enough to define the semantics of the command language.
+Remark 1.1. Consider the following three desirable features:
+  i) a programming language being Turing-complete over integers, and thus able to realize
+     an algorithm whose termination is co-r.e. hard
+ ii) a specification language sufficiently rich to express the termination of said algorithm
+iii) a sound and complete r.e. deductive system of said specification language.
+Obviously, not all three are simultaneously feasible. For instance integer WHILE programs /
+Peano arithmetic satisfy (i) / (ii), but not (iii) [Coo78, §6].
+     We propose choosing (i) and (iii) over (ii) as the base design aiming for further develop-
+ments of automatic reasoning of exact real computations using the decidability property.
+However, since our language is defined relative to primitive operator extensions, those who
+are not happy with this trade-off can take the other direction by adding, for example, the
+integer multiplication or the naı̈ve coercion Z ∋ z 7→ z ∈ R in (F, G). The other parts of
+this work remain valid.
+     Based on the specification language, we extend the classical Hoare logic for ERC
+commands’ total correctness                     
+                                           ϕ S ψ
+that says for any initial state satisfying the precondition ϕ, all possible executions of
+the command S regarding the nondeterminism in ERC terminate and each yields a state
+satisfying the postcondition ψ. The precondition and postconditions are formulae in the
+specification language. We prove the soundness of the extended Hoare logic with regard
+to the denotational semantics. We demonstrate the extended Hoare logic to prove the
+correctness of a root-finding program.
+     To summarize our main contributions:
+• A choice of primitive operations over real numbers and their computable (multi-valued)
+  semantics in Section 2.
+Vol. 20:2                          EXACT REAL COMPUTATION                                  17:7
+
+
+
+
+• A small imperative programming language with three basic data types R, Z, and K, and
+   the primitive operations for exact (multi-valued) computations over the algebraic structure
+   of R, Z, and K regarding the said semantics in Sections 3 and 4.
+• Examples demonstrating programming with these operations and semantics, such as:
+   multi-valued integer rounding, determinant via Gaussian elimination with full pivoting
+  (subject to full-rank promise), and root-finding in Section 5
+• Proof that this programming language is Turing-complete: those and only those real
+   functions and integer multi-valued functions that can be realized in ERC are computable
+   in the sense of computable analysis in Theorems 4.8 and 5.3.
+• A many-sorted structure for the formal specification of ERC whose first-order theory is
+   decidable and model-complete in the case of ERC0 in Section 6 and Theorem 6.2.
+• An extended Hoare logic to enable formal verification of ERC programs’ behaviours
+   including their terminations in Section 6.3 and Theorem 6.11.
+• An example correctness proof using the extended Hoare logic of the root-finding example
+   program in Section 7.
+     This paper is structured as follows. In Section 2, we review the definitions of computable
+partial functions and computable partial multi-valued functions in computable analysis and
+the definition of Plotkin powerdomain over flat domains. We specify several computable
+partial functions and multi-valued functions that constitute our primitive operators. Section 3
+defines the formal definition of our language syntax and typing rules. In Section 4, we
+define domain-theoretic denotational semantics using the Plotkin powerdomain and prove
+that for any well-typed terms, well-formed commands, and well-typed programs, their
+denotations are computable partial multi-valued functions (or partial real functions in the
+case of real programs). Section 5 defines some programming abbreviations and introduces
+various example programs which are: square root using Heron’s method, exponential function
+via Taylor expansion and iterative, integer rounding, matrix determinants via Gaussian
+elimination, and root-finding. Later in the section, based on the integer rounding example,
+we prove the Turing-completeness of ERC saying that any computable partial real functions
+and integer multi-valued functions are realizable in ERC.
+     We introduce in Section 6 a three-sorted structure and its first-order language for
+specifying nondeterministic programs in ERC. We prove that its first-order theory is
+decidable and model-complete in the case of ERC0 . Section 6.3 extends the classical Hoare
+logic from Z to (K and) R and prove its soundness. Section 7 demonstrates our verification
+method by proving the correctness of the aforementioned tri section program for root finding.
+We conclude this work with Section 8 suggesting future research including extending ERC
+from operating on real numbers to operating on functions to express operators and other
+higher-order data types.
+
+
+                                     2. Preliminaries
+To devise sound mathematical semantics for unbounded loops, we take a traditional domain-
+theoretic approach [Rey09, Chapter 2.4] and define the denotations of loops as the least
+fixed points of some continuous operators.
+     To model nondeterministic computations, we use the Plotkin powerdomain (which
+we review later in this section) P(Y⊥ ) on flat domains Y⊥ . An element of the domain
+p ∈ P(Y⊥ ) is a subset of Y ∪ {⊥}. Hence, a mapping f : X → P(Y⊥ ), which is a partial
+multi-valued function, models a nondeterministic computation whose return values are in
+17:8    Park, Brauße, Collins, Kim, Konečný, Lee, Müller, Neumann, Preining, and Ziegler      Vol. 20:2
+
+
+
+
+Y where f (x) ⊆ Y ∪ {⊥} denotes the set of all possible return values of the computation
+at input x. When f (x) contains ⊥, it denotes the case where there is a nondeterministic
+branch that fails. In this sense, we say f is partial and defined only at x where ⊥ ̸∈ f (x).
+     In this section, we review the definitions of computable partial functions f : X → Y⊥
+and computable partial multi-valued functions f : X → P(Y⊥ ). We specify some computable
+partial functions and multi-valued functions that later constitute the set of primitive operators
+in ERC.
+     Instead of defining the computability of domain-theoretic functions by relating them with
+the ordinary computability definitions from computable analysis, we define the computability
+of functions to flat domains or to powerdomains directly such that we do not have to handle
+many different computability notions at the same time. Remark 2.6 may help the readers
+who are already familiar with computable analysis to translate the settings back and forth.
+
+2.1. Representations and Computable Partial Functions. For a set X, a representa-
+tion δX of it is a partial surjective function from the set of infinite sequences of integers to
+X. 1 When δX (φ) = x ∈ X, we say φ ∈ ZN is a δX -name of x. We often omit the prefix
+δX if it is obvious from the context or if it is irrelevant.
+     We work with the following representations of Z, R, K:
+                                      δZ (φ) = k :⇔ φ(n) = k for all n ∈ N,
+                                      δR (φ) = x :⇔ |x − φ(n) · 2−n | ≤ 2−n for all n ∈ N,
+                 δK (0#0 · · · 0#1#1 · · · ) = true,
+           δK (0#0 · · · 0# −1# −1 · · · ) = false,
+                     δK (0#0 · · · 0#0 · · · ) = unknown.
+Here, a#ϕ when a ∈ Z and ϕ ∈ ZN denotes the infinite sequence where a is prepended to ϕ
+as its new head. In a name of some b ∈ K, the digit 0 acts as a token saying that we do not
+know yet if b is true or false, the digit 1 acts as a token saying that we now know that b is
+true, and the digit −1 acts as a token saying that we now know that b is false. Note that
+for the name 0#0#0 · · · of b = unknown, it is not possible to decide in a finite time if b is
+unknown or if it will happen to be false or true in the future. In other words, the procedure
+deciding the value of b, if b = true or false, diverges when b = unknown.
+     Though we present the specific representations and work with them in this paper, the
+theory of admissibility [Wei00, Chapter 3.2] ensures their universality with regard to the
+topologies: the discrete topology of Z, the standard topology of R, and the generalized
+Sierpinski topology of K:
+                  
+                    ∅, {true}, {false}, {true, false}, {unknown, true, false} .
+As we are only interested in computability in this paper, the underlying representations can
+be replaced with any other computably equivalent representations.
+    When we have a function to a flat domain f : X → Y⊥ , we consider it as a partial
+function which is properly defined at dom(f ) := {x ∈ X | f (x) ̸= ⊥}. When X and Y are
+represented by δX and δY , respectively, f is said (δX , δY )-computable if there is a type-2
+machine [Wei00, Chapter 2.1] that for all x ∈ dom(f ) transforms each δX -name of x to a
+   1The domains of representations can be any Cantor or Baire space where type-2 computability theory can
+be built on; cf. [Wei00, Exercise 3.2.17].
+Vol. 20:2                               EXACT REAL COMPUTATION                                    17:9
+
+
+
+
+δY -name of f (x).2 In this case, we say the type-2 machine realizes f . We drop the prefix
+(δX , δY ) if it is obvious or irrelevant which specific representations underlie. An important
+fact to note here is that the realizer of f : X → Y⊥ does not need to diverge in the case
+f (x) = ⊥. The realizer on any name of such x not in the domain can either diverge or even
+compute a meaningless result.
+      We often call a function f : X → Y⊥ partial to emphasize that ⊥ may be a function
+value. Often we call f which does not admit ⊥ as its function value total when we want to
+emphasize it. To make our notation more informative, let us write f : X → Y in the case
+f : X → Y⊥ is total.
+      For a multivariate f : X1 × · · · × Xd → Y⊥ , its computability is defined by the existence
+of a type-2 machine with multiple inputs realizing it in a similar manner. Equivalently, it
+can be defined with regard to the product representation for its domain:
+   δX1 ×···×Xd (φ) = (x1 , · · · , xd ) if and only if δXj (n 7→ φ(d × n + j − 1)) = xj for each j.
+Again, other computably equivalent representations of products can replace this specific
+product representation.
+    The following are examples of computable partial and total functions:
+Examples 2.1 (Primitive operations).
+(1) For any represented set X, its identity function id : X → X is computable.
+(2) The constants true, false, unknown ∈ K and k ∈ Z are computable as constant functions
+    from any represented set.
+(3) The logic operations for Kleene three-valued logic ¬          ˆ, ∧
+                                                       ˆ : K → K, ∨  ˆ : K × K → K defined
+    as the following tables are computable. Note that unknown stands for indeterminacy.
+          ˆ
+          ∧          true       false unknown
+        true         true       false unknown
+        false        false      false   false
+      unknown      unknown      false unknown
+
+          ˆ
+          ∨        true   false unknown
+        true       true   true    true
+        false      true   false unknown
+      unknown      true unknown unknown
+
+      ¬
+      ˆ     true false unknown
+            false true unknown
+
+    This justifies the name Kleenean for K.
+(4) The operators of the Presburger arithmetic + : Z × Z → Z, − : Z → Z, and the K-valued
+    comparison tests =, ≤: Z × Z → K (which does not admit unknown) are computable.
+(5) The field operators +, × : R × R → R, − : R → R, and −1 : R → R⊥ where the
+    multiplicative inversion is not defined at 0, i.e., 0−1 = ⊥, are computable. (Any realizer
+    for the multiplicative inversion function will diverge on 0−1 = ⊥.)
+(6) The exponentiation ı : Z ∋ p 7→ 2p ∈ R called precision embedding is computable.
+
+   2It also can be defined equivalently using oracle machines [KC96].
+17:10    Park, Brauße, Collins, Kim, Konečný, Lee, Müller, Neumann, Preining, and Ziegler             Vol. 20:2
+
+
+
+
+(7) The K-valued real number comparison ⋖ : R×R → K from Equation (1.1) is computable.
+    It is realized by a procedure that given some names ϕx , ϕy of x, y ∈ R computes the
+    sequence of integers:
+                                  
+                                  1
+                                        if ϕx (n) + 2 < ϕy (n),
+                             n 7→ −1 if ϕy (n) + 2 < ϕx (n),
+                                  
+                                    0    otherwise.
+                                  
+
+    We can easily verify that the resulting sequence is a name of x ⋖ y.
+(8) A partial projection map proj : X d × Z → X⊥ defined by
+                                                        (
+                                                         xn if 0 ≤ n < d,
+                       proj((x0 , · · · , xd−1 ), n) :=
+                                                         ⊥ otherwise,
+
+    and a partial updating map update : X d × Z × X → (X d )⊥ defined by
+                                           (
+                                            (x0 , · · · , xn−1 , x, xn+1 , · · · , xd−1 ) if 0 ≤ n < d,
+     update((x0 , · · · , xd−1 ), n, x) :=
+                                            ⊥                                             otherwise,
+    are computable.
+(9) A total projection map proji : X1 × · · · × Xd → Xi defined by proji (x1 , · · · , xd ) := xi
+    and a total updating map updatei : X1 × · · · × Xd × Xi → X1 × · · · × Xd defined by
+    updatei ((x1 , · · · , xd ), y) := (x1 , · · · , xi−1 , y, xi+1 , · · · , xd ) updating the i’th entry xi with
+    y, are computable.
+
+
+2.2. Computable Infinite Multi-valued functions. Partial multi-valued functions are
+non-empty set-valued functions f : X → P(Y⊥ ) that model nondeterministic computations
+in the following sense. For an input x, f (x) is the set of all possible nondeterministic values
+that the computation modelled by f can yield, including ⊥ if there is a nondeterministic
+branch for which the computation fails. We say a function of type f : X → P(Y⊥ ) a (partial )
+multi-valued function which is properly defined at dom(f ) := {x | ⊥ ̸∈ f (x)}. We also often
+call a partial multi-valued function total when its function values never contain ⊥; i.e.,
+dom(f ) = X.
+     For a partial multi-valued function f : X → P(Y⊥ ), when the underlying sets X, Y are
+represented by δX and δY , respectively, we say that f is (δX , δY )-computable if there is
+a type-2 machine that for all x ∈ dom(f ) transforms each δX -name of x to a δY -name of
+some y ∈ f (x). Note that the realizer ’s behaviour on non-valid inputs is not specified. It
+can either diverge or compute a meaningless value. We omit the prefix (δX , δY ) if it is not
+necessary to explicitly specify the underlying representations. Note that nondeterminism
+happens due to the fact that even for a fixed x, for its different names, the realizer can
+compute different y, y ′ ∈ f (x) though the realizer itself is deterministic.
+
+
+2.3. Computable (Finite) Multi-valued functions and Plotkin Powerdomain.
+Using the entire non-empty power-set P(Y⊥ ) causes the same problem that motivated [Plo76,
+Section 2] that it does not give us a nice order theoretic property in defining denotational
+semantics. Reminding that ERC only provides finite nondeterminism, and that as long as
+only real numbers and integers are allowed as inputs there is no necessarily infinite integer
+Vol. 20:2                                 EXACT REAL COMPUTATION                                       17:11
+
+
+
+
+multi-valued function (see Fact 2.4), we safely restrict to Plotkin powerdomain [Plo76]. For
+a set X, the powerdomain on its flat domain X⊥ is defined by
+            P(X⊥ ) := {p ⊆ X ∪ {⊥} | p ̸= ∅, and p is finite or contains ⊥} ⊆ P(X⊥ )
+endowed with Egli-Milner ordering:
+                    p ⊑ q ⇔ (∀x ∈ p ∃y ∈ q. x ≤ y) ∧ (∀y ∈ q ∃x ∈ p. x ≤ y) .
+Here, x ≤ y is the order on the flat domain that holds if and only if x = ⊥ or x = y.
+The constructed powerdomain for any flat domain X⊥ is known to be a ω-cpo with the
+least element {⊥} [Rey09, Chapter 7.2]. We say a partial multi-valued function of type
+f : X → P(Y⊥ ) ⊆ P(Y⊥ ) finite.
+    For a function to a flat-domain f : X → Y⊥ , let us write f ‡ : X → P(Y⊥ ) for
+the embedding f ‡ (x) := {f (x)}. For a multivariate partial multi-valued function f :
+X1 × · · · × Xd → P(Y⊥ ), its extension f † : P((X1 )⊥ ) × · · · × P((Xd )⊥ ) → P(Y⊥ ) is defined by
+                                                       (
+                †
+                                            [           {f (x1 , · · · , xd )} if ∀i. xi ̸= ⊥,
+               f (p1 , · · · , pd ) :=
+                                       x ∈p ,··· ,x ∈p
+                                                        {⊥}                    otherwise.
+                                      1    1        d   d
+
+Furthermore, the extension by one argument f †i : X1 × · · · × P((Xi )⊥ ) × · · · × Xd → P(Y⊥ )
+is defined by
+                                                         (
+                                                     [ {f (x1 , · · · , xi , · · · xd )} if xi ̸= ⊥,
+              f †i (x1 , · · · , p, · · · , xd ) :=
+                                                    x ∈p
+                                                          {⊥}                            otherwise.
+                                                i
+
+The embedding and extensions can be more naturally understood in the setting of category
+theory [BVS93, AJ95].
+     The composition of two partial multi-valued functions f : X → P(Y⊥ ) and g : Y → P(Z⊥ )
+is expressed by g † ◦ f : X → P(Y ). This composition is continuous in both arguments [Plo76,
+Section 6]. In other words, given f, fi : X → P(Y⊥ ) and g, gi : Y → P(Z⊥ ) where fi and gi
+are increasing chains with regard to the point-wise orderings, it holds that
+                  G                       G        G †            G †
+                      (g † ◦ fi ) = g † ◦   fi and   (gi ◦ f ) =     gi ◦ f.
+                   i∈N                    i∈N               i∈N              i∈N
+Partial composition is also continuous: Consider a multivariate multi-valued function
+f : X1 × · · · × Xd → P(Y⊥ ), a list of functions gj : X → Xj for j ̸= i, and a chain of
+multi-valued functions gi,k : X → P((Xi )⊥ ) in k. Then,
+                 G                                                                G
+                    f †i ◦ ⟨g1 , · · · , gi,k , · · · gd ⟩ = f †i ◦ ⟨g1 , · · · ,   gi,k , · · · gd ⟩ .
+                  k∈N                                                  k∈N
+Here, for a finite collection of functions f1 , · · · , fd sharing their domains, ⟨f1 , · · · , fd ⟩ denotes
+x 7→ (f1 (x), · · · , fd (x)).
+    For each set X, define Cond : K × P(X⊥ ) × P(X⊥ ) → P(X⊥ ) by
+                                                   
+                                                   p
+                                                             if b = true,
+                               Cond(b, p, q) := q             if b = false,
+                                                   
+                                                       {⊥} otherwise,
+                                                   
+
+a conditional combinator of K. For any b : X → P(K⊥ ) and S : X → P(X⊥ ), due to the
+continuity of compositions, the following operator can be seen as continuous:
+                      W(b, S)(f : X → P(X⊥ )) := Cond†1 ◦ ⟨b, f † ◦ S, id‡ ⟩ .
+17:12   Park, Brauße, Collins, Kim, Konečný, Lee, Müller, Neumann, Preining, and Ziegler   Vol. 20:2
+
+
+
+                                                                          
+The continuity ensures the existence of the least fixed point lfp W(b, S) : X → P(X⊥ )
+which is used to define the denotations of loops later in Section 4.
+    The following are examples of computable (finite) multi-valued functions:
+Examples 2.2 (Primitive multi-valued operations).
+(1) When f : X → Y⊥ is a computable partial/total function, its embedding f ‡ : X → P(Y⊥ )
+    is a computable partial/total multi-valued function.
+(2) When f : X → P(Y⊥ ) and g : Y → P(Z⊥ ) are computable partial multi-valued functions,
+    their composition g † ◦ f : X → P(Z⊥ ) is a computable partial multi-valued function.
+(3) When fi : X → P((Yi )⊥ ) and g : Y1 × · · · × Yd → Z are computable multi-valued
+    functions, their composition g † ◦ ⟨f1 , · · · , fd ⟩ : X → P(Z⊥ ) is a computable multi-valued
+    function.
+(4) For each n ∈ N, the nondeterministic selection function choosen : Kn → P(Z⊥ ) defined
+    by
+                                           (
+                                            {i | bi = true} if there is i s.t. bi = true,
+           choosen (b0 , · · · , bn−1 ) :=
+                                            {⊥}                otherwise,
+    is a computable partial multi-valued function.
+       It is realized by the procedure which when it receives ϕ0 , · · · , ϕn−1 as some names
+    of b0 , · · · , bn−1 , for each p = 0, 1, · · · , checks ϕi (p) until it finds ϕi (p) = 1 implying
+    bi = true. If the realizer finds such i, it returns i#i#i# · · · as the name of the index
+    i ∈ choosen (b0 , · · · , bn−1 ). Note that depending on the given names, the realizer can
+    pick a different index. If there is no choosable index, the realizer will diverge.
+(5) For any computable f : X → P(K⊥ ) and g, h : X → P(Y⊥ ), the composite multi-valued
+    function
+                                     Cond†1 ◦ ⟨f, g, h⟩ : X → P(Y⊥ )
+    is computable.
+(6) Define Kond : K × P(R⊥ ) × P(R⊥ ) → P(R⊥ ), a continuous extension of Cond by
+                                 
+                                 
+                                 p     if b = true,
+                                 
+                                 q     if b = false,
+                Kond(b, p, q) :=
+                                 
+                                 {x} if b = unknown ∧ p = q = {x},
+                                 
+                                  {⊥} otherwise,
+                                 
+
+    with regard to the topology of K; cmp. [Wei00, Theorem 2.3.8] and “parallel if” from PCF
+    [Plo77]. For any computable f : X → P(K⊥ ) and g, h : X → P(R⊥ ), the composition
+    Kond†1 ◦ ⟨f, g, h⟩ : X → P(R⊥ ) is a computable partial multi-valued function.
+       Here, we make a further explanation of this operation. Though this operation at first
+    glance seems to violate the principle that we cannot make a case distinction on b ∈ K,
+    since this operation is continuous at b = unknown, it is not the case. The operation can
+    be realized without testing b = unknown or p = q. We describe one possible realizer of
+    Kond†1 ◦ ⟨f, g, h⟩ to make it clearer.
+       For any u ∈ X, write r := f (u) ∈ P(K⊥ ), p := g(u), q := h(u) ∈ P(R⊥ ) and assume
+    ⊥ ̸∈ Kond†1 (r, p, q). (Recall that we do not need to analyze how our realizer behaves
+    when ⊥ ∈ Kond†1 (r, p, q).) Since ⊥ is not in any of p, q, r, we are given names ϕb , ϕx , ϕy
+    of b, x, y, respectively, where b ∈ r, x ∈ p, and y ∈ q. For some z ∈ Kond†1 (r, p, q) and
+    its name ϕ, the realizer needs to compute n 7→ ϕ(n).
+Vol. 20:2                               EXACT REAL COMPUTATION                                           17:13
+
+
+
+
+       The realizer first tests if ϕx (n + 2) and ϕy (n + 2) differ by more than 2. In this case
+    (i), since we can conclude that x ̸= y, we test if b = true or b = false by inspecting
+    ϕb (0), ϕb (1), · · · . If b = true, since x ∈ Kond†1 (r, p, q), let x be the z and ϕx be the ϕz
+    and let the realizer return ϕx (n) for the ϕz (n). We can let the realizer work similarly
+    in the other case b = false. If b was unknown, the realizer’s inspecting procedure will
+    diverge. However, this is against our assumption that b = unknown and p ̸= q makes
+    ⊥ ∈ Kond†1 (r, p, q).
+       For the other case (ii) where ϕx (n + 2) and ϕy (n + 2) are different by at most 2,
+    from the two integers, the realizer can compute k ∈ Z where |x − k · 2−n | ≤ 2−n and
+    |y − k · 2−n | ≤ 2−n hold. Without being concerned with b, the realizer returns the
+    computed k for ϕz (n) as a valid n’th entry of some names of both x and y. There
+    are some hypothetical cases to analyze. If x = y, then the realizer will execute this
+    second case (ii) indefinitely for all n and yield a name of x (which can be different from
+    ϕx or ϕy ). Regardless of b, even when b = unknown, since x ∈ Kond†1 (r, p, q) as long
+    as ⊥ ̸∈ Kond†1 (r, p, q), we can conclude that the realizer is computing a correct name.
+    Otherwise, if x ̸= y, after returning some finite entries of a name that works for both x
+    and y, the realizer will execute the first case (i) which is already analyzed to be correct.
+       Note that in the case b = unknown, p, q being singleton is crucial. When we ease the
+    condition to p = q without forcing them to be a singleton, there is a case where the
+    nondeterministically picked inputs x ∈ p and y ∈ q are different. In this case, at some
+    point, the realizer executes the first case (i) and diverges by inspecting b.
+    Observe from the definitions that a realizer of a partial (multi-valued) function can
+be seen also as a realizer of some other partial (multi-valued) functions because (1) the
+out-of-domain behaviour of realizers is not specified and (2) for a partial multi-valued
+function, its realizer only has to compute some of the possible function values. Specifically:
+Fact 2.3. If a partial function f : X → Y⊥ is computable, any domain restriction g : X → Y⊥
+such that ∀x. g(x) ≤ f (x) is computable by the same realizers. Similarly, if a partial multi-
+valued function f : X → P(Y⊥ ) is computable, any domain restriction and function-value
+enlargement g : X → P(Y⊥ ) such that ∀x. g(x) ⊑ f (x) or f (x) ⊆ g(x) is computable by the
+same realizers.
+     For any real number or integer, the set of its names is compact with regard to the
+standard Baire space topology on ZN . Hence, for any type-2 computable realizer of an
+integer partial multi-valued function f : X1 × · · · × Xd → P(Z⊥ ) where Xi = Z or R, for fixed
+inputs (x1 , · · · , xd ), the image of the realizer of the compact set of names is also compact
+as any type-2 computable realizer is continuous. That means even when f (x1 , · · · , xd ) is
+infinite, there are only finitely many different integers that its realizer actually computes;
+see [Bra95, Theorem 4.2].
+Fact 2.4. Any computable multi-valued function f : X1 × · · · × Xd → P(Z⊥ ) where Xi = Z
+or R, admits finite refinement in the sense that there is a computable finite multi-valued
+function g : X1 × · · · × Xd → P(Z⊥ ) such that ∀(x1 , · · · , xd ). g(x1 , · · · , xd ) ⊆ f (x1 , · · · , xd )
+holds.
+     In addition to the above justification of our use of Plotkin powerdomain, the following
+is a note on the continuity issue regarding nondeterminism:
+Remark 2.5. Note that choosen : Kn → P(Z⊥ ) is not (domain-theoretic) continuous when K
+is ordered by b1 ≤ b2 iff b1 = b2 or b1 = unknown. This is observed in [MRE07] and there it is
+17:14   Park, Brauße, Collins, Kim, Konečný, Lee, Müller, Neumann, Preining, and Ziegler   Vol. 20:2
+
+
+
+
+suggested to use Hoare powerdomain instead. However, our approach distinguishes (domain-
+theoretic) continuity and computability of primitives: we do not use (domain-theoretic)
+continuity as a criterion for computability. We use continuity to define the semantics of
+loops whose computability is studied separately using the notion of type-2 computability of
+realizers. In other words, as long as we have a fact that choosen : Kn → P(Z⊥ ) is computable,
+there is no need to make it (domain-theoretic) continuous by giving an order on K. This
+way we still can use Plotkin powerdomain in defining our semantics such that we do not
+need to have separate operational semantics to express termination as in [MRE07].
+    We conclude this section with a remark on how the formulations of computable partial
+functions and multi-valued functions in this paper are related to the traditional formulations
+in computable analysis.
+Remark 2.6. In the traditional setting of computable analysis:
+(1) The computability of a partial function presented by f :⊆ X → Y is equivalent to the
+    computability of f⊥ : X → Y⊥ defined by x 7→ f (x) if x ∈ dom(f ) and ⊥ if x ̸∈ dom(f ).
+    Similarly, the computability of f : X → Y⊥ is equivalent to the computability of
+    f ↾dom(f ) :⊆ X → Y . Here, ↾ is a notation for the domain restriction and recall that
+    dom(f ) = {x | f (x) ̸= ⊥}.
+(2) The computability of a partial multi-valued function presented by f :⊆ X ⇒ Y , which is
+    a partial non-empty set-valued function, is equivalent to the computability of f{⊥} : X →
+    P(Y⊥ ). Similarly, the computability of f : X → P(Y⊥ ) is equivalent to the computability
+    of f ↾dom(f ) :⊆ X ⇒ Y . Recall that dom(f ) = {x | ⊥ ̸∈ f (x)}.
+
+
+
+          3. Formal Syntax and Typing Rules of Exact Real Computation
+In this section, we provide the formal syntax and typing rules of ERC(F, G) for any F and
+G according to the following convention:
+Convention 3.1. Fix a (possibly empty) finite set F of computable partial functions to
+R⊥ from products of Z, R, and Rn for any n ≥ 1, as well as a (possibly empty) finite set G
+of computable finite partial multi-valued functions to P(Z) from products of Z, R, and Rn
+for any n ≥ 1.
+
+
+3.1. Syntax. ERC is an imperative programming language comprising of the following
+axiomatized constituents: data types (Section 3.1.1), terms (Section 3.1.2), commands
+(Section 3.1.3), and programs (Section 3.1.4).
+
+
+3.1.1. Data Types. The data types that ERC provides are as follow:
+                            τ ::= K | Z | R | R[n] for each n = 1, 2, · · ·
+See that ERC provides countably many data types: for each natural number n ≥ 1, there is
+a data type R[n], which represents the set of arrays of real numbers of fixed length n. Note
+n here is a meta-level expression which is not a ERC “term” from Section 3.1.2.
+Vol. 20:2                                        EXACT REAL COMPUTATION                                   17:15
+
+
+
+
+3.1.2. Terms. Although the type of a term is judged later by typing rules in Section 3.2,
+here we follow the following conventions: Write m, ℓ to denote terms which should be typed
+Z, u, v to denote terms which should be typed R, and b to denote terms which should be
+typed K. Arbitrary terms are denoted by t. For some fixed countable set of variables V, the
+term language of ERC is defined as follows.
+   t, m, ℓ, u, v, b ::=
+      k                                        k ∈ Z; Z literal
+    | true | false | unknown                   K literal
+    | [t1 , · · · , tn ]                       array literal
+    |x                                         x ∈ V; variable
+    | t[m]                                     array access
+    | t1 + t2 | −t                             addition and additive inversion
+    |m≤ℓ|m=ℓ                                   integer comparison and equality test
+                    −1
+    |u×v |u                                    real multiplication and multiplicative inversion
+    |u⋖v                                       real comparison
+    | 2m                                       precision embedding
+    |¬        ˆ b2 | b1 ∨
+     ˆ b | b1 ∧         ˆ b2                   Kleene logic
+    | f (t1 , · · · , td )                     (f : X1 × · · · × Xd → R⊥ ) ∈ F; primitive function call
+    | g(t1 , · · · , td )                      (g : X1 × · · · × Xd → P(Z⊥ )) ∈ G;
+                                                 primitive multi-valued function call
+    | choosen (b0 , b1 , · · · , bn−1 )        n ∈ N; multi-valued choice
+    |b?u:v                                     continuous conditional
+    Note that we do not provide integer multiplication and any other coercion than 2m
+unless they are provided through F, G. For each natural number n, choosen is a distinct
+term construct. However, since the n is determined syntactically by the number of the
+arguments, we may omit it and instead, simply refer to choose(). We introduce m = ℓ as a
+                                                       ˆ m ≤ ℓ because their denotations
+term construct instead of as an abbreviation for m ≤ ℓ ∧
+which are defined later in Section 4.1 do not agree.
+
+3.1.3. Commands. ERC provides a strict distinction between its term language and command
+language where loops belong only to the command language. Commands in ERC are
+inductively constructed as follows.
+            S       ::= skip                                       skip
+                             | x := t                              variable assignment
+                             | x[m] := t                           array assignment
+                             | let x : τ = t                       variable declaration
+                             | S1 ; S2                             sequential composition
+                             | if b then S1 else S2 end            branching
+                             | while b do S end                    loop
+17:16   Park, Brauße, Collins, Kim, Konečný, Lee, Müller, Neumann, Preining, and Ziegler         Vol. 20:2
+
+
+
+
+    The variable declaration let statement introduces a variable with limited scope in a
+loop or a conditional branch; see the related typing rules in Figure 2.
+
+
+3.1.4. Programs. Having data types, terms, and commands defined, we can finally define
+what a program in ERC is. A program in ERC is defined to be in either of the two forms:
+         input x1 : τ1 , x2 : τ2 , · · · , xn : τn      input x1 : τ1 , x2 : τ2 , · · · , xn : τn
+           S                                              S
+         return t                                       return t as p → −∞
+Here, xi and p are variables varying over V and τi varies over {Z, R, R[1], R[2], · · · }. The
+variable p that is separated from the other input variables is the precision parameter. The
+intended behaviour of a program in the right kind is, taking x1 , · · · , xn as inputs, to compute
+the limit of the command S and the return term t as p goes to −∞. This is formally defined
+later in Section 4.
+
+
+3.2. Typing Rules. Here we define well-typedness of terms (Section 3.2.1), well-formedness
+of commands (Section 3.2.2), and well-typedness of programs (Section 3.2.3) under a context
+which is a mapping from a finite set of variables to their corresponding types. We use a list
+of assignments Γ := x1 : τ1 , x2 : τ2 , · · · , xn : τn to represent the context mapping a variable
+xi to its data type τi for i = 1, . . . , n.
+
+
+3.2.1. Well-Typed Terms. Well-typedness of a term t in ERC to τ under a context Γ is
+written as Γ ⊢ t : τ . Figure 1 shows ERC’s type inference rules. Note that + and − are used
+both in integer and real number operations.
+
+
+3.2.2. Well-formed Commands. Unlike terms, a command in ERC may modify contexts.
+Let us denote a command S under a context Γ being well-formed and yielding a new context
+Γ′ as Γ ⊢ S ▷ Γ′ . The Well-formedness of commands is defined by the inference rules in
+Figure 2.
+      The only construct that modifies a context is let x : τ = t (variable declaration). When
+it is executed under a context Γ, the command is well-formed if x is not already included in
+Γ and the type of the initializing term t is of the declared type τ . After the execution, we
+get the new context Γ, x : τ . However, when a context changes inside a branch or a loop, it
+gets restored once the block is finished. In other words, the variables created inside of a
+branch or a loop only survive locally (as common for example in C++).
+      Here we state a property of our typing rules that is needed later. We omit detailed
+proof as it can be seen directly by structural induction on the type judgement.
+Lemma 3.2. Whenever Γ ⊢ S ▷ Γ′ , the new context Γ′ is an extension of Γ in the sense
+that there is a context ∆ such that Γ′ = Γ, ∆.
+Vol. 20:2                                  EXACT REAL COMPUTATION                                               17:17
+
+
+
+
+                                     Figure 1: Typing rules for terms
+
+             Γ⊢k:Z               Γ ⊢ true : K                Γ ⊢ false : K           Γ ⊢ unknown : K
+
+            Γ ⊢ ti : R (for i = 1, · · · , n)             Γ(x) = τ             Γ ⊢ m : Z Γ ⊢ t : R[n]
+                Γ ⊢ [t1 , · · · , tn ] : R[n]             Γ⊢x:τ                     Γ ⊢ t[m] : R
+
+            Γ ⊢ t1 : τ Γ ⊢ t2 : τ                                        Γ ⊢ t : τ (⋆, τ, τ ′ ) ∈ UnTy
+                                  (⊙, τ, τ ′ ) ∈ BinTy
+               Γ ⊢ t1 ⊙ t2 : τ ′                                        Γ ⊢ ⋆ t : τ′
+
+                  (f : X1 × · · · × Xd → R⊥ ) ∈ F Γ ⊢ ti : ⟨Xi ⟩               (for i = 1, · · · , d)
+                                         Γ ⊢ f (t1 , · · · , td ) : R
+
+                 (g : X1 × · · · × Xd → P(Z⊥ )) ∈ G Γ ⊢ ti : ⟨Xi ⟩ (for i = 1, · · · , d)
+                                          Γ ⊢ g(t1 , · · · , td ) : Z
+
+             Γ ⊢ bi : K (for i = 0, 1, · · · , n − 1)              Γ⊢b:K Γ⊢u:R Γ⊢v:R
+              Γ ⊢ choosen (b0 , b1 , · · · , bn−1 ) : Z                Γ ⊢ (b ? u : v) : R
+
+               BinTy := {(+, R, R), (+, Z, Z), (≤, Z, K), (=, Z, K), (⋖, R, K), (×, R, R),
+                          ˆ , K, K), (∨
+                         (∧           ˆ , K, K)}
+                                                             ¬, K, K), (□−1 , R, R)}
+                UnTy := {(−, R, R), (−, Z, Z), (2□ , Z, R), (ˆ
+                    ⟨Z⟩ := Z
+                    ⟨R⟩ := R
+                  ⟨Rn ⟩ := R[n]     (for n = 1, 2, · · · )
+
+
+                                  Figure 2: Typing rules for commands
+                             Γ ⊢ t : τ Γ(x) = τ                  Γ⊢m:Z          Γ ⊢ t : R Γ(x) = R[n]
+     Γ ⊢ skip ▷ Γ                Γ ⊢ x := t ▷ Γ                               Γ ⊢ x[m] := t ▷ Γ
+
+                     x ̸∈ dom(Γ) Γ ⊢ t : τ                        Γ ⊢ S1 ▷ Γ1 Γ1 ⊢ S2 ▷ Γ2
+                   Γ ⊢ let x : τ = t ▷ Γ, x : τ                        Γ ⊢ S1 ; S2 ▷ Γ2
+
+              Γ ⊢ b : K Γ ⊢ S1 ▷ Γ1 Γ ⊢ S2 ▷ Γ2                            Γ ⊢ b : K Γ ⊢ S ▷ Γ′
+               Γ ⊢ if b then S1 else S2 end ▷ Γ                         Γ ⊢ while b do S end ▷ Γ
+
+
+3.2.3. Well-Typed Programs. Consider the two different kinds of ERC programs:
+   PZ := input x1 : τ1 , x2 : τ2 , · · · , xd : τd            PR :=      input x1 : τ1 , x2 : τ2 , · · · , xd : τd
+           S                                                               S
+         return t                                                        return t as p → −∞
+The first program PZ has type τ1 × · · · × τd → Z if there is a context Γ′ such that
+                         x1 : τ1 , x2 : τ2 , · · · , xd : τd ⊢ S ▷ Γ′   and    Γ′ ⊢ t : Z .
+17:18   Park, Brauße, Collins, Kim, Konečný, Lee, Müller, Neumann, Preining, and Ziegler        Vol. 20:2
+
+
+
+
+Similarly, PR has type τ1 × · · · × τd → R if there is a context Γ′ such that
+                      p : Z, x1 : τ1 , · · · , xd : τd ⊢ S ▷ Γ′   and   Γ′ ⊢ t : R .
+Note that p : Z is not regarded as an input variable and recall that τi varies over
+{Z, R, R[1], R[2], · · · } and cannot be K.
+    We call an ERC program an integer program if it is of the first kind (PZ ) and a real
+program if it is of the second kind (PR ).
+
+
+                 4. Denotational Semantics of Exact Real Computation
+We define multi-valued semantics for well-typed terms (Section 4.1), well-formed commands
+(Section 4.2), and well-typed programs (Section 4.3). In this semantics, the objects of ERC
+are assigned mathematical meanings that are arguably (i) closest possible to the intuition
+of real numbers as entities to be operated on exactly while simultaneously featuring (ii)
+Turing-completeness.
+    We start with denotations for data types and the definition of states.
+Definition 4.1.
+(1) Data types are interpreted as intended:
+                        JKK = K,       JZK = Z,      JRK = R,      JR[n]K = Rn .
+    Recall that n above is a natural number greater than 0 which is not to be confused with
+    an integer-typed term in ERC.
+(2) Contexts are interpreted as sets of assignments. Formally, given a context Γ = x1 :
+    τ1 , . . . , xn : τd , then
+                                  JΓK := Jτ1 K × · · · × Jτd K .
+(3) Given a context Γ, an element σ ∈ JΓK is called state which is a specific assignment of
+    variables contained in the domain of the context.
+
+
+4.1. Denotations of Terms. A (well-typed) term’s meaning under a state is, considering
+the nondeterminism in ERC, the set of all possible values that the term can evaluate. For
+example, a well-typed term Γ ⊢ t : R can evaluate to multiple values in R under a state
+σ ∈ JΓK. Moreover, if 0 is among these values, then the compound term t−1 could be
+undefined in addition to its defined values derived from non-zero values of t. This is reflected
+by including ⊥ in the denotation, which is thus an element of P(JRK⊥ ).
+Definition 4.2. Recall the computable partial multi-valued functions specified in Exam-
+ples 2.1 and Examples 2.2. Given a well-typed term t such that Γ ⊢ t : τ , we define its
+denotation as a partial multi-valued function JΓ ⊢ t : τ K : JΓK → P(Jτ K⊥ ) inductively as
+follows:
+                                 JΓ ⊢ k : ZK := σ 7→ {k}
+                              JΓ ⊢ true : KK := σ 7→ {true}
+                             JΓ ⊢ false : KK := σ 7→ {false}
+                        JΓ ⊢ unknown : KK := σ 7→ {unknown}
+                                                        †
+                   JΓ ⊢ [t1 , · · · , tn ] : R[n]K := id‡ ◦⟨JΓ ⊢ t1 : RK , · · · , JΓ ⊢ tn : RK⟩
+Vol. 20:2                                    EXACT REAL COMPUTATION                                              17:19
+
+
+
+
+ Jx1 : τ1 , · · · , xi : τi , · · · , xd : τd ⊢ xi : τi K := proj‡i
+                                                                      †
+                                   JΓ ⊢ t[m] : RK := proj‡ ◦ ⟨JΓ ⊢ t : R[n]K , JΓ ⊢ m : ZK⟩
+                                                        †
+                                 Γ ⊢ t1 ⊙ t2 : τ ′ := ⊙‡ ◦ ⟨JΓ ⊢ t1 : τ K , JΓ ⊢ t2 : τ K⟩
+                               q                  y
+
+                                                    for (⊙, τ, τ ′ ) ∈ BinTy
+                                                          †
+                                      Γ ⊢ ⋆ t : τ ′ := ⋆ ‡ ◦ JΓ ⊢ t : τ K
+                                     q             y
+
+                                                      for (⋆, τ, τ ′ ) ∈ UnTy
+                                                               †
+                         JΓ ⊢ f (t1 , . . . , td ) : RK := f ‡ ◦ ⟨JΓ ⊢ t1 : ⟨X1 ⟩K , · · · , JΓ ⊢ td : ⟨Xd ⟩K⟩
+                                                      where (f : X1 × · · · × Xd → R⊥ ) ∈ F
+                         JΓ ⊢ g(t1 , . . . , td ) : ZK := g † ◦ ⟨JΓ ⊢ t1 : ⟨X1 ⟩K , · · · , JΓ ⊢ td : ⟨Xd ⟩K⟩
+                                                      where (g : X1 × · · · × Xd → P(Z⊥ )) ∈ G
+            JΓ ⊢ choosen (b0 , · · · , bn−1 ) : ZK := choose†n ◦ ⟨JΓ ⊢ b0 : KK , · · · , JΓ ⊢ bn−1 : KK⟩
+                            JΓ ⊢ (b ? u : v) : RK := Kond†1 ◦ ⟨JΓ ⊢ b : KK , JΓ ⊢ u : RK , JΓ ⊢ v : RK⟩
+
+
+We often simply write JtK instead of JΓ ⊢ t : τ K omitting Γ and τ when they are obvious
+or irrelevant. We also synonymously say t evaluates to x under σ, or t has/contains the
+element x ∈ JtK σ.
+     Regarding the multi-valuedness, choose() and functions from G are the only atomic
+constructs that yield multi-valuedness. The denotations of all other constructs except the
+two and continuous conditionals are defined by the embedding of single-valued mappings.
+For the case of continuous conditionals, we can observe that Kond†1 (p, q, r) is a singleton
+when p, q, and q are singletons. Hence, it does not generate multi-valuedness.
+     Another remark on the multi-valuedness is that the denotation of integer equality m1 =
+m2 does not coincide with that of m1 ≤ m2 ∧    ˆ m2 ≤ m1 . As an example, consider a state σ
+                                                      q                         y
+where Jm1 K σ = {0, 2} and Jm2 K σ = {1, 3}. Then, m1 ≤ m2 ∧       ˆ m2 ≤ m1 σ = {true, false}
+whereas Jm1 = m2 K σ = {false}. This justifies introducing m1 = m2 as a separate primitive.
+     Well-typedness in ERC does not prevent ⊥: The sources of ⊥ are (i) an array accessed
+by a wrong index (proj), (ii) the multiplicative inverse of 0 (0−1 ), (iii) function calls to partial
+(multi-valued) functions at points out of their domains, (iv) a choice operation without any
+choosable argument (choose), and (v) a continuous conditional when the two arguments
+u, v do not match in Kond(unknown, u, v) as u = v = {x} for some x ∈ R. We emphasize
+here again that the computational meaning of ⊥ is not non-termination but is more general
+non-specified behaviour; recall Section 2.
+     Though P(X⊥ ) allows infinite sets (as long as they contain ⊥), this case does not occur
+in our term language. The denotation of any well-typed term at any state is finite unless
+the case is provided by functions in G. However, we still use the powerdomain for our term
+language to use the same setting with the denotational semantics of our command language
+where indeed ⊥-containing infinite sets arise.
+     The computability of the denotations follows directly from the computability of the
+primitive operations and of the compositions stated in Examples 2.1 and Examples 2.2:
+Lemma 4.3. The denotation of any well-typed term is a computable partial multi-valued
+function.
+17:20   Park, Brauße, Collins, Kim, Konečný, Lee, Müller, Neumann, Preining, and Ziegler           Vol. 20:2
+
+
+
+
+4.2. Denotations of Commands. As the denotation of a well-typed term under a state is
+the set of all possible values that the term may evaluate to, considering multi-valuedness
+in ERC, the denotation of a well-formed command under a state is the set of all possible
+resulting states that the command may result in. Hence, we let a well-typed command
+denote a function from the set of states to the restricted power-set of the resulting states:
+Definition 4.4. Recall the (multi-valued) functions specified in Examples 2.1 and Exam-
+ples 2.2. Given a well-formed command S such that Γ ⊢ S ▷ Γ′ , we define its denotation to
+be a partial multi-valued function JΓ ⊢ S ▷ Γ′ K : JΓK → P(JΓ′ K⊥ ) inductively as follows:
+                      JΓ ⊢ skip ▷ ΓK := id‡
+                                                            †
+                    JΓ ⊢ xi := t ▷ ΓK := update‡i ◦ ⟨id‡ , JtK⟩
+                                      where Γ = x1 : τ1 , · · · , xi : τi , · · · , xd : τd
+                                                            †                      †
+                 JΓ ⊢ xi [m] := t ▷ ΓK := update‡i ◦ ⟨id‡ , update‡ ◦ ⟨proj‡i , JmK , JtK⟩⟩
+                                             where Γ = x1 : τ1 , · · · , xi : R[n], · · · , xd : τd
+                                                    †
+             Γ ⊢ let x : τ = t ▷ Γ := id‡ ◦⟨id‡ , JtK⟩
+                                       ′
+            q                            y
+                                                     y†
+                    Γ ⊢ S1 ; S2 ▷ Γ′ := ∆ ⊢ S2 ▷ Γ′ ◦ JΓ ⊢ S1 ▷ ∆K
+                   q                y   q
+                                                         †             y † q
+JΓ ⊢ if b then S1 else S2 end ▷ ΓK := Cond†1 ◦ ⟨JbK , ↾‡Γ ◦ Γ ⊢ S1 ▷ Γ′ , ↾‡Γ ◦ Γ ⊢ S2 ▷ Γ′′ ⟩
+                                                             q                              y
+                                                       †
+       JΓ ⊢ while b do S end ▷ ΓK := lfp W(JbK , ↾‡Γ ◦ Γ ⊢ S ▷ Γ′ )
+                                                           q        y
+
+Here, ↾Γ : JΓ, ∆K → JΓK for any contexts Γ, ∆ when Γ = x1 : τ1 , · · · , xd : τd is defined by
+                             (x1 , · · · , xd , y1 , · · · , ym ) 7→ (x1 , · · · , xd ).
+We often write JSK to denote JΓ ⊢ S ▷ Γ′ K omitting Γ and Γ′ when they are obvious or
+irrelevant.
+     When a term is assigned to a variable, an array variable, or a newly created variable as
+its initial value, the underlying state branches into multiple states for each single value in
+the denotation of the term. Instead of having a single state storing multi-values, we choose
+to have multiple states where each stores single-values.
+     The denotations of conditional statements and loops are well-defined due to Lemma 3.2
+which justifies the post-composed restriction function ↾Γ clearing the newly added local
+variables. Regarding loops and branches, note that their denotations contain unknown when
+their conditions evaluate to unknown. We could also consider replacing Cond with Kond for
+the semantics of conditionals. However, first, their domains do not match: Kond requires
+the branches to be in P(R⊥ ) whereas we want them to be in P(JΓK⊥ ). Though one could
+imagine extending Kond’s domain, recalling how Kond is realized in Examples 2.2, this
+requires the resulting states of both branches to be inspected variable-wise. For this work,
+we decide to keep the ordinary branching which makes a decision only on its condition and
+diverges in the case the condition diverges by being unknown instead of further inspecting
+the two resulting states.
+     Unlike for terms, the multi-valued computability of loops needs more attention:
+Proposition 4.5. For a represented set X and computable partial multi-valued functions
+b : X → P(K⊥ ) and S : X → P(X⊥ ), the least fixed point
+                                          
+                             lfp W(b, S) : X → P(X⊥ )
+Vol. 20:2                                  EXACT REAL COMPUTATION                                17:21
+
+
+
+
+as partial multi-valued function is computable uniformly to b and c in the sense that the
+realizer for lfp W(b, S) : X → P(X⊥ ) can be defined with function calls to the realizers of
+b and S for any b and S.
+Proof. By the least fixed point theorem, the least fixed point is the limit of the chain
+                     (0)                               (n+1)                    (n)
+                  Wb,S := σ 7→ {⊥} and Wb,S                    := Cond†1 ◦ ⟨b, Wb,S ◦ S, id‡ ⟩
+which, intuitively, represents the process of unrolling the loop. For any two σ, δ ∈ X,
+                                                                       (n)
+δ ∈ lfp W(b, S) σ if and only if there is a natural number n where δ ∈ Wb,S σ. Furthermore,
+                                          (n)
+⊥ ∈ lfp W(b, S) σ if and only if ⊥ ∈ Wb,S σ for all n.
+     Suppose τb realizes b and τS realizes S. We consider the type-2 machine ττb ,τS (ϕσ ) on
+its input ϕσ a name of some σ ∈ X with the following description:
+input ϕσ
+    repeat :
+       ϕb := τb (ϕσ )
+       i t e r a t e i := 0, 1, 2, · · · u n t i l ϕb (i) = −1 or ϕb (i) = 1
+       i f ϕb (i) = 1 :
+             ϕσ := τS (ϕσ )
+       i f ϕb (i) = −1 :
+             return ϕσ
+                                          
+We need to prove that if ⊥ ̸∈ lfp W(b, S) σ, ττb ,τS (ϕσ ) is defined and is a name of some
+δ ∈ lfp W(b,
+            S) σ. (Recall that we do not need to reason about ττb ,τS (ϕσ ) when ⊥ ∈
+lfp W(b, S) σ.)
+                                               (n)
+     Consider the indexed variants ττb ,τS (ϕσ ) described by:
+input ϕσ
+    repeat :
+         i f n = 0 then diverge e l s e n := n − 1
+         ϕb := τb (ϕσ )
+         i t e r a t e i := 0, 1, 2, · · · u n t i l ϕb (i) = −1 or ϕb (i) = 1
+         i f ϕb (i) = 1 :
+                 ϕσ := τS (ϕσ )
+         i f ϕb (i) = −1 :
+                 return ϕσ
+                                                                  (n)
+which is almost identical to ττb ,τS (ϕσ ) except that ττb ,τS (ϕσ ) repeats the main iteration only
+at most n times and diverges unless it returns until then. By induction on n, we can easily
+                                             (n)               (n)
+verify that for each natural number n, ττb ,τS realizes Wb,S .
+                                                         (n)
+    Furthermore, it holds that as long as ττb ,τS (ϕσ ) is defined, it coincides with ττb ,τS (ϕσ ).
+                                                                       (n)            (n)
+Since ⊥ ̸∈ lfp W(b, S) σ, there exists n where lfp W(b, S) σ = Wb,S σ ̸∋ ⊥ and ττb ,τS (ϕσ )
+                                  (n)
+is a name of some δ ∈ Wb,S σ. Therefore, by the above claim, ττb ,τS (ϕσ ) coincides with
+  (n)                                           
+ττb ,τS (ϕσ ) which is a name of δ ∈ lfp W(b, S) σ.
+    In the lemma, we say “computable uniformly to b and c” to denote that the realizer can
+be defined by function calls to the realizers of b and c without depending on any further
+specifics of (the realizers of) b and c. We put a justification for this notion of uniformity.
+Type-2 computability provides a utm theorem stating that there exists an indexing of
+17:22   Park, Brauße, Collins, Kim, Konečný, Lee, Müller, Neumann, Preining, and Ziegler        Vol. 20:2
+
+
+
+
+type-2 machines by ZN and a universal type-2 machine for that indexing. Hence, the above
+uniformity means that the realizer can be actually defined as a multivariate function that
+receives the indices for the realizers of b and c as its input where the function calls are
+replaced with compositions by the universal machine. In other words, the least fixed point
+of W(b, c) is computable uniformly in the following sense that the operation
+                                                                                    
+       indices of the realizers of b, c and a name of σ 7→ a name of δ ∈ lfp W(b, c) σ
+is computable for any b, c, σ. We can also make this notion formal by representing computable
+partial multi-valued functions and making the above operation a computable mapping from
+them using the same type-2 machine. However, since the cardinality of the set of computable
+partial multi-valued functions exceeds that of ZN , it requires us to use a more general notion
+of representation, namely, multi-representation [Sch02] or assemblies over Kleene’s second
+algebra.
+     Following up on Lemma 4.3 and Proposition 4.5, we establish the computability result
+for our command language:
+Lemma 4.6. The denotation of any well-formed command is a computable partial multi-
+valued function.
+Proof. The restriction operations are computable. Due to the computability of the primitives,
+compositions, and fixed points of loops, the denotations of well-formed commands are
+computable partial multi-valued functions.
+
+
+4.3. Denotations of Programs. Having defined the meanings of terms and commands,
+we are now ready to define denotations of well-typed ERC programs.
+Definition 4.7. The denotation of a well-typed integer program
+                              PZ := input x1 : τ1 , x2 : τ2 , · · · , xd : τd
+                                      S
+                                    return m
+is a partial integer multi-valued function
+                                  JPZ K : Jτ1 K × · · · × Jτd K → P(Z⊥ )
+defined by JPZ K := JmK† ◦ JSK.
+    The denotation of a well-typed real program
+                             PR :=      input x1 : τ1 , x2 : τ2 , · · · , xd : τd
+                                          S
+                                        return u as p → −∞
+is a partial real function JPR K : Jτ1 K × · · · × Jτd K → R⊥ that is defined by
+                              (
+                               x if ∀p ∈ Z. ∀y ∈ JtK† ◦ JSK (p, x1 , · · · , xd ). y ̸= ⊥ ∧ |y − x| ≤ 2p ,
+  JPR K (x1 , · · · , xd ) :=
+                               ⊥ otherwise.
+     In words, a real program PR denotes a single-valued function f whose function value
+f (x1 , · · · , xd ) is the limit of the multi-valued sequence JtK† ◦ JSK (p, x1 , · · · , xd ) as p → −∞
+in the sense that for each i ∈ N, whichever yi is picked from JtK† ◦ JSK (−i, x1 , · · · , xd )
+nondeterministically, yi is a 2−i approximation to f (x1 , · · · , xd ) and not ⊥. The obligated
+Vol. 20:2                               EXACT REAL COMPUTATION                                           17:23
+
+
+
+
+rate of convergence 2p is chosen to make it coincide with the precision embedding ı : Z ∋
+p 7→ 2p ∈ R.
+Theorem 4.8. The denotation of a well-typed real ERC program is a computable partial
+real function. The denotation of a well-typed integer ERC program is a computable partial
+integer multi-valued function.
+Proof. The computability of terms, commands, compositions, and limit operations [Wei00,
+Theorem 4.3.7] yields the computability of the denotations of programs.
+    When a real program on its input does not generate a converging sequence as its precision
+parameter p heads to −∞, its function value is denoted by ⊥. This is the main motivation
+for us to make ⊥ to represent not only divergence or non-termination but more general
+non-specified behaviour. When a sequence is not converging, operationally, there is no
+possible way to decide that the sequence is not converging. Hence, after reading some finite
+portion of the sequence, believing that the rest of the sequence converges, an approximation
+to the limit has to be made. That means even when we realize later that the sequence does
+not follow our expectations and decides not to converge, there can be an output printed
+already as the limit of the sequence which turns out to be completely meaningless as the
+sequence does not converge after all. Without giving this freedom of a procedure returning
+completely meaningless results on its non-valid inputs, limit operations cannot be realized.
+    Recall from Fact 2.3 that in computable analysis, a machine realizing a (multi-valued)
+function can be seen to realize some other (multi-valued) functions at the same time.
+Reflecting this property, we add one more layer to the denotations of programs:
+Definition 4.9.
+(1) A well-typed real program P realizes a partial function f : X1 × · · · × Xd → R⊥ if
+    ∀(x1 , · · · , xd ). f (x1 , · · · , xd ) ≤ JP K (x1 , · · · , xd ) holds. Recall that x ≤ y if and only if
+    x = ⊥ or x = y for x, y ∈ R⊥ .
+(2) A well-typed integer program P realizes a partial (possibly infinite) multi-valued func-
+    tion f : X1 × · · · × Xd → P(Z⊥ ) if ∀(x1 , · · · , xd ). f (x1 , · · · , xd ) ⊑ JP K (x1 , · · · , xd ) or
+    JP K (x1 , · · · , xd ) ⊆ f (x1 , · · · , xd ) holds.
+    Note that though the denotations of integer programs are finite multi-valued functions,
+they can still realize infinite multi-valued functions. Directly from Fact 2.4, we get the
+computability of realizable partial (multi-valued) functions:
+Corollary 4.10. Realizable partial (multi-valued) functions are computable partial (multi-
+valued) functions.
+
+
+                          5. Programming in Exact Real Computation
+In this section, we collect several examples of (multi-valued) functions that are realizable in
+ERC. They illustrate the purpose of ERC which is to allow and justify naı̈vely implementing
+numerical algorithms, with computable analysis as the rigorous but hidden theoretical
+foundation. They demonstrate how naturally the classical algorithms can be modified to
+incorporate the Kleenean-valued comparisons and the nondeterministic choose.
+     The examples are square root using Heron’s method, exponential function via two
+different ways, integer rounding, matrix determinants via Gauss elimination, and root
+finding. Heron’s method, as an intuitive and efficient way to compute square roots of
+17:24   Park, Brauße, Collins, Kim, Konečný, Lee, Müller, Neumann, Preining, and Ziegler    Vol. 20:2
+
+
+
+
+real numbers, is often expressed in other frameworks [Mül01, BMR18, KST20]. Through
+the example, the readers can easily compare ERC with the others; similarly, for Gauss
+elimination [TZ04, Section 2.2]. The example of realizing the exponential function shows
+that the base language ERC0 can realize transcendental functions; this leads to a more
+detailed discussion of our specification language later in Section 6. Integer rounding, on the
+other hand, shows that ERC0 can nondeterministically extract names of real numbers. This
+later forms a core routine in the proof of Turing-completeness in Section 5.3. Root finding,
+a computational version of the intermediate value theorem is often picked as an example
+in computable or constructive analysis. The example further demonstrates a trick of using
+the extension sets F and G to model function calls to arbitrary external functions. This
+example is chosen to be formally verified later in Section 7.
+     The examples have been implemented using a shallow embedding of ERC into Haskell
+which we develop on top of the AERN library for exact real number computation [KTD+ 13].3
+There, though internally real numbers and Kleeneans are represented by infinite sequences,
+they are hidden from the users where the users see them as abstract entities. Hence, without
+a nondeterminism monad, it provides the nondeterministic choose operator which can choose
+different indices for the same inputs whose internal sequences are different. In other words,
+the choose operator is deterministic about the internal sequences of the arguments which are
+inspected with some fixed interleaving procedure, but is nondeterministic when the internal
+sequences are abstracted away.
+
+
+
+5.1. Programming Abbreviations. Several abbreviations are used in our example pro-
+grams. While deferring their introductions to each example program, here we make some
+remarks for those used importantly throughout this paper.
+
+
+
+5.1.1. Extension by denotations. Recall that the programming language ERC(F, G) is defined
+relative to the sets F and G. Beyond modelling primitive operator extensions, the sets F
+and G provide a trick on reasoning user-defined function calls (but without recursive calls)
+from some richer exact real computation software. Instead of equipping ERC with a feature
+of calling programs within programs, which removes ERC’s strict barrier between its term
+language and command language, in order to keep our term language as simple as possible,
+when the users want to model a program calling another program, they can use ERC(F, G)
+with F or G extended with the denotations of the programs.
+     When we want to extend the set F with the denotation of a real program P in ERC(F, G),
+we write ERC(F ∪{P }, G) to denote ERC(F ∪{JP K}, G). Similarly, we write ERC(F, G ∪{P })
+when P is an integer program in ERC(F, G). These notations are well-defined since the
+denotation of a real program is a computable partial real function and the denotation of an
+integer program is a computable partial integer multi-valued function. When the sets are
+extended by the denotation of a program P , we write P (t1 , · · · , td ) for JP K (t1 , · · · , td ) in
+the extended term language.
+
+
+
+   3The implementation can be found in https://github.com/michalkonecny/aern2/blob/master/
+aern2-erc/src/ERC/Examples.hs .
+Vol. 20:2                          EXACT REAL COMPUTATION                                 17:25
+
+
+
+
+5.1.2. Variable scope. ERC allows local variable creations inside conditional and loop state-
+ments. This mechanism for local variables can be used to define arbitrary variable scopes.
+For a well-formed command Γ ⊢ S ▷ Γ′ , write
+                                             {S}
+for
+                              Γ ⊢ if true then S else skip ▷ Γ
+We can easily check:
+                                 †
+                              ↾‡Γ ◦ Γ ⊢ S ▷ Γ′ = JΓ ⊢ {S} ▷ ΓK .
+                                   q          y
+
+
+
+
+5.1.3. Term Abbreviations. We assume obvious term abbreviations such as t1 /t2 for t1 × t−1 2 ,
+t1 − t2 for t1 + (−t2 ), and so on. For each integer constant k, we write k to refer to the |k|
+times repeated additions of either 20 or −20 when we want it to represent the real number k.
+
+5.1.4. Command Abbreviations. Though our default term language is restrictive without
+having integer multiplications or the ordinary integer-to-real coercion, the default command
+language can recover most of the restrictions. For instance, given two integer terms m1
+and m2 , though we cannot have its multiplication as a term, we can have a command that
+computes the multiplication and assigns the result into a variable say y : Z:
+   {
+        let x1 : Z = m1 ; let x2 : Z = m2 ; let k : Z = 0;
+        y := 0;
+        if 0 ≤ x2
+        then while k + 1 ≤ x2 do y := y + x1 ; k := k + 1 end
+        else while x2 + 1 ≤ k do y := y − x1 ; k := k − 1 end
+        end
+   }
+    The local variables x1 and x2 are used to choose values from possibly multi-valued m1
+and m2 and to use them consistently throughout the computation. For a context Γ such
+that Γ ⊢ m1 : Z, Γ ⊢ m2 : Z, and Γ(y) = Z,
+                                    Γ ⊢ y :≡ m1 × m2 ▷ Γ
+abbreviates the above well-formed command whose local variables are selected to not conflict
+with Γ. The notation :≡ is chosen to make it be distinguished from the usual assignment
+construct := to emphasize that m1 × m2 is not a term. The following semantic equation can
+be verified:
+                                                   (
+                                      [             {⊥}                if x1 = ⊥ ∨ x2 = ⊥,
+         Jy :≡ t1 × t2 K σ =
+                             x1 ∈Jt1 Kσ∧x2 ∈Jt2 Kσ
+                                                    {σ[y 7→ x1 × x2 ]} otherwise.
+       We can define various command abbreviations similarly for example
+                                       Γ ⊢ y :≡ um ▷ Γ
+17:26   Park, Brauße, Collins, Kim, Konečný, Lee, Müller, Neumann, Preining, and Ziegler     Vol. 20:2
+
+
+
+
+when Γ ⊢ u : R, Γ ⊢ m : Z, and Γ(y) = R for the repeated multiplications satisfying
+                                            (
+                   m
+                                  [          {⊥}           if x1 = ⊥ ∨ x2 = ⊥,
+           Jy :≡ u K σ =                              x2
+                          x1 ∈JuKσ∧x2 ∈JmKσ
+                                             {σ[y 7→ x1 ]} otherwise.
+
+
+5.2. Example Programs. We annotate assertions next to commands to convey the be-
+haviours, including the domains (preconditions), of the introduced programs. However, we
+remind the readers that the annotations are not part of ERC.
+
+5.2.1. Square Root Function via Heron’s Method. Heron’s method approximates the square
+root of a given real number 0 ≤ x up to any desired absolute error 2p , p ∈ Z, by calculating
+                                                                          √
+a contracting sequence of upper and lower approximations zn := x/yn ≤ x ≤ yn iteratively
+taking the average yn+1 := (yn + zn )/2. The ERC0 program HeronSqrt illustrated in
+Algorithm 1 realizes the square root function via Heron’s method.
+
+Algorithm 1 HeronSqrt : R → R
+  input x : R                                                                                 // 0 ≤ x
+                                                                                                √
+     let y : R = 1; let z : R = x/y ;                                                  // z ≤       x≤y
+                                           
+     while choose y − z ⋖ 2p , 2p−1 ⋖ y − z = 1 do
+                                                                                                √
+         y := (y + z)/2; z := x/y                                                      // z ≤       x≤y
+     end
+                                                                                              √
+  return y as p → −∞                                                                 // |y − x| < 2p
+
+    Recall that the arguments to choose are indexed from 0, hence choose(b0 , b1 ) = 1 means
+that the second argument b1 must evaluate to true. The ERC program employs the multi-
+valued choose() operation applied to two Kleenean-valued tests y − z ⋖ 2p and 2p−1 ⋖ y − z
+where at least one of the two must be true resulting in a total loop condition. Moreover,
+when the loop terminates, the first test (corresponding to return value 0) must (while the
+second test, corresponding to return value 1, may or may not) be true: guaranteed to return
+                        √
+an approximation y to x up to absolute error 2p .
+
+5.2.2. Exponential Function via Taylor Expansion. The exponential function has a globally
+converging Taylor expansion                 X∞
+                                 exp(x) =         xj /j!                            (5.1)
+                                                      j=0
+    A ERC real program computing it must return, given a dedicated precision parameter
+p ∈ Z and argument x ∈ R, an approximation to exp(x) up to error 2p . For |x| ≤ 1 and
+positive n ∈ N, the tail bound
+                 X                X             X
+                         xj /j! ≤    |x|j /j! ≤        2−j+1 = 2−n+1              (5.2)
+                      j>n                 j>n                 j>n
+justifies the straightforward algorithm as in the ERC program pExp in Algorithm 2. The
+program introduces a command abbreviation let x1 , · · · , xd : τ = t for let x1 : τ =
+Vol. 20:2                             EXACT REAL COMPUTATION                              17:27
+
+
+
+
+Algorithm 2 pExp : R → R
+   input x : R                                                                  // −1 ≤ x ≤ 1
+      let j : Z = 1; let jr , f : R = 1;                                     // j ≡ jr , f ≡ j!
+      let y : R = 1; let z : R = x;                                                  // z ≡ xj
+      while j ≤ −p + 1 do
+          y := y + z/f ;
+          j := j + 1;
+          jr := jr + 1;
+          z := z × x;
+          f := f × jr
+      end
+   return y as p → −∞                                                     // |y − exp(x)| ≤ 2p
+
+Algorithm 3 posExp : R → R
+   input x : R                                                                      // −1 ≤ x
+      let z : R = pExp(1/2);
+      let y : R = 1;
+      while choose(x ⋖ 1, 1/2 ⋖ x) = 1 do
+          y := y × z ;
+          x := x − 1/2
+      end
+   return y × pExp(x) as p → −∞
+
+
+t; · · · ; let xd : τ = t. In the program, the two variables j : Z and jr : R retain identical
+values but have distinguished types, written as j ≡ jr in the assertions.
+       The following wrapper posExp for pExp in Algorithm 3, which is a program in ERC({pExp}, ∅)
+removes the restriction |x| ≤ 1 and instead works for all −1 ≤ x. Furthermore, since for
+x < 0 it holds that exp(x) = 1/ exp(−x), and exp(y) = 1/ exp(y) at y = 0, we can construct
+a procedure that computes exp(x) for all x ∈ R using the continuous conditional by
+                               0 ⋖ x ? posExp(x) : 1/ posExp(−x).
+
+
+5.2.3. Exponential Function via Iteration. pExp employs unbounded sums, which leave
+the realm of the first-order language considered in Section 6 for formal specification and
+verification purposes. Here we consider an alternative, iterative approach to realize the
+exponential function in ERC. To this end recall for every x ∈ [0; 2] it holds [Mit70, §3.6.3]:
+                        n→∞        n                      n+1 n→∞
+               exp(x) ←− 1 + nx       ≤ exp(x) ≤ 1 + nx          −→ exp(x)
+    This suggests the iterative ERC program iExp in Algorithm 4. It supposes 0 ≤ x ≤ 2
+but can be extended to the entire real line similar to Section 5.2.2. Note that the loop
+is guaranteed to terminate since b − a converges to 0 as n grows. The loop condition is
+17:28   Park, Brauße, Collins, Kim, Konečný, Lee, Müller, Neumann, Preining, and Ziegler   Vol. 20:2
+
+
+
+
+Algorithm 4 iExp : R → R
+  input x : R                                                                            // 0 ≤ x ≤ 2
+     let n : Z = 1;
+     let nr : R = 1;
+     let c : R = 1 + x; let a : R = c; let b : R = a × c;
+                                             
+     while choose b − a ⋖ 2p , 2p−1 ⋖ b − a = 1 do
+         n := n + n;
+         nr := 2 × nr ;
+         c := 1 + x/nr ; a :≡ cn ; b := a × c
+     end
+  return a as p → −∞
+
+
+total: At least one of b − a ⋖ 2p and 2p−1 ⋖ b − a must be true. Furthermore, when the loop
+terminates, it must hold b − a < 2p , hence |a − exp(x)| ≤ |b − a| ≤ 2p .
+
+
+5.2.4. Integer Rounding Multi-valued function. All real-to-integer rounding functions (up,
+down, to nearest) are discontinuous and therefore not computable. We thus relax the
+specification and instead consider the following multi-valued function with overlap:
+
+                      Round : R ∋ x 7→ {k ∈ Z | x − 1 < k < x + 1} ⊆ Z                           (5.3)
+
+   The ERC program Round in Algorithm 5 realizes Round. It returns, given a real x,
+multi-valued integer k such that |x − k| < 1.
+
+Algorithm 5 Round : R → Z
+ 1: input x : R
+ 2:    let k : Z = 0;
+ 3:    while choose(x ⋖ 1, 1/2 ⋖ x) = 1 do
+ 4:        k := k + 1; x := x − 1
+ 5:    end;
+ 6:    while choose(−1 ⋖ x, x ⋖ −1/2) = 1 do
+ 7:        k := k − 1; x := x + 1
+ 8:    end
+ 9: return k
+
+
+     Intuitively, the number of steps made by Round is proportional to the value of the
+argument x, that is, exponential in its binary (≈output) length because Round essentially
+counts up to x.
+     Recovering the rounded integer bit-wise via binary search seems exponentially more
+efficient, but fails due to lack of continuity: Extracting any digit of the binary expansion
+(or one of the at most two possible ones) of a given real number is uncomputable [Tur37].
+Vol. 20:2                                EXACT REAL COMPUTATION                            17:29
+
+
+
+
+Instead, BinRound in Algorithm 6 realizes the idea that some signed-digit expansion [Wei00,
+Definition 7.2.4] of a given real number x ∈ R can be determined computably. There, the
+absolute value |y| is an abbreviation for 0 ⋖ y ? y : − y.
+
+Algorithm 6 BinRound : R → Z
+ 1: input x : R
+ 2:         let k, j, b : Z = 0; let y : R = x;
+ 3:         while choose(|y| ⋖ 1, 1/2 ⋖ |y|) = 1 do                               // x = y · 2j
+ 4:             j := j + 1; y := y/2
+ 5:         end;                                                                      // |y| ⋖ 1
+ 6:         while 1 ≤ j do                                         // x = (y + k) · 2j ∧ |y| < 1
+ 7:             y := y × 2;
+ 8:             b := choose(y ⋖ 0, −1 ⋖ y ⋖ 1, 0 ⋖ y) − 1;
+                                           // b =most-significant signed binary digit of y
+ 9:       if b = −1 then y := y + 1 end; if b = 1 then y := y − 1 end;
+10:       k := k + k + b; j := j − 1
+11:    end                                                                  // |x − k| < 1
+12: return k
+
+
+     Due to the multi-valuedness of the loop condition at Line 3, when the loop (Lines 3 to 5)
+exits, the second argument 1/2 ⋖ y may still be true, whereas the first |y| ⋖ 1 must be true.
+In the integer loop (Lines 6 to 11), multi-valuedness strikes only at Line 8 which employs
+choose() with trinary argument.
+
+
+5.2.5. Determinant Function via Gaussian Elimination. The determinant of a d × d matrix
+A = (aij )i,j is given by Leibniz’ formula
+                                        X            Yd
+                             det(A) =      sign(π) ·    aj,π(j)                   (5.4)
+                                                  π          j=1
+
+where the sum ranges over all d! permutations π : {1, . . . , d} → {1, . . . , d}. Since ERC
+conveniently relieves the programmer from numerical issues like cancellation, this formula
+gives rise to a straightforward ERC program. However one executing arithmetic operations
+exponential in d.
+     Common numerical approaches therefore transform A to triangular form, whose deter-
+minant is simply the product of its diagonal elements [PTVF07, §2.3.3]. Following Turing
+[Tur48], apply Gaussian Elimination to determine a LU factorization with full pivoting
+P · A · Q = L · U of A, where P, Q denote permutation matrices and L and U are lower and
+upper triangular matrices, respectively. In Gauss’ original algorithm, such search either
+(i) returns the index of a non-zero entry in the given sub-matrix or (ii) asserts that said
+sub-matrix is identically zero. By iterating this process, Gaussian Elimination determines
+the rank k ∈ N of the original matrix A ∈ Rd×d — which depends discontinuously on A’s
+entries and hence cannot be computed.
+17:30    Park, Brauße, Collins, Kim, Konečný, Lee, Müller, Neumann, Preining, and Ziegler      Vol. 20:2
+
+
+
+
+    We thus change the specification of the determinant (and of the LUPQ factorization4 it
+builds on): with the promise for the argument matrix A to have full rank—otherwise, its
+determinant will vanish, anyway.
+                                            (
+                                  d           det(A) if det(A) ̸= 0,
+                     Detd : GL(R ) ∋ A 7→                                            (5.5)
+                                              ⊥       otherwise.
+   We also relax pivot search (within the lower-right submatrix) to become a partial
+multi-valued function:
+
+
+                           (i, j) : A ∈ Rd×d ∧ k ≤ i, j < d ∧ Ai,j ̸= 0 {⊥} ∈ P(Z2⊥ )
+                          
+        Pivotd (A, k) =                                                                              (5.6)
+Here, X{⊥} := X if X ̸= ∅ and {⊥} if X = ∅. So the argument is a real d × d matrix A and
+an integer k, indicating that a pivot is to be sought for in the (d − k) × (d − k) non-zero
+                                                     
+sub-matrix A[k . . . d − 1, k . . . d − 1] := A[i, j] k≤i,j<d .
+
+Algorithm 7 Pivotd : R[d × d] × Z → Z
+ 1: input A : R[d × d], k : Z
+ 2:    let i0 , j0 : Z = k; let x : R = 0;
+ 3:    for i : Z = k to d − 1 do
+ 4:          for j : Z = k to d − 1 do
+                                           
+ 5:                x := max x, abs(A[i, j]) end end;
+ 6:    for i : Z = k to d − 1 do
+ 7:          for j : Z = k to d − 1 do
+ 8:                if choose(abs(A[i, j]) ⋖ x, x/2 ⋖ abs(A[i, j])) = 1 then i0 := i; j0 := j end
+ 9:    end end
+10: return (i0 , j0 )
+
+    In the program Pivotd in Algorithm 7, we represent matrices with fixed dimensions
+using ERC’s one-dimensional arrays. For each positive natural numbers n and m, we write
+A[n × m], to express a n × m-dimensional matrix, simulated by A[k] where k = n × m.
+Accessing an entry A[i, j]n is then a shorthand for A[i + j + · · · + j] denoting A[i + n · j].
+The repeated addition is only possible as n is a fixed natural number constant, not a ERC
+term while i, j are. The subscript n is omitted for better readability when it is obvious.
+Similarly the pair (i0 , j0 ) of return values is thus understood as an abbreviation of the single
+integer i0 + d · j0 where d is the dimension of the input matrix.
+    The program introduces more abbreviations. For any integer terms k, l and a command
+S, for n : Z = k to l do S end refers to
+              let n : Z = k; let m : Z = l; while (n ≤ m) do S; n := n + 1 end
+with n, m not appearing in S. For a Kleenean typed term b and a command S,
+                                           if b then S end
+   4LUPQ factorization A 7→ (L, U, P, Q) is not unique, hence a real matrix-tuple-valued multi-function.
+Vol. 20:2                              EXACT REAL COMPUTATION                                          17:31
+
+
+
+
+is used as an abbreviation for
+                                      if b then S else skip end
+Moreover, max(u, v) is a term abbreviation for u ⋖ v ? v : u.
+    Based on Pivotd , the ERC(∅, {Pivotd }) program Det in Algorithm 8 computes the
+non-zero determinant Detd from Equation (5.5) via LUP decomposition with full pivoting.
+Note that the precision parameter p ∈ Z is present but ignored since the result gets computed
+exactly.
+
+Algorithm 8 Det : R[d × d] → R
+ 1: input A : R[d × d]                                                       // A invertible, p ignored
+ 2:    let i : Z = 0; let j : Z = 0; let k : Z = 0;
+ 3:    let pi : Z = 0; let pj : Z = 0; let det : R = 1;                                       // ret.val
+ 4:    for k := 0 to d − 2 do
+ 5:                                   // Convert A[k..d − 1, k..d − 1] to reduced row echelon form:
+ 6:        (pi , pj ) := Pivot(A, k);                                    // pi, pj ≥ k s.t. A[pi , pj ] ̸= 0.
+ 7:        det := det ×A[pi , pj ];
+ 8:        for j := 0 to d − 1 do swap(A[k, j], A[pi , j]) end;
+                                                                      // Exchange rows #k and #pi
+ 9:        if k ̸= pi then det := − det;                                                    // flip sign
+10:        for i := 0 to d − 1 do swap(A[i, k], A[i, pj ]) end;
+                                                                  // Exchange columns #k and #pj
+11:        if k ̸= pj then det := − det;                                                    // flip sign
+12:        for j   :=  k + 1 to d − 1 do                            // Scale row #k by 1/A[k, k] and
+13:              A[k, j] := A[k, j]/A[k, k];                     // and subtract the A[i, k]-fold from
+14:              for i := k + 1 to d − 1                             // from rows #i = k + 1 . . . d − 1
+15:                    do A[i, j] := A[i, j] − A[i, k] × A[k, j] end
+16:        end; A[k, k] := 1; for i := k + 1 to d − 1 do A[i, k] := 0 end
+17:    end;
+18:    det := det ×A[d − 1, d − 1]
+19: return det as p → −∞
+
+
+     Note that pivot search in Line 6 of program Det is guaranteed to succeed in that the
+(d − k) × (d − k) submatrix A[k . . . d − 1, k . . . d − 1] under consideration will indeed contain
+at least one — usually non-unique — non-zero element due to the promise/restriction that
+A ∈ GL(Rd ).
+
+
+5.2.6. Simple Unique Root Finding Functional. The problem of finding (i.e. approximating)
+a root to a given real function f occurs ubiquitously in numerics under various hypotheses.
+We consider an algorithmic version of the Intermediate Value Theorem which is to find
+the unique root to a given continuous f : [a; b] → R satisfying f (a) < 0 < f (b). This case
+17:32   Park, Brauße, Collins, Kim, Konečný, Lee, Müller, Neumann, Preining, and Ziegler   Vol. 20:2
+
+
+
+
+is commonly treated using Bisection: Determine the sign of f (x) at the interval midpoint
+x := (a + b)/2 and recurse to either [a; x] or to [x; b] accordingly. However, since equality
+is undecidable, the sign test fails in case f (x) = 0. Tri section [Her96, p. 336] instead
+considers the signs of f at both one third x′ := (2a + b)/3 and at two third x′′ := (a + 2b)/3
+of the interval, in parallel; and recurses to either [a; x′′ ] or to [x′ ; b] accordingly: Now at
+most one of the two sign tests at f (x′ ) and f (x′′ ) can fail, provided that f ’s root is unique
+and f (a) · f (b) < 0. These hypotheses also avoid common counterexamples like [Spe59] or
+[Wei00, Theorem 6.3.2]. To summarize, we consider the (single-valued) root finding problem
+Root : f 7→ x with f (x) = 0 for f satisfying the following first-order predicates:
+
+
+   cont(f, a, b)         :≡
+          ∀ϵ > 0.    ∃δ > 0.    ∀x, x′ . a ≤ x ≤ x′ ≤ x + δ ≤ b ⇒ |f (x) − f (x′ )| ≤ ϵ
+   uniq(f, a, b)         :≡         cont(f, a, b) ∧ f (a) · f (b) < 0 ∧ ∃!x. a < x < b ∧ f (x) = 0
+The first condition cont(f, a, b) says f is continuous in the usual sense on the interval [a; b]
+and the second condition uniq(f, a, b) says f is continuous in the interval [a; b], admits a
+unique root in the interval (a; b), and the signs of f (a) and f (b) are different.
+     The ERC program Trisection in Algorithm 9 is annotated with precondition uniq(f, a, b)
+and postcondition uniq(f, a, b) ∧ |b − a| ≤ 2p , as well as loop invariant uniq(f, a, b). Formally,
+as ERC does not accept function arguments, the program is defined in ERC({f }, ∅). Given
+p, the postcondition guarantees that Trisection indeed returns an approximation to the
+root up to error 2p when uniq(f, a, b) holds. Therefore, as p → −∞ the program returns the
+root of f . This program is chosen later in Section 7 to be formally proved for its correctness.
+
+Algorithm 9 Trisection : R × R → R in ERC({f }, ∅) for any f : R → R⊥
+ 1: input a : R, b : R                                                                // uniq(f, a, b)
+                                p   p−1
+                                             
+ 2:    while choose b − a ⋖ 2 , 2    ⋖ b − a = 1 do                   // uniq(f, a, b) ∧ b − a > 2p−1
+ 3:       if choose(f (b/3 + 2 × a/3) × f (b) ⋖ 0, f (a) × f (2 × b/3 + a/3) ⋖ 0) = 1
+ 4:       then b := 2 × b/3 + a/3
+ 5:       else a := b/3 + 2 × a/3 end
+ 6:    end                                                             // uniq(f, a, b) ∧ |b − a| ≤ 2p
+ 7: return a as p → −∞
+
+
+
+
+5.3. Turing-Completeness. Algorithms 5 and 6 show the existence of a well-formed
+command which we abbreviate as
+                                       Γ ⊢ z :≡ round(x) ▷ Γ
+when Γ(x) = R and Γ(z) = Z that assigns the multi-valued rounding of x into z having its
+denotation
+              JΓ ⊢ z :≡ round(x) ▷ ΓK σ = {σ[z 7→ k] | σ(x) − 1 < k < σ(x) − 1}.
+Vol. 20:2                             EXACT REAL COMPUTATION                                   17:33
+
+
+
+
+Furthermore, though it is not available in the term language, the command language of
+ERC provides the naı̈ve coercion from integers to reals: There exists a well-formed command
+which we write
+                                         Γ ⊢ x :≡ real(z) ▷ Γ
+when Γ(x) = R and Γ(z) = Z that repeatedly add 1 or −1 in a loop such that
+                            JΓ ⊢ x :≡ real(z) ▷ ΓK σ = {σ[x 7→ σ(z)]}.
+   ERC being an imperative language providing integers, arithmetical operations on them,
+compositions of commands, and general loops, it is type-1 Turing-complete over natural
+numbers:
+
+Proposition 5.1. For any type-1 computable (or equivalently µ-recursive) f : Nd ⇀ N,
+there exists a well-formed ERC command which we abbreviate as
+                                     Γ ⊢ y :≡ f (x1 , · · · , xd ) ▷ Γ
+when Γ(y) = Z, Γ(xi ) = Z for each i, such that for all σ ∈ JΓK where (σ(x1 ), · · · , σ(xd )) ∈
+dom(f ),
+               JΓ ⊢ y :≡ f (x1 , · · · , xd ) ▷ ΓK σ = {σ[y 7→ f (σ(x1 ), · · · , σ(xd ))]}.
+
+Proof. We can construct the command S inductively on the µ-recursiveness of f .
+
+     From the fact that ERC is type-1 Turing-complete, we can automatically ensure many
+interesting operations on integers where some of which are necessary to build our (type-
+2) Turing-completeness result. Fix a standard numbering of finite sequences (including
+the empty sequence ϵ) of integers ζ : N → Z∗ throughout this section. By the type-1
+completeness, there are ERC commands for (1) constructing the code of the empty string ϵ,
+(2) appending a new tail to a sequence from its code, (3) accessing the tail of a sequence
+from its code assuming that the sequence is not empty, and (4) obtaining the length of a
+sequence from its code. For any integer variables y, x, x1 , x2 in Γ:
+                                     JΓ ⊢ y :≡ ϵ ▷ ΓK σ = {σ[y 7→ ζ −1 (ϵ)]}
+                              JΓ ⊢ y :≡ x1 #x2 ▷ ΓK σ = {σ[y 7→ ζ −1 (ζ(σ(x1 ))#σ(x2 ))]}
+  JΓ ⊢ y :≡ tail(x) ▷ ΓK σ = {σ[y 7→ m]} if ζ(σ(x)) = a#m for some a ∈ Z∗
+                           JΓ ⊢ y :≡ length(x) ▷ ΓK σ = {σ[y 7→ m]} if ζ(σ(x)) has length m
+Note that the command for accessing the tail of a sequence y :≡ tail(x) may not well-behave
+when the sequence that x represents is the empty sequence. Here, x#y when x ∈ Z∗ and
+y ∈ Z denotes the finite sequence of integers where y is appended to x.
+    For the last building block of our main theorem, we recall the type-1 characterization of
+type-2 machines:
+
+Proposition 5.2. For any type-2 machine computing τ : ZN × · · · × ZN ⇀ ZN , there
+exists a total type-1 computable (with regard to the standard numbering of finite sequences)
+17:34   Park, Brauße, Collins, Kim, Konečný, Lee, Müller, Neumann, Preining, and Ziegler            Vol. 20:2
+
+
+
+
+τ̄ : Z∗ × · · · × Z∗ → Z∗ such that for any (ϕ1 , · · · , ϕd ) ∈ dom(τ ),
+                                               (m)         (m)
+                                         (τ̄ (ϕ̄1 , · · · , ϕ̄d ))m∈N
+(which can contain the empty sequence) is a chain with regard to the prefix ordering and it
+converges to τ (ϕ1 , · · · , ϕd ). Here, ϕ̄(m) ∈ Z∗ denotes the length m prefix of ϕ ∈ ZN .
+
+     The type-1 τ̄ continuously approximates τ in the following sense. If ϕ ∈ dom(τ ), τ̄ tries
+to approximate τ (ϕ) using finite approximations of ϕ. The function τ̄ may fail initially due
+to for example lack of input precision and return the empty sequence. However, it eventually
+returns longer and longer prefixes of τ (ϕ) converging to τ (ϕ) consistently (i.e. monotonically
+with regard to the prefix ordering).
+Proof. Let us first consider the case where τ is univariate. As stated in [Wei00, Excer-
+cise 2.3.12], due to the relation between domain-computability and type-2 computability,
+for any partial τ computed by a type-2 machine, there exists a total function T : Z∗ → Z∗
+which is monotone with regard to the prefix ordering, approximates τ in the sense that
+                                            lim T (ϕ̄(n) ) = τ (ϕ)
+                                           n→∞
+for each ϕ ∈ dom(τ ), and the set
+                               {(u, v) ∈ Z∗ × Z∗ | v is a prefix of T (u)}
+is computably enumerable. Let e : N → Z∗ × Z∗ be one computable enumeration. Then, we
+can define τ̄ as follows: given ϕ̄(n) , iterate e(0), · · · , e(n) to find (u, v) := e(i) where u is a
+prefix of ϕ̄(n) and the length of v is the longest amongst such. If such (u, v) is located, return
+v. If there is no prefix of ϕ̄(n) found, return the empty sequence ϵ. This computational
+procedure describes the computable function τ̄ .
+       Now consider a computable d-variate τ and construct τ̄ . As τ is computable, there exists
+a computable τ ′ : ZN ⇀ ZN such that τ (ϕ1 , · · · , ϕd ) = τ ′ ⟨ϕ1 , · · · , ϕd ⟩ where ϕ := ⟨ϕ1 , · · · , ϕd ⟩
+is defined by interleaving. By the above proof, there exists τ̄ ′ : Z∗ → Z∗ for τ ′ satisfying the
+                                    (n)        (n)
+conditions. Given the prefixes ϕ̄1 , · · · , ϕ̄d , we construct ϕ̄(n·d) by interleaving, feed it in
+                                                 (n)           (n)
+τ ′ , and let it be the return sequence of τ̄ (ϕ̄1 , · · · , ϕ̄d ).
+
+Theorem 5.3. Recall the definitions of computable partial (mutli-valued) functions in
+Section 2 and ERC programs realizing them in Definition 4.9.
+(1) Every computable partial real function from integers and reals can be realized in ERC0 .
+(2) Similarly, every computable partial integer multi-valued function from integers and reals
+    can be realized in ERC0 .
+
+     As stated in Proposition 5.1, ERC0 can realize all µ-recursive integer functions, and
+consequently also every computable single real number r ∈ R, since the latter is defined
+as limit r = limn ϕ(n)/2n for |r − ϕ(n)/2n | ≤ 2−n . Note that also every oracle Turing
+machine computable integer function is oracle-recursive; see http://math.stackexchange.
+com/questions/2778974. This suggests realizing a type-2 oracle machine computing a real
+function f : R → R⊥ according to [Ko91, §2.3] in ERC0 : by replacing any oracle query
+Vol. 20:2                                   EXACT REAL COMPUTATION                                    17:35
+
+
+
+
+“ϕ(n)” for a 2−n –approximation ϕ(n)/2n to the real argument x ∈ dom(f ) by the ERC0
+commands in Section 5.2.4 realizing Round(x × 2n ). However said Round() is multi-valued,
+corresponding to a multi-valued oracle ϕ; and for these, oracle Turing computation does not
+seem to be known as equivalent to oracle µ-recursiveness. Instead, we present in the sequel
+a different proof of Theorem 5.3:
+
+Proof. (1) Without loss of generality, suppose any computable partial f : Rd1 × Zd2 → R⊥
+where d1 +d2 = d. By definition, there is a type-2 machine computing τ : ZN ×· · ·×ZN ⇀ ZN
+such that for each (x1 , · · · , xd ) ∈ dom(f ) and each ϕi a name of xi , τ (ϕ1 , · · · , ϕd ) is defined
+and is a name of f (x1 , · · · xd ):
+                   |f (x1 , · · · , xd ) − τ (ϕ1 , · · · , ϕd )(n) · 2−n | ≤ 2−n   holds for all n.
+By Propositions 5.1 and 5.2, there exists a well-formed command in ERC such that when
+                                                                                        (n)   (n)
+x′i , y ′ are integer variables in Γ, for any σ ∈ JΓK such that σ(x′i ) = mi ∈ N a code for ϕ̄i
+(w.r.t. the fixed standard numbering ξ),
+                              Γ ⊢ y ′ :≡ τ̄ (x′1 , · · · , x′d ) σ = {σ[y ′ 7→ y (n) ]}
+                            q                                   y
+
+holds for some y (n) ∈ N which is a code for a finite, possibly empty, prefix of τ (ϕ1 , · · · , ϕd ).
+     We claim that the real program in ERC0 in Algorithm 10 realizes f . On its input
+variables x1 , · · · , xd , the program prepares integer variables x′1 , · · · , x′d to let each x′i stores
+a code of a finite prefix (of say length n) of a name of xi . Starting from the empty sequences
+(n = 0), the program keeps appending x′i and computes τ̄ (x′1 , · · · , x′d ) in y ′ which is a finite
+prefix (of say length ℓ) of some name of f (x1 , · · · , xd ). The program iterates until the length
+ℓ of the obtained prefix y ′ becomes enough to obtain a 2−p approximation to f (x1 , · · · , xd ).
+     The variable n increases as the number of iterations. Each state that appears at the
+beginning of the n’th iteration satisfies that
+                  x′i is (a code for) the length n prefix of some name ϕi of xi                 and
+
+            y ′ is (a code for) the length ℓ prefix of τ (ϕ1 , · · · , ϕd ) for some name ϕi of xi
+irrelevant to the multi-valuedness of the integer rounding. (Note that though due to
+multi-valuedness, ϕi in each annotated assertion does not need to be consistent.)
+     Suppose for now that the loop is total. When the loop exits, due to ℓ − 1 ≥ −p and
+ℓ > 0 the tail of y ′ , which is y, is the ℓ − 1’th (counting from 0) entry of τ (ϕ1 , · · · , ϕd ) for
+some names ϕi of xi . Hence, it holds that |f (x1 , · · · , xd ) − y × 2−(ℓ−1) | ≤ 2−(ℓ−1) ≤ 2p where
+y × 2−(ℓ−1) is the return value. We conclude that the real program indeed realizes f .
+     To prove that the loop is total, we show that for any natural number k, there is a
+                                                                       (n(k))            (n(k))
+natural number n(k) such that for any names ϕi of xi , τ̄ (ϕ1                 , · · · , ϕd      ) has length
+greater than or equal to k. If this is true, the loop terminates after at most n(−p) (or n(1)
+if p is non-negative) iterations.
+     Recall that A := {(ϕ1 , · · · , ϕd ) | ϕi is a name of xi } is compact with regard to the
+standard topology of Baire space. For each natural number n, define An := {(ϕ1 , · · · , ϕd ) |
+                           (n)         (n)
+ϕi is a name of xi ∧ τ̄ (ϕ1 , · · · , ϕd ) has length greater than or equal to k} which is the set
+17:36   Park, Brauße, Collins, Kim, Konečný, Lee, Müller, Neumann, Preining, and Ziegler                Vol. 20:2
+
+
+
+
+Algorithm 10 A real program in ERC0 realizing f in the proof of Theorem 5.3
+  input x1 : R, · · · , xd1 : R, xd1 +1 : Z, · · · , xd : Z
+     let x′1 , · · · , x′d , y ′ , y ′′ :≡ ϵ;
+     let ℓ, t, n : Z = 0;
+     while ℓ ≤ −p ∨       ˆ ℓ ≤ 0 do
+                ′
+         // xi is a code for the length n prefix of some name ϕi of xi
+         // y ′ is a code for the length ℓ prefix of τ (ϕ1 , · · · , ϕd ) for some name ϕi of xi
+         // append x′i :
+         t :≡ round(x1 × 2n );
+         x′1 :≡ x′1 #t;
+          ..
+           .
+           t :≡ round(xd1 × 2n );
+           x′d1 :≡ x′d1 #t;
+           x′d1 +1 :≡ x′d1 +1 #xd1 +1 ; · · · ; x′d :≡ x′d #xd ;
+           n := n + 1;
+           // x′i is a code for the length n prefix of some name ϕi of xi
+           y ′ :≡ τ̄ (x′1 , · · · , x′d );
+           ℓ :≡ length(y ′ );
+           // y ′ is a code for the length ℓ prefix of τ (ϕ1 , · · · , ϕd ) for some names ϕi of xi
+     end;
+     // y ′ is a code for a length ℓ prefix of τ (ϕ1 , · · · , ϕd ) for some names ϕi of xi and
+     // ℓ > 0 and ℓ − 1 ≥ −p
+     y : R = 0;
+     y ′′ :≡ tail(y ′ );                                                // ℓ > 0 ensures tail(y ′ ) does not fail
+     y :≡ real(y ′′ );                                       // |f (x1 , · · · , xd ) − y × 2−(ℓ−1) | ≤ 2−(ℓ−1) ≤ 2p
+  return y × 2−(ℓ−1) as p → −∞
+
+
+of names whose length n prefix is enough to make τ̄ returns length k prefix of τ . Note that
+An is open and by the convergence of τ̄ , (An )n∈N forms a countable open cover of A. The
+compactness gives us a finite subcover of An and we can choose the maximum index of the
+finite subcover to be n(k).
+(2) The integer multi-valued function case can be proved similarly except that now we only
+need to iterate until ℓ > 0 and return tail(y ′ ).
+Remark 5.4. The completeness of WhileCC*’s algebraic semantics [TZ04] is obtained in
+a similar way: using nondeterminism to obtain discrete approximation then proceed with
+ordinary computation. However, their countable choice construct is not necessary for our
+case as we only consider real numbers; using the total order of reals, we can rely on our
+finite choice construct to extract names.
+    ERC defines integer multi-valued functions but not a real multi-valued function. Real
+programs are forced to take limit operations and compute single-valued real numbers. This
+Vol. 20:2                              EXACT REAL COMPUTATION                                   17:37
+
+
+
+
+is our design choice that can be chosen differently. Here, we state a possible alternative and
+explain our choice:
+
+Remark 5.5. One straightforward way to allow real multi-valued functions is to ease our
+typing rule such that we let the program
+                             P := input x1 : τ1 , x2 : τ2 , · · · , xd : τd
+                                    S
+                                  return t
+have type τ1 × · · · τd → R if there is a context Γ′ such that
+                     x1 : τ1 , x2 : τ2 , · · · , xd : τd ⊢ S ▷ Γ′   and   Γ′ ⊢ t : R .
+We let its denotation be JP K := JtK† ◦ JSK : Jτ1 K × · · · × Jτd K → P(R⊥ ) as it was an integer
+program. From Lemmas 4.3 and 4.6, it can be seen immediately that the denotations of
+such real programs are computable multi-valued functions. We can also extend the notion
+of realization in Definition 4.9 accordingly.
+     However, this extension does not carry the completeness in Theorem 5.3 over. Recall that
+the denotations of programs are finite multi-valued functions. Hence, a computable infinite
+multi-valued function is realizable in ERC only if it admits point-wise finite refinement that
+is computable. In the integer case, it was feasible as any infinite integer multi-valued function
+admits point-wise finite refinement. (Recall Fact 2.4.) However, this does not work for real
+multi-valued functions. That means when we extend ERC with real multi-valued functions
+as above, we end up with a restricted completeness theorem. As easing the restriction
+as above is straightforward, we choose to keep the restriction and achieve a more natural
+completeness theorem.
+
+
+
+                             6. Logic of Exact Real Computation
+In this section, we devise a specification language and based on the language, devise an
+extended Hoare logic for formal verification of ERC programs. Section 6.1 proposes a
+three-sorted structure which we use to rigorously specify (multi-valued) functions with real
+arguments in Section 6.2. It is carefully designed to be rich enough to allow arguing about
+computations in ERC yet restricted such as to assert logical decidability as a guarantee to
+formal program verification; recall Remark 1.1. Section 6.3 extends the classical Hoare logic
+which is sound with regard to our denotational semantics.
+
+
+6.1. Three-Sorted Structure with Decidable Theory.
+
+Definition 6.1. The Structure of ERC0 is the three-sorted structure S0 combining the
+Kleene Algebra (K, false, true, unknown, ∧     ˆ, ∨
+                                                  ˆ, ¬
+                                                     ˆ ) with Presburger Arithmetic (Z, 0, 1, +, −, ≤
+, 2Z, 3Z, 4Z, . . .) and ordered field (R, 0, 1, +, −, ×, <). Available inter-sort functions are the
+binary precision embedding ı : Z ∋ p 7→ 2p ∈ R and its partial half-inverse ⌊log2 ◦ abs⌋ :
+17:38   Park, Brauße, Collins, Kim, Konečný, Lee, Müller, Neumann, Preining, and Ziegler   Vol. 20:2
+
+
+
+
+R \ {0} → Z. Here kZ denotes the predicate on Z which is true precisely for all integer
+multiples of k ∈ N.
+    The (specification) language of ERC0 is the first-order language L0 over the signature
+of the structure S0 ; and the theory of ERC0 is the first-order theory T0 containing true
+statements of L0 in S0 .
+
+     We take the inequality on Z as non-strict ≤, but that on R strict < as in [Mar17]. This
+classical predicate <⊆ R × R is the classical order relation of real numbers and is not to be
+confused with anything computational. Another important note is that the symbol ⊥ in our
+denotational semantics does not appear in the structure of ERC.
+     Theorem 6.2(a) shows that the theory T0 is decidable. This applies for example to
+preconditions and postconditions or loop invariants of ERC0 programs; see Lemma 6.4 and
+Remark 6.9. This is a significant advantage of ERC, compared to traditional programming
+languages for discrete data: Classical While programs over integers with multiplication, for
+instance, do suffer from Gödel undecidability [Coo78, §6].
+
+Theorem 6.2.
+(a) The Theory T0 of ERC0 is decidable.
+(b) T0 is also ‘model complete’ in that it admits elimination of quantifiers up to one (by
+    choice either existential or universal) block ranging over integers.
+(c) Each of the following expansions destroys the decidability of the first-order theory of the
+    structure S0 :
+    • expanding with integer multiplication
+    • expanding with the unary predicate Z on R, or with the standard coercion Z ,→ R
+    • replacing the binary precision embedding ı with its unary counterpart ȷ : N+ ∋ n 7→
+       1/n ∈ R
+    • expanding simultaneously with the real exponential and sine function and with tran-
+       scendental constants π and ln 2
+
+Proof. (c) Including integer multiplication recovers Peano arithmetic and Gödel undecid-
+ability via Robinson’s Theorem [Rob59]. A unary predicate Z on R allows to express
+integer multiplication via the reals; similarly, for (any total extension of) the unary precision
+embedding ȷ. Finally, the real transcendental functions and constants make the theory
+undecidable according to Richardson’s Theorem [Ric68].
+
+(a)+(b) A celebrated result of van den Dries [Dri85] extends classical Tarski-Seidenberg
+quantifier elimination from the first-order theory of real-closed fields to the expanded
+structure
+                           (R, 0, 1, +, −, ×, <, 2kZ : k ∈ N, 2⌊log2 ◦ abs⌋ )                    (6.1)
+
+with axiomatized additional predicates 2kZ , k ∈ N, and truncation function to binary powers
+2⌊log2 ◦ abs⌋ , see also [AY07].
+Vol. 20:2                                 EXACT REAL COMPUTATION                               17:39
+
+
+
+
+    Note that both the real-closed field (R, 0, 1, +, −, ×, <) and Presburger Arithmetic can
+be embedded into the expanded structure from Equation (6.1); the latter interpreted as its
+multiplicative variant (2Z , 1, 2, ×, <, 2kZ : k ∈ N) is called Skolem Arithmetic [Bés02]:
+• Replace quantifiers over Skolem integers with real quantifiers subject to the predicate 2kZ
+  for k := 1;
+• Consider ı : Z → R as the restricted identity id2Z in R.
+Then every formula φ with or without parameters in our two-sorted structure translates
+signature by signature to an equivalent one φ̃ over the expanded theory where quantifiers
+can be eliminated, yielding equivalent decidable ψ̃ (which may involve binary truncation
+2⌊log2 ◦ abs⌋ ).
+     To translate this back to some equivalent ψ over the two-sorted structure, while re-
+introducing only one type of quantifier, observe that for real x:
+
+                        x ∈ 2kZ ⇔ ∃z ∈ Z. z ∈ kZ ∧ x = ı(z);
+                        x ̸∈ 2kZ ⇔ ∃z ∈ Z. z ∈ kZ ∧ ı(z) < x < ı(z + k) .
+
+Similarly, replace real binary truncation 2⌊log2 ◦ abs(x)⌋ with “ı(z)” for some/every z ∈ Z s.t.
+ı(z) ≤ |x| < ı(z) + 1 in case x > 0, with 0 otherwise.
+     Since the Kleene Algebra K as the third sort is finite, it does not affect decidability.
+
+
+
+6.2. Specification Language. We define a specification language for each ERC(F, G) by
+expanding the structure of ERC0 as follows:
+
+Definition 6.3. The structure of ERC(F, G) is the expansion S(F, G) of S0 with the graphs
+of f ∈ F and g ∈ G as new relations:
+• Graphf := {(x1 , · · · , xd ; y) | f (x1 , · · · , xd ) = y ̸= ⊥} and
+• Graphg := {(x1 , · · · , xd ; y) | y ∈ g(x1 , · · · , xd ) ∧ ⊥ ̸∈ g(x1 , · · · , xd )}.
+The (specification) language of ERC(F, G), which we write L(F, G) is the first-order language
+L0 extended with the new relation symbols. The theory of ERC(F, G), which we write
+T (F, G), is the sentences in the language that is true in S(F, G).
+
+     Let us write simply S, T , and L when the underlying F and G are obvious or not so
+relevant. Though, formally, we only add graphs of the (multivalued) functions, we may still
+have their function applications as appropriate abbreviations.
+     The following lemma shows that our specification logic is adequate for the term language
+of ERC:
+
+Lemma 6.4. For each well-typed term Γ ⊢ t : τ in ERC, its denotation JΓ ⊢ t : τ K : JΓK →
+P(Jτ K⊥ ) is definable in L in the sense that there is a formula ψ(x1 , · · · , xd ; y) defining the
+graph of the denotation (as in Definition 6.3). We represent a fixed length array, of say
+length d, with d variables x = (x(0) , · · · , x(d−1) ) in an obvious way.
+17:40   Park, Brauße, Collins, Kim, Konečný, Lee, Müller, Neumann, Preining, and Ziegler        Vol. 20:2
+
+
+
+
+Proof. Let X, Yi , Z ∈ {Jτ K | τ is a data type}. Suppose fi : X → P((Yi )⊥ ) and g : Y1 ×
+· · · × Yd → P(Z⊥ ) are definable partial multi-valued functions where ψi (x; yi ) defines fi and
+ψ(y1 , · · · , yd ; z) defines g. Then, its composition g † ◦ ⟨f1 , · · · , fd ⟩ : X → P(Z⊥ ) is definable
+by
+                 ψ(x; z) :≡ ∃y1 , · · · , yd . ψ1 (x; y1 ) ∧ · · · ∧ ψd (x; yd ) ∧ ψ(y1 , · · · , yd ; z) .
+Furthermore, if a partial function f : X → Z⊥ is definable by ψ(x; z), its embedding f ‡ is
+definable by the same ψ.
+    Hence, we only need to check the nontrivial cases, the definability of primitive functions
+that are absent in the structure ERC: (1) choose, (2) Kond, and (3) proj:
+(1) See that choosen : Kn → Z is definable by
+          ψ(x1 , · · · , xn ; y) :≡ (y = 0 ∧ x1 = true) ∨ · · · ∨ (y = n − 1 ∧ xn−1 = true) .
+(2) Suppose ψb (x; y) defines b : X → P(K⊥ ), ψf (x; y) defines f : X → P(R⊥ ), and ψg (x; y)
+    defines g : X → P(R⊥ ). Then, the composition Kond†1 ◦ ⟨b, f, g⟩ is definable by
+                                        
+ψ(x; z) :≡ ψb (x; true) ⇒ ∃y. ψf (x; y)
+                                        
+         ∧ ψb (x; false) ⇒ ∃y. ψg (x; y)
+          ∧ ψb (x; unknown)
+                                                                                              
+               ⇒ ∃y. ψf (x; y) ∧ ψg (x; y) ∧ ∀y1 , y2 . ψf (x; y1 ) ∧ ψg (x; y2 ) ⇒ y1 = y2
+                                                                                                  
+        ∧ (ψb (x; true) ∧ ψf (x; z)) ∨ (ψb (x; false) ∧ ψg (x; z)) ∨ (ψb (x; unknown) ∧ ψf (x; z)) .
+(3) The partial projection map proj : Rd × Z → R⊥ is defined by
+        ψ(x, k; y) :≡ 0 ≤ k < d ∧ (k = 0 ⇒ y = x(0) ) ∧ · · · ∧ (k = d − 1 ⇒ y = x(d−1) ) .
+    Note that when k is an index out of range, there is no y satisfying ψ(x, k; y) since
+    proj(x, k, y) = ⊥.
+
+Definition 6.5. For a well-typed term Γ ⊢ t : τ in ERC, let us write LΓ ⊢ t : τ M for the
+formula defining JΓ ⊢ t : τ K according to Lemma 6.4.
+
+We write simply LtM for LΓ ⊢ t : τ M when the particular context Γ is obvious or irrelevant.
+We let the free variables representing the input values in LtM be synchronized with Γ and
+omit them in the notation; i.e., LtM(y) := Lx1 : τ1 , · · · , xd : τd ⊢ t : τ M(x1 , · · · , xd ; y).
+    Note however that when we go beyond the term language of ERC0 , there are real
+functions that can be defined in the programming language but not in our specification
+language:
+
+Example 6.6. The restricted exponential function exp : I = [0; 1] → R is uniquely
+characterized by the following formula:
+                      ∀x, y ∈ I. x + y ∈ I ⇒ exp(x + y) = exp(x) · exp(y)                             (6.2)
+                             ∀x, y ∈ I. | exp(x) − exp(y)| ≤ 3 · |x − y|
+                                                            X
+                              exp(1) = lim(1 + 1/n)n =            1/n!                                (6.3)
+                                             n                      n
+Vol. 20:2                          EXACT REAL COMPUTATION                                   17:41
+
+
+
+
+The first line is the well-known functional equation, and the second one captures Lipschitz-
+continuity.
+    Although exp can be realized as in Section 5.2.2, the defining Equation (6.3) exceeds
+the first-order language of ERC by involving the transcendental constant e, which cannot
+be characterized algebraically.
+
+     In other words, our logic is not expressive enough for the command language of ERC.
+Propositional formulae in the specification language can only define semi-algebraic subsets of
+Euclidean space; and, according to Tarski-Seidenberg, real quantification does not increase
+the expressive power. Integer quantification can define countable unions of semi-algebraic
+subsets, but no more according to Theorem 6.2(b). According to Lindemann-Weierstrass,
+the graph of exp : [0; 1] → R is no countable union of semi-algebraic Euclidean sets, hence
+impossible to define in S0 .
+                                 
+     The expansion S {exp}, ∅ on the other hand makes exp trivial to define—but its
+first-order theory may violate decidability. Such trade-offs are unavoidable according to
+Remark 1.1. Nonetheless, specification and formal verification may suffice with less than
+definability of the function under consideration: applications tend to be interested in solutions
+that satisfy given algebraic properties expressible in ERC—such as the exponential functional
+Equation (6.2)—but do not necessarily make them unique, particularly transcendental or
+multi-valued ones.
+
+
+6.3. Hoare Logic. Hoare logic is a well-known tool for formally proving the total correctness
+of a program and agreement with the problem specification. The following considerations
+are guided by [Rey09, §3], adapted and extended to ERC with its three-sorted structure and
+multi-valued semantics. Both complicate matters since, for instance, a real guard variable
+in a while loop may strictly decrease during each iteration yet remain bounded forever;
+furthermore merely evaluating the loop condition can cause lack of termination when real
+equality occurs; see Remark 6.10. Since our language is simple imperative, we adopt the
+following notion of total correctness specification:
+
+Definition 6.7. For a well-typed command S in ERC(F, G) with Γ ⊢ S ▷ Γ′ , a (total
+correctness) specification
+                                Γ ⊨ ϕ S ψ ▷ Γ′
+                                       
+
+is defined by
+                           ∀σ ∈ JΓK . ⊥ ̸∈ JSK σ ∧ ∀δ ∈ JSK σ. ψ(δ).
+Here, ϕ, ψ are formulae in the specification language of ERC(F, G). In the precondition
+ϕ, only the variables in Γ appear free and in the postcondition ψ, only the variables in Γ′
+appear free. The notation says, for any σ ∈ JΓK that satisfies ϕ, (i) ⊥ ̸∈ JSK σ and (ii) any
+δ ∈ JSK σ satisfies ψ.
+
+Note that the definition of our specification does not publish any obligation to S when the
+precondition ϕ is not met.
+17:42   Park, Brauße, Collins, Kim, Konečný, Lee, Müller, Neumann, Preining, and Ziegler   Vol. 20:2
+
+
+
+
+Definition 6.8. A Hoare triple for ERC(F, G) is of the form Γ ⊢ ϕ S ψ ▷ Γ′ where S
+                                                                           
+
+is a well-typed command in ERC(F, G) such that Γ ⊢ S ▷ Γ′ , and ϕ, ψ are formulae in the
+specification language of ERC(F, G) such that only the variables in Γ are free in ϕ and only
+the variables in Γ′ are free in ψ. Hoare logic of ERC(F, G) is a formal system which consists
+of the inference rules and axioms for constructing Hoare triples defined in Figure 3.
+
+     The purpose of (Hoare) logic is to replace semantic arguments with formal proofs:
+sequences of purely syntactic manipulations, starting with the axioms and following certain
+inference rules, that for example, a computer can verify. Classical Hoare logic contains one
+exception:
+
+Remark 6.9. The rule of consequence for precondition-strengthening and postcondition-
+weakening
+                     Γ ⊢ ϕ′ S ψ ′ ▷ Γ′
+                               
+                                          ϕ ⇒ ϕ′ and ψ ′ ⇒ ψ
+                      Γ ⊢ ϕ S ψ ▷ Γ′
+                               
+
+depends on the semantic side-conditions ϕ ⇒ ϕ′ and ψ ′ ⇒ ψ which may or may not be feasible
+to verify algorithmically. Over integers, algorithmic verifiability can fail according to Gödel
+[Coo78, §6], but not in our specification language of ERC0 according to Theorem 6.2(a).
+
+Remark 6.10.
+(1) In the axiom for assignments, recall from Definition 6.5 that the precondition ∃w. LtM(w)
+    ensures that the denotation of t is well-defined. And, ∀w. LtM(w) ⇒ ψ[w/x] says that for
+    each value in the denotation of t, ψ holds when we replace the variable x with the value.
+(2) In the while loop case,
+     (a) the formula I is the loop invariant and the term V is the loop variant. The term L
+         is some invariant quantity that bounds by how much V decreases in each iteration.
+     (b) ξ, ξ ′ are ghost variables that do not appear in Γ. They can be understood as
+         meta-level universally quantified variables.
+     (c) The side condition says (i) each loop decreases V by some positive invariant quantity
+         L; (ii) as long as I holds, the evaluation of b is either true or false (but not unknown);
+         and (iii) when V is negative, it is guaranteed that the evaluation of b is false.
+(3) In the rule of if conditionals, the precondition (LbM(true) ∨ LbM(false)) ∧ ¬LbM(unknown)
+    says that the evaluation of b is either true or false (but not unknown).
+(4) In the rule of array assignments, update(x, i, w, y) says x = (x(0) , · · · , x(d−1) ) is updated
+    to y = (y(0) , · · · , y(d−1) ) by assigning w at 0 ≤ i < d.
+
+Theorem 6.11. The Hoare logic of ERC(F, G) is sound; i.e., for any Hoare triple Γ ⊢
+  ϕ S ψ ▷ Γ′ , it holds that Γ ⊨ ϕ S ψ ▷ Γ′ .
+                                 
+
+
+Proof. See Appendix A.
+Vol. 20:2                           EXACT REAL COMPUTATION                                     17:43
+
+
+
+
+                           Figure 3: The Hoare logic of ERC(F, G)
+
+            Γ ⊢ ϕ′ S ψ ′ ▷ Γ′
+                   
+                              ϕ ⇒ ϕ′ and ψ ′ ⇒ ψ
+            Γ ⊢ ϕ S ψ ▷ Γ′
+                                                                        
+                                                                 Γ ⊢ ψ skip ψ ▷ Γ
+
+                      
+                   Γ ⊢ ∃w. LtM(w) ∧ ∀w. LtM(w) ⇒ ψ[w/x]          x := t { ψ} ▷ Γ
+
+                          Γ ⊢ { ArrPre(ψ, x, m, t)} x[m] := t { ψ} ▷ Γ
+
+                                                              
+             Γ ⊢ ∃w. LtM(w) ∧ ∀w. LtM(w) ⇒ ψ[w/x] let x : τ = t ψ ▷ Γ, x : τ
+                                                  
+                        Γ ⊢ { ϕ} S1 { θ} ▷ Γ1 Γ1 ⊢ θ S2 { ψ} ▷ Γ2
+                                               
+                                  Γ ⊢ ϕ S1 ; S2 ψ ▷ Γ2
+
+            Γ ⊢ { ϕ ∧ LbM(true)} S1 { ψ} ▷ Γ1      Γ ⊢ { ϕ ∧ LbM(false)} S2 { ψ} ▷ Γ2
+  Γ ⊢ { ϕ ∧ (LbM(true) ∨ LbM(false)) ∧ ¬LbM(unknown)} if b then S1 else S2 end { ψ} ▷ Γ
+
+       Γ, ξ, ξ ′ : R ⊢ {LbM(true) ∧ I ∧ V = ξ ∧ L = ξ ′} S {I ∧ V ≤ ξ − ξ ′ ∧ L = ξ ′} ▷ Γ′′
+                       Γ ⊢ { I} while b do S end { I ∧ LbM(false)} ▷ Γ
+
+
+ The rule for loops has the side conditions:
+                   I ∧ LbM(true) ⇒ L > 0 ,
+                               I ⇒ (LbM(true) ∨ LbM(false)) ∧ ¬LbM(unknown) ,
+                     I ∧ V ≤ 0 ⇒ ∀k. LbM(k) ⇒ k = false , and
+                            ξ, ξ ′ do not appear free in I, V, L .
+ where L and V are real-valued.
+
+ In the case of array assignment ArrPre(ψ, x, m, t) is defined as follows:
+                                                  
+     ArrPre(ψ, x, m, t) :≡ ∃i, w. LmM(i) ∧ LtM(w)
+                             ∧ ∀i. (LmM(i) ⇒ 0 ≤ i < d)
+                             ∧ ∀i, w. (LmM(i) ∧ LtM(w) ∧ ∀y. update(x, i, w, y) ⇒ ψ[y/x])
+ assuming Γ ⊢ x[m] := t ▷ Γ and Γ ⊢ x : R[d] where
+    update(x, i, w, y) :≡ 0 ≤ i < d ∧ ((y(0) = x(0) ∧ i ̸= 0) ∨ (y(0) = w ∧ i = 0))
+                          ∧ · · · ∧ ((y(d−1) = x(d−1) ∧ i ̸= d − 1) ∨ (y(d−1) = w ∧ i = d − 1))
+17:44   Park, Brauße, Collins, Kim, Konečný, Lee, Müller, Neumann, Preining, and Ziegler        Vol. 20:2
+
+
+
+
+               7. Example Formal Verification in Exact Real Computation
+The present section picks up from Section 5.2.6 to illustrate formal verification in ERC.
+To emphasize, our purpose here is not to actually establish correctness of the long-known
+Trisection method, but to demonstrate the extended Hoare logic from Section 6.3 using a toy
+example. Since Trisection relies on the Intermediate Value Theorem, any correctness proof
+must make full use of real (as opposed to floating point, rational, or algebraic) numbers.
+    Let us define some abbreviations such that the program in Algorithm 9 becomes of the
+form
+                             input a : R, b : R S return a as p → −∞.
+
+           t̃1 :≡    b − a ⋖ 2p , t̃2 := 2p−1 ⋖ b − a
+           t1 :≡     f (b/3 + 2 × a/3) × f (b) ⋖ 0 , t2 :≡ f (a) × f (2 × b/3 + a/3) ⋖ 0
+          b1 :≡      choose(t̃1 , t̃2 ) = 1, b2 := choose(t1 , t2 ) = 1
+           S   :≡    while b1 do S1 end
+          S1   :≡    if b2 then S2 else S3 end
+          S2   :≡    b := 2 × b/3 + a/3
+          S3   :≡    a := b/3 + 2 × a/3
+    We work with T ({f }, ∅) which contains sentences saying that f is a continuous function.
+We want to verify that the program’s denotation at its inputs a, b which isolate a root of f
+uniquely with a sign change:
+          uniq(f, a, b) :≡ cont(f, a, b) ∧ f (a) · f (b) < 0 ∧ ∃!x. a < x < b ∧ f (x) = 0 .
+Considering the limit taken at the end of every real program, we need to prove the specifica-
+tion:
+                                                                              ′
+      Γ ⊨ p = p′ ∧ uniq(f, a, b) S ∃!z. f (z) = 0 ∧ a < z < b ∧ |a − z| ≤ 2p ▷ Γ′
+                                    
+
+where Γ = p, p′ : Z, a, b : R and Γ′ = p, p′ : Z, a, b : R. The ghost variable p′ captures the
+initial value that the variable p stores, considering that the value p stores may throughout
+the computation (though it does not in this specific example.)
+       To simplify our presentation, let us write t1 , t2 , t̃1 , t̃2 as valid formulae in our specification
+language where their occurrences of ⋖ are implicitly replaced with <. See that Lb1 M(true) ⇔
+t̃2 , Lb1 M(false) ⇔ t̃1 , ¬Lb1 M(unknown), Lb2 M(true) ⇔ t2 , Lb2 M(false) ⇔ t1 , and ¬Lb2 M(unknown)
+hold. Let us define I := p = p′ ∧ uniq(f, a, b) as a candidate for the loop invariant,
+V := b − a − 2p−1 as a candidate for the loop variant, L := 2p−2 be a candidate for a lower
+bound decrements, P̃ := t̃2 ∧ I ∧ V = ξ ∧ L = ξ ′ , and Q̃ := I ∧ V ≤ ξ − ξ ′ ∧ L = ξ ′ in our
+specification language with variables ξ, ξ ′ of the sort R. Let ∆ := p, p′ : Z, a, b, ξ, ξ ′ : R.
+       From the axiom for assignments, we have the triples:
+                                                                                           
+          ∆ ⊢ ∃ω. La/3 + 2 × b/3M(ω) ∧ ∀ω. La/3 + 2 × b/3M(ω) ⇒ Q̃[ω/b] S2 Q̃ ▷ ∆
+                                                                                           
+          ∆ ⊢ ∃ω. L2 × a/3 + b/3M(ω) ∧ ∀ω. L2 × a/3 + .b/3M(ω) ⇒ Q̃[ω/a] S3 Q̃ ▷ ∆
+Vol. 20:2                             EXACT REAL COMPUTATION                                 17:45
+
+
+
+
+See that we can apply the rule of precondition weakening to get the following triples derived:
+                                                                             
+   ∆ ⊢ Q̃[(a/3 + 2 × b/3)/b] C2 Q̃ ▷ ∆, ∆ ⊢ Q̃[(2 × a/3 + b/3)/a] C3 Q̃ ▷ ∆.
+     When we unwrap abbreviations, we can verify the following equivalences:
+            Q̃[(2 × a/3 + b/3)/a] ⇔ p = p′ ∧ uniq(f, (2 × a/3 + b/3), b)
+                                  ∧ b − (2 × a/3 + b/3) − 2p−1 ≤ ξ − ξ ′
+                                  ∧ 2p−2 = ξ ′
+                          P̃ ∧ t1 ⇔ p = p′ ∧ uniq(f, a, b) ∧ f (b/3 + 2 × a/3) × f (b) < 0
+                                  ∧ 2p−1 < b − a ∧ b − a − 2p−1 = ξ
+                                  ∧ 2p−2 = ξ ′
+    Due to the intermediate value theorem, if an interval (a; b) contains a root of f uniquely,
+and if f (x) × f (y) < 0 for a ≤ x < y ≤ b, then (x; y) also contains the root of f uniquely.
+Hence, P̃ ∧ t1 ⇒ Q̃[(2 × a/3 + b/3)/a] holds. And, similarly, P̃ ∧ t2 ⇒ Q̃[(a/3 + 2 × b/3)/b]
+holds.
+    Therefore, by the rule of precondition strengthening on the triples of S2 , S3 , and the
+rule for conditionals, we get the triple:
+             ∆ ⊢ t̃2 ∧ I ∧ V = ξ ∧ L = ξ ′ S1 I ∧ (V ≤ ξ − ξ ′ ) ∧ L = ξ ′ ▷ ∆
+                                              
+
+The side-conditions of the rule for while loops are quite trivial. Hence, assuming that they
+are proven, we apply the rule of while loops, and we get the following triple:
+                                   Γ ⊢ I S I ∧ t̃2 ▷ Γ′
+                                             
+
+Using the rule of pre/postcondition strengthening/weakening, we can get the originally
+desired specification.
+
+
+                               8. Conclusion and Future work
+We have formalized an imperative programming language for exact real number computation.
+Its domain-theoretic denotational semantics, based on the Plotkin powerdomain modelling
+multi-valued computations, is carefully designed to be computable and complete, matching
+the intuition of operating on continuous data exactly without rounding errors and in
+agreement with (proofs in) calculus. This enables a natural approach to formal program
+verification by adding real number axioms to Hoare logic.
+     The following considerations naturally suggest future further investigations:
+• Computational Cost: After the design of an algorithm comes its analysis, in terms of
+  computational cost as a quantitative indicator of its practical performance. For realistic
+  predictions, real complexity theory [Ko91, Wei03] employs bit-cost, as opposed to unit cost
+  common in algebraic complexity theory [BCS97]. In [BH98, Definition 2.4] it is suggested
+  that a logarithmic cost measure where each operation is supposed to take time according
+  to the binary length of the integer (part of the real) to be processed. More accurate
+17:46   Park, Brauße, Collins, Kim, Konečný, Lee, Müller, Neumann, Preining, and Ziegler   Vol. 20:2
+
+
+
+
+  predictions take into account the precision parameter p for real programs and for real
+  number comparisons “x ⋖ y” the logarithm of the difference |x − y|.
+• Full Mixed Data Types: ERC as introduced here formalizes computing with data
+  types Z, R, and K as counterparts to mathematical Z, R, K where K is permitted only for
+  expressions and local variables. A future extension will include also (multi-)functions with
+  K type arguments and return values as well as arrays and a dedicated limit operator.
+• Explicit Limit Operator: Constructing real numbers as the limits of converging
+  sequences is done only at the level of programs in ERC. It was our design choice to separate
+  the term language of ERC with loops and of course limits. A direction of extending our
+  framework to allow constructing a limit within user programs as a term has been also
+  investigated [BPS20] where the authors suggest an expression-based programming language
+  called Clerical that provides an explicit limit operator. Its prototype implementation can
+  be found in [BPS17].
+• Multi-valued Real Functions: The present version of ERC formalizes computing
+  mappings from reals to integers in the multi-valued sense because any single-valued, and
+  necessarily continuous [Wei00, Theorems 4.3.1+3.2.11], function with connected domain
+  and discrete range must be constant. On the other hand, computing real values is
+  deliberately restricted to the single-valued case. Defining approximate computation of
+  real multi-valued functions is delicate and still under exploration [BMR18, Kon18].
+• Functional s and Operators: The program in Algorithm 9 mimics a functional that
+  receives a continuous function f as an argument, accessible by point-wise black box
+  evaluation. Extending ERC with function arguments enriched with quantitative continuity
+  information, such as a modulus of continuity [KC12], is necessary to extend Theorem 5.3
+  (Turing-completeness of ERC) from functions to functionals.
+• Automated Formal Verification: The decidability of the theory of the base language
+  ERC0 according to Theorem 6.2 includes its complete (and elegant) axiomatization:
+  Guaranteed to yield convenient automated formal verification. This includes formalizing
+  ERC itself in a formal system for example in the Coq proof assistant [KST20, STT21] and
+  further development of annotated ERC and verification condition extraction mechanisms.
+• Continuous Data Types beyond the Reals: Real computability theory has been ex-
+  tended to topological T0 spaces, real complexity theory to co-Polish spaces [KSZ16, Sch04].
+  Current and future works similarly extend ERC to continuous data types beyond real num-
+  bers/functions, such as the Grassmannian, tensors [SAL+ 18] and groups [SZ18]. As hinted
+  in Remark 5.4, this may require extending our language with countable nondeterminism
+  for the extended language to be complete as well.
+
+
+                                       Acknowledgement
+This work was supported by the National Research Foundation of Korea (grants NRF-
+2017R1E1A1A03071032 and NRF-2017R1D1A1B05031658), by the International Research
+& Development Program of the Korean Ministry of Science and ICT
+Vol. 20:2                             EXACT REAL COMPUTATION                                       17:47
+
+
+
+
+(grant NRF-2016K1A3A7A03950702), by the European Union’s Horizon 2020 research and
+innovation program under the Marie Sklodowska-Curie grant agreement No 731143, and by
+the German Research Foundation (DFG) Grant MU 1801/5-1.
+    We thank Andrej Bauer, Cyril Cohen, Jeehoon Kang, Johannes Kanig, Alex Simpson,
+and Hongseok Yang for seminal discussions. Anonymous referees have provided valuable
+feedback to an earlier version. We would like to thank Holger Thies for constructive comments
+on this work and proofreading.
+    A preliminary version of this work was submitted as a part of the first author’s PhD
+thesis [Par21].
+
+
+                                            References
+[AJ95]   Samson Abramsky and Achim Jung. Domain theory. In Handbook of Logic in Computer Science,
+         volume III, pages 1–168. Oxford University Press, Oxford, United Kingdom, 1995.
+[AO19]   Krzysztof R Apt and Ernst-Rüdiger Olderog. Fifty years of hoare’s logic. Formal Aspects of
+         Computing, 31(6):751–807, 2019. doi:10.1007/s00165-019-00501-3.
+[AY07]   Jeremy Avigad and Yimu Yin. Quantifier elimination for the reals with a predicate for the powers
+         of two. Theoretical Computer Science, 370(1-3):48–59, 2007. doi:10.1016/j.tcs.2006.10.005.
+[BC90]   Hans Boehm and Robert Cartwright. Exact Real Arithmetic: Formulating real numbers as
+         functions. In Research Topics in Functional Programming, pages 43––64. Addison-Wesley Longman
+         Publishing Co., Inc., USA, 1990.
+[BCS97]  Peter Bürgisser, Michael Clausen, and Mohammad Amin Shokrollahi. Algebraic complexity
+         theory, volume 315 of Grundlehren der mathematischen Wissenschaften. Springer-Verlag Berlin
+         Heidelberg, Berlin, Heidelberg, 1997.
+[BCSS98] Lenore Blum, Felipe Cucker, Michael Shub, and Steven Smale. Complexity and real computation.
+         Springer, New York, NY, 1998. doi:10.1007/978-1-4612-0701-6.
+[Bés02] Alexis Bés. A survey of arithmetical definability. Soc. Math. Belgique, A tribute to Maurice
+         Boffa:1–54, 2002.
+[BFM09] Sylvie Boldo, Jean-Christophe Filliâtre, and Guillaume Melquiond. Combining Coq and Gappa for
+         certifying floating-point programs. In Jacques Carette, Lucas Dixon, Claudio Sacerdoti Coen, and
+         Stephen M. Watt, editors, Intelligent Computer Mathematics, pages 59–74, Berlin, Heidelberg,
+         2009. Springer Berlin Heidelberg. doi:10.1007/978-3-642-02614-0_10.
+[BH98]   Vasco Brattka and Peter Hertling. Feasible real random access machines. Journal of Complexity,
+         14(4):490–526, 1998. doi:10.1006/jcom.1998.0488.
+[Bla]    Jens Blanck. cdar – Reals based on Centred Dyadic Approximations. https://github.com/
+         jensblanck/cdar.
+[BM11]   Sylvie Boldo and Guillaume Melquiond. Flocq: A unified library for proving floating-point
+         algorithms in Coq. In 2011 IEEE 20th Symposium on Computer Arithmetic, pages 243–252. IEEE,
+         2011. doi:10.1109/ARITH.2011.40.
+[BMR18] Franz Brausse, Norbert Müller, and Robert Rettinger. Intensionality and multi-valued limits.
+         In Proc. 15th International Conference on Computability and Complexity in Analysis (CCA),
+         page 11, 2018.
+[BPS17]  Andrej Bauer, Sewon Park, and Alex Simpson. Clerical. https://github.com/andrejbauer/
+         clerical, 2017.
+[BPS20]  Andrej Bauer, Sewon Park, and Alex Simpson. Clerical: an imperative language for verified real-
+         number computation. In Proc. 17th International Conference on Computability and Complexity
+         in Analysis (CCA), pages 22–23, 2020.
+17:48     Park, Brauße, Collins, Kim, Konečný, Lee, Müller, Neumann, Preining, and Ziegler     Vol. 20:2
+
+
+
+
+[Bra95]   Vasco Brattka. Computable selection in analysis. In Proc. of the Workshop on Computability and
+          Complexity in Analysis, Informatik Berichte, FernUniversit at Hagen, volume 190, pages 125–138,
+          1995.
+[Bra03]   Vasco Brattka. The emperor’s new recursiveness: The epigraph of the exponential function in
+          two models of computability. In Masami Ito and Teruo Imaoka, editors, Words, Languages &
+          Combinatorics III, pages 63–72, Singapore, 2003. World Scientific Publishing. ICWLC 2000,
+          Kyoto, Japan, March 14–18, 2000. doi:10.1142/9789812704979_0005.
+[BVS93]   Stephen Brookes and Kathryn Van Stone. Monads and comonads in intensional semantics.
+          Technical report, Carnegie-Mellon University Pittsburgh PA Department of Computer Science,
+          1993.
+[CGC+ 20] Pieter Collins, Luca Geretti, Alberto Casagrande, Ivan Zapreev, and Sanja Zivanovic. Ariadne.
+          http://www.ariadne-cps.org/, 2005-20.
+[Coo78]   Stephen A Cook. Soundness and completeness of an axiom system for program verification. SIAM
+          Journal on Computing, 7(1):70–90, 1978. doi:10.1137/0207005.
+[DGE13] Pietro Di Gianantonio and Abbas Edalat. A language for differentiable functions. In Frank
+          Pfenning, editor, Foundations of Software Science and Computation Structures, pages 337–352,
+          Berlin, Heidelberg, 2013. Springer Berlin Heidelberg. doi:10.1007/978-3-642-37075-5_22.
+[Dri85]   Lou van den Dries. The field of reals with a predicate for the powers of two. Manuscripta
+          mathematica, 54:187–195, 1985. doi:10.1007/BF01171706.
+[EE00]    Abbas Edalat and Martın Hötzel Escardó. Integration in real PCF. Information and Computation,
+          160(1-2):128–166, 2000.
+[ES14]    Martı́n Hötzel Escardó and Alex Simpson. Abstract datatypes for real numbers in type theory. In
+          Gilles Dowek, editor, Rewriting and Typed Lambda Calculi, pages 208–223, Cham, 2014. Springer
+          International Publishing. doi:10.1007/978-3-319-08918-8_15.
+[Esc96]   Martı́n Hötzel Escardó. PCF extended with real numbers. Theoretical Computer Science, 162:79–
+          115, 1996. doi:10.1016/0304-3975(95)00250-2.
+[FP13]    Jean-Christophe Filliâtre and Andrei Paskevich. Why3 — Where programs meet provers. In
+          Matthias Felleisen and Philippa Gardner, editors, Programming Languages and Systems, pages 125–
+          128, Berlin, Heidelberg, 2013. Springer Berlin Heidelberg. doi:10.1007/978-3-642-37036-6_8.
+[Her96]   Peter Hertling. Topological complexity with continuous operations. Journal of Complexity, 12:315–
+          338, 1996. doi:10.1006/jcom.1996.0021.
+[Her99]   Peter Hertling. A real number structure that is effectively categorical. Mathematical Logic
+          Quarterly, 45(2):147–182, 1999. doi:10.1002/malq.19990450202.
+[Hoa69]   C. A. R. Hoare. An axiomatic basis for computer programming. Commun. ACM, 12(10):576–580,
+          oct 1969. doi:10.1145/363235.363259.
+[KC96]    Bruce M. Kapron and Steven A. Cook. A new characterization of type-2 feasibility. SIAM Journal
+          on Computing, 25(1):117–132, 1996. doi:10.1137/S0097539794263452.
+[KC12]    Akitoshi Kawamura and Stephen Cook. Complexity theory for operators in analysis. ACM Trans.
+          Comput. Theory, 4(2):5:1–5:24, May 2012. doi:10.1145/2189778.2189780.
+[KMP+ 08] Lutz Kettner, Kurt Mehlhorn, Sylvain Pion, Stefan Schirra, and Chee-Keng Yap. Classroom
+          examples of robustness problems in geometric computations. Computational Geometry, 40(1):61–
+          78, 2008. doi:10.1016/j.comgeo.2007.06.003.
+[Ko91]    Ker-I Ko. Complexity Theory of Real Functions. Progress in Theoretical Computer Science.
+          Birkhäuser, Boston, 1991.
+[Kon18]   Michal Konečný. Verified exact real limit computation. In Proc. 15th International Conference
+          on Computability and Complexity in Analysis (CCA), pages 9–10, 2018.
+[KST20]   Michal Konečný, Florian Steinberg, and Holger Thies. Computable analysis for verified exact
+          real computation. In Nitin Saxena and Sunil Simon, editors, 40th IARCS Annual Conference on
+Vol. 20:2                              EXACT REAL COMPUTATION                                        17:49
+
+
+
+
+          Foundations of Software Technology and Theoretical Computer Science, FSTTCS 2020, December
+          14-18, 2020, BITS Pilani, K K Birla Goa Campus, Goa, India (Virtual Conference), volume
+          182 of LIPIcs, pages 50:1–50:18. Schloss Dagstuhl - Leibniz-Zentrum für Informatik, 2020.
+          doi:10.4230/LIPIcs.FSTTCS.2020.50.
+[KSZ16]   Akitoshi Kawamura, Florian Steinberg, and Martin Ziegler. Complexity theory of (functions on)
+          compact metric spaces. In Proc. 31st Ann. Symposium on Logic in Computer Science, pages
+          837–846, New York, NY, United States, 2016. ACM/IEEE, Association for Computing Machinery.
+          doi:10.1145/2933575.2935311.
+[KTD+ 13] Michal Konečný, Walid Taha, Jan Duracz, Adam Duracz, and Aaron Ames. Enclosing the
+          behavior of a hybrid system up to and beyond a zeno point. In 2013 IEEE 1st International
+          Conference on Cyber-Physical Systems, Networks, and Applications (CPSNA), pages 120–125,
+          2013. doi:10.1109/CPSNA.2013.6614258.
+[Lam07]   Branimir Lambov. RealLib: An efficient implementation of exact real arithmetic. Mathematical
+          Structures in Computer Science, 17:81–98, 2007. doi:10.1017/S0960129506005822.
+[Luc77]   Horst Luckhardt. A fundamental effect in computations on real numbers. Theoretical Computer
+          Science, 5(3):321–324, 1977. doi:10.1016/0304-3975(77)90048-2.
+[Mar17]   David Marker. Model Theory of Fields. Lecture Notes in Logic. Cambridge University Press,
+          Cambridge, United Kingdom, 2017. doi:10.1017/9781316716991.
+[Mel08]   Guillaume Melquiond. Proving bounds on real-valued functions with computations. In Alessandro
+          Armando, Peter Baumgartner, and Gilles Dowek, editors, Automated Reasoning, pages 2–17,
+          Berlin, Heidelberg, 2008. Springer Berlin Heidelberg. doi:10.1007/978-3-540-71070-7_2.
+[Mit70]   Dragoslav S. Mitrinović. Analytic Inequalities, volume 165 of Die Grundlehren der mathematischen
+          Wissenschaften. Springer, 1970. doi:10.1007/978-3-642-99970-3.
+[MRE07] J. Raymundo Marcial-Romero and Martı́n H. Escardó. Semantics of a sequential language
+          for exact real-number computation. Theoretical Computer Science, 379(1):120–141, 2007. doi:
+          10.1016/j.tcs.2007.01.021.
+[Mül01]  Norbert Th. Müller. The iRRAM: Exact arithmetic in C++. In Jens Blanck, Vasco Brattka, and
+          Peter Hertling, editors, Computability and Complexity in Analysis, volume 2064 of Lecture Notes
+          in Computer Science, pages 222–252, Berlin, 2001. Springer. 4th International Workshop, CCA
+          2000, Swansea, UK, September 2000. doi:10.1007/3-540-45335-0_14.
+[NMB06] Aleksandar Nanevski, Greg Morrisett, and Lars Birkedal. Polymorphism and separation in hoare
+          type theory. In Proceedings of the eleventh ACM SIGPLAN international conference on Functional
+          programming, pages 62–73, 2006. doi:10.1145/1160074.1159812.
+[Par21]   Sewon Park. Continuous Abstract Data Types for Verified Computation. PhD thesis, KAIST,
+          School of Computing, Daejeon, South Korea, 2021.
+[PER89] Marian B. Pour-El and J. Ian Richards. Computability in Analysis and Physics. Perspectives in
+          Mathematical Logic. Springer, Berlin, 1989. doi:10.1017/9781316717325.
+[Plo76]   Gordon D. Plotkin. A powerdomain construction. SIAM Journal on Computing, 5(3):452–487,
+          1976. doi:10.1137/0205035.
+[Plo77]   Gordon D. Plotkin. LCF considered as a programming language. Theoretical computer science,
+          5(3):223–255, 1977. doi:10.1016/0304-3975(77)90044-5.
+[PS85]    Franco P. Preparata and Michael Ian Shamos. Computational Geometry. Monographs in Computer
+          Science. Springer, 1985. doi:10.1007/978-1-4612-1098-6.
+[PTVF07] William H. Press, Saul A. Teukolsky, William T. Vetterling, and Brian P. Flannery. Numerical
+          recipes: The art of scientific computing. Cambridge university press, Cambridge, United Kingdom,
+          3 edition, 2007.
+17:50     Park, Brauße, Collins, Kim, Konečný, Lee, Müller, Neumann, Preining, and Ziegler      Vol. 20:2
+
+
+
+
+[Rey02]   John C Reynolds. Separation logic: A logic for shared mutable data structures. In Proceedings
+          17th Annual IEEE Symposium on Logic in Computer Science, pages 55–74. IEEE, 2002. doi:
+          10.1109/LICS.2002.1029817.
+[Rey09]   John C Reynolds. Theories of programming languages. Cambridge University Press, Cambridge,
+          United Kingdom, 2009. doi:10.1017/CBO9780511626364.
+[Ric68]   Daniel Richardson. Some undecidable problems involving elementary functions of a real variable.
+          Journal of Symbolic Logic, 33(4):514–520, 1968. doi:10.2307/2271358.
+[Rob59]   Julia Robinson. The undecidability of algebraic rings and fields. Proceedings of the American
+          Mathematical Society, 10:950–957, 1959. doi:10.2307/2033628.
+[SAL+ 18] Joonhyung Shin, Namjo Ahn, Seungwoo Lee, Chansu Park, and Martin Ziegler. Towards ten-
+          sor calculus in exact real computation. 21st Japan-Korea Joint Workshop on Algorithms and
+          Computation, August 2018.
+[Sch02]   Matthias Schröder. Effectivity in spaces with admissible multirepresentations. Mathematical Logic
+          Quarterly, 48(S1):78–90, 2002.
+[Sch04]   Matthias Schröder. Spaces allowing type-2 complexity theory revisited. Mathematical Logic
+          Quarterly, 50(4,5):443–459, 2004. doi:10.1002/malq.200310111.
+[Spe59]   Ernst Specker. Der Satz vom Maximum in der rekursiven Analysis. In A. Heyting, editor,
+          Constructivity in mathematics, Studies in Logic and the Foundations of Mathematics, pages
+          254–265, Amsterdam, 1959. North-Holland. Proc. Colloq., Amsterdam, Aug. 26–31, 1957.
+[STT21]   Florian Steinberg, Laurent Thery, and Holger Thies. Computable analysis and notions of continuity
+          in Coq. Logical Methods in Computer Science, Volume 17, Issue 2, May 2021. doi:10.23638/
+          LMCS-17(2:16)2021.
+[SZ18]    Dongseong Seon and Martin Ziegler. Computing Haar averages. In Proc. 15th International
+          Conference on Computability and Complexity in Analysis (CCA), pages 43–44, 2018.
+[Tur37]   Alan M. Turing. On computable numbers, with an application to the “Entscheidungsproblem”.
+          Proceedings of the London Mathematical Society, 42(2):230–265, 1937.
+[Tur48]   Alan M. Turing. Rounding off errors in matrix processes. Quarterly Journal of Mechanical and
+          Applied Math, 1(1):287–308, 1948.
+[TZ99]    J.V. Tucker and J.I. Zucker. Computation by ‘While’ programs on topological partial algebras.
+          Theoretical Computer Science, 219:379–420, 1999. doi:10.1016/S0304-3975(98)00297-7.
+[TZ04]    J.V. Tucker and J.I. Zucker. Abstract versus concrete computation on metric partial algebras.
+          ACM Transactions on Computational Logic, 5(4):611–668, 2004. doi:10.1145/1024922.1024924.
+[Wei00]   Klaus Weihrauch. Computable Analysis. Springer,                   Berlin,   2000. doi:10.1007/
+          978-3-642-56999-9.
+[Wei03]   Klaus Weihrauch. Computational complexity on computable metric spaces. Mathematical Logic
+          Quarterly, 49(1):3–21, 2003. doi:10.1002/malq.200310001.
+[YYD+ 10] Jihun Yu, Chee Yap, Zilin Du, Sylvain Pion, and Hervé Brönnimann. The design of Core
+          2: A library for exact numeric computation in geometry and algebra. In Komei Fukuda,
+          Joris van der Hoeven, Michael Joswig, and Nobuki Takayama, editors, Mathematical Soft-
+          ware – ICMS 2010, pages 121–141, Berlin, Heidelberg, 2010. Springer Berlin Heidelberg.
+          doi:10.1007/978-3-642-15582-6_24.
+
+
+
+          Appendix A. Proof of the Soundness of the Hoare Logic of ERC
+We start the proof with the lemma:
+
+Lemma A.1. For a well-typed command Γ ⊢ while b do S end ▷ Γ, define the sequences of
+set-valued functions on JΓK:
+Vol. 20:2                                             EXACT REAL COMPUTATION                                             17:51
+
+
+
+
+   0 (σ) :≡ {σ}
+• Bb,S
+   0 (σ) :≡ ∅
+• Cb,S
+                                                            (
+   n+1       S          S                                    {δ ′ }     if l = true ∧ δ ′ ̸= ⊥,
+• Bb,S (σ) :≡ δ∈B n (σ)                       l∈JbKδ
+                 b,S
+                                                 †            ∅         otherwise.
+                                           δ ′ ∈↾†Γ ◦JSKδ
+                                                                          
+                                                                          {δ} if l = false,
+                                                                          
+                                                                          
+   n+1         n (σ) ∪
+                                                                                   if l = true ∧ δ ′ ̸= ⊥,
+                                       S                S
+• Cb,S (σ) :≡ Cb,S                            n (σ)
+                                           δ∈Bb,S              l∈JbKσ    ∅
+                                                                  ††
+                                                                        
+                                                             ′
+                                                            δ ∈↾Γ ◦JSKδ
+                                                                        
+                                                                        {⊥}       otherwise.
+
+Then, for all n ∈ N, it holds that W (n) (σ) = Cb,S
+                                                  n (σ) ∪ {⊥ | ∃x. x ∈ B n (σ)}.
+                                                                          b,S
+                   n (σ) is the set of states that requires further execution after running the
+     Intuitively, Bb,S
+while loop on σ for n times, and Cb,Sn (σ) is the set of states that have escaped from the loop
+
+(either because false has been evaluated or ⊥ has occurred) during running the loop for n
+times.
+
+Proof. Let us drop the subscripts b, S for the convenience in the presentation and write S
+       †
+for ↾‡Γ ◦ JSK.
+     We first prove the following alternative characterization of the sequence of sets:
+                                                               (
+                                       n+1
+                                                        [       B n (δ)      if ℓ = true ∧ δ ̸= ⊥,
+                                   B         (σ) =
+                                                      ℓ∈JbKσ
+                                                                   ∅         otherwise.
+                                                       δ∈Sσ
+
+
+   It is trivial when n = 0. Now, suppose the equation holds for all σ and for all n up to m.
+Then the following derivation shows that the characterization is valid for n = m + 1 as well.
+                                              (
+     m+2
+                        [              [       {δ}          if ℓ = true ∧ δ ̸= ⊥,
+ B          (σ) =
+                    γ∈B m+1 (σ) ℓ∈JbKγ
+                                                ∅           otherwise.
+                                 δ∈Sγ
+                                                                                              (
+                                                     [                                 [       {δ}    if ℓ = true ∧ δ ̸= ⊥,
+               =
+                                
+                                                                                     ℓ∈JbKγ
+                                                                                               ∅      otherwise.
+                                 m ′
+                      S          B (δ )               if ℓ′ = true ∧ δ ′ ̸= ⊥,       δ∈Sγ
+                    γ∈ ℓ′ ∈JbKσ
+                        δ ′ ∈Sσ ∅                      otherwise.
+                                
+                                
+                                                           (
+                                                             {δ}         if ℓ = true ∧ δ ̸= ⊥,
+                               S                                                                    if ℓ′ = true ∧ δ ′ ̸= ⊥,
+                                                    S
+                                   γ∈B m (δ ′ )       ℓ∈JbKγ
+                      [
+               =                                       δ∈Sγ        ∅      otherwise.
+                    ℓ′ ∈JbKσ 
+                               
+                             ∅                                                                      otherwise.
+                     δ ′ ∈Sσ
+                        (
+                      [  B m+1 (δ ′ )                 if ℓ′ = true ∧ δ ′ ̸= ⊥,
+               =
+                    ℓ′ ∈JbKσ
+                               ∅                      otherwise.
+                     δ ′ ∈Sσ
+17:52      Park, Brauße, Collins, Kim, Konečný, Lee, Müller, Neumann, Preining, and Ziegler   Vol. 20:2
+
+
+
+
+        We now show the following characterization:
+                                                  
+                                                    n         if ℓ = true ∧ δ ̸= ⊥,
+                                                  C (δ)
+                                                  
+                                                  
+                                              [
+                               n+1
+                           C         (σ) =         {σ}        if ℓ = false,
+                                                  
+                                             ℓ∈JbKσ 
+                                                    {⊥}
+                                              δ∈Sσ            otherwise.
+
+It is easy to show that the equation holds for n = 0. Now, assume the equation holds for all
+n up to m. Then,
+
+                                                      
+                                                      {δ}
+                                                      
+                                                            if ℓ′ = false,
+                                     [        [
+C m+2 (σ) = C m+1 (σ) ∪                               ∅   if ℓ′ = true ∧ δ ′ ̸= ⊥,
+                               δ∈B m+1 (σ) ℓ′ ∈JbKδ
+                                                     
+                                                     
+                                                     {⊥} otherwise.
+                                             δ ′ ∈Sδ
+              = C m+1 (σ)∪
+                                                                       
+                                                                       {δ}
+                                                                       
+                                                                              if ℓ′ = false,
+                                       [                         [
+                                                                        ∅ if ℓ′ = true ∧ δ ′ ̸= ⊥,
+                                                              ℓ′ ∈JbKδ 
+                                                                      
+                         B m (γ)                        ̸ ⊥, δ′ ∈Sδ {⊥} otherwise.
+                                         if ℓ = true ∧ γ =
+                                                                      
+                 S
+               δ∈ ℓ∈JbKσ
+                   γ∈Sσ ∅                otherwise.
+                         
+                         
+
+              = C m+1 (σ) ∪
+                                          
+                                                      ′
+                                           {δ} if ℓ = false
+                       
+                                          
+                                           
+                       
+                       
+                                                 if ℓ′ = true ∧ δ ′ ̸= ⊥, if ℓ = true ∧ γ ̸= ⊥,
+                        S        S
+                  [  δ∈B m (γ) ℓ∈JbKδ ∅
+                       
+                                   δ ′ ∈Sδ 
+                                           
+                                          {⊥} otherwise.
+                ℓ∈JbKσ 
+                       
+                       
+                 γ∈Sσ ∅                                                   otherwise.
+                       
+                       
+                       
+                       C m (γ)∪                                             if ℓ = true ∧ γ ̸= ⊥,
+                                           
+                                                        ′
+                                            {δ} if ℓ = false
+                       
+                                           
+                       
+                                           
+                       
+                                                   if ℓ′ = true ∧ δ ′ ̸= ⊥,
+                          S       S
+                  [  δ∈B m (γ) ℓ∈JbKδ ∅
+                       
+              =                         ′
+                                      δ ∈Sδ 
+                                            
+                                            
+                       
+                ℓ∈JbKσ 
+                                            {⊥} otherwise.
+                 γ∈Sσ 
+                       
+                       
+                       
+                       {σ}                                                  if ℓ = false,
+                       
+                       
+                        {⊥}                                                  otherwise.
+                       
+                       
+                       C m+1 (γ) if ℓ = true ∧ γ ̸= ⊥,
+                       
+                  [ 
+              =         {σ}       if ℓ = false,
+                       
+                ℓ∈JbKσ 
+                       
+                 γ∈Sσ   {⊥}       otherwise.
+
+     Using the suggested characterization, we prove W (n) (σ) = Cb,S
+                                                                 n (σ) ∪ {⊥ | ∃x. x ∈
+ n (σ)} for all n ∈ N. When n = 0, both are {⊥}. Suppose the equation holds for n = m.
+Bb,S
+Vol. 20:2                                   EXACT REAL COMPUTATION                                17:53
+
+
+
+
+Then,
+                                    
+                                      (n)
+                                    W (δ)       if ℓ = true ∧ δ ̸= ⊥,
+                                    
+                                    
+                                [
+                (n+1)
+            W           (σ) =         {σ}       if ℓ = false,
+                                    
+                             ℓ∈JbKσ 
+                                    
+                              δ∈Sσ    {⊥}       otherwise.
+                                    
+                                    C m (δ) if ℓ = true ∧ δ ̸= ⊥,
+                               [   
+                           =          {σ}     if ℓ = false,
+                                    
+                             ℓ∈JbKσ 
+                                    {⊥}
+                              δ∈Sσ            otherwise.
+                                         
+                                         {⊥|∃γ. γ ∈ B m (δ)} if ℓ = true ∧ δ ̸= ⊥
+                                         
+                                    [ 
+                                ∪         ∅                       if ℓ = false,
+                                         
+                                  ℓ∈JbKσ 
+                                         
+                                   δ∈Sσ   ∅                       otherwise.
+                                                                                             
+                                                              (                              
+                                                                B m (δ) if ℓ = true ∧ δ ̸= ⊥, 
+                                          
+                                                        [                                    
+                               m+1
+                           =C       (σ) ∪ ⊥ ∃γ. γ ∈
+                                          
+                                          
+                                                       ℓ∈JbKσ
+                                                                ∅          otherwise.         
+                                                                                              
+                                                                                              
+                                                        δ∈Sσ
+                                m+1                      m+1
+                           =C         (σ) ∪ {⊥ | ∃γ. γ ∈ B       (σ)}
+     We now proceed to the proof of Theorem 6.11:
+Proof. We can prove the statement by checking the soundness of each rule.
+(1) (Assignment):
+       Consider any state σ which satisfies ∃w. LtM(w)∧∀w. LtM(w) ⇒ ψ[w/x]. Then, ⊥ ̸∈ JtK σ
+    and for any w ∈ JtK σ, ψ[w/x] holds.
+                                    S
+       Now, see that Jx := tK σ = w∈JtKσ {σ[x 7→ w]} since ⊥ ̸∈ JtK σ and for all w ∈ JtK σ,
+    σ[x 7→ w] satisfies ψ.
+(2) The rule variable declarations and the rule of array assignments can be verified in very
+    similar manner as above and the rules of pre/postcondition strengthening/weakening,
+    skip, and sequential compositions can be verified trivially.
+(3) (Conditional):
+       Consider any state σ which satisfies ϕ ∧ (LbM(true) ∨ LbM(false)) ∧ ¬LbM(unknown). Then,
+    JbK σ = {true, false}, {true}, or {false}. Let us check the three cases:
+     (a) when JbK σ = {true, false}:
+         Then, σ satisfies ϕ ∧ LbM(true) and ϕ ∧ LbM(false). Therefore, (i) ⊥ ̸∈ JS1 K σ, (ii) for
+         all δ ∈ JS1 K σ it holds that δ ⊨ ψ, (iii) ⊥ ̸∈ JS2 K σ, and (iv) for all δ ∈ JS2 K σ it
+         holds that δ ⊨ ψ.
+         Since ⊥ ̸∈ JbK σ and unknown ̸∈ JbK σ, the denotation becomes
+                                                             †            †
+                          Jif b then S1 else S2 endK σ =↾‡Γ (JS1 K σ)∪ ↾‡Γ (JS2 K σ).
+            Since the restriction operator does not create ⊥, the denotation does not contain
+            ⊥. Also, since ψ only consists of free variables that are in Γ, each resulting state
+            after the restriction still satisfies ψ.
+17:54     Park, Brauße, Collins, Kim, Konečný, Lee, Müller, Neumann, Preining, and Ziegler      Vol. 20:2
+
+
+
+
+        (b) when JbK σ = {true}:
+            Then, σ satisfies ϕ ∧ LbM(true). Hence, (i) ⊥ ̸∈ JS1 K σ, (ii) each δ ∈ JS1 K σ satisfies
+            ψ. Since JbK σ = {true}, the denotation becomes
+
+                                                                   †
+                             Jif b then S1 else S2 endK σ =↾‡Γ (JS1 K σ).
+
+          Again, since the restriction does not create ⊥ and ⊥ ̸∈ JS1 K σ, ⊥ is not in the
+          denotation. Since ψ only consists of free variables that are in Γ, each resulting state
+          after the restriction still satisfies ψ
+     (c) when JbK σ = {false}, it can be done very similarly to the above item.
+(4) (Loop):
+       Consider any state σ that satisfies I. Then, by the side-conditions, it also satisfies
+    (LbM(true) ∨ LbM(false)) ∧ ¬LbM(unknown). Hence, JbK σ = {true, false}, {true}, or {false}
+    for any state σ that satisfies I. Now, we fix a state σ which satisfies I hence satisfies
+    the precondition.
+       The core part of the proof is the statement: for any natural number n, it holds that
+               n (σ), (ii) ⊥ ̸∈ C n (σ), (iii) all δ in B n (σ) or C n (σ) satisfies I, and (iv) all
+    (i) ⊥ ̸∈ Bb,S                  b,S                     b,S          b,S
+             n
+    δ in Cb,S (σ) satisfies LbM(false).
+       At the moment, suppose that the above statement is true. Then, all we have to show
+    is that Bb,Sm (σ) becomes empty as m ∈ N increases. Let us define ℓ := max{V (δ) |
+                                                                                       n
+           n
+    δ ∈ Bb,S (σ)} and show that ℓn is strictly decreasing by some quantity that is bounded
+    below, as n increases. See that if it holds, there will be some m that for all δ ∈ Bb,S         m (σ),
+                                     m+1
+    JbK δ = {false} and hence Bb,S        (σ) = ∅.
+       In order to prove it, we take the two steps:
+               1 (σ) ̸= ∅, then for all n ∈ N and for all δ ∈ B n (σ), it holds that L(δ) =
+     (a) If Bb,S                                                         b,S
+          L(σ) > 0. In this case, let us write ℓ0 = L(σ).
+               m+1
+     (b) If Bb,S    (σ) ̸= ∅, it holds that ℓm+1 ≤ ℓm − ℓ0 .
+    Now, we prove each statement:
+     (a) Bb,S1 (σ) ̸= ∅ only if true ∈ JbK σ and there is some non-bottom δ ∈ S. Therefore, by
+
+          the side-condition, L(σ) > 0.
+                                  m+1
+          Suppose any δ ∈ Bb,S         (σ) for any m ∈ N. See that it happens only if there is
+          δ ∈ Bb,S (σ) such that true ∈ JbK δ ′ and δ ∈ Sδ ′ . Together with Item (iii), δ ′
+           ′       m
+
+          satisfies I and LbM(true). Let us define δ̂ ′ := δ ′ ∪ (ξ 7→ V (δ ′ ) ∪ ξ ′ 7→ L(δ ′ ). Since δ̂ ′
+          satisfies the precondition in the premise, we have that for any δ̂ ∈ Sδ̂ ′ , δ̂ satisfies
+          I and V ≤ ξ − ξ ′ and L = ξ ′ . Hence, L(δ̂) = L(δ ′ ). Since ξ ′ , ξ are ghost variables,
+                                                                      m+1
+          L(δ̂) = L(δ) = L(δ ′ ). In conclusion, for any δ ∈ Bb,S            (σ), the quantity L(δ) is
+                                             ′             ′     m
+          identical to the quantity L(δ ) for some δ ∈ Bb,S (σ). Since, Bb,S           0 (σ) = {σ}, we
+
+          conclude that they are all identical to L(σ).
+                                  m+1
+     (b) Suppose any δ ∈ Bb,S          (σ) for any m ∈ N. See that it happens only if there is
+          δ ∈ Bb,S (σ) such that true ∈ JbK δ ′ and δ ∈ Sδ ′ . Together with Item (iii), δ ′
+           ′       m
+
+          satisfies I and LbM(true). Consider δ̂ ′ := δ ′ ∪ (ξ 7→ V (δ ′ ) ∪ ξ ′ 7→ L(δ ′ ) which satisfies
+Vol. 20:2                              EXACT REAL COMPUTATION                                                                   17:55
+
+
+
+
+          the precondition of the premise. Hence, δ ∪ (ξ 7→ V (δ ′ ) ∪ ξ ′ 7→ L(δ ′ ) satisfies the
+          postcondition. Hence, V (δ) ≤ V (δ ′ ) − L(δ) = V (δ ′ ) − ℓ0 . Hence, ℓm+1 ≤ ℓm − ℓ0 .
+        Now, we need to prove the aforementioned statement on Bb,S          m and C m :
+                                                                                       b,S
+      (a) (Base case): Recall that Bb,S  0 (σ) = {σ} ̸= {⊥} and C 0 (σ) = {}. Hence, the four
+                                                                       b,S
+          conditions are all satisfied.                                 (
+                                        n+1         S         S            {δ ′ } if l = true ∧ δ ′ ̸= ⊥
+      (b) (Induction step): Recall Bb,S (σ) :≡ δ∈B n (σ) l∈JbKδ                                          .
+                                                                δ ′ ∈Sδ ∅
+                                                        b,S
+                                                                                  otherwise.
+                          n (σ) satisfies I, JbK δ = {true}, {false}, or {true, false}. In the case
+          Since all δ ∈ Bb,S
+          of true ∈ JbK δ, δ satisfies the precondition of the premise. Hence, for all δ ′ ∈ Sδ, δ ′
+          is not ⊥ and also satisfies I. The case of JbK δ =  {false} is not of interest.
+                                                              {δ} if l = false
+                                                              
+                                                              
+                    n+1          n
+                                                                         if l = true ∧ δ ′ ̸= ⊥ .
+                                           S          S
+          Recall Cb,S (σ) :≡ Cb,S (σ) ∪ δ∈B n (σ) l∈JbKσ ∅
+                                                b,S      ′
+                                                        δ ∈Sδ 
+                                                              
+                                                              {⊥} otherwise.
+                           n (σ) satisfies I and LbM(false), we only need to care the rightmost
+          Since all γ ∈ Cb,S
+          part of the construction. Since all δ ∈ Bb,S   n (σ) satisfies I, by the side-condition,
+
+          unknown and ⊥ are not in JbK δ. The δ is added to C n+1 (σ) only if false ∈ JbK δ.
+          Therefore, δ satisfies both I and LbM(false).
+          Also, in the case of true ∈ JbK δ, since δ satisfies the precondition in the premise,
+                                        n+1
+          ⊥ ̸∈ Sδ. Therefore, ⊥ ̸∈ Cb,S     .
+
+
+
+
+                                            This work is licensed under the Creative Commons Attribution License. To view a copy of this
+                                            license, visit https://creativecommons.org/licenses/by/4.0/ or send a letter to Creative
+                                            Commons, 171 Second St, Suite 300, San Francisco, CA 94105, USA, or Eisenacher Strasse 2,
+                                            10777 Berlin, Germany
+

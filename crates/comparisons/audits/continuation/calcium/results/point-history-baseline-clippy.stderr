@@ -1,0 +1,19 @@
+    Checking serde_core v1.0.229
+    Checking num-integer v0.1.47
+    Checking zerocopy v0.8.56
+    Checking serde v1.0.229
+    Checking num-bigint v0.4.8
+    Checking num-rational v0.4.2
+    Checking num-complex v0.4.6
+    Checking half v2.7.1
+    Checking num-iter v0.1.46
+    Checking ciborium-ll v0.2.2
+    Checking serde_json v1.0.151
+    Checking ciborium v0.2.2
+    Checking num v0.4.3
+    Checking hyperreal v0.13.1 (/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/e-plan-qualified-candidate/hyperreal)
+    Checking hyperlattice v0.6.1 (/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/e-plan-qualified-candidate/hyperlattice)
+    Checking hyperlimit v0.4.1 (/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/e-plan-qualified-candidate/hyperlimit)
+    Checking hypersolve v0.3.1 (/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/e-plan-qualified-candidate/hypersolve)
+    Checking calcium-point-history-baseline v0.0.0 (/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/point-history-baseline)
+    Finished `dev` profile [unoptimized] target(s) in 7.42s

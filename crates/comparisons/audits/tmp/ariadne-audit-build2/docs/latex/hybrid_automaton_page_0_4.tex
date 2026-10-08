@@ -1,0 +1,145 @@
+\doxysection{Building a Hybrid Automaton (version 0.\+4) }
+\hypertarget{hybrid_automaton_page_0_4}{}\label{hybrid_automaton_page_0_4}\index{Building a Hybrid Automaton (version 0.4)@{Building a Hybrid Automaton (version 0.4)}}
+Building a hybrid automaton in Ariadne involves two main steps. We first define the real-\/valued functions used in the automaton, and then build the automaton from these pieces. However, first we need to know about the core numeric and linear algebra types used by Ariadne.\hypertarget{hybrid_automaton_page_0_4_hybrid_automaton_core}{}\doxysubsection{\texorpdfstring{Ariadne Core Types}{Ariadne Core Types}}\label{hybrid_automaton_page_0_4_hybrid_automaton_core}
+\hypertarget{hybrid_automaton_page_0_4_hybrid_automaton_numeric}{}\doxysubsubsection{\texorpdfstring{Numerical Types}{Numerical Types}}\label{hybrid_automaton_page_0_4_hybrid_automaton_numeric}
+Ariadne supports \doxylink{group__NumericModule_gad8d641e86f517dc6189876d9d1a6345a}{Float\+Approximation} and \doxylink{group__NumericModule_ga1e049524e162af01e451c9183315a982}{Float\+Bounds} types, representing an approximate floating-\/point value, and an approximation to a real value given by an interval $[l,u]$.
+
+Additionally, Ariadne supports \doxylink{classAriadne_1_1Integer}{Integer} and \doxylink{classAriadne_1_1Rational}{Rational} types if the Gnu Multiple-\/\+Precision library (GMP) is available. However, these types are typically not used for defining systems.\hypertarget{hybrid_automaton_page_0_4_hybrid_automaton_vector_matrix}{}\doxysubsubsection{\texorpdfstring{Vectors and Matrices}{Vectors and Matrices}}\label{hybrid_automaton_page_0_4_hybrid_automaton_vector_matrix}
+Most of the builtin functions rely on the construction of \doxylink{classAriadne_1_1Vector}{Vector} and \doxylink{classAriadne_1_1Matrix}{Matrix} objects. The simplest way to construct a vector or matrix is using a variable-\/size argument list.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\textcolor{comment}{//\ Create\ a\ vector\ of\ size\ n\ with\ values\ v[i].}}
+\DoxyCodeLine{\mbox{\hyperlink{classAriadne_1_1Vector}{Vector<Float>}}\ v(n,\ v[0],\ v[1],\ ...,\ v[n-\/1]);}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{comment}{//\ Create\ a\ matrix\ of\ size\ m\ x\ n\ with\ values\ a[i][j].}}
+\DoxyCodeLine{\mbox{\hyperlink{classAriadne_1_1Matrix}{Matrix<Float>}}\ A(m,n,\ a[0][0],a[0][1],..,a[0][n-\/1],}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ a[1][0],a[1][1],...,a[1][n-\/1],}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ...,}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ a[m-\/1][0],a[m-\/1][1],...,a[m-\/1][n-\/1]);}
+
+\end{DoxyCode}
+\hypertarget{hybrid_automaton_page_0_4_hybrid_automaton_functions}{}\doxysubsection{\texorpdfstring{Ariadne Functions}{Ariadne Functions}}\label{hybrid_automaton_page_0_4_hybrid_automaton_functions}
+An Ariadne \doxylink{classAriadne_1_1HybridAutomaton}{Hybrid\+Automaton} object is built out of vector-\/valued functions on Euclidean space $f:\R^m\rightarrow\R^n$. Since Ariadne internally needs to be able to evaluate the function on different data types, all functions used in an Ariadne \doxylink{classAriadne_1_1HybridAutomaton}{Hybrid\+Automaton} must inherit from the Scalar\+Function\+Interface or Vector\+Function\+Interface class. The \doxylink{group__FunctionModule_ga97dec0be54bdb27609f9925b055e35dc}{Scalar\+Function} and \doxylink{group__FunctionModule_gae5d2f69ea172c6a2dfa7d2f12f700737}{Vector\+Function} classes can be used to build general-\/purpose functions. A number of builtin function types are provided, including Identity\+Function, Scalar\+Constant\+Function, Scalar\+Affine\+Function and Scalar\+Polynomial\+Function. Additionally, a \doxylink{classAriadne_1_1ScalarUserFunction}{Scalar\+User\+Function$<$\+T$>$ } template is provided to facilitate the creation of more complicated nonlinear functions.\hypertarget{hybrid_automaton_page_0_4_hybrid_automaton_builtin_functions}{}\doxysubsubsection{\texorpdfstring{Builtin Functions}{Builtin Functions}}\label{hybrid_automaton_page_0_4_hybrid_automaton_builtin_functions}
+To create an Identity\+Function, only the dimension of the space needs to be given. 
+\begin{DoxyCode}{0}
+\DoxyCodeLine{IdentityFunction(n);}
+
+\end{DoxyCode}
+
+
+To create \doxylink{classAriadne_1_1ConstantFunction}{Constant\+Function} and Affine\+Function objects, the simplest way is to use variable-\/size argument lists. 
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\textcolor{comment}{//\ Create\ a\ constant\ function\ y=c\ with\ values\ c[i].}}
+\DoxyCodeLine{\mbox{\hyperlink{classAriadne_1_1ConstantFunction}{ConstantFunction}}(m,\ c[0],\ c[1],\ ...,\ c[m-\/1],\ n);}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{comment}{//\ Create\ the\ constant\ function\ y[0]=1.0;\ y[1]=2.0\ in\ three\ variables.}}
+\DoxyCodeLine{\mbox{\hyperlink{classAriadne_1_1ConstantFunction}{ConstantFunction}}(2,\ 1.0,2.0,\ 3);}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{comment}{//\ Create\ an\ affine\ function\ y=Ax+b\ with\ values\ b[i]\ and\ a[i][j].}}
+\DoxyCodeLine{AffineFunction(m,\ b[0],\ ...,\ b[m-\/1],\ n,\ a[0][0],...,a[0][n-\/1],\ a[1][0],...,a[1][n-\/1],\ ...,\ a[m-\/1][0],...,a[m-\/1][n-\/1]);}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{comment}{//\ Create\ the\ affine\ function\ y[0]=4.0+x[0]+2*x[1],\ y[1]=0.5-\/x[0]+3*x[1].}}
+\DoxyCodeLine{AffineFunction(2,\ 4.0,0.5,\ 3,\ 1.0,0.0,2.0,\ -\/1.0,3.0,0.0);}
+
+\end{DoxyCode}
+
+
+\begin{DoxyWarning}{Warning}
+When using variable-\/size argument lists, the floating-\/point values MUST have a decimal point.
+\end{DoxyWarning}
+To create a Scalar\+Polynomial\+Function object, it is easiest to first create polynomial variables and unit vectors. 
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\textcolor{comment}{//\ Create\ polynomials\ x[0]\ and\ x[1]\ in\ two\ independent\ variables.}}
+\DoxyCodeLine{\mbox{\hyperlink{classAriadne_1_1Vector}{Vector<Polynomial<Float>}}\ >\ x=Polynomial<Float>::variables(2);}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{comment}{//\ Create\ basis\ unit\ vectors\ e[0]\ and\ e[1]\ in\ two\ dimensions.}}
+\DoxyCodeLine{array<Vector<Float>\ >\ e=\mbox{\hyperlink{classAriadne_1_1Vector_a853bf5987659ce80eb23303e88e7a634}{Vector<Float>::basis}}(2);}
+
+\end{DoxyCode}
+
+
+The polynomial function can now be written directly as\+: 
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\textcolor{comment}{//\ Create\ the\ polynomial\ function\ y[0]=1.5-\/x[0]\string^2-\/0.5*x[1];\ y[1]=x[0].}}
+\DoxyCodeLine{PolynomialFunction\ p(\ (1.5-\/x[0]*x[0]-\/0.5*x[1])*e[0]\ +\ x[0]*e[1]\ );}
+
+\end{DoxyCode}
+\hypertarget{hybrid_automaton_page_0_4_hybrid_automaton_user_functions}{}\doxysubsubsection{\texorpdfstring{User Functions}{User Functions}}\label{hybrid_automaton_page_0_4_hybrid_automaton_user_functions}
+The simplest way to generate a nonlinear function is to use the templates
+\begin{DoxyItemize}
+\item template\texorpdfstring{$<$}{<}int RS, int AS, int PS=0, int SM=SMOOTH\texorpdfstring{$>$}{>} class Vector\+Function\+Data
+\item \doxylink{classAriadne_1_1VectorUserFunction}{template\texorpdfstring{$<$}{<}class T\texorpdfstring{$>$}{>} class Vector\+User\+Function} 
+\end{DoxyItemize}
+
+The Vector\+Function\+Data template sets the {\itshape result\+\_\+size}, {\itshape argument\+\_\+size}, {\itshape parameters\+\_\+size} and {\itshape smoothness} of the function. 
+
+The \doxylink{classAriadne_1_1VectorUserFunction}{Vector\+User\+Function} template sets defines polymorphic call() methods which evaluate the function on different argument types. The template parameter is the name of the derived class.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\textcolor{comment}{//\ Construct\ a\ function\ with\ two\ arguments\ and\ one\ output\ value.}}
+\DoxyCodeLine{\textcolor{keyword}{struct\ }RadiusFunction\ :\ \mbox{\hyperlink{classAriadne_1_1ScalarUserFunction}{ScalarUserFunction}}<RadiusFunction>,\ ScalarFunctionData<1,2>\ \{}
+\DoxyCodeLine{\ \ \ \ \textcolor{keyword}{template}<\textcolor{keyword}{class}\ Res,\ \textcolor{keyword}{class}\ Arg>\ \textcolor{keywordtype}{void}\ compute(Res\&\ r,\ \textcolor{keyword}{const}\ Arg\&\ x)\ \{}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ r[0]\ =\ sqrt(\ x[0]*x[1]\ +\ x[1]*x[1]\ );\ \}}
+\DoxyCodeLine{\};}
+
+\end{DoxyCode}
+\hypertarget{hybrid_automaton_page_0_4_hybrid_automaton_building}{}\doxysubsection{\texorpdfstring{Building a Hybrid Automaton}{Building a Hybrid Automaton}}\label{hybrid_automaton_page_0_4_hybrid_automaton_building}
+First, construct a \doxylink{classAriadne_1_1HybridAutomaton}{Hybrid\+Automaton} object with no modes and no transitions\+: 
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\mbox{\hyperlink{classAriadne_1_1HybridAutomaton}{HybridAutomaton}}\ automaton;}
+
+\end{DoxyCode}
+
+
+Then declare the discrete states and discrete events. The \doxylink{classAriadne_1_1DiscreteLocation}{Discrete\+Location} and \doxylink{classAriadne_1_1DiscreteEvent}{Discrete\+Event} classes are just integer labels and can be created as follows\+: 
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\mbox{\hyperlink{classAriadne_1_1DiscreteLocation}{DiscreteLocation}}\ location1(1);}
+\DoxyCodeLine{\mbox{\hyperlink{classAriadne_1_1DiscreteLocation}{DiscreteLocation}}\ location2(2);}
+\DoxyCodeLine{\mbox{\hyperlink{classAriadne_1_1DiscreteEvent}{DiscreteEvent}}\ event12(3);}
+
+\end{DoxyCode}
+
+
+Finally, build up the system using the methods\+:
+\begin{DoxyItemize}
+\item \doxylink{classAriadne_1_1HybridAutomaton_ab362c7846c09f3962b39982442849d7d}{Hybrid\+Automaton\+::new\+\_\+mode(Discrete\+State location, Function\+Interface dynamic)}
+\item \doxylink{classAriadne_1_1HybridAutomaton_ad6edf75d890f36ed0d5abf9d34b51266}{Hybrid\+Automaton\+::new\+\_\+invariant(Discrete\+State location, Function\+Interface predicate)}
+\item \doxylink{classAriadne_1_1HybridAutomaton_a761675be8c1692d45f5c4060f109a9fa}{Hybrid\+Automaton\+::new\+\_\+transition(Discrete\+Event event, Discrete\+State source, Discrete\+State target, Function\+Interface reset, Function\+Interface guard, bool urgency)}
+\end{DoxyItemize}
+
+bearing in mind\+:
+\begin{DoxyItemize}
+\item Every mode must correspond to different discrete state.
+\item The {\itshape dynamic} in location $q$ must be a function $f:\R^{n_q}\rightarrow \R^{n_q}$, so as to define a differential equation $\dot{x}=f(x)$. The constant $n_q$ is the {\itshape dimension} of the location.
+\item The {\itshape predicate} defining an invariant in location $q$, and the {\itshape guard} of a transition with {\itshape source} $q$ must scalar functions $\R^{n_q}\rightarrow\R$
+\item There may be multiple invariants in a given location.
+\item There can be at most one transition with a given {\itshape event} and {\itshape source}.
+\item The {\itshape reset} of a transition with {\itshape source} $s$ and {\itshape target} $t$ must be a function $r:\R^{n_s}\rightarrow \R^{n_t}$.
+\item If {\itshape urgency} flag is true, then the transition occurs as soon as the {\itshape guard} is positive. Otherwise, the transition is {\itshape permissive}, and occurs nondeterministically at any time (or not at all).
+\end{DoxyItemize}
+
+A simple hybrid automaton might be built as follows\+:
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\textcolor{comment}{//\ Create\ a\ new\ mode\ with\ the\ given\ dynamic.}}
+\DoxyCodeLine{automaton.\mbox{\hyperlink{classAriadne_1_1HybridAutomaton_ab362c7846c09f3962b39982442849d7d}{new\_mode}}(location1,dynamic1);}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{comment}{//\ Impose\ some\ invariants\ in\ the\ mode.}}
+\DoxyCodeLine{\textcolor{comment}{//\ Note\ that\ the\ invariant\ must\ be\ a\ scalar\ function.}}
+\DoxyCodeLine{automaton.\mbox{\hyperlink{classAriadne_1_1HybridAutomaton_ad6edf75d890f36ed0d5abf9d34b51266}{new\_invariant}}(location1,invariant1);}
+\DoxyCodeLine{automaton.\mbox{\hyperlink{classAriadne_1_1HybridAutomaton_ad6edf75d890f36ed0d5abf9d34b51266}{new\_invariant}}(location1,invariant2);}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{comment}{//\ Create\ another\ mode.}}
+\DoxyCodeLine{automaton.\mbox{\hyperlink{classAriadne_1_1HybridAutomaton_ab362c7846c09f3962b39982442849d7d}{new\_mode}}(location2,dynamic2);}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{comment}{//\ Add\ a\ new\ transition\ based\ on\ the\ DiscreteEvent\ event12,\ with\ source\ location1,\ target\ location2,\ reset\ reset12,\ guard\ condition\ guard12\ and\ urgency\ urgent12.}}
+\DoxyCodeLine{\textcolor{comment}{//\ Note\ that\ the\ guard\ must\ be\ a\ scalar\ function.}}
+\DoxyCodeLine{automaton.\mbox{\hyperlink{classAriadne_1_1HybridAutomaton_a761675be8c1692d45f5c4060f109a9fa}{new\_transition}}(event12,location1,location2,reset12,guard12,urgent12);}
+
+\end{DoxyCode}
+
+
+The main restriction to the invariants and guards is that they must be scalar functions. This is due to the way Ariadne performs event detection. These restrictions will be lifted in a later version of Ariadne. 

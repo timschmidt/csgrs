@@ -1,0 +1,13 @@
+{
+  "repos": {
+    "hypercurve": {
+      "parent": "632f6bc0aca136058413c68d604e48fcffaf9a42",
+      "paths": {
+        "src/lib.rs": "05738e6ebd1a406561371042b9c5fb8517761c892bed76908c813227f7eff191",
+        "src/nurbs.rs": "85ddb2b3974134446d3391d791ec13202df0fe34c04d0d18b49c5fd269bd70ae"
+      }
+    }
+  },
+  "qualification": "nurbs-decomposition-20260928-v667-terminal.json",
+  "verified_source_files": 2047
+}

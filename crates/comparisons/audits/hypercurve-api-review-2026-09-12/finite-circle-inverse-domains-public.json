@@ -1,0 +1,91 @@
+{
+  "parent_commit": "537070d1615695af7dbdb8357f0906fb7d6e20bd",
+  "source": "finite-selected-point-domains-public.rs",
+  "source_sha256": "c0268b16b9731d8ac7e8a36c8b5a09993d5a68015368d2c4f88ae067e9bb9a6b",
+  "executable": "finite-circle-inverse-domains-public",
+  "executable_sha256": "a38a89d2ec90b7dbae4bb4af65db6ad7a318ef28429da14302757b1e3f103cf1",
+  "normal_library": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypercurve-96f69e9a655f1fb5.rlib",
+  "normal_library_sha256": "4ae0b00c4bf9f0a4ee9000958e1f829e194b27d588a0b848d0c353038c6ecff5",
+  "compile_command": [
+    "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustc",
+    "--edition=2024",
+    "-O",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-selected-point-domains-public.rs",
+    "--extern",
+    "hypercurve=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypercurve-96f69e9a655f1fb5.rlib",
+    "-L",
+    "dependency=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps",
+    "-o",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-circle-inverse-domains-public"
+  ],
+  "queries": [
+    {
+      "chart": 0,
+      "repeat": false,
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-circle-inverse-domains-public",
+        "0"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.015640979021554813,
+      "log": "finite-circle-inverse-domains-public-chart0-repeat0.log",
+      "counts": {
+        "cases": 4,
+        "successes": 4,
+        "point_replays": 16,
+        "failures": 0
+      }
+    },
+    {
+      "chart": 1,
+      "repeat": false,
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-circle-inverse-domains-public",
+        "1"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.015532596997218207,
+      "log": "finite-circle-inverse-domains-public-chart1-repeat0.log",
+      "counts": {
+        "cases": 4,
+        "successes": 4,
+        "point_replays": 16,
+        "failures": 0
+      }
+    },
+    {
+      "chart": 2,
+      "repeat": false,
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-circle-inverse-domains-public",
+        "2"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.03158069800701924,
+      "log": "finite-circle-inverse-domains-public-chart2-repeat0.log",
+      "counts": {
+        "cases": 4,
+        "successes": 4,
+        "point_replays": 16,
+        "failures": 0
+      }
+    },
+    {
+      "chart": 3,
+      "repeat": false,
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-circle-inverse-domains-public",
+        "3"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.0316377840063069,
+      "log": "finite-circle-inverse-domains-public-chart3-repeat0.log",
+      "counts": {
+        "cases": 4,
+        "successes": 4,
+        "point_replays": 16,
+        "failures": 0
+      }
+    }
+  ]
+}

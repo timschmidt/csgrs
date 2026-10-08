@@ -1,0 +1,11 @@
+{
+  "tag": "high-product-native",
+  "started": "2026-09-09T19:29:41.310Z",
+  "finished": "2026-09-09T19:29:42.075Z",
+  "elapsedSeconds": 0.763213854,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison",
+  "command": "/tmp/calcium-high-product.03dkHN/high-product-controls",
+  "args": [],
+  "code": 1,
+  "signal": null
+}

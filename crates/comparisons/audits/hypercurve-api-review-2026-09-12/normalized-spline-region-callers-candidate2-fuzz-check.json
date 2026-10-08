@@ -1,0 +1,14 @@
+{
+  "command": [
+    "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+    "check",
+    "--manifest-path",
+    "fuzz/Cargo.toml",
+    "--bin",
+    "bezier_region",
+    "--locked",
+    "--offline"
+  ],
+  "returncode": 0,
+  "elapsed_seconds": 0.11401427298551425
+}

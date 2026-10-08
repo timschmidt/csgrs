@@ -1,0 +1,14 @@
+{
+  "tag": "power-rebased-fixed-kernel-check-v68",
+  "started": "2026-09-11T16:56:37.638Z",
+  "finished": "2026-09-11T16:56:37.840Z",
+  "elapsedSeconds": 0.199014413,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "node",
+  "args": [
+    "check-power-sums-kernel.mjs",
+    "results/power-rebased-fixed-kernel-v68.stdout"
+  ],
+  "code": 0,
+  "signal": null
+}

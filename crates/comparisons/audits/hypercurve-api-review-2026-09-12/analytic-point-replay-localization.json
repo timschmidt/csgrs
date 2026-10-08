@@ -1,0 +1,9 @@
+{
+  "returncode": 124,
+  "timeout_seconds": 30,
+  "elapsed_seconds": 30.00228174700169,
+  "source_sha256": "ab39135a82119edae8910efad36342aa8b4a19ddd014fe3a5d595fff11ef0f0a",
+  "binary_sha256": "8ee985abe6988f895e52ececa5071b9bb8553166373e949b69f416930aa30655",
+  "test": "curve_region_boolean::certified_successor_tests::algebraic_chord_analytic_parallel_pair_replays_contacts_and_overlap",
+  "log": "analytic-point-replay-localization.log"
+}

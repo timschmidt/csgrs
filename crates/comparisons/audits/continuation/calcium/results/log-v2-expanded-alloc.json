@@ -1,0 +1,15 @@
+{
+  "tag": "log-v2-expanded-alloc",
+  "started": "2026-09-08T09:33:42.909Z",
+  "finished": "2026-09-08T09:33:44.693Z",
+  "elapsedSeconds": 1.781412112,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison",
+  "command": "node",
+  "args": [
+    "audits/continuation/calcium/run-log-bench.mjs",
+    "alloc",
+    "v2-expanded"
+  ],
+  "code": 0,
+  "signal": null
+}

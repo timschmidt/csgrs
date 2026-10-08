@@ -1,0 +1,25 @@
+{
+  "tag": "reuse-cost-build-numeric-alloc-sign",
+  "started": "2026-09-08T22:19:37.449Z",
+  "finished": "2026-09-08T22:19:37.671Z",
+  "elapsedSeconds": 0.219646288,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "env",
+  "args": [
+    "CARGO_TARGET_DIR=/tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse",
+    "CARGO_INCREMENTAL=0",
+    "CARGO_PROFILE_DEV_DEBUG=0",
+    "CARGO_BUILD_JOBS=2",
+    "cargo",
+    "build",
+    "--offline",
+    "--locked",
+    "--release",
+    "--manifest-path",
+    "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/reuse-numeric-sign/Cargo.toml",
+    "--features",
+    "allocation-count"
+  ],
+  "code": 0,
+  "signal": null
+}

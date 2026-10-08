@@ -1,0 +1,309 @@
+\doxysubsection{tutorials/hybrid\+\_\+evolution/hybrid\+\_\+evolution\+\_\+tutorial.\+cpp}
+\hypertarget{tutorials_2hybrid_evolution_2hybrid_evolution_tutorial_8cpp-example}{}\label{tutorials_2hybrid_evolution_2hybrid_evolution_tutorial_8cpp-example}A simple nonlinear model of a heating system.
+
+
+\begin{DoxyCodeInclude}{0}
+\DoxyCodeLine{\textcolor{comment}{/***************************************************************************}}
+\DoxyCodeLine{\textcolor{comment}{\ *\ \ \ \ \ \ \ \ \ \ \ \ hybrid\_evolution\_tutorial.cpp}}
+\DoxyCodeLine{\textcolor{comment}{\ *}}
+\DoxyCodeLine{\textcolor{comment}{\ *\ \ Copyright\ \ 2020\ \ Luca\ Geretti}}
+\DoxyCodeLine{\textcolor{comment}{\ *}}
+\DoxyCodeLine{\textcolor{comment}{\ ****************************************************************************/}}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{comment}{/*}}
+\DoxyCodeLine{\textcolor{comment}{\ *\ \ This\ program\ is\ free\ software;\ you\ can\ redistribute\ it\ and/or\ modify}}
+\DoxyCodeLine{\textcolor{comment}{\ *\ \ it\ under\ the\ terms\ of\ the\ GNU\ General\ Public\ License\ as\ published\ by}}
+\DoxyCodeLine{\textcolor{comment}{\ *\ \ the\ Free\ Software\ Foundation;\ either\ version\ 2\ of\ the\ License,\ or}}
+\DoxyCodeLine{\textcolor{comment}{\ *\ \ (at\ your\ option)\ any\ later\ version.}}
+\DoxyCodeLine{\textcolor{comment}{\ *}}
+\DoxyCodeLine{\textcolor{comment}{\ *\ \ This\ program\ is\ distributed\ in\ the\ hope\ that\ it\ will\ be\ useful,}}
+\DoxyCodeLine{\textcolor{comment}{\ *\ \ but\ WITHOUT\ ANY\ WARRANTY;\ without\ even\ the\ implied\ warranty\ of}}
+\DoxyCodeLine{\textcolor{comment}{\ *\ \ MERCHANTABILITY\ or\ FITNESS\ FOR\ A\ PARTICULAR\ PURPOSE.\ \ See\ the}}
+\DoxyCodeLine{\textcolor{comment}{\ *\ \ GNU\ Library\ General\ Public\ License\ for\ more\ details.}}
+\DoxyCodeLine{\textcolor{comment}{\ *}}
+\DoxyCodeLine{\textcolor{comment}{\ *\ \ You\ should\ have\ received\ a\ copy\ of\ the\ GNU\ General\ Public\ License}}
+\DoxyCodeLine{\textcolor{comment}{\ *\ \ along\ with\ this\ program;\ if\ not,\ write\ to\ the\ Free\ Software}}
+\DoxyCodeLine{\textcolor{comment}{\ *\ \ Foundation,\ Inc.,\ 59\ Temple\ Place\ -\/\ Suite\ 330,\ Boston,\ MA\ 02111-\/1307,\ USA.}}
+\DoxyCodeLine{\textcolor{comment}{\ */}}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{preprocessor}{\#include\ <\mbox{\hyperlink{ariadne_8hpp}{ariadne.hpp}}>}}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{keyword}{using\ namespace\ }\mbox{\hyperlink{namespaceAriadne}{Ariadne}};}
+\DoxyCodeLine{}
+\DoxyCodeLine{\mbox{\hyperlink{classAriadne_1_1HybridAutomaton}{HybridAutomaton}}\ get\_tank()}
+\DoxyCodeLine{\{}
+\DoxyCodeLine{\ \ \ \ \textcolor{comment}{//\ Declare\ the\ system\ constants}}
+\DoxyCodeLine{\ \ \ \ RealConstant\ alpha(\textcolor{stringliteral}{"{}alpha"{}},0.02\_dec);}
+\DoxyCodeLine{\ \ \ \ RealConstant\ beta(\textcolor{stringliteral}{"{}beta"{}},0.3\_dec);}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ \ \ \textcolor{comment}{//\ Declare\ the\ variables\ for\ the\ dynamics}}
+\DoxyCodeLine{\ \ \ \ RealVariable\ aperture(\textcolor{stringliteral}{"{}aperture"{}});}
+\DoxyCodeLine{\ \ \ \ RealVariable\ height(\textcolor{stringliteral}{"{}height"{}});}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ \ \ \textcolor{comment}{//\ Create\ the\ tank\ automaton}}
+\DoxyCodeLine{\ \ \ \ \mbox{\hyperlink{classAriadne_1_1HybridAutomaton}{HybridAutomaton}}\ automaton;}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ \ \ \textcolor{comment}{//\ The\ water\ level\ is\ always\ given\ by\ the\ same\ dynamic.}}
+\DoxyCodeLine{\ \ \ \ \textcolor{comment}{//\ The\ inflow\ is\ controlled\ by\ the\ valve\ aperture,\ the\ outflow\ depends\ on\ the}}
+\DoxyCodeLine{\ \ \ \ \textcolor{comment}{//\ pressure,\ which\ is\ proportional\ to\ the\ water\ height.}}
+\DoxyCodeLine{\ \ \ \ automaton.\mbox{\hyperlink{classAriadne_1_1HybridAutomaton_ab362c7846c09f3962b39982442849d7d}{new\_mode}}(\{dot(height)=beta*aperture-\/alpha*height\});}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ \ \ \textcolor{keywordflow}{return}\ automaton;}
+\DoxyCodeLine{\}}
+\DoxyCodeLine{}
+\DoxyCodeLine{\mbox{\hyperlink{classAriadne_1_1HybridAutomaton}{HybridAutomaton}}\ get\_valve()}
+\DoxyCodeLine{\{}
+\DoxyCodeLine{\ \ \ \ \textcolor{comment}{//\ Declare\ some\ constants.\ Note\ that\ system\ parameters\ should\ be\ given\ as\ variables.}}
+\DoxyCodeLine{\ \ \ \ RealConstant\ T(\textcolor{stringliteral}{"{}T"{}},4);}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ \ \ \textcolor{comment}{//\ Declare\ the\ shared\ system\ variables}}
+\DoxyCodeLine{\ \ \ \ RealVariable\ aperture(\textcolor{stringliteral}{"{}aperture"{}});}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ \ \ \textcolor{comment}{//\ Declare\ the\ events\ we\ use}}
+\DoxyCodeLine{\ \ \ \ \mbox{\hyperlink{classAriadne_1_1DiscreteEvent}{DiscreteEvent}}\ stop\_opening(\textcolor{stringliteral}{"{}stop\_opening"{}});}
+\DoxyCodeLine{\ \ \ \ \mbox{\hyperlink{classAriadne_1_1DiscreteEvent}{DiscreteEvent}}\ stop\_closing(\textcolor{stringliteral}{"{}stop\_closing"{}});}
+\DoxyCodeLine{\ \ \ \ \mbox{\hyperlink{classAriadne_1_1DiscreteEvent}{DiscreteEvent}}\ can\_open(\textcolor{stringliteral}{"{}can\_open"{}});}
+\DoxyCodeLine{\ \ \ \ \mbox{\hyperlink{classAriadne_1_1DiscreteEvent}{DiscreteEvent}}\ can\_close(\textcolor{stringliteral}{"{}can\_close"{}});}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ \ \ \textcolor{comment}{//\ Declare\ the\ variable\ for\ the\ automaton\ name}}
+\DoxyCodeLine{\ \ \ \ StringVariable\ valve(\textcolor{stringliteral}{"{}valve"{}});}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ \ \ \textcolor{comment}{//\ Create\ the\ valve\ automaton}}
+\DoxyCodeLine{\ \ \ \ \mbox{\hyperlink{classAriadne_1_1HybridAutomaton}{HybridAutomaton}}\ automaton(valve.name());}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ \ \ \textcolor{comment}{//\ Declare\ the\ values\ the\ valve\ variable\ can\ have}}
+\DoxyCodeLine{\ \ \ \ \mbox{\hyperlink{classAriadne_1_1DiscreteLocation}{DiscreteLocation}}\ opening(valve|\textcolor{stringliteral}{"{}opening"{}});}
+\DoxyCodeLine{\ \ \ \ \mbox{\hyperlink{classAriadne_1_1DiscreteLocation}{DiscreteLocation}}\ closed(valve|\textcolor{stringliteral}{"{}closed"{}});}
+\DoxyCodeLine{\ \ \ \ \mbox{\hyperlink{classAriadne_1_1DiscreteLocation}{DiscreteLocation}}\ opened(valve|\textcolor{stringliteral}{"{}opened"{}});}
+\DoxyCodeLine{\ \ \ \ \mbox{\hyperlink{classAriadne_1_1DiscreteLocation}{DiscreteLocation}}\ closing(valve|\textcolor{stringliteral}{"{}closing"{}});}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ \ \ \textcolor{comment}{//\ Define\ the\ algebraic\ equations\ for\ the\ opened/closed\ locations.}}
+\DoxyCodeLine{\ \ \ \ automaton.new\_mode(opened,\{let(aperture)=1\});}
+\DoxyCodeLine{\ \ \ \ automaton.new\_mode(closed,\{let(aperture)=0\});}
+\DoxyCodeLine{\ \ \ \ \textcolor{comment}{//\ Define\ the\ differential\ equations\ for\ the\ opening/closing\ locations.}}
+\DoxyCodeLine{\ \ \ \ automaton.new\_mode(opening,\{dot(aperture)=+1/T\});}
+\DoxyCodeLine{\ \ \ \ automaton.new\_mode(closing,\{dot(aperture)=-\/1/T\});}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ \ \ \textcolor{comment}{//\ Define\ the\ transitions:\ source\ location,\ event\ and\ target\ location;}}
+\DoxyCodeLine{\ \ \ \ \textcolor{comment}{//\ then\ a\ mix\ of\ reset,\ guard\ and\ event\ kind\ can\ be\ present;\ if\ the\ event\ kind}}
+\DoxyCodeLine{\ \ \ \ \textcolor{comment}{//\ is\ not\ specified,\ then\ also\ the\ guard\ can't\ be\ specified:\ this\ implicitly}}
+\DoxyCodeLine{\ \ \ \ \textcolor{comment}{//\ means\ that\ the\ event\ is\ an\ input\ event\ for\ this\ automaton.}}
+\DoxyCodeLine{\ \ \ \ automaton.new\_transition(closed,can\_open,opening,\{next(aperture)=aperture\});}
+\DoxyCodeLine{\ \ \ \ automaton.new\_transition(opening,stop\_opening,opened,aperture>=1,EventKind::URGENT);}
+\DoxyCodeLine{\ \ \ \ automaton.new\_transition(opened,can\_close,closing,\{next(aperture)=aperture\});}
+\DoxyCodeLine{\ \ \ \ automaton.new\_transition(closing,stop\_closing,closed,aperture<=0,EventKind::URGENT);}
+\DoxyCodeLine{\ \ \ \ automaton.new\_transition(opening,can\_close,closing,\{next(aperture)=aperture\});}
+\DoxyCodeLine{\ \ \ \ automaton.new\_transition(closing,can\_open,opening,\{next(aperture)=aperture\});}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ \ \ \textcolor{keywordflow}{return}\ automaton;}
+\DoxyCodeLine{\}}
+\DoxyCodeLine{}
+\DoxyCodeLine{\mbox{\hyperlink{classAriadne_1_1HybridAutomaton}{HybridAutomaton}}\ get\_controller()}
+\DoxyCodeLine{\{}
+\DoxyCodeLine{\ \ \ \ \textcolor{comment}{//\ Declare\ some\ constants}}
+\DoxyCodeLine{\ \ \ \ RealConstant\ hmin(\textcolor{stringliteral}{"{}hmin"{}},5.75\_dec);}
+\DoxyCodeLine{\ \ \ \ RealConstant\ hmax(\textcolor{stringliteral}{"{}hmax"{}},7.75\_dec);}
+\DoxyCodeLine{\ \ \ \ RealConstant\ delta(\textcolor{stringliteral}{"{}delta"{}},0.02\_dec);}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ \ \ \textcolor{comment}{//\ Declare\ the\ shared\ system\ variables}}
+\DoxyCodeLine{\ \ \ \ RealVariable\ height(\textcolor{stringliteral}{"{}height"{}});}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ \ \ \textcolor{comment}{//\ Declare\ the\ events\ we\ use}}
+\DoxyCodeLine{\ \ \ \ \mbox{\hyperlink{classAriadne_1_1DiscreteEvent}{DiscreteEvent}}\ can\_open(\textcolor{stringliteral}{"{}can\_open"{}});}
+\DoxyCodeLine{\ \ \ \ \mbox{\hyperlink{classAriadne_1_1DiscreteEvent}{DiscreteEvent}}\ can\_close(\textcolor{stringliteral}{"{}can\_close"{}});}
+\DoxyCodeLine{\ \ \ \ \mbox{\hyperlink{classAriadne_1_1DiscreteEvent}{DiscreteEvent}}\ must\_open(\textcolor{stringliteral}{"{}must\_open"{}});}
+\DoxyCodeLine{\ \ \ \ \mbox{\hyperlink{classAriadne_1_1DiscreteEvent}{DiscreteEvent}}\ must\_close(\textcolor{stringliteral}{"{}must\_close"{}});}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ \ \ \textcolor{comment}{//\ Declare\ the\ variable\ for\ the\ automaton\ name}}
+\DoxyCodeLine{\ \ \ \ StringVariable\ controller(\textcolor{stringliteral}{"{}controller"{}});}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ \ \ \textcolor{comment}{//\ Create\ the\ controller\ automaton}}
+\DoxyCodeLine{\ \ \ \ \mbox{\hyperlink{classAriadne_1_1HybridAutomaton}{HybridAutomaton}}\ automaton(controller.name());}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ \ \ \textcolor{comment}{//\ Declare\ the\ locations\ for\ the\ controller}}
+\DoxyCodeLine{\ \ \ \ \mbox{\hyperlink{classAriadne_1_1DiscreteLocation}{DiscreteLocation}}\ rising(controller|\textcolor{stringliteral}{"{}rising"{}});}
+\DoxyCodeLine{\ \ \ \ \mbox{\hyperlink{classAriadne_1_1DiscreteLocation}{DiscreteLocation}}\ falling(controller|\textcolor{stringliteral}{"{}falling"{}});}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ \ \ \textcolor{comment}{//\ Instantiate\ modes\ for\ each\ location\ with\ no\ dynamics}}
+\DoxyCodeLine{\ \ \ \ automaton.new\_mode(rising);}
+\DoxyCodeLine{\ \ \ \ automaton.new\_mode(falling);}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ \ \ \textcolor{comment}{//\ Specify\ the\ invariants\ valid\ in\ each\ mode.\ Note\ that\ every\ invariant}}
+\DoxyCodeLine{\ \ \ \ \textcolor{comment}{//\ must\ have\ an\ action\ label.\ This\ is\ used\ internally,\ for\ example,\ to}}
+\DoxyCodeLine{\ \ \ \ \textcolor{comment}{//\ check\ non-\/blockingness\ of\ urgent\ actions.}}
+\DoxyCodeLine{\ \ \ \ automaton.new\_invariant(falling,height>=hmin-\/delta,must\_open);}
+\DoxyCodeLine{\ \ \ \ automaton.new\_invariant(rising,height<=hmax+delta,must\_close);}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ \ \ \textcolor{comment}{//\ Specify\ the\ transitions,\ starting\ from\ the\ source\ location,\ according\ to\ an\ event,\ to\ a\ target\ location;}}
+\DoxyCodeLine{\ \ \ \ \textcolor{comment}{//\ Following\ those\ arguments\ you\ specify\ a\ guard\ and\ whether\ the\ event\ is\ permissive\ or\ urgent.}}
+\DoxyCodeLine{\ \ \ \ automaton.new\_transition(falling,can\_open,rising,height<=hmin+delta,EventKind::PERMISSIVE);}
+\DoxyCodeLine{\ \ \ \ automaton.new\_transition(rising,can\_close,falling,height>=hmax-\/delta,EventKind::PERMISSIVE);}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ \ \ \textcolor{keywordflow}{return}\ automaton;}
+\DoxyCodeLine{\}}
+\DoxyCodeLine{}
+\DoxyCodeLine{\mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}}\ simulate\_evolution(\mbox{\hyperlink{classAriadne_1_1CompositeHybridAutomaton}{CompositeHybridAutomaton}}\ \textcolor{keyword}{const}\&\ system,\ \mbox{\hyperlink{classAriadne_1_1HybridBoundedConstraintSet}{HybridBoundedConstraintSet}}\ \textcolor{keyword}{const}\&\ initial\_set,\ \mbox{\hyperlink{classAriadne_1_1HybridTime}{HybridTime}}\ \textcolor{keyword}{const}\&\ final\_time)}
+\DoxyCodeLine{\{}
+\DoxyCodeLine{\ \ \ \ \textcolor{comment}{//\ Re-\/introduce\ the\ shared\ system\ variables\ required\ for\ plotting}}
+\DoxyCodeLine{\ \ \ \ RealVariable\ aperture(\textcolor{stringliteral}{"{}aperture"{}});}
+\DoxyCodeLine{\ \ \ \ RealVariable\ height(\textcolor{stringliteral}{"{}height"{}});}
+\DoxyCodeLine{\ \ \ \ \mbox{\hyperlink{classAriadne_1_1TimeVariable}{TimeVariable}}\ time;}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ \ \ \textcolor{comment}{//\ Create\ a\ simulator\ object}}
+\DoxyCodeLine{\ \ \ \ \mbox{\hyperlink{classAriadne_1_1HybridSimulator}{HybridSimulator}}\ simulator(system);}
+\DoxyCodeLine{\ \ \ \ simulator.configuration().set\_step\_size(0.01);}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ \ \ CONCLOG\_PRINTLN\_VAR(simulator.configuration());}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ \ \ \textcolor{comment}{//\ Compute\ a\ simulation\ trajectory}}
+\DoxyCodeLine{\ \ \ \ CONCLOG\_PRINTLN(\textcolor{stringliteral}{"{}Computing\ simulation\ trajectory..."{}});}
+\DoxyCodeLine{\ \ \ \ \textcolor{keyword}{auto}\ orbit\ =\ simulator.orbit(initial\_set,final\_time);}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ \ \ \textcolor{comment}{//\ Plot\ the\ simulation\ trajectory\ using\ three\ different\ projections}}
+\DoxyCodeLine{\ \ \ \ CONCLOG\_PRINTLN(\textcolor{stringliteral}{"{}Plotting\ simulation\ trajectory..."{}});}
+\DoxyCodeLine{\ \ \ \ plot(\textcolor{stringliteral}{"{}simulation\_t-\/height"{}},Axes2d(0<=time<=30,5<=height<=9),orbit);}
+\DoxyCodeLine{\ \ \ \ plot(\textcolor{stringliteral}{"{}simulation\_t-\/aperture"{}},Axes2d(0<=time<=30,-\/0.1<=aperture<=1.1),orbit);}
+\DoxyCodeLine{\ \ \ \ plot(\textcolor{stringliteral}{"{}simulation\_height-\/aperture"{}},Axes2d(5<=height<=9,-\/0.1<=aperture<=1.1),orbit);}
+\DoxyCodeLine{\ \ \ \ CONCLOG\_PRINTLN(\textcolor{stringliteral}{"{}Done\ computing\ and\ plotting\ simulation\ trajectory!"{}});}
+\DoxyCodeLine{\}}
+\DoxyCodeLine{}
+\DoxyCodeLine{\mbox{\hyperlink{classAriadne_1_1GeneralHybridEvolver}{GeneralHybridEvolver}}\ create\_evolver(\mbox{\hyperlink{classAriadne_1_1CompositeHybridAutomaton}{CompositeHybridAutomaton}}\ \textcolor{keyword}{const}\&\ system)}
+\DoxyCodeLine{\{}
+\DoxyCodeLine{\ \ \ \ \textcolor{comment}{//\ Create\ a\ GeneralHybridEvolver\ object}}
+\DoxyCodeLine{\ \ \ \ \mbox{\hyperlink{classAriadne_1_1GeneralHybridEvolver}{GeneralHybridEvolver}}\ evolver(system);}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ \ \ \textcolor{comment}{//\ Set\ the\ evolver\ configuration}}
+\DoxyCodeLine{\ \ \ \ evolver.configuration().set\_maximum\_enclosure\_radius(3.0);}
+\DoxyCodeLine{\ \ \ \ evolver.configuration().set\_maximum\_step\_size(0.25);}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ \ \ CONCLOG\_PRINTLN\_VAR(evolver.configuration());}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ \ \ \textcolor{keywordflow}{return}\ evolver;}
+\DoxyCodeLine{\}}
+\DoxyCodeLine{}
+\DoxyCodeLine{\mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}}\ compute\_evolution(\textcolor{keyword}{const}\ \mbox{\hyperlink{classAriadne_1_1GeneralHybridEvolver}{GeneralHybridEvolver}}\&\ evolver,\ \mbox{\hyperlink{classAriadne_1_1HybridBoundedConstraintSet}{HybridBoundedConstraintSet}}\ \textcolor{keyword}{const}\&\ initial\_set,\ \mbox{\hyperlink{classAriadne_1_1HybridTime}{HybridTime}}\ \textcolor{keyword}{const}\&\ final\_time)}
+\DoxyCodeLine{\{}
+\DoxyCodeLine{\ \ \ \ \textcolor{comment}{//\ Re-\/introduce\ the\ shared\ system\ variables\ required\ for\ plotting}}
+\DoxyCodeLine{\ \ \ \ RealVariable\ aperture(\textcolor{stringliteral}{"{}aperture"{}});}
+\DoxyCodeLine{\ \ \ \ RealVariable\ height(\textcolor{stringliteral}{"{}height"{}});}
+\DoxyCodeLine{\ \ \ \ \mbox{\hyperlink{classAriadne_1_1TimeVariable}{TimeVariable}}\ time;}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ \ \ \textcolor{comment}{//\ Compute\ the\ orbit\ using\ upper\ semantics}}
+\DoxyCodeLine{\ \ \ \ CONCLOG\_PRINTLN(\textcolor{stringliteral}{"{}Computing\ evolution\ flow\ tube..."{}});}
+\DoxyCodeLine{\ \ \ \ \textcolor{keyword}{auto}\ orbit\ =\ evolver.orbit(initial\_set,final\_time,\mbox{\hyperlink{group__DynamicsModule_ggafd43cf1b14dd42f7ac8ca23dcc3837b3a9e43f5291e6fcb2ad99c8e3f91acd179}{Semantics::UPPER}});}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ \ \ \textcolor{comment}{//\ Plot\ the\ flow\ tube\ using\ three\ different\ projections}}
+\DoxyCodeLine{\ \ \ \ CONCLOG\_PRINTLN(\textcolor{stringliteral}{"{}Plotting\ evolution\ flow\ tube..."{}});}
+\DoxyCodeLine{\ \ \ \ plot(\textcolor{stringliteral}{"{}finite\_evolution\_t-\/height"{}},Axes2d(0<=time<=30,5<=height<=9),orbit);}
+\DoxyCodeLine{\ \ \ \ plot(\textcolor{stringliteral}{"{}finite\_evolution\_t-\/aperture"{}},Axes2d(0<=time<=30,-\/0.1<=aperture<=1.1),orbit);}
+\DoxyCodeLine{\ \ \ \ plot(\textcolor{stringliteral}{"{}finite\_evolution\_height-\/aperture"{}},Axes2d(5<=height<=9,-\/0.1<=aperture<=1.1),orbit);}
+\DoxyCodeLine{\ \ \ \ CONCLOG\_PRINTLN(\textcolor{stringliteral}{"{}Done\ computing\ and\ plotting\ evolution\ flow\ tube!"{}});}
+\DoxyCodeLine{\}}
+\DoxyCodeLine{}
+\DoxyCodeLine{\mbox{\hyperlink{classAriadne_1_1HybridReachabilityAnalyser}{HybridReachabilityAnalyser}}\ create\_analyser(\mbox{\hyperlink{classAriadne_1_1GeneralHybridEvolver}{GeneralHybridEvolver}}\ \textcolor{keyword}{const}\&\ evolver)}
+\DoxyCodeLine{\{}
+\DoxyCodeLine{\ \ \ \ \textcolor{comment}{//\ Create\ a\ ReachabilityAnalyser\ object}}
+\DoxyCodeLine{\ \ \ \ \mbox{\hyperlink{classAriadne_1_1HybridReachabilityAnalyser}{HybridReachabilityAnalyser}}\ analyser(evolver);}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ \ \ \textcolor{comment}{//\ \ Set\ the\ analyser\ configuration}}
+\DoxyCodeLine{\ \ \ \ analyser.configuration().set\_maximum\_grid\_fineness(6);}
+\DoxyCodeLine{\ \ \ \ analyser.configuration().set\_lock\_to\_grid\_time(5);}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ \ \ CONCLOG\_PRINTLN\_VAR(analyser.configuration());}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ \ \ \textcolor{keywordflow}{return}\ analyser;}
+\DoxyCodeLine{\}}
+\DoxyCodeLine{}
+\DoxyCodeLine{\mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}}\ compute\_reachability(\mbox{\hyperlink{classAriadne_1_1HybridReachabilityAnalyser}{HybridReachabilityAnalyser}}\ \textcolor{keyword}{const}\&\ analyser,\ \mbox{\hyperlink{classAriadne_1_1HybridBoundedConstraintSet}{HybridBoundedConstraintSet}}\ \textcolor{keyword}{const}\&\ initial\_set,\ \mbox{\hyperlink{classAriadne_1_1HybridTime}{HybridTime}}\ \textcolor{keyword}{const}\&\ final\_time)}
+\DoxyCodeLine{\{}
+\DoxyCodeLine{\ \ \ \ \textcolor{comment}{//\ Re-\/introduce\ the\ shared\ system\ variables\ required\ for\ plotting}}
+\DoxyCodeLine{\ \ \ \ RealVariable\ aperture(\textcolor{stringliteral}{"{}aperture"{}});}
+\DoxyCodeLine{\ \ \ \ RealVariable\ height(\textcolor{stringliteral}{"{}height"{}});}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ \ \ \textcolor{comment}{//\ Compute\ over-\/approximation\ to\ infinite-\/time\ reachable\ set\ using\ upper\ semantics.}}
+\DoxyCodeLine{\ \ \ \ CONCLOG\_PRINTLN(\textcolor{stringliteral}{"{}Computing\ upper\ reach\ set..."{}});}
+\DoxyCodeLine{\ \ \ \ \textcolor{keyword}{auto}\ upper\_reach\ =\ analyser.upper\_reach(initial\_set,final\_time);}
+\DoxyCodeLine{\ \ \ \ CONCLOG\_PRINTLN(\textcolor{stringliteral}{"{}Plotting\ upper\ reach\ set..."{}});}
+\DoxyCodeLine{\ \ \ \ plot(\textcolor{stringliteral}{"{}upper\_reach"{}},Axes2d(5<=height<=9,-\/0.1<=aperture<=1.1),upper\_reach);}
+\DoxyCodeLine{\ \ \ \ CONCLOG\_PRINTLN(\textcolor{stringliteral}{"{}Done\ computing\ and\ plotting\ upper\ reach\ set!"{}});}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ \ \ \textcolor{comment}{//\ Compute\ over-\/approximation\ to\ infinite-\/time\ reachable\ set\ using\ upper\ semantics.}}
+\DoxyCodeLine{\ \ \ \ CONCLOG\_PRINTLN(\textcolor{stringliteral}{"{}Computing\ outer\ chain\ reach\ set..."{}});}
+\DoxyCodeLine{\ \ \ \ \textcolor{keyword}{auto}\ outer\_chain\_reach\ =\ analyser.outer\_chain\_reach(initial\_set);}
+\DoxyCodeLine{\ \ \ \ CONCLOG\_PRINTLN(\textcolor{stringliteral}{"{}Plotting\ outer\ chain\ reach\ set..."{}});}
+\DoxyCodeLine{\ \ \ \ plot(\textcolor{stringliteral}{"{}outer\_chain\_reach"{}},Axes2d(5<=height<=9,-\/0.1<=aperture<=1.1),outer\_chain\_reach);}
+\DoxyCodeLine{\ \ \ \ CONCLOG\_PRINTLN(\textcolor{stringliteral}{"{}Done\ computing\ and\ plotting\ outer\ chain\ reach\ set!"{}});}
+\DoxyCodeLine{\}}
+\DoxyCodeLine{}
+\DoxyCodeLine{\mbox{\hyperlink{classAriadne_1_1CompositeHybridAutomaton}{CompositeHybridAutomaton}}\ get\_system()}
+\DoxyCodeLine{\{}
+\DoxyCodeLine{\ \ \ \ \textcolor{comment}{//\ Create\ the\ composed\ automaton}}
+\DoxyCodeLine{\ \ \ \ \mbox{\hyperlink{classAriadne_1_1CompositeHybridAutomaton}{CompositeHybridAutomaton}}\ system(\textcolor{stringliteral}{"{}watertank"{}},\{get\_tank(),get\_valve(),get\_controller()\});}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ \ \ \textcolor{comment}{//\ Print\ the\ system\ description\ on\ the\ command\ line}}
+\DoxyCodeLine{\ \ \ \ CONCLOG\_PRINTLN\_VAR(system);}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ \ \ \textcolor{keywordflow}{return}\ system;}
+\DoxyCodeLine{\}}
+\DoxyCodeLine{}
+\DoxyCodeLine{\mbox{\hyperlink{classAriadne_1_1HybridBoundedConstraintSet}{HybridBoundedConstraintSet}}\ get\_initial\_set()}
+\DoxyCodeLine{\{}
+\DoxyCodeLine{\ \ \ \ \textcolor{comment}{//\ Re-\/introduce\ variables\ to\ be\ used\ for\ the\ initial\ set}}
+\DoxyCodeLine{\ \ \ \ RealVariable\ height(\textcolor{stringliteral}{"{}height"{}});}
+\DoxyCodeLine{\ \ \ \ StringVariable\ valve(\textcolor{stringliteral}{"{}valve"{}});}
+\DoxyCodeLine{\ \ \ \ StringVariable\ controller(\textcolor{stringliteral}{"{}controller"{}});}
+\DoxyCodeLine{\ \ \ \ \mbox{\hyperlink{classAriadne_1_1String}{String}}\ opened(\textcolor{stringliteral}{"{}opened"{}});}
+\DoxyCodeLine{\ \ \ \ \mbox{\hyperlink{classAriadne_1_1String}{String}}\ rising(\textcolor{stringliteral}{"{}rising"{}});}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ \ \ \textcolor{comment}{//\ Define\ the\ initial\ set,\ by\ supplying\ the\ location\ as\ a\ list\ of\ locations\ for\ each\ composed\ automata,\ and}}
+\DoxyCodeLine{\ \ \ \ \textcolor{comment}{//\ the\ continuous\ set\ as\ a\ list\ of\ variable\ assignments\ for\ each\ variable\ controlled\ on\ that\ location}}
+\DoxyCodeLine{\ \ \ \ \textcolor{comment}{//\ (the\ assignment\ can\ be\ either\ a\ singleton\ value\ using\ the\ ==\ symbol\ or\ an\ interval\ using\ the\ <=\ symbols)}}
+\DoxyCodeLine{\ \ \ \ \mbox{\hyperlink{classAriadne_1_1HybridBoundedConstraintSet}{HybridBoundedConstraintSet}}\ initial\_set(\{valve|opened,controller|rising\},\{6.9\_dec<=height<=7\});}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ \ \ \textcolor{comment}{//\ Print\ the\ initial\ set\ on\ the\ command\ line}}
+\DoxyCodeLine{\ \ \ \ CONCLOG\_PRINTLN\_VAR(initial\_set);}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ \ \ \textcolor{keywordflow}{return}\ initial\_set;}
+\DoxyCodeLine{\}}
+\DoxyCodeLine{}
+\DoxyCodeLine{\mbox{\hyperlink{classAriadne_1_1HybridTime}{HybridTime}}\ get\_final\_time()}
+\DoxyCodeLine{\{}
+\DoxyCodeLine{\ \ \ \ \textcolor{comment}{//\ Define\ the\ final\ time:\ continuous\ time\ and\ maximum\ number\ of\ transitions}}
+\DoxyCodeLine{\ \ \ \ \mbox{\hyperlink{classAriadne_1_1HybridTime}{HybridTime}}\ final\_time(30.0\_dec,5);}
+\DoxyCodeLine{\ \ \ \ CONCLOG\_PRINTLN\_VAR(final\_time);}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ \ \ \textcolor{keywordflow}{return}\ final\_time;}
+\DoxyCodeLine{\}}
+\DoxyCodeLine{}
+\DoxyCodeLine{\mbox{\hyperlink{namespaceAriadne_a008e7f6ae8f621fbb1d876061812b9b2}{Int}}\ \mbox{\hyperlink{ariadne__main_8hpp_ac0f2228420376f4db7e1274f2b41667c}{main}}(\mbox{\hyperlink{namespaceAriadne_a008e7f6ae8f621fbb1d876061812b9b2}{Int}}\ argc,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ argv[])}
+\DoxyCodeLine{\{}
+\DoxyCodeLine{\ \ \ \ \textcolor{comment}{//\ Acquire\ arguments\ from\ the\ command\ line,\ use\ "{}-\/h"{}\ to\ see\ options}}
+\DoxyCodeLine{\ \ \ \ \textcolor{keywordflow}{if}\ (not\ CommandLineInterface::instance().acquire(argc,argv))\ \textcolor{keywordflow}{return}\ -\/1;}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ \ \ \textcolor{comment}{//\ Get\ the\ system}}
+\DoxyCodeLine{\ \ \ \ \textcolor{keyword}{auto}\ system\ =\ get\_system();}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ \ \ \textcolor{comment}{//\ Get\ the\ initial\ set}}
+\DoxyCodeLine{\ \ \ \ \textcolor{keyword}{auto}\ initial\_set\ =\ get\_initial\_set();}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ \ \ \textcolor{comment}{//\ Get\ the\ final\ time}}
+\DoxyCodeLine{\ \ \ \ \textcolor{keyword}{auto}\ final\_time\ =\ get\_final\_time();}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ \ \ \textcolor{comment}{//\ Compute\ an\ approximate\ simulation\ of\ the\ system\ evolution}}
+\DoxyCodeLine{\ \ \ \ simulate\_evolution(system,initial\_set,final\_time);}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ \ \ \textcolor{comment}{//\ Create\ an\ evolver\ object}}
+\DoxyCodeLine{\ \ \ \ \textcolor{keyword}{auto}\ evolver\ =\ create\_evolver(system);}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ \ \ \textcolor{comment}{//\ Compute\ the\ system\ evolution}}
+\DoxyCodeLine{\ \ \ \ compute\_evolution(evolver,initial\_set,final\_time);}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ \ \ \textcolor{comment}{//\ Create\ an\ analyser\ object}}
+\DoxyCodeLine{\ \ \ \ \textcolor{keyword}{auto}\ analyser\ =\ create\_analyser(evolver);}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ \ \ \textcolor{comment}{//\ Compute\ the\ system\ reachability}}
+\DoxyCodeLine{\ \ \ \ compute\_reachability(analyser,initial\_set,final\_time);}
+\DoxyCodeLine{\}}
+
+\end{DoxyCodeInclude}
+ 

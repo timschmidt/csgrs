@@ -1,0 +1,10 @@
+[
+  {"profile":"debug","op":"asin","bits":192000,"status":101,"timeout_ms":60000},
+  {"profile":"debug","op":"asinh","bits":192000,"status":101,"timeout_ms":60000},
+  {"profile":"release","op":"asin","bits":192000,"status":2,"timeout_ms":60000},
+  {"profile":"release","op":"asinh","bits":192000,"status":2,"timeout_ms":60000},
+  {"profile":"debug","op":"asin","bits":184000,"status":0,"timeout_ms":60000},
+  {"profile":"debug","op":"asinh","bits":184000,"status":0,"timeout_ms":60000},
+  {"profile":"release","op":"asin","bits":184000,"status":0,"timeout_ms":60000},
+  {"profile":"release","op":"asinh","bits":184000,"status":0,"timeout_ms":60000}
+]

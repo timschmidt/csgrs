@@ -1,0 +1,11 @@
+{
+  "tag": "mag-series-native",
+  "started": "2026-09-09T23:59:32.906Z",
+  "finished": "2026-09-09T23:59:33.497Z",
+  "elapsedSeconds": 0.5884540909999999,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison",
+  "command": "/tmp/calcium-mag-series.o08QL0/mag-series-controls",
+  "args": [],
+  "code": 0,
+  "signal": null
+}

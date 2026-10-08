@@ -1,0 +1,28 @@
+{
+  "returncode": 0,
+  "elapsed_seconds": 0.06383267001365311,
+  "normal_library_sha256": "e202ba018058d08c8c82bec93bd0450757fd5fd6645097bea76f6108b6113aa1",
+  "log": "finite-region-bounds-constant-image-trim-matrix.log",
+  "source": "constant-image-trim-matrix.rs",
+  "command": [
+    "rustc",
+    "--edition=2024",
+    "-O",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/constant-image-trim-matrix.rs",
+    "--extern",
+    "hypercurve=/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/libhypercurve-2c7ff6f3fbe07653.rlib",
+    "-L",
+    "dependency=/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps",
+    "-o",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-region-bounds-constant-image-trim-matrix"
+  ],
+  "source_sha256": "bcd29d1363d76e24c531a2a6b6a87be834e4146b28f689fbcd6f997f565d04a2",
+  "executable_sha256": "cbbee19bda91a6eb03bd65028258af04da4c63df5c01b4b61e0dbe681c4f61ca",
+  "counts": {
+    "empty_clips": 280,
+    "path_clips": 56,
+    "replayed_paths": 252,
+    "clipped_spline_paths": 32,
+    "spline_endpoint_replays": 128
+  }
+}

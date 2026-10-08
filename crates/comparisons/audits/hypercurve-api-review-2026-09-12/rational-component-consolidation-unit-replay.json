@@ -1,0 +1,25 @@
+{
+  "returncode": 0,
+  "elapsed_seconds": 0.00773842899070587,
+  "normal_library_sha256": "753cd385d54a9dbe53b75a77087725e01ed2991bb50149378019aba36897b54a",
+  "log": "rational-component-consolidation-unit-replay.log",
+  "source": "rational-component-consolidation-unit-replay.rs",
+  "command": [
+    "rustc",
+    "--edition=2024",
+    "-O",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/rational-component-consolidation-unit-replay.rs",
+    "--extern",
+    "hypercurve=/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/libhypercurve-2c7ff6f3fbe07653.rlib",
+    "-L",
+    "dependency=/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps",
+    "-o",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/rational-component-consolidation-unit-replay"
+  ],
+  "source_sha256": "28d80f9372cdd041efbd33fc18b8582ecc7f943c6a6241f9129186f86c20d36e",
+  "executable_sha256": "2b09d2ebe303f1a83eee845ccd619e8a69f3714e74666afa49c933dc8e21670b",
+  "counts": {
+    "complete_queries": 4,
+    "retraced_selected_domain_queries": 2
+  }
+}

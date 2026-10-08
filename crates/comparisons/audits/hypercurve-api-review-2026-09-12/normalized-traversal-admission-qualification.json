@@ -1,0 +1,90 @@
+{
+  "parent": "2d26b0ae4d6178700d5c26ccdab5f8ac25a1f787",
+  "selected_files": [
+    "benches/bezier_region.rs",
+    "fuzz/fuzz_targets/bezier_region.rs",
+    "src/bezier_region.rs",
+    "src/curve_region_boolean.rs",
+    "tests/hypercurve_bezier_region.rs"
+  ],
+  "status": "qualified traversal admission slice",
+  "tests": {
+    "passed": 36,
+    "failed": 0,
+    "ignored": 0
+  },
+  "public_cases": 4,
+  "public_failures": 0,
+  "builds": [
+    {
+      "kind": "check",
+      "returncode": 0,
+      "elapsed_seconds": 0.2642734620021656,
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "check",
+        "--all-targets",
+        "--no-default-features",
+        "--locked",
+        "--offline"
+      ]
+    },
+    {
+      "kind": "test-build",
+      "returncode": 0,
+      "elapsed_seconds": 2.117447410011664,
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "test",
+        "--release",
+        "--all-features",
+        "--test",
+        "hypercurve_bezier_region",
+        "--no-run",
+        "--locked",
+        "--offline",
+        "--message-format=json"
+      ]
+    },
+    {
+      "kind": "fuzz-check",
+      "returncode": 0,
+      "elapsed_seconds": 0.06398408499080688,
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "check",
+        "--bin",
+        "bezier_region",
+        "--locked",
+        "--offline"
+      ]
+    }
+  ],
+  "working_manifest": "normalized-traversal-candidate3-working-sources.json",
+  "isolated_manifest": "normalized-traversal-candidate3-isolated-sources.json",
+  "normal_library": {
+    "command": [
+      "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustc",
+      "--edition=2024",
+      "-O",
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/normalized-traversal-admission-completed.rs",
+      "--extern",
+      "hypercurve=/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/normalized-traversal-candidate3-libraries/libhypercurve-bacb55d5ec235376.rlib",
+      "-L",
+      "dependency=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/normalized-traversal-admission-completed"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.005080751987406984,
+    "source_sha256": "3784cbb66835f5dd0f6edb8c168d1121d79329910135ad5a93c2e965c76bfe35",
+    "binary_sha256": "8c83d34a4fa31967af538369448ae888146fd9ee95e584dd544350c7d94e4365",
+    "library": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/normalized-traversal-candidate3-libraries/libhypercurve-bacb55d5ec235376.rlib",
+    "library_sha256": "87b2705938e05376c8d72a82432390c39b6f061c7a197333e018610234e25c58"
+  },
+  "excluded_working_file": "src/bezier_offset.rs",
+  "other_session": "Working Hyperreal src/verified and verification remain untouched and unused; pinned a2da8e2 supplies scalar meaning.",
+  "broader_scope": "No full-suite rerun for this slice: only public traversal clients change; private certified Boolean publication is a name-only change. The previous 2317-pass core run has five known failures, nine ignored tests and eight expensive exclusions; these remain unresolved, not requalified by this slice.",
+  "goal_status": "active",
+  "commit": "28fd4d6e909686ce0cead19f5a64b176d6bb4206"
+}

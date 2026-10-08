@@ -1,0 +1,229 @@
+diff --git a/src/bezier_offset.rs b/src/bezier_offset.rs
+index a7ee5d2..e1df5fb 100644
+--- a/src/bezier_offset.rs
++++ b/src/bezier_offset.rs
+@@ -52474,6 +52474,66 @@ impl BezierAlgebraicCuspSemicircleParameter2 {
+         Ok(same_root)
+     }
+ 
++    /// Reuses tangent incidence on the open half-circle. Parallel tangent
++    /// lines identify one point there; the antipodal ambiguity is excluded by
++    /// the strict angular-domain proofs. The source tangent stays unnormalized.
++    fn shares_tangent_point(&self, other: &Self, policy: &CurveContext) -> CurveResult<bool> {
++        let strict = policy.strict_counterpart();
++        if self.validate_policy(&strict).is_err() || other.validate_policy(&strict).is_err() {
++            return Ok(false);
++        }
++        let (Self::Mapped(first), Self::Mapped(second)) = (self, other) else {
++            return Ok(false);
++        };
++        if first.semicircle_carrier() != second.semicircle_carrier() {
++            return Ok(false);
++        }
++        for (chord_source, parametric_source) in [(first, second), (second, first)] {
++            let Some((_, chord, RealSign::Zero, chord_policy, _)) =
++                chord_source.coincident_chord_tangent_source()
++            else {
++                continue;
++            };
++            let Some((_, [x, y], source_policy)) =
++                parametric_source.coincident_tangent_power_source(&strict)?
++            else {
++                continue;
++            };
++            let [x, y] = [x, y].map(polynomial_trim_structural_zeros);
++            if !strict.accepts_retained_policy(chord_policy)
++                || !strict.accepts_retained_policy(source_policy)
++                || x.len() > 1
++                || y.len() > 1
++            {
++                continue;
++            }
++            let tangent = (
++                x.first().cloned().unwrap_or_else(Real::zero),
++                y.first().cloned().unwrap_or_else(Real::zero),
++            );
++            if real_sign(
++                &(&tangent.0 * &tangent.0 + &tangent.1 * &tangent.1),
++                &strict,
++            ) != Some(RealSign::Positive)
++                || chord.tangent_cross_vector_sign(&tangent, &strict)?
++                    != Classification::Decided(RealSign::Zero)
++            {
++                continue;
++            }
++            for parameter in [self, other] {
++                if parameter.order_to_real(&Real::zero(), &strict)?
++                    != Classification::Decided(std::cmp::Ordering::Greater)
++                    || parameter.order_to_real(&Real::one(), &strict)?
++                        != Classification::Decided(std::cmp::Ordering::Less)
++                {
++                    return Ok(false);
++                }
++            }
++            return Ok(true);
++        }
++        Ok(false)
++    }
++
+     /// The cosine of this chart's angle, retained in its selected field.
+     /// It decreases strictly with the public half-circle parameter regardless
+     /// of the circle's center, signed radius, or traversal direction.
+@@ -52561,6 +52621,9 @@ impl BezierAlgebraicCuspSemicircleParameter2 {
+         if self.shares_parametric_source_point(other, policy)? {
+             return Ok(Classification::Decided(std::cmp::Ordering::Equal));
+         }
++        if self.shares_tangent_point(other, policy)? {
++            return Ok(Classification::Decided(std::cmp::Ordering::Equal));
++        }
+         if let Some(Classification::Decided(order)) =
+             policy.strict_predicate_pass(|| self.translated_pair_contact_order(other, policy))
+         {
+diff --git a/src/curve_support_intersection.rs b/src/curve_support_intersection.rs
+index f4ea676..bbd37fa 100644
+--- a/src/curve_support_intersection.rs
++++ b/src/curve_support_intersection.rs
+@@ -402,34 +402,18 @@ impl Pair<'_> {
+         result: &mut Evidence,
+     ) -> ExactCurveResult<()> {
+         let mut circle_parameter = CurveParameter2::from_algebraic_cusp(circle_parameter);
+-        let (mut first, mut second) = if circle_first {
+-            (circle_parameter.clone(), other_parameter)
+-        } else {
+-            (other_parameter, circle_parameter.clone())
+-        };
+-        if !contains(
+-            &self.first.range,
+-            &first,
+-            self.first.support.family(),
+-            self.policy,
+-        )? || !contains(
+-            &self.second.range,
+-            &second,
+-            self.second.support.family(),
+-            self.policy,
+-        )? {
+-            return Ok(());
+-        }
+-        // Endpoint equality is already a parameter-space theorem. Keep the
+-        // endpoint's original point and parameter authority when publishing a
+-        // new contact, so evaluation and later cuts replay the same witness.
++        // Identify either endpoint before ordering against the complete
++        // range. The retained endpoint can be much cheaper to order against
++        // its opposite boundary than an independently isolated equal contact.
++        // Keep this optional canonicalization bounded; domain admission below
++        // still owns every required exact comparison.
+         let mut point = point;
+         for at_start in [true, false] {
+             let endpoint =
+                 CurveParameter2::from_algebraic_cusp(circle.endpoint_parameter(at_start).clone());
+             if self
+                 .policy
+-                .strict_predicate_pass(|| {
++                .bounded_exact_predicate_pass(|| {
+                     circle_parameter.cmp_by_refinement(&endpoint, self.policy)
+                 })
+                 .map_err(|cause| {
+@@ -454,15 +438,28 @@ impl Pair<'_> {
+                 })?
+             {
+                 circle_parameter = endpoint;
+-                if circle_first {
+-                    first = circle_parameter.clone();
+-                } else {
+-                    second = circle_parameter.clone();
+-                }
+                 point = Some(retained);
+             }
+             break;
+         }
++        let (first, second) = if circle_first {
++            (circle_parameter.clone(), other_parameter)
++        } else {
++            (other_parameter, circle_parameter.clone())
++        };
++        if !contains(
++            &self.first.range,
++            &first,
++            self.first.support.family(),
++            self.policy,
++        )? || !contains(
++            &self.second.range,
++            &second,
++            self.second.support.family(),
++            self.policy,
++        )? {
++            return Ok(());
++        }
+         let point = match point {
+             Some(point) => point,
+             None => Curve2::from_retained_fragment(BezierSplitFragment2::AlgebraicCuspSemicircle(
+diff --git a/tests/hypercurve_curve_intersection.rs b/tests/hypercurve_curve_intersection.rs
+index 4e66a4b..0075aaa 100644
+--- a/tests/hypercurve_curve_intersection.rs
++++ b/tests/hypercurve_curve_intersection.rs
+@@ -1723,6 +1723,64 @@ fn retained_noninjective_domains_keep_off_diagonal_contacts_and_traversal_signs(
+     }
+ }
+ 
++#[test]
++fn selected_circle_tangency_reuses_retained_normal_evidence() {
++    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
++        let path = CurvePath2::try_new(vec![
++            LineSeg2::try_new(p(-4, 0), p(0, 0)).unwrap().into(),
++            QuadraticBezier2::new(p(0, 0), p(0, 1), p(1, 2)).into(),
++        ])
++        .unwrap();
++        let hypercurve::CurveCornerSolutions2::Unique(path) = path
++            .fillet_vertex_by_radius(1, q(1, 4), hypercurve::CurveCornerMode2::TrimOnly, &policy)
++            .unwrap()
++            .into_value()
++        else {
++            panic!("unique retained fillet")
++        };
++        let circle = &path.curves()[1];
++        assert!(circle.geometry().is_none());
++        let endpoint = circle.start();
++        for line in [
++            Curve2::from(LineSeg2::try_new(p(-1, 0), p(1, 0)).unwrap()),
++            Curve2::from(LineSeg2::try_new(p(2, 0), p(-2, 0)).unwrap()),
++            Curve2::from(QuadraticBezier2::new(p(-3, 0), p(-1, 0), p(1, 0))),
++        ] {
++            for (first, second) in [(circle, &line), (&line, circle)] {
++                let outcome = first.intersect_curve(second, &policy).unwrap();
++                assert_eq!(outcome.certainty, CurveCertainty::Certified);
++                assert!(
++                    outcome.value.is_complete(),
++                    "{:?}",
++                    outcome.value.blockers()
++                );
++                let [contact] = outcome.value.contacts() else {
++                    panic!("one tangency")
++                };
++                assert!(!contact.is_certified_transverse());
++                assert_eq!(
++                    contact.tangent_cross_sign(),
++                    Some(hypercurve::RealSign::Zero)
++                );
++                assert!(decided(
++                    contact.point().coincides_with(&endpoint, &policy).value
++                ));
++                for (curve, location) in [(first, contact.first()), (second, contact.second())] {
++                    let parameter = decided(location.parameter(&policy).unwrap());
++                    let point = curve.point_at(&parameter, &policy).unwrap();
++                    assert_eq!(point.certainty, CurveCertainty::Certified);
++                    assert!(decided(
++                        point.value.coincides_with(contact.point(), &policy).value
++                    ));
++                }
++                let topology = first.intersection_topology(second, &policy).unwrap();
++                assert_eq!(topology.certainty, CurveCertainty::Certified);
++                assert!(topology.value.result().is_complete());
++            }
++        }
++    }
++}
++
+ #[test]
+ fn native_retraced_overlaps_survive_independent_restriction() {
+     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {

@@ -1,0 +1,182 @@
+{
+  "parents": {
+    "hypercurve": "5915c26bf0160f2fb69a9583f28d4ff16b9e0193",
+    "hypersolve": "a6307b5387282a2c125b71c8f5848282c052dd30"
+  },
+  "workspace_guard": "local-chord-complete-replay-20260924-v98-sources.json",
+  "source_manifest": "retained-contact-factor-20260925-v98-sources.json",
+  "source_directory": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/source-archives/retained-contact-factor-20260925-v98",
+  "build_source_directory": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/build-workspace-20260925",
+  "patch": "retained-contact-factor-20260925-v98.patch",
+  "checks": [
+    {
+      "repo": "hypersolve",
+      "label": "hypersolve-fmt",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustfmt",
+        "--edition",
+        "2024",
+        "--check",
+        "src/ordered_field_roots.rs",
+        "src/root_sign.rs",
+        "src/algebraic_fiber.rs"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.11392265104223043,
+      "log": "retained-contact-factor-20260925-v98-hypersolve-fmt.log"
+    },
+    {
+      "repo": "hypersolve",
+      "label": "hypersolve-clippy-0",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "clippy",
+        "--all-targets",
+        "--all-features",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.11391534097492695,
+      "log": "retained-contact-factor-20260925-v98-hypersolve-clippy-0.log"
+    },
+    {
+      "repo": "hypersolve",
+      "label": "hypersolve-clippy-1",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "clippy",
+        "--all-targets",
+        "--no-default-features",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.11391815193928778,
+      "log": "retained-contact-factor-20260925-v98-hypersolve-clippy-1.log"
+    },
+    {
+      "repo": "hypercurve",
+      "label": "hypercurve-fmt",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustfmt",
+        "--edition",
+        "2024",
+        "--check",
+        "src/bezier_offset.rs"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 2.167133989976719,
+      "log": "retained-contact-factor-20260925-v98-hypercurve-fmt.log"
+    },
+    {
+      "repo": "hypercurve",
+      "label": "hypercurve-clippy-0",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "clippy",
+        "--all-targets",
+        "--all-features",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 21.799795066937804,
+      "log": "retained-contact-factor-20260925-v98-hypercurve-clippy-0.log"
+    },
+    {
+      "repo": "hypercurve",
+      "label": "hypercurve-clippy-1",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "clippy",
+        "--all-targets",
+        "--no-default-features",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 22.8502112099668,
+      "log": "retained-contact-factor-20260925-v98-hypercurve-clippy-1.log"
+    },
+    {
+      "repo": "hyperbrep",
+      "label": "hyperbrep-check",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "check",
+        "--all-targets",
+        "--all-features",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 17.942695540958084,
+      "log": "retained-contact-factor-20260925-v98-hyperbrep-check.log"
+    }
+  ],
+  "cases": [
+    {
+      "repo": "hypersolve",
+      "label": "hypersolve-full",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-contact-factor-20260925-v98-hypersolve",
+        "--test-threads=2",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 2.417485030950047,
+      "log": "retained-contact-factor-20260925-v98-hypersolve-full.log"
+    }
+  ],
+  "binaries": {
+    "hypersolve": {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-contact-factor-20260925-v98-hypersolve",
+      "sha256": "ff118a55538f093bd4a80f268e97976e6a4604463b77d680ade11eb5e17d519d"
+    },
+    "hypercurve": {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-contact-factor-20260925-v98-hypercurve",
+      "sha256": "d5a38d34b820241f377f6d2ef6a18fb4a0eec36e01619fe222692626573567ca"
+    },
+    "hypercurve_bezier_arrangement": {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-contact-factor-20260925-v98-hypercurve_bezier_arrangement",
+      "sha256": "40370d6939ea03aca11fd74cd303e6aa24a3e33f5edfdd5e0463cffdffc5004f"
+    },
+    "hypercurve_curve": {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-contact-factor-20260925-v98-hypercurve_curve",
+      "sha256": "25457c4c1f3274c0590f09f05faa4a99b0dddc1dcd3990515f7a32947afd2795"
+    },
+    "hypercurve_curve_region_boolean": {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-contact-factor-20260925-v98-hypercurve_curve_region_boolean",
+      "sha256": "f294796f5fdc5f0004557072bf54201bb02a1496da053b4ec2fac39b45f9adda"
+    },
+    "hypercurve_curve_region_boolean_fuzz": {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-contact-factor-20260925-v98-hypercurve_curve_region_boolean_fuzz",
+      "sha256": "812f4a078b52aac5b34ebba832ec4e688352e426c0929cd69d2e205ff88bf636"
+    },
+    "hypercurve_pcb_boolean_regressions": {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-contact-factor-20260925-v98-hypercurve_pcb_boolean_regressions",
+      "sha256": "828b029e21db279a44d8d52f92b3bb26d143e45458cc423fed24660079094cc4"
+    }
+  },
+  "all_processes_reaped": true,
+  "all_sources_unchanged": true,
+  "hypersolve_build_returncode": 0,
+  "hypersolve_passed": 514,
+  "hypercurve_build_returncode": 0,
+  "qualification_complete": false,
+  "driver_failure": "Optional control local_parallel_endpoint_clipping_reuses_a_coefficient_root belongs to the broader uncommitted migration and is absent from this isolated candidate; selection assertion stopped before any Hypercurve test ran. Outer session 12792 was reaped with exit 1."
+}

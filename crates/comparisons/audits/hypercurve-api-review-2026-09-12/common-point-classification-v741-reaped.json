@@ -1,0 +1,11 @@
+{
+  "outer_session": 88975,
+  "outer_exit_code": 1,
+  "terminal": "common-point-classification-v741-terminal.json",
+  "passed_cases": 730,
+  "passing_checks": [
+    "hypercurve-clippy-all-features",
+    "hypercurve-clippy-no-default"
+  ],
+  "failure": "The isolated candidate did not contain csgrs/.rustfmt.toml, so its initial formatting used defaults. The final check correctly used csgrs settings and identified the mismatch."
+}

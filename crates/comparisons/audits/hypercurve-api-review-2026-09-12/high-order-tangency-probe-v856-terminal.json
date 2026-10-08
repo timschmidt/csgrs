@@ -1,0 +1,91 @@
+{
+  "baseline": "endpoint-derivative-retention-v852-sources.json",
+  "rlib": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypercurve-85a9105cd1c82df7.rlib",
+  "rlib_sha256": "5acd8f28a33076a2481d7e61c73edb1321198cf6613b714fd965c43d0519bbac",
+  "source_sha256": "936fa685dd223553cc4d2981cc4e319ae71e734849d0c7c9f62ec29f23383045",
+  "processes": [
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustc",
+        "--edition=2024",
+        "--crate-name",
+        "high_order_tangency_probe",
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/high-order-tangency-probe-v856.rs",
+        "--extern",
+        "hypercurve=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypercurve-85a9105cd1c82df7.rlib",
+        "-L",
+        "dependency=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps",
+        "-C",
+        "opt-level=3",
+        "-o",
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/high-order-tangency-probe-v856-binary"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.46444128081202507,
+      "log": "high-order-tangency-probe-v856-compile.log"
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/high-order-tangency-probe-v856-binary",
+        "2",
+        "0"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.007668614853173494,
+      "log": "high-order-tangency-probe-v856-degree2-policy0.log"
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/high-order-tangency-probe-v856-binary",
+        "4",
+        "0"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.015612859977409244,
+      "log": "high-order-tangency-probe-v856-degree4-policy0.log"
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/high-order-tangency-probe-v856-binary",
+        "8",
+        "0"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.03174143494106829,
+      "log": "high-order-tangency-probe-v856-degree8-policy0.log"
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/high-order-tangency-probe-v856-binary",
+        "2",
+        "1"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.0075632119551301,
+      "log": "high-order-tangency-probe-v856-degree2-policy1.log"
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/high-order-tangency-probe-v856-binary",
+        "4",
+        "1"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.007661154959350824,
+      "log": "high-order-tangency-probe-v856-degree4-policy1.log"
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/high-order-tangency-probe-v856-binary",
+        "8",
+        "1"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.03172163595445454,
+      "log": "high-order-tangency-probe-v856-degree8-policy1.log"
+    }
+  ],
+  "all_processes_reaped": true,
+  "binary_sha256": "59194c8d00794b9be366b974aac6c780612d64d097322c0d3fbb075252928efc",
+  "probe_complete": true
+}

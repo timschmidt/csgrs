@@ -1,0 +1,86 @@
+{
+  "checks": [
+    {
+      "label": "fmt",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustfmt",
+        "--edition",
+        "2024",
+        "--check",
+        "src/bezier_offset.rs"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 2.324521633097902,
+      "log": "retained-coordinate-identity-20260924-v3-fmt.log"
+    },
+    {
+      "label": "clippy-1",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "clippy",
+        "--all-targets",
+        "--all-features",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 26.47225643892307,
+      "log": "retained-coordinate-identity-20260924-v3-clippy-1.log"
+    },
+    {
+      "label": "clippy-2",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "clippy",
+        "--all-targets",
+        "--no-default-features",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 24.96491043595597,
+      "log": "retained-coordinate-identity-20260924-v3-clippy-2.log"
+    }
+  ],
+  "cases": [
+    {
+      "label": "one_fragment_materialized_loop_chamfers_to_one_middle_interval",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-coordinate-identity-20260924-v3-libtest",
+        "--exact",
+        "bezier_region::tests::one_fragment_materialized_loop_chamfers_to_one_middle_interval",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.474686324945651,
+      "log": "retained-coordinate-identity-20260924-v3-one_fragment_materialized_loop_chamfers_to_one_middle_interval.log"
+    },
+    {
+      "label": "one_fragment_selected_loop_chamfers_from_one_interval",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-coordinate-identity-20260924-v3-libtest",
+        "--exact",
+        "bezier_region::tests::one_fragment_selected_loop_chamfers_from_one_interval",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": "timeout",
+      "elapsed_seconds": 75.30986577295698,
+      "log": "retained-coordinate-identity-20260924-v3-one_fragment_selected_loop_chamfers_from_one_interval.log"
+    }
+  ],
+  "all_processes_reaped": true,
+  "binary_sha256": "1ddc0eba6f7d3fac67550193e3095fc9f730696bf2e32b2066eadccebf628f84",
+  "all_sources_unchanged": true
+}

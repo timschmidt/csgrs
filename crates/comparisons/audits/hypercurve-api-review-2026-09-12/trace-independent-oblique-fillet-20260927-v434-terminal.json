@@ -1,0 +1,62 @@
+{
+  "source_manifest": "trace-independent-oblique-fillet-20260927-v434-sources.json",
+  "source_directory": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/source-archives/trace-independent-oblique-fillet-20260927-v434",
+  "cases": [
+    {
+      "binary": "trace-independent-oblique-fillet-20260927-v434-hypercurve",
+      "name": "bezier_region::tests::nonlinear_selected_corner_chamfers_through_retained_fixed_distance_image",
+      "returncode": 0,
+      "log": "trace-independent-oblique-fillet-20260927-v434-case-000.log",
+      "elapsed_seconds": 4.719741940964013
+    },
+    {
+      "binary": "trace-independent-oblique-fillet-20260927-v434-hypercurve",
+      "name": "bezier_region::tests::one_fragment_nonzero_parallel_loop_extends_chamfer_cuts_on_one_finite_envelope",
+      "returncode": 124,
+      "log": "trace-independent-oblique-fillet-20260927-v434-case-001.log",
+      "elapsed_seconds": 240.02342135482468
+    }
+  ],
+  "builds": [
+    {
+      "crate": "hypercurve",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "test",
+        "--lib",
+        "--release",
+        "--all-features",
+        "--no-run",
+        "--message-format=json",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "log": "trace-independent-oblique-fillet-20260927-v434-hypercurve-build.log",
+      "elapsed_seconds": 129.843699012883,
+      "binary": {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/trace-independent-oblique-fillet-20260927-v434-hypercurve",
+        "sha256": "c0ebdfc875e244e4d5043e3d00c76e860054c928119f7f4a034c99dd595a9ee6"
+      }
+    }
+  ],
+  "trial": {
+    "hypercurve/src/bezier_offset.rs": "751e04e9d548377cc74baca001493a8b55e079719c6d57d5b9c4dd2c8505aae5",
+    "hypercurve/src/bezier_region.rs": "ee48668024f87aa570859ea0f1aabdb09088c9de7cbbf018f65d66859b23b2ca"
+  },
+  "all_processes_reaped": true,
+  "checks": [],
+  "qualification_scope": "Independent selected endpoint fields must preserve continuous fillet constraint behavior",
+  "expected_cases": {
+    "hypercurve": [
+      "bezier_region::tests::nonlinear_selected_corner_chamfers_through_retained_fixed_distance_image",
+      "bezier_region::tests::one_fragment_nonzero_parallel_loop_extends_chamfer_cuts_on_one_finite_envelope"
+    ]
+  },
+  "known_unresolved": [
+    "strict_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions",
+    "approximate_512_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions"
+  ],
+  "failure": "case failure or missing exact test",
+  "qualification_complete": false
+}

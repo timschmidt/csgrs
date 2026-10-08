@@ -1,0 +1,420 @@
+[
+  {
+    "repo": "calcium",
+    "path": "qqbar/eigenvalues_fmpq_mat.c",
+    "ranges": [
+      [
+        1,
+        23
+      ]
+    ],
+    "note": "Checkpoint84: Characteristic polynomial then exact roots; rational-matrix wrapper, shared flags and cleanup."
+  },
+  {
+    "repo": "calcium",
+    "path": "qqbar/eigenvalues_fmpz_mat.c",
+    "ranges": [
+      [
+        1,
+        23
+      ]
+    ],
+    "note": "Checkpoint84: Integer characteristic polynomial then exact roots; shared flags and cleanup."
+  },
+  {
+    "repo": "calcium",
+    "path": "qqbar/evaluate_fmpz_mpoly.c",
+    "ranges": [
+      [
+        1,
+        575
+      ]
+    ],
+    "note": "Checkpoint84: Full iterative/Horner scheduling, exponent representations, limits, status propagation, aliasing and cleanup. Current wrapper delegates to generic code, but omits its exponent-width dispatch guard."
+  },
+  {
+    "repo": "calcium",
+    "path": "qqbar/print.c",
+    "ranges": [
+      [
+        1,
+        31
+      ]
+    ],
+    "note": "Checkpoint84: Polynomial plus existing enclosure diagnostic rendering; no new precision requested."
+  },
+  {
+    "repo": "calcium",
+    "path": "qqbar/printn.c",
+    "ranges": [
+      [
+        1,
+        36
+      ]
+    ],
+    "note": "Checkpoint84: Decimal display requests approximation at 3.333*n+10 bits, clamps n>=1 and suppresses radius; not exact serialization."
+  },
+  {
+    "repo": "calcium",
+    "path": "qqbar/randtest.c",
+    "ranges": [
+      [
+        1,
+        213
+      ]
+    ],
+    "note": "Checkpoint84: Rational bias, irreducible-polynomial generation, signature filtering, selected root isolation and cleanup; both archived version branches read. Not a uniform distribution contract."
+  },
+  {
+    "repo": "calcium",
+    "path": "qqbar/roots_fmpq_poly.c",
+    "ranges": [
+      [
+        1,
+        22
+      ]
+    ],
+    "note": "Checkpoint84: Borrowed numerator-polynomial view; common nonzero denominator cannot change roots. No copy or ownership transfer."
+  },
+  {
+    "repo": "calcium",
+    "path": "qqbar/test/t-evaluate_fmpz_mpoly.c",
+    "ranges": [
+      [
+        1,
+        91
+      ]
+    ],
+    "note": "Checkpoint84: Complete t-evaluate_fmpz_mpoly test, inputs, mathematical identities, status guards, randomized boundaries, diagnostics and cleanup. Root test success-frequency guard only applies when iterations >100; composed-op samples one pair rather than proving the whole polynomial. Source read, not newly executed."
+  },
+  {
+    "repo": "calcium",
+    "path": "qqbar/test/t-fmpz_poly_composed_op.c",
+    "ranges": [
+      [
+        1,
+        127
+      ]
+    ],
+    "note": "Checkpoint84: Complete t-fmpz_poly_composed_op test, inputs, mathematical identities, status guards, randomized boundaries, diagnostics and cleanup. Root test success-frequency guard only applies when iterations >100; composed-op samples one pair rather than proving the whole polynomial. Source read, not newly executed."
+  },
+  {
+    "repo": "calcium",
+    "path": "qqbar/test/t-pow_fmpq.c",
+    "ranges": [
+      [
+        1,
+        91
+      ]
+    ],
+    "note": "Checkpoint84: Complete t-pow_fmpq test, inputs, mathematical identities, status guards, randomized boundaries, diagnostics and cleanup. Root test success-frequency guard only applies when iterations >100; composed-op samples one pair rather than proving the whole polynomial. Source read, not newly executed."
+  },
+  {
+    "repo": "calcium",
+    "path": "qqbar/test/t-pow_fmpz.c",
+    "ranges": [
+      [
+        1,
+        91
+      ]
+    ],
+    "note": "Checkpoint84: Complete t-pow_fmpz test, inputs, mathematical identities, status guards, randomized boundaries, diagnostics and cleanup. Root test success-frequency guard only applies when iterations >100; composed-op samples one pair rather than proving the whole polynomial. Source read, not newly executed."
+  },
+  {
+    "repo": "calcium",
+    "path": "qqbar/test/t-pow_si.c",
+    "ranges": [
+      [
+        1,
+        149
+      ]
+    ],
+    "note": "Checkpoint84: Complete t-pow_si test, inputs, mathematical identities, status guards, randomized boundaries, diagnostics and cleanup. Root test success-frequency guard only applies when iterations >100; composed-op samples one pair rather than proving the whole polynomial. Source read, not newly executed."
+  },
+  {
+    "repo": "calcium",
+    "path": "qqbar/test/t-pow_ui.c",
+    "ranges": [
+      [
+        1,
+        140
+      ]
+    ],
+    "note": "Checkpoint84: Complete t-pow_ui test, inputs, mathematical identities, status guards, randomized boundaries, diagnostics and cleanup. Root test success-frequency guard only applies when iterations >100; composed-op samples one pair rather than proving the whole polynomial. Source read, not newly executed."
+  },
+  {
+    "repo": "calcium",
+    "path": "qqbar/test/t-randtest.c",
+    "ranges": [
+      [
+        1,
+        60
+      ]
+    ],
+    "note": "Checkpoint84: Complete t-randtest test, inputs, mathematical identities, status guards, randomized boundaries, diagnostics and cleanup. Root test success-frequency guard only applies when iterations >100; composed-op samples one pair rather than proving the whole polynomial. Source read, not newly executed."
+  },
+  {
+    "repo": "calcium",
+    "path": "qqbar/test/t-root_ui.c",
+    "ranges": [
+      [
+        1,
+        90
+      ]
+    ],
+    "note": "Checkpoint84: Complete t-root_ui test, inputs, mathematical identities, status guards, randomized boundaries, diagnostics and cleanup. Root test success-frequency guard only applies when iterations >100; composed-op samples one pair rather than proving the whole polynomial. Source read, not newly executed."
+  },
+  {
+    "repo": "calcium",
+    "path": "qqbar/write.c",
+    "ranges": [
+      [
+        1,
+        49
+      ]
+    ],
+    "note": "Checkpoint84: Stream/string display and ownership transfer; current helper visibility narrowed to static. Not exact serialization."
+  },
+  {
+    "repo": "flint",
+    "path": "src/qqbar/eigenvalues_fmpq_mat.c",
+    "ranges": [
+      [
+        1,
+        24
+      ]
+    ],
+    "note": "Checkpoint84: Characteristic polynomial then exact roots; rational-matrix wrapper, shared flags and cleanup."
+  },
+  {
+    "repo": "flint",
+    "path": "src/qqbar/eigenvalues_fmpz_mat.c",
+    "ranges": [
+      [
+        1,
+        24
+      ]
+    ],
+    "note": "Checkpoint84: Integer characteristic polynomial then exact roots; shared flags and cleanup."
+  },
+  {
+    "repo": "flint",
+    "path": "src/qqbar/evaluate_fmpz_mpoly.c",
+    "ranges": [
+      [
+        1,
+        30
+      ]
+    ],
+    "note": "Checkpoint84: Full iterative/Horner scheduling, exponent representations, limits, status propagation, aliasing and cleanup. Current wrapper delegates to generic code, but omits its exponent-width dispatch guard."
+  },
+  {
+    "repo": "flint",
+    "path": "src/qqbar/print.c",
+    "ranges": [
+      [
+        1,
+        30
+      ]
+    ],
+    "note": "Checkpoint84: Polynomial plus existing enclosure diagnostic rendering; no new precision requested."
+  },
+  {
+    "repo": "flint",
+    "path": "src/qqbar/printn.c",
+    "ranges": [
+      [
+        1,
+        35
+      ]
+    ],
+    "note": "Checkpoint84: Decimal display requests approximation at 3.333*n+10 bits, clamps n>=1 and suppresses radius; not exact serialization."
+  },
+  {
+    "repo": "flint",
+    "path": "src/qqbar/randtest.c",
+    "ranges": [
+      [
+        1,
+        101
+      ]
+    ],
+    "note": "Checkpoint84: Rational bias, irreducible-polynomial generation, signature filtering, selected root isolation and cleanup; both archived version branches read. Not a uniform distribution contract."
+  },
+  {
+    "repo": "flint",
+    "path": "src/qqbar/roots_fmpq_poly.c",
+    "ranges": [
+      [
+        1,
+        22
+      ]
+    ],
+    "note": "Checkpoint84: Borrowed numerator-polynomial view; common nonzero denominator cannot change roots. No copy or ownership transfer."
+  },
+  {
+    "repo": "flint",
+    "path": "src/qqbar/roots_poly_squarefree.c",
+    "ranges": [
+      [
+        1,
+        350
+      ]
+    ],
+    "note": "Checkpoint84: Full Cartesian conjugate annihilator, denominator bound, balanced product, unique-integer reconstruction, factor/candidate enumeration, cardinality-based certified elimination, sorting and cleanup. Unchecked final degree product selected for bounded diagnostic."
+  },
+  {
+    "repo": "flint",
+    "path": "src/qqbar/test/main.c",
+    "ranges": [
+      [
+        1,
+        137
+      ]
+    ],
+    "note": "Checkpoint84: Complete include list and matching test registrations. No implicit execution claim."
+  },
+  {
+    "repo": "flint",
+    "path": "src/qqbar/test/t-evaluate_fmpz_mpoly.c",
+    "ranges": [
+      [
+        1,
+        84
+      ]
+    ],
+    "note": "Checkpoint84: Complete t-evaluate_fmpz_mpoly test, inputs, mathematical identities, status guards, randomized boundaries, diagnostics and cleanup. Root test success-frequency guard only applies when iterations >100; composed-op samples one pair rather than proving the whole polynomial. Source read, not newly executed."
+  },
+  {
+    "repo": "flint",
+    "path": "src/qqbar/test/t-fmpz_poly_composed_op.c",
+    "ranges": [
+      [
+        1,
+        122
+      ]
+    ],
+    "note": "Checkpoint84: Complete t-fmpz_poly_composed_op test, inputs, mathematical identities, status guards, randomized boundaries, diagnostics and cleanup. Root test success-frequency guard only applies when iterations >100; composed-op samples one pair rather than proving the whole polynomial. Source read, not newly executed."
+  },
+  {
+    "repo": "flint",
+    "path": "src/qqbar/test/t-pow_fmpq.c",
+    "ranges": [
+      [
+        1,
+        83
+      ]
+    ],
+    "note": "Checkpoint84: Complete t-pow_fmpq test, inputs, mathematical identities, status guards, randomized boundaries, diagnostics and cleanup. Root test success-frequency guard only applies when iterations >100; composed-op samples one pair rather than proving the whole polynomial. Source read, not newly executed."
+  },
+  {
+    "repo": "flint",
+    "path": "src/qqbar/test/t-pow_fmpz.c",
+    "ranges": [
+      [
+        1,
+        82
+      ]
+    ],
+    "note": "Checkpoint84: Complete t-pow_fmpz test, inputs, mathematical identities, status guards, randomized boundaries, diagnostics and cleanup. Root test success-frequency guard only applies when iterations >100; composed-op samples one pair rather than proving the whole polynomial. Source read, not newly executed."
+  },
+  {
+    "repo": "flint",
+    "path": "src/qqbar/test/t-pow_si.c",
+    "ranges": [
+      [
+        1,
+        140
+      ]
+    ],
+    "note": "Checkpoint84: Complete t-pow_si test, inputs, mathematical identities, status guards, randomized boundaries, diagnostics and cleanup. Root test success-frequency guard only applies when iterations >100; composed-op samples one pair rather than proving the whole polynomial. Source read, not newly executed."
+  },
+  {
+    "repo": "flint",
+    "path": "src/qqbar/test/t-pow_ui.c",
+    "ranges": [
+      [
+        1,
+        131
+      ]
+    ],
+    "note": "Checkpoint84: Complete t-pow_ui test, inputs, mathematical identities, status guards, randomized boundaries, diagnostics and cleanup. Root test success-frequency guard only applies when iterations >100; composed-op samples one pair rather than proving the whole polynomial. Source read, not newly executed."
+  },
+  {
+    "repo": "flint",
+    "path": "src/qqbar/test/t-randtest.c",
+    "ranges": [
+      [
+        1,
+        52
+      ]
+    ],
+    "note": "Checkpoint84: Complete t-randtest test, inputs, mathematical identities, status guards, randomized boundaries, diagnostics and cleanup. Root test success-frequency guard only applies when iterations >100; composed-op samples one pair rather than proving the whole polynomial. Source read, not newly executed."
+  },
+  {
+    "repo": "flint",
+    "path": "src/qqbar/test/t-root_ui.c",
+    "ranges": [
+      [
+        1,
+        81
+      ]
+    ],
+    "note": "Checkpoint84: Complete t-root_ui test, inputs, mathematical identities, status guards, randomized boundaries, diagnostics and cleanup. Root test success-frequency guard only applies when iterations >100; composed-op samples one pair rather than proving the whole polynomial. Source read, not newly executed."
+  },
+  {
+    "repo": "flint",
+    "path": "src/qqbar/test/t-roots_poly_squarefree.c",
+    "ranges": [
+      [
+        1,
+        147
+      ]
+    ],
+    "note": "Checkpoint84: Complete t-roots_poly_squarefree test, inputs, mathematical identities, status guards, randomized boundaries, diagnostics and cleanup. Root test success-frequency guard only applies when iterations >100; composed-op samples one pair rather than proving the whole polynomial. Source read, not newly executed."
+  },
+  {
+    "repo": "flint",
+    "path": "src/qqbar/write.c",
+    "ranges": [
+      [
+        1,
+        50
+      ]
+    ],
+    "note": "Checkpoint84: Stream/string display and ownership transfer; current helper visibility narrowed to static. Not exact serialization."
+  },
+  {
+    "repo": "flint",
+    "path": "src/gr_generic/fmpz_mpoly_evaluate.c",
+    "ranges": [
+      [
+        1,
+        440
+      ]
+    ],
+    "note": "Checkpoint84: Complete delegated generic multivariate evaluator/test: explicit Horner stack, scalar register tags, variable-power score, full exponent support, non-short-circuit status aggregation and width-aware outer dispatch. Tests may accept Unknown equality; donor-only test success is not an independent value oracle."
+  },
+  {
+    "repo": "flint",
+    "path": "src/gr_generic/test/t-fmpz_mpoly_evaluate.c",
+    "ranges": [
+      [
+        1,
+        97
+      ]
+    ],
+    "note": "Checkpoint84: Complete delegated generic multivariate evaluator/test: explicit Horner stack, scalar register tags, variable-power score, full exponent support, non-short-circuit status aggregation and width-aware outer dispatch. Tests may accept Unknown equality; donor-only test success is not an independent value oracle."
+  },
+  {
+    "repo": "flint",
+    "path": "src/gr/qqbar.c",
+    "ranges": [
+      [
+        101,
+        1351
+      ]
+    ],
+    "note": "Checkpoint84: All formerly unread methods now read: representation conversion, exact domain/Unknown/budget outcomes, arithmetic/powers, rounding and trig adapters, squarefree roots and other-ring root conversion. Existing setup/registration ranges reread; failure root-vector cleanup selected for diagnostic."
+  }
+]

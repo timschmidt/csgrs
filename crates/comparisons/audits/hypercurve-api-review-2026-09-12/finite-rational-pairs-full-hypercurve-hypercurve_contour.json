@@ -1,0 +1,39 @@
+{
+  "repo": "hypercurve",
+  "target": "hypercurve_contour",
+  "binary": "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve_contour-19d175352410715d",
+  "command": [
+    "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve_contour-19d175352410715d",
+    "--test-threads=4",
+    "--color",
+    "never"
+  ],
+  "sha256": "de7289fd15a3d273fb69791ebf628beaffaaaa8bca39194e04f2f3e12f3918a4",
+  "returncode": 0,
+  "timed_out": false,
+  "elapsed_seconds": 0.0034786709875334054,
+  "log": "finite-rational-pairs-full-hypercurve-hypercurve_contour.log",
+  "passed": [
+    "batched_contour_classification_matches_scalar_classification",
+    "contour_aabb_edge_hit_still_checks_boundary",
+    "batched_line_contour_classification_preserves_half_open_vertex_cases",
+    "circular_contour_winds_positive_semicircle_counter_clockwise",
+    "contour_aabb_miss_classifies_outside_and_zero_winding",
+    "contour_builds_closed_bulge_loop",
+    "contour_line_merge_preserves_mixed_segment_kinds",
+    "contour_merge_adjacent_collinear_lines",
+    "contour_merge_adjacent_collinear_lines_merges_wraparound_run",
+    "contour_rejects_open_segment_chain",
+    "exact_boundary_equality_ignores_closed_start_and_direction",
+    "rectangle_classifies_inside_outside_and_boundary",
+    "even_odd_fill_uses_winding_parity",
+    "rectangle_winding_is_positive_inside_and_boundary_is_explicit"
+  ],
+  "failed": [],
+  "ignored": [],
+  "summaries": [
+    "test result: ok. 14 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s"
+  ],
+  "new_failures": [],
+  "known_failures": []
+}

@@ -1,0 +1,161 @@
+{
+  "parents": {
+    "hypercurve": "3656512b28032175c87ce91aabd1b2b90a5d2db7",
+    "hypersolve": "41855c3604cbd18605a020d60758c8e5c489b629",
+    "hyperreal": "0cb5f29aee065c73e234e0ebb0a9e106398515bb"
+  },
+  "source_manifest": "retained-circle-parallel-20260926-v173-sources.json",
+  "source_directory": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/source-archives/retained-circle-parallel-20260926-v173",
+  "build_source_directory": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/build-workspace-20260925",
+  "workspace_guard": "local-chord-complete-replay-20260924-v173-sources.json",
+  "checks": [],
+  "cases": [
+    {
+      "repo": "hypercurve",
+      "label": "case-00",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-circle-parallel-20260926-v173-hypercurve",
+        "--exact",
+        "bezier_offset::conversion_tests::chord_normal_parallel_contacts_reuse_the_retained_center_field",
+        "--test-threads=1",
+        "--nocapture",
+        "--color",
+        "never"
+      ],
+      "returncode": 101,
+      "elapsed_seconds": 0.0035944529809057713,
+      "log": "retained-circle-parallel-20260926-v173-case-00.log",
+      "name": "bezier_offset::conversion_tests::chord_normal_parallel_contacts_reuse_the_retained_center_field"
+    },
+    {
+      "repo": "hypercurve",
+      "label": "case-01",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-circle-parallel-20260926-v173-hypercurve",
+        "--exact",
+        "bezier_offset::conversion_tests::dense_chord_normal_circle_extends_over_an_independent_analytic_speed",
+        "--test-threads=1",
+        "--nocapture",
+        "--color",
+        "never"
+      ],
+      "returncode": 101,
+      "elapsed_seconds": 0.015719781978987157,
+      "log": "retained-circle-parallel-20260926-v173-case-01.log",
+      "name": "bezier_offset::conversion_tests::dense_chord_normal_circle_extends_over_an_independent_analytic_speed"
+    },
+    {
+      "repo": "hypercurve",
+      "label": "case-02",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-circle-parallel-20260926-v173-hypercurve",
+        "--exact",
+        "bezier_offset::conversion_tests::recursively_pair_radial_circle_intersects_a_genuine_analytic_parallel",
+        "--test-threads=1",
+        "--nocapture",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 26.951590304961428,
+      "log": "retained-circle-parallel-20260926-v173-case-02.log",
+      "name": "bezier_offset::conversion_tests::recursively_pair_radial_circle_intersects_a_genuine_analytic_parallel"
+    },
+    {
+      "repo": "hypercurve",
+      "label": "case-03",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-circle-parallel-20260926-v173-hypercurve",
+        "--exact",
+        "bezier_offset::conversion_tests::chord_normal_recursive_frame_retains_center_and_oriented_unit_normal",
+        "--test-threads=1",
+        "--nocapture",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.06386812101118267,
+      "log": "retained-circle-parallel-20260926-v173-case-03.log",
+      "name": "bezier_offset::conversion_tests::chord_normal_recursive_frame_retains_center_and_oriented_unit_normal"
+    },
+    {
+      "repo": "hypercurve",
+      "label": "case-04",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-circle-parallel-20260926-v173-hypercurve",
+        "--exact",
+        "bezier_offset::conversion_tests::chord_normal_and_parallel_contacts_share_native_point_identity",
+        "--test-threads=1",
+        "--nocapture",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.0035625860327854753,
+      "log": "retained-circle-parallel-20260926-v173-case-04.log",
+      "name": "bezier_offset::conversion_tests::chord_normal_and_parallel_contacts_share_native_point_identity"
+    },
+    {
+      "repo": "hypercurve",
+      "label": "case-05",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-circle-parallel-20260926-v173-hypercurve",
+        "--exact",
+        "curve_region_boolean::certified_successor_tests::selected_parallel_arrangement_splits_interior_cusps",
+        "--test-threads=1",
+        "--nocapture",
+        "--color",
+        "never"
+      ],
+      "returncode": 101,
+      "elapsed_seconds": 0.4644006590824574,
+      "log": "retained-circle-parallel-20260926-v173-case-05.log",
+      "name": "curve_region_boolean::certified_successor_tests::selected_parallel_arrangement_splits_interior_cusps"
+    },
+    {
+      "repo": "hypercurve",
+      "label": "case-06",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-circle-parallel-20260926-v173-hypercurve",
+        "--exact",
+        "bezier_region::tests::one_fragment_materialized_loop_extends_algebraic_chamfer_cuts_once",
+        "--test-threads=1",
+        "--nocapture",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 2.8678880259394646,
+      "log": "retained-circle-parallel-20260926-v173-case-06.log",
+      "name": "bezier_region::tests::one_fragment_materialized_loop_extends_algebraic_chamfer_cuts_once"
+    },
+    {
+      "repo": "hypercurve",
+      "label": "case-07",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-circle-parallel-20260926-v173-hypercurve",
+        "--exact",
+        "bezier_region::tests::one_fragment_selected_loop_extends_chamfer_cuts_on_its_analytic_carrier",
+        "--test-threads=1",
+        "--nocapture",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 6.2726179549936205,
+      "log": "retained-circle-parallel-20260926-v173-case-07.log",
+      "name": "bezier_region::tests::one_fragment_selected_loop_extends_chamfer_cuts_on_its_analytic_carrier"
+    }
+  ],
+  "binaries": {
+    "hypercurve": {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-circle-parallel-20260926-v173-hypercurve",
+      "sha256": "fbfd4fcf4c65959028b41addfc1e68e13dde630ad432c868c4a0849f9d780bce"
+    }
+  },
+  "all_processes_reaped": true,
+  "diagnostic_only": false,
+  "hypercurve_build_returncode": 0,
+  "all_sources_unchanged": true,
+  "qualification_complete": false
+}

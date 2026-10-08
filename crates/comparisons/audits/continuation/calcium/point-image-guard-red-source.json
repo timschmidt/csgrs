@@ -1,0 +1,5 @@
+{
+  "source": "point-image-guard-red-source.rs",
+  "sha256": "792836ab15c313449250aed211ebb6441f9499bf03f175e6fadd5e1fce70b863",
+  "classification": "Harness precondition failed: selected product endpoints compare Unknown under STRICT, not Equal. This run does not demonstrate a candidate witness defect; original failure/source preserved."
+}

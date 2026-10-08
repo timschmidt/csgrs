@@ -1,0 +1,25 @@
+{
+  "qualification": "rational-root-dispatch-20260927-v468-terminal.json",
+  "source_manifest": "rational-root-dispatch-20260927-v468-sources.json",
+  "outer_session_reaped": 53597,
+  "validated_files": 2046,
+  "selected_geometry_tests": 323,
+  "checks": 9,
+  "integration_tests": {
+    "hypersolve-integration": 901
+  },
+  "repos": {
+    "hypersolve": {
+      "parent": "924762a75f2dbb0a0061ee78601f2d7e50c70b72",
+      "paths": {
+        "src/root_sign.rs": "5b96a801e18e3a0759632d838f3fec032e90ba90cb35b225ec6325ace3ee9d26"
+      }
+    }
+  },
+  "known_unresolved": [
+    "strict_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions",
+    "approximate_512_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions"
+  ],
+  "captured_root_oracles": "rational-root-dispatch-oracles-20260927-v469-terminal.json",
+  "captured_oracle_outer_session_reaped": 45920
+}

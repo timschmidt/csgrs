@@ -1,0 +1,35 @@
+{
+  "normal_production_build": false,
+  "source_manifest": "stationary-family-pair-diagnostic-20260927-v545-sources.json",
+  "source_directory": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/source-archives/stationary-family-pair-diagnostic-20260927-v545",
+  "builds": [
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "test",
+        "--lib",
+        "--release",
+        "--all-features",
+        "--locked",
+        "--offline",
+        "--no-run",
+        "--message-format=json"
+      ],
+      "returncode": 101,
+      "log": "stationary-family-pair-diagnostic-20260927-v545-build.log",
+      "elapsed_seconds": 17.98733239201829
+    }
+  ],
+  "cases": [],
+  "checks": [],
+  "expected_cases": {
+    "hypercurve": [
+      "curve::curve_fillet::stationary_family_composition_regression::normalized_region_selects_and_reuses_a_stationary_fillet_family",
+      "curve::curve_fillet::algebraic_bridge_fillet_regression::fillet_extension_owns_the_algebraic_endpoint_bridge"
+    ]
+  },
+  "all_processes_reaped": true,
+  "probe_complete": false,
+  "qualification_complete": false,
+  "failure": "fixture build failed"
+}

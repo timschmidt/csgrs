@@ -1,0 +1,27 @@
+{
+  "tag": "sign-consumer-hypercurve-baseline-debug-storage-retry",
+  "started": "2026-09-08T19:59:18.172Z",
+  "finished": "2026-09-08T20:29:17.500Z",
+  "elapsedSeconds": 1799.3185376440001,
+  "cwd": "/home/tim/Documents/GitHub/workspace",
+  "command": "env",
+  "args": [
+    "TMPDIR=/home/tim/Documents/GitHub/workspace/calcium-build-tmp.gVX5v4",
+    "CARGO_INCREMENTAL=0",
+    "CARGO_PROFILE_DEV_DEBUG=0",
+    "CARGO_BUILD_JOBS=2",
+    "cargo",
+    "test",
+    "--lib",
+    "--tests",
+    "--all-features",
+    "--offline",
+    "--locked",
+    "--manifest-path",
+    "exactcore-hyper-comparison/audits/continuation/calcium/sign-consumers/baseline/hypercurve/Cargo.toml",
+    "--target-dir",
+    ".audit-builds/calcium-baseline"
+  ],
+  "code": 0,
+  "signal": null
+}

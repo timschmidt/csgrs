@@ -1,0 +1,15 @@
+[
+  {
+    "target": "hypercurve_bspline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/normalized-spline-region-callers-candidate1-libraries/hypercurve_bspline-8b50d3309af94d13",
+      "--test-threads=2",
+      "--color",
+      "never"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.007625767990248278,
+    "sha256": "42e652e08e61dbb7af9c4136117f9b236ae600ddfaca8cffbeda396ea990b448",
+    "log": "normalized-spline-region-callers-candidate1-hypercurve_bspline-test.log"
+  }
+]

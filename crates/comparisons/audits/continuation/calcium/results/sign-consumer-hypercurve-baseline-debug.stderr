@@ -1,0 +1,101 @@
+   Compiling num-traits v0.2.19
+   Compiling rand_core v0.10.1
+   Compiling getrandom v0.4.2
+   Compiling smallvec v1.15.1
+   Compiling paste v1.0.15
+   Compiling ppv-lite86 v0.2.21
+   Compiling num-integer v0.1.46
+   Compiling num-complex v0.4.6
+   Compiling num-bigint v0.4.6
+   Compiling approx v0.5.1
+   Compiling num-iter v0.1.45
+   Compiling heapless v0.8.0
+   Compiling allocator-api2 v0.2.21
+   Compiling equivalent v1.0.2
+   Compiling byteorder v1.5.0
+   Compiling num-rational v0.4.2
+   Compiling foldhash v0.2.0
+   Compiling num v0.4.3
+   Compiling hash32 v0.3.1
+   Compiling rand_chacha v0.9.0
+   Compiling bytemuck v1.25.1
+   Compiling thiserror v2.0.18
+   Compiling stable_deref_trait v1.2.1
+   Compiling anyhow v1.0.102
+   Compiling safe_arch v1.0.0
+   Compiling rand v0.9.4
+   Compiling hyperreal v0.13.1 (/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/sign-consumers/baseline/hyperreal)
+   Compiling hashbrown v0.16.1
+   Compiling i_key_sort v0.10.3
+   Compiling thiserror-impl v2.0.18
+   Compiling i_float v1.16.0
+   Compiling cpufeatures v0.3.0
+   Compiling spade v2.15.1
+   Compiling chacha20 v0.10.1
+   Compiling i_shape v1.18.0
+   Compiling hyperlattice v0.6.1 (/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/sign-consumers/baseline/hyperlattice)
+   Compiling wide v1.5.0
+   Compiling rstar v0.12.2
+   Compiling simba v0.9.1
+   Compiling arrayvec v0.7.8
+   Compiling i_tree v0.18.0
+   Compiling i_overlay v4.5.2
+   Compiling nalgebra v0.34.2
+   Compiling polycool v0.4.0
+   Compiling simba v0.10.0
+   Compiling argmin-math v0.5.1
+   Compiling geo-types v0.7.19
+   Compiling hyperlimit v0.4.1 (/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/sign-consumers/baseline/hyperlimit)
+   Compiling rand v0.10.2
+   Compiling earcut v0.4.5
+   Compiling rand_xoshiro v0.7.0
+   Compiling rand_pcg v0.10.2
+   Compiling nalgebra-macros v0.3.0
+   Compiling i_float v3.0.0
+   Compiling geographiclib-rs v0.2.7
+   Compiling float_next_after v2.0.0
+   Compiling sif-itree v0.4.1
+   Compiling once_cell v1.21.4
+   Compiling log v0.4.29
+   Compiling web-time v1.1.0
+   Compiling tempfile v3.27.0
+   Compiling argmin v0.11.0
+   Compiling geo v0.33.1
+   Compiling i_shape v3.0.0
+   Compiling nalgebra v0.35.0
+   Compiling gauss-quad v0.3.1
+   Compiling kurbo v0.13.1
+   Compiling hashbrown v0.17.1
+   Compiling ordered-float v5.3.0
+   Compiling static_aabb2d_index v2.0.0
+   Compiling itertools v0.15.0
+   Compiling siphasher v1.0.3
+   Compiling i_tree v0.19.0
+   Compiling i_overlay v7.0.2
+   Compiling curvo v0.1.91
+   Compiling rusty-fork v0.3.1
+   Compiling svgtypes v0.16.1
+   Compiling cavalier_contours v0.7.0
+   Compiling hypertri v0.4.1 (/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/sign-consumers/baseline/hypertri)
+   Compiling hypersolve v0.3.1 (/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/sign-consumers/baseline/hypersolve)
+   Compiling svg v0.18.0
+   Compiling proptest v1.11.0
+   Compiling hypercurve v0.3.1 (/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/sign-consumers/baseline/hypercurve)
+rustc-LLVM ERROR: IO failure on output stream: Disk quota exceeded
+error: could not compile `hypercurve` (test "hypercurve_curve_region_promotion")
+
+Caused by:
+  Disk quota exceeded (os error 122)
+
+Caused by:
+  failed to parse process output: `/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustc --crate-name hypercurve_curve_region_promotion --edition=2024 tests/hypercurve_curve_region_promotion.rs --error-format=json --json=diagnostic-rendered-ansi,artifacts,future-incompat --emit=dep-info,link -C embed-bitcode=no --test --cfg 'feature="comparative-benchmarks"' --cfg 'feature="default"' --cfg 'feature="dispatch-trace"' --cfg 'feature="hershey"' --cfg 'feature="svg"' --cfg 'feature="triangulation"' --check-cfg 'cfg(docsrs,test)' --check-cfg 'cfg(feature, values("comparative-benchmarks", "default", "dispatch-trace", "hershey", "svg", "triangulation"))' -C metadata=f7252018287d63f7 -C extra-filename=-817c46271b77de56 --out-dir /home/tim/Documents/GitHub/workspace/.audit-builds/calcium-baseline/debug/deps -C strip=debuginfo -L dependency=/home/tim/Documents/GitHub/workspace/.audit-builds/calcium-baseline/debug/deps --extern cavalier_contours=/home/tim/Documents/GitHub/workspace/.audit-builds/calcium-baseline/debug/deps/libcavalier_contours-a773b391f2299490.rlib --extern curvo=/home/tim/Documents/GitHub/workspace/.audit-builds/calcium-baseline/debug/deps/libcurvo-47ccba147c773009.rlib --extern geo=/home/tim/Documents/GitHub/workspace/.audit-builds/calcium-baseline/debug/deps/libgeo-4deac3cfcca9d320.rlib --extern hypercurve=/home/tim/Documents/GitHub/workspace/.audit-builds/calcium-baseline/debug/deps/libhypercurve-ecc83f9f27fb7cab.rlib --extern hyperlimit=/home/tim/Documents/GitHub/workspace/.audit-builds/calcium-baseline/debug/deps/libhyperlimit-a87e598f18ee9c84.rlib --extern hyperreal=/home/tim/Documents/GitHub/workspace/.audit-builds/calcium-baseline/debug/deps/libhyperreal-0afd2dfec5a8931d.rlib --extern hypersolve=/home/tim/Documents/GitHub/workspace/.audit-builds/calcium-baseline/debug/deps/libhypersolve-eccd0d19f17788a7.rlib --extern hypertri=/home/tim/Documents/GitHub/workspace/.audit-builds/calcium-baseline/debug/deps/libhypertri-97c748967459a67f.rlib --extern i_overlay=/home/tim/Documents/GitHub/workspace/.audit-builds/calcium-baseline/debug/deps/libi_overlay-0fe118764ee9587d.rlib --extern nalgebra=/home/tim/Documents/GitHub/workspace/.audit-builds/calcium-baseline/debug/deps/libnalgebra-dcde55a31d46bfb1.rlib --extern num=/home/tim/Documents/GitHub/workspace/.audit-builds/calcium-baseline/debug/deps/libnum-9837fad94ddf3b7b.rlib --extern proptest=/home/tim/Documents/GitHub/workspace/.audit-builds/calcium-baseline/debug/deps/libproptest-a5002e6431351278.rlib --extern svg=/home/tim/Documents/GitHub/workspace/.audit-builds/calcium-baseline/debug/deps/libsvg-e002396f65120e18.rlib --extern svgtypes=/home/tim/Documents/GitHub/workspace/.audit-builds/calcium-baseline/debug/deps/libsvgtypes-7c9771cfe59c5631.rlib` (exit status: 101)
+warning: build failed, waiting for other jobs to finish...
+error: linking with `cc` failed: exit status: 1
+  |
+  = note:  "cc" "-m64" "/home/tim/Documents/GitHub/workspace/.audit-builds/calcium-baseline/debug/deps/rustcArQNf9/symbols.o" "<3 object files omitted>" "-Wl,--as-needed" "-Wl,-Bstatic" "<sysroot>/lib/rustlib/x86_64-unknown-linux-gnu/lib/{libtest-*,libgetopts-*,librustc_std_workspace_std-*}.rlib" "/tmp/calcium-consumer-builds.X7kU2Y/calcium-baseline/debug/deps/libhypercurve-ecc83f9f27fb7cab.rlib" "/home/tim/Documents/GitHub/workspace/.audit-builds/calcium-baseline/debug/deps/{libhypertri-97c748967459a67f,libsvg-e002396f65120e18,libsvgtypes-7c9771cfe59c5631,libkurbo-f77c0a8fc6db30b1,libpolycool-9f7d85f3ddacbc50,libsmallvec-e742dda677fabd39,libarrayvec-fc717ecfe6e15e65,libsiphasher-3dacad7ba934baeb,libhypersolve-eccd0d19f17788a7,libhyperlimit-a87e598f18ee9c84,libhyperlattice-4e2330a009412645}.rlib" "/tmp/calcium-consumer-builds.X7kU2Y/calcium-baseline/debug/deps/libhyperreal-0afd2dfec5a8931d.rlib" "/home/tim/Documents/GitHub/workspace/.audit-builds/calcium-baseline/debug/deps/{libserde_json-0b8a4ca7fbeb3238,libmemchr-4328a8d3b269f28a,libitoa-db0d7fb641fd1c30,libzmij-079472b9fbc79df8,libciborium-c177480547d8e666,libciborium_ll-1b68025d64741b53,libhalf-61a67a41858ed295,libcfg_if-c2b2c29e5bd1a5bb,libzerocopy-9042fb8ceee981fe,libciborium_io-efa01a0916dd0def,libnum-9837fad94ddf3b7b,libnum_iter-4177eb7dcaee10c7,libnum_rational-e95e1e31db9bdb93,libnum_complex-588b7da76351a00b,libnum_bigint-f2d787f709032b1e,libserde-0a5cfc3b806795b7,libserde_core-908e930e82489c32,libnum_integer-32e7cf79b3ecf5b9,libnum_traits-c39a49f866dc0bd1}.rlib" "<sysroot>/lib/rustlib/x86_64-unknown-linux-gnu/lib/{libstd-*,libpanic_unwind-*,libobject-*,libmemchr-*,libaddr2line-*,libgimli-*,libcfg_if-*,librustc_demangle-*,libstd_detect-*,libhashbrown-*,librustc_std_workspace_alloc-*,libminiz_oxide-*,libadler2-*,libunwind-*,liblibc-*,librustc_std_workspace_core-*,liballoc-*,libcore-*,libcompiler_builtins-*}.rlib" "-Wl,-Bdynamic" "-lgcc_s" "-lutil" "-lrt" "-lpthread" "-lm" "-ldl" "-lc" "-L" "/home/tim/Documents/GitHub/workspace/.audit-builds/calcium-baseline/debug/deps/rustcArQNf9/raw-dylibs" "-B<sysroot>/lib/rustlib/x86_64-unknown-linux-gnu/bin/gcc-ld" "-fuse-ld=lld" "-Wl,--eh-frame-hdr" "-Wl,-z,noexecstack" "-L" "<sysroot>/lib/rustlib/x86_64-unknown-linux-gnu/lib" "-o" "/home/tim/Documents/GitHub/workspace/.audit-builds/calcium-baseline/debug/deps/hypercurve_curve_region_stroke-cfc9e5a8e7f4d7e6" "-Wl,--gc-sections" "-pie" "-Wl,-z,relro,-z,now" "-Wl,--strip-debug" "-nodefaultlibs"
+  = note: some arguments are omitted. use `--verbose` to show all linker arguments
+  = note: collect2: fatal error: ld terminated with signal 7 [Bus error], core dumped
+          compilation terminated.
+          
+
+error: could not compile `hypercurve` (test "hypercurve_curve_region_stroke") due to 1 previous error

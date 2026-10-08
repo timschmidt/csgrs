@@ -1,0 +1,5 @@
+Share algebraic point incidence across fillet constraints and winding
+
+Independent retained point images of valid stationary-family centers and contacts were blocked while constructing winding-ray endpoint data. Share the existing incidence equations and root replay through a borrowed source query, and retain the component's regular normal frame for every point representation. Remove the Cartesian-only constraint path and keep endpoint/traversal data with winding. General point queries retain their original source semantics; incident extensions still certify the selected normal sheet.
+
+Validation: 451 release regressions across eight binaries and six static/downstream checks, with 31 identical-input/binary focused receipts reused. The new regression checks independent algebraic images of the known center and either contact under both policies and path orientations; all twelve selections retain the intended exact fillet.

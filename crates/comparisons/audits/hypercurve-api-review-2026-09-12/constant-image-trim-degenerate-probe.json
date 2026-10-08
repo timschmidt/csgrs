@@ -1,0 +1,6 @@
+{
+  "returncode": 0,
+  "sha256": "e2d6f1301f07dcc321496c3be77c9da3a6629831bcc1d4fe65ece4c0c0879729",
+  "expected": "x=0 pieces=0 certainty=Certified\nx=5 pieces=0 certainty=Certified\nx=6 pieces=0 certainty=Certified\n",
+  "actual": "x=0 pieces=0 certainty=Certified\nx=5 pieces=0 certainty=Certified\nx=6 pieces=0 certainty=Certified\n"
+}

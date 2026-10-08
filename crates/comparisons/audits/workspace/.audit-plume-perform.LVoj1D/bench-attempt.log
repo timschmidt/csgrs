@@ -1,0 +1,11 @@
+file:///home/tim/Documents/GitHub/workspace/exact-real-references/plume-qualification/run-instrumented.mjs:16
+      if(r.status!==0 || r.error) throw Error(`unqualified benchmark ${JSON.stringify(records.at(-1))}`);
+                                        ^
+
+Error: unqualified benchmark {"round":0,"op":"average","family":"dense","bits":32,"args":["-c","6","/home/tim/Documents/GitHub/workspace/.audit-plume-perform.LVoj1D/instrumented-probe","bench","average","dense","32","256","+RTS","-T","-M512m","-RTS"],"status":0,"signal":null,"error":"EPERM","stdout":"average dense 32 256 333783000 2507104 -157381470976 PASS\n","stderr":""}
+    at file:///home/tim/Documents/GitHub/workspace/exact-real-references/plume-qualification/run-instrumented.mjs:16:41
+    at ModuleJob.run (node:internal/modules/esm/module_job:343:25)
+    at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:665:26)
+    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+
+Node.js v22.22.2

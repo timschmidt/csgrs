@@ -1,0 +1,14 @@
+{
+  "command": [
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/single-loop-corner-20260923-attempt1-libraries/candidate-libtest",
+    "--exact",
+    "bezier_region::tests::general_nonrepresented_chord_and_retained_rational_arc_complete_the_fillet_kernel",
+    "--nocapture",
+    "--test-threads=1",
+    "--color",
+    "never"
+  ],
+  "returncode": 101,
+  "elapsed_seconds": 2.116649017087184,
+  "binary_sha256": "6d629727b6fbce84c75a0bfde2a5ec329d024b8247659fd3109c830d6796c213"
+}

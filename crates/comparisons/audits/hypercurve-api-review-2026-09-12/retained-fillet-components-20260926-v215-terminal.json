@@ -1,0 +1,20 @@
+{
+  "parents": {
+    "hypercurve": "5b1d0785125e7eb260dd81343e8030182751b869",
+    "hypersolve": "42308d704df777b3e627aa344424afa3f215e456",
+    "hyperreal": "0cb5f29aee065c73e234e0ebb0a9e106398515bb"
+  },
+  "command": [
+    "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+    "check",
+    "--all-targets",
+    "--all-features",
+    "--locked",
+    "--offline"
+  ],
+  "returncode": 101,
+  "log": "retained-fillet-components-20260926-v215-check.log",
+  "source_manifest": "retained-fillet-components-20260926-v215-sources.json",
+  "all_sources_unchanged": true,
+  "all_processes_reaped": true
+}

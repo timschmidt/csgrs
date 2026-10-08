@@ -1,0 +1,134 @@
+{
+  "status": "implemented, qualified and committed; original goal active",
+  "base_commits": {
+    "hypercurve": "2025587c91b4af5a1eeccae97a7412ef114a0dd1",
+    "hypersolve": "3ac2e7510936a11c7bf2eac5dfbe3f9f851afe55",
+    "hyperreal": "a2da8e2b5de9a1a4653d3662f2f05cb6533fd7ef",
+    "hyperbrep": "8a84ee7db02fd2720ac89a1a6a227ee4ec2a8171"
+  },
+  "implementation": [
+    "Conservative interval arithmetic no longer accepts geometry policy: eleven context parameters and 239 caller arguments removed, with five dead context locals removed.",
+    "The private arbitrary-exact-Real interval type is RealInterval; all 300 references migrate directly. Two square-root methods merge into nonnegative_square_root(Option<i32>). No forwarding alias remains.",
+    "Four scalar sign/order selection sites use strict predicates. Existing geometry policy identity, root/sheet decisions and work budgets remain in their owning callers. No cache, field or carrier added; production code decreases by 280 lines."
+  ],
+  "regression": {
+    "test": "real_interval_enclosures_do_not_consume_topology_approximation",
+    "source": "hypercurve/src/bezier_offset.rs",
+    "baseline_log": "interval-arithmetic-policy-baseline.log",
+    "baseline_exit_code": 101,
+    "baseline_finding": "Multiplication of [-2*epsilon,epsilon] by [-1,1] consumes Approximate512 for epsilon=1-cos(2^-607).",
+    "coverage": "Multiply, square, square root, hull and reciprocal with fresh near-zero expressions under both contexts. Every returned optional enclosure contains independently known exact witnesses, and no operation consumes approximation."
+  },
+  "focused_scope": "Four interval/retained-point/refinement unit tests and both public PH composition tests pass; 6 total. The inward public test includes both contexts/traversals and exact boundary-path readmission.",
+  "tests": {
+    "hypercurve": {
+      "passed": 1463,
+      "ignored": 6,
+      "targets": 13,
+      "fresh": true,
+      "log": "interval-arithmetic-policy-hypercurve-tests.log",
+      "exit_code": 0
+    },
+    "hyperbrep": {
+      "passed": 232,
+      "ignored": 0,
+      "targets": 1,
+      "fresh": true,
+      "log": "interval-arithmetic-policy-hyperbrep-tests.log",
+      "exit_code": 0
+    }
+  },
+  "freshly_run_total": 1695,
+  "unchanged_dependency_qualification": {
+    "hypersolve": {
+      "passed": 492,
+      "fresh": false,
+      "qualification": "shared-integer-gcd-qualification.json"
+    },
+    "hyperreal": {
+      "passed": 12,
+      "scope": "existing GCD tests",
+      "fresh": false,
+      "qualification": "shared-integer-gcd-qualification.json"
+    }
+  },
+  "checks": {
+    "hypercurve": {
+      "command": "cargo check --all-features --all-targets",
+      "log": "interval-arithmetic-policy-hypercurve-check.log",
+      "exit_code": 0
+    },
+    "hyperbrep": {
+      "command": "cargo check --all-features --all-targets",
+      "log": "interval-arithmetic-policy-hyperbrep-check.log",
+      "exit_code": 0
+    }
+  },
+  "source_sha256": {
+    "hypercurve/src/bezier_offset.rs": "aa3e2ac907b3322968335e1ef8b0333ff6897040f0b9137ee5f9af00a5a001a6"
+  },
+  "source_checks": "Changed-file rustfmt --check, git diff --check, retired-API scan and immutable source hashes pass; all-target type checking has no warnings.",
+  "held_out_retries": [
+    {
+      "log": "interval-arithmetic-policy-heldout-1.log",
+      "timeout_seconds": 60,
+      "exit_code": 124
+    },
+    {
+      "log": "interval-arithmetic-policy-heldout-2.log",
+      "timeout_seconds": 60,
+      "exit_code": 124
+    },
+    {
+      "log": "interval-arithmetic-policy-heldout-3.log",
+      "timeout_seconds": 60,
+      "exit_code": 124
+    },
+    {
+      "log": "interval-arithmetic-policy-heldout-4.log",
+      "timeout_seconds": 60,
+      "exit_code": 124
+    }
+  ],
+  "held_out_scope": "All four remain unqualified. Sequential retries overlapped qualification; no timing comparison or completion claim.",
+  "next": "box-construction-policy-followup.json",
+  "broader_goal": "Original review remains active, including the four held-out cases, normalized public topology, location API unification, full curve-family and operation-composition closure.",
+  "goal_status": "active",
+  "diagnostics": {
+    "probes": [
+      {
+        "binary": "stationary-ph-offset-interval-arithmetic-policy",
+        "source": "stationary-ph-offset-inspect.rs",
+        "binary_sha256": "f10e292196ead433c8c0dcd58932050e2209c9c203112872cbcc64bd83a79c8c",
+        "policy": "STRICT",
+        "log": "stationary-ph-offset-interval-arithmetic-policy.log",
+        "exit_code": 0,
+        "times_seconds": {
+          "first offset": 3.740804814,
+          "second offset": 21.142777643,
+          "total": 24.884051096
+        },
+        "result": "Both offsets Certified; second result has one boundary loop."
+      },
+      {
+        "binary": "stationary-ph-offset-interval-arithmetic-policy-approximate",
+        "source": "stationary-ph-offset-approximate-inspect.rs",
+        "binary_sha256": "ba3832fc4835ecd3bf9a6db55e4307fe0b44797edeb8a3f7dc1af3bcf322ff39",
+        "policy": "APPROXIMATE_512",
+        "log": "stationary-ph-offset-interval-arithmetic-policy-approximate.log",
+        "exit_code": 0,
+        "times_seconds": {
+          "first offset": 3.765482493,
+          "second offset": 19.923785696,
+          "total": 23.689700249
+        },
+        "result": "Both offsets Certified; second result has one boundary loop."
+      }
+    ],
+    "library_sha256": "a7e12ad27bf6248e4ad456562081b5d7386d8d623d4c908114f18189fbb3ca85",
+    "timing_scope": "Sequential unloaded probes started after all tests, checks, held-out retries and profiling processes ended. Both use the same inspector workload as earlier phases. No paired benchmark speedup claim.",
+    "baseline": "certified-chord-pair-enclosure-qualification.json"
+  },
+  "workspace_state": "interval-arithmetic-policy-workspace-before-commit.json",
+  "commit": "b4a0d02d5b2237bb6168eb1fe0e5849f3df82f06"
+}

@@ -1,0 +1,93 @@
+{
+  "parent_hypercurve": "61a9af24e90f78f91cbd4ca5ee23593f9e39ef38",
+  "scope": "Migrate three extracted spline region tests, two Bezier-region benchmark fixtures, and one fuzz construction from raw CurveRegion2 loops to general closed paths and normalized admission. Direct generated chord conversion replaces fragment wrapping.",
+  "builds": [
+    {
+      "kind": "check",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "check",
+        "--all-targets",
+        "--no-default-features",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.21411891700699925
+    },
+    {
+      "kind": "fuzz-check",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "check",
+        "--manifest-path",
+        "fuzz/Cargo.toml",
+        "--bin",
+        "bezier_region",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 11.480811901012203
+    },
+    {
+      "kind": "test-build",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "test",
+        "--release",
+        "--all-features",
+        "--test",
+        "hypercurve_bspline",
+        "--bench",
+        "bezier_region",
+        "--no-run",
+        "--message-format=json",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 2.0671959389874246
+    }
+  ],
+  "final_fuzz_check": {
+    "command": [
+      "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+      "check",
+      "--manifest-path",
+      "fuzz/Cargo.toml",
+      "--bin",
+      "bezier_region",
+      "--locked",
+      "--offline"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.11401427298551425
+  },
+  "tests": [
+    {
+      "target": "hypercurve_bspline",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/normalized-spline-region-callers-candidate1-libraries/hypercurve_bspline-8b50d3309af94d13",
+        "--test-threads=2",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.007625767990248278,
+      "sha256": "42e652e08e61dbb7af9c4136117f9b236ae600ddfaca8cffbeda396ea990b448",
+      "log": "normalized-spline-region-callers-candidate1-hypercurve_bspline-test.log"
+    }
+  ],
+  "passed": 24,
+  "final_isolated_sources": "normalized-spline-region-callers-candidate2-isolated-sources.json",
+  "final_working_sources": "normalized-spline-region-callers-candidate2-working-sources.json",
+  "final_change": "Only the now-unused fuzz BezierSplitFragment2 import changed after candidate1. The affected fuzz target was rechecked without warnings; all other tested source hashes are unchanged.",
+  "limitations": [
+    "The benchmark executable was compiled and archived; full benchmark timings were not run.",
+    "Fuzz target compiled; no fuzz campaign claimed.",
+    "Pinned Hyperreal a2da8e2b5de9a1a4653d3662f2f05cb6533fd7ef; its other-session working changes untouched.",
+    "Unqualified src/bezier_offset.rs mapped-point inverse candidate excluded.",
+    "Remaining raw-region callers and operation-producer normalization still require implementation."
+  ]
+}

@@ -1,0 +1,13 @@
+{
+  "tag": "flint-build",
+  "started": "2026-09-08T08:27:59.004Z",
+  "finished": "2026-09-08T08:29:18.958Z",
+  "elapsedSeconds": 79.951504341,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exact-real-references/flint",
+  "command": "make",
+  "args": [
+    "-j8"
+  ],
+  "code": 0,
+  "signal": null
+}

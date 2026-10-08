@@ -1,0 +1,31 @@
+{
+  "cases": [
+    {
+      "case": 0,
+      "returncode": 0,
+      "elapsed_seconds": 65.89783163298853,
+      "log": "fillet-companion-chart-20260923-public2-case-0.log"
+    },
+    {
+      "case": 1,
+      "returncode": 0,
+      "elapsed_seconds": 65.90047077194322,
+      "log": "fillet-companion-chart-20260923-public2-case-1.log"
+    },
+    {
+      "case": 2,
+      "returncode": 0,
+      "elapsed_seconds": 66.04531335795764,
+      "log": "fillet-companion-chart-20260923-public2-case-2.log"
+    },
+    {
+      "case": 3,
+      "returncode": 0,
+      "elapsed_seconds": 65.89715850900393,
+      "log": "fillet-companion-chart-20260923-public2-case-3.log"
+    }
+  ],
+  "binary_sha256": "dc4f7524be20efa94ff006d026e40558462c8abcfdb51764e1053a619c63875a",
+  "all_sources_unchanged": true,
+  "all_processes_reaped": true
+}

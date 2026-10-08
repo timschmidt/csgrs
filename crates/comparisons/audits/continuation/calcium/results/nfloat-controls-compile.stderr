@@ -1,0 +1,5 @@
+audits/continuation/calcium/flint-nfloat-controls.c: In function ‘conversion_controls’:
+audits/continuation/calcium/flint-nfloat-controls.c:161:34: error: implicit declaration of function ‘nfloat_set_arf’; did you mean ‘nfloat_set_str’? [-Wimplicit-function-declaration]
+  161 |                      kind == 1 ? nfloat_set_arf(out, ar, ctx) :
+      |                                  ^~~~~~~~~~~~~~
+      |                                  nfloat_set_str

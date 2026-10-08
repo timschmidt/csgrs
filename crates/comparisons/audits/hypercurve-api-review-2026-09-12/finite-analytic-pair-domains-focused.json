@@ -1,0 +1,114 @@
+[
+  {
+    "command": [
+      "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve-b98ca126fa73f19f",
+      "--exact",
+      "curve_intersection::curve_support_intersection::analytic_dispatch_tests::finite_analytic_pairs_replay_transverse_and_tangent_contacts",
+      "--test-threads=1",
+      "--nocapture"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.03188765799859539,
+    "binary": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve-b98ca126fa73f19f",
+    "sha256": "3a7c5e04a2b0cfe6c133b4ca06723ba8fe6973d3938623704043371c37a2e334",
+    "log": "finite-analytic-pair-domains-focused-finite_analytic_pairs_replay_transverse_and_tangent_contacts.log"
+  },
+  {
+    "command": [
+      "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve-b98ca126fa73f19f",
+      "--exact",
+      "curve_intersection::curve_support_intersection::analytic_dispatch_tests::finite_analytic_pairs_retain_components_in_the_original_charts",
+      "--test-threads=1",
+      "--nocapture"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.265461998002138,
+    "binary": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve-b98ca126fa73f19f",
+    "sha256": "3a7c5e04a2b0cfe6c133b4ca06723ba8fe6973d3938623704043371c37a2e334",
+    "log": "finite-analytic-pair-domains-focused-finite_analytic_pairs_retain_components_in_the_original_charts.log"
+  },
+  {
+    "command": [
+      "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve-b98ca126fa73f19f",
+      "--exact",
+      "curve_intersection::curve_support_intersection::analytic_dispatch_tests::finite_analytic_constant_images_retain_the_complete_parameter_fiber",
+      "--test-threads=1",
+      "--nocapture"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.007754179008770734,
+    "binary": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve-b98ca126fa73f19f",
+    "sha256": "3a7c5e04a2b0cfe6c133b4ca06723ba8fe6973d3938623704043371c37a2e334",
+    "log": "finite-analytic-pair-domains-focused-finite_analytic_constant_images_retain_the_complete_parameter_fiber.log"
+  },
+  {
+    "command": [
+      "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve-b98ca126fa73f19f",
+      "--exact",
+      "curve_intersection::curve_support_intersection::analytic_dispatch_tests::common_analytic_pairs_replay_contacts_in_both_orders_and_traversals",
+      "--test-threads=1",
+      "--nocapture"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 1.5663801759947091,
+    "binary": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve-b98ca126fa73f19f",
+    "sha256": "3a7c5e04a2b0cfe6c133b4ca06723ba8fe6973d3938623704043371c37a2e334",
+    "log": "finite-analytic-pair-domains-focused-common_analytic_pairs_replay_contacts_in_both_orders_and_traversals.log"
+  },
+  {
+    "command": [
+      "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve-b98ca126fa73f19f",
+      "--exact",
+      "curve_intersection::curve_support_intersection::analytic_dispatch_tests::common_analytic_overlaps_transport_distinct_source_charts",
+      "--test-threads=1",
+      "--nocapture"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.06387339800130576,
+    "binary": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve-b98ca126fa73f19f",
+    "sha256": "3a7c5e04a2b0cfe6c133b4ca06723ba8fe6973d3938623704043371c37a2e334",
+    "log": "finite-analytic-pair-domains-focused-common_analytic_overlaps_transport_distinct_source_charts.log"
+  },
+  {
+    "command": [
+      "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve-b98ca126fa73f19f",
+      "--exact",
+      "curve_intersection::curve_support_intersection::analytic_dispatch_tests::coincident_constant_parallels_retain_the_parameter_rectangle",
+      "--test-threads=1",
+      "--nocapture"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.0035737559956032783,
+    "binary": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve-b98ca126fa73f19f",
+    "sha256": "3a7c5e04a2b0cfe6c133b4ca06723ba8fe6973d3938623704043371c37a2e334",
+    "log": "finite-analytic-pair-domains-focused-coincident_constant_parallels_retain_the_parameter_rectangle.log"
+  },
+  {
+    "command": [
+      "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve_bezier_fit_offset-a64793ad83ff0ab6",
+      "--exact",
+      "finite_parallel_point_incidence_owns_poles_roots_and_normal_sheets",
+      "--test-threads=1",
+      "--nocapture"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.0035514670016709715,
+    "binary": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve_bezier_fit_offset-a64793ad83ff0ab6",
+    "sha256": "e72fd6dedb9d9b5407fac99875802e7e201060da0def45c8235482a24c106562",
+    "log": "finite-analytic-pair-domains-focused-finite_parallel_point_incidence_owns_poles_roots_and_normal_sheets.log"
+  },
+  {
+    "command": [
+      "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve_bezier_fit_offset-a64793ad83ff0ab6",
+      "--exact",
+      "parallel_point_incidence_uses_approximate_512_only_as_a_terminal_decision",
+      "--test-threads=1",
+      "--nocapture"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.0035402379871811718,
+    "binary": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve_bezier_fit_offset-a64793ad83ff0ab6",
+    "sha256": "e72fd6dedb9d9b5407fac99875802e7e201060da0def45c8235482a24c106562",
+    "log": "finite-analytic-pair-domains-focused-parallel_point_incidence_uses_approximate_512_only_as_a_terminal_decision.log"
+  }
+]

@@ -1,0 +1,808 @@
+{
+  "normal_production_build": true,
+  "source_manifest": "known-fillet-centers-20260928-v663-sources.json",
+  "source_directory": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/source-archives/known-fillet-centers-20260928-v663",
+  "builds": [
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "test",
+        "--lib",
+        "--test",
+        "hypercurve_stationary_fillets",
+        "--release",
+        "--all-features",
+        "--locked",
+        "--offline",
+        "--no-run",
+        "--message-format=json"
+      ],
+      "returncode": 0,
+      "log": "known-fillet-centers-20260928-v663-build.log",
+      "elapsed_seconds": 189.55770062305965,
+      "binaries": {
+        "hypercurve_stationary_fillets": {
+          "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/known-fillet-centers-20260928-v663-hypercurve_stationary_fillets-tests",
+          "sha256": "a99378919906c89321120baefb1995941c17f23fdb848f0b7918ca91c9597bd6"
+        },
+        "hypercurve": {
+          "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/known-fillet-centers-20260928-v663-hypercurve-tests",
+          "sha256": "642ebec4a761759c06d3004f176c8e88daf8da12c2f4632fa9e39ee18352c570"
+        }
+      }
+    }
+  ],
+  "cases": [
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/known-fillet-centers-20260928-v663-hypercurve-tests",
+        "--exact",
+        "curve::curve_fillet::incident_parallel_cusp_nonlinear_regression::incident_parallel_cusp_fillet_retains_nonlinear_partner_contact",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "known-fillet-centers-20260928-v663-incident_parallel_cusp_fillet_retains_nonlinear_partner_contact-a73bb9d2d6.log",
+      "elapsed_seconds": 0.0156248789280653,
+      "target": "hypercurve",
+      "name": "curve::curve_fillet::incident_parallel_cusp_nonlinear_regression::incident_parallel_cusp_fillet_retains_nonlinear_partner_contact",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/known-fillet-centers-20260928-v663-hypercurve-tests",
+        "--exact",
+        "bezier_offset::incident_offset_cusp_side_regression::incident_cusp_normal_side_survives_parameter_chart_reversal",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "known-fillet-centers-20260928-v663-incident_cusp_normal_side_survives_parameter_chart_reversal-a961cb2dbf.log",
+      "elapsed_seconds": 0.015723482007160783,
+      "target": "hypercurve",
+      "name": "bezier_offset::incident_offset_cusp_side_regression::incident_cusp_normal_side_survives_parameter_chart_reversal",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/known-fillet-centers-20260928-v663-hypercurve-tests",
+        "--exact",
+        "bezier_offset::incident_offset_cusp_side_regression::incident_cusp_side_does_not_create_undefined_or_collapsed_tangents",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "known-fillet-centers-20260928-v663-incident_cusp_side_does_not_create_undefined_or_collapsed_tangents-35d6cee414.log",
+      "elapsed_seconds": 0.0035291879903525114,
+      "target": "hypercurve",
+      "name": "bezier_offset::incident_offset_cusp_side_regression::incident_cusp_side_does_not_create_undefined_or_collapsed_tangents",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/known-fillet-centers-20260928-v663-hypercurve-tests",
+        "--exact",
+        "curve::curve_fillet::incident_parallel_cusp_fillet_regression::incident_parallel_cusp_fillet_retains_native_line_contact",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "known-fillet-centers-20260928-v663-incident_parallel_cusp_fillet_retains_native_line_contact-903364571c.log",
+      "elapsed_seconds": 0.007597208954393864,
+      "target": "hypercurve",
+      "name": "curve::curve_fillet::incident_parallel_cusp_fillet_regression::incident_parallel_cusp_fillet_retains_native_line_contact",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/known-fillet-centers-20260928-v663-hypercurve-tests",
+        "--exact",
+        "curve::curve_fillet::incident_parallel_cusp_fillet_regression::incident_parallel_cusp_fillet_retains_polynomial_line_contact",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "known-fillet-centers-20260928-v663-incident_parallel_cusp_fillet_retains_polynomial_line_contact-e735ea484e.log",
+      "elapsed_seconds": 0.015600840095430613,
+      "target": "hypercurve",
+      "name": "curve::curve_fillet::incident_parallel_cusp_fillet_regression::incident_parallel_cusp_fillet_retains_polynomial_line_contact",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/known-fillet-centers-20260928-v663-hypercurve-tests",
+        "--exact",
+        "bezier_offset::conversion_tests::recursive_incidence_keeps_stationary_and_collapsed_semantics",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "known-fillet-centers-20260928-v663-recursive_incidence_keeps_stationary_and_collapsed_semantics-5e1606472a.log",
+      "elapsed_seconds": 0.015652826987206936,
+      "target": "hypercurve",
+      "name": "bezier_offset::conversion_tests::recursive_incidence_keeps_stationary_and_collapsed_semantics",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/known-fillet-centers-20260928-v663-hypercurve-tests",
+        "--exact",
+        "curve::curve_fillet::stationary_recursive_point_constraint_regression::stationary_fillet_family_accepts_independent_recursive_point_constraints",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "known-fillet-centers-20260928-v663-stationary_fillet_family_accepts_independent_recursive_point_constraints-0944346744.log",
+      "elapsed_seconds": 18.238022743025795,
+      "target": "hypercurve",
+      "name": "curve::curve_fillet::stationary_recursive_point_constraint_regression::stationary_fillet_family_accepts_independent_recursive_point_constraints",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/known-fillet-centers-20260928-v663-hypercurve-tests",
+        "--exact",
+        "curve::curve_fillet::stationary_retained_point_constraint_regression::stationary_fillet_family_accepts_independent_retained_point_constraints",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "known-fillet-centers-20260928-v663-stationary_fillet_family_accepts_independent_retained_point_constraints-b640651c70.log",
+      "elapsed_seconds": 18.18812662619166,
+      "target": "hypercurve",
+      "name": "curve::curve_fillet::stationary_retained_point_constraint_regression::stationary_fillet_family_accepts_independent_retained_point_constraints",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/known-fillet-centers-20260928-v663-hypercurve-tests",
+        "--exact",
+        "curve::curve_fillet::stationary_family_composition_regression::normalized_region_selects_and_reuses_a_stationary_fillet_family",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "known-fillet-centers-20260928-v663-normalized_region_selects_and_reuses_a_stationary_fillet_family-3248dfd87f.log",
+      "elapsed_seconds": 1.966373706003651,
+      "target": "hypercurve",
+      "name": "curve::curve_fillet::stationary_family_composition_regression::normalized_region_selects_and_reuses_a_stationary_fillet_family",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/known-fillet-centers-20260928-v663-hypercurve-tests",
+        "--exact",
+        "curve::curve_fillet::tests::collapsed_parallel_fillet_requires_the_original_circle_normal",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "known-fillet-centers-20260928-v663-collapsed_parallel_fillet_requires_the_original_circle_normal-c90bb48148.log",
+      "elapsed_seconds": 0.007662594085559249,
+      "target": "hypercurve",
+      "name": "curve::curve_fillet::tests::collapsed_parallel_fillet_requires_the_original_circle_normal",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/known-fillet-centers-20260928-v663-hypercurve-tests",
+        "--exact",
+        "curve::curve_fillet::tests::collapsed_circle_fillet_requires_each_free_contact_and_preserves_exact_trims",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "known-fillet-centers-20260928-v663-collapsed_circle_fillet_requires_each_free_contact_and_preserves_exact_trims-8898db04fb.log",
+      "elapsed_seconds": 0.01565398694947362,
+      "target": "hypercurve",
+      "name": "curve::curve_fillet::tests::collapsed_circle_fillet_requires_each_free_contact_and_preserves_exact_trims",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/known-fillet-centers-20260928-v663-hypercurve-tests",
+        "--exact",
+        "bezier_offset::conversion_tests::domain_component_normal_constraints_follow_swapped_operands",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "known-fillet-centers-20260928-v663-domain_component_normal_constraints_follow_swapped_operands-0c74b5bde7.log",
+      "elapsed_seconds": 0.015655275899916887,
+      "target": "hypercurve",
+      "name": "bezier_offset::conversion_tests::domain_component_normal_constraints_follow_swapped_operands",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/known-fillet-centers-20260928-v663-hypercurve-tests",
+        "--exact",
+        "bezier_offset::conversion_tests::original_parallel_normal_constraints_clip_finite_and_incident_components",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "known-fillet-centers-20260928-v663-original_parallel_normal_constraints_clip_finite_and_incident_components-918c670ea1.log",
+      "elapsed_seconds": 0.0637955260463059,
+      "target": "hypercurve",
+      "name": "bezier_offset::conversion_tests::original_parallel_normal_constraints_clip_finite_and_incident_components",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/known-fillet-centers-20260928-v663-hypercurve-tests",
+        "--exact",
+        "bezier_offset::regular_parallel_contact_tests::stationary_endpoint_line_chart_reuses_regular_pair_incidence",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "known-fillet-centers-20260928-v663-stationary_endpoint_line_chart_reuses_regular_pair_incidence-f7bd5bba1d.log",
+      "elapsed_seconds": 0.015709402039647102,
+      "target": "hypercurve",
+      "name": "bezier_offset::regular_parallel_contact_tests::stationary_endpoint_line_chart_reuses_regular_pair_incidence",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/known-fillet-centers-20260928-v663-hypercurve-tests",
+        "--exact",
+        "bezier_offset::regular_parallel_contact_tests::regular_source_frame_keeps_contact_scale_across_a_center_cusp",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "known-fillet-centers-20260928-v663-regular_source_frame_keeps_contact_scale_across_a_center_cusp-03b3f5d50b.log",
+      "elapsed_seconds": 0.03177977097220719,
+      "target": "hypercurve",
+      "name": "bezier_offset::regular_parallel_contact_tests::regular_source_frame_keeps_contact_scale_across_a_center_cusp",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/known-fillet-centers-20260928-v663-hypercurve-tests",
+        "--exact",
+        "bezier_offset::regular_parallel_contact_tests::owned_endpoint_tangents_replay_both_sides_of_stationary_parameters",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "known-fillet-centers-20260928-v663-owned_endpoint_tangents_replay_both_sides_of_stationary_parameters-965bfa8be8.log",
+      "elapsed_seconds": 0.0035579358227550983,
+      "target": "hypercurve",
+      "name": "bezier_offset::regular_parallel_contact_tests::owned_endpoint_tangents_replay_both_sides_of_stationary_parameters",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/known-fillet-centers-20260928-v663-hypercurve-tests",
+        "--exact",
+        "bezier_offset::conversion_tests::odd_source_cusp_branches_do_not_saturate_a_false_source_diagonal",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "known-fillet-centers-20260928-v663-odd_source_cusp_branches_do_not_saturate_a_false_source_diagonal-219e7965a1.log",
+      "elapsed_seconds": 0.113839543890208,
+      "target": "hypercurve",
+      "name": "bezier_offset::conversion_tests::odd_source_cusp_branches_do_not_saturate_a_false_source_diagonal",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/known-fillet-centers-20260928-v663-hypercurve-tests",
+        "--exact",
+        "bezier_offset::conversion_tests::regular_ph_branch_pairs_retain_exact_cusp_incidence",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "known-fillet-centers-20260928-v663-regular_ph_branch_pairs_retain_exact_cusp_incidence-bb5f625684.log",
+      "elapsed_seconds": 2.8174579739570618,
+      "target": "hypercurve",
+      "name": "bezier_offset::conversion_tests::regular_ph_branch_pairs_retain_exact_cusp_incidence",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/known-fillet-centers-20260928-v663-hypercurve-tests",
+        "--exact",
+        "bezier_offset::regular_parallel_contact_tests::regular_source_frames_accept_every_retained_parameter_authority",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "known-fillet-centers-20260928-v663-regular_source_frames_accept_every_retained_parameter_authority-50b6dc8e12.log",
+      "elapsed_seconds": 0.00769750215113163,
+      "target": "hypercurve",
+      "name": "bezier_offset::regular_parallel_contact_tests::regular_source_frames_accept_every_retained_parameter_authority",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/known-fillet-centers-20260928-v663-hypercurve-tests",
+        "--exact",
+        "bezier_offset::regular_parallel_contact_tests::regular_source_frames_retain_unprojectable_selected_parameters",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "known-fillet-centers-20260928-v663-regular_source_frames_retain_unprojectable_selected_parameters-8d235dfa84.log",
+      "elapsed_seconds": 0.007584509905427694,
+      "target": "hypercurve",
+      "name": "bezier_offset::regular_parallel_contact_tests::regular_source_frames_retain_unprojectable_selected_parameters",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/known-fillet-centers-20260928-v663-hypercurve-tests",
+        "--exact",
+        "bezier_offset::regular_parallel_contact_tests::regular_source_frames_reject_poles_in_every_parameter_authority",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "known-fillet-centers-20260928-v663-regular_source_frames_reject_poles_in_every_parameter_authority-90da35ad55.log",
+      "elapsed_seconds": 0.0035312979016453028,
+      "target": "hypercurve",
+      "name": "bezier_offset::regular_parallel_contact_tests::regular_source_frames_reject_poles_in_every_parameter_authority",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/known-fillet-centers-20260928-v663-hypercurve-tests",
+        "--exact",
+        "bezier_offset::regular_parallel_contact_tests::regular_source_cells_preserve_reversed_and_algebraic_range_boundaries",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "known-fillet-centers-20260928-v663-regular_source_cells_preserve_reversed_and_algebraic_range_boundaries-55659b1c04.log",
+      "elapsed_seconds": 0.015687454957515,
+      "target": "hypercurve",
+      "name": "bezier_offset::regular_parallel_contact_tests::regular_source_cells_preserve_reversed_and_algebraic_range_boundaries",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/known-fillet-centers-20260928-v663-hypercurve-tests",
+        "--exact",
+        "bezier_offset::regular_parallel_contact_tests::stationary_component_queries_keep_one_sided_endpoints_and_exact_constraints",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "known-fillet-centers-20260928-v663-stationary_component_queries_keep_one_sided_endpoints_and_exact_constraints-7ef2d044c8.log",
+      "elapsed_seconds": 1.966423872858286,
+      "target": "hypercurve",
+      "name": "bezier_offset::regular_parallel_contact_tests::stationary_component_queries_keep_one_sided_endpoints_and_exact_constraints",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/known-fillet-centers-20260928-v663-hypercurve-tests",
+        "--exact",
+        "bezier_offset::finite_domain_ownership_tests::rational_stationary_components_keep_opposite_source_charts_and_ownership",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "known-fillet-centers-20260928-v663-rational_stationary_components_keep_opposite_source_charts_and_ownership-f56dcdd35d.log",
+      "elapsed_seconds": 0.015699723036959767,
+      "target": "hypercurve",
+      "name": "bezier_offset::finite_domain_ownership_tests::rational_stationary_components_keep_opposite_source_charts_and_ownership",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/known-fillet-centers-20260928-v663-hypercurve-tests",
+        "--exact",
+        "curve::curve_fillet::stationary_continuous_family_regression::continuous_fillets_preserve_stationary_reparameterization",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "known-fillet-centers-20260928-v663-continuous_fillets_preserve_stationary_reparameterization-29d6a94148.log",
+      "elapsed_seconds": 33.908609468024224,
+      "target": "hypercurve",
+      "name": "curve::curve_fillet::stationary_continuous_family_regression::continuous_fillets_preserve_stationary_reparameterization",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/known-fillet-centers-20260928-v663-hypercurve-tests",
+        "--exact",
+        "curve::curve_fillet::tests::coincident_circular_fillet_constraints_complete_the_authored_chart_solutions",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "known-fillet-centers-20260928-v663-coincident_circular_fillet_constraints_complete_the_authored_chart_solutions-bc345ae775.log",
+      "elapsed_seconds": 0.8650930270086974,
+      "target": "hypercurve",
+      "name": "curve::curve_fillet::tests::coincident_circular_fillet_constraints_complete_the_authored_chart_solutions",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/known-fillet-centers-20260928-v663-hypercurve-tests",
+        "--exact",
+        "curve::curve_fillet::tests::coincident_circular_fillet_domains_distinguish_families_and_isolated_contacts",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "known-fillet-centers-20260928-v663-coincident_circular_fillet_domains_distinguish_families_and_isolated_contacts-a0c7b93f11.log",
+      "elapsed_seconds": 0.0035560971591621637,
+      "target": "hypercurve",
+      "name": "curve::curve_fillet::tests::coincident_circular_fillet_domains_distinguish_families_and_isolated_contacts",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/known-fillet-centers-20260928-v663-hypercurve-tests",
+        "--exact",
+        "curve::curve_fillet::tests::collapsed_selected_circle_fillet_crosses_seams_and_reenters_region_editing",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "known-fillet-centers-20260928-v663-collapsed_selected_circle_fillet_crosses_seams_and_reenters_region_editing-f8c6c6039b.log",
+      "elapsed_seconds": 16.435125177027658,
+      "target": "hypercurve",
+      "name": "curve::curve_fillet::tests::collapsed_selected_circle_fillet_crosses_seams_and_reenters_region_editing",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/known-fillet-centers-20260928-v663-hypercurve-tests",
+        "--exact",
+        "curve::curve_fillet::tests::collapsed_selected_circle_fillet_reuses_constrained_contacts_and_support",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "known-fillet-centers-20260928-v663-collapsed_selected_circle_fillet_reuses_constrained_contacts_and_support-24c4e7ee02.log",
+      "elapsed_seconds": 28.151406856020913,
+      "target": "hypercurve",
+      "name": "curve::curve_fillet::tests::collapsed_selected_circle_fillet_reuses_constrained_contacts_and_support",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/known-fillet-centers-20260928-v663-hypercurve-tests",
+        "--exact",
+        "curve::curve_fillet::tests::native_circle_fillet_retains_selected_contacts_through_reconstruction",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "known-fillet-centers-20260928-v663-native_circle_fillet_retains_selected_contacts_through_reconstruction-5c25f327f7.log",
+      "elapsed_seconds": 0.2642182409763336,
+      "target": "hypercurve",
+      "name": "curve::curve_fillet::tests::native_circle_fillet_retains_selected_contacts_through_reconstruction",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/known-fillet-centers-20260928-v663-hypercurve-tests",
+        "--exact",
+        "curve::curve_fillet::tests::coincident_line_fillet_constraints_complete_the_authored_chart_solutions",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "known-fillet-centers-20260928-v663-coincident_line_fillet_constraints_complete_the_authored_chart_solutions-fe2d522311.log",
+      "elapsed_seconds": 0.06388662895187736,
+      "target": "hypercurve",
+      "name": "curve::curve_fillet::tests::coincident_line_fillet_constraints_complete_the_authored_chart_solutions",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/known-fillet-centers-20260928-v663-hypercurve-tests",
+        "--exact",
+        "curve::curve_fillet::tests::coincident_linear_fillet_domains_exclude_remote_endpoints",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "known-fillet-centers-20260928-v663-coincident_linear_fillet_domains_exclude_remote_endpoints-33f9cd60d3.log",
+      "elapsed_seconds": 0.007710801903158426,
+      "target": "hypercurve",
+      "name": "curve::curve_fillet::tests::coincident_linear_fillet_domains_exclude_remote_endpoints",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/known-fillet-centers-20260928-v663-hypercurve-tests",
+        "--exact",
+        "curve::curve_fillet::tests::coincident_retained_line_fillet_keeps_independent_endpoint_fields",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "known-fillet-centers-20260928-v663-coincident_retained_line_fillet_keeps_independent_endpoint_fields-42aa4f1eb0.log",
+      "elapsed_seconds": 0.11395515594631433,
+      "target": "hypercurve",
+      "name": "curve::curve_fillet::tests::coincident_retained_line_fillet_keeps_independent_endpoint_fields",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/known-fillet-centers-20260928-v663-hypercurve-tests",
+        "--exact",
+        "curve::curve_fillet::tests::collapsed_circle_parallel_fillet_replays_contacts_and_normal_sheets",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "known-fillet-centers-20260928-v663-collapsed_circle_parallel_fillet_replays_contacts_and_normal_sheets-62f6ef54ac.log",
+      "elapsed_seconds": 0.0317873100284487,
+      "target": "hypercurve",
+      "name": "curve::curve_fillet::tests::collapsed_circle_parallel_fillet_replays_contacts_and_normal_sheets",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/known-fillet-centers-20260928-v663-hypercurve-tests",
+        "--exact",
+        "curve::curve_fillet::tests::collapsed_fillet_point_contacts_preserve_distinct_bezier_preimages",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "known-fillet-centers-20260928-v663-collapsed_fillet_point_contacts_preserve_distinct_bezier_preimages-58d18e1aa5.log",
+      "elapsed_seconds": 0.015729770995676517,
+      "target": "hypercurve",
+      "name": "curve::curve_fillet::tests::collapsed_fillet_point_contacts_preserve_distinct_bezier_preimages",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/known-fillet-centers-20260928-v663-hypercurve-tests",
+        "--exact",
+        "curve::curve_fillet::tests::collapsed_circular_spline_fillets_keep_authored_contact_parameters",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "known-fillet-centers-20260928-v663-collapsed_circular_spline_fillets_keep_authored_contact_parameters-7e6a7ab4e9.log",
+      "elapsed_seconds": 0.007636375958099961,
+      "target": "hypercurve",
+      "name": "curve::curve_fillet::tests::collapsed_circular_spline_fillets_keep_authored_contact_parameters",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/known-fillet-centers-20260928-v663-hypercurve-tests",
+        "--exact",
+        "curve::curve_fillet::tests::circular_spline_contact_parameters_distinguish_repeated_point_visits",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "known-fillet-centers-20260928-v663-circular_spline_contact_parameters_distinguish_repeated_point_visits-da26157a22.log",
+      "elapsed_seconds": 0.007616547867655754,
+      "target": "hypercurve",
+      "name": "curve::curve_fillet::tests::circular_spline_contact_parameters_distinguish_repeated_point_visits",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/known-fillet-centers-20260928-v663-hypercurve-tests",
+        "--exact",
+        "curve::curve_fillet::tests::continuous_fillet_constraints_accept_arbitrary_exact_real_contacts",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "known-fillet-centers-20260928-v663-continuous_fillet_constraints_accept_arbitrary_exact_real_contacts-5a2623c2e3.log",
+      "elapsed_seconds": 0.03173021390102804,
+      "target": "hypercurve",
+      "name": "curve::curve_fillet::tests::continuous_fillet_constraints_accept_arbitrary_exact_real_contacts",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/known-fillet-centers-20260928-v663-hypercurve-tests",
+        "--exact",
+        "curve::curve_fillet::tests::fillet_contacts_use_authored_spline_knots_across_multiple_charts",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "known-fillet-centers-20260928-v663-fillet_contacts_use_authored_spline_knots_across_multiple_charts-6e2b42372f.log",
+      "elapsed_seconds": 0.003491939976811409,
+      "target": "hypercurve",
+      "name": "curve::curve_fillet::tests::fillet_contacts_use_authored_spline_knots_across_multiple_charts",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/known-fillet-centers-20260928-v663-hypercurve-tests",
+        "--exact",
+        "curve::curve_fillet::tests::isolated_fillet_constraints_are_conjunctive_and_use_input_parameters",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "known-fillet-centers-20260928-v663-isolated_fillet_constraints_are_conjunctive_and_use_input_parameters-0a52bf446e.log",
+      "elapsed_seconds": 0.0036076619289815426,
+      "target": "hypercurve",
+      "name": "curve::curve_fillet::tests::isolated_fillet_constraints_are_conjunctive_and_use_input_parameters",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/known-fillet-centers-20260928-v663-hypercurve-tests",
+        "--exact",
+        "curve::curve_fillet::tests::joined_path_selects_and_replays_a_continuous_fillet_family",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "known-fillet-centers-20260928-v663-joined_path_selects_and_replays_a_continuous_fillet_family-917c82aef4.log",
+      "elapsed_seconds": 0.3141764448955655,
+      "target": "hypercurve",
+      "name": "curve::curve_fillet::tests::joined_path_selects_and_replays_a_continuous_fillet_family",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/known-fillet-centers-20260928-v663-hypercurve-tests",
+        "--exact",
+        "curve::curve_fillet::tests::normalized_region_selects_and_reuses_a_continuous_fillet_family",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "known-fillet-centers-20260928-v663-normalized_region_selects_and_reuses_a_continuous_fillet_family-48c0d2fec3.log",
+      "elapsed_seconds": 0.11391497799195349,
+      "target": "hypercurve",
+      "name": "curve::curve_fillet::tests::normalized_region_selects_and_reuses_a_continuous_fillet_family",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/known-fillet-centers-20260928-v663-hypercurve-tests",
+        "--exact",
+        "curve::curve_fillet::tests::promoted_line_contact_constraints_keep_the_nonlinear_source_chart",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "known-fillet-centers-20260928-v663-promoted_line_contact_constraints_keep_the_nonlinear_source_chart-c7e716bf90.log",
+      "elapsed_seconds": 0.00362136191688478,
+      "target": "hypercurve",
+      "name": "curve::curve_fillet::tests::promoted_line_contact_constraints_keep_the_nonlinear_source_chart",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/known-fillet-centers-20260928-v663-hypercurve-tests",
+        "--exact",
+        "curve::curve_fillet::tests::nonlinear_linear_fillet_components_retain_unique_contacts_and_tangents",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 101,
+      "log": "known-fillet-centers-20260928-v663-nonlinear_linear_fillet_components_retain_unique_contacts_and_tangents-87169fa6dd.log",
+      "elapsed_seconds": 0.00759750884026289,
+      "target": "hypercurve",
+      "name": "curve::curve_fillet::tests::nonlinear_linear_fillet_components_retain_unique_contacts_and_tangents",
+      "passed": false
+    }
+  ],
+  "checks": [],
+  "expected_cases": {
+    "hypercurve": [
+      "curve::curve_fillet::incident_parallel_cusp_nonlinear_regression::incident_parallel_cusp_fillet_retains_nonlinear_partner_contact",
+      "bezier_offset::incident_offset_cusp_side_regression::incident_cusp_normal_side_survives_parameter_chart_reversal",
+      "bezier_offset::incident_offset_cusp_side_regression::incident_cusp_side_does_not_create_undefined_or_collapsed_tangents",
+      "curve::curve_fillet::incident_parallel_cusp_fillet_regression::incident_parallel_cusp_fillet_retains_native_line_contact",
+      "curve::curve_fillet::incident_parallel_cusp_fillet_regression::incident_parallel_cusp_fillet_retains_polynomial_line_contact",
+      "bezier_offset::conversion_tests::recursive_incidence_keeps_stationary_and_collapsed_semantics",
+      "curve::curve_fillet::stationary_recursive_point_constraint_regression::stationary_fillet_family_accepts_independent_recursive_point_constraints",
+      "curve::curve_fillet::stationary_retained_point_constraint_regression::stationary_fillet_family_accepts_independent_retained_point_constraints",
+      "curve::curve_fillet::stationary_family_composition_regression::normalized_region_selects_and_reuses_a_stationary_fillet_family",
+      "curve::curve_fillet::tests::collapsed_parallel_fillet_requires_the_original_circle_normal",
+      "curve::curve_fillet::tests::collapsed_circle_fillet_requires_each_free_contact_and_preserves_exact_trims",
+      "bezier_offset::conversion_tests::domain_component_normal_constraints_follow_swapped_operands",
+      "bezier_offset::conversion_tests::original_parallel_normal_constraints_clip_finite_and_incident_components",
+      "bezier_offset::regular_parallel_contact_tests::stationary_endpoint_line_chart_reuses_regular_pair_incidence",
+      "bezier_offset::regular_parallel_contact_tests::regular_source_frame_keeps_contact_scale_across_a_center_cusp",
+      "bezier_offset::regular_parallel_contact_tests::owned_endpoint_tangents_replay_both_sides_of_stationary_parameters",
+      "bezier_offset::conversion_tests::odd_source_cusp_branches_do_not_saturate_a_false_source_diagonal",
+      "bezier_offset::conversion_tests::regular_ph_branch_pairs_retain_exact_cusp_incidence",
+      "bezier_offset::regular_parallel_contact_tests::regular_source_frames_accept_every_retained_parameter_authority",
+      "bezier_offset::regular_parallel_contact_tests::regular_source_frames_retain_unprojectable_selected_parameters",
+      "bezier_offset::regular_parallel_contact_tests::regular_source_frames_reject_poles_in_every_parameter_authority",
+      "bezier_offset::regular_parallel_contact_tests::regular_source_cells_preserve_reversed_and_algebraic_range_boundaries",
+      "bezier_offset::regular_parallel_contact_tests::stationary_component_queries_keep_one_sided_endpoints_and_exact_constraints",
+      "bezier_offset::finite_domain_ownership_tests::rational_stationary_components_keep_opposite_source_charts_and_ownership",
+      "curve::curve_fillet::stationary_continuous_family_regression::continuous_fillets_preserve_stationary_reparameterization",
+      "curve::curve_fillet::tests::coincident_circular_fillet_constraints_complete_the_authored_chart_solutions",
+      "curve::curve_fillet::tests::coincident_circular_fillet_domains_distinguish_families_and_isolated_contacts",
+      "curve::curve_fillet::tests::collapsed_selected_circle_fillet_crosses_seams_and_reenters_region_editing",
+      "curve::curve_fillet::tests::collapsed_selected_circle_fillet_reuses_constrained_contacts_and_support",
+      "curve::curve_fillet::tests::native_circle_fillet_retains_selected_contacts_through_reconstruction",
+      "curve::curve_fillet::tests::coincident_line_fillet_constraints_complete_the_authored_chart_solutions",
+      "curve::curve_fillet::tests::coincident_linear_fillet_domains_exclude_remote_endpoints",
+      "curve::curve_fillet::tests::coincident_retained_line_fillet_keeps_independent_endpoint_fields",
+      "curve::curve_fillet::tests::collapsed_circle_parallel_fillet_replays_contacts_and_normal_sheets",
+      "curve::curve_fillet::tests::collapsed_fillet_point_contacts_preserve_distinct_bezier_preimages",
+      "curve::curve_fillet::tests::collapsed_circular_spline_fillets_keep_authored_contact_parameters",
+      "curve::curve_fillet::tests::circular_spline_contact_parameters_distinguish_repeated_point_visits",
+      "curve::curve_fillet::tests::continuous_fillet_constraints_accept_arbitrary_exact_real_contacts",
+      "curve::curve_fillet::tests::fillet_contacts_use_authored_spline_knots_across_multiple_charts",
+      "curve::curve_fillet::tests::isolated_fillet_constraints_are_conjunctive_and_use_input_parameters",
+      "curve::curve_fillet::tests::joined_path_selects_and_replays_a_continuous_fillet_family",
+      "curve::curve_fillet::tests::normalized_region_selects_and_reuses_a_continuous_fillet_family",
+      "curve::curve_fillet::tests::promoted_line_contact_constraints_keep_the_nonlinear_source_chart",
+      "curve::curve_fillet::tests::nonlinear_linear_fillet_components_retain_unique_contacts_and_tangents",
+      "curve::curve_fillet::tests::coincident_circular_fillet_families_use_the_surviving_rational_intervals",
+      "curve::curve_fillet::algebraic_bridge_fillet_regression::fillet_extension_owns_the_algebraic_endpoint_bridge"
+    ],
+    "hypercurve_stationary_fillets": [
+      "contacts::stationary_reparameterization_reversed_strict",
+      "contacts::stationary_reparameterization_reversed_approximate",
+      "contacts::one_sided_cusp_reversed_strict",
+      "contacts::one_sided_cusp_reversed_approximate",
+      "contacts::regular_parabola_strict",
+      "contacts::stationary_reparameterization_strict",
+      "contacts::one_sided_cusp_strict",
+      "contacts::regular_parabola_approximate",
+      "contacts::stationary_reparameterization_approximate",
+      "contacts::one_sided_cusp_approximate",
+      "contacts::interior_stationary_contact_reversed_strict",
+      "contacts::interior_stationary_contact_reversed_approximate",
+      "contacts::interior_stationary_contact_strict",
+      "contacts::interior_stationary_contact_approximate",
+      "contacts::opposite_stationary_sheet_strict",
+      "contacts::opposite_stationary_sheet_approximate",
+      "contacts::opposite_stationary_sheet_reversed_strict",
+      "contacts::opposite_stationary_sheet_reversed_approximate",
+      "composition::stationary_fillet_region_strict",
+      "composition::stationary_fillet_region_approximate",
+      "composition::stationary_fillet_offset_strict",
+      "composition::stationary_fillet_offset_approximate",
+      "exact_scalars::stationary_contact_exact_scalars_strict",
+      "exact_scalars::stationary_contact_exact_scalars_approximate",
+      "retained_domains::retained_regular_source_range_strict",
+      "retained_domains::retained_regular_source_range_approximate",
+      "retained_domains::retained_nonzero_parallel_range_strict",
+      "retained_domains::retained_nonzero_parallel_range_approximate",
+      "contacts::quadratic_line_preserves_stationary_contacts_strict",
+      "contacts::quadratic_line_preserves_stationary_contacts_approximate",
+      "contacts::quadratic_line_interior_contacts_strict",
+      "contacts::quadratic_line_interior_contacts_approximate",
+      "contacts::quadratic_line_opposite_sheet_strict",
+      "contacts::quadratic_line_opposite_sheet_approximate"
+    ]
+  },
+  "test_listings": {
+    "hypercurve": {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/known-fillet-centers-20260928-v663-hypercurve-tests",
+        "--list"
+      ],
+      "returncode": 0,
+      "log": "known-fillet-centers-20260928-v663-hypercurve-list.log",
+      "elapsed_seconds": 0.007655964931473136
+    },
+    "hypercurve_stationary_fillets": {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/known-fillet-centers-20260928-v663-hypercurve_stationary_fillets-tests",
+        "--list"
+      ],
+      "returncode": 0,
+      "log": "known-fillet-centers-20260928-v663-hypercurve_stationary_fillets-list.log",
+      "elapsed_seconds": 0.00353506812825799
+    }
+  },
+  "all_processes_reaped": true,
+  "probe_complete": false,
+  "qualification_complete": false,
+  "failure": "focused regression failed: curve::curve_fillet::tests::nonlinear_linear_fillet_components_retain_unique_contacts_and_tangents"
+}

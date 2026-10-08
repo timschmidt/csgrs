@@ -1,0 +1,14 @@
+[package]
+name = "calcium-root-exp-proof-probe"
+version = "0.1.0"
+edition = "2024"
+publish = false
+
+[workspace]
+
+[dependencies]
+hyperreal = { path = "../root-exp-proof-trial-hyperreal" }
+
+[[bin]]
+name = "calcium-root-exp-proof-probe"
+path = "../root-exp-probe.rs"

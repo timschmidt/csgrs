@@ -1,0 +1,117 @@
+{
+  "checks": [
+    {
+      "label": "fmt",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustfmt",
+        "--edition",
+        "2024",
+        "--check",
+        "src/bezier_offset.rs",
+        "src/bezier_parameter.rs"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 2.4315404570661485,
+      "log": "local-chord-complete-replay-20260924-v4-fmt.log"
+    },
+    {
+      "label": "clippy-1",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "clippy",
+        "--all-targets",
+        "--all-features",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 25.823358564986847,
+      "log": "local-chord-complete-replay-20260924-v4-clippy-1.log"
+    },
+    {
+      "label": "clippy-2",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "clippy",
+        "--all-targets",
+        "--no-default-features",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 24.821863306919113,
+      "log": "local-chord-complete-replay-20260924-v4-clippy-2.log"
+    }
+  ],
+  "cases": [
+    {
+      "label": "isolation_retains_large_rational_roots_until_projection_is_requested",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/local-chord-complete-replay-20260924-v4-libtest",
+        "--exact",
+        "bezier_parameter::conversion_tests::isolation_retains_large_rational_roots_until_projection_is_requested",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.27191582205705345,
+      "log": "local-chord-complete-replay-20260924-v4-isolation_retains_large_rational_roots_until_projection_is_requested.log"
+    },
+    {
+      "label": "rational_reconstruction_reuses_sturm_ownership_across_both_children",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/local-chord-complete-replay-20260924-v4-libtest",
+        "--exact",
+        "bezier_parameter::conversion_tests::rational_reconstruction_reuses_sturm_ownership_across_both_children",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.27051071799360216,
+      "log": "local-chord-complete-replay-20260924-v4-rational_reconstruction_reuses_sturm_ownership_across_both_children.log"
+    },
+    {
+      "label": "local_parallel_endpoint_clipping_reuses_a_coefficient_root",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/local-chord-complete-replay-20260924-v4-libtest",
+        "--exact",
+        "bezier_offset::conversion_tests::local_parallel_endpoint_clipping_reuses_a_coefficient_root",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.2749587430153042,
+      "log": "local-chord-complete-replay-20260924-v4-local_parallel_endpoint_clipping_reuses_a_coefficient_root.log"
+    },
+    {
+      "label": "one_fragment_nonzero_parallel_loop_extends_chamfer_cuts_on_one_finite_envelope",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/local-chord-complete-replay-20260924-v4-libtest",
+        "--exact",
+        "bezier_region::tests::one_fragment_nonzero_parallel_loop_extends_chamfer_cuts_on_one_finite_envelope",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": "timeout",
+      "elapsed_seconds": 75.27548128599301,
+      "log": "local-chord-complete-replay-20260924-v4-one_fragment_nonzero_parallel_loop_extends_chamfer_cuts_on_one_finite_envelope.log"
+    }
+  ],
+  "all_processes_reaped": true,
+  "binary_sha256": "8a0d13ddc02fdcc544501f89764e759f3ed15dad2fe5cc3ce6957619945f7c08",
+  "all_sources_unchanged": true
+}

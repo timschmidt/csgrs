@@ -1,0 +1,291 @@
+{
+  "hashes": {
+    "LateProbe.hs": "b02ff829139382457ad20cba4906b03f43291090e9cd1017ba1353bd12c8676c",
+    "LateBenchmark.hs": "d3ca7d8aa46ba789f1e42a89c584fe5aa0244d67f377034c071abf5feb58240d",
+    "LateBenchmark.bench-final.hs": "d3ca7d8aa46ba789f1e42a89c584fe5aa0244d67f377034c071abf5feb58240d",
+    "late_oracle.rs": "e37beb789ee61d654f5d8f4b221afd1f5425a26ffcb8c82160c33719a7d9a10a",
+    "../../.audit-plume-late.4Yth3g/late-benchmark": "140522bd3521d354dd55494bf5b8949a28b6483399c5b012d2215937a1ebe271"
+  },
+  "qualification": {
+    "logistic": {
+      "requests": 392,
+      "finitePrefixes": 350,
+      "cappedObservations": 42,
+      "numericalFailures": 28
+    },
+    "logistic-debug": {
+      "requests": 392,
+      "finitePrefixes": 350,
+      "cappedObservations": 42,
+      "numericalFailures": 28
+    },
+    "long": {
+      "requests": 42,
+      "finitePrefixes": 34,
+      "cappedObservations": 8,
+      "numericalFailures": 2
+    },
+    "functional": {
+      "requests": 16,
+      "finitePrefixes": 12,
+      "cappedObservations": 4,
+      "numericalFailures": 0
+    },
+    "functional-debug": {
+      "requests": 16,
+      "finitePrefixes": 10,
+      "cappedObservations": 6,
+      "numericalFailures": 0
+    },
+    "first-digit": {
+      "requests": 8,
+      "finitePrefixes": 8,
+      "cappedObservations": 0,
+      "numericalFailures": null
+    }
+  },
+  "shortO0O2Identical": true,
+  "sharedFunctionalPrefixesIdentical": true,
+  "hyperChecksPerBuild": 160,
+  "oracleSelfChecks": 91,
+  "memcheckErrors": 0,
+  "benchObservations": 108,
+  "benchKept": 96,
+  "groups": [
+    {
+      "input": "0.1",
+      "iterations": 4,
+      "variants": {
+        "sb-float": {
+          "medianCpuPs": 313499000,
+          "minCpuPs": 280367000,
+          "maxCpuPs": 359101000,
+          "medianAllocatedBytes": 327976,
+          "minAllocatedBytes": 327976,
+          "maxAllocatedBytes": 327976
+        },
+        "dy-float": {
+          "medianCpuPs": 4877748500,
+          "minCpuPs": 3597691000,
+          "maxCpuPs": 5536067000,
+          "medianAllocatedBytes": 5589104,
+          "minAllocatedBytes": 5589104,
+          "maxAllocatedBytes": 5589104
+        }
+      },
+      "dyadicOverSignedMedianCpu": 15.559056009748037,
+      "pairedMedianRatio": 15.175334867494467,
+      "pairedMedianBootstrap95": [
+        12.290379975295526,
+        17.05036120748898
+      ],
+      "pairedRatios": [
+        15.416462220935058,
+        18.43301815120895,
+        17.05036120748898,
+        12.968063841278315,
+        14.934207514053876,
+        11.604144693341075,
+        12.290379975295526,
+        16.057406502155324
+      ],
+      "dyadicOverSignedAllocation": 17.041198136449008
+    },
+    {
+      "input": "0.1",
+      "iterations": 8,
+      "variants": {
+        "sb-float": {
+          "medianCpuPs": 851644000,
+          "minCpuPs": 715721000,
+          "maxCpuPs": 877767000,
+          "medianAllocatedBytes": 888432,
+          "minAllocatedBytes": 888432,
+          "maxAllocatedBytes": 888432
+        },
+        "dy-float": {
+          "medianCpuPs": 21994680500,
+          "minCpuPs": 21814257000,
+          "maxCpuPs": 33092084000,
+          "medianAllocatedBytes": 34944864,
+          "minAllocatedBytes": 34944864,
+          "maxAllocatedBytes": 34944864
+        }
+      },
+      "dyadicOverSignedMedianCpu": 25.826143905199825,
+      "pairedMedianRatio": 29.538666886551695,
+      "pairedMedianBootstrap95": [
+        25.468235714419144,
+        34.86404706488168
+      ],
+      "pairedRatios": [
+        25.329564754493145,
+        30.991482714633214,
+        38.848681646357214,
+        25.468235714419144,
+        30.156074013369285,
+        25.631970902018633,
+        28.921259759734106,
+        34.86404706488168
+      ],
+      "dyadicOverSignedAllocation": 39.33318925927927
+    },
+    {
+      "input": "0.1",
+      "iterations": 10,
+      "variants": {
+        "sb-float": {
+          "medianCpuPs": 1015900500,
+          "minCpuPs": 955930000,
+          "maxCpuPs": 1263665000,
+          "medianAllocatedBytes": 1239120,
+          "minAllocatedBytes": 1239120,
+          "maxAllocatedBytes": 1239120
+        },
+        "dy-float": {
+          "medianCpuPs": 149616739500,
+          "minCpuPs": 146105711000,
+          "maxCpuPs": 209332926000,
+          "medianAllocatedBytes": 112327088,
+          "minAllocatedBytes": 112327088,
+          "maxAllocatedBytes": 112327088
+        }
+      },
+      "dyadicOverSignedMedianCpu": 147.2749934663877,
+      "pairedMedianRatio": 151.6247582868338,
+      "pairedMedianBootstrap95": [
+        122.23360506265047,
+        161.10643102714948
+      ],
+      "pairedRatios": [
+        148.6690629839696,
+        122.23360506265047,
+        207.90751209706255,
+        119.83586868355141,
+        156.72818777951656,
+        154.58045358969798,
+        143.408949892896,
+        161.10643102714948
+      ],
+      "dyadicOverSignedAllocation": 90.65069404093228
+    },
+    {
+      "input": "0.5467",
+      "iterations": 4,
+      "variants": {
+        "sb-float": {
+          "medianCpuPs": 225946000,
+          "minCpuPs": 212432000,
+          "maxCpuPs": 267458000,
+          "medianAllocatedBytes": 272688,
+          "minAllocatedBytes": 272688,
+          "maxAllocatedBytes": 272688
+        },
+        "dy-float": {
+          "medianCpuPs": 3657480000,
+          "minCpuPs": 3482810000,
+          "maxCpuPs": 4866475000,
+          "medianAllocatedBytes": 5040168,
+          "minAllocatedBytes": 5040168,
+          "maxAllocatedBytes": 5040168
+        }
+      },
+      "dyadicOverSignedMedianCpu": 16.187407610668036,
+      "pairedMedianRatio": 16.130336170518355,
+      "pairedMedianBootstrap95": [
+        14.968882967292732,
+        17.58185635379029
+      ],
+      "pairedRatios": [
+        17.537659109738645,
+        15.91180108253798,
+        16.348871258498733,
+        14.968882967292732,
+        18.195286736609113,
+        17.58185635379029,
+        14.428140616922281,
+        15.570290441030263
+      ],
+      "dyadicOverSignedAllocation": 18.483277591973245
+    },
+    {
+      "input": "0.5467",
+      "iterations": 8,
+      "variants": {
+        "sb-float": {
+          "medianCpuPs": 753127000,
+          "minCpuPs": 621259000,
+          "maxCpuPs": 803544000,
+          "medianAllocatedBytes": 728664,
+          "minAllocatedBytes": 728664,
+          "maxAllocatedBytes": 728664
+        },
+        "dy-float": {
+          "medianCpuPs": 20253390000,
+          "minCpuPs": 19340961000,
+          "maxCpuPs": 31019538000,
+          "medianAllocatedBytes": 32422672,
+          "minAllocatedBytes": 32422672,
+          "maxAllocatedBytes": 32422672
+        }
+      },
+      "dyadicOverSignedMedianCpu": 26.892396634299395,
+      "pairedMedianRatio": 28.764473493288584,
+      "pairedMedianBootstrap95": [
+        25.903381839302188,
+        38.64294367726024
+      ],
+      "pairedRatios": [
+        31.131880584426142,
+        27.63349607627617,
+        42.00127549293334,
+        26.191261984371945,
+        29.895450910301,
+        25.903381839302188,
+        24.473634300050776,
+        38.64294367726024
+      ],
+      "dyadicOverSignedAllocation": 44.49605305051437
+    },
+    {
+      "input": "0.5467",
+      "iterations": 10,
+      "variants": {
+        "sb-float": {
+          "medianCpuPs": 1062957000,
+          "minCpuPs": 894805000,
+          "maxCpuPs": 1110887000,
+          "medianAllocatedBytes": 1025320,
+          "minAllocatedBytes": 1025320,
+          "maxAllocatedBytes": 1025320
+        },
+        "dy-float": {
+          "medianCpuPs": 132252380000,
+          "minCpuPs": 129267684000,
+          "maxCpuPs": 193006634000,
+          "medianAllocatedBytes": 105919696,
+          "minAllocatedBytes": 105919696,
+          "maxAllocatedBytes": 105919696
+        }
+      },
+      "dyadicOverSignedMedianCpu": 124.41931329301185,
+      "pairedMedianRatio": 135.54898984646806,
+      "pairedMedianBootstrap95": [
+        120.44384730275301,
+        154.35555863995577
+      ],
+      "pairedRatios": [
+        154.35555863995577,
+        120.44384730275301,
+        118.99927175311261,
+        122.88457306689247,
+        150.27215291816643,
+        123.23334326377,
+        147.86463642916613,
+        180.62632505444338
+      ],
+      "dyadicOverSignedAllocation": 103.30403776382008
+    }
+  ],
+  "scope": "Within-GHC valid logistic recurrences; no Hyper speed/RSS/binary-size claim. Resource caps are observations, not nontermination proofs."
+}

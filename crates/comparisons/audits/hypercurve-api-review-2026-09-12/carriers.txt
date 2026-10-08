@@ -1,0 +1,7 @@
+carriers: offset Certified
+carriers: paths Ok(CurveOutcome { value: Uncertain(Unsupported), certainty: Certified })
+carriers: affine shear: Err(Blocked(ExactCurveBlocker { operation: Transformation, family: RationalBezier, reason: Unsupported }))
+dispatch/hypercurve/curve-region-exact-offset-join/smooth-source-overlap=4
+dispatch/hypercurve/curve-region-exact-offset-tangent-cross/vector-vector=8
+dispatch/hypercurve/regularization-successor/forced-bijection=4
+dispatch/hypercurve/retained-endpoint-scope/topology-connectivity-first=1

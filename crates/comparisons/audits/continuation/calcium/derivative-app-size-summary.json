@@ -1,0 +1,85 @@
+{
+  "recorded": "2026-09-09T15:39:27.756Z",
+  "root": "/tmp/calcium-derivative-apps.5K06wk",
+  "artifacts": [
+    {
+      "variant": "baseline",
+      "example": "basic",
+      "files": [
+        {
+          "path": "/tmp/calcium-derivative-apps.5K06wk/baseline-basic",
+          "bytes": 13494456,
+          "sha256": "adfdf893ea40d23a948bdc9b91d8cad4d4b6392db77ff01bd844e9e43f2d1c83"
+        },
+        {
+          "path": "/tmp/calcium-derivative-apps.5K06wk/baseline-basic.stripped",
+          "bytes": 11013576,
+          "sha256": "07e24d703306845e455d11ddcb30085468b62ff50faebb022ee5ad3f0b44797a"
+        }
+      ]
+    },
+    {
+      "variant": "baseline",
+      "example": "arrangement",
+      "files": [
+        {
+          "path": "/tmp/calcium-derivative-apps.5K06wk/baseline-arrangement",
+          "bytes": 14181200,
+          "sha256": "053e6f705f49cfe0bf3e7b13370fbc71eac9a5efc4670b548b3f6ff9d039b3b0"
+        },
+        {
+          "path": "/tmp/calcium-derivative-apps.5K06wk/baseline-arrangement.stripped",
+          "bytes": 11587912,
+          "sha256": "5dc82f67618c3d004de3c7ebf0aa1a3483a1ab8b1c0537f4e4f23a61b4ff9aec"
+        }
+      ]
+    },
+    {
+      "variant": "candidate",
+      "example": "basic",
+      "files": [
+        {
+          "path": "/tmp/calcium-derivative-apps.5K06wk/candidate-basic",
+          "bytes": 13494760,
+          "sha256": "02bcc2680459e1201a0d4453d80a3b93a35d356a2baf995a080ffd932afc2062"
+        },
+        {
+          "path": "/tmp/calcium-derivative-apps.5K06wk/candidate-basic.stripped",
+          "bytes": 11013800,
+          "sha256": "a8a28eddf4e757cff480bcd4f724ee537010e0d5df02d833cf121e973fd427e7"
+        }
+      ]
+    },
+    {
+      "variant": "candidate",
+      "example": "arrangement",
+      "files": [
+        {
+          "path": "/tmp/calcium-derivative-apps.5K06wk/candidate-arrangement",
+          "bytes": 14181504,
+          "sha256": "4bc43beb08e131914f103ddfe60f4612147d048da8d1c6c89cce1b457238e492"
+        },
+        {
+          "path": "/tmp/calcium-derivative-apps.5K06wk/candidate-arrangement.stripped",
+          "bytes": 11588120,
+          "sha256": "1dff5840ba9c0c58ded933d545fc807992240acffebab64d32f7d16830facbd3"
+        }
+      ]
+    }
+  ],
+  "state": [
+    {
+      "variant": "baseline",
+      "path": "/tmp/calcium-derivative-apps.5K06wk/baseline-state",
+      "bytes": 4075968,
+      "sha256": "c518dccddae2d0ddda8c1407b1decd980215b954fe234d02abe93e94424efdfa"
+    },
+    {
+      "variant": "candidate",
+      "path": "/tmp/calcium-derivative-apps.5K06wk/candidate-state",
+      "bytes": 4076112,
+      "sha256": "5f24b493e312808c405c250fe380cd79c5cd9361257a7f5dabcd1009f8a6941e"
+    }
+  ],
+  "limits": "Matched frozen Hypercurve basic/arrangement examples, default-feature standard release profile and separately stripped copies. Same retained scalar and Hypersolve dependencies. Not complete Alumina, all-feature/LTO/size-optimized binaries or CPU benchmarks. State binaries are separately copied for memory qualification."
+}

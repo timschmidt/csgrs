@@ -1,0 +1,18 @@
+[package]
+name = "hyper-krawczyk-ab"
+version = "0.0.0"
+edition = "2024"
+
+[dependencies]
+hyperreal = { path = "../hyperreal", default-features = false }
+hyperlimit = { path = "../hyperlimit", default-features = false }
+hypersolve = { path = "../hypersolve", default-features = false }
+num = "0.4.3"
+serde_json = "1"
+
+[[bin]]
+name = "hyper-krawczyk-ab"
+path = "/tmp/hyper-inverse-audit.nizGgs/src/main.rs"
+
+[profile.release]
+debug = 1

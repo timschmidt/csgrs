@@ -1,0 +1,726 @@
+{
+  "normal_production_build": true,
+  "source_manifest": "unordered-arrangement-api-v752-sources.json",
+  "source_directory": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/source-archives/unordered-arrangement-api-v752",
+  "builds": [
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "test",
+        "--lib",
+        "--test",
+        "hypercurve_curve_region_promotion",
+        "--release",
+        "--all-features",
+        "--locked",
+        "--offline",
+        "--no-run",
+        "--message-format=json"
+      ],
+      "returncode": 0,
+      "log": "unordered-arrangement-api-v752-hypercurve-build.log",
+      "elapsed_seconds": 192.38884650287218,
+      "binaries": {
+        "hypercurve_curve_region_promotion": {
+          "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/unordered-arrangement-api-v752-hypercurve_curve_region_promotion-tests",
+          "sha256": "afb2bf8a7b775f57aadfcc9f1e5824e981151bbb8c609ca46bcd89327ed3ae40"
+        },
+        "hypercurve": {
+          "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/unordered-arrangement-api-v752-hypercurve-tests",
+          "sha256": "c6691bb1de76500a5cf40e1475c7316a46c1097d6b71c6a8f39cac6f71e0d17e"
+        }
+      }
+    }
+  ],
+  "cases": [
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/unordered-arrangement-api-v752-hypercurve-tests",
+        "--exact",
+        "native_region_tests::batched_classifier_and_structural_facts_use_the_unified_surface",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "unordered-arrangement-api-v752-batched_classifier_and_structural_facts_use_the_unified_surface-0054d680c5.log",
+      "elapsed_seconds": 0.0035723948385566473,
+      "target": "hypercurve",
+      "name": "native_region_tests::batched_classifier_and_structural_facts_use_the_unified_surface",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/unordered-arrangement-api-v752-hypercurve-tests",
+        "--exact",
+        "native_region_tests::boundary_contour_nesting_assigns_disjoint_nested_roles",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "unordered-arrangement-api-v752-boundary_contour_nesting_assigns_disjoint_nested_roles-63d2ef143d.log",
+      "elapsed_seconds": 0.0035154891666024923,
+      "target": "hypercurve",
+      "name": "native_region_tests::boundary_contour_nesting_assigns_disjoint_nested_roles",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/unordered-arrangement-api-v752-hypercurve-tests",
+        "--exact",
+        "native_region_tests::boundary_contour_nesting_rejects_crossing_or_touching_loops",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "unordered-arrangement-api-v752-boundary_contour_nesting_rejects_crossing_or_touching_loops-3fe502a3d1.log",
+      "elapsed_seconds": 0.003549917135387659,
+      "target": "hypercurve",
+      "name": "native_region_tests::boundary_contour_nesting_rejects_crossing_or_touching_loops",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/unordered-arrangement-api-v752-hypercurve-tests",
+        "--exact",
+        "native_region_tests::contour_profiles_group_holes_with_their_exact_material_owner",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "unordered-arrangement-api-v752-contour_profiles_group_holes_with_their_exact_material_owner-0baa7e72a2.log",
+      "elapsed_seconds": 0.003531018039211631,
+      "target": "hypercurve",
+      "name": "native_region_tests::contour_profiles_group_holes_with_their_exact_material_owner",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/unordered-arrangement-api-v752-hypercurve-tests",
+        "--exact",
+        "native_region_tests::contour_profiles_remove_holes_without_a_material_owner",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "unordered-arrangement-api-v752-contour_profiles_remove_holes_without_a_material_owner-a62a51781c.log",
+      "elapsed_seconds": 0.003512319177389145,
+      "target": "hypercurve",
+      "name": "native_region_tests::contour_profiles_remove_holes_without_a_material_owner",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/unordered-arrangement-api-v752-hypercurve-tests",
+        "--exact",
+        "native_region_tests::contour_projection_closes_finite_ring_without_owning_topology",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "unordered-arrangement-api-v752-contour_projection_closes_finite_ring_without_owning_topology-5c15c45f80.log",
+      "elapsed_seconds": 0.003442764049395919,
+      "target": "hypercurve",
+      "name": "native_region_tests::contour_projection_closes_finite_ring_without_owning_topology",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/unordered-arrangement-api-v752-hypercurve-tests",
+        "--exact",
+        "native_region_tests::curve_string_projection_rejects_nonfinite_arc_samples",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "unordered-arrangement-api-v752-curve_string_projection_rejects_nonfinite_arc_samples-13816819a2.log",
+      "elapsed_seconds": 0.0035273688845336437,
+      "target": "hypercurve",
+      "name": "native_region_tests::curve_string_projection_rejects_nonfinite_arc_samples",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/unordered-arrangement-api-v752-hypercurve-tests",
+        "--exact",
+        "native_region_tests::curve_string_projection_subdivides_arcs_and_keeps_exact_endpoints",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "unordered-arrangement-api-v752-curve_string_projection_subdivides_arcs_and_keeps_exact_endpoints-7691948cdd.log",
+      "elapsed_seconds": 0.003547106869518757,
+      "target": "hypercurve",
+      "name": "native_region_tests::curve_string_projection_subdivides_arcs_and_keeps_exact_endpoints",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/unordered-arrangement-api-v752-hypercurve-tests",
+        "--exact",
+        "native_region_tests::empty_region_classifies_everything_outside",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "unordered-arrangement-api-v752-empty_region_classifies_everything_outside-aa6d8d55b8.log",
+      "elapsed_seconds": 0.003619092982262373,
+      "target": "hypercurve",
+      "name": "native_region_tests::empty_region_classifies_everything_outside",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/unordered-arrangement-api-v752-hypercurve-tests",
+        "--exact",
+        "native_region_tests::filled_area_is_exact_for_center_defined_circle",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "unordered-arrangement-api-v752-filled_area_is_exact_for_center_defined_circle-f23e71e798.log",
+      "elapsed_seconds": 0.003611801890656352,
+      "target": "hypercurve",
+      "name": "native_region_tests::filled_area_is_exact_for_center_defined_circle",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/unordered-arrangement-api-v752-hypercurve-tests",
+        "--exact",
+        "native_region_tests::filled_area_uses_roles_not_orientation_and_counts_nested_islands",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "unordered-arrangement-api-v752-filled_area_uses_roles_not_orientation_and_counts_nested_islands-555c9921e0.log",
+      "elapsed_seconds": 0.003424466121941805,
+      "target": "hypercurve",
+      "name": "native_region_tests::filled_area_uses_roles_not_orientation_and_counts_nested_islands",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/unordered-arrangement-api-v752-hypercurve-tests",
+        "--exact",
+        "native_region_tests::finite_projection_checked_measurements_reject_nonfinite_or_overflow",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "unordered-arrangement-api-v752-finite_projection_checked_measurements_reject_nonfinite_or_overflow-77e84c63eb.log",
+      "elapsed_seconds": 0.0035372378770262003,
+      "target": "hypercurve",
+      "name": "native_region_tests::finite_projection_checked_measurements_reject_nonfinite_or_overflow",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/unordered-arrangement-api-v752-hypercurve-tests",
+        "--exact",
+        "native_region_tests::generated_rectangle_hole_area_uses_roles_not_orientation",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "unordered-arrangement-api-v752-generated_rectangle_hole_area_uses_roles_not_orientation-fb2893175d.log",
+      "elapsed_seconds": 0.06376503291539848,
+      "target": "hypercurve",
+      "name": "native_region_tests::generated_rectangle_hole_area_uses_roles_not_orientation",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/unordered-arrangement-api-v752-hypercurve-tests",
+        "--exact",
+        "native_region_tests::generated_unordered_line_arc_semicircles_build_unified_regions",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "unordered-arrangement-api-v752-generated_unordered_line_arc_semicircles_build_unified_regions-bdfa76829b.log",
+      "elapsed_seconds": 0.11383992317132652,
+      "target": "hypercurve",
+      "name": "native_region_tests::generated_unordered_line_arc_semicircles_build_unified_regions",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/unordered-arrangement-api-v752-hypercurve-tests",
+        "--exact",
+        "native_region_tests::generated_unordered_line_rectangles_build_unified_regions",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "unordered-arrangement-api-v752-generated_unordered_line_rectangles_build_unified_regions-ed39b01206.log",
+      "elapsed_seconds": 0.03174162609502673,
+      "target": "hypercurve",
+      "name": "native_region_tests::generated_unordered_line_rectangles_build_unified_regions",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/unordered-arrangement-api-v752-hypercurve-tests",
+        "--exact",
+        "native_region_tests::material_contour_classifies_inside_outside_and_boundary",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "unordered-arrangement-api-v752-material_contour_classifies_inside_outside_and_boundary-3292e13e4f.log",
+      "elapsed_seconds": 0.003494719974696636,
+      "target": "hypercurve",
+      "name": "native_region_tests::material_contour_classifies_inside_outside_and_boundary",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/unordered-arrangement-api-v752-hypercurve-tests",
+        "--exact",
+        "native_region_tests::material_island_inside_hole_restores_membership",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "unordered-arrangement-api-v752-material_island_inside_hole_restores_membership-5c404e4543.log",
+      "elapsed_seconds": 0.0035126989241689444,
+      "target": "hypercurve",
+      "name": "native_region_tests::material_island_inside_hole_restores_membership",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/unordered-arrangement-api-v752-hypercurve-tests",
+        "--exact",
+        "native_region_tests::native_overlap_regularizes_empty_and_open_crossings_remain_blocked",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "unordered-arrangement-api-v752-native_overlap_regularizes_empty_and_open_crossings_remain_blocked-5474e53aba.log",
+      "elapsed_seconds": 0.0035012599546462297,
+      "target": "hypercurve",
+      "name": "native_region_tests::native_overlap_regularizes_empty_and_open_crossings_remain_blocked",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/unordered-arrangement-api-v752-hypercurve-tests",
+        "--exact",
+        "native_region_tests::similarity_transform_preserves_arcs_and_reflection_flips_orientation",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "unordered-arrangement-api-v752-similarity_transform_preserves_arcs_and_reflection_flips_orientation-542e74a3d7.log",
+      "elapsed_seconds": 0.0035270380321890116,
+      "target": "hypercurve",
+      "name": "native_region_tests::similarity_transform_preserves_arcs_and_reflection_flips_orientation",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/unordered-arrangement-api-v752-hypercurve-tests",
+        "--exact",
+        "native_region_tests::sparse_region_and_hole_classification_are_exact",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "unordered-arrangement-api-v752-sparse_region_and_hole_classification_are_exact-e0ee337fdb.log",
+      "elapsed_seconds": 0.003506510052829981,
+      "target": "hypercurve",
+      "name": "native_region_tests::sparse_region_and_hole_classification_are_exact",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/unordered-arrangement-api-v752-hypercurve-tests",
+        "--exact",
+        "native_region_tests::strict_and_approximate_512_share_the_unified_policy_terminal",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "unordered-arrangement-api-v752-strict_and_approximate_512_share_the_unified_policy_terminal-8c1860adaf.log",
+      "elapsed_seconds": 0.0035511869937181473,
+      "target": "hypercurve",
+      "name": "native_region_tests::strict_and_approximate_512_share_the_unified_policy_terminal",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/unordered-arrangement-api-v752-hypercurve-tests",
+        "--exact",
+        "native_region_tests::unified_finite_profiles_preserve_material_hole_bins_and_ownership",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "unordered-arrangement-api-v752-unified_finite_profiles_preserve_material_hole_bins_and_ownership-bd11689ed8.log",
+      "elapsed_seconds": 0.003497730940580368,
+      "target": "hypercurve",
+      "name": "native_region_tests::unified_finite_profiles_preserve_material_hole_bins_and_ownership",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/unordered-arrangement-api-v752-hypercurve-tests",
+        "--exact",
+        "native_region_tests::unordered_crossing_and_overlapping_lines_remain_explicit_blockers",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "unordered-arrangement-api-v752-unordered_crossing_and_overlapping_lines_remain_explicit_blockers-85516fdeb0.log",
+      "elapsed_seconds": 0.0035362381022423506,
+      "target": "hypercurve",
+      "name": "native_region_tests::unordered_crossing_and_overlapping_lines_remain_explicit_blockers",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/unordered-arrangement-api-v752-hypercurve-tests",
+        "--exact",
+        "native_region_tests::unordered_crossing_walks_are_regularized_by_global_parity",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "unordered-arrangement-api-v752-unordered_crossing_walks_are_regularized_by_global_parity-06492e8201.log",
+      "elapsed_seconds": 0.0034622419625520706,
+      "target": "hypercurve",
+      "name": "native_region_tests::unordered_crossing_walks_are_regularized_by_global_parity",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/unordered-arrangement-api-v752-hypercurve-tests",
+        "--exact",
+        "native_region_tests::unordered_line_arc_segments_recover_the_exact_native_view",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "unordered-arrangement-api-v752-unordered_line_arc_segments_recover_the_exact_native_view-062c8b74a2.log",
+      "elapsed_seconds": 0.003523687832057476,
+      "target": "hypercurve",
+      "name": "native_region_tests::unordered_line_arc_segments_recover_the_exact_native_view",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/unordered-arrangement-api-v752-hypercurve-tests",
+        "--exact",
+        "native_region_tests::unordered_lines_materialize_one_authoritative_region",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "unordered-arrangement-api-v752-unordered_lines_materialize_one_authoritative_region-152d322edf.log",
+      "elapsed_seconds": 0.003481502179056406,
+      "target": "hypercurve",
+      "name": "native_region_tests::unordered_lines_materialize_one_authoritative_region",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/unordered-arrangement-api-v752-hypercurve-tests",
+        "--exact",
+        "native_region_tests::unordered_native_arrangement_obeys_the_approximate_512_terminal",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "unordered-arrangement-api-v752-unordered_native_arrangement_obeys_the_approximate_512_terminal-c5b00a5e37.log",
+      "elapsed_seconds": 0.0035420481581240892,
+      "target": "hypercurve",
+      "name": "native_region_tests::unordered_native_arrangement_obeys_the_approximate_512_terminal",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/unordered-arrangement-api-v752-hypercurve-tests",
+        "--exact",
+        "native_region_tests::unordered_open_lines_retain_a_boundary_blocker",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "unordered-arrangement-api-v752-unordered_open_lines_retain_a_boundary_blocker-9beec3fb78.log",
+      "elapsed_seconds": 0.003605262842029333,
+      "target": "hypercurve",
+      "name": "native_region_tests::unordered_open_lines_retain_a_boundary_blocker",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/unordered-arrangement-api-v752-hypercurve-tests",
+        "--exact",
+        "native_region_tests::unordered_self_crossing_walk_uses_the_authoritative_curve_arrangement",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "unordered-arrangement-api-v752-unordered_self_crossing_walk_uses_the_authoritative_curve_arrangement-66092b7aa0.log",
+      "elapsed_seconds": 0.003552057081833482,
+      "target": "hypercurve",
+      "name": "native_region_tests::unordered_self_crossing_walk_uses_the_authoritative_curve_arrangement",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/unordered-arrangement-api-v752-hypercurve-tests",
+        "--exact",
+        "native_region_tests::unordered_single_full_circle_is_a_closed_walk",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "unordered-arrangement-api-v752-unordered_single_full_circle_is_a_closed_walk-04ac05c8fd.log",
+      "elapsed_seconds": 0.003545427927747369,
+      "target": "hypercurve",
+      "name": "native_region_tests::unordered_single_full_circle_is_a_closed_walk",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/unordered-arrangement-api-v752-hypercurve_curve_region_promotion-tests",
+        "--exact",
+        "unified_native_arrangement_exposes_immediate_evidence",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "unordered-arrangement-api-v752-unified_native_arrangement_exposes_immediate_evidence-42f8512d5f.log",
+      "elapsed_seconds": 0.003550515975803137,
+      "target": "hypercurve_curve_region_promotion",
+      "name": "unified_native_arrangement_exposes_immediate_evidence",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/unordered-arrangement-api-v752-hypercurve_curve_region_promotion-tests",
+        "--exact",
+        "native_self_crossing_walk_regularizes_with_both_fill_rules",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "unordered-arrangement-api-v752-native_self_crossing_walk_regularizes_with_both_fill_rules-1622162e44.log",
+      "elapsed_seconds": 0.0035555469803512096,
+      "target": "hypercurve_curve_region_promotion",
+      "name": "native_self_crossing_walk_regularizes_with_both_fill_rules",
+      "passed": true
+    }
+  ],
+  "checks": [
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "clippy",
+        "--all-targets",
+        "--all-features",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "returncode": 0,
+      "log": "unordered-arrangement-api-v752-hypercurve-clippy-all-features.log",
+      "elapsed_seconds": 21.145197721896693,
+      "label": "hypercurve-clippy-all-features"
+    },
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "clippy",
+        "--all-targets",
+        "--no-default-features",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "returncode": 0,
+      "log": "unordered-arrangement-api-v752-hypercurve-clippy-no-default.log",
+      "elapsed_seconds": 20.19377883616835,
+      "label": "hypercurve-clippy-no-default"
+    },
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustfmt",
+        "--edition",
+        "2024",
+        "--config",
+        "skip_children=true",
+        "--check",
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/build-workspace-20260925/hypercurve/benches/editing.rs",
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/build-workspace-20260925/hypercurve/examples/arrangement.rs",
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/build-workspace-20260925/hypercurve/src/bezier_region.rs",
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/build-workspace-20260925/hypercurve/src/native_region_tests.rs",
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/build-workspace-20260925/hypercurve/tests/hypercurve_curve_region_promotion.rs"
+      ],
+      "returncode": 0,
+      "log": "unordered-arrangement-api-v752-format.log",
+      "elapsed_seconds": 0.514536009170115,
+      "label": "format"
+    },
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "check",
+        "--manifest-path",
+        "fuzz/Cargo.toml",
+        "--bin",
+        "region_boolean",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "log": "unordered-arrangement-api-v752-fuzz-check.log",
+      "elapsed_seconds": 10.978712796932086,
+      "label": "fuzz-check"
+    },
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "doc",
+        "--no-deps",
+        "--all-features",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "log": "unordered-arrangement-api-v752-hypercurve-documentation.log",
+      "elapsed_seconds": 10.728119580075145,
+      "label": "hypercurve-documentation"
+    },
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "clippy",
+        "--all-targets",
+        "--all-features",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "returncode": 0,
+      "log": "unordered-arrangement-api-v752-hyperbrep-clippy.log",
+      "elapsed_seconds": 15.28486101794988,
+      "label": "hyperbrep-clippy"
+    },
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "check",
+        "--all-targets",
+        "--all-features",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "log": "unordered-arrangement-api-v752-csgrs-check.log",
+      "elapsed_seconds": 14.233690022025257,
+      "label": "csgrs-check"
+    }
+  ],
+  "test_listings": {
+    "hypercurve_curve_region_promotion": {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/unordered-arrangement-api-v752-hypercurve_curve_region_promotion-tests",
+        "--list"
+      ],
+      "returncode": 0,
+      "log": "unordered-arrangement-api-v752-hypercurve_curve_region_promotion-list.log",
+      "elapsed_seconds": 0.003567164996638894
+    },
+    "hypercurve": {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/unordered-arrangement-api-v752-hypercurve-tests",
+        "--list"
+      ],
+      "returncode": 0,
+      "log": "unordered-arrangement-api-v752-hypercurve-list.log",
+      "elapsed_seconds": 0.007602249970659614
+    }
+  },
+  "expected_cases": {
+    "hypercurve": [
+      "native_region_tests::batched_classifier_and_structural_facts_use_the_unified_surface",
+      "native_region_tests::boundary_contour_nesting_assigns_disjoint_nested_roles",
+      "native_region_tests::boundary_contour_nesting_rejects_crossing_or_touching_loops",
+      "native_region_tests::contour_profiles_group_holes_with_their_exact_material_owner",
+      "native_region_tests::contour_profiles_remove_holes_without_a_material_owner",
+      "native_region_tests::contour_projection_closes_finite_ring_without_owning_topology",
+      "native_region_tests::curve_string_projection_rejects_nonfinite_arc_samples",
+      "native_region_tests::curve_string_projection_subdivides_arcs_and_keeps_exact_endpoints",
+      "native_region_tests::empty_region_classifies_everything_outside",
+      "native_region_tests::filled_area_is_exact_for_center_defined_circle",
+      "native_region_tests::filled_area_uses_roles_not_orientation_and_counts_nested_islands",
+      "native_region_tests::finite_projection_checked_measurements_reject_nonfinite_or_overflow",
+      "native_region_tests::generated_rectangle_hole_area_uses_roles_not_orientation",
+      "native_region_tests::generated_unordered_line_arc_semicircles_build_unified_regions",
+      "native_region_tests::generated_unordered_line_rectangles_build_unified_regions",
+      "native_region_tests::material_contour_classifies_inside_outside_and_boundary",
+      "native_region_tests::material_island_inside_hole_restores_membership",
+      "native_region_tests::native_overlap_regularizes_empty_and_open_crossings_remain_blocked",
+      "native_region_tests::similarity_transform_preserves_arcs_and_reflection_flips_orientation",
+      "native_region_tests::sparse_region_and_hole_classification_are_exact",
+      "native_region_tests::strict_and_approximate_512_share_the_unified_policy_terminal",
+      "native_region_tests::unified_finite_profiles_preserve_material_hole_bins_and_ownership",
+      "native_region_tests::unordered_crossing_and_overlapping_lines_remain_explicit_blockers",
+      "native_region_tests::unordered_crossing_walks_are_regularized_by_global_parity",
+      "native_region_tests::unordered_line_arc_segments_recover_the_exact_native_view",
+      "native_region_tests::unordered_lines_materialize_one_authoritative_region",
+      "native_region_tests::unordered_native_arrangement_obeys_the_approximate_512_terminal",
+      "native_region_tests::unordered_open_lines_retain_a_boundary_blocker",
+      "native_region_tests::unordered_self_crossing_walk_uses_the_authoritative_curve_arrangement",
+      "native_region_tests::unordered_single_full_circle_is_a_closed_walk"
+    ],
+    "hypercurve_curve_region_promotion": [
+      "unified_native_arrangement_exposes_immediate_evidence",
+      "native_self_crossing_walk_regularizes_with_both_fill_rules"
+    ]
+  },
+  "all_processes_reaped": true,
+  "probe_complete": true,
+  "qualification_complete": true
+}

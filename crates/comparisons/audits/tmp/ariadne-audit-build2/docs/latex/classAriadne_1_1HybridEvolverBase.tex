@@ -1,0 +1,306 @@
+\doxysubsection{Hybrid\+Evolver\+Base Class Reference}
+\hypertarget{classAriadne_1_1HybridEvolverBase}{}\label{classAriadne_1_1HybridEvolverBase}\index{HybridEvolverBase@{HybridEvolverBase}}
+
+
+{\ttfamily \#include $<$hybrid\+\_\+evolver.\+hpp$>$}
+
+
+
+\doxysubsubsection{Description}
+Base routines for hybrid evolution. Includes routines for extracting system information in a mode, applying initial events, computing crossing times, computing the evolution time, and applying a time step. 
+
+\begin{DoxySeeAlso}{See also}
+The \doxylink{hybrid_evolution_page}{Hybrid Evolution Methods } page for details of the basic algorithm.
+\end{DoxySeeAlso}
+NOTE\+: This class currently contains both a skeleton for hybrid evolution, and default implementations of many of the routines. It would be cleaner to have an interface class without these default implementations. However, which operations are needed may depend on the higher-\/level operations involved, so these methods should also not go in the interface. Inheritance diagram for Hybrid\+Evolver\+Base\+:\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[height=4.000000cm]{classAriadne_1_1HybridEvolverBase}
+\end{center}
+\end{figure}
+\doxysubsubsubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1HybridEvolverBase_a64617264823f68e356f7b3c6c7606e65}\label{classAriadne_1_1HybridEvolverBase_a64617264823f68e356f7b3c6c7606e65} 
+{\bfseries Hybrid\+Evolver\+Base} (const \mbox{\hyperlink{classAriadne_1_1HybridAutomatonInterface}{System\+Type}} \&\mbox{\hyperlink{classAriadne_1_1HybridEvolverBase_a36cd3a3b0117770108ca8541759e46f9}{system}})
+\begin{DoxyCompactList}\small\item\em Default constructor. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1HybridEvolverBase_a17033aecf340b5eddcacf075cbff29eb}\label{classAriadne_1_1HybridEvolverBase_a17033aecf340b5eddcacf075cbff29eb} 
+{\bfseries Hybrid\+Evolver\+Base} (const \mbox{\hyperlink{classAriadne_1_1HybridAutomatonInterface}{System\+Type}} \&\mbox{\hyperlink{classAriadne_1_1HybridEvolverBase_a36cd3a3b0117770108ca8541759e46f9}{system}}, const Function\+Factory\+Type \&factory)
+\begin{DoxyCompactList}\small\item\em Construct from parameters using a default integrator. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1HybridEvolverBase_ab8de8f776f0c7ac9ef6b6cd1e294f442}\label{classAriadne_1_1HybridEvolverBase_ab8de8f776f0c7ac9ef6b6cd1e294f442} 
+\mbox{\hyperlink{classAriadne_1_1HybridEvolverBase}{Hybrid\+Evolver\+Base}} \texorpdfstring{$\ast$}{*} {\bfseries clone} () const =0
+\begin{DoxyCompactList}\small\item\em Make a dynamically-\/allocated copy. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1HybridEvolverBase_a36cd3a3b0117770108ca8541759e46f9}\label{classAriadne_1_1HybridEvolverBase_a36cd3a3b0117770108ca8541759e46f9} 
+const \mbox{\hyperlink{classAriadne_1_1HybridAutomatonInterface}{System\+Type}} \& {\bfseries system} () const
+\begin{DoxyCompactList}\small\item\em Get the internal system. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\begin{Indent}\textbf{ Main evolution functions.}\par
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1HybridEvolverBase_a376203c7802100e42665ce2f35fcf987}\label{classAriadne_1_1HybridEvolverBase_a376203c7802100e42665ce2f35fcf987} 
+\mbox{\hyperlink{classAriadne_1_1Orbit}{Orbit}}$<$ \mbox{\hyperlink{classAriadne_1_1HybridEnclosure}{Enclosure\+Type}} $>$ {\bfseries orbit} (const \mbox{\hyperlink{classAriadne_1_1HybridEnclosure}{Enclosure\+Type}} \&initial\+\_\+enclosure, const \mbox{\hyperlink{classAriadne_1_1EvolverInterface_afaf8d55b202cc690926f7f660b302e96}{Termination\+Type}} \&termination, \mbox{\hyperlink{group__DynamicsModule_gafd43cf1b14dd42f7ac8ca23dcc3837b3}{Semantics}} semantics) const
+\begin{DoxyCompactList}\small\item\em Compute an approximation to the orbit set using the given semantics, starting from an initial enclosure. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\end{Indent}
+\begin{Indent}\textbf{ Auxiliary set conversion functionality}\par
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1HybridEvolverBase_abe9c0efdf54de2244ee5188db44e7ed8}\label{classAriadne_1_1HybridEvolverBase_abe9c0efdf54de2244ee5188db44e7ed8} 
+virtual \mbox{\hyperlink{classAriadne_1_1HybridEnclosure}{Enclosure\+Type}} {\bfseries enclosure} (const \mbox{\hyperlink{classAriadne_1_1HybridBox}{Hybrid\+Exact\+Box}} \&initial\+\_\+box) const
+\begin{DoxyCompactList}\small\item\em \doxylink{classAriadne_1_1Set}{Set} construct an enclosure from a box, such as one obtained from a grid. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1HybridEvolverBase_a9bb4d6073ae6418d4188635a040e1776}\label{classAriadne_1_1HybridEvolverBase_a9bb4d6073ae6418d4188635a040e1776} 
+virtual \mbox{\hyperlink{classAriadne_1_1HybridEnclosure}{Enclosure\+Type}} {\bfseries enclosure} (const \mbox{\hyperlink{classAriadne_1_1HybridBoundedConstraintSet}{Hybrid\+Bounded\+Constraint\+Set}} \&initial\+\_\+set) const
+\begin{DoxyCompactList}\small\item\em \doxylink{classAriadne_1_1Set}{Set} construct an enclosure from a user-\/provided set. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\end{Indent}
+\doxyparagraph*{Public Member Functions inherited from \mbox{\hyperlink{classAriadne_1_1HybridEvolverInterface}{Hybrid\+Evolver\+Interface}}}
+\begin{DoxyCompactItemize}
+\item 
+virtual \mbox{\hyperlink{classAriadne_1_1Orbit}{Orbit}}$<$ \mbox{\hyperlink{classAriadne_1_1EvolverInterface_a3eee62b15617b80a9cd7a2f4ba905cff}{Enclosure\+Type}} $>$ {\bfseries orbit} (const \mbox{\hyperlink{classAriadne_1_1EvolverInterface_a3eee62b15617b80a9cd7a2f4ba905cff}{Enclosure\+Type}} \&initial\+\_\+enclosure, const \mbox{\hyperlink{classAriadne_1_1EvolverInterface_afaf8d55b202cc690926f7f660b302e96}{Termination\+Type}} \&termination, \mbox{\hyperlink{group__DynamicsModule_gafd43cf1b14dd42f7ac8ca23dcc3837b3}{Semantics}} semantics) const =0
+\begin{DoxyCompactList}\small\item\em Compute an approximation to the orbit set using the given semantics, starting from an initial enclosure. Useful for continuing a partially-\/computed orbit. \end{DoxyCompactList}\item 
+virtual \mbox{\hyperlink{classAriadne_1_1Orbit}{Orbit}}$<$ \mbox{\hyperlink{classAriadne_1_1EvolverInterface_a3eee62b15617b80a9cd7a2f4ba905cff}{Enclosure\+Type}} $>$ {\bfseries orbit} (const \mbox{\hyperlink{classAriadne_1_1HybridBox}{Hybrid\+Exact\+Box\+Type}} \&initial\+\_\+box, const \mbox{\hyperlink{classAriadne_1_1EvolverInterface_afaf8d55b202cc690926f7f660b302e96}{Termination\+Type}} \&termination, \mbox{\hyperlink{group__DynamicsModule_gafd43cf1b14dd42f7ac8ca23dcc3837b3}{Semantics}} semantics) const =0
+\begin{DoxyCompactList}\small\item\em Compute an approximation to the orbit set using the given semantics, starting from a box. Useful for computing the evolution starting from a cell of a grid. \end{DoxyCompactList}\item 
+virtual \mbox{\hyperlink{classAriadne_1_1Orbit}{Orbit}}$<$ \mbox{\hyperlink{classAriadne_1_1EvolverInterface_a3eee62b15617b80a9cd7a2f4ba905cff}{Enclosure\+Type}} $>$ {\bfseries orbit} (const \mbox{\hyperlink{classAriadne_1_1HybridBoundedConstraintSet}{Hybrid\+Bounded\+Constraint\+Set}} \&initial\+\_\+set, const \mbox{\hyperlink{classAriadne_1_1EvolverInterface_afaf8d55b202cc690926f7f660b302e96}{Termination\+Type}} \&termination, \mbox{\hyperlink{group__DynamicsModule_gafd43cf1b14dd42f7ac8ca23dcc3837b3}{Semantics}} semantics) const =0
+\begin{DoxyCompactList}\small\item\em Compute an approximation to the orbit set using the given semantics, starting from a set described by bounds and constraints. Useful for computing the evolution starting from user-\/provided set. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxyparagraph*{Public Member Functions inherited from \mbox{\hyperlink{classAriadne_1_1EvolverInterface}{Evolver\+Interface$<$ Hybrid\+Automaton\+Interface, Hybrid\+Enclosure, Hybrid\+Termination\+Criterion $>$}}}
+\begin{DoxyCompactItemize}
+\item 
+virtual {\bfseries \texorpdfstring{$\sim$}{\string~}\+Evolver\+Interface} ()=default
+\begin{DoxyCompactList}\small\item\em Virtual destructor. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsubsection*{Protected Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+virtual \mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} \mbox{\hyperlink{classAriadne_1_1HybridEvolverBase_a125d545ea963da5c9aecfa09c7a9e339}{\+\_\+process\+\_\+working\+\_\+set}} (Workload\+Type\+::\+Access \&workload, \mbox{\hyperlink{namespaceAriadne_abbe0884d033ed6289d1f654576d7bb07}{Pair}}$<$ \mbox{\hyperlink{classAriadne_1_1HybridEnclosure}{Hybrid\+Enclosure}}, \mbox{\hyperlink{namespaceAriadne_a76a8b016e5ad61faf9062cc387df5016}{Bool}} $>$ const \&working\+\_\+set, \mbox{\hyperlink{classAriadne_1_1EvolverInterface_afaf8d55b202cc690926f7f660b302e96}{Termination\+Type}} const \&termination, \mbox{\hyperlink{group__DynamicsModule_gafd43cf1b14dd42f7ac8ca23dcc3837b3}{Semantics}} const \&semantics, \mbox{\hyperlink{namespaceAriadne_a536cc349b9d52657c9d01d3f09c4633e}{Shared\+Pointer}}$<$ Synchronised\+Orbit $>$ result) const
+\begin{DoxyCompactList}\small\item\em Processes a single working set. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1HybridEvolverBase_a788bbdc04255fa2d5ecd90eaf3b7d8e1}\label{classAriadne_1_1HybridEvolverBase_a788bbdc04255fa2d5ecd90eaf3b7d8e1} 
+virtual \mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} {\bfseries \+\_\+evolution\+\_\+step} (Workload\+Type\+::\+Access \&workload, \mbox{\hyperlink{classAriadne_1_1HybridEnclosure}{Hybrid\+Enclosure}} const \&\mbox{\hyperlink{classAriadne_1_1HybridEvolverBase_abe9c0efdf54de2244ee5188db44e7ed8}{enclosure}}, \mbox{\hyperlink{classAriadne_1_1Real}{Real}} const \&final\+\_\+time, \mbox{\hyperlink{group__DynamicsModule_gafd43cf1b14dd42f7ac8ca23dcc3837b3}{Semantics}} const \&semantics, \mbox{\hyperlink{namespaceAriadne_a536cc349b9d52657c9d01d3f09c4633e}{Shared\+Pointer}}$<$ Synchronised\+Orbit $>$ result) const
+\begin{DoxyCompactList}\small\item\em Performs an evolution step on an {\itshape enclosure}, where initially active events have already been processed and only the continuous {\itshape final\+\_\+time} is necessary. \end{DoxyCompactList}\item 
+virtual \mbox{\hyperlink{classAriadne_1_1Map}{Map}}$<$ \mbox{\hyperlink{classAriadne_1_1DiscreteEvent}{Discrete\+Event}}, \mbox{\hyperlink{structAriadne_1_1TransitionData}{Transition\+Data}} $>$ \mbox{\hyperlink{classAriadne_1_1HybridEvolverBase_a84c2bfa780b344bd7723ef3ab9ceebf1}{\+\_\+extract\+\_\+transitions}} (\mbox{\hyperlink{classAriadne_1_1DiscreteLocation}{Discrete\+Location}} const \&location) const
+\begin{DoxyCompactList}\small\item\em Extracts the transitions valid in {\itshape location} of {\itshape system}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1HybridEvolverBase_ac49e420cf3c8d2bc0d31d2c36a190250}\label{classAriadne_1_1HybridEvolverBase_ac49e420cf3c8d2bc0d31d2c36a190250} 
+virtual \mbox{\hyperlink{classAriadne_1_1FunctionPatch}{Validated\+Vector\+Multivariate\+Function\+Patch}} {\bfseries \+\_\+compute\+\_\+flow} (Effective\+Vector\+Multivariate\+Function vector\+\_\+field, \mbox{\hyperlink{group__FunctionModule_gafdd31b4d01081cd09aad2ce11117f867}{Exact\+Box\+Type}} const \&initial\+\_\+set, const \mbox{\hyperlink{group__DifferentialEquationSubModule_ga6f1c6f216a042c31906593cafeb126fa}{Step\+Size\+Type}} \&maximum\+\_\+step\+\_\+size) const
+\begin{DoxyCompactList}\small\item\em Compute the flow of the {\itshape vector\+\_\+field}, starting in the given {\itshape initial\+\_\+set}, and with a time step as large as {\itshape maximum\+\_\+time\+\_\+set} if possible. The result is a function patch defined on a domain $B\times [0,h]$, where $B$ is the bounding box for the set, and $h$ is the step size actually used. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1HybridEvolverBase_a0b25810b33462ec26cb713ebbeb092d1}\label{classAriadne_1_1HybridEvolverBase_a0b25810b33462ec26cb713ebbeb092d1} 
+virtual \mbox{\hyperlink{classAriadne_1_1Set}{Set}}$<$ \mbox{\hyperlink{classAriadne_1_1DiscreteEvent}{Discrete\+Event}} $>$ {\bfseries \+\_\+compute\+\_\+active\+\_\+events} (Effective\+Vector\+Multivariate\+Function const \&dynamic, \mbox{\hyperlink{classAriadne_1_1Map}{Map}}$<$ \mbox{\hyperlink{classAriadne_1_1DiscreteEvent}{Discrete\+Event}}, Effective\+Scalar\+Multivariate\+Function $>$ const \&guards, \mbox{\hyperlink{classAriadne_1_1FunctionPatch}{Validated\+Vector\+Multivariate\+Function\+Patch}} const \&flow, \mbox{\hyperlink{classAriadne_1_1HybridEnclosure}{Hybrid\+Enclosure}} const \&starting\+\_\+set) const
+\begin{DoxyCompactList}\small\item\em Compute the active events for the {\itshape flow} $\phi$ with time step $h$ starting in the given {\itshape starting\+\_\+set} $S$. A event $e$ is {\itshape active} if $g_e(\phi(x,t))\geq0$ for some $x\in S$ and $t\in[0,h]$. The result is allowed to contain events which are not active during the time step, since the exact set may be too difficult to compute. \end{DoxyCompactList}\item 
+virtual \mbox{\hyperlink{classAriadne_1_1Map}{Map}}$<$ \mbox{\hyperlink{classAriadne_1_1DiscreteEvent}{Discrete\+Event}}, \mbox{\hyperlink{structAriadne_1_1CrossingData}{Crossing\+Data}} $>$ \mbox{\hyperlink{classAriadne_1_1HybridEvolverBase_ad72a7db88e2c02585d680c5f95044214}{\+\_\+compute\+\_\+crossings}} (\mbox{\hyperlink{classAriadne_1_1Set}{Set}}$<$ \mbox{\hyperlink{classAriadne_1_1DiscreteEvent}{Discrete\+Event}} $>$ const \&active\+\_\+events, Effective\+Vector\+Multivariate\+Function const \&dynamic, \mbox{\hyperlink{classAriadne_1_1Map}{Map}}$<$ \mbox{\hyperlink{classAriadne_1_1DiscreteEvent}{Discrete\+Event}}, Effective\+Scalar\+Multivariate\+Function $>$ const \&guards, \mbox{\hyperlink{classAriadne_1_1FlowFunctionModel}{Flow\+Function\+Model}} const \&flow, \mbox{\hyperlink{classAriadne_1_1HybridEnclosure}{Hybrid\+Enclosure}} const \&initial\+\_\+set) const
+\begin{DoxyCompactList}\small\item\em Compute data on how trajectories of the {\itshape flow} cross the given {\itshape guards}. For example, trajectories may have a crossing where the guard value is strictly increasing which has a crossing\+\_\+time as a function of the initial state. \end{DoxyCompactList}\item 
+virtual \mbox{\hyperlink{structAriadne_1_1TimingData}{Timing\+Data}} \mbox{\hyperlink{classAriadne_1_1HybridEvolverBase_a9bce02585c0b7f6056176a06ed10c49c}{\+\_\+estimate\+\_\+timing}} (\mbox{\hyperlink{classAriadne_1_1Set}{Set}}$<$ \mbox{\hyperlink{classAriadne_1_1DiscreteEvent}{Discrete\+Event}} $>$ \&active\+\_\+events, \mbox{\hyperlink{classAriadne_1_1Real}{Real}} final\+\_\+time, \mbox{\hyperlink{classAriadne_1_1FlowFunctionModel}{Flow\+Function\+Model}} const \&flow, \mbox{\hyperlink{classAriadne_1_1Map}{Map}}$<$ \mbox{\hyperlink{classAriadne_1_1DiscreteEvent}{Discrete\+Event}}, \mbox{\hyperlink{structAriadne_1_1CrossingData}{Crossing\+Data}} $>$ \&crossings, \mbox{\hyperlink{classAriadne_1_1Map}{Map}}$<$ \mbox{\hyperlink{classAriadne_1_1DiscreteEvent}{Discrete\+Event}}, \mbox{\hyperlink{structAriadne_1_1TransitionData}{Transition\+Data}} $>$ const \&transitions, \mbox{\hyperlink{classAriadne_1_1HybridEnclosure}{Hybrid\+Enclosure}} const \&initial\+\_\+set) const
+\begin{DoxyCompactList}\small\item\em Compute data related to the time of evolution related to the maximum time step allowed by the flow, the event times, and the final time which should be attained at the end of the evolution. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1HybridEvolverBase_a5e50c0137f83d5d72270a53026e25142}\label{classAriadne_1_1HybridEvolverBase_a5e50c0137f83d5d72270a53026e25142} 
+virtual \mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} {\bfseries \+\_\+recondition} (\mbox{\hyperlink{classAriadne_1_1HybridEnclosure}{Hybrid\+Enclosure}} \&set) const
+\begin{DoxyCompactList}\small\item\em Simplify the description of a set or allow for reconditioning of numerical error. \end{DoxyCompactList}\item 
+virtual \mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} \mbox{\hyperlink{classAriadne_1_1HybridEvolverBase_a07ba094b9039b118a6ca3a765131786e}{\+\_\+process\+\_\+starting\+\_\+events}} (Workload\+Type\+::\+Access \&workload, \mbox{\hyperlink{classAriadne_1_1HybridEnclosure}{Hybrid\+Enclosure}} const \&starting\+\_\+set, \mbox{\hyperlink{classAriadne_1_1Map}{Map}}$<$ \mbox{\hyperlink{classAriadne_1_1DiscreteEvent}{Discrete\+Event}}, \mbox{\hyperlink{structAriadne_1_1TransitionData}{Transition\+Data}} $>$ const \&transitions, \mbox{\hyperlink{namespaceAriadne_a536cc349b9d52657c9d01d3f09c4633e}{Shared\+Pointer}}$<$ Synchronised\+Orbit $>$ result) const
+\begin{DoxyCompactList}\small\item\em Process the {\itshape starting\+\_\+set} to find any {\itshape immediately active} events, and compute the relevant {\itshape jump} sets and the {\itshape flowable} or {\itshape progress} set. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1HybridEvolverBase_a2e4c2106d2edfbff335c6ed4e134ecdc}\label{classAriadne_1_1HybridEvolverBase_a2e4c2106d2edfbff335c6ed4e134ecdc} 
+virtual \mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} {\bfseries \+\_\+apply\+\_\+reach\+\_\+step} (\mbox{\hyperlink{classAriadne_1_1HybridEnclosure}{Hybrid\+Enclosure}} \&set, \mbox{\hyperlink{classAriadne_1_1FunctionPatch}{Validated\+Vector\+Multivariate\+Function\+Patch}} const \&flow, \mbox{\hyperlink{structAriadne_1_1TimingData}{Timing\+Data}} const \&timing\+\_\+data) const
+\begin{DoxyCompactList}\small\item\em Apply the {\itshape flow} to the {\itshape set} up to the time specified by {\itshape timing\+\_\+data} to obtain the single-\/step unconstrained reachable set. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1HybridEvolverBase_a33fd34365fae498d8c46bbbe8d17710a}\label{classAriadne_1_1HybridEvolverBase_a33fd34365fae498d8c46bbbe8d17710a} 
+virtual \mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} {\bfseries \+\_\+apply\+\_\+evolve\+\_\+step} (\mbox{\hyperlink{classAriadne_1_1HybridEnclosure}{Hybrid\+Enclosure}} \&set, \mbox{\hyperlink{classAriadne_1_1FunctionPatch}{Validated\+Vector\+Multivariate\+Function\+Patch}} const \&flow, \mbox{\hyperlink{structAriadne_1_1TimingData}{Timing\+Data}} const \&timing\+\_\+data) const
+\begin{DoxyCompactList}\small\item\em Apply the {\itshape flow} to the {\itshape set} for the time specified by {\itshape timing\+\_\+data} to obtain the single-\/step unconstrained evolved set. \end{DoxyCompactList}\item 
+virtual \mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} \mbox{\hyperlink{classAriadne_1_1HybridEvolverBase_a81057d3c2fb529df3c631615bd69df6f}{\+\_\+apply\+\_\+guard\+\_\+step}} (\mbox{\hyperlink{classAriadne_1_1HybridEnclosure}{Hybrid\+Enclosure}} \&set, Effective\+Vector\+Multivariate\+Function const \&dynamic, \mbox{\hyperlink{classAriadne_1_1FunctionPatch}{Validated\+Vector\+Multivariate\+Function\+Patch}} const \&flow, \mbox{\hyperlink{structAriadne_1_1TimingData}{Timing\+Data}} const \&timing\+\_\+data, \mbox{\hyperlink{structAriadne_1_1TransitionData}{Transition\+Data}} const \&transition\+\_\+data, \mbox{\hyperlink{structAriadne_1_1CrossingData}{Crossing\+Data}} const \&crossing\+\_\+data, const \mbox{\hyperlink{group__DynamicsModule_gafd43cf1b14dd42f7ac8ca23dcc3837b3}{Semantics}} semantics) const
+\begin{DoxyCompactList}\small\item\em Apply the {\itshape flow} to the {\itshape set} for to reach the guard specified by {\itshape transition\+\_\+data} using guidelines provided by {\itshape crossing\+\_\+data}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1HybridEvolverBase_af215096d6d2a58f34d1cc4ead6711d3d}\label{classAriadne_1_1HybridEvolverBase_af215096d6d2a58f34d1cc4ead6711d3d} 
+virtual \mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} {\bfseries \+\_\+apply\+\_\+invariants} (\mbox{\hyperlink{classAriadne_1_1HybridEnclosure}{Hybrid\+Enclosure}} \&set, const \mbox{\hyperlink{classAriadne_1_1Map}{Map}}$<$ \mbox{\hyperlink{classAriadne_1_1DiscreteEvent}{Discrete\+Event}}, \mbox{\hyperlink{structAriadne_1_1TransitionData}{Transition\+Data}} $>$ \&transition\+\_\+data) const
+\begin{DoxyCompactList}\small\item\em Apply the invariants in {\itshape transition\+\_\+data} to the set {\itshape set}. \end{DoxyCompactList}\item 
+virtual \mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} \mbox{\hyperlink{classAriadne_1_1HybridEvolverBase_adf086502d7253bec15c1a097d9211e98}{\+\_\+apply\+\_\+guard}} (\mbox{\hyperlink{classAriadne_1_1List}{List}}$<$ \mbox{\hyperlink{classAriadne_1_1HybridEnclosure}{Hybrid\+Enclosure}} $>$ \&sets, const \mbox{\hyperlink{classAriadne_1_1FunctionPatch}{Validated\+Scalar\+Multivariate\+Function\+Patch}} \&sets\+\_\+elapsed\+\_\+time, const \mbox{\hyperlink{classAriadne_1_1HybridEnclosure}{Hybrid\+Enclosure}} \&starting\+\_\+set, const \mbox{\hyperlink{classAriadne_1_1FunctionPatch}{Validated\+Vector\+Multivariate\+Function\+Patch}} \&flow, const \mbox{\hyperlink{structAriadne_1_1TransitionData}{Transition\+Data}} \&transition\+\_\+data, const \mbox{\hyperlink{structAriadne_1_1CrossingData}{Crossing\+Data}} crossing\+\_\+data, const \mbox{\hyperlink{group__DynamicsModule_gafd43cf1b14dd42f7ac8ca23dcc3837b3}{Semantics}} semantics) const
+\begin{DoxyCompactList}\small\item\em Apply {\itshape guard\+\_\+function} for {\itshape event} to each set in {\itshape sets}, using the computed {\itshape crossing\+\_\+data}. \end{DoxyCompactList}\item 
+mid \mbox{\hyperlink{classAriadne_1_1HybridEvolverBase_a8891724270851d68a81153ef0eccde8a}{rho}} (s)\textbackslash{}in C \textbackslash{} \textbackslash{}wedge\textbackslash{} t\textbackslash{}leq\textbackslash{}delta(s) \textbackslash{} \textbackslash{}wedge\textbackslash{} \textbackslash{}tau(s)+t\textbackslash{}leq t\+\_\+
+\begin{DoxyCompactList}\small\item\em Process the {\itshape starting\+\_\+set} $S$ based on the previously computed {\itshape flow}, {\itshape timing\+\_\+data} and {\itshape crossing\+\_\+data} to compute the successor sets in the evolution. Compute the resulting {\itshape jump}, {\itshape finishing}, {\itshape final} and {\itshape reach} sets after a single time step. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1HybridEvolverBase_a85f3b5130354af5c811f9e47bc50e38f}\label{classAriadne_1_1HybridEvolverBase_a85f3b5130354af5c811f9e47bc50e38f} 
+virtual \mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} {\bfseries \+\_\+log\+\_\+summary} (\mbox{\hyperlink{classAriadne_1_1HybridEnclosure}{Hybrid\+Enclosure}} const \&starting\+\_\+set, \mbox{\hyperlink{namespaceAriadne_a536cc349b9d52657c9d01d3f09c4633e}{Shared\+Pointer}}$<$ Synchronised\+Orbit $>$ result) const
+\begin{DoxyCompactList}\small\item\em Output a one-\/line summary of the current evolution state to the logging stream. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsubsection*{Settng and configuration for the class.}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1HybridEvolverBase_aed8e89999f9a23087fc6c45bb0613706}\label{classAriadne_1_1HybridEvolverBase_aed8e89999f9a23087fc6c45bb0613706} 
+\mbox{\hyperlink{namespaceAriadne_a76a8b016e5ad61faf9062cc387df5016}{Bool}} {\bfseries ALLOW\+\_\+\+CREEP}
+\begin{DoxyCompactList}\small\item\em If true, a less-\/than-\/full evolution step may be taken to avoid splitting due to partially crossing a guard. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1HybridEvolverBase_a91ff51eea9c750d0b0168444555a6b17}\label{classAriadne_1_1HybridEvolverBase_a91ff51eea9c750d0b0168444555a6b17} 
+\mbox{\hyperlink{namespaceAriadne_a76a8b016e5ad61faf9062cc387df5016}{Bool}} {\bfseries ALLOW\+\_\+\+UNWIND}
+\begin{DoxyCompactList}\small\item\em If true, a less-\/than-\/full evolution step may be taken to try to restore all time values over the parameter domain to the same value. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1HybridEvolverBase_a702fe085c2ed9d914912855fcc9d578a}\label{classAriadne_1_1HybridEvolverBase_a702fe085c2ed9d914912855fcc9d578a} 
+\mbox{\hyperlink{classAriadne_1_1HybridEvolverBaseConfiguration}{Configuration\+Type}} \& {\bfseries configuration} ()
+\begin{DoxyCompactList}\small\item\em A reference to the evolver\textquotesingle{}s configuration parameters. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1HybridEvolverBase_a28d9c6e3d5dd6d5b801eaad1c7c55bde}\label{classAriadne_1_1HybridEvolverBase_a28d9c6e3d5dd6d5b801eaad1c7c55bde} 
+virtual \mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} {\bfseries reconfigure} (const \mbox{\hyperlink{classAriadne_1_1HybridBoxes}{Hybrid\+Exact\+Boxes}} \&domain, const \mbox{\hyperlink{classAriadne_1_1Map}{Hybrid\+Exact\+Float\+Vector}} \&lengths)
+\begin{DoxyCompactList}\small\item\em Change the configuration from a {\itshape domain} and {\itshape lengths} (NOT IMPLEMENTED). \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1HybridEvolverBase_aa18dd9bc9de099573120315c18f8d9d8}\label{classAriadne_1_1HybridEvolverBase_aa18dd9bc9de099573120315c18f8d9d8} 
+const Function\+Factory\+Type {\bfseries function\+\_\+factory} () const
+\begin{DoxyCompactList}\small\item\em The class which constructs functions for the enclosures. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1HybridEvolverBase_a3fb60e088d161ee3a2201fc8997036f9}\label{classAriadne_1_1HybridEvolverBase_a3fb60e088d161ee3a2201fc8997036f9} 
+\mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} {\bfseries set\+\_\+function\+\_\+factory} (const Function\+Factory\+Type \&factory)
+\begin{DoxyCompactList}\small\item\em \doxylink{classAriadne_1_1Set}{Set} the class which constructs functions for the enclosures. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1HybridEvolverBase_a4f541ca51553d03fbd3d5d0a3e1cc9bc}\label{classAriadne_1_1HybridEvolverBase_a4f541ca51553d03fbd3d5d0a3e1cc9bc} 
+\mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} {\bfseries set\+\_\+integrator} (const \mbox{\hyperlink{classAriadne_1_1IntegratorInterface}{Integrator\+Interface}} \&integrator)
+\begin{DoxyCompactList}\small\item\em \doxylink{classAriadne_1_1Set}{Set} the class which integrates the continuous dynamics. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1HybridEvolverBase_ae9a21e8fea5dfadbf7c6d37e58ba0b3c}\label{classAriadne_1_1HybridEvolverBase_ae9a21e8fea5dfadbf7c6d37e58ba0b3c} 
+\mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} {\bfseries set\+\_\+solver} (const \mbox{\hyperlink{classAriadne_1_1SolverInterface}{Solver\+Interface}} \&solver)
+\begin{DoxyCompactList}\small\item\em \doxylink{classAriadne_1_1Set}{Set} the class which integrates the continuous dynamics. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsubsection*{Additional Inherited Members}
+\doxyparagraph*{Public Types inherited from \mbox{\hyperlink{classAriadne_1_1EvolverInterface}{Evolver\+Interface$<$ Hybrid\+Automaton\+Interface, Hybrid\+Enclosure, Hybrid\+Termination\+Criterion $>$}}}
+\begin{DoxyCompactItemize}
+\item 
+typedef \mbox{\hyperlink{classAriadne_1_1HybridAutomatonInterface}{Hybrid\+Automaton\+Interface}} {\bfseries System\+Type}
+\begin{DoxyCompactList}\small\item\em The type of system the evolver can compute the behaviour of. \end{DoxyCompactList}\item 
+typedef \mbox{\hyperlink{classAriadne_1_1HybridAutomatonInterface_a6758468f0d6935d3ea5db460673c9b71}{System\+Type\+::\+Time\+Type}} {\bfseries Time\+Type}
+\begin{DoxyCompactList}\small\item\em The type used to represent the evolution time of the system. \end{DoxyCompactList}\item 
+typedef Hybrid\+Termination\+Criterion {\bfseries Termination\+Type}
+\begin{DoxyCompactList}\small\item\em The type used to represent conditions under which system evolution may be terminated. \end{DoxyCompactList}\item 
+typedef \mbox{\hyperlink{classAriadne_1_1HybridEnclosure}{Hybrid\+Enclosure}} {\bfseries Enclosure\+Type}
+\begin{DoxyCompactList}\small\item\em The type of set used to enclose the flow tubes. \end{DoxyCompactList}\item 
+typedef \mbox{\hyperlink{classAriadne_1_1ListSet}{List\+Set}}$<$ \mbox{\hyperlink{classAriadne_1_1EvolverInterface_a3eee62b15617b80a9cd7a2f4ba905cff}{Enclosure\+Type}} $>$ {\bfseries Enclosure\+List\+Type}
+\begin{DoxyCompactList}\small\item\em The type of a list of enclosure sets. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\label{doc-func-members}
+\Hypertarget{classAriadne_1_1HybridEvolverBase_doc-func-members}
+\doxysubsubsection{Member Function Documentation}
+\Hypertarget{classAriadne_1_1HybridEvolverBase_a125d545ea963da5c9aecfa09c7a9e339}\index{HybridEvolverBase@{HybridEvolverBase}!\_process\_working\_set@{\_process\_working\_set}}
+\index{\_process\_working\_set@{\_process\_working\_set}!HybridEvolverBase@{HybridEvolverBase}}
+\doxyparagraph{\texorpdfstring{\_process\_working\_set()}{\_process\_working\_set()}}
+{\footnotesize\ttfamily \label{classAriadne_1_1HybridEvolverBase_a125d545ea963da5c9aecfa09c7a9e339} 
+\mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} \+\_\+process\+\_\+working\+\_\+set (\begin{DoxyParamCaption}\item[{Workload\+Type\+::\+Access \&}]{workload}{, }\item[{\mbox{\hyperlink{namespaceAriadne_abbe0884d033ed6289d1f654576d7bb07}{Pair}}$<$ \mbox{\hyperlink{classAriadne_1_1HybridEnclosure}{Hybrid\+Enclosure}}, \mbox{\hyperlink{namespaceAriadne_a76a8b016e5ad61faf9062cc387df5016}{Bool}} $>$ const \&}]{working\+\_\+set}{, }\item[{\mbox{\hyperlink{classAriadne_1_1EvolverInterface_afaf8d55b202cc690926f7f660b302e96}{Termination\+Type}} const \&}]{termination}{, }\item[{\mbox{\hyperlink{group__DynamicsModule_gafd43cf1b14dd42f7ac8ca23dcc3837b3}{Semantics}} const \&}]{semantics}{, }\item[{\mbox{\hyperlink{namespaceAriadne_a536cc349b9d52657c9d01d3f09c4633e}{Shared\+Pointer}}$<$ Synchronised\+Orbit $>$}]{result}{}\end{DoxyParamCaption}) const\hspace{0.3cm}{\ttfamily [protected]}, {\ttfamily [virtual]}}
+
+
+
+Processes a single working set. 
+
+Takes a set from evolution\+\_\+data.\+starting\+\_\+sets and possibly processes the active events. The resulting set is then evolved using until either the maximum continuous time is reached, or no further continuous evolution is possible. 
+
+References \mbox{\hyperlink{classAriadne_1_1HybridEvolverBase_a788bbdc04255fa2d5ecd90eaf3b7d8e1}{\+\_\+evolution\+\_\+step()}}.
+
+\Hypertarget{classAriadne_1_1HybridEvolverBase_a84c2bfa780b344bd7723ef3ab9ceebf1}\index{HybridEvolverBase@{HybridEvolverBase}!\_extract\_transitions@{\_extract\_transitions}}
+\index{\_extract\_transitions@{\_extract\_transitions}!HybridEvolverBase@{HybridEvolverBase}}
+\doxyparagraph{\texorpdfstring{\_extract\_transitions()}{\_extract\_transitions()}}
+{\footnotesize\ttfamily \label{classAriadne_1_1HybridEvolverBase_a84c2bfa780b344bd7723ef3ab9ceebf1} 
+\mbox{\hyperlink{classAriadne_1_1Map}{Map}}$<$ \mbox{\hyperlink{classAriadne_1_1DiscreteEvent}{Discrete\+Event}}, \mbox{\hyperlink{structAriadne_1_1TransitionData}{Transition\+Data}} $>$ \+\_\+extract\+\_\+transitions (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{classAriadne_1_1DiscreteLocation}{Discrete\+Location}} const \&}]{location}{}\end{DoxyParamCaption}) const\hspace{0.3cm}{\ttfamily [protected]}, {\ttfamily [virtual]}}
+
+
+
+Extracts the transitions valid in {\itshape location} of {\itshape system}. 
+
+For some systems, extracting the information about the guard and reset functions may be expensive. This routine collects all information in one place 
+
+References \mbox{\hyperlink{classAriadne_1_1HybridAutomatonInterface_ad220dc69774fb12447e5a2c503fbca57}{Hybrid\+Automaton\+Interface\+::auxiliary\+\_\+function()}}, \mbox{\hyperlink{classAriadne_1_1HybridAutomatonInterface_ae653826985fcca184e37f3bd88433a91}{Hybrid\+Automaton\+Interface\+::continuous\+\_\+auxiliary\+\_\+space()}}, \mbox{\hyperlink{classAriadne_1_1HybridAutomatonInterface_ad3274b0b37bffcf92348dd2720629552}{Hybrid\+Automaton\+Interface\+::continuous\+\_\+state\+\_\+space()}}, \mbox{\hyperlink{classAriadne_1_1HybridAutomatonInterface_a9b3e00b9e4023af179e44e7c6de02790}{Hybrid\+Automaton\+Interface\+::dynamic\+\_\+function()}}, \mbox{\hyperlink{classAriadne_1_1HybridAutomatonInterface_a3ea476c2c15224f35c72a07c147c2c9b}{Hybrid\+Automaton\+Interface\+::event\+\_\+kind()}}, \mbox{\hyperlink{classAriadne_1_1HybridAutomatonInterface_a9c88ce9bececdf0f02c0f5fb75a03c5b}{Hybrid\+Automaton\+Interface\+::events()}}, \mbox{\hyperlink{classAriadne_1_1HybridAutomatonInterface_a3363a75eae977c28723d4897ee5ad99a}{Hybrid\+Automaton\+Interface\+::guard\+\_\+function()}}, \mbox{\hyperlink{classAriadne_1_1HybridAutomatonInterface_a695223a9f1219ce9a309c6414440e692}{Hybrid\+Automaton\+Interface\+::invariant\+\_\+function()}}, \mbox{\hyperlink{classAriadne_1_1HybridAutomatonInterface_a0f8ab8fbd6872b72f7127eeb05662a6a}{Hybrid\+Automaton\+Interface\+::reset\+\_\+function()}}, \mbox{\hyperlink{classAriadne_1_1HybridEvolverBase_a36cd3a3b0117770108ca8541759e46f9}{system()}}, and \mbox{\hyperlink{classAriadne_1_1HybridAutomatonInterface_a6a81f05b33c97c807967f2b219f8e89b}{Hybrid\+Automaton\+Interface\+::target()}}.
+
+
+
+Referenced by \mbox{\hyperlink{classAriadne_1_1HybridEvolverBase_a788bbdc04255fa2d5ecd90eaf3b7d8e1}{\+\_\+evolution\+\_\+step()}}.
+
+\Hypertarget{classAriadne_1_1HybridEvolverBase_ad72a7db88e2c02585d680c5f95044214}\index{HybridEvolverBase@{HybridEvolverBase}!\_compute\_crossings@{\_compute\_crossings}}
+\index{\_compute\_crossings@{\_compute\_crossings}!HybridEvolverBase@{HybridEvolverBase}}
+\doxyparagraph{\texorpdfstring{\_compute\_crossings()}{\_compute\_crossings()}}
+{\footnotesize\ttfamily \label{classAriadne_1_1HybridEvolverBase_ad72a7db88e2c02585d680c5f95044214} 
+\mbox{\hyperlink{classAriadne_1_1Map}{Map}}$<$ \mbox{\hyperlink{classAriadne_1_1DiscreteEvent}{Discrete\+Event}}, \mbox{\hyperlink{structAriadne_1_1CrossingData}{Crossing\+Data}} $>$ \+\_\+compute\+\_\+crossings (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{classAriadne_1_1Set}{Set}}$<$ \mbox{\hyperlink{classAriadne_1_1DiscreteEvent}{Discrete\+Event}} $>$ const \&}]{active\+\_\+events}{, }\item[{Effective\+Vector\+Multivariate\+Function const \&}]{dynamic}{, }\item[{\mbox{\hyperlink{classAriadne_1_1Map}{Map}}$<$ \mbox{\hyperlink{classAriadne_1_1DiscreteEvent}{Discrete\+Event}}, Effective\+Scalar\+Multivariate\+Function $>$ const \&}]{guards}{, }\item[{\mbox{\hyperlink{classAriadne_1_1FlowFunctionModel}{Flow\+Function\+Model}} const \&}]{flow}{, }\item[{\mbox{\hyperlink{classAriadne_1_1HybridEnclosure}{Hybrid\+Enclosure}} const \&}]{initial\+\_\+set}{}\end{DoxyParamCaption}) const\hspace{0.3cm}{\ttfamily [protected]}, {\ttfamily [virtual]}}
+
+
+
+Compute data on how trajectories of the {\itshape flow} cross the given {\itshape guards}. For example, trajectories may have a crossing where the guard value is strictly increasing which has a crossing\+\_\+time as a function of the initial state. 
+
+The {\itshape dynamic} is given explicitly to facilitate computation of crossing times. A crossing\+\_\+time computed must be valid over the {\itshape initial\+\_\+set}, though will often be computed over the entire bounding box.
+
+If the crossing is \doxylink{group__HybridDynamicsSubModule_gga4179a1dd2049e4cb6ee977ee268d8470af0e494a5b9821b6ae99ecc9cc4413e42}{Crossing\+Kind\+::\+INCREASING}, then the {\itshape crossing\+\_\+time} $\gamma$ should be computed, satisfying $g(\phi(x,\gamma(x)))=0$. If the crossing is \doxylink{group__HybridDynamicsSubModule_gga4179a1dd2049e4cb6ee977ee268d8470afd60c95517f30f940fb63c6dcfd10181}{Crossing\+Kind\+::\+CONCAVE}, the the {\itshape critical\+\_\+time} ({\itshape maximum\+\_\+time}) $\mu$ should be computed, satisfying $L_{f}g(\phi(x,\mu(x)))=0$. 
+
+References \mbox{\hyperlink{classAriadne_1_1HybridEnclosure_af486444f93d59902ef32fd5460cb8e49}{Hybrid\+Enclosure\+::apply\+\_\+fixed\+\_\+evolve\+\_\+step()}}, \mbox{\hyperlink{classAriadne_1_1HybridEnclosure_adb82305c8098b72ed76ee1e6f1a5c6f3}{Hybrid\+Enclosure\+::apply\+\_\+space\+\_\+evolve\+\_\+step()}}, \mbox{\hyperlink{classAriadne_1_1HybridEnclosure_acd14d1ba9741a194faf8a46156921ee6}{Hybrid\+Enclosure\+::bounding\+\_\+box()}}, \mbox{\hyperlink{group__HybridDynamicsSubModule_gga4179a1dd2049e4cb6ee977ee268d8470afd60c95517f30f940fb63c6dcfd10181}{Ariadne\+::\+CONCAVE}}, \mbox{\hyperlink{group__HybridDynamicsSubModule_gga4179a1dd2049e4cb6ee977ee268d8470a87f945db7c7f9bb3f6b4931ae074a2ca}{Ariadne\+::\+CONVEX}}, \mbox{\hyperlink{group__HybridDynamicsSubModule_gga4179a1dd2049e4cb6ee977ee268d8470aeb1a1f88661e1da8ddf15d8c9818daad}{Ariadne\+::\+DECREASING}}, \mbox{\hyperlink{namespaceAriadne_aa44ba4f2d015e8143195445b46782c31}{Ariadne\+::definitely()}}, \mbox{\hyperlink{group__HybridDynamicsSubModule_gga4179a1dd2049e4cb6ee977ee268d8470a6084ee8bb30ae219127db8b7aece408a}{Ariadne\+::\+DEGENERATE}}, \mbox{\hyperlink{group__HybridDynamicsSubModule_gga4179a1dd2049e4cb6ee977ee268d8470aabc4b89db06cd86d6bf2704a06ec92d4}{Ariadne\+::\+GRAZING}}, \mbox{\hyperlink{group__HybridDynamicsSubModule_gga4179a1dd2049e4cb6ee977ee268d8470af0e494a5b9821b6ae99ecc9cc4413e42}{Ariadne\+::\+INCREASING}}, \mbox{\hyperlink{classAriadne_1_1Interval_ad0bc1be281cca14cc94437dcf7609b8f}{Interval$<$ U $>$\+::lower\+\_\+bound()}}, \mbox{\hyperlink{namespaceAriadne_a67004075d5a8db930365c150c0b8965a}{Ariadne\+::possibly()}}, \mbox{\hyperlink{classAriadne_1_1HybridEnclosure_aee2721f09c90a8fb24c29776cc7ae97a}{Hybrid\+Enclosure\+::range\+\_\+of()}}, \mbox{\hyperlink{group__HybridDynamicsSubModule_gga4179a1dd2049e4cb6ee977ee268d8470aad3af5e9770232d2363f9875000c16ec}{Ariadne\+::\+TRANSVERSE}}, and \mbox{\hyperlink{classAriadne_1_1Interval_a35ba283ea1d37f2be4139a57f2eda1bc}{Interval$<$ U $>$\+::upper\+\_\+bound()}}.
+
+
+
+Referenced by \mbox{\hyperlink{classAriadne_1_1HybridEvolverBase_a788bbdc04255fa2d5ecd90eaf3b7d8e1}{\+\_\+evolution\+\_\+step()}}.
+
+\Hypertarget{classAriadne_1_1HybridEvolverBase_a9bce02585c0b7f6056176a06ed10c49c}\index{HybridEvolverBase@{HybridEvolverBase}!\_estimate\_timing@{\_estimate\_timing}}
+\index{\_estimate\_timing@{\_estimate\_timing}!HybridEvolverBase@{HybridEvolverBase}}
+\doxyparagraph{\texorpdfstring{\_estimate\_timing()}{\_estimate\_timing()}}
+{\footnotesize\ttfamily \label{classAriadne_1_1HybridEvolverBase_a9bce02585c0b7f6056176a06ed10c49c} 
+\mbox{\hyperlink{structAriadne_1_1TimingData}{Timing\+Data}} \+\_\+estimate\+\_\+timing (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{classAriadne_1_1Set}{Set}}$<$ \mbox{\hyperlink{classAriadne_1_1DiscreteEvent}{Discrete\+Event}} $>$ \&}]{active\+\_\+events}{, }\item[{\mbox{\hyperlink{classAriadne_1_1Real}{Real}}}]{final\+\_\+time}{, }\item[{\mbox{\hyperlink{classAriadne_1_1FlowFunctionModel}{Flow\+Function\+Model}} const \&}]{flow}{, }\item[{\mbox{\hyperlink{classAriadne_1_1Map}{Map}}$<$ \mbox{\hyperlink{classAriadne_1_1DiscreteEvent}{Discrete\+Event}}, \mbox{\hyperlink{structAriadne_1_1CrossingData}{Crossing\+Data}} $>$ \&}]{crossings}{, }\item[{\mbox{\hyperlink{classAriadne_1_1Map}{Map}}$<$ \mbox{\hyperlink{classAriadne_1_1DiscreteEvent}{Discrete\+Event}}, \mbox{\hyperlink{structAriadne_1_1TransitionData}{Transition\+Data}} $>$ const \&}]{transitions}{, }\item[{\mbox{\hyperlink{classAriadne_1_1HybridEnclosure}{Hybrid\+Enclosure}} const \&}]{initial\+\_\+set}{}\end{DoxyParamCaption}) const\hspace{0.3cm}{\ttfamily [protected]}, {\ttfamily [virtual]}}
+
+
+
+Compute data related to the time of evolution related to the maximum time step allowed by the flow, the event times, and the final time which should be attained at the end of the evolution. 
+
+\begin{DoxyPostcond}{Postcondition}
+If the step\+\_\+kind is SPACETIME\+\_\+\+DEPENDENT\+\_\+\+EVOLUTION\+\_\+\+TIME, then the evolution\+\_\+time must evaluate a value in \mbox{[}0,h\mbox{]} over the initial\+\_\+set, where $h$ is the {\itshape step\+\_\+size}. In other words, $\varepsilon(\xi(s),\tau(s))\in[0,h]$ whenever $s$ is a valid parameter. If the step\+\_\+kind is PARAMETER\+\_\+\+DEPENDENT\+\_\+\+FINISHING\+\_\+\+TIME, then $(\omega(s)-\tau(s))\in[0,h]$ whenever $s$ is a valid parameter. If the step\+\_\+kind is CONSTANT\+\_\+\+FINISHING\+\_\+\+TIME, then $t_{\max}-\tau(s)\leq h$ whenever $s$ is a valid parameter.
+\end{DoxyPostcond}
+TODO\+: By reducing the step time, some events may become inactive. It should be possible to reflect this in the output.
+
+TODO\+: The CONSTANT\+\_\+\+FINISHING\+\_\+\+TIME choice might be inappropriate; maybe this should be replaced with an extra flag representing whether the final time could possibly be reached. However, it might be simpler to just check the final conditions latex, or 
+
+Reimplemented in \mbox{\hyperlink{classAriadne_1_1GeneralHybridEvolver_a9bce02585c0b7f6056176a06ed10c49c}{General\+Hybrid\+Evolver}}.
+
+
+
+References \mbox{\hyperlink{group__HybridDynamicsSubModule_gga79c7231766d05a92d72e027f2a7e9e46a56c1707c709ac0c044a926f60cc6f3ec}{Ariadne\+::\+CONSTANT\+\_\+\+EVOLUTION\+\_\+\+TIME}}, \mbox{\hyperlink{structAriadne_1_1TimingData_aac9f0a6b86f61350ff662ce4c4b059f5}{Timing\+Data\+::evolution\+\_\+time\+\_\+coordinate}}, \mbox{\hyperlink{structAriadne_1_1TimingData_a33e563cefbdf4f40a562952603c08f86}{Timing\+Data\+::evolution\+\_\+time\+\_\+domain}}, \mbox{\hyperlink{structAriadne_1_1TimingData_a0e2366c3a3468b897af00e2c43b171e1}{Timing\+Data\+::final\+\_\+time}}, \mbox{\hyperlink{structAriadne_1_1TimingData_a81a062ade4f946edc7470ed1c7b056e0}{Timing\+Data\+::finishing\+\_\+kind}}, \mbox{\hyperlink{classAriadne_1_1HybridEvolverBase_aa18dd9bc9de099573120315c18f8d9d8}{function\+\_\+factory()}}, \mbox{\hyperlink{structAriadne_1_1TimingData_a6929c98b1c62c15dbdb9eda93df07ddb}{Timing\+Data\+::parameter\+\_\+dependent\+\_\+evolution\+\_\+time}}, \mbox{\hyperlink{classAriadne_1_1HybridEnclosure_a6e1b119e9c87e8c2fc381d88640fbe91}{Hybrid\+Enclosure\+::parameter\+\_\+domain()}}, \mbox{\hyperlink{structAriadne_1_1TimingData_aa7f69b5b159b3fba68275d24810fc0a8}{Timing\+Data\+::step\+\_\+kind}}, \mbox{\hyperlink{structAriadne_1_1TimingData_afc3407ae5f19d20f239465ca3d98025d}{Timing\+Data\+::step\+\_\+size}}, and \mbox{\hyperlink{group__HybridDynamicsSubModule_ggaab38dcc1842690eb2fb23b9ef2930954a7fd663deae4100e4162f0f9fd7b2b879}{Ariadne\+::\+STRADDLE\+\_\+\+FINAL\+\_\+\+TIME}}.
+
+
+
+Referenced by \mbox{\hyperlink{classAriadne_1_1HybridEvolverBase_a788bbdc04255fa2d5ecd90eaf3b7d8e1}{\+\_\+evolution\+\_\+step()}}.
+
+\Hypertarget{classAriadne_1_1HybridEvolverBase_a07ba094b9039b118a6ca3a765131786e}\index{HybridEvolverBase@{HybridEvolverBase}!\_process\_starting\_events@{\_process\_starting\_events}}
+\index{\_process\_starting\_events@{\_process\_starting\_events}!HybridEvolverBase@{HybridEvolverBase}}
+\doxyparagraph{\texorpdfstring{\_process\_starting\_events()}{\_process\_starting\_events()}}
+{\footnotesize\ttfamily \label{classAriadne_1_1HybridEvolverBase_a07ba094b9039b118a6ca3a765131786e} 
+\mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} \+\_\+process\+\_\+starting\+\_\+events (\begin{DoxyParamCaption}\item[{Workload\+Type\+::\+Access \&}]{workload}{, }\item[{\mbox{\hyperlink{classAriadne_1_1HybridEnclosure}{Hybrid\+Enclosure}} const \&}]{starting\+\_\+set}{, }\item[{\mbox{\hyperlink{classAriadne_1_1Map}{Map}}$<$ \mbox{\hyperlink{classAriadne_1_1DiscreteEvent}{Discrete\+Event}}, \mbox{\hyperlink{structAriadne_1_1TransitionData}{Transition\+Data}} $>$ const \&}]{transitions}{, }\item[{\mbox{\hyperlink{namespaceAriadne_a536cc349b9d52657c9d01d3f09c4633e}{Shared\+Pointer}}$<$ Synchronised\+Orbit $>$}]{result}{}\end{DoxyParamCaption}) const\hspace{0.3cm}{\ttfamily [protected]}, {\ttfamily [virtual]}}
+
+
+
+Process the {\itshape starting\+\_\+set} to find any {\itshape immediately active} events, and compute the relevant {\itshape jump} sets and the {\itshape flowable} or {\itshape progress} set. 
+
+First, and {\itshape invariants} $i_e(x)\leq0$ are processed to give an {\itshape allowable} or {\itshape invariant} $I=\{ x\in S \mid \forall e\in E_{\mathrm{inv}},\ i_e(x)\leq0\}$. Then for each urgent or permissive transition, the {\itshape active} set $A_e = \{ x\in I \mid g_e(x)\geq 0\}$ and jump set $ _e = r_e(A_e)$ are computed. Finally, any progress predicates $p_e(x)\leq0$ are processed (including those derived from urgent events), to give the flowable set $P=\{ x\in I \mid \forall e\in E_{\mathrm{tcp}},\ p_e(x)\leq0\}$. 
+
+References \mbox{\hyperlink{classAriadne_1_1HybridEvolverBase_af215096d6d2a58f34d1cc4ead6711d3d}{\+\_\+apply\+\_\+invariants()}}, \mbox{\hyperlink{classAriadne_1_1HybridEnclosure_af4a5bc56d68ad4df1cc40d963e55d009}{Hybrid\+Enclosure\+::apply\+\_\+reset()}}, \mbox{\hyperlink{namespaceAriadne_aa44ba4f2d015e8143195445b46782c31}{Ariadne\+::definitely()}}, \mbox{\hyperlink{structAriadne_1_1TransitionData_adfb2faf70fed2914ee7d71bd5e1d8cfe}{Transition\+Data\+::event\+\_\+kind}}, \mbox{\hyperlink{structAriadne_1_1TransitionData_a860c6a9a295a4379569f0e8e4bce1226}{Transition\+Data\+::guard\+\_\+function}}, \mbox{\hyperlink{classAriadne_1_1HybridEnclosure_a105852630cf0748babb83881e3ce3a01}{Hybrid\+Enclosure\+::is\+\_\+empty()}}, \mbox{\hyperlink{classAriadne_1_1HybridEnclosure_a9d94ce33972ffaea02176e1256ba2e8a}{Hybrid\+Enclosure\+::new\+\_\+activation()}}, \mbox{\hyperlink{classAriadne_1_1HybridEnclosure_a07590b9ffe23b1d3232fc0551c8f2636}{Hybrid\+Enclosure\+::new\+\_\+invariant()}}, \mbox{\hyperlink{namespaceAriadne_a67004075d5a8db930365c150c0b8965a}{Ariadne\+::possibly()}}, \mbox{\hyperlink{structAriadne_1_1TransitionData_ad67cd44badd76622a1a1bc1c17ee9bf9}{Transition\+Data\+::reset\+\_\+function}}, \mbox{\hyperlink{structAriadne_1_1TransitionData_a106c486e7f0c4a01841082edcfa670d6}{Transition\+Data\+::target}}, \mbox{\hyperlink{structAriadne_1_1TransitionData_a8152cb335767d510297b22e3a1227cf2}{Transition\+Data\+::target\+\_\+auxiliary\+\_\+function}}, \mbox{\hyperlink{structAriadne_1_1TransitionData_a8b9fdddb6d00ce5abea5c718bfce9359}{Transition\+Data\+::target\+\_\+auxiliary\+\_\+space}}, and \mbox{\hyperlink{structAriadne_1_1TransitionData_a91da2972647fcb318be22f8cb0c3d3bf}{Transition\+Data\+::target\+\_\+space}}.
+
+\Hypertarget{classAriadne_1_1HybridEvolverBase_a81057d3c2fb529df3c631615bd69df6f}\index{HybridEvolverBase@{HybridEvolverBase}!\_apply\_guard\_step@{\_apply\_guard\_step}}
+\index{\_apply\_guard\_step@{\_apply\_guard\_step}!HybridEvolverBase@{HybridEvolverBase}}
+\doxyparagraph{\texorpdfstring{\_apply\_guard\_step()}{\_apply\_guard\_step()}}
+{\footnotesize\ttfamily \label{classAriadne_1_1HybridEvolverBase_a81057d3c2fb529df3c631615bd69df6f} 
+\mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} \+\_\+apply\+\_\+guard\+\_\+step (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{classAriadne_1_1HybridEnclosure}{Hybrid\+Enclosure}} \&}]{set}{, }\item[{Effective\+Vector\+Multivariate\+Function const \&}]{dynamic}{, }\item[{\mbox{\hyperlink{classAriadne_1_1FunctionPatch}{Validated\+Vector\+Multivariate\+Function\+Patch}} const \&}]{flow}{, }\item[{\mbox{\hyperlink{structAriadne_1_1TimingData}{Timing\+Data}} const \&}]{timing\+\_\+data}{, }\item[{\mbox{\hyperlink{structAriadne_1_1TransitionData}{Transition\+Data}} const \&}]{transition\+\_\+data}{, }\item[{\mbox{\hyperlink{structAriadne_1_1CrossingData}{Crossing\+Data}} const \&}]{crossing\+\_\+data}{, }\item[{const \mbox{\hyperlink{group__DynamicsModule_gafd43cf1b14dd42f7ac8ca23dcc3837b3}{Semantics}}}]{semantics}{}\end{DoxyParamCaption}) const\hspace{0.3cm}{\ttfamily [protected]}, {\ttfamily [virtual]}}
+
+
+
+Apply the {\itshape flow} to the {\itshape set} for to reach the guard specified by {\itshape transition\+\_\+data} using guidelines provided by {\itshape crossing\+\_\+data}. 
+
+NOTE\+: The {\itshape dynamic} is used to compute the Lie derivative of the flow to ensure positive crossing in the degenerate case. It should not really be necessary. 
+
+References \mbox{\hyperlink{classAriadne_1_1HybridEnclosure_ab60ea1b459232c4ebb8bd0ce4481a169}{Hybrid\+Enclosure\+::apply\+\_\+parameter\+\_\+evolve\+\_\+step()}}, \mbox{\hyperlink{classAriadne_1_1HybridEnclosure_a90e1f68d4f92a70354cf6772fb1464ea}{Hybrid\+Enclosure\+::apply\+\_\+parameter\+\_\+reach\+\_\+step()}}, \mbox{\hyperlink{group__HybridDynamicsSubModule_gga4179a1dd2049e4cb6ee977ee268d8470afd60c95517f30f940fb63c6dcfd10181}{Ariadne\+::\+CONCAVE}}, \mbox{\hyperlink{group__HybridDynamicsSubModule_gga79c7231766d05a92d72e027f2a7e9e46a56c1707c709ac0c044a926f60cc6f3ec}{Ariadne\+::\+CONSTANT\+\_\+\+EVOLUTION\+\_\+\+TIME}}, \mbox{\hyperlink{group__HybridDynamicsSubModule_gga4179a1dd2049e4cb6ee977ee268d8470a87f945db7c7f9bb3f6b4931ae074a2ca}{Ariadne\+::\+CONVEX}}, \mbox{\hyperlink{structAriadne_1_1CrossingData_aa1bae58d9caad2c5b51b11f1065f0172}{Crossing\+Data\+::critical\+\_\+time}}, \mbox{\hyperlink{structAriadne_1_1CrossingData_afb282ba579d0286f37a55a2eeacd9d68}{Crossing\+Data\+::crossing\+\_\+kind}}, \mbox{\hyperlink{structAriadne_1_1CrossingData_ae1f16790143e37b94e7d210eba9daa0e}{Crossing\+Data\+::crossing\+\_\+time}}, \mbox{\hyperlink{group__HybridDynamicsSubModule_gga4179a1dd2049e4cb6ee977ee268d8470aeb1a1f88661e1da8ddf15d8c9818daad}{Ariadne\+::\+DECREASING}}, \mbox{\hyperlink{namespaceAriadne_aa44ba4f2d015e8143195445b46782c31}{Ariadne\+::definitely()}}, \mbox{\hyperlink{group__HybridDynamicsSubModule_gga4179a1dd2049e4cb6ee977ee268d8470a6084ee8bb30ae219127db8b7aece408a}{Ariadne\+::\+DEGENERATE}}, \mbox{\hyperlink{structAriadne_1_1TransitionData_ae0389491957e643b4215449503a15327}{Transition\+Data\+::event}}, \mbox{\hyperlink{structAriadne_1_1TransitionData_adfb2faf70fed2914ee7d71bd5e1d8cfe}{Transition\+Data\+::event\+\_\+kind}}, \mbox{\hyperlink{structAriadne_1_1TimingData_aac9f0a6b86f61350ff662ce4c4b059f5}{Timing\+Data\+::evolution\+\_\+time\+\_\+coordinate}}, \mbox{\hyperlink{structAriadne_1_1TimingData_a33e563cefbdf4f40a562952603c08f86}{Timing\+Data\+::evolution\+\_\+time\+\_\+domain}}, \mbox{\hyperlink{group__HybridDynamicsSubModule_gga4179a1dd2049e4cb6ee977ee268d8470aabc4b89db06cd86d6bf2704a06ec92d4}{Ariadne\+::\+GRAZING}}, \mbox{\hyperlink{structAriadne_1_1TransitionData_a860c6a9a295a4379569f0e8e4bce1226}{Transition\+Data\+::guard\+\_\+function}}, \mbox{\hyperlink{group__HybridDynamicsSubModule_gga4179a1dd2049e4cb6ee977ee268d8470af0e494a5b9821b6ae99ecc9cc4413e42}{Ariadne\+::\+INCREASING}}, \mbox{\hyperlink{classAriadne_1_1HybridEnclosure_a105852630cf0748babb83881e3ce3a01}{Hybrid\+Enclosure\+::is\+\_\+empty()}}, \mbox{\hyperlink{classAriadne_1_1Interval_ad0bc1be281cca14cc94437dcf7609b8f}{Interval$<$ U $>$\+::lower\+\_\+bound()}}, \mbox{\hyperlink{group__HybridDynamicsSubModule_gga4179a1dd2049e4cb6ee977ee268d8470a50546bf973283065b6ccf09faf7a580a}{Ariadne\+::\+NEGATIVE}}, \mbox{\hyperlink{classAriadne_1_1HybridEnclosure_a9d94ce33972ffaea02176e1256ba2e8a}{Hybrid\+Enclosure\+::new\+\_\+activation()}}, \mbox{\hyperlink{classAriadne_1_1HybridEnclosure_ab34686aa489dae0cdb6f07dda97d172c}{Hybrid\+Enclosure\+::new\+\_\+guard()}}, \mbox{\hyperlink{classAriadne_1_1HybridEnclosure_a07590b9ffe23b1d3232fc0551c8f2636}{Hybrid\+Enclosure\+::new\+\_\+invariant()}}, \mbox{\hyperlink{classAriadne_1_1HybridEnclosure_a6af27c267e97303f174c17e1b17d50dd}{Hybrid\+Enclosure\+::new\+\_\+parameter\+\_\+constraint()}}, \mbox{\hyperlink{structAriadne_1_1TimingData_a6929c98b1c62c15dbdb9eda93df07ddb}{Timing\+Data\+::parameter\+\_\+dependent\+\_\+evolution\+\_\+time}}, \mbox{\hyperlink{group__HybridDynamicsSubModule_gga4179a1dd2049e4cb6ee977ee268d8470aab6c31432785221bae58327ef5f6ea58}{Ariadne\+::\+POSITIVE}}, \mbox{\hyperlink{namespaceAriadne_a67004075d5a8db930365c150c0b8965a}{Ariadne\+::possibly()}}, \mbox{\hyperlink{classAriadne_1_1HybridEnclosure_a6f9415ff5080eb386149d2793e3c3638}{Hybrid\+Enclosure\+::state\+\_\+bounding\+\_\+box()}}, \mbox{\hyperlink{structAriadne_1_1TimingData_aa7f69b5b159b3fba68275d24810fc0a8}{Timing\+Data\+::step\+\_\+kind}}, \mbox{\hyperlink{group__HybridDynamicsSubModule_gga4179a1dd2049e4cb6ee977ee268d8470aad3af5e9770232d2363f9875000c16ec}{Ariadne\+::\+TRANSVERSE}}, and \mbox{\hyperlink{group__DynamicsModule_ggafd43cf1b14dd42f7ac8ca23dcc3837b3a9e43f5291e6fcb2ad99c8e3f91acd179}{Ariadne\+::\+UPPER}}.
+
+\Hypertarget{classAriadne_1_1HybridEvolverBase_adf086502d7253bec15c1a097d9211e98}\index{HybridEvolverBase@{HybridEvolverBase}!\_apply\_guard@{\_apply\_guard}}
+\index{\_apply\_guard@{\_apply\_guard}!HybridEvolverBase@{HybridEvolverBase}}
+\doxyparagraph{\texorpdfstring{\_apply\_guard()}{\_apply\_guard()}}
+{\footnotesize\ttfamily \label{classAriadne_1_1HybridEvolverBase_adf086502d7253bec15c1a097d9211e98} 
+\mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} \+\_\+apply\+\_\+guard (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{classAriadne_1_1List}{List}}$<$ \mbox{\hyperlink{classAriadne_1_1HybridEnclosure}{Hybrid\+Enclosure}} $>$ \&}]{sets}{, }\item[{const \mbox{\hyperlink{classAriadne_1_1FunctionPatch}{Validated\+Scalar\+Multivariate\+Function\+Patch}} \&}]{sets\+\_\+elapsed\+\_\+time}{, }\item[{const \mbox{\hyperlink{classAriadne_1_1HybridEnclosure}{Hybrid\+Enclosure}} \&}]{starting\+\_\+set}{, }\item[{const \mbox{\hyperlink{classAriadne_1_1FunctionPatch}{Validated\+Vector\+Multivariate\+Function\+Patch}} \&}]{flow}{, }\item[{const \mbox{\hyperlink{structAriadne_1_1TransitionData}{Transition\+Data}} \&}]{transition\+\_\+data}{, }\item[{const \mbox{\hyperlink{structAriadne_1_1CrossingData}{Crossing\+Data}}}]{crossing\+\_\+data}{, }\item[{const \mbox{\hyperlink{group__DynamicsModule_gafd43cf1b14dd42f7ac8ca23dcc3837b3}{Semantics}}}]{semantics}{}\end{DoxyParamCaption}) const\hspace{0.3cm}{\ttfamily [protected]}, {\ttfamily [virtual]}}
+
+
+
+Apply {\itshape guard\+\_\+function} for {\itshape event} to each set in {\itshape sets}, using the computed {\itshape crossing\+\_\+data}. 
+
+The sets are updated with the extra constraints in-\/place for efficiency. In the case of a concave tangency, it may be necessary to split the enclosure in two, one part containing points which eventually cross the guard, the other points which miss the guard. The extra sets are adjoined to the end of the list of sets to be constrained. NOTE\+: The {\itshape evolve\+\_\+time} should probably be in crossing\+\_\+data, and should not really be necessary. 
+
+References \mbox{\hyperlink{group__HybridDynamicsSubModule_gga4179a1dd2049e4cb6ee977ee268d8470afd60c95517f30f940fb63c6dcfd10181}{Ariadne\+::\+CONCAVE}}, \mbox{\hyperlink{group__HybridDynamicsSubModule_gga4179a1dd2049e4cb6ee977ee268d8470a87f945db7c7f9bb3f6b4931ae074a2ca}{Ariadne\+::\+CONVEX}}, \mbox{\hyperlink{structAriadne_1_1CrossingData_aa1bae58d9caad2c5b51b11f1065f0172}{Crossing\+Data\+::critical\+\_\+time}}, \mbox{\hyperlink{structAriadne_1_1CrossingData_afb282ba579d0286f37a55a2eeacd9d68}{Crossing\+Data\+::crossing\+\_\+kind}}, \mbox{\hyperlink{structAriadne_1_1CrossingData_ae1f16790143e37b94e7d210eba9daa0e}{Crossing\+Data\+::crossing\+\_\+time}}, \mbox{\hyperlink{group__HybridDynamicsSubModule_gga4179a1dd2049e4cb6ee977ee268d8470aeb1a1f88661e1da8ddf15d8c9818daad}{Ariadne\+::\+DECREASING}}, \mbox{\hyperlink{namespaceAriadne_aa44ba4f2d015e8143195445b46782c31}{Ariadne\+::definitely()}}, \mbox{\hyperlink{group__HybridDynamicsSubModule_gga4179a1dd2049e4cb6ee977ee268d8470a6084ee8bb30ae219127db8b7aece408a}{Ariadne\+::\+DEGENERATE}}, \mbox{\hyperlink{structAriadne_1_1TransitionData_ae0389491957e643b4215449503a15327}{Transition\+Data\+::event}}, \mbox{\hyperlink{classAriadne_1_1HybridEvolverBase_aa18dd9bc9de099573120315c18f8d9d8}{function\+\_\+factory()}}, \mbox{\hyperlink{group__HybridDynamicsSubModule_gga4179a1dd2049e4cb6ee977ee268d8470aabc4b89db06cd86d6bf2704a06ec92d4}{Ariadne\+::\+GRAZING}}, \mbox{\hyperlink{structAriadne_1_1TransitionData_a860c6a9a295a4379569f0e8e4bce1226}{Transition\+Data\+::guard\+\_\+function}}, \mbox{\hyperlink{structAriadne_1_1CrossingData_a1246d567afcf0532283a42f48111cc8e}{Crossing\+Data\+::guard\+\_\+range\+\_\+at\+\_\+critical\+\_\+time}}, \mbox{\hyperlink{group__HybridDynamicsSubModule_gga4179a1dd2049e4cb6ee977ee268d8470af0e494a5b9821b6ae99ecc9cc4413e42}{Ariadne\+::\+INCREASING}}, \mbox{\hyperlink{classAriadne_1_1HybridEnclosure_a105852630cf0748babb83881e3ce3a01}{Hybrid\+Enclosure\+::is\+\_\+empty()}}, \mbox{\hyperlink{group__DynamicsModule_ggafd43cf1b14dd42f7ac8ca23dcc3837b3aa7c48ba367e019d004bfb0239b85f2b3}{Ariadne\+::\+LOWER}}, \mbox{\hyperlink{group__HybridDynamicsSubModule_gga4179a1dd2049e4cb6ee977ee268d8470a50546bf973283065b6ccf09faf7a580a}{Ariadne\+::\+NEGATIVE}}, \mbox{\hyperlink{classAriadne_1_1HybridEnclosure_a6af27c267e97303f174c17e1b17d50dd}{Hybrid\+Enclosure\+::new\+\_\+parameter\+\_\+constraint()}}, \mbox{\hyperlink{classAriadne_1_1HybridEnclosure_a6e1b119e9c87e8c2fc381d88640fbe91}{Hybrid\+Enclosure\+::parameter\+\_\+domain()}}, \mbox{\hyperlink{group__HybridDynamicsSubModule_gga4179a1dd2049e4cb6ee977ee268d8470aab6c31432785221bae58327ef5f6ea58}{Ariadne\+::\+POSITIVE}}, \mbox{\hyperlink{classAriadne_1_1HybridEnclosure_aceb1d5d4e1ac7c1e6041ac4ed3c229b2}{Hybrid\+Enclosure\+::reduce()}}, \mbox{\hyperlink{classAriadne_1_1HybridEnclosure_a5e8644dabf697036d7329f9eb6509693}{Hybrid\+Enclosure\+::state\+\_\+function()}}, \mbox{\hyperlink{group__HybridDynamicsSubModule_gga4179a1dd2049e4cb6ee977ee268d8470aad3af5e9770232d2363f9875000c16ec}{Ariadne\+::\+TRANSVERSE}}, and \mbox{\hyperlink{group__DynamicsModule_ggafd43cf1b14dd42f7ac8ca23dcc3837b3a9e43f5291e6fcb2ad99c8e3f91acd179}{Ariadne\+::\+UPPER}}.
+
+\Hypertarget{classAriadne_1_1HybridEvolverBase_a8891724270851d68a81153ef0eccde8a}\index{HybridEvolverBase@{HybridEvolverBase}!rho@{rho}}
+\index{rho@{rho}!HybridEvolverBase@{HybridEvolverBase}}
+\doxyparagraph{\texorpdfstring{rho()}{rho()}}
+{\footnotesize\ttfamily \label{classAriadne_1_1HybridEvolverBase_a8891724270851d68a81153ef0eccde8a} 
+mid rho (\begin{DoxyParamCaption}\item[{s}]{}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}, {\ttfamily [protected]}}
+
+
+
+Process the {\itshape starting\+\_\+set} $S$ based on the previously computed {\itshape flow}, {\itshape timing\+\_\+data} and {\itshape crossing\+\_\+data} to compute the successor sets in the evolution. Compute the resulting {\itshape jump}, {\itshape finishing}, {\itshape final} and {\itshape reach} sets after a single time step. 
+
+\begin{DoxyPrecond}{Precondition}
+$p_e(x)\leq0$ for any invariant or progress predicate and any $x\in S$ 
+
+The step time $\delta(s)$ in terms of the flow parameters satisfies $\delta(s)\in[0,h]$ whenever $\rho(s)\in C$.
+\end{DoxyPrecond}
+The evolution time (in terms of the flow parameters) is given by $\delta(s)=\varepsilon(\xi(s))$ for a {\itshape SPACE\+\_\+\+DEPENDENT\+\_\+\+EVOLUTION\+\_\+\+TIME} or $\delta(s)=\omega(s)-\tau(s)$ for an {\itshape PARAMETER\+\_\+\+DEPENDENT\+\_\+\+FINISHING\+\_\+\+TIME}.
+
+Let $E_\mathrm{blk}$ be set set of events {\itshape blocking} continuous evolution.
+\begin{DoxyItemize}
+\item The {\itshape reach} set is given by  
+\end{DoxyItemize}
+
+References \mbox{\hyperlink{classAriadne_1_1HybridEvolverBase_a36cd3a3b0117770108ca8541759e46f9}{system()}}.
+
+
+
+The documentation for this class was generated from the following files\+:\begin{DoxyCompactItemize}
+\item 
+source/hybrid/\mbox{\hyperlink{hybrid__evolver_8hpp}{hybrid\+\_\+evolver.\+hpp}}\item 
+source/hybrid/hybrid\+\_\+evolver.\+cpp\end{DoxyCompactItemize}

@@ -1,0 +1,50 @@
+{
+  "parents": {
+    "hypercurve": "8298a8fa022c01b54d4767cd61d5d7ba0d16518d",
+    "hypersolve": "5df3f496c7c2c5620381ac7a4e00fcdf27060ba8",
+    "hyperreal": "0cb5f29aee065c73e234e0ebb0a9e106398515bb"
+  },
+  "source_manifest": "local-chord-complete-replay-20260924-v123-sources.json",
+  "source_directory": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/source-archives/hypercurve-local-chord-complete-replay-v123-20260924",
+  "build_source_directory": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/build-workspace-20260925",
+  "checks": [
+    {
+      "repo": "hypercurve",
+      "label": "hypercurve-fmt",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustfmt",
+        "--edition",
+        "2024",
+        "--check",
+        "src/bezier_offset.rs",
+        "src/curve_region_boolean.rs"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 2.4174244550522417,
+      "log": "retained-contact-replay-20260926-v123-hypercurve-fmt.log"
+    },
+    {
+      "repo": "hypercurve",
+      "label": "hypercurve-clippy-0",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "clippy",
+        "--all-targets",
+        "--all-features",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "returncode": 101,
+      "elapsed_seconds": 18.59463919501286,
+      "log": "retained-contact-replay-20260926-v123-hypercurve-clippy-0.log"
+    }
+  ],
+  "cases": [],
+  "binaries": {},
+  "all_processes_reaped": true,
+  "diagnostic_only": true,
+  "all_sources_unchanged": true
+}

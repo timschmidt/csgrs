@@ -1,0 +1,69 @@
+{
+  "date": "2026-09-14",
+  "status": "qualified_increment_goal_active",
+  "commits": {
+    "hypercurve": "862be45",
+    "hyperbrep": "d82bc14"
+  },
+  "tests": {
+    "hypercurve_library": {
+      "passed": 974,
+      "failed": 0,
+      "ignored": 6,
+      "filtered_out": 4
+    },
+    "hypercurve_integrations": {
+      "hypercurve_arc_bezier": 12,
+      "hypercurve_bspline": 28,
+      "hypercurve_curve": 48,
+      "hypercurve_curve_intersection": 29,
+      "hypercurve_nurbs": 38,
+      "hypercurve_path_closure": 8,
+      "hypercurve_polynomial_spline": 18,
+      "hypercurve_rational_bezier": 48
+    },
+    "hyperbrep_path_tests": {
+      "passed": 19,
+      "failed": 0
+    },
+    "total_passed": 1222,
+    "new_regressions_included_in_library": 2,
+    "focused_passed_included_in_library": 2
+  },
+  "original_library_exclusions": [
+    "selected_parallel_normal_circle_intersects_genuinely_analytic_parallel_in_one_fiber",
+    "independent_oblique_chord_pair_fillets_extend_on_infinite_supports",
+    "selected_circle_and_analytic_parallel_extend_on_full_supports",
+    "pair_native_boolean_algebraic_chord_corner_publishes_a_third_generation_fillet"
+  ],
+  "checks": {
+    "hypercurve_all_targets_all_features": "passed",
+    "hyperbrep_all_targets_all_features": "passed",
+    "hypercurve_ui_offline_all_targets": "passed",
+    "hypercurve_docs_broken_links_denied": "passed",
+    "changed_rust_files_formatting": "passed",
+    "staged_whitespace": "passed"
+  },
+  "logs": [
+    "parameter-domain-contacts-focused-final.log",
+    "parameter-domain-contacts-qualification.log",
+    "parameter-domain-contacts-hyperbrep-paths.log",
+    "parameter-domain-contacts-all-targets.log",
+    "parameter-domain-contacts-hyperbrep-check.log",
+    "parameter-domain-contacts-ui-check.log",
+    "parameter-domain-contacts-docs.log"
+  ],
+  "scope": "Independent optional domains through parallel and ordered self-contact entry points; one symmetric rational resultant and one unit-root isolation shared by both axes; callers migrated directly.",
+  "remaining_scope": [
+    "Actual selected finite-range ownership, component-event ownership across overlapping charts, circle extension ownership and full authored-domain TrimOrExtend publication",
+    "Representation, region-normalization, policy-continuation and algebra-layer obligations in implementation.md"
+  ],
+  "performance_claim": "Extended rational self-contact projection now constructs one resultant and isolates unit roots once, retaining the finite-domain saturation guard and sharing root certificates. No matched benchmark claim.",
+  "pushed": false,
+  "excluded_attempts": [
+    {
+      "log": "parameter-domain-contacts-focused.log",
+      "reason": "The reversed test fixture passed descending endpoints to the ascending restriction constructor; corrected to restrict first, then reverse. The final focused and broad gates pass."
+    }
+  ]
+}

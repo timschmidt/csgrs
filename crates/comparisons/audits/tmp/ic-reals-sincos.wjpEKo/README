@@ -1,0 +1,60 @@
+
+This is version 6.0 of the Imperial College Exact Real Arithmetic
+Library. It provides support for lazy real and lazy boolean types
+callable from C plus a suite of primitive functions on reals, predicates
+and boolean operators.  See the separate copyright file for conditions of
+use and distribution.
+
+To install, you must have already installed the Gnu Multiple Precision
+Arithemtic package (GMP) Version 3.0.1. Edit the Makefile in this
+directory and change:
+  REALDIR to point to this directory and
+  GMPDIR to the root directory of the GMP tree.
+Then type make. Further details and an explanation
+of the compile flags can be found in doc/manual/manual.{tex,dvi}.
+
+The library makes trivial use of the utility strsep(3). This may not
+be available on some platforms but is easily obtained from the web.
+For example, the GNU version is available from:
+http://www.gnu.org/software/libc/libc.html
+Install strsep.c in the directory base and add the target to the Makefile.
+
+The library has compiled successfully under Linux and
+SunOS 5.5.1 (Solaris 2.5.1?)
+
+Lindsay Errington, June, 2000
+lindsay@kestrel.edu
+
+--------
+
+The library was written by Lindsay Errington with contributions from Marko
+Krznaric and Reinhold Heckmann. It is based on theory developed by Abbas
+Edalat, Martin Escardo, Reinhold Heckmann, Peter Potts, Philipp Sünderhauf
+and Lindsay Errington (lazy booleans).
+
+--------
+
+When viewing the source files, set tabstops to 4.
+The directory has the following structure.
+
+base - the low-level routines used in the representation of the reals
+  including those for lfts and booleans.
+
+math-lib - a collection of analytic functions.
+
+doc - see manual/manual.tex for a description of the types and
+  functions provided by the library.
+
+icons - used when the tool is connected to daVinci
+
+tests 
+
+Makefile
+
+-------
+
+Known bugs:
+
+sqrt_R diverges for 0. This is because sqrt is not continuous at
+0. Various options are being considered for this. We may choose to make
+sqrt continuous or introduce complex numbers.

@@ -1,0 +1,76 @@
+\doxysubsection{Univariate\+First\+Differential\texorpdfstring{$<$}{<} X \texorpdfstring{$>$}{>} Class Template Reference}
+\hypertarget{classAriadne_1_1UnivariateFirstDifferential}{}\label{classAriadne_1_1UnivariateFirstDifferential}\index{UnivariateFirstDifferential$<$ X $>$@{UnivariateFirstDifferential$<$ X $>$}}
+
+
+{\ttfamily \#include $<$fixed\+\_\+univariate\+\_\+differential.\+hpp$>$}
+
+
+
+\doxysubsubsection{Description}
+\subsubsection*{template$<$class X$>$\newline
+class Ariadne\+::\+Univariate\+First\+Differential$<$ X $>$}
+A class representing the value and derivative of a scalar quantity depending on a single argument. \doxysubsubsubsection*{Public Types}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1UnivariateFirstDifferential_af802285a44706269f2a6190f17286c2b}\label{classAriadne_1_1UnivariateFirstDifferential_af802285a44706269f2a6190f17286c2b} 
+typedef X\+::\+Numeric\+Type {\bfseries Numeric\+Type}
+\begin{DoxyCompactList}\small\item\em The type of used to represent numbers in the coefficient. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1UnivariateFirstDifferential_a1ff6c6c30faa4733eea879f8fdcdf613}\label{classAriadne_1_1UnivariateFirstDifferential_a1ff6c6c30faa4733eea879f8fdcdf613} 
+typedef X {\bfseries Value\+Type}
+\begin{DoxyCompactList}\small\item\em The type of used to represent the coefficients. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1UnivariateFirstDifferential_a28056883b251f475eb846dacc21adb1f}\label{classAriadne_1_1UnivariateFirstDifferential_a28056883b251f475eb846dacc21adb1f} 
+{\bfseries Univariate\+First\+Differential} (const X \&c)
+\begin{DoxyCompactList}\small\item\em Constructs a first differential with constant value {\itshape c}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1UnivariateFirstDifferential_a45152b27be7f80e2d874723c344935a2}\label{classAriadne_1_1UnivariateFirstDifferential_a45152b27be7f80e2d874723c344935a2} 
+{\bfseries Univariate\+First\+Differential} (const X \&v, const X \&g)
+\begin{DoxyCompactList}\small\item\em Constructs a first differential with value {\itshape v} and gradient {\itshape g}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1UnivariateFirstDifferential_a6e49ee4fb9c6e190813e51b8ae46ee0e}\label{classAriadne_1_1UnivariateFirstDifferential_a6e49ee4fb9c6e190813e51b8ae46ee0e} 
+{\footnotesize template$<$class XX$>$ }\\{\bfseries Univariate\+First\+Differential} (const \mbox{\hyperlink{classAriadne_1_1UnivariateFirstDifferential}{Univariate\+First\+Differential}}$<$ XX $>$ \&x)
+\begin{DoxyCompactList}\small\item\em Conversion constructor from a different numerical type. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1UnivariateFirstDifferential_ab5de18d891854f114f00b234f2330253}\label{classAriadne_1_1UnivariateFirstDifferential_ab5de18d891854f114f00b234f2330253} 
+{\bfseries Univariate\+First\+Differential} (const \mbox{\hyperlink{classAriadne_1_1Series}{Series}}$<$ X $>$ \&x)
+\begin{DoxyCompactList}\small\item\em Construct from a power series. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1UnivariateFirstDifferential_a449365efa89c4aa2654817d9244eff07}\label{classAriadne_1_1UnivariateFirstDifferential_a449365efa89c4aa2654817d9244eff07} 
+\mbox{\hyperlink{classAriadne_1_1UnivariateFirstDifferential}{Univariate\+First\+Differential}}$<$ X $>$ \& {\bfseries operator=} (const X \&c)
+\begin{DoxyCompactList}\small\item\em \doxylink{classAriadne_1_1Set}{Set} the differential equal to a constant, without changing the degree or number of arguments. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1UnivariateFirstDifferential_a330ba289a66e0228654e795e9f2010cf}\label{classAriadne_1_1UnivariateFirstDifferential_a330ba289a66e0228654e795e9f2010cf} 
+Equality\+Type$<$ X $>$ {\bfseries operator==} (const \mbox{\hyperlink{classAriadne_1_1UnivariateFirstDifferential}{Univariate\+First\+Differential}}$<$ X $>$ \&other) const
+\begin{DoxyCompactList}\small\item\em Equality operator. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1UnivariateFirstDifferential_aa0d0293481942a5c2ee2d160e831980e}\label{classAriadne_1_1UnivariateFirstDifferential_aa0d0293481942a5c2ee2d160e831980e} 
+Inequality\+Type$<$ X $>$ {\bfseries operator!=} (const \mbox{\hyperlink{classAriadne_1_1UnivariateFirstDifferential}{Univariate\+First\+Differential}}$<$ X $>$ \&other) const
+\begin{DoxyCompactList}\small\item\em Inequality operator. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1UnivariateFirstDifferential_ac553426d3e8c493742606dbe03855b08}\label{classAriadne_1_1UnivariateFirstDifferential_ac553426d3e8c493742606dbe03855b08} 
+\mbox{\hyperlink{namespaceAriadne_acd8b5f68421eb22a84277ef7c9c0ee2a}{Size\+Type}} {\bfseries argument\+\_\+size} () const
+\begin{DoxyCompactList}\small\item\em The number of independent variables. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1UnivariateFirstDifferential_a84847fadf9927f5cafdc5d68331bb74c}\label{classAriadne_1_1UnivariateFirstDifferential_a84847fadf9927f5cafdc5d68331bb74c} 
+\mbox{\hyperlink{namespaceAriadne_a80311bc831cfc870fd65158180330a77}{Degree\+Type}} {\bfseries degree} () const
+\begin{DoxyCompactList}\small\item\em The maximum degree of the stored terms. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1UnivariateFirstDifferential_a3bf892ca4d5c0b4498db4bf3cf965542}\label{classAriadne_1_1UnivariateFirstDifferential_a3bf892ca4d5c0b4498db4bf3cf965542} 
+const X \& {\bfseries value} () const
+\begin{DoxyCompactList}\small\item\em The value of the differential i.\+e. the coefficient of $1$. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1UnivariateFirstDifferential_afaeb68c16b7a56093a81c9daff0157b3}\label{classAriadne_1_1UnivariateFirstDifferential_afaeb68c16b7a56093a81c9daff0157b3} 
+const X \& {\bfseries gradient} () const
+\begin{DoxyCompactList}\small\item\em The first derivative. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1UnivariateFirstDifferential_a1f61ac4db9aeb7c3dc6e187b2b809829}\label{classAriadne_1_1UnivariateFirstDifferential_a1f61ac4db9aeb7c3dc6e187b2b809829} 
+\mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} {\bfseries set\+\_\+value} (const X \&c)
+\begin{DoxyCompactList}\small\item\em \doxylink{classAriadne_1_1Set}{Set} the coefficient of the constant term to {\itshape c}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1UnivariateFirstDifferential_aaecc226b7db6b8669e75e64e09285de4}\label{classAriadne_1_1UnivariateFirstDifferential_aaecc226b7db6b8669e75e64e09285de4} 
+\mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} {\bfseries clear} ()
+\begin{DoxyCompactList}\small\item\em \doxylink{classAriadne_1_1Set}{Set} all coefficients to zero. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsubsection*{Static Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1UnivariateFirstDifferential_a24eaa5b0a1114df52b01818cd27f8652}\label{classAriadne_1_1UnivariateFirstDifferential_a24eaa5b0a1114df52b01818cd27f8652} 
+static \mbox{\hyperlink{classAriadne_1_1UnivariateFirstDifferential}{Univariate\+First\+Differential}}$<$ X $>$ {\bfseries constant} (const X \&c)
+\begin{DoxyCompactList}\small\item\em A constant differential of degree {\itshape deg} in {\itshape as} arguments with value {\itshape c}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1UnivariateFirstDifferential_a638406746073193fc049f59b18b2a486}\label{classAriadne_1_1UnivariateFirstDifferential_a638406746073193fc049f59b18b2a486} 
+static \mbox{\hyperlink{classAriadne_1_1UnivariateFirstDifferential}{Univariate\+First\+Differential}}$<$ X $>$ {\bfseries variable} (const X \&v)
+\begin{DoxyCompactList}\small\item\em A differential of degree {\itshape deg} in {\itshape as} arguments representing the quantity $v+x_j$. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+The documentation for this class was generated from the following file\+:\begin{DoxyCompactItemize}
+\item 
+source/algebra/\mbox{\hyperlink{fixed__univariate__differential_8hpp}{fixed\+\_\+univariate\+\_\+differential.\+hpp}}\end{DoxyCompactItemize}

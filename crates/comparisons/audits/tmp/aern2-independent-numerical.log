@@ -1,0 +1,26 @@
+rational ball imports: 180/180
+rational ball add: 6480/6480
+rational ball sub: 6480/6480
+rational ball mul: 6480/6480
+rational ball division: 5760/5760
+ball lowering precision keeps original interval: 108/108
+sqrt exact rational enclosure: 80/80
+CReal rational algebra with error status: 1296/1296
+directed MPFloat add: 6480/6480
+directed MPFloat sub: 6480/6480
+directed MPFloat mul: 6480/6480
+directed MPFloat div: 5760/5760
+Diagnostic accuracy metadata (rough Accuracy is not a certified radius bound):
+(1 % 4,bits 2,True)
+(3 % 4,bits 1,False)
+(1 % 1,bits 0,True)
+(3 % 2,bits 0,False)
+(3 % 1,bits -1,False)
+(7 % 1,bits -2,False)
+getApproximate accuracy flags, exact and coarse at bits 20: (False,True)
+nonzero partial branch bits 5: [0.5 ± ~0.5000 ~2^(-1)]{{ERROR: numeric error: union of enclosures: not enclosing the same value}}
+continuous abs branch bits 5: [-0.00000000000000000000000000... ± ~4.4409e-16 ~2^(-50)]
+nonzero partial branch bits 20: [0.5 ± ~0.5000 ~2^(-1)]{{ERROR: numeric error: union of enclosures: not enclosing the same value}}
+continuous abs branch bits 20: [-0.00000000000000000000000000... ± ~4.4409e-16 ~2^(-50)]
+nonzero partial branch bits 100: [1 ± 0]
+continuous abs branch bits 100: [0.00000000000000000000000000... ± ~1.5046e-36 ~2^(-118)]

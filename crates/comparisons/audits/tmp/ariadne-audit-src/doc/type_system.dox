@@ -1,0 +1,422 @@
+/***************************************************************************
+ *            type_system.dox
+ *
+ *  Copyright  2018  Pieter Collins
+ *
+ ****************************************************************************/
+
+/*
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; either version 2 of the License, or
+ *  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Library General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program; if not, write to the Free Software
+ *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+ */
+
+/*! \file type_system.dox
+ *  \brief Overview of %Ariadne's type system
+ */
+
+//! \brief Main %Ariadne namespace 
+namespace Ariadne { 
+
+
+//! \brief Namespace for concepts
+namespace Concepts {
+
+//! \brief Associated types for an object
+template<class T> class Traits { };
+
+//! \brief The amount of work suggested in computing a Validated object from an Effective one.
+class Effort { };
+
+//! \brief An object provides rounded information
+class RoundedTag; 
+//! \brief An object provides exact information
+class ExactTag; 
+
+//! \brief An abstract version of T
+template<class T> class Abstract {
+};
+
+//! \brief The effective version of T
+template<class T> class Effective {
+  public:
+};
+
+//! \brief Compute an approximation to a certain amount of information.
+template<class T> Validated<T> compute(Effective<T>, Effort);
+
+//! \brief The validated version of T
+template<class T> class Validated {
+  public:
+    //! \brief Compute an approximation to a certain amount of information.
+    Validated(Effective<T>, Effort);
+    
+    Bool refines(Validated<T>, Validated<T>);
+    Bool inconsistent(Validated<T>, Validated<T>);
+    Validated<T> refinement(Validated<T>, Validated<T>)
+};
+
+
+//! \brief Templated compute
+template<class T> Validated<T> compute(Effective<T>, Effort);
+
+//! \brief The approximate version of T
+template<class T> class Approximate; 
+
+//! \brief A version of T with lower information only
+template<class T> class Lower;
+//! \brief A version of T with upper information only
+template<class T> class Upper;
+//! \brief A version of T with naive (useless) information only
+template<class T> class Naive;
+
+//! A positive element of T
+template<class T> class Positive;
+
+//! \brief %Symbolic information
+class Symbolic { };
+
+//! \brief Defined in terms of elementary operations
+class Elementary { };
+
+//! \brief The type of the completion of an object
+template<class T> using CompletionType = typename Traits<T>::CompletionType;
+
+//! \brief The generic type of an object
+template<class T> using GenericType = typename Traits<T>::GenericType;
+
+//! \brief The properties type of an object
+template<class T> using PropertiesType = typename Traits<T>::PropertiesType;
+
+//! \brief The mathematical type of an object
+template<class T> using ClassicalType = typename Traits<T>::ClassicalType;
+
+} // namespace Concepts 
+
+//! \brief Namespace for numbers
+namespace Numeric {
+
+using namespace Concepts;
+
+//! \brief A real number
+class Real;
+
+//! \brief A dyadic number
+class Dyadic { };
+
+//! \brief The type of Dyadic
+typedef GenericType<Dyadic> ExactNumber;
+
+//! \brief %Bounds on a number
+template<class X> class Bounds;
+
+//! \brief %Bounds on a dyadic number
+typedef Bounds<Dyadic> DyadicBounds;
+
+} // namespace Numeric
+
+using namespace Numeric;
+using namespace Concepts;
+
+namespace Concepts {
+
+
+using namespace Numeric;
+
+//! \brief A validated real number
+template<> class Validated<Real> { 
+  public:
+    //! \brief Get dyadic lower- and upper- bounds.
+    Bounds<Dyadic> get() const;
+};
+
+//! \brief The generic concept
+class GenericConcept {
+};
+
+//! \brief The concrete concept
+class ConcreteConcept {
+  public:
+    //! \brief Convert to the generic type.
+    GenericType generic() const;
+    //! \brief Get the properties.
+    PropertiesType properties() const;
+    
+    //! \brief Construct from the generic type and the properties.
+    ConcreteConcept(GenericType, PropertiesType);
+    //! \brief Assign from the generic type.
+    ConcreteConcept& operator=(GenericType);
+    //! \brief Convert to the generic type.
+    operator GenericType () const;
+};
+
+// \brief Declaration of a function with signature \a SIG.
+template<class SIG> class FunctionConcept;
+
+//! \brief A function taking arguments \a AS... and returning a result of type \a R.
+template<class R, class AS...> class FunctionConcept<R(AS...)> {
+  public:
+    //! \brief Call operator
+    R operator() (AS...) const;
+    //! \brief Evaluation operator
+    friend R evaluate(FunctionConcept<R(AS...)> f, AS... as) { return f(as...); }
+};
+
+//! \brief A vector whose scalar components are an algebra over some number type.
+template<class A> class VectorAlgebra {
+  public:
+    typedef A Algebra; //!< \brief 
+    typedef typename A::NumericType Number; //!< \brief
+    typedef Vector<Number> Vector; //!< \brief
+
+    friend neg(VectorAlgebra) -> VectorAlgebra; //!< \brief Negation
+    friend add(VectorAlgebra, VectorAlgebra) -> VectorAlgebra; //!< \brief Addition
+    friend sub(VectorAlgebra, VectorAlgebra) -> VectorAlgebra; //!< \brief Subtraction
+    friend mul(Algebra, VectorAlgebra) -> VectorAlgebra; //!< \brief Scalar multiplication
+    friend mul(VectorAlgebra, Algebra) -> VectorAlgebra; //!< \brief Scalar multiplication
+    friend div(VectorAlgebra, Algebra) -> VectorAlgebra; //!< \brief Scalar division
+
+    friend add(Vector, VectorAlgebra) -> VectorAlgebra; //!< \brief Addition of a constant vector
+    friend add(VectorAlgebra, Vector) -> VectorAlgebra; //!< \brief Addition of a constant vector
+    friend sub(Vector, VectorAlgebra) -> VectorAlgebra; //!< \brief Subtraction from a constant vector
+    friend sub(VectorAlgebra, Vector) -> VectorAlgebra; //!< \brief Subtraction of a constant vector
+    friend mul(Number, VectorAlgebra) -> VectorAlgebra; //!< \brief Multiplication by a constant vector
+    friend mul(VectorAlgebra, Number) -> VectorAlgebra; //!< \brief Multiplication by a constant vector
+    friend div(VectorAlgebra, Number) -> VectorAlgebra; //!< \brief Division by a constant vector
+};
+    
+/*!
+
+\page type_system_page %Types and %Concepts
+
+\section overview_computability Representations
+
+Objects from discrete mathematics, such as integers and rational numbers, can be described by a finite amount of data. (This holds even if the sets themselves are infinite, though we then need an arbitrarily large amount of data to store objects.) 
+We can think of this data as a <em>word</em> over some <em>alphabet</em> \f$\Sigma\f$.
+A <em>naming system</em> for a finite set \f$X\f$ is a partial surjective function \f$\nu:\Sigma^*\to X\f$ taking concrete data to the mathematical entity it describes. 
+Hence every object in \f$X\f$ has at least one description or <em>name</em>, but this need not be unique, and not all words are valid names
+ - e.g. \f$\nu(\texttt{2/3})=\nu(\texttt{4/6})=\frac{2}{3}\f$, but \f$\texttt{2/3/5}\f$ is not a valid name of a rational number.
+
+
+%Ariadne mainly deals with objects from uncountable sets, such as real numbers and continuous functions.
+It is impossible to find a description of objects from such sets for which objects are encoded by a finite amount of data.
+However, all the objects we study have <em>continuum cardinality</em>, and can be encoded by an infinite <em>stream</em> of (binary) data.
+Then a naming system or <em>representation</em> is a partial surjective function \f$\mu:\Sigma^\omega \to X\f$.
+ - e.g. \f$\texttt{3.14159}\cdots\f$ is an initial segment of the name of \f$\pi\f$ in decimal.
+
+It is of course, impossible, to compute the complete name of an object. For this reason, it is important that we can extract useful information about an object from a finite prefix of the name. 
+ - e.g. Given \f$\mu(\texttt{3.14159}\cdots)=p\f$, we know for sure that \f$p\in[3.14159\!:\!3.14160]\f$.
+
+\section effective_validated Effective and Validated types
+
+The relationship between infinite and finite data gives rise to one of the core conceptualisations in %Ariadne, that of the kind of <em>information</em>.
+We have already seen \ref Validated information, which is finite, and provides <em>guarantees</em> about the value of the object, without specifying it completely, and \ref Effective information, which is infinite, but from which Validated information can be extracted.
+The amount of information which is extracted is given by a parameter \ref Effort (this name may change in future). 
+Hence we have a constructor Validated<T>::Validated(Effective<T>,Effort), or a function \ref compute(Effective<T>, Effort) "compute(Effective<T>, Effort) -> Validated<T>" which performs the computation.
+
+For a given type, there are many possible <em>equivalent</em> naming systems.
+For example, we could describe a real number using a binary or a decimal expansion (though it turns out that these are not <em>quite</em> equivalent, or even appropriate). 
+Hence our \ref Validated "Validated<T>" is a <em>generic</em> class which can store a description in <em>any</em> such <em>admissible</em> representation.
+In order to use the computed information, we must be able to manipulate it in some concrete way.
+For number classes such as \ref Validated<Real> "Validated<Real>", this is typically a  therefore define for each type of mathematical object \p T, certain concrete classes which can be gotten from a \ref Validated "Validated<T>" using a <em>getter</em> method.
+For function types, this is typically a way of evaluating the function.
+
+The information provided by a finite prefix of a name of an object does not specify the object exactly, but instead merely shows that the object lies in a restricted set of possibilities. For an admissible representation, this set is related to the topology of the represented space. Theoretically, we find a <em>basic open subset</em> containing the object, though for practical reasons, it is usually more convenient to take the closure (in a locally-compact Hausdorff space).
+Since different representations may correspond most naturally to different bases, our \ref Validated types do not force a particular concrete description, but merely require that suitable information can be extracted e.g. \ref DyadicBounds for a \ref ValidatedReal number.
+
+Although \ref Validated information encodes sets of mathematical values, we do not conceptualised them as sets in %Ariadne. 
+For validated information represents partial knowledge about a single value, rather than describing a collections of values.
+For this reason, we do not provide set-theoretic operators such as subset tests and intersections, but predicates \ref refines(Validated<T>,Validated<T>), \ref inconsistent(Validated<T>,Validated<T>) and a \ref refinement(Validated<T>,Validated<T>) operator.
+Note that the \c refines and \c inconsistent predicates check if they are \em definitely true, and may return \c false even when satisfied to provide faster checks.
+
+The length of the information describing a \ref Validated object provides an integer \em grading of information. 
+We shall later see that it is convenient to sometimes provide more parameters (called \em properties) of an object controlling how the information is represented. (e.g. a polynomial approximation to a function may be controlled both by a \em precision of its coefficients, and the maximum \em degree of its terms.)
+It is also sometimes convenient to \em forget the length of information stored. (e.g. a decimal approximation \c 0.75000000 to a value may be truncated/simplified to \c 0.75.)
+The choice here affects the ability to estimate the amount of work that should be put in to computing an \ref Effective object which is to be combined with a \ref Validated object.
+
+In some cases, rigorous bounds on a value are not needed, and we can use \ref Approximate computation, which is usually faster. 
+A common use-case for approximate computation is to precondition or hotstart a rigorous computation.
+
+When specifying a problem, we may not even wish to specify which representations and algorithms to use, leaving this open for parametrisation.
+An object which is mathematically well-defined, but for which no computational content is specified, is \ref Abstract, and will typically have a \ref Symbolic description. e.g. <tt>3*atan(sqrt(3))</tt> defines a number, but requires concrete algorithms for \c sqrt and \c atan in order to compute.
+
+
+Type modifiers include \ref Lower, \ref Upper, \ref Naive, \ref Positive, \ref CompletionType<T>, \ref GenericType
+
+Types associated with an object are given by its \ref Traits.
+
+
+\section completion_function Completion and Function types
+
+There are two main ways of forming effective types in %Ariadne, namely via completions and functions.
+
+\subsection completion_types Completion Types
+
+The completion construction can be applied to both metric and ordered types.
+
+In the metric case, the class should provide a \ref dist(...) function giving the metric, or support either taking \ref abs(...) or \ref norm(...), returning a positive upper bound.
+The metric completion is \em not the usual completion via Cauchy series, but use \em fast Cauchy sequences \f$(q_n)\f$ satisfying
+\f[ d(q_{n_1},q_{n_2}) \leq 2^{-\min(n_1,n_2)} . \f]
+In this way, if \f$x_\infty = \lim_{n\to\infty} q_n\f$, then it is known that 
+\f[ d(x_\infty,q_n) \leq 2^{-n} \f]
+or, equivalently,
+\f[ x_\infty \in B_{2^{-n}}(q_n) . \f]
+An alternative to using a fast Cauchy sequence is to give an <em>error seqence</em> \f$(e_n) \searrow 0\f$ and require 
+\f[ d(q_{n_1},q_{n_2}) \leq e_{\min(n_1,n_2)} . \f]
+
+In the ordered case, there are \em directed completions, \em lower and \em upper, which denote the limit of a monotone sequence.
+\f[ q_{n+1} \geq q_n  \text{ or } q_{n+1} \leq q_n \f]
+Combining both kinds of information gives a two-sided completion.
+
+If no convergence rate is given, we obtain the \em naive completion. Although the sequence converges, no information about the limit can be obtained from any finite prefix of the sequence, so the naive completion is essentially useless! However, \ref Approximate information is equivalent to \ref Validated \ref Naive information. For this reason, we one could include the naive completion to round off the type system.
+
+Although these completion constructions can be defined in terms of limits of sequences of \em points, in %Ariadne, we always consider the result as defining a (nested) sequence of \em sets, each of which contains the correct value.
+The types of these sets are \ref Ball for metric space completions, \ref Bounds for ordered completions, \ref LowerBound and \ref UpperBound for increasing and decreasing completions, and \ref Approximation for the naive completion. These classes, along with \ref Value "(Exact)Value" form the main kinds of concrete information in %Ariadne. 
+
+When an \ref Algebraic object supports a completion, this is indicated as the \ref CompletionType.
+
+\subsection function_types Function Types
+
+A \em function type \ref FunctionConcept "Function" is characterised by its \em signature, which in C++ has the form <c>R(A0,A1,...)</c>, and is specified by its \em evaluation or \em call operator, \ref FunctionConcept<R(AS...)>::operator()(AS...)->R or \ref evaluate(FunctionConcept<R(AS...)> f, AS...) 
+
+When the arguments of the function are completions, there is a \em canonical conversion (N.B. This statement needs to be checked to see if it holds in full generality) from \ref Effective to \ref Validated. For evaluating the function on an effective object requires computing information on the result from a finite amount of information on the argument.
+This means that an effective function maps \ref Validated objects to \ref Validated objects, so can also be seen as a \ref Validated function.
+
+Note that while both an \c EffectiveFunction<R(A)> and a \c ValidatedFunction<R(A)> are functions from \c Validated<A> to \c Validated<R>, they also satisfy additional constraints on the image. 
+A validated function \f$\hat{f}\f$ should be \em monotone in the arguments i.e. \f$\hat{x} \subset \hat{y} \Rightarrow \hat{f}(\hat{x})\subset\hat{f}(\hat{y})\f$, and an effective function \f$f\f$ must also be \em convergent i.e. \f$\bigcap_{n=0}^{\infty}\hat{x}_n=\{x\} \Rightarrow \bigcap_{n=0}^{\infty} f(\hat{x}_n) = \{f(x)\}\f$
+
+%Ariadne also supports function classes with more information. 
+Most \ref Function "(Continuous)Function" objects can be evaluated on appropriate algebras, and \ref DifferentiableFunction objects support differentiation. Further, \ref PiecewiseContinuousFunction support restricted evaluation, and \ref MeasurableFunction objects are defined in terms of (pre)images of sets, and do not support evaluation at all.
+
+REMARK: We are in the process of refactoring the function classes, so the information gives details of future behaviour.
+
+\subsection cartesian_closed Product, union and sub-types
+
+In addition to completion and function types, we can also define types as (cartesian) \em products, as disjoint \em unions, or as \em subtypes.
+In principle, this makes %Ariadne's type system a <em>Cartesian closed category</em>, though in practice we do not support arbitrary higher-order types.
+
+
+
+\section concrete_generic_algebraic Concrete, Generic and Algebraic types
+
+Computations in %Ariadne are performed by classes which support efficient operations for the problem at hand.
+Each of these classes is a concrete model for a mathematical abstraction, such as a number, function, or set.
+The relationship between these \ref ConcreteConcept "Concrete" and \ref GenericConcept "Generic" types is defined as follows:
+
+A \ref ConcreteConcept "Concrete" object of class \ref X has a \ref ConcreteConcept::generic(...) method which returns \ref GenericType<X>. 
+Additionally, a concrete object may also be (explicity) converted to its generic type.
+
+Usually the conversion will not be explicit, so a concrete object may be used whenever a generic is required.) 
+From an object-oriented programming viewpoint, a concrete object is a subtype of its generic type, but as this may be difficult or inefficient to realise by subclassing, we do not require a subclassing relationship.
+
+A concrete object is specified by its \em properties, which are given by the ConcreteConcept::properties() method.
+It is constructible from its GenericType and its PropertiesType as ConcreteConcept::ConcreteConcept(GenericType, PropertiesType)
+If the GenericType is default-constructible, then it is also constructible from its PropertiesType alone.
+Since after assignment, the properties are known, a concrete object is also \em assignable from its GenericType alone.
+Additionally, any binary operation between a concrete object and its generic type returns a concrete object, with the generic object first being cast to the concrete object: 
+\code op(Concrete x, GenericType<Concrete> y) { return op(x, Concrete(y,x.properties())); } \endcode
+
+The \ref PropertiesType may be a single class, or a \a Tuple of classes \c PRS... . In the latter case, whenever a Tuple<PRS...> is required as an argument, the individual properties may be substituted instead.
+
+In general, \ref Effective types will be \ref GenericConcept "Generic", and \ref ConcreteConcept "Concrete" types will be \ref Validated.
+The properties of a validated concrete object typically provide a grading of the representation, so can in principle be used instead of the \ref Effort to specify the accuracy of a computation.
+
+
+\section exact_rounded Exact and rounded operations
+
+In %Ariadne, core numerical types include \ref Integer, \ref Dyadic and \ref Rational, supported by computation-oriented classes \ref FloatDP "DoublePrecisionFloat" and \ref FloatMP "MultiplePrecisionFloat".
+The former are \ref ExactTag or \ref Algebraic classes, since they support exact operations, typically with an algebraic signature, but not analytic operations which require a completion.
+The floating-point numbers are \ref RoundedTag or \ref Concrete classes, and support \em rounded operations, based on the mathematical type the represent.
+Since these are primitive, countable data types, they support \em exact comparisons.
+However, this makes them \em dangerous in user code, so they should be wrapped in a \ref Value, \ref Ball, \ref Bounds or \ref Approximation for most work. 
+
+%Rounded numeric types support rounding \em upward, \em downward, and <em>to nearest</em>. 
+Further, since current processors support builtin rounded arithmetic only through a global processor <em>rounding mode</em> state, they also support a \em round argument, which rounds to the current global rounding mode.
+These rounding arguments are placed \em after the input values in a constructor e.g. \ref FloatDP(Rational, RoundingModeType, PrecisionType), but as the \em first argument in an operator e.g. add(RoundingModeType, FloatDP, FloatDP).
+All rounded operations in %Ariadne need a rounding specifier (though this is currently not strictly enforced).
+
+\section algebraic Algebraic operations
+
+%Ariadne supports concepts for the algebraic classes of \em rings, \em fields, \em lattices, \em vectors, \em algebras and vectors of algebras.
+These support the usual mathematical operations, as detailed below. Further, \em elementary transcendental operations are supported for complete objects.
+
+All operations are named. Where symbolic operators are traditionally used, such as \a + for \a add, a named version is also provided.
+An \ref Algebra \a A has a \ref NumericType \a X, and a \ref Vector has a \ref ScalarType.
+All types support assignment from an \ref Integer.
+
+The supported basic operations on numbers are as follows:
+- Ring \c X: \c neg(X)->X, \c add(X,X)->X, \c mul(X,X)->X; \c nul, \c pos, \c sub, \c sqr, \c pow. 
+- Field \c X: \c neg(X)->X, \c rec(X)->X, \c add(X,X)->X, \c mul(X,X)->X; \c sub, \c div, \c hlf, \c sqr, \c pow. 
+- Lattice \c X: \c \c max(X,X)->X, \c min(X,X)->X; also \c abs(x)->X if negation is supported.
+- Elementary \c X: \c \c sqrt(X)->X, \c exp(X)->X, \c log(X)->X, \c sin(X)->X, \c cos(X)->X, \c tan(X)->X, \c atan(X)->X.
+
+The \c nul operator creates the zero element of the appropriate kind, \c pos creates a copy, \c sub(x1,x2)=add(x1,neg(x2)), \c sqr(x)=mul(x,x), \c div(x1,x2)=mul(x1,rec(x2)), \c hlf(x)=x/2, and \c abs(x)=max(x,neg(x)).
+
+Additionally, %Ariadne supports \em directed \ref Lower and \ref Upper numbers, which only support monotone operations, and \ref Positive versions of all number types.
+
+The \c neg, \c add, \c sqrt, \c exp, \c log \c atan, \c max and \c min operators are monotonic, and \c mul and \c rec are also monotonic on positive numbers.
+The \c add, \c mul, \c rec, \c sqrt and \c atan operators preserve positivity, \c sqr, \c exp and \c abs always yield positive answers, and \c sqrt and \c log require positive arguments. 
+The \c max operator returns a positive value any of its arguments is positive, and \c min returns a positive value if all of its arguments are positive.
+
+Algebraic types support the following arithmetic:
+- Vector \c V: \c neg(V)->V, \c add(V,V)->V, \c mul(V,X)->V; \c sub(V,V), \c mul(X,V), \c div(V,X), \c dot(V,V), \c norm(V)
+- Algebra \c A: \c neg(A)->A, \c add(A,A)->A, \c mul(A,A)->A, \c add(A,X)->A, \c mul(A,X)->A; \c sub(A,A) etc.
+- VectorAlgebra \c VA: \c neg(VA)->VA, \c add(VA,VA)->VA, \c add(VA,VX)->VA, \c mul(VA,A)->VA, \c mul(VA,X)->VA; etc
+
+Additionally, a \em normed algebra has \c norm(A), and a \em graded algebra has \c A::degree(). A \em differential algebra \a DA has a \c derivative(DA, I) for some index type \a I. A <em>function algebra</em> supports \em coordinate constructors as well as constants.
+ 
+For \ref ConcreteConcept "Concrete" objects, all relevant concrete-generic mixed operations are supported.
+
+\section predicates_and_set_types Predicate and Set types
+
+As well as numbers, %Ariadne also supports logical types.
+The usual \ref Boolean type is used for the result of a \em decidable predicate, and the \ref Kleenean type for a \em quasidecidable predicate, which may be (provably) \c true or \c false, or of \em unknown or even \em unknowable truth \c indeterminate. 
+The \ref Sierpinskian represents the result of a predicate which cannot (robustly) be falsified, such as the apartness/inequality relation \f$\neq\f$ on uncountable sets. 
+The \ref LowerKleenean type represents the result of a quasidecidable predicate which has only been checked for truth; for example, we may wish to prove the the maximum value of a function over a bounded interval is above some value, without spending the computational effort to provided a definitive result when this is not the case. 
+Similarly, the \ref UpperKleenean type represents the result of a quasidecidable predicate which has only been checked for falseness.
+The \ref Effective versions of the logical types support a check(Effort) method which returns a Validated version.
+
+Set types can be defined in terms of these predicates.
+The \ref RegularSet "RegularSet<X>" type (sometimes known as a complemented set) is defined by its elements 
+\code RegularSet<X>::contains(X)->Kleenean \endcode
+(Note that our definition varies slightly from that commonly used in topology.)
+The lower type of the regular sets is the \ref OpenSet "OpenSet<X>" type, defined by a verifiable element test: 
+\code OpenSet<X>::contains(X)->LowerKleenean \endcode 
+The upper type is the \ref CompactSet "CompactSet<X>" type, defined by a falsifiable element test: 
+\code ClosedSet<X>::contains(X)->UpperKleenean \endcode
+%Regular, open and closed sets support intersection and union operations, and preimages under continuous functions.
+
+The \ref LocatedSet "LocatedSet<X>" type is defined by its intersection or subset relation with regular sets (equivalently, by its intersection \em and subset relation with openn sets) with 
+\code 
+    LocatedSet<X>::intersects(RegularSet<X>)->Kleenean
+    LocatedSet<X>::inside(RegularSet<X>)->Kleenean
+\endcode
+The lower type of the located sets is the \ref OvertSet "OvertSet<X>" type, defined by a verifiable intersection test: 
+\code 
+    OvertSet<X>::intersects(OpenSet<X>)->LowerKleenean 
+\endcode 
+The upper type of the located sets is the \ref CompactSet "CompactSet<X>" type, defined by a verifiable subset test 
+\code 
+    CompactSet<X>::inside(OpenSet<X>)->LowerKleenean 
+\endcode
+Located, overt and compact sets support forward images by continuous functions and unions, but only compact sets support intersections.
+
+(Note that the \ref Real type can similarly be defined by predicates as Real::greater(Rational)->Kleenean and the \ref LowerReal type can be defined by LowerReal::greater(Rational)->LowerKleenean .)
+
+
+
+
+*/
+
+} //namespace Concepts
+} // namespace Ariadne

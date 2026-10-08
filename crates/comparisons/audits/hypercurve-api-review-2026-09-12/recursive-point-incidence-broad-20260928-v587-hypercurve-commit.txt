@@ -1,0 +1,5 @@
+Accept retained generated points as exact fillet constraints
+
+Use shared ordered-field GCD replay for parallel point incidence over retained projective coordinates. Tangent orthogonality and distance equations retain a common contact polynomial; one exact normal sign selects the authored offset without a new speed radical. Preserve whole-domain incidence for collapsed parallels, individual stationary-contact checks, and finite/incident source ownership. Generalize the existing recursive polynomial root enumerator to its consumed domain and update all callers directly.
+
+Validation: 488 release regressions across nine binaries and six static/downstream checks. Independent generated points select all 12 formerly unsupported stationary fillets. Regressions cover selected quadratic and quintic fields, cusp/contact-derived point forms, normal orientation, collapsed circles, stationary contacts, exterior ranges and pole barriers. Existing Boolean, offset, fillet and chamfer composition coverage remains included.

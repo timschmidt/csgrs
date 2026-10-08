@@ -1,0 +1,286 @@
+{
+  "schema": "hypercurve.performance-checkpoint.v1",
+  "captured_on": "2026-08-05",
+  "checkpoint": "selected-algebraic circle/certified-axis-chord CurveRegion2 Boolean",
+  "implementation_revision": "2e2d2a95a32b72302b8899a181011fae64457084",
+  "semantic_revision": "a471363",
+  "benchmark_revision": "c47e029",
+  "historical_benchmark_revision": "ee2666b",
+  "optimization_revision": "2e2d2a9",
+  "historical_semantic_control_revision": "34a929c",
+  "correctness_equivalent_control_revision": "a471363",
+  "preceding_checkpoint": "2026-08-05-selected-algebraic-round-offset.json",
+  "dependency_revisions": {
+    "hyperreal": "492882c16ec6f649051285a5e215371750b3c967",
+    "hyperlattice": "a475bb752c1e0fb0cfdb80f4db74a56caa6962c0",
+    "hyperlimit": "b0418bddff50183fa782e5caa6da6974a2b969a1",
+    "hypertri": "210a66c01f1f53f7ffb035a9643d57f81ee19171",
+    "hypersolve": "f3cf7467219abdf5c6a27459e330ed158bbc590e",
+    "hyperbrep": "6336697cd124ef6ef8384166b1f90ef2fceb6663",
+    "hypermesh_modified_or_benchmarked": false
+  },
+  "scope": {
+    "completed": [
+      "exact intersection of one selected algebraic semicircle with one structurally certified finite horizontal or vertical retained chord",
+      "positive, zero, and negative exact line-circle discriminants with traversal-ordered secant and tangent branches",
+      "exact selected-half filtering and exact diameter endpoint classification for the retained semicircle",
+      "exact finite-chord start and end filtering with positive-normalized projective denominators",
+      "one-word shared mapped semicircle parameters and correlated affine point evidence",
+      "exact parameter order, point bounds, point equality, chord splitting, line-side, winding, public intersection evidence, and all four region Booleans",
+      "exact bivariate-diagonal collapse when both retained parameter values are the same selected field",
+      "reuse of the stable support field system and at-most-once construction of each other endpoint system across both radical branches",
+      "STRICT and APPROXIMATE_512 execution through the same construction and predicate graph",
+      "historical rejection, correctness-equivalent, competitive floating, perf, allocation, linked-size, and static-callgraph evidence"
+    ],
+    "remaining": [
+      "general oblique selected-circle/retained-chord intersection",
+      "exact ordering between contacts produced by independent selected circle systems on one retained chord",
+      "re-entry when a later pair sees AlgebraicCuspChord evidence as a finite chord endpoint",
+      "exact affine transforms of correlated cusp/chord points",
+      "non-cardinal transformed circle and chord certificates",
+      "diagonal selected-field chord parallels",
+      "round joins and fillet centers carried by AlgebraicChordPair or other correlated evidence",
+      "offset re-entry for retained selected-circle fragments",
+      "coupled material and hole wavefront events",
+      "general non-orthogonal post-collapse scheduling"
+    ]
+  },
+  "authority": {
+    "route": "CurveRegion2::intersect_region/boolean_regions -> CurveRegionBooleanContext::build_intersection_evidence -> pair_result -> BezierAlgebraicCuspSemicircle2::axis_chord_intersections -> retained radical predicates/contact_evidence -> existing parameter splitting, winding, topology, and Boolean extraction",
+    "single_pair_kernel": "The selected circle and certified axis chord enter one reduced line-circle system. Pair-specific fast paths are private branches of the existing CurveRegion2 arrangement, not a second Boolean engine.",
+    "field_model": "The selected circle-center root and the stable chord-support root remain independent local fields. A square-root branch is retained over their bivariate coefficient field; no primitive element or rounded coordinate is constructed.",
+    "denominator_contract": "Circle-center and point affine denominators are signed exactly and normalized positive before every physical-space predicate.",
+    "contact_storage": "An interior contact allocates one shared map/contact object; the public point and mapped semicircle parameter are each one Arc word.",
+    "optimization": "The stable support system is reused directly and each distinct finite endpoint system is built lazily at most once, even for a two-branch secant.",
+    "approximate_geometry_added": false,
+    "compatibility_shim_added": false,
+    "duplicate_region_or_offset_engine_added": false
+  },
+  "policy_evidence": {
+    "strict": "Every supported fixture is decided by exact selected-field, radical, and topology predicates. An unsupported oblique or correlated re-entry path remains explicit uncertainty.",
+    "approximate_512": "The same translated selected-round Boolean fixture returns Certified geometry under APPROXIMATE_512. Approximation remains available only in shared terminal 512-bit equality/sign helpers and is never retained as construction evidence.",
+    "fixture_certainty": "The public four-Boolean batch is Certified under both policies; the correlated AlgebraicCuspChord point is observed directly in public intersection evidence.",
+    "optimization_policy_change": false
+  },
+  "benchmark_method": {
+    "cpu": 11,
+    "fixture": "A unit-height rectangle of width sqrt(1/2) is offset outward by exactly 1/20 with round corners, then copied by the exact translation (1/20, 1/40). The pair exercises selected-circle/certified-axis-chord contacts in the authoritative region arrangement.",
+    "timing_scope": "Fixture construction and exact round offset construction occur outside each timed loop. Every Hypercurve operation returns complete evidence or the historical benchmark records its explicit rejection.",
+    "matched_wall_command": "taskset -c 11 env HYPERCURVE_COMPARE_SAMPLES=11 HYPERCURVE_COMPARE_SAMPLE_MS=100 HYPERCURVE_COMPARE_GROUP=algebraic_round_boolean/translated_rectangle HYPERCURVE_COMPARE_IMPL=<implementation> <comparative-executable>",
+    "competitive_wall_command": "taskset -c 11 env HYPERCURVE_COMPARE_SAMPLES=21 HYPERCURVE_COMPARE_SAMPLE_MS=200 HYPERCURVE_COMPARE_GROUP=algebraic_round_boolean/translated_rectangle <candidate-comparative-executable>",
+    "perf_command": "taskset -c 11 perf stat -x, -r 5 -e instructions,cycles,branches,branch-misses env HYPERCURVE_COMPARE_SAMPLES=1 HYPERCURVE_COMPARE_ITERS=100 HYPERCURVE_COMPARE_GROUP=algebraic_round_boolean/translated_rectangle HYPERCURVE_COMPARE_IMPL=<implementation> <comparative-executable>",
+    "perf_normalization": "Subtract the matched disabled process, then divide by 101 because Runner executes one warm operation plus 100 timed operations.",
+    "heap_method": "Heaptrack records a direct release executable invocation with one warm operation and 100 timed operations. Counts subtract the matched disabled process and divide by 101; peak heap remains an absolute process peak.",
+    "historical_executable": "/tmp/hypercurve-circle-chord-parent-target/release/deps/comparative-68819996ab3fdf67",
+    "correctness_equivalent_executable": "/tmp/hypercurve-axis-circle-chord-semantic-comparative",
+    "candidate_executable": "target/release/deps/comparative-68819996ab3fdf67"
+  },
+  "matched_wall_performance": {
+    "samples_per_process": 11,
+    "target_milliseconds_per_sample": 100,
+    "processes": 3,
+    "correctness_equivalent_a471363": {
+      "intersection_process_medians_ns": [3665974.3, 3632697.2, 3661251.2],
+      "intersection_median_of_process_medians_ns": 3661251.2,
+      "all_four_process_medians_ns": [7693861.0, 8046613.3, 7640458.6],
+      "all_four_median_of_process_medians_ns": 7693861.0
+    },
+    "optimized_2e2d2a9": {
+      "intersection_process_medians_ns": [3529548.0, 3546136.2, 3529334.6],
+      "intersection_median_of_process_medians_ns": 3529548.0,
+      "all_four_process_medians_ns": [7770025.1, 7577850.5, 7552693.2],
+      "all_four_median_of_process_medians_ns": 7577850.5
+    },
+    "optimization_delta_percent": {
+      "intersection_time": -3.597218,
+      "all_four_time": -1.507832
+    }
+  },
+  "historical_and_competitive_context": {
+    "historical_rejection_34a929c": {
+      "process_medians_ns": [3159841.1, 3138908.5, 3163379.7],
+      "median_of_process_medians_ns": 3159841.1,
+      "candidate_interleaved_process_medians_ns": [3570918.9, 3530762.3, 3568730.6],
+      "candidate_interleaved_median_ns": 3568730.6,
+      "candidate_premium_percent": 12.940192,
+      "interpretation": "This is deliberately not correctness-equivalent: revision 34a929c performs most arrangement work and then rejects the selected-circle/chord pair as Unsupported. The candidate returns complete exact intersection evidence and all four Booleans."
+    },
+    "competitive_21_sample_process": {
+      "candidate_exact_intersection_median_ns": 3620732.8,
+      "candidate_exact_all_four_median_ns": 7601519.4,
+      "cavalier_f64_four_calls_median_ns": 11183.0,
+      "candidate_exact_all_four_over_cavalier": 679.738836,
+      "interpretation": "Cavalier is a binary64/bulge-topology throughput sentinel, not an exactness-equivalent implementation. It cannot retain independently selected algebraic fields, correlated radical evidence, or Hyper's STRICT/APPROXIMATE_512 policy trail."
+    }
+  },
+  "deterministic_perf": {
+    "repetitions": 5,
+    "fixed_timed_operations_per_process": 100,
+    "historical_rejection": {
+      "raw_operation_process": {"instructions": 2999432197, "cycles": 1325779868, "branches": 579693747, "branch_misses": 8128414},
+      "raw_disabled_process": {"instructions": 35953907, "cycles": 17517611, "branches": 6931071, "branch_misses": 126910},
+      "normalized_per_operation": {"instructions": 29341369.207921, "cycles": 12953091.653465, "branches": 5670917.584158, "branch_misses": 79222.811881}
+    },
+    "correctness_equivalent_a471363": {
+      "raw_operation_process": {"instructions": 3518191822, "cycles": 1563935392, "branches": 685189127, "branch_misses": 8866871},
+      "raw_disabled_process": {"instructions": 41093525, "cycles": 20413959, "branches": 7976907, "branch_misses": 134033},
+      "normalized_per_operation": {"instructions": 34426715.811881, "cycles": 15282390.425743, "branches": 6705071.485149, "branch_misses": 86463.742574}
+    },
+    "optimized_2e2d2a9": {
+      "raw_operation_process": {"instructions": 3453355348, "cycles": 1513693579, "branches": 671623312, "branch_misses": 8807272},
+      "raw_disabled_process": {"instructions": 40386493, "cycles": 19694051, "branches": 7826919, "branch_misses": 133621},
+      "normalized_per_operation": {"instructions": 33791770.841584, "cycles": 14792074.534653, "branches": 6572241.514851, "branch_misses": 85877.732673}
+    },
+    "optimized_all_four": {
+      "raw_operation_process": {"instructions": 7727704540, "cycles": 3181580249, "branches": 1501822258, "branch_misses": 12826136},
+      "raw_disabled_process": {"instructions": 40386493, "cycles": 19694051, "branches": 7826919, "branch_misses": 133621},
+      "normalized_per_four_operation_batch": {"instructions": 76112059.871287, "cycles": 31305803.940594, "branches": 14792033.059406, "branch_misses": 125668.465347}
+    },
+    "optimization_delta_percent": {
+      "intersection_instructions": -1.844338,
+      "intersection_cycles": -3.208372,
+      "intersection_branches": -1.981037,
+      "intersection_branch_misses": -0.677752,
+      "all_four_instructions": -0.827910,
+      "all_four_cycles": -1.505497,
+      "all_four_branches": -0.895195,
+      "all_four_branch_misses": -0.081029
+    },
+    "candidate_over_historical_rejection_percent": {
+      "instructions": 15.167669,
+      "cycles": 14.197251,
+      "branches": 15.893794,
+      "branch_misses": 8.400258
+    }
+  },
+  "allocation_evidence": {
+    "correctness_equivalent_a471363": {
+      "intersection_raw": {"allocation_calls": 7720621, "temporary_allocations": 1062776, "peak_heap_kib": 495.62},
+      "disabled_raw": {"allocation_calls": 85195, "temporary_allocations": 11370, "peak_heap_kib": 428.07},
+      "intersection_normalized_per_operation": {"allocation_calls": 75598.277228, "temporary_allocations": 10409.960396},
+      "all_four_raw": {"allocation_calls": 18761001, "temporary_allocations": 2564040, "peak_heap_kib": 570.53},
+      "all_four_normalized_per_batch": {"allocation_calls": 184908.970297, "temporary_allocations": 25273.960396}
+    },
+    "optimized_2e2d2a9": {
+      "intersection_raw": {"allocation_calls": 7589245, "temporary_allocations": 1058288, "peak_heap_kib": 495.62},
+      "disabled_raw": {"allocation_calls": 83907, "temporary_allocations": 11326, "peak_heap_kib": 428.07},
+      "intersection_normalized_per_operation": {"allocation_calls": 74310.277228, "temporary_allocations": 10365.960396},
+      "all_four_raw": {"allocation_calls": 18629625, "temporary_allocations": 2559552, "peak_heap_kib": 570.53},
+      "all_four_normalized_per_batch": {"allocation_calls": 183620.970297, "temporary_allocations": 25229.960396}
+    },
+    "optimization_delta_percent": {
+      "intersection_allocation_calls": -1.703742,
+      "intersection_temporary_allocations": -0.422668,
+      "intersection_peak_heap": 0.0,
+      "all_four_allocation_calls": -0.696559,
+      "all_four_temporary_allocations": -0.174092,
+      "all_four_peak_heap": 0.0
+    },
+    "historical_rejection_normalized": {
+      "allocation_calls_per_operation": 62696.267327,
+      "temporary_allocations_per_operation": 9125.960396,
+      "peak_heap_kib": 492.33
+    },
+    "candidate_over_historical_rejection_percent": {
+      "allocation_calls": 18.524245,
+      "temporary_allocations": 13.587616,
+      "peak_heap": 0.668251
+    }
+  },
+  "linked_size": {
+    "historical_semantic_delta": {
+      "control_revision": "34a929c",
+      "candidate_revision": "2e2d2a9",
+      "all_features_comparative": {
+        "control_sha256": "9e484203ac2dca72e42183f2632069143739fcdbd2d1938222db22e0af86c6c7",
+        "candidate_sha256": "19aa669333934e9ece859e2c0154354a6557f73be78220f5efcb848d1d642fe1",
+        "control_file_bytes": 12658352,
+        "candidate_file_bytes": 12713816,
+        "file_change_bytes": 55464,
+        "file_change_percent": 0.438161,
+        "control_stripped_bytes": 9932056,
+        "candidate_stripped_bytes": 9991848,
+        "stripped_change_bytes": 59792,
+        "stripped_change_percent": 0.602010,
+        "control_text_bytes": 9619551,
+        "candidate_text_bytes": 9679703,
+        "text_change_bytes": 60152,
+        "text_change_percent": 0.625310,
+        "control_allocated_bytes": 9930863,
+        "candidate_allocated_bytes": 9992311,
+        "allocated_change_bytes": 61448,
+        "allocated_change_percent": 0.618758
+      },
+      "no_default_curve_region_boolean_batch": {
+        "control_sha256": "c2a8a00b5bf8adcc4de2396533f6e1ab1e79d2390c30ef1f4461aa9149ef8797",
+        "candidate_sha256": "cd460b8cefd9f4df857bc3bf4e00f2a0d214980dee7ac0fa15d5bf45dd76d2be",
+        "control_file_bytes": 8016072,
+        "candidate_file_bytes": 8016904,
+        "file_change_bytes": 832,
+        "file_change_percent": 0.010379,
+        "control_stripped_bytes": 6366728,
+        "candidate_stripped_bytes": 6367272,
+        "stripped_change_bytes": 544,
+        "stripped_change_percent": 0.008544,
+        "control_text_bytes": 6094105,
+        "candidate_text_bytes": 6094649,
+        "text_change_bytes": 544,
+        "text_change_percent": 0.008927,
+        "control_allocated_bytes": 6366921,
+        "candidate_allocated_bytes": 6366921,
+        "allocated_change_bytes": 0,
+        "allocated_change_percent": 0.0
+      }
+    },
+    "optimization_delta": {
+      "control_revision": "a471363",
+      "candidate_revision": "2e2d2a9",
+      "control_sha256": "9d0d8c414c5e929339d627abfa5163917ccbbbd107184e98c7f5fa027d069931",
+      "candidate_sha256": "19aa669333934e9ece859e2c0154354a6557f73be78220f5efcb848d1d642fe1",
+      "control_file_bytes": 12712568,
+      "candidate_file_bytes": 12713816,
+      "file_change_bytes": 1248,
+      "file_change_percent": 0.009817,
+      "control_stripped_bytes": 9990632,
+      "candidate_stripped_bytes": 9991848,
+      "stripped_change_bytes": 1216,
+      "stripped_change_percent": 0.012171,
+      "control_text_bytes": 9678507,
+      "candidate_text_bytes": 9679703,
+      "text_change_bytes": 1196,
+      "text_change_percent": 0.012357,
+      "control_allocated_bytes": 9992331,
+      "candidate_allocated_bytes": 9992311,
+      "allocated_change_bytes": -20,
+      "allocated_change_percent": -0.000200
+    }
+  },
+  "static_callgraph": {
+    "command": "tools/hyper-callgraph/target/release/hyper-callgraph --root . --out-dir /tmp/hypercurve-axis-circle-chord-optimized-callgraph --crate-name hypercurve --include-examples --include-tests --include-bench --include-fuzz --format json",
+    "artifact": "/tmp/hypercurve-axis-circle-chord-optimized-callgraph/callgraph.json",
+    "libraries_discovered": 21,
+    "nodes": 29317,
+    "edges": 56690,
+    "authoritative_route_confirmed": true,
+    "endpoint_system_cache_on_authoritative_route": true,
+    "duplicate_public_engine_found": false
+  },
+  "verification": {
+    "cargo_test_all_features_lib": "472 passed",
+    "cargo_test_all_features_hypercurve_curve_region_promotion": "60 passed",
+    "cargo_test_no_default_features_lib": "323 passed",
+    "cargo_clippy_all_features_lib_tests_no_deps_deny_warnings": "pass",
+    "cargo_clippy_no_default_features_all_targets_no_deps_deny_warnings": "pass",
+    "cargo_fmt_check": "pass",
+    "git_diff_check": "pass",
+    "all_features_comparative_benchmark_build": "pass",
+    "known_external_warning": "Hypertri ExactKernel::sub remains pre-existing dead code; Hypertri and Hypermesh were not modified.",
+    "full_all_target_fuzz_matrix": "not rerun for the branch-local endpoint-system cache; the semantic checkpoint had already passed the full ordinary suites and this checkpoint reran all library and promotion tests"
+  },
+  "next_priority": {
+    "correctness": "Make AlgebraicCuspChord endpoints re-enter the same pair kernel exactly, including structural same-contact recognition and exact order between independent selected circles on one chord. Then generalize the support from certified cardinal to exact oblique direction without constructing approximate normalized scalars.",
+    "performance_and_memory": "Share reduced support systems and exact root relations at operation scope only. Profile correlated re-entry before adding persistent caches; preserve one-word public carriers and avoid primitive elements unless elimination proves they are the smallest exact representation.",
+    "fillet_unification": "Route selected or correlated fillet centers and contacts into this same retained circle carrier, corner solver, and CurveRegionBooleanContext rather than introducing a fillet-only arc engine.",
+    "size": "Keep predicate-only machinery feature-gated, measure production and minimal images at every new interaction family, and collapse historical names only after all callers use the one carrier graph."
+  }
+}

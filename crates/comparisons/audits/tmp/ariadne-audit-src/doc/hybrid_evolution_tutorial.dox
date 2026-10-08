@@ -1,0 +1,82 @@
+/***************************************************************************
+ *            hybrid_evolution_tutorial.dox
+ *
+ *  Copyright  2004-20  Pieter Collins
+ *
+ ****************************************************************************/
+
+/*
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; either version 2 of the License, or
+ *  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Library General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program; if not, write to the Free Software
+ *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+ */
+
+/*!
+
+\file hybrid_evolution_tutorial.dox
+\brief Tutorial on %Ariadne's features for analysing hybrid systems.
+
+\page hybrid_evolution_tutorial_page Tutorial on Analysing Hybrid Systems
+
+In this tutorial, we show how to use %Ariadne to model and analyse a hybrid automaton model of a simple water-tank system.
+
+\section tutorial_system_model The Hybrid Automaton Model
+
+The system represents a system used to control the height of water in a tank with inflow and outflow.
+The outflow of the tank is given by Toricelli's law and is proportional to the height:
+\f[ \dot{h}=\beta v-\alpha h \f]
+The inflow is governed by a valve, which takes a certain amout of time to fully open or close.
+The opening and closing of the valve is regulated by a controller, which opens or closes the valve as the water level goes beyond lower and upper threshold values.
+
+\section tutorial_building_system Building the Ariadne Hybrid Automaton
+
+The tank has a single mode, a single state variable \p height, and two constants \p alpha and \p beta, and an external input variable, the valve \p aperture.
+
+\snippet tutorials/hybrid_evolution/hybrid_evolution_tutorial.cpp get_tank
+
+The valve four discrete modes, \f$\textsc{opening}\f$, \f$\textsc{closing}\f$ and fully \f$\textsc{open}\f$ and \f$\textsc{closed}\f$, and a single state variable \f$\textsc{aperture}\f$.
+The valve is opened on whenever the height falls below \f$h_{\textsc{Open}}\f$, and is closed whenever the height rises above \f$h_{\textsc{Close}}\f$.
+
+\snippet tutorials/hybrid_evolution/hybrid_evolution_tutorial.cpp get_valve
+
+The controller has two modes \f$\textsc{rising}\f$ and \f$\textsc{falling}\f$, which indicate whether the water level should rise or fall.
+
+\snippet tutorials/hybrid_evolution/hybrid_evolution_tutorial.cpp get_controller
+
+The complete watertank system is the parallel composition of the tank, valve and controller subsystems.
+
+\snippet tutorials/hybrid_evolution/hybrid_evolution_tutorial.cpp get_system
+
+
+\section tutorial_hybrid_system_evolution Computing the Continuous Evolution
+
+The following function creates a HybridEvolver object, which is a class which can compute system evolution.
+
+\snippet tutorials/hybrid_evolution/hybrid_evolution_tutorial.cpp create_evolver
+
+We now compute an approximate simulation of the evolution of the system.
+
+\snippet tutorials/hybrid_evolution/hybrid_evolution_tutorial.cpp simulate_evolution
+
+We now compute a rigorous simulation of the evolution of the system, and over-approximation of a larger flow-tube.
+
+\snippet tutorials/hybrid_evolution/hybrid_evolution_tutorial.cpp compute_evolution
+
+In each case we first define the intial set and evolution time, and then compute trajectories using the \c Evolver object up to the evolution time. The computed dynamics are written to standard output and to a file, and the attained sets are plotted.
+
+
+\section tutorial_main Main function
+
+\snippet tutorials/hybrid_evolution/hybrid_evolution_tutorial.cpp main
+
+*/

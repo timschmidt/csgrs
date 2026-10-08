@@ -1,0 +1,127 @@
+{
+  "status": "passed within recorded core scope; downstream migration qualified separately",
+  "goal_status": "active",
+  "previous_commit": "8977b811b66efcaeee00c9d8005f97ca6d788e28",
+  "targets": 49,
+  "passed": 2316,
+  "known_failed": [
+    "approximate_512_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions",
+    "non_ph_bezier_pair_projective_fillet_retains_algebraic_extensions",
+    "nonconvex_algebraic_chord_expansion_is_exact_and_local_collapse_is_explicit",
+    "strict_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions",
+    "unified_mixed_line_arc_erosion_splits_after_a_curved_neck_collapse"
+  ],
+  "new_failures": [],
+  "ignored": 9,
+  "prior_expensive_exclusions": 8,
+  "timeouts": 0,
+  "builds": [
+    {
+      "repository": "hypercurve",
+      "kind": "check",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "check",
+        "--all-targets",
+        "--no-default-features",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.11415747200953774,
+      "log": "normalized-path-admission-full2-check.log"
+    },
+    {
+      "repository": "hypercurve",
+      "kind": "test-build",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "test",
+        "--release",
+        "--all-features",
+        "--locked",
+        "--offline",
+        "--lib",
+        "--tests",
+        "--no-run",
+        "--message-format=json"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 50.116171307017794,
+      "log": "normalized-path-admission-full2-test-build.log"
+    },
+    {
+      "repository": "hyperbrep",
+      "kind": "check",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "check",
+        "--all-targets",
+        "--no-default-features",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 16.945731643005274,
+      "log": "normalized-path-admission-full2-hyperbrep-check.log"
+    },
+    {
+      "repository": "hyperbrep",
+      "kind": "test-build",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "test",
+        "--release",
+        "--all-features",
+        "--locked",
+        "--offline",
+        "--lib",
+        "--tests",
+        "--no-run",
+        "--message-format=json"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 124.09338492297684,
+      "log": "normalized-path-admission-full2-hyperbrep-test-build.log"
+    }
+  ],
+  "source_files_verified": {
+    "working": 396,
+    "isolated": 1007
+  },
+  "selected_source_files": [
+    "src/bezier_flatten.rs",
+    "src/bezier_region.rs",
+    "src/curve_region_boolean.rs",
+    "src/curve_region_trim.rs",
+    "src/finite_projection.rs",
+    "src/native_region_tests.rs",
+    "src/svg.rs",
+    "tests/hypercurve_bbox.rs",
+    "tests/hypercurve_curve_region_boolean.rs",
+    "tests/hypercurve_curve_region_boolean_fuzz.rs",
+    "tests/hypercurve_curve_region_promotion.rs",
+    "tests/hypercurve_exact_closure.rs",
+    "tests/hypercurve_svg.rs"
+  ],
+  "excluded_working_file": "src/bezier_offset.rs",
+  "excluded_scope": "Unfinished mapped-point inverse candidate remains outside this snapshot and commit. Offset source and tests are from committed parent 8977b81.",
+  "public_baseline": "normalized-region-admission-baseline.json",
+  "public_completed": "normalized-region-admission-completed.json",
+  "public_cases": {
+    "cases": 8,
+    "construction_failures": 0,
+    "normalized_point_replays": 18
+  },
+  "public_source_sha256": "942615d90a8844189e0ab77f98209724a73078f4a5b8d8688488d565fc772850",
+  "actual_public_executable_sha256": "b41613004f979dfb0389ddd52891e1eb86b72350fc7c7a29e40d8c708deb502a",
+  "archived_normal_library": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/normalized-path-admission-full2-libraries/libhypercurve-bacb55d5ec235376.rlib",
+  "normal_library_sha256": "fd1203e4eb3e6fa064be46977d35d871e0185d2eed992d795a23ca191d56afdf",
+  "actual_target_results": "normalized-path-admission-full2-full-results.json",
+  "snapshot": "normalized-path-admission-snapshot.json",
+  "other_session": "Hyperreal src/verified/ and verification/ changes untouched; pinned a2da8e2b5de9a1a4653d3662f2f05cb6533fd7ef used",
+  "remaining": "Public retained-loop/traversal constructors and operation producers, global authored winding, mapped-point analytic normal-sheet inverse, source-cusp frames, known failures and exclusions, and broader algebraic/computational consolidation remain required.",
+  "commit": "9f7a63686a9ee1a40fcedaba5e822234bd960f42",
+  "downstream_qualification": "normalized-path-admission-callers-qualification.json",
+  "followup_exactness_repair": "opposed-endpoint-contact-qualification.json"
+}

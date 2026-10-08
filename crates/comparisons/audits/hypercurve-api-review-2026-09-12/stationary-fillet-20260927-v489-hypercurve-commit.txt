@@ -1,0 +1,5 @@
+Retain one-sided source frames for stationary fillets
+
+A zero derivative elsewhere on an authored Bezier source incorrectly blocked exact line/curve fillets. Enumerate certified regular source cells when the whole-source speed check reaches a stationary point, and give each seam to the side retained by its cut. Carry the certified tangent chord and traversal scale through center selection, contact reconstruction and the existing chord-normal circle representation. A represented stationary endpoint stops its incident extension without discarding finite-domain trims. No public carrier or compatibility interface is added.
+
+Validation: 349 selected Hypercurve release tests across eight binaries, all-target Clippy with all and no default features, formatting, denied-warning docs, editing fuzz compilation, and Hyperbrep compilation. New regressions cover both policies, traversal directions and trim modes, wrong-side exclusion, irrational exact coefficients, closed-region/boundary/Boolean replay and a further nonzero round offset against an independent reference. Both earlier complete extended-fillet re-offset regressions remain passing.

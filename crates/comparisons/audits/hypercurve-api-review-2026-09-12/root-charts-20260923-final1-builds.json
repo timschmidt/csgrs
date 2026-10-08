@@ -1,0 +1,34 @@
+[
+  {
+    "label": "candidate",
+    "command": [
+      "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+      "test",
+      "--lib",
+      "--release",
+      "--all-features",
+      "--no-run",
+      "--message-format=json",
+      "--locked",
+      "--offline"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 123.40310880192555
+  },
+  {
+    "label": "parent",
+    "command": [
+      "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+      "test",
+      "--lib",
+      "--release",
+      "--all-features",
+      "--no-run",
+      "--message-format=json",
+      "--locked",
+      "--offline"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 160.00825264502782
+  }
+]

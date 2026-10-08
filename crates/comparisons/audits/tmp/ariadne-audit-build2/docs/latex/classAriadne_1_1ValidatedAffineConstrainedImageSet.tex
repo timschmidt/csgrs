@@ -1,0 +1,103 @@
+\doxysubsection{Validated\+Affine\+Constrained\+Image\+Set Class Reference}
+\hypertarget{classAriadne_1_1ValidatedAffineConstrainedImageSet}{}\label{classAriadne_1_1ValidatedAffineConstrainedImageSet}\index{ValidatedAffineConstrainedImageSet@{ValidatedAffineConstrainedImageSet}}
+
+
+{\ttfamily \#include $<$affine\+\_\+set.\+hpp$>$}
+
+
+
+\doxysubsubsection{Description}
+A constrained image set defined by affine functions. Defines a set of the form $S=\{ f(x) \mid x\in D \mid g(x)\leq 0 \wedge h(x)=0 \}$ where $f$, $g$ and $h$ are vector-\/valued affine functions on $\R^n$ and $D$ is a box in $\R^n$. 
+
+Includes the class of zonotopes $Z=\{ f(x) \mid x\in D\}$, polyhedra $\{ f(x) \mid x\in\R^n \mid g(x)\leq 0\}$ and polytopes $\{ f(x) \mid x\in[0,\infty)^n \mid \sum_{i=1}^{n} x_i -1 = 0\}$. \begin{DoxySeeAlso}{See also}
+\doxylink{classAriadne_1_1ValidatedConstrainedImageSet}{Validated\+Constrained\+Image\+Set} 
+\end{DoxySeeAlso}
+Inheritance diagram for Validated\+Affine\+Constrained\+Image\+Set\+:\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[height=2.424242cm]{classAriadne_1_1ValidatedAffineConstrainedImageSet}
+\end{center}
+\end{figure}
+\doxysubsubsubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1ValidatedAffineConstrainedImageSet_aa8be5360605ad4eb54fa42b06a675b96}\label{classAriadne_1_1ValidatedAffineConstrainedImageSet_aa8be5360605ad4eb54fa42b06a675b96} 
+{\bfseries Validated\+Affine\+Constrained\+Image\+Set} (const \mbox{\hyperlink{group__FunctionModule_gafdd31b4d01081cd09aad2ce11117f867}{Exact\+Box\+Type}} \&D)
+\begin{DoxyCompactList}\small\item\em The set $\{ y \mid y\in D\}$. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1ValidatedAffineConstrainedImageSet_ab4d91f33e40e7440839b35740b99ebf8}\label{classAriadne_1_1ValidatedAffineConstrainedImageSet_ab4d91f33e40e7440839b35740b99ebf8} 
+{\bfseries Validated\+Affine\+Constrained\+Image\+Set} (const \mbox{\hyperlink{group__FunctionModule_gafdd31b4d01081cd09aad2ce11117f867}{Exact\+Box\+Type}} \&D, const \mbox{\hyperlink{classAriadne_1_1Matrix}{Matrix}}$<$ \mbox{\hyperlink{namespaceAriadne_af915b9f1459c9691328efa71c6f39c6e}{Float\+DP}} $>$ \&G, const \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ \mbox{\hyperlink{namespaceAriadne_af915b9f1459c9691328efa71c6f39c6e}{Float\+DP}} $>$ \&c)
+\begin{DoxyCompactList}\small\item\em The set $\{ Gy+c \mid y\in D\}$. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1ValidatedAffineConstrainedImageSet_adc2e4dc60a9ac7a0c94cd86308505eb0}\label{classAriadne_1_1ValidatedAffineConstrainedImageSet_adc2e4dc60a9ac7a0c94cd86308505eb0} 
+{\bfseries Validated\+Affine\+Constrained\+Image\+Set} (const \mbox{\hyperlink{group__FunctionModule_gafdd31b4d01081cd09aad2ce11117f867}{Exact\+Box\+Type}} \&D, const \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ \mbox{\hyperlink{classAriadne_1_1Affine}{Affine}}$<$ Float\+DPBounds $>$ $>$ \&f)
+\begin{DoxyCompactList}\small\item\em The set $\{ x_i=f_i(s) \mid s\in D \}$. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1ValidatedAffineConstrainedImageSet_aff005114267463f2fc371409f5a3e052}\label{classAriadne_1_1ValidatedAffineConstrainedImageSet_aff005114267463f2fc371409f5a3e052} 
+{\bfseries Validated\+Affine\+Constrained\+Image\+Set} (const \mbox{\hyperlink{group__FunctionModule_gafdd31b4d01081cd09aad2ce11117f867}{Exact\+Box\+Type}} \&D, const \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ \mbox{\hyperlink{classAriadne_1_1Affine}{Affine}}$<$ Float\+DPBounds $>$ $>$ \&f, const \mbox{\hyperlink{classAriadne_1_1List}{List}}$<$ \mbox{\hyperlink{classAriadne_1_1Constraint}{Affine\+Constraint}}$<$ Float\+DPBounds $>$ $>$ \&c)
+\begin{DoxyCompactList}\small\item\em The set $\{ x_i=f_i(s) \mid s\in D \mid c(s) \}$. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1ValidatedAffineConstrainedImageSet_a6c3f08e9de4bd36af07396232d0ce7e2}\label{classAriadne_1_1ValidatedAffineConstrainedImageSet_a6c3f08e9de4bd36af07396232d0ce7e2} 
+{\bfseries Validated\+Affine\+Constrained\+Image\+Set} (const \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ Validated\+Affine\+Model\+DP $>$ \&f, const \mbox{\hyperlink{classAriadne_1_1List}{List}}$<$ \mbox{\hyperlink{classAriadne_1_1Constraint}{Validated\+Affine\+Model\+Constraint\+DP}} $>$ \&c)
+\begin{DoxyCompactList}\small\item\em The set $\{ x_i=f_i(s) \mid s\in [-1,+1]^n \mid c(s) \}$. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1ValidatedAffineConstrainedImageSet_ad3d4836d1eeaaa23193ba8c907c55a05}\label{classAriadne_1_1ValidatedAffineConstrainedImageSet_ad3d4836d1eeaaa23193ba8c907c55a05} 
+{\bfseries Validated\+Affine\+Constrained\+Image\+Set} (const Real\+Box \&B)
+\begin{DoxyCompactList}\small\item\em The set $\{ x \mid x\in B\}$. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1ValidatedAffineConstrainedImageSet_adb631bfa55c194e6e0485a62c6e6acc3}\label{classAriadne_1_1ValidatedAffineConstrainedImageSet_adb631bfa55c194e6e0485a62c6e6acc3} 
+{\bfseries Validated\+Affine\+Constrained\+Image\+Set} (const \mbox{\hyperlink{classAriadne_1_1Box}{Box}}$<$ \mbox{\hyperlink{classAriadne_1_1Interval}{Interval}}$<$ Float\+DPBall $>$ $>$ \&B)
+\begin{DoxyCompactList}\small\item\em The set $\{ x \mid x\in B\}$. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1ValidatedAffineConstrainedImageSet_a001608e5ea768a3c8df19b42064f78f1}\label{classAriadne_1_1ValidatedAffineConstrainedImageSet_a001608e5ea768a3c8df19b42064f78f1} 
+virtual \mbox{\hyperlink{classAriadne_1_1ValidatedAffineConstrainedImageSet}{Validated\+Affine\+Constrained\+Image\+Set}} \texorpdfstring{$\ast$}{*} {\bfseries clone} () const override
+\begin{DoxyCompactList}\small\item\em Construct a dynamically-\/allocated copy. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1ValidatedAffineConstrainedImageSet_a92c497b6e7ed3bafb7f483c87a8bf85b}\label{classAriadne_1_1ValidatedAffineConstrainedImageSet_a92c497b6e7ed3bafb7f483c87a8bf85b} 
+virtual \mbox{\hyperlink{namespaceAriadne_a4b06015a4986ef014fb6643680cb04d2}{Dimension\+Type}} {\bfseries dimension} () const override
+\begin{DoxyCompactList}\small\item\em The dimension of the set. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1ValidatedAffineConstrainedImageSet_a7d8d2aadc11174ba762427368efce582}\label{classAriadne_1_1ValidatedAffineConstrainedImageSet_a7d8d2aadc11174ba762427368efce582} 
+virtual \mbox{\hyperlink{group__FunctionModule_gadb510bd9aa076e5ae44245b498901ca6}{Upper\+Box\+Type}} {\bfseries bounding\+\_\+box} () const override
+\begin{DoxyCompactList}\small\item\em Returns a bounding box for the set. If the set is empty, then the first component of the result should be empty. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1ValidatedAffineConstrainedImageSet_af5e10c1b7ee737214d82ebbcf3a0a60b}\label{classAriadne_1_1ValidatedAffineConstrainedImageSet_af5e10c1b7ee737214d82ebbcf3a0a60b} 
+virtual \mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} {\bfseries draw} (\mbox{\hyperlink{classAriadne_1_1CanvasInterface}{Canvas\+Interface}} \&, const Projection2d \&p) const override
+\begin{DoxyCompactList}\small\item\em brief Draw the object on the canvas {\itshape c} using line segments and fill/stroke commands. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1ValidatedAffineConstrainedImageSet_ac7b4e4c2bfba8df731d221eaa97a132e}\label{classAriadne_1_1ValidatedAffineConstrainedImageSet_ac7b4e4c2bfba8df731d221eaa97a132e} 
+virtual \mbox{\hyperlink{namespaceAriadne_acbb98ddc4385af4599070e65a1a47ec1}{Output\+Stream}} \& {\bfseries \+\_\+write} (\mbox{\hyperlink{namespaceAriadne_acbb98ddc4385af4599070e65a1a47ec1}{Output\+Stream}} \&os) const override
+\begin{DoxyCompactList}\small\item\em Write to an output stream. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxyparagraph*{Public Member Functions inherited from \mbox{\hyperlink{classAriadne_1_1BoundedSetInterface}{Bounded\+Set\+Interface$<$ Validated\+Tag, Real\+Vector $>$}}}
+\begin{DoxyCompactItemize}
+\item 
+virtual Lower\+Kleenean\+Type$<$ \mbox{\hyperlink{structAriadne_1_1ValidatedTag}{Validated\+Tag}} $>$ {\bfseries inside} (const \mbox{\hyperlink{classAriadne_1_1SetInterfaceBase_a621a6488ff988ea56df9398b55b4241f}{Basic\+Set\+Type}} \&bx) const=0
+\begin{DoxyCompactList}\small\item\em Tests if the set is a inside of {\itshape bx}. A set {\itshape A} is {\itshape inside} {\itshape B} if the closure of {\itshape A} is a subset of the interior of {\itshape B}. A set $A$ is {\itshape inside} $B$ if $\,\overline{\!A} \subset B^\circ$. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxyparagraph*{Public Member Functions inherited from \mbox{\hyperlink{classAriadne_1_1SetInterfaceBase}{Set\+Interface\+Base$<$ Real\+Vector $>$}}}
+\begin{DoxyCompactItemize}
+\item 
+virtual {\bfseries \texorpdfstring{$\sim$}{\string~}\+Set\+Interface\+Base} ()=default
+\begin{DoxyCompactList}\small\item\em Virtual destructor. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxyparagraph*{Public Member Functions inherited from \mbox{\hyperlink{classAriadne_1_1ClosedSetInterface}{Closed\+Set\+Interface$<$ Validated\+Tag, Real\+Vector $>$}}}
+\begin{DoxyCompactItemize}
+\item 
+virtual Lower\+Kleenean\+Type$<$ \mbox{\hyperlink{structAriadne_1_1ValidatedTag}{Validated\+Tag}} $>$ {\bfseries separated} (const \mbox{\hyperlink{classAriadne_1_1SetInterfaceBase_a621a6488ff988ea56df9398b55b4241f}{Basic\+Set\+Type}} \&bx) const=0
+\begin{DoxyCompactList}\small\item\em Tests if the set is separated from {\itshape bx}. A set {\itshape A} is {\itshape separated} from {\itshape B} if the closures of {\itshape A} and {\itshape B} are disjoint. A set $A$ is {\itshape separated} from $B$ if $\,\overline{\!A} \cap \overline{B} = \emptyset$. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxyparagraph*{Public Member Functions inherited from \mbox{\hyperlink{classAriadne_1_1Drawable2dInterface}{Drawable2d\+Interface}}}
+\begin{DoxyCompactItemize}
+\item 
+virtual {\bfseries \texorpdfstring{$\sim$}{\string~}\+Drawable2d\+Interface} ()=default
+\begin{DoxyCompactList}\small\item\em brief Virtual destructor. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsubsection*{Friends}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1ValidatedAffineConstrainedImageSet_a8553212089dde8374baf16dc0af00aee}\label{classAriadne_1_1ValidatedAffineConstrainedImageSet_a8553212089dde8374baf16dc0af00aee} 
+\mbox{\hyperlink{classAriadne_1_1ValidatedAffineConstrainedImageSet}{Validated\+Affine\+Constrained\+Image\+Set}} {\bfseries image} (\mbox{\hyperlink{classAriadne_1_1ValidatedAffineConstrainedImageSet}{Validated\+Affine\+Constrained\+Image\+Set}} set, Validated\+Vector\+Multivariate\+Function const \&h)
+\begin{DoxyCompactList}\small\item\em Compute the image of $S$ under the function $h$. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsubsection*{Additional Inherited Members}
+\doxyparagraph*{Public Types inherited from \mbox{\hyperlink{classAriadne_1_1SetInterfaceBase}{Set\+Interface\+Base$<$ Real\+Vector $>$}}}
+\begin{DoxyCompactItemize}
+\item 
+typedef \mbox{\hyperlink{group__LinearAlgebraSubModule_ga00e69bf76ffebd1f3ba573f4662134bc}{Real\+Vector}} {\bfseries Element\+Type}
+\begin{DoxyCompactList}\small\item\em The type of element of the set. \end{DoxyCompactList}\item 
+typedef Set\+Traits$<$ \mbox{\hyperlink{group__LinearAlgebraSubModule_ga00e69bf76ffebd1f3ba573f4662134bc}{Real\+Vector}} $>$\+::\+Dimension\+Type {\bfseries Dimension\+Type}
+\begin{DoxyCompactList}\small\item\em The type representing the dimension of the set. \end{DoxyCompactList}\item 
+typedef Set\+Traits$<$ \mbox{\hyperlink{group__LinearAlgebraSubModule_ga00e69bf76ffebd1f3ba573f4662134bc}{Real\+Vector}} $>$\+::\+Basic\+Set\+Type {\bfseries Basic\+Set\+Type}
+\begin{DoxyCompactList}\small\item\em The type of basic set in the space. \end{DoxyCompactList}\item 
+typedef Set\+Traits$<$ \mbox{\hyperlink{group__LinearAlgebraSubModule_ga00e69bf76ffebd1f3ba573f4662134bc}{Real\+Vector}} $>$\+::\+Bounding\+Set\+Type {\bfseries Bounding\+Set\+Type}
+\begin{DoxyCompactList}\small\item\em The type of basic set in the space. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+The documentation for this class was generated from the following files\+:\begin{DoxyCompactItemize}
+\item 
+source/geometry/\mbox{\hyperlink{affine__set_8hpp}{affine\+\_\+set.\+hpp}}\item 
+source/geometry/affine\+\_\+set.\+cpp\end{DoxyCompactItemize}

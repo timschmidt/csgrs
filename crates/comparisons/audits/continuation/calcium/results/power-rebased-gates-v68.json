@@ -1,0 +1,13 @@
+{
+  "tag": "power-rebased-gates-v68",
+  "started": "2026-09-11T03:50:06.627Z",
+  "finished": "2026-09-11T03:52:15.469Z",
+  "elapsedSeconds": 128.839579182,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "node",
+  "args": [
+    "run-power-rebased-v68.mjs"
+  ],
+  "code": 1,
+  "signal": null
+}

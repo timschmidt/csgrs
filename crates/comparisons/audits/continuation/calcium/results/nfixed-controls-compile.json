@@ -1,0 +1,30 @@
+{
+  "tag": "nfixed-controls-compile",
+  "started": "2026-09-09T16:32:01.057Z",
+  "finished": "2026-09-09T16:32:01.268Z",
+  "elapsedSeconds": 0.20852556800000002,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison",
+  "command": "gcc",
+  "args": [
+    "-O2",
+    "-g0",
+    "-Wall",
+    "-Wextra",
+    "-Werror",
+    "-isystem",
+    "../exact-real-references/flint/src",
+    "audits/continuation/calcium/flint-nfixed-controls.c",
+    "-L",
+    "../exact-real-references/flint",
+    "-Wl,-rpath,/home/tim/Documents/GitHub/workspace/exact-real-references/flint",
+    "-lflint",
+    "-lmpfr",
+    "-lgmp",
+    "-lm",
+    "-lpthread",
+    "-o",
+    "/tmp/calcium-nfixed-controls.qZn5o6/nfixed-controls"
+  ],
+  "code": 1,
+  "signal": null
+}

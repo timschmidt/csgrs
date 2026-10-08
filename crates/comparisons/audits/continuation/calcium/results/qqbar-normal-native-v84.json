@@ -1,0 +1,19 @@
+{
+  "tag": "qqbar-normal-native-v84",
+  "started": "2026-09-12T04:48:14.340Z",
+  "finished": "2026-09-12T04:48:14.417Z",
+  "elapsedSeconds": 0.07445612900000001,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "timeout",
+  "args": [
+    "120s",
+    "prlimit",
+    "--core=0",
+    "--as=1073741824",
+    "--cpu=90",
+    "--",
+    "/tmp/calcium-qqbar-remainder-v84.1aubRO/normal"
+  ],
+  "code": 0,
+  "signal": null
+}

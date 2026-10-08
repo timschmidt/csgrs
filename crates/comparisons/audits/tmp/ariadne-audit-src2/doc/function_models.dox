@@ -1,0 +1,257 @@
+/***************************************************************************
+ *            function_models.dox
+ *
+ *  Copyright  2007  Pieter Collins
+ *
+ ****************************************************************************/
+
+/*
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; either version 2 of the License, or
+ *  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Library General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program; if not, write to the Free Software
+ *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+ */
+
+/*!
+
+\file function_models.dox
+\brief Documentation on polynomial models of functions
+
+
+
+\page function_models_page Function Models
+
+A \em model for a function \f$f:\mathbb{R}^n\rightarrow \mathbb{R}^m\f$ is an approximation of \f$f\f$ on some domain \f$D\f$.
+A \em validated model describes a set of possibilities for \f$f\f$, such as a ball around some fixed approximation in a function norm, whereas an \em approximate model merely gives an approxmation, with no guarantees on the true value.
+
+A particularly useful approach is to first \em scale or otherwise perform a mapping of \f$D\f$ to a canonical domain, typically \f$[-1\!:\!+1]^n\f$, though for Fourier approximations we may prefer variables in \f$[-\pi\!:\!+\pi]\f$.
+We shall henceforth assume that our function models are defined on a rescaled domain.
+
+For more information on Taylor (polynomial) models, see Berz & Hoffstätter (1998) and Makino & Berz (1999).
+
+\section polynomial_models Polynomial Models
+
+A polynomial model represent represents a function \f$f\f$ on \f$X\f$ by in terms of a polynomial over \f$D\f$.
+
+
+We recall that a polynomial \f$p\f$ in \f$n\f$ variables \f$(x_1,\ldots,x_n)\f$ can be written as
+\f[ p(x) = \sum_{\alpha\in \aleph} c_{\alpha}\,x^{\alpha} . \f]
+Here, \f$\alpha\f$ is a multi-index \f$(\alpha_1,\ldots,\alpha_m)\f$ with degree \f$|\alpha|=\alpha_1+\cdots+\alpha_m\f$, and \f$x^\alpha := x_1^{\alpha_1}\,x_2^{\alpha_2}\,\cdots\,x_m^{\alpha_m}\f$, and \f$\aleph\f$ is a finite set of multi-indices.
+We will write \f$\alpha_i\f$ for the multi-index \f$(\alpha_i)_i=1\f$, \f$(\alpha_i)_j=0,\;i\neq j\f$.
+The coefficients \f$c_\alpha\f$ are constants of a real-number type depending on the representation of the model.
+
+In an \em approximate model, the coefficients are approximate values \f$\tilde{c}_\alpha\f$, typically of some \ref Approximation "Approximation<FLT> class.
+The model is then an approximate polynomial \f[ \textstyle \tilde{p}(x) = \sum_{\alpha\in\aleph} \tilde{c}_\alpha x^\alpha \f] such that \f$\tilde{p} \approx f\f$ over \f$D\f$.
+
+There are many kinds of \em validated model.
+
+A simple class of validated models can be described
+\f[ \hat{p}(z) = \sum_\alpha c_\alpha z^\alpha \pm e = p(z)\pm \varepsilon \f]
+which describes a continuous function in the set
+\f[ \textstyle \langle p \pm \varepsilon\rangle = \{ f : D\to\R \mid \forall _{z\in D} | f(z) - p(z) | \leq \varepsilon \} . \f]
+In other words, \f$\hat{p}\f$ is the ball of radius \f$e\f$ around \f$p(z)=\sum_\alpha c_\alpha z^\alpha\f$ in the uniform (\f$L^\infty\f$) norm.
+Note that this model class does not support differentiation, since (here, restricting to one dimension) for any differentiable function \f$e\f$ with \f$\|e\|_\infty\leq \varepsilon\f$, we could have \f$f'(z) = \sum_{\alpha} \alpha c_\alpha z^{\alpha-1} + e'(z)\f$, so the derivative at any point can be made to take an arbitrary value.
+
+\subsection higher_order_function_models Higher Order Function Models
+
+We can also consider models in higher differentiability classes by keeping track of higher-order norms.
+For example, we can keep track of error bounds \f$\varepsilon_\alpha\f$ on \f$\partial^\alpha f/\partial z^\alpha\f$ for \f$|\alpha|=1\f$ to obtain a <em>\f$C^1\f$ function model</em>.
+Here, it is also useful to keep track of the error \f$\delta_0\f$ at \f$z=0\f$, since then we have the following bound on the uniform error:
+\f[ \textstyle \sup_{z\in D}|f(z)-p(z)| \leq \delta_0 + \sum_i \epsilon_{\alpha_i} z_i , \f]
+
+\subsection interval_taylor_models Interval Taylor Models
+
+We can construct polynomial models using coefficients which are themselves non-exact:
+\f[ \textstyle \hat{p}(z) = \sum_\alpha \hat{c}_\alpha z^\alpha \f]
+
+\subsubsection interval_taylor_model_semantics Semantics
+
+Here there are two distinct interpretations:
+ - (i) We can assume that the \f$\hat{c}_\alpha\f$ are bounds for some fixed, but unknown value.
+In this case, \f$\langle \hat{p} \rangle\f$ is a set of \em polynomials:
+\f[ \textstyle \langle \hat{p} \rangle = \{ f : D\to\R \mid \forall \alpha\in\aleph,\ \exists c_\alpha \in \hat{c}_\alpha,\ \forall z\in D,\ f(z) = \sum_\alpha c_\alpha z^\alpha \} , \f]
+ - (ii) We can assume that the \f$\widehat{c}_\alpha\f$ are bounds on the range of a function which may itself depend on \f$z\f$.
+In this case, we give the semantics:
+\f[ \textstyle \langle \hat{p} \rangle = \{ f : D\to\R \mid \forall z\in D,\ \forall \alpha\in\aleph,\ \exists c_\alpha\in\widehat{c}_\alpha,\ f(z) = \sum_\alpha c_\alpha z^\alpha \} , \f]
+or equivalently,
+\f[ \textstyle \langle \hat{p} \rangle = \{ f : D\to\R \mid \forall \alpha\in\aleph,\ \exists \gamma_\alpha:D\to\widehat{c}_\alpha,\ f(z) = \sum_\alpha \gamma_\alpha(z) z^\alpha \} . \f]
+Note that the interpretation (ii) gives more possible choices of \f$f\f$.
+
+Interpretation (i) only allows representation of polynomial functions.
+For this reason, one would typically introduce an additional uniform remainder term:
+\f[ \textstyle \hat{p}(z) = \sum_\alpha \hat{c}_\alpha z^\alpha \pm e \f]
+to allow representation of arbitrary continuous functions
+\f[ \textstyle \langle \hat{p}\pm e \rangle = \{ f : D\to\R \mid \forall \alpha\in\aleph,\ \exists c_\alpha \in \hat{c}_\alpha,\ \forall z\in D, \ \exists \epsilon\in e,\ f(z) = \sum_\alpha c_\alpha z^\alpha + \epsilon \} , \f]
+Interpretation (ii) allows for the interpretation of analytic functions e.g.
+\f[ \exp(z) \in 1+z+\cdots + \frac{1}{(n-1)!}z^{n-1} + \frac{[0.25\!:\!2.75]}{n!} z^{n} \subset \Bigl(1+\frac{[-2.75\!:\!2.75]}{n!}\Bigr) + z + \cdots + \frac{1}{(n-1)!} z^{n-1} . \f]
+
+\subsubsection interval_taylor_model_arithmetic Arithmetic
+
+In both cases, arithmetic can be performed by using interval arithmetic on the coefficients:
+\f[ \begin{aligned} \textstyle (\sum_\alpha \hat{a}_\alpha z^\alpha) + (\sum_\beta \hat{b}_\beta z^\beta) &= \textstyle \sum_{\gamma} \bigl( \hat{a}_\gamma + \hat{b}_\gamma \bigr) z^\gamma \\
+\textstyle (\sum_\alpha \hat{a}_\alpha z^\alpha) \times (\sum_\beta \hat{b}_\beta z^\beta) &= \textstyle \sum_{\gamma} \bigl( \sum_{\alpha+\beta=\gamma} \hat{a}_\alpha \times \hat{b}_\beta \bigr) z^\gamma . \end{aligned} \f]
+and composition by using the addition and multiplication operations so defined.
+
+\subsubsection interval_taylor_model_differentiation Differentiation
+
+Howerver, interpretation (ii) does not support differentiation, since
+\f[ \frac{d}{dz} \sum_k \gamma_k(z) z^k = \sum_k \bigl( \gamma_k'(z) + (k+1) \gamma_{k+1}(z) \bigr) z^k , \f]
+and \f$\gamma_k'(z)\f$ cannot be bounded, while In the first interpretation, differentiation can be performed elementwise:
+\f[ \frac{d}{dz} \sum_k \hat{c}_k z^k = \sum_k (k+1) \hat{c}_{k+1} z^k , \f]
+
+\subsubsection interval_taylor_model_integration Integration
+
+Integration also differs between the two interpretations. In interpretation (i),
+\f[ \int_a^b \sum_k \hat{c}_k z^k ,dz = \sum_k \tfrac{1}{k+1}\hat{c}_k \bigl[ z^{k+1}\bigr]_a^b = \sum_{k} \tfrac{1}{k+1}\hat{c}_k (b^{k+1}-a^{k+1}) , \f]
+whereas in the second interpretation (ii),
+\f[ \int_a^b \sum_k \hat{c}_k z^k \,dz = \Bigl[{{\sum}_k \tfrac{1}{k+1}\hat{c}_k z^{k+1}}\Bigr]_a^b = \sum_{k} \tfrac{1}{k+1} \bigl(\hat{c}_k b^{k+1}-\hat{c}_k a^{k+1}\bigr) . \f]
+These are different, since the distributive law does not hold for interval arithmetic: in general, \f$(b-a)\hat{c} \subsetneq b\hat{c}-a\hat{c}\f$.
+However, for interpretation (ii) we can still use
+\f[ \int_0^z \sum_k \hat{c}_k \zeta^k \,d\zeta = \Bigl[{{\sum}_k \tfrac{1}{k+1}\hat{c}_k \zeta^{k+1}}\Bigr]_0^z = \sum_{k} \tfrac{1}{k+1} \hat{c}_k z^{k+1} . \f]
+
+\subsubsection interval_taylor_model_multivalued Sets of functions
+
+In many cases, we use interval coefficients when we wish to denote an over-approximation to a \em set of functions, or to a \em multivalued function, rather than a range of possibilities for a \em single function point-valued function.
+We henceforth write \f$\widehat{C}_\alpha\f$ where  distinguish use \ref UpperInterval "UpperInterval<FLT>" as the type of coefficient.
+
+- (iii) The interpretation as a set of functions is equivalent to (ii)
+\f[ \textstyle \langle \widehat{P} \rangle = \{ f : D\to\R \mid \forall z\in D,\ \forall \alpha\in\aleph,\ \exists c_\alpha\in\widehat{C}_\alpha,\ f(z) = \sum_\alpha c_\alpha z^\alpha \} , \f]
+
+- (iv) The interpretation as a \em multivalued function is
+\f[ \textstyle \langle \widehat{P} \rangle = \{ F:D\rightrightarrows\mathbb{R} \mid \forall z, F(z) = \{ w \mid \forall \alpha\in\aleph,\ \exists c_\alpha \in \widehat{C}_\alpha, w=\sum_\alpha c_\alpha z^\alpha\} \} \f]
+
+In both cases, arithmetic is performed as for (i) and (ii), and for case (iii), differentiation is not supported, and integration follows case (ii).
+
+
+\b Example
+
+Consider the polynomial model \f$\hat{p}(z) = [0:1]+[2:4]z\f$.
+
+In interpretation (i), \f$\langle \hat{p} \rangle\f$ is the set of affine functions \f$ f(z) = c_0 + c_1 z\f$ where \f$c_0\in[0:1]\f$ and \f$c_1\in[2:4]\f$. In this case, the possible values of \f$\int_{-1}^{+1} f(z) dz\f$ are \f$[0:2]\f$, since
+\f[ \begin{aligned} \textstyle \int_{-1}^{+1} f(z)dz & = \textstyle \int_{-1}^{+1} c_0 + c_1 z dz=[c_0z+c_1\tfrac{1}{2}z^2]_{-1}^{+1}=c_0[z]_{-1}^{+1}+c_1[\tfrac{1}{2}z^2]_{-1}^{+1} \\ &\textstyle =c_0(1-(-1))+c_1(\tfrac{1}{2}-\tfrac{1}{2})=2c_0 \in [0:2] . \end{aligned} \f]
+
+In interpretation (ii), \f$\langle \hat{p} \rangle\f$ is the set all functions of the form \f$ f(z) = c_0(z) + c_1(z) z\f$ where for all \f$z\f$, \f$c_0(z)\in[0:1]\f$ and \f$c_1(z)\in[2:4]\f$.
+In this case, \f$\int_{-1}^{+1} f(z) dz\f$ are \f$[-1:+3]\f$.
+The maximum value the integral can take is for \f$f(z)=1+2z\f$ for \f$z\in[-1:0]\f$ and \f$1+4z\f$ for \f$z\in[0:+1]\f$, so
+\f[ \textstyle \int_{-1}^{+1} f(z) dz \leq \int_{-1}^{0} 1+2z\,dz + \int_{0}^{+1} 1+4z\,dz = [z+z^2]_{-1}^{0} + [z+2z^2]_{0}^{+1} = (0-0) + (3-0) = 3 . \f]
+
+\b Notation
+
+We henceforth describe a function \f$\hat{p}(z)=\sum_{\alpha} \hat{c}_\alpha z^\alpha\f$ using interpretation (i) as a <em>validated polynomial</em>.
+When using the interpretations (ii), we use the terminology <em>varying-coefficient Taylor model</em>, and for (iii), we say <em>interval Taylor model</em>.
+
+See \ref interval_taylor_model_differential_inclusions "Solution (of differential inclusions) using interval Taylor models" for information on using interval Taylor models to solve differential inclusions.
+
+\subsection sweeping Simplification by sweeping
+
+One of the key operations on function models is simplification by \em sweeping, in which small (or high-order) terms are removed by either combining with other terms, or putting into a \em remainder term, such as the error bound.
+
+For a \f$C^0\f$ model \f$p(z)\pm\varepsilon\f$, sweeping yields
+\f[ \textstyle \sum_{\alpha\in\alpha_1} c_\alpha z^\alpha + \sum_{\alpha\in\alpha_2} c_\alpha z^\alpha  \pm \varepsilon \preceq
+     \sum_{\alpha\in\alpha_1} c_\alpha z^\alpha  \pm \bigl( \varepsilon + \sum_{\alpha\in\alpha_2} |c_\alpha| \|z^\alpha\| \bigr) . \f]
+When working on the unit domain, \f$\|z^\alpha\|=1\f$ for all \f$\alpha\f$, so we can take error \f$\varepsilon + \sum_{\alpha\in\alpha_2} |c_\alpha|\f$.
+
+Other model classes can be constructed from these basic building blocks.
+For example, we could consider models which are explicitly represented as a composition, or as a sum of other model classes.
+
+\subsection taylor_model_efficiency_and_accuracy Efficiency and accuracy considerations
+
+Consider the approximation of an analytic function \f$f:\mathbb{R}\to\mathbb{R}\f$.
+Assume that the Taylor series of \f$f\f$ at \f$0\f$ has coefficients \f$c_k\f$ and radius of convergence \f$R\f$.
+
+Suppose we with to represent \f$f\f$ over the interval \f$[-h\!:\!+h]\f$ by a Taylor model with sweep threshold \f$\theta\f$.
+We are interested in the balance between the choice of \f$h\f$ and \f$\theta\f$, the accuracy of the approximation, and the number of terms used.
+
+Since \f$R=\limsup_{k\to\infty} |c_k|^{1/k}\f$, there exists a constant \f$C\f$ such that \f$|c_k|\leq C/R^k\f$.
+Since we are working on \f$[-h\!:\!+h]\f$, scaling to the unit interval gives \f$f(z)=\sum_{k=0}^\infty c_k h^k z_k\f$ for \f$z\in[-1\!:\!+1]\f$.
+If \f$C h^k/R^k \leq \theta\f$, which occurs when \f$k\geq \log(\theta/C)/\log(h/R) = M\f$ (note that we require \f$h<R\f$, and we should therefore choose \f$\theta<C\f$), we discard the \f$k\f$th term.
+These terms have sum bounded by \f$C (h/R)^M /(1-h/R) = \theta /(1-h/R)\f$.
+The remaining \f$M\f$ coefficients \f$c_k h^k\f$ could also be less than \f$\theta\f$.
+If \f$N\f$ of these are keps, the additional extra error is \f$(M-N)\theta=\theta (\log(\theta/C)/\log(h/R)-N)\f$.
+Hence an over-approximation to the total error is
+\f[ \varepsilon = \theta \Bigl( M - N + \frac{1}{1-h/R} \Bigr)\theta \Bigl( (1-\nu) \frac{\log(\theta/C)}{\log(h/R)}  + \frac{1}{1-h/R} \Bigr). \f]
+Clearly, this decreases as \f$\theta\f$ decreases, but is non-monotone in \f$h\f$: for \f$h\to\R\f$, the Taylor expansion converges too slowly, but for \f$h\to 0\f$, all but the constant term decrease below the sweep threshold.
+
+The accuracy considerations need to be balanced by the effort needed to compute with the approximations.
+We need \f$\Theta(1/h)\f$ pieces of width \f$2h\f$ to cover a given interval, so we should divide \f$\varepsilon\f$ by \f$h\f$.
+The effort \f$\sigma(N)\f$ needed to store and work with \f$N\f$ terms also needs to be considered; realistic choices are \f$O(N)\f$, \f$O(N\log N)\f$ and \f$O(N^2)\f$.
+
+Assume \f$N\approx \nu M\f$ for some constant \f$\nu\in[0,1]\f$ i.e. a fraction \f$1-\nu\f$ of low-order terms are small, and are swept away.
+Denoting the total work by \f$\mu=\sigma(N)/h\f$ gives
+\f[ \varepsilon \times \mu = \frac{\theta \sigma(N)}{h} \Bigl( (1-\nu)M + \frac{1}{1-h/R} \Bigr) \f]
+
+If we assume \f$\sigma(N)=N\f$, then
+\f[ \varepsilon \times \mu = \nu \frac{\theta}{h} \frac{\log(\theta/C)}{\log(h/R)} \Bigr((1-\nu)\frac{\log(\theta/C)}{\log(h/R)}+\frac{1}{1-h/R} \Bigr) \f]
+For \f$\nu=1\f$ (i.e. all terms with a small degree are kept), this seems to indicates a sweep threshold of around \f$\theta = C/\mathrm{e}\approx0.37C\f$ should be used, and \f$h\approx 0.24 R\f$.
+
+If we were to take \f$\sigma(N)=N^2\f$, then we would expect to prefer a lower sweep threshould and more subintervals.
+
+\section affine_models Affine Models
+
+An affine model represents a function \f$f\f$ on \f$X\f$ by \f$f(x) = b + A (x-c)\f$.
+Given \f$f\f$, an \f$C^1\f$ model can be computed by taking
+\f[ [b] \ni f(c); \quad [A] \ni Df(X) \f]
+
+
+
+
+\section function_operation Function Operations
+
+We say a \f$(d,s)\f$-model is a polynomial of maximum degree \f$d\f$, and differentiability class \f$s\f$.
+
+The following operations on functions are supported:
+ - Evaluation: If \f$p\f$ is a \f$(d,s)\f$-model \f$\mathbb{R}^m\rightarrow\mathbb{R}^n\f$, then \f$p(c_1,\ldots,c_m)\f$ is an interval.
+ - Partial evaluation: If \f$p\f$ is a \f$(d,s)\f$-model \f$\mathbb{R}^m\rightarrow\mathbb{R}^n\f$, then \f$p(\cdot,\ldots,c_j,\ldots,\cdot)\f$ is a \f$(d,s)\f$-model \f$\mathbb{R}^{m-1}\rightarrow\mathbb{R}^n\f$.
+ - Variable substitution: If \f$p\f$ is a \f$(d,s)\f$-model \f$\mathbb{R}^m\rightarrow\mathbb{R}^n\f$,  and \f$q\f$ is a \f$(d,s)\f$-model \f$\mathbb{R}^{m-1}\rightarrow \R\f$, then \f$p(\cdot,\ldots,q(\cdot),\ldots,\cdot)\f$ is a \f$(d,s)\f$-model \f$\mathbb{R}^{m-1}\rightarrow\mathbb{R}^n\f$.
+
+ - Addition/Subtraction: If \f$p\f$ and \f$q\f$ are \f$(d,s)\f$-models \f$\mathbb{R}^m\rightarrow\mathbb{R}^n\f$, then so are \f$p+q\f$ and \f$p-q\f$.
+ - Multiplication: If \f$s\f$ is a scalar model \f$(d,s)\f$-model and \f$p\f$ is a \f$(d,s)\f$-model, then \f$s\times p\f$ is a \f$(d,s)\f$-model.
+ - Division: If \f$s\f$ is a scalar model and \f$s(x)\neq0\f$, then \f$1/s\f$ is a \f$(d,s)\f$-model.
+
+ - Differentiation: If \f$p\f$ is an \f$(d,s)\f$-model, then the single-variable derivative \f$\frac{\partial p}{\partial x_i}\f$ is a \f$(d-1,s-1)\f$-model.
+ - Differentiation: If \f$p\f$ is an \f$(d,s)\f$-model, then the single-variable integral \f$\int^{x_j} p(x_1,\ldots,\xi_j,\ldots,x_m)\,d\xi_j\f$ is a \f$(d,s)\f$-model.
+
+ - Direct sum (combine): If \f$p_1:\mathbb{R}^{m_1}\rightarrow\mathbb{R}^{n_1}\f$ and \f$p_2:\mathbb{R}^{m_2}\rightarrow\mathbb{R}^{n_2}\f$ are \f$(d,s)\f$ models, then so is \f$p_1\oplus p_2 : \mathbb{R}^{m_1+m_2}\rightarrow\mathbb{R}^{n_1+n_2}\f$ given by \f$(p_1\oplus p_2)(x_1,x_2):=(p_1(x_1),p_2(x_2))\f$.
+ - Cartesian product (join): If \f$p_1:\mathbb{R}^{m}\rightarrow\mathbb{R}^{n_1}\f$ and \f$p_2:\mathbb{R}^{m}\rightarrow\mathbb{R}^{n_2}\f$ are \f$(d,s)\f$ models, then so is \f$p_1 \times p_2 : \mathbb{R}^{m}\rightarrow\mathbb{R}^{n_1+n_2}\f$ given by \f$(p_1\times p_2)(x):= (p_1(x),p_2(x))\f$.
+
+ - Composition: If \f$p_1:\mathbb{R}^{m}\rightarrow\mathbb{R}^{l}\f$ and \f$p_2:\mathbb{R}^{l}\rightarrow\mathbb{R}^{n}\f$ are \f$(d,s)\f$-models, then \f$p_2\circ p_1\f$ is a \f$(d,s)\f$-model \f$\mathbb{R}^{m}\rightarrow\mathbb{R}^{n}\f$.
+ - Inverse: If \f$p:\mathbb{R}^{n}\rightarrow\mathbb{R}^{n}\f$ is a \f$(d,s)\f$-model with \f$s\geq1\f$, and if \f$Dp\f$ is nonsingular, then \f$p^{-1}\f$ is a \f$(d,s)\f$ model. The inverse should be centred around \f$y=p(x)\f$, where \f$x\f$ is given, since locally \f$p^{-1}(y)\f$ may have several branches.
+ - Implicit: If \f$p:\mathbb{R}^{m}\times\mathbb{R}^{n}\rightarrow\mathbb{R}^{n}\f$ is a \f$(d,s)\f$-model with \f$s\geq1\f$, and if \f$D_2p\f$ is nonsingular near \f$(x,y)\f$, then there is a \f$(d,s)\f$-model \f$q\f$ such that \f$y\in q(x)\f$ and \f$p(x,q(x))=z\f$.
+
+ - Reduce: If \f$p:\mathbb{R}^{m}\times\mathbb{R}^{n}\rightarrow\mathbb{R}^{n}\f$ is a \f$(d_1,s_1)\f$-model, \f$d_2\leq d_1\f$ and \f$s_2\leq\min\{d_2,s_1\}\f$, then \f$p\f$ can be reduced to a \f$(d_2,s_2)\f$-model.
+
+
+
+
+\section function_model_contractors Theory of Contractors
+
+Consider the equation \f$f_i(x_1,\ldots,x_k)=x_i\f$ for \f$i=1,\ldots,k\f$. A \e contractor is a set-based over-approximation to the \f$f_i\f$ working on a class of set with an \e intersection operation. (Actually, all we require of the intersection operation is that it is an over-approximation to the set-theoretic intersection, and that the intersection of \a X and \a Y is a subset of both \a X and \a Y.)
+
+A contractor is \e monotone if \f$f_i(X_1,\ldots,X_k)\subset f_i(Y_1,\ldots,Y_k)\f$ if \f$X_i \subset Y_i\f$ for all \f$i\f$.
+Suppose \f$f_i(X_1,\ldots,X_k)=Y_i\subset X_i\f$, and \f$Y_j\subset X_j\f$ for \f$j\neq i\f$. Then \f$f_i(Y_1,\ldots,Y_k)\subset f_i(X_1,\ldots,X_k)\subset Y_i\f$.
+
+
+A system of contractors applies updates \f$X_i'=f_i(X_1,\ldots,X_k)\cap X_i\f$, possibly performing multiple updates simultaneously.
+If \f$f_i\f$ is monotone and \f$f_i(X_1,\ldots,X_k)\subset X_i\f$ at one stage, then inclusion holds at all stages.
+We can therefore apply contractors \f$f_i\f$ sequentially or in parallel. If for any \f$i\f$, \f$f_i(X_1,\ldots,X_k)\cap X_i = \emptyset\f$, then there is no fixed-point. If for all \f$i\f$, \f$f_i(X_1,\ldots,X_k)\subset X_i\f$, then there is at least one solution in \f$X_1\times\cdots\times X_k\f$.
+
+The Taylor calculus operations are not monotone, since refining an argument may cause terms to be swept into the error. Further, the intersection of two Taylor expressions need not be a subset of either argument due to round-off error.
+However, both operations are over-approximations of the exact operations, and this allows us to prove the existence of solutions.
+
+Suppose \f$f_i\f$ are monotone contractors, \f$\hat{f}_i\f$ are non-monotone numerical over-approximations to the \f$f_i\f$, and \f$\sqcap\f$ is an over-approximation to the intersection operator.
+Consider a system of contractors, \f$X_i'=\hat{f}_i(X_1,\ldots,X_k) \sqcap X_i\f$.
+Suppose that for all \f$i\f$ at some stage of the operation, \f$\hat{f}_i(X_1,\ldots,X_k) \subset X_i\f$. Then the final result contains a solution of \f$f_i(x_1,\ldots,x_k)=x_i;\ i=1,\ldots,k\f$.
+
+Consider the two-variable case. Suppose \f$\hat{f}_1(X_1,X_2)\subset X_1\f$, and that after applying some numerical contractors to obtain \f$(Y_1,Y_2)\f$ we have \f$\hat{f}_2(Y_1,Y_2)\subset Y_2\f$. Let \f$\tilde{Y}_1\f$ be the set obtained by applying the monotone contractors. Then \f$f_2(\tilde{Y}_1,Y_2)\subset f_2(Y_1,Y_2) \subset \hat{f}_2(Y_1,Y_2) \subset Y_2\f$, and \f$f_1(\tilde{Y}_1,Y_2)\subset \tilde{Y}_1\f$. Hence \f$(\tilde{Y}_1,Y_2)\f$ contains a solution, and therefore so does \f$(Y_1,Y_2)\f$.
+
+
+*/

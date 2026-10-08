@@ -1,0 +1,11 @@
+{
+  "tag": "complex-product-trace-baseline",
+  "started": "2026-09-09T21:40:39.499Z",
+  "finished": "2026-09-09T21:45:31.496Z",
+  "elapsedSeconds": 291.99451502,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "/tmp/calcium-complex-product.0bkAWH/baseline-trace",
+  "args": [],
+  "code": 0,
+  "signal": null
+}

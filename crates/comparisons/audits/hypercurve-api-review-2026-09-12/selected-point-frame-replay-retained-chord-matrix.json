@@ -1,0 +1,26 @@
+{
+  "returncode": 0,
+  "elapsed_seconds": 0.031647294003050774,
+  "normal_library_sha256": "476ce4085af4463f86d6182e476e0fa13af9266727aaefa54be4b0293d704b2a",
+  "log": "selected-point-frame-replay-retained-chord-matrix.log",
+  "source": "finite-domain-chord-matrix.rs",
+  "command": [
+    "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustc",
+    "--edition=2024",
+    "-O",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-domain-chord-matrix.rs",
+    "--extern",
+    "hypercurve=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypercurve-930b1fe968ca3c94.rlib",
+    "-L",
+    "dependency=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps",
+    "-o",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/selected-point-frame-replay-retained-chord-matrix"
+  ],
+  "source_sha256": "4e86f5ef8ff09819960f7b93a635dac2180830329d506dae7f14cbddb887a840",
+  "executable_sha256": "1677371701e906ef0ec18d570fa059d1055e54f7e6ccb66f12b87666353dc5ed",
+  "counts": {
+    "queries": 144,
+    "point_replays": 480,
+    "restrictions": 16
+  }
+}

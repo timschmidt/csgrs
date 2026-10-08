@@ -1,0 +1,213 @@
+\doxysubsection{Error\texorpdfstring{$<$}{<} F \texorpdfstring{$>$}{>} Class Template Reference}
+\hypertarget{classAriadne_1_1Error}{}\label{classAriadne_1_1Error}\index{Error$<$ F $>$@{Error$<$ F $>$}}
+
+
+{\ttfamily \#include $<$float\+\_\+error.\+hpp$>$}
+
+
+
+\doxysubsubsection{Description}
+\subsubsection*{template$<$class F$>$\newline
+class Ariadne\+::\+Error$<$ F $>$}
+Floating-\/point upper bounds for positive real numbers, suitable for use as an upper bound for an error in a metric space. 
+
+\begin{DoxySeeAlso}{See also}
+\doxylink{namespaceAriadne_af915b9f1459c9691328efa71c6f39c6e}{Float\+DP}, \doxylink{namespaceAriadne_a07966b67e613cc8779412beecb60651d}{Float\+MP}, Float, \doxylink{classAriadne_1_1UpperBound}{Upper\+Bound}. 
+\end{DoxySeeAlso}
+\doxysubsubsubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1Error_a2e56b0ca9b650963b49028f53bc5b763}\label{classAriadne_1_1Error_a2e56b0ca9b650963b49028f53bc5b763} 
+{\bfseries Error} (Positive\+Upper\+Bound$<$ F $>$ const \&x)
+\begin{DoxyCompactList}\small\item\em Convert from a positive upper bound {\itshape x} on the value to be used to represent an error-\/bound. \end{DoxyCompactList}\item 
+\mbox{\hyperlink{classAriadne_1_1Error_a670caf7b62051999d459269505f7a7a0}{Error}} (F const \&e)
+\begin{DoxyCompactList}\small\item\em Treat {\itshape a} as an upper-\/bound for an error. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Error_a0d933ccec4b52f73ef251e47f190841f}\label{classAriadne_1_1Error_a0d933ccec4b52f73ef251e47f190841f} 
+{\footnotesize template$<$Builtin\+Unsigned\+Integral M$>$ }\\{\bfseries Error} (M m, PR pr)
+\begin{DoxyCompactList}\small\item\em Treat the natural number {\itshape m} as an upper-\/bound for an error, represented with precision {\itshape pr}. \end{DoxyCompactList}\item 
+\mbox{\hyperlink{classAriadne_1_1Error_a17dd630085a235de4743f312341ebffa}{Error}} (\mbox{\hyperlink{classAriadne_1_1UpperNumber}{Validated\+Upper\+Number}} const \&y, PR pr)
+\begin{DoxyCompactList}\small\item\em Treat {\itshape y} as an upper-\/bound for an error, represented with precision {\itshape pr}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Error_a59fed2d68dfaa1094830e5f74b7fd21b}\label{classAriadne_1_1Error_a59fed2d68dfaa1094830e5f74b7fd21b} 
+{\footnotesize template$<$Builtin\+Unsigned\+Integral M$>$ }\\\mbox{\hyperlink{classAriadne_1_1Error}{Error}}$<$ F $>$ \& {\bfseries operator=} (\mbox{\hyperlink{namespaceAriadne_aae901a69a841b1a085a0dfe218e38fe9}{Nat}} m)
+\begin{DoxyCompactList}\small\item\em Assign from the natural number {\itshape m}, keeping the same precision. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Error_a03d9c847553261ca4a31b060165f98d3}\label{classAriadne_1_1Error_a03d9c847553261ca4a31b060165f98d3} 
+\mbox{\hyperlink{classAriadne_1_1Error}{Error}}$<$ F $>$ \& {\bfseries operator=} (Validated\+Error\+Number y)
+\begin{DoxyCompactList}\small\item\em Assign from the generic error bound {\itshape y}, keeping the same precision. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Error_a34e693c4b7bca149d60f0aa2f5ec278f}\label{classAriadne_1_1Error_a34e693c4b7bca149d60f0aa2f5ec278f} 
+Validated\+Error\+Number {\bfseries generic} () const
+\begin{DoxyCompactList}\small\item\em Downcast to a generic error bound. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Error_ad6bf2be97424a4ac1b4d9f6ca1cc2324}\label{classAriadne_1_1Error_ad6bf2be97424a4ac1b4d9f6ca1cc2324} 
+Precision\+Type {\bfseries precision} () const
+\begin{DoxyCompactList}\small\item\em The precision of the floating-\/point type used. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Error_a5d56faca91b250e16f0d60db804ded74}\label{classAriadne_1_1Error_a5d56faca91b250e16f0d60db804ded74} 
+Characteristics\+Type {\bfseries characteristics} () const
+\begin{DoxyCompactList}\small\item\em The compuational characteristics needed to create the error bound; equivalent to the precision. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Error_ad1b86bc376865ddd978d5f5d27eb0c5b}\label{classAriadne_1_1Error_ad1b86bc376865ddd978d5f5d27eb0c5b} 
+F const \& {\bfseries raw} () const
+\begin{DoxyCompactList}\small\item\em The raw data used to represent the error bound. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Error_aa3002e852fa4cf3d091f59715be0885c}\label{classAriadne_1_1Error_aa3002e852fa4cf3d091f59715be0885c} 
+F \& {\bfseries raw} ()
+\begin{DoxyCompactList}\small\item\em A mutable reference to the raw data used to represent the error bound. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsubsection*{Static Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1Error_a18d4b6d2aa2c61e54c6e285573f10701}\label{classAriadne_1_1Error_a18d4b6d2aa2c61e54c6e285573f10701} 
+static \mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} {\bfseries set\+\_\+output\+\_\+places} (\mbox{\hyperlink{namespaceAriadne_aae901a69a841b1a085a0dfe218e38fe9}{Nat}} p)
+\begin{DoxyCompactList}\small\item\em \doxylink{classAriadne_1_1Set}{Set} the number of decimal places used for the output. DEPRECATED. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsubsection*{Friends}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1Error_a025f9d6b28f40b949a3704776a3e7be9}\label{classAriadne_1_1Error_a025f9d6b28f40b949a3704776a3e7be9} 
+\mbox{\hyperlink{classAriadne_1_1Bounds}{Bounds}}$<$ F $>$ {\bfseries pm} (\mbox{\hyperlink{classAriadne_1_1Error}{Error}}$<$ F $>$ const \&x)
+\end{DoxyCompactItemize}
+\begin{Indent}\textbf{ Arithmetic operators}\par
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1Error_afc147fe9c95726d2050cab3b2493334d}\label{classAriadne_1_1Error_afc147fe9c95726d2050cab3b2493334d} 
+\mbox{\hyperlink{classAriadne_1_1Error}{Error}}$<$ F $>$ {\bfseries operator+} (\mbox{\hyperlink{classAriadne_1_1Error}{Error}}$<$ F $>$ const \&x1, \mbox{\hyperlink{classAriadne_1_1Error}{Error}}$<$ F $>$ const \&x2)
+\item 
+\Hypertarget{classAriadne_1_1Error_a9ee5d8aab015fbf0d6e3328d6fa1b4a6}\label{classAriadne_1_1Error_a9ee5d8aab015fbf0d6e3328d6fa1b4a6} 
+\mbox{\hyperlink{classAriadne_1_1Error}{Error}}$<$ F $>$ {\bfseries operator\texorpdfstring{$\ast$}{*}} (\mbox{\hyperlink{classAriadne_1_1Error}{Error}}$<$ F $>$ const \&x1, \mbox{\hyperlink{classAriadne_1_1Error}{Error}}$<$ F $>$ const \&x2)
+\item 
+\Hypertarget{classAriadne_1_1Error_a1a8f7924f412f35bafd683daa6477bb8}\label{classAriadne_1_1Error_a1a8f7924f412f35bafd683daa6477bb8} 
+\mbox{\hyperlink{classAriadne_1_1Error}{Error}}$<$ F $>$ \& {\bfseries operator+=} (\mbox{\hyperlink{classAriadne_1_1Error}{Error}}$<$ F $>$ \&x1, \mbox{\hyperlink{classAriadne_1_1Error}{Error}}$<$ F $>$ const \&x2)
+\item 
+\Hypertarget{classAriadne_1_1Error_af88b35d7d4758aeced088910f7b77415}\label{classAriadne_1_1Error_af88b35d7d4758aeced088910f7b77415} 
+\mbox{\hyperlink{classAriadne_1_1Error}{Error}}$<$ F $>$ \& {\bfseries operator\texorpdfstring{$\ast$}{*}=} (\mbox{\hyperlink{classAriadne_1_1Error}{Error}}$<$ F $>$ \&x1, \mbox{\hyperlink{classAriadne_1_1Error}{Error}}$<$ F $>$ const \&x2)
+\item 
+\Hypertarget{classAriadne_1_1Error_a4370270fc5ecc34999977497b04b0396}\label{classAriadne_1_1Error_a4370270fc5ecc34999977497b04b0396} 
+\mbox{\hyperlink{classAriadne_1_1UpperBound}{Upper\+Bound}}$<$ F $>$ {\bfseries operator+} (\mbox{\hyperlink{classAriadne_1_1Error}{Error}}$<$ F $>$ const \&x)
+\item 
+\Hypertarget{classAriadne_1_1Error_a5449912cc50865059827a66c5de0c098}\label{classAriadne_1_1Error_a5449912cc50865059827a66c5de0c098} 
+\mbox{\hyperlink{classAriadne_1_1LowerBound}{Lower\+Bound}}$<$ F $>$ {\bfseries operator-\/} (\mbox{\hyperlink{classAriadne_1_1Error}{Error}}$<$ F $>$ const \&x)
+\item 
+\Hypertarget{classAriadne_1_1Error_a6c2523094ee7bb6ed5379ac4c0d5d066}\label{classAriadne_1_1Error_a6c2523094ee7bb6ed5379ac4c0d5d066} 
+\mbox{\hyperlink{classAriadne_1_1UpperBound}{Upper\+Bound}}$<$ F $>$ {\bfseries operator+} (F const \&x1, \mbox{\hyperlink{classAriadne_1_1Error}{Error}}$<$ F $>$ const \&x2)
+\item 
+\Hypertarget{classAriadne_1_1Error_a5f66270f8466efed26a35604c67b2a27}\label{classAriadne_1_1Error_a5f66270f8466efed26a35604c67b2a27} 
+\mbox{\hyperlink{classAriadne_1_1LowerBound}{Lower\+Bound}}$<$ F $>$ {\bfseries operator-\/} (F const \&x1, \mbox{\hyperlink{classAriadne_1_1Error}{Error}}$<$ F $>$ const \&x2)
+\end{DoxyCompactItemize}
+\end{Indent}
+\begin{Indent}\textbf{ Monotone arithmetic operations}\par
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1Error_a17a1b4e73057bc0ada4175eff56d9d34}\label{classAriadne_1_1Error_a17a1b4e73057bc0ada4175eff56d9d34} 
+\mbox{\hyperlink{classAriadne_1_1Error}{Error}}$<$ F $>$ {\bfseries nul} (\mbox{\hyperlink{classAriadne_1_1Error}{Error}}$<$ F $>$ const \&x)
+\item 
+\Hypertarget{classAriadne_1_1Error_a6d959dd8147ddbf49ec5dfb9a1d3269e}\label{classAriadne_1_1Error_a6d959dd8147ddbf49ec5dfb9a1d3269e} 
+\mbox{\hyperlink{classAriadne_1_1UpperBound}{Upper\+Bound}}$<$ F $>$ {\bfseries pos} (\mbox{\hyperlink{classAriadne_1_1Error}{Error}}$<$ F $>$ const \&x)
+\item 
+\Hypertarget{classAriadne_1_1Error_a2cc740c673d8950ef58a2f8a935058e2}\label{classAriadne_1_1Error_a2cc740c673d8950ef58a2f8a935058e2} 
+\mbox{\hyperlink{classAriadne_1_1LowerBound}{Lower\+Bound}}$<$ F $>$ {\bfseries neg} (\mbox{\hyperlink{classAriadne_1_1Error}{Error}}$<$ F $>$ const \&x)
+\item 
+\Hypertarget{classAriadne_1_1Error_aad875ef5013d98e5f1570b82ffaecede}\label{classAriadne_1_1Error_aad875ef5013d98e5f1570b82ffaecede} 
+\mbox{\hyperlink{classAriadne_1_1Error}{Error}}$<$ F $>$ {\bfseries add} (\mbox{\hyperlink{classAriadne_1_1Error}{Error}}$<$ F $>$ const \&x1, \mbox{\hyperlink{classAriadne_1_1Error}{Error}}$<$ F $>$ const \&x2)
+\item 
+\Hypertarget{classAriadne_1_1Error_a80fcb559928a334d5243db73ea2425f2}\label{classAriadne_1_1Error_a80fcb559928a334d5243db73ea2425f2} 
+\mbox{\hyperlink{classAriadne_1_1Error}{Error}}$<$ F $>$ {\bfseries mul} (\mbox{\hyperlink{classAriadne_1_1Error}{Error}}$<$ F $>$ const \&x1, \mbox{\hyperlink{classAriadne_1_1Error}{Error}}$<$ F $>$ const \&x2)
+\item 
+\Hypertarget{classAriadne_1_1Error_aaa624d0ba9653dd6b7907d7a8d7d6328}\label{classAriadne_1_1Error_aaa624d0ba9653dd6b7907d7a8d7d6328} 
+\mbox{\hyperlink{classAriadne_1_1Error}{Error}}$<$ F $>$ {\bfseries sqr} (\mbox{\hyperlink{classAriadne_1_1Error}{Error}}$<$ F $>$ const \&x)
+\item 
+\Hypertarget{classAriadne_1_1Error_abcf2df026c93bf18fb3c99e5f0175790}\label{classAriadne_1_1Error_abcf2df026c93bf18fb3c99e5f0175790} 
+\mbox{\hyperlink{classAriadne_1_1Error}{Error}}$<$ F $>$ {\bfseries pow} (\mbox{\hyperlink{classAriadne_1_1Error}{Error}}$<$ F $>$ const \&x, \mbox{\hyperlink{namespaceAriadne_aae901a69a841b1a085a0dfe218e38fe9}{Nat}} m)
+\item 
+\Hypertarget{classAriadne_1_1Error_a830910023043fbf050702e24ecf34ef3}\label{classAriadne_1_1Error_a830910023043fbf050702e24ecf34ef3} 
+\mbox{\hyperlink{classAriadne_1_1Error}{Error}}$<$ F $>$ {\bfseries fma} (\mbox{\hyperlink{classAriadne_1_1Error}{Error}}$<$ F $>$ const \&x1, \mbox{\hyperlink{classAriadne_1_1Error}{Error}}$<$ F $>$ const \&x2, \mbox{\hyperlink{classAriadne_1_1Error}{Error}}$<$ F $>$ const \&x3)
+\end{DoxyCompactItemize}
+\end{Indent}
+\begin{Indent}\textbf{ Monotone algebraic and transcendental operations}\par
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1Error_a61393e53afda482f9383fd39e91fe24c}\label{classAriadne_1_1Error_a61393e53afda482f9383fd39e91fe24c} 
+\mbox{\hyperlink{classAriadne_1_1Error}{Error}}$<$ F $>$ {\bfseries sqrt} (\mbox{\hyperlink{classAriadne_1_1Error}{Error}}$<$ F $>$ const \&x)
+\item 
+\Hypertarget{classAriadne_1_1Error_abb009b87e4bc53158c258e7c81261d12}\label{classAriadne_1_1Error_abb009b87e4bc53158c258e7c81261d12} 
+\mbox{\hyperlink{classAriadne_1_1Error}{Error}}$<$ F $>$ {\bfseries exp} (\mbox{\hyperlink{classAriadne_1_1Error}{Error}}$<$ F $>$ const \&x)
+\item 
+\Hypertarget{classAriadne_1_1Error_ae90c4470e8fa47ce55c378e728b00fd1}\label{classAriadne_1_1Error_ae90c4470e8fa47ce55c378e728b00fd1} 
+\mbox{\hyperlink{classAriadne_1_1UpperBound}{Upper\+Bound}}$<$ F $>$ {\bfseries log} (\mbox{\hyperlink{classAriadne_1_1Error}{Error}}$<$ F $>$ const \&x)
+\item 
+\Hypertarget{classAriadne_1_1Error_aae020e5b2a6886a3af779f6e8e68a866}\label{classAriadne_1_1Error_aae020e5b2a6886a3af779f6e8e68a866} 
+\mbox{\hyperlink{classAriadne_1_1UpperBound}{Upper\+Bound}}$<$ F $>$ {\bfseries log2} (\mbox{\hyperlink{classAriadne_1_1Error}{Error}}$<$ F $>$ const \&x)
+\end{DoxyCompactItemize}
+\end{Indent}
+\begin{Indent}\textbf{ Lattice operations}\par
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1Error_ad7b2e5ddb8da943cd84e706a55a91ca9}\label{classAriadne_1_1Error_ad7b2e5ddb8da943cd84e706a55a91ca9} 
+\mbox{\hyperlink{classAriadne_1_1Error}{Error}}$<$ F $>$ {\bfseries max} (\mbox{\hyperlink{classAriadne_1_1Error}{Error}}$<$ F $>$ const \&x1, \mbox{\hyperlink{classAriadne_1_1Error}{Error}}$<$ F $>$ const \&x2)
+\item 
+\Hypertarget{classAriadne_1_1Error_aab8c40be521b8b1e301694c9a33709c8}\label{classAriadne_1_1Error_aab8c40be521b8b1e301694c9a33709c8} 
+\mbox{\hyperlink{classAriadne_1_1Error}{Error}}$<$ F $>$ {\bfseries min} (\mbox{\hyperlink{classAriadne_1_1Error}{Error}}$<$ F $>$ const \&x1, \mbox{\hyperlink{classAriadne_1_1Error}{Error}}$<$ F $>$ const \&x2)
+\item 
+\Hypertarget{classAriadne_1_1Error_a4e9881367f4b813a05985c4bcee161bf}\label{classAriadne_1_1Error_a4e9881367f4b813a05985c4bcee161bf} 
+\mbox{\hyperlink{classAriadne_1_1Error}{Error}}$<$ F $>$ {\bfseries abs} (\mbox{\hyperlink{classAriadne_1_1Error}{Error}}$<$ F $>$ const \&x)
+\item 
+\Hypertarget{classAriadne_1_1Error_a65dc12aa515fddaad1374515878c8a19}\label{classAriadne_1_1Error_a65dc12aa515fddaad1374515878c8a19} 
+\mbox{\hyperlink{classAriadne_1_1Error}{Error}}$<$ F $>$ {\bfseries mag} (\mbox{\hyperlink{classAriadne_1_1Error}{Error}}$<$ F $>$ const \&x)
+\end{DoxyCompactItemize}
+\end{Indent}
+\begin{Indent}\textbf{ Validated information tests and operations}\par
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1Error_a54c0db2dbf362d55a3b9a87dc3a60420}\label{classAriadne_1_1Error_a54c0db2dbf362d55a3b9a87dc3a60420} 
+\mbox{\hyperlink{namespaceAriadne_a76a8b016e5ad61faf9062cc387df5016}{Bool}} {\bfseries refines} (\mbox{\hyperlink{classAriadne_1_1Error}{Error}}$<$ F $>$ const \&x1, \mbox{\hyperlink{classAriadne_1_1Error}{Error}}$<$ F $>$ const \&x2)
+\item 
+\Hypertarget{classAriadne_1_1Error_adafe8ab66be3002d8bf7ce8e5fc69207}\label{classAriadne_1_1Error_adafe8ab66be3002d8bf7ce8e5fc69207} 
+\mbox{\hyperlink{classAriadne_1_1Error}{Error}}$<$ F $>$ {\bfseries refinement} (\mbox{\hyperlink{classAriadne_1_1Error}{Error}}$<$ F $>$ const \&x1, \mbox{\hyperlink{classAriadne_1_1Error}{Error}}$<$ F $>$ const \&x2)
+\end{DoxyCompactItemize}
+\end{Indent}
+\begin{Indent}\textbf{ Input/output operations}\par
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1Error_add1e1c0b9c95458f1cc1f72c3c1a9f2b}\label{classAriadne_1_1Error_add1e1c0b9c95458f1cc1f72c3c1a9f2b} 
+\mbox{\hyperlink{namespaceAriadne_acbb98ddc4385af4599070e65a1a47ec1}{Output\+Stream}} \& {\bfseries operator$<$$<$} (\mbox{\hyperlink{namespaceAriadne_acbb98ddc4385af4599070e65a1a47ec1}{Output\+Stream}} \&os, \mbox{\hyperlink{classAriadne_1_1Error}{Error}}$<$ F $>$ const \&x)
+\begin{DoxyCompactList}\small\item\em Write to an output stream. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Error_a9110904e08b0cafcb001091ef0c27746}\label{classAriadne_1_1Error_a9110904e08b0cafcb001091ef0c27746} 
+\mbox{\hyperlink{namespaceAriadne_a3c42889d7ee562011f1dc63874e51d0e}{Input\+Stream}} \& {\bfseries operator$>$$>$} (\mbox{\hyperlink{namespaceAriadne_a3c42889d7ee562011f1dc63874e51d0e}{Input\+Stream}} \&is, \mbox{\hyperlink{classAriadne_1_1Error}{Error}}$<$ F $>$ \&x)
+\begin{DoxyCompactList}\small\item\em Read from an input stream. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\end{Indent}
+
+
+\label{doc-constructors}
+\Hypertarget{classAriadne_1_1Error_doc-constructors}
+\doxysubsubsection{Constructor \& Destructor Documentation}
+\Hypertarget{classAriadne_1_1Error_a670caf7b62051999d459269505f7a7a0}\index{Error$<$ F $>$@{Error$<$ F $>$}!Error@{Error}}
+\index{Error@{Error}!Error$<$ F $>$@{Error$<$ F $>$}}
+\doxyparagraph{\texorpdfstring{Error()}{Error()}\hspace{0.1cm}{\footnotesize\ttfamily [1/2]}}
+{\footnotesize\ttfamily \label{classAriadne_1_1Error_a670caf7b62051999d459269505f7a7a0} 
+template$<$class F$>$ \\
+\mbox{\hyperlink{classAriadne_1_1Error}{Error}} (\begin{DoxyParamCaption}\item[{F const \&}]{e}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}, {\ttfamily [explicit]}}
+
+
+
+Treat {\itshape a} as an upper-\/bound for an error. 
+
+\begin{DoxyPrecond}{Precondition}
+Requires that {\itshape e} is positive (or zero). 
+\end{DoxyPrecond}
+\begin{DoxyRefDesc}{Todo}
+\item[\mbox{\hyperlink{todo__todo000001}{Todo}}]Check error not being negative to allow for NaN as a valid input. \end{DoxyRefDesc}
+\Hypertarget{classAriadne_1_1Error_a17dd630085a235de4743f312341ebffa}\index{Error$<$ F $>$@{Error$<$ F $>$}!Error@{Error}}
+\index{Error@{Error}!Error$<$ F $>$@{Error$<$ F $>$}}
+\doxyparagraph{\texorpdfstring{Error()}{Error()}\hspace{0.1cm}{\footnotesize\ttfamily [2/2]}}
+{\footnotesize\ttfamily \label{classAriadne_1_1Error_a17dd630085a235de4743f312341ebffa} 
+template$<$class F$>$ \\
+\mbox{\hyperlink{classAriadne_1_1Error}{Error}} (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{classAriadne_1_1UpperNumber}{Validated\+Upper\+Number}} const \&}]{y}{, }\item[{PR}]{pr}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}, {\ttfamily [explicit]}}
+
+
+
+Treat {\itshape y} as an upper-\/bound for an error, represented with precision {\itshape pr}. 
+
+\begin{DoxyPrecond}{Precondition}
+Requires that {\itshape y} is not definitely strictly negative. 
+\end{DoxyPrecond}
+
+
+The documentation for this class was generated from the following files\+:\begin{DoxyCompactItemize}
+\item 
+source/numeric/\mbox{\hyperlink{float_8decl_8hpp}{float.\+decl.\+hpp}}\item 
+source/numeric/\mbox{\hyperlink{float__error_8hpp}{float\+\_\+error.\+hpp}}\item 
+source/numeric/float\+\_\+error.\+tpl.\+hpp\item 
+tutorials/rigorous\+\_\+numerics/rigorous\+\_\+numerics\+\_\+tutorial.\+cpp\end{DoxyCompactItemize}

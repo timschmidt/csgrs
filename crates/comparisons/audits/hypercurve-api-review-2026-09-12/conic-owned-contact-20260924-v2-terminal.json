@@ -1,0 +1,58 @@
+{
+  "checks": [
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "clippy",
+        "--all-targets",
+        "--all-features",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "returncode": 0,
+      "log": "conic-owned-contact-20260924-v2-check-0.log"
+    },
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "clippy",
+        "--all-targets",
+        "--no-default-features",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "returncode": 0,
+      "log": "conic-owned-contact-20260924-v2-check-1.log"
+    }
+  ],
+  "command": [
+    "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+    "test",
+    "--lib",
+    "--release",
+    "--all-features",
+    "--no-run",
+    "--message-format=json",
+    "--locked",
+    "--offline"
+  ],
+  "cases": [
+    {
+      "name": "bezier_offset::conversion_tests::conic_owned_endpoint_reuses_local_evidence_on_finite_ranges",
+      "returncode": 101,
+      "passed": false,
+      "elapsed_seconds": 0.2706284709274769,
+      "limit_seconds": 60,
+      "log": "conic-owned-contact-20260924-v2-case-0.log"
+    }
+  ],
+  "binary_sha256": "9022cffd9eb03247fd0dc3df436bb25588dcfcdc77fa7c4fc85db7468650c6d8",
+  "all_sources_unchanged": true,
+  "all_processes_reaped": true
+}

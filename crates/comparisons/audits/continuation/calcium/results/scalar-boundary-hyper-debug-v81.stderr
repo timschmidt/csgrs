@@ -1,0 +1,38 @@
+error[E0599]: no method named `as_f64_lossy` found for struct `hyperreal::Real` in the current scope
+  --> src/main.rs:25:64
+   |
+25 |             row["exportBits"] = json!(format!("{:016x}", value.as_f64_lossy().unwrap().to_bits()));
+   |                                                                ^^^^^^^^^^^^
+   |
+help: there is a method `to_f64_lossy` with a similar name
+   |
+25 -             row["exportBits"] = json!(format!("{:016x}", value.as_f64_lossy().unwrap().to_bits()));
+25 +             row["exportBits"] = json!(format!("{:016x}", value.to_f64_lossy().unwrap().to_bits()));
+   |
+
+error[E0599]: no method named `sec_pi` found for struct `hyperreal::Real` in the current scope
+  --> src/main.rs:73:15
+   |
+73 |         angle.sec_pi()
+   |               ^^^^^^
+   |
+help: there is a method `sin_pi` with a similar name
+   |
+73 -         angle.sec_pi()
+73 +         angle.sin_pi()
+   |
+
+error[E0599]: no method named `csc_pi` found for struct `hyperreal::Real` in the current scope
+  --> src/main.rs:75:15
+   |
+75 |         angle.csc_pi()
+   |               ^^^^^^
+   |
+help: there is a method `cos_pi` with a similar name
+   |
+75 -         angle.csc_pi()
+75 +         angle.cos_pi()
+   |
+
+For more information about this error, try `rustc --explain E0599`.
+error: could not compile `scalar-boundary-hyper-v81` (bin "scalar-boundary-hyper-v81") due to 3 previous errors

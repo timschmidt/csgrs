@@ -1,0 +1,121 @@
+{
+  "crates": [
+    {
+      "crate": "hyperlimit",
+      "checks": [
+        {
+          "feature": "--all-features",
+          "returncode": 0,
+          "log": "tower-reuse-20260924-v6-dependents-hyperlimit-check-0.log"
+        },
+        {
+          "feature": "--no-default-features",
+          "returncode": 0,
+          "log": "tower-reuse-20260924-v6-dependents-hyperlimit-check-1.log"
+        }
+      ],
+      "hyperreal_artifacts": [
+        {
+          "reason": "compiler-artifact",
+          "package_id": "path+file:///tmp/hypercurve-tower-reuse-v6-2026-09-24/hyperreal#0.13.1",
+          "manifest_path": "/tmp/hypercurve-tower-reuse-v6-2026-09-24/hyperreal/Cargo.toml",
+          "target": {
+            "kind": [
+              "lib"
+            ],
+            "crate_types": [
+              "lib"
+            ],
+            "name": "hyperreal",
+            "src_path": "/tmp/hypercurve-tower-reuse-v6-2026-09-24/hyperreal/src/lib.rs",
+            "edition": "2024",
+            "doc": true,
+            "doctest": true,
+            "test": true
+          },
+          "profile": {
+            "opt_level": "3",
+            "debuginfo": 0,
+            "debug_assertions": false,
+            "overflow_checks": false,
+            "test": false
+          },
+          "features": [
+            "default",
+            "dispatch-trace",
+            "serde"
+          ],
+          "filenames": [
+            "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperreal-ff831d1a7eb1eb4e.rlib",
+            "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperreal-ff831d1a7eb1eb4e.rmeta"
+          ],
+          "executable": null,
+          "fresh": false
+        }
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.3625740990974009,
+      "log": "tower-reuse-20260924-v6-dependents-hyperlimit-tests.log",
+      "binary_sha256": "1f08bc0701449faeb3abaccc80193575f3039d572470620f61974e2792dfddaf"
+    },
+    {
+      "crate": "hypersolve",
+      "checks": [
+        {
+          "feature": "--all-features",
+          "returncode": 0,
+          "log": "tower-reuse-20260924-v6-dependents-hypersolve-check-0.log"
+        },
+        {
+          "feature": "--no-default-features",
+          "returncode": 0,
+          "log": "tower-reuse-20260924-v6-dependents-hypersolve-check-1.log"
+        }
+      ],
+      "hyperreal_artifacts": [
+        {
+          "reason": "compiler-artifact",
+          "package_id": "path+file:///tmp/hypercurve-tower-reuse-v6-2026-09-24/hyperreal#0.13.1",
+          "manifest_path": "/tmp/hypercurve-tower-reuse-v6-2026-09-24/hyperreal/Cargo.toml",
+          "target": {
+            "kind": [
+              "lib"
+            ],
+            "crate_types": [
+              "lib"
+            ],
+            "name": "hyperreal",
+            "src_path": "/tmp/hypercurve-tower-reuse-v6-2026-09-24/hyperreal/src/lib.rs",
+            "edition": "2024",
+            "doc": true,
+            "doctest": true,
+            "test": true
+          },
+          "profile": {
+            "opt_level": "3",
+            "debuginfo": 0,
+            "debug_assertions": false,
+            "overflow_checks": false,
+            "test": false
+          },
+          "features": [
+            "default",
+            "dispatch-trace"
+          ],
+          "filenames": [
+            "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperreal-01a322f9737c2a1a.rlib",
+            "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperreal-01a322f9737c2a1a.rmeta"
+          ],
+          "executable": null,
+          "fresh": false
+        }
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 3.5129120339406654,
+      "log": "tower-reuse-20260924-v6-dependents-hypersolve-tests.log",
+      "binary_sha256": "bcb1a029719ce371efa452865229aa09649044c0cefe8bcf817afdb860a5ab7f"
+    }
+  ],
+  "all_processes_reaped": true,
+  "all_sources_unchanged": true
+}

@@ -1,0 +1,16 @@
+{
+  "commit": "1daed206b1748b84bfe8e038a1b969c5ea46f703",
+  "parent": "08ca2e24c2658d2b50d2c10f1e2e0e2779dab417",
+  "qualification": "finite-point-inverse-domains-qualification.json",
+  "committed_source_sha256": "0eb8b9487b0ffcaaf3eb0247c9c7d50cca6f5b48ae8ea5e5372fddd8af778f67",
+  "verified_source_files": {
+    "working": 396,
+    "isolated": 1005
+  },
+  "hypercurve_clean": true,
+  "hyperbrep_clean": true,
+  "workspace_clean_claim": false,
+  "other_session_hyperreal": "untouched; isolated pinned dependencies used",
+  "goal_status": "active",
+  "pushed": false
+}

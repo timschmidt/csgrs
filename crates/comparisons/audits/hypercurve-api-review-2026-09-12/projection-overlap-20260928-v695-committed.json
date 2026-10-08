@@ -1,0 +1,14 @@
+{
+  "repos": {
+    "hypercurve": {
+      "commit": "609ee473dcf2edfa56c9a71c36e88ff9e2478d5a",
+      "parent": "fa6370757c6cc4a703e49befe4474bf00c2158cc",
+      "paths": {
+        "src/bezier_offset.rs": "a1773e21bea1063e085ddd5ebf444cba35cc37e33fb969df061d13e1577c1d39"
+      }
+    }
+  },
+  "qualification": "projection-overlap-20260928-v695-terminal.json",
+  "verified_source_files": 2047,
+  "clean_repositories": 30
+}

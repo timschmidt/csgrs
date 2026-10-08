@@ -1,0 +1,47 @@
+{
+  "hypercurve_commit": "5672417",
+  "results": {
+    "library": {
+      "summary": [
+        "test result: ok. 934 passed; 0 failed; 6 ignored; 0 measured; 4 filtered out; finished in 96.97s"
+      ],
+      "failures": [],
+      "log": "/tmp/hypercurve-regular-pair-library.log"
+    },
+    "analytic": {
+      "summary": [
+        "test result: ok. 14 passed; 0 failed; 0 ignored; 0 measured; 1 filtered out; finished in 54.91s"
+      ],
+      "failures": [],
+      "log": "/tmp/hypercurve-regular-pair-analytic.log"
+    },
+    "opposite-cusps": {
+      "summary": [
+        "test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 943 filtered out; finished in 0.58s"
+      ],
+      "failures": [],
+      "log": "/tmp/hypercurve-regular-pair-opposite-cusps.log"
+    },
+    "rational-cusp": {
+      "summary": [
+        "test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 943 filtered out; finished in 0.03s"
+      ],
+      "failures": [],
+      "log": "/tmp/hypercurve-regular-pair-rational-cusp.log"
+    },
+    "mixed-fillet": {
+      "summary": [
+        "test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 14 filtered out; finished in 9.07s"
+      ],
+      "failures": [],
+      "log": "/tmp/hypercurve-regular-pair-mixed-fillet.log"
+    },
+    "cusp-offset": {
+      "status": "timeout",
+      "exit_code": 124,
+      "limit_seconds": 180,
+      "case": "radical_parallel_cusp_offsets_exactly_under_both_policies",
+      "log": "/tmp/hypercurve-regular-pair-cusp-offset.log"
+    }
+  }
+}

@@ -1,0 +1,27 @@
+{
+  "inputs": {
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/selected-chamfer-scalar-replay.rs": "c50ad9af705ae1be95e2fc790066d316ec78ce0363229acc79320b59901a4a86",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/selected-chamfer-scalar-20260923-replay.json": "70bb4440470b5b09b09ba1f472a48bcb5bb4fa79ed60af6cd77c97133a4f3991",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperreal-4ded4d348b4a42bb.rlib": "75965727f65939238f158ea1b01c3bf5160cf48a928beb700476b83c6297ec7a"
+  },
+  "library_package": "path+file:///tmp/hypercurve-selected-chamfer-scalar-replay-2026-09-23/hyperreal#0.13.1",
+  "command": [
+    "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustc",
+    "--edition=2024",
+    "--crate-name",
+    "selected_chamfer_scalar_replay",
+    "-C",
+    "opt-level=3",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/selected-chamfer-scalar-replay.rs",
+    "--extern",
+    "hyperreal=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperreal-4ded4d348b4a42bb.rlib",
+    "-L",
+    "dependency=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps",
+    "-o",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/selected-chamfer-scalar-20260923-standalone"
+  ],
+  "returncode": 0,
+  "binary_sha256": "3097972657debaa98e38f3f8b3d8a09211682f4705dc6d05c9d860c36b8bbf3c",
+  "all_processes_reaped": true,
+  "diagnostic_only": true
+}

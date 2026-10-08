@@ -1,0 +1,24 @@
+   Compiling hyperreal v0.13.1 (/home/tim/Documents/GitHub/workspace/hyperreal)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 2.28s
+     Running unittests src/lib.rs (target/debug/deps/hyperreal-99435bbe0ce6f1f3)
+
+running 16 tests
+test real::arithmetic::tests::affine_det2_filter_matches_one_shot_filter ... ok
+test rational::arithmetic::tests::affine_plane3_dyadic_stack_matches_expanded_determinants_and_falls_back ... ok
+test real::arithmetic::tests::affine_det2_pair_filter_matches_one_shot_directions ... ok
+test real::arithmetic::tests::affine_det2_exact_word_filter_handles_unrelated_denominators ... ok
+test real::arithmetic::tests::affine_det3_filter_matches_one_shot_filter ... ok
+test real::arithmetic::tests::certified_affine_det2_sign_bounds_subnormal_products_absolutely ... ok
+test real::arithmetic::tests::certified_affine_det2_sign_only_returns_exact_signs ... ok
+test real::arithmetic::tests::certified_affine_det3_sign_only_returns_exact_signs ... ok
+test real::tests::tests::exact_normal_form_cancels_shared_opaque_affine_atoms ... ok
+test real::tests::tests::exact_dyadic_parameterized_point_reduces_wide_affine_numerators_exactly ... ok
+test computable::node::tests::affine_offsets_preserve_shared_bases_through_exact_scaling ... ok
+test real::arithmetic::tests::dominant_affine_cross_axis_word_path_is_exact ... ok
+test real::arithmetic::tests::certified_affine_det3_sign_matches_exact_randomized_determinants ... ok
+test real::arithmetic::tests::certified_affine_det2_sign_matches_exact_randomized_determinants ... ok
+test real::arithmetic::tests::affine_det2_exact_word_filter_matches_randomized_rationals ... ok
+test real::arithmetic::tests::affine_det3_exact_word_filter_matches_randomized_rationals ... ok
+
+test result: ok. 16 passed; 0 failed; 0 ignored; 0 measured; 707 filtered out; finished in 0.66s
+

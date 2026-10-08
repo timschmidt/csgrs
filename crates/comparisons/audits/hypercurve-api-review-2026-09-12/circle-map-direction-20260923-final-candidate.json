@@ -1,0 +1,5 @@
+{
+  "src/bezier_offset.rs": "cbdb8cfc30d03362c3e3b723a57bad3bdd322ec3e7b019f959eb4866ca92e871",
+  "src/rational_bezier_general.rs": "7354f4500a3c9eea3dff4e33bddffe250563ea976d96dc0ffd4fe8a00e2e1a50",
+  "src/bezier_region.rs": "d2d5ddee1f0120d01a76bdc54a858794b13904ba51112bd3a442ee5691b9b46c"
+}

@@ -1,0 +1,116 @@
+{
+  "head": "c980fed50380fdf26ec5ef0c633e61ed98cb8fea",
+  "working": {
+    "benches/comparative.rs": "95392eac22887bdcc3598eb05565fad4927bce42fcb19fde77aae8535c6ee6eb",
+    "benches/editing.rs": "b4bce5f3b81476446ccbe70aeac1f3da1a1ec850aaf9bf841fb000af5b7320c3",
+    "src/bezier_region.rs": "dd4fe3e440751434578ce9203d85235b8141521879a53a21b695d721a42133f5",
+    "src/curve.rs": "c0571627c09826eb636ebbbad1441d656c419c2a96b69c0afd5f8b08407183f0",
+    "src/lib.rs": "6ffa67e5a8f517ba8eb9c438d7393b30a7a6d8b6988f4074c5ba12fb872e3d22",
+    "tests/hypercurve_adversarial_polygons.rs": "95b036a302252b1ec6d5b06f1c0f4f0cd56c26ded95d09a6710db69408298319",
+    "tests/hypercurve_analytic_parallel_region.rs": "13c56831b7bc0444b3c39f10bb657963062e8f05f6741dbf833f869d8010a4e4",
+    "tests/hypercurve_arc_bezier.rs": "5e6e1c17332baad8c78347832459872462581d96ed597f358c2ace6e26f656f3",
+    "tests/hypercurve_curve.rs": "a885a3199f6de58c088c0046b726b44e3d9e6405fe13c50eefa6b540c28df742",
+    "tests/hypercurve_curve_region_boolean.rs": "3909866bfea3802abf14c3e2ea09d8c3328886f23af84d78c7fc5d94573044c3",
+    "tests/hypercurve_curve_region_promotion.rs": "f33b46a5a05a0a99acf3f296b0ef5bd5a7c2f3fd3bda2374b95c2e1df102f62c",
+    "tests/hypercurve_curve_region_stroke.rs": "1bea7210963930c97e498739cd76b352897737590e7365f32fd68daf5caa63ea",
+    "tests/hypercurve_svg.rs": "2804b26b0f91425852105bf193e96668b6be438393723b433af171479450fb07"
+  },
+  "runs": [
+    {
+      "label": "parent-build",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "test",
+        "--release",
+        "--all-features",
+        "--lib",
+        "--no-run",
+        "--message-format=json",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 199.87450533895753,
+      "binary": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/single-loop-corner-20260923-attempt1-libraries/parent-libtest",
+      "sha256": "08949cda980234983841e1696c33c6ccd16d2e2ff642ece106c6a09d6445c752"
+    },
+    {
+      "label": "parent-regression",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/single-loop-corner-20260923-attempt1-libraries/parent-libtest",
+        "--exact",
+        "bezier_region::single_loop_corner_publication_tests::selected_circle_corner_candidates_publish_normalized_single_loops",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 101,
+      "elapsed_seconds": 0.0075564730213955045
+    },
+    {
+      "label": "check",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "check",
+        "--all-targets",
+        "--no-default-features",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 27.757767384988256
+    },
+    {
+      "label": "candidate-build",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "test",
+        "--release",
+        "--all-features",
+        "--lib",
+        "--no-run",
+        "--message-format=json",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 122.80491702596191,
+      "binary": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/single-loop-corner-20260923-attempt1-libraries/candidate-libtest",
+      "sha256": "6d629727b6fbce84c75a0bfde2a5ec329d024b8247659fd3109c830d6796c213"
+    },
+    {
+      "label": "candidate-regression",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/single-loop-corner-20260923-attempt1-libraries/candidate-libtest",
+        "--exact",
+        "bezier_region::single_loop_corner_publication_tests::selected_circle_corner_candidates_publish_normalized_single_loops",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.031754405004903674
+    },
+    {
+      "label": "candidate-library",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/single-loop-corner-20260923-attempt1-libraries/candidate-libtest",
+        "--test-threads=2",
+        "--color",
+        "never",
+        "--skip",
+        "bezier_offset::conversion_tests::selected_parallel_normal_circle_intersects_genuinely_analytic_parallel_in_one_fiber",
+        "--skip",
+        "bezier_region::tests::independent_oblique_chord_pair_fillets_extend_on_infinite_supports",
+        "--skip",
+        "bezier_region::tests::selected_circle_and_analytic_parallel_extend_on_full_supports",
+        "--skip",
+        "bezier_region::tests::pair_native_boolean_algebraic_chord_corner_publishes_a_third_generation_fillet"
+      ],
+      "returncode": "timeout",
+      "elapsed_seconds": 420.11522586399224
+    }
+  ]
+}

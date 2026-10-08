@@ -1,0 +1,99 @@
+    Blocking waiting for file lock on build directory
+   Compiling syn v2.0.117
+   Compiling bytemuck v1.25.0
+   Compiling version_check v0.9.5
+   Compiling serde_core v1.0.228
+   Compiling num-complex v0.4.6
+   Compiling gmp-mpfr-sys v1.7.1
+   Compiling serde v1.0.228
+   Compiling safe_arch v0.7.4
+   Compiling ahash v0.8.12
+   Compiling find-msvc-tools v0.1.9
+   Compiling shlex v1.3.0
+   Compiling wide v0.7.33
+   Compiling cc v1.2.62
+   Compiling regex-automata v0.4.14
+   Compiling safe_arch v1.0.0
+   Compiling approx v0.5.1
+   Compiling rug v1.30.0
+   Compiling serde_json v1.0.149
+   Compiling wide v1.4.0
+   Compiling simba v0.9.1
+   Compiling zerocopy-derive v0.8.48
+   Compiling serde_derive v1.0.228
+   Compiling zerocopy v0.8.48
+   Compiling libmimalloc-sys v0.1.47
+   Compiling tracing-core v0.1.36
+   Compiling foldhash v0.1.5
+   Compiling alloc-no-stdlib v2.0.4
+   Compiling hashbrown v0.17.1
+   Compiling indexmap v2.14.0
+   Compiling alloc-stdlib v0.2.2
+   Compiling xprec v0.2.2
+   Compiling hashbrown v0.15.5
+warning: libmimalloc-sys@0.1.47: ccache: error: Read-only file system
+error: failed to run custom build command for `libmimalloc-sys v0.1.47`
+
+Caused by:
+  process didn't exit successfully: `/home/tim/Documents/GitHub/workspace/.audit-targets/ireal-derivative-18555/debug/build/libmimalloc-sys-d0c371e456291abe/build-script-build` (exit status: 1)
+  --- stdout
+  cargo:INCLUDE_DIR=/home/tim/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/libmimalloc-sys-0.1.47/c_src/mimalloc/v3/include
+  cargo:rerun-if-env-changed=CC_x86_64-unknown-linux-gnu
+  CC_x86_64-unknown-linux-gnu = None
+  cargo:rerun-if-env-changed=CC_x86_64_unknown_linux_gnu
+  CC_x86_64_unknown_linux_gnu = None
+  cargo:rerun-if-env-changed=HOST_CC
+  HOST_CC = None
+  cargo:rerun-if-env-changed=CC
+  CC = None
+  cargo:rerun-if-env-changed=CC_ENABLE_DEBUG_OUTPUT
+  cargo:rerun-if-env-changed=CRATE_CC_NO_DEFAULTS
+  CRATE_CC_NO_DEFAULTS = None
+  cargo:rerun-if-env-changed=CFLAGS
+  CFLAGS = None
+  cargo:rerun-if-env-changed=HOST_CFLAGS
+  HOST_CFLAGS = None
+  cargo:rerun-if-env-changed=CFLAGS_x86_64_unknown_linux_gnu
+  CFLAGS_x86_64_unknown_linux_gnu = None
+  cargo:rerun-if-env-changed=CFLAGS_x86_64-unknown-linux-gnu
+  CFLAGS_x86_64-unknown-linux-gnu = None
+  cargo:rerun-if-env-changed=CC_ENABLE_DEBUG_OUTPUT
+  cargo:rerun-if-env-changed=CRATE_CC_NO_DEFAULTS
+  CRATE_CC_NO_DEFAULTS = None
+  cargo:rerun-if-env-changed=CFLAGS
+  CFLAGS = None
+  cargo:rerun-if-env-changed=HOST_CFLAGS
+  HOST_CFLAGS = None
+  cargo:rerun-if-env-changed=CFLAGS_x86_64_unknown_linux_gnu
+  CFLAGS_x86_64_unknown_linux_gnu = None
+  cargo:rerun-if-env-changed=CFLAGS_x86_64-unknown-linux-gnu
+  CFLAGS_x86_64-unknown-linux-gnu = None
+  cargo:rerun-if-env-changed=CC_FORCE_DISABLE
+  CC_FORCE_DISABLE = None
+  cargo:rerun-if-env-changed=CC_x86_64-unknown-linux-gnu
+  CC_x86_64-unknown-linux-gnu = None
+  cargo:rerun-if-env-changed=CC_x86_64_unknown_linux_gnu
+  CC_x86_64_unknown_linux_gnu = None
+  cargo:rerun-if-env-changed=HOST_CC
+  HOST_CC = None
+  cargo:rerun-if-env-changed=CC
+  CC = None
+  cargo:rerun-if-env-changed=CRATE_CC_NO_DEFAULTS
+  CRATE_CC_NO_DEFAULTS = None
+  cargo:rerun-if-env-changed=CFLAGS
+  CFLAGS = None
+  cargo:rerun-if-env-changed=HOST_CFLAGS
+  HOST_CFLAGS = None
+  cargo:rerun-if-env-changed=CFLAGS_x86_64_unknown_linux_gnu
+  CFLAGS_x86_64_unknown_linux_gnu = None
+  cargo:rerun-if-env-changed=CFLAGS_x86_64-unknown-linux-gnu
+  CFLAGS_x86_64-unknown-linux-gnu = None
+  cargo:warning=ccache: error: Read-only file system
+
+  --- stderr
+
+
+  error occurred in cc-rs: command did not execute successfully (status code exit status: 1): LC_ALL="C" "cc" "-O0" "-ffunction-sections" "-fdata-sections" "-fPIC" "-g" "-gdwarf-4" "-fno-omit-frame-pointer" "-m64" "-I" "c_src/mimalloc/v3/include" "-I" "c_src/mimalloc/v3/src" "-Wall" "-Wextra" "-Wno-error=date-time" "-DMI_DEBUG=0" "-o" "/home/tim/Documents/GitHub/workspace/.audit-targets/ireal-derivative-18555/debug/build/libmimalloc-sys-6fb1c8efde9ae207/out/3623ac3857f1c925-static.o" "-c" "c_src/mimalloc/v3/src/static.c"
+
+
+warning: build failed, waiting for other jobs to finish...

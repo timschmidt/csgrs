@@ -1,0 +1,131 @@
+{
+  "checks": [
+    {
+      "label": "fmt",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustfmt",
+        "--edition",
+        "2024",
+        "--check",
+        "src/bezier_region.rs"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.744559693033807,
+      "log": "normalized-ph-corner-20260924-v1-fmt.log"
+    },
+    {
+      "label": "clippy-1",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "clippy",
+        "--all-targets",
+        "--all-features",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 26.243835153989494,
+      "log": "normalized-ph-corner-20260924-v1-clippy-1.log"
+    },
+    {
+      "label": "clippy-2",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "clippy",
+        "--all-targets",
+        "--no-default-features",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 24.982439229963347,
+      "log": "normalized-ph-corner-20260924-v1-clippy-2.log"
+    }
+  ],
+  "cases": [
+    {
+      "label": "closed_ph_corner_edits_preserve_both_normalized_source_lobes",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/normalized-ph-corner-20260924-v1-libtest",
+        "--exact",
+        "bezier_region::tests::closed_ph_corner_edits_preserve_both_normalized_source_lobes",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.3788741839816794,
+      "log": "normalized-ph-corner-20260924-v1-closed_ph_corner_edits_preserve_both_normalized_source_lobes.log"
+    },
+    {
+      "label": "one_fragment_ph_loop_fillets_through_rational_self_contact",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/normalized-ph-corner-20260924-v1-libtest",
+        "--exact",
+        "bezier_region::tests::one_fragment_ph_loop_fillets_through_rational_self_contact",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 3.6927344080759212,
+      "log": "normalized-ph-corner-20260924-v1-one_fragment_ph_loop_fillets_through_rational_self_contact.log"
+    },
+    {
+      "label": "one_fragment_retained_ph_loop_extends_fillet_on_one_analytic_carrier",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/normalized-ph-corner-20260924-v1-libtest",
+        "--exact",
+        "bezier_region::tests::one_fragment_retained_ph_loop_extends_fillet_on_one_analytic_carrier",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.48842543095815927,
+      "log": "normalized-ph-corner-20260924-v1-one_fragment_retained_ph_loop_extends_fillet_on_one_analytic_carrier.log"
+    },
+    {
+      "label": "ordered_ph_parallel_domains_retain_same_sheet_exterior_contacts",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/normalized-ph-corner-20260924-v1-libtest",
+        "--exact",
+        "bezier_offset::conversion_tests::ordered_ph_parallel_domains_retain_same_sheet_exterior_contacts",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.5764022370567545,
+      "log": "normalized-ph-corner-20260924-v1-ordered_ph_parallel_domains_retain_same_sheet_exterior_contacts.log"
+    },
+    {
+      "label": "ordered_ph_parallel_domains_reject_a_cached_opposite_normal_contact",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/normalized-ph-corner-20260924-v1-libtest",
+        "--exact",
+        "bezier_offset::conversion_tests::ordered_ph_parallel_domains_reject_a_cached_opposite_normal_contact",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.43136506399605423,
+      "log": "normalized-ph-corner-20260924-v1-ordered_ph_parallel_domains_reject_a_cached_opposite_normal_contact.log"
+    }
+  ],
+  "all_processes_reaped": true,
+  "binary_sha256": "74cbdc47b5f554e500bea48250724cbb08a610706b6c8d021940d55483f36a15",
+  "all_sources_unchanged": true
+}

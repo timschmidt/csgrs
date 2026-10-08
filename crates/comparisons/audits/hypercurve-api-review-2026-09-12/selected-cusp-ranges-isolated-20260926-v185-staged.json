@@ -1,0 +1,70 @@
+{
+  "phase": "staged",
+  "heads": {
+    "hypercurve": "7941ee50b10bef91a519bfcbd104b759f9cb721a"
+  },
+  "selected": {
+    "hypercurve": [
+      "src/bezier_offset.rs",
+      "src/bezier_region.rs"
+    ]
+  },
+  "source_manifest": "selected-cusp-ranges-isolated-20260926-v185-sources.json",
+  "workspace_guard": "local-chord-complete-replay-20260924-v184-sources.json",
+  "qualification": "selected-cusp-ranges-isolated-20260926-v185-resumed-terminal.json",
+  "hypercurve_passed": 356,
+  "ignored": 0,
+  "pre_existing_timeout": {
+    "repo": "hypercurve",
+    "label": "case-222",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/selected-cusp-ranges-isolated-20260926-v185-hypercurve_analytic_parallel_region",
+      "--exact",
+      "algebraic_endpoint_analytic_parallel_chamfers_replay_selected_distance",
+      "--nocapture",
+      "--test-threads=1",
+      "--color",
+      "never"
+    ],
+    "returncode": "timeout",
+    "elapsed_seconds": 180.00891581899486,
+    "log": "selected-cusp-ranges-isolated-20260926-v185-case-222.log",
+    "target": "hypercurve_analytic_parallel_region",
+    "name": "algebraic_endpoint_analytic_parallel_chamfers_replay_selected_distance",
+    "baseline_comparison": "selected-cusp-ranges-20260926-v185-chamfer-baseline-terminal.json"
+  },
+  "every_owned_process_reaped": true,
+  "all_bound_sources_and_binaries_unchanged": true,
+  "repository_statuses": {
+    "hypersdf": "",
+    "hyperbrep": "",
+    "hyperparts": "",
+    "alumina-interface": "",
+    "hyperlattice": "",
+    "citizen-builder": "",
+    "csgrs-ffi": "",
+    "alumina-firmware": "",
+    "videos": "",
+    "hypertri": "",
+    "hyperreal": "",
+    "hyperpath": "",
+    "hypervoxel": "",
+    "hypergraphics": "",
+    "hyperevolution": "",
+    "exactcore-hyper-comparison": "",
+    "hypersolve": "",
+    "hypercurve": "MM src/bezier_offset.rs\nMM src/bezier_region.rs\n M src/curve.rs\n M src/curve_corner_chain.rs\n M src/curve_region_boolean.rs\n",
+    "crcalc": "",
+    "openscad-rs": "",
+    "hypermesh": "",
+    "csgrs": "",
+    "synaps-cad": "",
+    "hyperdrc": "",
+    "hyperphysics": "",
+    "hyperlimit": "",
+    "hyperpack": "",
+    "NURBS_BREP_kernel": "",
+    "ExactCalculator": "",
+    "hypercircuit": ""
+  }
+}

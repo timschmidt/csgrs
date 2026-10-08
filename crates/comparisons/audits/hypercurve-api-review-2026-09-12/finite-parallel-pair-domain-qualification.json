@@ -1,0 +1,172 @@
+{
+  "status": "qualified",
+  "base_commit": "dc5481fb01bbea7772ebb024d95ea548ba01a0fd",
+  "change": "Use common finite and incident domains for parallel-pair fillets, retain isolated selected component boundaries through CurveParameter2, and remove duplicate corner overlap and parameter-role machinery.",
+  "source_sha256": {
+    "src/bezier_offset.rs": "b00b936f121f3584d87bae07e5fe28dbd2242e21c446d3a17ace98bf28903b42",
+    "src/curve.rs": "79305e5129eeccf573d56c7e6e82ddb8e2197bedc938b19bdc6503db1f5f4999",
+    "src/curve_region_boolean.rs": "b1cd2ae0f84ad0fcb76172a4a397801194d7bd0fbd77388d35c5ff2b2beea632",
+    "src/curve_subdivision.rs": "8abeb403f62d647a70d0a16c9e34272c80308b49ff08148f32e301a84d77f0ee",
+    "tests/hypercurve_bezier_fit_offset.rs": "39bd1ae33090f9e95c70823f028d1b2eafacde5969b4d45ac150babe92d6d4fc"
+  },
+  "regressions": {
+    "finite_fillet_before": {
+      "log": "finite-parallel-pair-domain-before.log",
+      "result": "The exact radius-5/8 parabola fillet was not returned on retained exterior finite halves."
+    },
+    "selected_component_before": {
+      "log": "finite-parallel-pair-component-before.log",
+      "result": "A positive component clipped to one selected closed endpoint returned no contact."
+    },
+    "retained_boundaries": {
+      "log": "finite-parallel-pair-retained-boundary.log",
+      "passed": 2,
+      "seconds": 11.0
+    },
+    "intermediate_runs": {
+      "finite-parallel-pair-domain-after.log": "The exterior finite fillet passes after common domain enumeration.",
+      "finite-parallel-pair-ph-path.log": "The existing PH path regression passes.",
+      "finite-parallel-pair-domain-qualified.log": "Intermediate run: the fillet passed but the selected component boundary failed. This run was not qualified.",
+      "finite-parallel-pair-domain-after-contact-migration.log": "Both focused regressions pass after general contact parameters and closed-boundary retention.",
+      "finite-parallel-pair-contact-migration.log": "Intermediate caller migration diagnostics; final all-target checks supersede these compile errors."
+    },
+    "coverage": [
+      "Exact parabola fillet contacts, source-chart shifts above and below the unit interval, reversal, both policies, and exact path adjacency",
+      "Positive-dimensional overlap, isolated closed touch, and empty intersection on exterior finite parameter rectangles",
+      "Standalone algebraic and degree-135 local selected-fiber boundaries; exact comparison, retained base-root authority and strict construction policy",
+      "Existing public analytic pair, PH, zero-offset, component, and selected-branch integration workloads"
+    ],
+    "performance_limit": "No controlled performance or allocation benchmark. Complete unit domains retain their existing rational and cached finite fast paths; selected contacts do not require global polynomial reconstruction."
+  },
+  "checks": {
+    "hypercurve_all_targets": {
+      "status": "passed",
+      "log": "finite-parallel-pair-hypercurve-check.log"
+    },
+    "hyperbrep_all_targets": {
+      "status": "passed",
+      "log": "finite-parallel-pair-hyperbrep-check.log"
+    },
+    "offline_ui": {
+      "status": "passed",
+      "log": "finite-parallel-pair-ui-check.log"
+    },
+    "documentation_broken_links_denied": {
+      "status": "passed",
+      "log": "finite-parallel-pair-doc.log"
+    },
+    "formatting": {
+      "status": "passed",
+      "log": "finite-parallel-pair-format.log"
+    }
+  },
+  "release_suite": {
+    "status": "passed",
+    "log": "finite-parallel-pair-domain-release.log",
+    "results": {
+      "library": {
+        "passed": 999,
+        "failed": 0,
+        "ignored": 6,
+        "measured": 0,
+        "filtered_out": 4,
+        "seconds": 107.37
+      },
+      "arc_bezier": {
+        "passed": 12,
+        "failed": 0,
+        "ignored": 0,
+        "measured": 0,
+        "filtered_out": 0,
+        "seconds": 0.0
+      },
+      "bezier_fit_offset": {
+        "passed": 101,
+        "failed": 0,
+        "ignored": 0,
+        "measured": 0,
+        "filtered_out": 0,
+        "seconds": 3.38
+      },
+      "bspline": {
+        "passed": 28,
+        "failed": 0,
+        "ignored": 0,
+        "measured": 0,
+        "filtered_out": 0,
+        "seconds": 0.0
+      },
+      "curve": {
+        "passed": 48,
+        "failed": 0,
+        "ignored": 0,
+        "measured": 0,
+        "filtered_out": 0,
+        "seconds": 49.28
+      },
+      "curve_intersection": {
+        "passed": 29,
+        "failed": 0,
+        "ignored": 0,
+        "measured": 0,
+        "filtered_out": 0,
+        "seconds": 0.02
+      },
+      "nurbs": {
+        "passed": 38,
+        "failed": 0,
+        "ignored": 0,
+        "measured": 0,
+        "filtered_out": 0,
+        "seconds": 0.0
+      },
+      "path_closure": {
+        "passed": 8,
+        "failed": 0,
+        "ignored": 0,
+        "measured": 0,
+        "filtered_out": 0,
+        "seconds": 0.38
+      },
+      "polynomial_spline": {
+        "passed": 18,
+        "failed": 0,
+        "ignored": 0,
+        "measured": 0,
+        "filtered_out": 0,
+        "seconds": 0.0
+      },
+      "rational_bezier": {
+        "passed": 48,
+        "failed": 0,
+        "ignored": 0,
+        "measured": 0,
+        "filtered_out": 0,
+        "seconds": 0.02
+      }
+    }
+  },
+  "hyperbrep_path": {
+    "status": "passed",
+    "log": "finite-parallel-pair-hyperbrep-path.log",
+    "passed": 19
+  },
+  "existing_expensive_exclusions": [
+    "selected_parallel_normal_circle_intersects_genuinely_analytic_parallel_in_one_fiber",
+    "independent_oblique_chord_pair_fillets_extend_on_infinite_supports",
+    "selected_circle_and_analytic_parallel_extend_on_full_supports",
+    "pair_native_boolean_algebraic_chord_corner_publishes_a_third_generation_fillet"
+  ],
+  "new_exclusions": [],
+  "remaining": [
+    "General finite/ray exact-rational parallel-pair specialization, including offset cancellation, stationary source contacts and folded supports.",
+    "Share strictly discovered homogeneous conic frames without repeated reduction.",
+    "Exterior representatives, pole and orientation authority, normalized region closure and general composed workloads.",
+    "Reuse selected fibers on first point import and share Hypersolve root/refinement evidence."
+  ],
+  "goal_status": "active",
+  "pushed": false,
+  "unique_tests_passed": 1348,
+  "commit": "bfb1516",
+  "worktree_clean_after_commit": true
+}

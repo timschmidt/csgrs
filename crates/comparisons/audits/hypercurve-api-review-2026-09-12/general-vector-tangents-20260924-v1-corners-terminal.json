@@ -1,0 +1,180 @@
+{
+  "cases": [
+    {
+      "target": "hypercurve",
+      "name": "bezier_region::single_loop_corner_publication_tests::selected_circle_corner_candidates_publish_normalized_single_loops",
+      "returncode": 0,
+      "passed": true,
+      "ignored": false,
+      "elapsed_seconds": 0.03191036102361977,
+      "limit_seconds": 75,
+      "log": "general-vector-tangents-20260924-v1-corners-00.log"
+    },
+    {
+      "target": "hypercurve",
+      "name": "bezier_region::tests::algebraic_endpoint_images_reenter_shared_corner_carriers",
+      "returncode": 101,
+      "passed": false,
+      "ignored": false,
+      "elapsed_seconds": 0.06403130805119872,
+      "limit_seconds": 75,
+      "log": "general-vector-tangents-20260924-v1-corners-01.log"
+    },
+    {
+      "target": "hypercurve",
+      "name": "bezier_region::tests::analytic_corner_restrictions_keep_common_scalar_cuts_and_one_source",
+      "returncode": 0,
+      "passed": true,
+      "ignored": false,
+      "elapsed_seconds": 0.007812394993379712,
+      "limit_seconds": 75,
+      "log": "general-vector-tangents-20260924-v1-corners-02.log"
+    },
+    {
+      "target": "hypercurve",
+      "name": "bezier_region::tests::corner_trims_drop_consumed_ranges_without_dropping_closed_traces",
+      "returncode": 0,
+      "passed": true,
+      "ignored": false,
+      "elapsed_seconds": 0.0036075630923733115,
+      "limit_seconds": 75,
+      "log": "general-vector-tangents-20260924-v1-corners-03.log"
+    },
+    {
+      "target": "hypercurve",
+      "name": "bezier_region::tests::native_corner_intervals_retain_general_cuts_and_replay_after_trimming",
+      "returncode": 0,
+      "passed": true,
+      "ignored": false,
+      "elapsed_seconds": 0.007711780956014991,
+      "limit_seconds": 75,
+      "log": "general-vector-tangents-20260924-v1-corners-04.log"
+    },
+    {
+      "target": "hypercurve",
+      "name": "bezier_region::tests::repeated_circle_corner_restrictions_preserve_only_outer_tangency",
+      "returncode": 0,
+      "passed": true,
+      "ignored": false,
+      "elapsed_seconds": 0.003599822986871004,
+      "limit_seconds": 75,
+      "log": "general-vector-tangents-20260924-v1-corners-05.log"
+    },
+    {
+      "target": "hypercurve",
+      "name": "bezier_region::tests::retained_selected_corner_trim_keeps_distinct_bounded_fields_local",
+      "returncode": 0,
+      "passed": true,
+      "ignored": false,
+      "elapsed_seconds": 0.007632106076925993,
+      "limit_seconds": 75,
+      "log": "general-vector-tangents-20260924-v1-corners-06.log"
+    },
+    {
+      "target": "hypercurve",
+      "name": "bezier_region::tests::selected_corner_candidates_reenter_normalization_with_retained_contacts",
+      "returncode": 0,
+      "passed": true,
+      "ignored": false,
+      "elapsed_seconds": 1.416073442902416,
+      "limit_seconds": 75,
+      "log": "general-vector-tangents-20260924-v1-corners-07.log"
+    },
+    {
+      "target": "hypercurve",
+      "name": "curve::curve_subdivision::tests::exterior_circular_intervals_retain_complete_corner_contacts",
+      "returncode": 0,
+      "passed": true,
+      "ignored": false,
+      "elapsed_seconds": 0.26438387599773705,
+      "limit_seconds": 75,
+      "log": "general-vector-tangents-20260924-v1-corners-08.log"
+    },
+    {
+      "target": "hypercurve",
+      "name": "curve::curve_subdivision::tests::selected_source_ranges_reenter_public_path_corner_operations",
+      "returncode": 0,
+      "passed": true,
+      "ignored": false,
+      "elapsed_seconds": 0.06404493690934032,
+      "limit_seconds": 75,
+      "log": "general-vector-tangents-20260924-v1-corners-09.log"
+    },
+    {
+      "target": "hypercurve",
+      "name": "curve::tests::represented_rational_corner_extension_materializes_before_its_pole",
+      "returncode": 0,
+      "passed": true,
+      "ignored": false,
+      "elapsed_seconds": 0.0037000859156250954,
+      "limit_seconds": 75,
+      "log": "general-vector-tangents-20260924-v1-corners-10.log"
+    },
+    {
+      "target": "hypercurve",
+      "name": "curve_region_trim::tests::equal_endpoint_images_do_not_collapse_nonconstant_curves",
+      "returncode": 0,
+      "passed": true,
+      "ignored": false,
+      "elapsed_seconds": 0.007761757937259972,
+      "limit_seconds": 75,
+      "log": "general-vector-tangents-20260924-v1-corners-11.log"
+    }
+  ],
+  "jobs": [
+    [
+      "hypercurve",
+      "bezier_region::single_loop_corner_publication_tests::selected_circle_corner_candidates_publish_normalized_single_loops"
+    ],
+    [
+      "hypercurve",
+      "bezier_region::tests::algebraic_endpoint_images_reenter_shared_corner_carriers"
+    ],
+    [
+      "hypercurve",
+      "bezier_region::tests::analytic_corner_restrictions_keep_common_scalar_cuts_and_one_source"
+    ],
+    [
+      "hypercurve",
+      "bezier_region::tests::corner_trims_drop_consumed_ranges_without_dropping_closed_traces"
+    ],
+    [
+      "hypercurve",
+      "bezier_region::tests::native_corner_intervals_retain_general_cuts_and_replay_after_trimming"
+    ],
+    [
+      "hypercurve",
+      "bezier_region::tests::repeated_circle_corner_restrictions_preserve_only_outer_tangency"
+    ],
+    [
+      "hypercurve",
+      "bezier_region::tests::retained_selected_corner_trim_keeps_distinct_bounded_fields_local"
+    ],
+    [
+      "hypercurve",
+      "bezier_region::tests::selected_corner_candidates_reenter_normalization_with_retained_contacts"
+    ],
+    [
+      "hypercurve",
+      "curve::curve_subdivision::tests::exterior_circular_intervals_retain_complete_corner_contacts"
+    ],
+    [
+      "hypercurve",
+      "curve::curve_subdivision::tests::selected_source_ranges_reenter_public_path_corner_operations"
+    ],
+    [
+      "hypercurve",
+      "curve::tests::represented_rational_corner_extension_materializes_before_its_pole"
+    ],
+    [
+      "hypercurve",
+      "curve_region_trim::tests::equal_endpoint_images_do_not_collapse_nonconstant_curves"
+    ]
+  ],
+  "binary": {
+    "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/general-vector-tangents-20260924-v1-libtest",
+    "sha256": "eeb508354868d92833eda9975cbc20680245e69c78d75fa73f10f7790cfa1f5f"
+  },
+  "all_sources_unchanged": true,
+  "all_processes_reaped": true
+}

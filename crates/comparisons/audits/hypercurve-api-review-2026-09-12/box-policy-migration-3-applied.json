@@ -1,0 +1,194 @@
+[
+  {
+    "file": "hypercurve/src/bezier_retained_measure.rs",
+    "before_sha256": "fe25d28da7013d00091494f543dd83a2b73011331d2392ac7615d26b072352cd",
+    "after_sha256": "b4a1328f5bc0ce802bda187b79581f5417811facf17e41be1244223e70d10250",
+    "deletions": [
+      {
+        "byte_start": 18292,
+        "byte_end": 18300,
+        "old": ", policy"
+      },
+      {
+        "byte_start": 18490,
+        "byte_end": 18498,
+        "old": ", policy"
+      },
+      {
+        "byte_start": 19396,
+        "byte_end": 19404,
+        "old": ", policy"
+      },
+      {
+        "byte_start": 28532,
+        "byte_end": 28540,
+        "old": ", policy"
+      },
+      {
+        "byte_start": 28783,
+        "byte_end": 28791,
+        "old": ", policy"
+      },
+      {
+        "byte_start": 29708,
+        "byte_end": 29716,
+        "old": ", policy"
+      },
+      {
+        "byte_start": 29932,
+        "byte_end": 29940,
+        "old": ", policy"
+      },
+      {
+        "byte_start": 31254,
+        "byte_end": 31262,
+        "old": ", policy"
+      },
+      {
+        "byte_start": 31553,
+        "byte_end": 31561,
+        "old": ", policy"
+      },
+      {
+        "byte_start": 32172,
+        "byte_end": 32180,
+        "old": ", policy"
+      },
+      {
+        "byte_start": 32479,
+        "byte_end": 32487,
+        "old": ", policy"
+      }
+    ]
+  },
+  {
+    "file": "hypercurve/src/bezier_topology.rs",
+    "before_sha256": "1224ac45d74a1a7c540e2ef879845d7062abb81d1fd91a2cfced5a73722e9025",
+    "after_sha256": "ac6967cc86c88293892d574f4b0e6fa0d0fd6fe6e739262ff5d78dcbef0212eb",
+    "deletions": [
+      {
+        "byte_start": 109131,
+        "byte_end": 109137,
+        "old": "policy"
+      },
+      {
+        "byte_start": 109306,
+        "byte_end": 109312,
+        "old": "policy"
+      }
+    ]
+  },
+  {
+    "file": "hypercurve/src/contour.rs",
+    "before_sha256": "0ad186042e7361137f5b2ebe15e408687de0ba39c1b87002644835544f0726e4",
+    "after_sha256": "e6ae70f5f9b9a2eda5a5a4860a2a4d3a7e687ee8bc1bc16875bbbc5807ae632f",
+    "deletions": [
+      {
+        "byte_start": 13272,
+        "byte_end": 13280,
+        "old": ", policy"
+      },
+      {
+        "byte_start": 14055,
+        "byte_end": 14063,
+        "old": ", policy"
+      },
+      {
+        "byte_start": 15572,
+        "byte_end": 15580,
+        "old": ", policy"
+      }
+    ]
+  },
+  {
+    "file": "hypercurve/src/prepared.rs",
+    "before_sha256": "2412aaa90a4c9b5b626a61b81848f96075652e74bcf9f8490e1a9426fd43c5a7",
+    "after_sha256": "6387ce955772eaa0f396e50f00bd14a2c79b9a1a3f404292f9f6a4cf017b8104",
+    "deletions": [
+      {
+        "byte_start": 10521,
+        "byte_end": 10529,
+        "old": ", policy"
+      },
+      {
+        "byte_start": 10616,
+        "byte_end": 10624,
+        "old": ", policy"
+      },
+      {
+        "byte_start": 10943,
+        "byte_end": 10951,
+        "old": ", policy"
+      },
+      {
+        "byte_start": 11040,
+        "byte_end": 11048,
+        "old": ", policy"
+      },
+      {
+        "byte_start": 11526,
+        "byte_end": 11534,
+        "old": ", policy"
+      },
+      {
+        "byte_start": 11613,
+        "byte_end": 11621,
+        "old": ", policy"
+      },
+      {
+        "byte_start": 11769,
+        "byte_end": 11777,
+        "old": ", policy"
+      },
+      {
+        "byte_start": 13619,
+        "byte_end": 13627,
+        "old": ", policy"
+      },
+      {
+        "byte_start": 14423,
+        "byte_end": 14431,
+        "old": ", policy"
+      },
+      {
+        "byte_start": 17861,
+        "byte_end": 17881,
+        "old": ",\n            policy"
+      }
+    ]
+  },
+  {
+    "file": "hypercurve/src/rational_bezier.rs",
+    "before_sha256": "73b55f06af5b3c6e128085f952343e211e7060972811ee758b9e38a2bad5bc41",
+    "after_sha256": "a0791ca64f7e4db5d242d259bffb84c6eaaa2cb1c7a6c6d3fcde04413bcbb858",
+    "deletions": [
+      {
+        "byte_start": 148771,
+        "byte_end": 148777,
+        "old": "policy"
+      },
+      {
+        "byte_start": 148946,
+        "byte_end": 148952,
+        "old": "policy"
+      }
+    ]
+  },
+  {
+    "file": "hypercurve/src/svg.rs",
+    "before_sha256": "4d6df82e00315fdfa5172cf70c1801103bc0164342fe794595294857f18149d8",
+    "after_sha256": "1160e8168708c46243013e3bcf7aa4a4796c4e23636c92175d83a7e6ea7d0dc4",
+    "deletions": [
+      {
+        "byte_start": 64248,
+        "byte_end": 64257,
+        "old": ", &policy"
+      },
+      {
+        "byte_start": 64410,
+        "byte_end": 64431,
+        "old": ",\n            &policy"
+      }
+    ]
+  }
+]

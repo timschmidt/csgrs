@@ -1,0 +1,46 @@
+expUp(1): MPFR 2.7182818284590452353602874713544
+expDn(1): EXCEPTION MPFR type: fromInteger not implemented
+CallStack (from HasCallStack):
+  error, called at src/Numeric/AERN/RealArithmetic/Basis/MPFR/Basics.hs:141:19 in aern-mpfr-rounded-0.5.0-B29geSdGhuKCzhzfnQwnxB:Numeric.AERN.RealArithmetic.Basis.MPFR.Basics
+sqrtUp(2): MPFR 1.4142135623730950488016887242108
+sqrtDn(2): EXCEPTION MPFR type: fromInteger not implemented
+CallStack (from HasCallStack):
+  error, called at src/Numeric/AERN/RealArithmetic/Basis/MPFR/Basics.hs:141:19 in aern-mpfr-rounded-0.5.0-B29geSdGhuKCzhzfnQwnxB:Numeric.AERN.RealArithmetic.Basis.MPFR.Basics
+eUp: MPFR 2.7182818284590452353602874713544
+eDn: EXCEPTION MPFR type: fromInteger not implemented
+CallStack (from HasCallStack):
+  error, called at src/Numeric/AERN/RealArithmetic/Basis/MPFR/Basics.hs:141:19 in aern-mpfr-rounded-0.5.0-B29geSdGhuKCzhzfnQwnxB:Numeric.AERN.RealArithmetic.Basis.MPFR.Basics
+piDn: MPFR 3.1415926535897932384626433832793
+piUp: MPFR 3.1415926535897932384626433832825
+bisect default: EXCEPTION MPFR type: fromRational not implemented
+CallStack (from HasCallStack):
+  error, called at src/Numeric/AERN/RealArithmetic/Basis/MPFR/Basics.hs:147:20 in aern-mpfr-rounded-0.5.0-B29geSdGhuKCzhzfnQwnxB:Numeric.AERN.RealArithmetic.Basis.MPFR.Basics
+bisect explicit: ([_0.0000000000000000000000000000000000000000,1.0000000000000000000000000000000000000000^],[_1.0000000000000000000000000000000000000000,2.0000000000000000000000000000000000000000^])
+MPFR -> Double upward: EXCEPTION src/Numeric/AERN/RealArithmetic/Basis/MPFR/Conversion.hs:86:10-32: No instance nor default method for class operation convertUpEff
+
+mixed precision comparison: EXCEPTION ==: trying to mix precisions: MPFRPrec 100 vs MPFRPrec 53
+CallStack (from HasCallStack):
+  error, called at src/Numeric/AERN/RealArithmetic/Basis/MPFR/Basics.hs:109:9 in aern-mpfr-rounded-0.5.0-B29geSdGhuKCzhzfnQwnxB:Numeric.AERN.RealArithmetic.Basis.MPFR.Basics
+Int directed conversion: checks=14 invalid=1
+(-9223372036854775808,False,Just (9223372036854775808 % 1),False)
+setPrecOut exact singleton: checks=7695 invalid=3864
+((-255) % 2,MPFRPrec 2,(-96) % 1,(-96) % 1,False)
+((-255) % 2,MPFRPrec 3,(-112) % 1,(-112) % 1,False)
+((-255) % 2,MPFRPrec 5,(-124) % 1,(-124) % 1,False)
+((-255) % 64,MPFRPrec 2,(-3) % 1,(-3) % 1,False)
+((-255) % 64,MPFRPrec 3,(-7) % 2,(-7) % 2,False)
+((-255) % 64,MPFRPrec 5,(-31) % 8,(-31) % 8,False)
+((-255) % 4294967296,MPFRPrec 2,(-3) % 67108864,(-3) % 67108864,False)
+((-255) % 4294967296,MPFRPrec 3,(-7) % 134217728,(-7) % 134217728,False)
+add precision=MPFRPrec 2 checks=882 invalid=0
+multiply precision=MPFRPrec 2 checks=882 invalid=0
+divide precision=MPFRPrec 2 checks=756 invalid=0
+add precision=MPFRPrec 24 checks=882 invalid=0
+multiply precision=MPFRPrec 24 checks=882 invalid=0
+divide precision=MPFRPrec 24 checks=756 invalid=0
+add precision=MPFRPrec 53 checks=882 invalid=0
+multiply precision=MPFRPrec 53 checks=882 invalid=0
+divide precision=MPFRPrec 53 checks=756 invalid=0
+add precision=MPFRPrec 100 checks=882 invalid=0
+multiply precision=MPFRPrec 100 checks=882 invalid=0
+divide precision=MPFRPrec 100 checks=756 invalid=0

@@ -1,0 +1,22 @@
+==9== Memcheck, a memory error detector
+==9== Copyright (C) 2002-2026, and GNU GPL'd, by Julian Seward et al.
+==9== Using Valgrind-3.27.1 and LibVEX; rerun with -h for copyright info
+==9== Command: /tmp/aern-hyper-exp.PdU63J/expm1-bench-sign/target/release/aern-expm1-bench 10000 1 -128 cold 1
+==9== 
+{"n":10000,"d":1,"p":-128,"mode":"cold","iterations":1,"ns":84209713,"allocations":0,"requested_bytes":0}
+==9== 
+==9== HEAP SUMMARY:
+==9==     in use at exit: 4,280 bytes in 61 blocks
+==9==   total heap usage: 129,385 allocs, 129,324 frees, 64,643,438 bytes allocated
+==9== 
+==9== LEAK SUMMARY:
+==9==    definitely lost: 0 bytes in 0 blocks
+==9==    indirectly lost: 0 bytes in 0 blocks
+==9==      possibly lost: 0 bytes in 0 blocks
+==9==    still reachable: 4,280 bytes in 61 blocks
+==9==         suppressed: 0 bytes in 0 blocks
+==9== Reachable blocks (those to which a pointer was found) are not shown.
+==9== To see them, rerun with: --leak-check=full --show-leak-kinds=all
+==9== 
+==9== For lists of detected and suppressed errors, rerun with: -s
+==9== ERROR SUMMARY: 0 errors from 0 contexts (suppressed: 0 from 0)

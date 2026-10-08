@@ -1,0 +1,15 @@
+{
+  "tag": "run-reuse-cost-numeric-cpu",
+  "started": "2026-09-08T22:18:23.480Z",
+  "finished": "2026-09-08T22:19:14.781Z",
+  "elapsedSeconds": 51.29897567,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "/usr/bin/node-22",
+  "args": [
+    "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/run-reuse-cost-bench.mjs",
+    "numeric",
+    "cpu"
+  ],
+  "code": 0,
+  "signal": null
+}

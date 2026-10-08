@@ -1,0 +1,40 @@
+{
+  "cases": [
+    {
+      "version": "v39",
+      "name": "retained_polynomial_chamfer_extends_exact_and_algebraic_incident_roots",
+      "returncode": 0,
+      "elapsed_seconds": 0.0318354160990566,
+      "binary_sha256": "22f3d8c25935b45b3397553da942475cf15f5ae54456344f2bc923185b1d427f",
+      "log": "v39-extension-comparison-retained_polynomial_chamfer_extends_exact_and_algebraic_incident_roots.log"
+    },
+    {
+      "version": "v44",
+      "name": "retained_polynomial_chamfer_extends_exact_and_algebraic_incident_roots",
+      "returncode": 0,
+      "elapsed_seconds": 2.7681907650548965,
+      "binary_sha256": "196e9e16a78f7583c6c860a7803bc761a3a6341b00766aafd38986a1e68d45e0",
+      "log": "v44-extension-comparison-retained_polynomial_chamfer_extends_exact_and_algebraic_incident_roots.log"
+    },
+    {
+      "version": "v39",
+      "name": "retained_rational_chamfer_extends_exact_and_algebraic_pre_pole_roots",
+      "returncode": 0,
+      "elapsed_seconds": 0.03192465007305145,
+      "binary_sha256": "22f3d8c25935b45b3397553da942475cf15f5ae54456344f2bc923185b1d427f",
+      "log": "v39-extension-comparison-retained_rational_chamfer_extends_exact_and_algebraic_pre_pole_roots.log"
+    },
+    {
+      "version": "v44",
+      "name": "retained_rational_chamfer_extends_exact_and_algebraic_pre_pole_roots",
+      "returncode": 0,
+      "elapsed_seconds": 7.528846374945715,
+      "binary_sha256": "196e9e16a78f7583c6c860a7803bc761a3a6341b00766aafd38986a1e68d45e0",
+      "log": "v44-extension-comparison-retained_rational_chamfer_extends_exact_and_algebraic_pre_pole_roots.log"
+    }
+  ],
+  "all_owned_processes_reaped": true,
+  "all_archived_inputs_match": true,
+  "current_v44_inputs_match": true,
+  "diagnostic_only": true
+}

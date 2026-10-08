@@ -1,0 +1,4 @@
+   text	   data	    bss	    dec	    hex	filename
+2309471	 229976	   1292	2540739	 26c4c3	/tmp/calcium-point-cold.3RcRIa/baseline
+2310607	 229976	   4300	2544883	 26d4f3	/tmp/calcium-point-cold.3RcRIa/eager
+2313779	 229976	   5164	2548919	 26e4b7	/tmp/calcium-point-cold.3RcRIa/demand

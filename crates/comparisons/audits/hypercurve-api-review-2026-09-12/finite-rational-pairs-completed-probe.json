@@ -1,0 +1,25 @@
+{
+  "returncode": 0,
+  "elapsed_seconds": 0.0035033210006076843,
+  "normal_library_sha256": "4f31e2ad099d11b75a71df9f3c58671aa71af68816db9260c69ae286f65e7add",
+  "log": "finite-rational-pairs-completed-probe.log",
+  "source": "native-point-components-completed.rs",
+  "command": [
+    "rustc",
+    "--edition=2024",
+    "-O",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/native-point-components-completed.rs",
+    "--extern",
+    "hypercurve=/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/libhypercurve-2c7ff6f3fbe07653.rlib",
+    "-L",
+    "dependency=/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps",
+    "-o",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-rational-pairs-completed-probe"
+  ],
+  "source_sha256": "afcba6724ef40752e39b1596454d7a04669a8743a413dddf5fd266ad6b7abafe",
+  "executable_sha256": "f5cd13093264d27431b58cccfecbd93eeacb25dd904f02600a25d95a2255cca0",
+  "counts": {
+    "complete_queries": 12,
+    "parameter_components": 12
+  }
+}

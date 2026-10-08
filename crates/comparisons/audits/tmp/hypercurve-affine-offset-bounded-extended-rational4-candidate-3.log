@@ -1,0 +1,25 @@
+rational_bezier_large_cold_evaluation_4_controls: 100000 iterations in 274.224447ms (2.742µs/iter), checksum=0
+rational_bezier_large_cached_evaluation_4_controls: 100000 iterations in 64.278004ms (642ns/iter), checksum=0
+	Command being timed: "taskset -c 7 env HYPERCURVE_BENCH_RATIONAL_ONLY=1 HYPERCURVE_BENCH_RATIONAL_OPERATION=evaluation HYPERCURVE_BENCH_RATIONAL_CONTROLS=4 HYPERCURVE_BENCH_RATIONAL_ITERATIONS=100000 /tmp/hypercurve-affine-offset-bounded-frozen-candidate-rational"
+	User time (seconds): 0.33
+	System time (seconds): 0.00
+	Percent of CPU this job got: 99%
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:00.34
+	Average shared text size (kbytes): 0
+	Average unshared data size (kbytes): 0
+	Average stack size (kbytes): 0
+	Average total size (kbytes): 0
+	Maximum resident set size (kbytes): 4832
+	Average resident set size (kbytes): 0
+	Major (requiring I/O) page faults: 0
+	Minor (reclaiming a frame) page faults: 340
+	Voluntary context switches: 1
+	Involuntary context switches: 21
+	Swaps: 0
+	File system inputs: 0
+	File system outputs: 0
+	Socket messages sent: 0
+	Socket messages received: 0
+	Signals delivered: 0
+	Page size (bytes): 4096
+	Exit status: 0

@@ -1,0 +1,75 @@
+{
+  "parent_hypercurve": "b967de6c7138e51428776f2a6324974689fc4e98",
+  "scope": "Direct Curve2 conversion of validated generated chords, analytic parallel fragments, selected circle fragments, and selected fibers. Three open-path fixtures no longer construct unrelated closed regions to obtain their analytic curve.",
+  "builds": [
+    {
+      "kind": "check",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "check",
+        "--all-targets",
+        "--no-default-features",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 17.442206668987637
+    },
+    {
+      "kind": "test-build",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "test",
+        "--release",
+        "--all-features",
+        "--test",
+        "hypercurve_path_closure",
+        "--test",
+        "hypercurve_curve_intersection",
+        "--no-run",
+        "--message-format=json",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 83.90190852500382
+    }
+  ],
+  "tests": [
+    {
+      "target": "hypercurve_path_closure",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/direct-generated-curves-candidate2-libraries/hypercurve_path_closure-34c4b0240fb4e48a",
+        "--test-threads=2",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 32.66228248900734,
+      "sha256": "a257b0a47ff4261e9689e1cfb1e90fd5913ed56a2da03603e2bad9b137264808",
+      "log": "direct-generated-curves-candidate2-hypercurve_path_closure-test.log"
+    },
+    {
+      "target": "hypercurve_curve_intersection",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/direct-generated-curves-candidate2-libraries/hypercurve_curve_intersection-38c349bc201247b4",
+        "--test-threads=2",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 17.0409235029947,
+      "sha256": "2deb059d91ec9f7568de5fc5231a1fe5beebb3ce45f073abc48ddf0f4695d864",
+      "log": "direct-generated-curves-candidate2-hypercurve_curve_intersection-test.log"
+    }
+  ],
+  "passed": 63,
+  "isolated_sources": "direct-generated-curves-candidate2-isolated-sources.json",
+  "working_sources": "direct-generated-curves-candidate2-working-sources.json",
+  "limitations": [
+    "Hyperreal working tree owned by another session; used pinned snapshot a2da8e2b5de9a1a4653d3662f2f05cb6533fd7ef.",
+    "Unqualified mapped-point inverse candidate in src/bezier_offset.rs excluded; isolated source uses committed baseline.",
+    "Only two affected integration targets run; full closure goal and raw-region constructor removal remain incomplete."
+  ],
+  "earlier_attempt": "candidate1 failed compile because SelectedFiberFragment is not re-exported at crate root; candidate2 uses its defining module path. All remaining inference errors disappeared after that correction."
+}

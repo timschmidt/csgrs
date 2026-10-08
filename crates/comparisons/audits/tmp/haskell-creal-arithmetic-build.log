@@ -1,0 +1,5 @@
+[1 of 4] Compiling Data.CReal.Internal ( /home/tim/Documents/GitHub/workspace/exact-real-references/haskell-exact-real/src/Data/CReal/Internal.hs, /tmp/haskell-creal-audit.rafb8h/arithmetic-build/Data/CReal/Internal.o )
+ccache: error: Read-only file system
+
+<no location info>: error:
+    `gcc' failed in phase `Assembler'. (Exit code: 1)

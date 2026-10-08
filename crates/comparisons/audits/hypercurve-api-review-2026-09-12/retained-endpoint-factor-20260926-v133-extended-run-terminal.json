@@ -1,0 +1,27 @@
+{
+  "binary": {
+    "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-endpoint-factor-20260926-v133-hypercurve",
+    "sha256": "9fc909d5449a1bd49bdebe014e76961c7010272ba603fa88502749541a4b41ac"
+  },
+  "source_manifest": "local-chord-complete-replay-20260924-v133-sources.json",
+  "qualification": "retained-endpoint-factor-20260926-v133-terminal.json",
+  "source_directory": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/source-archives/hypercurve-local-chord-complete-replay-v133-20260924",
+  "build_source_directory": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/build-workspace-20260925",
+  "command": [
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-endpoint-factor-20260926-v133-hypercurve",
+    "--exact",
+    "bezier_region::tests::one_fragment_nonzero_parallel_loop_extends_chamfer_cuts_on_one_finite_envelope",
+    "--test-threads=1",
+    "--nocapture",
+    "--color",
+    "never"
+  ],
+  "name": "bezier_region::tests::one_fragment_nonzero_parallel_loop_extends_chamfer_cuts_on_one_finite_envelope",
+  "all_processes_reaped": true,
+  "limit_seconds": 300,
+  "log": "retained-endpoint-factor-20260926-v133-extended-run.log",
+  "returncode": "timeout",
+  "elapsed_seconds": 300.0062872020062,
+  "all_sources_unchanged": true,
+  "passed": false
+}

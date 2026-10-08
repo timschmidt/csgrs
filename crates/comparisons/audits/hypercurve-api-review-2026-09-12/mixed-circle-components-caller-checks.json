@@ -1,0 +1,47 @@
+[
+  {
+    "target": "fuzz",
+    "command": [
+      "cargo",
+      "check",
+      "--manifest-path",
+      "fuzz/Cargo.toml",
+      "--all-targets",
+      "--locked",
+      "--offline"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 3.2201623549917713,
+    "log": "mixed-circle-components-fuzz-check.log"
+  },
+  {
+    "target": "ui",
+    "command": [
+      "cargo",
+      "check",
+      "--manifest-path",
+      "examples/hypercurve_ui/Cargo.toml",
+      "--all-targets",
+      "--locked",
+      "--offline"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 3.3694225320068654,
+    "log": "mixed-circle-components-ui-check.log"
+  },
+  {
+    "target": "hyperbrep-fuzz",
+    "command": [
+      "cargo",
+      "check",
+      "--manifest-path",
+      "fuzz/Cargo.toml",
+      "--all-targets",
+      "--locked",
+      "--offline"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 3.56991717100027,
+    "log": "mixed-circle-components-hyperbrep-fuzz-check.log"
+  }
+]

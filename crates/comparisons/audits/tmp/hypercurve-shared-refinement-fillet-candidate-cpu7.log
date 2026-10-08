@@ -1,0 +1,29 @@
+
+running 1 test
+test direct_bezier_pair_fillet_materializes_both_incident_extensions ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 46 filtered out; finished in 35.74s
+
+	Command being timed: "taskset -c 7 /tmp/hypercurve-shared-refinement-fillet-candidate direct_bezier_pair_fillet_materializes_both_incident_extensions --exact"
+	User time (seconds): 34.60
+	System time (seconds): 0.11
+	Percent of CPU this job got: 97%
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:35.74
+	Average shared text size (kbytes): 0
+	Average unshared data size (kbytes): 0
+	Average stack size (kbytes): 0
+	Average total size (kbytes): 0
+	Maximum resident set size (kbytes): 22004
+	Average resident set size (kbytes): 0
+	Major (requiring I/O) page faults: 0
+	Minor (reclaiming a frame) page faults: 3562
+	Voluntary context switches: 2
+	Involuntary context switches: 23699
+	Swaps: 0
+	File system inputs: 0
+	File system outputs: 0
+	Socket messages sent: 0
+	Socket messages received: 0
+	Signals delivered: 0
+	Page size (bytes): 4096
+	Exit status: 0

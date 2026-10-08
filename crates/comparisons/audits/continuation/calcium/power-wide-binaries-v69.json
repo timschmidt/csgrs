@@ -1,0 +1,18 @@
+{
+  "binaries": [
+    {
+      "variant": "baseline",
+      "path": "/tmp/calcium-power-wide.ijyxgC/baseline",
+      "sha256": "3f2cf8690e7132778b2283de3628600c9b19078f0512f80ab6d5bc1247da5719",
+      "bytes": 2801240
+    },
+    {
+      "variant": "candidate",
+      "path": "/tmp/calcium-power-wide.ijyxgC/candidate",
+      "sha256": "42b1dd7b99d273e182354f3e7c92c7c00d753169d0a1b6a3fb7a4d0ce9e3b532",
+      "bytes": 2814976
+    }
+  ],
+  "originSha256": "e5f493e180c2a73ea0d2b8d7d86a4a60ec57547aee0fa253ecd1ad238a8e209a",
+  "recorded": "2026-09-11T17:11:25.756Z"
+}

@@ -1,0 +1,308 @@
+{
+  "diagnostic_only": true,
+  "source_manifest": "empty-incident-components-20260927-v523-sources.json",
+  "source_directory": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/source-archives/empty-incident-components-20260927-v523",
+  "fixtures": {
+    "stationary-fillet-line-chart-v516.rs": "821d506394f407af75465776f6835ff581c0d85df67e7680d198e87bb9103808"
+  },
+  "library": {
+    "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/libhypercurve-stationary-fillet-cells-20260927-v522.rlib",
+    "sha256": "2c1ca6b764f72cdf27ba1bdbef19779e817b95d86824e0692a2fe514e3d4c812",
+    "qualified_library": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/libhypercurve.rlib",
+    "dependency_directory": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps",
+    "source_manifest": "empty-incident-components-20260927-v523-sources.json"
+  },
+  "expected_cases": [
+    [
+      "line_chart",
+      "stationary-fillet-line-chart-v516.rs",
+      [
+        "regular_parabola_strict",
+        "stationary_reparameterization_strict",
+        "one_sided_cusp_strict",
+        "regular_parabola_approximate",
+        "stationary_reparameterization_approximate",
+        "one_sided_cusp_approximate",
+        "interior_stationary_contact_strict",
+        "interior_stationary_contact_approximate",
+        "regular_parabola_extend_strict",
+        "stationary_reparameterization_extend_strict",
+        "one_sided_cusp_extend_strict",
+        "interior_stationary_contact_extend_strict",
+        "regular_parabola_extend_approximate",
+        "stationary_reparameterization_extend_approximate",
+        "one_sided_cusp_extend_approximate",
+        "interior_stationary_contact_extend_approximate"
+      ]
+    ]
+  ],
+  "builds": [
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustc",
+        "--edition=2024",
+        "--test",
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/stationary-fillet-line-chart-v516.rs",
+        "-C",
+        "opt-level=3",
+        "-L",
+        "dependency=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps",
+        "--extern",
+        "hypercurve=/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/libhypercurve-stationary-fillet-cells-20260927-v522.rlib",
+        "-o",
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/stationary-fillet-cells-20260927-v524-line_chart-tests"
+      ],
+      "returncode": 0,
+      "log": "stationary-fillet-cells-20260927-v524-line_chart-build.log",
+      "elapsed_seconds": 0.5144768359605223,
+      "binary": {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/stationary-fillet-cells-20260927-v524-line_chart-tests",
+        "sha256": "a008705b87ee103e90635574dfa450d03d56e4a56dda513ae9fa7764c35997c1"
+      }
+    }
+  ],
+  "cases": [
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/stationary-fillet-cells-20260927-v524-line_chart-tests",
+        "--exact",
+        "regular_parabola_strict",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "stationary-fillet-cells-20260927-v524-line_chart-regular_parabola_strict.log",
+      "elapsed_seconds": 0.0034902601037174463,
+      "group": "line_chart",
+      "name": "regular_parabola_strict",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/stationary-fillet-cells-20260927-v524-line_chart-tests",
+        "--exact",
+        "stationary_reparameterization_strict",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 101,
+      "log": "stationary-fillet-cells-20260927-v524-line_chart-stationary_reparameterization_strict.log",
+      "elapsed_seconds": 0.003560686018317938,
+      "group": "line_chart",
+      "name": "stationary_reparameterization_strict",
+      "passed": false
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/stationary-fillet-cells-20260927-v524-line_chart-tests",
+        "--exact",
+        "one_sided_cusp_strict",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 101,
+      "log": "stationary-fillet-cells-20260927-v524-line_chart-one_sided_cusp_strict.log",
+      "elapsed_seconds": 0.003465781919658184,
+      "group": "line_chart",
+      "name": "one_sided_cusp_strict",
+      "passed": false
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/stationary-fillet-cells-20260927-v524-line_chart-tests",
+        "--exact",
+        "regular_parabola_approximate",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "stationary-fillet-cells-20260927-v524-line_chart-regular_parabola_approximate.log",
+      "elapsed_seconds": 0.0034976699389517307,
+      "group": "line_chart",
+      "name": "regular_parabola_approximate",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/stationary-fillet-cells-20260927-v524-line_chart-tests",
+        "--exact",
+        "stationary_reparameterization_approximate",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 101,
+      "log": "stationary-fillet-cells-20260927-v524-line_chart-stationary_reparameterization_approximate.log",
+      "elapsed_seconds": 0.003495630109682679,
+      "group": "line_chart",
+      "name": "stationary_reparameterization_approximate",
+      "passed": false
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/stationary-fillet-cells-20260927-v524-line_chart-tests",
+        "--exact",
+        "one_sided_cusp_approximate",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 101,
+      "log": "stationary-fillet-cells-20260927-v524-line_chart-one_sided_cusp_approximate.log",
+      "elapsed_seconds": 0.0034939199686050415,
+      "group": "line_chart",
+      "name": "one_sided_cusp_approximate",
+      "passed": false
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/stationary-fillet-cells-20260927-v524-line_chart-tests",
+        "--exact",
+        "interior_stationary_contact_strict",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 101,
+      "log": "stationary-fillet-cells-20260927-v524-line_chart-interior_stationary_contact_strict.log",
+      "elapsed_seconds": 0.0035083689726889133,
+      "group": "line_chart",
+      "name": "interior_stationary_contact_strict",
+      "passed": false
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/stationary-fillet-cells-20260927-v524-line_chart-tests",
+        "--exact",
+        "interior_stationary_contact_approximate",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 101,
+      "log": "stationary-fillet-cells-20260927-v524-line_chart-interior_stationary_contact_approximate.log",
+      "elapsed_seconds": 0.0035117100924253464,
+      "group": "line_chart",
+      "name": "interior_stationary_contact_approximate",
+      "passed": false
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/stationary-fillet-cells-20260927-v524-line_chart-tests",
+        "--exact",
+        "regular_parabola_extend_strict",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "stationary-fillet-cells-20260927-v524-line_chart-regular_parabola_extend_strict.log",
+      "elapsed_seconds": 0.01563477679155767,
+      "group": "line_chart",
+      "name": "regular_parabola_extend_strict",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/stationary-fillet-cells-20260927-v524-line_chart-tests",
+        "--exact",
+        "stationary_reparameterization_extend_strict",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "stationary-fillet-cells-20260927-v524-line_chart-stationary_reparameterization_extend_strict.log",
+      "elapsed_seconds": 0.21392510016448796,
+      "group": "line_chart",
+      "name": "stationary_reparameterization_extend_strict",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/stationary-fillet-cells-20260927-v524-line_chart-tests",
+        "--exact",
+        "one_sided_cusp_extend_strict",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "stationary-fillet-cells-20260927-v524-line_chart-one_sided_cusp_extend_strict.log",
+      "elapsed_seconds": 0.031694455072283745,
+      "group": "line_chart",
+      "name": "one_sided_cusp_extend_strict",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/stationary-fillet-cells-20260927-v524-line_chart-tests",
+        "--exact",
+        "interior_stationary_contact_extend_strict",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 101,
+      "log": "stationary-fillet-cells-20260927-v524-line_chart-interior_stationary_contact_extend_strict.log",
+      "elapsed_seconds": 0.21399349602870643,
+      "group": "line_chart",
+      "name": "interior_stationary_contact_extend_strict",
+      "passed": false
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/stationary-fillet-cells-20260927-v524-line_chart-tests",
+        "--exact",
+        "regular_parabola_extend_approximate",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "stationary-fillet-cells-20260927-v524-line_chart-regular_parabola_extend_approximate.log",
+      "elapsed_seconds": 0.0155946200247854,
+      "group": "line_chart",
+      "name": "regular_parabola_extend_approximate",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/stationary-fillet-cells-20260927-v524-line_chart-tests",
+        "--exact",
+        "stationary_reparameterization_extend_approximate",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "stationary-fillet-cells-20260927-v524-line_chart-stationary_reparameterization_extend_approximate.log",
+      "elapsed_seconds": 0.21396420802921057,
+      "group": "line_chart",
+      "name": "stationary_reparameterization_extend_approximate",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/stationary-fillet-cells-20260927-v524-line_chart-tests",
+        "--exact",
+        "one_sided_cusp_extend_approximate",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "stationary-fillet-cells-20260927-v524-line_chart-one_sided_cusp_extend_approximate.log",
+      "elapsed_seconds": 0.03178101917728782,
+      "group": "line_chart",
+      "name": "one_sided_cusp_extend_approximate",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/stationary-fillet-cells-20260927-v524-line_chart-tests",
+        "--exact",
+        "interior_stationary_contact_extend_approximate",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 101,
+      "log": "stationary-fillet-cells-20260927-v524-line_chart-interior_stationary_contact_extend_approximate.log",
+      "elapsed_seconds": 0.2139973659068346,
+      "group": "line_chart",
+      "name": "interior_stationary_contact_extend_approximate",
+      "passed": false
+    }
+  ],
+  "all_processes_reaped": true,
+  "probe_complete": true
+}

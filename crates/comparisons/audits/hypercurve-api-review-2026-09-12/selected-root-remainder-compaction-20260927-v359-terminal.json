@@ -1,0 +1,42 @@
+{
+  "source_manifest": "retained-fillet-sign-replay-20260927-v356-sources.json",
+  "source_sha256": "2ddbdb457bc5d04ea13f7855ff64a89a2ce5fe22f88b5f9874f3a16ac53ae490",
+  "libraries": {
+    "hyperreal": {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperreal-dff9c97d38a41830.rlib",
+      "sha256": "c5d9d21ab21d08684682c44b7a055cfe866fd2bcef7fd68026f8a74306a5c897"
+    },
+    "hypersolve": {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypersolve-dab45c0236e67f19.rlib",
+      "sha256": "6a7fdcce76ade326f2a7ae47e2c8e6d9d77083c1122a3fce2d37a18c0219c594"
+    }
+  },
+  "all_processes_reaped": true,
+  "compile": {
+    "command": [
+      "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustc",
+      "--edition=2024",
+      "-O",
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/selected-root-remainder-compaction-20260927-v359.rs",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/selected-root-remainder-compaction-20260927-v359",
+      "-L",
+      "dependency=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps",
+      "--extern",
+      "hyperreal=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperreal-dff9c97d38a41830.rlib",
+      "--extern",
+      "hypersolve=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypersolve-dab45c0236e67f19.rlib"
+    ],
+    "returncode": 0
+  },
+  "binary": {
+    "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/selected-root-remainder-compaction-20260927-v359",
+    "sha256": "111fb75337e95f0a55cf42c53224c2560965d0152c05f7e6ff1b1e4c93d0c7f2"
+  },
+  "run": {
+    "returncode": 0,
+    "output": "query begin shift=1\nquery end shift=1 result=Some(Greater)\nquery begin shift=0\nquery end shift=0 result=Some(Equal)\nquery begin shift=-1\nquery end shift=-1 result=Some(Less)\n",
+    "stderr": "selected-root begin defining=8 predicate=6\nselected-root endpoints admitted\nselected-root sequence first=8 second=12\nselected-root sequence first=12 second=8\nselected-root sequence first=8 second=7\nselected-root sequence first=7 second=6\nselected-root sequence first=6 second=5\nselected-root sequence first=5 second=4\nselected-root sequence first=4 second=3\nselected-root sequence first=3 second=2\nselected-root sequence first=2 second=1\nselected-root sequence first=1 second=1\nselected-root end Some(Greater)\nselected-root begin defining=8 predicate=6\nselected-root endpoints admitted\nselected-root sequence first=8 second=12\nselected-root sequence first=12 second=8\nselected-root sequence first=8 second=7\nselected-root sequence first=7 second=6\nselected-root sequence first=6 second=5\nselected-root sequence first=5 second=4\nselected-root sequence first=4 second=3\nselected-root sequence first=3 second=2\nselected-root sequence first=2 second=1\nselected-root end Some(Equal)\nselected-root begin defining=8 predicate=6\nselected-root endpoints admitted\nselected-root sequence first=8 second=12\nselected-root sequence first=12 second=8\nselected-root sequence first=8 second=7\nselected-root sequence first=7 second=6\nselected-root sequence first=6 second=5\nselected-root sequence first=5 second=4\nselected-root sequence first=4 second=3\nselected-root sequence first=3 second=2\nselected-root sequence first=2 second=1\nselected-root sequence first=1 second=1\nselected-root end Some(Less)\n",
+    "elapsed_seconds": 0.036666073952801526
+  }
+}

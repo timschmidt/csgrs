@@ -1,0 +1,595 @@
+{
+  "schema": 1,
+  "recorded": "2026-09-09T01:53:26.587Z",
+  "files": {
+    "bind-matrix-pivots.mjs": "46a0b36692b8bbb2efc3729ddc367eab3a8f3c374302647983cbe91c067c2154",
+    "verify-matrix-pivots.mjs": "b792f669b14d43993688218f3dbf7d5835e8bbfde94d5d1e186b46f981a2b75b",
+    "capture.mjs": "aaf6df6bbd73025a8541617ce83731ae5ea3fd2272bd98c15e3c4c12b713ce23",
+    "record-matrix-pivot-reads.mjs": "23206543dd5220a5a279de192dbd1eb2b4491eeb9c26aa4e1fafb7827db3b028",
+    "matrix-pivot-read-selection.json": "a000b3d631254eac790aa713ecf4d705869a9ef50e241a143398e74de6f6c057",
+    "flint-matrix-pivot-probe.c": "ce8ad7547b4d227142d7aa51c183f922bf333d19772733508cb0eeb79f3d1a30",
+    "matrix-pivot-hyper.rs": "6e9144135d7267eb1df6894758362144d600de0d7c431bbefd528e74be39667f",
+    "matrix-methods-probe.rs": "ff9bc00ed6c01b97d60ab1b326d0e526d206138bb070ade8a24d090315556ac3",
+    "monic-state-experiment.json": "da068df11bca6fea058ed1e59da77c1c1af0f2042b6673d7a20ecc4f02df9906",
+    "retained-polynomial-facts.json": "5b6662632f11ce4f51caf8172b7064d6e6d6224d96ac14745dfc89ac8eeda1f9",
+    "matrix-pivot-hyper/Cargo.toml": "9c8b84415bf6a4074d3f7111122db6400761bd4fcf0e896fda3abe5d84001dac",
+    "matrix-pivot-hyper/Cargo.lock": "8964ece133af1c088b384e36c3e43e77a20b465963c6df98843277fcfedd6550",
+    "matrix-methods-probe/Cargo.toml": "3d8fc131ace7ebc10352d40a48de38602d8f764c95b6693e5dfbeb17b8c9234f",
+    "matrix-methods-probe/Cargo.lock": "dfc80958af6820b0d12e0e26b4ed983a75eac533fd5f5ee5036039063c271d3a",
+    "results/matrix-pivot-native-compile.json": "e896e01acecba85bd40e462ff915d3da320b354cfbba54edf5ab125414e9581f",
+    "results/matrix-pivot-native-compile.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/matrix-pivot-native-compile.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/matrix-pivot-native.json": "ca10e66c0cd619fb1e1b81b4dff7e8d1d5f0c554a86135879f85553d450641f0",
+    "results/matrix-pivot-native.stdout": "bff909f0e1aee22377140c15345849bde7af5296b15d80b428a773a4e73fcc08",
+    "results/matrix-pivot-native.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/matrix-pivot-native-memcheck.json": "be5862a5942cd010b108a419087e78e354086eb2e2db318065622b8e52f4f201",
+    "results/matrix-pivot-native-memcheck.stdout": "bff909f0e1aee22377140c15345849bde7af5296b15d80b428a773a4e73fcc08",
+    "results/matrix-pivot-native-memcheck.stderr": "8da10b27dc8a55c5d95d08688a9b5dff24fcebbebebc44271fab30101f829f02",
+    "results/matrix-pivot-hyper-debug.json": "b4d15cf1d3c7ee47d3983a5e0dbc4298c74624bdf9ed0d2b4da7f6ce9ee253bd",
+    "results/matrix-pivot-hyper-debug.stdout": "1806802f9b881bd80ea916319f4410d9a0b083b5ea542e8de0ab9cb8483e98d9",
+    "results/matrix-pivot-hyper-debug.stderr": "30ad2348b5a5801a498af52237dcf9a08c5eb381251f53b587ce502d74f2bd7b",
+    "results/matrix-pivot-hyper-release.json": "29ee81a5f8c2f85754fb010d9b90eeefd8e96f29792e592c0d28ad6c58c8dd92",
+    "results/matrix-pivot-hyper-release.stdout": "1806802f9b881bd80ea916319f4410d9a0b083b5ea542e8de0ab9cb8483e98d9",
+    "results/matrix-pivot-hyper-release.stderr": "4b11adfece359cd2e73a4e707a2b22461b550c2776b9abcf215d577f7e173ee6",
+    "results/matrix-pivot-hyper-memcheck.json": "65fd73693979a76d6eb802b069adb1ce9e0d2333bb4dac4f7e1b5a0e665f0a9a",
+    "results/matrix-pivot-hyper-memcheck.stdout": "1806802f9b881bd80ea916319f4410d9a0b083b5ea542e8de0ab9cb8483e98d9",
+    "results/matrix-pivot-hyper-memcheck.stderr": "8426522b6f58b034871338fcfc435bbb05dace79b71020c3f19a78b48cf096f1",
+    "results/matrix-pivot-donor-tests.json": "cedefd956faf0a1343cce5329102610642222c1e84b12e1bf3d3c40dbb6fd7a5",
+    "results/matrix-pivot-donor-tests.stdout": "6bbb870221d6d8125e4fbf896a7cbbb4aaa2611683628d0294d0fdbb1f24eba5",
+    "results/matrix-pivot-donor-tests.stderr": "b0764354f546d1f63dee848506832dc47cbadc8a09bb7ba660b57bbec4737585",
+    "results/matrix-methods-debug.json": "9ffac53c394060a83f76c90552b3bbd7a294b2d6a6eb86a04b1294b80d586108",
+    "results/matrix-methods-debug.stdout": "54e742b0953ee433f923d6675069ce37bf143723eac81b66ee846eddd360eca5",
+    "results/matrix-methods-debug.stderr": "c5de165cca7368a4eee99a413e93face61a142e0256fc73c644c1ae185bad6fa",
+    "results/matrix-methods-release.json": "509149f6ef406b5e3782fab728a2d52e7b8d82f6a956bd289f39098a97e0a068",
+    "results/matrix-methods-release.stdout": "54e742b0953ee433f923d6675069ce37bf143723eac81b66ee846eddd360eca5",
+    "results/matrix-methods-release.stderr": "2e061a1780a0d227540efd614a12a330e89b59a42cd2e25b75c7bcb5297b9ddd",
+    "results/matrix-methods-memcheck.json": "cfc9456ec23079142a90e6f379058b8c92750a3e18893d906e377cb11d1edb66",
+    "results/matrix-methods-memcheck.stdout": "54e742b0953ee433f923d6675069ce37bf143723eac81b66ee846eddd360eca5",
+    "results/matrix-methods-memcheck.stderr": "3f4b59dd5d73700f79d830cda520e9b2dc3ba6066551fc422bebe6e3d156c3f2",
+    "results/monic-qualified-consumer-hypercurve-debug.json": "24ee53f52f4ff275132fb3690e019f002a16193d7695ca0a987ac13f02ac4b84",
+    "results/monic-qualified-consumer-hypercurve-debug.stdout": "b42fddda4cd5669e07fbd205dfc50ac886129b3f4048d8dedfaddef3aeea33a4",
+    "results/monic-qualified-consumer-hypercurve-debug.stderr": "2f27b1d6faeb29712260959fb51f835af327d0982bcb02022768220ee9c2290b"
+  },
+  "binaries": {
+    "/tmp/calcium-matrix-pivots.X3ulwj/flint-matrix-pivots": "fcf9e4d9bb03c3d12d8690bcc4bd37168e4bcbc50c750cc8bfd12837194d7b1b",
+    "/tmp/calcium-matrix-pivots.X3ulwj/calcium-matrix-pivot-hyper-debug": "a632c8393feec6aa39c9ae088c1b778399bccedc7d50dffb9d1bbc3745be8b76",
+    "/tmp/calcium-matrix-pivots.X3ulwj/calcium-matrix-pivot-hyper-release": "aebaef51aa5bafd2c87842b8e26f8404c44e74a909635f44162f55314f1e1ee7",
+    "/tmp/calcium-matrix-pivots.X3ulwj/calcium-matrix-methods-probe-debug": "9d33a5451b395faa290d2700ab4f379ecbedcf70eef134a9a822e7f417fd4251",
+    "/tmp/calcium-matrix-pivots.X3ulwj/calcium-matrix-methods-probe-release": "794c7ad9ba5301e38d2a86bba5de82affad3afa3ef7db645a1b8da6a781f7d45",
+    "/tmp/calcium-matrix-pivots.X3ulwj/flint-ca-mat-tests": "bbc604dd36ceff098618757818a7778f59ab67b6cdabac29e6d3394bd3611c94"
+  },
+  "reads": [
+    {
+      "repo": "flint",
+      "path": "src/ca_mat/test/main.c",
+      "ranges": [
+        [
+          1,
+          79
+        ]
+      ],
+      "note": "Complete independent current registry read: includes/registers28 matrix tests, covering characteristic/determinant, decomposition, solving, kernels and functions. Registration/execution does not credit unread constituent tests or strengthen permissive assertions. Four determinant/LU test families were independently read here; other constituent reads remain pending."
+    },
+    {
+      "repo": "calcium",
+      "path": "ca_mat/test/t-det.c",
+      "ranges": [
+        [
+          1,
+          159
+        ]
+      ],
+      "note": "Complete independent archived test read: compares two randomly selected determinant algorithms at dimensions0..5 and determinant multiplicativity at0..4; ignores method success flags and fails only T_FALSE, allowing Unknown. Same implementation or correlated scalar errors can agree. Does not require completion on certified singular inputs."
+    },
+    {
+      "repo": "flint",
+      "path": "src/ca_mat/test/t-det.c",
+      "ranges": [
+        [
+          1,
+          150
+        ]
+      ],
+      "note": "Complete independent current test read: cross-method comparison only at dimensions0..4 and multiplicativity at0..3, with reduced iteration multiplier. Thus default determinant selection for larger same-number-field matrices is never exercised by this file. Return flags are ignored and Unknown equality passes, explaining why the focused singular/default-LU completeness controls add evidence."
+    },
+    {
+      "repo": "calcium",
+      "path": "ca_mat/test/t-lu.c",
+      "ranges": [
+        [
+          1,
+          164
+        ]
+      ],
+      "note": "Complete independent archived test read: integer matrices of generated rank, optional rank-preserving random operations, rectangular dimensions0..9, packed LU shape and permuted L*U reconstruction. Only successful decompositions are checked; reconstruction Unknown passes, required trailing zeros do not. Every call uses rank_check=0, so this does not cover nonsingularity early-stop semantics."
+    },
+    {
+      "repo": "calcium",
+      "path": "ca_mat/test/t-lu_classical.c",
+      "ranges": [
+        [
+          1,
+          164
+        ]
+      ],
+      "note": "Complete independent archived test read: directly tests classical LU on generated integer ranks, with required-True trailing-zero shape and T_FALSE-only reconstruction check. Failed decomposition is accepted; rank_check is always0. Duplicate permutation/check helpers use row-pointer swapping and independent owned L/U matrices."
+    },
+    {
+      "repo": "calcium",
+      "path": "ca_mat/test/t-lu_recursive.c",
+      "ranges": [
+        [
+          1,
+          164
+        ]
+      ],
+      "note": "Complete independent archived test read: direct recursive LU, generated known-rank integer matrices and optional row/column operations; checks rank and packed factor reconstruction only on success. All calls use rank_check=0, so early singularity reporting through nonsingular_lu is not qualified. Reconstruction Unknown passes; trailing zeros require proof."
+    },
+    {
+      "repo": "flint",
+      "path": "src/ca_mat/test/t-lu.c",
+      "ranges": [
+        [
+          1,
+          169
+        ]
+      ],
+      "note": "Complete independent current test read: same generated-rank/packed-LU contract, with guarded shared helper definitions and strided payload permutation rather than row pointers. Every call rank_check=0; only success is inspected, reconstruction Unknown passes, trailing zero shape requires True. The new rank_check=1 singular corpus is distinct evidence."
+    },
+    {
+      "repo": "flint",
+      "path": "src/ca_mat/test/t-lu_classical.c",
+      "ranges": [
+        [
+          1,
+          169
+        ]
+      ],
+      "note": "Complete independent current test read: direct classical LU on generated integer matrices with rank_check=0; guarded shared helpers copy raw strided payloads for permutation and clear only owned reconstructed matrices. Failure is skipped, reconstruction Unknown accepted, exact trailing-zero/rank checks required on success."
+    },
+    {
+      "repo": "flint",
+      "path": "src/ca_mat/test/t-lu_recursive.c",
+      "ranges": [
+        [
+          1,
+          169
+        ]
+      ],
+      "note": "Complete independent current test read: direct recursive LU with integer generated ranks and rank_check=0. Does not assert that decidably singular input yields False through nonsingular rank checking. Guards prevent helper redefinition in combined runner; valid strided permutation tested, not arbitrary overlapping windows or invalid indices."
+    },
+    {
+      "repo": "calcium",
+      "path": "ca_mat.h",
+      "ranges": [
+        [
+          1,
+          371
+        ]
+      ],
+      "note": "Complete independent archived read: Dense matrix owner/window API, scalar scaling, exact/partial determinant and solve signatures. Archive stores row pointers, enabling O(1) row swaps but allocating row maps; current uses entries/stride, allocation-free windows and per-entry row swaps. Windows require separate nonowning cleanup. No blind Rust storage replacement: Hyper fixed matrices are already contiguous and dynamic solver rows support cheap swaps."
+    },
+    {
+      "repo": "flint",
+      "path": "src/ca_mat.h",
+      "ranges": [
+        [
+          1,
+          346
+        ]
+      ],
+      "note": "Complete independent current read: Dense matrix owner/window API, scalar scaling, exact/partial determinant and solve signatures. Archive stores row pointers, enabling O(1) row swaps but allocating row maps; current uses entries/stride, allocation-free windows and per-entry row swaps. Windows require separate nonowning cleanup. No blind Rust storage replacement: Hyper fixed matrices are already contiguous and dynamic solver rows support cheap swaps."
+    },
+    {
+      "repo": "calcium",
+      "path": "ca_mat/init.c",
+      "ranges": [
+        [
+          1,
+          32
+        ]
+      ],
+      "note": "Complete independent archived read: Archive allocates initialized entries plus row-pointer table only for nonempty shape; current initializes entries/r/c/stride before optional single entry allocation. Caller must supply valid representable dimensions. No unmeasured memory/speed claim for replacing Hyper ownership."
+    },
+    {
+      "repo": "flint",
+      "path": "src/ca_mat/init.c",
+      "ranges": [
+        [
+          1,
+          25
+        ]
+      ],
+      "note": "Complete independent current read: Archive allocates initialized entries plus row-pointer table only for nonempty shape; current initializes entries/r/c/stride before optional single entry allocation. Caller must supply valid representable dimensions. No unmeasured memory/speed claim for replacing Hyper ownership."
+    },
+    {
+      "repo": "calcium",
+      "path": "ca_mat/clear.c",
+      "ranges": [
+        [
+          1,
+          22
+        ]
+      ],
+      "note": "Complete independent archived read: Archive clears physical owner storage once and frees row table; current walks logical owner entries before freeing its contiguous allocation. Borrowed windows must use window_clear, not owner clear. This is a lifetime contract, not evidence for arbitrary overlapping aliases."
+    },
+    {
+      "repo": "flint",
+      "path": "src/ca_mat/clear.c",
+      "ranges": [
+        [
+          1,
+          26
+        ]
+      ],
+      "note": "Complete independent current read: Archive clears physical owner storage once and frees row table; current walks logical owner entries before freeing its contiguous allocation. Borrowed windows must use window_clear, not owner clear. This is a lifetime contract, not evidence for arbitrary overlapping aliases."
+    },
+    {
+      "repo": "calcium",
+      "path": "ca_mat/window_init.c",
+      "ranges": [
+        [
+          1,
+          28
+        ]
+      ],
+      "note": "Complete independent archived read: Archive allocates a copied row-pointer view with entries=NULL; current borrows a strided entry region and window_clear does nothing. Current row assertion is explicit; its column assertion omits a separate c1>=0 check. Only valid bounded windows are considered; no invalid-access reproduction or exploit. Lifetime remains tied to the owner."
+    },
+    {
+      "repo": "flint",
+      "path": "src/ca_mat/window_init.c",
+      "ranges": [
+        [
+          1,
+          25
+        ]
+      ],
+      "note": "Complete independent current read: Archive allocates a copied row-pointer view with entries=NULL; current borrows a strided entry region and window_clear does nothing. Current row assertion is explicit; its column assertion omits a separate c1>=0 check. Only valid bounded windows are considered; no invalid-access reproduction or exploit. Lifetime remains tied to the owner."
+    },
+    {
+      "repo": "calcium",
+      "path": "ca_mat/find_pivot.c",
+      "ranges": [
+        [
+          1,
+          117
+        ]
+      ],
+      "note": "Complete independent archived read: Rational-only cheap zero check selects a representation-simple candidate, then certifies it; if needed a full scan finds the simplest proved nonzero. Unknown elsewhere does not block a known nonzero pivot. Proven zeros may be normalized in owned work storage. Hyper already continues past Unknown to later certified nonzeros, but simpler/fact-first pivot scheduling is a separate potential cost improvement requiring qualification."
+    },
+    {
+      "repo": "flint",
+      "path": "src/ca_mat/find_pivot.c",
+      "ranges": [
+        [
+          1,
+          117
+        ]
+      ],
+      "note": "Complete independent current read: Rational-only cheap zero check selects a representation-simple candidate, then certifies it; if needed a full scan finds the simplest proved nonzero. Unknown elsewhere does not block a known nonzero pivot. Proven zeros may be normalized in owned work storage. Hyper already continues past Unknown to later certified nonzeros, but simpler/fact-first pivot scheduling is a separate potential cost improvement requiring qualification."
+    },
+    {
+      "repo": "calcium",
+      "path": "ca_mat/fflu.c",
+      "ranges": [
+        [
+          1,
+          107
+        ]
+      ],
+      "note": "Complete independent archived read: Fraction-free update reuses one inverse of the previous pivot across the remaining block; retains packed lower factors, publishes rank and last denominator, distinguishes unknown pivot from proved zero column, and canonicalizes denominator zero/unknown on termination. rank_check stops at a zero column. Hyper has exact integer cross-difference division and fraction-free dense/sparse paths already."
+    },
+    {
+      "repo": "flint",
+      "path": "src/ca_mat/fflu.c",
+      "ranges": [
+        [
+          1,
+          107
+        ]
+      ],
+      "note": "Complete independent current read: Fraction-free update reuses one inverse of the previous pivot across the remaining block; retains packed lower factors, publishes rank and last denominator, distinguishes unknown pivot from proved zero column, and canonicalizes denominator zero/unknown on termination. rank_check stops at a zero column. Hyper has exact integer cross-difference division and fraction-free dense/sparse paths already."
+    },
+    {
+      "repo": "calcium",
+      "path": "ca_mat/lu_classical.c",
+      "ranges": [
+        [
+          1,
+          93
+        ]
+      ],
+      "note": "Complete independent archived read: One reciprocal per certified pivot, scalar-vector trailing updates and packed lower multipliers; skips proved zero columns unless rank_check requests termination. Unknown pivots fail explicitly. Current accessors respect stride whereas archive aliases the row-pointer table. No numerical largest-magnitude pivot heuristic is used."
+    },
+    {
+      "repo": "flint",
+      "path": "src/ca_mat/lu_classical.c",
+      "ranges": [
+        [
+          1,
+          91
+        ]
+      ],
+      "note": "Complete independent current read: One reciprocal per certified pivot, scalar-vector trailing updates and packed lower multipliers; skips proved zero columns unless rank_check requests termination. Unknown pivots fail explicitly. Current accessors respect stride whereas archive aliases the row-pointer table. No numerical largest-magnitude pivot heuristic is used."
+    },
+    {
+      "repo": "calcium",
+      "path": "ca_mat/det.c",
+      "ranges": [
+        [
+          1,
+          145
+        ]
+      ],
+      "note": "Complete independent archived read: Exact package dispatch: order>=3 rational matrices use borrowed fmpz/fmpq entries and free only temporary storage; order<=4 uses division-free cofactors; larger same-number-field matrices use LU, others Berkowitz. LU success is not separately checked by the caller. Same-field is identity-based, excludes special values and permits rational coefficients. Hyper already has package-aware fixed formulas and pivot-free fallback; borrowed C header tricks are not a safe Rust transfer."
+    },
+    {
+      "repo": "flint",
+      "path": "src/ca_mat/det.c",
+      "ranges": [
+        [
+          1,
+          144
+        ]
+      ],
+      "note": "Complete independent current read: Exact package dispatch: order>=3 rational matrices use borrowed fmpz/fmpq entries and free only temporary storage; order<=4 uses division-free cofactors; larger same-number-field matrices use LU, others Berkowitz. LU success is not separately checked by the caller. Same-field is identity-based, excludes special values and permits rational coefficients. Hyper already has package-aware fixed formulas and pivot-free fallback; borrowed C header tricks are not a safe Rust transfer."
+    },
+    {
+      "repo": "calcium",
+      "path": "ca_mat/charpoly_berkowitz.c",
+      "ranges": [
+        [
+          1,
+          90
+        ]
+      ],
+      "note": "Complete independent archived read: Zero/one/two-dimensional closed forms; larger archived matrices use n*n initialized scratch and vector-dot recurrence without data-dependent division, then shift/reverse to monic ascending coefficients. Current delegates this same algorithm to generic-ring code independently read here. Potential comparison with Hyper Faddeev-LeVerrier concerns expression/allocation cost, not a missing pivot-free determinant capability."
+    },
+    {
+      "repo": "flint",
+      "path": "src/ca_mat/charpoly_berkowitz.c",
+      "ranges": [
+        [
+          1,
+          52
+        ]
+      ],
+      "note": "Complete independent current read: Zero/one/two-dimensional closed forms; larger archived matrices use n*n initialized scratch and vector-dot recurrence without data-dependent division, then shift/reverse to monic ascending coefficients. Current delegates this same algorithm to generic-ring code independently read here. Potential comparison with Hyper Faddeev-LeVerrier concerns expression/allocation cost, not a missing pivot-free determinant capability."
+    },
+    {
+      "repo": "calcium",
+      "path": "ca_mat/det_berkowitz.c",
+      "ranges": [
+        [
+          1,
+          26
+        ]
+      ],
+      "note": "Complete independent archived read: Allocates n+1 characteristic coefficients, moves the constant coefficient to result and applies parity. Calls generic ca charpoly dispatcher, whose only active route here is Berkowitz. No pivot classification and no division; output/entry alias is not asserted from this wrapper alone."
+    },
+    {
+      "repo": "flint",
+      "path": "src/ca_mat/det_berkowitz.c",
+      "ranges": [
+        [
+          1,
+          27
+        ]
+      ],
+      "note": "Complete independent current read: Allocates n+1 characteristic coefficients, moves the constant coefficient to result and applies parity. Calls generic ca charpoly dispatcher, whose only active route here is Berkowitz. No pivot classification and no division; output/entry alias is not asserted from this wrapper alone."
+    },
+    {
+      "repo": "calcium",
+      "path": "ca_mat/charpoly.c",
+      "ranges": [
+        [
+          1,
+          50
+        ]
+      ],
+      "note": "Complete independent archived read: Both pins always dispatch to Berkowitz; number-field Danilevsky selection is commented out. Public wrapper rejects nonsquare input and fixes coefficient length n+1. Do not infer a live Danilevsky fast path from the available symbol."
+    },
+    {
+      "repo": "flint",
+      "path": "src/ca_mat/charpoly.c",
+      "ranges": [
+        [
+          1,
+          50
+        ]
+      ],
+      "note": "Complete independent current read: Both pins always dispatch to Berkowitz; number-field Danilevsky selection is commented out. Public wrapper rejects nonsquare input and fixes coefficient length n+1. Do not infer a live Danilevsky fast path from the available symbol."
+    },
+    {
+      "repo": "calcium",
+      "path": "ca_mat/det_bareiss.c",
+      "ranges": [
+        [
+          1,
+          44
+        ]
+      ],
+      "note": "Complete independent archived read: Uses nonsingular fraction-free decomposition, returns exact zero for certified singularity, parity-adjusts its denominator for nonsingular input, and returns false with Unknown output if undecided. Owns and clears permutation/work matrix. Empty square determinant is one through its callee."
+    },
+    {
+      "repo": "flint",
+      "path": "src/ca_mat/det_bareiss.c",
+      "ranges": [
+        [
+          1,
+          45
+        ]
+      ],
+      "note": "Complete independent current read: Uses nonsingular fraction-free decomposition, returns exact zero for certified singularity, parity-adjusts its denominator for nonsingular input, and returns false with Unknown output if undecided. Owns and clears permutation/work matrix. Empty square determinant is one through its callee."
+    },
+    {
+      "repo": "calcium",
+      "path": "ca_mat/det_lu.c",
+      "ranges": [
+        [
+          1,
+          47
+        ]
+      ],
+      "note": "Complete independent archived read: Uses nonsingular LU, exact zero on T_FALSE, signed diagonal product on T_TRUE, explicit Unknown otherwise; returns a Boolean success flag independently of determinant value. Need distinguish recursive rank-check inability from mathematically proved singularity; no unqualified replacement of Hyper fallback."
+    },
+    {
+      "repo": "flint",
+      "path": "src/ca_mat/det_lu.c",
+      "ranges": [
+        [
+          1,
+          48
+        ]
+      ],
+      "note": "Complete independent current read: Uses nonsingular LU, exact zero on T_FALSE, signed diagonal product on T_TRUE, explicit Unknown otherwise; returns a Boolean success flag independently of determinant value. Need distinguish recursive rank-check inability from mathematically proved singularity; no unqualified replacement of Hyper fallback."
+    },
+    {
+      "repo": "calcium",
+      "path": "ca_mat/nonsingular_fflu.c",
+      "ranges": [
+        [
+          1,
+          36
+        ]
+      ],
+      "note": "Complete independent archived read: Empty square input is nonsingular with denominator one. Otherwise runs rank_check=1 and maps failure to Unknown, rank zero to False, successful nonzero rank to True. Intended nonsingularity use is square matrices; no rectangular interpretation inferred."
+    },
+    {
+      "repo": "flint",
+      "path": "src/ca_mat/nonsingular_fflu.c",
+      "ranges": [
+        [
+          1,
+          36
+        ]
+      ],
+      "note": "Complete independent current read: Empty square input is nonsingular with denominator one. Otherwise runs rank_check=1 and maps failure to Unknown, rank zero to False, successful nonzero rank to True. Intended nonsingularity use is square matrices; no rectangular interpretation inferred."
+    },
+    {
+      "repo": "calcium",
+      "path": "ca_mat/nonsingular_lu.c",
+      "ranges": [
+        [
+          1,
+          35
+        ]
+      ],
+      "note": "Complete independent archived read: Empty square input returns True; rank-check LU failure becomes Unknown, rank zero False, remaining success True. The recursive leading-block rank-check branch can return failure after a proved rank deficiency; finite diagnostic qualification is needed before labeling observed incompleteness."
+    },
+    {
+      "repo": "flint",
+      "path": "src/ca_mat/nonsingular_lu.c",
+      "ranges": [
+        [
+          1,
+          35
+        ]
+      ],
+      "note": "Complete independent current read: Empty square input returns True; rank-check LU failure becomes Unknown, rank zero False, remaining success True. The recursive leading-block rank-check branch can return failure after a proved rank deficiency; finite diagnostic qualification is needed before labeling observed incompleteness."
+    },
+    {
+      "repo": "calcium",
+      "path": "ca_mat/lu.c",
+      "ranges": [
+        [
+          1,
+          18
+        ]
+      ],
+      "note": "Complete independent archived read: Unconditional recursive-LU wrapper; size cutoff and rank-check semantics belong to separately read lu_recursive.c, not an adaptive precision scheduler."
+    },
+    {
+      "repo": "flint",
+      "path": "src/ca_mat/lu.c",
+      "ranges": [
+        [
+          1,
+          18
+        ]
+      ],
+      "note": "Complete independent current read: Unconditional recursive-LU wrapper; size cutoff and rank-check semantics belong to separately read lu_recursive.c, not an adaptive precision scheduler."
+    },
+    {
+      "repo": "calcium",
+      "path": "ca_mat/lu_recursive.c",
+      "ranges": [
+        [
+          1,
+          135
+        ]
+      ],
+      "note": "Complete independent archived read: Column bisection at dimensions>=4; factor left block, apply its permutation, triangular solve and Schur complement, then factor trailing block and compress L. Current strided layout copies only unprocessed column blocks for permutation and initializes r2=0; archive has no explicit r2 initialization before early cleanup (source-only, no archived runtime claim). Leading-block deficient rank_check exits success=0, while later proved rank deficiency can retain success=1 with rank zero. Temporary permutation/storage allocation and borrowed-window lifetimes are explicit."
+    },
+    {
+      "repo": "flint",
+      "path": "src/ca_mat/lu_recursive.c",
+      "ranges": [
+        [
+          1,
+          136
+        ]
+      ],
+      "note": "Complete independent current read: Column bisection at dimensions>=4; factor left block, apply its permutation, triangular solve and Schur complement, then factor trailing block and compress L. Current strided layout copies only unprocessed column blocks for permutation and initializes r2=0; archive has no explicit r2 initialization before early cleanup (source-only, no archived runtime claim). Leading-block deficient rank_check exits success=0, while later proved rank deficiency can retain success=1 with rank zero. Temporary permutation/storage allocation and borrowed-window lifetimes are explicit."
+    },
+    {
+      "repo": "calcium",
+      "path": "ca_mat/det_cofactor.c",
+      "ranges": [
+        [
+          1,
+          135
+        ]
+      ],
+      "note": "Complete independent archived read: Division-free determinant formulas for dimensions0..4, with six paired 2x2 minors at order4 and scalar temporaries; unsupported larger direct calls fail. Current forwards through a borrowed generic-ring context. Hyper fixed Matrix3/4 already uses shared determinant/cofactor product-sum schedules, so no generic replacement selected."
+    },
+    {
+      "repo": "flint",
+      "path": "src/ca_mat/det_cofactor.c",
+      "ranges": [
+        [
+          1,
+          24
+        ]
+      ],
+      "note": "Complete independent current read: Division-free determinant formulas for dimensions0..4, with six paired 2x2 minors at order4 and scalar temporaries; unsupported larger direct calls fail. Current forwards through a borrowed generic-ring context. Hyper fixed Matrix3/4 already uses shared determinant/cofactor product-sum schedules, so no generic replacement selected."
+    },
+    {
+      "repo": "flint",
+      "path": "src/gr_mat/charpoly_berkowitz.c",
+      "ranges": [
+        [
+          1,
+          110
+        ]
+      ],
+      "note": "Complete independent current generic-kernel read: mirrors archived division-free n*n scratch/vector-dot recurrence, combines generic operation status flags, special-cases dimensions0..2, returns GR_DOMAIN for nonsquare wrapper input and normalizes only for zero-ring output. Characteristic coefficients are built independently of unknown pivots; not a new exactness domain for Hyper, which already has Faddeev-LeVerrier fallback. Performance/expression-size comparison remains open."
+    },
+    {
+      "repo": "flint",
+      "path": "src/gr_mat/det_cofactor.c",
+      "ranges": [
+        [
+          1,
+          137
+        ]
+      ],
+      "note": "Complete independent current generic-kernel read: checked-square order0..4 determinant using explicit products/subtractions and six paired minors; aggregates generic status and returns GR_UNABLE above4. The TODO for fused addmul/fmms reinforces Hyper existing fixed product-sum kernels rather than justifying a port of generic dispatch."
+    }
+  ],
+  "gates": [
+    "matrix-pivot-native-compile",
+    "matrix-pivot-native",
+    "matrix-pivot-native-memcheck",
+    "matrix-pivot-hyper-debug",
+    "matrix-pivot-hyper-release",
+    "matrix-pivot-hyper-memcheck",
+    "matrix-pivot-donor-tests",
+    "matrix-methods-debug",
+    "matrix-methods-release",
+    "matrix-methods-memcheck",
+    "monic-qualified-consumer-hypercurve-debug"
+  ],
+  "status": "Matrix source/capability checkpoint and completed monic downstream; monic live retention recorded separately. Full ecosystem incomplete.",
+  "limits": "Native determinant oracle covers finite diagonal, row-swapped and repeated-row matrices; no general matrix or archived runtime qualification. Generic same-scalar oracles are not independent scalar backends. Hyper determinant construction and decidable equality are separate capabilities. Standalone Faddeev/Berkowitz probes are not production algorithms or matched benchmarks. Berkowitz gains eight comparisons but loses two: not selected as a direct replacement; alternate scheduling remains open. Nine pre-existing Hypercurve ignored tests remain unrun."
+}

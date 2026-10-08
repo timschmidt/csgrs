@@ -1,0 +1,192 @@
+{
+  "created": "2026-09-07T02:19:42.140Z",
+  "stages": [
+    {
+      "script": "inventory.mjs",
+      "sourceSha256": "a3e3a34d5e3f0ac781adc075af175c3def62f078b78a8cadd92c1da3dc33fcde",
+      "status": 0,
+      "classification": "PASS",
+      "liveSourceDrift": [],
+      "stdoutSha256": "c9d31b198b2ae24761ffaa9934ef4d704bf5dd1c3b4941e8da8e4208234b0bf9",
+      "stderr": ""
+    },
+    {
+      "script": "analyze-boundary.mjs",
+      "sourceSha256": "9fb41d1df6ce46ee8be0f96b633a66c38746ff3a6cd807129777decb20db7979",
+      "status": 0,
+      "classification": "PASS",
+      "liveSourceDrift": [],
+      "stdoutSha256": "abc27852c5bce58036cab6c54b220d795785903e2fa41c35d453216143627fb7",
+      "stderr": ""
+    },
+    {
+      "script": "analyze-shared.mjs",
+      "sourceSha256": "3f9c14a20c3a7fcf8db5e9b442739093253da495cd8179a651108a2d3af7e06b",
+      "status": 0,
+      "classification": "PASS",
+      "liveSourceDrift": [],
+      "stdoutSha256": "114e03dfaf4bdebc542ef864cfa86bad8d326df50983f77b3a38a60447d87029",
+      "stderr": ""
+    },
+    {
+      "script": "analyze-hyper.mjs",
+      "sourceSha256": "0926698c1adf46f34a778bc805e9c3100fb24980258332333cc57d15d8b4836c",
+      "status": 1,
+      "classification": "SOURCE_DRIFT: historical Hyper qualification NOT revalidated",
+      "liveSourceDrift": [
+        {
+          "path": "hyperreal/src/rational/arithmetic/tests.rs",
+          "reportedPath": "src/rational/arithmetic/tests.rs",
+          "expected": "e7bbe52bc66c8fd17d9734273f55d1bdab148c7d8cc9a7037299d3b4e2dc19ad",
+          "actual": "3b44775d17020588cae0ee3ac8385b3fd4dfc6945f15c591b752bfadd994e5df"
+        }
+      ],
+      "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr": "node:internal/modules/run_main:123\n    triggerUncaughtException(\n    ^\n\nAssertionError [ERR_ASSERTION]: src/rational/arithmetic/tests.rs\n+ actual - expected\n\n+ '3b44775d17020588cae0ee3ac8385b3fd4dfc6945f15c591b752bfadd994e5df'\n- 'e7bbe52bc66c8fd17d9734273f55d1bdab148c7d8cc9a7037299d3b4e2dc19ad'\n\n    at file:///home/tim/Documents/GitHub/workspace/exact-real-references/ruffini-qualification/analyze-hyper.mjs:9:95\n    at ModuleJob.run (node:internal/modules/esm/module_job:343:25)\n    at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:665:26)\n    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5) {\n  generatedMessage: false,\n  code: 'ERR_ASSERTION',\n  actual: '3b44775d17020588cae0ee3ac8385b3fd4dfc6945f15c591b752bfadd994e5df',\n  expected: 'e7bbe52bc66c8fd17d9734273f55d1bdab148c7d8cc9a7037299d3b4e2dc19ad',\n  operator: 'strictEqual',\n  diff: 'simple'\n}\n\nNode.js v22.22.2\n"
+    },
+    {
+      "script": "analyze-matrix.mjs",
+      "sourceSha256": "6f60484e2dfcd0a4183071a5ef88e7609cf6b2f9eeb7feb963276900e793d0f0",
+      "status": 1,
+      "classification": "SOURCE_DRIFT: historical Hyper qualification NOT revalidated",
+      "liveSourceDrift": [
+        {
+          "path": "hyperreal/src/rational/arithmetic/tests.rs",
+          "reportedPath": "hyperreal/src/rational/arithmetic/tests.rs",
+          "expected": "e7bbe52bc66c8fd17d9734273f55d1bdab148c7d8cc9a7037299d3b4e2dc19ad",
+          "actual": "3b44775d17020588cae0ee3ac8385b3fd4dfc6945f15c591b752bfadd994e5df"
+        }
+      ],
+      "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr": "node:internal/modules/run_main:123\n    triggerUncaughtException(\n    ^\n\nAssertionError [ERR_ASSERTION]: hyperreal/src/rational/arithmetic/tests.rs\n+ actual - expected\n\n+ '3b44775d17020588cae0ee3ac8385b3fd4dfc6945f15c591b752bfadd994e5df'\n- 'e7bbe52bc66c8fd17d9734273f55d1bdab148c7d8cc9a7037299d3b4e2dc19ad'\n\n    at file:///home/tim/Documents/GitHub/workspace/exact-real-references/ruffini-qualification/analyze-matrix.mjs:62:124\n    at ModuleJob.run (node:internal/modules/esm/module_job:343:25)\n    at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:665:26)\n    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5) {\n  generatedMessage: false,\n  code: 'ERR_ASSERTION',\n  actual: '3b44775d17020588cae0ee3ac8385b3fd4dfc6945f15c591b752bfadd994e5df',\n  expected: 'e7bbe52bc66c8fd17d9734273f55d1bdab148c7d8cc9a7037299d3b4e2dc19ad',\n  operator: 'strictEqual',\n  diff: 'simple'\n}\n\nNode.js v22.22.2\n"
+    },
+    {
+      "script": "analyze-matrix-bench.mjs",
+      "sourceSha256": "340e917873a250ab9861806412f12ed3d584c71864f3d7f769b1910586a4c3c8",
+      "status": 0,
+      "classification": "PASS",
+      "liveSourceDrift": [],
+      "stdoutSha256": "6910202bd6457f8fd7160321946d4dffe702048ff2994fbea3c290659ee2dfcd",
+      "stderr": ""
+    },
+    {
+      "script": "analyze-matrix-bench-stable.mjs",
+      "sourceSha256": "ea90f789eaea4dedaa1ad6053a9fbdd94c5993226ebe6cb6dc12bc17a8a846d8",
+      "status": 0,
+      "classification": "PASS",
+      "liveSourceDrift": [],
+      "stdoutSha256": "a64847a95bbb7683f4a5fa239e68f4d7516e183311a92340a001b6833e33ac9d",
+      "stderr": ""
+    },
+    {
+      "script": "analyze-polynomial.mjs",
+      "sourceSha256": "10b7cdb83ff289b0899937057822afb0c1bb2238d81959c2266d74418673f22e",
+      "status": 1,
+      "classification": "SOURCE_DRIFT: historical Hyper qualification NOT revalidated",
+      "liveSourceDrift": [
+        {
+          "path": "hyperreal/src/rational/arithmetic/tests.rs",
+          "reportedPath": "hyperreal/src/rational/arithmetic/tests.rs",
+          "expected": "e7bbe52bc66c8fd17d9734273f55d1bdab148c7d8cc9a7037299d3b4e2dc19ad",
+          "actual": "3b44775d17020588cae0ee3ac8385b3fd4dfc6945f15c591b752bfadd994e5df"
+        }
+      ],
+      "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr": "node:internal/modules/run_main:123\n    triggerUncaughtException(\n    ^\n\nAssertionError [ERR_ASSERTION]: hyperreal/src/rational/arithmetic/tests.rs\n+ actual - expected\n\n+ '3b44775d17020588cae0ee3ac8385b3fd4dfc6945f15c591b752bfadd994e5df'\n- 'e7bbe52bc66c8fd17d9734273f55d1bdab148c7d8cc9a7037299d3b4e2dc19ad'\n\n    at file:///home/tim/Documents/GitHub/workspace/exact-real-references/ruffini-qualification/analyze-polynomial.mjs:72:128\n    at ModuleJob.run (node:internal/modules/esm/module_job:343:25)\n    at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:665:26)\n    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5) {\n  generatedMessage: false,\n  code: 'ERR_ASSERTION',\n  actual: '3b44775d17020588cae0ee3ac8385b3fd4dfc6945f15c591b752bfadd994e5df',\n  expected: 'e7bbe52bc66c8fd17d9734273f55d1bdab148c7d8cc9a7037299d3b4e2dc19ad',\n  operator: 'strictEqual',\n  diff: 'simple'\n}\n\nNode.js v22.22.2\n"
+    },
+    {
+      "script": "analyze-polynomial-bench.mjs",
+      "sourceSha256": "1f4d6744855dcfd694e74f90064a95742be140a0cee401e498ae13e4483a6a42",
+      "status": 0,
+      "classification": "PASS",
+      "liveSourceDrift": [],
+      "stdoutSha256": "f63e2a602e98aeefd0a1cbc18fcf5617b69edefb98721d8b7365ce11c3de539d",
+      "stderr": ""
+    },
+    {
+      "script": "analyze-classgroup.mjs",
+      "sourceSha256": "ae882888210a44a58169b9274b823a7e580324ff49bf112b66a6b5a8deaef25f",
+      "status": 0,
+      "classification": "PASS",
+      "liveSourceDrift": [],
+      "stdoutSha256": "3b2fb8e395725b393f972641ef4a22b56faf2b57765f8276473b5f647846c5e1",
+      "stderr": ""
+    },
+    {
+      "script": "analyze-elliptic-coordinates.mjs",
+      "sourceSha256": "2d431325df0004e38b7d43c805b4b30bedbd052513858c13380093dd6bee5be9",
+      "status": 0,
+      "classification": "PASS",
+      "liveSourceDrift": [],
+      "stdoutSha256": "b400ffb3f437529ccf10a3be5461ae85d177e9b9888bcee4217894023fd15083",
+      "stderr": ""
+    },
+    {
+      "script": "check-read-matrices.mjs",
+      "sourceSha256": "a84f4a42ea3fd091b7c397ef741fcb0bd497506223bf8342097b77a2e870f6c7",
+      "status": 0,
+      "classification": "PASS",
+      "liveSourceDrift": [],
+      "stdoutSha256": "8cada48c431f1cd86e3ef14c133c3645f6ba74929d8d3a6b3e0e02b5bc63442a",
+      "stderr": ""
+    },
+    {
+      "script": "check-remaining-matrices.mjs",
+      "sourceSha256": "c82aaeb43c165216ff7b618968918293e880863e537f9fa2f58f167f6b49e85f",
+      "status": 0,
+      "classification": "PASS",
+      "liveSourceDrift": [],
+      "stdoutSha256": "81c997e687106b8a35847f5d76357c904733429257b44cbe2e5f61f7baa8156c",
+      "stderr": ""
+    },
+    {
+      "script": "check-read-round-constants.mjs",
+      "sourceSha256": "e128871162ae75690a23d646b48f465e1aa7fcd4ebee830bb6ce974745ba6bc2",
+      "status": 0,
+      "classification": "PASS",
+      "liveSourceDrift": [],
+      "stdoutSha256": "f9136a4069bf84daf4ec1228d17873f32e91d7b97674b0692cccf655a7605c13",
+      "stderr": ""
+    },
+    {
+      "script": "hyper-polynomial-pilot/analyze.mjs",
+      "sourceSha256": "23dd1b4b731a06c65d364b5aad18ecd9f1357fe7fbbfe88d9da2eb8ce14c552b",
+      "status": 0,
+      "classification": "PASS",
+      "liveSourceDrift": [],
+      "stdoutSha256": "cbe8238c07b78d89c09ea11dc82a7b60b97257ccc9ac0e560efbd23907fd8172",
+      "stderr": ""
+    }
+  ],
+  "passedStages": 12,
+  "sourceDriftStages": [
+    "analyze-hyper.mjs",
+    "analyze-matrix.mjs",
+    "analyze-polynomial.mjs"
+  ],
+  "readFiles": 230,
+  "readLines": 15691,
+  "unreadFiles": 15,
+  "hyperSnapshotFiles": 393,
+  "currentHyperDrift": [
+    "hyperreal/benches/scalar_micro.rs",
+    "hyperreal/src/rational/arithmetic/comparison.rs",
+    "hyperreal/src/rational/arithmetic/tests.rs"
+  ],
+  "coefficientExport": {
+    "checksPerMode": 4905,
+    "usesHyperEqualityForOracle": false,
+    "identicalDebugReleaseOutput": true,
+    "originalDebugTimeoutSeconds": 300,
+    "originalTimeoutPreserved": true,
+    "extendedDebugCapSeconds": 1200,
+    "debugWallSeconds": 674.615,
+    "releaseWallSeconds": 29.75
+  },
+  "newProductionChanges": 0,
+  "oldHyperQualification": "not reclassified; original scalar/matrix/polynomial guards reject changed live source; exact drift and errors recorded; old frozen evidence preserved",
+  "scope": "Ruffini source/native evidence and isolated frozen Hyper transfer study only; source-drift stages are NOT passes",
+  "actualCallerAndSizeRetentionGates": "OPEN",
+  "fullRuffiniAudit": "OPEN",
+  "fullEcosystemGoal": "ACTIVE/OPEN"
+}

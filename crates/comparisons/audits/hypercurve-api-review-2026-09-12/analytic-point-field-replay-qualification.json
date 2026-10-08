@@ -1,0 +1,101 @@
+{
+  "status": "qualified against the documented baseline and committed",
+  "goal_status": "active",
+  "previous_commit": "7faa8340e1bf79c823e618f78feedc186213eda9",
+  "commit": "ef2114738d48439e9ce3f1ac787c974309b9d6e5",
+  "targets": 49,
+  "passed": 2210,
+  "passed_by_repo": {
+    "hypercurve": 1978,
+    "hyperbrep": 232
+  },
+  "known_failed": [
+    "approximate_512_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions",
+    "non_ph_bezier_pair_projective_fillet_retains_algebraic_extensions",
+    "nonconvex_algebraic_chord_expansion_is_exact_and_local_collapse_is_explicit",
+    "strict_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions",
+    "unified_mixed_line_arc_erosion_splits_after_a_curved_neck_collapse"
+  ],
+  "new_failures": [],
+  "ignored": 9,
+  "expensive_previously_unqualified_exclusions": 8,
+  "timeouts": 0,
+  "builds_and_checks": {
+    "-check": 0,
+    "-test-build": 0,
+    "-hyperbrep-check": 0,
+    "-hyperbrep-test-build": 0
+  },
+  "formatting_and_whitespace": "passed on final frozen qualification sources",
+  "formatted_files": {
+    "hypercurve": [
+      "src/bezier_offset.rs",
+      "src/curve_region_boolean.rs"
+    ],
+    "hyperbrep": []
+  },
+  "additional_caller_checks": [
+    {
+      "target": "fuzz",
+      "command": [
+        "cargo",
+        "check",
+        "--manifest-path",
+        "fuzz/Cargo.toml",
+        "--all-targets",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 5.171318463006173,
+      "log": "analytic-point-field-replay-fuzz-check.log"
+    },
+    {
+      "target": "ui",
+      "command": [
+        "cargo",
+        "check",
+        "--manifest-path",
+        "examples/hypercurve_ui/Cargo.toml",
+        "--all-targets",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 4.620914424987859,
+      "log": "analytic-point-field-replay-ui-check.log"
+    }
+  ],
+  "resolved_stress_reproducer": "region-carrier-evidence-equality-stress/reproducer.json",
+  "source_verification": "analytic-point-field-replay-source-verification.json",
+  "normal_library_sha256": "71ce67bd166701aac15ea302f64d5c2bf15e92468ecc755567a4cecced1ecc23",
+  "independent_probes_and_matrices": [
+    "analytic-point-field-replay-probe-final.json",
+    "analytic-point-field-replay-circle-matrix.json",
+    "analytic-point-field-replay-region-carrier-matrix.json",
+    "analytic-point-field-replay-general-trim-matrix.json",
+    "analytic-point-field-replay-constant-image-trim-matrix.json"
+  ],
+  "regression_baseline": "region-carrier-evidence-qualification.json",
+  "regression_fixed": "analytic-point-field-replay-full-hypercurve-lib.json",
+  "evidence_audit": "analytic-point-field-replay-evidence-audit.md",
+  "performance_claim": {
+    "generic_point_replay": "The formerly >300-second fixture completes in 0.11 seconds in focused release runs. The final broad library target includes Certified contact and overlap replay.",
+    "public_carrier_matrix": {
+      "before_seconds": 198.36914895600057,
+      "after_median_seconds": 1.4154697869962547,
+      "after_runs": 3,
+      "all_counts_and_certainty_match": true,
+      "scope": "One unchanged public API matrix; separate sequential processes, preserved old executable versus final qualified executable. Not a general throughput, allocation, or memory benchmark."
+    }
+  },
+  "remaining": "Parallel/rational, parallel/chord and parallel/parallel common dispatch; finite exterior and retraced domains; normalized public region construction; five promotion failures; eight unqualified expensive tests; broader original architecture goal.",
+  "performance_comparison": "analytic-point-field-replay-comparison.json",
+  "postcommit_repositories": "analytic-point-field-replay-postcommit-repositories.json",
+  "source_verification_after_comparison": {
+    "files_checked": 396,
+    "unchanged": true,
+    "normal_library_sha256": "71ce67bd166701aac15ea302f64d5c2bf15e92468ecc755567a4cecced1ecc23"
+  },
+  "next_work": "analytic-common-dispatch-followup.json"
+}

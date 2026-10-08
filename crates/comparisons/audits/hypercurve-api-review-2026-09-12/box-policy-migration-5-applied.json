@@ -1,0 +1,31 @@
+[
+  {
+    "file": "hypercurve/tests/hypercurve_contour.rs",
+    "before_sha256": "4f755c4db5a81c88b7cf294b681a81be19d39af6d91ab461c98e31d83c62d14a",
+    "after_sha256": "f2adab28e9f92cd1980fb9682ab854f6313af7d8396a082d5be3350c95a8e239",
+    "deletions": [
+      {
+        "byte_start": 5123,
+        "byte_end": 5132,
+        "old": ", &policy"
+      }
+    ]
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_curve_string.rs",
+    "before_sha256": "0b1d44df077e15477dfa0889116cb7082720e8f2e5f943e6e76a22f82ec5cce5",
+    "after_sha256": "29bab382aa356f32bf5bef905b70125b6f9a60c3679ee72fd3a1c0aba42d61ec",
+    "deletions": [
+      {
+        "byte_start": 3307,
+        "byte_end": 3318,
+        "old": ", &policy()"
+      },
+      {
+        "byte_start": 3868,
+        "byte_end": 3879,
+        "old": ", &policy()"
+      }
+    ]
+  }
+]

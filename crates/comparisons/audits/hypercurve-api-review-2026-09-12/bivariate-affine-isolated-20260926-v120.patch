@@ -1,0 +1,419 @@
+--- a/src/bezier_offset.rs
++++ b/src/bezier_offset.rs
+@@ -3270,48 +3270,11 @@
+ }
+ 
+ fn bivariate_complement_second_parameter(polynomial: &BivariatePolynomial) -> BivariatePolynomial {
+-    bivariate_affine_second_parameter(polynomial, &Real::from(-1_i8), &Real::one())
+-}
+-
+-/// Substitutes `offset + scale * second_parameter` into the second axis.
+-///
+-/// Keeping this small power-basis compositor shared by complement and
+-/// selected-fiber translation avoids projecting a locally selected scalar
+-/// merely to apply an exact affine parameter-chart change.
+-fn bivariate_affine_second_parameter(
+-    polynomial: &BivariatePolynomial,
+-    scale: &Real,
+-    offset: &Real,
+-) -> BivariatePolynomial {
+-    let degree = polynomial
+-        .coefficients
+-        .iter()
+-        .map(|row| row.len().saturating_sub(1))
+-        .max()
+-        .unwrap_or(0);
+-    let mut complement_powers = Vec::with_capacity(degree + 1);
+-    complement_powers.push(vec![Real::one()]);
+-    for power in 1..=degree {
+-        complement_powers.push(polynomial_multiply(
+-            &complement_powers[power - 1],
+-            &[offset.clone(), scale.clone()],
+-        ));
+-    }
+-    BivariatePolynomial::new(
+-        polynomial
+-            .coefficients
+-            .iter()
+-            .map(|row| {
+-                let mut complemented = vec![Real::zero(); row.len()];
+-                for (source_power, coefficient) in row.iter().enumerate() {
+-                    for (target_power, factor) in complement_powers[source_power].iter().enumerate()
+-                    {
+-                        complemented[target_power] += coefficient * factor;
+-                    }
+-                }
+-                complemented
+-            })
+-            .collect(),
++    polynomial.substitute_affine(
++        &Real::one(),
++        &Real::zero(),
++        &Real::from(-1_i8),
++        &Real::one(),
+     )
+ }
+ 
+@@ -4885,8 +4848,9 @@
+         let inverse_scale = (Real::one() / scale)?;
+         let inverse_offset = ((-offset.clone()) / scale)?;
+         let authority = BezierAlgebraicSelectedFiberAuthority2::new(
+-            bivariate_affine_second_parameter(
+-                &self.data.authority.data.incidence,
++            self.data.authority.data.incidence.substitute_affine(
++                &Real::one(),
++                &Real::zero(),
+                 &inverse_scale,
+                 &inverse_offset,
+             ),
+@@ -107509,13 +107473,11 @@
+             BezierParameter2::Algebraic(parameter) => parameter,
+             BezierParameter2::Exact(value) => return sign_at_exact_retained(&value, &latest),
+         };
+-        let restricted = bivariate_restrict_to_box_bounds(
+-            predicate,
++        let restricted = predicate.substitute_affine(
++            &(retained_refined.interval().end() - retained_refined.interval().start()),
+             retained_refined.interval().start(),
+-            retained_refined.interval().end(),
++            &(&latest.upper - &latest.lower),
+             &latest.lower,
+-            &latest.upper,
+-            &CurveContext::STRICT,
+         );
+         if let Some(sign) =
+             bivariate_unit_square_strict_bernstein_sign(&restricted, &CurveContext::STRICT)?
+@@ -107719,13 +107681,11 @@
+             old_first == &refined_first && old_second == &refined_second
+         });
+         previous = Some((refined_first.clone(), refined_second.clone()));
+-        let restricted = bivariate_restrict_to_box_bounds(
+-            predicate,
++        let restricted = predicate.substitute_affine(
++            &(&refined_first.root().upper - &refined_first.root().lower),
+             &refined_first.root().lower,
+-            &refined_first.root().upper,
++            &(&refined_second.root().upper - &refined_second.root().lower),
+             &refined_second.root().lower,
+-            &refined_second.root().upper,
+-            strict,
+         );
+         if let Some(sign) = bivariate_unit_square_strict_bernstein_sign(&restricted, strict)? {
+             return Ok(Classification::Decided(sign));
+@@ -108021,13 +107981,11 @@
+             steps = next_steps(steps)?;
+             continue;
+         }
+-        let restricted_source = bivariate_restrict_to_box_bounds(
+-            &source_incidence,
++        let restricted_source = source_incidence.substitute_affine(
++            &(alpha.interval().end() - alpha.interval().start()),
+             alpha.interval().start(),
+-            alpha.interval().end(),
++            &(&source.root().upper - &source.root().lower),
+             &source.root().lower,
+-            &source.root().upper,
+-            &strict,
+         );
+         let source_lower = univariate_unit_interval_strict_bernstein_sign(
+             &bivariate_specialize_second(&restricted_source, &Real::zero()),
+@@ -108371,13 +108329,11 @@
+             }
+             previous = Some((alpha.clone(), source.clone(), image.clone()));
+ 
+-            let restricted_incidence = bivariate_restrict_to_box_bounds(
+-                projected_incidence,
++            let restricted_incidence = projected_incidence.substitute_affine(
++                &(&source.root().upper - &source.root().lower),
+                 &source.root().lower,
+-                &source.root().upper,
++                &(&image.root().upper - &image.root().lower),
+                 &image.root().lower,
+-                &image.root().upper,
+-                strict,
+             );
+             if bivariate_unit_square_strict_bernstein_sign(&restricted_incidence, strict)?.is_some()
+             {
+@@ -108412,13 +108368,11 @@
+                 continue;
+             }
+ 
+-            let source_incidence = bivariate_restrict_to_box_bounds(
+-                &source.data.authority.data.incidence,
++            let source_incidence = source.data.authority.data.incidence.substitute_affine(
++                &(alpha.interval().end() - alpha.interval().start()),
+                 alpha.interval().start(),
+-                alpha.interval().end(),
++                &(&source.root().upper - &source.root().lower),
+                 &source.root().lower,
+-                &source.root().upper,
+-                strict,
+             );
+             let source_lower = univariate_unit_interval_strict_bernstein_sign(
+                 &bivariate_specialize_second(&source_incidence, &Real::zero()),
+@@ -124433,75 +124387,15 @@
+     polynomial: &BivariatePolynomial,
+     first_parameter: &BezierParameter2,
+     second_parameter: &BezierParameter2,
+-    policy: &CurveContext,
+ ) -> BivariatePolynomial {
+-    let (first_start, first_end) = match first_parameter {
+-        BezierParameter2::Exact(parameter) => (parameter.clone(), parameter.clone()),
+-        BezierParameter2::Algebraic(parameter) => (
+-            parameter.interval().start().clone(),
+-            parameter.interval().end().clone(),
+-        ),
+-    };
+-    let (second_start, second_end) = match second_parameter {
+-        BezierParameter2::Exact(parameter) => (parameter.clone(), parameter.clone()),
+-        BezierParameter2::Algebraic(parameter) => (
+-            parameter.interval().start().clone(),
+-            parameter.interval().end().clone(),
+-        ),
+-    };
+-    bivariate_restrict_to_box_bounds(
+-        polynomial,
+-        &first_start,
+-        &first_end,
+-        &second_start,
+-        &second_end,
+-        policy,
++    let first = RealInterval::from_parameter(first_parameter);
++    let second = RealInterval::from_parameter(second_parameter);
++    polynomial.substitute_affine(
++        &(&first.upper - &first.lower),
++        &first.lower,
++        &(&second.upper - &second.lower),
++        &second.lower,
+     )
+-}
+-
+-fn bivariate_restrict_to_box_bounds(
+-    polynomial: &BivariatePolynomial,
+-    first_start: &Real,
+-    first_end: &Real,
+-    second_start: &Real,
+-    second_end: &Real,
+-    policy: &CurveContext,
+-) -> BivariatePolynomial {
+-    let first_degree = polynomial.coefficients.len().saturating_sub(1);
+-    let second_degree = polynomial
+-        .coefficients
+-        .iter()
+-        .map(Vec::len)
+-        .max()
+-        .unwrap_or_default()
+-        .saturating_sub(1);
+-    let first_powers = polynomial_powers(
+-        &[first_start.clone(), first_end - first_start],
+-        first_degree,
+-    );
+-    let second_powers = polynomial_powers(
+-        &[second_start.clone(), second_end - second_start],
+-        second_degree,
+-    );
+-    let mut restricted = BivariatePolynomial::new(vec![vec![Real::zero()]]);
+-    for (first_power, row) in polynomial.coefficients.iter().enumerate() {
+-        for (second_power, coefficient) in row.iter().enumerate() {
+-            if matches!(real_sign(coefficient, policy), Some(RealSign::Zero)) {
+-                continue;
+-            }
+-            restricted = bivariate_add(
+-                &restricted,
+-                &bivariate_scale(
+-                    bivariate_outer_product(
+-                        &first_powers[first_power],
+-                        &second_powers[second_power],
+-                    ),
+-                    coefficient,
+-                ),
+-            );
+-        }
+-    }
+-    restricted
+ }
+ 
+ fn rational_interval_bernstein_strict_sign(controls: Vec<[HyperRational; 2]>) -> Option<RealSign> {
+@@ -124575,13 +124469,11 @@
+             Classification::Decided(bounds) => bounds,
+             Classification::Uncertain(_) => return Ok(None),
+         };
+-        let restricted = bivariate_restrict_to_box_bounds(
+-            polynomial,
++        let restricted = polynomial.substitute_affine(
++            &(retained.interval().end() - retained.interval().start()),
+             retained.interval().start(),
+-            retained.interval().end(),
++            &(&fiber_upper - &fiber_lower),
+             &fiber_lower,
+-            &fiber_upper,
+-            policy,
+         );
+         if let Some(sign) = bivariate_unit_square_strict_bernstein_sign(&restricted, policy)? {
+             return Ok(Some(sign));
+@@ -124600,13 +124492,11 @@
+             Classification::Decided(bounds) => bounds,
+             Classification::Uncertain(_) => return Ok(None),
+         };
+-        let restricted = bivariate_restrict_to_box_bounds(
+-            polynomial,
++        let restricted = polynomial.substitute_affine(
++            &Real::one(),
+             &Real::zero(),
+-            &Real::one(),
++            &(&fiber_upper - &fiber_lower),
+             &fiber_lower,
+-            &fiber_upper,
+-            policy,
+         );
+         let fiber_degree = restricted
+             .coefficients
+@@ -124785,8 +124675,21 @@
+     second_parameter: &BezierParameter2,
+     policy: &CurveContext,
+ ) -> CurveResult<Option<RealSign>> {
++    // Horner enclosures need only linear work in the coefficient grid. Try
++    // them before expanding a fresh polynomial in the isolator's affine chart.
++    // An unresolved enclosure leaves Bernstein and algebraic replay intact.
++    if let Some(sign) = policy.bounded_exact_predicate_pass(|| {
++        RealInterval::evaluate_bivariate_power_basis(
++            polynomial,
++            &RealInterval::from_parameter(first_parameter),
++            &RealInterval::from_parameter(second_parameter),
++        )
++        .and_then(|interval| interval.strict_nonzero_sign())
++    }) {
++        return Ok(Some(sign));
++    }
+     bivariate_unit_square_strict_bernstein_sign(
+-        &bivariate_restrict_to_parameter_box(polynomial, first_parameter, second_parameter, policy),
++        &bivariate_restrict_to_parameter_box(polynomial, first_parameter, second_parameter),
+         policy,
+     )
+ }
+@@ -124929,9 +124832,9 @@
+         }
+         previous_box = Some((refined_first.clone(), refined_second.clone()));
+         let restricted_first =
+-            bivariate_restrict_to_parameter_box(first, &refined_first, &refined_second, policy);
++            bivariate_restrict_to_parameter_box(first, &refined_first, &refined_second);
+         let restricted_second =
+-            bivariate_restrict_to_parameter_box(second, &refined_first, &refined_second, policy);
++            bivariate_restrict_to_parameter_box(second, &refined_first, &refined_second);
+         let certified = bivariate_unit_square_has_preconditioned_poincare_miranda_root(
+             &restricted_first,
+             &restricted_second,
+@@ -129843,15 +129746,15 @@
+             ParameterComponentMap2::Identity => {}
+             ParameterComponentMap2::Affine(mapping) => {
+                 let polynomial = match axis {
+-                    CurveResultantParameter::First => {
+-                        bivariate_swap_parameters(&bivariate_affine_second_parameter(
+-                            &bivariate_swap_parameters(&transformed),
+-                            &mapping.scale,
+-                            &mapping.offset,
+-                        ))
+-                    }
+-                    CurveResultantParameter::Second => bivariate_affine_second_parameter(
+-                        &transformed,
++                    CurveResultantParameter::First => transformed.substitute_affine(
++                        &mapping.scale,
++                        &mapping.offset,
++                        &Real::one(),
++                        &Real::zero(),
++                    ),
++                    CurveResultantParameter::Second => transformed.substitute_affine(
++                        &Real::one(),
++                        &Real::zero(),
+                         &mapping.scale,
+                         &mapping.offset,
+                     ),
+@@ -188722,6 +188625,88 @@
+     }
+ 
+     #[test]
++    fn bivariate_parameter_box_sign_keeps_boundary_zeros_and_bernstein_fallback() {
++        let half = (Real::one() / Real::from(2_i8)).unwrap();
++        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
++            let Classification::Decided(polynomial) =
++                BezierParameterPolynomial::try_new_power_basis(
++                    vec![-half.clone(), Real::zero(), Real::one()],
++                    &policy,
++                )
++                .unwrap()
++            else {
++                panic!("the quadratic must construct");
++            };
++            let Classification::Decided(interval) =
++                BezierParameterInterval::try_new(Real::zero(), Real::one(), &policy).unwrap()
++            else {
++                panic!("the unit isolator must construct");
++            };
++            let Classification::Decided(root) =
++                BezierAlgebraicParameter2::try_isolate(polynomial, interval, &policy).unwrap()
++            else {
++                panic!("the positive quadratic root must isolate");
++            };
++            let parameter = BezierParameter2::Algebraic(root);
++            let positive = BivariatePolynomial::new(vec![
++                vec![Real::one(), Real::one()],
++                vec![Real::one(), Real::one()],
++            ]);
++            // 2-3*x+2*x^2 has positive Bernstein controls [2, 1/2, 1],
++            // although interval Horner evaluation over [0,1] contains zero.
++            let bernstein_only = BivariatePolynomial::new(vec![
++                vec![Real::from(2_i8)],
++                vec![Real::from(-3_i8)],
++                vec![Real::from(2_i8)],
++            ]);
++            let unit = RealInterval::from_parameter(&parameter);
++            assert_eq!(
++                RealInterval::evaluate_bivariate_power_basis(&bernstein_only, &unit, &unit)
++                    .and_then(|interval| interval.strict_nonzero_sign()),
++                None,
++            );
++            for positive in [positive, bernstein_only] {
++                for (scale, sign) in [(1_i8, RealSign::Positive), (-1, RealSign::Negative)] {
++                    assert_eq!(
++                        bivariate_parameter_box_strict_sign(
++                            &bivariate_scale(positive.clone(), &Real::from(scale)),
++                            &parameter,
++                            &parameter,
++                            &policy,
++                        )
++                        .unwrap(),
++                        Some(sign),
++                    );
++                }
++            }
++            // Neither boundary zeros nor a diagonal containing the selected
++            // pair can supply the strict sign required to reject a contact.
++            for polynomial in [
++                BivariatePolynomial::new(vec![vec![Real::zero(), Real::one()]]),
++                BivariatePolynomial::new(vec![vec![Real::zero(), -Real::one()], vec![Real::one()]]),
++            ] {
++                assert_eq!(
++                    bivariate_parameter_box_strict_sign(
++                        &polynomial,
++                        &parameter,
++                        &parameter,
++                        &policy,
++                    )
++                    .unwrap(),
++                    None,
++                );
++            }
++            let exact = BezierParameter2::Exact(Real::pi());
++            let exact_zero = BivariatePolynomial::new(vec![vec![-Real::pi()], vec![Real::one()]]);
++            assert_eq!(
++                bivariate_parameter_box_strict_sign(&exact_zero, &exact, &parameter, &policy)
++                    .unwrap(),
++                None,
++            );
++        }
++    }
++
++    #[test]
+     fn poincare_miranda_preconditions_rotated_transverse_system_exactly() {
+         let half = (Real::one() / Real::from(2_i8)).unwrap();
+         // F=(t-1/2)+(u-1/2), G=(t-1/2)-(u-1/2). The zero is transverse and

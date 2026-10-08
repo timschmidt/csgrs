@@ -1,0 +1,15 @@
+{
+  "commits": {
+    "hypercurve": "1daed206b1748b84bfe8e038a1b969c5ea46f703",
+    "hyperbrep": "878fcb441b281ab1b44051ca4420b28092c3c2ed",
+    "hypersolve": "c96ed424fa6de0ea889652315095e7c7a17aade9"
+  },
+  "candidate_files": [
+    "src/bezier_parameter.rs",
+    "src/bezier_split.rs",
+    "src/rational_bezier_general.rs"
+  ],
+  "excluded_working_file": "src/bezier_offset.rs",
+  "excluded_working_file_scope": "Unfinished mapped-point consolidation and required normal-sheet regression remain outside this commit; the snapshot builds parent offset source.",
+  "pinned_dependencies": "finite-parallel-pruning-isolated-sources.json"
+}

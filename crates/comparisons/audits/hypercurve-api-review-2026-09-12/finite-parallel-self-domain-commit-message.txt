@@ -1,0 +1,11 @@
+Retain finite analytic self-intersection evidence
+
+Route rational and analytic self queries through the same lazy intersection
+context. Retain finite contacts and overlap correspondences with original-chart
+off-diagonal filters, including chart changes and selected normal sheets.
+Preserve operation-owned whole-unit discovery reuse under its domain and policy
+premises. Remove the separate region self adapter and cache; rename pair blocker
+introspection and update controlled callers without compatibility APIs.
+
+Add regressions for exterior zero/nonzero parallel self contacts, selected
+endpoint authority, cache domain scope, and analytic component correspondence.

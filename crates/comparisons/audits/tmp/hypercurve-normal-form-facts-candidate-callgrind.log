@@ -1,0 +1,22 @@
+==51== Callgrind, a call-graph generating cache profiler
+==51== Copyright (C) 2002-2017, and GNU GPL'd, by Josef Weidendorfer et al.
+==51== Using Valgrind-3.27.1 and LibVEX; rerun with -h for copyright info
+==51== Command: /tmp/hypercurve-normal-form-facts-parameter-candidate-benchmark
+==51== 
+==51== For interactive control, run 'callgrind_control -h'.
+bezier_parameter_normal_form_zero_cold: 20000 iterations in 12.120494439s (606.024µs/iter), equal=20000
+bezier_parameter_normal_form_zero_reused: 20000 iterations in 56.528278ms (2.826µs/iter), equal=20000
+bezier_parameter_bernstein_32_to_power: 20000 iterations in 26.405944039s (1.320297ms/iter), degree_checksum=640000
+bezier_algebraic_parameter_sturm: 20000 iterations in 5.125387757s (256.269µs/iter), total=40000
+bezier_algebraic_parameter_refined_ordering: 10000 iterations in 7.386210272s (738.621µs/iter), ordered=10000
+bezier_algebraic_parameter_refined_even_root_ordering: 10000 iterations in 25.383398337s (2.538339ms/iter), ordered=10000
+bezier_parameter_quintic_unit_isolation: 2000 iterations in 4.041799628s (2.020899ms/iter), isolated=10000, sturm_builds=1, interval_counts=19, bisections=9, rational_refinements=0, max_depth=5
+bezier_parameter_boundary_root_isolation: 2000 iterations in 6.001784288s (3.000892ms/iter), isolated=2000, interval_counts=263, bisections=130, max_depth=130
+bezier_algebraic_parameter_exact_rational_reconstruction: 500000 iterations in 299.465078ms (598ns/iter), reconstructed=500000
+bezier_algebraic_point_tangent_image: 20000 iterations in 3.083722021s (154.186µs/iter), transformed=40000
+rational_bezier_algebraic_point_tangent_image: 20000 iterations in 102.318412ms (5.115µs/iter), transformed=40000
+==51== 
+==51== Events    : Ir
+==51== Collected : 18771343303
+==51== 
+==51== I   refs:      18,771,343,303

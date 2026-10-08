@@ -1,0 +1,235 @@
+{
+  "schema": "hypercurve.performance-checkpoint.v1",
+  "captured_on": "2026-08-02",
+  "checkpoint": "exact algebraic-cusp subfragment winding",
+  "source_revision": "026addb902f101ace68b455c44ea15212ad0a8c9",
+  "comparison_revision": "685e3efc76bf1ba26effaaf3f9d8ef28e991dd61",
+  "previous_checkpoint": "2026-08-02-algebraic-cusp-subfragments.json",
+  "scope": {
+    "included": [
+      "policy-bound exact range membership for retained algebraic-cusp semicircle cuts",
+      "closed boundary incidence and half-open winding ownership for forward and reversed subfragments",
+      "one shared rational/cusp reduction authority for contacts and optional local-parameter evidence",
+      "map-free preservation of the existing full-semicircle winding hot path",
+      "focused capability, matched historical, competitive, allocation, release-size, and static-callgraph evidence"
+    ],
+    "excluded": [
+      "CurveRegion2 arrangement admission",
+      "topology-backed equality between unrelated irrational contact proofs",
+      "selected positive-dimensional analytic-parallel radical replay",
+      "finite projection or export",
+      "fillet and chamfer solving",
+      "hypermesh"
+    ]
+  },
+  "mathematical_contract": {
+    "range": "Every membership decision compares the queried exact cut against both retained fragment cuts under the fragment's construction policy. Endpoint inclusion is explicit per call and policy mismatch is an error.",
+    "boundary": "A ray origin on either retained fragment endpoint is Boundary even when that endpoint is excluded from half-open crossing ownership. Incidence on the unused part of the supporting circle is not a fragment boundary.",
+    "ownership": "Forward traversal includes its start and excludes its end; reversed traversal excludes the ascending-range start, includes the ascending-range end, and negates the contact orientation. This assigns every split vertex to exactly one adjacent traversal crossing.",
+    "interaction_authority": "Rational contacts and the optional monotone semicircle parameter map now reuse one rational system, selected-cusp projection, reduced incidence, and lazily reduced diameter data. Ordinary callers request contacts only. A retained map is built only when a subfragment has an interior contact that must be ordered against its cuts.",
+    "policy": "STRICT and APPROXIMATE_512 execute the same exact predicates. Comparisons that remain unresolved at Hyperlimit's 512-bit boundary return Ordering uncertainty in STRICT and consume the policy terminal before equality in APPROXIMATE_512.",
+    "representation": "The retained subfragment remains one pointer. No endpoint field element, primitive element for independent roots, sampled tolerance, or finite approximation is introduced."
+  },
+  "capability": {
+    "comparison_revision": "The compact subfragment could be constructed, reversed, sampled, and bounded, but only the complete supporting semicircle could contribute winding.",
+    "source_revision": "A retained partial or full semicircle now supplies exact policy-aware ray boundary classification and half-open winding, including reversal, without materializing algebraic endpoints.",
+    "fixtures": [
+      "the upper-left quarter represented by the ascending cut range [1/2,1]",
+      "right, left, and upward rays through the circle center in forward traversal",
+      "left and upward rays through the circle center in reversed traversal",
+      "a ray origin on the supporting-circle start outside the retained subfragment",
+      "ray origins on both retained subfragment endpoints",
+      "all cases under STRICT and APPROXIMATE_512"
+    ],
+    "intentional_boundary": "The carrier remains crate-internal until cross-carrier topology vertices provide authoritative equality for unrelated irrational evidence."
+  },
+  "benchmark": {
+    "host": "AMD Ryzen 7 5800X3D",
+    "toolchain": "rustc 1.97.0, LLVM 22.1.6, x86_64-unknown-linux-gnu",
+    "focused_subfragment_capability": {
+      "method": "eleven release unit-test processes pinned to CPU 11 under perf stat; the existing overlap/subfragment fixture now additionally executes seven partial-fragment ray classifications under both policies",
+      "command": "taskset -c 11 perf stat -r 11 -e task-clock,cycles,instructions,branches,branch-misses <source-release-lib-test> --quiet --exact bezier_offset::conversion_tests::algebraic_cusp_semicircle_pair_maps_full_partial_and_endpoint_only_overlap",
+      "task_clock_ms": 4.87,
+      "cycles": 15037680,
+      "instructions": 31020431,
+      "branches": 6173158,
+      "branch_misses": 119149,
+      "elapsed_seconds": 0.005477511,
+      "change_from_previous_fixture_percent": {
+        "task_clock": 87.30769,
+        "cycles": 132.84757,
+        "instructions": 177.05516,
+        "branches": 163.03758,
+        "branch_misses": 94.04110,
+        "elapsed": 73.78745
+      },
+      "interpretation": "This is a capability delta, not a matched-path regression: each newly added exact ray query constructs and solves a selected-root/rational contact problem and then orders its interior contacts against retained irrational cuts. The unchanged full-carrier guard below isolates the refactor's hot-path cost."
+    },
+    "matched_full_semicircle_winding_guard": {
+      "method": "equal-length /tmp copies of the exact parent and source release unit-test executables; eleven processes per revision pinned to CPU 11",
+      "command": "taskset -c 11 perf stat -r 11 -e task-clock,cycles,instructions,branches,branch-misses /tmp/hypercurve-{revision}-release-test --quiet --exact bezier_offset::conversion_tests::algebraic_cusp_semicircle_forward_ray_obeys_half_open_winding",
+      "comparison": {
+        "task_clock_ms": 3.80,
+        "cycles": 10877072,
+        "instructions": 24323637,
+        "branches": 4689851,
+        "branch_misses": 69937,
+        "elapsed_seconds": 0.004135035
+      },
+      "source": {
+        "task_clock_ms": 3.76,
+        "cycles": 11072113,
+        "instructions": 24324924,
+        "branches": 4689611,
+        "branch_misses": 71988,
+        "elapsed_seconds": 0.004067875
+      },
+      "change_percent": {
+        "task_clock": -1.05263,
+        "cycles": 1.79314,
+        "instructions": 0.00529,
+        "branches": -0.00512,
+        "branch_misses": 2.93264,
+        "elapsed": -1.62417
+      },
+      "interpretation": "Deterministic work is neutral. The full-semicircle caller requests no parameter map, and matched Heaptrack evidence confirms identical allocation behavior. Sub-millisecond cycle and miss differences are process noise."
+    },
+    "matched_shared_rational_map_guard": {
+      "method": "equal-length parent/source release executables; eleven processes per revision pinned to CPU 11",
+      "command": "taskset -c 11 perf stat -r 11 -e task-clock,cycles,instructions,branches,branch-misses /tmp/hypercurve-{revision}-release-test --quiet --exact bezier_offset::conversion_tests::algebraic_cusp_rational_parameter_map_brackets_an_interior_contact",
+      "comparison": {
+        "task_clock_ms": 1.84,
+        "cycles": 3091986,
+        "instructions": 4815970,
+        "branches": 974987,
+        "branch_misses": 31714,
+        "elapsed_seconds": 0.002274882
+      },
+      "source": {
+        "task_clock_ms": 1.81,
+        "cycles": 2981340,
+        "instructions": 4643477,
+        "branches": 939015,
+        "branch_misses": 31011,
+        "elapsed_seconds": 0.002211469
+      },
+      "change_percent": {
+        "task_clock": -1.63043,
+        "cycles": -3.57848,
+        "instructions": -3.58169,
+        "branches": -3.68949,
+        "branch_misses": -2.21669,
+        "elapsed": -2.78753
+      },
+      "interpretation": "Collapsing separate contact and map construction into one reduced system removes 172,493 instructions and 35,972 branches from the exact two-policy fixture."
+    },
+    "historical_and_competitive_controls": {
+      "adaptive_method": "three current all-feature comparative processes per group, each with eleven calibrated 100 ms samples pinned to CPU 11; reported Hypercurve values are medians of process medians",
+      "exact_open_cubic_offset_ns": 30375601.2,
+      "previous_exact_open_cubic_offset_ns": 29272007.2,
+      "adaptive_open_cubic_change_percent": 3.77013,
+      "curvo_open_cubic_ns": 8366.5,
+      "native_line_arc_offset_ns": 19650.2,
+      "previous_native_line_arc_offset_ns": 17883.3,
+      "adaptive_line_arc_change_percent": 9.88017,
+      "cavalier_line_arc_ns": 933.0,
+      "matched_code_guard": {
+        "method": "isolated parent and source worktrees rebuilt with the same release target; fixed-work parent/source perf runs use equal-length /tmp executable paths",
+        "text_section_bytes": 6464903,
+        "parent_text_sha256": "3eae17f4e9031f00ee418abde4855977115c67e2f49ee867c7598f11f5a84741",
+        "source_text_sha256": "3eae17f4e9031f00ee418abde4855977115c67e2f49ee867c7598f11f5a84741",
+        "line_arc_fixed_iterations": 100000,
+        "line_arc_parent_instructions": 21429937526,
+        "line_arc_source_instructions": 21429895822,
+        "line_arc_instruction_change_percent": -0.00019,
+        "line_arc_cycle_change_percent": -0.19008,
+        "open_cubic_fixed_iterations": 20,
+        "open_cubic_parent_instructions": 6384013106,
+        "open_cubic_source_instructions": 6384013184,
+        "open_cubic_instruction_change_percent": 0.00002,
+        "open_cubic_adjacent_cycle_change_percent": 0.84859
+      },
+      "interpretation": "The initially alarming adaptive shifts are measurement drift: the complete executable .text sections are byte-identical, and fixed-work retired instructions are identical within startup noise. Current competitor numbers remain throughput sentinels only; neither competitor provides canonical-Real exactness, selected-root contact evidence, or STRICT/APPROXIMATE_512 policy semantics."
+    }
+  },
+  "memory": {
+    "matched_full_semicircle_guard": {
+      "tool": "Heaptrack direct release-unit-test traces with equal-length executable paths",
+      "comparison_profile": "/tmp/hypercurve-full-cusp-winding-685e3ef.zst",
+      "source_profile": "/tmp/hypercurve-full-cusp-winding-equalpath-026addb.zst",
+      "comparison_allocation_calls": 47599,
+      "source_allocation_calls": 47599,
+      "comparison_temporary_allocations": 1519,
+      "source_temporary_allocations": 1519,
+      "comparison_peak_heap": "172.68 KiB",
+      "source_peak_heap": "172.68 KiB",
+      "interpretation": "The helper extraction and optional-map return add no measured allocation, temporary, or peak-heap cost to ordinary full-semicircle winding."
+    },
+    "subfragment_capability_profile": {
+      "tool": "Heaptrack direct release-unit-test trace",
+      "profile": "/tmp/hypercurve-cusp-subfragment-winding-026addb.zst",
+      "allocation_calls": 57355,
+      "temporary_allocations": 1474,
+      "peak_heap": "293.04 KiB",
+      "instrumented_runtime_seconds": 0.073,
+      "interpretation": "The fixture includes all prior overlap/subfragment work plus seven new ray classifications under both policies. Repeated exact polynomial projection dominates; the retained fragment itself remains one Arc pointer."
+    },
+    "retained_fragment_handle_bytes": 8
+  },
+  "release_size": {
+    "representative_production": {
+      "method": "all-feature curve_region_boolean_batch release executable compared with the preceding checkpoint",
+      "source_file_bytes": 7875216,
+      "comparison_file_bytes": 7875216,
+      "source_aggregate_text_bytes": 5961398,
+      "comparison_aggregate_text_bytes": 5961398,
+      "source_actual_text_section_bytes": 4436295,
+      "comparison_actual_text_section_bytes": 4436295,
+      "interpretation": "The not-yet-admitted subfragment winding path is dead-stripped; the representative production image remains exactly size-neutral."
+    },
+    "comparative_control": {
+      "source_file_bytes": 11084640,
+      "comparison_file_bytes": 11084640,
+      "source_aggregate_text_bytes": 8318355,
+      "comparison_aggregate_text_bytes": 8318355,
+      "source_actual_text_section_bytes": 6464903,
+      "comparison_actual_text_section_bytes": 6464903,
+      "actual_text_sha256": "3eae17f4e9031f00ee418abde4855977115c67e2f49ee867c7598f11f5a84741",
+      "interpretation": "The isolated parent/source comparative builds have byte-identical executable code, independently disproving a code-generated interpretation of the adaptive timing drift."
+    }
+  },
+  "static_callgraph": {
+    "tool": "tools/hyper-callgraph",
+    "command": "tools/hyper-callgraph/target/release/hyper-callgraph --root /home/tim/Documents/GitHub/workspace --out-dir /tmp/hypercurve-callgraph-cusp-subfragment-winding-026addb-clean --crate-name hypercurve,hypersolve --include-examples --include-tests --include-bench --include-fuzz --format json",
+    "discovered_crates": 10,
+    "nodes": 32153,
+    "previous_nodes": 32137,
+    "edges": 59478,
+    "previous_edges": 59453,
+    "confirmed_paths": [
+      "BezierAlgebraicCuspSemicircleFragment2::forward_ray_winding_delta -> BezierAlgebraicCuspSemicircle2::forward_ray_rational_contacts",
+      "BezierAlgebraicCuspSemicircle2::forward_ray_rational_contacts -> BezierAlgebraicCuspSemicircle2::rational_intersections_internal",
+      "BezierAlgebraicCuspSemicircle2::rational_intersections -> BezierAlgebraicCuspSemicircle2::rational_intersections_internal",
+      "BezierAlgebraicCuspSemicircleFragment2::contains_parameter -> BezierAlgebraicCuspSemicircleParameter2::cmp_by_refinement"
+    ]
+  },
+  "verification": {
+    "focused_fixtures": "passed retained partial-fragment forward/reversed winding, excluded-support incidence, both retained endpoints, and shared rational-map construction under STRICT and APPROXIMATE_512",
+    "all_feature_library": "passed: 368 tests",
+    "clippy_all_features": "passed all targets with -D warnings",
+    "clippy_no_default_features": "passed all targets with -D warnings",
+    "release_builds": "passed all-feature focused unit, comparative, and curve_region_boolean_batch builds",
+    "format": "passed",
+    "diff_check": "passed"
+  },
+  "remaining": [
+    "intern arrangement topology vertices so unrelated exact contact proofs at one point share equality authority",
+    "admit the algebraic-cusp subfragment to CurveRegion2 pair dispatch, splitting, winding, and traversal",
+    "add line/ray-specific exact contact fast paths if arrangement profiles confirm general resultant projection dominates",
+    "tighten conservative subfragment bounds without materializing algebraic endpoints",
+    "replay selected positive-dimensional analytic-parallel/circle components into exact overlap ranges",
+    "route general algebraic U-turn and distinct-carrier joins through the authoritative raw-offset graph",
+    "complete finite projection/export and solver-driven fillet/chamfer work",
+    "continue reducing exact polynomial and bigint allocation churn"
+  ]
+}

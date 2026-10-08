@@ -1,0 +1,20 @@
+{
+  "source_manifest": "circle-contact-evidence-20260926-v200-sources.json",
+  "build_source_manifest": "circle-endpoint-source-20260926-v202-sources.json",
+  "binary": {
+    "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/circle-contact-evidence-20260926-v200-hypercurve",
+    "sha256": "f9a3bafdbd5a1cea7ff9f17afe8430d2a8df560b35b44d3a1882ae0e5b74457f"
+  },
+  "diagnostic_only": true,
+  "all_processes_reaped": true,
+  "command": [
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/circle-contact-evidence-20260926-v200-hypercurve",
+    "--exact",
+    "curve_region_boolean::certified_successor_tests::selected_parallel_arrangement_splits_interior_cusps",
+    "--nocapture",
+    "--test-threads=1"
+  ],
+  "returncode": "timeout",
+  "elapsed_seconds": 30.436072231037542,
+  "all_sources_unchanged": true
+}

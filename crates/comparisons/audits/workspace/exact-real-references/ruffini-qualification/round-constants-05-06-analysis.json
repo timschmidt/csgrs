@@ -1,0 +1,27 @@
+{
+  "sourceSha256": "08b2082bf33463efca28e56ab7d3f0831febbc2dcbc1f75c28c369ab6fe76382",
+  "files": [
+    {
+      "name": "constants05",
+      "sha256": "210390dced4d61234d3f0eb82e774ebac17dad27a1adaf20a14b12dbf85b54b5",
+      "physicalLines": 497,
+      "coordinates": 7,
+      "fullRounds": 8,
+      "partialRounds": 63,
+      "finalNewline": false,
+      "canonicalDecimalAndRange": true
+    },
+    {
+      "name": "constants06",
+      "sha256": "18e5e9555229f746ab5a47e3d016109e5101dc04b41759f84a429107c575501a",
+      "physicalLines": 576,
+      "coordinates": 8,
+      "fullRounds": 8,
+      "partialRounds": 64,
+      "finalNewline": false,
+      "canonicalDecimalAndRange": true
+    }
+  ],
+  "totalEntries": 1073,
+  "scope": "constants05 and constants06 already read in full; dimension/format/range checks only, not generating-procedure or cryptographic qualification and not unread-file credit"
+}

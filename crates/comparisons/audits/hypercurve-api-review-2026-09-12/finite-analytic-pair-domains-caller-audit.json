@@ -1,0 +1,47 @@
+{
+  "records": [
+    {
+      "command": [
+        "rg",
+        "-n",
+        "\\.point_incidence\\(",
+        "hypercurve",
+        "hyperbrep",
+        "hypergraphics",
+        "hypertri",
+        "hypermesh",
+        "synaps-cad",
+        "hypersolve",
+        "hyperlimit",
+        "-g",
+        "*.rs",
+        "-g",
+        "!**/target/**"
+      ],
+      "returncode": 0,
+      "output": "hyperbrep/src/geometry.rs:9354:    match projected.point_incidence(&query, &CurveContext::STRICT)? {\nhypercurve/benches/rational_bezier.rs:129:        .point_incidence(curve.start(), &policy)\nhypercurve/benches/rational_bezier.rs:232:            .point_incidence(black_box(curve.start()), &policy)\nhypercurve/tests/hypercurve_bezier_fit_offset.rs:1234:                .point_incidence(&p(1, 1), &CurveParameterRange2::unit(), &policy)\nhypercurve/tests/hypercurve_bezier_fit_offset.rs:1242:                .point_incidence(&p(1, -1), &CurveParameterRange2::unit(), &policy)\nhypercurve/tests/hypercurve_bezier_fit_offset.rs:1260:                .point_incidence(&p(1, -1), &CurveParameterRange2::unit(), &policy)\nhypercurve/tests/hypercurve_bezier_fit_offset.rs:1268:                .point_incidence(&p(1, 1), &CurveParameterRange2::unit(), &policy)\nhypercurve/tests/hypercurve_bezier_fit_offset.rs:1282:        parallel.point_incidence(\nhypercurve/tests/hypercurve_bezier_fit_offset.rs:1292:        parallel.point_incidence(\nhypercurve/tests/hypercurve_bezier_fit_offset.rs:1323:                    parallel.point_incidence(&point, &range, &policy).unwrap()\nhypercurve/tests/hypercurve_bezier_fit_offset.rs:1372:            .point_incidence(&p(1, 1), &CurveParameterRange2::unit(), &policy)\nhypercurve/tests/hypercurve_bezier_fit_offset.rs:1384:                .point_incidence(&p(1, -1), &CurveParameterRange2::unit(), &policy)\nhypercurve/tests/hypercurve_bezier_fit_offset.rs:1400:                .point_incidence(\nhypercurve/tests/hypercurve_bezier_fit_offset.rs:1412:                .point_incidence(\nhypercurve/tests/hypercurve_bezier_fit_offset.rs:1432:                .point_incidence(&p(0, 0), &CurveParameterRange2::unit(), &policy)\nhypercurve/tests/hypercurve_bezier_fit_offset.rs:1438:                .point_incidence(&p(1, 0), &CurveParameterRange2::unit(), &policy)\nhypercurve/tests/hypercurve_bezier_fit_offset.rs:1465:                .point_incidence(&p(0, 0), &CurveParameterRange2::unit(), &policy)\nhypercurve/tests/hypercurve_bezier_fit_offset.rs:1471:                .point_incidence(&p(0, 1), &CurveParameterRange2::unit(), &policy)\nhypercurve/tests/hypercurve_bezier_fit_offset.rs:1477:                .point_incidence(&p(0, 0), &CurveParameterRange2::unit(), &policy)\nhypercurve/tests/hypercurve_bezier_fit_offset.rs:1485:                .point_incidence(&p(3, 4), &CurveParameterRange2::unit(), &policy)\nhypercurve/tests/hypercurve_rational_bezier.rs:556:        curve.point_incidence(&midpoint, &policy).unwrap(),\nhypercurve/tests/hypercurve_rational_bezier.rs:570:    let incidence = curve.point_incidence(&query, &policy).unwrap();\nhypercurve/tests/hypercurve_rational_bezier.rs:586:        parabola.point_incidence(&p(0, 0), &policy).unwrap(),\nhypercurve/tests/hypercurve_rational_bezier.rs:590:        parabola.point_incidence(&p(1, 1), &policy).unwrap(),\nhypercurve/tests/hypercurve_rational_bezier.rs:597:        constant.point_incidence(&p(2, 3), &policy).unwrap(),\nhypercurve/tests/hypercurve_rational_bezier.rs:1281:        first.point_incidence(second.start(), &policy).unwrap(),\nhypercurve/tests/hypercurve_rational_bezier.rs:1285:        second.point_incidence(first.end(), &policy).unwrap(),\nhypercurve/src/rational_bezier_general.rs:2760:        self.point_incidence(point, policy)\nhypercurve/src/rational_bezier_general.rs:10734:                            branch.point_incidence(branch.start(), &policy).unwrap(),\nhypercurve/src/rational_bezier_general.rs:10792:                        point.point_incidence(point.start(), &policy).unwrap(),\nhypercurve/src/bezier_offset.rs:111891:            .point_incidence(point, range, policy)?\nhypercurve/src/bezier_offset.rs:119208:                let incidence = match self.point_incidence(&other_point, ranges[0], policy)? {\nhypercurve/src/bezier_offset.rs:119248:        match self.point_incidence(&parallel_point, ranges[0], policy)? {\n"
+    },
+    {
+      "command": [
+        "rg",
+        "-n",
+        "parallel\\.contains_point\\(|common_unit_polynomial_roots|require_unit_domain",
+        "hypercurve",
+        "hyperbrep",
+        "hypergraphics",
+        "hypertri",
+        "hypermesh",
+        "synaps-cad",
+        "hypersolve",
+        "hyperlimit",
+        "-g",
+        "*.rs",
+        "-g",
+        "!**/target/**"
+      ],
+      "returncode": 0,
+      "output": "hypercurve/tests/hypercurve_bezier_fit_offset.rs:1337:                        parallel.contains_point(&opposite, &range, &policy).unwrap(),\nhypercurve/src/bezier_offset.rs:96819:            return parallel.contains_point(&point, &CurveParameterRange2::unit(), policy);\n"
+    }
+  ],
+  "inspection": "Remaining two-argument point_incidence calls are RationalBezier2; the lone HyperBREP projected.point_incidence is RationalBezier2. Migrated parallel calls supply explicit ranges; old common_unit_polynomial_roots and require_unit_domain are absent. Both affected crates pass all-target no-default checks."
+}

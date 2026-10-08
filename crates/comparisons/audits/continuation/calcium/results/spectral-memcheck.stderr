@@ -1,0 +1,14 @@
+==2705477== Memcheck, a memory error detector
+==2705477== Copyright (C) 2002-2026, and GNU GPL'd, by Julian Seward et al.
+==2705477== Using Valgrind-3.27.1 and LibVEX; rerun with -h for copyright info
+==2705477== Command: /tmp/calcium-spectral.nqRkRT/flint-spectral
+==2705477== 
+==2705477== 
+==2705477== HEAP SUMMARY:
+==2705477==     in use at exit: 0 bytes in 0 blocks
+==2705477==   total heap usage: 1,092,304 allocs, 1,092,304 frees, 54,643,520 bytes allocated
+==2705477== 
+==2705477== All heap blocks were freed -- no leaks are possible
+==2705477== 
+==2705477== For lists of detected and suppressed errors, rerun with: -s
+==2705477== ERROR SUMMARY: 0 errors from 0 contexts (suppressed: 0 from 0)

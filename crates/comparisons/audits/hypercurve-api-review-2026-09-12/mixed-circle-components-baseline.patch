@@ -1,0 +1,53 @@
+diff --git a/src/bezier_offset.rs b/src/bezier_offset.rs
+index df6457c..5c78c04 100644
+--- a/src/bezier_offset.rs
++++ b/src/bezier_offset.rs
+@@ -149607,6 +149607,48 @@ mod conversion_tests {
+         }
+     }
+ 
++    #[test]
++    fn rational_circle_overlap_preserves_an_isolated_parameter_visit() {
++        let ratio = |n: i8, d: i8| (Real::from(n) / Real::from(d)).unwrap();
++        // P(v)=((1-v^2)/(1+v^2), 2v/(1+v^2)) is on the unit circle.
++        // v(t)=(t-1/4)^2(t-3/4) touches the upper half only at t=1/4
++        // before following a positive-length upper arc on [3/4,1].
++        let v = vec![ratio(-3, 64), ratio(7, 16), ratio(-5, 4), Real::one()];
++        let squared = polynomial_multiply(&v, &v);
++        let x = power_to_bernstein_coefficients(&polynomial_subtract(&[Real::one()], &squared), 6)
++            .unwrap();
++        let y = power_to_bernstein_coefficients(&polynomial_scale(&v, &Real::from(2)), 6).unwrap();
++        let weights =
++            power_to_bernstein_coefficients(&polynomial_add(&[Real::one()], &squared), 6).unwrap();
++        let target = RationalBezier2::try_new(
++            x.into_iter()
++                .zip(y)
++                .zip(&weights)
++                .map(|((x, y), w)| Point2::new((x / w).unwrap(), (y / w).unwrap()))
++                .collect(),
++            weights,
++        )
++        .unwrap();
++        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
++            let circle = synthetic_independent_unit_cusp_semicircle(&policy);
++            let result = circle.rational_intersections(&target, &policy).unwrap();
++            let counts = match result {
++                Classification::Decided(
++                    BezierAlgebraicCuspSemicircleRationalIntersections2::Contacts(contacts),
++                ) => (contacts.len(), 0),
++                Classification::Decided(
++                    BezierAlgebraicCuspSemicircleRationalIntersections2::Overlaps(overlaps),
++                ) => (0, overlaps.len()),
++                _ => panic!("the rational circle components must be decided"),
++            };
++            assert_eq!(
++                counts,
++                (1, 1),
++                "the isolated source visit must survive the overlap"
++            );
++        }
++    }
++
+     fn synthetic_independent_unit_cusp_semicircle(
+         policy: &CurveContext,
+     ) -> BezierAlgebraicCuspSemicircle2 {

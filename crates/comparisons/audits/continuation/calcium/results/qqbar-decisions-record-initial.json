@@ -1,0 +1,13 @@
+{
+  "tag": "qqbar-decisions-record-initial",
+  "started": "2026-09-10T05:48:50.363Z",
+  "finished": "2026-09-10T05:48:50.604Z",
+  "elapsedSeconds": 0.23879797499999997,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "node",
+  "args": [
+    "record-qqbar-decisions.mjs"
+  ],
+  "code": 1,
+  "signal": null
+}

@@ -1,0 +1,156 @@
+\doxysubsection{Array\texorpdfstring{$<$}{<} T \texorpdfstring{$>$}{>} Class Template Reference}
+\hypertarget{classAriadne_1_1Array}{}\label{classAriadne_1_1Array}\index{Array$<$ T $>$@{Array$<$ T $>$}}
+
+
+\doxysubsubsection{Description}
+\subsubsection*{template$<$class T$>$\newline
+class Ariadne\+::\+Array$<$ T $>$}
+A class wrapper for C-\/style arrays. \doxysubsubsubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1Array_a9338ffdafb6c90a0d192ade96b24550a}\label{classAriadne_1_1Array_a9338ffdafb6c90a0d192ade96b24550a} 
+{\bfseries \texorpdfstring{$\sim$}{\string~}\+Array} ()
+\begin{DoxyCompactList}\small\item\em Destructor. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Array_af9474cac29f3177edf5e8d72ea4a440c}\label{classAriadne_1_1Array_af9474cac29f3177edf5e8d72ea4a440c} 
+{\bfseries Array} ()
+\begin{DoxyCompactList}\small\item\em Default constructor. Constructs an empty \doxylink{classAriadne_1_1Array}{Array}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Array_abad1e44127ebc8d8285a6ef264b6daa3}\label{classAriadne_1_1Array_abad1e44127ebc8d8285a6ef264b6daa3} 
+{\bfseries Array} (const Size\+Type n)
+\begin{DoxyCompactList}\small\item\em Constructs an \doxylink{classAriadne_1_1Array}{Array} of size {\itshape n} with default-\/initialised elements. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Array_a1d22e3fc3039276fb720fccffffdca67}\label{classAriadne_1_1Array_a1d22e3fc3039276fb720fccffffdca67} 
+{\bfseries Array} (const Size\+Type n, Uninitialised)
+\begin{DoxyCompactList}\small\item\em Constructs an \doxylink{classAriadne_1_1Array}{Array} of size {\itshape n} with uninitialised elements. The elements should be initialised using placement new. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Array_ab283c1c8f20d1609164a380f0c0135a2}\label{classAriadne_1_1Array_ab283c1c8f20d1609164a380f0c0135a2} 
+{\bfseries Array} (const Size\+Type n, const Value\+Type \&x)
+\begin{DoxyCompactList}\small\item\em Constructs an \doxylink{classAriadne_1_1Array}{Array} of size {\itshape n} with elements initialised to {\itshape x}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Array_a8f65eceaa69b5b32b74dbc1f140aa4a1}\label{classAriadne_1_1Array_a8f65eceaa69b5b32b74dbc1f140aa4a1} 
+{\bfseries Array} (\mbox{\hyperlink{namespaceAriadne_a8d51a34ecd8621e992f2470124281c93}{Initializer\+List}}$<$ T $>$ lst)
+\begin{DoxyCompactList}\small\item\em Converts an initializer list to an \doxylink{classAriadne_1_1Array}{Array}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Array_a5495c68ad7b711d782c0c4cff59e3fb4}\label{classAriadne_1_1Array_a5495c68ad7b711d782c0c4cff59e3fb4} 
+{\footnotesize template$<$class PR$>$ \newline
+requires Constructible$<$T,double,PR$>$}\\{\bfseries Array} (\mbox{\hyperlink{namespaceAriadne_a8d51a34ecd8621e992f2470124281c93}{Initializer\+List}}$<$ double $>$ lst, PR pr)
+\begin{DoxyCompactList}\small\item\em Constructs an \doxylink{classAriadne_1_1Array}{Array} from an initializer list of doubles and a precision parameter. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Array_a1b86d75b7a982c72b18721a68df1ee8b}\label{classAriadne_1_1Array_a1b86d75b7a982c72b18721a68df1ee8b} 
+{\footnotesize template$<$class G$>$ \newline
+requires Invocable\+Returning$<$Value\+Type,G,Size\+Type$>$}\\{\bfseries Array} (Size\+Type n, G const \&g)
+\begin{DoxyCompactList}\small\item\em Generate from a function (object) {\itshape g} of type {\itshape G} mapping an index to a value. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Array_a4ef7423ed92a3673298caa4715493b17}\label{classAriadne_1_1Array_a4ef7423ed92a3673298caa4715493b17} 
+{\footnotesize template$<$class Forward\+Iterator$>$ }\\{\bfseries Array} (Forward\+Iterator first, Forward\+Iterator last)
+\begin{DoxyCompactList}\small\item\em Constructs an \doxylink{classAriadne_1_1Array}{Array} from the range {\itshape first} to {\itshape last}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Array_a59b3126093f395741d2145caaf092c1f}\label{classAriadne_1_1Array_a59b3126093f395741d2145caaf092c1f} 
+{\footnotesize template$<$class TT$>$ \newline
+requires Convertible$<$TT,T$>$}\\{\bfseries Array} (const \mbox{\hyperlink{classAriadne_1_1Array}{Array}}$<$ TT $>$ \&a)
+\begin{DoxyCompactList}\small\item\em Conversion constructor. \end{DoxyCompactList}\item 
+{\footnotesize template$<$class TT$>$ }\\\mbox{\hyperlink{classAriadne_1_1Array_a75582d4341fe4e926ca9a828a2fa2026}{Array}} (const \mbox{\hyperlink{classAriadne_1_1Array}{Array}}$<$ TT $>$ \&a)
+\begin{DoxyCompactList}\small\item\em Explicit conversion constructor. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Array_a0f41519b1d5ab86041dc74ea94af222a}\label{classAriadne_1_1Array_a0f41519b1d5ab86041dc74ea94af222a} 
+{\footnotesize template$<$class TT, class PR$>$ \newline
+requires Constructible$<$T,TT,PR$>$}\\{\bfseries Array} (const \mbox{\hyperlink{classAriadne_1_1Array}{Array}}$<$ TT $>$ \&a, PR pr)
+\begin{DoxyCompactList}\small\item\em Explicit construction with characteristics (properties) parameter. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Array_a68617ce45c266cba40302d55beaae32f}\label{classAriadne_1_1Array_a68617ce45c266cba40302d55beaae32f} 
+{\bfseries Array} (const \mbox{\hyperlink{classAriadne_1_1Array}{Array}}$<$ T $>$ \&a)
+\begin{DoxyCompactList}\small\item\em Copy constructor. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Array_aad66d640c9e88c6fbcba894ac25dd768}\label{classAriadne_1_1Array_aad66d640c9e88c6fbcba894ac25dd768} 
+{\bfseries Array} (\mbox{\hyperlink{classAriadne_1_1Array}{Array}}$<$ T $>$ \&\&a)
+\begin{DoxyCompactList}\small\item\em Move constructor. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Array_a63d83fcc030fe484ba7448a134c5e806}\label{classAriadne_1_1Array_a63d83fcc030fe484ba7448a134c5e806} 
+\mbox{\hyperlink{classAriadne_1_1Array}{Array}}$<$ T $>$ \& {\bfseries operator=} (const \mbox{\hyperlink{classAriadne_1_1Array}{Array}}$<$ T $>$ \&a)
+\begin{DoxyCompactList}\small\item\em Copy assignment. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Array_a2ce1e6248e91f1d6317d754728d5b116}\label{classAriadne_1_1Array_a2ce1e6248e91f1d6317d754728d5b116} 
+\mbox{\hyperlink{classAriadne_1_1Array}{Array}}$<$ T $>$ \& {\bfseries operator=} (\mbox{\hyperlink{classAriadne_1_1Array}{Array}}$<$ T $>$ \&\&a)
+\begin{DoxyCompactList}\small\item\em Move assignment. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Array_a644718bb2fb240de962dc3c9a1fdf0dc}\label{classAriadne_1_1Array_a644718bb2fb240de962dc3c9a1fdf0dc} 
+bool {\bfseries empty} () const
+\begin{DoxyCompactList}\small\item\em True if the \doxylink{classAriadne_1_1Array}{Array}\textquotesingle{}s size is 0. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Array_a0472c48c2838a924eac36b19cbe017d0}\label{classAriadne_1_1Array_a0472c48c2838a924eac36b19cbe017d0} 
+Size\+Type {\bfseries size} () const
+\begin{DoxyCompactList}\small\item\em The size of the \doxylink{classAriadne_1_1Array}{Array}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Array_a1758211cffb5eb83701972730a2afe24}\label{classAriadne_1_1Array_a1758211cffb5eb83701972730a2afe24} 
+Size\+Type {\bfseries max\+\_\+size} () const
+\begin{DoxyCompactList}\small\item\em The maximum possible size of the \doxylink{classAriadne_1_1Array}{Array}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Array_a57c0b68de906f5f26118578b1ebfe0c6}\label{classAriadne_1_1Array_a57c0b68de906f5f26118578b1ebfe0c6} 
+void {\bfseries resize} (Size\+Type n)
+\begin{DoxyCompactList}\small\item\em Resizes the \doxylink{classAriadne_1_1Array}{Array} to hold {\itshape n} elements. If {\itshape n} is larger than the current size, the extra elements are default initialised. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Array_aaa4d4c04a4526ede2358123cc2c8ac00}\label{classAriadne_1_1Array_aaa4d4c04a4526ede2358123cc2c8ac00} 
+void {\bfseries resize} (Size\+Type n, const T \&t)
+\begin{DoxyCompactList}\small\item\em Resizes the \doxylink{classAriadne_1_1Array}{Array} to hold {\itshape n} elements. If {\itshape n} is larger than the current size, the extra elements are initialised with value {\itshape t}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Array_a588df4d0a1c668f175b7d3d6f5694619}\label{classAriadne_1_1Array_a588df4d0a1c668f175b7d3d6f5694619} 
+void {\bfseries reallocate} (Size\+Type n)
+\begin{DoxyCompactList}\small\item\em Reallocates the \doxylink{classAriadne_1_1Array}{Array} to hold {\itshape n} elements. The new elements are default-\/constructed. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Array_a3982749f6cd0015f715e14b7e14c8a89}\label{classAriadne_1_1Array_a3982749f6cd0015f715e14b7e14c8a89} 
+void {\bfseries swap} (\mbox{\hyperlink{classAriadne_1_1Array}{Array}}$<$ T $>$ \&a)
+\begin{DoxyCompactList}\small\item\em Efficiently swap two arrays. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Array_ace4acba8ce798585c9b1b4cf0e660549}\label{classAriadne_1_1Array_ace4acba8ce798585c9b1b4cf0e660549} 
+Value\+Type \& {\bfseries operator\mbox{[}$\,$\mbox{]}} (Size\+Type i)
+\begin{DoxyCompactList}\small\item\em The {\itshape n} th element. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Array_abc0b5dd4046cb6900964d5c743d54593}\label{classAriadne_1_1Array_abc0b5dd4046cb6900964d5c743d54593} 
+const Value\+Type \& {\bfseries operator\mbox{[}$\,$\mbox{]}} (Size\+Type i) const
+\begin{DoxyCompactList}\small\item\em The {\itshape n} th element. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Array_a183f19cf58425c311449b9fe6fb44fa7}\label{classAriadne_1_1Array_a183f19cf58425c311449b9fe6fb44fa7} 
+Value\+Type \& {\bfseries at} (Size\+Type i)
+\begin{DoxyCompactList}\small\item\em Checked access to the {\itshape n} th element. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Array_a4329993a01080330bf77ad1aa72b787b}\label{classAriadne_1_1Array_a4329993a01080330bf77ad1aa72b787b} 
+const Value\+Type \& {\bfseries at} (Size\+Type i) const
+\begin{DoxyCompactList}\small\item\em Checked access to the {\itshape n} th element. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Array_a736a6bda35a26620407e175bee46ae4a}\label{classAriadne_1_1Array_a736a6bda35a26620407e175bee46ae4a} 
+Value\+Type \& {\bfseries front} ()
+\begin{DoxyCompactList}\small\item\em A reference to the first element of the \doxylink{classAriadne_1_1Array}{Array}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Array_a02aaa52ad7a120201f6dd3e90eff737f}\label{classAriadne_1_1Array_a02aaa52ad7a120201f6dd3e90eff737f} 
+const Value\+Type \& {\bfseries front} () const
+\begin{DoxyCompactList}\small\item\em A constant reference to the first element of the \doxylink{classAriadne_1_1Array}{Array}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Array_a2bad145b40a82c36986f67610313658d}\label{classAriadne_1_1Array_a2bad145b40a82c36986f67610313658d} 
+Value\+Type \& {\bfseries back} ()
+\begin{DoxyCompactList}\small\item\em A reference to the last element of the \doxylink{classAriadne_1_1Array}{Array}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Array_adc761c91bdacd01bed5c96e25fd9486a}\label{classAriadne_1_1Array_adc761c91bdacd01bed5c96e25fd9486a} 
+const Value\+Type \& {\bfseries back} () const
+\begin{DoxyCompactList}\small\item\em A constant reference to the last element of the \doxylink{classAriadne_1_1Array}{Array}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Array_a2387033802383edbdc95f9bbb12a707e}\label{classAriadne_1_1Array_a2387033802383edbdc95f9bbb12a707e} 
+Iterator {\bfseries begin} ()
+\begin{DoxyCompactList}\small\item\em An Iterator pointing to the beginning of the \doxylink{classAriadne_1_1Array}{Array}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Array_ad5fee900c7aee90671038c79225bf8ec}\label{classAriadne_1_1Array_ad5fee900c7aee90671038c79225bf8ec} 
+Const\+Iterator {\bfseries begin} () const
+\begin{DoxyCompactList}\small\item\em A constant Iterator pointing to the beginning of the \doxylink{classAriadne_1_1Array}{Array}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Array_ab45dae688fc5d8983727abffa4389003}\label{classAriadne_1_1Array_ab45dae688fc5d8983727abffa4389003} 
+Iterator {\bfseries end} ()
+\begin{DoxyCompactList}\small\item\em An Iterator pointing to the end of the \doxylink{classAriadne_1_1Array}{Array}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Array_a69b6e2a03c835ca5d658a1f16acbaa9c}\label{classAriadne_1_1Array_a69b6e2a03c835ca5d658a1f16acbaa9c} 
+Const\+Iterator {\bfseries end} () const
+\begin{DoxyCompactList}\small\item\em A constant Iterator pointing to the end of the \doxylink{classAriadne_1_1Array}{Array}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Array_a421c627c6ac4846f690f35f30371238a}\label{classAriadne_1_1Array_a421c627c6ac4846f690f35f30371238a} 
+bool {\bfseries operator==} (const \mbox{\hyperlink{classAriadne_1_1Array}{Array}} \&other) const
+\begin{DoxyCompactList}\small\item\em Tests two arrays for equality. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Array_a2fffc8ba53971b4313623dec57a614a4}\label{classAriadne_1_1Array_a2fffc8ba53971b4313623dec57a614a4} 
+bool {\bfseries operator!=} (const \mbox{\hyperlink{classAriadne_1_1Array}{Array}} \&other) const
+\begin{DoxyCompactList}\small\item\em Tests two arrays for inequality. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Array_a44cccecb2515521a54df05283fcf8a36}\label{classAriadne_1_1Array_a44cccecb2515521a54df05283fcf8a36} 
+void {\bfseries fill} (const Value\+Type \&x)
+\begin{DoxyCompactList}\small\item\em Fills the \doxylink{classAriadne_1_1Array}{Array} with copies of {\itshape x}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Array_a43356708846150665faed9b0b12d27c7}\label{classAriadne_1_1Array_a43356708846150665faed9b0b12d27c7} 
+{\footnotesize template$<$class Input\+Iterator$>$ }\\void {\bfseries fill} (Input\+Iterator first)
+\begin{DoxyCompactList}\small\item\em Fills the \doxylink{classAriadne_1_1Array}{Array} from the sequence starting at {\itshape first}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Array_acc2a4f41c1790e094a82b98cbb5283a1}\label{classAriadne_1_1Array_acc2a4f41c1790e094a82b98cbb5283a1} 
+{\footnotesize template$<$class Forward\+Iterator$>$ }\\void {\bfseries assign} (Forward\+Iterator first, Forward\+Iterator last)
+\begin{DoxyCompactList}\small\item\em Assigns the sequence from {\itshape first} to {\itshape last}. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\label{doc-constructors}
+\Hypertarget{classAriadne_1_1Array_doc-constructors}
+\doxysubsubsection{Constructor \& Destructor Documentation}
+\Hypertarget{classAriadne_1_1Array_a75582d4341fe4e926ca9a828a2fa2026}\index{Array$<$ T $>$@{Array$<$ T $>$}!Array@{Array}}
+\index{Array@{Array}!Array$<$ T $>$@{Array$<$ T $>$}}
+\doxyparagraph{\texorpdfstring{Array()}{Array()}}
+{\footnotesize\ttfamily \label{classAriadne_1_1Array_a75582d4341fe4e926ca9a828a2fa2026} 
+template$<$class T$>$ \\
+template$<$class TT$>$ \\
+\mbox{\hyperlink{classAriadne_1_1Array}{Array}} (\begin{DoxyParamCaption}\item[{const \mbox{\hyperlink{classAriadne_1_1Array}{Array}}$<$ TT $>$ \&}]{a}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}, {\ttfamily [explicit]}}
+
+
+
+Explicit conversion constructor. 
+
+Requirement Explicitly\+Convertible$<$\+TT,\+T$>$ as a static\+\_\+assert to avoid definition of {\ttfamily TT} being required. 
+
+The documentation for this class was generated from the following files\+:\begin{DoxyCompactItemize}
+\item 
+source/algebra/\mbox{\hyperlink{dense__differential_8hpp}{dense\+\_\+differential.\+hpp}}\item 
+source/utility/\mbox{\hyperlink{array_8hpp}{array.\+hpp}}\end{DoxyCompactItemize}

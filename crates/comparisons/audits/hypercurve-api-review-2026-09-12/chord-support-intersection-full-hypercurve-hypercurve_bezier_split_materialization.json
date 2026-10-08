@@ -1,0 +1,43 @@
+{
+  "repo": "hypercurve",
+  "target": "hypercurve_bezier_split_materialization",
+  "binary": "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve_bezier_split_materialization-da9614afe8808126",
+  "command": [
+    "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve_bezier_split_materialization-da9614afe8808126",
+    "--test-threads=4",
+    "--color",
+    "never"
+  ],
+  "sha256": "f17499aad574b150b2ad60cfd543353ff0d563594ae65e37a98fd86b7ac46b49",
+  "returncode": 0,
+  "timed_out": false,
+  "elapsed_seconds": 0.007560332000139169,
+  "log": "chord-support-intersection-full-hypercurve-hypercurve_bezier_split_materialization.log",
+  "passed": [
+    "algebraic_endpoint_image_is_a_clone_shared_handle",
+    "exact_cubic_subcurve_matches_original_endpoints_at_range_bounds",
+    "algebraic_fragment_reversal_retains_source_evidence_and_toggles_traversal",
+    "broad_singleton_isolator_materializes_exact_endpoint_images",
+    "algebraic_boundary_carries_endpoint_images_without_approximate_materialization",
+    "exact_quadratic_split_materializes_native_subcurves",
+    "exact_rational_quadratic_split_preserves_conic_endpoint_evaluation",
+    "linear_algebraic_boundary_materializes_native_subcurves",
+    "rational_algebraic_endpoint_retains_second_derivative_when_constructed",
+    "rational_algebraic_boundary_carries_conic_endpoint_images",
+    "split_materialization_constructor_rejects_disconnected_materialized_fragments",
+    "split_materialization_constructor_rejects_duplicate_fragments",
+    "split_materialization_constructor_rejects_incomplete_source_coverage",
+    "split_materialization_constructor_rejects_materialized_algebraic_range",
+    "split_materialization_constructor_rejects_forged_algebraic_endpoint_evidence",
+    "rational_algebraic_boundary_with_zero_denominator_returns_explicit_uncertainty",
+    "split_materialization_constructor_rejects_noncontiguous_fragments",
+    "exact_quadratic_split_endpoints_match_original"
+  ],
+  "failed": [],
+  "ignored": [],
+  "summaries": [
+    "test result: ok. 18 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s"
+  ],
+  "new_failures": [],
+  "known_failures": []
+}

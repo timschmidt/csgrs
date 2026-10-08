@@ -1,0 +1,8 @@
+{
+  "owned_generated_directory": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps",
+  "exclusive_cargo_profile_lock": true,
+  "all_owned_processes_reaped": true,
+  "removed_file_count": 5308,
+  "removed_bytes": 21195805279,
+  "source_snapshots_and_archived_executables_preserved": true
+}

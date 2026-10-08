@@ -1,0 +1,531 @@
+{
+  "schema": 1,
+  "captured_on": "2026-07-31",
+  "checkpoint": "native-curve-topology-policy",
+  "source_revision": "a7f226cc87224fc4a603576d057e882bb5e5b86a",
+  "parent_revision": "5eed62c5c9740e3814f2b1cb90e84b6c332bc38d",
+  "implementation_revisions": [
+    "07f9f473ef5f5ab8741b863a3b355c589a4519f7",
+    "a7f226cc87224fc4a603576d057e882bb5e5b86a"
+  ],
+  "frozen_baseline_revision": "dfc4ec5f9546560765bd33d4a88292581869adb8",
+  "baseline": "../baselines/2026-07-31/baseline.json",
+  "semantic_evidence": {
+    "policy_explicit_public_apis": [
+      "Curve2::native_bezier_fragments",
+      "CurvePath2::native_bezier_fragments",
+      "CircularArc2::rational_bezier_decomposition",
+      "CircularArcBezierDecomposition2::point_at",
+      "CircularArc2::directed_sweep_angle"
+    ],
+    "curve_native_return_contract": "CurveOutcome<&[NativeBezierFragment2]>",
+    "path_native_return_contract": "CurveOutcome<&[NativeBezierFragment2]>",
+    "arc_decomposition_return_contract": "CurveOutcome<&CircularArcBezierDecomposition2>",
+    "decomposition_point_return_contract": "CurveOutcome<Point2>",
+    "directed_sweep_return_contract": "CurveOutcome<Classification<&Real>>",
+    "directed_sweep_borrows_the_retained_real_instead_of_cloning_it": true,
+    "internal_composition_uses_raw_policy_kernels": true,
+    "complete_public_operation_observes_terminal_consumption_once": true,
+    "strict_and_approximate_cache_entries_remain_isolated": true,
+    "approximate_directed_sweep_returns_decided_exact_real_and_reports_consumption": true,
+    "later_strict_directed_sweep_preserves_inner_RealSign_uncertainty": true,
+    "approximate_arc_decomposition_returns_exact_conics_and_reports_consumption": true,
+    "later_strict_arc_decomposition_returns_BezierDecomposition_RealSign_blocker": true,
+    "approximate_curve_and_path_native_promotion_returns_exact_fragments_and_reports_consumption": true,
+    "later_strict_curve_and_path_native_promotion_returns_NativeTopology_RealSign_blocker": true,
+    "approximate_decomposition_join_evaluation_returns_exact_point_and_reports_consumption": true,
+    "later_strict_decomposition_join_evaluation_returns_Evaluation_Ordering_blocker": true,
+    "repeated_approximate_cache_replay_reports_terminal_consumption": true,
+    "returned_curves_conics_points_and_sweep_values_remain_exact": true,
+    "compatibility_overload_deref_or_implicit_value_shim_added": false,
+    "hypermesh_modified": false
+  },
+  "layout_and_memory_evidence": {
+    "retained_curve_arc_and_path_layout_change": "none",
+    "cached_native_and_decomposition_results_remain_borrowed": true,
+    "directed_sweep_clone_removed": "one clone-shared Real handle clone per public cached query",
+    "cache_hit_heap_allocations_added": 0,
+    "outcome_framing": "stack-only and inlined on hot strict cache paths"
+  },
+  "matched_arc_benchmarks": {
+    "command": "eleven interleaved parent/candidate executions of matched default-feature release arc artifacts pinned to CPU 9, reversing execution order on alternate pairs",
+    "benchmark_harness": "benches/arc.rs",
+    "parent_revision": "5eed62c5c9740e3814f2b1cb90e84b6c332bc38d",
+    "candidate_revision": "a7f226cc87224fc4a603576d057e882bb5e5b86a",
+    "cached_rational_decomposition": {
+      "iterations_per_process": 2000000,
+      "parent_total_ms": [
+        6.225971,
+        3.535247,
+        3.697835,
+        3.761081,
+        3.608352,
+        3.797209,
+        3.774940,
+        3.567805,
+        3.718044,
+        3.705755,
+        3.511928
+      ],
+      "candidate_total_ms": [
+        2.194059,
+        2.095086,
+        2.035180,
+        1.966664,
+        2.213037,
+        2.059888,
+        2.140813,
+        1.982723,
+        2.034789,
+        1.999383,
+        2.175031
+      ],
+      "parent_median_ns_per_iteration": 1.852878,
+      "candidate_median_ns_per_iteration": 1.029944,
+      "median_change_percent": -44.4138,
+      "paired_geomean_change_percent": -45.9401
+    },
+    "cached_directed_sweep": {
+      "iterations_per_process": 2000000,
+      "parent_total_ms": [
+        77.078894,
+        76.241162,
+        75.734147,
+        75.789302,
+        74.056002,
+        77.195416,
+        74.167594,
+        75.489444,
+        75.634623,
+        75.487654,
+        74.912683
+      ],
+      "candidate_total_ms": [
+        2.011162,
+        2.214508,
+        2.089276,
+        2.030170,
+        2.067967,
+        2.004022,
+        2.038660,
+        2.050969,
+        2.074457,
+        2.063778,
+        2.011372
+      ],
+      "parent_median_ns_per_iteration": 37.817312,
+      "candidate_median_ns_per_iteration": 1.025485,
+      "median_change_percent": -97.2883,
+      "paired_geomean_change_percent": -97.2769
+    },
+    "decomposition_point_evaluation": {
+      "iterations_per_process": 100000,
+      "parent_total_ms": [
+        332.344251,
+        339.172621,
+        329.726142,
+        323.688147,
+        325.326225,
+        327.898517,
+        323.633271,
+        328.896849,
+        329.275743,
+        327.891947,
+        324.232660
+      ],
+      "candidate_total_ms": [
+        320.566532,
+        335.209904,
+        327.947144,
+        321.725142,
+        317.588047,
+        320.494218,
+        325.294256,
+        318.566690,
+        315.665440,
+        319.515875,
+        309.996120
+      ],
+      "parent_median_us_per_iteration": 3.278985,
+      "candidate_median_us_per_iteration": 3.204942,
+      "median_change_percent": -2.2581,
+      "paired_geomean_change_percent": -2.2118
+    },
+    "cached_curve_native_promotion": {
+      "iterations_per_process": 2000000,
+      "parent_total_ms": [
+        4.135336,
+        4.635141,
+        4.488481,
+        4.515419,
+        4.096328,
+        4.092908,
+        4.070350,
+        4.068790,
+        4.193811,
+        4.005374,
+        4.502120
+      ],
+      "candidate_total_ms": [
+        2.085637,
+        2.132803,
+        2.148212,
+        2.116914,
+        2.125564,
+        2.132293,
+        2.189669,
+        2.146182,
+        2.120854,
+        2.135613,
+        2.085966
+      ],
+      "parent_median_ns_per_iteration": 2.067668,
+      "candidate_median_ns_per_iteration": 1.066147,
+      "median_change_percent": -48.4372,
+      "paired_geomean_change_percent": -49.9011
+    },
+    "cached_top_level_arc_evaluation": {
+      "iterations_per_process": 20000,
+      "parent_total_ms": [
+        72.759251,
+        66.377381,
+        65.554738,
+        66.056803,
+        66.810951,
+        68.470367,
+        68.060934,
+        68.382902,
+        66.901184,
+        66.048904,
+        67.357123
+      ],
+      "candidate_total_ms": [
+        70.907449,
+        66.847989,
+        66.632963,
+        66.448125,
+        64.247397,
+        64.454913,
+        66.391579,
+        64.210710,
+        63.168542,
+        64.555086,
+        63.247216
+      ],
+      "parent_median_us_per_iteration": 3.345059,
+      "candidate_median_us_per_iteration": 3.227754,
+      "median_change_percent": -3.5068,
+      "paired_geomean_change_percent": -2.9297
+    },
+    "interpretation": "policy-explicit native topology is faster on every focused arc row; borrowing the retained sweep Real removes almost all cached-query work"
+  },
+  "matched_curve_path_benchmarks": {
+    "command": "eleven interleaved parent/candidate executions of matched default-feature release curve_path artifacts pinned to CPU 9, reversing execution order on alternate pairs",
+    "cached_native_promotion": {
+      "iterations_per_process": 2000000,
+      "parent_total_ms": [
+        6.956691,
+        4.084989,
+        4.088509,
+        4.575115,
+        4.276605,
+        4.486061,
+        4.134206,
+        4.105857,
+        4.571185,
+        4.450244,
+        4.429076
+      ],
+      "candidate_total_ms": [
+        2.175440,
+        2.169191,
+        2.136163,
+        2.119654,
+        2.187249,
+        2.212888,
+        2.159691,
+        2.207589,
+        2.269464,
+        2.173880,
+        2.121244
+      ],
+      "parent_median_ns_per_iteration": 2.214538,
+      "candidate_median_ns_per_iteration": 1.086940,
+      "median_change_percent": -50.9180,
+      "paired_geomean_change_percent": -51.7384
+    },
+    "cached_boundary_loop_sentinel": {
+      "parent_median_ns_per_iteration": 2.902945,
+      "candidate_median_ns_per_iteration": 2.892671,
+      "median_change_percent": -0.3539,
+      "paired_geomean_change_percent": -1.8157
+    },
+    "fresh_boundary_loop_sentinel": {
+      "parent_median_ns_per_iteration": 621.808150,
+      "candidate_median_ns_per_iteration": 622.612150,
+      "median_change_percent": 0.1293,
+      "paired_geomean_change_percent": 0.0386
+    },
+    "cached_point_classification_sentinel": {
+      "parent_median_us_per_iteration": 7.915230,
+      "candidate_median_us_per_iteration": 7.794598,
+      "median_change_percent": -1.5240,
+      "paired_geomean_change_percent": -1.6401
+    },
+    "immediate_boolean_batch_sentinel": {
+      "parent_median_us_per_iteration": 109.203842,
+      "candidate_median_us_per_iteration": 108.173854,
+      "median_change_percent": -0.9432,
+      "paired_geomean_change_percent": -1.1621
+    },
+    "native_circle_dispatch_sentinel": {
+      "parent_median_us_per_iteration": 122.048518,
+      "candidate_median_us_per_iteration": 121.181698,
+      "median_change_percent": -0.7102,
+      "paired_geomean_change_percent": -0.5976
+    },
+    "interpretation": "path native cache replay improves about 51 percent while every unchanged closed-path and Boolean sentinel is neutral or faster"
+  },
+  "complete_arc_instruction_control": {
+    "command": "seven interleaved perf stat -e instructions executions of the matched default-feature release arc artifacts pinned to CPU 9",
+    "parent_instructions": [
+      7901857016,
+      7901855682,
+      7901856132,
+      7901856295,
+      7901857182,
+      7901857981,
+      7901856173
+    ],
+    "candidate_instructions": [
+      7181168030,
+      7181167962,
+      7181164664,
+      7181168589,
+      7181165546,
+      7181165819,
+      7181168345
+    ],
+    "parent_median": 7901856295,
+    "candidate_median": 7181167962,
+    "median_change_percent": -9.1205,
+    "paired_geomean_change_percent": -9.1205
+  },
+  "matched_pathological_curve_region2": {
+    "command": "one warm-up pair followed by eight measured interleaved parent/candidate executions of matched default-feature release pathological_regions artifacts pinned to CPU 9",
+    "cells": 67,
+    "operations": 268,
+    "completed_operations": 268,
+    "blockers": 0,
+    "checksum": 6,
+    "candidate_pairs": 603,
+    "retained_fragments": 3248,
+    "point_classifications": 134,
+    "parent_build_ms": [
+      71.834840,
+      71.616125,
+      71.674231,
+      73.461789,
+      72.851491,
+      73.303420,
+      72.381253,
+      73.443920
+    ],
+    "candidate_build_ms": [
+      71.596947,
+      72.215434,
+      70.344242,
+      72.026307,
+      72.567130,
+      71.665253,
+      72.395142,
+      72.815073
+    ],
+    "parent_build_median_ms": 72.616372,
+    "candidate_build_median_ms": 72.120871,
+    "build_median_change_percent": -0.6824,
+    "build_paired_geomean_change_percent": -0.8510,
+    "parent_boolean_ms": [
+      463.051484,
+      473.357516,
+      473.810955,
+      468.053271,
+      469.037722,
+      466.366537,
+      465.122061,
+      467.132844
+    ],
+    "candidate_boolean_ms": [
+      463.029656,
+      462.540978,
+      459.607590,
+      463.707799,
+      475.640030,
+      462.297306,
+      465.516964,
+      467.509248
+    ],
+    "parent_boolean_median_ms": 467.593058,
+    "candidate_boolean_median_ms": 463.368728,
+    "boolean_median_change_percent": -0.9034,
+    "boolean_paired_geomean_change_percent": -0.6983,
+    "parent_observed_rss_delta_mib": [
+      34.5,
+      34.6,
+      34.6,
+      34.5,
+      34.5,
+      34.5,
+      34.4,
+      34.3
+    ],
+    "candidate_observed_rss_delta_mib": [
+      34.6,
+      34.5,
+      34.5,
+      34.5,
+      34.5,
+      34.5,
+      34.6,
+      34.4
+    ],
+    "parent_observed_rss_delta_mib_median": 34.5,
+    "candidate_observed_rss_delta_mib_median": 34.5,
+    "interpretation": "all topology and checksums are identical; construction and Boolean execution improve slightly and process-scale RSS is unchanged"
+  },
+  "comparative_release_medians_ns": {
+    "command": "HYPERCURVE_COMPARE_SAMPLES=7 HYPERCURVE_COMPARE_SAMPLE_MS=75 matched default-feature plus comparative-benchmarks release executions pinned to CPU 9",
+    "rectangle_union": {
+      "parent_hypercurve": 4829.9,
+      "candidate_hypercurve": 4868.3,
+      "hypercurve_contours": 4938.0,
+      "hypercurve_loops": 5256.4,
+      "cavalier_contours": 912.5,
+      "i_overlay": 1016.0,
+      "geo": 1227.8,
+      "change_from_parent_percent": 0.7950,
+      "change_from_preceding_checkpoint_percent": 4.5957
+    },
+    "star64_intersection": {
+      "parent_hypercurve": 35578.4,
+      "candidate_hypercurve": 36668.5,
+      "hypercurve_contours": 36488.7,
+      "hypercurve_loops": 100149.8,
+      "cavalier_contours": 27989.5,
+      "i_overlay": 35150.1,
+      "geo": 36329.8,
+      "change_from_parent_percent": 3.0639,
+      "change_from_preceding_checkpoint_percent": -2.5212
+    },
+    "star256_intersection": {
+      "parent_hypercurve": 432362.5,
+      "candidate_hypercurve": 423049.4,
+      "hypercurve_contours": 302086.3,
+      "hypercurve_loops": 833945.7,
+      "cavalier_contours": 481281.8,
+      "i_overlay": 512113.7,
+      "geo": 523290.6,
+      "change_from_parent_percent": -2.1540,
+      "change_from_preceding_checkpoint_percent": 0.7854
+    },
+    "star1024_intersection": {
+      "parent_hypercurve": 5122642.5,
+      "candidate_hypercurve": 5165027.5,
+      "hypercurve_contours": 3976186.5,
+      "hypercurve_loops": 10707942.3,
+      "cavalier_contours": 19502271.8,
+      "i_overlay": 10071536.4,
+      "geo": 10129418.6,
+      "change_from_parent_percent": 0.8274,
+      "change_from_preceding_checkpoint_percent": 2.5788
+    },
+    "inward_capsule_offset": {
+      "parent_hypercurve": 19170.7,
+      "candidate_hypercurve": 19078.1,
+      "cavalier_contours": 940.1,
+      "change_from_parent_percent": -0.4830,
+      "change_from_preceding_checkpoint_percent": 3.6572
+    },
+    "certified_open_cubic_offset": {
+      "parent_hypercurve": 30448230.7,
+      "candidate_hypercurve": 30170929.7,
+      "curvo_heuristic": 8164.5,
+      "change_from_parent_percent": -0.9107,
+      "change_from_preceding_checkpoint_percent": 2.5801
+    },
+    "source_chord_cubic_fallback": {
+      "parent_hypercurve": 935951.5,
+      "candidate_hypercurve": 927503.0,
+      "change_from_parent_percent": -0.9027,
+      "change_from_preceding_checkpoint_percent": 1.1961
+    },
+    "rational_cubic_nurbs_evaluation": {
+      "parent_hypercurve": 1537.1,
+      "candidate_hypercurve": 1577.8,
+      "curvo": 58.2,
+      "change_from_parent_percent": 2.6478,
+      "change_from_preceding_checkpoint_percent": 1.3554
+    },
+    "interpretation": "every exact Hypercurve lane remains within 3.1 percent of the matched parent; the 256- and 1024-vertex exact lanes remain faster than the measured finite competitors, while offset and NURBS peers retain explicitly non-equivalent guarantees"
+  },
+  "release_pathological_binary": {
+    "measurement": "matched default-feature release executables copied and stripped with strip --strip-all",
+    "parent_bytes": 5504360,
+    "candidate_bytes": 5502800,
+    "delta_bytes": -1560,
+    "delta_percent": -0.0283,
+    "frozen_baseline_bytes": 5531293,
+    "delta_from_frozen_baseline_bytes": -28493,
+    "delta_from_frozen_baseline_percent": -0.5151,
+    "interpretation": "the policy-explicit native APIs and hot-path inlining reduce rather than increase the final linked artifact"
+  },
+  "static_callgraph": {
+    "command": "/home/tim/Documents/GitHub/workspace/tools/hyper-callgraph/target/release/hyper-callgraph --root /home/tim/Documents/GitHub/workspace --out-dir /tmp/hypercurve-native-topology-callgraph --crate-name hypercurve --include-examples --include-tests --include-bench --include-fuzz --format json",
+    "nodes": 22564,
+    "edges": 38642,
+    "artifact": "/tmp/hypercurve-native-topology-callgraph/callgraph.json",
+    "public_curve_native_node_present": true,
+    "public_path_native_node_present": true,
+    "public_arc_decomposition_node_present": true,
+    "public_decomposition_point_node_present": true,
+    "public_directed_sweep_node_present": true,
+    "raw_policy_composition_nodes_present": true
+  },
+  "caller_audit": {
+    "hypercurve_tests_benches_examples_and_fuzz": "all migrated and warning-clean",
+    "workspace_old_signature_search": "only Hyperbrep contains old zero-argument native-fragment or directed-sweep calls",
+    "hyperbrep_old_signature_calls": 10,
+    "csgrs_all_feature_check": "pass",
+    "hypercurve_ui_all_target_check_and_warning_denied_clippy": "pass",
+    "hyperbrep": "current branch already requires the accumulated CurvePolicy-to-CurveContext and explicit-outcome cutovers; caller migration remains deferred until the remaining Phase 1 public policy surfaces stabilize",
+    "caller_cutover_deferred_until_remaining_phase_1_public_policy_surfaces_stabilize": true,
+    "compatibility_shim_added": false,
+    "hypermesh_modified": false
+  },
+  "remaining_policy_audit": {
+    "public_curve_and_path_native_fragment_accessors_are_strict_wrappers": false,
+    "public_circular_arc_decomposition_and_directed_sweep_are_strict_wrappers": false,
+    "public_curve_region_materialized_boundary_paths_is_a_strict_wrapper": true,
+    "spline_reconstruction_and_subcurve_policy_cut_is_incomplete": true,
+    "next_action": "cut over CurveRegion2 materialized_boundary_paths, then spline subcurve and reconstruction propagation"
+  },
+  "verification": {
+    "cargo_test_all_features": "pass",
+    "unit_tests": 260,
+    "all_integration_tests": "pass except two explicitly ignored release-scale PCB performance corpora",
+    "generated_curve_region_boolean_corpus_seconds": 172.97,
+    "pathological_operations": "268/268 decided with no blockers",
+    "terminal_policy_integration_test": "pass",
+    "cargo_check_all_features_all_targets": "pass",
+    "cargo_check_no_default_features_all_targets": "pass",
+    "cargo_clippy_all_features_all_targets_deny_warnings": "pass",
+    "cargo_clippy_no_default_features_all_targets_deny_warnings": "pass",
+    "cargo_check_fuzz_all_targets": "pass",
+    "cargo_doc_all_features_deny_warnings": "pass",
+    "csgrs_cargo_check_all_features": "pass",
+    "hypercurve_ui_cargo_check_all_targets": "pass",
+    "hypercurve_ui_cargo_clippy_all_targets_deny_warnings": "pass",
+    "cargo_fmt_all_check": "pass",
+    "git_diff_check": "pass"
+  }
+}

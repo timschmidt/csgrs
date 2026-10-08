@@ -1,0 +1,20 @@
+{
+  "commit": "5c115f5171c0c90623cddaa7c268bac4d316d758",
+  "qualification": "selected-point-frame-replay-qualification.json",
+  "repositories": {
+    "hypercurve": {
+      "commit": "5c115f5171c0c90623cddaa7c268bac4d316d758",
+      "status": ""
+    },
+    "hyperbrep": {
+      "commit": "878fcb441b281ab1b44051ca4420b28092c3c2ed",
+      "status": ""
+    }
+  },
+  "working_sources_verified": 396,
+  "isolated_sources_verified": 1005,
+  "workspace_clean_claim": false,
+  "other_session_hyperreal_changes": "untouched",
+  "goal_status": "active",
+  "turn_classification": "progress: one qualified implementation commit and stack-localized public replay defect"
+}

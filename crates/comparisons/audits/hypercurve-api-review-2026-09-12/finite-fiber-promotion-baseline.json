@@ -1,0 +1,27 @@
+{
+  "commit": "63dc97aba4fe578ceb11dee3bdc50ee2307f3884",
+  "source_sha256": "fd2462578d634931fa92bf35e9118da227ddd0bcaf679e706de8a29fbadf3e1a",
+  "build_returncode": 0,
+  "build_seconds": 114.18109319299401,
+  "binary_sha256": "65454f8775469623afa30f19666f9198f06d1a9935981b85f71faf0693594a76",
+  "tests": [
+    {
+      "name": "selected_scalar_promotion_uses_its_finite_isolator",
+      "returncode": 101,
+      "seconds": 0.0034878509904956445,
+      "log": "finite-fiber-promotion-baseline-selected_scalar_promotion_uses_its_finite_isolator.log"
+    },
+    {
+      "name": "selected_norm_isolation_preserves_exterior_exact_and_algebraic_roots",
+      "returncode": 101,
+      "seconds": 0.0034054769930662587,
+      "log": "finite-fiber-promotion-baseline-selected_norm_isolation_preserves_exterior_exact_and_algebraic_roots.log"
+    },
+    {
+      "name": "degenerate_fiber_projection_cannot_discard_an_exterior_selected_root",
+      "returncode": 101,
+      "seconds": 0.003357849986059591,
+      "log": "finite-fiber-promotion-baseline-degenerate_fiber_projection_cannot_discard_an_exterior_selected_root.log"
+    }
+  ]
+}

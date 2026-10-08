@@ -1,0 +1,28 @@
+{
+  "returncode": 0,
+  "elapsed_seconds": 0.0035928839934058487,
+  "normal_library_sha256": "2664818a3d8832ddbf1351350562e105a7fd486401f71db0f2cd3661e4180048",
+  "log": "finite-circle-source-domain-completed-probe.log",
+  "source": "native-point-components-completed.rs",
+  "command": [
+    "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustc",
+    "--edition=2024",
+    "-O",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/native-point-components-completed.rs",
+    "--extern",
+    "hypercurve=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypercurve-3abe3d9bfe83911d.rlib",
+    "-L",
+    "dependency=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps",
+    "-o",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-circle-source-domain-completed-probe"
+  ],
+  "run_command": [
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-circle-source-domain-completed-probe"
+  ],
+  "source_sha256": "afcba6724ef40752e39b1596454d7a04669a8743a413dddf5fd266ad6b7abafe",
+  "executable_sha256": "6ebe5c8d138b4a7d820df1623d58ad4bb6aa8ab351910e17bab5ce9a53241ed8",
+  "counts": {
+    "complete_queries": 12,
+    "parameter_components": 12
+  }
+}

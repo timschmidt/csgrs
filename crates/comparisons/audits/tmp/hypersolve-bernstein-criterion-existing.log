@@ -1,0 +1,13 @@
+Benchmarking subdivide_bernstein_univariate_polynomial_interval_roots
+Benchmarking subdivide_bernstein_univariate_polynomial_interval_roots: Warming up for 200.00 ms
+Benchmarking subdivide_bernstein_univariate_polynomial_interval_roots: Collecting 40 samples in estimated 536.30 ms (8200 iterations)
+Benchmarking subdivide_bernstein_univariate_polynomial_interval_roots: Analyzing
+subdivide_bernstein_univariate_polynomial_interval_roots
+                        time:   [61.338 µs 61.675 µs 62.270 µs]
+                        change: [+7.2373% +7.9801% +8.7097%] (p = 0.00 < 0.05)
+                        Performance has regressed.
+Found 5 outliers among 40 measurements (12.50%)
+  3 (7.50%) high mild
+  2 (5.00%) high severe
+
+updated /home/tim/Documents/GitHub/workspace/hypersolve/benchmarks.md from 409 Criterion rows, 4 comparisons, and 6 benchmark suites

@@ -1,0 +1,20 @@
+{
+  "matches": [
+    "hypercurve/README.md:294:- `CurveRegion2::{empty, arrange_unordered_segments,",
+    "hypercurve/examples/arrangement.rs:24:    let result = CurveRegion2::arrange_unordered_segments(",
+    "hypercurve/benches/editing.rs:1803:        let result = CurveRegion2::arrange_unordered_segments_borrowed(",
+    "hypercurve/benches/editing.rs:1843:        let result = CurveRegion2::arrange_unordered_segments_borrowed(",
+    "hypercurve/benches/editing.rs:1877:    let result = CurveRegion2::arrange_unordered_segments(segments, FillRule::NonZero, &policy)",
+    "hypercurve/tests/hypercurve_curve_region_promotion.rs:7375:        CurveRegion2::arrange_unordered_segments(source, FillRule::NonZero, &CurveContext::STRICT)",
+    "hypercurve/src/native_region_tests.rs:77:    CurveRegion2::arrange_unordered_segments(",
+    "hypercurve/src/native_region_tests.rs:95:    CurveRegion2::arrange_unordered_segments_borrowed(&segments, fill_rule, &policy())",
+    "hypercurve/src/native_region_tests.rs:101:    CurveRegion2::arrange_unordered_segments(segments, fill_rule, &policy())",
+    "hypercurve/src/native_region_tests.rs:110:    CurveRegion2::arrange_unordered_segments_borrowed(segments, fill_rule, &policy())",
+    "hypercurve/src/native_region_tests.rs:698:    let strict = CurveRegion2::arrange_unordered_segments_borrowed(",
+    "hypercurve/src/native_region_tests.rs:708:    let approximate = CurveRegion2::arrange_unordered_segments_borrowed(",
+    "hypercurve/src/native_region_tests.rs:721:    let approximate_owned = CurveRegion2::arrange_unordered_segments(",
+    "hypercurve/src/bezier_region.rs:10198:    pub fn arrange_unordered_segments(",
+    "hypercurve/src/bezier_region.rs:10209:    pub fn arrange_unordered_segments_borrowed("
+  ],
+  "decision": "Audit only. Both public entry points call the same slice kernel; consolidate on a borrowed input without cloning. Candidate not yet prepared."
+}

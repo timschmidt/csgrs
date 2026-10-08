@@ -1,0 +1,29 @@
+diff --git a/src/curve/native.rs b/src/curve/native.rs
+index 56b6925..25cadf2 100644
+--- a/src/curve/native.rs
++++ b/src/curve/native.rs
+@@ -1773,13 +1773,17 @@ pub fn bezier_region_with_context(
+     let decisions = GeometryDecisions::new(context);
+     let path =
+         bezier_path(control, display_segments).ok_or(ValidationError::InvalidArguments)?;
+-    let start = hyperlimit::Point2::new(path.start().x().clone(), path.start().y().clone());
+-    let end = hyperlimit::Point2::new(path.end().x().clone(), path.end().y().clone());
+-    if !decisions.decide(
+-        hyperlimit::point2_equal(&start, &end, decisions.predicate_policy()),
+-        "Bezier boundary closure",
+-    )? {
+-        return Err(ValidationError::InvalidArguments);
++    match decisions.consume_curve(
++        path.start()
++            .coincides_with(&path.end(), decisions.curve_policy()),
++    ) {
++        Classification::Decided(true) => {},
++        Classification::Decided(false) => return Err(ValidationError::InvalidArguments),
++        Classification::Uncertain(reason) => {
++            return Err(ValidationError::Geometry(format!(
++                "Bezier boundary closure is undecided: {reason:?}"
++            )));
++        },
+     }
+     let region = decisions.consume_curve(
+         CurveRegion2::try_from_boundary_paths(

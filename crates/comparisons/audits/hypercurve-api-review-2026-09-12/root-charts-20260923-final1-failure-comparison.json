@@ -1,0 +1,66 @@
+[
+  {
+    "name": "bezier_offset::conversion_tests::independently_encoded_nonrepresented_analytic_circle_publishes_overlap",
+    "returncodes_match": true,
+    "assertion_text_matches": true
+  },
+  {
+    "name": "bezier_offset::conversion_tests::nonrepresented_center_nonrational_chamfer_inverts_with_retained_authority",
+    "returncodes_match": true,
+    "assertion_text_matches": true
+  },
+  {
+    "name": "bezier_offset::conversion_tests::selected_fiber_transverse_mapped_cut_inverts_by_point",
+    "returncodes_match": true,
+    "assertion_text_matches": true
+  },
+  {
+    "name": "bezier_region::tests::algebraic_endpoint_images_reenter_shared_corner_carriers",
+    "returncodes_match": true,
+    "assertion_text_matches": true
+  },
+  {
+    "name": "bezier_region::tests::nonlinear_selected_corner_chamfers_through_retained_fixed_distance_image",
+    "returncodes_match": true
+  },
+  {
+    "name": "bezier_region::tests::nonrepresented_chord_and_retained_rational_arc_share_the_fillet_kernel",
+    "returncodes_match": true,
+    "assertion_text_matches": true
+  },
+  {
+    "name": "bezier_region::tests::one_fragment_materialized_loop_chamfers_to_one_middle_interval",
+    "returncodes_match": true
+  },
+  {
+    "name": "bezier_region::tests::one_fragment_materialized_loop_extends_algebraic_chamfer_cuts_once",
+    "returncodes_match": true
+  },
+  {
+    "name": "bezier_region::tests::one_fragment_nonzero_parallel_loop_extends_chamfer_cuts_on_one_finite_envelope",
+    "returncodes_match": true
+  },
+  {
+    "name": "bezier_region::tests::one_fragment_ph_loop_projective_corners_retain_one_extended_interval",
+    "returncodes_match": true,
+    "assertion_text_matches": true
+  },
+  {
+    "name": "bezier_region::tests::one_fragment_selected_loop_chamfers_from_one_interval",
+    "returncodes_match": true
+  },
+  {
+    "name": "bezier_region::tests::one_fragment_selected_loop_extends_chamfer_cuts_on_its_analytic_carrier",
+    "returncodes_match": true
+  },
+  {
+    "name": "bezier_region::tests::retained_algebraic_straights_trim_or_extend_chamfer_and_fillet",
+    "returncodes_match": true,
+    "assertion_text_matches": true
+  },
+  {
+    "name": "bezier_region::tests::retained_analytic_multifragment_corner_extends_chamfer_and_fillet",
+    "returncodes_match": true,
+    "assertion_text_matches": true
+  }
+]

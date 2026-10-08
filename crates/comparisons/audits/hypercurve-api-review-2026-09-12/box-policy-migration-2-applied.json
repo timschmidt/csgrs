@@ -1,0 +1,96 @@
+[
+  {
+    "file": "hypercurve/tests/hypercurve_adversarial_polygons.rs",
+    "before_sha256": "6551f85a80e1e34aa2cfd1c4a4d444979729d2fd3bc97e5e5d8b58fdf68c637b",
+    "after_sha256": "d6f33d5333ddcc2aafb4c1b8af69df5ab1485fb17f0d30dc425c86d0a89fe060",
+    "deletions": [
+      {
+        "byte_start": 2524,
+        "byte_end": 2535,
+        "old": ", &policy()"
+      }
+    ]
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_bbox.rs",
+    "before_sha256": "756a4c4db02ff000154ad3c0b4c0c065c62ee55d531663db2b0022793aa7f2b7",
+    "after_sha256": "bea003be7f05f2e7ada62356c1d8358cf036eb30ee19abdbd1d72da10d193959",
+    "deletions": [
+      {
+        "byte_start": 1073,
+        "byte_end": 1082,
+        "old": "&policy()"
+      },
+      {
+        "byte_start": 1184,
+        "byte_end": 1193,
+        "old": "&policy()"
+      },
+      {
+        "byte_start": 1296,
+        "byte_end": 1305,
+        "old": "&policy()"
+      },
+      {
+        "byte_start": 1494,
+        "byte_end": 1505,
+        "old": ", &policy()"
+      },
+      {
+        "byte_start": 1844,
+        "byte_end": 1855,
+        "old": ", &policy()"
+      },
+      {
+        "byte_start": 2172,
+        "byte_end": 2183,
+        "old": ", &policy()"
+      },
+      {
+        "byte_start": 2565,
+        "byte_end": 2576,
+        "old": ", &policy()"
+      },
+      {
+        "byte_start": 2845,
+        "byte_end": 2856,
+        "old": ", &policy()"
+      },
+      {
+        "byte_start": 3009,
+        "byte_end": 3020,
+        "old": ", &policy()"
+      },
+      {
+        "byte_start": 3186,
+        "byte_end": 3197,
+        "old": ", &policy()"
+      },
+      {
+        "byte_start": 3358,
+        "byte_end": 3369,
+        "old": ", &policy()"
+      },
+      {
+        "byte_start": 4143,
+        "byte_end": 4154,
+        "old": ", &policy()"
+      },
+      {
+        "byte_start": 4269,
+        "byte_end": 4280,
+        "old": ", &policy()"
+      },
+      {
+        "byte_start": 4390,
+        "byte_end": 4401,
+        "old": ", &policy()"
+      },
+      {
+        "byte_start": 4746,
+        "byte_end": 4757,
+        "old": ", &policy()"
+      }
+    ]
+  }
+]

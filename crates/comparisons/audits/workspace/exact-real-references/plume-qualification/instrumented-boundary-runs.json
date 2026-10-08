@@ -1,0 +1,44 @@
+[
+  {
+    "name": "float-int-div-zero",
+    "args": [
+      "boundary",
+      "float-int-div-zero",
+      "+RTS",
+      "-M256m",
+      "-RTS"
+    ],
+    "status": 251,
+    "signal": null,
+    "stdout": "",
+    "stderr": "instrumented-probe: Heap exhausted;\ninstrumented-probe: Current maximum heap size is 268435456 bytes (256 MB).\ninstrumented-probe: Use `+RTS -M<size>' to increase it.\n"
+  },
+  {
+    "name": "limit-upper-zero",
+    "args": [
+      "boundary",
+      "limit-upper-zero",
+      "+RTS",
+      "-M256m",
+      "-RTS"
+    ],
+    "status": 251,
+    "signal": null,
+    "stdout": "",
+    "stderr": "instrumented-probe: Heap exhausted;\ninstrumented-probe: Current maximum heap size is 268435456 bytes (256 MB).\ninstrumented-probe: Use `+RTS -M<size>' to increase it.\n"
+  },
+  {
+    "name": "dyadic-norm-cap",
+    "args": [
+      "boundary",
+      "dyadic-norm-cap",
+      "+RTS",
+      "-M256m",
+      "-RTS"
+    ],
+    "status": 0,
+    "signal": null,
+    "stdout": "20\n",
+    "stderr": ""
+  }
+]

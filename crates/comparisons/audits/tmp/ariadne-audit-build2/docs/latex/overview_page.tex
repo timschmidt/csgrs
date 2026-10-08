@@ -1,0 +1,81 @@
+\doxysection{Overview }
+\hypertarget{overview_page}{}\label{overview_page}\index{Overview@{Overview}}
+\hypertarget{overview_page_overview_reachability}{}\doxysubsection{\texorpdfstring{Reachability Analysis of Hybrid Systems}{Reachability Analysis of Hybrid Systems}}\label{overview_page_overview_reachability}
+The main functionality of Ariadne is to perform reachability analysis and verification of hybrid systems. A {\itshape hybrid system} is a dynamic system in which continuous evolution is interspersed with discrete jumps. The state space of a hybrid system is of the form $X=\bigcup_{q\in Q} \{q\}\times \R^{n_q}$ with $Q$ a finite set of {\itshape locations}. The evolution of a hybrid system proceeds via a differential equation $\dot{x}(t) = f_q(x(t))$ in location $q$ until a {\itshape guard condition} $g_e(x)\geq 0$ is satisfied, in which case the {\itshape event} $e$ occurs, the location jumps to a target location $q\textnormal{\textquotesingle}=\tau(q,e)$ and the continuous state jumps to $x\textnormal{\textquotesingle}=r_{q,e}(x)$.
+
+A {\itshape trajectory} or {\itshape execution} of a hybrid system comprises continuous evolution interspersed with discrete events. We let $t_0$ be the {\itshape starting time} (canonically $t_0=0$) and $t_n$ the time when the $n^\mathrm{th}$ event $e_n$ occurs. Since more than one event may occur at the same time, we keep track of both the total number of events as well as the elapsed time when describing a trajectory. A trajectory is therefore a partial function $\xi(t,n)$ defined whenever $t_n\leq t\leq t_{n+1}$. The domain of $\xi$ is a {\itshape hybrid time domain} $T=\{ (t,n)\in\R^+\times\Z^+ \mid t\in[t_n,t_{n+1}]$. A trajectory is {\itshape Zeno} if the total number of event $N$ equals $\infty$, and $\lim_{n\to\infty} t_n < \infty$.
+
+In {\itshape reachability analysis} we are given an {\itshape initial set} $X_0 \subset X$, and aim to compute the set of points which are reachable by a trajectory starting in $x_0$. The reachability analysis may be performed over a {\itshape finite} time interval, in which case a bound on the total time $T$ and the maximum number of events $N$ is given, or over an {\itshape infinite} time interval.
+
+In both cases, we can compute either an over-\/approximation to the reachable set $R$, or a {\itshape lower} approximation. A set $A$ is said to be an $\epsilon$-\/lower approximation to $S$ if $A\subset N_\epsilon(S)$, and an over-\/approximation if $A\supset S$. For general systems it is impossible to compute a sequence of over-\/approximations converging to the infinite-\/time reachable set. Instead, we compute over-\/approximations to the reachable set which converge to the {\itshape chain-\/reachable set} as the accuracy parameters governing the computation are improved.
+
+\begin{DoxySeeAlso}{See also}
+\doxysectlink{hybrid_systems_page}{Hybrid Systems}{0}
+\end{DoxySeeAlso}
+\hypertarget{overview_page_overview_function}{}\doxysubsection{\texorpdfstring{Function Calculus}{Function Calculus}}\label{overview_page_overview_function}
+The computational kernel of Ariadne is based on a calculus of continuous functions on Euclidean space. The core type is of (multivariable, vector-\/valued) functions $f:\R^n\rightarrow\R^m$. These functions can be built from scalar-\/valued functions $\R^n\rightarrow\R$ componentwise, starting from the constant functions $f(x_1,\ldots,x_n)=c$, the coordinate projection functions $f(x_1,\ldots,x_n)=x_i$, arithmetical operations $+,-,\times,\div$, the absolute value operation $|x|$ and simple functions such as $\mathrm{sqrt}$, $\exp$, $\log$ and $\sin$.
+
+The results of operations on functions are expressed in terms of {\itshape interval functions} on bounded domains. An interval function is a map $\mathbb{IF}^n\rightarrow\mathbb{IF}^m$ where $\mathbb{IF}$ is the set of intervals in $\R$ with endpoints in a subset $\mathbb{F}$ of $\R$. An interval function $\hat{f}:\mathbb{IF}^n\rightarrow\mathbb{IF}^m$ is an {\itshape interval extension} of $f:\R^n\rightarrow\R^m$ if for every box $\ivl{x}=[a_1,b_1]\times\cdots\times[a_n,b_n]\in\mathbb{IF}^n$ and every $x\in\ivl{x}$, we have $f(x)\in \hat{f}(\ivl{x})$.
+
+If the result of an exact operation is a continuous function $f:U\fto\R^m$ where $U$ is an open subset of $\R^n$, then the computed solution is typically an interval function $\hat{f}:\IF^n\fto\IF^m$ which is a valid interval extension of $f$ on a box $D\subset U$.
+
+The main operations which Ariadne can perform are
+\begin{DoxyItemize}
+\item Solution of differential equations\+: Given a differential equation of the form $\dot{x}=f(x)$, computes the flow $\phi(x,t)$ satisfying $\phi(x,0)=x$ and $\dot{\phi}(x,t) = f(\phi(x,t))$.
+\item Solution of (parameterised) algebraic equations\+: Given an algebraic equation $f(a,x)=0$, find a function $h(a)$ satisfying $f(a,h(a))=0$.
+\item Nonlinear feasibility problems\+: Given a set of nonlinear constraints $g_i(x)\in C_i$, determine whether there exists a solution with $x\in D$.
+\item Solution of nonlinear programming problems\+: Given a nonlinear programming problem $ \max f(x) \text{ such that } x\in D,\ g(x)\leq 0\text{ and } h(x) = 0 $ where $D$ is a bounded domain, find all (local) solutions.
+\end{DoxyItemize}\hypertarget{overview_page_overview_classes}{}\doxysubsection{\texorpdfstring{Main Classes}{Main Classes}}\label{overview_page_overview_classes}
+Ariadne comprises a number of modules, which may be roughly classifies into {\itshape user modules}, including core data types, system classes and analysis tools, and {\itshape internal modules} which are used by the kernel and which the average user need not be concerned about.
+
+
+\begin{DoxyItemize}
+\item Main user classes for reachability analysis of hybrid systems.
+\begin{DoxyItemize}
+\item System classes implementing \doxylink{classAriadne_1_1HybridAutomatonInterface}{Hybrid\+Automaton\+Interface} for defining hybrid systems,
+\item Evolution classes implementing \doxylink{classAriadne_1_1HybridEvolverInterface}{Hybrid\+Evolver\+Interface} for computing the evolution of a hybrid system from a given initial set, and a \doxylink{classAriadne_1_1HybridReachabilityAnalyser}{Hybrid\+Reachability\+Analyser} for performing global reachability analysis
+\item Output classes \doxylink{classAriadne_1_1Figure}{Figure} for plotting sets and orbits.
+\end{DoxyItemize}
+\item Auxiliary user classes, used to define systems and store output.
+\begin{DoxyItemize}
+\item \doxylink{namespaceAriadne_1_1Numeric}{Numeric} classes, including \doxylink{classAriadne_1_1Real}{Real}, \doxylink{classAriadne_1_1Bounds}{{\ttfamily \doxylink{classAriadne_1_1Bounds}{Bounds$<$\+F$>$}} } and \doxylink{classAriadne_1_1Approximation}{{\ttfamily \doxylink{classAriadne_1_1Approximation}{Approximation$<$\+F$>$}} } based on floating-\/point types \doxylink{namespaceAriadne_af915b9f1459c9691328efa71c6f39c6e}{Float\+DP} and \doxylink{namespaceAriadne_a07966b67e613cc8779412beecb60651d}{Float\+MP}, and concrete \doxylink{classAriadne_1_1Integer}{Integer}, \doxylink{classAriadne_1_1Dyadic}{Dyadic}, \doxylink{classAriadne_1_1Decimal}{Decimal} and \doxylink{classAriadne_1_1Rational}{Rational} classes.
+\item Linear algebra classes, \doxylink{classAriadne_1_1Vector}{{\ttfamily \doxylink{classAriadne_1_1Vector}{Vector$<$\+X$>$}} } and \doxylink{classAriadne_1_1Matrix}{{\ttfamily \doxylink{classAriadne_1_1Matrix}{Matrix$<$\+X$>$}} }, templated on the numerical type.
+\item Function classes, including the general \doxylink{classAriadne_1_1Function}{Function} type, with \doxylink{group__FunctionModule_ga4a215a0a287e522d9422c606425448ec}{Scalar\+Univariate\+Function}, \doxylink{group__FunctionModule_ga80b7b96539d5ad6d733df84d41bd259d}{Vector\+Univariate\+Function}, \doxylink{group__FunctionModule_gaec600ea23399c725519b926e6b012451}{Scalar\+Multivariate\+Function} and \doxylink{group__FunctionModule_ga1abdce965f7ad2f9aa70af013de6b045}{Vector\+Multivariate\+Function}, specific \doxylink{classAriadne_1_1ConstantFunction}{Constant\+Function}, \doxylink{classAriadne_1_1CoordinateFunction}{Coordinate\+Function}, \doxylink{classAriadne_1_1Affine}{Affine} function, and \doxylink{classAriadne_1_1Polynomial}{Polynomial} function types.
+\item Geometric classes, including affine geometric types such as \doxylink{classAriadne_1_1Point}{Point}, \doxylink{classAriadne_1_1Box}{Box} and \doxylink{classAriadne_1_1Polyhedron}{Polyhedron}, and general \doxylink{classAriadne_1_1ImageSet}{Image\+Set}, \doxylink{classAriadne_1_1ConstraintSet}{Constraint\+Set} and \doxylink{classAriadne_1_1ConstrainedImageSet}{Constrained\+Image\+Set} objects, and generic sets such as Open\+Set, Overt\+Set and Compact\+Set defined by abstract interfaces.
+\item \doxylink{classAriadne_1_1Storage}{Storage} class \doxylink{classAriadne_1_1Orbit}{Orbit$<$ S $>$ } for storing evolution traces and \doxylink{classAriadne_1_1GridTreePaving}{Grid\+Tree\+Paving} for storing reached sets.
+\end{DoxyItemize}
+\item Internal classes, used in computations.
+\begin{DoxyItemize}
+\item Automatic differentiation classes \doxylink{classAriadne_1_1Differential}{Differential$<$\+X$>$ }.
+\item Differential calculus classes, including \doxylink{classAriadne_1_1TaylorModel}{Taylor\+Model} class for high-\/order polynomial approximation to dependent quantities.
+\end{DoxyItemize}
+\end{DoxyItemize}
+
+Function patch models, such as the \doxylink{group__FunctionModelSubModule_gae1628e0ab768b5e00d157d1b30e08bd1}{Scalar\+Multivariate\+Taylor\+Function\+Model} and \doxylink{group__FunctionModelSubModule_gad6930a6c6de398eaef74e98367a4480c}{Vector\+Multivariate\+Taylor\+Function\+Model} classes, for storing approximation to functions over bounded sets.
+
+
+\begin{DoxyItemize}
+\item Evaluation classes for performing nontrivial internal computations.
+\begin{DoxyItemize}
+\item Differential equation solvers satisfying the Integrator\+Interface.
+\item Algebraic equation solvers satisfying the Solver\+Interface.
+\item Nonlinear programming classes satisfying the \doxylink{classAriadne_1_1OptimiserInterface}{Optimiser\+Interface}.
+\item Constraint propagation classes satisfying the \doxylink{classAriadne_1_1ConstraintSolverInterface}{Constraint\+Solver\+Interface}.
+\end{DoxyItemize}
+\end{DoxyItemize}\hypertarget{overview_page_overview_system}{}\doxysubsection{\texorpdfstring{Building a Hybrid System}{Building a Hybrid System}}\label{overview_page_overview_system}
+In order to use Ariadne for reachability analysis, it is first necessary to build a hybrid system. The \doxylink{classAriadne_1_1HybridAutomaton}{Hybrid\+Automaton} class is the main Ariadne class for describing hybrid systems as a single hybrid automaton. A Monolithic\+Hybrid\+Automaton comprises \doxylink{classAriadne_1_1DiscreteMode}{Discrete\+Mode} and \doxylink{classAriadne_1_1DiscreteTransition}{Discrete\+Transition} objects to describe the modes (including continuous dynamics and invariants) and the discrete transitions (describing guards/activation predicates and reset relations.
+
+An Ariadne automaton must be built explicitly using the \doxylink{classAriadne_1_1HybridAutomaton_ab362c7846c09f3962b39982442849d7d}{{\ttfamily new\+\_\+mode} }, \doxylink{classAriadne_1_1HybridAutomaton_ad6edf75d890f36ed0d5abf9d34b51266}{{\ttfamily new\+\_\+invariant} } and \doxylink{classAriadne_1_1HybridAutomaton_a761675be8c1692d45f5c4060f109a9fa}{{\ttfamily new\+\_\+transition} } methods.
+
+All resets, flows and guards are specified using {\itshape functions}. A function is just a mapping from $\R^m$ to $\R^n$. Unfortunately, since Ariadne uses specialised automatic differentiation functionality, an Ariadne function cannot be specified directly from a C++ function, but must be defined using the a function object. The \doxylink{group__FunctionModule_ga97dec0be54bdb27609f9925b055e35dc}{Scalar\+Function} and \doxylink{group__FunctionModule_gae5d2f69ea172c6a2dfa7d2f12f700737}{Vector\+Function} classes can be used to build and represent simple functions. The \doxylink{classAriadne_1_1ScalarUserFunction}{{\ttfamily \doxylink{classAriadne_1_1ScalarUserFunction}{Scalar\+User\+Function$<$\+F$>$}} } and \doxylink{classAriadne_1_1VectorUserFunction}{{\ttfamily \doxylink{classAriadne_1_1VectorUserFunction}{Vector\+User\+Function$<$\+F$>$}} } can be used to wrap more complex user function objects to conform to the Ariadne interface.\hypertarget{overview_page_overview_analyser}{}\doxysubsection{\texorpdfstring{Building an Evolver or Analyser}{Building an Evolver or Analyser}}\label{overview_page_overview_analyser}
+In order to analyse a hybrid system, we need an {\itshape Evolver} or {\itshape Analyser} class. An Evolver class is used to perform simulations, and computes the evolution up to a given time starting from an initial {\itshape enclosure} set. An Analyser class is used to perform global analysis, and computes the evolution starting from an arbitrary given set. Internally, an Analyser class typically uses an Evolver to perform the evolution, and then performs a discretization of the evolved set on a grid.
+
+An evolver class satisfies the interface \doxylink{classAriadne_1_1EvolverInterface}{{\ttfamily \doxylink{classAriadne_1_1EvolverInterface}{Evolver\+Interface$<$\+SYS,\+ES$>$}} }, where {\ttfamily ES} is the template parameter giving the type used for the enclosure sets. The \doxylink{classAriadne_1_1HybridEvolverInterface}{Hybrid\+Evolver\+Interface } class is an interface for evolvers for hybrid systems using the type {\ttfamily \doxylink{classAriadne_1_1HybridEnclosure}{Hybrid\+Enclosure}} to specify the continuous part of the enclosure set. To build an Evolver class, we need to give {\itshape evolution parameters} to specify the accuracy of the computation. The evolution parameters are passed using the evolver\textquotesingle{}s configuration class. Note that not all parameters need be used by a given Evolver class.
+
+A reachability analyser class satisfies the interface \doxylink{classAriadne_1_1ReachabilityAnalyserInterface}{{\ttfamily \doxylink{classAriadne_1_1ReachabilityAnalyserInterface}{Reachability\+Analyser\+Interface$<$\+SYS$>$}} }. The class \doxylink{classAriadne_1_1HybridReachabilityAnalyser}{Hybrid\+Reachability\+Analyser} may be used to perform reachability analysis of hybrid systems. It can be constructed from a \doxylink{classAriadne_1_1HybridEvolverInterface}{Hybrid\+Evolver\+Interface} class.
+
+\begin{DoxyRemark}{Remarks}
+We use Evolver and Analyser classes rather than functions to perform the analysis since different methods require different user parameters to specify the accuracy.
+\end{DoxyRemark}
+A reachability analyser class satisfies the interface \doxylink{classAriadne_1_1ReachabilityAnalyserInterface}{Reachability\+Analyser\+Interface\texorpdfstring{$<$}{<}SYS\texorpdfstring{$>$}{>}}. The class \doxylink{classAriadne_1_1HybridReachabilityAnalyser}{Hybrid\+Reachability\+Analyser} may be used to perform reachability analysis of hybrid systems. It can be constructed from a \doxylink{classAriadne_1_1HybridEvolverInterface}{Hybrid\+Evolver\+Interface} class.\hypertarget{overview_page_tutorial_system_hybrid}{}\doxysubsection{\texorpdfstring{Performing Simulations or Reachability Analysis}{Performing Simulations or Reachability Analysis}}\label{overview_page_tutorial_system_hybrid}
+The functionality available for computing (rigorous) simulations, and performing reachability analysis can be found in the documentation for \doxylink{classAriadne_1_1EvolverInterface}{{\ttfamily \doxylink{classAriadne_1_1EvolverInterface}{Evolver\+Interface$<$\+SYS,\+ES$>$}} } and \doxylink{classAriadne_1_1ReachabilityAnalyserInterface}{{\ttfamily \doxylink{classAriadne_1_1ReachabilityAnalyserInterface}{Reachability\+Analyser\+Interface$<$\+SYS$>$}} }. 

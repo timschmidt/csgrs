@@ -1,0 +1,8 @@
+{
+  "files": {
+    "src/computable/node/quadratic_tower.rs": "90e9c6f314037614b6d2b0c4426e28987ee2a207a8262629f21fc9baa01c34d7",
+    "src/real/arithmetic/quadratic_tower_sign.rs": "652f9092c0059461f52e5b8d33997018a368b2572999d0fad4dc8694cac8e099"
+  },
+  "matches_qualified": true,
+  "parent": "a0e82b27d33eb74fa611677f237a15278289048f"
+}

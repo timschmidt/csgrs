@@ -1,0 +1,23 @@
+{
+  "qualification": "point-similarity-composition-20260927-v410-terminal.json",
+  "source_manifest": "point-similarity-composition-20260927-v410-sources.json",
+  "outer_session_reaped": 62399,
+  "validated_files": 2046,
+  "selected_geometry_tests": 297,
+  "checks": 6,
+  "reused_runs": [
+    "point-similarity-composition-20260927-v409-terminal.json"
+  ],
+  "repos": {
+    "hypercurve": {
+      "parent": "9d1dc57db828847afc4dfec0b4ba5fbb4d0a6121",
+      "paths": {
+        "src/bezier_offset.rs": "17b5fcc128b4d9f7e5d70d54712843b43902766b4458a403794b2e5105a32d76"
+      }
+    }
+  },
+  "known_unresolved": [
+    "strict_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions",
+    "approximate_512_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions"
+  ]
+}

@@ -1,0 +1,105 @@
+\doxysubsection{Sub\+Paving\+Interface Class Reference}
+\hypertarget{classAriadne_1_1SubPavingInterface}{}\label{classAriadne_1_1SubPavingInterface}\index{SubPavingInterface@{SubPavingInterface}}
+
+
+{\ttfamily \#include $<$paving\+\_\+interface.\+hpp$>$}
+
+
+
+\doxysubsubsection{Description}
+A prototype interface for subpavings. 
+
+A sub-\/paving is a paving-\/type set which is the restriction of another paving to a cell, called the {\itshape root\+\_\+cell} of the subpaving. In general, a sub-\/paving supports the non-\/modifying operations of a paving.
+
+The only modifying operations on a sub-\/paving which are logically allowable are those which apply to sub-\/cells of the root cell. These operations modify the paving itself. Inheritance diagram for Sub\+Paving\+Interface\+:\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[height=4.242424cm]{classAriadne_1_1SubPavingInterface}
+\end{center}
+\end{figure}
+\doxysubsubsubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1SubPavingInterface_a354a4ad6024c02e450b67dbe9d4af3ee}\label{classAriadne_1_1SubPavingInterface_a354a4ad6024c02e450b67dbe9d4af3ee} 
+\mbox{\hyperlink{classAriadne_1_1ForwardConstantIteratorHandle}{Forward\+Constant\+Iterator\+Handle}}$<$ \mbox{\hyperlink{classAriadne_1_1GridCell}{Grid\+Cell}} $>$ {\bfseries begin} () const
+\begin{DoxyCompactList}\small\item\em A constant \doxylink{classAriadne_1_1Expansion}{Iterator} through the cells of the paving. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1SubPavingInterface_a97a63b67f545b4d0dec28e03bc0c72e6}\label{classAriadne_1_1SubPavingInterface_a97a63b67f545b4d0dec28e03bc0c72e6} 
+\mbox{\hyperlink{classAriadne_1_1SubPavingHandle}{Sub\+Paving\+Handle}} {\bfseries branch} (\mbox{\hyperlink{namespaceAriadne_a76a8b016e5ad61faf9062cc387df5016}{Bool}} left\+\_\+or\+\_\+right) const
+\begin{DoxyCompactList}\small\item\em A sub-\/paving obtained by considering one of the immediate subcells of the root cell. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1SubPavingInterface_a333a60dd3f22c7dcb1de042f0a783d15}\label{classAriadne_1_1SubPavingInterface_a333a60dd3f22c7dcb1de042f0a783d15} 
+virtual \mbox{\hyperlink{classAriadne_1_1SubPavingInterface}{Sub\+Paving\+Interface}} \texorpdfstring{$\ast$}{*} {\bfseries clone} () const =0
+\begin{DoxyCompactList}\small\item\em A dynamically-\/allocated copy. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1SubPavingInterface_a20229d111f40efba6bd023a69794d261}\label{classAriadne_1_1SubPavingInterface_a20229d111f40efba6bd023a69794d261} 
+virtual Dimension\+Type {\bfseries dimension} () const =0
+\begin{DoxyCompactList}\small\item\em The dimension of the paving. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1SubPavingInterface_a36dbb509918bcce45aae9a30ada6c3fd}\label{classAriadne_1_1SubPavingInterface_a36dbb509918bcce45aae9a30ada6c3fd} 
+virtual const \mbox{\hyperlink{classAriadne_1_1Grid}{Grid}} \& {\bfseries grid} () const =0
+\begin{DoxyCompactList}\small\item\em The underlying grid of the paving. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1SubPavingInterface_a38e96fc508d4a0945555650ae54f53c2}\label{classAriadne_1_1SubPavingInterface_a38e96fc508d4a0945555650ae54f53c2} 
+virtual Size\+Type {\bfseries size} () const =0
+\begin{DoxyCompactList}\small\item\em The number of activated cells in the set. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1SubPavingInterface_a40f444abccbeb6514dbd036fbe2da5ba}\label{classAriadne_1_1SubPavingInterface_a40f444abccbeb6514dbd036fbe2da5ba} 
+virtual \mbox{\hyperlink{classAriadne_1_1GridCell}{Grid\+Cell}} {\bfseries root\+\_\+cell} () const =0
+\begin{DoxyCompactList}\small\item\em The root cell of the (sub)paving. All enabled cells are subcells of the root cell. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1SubPavingInterface_a07afebdec9680a88d79f638c64ae3c48}\label{classAriadne_1_1SubPavingInterface_a07afebdec9680a88d79f638c64ae3c48} 
+virtual \mbox{\hyperlink{namespaceAriadne_a76a8b016e5ad61faf9062cc387df5016}{Bool}} {\bfseries superset} (const \mbox{\hyperlink{classAriadne_1_1GridCell}{Grid\+Cell}} \&c) const =0
+\begin{DoxyCompactList}\small\item\em Tests if the cell {\itshape c} is contained in one of the cells of the subpaving. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1SubPavingInterface_a976aea5a1743cd44aa9bd4473390885d}\label{classAriadne_1_1SubPavingInterface_a976aea5a1743cd44aa9bd4473390885d} 
+virtual \mbox{\hyperlink{namespaceAriadne_a76a8b016e5ad61faf9062cc387df5016}{Bool}} {\bfseries equals} (const \mbox{\hyperlink{classAriadne_1_1SubPavingInterface}{Sub\+Paving\+Interface}} \&) const =0
+\begin{DoxyCompactList}\small\item\em Tests if the paving equals another paving on the same \doxylink{classAriadne_1_1Grid}{Grid}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1SubPavingInterface_a43a2676b457f58f40172eb5afc531a25}\label{classAriadne_1_1SubPavingInterface_a43a2676b457f58f40172eb5afc531a25} 
+virtual \mbox{\hyperlink{namespaceAriadne_a76a8b016e5ad61faf9062cc387df5016}{Bool}} {\bfseries subset} (const \mbox{\hyperlink{classAriadne_1_1SubPavingInterface}{Sub\+Paving\+Interface}} \&) const =0
+\begin{DoxyCompactList}\small\item\em Tests if the paving is a subset of another paving on the same \doxylink{classAriadne_1_1Grid}{Grid}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1SubPavingInterface_a577580ad6ad798660b6710a0118e8cd9}\label{classAriadne_1_1SubPavingInterface_a577580ad6ad798660b6710a0118e8cd9} 
+virtual \mbox{\hyperlink{namespaceAriadne_a76a8b016e5ad61faf9062cc387df5016}{Bool}} {\bfseries intersects} (const \mbox{\hyperlink{classAriadne_1_1SubPavingInterface}{Sub\+Paving\+Interface}} \&) const =0
+\begin{DoxyCompactList}\small\item\em Tests if the paving intersects another paving on the same \doxylink{classAriadne_1_1Grid}{Grid}. Tests intersection of interiors, so returns false if the pavings touch but do not overlap. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1SubPavingInterface_a5b5b37f50e7ec04a859007e27d6931a3}\label{classAriadne_1_1SubPavingInterface_a5b5b37f50e7ec04a859007e27d6931a3} 
+virtual \mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} {\bfseries set\+\_\+root\+\_\+cell} (\mbox{\hyperlink{namespaceAriadne_a76a8b016e5ad61faf9062cc387df5016}{Bool}} onoff)=0
+\begin{DoxyCompactList}\small\item\em Modify the underlying paving so that the root cell of the subpaving is either enabled or disabled. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1SubPavingInterface_a29a22ce86b2fa46534a65bacb92b61e3}\label{classAriadne_1_1SubPavingInterface_a29a22ce86b2fa46534a65bacb92b61e3} 
+virtual \mbox{\hyperlink{group__FunctionModule_gadb510bd9aa076e5ae44245b498901ca6}{Upper\+Box\+Type}} {\bfseries bounding\+\_\+box} () const =0
+\begin{DoxyCompactList}\small\item\em Returns a bounding box for the set. If the set is empty, then the first component of the result should be empty. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxyparagraph*{Public Member Functions inherited from \mbox{\hyperlink{classAriadne_1_1OvertSetInterface}{Overt\+Set\+Interface$<$ Validated\+Tag, Real\+Vector $>$}}}
+\begin{DoxyCompactItemize}
+\item 
+virtual Lower\+Kleenean\+Type$<$ \mbox{\hyperlink{structAriadne_1_1ValidatedTag}{Validated\+Tag}} $>$ {\bfseries overlaps} (const \mbox{\hyperlink{classAriadne_1_1SetInterfaceBase_a621a6488ff988ea56df9398b55b4241f}{Basic\+Set\+Type}} \&bx) const=0
+\begin{DoxyCompactList}\small\item\em Tests if the set overlaps {\itshape bx}. Sets {\itshape A} and {\itshape B} {\itshape overlap} if the interiors of {\itshape A} and {\itshape B} intersect. Sets $A$ and $B$ {\itshape overlap} if $A^\circ \cap B^\circ \neq \emptyset$. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxyparagraph*{Public Member Functions inherited from \mbox{\hyperlink{classAriadne_1_1SetInterfaceBase}{Set\+Interface\+Base$<$ Real\+Vector $>$}}}
+\begin{DoxyCompactItemize}
+\item 
+virtual {\bfseries \texorpdfstring{$\sim$}{\string~}\+Set\+Interface\+Base} ()=default
+\begin{DoxyCompactList}\small\item\em Virtual destructor. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxyparagraph*{Public Member Functions inherited from \mbox{\hyperlink{classAriadne_1_1BoundedSetInterface}{Bounded\+Set\+Interface$<$ Validated\+Tag, Real\+Vector $>$}}}
+\begin{DoxyCompactItemize}
+\item 
+virtual Lower\+Kleenean\+Type$<$ \mbox{\hyperlink{structAriadne_1_1ValidatedTag}{Validated\+Tag}} $>$ {\bfseries inside} (const \mbox{\hyperlink{classAriadne_1_1SetInterfaceBase_a621a6488ff988ea56df9398b55b4241f}{Basic\+Set\+Type}} \&bx) const=0
+\begin{DoxyCompactList}\small\item\em Tests if the set is a inside of {\itshape bx}. A set {\itshape A} is {\itshape inside} {\itshape B} if the closure of {\itshape A} is a subset of the interior of {\itshape B}. A set $A$ is {\itshape inside} $B$ if $\,\overline{\!A} \subset B^\circ$. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxyparagraph*{Public Member Functions inherited from \mbox{\hyperlink{classAriadne_1_1ClosedSetInterface}{Closed\+Set\+Interface$<$ Validated\+Tag, Real\+Vector $>$}}}
+\begin{DoxyCompactItemize}
+\item 
+virtual Lower\+Kleenean\+Type$<$ \mbox{\hyperlink{structAriadne_1_1ValidatedTag}{Validated\+Tag}} $>$ {\bfseries separated} (const \mbox{\hyperlink{classAriadne_1_1SetInterfaceBase_a621a6488ff988ea56df9398b55b4241f}{Basic\+Set\+Type}} \&bx) const=0
+\begin{DoxyCompactList}\small\item\em Tests if the set is separated from {\itshape bx}. A set {\itshape A} is {\itshape separated} from {\itshape B} if the closures of {\itshape A} and {\itshape B} are disjoint. A set $A$ is {\itshape separated} from $B$ if $\,\overline{\!A} \cap \overline{B} = \emptyset$. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxyparagraph*{Public Member Functions inherited from \mbox{\hyperlink{classAriadne_1_1Drawable2dInterface}{Drawable2d\+Interface}}}
+\begin{DoxyCompactItemize}
+\item 
+virtual {\bfseries \texorpdfstring{$\sim$}{\string~}\+Drawable2d\+Interface} ()=default
+\begin{DoxyCompactList}\small\item\em brief Virtual destructor. \end{DoxyCompactList}\item 
+virtual \mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} {\bfseries draw} (\mbox{\hyperlink{classAriadne_1_1CanvasInterface}{Canvas\+Interface}} \&c, const Projection2d \&p) const =0
+\begin{DoxyCompactList}\small\item\em brief Draw the object on the canvas {\itshape c} using line segments and fill/stroke commands. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsubsection*{Additional Inherited Members}
+\doxyparagraph*{Public Types inherited from \mbox{\hyperlink{classAriadne_1_1SetInterfaceBase}{Set\+Interface\+Base$<$ Real\+Vector $>$}}}
+\begin{DoxyCompactItemize}
+\item 
+typedef \mbox{\hyperlink{group__LinearAlgebraSubModule_ga00e69bf76ffebd1f3ba573f4662134bc}{Real\+Vector}} {\bfseries Element\+Type}
+\begin{DoxyCompactList}\small\item\em The type of element of the set. \end{DoxyCompactList}\item 
+typedef Set\+Traits$<$ \mbox{\hyperlink{group__LinearAlgebraSubModule_ga00e69bf76ffebd1f3ba573f4662134bc}{Real\+Vector}} $>$\+::\+Dimension\+Type {\bfseries Dimension\+Type}
+\begin{DoxyCompactList}\small\item\em The type representing the dimension of the set. \end{DoxyCompactList}\item 
+typedef Set\+Traits$<$ \mbox{\hyperlink{group__LinearAlgebraSubModule_ga00e69bf76ffebd1f3ba573f4662134bc}{Real\+Vector}} $>$\+::\+Basic\+Set\+Type {\bfseries Basic\+Set\+Type}
+\begin{DoxyCompactList}\small\item\em The type of basic set in the space. \end{DoxyCompactList}\item 
+typedef Set\+Traits$<$ \mbox{\hyperlink{group__LinearAlgebraSubModule_ga00e69bf76ffebd1f3ba573f4662134bc}{Real\+Vector}} $>$\+::\+Bounding\+Set\+Type {\bfseries Bounding\+Set\+Type}
+\begin{DoxyCompactList}\small\item\em The type of basic set in the space. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+The documentation for this class was generated from the following file\+:\begin{DoxyCompactItemize}
+\item 
+source/geometry/\mbox{\hyperlink{paving__interface_8hpp}{paving\+\_\+interface.\+hpp}}\end{DoxyCompactItemize}

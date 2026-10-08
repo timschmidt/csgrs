@@ -1,0 +1,280 @@
+[
+  {
+    "name": "quadratic-min",
+    "bits": 0,
+    "args": [
+      "functional",
+      "quadratic-min",
+      "0",
+      "+RTS",
+      "-M256m",
+      "-RTS"
+    ],
+    "timeout": 3000,
+    "status": 0,
+    "signal": null,
+    "stdout": "0 1 1 1 5 5\n",
+    "stderr": ""
+  },
+  {
+    "name": "quadratic-min",
+    "bits": 4,
+    "args": [
+      "functional",
+      "quadratic-min",
+      "4",
+      "+RTS",
+      "-M256m",
+      "-RTS"
+    ],
+    "timeout": 3000,
+    "status": 0,
+    "signal": null,
+    "stdout": "-1 4 1 16 5 9\n",
+    "stderr": ""
+  },
+  {
+    "name": "quadratic-min",
+    "bits": 6,
+    "args": [
+      "functional",
+      "quadratic-min",
+      "6",
+      "+RTS",
+      "-M256m",
+      "-RTS"
+    ],
+    "timeout": 3000,
+    "status": 0,
+    "signal": null,
+    "stdout": "-1 4 1 64 5 11\n",
+    "stderr": ""
+  },
+  {
+    "name": "quadratic-min",
+    "bits": 8,
+    "args": [
+      "functional",
+      "quadratic-min",
+      "8",
+      "+RTS",
+      "-M256m",
+      "-RTS"
+    ],
+    "timeout": 3000,
+    "status": 0,
+    "signal": null,
+    "stdout": "-1 4 1 256 5 13\n",
+    "stderr": ""
+  },
+  {
+    "name": "quadratic-max",
+    "bits": 0,
+    "args": [
+      "functional",
+      "quadratic-max",
+      "0",
+      "+RTS",
+      "-M256m",
+      "-RTS"
+    ],
+    "timeout": 3000,
+    "status": 0,
+    "signal": null,
+    "stdout": "1 1 1 1 6 6\n",
+    "stderr": ""
+  },
+  {
+    "name": "quadratic-max",
+    "bits": 4,
+    "args": [
+      "functional",
+      "quadratic-max",
+      "4",
+      "+RTS",
+      "-M256m",
+      "-RTS"
+    ],
+    "timeout": 3000,
+    "status": null,
+    "signal": "SIGKILL",
+    "error": "ETIMEDOUT",
+    "stdout": "",
+    "stderr": ""
+  },
+  {
+    "name": "quadratic-max",
+    "bits": 6,
+    "args": [
+      "functional",
+      "quadratic-max",
+      "6",
+      "+RTS",
+      "-M256m",
+      "-RTS"
+    ],
+    "timeout": 3000,
+    "status": null,
+    "signal": "SIGKILL",
+    "error": "ETIMEDOUT",
+    "stdout": "",
+    "stderr": ""
+  },
+  {
+    "name": "quadratic-max",
+    "bits": 8,
+    "args": [
+      "functional",
+      "quadratic-max",
+      "8",
+      "+RTS",
+      "-M256m",
+      "-RTS"
+    ],
+    "timeout": 3000,
+    "status": null,
+    "signal": "SIGKILL",
+    "error": "ETIMEDOUT",
+    "stdout": "",
+    "stderr": ""
+  },
+  {
+    "name": "square-integral",
+    "bits": 0,
+    "args": [
+      "functional",
+      "square-integral",
+      "0",
+      "+RTS",
+      "-M256m",
+      "-RTS"
+    ],
+    "timeout": 3000,
+    "status": 0,
+    "signal": null,
+    "stdout": "0 1 1 1 5 5\n",
+    "stderr": ""
+  },
+  {
+    "name": "square-integral",
+    "bits": 4,
+    "args": [
+      "functional",
+      "square-integral",
+      "4",
+      "+RTS",
+      "-M256m",
+      "-RTS"
+    ],
+    "timeout": 3000,
+    "status": null,
+    "signal": "SIGKILL",
+    "error": "ETIMEDOUT",
+    "stdout": "",
+    "stderr": ""
+  },
+  {
+    "name": "square-integral",
+    "bits": 6,
+    "args": [
+      "functional",
+      "square-integral",
+      "6",
+      "+RTS",
+      "-M256m",
+      "-RTS"
+    ],
+    "timeout": 3000,
+    "status": null,
+    "signal": "SIGKILL",
+    "error": "ETIMEDOUT",
+    "stdout": "",
+    "stderr": ""
+  },
+  {
+    "name": "square-integral",
+    "bits": 8,
+    "args": [
+      "functional",
+      "square-integral",
+      "8",
+      "+RTS",
+      "-M256m",
+      "-RTS"
+    ],
+    "timeout": 3000,
+    "status": null,
+    "signal": "SIGKILL",
+    "error": "ETIMEDOUT",
+    "stdout": "",
+    "stderr": ""
+  },
+  {
+    "name": "reciprocal-max",
+    "bits": 0,
+    "args": [
+      "functional",
+      "reciprocal-max",
+      "0",
+      "+RTS",
+      "-M256m",
+      "-RTS"
+    ],
+    "timeout": 3000,
+    "status": 0,
+    "signal": null,
+    "stdout": "14 1 1 1 10 10\n",
+    "stderr": ""
+  },
+  {
+    "name": "reciprocal-max",
+    "bits": 4,
+    "args": [
+      "functional",
+      "reciprocal-max",
+      "4",
+      "+RTS",
+      "-M256m",
+      "-RTS"
+    ],
+    "timeout": 3000,
+    "status": 0,
+    "signal": null,
+    "stdout": "29 2 1 16 10 14\n",
+    "stderr": ""
+  },
+  {
+    "name": "reciprocal-max",
+    "bits": 6,
+    "args": [
+      "functional",
+      "reciprocal-max",
+      "6",
+      "+RTS",
+      "-M256m",
+      "-RTS"
+    ],
+    "timeout": 3000,
+    "status": 0,
+    "signal": null,
+    "stdout": "29 2 1 64 10 16\n",
+    "stderr": ""
+  },
+  {
+    "name": "reciprocal-max",
+    "bits": 8,
+    "args": [
+      "functional",
+      "reciprocal-max",
+      "8",
+      "+RTS",
+      "-M256m",
+      "-RTS"
+    ],
+    "timeout": 3000,
+    "status": 0,
+    "signal": null,
+    "stdout": "1857 128 1 256 10 18\n",
+    "stderr": ""
+  }
+]

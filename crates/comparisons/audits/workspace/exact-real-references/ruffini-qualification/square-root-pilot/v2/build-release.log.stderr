@@ -1,0 +1,5 @@
+   Compiling hyperreal v0.13.1 (/home/tim/Documents/GitHub/workspace/exact-real-references/ruffini-qualification/square-root-pilot/snapshot/hyperreal)
+   Compiling hyperlattice v0.6.1 (/home/tim/Documents/GitHub/workspace/exact-real-references/ruffini-qualification/square-root-pilot/snapshot/hyperlattice)
+   Compiling hyperlimit v0.4.1 (/home/tim/Documents/GitHub/workspace/exact-real-references/ruffini-qualification/square-root-pilot/snapshot/hyperlimit)
+   Compiling ruffini_hyper_square_root_oracle_v2 v0.0.0 (/home/tim/Documents/GitHub/workspace/exact-real-references/ruffini-qualification/square-root-pilot/v2)
+    Finished `release` profile [optimized] target(s) in 8.14s

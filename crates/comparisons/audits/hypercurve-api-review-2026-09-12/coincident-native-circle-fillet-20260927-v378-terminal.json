@@ -1,0 +1,8 @@
+{
+  "source_manifest": "retained-wide-field-proofs-20260927-v374-sources.json",
+  "source_sha256": "2c0f577752d89b1ad79fb46b2b9935cbdef8ebea166f9ab562c984666ec5351c",
+  "library": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/libhypercurve.rlib",
+  "library_sha256": "3eb07b8c836c421b673e07ab7fbdcfac7c755dac4d22f7daf50971169c773799",
+  "all_processes_reaped": true,
+  "build_returncode": 1
+}

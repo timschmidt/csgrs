@@ -1,0 +1,10 @@
+import assert from 'node:assert/strict';
+import {captured} from './point-qualified-capture.mjs';
+import {wasmBindings,flags} from './point-wasm-protocol.mjs';
+const before=wasmBindings();
+await captured('point-wasm-qualification-check','.','node',['check-point-wasm-qualification.mjs']);
+await captured('point-wasm-environment','.','node',['point-image-cost-environment.mjs']);
+await captured('point-wasm-cost','.','taskset',['-c','6','node',...flags,'run-point-wasm-costs.mjs']);
+await captured('point-wasm-environment-after','.','node',['point-image-cost-environment.mjs']);
+await captured('point-wasm-capacity','.','df',['-B1','/tmp','.']);
+assert.deepEqual(wasmBindings(),before);

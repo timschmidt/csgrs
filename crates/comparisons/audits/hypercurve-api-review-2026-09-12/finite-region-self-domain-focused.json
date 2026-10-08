@@ -1,0 +1,100 @@
+[
+  {
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve-6e6572a45c5b177b",
+      "--exact",
+      "curve_support::tests::injectivity_certificates_own_their_domain_and_circle_chart",
+      "--test-threads=1",
+      "--nocapture"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.003581463999580592,
+    "binary": "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve-6e6572a45c5b177b",
+    "sha256": "f9f496002e209743c785052b1e09be7f2b19ac461856012a5ee24089ce22fa83",
+    "log": "finite-region-self-domain-focused-injectivity_certificates_own_their_domain_and_circle_chart.log"
+  },
+  {
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve-6e6572a45c5b177b",
+      "--exact",
+      "curve_intersection::curve_support_intersection::analytic_dispatch_tests::finite_bezier_self_contacts_retain_domain_and_point_evidence",
+      "--test-threads=1",
+      "--nocapture"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.11393339501228184,
+    "binary": "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve-6e6572a45c5b177b",
+    "sha256": "f9f496002e209743c785052b1e09be7f2b19ac461856012a5ee24089ce22fa83",
+    "log": "finite-region-self-domain-focused-finite_bezier_self_contacts_retain_domain_and_point_evidence.log"
+  },
+  {
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve-6e6572a45c5b177b",
+      "--exact",
+      "curve_intersection::curve_support_intersection::analytic_dispatch_tests::finite_bezier_self_components_exclude_the_identity_diagonal",
+      "--test-threads=1",
+      "--nocapture"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.015671436995035037,
+    "binary": "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve-6e6572a45c5b177b",
+    "sha256": "f9f496002e209743c785052b1e09be7f2b19ac461856012a5ee24089ce22fa83",
+    "log": "finite-region-self-domain-focused-finite_bezier_self_components_exclude_the_identity_diagonal.log"
+  },
+  {
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve-6e6572a45c5b177b",
+      "--exact",
+      "curve_region_boolean::certified_successor_tests::finite_self_crossing_regions_retain_boundary_ownership_on_reentry",
+      "--test-threads=1",
+      "--nocapture"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.031740955979330465,
+    "binary": "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve-6e6572a45c5b177b",
+    "sha256": "f9f496002e209743c785052b1e09be7f2b19ac461856012a5ee24089ce22fa83",
+    "log": "finite-region-self-domain-focused-finite_self_crossing_regions_retain_boundary_ownership_on_reentry.log"
+  },
+  {
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve-6e6572a45c5b177b",
+      "--exact",
+      "curve_region_boolean::certified_successor_tests::regularization_removes_symmetric_polynomial_and_rational_retracing",
+      "--test-threads=1",
+      "--nocapture"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.003543697006534785,
+    "binary": "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve-6e6572a45c5b177b",
+    "sha256": "f9f496002e209743c785052b1e09be7f2b19ac461856012a5ee24089ce22fa83",
+    "log": "finite-region-self-domain-focused-regularization_removes_symmetric_polynomial_and_rational_retracing.log"
+  },
+  {
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve-6e6572a45c5b177b",
+      "--exact",
+      "bezier_region::tests::selected_circle_and_retained_rational_arc_chamfer_extend_exactly",
+      "--test-threads=1",
+      "--nocapture"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 1.4658034919993952,
+    "binary": "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve-6e6572a45c5b177b",
+    "sha256": "f9f496002e209743c785052b1e09be7f2b19ac461856012a5ee24089ce22fa83",
+    "log": "finite-region-self-domain-focused-selected_circle_and_retained_rational_arc_chamfer_extend_exactly.log"
+  },
+  {
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve-6e6572a45c5b177b",
+      "--exact",
+      "curve_region_trim::tests::finite_bezier_carrier_preparation_preserves_trim_and_replay",
+      "--test-threads=1",
+      "--nocapture"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.16403487301431596,
+    "binary": "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve-6e6572a45c5b177b",
+    "sha256": "f9f496002e209743c785052b1e09be7f2b19ac461856012a5ee24089ce22fa83",
+    "log": "finite-region-self-domain-focused-finite_bezier_carrier_preparation_preserves_trim_and_replay.log"
+  }
+]

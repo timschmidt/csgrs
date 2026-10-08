@@ -1,0 +1,285 @@
+   Compiling hypercurve v0.3.1 (/home/tim/Documents/GitHub/workspace/hypercurve)
+    Finished `release` profile [optimized] target(s) in 1m 07s
+     Running tests/hypercurve_curve_region_promotion.rs (target/release/deps/hypercurve_curve_region_promotion-2922d8dd6e249918)
+
+running 100 tests
+test affine_line_fast_path_preserves_nonzero_and_even_odd_fill_rules ... ok
+test authored_nested_material_roles_certify_filled_sides_directly ... ok
+test authored_loop_semantics_drive_nonzero_and_even_odd_classification ... ok
+test algebraic_chamfer_participates_in_a_disjoint_boolean_batch ... ok
+test all_family_nesting_rejects_crossing_loops_before_role_assignment ... ok
+test authored_line_arc_paths_use_the_unified_offset_engine ... ok
+test authoritative_curve_region_arrangement_regularizes_nonlinear_winding ... ok
+test authoritative_curve_region_arrangement_honors_coincident_winding_multiplicity ... ok
+test canonical_exact_chord_regions_fillet_without_line_demotion ... ok
+test authoritative_curve_region_arrangement_regularizes_self_crossing_walks ... ok
+test authoritative_curve_region_arrangement_regularizes_signed_loop_composition ... ok
+test empty_region_promotion_is_decided_and_reusable ... ok
+test algebraic_chords_survive_nonsingular_exact_affine_transforms ... ok
+test exact_profiles_assign_holes_to_the_smallest_containing_material ... ok
+test authoritative_curve_region_regularizes_polynomial_and_rational_self_crossings ... ok
+test algebraic_chords_and_round_centers_survive_exact_similarities ... ok
+approximate-512 consumed caller=src/classify.rs:183
+   0: <hypercurve::policy::CurveContext>::observe_approximate_512
+   1: hypercurve::classify::real_sign
+   2: hypercurve::curve::curve_path_is_closed
+   3: <hypercurve::bezier_region::CurveRegion2>::try_from_boundary_paths_raw
+   4: <hypercurve::bezier_region::CurveRegion2>::try_from_boundary_paths
+   5: <hypercurve_curve_region_promotion::materialized_boundary_paths_obey_terminal_policy_once::{closure#0} as core::ops::function::FnOnce<()>>::call_once
+   6: test::__rust_begin_short_backtrace::<core::result::Result<(), alloc::string::String>, fn() -> core::result::Result<(), alloc::string::String>>
+   7: test::run_test::{closure#0}
+   8: std::sys::backtrace::__rust_begin_short_backtrace::<test::run_test::{closure#1}, ()>
+   9: <std::thread::lifecycle::spawn_unchecked<test::run_test::{closure#1}, ()>::{closure#1} as core::ops::function::FnOnce<()>>::call_once::{shim:vtable#0}
+  10: <std::sys::thread::unix::Thread>::new::thread_start
+  11: start_thread
+  12: __clone3
+
+approximate-512 consumed caller=src/classify.rs:183
+   0: <hypercurve::policy::CurveContext>::observe_approximate_512
+   1: hypercurve::classify::real_sign
+   2: hypercurve::curve::curve_path_is_closed
+   3: <hypercurve::bezier_region::CurveRegion2>::materialized_boundary_paths_for_edit
+   4: <hypercurve::bezier_region::CurveRegion2>::materialized_boundary_paths
+   5: <hypercurve_curve_region_promotion::materialized_boundary_paths_obey_terminal_policy_once::{closure#0} as core::ops::function::FnOnce<()>>::call_once
+   6: test::__rust_begin_short_backtrace::<core::result::Result<(), alloc::string::String>, fn() -> core::result::Result<(), alloc::string::String>>
+   7: test::run_test::{closure#0}
+   8: std::sys::backtrace::__rust_begin_short_backtrace::<test::run_test::{closure#1}, ()>
+   9: <std::thread::lifecycle::spawn_unchecked<test::run_test::{closure#1}, ()>::{closure#1} as core::ops::function::FnOnce<()>>::call_once::{shim:vtable#0}
+  10: <std::sys::thread::unix::Thread>::new::thread_start
+  11: start_thread
+  12: __clone3
+
+approximate-512 consumed caller=src/classify.rs:183
+   0: <hypercurve::policy::CurveContext>::observe_approximate_512
+   1: hypercurve::classify::real_sign
+   2: hypercurve::curve::curve_path_is_closed
+   3: <hypercurve::bezier_region::CurveRegion2>::materialized_boundary_paths_for_edit
+   4: <hypercurve::bezier_region::CurveRegion2>::materialized_boundary_paths
+   5: <hypercurve_curve_region_promotion::materialized_boundary_paths_obey_terminal_policy_once::{closure#0} as core::ops::function::FnOnce<()>>::call_once
+   6: test::__rust_begin_short_backtrace::<core::result::Result<(), alloc::string::String>, fn() -> core::result::Result<(), alloc::string::String>>
+   7: test::run_test::{closure#0}
+   8: std::sys::backtrace::__rust_begin_short_backtrace::<test::run_test::{closure#1}, ()>
+   9: <std::thread::lifecycle::spawn_unchecked<test::run_test::{closure#1}, ()>::{closure#1} as core::ops::function::FnOnce<()>>::call_once::{shim:vtable#0}
+  10: <std::sys::thread::unix::Thread>::new::thread_start
+  11: start_thread
+  12: __clone3
+
+test materialized_boundary_paths_obey_terminal_policy_once ... ok
+test native_contour_constructors_and_signed_depth_need_no_region_wrapper ... ok
+test analytic_parallel_miter_tangent_legs_have_no_nondegenerate_fillet ... ok
+test native_self_crossing_walk_regularizes_with_both_fill_rules ... ok
+test native_self_overlap_regularization_honors_winding_multiplicity ... ok
+test correlated_chord_pair_endpoints_survive_transform_and_offset ... ok
+test analytic_parallel_rejected_miters_remain_transverse_fillet_candidates ... ok
+test nonlinear_curved_winding_honors_authored_fill_rules_exactly ... ok
+test nonperiodic_self_contact_does_not_claim_a_green_integral_as_filled_area ... ok
+test cusp_chord_boolean_boundary_reoffsets_with_exact_bevels ... ok
+test one_field_algebraic_chamfer_regularizes_without_rebuilding_its_solver ... ok
+test region_promotion_retains_explicit_roles_and_line_fast_path ... ok
+test region_promotion_retains_hole_role_for_projection ... ok
+test line_parabola_fillet_extends_the_regular_incident_cell_exactly ... ok
+test retained_circular_regions_chamfer_over_the_full_support ... ok
+test one_chord_orders_contacts_from_two_selected_round_corners ... ok
+test approximate_512_trim_only_analytic_parallel_support_corners_retain_algebraic_fillet_centers ... ok
+test selected_algebraic_cusp_chamfers_use_the_unified_retained_kernel ... ok
+test selected_algebraic_round_join_retains_a_general_minor_cut ... ok
+test rotated_algebraic_round_regions_boolean_through_oblique_three_field_contacts ... ok
+test exact_support_cutter_reenters_correlated_chord_collinearly ... ok
+test selected_endpoint_chord_pairs_share_the_linear_fillet_kernel ... ok
+test selected_endpoint_chords_share_linear_arc_fillet_incidence ... ok
+test selected_endpoint_chords_share_linear_bezier_fillet_incidence ... ok
+test selected_circle_support_chord_corners_retain_algebraic_fillet_centers ... ok
+test similarity_rotation_preserves_unified_region_semantics_and_fast_path ... ok
+test algebraic_chord_expansion_merges_coupled_material_loops_exactly ... ok
+test arc_parabola_fillet_recovers_exact_complement_contacts ... ok
+test transformed_promotion_retains_explicit_roles_without_the_source_fast_path ... ok
+test strict_trim_only_analytic_parallel_support_corners_retain_algebraic_fillet_centers ... ok
+test repeated_region_offsets_compose_retained_exact_parallels_under_both_policies ... ok
+test translated_algebraic_round_regions_boolean_through_cusp_chord_contacts ... ok
+test unified_curved_erosion_resolves_simultaneous_hole_and_material_tangencies ... ok
+test unified_curved_erosion_opens_a_hole_through_the_material_boundary ... ok
+test unified_curved_erosion_retains_the_exact_hole_boundary_contact ... ok
+test unified_native_arrangement_exposes_immediate_evidence ... ok
+test unified_native_constructor_retains_zero_signed_area_boundary_for_diagnostics ... ok
+test unified_region_bounds_cover_native_and_higher_order_carriers_exactly ... ok
+test unified_region_chamfer_and_fillet_edit_higher_order_loops ... ok
+test unified_region_chamfer_joins_two_algebraic_bezier_cuts ... ok
+test unified_region_chamfer_reenters_general_algebraic_chords ... ok
+test unified_region_chamfer_retains_algebraic_bezier_cut ... ok
+test axis_aligned_algebraic_chords_reenter_exact_region_offsets ... ok
+test unified_region_contracts_nonconvex_material_before_its_medial_collapse ... ok
+test unified_region_convex_contraction_decides_collapse_and_over_contraction ... ok
+test unified_region_convex_erosion_handles_orientation_and_redundant_edges ... ok
+test unified_region_contraction_preserves_non_miter_corner_styles ... ok
+approximate-512 consumed caller=src/curve.rs:4064
+   0: <hypercurve::policy::CurveContext>::observe_approximate_512
+   1: hypercurve::classify::real_sign
+   2: <hypercurve::bezier_region::CurveRegion2>::fillet_loop_vertex_by_radius::{closure#0}
+   3: <hypercurve::bezier_region::CurveRegion2>::fillet_loop_vertex_by_radius
+   4: <hypercurve_curve_region_promotion::unified_region_corner_solver_obeys_terminal_policy_once::{closure#0} as core::ops::function::FnOnce<()>>::call_once
+   5: test::__rust_begin_short_backtrace::<core::result::Result<(), alloc::string::String>, fn() -> core::result::Result<(), alloc::string::String>>
+   6: test::run_test::{closure#0}
+   7: std::sys::backtrace::__rust_begin_short_backtrace::<test::run_test::{closure#1}, ()>
+   8: <std::thread::lifecycle::spawn_unchecked<test::run_test::{closure#1}, ()>::{closure#1} as core::ops::function::FnOnce<()>>::call_once::{shim:vtable#0}
+   9: <std::sys::thread::unix::Thread>::new::thread_start
+  10: start_thread
+  11: __clone3
+
+test unified_region_corner_solver_obeys_terminal_policy_once ... ok
+test unified_region_corners_use_canonical_spline_bezier_spans ... ok
+test unified_region_corners_use_rational_circular_carriers ... ok
+test unified_region_corners_use_represented_bezier_incidence ... ok
+test unified_curved_erosion_composes_merging_holes_and_material_crossings ... ok
+test unified_region_discards_nonconvex_material_after_wavefront_collapse ... ok
+test unified_region_erosion_splits_when_a_hole_reaches_the_material_boundary ... ok
+test unified_region_expansion_regularizes_a_closed_concavity ... ok
+test unified_region_native_chamfer_uses_arc_sweep_evidence ... ok
+test unified_mixed_line_arc_erosion_splits_after_a_curved_neck_collapse ... ok
+test unified_region_native_fillet_retains_certified_arc_contacts ... ok
+test unified_region_convex_erosion_keeps_symbolic_diagonal_offsets_and_collapse_exact ... ok
+test unified_region_nonconvex_erosion_splits_at_a_collapsed_neck ... ok
+approximate-512 consumed caller=src/offset.rs:33
+   0: <hypercurve::policy::CurveContext>::observe_approximate_512
+   1: hypercurve::classify::real_sign
+   2: <hypercurve::bezier_region::CurveRegion2>::offset::{closure#0}
+   3: <hypercurve::bezier_region::CurveRegion2>::offset
+   4: <hypercurve_curve_region_promotion::unified_region_offset_corner_options_obey_the_terminal_policy::{closure#0} as core::ops::function::FnOnce<()>>::call_once
+   5: test::__rust_begin_short_backtrace::<core::result::Result<(), alloc::string::String>, fn() -> core::result::Result<(), alloc::string::String>>
+   6: test::run_test::{closure#0}
+   7: std::sys::backtrace::__rust_begin_short_backtrace::<test::run_test::{closure#1}, ()>
+   8: <std::thread::lifecycle::spawn_unchecked<test::run_test::{closure#1}, ()>::{closure#1} as core::ops::function::FnOnce<()>>::call_once::{shim:vtable#0}
+   9: <std::sys::thread::unix::Thread>::new::thread_start
+  10: start_thread
+  11: __clone3
+
+test unified_region_offset_corner_options_obey_the_terminal_policy ... ok
+test unified_region_offset_corner_styles_have_exact_area_and_miter_fallback ... ok
+test unified_region_offset_expands_material_and_contracts_holes ... ok
+test unified_region_offset_regularizes_overlapping_expanded_components ... ok
+test unified_region_offset_regularizes_overlapping_expanded_voids ... ok
+test strict_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions ... ok
+test unified_region_offsets_quadratic_boundary_through_exact_parallel_arrangement ... ok
+test unified_region_offsets_general_rational_boundary_identically_under_both_policies ... ok
+test unified_region_reuses_design_parameter_corner_solvers ... ok
+test unified_region_positive_offset_removes_exactly_collapsed_convex_hole ... ok
+approximate-512 consumed caller=src/bbox.rs:619
+   0: <hypercurve::policy::CurveContext>::observe_approximate_512
+   1: hypercurve::classify::compare_reals
+   2: hypercurve::bbox::include_coordinate
+   3: <hypercurve::bbox::Aabb2>::include_point
+   4: <hypercurve::bbox::Aabb2>::union
+   5: <hypercurve::bbox::Aabb2>::from_curve_string
+   6: <hypercurve::bbox::Aabb2>::from_contour
+   7: <hypercurve::bbox::Aabb2>::from_region_view
+   8: <hypercurve::region::RegionView2>::signed_depth
+   9: <hypercurve::region::LineArcRegion2>::classify_point
+  10: <hypercurve::bezier_region::CurveRegion2>::classify_point_raw
+  11: <hypercurve::bezier_region::CurveRegion2>::classify_point
+  12: <hypercurve_curve_region_promotion::unified_region_non_miter_erosions_split_after_neck_collapse::{closure#0} as core::ops::function::FnOnce<()>>::call_once
+  13: test::__rust_begin_short_backtrace::<core::result::Result<(), alloc::string::String>, fn() -> core::result::Result<(), alloc::string::String>>
+  14: test::run_test::{closure#0}
+  15: std::sys::backtrace::__rust_begin_short_backtrace::<test::run_test::{closure#1}, ()>
+  16: <std::thread::lifecycle::spawn_unchecked<test::run_test::{closure#1}, ()>::{closure#1} as core::ops::function::FnOnce<()>>::call_once::{shim:vtable#0}
+  17: <std::sys::thread::unix::Thread>::new::thread_start
+  18: start_thread
+  19: __clone3
+
+approximate-512 consumed caller=src/bbox.rs:619
+   0: <hypercurve::policy::CurveContext>::observe_approximate_512
+   1: hypercurve::classify::compare_reals
+   2: hypercurve::bbox::include_coordinate
+   3: <hypercurve::bbox::Aabb2>::include_point
+   4: <hypercurve::bbox::Aabb2>::union
+   5: <hypercurve::bbox::Aabb2>::from_curve_string
+   6: <hypercurve::bbox::Aabb2>::from_contour
+   7: <hypercurve::bbox::Aabb2>::from_region_view
+   8: <hypercurve::region::RegionView2>::signed_depth
+   9: <hypercurve::region::LineArcRegion2>::classify_point
+  10: <hypercurve::bezier_region::CurveRegion2>::classify_point_raw
+  11: <hypercurve::bezier_region::CurveRegion2>::classify_point
+  12: <hypercurve_curve_region_promotion::unified_region_non_miter_erosions_split_after_neck_collapse::{closure#0} as core::ops::function::FnOnce<()>>::call_once
+  13: test::__rust_begin_short_backtrace::<core::result::Result<(), alloc::string::String>, fn() -> core::result::Result<(), alloc::string::String>>
+  14: test::run_test::{closure#0}
+  15: std::sys::backtrace::__rust_begin_short_backtrace::<test::run_test::{closure#1}, ()>
+  16: <std::thread::lifecycle::spawn_unchecked<test::run_test::{closure#1}, ()>::{closure#1} as core::ops::function::FnOnce<()>>::call_once::{shim:vtable#0}
+  17: <std::sys::thread::unix::Thread>::new::thread_start
+  18: start_thread
+  19: __clone3
+
+approximate-512 consumed caller=src/bbox.rs:619
+   0: <hypercurve::policy::CurveContext>::observe_approximate_512
+   1: hypercurve::classify::compare_reals
+   2: hypercurve::bbox::include_coordinate
+   3: <hypercurve::bbox::Aabb2>::include_point
+   4: <hypercurve::bbox::Aabb2>::union
+   5: <hypercurve::bbox::Aabb2>::from_curve_string
+   6: <hypercurve::bbox::Aabb2>::from_contour
+   7: <hypercurve::bbox::Aabb2>::from_region_view
+   8: <hypercurve::region::RegionView2>::signed_depth
+   9: <hypercurve::region::LineArcRegion2>::classify_point
+  10: <hypercurve::bezier_region::CurveRegion2>::classify_point_raw
+  11: <hypercurve::bezier_region::CurveRegion2>::classify_point
+  12: <hypercurve_curve_region_promotion::unified_region_non_miter_erosions_split_after_neck_collapse::{closure#0} as core::ops::function::FnOnce<()>>::call_once
+  13: test::__rust_begin_short_backtrace::<core::result::Result<(), alloc::string::String>, fn() -> core::result::Result<(), alloc::string::String>>
+  14: test::run_test::{closure#0}
+  15: std::sys::backtrace::__rust_begin_short_backtrace::<test::run_test::{closure#1}, ()>
+  16: <std::thread::lifecycle::spawn_unchecked<test::run_test::{closure#1}, ()>::{closure#1} as core::ops::function::FnOnce<()>>::call_once::{shim:vtable#0}
+  17: <std::sys::thread::unix::Thread>::new::thread_start
+  18: start_thread
+  19: __clone3
+
+test unified_region_non_miter_erosions_split_after_neck_collapse ... ok
+test exact_high_degree_elevations_reenter_the_quadratic_corner_kernel ... ok
+test unified_region_exact_neck_event_uses_post_event_topology ... ok
+test nonconvex_algebraic_chord_expansion_is_exact_and_local_collapse_is_explicit ... ok
+test unified_region_nonorthogonal_erosion_splits_through_the_exact_wavefront ... ok
+test selected_algebraic_round_joins_reenter_exact_region_offsets ... ok
+test algebraic_chord_erosion_splits_a_collapsed_neck_exactly ... ok
+test non_ph_bezier_pair_fillet_retains_general_selected_circle ... ok
+test sheared_algebraic_chord_erosion_splits_a_collapsed_neck_exactly ... ok
+test algebraic_chord_material_hole_contact_and_hole_collapse_are_exact ... ok
+test rotated_algebraic_chord_erosion_splits_a_collapsed_neck_exactly ... ok
+test algebraic_chord_non_miter_erosions_split_a_collapsed_neck_exactly ... ok
+test non_ph_bezier_pair_projective_fillet_retains_algebraic_extensions ... ok
+test approximate_512_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions has been running for over 60 seconds
+approximate-512 consumed caller=src/bezier_parameter.rs:2623
+   0: <hypercurve::policy::CurveContext>::observe_approximate_512
+   1: hypercurve::classify::real_sign
+   2: <hypercurve::bezier_parameter::BezierParameter2>::refined_isolating_interval
+   3: <hypercurve::bezier_parameter::BezierParameterRefinement2>::refine_to
+   4: <hypercurve::bezier_offset::BezierAlgebraicCuspSemicircle2>::represented_oblique_chord_intersections_in_domain
+   5: <hypercurve::bezier_offset::BezierAlgebraicCuspSemicircle2>::retained_represented_oblique_chord_intersections_in_domain
+   6: <hypercurve::bezier_offset::BezierAlgebraicCuspSemicircle2>::chord_intersections_in_domain_once
+   7: <hypercurve::bezier_offset::BezierAlgebraicCuspSemicircle2>::chord_intersections_in_domain_with_exact_line_preference
+   8: <hypercurve::curve_region_boolean::CurveRegionBooleanContext>::pair_result
+   9: <hypercurve::curve_region_boolean::CurveRegionBooleanContext>::build_split_topology
+  10: <hypercurve::curve_region_boolean::CurveRegionBooleanContext>::build_regularized_region
+  11: <hypercurve::bezier_region::CurveRegion2>::regularized_region_raw
+  12: <hypercurve::bezier_region::CurveRegion2>::offset_exact_boundary_walk_raw
+  13: <hypercurve::bezier_region::CurveRegion2>::offset::{closure#0}
+  14: <hypercurve::bezier_region::CurveRegion2>::offset
+  15: hypercurve_curve_region_promotion::assert_analytic_parallel_support_corners_retain_algebraic_fillet_centers_and_extensions
+  16: <hypercurve_curve_region_promotion::approximate_512_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions::{closure#0} as core::ops::function::FnOnce<()>>::call_once
+  17: test::__rust_begin_short_backtrace::<core::result::Result<(), alloc::string::String>, fn() -> core::result::Result<(), alloc::string::String>>
+  18: test::run_test::{closure#0}
+  19: std::sys::backtrace::__rust_begin_short_backtrace::<test::run_test::{closure#1}, ()>
+  20: <std::thread::lifecycle::spawn_unchecked<test::run_test::{closure#1}, ()>::{closure#1} as core::ops::function::FnOnce<()>>::call_once::{shim:vtable#0}
+  21: <std::sys::thread::unix::Thread>::new::thread_start
+  22: start_thread
+  23: __clone3
+
+retained analytic fillet re-offset paths: [DispatchCount { layer: "hypercurve", operation: "algebraic-chord-parameter-axis", path: "cross-axis-interval-separated", count: 6 }, DispatchCount { layer: "hypercurve", operation: "algebraic-chord-support-line", path: "procedural-parallel-exact-anchor", count: 2 }, DispatchCount { layer: "hypercurve", operation: "algebraic-chord-tangent-relation", path: "retained-construction-cross", count: 3 }, DispatchCount { layer: "hypercurve", operation: "algebraic-chord-tangent-relation", path: "retained-direction-authority", count: 6 }, DispatchCount { layer: "hypercurve", operation: "algebraic-chord-tangent-relation", path: "shared-endpoint-diagonal", count: 1 }, DispatchCount { layer: "hypercurve", operation: "algebraic-chord-tangent-relation", path: "shared-support-forward", count: 3 }, DispatchCount { layer: "hypercurve", operation: "algebraic-circle-chord-kernel", path: "certified-oblique-support-line", count: 2 }, DispatchCount { layer: "hypercurve", operation: "algebraic-circle-chord-kernel", path: "selected-parallel-normal-represented-fallback", count: 2 }, DispatchCount { layer: "hypercurve", operation: "algebraic-circle-chord-kernel-blocker", path: "certified-tangent", count: 1 }, DispatchCount { layer: "hypercurve", operation: "algebraic-circle-chord-pair", path: "kernel-unsupported", count: 1 }, DispatchCount { layer: "hypercurve", operation: "algebraic-circle-chord-pair", path: "supporting-circle-sibling-endpoint-tangent", count: 1 }, DispatchCount { layer: "hypercurve", operation: "algebraic-circle-parallel-kernel", path: "selected-normal-diagonal-rootless", count: 1 }, DispatchCount { layer: "hypercurve", operation: "algebraic-circle-parallel-kernel", path: "selected-normal-positive-affine-source", count: 1 }, DispatchCount { layer: "hypercurve", operation: "curve-region-exact-line-join", path: "represented-endpoints", count: 1 }, DispatchCount { layer: "hypercurve", operation: "curve-region-exact-offset-bevel-axis", path: "separated-tangent-components", count: 1 }, DispatchCount { layer: "hypercurve", operation: "curve-region-exact-offset-blocker", path: "regularization", count: 1 }, DispatchCount { layer: "hypercurve", operation: "curve-region-exact-offset-join", path: "bevel-outer", count: 7 }, DispatchCount { layer: "hypercurve", operation: "curve-region-exact-offset-join", path: "smooth-source-overlap", count: 3 }, DispatchCount { layer: "hypercurve", operation: "curve-region-exact-offset-span", path: "retained-oblique-algebraic-chord", count: 4 }, DispatchCount { layer: "hypercurve", operation: "curve-region-exact-offset-tangent", path: "retained-selected-circle-endpoint", count: 3 }, DispatchCount { layer: "hypercurve", operation: "curve-region-exact-offset-tangent", path: "selected-circle-chord-contact", count: 1 }, DispatchCount { layer: "hypercurve", operation: "curve-region-exact-offset-tangent-cross", path: "algebraic-chord-algebraic-chord", count: 1 }, DispatchCount { layer: "hypercurve", operation: "curve-region-exact-offset-tangent-cross", path: "algebraic-chord-circle-chord-contact", count: 2 }, DispatchCount { layer: "hypercurve", operation: "curve-region-exact-offset-tangent-cross", path: "selected-circle-pair-contact", count: 2 }, DispatchCount { layer: "hypercurve", operation: "curve-region-exact-offset-tangent-cross", path: "selected-circle-retained-parallel", count: 2 }, DispatchCount { layer: "hypercurve", operation: "curve-region-exact-offset-tangent-dot", path: "selected-chord-normal-algebraic-chord", count: 1 }, DispatchCount { layer: "hypercurve", operation: "curve-region-regularization-pair-blocker", path: "cusp-chord", count: 1 }, DispatchCount { layer: "hypercurve", operation: "curve-region-regularization-pair-blocker-adjacency", path: "nonadjacent", count: 1 }, DispatchCount { layer: "hypercurve", operation: "parallel-shared-source-parameter", path: "same-source-same-parameter", count: 6 }, DispatchCount { layer: "hypercurve", operation: "recursive-chord-displacement-speed", path: "new-generator", count: 2 }, DispatchCount { layer: "hypercurve", operation: "recursive-projective-axis-order", path: "interval-separated", count: 1 }, DispatchCount { layer: "hypercurve", operation: "recursive-projective-point", path: "analytic-parallel", count: 5 }, DispatchCount { layer: "hypercurve", operation: "represented-chord-parallel-blocker", path: "origin", count: 4 }, DispatchCount { layer: "hypercurve", operation: "represented-chord-parallel-origin-kind", path: "analytic-parallel", count: 2 }, DispatchCount { layer: "hypercurve", operation: "represented-chord-parallel-origin-kind", path: "chord-parallel", count: 2 }, DispatchCount { layer: "hypercurve", operation: "represented-chord-parallel-origin-mode", path: "endpoint-end-normal", count: 2 }, DispatchCount { layer: "hypercurve", operation: "represented-chord-parallel-origin-mode", path: "interior-normal", count: 2 }, DispatchCount { layer: "hypercurve", operation: "represented-chord-unit-direction", path: "independent-quotients", count: 2 }, DispatchCount { layer: "hypercurve", operation: "represented-circle-chord-blocker", path: "end-coordinate", count: 2 }, DispatchCount { layer: "hypercurve", operation: "represented-circle-chord-end-kind", path: "chord-parallel", count: 2 }, DispatchCount { layer: "hypercurve", operation: "represented-circle-chord-frame-kind", path: "parallel-normal", count: 2 }, DispatchCount { layer: "hypercurve", operation: "represented-circle-chord-start-kind", path: "chord-parallel", count: 2 }, DispatchCount { layer: "hypercurve", operation: "selected-circle-parallel-tangent-fast-path", path: "exact-parallel-normal", count: 6 }, DispatchCount { layer: "hypercurve", operation: "selected-circle-parallel-tangent-topology", path: "retained-affine-endpoint", count: 1 }, DispatchCount { layer: "hypercurve", operation: "selected-normal-affine-parameter", path: "retained-authority-identity", count: 1 }, DispatchCount { layer: "hypercurve", operation: "selected-normal-affine-parameter", path: "retained-center-identity", count: 1 }]
+
+thread 'approximate_512_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions' (160) panicked at tests/hypercurve_curve_region_promotion.rs:4754:17:
+the retained analytic fillet must re-enter the offset kernel: policy=CurveContext(1), mode=TrimOrExtend, corner=0, candidate=1, source_fragments=["analytic-parallel", "materialized", "chord", "materialized", "chord", "materialized", "chord", "materialized"], fragments=["selected-circle", "selected-circle", "analytic-parallel", "materialized", "chord", "materialized", "chord", "materialized", "chord", "chord"], error=Blocked(ExactCurveBlocker { operation: Offset, family: RationalBezier, reason: Unsupported })
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+test approximate_512_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions ... FAILED
+
+failures:
+
+failures:
+    approximate_512_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions
+
+test result: FAILED. 99 passed; 1 failed; 0 ignored; 0 measured; 0 filtered out; finished in 97.05s
+
+error: test failed, to rerun pass `--test hypercurve_curve_region_promotion`

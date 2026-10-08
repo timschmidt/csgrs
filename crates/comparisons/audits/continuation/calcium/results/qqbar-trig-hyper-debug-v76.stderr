@@ -1,0 +1,20 @@
+error[E0308]: mismatched types
+   --> src/main.rs:47:43
+    |
+ 47 |     let x = Real::from(Rational::fraction(k, 12).unwrap() + Rational::from_bigint(turns * 2));
+    |                        ------------------ ^ expected `i64`, found `i32`
+    |                        |
+    |                        arguments to this function are incorrect
+    |
+note: associated function defined here
+   --> /home/tim/Documents/GitHub/workspace/hyperreal/src/rational/arithmetic/construction.rs:322:12
+    |
+322 |     pub fn fraction(n: i64, d: u64) -> Result<Self, Problem> {
+    |            ^^^^^^^^
+help: you can convert an `i32` to an `i64`
+    |
+ 47 |     let x = Real::from(Rational::fraction(k.into(), 12).unwrap() + Rational::from_bigint(turns * 2));
+    |                                            +++++++
+
+For more information about this error, try `rustc --explain E0308`.
+error: could not compile `qqbar-trig-hyper-v76` (bin "qqbar-trig-hyper-v76") due to 1 previous error

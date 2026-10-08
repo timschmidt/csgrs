@@ -1,0 +1,19 @@
+{
+  "qualification": "derivative-denominator-v836-terminal.json",
+  "source_manifest": "derivative-denominator-v836-sources.json",
+  "outer_session_reaped": 79291,
+  "validated_files": 2048,
+  "tests": 324,
+  "checks": 7,
+  "repos": {
+    "hypercurve": {
+      "parent": "b770f24e37982b32c14cda4c2e7bc4c45876a2fd",
+      "paths": {
+        "src/bezier_algebraic_image.rs": "b361d9a88aa622db02632d36e214f86df2fc935b0842c9feaad071ea749f9d64",
+        "tests/hypercurve_bezier_algebraic_image.rs": "471d5a2f7af55e91c1928ba4ba183a4d3f2698e5bc902825b2b79667b14b95b5"
+      }
+    }
+  },
+  "scope": "Keep denominator powers reduced at the selected source root between derivative iterations. Preserve full numerator differentiation, source pole semantics, exact coefficient/root identities and existing image construction; validate independent high-order values and matched allocation-request measurements.",
+  "unresolved": "The full exact-geometry implementation goal remains active; this migration does not establish universal composition closure or a measured speedup."
+}

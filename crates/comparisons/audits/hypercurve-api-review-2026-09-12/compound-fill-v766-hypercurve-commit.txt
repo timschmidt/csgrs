@@ -1,0 +1,7 @@
+Select compound fills from global signed winding
+
+Boundary-path admission now takes an explicit FillRule and applies it to the sum of signed winding across all paths. SVG uses this canonical admission directly, removing a nesting prepass that created false holes for equally oriented nested paths and rejected overlapping subpaths. Update all controlled callers directly to preserve their existing EvenOdd semantics.
+
+Keep the authoring fill rule local to the unary arrangement context. Boundary-side rays return reusable winding evidence, and the shared face selector applies the rule to both geometric seeds and propagated winding. Published region representation, exact carrier/intersection machinery, explicit material/hole semantics and retained certificates are unchanged.
+
+A pinned rational baseline probe reproduces five defects with three passing controls. Five new regressions cover order and reversal, nested islands, repeated and opposed winding, canceled seams, circular algebraic intersections, nonuniform rational and generated boundaries, offset/Boolean reentry and both exact policies. Validation:459 release regressions across12 pinned executables and8 checks pass, including full affected integration inventories, selected core/downstream cases, lint, repository formatting, two fuzz targets and warning-denied documentation. The104 existing call-site migrations were independently checked against the previous source.

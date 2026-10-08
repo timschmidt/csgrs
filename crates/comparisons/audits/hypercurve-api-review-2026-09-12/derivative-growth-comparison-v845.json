@@ -1,0 +1,309 @@
+{
+  "independent_exact_samples": 36,
+  "domain_cases": 4,
+  "groups": [
+    {
+      "policy": 0,
+      "degree": 1,
+      "order": 3,
+      "samples": 3,
+      "ns": {
+        "before": 52126,
+        "after": 69005,
+        "ratio": 1.3238115335916818
+      },
+      "allocations": {
+        "before": 329,
+        "after": 346,
+        "ratio": 1.0516717325227964
+      },
+      "requested_bytes": {
+        "before": 31568,
+        "after": 32000,
+        "ratio": 1.0136847440446022
+      }
+    },
+    {
+      "policy": 0,
+      "degree": 1,
+      "order": 8,
+      "samples": 3,
+      "ns": {
+        "before": 158959,
+        "after": 140251,
+        "ratio": 0.8823092747186382
+      },
+      "allocations": {
+        "before": 1150,
+        "after": 1169,
+        "ratio": 1.0165217391304349
+      },
+      "requested_bytes": {
+        "before": 102224,
+        "after": 102368,
+        "ratio": 1.0014086711535453
+      }
+    },
+    {
+      "policy": 0,
+      "degree": 7,
+      "order": 3,
+      "samples": 3,
+      "ns": {
+        "before": 268631,
+        "after": 111233,
+        "ratio": 0.41407358048773224
+      },
+      "allocations": {
+        "before": 2817,
+        "after": 1236,
+        "ratio": 0.4387646432374867
+      },
+      "requested_bytes": {
+        "before": 230200,
+        "after": 104384,
+        "ratio": 0.45344917463075585
+      }
+    },
+    {
+      "policy": 0,
+      "degree": 7,
+      "order": 8,
+      "samples": 3,
+      "ns": {
+        "before": 1286342,
+        "after": 236414,
+        "ratio": 0.18378782625460413
+      },
+      "allocations": {
+        "before": 17954,
+        "after": 3926,
+        "ratio": 0.21866993427648435
+      },
+      "requested_bytes": {
+        "before": 1367144,
+        "after": 300520,
+        "ratio": 0.21981590819986777
+      }
+    },
+    {
+      "policy": 0,
+      "degree": 15,
+      "order": 3,
+      "samples": 3,
+      "ns": {
+        "before": 905398,
+        "after": 207596,
+        "ratio": 0.22928700969076582
+      },
+      "allocations": {
+        "before": 15761,
+        "after": 3645,
+        "ratio": 0.23126705158302138
+      },
+      "requested_bytes": {
+        "before": 1097672,
+        "after": 303968,
+        "ratio": 0.2769206101640563
+      }
+    },
+    {
+      "policy": 0,
+      "degree": 15,
+      "order": 8,
+      "samples": 3,
+      "ns": {
+        "before": 4292356,
+        "after": 443699,
+        "ratio": 0.10336957139622156
+      },
+      "allocations": {
+        "before": 86730,
+        "after": 7691,
+        "ratio": 0.08867750490026519
+      },
+      "requested_bytes": {
+        "before": 5806480,
+        "after": 603304,
+        "ratio": 0.10390184759096734
+      }
+    },
+    {
+      "policy": 1,
+      "degree": 1,
+      "order": 3,
+      "samples": 3,
+      "ns": {
+        "before": 46846,
+        "after": 56086,
+        "ratio": 1.1972420270674125
+      },
+      "allocations": {
+        "before": 329,
+        "after": 346,
+        "ratio": 1.0516717325227964
+      },
+      "requested_bytes": {
+        "before": 31568,
+        "after": 32000,
+        "ratio": 1.0136847440446022
+      }
+    },
+    {
+      "policy": 1,
+      "degree": 1,
+      "order": 8,
+      "samples": 3,
+      "ns": {
+        "before": 117052,
+        "after": 128961,
+        "ratio": 1.1017411065167617
+      },
+      "allocations": {
+        "before": 1129,
+        "after": 1148,
+        "ratio": 1.016829052258636
+      },
+      "requested_bytes": {
+        "before": 100328,
+        "after": 100472,
+        "ratio": 1.001435292241448
+      }
+    },
+    {
+      "policy": 1,
+      "degree": 7,
+      "order": 3,
+      "samples": 3,
+      "ns": {
+        "before": 222515,
+        "after": 103753,
+        "ratio": 0.46627418376289237
+      },
+      "allocations": {
+        "before": 2761,
+        "after": 1236,
+        "ratio": 0.4476638898949656
+      },
+      "requested_bytes": {
+        "before": 224664,
+        "after": 104384,
+        "ratio": 0.4646227254922907
+      }
+    },
+    {
+      "policy": 1,
+      "degree": 7,
+      "order": 8,
+      "samples": 3,
+      "ns": {
+        "before": 1118053,
+        "after": 253643,
+        "ratio": 0.2268613384159785
+      },
+      "allocations": {
+        "before": 17955,
+        "after": 3926,
+        "ratio": 0.21865775549986077
+      },
+      "requested_bytes": {
+        "before": 1366600,
+        "after": 300520,
+        "ratio": 0.21990340992243523
+      }
+    },
+    {
+      "policy": 1,
+      "degree": 15,
+      "order": 3,
+      "samples": 3,
+      "ns": {
+        "before": 832363,
+        "after": 191706,
+        "ratio": 0.2303153792275726
+      },
+      "allocations": {
+        "before": 15754,
+        "after": 3639,
+        "ratio": 0.2309889551859845
+      },
+      "requested_bytes": {
+        "before": 1096440,
+        "after": 303272,
+        "ratio": 0.27659698661121446
+      }
+    },
+    {
+      "policy": 1,
+      "degree": 15,
+      "order": 8,
+      "samples": 3,
+      "ns": {
+        "before": 4242870,
+        "after": 414992,
+        "ratio": 0.09780926589784744
+      },
+      "allocations": {
+        "before": 86724,
+        "after": 7685,
+        "ratio": 0.08861445505281122
+      },
+      "requested_bytes": {
+        "before": 5805784,
+        "after": 602608,
+        "ratio": 0.10379442294098437
+      }
+    }
+  ],
+  "high_order_groups": [
+    {
+      "degree": 8,
+      "order": 16,
+      "samples": 1,
+      "ns": {
+        "before": 1813745,
+        "after": 159959,
+        "ratio": 0.0881926621437964
+      },
+      "allocations": {
+        "before": 5616,
+        "after": 698,
+        "ratio": 0.12428774928774929
+      },
+      "requested_bytes": {
+        "before": 1130448,
+        "after": 117792,
+        "ratio": 0.10419939705320369
+      }
+    },
+    {
+      "degree": 40,
+      "order": 80,
+      "samples": 1,
+      "ns": {
+        "before": 591119388,
+        "after": 865340,
+        "ratio": 0.0014639005547217815
+      },
+      "allocations": {
+        "before": 886038,
+        "after": 6880,
+        "ratio": 0.0077649039883165285
+      },
+      "requested_bytes": {
+        "before": 132172376,
+        "after": 1044632,
+        "ratio": 0.007903557699530194
+      }
+    }
+  ],
+  "source_logs": {
+    "derivative-growth-replay-v837-run.log": "ef35cb123587e97058498724aa280b4bfa0079f133c6cb652e888c2f604a6f6e",
+    "derivative-growth-replay-v842-run.log": "2439a4f062e2a754ee5388e399dd96eca842425b64e610f4d2d623f20fa85872",
+    "derivative-domain-replay-v838-run.log": "e7d49c58005fcfa58c5b3f62d5a437befdb861b9431fe88c4cb29a9c17138bea",
+    "derivative-domain-replay-v843-run.log": "e7d49c58005fcfa58c5b3f62d5a437befdb861b9431fe88c4cb29a9c17138bea",
+    "high-order-derivative-replay-v840-run.log": "95c75454102d0ad3c681ae2930436da7c40c7406452fc031e23b94f7bd8fe400",
+    "high-order-derivative-replay-v844-run.log": "d0631c11ee6ba679e9c9ae1aa1185ef557c2c3ec63cc8804ca23e71ec6310948"
+  },
+  "scope": "Same standalone source linked to normal release libraries before and after the selected-root derivative recurrence change. Fresh curves and parameters; three samples per policy/degree/order, all eight derivative values checked independently. Allocator counters measure Rust allocation/reallocation requests and requested bytes, not peak memory or native-library allocations. Timings include allocator instrumentation and are workload-local, not a uniform speedup claim."
+}

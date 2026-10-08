@@ -1,0 +1,19 @@
+{
+  "target": "preview",
+  "command": [
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/normalized-path-admission-hypercircuit-candidate4-binaries/preview-5c112f3e58b87981",
+    "--test-threads=2",
+    "--color",
+    "never"
+  ],
+  "binary_sha256": "495f3076504b81b70cc47d99e6c08e98e026cec16fbc618a815e119fc6472d2f",
+  "returncode": 0,
+  "elapsed_seconds": 0.024471583019476384,
+  "log": "normalized-path-admission-hypercircuit-candidate4-preview.log",
+  "passed": [
+    "native_pcb_svg_retains_source_and_net_identity_with_projection_audit",
+    "native_pcb_svg_filters_copper_by_layer_but_keeps_spanning_vias"
+  ],
+  "failed": [],
+  "ignored": []
+}

@@ -1,0 +1,3289 @@
+[
+  {
+    "target": "hypercurve_curve_region_stroke",
+    "name": "closed_path_stroke_is_cyclic_and_does_not_apply_caps",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/corner-normalization-20260923-fix6-broad-hypercurve_curve_region_stroke",
+      "--exact",
+      "closed_path_stroke_is_cyclic_and_does_not_apply_caps",
+      "--test-threads=1",
+      "--nocapture",
+      "--color",
+      "never"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.03742380300536752,
+    "passed": true,
+    "ignored": false,
+    "log": "corner-normalization-20260923-fix6-broad-hypercurve_curve_region_stroke-closed_path_stroke_is_cyclic_and_does_not_apply_caps.log",
+    "binary_sha256": "6292726ddc394c354cf34de366b10403ea41db3c4512659c3738a30dd9d773a4"
+  },
+  {
+    "target": "hypercurve_curve_region_stroke",
+    "name": "curved_endpoint_caps_use_the_exact_one_sided_tangent",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/corner-normalization-20260923-fix6-broad-hypercurve_curve_region_stroke",
+      "--exact",
+      "curved_endpoint_caps_use_the_exact_one_sided_tangent",
+      "--test-threads=1",
+      "--nocapture",
+      "--color",
+      "never"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.037605819990858436,
+    "passed": true,
+    "ignored": false,
+    "log": "corner-normalization-20260923-fix6-broad-hypercurve_curve_region_stroke-curved_endpoint_caps_use_the_exact_one_sided_tangent.log",
+    "binary_sha256": "6292726ddc394c354cf34de366b10403ea41db3c4512659c3738a30dd9d773a4"
+  },
+  {
+    "target": "hypercurve_curve_region_stroke",
+    "name": "exact_path_stroke_cap_styles_have_their_defined_extent",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/corner-normalization-20260923-fix6-broad-hypercurve_curve_region_stroke",
+      "--exact",
+      "exact_path_stroke_cap_styles_have_their_defined_extent",
+      "--test-threads=1",
+      "--nocapture",
+      "--color",
+      "never"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.007757917977869511,
+    "passed": true,
+    "ignored": false,
+    "log": "corner-normalization-20260923-fix6-broad-hypercurve_curve_region_stroke-exact_path_stroke_cap_styles_have_their_defined_extent.log",
+    "binary_sha256": "6292726ddc394c354cf34de366b10403ea41db3c4512659c3738a30dd9d773a4"
+  },
+  {
+    "target": "hypercurve_curve_region_stroke",
+    "name": "exact_path_stroke_corner_styles_share_the_region_offset_solver",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/corner-normalization-20260923-fix6-broad-hypercurve_curve_region_stroke",
+      "--exact",
+      "exact_path_stroke_corner_styles_share_the_region_offset_solver",
+      "--test-threads=1",
+      "--nocapture",
+      "--color",
+      "never"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.007852541049942374,
+    "passed": true,
+    "ignored": false,
+    "log": "corner-normalization-20260923-fix6-broad-hypercurve_curve_region_stroke-exact_path_stroke_corner_styles_share_the_region_offset_solver.log",
+    "binary_sha256": "6292726ddc394c354cf34de366b10403ea41db3c4512659c3738a30dd9d773a4"
+  },
+  {
+    "target": "hypercurve_curve_region_stroke",
+    "name": "exact_path_stroke_handles_an_arc_parallel_radius_collapse",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/corner-normalization-20260923-fix6-broad-hypercurve_curve_region_stroke",
+      "--exact",
+      "exact_path_stroke_handles_an_arc_parallel_radius_collapse",
+      "--test-threads=1",
+      "--nocapture",
+      "--color",
+      "never"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.015814194921404123,
+    "passed": true,
+    "ignored": false,
+    "log": "corner-normalization-20260923-fix6-broad-hypercurve_curve_region_stroke-exact_path_stroke_handles_an_arc_parallel_radius_collapse.log",
+    "binary_sha256": "6292726ddc394c354cf34de366b10403ea41db3c4512659c3738a30dd9d773a4"
+  },
+  {
+    "target": "hypercurve_curve_region_stroke",
+    "name": "exact_path_stroke_is_invariant_to_a_collinear_partition",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/corner-normalization-20260923-fix6-broad-hypercurve_curve_region_stroke",
+      "--exact",
+      "exact_path_stroke_is_invariant_to_a_collinear_partition",
+      "--test-threads=1",
+      "--nocapture",
+      "--color",
+      "never"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.003734434023499489,
+    "passed": true,
+    "ignored": false,
+    "log": "corner-normalization-20260923-fix6-broad-hypercurve_curve_region_stroke-exact_path_stroke_is_invariant_to_a_collinear_partition.log",
+    "binary_sha256": "6292726ddc394c354cf34de366b10403ea41db3c4512659c3738a30dd9d773a4"
+  },
+  {
+    "target": "hypercurve_curve_region_stroke",
+    "name": "exact_path_stroke_preserves_an_even_multiplicity_stationary_source",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/corner-normalization-20260923-fix6-broad-hypercurve_curve_region_stroke",
+      "--exact",
+      "exact_path_stroke_preserves_an_even_multiplicity_stationary_source",
+      "--test-threads=1",
+      "--nocapture",
+      "--color",
+      "never"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.001520256046205759,
+    "passed": false,
+    "ignored": true,
+    "log": "corner-normalization-20260923-fix6-broad-hypercurve_curve_region_stroke-exact_path_stroke_preserves_an_even_multiplicity_stationary_source.log",
+    "binary_sha256": "6292726ddc394c354cf34de366b10403ea41db3c4512659c3738a30dd9d773a4"
+  },
+  {
+    "target": "hypercurve_curve_region_stroke",
+    "name": "exact_path_stroke_regularizes_a_parallel_reversal_corner",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/corner-normalization-20260923-fix6-broad-hypercurve_curve_region_stroke",
+      "--exact",
+      "exact_path_stroke_regularizes_a_parallel_reversal_corner",
+      "--test-threads=1",
+      "--nocapture",
+      "--color",
+      "never"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.015937035903334618,
+    "passed": true,
+    "ignored": false,
+    "log": "corner-normalization-20260923-fix6-broad-hypercurve_curve_region_stroke-exact_path_stroke_regularizes_a_parallel_reversal_corner.log",
+    "binary_sha256": "6292726ddc394c354cf34de366b10403ea41db3c4512659c3738a30dd9d773a4"
+  },
+  {
+    "target": "hypercurve_curve_region_stroke",
+    "name": "exact_path_stroke_splits_a_nonuniform_rational_source_cusp",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/corner-normalization-20260923-fix6-broad-hypercurve_curve_region_stroke",
+      "--exact",
+      "exact_path_stroke_splits_a_nonuniform_rational_source_cusp",
+      "--test-threads=1",
+      "--nocapture",
+      "--color",
+      "never"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.0015641329810023308,
+    "passed": false,
+    "ignored": true,
+    "log": "corner-normalization-20260923-fix6-broad-hypercurve_curve_region_stroke-exact_path_stroke_splits_a_nonuniform_rational_source_cusp.log",
+    "binary_sha256": "6292726ddc394c354cf34de366b10403ea41db3c4512659c3738a30dd9d773a4"
+  },
+  {
+    "target": "hypercurve_curve_region_stroke",
+    "name": "exact_path_stroke_splits_an_interior_source_cusp",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/corner-normalization-20260923-fix6-broad-hypercurve_curve_region_stroke",
+      "--exact",
+      "exact_path_stroke_splits_an_interior_source_cusp",
+      "--test-threads=1",
+      "--nocapture",
+      "--color",
+      "never"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.0015546829672530293,
+    "passed": false,
+    "ignored": true,
+    "log": "corner-normalization-20260923-fix6-broad-hypercurve_curve_region_stroke-exact_path_stroke_splits_an_interior_source_cusp.log",
+    "binary_sha256": "6292726ddc394c354cf34de366b10403ea41db3c4512659c3738a30dd9d773a4"
+  },
+  {
+    "target": "hypercurve_curve_region_stroke",
+    "name": "nonlinear_path_stroke_retains_exact_parallels_under_both_policies",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/corner-normalization-20260923-fix6-broad-hypercurve_curve_region_stroke",
+      "--exact",
+      "nonlinear_path_stroke_retains_exact_parallels_under_both_policies",
+      "--test-threads=1",
+      "--nocapture",
+      "--color",
+      "never"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.8149887650506571,
+    "passed": true,
+    "ignored": false,
+    "log": "corner-normalization-20260923-fix6-broad-hypercurve_curve_region_stroke-nonlinear_path_stroke_retains_exact_parallels_under_both_policies.log",
+    "binary_sha256": "6292726ddc394c354cf34de366b10403ea41db3c4512659c3738a30dd9d773a4"
+  },
+  {
+    "target": "hypercurve_curve_region_stroke",
+    "name": "nonlinear_source_cusp_endpoint_uses_its_exact_one_sided_frame",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/corner-normalization-20260923-fix6-broad-hypercurve_curve_region_stroke",
+      "--exact",
+      "nonlinear_source_cusp_endpoint_uses_its_exact_one_sided_frame",
+      "--test-threads=1",
+      "--nocapture",
+      "--color",
+      "never"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 1.7163114580325782,
+    "passed": true,
+    "ignored": false,
+    "log": "corner-normalization-20260923-fix6-broad-hypercurve_curve_region_stroke-nonlinear_source_cusp_endpoint_uses_its_exact_one_sided_frame.log",
+    "binary_sha256": "6292726ddc394c354cf34de366b10403ea41db3c4512659c3738a30dd9d773a4"
+  },
+  {
+    "target": "hypercurve_curve_region_stroke",
+    "name": "path_stroke_obeys_the_approximate_512_closure_terminal",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/corner-normalization-20260923-fix6-broad-hypercurve_curve_region_stroke",
+      "--exact",
+      "path_stroke_obeys_the_approximate_512_closure_terminal",
+      "--test-threads=1",
+      "--nocapture",
+      "--color",
+      "never"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.11425834300462157,
+    "passed": true,
+    "ignored": false,
+    "log": "corner-normalization-20260923-fix6-broad-hypercurve_curve_region_stroke-path_stroke_obeys_the_approximate_512_closure_terminal.log",
+    "binary_sha256": "6292726ddc394c354cf34de366b10403ea41db3c4512659c3738a30dd9d773a4"
+  },
+  {
+    "target": "hypercurve_curve_region_stroke",
+    "name": "path_stroke_obeys_the_approximate_512_connectivity_terminal",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/corner-normalization-20260923-fix6-broad-hypercurve_curve_region_stroke",
+      "--exact",
+      "path_stroke_obeys_the_approximate_512_connectivity_terminal",
+      "--test-threads=1",
+      "--nocapture",
+      "--color",
+      "never"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.03185597504489124,
+    "passed": true,
+    "ignored": false,
+    "log": "corner-normalization-20260923-fix6-broad-hypercurve_curve_region_stroke-path_stroke_obeys_the_approximate_512_connectivity_terminal.log",
+    "binary_sha256": "6292726ddc394c354cf34de366b10403ea41db3c4512659c3738a30dd9d773a4"
+  },
+  {
+    "target": "hypercurve_curve_region_stroke",
+    "name": "path_stroke_requires_a_policy_positive_half_width",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/corner-normalization-20260923-fix6-broad-hypercurve_curve_region_stroke",
+      "--exact",
+      "path_stroke_requires_a_policy_positive_half_width",
+      "--test-threads=1",
+      "--nocapture",
+      "--color",
+      "never"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.0037272541085258126,
+    "passed": true,
+    "ignored": false,
+    "log": "corner-normalization-20260923-fix6-broad-hypercurve_curve_region_stroke-path_stroke_requires_a_policy_positive_half_width.log",
+    "binary_sha256": "6292726ddc394c354cf34de366b10403ea41db3c4512659c3738a30dd9d773a4"
+  },
+  {
+    "target": "hypercurve_curve_region_stroke",
+    "name": "rational_nurbs_path_stroke_retains_exact_parallels_under_both_policies",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/corner-normalization-20260923-fix6-broad-hypercurve_curve_region_stroke",
+      "--exact",
+      "rational_nurbs_path_stroke_retains_exact_parallels_under_both_policies",
+      "--test-threads=1",
+      "--nocapture",
+      "--color",
+      "never"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.36430831998586655,
+    "passed": true,
+    "ignored": false,
+    "log": "corner-normalization-20260923-fix6-broad-hypercurve_curve_region_stroke-rational_nurbs_path_stroke_retains_exact_parallels_under_both_policies.log",
+    "binary_sha256": "6292726ddc394c354cf34de366b10403ea41db3c4512659c3738a30dd9d773a4"
+  },
+  {
+    "target": "hypercurve_curve_region_stroke",
+    "name": "self_crossing_source_is_regularized_instead_of_rejected",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/corner-normalization-20260923-fix6-broad-hypercurve_curve_region_stroke",
+      "--exact",
+      "self_crossing_source_is_regularized_instead_of_rejected",
+      "--test-threads=1",
+      "--nocapture",
+      "--color",
+      "never"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.31429339095484465,
+    "passed": true,
+    "ignored": false,
+    "log": "corner-normalization-20260923-fix6-broad-hypercurve_curve_region_stroke-self_crossing_source_is_regularized_instead_of_rejected.log",
+    "binary_sha256": "6292726ddc394c354cf34de366b10403ea41db3c4512659c3738a30dd9d773a4"
+  },
+  {
+    "target": "hypercurve_curve_region_stroke",
+    "name": "square_cap_uses_the_first_nonzero_endpoint_derivative",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/corner-normalization-20260923-fix6-broad-hypercurve_curve_region_stroke",
+      "--exact",
+      "square_cap_uses_the_first_nonzero_endpoint_derivative",
+      "--test-threads=1",
+      "--nocapture",
+      "--color",
+      "never"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.007694942061789334,
+    "passed": true,
+    "ignored": false,
+    "log": "corner-normalization-20260923-fix6-broad-hypercurve_curve_region_stroke-square_cap_uses_the_first_nonzero_endpoint_derivative.log",
+    "binary_sha256": "6292726ddc394c354cf34de366b10403ea41db3c4512659c3738a30dd9d773a4"
+  },
+  {
+    "target": "hypercurve_curve_region_boolean",
+    "name": "affine_line_batch_preserves_material_and_hole_roles",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/corner-normalization-20260923-fix6-broad-hypercurve_curve_region_boolean",
+      "--exact",
+      "affine_line_batch_preserves_material_and_hole_roles",
+      "--test-threads=1",
+      "--nocapture",
+      "--color",
+      "never"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.003610071958974004,
+    "passed": true,
+    "ignored": false,
+    "log": "corner-normalization-20260923-fix6-broad-hypercurve_curve_region_boolean-affine_line_batch_preserves_material_and_hole_roles.log",
+    "binary_sha256": "3b90b982b2a740cfaff2287c0c9bd25c2c654b58a052344dab80fd407b9a4557"
+  },
+  {
+    "target": "hypercurve_curve_region_boolean",
+    "name": "affine_line_batch_reuses_the_authoritative_arrangement_topology",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/corner-normalization-20260923-fix6-broad-hypercurve_curve_region_boolean",
+      "--exact",
+      "affine_line_batch_reuses_the_authoritative_arrangement_topology",
+      "--test-threads=1",
+      "--nocapture",
+      "--color",
+      "never"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.003770190989598632,
+    "passed": true,
+    "ignored": false,
+    "log": "corner-normalization-20260923-fix6-broad-hypercurve_curve_region_boolean-affine_line_batch_reuses_the_authoritative_arrangement_topology.log",
+    "binary_sha256": "3b90b982b2a740cfaff2287c0c9bd25c2c654b58a052344dab80fd407b9a4557"
+  },
+  {
+    "target": "hypercurve_curve_region_boolean",
+    "name": "algebraic_curved_region_output_can_feed_another_boolean",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/corner-normalization-20260923-fix6-broad-hypercurve_curve_region_boolean",
+      "--exact",
+      "algebraic_curved_region_output_can_feed_another_boolean",
+      "--test-threads=1",
+      "--nocapture",
+      "--color",
+      "never"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.004351391922682524,
+    "passed": true,
+    "ignored": false,
+    "log": "corner-normalization-20260923-fix6-broad-hypercurve_curve_region_boolean-algebraic_curved_region_output_can_feed_another_boolean.log",
+    "binary_sha256": "3b90b982b2a740cfaff2287c0c9bd25c2c654b58a052344dab80fd407b9a4557"
+  },
+  {
+    "target": "hypercurve_curve_region_boolean",
+    "name": "approximate_offset_reports_a_consumed_terminal_for_symbolic_zero_distance",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/corner-normalization-20260923-fix6-broad-hypercurve_curve_region_boolean",
+      "--exact",
+      "approximate_offset_reports_a_consumed_terminal_for_symbolic_zero_distance",
+      "--test-threads=1",
+      "--nocapture",
+      "--color",
+      "never"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.003700676024891436,
+    "passed": true,
+    "ignored": false,
+    "log": "corner-normalization-20260923-fix6-broad-hypercurve_curve_region_boolean-approximate_offset_reports_a_consumed_terminal_for_symbolic_zero_distance.log",
+    "binary_sha256": "3b90b982b2a740cfaff2287c0c9bd25c2c654b58a052344dab80fd407b9a4557"
+  },
+  {
+    "target": "hypercurve_curve_region_boolean",
+    "name": "approximate_policy_reports_a_consumed_terminal_instead_of_relabeling_it_exact",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/corner-normalization-20260923-fix6-broad-hypercurve_curve_region_boolean",
+      "--exact",
+      "approximate_policy_reports_a_consumed_terminal_instead_of_relabeling_it_exact",
+      "--test-threads=1",
+      "--nocapture",
+      "--color",
+      "never"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.01581580506172031,
+    "passed": true,
+    "ignored": false,
+    "log": "corner-normalization-20260923-fix6-broad-hypercurve_curve_region_boolean-approximate_policy_reports_a_consumed_terminal_instead_of_relabeling_it_exact.log",
+    "binary_sha256": "3b90b982b2a740cfaff2287c0c9bd25c2c654b58a052344dab80fd407b9a4557"
+  },
+  {
+    "target": "hypercurve_curve_region_boolean",
+    "name": "boolean_batch_short_circuits_empty_and_identical_operands",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/corner-normalization-20260923-fix6-broad-hypercurve_curve_region_boolean",
+      "--exact",
+      "boolean_batch_short_circuits_empty_and_identical_operands",
+      "--test-threads=1",
+      "--nocapture",
+      "--color",
+      "never"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.003676017979159951,
+    "passed": true,
+    "ignored": false,
+    "log": "corner-normalization-20260923-fix6-broad-hypercurve_curve_region_boolean-boolean_batch_short_circuits_empty_and_identical_operands.log",
+    "binary_sha256": "3b90b982b2a740cfaff2287c0c9bd25c2c654b58a052344dab80fd407b9a4557"
+  },
+  {
+    "target": "hypercurve_curve_region_boolean",
+    "name": "circular_boolean_outputs_publish_native_boundaries_under_both_policies",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/corner-normalization-20260923-fix6-broad-hypercurve_curve_region_boolean",
+      "--exact",
+      "circular_boolean_outputs_publish_native_boundaries_under_both_policies",
+      "--test-threads=1",
+      "--nocapture",
+      "--color",
+      "never"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.03173220297321677,
+    "passed": true,
+    "ignored": false,
+    "log": "corner-normalization-20260923-fix6-broad-hypercurve_curve_region_boolean-circular_boolean_outputs_publish_native_boundaries_under_both_policies.log",
+    "binary_sha256": "3b90b982b2a740cfaff2287c0c9bd25c2c654b58a052344dab80fd407b9a4557"
+  },
+  {
+    "target": "hypercurve_curve_region_boolean",
+    "name": "circular_conic_batch_obeys_the_approximate_512_terminal",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/corner-normalization-20260923-fix6-broad-hypercurve_curve_region_boolean",
+      "--exact",
+      "circular_conic_batch_obeys_the_approximate_512_terminal",
+      "--test-threads=1",
+      "--nocapture",
+      "--color",
+      "never"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.0319104710360989,
+    "passed": true,
+    "ignored": false,
+    "log": "corner-normalization-20260923-fix6-broad-hypercurve_curve_region_boolean-circular_conic_batch_obeys_the_approximate_512_terminal.log",
+    "binary_sha256": "3b90b982b2a740cfaff2287c0c9bd25c2c654b58a052344dab80fd407b9a4557"
+  },
+  {
+    "target": "hypercurve_curve_region_boolean",
+    "name": "circular_conic_batch_reuses_one_authoritative_topology",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/corner-normalization-20260923-fix6-broad-hypercurve_curve_region_boolean",
+      "--exact",
+      "circular_conic_batch_reuses_one_authoritative_topology",
+      "--test-threads=1",
+      "--nocapture",
+      "--color",
+      "never"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 2.0668414630927145,
+    "passed": true,
+    "ignored": false,
+    "log": "corner-normalization-20260923-fix6-broad-hypercurve_curve_region_boolean-circular_conic_batch_reuses_one_authoritative_topology.log",
+    "binary_sha256": "3b90b982b2a740cfaff2287c0c9bd25c2c654b58a052344dab80fd407b9a4557"
+  },
+  {
+    "target": "hypercurve_curve_region_boolean",
+    "name": "conic_general_batch_obeys_the_approximate_512_terminal",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/corner-normalization-20260923-fix6-broad-hypercurve_curve_region_boolean",
+      "--exact",
+      "conic_general_batch_obeys_the_approximate_512_terminal",
+      "--test-threads=1",
+      "--nocapture",
+      "--color",
+      "never"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.03187837393488735,
+    "passed": true,
+    "ignored": false,
+    "log": "corner-normalization-20260923-fix6-broad-hypercurve_curve_region_boolean-conic_general_batch_obeys_the_approximate_512_terminal.log",
+    "binary_sha256": "3b90b982b2a740cfaff2287c0c9bd25c2c654b58a052344dab80fd407b9a4557"
+  },
+  {
+    "target": "hypercurve_curve_region_boolean",
+    "name": "curve_path_construction_obeys_the_approximate_512_terminal",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/corner-normalization-20260923-fix6-broad-hypercurve_curve_region_boolean",
+      "--exact",
+      "curve_path_construction_obeys_the_approximate_512_terminal",
+      "--test-threads=1",
+      "--nocapture",
+      "--color",
+      "never"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.003598322975449264,
+    "passed": true,
+    "ignored": false,
+    "log": "corner-normalization-20260923-fix6-broad-hypercurve_curve_region_boolean-curve_path_construction_obeys_the_approximate_512_terminal.log",
+    "binary_sha256": "3b90b982b2a740cfaff2287c0c9bd25c2c654b58a052344dab80fd407b9a4557"
+  },
+  {
+    "target": "hypercurve_curve_region_boolean",
+    "name": "curved_region_boolean_output_can_feed_another_boolean",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/corner-normalization-20260923-fix6-broad-hypercurve_curve_region_boolean",
+      "--exact",
+      "curved_region_boolean_output_can_feed_another_boolean",
+      "--test-threads=1",
+      "--nocapture",
+      "--color",
+      "never"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.003602192969992757,
+    "passed": true,
+    "ignored": false,
+    "log": "corner-normalization-20260923-fix6-broad-hypercurve_curve_region_boolean-curved_region_boolean_output_can_feed_another_boolean.log",
+    "binary_sha256": "3b90b982b2a740cfaff2287c0c9bd25c2c654b58a052344dab80fd407b9a4557"
+  },
+  {
+    "target": "hypercurve_curve_region_boolean",
+    "name": "curved_region_boolean_respects_nested_hole_roles",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/corner-normalization-20260923-fix6-broad-hypercurve_curve_region_boolean",
+      "--exact",
+      "curved_region_boolean_respects_nested_hole_roles",
+      "--test-threads=1",
+      "--nocapture",
+      "--color",
+      "never"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.0035801150370389223,
+    "passed": true,
+    "ignored": false,
+    "log": "corner-normalization-20260923-fix6-broad-hypercurve_curve_region_boolean-curved_region_boolean_respects_nested_hole_roles.log",
+    "binary_sha256": "3b90b982b2a740cfaff2287c0c9bd25c2c654b58a052344dab80fd407b9a4557"
+  },
+  {
+    "target": "hypercurve_curve_region_boolean",
+    "name": "elevated_circular_boolean_outputs_publish_native_boundaries",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/corner-normalization-20260923-fix6-broad-hypercurve_curve_region_boolean",
+      "--exact",
+      "elevated_circular_boolean_outputs_publish_native_boundaries",
+      "--test-threads=1",
+      "--nocapture",
+      "--color",
+      "never"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.03192145098000765,
+    "passed": true,
+    "ignored": false,
+    "log": "corner-normalization-20260923-fix6-broad-hypercurve_curve_region_boolean-elevated_circular_boolean_outputs_publish_native_boundaries.log",
+    "binary_sha256": "3b90b982b2a740cfaff2287c0c9bd25c2c654b58a052344dab80fd407b9a4557"
+  },
+  {
+    "target": "hypercurve_curve_region_boolean",
+    "name": "empty_output_does_not_certify_an_approximate_normalization",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/corner-normalization-20260923-fix6-broad-hypercurve_curve_region_boolean",
+      "--exact",
+      "empty_output_does_not_certify_an_approximate_normalization",
+      "--test-threads=1",
+      "--nocapture",
+      "--color",
+      "never"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.0037223451072350144,
+    "passed": true,
+    "ignored": false,
+    "log": "corner-normalization-20260923-fix6-broad-hypercurve_curve_region_boolean-empty_output_does_not_certify_an_approximate_normalization.log",
+    "binary_sha256": "3b90b982b2a740cfaff2287c0c9bd25c2c654b58a052344dab80fd407b9a4557"
+  },
+  {
+    "target": "hypercurve_curve_region_boolean",
+    "name": "finite_bezier_charts_preserve_bounds_boundary_and_winding",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/corner-normalization-20260923-fix6-broad-hypercurve_curve_region_boolean",
+      "--exact",
+      "finite_bezier_charts_preserve_bounds_boundary_and_winding",
+      "--test-threads=1",
+      "--nocapture",
+      "--color",
+      "never"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.03171515406575054,
+    "passed": true,
+    "ignored": false,
+    "log": "corner-normalization-20260923-fix6-broad-hypercurve_curve_region_boolean-finite_bezier_charts_preserve_bounds_boundary_and_winding.log",
+    "binary_sha256": "3b90b982b2a740cfaff2287c0c9bd25c2c654b58a052344dab80fd407b9a4557"
+  },
+  {
+    "target": "hypercurve_curve_region_boolean",
+    "name": "general_curve_batch_obeys_the_approximate_512_terminal",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/corner-normalization-20260923-fix6-broad-hypercurve_curve_region_boolean",
+      "--exact",
+      "general_curve_batch_obeys_the_approximate_512_terminal",
+      "--test-threads=1",
+      "--nocapture",
+      "--color",
+      "never"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.007753557991236448,
+    "passed": true,
+    "ignored": false,
+    "log": "corner-normalization-20260923-fix6-broad-hypercurve_curve_region_boolean-general_curve_batch_obeys_the_approximate_512_terminal.log",
+    "binary_sha256": "3b90b982b2a740cfaff2287c0c9bd25c2c654b58a052344dab80fd407b9a4557"
+  },
+  {
+    "target": "hypercurve_curve_region_boolean",
+    "name": "independent_nonlinear_line_parameters_compact_to_reusable_regions",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/corner-normalization-20260923-fix6-broad-hypercurve_curve_region_boolean",
+      "--exact",
+      "independent_nonlinear_line_parameters_compact_to_reusable_regions",
+      "--test-threads=1",
+      "--nocapture",
+      "--color",
+      "never"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.007671972969546914,
+    "passed": true,
+    "ignored": false,
+    "log": "corner-normalization-20260923-fix6-broad-hypercurve_curve_region_boolean-independent_nonlinear_line_parameters_compact_to_reusable_regions.log",
+    "binary_sha256": "3b90b982b2a740cfaff2287c0c9bd25c2c654b58a052344dab80fd407b9a4557"
+  },
+  {
+    "target": "hypercurve_curve_region_boolean",
+    "name": "line_general_batch_obeys_the_approximate_512_terminal",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/corner-normalization-20260923-fix6-broad-hypercurve_curve_region_boolean",
+      "--exact",
+      "line_general_batch_obeys_the_approximate_512_terminal",
+      "--test-threads=1",
+      "--nocapture",
+      "--color",
+      "never"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.0037561419885605574,
+    "passed": true,
+    "ignored": false,
+    "log": "corner-normalization-20260923-fix6-broad-hypercurve_curve_region_boolean-line_general_batch_obeys_the_approximate_512_terminal.log",
+    "binary_sha256": "3b90b982b2a740cfaff2287c0c9bd25c2c654b58a052344dab80fd407b9a4557"
+  },
+  {
+    "target": "hypercurve_curve_region_boolean",
+    "name": "mixed_line_circular_conic_batch_obeys_the_approximate_512_terminal",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/corner-normalization-20260923-fix6-broad-hypercurve_curve_region_boolean",
+      "--exact",
+      "mixed_line_circular_conic_batch_obeys_the_approximate_512_terminal",
+      "--test-threads=1",
+      "--nocapture",
+      "--color",
+      "never"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.16410176397766918,
+    "passed": true,
+    "ignored": false,
+    "log": "corner-normalization-20260923-fix6-broad-hypercurve_curve_region_boolean-mixed_line_circular_conic_batch_obeys_the_approximate_512_terminal.log",
+    "binary_sha256": "3b90b982b2a740cfaff2287c0c9bd25c2c654b58a052344dab80fd407b9a4557"
+  },
+  {
+    "target": "hypercurve_curve_region_boolean",
+    "name": "mixed_line_circular_conic_batch_reuses_one_authoritative_topology",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/corner-normalization-20260923-fix6-broad-hypercurve_curve_region_boolean",
+      "--exact",
+      "mixed_line_circular_conic_batch_reuses_one_authoritative_topology",
+      "--test-threads=1",
+      "--nocapture",
+      "--color",
+      "never"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.11399872007314116,
+    "passed": true,
+    "ignored": false,
+    "log": "corner-normalization-20260923-fix6-broad-hypercurve_curve_region_boolean-mixed_line_circular_conic_batch_reuses_one_authoritative_topology.log",
+    "binary_sha256": "3b90b982b2a740cfaff2287c0c9bd25c2c654b58a052344dab80fd407b9a4557"
+  },
+  {
+    "target": "hypercurve_curve_region_boolean",
+    "name": "mixed_line_circular_conic_degeneracy_matrix_matches_native_results",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/corner-normalization-20260923-fix6-broad-hypercurve_curve_region_boolean",
+      "--exact",
+      "mixed_line_circular_conic_degeneracy_matrix_matches_native_results",
+      "--test-threads=1",
+      "--nocapture",
+      "--color",
+      "never"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 2.718163804966025,
+    "passed": true,
+    "ignored": false,
+    "log": "corner-normalization-20260923-fix6-broad-hypercurve_curve_region_boolean-mixed_line_circular_conic_degeneracy_matrix_matches_native_results.log",
+    "binary_sha256": "3b90b982b2a740cfaff2287c0c9bd25c2c654b58a052344dab80fd407b9a4557"
+  },
+  {
+    "target": "hypercurve_curve_region_boolean",
+    "name": "native_chart_poles_do_not_block_finite_region_queries",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/corner-normalization-20260923-fix6-broad-hypercurve_curve_region_boolean",
+      "--exact",
+      "native_chart_poles_do_not_block_finite_region_queries",
+      "--test-threads=1",
+      "--nocapture",
+      "--color",
+      "never"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.007883768994361162,
+    "passed": true,
+    "ignored": false,
+    "log": "corner-normalization-20260923-fix6-broad-hypercurve_curve_region_boolean-native_chart_poles_do_not_block_finite_region_queries.log",
+    "binary_sha256": "3b90b982b2a740cfaff2287c0c9bd25c2c654b58a052344dab80fd407b9a4557"
+  },
+  {
+    "target": "hypercurve_curve_region_boolean",
+    "name": "noncircular_conic_boolean_output_is_not_mislabeled_as_native_arc",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/corner-normalization-20260923-fix6-broad-hypercurve_curve_region_boolean",
+      "--exact",
+      "noncircular_conic_boolean_output_is_not_mislabeled_as_native_arc",
+      "--test-threads=1",
+      "--nocapture",
+      "--color",
+      "never"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.0037207549903541803,
+    "passed": true,
+    "ignored": false,
+    "log": "corner-normalization-20260923-fix6-broad-hypercurve_curve_region_boolean-noncircular_conic_boolean_output_is_not_mislabeled_as_native_arc.log",
+    "binary_sha256": "3b90b982b2a740cfaff2287c0c9bd25c2c654b58a052344dab80fd407b9a4557"
+  },
+  {
+    "target": "hypercurve_curve_region_boolean",
+    "name": "point_query_reports_when_approximate_policy_decides_a_symbolic_boundary",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/corner-normalization-20260923-fix6-broad-hypercurve_curve_region_boolean",
+      "--exact",
+      "point_query_reports_when_approximate_policy_decides_a_symbolic_boundary",
+      "--test-threads=1",
+      "--nocapture",
+      "--color",
+      "never"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.0035960039822384715,
+    "passed": true,
+    "ignored": false,
+    "log": "corner-normalization-20260923-fix6-broad-hypercurve_curve_region_boolean-point_query_reports_when_approximate_policy_decides_a_symbolic_boundary.log",
+    "binary_sha256": "3b90b982b2a740cfaff2287c0c9bd25c2c654b58a052344dab80fd407b9a4557"
+  },
+  {
+    "target": "hypercurve_curve_region_boolean",
+    "name": "region_intersection_carriers_replay_prepared_charts_and_outlive_inputs",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/corner-normalization-20260923-fix6-broad-hypercurve_curve_region_boolean",
+      "--exact",
+      "region_intersection_carriers_replay_prepared_charts_and_outlive_inputs",
+      "--test-threads=1",
+      "--nocapture",
+      "--color",
+      "never"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.0035980939865112305,
+    "passed": true,
+    "ignored": false,
+    "log": "corner-normalization-20260923-fix6-broad-hypercurve_curve_region_boolean-region_intersection_carriers_replay_prepared_charts_and_outlive_inputs.log",
+    "binary_sha256": "3b90b982b2a740cfaff2287c0c9bd25c2c654b58a052344dab80fd407b9a4557"
+  },
+  {
+    "target": "hypercurve_curve_region_boolean",
+    "name": "region_intersection_removes_authored_internal_and_canceled_boundaries",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/corner-normalization-20260923-fix6-broad-hypercurve_curve_region_boolean",
+      "--exact",
+      "region_intersection_removes_authored_internal_and_canceled_boundaries",
+      "--test-threads=1",
+      "--nocapture",
+      "--color",
+      "never"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.007617558003403246,
+    "passed": true,
+    "ignored": false,
+    "log": "corner-normalization-20260923-fix6-broad-hypercurve_curve_region_boolean-region_intersection_removes_authored_internal_and_canceled_boundaries.log",
+    "binary_sha256": "3b90b982b2a740cfaff2287c0c9bd25c2c654b58a052344dab80fd407b9a4557"
+  },
+  {
+    "target": "hypercurve_curve_region_boolean",
+    "name": "regularized_affine_contacts_discard_lower_dimensional_intersections",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/corner-normalization-20260923-fix6-broad-hypercurve_curve_region_boolean",
+      "--exact",
+      "regularized_affine_contacts_discard_lower_dimensional_intersections",
+      "--test-threads=1",
+      "--nocapture",
+      "--color",
+      "never"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.003548215958289802,
+    "passed": true,
+    "ignored": false,
+    "log": "corner-normalization-20260923-fix6-broad-hypercurve_curve_region_boolean-regularized_affine_contacts_discard_lower_dimensional_intersections.log",
+    "binary_sha256": "3b90b982b2a740cfaff2287c0c9bd25c2c654b58a052344dab80fd407b9a4557"
+  },
+  {
+    "target": "hypercurve_curve_region_boolean",
+    "name": "regularized_conic_tangencies_preserve_regions_but_not_point_intersections",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/corner-normalization-20260923-fix6-broad-hypercurve_curve_region_boolean",
+      "--exact",
+      "regularized_conic_tangencies_preserve_regions_but_not_point_intersections",
+      "--test-threads=1",
+      "--nocapture",
+      "--color",
+      "never"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.015784748014993966,
+    "passed": true,
+    "ignored": false,
+    "log": "corner-normalization-20260923-fix6-broad-hypercurve_curve_region_boolean-regularized_conic_tangencies_preserve_regions_but_not_point_intersections.log",
+    "binary_sha256": "3b90b982b2a740cfaff2287c0c9bd25c2c654b58a052344dab80fd407b9a4557"
+  },
+  {
+    "target": "hypercurve_curve_region_boolean",
+    "name": "regularized_partial_shared_edges_resolve_exact_side_ownership",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/corner-normalization-20260923-fix6-broad-hypercurve_curve_region_boolean",
+      "--exact",
+      "regularized_partial_shared_edges_resolve_exact_side_ownership",
+      "--test-threads=1",
+      "--nocapture",
+      "--color",
+      "never"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.0037581019569188356,
+    "passed": true,
+    "ignored": false,
+    "log": "corner-normalization-20260923-fix6-broad-hypercurve_curve_region_boolean-regularized_partial_shared_edges_resolve_exact_side_ownership.log",
+    "binary_sha256": "3b90b982b2a740cfaff2287c0c9bd25c2c654b58a052344dab80fd407b9a4557"
+  },
+  {
+    "target": "hypercurve_curve_region_boolean",
+    "name": "regularized_topology_does_not_upgrade_terminal_connectivity",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/corner-normalization-20260923-fix6-broad-hypercurve_curve_region_boolean",
+      "--exact",
+      "regularized_topology_does_not_upgrade_terminal_connectivity",
+      "--test-threads=1",
+      "--nocapture",
+      "--color",
+      "never"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.007630676031112671,
+    "passed": true,
+    "ignored": false,
+    "log": "corner-normalization-20260923-fix6-broad-hypercurve_curve_region_boolean-regularized_topology_does_not_upgrade_terminal_connectivity.log",
+    "binary_sha256": "3b90b982b2a740cfaff2287c0c9bd25c2c654b58a052344dab80fd407b9a4557"
+  },
+  {
+    "target": "hypercurve_curve_region_boolean",
+    "name": "regularized_topology_retains_only_the_policy_actually_consumed",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/corner-normalization-20260923-fix6-broad-hypercurve_curve_region_boolean",
+      "--exact",
+      "regularized_topology_retains_only_the_policy_actually_consumed",
+      "--test-threads=1",
+      "--nocapture",
+      "--color",
+      "never"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.0035597250098362565,
+    "passed": true,
+    "ignored": false,
+    "log": "corner-normalization-20260923-fix6-broad-hypercurve_curve_region_boolean-regularized_topology_retains_only_the_policy_actually_consumed.log",
+    "binary_sha256": "3b90b982b2a740cfaff2287c0c9bd25c2c654b58a052344dab80fd407b9a4557"
+  },
+  {
+    "target": "hypercurve_curve_region_boolean",
+    "name": "retained_regions_clip_degree_equivalent_shared_images_to_carrier_ranges",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/corner-normalization-20260923-fix6-broad-hypercurve_curve_region_boolean",
+      "--exact",
+      "retained_regions_clip_degree_equivalent_shared_images_to_carrier_ranges",
+      "--test-threads=1",
+      "--nocapture",
+      "--color",
+      "never"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.03176911105401814,
+    "passed": true,
+    "ignored": false,
+    "log": "corner-normalization-20260923-fix6-broad-hypercurve_curve_region_boolean-retained_regions_clip_degree_equivalent_shared_images_to_carrier_ranges.log",
+    "binary_sha256": "3b90b982b2a740cfaff2287c0c9bd25c2c654b58a052344dab80fd407b9a4557"
+  },
+  {
+    "target": "hypercurve_curve_region_boolean",
+    "name": "retained_regions_clip_mobius_reparameterized_conics_to_carrier_ranges",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/corner-normalization-20260923-fix6-broad-hypercurve_curve_region_boolean",
+      "--exact",
+      "retained_regions_clip_mobius_reparameterized_conics_to_carrier_ranges",
+      "--test-threads=1",
+      "--nocapture",
+      "--color",
+      "never"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.0639398240018636,
+    "passed": true,
+    "ignored": false,
+    "log": "corner-normalization-20260923-fix6-broad-hypercurve_curve_region_boolean-retained_regions_clip_mobius_reparameterized_conics_to_carrier_ranges.log",
+    "binary_sha256": "3b90b982b2a740cfaff2287c0c9bd25c2c654b58a052344dab80fd407b9a4557"
+  },
+  {
+    "target": "hypercurve_curve_region_boolean",
+    "name": "retained_regions_clip_non_axis_monotone_mobius_cubic_components",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/corner-normalization-20260923-fix6-broad-hypercurve_curve_region_boolean",
+      "--exact",
+      "retained_regions_clip_non_axis_monotone_mobius_cubic_components",
+      "--test-threads=1",
+      "--nocapture",
+      "--color",
+      "never"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.0643261669902131,
+    "passed": true,
+    "ignored": false,
+    "log": "corner-normalization-20260923-fix6-broad-hypercurve_curve_region_boolean-retained_regions_clip_non_axis_monotone_mobius_cubic_components.log",
+    "binary_sha256": "3b90b982b2a740cfaff2287c0c9bd25c2c654b58a052344dab80fd407b9a4557"
+  },
+  {
+    "target": "hypercurve_curve_region_boolean",
+    "name": "retained_regions_clip_shared_source_components_to_carrier_ranges",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/corner-normalization-20260923-fix6-broad-hypercurve_curve_region_boolean",
+      "--exact",
+      "retained_regions_clip_shared_source_components_to_carrier_ranges",
+      "--test-threads=1",
+      "--nocapture",
+      "--color",
+      "never"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.01603409997187555,
+    "passed": true,
+    "ignored": false,
+    "log": "corner-normalization-20260923-fix6-broad-hypercurve_curve_region_boolean-retained_regions_clip_shared_source_components_to_carrier_ranges.log",
+    "binary_sha256": "3b90b982b2a740cfaff2287c0c9bd25c2c654b58a052344dab80fd407b9a4557"
+  },
+  {
+    "target": "hypercurve_curve_region_boolean",
+    "name": "selected_fillet_region_intersection_closes_through_exterior_cap_booleans",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/corner-normalization-20260923-fix6-broad-hypercurve_curve_region_boolean",
+      "--exact",
+      "selected_fillet_region_intersection_closes_through_exterior_cap_booleans",
+      "--test-threads=1",
+      "--nocapture",
+      "--color",
+      "never"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 4.320771102095023,
+    "passed": true,
+    "ignored": false,
+    "log": "corner-normalization-20260923-fix6-broad-hypercurve_curve_region_boolean-selected_fillet_region_intersection_closes_through_exterior_cap_booleans.log",
+    "binary_sha256": "3b90b982b2a740cfaff2287c0c9bd25c2c654b58a052344dab80fd407b9a4557"
+  },
+  {
+    "target": "hypercurve_analytic_parallel_region",
+    "name": "algebraic_endpoint_analytic_parallel_chamfers_replay_selected_distance",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/corner-normalization-20260923-fix6-broad-hypercurve_analytic_parallel_region",
+      "--exact",
+      "algebraic_endpoint_analytic_parallel_chamfers_replay_selected_distance",
+      "--test-threads=1",
+      "--nocapture",
+      "--color",
+      "never"
+    ],
+    "returncode": "timeout",
+    "elapsed_seconds": 75.02496610896196,
+    "passed": false,
+    "ignored": false,
+    "log": "corner-normalization-20260923-fix6-broad-hypercurve_analytic_parallel_region-algebraic_endpoint_analytic_parallel_chamfers_replay_selected_distance.log",
+    "binary_sha256": "26171510da28374f0134a2eba819dcd4c1fda02368ea580a617bc9bc88f87cbf"
+  },
+  {
+    "target": "hypercurve_analytic_parallel_region",
+    "name": "analytic_parallel_chamfers_retain_normalized_cut_points",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/corner-normalization-20260923-fix6-broad-hypercurve_analytic_parallel_region",
+      "--exact",
+      "analytic_parallel_chamfers_retain_normalized_cut_points",
+      "--test-threads=1",
+      "--nocapture",
+      "--color",
+      "never"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.01624278596136719,
+    "passed": true,
+    "ignored": false,
+    "log": "corner-normalization-20260923-fix6-broad-hypercurve_analytic_parallel_region-analytic_parallel_chamfers_retain_normalized_cut_points.log",
+    "binary_sha256": "26171510da28374f0134a2eba819dcd4c1fda02368ea580a617bc9bc88f87cbf"
+  },
+  {
+    "target": "hypercurve_analytic_parallel_region",
+    "name": "analytic_parallel_circle_fast_path_excludes_other_support_contacts",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/corner-normalization-20260923-fix6-broad-hypercurve_analytic_parallel_region",
+      "--exact",
+      "analytic_parallel_circle_fast_path_excludes_other_support_contacts",
+      "--test-threads=1",
+      "--nocapture",
+      "--color",
+      "never"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.003640461014583707,
+    "passed": true,
+    "ignored": false,
+    "log": "corner-normalization-20260923-fix6-broad-hypercurve_analytic_parallel_region-analytic_parallel_circle_fast_path_excludes_other_support_contacts.log",
+    "binary_sha256": "26171510da28374f0134a2eba819dcd4c1fda02368ea580a617bc9bc88f87cbf"
+  },
+  {
+    "target": "hypercurve_analytic_parallel_region",
+    "name": "analytic_parallel_circle_tangency_retains_zero_cross_evidence",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/corner-normalization-20260923-fix6-broad-hypercurve_analytic_parallel_region",
+      "--exact",
+      "analytic_parallel_circle_tangency_retains_zero_cross_evidence",
+      "--test-threads=1",
+      "--nocapture",
+      "--color",
+      "never"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.007755817961879075,
+    "passed": true,
+    "ignored": false,
+    "log": "corner-normalization-20260923-fix6-broad-hypercurve_analytic_parallel_region-analytic_parallel_circle_tangency_retains_zero_cross_evidence.log",
+    "binary_sha256": "26171510da28374f0134a2eba819dcd4c1fda02368ea580a617bc9bc88f87cbf"
+  },
+  {
+    "target": "hypercurve_analytic_parallel_region",
+    "name": "analytic_parallel_fragments_retain_exact_region_evidence_under_both_policies",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/corner-normalization-20260923-fix6-broad-hypercurve_analytic_parallel_region",
+      "--exact",
+      "analytic_parallel_fragments_retain_exact_region_evidence_under_both_policies",
+      "--test-threads=1",
+      "--nocapture",
+      "--color",
+      "never"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.031853244989179075,
+    "passed": true,
+    "ignored": false,
+    "log": "corner-normalization-20260923-fix6-broad-hypercurve_analytic_parallel_region-analytic_parallel_fragments_retain_exact_region_evidence_under_both_policies.log",
+    "binary_sha256": "26171510da28374f0134a2eba819dcd4c1fda02368ea580a617bc9bc88f87cbf"
+  },
+  {
+    "target": "hypercurve_analytic_parallel_region",
+    "name": "analytic_parallel_intersects_independently_parameterized_circles_exactly",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/corner-normalization-20260923-fix6-broad-hypercurve_analytic_parallel_region",
+      "--exact",
+      "analytic_parallel_intersects_independently_parameterized_circles_exactly",
+      "--test-threads=1",
+      "--nocapture",
+      "--color",
+      "never"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.031804237980395555,
+    "passed": true,
+    "ignored": false,
+    "log": "corner-normalization-20260923-fix6-broad-hypercurve_analytic_parallel_region-analytic_parallel_intersects_independently_parameterized_circles_exactly.log",
+    "binary_sha256": "26171510da28374f0134a2eba819dcd4c1fda02368ea580a617bc9bc88f87cbf"
+  },
+  {
+    "target": "hypercurve_analytic_parallel_region",
+    "name": "curve_trim_intersects_analytic_parallel_region_boundaries",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/corner-normalization-20260923-fix6-broad-hypercurve_analytic_parallel_region",
+      "--exact",
+      "curve_trim_intersects_analytic_parallel_region_boundaries",
+      "--test-threads=1",
+      "--nocapture",
+      "--color",
+      "never"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.0035850239219143987,
+    "passed": true,
+    "ignored": false,
+    "log": "corner-normalization-20260923-fix6-broad-hypercurve_analytic_parallel_region-curve_trim_intersects_analytic_parallel_region_boundaries.log",
+    "binary_sha256": "26171510da28374f0134a2eba819dcd4c1fda02368ea580a617bc9bc88f87cbf"
+  },
+  {
+    "target": "hypercurve_analytic_parallel_region",
+    "name": "curve_trim_retains_an_analytic_parallel_boundary_overlap",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/corner-normalization-20260923-fix6-broad-hypercurve_analytic_parallel_region",
+      "--exact",
+      "curve_trim_retains_an_analytic_parallel_boundary_overlap",
+      "--test-threads=1",
+      "--nocapture",
+      "--color",
+      "never"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.0036641389597207308,
+    "passed": true,
+    "ignored": false,
+    "log": "corner-normalization-20260923-fix6-broad-hypercurve_analytic_parallel_region-curve_trim_retains_an_analytic_parallel_boundary_overlap.log",
+    "binary_sha256": "26171510da28374f0134a2eba819dcd4c1fda02368ea580a617bc9bc88f87cbf"
+  },
+  {
+    "target": "hypercurve_analytic_parallel_region",
+    "name": "cusp_split_analytic_self_crossing_normalizes_at_admission",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/corner-normalization-20260923-fix6-broad-hypercurve_analytic_parallel_region",
+      "--exact",
+      "cusp_split_analytic_self_crossing_normalizes_at_admission",
+      "--test-threads=1",
+      "--nocapture",
+      "--color",
+      "never"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 5.721591821056791,
+    "passed": true,
+    "ignored": false,
+    "log": "corner-normalization-20260923-fix6-broad-hypercurve_analytic_parallel_region-cusp_split_analytic_self_crossing_normalizes_at_admission.log",
+    "binary_sha256": "26171510da28374f0134a2eba819dcd4c1fda02368ea580a617bc9bc88f87cbf"
+  },
+  {
+    "target": "hypercurve_analytic_parallel_region",
+    "name": "general_boundary_paths_preserve_analytic_carriers_and_boolean_reentry",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/corner-normalization-20260923-fix6-broad-hypercurve_analytic_parallel_region",
+      "--exact",
+      "general_boundary_paths_preserve_analytic_carriers_and_boolean_reentry",
+      "--test-threads=1",
+      "--nocapture",
+      "--color",
+      "never"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.03206374088767916,
+    "passed": true,
+    "ignored": false,
+    "log": "corner-normalization-20260923-fix6-broad-hypercurve_analytic_parallel_region-general_boundary_paths_preserve_analytic_carriers_and_boolean_reentry.log",
+    "binary_sha256": "26171510da28374f0134a2eba819dcd4c1fda02368ea580a617bc9bc88f87cbf"
+  },
+  {
+    "target": "hypercurve_analytic_parallel_region",
+    "name": "radical_parallel_cusp_offsets_exactly_under_both_policies",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/corner-normalization-20260923-fix6-broad-hypercurve_analytic_parallel_region",
+      "--exact",
+      "radical_parallel_cusp_offsets_exactly_under_both_policies",
+      "--test-threads=1",
+      "--nocapture",
+      "--color",
+      "never"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 1.5182834120932966,
+    "passed": true,
+    "ignored": false,
+    "log": "corner-normalization-20260923-fix6-broad-hypercurve_analytic_parallel_region-radical_parallel_cusp_offsets_exactly_under_both_policies.log",
+    "binary_sha256": "26171510da28374f0134a2eba819dcd4c1fda02368ea580a617bc9bc88f87cbf"
+  },
+  {
+    "target": "hypercurve_analytic_parallel_region",
+    "name": "radical_parallel_cusp_spans_connect_under_both_policies",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/corner-normalization-20260923-fix6-broad-hypercurve_analytic_parallel_region",
+      "--exact",
+      "radical_parallel_cusp_spans_connect_under_both_policies",
+      "--test-threads=1",
+      "--nocapture",
+      "--color",
+      "never"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.016168111003935337,
+    "passed": true,
+    "ignored": false,
+    "log": "corner-normalization-20260923-fix6-broad-hypercurve_analytic_parallel_region-radical_parallel_cusp_spans_connect_under_both_policies.log",
+    "binary_sha256": "26171510da28374f0134a2eba819dcd4c1fda02368ea580a617bc9bc88f87cbf"
+  },
+  {
+    "target": "hypercurve_analytic_parallel_region",
+    "name": "retained_arc_fillet_preserves_past_center_tangent_orientation",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/corner-normalization-20260923-fix6-broad-hypercurve_analytic_parallel_region",
+      "--exact",
+      "retained_arc_fillet_preserves_past_center_tangent_orientation",
+      "--test-threads=1",
+      "--nocapture",
+      "--color",
+      "never"
+    ],
+    "returncode": "timeout",
+    "elapsed_seconds": 75.00797191506717,
+    "passed": false,
+    "ignored": false,
+    "log": "corner-normalization-20260923-fix6-broad-hypercurve_analytic_parallel_region-retained_arc_fillet_preserves_past_center_tangent_orientation.log",
+    "binary_sha256": "26171510da28374f0134a2eba819dcd4c1fda02368ea580a617bc9bc88f87cbf"
+  },
+  {
+    "target": "hypercurve_analytic_parallel_region",
+    "name": "retained_rational_arc_and_analytic_parallel_fillet_exactly",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/corner-normalization-20260923-fix6-broad-hypercurve_analytic_parallel_region",
+      "--exact",
+      "retained_rational_arc_and_analytic_parallel_fillet_exactly",
+      "--test-threads=1",
+      "--nocapture",
+      "--color",
+      "never"
+    ],
+    "returncode": "timeout",
+    "elapsed_seconds": 75.01127368805464,
+    "passed": false,
+    "ignored": false,
+    "log": "corner-normalization-20260923-fix6-broad-hypercurve_analytic_parallel_region-retained_rational_arc_and_analytic_parallel_fillet_exactly.log",
+    "binary_sha256": "26171510da28374f0134a2eba819dcd4c1fda02368ea580a617bc9bc88f87cbf"
+  },
+  {
+    "target": "hypercurve_analytic_parallel_region",
+    "name": "retained_rational_arc_and_analytic_parallel_fillet_extends_exactly",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/corner-normalization-20260923-fix6-broad-hypercurve_analytic_parallel_region",
+      "--exact",
+      "retained_rational_arc_and_analytic_parallel_fillet_extends_exactly",
+      "--test-threads=1",
+      "--nocapture",
+      "--color",
+      "never"
+    ],
+    "returncode": "timeout",
+    "elapsed_seconds": 75.0092982549686,
+    "passed": false,
+    "ignored": false,
+    "log": "corner-normalization-20260923-fix6-broad-hypercurve_analytic_parallel_region-retained_rational_arc_and_analytic_parallel_fillet_extends_exactly.log",
+    "binary_sha256": "26171510da28374f0134a2eba819dcd4c1fda02368ea580a617bc9bc88f87cbf"
+  },
+  {
+    "target": "hypercurve_curve_region_promotion",
+    "name": "affine_line_fast_path_preserves_nonzero_and_even_odd_fill_rules",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/corner-normalization-20260923-fix6-broad-hypercurve_curve_region_promotion",
+      "--exact",
+      "affine_line_fast_path_preserves_nonzero_and_even_odd_fill_rules",
+      "--test-threads=1",
+      "--nocapture",
+      "--color",
+      "never"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.004114078008569777,
+    "passed": true,
+    "ignored": false,
+    "log": "corner-normalization-20260923-fix6-broad-hypercurve_curve_region_promotion-affine_line_fast_path_preserves_nonzero_and_even_odd_fill_rules.log",
+    "binary_sha256": "0ef2f1b88058152c32c5dba33d9fe3c0982b84b0331f4f2e7a10df21677205aa"
+  },
+  {
+    "target": "hypercurve_curve_region_promotion",
+    "name": "algebraic_chamfer_participates_in_a_disjoint_boolean_batch",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/corner-normalization-20260923-fix6-broad-hypercurve_curve_region_promotion",
+      "--exact",
+      "algebraic_chamfer_participates_in_a_disjoint_boolean_batch",
+      "--test-threads=1",
+      "--nocapture",
+      "--color",
+      "never"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.0036017330130562186,
+    "passed": true,
+    "ignored": false,
+    "log": "corner-normalization-20260923-fix6-broad-hypercurve_curve_region_promotion-algebraic_chamfer_participates_in_a_disjoint_boolean_batch.log",
+    "binary_sha256": "0ef2f1b88058152c32c5dba33d9fe3c0982b84b0331f4f2e7a10df21677205aa"
+  },
+  {
+    "target": "hypercurve_curve_region_promotion",
+    "name": "algebraic_chord_erosion_splits_a_collapsed_neck_exactly",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/corner-normalization-20260923-fix6-broad-hypercurve_curve_region_promotion",
+      "--exact",
+      "algebraic_chord_erosion_splits_a_collapsed_neck_exactly",
+      "--test-threads=1",
+      "--nocapture",
+      "--color",
+      "never"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 2.7678390570217744,
+    "passed": true,
+    "ignored": false,
+    "log": "corner-normalization-20260923-fix6-broad-hypercurve_curve_region_promotion-algebraic_chord_erosion_splits_a_collapsed_neck_exactly.log",
+    "binary_sha256": "0ef2f1b88058152c32c5dba33d9fe3c0982b84b0331f4f2e7a10df21677205aa"
+  },
+  {
+    "target": "hypercurve_curve_region_promotion",
+    "name": "algebraic_chord_expansion_merges_coupled_material_loops_exactly",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/corner-normalization-20260923-fix6-broad-hypercurve_curve_region_promotion",
+      "--exact",
+      "algebraic_chord_expansion_merges_coupled_material_loops_exactly",
+      "--test-threads=1",
+      "--nocapture",
+      "--color",
+      "never"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.7650087829679251,
+    "passed": true,
+    "ignored": false,
+    "log": "corner-normalization-20260923-fix6-broad-hypercurve_curve_region_promotion-algebraic_chord_expansion_merges_coupled_material_loops_exactly.log",
+    "binary_sha256": "0ef2f1b88058152c32c5dba33d9fe3c0982b84b0331f4f2e7a10df21677205aa"
+  },
+  {
+    "target": "hypercurve_curve_region_promotion",
+    "name": "algebraic_chord_material_hole_contact_and_hole_collapse_are_exact",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/corner-normalization-20260923-fix6-broad-hypercurve_curve_region_promotion",
+      "--exact",
+      "algebraic_chord_material_hole_contact_and_hole_collapse_are_exact",
+      "--test-threads=1",
+      "--nocapture",
+      "--color",
+      "never"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 7.574213597923517,
+    "passed": true,
+    "ignored": false,
+    "log": "corner-normalization-20260923-fix6-broad-hypercurve_curve_region_promotion-algebraic_chord_material_hole_contact_and_hole_collapse_are_exact.log",
+    "binary_sha256": "0ef2f1b88058152c32c5dba33d9fe3c0982b84b0331f4f2e7a10df21677205aa"
+  },
+  {
+    "target": "hypercurve_curve_region_promotion",
+    "name": "algebraic_chord_non_miter_erosions_split_a_collapsed_neck_exactly",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/corner-normalization-20260923-fix6-broad-hypercurve_curve_region_promotion",
+      "--exact",
+      "algebraic_chord_non_miter_erosions_split_a_collapsed_neck_exactly",
+      "--test-threads=1",
+      "--nocapture",
+      "--color",
+      "never"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 5.421404603053816,
+    "passed": true,
+    "ignored": false,
+    "log": "corner-normalization-20260923-fix6-broad-hypercurve_curve_region_promotion-algebraic_chord_non_miter_erosions_split_a_collapsed_neck_exactly.log",
+    "binary_sha256": "0ef2f1b88058152c32c5dba33d9fe3c0982b84b0331f4f2e7a10df21677205aa"
+  },
+  {
+    "target": "hypercurve_curve_region_promotion",
+    "name": "algebraic_chords_and_round_centers_survive_exact_similarities",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/corner-normalization-20260923-fix6-broad-hypercurve_curve_region_promotion",
+      "--exact",
+      "algebraic_chords_and_round_centers_survive_exact_similarities",
+      "--test-threads=1",
+      "--nocapture",
+      "--color",
+      "never"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.008057167055085301,
+    "passed": true,
+    "ignored": false,
+    "log": "corner-normalization-20260923-fix6-broad-hypercurve_curve_region_promotion-algebraic_chords_and_round_centers_survive_exact_similarities.log",
+    "binary_sha256": "0ef2f1b88058152c32c5dba33d9fe3c0982b84b0331f4f2e7a10df21677205aa"
+  },
+  {
+    "target": "hypercurve_curve_region_promotion",
+    "name": "algebraic_chords_survive_nonsingular_exact_affine_transforms",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/corner-normalization-20260923-fix6-broad-hypercurve_curve_region_promotion",
+      "--exact",
+      "algebraic_chords_survive_nonsingular_exact_affine_transforms",
+      "--test-threads=1",
+      "--nocapture",
+      "--color",
+      "never"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.007785016088746488,
+    "passed": true,
+    "ignored": false,
+    "log": "corner-normalization-20260923-fix6-broad-hypercurve_curve_region_promotion-algebraic_chords_survive_nonsingular_exact_affine_transforms.log",
+    "binary_sha256": "0ef2f1b88058152c32c5dba33d9fe3c0982b84b0331f4f2e7a10df21677205aa"
+  },
+  {
+    "target": "hypercurve_curve_region_promotion",
+    "name": "analytic_parallel_miter_tangent_legs_have_no_nondegenerate_fillet",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/corner-normalization-20260923-fix6-broad-hypercurve_curve_region_promotion",
+      "--exact",
+      "analytic_parallel_miter_tangent_legs_have_no_nondegenerate_fillet",
+      "--test-threads=1",
+      "--nocapture",
+      "--color",
+      "never"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.007632756023667753,
+    "passed": true,
+    "ignored": false,
+    "log": "corner-normalization-20260923-fix6-broad-hypercurve_curve_region_promotion-analytic_parallel_miter_tangent_legs_have_no_nondegenerate_fillet.log",
+    "binary_sha256": "0ef2f1b88058152c32c5dba33d9fe3c0982b84b0331f4f2e7a10df21677205aa"
+  },
+  {
+    "target": "hypercurve_curve_region_promotion",
+    "name": "analytic_parallel_rejected_miters_remain_transverse_fillet_candidates",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/corner-normalization-20260923-fix6-broad-hypercurve_curve_region_promotion",
+      "--exact",
+      "analytic_parallel_rejected_miters_remain_transverse_fillet_candidates",
+      "--test-threads=1",
+      "--nocapture",
+      "--color",
+      "never"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.4644254430895671,
+    "passed": true,
+    "ignored": false,
+    "log": "corner-normalization-20260923-fix6-broad-hypercurve_curve_region_promotion-analytic_parallel_rejected_miters_remain_transverse_fillet_candidates.log",
+    "binary_sha256": "0ef2f1b88058152c32c5dba33d9fe3c0982b84b0331f4f2e7a10df21677205aa"
+  },
+  {
+    "target": "hypercurve_curve_region_promotion",
+    "name": "approximate_512_trim_only_analytic_parallel_support_corners_retain_algebraic_fillet_centers",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/corner-normalization-20260923-fix6-broad-hypercurve_curve_region_promotion",
+      "--exact",
+      "approximate_512_trim_only_analytic_parallel_support_corners_retain_algebraic_fillet_centers",
+      "--test-threads=1",
+      "--nocapture",
+      "--color",
+      "never"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.3143765650456771,
+    "passed": true,
+    "ignored": false,
+    "log": "corner-normalization-20260923-fix6-broad-hypercurve_curve_region_promotion-approximate_512_trim_only_analytic_parallel_support_corners_retain_algebraic_fillet_centers.log",
+    "binary_sha256": "0ef2f1b88058152c32c5dba33d9fe3c0982b84b0331f4f2e7a10df21677205aa"
+  },
+  {
+    "target": "hypercurve_curve_region_promotion",
+    "name": "approximate_512_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/corner-normalization-20260923-fix6-broad-hypercurve_curve_region_promotion",
+      "--exact",
+      "approximate_512_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions",
+      "--test-threads=1",
+      "--nocapture",
+      "--color",
+      "never"
+    ],
+    "returncode": 101,
+    "elapsed_seconds": 1.0655217199819162,
+    "passed": false,
+    "ignored": false,
+    "log": "corner-normalization-20260923-fix6-broad-hypercurve_curve_region_promotion-approximate_512_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions.log",
+    "binary_sha256": "0ef2f1b88058152c32c5dba33d9fe3c0982b84b0331f4f2e7a10df21677205aa"
+  },
+  {
+    "target": "hypercurve_curve_region_promotion",
+    "name": "arc_parabola_fillet_recovers_exact_complement_contacts",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/corner-normalization-20260923-fix6-broad-hypercurve_curve_region_promotion",
+      "--exact",
+      "arc_parabola_fillet_recovers_exact_complement_contacts",
+      "--test-threads=1",
+      "--nocapture",
+      "--color",
+      "never"
+    ],
+    "returncode": "timeout",
+    "elapsed_seconds": 75.01558780099731,
+    "passed": false,
+    "ignored": false,
+    "log": "corner-normalization-20260923-fix6-broad-hypercurve_curve_region_promotion-arc_parabola_fillet_recovers_exact_complement_contacts.log",
+    "binary_sha256": "0ef2f1b88058152c32c5dba33d9fe3c0982b84b0331f4f2e7a10df21677205aa"
+  },
+  {
+    "target": "hypercurve_curve_region_promotion",
+    "name": "authored_line_arc_paths_use_the_unified_offset_engine",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/corner-normalization-20260923-fix6-broad-hypercurve_curve_region_promotion",
+      "--exact",
+      "authored_line_arc_paths_use_the_unified_offset_engine",
+      "--test-threads=1",
+      "--nocapture",
+      "--color",
+      "never"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.004126297077164054,
+    "passed": true,
+    "ignored": false,
+    "log": "corner-normalization-20260923-fix6-broad-hypercurve_curve_region_promotion-authored_line_arc_paths_use_the_unified_offset_engine.log",
+    "binary_sha256": "0ef2f1b88058152c32c5dba33d9fe3c0982b84b0331f4f2e7a10df21677205aa"
+  },
+  {
+    "target": "hypercurve_curve_region_promotion",
+    "name": "authored_loop_semantics_drive_nonzero_and_even_odd_classification",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/corner-normalization-20260923-fix6-broad-hypercurve_curve_region_promotion",
+      "--exact",
+      "authored_loop_semantics_drive_nonzero_and_even_odd_classification",
+      "--test-threads=1",
+      "--nocapture",
+      "--color",
+      "never"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.0035632860381156206,
+    "passed": true,
+    "ignored": false,
+    "log": "corner-normalization-20260923-fix6-broad-hypercurve_curve_region_promotion-authored_loop_semantics_drive_nonzero_and_even_odd_classification.log",
+    "binary_sha256": "0ef2f1b88058152c32c5dba33d9fe3c0982b84b0331f4f2e7a10df21677205aa"
+  },
+  {
+    "target": "hypercurve_curve_region_promotion",
+    "name": "authored_nested_material_roles_certify_filled_sides_directly",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/corner-normalization-20260923-fix6-broad-hypercurve_curve_region_promotion",
+      "--exact",
+      "authored_nested_material_roles_certify_filled_sides_directly",
+      "--test-threads=1",
+      "--nocapture",
+      "--color",
+      "never"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.0035413469886407256,
+    "passed": true,
+    "ignored": false,
+    "log": "corner-normalization-20260923-fix6-broad-hypercurve_curve_region_promotion-authored_nested_material_roles_certify_filled_sides_directly.log",
+    "binary_sha256": "0ef2f1b88058152c32c5dba33d9fe3c0982b84b0331f4f2e7a10df21677205aa"
+  },
+  {
+    "target": "hypercurve_curve_region_promotion",
+    "name": "authoritative_curve_region_arrangement_honors_coincident_winding_multiplicity",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/corner-normalization-20260923-fix6-broad-hypercurve_curve_region_promotion",
+      "--exact",
+      "authoritative_curve_region_arrangement_honors_coincident_winding_multiplicity",
+      "--test-threads=1",
+      "--nocapture",
+      "--color",
+      "never"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.007661784999072552,
+    "passed": true,
+    "ignored": false,
+    "log": "corner-normalization-20260923-fix6-broad-hypercurve_curve_region_promotion-authoritative_curve_region_arrangement_honors_coincident_winding_multiplicity.log",
+    "binary_sha256": "0ef2f1b88058152c32c5dba33d9fe3c0982b84b0331f4f2e7a10df21677205aa"
+  },
+  {
+    "target": "hypercurve_curve_region_promotion",
+    "name": "authoritative_curve_region_arrangement_regularizes_nonlinear_winding",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/corner-normalization-20260923-fix6-broad-hypercurve_curve_region_promotion",
+      "--exact",
+      "authoritative_curve_region_arrangement_regularizes_nonlinear_winding",
+      "--test-threads=1",
+      "--nocapture",
+      "--color",
+      "never"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.0076023980509489775,
+    "passed": true,
+    "ignored": false,
+    "log": "corner-normalization-20260923-fix6-broad-hypercurve_curve_region_promotion-authoritative_curve_region_arrangement_regularizes_nonlinear_winding.log",
+    "binary_sha256": "0ef2f1b88058152c32c5dba33d9fe3c0982b84b0331f4f2e7a10df21677205aa"
+  },
+  {
+    "target": "hypercurve_curve_region_promotion",
+    "name": "authoritative_curve_region_arrangement_regularizes_self_crossing_walks",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/corner-normalization-20260923-fix6-broad-hypercurve_curve_region_promotion",
+      "--exact",
+      "authoritative_curve_region_arrangement_regularizes_self_crossing_walks",
+      "--test-threads=1",
+      "--nocapture",
+      "--color",
+      "never"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.003595342976041138,
+    "passed": true,
+    "ignored": false,
+    "log": "corner-normalization-20260923-fix6-broad-hypercurve_curve_region_promotion-authoritative_curve_region_arrangement_regularizes_self_crossing_walks.log",
+    "binary_sha256": "0ef2f1b88058152c32c5dba33d9fe3c0982b84b0331f4f2e7a10df21677205aa"
+  },
+  {
+    "target": "hypercurve_curve_region_promotion",
+    "name": "authoritative_curve_region_arrangement_regularizes_signed_loop_composition",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/corner-normalization-20260923-fix6-broad-hypercurve_curve_region_promotion",
+      "--exact",
+      "authoritative_curve_region_arrangement_regularizes_signed_loop_composition",
+      "--test-threads=1",
+      "--nocapture",
+      "--color",
+      "never"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.007594148977659643,
+    "passed": true,
+    "ignored": false,
+    "log": "corner-normalization-20260923-fix6-broad-hypercurve_curve_region_promotion-authoritative_curve_region_arrangement_regularizes_signed_loop_composition.log",
+    "binary_sha256": "0ef2f1b88058152c32c5dba33d9fe3c0982b84b0331f4f2e7a10df21677205aa"
+  },
+  {
+    "target": "hypercurve_curve_region_promotion",
+    "name": "authoritative_curve_region_regularizes_polynomial_and_rational_self_crossings",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/corner-normalization-20260923-fix6-broad-hypercurve_curve_region_promotion",
+      "--exact",
+      "authoritative_curve_region_regularizes_polynomial_and_rational_self_crossings",
+      "--test-threads=1",
+      "--nocapture",
+      "--color",
+      "never"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.015644997009076178,
+    "passed": true,
+    "ignored": false,
+    "log": "corner-normalization-20260923-fix6-broad-hypercurve_curve_region_promotion-authoritative_curve_region_regularizes_polynomial_and_rational_self_crossings.log",
+    "binary_sha256": "0ef2f1b88058152c32c5dba33d9fe3c0982b84b0331f4f2e7a10df21677205aa"
+  },
+  {
+    "target": "hypercurve_curve_region_promotion",
+    "name": "axis_aligned_algebraic_chords_reenter_exact_region_offsets",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/corner-normalization-20260923-fix6-broad-hypercurve_curve_region_promotion",
+      "--exact",
+      "axis_aligned_algebraic_chords_reenter_exact_region_offsets",
+      "--test-threads=1",
+      "--nocapture",
+      "--color",
+      "never"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.9149611170869321,
+    "passed": true,
+    "ignored": false,
+    "log": "corner-normalization-20260923-fix6-broad-hypercurve_curve_region_promotion-axis_aligned_algebraic_chords_reenter_exact_region_offsets.log",
+    "binary_sha256": "0ef2f1b88058152c32c5dba33d9fe3c0982b84b0331f4f2e7a10df21677205aa"
+  },
+  {
+    "target": "hypercurve_curve_region_promotion",
+    "name": "boundary_paths_obey_terminal_policy_once",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/corner-normalization-20260923-fix6-broad-hypercurve_curve_region_promotion",
+      "--exact",
+      "boundary_paths_obey_terminal_policy_once",
+      "--test-threads=1",
+      "--nocapture",
+      "--color",
+      "never"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.0036120619624853134,
+    "passed": true,
+    "ignored": false,
+    "log": "corner-normalization-20260923-fix6-broad-hypercurve_curve_region_promotion-boundary_paths_obey_terminal_policy_once.log",
+    "binary_sha256": "0ef2f1b88058152c32c5dba33d9fe3c0982b84b0331f4f2e7a10df21677205aa"
+  },
+  {
+    "target": "hypercurve_curve_region_promotion",
+    "name": "canonical_exact_chord_regions_fillet_without_line_demotion",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/corner-normalization-20260923-fix6-broad-hypercurve_curve_region_promotion",
+      "--exact",
+      "canonical_exact_chord_regions_fillet_without_line_demotion",
+      "--test-threads=1",
+      "--nocapture",
+      "--color",
+      "never"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.003550507011823356,
+    "passed": true,
+    "ignored": false,
+    "log": "corner-normalization-20260923-fix6-broad-hypercurve_curve_region_promotion-canonical_exact_chord_regions_fillet_without_line_demotion.log",
+    "binary_sha256": "0ef2f1b88058152c32c5dba33d9fe3c0982b84b0331f4f2e7a10df21677205aa"
+  },
+  {
+    "target": "hypercurve_curve_region_promotion",
+    "name": "correlated_chord_pair_endpoints_survive_transform_and_offset",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/corner-normalization-20260923-fix6-broad-hypercurve_curve_region_promotion",
+      "--exact",
+      "correlated_chord_pair_endpoints_survive_transform_and_offset",
+      "--test-threads=1",
+      "--nocapture",
+      "--color",
+      "never"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.03169331594835967,
+    "passed": true,
+    "ignored": false,
+    "log": "corner-normalization-20260923-fix6-broad-hypercurve_curve_region_promotion-correlated_chord_pair_endpoints_survive_transform_and_offset.log",
+    "binary_sha256": "0ef2f1b88058152c32c5dba33d9fe3c0982b84b0331f4f2e7a10df21677205aa"
+  },
+  {
+    "target": "hypercurve_curve_region_promotion",
+    "name": "crossing_authored_loops_publish_the_regularized_even_odd_set",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/corner-normalization-20260923-fix6-broad-hypercurve_curve_region_promotion",
+      "--exact",
+      "crossing_authored_loops_publish_the_regularized_even_odd_set",
+      "--test-threads=1",
+      "--nocapture",
+      "--color",
+      "never"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.0076226870296522975,
+    "passed": true,
+    "ignored": false,
+    "log": "corner-normalization-20260923-fix6-broad-hypercurve_curve_region_promotion-crossing_authored_loops_publish_the_regularized_even_odd_set.log",
+    "binary_sha256": "0ef2f1b88058152c32c5dba33d9fe3c0982b84b0331f4f2e7a10df21677205aa"
+  },
+  {
+    "target": "hypercurve_curve_region_promotion",
+    "name": "cusp_chord_boolean_boundary_reoffsets_with_exact_bevels",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/corner-normalization-20260923-fix6-broad-hypercurve_curve_region_promotion",
+      "--exact",
+      "cusp_chord_boolean_boundary_reoffsets_with_exact_bevels",
+      "--test-threads=1",
+      "--nocapture",
+      "--color",
+      "never"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.06375579698942602,
+    "passed": true,
+    "ignored": false,
+    "log": "corner-normalization-20260923-fix6-broad-hypercurve_curve_region_promotion-cusp_chord_boolean_boundary_reoffsets_with_exact_bevels.log",
+    "binary_sha256": "0ef2f1b88058152c32c5dba33d9fe3c0982b84b0331f4f2e7a10df21677205aa"
+  },
+  {
+    "target": "hypercurve_curve_region_promotion",
+    "name": "empty_region_promotion_is_decided_and_reusable",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/corner-normalization-20260923-fix6-broad-hypercurve_curve_region_promotion",
+      "--exact",
+      "empty_region_promotion_is_decided_and_reusable",
+      "--test-threads=1",
+      "--nocapture",
+      "--color",
+      "never"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.0035310080274939537,
+    "passed": true,
+    "ignored": false,
+    "log": "corner-normalization-20260923-fix6-broad-hypercurve_curve_region_promotion-empty_region_promotion_is_decided_and_reusable.log",
+    "binary_sha256": "0ef2f1b88058152c32c5dba33d9fe3c0982b84b0331f4f2e7a10df21677205aa"
+  },
+  {
+    "target": "hypercurve_curve_region_promotion",
+    "name": "exact_high_degree_elevations_reenter_the_quadratic_corner_kernel",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/corner-normalization-20260923-fix6-broad-hypercurve_curve_region_promotion",
+      "--exact",
+      "exact_high_degree_elevations_reenter_the_quadratic_corner_kernel",
+      "--test-threads=1",
+      "--nocapture",
+      "--color",
+      "never"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 11.830328145995736,
+    "passed": true,
+    "ignored": false,
+    "log": "corner-normalization-20260923-fix6-broad-hypercurve_curve_region_promotion-exact_high_degree_elevations_reenter_the_quadratic_corner_kernel.log",
+    "binary_sha256": "0ef2f1b88058152c32c5dba33d9fe3c0982b84b0331f4f2e7a10df21677205aa"
+  },
+  {
+    "target": "hypercurve_curve_region_promotion",
+    "name": "exact_profiles_assign_holes_to_the_smallest_containing_material",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/corner-normalization-20260923-fix6-broad-hypercurve_curve_region_promotion",
+      "--exact",
+      "exact_profiles_assign_holes_to_the_smallest_containing_material",
+      "--test-threads=1",
+      "--nocapture",
+      "--color",
+      "never"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.0037243349943310022,
+    "passed": true,
+    "ignored": false,
+    "log": "corner-normalization-20260923-fix6-broad-hypercurve_curve_region_promotion-exact_profiles_assign_holes_to_the_smallest_containing_material.log",
+    "binary_sha256": "0ef2f1b88058152c32c5dba33d9fe3c0982b84b0331f4f2e7a10df21677205aa"
+  },
+  {
+    "target": "hypercurve_curve_region_promotion",
+    "name": "exact_support_cutter_reenters_correlated_chord_collinearly",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/corner-normalization-20260923-fix6-broad-hypercurve_curve_region_promotion",
+      "--exact",
+      "exact_support_cutter_reenters_correlated_chord_collinearly",
+      "--test-threads=1",
+      "--nocapture",
+      "--color",
+      "never"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.31419904704671353,
+    "passed": true,
+    "ignored": false,
+    "log": "corner-normalization-20260923-fix6-broad-hypercurve_curve_region_promotion-exact_support_cutter_reenters_correlated_chord_collinearly.log",
+    "binary_sha256": "0ef2f1b88058152c32c5dba33d9fe3c0982b84b0331f4f2e7a10df21677205aa"
+  },
+  {
+    "target": "hypercurve_curve_region_promotion",
+    "name": "line_parabola_fillet_extends_the_regular_incident_cell_exactly",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/corner-normalization-20260923-fix6-broad-hypercurve_curve_region_promotion",
+      "--exact",
+      "line_parabola_fillet_extends_the_regular_incident_cell_exactly",
+      "--test-threads=1",
+      "--nocapture",
+      "--color",
+      "never"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 32.55728269496467,
+    "passed": true,
+    "ignored": false,
+    "log": "corner-normalization-20260923-fix6-broad-hypercurve_curve_region_promotion-line_parabola_fillet_extends_the_regular_incident_cell_exactly.log",
+    "binary_sha256": "0ef2f1b88058152c32c5dba33d9fe3c0982b84b0331f4f2e7a10df21677205aa"
+  },
+  {
+    "target": "hypercurve_curve_region_promotion",
+    "name": "native_contour_constructors_and_signed_depth_need_no_region_wrapper",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/corner-normalization-20260923-fix6-broad-hypercurve_curve_region_promotion",
+      "--exact",
+      "native_contour_constructors_and_signed_depth_need_no_region_wrapper",
+      "--test-threads=1",
+      "--nocapture",
+      "--color",
+      "never"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.0036316009936854243,
+    "passed": true,
+    "ignored": false,
+    "log": "corner-normalization-20260923-fix6-broad-hypercurve_curve_region_promotion-native_contour_constructors_and_signed_depth_need_no_region_wrapper.log",
+    "binary_sha256": "0ef2f1b88058152c32c5dba33d9fe3c0982b84b0331f4f2e7a10df21677205aa"
+  },
+  {
+    "target": "hypercurve_curve_region_promotion",
+    "name": "native_self_crossing_walk_regularizes_with_both_fill_rules",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/corner-normalization-20260923-fix6-broad-hypercurve_curve_region_promotion",
+      "--exact",
+      "native_self_crossing_walk_regularizes_with_both_fill_rules",
+      "--test-threads=1",
+      "--nocapture",
+      "--color",
+      "never"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.00357824400998652,
+    "passed": true,
+    "ignored": false,
+    "log": "corner-normalization-20260923-fix6-broad-hypercurve_curve_region_promotion-native_self_crossing_walk_regularizes_with_both_fill_rules.log",
+    "binary_sha256": "0ef2f1b88058152c32c5dba33d9fe3c0982b84b0331f4f2e7a10df21677205aa"
+  },
+  {
+    "target": "hypercurve_curve_region_promotion",
+    "name": "native_self_overlap_regularization_honors_winding_multiplicity",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/corner-normalization-20260923-fix6-broad-hypercurve_curve_region_promotion",
+      "--exact",
+      "native_self_overlap_regularization_honors_winding_multiplicity",
+      "--test-threads=1",
+      "--nocapture",
+      "--color",
+      "never"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.003546847030520439,
+    "passed": true,
+    "ignored": false,
+    "log": "corner-normalization-20260923-fix6-broad-hypercurve_curve_region_promotion-native_self_overlap_regularization_honors_winding_multiplicity.log",
+    "binary_sha256": "0ef2f1b88058152c32c5dba33d9fe3c0982b84b0331f4f2e7a10df21677205aa"
+  },
+  {
+    "target": "hypercurve_curve_region_promotion",
+    "name": "non_ph_bezier_pair_fillet_retains_general_selected_circle",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/corner-normalization-20260923-fix6-broad-hypercurve_curve_region_promotion",
+      "--exact",
+      "non_ph_bezier_pair_fillet_retains_general_selected_circle",
+      "--test-threads=1",
+      "--nocapture",
+      "--color",
+      "never"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 19.089342585997656,
+    "passed": true,
+    "ignored": false,
+    "log": "corner-normalization-20260923-fix6-broad-hypercurve_curve_region_promotion-non_ph_bezier_pair_fillet_retains_general_selected_circle.log",
+    "binary_sha256": "0ef2f1b88058152c32c5dba33d9fe3c0982b84b0331f4f2e7a10df21677205aa"
+  },
+  {
+    "target": "hypercurve_curve_region_promotion",
+    "name": "non_ph_bezier_pair_projective_fillet_retains_algebraic_extensions",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/corner-normalization-20260923-fix6-broad-hypercurve_curve_region_promotion",
+      "--exact",
+      "non_ph_bezier_pair_projective_fillet_retains_algebraic_extensions",
+      "--test-threads=1",
+      "--nocapture",
+      "--color",
+      "never"
+    ],
+    "returncode": "timeout",
+    "elapsed_seconds": 75.0025672459742,
+    "passed": false,
+    "ignored": false,
+    "log": "corner-normalization-20260923-fix6-broad-hypercurve_curve_region_promotion-non_ph_bezier_pair_projective_fillet_retains_algebraic_extensions.log",
+    "binary_sha256": "0ef2f1b88058152c32c5dba33d9fe3c0982b84b0331f4f2e7a10df21677205aa"
+  },
+  {
+    "target": "hypercurve_curve_region_promotion",
+    "name": "nonconvex_algebraic_chord_expansion_is_exact_and_local_collapse_is_explicit",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/corner-normalization-20260923-fix6-broad-hypercurve_curve_region_promotion",
+      "--exact",
+      "nonconvex_algebraic_chord_expansion_is_exact_and_local_collapse_is_explicit",
+      "--test-threads=1",
+      "--nocapture",
+      "--color",
+      "never"
+    ],
+    "returncode": 101,
+    "elapsed_seconds": 0.3155132669489831,
+    "passed": false,
+    "ignored": false,
+    "log": "corner-normalization-20260923-fix6-broad-hypercurve_curve_region_promotion-nonconvex_algebraic_chord_expansion_is_exact_and_local_collapse_is_explicit.log",
+    "binary_sha256": "0ef2f1b88058152c32c5dba33d9fe3c0982b84b0331f4f2e7a10df21677205aa"
+  },
+  {
+    "target": "hypercurve_curve_region_promotion",
+    "name": "nonlinear_curved_winding_honors_authored_fill_rules_exactly",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/corner-normalization-20260923-fix6-broad-hypercurve_curve_region_promotion",
+      "--exact",
+      "nonlinear_curved_winding_honors_authored_fill_rules_exactly",
+      "--test-threads=1",
+      "--nocapture",
+      "--color",
+      "never"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.0036784480325877666,
+    "passed": true,
+    "ignored": false,
+    "log": "corner-normalization-20260923-fix6-broad-hypercurve_curve_region_promotion-nonlinear_curved_winding_honors_authored_fill_rules_exactly.log",
+    "binary_sha256": "0ef2f1b88058152c32c5dba33d9fe3c0982b84b0331f4f2e7a10df21677205aa"
+  },
+  {
+    "target": "hypercurve_curve_region_promotion",
+    "name": "nonperiodic_self_contact_does_not_claim_a_green_integral_as_filled_area",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/corner-normalization-20260923-fix6-broad-hypercurve_curve_region_promotion",
+      "--exact",
+      "nonperiodic_self_contact_does_not_claim_a_green_integral_as_filled_area",
+      "--test-threads=1",
+      "--nocapture",
+      "--color",
+      "never"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.003599003073759377,
+    "passed": true,
+    "ignored": false,
+    "log": "corner-normalization-20260923-fix6-broad-hypercurve_curve_region_promotion-nonperiodic_self_contact_does_not_claim_a_green_integral_as_filled_area.log",
+    "binary_sha256": "0ef2f1b88058152c32c5dba33d9fe3c0982b84b0331f4f2e7a10df21677205aa"
+  },
+  {
+    "target": "hypercurve_curve_region_promotion",
+    "name": "one_chord_orders_contacts_from_two_selected_round_corners",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/corner-normalization-20260923-fix6-broad-hypercurve_curve_region_promotion",
+      "--exact",
+      "one_chord_orders_contacts_from_two_selected_round_corners",
+      "--test-threads=1",
+      "--nocapture",
+      "--color",
+      "never"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.06383562099654227,
+    "passed": true,
+    "ignored": false,
+    "log": "corner-normalization-20260923-fix6-broad-hypercurve_curve_region_promotion-one_chord_orders_contacts_from_two_selected_round_corners.log",
+    "binary_sha256": "0ef2f1b88058152c32c5dba33d9fe3c0982b84b0331f4f2e7a10df21677205aa"
+  },
+  {
+    "target": "hypercurve_curve_region_promotion",
+    "name": "one_field_algebraic_chamfer_regularizes_without_rebuilding_its_solver",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/corner-normalization-20260923-fix6-broad-hypercurve_curve_region_promotion",
+      "--exact",
+      "one_field_algebraic_chamfer_regularizes_without_rebuilding_its_solver",
+      "--test-threads=1",
+      "--nocapture",
+      "--color",
+      "never"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.003616602043621242,
+    "passed": true,
+    "ignored": false,
+    "log": "corner-normalization-20260923-fix6-broad-hypercurve_curve_region_promotion-one_field_algebraic_chamfer_regularizes_without_rebuilding_its_solver.log",
+    "binary_sha256": "0ef2f1b88058152c32c5dba33d9fe3c0982b84b0331f4f2e7a10df21677205aa"
+  },
+  {
+    "target": "hypercurve_curve_region_promotion",
+    "name": "region_constructors_remove_canceled_boundaries_and_filled_seams",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/corner-normalization-20260923-fix6-broad-hypercurve_curve_region_promotion",
+      "--exact",
+      "region_constructors_remove_canceled_boundaries_and_filled_seams",
+      "--test-threads=1",
+      "--nocapture",
+      "--color",
+      "never"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.015694163972511888,
+    "passed": true,
+    "ignored": false,
+    "log": "corner-normalization-20260923-fix6-broad-hypercurve_curve_region_promotion-region_constructors_remove_canceled_boundaries_and_filled_seams.log",
+    "binary_sha256": "0ef2f1b88058152c32c5dba33d9fe3c0982b84b0331f4f2e7a10df21677205aa"
+  },
+  {
+    "target": "hypercurve_curve_region_promotion",
+    "name": "region_corner_edits_publish_normalized_hole_openings",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/corner-normalization-20260923-fix6-broad-hypercurve_curve_region_promotion",
+      "--exact",
+      "region_corner_edits_publish_normalized_hole_openings",
+      "--test-threads=1",
+      "--nocapture",
+      "--color",
+      "never"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.015653855982236564,
+    "passed": true,
+    "ignored": false,
+    "log": "corner-normalization-20260923-fix6-broad-hypercurve_curve_region_promotion-region_corner_edits_publish_normalized_hole_openings.log",
+    "binary_sha256": "0ef2f1b88058152c32c5dba33d9fe3c0982b84b0331f4f2e7a10df21677205aa"
+  },
+  {
+    "target": "hypercurve_curve_region_promotion",
+    "name": "region_promotion_retains_explicit_roles_and_line_fast_path",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/corner-normalization-20260923-fix6-broad-hypercurve_curve_region_promotion",
+      "--exact",
+      "region_promotion_retains_explicit_roles_and_line_fast_path",
+      "--test-threads=1",
+      "--nocapture",
+      "--color",
+      "never"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.003576655057258904,
+    "passed": true,
+    "ignored": false,
+    "log": "corner-normalization-20260923-fix6-broad-hypercurve_curve_region_promotion-region_promotion_retains_explicit_roles_and_line_fast_path.log",
+    "binary_sha256": "0ef2f1b88058152c32c5dba33d9fe3c0982b84b0331f4f2e7a10df21677205aa"
+  },
+  {
+    "target": "hypercurve_curve_region_promotion",
+    "name": "region_promotion_retains_hole_role_for_projection",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/corner-normalization-20260923-fix6-broad-hypercurve_curve_region_promotion",
+      "--exact",
+      "region_promotion_retains_hole_role_for_projection",
+      "--test-threads=1",
+      "--nocapture",
+      "--color",
+      "never"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.0035565459402278066,
+    "passed": true,
+    "ignored": false,
+    "log": "corner-normalization-20260923-fix6-broad-hypercurve_curve_region_promotion-region_promotion_retains_hole_role_for_projection.log",
+    "binary_sha256": "0ef2f1b88058152c32c5dba33d9fe3c0982b84b0331f4f2e7a10df21677205aa"
+  },
+  {
+    "target": "hypercurve_curve_region_promotion",
+    "name": "repeated_region_offsets_compose_retained_exact_parallels_under_both_policies",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/corner-normalization-20260923-fix6-broad-hypercurve_curve_region_promotion",
+      "--exact",
+      "repeated_region_offsets_compose_retained_exact_parallels_under_both_policies",
+      "--test-threads=1",
+      "--nocapture",
+      "--color",
+      "never"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 1.0152083509601653,
+    "passed": true,
+    "ignored": false,
+    "log": "corner-normalization-20260923-fix6-broad-hypercurve_curve_region_promotion-repeated_region_offsets_compose_retained_exact_parallels_under_both_policies.log",
+    "binary_sha256": "0ef2f1b88058152c32c5dba33d9fe3c0982b84b0331f4f2e7a10df21677205aa"
+  },
+  {
+    "target": "hypercurve_curve_region_promotion",
+    "name": "retained_circular_regions_chamfer_over_the_full_support",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/corner-normalization-20260923-fix6-broad-hypercurve_curve_region_promotion",
+      "--exact",
+      "retained_circular_regions_chamfer_over_the_full_support",
+      "--test-threads=1",
+      "--nocapture",
+      "--color",
+      "never"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.5147820679703727,
+    "passed": true,
+    "ignored": false,
+    "log": "corner-normalization-20260923-fix6-broad-hypercurve_curve_region_promotion-retained_circular_regions_chamfer_over_the_full_support.log",
+    "binary_sha256": "0ef2f1b88058152c32c5dba33d9fe3c0982b84b0331f4f2e7a10df21677205aa"
+  },
+  {
+    "target": "hypercurve_curve_region_promotion",
+    "name": "rotated_algebraic_chord_erosion_splits_a_collapsed_neck_exactly",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/corner-normalization-20260923-fix6-broad-hypercurve_curve_region_promotion",
+      "--exact",
+      "rotated_algebraic_chord_erosion_splits_a_collapsed_neck_exactly",
+      "--test-threads=1",
+      "--nocapture",
+      "--color",
+      "never"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 4.069237185991369,
+    "passed": true,
+    "ignored": false,
+    "log": "corner-normalization-20260923-fix6-broad-hypercurve_curve_region_promotion-rotated_algebraic_chord_erosion_splits_a_collapsed_neck_exactly.log",
+    "binary_sha256": "0ef2f1b88058152c32c5dba33d9fe3c0982b84b0331f4f2e7a10df21677205aa"
+  },
+  {
+    "target": "hypercurve_curve_region_promotion",
+    "name": "rotated_algebraic_round_regions_boolean_through_oblique_three_field_contacts",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/corner-normalization-20260923-fix6-broad-hypercurve_curve_region_promotion",
+      "--exact",
+      "rotated_algebraic_round_regions_boolean_through_oblique_three_field_contacts",
+      "--test-threads=1",
+      "--nocapture",
+      "--color",
+      "never"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.2142022370826453,
+    "passed": true,
+    "ignored": false,
+    "log": "corner-normalization-20260923-fix6-broad-hypercurve_curve_region_promotion-rotated_algebraic_round_regions_boolean_through_oblique_three_field_contacts.log",
+    "binary_sha256": "0ef2f1b88058152c32c5dba33d9fe3c0982b84b0331f4f2e7a10df21677205aa"
+  },
+  {
+    "target": "hypercurve_curve_region_promotion",
+    "name": "selected_algebraic_cusp_chamfers_use_the_unified_retained_kernel",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/corner-normalization-20260923-fix6-broad-hypercurve_curve_region_promotion",
+      "--exact",
+      "selected_algebraic_cusp_chamfers_use_the_unified_retained_kernel",
+      "--test-threads=1",
+      "--nocapture",
+      "--color",
+      "never"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 3.9692534640198573,
+    "passed": true,
+    "ignored": false,
+    "log": "corner-normalization-20260923-fix6-broad-hypercurve_curve_region_promotion-selected_algebraic_cusp_chamfers_use_the_unified_retained_kernel.log",
+    "binary_sha256": "0ef2f1b88058152c32c5dba33d9fe3c0982b84b0331f4f2e7a10df21677205aa"
+  },
+  {
+    "target": "hypercurve_curve_region_promotion",
+    "name": "selected_algebraic_round_join_retains_a_general_minor_cut",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/corner-normalization-20260923-fix6-broad-hypercurve_curve_region_promotion",
+      "--exact",
+      "selected_algebraic_round_join_retains_a_general_minor_cut",
+      "--test-threads=1",
+      "--nocapture",
+      "--color",
+      "never"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.007727080024778843,
+    "passed": true,
+    "ignored": false,
+    "log": "corner-normalization-20260923-fix6-broad-hypercurve_curve_region_promotion-selected_algebraic_round_join_retains_a_general_minor_cut.log",
+    "binary_sha256": "0ef2f1b88058152c32c5dba33d9fe3c0982b84b0331f4f2e7a10df21677205aa"
+  },
+  {
+    "target": "hypercurve_curve_region_promotion",
+    "name": "selected_algebraic_round_joins_reenter_exact_region_offsets",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/corner-normalization-20260923-fix6-broad-hypercurve_curve_region_promotion",
+      "--exact",
+      "selected_algebraic_round_joins_reenter_exact_region_offsets",
+      "--test-threads=1",
+      "--nocapture",
+      "--color",
+      "never"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 5.4209793920163065,
+    "passed": true,
+    "ignored": false,
+    "log": "corner-normalization-20260923-fix6-broad-hypercurve_curve_region_promotion-selected_algebraic_round_joins_reenter_exact_region_offsets.log",
+    "binary_sha256": "0ef2f1b88058152c32c5dba33d9fe3c0982b84b0331f4f2e7a10df21677205aa"
+  },
+  {
+    "target": "hypercurve_curve_region_promotion",
+    "name": "selected_boundary_paths_retain_domains_through_repeated_region_roundtrips",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/corner-normalization-20260923-fix6-broad-hypercurve_curve_region_promotion",
+      "--exact",
+      "selected_boundary_paths_retain_domains_through_repeated_region_roundtrips",
+      "--test-threads=1",
+      "--nocapture",
+      "--color",
+      "never"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.0077256300719454885,
+    "passed": true,
+    "ignored": false,
+    "log": "corner-normalization-20260923-fix6-broad-hypercurve_curve_region_promotion-selected_boundary_paths_retain_domains_through_repeated_region_roundtrips.log",
+    "binary_sha256": "0ef2f1b88058152c32c5dba33d9fe3c0982b84b0331f4f2e7a10df21677205aa"
+  },
+  {
+    "target": "hypercurve_curve_region_promotion",
+    "name": "selected_circle_support_chord_corners_retain_algebraic_fillet_centers",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/corner-normalization-20260923-fix6-broad-hypercurve_curve_region_promotion",
+      "--exact",
+      "selected_circle_support_chord_corners_retain_algebraic_fillet_centers",
+      "--test-threads=1",
+      "--nocapture",
+      "--color",
+      "never"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.11396382295060903,
+    "passed": true,
+    "ignored": false,
+    "log": "corner-normalization-20260923-fix6-broad-hypercurve_curve_region_promotion-selected_circle_support_chord_corners_retain_algebraic_fillet_centers.log",
+    "binary_sha256": "0ef2f1b88058152c32c5dba33d9fe3c0982b84b0331f4f2e7a10df21677205aa"
+  },
+  {
+    "target": "hypercurve_curve_region_promotion",
+    "name": "selected_endpoint_chord_pairs_share_the_linear_fillet_kernel",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/corner-normalization-20260923-fix6-broad-hypercurve_curve_region_promotion",
+      "--exact",
+      "selected_endpoint_chord_pairs_share_the_linear_fillet_kernel",
+      "--test-threads=1",
+      "--nocapture",
+      "--color",
+      "never"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.0036667479434981942,
+    "passed": true,
+    "ignored": false,
+    "log": "corner-normalization-20260923-fix6-broad-hypercurve_curve_region_promotion-selected_endpoint_chord_pairs_share_the_linear_fillet_kernel.log",
+    "binary_sha256": "0ef2f1b88058152c32c5dba33d9fe3c0982b84b0331f4f2e7a10df21677205aa"
+  },
+  {
+    "target": "hypercurve_curve_region_promotion",
+    "name": "selected_endpoint_chords_share_linear_arc_fillet_incidence",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/corner-normalization-20260923-fix6-broad-hypercurve_curve_region_promotion",
+      "--exact",
+      "selected_endpoint_chords_share_linear_arc_fillet_incidence",
+      "--test-threads=1",
+      "--nocapture",
+      "--color",
+      "never"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.007683192961849272,
+    "passed": true,
+    "ignored": false,
+    "log": "corner-normalization-20260923-fix6-broad-hypercurve_curve_region_promotion-selected_endpoint_chords_share_linear_arc_fillet_incidence.log",
+    "binary_sha256": "0ef2f1b88058152c32c5dba33d9fe3c0982b84b0331f4f2e7a10df21677205aa"
+  },
+  {
+    "target": "hypercurve_curve_region_promotion",
+    "name": "selected_endpoint_chords_share_linear_bezier_fillet_incidence",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/corner-normalization-20260923-fix6-broad-hypercurve_curve_region_promotion",
+      "--exact",
+      "selected_endpoint_chords_share_linear_bezier_fillet_incidence",
+      "--test-threads=1",
+      "--nocapture",
+      "--color",
+      "never"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.00775270804297179,
+    "passed": true,
+    "ignored": false,
+    "log": "corner-normalization-20260923-fix6-broad-hypercurve_curve_region_promotion-selected_endpoint_chords_share_linear_bezier_fillet_incidence.log",
+    "binary_sha256": "0ef2f1b88058152c32c5dba33d9fe3c0982b84b0331f4f2e7a10df21677205aa"
+  },
+  {
+    "target": "hypercurve_curve_region_promotion",
+    "name": "sheared_algebraic_chord_erosion_splits_a_collapsed_neck_exactly",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/corner-normalization-20260923-fix6-broad-hypercurve_curve_region_promotion",
+      "--exact",
+      "sheared_algebraic_chord_erosion_splits_a_collapsed_neck_exactly",
+      "--test-threads=1",
+      "--nocapture",
+      "--color",
+      "never"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 5.771845014067367,
+    "passed": true,
+    "ignored": false,
+    "log": "corner-normalization-20260923-fix6-broad-hypercurve_curve_region_promotion-sheared_algebraic_chord_erosion_splits_a_collapsed_neck_exactly.log",
+    "binary_sha256": "0ef2f1b88058152c32c5dba33d9fe3c0982b84b0331f4f2e7a10df21677205aa"
+  },
+  {
+    "target": "hypercurve_curve_region_promotion",
+    "name": "similarity_rotation_preserves_unified_region_semantics_and_fast_path",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/corner-normalization-20260923-fix6-broad-hypercurve_curve_region_promotion",
+      "--exact",
+      "similarity_rotation_preserves_unified_region_semantics_and_fast_path",
+      "--test-threads=1",
+      "--nocapture",
+      "--color",
+      "never"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.003667818964459002,
+    "passed": true,
+    "ignored": false,
+    "log": "corner-normalization-20260923-fix6-broad-hypercurve_curve_region_promotion-similarity_rotation_preserves_unified_region_semantics_and_fast_path.log",
+    "binary_sha256": "0ef2f1b88058152c32c5dba33d9fe3c0982b84b0331f4f2e7a10df21677205aa"
+  },
+  {
+    "target": "hypercurve_curve_region_promotion",
+    "name": "strict_trim_only_analytic_parallel_support_corners_retain_algebraic_fillet_centers",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/corner-normalization-20260923-fix6-broad-hypercurve_curve_region_promotion",
+      "--exact",
+      "strict_trim_only_analytic_parallel_support_corners_retain_algebraic_fillet_centers",
+      "--test-threads=1",
+      "--nocapture",
+      "--color",
+      "never"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.2642543129622936,
+    "passed": true,
+    "ignored": false,
+    "log": "corner-normalization-20260923-fix6-broad-hypercurve_curve_region_promotion-strict_trim_only_analytic_parallel_support_corners_retain_algebraic_fillet_centers.log",
+    "binary_sha256": "0ef2f1b88058152c32c5dba33d9fe3c0982b84b0331f4f2e7a10df21677205aa"
+  },
+  {
+    "target": "hypercurve_curve_region_promotion",
+    "name": "strict_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/corner-normalization-20260923-fix6-broad-hypercurve_curve_region_promotion",
+      "--exact",
+      "strict_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions",
+      "--test-threads=1",
+      "--nocapture",
+      "--color",
+      "never"
+    ],
+    "returncode": 101,
+    "elapsed_seconds": 1.0653531310381368,
+    "passed": false,
+    "ignored": false,
+    "log": "corner-normalization-20260923-fix6-broad-hypercurve_curve_region_promotion-strict_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions.log",
+    "binary_sha256": "0ef2f1b88058152c32c5dba33d9fe3c0982b84b0331f4f2e7a10df21677205aa"
+  },
+  {
+    "target": "hypercurve_curve_region_promotion",
+    "name": "transformed_promotion_retains_explicit_roles_without_the_source_fast_path",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/corner-normalization-20260923-fix6-broad-hypercurve_curve_region_promotion",
+      "--exact",
+      "transformed_promotion_retains_explicit_roles_without_the_source_fast_path",
+      "--test-threads=1",
+      "--nocapture",
+      "--color",
+      "never"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.0036396499490365386,
+    "passed": true,
+    "ignored": false,
+    "log": "corner-normalization-20260923-fix6-broad-hypercurve_curve_region_promotion-transformed_promotion_retains_explicit_roles_without_the_source_fast_path.log",
+    "binary_sha256": "0ef2f1b88058152c32c5dba33d9fe3c0982b84b0331f4f2e7a10df21677205aa"
+  },
+  {
+    "target": "hypercurve_curve_region_promotion",
+    "name": "translated_algebraic_round_regions_boolean_through_cusp_chord_contacts",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/corner-normalization-20260923-fix6-broad-hypercurve_curve_region_promotion",
+      "--exact",
+      "translated_algebraic_round_regions_boolean_through_cusp_chord_contacts",
+      "--test-threads=1",
+      "--nocapture",
+      "--color",
+      "never"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.2641057641012594,
+    "passed": true,
+    "ignored": false,
+    "log": "corner-normalization-20260923-fix6-broad-hypercurve_curve_region_promotion-translated_algebraic_round_regions_boolean_through_cusp_chord_contacts.log",
+    "binary_sha256": "0ef2f1b88058152c32c5dba33d9fe3c0982b84b0331f4f2e7a10df21677205aa"
+  },
+  {
+    "target": "hypercurve_curve_region_promotion",
+    "name": "unified_curved_erosion_composes_merging_holes_and_material_crossings",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/corner-normalization-20260923-fix6-broad-hypercurve_curve_region_promotion",
+      "--exact",
+      "unified_curved_erosion_composes_merging_holes_and_material_crossings",
+      "--test-threads=1",
+      "--nocapture",
+      "--color",
+      "never"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.6647388610290363,
+    "passed": true,
+    "ignored": false,
+    "log": "corner-normalization-20260923-fix6-broad-hypercurve_curve_region_promotion-unified_curved_erosion_composes_merging_holes_and_material_crossings.log",
+    "binary_sha256": "0ef2f1b88058152c32c5dba33d9fe3c0982b84b0331f4f2e7a10df21677205aa"
+  },
+  {
+    "target": "hypercurve_curve_region_promotion",
+    "name": "unified_curved_erosion_opens_a_hole_through_the_material_boundary",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/corner-normalization-20260923-fix6-broad-hypercurve_curve_region_promotion",
+      "--exact",
+      "unified_curved_erosion_opens_a_hole_through_the_material_boundary",
+      "--test-threads=1",
+      "--nocapture",
+      "--color",
+      "never"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.3142238250002265,
+    "passed": true,
+    "ignored": false,
+    "log": "corner-normalization-20260923-fix6-broad-hypercurve_curve_region_promotion-unified_curved_erosion_opens_a_hole_through_the_material_boundary.log",
+    "binary_sha256": "0ef2f1b88058152c32c5dba33d9fe3c0982b84b0331f4f2e7a10df21677205aa"
+  },
+  {
+    "target": "hypercurve_curve_region_promotion",
+    "name": "unified_curved_erosion_resolves_simultaneous_hole_and_material_tangencies",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/corner-normalization-20260923-fix6-broad-hypercurve_curve_region_promotion",
+      "--exact",
+      "unified_curved_erosion_resolves_simultaneous_hole_and_material_tangencies",
+      "--test-threads=1",
+      "--nocapture",
+      "--color",
+      "never"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.1140132489381358,
+    "passed": true,
+    "ignored": false,
+    "log": "corner-normalization-20260923-fix6-broad-hypercurve_curve_region_promotion-unified_curved_erosion_resolves_simultaneous_hole_and_material_tangencies.log",
+    "binary_sha256": "0ef2f1b88058152c32c5dba33d9fe3c0982b84b0331f4f2e7a10df21677205aa"
+  },
+  {
+    "target": "hypercurve_curve_region_promotion",
+    "name": "unified_curved_erosion_retains_the_exact_hole_boundary_contact",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/corner-normalization-20260923-fix6-broad-hypercurve_curve_region_promotion",
+      "--exact",
+      "unified_curved_erosion_retains_the_exact_hole_boundary_contact",
+      "--test-threads=1",
+      "--nocapture",
+      "--color",
+      "never"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.11407378502190113,
+    "passed": true,
+    "ignored": false,
+    "log": "corner-normalization-20260923-fix6-broad-hypercurve_curve_region_promotion-unified_curved_erosion_retains_the_exact_hole_boundary_contact.log",
+    "binary_sha256": "0ef2f1b88058152c32c5dba33d9fe3c0982b84b0331f4f2e7a10df21677205aa"
+  },
+  {
+    "target": "hypercurve_curve_region_promotion",
+    "name": "unified_mixed_line_arc_erosion_splits_after_a_curved_neck_collapse",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/corner-normalization-20260923-fix6-broad-hypercurve_curve_region_promotion",
+      "--exact",
+      "unified_mixed_line_arc_erosion_splits_after_a_curved_neck_collapse",
+      "--test-threads=1",
+      "--nocapture",
+      "--color",
+      "never"
+    ],
+    "returncode": 101,
+    "elapsed_seconds": 0.3643994240555912,
+    "passed": false,
+    "ignored": false,
+    "log": "corner-normalization-20260923-fix6-broad-hypercurve_curve_region_promotion-unified_mixed_line_arc_erosion_splits_after_a_curved_neck_collapse.log",
+    "binary_sha256": "0ef2f1b88058152c32c5dba33d9fe3c0982b84b0331f4f2e7a10df21677205aa"
+  },
+  {
+    "target": "hypercurve_curve_region_promotion",
+    "name": "unified_native_arrangement_exposes_immediate_evidence",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/corner-normalization-20260923-fix6-broad-hypercurve_curve_region_promotion",
+      "--exact",
+      "unified_native_arrangement_exposes_immediate_evidence",
+      "--test-threads=1",
+      "--nocapture",
+      "--color",
+      "never"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.0037787710316479206,
+    "passed": true,
+    "ignored": false,
+    "log": "corner-normalization-20260923-fix6-broad-hypercurve_curve_region_promotion-unified_native_arrangement_exposes_immediate_evidence.log",
+    "binary_sha256": "0ef2f1b88058152c32c5dba33d9fe3c0982b84b0331f4f2e7a10df21677205aa"
+  },
+  {
+    "target": "hypercurve_curve_region_promotion",
+    "name": "unified_native_constructor_regularizes_zero_signed_area_self_crossing",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/corner-normalization-20260923-fix6-broad-hypercurve_curve_region_promotion",
+      "--exact",
+      "unified_native_constructor_regularizes_zero_signed_area_self_crossing",
+      "--test-threads=1",
+      "--nocapture",
+      "--color",
+      "never"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.0035704750334843993,
+    "passed": true,
+    "ignored": false,
+    "log": "corner-normalization-20260923-fix6-broad-hypercurve_curve_region_promotion-unified_native_constructor_regularizes_zero_signed_area_self_crossing.log",
+    "binary_sha256": "0ef2f1b88058152c32c5dba33d9fe3c0982b84b0331f4f2e7a10df21677205aa"
+  },
+  {
+    "target": "hypercurve_curve_region_promotion",
+    "name": "unified_region_bounds_cover_native_and_higher_order_carriers_exactly",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/corner-normalization-20260923-fix6-broad-hypercurve_curve_region_promotion",
+      "--exact",
+      "unified_region_bounds_cover_native_and_higher_order_carriers_exactly",
+      "--test-threads=1",
+      "--nocapture",
+      "--color",
+      "never"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.0035657159751281142,
+    "passed": true,
+    "ignored": false,
+    "log": "corner-normalization-20260923-fix6-broad-hypercurve_curve_region_promotion-unified_region_bounds_cover_native_and_higher_order_carriers_exactly.log",
+    "binary_sha256": "0ef2f1b88058152c32c5dba33d9fe3c0982b84b0331f4f2e7a10df21677205aa"
+  },
+  {
+    "target": "hypercurve_curve_region_promotion",
+    "name": "unified_region_chamfer_and_fillet_edit_higher_order_loops",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/corner-normalization-20260923-fix6-broad-hypercurve_curve_region_promotion",
+      "--exact",
+      "unified_region_chamfer_and_fillet_edit_higher_order_loops",
+      "--test-threads=1",
+      "--nocapture",
+      "--color",
+      "never"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.06389691703952849,
+    "passed": true,
+    "ignored": false,
+    "log": "corner-normalization-20260923-fix6-broad-hypercurve_curve_region_promotion-unified_region_chamfer_and_fillet_edit_higher_order_loops.log",
+    "binary_sha256": "0ef2f1b88058152c32c5dba33d9fe3c0982b84b0331f4f2e7a10df21677205aa"
+  },
+  {
+    "target": "hypercurve_curve_region_promotion",
+    "name": "unified_region_chamfer_joins_two_algebraic_bezier_cuts",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/corner-normalization-20260923-fix6-broad-hypercurve_curve_region_promotion",
+      "--exact",
+      "unified_region_chamfer_joins_two_algebraic_bezier_cuts",
+      "--test-threads=1",
+      "--nocapture",
+      "--color",
+      "never"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.46446670999284834,
+    "passed": true,
+    "ignored": false,
+    "log": "corner-normalization-20260923-fix6-broad-hypercurve_curve_region_promotion-unified_region_chamfer_joins_two_algebraic_bezier_cuts.log",
+    "binary_sha256": "0ef2f1b88058152c32c5dba33d9fe3c0982b84b0331f4f2e7a10df21677205aa"
+  },
+  {
+    "target": "hypercurve_curve_region_promotion",
+    "name": "unified_region_chamfer_reenters_general_algebraic_chords",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/corner-normalization-20260923-fix6-broad-hypercurve_curve_region_promotion",
+      "--exact",
+      "unified_region_chamfer_reenters_general_algebraic_chords",
+      "--test-threads=1",
+      "--nocapture",
+      "--color",
+      "never"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 2.617300383048132,
+    "passed": true,
+    "ignored": false,
+    "log": "corner-normalization-20260923-fix6-broad-hypercurve_curve_region_promotion-unified_region_chamfer_reenters_general_algebraic_chords.log",
+    "binary_sha256": "0ef2f1b88058152c32c5dba33d9fe3c0982b84b0331f4f2e7a10df21677205aa"
+  },
+  {
+    "target": "hypercurve_curve_region_promotion",
+    "name": "unified_region_chamfer_retains_algebraic_bezier_cut",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/corner-normalization-20260923-fix6-broad-hypercurve_curve_region_promotion",
+      "--exact",
+      "unified_region_chamfer_retains_algebraic_bezier_cut",
+      "--test-threads=1",
+      "--nocapture",
+      "--color",
+      "never"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.5146386780543253,
+    "passed": true,
+    "ignored": false,
+    "log": "corner-normalization-20260923-fix6-broad-hypercurve_curve_region_promotion-unified_region_chamfer_retains_algebraic_bezier_cut.log",
+    "binary_sha256": "0ef2f1b88058152c32c5dba33d9fe3c0982b84b0331f4f2e7a10df21677205aa"
+  },
+  {
+    "target": "hypercurve_curve_region_promotion",
+    "name": "unified_region_contraction_preserves_non_miter_corner_styles",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/corner-normalization-20260923-fix6-broad-hypercurve_curve_region_promotion",
+      "--exact",
+      "unified_region_contraction_preserves_non_miter_corner_styles",
+      "--test-threads=1",
+      "--nocapture",
+      "--color",
+      "never"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.06389630702324212,
+    "passed": true,
+    "ignored": false,
+    "log": "corner-normalization-20260923-fix6-broad-hypercurve_curve_region_promotion-unified_region_contraction_preserves_non_miter_corner_styles.log",
+    "binary_sha256": "0ef2f1b88058152c32c5dba33d9fe3c0982b84b0331f4f2e7a10df21677205aa"
+  },
+  {
+    "target": "hypercurve_curve_region_promotion",
+    "name": "unified_region_contracts_nonconvex_material_before_its_medial_collapse",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/corner-normalization-20260923-fix6-broad-hypercurve_curve_region_promotion",
+      "--exact",
+      "unified_region_contracts_nonconvex_material_before_its_medial_collapse",
+      "--test-threads=1",
+      "--nocapture",
+      "--color",
+      "never"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.007691433071158826,
+    "passed": true,
+    "ignored": false,
+    "log": "corner-normalization-20260923-fix6-broad-hypercurve_curve_region_promotion-unified_region_contracts_nonconvex_material_before_its_medial_collapse.log",
+    "binary_sha256": "0ef2f1b88058152c32c5dba33d9fe3c0982b84b0331f4f2e7a10df21677205aa"
+  },
+  {
+    "target": "hypercurve_curve_region_promotion",
+    "name": "unified_region_convex_contraction_decides_collapse_and_over_contraction",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/corner-normalization-20260923-fix6-broad-hypercurve_curve_region_promotion",
+      "--exact",
+      "unified_region_convex_contraction_decides_collapse_and_over_contraction",
+      "--test-threads=1",
+      "--nocapture",
+      "--color",
+      "never"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.01572329201735556,
+    "passed": true,
+    "ignored": false,
+    "log": "corner-normalization-20260923-fix6-broad-hypercurve_curve_region_promotion-unified_region_convex_contraction_decides_collapse_and_over_contraction.log",
+    "binary_sha256": "0ef2f1b88058152c32c5dba33d9fe3c0982b84b0331f4f2e7a10df21677205aa"
+  },
+  {
+    "target": "hypercurve_curve_region_promotion",
+    "name": "unified_region_convex_erosion_handles_orientation_and_redundant_edges",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/corner-normalization-20260923-fix6-broad-hypercurve_curve_region_promotion",
+      "--exact",
+      "unified_region_convex_erosion_handles_orientation_and_redundant_edges",
+      "--test-threads=1",
+      "--nocapture",
+      "--color",
+      "never"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.007608607993461192,
+    "passed": true,
+    "ignored": false,
+    "log": "corner-normalization-20260923-fix6-broad-hypercurve_curve_region_promotion-unified_region_convex_erosion_handles_orientation_and_redundant_edges.log",
+    "binary_sha256": "0ef2f1b88058152c32c5dba33d9fe3c0982b84b0331f4f2e7a10df21677205aa"
+  },
+  {
+    "target": "hypercurve_curve_region_promotion",
+    "name": "unified_region_convex_erosion_keeps_symbolic_diagonal_offsets_and_collapse_exact",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/corner-normalization-20260923-fix6-broad-hypercurve_curve_region_promotion",
+      "--exact",
+      "unified_region_convex_erosion_keeps_symbolic_diagonal_offsets_and_collapse_exact",
+      "--test-threads=1",
+      "--nocapture",
+      "--color",
+      "never"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.11386486003175378,
+    "passed": true,
+    "ignored": false,
+    "log": "corner-normalization-20260923-fix6-broad-hypercurve_curve_region_promotion-unified_region_convex_erosion_keeps_symbolic_diagonal_offsets_and_collapse_exact.log",
+    "binary_sha256": "0ef2f1b88058152c32c5dba33d9fe3c0982b84b0331f4f2e7a10df21677205aa"
+  },
+  {
+    "target": "hypercurve_curve_region_promotion",
+    "name": "unified_region_corner_solver_obeys_terminal_policy_once",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/corner-normalization-20260923-fix6-broad-hypercurve_curve_region_promotion",
+      "--exact",
+      "unified_region_corner_solver_obeys_terminal_policy_once",
+      "--test-threads=1",
+      "--nocapture",
+      "--color",
+      "never"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.0036179820308461785,
+    "passed": true,
+    "ignored": false,
+    "log": "corner-normalization-20260923-fix6-broad-hypercurve_curve_region_promotion-unified_region_corner_solver_obeys_terminal_policy_once.log",
+    "binary_sha256": "0ef2f1b88058152c32c5dba33d9fe3c0982b84b0331f4f2e7a10df21677205aa"
+  },
+  {
+    "target": "hypercurve_curve_region_promotion",
+    "name": "unified_region_corners_preserve_circular_geometry_across_representations",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/corner-normalization-20260923-fix6-broad-hypercurve_curve_region_promotion",
+      "--exact",
+      "unified_region_corners_preserve_circular_geometry_across_representations",
+      "--test-threads=1",
+      "--nocapture",
+      "--color",
+      "never"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.11392126500140876,
+    "passed": true,
+    "ignored": false,
+    "log": "corner-normalization-20260923-fix6-broad-hypercurve_curve_region_promotion-unified_region_corners_preserve_circular_geometry_across_representations.log",
+    "binary_sha256": "0ef2f1b88058152c32c5dba33d9fe3c0982b84b0331f4f2e7a10df21677205aa"
+  },
+  {
+    "target": "hypercurve_curve_region_promotion",
+    "name": "unified_region_corners_use_canonical_spline_bezier_spans",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/corner-normalization-20260923-fix6-broad-hypercurve_curve_region_promotion",
+      "--exact",
+      "unified_region_corners_use_canonical_spline_bezier_spans",
+      "--test-threads=1",
+      "--nocapture",
+      "--color",
+      "never"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.007642396027222276,
+    "passed": true,
+    "ignored": false,
+    "log": "corner-normalization-20260923-fix6-broad-hypercurve_curve_region_promotion-unified_region_corners_use_canonical_spline_bezier_spans.log",
+    "binary_sha256": "0ef2f1b88058152c32c5dba33d9fe3c0982b84b0331f4f2e7a10df21677205aa"
+  },
+  {
+    "target": "hypercurve_curve_region_promotion",
+    "name": "unified_region_corners_use_represented_bezier_incidence",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/corner-normalization-20260923-fix6-broad-hypercurve_curve_region_promotion",
+      "--exact",
+      "unified_region_corners_use_represented_bezier_incidence",
+      "--test-threads=1",
+      "--nocapture",
+      "--color",
+      "never"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.0035580460680648685,
+    "passed": true,
+    "ignored": false,
+    "log": "corner-normalization-20260923-fix6-broad-hypercurve_curve_region_promotion-unified_region_corners_use_represented_bezier_incidence.log",
+    "binary_sha256": "0ef2f1b88058152c32c5dba33d9fe3c0982b84b0331f4f2e7a10df21677205aa"
+  },
+  {
+    "target": "hypercurve_curve_region_promotion",
+    "name": "unified_region_discards_nonconvex_material_after_wavefront_collapse",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/corner-normalization-20260923-fix6-broad-hypercurve_curve_region_promotion",
+      "--exact",
+      "unified_region_discards_nonconvex_material_after_wavefront_collapse",
+      "--test-threads=1",
+      "--nocapture",
+      "--color",
+      "never"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.01574295002501458,
+    "passed": true,
+    "ignored": false,
+    "log": "corner-normalization-20260923-fix6-broad-hypercurve_curve_region_promotion-unified_region_discards_nonconvex_material_after_wavefront_collapse.log",
+    "binary_sha256": "0ef2f1b88058152c32c5dba33d9fe3c0982b84b0331f4f2e7a10df21677205aa"
+  },
+  {
+    "target": "hypercurve_curve_region_promotion",
+    "name": "unified_region_erosion_splits_when_a_hole_reaches_the_material_boundary",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/corner-normalization-20260923-fix6-broad-hypercurve_curve_region_promotion",
+      "--exact",
+      "unified_region_erosion_splits_when_a_hole_reaches_the_material_boundary",
+      "--test-threads=1",
+      "--nocapture",
+      "--color",
+      "never"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.0638935969909653,
+    "passed": true,
+    "ignored": false,
+    "log": "corner-normalization-20260923-fix6-broad-hypercurve_curve_region_promotion-unified_region_erosion_splits_when_a_hole_reaches_the_material_boundary.log",
+    "binary_sha256": "0ef2f1b88058152c32c5dba33d9fe3c0982b84b0331f4f2e7a10df21677205aa"
+  },
+  {
+    "target": "hypercurve_curve_region_promotion",
+    "name": "unified_region_exact_neck_event_uses_post_event_topology",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/corner-normalization-20260923-fix6-broad-hypercurve_curve_region_promotion",
+      "--exact",
+      "unified_region_exact_neck_event_uses_post_event_topology",
+      "--test-threads=1",
+      "--nocapture",
+      "--color",
+      "never"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 2.1674648399930447,
+    "passed": true,
+    "ignored": false,
+    "log": "corner-normalization-20260923-fix6-broad-hypercurve_curve_region_promotion-unified_region_exact_neck_event_uses_post_event_topology.log",
+    "binary_sha256": "0ef2f1b88058152c32c5dba33d9fe3c0982b84b0331f4f2e7a10df21677205aa"
+  },
+  {
+    "target": "hypercurve_curve_region_promotion",
+    "name": "unified_region_expansion_regularizes_a_closed_concavity",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/corner-normalization-20260923-fix6-broad-hypercurve_curve_region_promotion",
+      "--exact",
+      "unified_region_expansion_regularizes_a_closed_concavity",
+      "--test-threads=1",
+      "--nocapture",
+      "--color",
+      "never"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.007810783921740949,
+    "passed": true,
+    "ignored": false,
+    "log": "corner-normalization-20260923-fix6-broad-hypercurve_curve_region_promotion-unified_region_expansion_regularizes_a_closed_concavity.log",
+    "binary_sha256": "0ef2f1b88058152c32c5dba33d9fe3c0982b84b0331f4f2e7a10df21677205aa"
+  },
+  {
+    "target": "hypercurve_curve_region_promotion",
+    "name": "unified_region_native_chamfer_uses_arc_sweep_evidence",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/corner-normalization-20260923-fix6-broad-hypercurve_curve_region_promotion",
+      "--exact",
+      "unified_region_native_chamfer_uses_arc_sweep_evidence",
+      "--test-threads=1",
+      "--nocapture",
+      "--color",
+      "never"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.031881403061561286,
+    "passed": true,
+    "ignored": false,
+    "log": "corner-normalization-20260923-fix6-broad-hypercurve_curve_region_promotion-unified_region_native_chamfer_uses_arc_sweep_evidence.log",
+    "binary_sha256": "0ef2f1b88058152c32c5dba33d9fe3c0982b84b0331f4f2e7a10df21677205aa"
+  },
+  {
+    "target": "hypercurve_curve_region_promotion",
+    "name": "unified_region_native_fillet_retains_certified_arc_contacts",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/corner-normalization-20260923-fix6-broad-hypercurve_curve_region_promotion",
+      "--exact",
+      "unified_region_native_fillet_retains_certified_arc_contacts",
+      "--test-threads=1",
+      "--nocapture",
+      "--color",
+      "never"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.03186042502056807,
+    "passed": true,
+    "ignored": false,
+    "log": "corner-normalization-20260923-fix6-broad-hypercurve_curve_region_promotion-unified_region_native_fillet_retains_certified_arc_contacts.log",
+    "binary_sha256": "0ef2f1b88058152c32c5dba33d9fe3c0982b84b0331f4f2e7a10df21677205aa"
+  },
+  {
+    "target": "hypercurve_curve_region_promotion",
+    "name": "unified_region_non_miter_erosions_split_after_neck_collapse",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/corner-normalization-20260923-fix6-broad-hypercurve_curve_region_promotion",
+      "--exact",
+      "unified_region_non_miter_erosions_split_after_neck_collapse",
+      "--test-threads=1",
+      "--nocapture",
+      "--color",
+      "never"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.5146147490013391,
+    "passed": true,
+    "ignored": false,
+    "log": "corner-normalization-20260923-fix6-broad-hypercurve_curve_region_promotion-unified_region_non_miter_erosions_split_after_neck_collapse.log",
+    "binary_sha256": "0ef2f1b88058152c32c5dba33d9fe3c0982b84b0331f4f2e7a10df21677205aa"
+  },
+  {
+    "target": "hypercurve_curve_region_promotion",
+    "name": "unified_region_nonconvex_erosion_splits_at_a_collapsed_neck",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/corner-normalization-20260923-fix6-broad-hypercurve_curve_region_promotion",
+      "--exact",
+      "unified_region_nonconvex_erosion_splits_at_a_collapsed_neck",
+      "--test-threads=1",
+      "--nocapture",
+      "--color",
+      "never"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.03191779996268451,
+    "passed": true,
+    "ignored": false,
+    "log": "corner-normalization-20260923-fix6-broad-hypercurve_curve_region_promotion-unified_region_nonconvex_erosion_splits_at_a_collapsed_neck.log",
+    "binary_sha256": "0ef2f1b88058152c32c5dba33d9fe3c0982b84b0331f4f2e7a10df21677205aa"
+  },
+  {
+    "target": "hypercurve_curve_region_promotion",
+    "name": "unified_region_nonorthogonal_erosion_splits_through_the_exact_wavefront",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/corner-normalization-20260923-fix6-broad-hypercurve_curve_region_promotion",
+      "--exact",
+      "unified_region_nonorthogonal_erosion_splits_through_the_exact_wavefront",
+      "--test-threads=1",
+      "--nocapture",
+      "--color",
+      "never"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 2.5672476270701736,
+    "passed": true,
+    "ignored": false,
+    "log": "corner-normalization-20260923-fix6-broad-hypercurve_curve_region_promotion-unified_region_nonorthogonal_erosion_splits_through_the_exact_wavefront.log",
+    "binary_sha256": "0ef2f1b88058152c32c5dba33d9fe3c0982b84b0331f4f2e7a10df21677205aa"
+  },
+  {
+    "target": "hypercurve_curve_region_promotion",
+    "name": "unified_region_offset_corner_options_obey_the_terminal_policy",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/corner-normalization-20260923-fix6-broad-hypercurve_curve_region_promotion",
+      "--exact",
+      "unified_region_offset_corner_options_obey_the_terminal_policy",
+      "--test-threads=1",
+      "--nocapture",
+      "--color",
+      "never"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.0036652589915320277,
+    "passed": true,
+    "ignored": false,
+    "log": "corner-normalization-20260923-fix6-broad-hypercurve_curve_region_promotion-unified_region_offset_corner_options_obey_the_terminal_policy.log",
+    "binary_sha256": "0ef2f1b88058152c32c5dba33d9fe3c0982b84b0331f4f2e7a10df21677205aa"
+  },
+  {
+    "target": "hypercurve_curve_region_promotion",
+    "name": "unified_region_offset_corner_styles_have_exact_area_and_miter_fallback",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/corner-normalization-20260923-fix6-broad-hypercurve_curve_region_promotion",
+      "--exact",
+      "unified_region_offset_corner_styles_have_exact_area_and_miter_fallback",
+      "--test-threads=1",
+      "--nocapture",
+      "--color",
+      "never"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.0036371409660205245,
+    "passed": true,
+    "ignored": false,
+    "log": "corner-normalization-20260923-fix6-broad-hypercurve_curve_region_promotion-unified_region_offset_corner_styles_have_exact_area_and_miter_fallback.log",
+    "binary_sha256": "0ef2f1b88058152c32c5dba33d9fe3c0982b84b0331f4f2e7a10df21677205aa"
+  },
+  {
+    "target": "hypercurve_curve_region_promotion",
+    "name": "unified_region_offset_expands_material_and_contracts_holes",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/corner-normalization-20260923-fix6-broad-hypercurve_curve_region_promotion",
+      "--exact",
+      "unified_region_offset_expands_material_and_contracts_holes",
+      "--test-threads=1",
+      "--nocapture",
+      "--color",
+      "never"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.007571099908091128,
+    "passed": true,
+    "ignored": false,
+    "log": "corner-normalization-20260923-fix6-broad-hypercurve_curve_region_promotion-unified_region_offset_expands_material_and_contracts_holes.log",
+    "binary_sha256": "0ef2f1b88058152c32c5dba33d9fe3c0982b84b0331f4f2e7a10df21677205aa"
+  },
+  {
+    "target": "hypercurve_curve_region_promotion",
+    "name": "unified_region_offset_regularizes_overlapping_expanded_components",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/corner-normalization-20260923-fix6-broad-hypercurve_curve_region_promotion",
+      "--exact",
+      "unified_region_offset_regularizes_overlapping_expanded_components",
+      "--test-threads=1",
+      "--nocapture",
+      "--color",
+      "never"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.007595638977363706,
+    "passed": true,
+    "ignored": false,
+    "log": "corner-normalization-20260923-fix6-broad-hypercurve_curve_region_promotion-unified_region_offset_regularizes_overlapping_expanded_components.log",
+    "binary_sha256": "0ef2f1b88058152c32c5dba33d9fe3c0982b84b0331f4f2e7a10df21677205aa"
+  },
+  {
+    "target": "hypercurve_curve_region_promotion",
+    "name": "unified_region_offset_regularizes_overlapping_expanded_voids",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/corner-normalization-20260923-fix6-broad-hypercurve_curve_region_promotion",
+      "--exact",
+      "unified_region_offset_regularizes_overlapping_expanded_voids",
+      "--test-threads=1",
+      "--nocapture",
+      "--color",
+      "never"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.03177033003885299,
+    "passed": true,
+    "ignored": false,
+    "log": "corner-normalization-20260923-fix6-broad-hypercurve_curve_region_promotion-unified_region_offset_regularizes_overlapping_expanded_voids.log",
+    "binary_sha256": "0ef2f1b88058152c32c5dba33d9fe3c0982b84b0331f4f2e7a10df21677205aa"
+  },
+  {
+    "target": "hypercurve_curve_region_promotion",
+    "name": "unified_region_offsets_general_rational_boundary_identically_under_both_policies",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/corner-normalization-20260923-fix6-broad-hypercurve_curve_region_promotion",
+      "--exact",
+      "unified_region_offsets_general_rational_boundary_identically_under_both_policies",
+      "--test-threads=1",
+      "--nocapture",
+      "--color",
+      "never"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.0076801530085504055,
+    "passed": true,
+    "ignored": false,
+    "log": "corner-normalization-20260923-fix6-broad-hypercurve_curve_region_promotion-unified_region_offsets_general_rational_boundary_identically_under_both_policies.log",
+    "binary_sha256": "0ef2f1b88058152c32c5dba33d9fe3c0982b84b0331f4f2e7a10df21677205aa"
+  },
+  {
+    "target": "hypercurve_curve_region_promotion",
+    "name": "unified_region_offsets_quadratic_boundary_through_exact_parallel_arrangement",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/corner-normalization-20260923-fix6-broad-hypercurve_curve_region_promotion",
+      "--exact",
+      "unified_region_offsets_quadratic_boundary_through_exact_parallel_arrangement",
+      "--test-threads=1",
+      "--nocapture",
+      "--color",
+      "never"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.007629116997122765,
+    "passed": true,
+    "ignored": false,
+    "log": "corner-normalization-20260923-fix6-broad-hypercurve_curve_region_promotion-unified_region_offsets_quadratic_boundary_through_exact_parallel_arrangement.log",
+    "binary_sha256": "0ef2f1b88058152c32c5dba33d9fe3c0982b84b0331f4f2e7a10df21677205aa"
+  },
+  {
+    "target": "hypercurve_curve_region_promotion",
+    "name": "unified_region_positive_offset_removes_exactly_collapsed_convex_hole",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/corner-normalization-20260923-fix6-broad-hypercurve_curve_region_promotion",
+      "--exact",
+      "unified_region_positive_offset_removes_exactly_collapsed_convex_hole",
+      "--test-threads=1",
+      "--nocapture",
+      "--color",
+      "never"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.007712380960583687,
+    "passed": true,
+    "ignored": false,
+    "log": "corner-normalization-20260923-fix6-broad-hypercurve_curve_region_promotion-unified_region_positive_offset_removes_exactly_collapsed_convex_hole.log",
+    "binary_sha256": "0ef2f1b88058152c32c5dba33d9fe3c0982b84b0331f4f2e7a10df21677205aa"
+  },
+  {
+    "target": "hypercurve_curve_region_promotion",
+    "name": "unified_region_reuses_design_parameter_corner_solvers",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/corner-normalization-20260923-fix6-broad-hypercurve_curve_region_promotion",
+      "--exact",
+      "unified_region_reuses_design_parameter_corner_solvers",
+      "--test-threads=1",
+      "--nocapture",
+      "--color",
+      "never"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.003599732997827232,
+    "passed": true,
+    "ignored": false,
+    "log": "corner-normalization-20260923-fix6-broad-hypercurve_curve_region_promotion-unified_region_reuses_design_parameter_corner_solvers.log",
+    "binary_sha256": "0ef2f1b88058152c32c5dba33d9fe3c0982b84b0331f4f2e7a10df21677205aa"
+  }
+]

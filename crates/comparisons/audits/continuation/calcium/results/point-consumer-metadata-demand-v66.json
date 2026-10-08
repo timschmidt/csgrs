@@ -1,0 +1,25 @@
+{
+  "tag": "point-consumer-metadata-demand-v66",
+  "started": "2026-09-11T03:06:14.615Z",
+  "finished": "2026-09-11T03:06:14.724Z",
+  "elapsedSeconds": 0.10716329899999999,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "env",
+  "args": [
+    "CARGO_TARGET_DIR=/tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse",
+    "CARGO_INCREMENTAL=0",
+    "CARGO_PROFILE_DEV_DEBUG=0",
+    "CARGO_BUILD_JOBS=2",
+    "cargo",
+    "metadata",
+    "--offline",
+    "--locked",
+    "--format-version",
+    "1",
+    "--all-features",
+    "--manifest-path",
+    "point-demand-consumer-v66/hypercurve/Cargo.toml"
+  ],
+  "code": 0,
+  "signal": null
+}

@@ -1,0 +1,19 @@
+{
+  "tag": "qqbar-decisions-memcheck",
+  "started": "2026-09-10T05:41:54.612Z",
+  "finished": "2026-09-10T05:42:08.592Z",
+  "elapsedSeconds": 13.977221773000002,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison",
+  "command": "valgrind",
+  "args": [
+    "--vgdb=no",
+    "--tool=memcheck",
+    "--error-exitcode=97",
+    "--leak-check=full",
+    "--show-leak-kinds=all",
+    "--errors-for-leak-kinds=definite,indirect,possible",
+    "/tmp/calcium-qqbar-decisions.xUeflv/controls"
+  ],
+  "code": 0,
+  "signal": null
+}

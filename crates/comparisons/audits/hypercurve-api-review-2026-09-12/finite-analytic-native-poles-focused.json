@@ -1,0 +1,86 @@
+[
+  {
+    "command": [
+      "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve-f3a2b12f998828b7",
+      "--exact",
+      "curve_intersection::curve_support_intersection::analytic_dispatch_tests::finite_analytic_pairs_exclude_unused_native_poles",
+      "--test-threads=1",
+      "--nocapture"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.031753476010635495,
+    "binary": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve-f3a2b12f998828b7",
+    "sha256": "5d9907e5903b14ac2c3fc3116582ecaa60f2520e46a58c1d670ea316533f3c1e",
+    "log": "finite-analytic-native-poles-focused-finite_analytic_pairs_exclude_unused_native_poles.log"
+  },
+  {
+    "command": [
+      "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve-f3a2b12f998828b7",
+      "--exact",
+      "curve_intersection::curve_support_intersection::analytic_dispatch_tests::finite_analytic_pairs_replay_transverse_and_tangent_contacts",
+      "--test-threads=1",
+      "--nocapture"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.03175169599126093,
+    "binary": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve-f3a2b12f998828b7",
+    "sha256": "5d9907e5903b14ac2c3fc3116582ecaa60f2520e46a58c1d670ea316533f3c1e",
+    "log": "finite-analytic-native-poles-focused-finite_analytic_pairs_replay_transverse_and_tangent_contacts.log"
+  },
+  {
+    "command": [
+      "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve-f3a2b12f998828b7",
+      "--exact",
+      "curve_intersection::curve_support_intersection::analytic_dispatch_tests::finite_analytic_pairs_retain_components_in_the_original_charts",
+      "--test-threads=1",
+      "--nocapture"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.1639810420165304,
+    "binary": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve-f3a2b12f998828b7",
+    "sha256": "5d9907e5903b14ac2c3fc3116582ecaa60f2520e46a58c1d670ea316533f3c1e",
+    "log": "finite-analytic-native-poles-focused-finite_analytic_pairs_retain_components_in_the_original_charts.log"
+  },
+  {
+    "command": [
+      "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve-f3a2b12f998828b7",
+      "--exact",
+      "curve_intersection::curve_support_intersection::analytic_dispatch_tests::finite_analytic_constant_images_retain_the_complete_parameter_fiber",
+      "--test-threads=1",
+      "--nocapture"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.007619707990670577,
+    "binary": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve-f3a2b12f998828b7",
+    "sha256": "5d9907e5903b14ac2c3fc3116582ecaa60f2520e46a58c1d670ea316533f3c1e",
+    "log": "finite-analytic-native-poles-focused-finite_analytic_constant_images_retain_the_complete_parameter_fiber.log"
+  },
+  {
+    "command": [
+      "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve-f3a2b12f998828b7",
+      "--exact",
+      "curve_intersection::curve_support_intersection::analytic_dispatch_tests::common_analytic_pairs_replay_contacts_in_both_orders_and_traversals",
+      "--test-threads=1",
+      "--nocapture"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 1.4157491069927346,
+    "binary": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve-f3a2b12f998828b7",
+    "sha256": "5d9907e5903b14ac2c3fc3116582ecaa60f2520e46a58c1d670ea316533f3c1e",
+    "log": "finite-analytic-native-poles-focused-common_analytic_pairs_replay_contacts_in_both_orders_and_traversals.log"
+  },
+  {
+    "command": [
+      "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve-f3a2b12f998828b7",
+      "--exact",
+      "curve_intersection::curve_support_intersection::analytic_dispatch_tests::common_analytic_overlaps_transport_distinct_source_charts",
+      "--test-threads=1",
+      "--nocapture"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.06384912799694575,
+    "binary": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve-f3a2b12f998828b7",
+    "sha256": "5d9907e5903b14ac2c3fc3116582ecaa60f2520e46a58c1d670ea316533f3c1e",
+    "log": "finite-analytic-native-poles-focused-common_analytic_overlaps_transport_distinct_source_charts.log"
+  }
+]

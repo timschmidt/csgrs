@@ -1,0 +1,49 @@
+{
+  "repo": "hypercurve",
+  "target": "hypercurve_bspline",
+  "binary": "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve_bspline-84a307cee5342a84",
+  "command": [
+    "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve_bspline-84a307cee5342a84",
+    "--test-threads=4",
+    "--color",
+    "never"
+  ],
+  "sha256": "347308d9c30fa177f66f546a144ab93a365162ef3357497a0f0efb0cbfe4774c",
+  "returncode": 0,
+  "timed_out": false,
+  "elapsed_seconds": 0.0033782090031309053,
+  "log": "exterior-fillet-closure-full-hypercurve-hypercurve_bspline.log",
+  "passed": [
+    "bspline_constructor_rejects_degenerate_knot_vectors",
+    "affine_authoring_rejects_zero_weights_and_extraction_rejects_infinite_endpoints",
+    "cubic_bspline_extracts_spans_with_degree_multiplicity_at_internal_knot",
+    "equal_weight_quadratic_nurbs_matches_polynomial_bspline_spans",
+    "equal_weight_rational_cubic_spans_specialize_to_polynomial_cubics",
+    "equal_weight_retained_rational_cubic_matches_polynomial_cubic_spans",
+    "equal_weight_retained_rational_cubic_spans_feed_unified_region_area",
+    "extracted_bspline_spans_feed_unified_region_area",
+    "linear_bspline_spans_are_elevated_exactly",
+    "quadratic_bspline_extracts_bezier_spans_by_exact_knot_insertion",
+    "nonuniform_rational_cubic_spans_promote_without_degree_reduction",
+    "rational_linear_span_preserves_homogeneous_parameterization",
+    "extracted_rational_bspline_spans_feed_conic_region_area",
+    "rational_linear_span_retains_its_denominator_pole",
+    "rational_quadratic_bspline_extracts_homogeneous_bezier_spans",
+    "retained_bspline_span_facts_evidence_native_bounds_and_monotonicity",
+    "rational_quadratic_span_facts_certify_bounds_and_extrema",
+    "retained_rational_bspline_rejects_invalid_degree_and_zero_weight",
+    "retained_rational_cubic_bspline_extracts_bezier_span_evidence",
+    "retained_degree_four_nurbs_span_certifies_stationary_monotone_axis",
+    "retained_rational_cubic_span_facts_certify_control_hull_and_monotonicity",
+    "retained_rational_quadratic_span_facts_follow_refined_knot_windows",
+    "retained_rational_quadratic_spans_promote_to_native_conic_topology",
+    "unclamped_uniform_bspline_refines_active_domain_endpoints_exactly"
+  ],
+  "failed": [],
+  "ignored": [],
+  "summaries": [
+    "test result: ok. 24 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s"
+  ],
+  "new_failures": [],
+  "known_failures": []
+}

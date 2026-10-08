@@ -1,0 +1,9 @@
+{
+  "source": "retained-support-self-contact-probe.rs",
+  "source_sha256": "c874444e748bc41857d4d69f476bdfe5391371cda7c85d9a4983eb34fc25c406",
+  "returncode": 0,
+  "seconds": 0.0037185249966569245,
+  "rlib_sha256": "4115bb5ea8d11d89f928f126b1ede4823da16e665b9706202016c632d679d85c",
+  "unresolved_pairs": [],
+  "independent_region_xor_empty": 0
+}

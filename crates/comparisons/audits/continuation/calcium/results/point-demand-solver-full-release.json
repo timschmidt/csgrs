@@ -1,0 +1,22 @@
+{
+  "tag": "point-demand-solver-full-release",
+  "started": "2026-09-10T22:33:12.669Z",
+  "finished": "2026-09-10T22:34:01.159Z",
+  "elapsedSeconds": 48.487097905999995,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/point-demand-candidate/hypersolve",
+  "command": "env",
+  "args": [
+    "CARGO_TARGET_DIR=/tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse",
+    "CARGO_INCREMENTAL=0",
+    "CARGO_PROFILE_DEV_DEBUG=0",
+    "CARGO_BUILD_JOBS=2",
+    "cargo",
+    "test",
+    "--locked",
+    "--offline",
+    "--release",
+    "--all-features"
+  ],
+  "code": 0,
+  "signal": null
+}

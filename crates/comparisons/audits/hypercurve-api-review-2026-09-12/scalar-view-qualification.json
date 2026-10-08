@@ -1,0 +1,16 @@
+{
+  "hypercurve_commit": "27139ad",
+  "hyperbrep_commit": "1264ed2",
+  "change": "Rename parameter as_exact to scalar and range exact_endpoints to scalar_endpoints; remove parameter is_exact predicates and update consumers directly.",
+  "behavior": "Stored-view availability and every consumer branch remain unchanged. Existing exactness predicates for replayable endpoint images and zero-width metric bounds remain separate.",
+  "checks": {
+    "hypercurve_all_targets_all_features": "passed",
+    "hyperbrep_all_targets_all_features": "passed",
+    "hypercurve_ui_all_targets": "passed",
+    "hypercurve_fuzz_all_bins": "passed",
+    "docs_broken_links_denied": "passed",
+    "diff_check": "passed"
+  },
+  "runtime_qualification": "The immediately preceding evaluation checkpoint passed 1,069 included tests. This naming-only migration was compiled across all affected targets; the same runtime suites were not repeated.",
+  "goal_status": "active"
+}

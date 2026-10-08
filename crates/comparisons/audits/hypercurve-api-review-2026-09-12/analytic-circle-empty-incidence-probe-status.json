@@ -1,0 +1,5 @@
+{
+  "status": "standalone probe did not compile because circle_incidence is crate-private; no runtime result claimed",
+  "source": "analytic-circle-empty-incidence-probe.rs",
+  "independent_empty_case_proof": "For P(t)=(2t-t^2,t^2), 0<=t<=1, unit tangent norm s=sqrt((1-t)^2+t^2)>=1/2. The d=1/4 parallel has y=t^2+(1-t)/(4s)<=t^2+(1-t)/2<=1. The supporting circle center (1,2), radius 3/4, has y>=5/4. Hence there are no supporting-circle contacts."
+}

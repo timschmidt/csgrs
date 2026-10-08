@@ -1,0 +1,17 @@
+{
+  "hypercurve": {
+    "immutable_source_hashes": true,
+    "diff_check": true,
+    "format_check": true,
+    "changed_files": [
+      "src/bezier_offset.rs",
+      "tests/hypercurve_analytic_parallel_region.rs"
+    ]
+  },
+  "hyperbrep": {
+    "immutable_source_hashes": true,
+    "diff_check": true,
+    "format_check": true,
+    "changed_files": []
+  }
+}

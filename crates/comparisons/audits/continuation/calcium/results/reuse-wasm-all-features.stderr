@@ -1,0 +1,21 @@
+   Compiling num-traits v0.2.19
+   Compiling serde_core v1.0.228
+   Compiling serde v1.0.228
+   Compiling zerocopy v0.8.48
+    Checking num-integer v0.1.46
+    Checking cfg-if v1.0.4
+   Compiling zmij v1.0.21
+    Checking num-bigint v0.4.6
+    Checking ciborium-io v0.2.2
+   Compiling serde_json v1.0.149
+    Checking num-rational v0.4.2
+    Checking num-complex v0.4.6
+    Checking num-iter v0.1.45
+    Checking memchr v2.8.0
+    Checking itoa v1.0.18
+    Checking half v2.7.1
+    Checking ciborium-ll v0.2.2
+    Checking ciborium v0.2.2
+    Checking num v0.4.3
+    Checking hyperreal v0.13.1 (/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/root-exp-reuse-trial-hyperreal)
+    Finished `dev` profile [unoptimized] target(s) in 4.69s

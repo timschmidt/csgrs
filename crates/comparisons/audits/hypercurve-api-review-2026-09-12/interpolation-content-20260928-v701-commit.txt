@@ -1,0 +1,7 @@
+Remove common rational content before exact interpolation
+
+Newton interpolation is linear in sampled ordinates. Normalize exact rational samples to primitive integers once, retain their exact common scale, and restore every signed coefficient after reconstruction. This avoids carrying a redundant common factor through every divided difference and basis conversion. Arbitrary exact sample values retain the existing general path, with no new public interface or rational coefficient restriction.
+
+An independent scaled binomial(t,6) identity verifies fractional coefficients despite integer sample values, nonuniform/reversed nodes, zero data, and a large negative rational scale. All prior arbitrary-exact and full signed resultant identities remain covered.
+
+Validation: 219 algebraic and 174 geometry release tests across six pinned binaries, nine lint/format/fuzz/docs/downstream checks. Three serial matched runs of the unchanged degree-six offset/re-entry workload moved the median from 47.878s to 45.834s (-4.27%). All candidate samples were faster than all baseline samples; interval ownership, two crossing contacts and public overlap clipping remained exact.

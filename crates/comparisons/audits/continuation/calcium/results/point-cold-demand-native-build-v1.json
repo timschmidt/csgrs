@@ -1,0 +1,23 @@
+{
+  "tag": "point-cold-demand-native-build-v1",
+  "started": "2026-09-10T23:09:45.298Z",
+  "finished": "2026-09-10T23:09:46.321Z",
+  "elapsedSeconds": 1.021013059,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/point-cold-demand",
+  "command": "env",
+  "args": [
+    "CARGO_TARGET_DIR=/tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse",
+    "CARGO_INCREMENTAL=0",
+    "CARGO_PROFILE_DEV_DEBUG=0",
+    "CARGO_BUILD_JOBS=2",
+    "cargo",
+    "build",
+    "--locked",
+    "--offline",
+    "--release",
+    "--bin",
+    "point-cold-demand"
+  ],
+  "code": 0,
+  "signal": null
+}

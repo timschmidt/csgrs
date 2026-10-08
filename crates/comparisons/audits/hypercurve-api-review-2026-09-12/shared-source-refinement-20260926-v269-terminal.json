@@ -1,0 +1,29 @@
+{
+  "source_manifest": "shared-source-refinement-20260926-v269-sources.json",
+  "source_directory": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/source-archives/shared-source-refinement-20260926-v269",
+  "cases": [],
+  "builds": [
+    {
+      "crate": "hypercurve",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "test",
+        "--lib",
+        "--release",
+        "--all-features",
+        "--no-run",
+        "--message-format=json",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 101,
+      "log": "shared-source-refinement-20260926-v269-hypercurve-build.log",
+      "elapsed_seconds": 17.486512445029803
+    }
+  ],
+  "all_processes_reaped": true,
+  "checks": [],
+  "qualification_scope": "Shared recursive-field source refinement: exact bounds, local roots, dense fields, selected circle controls and all-target Clippy; V267 separately records the unresolved re-offset timeout; full goal remains active",
+  "failure": "build failure",
+  "qualification_complete": false
+}

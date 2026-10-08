@@ -1,0 +1,12 @@
+{
+  "commit": "8bccea3d36b2803824129e648656126bdd9e3553",
+  "qualified_files": {
+    "src/algebraic_fiber.rs": "bf1623f189013a694a038f38768baadfcf6359825adb410da2a1bc32d647a832",
+    "src/integer_interpolation.rs": "5a0d1937afb182ffff3838aa3ca8fed2dbffca147ab132d4e41b3bfe39397fa2",
+    "src/integer_interpolation/bivariate.rs": "f73c225ade2ca81b2f0cbc926e4da091125f04aa57a4786e484ba8d516b310af",
+    "tests/data/nonph_fillet_circle_contact.json": "bd534d3bbca7bb285d426f2e9deec2b7020bd6c3e033395c74d11225372d33fd"
+  },
+  "working_tree_clean": true,
+  "all_processes_reaped": true,
+  "hyperreal_working_tree_unused": true
+}

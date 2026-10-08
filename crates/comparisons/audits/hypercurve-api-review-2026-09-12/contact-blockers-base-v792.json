@@ -1,0 +1,8 @@
+{
+  "hypercurve/src/rational_bezier_general.rs": "a1d9e3bcf8fb87e993250930a92e380b11838e15a1365c540352dad8f677e99b",
+  "hypercurve/src/bezier_offset.rs": "85bd9001f30bc94149ce4677f820738049e933247a15ea5984ce85bb04e3b71a",
+  "hypercurve/src/bezier_region.rs": "831e8efc440a609fa24114681e2fee6e81c309d4409fa6d36dc6be9a4037247c",
+  "hypercurve/src/curve_region_boolean.rs": "92247dac311e5f6dc8b226a3c99adfd62b13ee4289f6ba34172cd148e7bcf490",
+  "hypercurve/src/curve.rs": "da138d593b3f753485599157cc2f632c39059bccc3ebd79119b5b64c18bfbe90",
+  "hypercurve/src/curve_fillet.rs": "5a8463049f24554018f3e24c38e339b7b5318a7134f576fe4b4386dca8ebd6e3"
+}

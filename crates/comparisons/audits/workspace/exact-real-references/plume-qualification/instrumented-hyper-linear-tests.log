@@ -1,0 +1,12 @@
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.10s
+     Running unittests src/lib.rs (.audit-targets/ireal-derivative-18555/debug/deps/hyperreal-99435bbe0ce6f1f3)
+
+running 5 tests
+test computable::node::linear_demand_tests::linear_demand_hint_survives_independent_fact_updates ... ok
+test computable::node::linear_demand_tests::linear_demand_hint_saturates_and_accounts_for_binary_scaling ... ok
+test computable::node::linear_demand_tests::linear_demand_hint_is_not_serialized_numerical_state ... ok
+test computable::node::linear_demand_tests::linear_demand_schedule_does_not_publish_aborted_results ... ok
+test computable::node::linear_demand_tests::linear_demand_schedule_matches_independent_signed_root_enclosures ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 722 filtered out; finished in 0.13s
+

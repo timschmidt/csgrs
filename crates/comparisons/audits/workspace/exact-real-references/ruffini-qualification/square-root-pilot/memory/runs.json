@@ -1,0 +1,96 @@
+[
+  {
+    "mode": "build",
+    "command": "cargo",
+    "args": [
+      "build",
+      "--release",
+      "--offline",
+      "--manifest-path",
+      "/home/tim/Documents/GitHub/workspace/exact-real-references/ruffini-qualification/square-root-pilot/memory/Cargo.toml",
+      "--target-dir",
+      "/home/tim/Documents/GitHub/workspace/.audit-square-root.C42NO5BC/target"
+    ],
+    "started": "2026-09-07T02:50:04.436Z",
+    "finished": "2026-09-07T02:50:04.994Z",
+    "status": 0,
+    "signal": null,
+    "error": null,
+    "file": "build.log",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderrSha256": "6161d5fd2929e920682344c656061fa4f1022d9c85934fcd6ddfed285004b5b7",
+    "sources": [
+      [
+        "main.rs",
+        "0dd4a34577350b5d288c5cb25b206ab8f25fab85b44b92ba02df78cfa616f042"
+      ],
+      [
+        "Cargo.toml",
+        "89ff87dcc40226c2ef2cd308b6cf96b5f7ba1d89c2427f53b074ebfded53ef15"
+      ],
+      [
+        "../main.rs",
+        "d6b3b28c73bdc1c16452a98f55d827e7695d5344db679dcabff09dd8015a6f6f"
+      ],
+      [
+        "../diagonal.rs",
+        "fe7e844196357e900969c6a919d5aafca192839f6f42a34814845e8f5fbf5fd8"
+      ],
+      [
+        "../baseline.rs",
+        "f09fb430259ecd9ca39a7821e738ea9c881cbe0e6f65cf410d62f6a5f9c5b2f4"
+      ],
+      [
+        "../shared.rs",
+        "5ea43f1efafd86c8977314e75045e072fb9c5fe54711a8b34eb474cf663f9971"
+      ]
+    ],
+    "lockSha256": "74a144ed6d460193b3f969cbe9ae428d4b7b6915fa6ca1b78de774677078fac6",
+    "runnerSha256": "04a7783beb1c1a9fdb5a953747d4be179ac6038bc9a70581937cf93e42706eaa",
+    "binary": "/home/tim/Documents/GitHub/workspace/.audit-square-root.C42NO5BC/square-root-memory",
+    "binarySha256": "d236287ad2ba534edd5e0c8415c27e37992f0a50a9c852d382543e751f184492"
+  },
+  {
+    "mode": "check",
+    "command": "/home/tim/Documents/GitHub/workspace/.audit-square-root.C42NO5BC/square-root-memory",
+    "args": [],
+    "started": "2026-09-07T02:50:05.016Z",
+    "finished": "2026-09-07T02:50:07.874Z",
+    "status": 0,
+    "signal": null,
+    "error": null,
+    "file": "check.log",
+    "sha256": "1207dcfd1c74acd438fa941ecfc1f50b39323fc1a60aa812c5bc8718118e5fcf",
+    "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "sources": [
+      [
+        "main.rs",
+        "0dd4a34577350b5d288c5cb25b206ab8f25fab85b44b92ba02df78cfa616f042"
+      ],
+      [
+        "Cargo.toml",
+        "89ff87dcc40226c2ef2cd308b6cf96b5f7ba1d89c2427f53b074ebfded53ef15"
+      ],
+      [
+        "../main.rs",
+        "d6b3b28c73bdc1c16452a98f55d827e7695d5344db679dcabff09dd8015a6f6f"
+      ],
+      [
+        "../diagonal.rs",
+        "fe7e844196357e900969c6a919d5aafca192839f6f42a34814845e8f5fbf5fd8"
+      ],
+      [
+        "../baseline.rs",
+        "f09fb430259ecd9ca39a7821e738ea9c881cbe0e6f65cf410d62f6a5f9c5b2f4"
+      ],
+      [
+        "../shared.rs",
+        "5ea43f1efafd86c8977314e75045e072fb9c5fe54711a8b34eb474cf663f9971"
+      ]
+    ],
+    "lockSha256": "74a144ed6d460193b3f969cbe9ae428d4b7b6915fa6ca1b78de774677078fac6",
+    "runnerSha256": "04a7783beb1c1a9fdb5a953747d4be179ac6038bc9a70581937cf93e42706eaa",
+    "binary": "/home/tim/Documents/GitHub/workspace/.audit-square-root.C42NO5BC/square-root-memory",
+    "binarySha256": "d236287ad2ba534edd5e0c8415c27e37992f0a50a9c852d382543e751f184492"
+  }
+]

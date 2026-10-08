@@ -1,0 +1,17 @@
+{
+  "source_manifest": "point-incidence-evidence-20260926-v295-sources.json",
+  "qualification": "point-incidence-evidence-20260926-v295-terminal.json",
+  "validated_files": 2046,
+  "passed_tests": 18,
+  "static_checks": 3,
+  "repos": {
+    "hypercurve": {
+      "parent": "d49748d7f67105b79610fadf6489e42d38795de9",
+      "paths": {
+        "src/bezier_offset.rs": "7e84a72797ded08e7c55b34e24aa47b64cf3aded7623f916ccc67891394ed47f"
+      },
+      "commit": "3ffa46d0c48ebc61c5b14826b6a1c896ced4581d"
+    }
+  },
+  "repositories_clean": 30
+}

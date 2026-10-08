@@ -1,0 +1,28 @@
+{
+  "recorded": "2026-09-12T03:42:58.646Z",
+  "files": {
+    "run-complex-roundtrip-v83.mjs": "d4d3b52bbc1fb59ca890aa35e5472522aa3547223fac0aa74d1b20be9d5f0d27",
+    "flint-complex-roundtrip-v83.c": "30c8c21ddc31347e7d0a3d0494da57e256722816742c91e3d2132de4cf0d17ee",
+    "flint-symbolic-boundary-fixed-v83.c": "897c9a1c5224ca045b3a63da7a154708178e135467f8e166fb959dddebf8bfcc"
+  },
+  "binary": "/tmp/calcium-symbolic-boundary-v83.JuGH8X/components",
+  "current": {
+    "checkpoint": 75,
+    "originSha256": "f14634eec550e7d166e63ba28852460782668e42a288c2356e8541680e5b0191",
+    "changed": [
+      "hypersolve/src/algebraic_binary.rs",
+      "hypersolve/src/algebraic_binary/zero_factor_tests.rs"
+    ],
+    "previousLiveFiles": 956,
+    "liveFiles": 957,
+    "unchangedPreviousFiles": 955,
+    "qualifiedSolverFiles": 176,
+    "qualifiedConsumerFiles": 355,
+    "mainSha256": "63b08c8d7523d3e3410d3d6e84a04088fa9f4f7c3b66ab586bfe9af37fa1b002",
+    "testSha256": "8f8e2b7617f9c9b993f1190139bbbe960a723309bf09989b5001d061f2c49961",
+    "previousMainSha256": "e97877da6029f26e256943ca70f4005576574689f33288b71874165b4c8e87e6",
+    "historicalArtifacts": 1279,
+    "previousFinished": "2026-09-11T21:51:02.880Z",
+    "scope": "Exact promotion of the fully qualified zero-factor candidate; no other recorded live source/support change. Historical live flags describe older states. Source identity is separate from successful live regression/retention gates."
+  }
+}

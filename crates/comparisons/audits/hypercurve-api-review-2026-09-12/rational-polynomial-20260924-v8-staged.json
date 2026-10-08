@@ -1,0 +1,27 @@
+{
+  "hyperreal": {
+    "parent": "28eaac35e8c24006c532b25a393b7d430d03823c",
+    "files": {
+      "src/computable/node/quadratic_tower.rs": "a53bced00cef4cf3504c96c77f7811b9b57ab9b6f1a5777921115b83f3d9cd2e",
+      "src/rational/arithmetic/aggregate_products.rs": "d9b41df790ef9fac422ce9d7d6a7a70c5223fd72eba70b46b81ce2a8b72a2a66",
+      "src/rational/arithmetic/construction.rs": "ced48307f5f6d8e0b6d8605eea87c4f3f8b6827e507055d3f1e3c32c7392e76d",
+      "src/rational/arithmetic/ops.rs": "2458fd6b52d430739a11b04892cc63c69294c218138dc486fd79d6cf47839925",
+      "src/rational/arithmetic/queries_conversion.rs": "dd6e4f2aa4381dd9955d50179df042638a56f56b0e0c9472b756064cc46f739b",
+      "src/rational/arithmetic/tests.rs": "7b93ece807793e2aefc12faf195c09648e9b44e2bc4a104e3b2f38fe0d767651",
+      "src/real/arithmetic/linear_algebra.rs": "642e6aa0c79baa0d6939acb4bcb442643df1087e8fc11cec38f1e342efd2538a",
+      "src/real/arithmetic/tests.rs": "cee2f780946efe1bccea2ce2b9db70e60921d0d57d85083ba6b63aa45abe43c8",
+      "tests/gmp_api_coverage.rs": "629f233f8f62228e9983b5fb6be43f0513e24c39059032f14ec384e2fc8ce3b6"
+    },
+    "all_index_bytes_match_qualified_sources": true
+  },
+  "hypersolve": {
+    "parent": "d7cd3d9ffe33e6ef26c0c409dda986a88f16f7ef",
+    "files": {
+      "src/algebraic_fiber.rs": "69eafcc5933094d605bc9837830e9f9a8a31453bb1e6fe953b9a936e75a9f70a",
+      "src/algebraic_tensor_image.rs": "492a583d7bc42b01a6e7e6aac11548bed4c9a01b863d92def56cddf8bd9de10a",
+      "src/integer_interpolation.rs": "6b2cc160a717f6a67b329ae1bcf644481780d778fbf543f5bc4026a209c3aa28",
+      "tests/tensor_remainder_scale.rs": "867e3944777b7d293a7c3fd81373e3f733f859cde9252456ca25b543065a405d"
+    },
+    "all_index_bytes_match_qualified_sources": true
+  }
+}

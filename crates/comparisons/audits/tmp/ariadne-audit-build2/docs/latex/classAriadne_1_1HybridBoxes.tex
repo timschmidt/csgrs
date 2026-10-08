@@ -1,0 +1,79 @@
+\doxysubsection{Hybrid\+Boxes\texorpdfstring{$<$}{<} IVL \texorpdfstring{$>$}{>} Class Template Reference}
+\hypertarget{classAriadne_1_1HybridBoxes}{}\label{classAriadne_1_1HybridBoxes}\index{HybridBoxes$<$ IVL $>$@{HybridBoxes$<$ IVL $>$}}
+
+
+{\ttfamily \#include $<$hybrid\+\_\+set.\+hpp$>$}
+
+
+
+\doxysubsubsection{Description}
+\subsubsection*{template$<$class IVL$>$\newline
+class Ariadne\+::\+Hybrid\+Boxes$<$ IVL $>$}
+A collection of boxes, one in each location of a hybrid space. 
+
+Primarily used to represent bounds for a compact hybrid set. Inheritance diagram for Hybrid\+Boxes\texorpdfstring{$<$}{<} IVL \texorpdfstring{$>$}{>}\+:\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[height=2.568807cm]{classAriadne_1_1HybridBoxes}
+\end{center}
+\end{figure}
+\doxysubsubsubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1HybridBoxes_aebfe4b3869bd69d2fcb839227a1efb29}\label{classAriadne_1_1HybridBoxes_aebfe4b3869bd69d2fcb839227a1efb29} 
+\mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} {\bfseries insert} (const \mbox{\hyperlink{classAriadne_1_1HybridBox}{Hybrid\+Box}}$<$ IVL $>$ \&hbx)
+\begin{DoxyCompactList}\small\item\em \doxylink{classAriadne_1_1Set}{Set} the continuous state set in location {\itshape loc} to {\itshape vbx}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1HybridBoxes_a1bcfa858417f5a7fccfa4be6cfb1293a}\label{classAriadne_1_1HybridBoxes_a1bcfa858417f5a7fccfa4be6cfb1293a} 
+\mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} {\bfseries insert} (const \mbox{\hyperlink{classAriadne_1_1DiscreteLocation}{Discrete\+Location}} \&loc, const \mbox{\hyperlink{classAriadne_1_1LabelledSet}{Labelled\+Set}}$<$ \mbox{\hyperlink{classAriadne_1_1Box}{Box}}$<$ IVL $>$ $>$ \&bx)
+\begin{DoxyCompactList}\small\item\em \doxylink{classAriadne_1_1Set}{Set} the continuous state set in location {\itshape loc} to {\itshape vbx}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1HybridBoxes_a03b9b5817f59c7ef80aae960817e2bdf}\label{classAriadne_1_1HybridBoxes_a03b9b5817f59c7ef80aae960817e2bdf} 
+\mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} {\bfseries insert} (const \mbox{\hyperlink{classAriadne_1_1DiscreteLocation}{Discrete\+Location}} \&loc, const \mbox{\hyperlink{classAriadne_1_1Space}{Real\+Space}} \&spc, const \mbox{\hyperlink{classAriadne_1_1Box}{Box}}$<$ IVL $>$ \&bx)
+\begin{DoxyCompactList}\small\item\em \doxylink{classAriadne_1_1Set}{Set} the continuous state set in location {\itshape loc} to box {\itshape bx} using {\itshape spc} to order the variables. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1HybridBoxes_a01618894e44f5f067f6f6dcbff0332ba}\label{classAriadne_1_1HybridBoxes_a01618894e44f5f067f6f6dcbff0332ba} 
+\mbox{\hyperlink{classAriadne_1_1Set}{Set}}$<$ \mbox{\hyperlink{classAriadne_1_1DiscreteLocation}{Discrete\+Location}} $>$ {\bfseries locations} () const
+\begin{DoxyCompactList}\small\item\em The set of discrete locations in which the set is nontrivial. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1HybridBoxes_ad8fbd2a97ef3c9c030e0f01c2e0f53c2}\label{classAriadne_1_1HybridBoxes_ad8fbd2a97ef3c9c030e0f01c2e0f53c2} 
+\mbox{\hyperlink{classAriadne_1_1Space}{Real\+Space}} const \& {\bfseries space} (const \mbox{\hyperlink{classAriadne_1_1DiscreteLocation}{Discrete\+Location}} \&loc) const
+\begin{DoxyCompactList}\small\item\em The ordering of variables used to define the Euclidean box in location {\itshape loc}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1HybridBoxes_ade98196f9a6298eb420b84327e69a953}\label{classAriadne_1_1HybridBoxes_ade98196f9a6298eb420b84327e69a953} 
+\mbox{\hyperlink{classAriadne_1_1LabelledSet}{Labelled\+Set}}$<$ \mbox{\hyperlink{classAriadne_1_1Box}{Box}}$<$ IVL $>$ $>$ const \& {\bfseries continuous\+\_\+set} (const \mbox{\hyperlink{classAriadne_1_1DiscreteLocation}{Discrete\+Location}} \&loc) const
+\begin{DoxyCompactList}\small\item\em The subset of $\mathbb{R}^V$ obtained by restricting to location {\itshape loc}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1HybridBoxes_ac3ef70d65236934ffe949d37d676e22b}\label{classAriadne_1_1HybridBoxes_ac3ef70d65236934ffe949d37d676e22b} 
+\mbox{\hyperlink{classAriadne_1_1Box}{Box}}$<$ IVL $>$ const {\bfseries euclidean\+\_\+set} (const \mbox{\hyperlink{classAriadne_1_1DiscreteLocation}{Discrete\+Location}} \&loc, const \mbox{\hyperlink{classAriadne_1_1Space}{Real\+Space}} \&spc) const
+\begin{DoxyCompactList}\small\item\em The box in Euclidean space $\mathbb{R}^n$ obtained by restricting to location {\itshape loc} and ordering the variables as defined by {\itshape spc}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1HybridBoxes_a1ef80de0412203741b9394243b9b8df9}\label{classAriadne_1_1HybridBoxes_a1ef80de0412203741b9394243b9b8df9} 
+virtual \mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} {\bfseries draw} (\mbox{\hyperlink{classAriadne_1_1CanvasInterface}{Canvas\+Interface}} \&, const \mbox{\hyperlink{classAriadne_1_1Set}{Set}}$<$ \mbox{\hyperlink{classAriadne_1_1DiscreteLocation}{Discrete\+Location}} $>$ \&, const Variables2d \&) const override
+\begin{DoxyCompactList}\small\item\em brief Draw the object on the canvas {\itshape c} using line segments and fill/stroke commands. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxyparagraph*{Public Member Functions inherited from \mbox{\hyperlink{classAriadne_1_1HybridDrawableInterface}{Hybrid\+Drawable\+Interface}}}
+\begin{DoxyCompactItemize}
+\item 
+virtual {\bfseries \texorpdfstring{$\sim$}{\string~}\+Hybrid\+Drawable\+Interface} ()=default
+\begin{DoxyCompactList}\small\item\em brief Virtual destructor. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxyparagraph*{Public Member Functions inherited from \mbox{\hyperlink{classAriadne_1_1HybridDenotableSet}{Hybrid\+Denotable\+Set$<$ Box$<$ IVL $>$ $>$}}}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} {\bfseries insert} (const \mbox{\hyperlink{classAriadne_1_1DiscreteLocation}{Discrete\+Location}} \&loc, const \mbox{\hyperlink{classAriadne_1_1LabelledSet}{Labelled\+Set}}$<$ \mbox{\hyperlink{classAriadne_1_1Box}{Box}}$<$ IVL $>$ $>$ \&eset)
+\begin{DoxyCompactList}\small\item\em \doxylink{classAriadne_1_1Set}{Set} the continuous state set in location {\itshape loc} to {\itshape vbx}. \end{DoxyCompactList}\item 
+\mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} {\bfseries insert} (const \mbox{\hyperlink{classAriadne_1_1DiscreteLocation}{Discrete\+Location}} \&loc, const \mbox{\hyperlink{classAriadne_1_1Space}{Real\+Space}} \&spc, const \mbox{\hyperlink{classAriadne_1_1Box}{Box}}$<$ IVL $>$ \&set)
+\begin{DoxyCompactList}\small\item\em \doxylink{classAriadne_1_1Set}{Set} the continuous state set in location {\itshape loc} to box {\itshape bx} using {\itshape spc} to order the variables. \end{DoxyCompactList}\item 
+\mbox{\hyperlink{classAriadne_1_1Set}{Set}}$<$ \mbox{\hyperlink{classAriadne_1_1DiscreteLocation}{Discrete\+Location}} $>$ {\bfseries locations} () const
+\begin{DoxyCompactList}\small\item\em The set of discrete locations in which the set is nontrivial. \end{DoxyCompactList}\item 
+\mbox{\hyperlink{classAriadne_1_1Space}{Real\+Space}} const \& {\bfseries space} (const \mbox{\hyperlink{classAriadne_1_1DiscreteLocation}{Discrete\+Location}} \&loc) const
+\begin{DoxyCompactList}\small\item\em The ordering of variables used to define the Euclidean box in location {\itshape loc}. \end{DoxyCompactList}\item 
+\mbox{\hyperlink{classAriadne_1_1Box}{Box}}$<$ IVL $>$ const \& {\bfseries continuous\+\_\+set} (const \mbox{\hyperlink{classAriadne_1_1DiscreteLocation}{Discrete\+Location}} \&loc) const
+\begin{DoxyCompactList}\small\item\em The Euclidean box in location {\itshape loc}. \end{DoxyCompactList}\item 
+\mbox{\hyperlink{classAriadne_1_1Box}{Box}}$<$ IVL $>$ {\bfseries euclidean\+\_\+set} (const \mbox{\hyperlink{classAriadne_1_1DiscreteLocation}{Discrete\+Location}} \&loc, const \mbox{\hyperlink{classAriadne_1_1Space}{Real\+Space}} \&spc) const
+\begin{DoxyCompactList}\small\item\em The subset of $\mathbb{R}^n$ obtained by restricting to location {\itshape loc} and ordering the variables as defined by {\itshape spc}. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsubsection*{Additional Inherited Members}
+\doxyparagraph*{Public Types inherited from \mbox{\hyperlink{classAriadne_1_1HybridDrawableInterface}{Hybrid\+Drawable\+Interface}}}
+\begin{DoxyCompactItemize}
+\item 
+typedef Variables2d {\bfseries Projection\+Type}
+\begin{DoxyCompactList}\small\item\em brief The type of data needed to project to a 2d image. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+The documentation for this class was generated from the following files\+:\begin{DoxyCompactItemize}
+\item 
+source/hybrid/\mbox{\hyperlink{hybrid__set_8decl_8hpp}{hybrid\+\_\+set.\+decl.\+hpp}}\item 
+source/hybrid/\mbox{\hyperlink{hybrid__set_8hpp}{hybrid\+\_\+set.\+hpp}}\item 
+source/hybrid/hybrid\+\_\+set.\+cpp\end{DoxyCompactItemize}

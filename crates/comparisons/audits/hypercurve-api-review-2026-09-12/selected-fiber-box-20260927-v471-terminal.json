@@ -1,0 +1,70 @@
+{
+  "input_sha256": "93f8cd5bca8627c62f971af74f7ce01c9a6c6b8ecd84b251e830975b1cc85a63",
+  "steps": [
+    {
+      "centered": false,
+      "bits": 64,
+      "step": 0,
+      "base_width_bits": 76,
+      "fiber_width_bits": 23,
+      "predicate_sign": 0,
+      "incidence_sign": 0
+    },
+    {
+      "centered": false,
+      "bits": 128,
+      "step": 0,
+      "base_width_bits": 119,
+      "fiber_width_bits": 23,
+      "predicate_sign": 0,
+      "incidence_sign": 0
+    },
+    {
+      "centered": false,
+      "bits": 256,
+      "step": 0,
+      "base_width_bits": 242,
+      "fiber_width_bits": 23,
+      "predicate_sign": 0,
+      "incidence_sign": 0
+    },
+    {
+      "centered": false,
+      "bits": 512,
+      "step": 0,
+      "base_width_bits": 494,
+      "fiber_width_bits": 23,
+      "predicate_sign": 0,
+      "incidence_sign": 0
+    },
+    {
+      "centered": false,
+      "bits": 1024,
+      "step": 0,
+      "base_width_bits": 998,
+      "fiber_width_bits": 23,
+      "predicate_sign": 0,
+      "incidence_sign": 0
+    },
+    {
+      "centered": false,
+      "bits": 2048,
+      "step": 0,
+      "base_width_bits": 2012,
+      "fiber_width_bits": 23,
+      "predicate_sign": 0,
+      "incidence_sign": 0
+    },
+    {
+      "centered": true,
+      "bits": 64,
+      "step": 0,
+      "base_width_bits": 76,
+      "fiber_width_bits": 23,
+      "predicate_sign": 1,
+      "incidence_sign": 0
+    }
+  ],
+  "complete": true,
+  "common_root_excluded": true
+}

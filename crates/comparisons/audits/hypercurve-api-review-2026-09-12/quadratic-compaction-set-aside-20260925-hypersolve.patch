@@ -1,0 +1,198 @@
+diff --git a/src/algebraic.rs b/src/algebraic.rs
+index 2b26cdd..a52471f 100644
+--- a/src/algebraic.rs
++++ b/src/algebraic.rs
+@@ -5213,31 +5213,37 @@ mod tests {
+ 
+     #[test]
+     fn algebraic_root_arithmetic_divides_by_policy_certified_exact_point() {
+-        let denominator_value = crate::test_support::exact_normal_positive();
+-        let numerator = exact_point_representation(0, Real::one());
+-        let denominator = exact_point_representation(1, denominator_value.clone());
+-
+-        let quotient = arithmetic_algebraic_root_representations(
+-            &numerator,
+-            Some(&denominator),
+-            AlgebraicRootArithmeticOp::Divide,
+-            PredicatePolicy::STRICT,
+-        );
+-        assert_eq!(
+-            quotient.status,
+-            AlgebraicRootArithmeticStatus::ComputedExactRealWitness
+-        );
+-        assert!(quotient.result_representation.is_none());
+-        let value = quotient.exact_result.as_ref().expect("exact Real quotient");
+-        assert_eq!(
+-            compare_reals(
+-                &(value.clone() * denominator_value),
+-                &Real::one(),
++        for (denominator_value, expected_status) in [
++            (
++                crate::test_support::exact_normal_positive(),
++                AlgebraicRootArithmeticStatus::ComputedExactRationalWitness,
++            ),
++            (
++                real(3) + real(2).sqrt().unwrap(),
++                AlgebraicRootArithmeticStatus::ComputedExactRealWitness,
++            ),
++        ] {
++            let numerator = exact_point_representation(0, Real::one());
++            let denominator = exact_point_representation(1, denominator_value.clone());
++            let quotient = arithmetic_algebraic_root_representations(
++                &numerator,
++                Some(&denominator),
++                AlgebraicRootArithmeticOp::Divide,
+                 PredicatePolicy::STRICT,
+-            )
+-            .value(),
+-            Some(Ordering::Equal)
+-        );
++            );
++            assert_eq!(quotient.status, expected_status);
++            assert!(quotient.result_representation.is_none());
++            let value = quotient.exact_result.as_ref().expect("exact Real quotient");
++            assert_eq!(
++                compare_reals(
++                    &(value.clone() * denominator_value),
++                    &Real::one(),
++                    PredicatePolicy::STRICT,
++                )
++                .value(),
++                Some(Ordering::Equal)
++            );
++        }
+     }
+ 
+     #[test]
+@@ -5920,7 +5926,7 @@ mod tests {
+         );
+         assert_eq!(
+             policy_exact.status,
+-            AlgebraicRootRationalEvaluationStatus::EvaluatedExactRealWitness
++            AlgebraicRootRationalEvaluationStatus::EvaluatedExactRationalWitness
+         );
+         assert_eq!(
+             policy_exact
+diff --git a/src/algebraic_fiber.rs b/src/algebraic_fiber.rs
+index 1c40b12..b35b0a8 100644
+--- a/src/algebraic_fiber.rs
++++ b/src/algebraic_fiber.rs
+@@ -4336,14 +4336,16 @@ mod tests {
+     #[test]
+     fn local_constant_signs_reuse_native_proofs_without_field_cache_entries() {
+         let tiny = real(2).powi_i64(-3000).unwrap();
+-        let atom = (real(2).sqrt().unwrap() + Real::one()).sin();
+-        let upper = &atom + real(2);
+-        let lower = &atom - Real::one();
+-        let retained =
+-            Real::diff_of_products(&Real::one(), &upper, &Real::one(), &lower) - real(3) + &tiny;
++        // Use a genuinely nonrational value whose sign needs refinement,
++        // rather than an arithmetic identity that scalar normalization may
++        // already have folded into a rational payload.
++        let retained = Real::pi() - rational(103_993, 33_102);
+         assert!(retained.immediate_sign().is_none());
+-        assert_eq!(retained.exact_rational_normal_form(), tiny.exact_rational());
+         assert!(retained.exact_rational_ref().is_none());
++        assert_eq!(
++            retained.certified_sign_until(-64).sign(),
++            Some(hyperreal::RealSign::Positive)
++        );
+         assert_eq!(
+             retained.immediate_sign(),
+             Some(hyperreal::RealSign::Positive)
+@@ -4402,12 +4404,7 @@ mod tests {
+     #[test]
+     fn local_constant_signs_keep_the_unresolved_native_fact_fallback() {
+         for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
+-            let atom = (real(2).sqrt().unwrap() + Real::one()).sin();
+-            let upper = &atom + real(2);
+-            let lower = &atom - Real::one();
+-            let constant = Real::diff_of_products(&Real::one(), &upper, &Real::one(), &lower)
+-                - real(3)
+-                + real(2).powi_i64(-3000).unwrap();
++            let constant = Real::pi() - rational(103_993, 33_102);
+             assert!(constant.immediate_sign().is_none());
+             let alpha = represented_root(
+                 vec![real(-2), Real::zero(), Real::one()],
+@@ -4812,6 +4809,48 @@ mod tests {
+         }
+     }
+ 
++    #[test]
++    fn nonrational_local_coefficients_preserve_repeated_fiber_roots() {
++        let radical = real(2).sqrt().unwrap();
++        // At alpha=cuberoot(2), this is
++        // (u-alpha)^2 * ((alpha+sqrt(2))*u-1).
++        // The repeated root lies in (1,3/2); the other lies in (1/4,1/2).
++        // Scalar arithmetic must preserve its quadratic coefficients through
++        // local field division and repeated-root Sturm replay.
++        let fiber = BivariatePolynomial::new(vec![
++            vec![real(0), real(0), real(-1), radical.clone()],
++            vec![real(0), real(2), real(-2) * &radical, real(1)],
++            vec![real(-1), radical, real(-2)],
++            vec![real(0), real(1)],
++        ]);
++        for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
++            let root = represented_root(
++                vec![real(-2), real(0), real(0), real(1)],
++                real(1),
++                rational(3, 2),
++                policy,
++            );
++            for (lower, upper, count) in [
++                (real(0), real(2), 2),
++                (rational(1, 4), rational(1, 2), 1),
++                (rational(1, 2), real(1), 0),
++                (real(1), rational(3, 2), 1),
++            ] {
++                let report = count_bivariate_fiber_roots_at_algebraic_parameter(
++                    &fiber,
++                    CurveResultantParameter::First,
++                    &root,
++                    &lower,
++                    &upper,
++                    policy,
++                );
++                assert_eq!(report.status, AlgebraicFiberRootCountStatus::Counted);
++                assert_eq!(report.distinct_root_count, Some(count));
++                assert_eq!(report.certainty, Certainty::Exact);
++            }
++        }
++    }
++
+     #[test]
+     fn local_division_removes_only_foreign_factors_and_reuses_older_values() {
+         for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
+diff --git a/src/algebraic_polynomial_image.rs b/src/algebraic_polynomial_image.rs
+index 40558e8..7b4b2a6 100644
+--- a/src/algebraic_polynomial_image.rs
++++ b/src/algebraic_polynomial_image.rs
+@@ -867,12 +867,11 @@ mod tests {
+             AlgebraicRootPolynomialImageStatus::InvalidImagePolynomial
+         );
+ 
+-        let exact_normal_zero =
+-            real(2).powi_i64(-3000).unwrap() - crate::test_support::exact_normal_positive();
+-        assert!(exact_normal_zero.exact_rational_ref().is_none());
++        let nonrational_coefficient = real(2).sqrt().unwrap();
++        assert!(nonrational_coefficient.exact_rational_ref().is_none());
+         let unsupported = transform_algebraic_root_polynomial_image(
+             &sqrt_two_positive(),
+-            &[Real::zero(), Real::one(), exact_normal_zero],
++            &[Real::zero(), Real::one(), nonrational_coefficient],
+             PredicatePolicy::APPROXIMATE_512,
+         );
+         assert_eq!(
+diff --git a/src/root_isolation.rs b/src/root_isolation.rs
+index 0f903f7..c0bb775 100644
+--- a/src/root_isolation.rs
++++ b/src/root_isolation.rs
+@@ -3594,7 +3594,7 @@ mod tests {
+         let sum = &sqrt_two + &sqrt_three;
+         let radical_zero =
+             &sum * &sum - (real(5) + real(2) * real(6).sqrt().expect("positive square root"));
+-        assert!(!radical_zero.definitely_zero());
++        assert!(radical_zero.definitely_zero());
+ 
+         let modulus = [real(-2), Real::zero(), Real::one()];
+         let radical_dividend = vec![Real::zero(), Real::zero(), radical_zero, Real::one()];

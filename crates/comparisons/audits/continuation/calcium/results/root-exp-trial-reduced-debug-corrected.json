@@ -1,0 +1,22 @@
+{
+  "tag": "root-exp-trial-reduced-debug-corrected",
+  "started": "2026-09-08T11:19:26.109Z",
+  "finished": "2026-09-08T11:19:28.309Z",
+  "elapsedSeconds": 2.198054071,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison",
+  "command": "env",
+  "args": [
+    "TMPDIR=/home/tim/Documents/GitHub/workspace/calcium-build-tmp.gVX5v4",
+    "CARGO_INCREMENTAL=0",
+    "CARGO_PROFILE_DEV_DEBUG=0",
+    "cargo",
+    "run",
+    "--offline",
+    "--manifest-path",
+    "audits/continuation/calcium/root-exp-trial-probe/Cargo.toml",
+    "--target-dir",
+    "/home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype"
+  ],
+  "code": 0,
+  "signal": null
+}

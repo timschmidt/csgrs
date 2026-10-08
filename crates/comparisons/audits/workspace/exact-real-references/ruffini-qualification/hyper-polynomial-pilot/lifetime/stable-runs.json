@@ -1,0 +1,2762 @@
+[
+  {
+    "name": "16-16-32-dense-fresh-137",
+    "command": "taskset",
+    "args": [
+      "-c",
+      "6",
+      "/home/tim/Documents/GitHub/workspace/exact-real-references/ruffini-qualification/hyper-polynomial-pilot/lifetime/binaries/release",
+      "bench",
+      "16",
+      "16",
+      "32",
+      "dense",
+      "fresh",
+      "137",
+      "0.25",
+      "6"
+    ],
+    "cap": 240000,
+    "started": "2026-09-07T00:36:32.127Z",
+    "finished": "2026-09-07T00:36:45.925Z",
+    "status": 0,
+    "error": null,
+    "signal": null,
+    "file": "stable-16-16-32-dense-fresh-137.log",
+    "sha256": "79fabaf3946cf30560811e05de92e62c1c4723a70f3bbb6c2ac3295bfe314b04",
+    "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "source": [
+      [
+        "main.rs",
+        "5b76e437c07433c15dbde8575aa1fa03ac84d9f587d8120c5d5742f922f957de"
+      ],
+      [
+        "Cargo.toml",
+        "3000cee38c839964ec2b8ef853f9e53b887651a4c7f116e932b3db5124910e8c"
+      ],
+      [
+        "../main.rs",
+        "1f581e68efeaf5f99afa25f61b9467c0b364de010ad56dab999b5a7a816523d7"
+      ],
+      [
+        "../baseline.rs",
+        "a70fe73900071228accf81b1ac2d9a91b23b76e52423e6b0243e1ab0b61735b3"
+      ]
+    ],
+    "binarySha256": "4cb806cc6afbf77793d239716c54f89d65565e9ffe47a8bfb5421ad3dd53f2ea"
+  },
+  {
+    "name": "16-16-32-dense-reused-137",
+    "command": "taskset",
+    "args": [
+      "-c",
+      "6",
+      "/home/tim/Documents/GitHub/workspace/exact-real-references/ruffini-qualification/hyper-polynomial-pilot/lifetime/binaries/release",
+      "bench",
+      "16",
+      "16",
+      "32",
+      "dense",
+      "reused",
+      "137",
+      "0.25",
+      "6"
+    ],
+    "cap": 240000,
+    "started": "2026-09-07T00:36:45.930Z",
+    "finished": "2026-09-07T00:37:04.024Z",
+    "status": 0,
+    "error": null,
+    "signal": null,
+    "file": "stable-16-16-32-dense-reused-137.log",
+    "sha256": "8c51130cf7f21ffbed3778b944efd94d09a68fbf2ff336608e16acb89963ee49",
+    "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "source": [
+      [
+        "main.rs",
+        "5b76e437c07433c15dbde8575aa1fa03ac84d9f587d8120c5d5742f922f957de"
+      ],
+      [
+        "Cargo.toml",
+        "3000cee38c839964ec2b8ef853f9e53b887651a4c7f116e932b3db5124910e8c"
+      ],
+      [
+        "../main.rs",
+        "1f581e68efeaf5f99afa25f61b9467c0b364de010ad56dab999b5a7a816523d7"
+      ],
+      [
+        "../baseline.rs",
+        "a70fe73900071228accf81b1ac2d9a91b23b76e52423e6b0243e1ab0b61735b3"
+      ]
+    ],
+    "binarySha256": "4cb806cc6afbf77793d239716c54f89d65565e9ffe47a8bfb5421ad3dd53f2ea"
+  },
+  {
+    "name": "32-32-512-dense-fresh-137",
+    "command": "taskset",
+    "args": [
+      "-c",
+      "6",
+      "/home/tim/Documents/GitHub/workspace/exact-real-references/ruffini-qualification/hyper-polynomial-pilot/lifetime/binaries/release",
+      "bench",
+      "32",
+      "32",
+      "512",
+      "dense",
+      "fresh",
+      "137",
+      "0.25",
+      "6"
+    ],
+    "cap": 240000,
+    "started": "2026-09-07T00:37:04.027Z",
+    "finished": "2026-09-07T00:37:19.106Z",
+    "status": 0,
+    "error": null,
+    "signal": null,
+    "file": "stable-32-32-512-dense-fresh-137.log",
+    "sha256": "21b1d1dcd1c58e6a870a8ed9f93c8045cd36a22e82244b2f32f6622576484a81",
+    "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "source": [
+      [
+        "main.rs",
+        "5b76e437c07433c15dbde8575aa1fa03ac84d9f587d8120c5d5742f922f957de"
+      ],
+      [
+        "Cargo.toml",
+        "3000cee38c839964ec2b8ef853f9e53b887651a4c7f116e932b3db5124910e8c"
+      ],
+      [
+        "../main.rs",
+        "1f581e68efeaf5f99afa25f61b9467c0b364de010ad56dab999b5a7a816523d7"
+      ],
+      [
+        "../baseline.rs",
+        "a70fe73900071228accf81b1ac2d9a91b23b76e52423e6b0243e1ab0b61735b3"
+      ]
+    ],
+    "binarySha256": "4cb806cc6afbf77793d239716c54f89d65565e9ffe47a8bfb5421ad3dd53f2ea"
+  },
+  {
+    "name": "32-32-512-dense-reused-137",
+    "command": "taskset",
+    "args": [
+      "-c",
+      "6",
+      "/home/tim/Documents/GitHub/workspace/exact-real-references/ruffini-qualification/hyper-polynomial-pilot/lifetime/binaries/release",
+      "bench",
+      "32",
+      "32",
+      "512",
+      "dense",
+      "reused",
+      "137",
+      "0.25",
+      "6"
+    ],
+    "cap": 240000,
+    "started": "2026-09-07T00:37:19.109Z",
+    "finished": "2026-09-07T00:37:33.679Z",
+    "status": 0,
+    "error": null,
+    "signal": null,
+    "file": "stable-32-32-512-dense-reused-137.log",
+    "sha256": "76ba8fbffeda172b0d447221ffbadb2f41d5226adcb7602d6c8f12f28a0636ba",
+    "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "source": [
+      [
+        "main.rs",
+        "5b76e437c07433c15dbde8575aa1fa03ac84d9f587d8120c5d5742f922f957de"
+      ],
+      [
+        "Cargo.toml",
+        "3000cee38c839964ec2b8ef853f9e53b887651a4c7f116e932b3db5124910e8c"
+      ],
+      [
+        "../main.rs",
+        "1f581e68efeaf5f99afa25f61b9467c0b364de010ad56dab999b5a7a816523d7"
+      ],
+      [
+        "../baseline.rs",
+        "a70fe73900071228accf81b1ac2d9a91b23b76e52423e6b0243e1ab0b61735b3"
+      ]
+    ],
+    "binarySha256": "4cb806cc6afbf77793d239716c54f89d65565e9ffe47a8bfb5421ad3dd53f2ea"
+  },
+  {
+    "name": "64-64-32-dense-fresh-137",
+    "command": "taskset",
+    "args": [
+      "-c",
+      "6",
+      "/home/tim/Documents/GitHub/workspace/exact-real-references/ruffini-qualification/hyper-polynomial-pilot/lifetime/binaries/release",
+      "bench",
+      "64",
+      "64",
+      "32",
+      "dense",
+      "fresh",
+      "137",
+      "0.25",
+      "6"
+    ],
+    "cap": 240000,
+    "started": "2026-09-07T00:37:33.681Z",
+    "finished": "2026-09-07T00:37:47.608Z",
+    "status": 0,
+    "error": null,
+    "signal": null,
+    "file": "stable-64-64-32-dense-fresh-137.log",
+    "sha256": "71a86da6b5ded350998051a6053569d0d68ee750683dafd30d566b2623b7a70c",
+    "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "source": [
+      [
+        "main.rs",
+        "5b76e437c07433c15dbde8575aa1fa03ac84d9f587d8120c5d5742f922f957de"
+      ],
+      [
+        "Cargo.toml",
+        "3000cee38c839964ec2b8ef853f9e53b887651a4c7f116e932b3db5124910e8c"
+      ],
+      [
+        "../main.rs",
+        "1f581e68efeaf5f99afa25f61b9467c0b364de010ad56dab999b5a7a816523d7"
+      ],
+      [
+        "../baseline.rs",
+        "a70fe73900071228accf81b1ac2d9a91b23b76e52423e6b0243e1ab0b61735b3"
+      ]
+    ],
+    "binarySha256": "4cb806cc6afbf77793d239716c54f89d65565e9ffe47a8bfb5421ad3dd53f2ea"
+  },
+  {
+    "name": "64-64-32-dense-reused-137",
+    "command": "taskset",
+    "args": [
+      "-c",
+      "6",
+      "/home/tim/Documents/GitHub/workspace/exact-real-references/ruffini-qualification/hyper-polynomial-pilot/lifetime/binaries/release",
+      "bench",
+      "64",
+      "64",
+      "32",
+      "dense",
+      "reused",
+      "137",
+      "0.25",
+      "6"
+    ],
+    "cap": 240000,
+    "started": "2026-09-07T00:37:47.610Z",
+    "finished": "2026-09-07T00:38:01.169Z",
+    "status": 0,
+    "error": null,
+    "signal": null,
+    "file": "stable-64-64-32-dense-reused-137.log",
+    "sha256": "0e37b3135afdc499739bbeaca8afcee0c4a494e0cdba45aaf58f56ef771306ec",
+    "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "source": [
+      [
+        "main.rs",
+        "5b76e437c07433c15dbde8575aa1fa03ac84d9f587d8120c5d5742f922f957de"
+      ],
+      [
+        "Cargo.toml",
+        "3000cee38c839964ec2b8ef853f9e53b887651a4c7f116e932b3db5124910e8c"
+      ],
+      [
+        "../main.rs",
+        "1f581e68efeaf5f99afa25f61b9467c0b364de010ad56dab999b5a7a816523d7"
+      ],
+      [
+        "../baseline.rs",
+        "a70fe73900071228accf81b1ac2d9a91b23b76e52423e6b0243e1ab0b61735b3"
+      ]
+    ],
+    "binarySha256": "4cb806cc6afbf77793d239716c54f89d65565e9ffe47a8bfb5421ad3dd53f2ea"
+  },
+  {
+    "name": "64-64-2048-dense-fresh-137",
+    "command": "taskset",
+    "args": [
+      "-c",
+      "6",
+      "/home/tim/Documents/GitHub/workspace/exact-real-references/ruffini-qualification/hyper-polynomial-pilot/lifetime/binaries/release",
+      "bench",
+      "64",
+      "64",
+      "2048",
+      "dense",
+      "fresh",
+      "137",
+      "0.25",
+      "6"
+    ],
+    "cap": 240000,
+    "started": "2026-09-07T00:38:01.172Z",
+    "finished": "2026-09-07T00:38:16.410Z",
+    "status": 0,
+    "error": null,
+    "signal": null,
+    "file": "stable-64-64-2048-dense-fresh-137.log",
+    "sha256": "cf5fc8c7783765dc2e8173f4b26351300d9761661c3e50f6287ac2c04f0e4385",
+    "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "source": [
+      [
+        "main.rs",
+        "5b76e437c07433c15dbde8575aa1fa03ac84d9f587d8120c5d5742f922f957de"
+      ],
+      [
+        "Cargo.toml",
+        "3000cee38c839964ec2b8ef853f9e53b887651a4c7f116e932b3db5124910e8c"
+      ],
+      [
+        "../main.rs",
+        "1f581e68efeaf5f99afa25f61b9467c0b364de010ad56dab999b5a7a816523d7"
+      ],
+      [
+        "../baseline.rs",
+        "a70fe73900071228accf81b1ac2d9a91b23b76e52423e6b0243e1ab0b61735b3"
+      ]
+    ],
+    "binarySha256": "4cb806cc6afbf77793d239716c54f89d65565e9ffe47a8bfb5421ad3dd53f2ea"
+  },
+  {
+    "name": "64-64-2048-dense-reused-137",
+    "command": "taskset",
+    "args": [
+      "-c",
+      "6",
+      "/home/tim/Documents/GitHub/workspace/exact-real-references/ruffini-qualification/hyper-polynomial-pilot/lifetime/binaries/release",
+      "bench",
+      "64",
+      "64",
+      "2048",
+      "dense",
+      "reused",
+      "137",
+      "0.25",
+      "6"
+    ],
+    "cap": 240000,
+    "started": "2026-09-07T00:38:16.412Z",
+    "finished": "2026-09-07T00:38:29.666Z",
+    "status": 0,
+    "error": null,
+    "signal": null,
+    "file": "stable-64-64-2048-dense-reused-137.log",
+    "sha256": "d7222250a4865fca214fd6dd71d4973826c529b6dc199d9f5cff68a832a97db2",
+    "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "source": [
+      [
+        "main.rs",
+        "5b76e437c07433c15dbde8575aa1fa03ac84d9f587d8120c5d5742f922f957de"
+      ],
+      [
+        "Cargo.toml",
+        "3000cee38c839964ec2b8ef853f9e53b887651a4c7f116e932b3db5124910e8c"
+      ],
+      [
+        "../main.rs",
+        "1f581e68efeaf5f99afa25f61b9467c0b364de010ad56dab999b5a7a816523d7"
+      ],
+      [
+        "../baseline.rs",
+        "a70fe73900071228accf81b1ac2d9a91b23b76e52423e6b0243e1ab0b61735b3"
+      ]
+    ],
+    "binarySha256": "4cb806cc6afbf77793d239716c54f89d65565e9ffe47a8bfb5421ad3dd53f2ea"
+  },
+  {
+    "name": "128-128-2048-dense-fresh-137",
+    "command": "taskset",
+    "args": [
+      "-c",
+      "6",
+      "/home/tim/Documents/GitHub/workspace/exact-real-references/ruffini-qualification/hyper-polynomial-pilot/lifetime/binaries/release",
+      "bench",
+      "128",
+      "128",
+      "2048",
+      "dense",
+      "fresh",
+      "137",
+      "0.25",
+      "6"
+    ],
+    "cap": 240000,
+    "started": "2026-09-07T00:38:29.669Z",
+    "finished": "2026-09-07T00:38:46.997Z",
+    "status": 0,
+    "error": null,
+    "signal": null,
+    "file": "stable-128-128-2048-dense-fresh-137.log",
+    "sha256": "fbe17ddd0eb909754d3a9960cf2521199f815e24cc154b16337b8c0980f302f6",
+    "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "source": [
+      [
+        "main.rs",
+        "5b76e437c07433c15dbde8575aa1fa03ac84d9f587d8120c5d5742f922f957de"
+      ],
+      [
+        "Cargo.toml",
+        "3000cee38c839964ec2b8ef853f9e53b887651a4c7f116e932b3db5124910e8c"
+      ],
+      [
+        "../main.rs",
+        "1f581e68efeaf5f99afa25f61b9467c0b364de010ad56dab999b5a7a816523d7"
+      ],
+      [
+        "../baseline.rs",
+        "a70fe73900071228accf81b1ac2d9a91b23b76e52423e6b0243e1ab0b61735b3"
+      ]
+    ],
+    "binarySha256": "4cb806cc6afbf77793d239716c54f89d65565e9ffe47a8bfb5421ad3dd53f2ea"
+  },
+  {
+    "name": "128-128-2048-dense-reused-137",
+    "command": "taskset",
+    "args": [
+      "-c",
+      "6",
+      "/home/tim/Documents/GitHub/workspace/exact-real-references/ruffini-qualification/hyper-polynomial-pilot/lifetime/binaries/release",
+      "bench",
+      "128",
+      "128",
+      "2048",
+      "dense",
+      "reused",
+      "137",
+      "0.25",
+      "6"
+    ],
+    "cap": 240000,
+    "started": "2026-09-07T00:38:47.001Z",
+    "finished": "2026-09-07T00:39:03.034Z",
+    "status": 0,
+    "error": null,
+    "signal": null,
+    "file": "stable-128-128-2048-dense-reused-137.log",
+    "sha256": "968cbfc949dadd5c76cefd2054e186ecd5eff462dc858c35ae07707be138c84f",
+    "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "source": [
+      [
+        "main.rs",
+        "5b76e437c07433c15dbde8575aa1fa03ac84d9f587d8120c5d5742f922f957de"
+      ],
+      [
+        "Cargo.toml",
+        "3000cee38c839964ec2b8ef853f9e53b887651a4c7f116e932b3db5124910e8c"
+      ],
+      [
+        "../main.rs",
+        "1f581e68efeaf5f99afa25f61b9467c0b364de010ad56dab999b5a7a816523d7"
+      ],
+      [
+        "../baseline.rs",
+        "a70fe73900071228accf81b1ac2d9a91b23b76e52423e6b0243e1ab0b61735b3"
+      ]
+    ],
+    "binarySha256": "4cb806cc6afbf77793d239716c54f89d65565e9ffe47a8bfb5421ad3dd53f2ea"
+  },
+  {
+    "name": "64-64-2048-sparse-fresh-137",
+    "command": "taskset",
+    "args": [
+      "-c",
+      "6",
+      "/home/tim/Documents/GitHub/workspace/exact-real-references/ruffini-qualification/hyper-polynomial-pilot/lifetime/binaries/release",
+      "bench",
+      "64",
+      "64",
+      "2048",
+      "sparse",
+      "fresh",
+      "137",
+      "0.25",
+      "6"
+    ],
+    "cap": 240000,
+    "started": "2026-09-07T00:39:03.037Z",
+    "finished": "2026-09-07T00:39:18.566Z",
+    "status": 0,
+    "error": null,
+    "signal": null,
+    "file": "stable-64-64-2048-sparse-fresh-137.log",
+    "sha256": "b0cca1ddda562afff04def93293e90c0a4294dba62610f1fd8db0fe98b1382e9",
+    "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "source": [
+      [
+        "main.rs",
+        "5b76e437c07433c15dbde8575aa1fa03ac84d9f587d8120c5d5742f922f957de"
+      ],
+      [
+        "Cargo.toml",
+        "3000cee38c839964ec2b8ef853f9e53b887651a4c7f116e932b3db5124910e8c"
+      ],
+      [
+        "../main.rs",
+        "1f581e68efeaf5f99afa25f61b9467c0b364de010ad56dab999b5a7a816523d7"
+      ],
+      [
+        "../baseline.rs",
+        "a70fe73900071228accf81b1ac2d9a91b23b76e52423e6b0243e1ab0b61735b3"
+      ]
+    ],
+    "binarySha256": "4cb806cc6afbf77793d239716c54f89d65565e9ffe47a8bfb5421ad3dd53f2ea"
+  },
+  {
+    "name": "64-64-2048-sparse-reused-137",
+    "command": "taskset",
+    "args": [
+      "-c",
+      "6",
+      "/home/tim/Documents/GitHub/workspace/exact-real-references/ruffini-qualification/hyper-polynomial-pilot/lifetime/binaries/release",
+      "bench",
+      "64",
+      "64",
+      "2048",
+      "sparse",
+      "reused",
+      "137",
+      "0.25",
+      "6"
+    ],
+    "cap": 240000,
+    "started": "2026-09-07T00:39:18.569Z",
+    "finished": "2026-09-07T00:39:35.794Z",
+    "status": 0,
+    "error": null,
+    "signal": null,
+    "file": "stable-64-64-2048-sparse-reused-137.log",
+    "sha256": "57efeb8d211ec3fac718474aecef3d3ed32eeb51517ea76cc8a0c9c5cd169f31",
+    "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "source": [
+      [
+        "main.rs",
+        "5b76e437c07433c15dbde8575aa1fa03ac84d9f587d8120c5d5742f922f957de"
+      ],
+      [
+        "Cargo.toml",
+        "3000cee38c839964ec2b8ef853f9e53b887651a4c7f116e932b3db5124910e8c"
+      ],
+      [
+        "../main.rs",
+        "1f581e68efeaf5f99afa25f61b9467c0b364de010ad56dab999b5a7a816523d7"
+      ],
+      [
+        "../baseline.rs",
+        "a70fe73900071228accf81b1ac2d9a91b23b76e52423e6b0243e1ab0b61735b3"
+      ]
+    ],
+    "binarySha256": "4cb806cc6afbf77793d239716c54f89d65565e9ffe47a8bfb5421ad3dd53f2ea"
+  },
+  {
+    "name": "64-64-2048-fraction-fresh-137",
+    "command": "taskset",
+    "args": [
+      "-c",
+      "6",
+      "/home/tim/Documents/GitHub/workspace/exact-real-references/ruffini-qualification/hyper-polynomial-pilot/lifetime/binaries/release",
+      "bench",
+      "64",
+      "64",
+      "2048",
+      "fraction",
+      "fresh",
+      "137",
+      "0.25",
+      "6"
+    ],
+    "cap": 240000,
+    "started": "2026-09-07T00:39:35.796Z",
+    "finished": "2026-09-07T00:39:49.000Z",
+    "status": 0,
+    "error": null,
+    "signal": null,
+    "file": "stable-64-64-2048-fraction-fresh-137.log",
+    "sha256": "ef5f923deabd312a4fa07b58af94e0ce51f95cea90e11ff05299a3c965e4ed6f",
+    "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "source": [
+      [
+        "main.rs",
+        "5b76e437c07433c15dbde8575aa1fa03ac84d9f587d8120c5d5742f922f957de"
+      ],
+      [
+        "Cargo.toml",
+        "3000cee38c839964ec2b8ef853f9e53b887651a4c7f116e932b3db5124910e8c"
+      ],
+      [
+        "../main.rs",
+        "1f581e68efeaf5f99afa25f61b9467c0b364de010ad56dab999b5a7a816523d7"
+      ],
+      [
+        "../baseline.rs",
+        "a70fe73900071228accf81b1ac2d9a91b23b76e52423e6b0243e1ab0b61735b3"
+      ]
+    ],
+    "binarySha256": "4cb806cc6afbf77793d239716c54f89d65565e9ffe47a8bfb5421ad3dd53f2ea"
+  },
+  {
+    "name": "64-64-2048-fraction-reused-137",
+    "command": "taskset",
+    "args": [
+      "-c",
+      "6",
+      "/home/tim/Documents/GitHub/workspace/exact-real-references/ruffini-qualification/hyper-polynomial-pilot/lifetime/binaries/release",
+      "bench",
+      "64",
+      "64",
+      "2048",
+      "fraction",
+      "reused",
+      "137",
+      "0.25",
+      "6"
+    ],
+    "cap": 240000,
+    "started": "2026-09-07T00:39:49.009Z",
+    "finished": "2026-09-07T00:40:08.359Z",
+    "status": 0,
+    "error": null,
+    "signal": null,
+    "file": "stable-64-64-2048-fraction-reused-137.log",
+    "sha256": "4bc6f6ad01eaaf4f66c07fe1559d4ed7f1b8aa7db7763bb4626728c893671ae9",
+    "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "source": [
+      [
+        "main.rs",
+        "5b76e437c07433c15dbde8575aa1fa03ac84d9f587d8120c5d5742f922f957de"
+      ],
+      [
+        "Cargo.toml",
+        "3000cee38c839964ec2b8ef853f9e53b887651a4c7f116e932b3db5124910e8c"
+      ],
+      [
+        "../main.rs",
+        "1f581e68efeaf5f99afa25f61b9467c0b364de010ad56dab999b5a7a816523d7"
+      ],
+      [
+        "../baseline.rs",
+        "a70fe73900071228accf81b1ac2d9a91b23b76e52423e6b0243e1ab0b61735b3"
+      ]
+    ],
+    "binarySha256": "4cb806cc6afbf77793d239716c54f89d65565e9ffe47a8bfb5421ad3dd53f2ea"
+  },
+  {
+    "name": "64-33-2048-dense-fresh-137",
+    "command": "taskset",
+    "args": [
+      "-c",
+      "6",
+      "/home/tim/Documents/GitHub/workspace/exact-real-references/ruffini-qualification/hyper-polynomial-pilot/lifetime/binaries/release",
+      "bench",
+      "64",
+      "33",
+      "2048",
+      "dense",
+      "fresh",
+      "137",
+      "0.25",
+      "6"
+    ],
+    "cap": 240000,
+    "started": "2026-09-07T00:40:08.361Z",
+    "finished": "2026-09-07T00:40:23.186Z",
+    "status": 0,
+    "error": null,
+    "signal": null,
+    "file": "stable-64-33-2048-dense-fresh-137.log",
+    "sha256": "f387358f28ddf2db49d2e0704ab60aafc5c41db13169dd2f3df458b432892a6e",
+    "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "source": [
+      [
+        "main.rs",
+        "5b76e437c07433c15dbde8575aa1fa03ac84d9f587d8120c5d5742f922f957de"
+      ],
+      [
+        "Cargo.toml",
+        "3000cee38c839964ec2b8ef853f9e53b887651a4c7f116e932b3db5124910e8c"
+      ],
+      [
+        "../main.rs",
+        "1f581e68efeaf5f99afa25f61b9467c0b364de010ad56dab999b5a7a816523d7"
+      ],
+      [
+        "../baseline.rs",
+        "a70fe73900071228accf81b1ac2d9a91b23b76e52423e6b0243e1ab0b61735b3"
+      ]
+    ],
+    "binarySha256": "4cb806cc6afbf77793d239716c54f89d65565e9ffe47a8bfb5421ad3dd53f2ea"
+  },
+  {
+    "name": "64-33-2048-dense-reused-137",
+    "command": "taskset",
+    "args": [
+      "-c",
+      "6",
+      "/home/tim/Documents/GitHub/workspace/exact-real-references/ruffini-qualification/hyper-polynomial-pilot/lifetime/binaries/release",
+      "bench",
+      "64",
+      "33",
+      "2048",
+      "dense",
+      "reused",
+      "137",
+      "0.25",
+      "6"
+    ],
+    "cap": 240000,
+    "started": "2026-09-07T00:40:23.189Z",
+    "finished": "2026-09-07T00:40:38.134Z",
+    "status": 0,
+    "error": null,
+    "signal": null,
+    "file": "stable-64-33-2048-dense-reused-137.log",
+    "sha256": "c436e19e67f9a77a07c00e5ecea58587e9c4f559c55bfbf46b12a70dfdebec2a",
+    "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "source": [
+      [
+        "main.rs",
+        "5b76e437c07433c15dbde8575aa1fa03ac84d9f587d8120c5d5742f922f957de"
+      ],
+      [
+        "Cargo.toml",
+        "3000cee38c839964ec2b8ef853f9e53b887651a4c7f116e932b3db5124910e8c"
+      ],
+      [
+        "../main.rs",
+        "1f581e68efeaf5f99afa25f61b9467c0b364de010ad56dab999b5a7a816523d7"
+      ],
+      [
+        "../baseline.rs",
+        "a70fe73900071228accf81b1ac2d9a91b23b76e52423e6b0243e1ab0b61735b3"
+      ]
+    ],
+    "binarySha256": "4cb806cc6afbf77793d239716c54f89d65565e9ffe47a8bfb5421ad3dd53f2ea"
+  },
+  {
+    "name": "64-1-2048-dense-fresh-137",
+    "command": "taskset",
+    "args": [
+      "-c",
+      "6",
+      "/home/tim/Documents/GitHub/workspace/exact-real-references/ruffini-qualification/hyper-polynomial-pilot/lifetime/binaries/release",
+      "bench",
+      "64",
+      "1",
+      "2048",
+      "dense",
+      "fresh",
+      "137",
+      "0.25",
+      "6"
+    ],
+    "cap": 240000,
+    "started": "2026-09-07T00:40:38.137Z",
+    "finished": "2026-09-07T00:40:51.949Z",
+    "status": 0,
+    "error": null,
+    "signal": null,
+    "file": "stable-64-1-2048-dense-fresh-137.log",
+    "sha256": "d4170a95ab0040b2e0f79e83638e2f54f40aaaec9d9952e7b0bc71feb3353415",
+    "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "source": [
+      [
+        "main.rs",
+        "5b76e437c07433c15dbde8575aa1fa03ac84d9f587d8120c5d5742f922f957de"
+      ],
+      [
+        "Cargo.toml",
+        "3000cee38c839964ec2b8ef853f9e53b887651a4c7f116e932b3db5124910e8c"
+      ],
+      [
+        "../main.rs",
+        "1f581e68efeaf5f99afa25f61b9467c0b364de010ad56dab999b5a7a816523d7"
+      ],
+      [
+        "../baseline.rs",
+        "a70fe73900071228accf81b1ac2d9a91b23b76e52423e6b0243e1ab0b61735b3"
+      ]
+    ],
+    "binarySha256": "4cb806cc6afbf77793d239716c54f89d65565e9ffe47a8bfb5421ad3dd53f2ea"
+  },
+  {
+    "name": "64-1-2048-dense-reused-137",
+    "command": "taskset",
+    "args": [
+      "-c",
+      "6",
+      "/home/tim/Documents/GitHub/workspace/exact-real-references/ruffini-qualification/hyper-polynomial-pilot/lifetime/binaries/release",
+      "bench",
+      "64",
+      "1",
+      "2048",
+      "dense",
+      "reused",
+      "137",
+      "0.25",
+      "6"
+    ],
+    "cap": 240000,
+    "started": "2026-09-07T00:40:51.951Z",
+    "finished": "2026-09-07T00:41:04.230Z",
+    "status": 0,
+    "error": null,
+    "signal": null,
+    "file": "stable-64-1-2048-dense-reused-137.log",
+    "sha256": "d4a53a3782599ad48790bf845578439942ee80d22b1b4eabc4a63ee2382c895b",
+    "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "source": [
+      [
+        "main.rs",
+        "5b76e437c07433c15dbde8575aa1fa03ac84d9f587d8120c5d5742f922f957de"
+      ],
+      [
+        "Cargo.toml",
+        "3000cee38c839964ec2b8ef853f9e53b887651a4c7f116e932b3db5124910e8c"
+      ],
+      [
+        "../main.rs",
+        "1f581e68efeaf5f99afa25f61b9467c0b364de010ad56dab999b5a7a816523d7"
+      ],
+      [
+        "../baseline.rs",
+        "a70fe73900071228accf81b1ac2d9a91b23b76e52423e6b0243e1ab0b61735b3"
+      ]
+    ],
+    "binarySha256": "4cb806cc6afbf77793d239716c54f89d65565e9ffe47a8bfb5421ad3dd53f2ea"
+  },
+  {
+    "name": "64-31-2048-dense-fresh-137",
+    "command": "taskset",
+    "args": [
+      "-c",
+      "6",
+      "/home/tim/Documents/GitHub/workspace/exact-real-references/ruffini-qualification/hyper-polynomial-pilot/lifetime/binaries/release",
+      "bench",
+      "64",
+      "31",
+      "2048",
+      "dense",
+      "fresh",
+      "137",
+      "0.25",
+      "6"
+    ],
+    "cap": 240000,
+    "started": "2026-09-07T00:41:04.232Z",
+    "finished": "2026-09-07T00:41:17.860Z",
+    "status": 0,
+    "error": null,
+    "signal": null,
+    "file": "stable-64-31-2048-dense-fresh-137.log",
+    "sha256": "6055e91458ef52f035df71ef45eaa26fd276da6abd37340597e55a762a370be4",
+    "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "source": [
+      [
+        "main.rs",
+        "5b76e437c07433c15dbde8575aa1fa03ac84d9f587d8120c5d5742f922f957de"
+      ],
+      [
+        "Cargo.toml",
+        "3000cee38c839964ec2b8ef853f9e53b887651a4c7f116e932b3db5124910e8c"
+      ],
+      [
+        "../main.rs",
+        "1f581e68efeaf5f99afa25f61b9467c0b364de010ad56dab999b5a7a816523d7"
+      ],
+      [
+        "../baseline.rs",
+        "a70fe73900071228accf81b1ac2d9a91b23b76e52423e6b0243e1ab0b61735b3"
+      ]
+    ],
+    "binarySha256": "4cb806cc6afbf77793d239716c54f89d65565e9ffe47a8bfb5421ad3dd53f2ea"
+  },
+  {
+    "name": "64-31-2048-dense-reused-137",
+    "command": "taskset",
+    "args": [
+      "-c",
+      "6",
+      "/home/tim/Documents/GitHub/workspace/exact-real-references/ruffini-qualification/hyper-polynomial-pilot/lifetime/binaries/release",
+      "bench",
+      "64",
+      "31",
+      "2048",
+      "dense",
+      "reused",
+      "137",
+      "0.25",
+      "6"
+    ],
+    "cap": 240000,
+    "started": "2026-09-07T00:41:17.862Z",
+    "finished": "2026-09-07T00:41:29.896Z",
+    "status": 0,
+    "error": null,
+    "signal": null,
+    "file": "stable-64-31-2048-dense-reused-137.log",
+    "sha256": "c986bc198007f0d80d1f188558fc5fe809e24ea94deabfd1f967be630e2eab0a",
+    "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "source": [
+      [
+        "main.rs",
+        "5b76e437c07433c15dbde8575aa1fa03ac84d9f587d8120c5d5742f922f957de"
+      ],
+      [
+        "Cargo.toml",
+        "3000cee38c839964ec2b8ef853f9e53b887651a4c7f116e932b3db5124910e8c"
+      ],
+      [
+        "../main.rs",
+        "1f581e68efeaf5f99afa25f61b9467c0b364de010ad56dab999b5a7a816523d7"
+      ],
+      [
+        "../baseline.rs",
+        "a70fe73900071228accf81b1ac2d9a91b23b76e52423e6b0243e1ab0b61735b3"
+      ]
+    ],
+    "binarySha256": "4cb806cc6afbf77793d239716c54f89d65565e9ffe47a8bfb5421ad3dd53f2ea"
+  },
+  {
+    "name": "16-16-32-dense-fresh-149",
+    "command": "taskset",
+    "args": [
+      "-c",
+      "6",
+      "/home/tim/Documents/GitHub/workspace/exact-real-references/ruffini-qualification/hyper-polynomial-pilot/lifetime/binaries/release",
+      "bench",
+      "16",
+      "16",
+      "32",
+      "dense",
+      "fresh",
+      "149",
+      "0.25",
+      "6"
+    ],
+    "cap": 240000,
+    "started": "2026-09-07T00:41:29.899Z",
+    "finished": "2026-09-07T00:41:44.284Z",
+    "status": 0,
+    "error": null,
+    "signal": null,
+    "file": "stable-16-16-32-dense-fresh-149.log",
+    "sha256": "a61749678ca1985b2b16d33d4e8ae0bc9b0f4ef0d481b4f371b587cc4bc8811f",
+    "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "source": [
+      [
+        "main.rs",
+        "5b76e437c07433c15dbde8575aa1fa03ac84d9f587d8120c5d5742f922f957de"
+      ],
+      [
+        "Cargo.toml",
+        "3000cee38c839964ec2b8ef853f9e53b887651a4c7f116e932b3db5124910e8c"
+      ],
+      [
+        "../main.rs",
+        "1f581e68efeaf5f99afa25f61b9467c0b364de010ad56dab999b5a7a816523d7"
+      ],
+      [
+        "../baseline.rs",
+        "a70fe73900071228accf81b1ac2d9a91b23b76e52423e6b0243e1ab0b61735b3"
+      ]
+    ],
+    "binarySha256": "4cb806cc6afbf77793d239716c54f89d65565e9ffe47a8bfb5421ad3dd53f2ea"
+  },
+  {
+    "name": "16-16-32-dense-reused-149",
+    "command": "taskset",
+    "args": [
+      "-c",
+      "6",
+      "/home/tim/Documents/GitHub/workspace/exact-real-references/ruffini-qualification/hyper-polynomial-pilot/lifetime/binaries/release",
+      "bench",
+      "16",
+      "16",
+      "32",
+      "dense",
+      "reused",
+      "149",
+      "0.25",
+      "6"
+    ],
+    "cap": 240000,
+    "started": "2026-09-07T00:41:44.287Z",
+    "finished": "2026-09-07T00:42:02.384Z",
+    "status": 0,
+    "error": null,
+    "signal": null,
+    "file": "stable-16-16-32-dense-reused-149.log",
+    "sha256": "35c8adf9b1d4d558079b0dde4d8f0fe051cbd5ee02a9ca52549560e26b927ce8",
+    "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "source": [
+      [
+        "main.rs",
+        "5b76e437c07433c15dbde8575aa1fa03ac84d9f587d8120c5d5742f922f957de"
+      ],
+      [
+        "Cargo.toml",
+        "3000cee38c839964ec2b8ef853f9e53b887651a4c7f116e932b3db5124910e8c"
+      ],
+      [
+        "../main.rs",
+        "1f581e68efeaf5f99afa25f61b9467c0b364de010ad56dab999b5a7a816523d7"
+      ],
+      [
+        "../baseline.rs",
+        "a70fe73900071228accf81b1ac2d9a91b23b76e52423e6b0243e1ab0b61735b3"
+      ]
+    ],
+    "binarySha256": "4cb806cc6afbf77793d239716c54f89d65565e9ffe47a8bfb5421ad3dd53f2ea"
+  },
+  {
+    "name": "32-32-512-dense-fresh-149",
+    "command": "taskset",
+    "args": [
+      "-c",
+      "6",
+      "/home/tim/Documents/GitHub/workspace/exact-real-references/ruffini-qualification/hyper-polynomial-pilot/lifetime/binaries/release",
+      "bench",
+      "32",
+      "32",
+      "512",
+      "dense",
+      "fresh",
+      "149",
+      "0.25",
+      "6"
+    ],
+    "cap": 240000,
+    "started": "2026-09-07T00:42:02.388Z",
+    "finished": "2026-09-07T00:42:17.443Z",
+    "status": 0,
+    "error": null,
+    "signal": null,
+    "file": "stable-32-32-512-dense-fresh-149.log",
+    "sha256": "122e67fd03e9b61a90884f93db85b51a94c331c220ddd5558ba60d1a422e52d7",
+    "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "source": [
+      [
+        "main.rs",
+        "5b76e437c07433c15dbde8575aa1fa03ac84d9f587d8120c5d5742f922f957de"
+      ],
+      [
+        "Cargo.toml",
+        "3000cee38c839964ec2b8ef853f9e53b887651a4c7f116e932b3db5124910e8c"
+      ],
+      [
+        "../main.rs",
+        "1f581e68efeaf5f99afa25f61b9467c0b364de010ad56dab999b5a7a816523d7"
+      ],
+      [
+        "../baseline.rs",
+        "a70fe73900071228accf81b1ac2d9a91b23b76e52423e6b0243e1ab0b61735b3"
+      ]
+    ],
+    "binarySha256": "4cb806cc6afbf77793d239716c54f89d65565e9ffe47a8bfb5421ad3dd53f2ea"
+  },
+  {
+    "name": "32-32-512-dense-reused-149",
+    "command": "taskset",
+    "args": [
+      "-c",
+      "6",
+      "/home/tim/Documents/GitHub/workspace/exact-real-references/ruffini-qualification/hyper-polynomial-pilot/lifetime/binaries/release",
+      "bench",
+      "32",
+      "32",
+      "512",
+      "dense",
+      "reused",
+      "149",
+      "0.25",
+      "6"
+    ],
+    "cap": 240000,
+    "started": "2026-09-07T00:42:17.445Z",
+    "finished": "2026-09-07T00:42:31.924Z",
+    "status": 0,
+    "error": null,
+    "signal": null,
+    "file": "stable-32-32-512-dense-reused-149.log",
+    "sha256": "c199b633881a3cb3e637aa5036e1b777d92305fd65c456b7c3264e326fdc2abe",
+    "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "source": [
+      [
+        "main.rs",
+        "5b76e437c07433c15dbde8575aa1fa03ac84d9f587d8120c5d5742f922f957de"
+      ],
+      [
+        "Cargo.toml",
+        "3000cee38c839964ec2b8ef853f9e53b887651a4c7f116e932b3db5124910e8c"
+      ],
+      [
+        "../main.rs",
+        "1f581e68efeaf5f99afa25f61b9467c0b364de010ad56dab999b5a7a816523d7"
+      ],
+      [
+        "../baseline.rs",
+        "a70fe73900071228accf81b1ac2d9a91b23b76e52423e6b0243e1ab0b61735b3"
+      ]
+    ],
+    "binarySha256": "4cb806cc6afbf77793d239716c54f89d65565e9ffe47a8bfb5421ad3dd53f2ea"
+  },
+  {
+    "name": "64-64-32-dense-fresh-149",
+    "command": "taskset",
+    "args": [
+      "-c",
+      "6",
+      "/home/tim/Documents/GitHub/workspace/exact-real-references/ruffini-qualification/hyper-polynomial-pilot/lifetime/binaries/release",
+      "bench",
+      "64",
+      "64",
+      "32",
+      "dense",
+      "fresh",
+      "149",
+      "0.25",
+      "6"
+    ],
+    "cap": 240000,
+    "started": "2026-09-07T00:42:31.927Z",
+    "finished": "2026-09-07T00:42:46.283Z",
+    "status": 0,
+    "error": null,
+    "signal": null,
+    "file": "stable-64-64-32-dense-fresh-149.log",
+    "sha256": "cf8b0d3bc54141bbdb149adc81d38c1141d771acc6860cc1f6526f83527714eb",
+    "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "source": [
+      [
+        "main.rs",
+        "5b76e437c07433c15dbde8575aa1fa03ac84d9f587d8120c5d5742f922f957de"
+      ],
+      [
+        "Cargo.toml",
+        "3000cee38c839964ec2b8ef853f9e53b887651a4c7f116e932b3db5124910e8c"
+      ],
+      [
+        "../main.rs",
+        "1f581e68efeaf5f99afa25f61b9467c0b364de010ad56dab999b5a7a816523d7"
+      ],
+      [
+        "../baseline.rs",
+        "a70fe73900071228accf81b1ac2d9a91b23b76e52423e6b0243e1ab0b61735b3"
+      ]
+    ],
+    "binarySha256": "4cb806cc6afbf77793d239716c54f89d65565e9ffe47a8bfb5421ad3dd53f2ea"
+  },
+  {
+    "name": "64-64-32-dense-reused-149",
+    "command": "taskset",
+    "args": [
+      "-c",
+      "6",
+      "/home/tim/Documents/GitHub/workspace/exact-real-references/ruffini-qualification/hyper-polynomial-pilot/lifetime/binaries/release",
+      "bench",
+      "64",
+      "64",
+      "32",
+      "dense",
+      "reused",
+      "149",
+      "0.25",
+      "6"
+    ],
+    "cap": 240000,
+    "started": "2026-09-07T00:42:46.286Z",
+    "finished": "2026-09-07T00:42:59.485Z",
+    "status": 0,
+    "error": null,
+    "signal": null,
+    "file": "stable-64-64-32-dense-reused-149.log",
+    "sha256": "f7e945b75e7b77470df704026ac49afe40816939c1be0e7bfbc79c88931f458c",
+    "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "source": [
+      [
+        "main.rs",
+        "5b76e437c07433c15dbde8575aa1fa03ac84d9f587d8120c5d5742f922f957de"
+      ],
+      [
+        "Cargo.toml",
+        "3000cee38c839964ec2b8ef853f9e53b887651a4c7f116e932b3db5124910e8c"
+      ],
+      [
+        "../main.rs",
+        "1f581e68efeaf5f99afa25f61b9467c0b364de010ad56dab999b5a7a816523d7"
+      ],
+      [
+        "../baseline.rs",
+        "a70fe73900071228accf81b1ac2d9a91b23b76e52423e6b0243e1ab0b61735b3"
+      ]
+    ],
+    "binarySha256": "4cb806cc6afbf77793d239716c54f89d65565e9ffe47a8bfb5421ad3dd53f2ea"
+  },
+  {
+    "name": "64-64-2048-dense-fresh-149",
+    "command": "taskset",
+    "args": [
+      "-c",
+      "6",
+      "/home/tim/Documents/GitHub/workspace/exact-real-references/ruffini-qualification/hyper-polynomial-pilot/lifetime/binaries/release",
+      "bench",
+      "64",
+      "64",
+      "2048",
+      "dense",
+      "fresh",
+      "149",
+      "0.25",
+      "6"
+    ],
+    "cap": 240000,
+    "started": "2026-09-07T00:42:59.487Z",
+    "finished": "2026-09-07T00:43:14.580Z",
+    "status": 0,
+    "error": null,
+    "signal": null,
+    "file": "stable-64-64-2048-dense-fresh-149.log",
+    "sha256": "39fa4d25cdc4c7352b225ce2e4e89ec85ac87f38511f9738923d884c59ca937e",
+    "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "source": [
+      [
+        "main.rs",
+        "5b76e437c07433c15dbde8575aa1fa03ac84d9f587d8120c5d5742f922f957de"
+      ],
+      [
+        "Cargo.toml",
+        "3000cee38c839964ec2b8ef853f9e53b887651a4c7f116e932b3db5124910e8c"
+      ],
+      [
+        "../main.rs",
+        "1f581e68efeaf5f99afa25f61b9467c0b364de010ad56dab999b5a7a816523d7"
+      ],
+      [
+        "../baseline.rs",
+        "a70fe73900071228accf81b1ac2d9a91b23b76e52423e6b0243e1ab0b61735b3"
+      ]
+    ],
+    "binarySha256": "4cb806cc6afbf77793d239716c54f89d65565e9ffe47a8bfb5421ad3dd53f2ea"
+  },
+  {
+    "name": "64-64-2048-dense-reused-149",
+    "command": "taskset",
+    "args": [
+      "-c",
+      "6",
+      "/home/tim/Documents/GitHub/workspace/exact-real-references/ruffini-qualification/hyper-polynomial-pilot/lifetime/binaries/release",
+      "bench",
+      "64",
+      "64",
+      "2048",
+      "dense",
+      "reused",
+      "149",
+      "0.25",
+      "6"
+    ],
+    "cap": 240000,
+    "started": "2026-09-07T00:43:14.583Z",
+    "finished": "2026-09-07T00:43:27.660Z",
+    "status": 0,
+    "error": null,
+    "signal": null,
+    "file": "stable-64-64-2048-dense-reused-149.log",
+    "sha256": "4f6227543fcd1d750fac707908adc62b61813badd8e55a79e509711285eaa448",
+    "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "source": [
+      [
+        "main.rs",
+        "5b76e437c07433c15dbde8575aa1fa03ac84d9f587d8120c5d5742f922f957de"
+      ],
+      [
+        "Cargo.toml",
+        "3000cee38c839964ec2b8ef853f9e53b887651a4c7f116e932b3db5124910e8c"
+      ],
+      [
+        "../main.rs",
+        "1f581e68efeaf5f99afa25f61b9467c0b364de010ad56dab999b5a7a816523d7"
+      ],
+      [
+        "../baseline.rs",
+        "a70fe73900071228accf81b1ac2d9a91b23b76e52423e6b0243e1ab0b61735b3"
+      ]
+    ],
+    "binarySha256": "4cb806cc6afbf77793d239716c54f89d65565e9ffe47a8bfb5421ad3dd53f2ea"
+  },
+  {
+    "name": "128-128-2048-dense-fresh-149",
+    "command": "taskset",
+    "args": [
+      "-c",
+      "6",
+      "/home/tim/Documents/GitHub/workspace/exact-real-references/ruffini-qualification/hyper-polynomial-pilot/lifetime/binaries/release",
+      "bench",
+      "128",
+      "128",
+      "2048",
+      "dense",
+      "fresh",
+      "149",
+      "0.25",
+      "6"
+    ],
+    "cap": 240000,
+    "started": "2026-09-07T00:43:27.662Z",
+    "finished": "2026-09-07T00:43:44.660Z",
+    "status": 0,
+    "error": null,
+    "signal": null,
+    "file": "stable-128-128-2048-dense-fresh-149.log",
+    "sha256": "f0df5e831f4d2907c460b4868d152a93130d3d4facce0b78572f3ef3bc534384",
+    "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "source": [
+      [
+        "main.rs",
+        "5b76e437c07433c15dbde8575aa1fa03ac84d9f587d8120c5d5742f922f957de"
+      ],
+      [
+        "Cargo.toml",
+        "3000cee38c839964ec2b8ef853f9e53b887651a4c7f116e932b3db5124910e8c"
+      ],
+      [
+        "../main.rs",
+        "1f581e68efeaf5f99afa25f61b9467c0b364de010ad56dab999b5a7a816523d7"
+      ],
+      [
+        "../baseline.rs",
+        "a70fe73900071228accf81b1ac2d9a91b23b76e52423e6b0243e1ab0b61735b3"
+      ]
+    ],
+    "binarySha256": "4cb806cc6afbf77793d239716c54f89d65565e9ffe47a8bfb5421ad3dd53f2ea"
+  },
+  {
+    "name": "128-128-2048-dense-reused-149",
+    "command": "taskset",
+    "args": [
+      "-c",
+      "6",
+      "/home/tim/Documents/GitHub/workspace/exact-real-references/ruffini-qualification/hyper-polynomial-pilot/lifetime/binaries/release",
+      "bench",
+      "128",
+      "128",
+      "2048",
+      "dense",
+      "reused",
+      "149",
+      "0.25",
+      "6"
+    ],
+    "cap": 240000,
+    "started": "2026-09-07T00:43:44.662Z",
+    "finished": "2026-09-07T00:44:01.624Z",
+    "status": 0,
+    "error": null,
+    "signal": null,
+    "file": "stable-128-128-2048-dense-reused-149.log",
+    "sha256": "3c0b116dc0f414e49c64211ab651088eeaba529cb12544278e076e44ee1a5b6e",
+    "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "source": [
+      [
+        "main.rs",
+        "5b76e437c07433c15dbde8575aa1fa03ac84d9f587d8120c5d5742f922f957de"
+      ],
+      [
+        "Cargo.toml",
+        "3000cee38c839964ec2b8ef853f9e53b887651a4c7f116e932b3db5124910e8c"
+      ],
+      [
+        "../main.rs",
+        "1f581e68efeaf5f99afa25f61b9467c0b364de010ad56dab999b5a7a816523d7"
+      ],
+      [
+        "../baseline.rs",
+        "a70fe73900071228accf81b1ac2d9a91b23b76e52423e6b0243e1ab0b61735b3"
+      ]
+    ],
+    "binarySha256": "4cb806cc6afbf77793d239716c54f89d65565e9ffe47a8bfb5421ad3dd53f2ea"
+  },
+  {
+    "name": "64-64-2048-sparse-fresh-149",
+    "command": "taskset",
+    "args": [
+      "-c",
+      "6",
+      "/home/tim/Documents/GitHub/workspace/exact-real-references/ruffini-qualification/hyper-polynomial-pilot/lifetime/binaries/release",
+      "bench",
+      "64",
+      "64",
+      "2048",
+      "sparse",
+      "fresh",
+      "149",
+      "0.25",
+      "6"
+    ],
+    "cap": 240000,
+    "started": "2026-09-07T00:44:01.626Z",
+    "finished": "2026-09-07T00:44:17.314Z",
+    "status": 0,
+    "error": null,
+    "signal": null,
+    "file": "stable-64-64-2048-sparse-fresh-149.log",
+    "sha256": "a0ee9041b19af2eb30612bd3d229d489707efe60292436f7701e1afcceb6c344",
+    "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "source": [
+      [
+        "main.rs",
+        "5b76e437c07433c15dbde8575aa1fa03ac84d9f587d8120c5d5742f922f957de"
+      ],
+      [
+        "Cargo.toml",
+        "3000cee38c839964ec2b8ef853f9e53b887651a4c7f116e932b3db5124910e8c"
+      ],
+      [
+        "../main.rs",
+        "1f581e68efeaf5f99afa25f61b9467c0b364de010ad56dab999b5a7a816523d7"
+      ],
+      [
+        "../baseline.rs",
+        "a70fe73900071228accf81b1ac2d9a91b23b76e52423e6b0243e1ab0b61735b3"
+      ]
+    ],
+    "binarySha256": "4cb806cc6afbf77793d239716c54f89d65565e9ffe47a8bfb5421ad3dd53f2ea"
+  },
+  {
+    "name": "64-64-2048-sparse-reused-149",
+    "command": "taskset",
+    "args": [
+      "-c",
+      "6",
+      "/home/tim/Documents/GitHub/workspace/exact-real-references/ruffini-qualification/hyper-polynomial-pilot/lifetime/binaries/release",
+      "bench",
+      "64",
+      "64",
+      "2048",
+      "sparse",
+      "reused",
+      "149",
+      "0.25",
+      "6"
+    ],
+    "cap": 240000,
+    "started": "2026-09-07T00:44:17.317Z",
+    "finished": "2026-09-07T00:44:31.697Z",
+    "status": 0,
+    "error": null,
+    "signal": null,
+    "file": "stable-64-64-2048-sparse-reused-149.log",
+    "sha256": "34fe98ee3d2bb11b1dd6e2c5792ccf52f79e253ce071b36c946c4dea350b7178",
+    "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "source": [
+      [
+        "main.rs",
+        "5b76e437c07433c15dbde8575aa1fa03ac84d9f587d8120c5d5742f922f957de"
+      ],
+      [
+        "Cargo.toml",
+        "3000cee38c839964ec2b8ef853f9e53b887651a4c7f116e932b3db5124910e8c"
+      ],
+      [
+        "../main.rs",
+        "1f581e68efeaf5f99afa25f61b9467c0b364de010ad56dab999b5a7a816523d7"
+      ],
+      [
+        "../baseline.rs",
+        "a70fe73900071228accf81b1ac2d9a91b23b76e52423e6b0243e1ab0b61735b3"
+      ]
+    ],
+    "binarySha256": "4cb806cc6afbf77793d239716c54f89d65565e9ffe47a8bfb5421ad3dd53f2ea"
+  },
+  {
+    "name": "64-64-2048-fraction-fresh-149",
+    "command": "taskset",
+    "args": [
+      "-c",
+      "6",
+      "/home/tim/Documents/GitHub/workspace/exact-real-references/ruffini-qualification/hyper-polynomial-pilot/lifetime/binaries/release",
+      "bench",
+      "64",
+      "64",
+      "2048",
+      "fraction",
+      "fresh",
+      "149",
+      "0.25",
+      "6"
+    ],
+    "cap": 240000,
+    "started": "2026-09-07T00:44:31.699Z",
+    "finished": "2026-09-07T00:44:44.907Z",
+    "status": 0,
+    "error": null,
+    "signal": null,
+    "file": "stable-64-64-2048-fraction-fresh-149.log",
+    "sha256": "c84c618ebd7b805cfaf0269e57ad15254405452376eea31d8d8eae6c46d398d2",
+    "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "source": [
+      [
+        "main.rs",
+        "5b76e437c07433c15dbde8575aa1fa03ac84d9f587d8120c5d5742f922f957de"
+      ],
+      [
+        "Cargo.toml",
+        "3000cee38c839964ec2b8ef853f9e53b887651a4c7f116e932b3db5124910e8c"
+      ],
+      [
+        "../main.rs",
+        "1f581e68efeaf5f99afa25f61b9467c0b364de010ad56dab999b5a7a816523d7"
+      ],
+      [
+        "../baseline.rs",
+        "a70fe73900071228accf81b1ac2d9a91b23b76e52423e6b0243e1ab0b61735b3"
+      ]
+    ],
+    "binarySha256": "4cb806cc6afbf77793d239716c54f89d65565e9ffe47a8bfb5421ad3dd53f2ea"
+  },
+  {
+    "name": "64-64-2048-fraction-reused-149",
+    "command": "taskset",
+    "args": [
+      "-c",
+      "6",
+      "/home/tim/Documents/GitHub/workspace/exact-real-references/ruffini-qualification/hyper-polynomial-pilot/lifetime/binaries/release",
+      "bench",
+      "64",
+      "64",
+      "2048",
+      "fraction",
+      "reused",
+      "149",
+      "0.25",
+      "6"
+    ],
+    "cap": 240000,
+    "started": "2026-09-07T00:44:44.912Z",
+    "finished": "2026-09-07T00:44:59.344Z",
+    "status": 0,
+    "error": null,
+    "signal": null,
+    "file": "stable-64-64-2048-fraction-reused-149.log",
+    "sha256": "16ecdd253425f1a9a53253d8d1004683f1f3ffd349d11ad92e013349045ef188",
+    "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "source": [
+      [
+        "main.rs",
+        "5b76e437c07433c15dbde8575aa1fa03ac84d9f587d8120c5d5742f922f957de"
+      ],
+      [
+        "Cargo.toml",
+        "3000cee38c839964ec2b8ef853f9e53b887651a4c7f116e932b3db5124910e8c"
+      ],
+      [
+        "../main.rs",
+        "1f581e68efeaf5f99afa25f61b9467c0b364de010ad56dab999b5a7a816523d7"
+      ],
+      [
+        "../baseline.rs",
+        "a70fe73900071228accf81b1ac2d9a91b23b76e52423e6b0243e1ab0b61735b3"
+      ]
+    ],
+    "binarySha256": "4cb806cc6afbf77793d239716c54f89d65565e9ffe47a8bfb5421ad3dd53f2ea"
+  },
+  {
+    "name": "64-33-2048-dense-fresh-149",
+    "command": "taskset",
+    "args": [
+      "-c",
+      "6",
+      "/home/tim/Documents/GitHub/workspace/exact-real-references/ruffini-qualification/hyper-polynomial-pilot/lifetime/binaries/release",
+      "bench",
+      "64",
+      "33",
+      "2048",
+      "dense",
+      "fresh",
+      "149",
+      "0.25",
+      "6"
+    ],
+    "cap": 240000,
+    "started": "2026-09-07T00:44:59.347Z",
+    "finished": "2026-09-07T00:45:14.087Z",
+    "status": 0,
+    "error": null,
+    "signal": null,
+    "file": "stable-64-33-2048-dense-fresh-149.log",
+    "sha256": "ff8ecfb61ff1c0663fbbe916c086d757c39b9dbcc96976ff1d412ccc64352eaa",
+    "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "source": [
+      [
+        "main.rs",
+        "5b76e437c07433c15dbde8575aa1fa03ac84d9f587d8120c5d5742f922f957de"
+      ],
+      [
+        "Cargo.toml",
+        "3000cee38c839964ec2b8ef853f9e53b887651a4c7f116e932b3db5124910e8c"
+      ],
+      [
+        "../main.rs",
+        "1f581e68efeaf5f99afa25f61b9467c0b364de010ad56dab999b5a7a816523d7"
+      ],
+      [
+        "../baseline.rs",
+        "a70fe73900071228accf81b1ac2d9a91b23b76e52423e6b0243e1ab0b61735b3"
+      ]
+    ],
+    "binarySha256": "4cb806cc6afbf77793d239716c54f89d65565e9ffe47a8bfb5421ad3dd53f2ea"
+  },
+  {
+    "name": "64-33-2048-dense-reused-149",
+    "command": "taskset",
+    "args": [
+      "-c",
+      "6",
+      "/home/tim/Documents/GitHub/workspace/exact-real-references/ruffini-qualification/hyper-polynomial-pilot/lifetime/binaries/release",
+      "bench",
+      "64",
+      "33",
+      "2048",
+      "dense",
+      "reused",
+      "149",
+      "0.25",
+      "6"
+    ],
+    "cap": 240000,
+    "started": "2026-09-07T00:45:14.090Z",
+    "finished": "2026-09-07T00:45:28.956Z",
+    "status": 0,
+    "error": null,
+    "signal": null,
+    "file": "stable-64-33-2048-dense-reused-149.log",
+    "sha256": "744244e95235ec21b5d4a6b36b1b6a3a7aa1724f5e3e8b93c9b1b09c5abdf0c2",
+    "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "source": [
+      [
+        "main.rs",
+        "5b76e437c07433c15dbde8575aa1fa03ac84d9f587d8120c5d5742f922f957de"
+      ],
+      [
+        "Cargo.toml",
+        "3000cee38c839964ec2b8ef853f9e53b887651a4c7f116e932b3db5124910e8c"
+      ],
+      [
+        "../main.rs",
+        "1f581e68efeaf5f99afa25f61b9467c0b364de010ad56dab999b5a7a816523d7"
+      ],
+      [
+        "../baseline.rs",
+        "a70fe73900071228accf81b1ac2d9a91b23b76e52423e6b0243e1ab0b61735b3"
+      ]
+    ],
+    "binarySha256": "4cb806cc6afbf77793d239716c54f89d65565e9ffe47a8bfb5421ad3dd53f2ea"
+  },
+  {
+    "name": "64-1-2048-dense-fresh-149",
+    "command": "taskset",
+    "args": [
+      "-c",
+      "6",
+      "/home/tim/Documents/GitHub/workspace/exact-real-references/ruffini-qualification/hyper-polynomial-pilot/lifetime/binaries/release",
+      "bench",
+      "64",
+      "1",
+      "2048",
+      "dense",
+      "fresh",
+      "149",
+      "0.25",
+      "6"
+    ],
+    "cap": 240000,
+    "started": "2026-09-07T00:45:28.958Z",
+    "finished": "2026-09-07T00:45:42.733Z",
+    "status": 0,
+    "error": null,
+    "signal": null,
+    "file": "stable-64-1-2048-dense-fresh-149.log",
+    "sha256": "e2cfb510eb2f23d94a4dbf3917fce3a3847d7d25e920a0d769ca98073c8c76d0",
+    "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "source": [
+      [
+        "main.rs",
+        "5b76e437c07433c15dbde8575aa1fa03ac84d9f587d8120c5d5742f922f957de"
+      ],
+      [
+        "Cargo.toml",
+        "3000cee38c839964ec2b8ef853f9e53b887651a4c7f116e932b3db5124910e8c"
+      ],
+      [
+        "../main.rs",
+        "1f581e68efeaf5f99afa25f61b9467c0b364de010ad56dab999b5a7a816523d7"
+      ],
+      [
+        "../baseline.rs",
+        "a70fe73900071228accf81b1ac2d9a91b23b76e52423e6b0243e1ab0b61735b3"
+      ]
+    ],
+    "binarySha256": "4cb806cc6afbf77793d239716c54f89d65565e9ffe47a8bfb5421ad3dd53f2ea"
+  },
+  {
+    "name": "64-1-2048-dense-reused-149",
+    "command": "taskset",
+    "args": [
+      "-c",
+      "6",
+      "/home/tim/Documents/GitHub/workspace/exact-real-references/ruffini-qualification/hyper-polynomial-pilot/lifetime/binaries/release",
+      "bench",
+      "64",
+      "1",
+      "2048",
+      "dense",
+      "reused",
+      "149",
+      "0.25",
+      "6"
+    ],
+    "cap": 240000,
+    "started": "2026-09-07T00:45:42.736Z",
+    "finished": "2026-09-07T00:45:54.760Z",
+    "status": 0,
+    "error": null,
+    "signal": null,
+    "file": "stable-64-1-2048-dense-reused-149.log",
+    "sha256": "553b1517116e84dc54356331175d31663bd2b790f71b89f37845b1d159027dce",
+    "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "source": [
+      [
+        "main.rs",
+        "5b76e437c07433c15dbde8575aa1fa03ac84d9f587d8120c5d5742f922f957de"
+      ],
+      [
+        "Cargo.toml",
+        "3000cee38c839964ec2b8ef853f9e53b887651a4c7f116e932b3db5124910e8c"
+      ],
+      [
+        "../main.rs",
+        "1f581e68efeaf5f99afa25f61b9467c0b364de010ad56dab999b5a7a816523d7"
+      ],
+      [
+        "../baseline.rs",
+        "a70fe73900071228accf81b1ac2d9a91b23b76e52423e6b0243e1ab0b61735b3"
+      ]
+    ],
+    "binarySha256": "4cb806cc6afbf77793d239716c54f89d65565e9ffe47a8bfb5421ad3dd53f2ea"
+  },
+  {
+    "name": "64-31-2048-dense-fresh-149",
+    "command": "taskset",
+    "args": [
+      "-c",
+      "6",
+      "/home/tim/Documents/GitHub/workspace/exact-real-references/ruffini-qualification/hyper-polynomial-pilot/lifetime/binaries/release",
+      "bench",
+      "64",
+      "31",
+      "2048",
+      "dense",
+      "fresh",
+      "149",
+      "0.25",
+      "6"
+    ],
+    "cap": 240000,
+    "started": "2026-09-07T00:45:54.762Z",
+    "finished": "2026-09-07T00:46:06.316Z",
+    "status": 0,
+    "error": null,
+    "signal": null,
+    "file": "stable-64-31-2048-dense-fresh-149.log",
+    "sha256": "fc1b57ef55806b42ea9cddb5ce9f2a35b0b9616ec959af14ba0adcf7813a8ad1",
+    "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "source": [
+      [
+        "main.rs",
+        "5b76e437c07433c15dbde8575aa1fa03ac84d9f587d8120c5d5742f922f957de"
+      ],
+      [
+        "Cargo.toml",
+        "3000cee38c839964ec2b8ef853f9e53b887651a4c7f116e932b3db5124910e8c"
+      ],
+      [
+        "../main.rs",
+        "1f581e68efeaf5f99afa25f61b9467c0b364de010ad56dab999b5a7a816523d7"
+      ],
+      [
+        "../baseline.rs",
+        "a70fe73900071228accf81b1ac2d9a91b23b76e52423e6b0243e1ab0b61735b3"
+      ]
+    ],
+    "binarySha256": "4cb806cc6afbf77793d239716c54f89d65565e9ffe47a8bfb5421ad3dd53f2ea"
+  },
+  {
+    "name": "64-31-2048-dense-reused-149",
+    "command": "taskset",
+    "args": [
+      "-c",
+      "6",
+      "/home/tim/Documents/GitHub/workspace/exact-real-references/ruffini-qualification/hyper-polynomial-pilot/lifetime/binaries/release",
+      "bench",
+      "64",
+      "31",
+      "2048",
+      "dense",
+      "reused",
+      "149",
+      "0.25",
+      "6"
+    ],
+    "cap": 240000,
+    "started": "2026-09-07T00:46:06.318Z",
+    "finished": "2026-09-07T00:46:18.547Z",
+    "status": 0,
+    "error": null,
+    "signal": null,
+    "file": "stable-64-31-2048-dense-reused-149.log",
+    "sha256": "4fe4b74ceca5831c7defe341d8ee070c469c0639c3d21187a8022c21dda84c3a",
+    "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "source": [
+      [
+        "main.rs",
+        "5b76e437c07433c15dbde8575aa1fa03ac84d9f587d8120c5d5742f922f957de"
+      ],
+      [
+        "Cargo.toml",
+        "3000cee38c839964ec2b8ef853f9e53b887651a4c7f116e932b3db5124910e8c"
+      ],
+      [
+        "../main.rs",
+        "1f581e68efeaf5f99afa25f61b9467c0b364de010ad56dab999b5a7a816523d7"
+      ],
+      [
+        "../baseline.rs",
+        "a70fe73900071228accf81b1ac2d9a91b23b76e52423e6b0243e1ab0b61735b3"
+      ]
+    ],
+    "binarySha256": "4cb806cc6afbf77793d239716c54f89d65565e9ffe47a8bfb5421ad3dd53f2ea"
+  },
+  {
+    "name": "16-16-32-dense-fresh-163",
+    "command": "taskset",
+    "args": [
+      "-c",
+      "6",
+      "/home/tim/Documents/GitHub/workspace/exact-real-references/ruffini-qualification/hyper-polynomial-pilot/lifetime/binaries/release",
+      "bench",
+      "16",
+      "16",
+      "32",
+      "dense",
+      "fresh",
+      "163",
+      "0.25",
+      "6"
+    ],
+    "cap": 240000,
+    "started": "2026-09-07T00:46:18.550Z",
+    "finished": "2026-09-07T00:46:32.491Z",
+    "status": 0,
+    "error": null,
+    "signal": null,
+    "file": "stable-16-16-32-dense-fresh-163.log",
+    "sha256": "727c67907101731264688d1488a7c137fbc371ce9e498ca9d71781ff785e7ba7",
+    "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "source": [
+      [
+        "main.rs",
+        "5b76e437c07433c15dbde8575aa1fa03ac84d9f587d8120c5d5742f922f957de"
+      ],
+      [
+        "Cargo.toml",
+        "3000cee38c839964ec2b8ef853f9e53b887651a4c7f116e932b3db5124910e8c"
+      ],
+      [
+        "../main.rs",
+        "1f581e68efeaf5f99afa25f61b9467c0b364de010ad56dab999b5a7a816523d7"
+      ],
+      [
+        "../baseline.rs",
+        "a70fe73900071228accf81b1ac2d9a91b23b76e52423e6b0243e1ab0b61735b3"
+      ]
+    ],
+    "binarySha256": "4cb806cc6afbf77793d239716c54f89d65565e9ffe47a8bfb5421ad3dd53f2ea"
+  },
+  {
+    "name": "16-16-32-dense-reused-163",
+    "command": "taskset",
+    "args": [
+      "-c",
+      "6",
+      "/home/tim/Documents/GitHub/workspace/exact-real-references/ruffini-qualification/hyper-polynomial-pilot/lifetime/binaries/release",
+      "bench",
+      "16",
+      "16",
+      "32",
+      "dense",
+      "reused",
+      "163",
+      "0.25",
+      "6"
+    ],
+    "cap": 240000,
+    "started": "2026-09-07T00:46:32.494Z",
+    "finished": "2026-09-07T00:46:48.779Z",
+    "status": 0,
+    "error": null,
+    "signal": null,
+    "file": "stable-16-16-32-dense-reused-163.log",
+    "sha256": "9124c65dfa08c627fa811e4c509c93e2f09d5fa4295e57041f90f5226b24ec2c",
+    "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "source": [
+      [
+        "main.rs",
+        "5b76e437c07433c15dbde8575aa1fa03ac84d9f587d8120c5d5742f922f957de"
+      ],
+      [
+        "Cargo.toml",
+        "3000cee38c839964ec2b8ef853f9e53b887651a4c7f116e932b3db5124910e8c"
+      ],
+      [
+        "../main.rs",
+        "1f581e68efeaf5f99afa25f61b9467c0b364de010ad56dab999b5a7a816523d7"
+      ],
+      [
+        "../baseline.rs",
+        "a70fe73900071228accf81b1ac2d9a91b23b76e52423e6b0243e1ab0b61735b3"
+      ]
+    ],
+    "binarySha256": "4cb806cc6afbf77793d239716c54f89d65565e9ffe47a8bfb5421ad3dd53f2ea"
+  },
+  {
+    "name": "32-32-512-dense-fresh-163",
+    "command": "taskset",
+    "args": [
+      "-c",
+      "6",
+      "/home/tim/Documents/GitHub/workspace/exact-real-references/ruffini-qualification/hyper-polynomial-pilot/lifetime/binaries/release",
+      "bench",
+      "32",
+      "32",
+      "512",
+      "dense",
+      "fresh",
+      "163",
+      "0.25",
+      "6"
+    ],
+    "cap": 240000,
+    "started": "2026-09-07T00:46:48.782Z",
+    "finished": "2026-09-07T00:47:04.174Z",
+    "status": 0,
+    "error": null,
+    "signal": null,
+    "file": "stable-32-32-512-dense-fresh-163.log",
+    "sha256": "805b0afead9709c08a5cb0e27d4e07351bec94a4904f9581114b0c2e4f9724f6",
+    "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "source": [
+      [
+        "main.rs",
+        "5b76e437c07433c15dbde8575aa1fa03ac84d9f587d8120c5d5742f922f957de"
+      ],
+      [
+        "Cargo.toml",
+        "3000cee38c839964ec2b8ef853f9e53b887651a4c7f116e932b3db5124910e8c"
+      ],
+      [
+        "../main.rs",
+        "1f581e68efeaf5f99afa25f61b9467c0b364de010ad56dab999b5a7a816523d7"
+      ],
+      [
+        "../baseline.rs",
+        "a70fe73900071228accf81b1ac2d9a91b23b76e52423e6b0243e1ab0b61735b3"
+      ]
+    ],
+    "binarySha256": "4cb806cc6afbf77793d239716c54f89d65565e9ffe47a8bfb5421ad3dd53f2ea"
+  },
+  {
+    "name": "32-32-512-dense-reused-163",
+    "command": "taskset",
+    "args": [
+      "-c",
+      "6",
+      "/home/tim/Documents/GitHub/workspace/exact-real-references/ruffini-qualification/hyper-polynomial-pilot/lifetime/binaries/release",
+      "bench",
+      "32",
+      "32",
+      "512",
+      "dense",
+      "reused",
+      "163",
+      "0.25",
+      "6"
+    ],
+    "cap": 240000,
+    "started": "2026-09-07T00:47:04.177Z",
+    "finished": "2026-09-07T00:47:19.392Z",
+    "status": 0,
+    "error": null,
+    "signal": null,
+    "file": "stable-32-32-512-dense-reused-163.log",
+    "sha256": "89ccbf31ed58ac8d4be0ec3509a57859651960de7d3c954f4c0f99eca1e58ed9",
+    "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "source": [
+      [
+        "main.rs",
+        "5b76e437c07433c15dbde8575aa1fa03ac84d9f587d8120c5d5742f922f957de"
+      ],
+      [
+        "Cargo.toml",
+        "3000cee38c839964ec2b8ef853f9e53b887651a4c7f116e932b3db5124910e8c"
+      ],
+      [
+        "../main.rs",
+        "1f581e68efeaf5f99afa25f61b9467c0b364de010ad56dab999b5a7a816523d7"
+      ],
+      [
+        "../baseline.rs",
+        "a70fe73900071228accf81b1ac2d9a91b23b76e52423e6b0243e1ab0b61735b3"
+      ]
+    ],
+    "binarySha256": "4cb806cc6afbf77793d239716c54f89d65565e9ffe47a8bfb5421ad3dd53f2ea"
+  },
+  {
+    "name": "64-64-32-dense-fresh-163",
+    "command": "taskset",
+    "args": [
+      "-c",
+      "6",
+      "/home/tim/Documents/GitHub/workspace/exact-real-references/ruffini-qualification/hyper-polynomial-pilot/lifetime/binaries/release",
+      "bench",
+      "64",
+      "64",
+      "32",
+      "dense",
+      "fresh",
+      "163",
+      "0.25",
+      "6"
+    ],
+    "cap": 240000,
+    "started": "2026-09-07T00:47:19.395Z",
+    "finished": "2026-09-07T00:47:33.445Z",
+    "status": 0,
+    "error": null,
+    "signal": null,
+    "file": "stable-64-64-32-dense-fresh-163.log",
+    "sha256": "f41e28d4a1706d96b47960a61151e5c0a6a7a9d33e6902166f0da98fdbe9098b",
+    "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "source": [
+      [
+        "main.rs",
+        "5b76e437c07433c15dbde8575aa1fa03ac84d9f587d8120c5d5742f922f957de"
+      ],
+      [
+        "Cargo.toml",
+        "3000cee38c839964ec2b8ef853f9e53b887651a4c7f116e932b3db5124910e8c"
+      ],
+      [
+        "../main.rs",
+        "1f581e68efeaf5f99afa25f61b9467c0b364de010ad56dab999b5a7a816523d7"
+      ],
+      [
+        "../baseline.rs",
+        "a70fe73900071228accf81b1ac2d9a91b23b76e52423e6b0243e1ab0b61735b3"
+      ]
+    ],
+    "binarySha256": "4cb806cc6afbf77793d239716c54f89d65565e9ffe47a8bfb5421ad3dd53f2ea"
+  },
+  {
+    "name": "64-64-32-dense-reused-163",
+    "command": "taskset",
+    "args": [
+      "-c",
+      "6",
+      "/home/tim/Documents/GitHub/workspace/exact-real-references/ruffini-qualification/hyper-polynomial-pilot/lifetime/binaries/release",
+      "bench",
+      "64",
+      "64",
+      "32",
+      "dense",
+      "reused",
+      "163",
+      "0.25",
+      "6"
+    ],
+    "cap": 240000,
+    "started": "2026-09-07T00:47:33.448Z",
+    "finished": "2026-09-07T00:47:48.038Z",
+    "status": 0,
+    "error": null,
+    "signal": null,
+    "file": "stable-64-64-32-dense-reused-163.log",
+    "sha256": "b2a9f00cdd0b59dc65eed69965e1a910bdf48f9561d261d9b4c3ffd41ee8a2bb",
+    "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "source": [
+      [
+        "main.rs",
+        "5b76e437c07433c15dbde8575aa1fa03ac84d9f587d8120c5d5742f922f957de"
+      ],
+      [
+        "Cargo.toml",
+        "3000cee38c839964ec2b8ef853f9e53b887651a4c7f116e932b3db5124910e8c"
+      ],
+      [
+        "../main.rs",
+        "1f581e68efeaf5f99afa25f61b9467c0b364de010ad56dab999b5a7a816523d7"
+      ],
+      [
+        "../baseline.rs",
+        "a70fe73900071228accf81b1ac2d9a91b23b76e52423e6b0243e1ab0b61735b3"
+      ]
+    ],
+    "binarySha256": "4cb806cc6afbf77793d239716c54f89d65565e9ffe47a8bfb5421ad3dd53f2ea"
+  },
+  {
+    "name": "64-64-2048-dense-fresh-163",
+    "command": "taskset",
+    "args": [
+      "-c",
+      "6",
+      "/home/tim/Documents/GitHub/workspace/exact-real-references/ruffini-qualification/hyper-polynomial-pilot/lifetime/binaries/release",
+      "bench",
+      "64",
+      "64",
+      "2048",
+      "dense",
+      "fresh",
+      "163",
+      "0.25",
+      "6"
+    ],
+    "cap": 240000,
+    "started": "2026-09-07T00:47:48.042Z",
+    "finished": "2026-09-07T00:48:03.443Z",
+    "status": 0,
+    "error": null,
+    "signal": null,
+    "file": "stable-64-64-2048-dense-fresh-163.log",
+    "sha256": "c8e5c05a4a85a808c6353110368070e55d309383d4244b2d9465ca9c311bb94e",
+    "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "source": [
+      [
+        "main.rs",
+        "5b76e437c07433c15dbde8575aa1fa03ac84d9f587d8120c5d5742f922f957de"
+      ],
+      [
+        "Cargo.toml",
+        "3000cee38c839964ec2b8ef853f9e53b887651a4c7f116e932b3db5124910e8c"
+      ],
+      [
+        "../main.rs",
+        "1f581e68efeaf5f99afa25f61b9467c0b364de010ad56dab999b5a7a816523d7"
+      ],
+      [
+        "../baseline.rs",
+        "a70fe73900071228accf81b1ac2d9a91b23b76e52423e6b0243e1ab0b61735b3"
+      ]
+    ],
+    "binarySha256": "4cb806cc6afbf77793d239716c54f89d65565e9ffe47a8bfb5421ad3dd53f2ea"
+  },
+  {
+    "name": "64-64-2048-dense-reused-163",
+    "command": "taskset",
+    "args": [
+      "-c",
+      "6",
+      "/home/tim/Documents/GitHub/workspace/exact-real-references/ruffini-qualification/hyper-polynomial-pilot/lifetime/binaries/release",
+      "bench",
+      "64",
+      "64",
+      "2048",
+      "dense",
+      "reused",
+      "163",
+      "0.25",
+      "6"
+    ],
+    "cap": 240000,
+    "started": "2026-09-07T00:48:03.446Z",
+    "finished": "2026-09-07T00:48:16.987Z",
+    "status": 0,
+    "error": null,
+    "signal": null,
+    "file": "stable-64-64-2048-dense-reused-163.log",
+    "sha256": "4fccd07ba5c678857006e6bd9e6b15a7f07cdbab3d9e0735fb390d527ce72c7d",
+    "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "source": [
+      [
+        "main.rs",
+        "5b76e437c07433c15dbde8575aa1fa03ac84d9f587d8120c5d5742f922f957de"
+      ],
+      [
+        "Cargo.toml",
+        "3000cee38c839964ec2b8ef853f9e53b887651a4c7f116e932b3db5124910e8c"
+      ],
+      [
+        "../main.rs",
+        "1f581e68efeaf5f99afa25f61b9467c0b364de010ad56dab999b5a7a816523d7"
+      ],
+      [
+        "../baseline.rs",
+        "a70fe73900071228accf81b1ac2d9a91b23b76e52423e6b0243e1ab0b61735b3"
+      ]
+    ],
+    "binarySha256": "4cb806cc6afbf77793d239716c54f89d65565e9ffe47a8bfb5421ad3dd53f2ea"
+  },
+  {
+    "name": "128-128-2048-dense-fresh-163",
+    "command": "taskset",
+    "args": [
+      "-c",
+      "6",
+      "/home/tim/Documents/GitHub/workspace/exact-real-references/ruffini-qualification/hyper-polynomial-pilot/lifetime/binaries/release",
+      "bench",
+      "128",
+      "128",
+      "2048",
+      "dense",
+      "fresh",
+      "163",
+      "0.25",
+      "6"
+    ],
+    "cap": 240000,
+    "started": "2026-09-07T00:48:16.990Z",
+    "finished": "2026-09-07T00:48:33.980Z",
+    "status": 0,
+    "error": null,
+    "signal": null,
+    "file": "stable-128-128-2048-dense-fresh-163.log",
+    "sha256": "d29ddd9775027c84a80c347fdea83f6b3e04b950f7ce608ad8295ad32016aa37",
+    "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "source": [
+      [
+        "main.rs",
+        "5b76e437c07433c15dbde8575aa1fa03ac84d9f587d8120c5d5742f922f957de"
+      ],
+      [
+        "Cargo.toml",
+        "3000cee38c839964ec2b8ef853f9e53b887651a4c7f116e932b3db5124910e8c"
+      ],
+      [
+        "../main.rs",
+        "1f581e68efeaf5f99afa25f61b9467c0b364de010ad56dab999b5a7a816523d7"
+      ],
+      [
+        "../baseline.rs",
+        "a70fe73900071228accf81b1ac2d9a91b23b76e52423e6b0243e1ab0b61735b3"
+      ]
+    ],
+    "binarySha256": "4cb806cc6afbf77793d239716c54f89d65565e9ffe47a8bfb5421ad3dd53f2ea"
+  },
+  {
+    "name": "128-128-2048-dense-reused-163",
+    "command": "taskset",
+    "args": [
+      "-c",
+      "6",
+      "/home/tim/Documents/GitHub/workspace/exact-real-references/ruffini-qualification/hyper-polynomial-pilot/lifetime/binaries/release",
+      "bench",
+      "128",
+      "128",
+      "2048",
+      "dense",
+      "reused",
+      "163",
+      "0.25",
+      "6"
+    ],
+    "cap": 240000,
+    "started": "2026-09-07T00:48:33.983Z",
+    "finished": "2026-09-07T00:48:51.137Z",
+    "status": 0,
+    "error": null,
+    "signal": null,
+    "file": "stable-128-128-2048-dense-reused-163.log",
+    "sha256": "262fed947c663dab567d86d0e034a35e38762cdbe37609a3b0f6f066e5a6bcf0",
+    "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "source": [
+      [
+        "main.rs",
+        "5b76e437c07433c15dbde8575aa1fa03ac84d9f587d8120c5d5742f922f957de"
+      ],
+      [
+        "Cargo.toml",
+        "3000cee38c839964ec2b8ef853f9e53b887651a4c7f116e932b3db5124910e8c"
+      ],
+      [
+        "../main.rs",
+        "1f581e68efeaf5f99afa25f61b9467c0b364de010ad56dab999b5a7a816523d7"
+      ],
+      [
+        "../baseline.rs",
+        "a70fe73900071228accf81b1ac2d9a91b23b76e52423e6b0243e1ab0b61735b3"
+      ]
+    ],
+    "binarySha256": "4cb806cc6afbf77793d239716c54f89d65565e9ffe47a8bfb5421ad3dd53f2ea"
+  },
+  {
+    "name": "64-64-2048-sparse-fresh-163",
+    "command": "taskset",
+    "args": [
+      "-c",
+      "6",
+      "/home/tim/Documents/GitHub/workspace/exact-real-references/ruffini-qualification/hyper-polynomial-pilot/lifetime/binaries/release",
+      "bench",
+      "64",
+      "64",
+      "2048",
+      "sparse",
+      "fresh",
+      "163",
+      "0.25",
+      "6"
+    ],
+    "cap": 240000,
+    "started": "2026-09-07T00:48:51.141Z",
+    "finished": "2026-09-07T00:49:06.481Z",
+    "status": 0,
+    "error": null,
+    "signal": null,
+    "file": "stable-64-64-2048-sparse-fresh-163.log",
+    "sha256": "0a3a482d3dd2c51a5db3d64d7381a35b3fdf6c06f25d0f80ef8731a4a4f301a3",
+    "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "source": [
+      [
+        "main.rs",
+        "5b76e437c07433c15dbde8575aa1fa03ac84d9f587d8120c5d5742f922f957de"
+      ],
+      [
+        "Cargo.toml",
+        "3000cee38c839964ec2b8ef853f9e53b887651a4c7f116e932b3db5124910e8c"
+      ],
+      [
+        "../main.rs",
+        "1f581e68efeaf5f99afa25f61b9467c0b364de010ad56dab999b5a7a816523d7"
+      ],
+      [
+        "../baseline.rs",
+        "a70fe73900071228accf81b1ac2d9a91b23b76e52423e6b0243e1ab0b61735b3"
+      ]
+    ],
+    "binarySha256": "4cb806cc6afbf77793d239716c54f89d65565e9ffe47a8bfb5421ad3dd53f2ea"
+  },
+  {
+    "name": "64-64-2048-sparse-reused-163",
+    "command": "taskset",
+    "args": [
+      "-c",
+      "6",
+      "/home/tim/Documents/GitHub/workspace/exact-real-references/ruffini-qualification/hyper-polynomial-pilot/lifetime/binaries/release",
+      "bench",
+      "64",
+      "64",
+      "2048",
+      "sparse",
+      "reused",
+      "163",
+      "0.25",
+      "6"
+    ],
+    "cap": 240000,
+    "started": "2026-09-07T00:49:06.484Z",
+    "finished": "2026-09-07T00:49:23.845Z",
+    "status": 0,
+    "error": null,
+    "signal": null,
+    "file": "stable-64-64-2048-sparse-reused-163.log",
+    "sha256": "65001f89ac4f69907f6146eb48aaa7db5d97c5eb7c55bf75d56cad192a37ff73",
+    "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "source": [
+      [
+        "main.rs",
+        "5b76e437c07433c15dbde8575aa1fa03ac84d9f587d8120c5d5742f922f957de"
+      ],
+      [
+        "Cargo.toml",
+        "3000cee38c839964ec2b8ef853f9e53b887651a4c7f116e932b3db5124910e8c"
+      ],
+      [
+        "../main.rs",
+        "1f581e68efeaf5f99afa25f61b9467c0b364de010ad56dab999b5a7a816523d7"
+      ],
+      [
+        "../baseline.rs",
+        "a70fe73900071228accf81b1ac2d9a91b23b76e52423e6b0243e1ab0b61735b3"
+      ]
+    ],
+    "binarySha256": "4cb806cc6afbf77793d239716c54f89d65565e9ffe47a8bfb5421ad3dd53f2ea"
+  },
+  {
+    "name": "64-64-2048-fraction-fresh-163",
+    "command": "taskset",
+    "args": [
+      "-c",
+      "6",
+      "/home/tim/Documents/GitHub/workspace/exact-real-references/ruffini-qualification/hyper-polynomial-pilot/lifetime/binaries/release",
+      "bench",
+      "64",
+      "64",
+      "2048",
+      "fraction",
+      "fresh",
+      "163",
+      "0.25",
+      "6"
+    ],
+    "cap": 240000,
+    "started": "2026-09-07T00:49:23.848Z",
+    "finished": "2026-09-07T00:49:38.162Z",
+    "status": 0,
+    "error": null,
+    "signal": null,
+    "file": "stable-64-64-2048-fraction-fresh-163.log",
+    "sha256": "d58f3991d943cc64a6160c259d0759a4a45c6589816c051570b19d930c378190",
+    "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "source": [
+      [
+        "main.rs",
+        "5b76e437c07433c15dbde8575aa1fa03ac84d9f587d8120c5d5742f922f957de"
+      ],
+      [
+        "Cargo.toml",
+        "3000cee38c839964ec2b8ef853f9e53b887651a4c7f116e932b3db5124910e8c"
+      ],
+      [
+        "../main.rs",
+        "1f581e68efeaf5f99afa25f61b9467c0b364de010ad56dab999b5a7a816523d7"
+      ],
+      [
+        "../baseline.rs",
+        "a70fe73900071228accf81b1ac2d9a91b23b76e52423e6b0243e1ab0b61735b3"
+      ]
+    ],
+    "binarySha256": "4cb806cc6afbf77793d239716c54f89d65565e9ffe47a8bfb5421ad3dd53f2ea"
+  },
+  {
+    "name": "64-64-2048-fraction-reused-163",
+    "command": "taskset",
+    "args": [
+      "-c",
+      "6",
+      "/home/tim/Documents/GitHub/workspace/exact-real-references/ruffini-qualification/hyper-polynomial-pilot/lifetime/binaries/release",
+      "bench",
+      "64",
+      "64",
+      "2048",
+      "fraction",
+      "reused",
+      "163",
+      "0.25",
+      "6"
+    ],
+    "cap": 240000,
+    "started": "2026-09-07T00:49:38.165Z",
+    "finished": "2026-09-07T00:49:52.960Z",
+    "status": 0,
+    "error": null,
+    "signal": null,
+    "file": "stable-64-64-2048-fraction-reused-163.log",
+    "sha256": "1f18a3333c20ef65d65d45106d3ab3e0474beda327b8e096c674c4c4ede2b2cb",
+    "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "source": [
+      [
+        "main.rs",
+        "5b76e437c07433c15dbde8575aa1fa03ac84d9f587d8120c5d5742f922f957de"
+      ],
+      [
+        "Cargo.toml",
+        "3000cee38c839964ec2b8ef853f9e53b887651a4c7f116e932b3db5124910e8c"
+      ],
+      [
+        "../main.rs",
+        "1f581e68efeaf5f99afa25f61b9467c0b364de010ad56dab999b5a7a816523d7"
+      ],
+      [
+        "../baseline.rs",
+        "a70fe73900071228accf81b1ac2d9a91b23b76e52423e6b0243e1ab0b61735b3"
+      ]
+    ],
+    "binarySha256": "4cb806cc6afbf77793d239716c54f89d65565e9ffe47a8bfb5421ad3dd53f2ea"
+  },
+  {
+    "name": "64-33-2048-dense-fresh-163",
+    "command": "taskset",
+    "args": [
+      "-c",
+      "6",
+      "/home/tim/Documents/GitHub/workspace/exact-real-references/ruffini-qualification/hyper-polynomial-pilot/lifetime/binaries/release",
+      "bench",
+      "64",
+      "33",
+      "2048",
+      "dense",
+      "fresh",
+      "163",
+      "0.25",
+      "6"
+    ],
+    "cap": 240000,
+    "started": "2026-09-07T00:49:52.963Z",
+    "finished": "2026-09-07T00:50:05.856Z",
+    "status": 0,
+    "error": null,
+    "signal": null,
+    "file": "stable-64-33-2048-dense-fresh-163.log",
+    "sha256": "9614c0ea48117d7f3494d206f1f41b7d6b8e620d2559c72a4af6e0901415ea04",
+    "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "source": [
+      [
+        "main.rs",
+        "5b76e437c07433c15dbde8575aa1fa03ac84d9f587d8120c5d5742f922f957de"
+      ],
+      [
+        "Cargo.toml",
+        "3000cee38c839964ec2b8ef853f9e53b887651a4c7f116e932b3db5124910e8c"
+      ],
+      [
+        "../main.rs",
+        "1f581e68efeaf5f99afa25f61b9467c0b364de010ad56dab999b5a7a816523d7"
+      ],
+      [
+        "../baseline.rs",
+        "a70fe73900071228accf81b1ac2d9a91b23b76e52423e6b0243e1ab0b61735b3"
+      ]
+    ],
+    "binarySha256": "4cb806cc6afbf77793d239716c54f89d65565e9ffe47a8bfb5421ad3dd53f2ea"
+  },
+  {
+    "name": "64-33-2048-dense-reused-163",
+    "command": "taskset",
+    "args": [
+      "-c",
+      "6",
+      "/home/tim/Documents/GitHub/workspace/exact-real-references/ruffini-qualification/hyper-polynomial-pilot/lifetime/binaries/release",
+      "bench",
+      "64",
+      "33",
+      "2048",
+      "dense",
+      "reused",
+      "163",
+      "0.25",
+      "6"
+    ],
+    "cap": 240000,
+    "started": "2026-09-07T00:50:05.859Z",
+    "finished": "2026-09-07T00:50:20.885Z",
+    "status": 0,
+    "error": null,
+    "signal": null,
+    "file": "stable-64-33-2048-dense-reused-163.log",
+    "sha256": "3041d515b697b389b92405436f83c6ad3c2a21f0b68b3730731eb17c4c8270d8",
+    "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "source": [
+      [
+        "main.rs",
+        "5b76e437c07433c15dbde8575aa1fa03ac84d9f587d8120c5d5742f922f957de"
+      ],
+      [
+        "Cargo.toml",
+        "3000cee38c839964ec2b8ef853f9e53b887651a4c7f116e932b3db5124910e8c"
+      ],
+      [
+        "../main.rs",
+        "1f581e68efeaf5f99afa25f61b9467c0b364de010ad56dab999b5a7a816523d7"
+      ],
+      [
+        "../baseline.rs",
+        "a70fe73900071228accf81b1ac2d9a91b23b76e52423e6b0243e1ab0b61735b3"
+      ]
+    ],
+    "binarySha256": "4cb806cc6afbf77793d239716c54f89d65565e9ffe47a8bfb5421ad3dd53f2ea"
+  },
+  {
+    "name": "64-1-2048-dense-fresh-163",
+    "command": "taskset",
+    "args": [
+      "-c",
+      "6",
+      "/home/tim/Documents/GitHub/workspace/exact-real-references/ruffini-qualification/hyper-polynomial-pilot/lifetime/binaries/release",
+      "bench",
+      "64",
+      "1",
+      "2048",
+      "dense",
+      "fresh",
+      "163",
+      "0.25",
+      "6"
+    ],
+    "cap": 240000,
+    "started": "2026-09-07T00:50:20.887Z",
+    "finished": "2026-09-07T00:50:35.326Z",
+    "status": 0,
+    "error": null,
+    "signal": null,
+    "file": "stable-64-1-2048-dense-fresh-163.log",
+    "sha256": "6012df63d3c4a7c36697535368f4dfeb6dcb3f757a50b76245aec7eaf389aa3f",
+    "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "source": [
+      [
+        "main.rs",
+        "5b76e437c07433c15dbde8575aa1fa03ac84d9f587d8120c5d5742f922f957de"
+      ],
+      [
+        "Cargo.toml",
+        "3000cee38c839964ec2b8ef853f9e53b887651a4c7f116e932b3db5124910e8c"
+      ],
+      [
+        "../main.rs",
+        "1f581e68efeaf5f99afa25f61b9467c0b364de010ad56dab999b5a7a816523d7"
+      ],
+      [
+        "../baseline.rs",
+        "a70fe73900071228accf81b1ac2d9a91b23b76e52423e6b0243e1ab0b61735b3"
+      ]
+    ],
+    "binarySha256": "4cb806cc6afbf77793d239716c54f89d65565e9ffe47a8bfb5421ad3dd53f2ea"
+  },
+  {
+    "name": "64-1-2048-dense-reused-163",
+    "command": "taskset",
+    "args": [
+      "-c",
+      "6",
+      "/home/tim/Documents/GitHub/workspace/exact-real-references/ruffini-qualification/hyper-polynomial-pilot/lifetime/binaries/release",
+      "bench",
+      "64",
+      "1",
+      "2048",
+      "dense",
+      "reused",
+      "163",
+      "0.25",
+      "6"
+    ],
+    "cap": 240000,
+    "started": "2026-09-07T00:50:35.329Z",
+    "finished": "2026-09-07T00:50:47.686Z",
+    "status": 0,
+    "error": null,
+    "signal": null,
+    "file": "stable-64-1-2048-dense-reused-163.log",
+    "sha256": "3fb510bb605c4e6b1dd6cd3fffd5aa333b8c3f01f1915becc947f7f06ee06f25",
+    "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "source": [
+      [
+        "main.rs",
+        "5b76e437c07433c15dbde8575aa1fa03ac84d9f587d8120c5d5742f922f957de"
+      ],
+      [
+        "Cargo.toml",
+        "3000cee38c839964ec2b8ef853f9e53b887651a4c7f116e932b3db5124910e8c"
+      ],
+      [
+        "../main.rs",
+        "1f581e68efeaf5f99afa25f61b9467c0b364de010ad56dab999b5a7a816523d7"
+      ],
+      [
+        "../baseline.rs",
+        "a70fe73900071228accf81b1ac2d9a91b23b76e52423e6b0243e1ab0b61735b3"
+      ]
+    ],
+    "binarySha256": "4cb806cc6afbf77793d239716c54f89d65565e9ffe47a8bfb5421ad3dd53f2ea"
+  },
+  {
+    "name": "64-31-2048-dense-fresh-163",
+    "command": "taskset",
+    "args": [
+      "-c",
+      "6",
+      "/home/tim/Documents/GitHub/workspace/exact-real-references/ruffini-qualification/hyper-polynomial-pilot/lifetime/binaries/release",
+      "bench",
+      "64",
+      "31",
+      "2048",
+      "dense",
+      "fresh",
+      "163",
+      "0.25",
+      "6"
+    ],
+    "cap": 240000,
+    "started": "2026-09-07T00:50:47.689Z",
+    "finished": "2026-09-07T00:51:02.445Z",
+    "status": 0,
+    "error": null,
+    "signal": null,
+    "file": "stable-64-31-2048-dense-fresh-163.log",
+    "sha256": "a5b6195d4227b7e352815d3bc68fa134aaf312c84f5f57c8c128ae4a3f2f2fc4",
+    "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "source": [
+      [
+        "main.rs",
+        "5b76e437c07433c15dbde8575aa1fa03ac84d9f587d8120c5d5742f922f957de"
+      ],
+      [
+        "Cargo.toml",
+        "3000cee38c839964ec2b8ef853f9e53b887651a4c7f116e932b3db5124910e8c"
+      ],
+      [
+        "../main.rs",
+        "1f581e68efeaf5f99afa25f61b9467c0b364de010ad56dab999b5a7a816523d7"
+      ],
+      [
+        "../baseline.rs",
+        "a70fe73900071228accf81b1ac2d9a91b23b76e52423e6b0243e1ab0b61735b3"
+      ]
+    ],
+    "binarySha256": "4cb806cc6afbf77793d239716c54f89d65565e9ffe47a8bfb5421ad3dd53f2ea"
+  },
+  {
+    "name": "64-31-2048-dense-reused-163",
+    "command": "taskset",
+    "args": [
+      "-c",
+      "6",
+      "/home/tim/Documents/GitHub/workspace/exact-real-references/ruffini-qualification/hyper-polynomial-pilot/lifetime/binaries/release",
+      "bench",
+      "64",
+      "31",
+      "2048",
+      "dense",
+      "reused",
+      "163",
+      "0.25",
+      "6"
+    ],
+    "cap": 240000,
+    "started": "2026-09-07T00:51:02.447Z",
+    "finished": "2026-09-07T00:51:14.530Z",
+    "status": 0,
+    "error": null,
+    "signal": null,
+    "file": "stable-64-31-2048-dense-reused-163.log",
+    "sha256": "0a39ef61f2f44e4808e9ce5bf7020a57318c9b1badea6cca6548c69472a27fd6",
+    "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "source": [
+      [
+        "main.rs",
+        "5b76e437c07433c15dbde8575aa1fa03ac84d9f587d8120c5d5742f922f957de"
+      ],
+      [
+        "Cargo.toml",
+        "3000cee38c839964ec2b8ef853f9e53b887651a4c7f116e932b3db5124910e8c"
+      ],
+      [
+        "../main.rs",
+        "1f581e68efeaf5f99afa25f61b9467c0b364de010ad56dab999b5a7a816523d7"
+      ],
+      [
+        "../baseline.rs",
+        "a70fe73900071228accf81b1ac2d9a91b23b76e52423e6b0243e1ab0b61735b3"
+      ]
+    ],
+    "binarySha256": "4cb806cc6afbf77793d239716c54f89d65565e9ffe47a8bfb5421ad3dd53f2ea"
+  }
+]

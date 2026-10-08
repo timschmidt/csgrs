@@ -1,0 +1,14 @@
+{
+  "primaryReportVisualPages": 133,
+  "exactRationalEnclosureSelfChecks": 39,
+  "independentIntegerTableChecks": 30,
+  "mpfrTableChecks": 10,
+  "badicCounterexamples": 36,
+  "hyperHistoricalBinaryChecks": 4,
+  "limitations": [
+    "Only the printed correct-result column is qualified; historical single/double runs and timings are not reproduced.",
+    "The existing late_oracle binary predates the Display fix; its approximation-only check is not a fresh production-build qualification.",
+    "Visual read credit is recorded by the human-readable ledger; this validator checks consistency and numerical fixtures, not whether pages were read.",
+    "No new performance benchmark or Hyper production change is introduced."
+  ]
+}

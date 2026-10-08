@@ -1,0 +1,26 @@
+{
+  "returncode": 0,
+  "elapsed_seconds": 1.014967223003623,
+  "normal_library_sha256": "7684d1d8d9b163dfd91c7cea3d696b720e330a58f20eb13607588cc82aa3dea9",
+  "log": "native-rational-publication-analytic-probe.log",
+  "source": "analytic-common-dispatch-completed.rs",
+  "command": [
+    "rustc",
+    "--edition=2024",
+    "-O",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/analytic-common-dispatch-completed.rs",
+    "--extern",
+    "hypercurve=/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/libhypercurve-2c7ff6f3fbe07653.rlib",
+    "-L",
+    "dependency=/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps",
+    "-o",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/native-rational-publication-analytic-probe"
+  ],
+  "source_sha256": "435ca28d063a5d18fc1e613c263adb8c759297294a2b10300a4814b7859c5a44",
+  "executable_sha256": "66bd57c5f4b4dc9ed7d90d26179794201c3c74c96875fed8b90c26f3b103616b",
+  "counts": {
+    "completed_common_queries": 12,
+    "point_replays": 32,
+    "lower_kernels_complete": true
+  }
+}

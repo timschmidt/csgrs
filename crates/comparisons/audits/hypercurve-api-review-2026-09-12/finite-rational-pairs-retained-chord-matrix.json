@@ -1,0 +1,26 @@
+{
+  "returncode": 0,
+  "elapsed_seconds": 0.03166582100675441,
+  "normal_library_sha256": "4f31e2ad099d11b75a71df9f3c58671aa71af68816db9260c69ae286f65e7add",
+  "log": "finite-rational-pairs-retained-chord-matrix.log",
+  "source": "finite-domain-chord-matrix.rs",
+  "command": [
+    "rustc",
+    "--edition=2024",
+    "-O",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-domain-chord-matrix.rs",
+    "--extern",
+    "hypercurve=/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/libhypercurve-2c7ff6f3fbe07653.rlib",
+    "-L",
+    "dependency=/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps",
+    "-o",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-rational-pairs-retained-chord-matrix"
+  ],
+  "source_sha256": "4e86f5ef8ff09819960f7b93a635dac2180830329d506dae7f14cbddb887a840",
+  "executable_sha256": "d4ba283d1eaa4c5a5362e04a511d5a6ab5f86802adf435bba32ab452f2901b2d",
+  "counts": {
+    "queries": 144,
+    "point_replays": 480,
+    "restrictions": 16
+  }
+}

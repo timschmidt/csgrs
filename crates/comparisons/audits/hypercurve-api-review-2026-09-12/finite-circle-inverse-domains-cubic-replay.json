@@ -1,0 +1,29 @@
+{
+  "returncode": 0,
+  "elapsed_seconds": 1.0652113929972984,
+  "normal_library_sha256": "4ae0b00c4bf9f0a4ee9000958e1f829e194b27d588a0b848d0c353038c6ecff5",
+  "log": "finite-circle-inverse-domains-cubic-replay.log",
+  "source": "finite-domain-chord-cubic-replay.rs",
+  "command": [
+    "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustc",
+    "--edition=2024",
+    "-O",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-domain-chord-cubic-replay.rs",
+    "--extern",
+    "hypercurve=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypercurve-96f69e9a655f1fb5.rlib",
+    "-L",
+    "dependency=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps",
+    "-o",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-circle-inverse-domains-cubic-replay"
+  ],
+  "run_command": [
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-circle-inverse-domains-cubic-replay"
+  ],
+  "source_sha256": "883ea6bc0007433637ee9f49c1c4e5ace7731f236e56789a82fec053fde7d508",
+  "executable_sha256": "db178a4fd436be93f2eeb0e7e79c4b97de660804aca42ae60bed638ab4724c06",
+  "counts": {
+    "queries": 44,
+    "point_replays": 16,
+    "splits": 4
+  }
+}

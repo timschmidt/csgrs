@@ -1,0 +1,67 @@
+{
+  "PAIR_UNCERTAIN:2380": {
+    "file": "src/curve_region_boolean.rs",
+    "line": 2380,
+    "context": "se| self.invalid(chord_index, cause))?;\n        let blocker = |reason| RegionPairResult {\n            contacts: Vec::new(),\n            overlaps: Vec::new(),\n            blockers: vec![RegionPairBlocker::Uncertain(reason)],\n        };\n        let chord_parameter = |point: &crate::Point2| match chord\n           "
+  },
+  "PAIR_UNCERTAIN:2851": {
+    "file": "src/curve_region_boolean.rs",
+    "line": 2851,
+    "context": "in(reason) => {\n                return Ok(Some(RegionPairResult {\n                    contacts: Vec::new(),\n                    overlaps: Vec::new(),\n                    blockers: vec![RegionPairBlocker::Uncertain(reason)],\n                }));\n            }\n        };\n        let Some((contacts, overlaps)) = c"
+  },
+  "PAIR_UNCERTAIN:3323": {
+    "file": "src/curve_region_boolean.rs",
+    "line": 3323,
+    "context": "t);\n        }\n        {\n            let blocker = |reason| RegionPairResult {\n                contacts: Vec::new(),\n                overlaps: Vec::new(),\n                blockers: vec![RegionPairBlocker::Uncertain(reason)],\n            };\n            let retained = chord\n                .parallel_intersections_"
+  },
+  "PAIR_UNCERTAIN:3371": {
+    "file": "src/curve_region_boolean.rs",
+    "line": 3371,
+    "context": "llel_index == pair.first_carrier_index;\n        let blocker = |reason| RegionPairResult {\n            contacts: Vec::new(),\n            overlaps: Vec::new(),\n            blockers: vec![RegionPairBlocker::Uncertain(reason)],\n        };\n        let chord_parameter = |point: CurvePoint2| match chord\n            .p"
+  },
+  "PAIR_UNCERTAIN:3564": {
+    "file": "src/curve_region_boolean.rs",
+    "line": 3564,
+    "context": "-> ExactCurveResult<RegionPairResult> {\n        let blocker = |reason| RegionPairResult {\n            contacts: Vec::new(),\n            overlaps: Vec::new(),\n            blockers: vec![RegionPairBlocker::Uncertain(reason)],\n        };\n        let parallel_carrier = &self.data.carriers[parallel_index];\n        l"
+  },
+  "PAIR_UNCERTAIN:3909": {
+    "file": "src/curve_region_boolean.rs",
+    "line": 3909,
+    "context": "certain(reason) => {\n                return Ok(RegionPairResult {\n                    contacts: Vec::new(),\n                    overlaps: Vec::new(),\n                    blockers: vec![RegionPairBlocker::Uncertain(reason)],\n                });\n            }\n        };\n        match intersections {\n            B"
+  },
+  "PAIR_UNCERTAIN:4225": {
+    "file": "src/curve_region_boolean.rs",
+    "line": 4225,
+    "context": "             return Ok(RegionPairResult {\n                            contacts: Vec::new(),\n                            overlaps: Vec::new(),\n                            blockers: vec![RegionPairBlocker::Uncertain(reason)],\n                        });\n                    }\n                };\n                let"
+  },
+  "PAIR_UNCERTAIN:4313": {
+    "file": "src/curve_region_boolean.rs",
+    "line": 4313,
+    "context": "             return Ok(RegionPairResult {\n                            contacts: Vec::new(),\n                            overlaps: Vec::new(),\n                            blockers: vec![RegionPairBlocker::Uncertain(reason)],\n                        });\n                    }\n                };\n                let"
+  },
+  "PAIR_UNCERTAIN:4586": {
+    "file": "src/curve_region_boolean.rs",
+    "line": 4586,
+    "context": " return Ok(RegionPairResult {\n                                contacts: Vec::new(),\n                                overlaps: Vec::new(),\n                                blockers: vec![RegionPairBlocker::Uncertain(reason)],\n                            });\n                        }\n                    };\n       "
+  },
+  "PAIR_UNCERTAIN:4788": {
+    "file": "src/curve_region_boolean.rs",
+    "line": 4788,
+    "context": "egionPairResult {\n                                    contacts: Vec::new(),\n                                    overlaps: Vec::new(),\n                                    blockers: vec![RegionPairBlocker::Uncertain(reason)],\n                                });\n                            }\n                      "
+  },
+  "PAIR_UNCERTAIN:5307": {
+    "file": "src/curve_region_boolean.rs",
+    "line": 5307,
+    "context": "             return Ok(RegionPairResult {\n                            contacts: Vec::new(),\n                            overlaps: Vec::new(),\n                            blockers: vec![RegionPairBlocker::Uncertain(reason)],\n                        });\n                    }\n                };\n                let"
+  },
+  "PAIR_UNCERTAIN:5349": {
+    "file": "src/curve_region_boolean.rs",
+    "line": 5349,
+    "context": " return Ok(RegionPairResult {\n                                contacts: Vec::new(),\n                                overlaps: Vec::new(),\n                                blockers: vec![RegionPairBlocker::Uncertain(reason)],\n                            });\n                        }\n                    }\n        "
+  },
+  "PAIR_UNCERTAIN:5529": {
+    "file": "src/curve_region_boolean.rs",
+    "line": 5529,
+    "context": "             return Ok(RegionPairResult {\n                            contacts: Vec::new(),\n                            overlaps: Vec::new(),\n                            blockers: vec![RegionPairBlocker::Uncertain(reason)],\n                        });\n                    }\n                };\n                let"
+  }
+}

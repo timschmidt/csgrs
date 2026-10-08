@@ -1,0 +1,13 @@
+{
+  "tag": "nfixed-bind",
+  "started": "2026-09-09T16:50:21.313Z",
+  "finished": "2026-09-09T16:50:21.853Z",
+  "elapsedSeconds": 0.5377590139999999,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "node",
+  "args": [
+    "bind-nfixed.mjs"
+  ],
+  "code": 0,
+  "signal": null
+}

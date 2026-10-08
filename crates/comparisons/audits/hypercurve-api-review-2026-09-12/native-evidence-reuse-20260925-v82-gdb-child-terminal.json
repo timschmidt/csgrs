@@ -1,0 +1,32 @@
+{
+  "command": [
+    "gdb",
+    "--nx",
+    "--nh",
+    "-batch",
+    "-iex",
+    "set debuginfod enabled off",
+    "-x",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/native-evidence-reuse-20260925-v82-gdb-stages.commands",
+    "--args",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/native-evidence-reuse-20260925-v82-candidate-hypercurve",
+    "--exact",
+    "curve_region_boolean::certified_successor_tests::algebraic_chord_analytic_parallel_pair_replays_contacts_and_overlap",
+    "--nocapture",
+    "--test-threads=1",
+    "--color",
+    "never"
+  ],
+  "pid": 768048,
+  "returncode": 0,
+  "elapsed_seconds": 0.8392792239319533,
+  "driver_sha256": "5be1705b7aadd196d729a6cbf2c2190d5abca27854dd97fce9c91112c55f2c09",
+  "commands_file": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/native-evidence-reuse-20260925-v82-gdb-stages.commands",
+  "commands_sha256": "7b6eb0dd95b1a9902e6485d4ad8e6cd3c95d7ed36cc96306f7a2bb1257f45d44",
+  "source_manifest": "native-evidence-reuse-20260925-v82-candidate-sources.json",
+  "workspace_guard": "local-chord-complete-replay-20260924-v82-sources.json",
+  "executable": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/native-evidence-reuse-20260925-v82-candidate-hypercurve",
+  "executable_sha256": "8090553310e72ba67ababb09873a6d9b0dfb224e6c2016af5c1ee00be170daf8",
+  "gdb_process_reaped": true,
+  "all_inputs_unchanged": true
+}

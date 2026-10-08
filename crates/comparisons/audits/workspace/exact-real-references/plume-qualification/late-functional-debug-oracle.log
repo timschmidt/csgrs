@@ -1,0 +1,5 @@
+quadratic-max	checks=1	failures=0
+quadratic-min	checks=4	failures=0
+reciprocal-max	checks=4	failures=0
+square-integral	checks=1	failures=0
+TOTAL functional	checks=10	failures=0

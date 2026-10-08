@@ -1,0 +1,21 @@
+{
+  "qualification": "stationary-fillet-20260927-v489-terminal.json",
+  "source_manifest": "stationary-fillet-20260927-v489-sources.json",
+  "outer_session_reaped": 95767,
+  "validated_files": 2047,
+  "selected_geometry_tests": 349,
+  "checks": 6,
+  "repos": {
+    "hypercurve": {
+      "parent": "0987b79aa72a020999a97125b2db5a15f6e32e7c",
+      "paths": {
+        "src/bezier_offset.rs": "58115939782ca91a1caff7739cd2f901fc8357276ef00b3e7e3869d5e19ea09e",
+        "src/curve.rs": "0ce0cf1c5d9657a4aaee194f88a0540fce34c2d47a95887f84631048c1e7f1d3",
+        "src/curve_fillet.rs": "d1e8411fee8d3c0bc149bb843a92eb5adb090ba996e2ccb89fb5ec369a71eec9",
+        "tests/hypercurve_stationary_fillets.rs": "7b18871c8808439308153f2315ef864631090cd6d7dcdbdc5594a275b25df210"
+      }
+    }
+  },
+  "scope": "selected regression suite; overall implementation goal remains active",
+  "performance_changes": []
+}

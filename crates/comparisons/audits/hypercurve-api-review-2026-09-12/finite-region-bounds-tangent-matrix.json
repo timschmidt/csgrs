@@ -1,0 +1,27 @@
+{
+  "returncode": 0,
+  "elapsed_seconds": 4.670372136984952,
+  "normal_library_sha256": "e202ba018058d08c8c82bec93bd0450757fd5fd6645097bea76f6108b6113aa1",
+  "log": "finite-region-bounds-tangent-matrix.log",
+  "source": "selected-circle-tangent-identity-matrix.rs",
+  "command": [
+    "rustc",
+    "--edition=2024",
+    "-O",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/selected-circle-tangent-identity-matrix.rs",
+    "--extern",
+    "hypercurve=/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/libhypercurve-2c7ff6f3fbe07653.rlib",
+    "-L",
+    "dependency=/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps",
+    "-o",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-region-bounds-tangent-matrix"
+  ],
+  "source_sha256": "005a451f7b9e9c4bd551360b7ab627d150c6ad4ed8e0794e17c059c751a6bef5",
+  "executable_sha256": "eba3be952aa97aa9a68391c23cced10380468f2b528143c37ba81d33911646d1",
+  "counts": {
+    "tangent_queries": 120,
+    "opposite_tangent_exclusions": 40,
+    "point_replays": 240,
+    "topologies": 120
+  }
+}

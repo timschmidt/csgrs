@@ -1,0 +1,6 @@
+Breakpoint 1 at 0x13096f: file src/curve_resultant.rs, line 3324.
+[Thread debugging using libthread_db enabled]
+Using host libthread_db library "/lib64/libthread_db.so.1".
+AUDIT_SQUARE_ROOT_HIT
+PASS	public-probe
+[Inferior 1 (process 1033779) exited normally]

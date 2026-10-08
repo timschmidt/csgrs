@@ -1,0 +1,4003 @@
+{
+  "schema": 2,
+  "scanned": "2026-09-11T01:54:37.994Z",
+  "root": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "initialSha256": "53c5f4223b285572dc4a5f050aa89bd19aa63521fb47271eaecfb2d685aa8138",
+  "files": [
+    {
+      "path": "arf-fused-bigint-oracle.mjs",
+      "sha256": "a2b35063397d6875b76ef4b346cb1638a4d43dd269161f7b7cf74e8858a888b2",
+      "lines": 64,
+      "matches": []
+    },
+    {
+      "path": "arf-rounding-bigint-oracle.mjs",
+      "sha256": "96c82f9cc8481b301f983f82a824764692280e46c3f8852cda8c6d96fa930789",
+      "lines": 84,
+      "matches": []
+    },
+    {
+      "path": "bind-arb-dot.mjs",
+      "sha256": "c8fb30525c1924e2676604a08b85f48ade8e6f6c2684e10744a26370bbdad07f",
+      "lines": 42,
+      "matches": []
+    },
+    {
+      "path": "bind-arf-contracts.mjs",
+      "sha256": "cdb6451994aa441fa301acc8364e2f1607ded2163ac2499f3cf3569c8e9c9491",
+      "lines": 47,
+      "matches": []
+    },
+    {
+      "path": "bind-arf-conversion.mjs",
+      "sha256": "e6a2662f677e75d2b72b91ae55c095a04e6217d7690ba17e502c518e6219c1e7",
+      "lines": 47,
+      "matches": []
+    },
+    {
+      "path": "bind-arf-fused.mjs",
+      "sha256": "e4cfa8d1e9e8ddfd388e5a74a82a86c421c4243d979026efbd451f30108b43f7",
+      "lines": 40,
+      "matches": []
+    },
+    {
+      "path": "bind-arf-rounding-v2.mjs",
+      "sha256": "95bede5d5a053d092f3a5ca5dc40883fdb5760c17ec0b11411af5eeb4b272527",
+      "lines": 25,
+      "matches": []
+    },
+    {
+      "path": "bind-arf-rounding.mjs",
+      "sha256": "01805a01428944fc16dec39d1e32b662766155e64545ffdcfbf67e8427b99998",
+      "lines": 37,
+      "matches": []
+    },
+    {
+      "path": "bind-charpoly-domain.mjs",
+      "sha256": "6ddd03ee56ba9331f0ce671afd8d2ba4c581fbd3a3cac4f191a34545ed0d9745",
+      "lines": 59,
+      "matches": []
+    },
+    {
+      "path": "bind-complex-product-v2.mjs",
+      "sha256": "ce92ee4993d9704a372c252e7f992da8d296f0ce7a9e65cd1475518803af97f3",
+      "lines": 49,
+      "matches": [
+        {
+          "line": 32,
+          "kinds": [
+            "interval"
+          ],
+          "text": " below:ss.filter(s=>s.pairedMedianBootstrap95[1]<1).length,above:ss.filter(s=>s.pairedMedianBootstrap95[0]>1).length,"
+        },
+        {
+          "line": 33,
+          "kinds": [
+            "interval"
+          ],
+          "text": " overlap:ss.filter(s=>s.pairedMedianBootstrap95[0]<=1&&s.pairedMedianBootstrap95[1]>=1).length});"
+        },
+        {
+          "line": 44,
+          "kinds": [
+            "interval"
+          ],
+          "text": " limits:'Same finite release oracle and benchmark corpus as v1; old baseline numerical/memory/trace evidence and four exact binaries are reused, while all CPU/allocation baseline measurements are fresh. No new full crate/debug/state-history/concurrency/internal-unreduced-storage/quotient timing/application-size/WASM/other-architecture qualification. Paired per-group bootstrap intervals are not multiplicity-adjusted. Source copy and dedicated executable sizes do not bound build-cache growth or RSS. Earlier failed gates remain preserved.',"
+        }
+      ]
+    },
+    {
+      "path": "bind-complex-product.mjs",
+      "sha256": "0ac04b41598ec8f61cfc71af1c25abbbab0b8f9f3015ced6dad28a3149c4a864",
+      "lines": 60,
+      "matches": []
+    },
+    {
+      "path": "bind-derivative-demand.mjs",
+      "sha256": "d561e2d3c63269b03d3ea70291e0494c4af48ab88af367aec2a14f0b9c424dd6",
+      "lines": 52,
+      "matches": []
+    },
+    {
+      "path": "bind-derivative-qualification.mjs",
+      "sha256": "d2b32af4460811dd2df9bc848d319eb4aded260567eba96a8ffe429cae083e9c",
+      "lines": 73,
+      "matches": []
+    },
+    {
+      "path": "bind-e-plan.mjs",
+      "sha256": "0e05e4ae41884eb93f7f6b9ba63d0389ac1215b46338b2abee250df5f26497b8",
+      "lines": 38,
+      "matches": []
+    },
+    {
+      "path": "bind-e-qualified.initial.mjs",
+      "sha256": "7f6ca08fa652b89da5b4d54baa75da731f2e439743498dd872653b5e4d653a5c",
+      "lines": 55,
+      "matches": [
+        {
+          "line": 51,
+          "kinds": [
+            "interval"
+          ],
+          "text": " limits:'Not full ecosystem coverage, arbitrary precision/history proof, physical ARM/RISC-V execution, all-FENV, whole-Alumina timing/size, default-only downstream matrix, all ignored stress tests, full CI or peak RSS qualification. WASM consumer feature set excludes comparative benchmark dependencies; library compile gates do not run the browser demo. WASM tests run locally in Node22/V8, not an embedded device. New source-read ARF routines have no new independent numerical campaign here. Prior focused Memchecks are reused because production numerical code is identical to checkpoint42 except planner; test-only additions do not extend memory qualification. Earlier numerical failures, LLL assertion, thread-memory findings, and initial failed42 audit build remain preserved. Per-group bootstrap intervals are unadjusted; targeted controls supplement rather than replace the original71 groups. Dedicated snapshots total108188255 bytes plus the one45446168-byte source copy; shared build cache grows separately. No donor edit, cleanup/deletion, commit, push or external report.',"
+        }
+      ]
+    },
+    {
+      "path": "bind-e-qualified.mjs",
+      "sha256": "a63c29d9d93ccbb9fc4dbd3b9f5ff5f7277d4510b99f82108b4fa640aba0378d",
+      "lines": 58,
+      "matches": [
+        {
+          "line": 54,
+          "kinds": [
+            "interval"
+          ],
+          "text": " limits:'Not full ecosystem coverage, arbitrary precision/history proof, physical ARM/RISC-V execution, all-FENV, whole-Alumina timing/size, default-only downstream matrix, all ignored stress tests, full CI or peak RSS qualification. WASM consumer feature set excludes comparative benchmark dependencies; library compile gates do not run the browser demo. WASM tests run locally in Node22/V8, not an embedded device. New source-read ARF routines have no new independent numerical campaign here. Prior focused Memchecks are reused because production numerical code is identical to checkpoint42 except planner; test-only additions do not extend memory qualification. Earlier numerical failures, LLL assertion, thread-memory findings, and initial failed42 audit build remain preserved. Per-group bootstrap intervals are unadjusted; targeted controls supplement rather than replace the original71 groups. Dedicated snapshots total108188255 bytes plus the one45446168-byte source copy; shared build cache grows separately. No donor edit, cleanup/deletion, commit, push or external report.',"
+        }
+      ]
+    },
+    {
+      "path": "bind-high-product.mjs",
+      "sha256": "baf2a2679df2e5294a1a0f5885f46c8bc73ee13a2b2d9edb66fc0bd3ee040e82",
+      "lines": 40,
+      "matches": []
+    },
+    {
+      "path": "bind-mag-series.mjs",
+      "sha256": "ba652483283d2823d26a6bb04c3cb0537b7ec0f9b5165ca36975431e85cbb8b2",
+      "lines": 43,
+      "matches": []
+    },
+    {
+      "path": "bind-mag-transcendental.mjs",
+      "sha256": "f52db325acd435bd94c39fcbe475b57a82a4538c43c6e0a59183c71f1bf9f172",
+      "lines": 43,
+      "matches": []
+    },
+    {
+      "path": "bind-magnitude.mjs",
+      "sha256": "1a4b38fc45409f220a734fa915e72b4591cdca87f16c605c24a00889bc54afaa",
+      "lines": 47,
+      "matches": []
+    },
+    {
+      "path": "bind-matrix-pivots.mjs",
+      "sha256": "46a0b36692b8bbb2efc3729ddc367eab3a8f3c374302647983cbe91c067c2154",
+      "lines": 42,
+      "matches": []
+    },
+    {
+      "path": "bind-matrix-solves.mjs",
+      "sha256": "1dbdc378a32fb921baebfdfe5cddc4d5b7140627a7f9ac44798df33d6f6e585f",
+      "lines": 63,
+      "matches": []
+    },
+    {
+      "path": "bind-monic-costs.mjs",
+      "sha256": "d745d7deedfebc104474e95700a6cb0f6188d27b860b5c072e12bfea91c39ef9",
+      "lines": 46,
+      "matches": []
+    },
+    {
+      "path": "bind-monic-state.mjs",
+      "sha256": "a4a1dd17f6e0ed1ef999ce997acb5e7e72ff20150521749df2f93e6431c85eb7",
+      "lines": 62,
+      "matches": []
+    },
+    {
+      "path": "bind-mpoly-bridge.mjs",
+      "sha256": "44c09c65a4fb06748c215ad5937ab16d98ba9904fc085ac64307e232b9a20f3f",
+      "lines": 35,
+      "matches": []
+    },
+    {
+      "path": "bind-mpoly-rational.mjs",
+      "sha256": "57e0357514dd1205b14eec0612e975eedae0212bb58c46050cd8271e879a0fbd",
+      "lines": 46,
+      "matches": []
+    },
+    {
+      "path": "bind-nfixed.mjs",
+      "sha256": "17232bad8a9fe7da1f50ef8da83933295debdd9936a8267faf0501cab20315e1",
+      "lines": 44,
+      "matches": []
+    },
+    {
+      "path": "bind-nfloat-complex.mjs",
+      "sha256": "4d9ba98709204ea05e5b87c6bcb89a4a0179d993d78d7543319c7a5ef4869555",
+      "lines": 48,
+      "matches": []
+    },
+    {
+      "path": "bind-nfloat-support.mjs",
+      "sha256": "757bd4aac98182d358c8d75620b515a2dbf45393acc56b0d342ffb328eafe20d",
+      "lines": 49,
+      "matches": []
+    },
+    {
+      "path": "bind-polynomial-closure.mjs",
+      "sha256": "bf947be0d653407e16de2692a66279ada72cc5129bc4c58ecbd6ee3879fb1e47",
+      "lines": 75,
+      "matches": []
+    },
+    {
+      "path": "bind-polynomial-decision.mjs",
+      "sha256": "992fc5f2b38995391a6a19b25f93d525f24320b96638b673e785aaf0955e2ef0",
+      "lines": 49,
+      "matches": []
+    },
+    {
+      "path": "bind-polynomial-facts.mjs",
+      "sha256": "6844ce1eaa9fa960dc9ecc096799e8f2b0ab75dd7da58fc45521748c795022bb",
+      "lines": 50,
+      "matches": []
+    },
+    {
+      "path": "bind-rank-costs.mjs",
+      "sha256": "b1caeaa5b2bf79d6a563c167940e6f8b47f5545dbf678a5fbc94dc10dd1d9da6",
+      "lines": 46,
+      "matches": [
+        {
+          "line": 12,
+          "kinds": [
+            "interval"
+          ],
+          "text": "  limits:'Costs cover seven patterns, four widths, two warm-input lifecycles on one host, not cold scalar construction. Different-outcome witness gains are not equal-work speedups. Allocation counts are Rust requested bytes/calls, not RSS/native overhead/stack or allocator retention. Per-group paired bootstrap intervals are not multiplicity-adjusted or universal bounds. Driver binary deltas include build-path/layout and do not measure application size. No broader state/downstream qualification for this unselected v1. Native matrix oracles avoid tested matrix kernels but share the scalar backend; sampled shapes, whole aliases and denominator sizes are not full branch coverage. Archived support was read, not executed.'};"
+        }
+      ]
+    },
+    {
+      "path": "bind-retained-exp-proof.mjs",
+      "sha256": "b7e6842261e41131f6f3a09cfab6f1c6d9db321632e76116a1648e74d750034d",
+      "lines": 36,
+      "matches": []
+    },
+    {
+      "path": "bind-retained-monic.mjs",
+      "sha256": "c113030b9737a49c2af58adead416e5c4189b914e7e20ae23fe9cc96ba15b620",
+      "lines": 48,
+      "matches": []
+    },
+    {
+      "path": "bind-retained-polynomial-facts.mjs",
+      "sha256": "7bbbd988b11dedc50f26cbc40d2cb4e60545ea426077785188cd5d0143563317",
+      "lines": 39,
+      "matches": []
+    },
+    {
+      "path": "bind-reuse-cost-experiment.mjs",
+      "sha256": "0800176a3c112ebdd52b60629a792ab595db054050d5d0c8b31d77067050f684",
+      "lines": 44,
+      "matches": []
+    },
+    {
+      "path": "bind-reuse-qualification-experiment.mjs",
+      "sha256": "33414133a61b024f507b3aecbbc248499e6f28bfcb3c7b39cf452d15645f1b0b",
+      "lines": 82,
+      "matches": []
+    },
+    {
+      "path": "bind-root-exp-experiment.mjs",
+      "sha256": "44bd873b7b69ac3db744f58f86b3c83944fdf14582e579b77da3bb77cfb72b25",
+      "lines": 35,
+      "matches": []
+    },
+    {
+      "path": "bind-root-exp-proof-experiment.mjs",
+      "sha256": "ca76541efda6d88268400b1f3086d856b190961c6e018cd1a64a92e8ad4f4522",
+      "lines": 44,
+      "matches": []
+    },
+    {
+      "path": "bind-root-exp-reuse-experiment.mjs",
+      "sha256": "8fc59c7ac50ed4c25887dc06fee094ad344de3654c74c2baeb5ed22ad541738d",
+      "lines": 58,
+      "matches": []
+    },
+    {
+      "path": "bind-root-exp-sign-experiment.mjs",
+      "sha256": "157f37124d43b75c65587df2673bfe417628091aaf1164faa7e10e365d0280d0",
+      "lines": 41,
+      "matches": []
+    },
+    {
+      "path": "bind-scalar-boundary-experiment.mjs",
+      "sha256": "12b6f0d9e7038893e20b93916a8a9dc0355d5fe39c53c8b7f82756a64ea1b4b1",
+      "lines": 21,
+      "matches": []
+    },
+    {
+      "path": "bind-sign-consumer-experiment.mjs",
+      "sha256": "7e8eeaf619e362a3754fce0b766a7b412aeb9332ce21336c04f0f4afc98a03c2",
+      "lines": 40,
+      "matches": []
+    },
+    {
+      "path": "bind-sign-filter-mask.mjs",
+      "sha256": "5b589270f48980bd3dca33b782b139d5d1b49ee1227d65b4b6f01d19bdac0dcd",
+      "lines": 37,
+      "matches": [
+        {
+          "line": 30,
+          "kinds": [
+            "interval"
+          ],
+          "text": " limits:'364 identical tests per profile, including 299593 exhaustive short sequences, 1280 long cases and 32 private traces; 45 public traces agree with the frozen baseline. These are finite checks, not arbitrary expressions, serialization/thread/abort histories, cold scalars or full downstream CI. The old independent 24-ring rational shoelace/Machin sign oracle is reused. CPU measurements comprise 2304 batches/8346816 queries in 48 groups, 12 ABBA blocks per group on CPU 6; separate allocations comprise 288 batches/4608 queries. Pilots and warmups are not timed-query totals. Bootstrap intervals are per group and not multiplicity-adjusted; bypass controls also vary. Allocation measurements are Rust requests/bytes/live/peak, not RSS or a general retention bound. Unstripped driver size deltas are artifact-specific, not representative application size or a proven codegen cause. No new sanitizer, WASM or concurrent qualification is claimed. High-product coverage adds 12 complete files and two partial ranges (2196 lines); donor tests were read, not newly executed, and no independent high-product numerical qualification is claimed. Supporting assembly, FFT and remaining header/docs are still open. Earlier numerical and memory failures remain preserved.',"
+        }
+      ]
+    },
+    {
+      "path": "bind-sign-filter.mjs",
+      "sha256": "4e9cf908027be2e83ff284c20bec3ef4f4dc752cdc88f25d031985a17ae92260",
+      "lines": 36,
+      "matches": [
+        {
+          "line": 30,
+          "kinds": [
+            "interval"
+          ],
+          "text": " limits:'No new donor line coverage this turn; prior 806 complete/13 partial/98501-line continuation scope remains. 299593 short sequences through length six and 1280 long cases are finite tests, not all possible expressions; same small branch and Unknown evaluation order are additionally source-checked. Thirty-two private trace cases and 45 public queries agree, but process-cold, arbitrary serialization/abort/thread histories, downstream full-stack consumers, WASM, broad CI and memory sanitizers are not newly qualified. CPU campaign has 2304 measured batches across 48 groups with 12 ABBA blocks/group, plus pilots; allocation campaign is separate, 288 batches of 16 queries. Sixteen prewarm queries and cloned prebuilt rings do not measure cold scalar construction. All outcomes/certainty/stages match and signs have an independent rational shoelace/Machin-series oracle. Per-group bootstrap intervals are not multiplicity-adjusted. Runtime ratios range from about 0.946 to 1.080, not a universal slowdown/speedup claim. Memory counts are Rust requested/live/peak bytes, not RSS, stacks, native allocator overhead or a general retention bound. Unstripped benchmark executables, not representative application builds, grow 2536/2552 bytes; section deltas are observations, not a demonstrated codegen cause or general Hyper binary-size regression.',"
+        }
+      ]
+    },
+    {
+      "path": "bind-sign-work-cost-experiment.mjs",
+      "sha256": "7e425e67e8652d681245593b9c7380aa9f61cdafc8e52f748a98a4fde32c9b3a",
+      "lines": 30,
+      "matches": []
+    },
+    {
+      "path": "bind-spectral.mjs",
+      "sha256": "317c5ae85a4cb5e9d333e2fd214934c14c6c9423be892e3aa49ff7c131c2b2ed",
+      "lines": 48,
+      "matches": []
+    },
+    {
+      "path": "build-point-cold.mjs",
+      "sha256": "cbeae70b3eeb79c7c65a1c21e1e6e1d0a26f941cdab7b889e7d30b34ca69de99",
+      "lines": 27,
+      "matches": []
+    },
+    {
+      "path": "build-point-demand.mjs",
+      "sha256": "a310fb54b3dbd63e6d051ec61bd29ac2b4e003dbaa83bacba5c396bb134d8b9d",
+      "lines": 23,
+      "matches": []
+    },
+    {
+      "path": "build-point-extended.mjs",
+      "sha256": "3bd2e5bc23cb4888e2b91c89d3a45d5a670db47b5fab0bc1835282ecf553aad0",
+      "lines": 17,
+      "matches": []
+    },
+    {
+      "path": "build-point-history.mjs",
+      "sha256": "fdadd3075bf42865dedc1f9b06e9257b9756bed291a945272bde8652d2aceb31",
+      "lines": 21,
+      "matches": []
+    },
+    {
+      "path": "build-point-qualified-approx.mjs",
+      "sha256": "eb806010aae329cd8580f26c4a2b43e12e6bc08f238e4a132a890de9a433bb88",
+      "lines": 20,
+      "matches": []
+    },
+    {
+      "path": "build-point-qualified-platform.mjs",
+      "sha256": "1deba30c2b706c4e63de9d2a4b17759009c7b804e9d56fc83e561a887c812d92",
+      "lines": 20,
+      "matches": []
+    },
+    {
+      "path": "build-point-wasm.mjs",
+      "sha256": "14f532ebedb98089aeadccc329888efab47c960da90bfd8fb2d6cdb994b3c077",
+      "lines": 22,
+      "matches": []
+    },
+    {
+      "path": "capture.mjs",
+      "sha256": "aaf6df6bbd73025a8541617ce83731ae5ea3fd2272bd98c15e3c4c12b713ce23",
+      "lines": 34,
+      "matches": []
+    },
+    {
+      "path": "check-arb-dot-controls.mjs",
+      "sha256": "6fb3802d4df9fa4eb1edfe82f3019c902f5b0f5f289e8919cf186969cb233d17",
+      "lines": 32,
+      "matches": []
+    },
+    {
+      "path": "check-arf-contracts.mjs",
+      "sha256": "fc1f49944be6674a7f222953eadc5deed8cbeb48d7d725f73fb6076010761d06",
+      "lines": 84,
+      "matches": []
+    },
+    {
+      "path": "check-arf-conversion.mjs",
+      "sha256": "40ba3b53e98a8a706093cdb331093822927503aea1e56b5bb8f3d83b25099d7c",
+      "lines": 134,
+      "matches": []
+    },
+    {
+      "path": "check-arf-fused-controls.mjs",
+      "sha256": "1d254cf3f7b7b49601d2337b68fd40fa6cdb0a0c4d251a76524027b862767354",
+      "lines": 17,
+      "matches": []
+    },
+    {
+      "path": "check-arf-rounding-controls.mjs",
+      "sha256": "6414801a0beafbfa4873c5fef433e568d96e479c8576cab8e600970e18c0e132",
+      "lines": 23,
+      "matches": []
+    },
+    {
+      "path": "check-complex-product-v2.mjs",
+      "sha256": "b6f33ab4d8c144927850b7a74c23e93dc036abdcf27bf68bec907ed9bd879288",
+      "lines": 98,
+      "matches": [
+        {
+          "line": 56,
+          "kinds": [
+            "seed"
+          ],
+          "text": "  let seed=31337;const random=n=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed%n;};"
+        },
+        {
+          "line": 70,
+          "kinds": [
+            "interval"
+          ],
+          "text": "    const bootstrap=Array.from({length:5000},()=>median(ratios.map(()=>ratios[random(12)]))).sort((a,b)=>a-b);"
+        },
+        {
+          "line": 71,
+          "kinds": [
+            "interval"
+          ],
+          "text": "    assert.equal(s.pairedMedianRatio,median(ratios));assert.deepEqual(s.pairedMedianBootstrap95,[bootstrap[125],bootstrap[4875]]);"
+        },
+        {
+          "line": 83,
+          "kinds": [
+            "interval"
+          ],
+          "text": "   below:groups.filter(s=>s.pairedMedianBootstrap95[1]<1).length,"
+        },
+        {
+          "line": 84,
+          "kinds": [
+            "interval"
+          ],
+          "text": "   above:groups.filter(s=>s.pairedMedianBootstrap95[0]>1).length,"
+        },
+        {
+          "line": 85,
+          "kinds": [
+            "interval"
+          ],
+          "text": "   overlap:groups.filter(s=>s.pairedMedianBootstrap95[0]<=1&&s.pairedMedianBootstrap95[1]>=1).length,"
+        }
+      ]
+    },
+    {
+      "path": "check-complex-product.mjs",
+      "sha256": "5769ca77c69c2705d6bc20856531023301818b4c7ceb76599b94d9803940ac70",
+      "lines": 96,
+      "matches": [
+        {
+          "line": 54,
+          "kinds": [
+            "seed"
+          ],
+          "text": "  let seed=31337;const random=n=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed%n;};"
+        },
+        {
+          "line": 68,
+          "kinds": [
+            "interval"
+          ],
+          "text": "    const bootstrap=Array.from({length:5000},()=>median(ratios.map(()=>ratios[random(12)]))).sort((a,b)=>a-b);"
+        },
+        {
+          "line": 69,
+          "kinds": [
+            "interval"
+          ],
+          "text": "    assert.equal(s.pairedMedianRatio,median(ratios));assert.deepEqual(s.pairedMedianBootstrap95,[bootstrap[125],bootstrap[4875]]);"
+        },
+        {
+          "line": 81,
+          "kinds": [
+            "interval"
+          ],
+          "text": "   below:groups.filter(s=>s.pairedMedianBootstrap95[1]<1).length,"
+        },
+        {
+          "line": 82,
+          "kinds": [
+            "interval"
+          ],
+          "text": "   above:groups.filter(s=>s.pairedMedianBootstrap95[0]>1).length,"
+        },
+        {
+          "line": 83,
+          "kinds": [
+            "interval"
+          ],
+          "text": "   overlap:groups.filter(s=>s.pairedMedianBootstrap95[0]<=1&&s.pairedMedianBootstrap95[1]>=1).length,"
+        }
+      ]
+    },
+    {
+      "path": "check-derivative-costs.mjs",
+      "sha256": "dffdf144c6e9df04151d3cb7d56e9f76c76497d1234d6ef04ce7e0b4757df7be",
+      "lines": 78,
+      "matches": [
+        {
+          "line": 11,
+          "kinds": [
+            "seed"
+          ],
+          "text": "  let seed=9261;const random=n=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed%n;};"
+        },
+        {
+          "line": 48,
+          "kinds": [
+            "interval"
+          ],
+          "text": "        const bootstrap=Array.from({length:5000},()=>median(ratios.map(()=>ratios[random(blocks)]))).sort((a,b)=>a-b);"
+        },
+        {
+          "line": 49,
+          "kinds": [
+            "interval"
+          ],
+          "text": "        assert.equal(q.pairedMedianRatio,median(ratios));assert.deepEqual(q.pairedMedianBootstrap95,[bootstrap[125],bootstrap[4875]]);"
+        },
+        {
+          "line": 71,
+          "kinds": [
+            "interval"
+          ],
+          "text": "  const faster=q.filter(v=>v.pairedMedianBootstrap95[1]<1),slower=q.filter(v=>v.pairedMedianBootstrap95[0]>1);"
+        },
+        {
+          "line": 77,
+          "kinds": [
+            "interval"
+          ],
+          "text": "    slowerControls:slower.map(({kind,degree,order,lifecycle,pairedMedianRatio,pairedMedianBootstrap95})=>({kind,degree,order,lifecycle,pairedMedianRatio,pairedMedianBootstrap95}))};"
+        }
+      ]
+    },
+    {
+      "path": "check-derivative-qualification-costs.mjs",
+      "sha256": "9c3ba23e8f15482c4de5ff684ec14f852defd55f5415fe5ee9c319828cc9d5d2",
+      "lines": 90,
+      "matches": [
+        {
+          "line": 40,
+          "kinds": [
+            "seed"
+          ],
+          "text": " let seed=270927;const random=n=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed%n;};"
+        },
+        {
+          "line": 70,
+          "kinds": [
+            "interval"
+          ],
+          "text": "    assert.deepEqual(s.pairedMedianBootstrap95,[samples[125],samples[4875]]);"
+        },
+        {
+          "line": 73,
+          "kinds": [
+            "interval"
+          ],
+          "text": "    summary.intervalBelowOne+=+(s.pairedMedianBootstrap95[1]<1);"
+        },
+        {
+          "line": 74,
+          "kinds": [
+            "interval"
+          ],
+          "text": "    summary.intervalAboveOne+=+(s.pairedMedianBootstrap95[0]>1);"
+        }
+      ]
+    },
+    {
+      "path": "check-e-plan-regressions.mjs",
+      "sha256": "5abab0d399638b76ca90500e4d86cc6008172b1fb5b0adce65a1958bd48e6a8a",
+      "lines": 18,
+      "matches": []
+    },
+    {
+      "path": "check-e-plan.mjs",
+      "sha256": "88679a7f348b05d20684b969efdffae9864f8bfe35d890e7fdd48345a1901939",
+      "lines": 125,
+      "matches": [
+        {
+          "line": 73,
+          "kinds": [
+            "seed"
+          ],
+          "text": "  assert.equal(raw.length,mode==='cpu'?3408:426);let seed=42819;"
+        },
+        {
+          "line": 74,
+          "kinds": [
+            "seed"
+          ],
+          "text": "  const random=n=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed%n;};"
+        },
+        {
+          "line": 104,
+          "kinds": [
+            "interval"
+          ],
+          "text": "    const bootstrap=Array.from({length:5000},()=>median(ratios.map(()=>ratios[random(12)]))).sort((a,b)=>a-b);"
+        },
+        {
+          "line": 105,
+          "kinds": [
+            "interval"
+          ],
+          "text": "    assert.equal(g.pairedMedianRatio,median(ratios));assert.deepEqual(g.pairedMedianBootstrap95,[bootstrap[125],bootstrap[4875]]);"
+        },
+        {
+          "line": 107,
+          "kinds": [
+            "interval"
+          ],
+          "text": "    groups.push({p:g.p,route:g.route,lifecycle:g.lifecycle,ratio:g.pairedMedianRatio,interval:g.pairedMedianBootstrap95,nsPerQuery:g.nsPerQuery});"
+        }
+      ]
+    },
+    {
+      "path": "check-e-qualified.mjs",
+      "sha256": "dbb9897c2a665ffa76331975cc5a38e47d40f55192bdfd53e81f7f8cda46290c",
+      "lines": 122,
+      "matches": [
+        {
+          "line": 24,
+          "kinds": [
+            "seed"
+          ],
+          "text": " let seed=wasm?43189:43177;const random=n=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed%n;};"
+        },
+        {
+          "line": 48,
+          "kinds": [
+            "interval"
+          ],
+          "text": "  assert.equal(g.pairedMedianRatio,median(ratios));assert.deepEqual(g.pairedMedianBootstrap95,[boot[125],boot[4875]]);"
+        },
+        {
+          "line": 54,
+          "kinds": [
+            "interval"
+          ],
+          "text": "  groups.push({p:g.p,route:g.route,lifecycle:g.lifecycle,ratio:g.pairedMedianRatio,interval:g.pairedMedianBootstrap95,nsPerQuery,"
+        }
+      ]
+    },
+    {
+      "path": "check-fexpr-formatting-metadata.mjs",
+      "sha256": "6b8926f667ba9def132d1b491813ce27fbaa1b3c97c06fbf06fb0384ec6bb764",
+      "lines": 48,
+      "matches": []
+    },
+    {
+      "path": "check-high-product-controls.mjs",
+      "sha256": "d3ae10c1d8deeb4731e730116ad39b7ce659ebd714cac36baeb91e5a8570906f",
+      "lines": 61,
+      "matches": []
+    },
+    {
+      "path": "check-mag-series.mjs",
+      "sha256": "37e7126eba8aea9851aa47d6b7339c9f2d7b9289b3edb72bc6df31eb4b5b39fe",
+      "lines": 127,
+      "matches": []
+    },
+    {
+      "path": "check-mag-transcendental.mjs",
+      "sha256": "3d2addf5086c659c88e9c500e41252ec74e5b102c648c0ec9a3d45db90c2cb11",
+      "lines": 77,
+      "matches": []
+    },
+    {
+      "path": "check-magnitude-controls.mjs",
+      "sha256": "28deab80ca7462f19e0fd6825aa2ae7a8097fcab887755b85f714b0a76f1a883",
+      "lines": 43,
+      "matches": []
+    },
+    {
+      "path": "check-mpoly-bridge.mjs",
+      "sha256": "2d986d540273b56035b97f8f7ae1ce404058b7b36cc98da7abf29622be2573c3",
+      "lines": 66,
+      "matches": []
+    },
+    {
+      "path": "check-mpoly-rational-upstream.mjs",
+      "sha256": "37a989e8b947b6939898977bd2625b40afc969d7fe2159d7eb835d668c4314a7",
+      "lines": 23,
+      "matches": []
+    },
+    {
+      "path": "check-mpoly-rational.mjs",
+      "sha256": "eed33a8336ff8b9c1cfdbf47da25b3a3b2e81683422cd4f46a6ef6fb1dfefd9d",
+      "lines": 129,
+      "matches": []
+    },
+    {
+      "path": "check-nfixed-controls-initial.mjs",
+      "sha256": "e0b0bbada06c35319395b753be2fce42c7339efc9fb0a9d633024e0b2faf40b0",
+      "lines": 60,
+      "matches": []
+    },
+    {
+      "path": "check-nfixed-controls.mjs",
+      "sha256": "eee38ca8e70c05458f630d0b3baa4e2717c060011831b53518745a5d462d4a48",
+      "lines": 89,
+      "matches": []
+    },
+    {
+      "path": "check-nfloat-complex-controls.mjs",
+      "sha256": "7182dcb94927bfa9cd0e6f77db91e0bf617df41a4b3e98f3eaacb57283224c0a",
+      "lines": 82,
+      "matches": []
+    },
+    {
+      "path": "check-nfloat-controls.mjs",
+      "sha256": "97d4ca43d63c60b5b3da3b5e587b513391d7e99d980783bd087d126c78be8146",
+      "lines": 48,
+      "matches": []
+    },
+    {
+      "path": "check-point-cold.mjs",
+      "sha256": "a8dd516600d13eb6dcd41e5ad168eded3005e05dce37631040e772897fc2af37",
+      "lines": 135,
+      "matches": [
+        {
+          "line": 131,
+          "kinds": [
+            "seed"
+          ],
+          "text": " limits:'Authored 48-case corpus, two policies, four initial histories, three lifecycles, nine observed calls per fresh process/instance. Every full record independently checked with the previously qualified exact field/identity oracle. Initial constructors/refinements may seed caches. No CPU, allocator, RSS, lifetime-bound, arbitrary-expression, final-consumer, representative-size or retention claim.'};"
+        }
+      ]
+    },
+    {
+      "path": "check-point-demand-costs.mjs",
+      "sha256": "64be1ba3ae9c2631fb0462443d19eab5df9388b9048b917759fd200f9c58f2e6",
+      "lines": 102,
+      "matches": [
+        {
+          "line": 77,
+          "kinds": [
+            "interval"
+          ],
+          "text": "   ratio:g.pairedMedianRatio,ci:g.pairedMedianBootstrap95,ns:g.nsPerQuery});"
+        },
+        {
+          "line": 79,
+          "kinds": [
+            "interval"
+          ],
+          "text": "   ciWhollyBelowOne:xs.filter(g=>g.pairedMedianBootstrap95[1]<1).length,ciWhollyAboveOne:xs.filter(g=>g.pairedMedianBootstrap95[0]>1).length,"
+        }
+      ]
+    },
+    {
+      "path": "check-point-demand-public.mjs",
+      "sha256": "f7669f9aac6bfe9bf7cf32a00a1e835a0f4df6f89c6496444bd8e1ff9c573129",
+      "lines": 31,
+      "matches": []
+    },
+    {
+      "path": "check-point-extended-v1.mjs",
+      "sha256": "5a8dda74d7c32d60c4c5899e7fafe3aabcb4874eb852b8b84d3aa1a96213b052",
+      "lines": 101,
+      "matches": []
+    },
+    {
+      "path": "check-point-extended.mjs",
+      "sha256": "925384f7417d82a808907b34b7866bee5239559d42c08fb86daf284255cc09b1",
+      "lines": 122,
+      "matches": []
+    },
+    {
+      "path": "check-point-history.mjs",
+      "sha256": "7e7842b114f00a2d3be110b03541b0c68ac61da622e014a5f48bb20af952622f",
+      "lines": 118,
+      "matches": [
+        {
+          "line": 96,
+          "kinds": [
+            "interval"
+          ],
+          "text": "  ratio:g.pairedMedianRatio,ci:g.pairedMedianBootstrap95,ns:g.nsPerQuery});"
+        },
+        {
+          "line": 108,
+          "kinds": [
+            "interval"
+          ],
+          "text": "  ciWhollyBelowOne:xs.filter(g=>g.pairedMedianBootstrap95[1]<1).length,ciWhollyAboveOne:xs.filter(g=>g.pairedMedianBootstrap95[0]>1).length,"
+        }
+      ]
+    },
+    {
+      "path": "check-point-image-costs.mjs",
+      "sha256": "07dc13901c3208483b99d26b9b58f8ee675f6468f812f5954a917145ea2df02d",
+      "lines": 59,
+      "matches": [
+        {
+          "line": 37,
+          "kinds": [
+            "interval"
+          ],
+          "text": " const compact=g=>({case:g.case,lifecycle:g.lifecycle,statuses:g.statuses,ratio:g.pairedMedianRatio,ci:g.pairedMedianBootstrap95,ns:g.nsPerQuery});"
+        },
+        {
+          "line": 52,
+          "kinds": [
+            "interval"
+          ],
+          "text": "  sameResultCiWhollyBelowOne:same.filter(g=>g.pairedMedianBootstrap95[1]<1).length,"
+        },
+        {
+          "line": 53,
+          "kinds": [
+            "interval"
+          ],
+          "text": "  sameResultCiWhollyAboveOne:same.filter(g=>g.pairedMedianBootstrap95[0]>1).length,"
+        },
+        {
+          "line": 57,
+          "kinds": [
+            "interval"
+          ],
+          "text": "  limits:'Per-group paired bootstrap intervals are not adjusted for multiple comparisons. Changed outcomes perform additional certified work and are not equal-work speedups. Corpus has rational endpoints and preconditioned process-local caches; nonrational/Unknown endpoint costs, other platforms and representative application sizes remain unqualified.'};"
+        }
+      ]
+    },
+    {
+      "path": "check-point-image.mjs",
+      "sha256": "258e5e9ce0ac30dfaeeeec821ebb98ee3eba027102a676c746b793c8c15ef8e3",
+      "lines": 32,
+      "matches": []
+    },
+    {
+      "path": "check-point-qualified-approx-public.mjs",
+      "sha256": "4020b76f3b9039741aea8c6bc5a276ab0b33e45c6fc9a4ab05229045c21e9be0",
+      "lines": 31,
+      "matches": []
+    },
+    {
+      "path": "check-point-qualified-public.mjs",
+      "sha256": "16f589a73abdae5b891c61b75dab87c8e98a4fa06fa5f83d02acce1010fc5054",
+      "lines": 29,
+      "matches": []
+    },
+    {
+      "path": "check-point-wasm-costs.mjs",
+      "sha256": "0e73d745e6d93e2a4f7bdc566ad62cff6ea3f30a8b2ad9f284340cc72065e16c",
+      "lines": 83,
+      "matches": [
+        {
+          "line": 68,
+          "kinds": [
+            "interval"
+          ],
+          "text": "  ratio:g.pairedMedianRatio,ci:g.pairedMedianBootstrap95,ns:g.nsPerQuery});"
+        },
+        {
+          "line": 70,
+          "kinds": [
+            "interval"
+          ],
+          "text": "  ciWhollyBelowOne:gs.filter(g=>g.pairedMedianBootstrap95[1]<1).length,ciWhollyAboveOne:gs.filter(g=>g.pairedMedianBootstrap95[0]>1).length,"
+        },
+        {
+          "line": 73,
+          "kinds": [
+            "interval"
+          ],
+          "text": "  slowestConfirmed:[...gs].filter(g=>g.pairedMedianBootstrap95[0]>1).sort((a,b)=>b.pairedMedianRatio-a.pairedMedianRatio).slice(0,5).map(compact)}:{groups:0};"
+        }
+      ]
+    },
+    {
+      "path": "check-point-wasm-qualification.mjs",
+      "sha256": "6e0269a9b705112f70756ccc1995a66f7f8a3ca8d8c2f5851051fae6fb91773a",
+      "lines": 4,
+      "matches": []
+    },
+    {
+      "path": "check-power-sums-kernel.mjs",
+      "sha256": "23d5961387f4691d886f7a561fb5d7991f66cee18a594264f4df9b4f7a3de674",
+      "lines": 87,
+      "matches": []
+    },
+    {
+      "path": "check-power-sums-public.mjs",
+      "sha256": "bd2ae22f557c929c0760d87939e42e32a555bc9ca2d03b78740447a66e71083e",
+      "lines": 98,
+      "matches": []
+    },
+    {
+      "path": "check-qqbar-arithmetic.mjs",
+      "sha256": "316e30a8006d056cc32b51816a3195d3c7e01396a810e9889eb676483706bfcf",
+      "lines": 177,
+      "matches": []
+    },
+    {
+      "path": "check-qqbar-decisions.mjs",
+      "sha256": "ccd46abdd03cdaa00d12ae0531b0a16a20136ab3247d1f3f40ae99f29766cfc3",
+      "lines": 78,
+      "matches": []
+    },
+    {
+      "path": "check-sign-filter-mask.mjs",
+      "sha256": "a33aee147e969ed825128c15e683346706640a3c234934fb066b3ea8a8b12d17",
+      "lines": 84,
+      "matches": [
+        {
+          "line": 24,
+          "kinds": [
+            "seed"
+          ],
+          "text": "  assert.equal(raw.length,mode==='cpu'?2304:288);let groupIndex=0,rawIndex=0,seed=31337;"
+        },
+        {
+          "line": 25,
+          "kinds": [
+            "seed"
+          ],
+          "text": "  const random=n=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed%n;};"
+        },
+        {
+          "line": 48,
+          "kinds": [
+            "interval"
+          ],
+          "text": "    assert.equal(g.pairedMedianRatio,median(ratios));assert.deepEqual(g.pairedMedianBootstrap95,[boot[125],boot[4875]]);"
+        },
+        {
+          "line": 51,
+          "kinds": [
+            "interval"
+          ],
+          "text": "    if(g.pairedMedianBootstrap95[1]<1)aggregate.below++;"
+        },
+        {
+          "line": 52,
+          "kinds": [
+            "interval"
+          ],
+          "text": "    else if(g.pairedMedianBootstrap95[0]>1){aggregate.above++;aggregate.regressions.push({fixture,vertices,lifecycle,ratio:g.pairedMedianRatio,ci:g.pairedMedianBootstrap95});}"
+        }
+      ]
+    },
+    {
+      "path": "check-sign-filter.mjs",
+      "sha256": "091cdd6bf93257b3dfeefac0e35aaa846b4bcd09c4fda0161999297684f56b45",
+      "lines": 86,
+      "matches": [
+        {
+          "line": 27,
+          "kinds": [
+            "seed"
+          ],
+          "text": "  assert.equal(raw.length,mode==='cpu'?2304:288);let groupIndex=0,rawIndex=0,seed=31337;"
+        },
+        {
+          "line": 28,
+          "kinds": [
+            "seed"
+          ],
+          "text": "  const random=n=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed%n;};"
+        },
+        {
+          "line": 51,
+          "kinds": [
+            "interval"
+          ],
+          "text": "    assert.equal(g.pairedMedianRatio,median(ratios));assert.deepEqual(g.pairedMedianBootstrap95,[boot[125],boot[4875]]);"
+        },
+        {
+          "line": 54,
+          "kinds": [
+            "interval"
+          ],
+          "text": "    if(g.pairedMedianBootstrap95[1]<1)aggregate.below++;"
+        },
+        {
+          "line": 55,
+          "kinds": [
+            "interval"
+          ],
+          "text": "    else if(g.pairedMedianBootstrap95[0]>1){aggregate.above++;aggregate.regressions.push({fixture,vertices,lifecycle,ratio:g.pairedMedianRatio,ci:g.pairedMedianBootstrap95});}"
+        }
+      ]
+    },
+    {
+      "path": "complex-product-sources.mjs",
+      "sha256": "67fe7d85f4d598369f9de8821af8bb661b1d2c67a7c6443c281611428da71e9e",
+      "lines": 19,
+      "matches": []
+    },
+    {
+      "path": "complex-product-v2-sources.mjs",
+      "sha256": "b6544549899ab625674aca9b60b24a7ecf7378c5252a84641311caeebc15ebb4",
+      "lines": 20,
+      "matches": []
+    },
+    {
+      "path": "derivative-demand-sources.mjs",
+      "sha256": "e9152f321cb19a96f42968259691650363dee53adbf9c3abe0c4da5cada60b88",
+      "lines": 35,
+      "matches": []
+    },
+    {
+      "path": "e-plan-qualified-sources.mjs",
+      "sha256": "47e4fa274943d9facd457ae500f540b7e3ba53821f1c51a61741cbc0586300f6",
+      "lines": 19,
+      "matches": []
+    },
+    {
+      "path": "e-plan-sources.mjs",
+      "sha256": "e2860fc22835bc9f39d24216ece54a25cf0a7a411d334990f1a7c9cb70cdeed2",
+      "lines": 31,
+      "matches": []
+    },
+    {
+      "path": "e-qualified-gates.mjs",
+      "sha256": "f99c6b6c52330d54c940fb656e6f22840550f9e97cdf9d330cd67cc3f72f0e92",
+      "lines": 45,
+      "matches": []
+    },
+    {
+      "path": "effective-coverage.mjs",
+      "sha256": "b884fd5eb462ede70cb9b3c2bed2cfad14d5700301e92e37156c7ec5104b17e0",
+      "lines": 37,
+      "matches": []
+    },
+    {
+      "path": "finish-point-image-gates.mjs",
+      "sha256": "7d5a383a8fa0e07d195120ca28ffd03902afd94054c46cd8e0f35f9b61669dad",
+      "lines": 19,
+      "matches": []
+    },
+    {
+      "path": "freeze-complex-product-traces.mjs",
+      "sha256": "871d04b7759267ac42b28589a436386219410892dab1065a08e32aeda2c277fb",
+      "lines": 14,
+      "matches": []
+    },
+    {
+      "path": "freeze-complex-product-v2.mjs",
+      "sha256": "2679565b50ea564ff85d8c5a7a31930fea9eea3bd6b809bc110f9f01a80be4bb",
+      "lines": 29,
+      "matches": []
+    },
+    {
+      "path": "freeze-hyper.mjs",
+      "sha256": "75e803d40aae67b88df6139867412b9dab25f67ebbfa43b8fb1d972ecbd4db82",
+      "lines": 53,
+      "matches": []
+    },
+    {
+      "path": "freeze-point-image-guard.mjs",
+      "sha256": "ac891aa91f053cbf5858e3e01f8b61bfb969881e2fafe3d5fbdb153642c92413",
+      "lines": 20,
+      "matches": []
+    },
+    {
+      "path": "freeze-point-image.mjs",
+      "sha256": "04df11c72cb27c8d286b7fde863cb68a3a1bb2f227a6bbcb8eeb189c9087ae03",
+      "lines": 23,
+      "matches": []
+    },
+    {
+      "path": "high-product-bigint-oracle.mjs",
+      "sha256": "ffbaa1e747def01669de2403f8822cf5abaa4a22870d381766480e9662bf99b4",
+      "lines": 70,
+      "matches": []
+    },
+    {
+      "path": "inventory.mjs",
+      "sha256": "a4fe79c68c3fe8e1d7b3e1447c677cabbbc551b32a5ffc4d15e82be673d8f849",
+      "lines": 84,
+      "matches": []
+    },
+    {
+      "path": "make-e-qualified-live-patch.initial.mjs",
+      "sha256": "6663a80029c2a426708de858f992dbd698af372f4dd0aa41f9c75a8d8d168242",
+      "lines": 16,
+      "matches": []
+    },
+    {
+      "path": "make-e-qualified-live-patch.mjs",
+      "sha256": "ee30995d82364012d17f97eb34ea785b720fc8f0aade004a7e08d68cb4ce11f0",
+      "lines": 16,
+      "matches": []
+    },
+    {
+      "path": "measure-derivative-app-size.mjs",
+      "sha256": "e4aa3cb4daec900a153ba8d00fbf97b726321b911049b9d865fccddb5b5c890f",
+      "lines": 42,
+      "matches": []
+    },
+    {
+      "path": "measure-e-qualified-app-size.initial.mjs",
+      "sha256": "7da4b494442230316885cad0cb917a530710e2a106eb98397e2e4872d6ef04e7",
+      "lines": 30,
+      "matches": []
+    },
+    {
+      "path": "measure-e-qualified-app-size.mjs",
+      "sha256": "c106e66a1d8ed1e1166ddaba5244e2a693c1e73f6b18b0c280ade3d8376f4478",
+      "lines": 41,
+      "matches": []
+    },
+    {
+      "path": "measure-monic-app-size.mjs",
+      "sha256": "447b289bbe3188a96403fbf2effe45d6455a4a5e7e3867992150e00e04599dce",
+      "lines": 34,
+      "matches": []
+    },
+    {
+      "path": "measure-point-qualified-apps.mjs",
+      "sha256": "36d80ab96670c2266436582150d59c2a545b8ed069d1418e8c7ff8a9ca54cbe3",
+      "lines": 32,
+      "matches": []
+    },
+    {
+      "path": "measure-polynomial-facts-app-size.mjs",
+      "sha256": "876b2cd9953946d95268df4b9aa001c0010defa0f9f21228e9438e32215d81d2",
+      "lines": 34,
+      "matches": []
+    },
+    {
+      "path": "measure-reuse-app-size.mjs",
+      "sha256": "e075c99d8ee41482d45c7c442d96017c2fb8c039dcbf089bcb3c3e0280a82c26",
+      "lines": 34,
+      "matches": []
+    },
+    {
+      "path": "mpoly-bridge-math.mjs",
+      "sha256": "1761913885087576aac1fe0572112b79b21f919465ef041967a0c6d6bbf7b742",
+      "lines": 84,
+      "matches": []
+    },
+    {
+      "path": "point-cold-evidence.mjs",
+      "sha256": "fcaa7fc23bfe85efa29f0ca00bab9c286ffbf99651321728b3cd83bf52787600",
+      "lines": 74,
+      "matches": []
+    },
+    {
+      "path": "point-cold-protocol.mjs",
+      "sha256": "7bbf86ba4a21b368ae043260e58e1251819feb601fb43fff14a91f79290e77d7",
+      "lines": 44,
+      "matches": []
+    },
+    {
+      "path": "point-demand-bindings.mjs",
+      "sha256": "877ad454293ff28af6ce354ff17976fba45a27cfaaa224bde916d04475c587ac",
+      "lines": 17,
+      "matches": []
+    },
+    {
+      "path": "point-demand-cost-protocol.mjs",
+      "sha256": "a624da7e771af6d0b61dc13a8ff83583f0ade9842e1f8796ed9bf1632565bfa9",
+      "lines": 46,
+      "matches": [
+        {
+          "line": 13,
+          "kinds": [
+            "seed"
+          ],
+          "text": " let seed=532825;const random=n=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed%n;};"
+        },
+        {
+          "line": 36,
+          "kinds": [
+            "interval"
+          ],
+          "text": "    const bootstrap=Array.from({length:5000},()=>median(ratios.map(()=>ratios[random(blocks)]))).sort((a,b)=>a-b);"
+        },
+        {
+          "line": 37,
+          "kinds": [
+            "interval"
+          ],
+          "text": "    Object.assign(c,{pairedBlockRatios:ratios,pairedMedianRatio:median(ratios),pairedMedianBootstrap95:[bootstrap[125],bootstrap[4875]]});"
+        }
+      ]
+    },
+    {
+      "path": "point-demand-evidence.mjs",
+      "sha256": "8633269bc96eeff000f7e31bf5418cc4c684dddf95de498a039746cf29b4f44d",
+      "lines": 80,
+      "matches": []
+    },
+    {
+      "path": "point-demand-sources.mjs",
+      "sha256": "6c10d4c9a336971b3018373508999cd1fe37635d8a336d8b337f2c1997f37700",
+      "lines": 22,
+      "matches": []
+    },
+    {
+      "path": "point-extended-evidence.mjs",
+      "sha256": "53ba7e71eceb6fccad1d9f0f66f7a50d5049a23b8ca3840e4634c6580445b350",
+      "lines": 78,
+      "matches": []
+    },
+    {
+      "path": "point-extended-field-v1.mjs",
+      "sha256": "3c06f05d8d36b0f5e3d370de876e2f541a604b88bc54f6062a9ce113616de2b5",
+      "lines": 123,
+      "matches": []
+    },
+    {
+      "path": "point-extended-field.mjs",
+      "sha256": "795154da44b1502c04db4aaa880adb470eec16a4970e2d928410d44ffa6b6424",
+      "lines": 125,
+      "matches": []
+    },
+    {
+      "path": "point-history-evidence.mjs",
+      "sha256": "e1754cd0b80090a29e3781c406330d8c155bd0eba8494a58e5681db7dd478308",
+      "lines": 57,
+      "matches": []
+    },
+    {
+      "path": "point-history-protocol.mjs",
+      "sha256": "ed7fd8958b7af7d506375b760f9eb725cb3d2252d708225031f8f91dd5cc82c6",
+      "lines": 59,
+      "matches": []
+    },
+    {
+      "path": "point-history-statistics.mjs",
+      "sha256": "d65af75d314c11f629d315e962867fc0c60e90de09b588120618a9d768e856de",
+      "lines": 38,
+      "matches": [
+        {
+          "line": 5,
+          "kinds": [
+            "seed"
+          ],
+          "text": " let seed=532825;"
+        },
+        {
+          "line": 6,
+          "kinds": [
+            "seed"
+          ],
+          "text": " const random=n=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed%n;};"
+        },
+        {
+          "line": 31,
+          "kinds": [
+            "interval"
+          ],
+          "text": "   const bootstrap=Array.from({length:5000},()=>median(ratios.map(()=>ratios[random(blocks)]))).sort((a,b)=>a-b);"
+        },
+        {
+          "line": 32,
+          "kinds": [
+            "interval"
+          ],
+          "text": "   Object.assign(s,{pairedBlockRatios:ratios,pairedMedianRatio:median(ratios),pairedMedianBootstrap95:[bootstrap[125],bootstrap[4875]],"
+        }
+      ]
+    },
+    {
+      "path": "point-image-cost-environment.mjs",
+      "sha256": "54672f2e3be42be42f5b798d621a5180af769754ee93afb5e473b8897014e20b",
+      "lines": 8,
+      "matches": []
+    },
+    {
+      "path": "point-image-cost-statistics.mjs",
+      "sha256": "78ef2ba18a72fb4f309f2f3421604efd1530912d20f334352a396d9a5952cf94",
+      "lines": 31,
+      "matches": [
+        {
+          "line": 4,
+          "kinds": [
+            "seed"
+          ],
+          "text": " const variants=['baseline','candidate'],summaries=[];let seed=532825;"
+        },
+        {
+          "line": 5,
+          "kinds": [
+            "seed"
+          ],
+          "text": " const random=n=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed%n;};"
+        },
+        {
+          "line": 23,
+          "kinds": [
+            "interval"
+          ],
+          "text": "   const bootstrap=Array.from({length:5000},()=>median(ratios.map(()=>ratios[random(blocks)]))).sort((a,b)=>a-b);"
+        },
+        {
+          "line": 24,
+          "kinds": [
+            "interval"
+          ],
+          "text": "   Object.assign(s,{pairedMedianRatio:median(ratios),pairedMedianBootstrap95:[bootstrap[125],bootstrap[4875]],"
+        }
+      ]
+    },
+    {
+      "path": "point-image-evidence-bind-draft.mjs",
+      "sha256": "05d65d913e3d614c047ef27c8d79fa2abcb268040b71d639b0ea2b7ed847a805",
+      "lines": 71,
+      "matches": []
+    },
+    {
+      "path": "point-image-evidence.mjs",
+      "sha256": "de6dfc4c62c4efa927c8e8d068532eba886b8749043e84242519e06229c49ec0",
+      "lines": 74,
+      "matches": []
+    },
+    {
+      "path": "point-image-sources.mjs",
+      "sha256": "50795c369b745d73825933f6af0ee27d1e482169815e52e42cf25d1ce255ecee",
+      "lines": 19,
+      "matches": []
+    },
+    {
+      "path": "point-qualified-capture.mjs",
+      "sha256": "8b574f18a85c470ef47f9eafc780c462a93e811ebe15695f0950cfef17ada66e",
+      "lines": 19,
+      "matches": []
+    },
+    {
+      "path": "point-qualified-environment.mjs",
+      "sha256": "51947315ab10dc3618c03e296e3c64ceed5ead142691ae9553460a016352efbb",
+      "lines": 11,
+      "matches": []
+    },
+    {
+      "path": "point-qualified-evidence.mjs",
+      "sha256": "5919f0c8aa45d7cdb4533f270ce3dd3e293e53cb7fe935e47568e44d6ba87632",
+      "lines": 128,
+      "matches": []
+    },
+    {
+      "path": "point-qualified-sources.mjs",
+      "sha256": "418966d05873911d79682a4b4563059b78733cc26955ba4cdd15cdccf0a6ffe9",
+      "lines": 20,
+      "matches": []
+    },
+    {
+      "path": "point-wasm-evidence.mjs",
+      "sha256": "9d6d1803f199376e0d5d51bc543cd71b42da9783079551a15d9d74b181248ed5",
+      "lines": 52,
+      "matches": []
+    },
+    {
+      "path": "point-wasm-protocol.mjs",
+      "sha256": "ac1de0f9e155e78b0270507d3dfd055153084f7dc3a929dbcaf5170a4763af9b",
+      "lines": 74,
+      "matches": []
+    },
+    {
+      "path": "power-sums-evidence.mjs",
+      "sha256": "81cfcf86572b48bfd4d34d6cb26f1c39e5fe3d585418e8adaac591076f25274e",
+      "lines": 70,
+      "matches": []
+    },
+    {
+      "path": "power-sums-polynomial-oracle.mjs",
+      "sha256": "91a277ede6c566a0d6e74e368ef989a3f9fe842f10a495347efc1b4f8a73efb7",
+      "lines": 59,
+      "matches": []
+    },
+    {
+      "path": "prepare-arf-conversion-v2.mjs",
+      "sha256": "abd07c6762a2ff8e958df617f5194081054948990babe9a7cab1e9028e1c07df",
+      "lines": 39,
+      "matches": []
+    },
+    {
+      "path": "prepare-complex-product-v2.mjs",
+      "sha256": "ee3f9570040bffcbc049ddc65d534d46b52b2e72db33af662b10985027acc3aa",
+      "lines": 49,
+      "matches": []
+    },
+    {
+      "path": "prepare-complex-product.mjs",
+      "sha256": "2950e197e044eae7aa99d2fc55e1d1c65117d0b98f00a82d67643c8650ffd450",
+      "lines": 25,
+      "matches": []
+    },
+    {
+      "path": "prepare-derivative-demand.mjs",
+      "sha256": "a492baa49bf352967ac3b96edd9bfcb34c80aae4fc3c62a4c05a000a9172d856",
+      "lines": 28,
+      "matches": []
+    },
+    {
+      "path": "prepare-e-plan-apps.mjs",
+      "sha256": "9f817c52afca1078ad9ec19aa40def72976cb5377977260880f5d93933f11a33",
+      "lines": 52,
+      "matches": []
+    },
+    {
+      "path": "prepare-e-plan-qualified.mjs",
+      "sha256": "a82a31f70527d9d185e47abf9a50e681ca177793c287b778533f573fb40d9daf",
+      "lines": 19,
+      "matches": []
+    },
+    {
+      "path": "prepare-e-plan.mjs",
+      "sha256": "612896b0c59ee4d02abe11ef5d80fe91249435fdbadb006be55d387fe600b77a",
+      "lines": 17,
+      "matches": []
+    },
+    {
+      "path": "prepare-e-qualified-wasm.mjs",
+      "sha256": "e04f6ad00fabd083aff8a29574bb0acf7fee3c089bddfdc5210574ecb49f231b",
+      "lines": 25,
+      "matches": []
+    },
+    {
+      "path": "prepare-monic-consumers.mjs",
+      "sha256": "bb8db5c9db2fe485c1b74eb30d1a56c1ac69a8f177630474378d9cdf35ec2493",
+      "lines": 19,
+      "matches": []
+    },
+    {
+      "path": "prepare-monic-qualified.mjs",
+      "sha256": "91408eaaaec938b56faad82a9e6fa71afb7655d4cc287b5c56351023a7c2859e",
+      "lines": 20,
+      "matches": []
+    },
+    {
+      "path": "prepare-mpoly-bridge-helpers.mjs",
+      "sha256": "6ced72485f040d8c31a1f2dd13e5d521a27ba584d7df33178b16317270c047df",
+      "lines": 11,
+      "matches": []
+    },
+    {
+      "path": "prepare-point-cold.mjs",
+      "sha256": "480350298c0122b4a038390c1017ebe39023439b16648b7ce9c8519259f97a13",
+      "lines": 11,
+      "matches": []
+    },
+    {
+      "path": "prepare-point-demand.mjs",
+      "sha256": "4e69d0314fbb2a8098d856d4b184ebb3cc4823844b9798dfabed3205b2e704f7",
+      "lines": 26,
+      "matches": []
+    },
+    {
+      "path": "prepare-point-history.mjs",
+      "sha256": "2008586dcf1068593983b5d2ea6be02b41f7a344406f2c80c314e6398cffa0eb",
+      "lines": 18,
+      "matches": []
+    },
+    {
+      "path": "prepare-point-image-guard.mjs",
+      "sha256": "2069e3ee497126fe203b3197927d7e1fad2c29f574e64bd5186fd4977572ff47",
+      "lines": 21,
+      "matches": []
+    },
+    {
+      "path": "prepare-point-image-test-cleanup.mjs",
+      "sha256": "2d05465b04dd7238bf3e4ef96b1672e6604d0efd8a986a4f9d2aec815cd9f49a",
+      "lines": 12,
+      "matches": []
+    },
+    {
+      "path": "prepare-point-image.mjs",
+      "sha256": "9fccb9728b8a56e7abf6d84f06b486fac2245b781d4d1fa4ac8fd1361ca8a380",
+      "lines": 22,
+      "matches": []
+    },
+    {
+      "path": "prepare-point-qualified-approx.mjs",
+      "sha256": "bbca9e306c01f6d7c7965015018c76c7797eb61b26f2efa625c93962fd144e91",
+      "lines": 27,
+      "matches": []
+    },
+    {
+      "path": "prepare-point-qualified.mjs",
+      "sha256": "51c1500b872ea5ad222487d169401bd84313d7cf556128fa9d2ec2b8067a24d4",
+      "lines": 22,
+      "matches": []
+    },
+    {
+      "path": "prepare-point-wasm.mjs",
+      "sha256": "7746f97b81757927d813611a75f31eceda25d354a334c3c1bbc691e232b726de",
+      "lines": 30,
+      "matches": []
+    },
+    {
+      "path": "prepare-polynomial-decision-trial.mjs",
+      "sha256": "e6ebccd66af007b440f098d081a5ddcaebe988a7a3b746bb652c160fa273f485",
+      "lines": 32,
+      "matches": []
+    },
+    {
+      "path": "prepare-polynomial-facts-consumers.mjs",
+      "sha256": "2212c363ec60d9ab6743bd27a4091a063d8b584cc40859490ff2f4ae2826822e",
+      "lines": 21,
+      "matches": []
+    },
+    {
+      "path": "prepare-polynomial-facts.mjs",
+      "sha256": "29563102f17ea65e9dbeb3100a5d10f8e38bbc71d94fd0bff7fabb4c3fa3e8ba",
+      "lines": 23,
+      "matches": []
+    },
+    {
+      "path": "prepare-polynomial-monic.mjs",
+      "sha256": "d7e46fa2f2b9af7595a533bba3b31d7e980a412135bf4efe2fb78a6e5a3372f0",
+      "lines": 21,
+      "matches": []
+    },
+    {
+      "path": "prepare-power-sums-oracle.mjs",
+      "sha256": "e16fb82f7ee1b05031632ab2ab17bfc814e0bb90aab9f847973b007b301b6f89",
+      "lines": 12,
+      "matches": []
+    },
+    {
+      "path": "prepare-power-sums.mjs",
+      "sha256": "2a87d0fb40a8b4579ec019d1287f483a1eb28d77bc1a9e50839cca93fa0e4332",
+      "lines": 24,
+      "matches": []
+    },
+    {
+      "path": "prepare-rank-dominance.mjs",
+      "sha256": "088abe93bfb0862a195c1d1ee2abd6909cb1e96dbd8fc605fbde7dacc2f8445c",
+      "lines": 21,
+      "matches": []
+    },
+    {
+      "path": "prepare-reuse-consumers.mjs",
+      "sha256": "c3076d574a3c9599fd64239f7528fa1d62cb32586434684df84d24e48a0e3cc5",
+      "lines": 28,
+      "matches": []
+    },
+    {
+      "path": "prepare-sign-consumers.mjs",
+      "sha256": "7d97652206a533ebae159bc169b7e31e3069babfee2fb84b01799d67449edd97",
+      "lines": 55,
+      "matches": []
+    },
+    {
+      "path": "prepare-sign-filter-mask-costs.mjs",
+      "sha256": "b0282f77fa1943b82eeef6e1728eae045e6f621467688a878da002dd70fae51b",
+      "lines": 20,
+      "matches": []
+    },
+    {
+      "path": "prepare-snapshot-v43.mjs",
+      "sha256": "29a9961d5499af7d142d4ea41c617c00c80d6c05fe6f1631e46800caaea756db",
+      "lines": 27,
+      "matches": []
+    },
+    {
+      "path": "prepare-trial.mjs",
+      "sha256": "c5da735023fd2d79de6700308a976f9a5da1b4d0f6c7e4b433e084ab2e0a4440",
+      "lines": 20,
+      "matches": []
+    },
+    {
+      "path": "preserve-point-image-binding-draft.mjs",
+      "sha256": "58935357bf5638a0fd3c33bb9b4641fdb64d9c4fee9ed224c6e8f1d7ed22ef52",
+      "lines": 11,
+      "matches": []
+    },
+    {
+      "path": "preserve-point-image-guard-controls.mjs",
+      "sha256": "d1860dba42aef14df85931a90af977c9d210cb0f4f794c3b5181c238599c3790",
+      "lines": 10,
+      "matches": []
+    },
+    {
+      "path": "preserve-point-image-guard-red.mjs",
+      "sha256": "479f2467c60c5acf33b14a5cccff5534d596bd48870b730f47932d24ebcbe31b",
+      "lines": 10,
+      "matches": []
+    },
+    {
+      "path": "probe-point-extended-field.mjs",
+      "sha256": "39f07a7d71deb41ab19317d2ecaa896e65d846d98dc4bafbbc7f51eefb06f0a4",
+      "lines": 12,
+      "matches": []
+    },
+    {
+      "path": "prototype-statistics-v63-inventory.mjs",
+      "sha256": "56a1740f34253cd1834697507252f43d5e6e9dfac4bc340a3646f673c4e8894b",
+      "lines": 36,
+      "matches": [
+        {
+          "line": 6,
+          "kinds": [
+            "interval",
+            "randomness",
+            "seed"
+          ],
+          "text": "const patterns={interval:/bootstrap|confidence/i,randomness:/Math\\.random|randomBytes|randomInt|xorshift/i,seed:/\\bseed\\b/};"
+        }
+      ]
+    },
+    {
+      "path": "qualify-point-demand-history.mjs",
+      "sha256": "31a72f23c35b7f4ea3395a3f6525a17454efc7971870b43e556104186eb3a2bb",
+      "lines": 27,
+      "matches": []
+    },
+    {
+      "path": "qualify-point-history.mjs",
+      "sha256": "530371078c0f93ac3847e0e79e9d026dbf441f849c8d9f6ee4b1eab42883246a",
+      "lines": 51,
+      "matches": []
+    },
+    {
+      "path": "qualify-point-wasm.mjs",
+      "sha256": "2cabe839753c18f38d24a45861a1f2ab8a86c7bfc91033d0dffcf22a9a7a34b5",
+      "lines": 22,
+      "matches": []
+    },
+    {
+      "path": "record-arb-dot-reads.mjs",
+      "sha256": "7042a8f6789c52f87f5d3feb54d97a2d3eccfab6cf8cb6fd0a6c28824b78a7e4",
+      "lines": 44,
+      "matches": []
+    },
+    {
+      "path": "record-arf-contract-reads.mjs",
+      "sha256": "72ee969cd0c0b127f89f7c2deffc35221e1cf9bf9080d2f5506d809af4370fa1",
+      "lines": 46,
+      "matches": []
+    },
+    {
+      "path": "record-arf-contract-support.mjs",
+      "sha256": "0cd652315c9a2ca97851301d3dcdf97ff133dc53fb4cbd0215aa9cc14675e01d",
+      "lines": 15,
+      "matches": []
+    },
+    {
+      "path": "record-arf-conversion-reads.mjs",
+      "sha256": "d423f8dec6ef30bb479737928685a319846128eeba631b26641f0d587d1dc484",
+      "lines": 14,
+      "matches": []
+    },
+    {
+      "path": "record-arf-fused-reads.mjs",
+      "sha256": "53b4834adfd83443946ca5925a55ea7a3e480338717e8f29f4ea1673431dd048",
+      "lines": 44,
+      "matches": []
+    },
+    {
+      "path": "record-arf-rounding-reads.mjs",
+      "sha256": "e78034c9b8baa57d3fa559c8ec6340af612f28257aca1f36b659909dc05cc046",
+      "lines": 44,
+      "matches": []
+    },
+    {
+      "path": "record-charpoly-domain-reads.mjs",
+      "sha256": "8178c29900351461925e9412fb47a3c6a6d79ca2678dfde02c3fcbef964c7122",
+      "lines": 52,
+      "matches": []
+    },
+    {
+      "path": "record-derivative-lll-reads.mjs",
+      "sha256": "af1cda6673d6795bdac1833093841252997a2a53284182b581c735d3807f749f",
+      "lines": 39,
+      "matches": []
+    },
+    {
+      "path": "record-derivative-qualification-reads.mjs",
+      "sha256": "5b9e9f5dd8963c1f65379a9892f37cb8be736379cb6b4759c5c27875e7a5e1d9",
+      "lines": 23,
+      "matches": []
+    },
+    {
+      "path": "record-e-qualified-reads.mjs",
+      "sha256": "48feabc28fc8260123d3c589e460dbaca792b8cfe1bfcff8b673ce2b4ec9ae7f",
+      "lines": 19,
+      "matches": []
+    },
+    {
+      "path": "record-fexpr-formatting-reads.mjs",
+      "sha256": "8b5d9289dce5b32b7d615a51f35316a1e7dd35b7f688c5d53bd647348c2f808a",
+      "lines": 75,
+      "matches": []
+    },
+    {
+      "path": "record-fexpr-representation-reads.mjs",
+      "sha256": "13def90fdd877edf6b1a33ba2f7e9e585d6915d1018f17ddcc771986e795d55d",
+      "lines": 105,
+      "matches": []
+    },
+    {
+      "path": "record-high-product-qualification-reads.mjs",
+      "sha256": "7f1640f4fee3788cd9edcb1441e9d1763145eab6fb554336ca90ece782de2f7f",
+      "lines": 32,
+      "matches": []
+    },
+    {
+      "path": "record-high-product-reads.mjs",
+      "sha256": "57388fcf4774ca2c8e5ac37d770bb9125304a64515d510b49b8d5345a0257ef8",
+      "lines": 35,
+      "matches": []
+    },
+    {
+      "path": "record-mag-series-reads.mjs",
+      "sha256": "cc7963de3c054fea8130c064b1c9a144002121929460a17cba94dfcc01bb3b6d",
+      "lines": 57,
+      "matches": []
+    },
+    {
+      "path": "record-mag-transcendental-reads.mjs",
+      "sha256": "388af532c9eabd2f58c27c501ac03f526579a67a2a03e2530f38704fcd9a1157",
+      "lines": 66,
+      "matches": []
+    },
+    {
+      "path": "record-magnitude-reads-initial.mjs",
+      "sha256": "67fa003325df065f536062b08027e82fe7ba1e0541bc8b7302babfb9dd66c8f1",
+      "lines": 63,
+      "matches": []
+    },
+    {
+      "path": "record-magnitude-reads.mjs",
+      "sha256": "5d5a4d4435be55fa954813c5bbfc071d4bbcd5acb851a4b6392eac64db3fd690",
+      "lines": 63,
+      "matches": []
+    },
+    {
+      "path": "record-matrix-pivot-reads.mjs",
+      "sha256": "23206543dd5220a5a279de192dbd1eb2b4491eeb9c26aa4e1fafb7827db3b028",
+      "lines": 43,
+      "matches": []
+    },
+    {
+      "path": "record-matrix-solve-reads.mjs",
+      "sha256": "42c7d4f199ce23c044b16cd2023ed8ddb7fe049c7b4fd2dc83351058f09589be",
+      "lines": 50,
+      "matches": []
+    },
+    {
+      "path": "record-mpoly-bridge-reads.mjs",
+      "sha256": "392b0353f6b267a658c6a2c34a399f044840f4320a32c29ca0cf5b1e7e74a866",
+      "lines": 73,
+      "matches": []
+    },
+    {
+      "path": "record-mpoly-rational-reads.mjs",
+      "sha256": "eddea8c58ca146cd93720582c4d17a77433b56da0ea60013436662982a3c9d5e",
+      "lines": 53,
+      "matches": []
+    },
+    {
+      "path": "record-mpoly-rational-support.mjs",
+      "sha256": "c270ad4aea9863a52daa48cc4b1520f5f4e6c2e63924c073b9fabb6138fa7840",
+      "lines": 16,
+      "matches": []
+    },
+    {
+      "path": "record-nfixed-reads.mjs",
+      "sha256": "fa7514e1a3f6cd81db4e192a30b32665cf916ee3bd34670a54e4b5c3bbca8721",
+      "lines": 32,
+      "matches": []
+    },
+    {
+      "path": "record-nfloat-complex-reads.mjs",
+      "sha256": "0595a93b5925f31dbfa5d95b80ce7fb63906d4d3a9affde50f38d8f6ac126b50",
+      "lines": 25,
+      "matches": []
+    },
+    {
+      "path": "record-nfloat-support-reads.mjs",
+      "sha256": "ad033b07bdc4e16cf42112e69a04c1504eb7cbe4120d7b60daf8f89a916c2b84",
+      "lines": 33,
+      "matches": []
+    },
+    {
+      "path": "record-point-cold.mjs",
+      "sha256": "78362bf4ba50494a1460b59a5518dc05c6c69fdd0ac5bcec881806128e24b796",
+      "lines": 28,
+      "matches": []
+    },
+    {
+      "path": "record-point-demand-source.mjs",
+      "sha256": "9ce368f6b66199149bc4e7cfcd991924a1d863c20aa3e425bb75ac1737a24e34",
+      "lines": 5,
+      "matches": []
+    },
+    {
+      "path": "record-point-demand.mjs",
+      "sha256": "131dd480017d0971f3ea13fb44d7e07f3315673ab2b0f2526c26ff47ba522a8f",
+      "lines": 30,
+      "matches": []
+    },
+    {
+      "path": "record-point-extended.mjs",
+      "sha256": "dcd8470f15edbc48f3d3d121a2c3b5f99145820e2cc5eab46346407a0ad19f92",
+      "lines": 27,
+      "matches": []
+    },
+    {
+      "path": "record-point-history.mjs",
+      "sha256": "5bfc4c18f2fac33b1f1c9e24dff2b7adf43d7c7349895c388ed5591b31dc4724",
+      "lines": 29,
+      "matches": []
+    },
+    {
+      "path": "record-point-image-bind-draft.mjs",
+      "sha256": "2f7c312bc2a4d624b25cf46e6edd0126ccd2b4ea7ae1fd06b5d44226ad801f3c",
+      "lines": 36,
+      "matches": []
+    },
+    {
+      "path": "record-point-image.mjs",
+      "sha256": "ad9d6b53f64906ea4cb09975ef8b0d757aea3bd84b20452a9c57196a5866b7a4",
+      "lines": 38,
+      "matches": []
+    },
+    {
+      "path": "record-point-qualified.mjs",
+      "sha256": "f49637168044815feec8e15ab64bf1a7ccda3434d378fa8ac14ebb1a9d0c00e2",
+      "lines": 31,
+      "matches": []
+    },
+    {
+      "path": "record-point-wasm.mjs",
+      "sha256": "bc2bc5a8ae98c504049063ce7786c40d55ae982115f3c2a5c7c645144d493d52",
+      "lines": 30,
+      "matches": []
+    },
+    {
+      "path": "record-power-sums.mjs",
+      "sha256": "33897ff6781aa6856d0b0202a2cc95453388d5ac587fe085f9b7fc73b13ce2b8",
+      "lines": 27,
+      "matches": []
+    },
+    {
+      "path": "record-qqbar-arithmetic.mjs",
+      "sha256": "53895e20c7bbaaaca64268db468667683c850f3bd4d36e387b0f9e7a5a23d387",
+      "lines": 93,
+      "matches": []
+    },
+    {
+      "path": "record-qqbar-decisions.initial.mjs",
+      "sha256": "d541407de1f8ac8b3cf662002b36407bf7b6b4a54915da3e129f4e028e592e5c",
+      "lines": 107,
+      "matches": []
+    },
+    {
+      "path": "record-qqbar-decisions.mjs",
+      "sha256": "704d07637a67413de091134892735bbc2a07e40ed48b820e449d4cd2a98bd47e",
+      "lines": 111,
+      "matches": []
+    },
+    {
+      "path": "record-rank-cost-reads.mjs",
+      "sha256": "cdd61a45ab4062b27f63a1e32b0a326ae9bf62d0fa200820732ac3c166b7281a",
+      "lines": 41,
+      "matches": []
+    },
+    {
+      "path": "record-spectral-reads.mjs",
+      "sha256": "6a9d185c20c7b54aea0aded07133ab128075a4bfa38f54d40903b9b9f9cd9b75",
+      "lines": 71,
+      "matches": []
+    },
+    {
+      "path": "resume-point-cold-build.mjs",
+      "sha256": "94dfd67d5b7ada10306b4aaf385dbb38c3bc36f4db1c207d19b6d54705c6c6e3",
+      "lines": 29,
+      "matches": []
+    },
+    {
+      "path": "run-complex-product-costs.mjs",
+      "sha256": "e18778063f779309e53cf57bdaaef52377eeee49dac843ce3e29bb797287eadb",
+      "lines": 71,
+      "matches": [
+        {
+          "line": 32,
+          "kinds": [
+            "seed"
+          ],
+          "text": " let seed=31337;const random=n=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed%n;};"
+        },
+        {
+          "line": 59,
+          "kinds": [
+            "interval"
+          ],
+          "text": "   const bootstrap=Array.from({length:5000},()=>median(ratios.map(()=>ratios[random(blocks)]))).sort((a,b)=>a-b);"
+        },
+        {
+          "line": 60,
+          "kinds": [
+            "interval"
+          ],
+          "text": "   Object.assign(summary,{pairedMedianRatio:median(ratios),pairedMedianBootstrap95:[bootstrap[125],bootstrap[4875]],"
+        },
+        {
+          "line": 70,
+          "kinds": [
+            "interval"
+          ],
+          "text": "  limits:'192 kernel groups: six widths, eight shape/scale/sign scenarios, Rational/public Hyperlattice product, separately constructed first-use or four-query-prewarmed inputs. Construction/pool lifetime/oracles excluded; outputs dropped in window. Per-process independent-input exact num-rational preflight; primary GMP correctness campaign is separate. No quotient timing, whole-application/representative binary size, peak RSS, arbitrary histories, concurrency or universal gain claim. Paired percentile bootstrap intervals are per-group and not multiplicity-adjusted.'},null,2)+'\\n',{flag:'wx'});"
+        }
+      ]
+    },
+    {
+      "path": "run-complex-product-v2-costs.mjs",
+      "sha256": "119732f39ceb4cce41e8cf14d1c166161cf6f996feb1ef0af35bc613741052f2",
+      "lines": 58,
+      "matches": [
+        {
+          "line": 19,
+          "kinds": [
+            "seed"
+          ],
+          "text": " let seed=31337;const random=n=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed%n;};"
+        },
+        {
+          "line": 46,
+          "kinds": [
+            "interval"
+          ],
+          "text": "   const bootstrap=Array.from({length:5000},()=>median(ratios.map(()=>ratios[random(blocks)]))).sort((a,b)=>a-b);"
+        },
+        {
+          "line": 47,
+          "kinds": [
+            "interval"
+          ],
+          "text": "   Object.assign(summary,{pairedMedianRatio:median(ratios),pairedMedianBootstrap95:[bootstrap[125],bootstrap[4875]],"
+        },
+        {
+          "line": 57,
+          "kinds": [
+            "interval"
+          ],
+          "text": "  limits:'192 kernel groups: six widths, eight shape/scale/sign scenarios, Rational/public Hyperlattice product, separately constructed first-use or four-query-prewarmed inputs. Construction/pool lifetime/oracles excluded; outputs dropped in window. Per-process independent-input exact num-rational preflight; primary GMP correctness campaign is separate. No quotient timing, whole-application/representative binary size, peak RSS, arbitrary histories, concurrency or universal gain claim. Paired percentile bootstrap intervals are per-group and not multiplicity-adjusted.'},null,2)+'\\n',{flag:'wx'});"
+        }
+      ]
+    },
+    {
+      "path": "run-derivative-costs.mjs",
+      "sha256": "3438165691cfdec6826715adc5eb3a2aaf46cac8582e26bd51dac26a85d92eb5",
+      "lines": 69,
+      "matches": [
+        {
+          "line": 35,
+          "kinds": [
+            "seed"
+          ],
+          "text": "let seed=9261;const random=n=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed%n;};"
+        },
+        {
+          "line": 60,
+          "kinds": [
+            "interval"
+          ],
+          "text": "    const bootstrap=Array.from({length:5000},()=>median(ratios.map(()=>ratios[random(blocks)]))).sort((a,b)=>a-b);"
+        },
+        {
+          "line": 61,
+          "kinds": [
+            "interval"
+          ],
+          "text": "    Object.assign(summary,{pairedMedianRatio:median(ratios),pairedMedianBootstrap95:[bootstrap[125],bootstrap[4875]],"
+        },
+        {
+          "line": 69,
+          "kinds": [
+            "interval"
+          ],
+          "text": "  limits:'80 groups: rational polynomial and pi-scaled nonconstant-denominator curves, four degrees, five derivative orders, retained/fresh curve lifecycles. Each process prechecks every result against BigRational Bernstein expansion/direct monomial derivatives and the standard quotient formula, then warms eight queries. Fresh curve clones prebuilt controls/weights and builds its power basis, not cold scalar construction. Timed queries include public derivative-vector construction and dropping. Generic parameter is exactly 1/3; no endpoint-helper CPU claim. Uninstrumented CPU, separately counted Rust allocation requests/bytes/live/peak; not RSS, stacks or allocator/native overhead. Per-group bootstrap estimates are not multiplicity-adjusted or universal. No production retention decision at this checkpoint.'},null,2)+'\\n',{flag:'wx'});"
+        }
+      ]
+    },
+    {
+      "path": "run-derivative-endpoint.mjs",
+      "sha256": "7240156d1282db4ecd794356924b603e8bf4318ca23030cf3d5922aa429cb0c6",
+      "lines": 68,
+      "matches": [
+        {
+          "line": 36,
+          "kinds": [
+            "seed"
+          ],
+          "text": "let seed=270927;const random=n=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed%n;};"
+        },
+        {
+          "line": 59,
+          "kinds": [
+            "interval"
+          ],
+          "text": "  Object.assign(summary,{pairedMedianRatio:median(ratios),pairedMedianBootstrap95:[samples[125],samples[4875]],"
+        },
+        {
+          "line": 67,
+          "kinds": [
+            "interval"
+          ],
+          "text": " limits:'Sixteen known closed-square four-fragment public tangent-order traversal workloads: degrees 1/3/8/24, rational and pi-scaled positive-weight curves, retained/fresh graphs from shared prebuilt input controls. Every result must certify the known single closed chain. Eight warm traversals after a precheck. End endpoint requests order one, start requests order three and is unchanged by candidate. Thus this measures the complete consumer, not an isolated high-order endpoint helper. Uninstrumented pinned CPU; separate Rust allocation counts, not RSS. Per-group bootstrap intervals are not multiplicity-adjusted or universal.'"
+        }
+      ]
+    },
+    {
+      "path": "run-derivative-retention.mjs",
+      "sha256": "4cc4e5c5be4c90b6dc31d6c0cc10e1df5af3312e15c7613025cff7c935f4f802",
+      "lines": 32,
+      "matches": []
+    },
+    {
+      "path": "run-e-plan-checks.mjs",
+      "sha256": "2d65dd80c99f3e3d9a446726431740def5d45d938c1f11fecb0ba7c227acdc82",
+      "lines": 17,
+      "matches": []
+    },
+    {
+      "path": "run-e-plan-costs.mjs",
+      "sha256": "14627c6a5f18eeb660f9af36c9891ec15d46fbc1012af4223aa3d25f48013829",
+      "lines": 74,
+      "matches": [
+        {
+          "line": 32,
+          "kinds": [
+            "seed"
+          ],
+          "text": " let seed=42819;const random=n=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed%n;};"
+        },
+        {
+          "line": 62,
+          "kinds": [
+            "interval"
+          ],
+          "text": "   const bootstrap=Array.from({length:5000},()=>median(ratios.map(()=>ratios[random(blocks)]))).sort((a,b)=>a-b);"
+        },
+        {
+          "line": 63,
+          "kinds": [
+            "interval"
+          ],
+          "text": "   Object.assign(summary,{pairedMedianRatio:median(ratios),pairedMedianBootstrap95:[bootstrap[125],bootstrap[4875]],"
+        },
+        {
+          "line": 73,
+          "kinds": [
+            "interval"
+          ],
+          "text": "  limits:'71 predeclared groups, ten precision levels. Planner and exact series kernel are uncached. Fresh/refine public calls are one query in each fresh process; warm/coarsen calls are repeated after explicit setup. Pi is an unchanged-path control. Wrapper/setup and postflight fingerprint are excluded, output destruction included. Allocation and CPU binaries are separate. Matched fingerprints are not a mathematical oracle; GMP/MPFR qualification is separate. 12 alternating ABBA/BAAB blocks and 5000 paired median bootstrap resamples per CPU group, intervals not multiplicity-adjusted. No whole-application timing, peak RSS, universal gain, arbitrary history or other-target claim.'},null,2)+'\\n',{flag:'wx'});"
+        }
+      ]
+    },
+    {
+      "path": "run-e-plan-regressions.mjs",
+      "sha256": "22c9c87cd17f24039e803a1f0e406880e896a037914f0a1ef9a47568fe6f99ad",
+      "lines": 18,
+      "matches": []
+    },
+    {
+      "path": "run-e-qualified-controls.mjs",
+      "sha256": "5266ede2604ea4a2784838889d86f434bfd82a231c4e6244a7a062e1b16569b8",
+      "lines": 42,
+      "matches": [
+        {
+          "line": 12,
+          "kinds": [
+            "seed"
+          ],
+          "text": "let seed=43177;const random=n=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed%n;};"
+        },
+        {
+          "line": 37,
+          "kinds": [
+            "interval"
+          ],
+          "text": "  pairedMedianBootstrap95:[boot[125],boot[4875]],nsPerQuery:Object.fromEntries(['baseline','candidate'].map(v=>[v,median(observed.filter(r=>r.variant===v).map(r=>r.ns/r.iterations))]))};"
+        },
+        {
+          "line": 42,
+          "kinds": [
+            "interval"
+          ],
+          "text": " limits:'Explicit follow-up corpus includes all three earlier slower-interval controls, small/large cold e and additional unchanged cache/pi controls. Reuses the frozen42 CPU executables because the qualified candidate only adds cfg(test) code to its unchanged production planner. Forty ABBA/BAAB blocks per group;8192-query calibration for cached paths, target10ms; first-use remains one query per fresh process. Per-group bootstrap intervals unadjusted. This supplements rather than replaces the original71 groups and all unfavorable evidence. No new mathematical oracle, representative application throughput or universal speedup.'},null,2)+'\\n',{flag:'wx'});"
+        }
+      ]
+    },
+    {
+      "path": "run-e-qualified-gates.mjs",
+      "sha256": "1b99149e4516d4c3d70e22a03b4c8a52812a6632e2911a2efc68d2e116215405",
+      "lines": 38,
+      "matches": []
+    },
+    {
+      "path": "run-e-qualified-live.mjs",
+      "sha256": "c44466589d21eab6f4a0d48c1e4eb9d958fa58a4f29f1f70ac05d16409893625",
+      "lines": 15,
+      "matches": []
+    },
+    {
+      "path": "run-e-qualified-wasm-costs.mjs",
+      "sha256": "2aa2920288c7c6cc9bb968c1440f66d109ff914b9a70d5765aee10ad12c04e13",
+      "lines": 56,
+      "matches": [
+        {
+          "line": 14,
+          "kinds": [
+            "seed"
+          ],
+          "text": "let seed=43189;const random=n=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed%n;};"
+        },
+        {
+          "line": 49,
+          "kinds": [
+            "interval"
+          ],
+          "text": " const g={p,route,lifecycle,iterations,probeCount,pilots,observations:48,pairedMedianRatio:median(ratios),pairedMedianBootstrap95:[boot[125],boot[4875]],"
+        },
+        {
+          "line": 56,
+          "kinds": [
+            "interval"
+          ],
+          "text": " sourceMap,summaries,limits:'22 predeclared wasm32 groups in local V8,12 ABBA/BAAB blocks and5000 paired bootstrap resamples per group; intervals unadjusted. Caller pins Node to CPU6. Both compiled modules are reused; four warmups and one pilot per variant use predeclared counts:1 for fresh public,8192 for warm public,2 for deep uncached p<=-4096,64 for small uncached. Every observation has a new module instance/linear memory. Wrapper construction and output destruction are inside the Rust time_loop; module instantiation, explicit host GC, setup and postflight export are excluded. Fresh means fresh constant cache, not cold V8 engine or process. Native and WASM timings are separate experiments. Linear-memory high-water bytes include static/setup/runtime and are not live allocation, peak RSS or arbitrary retention bounds. Matched postflight fingerprints are not numerical oracles; full-word exact enclosure qualification is a separate gate. Not physical ARM/RISC-V performance or a universal speedup.'},null,2)+'\\n',{flag:'wx'});"
+        }
+      ]
+    },
+    {
+      "path": "run-e-qualified-wasm.mjs",
+      "sha256": "6709df77ebb68f42eb161560937638309df2df44ab11127e39c0f89963f17fce",
+      "lines": 73,
+      "matches": []
+    },
+    {
+      "path": "run-erf-bench.mjs",
+      "sha256": "90c59969d73a8d85ed17a1d68b4bd99bd2a7303e965d92d11bf2dca8c6798138",
+      "lines": 73,
+      "matches": [
+        {
+          "line": 29,
+          "kinds": [
+            "seed"
+          ],
+          "text": "let seed = 8675309;"
+        },
+        {
+          "line": 31,
+          "kinds": [
+            "seed"
+          ],
+          "text": "  seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0;"
+        },
+        {
+          "line": 32,
+          "kinds": [
+            "seed"
+          ],
+          "text": "  return seed % n;"
+        },
+        {
+          "line": 61,
+          "kinds": [
+            "interval"
+          ],
+          "text": "  const bootstrap = Array.from({ length: 5000 }, () => median(paired.map(() => paired[random(paired.length)]))).sort((a, b) => a - b);"
+        },
+        {
+          "line": 65,
+          "kinds": [
+            "interval"
+          ],
+          "text": "    pairedMedianRatio: median(paired), pairedMedianBootstrap95: [bootstrap[125], bootstrap[4875]],"
+        },
+        {
+          "line": 73,
+          "kinds": [
+            "interval"
+          ],
+          "text": "  limits: 'Absolute approximation work, not certified equality queries. Independent oracle checks accuracy. Warm global constants are preconditioned in every process. Allocation clocks are not CPU evidence; requested bytes are cumulative, not peak heap. Bootstrap intervals describe this host/session only.' }, null, 2) + '\\n', { flag: 'wx' });"
+        }
+      ]
+    },
+    {
+      "path": "run-log-bench.mjs",
+      "sha256": "bd9a593fae6cdf7fc19d63c54e26505b15e587e7abab5a83468ba063ab510c2e",
+      "lines": 87,
+      "matches": [
+        {
+          "line": 36,
+          "kinds": [
+            "seed"
+          ],
+          "text": "let seed = 8675309;"
+        },
+        {
+          "line": 38,
+          "kinds": [
+            "seed"
+          ],
+          "text": "  seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0;"
+        },
+        {
+          "line": 39,
+          "kinds": [
+            "seed"
+          ],
+          "text": "  return seed % n;"
+        },
+        {
+          "line": 74,
+          "kinds": [
+            "interval"
+          ],
+          "text": "  const bootstrap = Array.from({ length: 5000 }, () => median(paired.map(() => paired[random(paired.length)]))).sort((a, b) => a - b);"
+        },
+        {
+          "line": 79,
+          "kinds": [
+            "interval"
+          ],
+          "text": "    pairedMedianRatio: median(paired), pairedMedianBootstrap95: [bootstrap[125], bootstrap[4875]],"
+        },
+        {
+          "line": 87,
+          "kinds": [
+            "interval"
+          ],
+          "text": "  limits: 'Bootstrap intervals are descriptive of this host/session; unmatched rows compare Unknown to a proof, not equivalent successful work. Allocation-build clocks are not CPU performance evidence.' }, null, 2) + '\\n', { flag: 'wx' });"
+        }
+      ]
+    },
+    {
+      "path": "run-monic-churn.mjs",
+      "sha256": "aebbfb403d23e8ea229c5868ead555f53f50d65c3a09e5650707326ad16e1811",
+      "lines": 25,
+      "matches": []
+    },
+    {
+      "path": "run-monic-costs.mjs",
+      "sha256": "6ea1693b961c9319c7588fbd27fe79cc664a68565ebf0bc20892d79de56b877b",
+      "lines": 84,
+      "matches": [
+        {
+          "line": 41,
+          "kinds": [
+            "seed"
+          ],
+          "text": "let seed=3109;"
+        },
+        {
+          "line": 42,
+          "kinds": [
+            "seed"
+          ],
+          "text": "const random = n => { seed=(Math.imul(seed,1664525)+1013904223)>>>0; return seed%n; };"
+        },
+        {
+          "line": 72,
+          "kinds": [
+            "interval"
+          ],
+          "text": "    const bootstrap=Array.from({length:5000},()=>median(ratios.map(()=>ratios[random(blocks)]))).sort((a,b)=>a-b);"
+        },
+        {
+          "line": 73,
+          "kinds": [
+            "interval"
+          ],
+          "text": "    Object.assign(summary,{pairedMedianRatio:median(ratios),pairedMedianBootstrap95:[bootstrap[125],bootstrap[4875]],"
+        },
+        {
+          "line": 84,
+          "kinds": [
+            "interval"
+          ],
+          "text": "  limits:'81 known-factor recipes; retained includes required Vec cloning, fresh includes construction and teardown. Eight preconditioning queries, not cold-process timing. Same Some/None and degrees do not imply identical output representation or downstream proof availability. CPU clocks only from uninstrumented binaries. Requested heap/peak deltas exclude allocator overhead, native allocations, RSS and thread stacks. Paired bootstrap intervals are host/corpus observations, not universal guarantees.'},null,2)+'\\n',{flag:'wx'});"
+        }
+      ]
+    },
+    {
+      "path": "run-point-cold-campaign.mjs",
+      "sha256": "c5bab98ef79e86cc7307851a69f8956af9abc306f41f23322bc74c812e7c4399",
+      "lines": 8,
+      "matches": []
+    },
+    {
+      "path": "run-point-cold-native.mjs",
+      "sha256": "f44014b836719bc0c6e5baf46cf0a10632f07dfa90c4ca66e09b968428622e10",
+      "lines": 24,
+      "matches": []
+    },
+    {
+      "path": "run-point-cold-wasm.mjs",
+      "sha256": "abc915c350760983908a4b01757c3069dcb31a92588370de22c7b1480f853469",
+      "lines": 33,
+      "matches": []
+    },
+    {
+      "path": "run-point-demand-campaign.mjs",
+      "sha256": "5c14660e18fea6c10a2cb4cac8bff31ba430811c2c04a096cff2a94343fefe7c",
+      "lines": 5,
+      "matches": []
+    },
+    {
+      "path": "run-point-demand-costs.mjs",
+      "sha256": "49d5e7bcb6eb3e2ff20d92ee02ba2bb2483ab6c58a4b1845fff5dbb230e7042c",
+      "lines": 42,
+      "matches": [
+        {
+          "line": 40,
+          "kinds": [
+            "interval"
+          ],
+          "text": " limits:'Three frozen variants measured together, not ratios of separate campaigns. Twelve palindromic six-observation blocks cover every permutation twice; common iteration count calibrated from all three pilots. Core 6 affinity, no fixed-frequency/idle-host guarantee. Independent allocation binary uses three rotated blocks of eight iterations. Nine preconditioning calls, retained/fresh input graphs and four explicit histories; not cold process-wide constants. Clock/counters exclude final result drop, serialization and full validation; final report remains alive. Every final full record matches independent qualification, intermediate iterations only carry a polynomial-length checksum. Requested bytes/net live/peak are not RSS or general memory bounds. Bootstrap intervals are individual and unadjusted for multiplicity. Demand/baseline groups with additional answers are different work. Native only; no consumer/WASM/retention claim.'};"
+        }
+      ]
+    },
+    {
+      "path": "run-point-demand-qualification.mjs",
+      "sha256": "458a04026c98e4759e012502e3e377cac89d68e257e3058aa8bbe0f10e1071f7",
+      "lines": 21,
+      "matches": []
+    },
+    {
+      "path": "run-point-extended-memory.mjs",
+      "sha256": "52987ad3b4708296d5494ac6a1c95abb7997fd75b4de98214aff0207c3a98fcb",
+      "lines": 13,
+      "matches": []
+    },
+    {
+      "path": "run-point-extended.mjs",
+      "sha256": "5738d464a3f3dc4ccc6b9059f2cb6354516dc019780995d3ae2087ee9c31beb2",
+      "lines": 12,
+      "matches": []
+    },
+    {
+      "path": "run-point-history-campaign.mjs",
+      "sha256": "62da3860d8fb9835c4f8ed724016ba8f2fe428fb9e82741d39a27ffe881b186f",
+      "lines": 5,
+      "matches": []
+    },
+    {
+      "path": "run-point-history-costs.mjs",
+      "sha256": "e3244ce95f090e75ebb409ed1a74f8659944d0525b3dc45ce2cef244de1fc32b",
+      "lines": 41,
+      "matches": [
+        {
+          "line": 39,
+          "kinds": [
+            "interval"
+          ],
+          "text": " limits:'CPU only from the uninstrumented binary, taskset core 6, twelve alternating ABBA/BAAB blocks per group. Separate allocator binary uses three paired blocks of eight iterations. Nine preconditioning calls precede timing; retained/fresh refer to input graph lifecycles, not cold processes or cold shared constants. Timing includes prior result drops, excludes the final result drop, and excludes serialization/full validation. Every final actual complete record is compared to independently qualified mathematical records; intermediate results have a polynomial-length checksum only. Final report remains alive at the allocation snapshot. Rust requested bytes/live/peak omit allocator overhead, RSS and stacks. Per-group bootstrap intervals are not adjusted for multiplicity. Changed outcomes perform different certified work and are not equal-work speedups. Native only; no WASM or retention claim.'};"
+        }
+      ]
+    },
+    {
+      "path": "run-point-image-cost-campaign.mjs",
+      "sha256": "27d555eb43373785cd302e4094271712221972fcf50f29f3019dea69d7d2b870",
+      "lines": 8,
+      "matches": []
+    },
+    {
+      "path": "run-point-image-costs.mjs",
+      "sha256": "12bab02b5371caa4687baecc8985f7caf135389db9c2e2151e57d9f87e624de5",
+      "lines": 52,
+      "matches": [
+        {
+          "line": 50,
+          "kinds": [
+            "interval"
+          ],
+          "text": " limits:'Forty authored public queries, retained/fresh inputs, eight preconditioning calls per child. CPU pinned to core 6, twelve alternating ABBA/BAAB blocks, independently instrumented allocation binary. Fresh includes input construction/drop but not cold-process caches. Exact expected report and checksum checked for every observation. Changed outcomes are additional certified work, not equal-work speedups. Bootstrap intervals are per-group, not multiplicity-adjusted or universal. Rust requested bytes/live/peak omit native allocation overhead, RSS and stacks. No production retention or representative application-size qualification at this stage.'};"
+        }
+      ]
+    },
+    {
+      "path": "run-point-image-gates.mjs",
+      "sha256": "908aa672ad0f376446072e267cab7bc907630ebcebd192acd2ac90fd86e53ca1",
+      "lines": 35,
+      "matches": []
+    },
+    {
+      "path": "run-point-image-guard-gates.mjs",
+      "sha256": "a1dabdc2b623fd5909c796828f88c4ffd209d59be628c9946c8ed6834d858ea0",
+      "lines": 18,
+      "matches": []
+    },
+    {
+      "path": "run-point-image-guard-public.mjs",
+      "sha256": "a651dd91cdaea2c107f82227680594ce549a9f19e17b3cc380716ae56c205722",
+      "lines": 14,
+      "matches": []
+    },
+    {
+      "path": "run-point-qualified-approx-wasm.mjs",
+      "sha256": "f420546a14784ba53a74a571d321b74ea7860b88c81d73d512fc3668ce7d5c9a",
+      "lines": 21,
+      "matches": []
+    },
+    {
+      "path": "run-point-qualified-approx.mjs",
+      "sha256": "2c93c6ad422be335e0b149b3709428ef39e27d89cc24c7c05ba718bd16837c1a",
+      "lines": 14,
+      "matches": []
+    },
+    {
+      "path": "run-point-qualified-platform.mjs",
+      "sha256": "088164bc8c3c9b9b230f11048d61e077c08b011b526927cf77016892f9e77776",
+      "lines": 14,
+      "matches": []
+    },
+    {
+      "path": "run-point-qualified-wasm.mjs",
+      "sha256": "e20d8790238414769fffc7d12adf1bf5283377720818f41e9190dee25f224ba8",
+      "lines": 21,
+      "matches": []
+    },
+    {
+      "path": "run-point-wasm-campaign.mjs",
+      "sha256": "2a6731aee8cd9d0fe3440936d8689a1e10bb48bb8871ba2939b21c6c769dec76",
+      "lines": 10,
+      "matches": []
+    },
+    {
+      "path": "run-point-wasm-costs.mjs",
+      "sha256": "b16b74795a015a4e26292cf8966300bc20a5930c377219c5cb2ab5ffa762e449",
+      "lines": 31,
+      "matches": [
+        {
+          "line": 29,
+          "kinds": [
+            "interval"
+          ],
+          "text": " limits:'Direct three-variant optimized-tier WASM comparison, 768 authored groups, common calibration and twelve balanced palindromic blocks. Fresh instance and nine preconditioning queries precede each timed batch. Retained/fresh workload exactly matches the native HistoryWork prefix; fresh mode also retains its initial reference roots, as native does. Final report stays alive; host call/bookkeeping are timed, final drop/serialization/checking/GC/compilation/setup are not. Intermediate iterations only have a checksum. Core 6 affinity, no fixed-frequency/idle-host guarantee. Individual bootstrap CIs are unadjusted for multiplicity. Newly successful versus baseline queries are different work. Not a default-tier/browser/whole-application benchmark or a memory/retention claim.'};"
+        }
+      ]
+    },
+    {
+      "path": "run-polynomial-decision-bench.mjs",
+      "sha256": "0659386be5fad9a764b3d72febc83d36c42936ad019be13c4208db0113c97b26",
+      "lines": 79,
+      "matches": [
+        {
+          "line": 39,
+          "kinds": [
+            "seed"
+          ],
+          "text": "let seed = 997;"
+        },
+        {
+          "line": 40,
+          "kinds": [
+            "seed"
+          ],
+          "text": "const random = n => { seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0; return seed % n; };"
+        },
+        {
+          "line": 70,
+          "kinds": [
+            "interval"
+          ],
+          "text": "    const bootstrap = Array.from({ length: 5000 }, () => median(ratios.map(() => ratios[random(12)]))).sort((a, b) => a - b);"
+        },
+        {
+          "line": 73,
+          "kinds": [
+            "interval"
+          ],
+          "text": "      pairedMedianRatio: median(ratios), pairedMedianBootstrap95: [bootstrap[125], bootstrap[4875]] };"
+        },
+        {
+          "line": 79,
+          "kinds": [
+            "interval"
+          ],
+          "text": "  limits: 'Uninstrumented CPU only. New known results do more work than baseline early Unknown; not equal-work speedups. Retained operands are preconditioned by eight queries; fresh includes construction and result teardown. All lower coefficients share one scalar node. No cold-process, concurrency, allocations, peak memory or application size qualification. Paired bootstrap intervals describe this host/session, not universal bounds.' }, null, 2) + '\\n', { flag: 'wx' });"
+        }
+      ]
+    },
+    {
+      "path": "run-polynomial-facts-allocation-bounded.mjs",
+      "sha256": "349ba1c6f5bcbf53d2860ac30bb44aebfdfd18017ede7c988d17e5924374b801",
+      "lines": 77,
+      "matches": []
+    },
+    {
+      "path": "run-polynomial-facts-allocation.mjs",
+      "sha256": "db5b772d1042aa271239cd3ff4088ec3927659cd1020834ee7a6d9c2144f00da",
+      "lines": 63,
+      "matches": []
+    },
+    {
+      "path": "run-polynomial-facts-cpu.mjs",
+      "sha256": "75ac326bd5287de82e61d0af599f9a716254c6c7f6b228f1e6146dc8f7b74b0a",
+      "lines": 88,
+      "matches": [
+        {
+          "line": 44,
+          "kinds": [
+            "seed"
+          ],
+          "text": "let seed = 997;"
+        },
+        {
+          "line": 45,
+          "kinds": [
+            "seed"
+          ],
+          "text": "const random = n => { seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0; return seed % n; };"
+        },
+        {
+          "line": 78,
+          "kinds": [
+            "interval"
+          ],
+          "text": "      const bootstrap = Array.from({ length: 5000 }, () => median(ratios.map(() => ratios[random(12)]))).sort((a, b) => a - b);"
+        },
+        {
+          "line": 79,
+          "kinds": [
+            "interval"
+          ],
+          "text": "      comparisons[control] = { pairedMedianRatio: median(ratios), pairedMedianBootstrap95: [bootstrap[125], bootstrap[4875]] };"
+        },
+        {
+          "line": 88,
+          "kinds": [
+            "interval"
+          ],
+          "text": "  limits: 'Uninstrumented CPU only. New known results do more work than baseline early Unknown; not equal-work speedups. Retained operands are preconditioned by eight queries; fresh includes construction and result teardown. All lower coefficients share one scalar node. No cold-process, concurrency, allocations, peak memory or application size qualification. Paired bootstrap intervals describe this host/session, not universal bounds.' }, null, 2) + '\\n', { flag: 'wx' });"
+        }
+      ]
+    },
+    {
+      "path": "run-rank-costs.mjs",
+      "sha256": "22763eb0233811786db9913c192d45e2985dd71234bdb723a572997c5a8ea2ce",
+      "lines": 77,
+      "matches": [
+        {
+          "line": 40,
+          "kinds": [
+            "seed"
+          ],
+          "text": "let seed=5233;const random=n=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed%n;};"
+        },
+        {
+          "line": 66,
+          "kinds": [
+            "interval"
+          ],
+          "text": "    const bootstrap=Array.from({length:5000},()=>median(ratios.map(()=>ratios[random(blocks)]))).sort((a,b)=>a-b);"
+        },
+        {
+          "line": 67,
+          "kinds": [
+            "interval"
+          ],
+          "text": "    Object.assign(summary,{pairedMedianRatio:median(ratios),pairedMedianBootstrap95:[bootstrap[125],bootstrap[4875]],"
+        },
+        {
+          "line": 77,
+          "kinds": [
+            "interval"
+          ],
+          "text": "  limits:'Seven affine-rank patterns/four widths/two lifecycles. Fresh_problem constructs and analyzes a new Problem from a shared prechecked tiny scalar; retained_analysis reuses the ProblemAnalysis. Eight warmup queries, not cold scalar/process timing. New rank decisions are different work from baseline Unknown. CPU uses uninstrumented binaries; separate allocation counters measure requested Rust bytes, not native/allocator overhead, RSS or stacks. Bootstrap intervals are per-group host/corpus estimates, not multiplicity-adjusted or universal bounds. No production transfer or broader state/consumer qualification.'},null,2)+'\\n',{flag:'wx'});"
+        }
+      ]
+    },
+    {
+      "path": "run-reuse-cost-bench.mjs",
+      "sha256": "2a9bef0d3277b915e79a15e1432a312c1f450d19c260e60a6b628582ec9b5df5",
+      "lines": 100,
+      "matches": [
+        {
+          "line": 44,
+          "kinds": [
+            "seed"
+          ],
+          "text": "let seed = 17911;"
+        },
+        {
+          "line": 45,
+          "kinds": [
+            "seed"
+          ],
+          "text": "const random = n => { seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0; return seed % n; };"
+        },
+        {
+          "line": 88,
+          "kinds": [
+            "interval"
+          ],
+          "text": "      comparisons[control][clock] = { pairedMedianRatio: median(ratios), pairedMedianBootstrap95: [boot[125], boot[4875]] };"
+        },
+        {
+          "line": 100,
+          "kinds": [
+            "interval"
+          ],
+          "text": "  limits: 'Same frozen numeric workload. First-touch operands/numeric caches and process constants preconditioned on parent; measured workers have fresh TLS, execute one first query then16 warm queries. Query clocks exclude thread start/exit; lifecycle clock includes17 queries and thread start/join/exit. Empty-clock samples reported without subtraction. Workers inherit CPU affinity and run sequentially. Shared/common-tail/independent graphs, not every collision or sharing pattern. Baseline Unknown versus candidate Equal is different work. Instrumented allocation clocks are not CPU evidence; requested Rust allocation bytes exclude native bookkeeping/allocator overhead. Snapshot binaries preserved separately by mode. Host/session confidence intervals, not universal bounds.' }, null, 2) + '\\n', { flag: 'wx' });"
+        }
+      ]
+    },
+    {
+      "path": "run-reuse-cost-campaign.mjs",
+      "sha256": "bc7e4b086b367a6717900cd05976dacf49619f17dd0de91a67ba7eadbd684bda",
+      "lines": 27,
+      "matches": []
+    },
+    {
+      "path": "run-reuse-memory.mjs",
+      "sha256": "0d966b1c915f7a6c5c672ca39c8cc55150817246c5c527e016cd13569072055e",
+      "lines": 41,
+      "matches": []
+    },
+    {
+      "path": "run-reuse-scalar-gates.mjs",
+      "sha256": "f0b444c3134ccddec83761e227f5b2a435ef134692ba876b10a1e02e416a6e8d",
+      "lines": 23,
+      "matches": []
+    },
+    {
+      "path": "run-root-exp-bench.mjs",
+      "sha256": "36460741ef0938b9f2ce792f16e05fe62a9d8069e3966ed2eb2987618746451f",
+      "lines": 75,
+      "matches": [
+        {
+          "line": 30,
+          "kinds": [
+            "seed"
+          ],
+          "text": "let seed = 736124;"
+        },
+        {
+          "line": 32,
+          "kinds": [
+            "seed"
+          ],
+          "text": "  seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0;"
+        },
+        {
+          "line": 33,
+          "kinds": [
+            "seed"
+          ],
+          "text": "  return seed % n;"
+        },
+        {
+          "line": 63,
+          "kinds": [
+            "interval"
+          ],
+          "text": "  const bootstrap = Array.from({ length: 5000 }, () => median(paired.map(() => paired[random(paired.length)]))).sort((a, b) => a - b);"
+        },
+        {
+          "line": 67,
+          "kinds": [
+            "interval"
+          ],
+          "text": "    pairedMedianRatio: median(paired), pairedMedianBootstrap95: [bootstrap[125], bootstrap[4875]],"
+        },
+        {
+          "line": 75,
+          "kinds": [
+            "interval"
+          ],
+          "text": "  limits: 'Absolute approximation work, not certified equality. Independent directed-MPFR oracle checks accuracy. Warm constants preconditioned in every process. Hot-operand reuses an exp operand already approximated at -768, then constructs a fresh root on each iteration. Allocation clocks are not CPU evidence; bytes are cumulative requests, not peak heap. Bootstrap intervals describe this host/session only.' }, null, 2) + '\\n', { flag: 'wx' });"
+        }
+      ]
+    },
+    {
+      "path": "run-root-exp-opaque-bench.mjs",
+      "sha256": "7aecde5f22774f4c3e881bb0a34c35f588ade0f057b2572d8fe24a7d16e32eb4",
+      "lines": 66,
+      "matches": [
+        {
+          "line": 29,
+          "kinds": [
+            "seed"
+          ],
+          "text": "let seed = 17911;"
+        },
+        {
+          "line": 30,
+          "kinds": [
+            "seed"
+          ],
+          "text": "const rand = n => { seed = (Math.imul(seed, 1664525)+1013904223) >>> 0; return seed % n; };"
+        },
+        {
+          "line": 56,
+          "kinds": [
+            "interval"
+          ],
+          "text": "  const bootstrap = Array.from({length: 5000}, () => median(pairs.map(() => pairs[rand(pairs.length)]))).sort((a,b)=>a-b);"
+        },
+        {
+          "line": 60,
+          "kinds": [
+            "interval"
+          ],
+          "text": "    pairedMedianRatio: median(pairs), pairedMedianBootstrap95: [bootstrap[125],bootstrap[4875]],"
+        },
+        {
+          "line": 66,
+          "kinds": [
+            "interval"
+          ],
+          "text": "  limits: 'Identity rows compare additional decisions with baseline Unknown, not equal work. Unresolved controls require Unknown in both variants. CPU and allocation binaries differ; requested bytes are cumulative, not peak heap. Fixed process preconditioning; host/session bootstrap intervals only. Opaque nested-sine depths are1,8,32,128; both variants use the same independently reconstructed graphs. Collector visit caps do not bound all opaque descendants. Not a whole-program resource bound.'}, null, 2)+'\\n', {flag:'wx'});"
+        }
+      ]
+    },
+    {
+      "path": "run-root-exp-proof-bench.mjs",
+      "sha256": "c69610152d60ee02ce99bdc22afd186e98d6d1f5784a63dc138593da54eb0ff7",
+      "lines": 68,
+      "matches": [
+        {
+          "line": 31,
+          "kinds": [
+            "seed"
+          ],
+          "text": "let seed = 17911;"
+        },
+        {
+          "line": 32,
+          "kinds": [
+            "seed"
+          ],
+          "text": "const rand = n => { seed = (Math.imul(seed, 1664525)+1013904223) >>> 0; return seed % n; };"
+        },
+        {
+          "line": 58,
+          "kinds": [
+            "interval"
+          ],
+          "text": "  const bootstrap = Array.from({length: 5000}, () => median(pairs.map(() => pairs[rand(pairs.length)]))).sort((a,b)=>a-b);"
+        },
+        {
+          "line": 62,
+          "kinds": [
+            "interval"
+          ],
+          "text": "    pairedMedianRatio: median(pairs), pairedMedianBootstrap95: [bootstrap[125],bootstrap[4875]],"
+        },
+        {
+          "line": 68,
+          "kinds": [
+            "interval"
+          ],
+          "text": "  limits: 'Identity rows compare additional decisions with baseline Unknown, not equal work. Unresolved controls require Unknown in both variants. CPU and allocation binaries differ; requested bytes are cumulative, not peak heap. Fixed process preconditioning; host/session bootstrap intervals only. Numeric cases use the same earlier frozen workload.'}, null, 2)+'\\n', {flag:'wx'});"
+        }
+      ]
+    },
+    {
+      "path": "run-root-exp-reuse-alloc-bench.mjs",
+      "sha256": "4cbf8d8bd1b7e5a153221220060c5f687a8f85ae8a764f0d4600b0c6e611141b",
+      "lines": 66,
+      "matches": [
+        {
+          "line": 27,
+          "kinds": [
+            "seed"
+          ],
+          "text": "let seed = 17911;"
+        },
+        {
+          "line": 28,
+          "kinds": [
+            "seed"
+          ],
+          "text": "const rand = n => { seed = (Math.imul(seed, 1664525)+1013904223) >>> 0; return seed % n; };"
+        },
+        {
+          "line": 55,
+          "kinds": [
+            "interval"
+          ],
+          "text": "    const bootstrap = Array.from({length: 5000}, () => median(pairs.map(() => pairs[rand(pairs.length)]))).sort((a,b)=>a-b);"
+        },
+        {
+          "line": 56,
+          "kinds": [
+            "interval"
+          ],
+          "text": "    comparisons[control] = {pairedMedianRatio: median(pairs), pairedMedianBootstrap95: [bootstrap[125],bootstrap[4875]]};"
+        },
+        {
+          "line": 66,
+          "kinds": [
+            "interval"
+          ],
+          "text": "  limits: 'Identity rows compare additional decisions with baseline Unknown; sign versus reuse has matching outcomes. CPU and allocation binaries differ; requested bytes are not peak live memory. TLS cache has bounded weak retention per thread, not a whole-query work bound. Fixed process preconditioning and independent nested-sine atoms at depths 1/8/32/128; not all graph sharing patterns. Host/session bootstrap intervals only.'}, null, 2)+'\\n', {flag:'wx'});"
+        }
+      ]
+    },
+    {
+      "path": "run-root-exp-reuse-bench.mjs",
+      "sha256": "6d7e825b435230ca665f9aca710681c441320fcd2e7c3aaef5eed535a43a5e57",
+      "lines": 66,
+      "matches": [
+        {
+          "line": 27,
+          "kinds": [
+            "seed"
+          ],
+          "text": "let seed = 17911;"
+        },
+        {
+          "line": 28,
+          "kinds": [
+            "seed"
+          ],
+          "text": "const rand = n => { seed = (Math.imul(seed, 1664525)+1013904223) >>> 0; return seed % n; };"
+        },
+        {
+          "line": 55,
+          "kinds": [
+            "interval"
+          ],
+          "text": "    const bootstrap = Array.from({length: 5000}, () => median(pairs.map(() => pairs[rand(pairs.length)]))).sort((a,b)=>a-b);"
+        },
+        {
+          "line": 56,
+          "kinds": [
+            "interval"
+          ],
+          "text": "    comparisons[control] = {pairedMedianRatio: median(pairs), pairedMedianBootstrap95: [bootstrap[125],bootstrap[4875]]};"
+        },
+        {
+          "line": 66,
+          "kinds": [
+            "interval"
+          ],
+          "text": "  limits: 'Identity rows compare additional decisions with baseline Unknown; sign versus reuse has matching outcomes. CPU and allocation binaries differ; requested bytes are not peak live memory. TLS cache has bounded weak retention per thread, not a whole-query work bound. Fixed process preconditioning and independent nested-sine atoms at depths 1/8/32/128; not all graph sharing patterns. Host/session bootstrap intervals only.'}, null, 2)+'\\n', {flag:'wx'});"
+        }
+      ]
+    },
+    {
+      "path": "run-root-exp-reuse-confirm-bench.mjs",
+      "sha256": "be758f4b7681a250edb2303736dd73293d9bd7b3a980d935d688296763da2101",
+      "lines": 66,
+      "matches": [
+        {
+          "line": 27,
+          "kinds": [
+            "seed"
+          ],
+          "text": "let seed = 17911;"
+        },
+        {
+          "line": 28,
+          "kinds": [
+            "seed"
+          ],
+          "text": "const rand = n => { seed = (Math.imul(seed, 1664525)+1013904223) >>> 0; return seed % n; };"
+        },
+        {
+          "line": 55,
+          "kinds": [
+            "interval"
+          ],
+          "text": "    const bootstrap = Array.from({length: 5000}, () => median(pairs.map(() => pairs[rand(pairs.length)]))).sort((a,b)=>a-b);"
+        },
+        {
+          "line": 56,
+          "kinds": [
+            "interval"
+          ],
+          "text": "    comparisons[control] = {pairedMedianRatio: median(pairs), pairedMedianBootstrap95: [bootstrap[125],bootstrap[4875]]};"
+        },
+        {
+          "line": 66,
+          "kinds": [
+            "interval"
+          ],
+          "text": "  limits: 'Identity rows compare additional decisions with baseline Unknown; sign versus reuse has matching outcomes. CPU and allocation binaries differ; requested bytes are not peak live memory. TLS cache has bounded weak retention per thread, not a whole-query work bound. Fixed process preconditioning and independent nested-sine atoms at depths 1/8/32/128; not all graph sharing patterns. Host/session bootstrap intervals only.'}, null, 2)+'\\n', {flag:'wx'});"
+        }
+      ]
+    },
+    {
+      "path": "run-root-exp-sign-bench.mjs",
+      "sha256": "13f4664efa1e9fea7430eff4fd8cd1c7481818fe574a28f735456a8d9f2ceac1",
+      "lines": 68,
+      "matches": [
+        {
+          "line": 31,
+          "kinds": [
+            "seed"
+          ],
+          "text": "let seed = 17911;"
+        },
+        {
+          "line": 32,
+          "kinds": [
+            "seed"
+          ],
+          "text": "const rand = n => { seed = (Math.imul(seed, 1664525)+1013904223) >>> 0; return seed % n; };"
+        },
+        {
+          "line": 58,
+          "kinds": [
+            "interval"
+          ],
+          "text": "  const bootstrap = Array.from({length: 5000}, () => median(pairs.map(() => pairs[rand(pairs.length)]))).sort((a,b)=>a-b);"
+        },
+        {
+          "line": 62,
+          "kinds": [
+            "interval"
+          ],
+          "text": "    pairedMedianRatio: median(pairs), pairedMedianBootstrap95: [bootstrap[125],bootstrap[4875]],"
+        },
+        {
+          "line": 68,
+          "kinds": [
+            "interval"
+          ],
+          "text": "  limits: 'Identity rows compare additional decisions with baseline Unknown, not equal work. Unresolved controls require Unknown in both variants. CPU and allocation binaries differ; requested bytes are cumulative, not peak heap. Fixed process preconditioning; host/session bootstrap intervals only. Numeric cases use the same earlier frozen workload.'}, null, 2)+'\\n', {flag:'wx'});"
+        }
+      ]
+    },
+    {
+      "path": "run-sign-filter-costs.mjs",
+      "sha256": "fd31a68ad0ac3d3d33ac9f65f9c2d65e72ef4334959cbf61fe843773212413a9",
+      "lines": 61,
+      "matches": [
+        {
+          "line": 29,
+          "kinds": [
+            "seed"
+          ],
+          "text": "let seed=31337;const random=n=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed%n;};"
+        },
+        {
+          "line": 52,
+          "kinds": [
+            "interval"
+          ],
+          "text": "  const bootstrap=Array.from({length:5000},()=>median(ratios.map(()=>ratios[random(blocks)]))).sort((a,b)=>a-b);"
+        },
+        {
+          "line": 53,
+          "kinds": [
+            "interval"
+          ],
+          "text": "  Object.assign(summary,{pairedMedianRatio:median(ratios),pairedMedianBootstrap95:[bootstrap[125],bootstrap[4875]],"
+        },
+        {
+          "line": 61,
+          "kinds": [
+            "interval"
+          ],
+          "text": " limits:'48 public ring-area groups, four fixtures, six vertex counts, retained or cloned-ring inputs. Independent exact rational shoelace and Machin alternating-series sign oracle recorded separately. Sixteen prewarm queries; cloned-ring timing includes cloning and dropping points but does not rebuild cold scalar values. Each timed query asserts the complete expected PredicateOutcome including certainty/stage. Uninstrumented CPU, separate Rust allocation requests/bytes/live/peak. Per-group paired bootstrap estimates are not multiplicity-adjusted; no universal timing, memory bound, RSS, concurrent or production-retention claim.'},null,2)+'\\n',{flag:'wx'});"
+        }
+      ]
+    },
+    {
+      "path": "run-sign-filter-mask-costs.mjs",
+      "sha256": "cfe752dd851380da198d48f625a60269917c936299a2ff0b8c6afcd2af4d3496",
+      "lines": 62,
+      "matches": [
+        {
+          "line": 30,
+          "kinds": [
+            "seed"
+          ],
+          "text": "let seed=31337;const random=n=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed%n;};"
+        },
+        {
+          "line": 53,
+          "kinds": [
+            "interval"
+          ],
+          "text": "  const bootstrap=Array.from({length:5000},()=>median(ratios.map(()=>ratios[random(blocks)]))).sort((a,b)=>a-b);"
+        },
+        {
+          "line": 54,
+          "kinds": [
+            "interval"
+          ],
+          "text": "  Object.assign(summary,{pairedMedianRatio:median(ratios),pairedMedianBootstrap95:[bootstrap[125],bootstrap[4875]],"
+        },
+        {
+          "line": 62,
+          "kinds": [
+            "interval"
+          ],
+          "text": " limits:'48 public ring-area groups, four fixtures, six vertex counts, retained or cloned-ring inputs. Independent exact rational shoelace and Machin alternating-series sign oracle recorded separately. Sixteen prewarm queries; cloned-ring timing includes cloning and dropping points but does not rebuild cold scalar values. Each timed query asserts the complete expected PredicateOutcome including certainty/stage. Uninstrumented CPU, separate Rust allocation requests/bytes/live/peak. Per-group paired bootstrap estimates are not multiplicity-adjusted; no universal timing, memory bound, RSS, concurrent or production-retention claim.'},null,2)+'\\n',{flag:'wx'});"
+        }
+      ]
+    },
+    {
+      "path": "setup-sign-filter-mask.mjs",
+      "sha256": "96660f6bd2c7f81d8fcbd04941306f99889516548dc291b3e0df301b8c04b343",
+      "lines": 13,
+      "matches": []
+    },
+    {
+      "path": "setup-sign-filter.mjs",
+      "sha256": "35ab8c9b722a63e3a55f56d3c0f0d2985ffc16a52a4ca3ff80da60b9add7b73d",
+      "lines": 21,
+      "matches": []
+    },
+    {
+      "path": "sign-filter-mask-sources.mjs",
+      "sha256": "39b9fb14108d73346665669e08a671e842015950ef5d8abea2d2223122452c27",
+      "lines": 49,
+      "matches": []
+    },
+    {
+      "path": "sign-filter-ring-oracle.mjs",
+      "sha256": "022cab1a665c7f6ea9388710a6ba691bfd8f7e7f4d1138b64773d3e0e0b1fd2e",
+      "lines": 41,
+      "matches": []
+    },
+    {
+      "path": "sign-filter-sources.mjs",
+      "sha256": "727196f1f7ff6e38ee492bc6eeeca17b2490094496274af3988bc761ec545c6b",
+      "lines": 60,
+      "matches": []
+    },
+    {
+      "path": "snapshot-v43-check-complex-product-v2.mjs",
+      "sha256": "c3d00b056103e45030105eb13632a364926b56c56b359c463224e7a8de54b2be",
+      "lines": 98,
+      "matches": [
+        {
+          "line": 56,
+          "kinds": [
+            "seed"
+          ],
+          "text": "  let seed=31337;const random=n=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed%n;};"
+        },
+        {
+          "line": 70,
+          "kinds": [
+            "interval"
+          ],
+          "text": "    const bootstrap=Array.from({length:5000},()=>median(ratios.map(()=>ratios[random(12)]))).sort((a,b)=>a-b);"
+        },
+        {
+          "line": 71,
+          "kinds": [
+            "interval"
+          ],
+          "text": "    assert.equal(s.pairedMedianRatio,median(ratios));assert.deepEqual(s.pairedMedianBootstrap95,[bootstrap[125],bootstrap[4875]]);"
+        },
+        {
+          "line": 83,
+          "kinds": [
+            "interval"
+          ],
+          "text": "   below:groups.filter(s=>s.pairedMedianBootstrap95[1]<1).length,"
+        },
+        {
+          "line": 84,
+          "kinds": [
+            "interval"
+          ],
+          "text": "   above:groups.filter(s=>s.pairedMedianBootstrap95[0]>1).length,"
+        },
+        {
+          "line": 85,
+          "kinds": [
+            "interval"
+          ],
+          "text": "   overlap:groups.filter(s=>s.pairedMedianBootstrap95[0]<=1&&s.pairedMedianBootstrap95[1]>=1).length,"
+        }
+      ]
+    },
+    {
+      "path": "snapshot-v43-check-complex-product.mjs",
+      "sha256": "b797557531c98ed66c195de5a6c94ba47469433e5f9e6b148f5ad135ad136b27",
+      "lines": 96,
+      "matches": [
+        {
+          "line": 54,
+          "kinds": [
+            "seed"
+          ],
+          "text": "  let seed=31337;const random=n=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed%n;};"
+        },
+        {
+          "line": 68,
+          "kinds": [
+            "interval"
+          ],
+          "text": "    const bootstrap=Array.from({length:5000},()=>median(ratios.map(()=>ratios[random(12)]))).sort((a,b)=>a-b);"
+        },
+        {
+          "line": 69,
+          "kinds": [
+            "interval"
+          ],
+          "text": "    assert.equal(s.pairedMedianRatio,median(ratios));assert.deepEqual(s.pairedMedianBootstrap95,[bootstrap[125],bootstrap[4875]]);"
+        },
+        {
+          "line": 81,
+          "kinds": [
+            "interval"
+          ],
+          "text": "   below:groups.filter(s=>s.pairedMedianBootstrap95[1]<1).length,"
+        },
+        {
+          "line": 82,
+          "kinds": [
+            "interval"
+          ],
+          "text": "   above:groups.filter(s=>s.pairedMedianBootstrap95[0]>1).length,"
+        },
+        {
+          "line": 83,
+          "kinds": [
+            "interval"
+          ],
+          "text": "   overlap:groups.filter(s=>s.pairedMedianBootstrap95[0]<=1&&s.pairedMedianBootstrap95[1]>=1).length,"
+        }
+      ]
+    },
+    {
+      "path": "snapshot-v43-complex-product-sources.mjs",
+      "sha256": "c737bbc08a172e579fbefe3c90f12484eb80cc732171782ea31eac2eb68c658d",
+      "lines": 19,
+      "matches": []
+    },
+    {
+      "path": "snapshot-v43-complex-product-v2-sources.mjs",
+      "sha256": "3454655915bb91da95e4b099bcb13bfc0b018462ae08b77fc4f1d8fd6d9807fc",
+      "lines": 20,
+      "matches": []
+    },
+    {
+      "path": "snapshot-v43-spec.mjs",
+      "sha256": "831923787acc6a5b09c1ff7b287798aac7f5d1d2710da636d7b314f1166447d7",
+      "lines": 59,
+      "matches": []
+    },
+    {
+      "path": "snapshot-v43-verify-arb-dot.mjs",
+      "sha256": "8c3a363d0e80f966b2c6acde9e9043cc99a67dab7bbd62ae43f0b52ad2c8b082",
+      "lines": 57,
+      "matches": []
+    },
+    {
+      "path": "snapshot-v43-verify-arf-fused.mjs",
+      "sha256": "3b2f7a7bfb7fbf2331383a163c124dc17101a42717448b05b0633c2ad8dfc9ac",
+      "lines": 59,
+      "matches": []
+    },
+    {
+      "path": "snapshot-v43-verify-arf-rounding-v2.mjs",
+      "sha256": "0446646614f966209b82b1ccfac2bbe824231bf9021eebfc7924ad4d7faec176",
+      "lines": 69,
+      "matches": []
+    },
+    {
+      "path": "snapshot-v43-verify-complex-product-v2.mjs",
+      "sha256": "99d43badc4c17a20d0c9dea4df615eed322764909bbf5df8a55775de842301eb",
+      "lines": 46,
+      "matches": [
+        {
+          "line": 34,
+          "kinds": [
+            "interval"
+          ],
+          "text": " below:ss.filter(s=>s.pairedMedianBootstrap95[1]<1).length,above:ss.filter(s=>s.pairedMedianBootstrap95[0]>1).length,"
+        },
+        {
+          "line": 35,
+          "kinds": [
+            "interval"
+          ],
+          "text": " overlap:ss.filter(s=>s.pairedMedianBootstrap95[0]<=1&&s.pairedMedianBootstrap95[1]>=1).length});"
+        }
+      ]
+    },
+    {
+      "path": "snapshot-v43-verify-complex-product.mjs",
+      "sha256": "65ef55f96a851f40848694bf128b4c0cee06e3da0856a223cb4f62673c26cbdb",
+      "lines": 34,
+      "matches": []
+    },
+    {
+      "path": "snapshot-v43-verify-e-plan.mjs",
+      "sha256": "1a393d33a020036c012bc19d92912c9dfc1a332ec3ec763cf2bad7d38a71c2b1",
+      "lines": 87,
+      "matches": []
+    },
+    {
+      "path": "snapshot-v43-verify-e-qualified.mjs",
+      "sha256": "c2355c87f4453fba781dddf2303492bc0adf6cb69d8fb5a96e5ac8f08317de8c",
+      "lines": 85,
+      "matches": []
+    },
+    {
+      "path": "snapshot-v43-verify-high-product.mjs",
+      "sha256": "2d5160d687963d20a27fa0d91454a6bf1c6ca1d2fd24d9a62edf8eb9e3e7dab3",
+      "lines": 64,
+      "matches": []
+    },
+    {
+      "path": "snapshot-v43-verify-mag-series.mjs",
+      "sha256": "4076bebb54c3dcbcf26ba008af345751221ddb849dfc00de1ff4dc2f4cbd2a26",
+      "lines": 61,
+      "matches": []
+    },
+    {
+      "path": "snapshot-v43-verify-mag-transcendental.mjs",
+      "sha256": "a572e51fc365565fecee546e6c19671ea6d5362d964b563066e35c503aef8c9a",
+      "lines": 57,
+      "matches": []
+    },
+    {
+      "path": "snapshot-v43-verify-magnitude.mjs",
+      "sha256": "12475b84d6adfe83aef2104ea0cbcedaa2c57e539a4169921ac31e3151130a6d",
+      "lines": 70,
+      "matches": []
+    },
+    {
+      "path": "verify-arb-dot.mjs",
+      "sha256": "7a4cc3b90f6b44c9e55119c8be4b8dc5bb044d314aa96e06cd5d3be349496e0e",
+      "lines": 57,
+      "matches": []
+    },
+    {
+      "path": "verify-arf-contracts.mjs",
+      "sha256": "e426cc4d655139df2b91d61db51fcc18c98d69e21dd04b167c16c58956d8f111",
+      "lines": 56,
+      "matches": []
+    },
+    {
+      "path": "verify-arf-conversion.mjs",
+      "sha256": "5066800910246dd81f7167396d1a7903907e182f0d9532b8a03a3f11b1fdbb52",
+      "lines": 63,
+      "matches": []
+    },
+    {
+      "path": "verify-arf-fused.mjs",
+      "sha256": "af4710187104bbd2d86cde0c30c1dbb56dddd51299c95ec6a11dcbe738cc9b73",
+      "lines": 59,
+      "matches": []
+    },
+    {
+      "path": "verify-arf-rounding-v2.mjs",
+      "sha256": "8fa49821ac919feacf2742460c83533846aaacd4a1da1f5b64f0f002271c04bd",
+      "lines": 69,
+      "matches": []
+    },
+    {
+      "path": "verify-arf-rounding.mjs",
+      "sha256": "72046c288965135c81a2b0b242ee0cf19c6045770a2b4c02fcdbcbf55f8364c7",
+      "lines": 59,
+      "matches": []
+    },
+    {
+      "path": "verify-charpoly-domain.mjs",
+      "sha256": "09748fcff9c3d0174d9c8e0875d2e4908a5ce64851887cbec9b8572e1ed55605",
+      "lines": 172,
+      "matches": [
+        {
+          "line": 78,
+          "kinds": [
+            "seed"
+          ],
+          "text": "const charpoly=corpus('charpoly-certificate-native','family,kind,n,shape,seed,method,success,equality',"
+        },
+        {
+          "line": 81,
+          "kinds": [
+            "seed"
+          ],
+          "text": "for(let seed=0;seed<2;seed++)for(let method=0;method<2;method++)"
+        },
+        {
+          "line": 82,
+          "kinds": [
+            "seed"
+          ],
+          "text": "  assert.equal(charpoly[index++],['charpoly',kind,n,shape,seed,method,1,'True'].join(','));"
+        }
+      ]
+    },
+    {
+      "path": "verify-checkpoint.mjs",
+      "sha256": "9544e1220afcbdd475756d8250afa9013da854080899112a320c2fc0a3e0b79e",
+      "lines": 125,
+      "matches": []
+    },
+    {
+      "path": "verify-complex-product-v2.mjs",
+      "sha256": "e0b58c9b77dfb8e933136b7aa84becdf75aa281add679e869f5b96828a7035bd",
+      "lines": 46,
+      "matches": [
+        {
+          "line": 34,
+          "kinds": [
+            "interval"
+          ],
+          "text": " below:ss.filter(s=>s.pairedMedianBootstrap95[1]<1).length,above:ss.filter(s=>s.pairedMedianBootstrap95[0]>1).length,"
+        },
+        {
+          "line": 35,
+          "kinds": [
+            "interval"
+          ],
+          "text": " overlap:ss.filter(s=>s.pairedMedianBootstrap95[0]<=1&&s.pairedMedianBootstrap95[1]>=1).length});"
+        }
+      ]
+    },
+    {
+      "path": "verify-complex-product.mjs",
+      "sha256": "0bf857c5260b2d66b4736d2faff2a449f63d71641054d2765d14aae66230ec25",
+      "lines": 34,
+      "matches": []
+    },
+    {
+      "path": "verify-derivative-demand.mjs",
+      "sha256": "8a3d75212d62e7813ebdbbd1c32512b66e6204ba3c69cfcc535b615f941555af",
+      "lines": 125,
+      "matches": []
+    },
+    {
+      "path": "verify-derivative-qualification.mjs",
+      "sha256": "bb56441d33b7911a5eb3522f3257ef90cb1bdf40d2d4b5bf86e13f3978e3e297",
+      "lines": 145,
+      "matches": []
+    },
+    {
+      "path": "verify-e-plan.mjs",
+      "sha256": "a40e4055db00b718e4fc6037b025bc324b7538e02459657634afed3d6623cac6",
+      "lines": 87,
+      "matches": []
+    },
+    {
+      "path": "verify-e-qualified-retained.mjs",
+      "sha256": "f069ea06910641823ab3256a2c7a3911e5a763df589f1d442e754c597861183c",
+      "lines": 32,
+      "matches": []
+    },
+    {
+      "path": "verify-e-qualified.initial.mjs",
+      "sha256": "180f001e713a694b4265e041a022ab3e4761faabd8dd1be63be8492a01ad4b92",
+      "lines": 81,
+      "matches": []
+    },
+    {
+      "path": "verify-e-qualified.mjs",
+      "sha256": "cda941a2fb363f0c91af549ca397084bd62f1255ef81cc07658a9acdafc74ba4",
+      "lines": 85,
+      "matches": []
+    },
+    {
+      "path": "verify-erf-checkpoint.mjs",
+      "sha256": "b0d1af57829a8824500e6ea7ad70c9925e327b26365d32ae620f5ad7030d692e",
+      "lines": 119,
+      "matches": []
+    },
+    {
+      "path": "verify-fexpr-formatting.mjs",
+      "sha256": "5810e7e5839cb84e1a07e38f18b08a7f9968fc8d12b239c514dddf08f579b3de",
+      "lines": 55,
+      "matches": []
+    },
+    {
+      "path": "verify-fexpr-representation.mjs",
+      "sha256": "9e6c9af344f39b91d4284559e6589a9d8965ea7c8472c34d6db9ac26f3c84bca",
+      "lines": 61,
+      "matches": []
+    },
+    {
+      "path": "verify-high-product.mjs",
+      "sha256": "8bde230b57bdc6572255e55612f288e000daf3f7ee863a39d9e1a894f786a8c3",
+      "lines": 64,
+      "matches": []
+    },
+    {
+      "path": "verify-mag-series.mjs",
+      "sha256": "184c49503cf38cdec85c60c7ab703677e1b1ed408ff58e817c8d4e9e496b3cdd",
+      "lines": 61,
+      "matches": []
+    },
+    {
+      "path": "verify-mag-transcendental.mjs",
+      "sha256": "c8be0597f40e2b87b403ea2374e1315c6850b053b43dec971f00481d02337bd8",
+      "lines": 57,
+      "matches": []
+    },
+    {
+      "path": "verify-magnitude.mjs",
+      "sha256": "929e299e1a5d37a6d8ff94c3c7c4bbec73834ee7ac38fb5da0282ac48aca55d4",
+      "lines": 70,
+      "matches": []
+    },
+    {
+      "path": "verify-matrix-pivots.mjs",
+      "sha256": "b792f669b14d43993688218f3dbf7d5835e8bbfde94d5d1e186b46f981a2b75b",
+      "lines": 97,
+      "matches": []
+    },
+    {
+      "path": "verify-matrix-solves.mjs",
+      "sha256": "a64d14bc6542fb6f5867c34186ca25d6107e5ac57873e00e9359227e1078fef1",
+      "lines": 127,
+      "matches": [
+        {
+          "line": 54,
+          "kinds": [
+            "seed"
+          ],
+          "text": "for (let r=0;r<=6;r++) for (let c=0;c<=6;c++) for (let seed=0;seed<3;seed++)"
+        },
+        {
+          "line": 56,
+          "kinds": [
+            "seed"
+          ],
+          "text": "  const bad = r>0&&c>0&&seed>0&&alias===0&&method!==2;"
+        },
+        {
+          "line": 57,
+          "kinds": [
+            "seed"
+          ],
+          "text": "  assert.equal(native[index++],['rref',seed,r,c,alias,method,1,0,bad?'False':'True'].join(','));"
+        }
+      ]
+    },
+    {
+      "path": "verify-monic-costs.mjs",
+      "sha256": "8fde82f275ca8a49cb5860d325d574f47223f3dd9e7b79d700d717e8eb62145f",
+      "lines": 136,
+      "matches": [
+        {
+          "line": 46,
+          "kinds": [
+            "seed"
+          ],
+          "text": "let seed=3109;"
+        },
+        {
+          "line": 47,
+          "kinds": [
+            "seed"
+          ],
+          "text": "const random=n=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed%n;};"
+        },
+        {
+          "line": 79,
+          "kinds": [
+            "interval"
+          ],
+          "text": "  const bootstrap=Array.from({length:5000},()=>median(ratios.map(()=>ratios[random(12)]))).sort((a,b)=>a-b);"
+        },
+        {
+          "line": 80,
+          "kinds": [
+            "interval"
+          ],
+          "text": "  assert.equal(s.pairedMedianRatio,median(ratios));assert.deepEqual(s.pairedMedianBootstrap95,[bootstrap[125],bootstrap[4875]]);"
+        }
+      ]
+    },
+    {
+      "path": "verify-monic-state.mjs",
+      "sha256": "2224cef6d50b1aa7e57b1800fc38e88b4de8b7d63c1779a5c7976c10f4a7f6d2",
+      "lines": 163,
+      "matches": []
+    },
+    {
+      "path": "verify-mpoly-bridge.mjs",
+      "sha256": "15713abc3efa1471d0e58134704130925b72eb776c116f3e3f520ff9117e5569",
+      "lines": 57,
+      "matches": []
+    },
+    {
+      "path": "verify-mpoly-rational.mjs",
+      "sha256": "88050fe012762ac9767dbeded90d46166877d973ef0e1924e53ee766a58c1ac4",
+      "lines": 60,
+      "matches": []
+    },
+    {
+      "path": "verify-nfixed.mjs",
+      "sha256": "feef09b7112eab1fec8566c0582c64b7d7f72e32f4a33e3b5d293516a52318b3",
+      "lines": 82,
+      "matches": []
+    },
+    {
+      "path": "verify-nfloat-complex.mjs",
+      "sha256": "34695358125049324194ada88ce6c16ae32a66fb67e65d3a8f82e6ad0860997b",
+      "lines": 91,
+      "matches": []
+    },
+    {
+      "path": "verify-nfloat-support.mjs",
+      "sha256": "1d704d103ff5974ab0f983241a61bacf8850f8a5444d1618e8a18143791718b9",
+      "lines": 91,
+      "matches": []
+    },
+    {
+      "path": "verify-point-cold.mjs",
+      "sha256": "d9137d807c9d24adadf3c21880b37b93cab2da9daa67013265079d28fbd03369",
+      "lines": 16,
+      "matches": []
+    },
+    {
+      "path": "verify-point-demand.mjs",
+      "sha256": "e7d3e89a07419fa5569015b7f42907a7b41545c704ffc958e07e5c78bf819511",
+      "lines": 18,
+      "matches": []
+    },
+    {
+      "path": "verify-point-extended.mjs",
+      "sha256": "b879baad53b4524a02aebb825c9b0cc46e7a1b7d96a4bb2d3a42a1f178f247e5",
+      "lines": 15,
+      "matches": []
+    },
+    {
+      "path": "verify-point-history.mjs",
+      "sha256": "8ee338304aea0fddb73ebb09817a60f8a89c0fa2628d2285afb9fd897207f837",
+      "lines": 15,
+      "matches": []
+    },
+    {
+      "path": "verify-point-image.mjs",
+      "sha256": "9f324d1c10bcd12e25a63fe189104208e827d5f25604ad973d6055bb4ec13f16",
+      "lines": 18,
+      "matches": []
+    },
+    {
+      "path": "verify-point-qualified.mjs",
+      "sha256": "defb9056a11c5e8842190931c6ebb1960bb9a1b1b78c662b50e57c75162ca511",
+      "lines": 18,
+      "matches": []
+    },
+    {
+      "path": "verify-point-wasm.mjs",
+      "sha256": "1d10b00461ec9d76b6f5e44c5b1ac5895871a14fb89f5153bbc834094d0f96c9",
+      "lines": 15,
+      "matches": []
+    },
+    {
+      "path": "verify-polynomial-closure.mjs",
+      "sha256": "06ffb8fcbe15dfed39ccca8b3074b265eaa49999ee5dab0108583347afed28ee",
+      "lines": 144,
+      "matches": []
+    },
+    {
+      "path": "verify-polynomial-decision.mjs",
+      "sha256": "94a23f7d10ea522a8cd3f8051dab3d115793475ca26510265d2aac203d7d11ac",
+      "lines": 156,
+      "matches": [
+        {
+          "line": 115,
+          "kinds": [
+            "seed"
+          ],
+          "text": "let seed = 997, offset = 0;"
+        },
+        {
+          "line": 116,
+          "kinds": [
+            "seed"
+          ],
+          "text": "const random = n => { seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0; return seed % n; };"
+        },
+        {
+          "line": 139,
+          "kinds": [
+            "interval"
+          ],
+          "text": "  assert.equal(s.pairedMedianRatio, median(ratios)); assert.deepEqual(s.pairedMedianBootstrap95, [boot[125], boot[4875]]);"
+        }
+      ]
+    },
+    {
+      "path": "verify-polynomial-facts.mjs",
+      "sha256": "b9d24674345b860321810ec932d227203fbc46e745a1d341556da9944b7956b3",
+      "lines": 171,
+      "matches": [
+        {
+          "line": 81,
+          "kinds": [
+            "seed"
+          ],
+          "text": "let seed = 997;"
+        },
+        {
+          "line": 82,
+          "kinds": [
+            "seed"
+          ],
+          "text": "const random = n => { seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0; return seed % n; };"
+        },
+        {
+          "line": 108,
+          "kinds": [
+            "interval"
+          ],
+          "text": "    assert.deepEqual(s.comparisons[control], { pairedMedianRatio: median(ratios), pairedMedianBootstrap95: [boot[125], boot[4875]] });"
+        }
+      ]
+    },
+    {
+      "path": "verify-power-sums.mjs",
+      "sha256": "9548ef2a9e4d66811543015285e1b578eb1d0325e569cd8bb92f4275a4c23d61",
+      "lines": 15,
+      "matches": []
+    },
+    {
+      "path": "verify-qqbar-arithmetic.mjs",
+      "sha256": "e6df55d7ddf36cd6cf40d491c146f429db28417431834ac7d5edcbe6b1f114d4",
+      "lines": 60,
+      "matches": []
+    },
+    {
+      "path": "verify-qqbar-decisions.initial.mjs",
+      "sha256": "9f7618bb73fb4c10f8977ffb4646461434dda1a9ab1739d46512fb9d175bf76a",
+      "lines": 62,
+      "matches": []
+    },
+    {
+      "path": "verify-qqbar-decisions.mjs",
+      "sha256": "9d7d58187cc6054f9af30155c07e573424024a61ce15db9d913520fb2673e415",
+      "lines": 66,
+      "matches": []
+    },
+    {
+      "path": "verify-rank-costs.mjs",
+      "sha256": "c6fd9c80647552cea431298d788084739db58ea0a706b03061ce162c5c5bcf9e",
+      "lines": 147,
+      "matches": [
+        {
+          "line": 54,
+          "kinds": [
+            "seed"
+          ],
+          "text": "let seed=5233;const random=n=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed%n;};"
+        },
+        {
+          "line": 96,
+          "kinds": [
+            "interval"
+          ],
+          "text": "      const bootstrap=Array.from({length:5000},()=>median(ratios.map(()=>ratios[random(blocks)]))).sort((a,b)=>a-b);"
+        },
+        {
+          "line": 98,
+          "kinds": [
+            "interval"
+          ],
+          "text": "      assert.deepEqual(q.pairedMedianBootstrap95,[bootstrap[125],bootstrap[4875]]);"
+        },
+        {
+          "line": 145,
+          "kinds": [
+            "interval"
+          ],
+          "text": "  allocationCounts,unresolvedWidth32Retained:{pairedRatio:unresolved.pairedMedianRatio,bootstrap95:unresolved.pairedMedianBootstrap95,"
+        }
+      ]
+    },
+    {
+      "path": "verify-results.mjs",
+      "sha256": "11c433e80b307e95cd2693c75e786b520d8fe3207874bbdcb674f5cb97ceb842",
+      "lines": 64,
+      "matches": []
+    },
+    {
+      "path": "verify-retained-exp-proof.mjs",
+      "sha256": "89768cff08847d2f2ee291dfc70730a0b0aa5c31a6fb2d631d92d532c69ce8a2",
+      "lines": 66,
+      "matches": []
+    },
+    {
+      "path": "verify-retained-monic.mjs",
+      "sha256": "d3e5abfd619d521b64927ca85cada4743fd515de109f00578c05cf322d875f8c",
+      "lines": 68,
+      "matches": []
+    },
+    {
+      "path": "verify-retained-polynomial-facts.mjs",
+      "sha256": "3a731483b2b6552c5a2bc1412c6e1aa6613d3d19cc0ae09244a827df3515b73d",
+      "lines": 49,
+      "matches": []
+    },
+    {
+      "path": "verify-reuse-cost-checkpoint.mjs",
+      "sha256": "b56e9bdc7883f74e8d6b1b0df5752cdf3629daea940ee18184b23b3c45946a70",
+      "lines": 127,
+      "matches": [
+        {
+          "line": 46,
+          "kinds": [
+            "seed"
+          ],
+          "text": "  let seed = 17911;"
+        },
+        {
+          "line": 47,
+          "kinds": [
+            "seed"
+          ],
+          "text": "  const random = n => { seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0; return seed % n; };"
+        },
+        {
+          "line": 80,
+          "kinds": [
+            "interval"
+          ],
+          "text": "      assert.deepEqual(s.comparisons[control][clock].pairedMedianBootstrap95, [boot[125], boot[4875]]);"
+        }
+      ]
+    },
+    {
+      "path": "verify-reuse-qualification-checkpoint.mjs",
+      "sha256": "dce37711c9ca67669a3aecb725f903486a800a6b1f87ae033d9fb78568054a28",
+      "lines": 170,
+      "matches": []
+    },
+    {
+      "path": "verify-root-exp-checkpoint.mjs",
+      "sha256": "9fa73643811ef21514c8717eb5797dc480978bda86e5edc534e5d4a5daaccb77",
+      "lines": 154,
+      "matches": []
+    },
+    {
+      "path": "verify-root-exp-proof-checkpoint.mjs",
+      "sha256": "b88e3b1131850b713ff80319afc8c180aa96142e95da48a47723fdff9f291a61",
+      "lines": 147,
+      "matches": [
+        {
+          "line": 95,
+          "kinds": [
+            "seed"
+          ],
+          "text": "  let seed = 17911;"
+        },
+        {
+          "line": 96,
+          "kinds": [
+            "seed"
+          ],
+          "text": "  const rand = n => { seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0; return seed % n; };"
+        },
+        {
+          "line": 129,
+          "kinds": [
+            "interval"
+          ],
+          "text": "    const bootstrap = Array.from({ length: 5000 }, () => median(ratios.map(() => ratios[rand(ratios.length)]))).sort((a, b) => a - b);"
+        },
+        {
+          "line": 130,
+          "kinds": [
+            "interval"
+          ],
+          "text": "    assert.deepEqual(s.pairedMedianBootstrap95, [bootstrap[125], bootstrap[4875]]);"
+        }
+      ]
+    },
+    {
+      "path": "verify-root-exp-reuse-checkpoint.mjs",
+      "sha256": "af9b2649b97e389e10462091dbf202cecd8c159b59ceb06b46014ea6648f2d89",
+      "lines": 103,
+      "matches": [
+        {
+          "line": 68,
+          "kinds": [
+            "seed"
+          ],
+          "text": "  let seed=17911;"
+        },
+        {
+          "line": 69,
+          "kinds": [
+            "seed"
+          ],
+          "text": "  const random=n=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed%n;};"
+        },
+        {
+          "line": 93,
+          "kinds": [
+            "interval"
+          ],
+          "text": "      assert.deepEqual(s.comparisons[control].pairedMedianBootstrap95,[boot[125],boot[4875]]);"
+        }
+      ]
+    },
+    {
+      "path": "verify-root-exp-sign-checkpoint.mjs",
+      "sha256": "e80633b4b56eb92272e7031ff5fff35baad75c8d8e3d930d9813d373769e4873",
+      "lines": 181,
+      "matches": [
+        {
+          "line": 132,
+          "kinds": [
+            "seed"
+          ],
+          "text": "  let seed = 17911;"
+        },
+        {
+          "line": 133,
+          "kinds": [
+            "seed"
+          ],
+          "text": "  const rand = n => { seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0; return seed % n; };"
+        },
+        {
+          "line": 166,
+          "kinds": [
+            "interval"
+          ],
+          "text": "    const bootstrap = Array.from({ length: 5000 }, () => median(ratios.map(() => ratios[rand(ratios.length)]))).sort((a, b) => a - b);"
+        },
+        {
+          "line": 167,
+          "kinds": [
+            "interval"
+          ],
+          "text": "    assert.deepEqual(s.pairedMedianBootstrap95, [bootstrap[125], bootstrap[4875]]);"
+        }
+      ]
+    },
+    {
+      "path": "verify-scalar-boundary-checkpoint.mjs",
+      "sha256": "c253caa2df5a74fcca2580a7c8556808f834a3a37676ef5390245f08e1082b15",
+      "lines": 56,
+      "matches": []
+    },
+    {
+      "path": "verify-sign-consumer-checkpoint.mjs",
+      "sha256": "b61f524a543debcc880502d8a1a77e9d014eb2e0bcf80bbcb887b3f2cf367cb0",
+      "lines": 149,
+      "matches": []
+    },
+    {
+      "path": "verify-sign-filter-mask.mjs",
+      "sha256": "2fc6b632541446aad70da986634a2659fb16e2db27e86db772cd73b4af62e999",
+      "lines": 64,
+      "matches": []
+    },
+    {
+      "path": "verify-sign-filter.mjs",
+      "sha256": "4bb033f629cd51f8bb99ec486e730e2d62a7f640a15c89b4a434980a562859dd",
+      "lines": 56,
+      "matches": []
+    },
+    {
+      "path": "verify-sign-work-cost-checkpoint.mjs",
+      "sha256": "165498bf4312500895fcd07df95ece72d29f3417f46bd5aef2e58be793632369",
+      "lines": 95,
+      "matches": [
+        {
+          "line": 58,
+          "kinds": [
+            "seed"
+          ],
+          "text": "  let seed=17911;"
+        },
+        {
+          "line": 59,
+          "kinds": [
+            "seed"
+          ],
+          "text": "  const random=n=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed%n;};"
+        },
+        {
+          "line": 80,
+          "kinds": [
+            "interval"
+          ],
+          "text": "    const bootstrap=Array.from({length:5000},()=>median(ratios.map(()=>ratios[random(ratios.length)]))).sort((a,b)=>a-b);"
+        },
+        {
+          "line": 81,
+          "kinds": [
+            "interval"
+          ],
+          "text": "    assert.deepEqual(s.pairedMedianBootstrap95,[bootstrap[125],bootstrap[4875]]);"
+        },
+        {
+          "line": 92,
+          "kinds": [
+            "interval"
+          ],
+          "text": "assert(cpu.pairedMedianBootstrap95[0]>4);assert.deepEqual([alloc.baseline_alloc_calls,alloc.sign_alloc_calls,alloc.baseline_alloc_bytes,alloc.sign_alloc_bytes],[25,39,1768,11220]);"
+        }
+      ]
+    },
+    {
+      "path": "verify-spectral.mjs",
+      "sha256": "8c595032caea66c9f236e53edbc17e43353829bf30443f142c1ec64e867197fb",
+      "lines": 126,
+      "matches": []
+    }
+  ],
+  "knownLcgMatches": [
+    "check-complex-product-v2.mjs",
+    "check-complex-product.mjs",
+    "check-derivative-costs.mjs",
+    "check-derivative-qualification-costs.mjs",
+    "check-e-plan.mjs",
+    "check-e-qualified.mjs",
+    "check-sign-filter-mask.mjs",
+    "check-sign-filter.mjs",
+    "point-demand-cost-protocol.mjs",
+    "point-history-statistics.mjs",
+    "point-image-cost-statistics.mjs",
+    "run-complex-product-costs.mjs",
+    "run-complex-product-v2-costs.mjs",
+    "run-derivative-costs.mjs",
+    "run-derivative-endpoint.mjs",
+    "run-e-plan-costs.mjs",
+    "run-e-qualified-controls.mjs",
+    "run-e-qualified-wasm-costs.mjs",
+    "run-erf-bench.mjs",
+    "run-log-bench.mjs",
+    "run-monic-costs.mjs",
+    "run-polynomial-decision-bench.mjs",
+    "run-polynomial-facts-cpu.mjs",
+    "run-rank-costs.mjs",
+    "run-reuse-cost-bench.mjs",
+    "run-root-exp-bench.mjs",
+    "run-root-exp-opaque-bench.mjs",
+    "run-root-exp-proof-bench.mjs",
+    "run-root-exp-reuse-alloc-bench.mjs",
+    "run-root-exp-reuse-bench.mjs",
+    "run-root-exp-reuse-confirm-bench.mjs",
+    "run-root-exp-sign-bench.mjs",
+    "run-sign-filter-costs.mjs",
+    "run-sign-filter-mask-costs.mjs",
+    "snapshot-v43-check-complex-product-v2.mjs",
+    "snapshot-v43-check-complex-product.mjs",
+    "verify-monic-costs.mjs",
+    "verify-polynomial-decision.mjs",
+    "verify-polynomial-facts.mjs",
+    "verify-rank-costs.mjs",
+    "verify-reuse-cost-checkpoint.mjs",
+    "verify-root-exp-proof-checkpoint.mjs",
+    "verify-root-exp-reuse-checkpoint.mjs",
+    "verify-root-exp-sign-checkpoint.mjs",
+    "verify-sign-work-cost-checkpoint.mjs"
+  ],
+  "matchingFiles": 65,
+  "otherPotentialFiles": [
+    "bind-complex-product-v2.mjs",
+    "bind-e-qualified.initial.mjs",
+    "bind-e-qualified.mjs",
+    "bind-rank-costs.mjs",
+    "bind-sign-filter-mask.mjs",
+    "bind-sign-filter.mjs",
+    "check-point-cold.mjs",
+    "check-point-demand-costs.mjs",
+    "check-point-history.mjs",
+    "check-point-image-costs.mjs",
+    "check-point-wasm-costs.mjs",
+    "prototype-statistics-v63-inventory.mjs",
+    "run-point-demand-costs.mjs",
+    "run-point-history-costs.mjs",
+    "run-point-image-costs.mjs",
+    "run-point-wasm-costs.mjs",
+    "snapshot-v43-verify-complex-product-v2.mjs",
+    "verify-charpoly-domain.mjs",
+    "verify-complex-product-v2.mjs",
+    "verify-matrix-solves.mjs"
+  ]
+}

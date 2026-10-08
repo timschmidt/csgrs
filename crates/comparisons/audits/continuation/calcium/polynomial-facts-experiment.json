@@ -1,0 +1,533 @@
+{
+  "schema": 1,
+  "recorded": "2026-09-08T23:44:36.257Z",
+  "files": {
+    "prepare-polynomial-facts.mjs": "29563102f17ea65e9dbeb3100a5d10f8e38bbc71d94fd0bff7fabb4c3fa3e8ba",
+    "prepare-polynomial-facts-consumers.mjs": "2212c363ec60d9ab6743bd27a4091a063d8b584cc40859490ff2f4ae2826822e",
+    "run-polynomial-facts-cpu.mjs": "75ac326bd5287de82e61d0af599f9a716254c6c7f6b228f1e6146dc8f7b74b0a",
+    "polynomial-facts-cpu-summary.json": "678573d858c2f50fdb62c2737add5b203ebbb403beb529b7aad6c3dce61cac1d",
+    "results/polynomial-facts-cpu.jsonl": "0de4fb29d42b62d8c9ad077149fff651d9c75634f45e4695c0ac3904c1dc0882",
+    "polynomial-facts-state.rs": "f72823fdbcc675ecf085e0a4819ae5bdce2b24045496908f7d876c7debed07d0",
+    "polynomial-facts-allocation.rs": "0710cd54440b33658abd3156cb89ff29a75a4f29bbd0eeb3569337eb3a5f62e5",
+    "run-polynomial-facts-allocation.mjs": "db5b772d1042aa271239cd3ff4088ec3927659cd1020834ee7a6d9c2144f00da",
+    "results/polynomial-facts-allocation.jsonl": "7287958d486bf9dd5fadb2fd9f5b613e344a09f51b1b5070b147eb44d23f89af",
+    "run-polynomial-facts-allocation-bounded.mjs": "349ba1c6f5bcbf53d2860ac30bb44aebfdfd18017ede7c988d17e5924374b801",
+    "results/polynomial-facts-allocation-bounded.jsonl": "6f0226823f1ceed0addd52a61aefb6e2fa8ad2bf1fe96e0e19fe5b5f522f238c",
+    "polynomial-facts-allocation-bounded-summary.json": "a424c41baef4abea02d22fa8022ec9ecf1cbe34b07659936ea0a66ab3c320f44",
+    "flint-polynomial-arithmetic-probe.c": "7b06c53ac00bec660888cd4668b54ffd4d55201f55987a8eb4d0b157baf64d4c",
+    "measure-polynomial-facts-app-size.mjs": "876b2cd9953946d95268df4b9aa001c0010defa0f9f21228e9438e32215d81d2",
+    "polynomial-facts-app-size-summary.json": "9b7e10eea31ee1e37d72fa90f008319cf1c185addf46f271fc691df9b69c4e32",
+    "polynomial-facts-read-selection.json": "fbe0da7a34f9372982514b40efe1b01e9880b1aeaac455882ab1ac63ecec3381",
+    "polynomial-facts-trial/hypersolve/src/resultant.rs": "528ace3160b4799c311268ae12578a303160b0edcec9b1f13b59df3ca84044af",
+    "verify-polynomial-facts.mjs": "b9d24674345b860321810ec932d227203fbc46e745a1d341556da9944b7956b3",
+    "bind-polynomial-facts.mjs": "6844ce1eaa9fa960dc9ecc096799e8f2b0ab75dd7da58fc45521748c795022bb",
+    "polynomial-facts-probe/Cargo.toml": "29af7fd60630aac6021ca0e1cf23efb6b7822a9c9c887bf71010d97e7167dde1",
+    "polynomial-facts-probe/Cargo.lock": "192666988416fa9099ea52af3701ff855807ea37202b54d8b4f9c313e4ccf291",
+    "polynomial-facts-bench/Cargo.toml": "506e50fb3f195bd02235b497e178f0b508cfcc6dfe823e8e655c2ca415f2e10c",
+    "polynomial-facts-bench/Cargo.lock": "445d6feb4729491f4f91d7332080b693fe88a9d697e2772fb548689e3289817d",
+    "polynomial-facts-state/Cargo.toml": "03337048a3f9f2f9812ee46e0dd9b1fe8ef92fa65ada20a89f1df19186d347d3",
+    "polynomial-facts-state/Cargo.lock": "45834e8eabee94a77dafdf83093baa48d845dd54633f823f7aba08de0fb425bd",
+    "polynomial-allocation-baseline/Cargo.toml": "eb81b1a18c2d1c826167d3c10a2e694f29a6f6ffc8f265b064d31842f66aa2c8",
+    "polynomial-allocation-baseline/Cargo.lock": "a503e1209cc030cfa2f9e8f9cc7712ed79696fa8656da33264a9dded0375d6c4",
+    "polynomial-allocation-trial/Cargo.toml": "16d83f4b96718eae084625cb00e0de66a9f4c50c8cc7fb92228cbe7349889dbf",
+    "polynomial-allocation-trial/Cargo.lock": "0aa8b9c99b5438f33830e8acc90f287f65ad774c7d44b4b2328510eaf8ef3aa4",
+    "polynomial-allocation-facts/Cargo.toml": "e6dbd7898acfd5efddaec9ef92bf3166697076e31c15bb6816d48d1ede9da18b",
+    "polynomial-allocation-facts/Cargo.lock": "a332fde87f5b837089af8e6b2fce6f56bfeff2113a457deec84c81830b58ace5",
+    "results/polynomial-facts-allocation-bounded-run.json": "b1a7556d2610577dee3cd4681bf4acc4242895aba4b7184f99a0968f9e540083",
+    "results/polynomial-facts-allocation-bounded-run.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/polynomial-facts-allocation-bounded-run.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/polynomial-facts-allocation-build-baseline.json": "84e1494a9e8364e8510f7cd53cd69fe84f38c0ff41b87a87c45f9362e94fc712",
+    "results/polynomial-facts-allocation-build-baseline.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/polynomial-facts-allocation-build-baseline.stderr": "e366ea987a7220739cd1a5693263be94775a783fb69538c4bb70137a62fac8bf",
+    "results/polynomial-facts-allocation-build-facts.json": "0161717924ae48bb3142aebee260c49e16a3fbc074ef73b1bb1dc64f005c22c9",
+    "results/polynomial-facts-allocation-build-facts.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/polynomial-facts-allocation-build-facts.stderr": "872e4635730f81d9603fd48502db07781bdbed8b3c8d005997ce6190c707b101",
+    "results/polynomial-facts-allocation-build-trial.json": "267866ec7ed9ab987039bd800a7a603bffa670b4f86005b8fb2fbc7698637b97",
+    "results/polynomial-facts-allocation-build-trial.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/polynomial-facts-allocation-build-trial.stderr": "311493803ac8724ad0e36f7eb6ac523df040946a32a13cab0c582b26a8c2a8e1",
+    "results/polynomial-facts-allocation-run.json": "d7aa9c76efdace350ac0d87e40df83c0ab9b1dde9d1827eab5784c9bd2ade9c3",
+    "results/polynomial-facts-allocation-run.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/polynomial-facts-allocation-run.stderr": "82b973fd616a0c8c6147ce3e72dac338616b6e6c1809d290c5fa8175282f87f0",
+    "results/polynomial-facts-app-build.json": "20cb4ff0af05ab80f7aa536b649e813046509320b7b2a42e0ffcab00783e3bab",
+    "results/polynomial-facts-app-build.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/polynomial-facts-app-build.stderr": "415bf1244dcc9ad2feda8aa6ffe5ee11131c47b081dc255635641d5a7c62d4e8",
+    "results/polynomial-facts-app-run-arrangement.json": "e77e23d57dc7570aac5f0acee54c65de31b6a3f59e96fe9518bfe56bf86e75ae",
+    "results/polynomial-facts-app-run-arrangement.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/polynomial-facts-app-run-arrangement.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/polynomial-facts-app-run-basic.json": "09a6b71f8ee9240127a0c6ef73f30f37f2bbd5791b28ec93dd727ac9642879d7",
+    "results/polynomial-facts-app-run-basic.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/polynomial-facts-app-run-basic.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/polynomial-facts-app-size-arrangement.json": "abbba6ec9054070305d21c6fddd31a708eac179d5a032bbbb0a5b17423cc4819",
+    "results/polynomial-facts-app-size-arrangement.stdout": "a1a9571dc5b17774621a72083722cc48753dba2e1fd314e873c83f1d401c9aa9",
+    "results/polynomial-facts-app-size-arrangement.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/polynomial-facts-app-size-basic.json": "8aac9b20eb2f07f148c61d20c0c9c495303d9b3c30db74fbc799e5ad01886997",
+    "results/polynomial-facts-app-size-basic.stdout": "1f2b49f638f8b650053b3611da4966607b080d44c74bf66b00edb657b1dbfa9a",
+    "results/polynomial-facts-app-size-basic.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/polynomial-facts-app-size-run.json": "98c67e6cb17f2ed3937b5a6c9c1a99dc1ff70a5bfc2e3954383f95bc787d5098",
+    "results/polynomial-facts-app-size-run.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/polynomial-facts-app-size-run.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/polynomial-facts-app-strip-arrangement.json": "125e7c1b5dba1f4837d1910cd9169809efcce9d363d4aa00afca6fbebf4151db",
+    "results/polynomial-facts-app-strip-arrangement.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/polynomial-facts-app-strip-arrangement.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/polynomial-facts-app-strip-basic.json": "ec24ab2e623a604e3367f585e11787f29152bf7c0f171fe4772e0c0d50874f1f",
+    "results/polynomial-facts-app-strip-basic.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/polynomial-facts-app-strip-basic.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/polynomial-facts-bench-build.json": "ac49f2a721024f68071afbfb5970912511f2a8399528e98dfb41a9f452ba98a6",
+    "results/polynomial-facts-bench-build.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/polynomial-facts-bench-build.stderr": "f87ee6630a93d6255fbb228be554b2c0b885ebf65f7ccebf119d75bd25718817",
+    "results/polynomial-facts-clippy.json": "1e4da738d184e7a20bca2e2dda75921ec21d2a393ca2129c0688b187c814777b",
+    "results/polynomial-facts-clippy.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/polynomial-facts-clippy.stderr": "8d9a5da9df39c0ff55547a61659951a7f5522370d952a70034410f406c31b292",
+    "results/polynomial-facts-consumer-hypercurve-debug.json": "4046be312b09877ea08215d6386732a9c7968da4c2bafe03753da571c307644a",
+    "results/polynomial-facts-consumer-hypercurve-debug.stdout": "c9182526516041ede2222f25a0013902d3420cb3e3cc4b885b8f02adf2bd6dc6",
+    "results/polynomial-facts-consumer-hypercurve-debug.stderr": "51fb67da208c197c72b8715e4f88884a36a050b90ea796b7167ddb40ae29349c",
+    "results/polynomial-facts-cpu-run.json": "0af393e54e009b426096b4a3929fdc6c691aef2f3f9199dc9193a659cac5b03c",
+    "results/polynomial-facts-cpu-run.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/polynomial-facts-cpu-run.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/polynomial-facts-fmt.json": "5374c1754ce33bf9ee3f5a68e90be734f525d2caf295b4a0afeb49da7227270b",
+    "results/polynomial-facts-fmt.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/polynomial-facts-fmt.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/polynomial-facts-native-compile.json": "e8c28ddf588a03da3519501d152ae18181bd46a659313a6a8a0cf4e75beaed62",
+    "results/polynomial-facts-native-compile.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/polynomial-facts-native-compile.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/polynomial-facts-native-memcheck.json": "814706d44474e86beff1b4a884998f4147dd964862c1343802d5c2f1fa7695ea",
+    "results/polynomial-facts-native-memcheck.stdout": "6564a6db3af671223946e630bd239ef4a4dcb58a07d6859056f86049e5349f0f",
+    "results/polynomial-facts-native-memcheck.stderr": "53319a4a7d73d1d7a2da93bc524883e962510b0befea23706d5caff4ea74a537",
+    "results/polynomial-facts-native.json": "16004583c527d0c07ae2dcfa898c413226cc34d5ffc482f727653330bbf3c546",
+    "results/polynomial-facts-native.stdout": "6564a6db3af671223946e630bd239ef4a4dcb58a07d6859056f86049e5349f0f",
+    "results/polynomial-facts-native.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/polynomial-facts-probe-debug.json": "16dd7d8e5b21ba4346b8793ff97a30e7c3effcc09b4a25e3cbfece49504975c4",
+    "results/polynomial-facts-probe-debug.stdout": "f7d381a703cc076c7d2aa8fe3217cbdab1112ba14b39f0a9dbed967c182ba96b",
+    "results/polynomial-facts-probe-debug.stderr": "fc0a24a63fa220aea95162ed3f65aeb037891e666f178d31502f8f100316d4fe",
+    "results/polynomial-facts-probe-memcheck.json": "bb68022743c1de5f99d9624d74350f04dca2bdaae79cff61dcf605fb2fe51e1a",
+    "results/polynomial-facts-probe-memcheck.stdout": "f7d381a703cc076c7d2aa8fe3217cbdab1112ba14b39f0a9dbed967c182ba96b",
+    "results/polynomial-facts-probe-memcheck.stderr": "47f221275f8558c96360611adea266ff9a82073314882c3bcdb922d2c9cd126d",
+    "results/polynomial-facts-probe-release.json": "68070dc93b7071626f17b6f58a151fc874c99e54bba6f2aaa5f0a62e99c42c94",
+    "results/polynomial-facts-probe-release.stdout": "f7d381a703cc076c7d2aa8fe3217cbdab1112ba14b39f0a9dbed967c182ba96b",
+    "results/polynomial-facts-probe-release.stderr": "aa122f42c793d160c44af854a1fc76d808f5d0736ba18f3e69d90db5811e9293",
+    "results/polynomial-facts-state-debug.json": "0b989e322ffe0b05fafee0e058bcc47b1bd15ea65daceab4689d52ee11468b23",
+    "results/polynomial-facts-state-debug.stdout": "9817539a87ea0d2b7b27363e3d6941a05775188e5aea991391b7552f3c53b666",
+    "results/polynomial-facts-state-debug.stderr": "078a9c7fc73a07e18bfe48d5ae24433adf2c48e8542e911346d78cb8215f1112",
+    "results/polynomial-facts-state-release.json": "0933c19dea9e3d7a701eefe1cfdc449efe5ce7936829874740f8b85159a30fad",
+    "results/polynomial-facts-state-release.stdout": "9817539a87ea0d2b7b27363e3d6941a05775188e5aea991391b7552f3c53b666",
+    "results/polynomial-facts-state-release.stderr": "bf9f530c2389334e3eb0f6aed109b61069ee6dc42b6e62be1210a77cbd80bfbe",
+    "results/polynomial-facts-tests-debug.json": "45e0199ad7c962496eade25e150bad4279f471aa87ce7c73a5eb592583316eb4",
+    "results/polynomial-facts-tests-debug.stdout": "ecacff442313a2bd2dbd0e4dd109083d7c502d843b1b8bb12ea795e8a113239f",
+    "results/polynomial-facts-tests-debug.stderr": "4a55f093654fb8bc557ff9de8e8fe80847263cf00f84cf77cc18df2fb16e90ee",
+    "results/polynomial-facts-tests-release.json": "c381e481eb7683b264acbfa2e1a3193acecb87f189564d43f12c61abfe932a4a",
+    "results/polynomial-facts-tests-release.stdout": "2775ed237ae52b61b7877e45ea944d8700aa992fb6a2e32d33efdf7e620060e5",
+    "results/polynomial-facts-tests-release.stderr": "e3112a0c89c8b25e43f626fd07391796b752c9cb2b17627e622ca60a34a5188d",
+    "results/polynomial-facts-wasm.json": "63b9db6112f083e2a9cdde44aa28907941583b2841a80966bc2d2ee38e604a25",
+    "results/polynomial-facts-wasm.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/polynomial-facts-wasm.stderr": "01f813f700d72468c32419aaa41567797ce5c3ffab78c7c4d203f0861c20fede"
+  },
+  "binaries": {
+    "/tmp/calcium-polynomial-facts.ZX8NqH/polynomial-cpu-baseline": "e2ce9cb2402a8dac7af23345ca6a1f236ca5452282a0ad366de7fdd5abc985c7",
+    "/tmp/calcium-polynomial-facts.ZX8NqH/polynomial-cpu-trial": "59881ebc3a901850ead3d8a37a44c4f98efd49f11343c5be3046936494e9e81c",
+    "/tmp/calcium-polynomial-facts.ZX8NqH/polynomial-cpu-facts": "33fc0437458c5573e406a525642528c981ecf7e27544815edc8b21cc640796e6",
+    "/tmp/calcium-polynomial-facts.ZX8NqH/polynomial-allocation-baseline": "a5c75fd1f9c26bb7a6aa4e59696a1aa0061b0c8a4f0959587792381371085abf",
+    "/tmp/calcium-polynomial-facts.ZX8NqH/polynomial-allocation-trial": "fff2d1eec3197da775b0172d32c2d99193e69e8da50d6f3f4ef4eb0717b0c56a",
+    "/tmp/calcium-polynomial-facts.ZX8NqH/polynomial-allocation-facts": "ee740be193462a7cff7840aeaa7065c0ba817daf2634b09edeaa3d690879d574",
+    "/tmp/calcium-reuse-costs.73SR1w/app-reuse-basic": "150a67b84ee8097e2fd759da26ba736b788bdfd1591cb317530cb7bdef4aa4ed",
+    "/tmp/calcium-reuse-costs.73SR1w/app-reuse-basic.stripped": "c7b82a07f022365f3c74fef8488d3c1019b1e1e1c4a0ec55a5c68d2a529c53e8",
+    "/tmp/calcium-polynomial-facts.ZX8NqH/app-facts-basic": "3b83c7708ef0b0c8b8ab87ffb1c78c883973cd3f52d6c7c02b6a4f453fc6b762",
+    "/tmp/calcium-polynomial-facts.ZX8NqH/app-facts-basic.stripped": "aa2b3f3b0a4c50e0075256469848314c575f0cbe0813d7097369314055fcb87a",
+    "/tmp/calcium-reuse-costs.73SR1w/app-reuse-arrangement": "a8386eaef98d9896674243e3dfdb3f9b8f92aa628a324492f16441fd0ae0b35e",
+    "/tmp/calcium-reuse-costs.73SR1w/app-reuse-arrangement.stripped": "e732fc0c67ce06b88d5392831e9addfb674d86391b6a6c8305940d4f0f637c5a",
+    "/tmp/calcium-polynomial-facts.ZX8NqH/app-facts-arrangement": "3d589961bdd921d26a5834cb51ef9a3a13ef495167f007893fa2046baa057305",
+    "/tmp/calcium-polynomial-facts.ZX8NqH/app-facts-arrangement.stripped": "f8956e1db249d16a5313e9a9d33ae432722dda449aef5435e0587e1db54f172a",
+    "/tmp/calcium-polynomial-facts.ZX8NqH/polynomial-facts-probe": "6df367e2c6cb55f4cabd022d705170a65fa493dcaf167ead092b0fefbe9191cf",
+    "/tmp/calcium-polynomial-facts.ZX8NqH/polynomial-facts-state": "80b2ea8f8bbdecae89b807a9bb6a0539846c087d0195a6a7efb9bcb3a34f737f",
+    "/tmp/calcium-polynomial-facts.ZX8NqH/flint-polynomial-arithmetic-probe": "7d9704d1b74676aee4750a803288fe96e078946c09ba1debfcb853b695887bbb"
+  },
+  "gates": [
+    "allocation-bounded-run",
+    "allocation-build-baseline",
+    "allocation-build-facts",
+    "allocation-build-trial",
+    "allocation-run",
+    "app-build",
+    "app-run-arrangement",
+    "app-run-basic",
+    "app-size-arrangement",
+    "app-size-basic",
+    "app-size-run",
+    "app-strip-arrangement",
+    "app-strip-basic",
+    "bench-build",
+    "clippy",
+    "consumer-hypercurve-debug",
+    "cpu-run",
+    "fmt",
+    "native",
+    "native-compile",
+    "native-memcheck",
+    "probe-debug",
+    "probe-memcheck",
+    "probe-release",
+    "state-debug",
+    "state-release",
+    "tests-debug",
+    "tests-release",
+    "wasm"
+  ],
+  "reads": [
+    {
+      "repo": "calcium",
+      "path": "ca_poly/mul.c",
+      "ranges": [
+        [
+          1,
+          52
+        ]
+      ],
+      "note": "Independent complete read: Empty inputs yield zero; full multiplication calls mullow at the full product length. Whole-object input/output aliases use an initialized temporary and swap. Sets stored output length without proving leading nonzero; no arbitrary subrange-alias contract inferred."
+    },
+    {
+      "repo": "flint",
+      "path": "src/ca_poly/mul.c",
+      "ranges": [
+        [
+          1,
+          52
+        ]
+      ],
+      "note": "Independent complete read: Empty inputs yield zero; full multiplication calls mullow at the full product length. Whole-object input/output aliases use an initialized temporary and swap. Sets stored output length without proving leading nonzero; no arbitrary subrange-alias contract inferred."
+    },
+    {
+      "repo": "calcium",
+      "path": "ca_poly/mullow.c",
+      "ranges": [
+        [
+          1,
+          335
+        ]
+      ],
+      "note": "Independent complete read: Complete dispatcher and kernels read: scalar shortcuts; pointer-identity squaring; integer/rational denominator-cleared convolution; common-number-field selection; otherwise scalar dot-product convolution. Integer input words are borrowed and output words transferred with raw buffers freed, not double-cleared. Public truncation caps length, handles whole-input aliases, and normalizes proven zeros. Archive orders integer kernel operands explicitly; current kernel contract not inferred from that difference."
+    },
+    {
+      "repo": "flint",
+      "path": "src/ca_poly/mullow.c",
+      "ranges": [
+        [
+          1,
+          330
+        ]
+      ],
+      "note": "Independent complete read: Complete dispatcher and kernels read: scalar shortcuts; pointer-identity squaring; integer/rational denominator-cleared convolution; common-number-field selection; otherwise scalar dot-product convolution. Integer input words are borrowed and output words transferred with raw buffers freed, not double-cleared. Public truncation caps length, handles whole-input aliases, and normalizes proven zeros. Archive orders integer kernel operands explicitly; current kernel contract not inferred from that difference."
+    },
+    {
+      "repo": "calcium",
+      "path": "ca_poly/mullow_same_nf.c",
+      "ranges": [
+        [
+          1,
+          175
+        ]
+      ],
+      "note": "Independent complete read: Common-field multiplication packs inner polynomials at stride 2*d-1, clears each input denominator once, performs integer convolution, then reduces each block back into the common field. Squaring shares packed input and squares denominator. Requires matching field and finite coefficients; no generic computable-real field embedding. Borrowed output-block polynomial sets coefficients/length but not alloc; callee copies alloc into a borrowed view. No executed defect claimed from that source observation."
+    },
+    {
+      "repo": "flint",
+      "path": "src/ca_poly/mullow_same_nf.c",
+      "ranges": [
+        [
+          1,
+          172
+        ]
+      ],
+      "note": "Independent complete read: Common-field multiplication packs inner polynomials at stride 2*d-1, clears each input denominator once, performs integer convolution, then reduces each block back into the common field. Squaring shares packed input and squares denominator. Requires matching field and finite coefficients; no generic computable-real field embedding. Borrowed output-block polynomial sets coefficients/length but not alloc; callee copies alloc into a borrowed view. No executed defect claimed from that source observation."
+    },
+    {
+      "repo": "calcium",
+      "path": "ca_poly/derivative.c",
+      "ranges": [
+        [
+          1,
+          38
+        ]
+      ],
+      "note": "Independent complete read: Multiplies each nonconstant coefficient by its positive integer index in forward order; supports whole-object in-place derivative. Constants become zero. Does not prove new degree by normalizing."
+    },
+    {
+      "repo": "flint",
+      "path": "src/ca_poly/derivative.c",
+      "ranges": [
+        [
+          1,
+          38
+        ]
+      ],
+      "note": "Independent complete read: Multiplies each nonconstant coefficient by its positive integer index in forward order; supports whole-object in-place derivative. Constants become zero. Does not prove new degree by normalizing."
+    },
+    {
+      "repo": "calcium",
+      "path": "ca_poly/integral.c",
+      "ranges": [
+        [
+          1,
+          32
+        ]
+      ],
+      "note": "Independent complete read: Reverse traversal divides by positive integer indices, making whole-object in-place integration safe after growth; sets constant zero and normalizes. Raw length is output length; owner wrapper passes input length plus one."
+    },
+    {
+      "repo": "flint",
+      "path": "src/ca_poly/integral.c",
+      "ranges": [
+        [
+          1,
+          32
+        ]
+      ],
+      "note": "Independent complete read: Reverse traversal divides by positive integer indices, making whole-object in-place integration safe after growth; sets constant zero and normalizes. Raw length is output length; owner wrapper passes input length plus one."
+    },
+    {
+      "repo": "calcium",
+      "path": "ca_poly/evaluate.c",
+      "ranges": [
+        [
+          1,
+          25
+        ]
+      ],
+      "note": "Independent complete read: Owner evaluation dispatches to Horner; no distinct precision scheduler or approximation semantics here."
+    },
+    {
+      "repo": "flint",
+      "path": "src/ca_poly/evaluate.c",
+      "ranges": [
+        [
+          1,
+          25
+        ]
+      ],
+      "note": "Independent complete read: Owner evaluation dispatches to Horner; no distinct precision scheduler or approximation semantics here."
+    },
+    {
+      "repo": "calcium",
+      "path": "ca_poly/evaluate_horner.c",
+      "ranges": [
+        [
+          1,
+          57
+        ]
+      ],
+      "note": "Independent complete read: Zero/constant/proven-zero-argument shortcuts, one product/add for linear input, and two reusable scalar temporaries for higher-degree Horner. Output/argument alias is exercised by donor tests; arbitrary coefficient alias is not inferred. Generic scalar operations remain responsible for exactness."
+    },
+    {
+      "repo": "flint",
+      "path": "src/ca_poly/evaluate_horner.c",
+      "ranges": [
+        [
+          1,
+          57
+        ]
+      ],
+      "note": "Independent complete read: Zero/constant/proven-zero-argument shortcuts, one product/add for linear input, and two reusable scalar temporaries for higher-degree Horner. Output/argument alias is exercised by donor tests; arbitrary coefficient alias is not inferred. Generic scalar operations remain responsible for exactness."
+    },
+    {
+      "repo": "calcium",
+      "path": "ca_poly/neg.c",
+      "ranges": [
+        [
+          1,
+          20
+        ]
+      ],
+      "note": "Independent complete read: Uses raw elementwise vector negation, including whole-object in-place operation; unlike the previously reproduced public ca_vec_neg alias no-op. Retains length and capacity semantics."
+    },
+    {
+      "repo": "flint",
+      "path": "src/ca_poly/neg.c",
+      "ranges": [
+        [
+          1,
+          20
+        ]
+      ],
+      "note": "Independent complete read: Uses raw elementwise vector negation, including whole-object in-place operation; unlike the previously reproduced public ca_vec_neg alias no-op. Retains length and capacity semantics."
+    },
+    {
+      "repo": "calcium",
+      "path": "ca_poly/add.c",
+      "ranges": [
+        [
+          1,
+          43
+        ]
+      ],
+      "note": "Independent complete read: Adds common coordinates, copies excess tail, then normalizes only proven top zeros. Whole-owner aliases are accommodated by scalar operations; no Unknown-as-zero decision."
+    },
+    {
+      "repo": "flint",
+      "path": "src/ca_poly/add.c",
+      "ranges": [
+        [
+          1,
+          43
+        ]
+      ],
+      "note": "Independent complete read: Adds common coordinates, copies excess tail, then normalizes only proven top zeros. Whole-owner aliases are accommodated by scalar operations; no Unknown-as-zero decision."
+    },
+    {
+      "repo": "calcium",
+      "path": "ca_poly/sub.c",
+      "ranges": [
+        [
+          1,
+          43
+        ]
+      ],
+      "note": "Independent complete read: Subtracts common coordinates; copies excess left tail or negates excess right tail before proof-zero normalization. Does not collapse unresolved coefficients."
+    },
+    {
+      "repo": "flint",
+      "path": "src/ca_poly/sub.c",
+      "ranges": [
+        [
+          1,
+          43
+        ]
+      ],
+      "note": "Independent complete read: Subtracts common coordinates; copies excess left tail or negates excess right tail before proof-zero normalization. Does not collapse unresolved coefficients."
+    },
+    {
+      "repo": "calcium",
+      "path": "ca_poly/test/t-mul.c",
+      "ranges": [
+        [
+          1,
+          139
+        ]
+      ],
+      "note": "Independent complete read: Random distributivity and square-versus-independent-equal-input checks cover generic and shared-number-field inputs, with whole-input output aliases. Only T_FALSE equality fails, so Unknown is accepted and decision completeness is not established. Current default multiplier is one tenth archived. Shared-field random helper uses a common denominator and the previously audited random scalar generator."
+    },
+    {
+      "repo": "flint",
+      "path": "src/ca_poly/test/t-mul.c",
+      "ranges": [
+        [
+          1,
+          134
+        ]
+      ],
+      "note": "Independent complete read: Random distributivity and square-versus-independent-equal-input checks cover generic and shared-number-field inputs, with whole-input output aliases. Only T_FALSE equality fails, so Unknown is accepted and decision completeness is not established. Current default multiplier is one tenth archived. Shared-field random helper uses a common denominator and the previously audited random scalar generator."
+    },
+    {
+      "repo": "calcium",
+      "path": "ca_poly/test/t-evaluate.c",
+      "ranges": [
+        [
+          1,
+          83
+        ]
+      ],
+      "note": "Independent complete read: Random linearity identity and evaluation output/argument alias test. Rejects only T_FALSE, permitting Unknown; lacks systematic zero/short-degree/known-field completeness controls. Current default iteration count is one tenth archived."
+    },
+    {
+      "repo": "flint",
+      "path": "src/ca_poly/test/t-evaluate.c",
+      "ranges": [
+        [
+          1,
+          74
+        ]
+      ],
+      "note": "Independent complete read: Random linearity identity and evaluation output/argument alias test. Rejects only T_FALSE, permitting Unknown; lacks systematic zero/short-degree/known-field completeness controls. Current default iteration count is one tenth archived."
+    },
+    {
+      "repo": "calcium",
+      "path": "ca_poly/test/t-evaluate_horner.c",
+      "ranges": [
+        [
+          1,
+          83
+        ]
+      ],
+      "note": "Independent complete read: Independently read Horner-specific counterpart of random linearity/output-argument-alias test. Unknown equality is accepted. No derivative/integral or packed-convolution correctness evidence inferred from it."
+    },
+    {
+      "repo": "flint",
+      "path": "src/ca_poly/test/t-evaluate_horner.c",
+      "ranges": [
+        [
+          1,
+          74
+        ]
+      ],
+      "note": "Independent complete read: Independently read Horner-specific counterpart of random linearity/output-argument-alias test. Unknown equality is accepted. No derivative/integral or packed-convolution correctness evidence inferred from it."
+    },
+    {
+      "repo": "calcium",
+      "path": "ca_mat/mul_same_nf.c",
+      "ranges": [
+        [
+          1,
+          270
+        ]
+      ],
+      "note": "Independent complete read: clears row/column denominators with a 1000-bit cutoff and classical fallback, multiplies exact integer-polynomial matrices, restores per-cell scale and reduces into the field. Scalar converter canonicalizes rational output, handles quadratic representation explicitly and condenses reduced values. Borrowed fmpq view copies source alloc; no ownership transfer or clear of borrowed data. This polynomial-matrix method is not a ready-made replacement for Hyper's existing shared-scale/rational-specialized carriers."
+    },
+    {
+      "repo": "flint",
+      "path": "src/ca_mat/mul_same_nf.c",
+      "ranges": [
+        [
+          1,
+          270
+        ]
+      ],
+      "note": "Independent complete read: clears row/column denominators with a 1000-bit cutoff and classical fallback, multiplies exact integer-polynomial matrices, restores per-cell scale and reduces into the field. Scalar converter canonicalizes rational output, handles quadratic representation explicitly and condenses reduced values. Borrowed fmpq view copies source alloc; no ownership transfer or clear of borrowed data. This polynomial-matrix method is not a ready-made replacement for Hyper's existing shared-scale/rational-specialized carriers."
+    },
+    {
+      "repo": "flint",
+      "path": "src/ca_poly/impl.h",
+      "ranges": [
+        [
+          1,
+          19
+        ]
+      ],
+      "note": "Complete declaration-only read: internal shared-field selector and packed convolution declarations, no additional implementation credited."
+    },
+    {
+      "repo": "flint",
+      "path": "src/ca_mat/impl.h",
+      "ranges": [
+        [
+          1,
+          19
+        ]
+      ],
+      "note": "Complete declaration-only read: internal exact integer-polynomial/common-denominator field converter, implemented in the independently read matrix file."
+    },
+    {
+      "repo": "flint",
+      "path": "src/nf_elem/set_fmpq_poly.c",
+      "ranges": [
+        [
+          1,
+          59
+        ]
+      ],
+      "note": "Complete selected supporting read: reduces polynomial modulo field modulus when needed, then copies exact linear/quadratic coefficients or general rational polynomial into owned field storage. Does not use borrowed source capacity directly; remainder implementation remains outside this read."
+    },
+    {
+      "repo": "flint",
+      "path": "src/fmpq_poly/set.c",
+      "ranges": [
+        [
+          1,
+          103
+        ]
+      ],
+      "note": "Complete selected supporting read: general set copies source length, coefficients and denominator, fitting destination capacity without reading source alloc. Integer/rational/modular setters normalize where needed. Helps delimit the packed borrowed-view alloc observation, not proof of all downstream remainder paths."
+    }
+  ],
+  "status": "Qualified frozen v2 candidate; live transfer not part of this manifest.",
+  "exclusions": [
+    "Initial450-row allocation run stopped on pointer-dependent live-byte occupancy; it is not the passing648-row bounded campaign.",
+    "Nine ignored Hypercurve tests were not run. Different proof outcomes and instrumented allocation clocks are not equal-work CPU evidence."
+  ]
+}

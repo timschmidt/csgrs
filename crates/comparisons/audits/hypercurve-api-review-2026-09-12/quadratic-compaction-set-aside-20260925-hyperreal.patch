@@ -1,0 +1,202 @@
+diff --git a/src/real/arithmetic/add_sub.rs b/src/real/arithmetic/add_sub.rs
+index bf72fb2..bf9b14e 100644
+--- a/src/real/arithmetic/add_sub.rs
++++ b/src/real/arithmetic/add_sub.rs
+@@ -159,12 +159,7 @@ impl<T: AsRef<Real>> Add<T> for &Real {
+         let left = self.fold_ref();
+         let right = other.fold_ref();
+         let computable = Computable::add(left, right);
+-        Self::Output {
+-            rational: Rational::one(),
+-            class: Irrational,
+-            computable: Some(computable),
+-            primitive_approx_cache: AtomicPrimitiveApproxCache::new(PrimitiveApproxCache::Empty),
+-        }
++        Self::Output::arithmetic_from_computable(Rational::one(), computable)
+     }
+ }
+ 
+diff --git a/src/real/arithmetic/inversion.rs b/src/real/arithmetic/inversion.rs
+index 8d71294..cc32462 100644
+--- a/src/real/arithmetic/inversion.rs
++++ b/src/real/arithmetic/inversion.rs
+@@ -528,12 +528,10 @@ impl Real {
+             });
+         }
+         crate::trace_dispatch!("real", "inverse", "generic");
+-        Ok(Self {
+-            rational: self.rational.clone().inverse()?,
+-            class: Irrational,
+-            computable: Some(Computable::inverse(self.computable_clone())),
+-            primitive_approx_cache: AtomicPrimitiveApproxCache::new(PrimitiveApproxCache::Empty),
+-        })
++        Ok(Self::arithmetic_from_computable(
++            self.rational.clone().inverse()?,
++            Computable::inverse(self.computable_clone()),
++        ))
+     }
+ 
+     /// The multiplicative inverse of this Real without consuming it.
+@@ -759,14 +757,10 @@ impl Real {
+                     });
+                 }
+                 crate::trace_dispatch!("real", "inverse_ref", "generic");
+-                Ok(Self {
+-                    rational: self.rational.clone().inverse()?,
+-                    class: Irrational,
+-                    computable: Some(Computable::inverse(self.computable_clone())),
+-                    primitive_approx_cache: AtomicPrimitiveApproxCache::new(
+-                        PrimitiveApproxCache::Empty,
+-                    ),
+-                })
++                Ok(Self::arithmetic_from_computable(
++                    self.rational.clone().inverse()?,
++                    Computable::inverse(self.computable_clone()),
++                ))
+             }
+         }
+     }
+@@ -791,11 +785,9 @@ impl Real {
+             return self.inverse_ref();
+         }
+         crate::trace_dispatch!("real", "inverse_ref", "externally-certified-nonzero");
+-        Ok(Self {
+-            rational: self.rational.clone().inverse()?,
+-            class: Irrational,
+-            computable: Some(Computable::inverse(self.computable_clone())),
+-            primitive_approx_cache: AtomicPrimitiveApproxCache::new(PrimitiveApproxCache::Empty),
+-        })
++        Ok(Self::arithmetic_from_computable(
++            self.rational.clone().inverse()?,
++            Computable::inverse(self.computable_clone()),
++        ))
+     }
+ }
+diff --git a/src/real/arithmetic/mul_div.rs b/src/real/arithmetic/mul_div.rs
+index 5fae1e7..3a8880f 100644
+--- a/src/real/arithmetic/mul_div.rs
++++ b/src/real/arithmetic/mul_div.rs
+@@ -406,15 +406,13 @@ impl<T: AsRef<Real>> Mul<T> for &Real {
+                     };
+                 }
+                 let rational = &self.rational * &other.rational;
+-                Self::Output {
++                Self::Output::arithmetic_from_computable(
+                     rational,
+-                    class: Irrational,
+-                    computable: Some(Computable::multiply(
++                    Computable::multiply(
+                         self.computable_clone(),
+                         other.computable_clone(),
+-                    )),
+-                    primitive_approx_cache: AtomicPrimitiveApproxCache::new(PrimitiveApproxCache::Empty),
+-                }
++                    ),
++                )
+             }
+         }
+     }
+diff --git a/src/real/arithmetic/representation.rs b/src/real/arithmetic/representation.rs
+index 65fb9d1..eda8379 100644
+--- a/src/real/arithmetic/representation.rs
++++ b/src/real/arithmetic/representation.rs
+@@ -130,6 +130,45 @@ impl Real {
+         }
+     }
+ 
++    /// Keep recognized quadratic arithmetic independent of its construction
++    /// history. The bounded normal form is an exact proof, never a numerical
++    /// approximation; unrecognized values retain their original graph.
++    fn arithmetic_from_computable(rational: Rational, computable: Computable) -> Self {
++        let (rational, computable) = match computable.exact_quadratic_surd_parts() {
++            Some((constant, scale, radicand)) => {
++                if scale.sign() == Sign::NoSign {
++                    return Self::new(rational * constant);
++                }
++                // Cancel the outer scale against both exact coefficients here.
++                // Keeping reciprocal contents on opposite sides of this
++                // boundary can inflate them under repeated field division.
++                let constant = constant * &rational;
++                let scale = scale * rational;
++                // Build through Computable, not Real arithmetic: this is the
++                // normalization boundary, so rebuilding must not invoke it
++                // recursively. Retain a generic class for arbitrary radicands.
++                let radical = Computable::rational(
++                    radicand.expect("a nonzero quadratic term has a radicand"),
++                )
++                .sqrt()
++                .multiply_rational(scale);
++                let computable = if constant.sign() == Sign::NoSign {
++                    radical
++                } else {
++                    radical.add(Computable::rational(constant))
++                };
++                (Rational::one(), computable)
++            }
++            None => (rational, computable),
++        };
++        Self {
++            rational,
++            class: Irrational,
++            computable: Some(computable),
++            primitive_approx_cache: AtomicPrimitiveApproxCache::new(PrimitiveApproxCache::Empty),
++        }
++    }
++
+     pub(super) fn same_symbolic_basis(&self, other: &Self) -> bool {
+         match (&self.class, &other.class) {
+             (Irrational, Irrational) => match (&self.computable, &other.computable) {
+diff --git a/tests/exact_quadratic_normal_form.rs b/tests/exact_quadratic_normal_form.rs
+index a06c561..cec817e 100644
+--- a/tests/exact_quadratic_normal_form.rs
++++ b/tests/exact_quadratic_normal_form.rs
+@@ -46,3 +46,49 @@ fn quadratic_normal_form_handles_rational_scale_and_declines_other_exact_values(
+         assert!(value.exact_quadratic_normal_form().is_none());
+     }
+ }
++
++#[test]
++fn repeated_quadratic_field_arithmetic_preserves_exact_cancellation() {
++    let root = Real::from(2).sqrt().unwrap();
++    let unit = Real::one() + &root;
++    let mut power = Real::one();
++    let mut a = Rational::one();
++    let mut b = Rational::zero();
++    for _ in 0..128 {
++        power *= &unit;
++        (a, b) = (&a + &b * Rational::from(2), &a + &b);
++        assert_eq!(
++            power.exact_quadratic_normal_form(),
++            Some((a.clone(), b.clone(), Rational::from(2))),
++        );
++        // The independently computed Pell norm is always +1 or -1, even
++        // when its expanded products have large, nearly cancelling values.
++        let conjugate = Real::new(a.clone()) - Real::new(b.clone()) * &root;
++        let norm = &power * conjugate;
++        assert_eq!(
++            norm.exact_rational_ref(),
++            Some(&(&a * &a - &b * &b * Rational::from(2))),
++        );
++    }
++}
++
++#[test]
++fn repeated_quadratic_fractional_transform_preserves_its_exact_fixed_point() {
++    let root = Real::from(2).sqrt().unwrap();
++    let mut value = root.clone();
++    for step in 0..256 {
++        let numerator = &value + Real::from(2);
++        let denominator = &value + Real::one();
++        value = match step % 4 {
++            0 => (numerator / &denominator).unwrap(),
++            1 => numerator * denominator.inverse().unwrap(),
++            2 => numerator * denominator.inverse_ref().unwrap(),
++            _ => numerator * denominator.inverse_ref_assuming_nonzero().unwrap(),
++        };
++        assert_eq!(
++            value.exact_quadratic_normal_form(),
++            Some((Rational::zero(), Rational::one(), Rational::from(2))),
++        );
++        assert_eq!((&value - &root).zero_status(), ZeroKnowledge::Zero);
++    }
++}

@@ -1,0 +1,16 @@
+{
+  "tag": "point-consumer-basic-strip-v66",
+  "started": "2026-09-11T03:16:10.771Z",
+  "finished": "2026-09-11T03:16:10.816Z",
+  "elapsedSeconds": 0.04274597199999999,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "strip",
+  "args": [
+    "--strip-all",
+    "-o",
+    "/tmp/calcium-point-consumer.qyV59b/demand-basic.stripped",
+    "/tmp/calcium-point-consumer.qyV59b/demand-basic"
+  ],
+  "code": 0,
+  "signal": null
+}

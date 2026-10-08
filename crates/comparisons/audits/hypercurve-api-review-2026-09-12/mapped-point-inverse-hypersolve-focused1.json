@@ -1,0 +1,11 @@
+{
+  "command": [
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypersolve-2e681fec2f29f4bd",
+    "algebraic_fiber::subresultant::tests",
+    "--test-threads=1",
+    "--nocapture"
+  ],
+  "returncode": 0,
+  "elapsed_seconds": 0.0034550029959063977,
+  "binary_sha256": "4b05fae9ee5ccaa8ba42ffc8a8ddcc85112bf6a04fa7145e53a90dd6ce38509d"
+}

@@ -1,0 +1,22 @@
+{
+  "tag": "qqbar-remainder-hyper-metadata-v84",
+  "started": "2026-09-12T04:50:43.082Z",
+  "finished": "2026-09-12T04:50:43.200Z",
+  "elapsedSeconds": 0.11516562,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/qqbar-remainder-hyper-v84",
+  "command": "env",
+  "args": [
+    "CARGO_TARGET_DIR=/tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse",
+    "CARGO_INCREMENTAL=0",
+    "CARGO_PROFILE_DEV_DEBUG=0",
+    "CARGO_BUILD_JOBS=2",
+    "cargo",
+    "metadata",
+    "--offline",
+    "--locked",
+    "--format-version",
+    "1"
+  ],
+  "code": 0,
+  "signal": null
+}

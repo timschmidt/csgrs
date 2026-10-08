@@ -1,0 +1,40 @@
+{
+  "baseline": "equal-curvature-v871-sources.json",
+  "rlib": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypercurve-85a9105cd1c82df7.rlib",
+  "rlib_sha256": "27ef5f2ddef464a9b7c198beadb7f977eba2ef03263b88756dcd1b9db29a031a",
+  "source_sha256": "d62ab73b36c5ba8ff64c9d581415b4e7760e4fd2af72a8c7fa79d03e21e3c966",
+  "processes": [
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustc",
+        "--edition=2024",
+        "--crate-name",
+        "quadratic_zero_jet_probe",
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/quadratic-zero-jet-probe-v873.rs",
+        "--extern",
+        "hypercurve=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypercurve-85a9105cd1c82df7.rlib",
+        "-L",
+        "dependency=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps",
+        "-C",
+        "opt-level=3",
+        "-o",
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/quadratic-zero-jet-probe-v873-binary"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.4644235128071159,
+      "log": "quadratic-zero-jet-probe-v873-compile.log"
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/quadratic-zero-jet-probe-v873-binary"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.003547677071765065,
+      "log": "quadratic-zero-jet-probe-v873-cases.log"
+    }
+  ],
+  "all_processes_reaped": true,
+  "binary_sha256": "ac8911b271598e1c2deb71eaf1dd35e55b1626fd054e34373a242cf4f3524dc0",
+  "output": "policy=0 family=0 kind=native blocked=Boundary\npolicy=0 family=0 kind=retained blocked=Boundary\npolicy=0 family=0 kind=selected blocked=Boundary\npolicy=0 family=1 kind=native decided=true\npolicy=0 family=1 kind=retained decided=true\npolicy=0 family=1 kind=selected decided=true\npolicy=0 family=2 kind=native decided=true\npolicy=0 family=2 kind=retained decided=true\npolicy=0 family=2 kind=selected decided=true\npolicy=1 family=0 kind=native blocked=Boundary\npolicy=1 family=0 kind=retained blocked=Boundary\npolicy=1 family=0 kind=selected blocked=Boundary\npolicy=1 family=1 kind=native decided=true\npolicy=1 family=1 kind=retained decided=true\npolicy=1 family=1 kind=selected decided=true\npolicy=1 family=2 kind=native decided=true\npolicy=1 family=2 kind=retained decided=true\npolicy=1 family=2 kind=selected decided=true\ncomplete requests=18 blocked=6\n",
+  "probe_complete": true
+}

@@ -1,0 +1,16 @@
+{
+  "command": [
+    "rustc",
+    "--edition=2024",
+    "-O",
+    "exact-real-image-power-evaluation-probe.rs",
+    "--extern",
+    "hypercurve=/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/libhypercurve-2c7ff6f3fbe07653.rlib",
+    "-L",
+    "dependency=/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps",
+    "-o",
+    "exact-real-image-power-evaluation-probe"
+  ],
+  "library_sha256": "b841f3b55cb5f6fd03f8256fb4bede041ef8ed31d0e0a89c94a316145ea701d5",
+  "returncode": 0
+}

@@ -1,0 +1,17 @@
+[
+  {
+    "path": "hypercurve/src/bezier_region.rs",
+    "line": 10426,
+    "source": "pub fn try_from_native_boundary_contours_borrowed("
+  },
+  {
+    "path": "hypercurve/src/native_region_tests.rs",
+    "line": 224,
+    "source": "let classified = CurveRegion2::try_from_native_boundary_contours_borrowed(&contours, &policy())"
+  },
+  {
+    "path": "hypercurve/tests/hypercurve_curve_region_promotion.rs",
+    "line": 8011,
+    "source": "CurveRegion2::try_from_native_boundary_contours_borrowed(&boundaries, &policy)"
+  }
+]

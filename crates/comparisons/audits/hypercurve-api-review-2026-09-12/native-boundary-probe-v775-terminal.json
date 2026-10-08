@@ -1,0 +1,30 @@
+{
+  "baseline": "topology-hint-removal-v773-sources.json",
+  "rlib": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypercurve-85a9105cd1c82df7.rlib",
+  "rlib_sha256": "0edbca3c5323c8de7e2aaa2bc27d7d39ee1cf6bc5bce0ae3635bbfba8c65a642",
+  "source_sha256": "51cf0eb4e69287653b7305ec5520bb60999a0a1974132edb0e17d655ae695a07",
+  "processes": [
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustc",
+        "--edition=2024",
+        "--crate-name",
+        "native_boundary_probe",
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/native-boundary-probe-v775.rs",
+        "--extern",
+        "hypercurve=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypercurve-85a9105cd1c82df7.rlib",
+        "-L",
+        "dependency=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps",
+        "-C",
+        "opt-level=3",
+        "-o",
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/native-boundary-probe-v775-binary"
+      ],
+      "returncode": 1,
+      "elapsed_seconds": 0.11393492203205824,
+      "log": "native-boundary-probe-v775-compile.log"
+    }
+  ],
+  "all_processes_reaped": true,
+  "failure": "compile failed"
+}

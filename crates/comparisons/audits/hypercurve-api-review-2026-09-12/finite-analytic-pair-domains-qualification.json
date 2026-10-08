@@ -1,0 +1,159 @@
+{
+  "status": "passed within the recorded broad qualification scope",
+  "goal_status": "active",
+  "previous_commit": "d74648a256a03494c247cb965158af09a49cae33",
+  "commit": "b518e5ff82ce2e6dd80c426aac0cb53236047d05",
+  "targets": 49,
+  "passed": 2293,
+  "passed_by_repo": {
+    "hypercurve": 2061,
+    "hyperbrep": 232
+  },
+  "known_failed": [
+    "approximate_512_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions",
+    "non_ph_bezier_pair_projective_fillet_retains_algebraic_extensions",
+    "nonconvex_algebraic_chord_expansion_is_exact_and_local_collapse_is_explicit",
+    "strict_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions",
+    "unified_mixed_line_arc_erosion_splits_after_a_curved_neck_collapse"
+  ],
+  "new_failures": [],
+  "ignored": 9,
+  "expensive_previously_unqualified_exclusions": 8,
+  "timeouts_in_broad_run": 0,
+  "builds": [
+    {
+      "repository": "hypercurve",
+      "kind": "check",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "check",
+        "--all-targets",
+        "--no-default-features",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 6.8744675510097295,
+      "log": "finite-analytic-pair-domains-check.log"
+    },
+    {
+      "repository": "hypercurve",
+      "kind": "test-build",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "test",
+        "--release",
+        "--all-features",
+        "--locked",
+        "--offline",
+        "--lib",
+        "--tests",
+        "--no-run",
+        "--message-format=json"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 237.78685485600727,
+      "log": "finite-analytic-pair-domains-test-build.log"
+    },
+    {
+      "repository": "hyperbrep",
+      "kind": "check",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "check",
+        "--all-targets",
+        "--no-default-features",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 4.722968378016958,
+      "log": "finite-analytic-pair-domains-hyperbrep-check.log"
+    },
+    {
+      "repository": "hyperbrep",
+      "kind": "test-build",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "test",
+        "--release",
+        "--all-features",
+        "--locked",
+        "--offline",
+        "--lib",
+        "--tests",
+        "--no-run",
+        "--message-format=json"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 114.74487036999199,
+      "log": "finite-analytic-pair-domains-hyperbrep-test-build.log"
+    }
+  ],
+  "focused_checks": 8,
+  "public_matrices_and_probes": [
+    "finite-analytic-pair-domains-admission-region-entry.json",
+    "finite-analytic-pair-domains-affine-parallel-replay.json",
+    "finite-analytic-pair-domains-affine-public.json",
+    "finite-analytic-pair-domains-analytic-probe.json",
+    "finite-analytic-pair-domains-baseline-recheck.json",
+    "finite-analytic-pair-domains-bounds-public.json",
+    "finite-analytic-pair-domains-circle-matrix.json",
+    "finite-analytic-pair-domains-completed-probe.json",
+    "finite-analytic-pair-domains-completed.json",
+    "finite-analytic-pair-domains-constant-image-trim-matrix.json",
+    "finite-analytic-pair-domains-constructor-public.json",
+    "finite-analytic-pair-domains-cubic-replay.json",
+    "finite-analytic-pair-domains-endpoint-probe.json",
+    "finite-analytic-pair-domains-exterior-completed.json",
+    "finite-analytic-pair-domains-family-matrix.json",
+    "finite-analytic-pair-domains-finite-circle-probe.json",
+    "finite-analytic-pair-domains-finite-matrix.json",
+    "finite-analytic-pair-domains-general-trim-matrix.json",
+    "finite-analytic-pair-domains-probe-final.json",
+    "finite-analytic-pair-domains-public-replay.json",
+    "finite-analytic-pair-domains-public.json",
+    "finite-analytic-pair-domains-region-carrier-matrix.json",
+    "finite-analytic-pair-domains-region-entry.json",
+    "finite-analytic-pair-domains-region-explicit.json",
+    "finite-analytic-pair-domains-region-public.json",
+    "finite-analytic-pair-domains-replay-matrix-run.json",
+    "finite-analytic-pair-domains-retained-chord-matrix.json",
+    "finite-analytic-pair-domains-retrace-public.json",
+    "finite-analytic-pair-domains-self-public.json",
+    "finite-analytic-pair-domains-tangent-matrix.json",
+    "finite-analytic-pair-domains-trim-public.json",
+    "finite-analytic-pair-domains-unit-replay.json",
+    "finite-analytic-pair-domains-winding-public.json"
+  ],
+  "public_pair_checks": 128,
+  "public_pair_baseline": {
+    "native_passed": 32,
+    "exterior_incomplete": 96
+  },
+  "public_region_boolean_reentry_checks": 20,
+  "region_scope": "Successful explicit normalization, Boolean intersection and exact boundary path reentry; no parent baseline claim for this region probe.",
+  "attempts": [
+    "finite-analytic-pair-domains-compile-attempt1/",
+    "finite-analytic-pair-domains-attempt1/",
+    "finite-analytic-pair-domains-attempt2/",
+    "finite-analytic-pair-domains-compile-attempt3/",
+    "finite-analytic-pair-domains-attempt4/"
+  ],
+  "source_files_verified": {
+    "working": 396,
+    "isolated": 1005
+  },
+  "dependency_commits": "finite-parallel-pruning-isolated-sources.json",
+  "isolated_dependency_sources": true,
+  "workspace_clean_claim": false,
+  "other_session_owns": "Hyperreal verified/ and verification/ changes; left untouched",
+  "normal_library": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypercurve-a7ee000b69ee5146.rlib",
+  "normal_library_sha256": "d680fbce859f7d1e7f470916621fb407de5f877a836cacaf4fe3a7fa514000c0",
+  "archived_library": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-analytic-pair-domains-libraries/libhypercurve-a7ee000b69ee5146.rlib",
+  "libtest_sha256": "3a7c5e04a2b0cfe6c133b4ca06723ba8fe6973d3938623704043371c37a2e334",
+  "toolchain": "finite-parallel-pruning-toolchain.json",
+  "baseline": "finite-analytic-pair-domains-baseline.json",
+  "evidence_audit": "finite-analytic-pair-domains-worklog.md",
+  "remaining": "Finite circle/parallel domain guard, selected-point finite incidence, one-sided source-cusp frames, normalized public-region construction, independent inverse replay, known failures/exclusions and broader algebraic/computational consolidation."
+}

@@ -1,0 +1,20 @@
+{
+  "source_manifest": "collapsed-selected-circle-contact-20260927-v343-sources.json",
+  "binary": {
+    "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/collapsed-selected-circle-contact-20260927-v343-hypercurve",
+    "sha256": "c4a2cae486d83b4761758ae988ff7e340fac74f8b24b246850f7544e9130777a"
+  },
+  "command": [
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/collapsed-selected-circle-contact-20260927-v343-hypercurve",
+    "--exact",
+    "bezier_region::tests::one_fragment_nonzero_parallel_loop_extends_chamfer_cuts_on_one_finite_envelope",
+    "--nocapture",
+    "--test-threads=1"
+  ],
+  "name": "bezier_region::tests::one_fragment_nonzero_parallel_loop_extends_chamfer_cuts_on_one_finite_envelope",
+  "returncode": 124,
+  "elapsed_seconds": 240.00726118206512,
+  "all_processes_reaped": true,
+  "outer_session_reaped": 88492,
+  "commit": "68e1f2b01bc9741dd77e410e9f9ba6b4099c9499"
+}

@@ -1,0 +1,14 @@
+\doxysubsubsubsection{Basic sets }
+\hypertarget{group__BasicSetSubModule}{}\label{group__BasicSetSubModule}\index{Basic sets@{Basic sets}}
+
+
+\doxysubsubsubsubsection{Description}
+Basic set classes. 
+
+Basic sets are so-\/called because they form a base for the topology of the space. Typically, basic sets are (a subclass of) convex polytopes or ellipsoids. Basic sets must support the fundamental geometric predicates, both within the class and with the Rectangle class. Additionally, basic sets may support the optional geometric operations, but only if the class of set under consideration is closed under that operation. The result may be exactly computable if it involves no arithmetic (e.\+g. intersection of two rectangles) or may need to be represented by a fuzzy set (e.\+g. Minkowski sum of two rectangles). \doxysubsubsubsubsubsection*{Classes}
+\begin{DoxyCompactItemize}
+\item 
+class \mbox{\hyperlink{classAriadne_1_1Box}{Box$<$ I $>$}}
+\begin{DoxyCompactList}\small\item\em A box in Euclidean space. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1GridCell}{Grid\+Cell}}
+\begin{DoxyCompactList}\small\item\em A cell of a grid paving. Note that this class represents the closed cell. It is uniquely defined by the path from the primary cell and is exactly on cell in a grid. This is different from the \doxylink{classAriadne_1_1GridOpenCell}{Grid\+Open\+Cell} which is open and the path from the root cell defines its lower left sub cell wheres the complete open cell is a union of 4 cells. \end{DoxyCompactList}\end{DoxyCompactItemize}

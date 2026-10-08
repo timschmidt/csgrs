@@ -1,0 +1,21 @@
+   Compiling hypersolve v0.3.1 (/home/tim/Documents/GitHub/workspace/hypersolve)
+    Finished `release` profile [optimized] target(s) in 17.66s
+     Running unittests src/lib.rs (target/release/deps/hypersolve-f165f92bff40da5b)
+
+running 1 test
+
+thread 'algebraic_fiber::tests::local_constant_signs_reuse_native_proofs_without_field_cache_entries' (110) panicked at src/algebraic_fiber.rs:4029:17:
+assertion `left == right` failed
+  left: 2
+ right: 1
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+test algebraic_fiber::tests::local_constant_signs_reuse_native_proofs_without_field_cache_entries ... FAILED
+
+failures:
+
+failures:
+    algebraic_fiber::tests::local_constant_signs_reuse_native_proofs_without_field_cache_entries
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 421 filtered out; finished in 0.00s
+
+error: test failed, to rerun pass `--lib`

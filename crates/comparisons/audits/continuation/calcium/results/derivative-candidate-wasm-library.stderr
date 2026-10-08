@@ -1,0 +1,13 @@
+    Checking arrayvec v0.7.8
+    Checking hyperreal v0.13.1 (/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/derivative-demand-candidate/hyperreal)
+    Checking polycool v0.4.0
+    Checking kurbo v0.13.1
+    Checking siphasher v1.0.3
+    Checking svgtypes v0.16.1
+    Checking svg v0.18.0
+    Checking hyperlattice v0.6.1 (/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/derivative-demand-candidate/hyperlattice)
+    Checking hyperlimit v0.4.1 (/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/derivative-demand-candidate/hyperlimit)
+    Checking hypersolve v0.3.1 (/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/derivative-demand-candidate/hypersolve)
+    Checking hypertri v0.4.1 (/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/derivative-demand-candidate/hypertri)
+    Checking hypercurve v0.3.1 (/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/derivative-demand-candidate/hypercurve)
+    Finished `dev` profile [unoptimized] target(s) in 15.93s

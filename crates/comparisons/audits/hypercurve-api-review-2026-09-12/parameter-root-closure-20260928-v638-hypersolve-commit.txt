@@ -1,0 +1,7 @@
+Remove redundant rational scale from square-free root evidence
+
+Clear rational denominators and content before square-free reduction, and retain the primitive integer GCD through exact quotient construction. This keeps unnecessary rational factors out of retained root polynomials and subsequent scalar fields. An expanded cusp polynomial could certify zero in primitive integer form but lost that proof after a common rational scaling; normalization restores geometric root admission and replay without a cusp-specific rule.
+
+Clarify that AlgebraicRootRepresentation stores a finite isolating interval, with domain restrictions owned by geometric operations. Arbitrary exact coefficient fields keep their existing guarded reduction.
+
+Validation: 201 algebraic and 630 geometry release regressions, plus 9 static/downstream checks. New tests cover signed 1024-bit content, exact radical boundary identity, and primitive quotients of repeated nonmonic factors. The public radical-cusp region constructs and offsets under both policies.

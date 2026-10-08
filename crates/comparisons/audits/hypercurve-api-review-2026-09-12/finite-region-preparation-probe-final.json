@@ -1,0 +1,21 @@
+{
+  "returncode": 0,
+  "elapsed_seconds": 0.007541442988440394,
+  "normal_library_sha256": "cfe74e6bb84e6907ba989a26023d587fb8d2fd4912961045b76c518bd98b1f39",
+  "log": "finite-region-preparation-probe-final.log",
+  "source": "circle-common-dispatch-baseline.rs",
+  "command": [
+    "rustc",
+    "--edition=2024",
+    "-O",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/circle-common-dispatch-baseline.rs",
+    "--extern",
+    "hypercurve=/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/libhypercurve-2c7ff6f3fbe07653.rlib",
+    "-L",
+    "dependency=/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps",
+    "-o",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-region-preparation-probe-final"
+  ],
+  "source_sha256": "43fd661cca1f5a4ea052a03f8c01e7a17b22ca732d38addd201dafcc86d9360b",
+  "executable_sha256": "7ecbc1126c7b1097066e7e7e8827522f7a1f4cc86ae49ff98822577ee65c6adc"
+}

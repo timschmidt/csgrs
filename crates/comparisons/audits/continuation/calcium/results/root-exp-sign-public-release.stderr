@@ -1,0 +1,4 @@
+    Blocking waiting for file lock on build directory
+   Compiling calcium-root-exp-sign-probe v0.1.0 (/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/root-exp-sign-probe)
+    Finished `release` profile [optimized] target(s) in 3.83s
+     Running `/home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype/release/calcium-root-exp-sign-probe`

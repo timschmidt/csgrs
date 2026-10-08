@@ -1,0 +1,70 @@
+[
+  {
+    "repository": "hypercurve",
+    "kind": "check",
+    "command": [
+      "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+      "check",
+      "--all-targets",
+      "--no-default-features",
+      "--locked",
+      "--offline"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 26.60790086101042,
+    "log": "finite-parallel-admission-check.log"
+  },
+  {
+    "repository": "hypercurve",
+    "kind": "test-build",
+    "command": [
+      "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+      "test",
+      "--release",
+      "--all-features",
+      "--locked",
+      "--offline",
+      "--lib",
+      "--tests",
+      "--no-run",
+      "--message-format=json"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 230.94251229299698,
+    "log": "finite-parallel-admission-test-build.log"
+  },
+  {
+    "repository": "hyperbrep",
+    "kind": "check",
+    "command": [
+      "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+      "check",
+      "--all-targets",
+      "--no-default-features",
+      "--locked",
+      "--offline"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 23.451123976992676,
+    "log": "finite-parallel-admission-hyperbrep-check.log"
+  },
+  {
+    "repository": "hyperbrep",
+    "kind": "test-build",
+    "command": [
+      "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+      "test",
+      "--release",
+      "--all-features",
+      "--locked",
+      "--offline",
+      "--lib",
+      "--tests",
+      "--no-run",
+      "--message-format=json"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 139.23570720499265,
+    "log": "finite-parallel-admission-hyperbrep-test-build.log"
+  }
+]

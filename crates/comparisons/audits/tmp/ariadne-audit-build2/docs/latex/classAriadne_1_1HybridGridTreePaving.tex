@@ -1,0 +1,63 @@
+\doxysubsection{Hybrid\+Grid\+Tree\+Paving Class Reference}
+\hypertarget{classAriadne_1_1HybridGridTreePaving}{}\label{classAriadne_1_1HybridGridTreePaving}\index{HybridGridTreePaving@{HybridGridTreePaving}}
+
+
+{\ttfamily \#include $<$hybrid\+\_\+paving.\+hpp$>$}
+
+
+
+\doxysubsubsection{Description}
+A set comprising a Grid\+Tree\+Set in each location. Inheritance diagram for Hybrid\+Grid\+Tree\+Paving\+:\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[height=2.000000cm]{classAriadne_1_1HybridGridTreePaving}
+\end{center}
+\end{figure}
+\doxysubsubsubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1HybridGridTreePaving_a4d2a07cdf5ddeee4a7c7e4147ca262a9}\label{classAriadne_1_1HybridGridTreePaving_a4d2a07cdf5ddeee4a7c7e4147ca262a9} 
+{\bfseries Hybrid\+Grid\+Tree\+Paving} (const \mbox{\hyperlink{classAriadne_1_1HybridGrid}{Hybrid\+Grid}} \&hgrid)
+\begin{DoxyCompactList}\small\item\em Construct from a hybrid grid. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1HybridGridTreePaving_a5a55a2441451f69cea2b2edaac7b9f4a}\label{classAriadne_1_1HybridGridTreePaving_a5a55a2441451f69cea2b2edaac7b9f4a} 
+\mbox{\hyperlink{classAriadne_1_1HybridGrid}{Hybrid\+Grid}} {\bfseries grid} () const
+\begin{DoxyCompactList}\small\item\em The hybrid grid. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1HybridGridTreePaving_ab514320a66e306b9f648b6dff18bcea2}\label{classAriadne_1_1HybridGridTreePaving_ab514320a66e306b9f648b6dff18bcea2} 
+\mbox{\hyperlink{namespaceAriadne_a76a8b016e5ad61faf9062cc387df5016}{Bool}} {\bfseries has\+\_\+location} (\mbox{\hyperlink{classAriadne_1_1DiscreteLocation}{Discrete\+Location}} q) const
+\begin{DoxyCompactList}\small\item\em Test if {\itshape q} is a location of the set i.\+e. corresponds to a valid location of the underlying hybrid space. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1HybridGridTreePaving_ac153a0121733e5118bb4223b6f2f0941}\label{classAriadne_1_1HybridGridTreePaving_ac153a0121733e5118bb4223b6f2f0941} 
+\mbox{\hyperlink{namespaceAriadne_a76a8b016e5ad61faf9062cc387df5016}{Bool}} {\bfseries nontrivial\+\_\+location} (\mbox{\hyperlink{classAriadne_1_1DiscreteLocation}{Discrete\+Location}} q) const
+\begin{DoxyCompactList}\small\item\em Test if {\itshape q} is a nontrivial location of the set i.\+e. contained in the map of \texorpdfstring{$<$}{<}\doxylink{classAriadne_1_1DiscreteLocation}{Discrete\+Location},Grid\+Tree\+Set\texorpdfstring{$>$}{>} pairs. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1HybridGridTreePaving_a88e5a1f7b33a9a83e991d5f36e265dfa}\label{classAriadne_1_1HybridGridTreePaving_a88e5a1f7b33a9a83e991d5f36e265dfa} 
+\mbox{\hyperlink{classAriadne_1_1Space}{Real\+Space}} {\bfseries space} (\mbox{\hyperlink{classAriadne_1_1DiscreteLocation}{Discrete\+Location}} q) const
+\begin{DoxyCompactList}\small\item\em The continuous state space corresponding to location {\itshape q}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1HybridGridTreePaving_a95a39709ccf936aa064220cbda4f7279}\label{classAriadne_1_1HybridGridTreePaving_a95a39709ccf936aa064220cbda4f7279} 
+const \mbox{\hyperlink{classAriadne_1_1GridTreePaving}{Grid\+Tree\+Paving}} \& {\bfseries euclidean\+\_\+set} (\mbox{\hyperlink{classAriadne_1_1DiscreteLocation}{Discrete\+Location}} q) const
+\begin{DoxyCompactList}\small\item\em The continuous state space corresponding to location {\itshape q}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1HybridGridTreePaving_a6be30f90b8d1ae14f4f7e11b0ea8df7e}\label{classAriadne_1_1HybridGridTreePaving_a6be30f90b8d1ae14f4f7e11b0ea8df7e} 
+const \mbox{\hyperlink{classAriadne_1_1GridTreePaving}{Grid\+Tree\+Paving}} \& {\bfseries euclidean\+\_\+set} (\mbox{\hyperlink{classAriadne_1_1DiscreteLocation}{Discrete\+Location}} q, const \mbox{\hyperlink{classAriadne_1_1Space}{Real\+Space}} \&s) const
+\begin{DoxyCompactList}\small\item\em The continuous state space corresponding to location {\itshape q}. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\begin{Indent}\textbf{ Hybrid\+Set\+Interface methods}\par
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1HybridGridTreePaving_a33fcb0abf6eb08dfae4474723fdefdb2}\label{classAriadne_1_1HybridGridTreePaving_a33fcb0abf6eb08dfae4474723fdefdb2} 
+\mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} {\bfseries draw} (\mbox{\hyperlink{classAriadne_1_1CanvasInterface}{Canvas\+Interface}} \&c, const \mbox{\hyperlink{classAriadne_1_1Set}{Set}}$<$ \mbox{\hyperlink{classAriadne_1_1DiscreteLocation}{Discrete\+Location}} $>$ \&l, const Variables2d \&v) const
+\begin{DoxyCompactList}\small\item\em brief Draw the object on the canvas {\itshape c} using line segments and fill/stroke commands. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\end{Indent}
+\doxyparagraph*{Public Member Functions inherited from \mbox{\hyperlink{classAriadne_1_1HybridDrawableInterface}{Hybrid\+Drawable\+Interface}}}
+\begin{DoxyCompactItemize}
+\item 
+virtual {\bfseries \texorpdfstring{$\sim$}{\string~}\+Hybrid\+Drawable\+Interface} ()=default
+\begin{DoxyCompactList}\small\item\em brief Virtual destructor. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsubsection*{Additional Inherited Members}
+\doxyparagraph*{Public Types inherited from \mbox{\hyperlink{classAriadne_1_1HybridDrawableInterface}{Hybrid\+Drawable\+Interface}}}
+\begin{DoxyCompactItemize}
+\item 
+typedef Variables2d {\bfseries Projection\+Type}
+\begin{DoxyCompactList}\small\item\em brief The type of data needed to project to a 2d image. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+The documentation for this class was generated from the following files\+:\begin{DoxyCompactItemize}
+\item 
+source/hybrid/\mbox{\hyperlink{hybrid__paving_8hpp}{hybrid\+\_\+paving.\+hpp}}\item 
+source/hybrid/hybrid\+\_\+paving.\+cpp\end{DoxyCompactItemize}

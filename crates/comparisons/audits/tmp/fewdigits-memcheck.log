@@ -1,0 +1,15 @@
+==10== Memcheck, a memory error detector
+==10== Copyright (C) 2002-2026, and GNU GPL'd, by Julian Seward et al.
+==10== Using Valgrind-3.27.1 and LibVEX; rerun with -h for copyright info
+==10== Command: /tmp/fewdigits-audit.hKnqR2/few-semantic
+==10== Parent PID: 9
+==10== 
+==10== 
+==10== HEAP SUMMARY:
+==10==     in use at exit: 4,195,808 bytes in 11 blocks
+==10==   total heap usage: 86 allocs, 75 frees, 4,263,555 bytes allocated
+==10== 
+==10== For a detailed leak analysis, rerun with: --leak-check=full
+==10== 
+==10== For lists of detected and suppressed errors, rerun with: -s
+==10== ERROR SUMMARY: 0 errors from 0 contexts (suppressed: 0 from 0)

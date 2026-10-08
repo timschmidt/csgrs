@@ -1,0 +1,11 @@
+Name:           FewDigits
+Version:        0.5.0
+License:        BSD3
+License-file:   Licence.txt
+Author:         Rusell O'Connor
+Stability:      experimental
+Homepage:       http://r6.ca/FewDigits/
+Synopsis:       Exact real arithmetic library
+Exposed-modules:
+        Data.Real.CReal, Data.Real.ICReal
+        Data.Interval, Data.Multinomial

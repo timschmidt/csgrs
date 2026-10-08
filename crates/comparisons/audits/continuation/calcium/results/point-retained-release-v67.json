@@ -1,0 +1,25 @@
+{
+  "tag": "point-retained-release-v67",
+  "started": "2026-09-11T03:26:45.865Z",
+  "finished": "2026-09-11T03:28:14.541Z",
+  "elapsedSeconds": 88.673537914,
+  "cwd": "/home/tim/Documents/GitHub/workspace/hypersolve",
+  "command": "env",
+  "args": [
+    "CARGO_TARGET_DIR=/tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse",
+    "CARGO_INCREMENTAL=0",
+    "CARGO_PROFILE_DEV_DEBUG=0",
+    "CARGO_BUILD_JOBS=2",
+    "cargo",
+    "test",
+    "--offline",
+    "--locked",
+    "--release",
+    "--all-features",
+    "--no-fail-fast",
+    "--",
+    "--test-threads=2"
+  ],
+  "code": 0,
+  "signal": null
+}

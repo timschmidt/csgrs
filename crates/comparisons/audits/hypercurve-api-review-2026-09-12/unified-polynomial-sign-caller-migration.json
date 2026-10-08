@@ -1,0 +1,656 @@
+[
+  {
+    "file": "src/bezier_algebraic_image.rs",
+    "line": 993,
+    "previous": "cross_difference",
+    "updated": "&cross_difference"
+  },
+  {
+    "file": "src/bezier_algebraic_image.rs",
+    "line": 1029,
+    "previous": "denominator.to_vec()",
+    "updated": "&denominator"
+  },
+  {
+    "file": "src/bezier_algebraic_image.rs",
+    "line": 1047,
+    "previous": "difference",
+    "updated": "&difference"
+  },
+  {
+    "file": "src/bezier_algebraic_image.rs",
+    "line": 1167,
+    "previous": "denominator.to_vec()",
+    "updated": "&denominator"
+  },
+  {
+    "file": "src/bezier_algebraic_image.rs",
+    "line": 1208,
+    "previous": "coefficients",
+    "updated": "&coefficients"
+  },
+  {
+    "file": "src/bezier_algebraic_image.rs",
+    "line": 1488,
+    "previous": "expression.denominator.clone()",
+    "updated": "&expression.denominator"
+  },
+  {
+    "file": "src/bezier_algebraic_image.rs",
+    "line": 1507,
+    "previous": "numerator",
+    "updated": "&numerator"
+  },
+  {
+    "file": "src/bezier_algebraic_image.rs",
+    "line": 2231,
+    "previous": "denominator_coefficients.clone()",
+    "updated": "&denominator_coefficients"
+  },
+  {
+    "file": "src/bezier_split.rs",
+    "line": 120,
+    "previous": "coefficients.to_vec()",
+    "updated": "&coefficients"
+  },
+  {
+    "file": "src/bezier_offset.rs",
+    "line": 15938,
+    "previous": "residual_x",
+    "updated": "&residual_x"
+  },
+  {
+    "file": "src/bezier_offset.rs",
+    "line": 15940,
+    "previous": "residual_y",
+    "updated": "&residual_y"
+  },
+  {
+    "file": "src/bezier_offset.rs",
+    "line": 16153,
+    "previous": "numerator",
+    "updated": "&numerator"
+  },
+  {
+    "file": "src/bezier_offset.rs",
+    "line": 16162,
+    "previous": "self.data.denominator.clone()",
+    "updated": "&self.data.denominator"
+  },
+  {
+    "file": "src/bezier_offset.rs",
+    "line": 18335,
+    "previous": "discriminant",
+    "updated": "&discriminant"
+  },
+  {
+    "file": "src/bezier_offset.rs",
+    "line": 24414,
+    "previous": "denominator.clone()",
+    "updated": "&denominator"
+  },
+  {
+    "file": "src/bezier_offset.rs",
+    "line": 39721,
+    "previous": "tangent.clone()",
+    "updated": "&tangent"
+  },
+  {
+    "file": "src/bezier_offset.rs",
+    "line": 53380,
+    "previous": "bivariate_substitute_second_equal_first(polynomial)",
+    "updated": "&bivariate_substitute_second_equal_first(polynomial)"
+  },
+  {
+    "file": "src/bezier_offset.rs",
+    "line": 57878,
+    "previous": "coefficients.to_vec()",
+    "updated": "&coefficients"
+  },
+  {
+    "file": "src/bezier_offset.rs",
+    "line": 57950,
+    "previous": "coefficients.to_vec()",
+    "updated": "&coefficients"
+  },
+  {
+    "file": "src/bezier_offset.rs",
+    "line": 65629,
+    "previous": "bivariate_specialize_first(&incidence, second)",
+    "updated": "&bivariate_specialize_first(&incidence, second)"
+  },
+  {
+    "file": "src/bezier_offset.rs",
+    "line": 65644,
+    "previous": "bivariate_specialize_second(&incidence, third)",
+    "updated": "&bivariate_specialize_second(&incidence, third)"
+  },
+  {
+    "file": "src/bezier_offset.rs",
+    "line": 65659,
+    "previous": "bivariate_specialize_second(&incidence, third)",
+    "updated": "&bivariate_specialize_second(&incidence, third)"
+  },
+  {
+    "file": "src/bezier_offset.rs",
+    "line": 65786,
+    "previous": "derivative.clone()",
+    "updated": "&derivative"
+  },
+  {
+    "file": "src/bezier_offset.rs",
+    "line": 66444,
+    "previous": "content.clone()",
+    "updated": "&content"
+  },
+  {
+    "file": "src/bezier_offset.rs",
+    "line": 69378,
+    "previous": "polynomial.coefficients().to_vec()",
+    "updated": "&polynomial.coefficients()"
+  },
+  {
+    "file": "src/bezier_offset.rs",
+    "line": 70076,
+    "previous": "self.target_weight.clone()",
+    "updated": "&self.target_weight"
+  },
+  {
+    "file": "src/bezier_offset.rs",
+    "line": 70090,
+    "previous": "self.target_speed_squared.clone()",
+    "updated": "&self.target_speed_squared"
+  },
+  {
+    "file": "src/bezier_offset.rs",
+    "line": 83113,
+    "previous": "denominator.clone()",
+    "updated": "&denominator"
+  },
+  {
+    "file": "src/bezier_offset.rs",
+    "line": 84754,
+    "previous": "residual",
+    "updated": "&residual"
+  },
+  {
+    "file": "src/bezier_offset.rs",
+    "line": 85073,
+    "previous": "weight",
+    "updated": "&weight"
+  },
+  {
+    "file": "src/bezier_offset.rs",
+    "line": 93727,
+    "previous": "speed_squared.clone()",
+    "updated": "&speed_squared"
+  },
+  {
+    "file": "src/bezier_offset.rs",
+    "line": 94149,
+    "previous": "speed_squared.clone()",
+    "updated": "&speed_squared"
+  },
+  {
+    "file": "src/bezier_offset.rs",
+    "line": 95110,
+    "previous": "polynomial.to_vec()",
+    "updated": "&polynomial"
+  },
+  {
+    "file": "src/bezier_offset.rs",
+    "line": 104013,
+    "previous": "speed.clone()",
+    "updated": "&speed"
+  },
+  {
+    "file": "src/bezier_offset.rs",
+    "line": 104038,
+    "previous": "rational.clone()",
+    "updated": "&rational"
+  },
+  {
+    "file": "src/bezier_offset.rs",
+    "line": 104045,
+    "previous": "radical.clone()",
+    "updated": "&radical"
+  },
+  {
+    "file": "src/bezier_offset.rs",
+    "line": 104059,
+    "previous": "magnitude",
+    "updated": "&magnitude"
+  },
+  {
+    "file": "src/bezier_offset.rs",
+    "line": 105686,
+    "previous": "diagonal",
+    "updated": "&diagonal"
+  },
+  {
+    "file": "src/bezier_offset.rs",
+    "line": 105959,
+    "previous": "bivariate_specialize_first(predicate, retained_value)",
+    "updated": "&bivariate_specialize_first(predicate, retained_value)"
+  },
+  {
+    "file": "src/bezier_offset.rs",
+    "line": 105969,
+    "previous": "bivariate_specialize_second(predicate, exact_root)",
+    "updated": "&bivariate_specialize_second(predicate, exact_root)"
+  },
+  {
+    "file": "src/bezier_offset.rs",
+    "line": 106016,
+    "previous": "bivariate_substitute_second_equal_first(predicate)",
+    "updated": "&bivariate_substitute_second_equal_first(predicate)"
+  },
+  {
+    "file": "src/bezier_offset.rs",
+    "line": 106049,
+    "previous": "bivariate_specialize_second(predicate, exact_root)",
+    "updated": "&bivariate_specialize_second(predicate, exact_root)"
+  },
+  {
+    "file": "src/bezier_offset.rs",
+    "line": 110470,
+    "previous": "speed_squared",
+    "updated": "&speed_squared"
+  },
+  {
+    "file": "src/bezier_offset.rs",
+    "line": 110725,
+    "previous": "cross",
+    "updated": "&cross"
+  },
+  {
+    "file": "src/bezier_offset.rs",
+    "line": 110731,
+    "previous": "dot",
+    "updated": "&dot"
+  },
+  {
+    "file": "src/bezier_offset.rs",
+    "line": 110777,
+    "previous": "polynomial_add(\n                &polynomial_scale(&differential.tangent_x, &coefficient_x),\n                &polynomial_scale(&differential.tangent_y, &coefficient_y),\n            )",
+    "updated": "&polynomial_add(\n                &polynomial_scale(&differential.tangent_x, &coefficient_x),\n                &polynomial_scale(&differential.tangent_y, &coefficient_y),\n            )"
+  },
+  {
+    "file": "src/bezier_offset.rs",
+    "line": 110818,
+    "previous": "speed_squared",
+    "updated": "&speed_squared"
+  },
+  {
+    "file": "src/bezier_offset.rs",
+    "line": 111208,
+    "previous": "Some(&branch)",
+    "updated": "branch.coefficients()"
+  },
+  {
+    "file": "src/bezier_offset.rs",
+    "line": 111468,
+    "previous": "Some(weight)",
+    "updated": "weight.coefficients()"
+  },
+  {
+    "file": "src/bezier_offset.rs",
+    "line": 111706,
+    "previous": "bivariate_specialize_second(incidence, &candidate)",
+    "updated": "&bivariate_specialize_second(incidence, &candidate)"
+  },
+  {
+    "file": "src/bezier_offset.rs",
+    "line": 112921,
+    "previous": "radial_polynomial.as_ref()",
+    "updated": "radial_polynomial.as_ref().map_or(&[][..], BezierParameterPolynomial::coefficients)"
+  },
+  {
+    "file": "src/bezier_offset.rs",
+    "line": 112928,
+    "previous": "normal_polynomial.as_ref()",
+    "updated": "normal_polynomial.as_ref().map_or(&[][..], BezierParameterPolynomial::coefficients)"
+  },
+  {
+    "file": "src/bezier_offset.rs",
+    "line": 113107,
+    "previous": "radial_polynomial.as_ref()",
+    "updated": "radial_polynomial.as_ref().map_or(&[][..], BezierParameterPolynomial::coefficients)"
+  },
+  {
+    "file": "src/bezier_offset.rs",
+    "line": 113114,
+    "previous": "normal_polynomial.as_ref()",
+    "updated": "normal_polynomial.as_ref().map_or(&[][..], BezierParameterPolynomial::coefficients)"
+  },
+  {
+    "file": "src/bezier_offset.rs",
+    "line": 113129,
+    "previous": "candidate_derivative.as_ref()",
+    "updated": "candidate_derivative.as_ref().map_or(&[][..], BezierParameterPolynomial::coefficients)"
+  },
+  {
+    "file": "src/bezier_offset.rs",
+    "line": 113723,
+    "previous": "Some(&normal_polynomial)",
+    "updated": "normal_polynomial.coefficients()"
+  },
+  {
+    "file": "src/bezier_offset.rs",
+    "line": 114007,
+    "previous": "branch_product.as_ref()",
+    "updated": "branch_product.as_ref().map_or(&[][..], BezierParameterPolynomial::coefficients)"
+  },
+  {
+    "file": "src/bezier_offset.rs",
+    "line": 114011,
+    "previous": "Some(&line_polynomial)",
+    "updated": "line_polynomial.coefficients()"
+  },
+  {
+    "file": "src/bezier_offset.rs",
+    "line": 114012,
+    "previous": "Some(&normal_polynomial)",
+    "updated": "normal_polynomial.coefficients()"
+  },
+  {
+    "file": "src/bezier_offset.rs",
+    "line": 114032,
+    "previous": "Some(&line_polynomial)",
+    "updated": "line_polynomial.coefficients()"
+  },
+  {
+    "file": "src/bezier_offset.rs",
+    "line": 114042,
+    "previous": "Some(&normal_polynomial)",
+    "updated": "normal_polynomial.coefficients()"
+  },
+  {
+    "file": "src/bezier_offset.rs",
+    "line": 114245,
+    "previous": "tangent_projection.clone()",
+    "updated": "&tangent_projection"
+  },
+  {
+    "file": "src/bezier_offset.rs",
+    "line": 114269,
+    "previous": "line_numerator.clone()",
+    "updated": "&line_numerator"
+  },
+  {
+    "file": "src/bezier_offset.rs",
+    "line": 114286,
+    "previous": "tangent_cross",
+    "updated": "&tangent_cross"
+  },
+  {
+    "file": "src/bezier_offset.rs",
+    "line": 114602,
+    "previous": "branch_polynomial.as_ref()",
+    "updated": "branch_polynomial.as_ref().map_or(&[][..], BezierParameterPolynomial::coefficients)"
+  },
+  {
+    "file": "src/bezier_offset.rs",
+    "line": 114608,
+    "previous": "Some(&line_polynomial)",
+    "updated": "line_polynomial.coefficients()"
+  },
+  {
+    "file": "src/bezier_offset.rs",
+    "line": 114615,
+    "previous": "Some(&normal_polynomial)",
+    "updated": "normal_polynomial.coefficients()"
+  },
+  {
+    "file": "src/bezier_offset.rs",
+    "line": 114703,
+    "previous": "Some(&line_polynomial)",
+    "updated": "line_polynomial.coefficients()"
+  },
+  {
+    "file": "src/bezier_offset.rs",
+    "line": 114713,
+    "previous": "Some(&normal_polynomial)",
+    "updated": "normal_polynomial.coefficients()"
+  },
+  {
+    "file": "src/bezier_offset.rs",
+    "line": 116836,
+    "previous": "signed_curvature",
+    "updated": "&signed_curvature"
+  },
+  {
+    "file": "src/bezier_offset.rs",
+    "line": 116920,
+    "previous": "speed_squared.clone()",
+    "updated": "&speed_squared"
+  },
+  {
+    "file": "src/bezier_offset.rs",
+    "line": 116934,
+    "previous": "signed_curvature.clone()",
+    "updated": "&signed_curvature"
+  },
+  {
+    "file": "src/bezier_offset.rs",
+    "line": 116944,
+    "previous": "squared_difference",
+    "updated": "&squared_difference"
+  },
+  {
+    "file": "src/bezier_offset.rs",
+    "line": 116972,
+    "previous": "speed_squared.clone()",
+    "updated": "&speed_squared"
+  },
+  {
+    "file": "src/bezier_offset.rs",
+    "line": 116990,
+    "previous": "signed_curvature.clone()",
+    "updated": "&signed_curvature"
+  },
+  {
+    "file": "src/bezier_offset.rs",
+    "line": 117008,
+    "previous": "cusp_residual",
+    "updated": "&cusp_residual"
+  },
+  {
+    "file": "src/bezier_offset.rs",
+    "line": 119180,
+    "previous": "curvature_term_polynomial.as_ref()",
+    "updated": "curvature_term_polynomial.as_ref().map_or(&[][..], BezierParameterPolynomial::coefficients)"
+  },
+  {
+    "file": "src/bezier_offset.rs",
+    "line": 122500,
+    "previous": "polynomial.as_ref()",
+    "updated": "polynomial.as_ref().map_or(&[][..], BezierParameterPolynomial::coefficients)"
+  },
+  {
+    "file": "src/bezier_offset.rs",
+    "line": 129637,
+    "previous": "cleared",
+    "updated": "&cleared"
+  },
+  {
+    "file": "src/bezier_offset.rs",
+    "line": 129647,
+    "previous": "map.denominator_coefficients.clone()",
+    "updated": "&map.denominator_coefficients"
+  },
+  {
+    "file": "src/bezier_offset.rs",
+    "line": 129817,
+    "previous": "bivariate_specialize_first(polynomial, first)",
+    "updated": "&bivariate_specialize_first(polynomial, first)"
+  },
+  {
+    "file": "src/bezier_offset.rs",
+    "line": 129822,
+    "previous": "bivariate_specialize_second(polynomial, second)",
+    "updated": "&bivariate_specialize_second(polynomial, second)"
+  },
+  {
+    "file": "src/bezier_offset.rs",
+    "line": 129850,
+    "previous": "coefficients",
+    "updated": "&coefficients"
+  },
+  {
+    "file": "src/bezier_offset.rs",
+    "line": 129861,
+    "previous": "coefficients",
+    "updated": "&coefficients"
+  },
+  {
+    "file": "src/bezier_offset.rs",
+    "line": 129877,
+    "previous": "bivariate_substitute_second_equal_first(polynomial)",
+    "updated": "&bivariate_substitute_second_equal_first(polynomial)"
+  },
+  {
+    "file": "src/bezier_offset.rs",
+    "line": 129888,
+    "previous": "bivariate_substitute_second_equal_one_minus_first(polynomial)",
+    "updated": "&bivariate_substitute_second_equal_one_minus_first(polynomial)"
+  },
+  {
+    "file": "src/bezier_offset.rs",
+    "line": 129913,
+    "previous": "coefficients",
+    "updated": "&coefficients"
+  },
+  {
+    "file": "src/bezier_offset.rs",
+    "line": 129924,
+    "previous": "coefficients",
+    "updated": "&coefficients"
+  },
+  {
+    "file": "src/bezier_offset.rs",
+    "line": 129931,
+    "previous": "bivariate_substitute_second_equal_affine_first(polynomial, &scale, &offset)",
+    "updated": "&bivariate_substitute_second_equal_affine_first(polynomial, &scale, &offset)"
+  },
+  {
+    "file": "src/bezier_offset.rs",
+    "line": 130004,
+    "previous": "polynomial\n            .coefficients\n            .iter()\n            .map(|row| {\n                row.get(pivot_column_index)\n                    .cloned()\n                    .unwrap_or_else(Real::zero)\n            })\n            .collect()",
+    "updated": "&polynomial\n            .coefficients\n            .iter()\n            .map(|row| {\n                row.get(pivot_column_index)\n                    .cloned()\n                    .unwrap_or_else(Real::zero)\n            })\n            .collect::<Vec<_>>()"
+  },
+  {
+    "file": "src/bezier_offset.rs",
+    "line": 130017,
+    "previous": "(0..column_count)\n            .map(|column_index| {\n                pivot_row\n                    .get(column_index)\n                    .cloned()\n                    .unwrap_or_else(Real::zero)\n            })\n            .collect()",
+    "updated": "&(0..column_count)\n            .map(|column_index| {\n                pivot_row\n                    .get(column_index)\n                    .cloned()\n                    .unwrap_or_else(Real::zero)\n            })\n            .collect::<Vec<_>>()"
+  },
+  {
+    "file": "src/bezier_offset.rs",
+    "line": 130842,
+    "previous": "Some(weight)",
+    "updated": "weight.coefficients()"
+  },
+  {
+    "file": "src/bezier_offset.rs",
+    "line": 130852,
+    "previous": "Some(&speed)",
+    "updated": "speed.coefficients()"
+  },
+  {
+    "file": "src/bezier_offset.rs",
+    "line": 131161,
+    "previous": "weight.clone()",
+    "updated": "&weight"
+  },
+  {
+    "file": "src/bezier_offset.rs",
+    "line": 131171,
+    "previous": "source_projection.clone()",
+    "updated": "&source_projection"
+  },
+  {
+    "file": "src/bezier_offset.rs",
+    "line": 131200,
+    "previous": "normal_projection.clone()",
+    "updated": "&normal_projection"
+  },
+  {
+    "file": "src/bezier_offset.rs",
+    "line": 131210,
+    "previous": "speed_squared.clone()",
+    "updated": "&speed_squared"
+  },
+  {
+    "file": "src/bezier_offset.rs",
+    "line": 131236,
+    "previous": "squared_difference",
+    "updated": "&squared_difference"
+  },
+  {
+    "file": "src/bezier_offset.rs",
+    "line": 137116,
+    "previous": "coefficients",
+    "updated": "&coefficients"
+  },
+  {
+    "file": "src/bezier_offset.rs",
+    "line": 173067,
+    "previous": "compact_polynomial",
+    "updated": "&compact_polynomial"
+  },
+  {
+    "file": "src/rational_bezier_general.rs",
+    "line": 8169,
+    "previous": "candidate.denominator.clone()",
+    "updated": "&candidate.denominator"
+  },
+  {
+    "file": "src/rational_bezier_general.rs",
+    "line": 9867,
+    "previous": "defining.clone()",
+    "updated": "&defining"
+  },
+  {
+    "file": "src/bezier_parameter.rs",
+    "line": 2257,
+    "previous": "Some(&polynomial)",
+    "updated": "polynomial.coefficients()"
+  },
+  {
+    "file": "src/bezier_parameter.rs",
+    "line": 5185,
+    "previous": "Some(&filter)",
+    "updated": "filter.coefficients()"
+  },
+  {
+    "file": "src/bezier_parameter.rs",
+    "line": 5208,
+    "previous": "coefficients",
+    "updated": "&coefficients"
+  },
+  {
+    "file": "src/bezier_parameter.rs",
+    "line": 5282,
+    "previous": "Some(&filter)",
+    "updated": "filter.coefficients()"
+  },
+  {
+    "file": "src/bezier_parameter.rs",
+    "line": 5327,
+    "previous": "None",
+    "updated": "&[]"
+  },
+  {
+    "file": "src/bezier_parameter.rs",
+    "line": 5344,
+    "previous": "Some(&filter)",
+    "updated": "filter.coefficients()"
+  },
+  {
+    "file": "src/bezier_parameter.rs",
+    "line": 5357,
+    "previous": "Some(&polynomial(&[-13, 16]))",
+    "updated": "polynomial(&[-13, 16]).coefficients()"
+  }
+]

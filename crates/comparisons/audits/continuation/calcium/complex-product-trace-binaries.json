@@ -1,0 +1,12 @@
+{
+  "baseline": {
+    "path": "/tmp/calcium-complex-product.0bkAWH/baseline-trace",
+    "sha256": "b63aedde44a7f635e2636af55b0f718dffe5aa2acba10a6126859c59524e7abd",
+    "bytes": 2120880
+  },
+  "candidate": {
+    "path": "/tmp/calcium-complex-product.0bkAWH/candidate-trace",
+    "sha256": "4a3ac35eaf15a78e764753505a1e34aa955958ad16a7e0dfb382fcb9dbaf41c2",
+    "bytes": 2130144
+  }
+}

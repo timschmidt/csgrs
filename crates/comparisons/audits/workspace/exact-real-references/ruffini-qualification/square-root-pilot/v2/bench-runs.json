@@ -1,0 +1,2738 @@
+[
+  {
+    "name": "1-32-dense-fresh-square-137",
+    "command": "taskset",
+    "args": [
+      "-c",
+      "6",
+      "/home/tim/Documents/GitHub/workspace/.audit-square-root.C42NO5BC/v2-binaries/release",
+      "bench",
+      "1",
+      "32",
+      "dense",
+      "fresh",
+      "square",
+      "137",
+      "0.25",
+      "6"
+    ],
+    "capMs": 240000,
+    "started": "2026-09-07T02:38:33.948Z",
+    "finished": "2026-09-07T02:38:48.260Z",
+    "status": 0,
+    "signal": null,
+    "error": null,
+    "file": "bench-1-32-dense-fresh-square-137.log",
+    "sha256": "edff03dd26254d4d0d8a02b38f0fbb637846a6e0eb0132bd2e52f7656cd29546",
+    "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "sources": [
+      [
+        "main.rs",
+        "8c1d88393e00a99d07df5ae50cea454b5d108d0a5b8563e89791938a26495be2"
+      ],
+      [
+        "Cargo.toml",
+        "a7dfcf7a0d76e98ae1bdf29e48b6521ac3530daa9eb0f7e2a3d7b702f954e686"
+      ],
+      [
+        "../main.rs",
+        "d6b3b28c73bdc1c16452a98f55d827e7695d5344db679dcabff09dd8015a6f6f"
+      ],
+      [
+        "../diagonal.rs",
+        "fe7e844196357e900969c6a919d5aafca192839f6f42a34814845e8f5fbf5fd8"
+      ],
+      [
+        "../baseline.rs",
+        "f09fb430259ecd9ca39a7821e738ea9c881cbe0e6f65cf410d62f6a5f9c5b2f4"
+      ],
+      [
+        "../shared.rs",
+        "5ea43f1efafd86c8977314e75045e072fb9c5fe54711a8b34eb474cf663f9971"
+      ]
+    ],
+    "runnerSha256": "b5dc037c385e9bc3af23e83d6dbd65fcca81b623fdf379c1939f87f676536daa",
+    "lockSha256": "f70105bad87a26414538c55b77ceb032fe401d17bd9fe1f9d04b02357b457b87",
+    "binary": "/home/tim/Documents/GitHub/workspace/.audit-square-root.C42NO5BC/v2-binaries/release",
+    "binarySha256": "2a0d7f5ad43f3ef143776b29acb8db9acbcec77651e6e248d808e379b87d8ff9"
+  },
+  {
+    "name": "1-32-dense-reused-square-137",
+    "command": "taskset",
+    "args": [
+      "-c",
+      "6",
+      "/home/tim/Documents/GitHub/workspace/.audit-square-root.C42NO5BC/v2-binaries/release",
+      "bench",
+      "1",
+      "32",
+      "dense",
+      "reused",
+      "square",
+      "137",
+      "0.25",
+      "6"
+    ],
+    "capMs": 240000,
+    "started": "2026-09-07T02:38:48.262Z",
+    "finished": "2026-09-07T02:39:04.239Z",
+    "status": 0,
+    "signal": null,
+    "error": null,
+    "file": "bench-1-32-dense-reused-square-137.log",
+    "sha256": "ff8c6f9860f81335d6b93da269fd48f431f064b8a527209bc0319de4ff307543",
+    "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "sources": [
+      [
+        "main.rs",
+        "8c1d88393e00a99d07df5ae50cea454b5d108d0a5b8563e89791938a26495be2"
+      ],
+      [
+        "Cargo.toml",
+        "a7dfcf7a0d76e98ae1bdf29e48b6521ac3530daa9eb0f7e2a3d7b702f954e686"
+      ],
+      [
+        "../main.rs",
+        "d6b3b28c73bdc1c16452a98f55d827e7695d5344db679dcabff09dd8015a6f6f"
+      ],
+      [
+        "../diagonal.rs",
+        "fe7e844196357e900969c6a919d5aafca192839f6f42a34814845e8f5fbf5fd8"
+      ],
+      [
+        "../baseline.rs",
+        "f09fb430259ecd9ca39a7821e738ea9c881cbe0e6f65cf410d62f6a5f9c5b2f4"
+      ],
+      [
+        "../shared.rs",
+        "5ea43f1efafd86c8977314e75045e072fb9c5fe54711a8b34eb474cf663f9971"
+      ]
+    ],
+    "runnerSha256": "b5dc037c385e9bc3af23e83d6dbd65fcca81b623fdf379c1939f87f676536daa",
+    "lockSha256": "f70105bad87a26414538c55b77ceb032fe401d17bd9fe1f9d04b02357b457b87",
+    "binary": "/home/tim/Documents/GitHub/workspace/.audit-square-root.C42NO5BC/v2-binaries/release",
+    "binarySha256": "2a0d7f5ad43f3ef143776b29acb8db9acbcec77651e6e248d808e379b87d8ff9"
+  },
+  {
+    "name": "2-32-dense-fresh-square-137",
+    "command": "taskset",
+    "args": [
+      "-c",
+      "6",
+      "/home/tim/Documents/GitHub/workspace/.audit-square-root.C42NO5BC/v2-binaries/release",
+      "bench",
+      "2",
+      "32",
+      "dense",
+      "fresh",
+      "square",
+      "137",
+      "0.25",
+      "6"
+    ],
+    "capMs": 240000,
+    "started": "2026-09-07T02:39:04.248Z",
+    "finished": "2026-09-07T02:39:22.623Z",
+    "status": 0,
+    "signal": null,
+    "error": null,
+    "file": "bench-2-32-dense-fresh-square-137.log",
+    "sha256": "a5ca03947dc5c1c80288ec05cfb602b241902bc6db8b7f37698b8acb8f3d5508",
+    "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "sources": [
+      [
+        "main.rs",
+        "8c1d88393e00a99d07df5ae50cea454b5d108d0a5b8563e89791938a26495be2"
+      ],
+      [
+        "Cargo.toml",
+        "a7dfcf7a0d76e98ae1bdf29e48b6521ac3530daa9eb0f7e2a3d7b702f954e686"
+      ],
+      [
+        "../main.rs",
+        "d6b3b28c73bdc1c16452a98f55d827e7695d5344db679dcabff09dd8015a6f6f"
+      ],
+      [
+        "../diagonal.rs",
+        "fe7e844196357e900969c6a919d5aafca192839f6f42a34814845e8f5fbf5fd8"
+      ],
+      [
+        "../baseline.rs",
+        "f09fb430259ecd9ca39a7821e738ea9c881cbe0e6f65cf410d62f6a5f9c5b2f4"
+      ],
+      [
+        "../shared.rs",
+        "5ea43f1efafd86c8977314e75045e072fb9c5fe54711a8b34eb474cf663f9971"
+      ]
+    ],
+    "runnerSha256": "b5dc037c385e9bc3af23e83d6dbd65fcca81b623fdf379c1939f87f676536daa",
+    "lockSha256": "f70105bad87a26414538c55b77ceb032fe401d17bd9fe1f9d04b02357b457b87",
+    "binary": "/home/tim/Documents/GitHub/workspace/.audit-square-root.C42NO5BC/v2-binaries/release",
+    "binarySha256": "2a0d7f5ad43f3ef143776b29acb8db9acbcec77651e6e248d808e379b87d8ff9"
+  },
+  {
+    "name": "2-32-dense-reused-square-137",
+    "command": "taskset",
+    "args": [
+      "-c",
+      "6",
+      "/home/tim/Documents/GitHub/workspace/.audit-square-root.C42NO5BC/v2-binaries/release",
+      "bench",
+      "2",
+      "32",
+      "dense",
+      "reused",
+      "square",
+      "137",
+      "0.25",
+      "6"
+    ],
+    "capMs": 240000,
+    "started": "2026-09-07T02:39:22.632Z",
+    "finished": "2026-09-07T02:39:36.756Z",
+    "status": 0,
+    "signal": null,
+    "error": null,
+    "file": "bench-2-32-dense-reused-square-137.log",
+    "sha256": "b3f0091fb16e54fbb4fecf06fab812f9e30a3837ef3359c7f226ba6262dc604a",
+    "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "sources": [
+      [
+        "main.rs",
+        "8c1d88393e00a99d07df5ae50cea454b5d108d0a5b8563e89791938a26495be2"
+      ],
+      [
+        "Cargo.toml",
+        "a7dfcf7a0d76e98ae1bdf29e48b6521ac3530daa9eb0f7e2a3d7b702f954e686"
+      ],
+      [
+        "../main.rs",
+        "d6b3b28c73bdc1c16452a98f55d827e7695d5344db679dcabff09dd8015a6f6f"
+      ],
+      [
+        "../diagonal.rs",
+        "fe7e844196357e900969c6a919d5aafca192839f6f42a34814845e8f5fbf5fd8"
+      ],
+      [
+        "../baseline.rs",
+        "f09fb430259ecd9ca39a7821e738ea9c881cbe0e6f65cf410d62f6a5f9c5b2f4"
+      ],
+      [
+        "../shared.rs",
+        "5ea43f1efafd86c8977314e75045e072fb9c5fe54711a8b34eb474cf663f9971"
+      ]
+    ],
+    "runnerSha256": "b5dc037c385e9bc3af23e83d6dbd65fcca81b623fdf379c1939f87f676536daa",
+    "lockSha256": "f70105bad87a26414538c55b77ceb032fe401d17bd9fe1f9d04b02357b457b87",
+    "binary": "/home/tim/Documents/GitHub/workspace/.audit-square-root.C42NO5BC/v2-binaries/release",
+    "binarySha256": "2a0d7f5ad43f3ef143776b29acb8db9acbcec77651e6e248d808e379b87d8ff9"
+  },
+  {
+    "name": "4-32-dense-fresh-square-137",
+    "command": "taskset",
+    "args": [
+      "-c",
+      "6",
+      "/home/tim/Documents/GitHub/workspace/.audit-square-root.C42NO5BC/v2-binaries/release",
+      "bench",
+      "4",
+      "32",
+      "dense",
+      "fresh",
+      "square",
+      "137",
+      "0.25",
+      "6"
+    ],
+    "capMs": 240000,
+    "started": "2026-09-07T02:39:36.760Z",
+    "finished": "2026-09-07T02:39:49.838Z",
+    "status": 0,
+    "signal": null,
+    "error": null,
+    "file": "bench-4-32-dense-fresh-square-137.log",
+    "sha256": "1b2b75480e33776491a0405aa52b8be24ed658338b09c88b975f25fb784b389d",
+    "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "sources": [
+      [
+        "main.rs",
+        "8c1d88393e00a99d07df5ae50cea454b5d108d0a5b8563e89791938a26495be2"
+      ],
+      [
+        "Cargo.toml",
+        "a7dfcf7a0d76e98ae1bdf29e48b6521ac3530daa9eb0f7e2a3d7b702f954e686"
+      ],
+      [
+        "../main.rs",
+        "d6b3b28c73bdc1c16452a98f55d827e7695d5344db679dcabff09dd8015a6f6f"
+      ],
+      [
+        "../diagonal.rs",
+        "fe7e844196357e900969c6a919d5aafca192839f6f42a34814845e8f5fbf5fd8"
+      ],
+      [
+        "../baseline.rs",
+        "f09fb430259ecd9ca39a7821e738ea9c881cbe0e6f65cf410d62f6a5f9c5b2f4"
+      ],
+      [
+        "../shared.rs",
+        "5ea43f1efafd86c8977314e75045e072fb9c5fe54711a8b34eb474cf663f9971"
+      ]
+    ],
+    "runnerSha256": "b5dc037c385e9bc3af23e83d6dbd65fcca81b623fdf379c1939f87f676536daa",
+    "lockSha256": "f70105bad87a26414538c55b77ceb032fe401d17bd9fe1f9d04b02357b457b87",
+    "binary": "/home/tim/Documents/GitHub/workspace/.audit-square-root.C42NO5BC/v2-binaries/release",
+    "binarySha256": "2a0d7f5ad43f3ef143776b29acb8db9acbcec77651e6e248d808e379b87d8ff9"
+  },
+  {
+    "name": "4-32-dense-reused-square-137",
+    "command": "taskset",
+    "args": [
+      "-c",
+      "6",
+      "/home/tim/Documents/GitHub/workspace/.audit-square-root.C42NO5BC/v2-binaries/release",
+      "bench",
+      "4",
+      "32",
+      "dense",
+      "reused",
+      "square",
+      "137",
+      "0.25",
+      "6"
+    ],
+    "capMs": 240000,
+    "started": "2026-09-07T02:39:49.848Z",
+    "finished": "2026-09-07T02:40:06.256Z",
+    "status": 0,
+    "signal": null,
+    "error": null,
+    "file": "bench-4-32-dense-reused-square-137.log",
+    "sha256": "6db6f520461d3000628b4b7f21782a1f3429bc699b7300b26c924c56e526d7d3",
+    "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "sources": [
+      [
+        "main.rs",
+        "8c1d88393e00a99d07df5ae50cea454b5d108d0a5b8563e89791938a26495be2"
+      ],
+      [
+        "Cargo.toml",
+        "a7dfcf7a0d76e98ae1bdf29e48b6521ac3530daa9eb0f7e2a3d7b702f954e686"
+      ],
+      [
+        "../main.rs",
+        "d6b3b28c73bdc1c16452a98f55d827e7695d5344db679dcabff09dd8015a6f6f"
+      ],
+      [
+        "../diagonal.rs",
+        "fe7e844196357e900969c6a919d5aafca192839f6f42a34814845e8f5fbf5fd8"
+      ],
+      [
+        "../baseline.rs",
+        "f09fb430259ecd9ca39a7821e738ea9c881cbe0e6f65cf410d62f6a5f9c5b2f4"
+      ],
+      [
+        "../shared.rs",
+        "5ea43f1efafd86c8977314e75045e072fb9c5fe54711a8b34eb474cf663f9971"
+      ]
+    ],
+    "runnerSha256": "b5dc037c385e9bc3af23e83d6dbd65fcca81b623fdf379c1939f87f676536daa",
+    "lockSha256": "f70105bad87a26414538c55b77ceb032fe401d17bd9fe1f9d04b02357b457b87",
+    "binary": "/home/tim/Documents/GitHub/workspace/.audit-square-root.C42NO5BC/v2-binaries/release",
+    "binarySha256": "2a0d7f5ad43f3ef143776b29acb8db9acbcec77651e6e248d808e379b87d8ff9"
+  },
+  {
+    "name": "8-32-dense-fresh-square-137",
+    "command": "taskset",
+    "args": [
+      "-c",
+      "6",
+      "/home/tim/Documents/GitHub/workspace/.audit-square-root.C42NO5BC/v2-binaries/release",
+      "bench",
+      "8",
+      "32",
+      "dense",
+      "fresh",
+      "square",
+      "137",
+      "0.25",
+      "6"
+    ],
+    "capMs": 240000,
+    "started": "2026-09-07T02:40:06.265Z",
+    "finished": "2026-09-07T02:40:18.817Z",
+    "status": 0,
+    "signal": null,
+    "error": null,
+    "file": "bench-8-32-dense-fresh-square-137.log",
+    "sha256": "36652ec9d0126337614ebb1062f74861519cdd030e91270132a6e82d51a9c2ea",
+    "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "sources": [
+      [
+        "main.rs",
+        "8c1d88393e00a99d07df5ae50cea454b5d108d0a5b8563e89791938a26495be2"
+      ],
+      [
+        "Cargo.toml",
+        "a7dfcf7a0d76e98ae1bdf29e48b6521ac3530daa9eb0f7e2a3d7b702f954e686"
+      ],
+      [
+        "../main.rs",
+        "d6b3b28c73bdc1c16452a98f55d827e7695d5344db679dcabff09dd8015a6f6f"
+      ],
+      [
+        "../diagonal.rs",
+        "fe7e844196357e900969c6a919d5aafca192839f6f42a34814845e8f5fbf5fd8"
+      ],
+      [
+        "../baseline.rs",
+        "f09fb430259ecd9ca39a7821e738ea9c881cbe0e6f65cf410d62f6a5f9c5b2f4"
+      ],
+      [
+        "../shared.rs",
+        "5ea43f1efafd86c8977314e75045e072fb9c5fe54711a8b34eb474cf663f9971"
+      ]
+    ],
+    "runnerSha256": "b5dc037c385e9bc3af23e83d6dbd65fcca81b623fdf379c1939f87f676536daa",
+    "lockSha256": "f70105bad87a26414538c55b77ceb032fe401d17bd9fe1f9d04b02357b457b87",
+    "binary": "/home/tim/Documents/GitHub/workspace/.audit-square-root.C42NO5BC/v2-binaries/release",
+    "binarySha256": "2a0d7f5ad43f3ef143776b29acb8db9acbcec77651e6e248d808e379b87d8ff9"
+  },
+  {
+    "name": "8-32-dense-reused-square-137",
+    "command": "taskset",
+    "args": [
+      "-c",
+      "6",
+      "/home/tim/Documents/GitHub/workspace/.audit-square-root.C42NO5BC/v2-binaries/release",
+      "bench",
+      "8",
+      "32",
+      "dense",
+      "reused",
+      "square",
+      "137",
+      "0.25",
+      "6"
+    ],
+    "capMs": 240000,
+    "started": "2026-09-07T02:40:18.826Z",
+    "finished": "2026-09-07T02:40:28.739Z",
+    "status": 0,
+    "signal": null,
+    "error": null,
+    "file": "bench-8-32-dense-reused-square-137.log",
+    "sha256": "eadb01a14862cd08c115139d063c5b89c1254fda3da02a8aa0e144d3f6fd1efb",
+    "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "sources": [
+      [
+        "main.rs",
+        "8c1d88393e00a99d07df5ae50cea454b5d108d0a5b8563e89791938a26495be2"
+      ],
+      [
+        "Cargo.toml",
+        "a7dfcf7a0d76e98ae1bdf29e48b6521ac3530daa9eb0f7e2a3d7b702f954e686"
+      ],
+      [
+        "../main.rs",
+        "d6b3b28c73bdc1c16452a98f55d827e7695d5344db679dcabff09dd8015a6f6f"
+      ],
+      [
+        "../diagonal.rs",
+        "fe7e844196357e900969c6a919d5aafca192839f6f42a34814845e8f5fbf5fd8"
+      ],
+      [
+        "../baseline.rs",
+        "f09fb430259ecd9ca39a7821e738ea9c881cbe0e6f65cf410d62f6a5f9c5b2f4"
+      ],
+      [
+        "../shared.rs",
+        "5ea43f1efafd86c8977314e75045e072fb9c5fe54711a8b34eb474cf663f9971"
+      ]
+    ],
+    "runnerSha256": "b5dc037c385e9bc3af23e83d6dbd65fcca81b623fdf379c1939f87f676536daa",
+    "lockSha256": "f70105bad87a26414538c55b77ceb032fe401d17bd9fe1f9d04b02357b457b87",
+    "binary": "/home/tim/Documents/GitHub/workspace/.audit-square-root.C42NO5BC/v2-binaries/release",
+    "binarySha256": "2a0d7f5ad43f3ef143776b29acb8db9acbcec77651e6e248d808e379b87d8ff9"
+  },
+  {
+    "name": "16-256-dense-fresh-square-137",
+    "command": "taskset",
+    "args": [
+      "-c",
+      "6",
+      "/home/tim/Documents/GitHub/workspace/.audit-square-root.C42NO5BC/v2-binaries/release",
+      "bench",
+      "16",
+      "256",
+      "dense",
+      "fresh",
+      "square",
+      "137",
+      "0.25",
+      "6"
+    ],
+    "capMs": 240000,
+    "started": "2026-09-07T02:40:28.748Z",
+    "finished": "2026-09-07T02:40:37.904Z",
+    "status": 0,
+    "signal": null,
+    "error": null,
+    "file": "bench-16-256-dense-fresh-square-137.log",
+    "sha256": "fd5de1f75b85286baa2a151063092945b39540f3261b191f30845f76b1086925",
+    "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "sources": [
+      [
+        "main.rs",
+        "8c1d88393e00a99d07df5ae50cea454b5d108d0a5b8563e89791938a26495be2"
+      ],
+      [
+        "Cargo.toml",
+        "a7dfcf7a0d76e98ae1bdf29e48b6521ac3530daa9eb0f7e2a3d7b702f954e686"
+      ],
+      [
+        "../main.rs",
+        "d6b3b28c73bdc1c16452a98f55d827e7695d5344db679dcabff09dd8015a6f6f"
+      ],
+      [
+        "../diagonal.rs",
+        "fe7e844196357e900969c6a919d5aafca192839f6f42a34814845e8f5fbf5fd8"
+      ],
+      [
+        "../baseline.rs",
+        "f09fb430259ecd9ca39a7821e738ea9c881cbe0e6f65cf410d62f6a5f9c5b2f4"
+      ],
+      [
+        "../shared.rs",
+        "5ea43f1efafd86c8977314e75045e072fb9c5fe54711a8b34eb474cf663f9971"
+      ]
+    ],
+    "runnerSha256": "b5dc037c385e9bc3af23e83d6dbd65fcca81b623fdf379c1939f87f676536daa",
+    "lockSha256": "f70105bad87a26414538c55b77ceb032fe401d17bd9fe1f9d04b02357b457b87",
+    "binary": "/home/tim/Documents/GitHub/workspace/.audit-square-root.C42NO5BC/v2-binaries/release",
+    "binarySha256": "2a0d7f5ad43f3ef143776b29acb8db9acbcec77651e6e248d808e379b87d8ff9"
+  },
+  {
+    "name": "16-256-dense-reused-square-137",
+    "command": "taskset",
+    "args": [
+      "-c",
+      "6",
+      "/home/tim/Documents/GitHub/workspace/.audit-square-root.C42NO5BC/v2-binaries/release",
+      "bench",
+      "16",
+      "256",
+      "dense",
+      "reused",
+      "square",
+      "137",
+      "0.25",
+      "6"
+    ],
+    "capMs": 240000,
+    "started": "2026-09-07T02:40:37.913Z",
+    "finished": "2026-09-07T02:40:53.826Z",
+    "status": 0,
+    "signal": null,
+    "error": null,
+    "file": "bench-16-256-dense-reused-square-137.log",
+    "sha256": "26fa76fa082c1108d7c61537b971b096d2e6edb54589cfe8648c6b1d5e9be0c6",
+    "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "sources": [
+      [
+        "main.rs",
+        "8c1d88393e00a99d07df5ae50cea454b5d108d0a5b8563e89791938a26495be2"
+      ],
+      [
+        "Cargo.toml",
+        "a7dfcf7a0d76e98ae1bdf29e48b6521ac3530daa9eb0f7e2a3d7b702f954e686"
+      ],
+      [
+        "../main.rs",
+        "d6b3b28c73bdc1c16452a98f55d827e7695d5344db679dcabff09dd8015a6f6f"
+      ],
+      [
+        "../diagonal.rs",
+        "fe7e844196357e900969c6a919d5aafca192839f6f42a34814845e8f5fbf5fd8"
+      ],
+      [
+        "../baseline.rs",
+        "f09fb430259ecd9ca39a7821e738ea9c881cbe0e6f65cf410d62f6a5f9c5b2f4"
+      ],
+      [
+        "../shared.rs",
+        "5ea43f1efafd86c8977314e75045e072fb9c5fe54711a8b34eb474cf663f9971"
+      ]
+    ],
+    "runnerSha256": "b5dc037c385e9bc3af23e83d6dbd65fcca81b623fdf379c1939f87f676536daa",
+    "lockSha256": "f70105bad87a26414538c55b77ceb032fe401d17bd9fe1f9d04b02357b457b87",
+    "binary": "/home/tim/Documents/GitHub/workspace/.audit-square-root.C42NO5BC/v2-binaries/release",
+    "binarySha256": "2a0d7f5ad43f3ef143776b29acb8db9acbcec77651e6e248d808e379b87d8ff9"
+  },
+  {
+    "name": "32-32-dense-fresh-square-137",
+    "command": "taskset",
+    "args": [
+      "-c",
+      "6",
+      "/home/tim/Documents/GitHub/workspace/.audit-square-root.C42NO5BC/v2-binaries/release",
+      "bench",
+      "32",
+      "32",
+      "dense",
+      "fresh",
+      "square",
+      "137",
+      "0.25",
+      "6"
+    ],
+    "capMs": 240000,
+    "started": "2026-09-07T02:40:53.835Z",
+    "finished": "2026-09-07T02:41:02.631Z",
+    "status": 0,
+    "signal": null,
+    "error": null,
+    "file": "bench-32-32-dense-fresh-square-137.log",
+    "sha256": "4775ed2338fa5ca0e778932665f4f3818bee5d2e39cc9b363c411fe84e1e4303",
+    "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "sources": [
+      [
+        "main.rs",
+        "8c1d88393e00a99d07df5ae50cea454b5d108d0a5b8563e89791938a26495be2"
+      ],
+      [
+        "Cargo.toml",
+        "a7dfcf7a0d76e98ae1bdf29e48b6521ac3530daa9eb0f7e2a3d7b702f954e686"
+      ],
+      [
+        "../main.rs",
+        "d6b3b28c73bdc1c16452a98f55d827e7695d5344db679dcabff09dd8015a6f6f"
+      ],
+      [
+        "../diagonal.rs",
+        "fe7e844196357e900969c6a919d5aafca192839f6f42a34814845e8f5fbf5fd8"
+      ],
+      [
+        "../baseline.rs",
+        "f09fb430259ecd9ca39a7821e738ea9c881cbe0e6f65cf410d62f6a5f9c5b2f4"
+      ],
+      [
+        "../shared.rs",
+        "5ea43f1efafd86c8977314e75045e072fb9c5fe54711a8b34eb474cf663f9971"
+      ]
+    ],
+    "runnerSha256": "b5dc037c385e9bc3af23e83d6dbd65fcca81b623fdf379c1939f87f676536daa",
+    "lockSha256": "f70105bad87a26414538c55b77ceb032fe401d17bd9fe1f9d04b02357b457b87",
+    "binary": "/home/tim/Documents/GitHub/workspace/.audit-square-root.C42NO5BC/v2-binaries/release",
+    "binarySha256": "2a0d7f5ad43f3ef143776b29acb8db9acbcec77651e6e248d808e379b87d8ff9"
+  },
+  {
+    "name": "32-32-dense-reused-square-137",
+    "command": "taskset",
+    "args": [
+      "-c",
+      "6",
+      "/home/tim/Documents/GitHub/workspace/.audit-square-root.C42NO5BC/v2-binaries/release",
+      "bench",
+      "32",
+      "32",
+      "dense",
+      "reused",
+      "square",
+      "137",
+      "0.25",
+      "6"
+    ],
+    "capMs": 240000,
+    "started": "2026-09-07T02:41:02.640Z",
+    "finished": "2026-09-07T02:41:13.613Z",
+    "status": 0,
+    "signal": null,
+    "error": null,
+    "file": "bench-32-32-dense-reused-square-137.log",
+    "sha256": "eb6ef10404a7ba48cf45d5fbaaca55d31733e25072b73494ab0e4735a7ae188e",
+    "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "sources": [
+      [
+        "main.rs",
+        "8c1d88393e00a99d07df5ae50cea454b5d108d0a5b8563e89791938a26495be2"
+      ],
+      [
+        "Cargo.toml",
+        "a7dfcf7a0d76e98ae1bdf29e48b6521ac3530daa9eb0f7e2a3d7b702f954e686"
+      ],
+      [
+        "../main.rs",
+        "d6b3b28c73bdc1c16452a98f55d827e7695d5344db679dcabff09dd8015a6f6f"
+      ],
+      [
+        "../diagonal.rs",
+        "fe7e844196357e900969c6a919d5aafca192839f6f42a34814845e8f5fbf5fd8"
+      ],
+      [
+        "../baseline.rs",
+        "f09fb430259ecd9ca39a7821e738ea9c881cbe0e6f65cf410d62f6a5f9c5b2f4"
+      ],
+      [
+        "../shared.rs",
+        "5ea43f1efafd86c8977314e75045e072fb9c5fe54711a8b34eb474cf663f9971"
+      ]
+    ],
+    "runnerSha256": "b5dc037c385e9bc3af23e83d6dbd65fcca81b623fdf379c1939f87f676536daa",
+    "lockSha256": "f70105bad87a26414538c55b77ceb032fe401d17bd9fe1f9d04b02357b457b87",
+    "binary": "/home/tim/Documents/GitHub/workspace/.audit-square-root.C42NO5BC/v2-binaries/release",
+    "binarySha256": "2a0d7f5ad43f3ef143776b29acb8db9acbcec77651e6e248d808e379b87d8ff9"
+  },
+  {
+    "name": "16-256-sparse-fresh-square-137",
+    "command": "taskset",
+    "args": [
+      "-c",
+      "6",
+      "/home/tim/Documents/GitHub/workspace/.audit-square-root.C42NO5BC/v2-binaries/release",
+      "bench",
+      "16",
+      "256",
+      "sparse",
+      "fresh",
+      "square",
+      "137",
+      "0.25",
+      "6"
+    ],
+    "capMs": 240000,
+    "started": "2026-09-07T02:41:13.615Z",
+    "finished": "2026-09-07T02:41:28.710Z",
+    "status": 0,
+    "signal": null,
+    "error": null,
+    "file": "bench-16-256-sparse-fresh-square-137.log",
+    "sha256": "675cf75dcd845096e1a9a92a22fcd2f9f9e41cb645688422c55312095468f630",
+    "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "sources": [
+      [
+        "main.rs",
+        "8c1d88393e00a99d07df5ae50cea454b5d108d0a5b8563e89791938a26495be2"
+      ],
+      [
+        "Cargo.toml",
+        "a7dfcf7a0d76e98ae1bdf29e48b6521ac3530daa9eb0f7e2a3d7b702f954e686"
+      ],
+      [
+        "../main.rs",
+        "d6b3b28c73bdc1c16452a98f55d827e7695d5344db679dcabff09dd8015a6f6f"
+      ],
+      [
+        "../diagonal.rs",
+        "fe7e844196357e900969c6a919d5aafca192839f6f42a34814845e8f5fbf5fd8"
+      ],
+      [
+        "../baseline.rs",
+        "f09fb430259ecd9ca39a7821e738ea9c881cbe0e6f65cf410d62f6a5f9c5b2f4"
+      ],
+      [
+        "../shared.rs",
+        "5ea43f1efafd86c8977314e75045e072fb9c5fe54711a8b34eb474cf663f9971"
+      ]
+    ],
+    "runnerSha256": "b5dc037c385e9bc3af23e83d6dbd65fcca81b623fdf379c1939f87f676536daa",
+    "lockSha256": "f70105bad87a26414538c55b77ceb032fe401d17bd9fe1f9d04b02357b457b87",
+    "binary": "/home/tim/Documents/GitHub/workspace/.audit-square-root.C42NO5BC/v2-binaries/release",
+    "binarySha256": "2a0d7f5ad43f3ef143776b29acb8db9acbcec77651e6e248d808e379b87d8ff9"
+  },
+  {
+    "name": "16-256-sparse-reused-square-137",
+    "command": "taskset",
+    "args": [
+      "-c",
+      "6",
+      "/home/tim/Documents/GitHub/workspace/.audit-square-root.C42NO5BC/v2-binaries/release",
+      "bench",
+      "16",
+      "256",
+      "sparse",
+      "reused",
+      "square",
+      "137",
+      "0.25",
+      "6"
+    ],
+    "capMs": 240000,
+    "started": "2026-09-07T02:41:28.713Z",
+    "finished": "2026-09-07T02:41:42.384Z",
+    "status": 0,
+    "signal": null,
+    "error": null,
+    "file": "bench-16-256-sparse-reused-square-137.log",
+    "sha256": "de3f1fe4c01f870d2316712649ac201632ccc364944c6d008dbb96e08b6d362a",
+    "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "sources": [
+      [
+        "main.rs",
+        "8c1d88393e00a99d07df5ae50cea454b5d108d0a5b8563e89791938a26495be2"
+      ],
+      [
+        "Cargo.toml",
+        "a7dfcf7a0d76e98ae1bdf29e48b6521ac3530daa9eb0f7e2a3d7b702f954e686"
+      ],
+      [
+        "../main.rs",
+        "d6b3b28c73bdc1c16452a98f55d827e7695d5344db679dcabff09dd8015a6f6f"
+      ],
+      [
+        "../diagonal.rs",
+        "fe7e844196357e900969c6a919d5aafca192839f6f42a34814845e8f5fbf5fd8"
+      ],
+      [
+        "../baseline.rs",
+        "f09fb430259ecd9ca39a7821e738ea9c881cbe0e6f65cf410d62f6a5f9c5b2f4"
+      ],
+      [
+        "../shared.rs",
+        "5ea43f1efafd86c8977314e75045e072fb9c5fe54711a8b34eb474cf663f9971"
+      ]
+    ],
+    "runnerSha256": "b5dc037c385e9bc3af23e83d6dbd65fcca81b623fdf379c1939f87f676536daa",
+    "lockSha256": "f70105bad87a26414538c55b77ceb032fe401d17bd9fe1f9d04b02357b457b87",
+    "binary": "/home/tim/Documents/GitHub/workspace/.audit-square-root.C42NO5BC/v2-binaries/release",
+    "binarySha256": "2a0d7f5ad43f3ef143776b29acb8db9acbcec77651e6e248d808e379b87d8ff9"
+  },
+  {
+    "name": "8-256-fraction-fresh-nonsquare-137",
+    "command": "taskset",
+    "args": [
+      "-c",
+      "6",
+      "/home/tim/Documents/GitHub/workspace/.audit-square-root.C42NO5BC/v2-binaries/release",
+      "bench",
+      "8",
+      "256",
+      "fraction",
+      "fresh",
+      "nonsquare",
+      "137",
+      "0.25",
+      "6"
+    ],
+    "capMs": 240000,
+    "started": "2026-09-07T02:41:42.394Z",
+    "finished": "2026-09-07T02:41:57.969Z",
+    "status": 0,
+    "signal": null,
+    "error": null,
+    "file": "bench-8-256-fraction-fresh-nonsquare-137.log",
+    "sha256": "83d1306f9db6528b5a2f0ffe5c61e604acff528c3f9d50adcf4bd4042bd82773",
+    "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "sources": [
+      [
+        "main.rs",
+        "8c1d88393e00a99d07df5ae50cea454b5d108d0a5b8563e89791938a26495be2"
+      ],
+      [
+        "Cargo.toml",
+        "a7dfcf7a0d76e98ae1bdf29e48b6521ac3530daa9eb0f7e2a3d7b702f954e686"
+      ],
+      [
+        "../main.rs",
+        "d6b3b28c73bdc1c16452a98f55d827e7695d5344db679dcabff09dd8015a6f6f"
+      ],
+      [
+        "../diagonal.rs",
+        "fe7e844196357e900969c6a919d5aafca192839f6f42a34814845e8f5fbf5fd8"
+      ],
+      [
+        "../baseline.rs",
+        "f09fb430259ecd9ca39a7821e738ea9c881cbe0e6f65cf410d62f6a5f9c5b2f4"
+      ],
+      [
+        "../shared.rs",
+        "5ea43f1efafd86c8977314e75045e072fb9c5fe54711a8b34eb474cf663f9971"
+      ]
+    ],
+    "runnerSha256": "b5dc037c385e9bc3af23e83d6dbd65fcca81b623fdf379c1939f87f676536daa",
+    "lockSha256": "f70105bad87a26414538c55b77ceb032fe401d17bd9fe1f9d04b02357b457b87",
+    "binary": "/home/tim/Documents/GitHub/workspace/.audit-square-root.C42NO5BC/v2-binaries/release",
+    "binarySha256": "2a0d7f5ad43f3ef143776b29acb8db9acbcec77651e6e248d808e379b87d8ff9"
+  },
+  {
+    "name": "8-256-fraction-reused-nonsquare-137",
+    "command": "taskset",
+    "args": [
+      "-c",
+      "6",
+      "/home/tim/Documents/GitHub/workspace/.audit-square-root.C42NO5BC/v2-binaries/release",
+      "bench",
+      "8",
+      "256",
+      "fraction",
+      "reused",
+      "nonsquare",
+      "137",
+      "0.25",
+      "6"
+    ],
+    "capMs": 240000,
+    "started": "2026-09-07T02:41:57.979Z",
+    "finished": "2026-09-07T02:42:11.215Z",
+    "status": 0,
+    "signal": null,
+    "error": null,
+    "file": "bench-8-256-fraction-reused-nonsquare-137.log",
+    "sha256": "57f784d6184b598b959cd3b59d9506333a8fd7f76211c673d3adb621f614160d",
+    "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "sources": [
+      [
+        "main.rs",
+        "8c1d88393e00a99d07df5ae50cea454b5d108d0a5b8563e89791938a26495be2"
+      ],
+      [
+        "Cargo.toml",
+        "a7dfcf7a0d76e98ae1bdf29e48b6521ac3530daa9eb0f7e2a3d7b702f954e686"
+      ],
+      [
+        "../main.rs",
+        "d6b3b28c73bdc1c16452a98f55d827e7695d5344db679dcabff09dd8015a6f6f"
+      ],
+      [
+        "../diagonal.rs",
+        "fe7e844196357e900969c6a919d5aafca192839f6f42a34814845e8f5fbf5fd8"
+      ],
+      [
+        "../baseline.rs",
+        "f09fb430259ecd9ca39a7821e738ea9c881cbe0e6f65cf410d62f6a5f9c5b2f4"
+      ],
+      [
+        "../shared.rs",
+        "5ea43f1efafd86c8977314e75045e072fb9c5fe54711a8b34eb474cf663f9971"
+      ]
+    ],
+    "runnerSha256": "b5dc037c385e9bc3af23e83d6dbd65fcca81b623fdf379c1939f87f676536daa",
+    "lockSha256": "f70105bad87a26414538c55b77ceb032fe401d17bd9fe1f9d04b02357b457b87",
+    "binary": "/home/tim/Documents/GitHub/workspace/.audit-square-root.C42NO5BC/v2-binaries/release",
+    "binarySha256": "2a0d7f5ad43f3ef143776b29acb8db9acbcec77651e6e248d808e379b87d8ff9"
+  },
+  {
+    "name": "1-32-dense-fresh-square-149",
+    "command": "taskset",
+    "args": [
+      "-c",
+      "6",
+      "/home/tim/Documents/GitHub/workspace/.audit-square-root.C42NO5BC/v2-binaries/release",
+      "bench",
+      "1",
+      "32",
+      "dense",
+      "fresh",
+      "square",
+      "149",
+      "0.25",
+      "6"
+    ],
+    "capMs": 240000,
+    "started": "2026-09-07T02:42:11.224Z",
+    "finished": "2026-09-07T02:42:28.463Z",
+    "status": 0,
+    "signal": null,
+    "error": null,
+    "file": "bench-1-32-dense-fresh-square-149.log",
+    "sha256": "0089199bda3ba74e86808614faffbc241e542d28f789415bccca9bd30462c958",
+    "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "sources": [
+      [
+        "main.rs",
+        "8c1d88393e00a99d07df5ae50cea454b5d108d0a5b8563e89791938a26495be2"
+      ],
+      [
+        "Cargo.toml",
+        "a7dfcf7a0d76e98ae1bdf29e48b6521ac3530daa9eb0f7e2a3d7b702f954e686"
+      ],
+      [
+        "../main.rs",
+        "d6b3b28c73bdc1c16452a98f55d827e7695d5344db679dcabff09dd8015a6f6f"
+      ],
+      [
+        "../diagonal.rs",
+        "fe7e844196357e900969c6a919d5aafca192839f6f42a34814845e8f5fbf5fd8"
+      ],
+      [
+        "../baseline.rs",
+        "f09fb430259ecd9ca39a7821e738ea9c881cbe0e6f65cf410d62f6a5f9c5b2f4"
+      ],
+      [
+        "../shared.rs",
+        "5ea43f1efafd86c8977314e75045e072fb9c5fe54711a8b34eb474cf663f9971"
+      ]
+    ],
+    "runnerSha256": "b5dc037c385e9bc3af23e83d6dbd65fcca81b623fdf379c1939f87f676536daa",
+    "lockSha256": "f70105bad87a26414538c55b77ceb032fe401d17bd9fe1f9d04b02357b457b87",
+    "binary": "/home/tim/Documents/GitHub/workspace/.audit-square-root.C42NO5BC/v2-binaries/release",
+    "binarySha256": "2a0d7f5ad43f3ef143776b29acb8db9acbcec77651e6e248d808e379b87d8ff9"
+  },
+  {
+    "name": "1-32-dense-reused-square-149",
+    "command": "taskset",
+    "args": [
+      "-c",
+      "6",
+      "/home/tim/Documents/GitHub/workspace/.audit-square-root.C42NO5BC/v2-binaries/release",
+      "bench",
+      "1",
+      "32",
+      "dense",
+      "reused",
+      "square",
+      "149",
+      "0.25",
+      "6"
+    ],
+    "capMs": 240000,
+    "started": "2026-09-07T02:42:28.472Z",
+    "finished": "2026-09-07T02:42:41.710Z",
+    "status": 0,
+    "signal": null,
+    "error": null,
+    "file": "bench-1-32-dense-reused-square-149.log",
+    "sha256": "81c44a3faefe36c5254c70ad33d5a903c1aa120eb6b5030ede63bf2cbab2a900",
+    "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "sources": [
+      [
+        "main.rs",
+        "8c1d88393e00a99d07df5ae50cea454b5d108d0a5b8563e89791938a26495be2"
+      ],
+      [
+        "Cargo.toml",
+        "a7dfcf7a0d76e98ae1bdf29e48b6521ac3530daa9eb0f7e2a3d7b702f954e686"
+      ],
+      [
+        "../main.rs",
+        "d6b3b28c73bdc1c16452a98f55d827e7695d5344db679dcabff09dd8015a6f6f"
+      ],
+      [
+        "../diagonal.rs",
+        "fe7e844196357e900969c6a919d5aafca192839f6f42a34814845e8f5fbf5fd8"
+      ],
+      [
+        "../baseline.rs",
+        "f09fb430259ecd9ca39a7821e738ea9c881cbe0e6f65cf410d62f6a5f9c5b2f4"
+      ],
+      [
+        "../shared.rs",
+        "5ea43f1efafd86c8977314e75045e072fb9c5fe54711a8b34eb474cf663f9971"
+      ]
+    ],
+    "runnerSha256": "b5dc037c385e9bc3af23e83d6dbd65fcca81b623fdf379c1939f87f676536daa",
+    "lockSha256": "f70105bad87a26414538c55b77ceb032fe401d17bd9fe1f9d04b02357b457b87",
+    "binary": "/home/tim/Documents/GitHub/workspace/.audit-square-root.C42NO5BC/v2-binaries/release",
+    "binarySha256": "2a0d7f5ad43f3ef143776b29acb8db9acbcec77651e6e248d808e379b87d8ff9"
+  },
+  {
+    "name": "2-32-dense-fresh-square-149",
+    "command": "taskset",
+    "args": [
+      "-c",
+      "6",
+      "/home/tim/Documents/GitHub/workspace/.audit-square-root.C42NO5BC/v2-binaries/release",
+      "bench",
+      "2",
+      "32",
+      "dense",
+      "fresh",
+      "square",
+      "149",
+      "0.25",
+      "6"
+    ],
+    "capMs": 240000,
+    "started": "2026-09-07T02:42:41.719Z",
+    "finished": "2026-09-07T02:42:57.909Z",
+    "status": 0,
+    "signal": null,
+    "error": null,
+    "file": "bench-2-32-dense-fresh-square-149.log",
+    "sha256": "44fce9e1c2d63c09a8f0f1be0c65c25ca00daf168de91dc968cd69c5bb113170",
+    "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "sources": [
+      [
+        "main.rs",
+        "8c1d88393e00a99d07df5ae50cea454b5d108d0a5b8563e89791938a26495be2"
+      ],
+      [
+        "Cargo.toml",
+        "a7dfcf7a0d76e98ae1bdf29e48b6521ac3530daa9eb0f7e2a3d7b702f954e686"
+      ],
+      [
+        "../main.rs",
+        "d6b3b28c73bdc1c16452a98f55d827e7695d5344db679dcabff09dd8015a6f6f"
+      ],
+      [
+        "../diagonal.rs",
+        "fe7e844196357e900969c6a919d5aafca192839f6f42a34814845e8f5fbf5fd8"
+      ],
+      [
+        "../baseline.rs",
+        "f09fb430259ecd9ca39a7821e738ea9c881cbe0e6f65cf410d62f6a5f9c5b2f4"
+      ],
+      [
+        "../shared.rs",
+        "5ea43f1efafd86c8977314e75045e072fb9c5fe54711a8b34eb474cf663f9971"
+      ]
+    ],
+    "runnerSha256": "b5dc037c385e9bc3af23e83d6dbd65fcca81b623fdf379c1939f87f676536daa",
+    "lockSha256": "f70105bad87a26414538c55b77ceb032fe401d17bd9fe1f9d04b02357b457b87",
+    "binary": "/home/tim/Documents/GitHub/workspace/.audit-square-root.C42NO5BC/v2-binaries/release",
+    "binarySha256": "2a0d7f5ad43f3ef143776b29acb8db9acbcec77651e6e248d808e379b87d8ff9"
+  },
+  {
+    "name": "2-32-dense-reused-square-149",
+    "command": "taskset",
+    "args": [
+      "-c",
+      "6",
+      "/home/tim/Documents/GitHub/workspace/.audit-square-root.C42NO5BC/v2-binaries/release",
+      "bench",
+      "2",
+      "32",
+      "dense",
+      "reused",
+      "square",
+      "149",
+      "0.25",
+      "6"
+    ],
+    "capMs": 240000,
+    "started": "2026-09-07T02:42:57.918Z",
+    "finished": "2026-09-07T02:43:11.988Z",
+    "status": 0,
+    "signal": null,
+    "error": null,
+    "file": "bench-2-32-dense-reused-square-149.log",
+    "sha256": "428ac8320fec45b9a7c3c912e8acf599572c0570579d97db818cd1af5f5a4cd6",
+    "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "sources": [
+      [
+        "main.rs",
+        "8c1d88393e00a99d07df5ae50cea454b5d108d0a5b8563e89791938a26495be2"
+      ],
+      [
+        "Cargo.toml",
+        "a7dfcf7a0d76e98ae1bdf29e48b6521ac3530daa9eb0f7e2a3d7b702f954e686"
+      ],
+      [
+        "../main.rs",
+        "d6b3b28c73bdc1c16452a98f55d827e7695d5344db679dcabff09dd8015a6f6f"
+      ],
+      [
+        "../diagonal.rs",
+        "fe7e844196357e900969c6a919d5aafca192839f6f42a34814845e8f5fbf5fd8"
+      ],
+      [
+        "../baseline.rs",
+        "f09fb430259ecd9ca39a7821e738ea9c881cbe0e6f65cf410d62f6a5f9c5b2f4"
+      ],
+      [
+        "../shared.rs",
+        "5ea43f1efafd86c8977314e75045e072fb9c5fe54711a8b34eb474cf663f9971"
+      ]
+    ],
+    "runnerSha256": "b5dc037c385e9bc3af23e83d6dbd65fcca81b623fdf379c1939f87f676536daa",
+    "lockSha256": "f70105bad87a26414538c55b77ceb032fe401d17bd9fe1f9d04b02357b457b87",
+    "binary": "/home/tim/Documents/GitHub/workspace/.audit-square-root.C42NO5BC/v2-binaries/release",
+    "binarySha256": "2a0d7f5ad43f3ef143776b29acb8db9acbcec77651e6e248d808e379b87d8ff9"
+  },
+  {
+    "name": "4-32-dense-fresh-square-149",
+    "command": "taskset",
+    "args": [
+      "-c",
+      "6",
+      "/home/tim/Documents/GitHub/workspace/.audit-square-root.C42NO5BC/v2-binaries/release",
+      "bench",
+      "4",
+      "32",
+      "dense",
+      "fresh",
+      "square",
+      "149",
+      "0.25",
+      "6"
+    ],
+    "capMs": 240000,
+    "started": "2026-09-07T02:43:11.997Z",
+    "finished": "2026-09-07T02:43:24.995Z",
+    "status": 0,
+    "signal": null,
+    "error": null,
+    "file": "bench-4-32-dense-fresh-square-149.log",
+    "sha256": "d45462a0bbbca4316346c0f3bc461cf31c1936bc8f42bf26236780984e70dd51",
+    "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "sources": [
+      [
+        "main.rs",
+        "8c1d88393e00a99d07df5ae50cea454b5d108d0a5b8563e89791938a26495be2"
+      ],
+      [
+        "Cargo.toml",
+        "a7dfcf7a0d76e98ae1bdf29e48b6521ac3530daa9eb0f7e2a3d7b702f954e686"
+      ],
+      [
+        "../main.rs",
+        "d6b3b28c73bdc1c16452a98f55d827e7695d5344db679dcabff09dd8015a6f6f"
+      ],
+      [
+        "../diagonal.rs",
+        "fe7e844196357e900969c6a919d5aafca192839f6f42a34814845e8f5fbf5fd8"
+      ],
+      [
+        "../baseline.rs",
+        "f09fb430259ecd9ca39a7821e738ea9c881cbe0e6f65cf410d62f6a5f9c5b2f4"
+      ],
+      [
+        "../shared.rs",
+        "5ea43f1efafd86c8977314e75045e072fb9c5fe54711a8b34eb474cf663f9971"
+      ]
+    ],
+    "runnerSha256": "b5dc037c385e9bc3af23e83d6dbd65fcca81b623fdf379c1939f87f676536daa",
+    "lockSha256": "f70105bad87a26414538c55b77ceb032fe401d17bd9fe1f9d04b02357b457b87",
+    "binary": "/home/tim/Documents/GitHub/workspace/.audit-square-root.C42NO5BC/v2-binaries/release",
+    "binarySha256": "2a0d7f5ad43f3ef143776b29acb8db9acbcec77651e6e248d808e379b87d8ff9"
+  },
+  {
+    "name": "4-32-dense-reused-square-149",
+    "command": "taskset",
+    "args": [
+      "-c",
+      "6",
+      "/home/tim/Documents/GitHub/workspace/.audit-square-root.C42NO5BC/v2-binaries/release",
+      "bench",
+      "4",
+      "32",
+      "dense",
+      "reused",
+      "square",
+      "149",
+      "0.25",
+      "6"
+    ],
+    "capMs": 240000,
+    "started": "2026-09-07T02:43:25.005Z",
+    "finished": "2026-09-07T02:43:37.460Z",
+    "status": 0,
+    "signal": null,
+    "error": null,
+    "file": "bench-4-32-dense-reused-square-149.log",
+    "sha256": "4b275dfd1686911673c216377dc23a12988d922801d5548a573ef4779c9e6360",
+    "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "sources": [
+      [
+        "main.rs",
+        "8c1d88393e00a99d07df5ae50cea454b5d108d0a5b8563e89791938a26495be2"
+      ],
+      [
+        "Cargo.toml",
+        "a7dfcf7a0d76e98ae1bdf29e48b6521ac3530daa9eb0f7e2a3d7b702f954e686"
+      ],
+      [
+        "../main.rs",
+        "d6b3b28c73bdc1c16452a98f55d827e7695d5344db679dcabff09dd8015a6f6f"
+      ],
+      [
+        "../diagonal.rs",
+        "fe7e844196357e900969c6a919d5aafca192839f6f42a34814845e8f5fbf5fd8"
+      ],
+      [
+        "../baseline.rs",
+        "f09fb430259ecd9ca39a7821e738ea9c881cbe0e6f65cf410d62f6a5f9c5b2f4"
+      ],
+      [
+        "../shared.rs",
+        "5ea43f1efafd86c8977314e75045e072fb9c5fe54711a8b34eb474cf663f9971"
+      ]
+    ],
+    "runnerSha256": "b5dc037c385e9bc3af23e83d6dbd65fcca81b623fdf379c1939f87f676536daa",
+    "lockSha256": "f70105bad87a26414538c55b77ceb032fe401d17bd9fe1f9d04b02357b457b87",
+    "binary": "/home/tim/Documents/GitHub/workspace/.audit-square-root.C42NO5BC/v2-binaries/release",
+    "binarySha256": "2a0d7f5ad43f3ef143776b29acb8db9acbcec77651e6e248d808e379b87d8ff9"
+  },
+  {
+    "name": "8-32-dense-fresh-square-149",
+    "command": "taskset",
+    "args": [
+      "-c",
+      "6",
+      "/home/tim/Documents/GitHub/workspace/.audit-square-root.C42NO5BC/v2-binaries/release",
+      "bench",
+      "8",
+      "32",
+      "dense",
+      "fresh",
+      "square",
+      "149",
+      "0.25",
+      "6"
+    ],
+    "capMs": 240000,
+    "started": "2026-09-07T02:43:37.469Z",
+    "finished": "2026-09-07T02:43:50.273Z",
+    "status": 0,
+    "signal": null,
+    "error": null,
+    "file": "bench-8-32-dense-fresh-square-149.log",
+    "sha256": "2963af9cf191d4a72ba1d0788cc53fe2716dcc309a0e4580ae16f521257bec20",
+    "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "sources": [
+      [
+        "main.rs",
+        "8c1d88393e00a99d07df5ae50cea454b5d108d0a5b8563e89791938a26495be2"
+      ],
+      [
+        "Cargo.toml",
+        "a7dfcf7a0d76e98ae1bdf29e48b6521ac3530daa9eb0f7e2a3d7b702f954e686"
+      ],
+      [
+        "../main.rs",
+        "d6b3b28c73bdc1c16452a98f55d827e7695d5344db679dcabff09dd8015a6f6f"
+      ],
+      [
+        "../diagonal.rs",
+        "fe7e844196357e900969c6a919d5aafca192839f6f42a34814845e8f5fbf5fd8"
+      ],
+      [
+        "../baseline.rs",
+        "f09fb430259ecd9ca39a7821e738ea9c881cbe0e6f65cf410d62f6a5f9c5b2f4"
+      ],
+      [
+        "../shared.rs",
+        "5ea43f1efafd86c8977314e75045e072fb9c5fe54711a8b34eb474cf663f9971"
+      ]
+    ],
+    "runnerSha256": "b5dc037c385e9bc3af23e83d6dbd65fcca81b623fdf379c1939f87f676536daa",
+    "lockSha256": "f70105bad87a26414538c55b77ceb032fe401d17bd9fe1f9d04b02357b457b87",
+    "binary": "/home/tim/Documents/GitHub/workspace/.audit-square-root.C42NO5BC/v2-binaries/release",
+    "binarySha256": "2a0d7f5ad43f3ef143776b29acb8db9acbcec77651e6e248d808e379b87d8ff9"
+  },
+  {
+    "name": "8-32-dense-reused-square-149",
+    "command": "taskset",
+    "args": [
+      "-c",
+      "6",
+      "/home/tim/Documents/GitHub/workspace/.audit-square-root.C42NO5BC/v2-binaries/release",
+      "bench",
+      "8",
+      "32",
+      "dense",
+      "reused",
+      "square",
+      "149",
+      "0.25",
+      "6"
+    ],
+    "capMs": 240000,
+    "started": "2026-09-07T02:43:50.283Z",
+    "finished": "2026-09-07T02:44:01.938Z",
+    "status": 0,
+    "signal": null,
+    "error": null,
+    "file": "bench-8-32-dense-reused-square-149.log",
+    "sha256": "c2ffd62a816e790c65a710ead2a45fe4527c404d8b1060b738e28b80def1d37c",
+    "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "sources": [
+      [
+        "main.rs",
+        "8c1d88393e00a99d07df5ae50cea454b5d108d0a5b8563e89791938a26495be2"
+      ],
+      [
+        "Cargo.toml",
+        "a7dfcf7a0d76e98ae1bdf29e48b6521ac3530daa9eb0f7e2a3d7b702f954e686"
+      ],
+      [
+        "../main.rs",
+        "d6b3b28c73bdc1c16452a98f55d827e7695d5344db679dcabff09dd8015a6f6f"
+      ],
+      [
+        "../diagonal.rs",
+        "fe7e844196357e900969c6a919d5aafca192839f6f42a34814845e8f5fbf5fd8"
+      ],
+      [
+        "../baseline.rs",
+        "f09fb430259ecd9ca39a7821e738ea9c881cbe0e6f65cf410d62f6a5f9c5b2f4"
+      ],
+      [
+        "../shared.rs",
+        "5ea43f1efafd86c8977314e75045e072fb9c5fe54711a8b34eb474cf663f9971"
+      ]
+    ],
+    "runnerSha256": "b5dc037c385e9bc3af23e83d6dbd65fcca81b623fdf379c1939f87f676536daa",
+    "lockSha256": "f70105bad87a26414538c55b77ceb032fe401d17bd9fe1f9d04b02357b457b87",
+    "binary": "/home/tim/Documents/GitHub/workspace/.audit-square-root.C42NO5BC/v2-binaries/release",
+    "binarySha256": "2a0d7f5ad43f3ef143776b29acb8db9acbcec77651e6e248d808e379b87d8ff9"
+  },
+  {
+    "name": "16-256-dense-fresh-square-149",
+    "command": "taskset",
+    "args": [
+      "-c",
+      "6",
+      "/home/tim/Documents/GitHub/workspace/.audit-square-root.C42NO5BC/v2-binaries/release",
+      "bench",
+      "16",
+      "256",
+      "dense",
+      "fresh",
+      "square",
+      "149",
+      "0.25",
+      "6"
+    ],
+    "capMs": 240000,
+    "started": "2026-09-07T02:44:01.947Z",
+    "finished": "2026-09-07T02:44:10.760Z",
+    "status": 0,
+    "signal": null,
+    "error": null,
+    "file": "bench-16-256-dense-fresh-square-149.log",
+    "sha256": "43a643cf967544acf1aa64089b77098833398ee3906c7a80e8b35fe2003ebb11",
+    "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "sources": [
+      [
+        "main.rs",
+        "8c1d88393e00a99d07df5ae50cea454b5d108d0a5b8563e89791938a26495be2"
+      ],
+      [
+        "Cargo.toml",
+        "a7dfcf7a0d76e98ae1bdf29e48b6521ac3530daa9eb0f7e2a3d7b702f954e686"
+      ],
+      [
+        "../main.rs",
+        "d6b3b28c73bdc1c16452a98f55d827e7695d5344db679dcabff09dd8015a6f6f"
+      ],
+      [
+        "../diagonal.rs",
+        "fe7e844196357e900969c6a919d5aafca192839f6f42a34814845e8f5fbf5fd8"
+      ],
+      [
+        "../baseline.rs",
+        "f09fb430259ecd9ca39a7821e738ea9c881cbe0e6f65cf410d62f6a5f9c5b2f4"
+      ],
+      [
+        "../shared.rs",
+        "5ea43f1efafd86c8977314e75045e072fb9c5fe54711a8b34eb474cf663f9971"
+      ]
+    ],
+    "runnerSha256": "b5dc037c385e9bc3af23e83d6dbd65fcca81b623fdf379c1939f87f676536daa",
+    "lockSha256": "f70105bad87a26414538c55b77ceb032fe401d17bd9fe1f9d04b02357b457b87",
+    "binary": "/home/tim/Documents/GitHub/workspace/.audit-square-root.C42NO5BC/v2-binaries/release",
+    "binarySha256": "2a0d7f5ad43f3ef143776b29acb8db9acbcec77651e6e248d808e379b87d8ff9"
+  },
+  {
+    "name": "16-256-dense-reused-square-149",
+    "command": "taskset",
+    "args": [
+      "-c",
+      "6",
+      "/home/tim/Documents/GitHub/workspace/.audit-square-root.C42NO5BC/v2-binaries/release",
+      "bench",
+      "16",
+      "256",
+      "dense",
+      "reused",
+      "square",
+      "149",
+      "0.25",
+      "6"
+    ],
+    "capMs": 240000,
+    "started": "2026-09-07T02:44:10.770Z",
+    "finished": "2026-09-07T02:44:23.864Z",
+    "status": 0,
+    "signal": null,
+    "error": null,
+    "file": "bench-16-256-dense-reused-square-149.log",
+    "sha256": "9a230ea8f1f8a249bf5914ab49b1a992b1f3281fee09304889b9c53f1547230e",
+    "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "sources": [
+      [
+        "main.rs",
+        "8c1d88393e00a99d07df5ae50cea454b5d108d0a5b8563e89791938a26495be2"
+      ],
+      [
+        "Cargo.toml",
+        "a7dfcf7a0d76e98ae1bdf29e48b6521ac3530daa9eb0f7e2a3d7b702f954e686"
+      ],
+      [
+        "../main.rs",
+        "d6b3b28c73bdc1c16452a98f55d827e7695d5344db679dcabff09dd8015a6f6f"
+      ],
+      [
+        "../diagonal.rs",
+        "fe7e844196357e900969c6a919d5aafca192839f6f42a34814845e8f5fbf5fd8"
+      ],
+      [
+        "../baseline.rs",
+        "f09fb430259ecd9ca39a7821e738ea9c881cbe0e6f65cf410d62f6a5f9c5b2f4"
+      ],
+      [
+        "../shared.rs",
+        "5ea43f1efafd86c8977314e75045e072fb9c5fe54711a8b34eb474cf663f9971"
+      ]
+    ],
+    "runnerSha256": "b5dc037c385e9bc3af23e83d6dbd65fcca81b623fdf379c1939f87f676536daa",
+    "lockSha256": "f70105bad87a26414538c55b77ceb032fe401d17bd9fe1f9d04b02357b457b87",
+    "binary": "/home/tim/Documents/GitHub/workspace/.audit-square-root.C42NO5BC/v2-binaries/release",
+    "binarySha256": "2a0d7f5ad43f3ef143776b29acb8db9acbcec77651e6e248d808e379b87d8ff9"
+  },
+  {
+    "name": "32-32-dense-fresh-square-149",
+    "command": "taskset",
+    "args": [
+      "-c",
+      "6",
+      "/home/tim/Documents/GitHub/workspace/.audit-square-root.C42NO5BC/v2-binaries/release",
+      "bench",
+      "32",
+      "32",
+      "dense",
+      "fresh",
+      "square",
+      "149",
+      "0.25",
+      "6"
+    ],
+    "capMs": 240000,
+    "started": "2026-09-07T02:44:23.867Z",
+    "finished": "2026-09-07T02:44:32.689Z",
+    "status": 0,
+    "signal": null,
+    "error": null,
+    "file": "bench-32-32-dense-fresh-square-149.log",
+    "sha256": "90a24236a3402897d96559c8caf3b468ac98443eaf2ad2400e897269c11fedb9",
+    "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "sources": [
+      [
+        "main.rs",
+        "8c1d88393e00a99d07df5ae50cea454b5d108d0a5b8563e89791938a26495be2"
+      ],
+      [
+        "Cargo.toml",
+        "a7dfcf7a0d76e98ae1bdf29e48b6521ac3530daa9eb0f7e2a3d7b702f954e686"
+      ],
+      [
+        "../main.rs",
+        "d6b3b28c73bdc1c16452a98f55d827e7695d5344db679dcabff09dd8015a6f6f"
+      ],
+      [
+        "../diagonal.rs",
+        "fe7e844196357e900969c6a919d5aafca192839f6f42a34814845e8f5fbf5fd8"
+      ],
+      [
+        "../baseline.rs",
+        "f09fb430259ecd9ca39a7821e738ea9c881cbe0e6f65cf410d62f6a5f9c5b2f4"
+      ],
+      [
+        "../shared.rs",
+        "5ea43f1efafd86c8977314e75045e072fb9c5fe54711a8b34eb474cf663f9971"
+      ]
+    ],
+    "runnerSha256": "b5dc037c385e9bc3af23e83d6dbd65fcca81b623fdf379c1939f87f676536daa",
+    "lockSha256": "f70105bad87a26414538c55b77ceb032fe401d17bd9fe1f9d04b02357b457b87",
+    "binary": "/home/tim/Documents/GitHub/workspace/.audit-square-root.C42NO5BC/v2-binaries/release",
+    "binarySha256": "2a0d7f5ad43f3ef143776b29acb8db9acbcec77651e6e248d808e379b87d8ff9"
+  },
+  {
+    "name": "32-32-dense-reused-square-149",
+    "command": "taskset",
+    "args": [
+      "-c",
+      "6",
+      "/home/tim/Documents/GitHub/workspace/.audit-square-root.C42NO5BC/v2-binaries/release",
+      "bench",
+      "32",
+      "32",
+      "dense",
+      "reused",
+      "square",
+      "149",
+      "0.25",
+      "6"
+    ],
+    "capMs": 240000,
+    "started": "2026-09-07T02:44:32.698Z",
+    "finished": "2026-09-07T02:44:43.851Z",
+    "status": 0,
+    "signal": null,
+    "error": null,
+    "file": "bench-32-32-dense-reused-square-149.log",
+    "sha256": "8f5a5a521666705a80a8aaef23326d7ac1aa4991ab6427abed485ae49759c3b1",
+    "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "sources": [
+      [
+        "main.rs",
+        "8c1d88393e00a99d07df5ae50cea454b5d108d0a5b8563e89791938a26495be2"
+      ],
+      [
+        "Cargo.toml",
+        "a7dfcf7a0d76e98ae1bdf29e48b6521ac3530daa9eb0f7e2a3d7b702f954e686"
+      ],
+      [
+        "../main.rs",
+        "d6b3b28c73bdc1c16452a98f55d827e7695d5344db679dcabff09dd8015a6f6f"
+      ],
+      [
+        "../diagonal.rs",
+        "fe7e844196357e900969c6a919d5aafca192839f6f42a34814845e8f5fbf5fd8"
+      ],
+      [
+        "../baseline.rs",
+        "f09fb430259ecd9ca39a7821e738ea9c881cbe0e6f65cf410d62f6a5f9c5b2f4"
+      ],
+      [
+        "../shared.rs",
+        "5ea43f1efafd86c8977314e75045e072fb9c5fe54711a8b34eb474cf663f9971"
+      ]
+    ],
+    "runnerSha256": "b5dc037c385e9bc3af23e83d6dbd65fcca81b623fdf379c1939f87f676536daa",
+    "lockSha256": "f70105bad87a26414538c55b77ceb032fe401d17bd9fe1f9d04b02357b457b87",
+    "binary": "/home/tim/Documents/GitHub/workspace/.audit-square-root.C42NO5BC/v2-binaries/release",
+    "binarySha256": "2a0d7f5ad43f3ef143776b29acb8db9acbcec77651e6e248d808e379b87d8ff9"
+  },
+  {
+    "name": "16-256-sparse-fresh-square-149",
+    "command": "taskset",
+    "args": [
+      "-c",
+      "6",
+      "/home/tim/Documents/GitHub/workspace/.audit-square-root.C42NO5BC/v2-binaries/release",
+      "bench",
+      "16",
+      "256",
+      "sparse",
+      "fresh",
+      "square",
+      "149",
+      "0.25",
+      "6"
+    ],
+    "capMs": 240000,
+    "started": "2026-09-07T02:44:43.861Z",
+    "finished": "2026-09-07T02:44:56.813Z",
+    "status": 0,
+    "signal": null,
+    "error": null,
+    "file": "bench-16-256-sparse-fresh-square-149.log",
+    "sha256": "9e4ff423e46c9523414874649601f3b67946ae26f941dc7c4187956d3d1aafae",
+    "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "sources": [
+      [
+        "main.rs",
+        "8c1d88393e00a99d07df5ae50cea454b5d108d0a5b8563e89791938a26495be2"
+      ],
+      [
+        "Cargo.toml",
+        "a7dfcf7a0d76e98ae1bdf29e48b6521ac3530daa9eb0f7e2a3d7b702f954e686"
+      ],
+      [
+        "../main.rs",
+        "d6b3b28c73bdc1c16452a98f55d827e7695d5344db679dcabff09dd8015a6f6f"
+      ],
+      [
+        "../diagonal.rs",
+        "fe7e844196357e900969c6a919d5aafca192839f6f42a34814845e8f5fbf5fd8"
+      ],
+      [
+        "../baseline.rs",
+        "f09fb430259ecd9ca39a7821e738ea9c881cbe0e6f65cf410d62f6a5f9c5b2f4"
+      ],
+      [
+        "../shared.rs",
+        "5ea43f1efafd86c8977314e75045e072fb9c5fe54711a8b34eb474cf663f9971"
+      ]
+    ],
+    "runnerSha256": "b5dc037c385e9bc3af23e83d6dbd65fcca81b623fdf379c1939f87f676536daa",
+    "lockSha256": "f70105bad87a26414538c55b77ceb032fe401d17bd9fe1f9d04b02357b457b87",
+    "binary": "/home/tim/Documents/GitHub/workspace/.audit-square-root.C42NO5BC/v2-binaries/release",
+    "binarySha256": "2a0d7f5ad43f3ef143776b29acb8db9acbcec77651e6e248d808e379b87d8ff9"
+  },
+  {
+    "name": "16-256-sparse-reused-square-149",
+    "command": "taskset",
+    "args": [
+      "-c",
+      "6",
+      "/home/tim/Documents/GitHub/workspace/.audit-square-root.C42NO5BC/v2-binaries/release",
+      "bench",
+      "16",
+      "256",
+      "sparse",
+      "reused",
+      "square",
+      "149",
+      "0.25",
+      "6"
+    ],
+    "capMs": 240000,
+    "started": "2026-09-07T02:44:56.816Z",
+    "finished": "2026-09-07T02:45:10.345Z",
+    "status": 0,
+    "signal": null,
+    "error": null,
+    "file": "bench-16-256-sparse-reused-square-149.log",
+    "sha256": "eb611a463840aada9954bdb0a526acbc8f879fc1b1ef2ca0d9403e3ef7ef8bd8",
+    "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "sources": [
+      [
+        "main.rs",
+        "8c1d88393e00a99d07df5ae50cea454b5d108d0a5b8563e89791938a26495be2"
+      ],
+      [
+        "Cargo.toml",
+        "a7dfcf7a0d76e98ae1bdf29e48b6521ac3530daa9eb0f7e2a3d7b702f954e686"
+      ],
+      [
+        "../main.rs",
+        "d6b3b28c73bdc1c16452a98f55d827e7695d5344db679dcabff09dd8015a6f6f"
+      ],
+      [
+        "../diagonal.rs",
+        "fe7e844196357e900969c6a919d5aafca192839f6f42a34814845e8f5fbf5fd8"
+      ],
+      [
+        "../baseline.rs",
+        "f09fb430259ecd9ca39a7821e738ea9c881cbe0e6f65cf410d62f6a5f9c5b2f4"
+      ],
+      [
+        "../shared.rs",
+        "5ea43f1efafd86c8977314e75045e072fb9c5fe54711a8b34eb474cf663f9971"
+      ]
+    ],
+    "runnerSha256": "b5dc037c385e9bc3af23e83d6dbd65fcca81b623fdf379c1939f87f676536daa",
+    "lockSha256": "f70105bad87a26414538c55b77ceb032fe401d17bd9fe1f9d04b02357b457b87",
+    "binary": "/home/tim/Documents/GitHub/workspace/.audit-square-root.C42NO5BC/v2-binaries/release",
+    "binarySha256": "2a0d7f5ad43f3ef143776b29acb8db9acbcec77651e6e248d808e379b87d8ff9"
+  },
+  {
+    "name": "8-256-fraction-fresh-nonsquare-149",
+    "command": "taskset",
+    "args": [
+      "-c",
+      "6",
+      "/home/tim/Documents/GitHub/workspace/.audit-square-root.C42NO5BC/v2-binaries/release",
+      "bench",
+      "8",
+      "256",
+      "fraction",
+      "fresh",
+      "nonsquare",
+      "149",
+      "0.25",
+      "6"
+    ],
+    "capMs": 240000,
+    "started": "2026-09-07T02:45:10.354Z",
+    "finished": "2026-09-07T02:45:25.917Z",
+    "status": 0,
+    "signal": null,
+    "error": null,
+    "file": "bench-8-256-fraction-fresh-nonsquare-149.log",
+    "sha256": "2f04c76b2919fef792e174997ff6316242c351307fd3deeb17e7ebd96c8c9842",
+    "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "sources": [
+      [
+        "main.rs",
+        "8c1d88393e00a99d07df5ae50cea454b5d108d0a5b8563e89791938a26495be2"
+      ],
+      [
+        "Cargo.toml",
+        "a7dfcf7a0d76e98ae1bdf29e48b6521ac3530daa9eb0f7e2a3d7b702f954e686"
+      ],
+      [
+        "../main.rs",
+        "d6b3b28c73bdc1c16452a98f55d827e7695d5344db679dcabff09dd8015a6f6f"
+      ],
+      [
+        "../diagonal.rs",
+        "fe7e844196357e900969c6a919d5aafca192839f6f42a34814845e8f5fbf5fd8"
+      ],
+      [
+        "../baseline.rs",
+        "f09fb430259ecd9ca39a7821e738ea9c881cbe0e6f65cf410d62f6a5f9c5b2f4"
+      ],
+      [
+        "../shared.rs",
+        "5ea43f1efafd86c8977314e75045e072fb9c5fe54711a8b34eb474cf663f9971"
+      ]
+    ],
+    "runnerSha256": "b5dc037c385e9bc3af23e83d6dbd65fcca81b623fdf379c1939f87f676536daa",
+    "lockSha256": "f70105bad87a26414538c55b77ceb032fe401d17bd9fe1f9d04b02357b457b87",
+    "binary": "/home/tim/Documents/GitHub/workspace/.audit-square-root.C42NO5BC/v2-binaries/release",
+    "binarySha256": "2a0d7f5ad43f3ef143776b29acb8db9acbcec77651e6e248d808e379b87d8ff9"
+  },
+  {
+    "name": "8-256-fraction-reused-nonsquare-149",
+    "command": "taskset",
+    "args": [
+      "-c",
+      "6",
+      "/home/tim/Documents/GitHub/workspace/.audit-square-root.C42NO5BC/v2-binaries/release",
+      "bench",
+      "8",
+      "256",
+      "fraction",
+      "reused",
+      "nonsquare",
+      "149",
+      "0.25",
+      "6"
+    ],
+    "capMs": 240000,
+    "started": "2026-09-07T02:45:25.920Z",
+    "finished": "2026-09-07T02:45:38.594Z",
+    "status": 0,
+    "signal": null,
+    "error": null,
+    "file": "bench-8-256-fraction-reused-nonsquare-149.log",
+    "sha256": "9001d5d9f0db3dd2140d0f5768f20a5bfdf88b3dd85375c3a615a6fa969d2b5b",
+    "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "sources": [
+      [
+        "main.rs",
+        "8c1d88393e00a99d07df5ae50cea454b5d108d0a5b8563e89791938a26495be2"
+      ],
+      [
+        "Cargo.toml",
+        "a7dfcf7a0d76e98ae1bdf29e48b6521ac3530daa9eb0f7e2a3d7b702f954e686"
+      ],
+      [
+        "../main.rs",
+        "d6b3b28c73bdc1c16452a98f55d827e7695d5344db679dcabff09dd8015a6f6f"
+      ],
+      [
+        "../diagonal.rs",
+        "fe7e844196357e900969c6a919d5aafca192839f6f42a34814845e8f5fbf5fd8"
+      ],
+      [
+        "../baseline.rs",
+        "f09fb430259ecd9ca39a7821e738ea9c881cbe0e6f65cf410d62f6a5f9c5b2f4"
+      ],
+      [
+        "../shared.rs",
+        "5ea43f1efafd86c8977314e75045e072fb9c5fe54711a8b34eb474cf663f9971"
+      ]
+    ],
+    "runnerSha256": "b5dc037c385e9bc3af23e83d6dbd65fcca81b623fdf379c1939f87f676536daa",
+    "lockSha256": "f70105bad87a26414538c55b77ceb032fe401d17bd9fe1f9d04b02357b457b87",
+    "binary": "/home/tim/Documents/GitHub/workspace/.audit-square-root.C42NO5BC/v2-binaries/release",
+    "binarySha256": "2a0d7f5ad43f3ef143776b29acb8db9acbcec77651e6e248d808e379b87d8ff9"
+  },
+  {
+    "name": "1-32-dense-fresh-square-163",
+    "command": "taskset",
+    "args": [
+      "-c",
+      "6",
+      "/home/tim/Documents/GitHub/workspace/.audit-square-root.C42NO5BC/v2-binaries/release",
+      "bench",
+      "1",
+      "32",
+      "dense",
+      "fresh",
+      "square",
+      "163",
+      "0.25",
+      "6"
+    ],
+    "capMs": 240000,
+    "started": "2026-09-07T02:45:38.603Z",
+    "finished": "2026-09-07T02:45:55.749Z",
+    "status": 0,
+    "signal": null,
+    "error": null,
+    "file": "bench-1-32-dense-fresh-square-163.log",
+    "sha256": "c74b852ce5889058c0b4ebc9bd92e621501baf2609f09c97677155350a934854",
+    "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "sources": [
+      [
+        "main.rs",
+        "8c1d88393e00a99d07df5ae50cea454b5d108d0a5b8563e89791938a26495be2"
+      ],
+      [
+        "Cargo.toml",
+        "a7dfcf7a0d76e98ae1bdf29e48b6521ac3530daa9eb0f7e2a3d7b702f954e686"
+      ],
+      [
+        "../main.rs",
+        "d6b3b28c73bdc1c16452a98f55d827e7695d5344db679dcabff09dd8015a6f6f"
+      ],
+      [
+        "../diagonal.rs",
+        "fe7e844196357e900969c6a919d5aafca192839f6f42a34814845e8f5fbf5fd8"
+      ],
+      [
+        "../baseline.rs",
+        "f09fb430259ecd9ca39a7821e738ea9c881cbe0e6f65cf410d62f6a5f9c5b2f4"
+      ],
+      [
+        "../shared.rs",
+        "5ea43f1efafd86c8977314e75045e072fb9c5fe54711a8b34eb474cf663f9971"
+      ]
+    ],
+    "runnerSha256": "b5dc037c385e9bc3af23e83d6dbd65fcca81b623fdf379c1939f87f676536daa",
+    "lockSha256": "f70105bad87a26414538c55b77ceb032fe401d17bd9fe1f9d04b02357b457b87",
+    "binary": "/home/tim/Documents/GitHub/workspace/.audit-square-root.C42NO5BC/v2-binaries/release",
+    "binarySha256": "2a0d7f5ad43f3ef143776b29acb8db9acbcec77651e6e248d808e379b87d8ff9"
+  },
+  {
+    "name": "1-32-dense-reused-square-163",
+    "command": "taskset",
+    "args": [
+      "-c",
+      "6",
+      "/home/tim/Documents/GitHub/workspace/.audit-square-root.C42NO5BC/v2-binaries/release",
+      "bench",
+      "1",
+      "32",
+      "dense",
+      "reused",
+      "square",
+      "163",
+      "0.25",
+      "6"
+    ],
+    "capMs": 240000,
+    "started": "2026-09-07T02:45:55.759Z",
+    "finished": "2026-09-07T02:46:09.147Z",
+    "status": 0,
+    "signal": null,
+    "error": null,
+    "file": "bench-1-32-dense-reused-square-163.log",
+    "sha256": "6e6de5b518e4d2dcc4d637c28c9b5a4990ce36063a485584043111349e42b211",
+    "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "sources": [
+      [
+        "main.rs",
+        "8c1d88393e00a99d07df5ae50cea454b5d108d0a5b8563e89791938a26495be2"
+      ],
+      [
+        "Cargo.toml",
+        "a7dfcf7a0d76e98ae1bdf29e48b6521ac3530daa9eb0f7e2a3d7b702f954e686"
+      ],
+      [
+        "../main.rs",
+        "d6b3b28c73bdc1c16452a98f55d827e7695d5344db679dcabff09dd8015a6f6f"
+      ],
+      [
+        "../diagonal.rs",
+        "fe7e844196357e900969c6a919d5aafca192839f6f42a34814845e8f5fbf5fd8"
+      ],
+      [
+        "../baseline.rs",
+        "f09fb430259ecd9ca39a7821e738ea9c881cbe0e6f65cf410d62f6a5f9c5b2f4"
+      ],
+      [
+        "../shared.rs",
+        "5ea43f1efafd86c8977314e75045e072fb9c5fe54711a8b34eb474cf663f9971"
+      ]
+    ],
+    "runnerSha256": "b5dc037c385e9bc3af23e83d6dbd65fcca81b623fdf379c1939f87f676536daa",
+    "lockSha256": "f70105bad87a26414538c55b77ceb032fe401d17bd9fe1f9d04b02357b457b87",
+    "binary": "/home/tim/Documents/GitHub/workspace/.audit-square-root.C42NO5BC/v2-binaries/release",
+    "binarySha256": "2a0d7f5ad43f3ef143776b29acb8db9acbcec77651e6e248d808e379b87d8ff9"
+  },
+  {
+    "name": "2-32-dense-fresh-square-163",
+    "command": "taskset",
+    "args": [
+      "-c",
+      "6",
+      "/home/tim/Documents/GitHub/workspace/.audit-square-root.C42NO5BC/v2-binaries/release",
+      "bench",
+      "2",
+      "32",
+      "dense",
+      "fresh",
+      "square",
+      "163",
+      "0.25",
+      "6"
+    ],
+    "capMs": 240000,
+    "started": "2026-09-07T02:46:09.157Z",
+    "finished": "2026-09-07T02:46:26.905Z",
+    "status": 0,
+    "signal": null,
+    "error": null,
+    "file": "bench-2-32-dense-fresh-square-163.log",
+    "sha256": "a494b41e36c2f8a79b759fca04335e1c65ab76610dd320c4eb7f2a36ab31b589",
+    "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "sources": [
+      [
+        "main.rs",
+        "8c1d88393e00a99d07df5ae50cea454b5d108d0a5b8563e89791938a26495be2"
+      ],
+      [
+        "Cargo.toml",
+        "a7dfcf7a0d76e98ae1bdf29e48b6521ac3530daa9eb0f7e2a3d7b702f954e686"
+      ],
+      [
+        "../main.rs",
+        "d6b3b28c73bdc1c16452a98f55d827e7695d5344db679dcabff09dd8015a6f6f"
+      ],
+      [
+        "../diagonal.rs",
+        "fe7e844196357e900969c6a919d5aafca192839f6f42a34814845e8f5fbf5fd8"
+      ],
+      [
+        "../baseline.rs",
+        "f09fb430259ecd9ca39a7821e738ea9c881cbe0e6f65cf410d62f6a5f9c5b2f4"
+      ],
+      [
+        "../shared.rs",
+        "5ea43f1efafd86c8977314e75045e072fb9c5fe54711a8b34eb474cf663f9971"
+      ]
+    ],
+    "runnerSha256": "b5dc037c385e9bc3af23e83d6dbd65fcca81b623fdf379c1939f87f676536daa",
+    "lockSha256": "f70105bad87a26414538c55b77ceb032fe401d17bd9fe1f9d04b02357b457b87",
+    "binary": "/home/tim/Documents/GitHub/workspace/.audit-square-root.C42NO5BC/v2-binaries/release",
+    "binarySha256": "2a0d7f5ad43f3ef143776b29acb8db9acbcec77651e6e248d808e379b87d8ff9"
+  },
+  {
+    "name": "2-32-dense-reused-square-163",
+    "command": "taskset",
+    "args": [
+      "-c",
+      "6",
+      "/home/tim/Documents/GitHub/workspace/.audit-square-root.C42NO5BC/v2-binaries/release",
+      "bench",
+      "2",
+      "32",
+      "dense",
+      "reused",
+      "square",
+      "163",
+      "0.25",
+      "6"
+    ],
+    "capMs": 240000,
+    "started": "2026-09-07T02:46:26.914Z",
+    "finished": "2026-09-07T02:46:41.122Z",
+    "status": 0,
+    "signal": null,
+    "error": null,
+    "file": "bench-2-32-dense-reused-square-163.log",
+    "sha256": "cf91f8a153c247837c396241ad603dc4b36609d5c17515c2be0090d06aa570f8",
+    "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "sources": [
+      [
+        "main.rs",
+        "8c1d88393e00a99d07df5ae50cea454b5d108d0a5b8563e89791938a26495be2"
+      ],
+      [
+        "Cargo.toml",
+        "a7dfcf7a0d76e98ae1bdf29e48b6521ac3530daa9eb0f7e2a3d7b702f954e686"
+      ],
+      [
+        "../main.rs",
+        "d6b3b28c73bdc1c16452a98f55d827e7695d5344db679dcabff09dd8015a6f6f"
+      ],
+      [
+        "../diagonal.rs",
+        "fe7e844196357e900969c6a919d5aafca192839f6f42a34814845e8f5fbf5fd8"
+      ],
+      [
+        "../baseline.rs",
+        "f09fb430259ecd9ca39a7821e738ea9c881cbe0e6f65cf410d62f6a5f9c5b2f4"
+      ],
+      [
+        "../shared.rs",
+        "5ea43f1efafd86c8977314e75045e072fb9c5fe54711a8b34eb474cf663f9971"
+      ]
+    ],
+    "runnerSha256": "b5dc037c385e9bc3af23e83d6dbd65fcca81b623fdf379c1939f87f676536daa",
+    "lockSha256": "f70105bad87a26414538c55b77ceb032fe401d17bd9fe1f9d04b02357b457b87",
+    "binary": "/home/tim/Documents/GitHub/workspace/.audit-square-root.C42NO5BC/v2-binaries/release",
+    "binarySha256": "2a0d7f5ad43f3ef143776b29acb8db9acbcec77651e6e248d808e379b87d8ff9"
+  },
+  {
+    "name": "4-32-dense-fresh-square-163",
+    "command": "taskset",
+    "args": [
+      "-c",
+      "6",
+      "/home/tim/Documents/GitHub/workspace/.audit-square-root.C42NO5BC/v2-binaries/release",
+      "bench",
+      "4",
+      "32",
+      "dense",
+      "fresh",
+      "square",
+      "163",
+      "0.25",
+      "6"
+    ],
+    "capMs": 240000,
+    "started": "2026-09-07T02:46:41.124Z",
+    "finished": "2026-09-07T02:46:54.029Z",
+    "status": 0,
+    "signal": null,
+    "error": null,
+    "file": "bench-4-32-dense-fresh-square-163.log",
+    "sha256": "019652a635e5ddb6afcb12f15d322830cbc705c04144c164f11ac7289d605811",
+    "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "sources": [
+      [
+        "main.rs",
+        "8c1d88393e00a99d07df5ae50cea454b5d108d0a5b8563e89791938a26495be2"
+      ],
+      [
+        "Cargo.toml",
+        "a7dfcf7a0d76e98ae1bdf29e48b6521ac3530daa9eb0f7e2a3d7b702f954e686"
+      ],
+      [
+        "../main.rs",
+        "d6b3b28c73bdc1c16452a98f55d827e7695d5344db679dcabff09dd8015a6f6f"
+      ],
+      [
+        "../diagonal.rs",
+        "fe7e844196357e900969c6a919d5aafca192839f6f42a34814845e8f5fbf5fd8"
+      ],
+      [
+        "../baseline.rs",
+        "f09fb430259ecd9ca39a7821e738ea9c881cbe0e6f65cf410d62f6a5f9c5b2f4"
+      ],
+      [
+        "../shared.rs",
+        "5ea43f1efafd86c8977314e75045e072fb9c5fe54711a8b34eb474cf663f9971"
+      ]
+    ],
+    "runnerSha256": "b5dc037c385e9bc3af23e83d6dbd65fcca81b623fdf379c1939f87f676536daa",
+    "lockSha256": "f70105bad87a26414538c55b77ceb032fe401d17bd9fe1f9d04b02357b457b87",
+    "binary": "/home/tim/Documents/GitHub/workspace/.audit-square-root.C42NO5BC/v2-binaries/release",
+    "binarySha256": "2a0d7f5ad43f3ef143776b29acb8db9acbcec77651e6e248d808e379b87d8ff9"
+  },
+  {
+    "name": "4-32-dense-reused-square-163",
+    "command": "taskset",
+    "args": [
+      "-c",
+      "6",
+      "/home/tim/Documents/GitHub/workspace/.audit-square-root.C42NO5BC/v2-binaries/release",
+      "bench",
+      "4",
+      "32",
+      "dense",
+      "reused",
+      "square",
+      "163",
+      "0.25",
+      "6"
+    ],
+    "capMs": 240000,
+    "started": "2026-09-07T02:46:54.032Z",
+    "finished": "2026-09-07T02:47:06.959Z",
+    "status": 0,
+    "signal": null,
+    "error": null,
+    "file": "bench-4-32-dense-reused-square-163.log",
+    "sha256": "6da50b1856a206bae4e2ddfd37a60d84e8b6d5969ff92bda796a9dcf7bb93f9e",
+    "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "sources": [
+      [
+        "main.rs",
+        "8c1d88393e00a99d07df5ae50cea454b5d108d0a5b8563e89791938a26495be2"
+      ],
+      [
+        "Cargo.toml",
+        "a7dfcf7a0d76e98ae1bdf29e48b6521ac3530daa9eb0f7e2a3d7b702f954e686"
+      ],
+      [
+        "../main.rs",
+        "d6b3b28c73bdc1c16452a98f55d827e7695d5344db679dcabff09dd8015a6f6f"
+      ],
+      [
+        "../diagonal.rs",
+        "fe7e844196357e900969c6a919d5aafca192839f6f42a34814845e8f5fbf5fd8"
+      ],
+      [
+        "../baseline.rs",
+        "f09fb430259ecd9ca39a7821e738ea9c881cbe0e6f65cf410d62f6a5f9c5b2f4"
+      ],
+      [
+        "../shared.rs",
+        "5ea43f1efafd86c8977314e75045e072fb9c5fe54711a8b34eb474cf663f9971"
+      ]
+    ],
+    "runnerSha256": "b5dc037c385e9bc3af23e83d6dbd65fcca81b623fdf379c1939f87f676536daa",
+    "lockSha256": "f70105bad87a26414538c55b77ceb032fe401d17bd9fe1f9d04b02357b457b87",
+    "binary": "/home/tim/Documents/GitHub/workspace/.audit-square-root.C42NO5BC/v2-binaries/release",
+    "binarySha256": "2a0d7f5ad43f3ef143776b29acb8db9acbcec77651e6e248d808e379b87d8ff9"
+  },
+  {
+    "name": "8-32-dense-fresh-square-163",
+    "command": "taskset",
+    "args": [
+      "-c",
+      "6",
+      "/home/tim/Documents/GitHub/workspace/.audit-square-root.C42NO5BC/v2-binaries/release",
+      "bench",
+      "8",
+      "32",
+      "dense",
+      "fresh",
+      "square",
+      "163",
+      "0.25",
+      "6"
+    ],
+    "capMs": 240000,
+    "started": "2026-09-07T02:47:06.968Z",
+    "finished": "2026-09-07T02:47:19.654Z",
+    "status": 0,
+    "signal": null,
+    "error": null,
+    "file": "bench-8-32-dense-fresh-square-163.log",
+    "sha256": "04bdb168aabf91af93060a5db839082bf02b1a8721542ae993a50e0474860dfe",
+    "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "sources": [
+      [
+        "main.rs",
+        "8c1d88393e00a99d07df5ae50cea454b5d108d0a5b8563e89791938a26495be2"
+      ],
+      [
+        "Cargo.toml",
+        "a7dfcf7a0d76e98ae1bdf29e48b6521ac3530daa9eb0f7e2a3d7b702f954e686"
+      ],
+      [
+        "../main.rs",
+        "d6b3b28c73bdc1c16452a98f55d827e7695d5344db679dcabff09dd8015a6f6f"
+      ],
+      [
+        "../diagonal.rs",
+        "fe7e844196357e900969c6a919d5aafca192839f6f42a34814845e8f5fbf5fd8"
+      ],
+      [
+        "../baseline.rs",
+        "f09fb430259ecd9ca39a7821e738ea9c881cbe0e6f65cf410d62f6a5f9c5b2f4"
+      ],
+      [
+        "../shared.rs",
+        "5ea43f1efafd86c8977314e75045e072fb9c5fe54711a8b34eb474cf663f9971"
+      ]
+    ],
+    "runnerSha256": "b5dc037c385e9bc3af23e83d6dbd65fcca81b623fdf379c1939f87f676536daa",
+    "lockSha256": "f70105bad87a26414538c55b77ceb032fe401d17bd9fe1f9d04b02357b457b87",
+    "binary": "/home/tim/Documents/GitHub/workspace/.audit-square-root.C42NO5BC/v2-binaries/release",
+    "binarySha256": "2a0d7f5ad43f3ef143776b29acb8db9acbcec77651e6e248d808e379b87d8ff9"
+  },
+  {
+    "name": "8-32-dense-reused-square-163",
+    "command": "taskset",
+    "args": [
+      "-c",
+      "6",
+      "/home/tim/Documents/GitHub/workspace/.audit-square-root.C42NO5BC/v2-binaries/release",
+      "bench",
+      "8",
+      "32",
+      "dense",
+      "reused",
+      "square",
+      "163",
+      "0.25",
+      "6"
+    ],
+    "capMs": 240000,
+    "started": "2026-09-07T02:47:19.664Z",
+    "finished": "2026-09-07T02:47:31.888Z",
+    "status": 0,
+    "signal": null,
+    "error": null,
+    "file": "bench-8-32-dense-reused-square-163.log",
+    "sha256": "83bfb7a0b6812cb31842b51b1c18e4fa5734b3087edcc53612b4c3459c9bab83",
+    "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "sources": [
+      [
+        "main.rs",
+        "8c1d88393e00a99d07df5ae50cea454b5d108d0a5b8563e89791938a26495be2"
+      ],
+      [
+        "Cargo.toml",
+        "a7dfcf7a0d76e98ae1bdf29e48b6521ac3530daa9eb0f7e2a3d7b702f954e686"
+      ],
+      [
+        "../main.rs",
+        "d6b3b28c73bdc1c16452a98f55d827e7695d5344db679dcabff09dd8015a6f6f"
+      ],
+      [
+        "../diagonal.rs",
+        "fe7e844196357e900969c6a919d5aafca192839f6f42a34814845e8f5fbf5fd8"
+      ],
+      [
+        "../baseline.rs",
+        "f09fb430259ecd9ca39a7821e738ea9c881cbe0e6f65cf410d62f6a5f9c5b2f4"
+      ],
+      [
+        "../shared.rs",
+        "5ea43f1efafd86c8977314e75045e072fb9c5fe54711a8b34eb474cf663f9971"
+      ]
+    ],
+    "runnerSha256": "b5dc037c385e9bc3af23e83d6dbd65fcca81b623fdf379c1939f87f676536daa",
+    "lockSha256": "f70105bad87a26414538c55b77ceb032fe401d17bd9fe1f9d04b02357b457b87",
+    "binary": "/home/tim/Documents/GitHub/workspace/.audit-square-root.C42NO5BC/v2-binaries/release",
+    "binarySha256": "2a0d7f5ad43f3ef143776b29acb8db9acbcec77651e6e248d808e379b87d8ff9"
+  },
+  {
+    "name": "16-256-dense-fresh-square-163",
+    "command": "taskset",
+    "args": [
+      "-c",
+      "6",
+      "/home/tim/Documents/GitHub/workspace/.audit-square-root.C42NO5BC/v2-binaries/release",
+      "bench",
+      "16",
+      "256",
+      "dense",
+      "fresh",
+      "square",
+      "163",
+      "0.25",
+      "6"
+    ],
+    "capMs": 240000,
+    "started": "2026-09-07T02:47:31.897Z",
+    "finished": "2026-09-07T02:47:41.229Z",
+    "status": 0,
+    "signal": null,
+    "error": null,
+    "file": "bench-16-256-dense-fresh-square-163.log",
+    "sha256": "3ebd208d0e4e40bb13cdea17517f5f47789f277c0dd822b694b131e55d728859",
+    "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "sources": [
+      [
+        "main.rs",
+        "8c1d88393e00a99d07df5ae50cea454b5d108d0a5b8563e89791938a26495be2"
+      ],
+      [
+        "Cargo.toml",
+        "a7dfcf7a0d76e98ae1bdf29e48b6521ac3530daa9eb0f7e2a3d7b702f954e686"
+      ],
+      [
+        "../main.rs",
+        "d6b3b28c73bdc1c16452a98f55d827e7695d5344db679dcabff09dd8015a6f6f"
+      ],
+      [
+        "../diagonal.rs",
+        "fe7e844196357e900969c6a919d5aafca192839f6f42a34814845e8f5fbf5fd8"
+      ],
+      [
+        "../baseline.rs",
+        "f09fb430259ecd9ca39a7821e738ea9c881cbe0e6f65cf410d62f6a5f9c5b2f4"
+      ],
+      [
+        "../shared.rs",
+        "5ea43f1efafd86c8977314e75045e072fb9c5fe54711a8b34eb474cf663f9971"
+      ]
+    ],
+    "runnerSha256": "b5dc037c385e9bc3af23e83d6dbd65fcca81b623fdf379c1939f87f676536daa",
+    "lockSha256": "f70105bad87a26414538c55b77ceb032fe401d17bd9fe1f9d04b02357b457b87",
+    "binary": "/home/tim/Documents/GitHub/workspace/.audit-square-root.C42NO5BC/v2-binaries/release",
+    "binarySha256": "2a0d7f5ad43f3ef143776b29acb8db9acbcec77651e6e248d808e379b87d8ff9"
+  },
+  {
+    "name": "16-256-dense-reused-square-163",
+    "command": "taskset",
+    "args": [
+      "-c",
+      "6",
+      "/home/tim/Documents/GitHub/workspace/.audit-square-root.C42NO5BC/v2-binaries/release",
+      "bench",
+      "16",
+      "256",
+      "dense",
+      "reused",
+      "square",
+      "163",
+      "0.25",
+      "6"
+    ],
+    "capMs": 240000,
+    "started": "2026-09-07T02:47:41.239Z",
+    "finished": "2026-09-07T02:47:49.783Z",
+    "status": 0,
+    "signal": null,
+    "error": null,
+    "file": "bench-16-256-dense-reused-square-163.log",
+    "sha256": "37fe3bd71cd8c7e348cd1a6332f81f8772297683b6703889cc9caaa1a1448790",
+    "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "sources": [
+      [
+        "main.rs",
+        "8c1d88393e00a99d07df5ae50cea454b5d108d0a5b8563e89791938a26495be2"
+      ],
+      [
+        "Cargo.toml",
+        "a7dfcf7a0d76e98ae1bdf29e48b6521ac3530daa9eb0f7e2a3d7b702f954e686"
+      ],
+      [
+        "../main.rs",
+        "d6b3b28c73bdc1c16452a98f55d827e7695d5344db679dcabff09dd8015a6f6f"
+      ],
+      [
+        "../diagonal.rs",
+        "fe7e844196357e900969c6a919d5aafca192839f6f42a34814845e8f5fbf5fd8"
+      ],
+      [
+        "../baseline.rs",
+        "f09fb430259ecd9ca39a7821e738ea9c881cbe0e6f65cf410d62f6a5f9c5b2f4"
+      ],
+      [
+        "../shared.rs",
+        "5ea43f1efafd86c8977314e75045e072fb9c5fe54711a8b34eb474cf663f9971"
+      ]
+    ],
+    "runnerSha256": "b5dc037c385e9bc3af23e83d6dbd65fcca81b623fdf379c1939f87f676536daa",
+    "lockSha256": "f70105bad87a26414538c55b77ceb032fe401d17bd9fe1f9d04b02357b457b87",
+    "binary": "/home/tim/Documents/GitHub/workspace/.audit-square-root.C42NO5BC/v2-binaries/release",
+    "binarySha256": "2a0d7f5ad43f3ef143776b29acb8db9acbcec77651e6e248d808e379b87d8ff9"
+  },
+  {
+    "name": "32-32-dense-fresh-square-163",
+    "command": "taskset",
+    "args": [
+      "-c",
+      "6",
+      "/home/tim/Documents/GitHub/workspace/.audit-square-root.C42NO5BC/v2-binaries/release",
+      "bench",
+      "32",
+      "32",
+      "dense",
+      "fresh",
+      "square",
+      "163",
+      "0.25",
+      "6"
+    ],
+    "capMs": 240000,
+    "started": "2026-09-07T02:47:49.792Z",
+    "finished": "2026-09-07T02:47:58.775Z",
+    "status": 0,
+    "signal": null,
+    "error": null,
+    "file": "bench-32-32-dense-fresh-square-163.log",
+    "sha256": "6e92d1e497678e56207bf3258ebe53618b0ff6dea6af79a9d0da14bcf312e56b",
+    "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "sources": [
+      [
+        "main.rs",
+        "8c1d88393e00a99d07df5ae50cea454b5d108d0a5b8563e89791938a26495be2"
+      ],
+      [
+        "Cargo.toml",
+        "a7dfcf7a0d76e98ae1bdf29e48b6521ac3530daa9eb0f7e2a3d7b702f954e686"
+      ],
+      [
+        "../main.rs",
+        "d6b3b28c73bdc1c16452a98f55d827e7695d5344db679dcabff09dd8015a6f6f"
+      ],
+      [
+        "../diagonal.rs",
+        "fe7e844196357e900969c6a919d5aafca192839f6f42a34814845e8f5fbf5fd8"
+      ],
+      [
+        "../baseline.rs",
+        "f09fb430259ecd9ca39a7821e738ea9c881cbe0e6f65cf410d62f6a5f9c5b2f4"
+      ],
+      [
+        "../shared.rs",
+        "5ea43f1efafd86c8977314e75045e072fb9c5fe54711a8b34eb474cf663f9971"
+      ]
+    ],
+    "runnerSha256": "b5dc037c385e9bc3af23e83d6dbd65fcca81b623fdf379c1939f87f676536daa",
+    "lockSha256": "f70105bad87a26414538c55b77ceb032fe401d17bd9fe1f9d04b02357b457b87",
+    "binary": "/home/tim/Documents/GitHub/workspace/.audit-square-root.C42NO5BC/v2-binaries/release",
+    "binarySha256": "2a0d7f5ad43f3ef143776b29acb8db9acbcec77651e6e248d808e379b87d8ff9"
+  },
+  {
+    "name": "32-32-dense-reused-square-163",
+    "command": "taskset",
+    "args": [
+      "-c",
+      "6",
+      "/home/tim/Documents/GitHub/workspace/.audit-square-root.C42NO5BC/v2-binaries/release",
+      "bench",
+      "32",
+      "32",
+      "dense",
+      "reused",
+      "square",
+      "163",
+      "0.25",
+      "6"
+    ],
+    "capMs": 240000,
+    "started": "2026-09-07T02:47:58.785Z",
+    "finished": "2026-09-07T02:48:10.201Z",
+    "status": 0,
+    "signal": null,
+    "error": null,
+    "file": "bench-32-32-dense-reused-square-163.log",
+    "sha256": "974316bd86ccf0a62d52d7c4448c2cc66e57c79f4523be7767d6c861b4f815f7",
+    "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "sources": [
+      [
+        "main.rs",
+        "8c1d88393e00a99d07df5ae50cea454b5d108d0a5b8563e89791938a26495be2"
+      ],
+      [
+        "Cargo.toml",
+        "a7dfcf7a0d76e98ae1bdf29e48b6521ac3530daa9eb0f7e2a3d7b702f954e686"
+      ],
+      [
+        "../main.rs",
+        "d6b3b28c73bdc1c16452a98f55d827e7695d5344db679dcabff09dd8015a6f6f"
+      ],
+      [
+        "../diagonal.rs",
+        "fe7e844196357e900969c6a919d5aafca192839f6f42a34814845e8f5fbf5fd8"
+      ],
+      [
+        "../baseline.rs",
+        "f09fb430259ecd9ca39a7821e738ea9c881cbe0e6f65cf410d62f6a5f9c5b2f4"
+      ],
+      [
+        "../shared.rs",
+        "5ea43f1efafd86c8977314e75045e072fb9c5fe54711a8b34eb474cf663f9971"
+      ]
+    ],
+    "runnerSha256": "b5dc037c385e9bc3af23e83d6dbd65fcca81b623fdf379c1939f87f676536daa",
+    "lockSha256": "f70105bad87a26414538c55b77ceb032fe401d17bd9fe1f9d04b02357b457b87",
+    "binary": "/home/tim/Documents/GitHub/workspace/.audit-square-root.C42NO5BC/v2-binaries/release",
+    "binarySha256": "2a0d7f5ad43f3ef143776b29acb8db9acbcec77651e6e248d808e379b87d8ff9"
+  },
+  {
+    "name": "16-256-sparse-fresh-square-163",
+    "command": "taskset",
+    "args": [
+      "-c",
+      "6",
+      "/home/tim/Documents/GitHub/workspace/.audit-square-root.C42NO5BC/v2-binaries/release",
+      "bench",
+      "16",
+      "256",
+      "sparse",
+      "fresh",
+      "square",
+      "163",
+      "0.25",
+      "6"
+    ],
+    "capMs": 240000,
+    "started": "2026-09-07T02:48:10.210Z",
+    "finished": "2026-09-07T02:48:20.635Z",
+    "status": 0,
+    "signal": null,
+    "error": null,
+    "file": "bench-16-256-sparse-fresh-square-163.log",
+    "sha256": "09ca11e319005b47a506d5333ec69e9f394c6763c1a02acb2d35b760aec836a1",
+    "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "sources": [
+      [
+        "main.rs",
+        "8c1d88393e00a99d07df5ae50cea454b5d108d0a5b8563e89791938a26495be2"
+      ],
+      [
+        "Cargo.toml",
+        "a7dfcf7a0d76e98ae1bdf29e48b6521ac3530daa9eb0f7e2a3d7b702f954e686"
+      ],
+      [
+        "../main.rs",
+        "d6b3b28c73bdc1c16452a98f55d827e7695d5344db679dcabff09dd8015a6f6f"
+      ],
+      [
+        "../diagonal.rs",
+        "fe7e844196357e900969c6a919d5aafca192839f6f42a34814845e8f5fbf5fd8"
+      ],
+      [
+        "../baseline.rs",
+        "f09fb430259ecd9ca39a7821e738ea9c881cbe0e6f65cf410d62f6a5f9c5b2f4"
+      ],
+      [
+        "../shared.rs",
+        "5ea43f1efafd86c8977314e75045e072fb9c5fe54711a8b34eb474cf663f9971"
+      ]
+    ],
+    "runnerSha256": "b5dc037c385e9bc3af23e83d6dbd65fcca81b623fdf379c1939f87f676536daa",
+    "lockSha256": "f70105bad87a26414538c55b77ceb032fe401d17bd9fe1f9d04b02357b457b87",
+    "binary": "/home/tim/Documents/GitHub/workspace/.audit-square-root.C42NO5BC/v2-binaries/release",
+    "binarySha256": "2a0d7f5ad43f3ef143776b29acb8db9acbcec77651e6e248d808e379b87d8ff9"
+  },
+  {
+    "name": "16-256-sparse-reused-square-163",
+    "command": "taskset",
+    "args": [
+      "-c",
+      "6",
+      "/home/tim/Documents/GitHub/workspace/.audit-square-root.C42NO5BC/v2-binaries/release",
+      "bench",
+      "16",
+      "256",
+      "sparse",
+      "reused",
+      "square",
+      "163",
+      "0.25",
+      "6"
+    ],
+    "capMs": 240000,
+    "started": "2026-09-07T02:48:20.644Z",
+    "finished": "2026-09-07T02:48:32.481Z",
+    "status": 0,
+    "signal": null,
+    "error": null,
+    "file": "bench-16-256-sparse-reused-square-163.log",
+    "sha256": "92a8f1322b9d15033d0f518ffe96dad1430b1892b212f8ecc466fc5c6fcbafed",
+    "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "sources": [
+      [
+        "main.rs",
+        "8c1d88393e00a99d07df5ae50cea454b5d108d0a5b8563e89791938a26495be2"
+      ],
+      [
+        "Cargo.toml",
+        "a7dfcf7a0d76e98ae1bdf29e48b6521ac3530daa9eb0f7e2a3d7b702f954e686"
+      ],
+      [
+        "../main.rs",
+        "d6b3b28c73bdc1c16452a98f55d827e7695d5344db679dcabff09dd8015a6f6f"
+      ],
+      [
+        "../diagonal.rs",
+        "fe7e844196357e900969c6a919d5aafca192839f6f42a34814845e8f5fbf5fd8"
+      ],
+      [
+        "../baseline.rs",
+        "f09fb430259ecd9ca39a7821e738ea9c881cbe0e6f65cf410d62f6a5f9c5b2f4"
+      ],
+      [
+        "../shared.rs",
+        "5ea43f1efafd86c8977314e75045e072fb9c5fe54711a8b34eb474cf663f9971"
+      ]
+    ],
+    "runnerSha256": "b5dc037c385e9bc3af23e83d6dbd65fcca81b623fdf379c1939f87f676536daa",
+    "lockSha256": "f70105bad87a26414538c55b77ceb032fe401d17bd9fe1f9d04b02357b457b87",
+    "binary": "/home/tim/Documents/GitHub/workspace/.audit-square-root.C42NO5BC/v2-binaries/release",
+    "binarySha256": "2a0d7f5ad43f3ef143776b29acb8db9acbcec77651e6e248d808e379b87d8ff9"
+  },
+  {
+    "name": "8-256-fraction-fresh-nonsquare-163",
+    "command": "taskset",
+    "args": [
+      "-c",
+      "6",
+      "/home/tim/Documents/GitHub/workspace/.audit-square-root.C42NO5BC/v2-binaries/release",
+      "bench",
+      "8",
+      "256",
+      "fraction",
+      "fresh",
+      "nonsquare",
+      "163",
+      "0.25",
+      "6"
+    ],
+    "capMs": 240000,
+    "started": "2026-09-07T02:48:32.484Z",
+    "finished": "2026-09-07T02:48:44.417Z",
+    "status": 0,
+    "signal": null,
+    "error": null,
+    "file": "bench-8-256-fraction-fresh-nonsquare-163.log",
+    "sha256": "36582da539ebf0aabc1e2bb269fae83314d2d344375f7a5fd3343a1616154e2a",
+    "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "sources": [
+      [
+        "main.rs",
+        "8c1d88393e00a99d07df5ae50cea454b5d108d0a5b8563e89791938a26495be2"
+      ],
+      [
+        "Cargo.toml",
+        "a7dfcf7a0d76e98ae1bdf29e48b6521ac3530daa9eb0f7e2a3d7b702f954e686"
+      ],
+      [
+        "../main.rs",
+        "d6b3b28c73bdc1c16452a98f55d827e7695d5344db679dcabff09dd8015a6f6f"
+      ],
+      [
+        "../diagonal.rs",
+        "fe7e844196357e900969c6a919d5aafca192839f6f42a34814845e8f5fbf5fd8"
+      ],
+      [
+        "../baseline.rs",
+        "f09fb430259ecd9ca39a7821e738ea9c881cbe0e6f65cf410d62f6a5f9c5b2f4"
+      ],
+      [
+        "../shared.rs",
+        "5ea43f1efafd86c8977314e75045e072fb9c5fe54711a8b34eb474cf663f9971"
+      ]
+    ],
+    "runnerSha256": "b5dc037c385e9bc3af23e83d6dbd65fcca81b623fdf379c1939f87f676536daa",
+    "lockSha256": "f70105bad87a26414538c55b77ceb032fe401d17bd9fe1f9d04b02357b457b87",
+    "binary": "/home/tim/Documents/GitHub/workspace/.audit-square-root.C42NO5BC/v2-binaries/release",
+    "binarySha256": "2a0d7f5ad43f3ef143776b29acb8db9acbcec77651e6e248d808e379b87d8ff9"
+  },
+  {
+    "name": "8-256-fraction-reused-nonsquare-163",
+    "command": "taskset",
+    "args": [
+      "-c",
+      "6",
+      "/home/tim/Documents/GitHub/workspace/.audit-square-root.C42NO5BC/v2-binaries/release",
+      "bench",
+      "8",
+      "256",
+      "fraction",
+      "reused",
+      "nonsquare",
+      "163",
+      "0.25",
+      "6"
+    ],
+    "capMs": 240000,
+    "started": "2026-09-07T02:48:44.427Z",
+    "finished": "2026-09-07T02:48:57.426Z",
+    "status": 0,
+    "signal": null,
+    "error": null,
+    "file": "bench-8-256-fraction-reused-nonsquare-163.log",
+    "sha256": "20d1b12d844d83f9d9b1a0a9ab9797f130d06950f6c775cf23aa0f3db17eb9c6",
+    "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "sources": [
+      [
+        "main.rs",
+        "8c1d88393e00a99d07df5ae50cea454b5d108d0a5b8563e89791938a26495be2"
+      ],
+      [
+        "Cargo.toml",
+        "a7dfcf7a0d76e98ae1bdf29e48b6521ac3530daa9eb0f7e2a3d7b702f954e686"
+      ],
+      [
+        "../main.rs",
+        "d6b3b28c73bdc1c16452a98f55d827e7695d5344db679dcabff09dd8015a6f6f"
+      ],
+      [
+        "../diagonal.rs",
+        "fe7e844196357e900969c6a919d5aafca192839f6f42a34814845e8f5fbf5fd8"
+      ],
+      [
+        "../baseline.rs",
+        "f09fb430259ecd9ca39a7821e738ea9c881cbe0e6f65cf410d62f6a5f9c5b2f4"
+      ],
+      [
+        "../shared.rs",
+        "5ea43f1efafd86c8977314e75045e072fb9c5fe54711a8b34eb474cf663f9971"
+      ]
+    ],
+    "runnerSha256": "b5dc037c385e9bc3af23e83d6dbd65fcca81b623fdf379c1939f87f676536daa",
+    "lockSha256": "f70105bad87a26414538c55b77ceb032fe401d17bd9fe1f9d04b02357b457b87",
+    "binary": "/home/tim/Documents/GitHub/workspace/.audit-square-root.C42NO5BC/v2-binaries/release",
+    "binarySha256": "2a0d7f5ad43f3ef143776b29acb8db9acbcec77651e6e248d808e379b87d8ff9"
+  }
+]

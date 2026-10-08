@@ -1,0 +1,5 @@
+# Nonlinear incident-offset cusp follow-up (prepared, unrun)
+
+V657 owns frozen production inputs. This sidecar changes only the independent V656 fixture's line partner into the exact cubic R(u)=J+2uD+u(u-1/2)^2 N with D=L-J and N=(-D_y,D_x). It keeps the known exact center C, offset cusp Q, radius r, and contact L at u=1/2. The source has R'(u) dot D=2|D|^2>0 everywhere. Since C-L=-(r/delta)N, circle incidence becomes (2u-1)^2+(u(u-1/2)^2+r/delta)^2=(r/delta)^2. For u>=0 this holds only at u=1/2; for u<0 the tangential term alone exceeds 1>(r/delta)^2 because delta=697/4800>r=49/400. This proves contact uniqueness without guessing from enumeration.
+
+The test checks center, exact parameter, and exact point constraints under both policies and reversed traversal, preserving both exact path junctions. It has not been compiled or executed and makes no claim about the nonlinear pair path. Run only after V657 has been reaped and committed; preserve a bounded timeout if general elimination is too expensive.

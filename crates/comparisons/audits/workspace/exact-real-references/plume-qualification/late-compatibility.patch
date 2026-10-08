@@ -1,0 +1,13 @@
+--- a/Tests.hs
++++ b/Tests.hs
+@@ -1,4 +1,4 @@
+-module Tests (tabulate) where
++module Tests where
+ 
+ import SBinStream
+ import SBinFloat
+@@ -131,4 +131,3 @@
+ 
+ log_mapDysWrap x n = (dysToSbs (log_mapDys (sbsToDys x) n))
+ 
+-

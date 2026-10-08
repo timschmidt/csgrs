@@ -1,0 +1,8 @@
+
+running 3 tests
+test root_isolation::monic_tests::square_free_log_factors_do_not_rebuild_an_opaque_leading_unit ... ok
+test root_isolation::monic_tests::monic_normalization_keeps_scalar_and_failed_reciprocal_boundaries ... ok
+test root_isolation::monic_tests::monic_normalization_preserves_lower_coefficients_and_certified_unit ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 435 filtered out; finished in 0.01s
+

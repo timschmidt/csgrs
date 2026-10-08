@@ -1,0 +1,5 @@
+path	sha256	read_coverage	source
+Escardo-Simpson-interval.pdf	7636880472de3f24a22d7f7e3be7cf851ea6afb68cc83000c8c4f805a7c15b04	all27 pages via full1641-line extraction; printed equations on pages9,21 also visually checked	https://martinescardo.github.io/papers/interval.pdf
+Escardo-Simpson-interval.txt	154d88c619921cba9dab3090ea2ce60f08e90c9a416bc0c985e33b339352e896	1-280;281-560;561-840;841-1120;1121-1400;1401-1641	https://martinescardo.github.io/papers/interval.pdf
+Simpson-1998-functional-integration.pdf	085b65330227070acbc3723ef763b7c632216b4816540f8c2d936fec715e0b27	university cover plus all9 paper pages visually read; full461-line extraction read	https://www.pure.ed.ac.uk/ws/files/12417914/download_2.pdf
+Simpson-1998-functional-integration.txt	95574c5ae7daf5a7152c89aa91ee9970f4acb45d6e9a9095c0dd0da40f320948	1-461	https://www.pure.ed.ac.uk/ws/files/12417914/download_2.pdf

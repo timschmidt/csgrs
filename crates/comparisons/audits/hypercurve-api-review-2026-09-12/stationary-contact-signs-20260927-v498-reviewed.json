@@ -1,0 +1,18 @@
+{
+  "qualification": "stationary-contact-signs-20260927-v498-terminal.json",
+  "source_manifest": "stationary-contact-signs-20260927-v498-sources.json",
+  "outer_session_reaped": 99281,
+  "validated_files": 2047,
+  "selected_geometry_tests": 357,
+  "checks": 6,
+  "repos": {
+    "hypercurve": {
+      "parent": "9aad1db6734065752a9b6d20648aceecddfebeae",
+      "paths": {
+        "src/bezier_offset.rs": "7a167c101692b2e10d6222159e7ccda6ce5c43c9967124b58658f8e5aaa1e7c3"
+      }
+    }
+  },
+  "scope": "selected regression suite; overall implementation goal remains active",
+  "performance_changes": []
+}

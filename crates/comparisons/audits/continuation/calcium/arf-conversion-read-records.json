@@ -1,0 +1,13 @@
+[
+  {
+    "repo": "flint",
+    "path": "src/fmpz/set.c",
+    "ranges": [
+      [
+        1,
+        238
+      ]
+    ],
+    "note": "Checkpoint45 complete integer-import support read: small exact cast window, truncating binary64/scaled-binary64 import, MPF and GMP conversion with inline/heap promotion, signed modular limb and unsigned-array import under their explicit size/sign preconditions. Only bounded finite public scalar paths are numerically qualified here; raw import helpers are read, not probed. Hyper already has explicit exact/lossy/certified boundaries and distinct rounding contracts; no nonredundant transfer selected. fmpz/get.c and ARF conversion/rounding/decomposition/comparison sources were reread but add no coverage."
+  }
+]

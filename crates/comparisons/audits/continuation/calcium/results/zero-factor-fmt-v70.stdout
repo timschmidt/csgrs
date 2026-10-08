@@ -1,0 +1,12 @@
+Diff in /home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/zero-factor-candidate-v70/hypersolve/src/algebraic_binary/zero_factor_tests.rs:137:
+                 AlgebraicRootBinaryTransformStatus::Transformed
+             );
+             let root = report.representation.unwrap();
+-            assert_eq!(root.polynomial_coefficients, carrier(&[0, 1], scale.signum()));
++            assert_eq!(
++                root.polynomial_coefficients,
++                carrier(&[0, 1], scale.signum())
++            );
+             assert_eq!(root.interval.exact_root, Some(Real::one()));
+         }
+     }

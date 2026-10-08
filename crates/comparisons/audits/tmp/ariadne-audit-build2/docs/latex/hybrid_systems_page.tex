@@ -1,0 +1,139 @@
+\doxysection{Hybrid Systems }
+\hypertarget{hybrid_systems_page}{}\label{hybrid_systems_page}\index{Hybrid Systems@{Hybrid Systems}}
+\hypertarget{hybrid_systems_page_hybrid_automaton_definition}{}\doxysubsection{\texorpdfstring{Mathematical Definition of a Hybrid Automaton}{Mathematical Definition of a Hybrid Automaton}}\label{hybrid_systems_page_hybrid_automaton_definition}
+A traditional mathematical definition of a hybrid automaton is as follows\+:
+
+A {\itshape hybrid automaton} is a tuple $H=(Q,E,\gamma,n_q,f_q,I_q,r_{q,e},G_{q,e})$ where
+\begin{DoxyItemize}
+\item The discrete behaviour is
+\begin{DoxyItemize}
+\item $Q$ is a finite set of {\itshape discrete states}
+\item $E$ is a finite set of {\itshape discrete events}
+\item $\gamma:\subset Q\times E\rightarrow Q$ is a partial function giving the {\itshape discrete transitions}
+\end{DoxyItemize}
+\item For each $q\in Q$,
+\begin{DoxyItemize}
+\item $n_q$ defines the {\itshape dimension} of the continuous state space $\R^{n_q}$.
+\item $f_q:\R^{n_q}\rightarrow \R^{n_q}$ defines the {\itshape continuous dynamics} by $\dot{x}=f_q(x)$.
+\item $I_q\subset \R^{n_q}$ is the {\itshape invariant} which must hold throughout the evolution in mode $q$.
+\end{DoxyItemize}
+\item For each $(q,e)\in\mathrm{dom}(\gamma)\subset Q\times E$,
+\begin{DoxyItemize}
+\item $r_{q,e}:\R^{n_q}\rightarrow \R^{n_\gamma(q,e)}$ defines the {\itshape reset} by $x\textnormal{\textquotesingle}=r_{q,e}(x)$.
+\item $G_{q,e}\subset \R^{n_q}$ is the {\itshape guard} which must hold for event $e$ to be possible.
+\end{DoxyItemize}
+\end{DoxyItemize}
+
+The {\itshape standard operational semantics} of a hybrid automaton $H$ is as follows.
+\begin{DoxyItemize}
+\item The {\itshape state} of the system is a pair $(q,x)$ with $q\in Q$ and $x\in\R^{n_q}$.
+\item The state may evolve according to the differential equation $\dot{x}=f_q(x)$ as long as $x\in I_q$.
+\item The state may evolve according to the discrete transition $(q\textnormal{\textquotesingle},x\textnormal{\textquotesingle})=(\gamma(q,e),r_{q,e}(x))$ as long as $x\in R_{q,e}$.
+\end{DoxyItemize}
+
+This definition has some disadvantages\+:
+\begin{DoxyEnumerate}
+\item The main disadvantage concerns the modelling of {\itshape urgent transitions}. These are transitions which occur as soon as the guard set is entered, for example, as soon as $g(x)\geq0$. The traditional way of modelling these transitions is to introduce the constraint $g(x)\leq 0$ into the invariant. However, the condition that the event occurs exactly when $g(x)=0$ is lost, and this is often very useful in computing the evolution.
+\item The invariant and guards in a mode determining the coupling between continuous and discrete dynamics. During the evolution, we usually need to consider both simultaneously. For this reason, it is preferable to consider invariant and guard sets at the same level.
+\item An invariant may prevent a transition from occurring by being violated in the new state. This entails some "{}look-\/ahead"{} in the definition of the evolution. Some systems e.\+g. CIF introduce "{}progress predicates"{} to prevent continuous evolution without preventing a jump into the point.
+\item There is no "{}concrete"{} format for sets. Although this is not strictly necessary, many numerical operations can be efficiently computed on sets defined by inequality constraints $c(x)\leq 0$ and equality constraints $e(x)=0$.
+\end{DoxyEnumerate}
+
+More generally, there are many different ways of specifying when continuous evolution is allowed, and when discrete transitions are allowed.
+\begin{DoxyItemize}
+\item Invariant/\+Guard \doxylink{classAriadne_1_1Set}{Set}\+: Continuous evolution allowed when $x\in I_q$; discrete transtions allowed when $x\in G_{q,e}$.
+\end{DoxyItemize}\hypertarget{hybrid_systems_page_monolithic_hybrid_automaton_old}{}\doxysubsection{\texorpdfstring{The Ariadne Hybrid Automaton Data Type (Version 0.\+4)}{The Ariadne Hybrid Automaton Data Type (Version 0.\+4)}}\label{hybrid_systems_page_monolithic_hybrid_automaton_old}
+The hybrid automaton interface in Ariadne is essentially equivalent to the enhanced mathematical definition given above. The dynamic and resets are defined using the \doxylink{group__FunctionModule_gae5d2f69ea172c6a2dfa7d2f12f700737}{Vector\+Function} class. The guards and invariants are defined using the class \doxylink{group__FunctionModule_ga97dec0be54bdb27609f9925b055e35dc}{Scalar\+Function} class, with invariants $i(x)\leq0$ and guards $g(x)\geq0$. A {\itshape \doxylink{classAriadne_1_1DiscreteMode}{Discrete\+Mode}} is a triple $(q,f_q,I_q)$ where
+\begin{DoxyItemize}
+\item $q$ is a Discrete\+State.
+\item $f_q$ is a \doxylink{group__FunctionModule_gae5d2f69ea172c6a2dfa7d2f12f700737}{Vector\+Function} giving the dynamic $\dot{x}=f_q(x)$.
+\item $I_q$ is a \doxylink{classAriadne_1_1List}{List} of \doxylink{group__FunctionModule_ga97dec0be54bdb27609f9925b055e35dc}{Scalar\+Function} with each $i_j:\R^{n_q}\rightarrow \R$ giving the invariants $i_j(x)\lesssim 0$.
+\end{DoxyItemize}
+
+A {\itshape \doxylink{classAriadne_1_1DiscreteTransition}{Discrete\+Transition}} is a triple $(e,s,t,r,g,u)$ where
+\begin{DoxyItemize}
+\item $e$ is a \doxylink{classAriadne_1_1DiscreteEvent}{Discrete\+Event}.
+\item $s$ and $t$ are the {\itshape source} and {\itshape target} Discrete\+State.
+\item $r:\R^{n_s}\rightarrow\R^{n_t}$ is a \doxylink{group__FunctionModule_gae5d2f69ea172c6a2dfa7d2f12f700737}{Vector\+Function} giving the reset $x\textnormal{\textquotesingle}=r(x)$.
+\item $g:\R^{n_s}\rightarrow\R$ is a \doxylink{group__FunctionModule_ga97dec0be54bdb27609f9925b055e35dc}{Scalar\+Function} giving the guard $g(x)\gtrsim 0$.
+\item $u\in\{\top,\bot\}$ is a flag determining whether the transition is {\itshape urgent} or not.
+\end{DoxyItemize}
+
+A {\itshape \doxylink{classAriadne_1_1HybridAutomaton}{Hybrid\+Automaton}} is a pair $(M,T)$ where
+\begin{DoxyItemize}
+\item $M$ is a set of discrete modes, and
+\item $T$ is a set of discrete transitions such that
+\begin{DoxyItemize}
+\item for every transition, the source $s$ and target $t$ correspond to modes in $M$, and
+\item for every event $e$, there is at most one transition with a given source $s$.
+\end{DoxyItemize}
+\end{DoxyItemize}\hypertarget{hybrid_systems_page_monolithic_hybrid_automaton}{}\doxysubsection{\texorpdfstring{The Ariadne Hybrid Automaton Framework}{The Ariadne Hybrid Automaton Framework}}\label{hybrid_systems_page_monolithic_hybrid_automaton}
+A {\itshape Mode} is a tuple $(q,f_q)$ where
+\begin{DoxyItemize}
+\item $q$ is a \doxylink{classAriadne_1_1DiscreteLocation}{Discrete\+Location}.
+\item $f_q$ is a \doxylink{group__FunctionModule_gae5d2f69ea172c6a2dfa7d2f12f700737}{Vector\+Function} giving the dynamic $\dot{x}=f_q(x)$.
+\end{DoxyItemize}
+
+A {\itshape Guard} is a tuple $(q,e,c,k)$ where
+\begin{DoxyItemize}
+\item $q$ is a \doxylink{classAriadne_1_1DiscreteLocation}{Discrete\+Location}.
+\item $e\in E$ is an Event label.
+\item $c:\R^{n_s}\rightarrow\R^{n_t}$ is a \doxylink{group__FunctionModule_ga97dec0be54bdb27609f9925b055e35dc}{Scalar\+Function} giving the condition $c(x)\geq0$.
+\item $k\in K$ determines the action to be taken when $c(x)\geq 0$ is satisfied. For example, in an urgent event, the transition corresponding to event $e$ in location $q$ must be taken as soon as the condition is satisfied, whereas for an invariant, the evolution is terminated (unless a transition corresponding to another event is activated.
+\end{DoxyItemize}
+
+A {\itshape Transition} is a tuple $(s,e,t,r)$ where
+\begin{DoxyItemize}
+\item $s$ is the {\itshape source} \doxylink{classAriadne_1_1DiscreteLocation}{Discrete\+Location}.
+\item $e$ is the \doxylink{classAriadne_1_1DiscreteEvent}{Discrete\+Event}.
+\item $t$ is the {\itshape target} \doxylink{classAriadne_1_1DiscreteLocation}{Discrete\+Location}.
+\item $r:\R^{n_s}\rightarrow\R^{n_t}$ is a \doxylink{group__FunctionModule_gae5d2f69ea172c6a2dfa7d2f12f700737}{Vector\+Function} giving the guard $g(x)\gtrsim 0$.
+\end{DoxyItemize}\hypertarget{hybrid_systems_page_hybrid_sytem_interface}{}\doxysubsection{\texorpdfstring{The Ariadne Interface for Hybrid Systems}{The Ariadne Interface for Hybrid Systems}}\label{hybrid_systems_page_hybrid_sytem_interface}
+So that the evolution routines in Ariadne are independent of the class of hybrid system used, all hybrid systems need to correspond to the \doxylink{classAriadne_1_1HybridAutomatonInterface}{Hybrid\+Automaton\+Interface}, which specifies a minimal set of operators which the system must provide.
+
+A hybrid automaton is defined by the data \[ \bigl( Q, E, \{ n_q, f_q \mid q\in Q\}, \{ c_{q,e},k_{q,e} \} , \{t_{q,a},r_{q,a}\} \bigr) \] where
+\begin{DoxyItemize}
+\item $n_{q}\in \N$ is the dimension of the continuous state space in location $q$.
+\item $f_{q}:\R^{n_q}\rightarrow\R^{n_q}$ defines the continuous dynamics $\dot{x}=f(x)$ in location $q$.
+\item $c_{q,e}:\R^{n_q}\rightarrow \R$ defines the activation condition $c_{q,e}(x)\geq0$ for the event $e$ in location $q$.
+\item $k_{q,e}$ is the kind of the event $e$ in location $q$.
+\item $t_{q,e}\in Q$ is the target of the transition $a$ in location $q$.
+\item $r_{q,e}:\R^{n_q}\rightarrow\R^{n_{t_{q,e}}}$ is the reset map for the transition $a$ in location $q$.
+\end{DoxyItemize}
+
+Additionally, we provide the data $G_q$ defining a "{}grid"{} in location $q$.
+
+Possible future extensions\+:
+\begin{DoxyItemize}
+\item Extend the range of continuous dynamics beyond vector fields $\dot{x}=f(x)$ to allow more general systems e.\+g. explicit flows $x(t)=\phi(x_0,t-t_0)$ or differential inclusions $\dot{x}(t) = f(x(t),v(t));\ v(t)\in V$.
+\item Extend the range of discrete dynamics beyond continuous maps e.\+g. multivalued maps $x\textnormal{\textquotesingle} \in \{ r(x,w) \mid w\in W\}$.
+\item Extend the activation conditions to allow non-\/smooth functions or logical predicates. e.\+g. $\min(c_1(x),c_2(x)) \geq 0$ or $c_1(x)\geq 0\wedge c_2(x)\geq 0$.
+\end{DoxyItemize}\hypertarget{hybrid_systems_page_hybrid_system_glossary}{}\doxysubsection{\texorpdfstring{Glossary of Terms describing Hybrid Systems}{Glossary of Terms describing Hybrid Systems}}\label{hybrid_systems_page_hybrid_system_glossary}
+There are many terms used to describe features of a hybrid system in the literature. However, the precise use of these terms is non-\/standard. In order to fix the terminology used in Ariadne, we use the following definitions. Some of these definitions may be different from what is "{}common"{} in the literature; this will usually be due to internal considerations (e.\+g. labelling), or the fact that existing frameworks typically do not consider computability issues, and hence blur concepts which should be kept separate.
+
+
+\begin{DoxyItemize}
+\item {\bfseries{(Discrete) Event}}\+: A label for any behaviour of the system other than continuous evolution.
+\begin{DoxyItemize}
+\item {\bfseries{Action}}\+: An event causing a change in the state of the system.
+\end{DoxyItemize}
+\item {\bfseries{(Discrete) Location}}\+: A value of the discrete state of the system.
+\item {\bfseries{(Discrete) Mode}}\+: The specification of the (continuous) behaviour in a discrete location.
+\item {\bfseries{Condition}}\+: A predicate $X\fto \{\top,\bot\}$ determining when an event is active. Typically defined using a constraint function $c:X\rightarrow\R$ as $c(x)\geq0$; may also be defined as $x\in C$ for some set $C$.
+\begin{DoxyItemize}
+\item {\bfseries{Invariant Condition}}\+: A predicate $\mathrm{inv}_q(x)$ which must hold at all states reached by the system evolution.
+\item {\bfseries{(Time-\/\+Can-\/)Progress Condition/\+Predicate}}\+: A predicate $\mathrm{tcp}_q(x)$ which must hold whenever continuous evolution is possible. Given by a function $p_{q,e}(x)\leq0$
+\item {\bfseries{Guard Condition}}\+: A condition $\mathrm{act}_q(x)$, usually given by a function $g_{q,e}(x)\geq0$, such that the event {\itshape e} only occurs when the condition is satisfied.
+\begin{DoxyItemize}
+\item {\bfseries{Urgent Guard}}\+: A condition $\mathrm{act}_q(x)$, usually given by a function $g_{q,e}(x)\geq0$ which implies that event {\itshape e} occurs as soon as the condition is satisfied. Formally equivalent to introducing the progress predicate $g_{q,e}(x)\leq0$.
+\item {\bfseries{Permissive Guard}}\+: A condition $\mathrm{act}_q(x)$, usually given by a function $g_{q,e}(x)\geq0$ which implies that event {\itshape e} occurs as soon as the condition is satisfied. Note that if another event is also possible, then although an event {\itshape must} occcur, both the event with the urgent guard and the other event {\itshape may} occur.
+\end{DoxyItemize}
+\item {\bfseries{Activation Condition}}\+: A synonym for a permissive guard.
+\end{DoxyItemize}
+\item {\bfseries{Active}}\+: An event is active when its constraint condition is satisfied.
+\item {\bfseries{Update}}\+: A rule governing how the state changes upon an event. For a given {\itshape source} location, comprises a {\itshape target} location and {\itshape reset} map.
+\begin{DoxyItemize}
+\item {\bfseries{Target}}\+: The location forming the discrete state after a transition.
+\item {\bfseries{Reset}}\+: A function mapping continuous states in the source location to continuous states in the target location upon a discrete transition. 
+\end{DoxyItemize}
+\end{DoxyItemize}

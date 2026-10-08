@@ -1,0 +1,27 @@
+{
+  "returncode": 0,
+  "elapsed_seconds": 0.5644806450000033,
+  "normal_library_sha256": "9ae1c520060940471e48c12e6100d86ee6ea9225a56e2ddd2281e5dd246c03f9",
+  "log": "finite-parallel-admission-general-trim-matrix.log",
+  "source": "general-trim-matrix.rs",
+  "command": [
+    "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustc",
+    "--edition=2024",
+    "-O",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/general-trim-matrix.rs",
+    "--extern",
+    "hypercurve=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypercurve-cdcdcc6da422cc2c.rlib",
+    "-L",
+    "dependency=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps",
+    "-o",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-parallel-admission-general-trim-matrix"
+  ],
+  "source_sha256": "7c6aa8ed342ad3be55d2ef71ef4d70bf78471e8155bcdac3047fe0f90147fe55",
+  "executable_sha256": "1a2c2d19085e530a63addf11429d5b7bb7ff0a39b721d4e24faa759da34f6264",
+  "counts": {
+    "queries": 448,
+    "endpoint_replays": 2208,
+    "repeated_path_trims": 1008,
+    "certainty": "Certified"
+  }
+}

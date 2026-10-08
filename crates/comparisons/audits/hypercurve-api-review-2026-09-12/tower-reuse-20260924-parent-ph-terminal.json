@@ -1,0 +1,11 @@
+{
+  "name": "bezier_region::tests::one_fragment_ph_loop_fillets_through_rational_self_contact",
+  "returncode": "timeout",
+  "passed": false,
+  "elapsed_seconds": 75.1935336550232,
+  "limit_seconds": 75,
+  "binary_sha256": "0e2c08aa9a4ea7214b11fad11d9e0ee4f2c2f347ecfdcea323e90215a0057559",
+  "all_sources_unchanged": true,
+  "all_processes_reaped": true,
+  "log": "tower-reuse-20260924-parent-ph.log"
+}

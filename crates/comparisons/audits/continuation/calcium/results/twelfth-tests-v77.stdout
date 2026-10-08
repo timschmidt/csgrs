@@ -1,0 +1,8 @@
+
+running 3 tests
+test computable::node::twelfth_relation_tests::proof_preserves_nodes_and_numeric_caches ... ok
+test computable::node::twelfth_relation_tests::descendant_queries_and_unknown_children_do_not_hide_proof ... ok
+test computable::node::twelfth_relation_tests::rejects_unproved_angles_domains_and_excessive_work ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 698 filtered out; finished in 0.00s
+

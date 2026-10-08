@@ -1,0 +1,127 @@
+{
+  "checks": [
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "clippy",
+        "--all-targets",
+        "--all-features",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "returncode": 0,
+      "log": "selected-projective-import-20260924-v2-check-0.log"
+    },
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "clippy",
+        "--all-targets",
+        "--no-default-features",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "returncode": 0,
+      "log": "selected-projective-import-20260924-v2-check-1.log"
+    }
+  ],
+  "command": [
+    "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+    "test",
+    "--release",
+    "--all-features",
+    "--no-run",
+    "--message-format=json",
+    "--locked",
+    "--offline",
+    "--test",
+    "hypercurve_path_closure",
+    "--test",
+    "hypercurve_curve_region_boolean",
+    "--test",
+    "hypercurve_bezier_arrangement",
+    "--test",
+    "hypercurve_curve_region_boolean_fuzz",
+    "--test",
+    "hypercurve_pcb_boolean_regressions"
+  ],
+  "binaries": {
+    "hypercurve": {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/selected-projective-import-20260924-v2-libtest",
+      "sha256": "4ad89e7f3c11ce9843bbe67aaf84388dcaa0b6cc16be2e8534b1008be916d776"
+    },
+    "hypercurve_curve_region_boolean_fuzz": {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/selected-projective-import-20260924-broad-hypercurve_curve_region_boolean_fuzz",
+      "sha256": "72d37f77061af8011152e098c327db7649b80cdaf1111b48e1c77de292c6623b"
+    },
+    "hypercurve_bezier_arrangement": {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/selected-projective-import-20260924-broad-hypercurve_bezier_arrangement",
+      "sha256": "f2c0e152f75eeeef6d5158bb976bb83c2cfcdfe1762453346fa1d1b6a2727bdc"
+    },
+    "hypercurve_pcb_boolean_regressions": {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/selected-projective-import-20260924-broad-hypercurve_pcb_boolean_regressions",
+      "sha256": "ec6335119d42d8a8486812f71bf22c0f42220c3f6926d0347597a70526949a2a"
+    },
+    "hypercurve_path_closure": {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/selected-projective-import-20260924-broad-hypercurve_path_closure",
+      "sha256": "0990d36ad73e41290cd32114f09ac5ab73a0b4fb5f0dcc06809c9452030ebd7a"
+    },
+    "hypercurve_curve_region_boolean": {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/selected-projective-import-20260924-broad-hypercurve_curve_region_boolean",
+      "sha256": "dcb7aeba35385e17a0ec3f3ff39617dbb06d51d90973955ce495dbc4991c58ff"
+    }
+  },
+  "attempted": 431,
+  "passed": 424,
+  "ignored": 3,
+  "nonpasses": [
+    {
+      "target": "hypercurve",
+      "name": "bezier_region::curve_corner_chain::tests::extended_fillet_region_classifies_both_sides_of_its_companion",
+      "returncode": "timeout",
+      "passed": false,
+      "ignored": false,
+      "elapsed_seconds": 75.00337111297995,
+      "limit_seconds": 75,
+      "log": "selected-projective-import-20260924-broad-case-0185.log"
+    },
+    {
+      "target": "hypercurve",
+      "name": "bezier_region::tests::nonlinear_selected_corner_chamfers_through_retained_fixed_distance_image",
+      "returncode": "timeout",
+      "passed": false,
+      "ignored": false,
+      "elapsed_seconds": 75.97382447496057,
+      "limit_seconds": 75,
+      "log": "selected-projective-import-20260924-broad-case-0199.log"
+    },
+    {
+      "target": "hypercurve",
+      "name": "bezier_region::tests::one_fragment_ph_loop_projective_corners_retain_one_extended_interval",
+      "returncode": 101,
+      "passed": false,
+      "ignored": false,
+      "elapsed_seconds": 0.06434852501843125,
+      "limit_seconds": 75,
+      "log": "selected-projective-import-20260924-broad-case-0205.log"
+    },
+    {
+      "target": "hypercurve",
+      "name": "bezier_region::tests::pair_native_boolean_algebraic_chord_corner_publishes_a_third_generation_fillet",
+      "returncode": "timeout",
+      "passed": false,
+      "ignored": false,
+      "elapsed_seconds": 75.00221219402738,
+      "limit_seconds": 75,
+      "log": "selected-projective-import-20260924-broad-case-0207.log"
+    }
+  ],
+  "all_sources_unchanged": true,
+  "all_processes_reaped": true
+}

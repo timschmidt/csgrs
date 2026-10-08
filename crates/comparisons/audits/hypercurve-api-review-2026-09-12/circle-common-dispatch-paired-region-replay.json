@@ -1,0 +1,14 @@
+{
+  "command": [
+    "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve-6e6572a45c5b177b",
+    "bezier_offset::conversion_tests::algebraic_cusp_semicircle_replays_a_selected_circle_component",
+    "--exact",
+    "--test-threads=1",
+    "--color",
+    "never"
+  ],
+  "returncode": 0,
+  "sha256": "7d37190b84d9015b3c12d64245f062c038ae176033f46463be8a6cc6d062f114",
+  "elapsed_seconds": 23.334162384999217,
+  "log": "circle-common-dispatch-paired-region-replay.log"
+}

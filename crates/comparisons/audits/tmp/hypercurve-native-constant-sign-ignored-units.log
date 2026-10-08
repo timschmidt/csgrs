@@ -1,0 +1,18 @@
+    Finished `release` profile [optimized] target(s) in 0.20s
+     Running unittests src/lib.rs (target/release/deps/hypercurve-6e6572a45c5b177b)
+
+running 6 tests
+correlated_circle_partition_offset mode=mapped complete=true iterations=64 elapsed_ns=4720686 ns_per_iter=73760.719 checksum=0
+test bezier_offset::conversion_tests::benchmark_correlated_circle_partition_offset_driver ... ok
+nested_chord_mapped_cap mode=mapped_exact_offset complete=true iterations=32 elapsed_ns=144098351 ns_per_iter=4503073.469 checksum=0
+test bezier_offset::conversion_tests::benchmark_nested_chord_mapped_cap_offset_driver ... ok
+nonendpoint_rational_mapped_cap mode=exact_offset complete=true iterations=32 elapsed_ns=104820121 ns_per_iter=3275628.781 checksum=0
+test bezier_offset::conversion_tests::benchmark_nonendpoint_rational_mapped_cap_offset_driver ... ok
+pair_mapped_lens_offset mode=exact_offset complete=true iterations=32 elapsed_ns=677756695 ns_per_iter=21179896.719 checksum=0
+test bezier_offset::conversion_tests::benchmark_pair_mapped_lens_offset_driver ... ok
+independent_oblique_chord_cap mode=prebuilt_reoffset complete=true iterations=8 elapsed_ns=516436963 ns_per_iter=64554620.375 checksum=0
+test bezier_offset::conversion_tests::benchmark_independent_oblique_chord_cap_offset_driver ... ok
+test bezier_offset::conversion_tests::selected_fiber_genuinely_analytic_contacts_complete_region_booleans ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 889 filtered out; finished in 51.99s
+

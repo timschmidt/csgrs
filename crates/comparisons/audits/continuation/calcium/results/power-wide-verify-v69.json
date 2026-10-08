@@ -1,0 +1,13 @@
+{
+  "tag": "power-wide-verify-v69",
+  "started": "2026-09-11T18:07:48.307Z",
+  "finished": "2026-09-11T18:07:50.176Z",
+  "elapsedSeconds": 1.8662756319999998,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "node",
+  "args": [
+    "verify-power-wide-v69.mjs"
+  ],
+  "code": 1,
+  "signal": null
+}

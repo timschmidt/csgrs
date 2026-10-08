@@ -1,0 +1,25 @@
+{
+  "tag": "symbolic-boundary-hyper-clippy-v83",
+  "started": "2026-09-12T03:54:59.162Z",
+  "finished": "2026-09-12T03:54:59.940Z",
+  "elapsedSeconds": 0.77567007,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/symbolic-boundary-hyper-v83",
+  "command": "env",
+  "args": [
+    "CARGO_TARGET_DIR=/tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse",
+    "CARGO_INCREMENTAL=0",
+    "CARGO_PROFILE_DEV_DEBUG=0",
+    "CARGO_BUILD_JOBS=2",
+    "cargo",
+    "clippy",
+    "--offline",
+    "--locked",
+    "--all-targets",
+    "--all-features",
+    "--",
+    "-D",
+    "warnings"
+  ],
+  "code": 0,
+  "signal": null
+}

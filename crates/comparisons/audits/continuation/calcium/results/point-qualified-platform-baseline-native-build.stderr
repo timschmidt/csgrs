@@ -1,0 +1,8 @@
+warning: /home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/point-qualified-platform-baseline/Cargo.toml: file `/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/point-qualified-platform-baseline/../point-qualified-platform.rs` found to be present in multiple build targets:
+  * `lib` target `calcium_point_qualified_platform_baseline`
+  * `bin` target `point-qualified-platform-baseline`
+    Blocking waiting for file lock on build directory
+   Compiling hyperlimit v0.4.1 (/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/e-plan-qualified-candidate/hyperlimit)
+   Compiling hypersolve v0.3.1 (/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/e-plan-qualified-candidate/hypersolve)
+   Compiling calcium-point-qualified-platform-baseline v0.0.0 (/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/point-qualified-platform-baseline)
+    Finished `release` profile [optimized] target(s) in 44.22s

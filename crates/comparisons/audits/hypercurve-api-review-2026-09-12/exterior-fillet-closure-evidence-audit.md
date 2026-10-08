@@ -1,0 +1,17 @@
+# Exterior fillet closure investigation
+
+The positive-overlap witnesses in the migrated parabola tests identify geometry, not selected-fiber storage variants. The first replays exposed two previously hidden assertions: a raw authored walk can regularize into several components, and the complement arc actually failed unary regularization.
+
+`complement-arc-side-classification-diagnostic1.log` found an ordinary circular fragment with winding zero on both sides. `complement-arc-ray-contact-diagnostic2.log` shows the generated fillet circle incorrectly rejected by the ray broad phase. `complement-arc-bounds-probe.log` independently prints its public box as [-1,2] x [-1,2], while its retained endpoint enclosure is approximately x=[0.8309,0.8344], y=[2.6314,2.6329]. These decimals are diagnostic renderings of exact enclosures; no approximate coordinate is used in a production predicate.
+
+The center is on the extended parabola, outside the authored unit domain. The selected circle bounds previously expanded the original source box without checking the retained center parameter. The fix requires a strict unit-domain enclosure before that acceleration; other cases use the existing selected-center enclosure and exact radius. This also removes duplicate center-box expansion machinery. No face-continuation consistency guard is weakened.
+
+An independent crossing-orientation issue was found in the boundary-side ray adapter. Its certificate follows boundary traversal, whereas the rational and analytic supporting-line solvers consume increasing source-parameter order. Reversed retained sources must convert the certificate before replay; final winding conversion already accounts for boundary reversal. The new quarter-circle regression checks signed winding, both traversal directions and both source representations under both policies. This independent fix alone did not repair the complement-arc failure (`parabola-extension-topology-chart-fix1.log`).
+
+The direct exterior-center test uses selected roots of t^2-2 and independently evaluates Q(t)+(1/2)N(t), Q(t)=(t,t^2), using |Q'(t)|=3. It checks both circle-axis extents for both root signs under both policies. Its first run caught an incorrect unit-interval constructor in the test itself; the fixture now uses the internal ordered affine interval constructor. The integration tests additionally require public exported curve bounds to contain their exact endpoints.
+
+Temporary ray and classification logging has been removed. The continuation error retains vertex and fragment context, with no additional adapter argument. Final qualification and commit status will be recorded in exterior-fillet-closure-qualification.json.
+
+The overall implementation goal remains active. General selected-circle/parallel pair dispatch, general trimming, normalized public region admission and the broader architecture work remain incomplete.
+
+Final qualification: 2,173 passes (1,941 Hypercurve + 232 HyperBREP), seven known promotion failures, nine ignored, no new failures or timeouts across 49 targets. Eight expensive unqualified cases remain excluded. Source, format, whitespace and both all-target checks pass. The normalized line/parabola set-identity blocker remains, independently reproduced by line-parabola-recovered-set-probe.json and line-parabola-recovered-parameters-probe.json. The primitive line/circle relation certifies its two secant roots; further finite line/arc filtering still needs diagnosis.

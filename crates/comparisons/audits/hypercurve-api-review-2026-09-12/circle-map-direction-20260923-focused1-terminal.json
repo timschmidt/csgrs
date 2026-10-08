@@ -1,0 +1,31 @@
+{
+  "cases": [
+    {
+      "name": "bezier_offset::conversion_tests::reconstructed_circle_overlap_reuses_parameter_identity_and_inverse",
+      "returncode": 0,
+      "passed": true,
+      "limit_seconds": 60,
+      "elapsed_seconds": 0.14638595399446785,
+      "log": "circle-map-direction-20260923-focused1-case-0.log"
+    },
+    {
+      "name": "bezier_region::tests::selected_circle_chamfer_crosses_one_sided_smooth_run_seam",
+      "returncode": 0,
+      "passed": true,
+      "limit_seconds": 75,
+      "elapsed_seconds": 1.9561021599220112,
+      "log": "circle-map-direction-20260923-focused1-case-1.log"
+    },
+    {
+      "name": "bezier_offset::conversion_tests::algebraic_cusp_semicircle_pair_maps_full_partial_and_endpoint_only_overlap",
+      "returncode": 0,
+      "passed": true,
+      "limit_seconds": 75,
+      "elapsed_seconds": 0.16777193697635084,
+      "log": "circle-map-direction-20260923-focused1-case-2.log"
+    }
+  ],
+  "binary_sha256": "b0ce87c55063663f5a19c479d9485dbbaabe28b56006c553f47ee8b55bf61e5b",
+  "all_sources_unchanged": true,
+  "all_processes_reaped": true
+}

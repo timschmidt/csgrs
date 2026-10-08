@@ -1,0 +1,150 @@
+{
+  "status": "committed",
+  "goal_status": "active",
+  "base_commits": {
+    "hypercurve": "db88eb4e1f026bc6d64770f14a09a8a29380d9a8",
+    "hyperbrep": "d7fa29cee735ba430caaef0a0e587687a6660abd"
+  },
+  "changes": [
+    "Return general Curve2 pieces from curve/region trimming; preserve CurveLocation2 and general oriented source ranges without forcing Bezier or scalar promotion.",
+    "Share support-span preparation with intersection and arrangement export, preserving native parameter lineage and selected source authority.",
+    "Reuse Boolean carrier intersections and fragment classification with demand-driven cached filled-side decisions.",
+    "Separate discontinuous spline spans and prevent closed-seam merging through omitted authored curves.",
+    "Remove superseded public trim fragment accessors and unused split dispatch; migrate HyperBREP, tests and documentation directly without compatibility shims."
+  ],
+  "normal_library_sha256": "0c0c677aec8bb0f04e3e3694aa275299386a546e3380885fb6eb0972e1797da8",
+  "qualification": {
+    "targets": 49,
+    "passed": 2186,
+    "failed": 5,
+    "passed_by_repo": {
+      "hypercurve": 1954,
+      "hyperbrep": 232
+    },
+    "remaining_failures": [
+      "approximate_512_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions",
+      "non_ph_bezier_pair_projective_fillet_retains_algebraic_extensions",
+      "nonconvex_algebraic_chord_expansion_is_exact_and_local_collapse_is_explicit",
+      "strict_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions",
+      "unified_mixed_line_arc_erosion_splits_after_a_curved_neck_collapse"
+    ],
+    "ignored": 9,
+    "new_failures": [],
+    "timeouts": [],
+    "previously_unqualified_expensive_cases": [
+      {
+        "repo": "hypercurve",
+        "target": "lib",
+        "test": "selected_parallel_normal_circle_intersects_genuinely_analytic_parallel_in_one_fiber"
+      },
+      {
+        "repo": "hypercurve",
+        "target": "lib",
+        "test": "independent_oblique_chord_pair_fillets_extend_on_infinite_supports"
+      },
+      {
+        "repo": "hypercurve",
+        "target": "lib",
+        "test": "selected_circle_and_analytic_parallel_extend_on_full_supports"
+      },
+      {
+        "repo": "hypercurve",
+        "target": "lib",
+        "test": "pair_native_boolean_algebraic_chord_corner_publishes_a_third_generation_fillet"
+      },
+      {
+        "repo": "hypercurve",
+        "target": "hypercurve_analytic_parallel_region",
+        "test": "radical_parallel_cusp_offsets_exactly_under_both_policies"
+      },
+      {
+        "repo": "hypercurve",
+        "target": "hypercurve_analytic_parallel_region",
+        "test": "retained_rational_arc_and_analytic_parallel_fillet_exactly"
+      },
+      {
+        "repo": "hypercurve",
+        "target": "hypercurve_pcb_boolean_regressions",
+        "test": "easyduino_scale_process_image_containment_corpus"
+      },
+      {
+        "repo": "hypercurve",
+        "target": "hypercurve_pcb_boolean_regressions",
+        "test": "easyduino_uno_scale_process_image_with_holes_corpus"
+      }
+    ],
+    "full_suite_passing": false,
+    "focused_passed": 23,
+    "checks": [
+      {
+        "check": "general-curve-region-trim-check",
+        "returncode": 0
+      },
+      {
+        "check": "general-curve-region-trim-test-build",
+        "returncode": 0
+      },
+      {
+        "check": "general-curve-region-trim-hyperbrep-check",
+        "returncode": 0
+      },
+      {
+        "check": "general-curve-region-trim-hyperbrep-test-build",
+        "returncode": 0
+      }
+    ],
+    "immutable_sources": {
+      "source_files": 396,
+      "changed": [],
+      "checks": [
+        {
+          "repo": "hypercurve",
+          "check": "format",
+          "returncode": 0,
+          "output": ""
+        },
+        {
+          "repo": "hypercurve",
+          "check": "whitespace",
+          "returncode": 0,
+          "output": ""
+        },
+        {
+          "repo": "hyperbrep",
+          "check": "format",
+          "returncode": 0,
+          "output": ""
+        },
+        {
+          "repo": "hyperbrep",
+          "check": "whitespace",
+          "returncode": 0,
+          "output": ""
+        }
+      ]
+    },
+    "independent_matrix": {
+      "returncode": 0,
+      "elapsed_seconds": 0.5646069689973956,
+      "library": "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/libhypercurve-2c7ff6f3fbe07653.rlib",
+      "sha256": "0c0c677aec8bb0f04e3e3694aa275299386a546e3380885fb6eb0972e1797da8",
+      "log": "general-trim-matrix.log",
+      "queries": 448,
+      "endpoint_replays": 2208,
+      "repeated_path_trims": 1008,
+      "certainty": "Certified"
+    },
+    "first_attempt": "general-curve-region-trim-attempt-1/",
+    "all_30_repositories_clean_after_commit": true
+  },
+  "evidence_audit": "general-curve-region-trim-evidence-audit.md",
+  "remaining": [
+    "Resolve constant-image trim semantics and grouping across constant spans; see general-trim-degeneracy-followup.json.",
+    "Selected-circle/analytic-parallel general curve-pair dispatch, full domain correspondence and normalized public region construction.",
+    "Five known promotion failures, eight expensive previously unqualified cases and the broader architecture goal."
+  ],
+  "commits": {
+    "hyperbrep": "6d9a1a689ee35e7d60d037851f5748ade2cbb05e",
+    "hypercurve": "678414f0c2e2f18987f5fe682c3fafa4cdd27930"
+  }
+}

@@ -1,0 +1,24 @@
+{
+  "returncode": 0,
+  "elapsed_seconds": 0.03170573999523185,
+  "normal_library_sha256": "4ae0b00c4bf9f0a4ee9000958e1f829e194b27d588a0b848d0c353038c6ecff5",
+  "log": "finite-circle-inverse-domains-self-public.log",
+  "source": "finite-region-self-domain-public.rs",
+  "command": [
+    "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustc",
+    "--edition=2024",
+    "-O",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-region-self-domain-public.rs",
+    "--extern",
+    "hypercurve=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypercurve-96f69e9a655f1fb5.rlib",
+    "-L",
+    "dependency=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps",
+    "-o",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-circle-inverse-domains-self-public"
+  ],
+  "run_command": [
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-circle-inverse-domains-self-public"
+  ],
+  "source_sha256": "90cb9bb76517881a9067f959549a04ddb2b0b89a4b595364c08cc6071fe1a8bf",
+  "executable_sha256": "7af6416c51c3260245f625f132f104067adbba1ce8893b77914980cc272d4d8c"
+}

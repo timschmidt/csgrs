@@ -1,0 +1,15 @@
+{
+  "command": [
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/corner-normalization-20260923-diagnostic3-libtest",
+    "--exact",
+    "bezier_region::tests::general_nonrepresented_chord_and_retained_rational_arc_complete_the_fillet_kernel",
+    "--test-threads=1",
+    "--nocapture"
+  ],
+  "returncode": 101,
+  "elapsed_seconds": 2.5174855740042403,
+  "env": {
+    "HYPERCURVE_DEBUG_RATIONAL_BLOCKER": "1"
+  },
+  "binary_sha256": "b6427155edc37417d7ea0423c92a508012ef2de11fc21aa3923feddb7d04a947"
+}

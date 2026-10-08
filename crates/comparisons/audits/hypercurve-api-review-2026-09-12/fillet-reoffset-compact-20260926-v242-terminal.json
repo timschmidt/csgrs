@@ -1,0 +1,7 @@
+{
+  "build_returncode": 101,
+  "outer_session": 18659,
+  "outer_exit_code": 1,
+  "all_processes_reaped": true,
+  "reason": "probe instrumentation syntax error; production unchanged"
+}

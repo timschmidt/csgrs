@@ -1,0 +1,3650 @@
+[
+  {
+    "case": 0,
+    "policy": 0,
+    "lifecycle": "retained",
+    "iterations": 1092,
+    "baselinePilotNs": 87534,
+    "candidatePilotNs": 87944
+  },
+  {
+    "case": 0,
+    "policy": 0,
+    "lifecycle": "fresh",
+    "iterations": 833,
+    "baselinePilotNs": 115332,
+    "candidatePilotNs": 112113
+  },
+  {
+    "case": 0,
+    "policy": 1,
+    "lifecycle": "retained",
+    "iterations": 1081,
+    "baselinePilotNs": 87024,
+    "candidatePilotNs": 88883
+  },
+  {
+    "case": 0,
+    "policy": 1,
+    "lifecycle": "fresh",
+    "iterations": 833,
+    "baselinePilotNs": 113872,
+    "candidatePilotNs": 115262
+  },
+  {
+    "case": 1,
+    "policy": 0,
+    "lifecycle": "retained",
+    "iterations": 1035,
+    "baselinePilotNs": 90064,
+    "candidatePilotNs": 92763
+  },
+  {
+    "case": 1,
+    "policy": 0,
+    "lifecycle": "fresh",
+    "iterations": 814,
+    "baselinePilotNs": 118022,
+    "candidatePilotNs": 116392
+  },
+  {
+    "case": 1,
+    "policy": 1,
+    "lifecycle": "retained",
+    "iterations": 975,
+    "baselinePilotNs": 92134,
+    "candidatePilotNs": 98513
+  },
+  {
+    "case": 1,
+    "policy": 1,
+    "lifecycle": "fresh",
+    "iterations": 812,
+    "baselinePilotNs": 118362,
+    "candidatePilotNs": 117742
+  },
+  {
+    "case": 2,
+    "policy": 0,
+    "lifecycle": "retained",
+    "iterations": 1186,
+    "baselinePilotNs": 80244,
+    "candidatePilotNs": 80955
+  },
+  {
+    "case": 2,
+    "policy": 0,
+    "lifecycle": "fresh",
+    "iterations": 700,
+    "baselinePilotNs": 104613,
+    "candidatePilotNs": 137180
+  },
+  {
+    "case": 2,
+    "policy": 1,
+    "lifecycle": "retained",
+    "iterations": 1089,
+    "baselinePilotNs": 88174,
+    "candidatePilotNs": 85444
+  },
+  {
+    "case": 2,
+    "policy": 1,
+    "lifecycle": "fresh",
+    "iterations": 854,
+    "baselinePilotNs": 112443,
+    "candidatePilotNs": 111102
+  },
+  {
+    "case": 3,
+    "policy": 0,
+    "lifecycle": "retained",
+    "iterations": 1145,
+    "baselinePilotNs": 82774,
+    "candidatePilotNs": 83874
+  },
+  {
+    "case": 3,
+    "policy": 0,
+    "lifecycle": "fresh",
+    "iterations": 875,
+    "baselinePilotNs": 109752,
+    "candidatePilotNs": 109243
+  },
+  {
+    "case": 3,
+    "policy": 1,
+    "lifecycle": "retained",
+    "iterations": 1002,
+    "baselinePilotNs": 95823,
+    "candidatePilotNs": 92033
+  },
+  {
+    "case": 3,
+    "policy": 1,
+    "lifecycle": "fresh",
+    "iterations": 691,
+    "baselinePilotNs": 138930,
+    "candidatePilotNs": 114712
+  },
+  {
+    "case": 4,
+    "policy": 0,
+    "lifecycle": "retained",
+    "iterations": 164,
+    "baselinePilotNs": 551122,
+    "candidatePilotNs": 586620
+  },
+  {
+    "case": 4,
+    "policy": 0,
+    "lifecycle": "fresh",
+    "iterations": 163,
+    "baselinePilotNs": 589429,
+    "candidatePilotNs": 579901
+  },
+  {
+    "case": 4,
+    "policy": 1,
+    "lifecycle": "retained",
+    "iterations": 166,
+    "baselinePilotNs": 551892,
+    "candidatePilotNs": 580730
+  },
+  {
+    "case": 4,
+    "policy": 1,
+    "lifecycle": "fresh",
+    "iterations": 100,
+    "baselinePilotNs": 962444,
+    "candidatePilotNs": 584970
+  },
+  {
+    "case": 5,
+    "policy": 0,
+    "lifecycle": "retained",
+    "iterations": 167,
+    "baselinePilotNs": 539373,
+    "candidatePilotNs": 576570
+  },
+  {
+    "case": 5,
+    "policy": 0,
+    "lifecycle": "fresh",
+    "iterations": 151,
+    "baselinePilotNs": 639136,
+    "candidatePilotNs": 581500
+  },
+  {
+    "case": 5,
+    "policy": 1,
+    "lifecycle": "retained",
+    "iterations": 176,
+    "baselinePilotNs": 546053,
+    "candidatePilotNs": 544663
+  },
+  {
+    "case": 5,
+    "policy": 1,
+    "lifecycle": "fresh",
+    "iterations": 166,
+    "baselinePilotNs": 578780,
+    "candidatePilotNs": 572891
+  },
+  {
+    "case": 6,
+    "policy": 0,
+    "lifecycle": "retained",
+    "iterations": 133,
+    "baselinePilotNs": 706081,
+    "candidatePilotNs": 724750
+  },
+  {
+    "case": 6,
+    "policy": 0,
+    "lifecycle": "fresh",
+    "iterations": 105,
+    "baselinePilotNs": 727980,
+    "candidatePilotNs": 920417
+  },
+  {
+    "case": 6,
+    "policy": 1,
+    "lifecycle": "retained",
+    "iterations": 135,
+    "baselinePilotNs": 695632,
+    "candidatePilotNs": 713021
+  },
+  {
+    "case": 6,
+    "policy": 1,
+    "lifecycle": "fresh",
+    "iterations": 132,
+    "baselinePilotNs": 729730,
+    "candidatePilotNs": 717070
+  },
+  {
+    "case": 7,
+    "policy": 0,
+    "lifecycle": "retained",
+    "iterations": 128,
+    "baselinePilotNs": 737939,
+    "candidatePilotNs": 755338
+  },
+  {
+    "case": 7,
+    "policy": 0,
+    "lifecycle": "fresh",
+    "iterations": 122,
+    "baselinePilotNs": 769817,
+    "candidatePilotNs": 789566
+  },
+  {
+    "case": 7,
+    "policy": 1,
+    "lifecycle": "retained",
+    "iterations": 133,
+    "baselinePilotNs": 726240,
+    "candidatePilotNs": 717551
+  },
+  {
+    "case": 7,
+    "policy": 1,
+    "lifecycle": "fresh",
+    "iterations": 122,
+    "baselinePilotNs": 786966,
+    "candidatePilotNs": 760768
+  },
+  {
+    "case": 8,
+    "policy": 0,
+    "lifecycle": "retained",
+    "iterations": 48,
+    "baselinePilotNs": 2026901,
+    "candidatePilotNs": 2020301
+  },
+  {
+    "case": 8,
+    "policy": 0,
+    "lifecycle": "fresh",
+    "iterations": 43,
+    "baselinePilotNs": 2282214,
+    "candidatePilotNs": 2088217
+  },
+  {
+    "case": 8,
+    "policy": 1,
+    "lifecycle": "retained",
+    "iterations": 46,
+    "baselinePilotNs": 2115355,
+    "candidatePilotNs": 2024191
+  },
+  {
+    "case": 8,
+    "policy": 1,
+    "lifecycle": "fresh",
+    "iterations": 45,
+    "baselinePilotNs": 2070818,
+    "candidatePilotNs": 2149693
+  },
+  {
+    "case": 9,
+    "policy": 0,
+    "lifecycle": "retained",
+    "iterations": 49,
+    "baselinePilotNs": 1942726,
+    "candidatePilotNs": 1993043
+  },
+  {
+    "case": 9,
+    "policy": 0,
+    "lifecycle": "fresh",
+    "iterations": 44,
+    "baselinePilotNs": 2213458,
+    "candidatePilotNs": 1991554
+  },
+  {
+    "case": 9,
+    "policy": 1,
+    "lifecycle": "retained",
+    "iterations": 49,
+    "baselinePilotNs": 1980504,
+    "candidatePilotNs": 1929907
+  },
+  {
+    "case": 9,
+    "policy": 1,
+    "lifecycle": "fresh",
+    "iterations": 48,
+    "baselinePilotNs": 1971894,
+    "candidatePilotNs": 2029760
+  },
+  {
+    "case": 10,
+    "policy": 0,
+    "lifecycle": "retained",
+    "iterations": 57,
+    "baselinePilotNs": 1646907,
+    "candidatePilotNs": 1694124
+  },
+  {
+    "case": 10,
+    "policy": 0,
+    "lifecycle": "fresh",
+    "iterations": 58,
+    "baselinePilotNs": 1672505,
+    "candidatePilotNs": 1624459
+  },
+  {
+    "case": 10,
+    "policy": 1,
+    "lifecycle": "retained",
+    "iterations": 54,
+    "baselinePilotNs": 1780578,
+    "candidatePilotNs": 1569522
+  },
+  {
+    "case": 10,
+    "policy": 1,
+    "lifecycle": "fresh",
+    "iterations": 58,
+    "baselinePilotNs": 1625118,
+    "candidatePilotNs": 1660126
+  },
+  {
+    "case": 11,
+    "policy": 0,
+    "lifecycle": "retained",
+    "iterations": 59,
+    "baselinePilotNs": 1626758,
+    "candidatePilotNs": 1646167
+  },
+  {
+    "case": 11,
+    "policy": 0,
+    "lifecycle": "fresh",
+    "iterations": 54,
+    "baselinePilotNs": 1808805,
+    "candidatePilotNs": 1695463
+  },
+  {
+    "case": 11,
+    "policy": 1,
+    "lifecycle": "retained",
+    "iterations": 59,
+    "baselinePilotNs": 1625448,
+    "candidatePilotNs": 1653406
+  },
+  {
+    "case": 11,
+    "policy": 1,
+    "lifecycle": "fresh",
+    "iterations": 56,
+    "baselinePilotNs": 1668756,
+    "candidatePilotNs": 1720542
+  },
+  {
+    "case": 12,
+    "policy": 0,
+    "lifecycle": "retained",
+    "iterations": 46,
+    "baselinePilotNs": 2107696,
+    "candidatePilotNs": 1994094
+  },
+  {
+    "case": 12,
+    "policy": 0,
+    "lifecycle": "fresh",
+    "iterations": 47,
+    "baselinePilotNs": 2011122,
+    "candidatePilotNs": 2047829
+  },
+  {
+    "case": 12,
+    "policy": 1,
+    "lifecycle": "retained",
+    "iterations": 49,
+    "baselinePilotNs": 1970155,
+    "candidatePilotNs": 1988184
+  },
+  {
+    "case": 12,
+    "policy": 1,
+    "lifecycle": "fresh",
+    "iterations": 46,
+    "baselinePilotNs": 2089006,
+    "candidatePilotNs": 2089317
+  },
+  {
+    "case": 13,
+    "policy": 0,
+    "lifecycle": "retained",
+    "iterations": 47,
+    "baselinePilotNs": 2056218,
+    "candidatePilotNs": 1963266
+  },
+  {
+    "case": 13,
+    "policy": 0,
+    "lifecycle": "fresh",
+    "iterations": 47,
+    "baselinePilotNs": 1981813,
+    "candidatePilotNs": 2081677
+  },
+  {
+    "case": 13,
+    "policy": 1,
+    "lifecycle": "retained",
+    "iterations": 49,
+    "baselinePilotNs": 1994093,
+    "candidatePilotNs": 1983733
+  },
+  {
+    "case": 13,
+    "policy": 1,
+    "lifecycle": "fresh",
+    "iterations": 46,
+    "baselinePilotNs": 2119904,
+    "candidatePilotNs": 1996893
+  },
+  {
+    "case": 14,
+    "policy": 0,
+    "lifecycle": "retained",
+    "iterations": 54,
+    "baselinePilotNs": 1794977,
+    "candidatePilotNs": 1803936
+  },
+  {
+    "case": 14,
+    "policy": 0,
+    "lifecycle": "fresh",
+    "iterations": 55,
+    "baselinePilotNs": 1690924,
+    "candidatePilotNs": 1753480
+  },
+  {
+    "case": 14,
+    "policy": 1,
+    "lifecycle": "retained",
+    "iterations": 47,
+    "baselinePilotNs": 2083357,
+    "candidatePilotNs": 1699673
+  },
+  {
+    "case": 14,
+    "policy": 1,
+    "lifecycle": "fresh",
+    "iterations": 56,
+    "baselinePilotNs": 1687014,
+    "candidatePilotNs": 1726621
+  },
+  {
+    "case": 15,
+    "policy": 0,
+    "lifecycle": "retained",
+    "iterations": 56,
+    "baselinePilotNs": 1724251,
+    "candidatePilotNs": 1714052
+  },
+  {
+    "case": 15,
+    "policy": 0,
+    "lifecycle": "fresh",
+    "iterations": 56,
+    "baselinePilotNs": 1744131,
+    "candidatePilotNs": 1733381
+  },
+  {
+    "case": 15,
+    "policy": 1,
+    "lifecycle": "retained",
+    "iterations": 56,
+    "baselinePilotNs": 1719062,
+    "candidatePilotNs": 1705933
+  },
+  {
+    "case": 15,
+    "policy": 1,
+    "lifecycle": "fresh",
+    "iterations": 54,
+    "baselinePilotNs": 1746850,
+    "candidatePilotNs": 1785437
+  },
+  {
+    "case": 16,
+    "policy": 0,
+    "lifecycle": "retained",
+    "iterations": 63,
+    "baselinePilotNs": 1522885,
+    "candidatePilotNs": 1532165
+  },
+  {
+    "case": 16,
+    "policy": 0,
+    "lifecycle": "fresh",
+    "iterations": 61,
+    "baselinePilotNs": 1555683,
+    "candidatePilotNs": 1582861
+  },
+  {
+    "case": 16,
+    "policy": 1,
+    "lifecycle": "retained",
+    "iterations": 62,
+    "baselinePilotNs": 1510846,
+    "candidatePilotNs": 1562193
+  },
+  {
+    "case": 16,
+    "policy": 1,
+    "lifecycle": "fresh",
+    "iterations": 58,
+    "baselinePilotNs": 1660316,
+    "candidatePilotNs": 1591161
+  },
+  {
+    "case": 17,
+    "policy": 0,
+    "lifecycle": "retained",
+    "iterations": 64,
+    "baselinePilotNs": 1510057,
+    "candidatePilotNs": 1509737
+  },
+  {
+    "case": 17,
+    "policy": 0,
+    "lifecycle": "fresh",
+    "iterations": 62,
+    "baselinePilotNs": 1531765,
+    "candidatePilotNs": 1549213
+  },
+  {
+    "case": 17,
+    "policy": 1,
+    "lifecycle": "retained",
+    "iterations": 61,
+    "baselinePilotNs": 1508186,
+    "candidatePilotNs": 1578542
+  },
+  {
+    "case": 17,
+    "policy": 1,
+    "lifecycle": "fresh",
+    "iterations": 59,
+    "baselinePilotNs": 1558433,
+    "candidatePilotNs": 1652547
+  },
+  {
+    "case": 18,
+    "policy": 0,
+    "lifecycle": "retained",
+    "iterations": 66,
+    "baselinePilotNs": 1463649,
+    "candidatePilotNs": 1464350
+  },
+  {
+    "case": 18,
+    "policy": 0,
+    "lifecycle": "fresh",
+    "iterations": 63,
+    "baselinePilotNs": 1535745,
+    "candidatePilotNs": 1501817
+  },
+  {
+    "case": 18,
+    "policy": 1,
+    "lifecycle": "retained",
+    "iterations": 65,
+    "baselinePilotNs": 1443131,
+    "candidatePilotNs": 1485058
+  },
+  {
+    "case": 18,
+    "policy": 1,
+    "lifecycle": "fresh",
+    "iterations": 63,
+    "baselinePilotNs": 1493617,
+    "candidatePilotNs": 1544624
+  },
+  {
+    "case": 19,
+    "policy": 0,
+    "lifecycle": "retained",
+    "iterations": 66,
+    "baselinePilotNs": 1440501,
+    "candidatePilotNs": 1455910
+  },
+  {
+    "case": 19,
+    "policy": 0,
+    "lifecycle": "fresh",
+    "iterations": 63,
+    "baselinePilotNs": 1490308,
+    "candidatePilotNs": 1530275
+  },
+  {
+    "case": 19,
+    "policy": 1,
+    "lifecycle": "retained",
+    "iterations": 65,
+    "baselinePilotNs": 1459150,
+    "candidatePilotNs": 1486278
+  },
+  {
+    "case": 19,
+    "policy": 1,
+    "lifecycle": "fresh",
+    "iterations": 65,
+    "baselinePilotNs": 1488528,
+    "candidatePilotNs": 1487988
+  },
+  {
+    "case": 20,
+    "policy": 0,
+    "lifecycle": "retained",
+    "iterations": 153,
+    "baselinePilotNs": 625807,
+    "candidatePilotNs": 627867
+  },
+  {
+    "case": 20,
+    "policy": 0,
+    "lifecycle": "fresh",
+    "iterations": 147,
+    "baselinePilotNs": 650555,
+    "candidatePilotNs": 654925
+  },
+  {
+    "case": 20,
+    "policy": 1,
+    "lifecycle": "retained",
+    "iterations": 142,
+    "baselinePilotNs": 640356,
+    "candidatePilotNs": 678163
+  },
+  {
+    "case": 20,
+    "policy": 1,
+    "lifecycle": "fresh",
+    "iterations": 102,
+    "baselinePilotNs": 946525,
+    "candidatePilotNs": 646546
+  },
+  {
+    "case": 21,
+    "policy": 0,
+    "lifecycle": "retained",
+    "iterations": 154,
+    "baselinePilotNs": 626407,
+    "candidatePilotNs": 613018
+  },
+  {
+    "case": 21,
+    "policy": 0,
+    "lifecycle": "fresh",
+    "iterations": 152,
+    "baselinePilotNs": 632897,
+    "candidatePilotNs": 632587
+  },
+  {
+    "case": 21,
+    "policy": 1,
+    "lifecycle": "retained",
+    "iterations": 155,
+    "baselinePilotNs": 621457,
+    "candidatePilotNs": 599729
+  },
+  {
+    "case": 21,
+    "policy": 1,
+    "lifecycle": "fresh",
+    "iterations": 150,
+    "baselinePilotNs": 641416,
+    "candidatePilotNs": 630137
+  },
+  {
+    "case": 22,
+    "policy": 0,
+    "lifecycle": "retained",
+    "iterations": 129,
+    "baselinePilotNs": 745609,
+    "candidatePilotNs": 669574
+  },
+  {
+    "case": 22,
+    "policy": 0,
+    "lifecycle": "fresh",
+    "iterations": 137,
+    "baselinePilotNs": 702842,
+    "candidatePilotNs": 696603
+  },
+  {
+    "case": 22,
+    "policy": 1,
+    "lifecycle": "retained",
+    "iterations": 142,
+    "baselinePilotNs": 668584,
+    "candidatePilotNs": 678254
+  },
+  {
+    "case": 22,
+    "policy": 1,
+    "lifecycle": "fresh",
+    "iterations": 132,
+    "baselinePilotNs": 728900,
+    "candidatePilotNs": 728070
+  },
+  {
+    "case": 23,
+    "policy": 0,
+    "lifecycle": "retained",
+    "iterations": 334,
+    "baselinePilotNs": 287731,
+    "candidatePilotNs": 157639
+  },
+  {
+    "case": 23,
+    "policy": 0,
+    "lifecycle": "fresh",
+    "iterations": 282,
+    "baselinePilotNs": 341067,
+    "candidatePilotNs": 183937
+  },
+  {
+    "case": 23,
+    "policy": 1,
+    "lifecycle": "retained",
+    "iterations": 339,
+    "baselinePilotNs": 283951,
+    "candidatePilotNs": 157840
+  },
+  {
+    "case": 23,
+    "policy": 1,
+    "lifecycle": "fresh",
+    "iterations": 311,
+    "baselinePilotNs": 308919,
+    "candidatePilotNs": 180827
+  },
+  {
+    "case": 24,
+    "policy": 0,
+    "lifecycle": "retained",
+    "iterations": 22,
+    "baselinePilotNs": 4506830,
+    "candidatePilotNs": 4532719
+  },
+  {
+    "case": 24,
+    "policy": 0,
+    "lifecycle": "fresh",
+    "iterations": 18,
+    "baselinePilotNs": 4495662,
+    "candidatePilotNs": 5471184
+  },
+  {
+    "case": 24,
+    "policy": 1,
+    "lifecycle": "retained",
+    "iterations": 21,
+    "baselinePilotNs": 4700807,
+    "candidatePilotNs": 4558747
+  },
+  {
+    "case": 24,
+    "policy": 1,
+    "lifecycle": "fresh",
+    "iterations": 21,
+    "baselinePilotNs": 4633932,
+    "candidatePilotNs": 4610004
+  },
+  {
+    "case": 25,
+    "policy": 0,
+    "lifecycle": "retained",
+    "iterations": 22,
+    "baselinePilotNs": 4516450,
+    "candidatePilotNs": 4479522
+  },
+  {
+    "case": 25,
+    "policy": 0,
+    "lifecycle": "fresh",
+    "iterations": 22,
+    "baselinePilotNs": 4540948,
+    "candidatePilotNs": 4565356
+  },
+  {
+    "case": 25,
+    "policy": 1,
+    "lifecycle": "retained",
+    "iterations": 22,
+    "baselinePilotNs": 4461034,
+    "candidatePilotNs": 4428556
+  },
+  {
+    "case": 25,
+    "policy": 1,
+    "lifecycle": "fresh",
+    "iterations": 22,
+    "baselinePilotNs": 4521300,
+    "candidatePilotNs": 4447375
+  },
+  {
+    "case": 26,
+    "policy": 0,
+    "lifecycle": "retained",
+    "iterations": 24,
+    "baselinePilotNs": 4088669,
+    "candidatePilotNs": 4122737
+  },
+  {
+    "case": 26,
+    "policy": 0,
+    "lifecycle": "fresh",
+    "iterations": 24,
+    "baselinePilotNs": 4089709,
+    "candidatePilotNs": 4117668
+  },
+  {
+    "case": 26,
+    "policy": 1,
+    "lifecycle": "retained",
+    "iterations": 24,
+    "baselinePilotNs": 4098189,
+    "candidatePilotNs": 4164195
+  },
+  {
+    "case": 26,
+    "policy": 1,
+    "lifecycle": "fresh",
+    "iterations": 23,
+    "baselinePilotNs": 4311514,
+    "candidatePilotNs": 4212601
+  },
+  {
+    "case": 27,
+    "policy": 0,
+    "lifecycle": "retained",
+    "iterations": 22,
+    "baselinePilotNs": 4521549,
+    "candidatePilotNs": 4159605
+  },
+  {
+    "case": 27,
+    "policy": 0,
+    "lifecycle": "fresh",
+    "iterations": 23,
+    "baselinePilotNs": 4213720,
+    "candidatePilotNs": 4200982
+  },
+  {
+    "case": 27,
+    "policy": 1,
+    "lifecycle": "retained",
+    "iterations": 24,
+    "baselinePilotNs": 4144036,
+    "candidatePilotNs": 4166754
+  },
+  {
+    "case": 27,
+    "policy": 1,
+    "lifecycle": "fresh",
+    "iterations": 24,
+    "baselinePilotNs": 4100578,
+    "candidatePilotNs": 4154995
+  },
+  {
+    "case": 28,
+    "policy": 0,
+    "lifecycle": "retained",
+    "iterations": 569,
+    "baselinePilotNs": 165949,
+    "candidatePilotNs": 168798
+  },
+  {
+    "case": 28,
+    "policy": 0,
+    "lifecycle": "fresh",
+    "iterations": 509,
+    "baselinePilotNs": 184177,
+    "candidatePilotNs": 188967
+  },
+  {
+    "case": 28,
+    "policy": 1,
+    "lifecycle": "retained",
+    "iterations": 577,
+    "baselinePilotNs": 159019,
+    "candidatePilotNs": 166568
+  },
+  {
+    "case": 28,
+    "policy": 1,
+    "lifecycle": "fresh",
+    "iterations": 485,
+    "baselinePilotNs": 186897,
+    "candidatePilotNs": 198266
+  },
+  {
+    "case": 29,
+    "policy": 0,
+    "lifecycle": "retained",
+    "iterations": 596,
+    "baselinePilotNs": 160919,
+    "candidatePilotNs": 161279
+  },
+  {
+    "case": 29,
+    "policy": 0,
+    "lifecycle": "fresh",
+    "iterations": 468,
+    "baselinePilotNs": 205566,
+    "candidatePilotNs": 186957
+  },
+  {
+    "case": 29,
+    "policy": 1,
+    "lifecycle": "retained",
+    "iterations": 562,
+    "baselinePilotNs": 170869,
+    "candidatePilotNs": 160619
+  },
+  {
+    "case": 29,
+    "policy": 1,
+    "lifecycle": "fresh",
+    "iterations": 509,
+    "baselinePilotNs": 187677,
+    "candidatePilotNs": 188777
+  },
+  {
+    "case": 30,
+    "policy": 0,
+    "lifecycle": "retained",
+    "iterations": 527,
+    "baselinePilotNs": 182307,
+    "candidatePilotNs": 161419
+  },
+  {
+    "case": 30,
+    "policy": 0,
+    "lifecycle": "fresh",
+    "iterations": 498,
+    "baselinePilotNs": 184357,
+    "candidatePilotNs": 192797
+  },
+  {
+    "case": 30,
+    "policy": 1,
+    "lifecycle": "retained",
+    "iterations": 591,
+    "baselinePilotNs": 162519,
+    "candidatePilotNs": 160789
+  },
+  {
+    "case": 30,
+    "policy": 1,
+    "lifecycle": "fresh",
+    "iterations": 513,
+    "baselinePilotNs": 184057,
+    "candidatePilotNs": 187137
+  },
+  {
+    "case": 31,
+    "policy": 0,
+    "lifecycle": "retained",
+    "iterations": 590,
+    "baselinePilotNs": 162089,
+    "candidatePilotNs": 162868
+  },
+  {
+    "case": 31,
+    "policy": 0,
+    "lifecycle": "fresh",
+    "iterations": 510,
+    "baselinePilotNs": 188457,
+    "candidatePilotNs": 188498
+  },
+  {
+    "case": 31,
+    "policy": 1,
+    "lifecycle": "retained",
+    "iterations": 590,
+    "baselinePilotNs": 161019,
+    "candidatePilotNs": 162919
+  },
+  {
+    "case": 31,
+    "policy": 1,
+    "lifecycle": "fresh",
+    "iterations": 507,
+    "baselinePilotNs": 188197,
+    "candidatePilotNs": 189717
+  },
+  {
+    "case": 32,
+    "policy": 0,
+    "lifecycle": "retained",
+    "iterations": 709,
+    "baselinePilotNs": 132061,
+    "candidatePilotNs": 135461
+  },
+  {
+    "case": 32,
+    "policy": 0,
+    "lifecycle": "fresh",
+    "iterations": 607,
+    "baselinePilotNs": 157089,
+    "candidatePilotNs": 158379
+  },
+  {
+    "case": 32,
+    "policy": 1,
+    "lifecycle": "retained",
+    "iterations": 667,
+    "baselinePilotNs": 131691,
+    "candidatePilotNs": 144140
+  },
+  {
+    "case": 32,
+    "policy": 1,
+    "lifecycle": "fresh",
+    "iterations": 570,
+    "baselinePilotNs": 161899,
+    "candidatePilotNs": 168539
+  },
+  {
+    "case": 33,
+    "policy": 0,
+    "lifecycle": "retained",
+    "iterations": 711,
+    "baselinePilotNs": 130851,
+    "candidatePilotNs": 135211
+  },
+  {
+    "case": 33,
+    "policy": 0,
+    "lifecycle": "fresh",
+    "iterations": 593,
+    "baselinePilotNs": 155119,
+    "candidatePilotNs": 162109
+  },
+  {
+    "case": 33,
+    "policy": 1,
+    "lifecycle": "retained",
+    "iterations": 699,
+    "baselinePilotNs": 132821,
+    "candidatePilotNs": 137391
+  },
+  {
+    "case": 33,
+    "policy": 1,
+    "lifecycle": "fresh",
+    "iterations": 605,
+    "baselinePilotNs": 155549,
+    "candidatePilotNs": 158909
+  },
+  {
+    "case": 34,
+    "policy": 0,
+    "lifecycle": "retained",
+    "iterations": 1339,
+    "baselinePilotNs": 71705,
+    "candidatePilotNs": 67565
+  },
+  {
+    "case": 34,
+    "policy": 0,
+    "lifecycle": "fresh",
+    "iterations": 1034,
+    "baselinePilotNs": 92933,
+    "candidatePilotNs": 90024
+  },
+  {
+    "case": 34,
+    "policy": 1,
+    "lifecycle": "retained",
+    "iterations": 1238,
+    "baselinePilotNs": 77585,
+    "candidatePilotNs": 73725
+  },
+  {
+    "case": 34,
+    "policy": 1,
+    "lifecycle": "fresh",
+    "iterations": 979,
+    "baselinePilotNs": 98103,
+    "candidatePilotNs": 94854
+  },
+  {
+    "case": 35,
+    "policy": 0,
+    "lifecycle": "retained",
+    "iterations": 20000,
+    "baselinePilotNs": 3250,
+    "candidatePilotNs": 3649
+  },
+  {
+    "case": 35,
+    "policy": 0,
+    "lifecycle": "fresh",
+    "iterations": 4007,
+    "baselinePilotNs": 22868,
+    "candidatePilotNs": 23959
+  },
+  {
+    "case": 35,
+    "policy": 1,
+    "lifecycle": "retained",
+    "iterations": 20000,
+    "baselinePilotNs": 3250,
+    "candidatePilotNs": 3690
+  },
+  {
+    "case": 35,
+    "policy": 1,
+    "lifecycle": "fresh",
+    "iterations": 4009,
+    "baselinePilotNs": 22888,
+    "candidatePilotNs": 23949
+  },
+  {
+    "case": 36,
+    "policy": 0,
+    "lifecycle": "retained",
+    "iterations": 39,
+    "baselinePilotNs": 2470920,
+    "candidatePilotNs": 2506078
+  },
+  {
+    "case": 36,
+    "policy": 0,
+    "lifecycle": "fresh",
+    "iterations": 33,
+    "baselinePilotNs": 2998245,
+    "candidatePilotNs": 2587822
+  },
+  {
+    "case": 36,
+    "policy": 1,
+    "lifecycle": "retained",
+    "iterations": 39,
+    "baselinePilotNs": 2478220,
+    "candidatePilotNs": 2465521
+  },
+  {
+    "case": 36,
+    "policy": 1,
+    "lifecycle": "fresh",
+    "iterations": 37,
+    "baselinePilotNs": 2600602,
+    "candidatePilotNs": 2557235
+  },
+  {
+    "case": 37,
+    "policy": 0,
+    "lifecycle": "retained",
+    "iterations": 40,
+    "baselinePilotNs": 2364337,
+    "candidatePilotNs": 2444773
+  },
+  {
+    "case": 37,
+    "policy": 0,
+    "lifecycle": "fresh",
+    "iterations": 39,
+    "baselinePilotNs": 2494039,
+    "candidatePilotNs": 2390096
+  },
+  {
+    "case": 37,
+    "policy": 1,
+    "lifecycle": "retained",
+    "iterations": 41,
+    "baselinePilotNs": 2372927,
+    "candidatePilotNs": 2366207
+  },
+  {
+    "case": 37,
+    "policy": 1,
+    "lifecycle": "fresh",
+    "iterations": 39,
+    "baselinePilotNs": 2461841,
+    "candidatePilotNs": 2506388
+  },
+  {
+    "case": 38,
+    "policy": 0,
+    "lifecycle": "retained",
+    "iterations": 50,
+    "baselinePilotNs": 1909499,
+    "candidatePilotNs": 1923298
+  },
+  {
+    "case": 38,
+    "policy": 0,
+    "lifecycle": "fresh",
+    "iterations": 48,
+    "baselinePilotNs": 2000792,
+    "candidatePilotNs": 1982264
+  },
+  {
+    "case": 38,
+    "policy": 1,
+    "lifecycle": "retained",
+    "iterations": 48,
+    "baselinePilotNs": 2000042,
+    "candidatePilotNs": 1985684
+  },
+  {
+    "case": 38,
+    "policy": 1,
+    "lifecycle": "fresh",
+    "iterations": 48,
+    "baselinePilotNs": 2026241,
+    "candidatePilotNs": 2002103
+  },
+  {
+    "case": 39,
+    "policy": 0,
+    "lifecycle": "retained",
+    "iterations": 39,
+    "baselinePilotNs": 2470511,
+    "candidatePilotNs": 1914488
+  },
+  {
+    "case": 39,
+    "policy": 0,
+    "lifecycle": "fresh",
+    "iterations": 49,
+    "baselinePilotNs": 1965685,
+    "candidatePilotNs": 1963545
+  },
+  {
+    "case": 39,
+    "policy": 1,
+    "lifecycle": "retained",
+    "iterations": 49,
+    "baselinePilotNs": 1890780,
+    "candidatePilotNs": 1983534
+  },
+  {
+    "case": 39,
+    "policy": 1,
+    "lifecycle": "fresh",
+    "iterations": 51,
+    "baselinePilotNs": 1895169,
+    "candidatePilotNs": 1904909
+  },
+  {
+    "case": 40,
+    "policy": 0,
+    "lifecycle": "retained",
+    "iterations": 70,
+    "baselinePilotNs": 1375096,
+    "candidatePilotNs": 1297681
+  },
+  {
+    "case": 40,
+    "policy": 0,
+    "lifecycle": "fresh",
+    "iterations": 65,
+    "baselinePilotNs": 1477958,
+    "candidatePilotNs": 1381925
+  },
+  {
+    "case": 40,
+    "policy": 1,
+    "lifecycle": "retained",
+    "iterations": 67,
+    "baselinePilotNs": 1434911,
+    "candidatePilotNs": 1322740
+  },
+  {
+    "case": 40,
+    "policy": 1,
+    "lifecycle": "fresh",
+    "iterations": 61,
+    "baselinePilotNs": 1599780,
+    "candidatePilotNs": 1415453
+  },
+  {
+    "case": 41,
+    "policy": 0,
+    "lifecycle": "retained",
+    "iterations": 68,
+    "baselinePilotNs": 204576,
+    "candidatePilotNs": 1429492
+  },
+  {
+    "case": 41,
+    "policy": 0,
+    "lifecycle": "fresh",
+    "iterations": 67,
+    "baselinePilotNs": 268901,
+    "candidatePilotNs": 1453910
+  },
+  {
+    "case": 41,
+    "policy": 1,
+    "lifecycle": "retained",
+    "iterations": 66,
+    "baselinePilotNs": 204335,
+    "candidatePilotNs": 1468289
+  },
+  {
+    "case": 41,
+    "policy": 1,
+    "lifecycle": "fresh",
+    "iterations": 63,
+    "baselinePilotNs": 231874,
+    "candidatePilotNs": 1528965
+  },
+  {
+    "case": 42,
+    "policy": 0,
+    "lifecycle": "retained",
+    "iterations": 418,
+    "baselinePilotNs": 225394,
+    "candidatePilotNs": 229704
+  },
+  {
+    "case": 42,
+    "policy": 0,
+    "lifecycle": "fresh",
+    "iterations": 350,
+    "baselinePilotNs": 256103,
+    "candidatePilotNs": 274481
+  },
+  {
+    "case": 42,
+    "policy": 1,
+    "lifecycle": "retained",
+    "iterations": 415,
+    "baselinePilotNs": 226965,
+    "candidatePilotNs": 231724
+  },
+  {
+    "case": 42,
+    "policy": 1,
+    "lifecycle": "fresh",
+    "iterations": 366,
+    "baselinePilotNs": 257962,
+    "candidatePilotNs": 262572
+  },
+  {
+    "case": 43,
+    "policy": 0,
+    "lifecycle": "retained",
+    "iterations": 17455,
+    "baselinePilotNs": 5289,
+    "candidatePilotNs": 5500
+  },
+  {
+    "case": 43,
+    "policy": 0,
+    "lifecycle": "fresh",
+    "iterations": 3716,
+    "baselinePilotNs": 24768,
+    "candidatePilotNs": 25838
+  },
+  {
+    "case": 43,
+    "policy": 1,
+    "lifecycle": "retained",
+    "iterations": 17055,
+    "baselinePilotNs": 5259,
+    "candidatePilotNs": 5629
+  },
+  {
+    "case": 43,
+    "policy": 1,
+    "lifecycle": "fresh",
+    "iterations": 3720,
+    "baselinePilotNs": 24698,
+    "candidatePilotNs": 25808
+  },
+  {
+    "case": 44,
+    "policy": 0,
+    "lifecycle": "retained",
+    "iterations": 691,
+    "baselinePilotNs": 138931,
+    "candidatePilotNs": 85794
+  },
+  {
+    "case": 44,
+    "policy": 0,
+    "lifecycle": "fresh",
+    "iterations": 562,
+    "baselinePilotNs": 170858,
+    "candidatePilotNs": 109113
+  },
+  {
+    "case": 44,
+    "policy": 1,
+    "lifecycle": "retained",
+    "iterations": 645,
+    "baselinePilotNs": 148869,
+    "candidatePilotNs": 98274
+  },
+  {
+    "case": 44,
+    "policy": 1,
+    "lifecycle": "fresh",
+    "iterations": 606,
+    "baselinePilotNs": 158519,
+    "candidatePilotNs": 117942
+  },
+  {
+    "case": 45,
+    "policy": 0,
+    "lifecycle": "retained",
+    "iterations": 753,
+    "baselinePilotNs": 127621,
+    "candidatePilotNs": 91344
+  },
+  {
+    "case": 45,
+    "policy": 0,
+    "lifecycle": "fresh",
+    "iterations": 644,
+    "baselinePilotNs": 149209,
+    "candidatePilotNs": 112293
+  },
+  {
+    "case": 45,
+    "policy": 1,
+    "lifecycle": "retained",
+    "iterations": 637,
+    "baselinePilotNs": 150890,
+    "candidatePilotNs": 102613
+  },
+  {
+    "case": 45,
+    "policy": 1,
+    "lifecycle": "fresh",
+    "iterations": 596,
+    "baselinePilotNs": 161219,
+    "candidatePilotNs": 123152
+  },
+  {
+    "case": 46,
+    "policy": 0,
+    "lifecycle": "retained",
+    "iterations": 470,
+    "baselinePilotNs": 204436,
+    "candidatePilotNs": 87144
+  },
+  {
+    "case": 46,
+    "policy": 0,
+    "lifecycle": "fresh",
+    "iterations": 405,
+    "baselinePilotNs": 237424,
+    "candidatePilotNs": 109062
+  },
+  {
+    "case": 46,
+    "policy": 1,
+    "lifecycle": "retained",
+    "iterations": 435,
+    "baselinePilotNs": 220955,
+    "candidatePilotNs": 97323
+  },
+  {
+    "case": 46,
+    "policy": 1,
+    "lifecycle": "fresh",
+    "iterations": 399,
+    "baselinePilotNs": 240933,
+    "candidatePilotNs": 121261
+  },
+  {
+    "case": 47,
+    "policy": 0,
+    "lifecycle": "retained",
+    "iterations": 443,
+    "baselinePilotNs": 217115,
+    "candidatePilotNs": 85494
+  },
+  {
+    "case": 47,
+    "policy": 0,
+    "lifecycle": "fresh",
+    "iterations": 359,
+    "baselinePilotNs": 267601,
+    "candidatePilotNs": 112843
+  },
+  {
+    "case": 47,
+    "policy": 1,
+    "lifecycle": "retained",
+    "iterations": 441,
+    "baselinePilotNs": 217805,
+    "candidatePilotNs": 96583
+  },
+  {
+    "case": 47,
+    "policy": 1,
+    "lifecycle": "fresh",
+    "iterations": 392,
+    "baselinePilotNs": 245243,
+    "candidatePilotNs": 120892
+  },
+  {
+    "case": 48,
+    "policy": 0,
+    "lifecycle": "retained",
+    "iterations": 351,
+    "baselinePilotNs": 273721,
+    "candidatePilotNs": 167098
+  },
+  {
+    "case": 48,
+    "policy": 0,
+    "lifecycle": "fresh",
+    "iterations": 223,
+    "baselinePilotNs": 296139,
+    "candidatePilotNs": 431101
+  },
+  {
+    "case": 48,
+    "policy": 1,
+    "lifecycle": "retained",
+    "iterations": 335,
+    "baselinePilotNs": 286611,
+    "candidatePilotNs": 153489
+  },
+  {
+    "case": 48,
+    "policy": 1,
+    "lifecycle": "fresh",
+    "iterations": 314,
+    "baselinePilotNs": 306429,
+    "candidatePilotNs": 180308
+  },
+  {
+    "case": 49,
+    "policy": 0,
+    "lifecycle": "retained",
+    "iterations": 356,
+    "baselinePilotNs": 269882,
+    "candidatePilotNs": 147410
+  },
+  {
+    "case": 49,
+    "policy": 0,
+    "lifecycle": "fresh",
+    "iterations": 324,
+    "baselinePilotNs": 296340,
+    "candidatePilotNs": 174388
+  },
+  {
+    "case": 49,
+    "policy": 1,
+    "lifecycle": "retained",
+    "iterations": 343,
+    "baselinePilotNs": 280511,
+    "candidatePilotNs": 159629
+  },
+  {
+    "case": 49,
+    "policy": 1,
+    "lifecycle": "fresh",
+    "iterations": 318,
+    "baselinePilotNs": 302669,
+    "candidatePilotNs": 206126
+  },
+  {
+    "case": 50,
+    "policy": 0,
+    "lifecycle": "retained",
+    "iterations": 189,
+    "baselinePilotNs": 508265,
+    "candidatePilotNs": 145180
+  },
+  {
+    "case": 50,
+    "policy": 0,
+    "lifecycle": "fresh",
+    "iterations": 183,
+    "baselinePilotNs": 527154,
+    "candidatePilotNs": 200546
+  },
+  {
+    "case": 50,
+    "policy": 1,
+    "lifecycle": "retained",
+    "iterations": 185,
+    "baselinePilotNs": 519674,
+    "candidatePilotNs": 152990
+  },
+  {
+    "case": 50,
+    "policy": 1,
+    "lifecycle": "fresh",
+    "iterations": 174,
+    "baselinePilotNs": 552303,
+    "candidatePilotNs": 188527
+  },
+  {
+    "case": 51,
+    "policy": 0,
+    "lifecycle": "retained",
+    "iterations": 190,
+    "baselinePilotNs": 506055,
+    "candidatePilotNs": 137241
+  },
+  {
+    "case": 51,
+    "policy": 0,
+    "lifecycle": "fresh",
+    "iterations": 184,
+    "baselinePilotNs": 523244,
+    "candidatePilotNs": 162288
+  },
+  {
+    "case": 51,
+    "policy": 1,
+    "lifecycle": "retained",
+    "iterations": 187,
+    "baselinePilotNs": 515605,
+    "candidatePilotNs": 148730
+  },
+  {
+    "case": 51,
+    "policy": 1,
+    "lifecycle": "fresh",
+    "iterations": 179,
+    "baselinePilotNs": 536573,
+    "candidatePilotNs": 173408
+  },
+  {
+    "case": 52,
+    "policy": 0,
+    "lifecycle": "retained",
+    "iterations": 189,
+    "baselinePilotNs": 510345,
+    "candidatePilotNs": 234024
+  },
+  {
+    "case": 52,
+    "policy": 0,
+    "lifecycle": "fresh",
+    "iterations": 180,
+    "baselinePilotNs": 535823,
+    "candidatePilotNs": 264232
+  },
+  {
+    "case": 52,
+    "policy": 1,
+    "lifecycle": "retained",
+    "iterations": 159,
+    "baselinePilotNs": 607418,
+    "candidatePilotNs": 244333
+  },
+  {
+    "case": 52,
+    "policy": 1,
+    "lifecycle": "fresh",
+    "iterations": 175,
+    "baselinePilotNs": 550292,
+    "candidatePilotNs": 285340
+  },
+  {
+    "case": 53,
+    "policy": 0,
+    "lifecycle": "retained",
+    "iterations": 185,
+    "baselinePilotNs": 520164,
+    "candidatePilotNs": 233444
+  },
+  {
+    "case": 53,
+    "policy": 0,
+    "lifecycle": "fresh",
+    "iterations": 177,
+    "baselinePilotNs": 543083,
+    "candidatePilotNs": 259492
+  },
+  {
+    "case": 53,
+    "policy": 1,
+    "lifecycle": "retained",
+    "iterations": 180,
+    "baselinePilotNs": 535983,
+    "candidatePilotNs": 243703
+  },
+  {
+    "case": 53,
+    "policy": 1,
+    "lifecycle": "fresh",
+    "iterations": 173,
+    "baselinePilotNs": 557422,
+    "candidatePilotNs": 276511
+  },
+  {
+    "case": 54,
+    "policy": 0,
+    "lifecycle": "retained",
+    "iterations": 87,
+    "baselinePilotNs": 1108244,
+    "candidatePilotNs": 225245
+  },
+  {
+    "case": 54,
+    "policy": 0,
+    "lifecycle": "fresh",
+    "iterations": 87,
+    "baselinePilotNs": 1107944,
+    "candidatePilotNs": 250693
+  },
+  {
+    "case": 54,
+    "policy": 1,
+    "lifecycle": "retained",
+    "iterations": 88,
+    "baselinePilotNs": 1093945,
+    "candidatePilotNs": 233274
+  },
+  {
+    "case": 54,
+    "policy": 1,
+    "lifecycle": "fresh",
+    "iterations": 86,
+    "baselinePilotNs": 1122303,
+    "candidatePilotNs": 256793
+  },
+  {
+    "case": 55,
+    "policy": 0,
+    "lifecycle": "retained",
+    "iterations": 90,
+    "baselinePilotNs": 1076566,
+    "candidatePilotNs": 233044
+  },
+  {
+    "case": 55,
+    "policy": 0,
+    "lifecycle": "fresh",
+    "iterations": 79,
+    "baselinePilotNs": 1219126,
+    "candidatePilotNs": 263872
+  },
+  {
+    "case": 55,
+    "policy": 1,
+    "lifecycle": "retained",
+    "iterations": 88,
+    "baselinePilotNs": 1094895,
+    "candidatePilotNs": 240913
+  },
+  {
+    "case": 55,
+    "policy": 1,
+    "lifecycle": "fresh",
+    "iterations": 65,
+    "baselinePilotNs": 1482898,
+    "candidatePilotNs": 287370
+  },
+  {
+    "case": 56,
+    "policy": 0,
+    "lifecycle": "retained",
+    "iterations": 69,
+    "baselinePilotNs": 1410603,
+    "candidatePilotNs": 1296860
+  },
+  {
+    "case": 56,
+    "policy": 0,
+    "lifecycle": "fresh",
+    "iterations": 64,
+    "baselinePilotNs": 1512396,
+    "candidatePilotNs": 1413973
+  },
+  {
+    "case": 56,
+    "policy": 1,
+    "lifecycle": "retained",
+    "iterations": 68,
+    "baselinePilotNs": 1371136,
+    "candidatePilotNs": 1420413
+  },
+  {
+    "case": 56,
+    "policy": 1,
+    "lifecycle": "fresh",
+    "iterations": 66,
+    "baselinePilotNs": 1462029,
+    "candidatePilotNs": 1400474
+  },
+  {
+    "case": 57,
+    "policy": 0,
+    "lifecycle": "retained",
+    "iterations": 67,
+    "baselinePilotNs": 208646,
+    "candidatePilotNs": 1435861
+  },
+  {
+    "case": 57,
+    "policy": 0,
+    "lifecycle": "fresh",
+    "iterations": 67,
+    "baselinePilotNs": 374004,
+    "candidatePilotNs": 1443401
+  },
+  {
+    "case": 57,
+    "policy": 1,
+    "lifecycle": "retained",
+    "iterations": 66,
+    "baselinePilotNs": 202766,
+    "candidatePilotNs": 1471589
+  },
+  {
+    "case": 57,
+    "policy": 1,
+    "lifecycle": "fresh",
+    "iterations": 65,
+    "baselinePilotNs": 229965,
+    "candidatePilotNs": 1477478
+  },
+  {
+    "case": 58,
+    "policy": 0,
+    "lifecycle": "retained",
+    "iterations": 420,
+    "baselinePilotNs": 225434,
+    "candidatePilotNs": 228724
+  },
+  {
+    "case": 58,
+    "policy": 0,
+    "lifecycle": "fresh",
+    "iterations": 323,
+    "baselinePilotNs": 279620,
+    "candidatePilotNs": 297889
+  },
+  {
+    "case": 58,
+    "policy": 1,
+    "lifecycle": "retained",
+    "iterations": 414,
+    "baselinePilotNs": 232104,
+    "candidatePilotNs": 227054
+  },
+  {
+    "case": 58,
+    "policy": 1,
+    "lifecycle": "fresh",
+    "iterations": 347,
+    "baselinePilotNs": 253822,
+    "candidatePilotNs": 276771
+  },
+  {
+    "case": 59,
+    "policy": 0,
+    "lifecycle": "retained",
+    "iterations": 17615,
+    "baselinePilotNs": 5240,
+    "candidatePilotNs": 5450
+  },
+  {
+    "case": 59,
+    "policy": 0,
+    "lifecycle": "fresh",
+    "iterations": 3236,
+    "baselinePilotNs": 25679,
+    "candidatePilotNs": 29668
+  },
+  {
+    "case": 59,
+    "policy": 1,
+    "lifecycle": "retained",
+    "iterations": 17363,
+    "baselinePilotNs": 5020,
+    "candidatePilotNs": 5529
+  },
+  {
+    "case": 59,
+    "policy": 1,
+    "lifecycle": "fresh",
+    "iterations": 3720,
+    "baselinePilotNs": 25809,
+    "candidatePilotNs": 25428
+  },
+  {
+    "case": 60,
+    "policy": 0,
+    "lifecycle": "retained",
+    "iterations": 737,
+    "baselinePilotNs": 130281,
+    "candidatePilotNs": 86974
+  },
+  {
+    "case": 60,
+    "policy": 0,
+    "lifecycle": "fresh",
+    "iterations": 633,
+    "baselinePilotNs": 151690,
+    "candidatePilotNs": 108553
+  },
+  {
+    "case": 60,
+    "policy": 1,
+    "lifecycle": "retained",
+    "iterations": 698,
+    "baselinePilotNs": 137571,
+    "candidatePilotNs": 96504
+  },
+  {
+    "case": 60,
+    "policy": 1,
+    "lifecycle": "fresh",
+    "iterations": 590,
+    "baselinePilotNs": 162919,
+    "candidatePilotNs": 120591
+  },
+  {
+    "case": 61,
+    "policy": 0,
+    "lifecycle": "retained",
+    "iterations": 762,
+    "baselinePilotNs": 126051,
+    "candidatePilotNs": 90154
+  },
+  {
+    "case": 61,
+    "policy": 0,
+    "lifecycle": "fresh",
+    "iterations": 525,
+    "baselinePilotNs": 183158,
+    "candidatePilotNs": 114502
+  },
+  {
+    "case": 61,
+    "policy": 1,
+    "lifecycle": "retained",
+    "iterations": 709,
+    "baselinePilotNs": 135571,
+    "candidatePilotNs": 133741
+  },
+  {
+    "case": 61,
+    "policy": 1,
+    "lifecycle": "fresh",
+    "iterations": 508,
+    "baselinePilotNs": 189017,
+    "candidatePilotNs": 123641
+  },
+  {
+    "case": 62,
+    "policy": 0,
+    "lifecycle": "retained",
+    "iterations": 467,
+    "baselinePilotNs": 205636,
+    "candidatePilotNs": 88594
+  },
+  {
+    "case": 62,
+    "policy": 0,
+    "lifecycle": "fresh",
+    "iterations": 416,
+    "baselinePilotNs": 230804,
+    "candidatePilotNs": 109683
+  },
+  {
+    "case": 62,
+    "policy": 1,
+    "lifecycle": "retained",
+    "iterations": 419,
+    "baselinePilotNs": 229424,
+    "candidatePilotNs": 103753
+  },
+  {
+    "case": 62,
+    "policy": 1,
+    "lifecycle": "fresh",
+    "iterations": 206,
+    "baselinePilotNs": 468238,
+    "candidatePilotNs": 154530
+  },
+  {
+    "case": 63,
+    "policy": 0,
+    "lifecycle": "retained",
+    "iterations": 451,
+    "baselinePilotNs": 213176,
+    "candidatePilotNs": 87464
+  },
+  {
+    "case": 63,
+    "policy": 0,
+    "lifecycle": "fresh",
+    "iterations": 412,
+    "baselinePilotNs": 233324,
+    "candidatePilotNs": 138991
+  },
+  {
+    "case": 63,
+    "policy": 1,
+    "lifecycle": "retained",
+    "iterations": 428,
+    "baselinePilotNs": 224735,
+    "candidatePilotNs": 97863
+  },
+  {
+    "case": 63,
+    "policy": 1,
+    "lifecycle": "fresh",
+    "iterations": 393,
+    "baselinePilotNs": 244824,
+    "candidatePilotNs": 124902
+  },
+  {
+    "case": 64,
+    "policy": 0,
+    "lifecycle": "retained",
+    "iterations": 352,
+    "baselinePilotNs": 273172,
+    "candidatePilotNs": 152060
+  },
+  {
+    "case": 64,
+    "policy": 0,
+    "lifecycle": "fresh",
+    "iterations": 325,
+    "baselinePilotNs": 295520,
+    "candidatePilotNs": 167928
+  },
+  {
+    "case": 64,
+    "policy": 1,
+    "lifecycle": "retained",
+    "iterations": 342,
+    "baselinePilotNs": 280781,
+    "candidatePilotNs": 151959
+  },
+  {
+    "case": 64,
+    "policy": 1,
+    "lifecycle": "fresh",
+    "iterations": 307,
+    "baselinePilotNs": 313059,
+    "candidatePilotNs": 216865
+  },
+  {
+    "case": 65,
+    "policy": 0,
+    "lifecycle": "retained",
+    "iterations": 350,
+    "baselinePilotNs": 274351,
+    "candidatePilotNs": 148250
+  },
+  {
+    "case": 65,
+    "policy": 0,
+    "lifecycle": "fresh",
+    "iterations": 322,
+    "baselinePilotNs": 298669,
+    "candidatePilotNs": 178888
+  },
+  {
+    "case": 65,
+    "policy": 1,
+    "lifecycle": "retained",
+    "iterations": 338,
+    "baselinePilotNs": 284781,
+    "candidatePilotNs": 156299
+  },
+  {
+    "case": 65,
+    "policy": 1,
+    "lifecycle": "fresh",
+    "iterations": 312,
+    "baselinePilotNs": 308419,
+    "candidatePilotNs": 195977
+  },
+  {
+    "case": 66,
+    "policy": 0,
+    "lifecycle": "retained",
+    "iterations": 193,
+    "baselinePilotNs": 499456,
+    "candidatePilotNs": 141950
+  },
+  {
+    "case": 66,
+    "policy": 0,
+    "lifecycle": "fresh",
+    "iterations": 180,
+    "baselinePilotNs": 534633,
+    "candidatePilotNs": 169738
+  },
+  {
+    "case": 66,
+    "policy": 1,
+    "lifecycle": "retained",
+    "iterations": 186,
+    "baselinePilotNs": 517155,
+    "candidatePilotNs": 151759
+  },
+  {
+    "case": 66,
+    "policy": 1,
+    "lifecycle": "fresh",
+    "iterations": 175,
+    "baselinePilotNs": 551242,
+    "candidatePilotNs": 178398
+  },
+  {
+    "case": 67,
+    "policy": 0,
+    "lifecycle": "retained",
+    "iterations": 188,
+    "baselinePilotNs": 510825,
+    "candidatePilotNs": 137120
+  },
+  {
+    "case": 67,
+    "policy": 0,
+    "lifecycle": "fresh",
+    "iterations": 181,
+    "baselinePilotNs": 531154,
+    "candidatePilotNs": 159719
+  },
+  {
+    "case": 67,
+    "policy": 1,
+    "lifecycle": "retained",
+    "iterations": 192,
+    "baselinePilotNs": 502006,
+    "candidatePilotNs": 145590
+  },
+  {
+    "case": 67,
+    "policy": 1,
+    "lifecycle": "fresh",
+    "iterations": 177,
+    "baselinePilotNs": 542873,
+    "candidatePilotNs": 181258
+  },
+  {
+    "case": 68,
+    "policy": 0,
+    "lifecycle": "retained",
+    "iterations": 186,
+    "baselinePilotNs": 516445,
+    "candidatePilotNs": 230184
+  },
+  {
+    "case": 68,
+    "policy": 0,
+    "lifecycle": "fresh",
+    "iterations": 181,
+    "baselinePilotNs": 533043,
+    "candidatePilotNs": 264902
+  },
+  {
+    "case": 68,
+    "policy": 1,
+    "lifecycle": "retained",
+    "iterations": 185,
+    "baselinePilotNs": 519015,
+    "candidatePilotNs": 242214
+  },
+  {
+    "case": 68,
+    "policy": 1,
+    "lifecycle": "fresh",
+    "iterations": 169,
+    "baselinePilotNs": 568401,
+    "candidatePilotNs": 271712
+  },
+  {
+    "case": 69,
+    "policy": 0,
+    "lifecycle": "retained",
+    "iterations": 165,
+    "baselinePilotNs": 584130,
+    "candidatePilotNs": 233004
+  },
+  {
+    "case": 69,
+    "policy": 0,
+    "lifecycle": "fresh",
+    "iterations": 178,
+    "baselinePilotNs": 539733,
+    "candidatePilotNs": 251963
+  },
+  {
+    "case": 69,
+    "policy": 1,
+    "lifecycle": "retained",
+    "iterations": 174,
+    "baselinePilotNs": 554782,
+    "candidatePilotNs": 258613
+  },
+  {
+    "case": 69,
+    "policy": 1,
+    "lifecycle": "fresh",
+    "iterations": 172,
+    "baselinePilotNs": 558462,
+    "candidatePilotNs": 269181
+  },
+  {
+    "case": 70,
+    "policy": 0,
+    "lifecycle": "retained",
+    "iterations": 90,
+    "baselinePilotNs": 1076746,
+    "candidatePilotNs": 224174
+  },
+  {
+    "case": 70,
+    "policy": 0,
+    "lifecycle": "fresh",
+    "iterations": 81,
+    "baselinePilotNs": 1187478,
+    "candidatePilotNs": 251883
+  },
+  {
+    "case": 70,
+    "policy": 1,
+    "lifecycle": "retained",
+    "iterations": 89,
+    "baselinePilotNs": 1090595,
+    "candidatePilotNs": 236433
+  },
+  {
+    "case": 70,
+    "policy": 1,
+    "lifecycle": "fresh",
+    "iterations": 86,
+    "baselinePilotNs": 1119093,
+    "candidatePilotNs": 257672
+  },
+  {
+    "case": 71,
+    "policy": 0,
+    "lifecycle": "retained",
+    "iterations": 88,
+    "baselinePilotNs": 1095815,
+    "candidatePilotNs": 225795
+  },
+  {
+    "case": 71,
+    "policy": 0,
+    "lifecycle": "fresh",
+    "iterations": 88,
+    "baselinePilotNs": 1092895,
+    "candidatePilotNs": 258142
+  },
+  {
+    "case": 71,
+    "policy": 1,
+    "lifecycle": "retained",
+    "iterations": 84,
+    "baselinePilotNs": 1151901,
+    "candidatePilotNs": 233714
+  },
+  {
+    "case": 71,
+    "policy": 1,
+    "lifecycle": "fresh",
+    "iterations": 86,
+    "baselinePilotNs": 1116603,
+    "candidatePilotNs": 263471
+  },
+  {
+    "case": 72,
+    "policy": 0,
+    "lifecycle": "retained",
+    "iterations": 70,
+    "baselinePilotNs": 1376385,
+    "candidatePilotNs": 1305451
+  },
+  {
+    "case": 72,
+    "policy": 0,
+    "lifecycle": "fresh",
+    "iterations": 61,
+    "baselinePilotNs": 1598820,
+    "candidatePilotNs": 1379675
+  },
+  {
+    "case": 72,
+    "policy": 1,
+    "lifecycle": "retained",
+    "iterations": 71,
+    "baselinePilotNs": 1354118,
+    "candidatePilotNs": 1337338
+  },
+  {
+    "case": 72,
+    "policy": 1,
+    "lifecycle": "fresh",
+    "iterations": 67,
+    "baselinePilotNs": 1445580,
+    "candidatePilotNs": 1406894
+  },
+  {
+    "case": 73,
+    "policy": 0,
+    "lifecycle": "retained",
+    "iterations": 73,
+    "baselinePilotNs": 205396,
+    "candidatePilotNs": 1323529
+  },
+  {
+    "case": 73,
+    "policy": 0,
+    "lifecycle": "fresh",
+    "iterations": 74,
+    "baselinePilotNs": 235083,
+    "candidatePilotNs": 1311540
+  },
+  {
+    "case": 73,
+    "policy": 1,
+    "lifecycle": "retained",
+    "iterations": 74,
+    "baselinePilotNs": 203066,
+    "candidatePilotNs": 1297651
+  },
+  {
+    "case": 73,
+    "policy": 1,
+    "lifecycle": "fresh",
+    "iterations": 69,
+    "baselinePilotNs": 233484,
+    "candidatePilotNs": 1406813
+  },
+  {
+    "case": 74,
+    "policy": 0,
+    "lifecycle": "retained",
+    "iterations": 428,
+    "baselinePilotNs": 218405,
+    "candidatePilotNs": 224445
+  },
+  {
+    "case": 74,
+    "policy": 0,
+    "lifecycle": "fresh",
+    "iterations": 353,
+    "baselinePilotNs": 272502,
+    "candidatePilotNs": 252883
+  },
+  {
+    "case": 74,
+    "policy": 1,
+    "lifecycle": "retained",
+    "iterations": 405,
+    "baselinePilotNs": 218045,
+    "candidatePilotNs": 237423
+  },
+  {
+    "case": 74,
+    "policy": 1,
+    "lifecycle": "fresh",
+    "iterations": 367,
+    "baselinePilotNs": 254433,
+    "candidatePilotNs": 261582
+  },
+  {
+    "case": 75,
+    "policy": 0,
+    "lifecycle": "retained",
+    "iterations": 14015,
+    "baselinePilotNs": 5180,
+    "candidatePilotNs": 6850
+  },
+  {
+    "case": 75,
+    "policy": 0,
+    "lifecycle": "fresh",
+    "iterations": 3736,
+    "baselinePilotNs": 25478,
+    "candidatePilotNs": 25698
+  },
+  {
+    "case": 75,
+    "policy": 1,
+    "lifecycle": "retained",
+    "iterations": 17680,
+    "baselinePilotNs": 5170,
+    "candidatePilotNs": 5430
+  },
+  {
+    "case": 75,
+    "policy": 1,
+    "lifecycle": "fresh",
+    "iterations": 3191,
+    "baselinePilotNs": 30088,
+    "candidatePilotNs": 24528
+  },
+  {
+    "case": 76,
+    "policy": 0,
+    "lifecycle": "retained",
+    "iterations": 763,
+    "baselinePilotNs": 125831,
+    "candidatePilotNs": 93084
+  },
+  {
+    "case": 76,
+    "policy": 0,
+    "lifecycle": "fresh",
+    "iterations": 644,
+    "baselinePilotNs": 149090,
+    "candidatePilotNs": 115792
+  },
+  {
+    "case": 76,
+    "policy": 1,
+    "lifecycle": "retained",
+    "iterations": 718,
+    "baselinePilotNs": 133740,
+    "candidatePilotNs": 101873
+  },
+  {
+    "case": 76,
+    "policy": 1,
+    "lifecycle": "fresh",
+    "iterations": 604,
+    "baselinePilotNs": 159059,
+    "candidatePilotNs": 132031
+  },
+  {
+    "case": 77,
+    "policy": 0,
+    "lifecycle": "retained",
+    "iterations": 776,
+    "baselinePilotNs": 123822,
+    "candidatePilotNs": 98053
+  },
+  {
+    "case": 77,
+    "policy": 0,
+    "lifecycle": "fresh",
+    "iterations": 639,
+    "baselinePilotNs": 150360,
+    "candidatePilotNs": 119192
+  },
+  {
+    "case": 77,
+    "policy": 1,
+    "lifecycle": "retained",
+    "iterations": 661,
+    "baselinePilotNs": 145410,
+    "candidatePilotNs": 96953
+  },
+  {
+    "case": 77,
+    "policy": 1,
+    "lifecycle": "fresh",
+    "iterations": 380,
+    "baselinePilotNs": 252662,
+    "candidatePilotNs": 119802
+  },
+  {
+    "case": 78,
+    "policy": 0,
+    "lifecycle": "retained",
+    "iterations": 494,
+    "baselinePilotNs": 194686,
+    "candidatePilotNs": 89684
+  },
+  {
+    "case": 78,
+    "policy": 0,
+    "lifecycle": "fresh",
+    "iterations": 435,
+    "baselinePilotNs": 221195,
+    "candidatePilotNs": 112572
+  },
+  {
+    "case": 78,
+    "policy": 1,
+    "lifecycle": "retained",
+    "iterations": 470,
+    "baselinePilotNs": 204336,
+    "candidatePilotNs": 99993
+  },
+  {
+    "case": 78,
+    "policy": 1,
+    "lifecycle": "fresh",
+    "iterations": 411,
+    "baselinePilotNs": 234103,
+    "candidatePilotNs": 123381
+  },
+  {
+    "case": 79,
+    "policy": 0,
+    "lifecycle": "retained",
+    "iterations": 492,
+    "baselinePilotNs": 195397,
+    "candidatePilotNs": 87404
+  },
+  {
+    "case": 79,
+    "policy": 0,
+    "lifecycle": "fresh",
+    "iterations": 425,
+    "baselinePilotNs": 226324,
+    "candidatePilotNs": 111322
+  },
+  {
+    "case": 79,
+    "policy": 1,
+    "lifecycle": "retained",
+    "iterations": 473,
+    "baselinePilotNs": 203226,
+    "candidatePilotNs": 98133
+  },
+  {
+    "case": 79,
+    "policy": 1,
+    "lifecycle": "fresh",
+    "iterations": 425,
+    "baselinePilotNs": 226284,
+    "candidatePilotNs": 126541
+  },
+  {
+    "case": 80,
+    "policy": 0,
+    "lifecycle": "retained",
+    "iterations": 388,
+    "baselinePilotNs": 247873,
+    "candidatePilotNs": 144610
+  },
+  {
+    "case": 80,
+    "policy": 0,
+    "lifecycle": "fresh",
+    "iterations": 350,
+    "baselinePilotNs": 274831,
+    "candidatePilotNs": 176758
+  },
+  {
+    "case": 80,
+    "policy": 1,
+    "lifecycle": "retained",
+    "iterations": 367,
+    "baselinePilotNs": 262202,
+    "candidatePilotNs": 154900
+  },
+  {
+    "case": 80,
+    "policy": 1,
+    "lifecycle": "fresh",
+    "iterations": 333,
+    "baselinePilotNs": 288510,
+    "candidatePilotNs": 179287
+  },
+  {
+    "case": 81,
+    "policy": 0,
+    "lifecycle": "retained",
+    "iterations": 386,
+    "baselinePilotNs": 248763,
+    "candidatePilotNs": 142020
+  },
+  {
+    "case": 81,
+    "policy": 0,
+    "lifecycle": "fresh",
+    "iterations": 337,
+    "baselinePilotNs": 285681,
+    "candidatePilotNs": 194647
+  },
+  {
+    "case": 81,
+    "policy": 1,
+    "lifecycle": "retained",
+    "iterations": 356,
+    "baselinePilotNs": 270131,
+    "candidatePilotNs": 147050
+  },
+  {
+    "case": 81,
+    "policy": 1,
+    "lifecycle": "fresh",
+    "iterations": 324,
+    "baselinePilotNs": 296569,
+    "candidatePilotNs": 172048
+  },
+  {
+    "case": 82,
+    "policy": 0,
+    "lifecycle": "retained",
+    "iterations": 197,
+    "baselinePilotNs": 487567,
+    "candidatePilotNs": 157659
+  },
+  {
+    "case": 82,
+    "policy": 0,
+    "lifecycle": "fresh",
+    "iterations": 199,
+    "baselinePilotNs": 484637,
+    "candidatePilotNs": 167088
+  },
+  {
+    "case": 82,
+    "policy": 1,
+    "lifecycle": "retained",
+    "iterations": 208,
+    "baselinePilotNs": 463458,
+    "candidatePilotNs": 156509
+  },
+  {
+    "case": 82,
+    "policy": 1,
+    "lifecycle": "fresh",
+    "iterations": 193,
+    "baselinePilotNs": 499255,
+    "candidatePilotNs": 228994
+  },
+  {
+    "case": 83,
+    "policy": 0,
+    "lifecycle": "retained",
+    "iterations": 209,
+    "baselinePilotNs": 460798,
+    "candidatePilotNs": 135481
+  },
+  {
+    "case": 83,
+    "policy": 0,
+    "lifecycle": "fresh",
+    "iterations": 186,
+    "baselinePilotNs": 516484,
+    "candidatePilotNs": 163539
+  },
+  {
+    "case": 83,
+    "policy": 1,
+    "lifecycle": "retained",
+    "iterations": 186,
+    "baselinePilotNs": 516434,
+    "candidatePilotNs": 147430
+  },
+  {
+    "case": 83,
+    "policy": 1,
+    "lifecycle": "fresh",
+    "iterations": 181,
+    "baselinePilotNs": 532883,
+    "candidatePilotNs": 179087
+  },
+  {
+    "case": 84,
+    "policy": 0,
+    "lifecycle": "retained",
+    "iterations": 193,
+    "baselinePilotNs": 497626,
+    "candidatePilotNs": 215205
+  },
+  {
+    "case": 84,
+    "policy": 0,
+    "lifecycle": "fresh",
+    "iterations": 193,
+    "baselinePilotNs": 497986,
+    "candidatePilotNs": 238953
+  },
+  {
+    "case": 84,
+    "policy": 1,
+    "lifecycle": "retained",
+    "iterations": 185,
+    "baselinePilotNs": 519764,
+    "candidatePilotNs": 230714
+  },
+  {
+    "case": 84,
+    "policy": 1,
+    "lifecycle": "fresh",
+    "iterations": 185,
+    "baselinePilotNs": 519434,
+    "candidatePilotNs": 253983
+  },
+  {
+    "case": 85,
+    "policy": 0,
+    "lifecycle": "retained",
+    "iterations": 200,
+    "baselinePilotNs": 480747,
+    "candidatePilotNs": 227965
+  },
+  {
+    "case": 85,
+    "policy": 0,
+    "lifecycle": "fresh",
+    "iterations": 190,
+    "baselinePilotNs": 506375,
+    "candidatePilotNs": 254722
+  },
+  {
+    "case": 85,
+    "policy": 1,
+    "lifecycle": "retained",
+    "iterations": 195,
+    "baselinePilotNs": 494406,
+    "candidatePilotNs": 284231
+  },
+  {
+    "case": 85,
+    "policy": 1,
+    "lifecycle": "fresh",
+    "iterations": 185,
+    "baselinePilotNs": 520974,
+    "candidatePilotNs": 278741
+  },
+  {
+    "case": 86,
+    "policy": 0,
+    "lifecycle": "retained",
+    "iterations": 101,
+    "baselinePilotNs": 954515,
+    "candidatePilotNs": 214295
+  },
+  {
+    "case": 86,
+    "policy": 0,
+    "lifecycle": "fresh",
+    "iterations": 95,
+    "baselinePilotNs": 1019150,
+    "candidatePilotNs": 239024
+  },
+  {
+    "case": 86,
+    "policy": 1,
+    "lifecycle": "retained",
+    "iterations": 101,
+    "baselinePilotNs": 956504,
+    "candidatePilotNs": 231064
+  },
+  {
+    "case": 86,
+    "policy": 1,
+    "lifecycle": "fresh",
+    "iterations": 97,
+    "baselinePilotNs": 997012,
+    "candidatePilotNs": 252463
+  },
+  {
+    "case": 87,
+    "policy": 0,
+    "lifecycle": "retained",
+    "iterations": 98,
+    "baselinePilotNs": 982842,
+    "candidatePilotNs": 224994
+  },
+  {
+    "case": 87,
+    "policy": 0,
+    "lifecycle": "fresh",
+    "iterations": 99,
+    "baselinePilotNs": 973263,
+    "candidatePilotNs": 253423
+  },
+  {
+    "case": 87,
+    "policy": 1,
+    "lifecycle": "retained",
+    "iterations": 100,
+    "baselinePilotNs": 965544,
+    "candidatePilotNs": 226015
+  },
+  {
+    "case": 87,
+    "policy": 1,
+    "lifecycle": "fresh",
+    "iterations": 97,
+    "baselinePilotNs": 998222,
+    "candidatePilotNs": 297730
+  },
+  {
+    "case": 88,
+    "policy": 0,
+    "lifecycle": "retained",
+    "iterations": 71,
+    "baselinePilotNs": 1364746,
+    "candidatePilotNs": 1287161
+  },
+  {
+    "case": 88,
+    "policy": 0,
+    "lifecycle": "fresh",
+    "iterations": 67,
+    "baselinePilotNs": 1451450,
+    "candidatePilotNs": 1373165
+  },
+  {
+    "case": 88,
+    "policy": 1,
+    "lifecycle": "retained",
+    "iterations": 71,
+    "baselinePilotNs": 1356337,
+    "candidatePilotNs": 1327489
+  },
+  {
+    "case": 88,
+    "policy": 1,
+    "lifecycle": "fresh",
+    "iterations": 65,
+    "baselinePilotNs": 1477719,
+    "candidatePilotNs": 1395014
+  },
+  {
+    "case": 89,
+    "policy": 0,
+    "lifecycle": "retained",
+    "iterations": 74,
+    "baselinePilotNs": 202646,
+    "candidatePilotNs": 1308120
+  },
+  {
+    "case": 89,
+    "policy": 0,
+    "lifecycle": "fresh",
+    "iterations": 64,
+    "baselinePilotNs": 242273,
+    "candidatePilotNs": 1501777
+  },
+  {
+    "case": 89,
+    "policy": 1,
+    "lifecycle": "retained",
+    "iterations": 73,
+    "baselinePilotNs": 211436,
+    "candidatePilotNs": 1316390
+  },
+  {
+    "case": 89,
+    "policy": 1,
+    "lifecycle": "fresh",
+    "iterations": 72,
+    "baselinePilotNs": 232594,
+    "candidatePilotNs": 1343148
+  },
+  {
+    "case": 90,
+    "policy": 0,
+    "lifecycle": "retained",
+    "iterations": 431,
+    "baselinePilotNs": 219305,
+    "candidatePilotNs": 222955
+  },
+  {
+    "case": 90,
+    "policy": 0,
+    "lifecycle": "fresh",
+    "iterations": 366,
+    "baselinePilotNs": 262752,
+    "candidatePilotNs": 253963
+  },
+  {
+    "case": 90,
+    "policy": 1,
+    "lifecycle": "retained",
+    "iterations": 417,
+    "baselinePilotNs": 224765,
+    "candidatePilotNs": 230755
+  },
+  {
+    "case": 90,
+    "policy": 1,
+    "lifecycle": "fresh",
+    "iterations": 363,
+    "baselinePilotNs": 265112,
+    "candidatePilotNs": 253272
+  },
+  {
+    "case": 91,
+    "policy": 0,
+    "lifecycle": "retained",
+    "iterations": 18083,
+    "baselinePilotNs": 5300,
+    "candidatePilotNs": 5309
+  },
+  {
+    "case": 91,
+    "policy": 0,
+    "lifecycle": "fresh",
+    "iterations": 3714,
+    "baselinePilotNs": 25348,
+    "candidatePilotNs": 25849
+  },
+  {
+    "case": 91,
+    "policy": 1,
+    "lifecycle": "retained",
+    "iterations": 18182,
+    "baselinePilotNs": 5250,
+    "candidatePilotNs": 5280
+  },
+  {
+    "case": 91,
+    "policy": 1,
+    "lifecycle": "fresh",
+    "iterations": 3729,
+    "baselinePilotNs": 25028,
+    "candidatePilotNs": 25748
+  },
+  {
+    "case": 92,
+    "policy": 0,
+    "lifecycle": "retained",
+    "iterations": 771,
+    "baselinePilotNs": 124581,
+    "candidatePilotNs": 94464
+  },
+  {
+    "case": 92,
+    "policy": 0,
+    "lifecycle": "fresh",
+    "iterations": 636,
+    "baselinePilotNs": 151030,
+    "candidatePilotNs": 116093
+  },
+  {
+    "case": 92,
+    "policy": 1,
+    "lifecycle": "retained",
+    "iterations": 707,
+    "baselinePilotNs": 135840,
+    "candidatePilotNs": 102923
+  },
+  {
+    "case": 92,
+    "policy": 1,
+    "lifecycle": "fresh",
+    "iterations": 599,
+    "baselinePilotNs": 160349,
+    "candidatePilotNs": 126021
+  },
+  {
+    "case": 93,
+    "policy": 0,
+    "lifecycle": "retained",
+    "iterations": 779,
+    "baselinePilotNs": 123392,
+    "candidatePilotNs": 103993
+  },
+  {
+    "case": 93,
+    "policy": 0,
+    "lifecycle": "fresh",
+    "iterations": 651,
+    "baselinePilotNs": 147690,
+    "candidatePilotNs": 106712
+  },
+  {
+    "case": 93,
+    "policy": 1,
+    "lifecycle": "retained",
+    "iterations": 580,
+    "baselinePilotNs": 165718,
+    "candidatePilotNs": 95683
+  },
+  {
+    "case": 93,
+    "policy": 1,
+    "lifecycle": "fresh",
+    "iterations": 610,
+    "baselinePilotNs": 157560,
+    "candidatePilotNs": 124132
+  },
+  {
+    "case": 94,
+    "policy": 0,
+    "lifecycle": "retained",
+    "iterations": 503,
+    "baselinePilotNs": 191197,
+    "candidatePilotNs": 87524
+  },
+  {
+    "case": 94,
+    "policy": 0,
+    "lifecycle": "fresh",
+    "iterations": 436,
+    "baselinePilotNs": 220345,
+    "candidatePilotNs": 111903
+  },
+  {
+    "case": 94,
+    "policy": 1,
+    "lifecycle": "retained",
+    "iterations": 451,
+    "baselinePilotNs": 213085,
+    "candidatePilotNs": 110193
+  },
+  {
+    "case": 94,
+    "policy": 1,
+    "lifecycle": "fresh",
+    "iterations": 417,
+    "baselinePilotNs": 230254,
+    "candidatePilotNs": 123502
+  },
+  {
+    "case": 95,
+    "policy": 0,
+    "lifecycle": "retained",
+    "iterations": 485,
+    "baselinePilotNs": 197977,
+    "candidatePilotNs": 120332
+  },
+  {
+    "case": 95,
+    "policy": 0,
+    "lifecycle": "fresh",
+    "iterations": 430,
+    "baselinePilotNs": 223735,
+    "candidatePilotNs": 109003
+  },
+  {
+    "case": 95,
+    "policy": 1,
+    "lifecycle": "retained",
+    "iterations": 462,
+    "baselinePilotNs": 208066,
+    "candidatePilotNs": 103883
+  },
+  {
+    "case": 95,
+    "policy": 1,
+    "lifecycle": "fresh",
+    "iterations": 413,
+    "baselinePilotNs": 232964,
+    "candidatePilotNs": 119502
+  },
+  {
+    "case": 96,
+    "policy": 0,
+    "lifecycle": "retained",
+    "iterations": 391,
+    "baselinePilotNs": 246013,
+    "candidatePilotNs": 140950
+  },
+  {
+    "case": 96,
+    "policy": 0,
+    "lifecycle": "fresh",
+    "iterations": 333,
+    "baselinePilotNs": 288620,
+    "candidatePilotNs": 207406
+  },
+  {
+    "case": 96,
+    "policy": 1,
+    "lifecycle": "retained",
+    "iterations": 368,
+    "baselinePilotNs": 261222,
+    "candidatePilotNs": 162778
+  },
+  {
+    "case": 96,
+    "policy": 1,
+    "lifecycle": "fresh",
+    "iterations": 337,
+    "baselinePilotNs": 285450,
+    "candidatePilotNs": 178948
+  },
+  {
+    "case": 97,
+    "policy": 0,
+    "lifecycle": "retained",
+    "iterations": 376,
+    "baselinePilotNs": 255593,
+    "candidatePilotNs": 146440
+  },
+  {
+    "case": 97,
+    "policy": 0,
+    "lifecycle": "fresh",
+    "iterations": 297,
+    "baselinePilotNs": 324288,
+    "candidatePilotNs": 162418
+  },
+  {
+    "case": 97,
+    "policy": 1,
+    "lifecycle": "retained",
+    "iterations": 374,
+    "baselinePilotNs": 257083,
+    "candidatePilotNs": 156419
+  },
+  {
+    "case": 97,
+    "policy": 1,
+    "lifecycle": "fresh",
+    "iterations": 336,
+    "baselinePilotNs": 286380,
+    "candidatePilotNs": 177268
+  },
+  {
+    "case": 98,
+    "policy": 0,
+    "lifecycle": "retained",
+    "iterations": 200,
+    "baselinePilotNs": 480267,
+    "candidatePilotNs": 174828
+  },
+  {
+    "case": 98,
+    "policy": 0,
+    "lifecycle": "fresh",
+    "iterations": 201,
+    "baselinePilotNs": 479127,
+    "candidatePilotNs": 176848
+  },
+  {
+    "case": 98,
+    "policy": 1,
+    "lifecycle": "retained",
+    "iterations": 203,
+    "baselinePilotNs": 473678,
+    "candidatePilotNs": 160639
+  },
+  {
+    "case": 98,
+    "policy": 1,
+    "lifecycle": "fresh",
+    "iterations": 194,
+    "baselinePilotNs": 497216,
+    "candidatePilotNs": 176138
+  },
+  {
+    "case": 99,
+    "policy": 0,
+    "lifecycle": "retained",
+    "iterations": 214,
+    "baselinePilotNs": 450279,
+    "candidatePilotNs": 135181
+  },
+  {
+    "case": 99,
+    "policy": 0,
+    "lifecycle": "fresh",
+    "iterations": 199,
+    "baselinePilotNs": 483777,
+    "candidatePilotNs": 170908
+  },
+  {
+    "case": 99,
+    "policy": 1,
+    "lifecycle": "retained",
+    "iterations": 210,
+    "baselinePilotNs": 457568,
+    "candidatePilotNs": 146510
+  },
+  {
+    "case": 99,
+    "policy": 1,
+    "lifecycle": "fresh",
+    "iterations": 198,
+    "baselinePilotNs": 486087,
+    "candidatePilotNs": 176618
+  },
+  {
+    "case": 100,
+    "policy": 0,
+    "lifecycle": "retained",
+    "iterations": 155,
+    "baselinePilotNs": 623257,
+    "candidatePilotNs": 211265
+  },
+  {
+    "case": 100,
+    "policy": 0,
+    "lifecycle": "fresh",
+    "iterations": 194,
+    "baselinePilotNs": 497305,
+    "candidatePilotNs": 246393
+  },
+  {
+    "case": 100,
+    "policy": 1,
+    "lifecycle": "retained",
+    "iterations": 146,
+    "baselinePilotNs": 660355,
+    "candidatePilotNs": 224625
+  },
+  {
+    "case": 100,
+    "policy": 1,
+    "lifecycle": "fresh",
+    "iterations": 189,
+    "baselinePilotNs": 508105,
+    "candidatePilotNs": 251473
+  },
+  {
+    "case": 101,
+    "policy": 0,
+    "lifecycle": "retained",
+    "iterations": 201,
+    "baselinePilotNs": 477807,
+    "candidatePilotNs": 228714
+  },
+  {
+    "case": 101,
+    "policy": 0,
+    "lifecycle": "fresh",
+    "iterations": 191,
+    "baselinePilotNs": 504825,
+    "candidatePilotNs": 258462
+  },
+  {
+    "case": 101,
+    "policy": 1,
+    "lifecycle": "retained",
+    "iterations": 197,
+    "baselinePilotNs": 487666,
+    "candidatePilotNs": 259842
+  },
+  {
+    "case": 101,
+    "policy": 1,
+    "lifecycle": "fresh",
+    "iterations": 183,
+    "baselinePilotNs": 525644,
+    "candidatePilotNs": 314079
+  },
+  {
+    "case": 102,
+    "policy": 0,
+    "lifecycle": "retained",
+    "iterations": 102,
+    "baselinePilotNs": 941586,
+    "candidatePilotNs": 211866
+  },
+  {
+    "case": 102,
+    "policy": 0,
+    "lifecycle": "fresh",
+    "iterations": 99,
+    "baselinePilotNs": 972683,
+    "candidatePilotNs": 237004
+  },
+  {
+    "case": 102,
+    "policy": 1,
+    "lifecycle": "retained",
+    "iterations": 100,
+    "baselinePilotNs": 964254,
+    "candidatePilotNs": 224164
+  },
+  {
+    "case": 102,
+    "policy": 1,
+    "lifecycle": "fresh",
+    "iterations": 96,
+    "baselinePilotNs": 1010341,
+    "candidatePilotNs": 251893
+  },
+  {
+    "case": 103,
+    "policy": 0,
+    "lifecycle": "retained",
+    "iterations": 100,
+    "baselinePilotNs": 967994,
+    "candidatePilotNs": 217565
+  },
+  {
+    "case": 103,
+    "policy": 0,
+    "lifecycle": "fresh",
+    "iterations": 96,
+    "baselinePilotNs": 1007441,
+    "candidatePilotNs": 253443
+  },
+  {
+    "case": 103,
+    "policy": 1,
+    "lifecycle": "retained",
+    "iterations": 97,
+    "baselinePilotNs": 990922,
+    "candidatePilotNs": 229514
+  },
+  {
+    "case": 103,
+    "policy": 1,
+    "lifecycle": "fresh",
+    "iterations": 92,
+    "baselinePilotNs": 1044068,
+    "candidatePilotNs": 253102
+  },
+  {
+    "case": 104,
+    "policy": 0,
+    "lifecycle": "retained",
+    "iterations": 111,
+    "baselinePilotNs": 870321,
+    "candidatePilotNs": 719660
+  },
+  {
+    "case": 104,
+    "policy": 0,
+    "lifecycle": "fresh",
+    "iterations": 108,
+    "baselinePilotNs": 897099,
+    "candidatePilotNs": 794985
+  },
+  {
+    "case": 104,
+    "policy": 1,
+    "lifecycle": "retained",
+    "iterations": 119,
+    "baselinePilotNs": 813034,
+    "candidatePilotNs": 743719
+  },
+  {
+    "case": 104,
+    "policy": 1,
+    "lifecycle": "fresh",
+    "iterations": 102,
+    "baselinePilotNs": 948445,
+    "candidatePilotNs": 815354
+  },
+  {
+    "case": 105,
+    "policy": 0,
+    "lifecycle": "retained",
+    "iterations": 121,
+    "baselinePilotNs": 794965,
+    "candidatePilotNs": 736840
+  },
+  {
+    "case": 105,
+    "policy": 0,
+    "lifecycle": "fresh",
+    "iterations": 113,
+    "baselinePilotNs": 854171,
+    "candidatePilotNs": 815114
+  },
+  {
+    "case": 105,
+    "policy": 1,
+    "lifecycle": "retained",
+    "iterations": 122,
+    "baselinePilotNs": 790616,
+    "candidatePilotNs": 729650
+  },
+  {
+    "case": 105,
+    "policy": 1,
+    "lifecycle": "fresh",
+    "iterations": 109,
+    "baselinePilotNs": 882799,
+    "candidatePilotNs": 794825
+  },
+  {
+    "case": 106,
+    "policy": 0,
+    "lifecycle": "retained",
+    "iterations": 12,
+    "baselinePilotNs": 8377635,
+    "candidatePilotNs": 8142051
+  },
+  {
+    "case": 106,
+    "policy": 0,
+    "lifecycle": "fresh",
+    "iterations": 12,
+    "baselinePilotNs": 8342647,
+    "candidatePilotNs": 8706132
+  },
+  {
+    "case": 106,
+    "policy": 1,
+    "lifecycle": "retained",
+    "iterations": 11,
+    "baselinePilotNs": 8070566,
+    "candidatePilotNs": 8888200
+  },
+  {
+    "case": 106,
+    "policy": 1,
+    "lifecycle": "fresh",
+    "iterations": 11,
+    "baselinePilotNs": 8857042,
+    "candidatePilotNs": 8827224
+  },
+  {
+    "case": 107,
+    "policy": 0,
+    "lifecycle": "retained",
+    "iterations": 11,
+    "baselinePilotNs": 9066617,
+    "candidatePilotNs": 8739060
+  },
+  {
+    "case": 107,
+    "policy": 0,
+    "lifecycle": "fresh",
+    "iterations": 11,
+    "baselinePilotNs": 9348038,
+    "candidatePilotNs": 9113274
+  },
+  {
+    "case": 107,
+    "policy": 1,
+    "lifecycle": "retained",
+    "iterations": 10,
+    "baselinePilotNs": 8736321,
+    "candidatePilotNs": 9668167
+  },
+  {
+    "case": 107,
+    "policy": 1,
+    "lifecycle": "fresh",
+    "iterations": 11,
+    "baselinePilotNs": 9075027,
+    "candidatePilotNs": 9135393
+  },
+  {
+    "case": 108,
+    "policy": 0,
+    "lifecycle": "retained",
+    "iterations": 17,
+    "baselinePilotNs": 5623444,
+    "candidatePilotNs": 5838429
+  },
+  {
+    "case": 108,
+    "policy": 0,
+    "lifecycle": "fresh",
+    "iterations": 16,
+    "baselinePilotNs": 5896836,
+    "candidatePilotNs": 6060084
+  },
+  {
+    "case": 108,
+    "policy": 1,
+    "lifecycle": "retained",
+    "iterations": 17,
+    "baselinePilotNs": 5733107,
+    "candidatePilotNs": 5602226
+  },
+  {
+    "case": 108,
+    "policy": 1,
+    "lifecycle": "fresh",
+    "iterations": 16,
+    "baselinePilotNs": 6031956,
+    "candidatePilotNs": 6089972
+  },
+  {
+    "case": 109,
+    "policy": 0,
+    "lifecycle": "retained",
+    "iterations": 28,
+    "baselinePilotNs": 3445573,
+    "candidatePilotNs": 1971155
+  },
+  {
+    "case": 109,
+    "policy": 0,
+    "lifecycle": "fresh",
+    "iterations": 25,
+    "baselinePilotNs": 3913822,
+    "candidatePilotNs": 2367757
+  },
+  {
+    "case": 109,
+    "policy": 1,
+    "lifecycle": "retained",
+    "iterations": 29,
+    "baselinePilotNs": 3403306,
+    "candidatePilotNs": 2007062
+  },
+  {
+    "case": 109,
+    "policy": 1,
+    "lifecycle": "fresh",
+    "iterations": 25,
+    "baselinePilotNs": 3900772,
+    "candidatePilotNs": 2396445
+  },
+  {
+    "case": 110,
+    "policy": 0,
+    "lifecycle": "retained",
+    "iterations": 4,
+    "baselinePilotNs": 29243962,
+    "candidatePilotNs": 29078773
+  },
+  {
+    "case": 110,
+    "policy": 0,
+    "lifecycle": "fresh",
+    "iterations": 4,
+    "baselinePilotNs": 30567862,
+    "candidatePilotNs": 30382034
+  },
+  {
+    "case": 110,
+    "policy": 1,
+    "lifecycle": "retained",
+    "iterations": 4,
+    "baselinePilotNs": 29722179,
+    "candidatePilotNs": 29753467
+  },
+  {
+    "case": 110,
+    "policy": 1,
+    "lifecycle": "fresh",
+    "iterations": 4,
+    "baselinePilotNs": 30429071,
+    "candidatePilotNs": 31030080
+  },
+  {
+    "case": 111,
+    "policy": 0,
+    "lifecycle": "retained",
+    "iterations": 3,
+    "baselinePilotNs": 32202689,
+    "candidatePilotNs": 31696744
+  },
+  {
+    "case": 111,
+    "policy": 0,
+    "lifecycle": "fresh",
+    "iterations": 3,
+    "baselinePilotNs": 33188561,
+    "candidatePilotNs": 32955268
+  },
+  {
+    "case": 111,
+    "policy": 1,
+    "lifecycle": "retained",
+    "iterations": 4,
+    "baselinePilotNs": 31713012,
+    "candidatePilotNs": 31768789
+  },
+  {
+    "case": 111,
+    "policy": 1,
+    "lifecycle": "fresh",
+    "iterations": 3,
+    "baselinePilotNs": 34104919,
+    "candidatePilotNs": 33194081
+  },
+  {
+    "case": 112,
+    "policy": 0,
+    "lifecycle": "retained",
+    "iterations": 7,
+    "baselinePilotNs": 14593908,
+    "candidatePilotNs": 14729929
+  },
+  {
+    "case": 112,
+    "policy": 0,
+    "lifecycle": "fresh",
+    "iterations": 6,
+    "baselinePilotNs": 16451021,
+    "candidatePilotNs": 15813254
+  },
+  {
+    "case": 112,
+    "policy": 1,
+    "lifecycle": "retained",
+    "iterations": 7,
+    "baselinePilotNs": 14702120,
+    "candidatePilotNs": 14952513
+  },
+  {
+    "case": 112,
+    "policy": 1,
+    "lifecycle": "fresh",
+    "iterations": 6,
+    "baselinePilotNs": 16088286,
+    "candidatePilotNs": 15640326
+  },
+  {
+    "case": 113,
+    "policy": 0,
+    "lifecycle": "retained",
+    "iterations": 10,
+    "baselinePilotNs": 9640159,
+    "candidatePilotNs": 4617123
+  },
+  {
+    "case": 113,
+    "policy": 0,
+    "lifecycle": "fresh",
+    "iterations": 9,
+    "baselinePilotNs": 10743353,
+    "candidatePilotNs": 5810481
+  },
+  {
+    "case": 113,
+    "policy": 1,
+    "lifecycle": "retained",
+    "iterations": 11,
+    "baselinePilotNs": 9475900,
+    "candidatePilotNs": 4665419
+  },
+  {
+    "case": 113,
+    "policy": 1,
+    "lifecycle": "fresh",
+    "iterations": 10,
+    "baselinePilotNs": 10126955,
+    "candidatePilotNs": 5699808
+  }
+]

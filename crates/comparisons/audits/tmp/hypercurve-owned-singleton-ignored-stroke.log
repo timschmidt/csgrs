@@ -1,0 +1,10 @@
+    Finished `release` profile [optimized] target(s) in 0.08s
+     Running tests/hypercurve_curve_region_stroke.rs (target/release/deps/hypercurve_curve_region_stroke-7a53ed96580339fd)
+
+running 3 tests
+test exact_path_stroke_preserves_an_even_multiplicity_stationary_source ... ok
+test exact_path_stroke_splits_a_nonuniform_rational_source_cusp ... ok
+test exact_path_stroke_splits_an_interior_source_cusp ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 15 filtered out; finished in 54.41s
+

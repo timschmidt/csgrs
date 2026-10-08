@@ -1,0 +1,81 @@
+{
+  "checks": [
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "check",
+        "--all-targets",
+        "--all-features",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "log": "recognized-circle-evidence-20260923-v3-check-0.log"
+    },
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "check",
+        "--all-targets",
+        "--no-default-features",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "log": "recognized-circle-evidence-20260923-v3-check-1.log"
+    }
+  ],
+  "cases": [
+    {
+      "name": "bezier_region::tests::nonrepresented_chord_and_retained_rational_arc_share_the_fillet_kernel",
+      "returncode": 101,
+      "passed": false,
+      "limit_seconds": 180,
+      "elapsed_seconds": 0.14485316805075854,
+      "log": "recognized-circle-evidence-20260923-v3-case-0.log"
+    },
+    {
+      "name": "bezier_region::tests::general_nonrepresented_chord_and_retained_rational_arc_complete_the_fillet_kernel",
+      "returncode": 0,
+      "passed": true,
+      "limit_seconds": 180,
+      "elapsed_seconds": 1.2527643640059978,
+      "log": "recognized-circle-evidence-20260923-v3-case-1.log"
+    },
+    {
+      "name": "bezier_region::tests::major_retained_rational_arc_and_general_chord_share_the_fillet_kernel",
+      "returncode": 0,
+      "passed": true,
+      "limit_seconds": 180,
+      "elapsed_seconds": 8.263545333058573,
+      "log": "recognized-circle-evidence-20260923-v3-case-2.log"
+    },
+    {
+      "name": "bezier_region::tests::selected_circle_and_retained_rational_arc_fillet_exactly",
+      "returncode": 0,
+      "passed": true,
+      "limit_seconds": 120,
+      "elapsed_seconds": 0.7538706830237061,
+      "log": "recognized-circle-evidence-20260923-v3-case-3.log"
+    },
+    {
+      "name": "bezier_region::tests::selected_circle_and_major_retained_rational_arc_fillet_exactly",
+      "returncode": 0,
+      "passed": true,
+      "limit_seconds": 120,
+      "elapsed_seconds": 1.8568051389884204,
+      "log": "recognized-circle-evidence-20260923-v3-case-4.log"
+    },
+    {
+      "name": "bezier_region::tests::selected_circle_pair_with_rationalizable_support_fillet_exactly",
+      "returncode": 0,
+      "passed": true,
+      "limit_seconds": 120,
+      "elapsed_seconds": 0.15396832290571183,
+      "log": "recognized-circle-evidence-20260923-v3-case-5.log"
+    }
+  ],
+  "binary_sha256": "088d1e16e6a4d4bb8f28f9dcd862ff74614592ac1cef6b1a5ec6e316a50718be",
+  "all_sources_unchanged": true,
+  "all_processes_reaped": true
+}

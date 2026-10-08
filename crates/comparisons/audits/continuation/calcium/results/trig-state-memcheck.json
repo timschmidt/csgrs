@@ -1,0 +1,17 @@
+{
+  "tag": "trig-state-memcheck",
+  "started": "2026-09-08T11:37:12.639Z",
+  "finished": "2026-09-08T11:37:13.473Z",
+  "elapsedSeconds": 0.8320745529999999,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison",
+  "command": "valgrind",
+  "args": [
+    "--leak-check=full",
+    "--show-leak-kinds=all",
+    "--errors-for-leak-kinds=definite,indirect,possible",
+    "--error-exitcode=99",
+    "/home/tim/Documents/GitHub/workspace/.audit-builds/calcium-flint-trig-state-probe"
+  ],
+  "code": 1,
+  "signal": null
+}

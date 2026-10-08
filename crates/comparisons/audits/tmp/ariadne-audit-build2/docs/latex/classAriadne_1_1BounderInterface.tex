@@ -1,0 +1,31 @@
+\doxysubsection{Bounder\+Interface Class Reference}
+\hypertarget{classAriadne_1_1BounderInterface}{}\label{classAriadne_1_1BounderInterface}\index{BounderInterface@{BounderInterface}}
+
+
+{\ttfamily \#include $<$bounder.\+hpp$>$}
+
+
+
+\doxysubsubsection{Description}
+Interface for classes calculating the bounds of a flow. \doxysubsubsubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1BounderInterface_a1808230c453ddfffe880ffdbfaee97d6}\label{classAriadne_1_1BounderInterface_a1808230c453ddfffe880ffdbfaee97d6} 
+virtual \mbox{\hyperlink{namespaceAriadne_abbe0884d033ed6289d1f654576d7bb07}{Pair}}$<$ \mbox{\hyperlink{group__DifferentialEquationSubModule_ga6f1c6f216a042c31906593cafeb126fa}{Step\+Size\+Type}}, \mbox{\hyperlink{group__FunctionModule_gadb510bd9aa076e5ae44245b498901ca6}{Upper\+Box\+Type}} $>$ {\bfseries compute} (Validated\+Vector\+Multivariate\+Function const \&f, \mbox{\hyperlink{group__FunctionModule_gaf5c0b733c80abb59b1c3d1eb58c20099}{Box\+Domain\+Type}} const \&D, \mbox{\hyperlink{classAriadne_1_1Suggestion}{Suggestion}}$<$ \mbox{\hyperlink{group__DifferentialEquationSubModule_ga6f1c6f216a042c31906593cafeb126fa}{Step\+Size\+Type}} $>$ const \&hsug) const =0
+\begin{DoxyCompactList}\small\item\em Compute a pair $(h,B)$ consisting of a bound {\itshape B} for the flow of $\dt{x}=f(x)$ starting in $dom$ for time step $h\leq h_{sug}$. ~\newline
+ Arguments\+: $f$ is the {\itshape vector\+\_\+field}, $dom$ is the {\itshape state\+\_\+domain} and $h_{sug}$ is the suggested time step. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1BounderInterface_a326e5ae6307087510344f1a1cc05172f}\label{classAriadne_1_1BounderInterface_a326e5ae6307087510344f1a1cc05172f} 
+virtual \mbox{\hyperlink{namespaceAriadne_abbe0884d033ed6289d1f654576d7bb07}{Pair}}$<$ \mbox{\hyperlink{group__DifferentialEquationSubModule_ga6f1c6f216a042c31906593cafeb126fa}{Step\+Size\+Type}}, \mbox{\hyperlink{group__FunctionModule_gadb510bd9aa076e5ae44245b498901ca6}{Upper\+Box\+Type}} $>$ {\bfseries compute} (Validated\+Vector\+Multivariate\+Function const \&differential\+\_\+equation, \mbox{\hyperlink{group__FunctionModule_gaf5c0b733c80abb59b1c3d1eb58c20099}{Box\+Domain\+Type}} const \&state\+\_\+domain, \mbox{\hyperlink{group__DifferentialEquationSubModule_ga6f1c6f216a042c31906593cafeb126fa}{Step\+Size\+Type}} const \&initial\+\_\+time, \mbox{\hyperlink{classAriadne_1_1Suggestion}{Suggestion}}$<$ \mbox{\hyperlink{group__DifferentialEquationSubModule_ga6f1c6f216a042c31906593cafeb126fa}{Step\+Size\+Type}} $>$ const \&suggested\+\_\+time\+\_\+step) const =0
+\begin{DoxyCompactList}\small\item\em Compute a pair $(h,B)$ consisting of a bound {\itshape B} for the flow of $\dt{x}=f(x,t)$ starting in $dom$ for time step $h\leq h_{sug}$. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1BounderInterface_a27385522339a4c81403405e2a9a32723}\label{classAriadne_1_1BounderInterface_a27385522339a4c81403405e2a9a32723} 
+virtual \mbox{\hyperlink{namespaceAriadne_abbe0884d033ed6289d1f654576d7bb07}{Pair}}$<$ \mbox{\hyperlink{group__DifferentialEquationSubModule_ga6f1c6f216a042c31906593cafeb126fa}{Step\+Size\+Type}}, \mbox{\hyperlink{group__FunctionModule_gadb510bd9aa076e5ae44245b498901ca6}{Upper\+Box\+Type}} $>$ {\bfseries compute} (Validated\+Vector\+Multivariate\+Function const \&vector\+\_\+field, \mbox{\hyperlink{group__FunctionModule_gaf5c0b733c80abb59b1c3d1eb58c20099}{Box\+Domain\+Type}} const \&state\+\_\+domain, \mbox{\hyperlink{group__FunctionModule_gaf5c0b733c80abb59b1c3d1eb58c20099}{Box\+Domain\+Type}} const \&parameter\+\_\+domain, \mbox{\hyperlink{classAriadne_1_1Suggestion}{Suggestion}}$<$ \mbox{\hyperlink{group__DifferentialEquationSubModule_ga6f1c6f216a042c31906593cafeb126fa}{Step\+Size\+Type}} $>$ const \&suggested\+\_\+time\+\_\+step) const =0
+\begin{DoxyCompactList}\small\item\em Compute a pair $(h,B)$ consisting of a bound {\itshape B} for the flow of $\dt{x}=f(x,a)$ starting in $D$ with $a\in A$ for time step $h\leq h_{sug}$. ~\newline
+ Arguments\+: $f$ is the {\itshape vector\+\_\+field}, $D$ is the {\itshape state\+\_\+domain} and $h_{sug}$ is the suggested time step. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1BounderInterface_a0a2dbd41ba6ae8094daa1ebf66e12db0}\label{classAriadne_1_1BounderInterface_a0a2dbd41ba6ae8094daa1ebf66e12db0} 
+virtual \mbox{\hyperlink{namespaceAriadne_abbe0884d033ed6289d1f654576d7bb07}{Pair}}$<$ \mbox{\hyperlink{group__DifferentialEquationSubModule_ga6f1c6f216a042c31906593cafeb126fa}{Step\+Size\+Type}}, \mbox{\hyperlink{group__FunctionModule_gadb510bd9aa076e5ae44245b498901ca6}{Upper\+Box\+Type}} $>$ {\bfseries compute} (Validated\+Vector\+Multivariate\+Function const \&differential\+\_\+equation, \mbox{\hyperlink{group__FunctionModule_gaf5c0b733c80abb59b1c3d1eb58c20099}{Box\+Domain\+Type}} const \&state\+\_\+domain, \mbox{\hyperlink{group__DifferentialEquationSubModule_ga6f1c6f216a042c31906593cafeb126fa}{Step\+Size\+Type}} const \&initial\+\_\+time, \mbox{\hyperlink{group__FunctionModule_gaf5c0b733c80abb59b1c3d1eb58c20099}{Box\+Domain\+Type}} const \&parameter\+\_\+domain, \mbox{\hyperlink{classAriadne_1_1Suggestion}{Suggestion}}$<$ \mbox{\hyperlink{group__DifferentialEquationSubModule_ga6f1c6f216a042c31906593cafeb126fa}{Step\+Size\+Type}} $>$ const \&suggested\+\_\+time\+\_\+step) const =0
+\begin{DoxyCompactList}\small\item\em Compute a pair $(h,B)$ consisting of a bound {\itshape B} for the flow of $\dt{x}=f(x,t,a)$ starting in $D$ with $a\in A$ for time step $h\leq h_{sug}$. Arguments\+: $f$ is the {\itshape vector\+\_\+field}, $dom$ is the {\itshape state\+\_\+domain} and $h_{sug}$ is the suggested time step. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+The documentation for this class was generated from the following file\+:\begin{DoxyCompactItemize}
+\item 
+source/solvers/\mbox{\hyperlink{bounder_8hpp}{bounder.\+hpp}}\end{DoxyCompactItemize}

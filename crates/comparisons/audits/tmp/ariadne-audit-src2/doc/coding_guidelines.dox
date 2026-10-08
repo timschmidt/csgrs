@@ -1,0 +1,139 @@
+/***************************************************************************
+ *            coding_guidelines.dox
+ *
+ *  Copyright  2007  Pieter Collins
+ *
+ ****************************************************************************/
+
+/*
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; either version 2 of the License, or
+ *  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Library General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program; if not, write to the Free Software
+ *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+ */
+
+/*!
+
+\file coding_guidelines.dox
+\brief Standards and guidelines for writing C++ and Python code
+
+
+
+\page coding_guidelines_page Coding Guidelines
+
+
+\section svnusage Git Usage
+
+ - Ensure that the \c master branch is always usable!!! It should compile with both \c gcc and \c clang.
+
+ - When merging \em major changes from a branch into \c master, it is often better to \em first \c merge (or \c rebase) changes from the current \c master into the branch.
+   This allows changes made to the trunk to first be assimilated before the final commit to the trunk is made.
+   Once the conflicts have been resolved (which may take several revisions), and assuming no further changes have been made to the \c master, the changes can be safely merged.
+
+\section cppcodingstandards C++ Coding Standards
+
+\subsection cppindentation Indentation
+
+ - The basic indentation size is four spaces.
+ - Tabs must not be used for indentation
+ - Namespaces should not be indented
+ - Scope classifiers (public, protected, private) should be indented by half the basic indentation.
+
+\subsection cppgeneralguidelines General guidelines
+
+ - Use C++ casts rather than C-style casts. i.e. use static_cast<T>(x) and not (T)x.
+
+ - Remember that identifiers beginning with two underscores __XXX, __xxx or an underscore and a capital letter _Xxx are reserved for the compiler.
+
+ - Each class should be in a single header file, which should include strongly related classes and methods.
+    - Source files xxx.cc should contain ordinary non-inline source code, internal code only used in the source file and explicit template instantiations.
+    - Header files xxx.h should contain the interface, inline functions, templated code which is not explicitly instantiated and Doxygen documentation.
+    - Header files xxx.decl.h should contain forward declarations.
+    - Header files xxx.inl.h may be used for inline functions.
+    - Header files xxx.tpl.h should contain templated code which is meant to be explicitly instantiated.
+
+ - To ease template instantiation, non-member functions related to a class should not require explicit instantiation.
+   They must then be in the main xxx.h file or xxx.inl.h, but may be simple forwarding functions to (static) class methods.
+
+ - The use of a private static _instantiate() method to enforce template instantiation does not work with all compilers and all optimization settings, and must not be used.
+
+\subsection cppgotchas Common mistakes
+ - A class static constant should be declared inside the class and initialised outside the class body. This initialisation should go in a source code file (.cc or .tpl.h). An exception is an integer constant, which may be initialised in the class definition.
+
+\section pythoncodingstandards Python Coding Standards
+ - Every executable Python code file should begin with <c>#!/usr/bin/python</c>. This is the proper location for the Python interpreter following the Linux <a href="http://www.pathname.com/fhs/">Filesystem Hierarchy Standard</a> (FHS).
+
+\section gdblibtoolusage Using GDB with libtool
+ - To use the GNU debugger under libtool, run <code>libtool --mode=execute gdb test_xxx</code> (This works with libtool 2.2.6)
+
+
+\section cppidioms C++ Idioms
+
+\subsection cpphierarchies Handle/Body Hierarchies
+
+A handle-body hierarchy must implement a virtual \c check_assign method in the handle class hierarchy to perform dynamic type-checking. This is to ensure type-safety in the following code:
+\code
+Base b;    // Handle class with body of type BaseBody
+
+Derived d; // Handle class derived from Base using Base to provide the pointer,
+           // with body of type DerivedBody derived from BaseBody.
+
+b=d; // Ok; downcast
+d=b; // Upcast caught at compile-time
+
+Base& br=d;
+br=b; // Oops, d now holds an object of dynamic type BaseBody
+\endcode
+A minimal implementation of this technique is:
+\code
+class Base {
+  public:
+    Base& operator=(const Base& other) {
+        check_assign(other.handle.operator->());
+        handle=other.handle; return *this; }
+  protected:
+    Base(BaseBody* p) : handle(p) { }
+    virtual void check_assign(const BaseBody* pointer) { }
+  private:
+    shared_ptr<BaseBody> handle;
+};
+
+struct Derived : public Base {
+  protected:
+    virtual void check_assign(const BaseBody* pointer) {
+        assert(dynamic_cast<const DerivedBody*>(other.pointer())); }
+};
+\endcode
+
+\subsection initializerlists Initializer Lists
+
+For many classes, it is useful to be able to initialise objects by providing lists of raw data. In C++, this is achieved using the \ref Ariadne::InitializerList "InitializerList<T>" template (which is an alias for \c std::initializer_list<T>). For classes based on concrete numbers (which need a \em precision parameter for the initialisation, it is conventient to specify a list of generic numbers, and only give the precision parameter once. For example, for a \ref Ariadne::Vector "Vector<X>" of elements of type \c X, which can be constructed from generic elements of type \c Y and properties of type \c PR, then we have a constructor <code>Vector(InitializerList<Y>,PR)</code>.
+
+For not all types \c X, there may be suitable \c Y and \c PR, such a constructor is not always valid. One way of selectively providing this constructor is to take \c Y and \c PR as template parameters, which would yield a method <code>template<class Y, class PR> Vector(InitializerList<Y>,PR)</code>. However, this disallows using different types in the initializer list, even if they can all be converted to a suitable common type.
+
+Since the main use of such constructors is providing explicit values for testing, and the main class for numerical values are double-precision floats, we instead fix the type \c Y to be \ref Ariadne::ExactDouble "ExactDouble", and only template on \c PR. Further, since a class may have many property parameters, we use a parameter pack \c PRS... instead of a single \c PR. This yields constructor:
+\code
+  template<class... PRS> Vector(InitializerList<ExactDouble>,PRS...)
+\endcode
+
+Similar constructors are provided for other list-based classes, such as \ref Ariadne::Matrix "Matrix<X>" and \ref Ariadne::Expansion "Expansion<I,X>".
+
+An alternative to the current approach may be to use concepts to restrict use cases to classes satisfying the Concrete/Generic concept.
+
+
+\section pybindings Python Bindings
+
+Some useful techniques for creating the Python bindings include:
+- To export a C++ \c typedef, use: <code>module.def("TypeAlias")=pybind11_class;
+
+
+*/

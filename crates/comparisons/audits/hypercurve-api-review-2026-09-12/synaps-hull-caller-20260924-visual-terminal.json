@@ -1,0 +1,30 @@
+{
+  "all_sources_unchanged": true,
+  "all_processes_reaped": true,
+  "visual": [
+    {
+      "fixture": "basic.scad",
+      "synaps_returncode": 0,
+      "elapsed_seconds": 0.06389805697835982,
+      "synaps_log": "synaps-hull-caller-20260924-visual/basic.synaps.log",
+      "openscad_returncode": 0
+    },
+    {
+      "fixture": "concave_difference.scad",
+      "synaps_returncode": 0,
+      "elapsed_seconds": 0.06367941189091653,
+      "synaps_log": "synaps-hull-caller-20260924-visual/concave_difference.synaps.log",
+      "openscad_returncode": 0
+    },
+    {
+      "fixture": "rotated_intersection.scad",
+      "synaps_returncode": 0,
+      "elapsed_seconds": 0.11378068500198424,
+      "synaps_log": "synaps-hull-caller-20260924-visual/rotated_intersection.synaps.log",
+      "openscad_returncode": 0
+    }
+  ],
+  "visual_inspection_pending": true,
+  "probe_sha256": "d32b2ee2e2cd98f72365e1d46b414c6d72f0f3f62888a2688d26e104a3b64bd1",
+  "library_sha256": "8e5ef3e530be2c814785aeb116b58c8a58dab72f39f76706db6c0154281217df"
+}

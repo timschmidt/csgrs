@@ -1,0 +1,27 @@
+{
+  "returncode": 0,
+  "elapsed_seconds": 1.315409984003054,
+  "normal_library_sha256": "8eb7cd1fbaa241bf01e599e07ca251959c800c77c62a8091232bad9d52006638",
+  "log": "finite-circle-domains-analytic-public.log",
+  "source": "finite-circle-analytic-domains-public.rs",
+  "command": [
+    "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustc",
+    "--edition=2024",
+    "-O",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-circle-analytic-domains-public.rs",
+    "--extern",
+    "hypercurve=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypercurve-ee303709bdb4cb6a.rlib",
+    "-L",
+    "dependency=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps",
+    "-o",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-circle-domains-analytic-public"
+  ],
+  "source_sha256": "75fcf3ab4d48751e51eacf4ed8a48e86010983600c2245bbb74b2bc34112f384",
+  "executable_sha256": "4a8f75615ea714bbef83406f8fc0d90fd7f9da173a5d92db70690c186e1f0dda",
+  "counts": {
+    "cases": 32,
+    "contacts": 32,
+    "point_replays": 64,
+    "failures": 0
+  }
+}

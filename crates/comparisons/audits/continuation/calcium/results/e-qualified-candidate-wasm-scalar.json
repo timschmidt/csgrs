@@ -1,0 +1,25 @@
+{
+  "tag": "e-qualified-candidate-wasm-scalar",
+  "started": "2026-09-10T01:15:48.269Z",
+  "finished": "2026-09-10T01:15:58.422Z",
+  "elapsedSeconds": 10.150535248,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/e-plan-qualified-candidate/hyperreal",
+  "command": "env",
+  "args": [
+    "CARGO_TARGET_DIR=/tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse",
+    "CARGO_INCREMENTAL=0",
+    "CARGO_PROFILE_DEV_DEBUG=0",
+    "CARGO_BUILD_JOBS=2",
+    "cargo",
+    "build",
+    "--locked",
+    "--offline",
+    "--release",
+    "--lib",
+    "--all-features",
+    "--target",
+    "wasm32-unknown-unknown"
+  ],
+  "code": 0,
+  "signal": null
+}

@@ -1,0 +1,236 @@
+diff --git a/benches/bezier_region.rs b/benches/bezier_region.rs
+index e47e693..ea41eae 100644
+--- a/benches/bezier_region.rs
++++ b/benches/bezier_region.rs
+@@ -145,14 +145,12 @@ fn algebraic_polynomial_parameter(
+     )))
+ }
+ 
+-fn retained_algebraic_line_fragment(
+-    start: Point2,
+-    end: Point2,
+-    policy: &CurveContext,
+-) -> CurveResult<BezierSplitFragment2> {
+-    Ok(BezierSplitFragment2::AlgebraicChord(decided(
+-        BezierAlgebraicChord2::try_new(CurvePoint2::from(start), CurvePoint2::from(end), policy)?,
+-    )))
++fn algebraic_chord(start: Point2, end: Point2, policy: &CurveContext) -> CurveResult<Curve2> {
++    Ok(Curve2::from(decided(BezierAlgebraicChord2::try_new(
++        CurvePoint2::from(start),
++        CurvePoint2::from(end),
++        policy,
++    )?)))
+ }
+ 
+ fn benchmark_measurements(region: &CurveRegion2, policy: &CurveContext) -> CurveResult<()> {
+@@ -215,12 +213,12 @@ fn benchmark_measurements(region: &CurveRegion2, policy: &CurveContext) -> Curve
+     Ok(())
+ }
+ 
+-fn main() -> CurveResult<()> {
++fn main() -> Result<(), Box<dyn std::error::Error>> {
+     let policy = CurveContext::STRICT;
+     let first_region = square_region(0, 0, 4, 4)?;
+     let second_region = square_region(2, 0, 6, 4)?;
+     if std::env::var_os("HYPERCURVE_BEZIER_REGION_MEASURE_ONLY").is_some() {
+-        return benchmark_measurements(&first_region, &policy);
++        return Ok(benchmark_measurements(&first_region, &policy)?);
+     }
+     let region_clone_iterations = 1_000_000_u32;
+     let started = Instant::now();
+@@ -498,15 +496,10 @@ fn main() -> CurveResult<()> {
+         elapsed / iterations
+     );
+ 
+-    let algebraic_split = decided(upper.split_at_parameters(
+-        &[algebraic_polynomial_parameter(
+-            vec![r(-1), r(0), r(2)],
+-            q(2, 3),
+-            q(3, 4),
+-            &policy,
+-        )?],
+-        &policy,
+-    )?);
++    let algebraic_cut =
++        algebraic_polynomial_parameter(vec![r(-1), r(0), r(2)], q(2, 3), q(3, 4), &policy)?;
++    let algebraic_split =
++        decided(upper.split_at_parameters(std::slice::from_ref(&algebraic_cut), &policy)?);
+     let mut algebraic_loop_fragments = algebraic_split.fragments().to_vec();
+     algebraic_loop_fragments.extend(
+         algebraic_split
+@@ -517,13 +510,12 @@ fn main() -> CurveResult<()> {
+             .collect::<CurveResult<Vec<_>>>()?,
+     );
+     let algebraic_loop = retained_loop(algebraic_loop_fragments)?;
+-    let mut algebraic_region_fragments = algebraic_split.fragments().to_vec();
+-    algebraic_region_fragments.push(BezierSplitFragment2::Materialized {
+-        start: BezierParameter2::Exact(Real::zero()),
+-        end: BezierParameter2::Exact(Real::one()),
+-        curve: BezierSubcurve2::Quadratic(lower),
+-    });
+-    let algebraic_region = CurveRegion2::new(vec![retained_loop(algebraic_region_fragments)?])?;
++    let (head, tail) = Curve2::from(upper.clone())
++        .split_at(algebraic_cut.into(), &policy)?
++        .into_value();
++    let algebraic_path = CurvePath2::try_new(vec![head, tail, lower.into()])?;
++    let algebraic_region =
++        CurveRegion2::try_from_boundary_paths(&[algebraic_path], &policy)?.into_value();
+     let algebraic_region_query = p(2, 0);
+     decided(
+         algebraic_region
+@@ -593,20 +585,17 @@ fn main() -> CurveResult<()> {
+         elapsed / iterations
+     );
+ 
+-    let algebraic_line_region = CurveRegion2::new(vec![
+-        retained_loop(vec![
+-            retained_algebraic_line_fragment(p(-3, -3), p(3, -3), &policy)?,
+-            retained_algebraic_line_fragment(p(3, -3), p(3, 3), &policy)?,
+-            retained_algebraic_line_fragment(p(3, 3), p(-3, 3), &policy)?,
+-            retained_algebraic_line_fragment(p(-3, 3), p(-3, -3), &policy)?,
+-        ])?,
+-        retained_loop(vec![
+-            retained_algebraic_line_fragment(p(-1, -1), p(1, -1), &policy)?,
+-            retained_algebraic_line_fragment(p(1, -1), p(1, 1), &policy)?,
+-            retained_algebraic_line_fragment(p(1, 1), p(-1, 1), &policy)?,
+-            retained_algebraic_line_fragment(p(-1, 1), p(-1, -1), &policy)?,
+-        ])?,
+-    ])?;
++    let mut algebraic_paths = Vec::with_capacity(2);
++    for (min, max) in [(-3, 3), (-1, 1)] {
++        algebraic_paths.push(CurvePath2::try_new(vec![
++            algebraic_chord(p(min, min), p(max, min), &policy)?,
++            algebraic_chord(p(max, min), p(max, max), &policy)?,
++            algebraic_chord(p(max, max), p(min, max), &policy)?,
++            algebraic_chord(p(min, max), p(min, min), &policy)?,
++        ])?);
++    }
++    let algebraic_line_region =
++        CurveRegion2::try_from_boundary_paths(&algebraic_paths, &policy)?.into_value();
+     let started = Instant::now();
+     let mut algebraic_line_role_checksum = 0_usize;
+     for _ in 0..iterations {
+diff --git a/fuzz/fuzz_targets/bezier_region.rs b/fuzz/fuzz_targets/bezier_region.rs
+index 66ce1eb..96a81b0 100644
+--- a/fuzz/fuzz_targets/bezier_region.rs
++++ b/fuzz/fuzz_targets/bezier_region.rs
+@@ -3,8 +3,8 @@
+ use hypercurve::{
+     BezierAlgebraicChord2, BezierAlgebraicParameter2, BezierArrangementGraph2, BezierParameter2,
+     BezierParameterInterval, BezierParameterPolynomial, BezierRetainedCurveEnvelope2,
+-    BezierRetainedEndpointEnvelope2, BezierSplitFragment2, Classification, CurveContext,
+-    CurvePoint2, CurveRegion2, CurveRegionBoundaryLoop2, Point2, QuadraticBezier2,
++    BezierRetainedEndpointEnvelope2, BezierSplitFragment2, Classification, Curve2, CurveContext,
++    CurvePath2, CurvePoint2, CurveRegion2, CurveRegionBoundaryLoop2, Point2, QuadraticBezier2,
+     RationalQuadraticBezier2, Real,
+ };
+ use libfuzzer_sys::fuzz_target;
+@@ -71,12 +71,8 @@ fn algebraic_sqrt_eighth(policy: &CurveContext) -> Option<BezierParameter2> {
+     Some(BezierParameter2::algebraic(parameter))
+ }
+ 
+-fn algebraic_line_fragment(
+-    start: Point2,
+-    end: Point2,
+-    policy: &CurveContext,
+-) -> Option<BezierSplitFragment2> {
+-    Some(BezierSplitFragment2::AlgebraicChord(
++fn algebraic_chord(start: Point2, end: Point2, policy: &CurveContext) -> Option<Curve2> {
++    Some(Curve2::from(
+         match BezierAlgebraicChord2::try_new(
+             CurvePoint2::from(start),
+             CurvePoint2::from(end),
+@@ -221,19 +217,16 @@ fuzz_target!(|data: &[u8]| {
+     ];
+     let outer = algebraic_outer
+         .into_iter()
+-        .filter_map(|(start, end)| algebraic_line_fragment(start, end, &policy))
++        .filter_map(|(start, end)| algebraic_chord(start, end, &policy))
+         .collect::<Vec<_>>();
+     let inner = algebraic_inner
+         .into_iter()
+-        .filter_map(|(start, end)| algebraic_line_fragment(start, end, &policy))
++        .filter_map(|(start, end)| algebraic_chord(start, end, &policy))
+         .collect::<Vec<_>>();
+     if outer.len() == 4 && inner.len() == 4 {
+-        if let (Ok(outer), Ok(inner)) = (
+-            CurveRegionBoundaryLoop2::new(outer, &policy),
+-            CurveRegionBoundaryLoop2::new(inner, &policy),
+-        ) {
+-            if let Ok(region) = CurveRegion2::new(vec![outer, inner]) {
+-                let _ = region.loop_roles(&policy);
++        if let (Ok(outer), Ok(inner)) = (CurvePath2::try_new(outer), CurvePath2::try_new(inner)) {
++            if let Ok(region) = CurveRegion2::try_from_boundary_paths(&[outer, inner], &policy) {
++                let _ = region.value.loop_roles(&policy);
+             }
+         }
+     }
+diff --git a/tests/hypercurve_bspline.rs b/tests/hypercurve_bspline.rs
+index c927fef..6154f3d 100644
+--- a/tests/hypercurve_bspline.rs
++++ b/tests/hypercurve_bspline.rs
+@@ -1,7 +1,7 @@
+ mod support;
+ 
+ use hypercurve::{
+-    BezierBoundaryLoop2, BezierSubcurve2, Classification, CurveContext, CurveError, CurveRegion2,
++    BezierSubcurve2, Classification, Curve2, CurveContext, CurveError, CurvePath2, CurveRegion2,
+     Point2, PolynomialBSplineCurve2, RationalBSplineCurve2, Real, RetainedSpanAxisMonotonicity,
+ };
+ 
+@@ -298,16 +298,14 @@ fn extracted_bspline_spans_feed_unified_region_area() {
+             .spans()
+             .to_vec(),
+     );
+-    let region = CurveRegion2::new(vec![
+-        BezierBoundaryLoop2::new(fragments, &CurveContext::STRICT)
+-            .unwrap()
+-            .into(),
+-    ])
+-    .unwrap();
++    let path = CurvePath2::try_new(fragments.into_iter().map(Curve2::from).collect()).unwrap();
++    let region = CurveRegion2::try_from_boundary_paths(&[path], &policy())
++        .unwrap()
++        .into_value();
+ 
+     assert_eq!(
+         decided(region.signed_area(&policy()).unwrap().into_value()),
+-        Some(q(-88, 3))
++        Some(q(88, 3))
+     );
+ }
+ 
+@@ -524,12 +522,10 @@ fn equal_weight_retained_rational_cubic_spans_feed_unified_region_area() {
+     fragments.extend(
+         decided(lower.extract_bezier_spans(&policy()).unwrap()).native_subcurves(&policy()),
+     );
+-    let region = CurveRegion2::new(vec![
+-        BezierBoundaryLoop2::new(fragments, &CurveContext::STRICT)
+-            .unwrap()
+-            .into(),
+-    ])
+-    .unwrap();
++    let path = CurvePath2::try_new(fragments.into_iter().map(Curve2::from).collect()).unwrap();
++    let region = CurveRegion2::try_from_boundary_paths(&[path], &policy())
++        .unwrap()
++        .into_value();
+ 
+     assert!(decided(region.signed_area(&policy()).unwrap().into_value()).is_some());
+ }
+@@ -802,12 +798,10 @@ fn extracted_rational_bspline_spans_feed_conic_region_area() {
+     fragments.extend(
+         decided(lower.extract_bezier_spans(&policy()).unwrap()).native_subcurves(&policy()),
+     );
+-    let region = CurveRegion2::new(vec![
+-        BezierBoundaryLoop2::new(fragments, &CurveContext::STRICT)
+-            .unwrap()
+-            .into(),
+-    ])
+-    .unwrap();
++    let path = CurvePath2::try_new(fragments.into_iter().map(Curve2::from).collect()).unwrap();
++    let region = CurveRegion2::try_from_boundary_paths(&[path], &policy())
++        .unwrap()
++        .into_value();
+ 
+     assert!(decided(region.signed_area(&policy()).unwrap().into_value()).is_some());
+ }

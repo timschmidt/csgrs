@@ -1,0 +1,212 @@
+{
+  "parents": {
+    "hypercurve": "7941ee50b10bef91a519bfcbd104b759f9cb721a",
+    "hypersolve": "41855c3604cbd18605a020d60758c8e5c489b629",
+    "hyperreal": "0cb5f29aee065c73e234e0ebb0a9e106398515bb"
+  },
+  "source_manifest": "selected-cusp-ranges-fixed-20260926-v184-sources.json",
+  "source_directory": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/source-archives/selected-cusp-ranges-fixed-20260926-v184",
+  "build_source_directory": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/build-workspace-20260925",
+  "workspace_guard": "local-chord-complete-replay-20260924-v184-sources.json",
+  "checks": [],
+  "cases": [
+    {
+      "repo": "hypercurve",
+      "label": "case-00",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/selected-cusp-ranges-fixed-20260926-v184-hypercurve",
+        "--exact",
+        "bezier_region::tests::selected_parallel_offset_partitions_existing_cusps_before_composition",
+        "--test-threads=1",
+        "--nocapture",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.007614976959303021,
+      "log": "selected-cusp-ranges-fixed-20260926-v184-case-00.log",
+      "name": "bezier_region::tests::selected_parallel_offset_partitions_existing_cusps_before_composition"
+    },
+    {
+      "repo": "hypercurve",
+      "label": "case-01",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/selected-cusp-ranges-fixed-20260926-v184-hypercurve",
+        "--exact",
+        "bezier_region::tests::selected_parallel_coalescing_requires_regular_cells",
+        "--test-threads=1",
+        "--nocapture",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.0035631549544632435,
+      "log": "selected-cusp-ranges-fixed-20260926-v184-case-01.log",
+      "name": "bezier_region::tests::selected_parallel_coalescing_requires_regular_cells"
+    },
+    {
+      "repo": "hypercurve",
+      "label": "case-02",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/selected-cusp-ranges-fixed-20260926-v184-hypercurve",
+        "--exact",
+        "bezier_region::tests::selected_parallel_endpoint_tangents_use_the_incident_branch",
+        "--test-threads=1",
+        "--nocapture",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.007622946053743362,
+      "log": "selected-cusp-ranges-fixed-20260926-v184-case-02.log",
+      "name": "bezier_region::tests::selected_parallel_endpoint_tangents_use_the_incident_branch"
+    },
+    {
+      "repo": "hypercurve",
+      "label": "case-03",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/selected-cusp-ranges-fixed-20260926-v184-hypercurve",
+        "--exact",
+        "bezier_region::tests::retained_parallel_offset_composition_respects_traversal_orientation",
+        "--test-threads=1",
+        "--nocapture",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.003555526025593281,
+      "log": "selected-cusp-ranges-fixed-20260926-v184-case-03.log",
+      "name": "bezier_region::tests::retained_parallel_offset_composition_respects_traversal_orientation"
+    },
+    {
+      "repo": "hypercurve",
+      "label": "case-04",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/selected-cusp-ranges-fixed-20260926-v184-hypercurve",
+        "--exact",
+        "bezier_region::tests::retained_parallel_offset_preserves_algebraic_cusp_partition",
+        "--test-threads=1",
+        "--nocapture",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.00764702504966408,
+      "log": "selected-cusp-ranges-fixed-20260926-v184-case-04.log",
+      "name": "bezier_region::tests::retained_parallel_offset_preserves_algebraic_cusp_partition"
+    },
+    {
+      "repo": "hypercurve",
+      "label": "case-05",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/selected-cusp-ranges-fixed-20260926-v184-hypercurve",
+        "--exact",
+        "bezier_region::tests::retained_parallel_offset_composition_splits_new_cusps_in_traversal_order",
+        "--test-threads=1",
+        "--nocapture",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.0035450569121167064,
+      "log": "selected-cusp-ranges-fixed-20260926-v184-case-05.log",
+      "name": "bezier_region::tests::retained_parallel_offset_composition_splits_new_cusps_in_traversal_order"
+    },
+    {
+      "repo": "hypercurve",
+      "label": "case-06",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/selected-cusp-ranges-fixed-20260926-v184-hypercurve",
+        "--exact",
+        "bezier_region::tests::retained_parallel_offset_coalesces_non_cusp_algebraic_arrangement_partitions",
+        "--test-threads=1",
+        "--nocapture",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.007580459932796657,
+      "log": "selected-cusp-ranges-fixed-20260926-v184-case-06.log",
+      "name": "bezier_region::tests::retained_parallel_offset_coalesces_non_cusp_algebraic_arrangement_partitions"
+    },
+    {
+      "repo": "hypercurve",
+      "label": "case-07",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/selected-cusp-ranges-fixed-20260926-v184-hypercurve",
+        "--exact",
+        "bezier_region::tests::selected_parallel_offset_preserves_stationary_branch_frames",
+        "--test-threads=1",
+        "--nocapture",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.003633179934695363,
+      "log": "selected-cusp-ranges-fixed-20260926-v184-case-07.log",
+      "name": "bezier_region::tests::selected_parallel_offset_preserves_stationary_branch_frames"
+    },
+    {
+      "repo": "hypercurve",
+      "label": "case-08",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/selected-cusp-ranges-fixed-20260926-v184-hypercurve",
+        "--exact",
+        "bezier_region::tests::retained_stationary_endpoint_composition_keeps_source_and_tangent_anchor",
+        "--test-threads=1",
+        "--nocapture",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.007618976989760995,
+      "log": "selected-cusp-ranges-fixed-20260926-v184-case-08.log",
+      "name": "bezier_region::tests::retained_stationary_endpoint_composition_keeps_source_and_tangent_anchor"
+    },
+    {
+      "repo": "hypercurve",
+      "label": "case-09",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/selected-cusp-ranges-fixed-20260926-v184-hypercurve",
+        "--exact",
+        "bezier_region::tests::resource_blocked_selected_offset_span_completes_its_cold_projection",
+        "--test-threads=1",
+        "--nocapture",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.0035495570627972484,
+      "log": "selected-cusp-ranges-fixed-20260926-v184-case-09.log",
+      "name": "bezier_region::tests::resource_blocked_selected_offset_span_completes_its_cold_projection"
+    },
+    {
+      "repo": "hypercurve",
+      "label": "case-10",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/selected-cusp-ranges-fixed-20260926-v184-hypercurve",
+        "--exact",
+        "bezier_region::tests::even_multiplicity_stationary_source_coalesces_one_offset_span",
+        "--test-threads=1",
+        "--nocapture",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.007721649948507547,
+      "log": "selected-cusp-ranges-fixed-20260926-v184-case-10.log",
+      "name": "bezier_region::tests::even_multiplicity_stationary_source_coalesces_one_offset_span"
+    }
+  ],
+  "binaries": {
+    "hypercurve": {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/selected-cusp-ranges-fixed-20260926-v184-hypercurve",
+      "sha256": "b2e96c4a033a5f0ae55c05c80376dac765c4778074f928df044a316cf506feef"
+    }
+  },
+  "all_processes_reaped": true,
+  "diagnostic_only": false,
+  "hypercurve_build_returncode": 0,
+  "all_sources_unchanged": true,
+  "qualification_complete": true
+}

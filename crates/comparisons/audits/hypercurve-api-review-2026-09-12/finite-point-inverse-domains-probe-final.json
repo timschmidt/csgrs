@@ -1,0 +1,24 @@
+{
+  "returncode": 0,
+  "elapsed_seconds": 0.007495787023799494,
+  "normal_library_sha256": "68b7eb07dd682f6f27b42ea8f5bf32ff3fb0e3d96d09c29889738e18190708f9",
+  "log": "finite-point-inverse-domains-probe-final.log",
+  "source": "circle-common-dispatch-baseline.rs",
+  "command": [
+    "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustc",
+    "--edition=2024",
+    "-O",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/circle-common-dispatch-baseline.rs",
+    "--extern",
+    "hypercurve=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypercurve-e19f31178f76cad1.rlib",
+    "-L",
+    "dependency=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps",
+    "-o",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-point-inverse-domains-probe-final"
+  ],
+  "run_command": [
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-point-inverse-domains-probe-final"
+  ],
+  "source_sha256": "43fd661cca1f5a4ea052a03f8c01e7a17b22ca732d38addd201dafcc86d9360b",
+  "executable_sha256": "192c0dfa65d0acefa0599ef0d4c4f57e3dcd7f7f5979951ddf8c672b87c48647"
+}

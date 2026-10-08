@@ -1,0 +1,57 @@
+{
+  "phase": "staged",
+  "heads": {
+    "hypersolve": "a6307b5387282a2c125b71c8f5848282c052dd30",
+    "hypercurve": "5915c26bf0160f2fb69a9583f28d4ff16b9e0193"
+  },
+  "selected": {
+    "hypersolve": [
+      "src/algebraic_fiber.rs",
+      "src/ordered_field_roots.rs",
+      "src/root_sign.rs"
+    ],
+    "hypercurve": [
+      "src/bezier_offset.rs"
+    ]
+  },
+  "source_manifest": "retained-contact-factor-20260925-v98-sources.json",
+  "workspace_guard": "local-chord-complete-replay-20260924-v98-sources.json",
+  "qualification": "retained-contact-factor-20260925-v98-terminal.json",
+  "hypersolve_passed": 514,
+  "hypercurve_passed": 259,
+  "ignored": 0,
+  "every_owned_process_reaped": true,
+  "all_bound_sources_and_binaries_unchanged": true,
+  "repository_statuses": {
+    "hypersdf": "",
+    "hyperbrep": "",
+    "hyperparts": "",
+    "alumina-interface": "",
+    "hyperlattice": "",
+    "citizen-builder": "",
+    "csgrs-ffi": "",
+    "alumina-firmware": "",
+    "videos": "",
+    "hypertri": "",
+    "hyperreal": "",
+    "hyperpath": "",
+    "hypervoxel": "",
+    "hypergraphics": "",
+    "hyperevolution": "",
+    "exactcore-hyper-comparison": "",
+    "hypersolve": "M  src/algebraic_fiber.rs\nM  src/ordered_field_roots.rs\nM  src/root_sign.rs\n",
+    "hypercurve": "MM src/bezier_offset.rs\n M src/bezier_region.rs\n M src/curve.rs\n M src/curve_corner_chain.rs\n",
+    "crcalc": "",
+    "openscad-rs": "",
+    "hypermesh": "",
+    "csgrs": "",
+    "synaps-cad": "",
+    "hyperdrc": "",
+    "hyperphysics": "",
+    "hyperlimit": "",
+    "hyperpack": "",
+    "NURBS_BREP_kernel": "",
+    "ExactCalculator": "",
+    "hypercircuit": ""
+  }
+}

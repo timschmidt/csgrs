@@ -1,0 +1,75 @@
+   Compiling hyperreal v0.13.1 (/home/tim/Documents/GitHub/workspace/hyperreal)
+error[E0599]: no associated function or constant named `one` found for struct `num::BigInt` in the current scope
+    --> src/real/arithmetic/tests.rs:2306:59
+     |
+2306 |         let tiny = Rational::from_bigint_fraction(BigInt::one(), BigUint::from(3_u8) << 600_usize).unwrap();
+     |                                                           ^^^ associated function or constant not found in `num::BigInt`
+     |
+note: if you're trying to build a new `num::BigInt` consider using one of the following associated functions:
+      num::BigInt::new
+      num::BigInt::from_biguint
+      num::BigInt::from_slice
+      num::BigInt::from_bytes_be
+      and 6 others
+    --> /home/tim/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/num-bigint-0.4.6/src/bigint.rs:576:5
+     |
+ 576 |     pub fn new(sign: Sign, digits: Vec<u32>) -> BigInt {
+     |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+...
+ 584 |     pub fn from_biguint(mut sign: Sign, mut data: BigUint) -> BigInt {
+     |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+...
+ 598 |     pub fn from_slice(sign: Sign, slice: &[u32]) -> BigInt {
+     |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+...
+ 634 |     pub fn from_bytes_be(sign: Sign, bytes: &[u8]) -> BigInt {
+     |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+     = help: items from traits can only be used if the trait is in scope
+help: there is a method `ne` with a similar name, but with different arguments
+    --> /home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/core/src/cmp.rs:263:5
+     |
+ 263 |     fn ne(&self, other: &Rhs) -> bool {
+     |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+help: trait `One` which provides `one` is implemented but not in scope; perhaps you want to import it
+     |
+   3 +     use num::One;
+     |
+
+error[E0599]: no associated function or constant named `one` found for struct `num::BigInt` in the current scope
+    --> src/real/arithmetic/tests.rs:2326:61
+     |
+2326 |         let scale = Real::new(Rational::from_bigint(BigInt::one() << 2_000_usize));
+     |                                                             ^^^ associated function or constant not found in `num::BigInt`
+     |
+note: if you're trying to build a new `num::BigInt` consider using one of the following associated functions:
+      num::BigInt::new
+      num::BigInt::from_biguint
+      num::BigInt::from_slice
+      num::BigInt::from_bytes_be
+      and 6 others
+    --> /home/tim/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/num-bigint-0.4.6/src/bigint.rs:576:5
+     |
+ 576 |     pub fn new(sign: Sign, digits: Vec<u32>) -> BigInt {
+     |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+...
+ 584 |     pub fn from_biguint(mut sign: Sign, mut data: BigUint) -> BigInt {
+     |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+...
+ 598 |     pub fn from_slice(sign: Sign, slice: &[u32]) -> BigInt {
+     |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+...
+ 634 |     pub fn from_bytes_be(sign: Sign, bytes: &[u8]) -> BigInt {
+     |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+     = help: items from traits can only be used if the trait is in scope
+help: there is a method `ne` with a similar name, but with different arguments
+    --> /home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/core/src/cmp.rs:263:5
+     |
+ 263 |     fn ne(&self, other: &Rhs) -> bool {
+     |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+help: trait `One` which provides `one` is implemented but not in scope; perhaps you want to import it
+     |
+   3 +     use num::One;
+     |
+
+For more information about this error, try `rustc --explain E0599`.
+error: could not compile `hyperreal` (lib test) due to 2 previous errors

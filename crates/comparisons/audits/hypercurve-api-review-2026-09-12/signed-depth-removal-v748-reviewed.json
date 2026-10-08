@@ -1,0 +1,24 @@
+{
+  "qualification": "signed-depth-removal-v748-terminal.json",
+  "source_manifest": "signed-depth-removal-v748-sources.json",
+  "outer_session_reaped": 5487,
+  "validated_files": 2048,
+  "tests": 45,
+  "checks": 7,
+  "repos": {
+    "hypercurve": {
+      "parent": "c466e84bee7e1b3f7ccad42dc4ada142a00a987b",
+      "paths": {
+        "PERFORMANCE.md": "d1442644c9001a6f69fcf80748e4d64ed2ff0c472e361d2d3281d37eff5b6d2e",
+        "README.md": "17a9387158be1a73213b38c9f5742331a58f3305eef0b7ea471e4d5e9defdde5",
+        "benches/bezier_region.rs": "eb89e0cecd44b298143576b843b79e2af326447f284db6b11965f312ca2f8cbc",
+        "src/bezier_region.rs": "ab8959d2040eea7add280bb645bf438b64ef86d608277dae82b77446caa4b5bf",
+        "src/native_region_tests.rs": "ebf0026f20804c1eeb1b8926cabe6350eac1d1970a24af340e92594832454bb5",
+        "src/region.rs": "2f27d5eb6f8870752c44f4c8c28f7fcb83c8ea18e38d4c09ce7b1c05698fad14",
+        "tests/hypercurve_curve_region_promotion.rs": "fb252b572d4e7c41b2ae5316b8d550a96ab18c192256c092000cb34e882e0a3f"
+      }
+    }
+  },
+  "scope": "Remove the public signed-depth query and duplicate kernel; use common exact point membership for normalized region callers",
+  "unresolved": "The full exact-geometry implementation goal remains active; this cleanup does not claim full spatial BREP closure or a measured speedup."
+}

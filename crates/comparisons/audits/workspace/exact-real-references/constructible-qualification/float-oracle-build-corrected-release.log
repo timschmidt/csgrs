@@ -1,0 +1,16 @@
+   Compiling numbers-qualification v0.0.0 (/home/tim/Documents/GitHub/workspace/exact-real-references/numbers-qualification)
+error[E0282]: type annotations needed
+  --> ../constructible-qualification/float_oracle.rs:42:48
+   |
+42 | ...   let approximation=raw.approx(-512);let scale=Integer::from(1)<<512;
+   |                                              ^^^^^
+43 | ...   let center=Q::from((Integer::from_str_radix(&approximation.to_string(),10).unwrap(),scale.clone()));let radius=Q::from((1,scal...
+   |                                                                                           ----- type must be known at this point
+   |
+help: consider giving `scale` an explicit type
+   |
+42 |         let approximation=raw.approx(-512);let scale: /* Type */=Integer::from(1)<<512;
+   |                                                     ++++++++++++
+
+For more information about this error, try `rustc --explain E0282`.
+error: could not compile `numbers-qualification` (bin "constructible_float_oracle") due to 1 previous error

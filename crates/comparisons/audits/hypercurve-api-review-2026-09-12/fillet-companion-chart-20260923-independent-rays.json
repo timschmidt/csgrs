@@ -1,0 +1,22 @@
+{
+  "companion_power_coefficients": [
+    [
+      "1",
+      "-31/65",
+      "-48/65"
+    ],
+    [
+      "1",
+      "-86/325",
+      "-43/325"
+    ]
+  ],
+  "companion_parameter": "-1/4",
+  "point": [
+    "279/260",
+    "5501/5200"
+  ],
+  "other_horizontal_root": "-7/4",
+  "query_below_circle_metric_lower_bound": true,
+  "positive_parabola_crossing_left_of_both_query_points": true
+}

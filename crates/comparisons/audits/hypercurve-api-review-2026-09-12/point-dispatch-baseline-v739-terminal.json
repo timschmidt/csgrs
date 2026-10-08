@@ -1,0 +1,21 @@
+{
+  "command": [
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/unit-domain-core-20260928-v649-hypercurve_curve_region_promotion-tests",
+    "--exact",
+    "nonconvex_algebraic_chord_expansion_is_exact_and_local_collapse_is_explicit",
+    "--include-ignored",
+    "--nocapture",
+    "--test-threads=1"
+  ],
+  "returncode": 101,
+  "elapsed_seconds": 0.7954784908797592,
+  "binary": {
+    "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/unit-domain-core-20260928-v649-hypercurve_curve_region_promotion-tests",
+    "sha256": "235becff18864ed5fbec6bd91f99838b19d12d4a4c784a21de3b82f25df5994f"
+  },
+  "source_manifest": "unit-domain-core-20260928-v649-sources.json",
+  "current_source_manifest": "common-point-classification-v738-sources.json",
+  "log": "point-dispatch-baseline-v739.log",
+  "all_processes_reaped": true,
+  "same_dispatch_assertion_failed": true
+}

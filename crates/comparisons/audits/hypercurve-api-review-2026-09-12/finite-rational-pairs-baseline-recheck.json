@@ -1,0 +1,25 @@
+{
+  "returncode": 0,
+  "elapsed_seconds": 0.0034806309995474294,
+  "normal_library_sha256": "4f31e2ad099d11b75a71df9f3c58671aa71af68816db9260c69ae286f65e7add",
+  "log": "finite-rational-pairs-baseline-recheck.log",
+  "source": "finite-domain-baseline.rs",
+  "command": [
+    "rustc",
+    "--edition=2024",
+    "-O",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-domain-baseline.rs",
+    "--extern",
+    "hypercurve=/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/libhypercurve-2c7ff6f3fbe07653.rlib",
+    "-L",
+    "dependency=/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps",
+    "-o",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-rational-pairs-baseline-recheck"
+  ],
+  "source_sha256": "c032cc63c161d14b576b2264b3df28e4a78b35d9210200aaf51b829f64806e59",
+  "executable_sha256": "15ce9cb680597943b102b17d17c2631a3788da3156535ce121180e791a995711",
+  "counts": {
+    "complete": 12,
+    "incomplete": 0
+  }
+}

@@ -1,0 +1,580 @@
+[
+  {
+    "path": "ExactCalculator",
+    "role": "external dependency",
+    "commit": "7265aa3a922a7e7c0389dae4b26cca562aa777a6",
+    "origin": "https://android.googlesource.com/platform/packages/apps/ExactCalculator",
+    "licenses": [
+      "MODULE_LICENSE_APACHE2"
+    ]
+  },
+  {
+    "path": "crcalc",
+    "role": "external dependency",
+    "commit": "4f398d699c9d498deb45520ea7ebb020627bc640",
+    "origin": "https://android.googlesource.com/platform/external/crcalc",
+    "licenses": [
+      "LICENSE",
+      "MODULE_LICENSE_APACHE2",
+      "COPYRIGHT.txt"
+    ]
+  },
+  {
+    "path": "crcalc-boehm",
+    "role": "external dependency",
+    "licenses": [
+      "COPYRIGHT.txt"
+    ]
+  },
+  {
+    "path": "exactCorelib-main",
+    "role": "external dependency",
+    "licenses": []
+  },
+  {
+    "path": "hyperbrep",
+    "role": "external dependency",
+    "commit": "7c8372727e8ee2b60a8c848152762daecadbeb0b",
+    "origin": "git@github.com:timschmidt/hyperbrep.git",
+    "licenses": []
+  },
+  {
+    "path": "hypercircuit",
+    "role": "external dependency",
+    "commit": "98c6515ead2bfb1579e329ebd32b7513c6c81b9f",
+    "origin": "git@github.com:timschmidt/hypercircuit.git",
+    "licenses": []
+  },
+  {
+    "path": "hypercurve",
+    "role": "external dependency",
+    "commit": "a3c1bb4582efbe337f37ef3e2c878787edf861d4",
+    "origin": "git@github.com:timschmidt/hypercurve.git",
+    "licenses": [
+      "LICENSE"
+    ]
+  },
+  {
+    "path": "hyperdrc",
+    "role": "external dependency",
+    "commit": "8e99479a7db9fb72f2f8a05cadf3c7415d25ee8c",
+    "origin": "git@github.com:timschmidt/hyperdrc.git",
+    "licenses": [
+      "LICENSE"
+    ]
+  },
+  {
+    "path": "hyperevolution",
+    "role": "external dependency",
+    "commit": "99645e3cefb7eea3af86abc15db68f7fcb31ca95",
+    "origin": "git@github.com:timschmidt/hyperevolution.git",
+    "licenses": []
+  },
+  {
+    "path": "hypergraphics",
+    "role": "external dependency",
+    "commit": "05d66a334731e984257dd4d4a07580f0846c1ce1",
+    "origin": "git@github.com:timschmidt/hypergraphics.git",
+    "licenses": [
+      "LICENSE-APACHE",
+      "LICENSE-MIT"
+    ]
+  },
+  {
+    "path": "hyperlattice",
+    "role": "external dependency",
+    "commit": "53427ce89f8c82c016e69a04e035787e2753adc8",
+    "origin": "git@github.com:timschmidt/hyperlattice.git",
+    "licenses": [
+      ".symbolica-license.example",
+      ".symbolica-license",
+      "LICENSE"
+    ]
+  },
+  {
+    "path": "hyperlimit",
+    "role": "external dependency",
+    "commit": "dd79d4770a3dfa1e0cfc0e1f0da19d15bd1ef9e5",
+    "origin": "git@github.com:timschmidt/hyperlimit.git",
+    "licenses": [
+      "LICENSE"
+    ]
+  },
+  {
+    "path": "hypermesh",
+    "role": "external dependency",
+    "commit": "d9db5c45a0cecc2307aa66a6f7f1b0396350e4ee",
+    "origin": "git@github.com:timschmidt/hypermesh.git",
+    "licenses": [
+      "LICENSE"
+    ]
+  },
+  {
+    "path": "hyperpack",
+    "role": "external dependency",
+    "commit": "1de5d7a08811123a9647fcef437f2a75e3571100",
+    "origin": "git@github.com:timschmidt/hyperpack.git",
+    "licenses": []
+  },
+  {
+    "path": "hyperparts",
+    "role": "external dependency",
+    "commit": "d8626e9d36256afc4a8eb0380ae94c9ed5619107",
+    "origin": "git@github.com:timschmidt/hyperparts.git",
+    "licenses": []
+  },
+  {
+    "path": "hyperpath",
+    "role": "external dependency",
+    "commit": "d792aa8dc843218b26fc0d1730033e5cd06bdf2f",
+    "origin": "git@github.com:timschmidt/hyperpath.git",
+    "licenses": []
+  },
+  {
+    "path": "hyperphysics",
+    "role": "external dependency",
+    "commit": "dcbc7cf3489a1299de16a946fd7f5e5658b6f15f",
+    "origin": "git@github.com:timschmidt/hyperphysics.git",
+    "licenses": [
+      "LICENSE"
+    ]
+  },
+  {
+    "path": "hyperreal",
+    "role": "external dependency",
+    "commit": "da26e961bf76adf13829d8a26ced6cdaacb6b564",
+    "origin": "git@github.com:timschmidt/hyperreal.git",
+    "licenses": [
+      "LICENSE-MIT",
+      "LICENSE.txt"
+    ]
+  },
+  {
+    "path": "hypersdf",
+    "role": "external dependency",
+    "commit": "b37825900457420cb64da385b8525acab33e31c5",
+    "origin": "git@github.com:timschmidt/hypersdf.git",
+    "licenses": []
+  },
+  {
+    "path": "hypersolve",
+    "role": "external dependency",
+    "commit": "42f2bdb87e5f9905b95e4f95d4e5e1abdb65586e",
+    "origin": "git@github.com:timschmidt/hypersolve.git",
+    "licenses": [
+      "LICENSE"
+    ]
+  },
+  {
+    "path": "hypertri",
+    "role": "external dependency",
+    "commit": "6a2092c066964f3b7528299a72ef0ed1af4b1ff0",
+    "origin": "git@github.com:timschmidt/hypertri.git",
+    "licenses": [
+      "LICENSE"
+    ]
+  },
+  {
+    "path": "hypervoxel",
+    "role": "external dependency",
+    "commit": "0486b1465a249a04973520a4138a39395ded2f23",
+    "origin": "git@github.com:timschmidt/hypervoxel.git",
+    "licenses": [
+      "LICENSE-APACHE",
+      "LICENSE-MIT"
+    ]
+  },
+  {
+    "path": "exact-real-references/DedekindCutArithmetic.jl",
+    "role": "external dependency",
+    "commit": "dc7a51b784a6d8f04be22fcca862656432a3d87e",
+    "origin": "https://github.com/lucaferranti/DedekindCutArithmetic.jl.git",
+    "licenses": [
+      "LICENSE"
+    ]
+  },
+  {
+    "path": "exact-real-references/ExactRealNumberComputationInHaskell",
+    "role": "external dependency",
+    "commit": "971ff20d35a4af4be595364c704ad118c4bf3c37",
+    "origin": "https://github.com/martinescardo/ExactRealNumberComputationInHaskell.git",
+    "licenses": [
+      "LICENSE"
+    ]
+  },
+  {
+    "path": "exact-real-references/ExactReals.jl",
+    "role": "external dependency",
+    "commit": "19d32155e69ad988cd68282d4e88b859552033e3",
+    "origin": "https://github.com/dpsanders/ExactReals.jl.git",
+    "licenses": [
+      "LICENSE"
+    ]
+  },
+  {
+    "path": "exact-real-references/FewDigits",
+    "role": "external dependency",
+    "licenses": [
+      "License.txt"
+    ]
+  },
+  {
+    "path": "exact-real-references/Plume",
+    "role": "external dependency",
+    "licenses": []
+  },
+  {
+    "path": "exact-real-references/RealLib",
+    "role": "external dependency",
+    "commit": "b36b18ecd3d712311a12f384210735dfa319f86c",
+    "origin": "https://github.com/blambov/RealLib.git",
+    "licenses": [
+      "LICENSE"
+    ]
+  },
+  {
+    "path": "exact-real-references/Ruffini",
+    "role": "external dependency",
+    "commit": "82d552fee22d92e493936183fab8672517694e56",
+    "origin": "https://github.com/jonas-lj/Ruffini",
+    "licenses": [
+      "LICENSE"
+    ]
+  },
+  {
+    "path": "exact-real-references/aern",
+    "role": "external dependency",
+    "commit": "3a45d80cfa2197ddb4935b96509348331c8b763d",
+    "origin": "https://github.com/michalkonecny/aern.git",
+    "licenses": [
+      "LICENSE"
+    ]
+  },
+  {
+    "path": "exact-real-references/aern2",
+    "role": "external dependency",
+    "commit": "d1ac3664bfb5c7f70fcf68f7fb412d288def65cb",
+    "origin": "https://github.com/michalkonecny/aern2.git",
+    "licenses": []
+  },
+  {
+    "path": "exact-real-references/ariadne",
+    "role": "external dependency",
+    "commit": "a86839f37e7e7ccb7077fd6fddb9cc09f418a29b",
+    "origin": "https://github.com/ariadne-cps/ariadne.git",
+    "licenses": [
+      "LICENSE"
+    ]
+  },
+  {
+    "path": "exact-real-references/boehm_reals",
+    "role": "external dependency",
+    "commit": "7787d8811ec7f64c599d3d9176fd83b3c2e1dabf",
+    "origin": "https://github.com/Madhura-mb/boehm_reals",
+    "licenses": [
+      "LICENSE"
+    ]
+  },
+  {
+    "path": "exact-real-references/boost-real-2018",
+    "role": "external dependency",
+    "commit": "5532037f5e4e5cad5d7e940a49191bb44099a7e5",
+    "origin": "https://github.com/BoostGSoC18/Real.git",
+    "licenses": []
+  },
+  {
+    "path": "exact-real-references/boost-real-2021",
+    "role": "external dependency",
+    "commit": "4db9b8f87b2b71748054190d085c449e866a529b",
+    "origin": "https://github.com/BoostGSoC21/Real.git",
+    "licenses": []
+  },
+  {
+    "path": "exact-real-references/cdar",
+    "role": "external dependency",
+    "commit": "1919f75c2cacd9f994ad50e925d8932d2639b690",
+    "origin": "https://github.com/jensblanck/cdar",
+    "licenses": [
+      "LICENSE"
+    ]
+  },
+  {
+    "path": "exact-real-references/cdar-mbound",
+    "role": "external dependency",
+    "commit": "132e0da252cb723dc1247f419919bdbfd4072e9e",
+    "origin": "https://github.com/michalkonecny/cdar",
+    "licenses": [
+      "LICENSE"
+    ]
+  },
+  {
+    "path": "exact-real-references/computable-0.1.0",
+    "role": "external dependency",
+    "licenses": [
+      "LICENSE"
+    ]
+  },
+  {
+    "path": "exact-real-references/computable-real-0.3.0",
+    "role": "external dependency",
+    "licenses": []
+  },
+  {
+    "path": "exact-real-references/computable-reals",
+    "role": "external dependency",
+    "commit": "607a5d5b95387c06f92a661aa5562a7be0f5cad8",
+    "origin": "https://github.com/stylewarning/computable-reals.git",
+    "licenses": [
+      "LICENSE"
+    ]
+  },
+  {
+    "path": "exact-real-references/corn",
+    "role": "external dependency",
+    "commit": "ada7c0b497ff15dd67cf7932c6f20e143a2aee2f",
+    "origin": "https://github.com/rocq-community/corn",
+    "licenses": [
+      "LICENSE"
+    ]
+  },
+  {
+    "path": "exact-real-references/crcalc.js",
+    "role": "external dependency",
+    "commit": "ea5d92921599f3666c6afbf86235864e66469da9",
+    "origin": "https://github.com/lll69/crcalc.js",
+    "licenses": [
+      "LICENSE"
+    ]
+  },
+  {
+    "path": "exact-real-references/creal",
+    "role": "external dependency",
+    "commit": "0520c6351fdc431db3c0941b5cf111211826f88a",
+    "origin": "https://github.com/backtracking/creal.git",
+    "licenses": [
+      "LICENSE"
+    ]
+  },
+  {
+    "path": "exact-real-references/edalat",
+    "role": "external dependency",
+    "commit": "474b133ad9cd52d94000efcfcb6febb3722edf2f",
+    "origin": "https://github.com/thalesians/edalat.git",
+    "licenses": [
+      "LICENSE"
+    ]
+  },
+  {
+    "path": "exact-real-references/exact-real-rs",
+    "role": "external dependency",
+    "commit": "4f1f99149da7aee269eb1f26375ba4ee7ba123e4",
+    "origin": "https://github.com/tczajka/exact-real-rs",
+    "licenses": [
+      "LICENSE"
+    ]
+  },
+  {
+    "path": "exact-real-references/flatsurf-exact-real",
+    "role": "external dependency",
+    "commit": "fc4104076cb76aa6efe11df6ae15b208b18d12f5",
+    "origin": "https://github.com/flatsurf/exact-real.git",
+    "licenses": [
+      "COPYING"
+    ]
+  },
+  {
+    "path": "exact-real-references/haskell-constructible",
+    "role": "external dependency",
+    "commit": "46d760cbd2d21f955ec96c8fe2c13fdf3b2dd9d0",
+    "origin": "https://github.com/andersk/haskell-constructible",
+    "licenses": [
+      "LICENSE"
+    ]
+  },
+  {
+    "path": "exact-real-references/haskell-exact-real",
+    "role": "external dependency",
+    "commit": "7bb2abaed01ac874d914c99919e81cfd00dd7d6d",
+    "origin": "https://github.com/expipiplus1/exact-real.git",
+    "licenses": [
+      "LICENSE"
+    ]
+  },
+  {
+    "path": "exact-real-references/haskell-fast-reals",
+    "role": "external dependency",
+    "commit": "8fa09b2457d7099c75b7db62895b5c8f3391d9e3",
+    "origin": "https://github.com/comius/haskell-fast-reals.git",
+    "licenses": [
+      "LICENSE"
+    ]
+  },
+  {
+    "path": "exact-real-references/haskell-mpfr",
+    "role": "external dependency",
+    "commit": "b5d91ca5d3ff3f0455860dcd3a38ebeee599a4e9",
+    "origin": "https://github.com/comius/haskell-mpfr.git",
+    "licenses": [
+      "LICENSE"
+    ]
+  },
+  {
+    "path": "exact-real-references/haskell-numbers-inventory",
+    "role": "external dependency",
+    "commit": "366f5c8f4fa02243241060469b04ed4119f2f154",
+    "origin": "https://github.com/haskellcats/haskell-numbers.git",
+    "licenses": []
+  },
+  {
+    "path": "exact-real-references/haskell-reals-comparison",
+    "role": "external dependency",
+    "commit": "7c53d4e4259f633606b18d655cdbbf813866ab81",
+    "origin": "https://github.com/michalkonecny/haskell-reals-comparison.git",
+    "licenses": [
+      "LICENSE"
+    ]
+  },
+  {
+    "path": "exact-real-references/hera-0.2",
+    "role": "external dependency",
+    "licenses": [
+      "LICENSE"
+    ]
+  },
+  {
+    "path": "exact-real-references/iRRAM",
+    "role": "external dependency",
+    "commit": "a4d2409b9591227f1bbba93557989d0a2ba29d26",
+    "origin": "https://github.com/norbert-mueller/iRRAM.git",
+    "licenses": [
+      "COPYING"
+    ]
+  },
+  {
+    "path": "exact-real-references/iRRAM-bigsteps",
+    "role": "external dependency",
+    "commit": "0c6efb521f9529c270cb3aa34741694713b562bf",
+    "origin": "https://github.com/fbrausse/iRRAM-bigsteps.git",
+    "licenses": []
+  },
+  {
+    "path": "exact-real-references/iRRAM-fbrausse-6545f78",
+    "role": "external dependency",
+    "commit": "6545f78ecfaa578931ea7d61a4709828a5d98452",
+    "origin": "https://github.com/fbrausse/iRRAM",
+    "licenses": [
+      "COPYING"
+    ]
+  },
+  {
+    "path": "exact-real-references/iRRAM-plus",
+    "role": "external dependency",
+    "commit": "13b7229af93e2a528153d85f439b4158378f6b14",
+    "origin": "https://github.com/realcomputation/irramplus.git",
+    "licenses": []
+  },
+  {
+    "path": "exact-real-references/iRRAMx",
+    "role": "external dependency",
+    "commit": "1d33af09e005fdff8655e4b29fed3918f54f8d21",
+    "origin": "https://github.com/realcomputation/iRRAMx.git",
+    "licenses": []
+  },
+  {
+    "path": "exact-real-references/ic-reals-6.3",
+    "role": "external dependency",
+    "licenses": [
+      "Copyright"
+    ]
+  },
+  {
+    "path": "exact-real-references/ireal",
+    "role": "external dependency",
+    "commit": "a7c83281362c5dc857e97d98b424ec314a216b56",
+    "origin": "https://github.com/sydow/ireal.git",
+    "licenses": [
+      "LICENSE"
+    ]
+  },
+  {
+    "path": "exact-real-references/marshall",
+    "role": "external dependency",
+    "commit": "c9f1f6466e879e8db11a12b9bc030e62b07d8bd2",
+    "origin": "https://github.com/andrejbauer/marshall.git",
+    "licenses": []
+  },
+  {
+    "path": "exact-real-references/numbas-constructive",
+    "role": "external dependency",
+    "commit": "b840893fe89308ee2a3e5167a901295dc5c2851b",
+    "origin": "https://github.com/numbas/numbas-extension-constructive-real-numbers.git",
+    "licenses": []
+  },
+  {
+    "path": "exact-real-references/numbers",
+    "role": "external dependency",
+    "commit": "0ab9e067e10a2e097239f73bdcbbffeae09790b0",
+    "origin": "https://github.com/jwiegley/numbers.git",
+    "licenses": [
+      "LICENSE"
+    ]
+  },
+  {
+    "path": "exact-real-references/realistic",
+    "role": "external dependency",
+    "commit": "d7d292aff5a1fa0add9161cc8bd1e88f90905fee",
+    "origin": "https://github.com/tialaramex/realistic.git",
+    "licenses": []
+  },
+  {
+    "path": "exact-real-references/reals-0.4.0",
+    "role": "external dependency",
+    "licenses": []
+  },
+  {
+    "path": "exact-real-references/rocq-exact-real-arithmetic",
+    "role": "external dependency",
+    "commit": "d6bc1fee859c5b773dc46ef8efd4d43ba29697c5",
+    "origin": "https://github.com/rocq-community/exact-real-arithmetic.git",
+    "licenses": [
+      "LICENSE"
+    ]
+  },
+  {
+    "path": "exact-real-references/rz",
+    "role": "external dependency",
+    "commit": "d92cacaf78fb50d61fc6712c74b8fdaf5d2c6d28",
+    "origin": "https://github.com/andrejbauer/rz.git",
+    "licenses": []
+  },
+  {
+    "path": "exact-real-references/spigot",
+    "role": "external dependency",
+    "commit": "4ef5af3408a890ce440833201c35cf511cdaa52d",
+    "origin": "https://git.tartarus.org/simon/spigot.git",
+    "licenses": []
+  },
+  {
+    "path": "exact-real-references/spire",
+    "role": "external dependency",
+    "commit": "0fe5a6a9714181a20fc9cef4c8b2af088ff2b4c9",
+    "origin": "https://github.com/typelevel/spire.git",
+    "licenses": [
+      "COPYING"
+    ]
+  },
+  {
+    "path": "exact-real-references/tcllib",
+    "role": "external dependency",
+    "commit": "6093f8d6246572ae461bf344333483ca329413bc",
+    "origin": "https://github.com/tcltk/tcllib",
+    "licenses": [
+      "license.terms"
+    ]
+  },
+  {
+    "path": "exact-real-references/xrc-1.2",
+    "role": "external dependency",
+    "licenses": []
+  }
+]

@@ -1,0 +1,183 @@
+{
+  "normal_production_build": true,
+  "source_manifest": "recursive-point-incidence-20260928-v583-sources.json",
+  "source_directory": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/source-archives/recursive-point-incidence-20260928-v583",
+  "builds": [
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "test",
+        "--lib",
+        "--release",
+        "--all-features",
+        "--locked",
+        "--offline",
+        "--no-run",
+        "--message-format=json"
+      ],
+      "returncode": 0,
+      "log": "recursive-point-incidence-20260928-v583-build.log",
+      "elapsed_seconds": 152.58561133383773,
+      "binaries": {
+        "hypercurve": {
+          "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/recursive-point-incidence-20260928-v583-hypercurve-tests",
+          "sha256": "cda9b169b43b2186248681fa4c3234fb9667d272f4c511025ea9d3c94b44f26f"
+        }
+      }
+    }
+  ],
+  "cases": [
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/recursive-point-incidence-20260928-v583-hypercurve-tests",
+        "--exact",
+        "bezier_offset::conversion_tests::recursive_incidence_preserves_selected_point_fields",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "recursive-point-incidence-corrected-20260928-v585-recursive_incidence_preserves_selected_point_fields.log",
+      "elapsed_seconds": 0.007608457934111357,
+      "target": "hypercurve",
+      "name": "bezier_offset::conversion_tests::recursive_incidence_preserves_selected_point_fields",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/recursive-point-incidence-20260928-v583-hypercurve-tests",
+        "--exact",
+        "bezier_offset::conversion_tests::recursive_incidence_keeps_stationary_and_collapsed_semantics",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "recursive-point-incidence-corrected-20260928-v585-recursive_incidence_keeps_stationary_and_collapsed_semantics.log",
+      "elapsed_seconds": 0.015680775046348572,
+      "target": "hypercurve",
+      "name": "bezier_offset::conversion_tests::recursive_incidence_keeps_stationary_and_collapsed_semantics",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/recursive-point-incidence-20260928-v583-hypercurve-tests",
+        "--exact",
+        "bezier_offset::conversion_tests::recursive_incidence_preserves_exterior_domains_and_pole_barriers",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "recursive-point-incidence-corrected-20260928-v585-recursive_incidence_preserves_exterior_domains_and_pole_barriers.log",
+      "elapsed_seconds": 0.00756037188693881,
+      "target": "hypercurve",
+      "name": "bezier_offset::conversion_tests::recursive_incidence_preserves_exterior_domains_and_pole_barriers",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/recursive-point-incidence-20260928-v583-hypercurve-tests",
+        "--exact",
+        "bezier_offset::conversion_tests::recursive_polynomial_predicates_reuse_the_retained_field_relation",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "recursive-point-incidence-corrected-20260928-v585-recursive_polynomial_predicates_reuse_the_retained_field_relation.log",
+      "elapsed_seconds": 0.0075973488856107,
+      "target": "hypercurve",
+      "name": "bezier_offset::conversion_tests::recursive_polynomial_predicates_reuse_the_retained_field_relation",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/recursive-point-incidence-20260928-v583-hypercurve-tests",
+        "--exact",
+        "bezier_offset::conversion_tests::recursive_polynomial_queries_reuse_a_selected_proper_factor",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "recursive-point-incidence-corrected-20260928-v585-recursive_polynomial_queries_reuse_a_selected_proper_factor.log",
+      "elapsed_seconds": 0.03173935296945274,
+      "target": "hypercurve",
+      "name": "bezier_offset::conversion_tests::recursive_polynomial_queries_reuse_a_selected_proper_factor",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/recursive-point-incidence-20260928-v583-hypercurve-tests",
+        "--exact",
+        "bezier_offset::conversion_tests::recursive_ordered_field_isolation_does_not_guess_polynomial_degree",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "recursive-point-incidence-corrected-20260928-v585-recursive_ordered_field_isolation_does_not_guess_polynomial_degree.log",
+      "elapsed_seconds": 0.0035331379622220993,
+      "target": "hypercurve",
+      "name": "bezier_offset::conversion_tests::recursive_ordered_field_isolation_does_not_guess_polynomial_degree",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/recursive-point-incidence-20260928-v583-hypercurve-tests",
+        "--exact",
+        "bezier_offset::conversion_tests::recursive_polynomial_isolators_keep_the_selected_root_after_endpoint_deflation",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "recursive-point-incidence-corrected-20260928-v585-recursive_polynomial_isolators_keep_the_selected_root_after_endpoint_deflation.log",
+      "elapsed_seconds": 0.0034998999908566475,
+      "target": "hypercurve",
+      "name": "bezier_offset::conversion_tests::recursive_polynomial_isolators_keep_the_selected_root_after_endpoint_deflation",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/recursive-point-incidence-20260928-v583-hypercurve-tests",
+        "--exact",
+        "bezier_offset::conversion_tests::recursive_polynomial_refinement_reuses_certified_bounds_and_identity",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "recursive-point-incidence-corrected-20260928-v585-recursive_polynomial_refinement_reuses_certified_bounds_and_identity.log",
+      "elapsed_seconds": 0.0035171890631318092,
+      "target": "hypercurve",
+      "name": "bezier_offset::conversion_tests::recursive_polynomial_refinement_reuses_certified_bounds_and_identity",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/recursive-point-incidence-20260928-v583-hypercurve-tests",
+        "--exact",
+        "bezier_offset::conversion_tests::recursive_polynomial_crossing_signs_survive_exact_midpoint_collapse",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "recursive-point-incidence-corrected-20260928-v585-recursive_polynomial_crossing_signs_survive_exact_midpoint_collapse.log",
+      "elapsed_seconds": 0.003550285939127207,
+      "target": "hypercurve",
+      "name": "bezier_offset::conversion_tests::recursive_polynomial_crossing_signs_survive_exact_midpoint_collapse",
+      "passed": true
+    }
+  ],
+  "checks": [],
+  "expected_cases": {
+    "hypercurve": [
+      "bezier_offset::conversion_tests::recursive_incidence_preserves_selected_point_fields",
+      "bezier_offset::conversion_tests::recursive_incidence_keeps_stationary_and_collapsed_semantics",
+      "bezier_offset::conversion_tests::recursive_incidence_preserves_exterior_domains_and_pole_barriers",
+      "bezier_offset::conversion_tests::recursive_polynomial_predicates_reuse_the_retained_field_relation",
+      "bezier_offset::conversion_tests::recursive_polynomial_queries_reuse_a_selected_proper_factor",
+      "bezier_offset::conversion_tests::recursive_ordered_field_isolation_does_not_guess_polynomial_degree",
+      "bezier_offset::conversion_tests::recursive_polynomial_isolators_keep_the_selected_root_after_endpoint_deflation",
+      "bezier_offset::conversion_tests::recursive_polynomial_refinement_reuses_certified_bounds_and_identity",
+      "bezier_offset::conversion_tests::recursive_polynomial_crossing_signs_survive_exact_midpoint_collapse"
+    ]
+  },
+  "all_processes_reaped": true,
+  "probe_complete": true,
+  "qualification_complete": false
+}

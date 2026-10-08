@@ -1,0 +1,51 @@
+{
+  "source_manifest": "point-similarity-composition-20260927-v408-sources.json",
+  "source_directory": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/source-archives/point-similarity-composition-20260927-v408",
+  "cases": [
+    {
+      "binary": "point-similarity-composition-20260927-v408-hypercurve",
+      "name": "bezier_offset::conversion_tests::repeated_point_similarities_keep_one_original_selected_field",
+      "returncode": 101,
+      "log": "point-similarity-composition-20260927-v408-case-000.log",
+      "elapsed_seconds": 0.0035545858554542065
+    }
+  ],
+  "builds": [
+    {
+      "crate": "hypercurve",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "test",
+        "--lib",
+        "--release",
+        "--all-features",
+        "--no-run",
+        "--message-format=json",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "log": "point-similarity-composition-20260927-v408-hypercurve-build.log",
+      "elapsed_seconds": 132.20605952991173,
+      "binary": {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/point-similarity-composition-20260927-v408-hypercurve",
+        "sha256": "28698416cee0e3033d0d62b8428825e3b972c8a77b499ba686a6f801cece0007"
+      }
+    }
+  ],
+  "all_processes_reaped": true,
+  "checks": [],
+  "qualification_scope": "Baseline test for bounded point similarity history and retained policy barriers",
+  "expected_cases": {
+    "hypercurve": [
+      "bezier_offset::conversion_tests::repeated_point_similarities_keep_one_original_selected_field",
+      "bezier_offset::conversion_tests::point_similarity_composition_preserves_retained_policy_barriers"
+    ]
+  },
+  "known_unresolved": [
+    "strict_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions",
+    "approximate_512_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions"
+  ],
+  "failure": "case failure or missing exact test",
+  "qualification_complete": false
+}

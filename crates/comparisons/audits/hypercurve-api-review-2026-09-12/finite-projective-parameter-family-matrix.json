@@ -1,0 +1,30 @@
+{
+  "returncode": 0,
+  "elapsed_seconds": 0.26397825800813735,
+  "normal_library_sha256": "5cc578428c0ecd41b54f2dca195f416779e365698dcb4ad46588dd84bd0ef96a",
+  "log": "finite-projective-parameter-family-matrix.log",
+  "source": "native-rational-publication-family-matrix.rs",
+  "command": [
+    "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustc",
+    "--edition=2024",
+    "-O",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/native-rational-publication-family-matrix.rs",
+    "--extern",
+    "hypercurve=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypercurve-1201b30e361703ad.rlib",
+    "-L",
+    "dependency=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps",
+    "-o",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-projective-parameter-family-matrix"
+  ],
+  "run_command": [
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-projective-parameter-family-matrix"
+  ],
+  "source_sha256": "4997d7958bc2ef9da3b91d65b97732be5c8c6d142015708f8360c02b5866c6bb",
+  "executable_sha256": "d1d0407d0a119b4a4f53a8fdac2b39f57c85c53173ed39dbd570c706f6e247c9",
+  "counts": {
+    "complete_queries": 416,
+    "restrictions": 1440,
+    "point_replays": 5120,
+    "path_topologies": 8
+  }
+}

@@ -1,0 +1,6 @@
+{
+  "commit": "9aab7d22f4d08608be75e99efde8def1145722b7",
+  "file": "tests/hypercurve_curve_region_promotion.rs",
+  "sha256": "5d03611eec57bc539d71306a00d6cbdb92b9e99b17f259ae66f48045b3fc2563",
+  "status": " M src/bezier_offset.rs\n"
+}

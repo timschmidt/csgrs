@@ -1,0 +1,22 @@
+[package]
+name = "hyper-inverse-joint"
+version = "0.0.0"
+edition = "2024"
+
+[dependencies]
+hyperreal = { path = "/tmp/hyper-krawczyk-ab.WlCBFy/hyperreal", default-features = false }
+hyperlimit = { path = "/tmp/hyper-krawczyk-ab.WlCBFy/hyperlimit", default-features = false }
+hypersolve = { path = "/tmp/hyper-krawczyk-ab.WlCBFy/hypersolve", default-features = false }
+num = "0.4.3"
+serde_json = "1"
+
+[profile.release]
+debug = 1
+
+[[bin]]
+name = "hyper-affine-joint"
+path = "src/affine.rs"
+
+[[bin]]
+name = "hyper-standard-joint"
+path = "src/standard.rs"

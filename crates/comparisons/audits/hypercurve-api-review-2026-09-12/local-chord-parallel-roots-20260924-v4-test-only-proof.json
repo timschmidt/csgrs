@@ -1,0 +1,5 @@
+{
+  "parent_snapshot": "local-chord-parallel-roots-20260924-v3",
+  "production_unchanged": true,
+  "only_new_circle_regression": true
+}

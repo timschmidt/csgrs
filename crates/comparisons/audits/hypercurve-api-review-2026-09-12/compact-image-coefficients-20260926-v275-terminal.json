@@ -1,0 +1,386 @@
+{
+  "source_manifest": "compact-image-coefficients-20260926-v275-sources.json",
+  "source_directory": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/source-archives/compact-image-coefficients-20260926-v275",
+  "cases": [
+    {
+      "binary": "compact-image-coefficients-20260926-v275-hypercurve",
+      "name": "bezier_offset::conversion_tests::certified_circle_chord_endpoint_factor_preserves_roots_and_field",
+      "returncode": 0,
+      "log": "compact-image-coefficients-20260926-v275-case-000.log",
+      "elapsed_seconds": 0.007595318951644003
+    },
+    {
+      "binary": "compact-image-coefficients-20260926-v275-hypercurve",
+      "name": "bezier_offset::conversion_tests::selected_parallel_normal_circle_accepts_a_center_locus_cusp",
+      "returncode": 0,
+      "log": "compact-image-coefficients-20260926-v275-case-001.log",
+      "elapsed_seconds": 0.007537043071351945
+    },
+    {
+      "binary": "compact-image-coefficients-20260926-v275-hypercurve",
+      "name": "bezier_offset::conversion_tests::selected_parallel_normal_circle_intersects_genuinely_analytic_parallel_in_one_fiber",
+      "returncode": 0,
+      "log": "compact-image-coefficients-20260926-v275-case-002.log",
+      "elapsed_seconds": 117.06297929305583
+    },
+    {
+      "binary": "compact-image-coefficients-20260926-v275-hypercurve",
+      "name": "bezier_offset::conversion_tests::selected_parallel_normal_circle_intersects_rational_curves_exactly",
+      "returncode": 0,
+      "log": "compact-image-coefficients-20260926-v275-case-003.log",
+      "elapsed_seconds": 0.03174008207861334
+    },
+    {
+      "binary": "compact-image-coefficients-20260926-v275-hypercurve",
+      "name": "bezier_offset::conversion_tests::selected_parallel_normal_circle_keeps_contacts_when_center_refines_to_exact",
+      "returncode": 0,
+      "log": "compact-image-coefficients-20260926-v275-case-004.log",
+      "elapsed_seconds": 0.01586616097483784
+    },
+    {
+      "binary": "compact-image-coefficients-20260926-v275-hypercurve",
+      "name": "bezier_offset::conversion_tests::selected_parallel_normal_circle_pair_decides_every_concentric_case",
+      "returncode": 0,
+      "log": "compact-image-coefficients-20260926-v275-case-005.log",
+      "elapsed_seconds": 0.0035487269051373005
+    },
+    {
+      "binary": "compact-image-coefficients-20260926-v275-hypercurve",
+      "name": "bezier_offset::conversion_tests::selected_parallel_normal_circle_retains_every_represented_point_exactly",
+      "returncode": 0,
+      "log": "compact-image-coefficients-20260926-v275-case-006.log",
+      "elapsed_seconds": 0.01562975801061839
+    },
+    {
+      "binary": "compact-image-coefficients-20260926-v275-hypercurve",
+      "name": "bezier_offset::conversion_tests::selected_parallel_normal_circle_retains_general_rational_contacts_in_one_fiber",
+      "returncode": 0,
+      "log": "compact-image-coefficients-20260926-v275-case-007.log",
+      "elapsed_seconds": 0.031707584974355996
+    },
+    {
+      "binary": "compact-image-coefficients-20260926-v275-hypercurve",
+      "name": "bezier_offset::conversion_tests::selected_parallel_normal_circle_retains_general_rational_overlaps_in_one_fiber",
+      "returncode": 0,
+      "log": "compact-image-coefficients-20260926-v275-case-008.log",
+      "elapsed_seconds": 0.015613199095241725
+    },
+    {
+      "binary": "compact-image-coefficients-20260926-v275-hypercurve",
+      "name": "bezier_offset::conversion_tests::selected_parallel_normal_circle_retains_strict_replay_after_exact_approximate_request",
+      "returncode": 0,
+      "log": "compact-image-coefficients-20260926-v275-case-009.log",
+      "elapsed_seconds": 0.0035075490595772862
+    },
+    {
+      "binary": "compact-image-coefficients-20260926-v275-hypercurve",
+      "name": "bezier_offset::conversion_tests::selected_parallel_normal_circle_reuses_rationalized_analytic_parallel_components",
+      "returncode": 0,
+      "log": "compact-image-coefficients-20260926-v275-case-010.log",
+      "elapsed_seconds": 0.26402995898388326
+    },
+    {
+      "binary": "compact-image-coefficients-20260926-v275-hypercurve",
+      "name": "bezier_offset::conversion_tests::selected_parallel_normal_circle_uses_direct_exact_winding",
+      "returncode": 0,
+      "log": "compact-image-coefficients-20260926-v275-case-011.log",
+      "elapsed_seconds": 0.003529898007400334
+    },
+    {
+      "binary": "compact-image-coefficients-20260926-v275-hypercurve",
+      "name": "bezier_offset::conversion_tests::selected_parallel_normal_incident_circle_selects_the_positive_speed_component",
+      "returncode": 0,
+      "log": "compact-image-coefficients-20260926-v275-case-012.log",
+      "elapsed_seconds": 0.007586039020679891
+    },
+    {
+      "binary": "compact-image-coefficients-20260926-v275-hypercurve",
+      "name": "bezier_offset::conversion_tests::selected_parallel_normal_positive_dimensional_projection_rejects_conjugate_components",
+      "returncode": 0,
+      "log": "compact-image-coefficients-20260926-v275-case-013.log",
+      "elapsed_seconds": 0.00351765810046345
+    },
+    {
+      "binary": "compact-image-coefficients-20260926-v275-hypercurve",
+      "name": "bezier_offset::conversion_tests::selected_parallel_normal_radial_tangent_excludes_the_complementary_half",
+      "returncode": 0,
+      "log": "compact-image-coefficients-20260926-v275-case-014.log",
+      "elapsed_seconds": 0.0035224889870733023
+    },
+    {
+      "binary": "compact-image-coefficients-20260926-v275-hypercurve",
+      "name": "bezier_offset::conversion_tests::selected_parallel_normal_tangent_replay_accepts_an_exact_center_parameter",
+      "returncode": 0,
+      "log": "compact-image-coefficients-20260926-v275-case-015.log",
+      "elapsed_seconds": 0.007587539963424206
+    },
+    {
+      "binary": "compact-image-coefficients-20260926-v275-hypercurve",
+      "name": "bezier_region::tests::selected_parallel_normal_circle_and_line_fillet_retains_recursive_contact",
+      "returncode": 0,
+      "log": "compact-image-coefficients-20260926-v275-case-016.log",
+      "elapsed_seconds": 0.031688936054706573
+    }
+  ],
+  "builds": [
+    {
+      "crate": "hyperreal",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "test",
+        "--lib",
+        "--release",
+        "--all-features",
+        "--no-run",
+        "--message-format=json",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "log": "compact-image-coefficients-20260926-v275-hyperreal-build.log",
+      "elapsed_seconds": 29.00288205500692,
+      "binary": {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/compact-image-coefficients-20260926-v275-hyperreal",
+        "sha256": "e13122e95dcf2e60b38b2eb8284b05f5cb66b1b1e447e722ba8b6fb32926ba47"
+      }
+    },
+    {
+      "crate": "hypersolve",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "test",
+        "--lib",
+        "--release",
+        "--all-features",
+        "--no-run",
+        "--message-format=json",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "log": "compact-image-coefficients-20260926-v275-hypersolve-build.log",
+      "elapsed_seconds": 53.23338918702211,
+      "binary": {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/compact-image-coefficients-20260926-v275-hypersolve",
+        "sha256": "fb01fda87c20460ad34235def7b16aad599ea44ef00a49fe781576f0bb7b8262"
+      }
+    },
+    {
+      "crate": "hypercurve",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "test",
+        "--lib",
+        "--release",
+        "--all-features",
+        "--no-run",
+        "--message-format=json",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "log": "compact-image-coefficients-20260926-v275-hypercurve-build.log",
+      "elapsed_seconds": 162.0817862439435,
+      "binary": {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/compact-image-coefficients-20260926-v275-hypercurve",
+        "sha256": "a73a028b037617b2798efa6e9e181228bd2df49ac970078cadac3541e67c46b5"
+      }
+    },
+    {
+      "crate": "hypercurve",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "test",
+        "--test",
+        "hypercurve_curve_region_promotion",
+        "--release",
+        "--all-features",
+        "--no-run",
+        "--message-format=json",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "log": "compact-image-coefficients-20260926-v275-hypercurve-build.log",
+      "elapsed_seconds": 82.77486496302299,
+      "binary": {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/compact-image-coefficients-20260926-v275-hypercurve_curve_region_promotion",
+        "sha256": "07fb168264c811775a8b5e74d17169db0096d046cfe6cebd106823ef990b67c6"
+      }
+    }
+  ],
+  "all_processes_reaped": true,
+  "checks": [
+    {
+      "label": "hyperreal-tower-tests",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/compact-image-coefficients-20260926-v275-hyperreal",
+        "quadratic_tower",
+        "--test-threads=2"
+      ],
+      "returncode": 0,
+      "log": "compact-image-coefficients-20260926-v275-hyperreal-tower-tests.log",
+      "elapsed_seconds": 0.015674244961701334,
+      "passed": 17
+    },
+    {
+      "label": "hypersolve-all-tests",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/compact-image-coefficients-20260926-v275-hypersolve",
+        "--test-threads=2"
+      ],
+      "returncode": 0,
+      "log": "compact-image-coefficients-20260926-v275-hypersolve-all-tests.log",
+      "elapsed_seconds": 2.316674678004347,
+      "passed": 523
+    },
+    {
+      "label": "hyperreal-format",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustfmt",
+        "--edition",
+        "2024",
+        "--config",
+        "skip_children=true",
+        "--check",
+        "src/computable/node/quadratic_tower.rs",
+        "src/real/arithmetic/quadratic_tower_sign.rs"
+      ],
+      "returncode": 0,
+      "log": "compact-image-coefficients-20260926-v275-hyperreal-format.log",
+      "elapsed_seconds": 0.031738811056129634
+    },
+    {
+      "label": "hyperreal-clippy-all-features",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "clippy",
+        "--all-targets",
+        "--all-features",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "returncode": 0,
+      "log": "compact-image-coefficients-20260926-v275-hyperreal-clippy-all-features.log",
+      "elapsed_seconds": 4.820448618964292
+    },
+    {
+      "label": "hyperreal-clippy-no-default",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "clippy",
+        "--all-targets",
+        "--no-default-features",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "returncode": 0,
+      "log": "compact-image-coefficients-20260926-v275-hyperreal-clippy-no-default.log",
+      "elapsed_seconds": 4.019383316976018
+    },
+    {
+      "label": "hypersolve-format",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustfmt",
+        "--edition",
+        "2024",
+        "--config",
+        "skip_children=true",
+        "--check",
+        "src/algebraic_tensor_image.rs"
+      ],
+      "returncode": 0,
+      "log": "compact-image-coefficients-20260926-v275-hypersolve-format.log",
+      "elapsed_seconds": 0.03176077001262456
+    },
+    {
+      "label": "hypersolve-clippy-all-features",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "clippy",
+        "--all-targets",
+        "--all-features",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "returncode": 0,
+      "log": "compact-image-coefficients-20260926-v275-hypersolve-clippy-all-features.log",
+      "elapsed_seconds": 8.475666675018147
+    },
+    {
+      "label": "hypersolve-clippy-no-default",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "clippy",
+        "--all-targets",
+        "--no-default-features",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "returncode": 0,
+      "log": "compact-image-coefficients-20260926-v275-hypersolve-clippy-no-default.log",
+      "elapsed_seconds": 8.325367572018877
+    }
+  ],
+  "qualification_scope": "Exact scalar tower compaction, full Hypersolve release library, selected Hypercurve circle/family controls, formatting and four all-target Clippy checks; full re-offset diagnostic remains separate",
+  "hyperreal_expected_cases": [
+    "computable::node::quadratic_tower_tests::cold_tower_proofs_replay_wide_dags_without_refinement",
+    "computable::node::quadratic_tower_tests::nested_radical_below_two_is_negative",
+    "computable::node::quadratic_tower_tests::nested_unit_normal_square_cancels",
+    "computable::node::quadratic_tower_tests::retained_forms_preserve_shared_dag_memoization",
+    "computable::node::quadratic_tower_tests::square_content_uses_one_primitive_radicand",
+    "computable::node::quadratic_tower_tests::tower_and_approximation_caches_can_publish_concurrently",
+    "computable::node::quadratic_tower_tests::tower_replay_handles_deep_and_exponentially_shared_graphs",
+    "computable::node::quadratic_tower_tests::transcendental_nodes_stay_undecided",
+    "real::arithmetic::quadratic_tower_real_tests::biquadratic_bases_share_sums_products_and_inverses",
+    "real::arithmetic::quadratic_tower_real_tests::compact_towers_preserve_nested_roots_after_repeated_arithmetic",
+    "real::arithmetic::quadratic_tower_real_tests::compact_towers_promote_proven_rationals_and_leave_other_fields_available",
+    "real::arithmetic::quadratic_tower_real_tests::independently_normalized_chord_normals_replay_exactly",
+    "real::arithmetic::quadratic_tower_real_tests::polynomial_linear_term_follows_the_selected_square_root",
+    "real::arithmetic::quadratic_tower_real_tests::polynomial_vanishes_at_both_square_roots_of_one_half",
+    "real::arithmetic::quadratic_tower_real_tests::scaled_nested_normal_square_cancels",
+    "real::arithmetic::quadratic_tower_real_tests::scaled_tower_sign_retains_the_shared_payload_proof",
+    "real::arithmetic::quadratic_tower_real_tests::shifted_fourth_root_has_a_rational_annihilator"
+  ],
+  "hypersolve_expected_test_count": 523,
+  "hypercurve_expected_cases": [
+    "bezier_offset::conversion_tests::certified_circle_chord_endpoint_factor_preserves_roots_and_field",
+    "bezier_offset::conversion_tests::selected_parallel_normal_circle_accepts_a_center_locus_cusp",
+    "bezier_offset::conversion_tests::selected_parallel_normal_circle_intersects_genuinely_analytic_parallel_in_one_fiber",
+    "bezier_offset::conversion_tests::selected_parallel_normal_circle_intersects_rational_curves_exactly",
+    "bezier_offset::conversion_tests::selected_parallel_normal_circle_keeps_contacts_when_center_refines_to_exact",
+    "bezier_offset::conversion_tests::selected_parallel_normal_circle_pair_decides_every_concentric_case",
+    "bezier_offset::conversion_tests::selected_parallel_normal_circle_retains_every_represented_point_exactly",
+    "bezier_offset::conversion_tests::selected_parallel_normal_circle_retains_general_rational_contacts_in_one_fiber",
+    "bezier_offset::conversion_tests::selected_parallel_normal_circle_retains_general_rational_overlaps_in_one_fiber",
+    "bezier_offset::conversion_tests::selected_parallel_normal_circle_retains_strict_replay_after_exact_approximate_request",
+    "bezier_offset::conversion_tests::selected_parallel_normal_circle_reuses_rationalized_analytic_parallel_components",
+    "bezier_offset::conversion_tests::selected_parallel_normal_circle_uses_direct_exact_winding",
+    "bezier_offset::conversion_tests::selected_parallel_normal_incident_circle_selects_the_positive_speed_component",
+    "bezier_offset::conversion_tests::selected_parallel_normal_positive_dimensional_projection_rejects_conjugate_components",
+    "bezier_offset::conversion_tests::selected_parallel_normal_radial_tangent_excludes_the_complementary_half",
+    "bezier_offset::conversion_tests::selected_parallel_normal_tangent_replay_accepts_an_exact_center_parameter",
+    "bezier_region::tests::selected_parallel_normal_circle_and_line_fillet_retains_recursive_contact"
+  ],
+  "diagnostics": [
+    {
+      "name": "approximate_512_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions",
+      "returncode": 124,
+      "log": "compact-image-coefficients-20260926-v275-reoffset.log",
+      "elapsed_seconds": 90.03300648205914
+    }
+  ],
+  "qualification_complete": true
+}

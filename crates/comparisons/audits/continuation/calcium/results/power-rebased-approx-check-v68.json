@@ -1,0 +1,15 @@
+{
+  "tag": "power-rebased-approx-check-v68",
+  "started": "2026-09-11T03:52:08.726Z",
+  "finished": "2026-09-11T03:52:09.267Z",
+  "elapsedSeconds": 0.538058444,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "node",
+  "args": [
+    "check-power-sums-public.mjs",
+    "results/power-rebased-baseline-approx-v68.stdout",
+    "results/power-rebased-candidate-approx-v68.stdout"
+  ],
+  "code": 0,
+  "signal": null
+}

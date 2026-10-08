@@ -1,0 +1,1928 @@
+{
+  "checkpoint": 78,
+  "originSha256": "f0637174fa54f8beb6c260a4c8a7364f9a0f5193ba4040ddd355ed6c5aa808ff",
+  "runs": [
+    {
+      "phase": "cpu",
+      "case": 0,
+      "round": 0,
+      "variant": "candidate",
+      "tag": "twelfth-isolated-cpu-0-0-candidate-v78",
+      "plan": "twelfth-isolated-cpu-0-0-candidate-v78-plan.json",
+      "planSha256": "0a562c2fe6fe7f7f81e2bac0e5c2f785600767dd1bc12faa438776a333b0fa66",
+      "groups": 6
+    },
+    {
+      "phase": "cpu",
+      "case": 0,
+      "round": 0,
+      "variant": "baseline",
+      "tag": "twelfth-isolated-cpu-0-0-baseline-v78",
+      "plan": "twelfth-isolated-cpu-0-0-baseline-v78-plan.json",
+      "planSha256": "0a562c2fe6fe7f7f81e2bac0e5c2f785600767dd1bc12faa438776a333b0fa66",
+      "groups": 6
+    },
+    {
+      "phase": "cpu",
+      "case": 0,
+      "round": 1,
+      "variant": "candidate",
+      "tag": "twelfth-isolated-cpu-0-1-candidate-v78",
+      "plan": "twelfth-isolated-cpu-0-1-candidate-v78-plan.json",
+      "planSha256": "bbb256e43bebcd1e7739c50466f7ccbd92a40140884087e7df90e02f90bac8f2",
+      "groups": 6
+    },
+    {
+      "phase": "cpu",
+      "case": 0,
+      "round": 1,
+      "variant": "baseline",
+      "tag": "twelfth-isolated-cpu-0-1-baseline-v78",
+      "plan": "twelfth-isolated-cpu-0-1-baseline-v78-plan.json",
+      "planSha256": "bbb256e43bebcd1e7739c50466f7ccbd92a40140884087e7df90e02f90bac8f2",
+      "groups": 6
+    },
+    {
+      "phase": "cpu",
+      "case": 0,
+      "round": 2,
+      "variant": "baseline",
+      "tag": "twelfth-isolated-cpu-0-2-baseline-v78",
+      "plan": "twelfth-isolated-cpu-0-2-baseline-v78-plan.json",
+      "planSha256": "f2b6a027d7a0aedb3ff91c61383be6c2eb341587687238117cb65ef7895102f3",
+      "groups": 6
+    },
+    {
+      "phase": "cpu",
+      "case": 0,
+      "round": 2,
+      "variant": "candidate",
+      "tag": "twelfth-isolated-cpu-0-2-candidate-v78",
+      "plan": "twelfth-isolated-cpu-0-2-candidate-v78-plan.json",
+      "planSha256": "f2b6a027d7a0aedb3ff91c61383be6c2eb341587687238117cb65ef7895102f3",
+      "groups": 6
+    },
+    {
+      "phase": "cpu",
+      "case": 0,
+      "round": 3,
+      "variant": "baseline",
+      "tag": "twelfth-isolated-cpu-0-3-baseline-v78",
+      "plan": "twelfth-isolated-cpu-0-3-baseline-v78-plan.json",
+      "planSha256": "891f81f10d775921999784475ace959687f2c969d0ff3c2125862541619bf043",
+      "groups": 6
+    },
+    {
+      "phase": "cpu",
+      "case": 0,
+      "round": 3,
+      "variant": "candidate",
+      "tag": "twelfth-isolated-cpu-0-3-candidate-v78",
+      "plan": "twelfth-isolated-cpu-0-3-candidate-v78-plan.json",
+      "planSha256": "891f81f10d775921999784475ace959687f2c969d0ff3c2125862541619bf043",
+      "groups": 6
+    },
+    {
+      "phase": "cpu",
+      "case": 0,
+      "round": 4,
+      "variant": "candidate",
+      "tag": "twelfth-isolated-cpu-0-4-candidate-v78",
+      "plan": "twelfth-isolated-cpu-0-4-candidate-v78-plan.json",
+      "planSha256": "93e518e65a66cc6292bf510f3780bef83cb59c7fa2262f3e5867d8ca42e612bf",
+      "groups": 6
+    },
+    {
+      "phase": "cpu",
+      "case": 0,
+      "round": 4,
+      "variant": "baseline",
+      "tag": "twelfth-isolated-cpu-0-4-baseline-v78",
+      "plan": "twelfth-isolated-cpu-0-4-baseline-v78-plan.json",
+      "planSha256": "93e518e65a66cc6292bf510f3780bef83cb59c7fa2262f3e5867d8ca42e612bf",
+      "groups": 6
+    },
+    {
+      "phase": "cpu",
+      "case": 0,
+      "round": 5,
+      "variant": "baseline",
+      "tag": "twelfth-isolated-cpu-0-5-baseline-v78",
+      "plan": "twelfth-isolated-cpu-0-5-baseline-v78-plan.json",
+      "planSha256": "c975be1540a7c17eb0fa992898e9e0d52726cc722b56a36f414fce9465631101",
+      "groups": 6
+    },
+    {
+      "phase": "cpu",
+      "case": 0,
+      "round": 5,
+      "variant": "candidate",
+      "tag": "twelfth-isolated-cpu-0-5-candidate-v78",
+      "plan": "twelfth-isolated-cpu-0-5-candidate-v78-plan.json",
+      "planSha256": "c975be1540a7c17eb0fa992898e9e0d52726cc722b56a36f414fce9465631101",
+      "groups": 6
+    },
+    {
+      "phase": "cpu",
+      "case": 0,
+      "round": 6,
+      "variant": "candidate",
+      "tag": "twelfth-isolated-cpu-0-6-candidate-v78",
+      "plan": "twelfth-isolated-cpu-0-6-candidate-v78-plan.json",
+      "planSha256": "eb4d3c6bb2164e58987045e7aeec66728765af41e78f4ce70e44af096ca3eb6a",
+      "groups": 6
+    },
+    {
+      "phase": "cpu",
+      "case": 0,
+      "round": 6,
+      "variant": "baseline",
+      "tag": "twelfth-isolated-cpu-0-6-baseline-v78",
+      "plan": "twelfth-isolated-cpu-0-6-baseline-v78-plan.json",
+      "planSha256": "eb4d3c6bb2164e58987045e7aeec66728765af41e78f4ce70e44af096ca3eb6a",
+      "groups": 6
+    },
+    {
+      "phase": "cpu",
+      "case": 0,
+      "round": 7,
+      "variant": "candidate",
+      "tag": "twelfth-isolated-cpu-0-7-candidate-v78",
+      "plan": "twelfth-isolated-cpu-0-7-candidate-v78-plan.json",
+      "planSha256": "294bcae06ed85ebd3735c024b44153ffdc9c111c8dea0859f6314b44038ed399",
+      "groups": 6
+    },
+    {
+      "phase": "cpu",
+      "case": 0,
+      "round": 7,
+      "variant": "baseline",
+      "tag": "twelfth-isolated-cpu-0-7-baseline-v78",
+      "plan": "twelfth-isolated-cpu-0-7-baseline-v78-plan.json",
+      "planSha256": "294bcae06ed85ebd3735c024b44153ffdc9c111c8dea0859f6314b44038ed399",
+      "groups": 6
+    },
+    {
+      "phase": "cpu",
+      "case": 0,
+      "round": 8,
+      "variant": "candidate",
+      "tag": "twelfth-isolated-cpu-0-8-candidate-v78",
+      "plan": "twelfth-isolated-cpu-0-8-candidate-v78-plan.json",
+      "planSha256": "f58c4b1438e1552329218eaae8f65bf3eb7ea54823e3bd3f6f62022d04efd449",
+      "groups": 6
+    },
+    {
+      "phase": "cpu",
+      "case": 0,
+      "round": 8,
+      "variant": "baseline",
+      "tag": "twelfth-isolated-cpu-0-8-baseline-v78",
+      "plan": "twelfth-isolated-cpu-0-8-baseline-v78-plan.json",
+      "planSha256": "f58c4b1438e1552329218eaae8f65bf3eb7ea54823e3bd3f6f62022d04efd449",
+      "groups": 6
+    },
+    {
+      "phase": "cpu",
+      "case": 0,
+      "round": 9,
+      "variant": "baseline",
+      "tag": "twelfth-isolated-cpu-0-9-baseline-v78",
+      "plan": "twelfth-isolated-cpu-0-9-baseline-v78-plan.json",
+      "planSha256": "f0064f33bac5398dbe266785c926933a6cf21f2fb5247938c7059cc6c0342aed",
+      "groups": 6
+    },
+    {
+      "phase": "cpu",
+      "case": 0,
+      "round": 9,
+      "variant": "candidate",
+      "tag": "twelfth-isolated-cpu-0-9-candidate-v78",
+      "plan": "twelfth-isolated-cpu-0-9-candidate-v78-plan.json",
+      "planSha256": "f0064f33bac5398dbe266785c926933a6cf21f2fb5247938c7059cc6c0342aed",
+      "groups": 6
+    },
+    {
+      "phase": "cpu",
+      "case": 0,
+      "round": 10,
+      "variant": "baseline",
+      "tag": "twelfth-isolated-cpu-0-10-baseline-v78",
+      "plan": "twelfth-isolated-cpu-0-10-baseline-v78-plan.json",
+      "planSha256": "30f38817b4195a12c07543caf52560edd030bbffcb2ee3afce8fa97569879b5b",
+      "groups": 6
+    },
+    {
+      "phase": "cpu",
+      "case": 0,
+      "round": 10,
+      "variant": "candidate",
+      "tag": "twelfth-isolated-cpu-0-10-candidate-v78",
+      "plan": "twelfth-isolated-cpu-0-10-candidate-v78-plan.json",
+      "planSha256": "30f38817b4195a12c07543caf52560edd030bbffcb2ee3afce8fa97569879b5b",
+      "groups": 6
+    },
+    {
+      "phase": "cpu",
+      "case": 0,
+      "round": 11,
+      "variant": "baseline",
+      "tag": "twelfth-isolated-cpu-0-11-baseline-v78",
+      "plan": "twelfth-isolated-cpu-0-11-baseline-v78-plan.json",
+      "planSha256": "87b763515569793d4c863c528c6ee4b5bd6c07fcda88ba874d96cd0cbe668321",
+      "groups": 6
+    },
+    {
+      "phase": "cpu",
+      "case": 0,
+      "round": 11,
+      "variant": "candidate",
+      "tag": "twelfth-isolated-cpu-0-11-candidate-v78",
+      "plan": "twelfth-isolated-cpu-0-11-candidate-v78-plan.json",
+      "planSha256": "87b763515569793d4c863c528c6ee4b5bd6c07fcda88ba874d96cd0cbe668321",
+      "groups": 6
+    },
+    {
+      "phase": "cpu",
+      "case": 2,
+      "round": 0,
+      "variant": "candidate",
+      "tag": "twelfth-isolated-cpu-2-0-candidate-v78",
+      "plan": "twelfth-isolated-cpu-2-0-candidate-v78-plan.json",
+      "planSha256": "d4be8d5702e5880d3c76ac2c29f89c314ddaeac129f47038fd59ad7c55261938",
+      "groups": 6
+    },
+    {
+      "phase": "cpu",
+      "case": 2,
+      "round": 0,
+      "variant": "baseline",
+      "tag": "twelfth-isolated-cpu-2-0-baseline-v78",
+      "plan": "twelfth-isolated-cpu-2-0-baseline-v78-plan.json",
+      "planSha256": "d4be8d5702e5880d3c76ac2c29f89c314ddaeac129f47038fd59ad7c55261938",
+      "groups": 6
+    },
+    {
+      "phase": "cpu",
+      "case": 2,
+      "round": 1,
+      "variant": "candidate",
+      "tag": "twelfth-isolated-cpu-2-1-candidate-v78",
+      "plan": "twelfth-isolated-cpu-2-1-candidate-v78-plan.json",
+      "planSha256": "5ab8398923557d0b2b52984d1b13c96a9c339f21c2be31dc4f83e1f7d5bb9748",
+      "groups": 6
+    },
+    {
+      "phase": "cpu",
+      "case": 2,
+      "round": 1,
+      "variant": "baseline",
+      "tag": "twelfth-isolated-cpu-2-1-baseline-v78",
+      "plan": "twelfth-isolated-cpu-2-1-baseline-v78-plan.json",
+      "planSha256": "5ab8398923557d0b2b52984d1b13c96a9c339f21c2be31dc4f83e1f7d5bb9748",
+      "groups": 6
+    },
+    {
+      "phase": "cpu",
+      "case": 2,
+      "round": 2,
+      "variant": "baseline",
+      "tag": "twelfth-isolated-cpu-2-2-baseline-v78",
+      "plan": "twelfth-isolated-cpu-2-2-baseline-v78-plan.json",
+      "planSha256": "32a6aa79fc4120ebb84b25622a996920640932c44917c9b70f804e9a7d343da3",
+      "groups": 6
+    },
+    {
+      "phase": "cpu",
+      "case": 2,
+      "round": 2,
+      "variant": "candidate",
+      "tag": "twelfth-isolated-cpu-2-2-candidate-v78",
+      "plan": "twelfth-isolated-cpu-2-2-candidate-v78-plan.json",
+      "planSha256": "32a6aa79fc4120ebb84b25622a996920640932c44917c9b70f804e9a7d343da3",
+      "groups": 6
+    },
+    {
+      "phase": "cpu",
+      "case": 2,
+      "round": 3,
+      "variant": "baseline",
+      "tag": "twelfth-isolated-cpu-2-3-baseline-v78",
+      "plan": "twelfth-isolated-cpu-2-3-baseline-v78-plan.json",
+      "planSha256": "2946823c3d0684627e18596e647c9a2ef8d8b2ceb3e5104a733357fbfe68a43e",
+      "groups": 6
+    },
+    {
+      "phase": "cpu",
+      "case": 2,
+      "round": 3,
+      "variant": "candidate",
+      "tag": "twelfth-isolated-cpu-2-3-candidate-v78",
+      "plan": "twelfth-isolated-cpu-2-3-candidate-v78-plan.json",
+      "planSha256": "2946823c3d0684627e18596e647c9a2ef8d8b2ceb3e5104a733357fbfe68a43e",
+      "groups": 6
+    },
+    {
+      "phase": "cpu",
+      "case": 2,
+      "round": 4,
+      "variant": "candidate",
+      "tag": "twelfth-isolated-cpu-2-4-candidate-v78",
+      "plan": "twelfth-isolated-cpu-2-4-candidate-v78-plan.json",
+      "planSha256": "b2e9a84503314cd2d7ba3beed1e3ab274bcb700f246ce3605c11702e4eef05b2",
+      "groups": 6
+    },
+    {
+      "phase": "cpu",
+      "case": 2,
+      "round": 4,
+      "variant": "baseline",
+      "tag": "twelfth-isolated-cpu-2-4-baseline-v78",
+      "plan": "twelfth-isolated-cpu-2-4-baseline-v78-plan.json",
+      "planSha256": "b2e9a84503314cd2d7ba3beed1e3ab274bcb700f246ce3605c11702e4eef05b2",
+      "groups": 6
+    },
+    {
+      "phase": "cpu",
+      "case": 2,
+      "round": 5,
+      "variant": "baseline",
+      "tag": "twelfth-isolated-cpu-2-5-baseline-v78",
+      "plan": "twelfth-isolated-cpu-2-5-baseline-v78-plan.json",
+      "planSha256": "d3b68aa5fb8ddd9295b4568c8e309dd695241abe364b2e75c9eec8868380022e",
+      "groups": 6
+    },
+    {
+      "phase": "cpu",
+      "case": 2,
+      "round": 5,
+      "variant": "candidate",
+      "tag": "twelfth-isolated-cpu-2-5-candidate-v78",
+      "plan": "twelfth-isolated-cpu-2-5-candidate-v78-plan.json",
+      "planSha256": "d3b68aa5fb8ddd9295b4568c8e309dd695241abe364b2e75c9eec8868380022e",
+      "groups": 6
+    },
+    {
+      "phase": "cpu",
+      "case": 2,
+      "round": 6,
+      "variant": "candidate",
+      "tag": "twelfth-isolated-cpu-2-6-candidate-v78",
+      "plan": "twelfth-isolated-cpu-2-6-candidate-v78-plan.json",
+      "planSha256": "00cc5752d7671f673ca8365255ef2e7dce6e1778a0c14d4f7327637fe9de6235",
+      "groups": 6
+    },
+    {
+      "phase": "cpu",
+      "case": 2,
+      "round": 6,
+      "variant": "baseline",
+      "tag": "twelfth-isolated-cpu-2-6-baseline-v78",
+      "plan": "twelfth-isolated-cpu-2-6-baseline-v78-plan.json",
+      "planSha256": "00cc5752d7671f673ca8365255ef2e7dce6e1778a0c14d4f7327637fe9de6235",
+      "groups": 6
+    },
+    {
+      "phase": "cpu",
+      "case": 2,
+      "round": 7,
+      "variant": "candidate",
+      "tag": "twelfth-isolated-cpu-2-7-candidate-v78",
+      "plan": "twelfth-isolated-cpu-2-7-candidate-v78-plan.json",
+      "planSha256": "baff69db9084fc926c26f1966373d6e48bd53af042a790a773c5a296c9bca60a",
+      "groups": 6
+    },
+    {
+      "phase": "cpu",
+      "case": 2,
+      "round": 7,
+      "variant": "baseline",
+      "tag": "twelfth-isolated-cpu-2-7-baseline-v78",
+      "plan": "twelfth-isolated-cpu-2-7-baseline-v78-plan.json",
+      "planSha256": "baff69db9084fc926c26f1966373d6e48bd53af042a790a773c5a296c9bca60a",
+      "groups": 6
+    },
+    {
+      "phase": "cpu",
+      "case": 2,
+      "round": 8,
+      "variant": "candidate",
+      "tag": "twelfth-isolated-cpu-2-8-candidate-v78",
+      "plan": "twelfth-isolated-cpu-2-8-candidate-v78-plan.json",
+      "planSha256": "06e588e0ee5dfe52f0a0344603871ac76a27a84d3314064b514641f2b1a8398a",
+      "groups": 6
+    },
+    {
+      "phase": "cpu",
+      "case": 2,
+      "round": 8,
+      "variant": "baseline",
+      "tag": "twelfth-isolated-cpu-2-8-baseline-v78",
+      "plan": "twelfth-isolated-cpu-2-8-baseline-v78-plan.json",
+      "planSha256": "06e588e0ee5dfe52f0a0344603871ac76a27a84d3314064b514641f2b1a8398a",
+      "groups": 6
+    },
+    {
+      "phase": "cpu",
+      "case": 2,
+      "round": 9,
+      "variant": "baseline",
+      "tag": "twelfth-isolated-cpu-2-9-baseline-v78",
+      "plan": "twelfth-isolated-cpu-2-9-baseline-v78-plan.json",
+      "planSha256": "7b27566a0b75bf480afb9dcb08148b59efe5eb44a6be030989f28050cbe2ee1b",
+      "groups": 6
+    },
+    {
+      "phase": "cpu",
+      "case": 2,
+      "round": 9,
+      "variant": "candidate",
+      "tag": "twelfth-isolated-cpu-2-9-candidate-v78",
+      "plan": "twelfth-isolated-cpu-2-9-candidate-v78-plan.json",
+      "planSha256": "7b27566a0b75bf480afb9dcb08148b59efe5eb44a6be030989f28050cbe2ee1b",
+      "groups": 6
+    },
+    {
+      "phase": "cpu",
+      "case": 2,
+      "round": 10,
+      "variant": "baseline",
+      "tag": "twelfth-isolated-cpu-2-10-baseline-v78",
+      "plan": "twelfth-isolated-cpu-2-10-baseline-v78-plan.json",
+      "planSha256": "c566152a6effc00b9fa6e43725830ddb6868804417f936de809719a2b71a19c7",
+      "groups": 6
+    },
+    {
+      "phase": "cpu",
+      "case": 2,
+      "round": 10,
+      "variant": "candidate",
+      "tag": "twelfth-isolated-cpu-2-10-candidate-v78",
+      "plan": "twelfth-isolated-cpu-2-10-candidate-v78-plan.json",
+      "planSha256": "c566152a6effc00b9fa6e43725830ddb6868804417f936de809719a2b71a19c7",
+      "groups": 6
+    },
+    {
+      "phase": "cpu",
+      "case": 2,
+      "round": 11,
+      "variant": "baseline",
+      "tag": "twelfth-isolated-cpu-2-11-baseline-v78",
+      "plan": "twelfth-isolated-cpu-2-11-baseline-v78-plan.json",
+      "planSha256": "e6e8b5da5fc2063bc9aa493a61f9e0fd9c9e722c84867143d161e610ffe96b2e",
+      "groups": 6
+    },
+    {
+      "phase": "cpu",
+      "case": 2,
+      "round": 11,
+      "variant": "candidate",
+      "tag": "twelfth-isolated-cpu-2-11-candidate-v78",
+      "plan": "twelfth-isolated-cpu-2-11-candidate-v78-plan.json",
+      "planSha256": "e6e8b5da5fc2063bc9aa493a61f9e0fd9c9e722c84867143d161e610ffe96b2e",
+      "groups": 6
+    },
+    {
+      "phase": "cpu",
+      "case": 34,
+      "round": 0,
+      "variant": "candidate",
+      "tag": "twelfth-isolated-cpu-34-0-candidate-v78",
+      "plan": "twelfth-isolated-cpu-34-0-candidate-v78-plan.json",
+      "planSha256": "5ebe633bbe23a0fa4951491b7e573ca8b71910361ca66deee37e541e2011f548",
+      "groups": 6
+    },
+    {
+      "phase": "cpu",
+      "case": 34,
+      "round": 0,
+      "variant": "baseline",
+      "tag": "twelfth-isolated-cpu-34-0-baseline-v78",
+      "plan": "twelfth-isolated-cpu-34-0-baseline-v78-plan.json",
+      "planSha256": "5ebe633bbe23a0fa4951491b7e573ca8b71910361ca66deee37e541e2011f548",
+      "groups": 6
+    },
+    {
+      "phase": "cpu",
+      "case": 34,
+      "round": 1,
+      "variant": "candidate",
+      "tag": "twelfth-isolated-cpu-34-1-candidate-v78",
+      "plan": "twelfth-isolated-cpu-34-1-candidate-v78-plan.json",
+      "planSha256": "b91e67c14e20dae2054a62ecee31cfa2e9ec3de3a12cd546a1bc136e279b51c4",
+      "groups": 6
+    },
+    {
+      "phase": "cpu",
+      "case": 34,
+      "round": 1,
+      "variant": "baseline",
+      "tag": "twelfth-isolated-cpu-34-1-baseline-v78",
+      "plan": "twelfth-isolated-cpu-34-1-baseline-v78-plan.json",
+      "planSha256": "b91e67c14e20dae2054a62ecee31cfa2e9ec3de3a12cd546a1bc136e279b51c4",
+      "groups": 6
+    },
+    {
+      "phase": "cpu",
+      "case": 34,
+      "round": 2,
+      "variant": "baseline",
+      "tag": "twelfth-isolated-cpu-34-2-baseline-v78",
+      "plan": "twelfth-isolated-cpu-34-2-baseline-v78-plan.json",
+      "planSha256": "32078a0c865af2e78119c40b54c9cef1b5a2d67535a3a7c7bdee7de4e375b9ad",
+      "groups": 6
+    },
+    {
+      "phase": "cpu",
+      "case": 34,
+      "round": 2,
+      "variant": "candidate",
+      "tag": "twelfth-isolated-cpu-34-2-candidate-v78",
+      "plan": "twelfth-isolated-cpu-34-2-candidate-v78-plan.json",
+      "planSha256": "32078a0c865af2e78119c40b54c9cef1b5a2d67535a3a7c7bdee7de4e375b9ad",
+      "groups": 6
+    },
+    {
+      "phase": "cpu",
+      "case": 34,
+      "round": 3,
+      "variant": "baseline",
+      "tag": "twelfth-isolated-cpu-34-3-baseline-v78",
+      "plan": "twelfth-isolated-cpu-34-3-baseline-v78-plan.json",
+      "planSha256": "65b1be6772601784c027157d99496c015c3eb8cb2a5bef5dda560310d78b198d",
+      "groups": 6
+    },
+    {
+      "phase": "cpu",
+      "case": 34,
+      "round": 3,
+      "variant": "candidate",
+      "tag": "twelfth-isolated-cpu-34-3-candidate-v78",
+      "plan": "twelfth-isolated-cpu-34-3-candidate-v78-plan.json",
+      "planSha256": "65b1be6772601784c027157d99496c015c3eb8cb2a5bef5dda560310d78b198d",
+      "groups": 6
+    },
+    {
+      "phase": "cpu",
+      "case": 34,
+      "round": 4,
+      "variant": "candidate",
+      "tag": "twelfth-isolated-cpu-34-4-candidate-v78",
+      "plan": "twelfth-isolated-cpu-34-4-candidate-v78-plan.json",
+      "planSha256": "a2ad17119e333fd5c74042acc709fd001fe607515c21711542dfb35aa423e4df",
+      "groups": 6
+    },
+    {
+      "phase": "cpu",
+      "case": 34,
+      "round": 4,
+      "variant": "baseline",
+      "tag": "twelfth-isolated-cpu-34-4-baseline-v78",
+      "plan": "twelfth-isolated-cpu-34-4-baseline-v78-plan.json",
+      "planSha256": "a2ad17119e333fd5c74042acc709fd001fe607515c21711542dfb35aa423e4df",
+      "groups": 6
+    },
+    {
+      "phase": "cpu",
+      "case": 34,
+      "round": 5,
+      "variant": "baseline",
+      "tag": "twelfth-isolated-cpu-34-5-baseline-v78",
+      "plan": "twelfth-isolated-cpu-34-5-baseline-v78-plan.json",
+      "planSha256": "10d897a66925416ae1979839fe98c5d877eae534de85a48ab0b42345705b074d",
+      "groups": 6
+    },
+    {
+      "phase": "cpu",
+      "case": 34,
+      "round": 5,
+      "variant": "candidate",
+      "tag": "twelfth-isolated-cpu-34-5-candidate-v78",
+      "plan": "twelfth-isolated-cpu-34-5-candidate-v78-plan.json",
+      "planSha256": "10d897a66925416ae1979839fe98c5d877eae534de85a48ab0b42345705b074d",
+      "groups": 6
+    },
+    {
+      "phase": "cpu",
+      "case": 34,
+      "round": 6,
+      "variant": "candidate",
+      "tag": "twelfth-isolated-cpu-34-6-candidate-v78",
+      "plan": "twelfth-isolated-cpu-34-6-candidate-v78-plan.json",
+      "planSha256": "43abc0a01a720d411c86443baee336c3b257a564fa4fa0e61c305176fe52a293",
+      "groups": 6
+    },
+    {
+      "phase": "cpu",
+      "case": 34,
+      "round": 6,
+      "variant": "baseline",
+      "tag": "twelfth-isolated-cpu-34-6-baseline-v78",
+      "plan": "twelfth-isolated-cpu-34-6-baseline-v78-plan.json",
+      "planSha256": "43abc0a01a720d411c86443baee336c3b257a564fa4fa0e61c305176fe52a293",
+      "groups": 6
+    },
+    {
+      "phase": "cpu",
+      "case": 34,
+      "round": 7,
+      "variant": "candidate",
+      "tag": "twelfth-isolated-cpu-34-7-candidate-v78",
+      "plan": "twelfth-isolated-cpu-34-7-candidate-v78-plan.json",
+      "planSha256": "f0ff4a46ca014f9bf747d3e1ee7ba285242207f3d10d754c195e0b289395ef6c",
+      "groups": 6
+    },
+    {
+      "phase": "cpu",
+      "case": 34,
+      "round": 7,
+      "variant": "baseline",
+      "tag": "twelfth-isolated-cpu-34-7-baseline-v78",
+      "plan": "twelfth-isolated-cpu-34-7-baseline-v78-plan.json",
+      "planSha256": "f0ff4a46ca014f9bf747d3e1ee7ba285242207f3d10d754c195e0b289395ef6c",
+      "groups": 6
+    },
+    {
+      "phase": "cpu",
+      "case": 34,
+      "round": 8,
+      "variant": "candidate",
+      "tag": "twelfth-isolated-cpu-34-8-candidate-v78",
+      "plan": "twelfth-isolated-cpu-34-8-candidate-v78-plan.json",
+      "planSha256": "29d224221668afc7a061f7f974dd9d070ae102e6385ee6995f0b703fa5643717",
+      "groups": 6
+    },
+    {
+      "phase": "cpu",
+      "case": 34,
+      "round": 8,
+      "variant": "baseline",
+      "tag": "twelfth-isolated-cpu-34-8-baseline-v78",
+      "plan": "twelfth-isolated-cpu-34-8-baseline-v78-plan.json",
+      "planSha256": "29d224221668afc7a061f7f974dd9d070ae102e6385ee6995f0b703fa5643717",
+      "groups": 6
+    },
+    {
+      "phase": "cpu",
+      "case": 34,
+      "round": 9,
+      "variant": "baseline",
+      "tag": "twelfth-isolated-cpu-34-9-baseline-v78",
+      "plan": "twelfth-isolated-cpu-34-9-baseline-v78-plan.json",
+      "planSha256": "472ba57ff0d2c3d79fae558f20c20e3c6de2c87030c7b474dfd5b47806272ab2",
+      "groups": 6
+    },
+    {
+      "phase": "cpu",
+      "case": 34,
+      "round": 9,
+      "variant": "candidate",
+      "tag": "twelfth-isolated-cpu-34-9-candidate-v78",
+      "plan": "twelfth-isolated-cpu-34-9-candidate-v78-plan.json",
+      "planSha256": "472ba57ff0d2c3d79fae558f20c20e3c6de2c87030c7b474dfd5b47806272ab2",
+      "groups": 6
+    },
+    {
+      "phase": "cpu",
+      "case": 34,
+      "round": 10,
+      "variant": "baseline",
+      "tag": "twelfth-isolated-cpu-34-10-baseline-v78",
+      "plan": "twelfth-isolated-cpu-34-10-baseline-v78-plan.json",
+      "planSha256": "4d0ebf01f3de096c3b0996fdd3e9155130cd086dcdabd1b53d5f45748cd8ef02",
+      "groups": 6
+    },
+    {
+      "phase": "cpu",
+      "case": 34,
+      "round": 10,
+      "variant": "candidate",
+      "tag": "twelfth-isolated-cpu-34-10-candidate-v78",
+      "plan": "twelfth-isolated-cpu-34-10-candidate-v78-plan.json",
+      "planSha256": "4d0ebf01f3de096c3b0996fdd3e9155130cd086dcdabd1b53d5f45748cd8ef02",
+      "groups": 6
+    },
+    {
+      "phase": "cpu",
+      "case": 34,
+      "round": 11,
+      "variant": "baseline",
+      "tag": "twelfth-isolated-cpu-34-11-baseline-v78",
+      "plan": "twelfth-isolated-cpu-34-11-baseline-v78-plan.json",
+      "planSha256": "1c8dba5634a7c26cfaab9766bb796fa987f4e560b32402e6080a163dede92c3d",
+      "groups": 6
+    },
+    {
+      "phase": "cpu",
+      "case": 34,
+      "round": 11,
+      "variant": "candidate",
+      "tag": "twelfth-isolated-cpu-34-11-candidate-v78",
+      "plan": "twelfth-isolated-cpu-34-11-candidate-v78-plan.json",
+      "planSha256": "1c8dba5634a7c26cfaab9766bb796fa987f4e560b32402e6080a163dede92c3d",
+      "groups": 6
+    },
+    {
+      "phase": "cpu",
+      "case": 39,
+      "round": 0,
+      "variant": "candidate",
+      "tag": "twelfth-isolated-cpu-39-0-candidate-v78",
+      "plan": "twelfth-isolated-cpu-39-0-candidate-v78-plan.json",
+      "planSha256": "1378bbb1e0be4f833b3ff4a2ce8d10146a55ee88adf1ce3fe84c498bb12ecf72",
+      "groups": 6
+    },
+    {
+      "phase": "cpu",
+      "case": 39,
+      "round": 0,
+      "variant": "baseline",
+      "tag": "twelfth-isolated-cpu-39-0-baseline-v78",
+      "plan": "twelfth-isolated-cpu-39-0-baseline-v78-plan.json",
+      "planSha256": "1378bbb1e0be4f833b3ff4a2ce8d10146a55ee88adf1ce3fe84c498bb12ecf72",
+      "groups": 6
+    },
+    {
+      "phase": "cpu",
+      "case": 39,
+      "round": 1,
+      "variant": "candidate",
+      "tag": "twelfth-isolated-cpu-39-1-candidate-v78",
+      "plan": "twelfth-isolated-cpu-39-1-candidate-v78-plan.json",
+      "planSha256": "387b65e1ca993d26754dd14420c2f38fd8424b647534c0a9a6927706b0e3b996",
+      "groups": 6
+    },
+    {
+      "phase": "cpu",
+      "case": 39,
+      "round": 1,
+      "variant": "baseline",
+      "tag": "twelfth-isolated-cpu-39-1-baseline-v78",
+      "plan": "twelfth-isolated-cpu-39-1-baseline-v78-plan.json",
+      "planSha256": "387b65e1ca993d26754dd14420c2f38fd8424b647534c0a9a6927706b0e3b996",
+      "groups": 6
+    },
+    {
+      "phase": "cpu",
+      "case": 39,
+      "round": 2,
+      "variant": "baseline",
+      "tag": "twelfth-isolated-cpu-39-2-baseline-v78",
+      "plan": "twelfth-isolated-cpu-39-2-baseline-v78-plan.json",
+      "planSha256": "d8b77e7d85eef7ae64071a884bc1dbac7d922b04aa0982f8ba2885d895830628",
+      "groups": 6
+    },
+    {
+      "phase": "cpu",
+      "case": 39,
+      "round": 2,
+      "variant": "candidate",
+      "tag": "twelfth-isolated-cpu-39-2-candidate-v78",
+      "plan": "twelfth-isolated-cpu-39-2-candidate-v78-plan.json",
+      "planSha256": "d8b77e7d85eef7ae64071a884bc1dbac7d922b04aa0982f8ba2885d895830628",
+      "groups": 6
+    },
+    {
+      "phase": "cpu",
+      "case": 39,
+      "round": 3,
+      "variant": "baseline",
+      "tag": "twelfth-isolated-cpu-39-3-baseline-v78",
+      "plan": "twelfth-isolated-cpu-39-3-baseline-v78-plan.json",
+      "planSha256": "fbeb2e8772d51521536113fb861d5df5c62681a70d019f7d39ef320a2b6811b9",
+      "groups": 6
+    },
+    {
+      "phase": "cpu",
+      "case": 39,
+      "round": 3,
+      "variant": "candidate",
+      "tag": "twelfth-isolated-cpu-39-3-candidate-v78",
+      "plan": "twelfth-isolated-cpu-39-3-candidate-v78-plan.json",
+      "planSha256": "fbeb2e8772d51521536113fb861d5df5c62681a70d019f7d39ef320a2b6811b9",
+      "groups": 6
+    },
+    {
+      "phase": "cpu",
+      "case": 39,
+      "round": 4,
+      "variant": "candidate",
+      "tag": "twelfth-isolated-cpu-39-4-candidate-v78",
+      "plan": "twelfth-isolated-cpu-39-4-candidate-v78-plan.json",
+      "planSha256": "8540d80e775c71981029dc777f98f0544d9be0788e75149eb6411e46710af99e",
+      "groups": 6
+    },
+    {
+      "phase": "cpu",
+      "case": 39,
+      "round": 4,
+      "variant": "baseline",
+      "tag": "twelfth-isolated-cpu-39-4-baseline-v78",
+      "plan": "twelfth-isolated-cpu-39-4-baseline-v78-plan.json",
+      "planSha256": "8540d80e775c71981029dc777f98f0544d9be0788e75149eb6411e46710af99e",
+      "groups": 6
+    },
+    {
+      "phase": "cpu",
+      "case": 39,
+      "round": 5,
+      "variant": "baseline",
+      "tag": "twelfth-isolated-cpu-39-5-baseline-v78",
+      "plan": "twelfth-isolated-cpu-39-5-baseline-v78-plan.json",
+      "planSha256": "46fa7e094edb1790f4392e35f056a40724af3a235ffc375b2dbcdfe0696ef6a4",
+      "groups": 6
+    },
+    {
+      "phase": "cpu",
+      "case": 39,
+      "round": 5,
+      "variant": "candidate",
+      "tag": "twelfth-isolated-cpu-39-5-candidate-v78",
+      "plan": "twelfth-isolated-cpu-39-5-candidate-v78-plan.json",
+      "planSha256": "46fa7e094edb1790f4392e35f056a40724af3a235ffc375b2dbcdfe0696ef6a4",
+      "groups": 6
+    },
+    {
+      "phase": "cpu",
+      "case": 39,
+      "round": 6,
+      "variant": "candidate",
+      "tag": "twelfth-isolated-cpu-39-6-candidate-v78",
+      "plan": "twelfth-isolated-cpu-39-6-candidate-v78-plan.json",
+      "planSha256": "2a7c4d7d90d59b4ca7829ea9c16d25180350a5d82c8b09cfd01840ae110d8c4c",
+      "groups": 6
+    },
+    {
+      "phase": "cpu",
+      "case": 39,
+      "round": 6,
+      "variant": "baseline",
+      "tag": "twelfth-isolated-cpu-39-6-baseline-v78",
+      "plan": "twelfth-isolated-cpu-39-6-baseline-v78-plan.json",
+      "planSha256": "2a7c4d7d90d59b4ca7829ea9c16d25180350a5d82c8b09cfd01840ae110d8c4c",
+      "groups": 6
+    },
+    {
+      "phase": "cpu",
+      "case": 39,
+      "round": 7,
+      "variant": "candidate",
+      "tag": "twelfth-isolated-cpu-39-7-candidate-v78",
+      "plan": "twelfth-isolated-cpu-39-7-candidate-v78-plan.json",
+      "planSha256": "f429e55a885ec27f8b22c471963df23912a522221db6c1fd8027cd43b4f865bf",
+      "groups": 6
+    },
+    {
+      "phase": "cpu",
+      "case": 39,
+      "round": 7,
+      "variant": "baseline",
+      "tag": "twelfth-isolated-cpu-39-7-baseline-v78",
+      "plan": "twelfth-isolated-cpu-39-7-baseline-v78-plan.json",
+      "planSha256": "f429e55a885ec27f8b22c471963df23912a522221db6c1fd8027cd43b4f865bf",
+      "groups": 6
+    },
+    {
+      "phase": "cpu",
+      "case": 39,
+      "round": 8,
+      "variant": "candidate",
+      "tag": "twelfth-isolated-cpu-39-8-candidate-v78",
+      "plan": "twelfth-isolated-cpu-39-8-candidate-v78-plan.json",
+      "planSha256": "06e035ae10545f50f98fc3b73d02c7228eb5b1d65951e5e554ca8d9db73e004e",
+      "groups": 6
+    },
+    {
+      "phase": "cpu",
+      "case": 39,
+      "round": 8,
+      "variant": "baseline",
+      "tag": "twelfth-isolated-cpu-39-8-baseline-v78",
+      "plan": "twelfth-isolated-cpu-39-8-baseline-v78-plan.json",
+      "planSha256": "06e035ae10545f50f98fc3b73d02c7228eb5b1d65951e5e554ca8d9db73e004e",
+      "groups": 6
+    },
+    {
+      "phase": "cpu",
+      "case": 39,
+      "round": 9,
+      "variant": "baseline",
+      "tag": "twelfth-isolated-cpu-39-9-baseline-v78",
+      "plan": "twelfth-isolated-cpu-39-9-baseline-v78-plan.json",
+      "planSha256": "380a7a7153ea99c7a108274c72bc6bd0745a20dfc36b00773ce9d8c2e525a7e9",
+      "groups": 6
+    },
+    {
+      "phase": "cpu",
+      "case": 39,
+      "round": 9,
+      "variant": "candidate",
+      "tag": "twelfth-isolated-cpu-39-9-candidate-v78",
+      "plan": "twelfth-isolated-cpu-39-9-candidate-v78-plan.json",
+      "planSha256": "380a7a7153ea99c7a108274c72bc6bd0745a20dfc36b00773ce9d8c2e525a7e9",
+      "groups": 6
+    },
+    {
+      "phase": "cpu",
+      "case": 39,
+      "round": 10,
+      "variant": "baseline",
+      "tag": "twelfth-isolated-cpu-39-10-baseline-v78",
+      "plan": "twelfth-isolated-cpu-39-10-baseline-v78-plan.json",
+      "planSha256": "ca6501a1ce8f638aa6a873f1c3646b4fbb0c24bdeee797c2d78b90dbc435516a",
+      "groups": 6
+    },
+    {
+      "phase": "cpu",
+      "case": 39,
+      "round": 10,
+      "variant": "candidate",
+      "tag": "twelfth-isolated-cpu-39-10-candidate-v78",
+      "plan": "twelfth-isolated-cpu-39-10-candidate-v78-plan.json",
+      "planSha256": "ca6501a1ce8f638aa6a873f1c3646b4fbb0c24bdeee797c2d78b90dbc435516a",
+      "groups": 6
+    },
+    {
+      "phase": "cpu",
+      "case": 39,
+      "round": 11,
+      "variant": "baseline",
+      "tag": "twelfth-isolated-cpu-39-11-baseline-v78",
+      "plan": "twelfth-isolated-cpu-39-11-baseline-v78-plan.json",
+      "planSha256": "7781cc305a35eeb9fa3de7e3c25aa4c2dd02cccc72cd49078a4e4aa82a861208",
+      "groups": 6
+    },
+    {
+      "phase": "cpu",
+      "case": 39,
+      "round": 11,
+      "variant": "candidate",
+      "tag": "twelfth-isolated-cpu-39-11-candidate-v78",
+      "plan": "twelfth-isolated-cpu-39-11-candidate-v78-plan.json",
+      "planSha256": "7781cc305a35eeb9fa3de7e3c25aa4c2dd02cccc72cd49078a4e4aa82a861208",
+      "groups": 6
+    },
+    {
+      "phase": "cpu",
+      "case": 84,
+      "round": 0,
+      "variant": "candidate",
+      "tag": "twelfth-isolated-cpu-84-0-candidate-v78",
+      "plan": "twelfth-isolated-cpu-84-0-candidate-v78-plan.json",
+      "planSha256": "5bfeb0a10f96af6f1a3ee82470a1f12c01043da10328cea6f244bed89ac2640d",
+      "groups": 6
+    },
+    {
+      "phase": "cpu",
+      "case": 84,
+      "round": 0,
+      "variant": "baseline",
+      "tag": "twelfth-isolated-cpu-84-0-baseline-v78",
+      "plan": "twelfth-isolated-cpu-84-0-baseline-v78-plan.json",
+      "planSha256": "5bfeb0a10f96af6f1a3ee82470a1f12c01043da10328cea6f244bed89ac2640d",
+      "groups": 6
+    },
+    {
+      "phase": "cpu",
+      "case": 84,
+      "round": 1,
+      "variant": "candidate",
+      "tag": "twelfth-isolated-cpu-84-1-candidate-v78",
+      "plan": "twelfth-isolated-cpu-84-1-candidate-v78-plan.json",
+      "planSha256": "5f197768880771a3519a094bc126bbd908ae5a9152f5afb2c8a0620b4c918a91",
+      "groups": 6
+    },
+    {
+      "phase": "cpu",
+      "case": 84,
+      "round": 1,
+      "variant": "baseline",
+      "tag": "twelfth-isolated-cpu-84-1-baseline-v78",
+      "plan": "twelfth-isolated-cpu-84-1-baseline-v78-plan.json",
+      "planSha256": "5f197768880771a3519a094bc126bbd908ae5a9152f5afb2c8a0620b4c918a91",
+      "groups": 6
+    },
+    {
+      "phase": "cpu",
+      "case": 84,
+      "round": 2,
+      "variant": "baseline",
+      "tag": "twelfth-isolated-cpu-84-2-baseline-v78",
+      "plan": "twelfth-isolated-cpu-84-2-baseline-v78-plan.json",
+      "planSha256": "4f8ab78f387319848c1fbeca22bf1d6eec627a67ebf1ceb502aedbd0c90daf78",
+      "groups": 6
+    },
+    {
+      "phase": "cpu",
+      "case": 84,
+      "round": 2,
+      "variant": "candidate",
+      "tag": "twelfth-isolated-cpu-84-2-candidate-v78",
+      "plan": "twelfth-isolated-cpu-84-2-candidate-v78-plan.json",
+      "planSha256": "4f8ab78f387319848c1fbeca22bf1d6eec627a67ebf1ceb502aedbd0c90daf78",
+      "groups": 6
+    },
+    {
+      "phase": "cpu",
+      "case": 84,
+      "round": 3,
+      "variant": "baseline",
+      "tag": "twelfth-isolated-cpu-84-3-baseline-v78",
+      "plan": "twelfth-isolated-cpu-84-3-baseline-v78-plan.json",
+      "planSha256": "530f43a7fdbe4949bb985b05e5a953b3e414f831a8888d89232808ac50c5c1b6",
+      "groups": 6
+    },
+    {
+      "phase": "cpu",
+      "case": 84,
+      "round": 3,
+      "variant": "candidate",
+      "tag": "twelfth-isolated-cpu-84-3-candidate-v78",
+      "plan": "twelfth-isolated-cpu-84-3-candidate-v78-plan.json",
+      "planSha256": "530f43a7fdbe4949bb985b05e5a953b3e414f831a8888d89232808ac50c5c1b6",
+      "groups": 6
+    },
+    {
+      "phase": "cpu",
+      "case": 84,
+      "round": 4,
+      "variant": "candidate",
+      "tag": "twelfth-isolated-cpu-84-4-candidate-v78",
+      "plan": "twelfth-isolated-cpu-84-4-candidate-v78-plan.json",
+      "planSha256": "8375c5ca5e0a87f5753f9478571d7d483bbab07e4149a8f3d2a631f4ad2cfc86",
+      "groups": 6
+    },
+    {
+      "phase": "cpu",
+      "case": 84,
+      "round": 4,
+      "variant": "baseline",
+      "tag": "twelfth-isolated-cpu-84-4-baseline-v78",
+      "plan": "twelfth-isolated-cpu-84-4-baseline-v78-plan.json",
+      "planSha256": "8375c5ca5e0a87f5753f9478571d7d483bbab07e4149a8f3d2a631f4ad2cfc86",
+      "groups": 6
+    },
+    {
+      "phase": "cpu",
+      "case": 84,
+      "round": 5,
+      "variant": "baseline",
+      "tag": "twelfth-isolated-cpu-84-5-baseline-v78",
+      "plan": "twelfth-isolated-cpu-84-5-baseline-v78-plan.json",
+      "planSha256": "d94b436df1a4b89898b04ce218fbe70776e4deb80af73a4035c7c213cf75f696",
+      "groups": 6
+    },
+    {
+      "phase": "cpu",
+      "case": 84,
+      "round": 5,
+      "variant": "candidate",
+      "tag": "twelfth-isolated-cpu-84-5-candidate-v78",
+      "plan": "twelfth-isolated-cpu-84-5-candidate-v78-plan.json",
+      "planSha256": "d94b436df1a4b89898b04ce218fbe70776e4deb80af73a4035c7c213cf75f696",
+      "groups": 6
+    },
+    {
+      "phase": "cpu",
+      "case": 84,
+      "round": 6,
+      "variant": "candidate",
+      "tag": "twelfth-isolated-cpu-84-6-candidate-v78",
+      "plan": "twelfth-isolated-cpu-84-6-candidate-v78-plan.json",
+      "planSha256": "4fc0d92c0bc838890202d393cd94560459e4f4d3b73df99c944b62f01bcf3f1d",
+      "groups": 6
+    },
+    {
+      "phase": "cpu",
+      "case": 84,
+      "round": 6,
+      "variant": "baseline",
+      "tag": "twelfth-isolated-cpu-84-6-baseline-v78",
+      "plan": "twelfth-isolated-cpu-84-6-baseline-v78-plan.json",
+      "planSha256": "4fc0d92c0bc838890202d393cd94560459e4f4d3b73df99c944b62f01bcf3f1d",
+      "groups": 6
+    },
+    {
+      "phase": "cpu",
+      "case": 84,
+      "round": 7,
+      "variant": "candidate",
+      "tag": "twelfth-isolated-cpu-84-7-candidate-v78",
+      "plan": "twelfth-isolated-cpu-84-7-candidate-v78-plan.json",
+      "planSha256": "aa5364a963489e9b30bec77fe3f9bf4f7e00bf25b82da03e1a3ad18c020b8fe3",
+      "groups": 6
+    },
+    {
+      "phase": "cpu",
+      "case": 84,
+      "round": 7,
+      "variant": "baseline",
+      "tag": "twelfth-isolated-cpu-84-7-baseline-v78",
+      "plan": "twelfth-isolated-cpu-84-7-baseline-v78-plan.json",
+      "planSha256": "aa5364a963489e9b30bec77fe3f9bf4f7e00bf25b82da03e1a3ad18c020b8fe3",
+      "groups": 6
+    },
+    {
+      "phase": "cpu",
+      "case": 84,
+      "round": 8,
+      "variant": "candidate",
+      "tag": "twelfth-isolated-cpu-84-8-candidate-v78",
+      "plan": "twelfth-isolated-cpu-84-8-candidate-v78-plan.json",
+      "planSha256": "701f57731357394d9180845415c834b85021c474aa82014c26fd89bcaad308db",
+      "groups": 6
+    },
+    {
+      "phase": "cpu",
+      "case": 84,
+      "round": 8,
+      "variant": "baseline",
+      "tag": "twelfth-isolated-cpu-84-8-baseline-v78",
+      "plan": "twelfth-isolated-cpu-84-8-baseline-v78-plan.json",
+      "planSha256": "701f57731357394d9180845415c834b85021c474aa82014c26fd89bcaad308db",
+      "groups": 6
+    },
+    {
+      "phase": "cpu",
+      "case": 84,
+      "round": 9,
+      "variant": "baseline",
+      "tag": "twelfth-isolated-cpu-84-9-baseline-v78",
+      "plan": "twelfth-isolated-cpu-84-9-baseline-v78-plan.json",
+      "planSha256": "cd4e46ebf34f203eab4463cdfac60af1de597c7020e84af7c3aa4b8aefa8e725",
+      "groups": 6
+    },
+    {
+      "phase": "cpu",
+      "case": 84,
+      "round": 9,
+      "variant": "candidate",
+      "tag": "twelfth-isolated-cpu-84-9-candidate-v78",
+      "plan": "twelfth-isolated-cpu-84-9-candidate-v78-plan.json",
+      "planSha256": "cd4e46ebf34f203eab4463cdfac60af1de597c7020e84af7c3aa4b8aefa8e725",
+      "groups": 6
+    },
+    {
+      "phase": "cpu",
+      "case": 84,
+      "round": 10,
+      "variant": "baseline",
+      "tag": "twelfth-isolated-cpu-84-10-baseline-v78",
+      "plan": "twelfth-isolated-cpu-84-10-baseline-v78-plan.json",
+      "planSha256": "fed566d32789f80adf1f24ef69a0443c50e59b383ae5f82b89d9d7a00c7ec63b",
+      "groups": 6
+    },
+    {
+      "phase": "cpu",
+      "case": 84,
+      "round": 10,
+      "variant": "candidate",
+      "tag": "twelfth-isolated-cpu-84-10-candidate-v78",
+      "plan": "twelfth-isolated-cpu-84-10-candidate-v78-plan.json",
+      "planSha256": "fed566d32789f80adf1f24ef69a0443c50e59b383ae5f82b89d9d7a00c7ec63b",
+      "groups": 6
+    },
+    {
+      "phase": "cpu",
+      "case": 84,
+      "round": 11,
+      "variant": "baseline",
+      "tag": "twelfth-isolated-cpu-84-11-baseline-v78",
+      "plan": "twelfth-isolated-cpu-84-11-baseline-v78-plan.json",
+      "planSha256": "ed547af2ab283385159c6763fa9c1f737975c7f3196c52a206a970ca38c06001",
+      "groups": 6
+    },
+    {
+      "phase": "cpu",
+      "case": 84,
+      "round": 11,
+      "variant": "candidate",
+      "tag": "twelfth-isolated-cpu-84-11-candidate-v78",
+      "plan": "twelfth-isolated-cpu-84-11-candidate-v78-plan.json",
+      "planSha256": "ed547af2ab283385159c6763fa9c1f737975c7f3196c52a206a970ca38c06001",
+      "groups": 6
+    },
+    {
+      "phase": "cpu",
+      "case": 93,
+      "round": 0,
+      "variant": "candidate",
+      "tag": "twelfth-isolated-cpu-93-0-candidate-v78",
+      "plan": "twelfth-isolated-cpu-93-0-candidate-v78-plan.json",
+      "planSha256": "631a568ad15acba5e4a4905f1916a3ff98654a43ced4b375f0c570a249444714",
+      "groups": 6
+    },
+    {
+      "phase": "cpu",
+      "case": 93,
+      "round": 0,
+      "variant": "baseline",
+      "tag": "twelfth-isolated-cpu-93-0-baseline-v78",
+      "plan": "twelfth-isolated-cpu-93-0-baseline-v78-plan.json",
+      "planSha256": "631a568ad15acba5e4a4905f1916a3ff98654a43ced4b375f0c570a249444714",
+      "groups": 6
+    },
+    {
+      "phase": "cpu",
+      "case": 93,
+      "round": 1,
+      "variant": "candidate",
+      "tag": "twelfth-isolated-cpu-93-1-candidate-v78",
+      "plan": "twelfth-isolated-cpu-93-1-candidate-v78-plan.json",
+      "planSha256": "4a49e5ef294b9ed25ee3f31827daa0661d4f6af57014fabff57d370904d82fd5",
+      "groups": 6
+    },
+    {
+      "phase": "cpu",
+      "case": 93,
+      "round": 1,
+      "variant": "baseline",
+      "tag": "twelfth-isolated-cpu-93-1-baseline-v78",
+      "plan": "twelfth-isolated-cpu-93-1-baseline-v78-plan.json",
+      "planSha256": "4a49e5ef294b9ed25ee3f31827daa0661d4f6af57014fabff57d370904d82fd5",
+      "groups": 6
+    },
+    {
+      "phase": "cpu",
+      "case": 93,
+      "round": 2,
+      "variant": "baseline",
+      "tag": "twelfth-isolated-cpu-93-2-baseline-v78",
+      "plan": "twelfth-isolated-cpu-93-2-baseline-v78-plan.json",
+      "planSha256": "aa4224c817e012a5d8c663cdab7bdfcad30b6419af0df7b1eb789841c2b403b4",
+      "groups": 6
+    },
+    {
+      "phase": "cpu",
+      "case": 93,
+      "round": 2,
+      "variant": "candidate",
+      "tag": "twelfth-isolated-cpu-93-2-candidate-v78",
+      "plan": "twelfth-isolated-cpu-93-2-candidate-v78-plan.json",
+      "planSha256": "aa4224c817e012a5d8c663cdab7bdfcad30b6419af0df7b1eb789841c2b403b4",
+      "groups": 6
+    },
+    {
+      "phase": "cpu",
+      "case": 93,
+      "round": 3,
+      "variant": "baseline",
+      "tag": "twelfth-isolated-cpu-93-3-baseline-v78",
+      "plan": "twelfth-isolated-cpu-93-3-baseline-v78-plan.json",
+      "planSha256": "a563a350a6ee7d6d61c0422bc1212cfdb377e6270b12c08d19bf4ab154dbfd15",
+      "groups": 6
+    },
+    {
+      "phase": "cpu",
+      "case": 93,
+      "round": 3,
+      "variant": "candidate",
+      "tag": "twelfth-isolated-cpu-93-3-candidate-v78",
+      "plan": "twelfth-isolated-cpu-93-3-candidate-v78-plan.json",
+      "planSha256": "a563a350a6ee7d6d61c0422bc1212cfdb377e6270b12c08d19bf4ab154dbfd15",
+      "groups": 6
+    },
+    {
+      "phase": "cpu",
+      "case": 93,
+      "round": 4,
+      "variant": "candidate",
+      "tag": "twelfth-isolated-cpu-93-4-candidate-v78",
+      "plan": "twelfth-isolated-cpu-93-4-candidate-v78-plan.json",
+      "planSha256": "3f58f70d16d610be4c6dbf148306e94d57ba55c26000f870b5cd926a18b25a30",
+      "groups": 6
+    },
+    {
+      "phase": "cpu",
+      "case": 93,
+      "round": 4,
+      "variant": "baseline",
+      "tag": "twelfth-isolated-cpu-93-4-baseline-v78",
+      "plan": "twelfth-isolated-cpu-93-4-baseline-v78-plan.json",
+      "planSha256": "3f58f70d16d610be4c6dbf148306e94d57ba55c26000f870b5cd926a18b25a30",
+      "groups": 6
+    },
+    {
+      "phase": "cpu",
+      "case": 93,
+      "round": 5,
+      "variant": "baseline",
+      "tag": "twelfth-isolated-cpu-93-5-baseline-v78",
+      "plan": "twelfth-isolated-cpu-93-5-baseline-v78-plan.json",
+      "planSha256": "9c36eab82798ff0d2c8301608582dffee1268f54e05decd9fd9a363d0b8b4565",
+      "groups": 6
+    },
+    {
+      "phase": "cpu",
+      "case": 93,
+      "round": 5,
+      "variant": "candidate",
+      "tag": "twelfth-isolated-cpu-93-5-candidate-v78",
+      "plan": "twelfth-isolated-cpu-93-5-candidate-v78-plan.json",
+      "planSha256": "9c36eab82798ff0d2c8301608582dffee1268f54e05decd9fd9a363d0b8b4565",
+      "groups": 6
+    },
+    {
+      "phase": "cpu",
+      "case": 93,
+      "round": 6,
+      "variant": "candidate",
+      "tag": "twelfth-isolated-cpu-93-6-candidate-v78",
+      "plan": "twelfth-isolated-cpu-93-6-candidate-v78-plan.json",
+      "planSha256": "cd5c7b8448489f8ab3b916efa35901c2d15740ca7af16a610beee1e7cd35bbce",
+      "groups": 6
+    },
+    {
+      "phase": "cpu",
+      "case": 93,
+      "round": 6,
+      "variant": "baseline",
+      "tag": "twelfth-isolated-cpu-93-6-baseline-v78",
+      "plan": "twelfth-isolated-cpu-93-6-baseline-v78-plan.json",
+      "planSha256": "cd5c7b8448489f8ab3b916efa35901c2d15740ca7af16a610beee1e7cd35bbce",
+      "groups": 6
+    },
+    {
+      "phase": "cpu",
+      "case": 93,
+      "round": 7,
+      "variant": "candidate",
+      "tag": "twelfth-isolated-cpu-93-7-candidate-v78",
+      "plan": "twelfth-isolated-cpu-93-7-candidate-v78-plan.json",
+      "planSha256": "67637157103a9dd18a27ff94556f24628f51f364e114967fb7cf2eec81293567",
+      "groups": 6
+    },
+    {
+      "phase": "cpu",
+      "case": 93,
+      "round": 7,
+      "variant": "baseline",
+      "tag": "twelfth-isolated-cpu-93-7-baseline-v78",
+      "plan": "twelfth-isolated-cpu-93-7-baseline-v78-plan.json",
+      "planSha256": "67637157103a9dd18a27ff94556f24628f51f364e114967fb7cf2eec81293567",
+      "groups": 6
+    },
+    {
+      "phase": "cpu",
+      "case": 93,
+      "round": 8,
+      "variant": "candidate",
+      "tag": "twelfth-isolated-cpu-93-8-candidate-v78",
+      "plan": "twelfth-isolated-cpu-93-8-candidate-v78-plan.json",
+      "planSha256": "ad5bfb382f99e7aa00596adaf5e9ea375baec43c3423bd73dcee11e5af09ac81",
+      "groups": 6
+    },
+    {
+      "phase": "cpu",
+      "case": 93,
+      "round": 8,
+      "variant": "baseline",
+      "tag": "twelfth-isolated-cpu-93-8-baseline-v78",
+      "plan": "twelfth-isolated-cpu-93-8-baseline-v78-plan.json",
+      "planSha256": "ad5bfb382f99e7aa00596adaf5e9ea375baec43c3423bd73dcee11e5af09ac81",
+      "groups": 6
+    },
+    {
+      "phase": "cpu",
+      "case": 93,
+      "round": 9,
+      "variant": "baseline",
+      "tag": "twelfth-isolated-cpu-93-9-baseline-v78",
+      "plan": "twelfth-isolated-cpu-93-9-baseline-v78-plan.json",
+      "planSha256": "47789fa4d350defc99ecd31c74c64fff508b7f0bfe6fa270eb802ab8d9597483",
+      "groups": 6
+    },
+    {
+      "phase": "cpu",
+      "case": 93,
+      "round": 9,
+      "variant": "candidate",
+      "tag": "twelfth-isolated-cpu-93-9-candidate-v78",
+      "plan": "twelfth-isolated-cpu-93-9-candidate-v78-plan.json",
+      "planSha256": "47789fa4d350defc99ecd31c74c64fff508b7f0bfe6fa270eb802ab8d9597483",
+      "groups": 6
+    },
+    {
+      "phase": "cpu",
+      "case": 93,
+      "round": 10,
+      "variant": "baseline",
+      "tag": "twelfth-isolated-cpu-93-10-baseline-v78",
+      "plan": "twelfth-isolated-cpu-93-10-baseline-v78-plan.json",
+      "planSha256": "e1dd46ac19a8d12c16f6940dcd165c83f3155b7ec85ef24f30d3e65ff80d4e4c",
+      "groups": 6
+    },
+    {
+      "phase": "cpu",
+      "case": 93,
+      "round": 10,
+      "variant": "candidate",
+      "tag": "twelfth-isolated-cpu-93-10-candidate-v78",
+      "plan": "twelfth-isolated-cpu-93-10-candidate-v78-plan.json",
+      "planSha256": "e1dd46ac19a8d12c16f6940dcd165c83f3155b7ec85ef24f30d3e65ff80d4e4c",
+      "groups": 6
+    },
+    {
+      "phase": "cpu",
+      "case": 93,
+      "round": 11,
+      "variant": "baseline",
+      "tag": "twelfth-isolated-cpu-93-11-baseline-v78",
+      "plan": "twelfth-isolated-cpu-93-11-baseline-v78-plan.json",
+      "planSha256": "447697a29a86a132febad3b91683771e44a2cc4444a1d5d07fc1aace7b213641",
+      "groups": 6
+    },
+    {
+      "phase": "cpu",
+      "case": 93,
+      "round": 11,
+      "variant": "candidate",
+      "tag": "twelfth-isolated-cpu-93-11-candidate-v78",
+      "plan": "twelfth-isolated-cpu-93-11-candidate-v78-plan.json",
+      "planSha256": "447697a29a86a132febad3b91683771e44a2cc4444a1d5d07fc1aace7b213641",
+      "groups": 6
+    },
+    {
+      "phase": "allocation",
+      "case": 0,
+      "round": 0,
+      "variant": "candidate",
+      "tag": "twelfth-isolated-allocation-0-0-candidate-v78",
+      "plan": "twelfth-isolated-allocation-0-0-candidate-v78-plan.json",
+      "planSha256": "cb1dbc23d0fcc886f7e06e41993c44078a74286d4d6b4a04ac511c70d77bcf6d",
+      "groups": 12
+    },
+    {
+      "phase": "allocation",
+      "case": 0,
+      "round": 0,
+      "variant": "baseline",
+      "tag": "twelfth-isolated-allocation-0-0-baseline-v78",
+      "plan": "twelfth-isolated-allocation-0-0-baseline-v78-plan.json",
+      "planSha256": "cb1dbc23d0fcc886f7e06e41993c44078a74286d4d6b4a04ac511c70d77bcf6d",
+      "groups": 12
+    },
+    {
+      "phase": "allocation",
+      "case": 0,
+      "round": 1,
+      "variant": "candidate",
+      "tag": "twelfth-isolated-allocation-0-1-candidate-v78",
+      "plan": "twelfth-isolated-allocation-0-1-candidate-v78-plan.json",
+      "planSha256": "684259d35b7951d1babfb6b6445c0c53cacb01dd50a7e6897041bfbc0d6dc74b",
+      "groups": 12
+    },
+    {
+      "phase": "allocation",
+      "case": 0,
+      "round": 1,
+      "variant": "baseline",
+      "tag": "twelfth-isolated-allocation-0-1-baseline-v78",
+      "plan": "twelfth-isolated-allocation-0-1-baseline-v78-plan.json",
+      "planSha256": "684259d35b7951d1babfb6b6445c0c53cacb01dd50a7e6897041bfbc0d6dc74b",
+      "groups": 12
+    },
+    {
+      "phase": "allocation",
+      "case": 0,
+      "round": 2,
+      "variant": "baseline",
+      "tag": "twelfth-isolated-allocation-0-2-baseline-v78",
+      "plan": "twelfth-isolated-allocation-0-2-baseline-v78-plan.json",
+      "planSha256": "1a5d3ce9743126d6457e6353264bbae747dd7d9c52aa059c5def5b1abc0940f0",
+      "groups": 12
+    },
+    {
+      "phase": "allocation",
+      "case": 0,
+      "round": 2,
+      "variant": "candidate",
+      "tag": "twelfth-isolated-allocation-0-2-candidate-v78",
+      "plan": "twelfth-isolated-allocation-0-2-candidate-v78-plan.json",
+      "planSha256": "1a5d3ce9743126d6457e6353264bbae747dd7d9c52aa059c5def5b1abc0940f0",
+      "groups": 12
+    },
+    {
+      "phase": "allocation",
+      "case": 0,
+      "round": 3,
+      "variant": "baseline",
+      "tag": "twelfth-isolated-allocation-0-3-baseline-v78",
+      "plan": "twelfth-isolated-allocation-0-3-baseline-v78-plan.json",
+      "planSha256": "a316d8f122531271255704db4fcc1a3a19d328dd417710c2eabd534282be4892",
+      "groups": 12
+    },
+    {
+      "phase": "allocation",
+      "case": 0,
+      "round": 3,
+      "variant": "candidate",
+      "tag": "twelfth-isolated-allocation-0-3-candidate-v78",
+      "plan": "twelfth-isolated-allocation-0-3-candidate-v78-plan.json",
+      "planSha256": "a316d8f122531271255704db4fcc1a3a19d328dd417710c2eabd534282be4892",
+      "groups": 12
+    },
+    {
+      "phase": "allocation",
+      "case": 2,
+      "round": 0,
+      "variant": "candidate",
+      "tag": "twelfth-isolated-allocation-2-0-candidate-v78",
+      "plan": "twelfth-isolated-allocation-2-0-candidate-v78-plan.json",
+      "planSha256": "040152b433ee4d28bbb6afaba3de473c9512b022684415025853df92608f7ae8",
+      "groups": 12
+    },
+    {
+      "phase": "allocation",
+      "case": 2,
+      "round": 0,
+      "variant": "baseline",
+      "tag": "twelfth-isolated-allocation-2-0-baseline-v78",
+      "plan": "twelfth-isolated-allocation-2-0-baseline-v78-plan.json",
+      "planSha256": "040152b433ee4d28bbb6afaba3de473c9512b022684415025853df92608f7ae8",
+      "groups": 12
+    },
+    {
+      "phase": "allocation",
+      "case": 2,
+      "round": 1,
+      "variant": "candidate",
+      "tag": "twelfth-isolated-allocation-2-1-candidate-v78",
+      "plan": "twelfth-isolated-allocation-2-1-candidate-v78-plan.json",
+      "planSha256": "e7416c9d8afa535308fb03e3fa4e032fe4452453ec74532518bb828219840804",
+      "groups": 12
+    },
+    {
+      "phase": "allocation",
+      "case": 2,
+      "round": 1,
+      "variant": "baseline",
+      "tag": "twelfth-isolated-allocation-2-1-baseline-v78",
+      "plan": "twelfth-isolated-allocation-2-1-baseline-v78-plan.json",
+      "planSha256": "e7416c9d8afa535308fb03e3fa4e032fe4452453ec74532518bb828219840804",
+      "groups": 12
+    },
+    {
+      "phase": "allocation",
+      "case": 2,
+      "round": 2,
+      "variant": "baseline",
+      "tag": "twelfth-isolated-allocation-2-2-baseline-v78",
+      "plan": "twelfth-isolated-allocation-2-2-baseline-v78-plan.json",
+      "planSha256": "2279ae6666c01ed2e2fab113ae7e5edf12c5c2009c8145704890f28334eae369",
+      "groups": 12
+    },
+    {
+      "phase": "allocation",
+      "case": 2,
+      "round": 2,
+      "variant": "candidate",
+      "tag": "twelfth-isolated-allocation-2-2-candidate-v78",
+      "plan": "twelfth-isolated-allocation-2-2-candidate-v78-plan.json",
+      "planSha256": "2279ae6666c01ed2e2fab113ae7e5edf12c5c2009c8145704890f28334eae369",
+      "groups": 12
+    },
+    {
+      "phase": "allocation",
+      "case": 2,
+      "round": 3,
+      "variant": "baseline",
+      "tag": "twelfth-isolated-allocation-2-3-baseline-v78",
+      "plan": "twelfth-isolated-allocation-2-3-baseline-v78-plan.json",
+      "planSha256": "42751ecb69fa60bd4cd3c5b23dd7c894a9660ce81d08a698d0a5b5d3de73593d",
+      "groups": 12
+    },
+    {
+      "phase": "allocation",
+      "case": 2,
+      "round": 3,
+      "variant": "candidate",
+      "tag": "twelfth-isolated-allocation-2-3-candidate-v78",
+      "plan": "twelfth-isolated-allocation-2-3-candidate-v78-plan.json",
+      "planSha256": "42751ecb69fa60bd4cd3c5b23dd7c894a9660ce81d08a698d0a5b5d3de73593d",
+      "groups": 12
+    },
+    {
+      "phase": "allocation",
+      "case": 34,
+      "round": 0,
+      "variant": "candidate",
+      "tag": "twelfth-isolated-allocation-34-0-candidate-v78",
+      "plan": "twelfth-isolated-allocation-34-0-candidate-v78-plan.json",
+      "planSha256": "cd483a9cb16a07e5d5187d4f62fe875d9a104a897c6dce52660a78e26b9dcdc2",
+      "groups": 12
+    },
+    {
+      "phase": "allocation",
+      "case": 34,
+      "round": 0,
+      "variant": "baseline",
+      "tag": "twelfth-isolated-allocation-34-0-baseline-v78",
+      "plan": "twelfth-isolated-allocation-34-0-baseline-v78-plan.json",
+      "planSha256": "cd483a9cb16a07e5d5187d4f62fe875d9a104a897c6dce52660a78e26b9dcdc2",
+      "groups": 12
+    },
+    {
+      "phase": "allocation",
+      "case": 34,
+      "round": 1,
+      "variant": "candidate",
+      "tag": "twelfth-isolated-allocation-34-1-candidate-v78",
+      "plan": "twelfth-isolated-allocation-34-1-candidate-v78-plan.json",
+      "planSha256": "b1f22c42b2dcb35a17cca24495232a126f8a61e9465753af39e2897b29f2983b",
+      "groups": 12
+    },
+    {
+      "phase": "allocation",
+      "case": 34,
+      "round": 1,
+      "variant": "baseline",
+      "tag": "twelfth-isolated-allocation-34-1-baseline-v78",
+      "plan": "twelfth-isolated-allocation-34-1-baseline-v78-plan.json",
+      "planSha256": "b1f22c42b2dcb35a17cca24495232a126f8a61e9465753af39e2897b29f2983b",
+      "groups": 12
+    },
+    {
+      "phase": "allocation",
+      "case": 34,
+      "round": 2,
+      "variant": "baseline",
+      "tag": "twelfth-isolated-allocation-34-2-baseline-v78",
+      "plan": "twelfth-isolated-allocation-34-2-baseline-v78-plan.json",
+      "planSha256": "058116feef26138b63ab759cbec71a7d4a9fba639e3b50ab3a4c5b6d92f875b5",
+      "groups": 12
+    },
+    {
+      "phase": "allocation",
+      "case": 34,
+      "round": 2,
+      "variant": "candidate",
+      "tag": "twelfth-isolated-allocation-34-2-candidate-v78",
+      "plan": "twelfth-isolated-allocation-34-2-candidate-v78-plan.json",
+      "planSha256": "058116feef26138b63ab759cbec71a7d4a9fba639e3b50ab3a4c5b6d92f875b5",
+      "groups": 12
+    },
+    {
+      "phase": "allocation",
+      "case": 34,
+      "round": 3,
+      "variant": "baseline",
+      "tag": "twelfth-isolated-allocation-34-3-baseline-v78",
+      "plan": "twelfth-isolated-allocation-34-3-baseline-v78-plan.json",
+      "planSha256": "0060f45808f3845a8439dfda64b8fee79b5aaf43e5b3bf27938b579233ca3373",
+      "groups": 12
+    },
+    {
+      "phase": "allocation",
+      "case": 34,
+      "round": 3,
+      "variant": "candidate",
+      "tag": "twelfth-isolated-allocation-34-3-candidate-v78",
+      "plan": "twelfth-isolated-allocation-34-3-candidate-v78-plan.json",
+      "planSha256": "0060f45808f3845a8439dfda64b8fee79b5aaf43e5b3bf27938b579233ca3373",
+      "groups": 12
+    },
+    {
+      "phase": "allocation",
+      "case": 39,
+      "round": 0,
+      "variant": "candidate",
+      "tag": "twelfth-isolated-allocation-39-0-candidate-v78",
+      "plan": "twelfth-isolated-allocation-39-0-candidate-v78-plan.json",
+      "planSha256": "0de4b0e132c000e73c448888bf5a4eb7dc647da79ce4e6c1effa2a9de6efd451",
+      "groups": 12
+    },
+    {
+      "phase": "allocation",
+      "case": 39,
+      "round": 0,
+      "variant": "baseline",
+      "tag": "twelfth-isolated-allocation-39-0-baseline-v78",
+      "plan": "twelfth-isolated-allocation-39-0-baseline-v78-plan.json",
+      "planSha256": "0de4b0e132c000e73c448888bf5a4eb7dc647da79ce4e6c1effa2a9de6efd451",
+      "groups": 12
+    },
+    {
+      "phase": "allocation",
+      "case": 39,
+      "round": 1,
+      "variant": "candidate",
+      "tag": "twelfth-isolated-allocation-39-1-candidate-v78",
+      "plan": "twelfth-isolated-allocation-39-1-candidate-v78-plan.json",
+      "planSha256": "5611f2c40bf530c7a1a774074a2e90952459c6965a6064a9c8d4f30fdeabb923",
+      "groups": 12
+    },
+    {
+      "phase": "allocation",
+      "case": 39,
+      "round": 1,
+      "variant": "baseline",
+      "tag": "twelfth-isolated-allocation-39-1-baseline-v78",
+      "plan": "twelfth-isolated-allocation-39-1-baseline-v78-plan.json",
+      "planSha256": "5611f2c40bf530c7a1a774074a2e90952459c6965a6064a9c8d4f30fdeabb923",
+      "groups": 12
+    },
+    {
+      "phase": "allocation",
+      "case": 39,
+      "round": 2,
+      "variant": "baseline",
+      "tag": "twelfth-isolated-allocation-39-2-baseline-v78",
+      "plan": "twelfth-isolated-allocation-39-2-baseline-v78-plan.json",
+      "planSha256": "3f8d9b75b73b78738714bc99e30caffc04b6df54cf8501a64e0326823e11ba82",
+      "groups": 12
+    },
+    {
+      "phase": "allocation",
+      "case": 39,
+      "round": 2,
+      "variant": "candidate",
+      "tag": "twelfth-isolated-allocation-39-2-candidate-v78",
+      "plan": "twelfth-isolated-allocation-39-2-candidate-v78-plan.json",
+      "planSha256": "3f8d9b75b73b78738714bc99e30caffc04b6df54cf8501a64e0326823e11ba82",
+      "groups": 12
+    },
+    {
+      "phase": "allocation",
+      "case": 39,
+      "round": 3,
+      "variant": "baseline",
+      "tag": "twelfth-isolated-allocation-39-3-baseline-v78",
+      "plan": "twelfth-isolated-allocation-39-3-baseline-v78-plan.json",
+      "planSha256": "49ddc3017dd80165c33851ba673e2873877322913d89f6b8623bf45c4524de9b",
+      "groups": 12
+    },
+    {
+      "phase": "allocation",
+      "case": 39,
+      "round": 3,
+      "variant": "candidate",
+      "tag": "twelfth-isolated-allocation-39-3-candidate-v78",
+      "plan": "twelfth-isolated-allocation-39-3-candidate-v78-plan.json",
+      "planSha256": "49ddc3017dd80165c33851ba673e2873877322913d89f6b8623bf45c4524de9b",
+      "groups": 12
+    },
+    {
+      "phase": "allocation",
+      "case": 84,
+      "round": 0,
+      "variant": "candidate",
+      "tag": "twelfth-isolated-allocation-84-0-candidate-v78",
+      "plan": "twelfth-isolated-allocation-84-0-candidate-v78-plan.json",
+      "planSha256": "125a8c13a7d7204eec39f491539aba257fb1e885a9b5721155fc4fe435284e9a",
+      "groups": 12
+    },
+    {
+      "phase": "allocation",
+      "case": 84,
+      "round": 0,
+      "variant": "baseline",
+      "tag": "twelfth-isolated-allocation-84-0-baseline-v78",
+      "plan": "twelfth-isolated-allocation-84-0-baseline-v78-plan.json",
+      "planSha256": "125a8c13a7d7204eec39f491539aba257fb1e885a9b5721155fc4fe435284e9a",
+      "groups": 12
+    },
+    {
+      "phase": "allocation",
+      "case": 84,
+      "round": 1,
+      "variant": "candidate",
+      "tag": "twelfth-isolated-allocation-84-1-candidate-v78",
+      "plan": "twelfth-isolated-allocation-84-1-candidate-v78-plan.json",
+      "planSha256": "030567d69b9d2486512c97ec9b95e6d4343d9aaed69bfe9445e5878f611ab8a3",
+      "groups": 12
+    },
+    {
+      "phase": "allocation",
+      "case": 84,
+      "round": 1,
+      "variant": "baseline",
+      "tag": "twelfth-isolated-allocation-84-1-baseline-v78",
+      "plan": "twelfth-isolated-allocation-84-1-baseline-v78-plan.json",
+      "planSha256": "030567d69b9d2486512c97ec9b95e6d4343d9aaed69bfe9445e5878f611ab8a3",
+      "groups": 12
+    },
+    {
+      "phase": "allocation",
+      "case": 84,
+      "round": 2,
+      "variant": "baseline",
+      "tag": "twelfth-isolated-allocation-84-2-baseline-v78",
+      "plan": "twelfth-isolated-allocation-84-2-baseline-v78-plan.json",
+      "planSha256": "7de5711710b684c9517787af4e765d62d48cbf347b9bc20d79f25b1bebefd8dc",
+      "groups": 12
+    },
+    {
+      "phase": "allocation",
+      "case": 84,
+      "round": 2,
+      "variant": "candidate",
+      "tag": "twelfth-isolated-allocation-84-2-candidate-v78",
+      "plan": "twelfth-isolated-allocation-84-2-candidate-v78-plan.json",
+      "planSha256": "7de5711710b684c9517787af4e765d62d48cbf347b9bc20d79f25b1bebefd8dc",
+      "groups": 12
+    },
+    {
+      "phase": "allocation",
+      "case": 84,
+      "round": 3,
+      "variant": "baseline",
+      "tag": "twelfth-isolated-allocation-84-3-baseline-v78",
+      "plan": "twelfth-isolated-allocation-84-3-baseline-v78-plan.json",
+      "planSha256": "cbea50e278c2e14bd0c7661c1eea0a9e0191066031d887c46d8bace0276d2f9c",
+      "groups": 12
+    },
+    {
+      "phase": "allocation",
+      "case": 84,
+      "round": 3,
+      "variant": "candidate",
+      "tag": "twelfth-isolated-allocation-84-3-candidate-v78",
+      "plan": "twelfth-isolated-allocation-84-3-candidate-v78-plan.json",
+      "planSha256": "cbea50e278c2e14bd0c7661c1eea0a9e0191066031d887c46d8bace0276d2f9c",
+      "groups": 12
+    },
+    {
+      "phase": "allocation",
+      "case": 93,
+      "round": 0,
+      "variant": "candidate",
+      "tag": "twelfth-isolated-allocation-93-0-candidate-v78",
+      "plan": "twelfth-isolated-allocation-93-0-candidate-v78-plan.json",
+      "planSha256": "f627667771a373583723cf6260f842c7105a56013ee99b8332c7ed951ccf555d",
+      "groups": 12
+    },
+    {
+      "phase": "allocation",
+      "case": 93,
+      "round": 0,
+      "variant": "baseline",
+      "tag": "twelfth-isolated-allocation-93-0-baseline-v78",
+      "plan": "twelfth-isolated-allocation-93-0-baseline-v78-plan.json",
+      "planSha256": "f627667771a373583723cf6260f842c7105a56013ee99b8332c7ed951ccf555d",
+      "groups": 12
+    },
+    {
+      "phase": "allocation",
+      "case": 93,
+      "round": 1,
+      "variant": "candidate",
+      "tag": "twelfth-isolated-allocation-93-1-candidate-v78",
+      "plan": "twelfth-isolated-allocation-93-1-candidate-v78-plan.json",
+      "planSha256": "16720d0526b1747926c26e38591d9d22da5d9d483b945fdf8ff7ca5f8329fa62",
+      "groups": 12
+    },
+    {
+      "phase": "allocation",
+      "case": 93,
+      "round": 1,
+      "variant": "baseline",
+      "tag": "twelfth-isolated-allocation-93-1-baseline-v78",
+      "plan": "twelfth-isolated-allocation-93-1-baseline-v78-plan.json",
+      "planSha256": "16720d0526b1747926c26e38591d9d22da5d9d483b945fdf8ff7ca5f8329fa62",
+      "groups": 12
+    },
+    {
+      "phase": "allocation",
+      "case": 93,
+      "round": 2,
+      "variant": "baseline",
+      "tag": "twelfth-isolated-allocation-93-2-baseline-v78",
+      "plan": "twelfth-isolated-allocation-93-2-baseline-v78-plan.json",
+      "planSha256": "af70cee501929667ab19ac252b0e2ecd765592f465c5811d4e20f4e4fd7188ca",
+      "groups": 12
+    },
+    {
+      "phase": "allocation",
+      "case": 93,
+      "round": 2,
+      "variant": "candidate",
+      "tag": "twelfth-isolated-allocation-93-2-candidate-v78",
+      "plan": "twelfth-isolated-allocation-93-2-candidate-v78-plan.json",
+      "planSha256": "af70cee501929667ab19ac252b0e2ecd765592f465c5811d4e20f4e4fd7188ca",
+      "groups": 12
+    },
+    {
+      "phase": "allocation",
+      "case": 93,
+      "round": 3,
+      "variant": "baseline",
+      "tag": "twelfth-isolated-allocation-93-3-baseline-v78",
+      "plan": "twelfth-isolated-allocation-93-3-baseline-v78-plan.json",
+      "planSha256": "96e9cfd0a55256b6ce39cb5a353f9b175e3993eef2b6a76c201147cc21923572",
+      "groups": 12
+    },
+    {
+      "phase": "allocation",
+      "case": 93,
+      "round": 3,
+      "variant": "candidate",
+      "tag": "twelfth-isolated-allocation-93-3-candidate-v78",
+      "plan": "twelfth-isolated-allocation-93-3-candidate-v78-plan.json",
+      "planSha256": "96e9cfd0a55256b6ce39cb5a353f9b175e3993eef2b6a76c201147cc21923572",
+      "groups": 12
+    }
+  ],
+  "started": "2026-09-11T23:59:02.582Z",
+  "finished": "2026-09-11T23:59:29.289Z"
+}

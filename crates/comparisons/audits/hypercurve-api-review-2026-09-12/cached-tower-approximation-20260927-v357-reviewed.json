@@ -1,0 +1,51 @@
+{
+  "qualification": "cached-tower-approximation-20260927-v357-terminal.json",
+  "source_manifest": "cached-tower-approximation-20260927-v357-sources.json",
+  "outer_session_reaped": 78519,
+  "validated_files": 2046,
+  "selected_geometry_tests": 232,
+  "suite_pass_counts": {
+    "hyperreal-full-lib": [
+      841
+    ],
+    "hypersolve-full-lib": [
+      527
+    ],
+    "hyperreal-integration": [
+      841,
+      0,
+      7,
+      10,
+      5,
+      2,
+      2,
+      1,
+      6,
+      10,
+      16,
+      1,
+      1,
+      1,
+      9,
+      8,
+      2,
+      2,
+      6
+    ]
+  },
+  "checks": 12,
+  "repos": {
+    "hyperreal": {
+      "parent": "f0a17ce20a7683751c7d278157614f36048fa239",
+      "paths": {
+        "src/computable/node/approximation_queries.rs": "36c7bb2791a9738d74d9021b31e1813811d4eb317e5470d16d1d4345ac9d7ca8",
+        "src/computable/node/quadratic_tower.rs": "ccaac199d57c7c1e0aaa266d0b784ad2581af1ff0f8c50da1ba5d5abd669d427",
+        "tests/gmp_api_coverage.rs": "4bd0d470cc779434b6f2c0ed64be15e05fc4a7a6d8237ed3905998ddd1248efb"
+      }
+    }
+  },
+  "known_unresolved": [
+    "strict_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions",
+    "approximate_512_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions"
+  ]
+}

@@ -1,0 +1,19 @@
+unrecognized option `--seed=271828'
+Usage: upstream-tests [OPTIONS]
+                   --help                                       show this help message
+  -j NUMBER        --threads=NUMBER                             number of threads to use to run tests
+                   --test-seed=NUMBER|random                    default seed for test random number generator
+  -a NUMBER        --maximum-generated-tests=NUMBER             how many automated tests something like QuickCheck should try, by default
+                   --maximum-unsuitable-generated-tests=NUMBER  how many unsuitable candidate tests something like QuickCheck should endure before giving up, by default
+  -s NUMBER        --maximum-test-size=NUMBER                   to what size something like QuickCheck should test the properties, by default
+  -d NUMBER        --maximum-test-depth=NUMBER                  to what depth something like SmallCheck should test the properties, by default
+  -o NUMBER        --timeout=NUMBER                             how many seconds a test should be run for before giving up, by default
+                   --no-timeout                                 specifies that tests should be run without a timeout, by default
+  -l               --list-tests                                 list available tests but don't run any; useful to guide subsequent --select-tests
+  -t TEST-PATTERN  --select-tests=TEST-PATTERN                  only tests that match at least one glob pattern given by an instance of this argument will be run
+                   --jxml=FILE                                  write a JUnit XML summary of the output to FILE
+                   --jxml-nested                                use nested testsuites to represent groups in JUnit XML (not standards compliant)
+                   --plain                                      do not use any ANSI terminal features to display the test run
+                   --color                                      use ANSI terminal features to display the test run
+                   --hide-successes                             hide sucessful tests, and only show failures
+

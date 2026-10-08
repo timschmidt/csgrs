@@ -1,0 +1,50 @@
+[
+  {
+    "name": "bezier_region::tests::nonrepresented_chord_and_retained_rational_arc_share_the_fillet_kernel",
+    "returncode": 101,
+    "passed": false,
+    "limit_seconds": 180,
+    "elapsed_seconds": 0.2512867150362581,
+    "log": "recognized-circle-evidence-20260923-v1-case-0.log"
+  },
+  {
+    "name": "bezier_region::tests::general_nonrepresented_chord_and_retained_rational_arc_complete_the_fillet_kernel",
+    "returncode": 0,
+    "passed": true,
+    "limit_seconds": 180,
+    "elapsed_seconds": 1.2530467049218714,
+    "log": "recognized-circle-evidence-20260923-v1-case-1.log"
+  },
+  {
+    "name": "bezier_region::tests::major_retained_rational_arc_and_general_chord_share_the_fillet_kernel",
+    "returncode": 0,
+    "passed": true,
+    "limit_seconds": 180,
+    "elapsed_seconds": 8.165141817065887,
+    "log": "recognized-circle-evidence-20260923-v1-case-2.log"
+  },
+  {
+    "name": "bezier_region::tests::selected_circle_and_retained_rational_arc_fillet_exactly",
+    "returncode": 0,
+    "passed": true,
+    "limit_seconds": 120,
+    "elapsed_seconds": 0.7525480140466243,
+    "log": "recognized-circle-evidence-20260923-v1-case-3.log"
+  },
+  {
+    "name": "bezier_region::tests::selected_circle_and_major_retained_rational_arc_fillet_exactly",
+    "returncode": 0,
+    "passed": true,
+    "limit_seconds": 120,
+    "elapsed_seconds": 1.9060159029904753,
+    "log": "recognized-circle-evidence-20260923-v1-case-4.log"
+  },
+  {
+    "name": "bezier_region::tests::selected_circle_pair_with_rationalizable_support_fillet_exactly",
+    "returncode": 0,
+    "passed": true,
+    "limit_seconds": 120,
+    "elapsed_seconds": 0.15372440090868622,
+    "log": "recognized-circle-evidence-20260923-v1-case-5.log"
+  }
+]

@@ -1,0 +1,8 @@
+{
+  "files": [
+    "src/algebraic_tensor_image.rs"
+  ],
+  "sha256": "8af1db098c986f685782d5e0d15c8b62a05bc30630851cf32d44657e033ee23d",
+  "parent": "e4f59ba19e01c224c9fdc37f44debb752b6d40ae",
+  "all_owned_processes_reaped": true
+}

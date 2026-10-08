@@ -1,0 +1,59 @@
+{
+  "seconds": 1.6031425490509719,
+  "rows": [
+    {
+      "degree": 8,
+      "base_degree": 10,
+      "selected_degree": 8,
+      "max_bits": 35
+    },
+    {
+      "degree": 7,
+      "base_degree": 8,
+      "selected_degree": 7,
+      "max_bits": 38
+    },
+    {
+      "degree": 6,
+      "base_degree": 14,
+      "selected_degree": 6,
+      "max_bits": 108
+    },
+    {
+      "degree": 5,
+      "base_degree": 20,
+      "selected_degree": 5,
+      "max_bits": 171
+    },
+    {
+      "degree": 4,
+      "base_degree": 30,
+      "selected_degree": 4,
+      "max_bits": 233
+    },
+    {
+      "degree": 3,
+      "base_degree": 36,
+      "selected_degree": 3,
+      "max_bits": 285
+    },
+    {
+      "degree": 2,
+      "base_degree": 46,
+      "selected_degree": 2,
+      "max_bits": 376
+    },
+    {
+      "degree": 1,
+      "base_degree": 56,
+      "selected_degree": 1,
+      "max_bits": 466
+    },
+    {
+      "degree": 0,
+      "base_degree": 70,
+      "selected_degree": -1,
+      "max_bits": 538
+    }
+  ]
+}

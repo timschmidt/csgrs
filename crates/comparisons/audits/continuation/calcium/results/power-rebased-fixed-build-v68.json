@@ -1,0 +1,22 @@
+{
+  "tag": "power-rebased-fixed-build-v68",
+  "started": "2026-09-11T16:54:37.514Z",
+  "finished": "2026-09-11T16:54:56.290Z",
+  "elapsedSeconds": 18.773862264999998,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/power-rebased-candidate-app-v68",
+  "command": "env",
+  "args": [
+    "CARGO_TARGET_DIR=/tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse",
+    "CARGO_INCREMENTAL=0",
+    "CARGO_PROFILE_DEV_DEBUG=0",
+    "CARGO_BUILD_JOBS=2",
+    "cargo",
+    "build",
+    "--offline",
+    "--locked",
+    "--release",
+    "--bins"
+  ],
+  "code": 0,
+  "signal": null
+}

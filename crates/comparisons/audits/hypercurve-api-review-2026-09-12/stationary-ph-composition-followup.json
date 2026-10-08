@@ -1,0 +1,108 @@
+{
+  "status": "stationary PH inward and outward fixtures qualified; broader original review and closure work remain active",
+  "source": "P(t)=(t^3/3-t^5/5,t^4/2), P'(t)=t^2(1-t^2,2t), closed through (-1,1/2), (-1,0), (0,0).",
+  "outward": {
+    "log": "stationary-ph-outward-composition.log",
+    "first_distance": "1/20",
+    "second_distance": "1/40",
+    "both_contexts": "Both successive outward offsets are Certified. Exact path reentry, reversal, XOR equivalence to the direct offset, and cancellation pass.",
+    "source_cause": "exact_offset_span_from_analytic_parallel and exact_offset_span_from_selected_parallel_fragment reject source singularities on closed retained ranges, including endpoints. The selected path also promotes to an analytic fragment before offsetting, losing the one-sided endpoint route.",
+    "repair_direction": "Unify retained offset composition over CurveParameterRange2, preserve stored endpoint identity, admit certified one-sided stationary endpoints, and keep tangent supports anchored at the original region corner. Direct point_at at zero hodograph remains undefined; ordinary boundary derivatives stay zero.",
+    "status": "repaired, qualified, committed",
+    "commit": "cbe81518b359e22473a6b4fe562abaadb5f46456",
+    "qualification": "retained-offset-composition-qualification.json"
+  },
+  "inward": {
+    "source": "stationary-ph-offset-inspect.rs",
+    "log": "stationary-ph-offset-rational-domains.log",
+    "first_distance": "-1/20",
+    "second_distance": "-1/40",
+    "observed": "First offset Certified with degree-five analytic support. Overall 180-second timeout during second offset; no second result claimed.",
+    "stack": "stationary-ph-rational-domains-stack.log",
+    "phase": "recursive_projective_rational_intersections -> parameter_at_certified_point -> retained_procedural_point_side -> recursive projective refinement -> dense radical interval arithmetic.",
+    "repair_direction": "Preserve and reuse chord/contact parameter authority rather than expanding and refining equivalent nested coordinate expressions.",
+    "latest_log": "stationary-ph-offset-certified-chord-pair-enclosure.log",
+    "latest_observation": "Both offsets Certified in both unloaded probes: STRICT total 24.798793366s; APPROXIMATE_512 total 24.174683148s. The public four-case regression also passes exact path readmission and 48 independent point classifications.",
+    "latest_stack": "stationary-ph-ordered-field-content-stack.log",
+    "latest_commit": "2025587c91b4af5a1eeccae97a7412ef114a0dd1",
+    "completed_reduction": "Satisfied polynomial root refinements now share the retained identity; sign-query passes continue from their latest exact interval. Qualification: recursive-polynomial-refinement-qualification.json.",
+    "next_investigation": "Continue interval-arithmetic-policy-followup.json and the broader review. This selected PH inward fixture is now qualified; the four held-out cases remain unqualified.",
+    "completed_sign_schedule": "Retained scalar witnesses now precede deep tensor refinement. Duplicate scalar sign and interval wrappers were removed. Qualification: recursive-sign-schedule-qualification.json.",
+    "additional_evidence_lead": "Endpoint signs are now retained. Deeper bounds still return in new parameter objects; investigate shared cumulative refinement across independent queries only with a measured repeated-work regression, preserving per-root identity and partial uncertainty. Avoid attaching per-root bracket state to an authority shared by several roots.",
+    "completed_local_relation_replay": "Hypersolve sign-preserving ordered-field remainder and Hypercurve native root relation replay are committed in 9211d62 and 827b416. See local-polynomial-remainder-qualification.json.",
+    "completed_axis_replay": "Direct analytic point axis predicates and shared axis/circle positive-speed replay are committed in 43f7d38c14e4e8fbf302ff01dee1f2be439996a2. See analytic-axis-local-replay-qualification.json.",
+    "completed_coefficient_field_replay": "Native local polynomial image comparisons in their existing coefficient field committed in 6d4d10f4932adfc7441300289d8ba85a8abf21cb. See analytic-axis-coefficient-field-qualification.json.",
+    "completed_polynomial_speed_embedding": "Committed b62c2fbf7ea92fe5dafca86491a36e93b5444e86: original selected axes accept polynomial positive-speed replay; matching generators stay first. One-source dense signs reuse the existing univariate parameter authority. See polynomial-speed-embedding-qualification.json.",
+    "established_coefficient_field_mismatch": "The temporary field trace shows identical source tuples, with raw speed t^4*(1+t^2)^2 and regularized-frame speed (1+t^2)^2. Import succeeds but literal base equivalence was insufficient.",
+    "completed_retained_incidence_replay": "Committed be971cce43b1b3d5b2c4ca33aee1304536f2e1d4: generic field embedding, joined incidence replay, and bounded-first cumulative incidence refinement. See retained-incidence-replay-qualification.json.",
+    "shared_hypersolve_commit": "ed9a599c75b6add0ed80722b868972f64c8629ca",
+    "completed_exact_field_embedding": "Committed 496ac88bedec6bf43b9b8f9b4096ac19778216d3: field generator signs and equality replay cannot consume approximation. See exact-field-embedding-qualification.json.",
+    "completed_shared_selected_root_sign": "Committed Hypercurve 5060fbb018ce18c850d5c4a4a4d4e49fd85c825a and Hypersolve 54859d54c7f112bc421712aec1862138da8cca42: use the existing exact selected-root sign query before independent filter-root isolation. See shared-selected-root-sign-qualification.json.",
+    "later_native_sign_lead": "The ordered-field singleton sign engine is implemented and qualified. Further selected-root certificates and field sharing remain in the original goal.",
+    "completed_deflated_root_ownership": "Committed Hypersolve c0742ace4a762d701df6241bdfa919c313e6cec4 and Hypercurve 52eec14407afd459b4fe7d668b95a79ac0c48cad: the shared isolator excludes separately emitted exact roots from nonpoint interval boundaries, preserving the original polynomial authority. See deflated-root-authority-qualification.json.",
+    "bracket_evidence_caveats": [
+      "The cubic/higher-degree local isolator receives only intervals from Hypersolve, so signs there need lazy exact retention unless the shared report is deliberately enriched. The current geometric crossing shortcut is restricted to degree at most two.",
+      "BezierRecursiveQuadraticUnitCrossing2.start_sign/end_sign describe the original crossing. When its refinement finds an exact midpoint, lower==upper certifies zero; copying the old nonzero signs onto that collapsed bracket would be wrong.",
+      "Pure field embeddings preserve defining-polynomial values and may retain bracket signs; a changed projective polynomial chart must reset them unless its sign transform is proved."
+    ],
+    "completed_certified_quadratic_crossing": "Committed Hypercurve f41175c: exact ordered-field degree signs, retained crossing after optional uncertainty, and direct defining-equation replay. See certified-quadratic-crossing-qualification.json.",
+    "completed_endpoint_sign_evidence": "Committed Hypercurve 9b9060c: independent exact endpoint certificates retained with polynomial brackets, seeded from crossings, updated on collapse, reused in ordering/refinement/field embedding, reset on changed polynomial charts. See polynomial-endpoint-evidence-qualification.json.",
+    "completed_shared_sign_schedule": "Committed Hypercurve 49692e2: one borrowed-coefficient interface, shared retained-interval certificate before algebraic replay, migrated callers and removed ten sign-only polynomial constructions. See unified-polynomial-sign-qualification.json.",
+    "completed_native_selected_root_sign": "Committed Hypersolve 9fa774c843b32f7a9f423e2784f0e3376df16e5a and Hypercurve bb9744b59e34a3adb1aae703be588a2ff7d84aa1: ordered-field singleton replay proves proper-factor equality and tiny signed shifts; four sign-only callers no longer require an explicit scalar carrier. Ancestor lifting shares the homogeneous evaluator. See ordered-field-selected-sign-qualification.json.",
+    "completed_general_support_axis_reduction": "Committed 82db719517c7283f68701e42820d30f5e6a4d913: all point-family counterparts share cardinal support-coordinate reduction. Six specific match arms and two comparison methods removed; 58 fewer production lines. See chord-pair-axis-reduction-qualification.json.",
+    "previous_axis_decline": "The instrumented former coordinate-projection case was a nonzero-distance analytic point at an ordinary Bezier parameter versus a chord-pair contact. Shared support-coordinate dispatch repairs the missing family route; the current stack reaches a later native incidence query.",
+    "latest_stack_commit": "f49145e59d52ef65b13c4d24c44317de5e1cd5e8",
+    "completed_owned_axis_coordinate": "Committed 4e2507f3bba5919a4572d8d83812e9ba21056ad4: nested contact-support queries preserve the requested axis; all callers migrated and the implicit-axis interface removed. See owned-axis-coordinate-qualification.json.",
+    "completed_retained_constant_coordinate": "Committed 6c6fdad97a46d5f6efcd653c631b058b6db29ae9: one strict proportionality proof shared by linear projections and coordinate conversion, with a separate selected denominator nonzero certificate. See retained-constant-coordinate-qualification.json.",
+    "latest_targeted_trace": "stationary-ph-field-chain-trace.log",
+    "latest_targeted_trace_finding": "Two native ordered-field queries each have eight defining coefficients and seven predicate coefficients. The first evaluates chain coefficient counts 13,8,7,6,5,4,3,2,1 at both endpoints. The second reaches both endpoints of its two-coefficient member; the final stack is in field multiplication and dense selected-tuple reduction while constructing the next remainder.",
+    "latest_stack_hypersolve_commit": "ed9a599c75b6add0ed80722b868972f64c8629ca",
+    "completed_primitive_coefficient_preparation": "Committed e5139b46c707768bdcb40164cefc990753a70f6e: one sign-preserving primitive conversion, reusing Hyperreal content certification before tensor reductions and selected-root replay. See primitive-coefficient-reduction-qualification.json.",
+    "completed_polynomial_content_normalization": "Committed Hypersolve ed9a599c75b6add0ed80722b868972f64c8629ca and Hypercurve f49145e59d52ef65b13c4d24c44317de5e1cd5e8: one field-owned positive-scale operation shares tuple normalization with native root replay and bounds the demonstrated scale-growth fixture. See ordered-field-content-qualification.json.",
+    "status": "two inward offsets and exact boundary-path readmission qualified in both contexts and both traversals",
+    "latest_approximate_log": "stationary-ph-offset-certified-chord-pair-enclosure-approximate.log",
+    "latest_qualification": "certified-chord-pair-enclosure-qualification.json"
+  },
+  "other_representation_followup": {
+    "status": "repaired, qualified, committed",
+    "commit": "1f49f12f401c37a7978635d942db5487cc202281",
+    "qualification": "minimal-homogeneous-reduction-qualification.json",
+    "change": "Publish certified inverse Bernstein degree reduction through the existing validated homogeneous constructor. Retain the original endpoint values, parameter lineage and exact line evidence; remove affine control projection and reconstruction. No common factor is cancelled."
+  },
+  "broader_scope": "The original raw-chart poles, conic authority, normalized recursive region closure, selected-fiber/root reuse, and repeated workload growth goals remain active.",
+  "root_replay_followup": "promoted_parameter uses its uniqueness interval for candidate identification. Tight query enclosures can turn close comparisons uncertain; the current selector skips uncertain interval comparisons and reports Boundary when no candidate remains. Do not unnecessarily replace the original root-selection domain with a query envelope; broader complete root replay remains part of the goal.",
+  "normalized_field_witness_stage": {
+    "commit": "6a69c9c71d96ac13a77c32aa7bf0281718ec7514",
+    "qualification": "normalized-field-witness-qualification.json",
+    "runtime": "first inward Certified in 3.755785438s; total timeout60 exit124; second result absent",
+    "scalar_inputs": "stationary-ph-scalar-query-followup.json",
+    "next": "Investigate shared integer GCD scheduling on captured exact scalar inputs."
+  },
+  "shared_integer_gcd_stage": {
+    "commits": {
+      "hyperreal": "a2da8e2b5de9a1a4653d3662f2f05cb6533fd7ef",
+      "hypersolve": "3ac2e7510936a11c7bf2eac5dfbe3f9f851afe55",
+      "hypercurve": "6a69c9c71d96ac13a77c32aa7bf0281718ec7514",
+      "hyperbrep": "8a84ee7db02fd2720ac89a1a6a227ee4ec2a8171"
+    },
+    "qualification": "shared-integer-gcd-qualification.json",
+    "change": "All six integer GCD consumers share Hyperreal; duplicated Euclidean loop removed.",
+    "comparison": "shared-integer-gcd-query-comparison.json",
+    "runtime": "First inward Certified in 3.935060758s; total60s timeout exit124; second result absent.",
+    "next": "conservative-chord-bound-union-followup.json"
+  },
+  "refined_chord_envelope_stage": {
+    "commit": "025dcd123335ace6426c2ed4903607d2cc33a6ea",
+    "qualification": "refined-chord-envelope-qualification.json",
+    "runtime": "first inward Certified in 3.755811659s; total60s timeout exit124; second result absent",
+    "next": "mixed-point-axis-order-followup.json"
+  },
+  "mixed_point_axis_order_stage": {
+    "commit": "8006617e8605eacf20969b5c11fb19df1590a8f8",
+    "qualification": "mixed-point-axis-order-qualification.json"
+  },
+  "certified_chord_pair_enclosure_stage": {
+    "commit": "2025587c91b4af5a1eeccae97a7412ef114a0dd1",
+    "qualification": "certified-chord-pair-enclosure-qualification.json"
+  }
+}

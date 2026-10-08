@@ -1,0 +1,11 @@
+file:///home/tim/Documents/GitHub/workspace/exact-real-references/plume-qualification/run-representations.mjs:9
+  if(r.status!==0) throw Error(JSON.stringify(records.at(-1)));
+                         ^
+
+Error: {"rep":"endpoint","exponent":1,"bits":8,"status":1,"signal":null,"error":"EPERM","stdout":"","stderr":"kernel-probe: usage: probe [boundary NAME | emit OP NUM DEN BITS]\nCallStack (from HasCallStack):\n  error, called at exact-real-references/plume-qualification/KernelProbe.hs:270:10 in main:Main\n"}
+    at file:///home/tim/Documents/GitHub/workspace/exact-real-references/plume-qualification/run-representations.mjs:9:26
+    at ModuleJob.run (node:internal/modules/esm/module_job:343:25)
+    at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:665:26)
+    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+
+Node.js v22.22.2

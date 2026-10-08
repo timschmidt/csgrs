@@ -1,0 +1,29 @@
+{
+  "returncode": 0,
+  "elapsed_seconds": 0.031700961000751704,
+  "normal_library_sha256": "5ab0beb19caab2b6ecaf12007a8f07af332a198e59837ce063f5b418f4003187",
+  "log": "finite-selected-point-domains-native-poles-public.log",
+  "source": "finite-analytic-native-poles-public.rs",
+  "command": [
+    "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustc",
+    "--edition=2024",
+    "-O",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-analytic-native-poles-public.rs",
+    "--extern",
+    "hypercurve=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypercurve-9eb8c540d8ca7826.rlib",
+    "-L",
+    "dependency=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps",
+    "-o",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-selected-point-domains-native-poles-public"
+  ],
+  "run_command": [
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-selected-point-domains-native-poles-public"
+  ],
+  "source_sha256": "ec10467bfcc46c94a0722084d1fbd30bb13be43bd643af4f9c7405a407a9f655",
+  "executable_sha256": "922323f8f916fd9df4b09be99298c1125d660de707fad80bd0e3cd4194839e36",
+  "counts": {
+    "cases": 128,
+    "contacts": 128,
+    "failures": 0
+  }
+}

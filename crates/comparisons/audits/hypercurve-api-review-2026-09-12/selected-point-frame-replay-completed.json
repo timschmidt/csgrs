@@ -1,0 +1,26 @@
+{
+  "returncode": 0,
+  "elapsed_seconds": 0.00751613499596715,
+  "normal_library_sha256": "476ce4085af4463f86d6182e476e0fa13af9266727aaefa54be4b0293d704b2a",
+  "log": "selected-point-frame-replay-completed.log",
+  "source": "native-rational-publication-completed.rs",
+  "command": [
+    "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustc",
+    "--edition=2024",
+    "-O",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/native-rational-publication-completed.rs",
+    "--extern",
+    "hypercurve=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypercurve-930b1fe968ca3c94.rlib",
+    "-L",
+    "dependency=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps",
+    "-o",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/selected-point-frame-replay-completed"
+  ],
+  "source_sha256": "1bbe6652ed98df1740369ba6e0a1ec5d93f477f4829784c9c414d5c81322250b",
+  "executable_sha256": "90c8736734eae325e93bfc60839262a6d0f561dac48374411797af9b8f751957",
+  "counts": {
+    "complete_queries": 6,
+    "restrictions": 2,
+    "transverse_node_contacts": 4
+  }
+}

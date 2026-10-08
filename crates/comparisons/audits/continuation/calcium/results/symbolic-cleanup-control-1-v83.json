@@ -1,0 +1,21 @@
+{
+  "tag": "symbolic-cleanup-control-1-v83",
+  "started": "2026-09-12T03:44:11.719Z",
+  "finished": "2026-09-12T03:44:11.732Z",
+  "elapsedSeconds": 0.011690539000000002,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "timeout",
+  "args": [
+    "60s",
+    "prlimit",
+    "--as=1073741824",
+    "--cpu=30",
+    "--",
+    "/tmp/calcium-symbolic-boundary-v83.JuGH8X/cleanup-control",
+    "powers",
+    "1",
+    "256"
+  ],
+  "code": 0,
+  "signal": null
+}

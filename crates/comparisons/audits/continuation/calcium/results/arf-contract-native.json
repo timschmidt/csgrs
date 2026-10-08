@@ -1,0 +1,11 @@
+{
+  "tag": "arf-contract-native",
+  "started": "2026-09-10T02:45:08.198Z",
+  "finished": "2026-09-10T02:45:08.576Z",
+  "elapsedSeconds": 0.375302794,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison",
+  "command": "/tmp/calcium-arf-contracts.PNgYf4/controls",
+  "args": [],
+  "code": 0,
+  "signal": null
+}

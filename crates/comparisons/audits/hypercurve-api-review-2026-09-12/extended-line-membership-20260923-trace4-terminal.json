@@ -1,0 +1,23 @@
+{
+  "cases": [
+    {
+      "name": "bezier_region::tests::selected_parallel_ray_vertices_use_spatial_endpoint_ownership",
+      "returncode": 101,
+      "passed": false,
+      "limit_seconds": 75,
+      "elapsed_seconds": 0.1399533129297197,
+      "log": "extended-line-membership-20260923-trace4-case-0.log"
+    },
+    {
+      "name": "bezier_region::tests::selected_circle_and_analytic_parallel_extend_on_full_supports",
+      "returncode": 0,
+      "passed": true,
+      "limit_seconds": 75,
+      "elapsed_seconds": 1.6063985039945692,
+      "log": "extended-line-membership-20260923-trace4-case-1.log"
+    }
+  ],
+  "binary_sha256": "19668668a38b2cf1f083dd21cf4b845f5ed8ab03c4bce6b28a3d84d9e03a41d2",
+  "all_sources_unchanged": true,
+  "all_processes_reaped": true
+}

@@ -1,0 +1,14 @@
+{
+  "tag": "derivative-demand-verify-full",
+  "started": "2026-09-09T04:28:01.089Z",
+  "finished": "2026-09-09T04:28:10.368Z",
+  "elapsedSeconds": 9.276591126000001,
+  "cwd": "/home/tim/Documents/GitHub/workspace",
+  "command": "node",
+  "args": [
+    "exactcore-hyper-comparison/audits/continuation/calcium/verify-derivative-demand.mjs",
+    "--monic-live"
+  ],
+  "code": 0,
+  "signal": null
+}

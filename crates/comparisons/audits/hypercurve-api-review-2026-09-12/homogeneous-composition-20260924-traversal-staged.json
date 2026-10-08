@@ -1,0 +1,4 @@
+{
+  "src/curve_region_boolean.rs": "bebac59f8e68d8a6fffaf59db8f2ecaeb42a64448b01ba5e3c6d1dafb4dcd152",
+  "tests/hypercurve_path_closure.rs": "cff0472ae34ec25b943d3520eb6570a298545317ee142858d914ebc56d8c7d92"
+}

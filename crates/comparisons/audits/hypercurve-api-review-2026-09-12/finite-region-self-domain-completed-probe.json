@@ -1,0 +1,25 @@
+{
+  "returncode": 0,
+  "elapsed_seconds": 0.003825608000624925,
+  "normal_library_sha256": "cd5d6b626821a5b86802f09cda7c6bbae3aad4c370057db70dc65aaef0ecfcd3",
+  "log": "finite-region-self-domain-completed-probe.log",
+  "source": "native-point-components-completed.rs",
+  "command": [
+    "rustc",
+    "--edition=2024",
+    "-O",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/native-point-components-completed.rs",
+    "--extern",
+    "hypercurve=/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/libhypercurve-2c7ff6f3fbe07653.rlib",
+    "-L",
+    "dependency=/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps",
+    "-o",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-region-self-domain-completed-probe"
+  ],
+  "source_sha256": "afcba6724ef40752e39b1596454d7a04669a8743a413dddf5fd266ad6b7abafe",
+  "executable_sha256": "21e0e26246d9241958fd9e17f8f664004e1178befbf70e502ed8d2ada5452e0c",
+  "counts": {
+    "complete_queries": 12,
+    "parameter_components": 12
+  }
+}

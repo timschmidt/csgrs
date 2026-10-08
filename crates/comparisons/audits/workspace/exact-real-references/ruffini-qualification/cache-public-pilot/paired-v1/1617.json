@@ -1,0 +1,21 @@
+{
+  "args": [
+    "-c",
+    "6",
+    "/home/tim/Documents/GitHub/workspace/exact-real-references/ruffini-qualification/cache-public-pilot/before-4NY2F6/release",
+    "bench",
+    "rational",
+    "positive",
+    "warm",
+    "64",
+    "72",
+    "100000"
+  ],
+  "begin": "2026-09-07T05:51:06.267Z",
+  "end": "2026-09-07T05:51:06.276Z",
+  "status": 0,
+  "signal": null,
+  "error": null,
+  "stdout": "{\"family\":\"rational\",\"negative\":false,\"mode\":\"warm\",\"bits\":64,\"gap\":72,\"reps\":100000,\"cpu_ns\":6655307,\"wall_ns\":6685661,\"checksum\":0,\"expected\":\"0\",\"memory\":null}\n",
+  "stderr": ""
+}

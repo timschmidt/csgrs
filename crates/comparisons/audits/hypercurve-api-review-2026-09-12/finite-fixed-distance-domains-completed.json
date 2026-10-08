@@ -1,0 +1,29 @@
+{
+  "returncode": 0,
+  "elapsed_seconds": 0.007555382995633408,
+  "normal_library_sha256": "714b601f333b40798493e6ce128734b3d2364e200468ebb07c5e34bf947b443d",
+  "log": "finite-fixed-distance-domains-completed.log",
+  "source": "native-rational-publication-completed.rs",
+  "command": [
+    "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustc",
+    "--edition=2024",
+    "-O",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/native-rational-publication-completed.rs",
+    "--extern",
+    "hypercurve=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypercurve-96140573e602b0b0.rlib",
+    "-L",
+    "dependency=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps",
+    "-o",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-fixed-distance-domains-completed"
+  ],
+  "run_command": [
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-fixed-distance-domains-completed"
+  ],
+  "source_sha256": "1bbe6652ed98df1740369ba6e0a1ec5d93f477f4829784c9c414d5c81322250b",
+  "executable_sha256": "5e900fba0c7c0893d4733a82a8e0f90ffb7d0c9c9f8ea9a43498cf685b12031e",
+  "counts": {
+    "complete_queries": 6,
+    "restrictions": 2,
+    "transverse_node_contacts": 4
+  }
+}

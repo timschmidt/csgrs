@@ -1,0 +1,9 @@
+    Blocking waiting for file lock on build directory
+   Compiling hypercurve v0.3.1 (/home/tim/Documents/GitHub/workspace/hypercurve)
+    Finished `release` profile [optimized] target(s) in 1m 17s
+     Running unittests src/lib.rs (target/release/deps/hypercurve-6e6572a45c5b177b)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 876 filtered out; finished in 0.00s
+

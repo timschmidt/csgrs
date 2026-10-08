@@ -1,0 +1,23 @@
+[package]
+name = "constructible-fractional-qualification"
+version = "0.0.0"
+edition = "2024"
+publish = false
+autobins = false
+
+[dependencies]
+hyperreal = { path = "../../../.audit-fractional-separation.qYmpNk" }
+rug = { version = "1.30.0", default-features = false, features = ["float", "integer", "rational", "std"] }
+
+[[bin]]
+name = "fractional_field_probe"
+path = "../hyper_field_probe.rs"
+
+[[bin]]
+name = "fractional_field_bench"
+path = "../hyper_field_bench.rs"
+
+[profile.release]
+debug = 0
+incremental = false
+codegen-units = 16

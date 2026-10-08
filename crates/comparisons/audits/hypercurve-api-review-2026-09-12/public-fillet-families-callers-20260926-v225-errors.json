@@ -1,0 +1,407 @@
+[
+  {
+    "rendered": "error[E0599]: no method named `families` found for enum `CurveCornerSolutions2<T>` in the current scope\n   --> benches/editing.rs:661:27\n    |\n661 |         assert!(solutions.families().is_empty());\n    |                           ^^^^^^^^ method not found in `CurveCornerSolutions2<CurvePath2>`\n\n",
+    "$message_type": "diagnostic",
+    "children": [],
+    "level": "error",
+    "message": "no method named `families` found for enum `CurveCornerSolutions2<T>` in the current scope",
+    "spans": [
+      {
+        "byte_end": 24031,
+        "byte_start": 24023,
+        "column_end": 35,
+        "column_start": 27,
+        "expansion": null,
+        "file_name": "benches/editing.rs",
+        "is_primary": true,
+        "label": "method not found in `CurveCornerSolutions2<CurvePath2>`",
+        "line_end": 661,
+        "line_start": 661,
+        "suggested_replacement": null,
+        "suggestion_applicability": null,
+        "text": [
+          {
+            "highlight_end": 35,
+            "highlight_start": 27,
+            "text": "        assert!(solutions.families().is_empty());"
+          }
+        ]
+      }
+    ],
+    "code": {
+      "code": "E0599",
+      "explanation": "This error occurs when a method is used on a type which doesn't implement it:\n\nErroneous code example:\n\n```compile_fail,E0599\nstruct Mouth;\n\nlet x = Mouth;\nx.chocolate(); // error: no method named `chocolate` found for type `Mouth`\n               //        in the current scope\n```\n\nIn this case, you need to implement the `chocolate` method to fix the error:\n\n```\nstruct Mouth;\n\nimpl Mouth {\n    fn chocolate(&self) { // We implement the `chocolate` method here.\n        println!(\"Hmmm! I love chocolate!\");\n    }\n}\n\nlet x = Mouth;\nx.chocolate(); // ok!\n```\n"
+    }
+  },
+  {
+    "rendered": "error[E0599]: no method named `isolated_solutions` found for enum `CurveCornerSolutions2<T>` in the current scope\n   --> benches/editing.rs:662:43\n    |\n662 |         candidates += black_box(solutions.isolated_solutions()).len();\n    |                                           ^^^^^^^^^^^^^^^^^^ method not found in `CurveCornerSolutions2<CurvePath2>`\n\n",
+    "$message_type": "diagnostic",
+    "children": [],
+    "level": "error",
+    "message": "no method named `isolated_solutions` found for enum `CurveCornerSolutions2<T>` in the current scope",
+    "spans": [
+      {
+        "byte_end": 24107,
+        "byte_start": 24089,
+        "column_end": 61,
+        "column_start": 43,
+        "expansion": null,
+        "file_name": "benches/editing.rs",
+        "is_primary": true,
+        "label": "method not found in `CurveCornerSolutions2<CurvePath2>`",
+        "line_end": 662,
+        "line_start": 662,
+        "suggested_replacement": null,
+        "suggestion_applicability": null,
+        "text": [
+          {
+            "highlight_end": 61,
+            "highlight_start": 43,
+            "text": "        candidates += black_box(solutions.isolated_solutions()).len();"
+          }
+        ]
+      }
+    ],
+    "code": {
+      "code": "E0599",
+      "explanation": "This error occurs when a method is used on a type which doesn't implement it:\n\nErroneous code example:\n\n```compile_fail,E0599\nstruct Mouth;\n\nlet x = Mouth;\nx.chocolate(); // error: no method named `chocolate` found for type `Mouth`\n               //        in the current scope\n```\n\nIn this case, you need to implement the `chocolate` method to fix the error:\n\n```\nstruct Mouth;\n\nimpl Mouth {\n    fn chocolate(&self) { // We implement the `chocolate` method here.\n        println!(\"Hmmm! I love chocolate!\");\n    }\n}\n\nlet x = Mouth;\nx.chocolate(); // ok!\n```\n"
+    }
+  },
+  {
+    "rendered": "error[E0599]: no method named `families` found for enum `CurveCornerSolutions2<T>` in the current scope\n    --> benches/editing.rs:1042:31\n     |\n1042 |             assert!(solutions.families().is_empty());\n     |                               ^^^^^^^^ method not found in `CurveCornerSolutions2<CurveRegion2>`\n\n",
+    "$message_type": "diagnostic",
+    "children": [],
+    "level": "error",
+    "message": "no method named `families` found for enum `CurveCornerSolutions2<T>` in the current scope",
+    "spans": [
+      {
+        "byte_end": 37978,
+        "byte_start": 37970,
+        "column_end": 39,
+        "column_start": 31,
+        "expansion": null,
+        "file_name": "benches/editing.rs",
+        "is_primary": true,
+        "label": "method not found in `CurveCornerSolutions2<CurveRegion2>`",
+        "line_end": 1042,
+        "line_start": 1042,
+        "suggested_replacement": null,
+        "suggestion_applicability": null,
+        "text": [
+          {
+            "highlight_end": 39,
+            "highlight_start": 31,
+            "text": "            assert!(solutions.families().is_empty());"
+          }
+        ]
+      }
+    ],
+    "code": {
+      "code": "E0599",
+      "explanation": "This error occurs when a method is used on a type which doesn't implement it:\n\nErroneous code example:\n\n```compile_fail,E0599\nstruct Mouth;\n\nlet x = Mouth;\nx.chocolate(); // error: no method named `chocolate` found for type `Mouth`\n               //        in the current scope\n```\n\nIn this case, you need to implement the `chocolate` method to fix the error:\n\n```\nstruct Mouth;\n\nimpl Mouth {\n    fn chocolate(&self) { // We implement the `chocolate` method here.\n        println!(\"Hmmm! I love chocolate!\");\n    }\n}\n\nlet x = Mouth;\nx.chocolate(); // ok!\n```\n"
+    }
+  },
+  {
+    "rendered": "error[E0599]: no method named `isolated_solutions` found for enum `CurveCornerSolutions2<T>` in the current scope\n    --> benches/editing.rs:1043:47\n     |\n1043 |             candidates += black_box(solutions.isolated_solutions()).len();\n     |                                               ^^^^^^^^^^^^^^^^^^ method not found in `CurveCornerSolutions2<CurveRegion2>`\n\n",
+    "$message_type": "diagnostic",
+    "children": [],
+    "level": "error",
+    "message": "no method named `isolated_solutions` found for enum `CurveCornerSolutions2<T>` in the current scope",
+    "spans": [
+      {
+        "byte_end": 38058,
+        "byte_start": 38040,
+        "column_end": 65,
+        "column_start": 47,
+        "expansion": null,
+        "file_name": "benches/editing.rs",
+        "is_primary": true,
+        "label": "method not found in `CurveCornerSolutions2<CurveRegion2>`",
+        "line_end": 1043,
+        "line_start": 1043,
+        "suggested_replacement": null,
+        "suggestion_applicability": null,
+        "text": [
+          {
+            "highlight_end": 65,
+            "highlight_start": 47,
+            "text": "            candidates += black_box(solutions.isolated_solutions()).len();"
+          }
+        ]
+      }
+    ],
+    "code": {
+      "code": "E0599",
+      "explanation": "This error occurs when a method is used on a type which doesn't implement it:\n\nErroneous code example:\n\n```compile_fail,E0599\nstruct Mouth;\n\nlet x = Mouth;\nx.chocolate(); // error: no method named `chocolate` found for type `Mouth`\n               //        in the current scope\n```\n\nIn this case, you need to implement the `chocolate` method to fix the error:\n\n```\nstruct Mouth;\n\nimpl Mouth {\n    fn chocolate(&self) { // We implement the `chocolate` method here.\n        println!(\"Hmmm! I love chocolate!\");\n    }\n}\n\nlet x = Mouth;\nx.chocolate(); // ok!\n```\n"
+    }
+  },
+  {
+    "rendered": "error[E0599]: no method named `families` found for enum `CurveCornerSolutions2<T>` in the current scope\n    --> benches/editing.rs:1067:31\n     |\n1067 |             assert!(solutions.families().is_empty());\n     |                               ^^^^^^^^ method not found in `CurveCornerSolutions2<CurveRegion2>`\n\n",
+    "$message_type": "diagnostic",
+    "children": [],
+    "level": "error",
+    "message": "no method named `families` found for enum `CurveCornerSolutions2<T>` in the current scope",
+    "spans": [
+      {
+        "byte_end": 38997,
+        "byte_start": 38989,
+        "column_end": 39,
+        "column_start": 31,
+        "expansion": null,
+        "file_name": "benches/editing.rs",
+        "is_primary": true,
+        "label": "method not found in `CurveCornerSolutions2<CurveRegion2>`",
+        "line_end": 1067,
+        "line_start": 1067,
+        "suggested_replacement": null,
+        "suggestion_applicability": null,
+        "text": [
+          {
+            "highlight_end": 39,
+            "highlight_start": 31,
+            "text": "            assert!(solutions.families().is_empty());"
+          }
+        ]
+      }
+    ],
+    "code": {
+      "code": "E0599",
+      "explanation": "This error occurs when a method is used on a type which doesn't implement it:\n\nErroneous code example:\n\n```compile_fail,E0599\nstruct Mouth;\n\nlet x = Mouth;\nx.chocolate(); // error: no method named `chocolate` found for type `Mouth`\n               //        in the current scope\n```\n\nIn this case, you need to implement the `chocolate` method to fix the error:\n\n```\nstruct Mouth;\n\nimpl Mouth {\n    fn chocolate(&self) { // We implement the `chocolate` method here.\n        println!(\"Hmmm! I love chocolate!\");\n    }\n}\n\nlet x = Mouth;\nx.chocolate(); // ok!\n```\n"
+    }
+  },
+  {
+    "rendered": "error[E0599]: no method named `isolated_solutions` found for enum `CurveCornerSolutions2<T>` in the current scope\n    --> benches/editing.rs:1068:47\n     |\n1068 |             candidates += black_box(solutions.isolated_solutions()).len();\n     |                                               ^^^^^^^^^^^^^^^^^^ method not found in `CurveCornerSolutions2<CurveRegion2>`\n\n",
+    "$message_type": "diagnostic",
+    "children": [],
+    "level": "error",
+    "message": "no method named `isolated_solutions` found for enum `CurveCornerSolutions2<T>` in the current scope",
+    "spans": [
+      {
+        "byte_end": 39077,
+        "byte_start": 39059,
+        "column_end": 65,
+        "column_start": 47,
+        "expansion": null,
+        "file_name": "benches/editing.rs",
+        "is_primary": true,
+        "label": "method not found in `CurveCornerSolutions2<CurveRegion2>`",
+        "line_end": 1068,
+        "line_start": 1068,
+        "suggested_replacement": null,
+        "suggestion_applicability": null,
+        "text": [
+          {
+            "highlight_end": 65,
+            "highlight_start": 47,
+            "text": "            candidates += black_box(solutions.isolated_solutions()).len();"
+          }
+        ]
+      }
+    ],
+    "code": {
+      "code": "E0599",
+      "explanation": "This error occurs when a method is used on a type which doesn't implement it:\n\nErroneous code example:\n\n```compile_fail,E0599\nstruct Mouth;\n\nlet x = Mouth;\nx.chocolate(); // error: no method named `chocolate` found for type `Mouth`\n               //        in the current scope\n```\n\nIn this case, you need to implement the `chocolate` method to fix the error:\n\n```\nstruct Mouth;\n\nimpl Mouth {\n    fn chocolate(&self) { // We implement the `chocolate` method here.\n        println!(\"Hmmm! I love chocolate!\");\n    }\n}\n\nlet x = Mouth;\nx.chocolate(); // ok!\n```\n"
+    }
+  },
+  {
+    "rendered": "error[E0599]: no method named `families` found for enum `CurveCornerSolutions2<T>` in the current scope\n    --> benches/editing.rs:1364:31\n     |\n1364 |             assert!(solutions.families().is_empty());\n     |                               ^^^^^^^^ method not found in `CurveCornerSolutions2<CurveRegion2>`\n\n",
+    "$message_type": "diagnostic",
+    "children": [],
+    "level": "error",
+    "message": "no method named `families` found for enum `CurveCornerSolutions2<T>` in the current scope",
+    "spans": [
+      {
+        "byte_end": 52491,
+        "byte_start": 52483,
+        "column_end": 39,
+        "column_start": 31,
+        "expansion": null,
+        "file_name": "benches/editing.rs",
+        "is_primary": true,
+        "label": "method not found in `CurveCornerSolutions2<CurveRegion2>`",
+        "line_end": 1364,
+        "line_start": 1364,
+        "suggested_replacement": null,
+        "suggestion_applicability": null,
+        "text": [
+          {
+            "highlight_end": 39,
+            "highlight_start": 31,
+            "text": "            assert!(solutions.families().is_empty());"
+          }
+        ]
+      }
+    ],
+    "code": {
+      "code": "E0599",
+      "explanation": "This error occurs when a method is used on a type which doesn't implement it:\n\nErroneous code example:\n\n```compile_fail,E0599\nstruct Mouth;\n\nlet x = Mouth;\nx.chocolate(); // error: no method named `chocolate` found for type `Mouth`\n               //        in the current scope\n```\n\nIn this case, you need to implement the `chocolate` method to fix the error:\n\n```\nstruct Mouth;\n\nimpl Mouth {\n    fn chocolate(&self) { // We implement the `chocolate` method here.\n        println!(\"Hmmm! I love chocolate!\");\n    }\n}\n\nlet x = Mouth;\nx.chocolate(); // ok!\n```\n"
+    }
+  },
+  {
+    "rendered": "error[E0599]: no method named `isolated_solutions` found for enum `CurveCornerSolutions2<T>` in the current scope\n    --> benches/editing.rs:1365:47\n     |\n1365 |             candidates += black_box(solutions.isolated_solutions()).len();\n     |                                               ^^^^^^^^^^^^^^^^^^ method not found in `CurveCornerSolutions2<CurveRegion2>`\n\n",
+    "$message_type": "diagnostic",
+    "children": [],
+    "level": "error",
+    "message": "no method named `isolated_solutions` found for enum `CurveCornerSolutions2<T>` in the current scope",
+    "spans": [
+      {
+        "byte_end": 52571,
+        "byte_start": 52553,
+        "column_end": 65,
+        "column_start": 47,
+        "expansion": null,
+        "file_name": "benches/editing.rs",
+        "is_primary": true,
+        "label": "method not found in `CurveCornerSolutions2<CurveRegion2>`",
+        "line_end": 1365,
+        "line_start": 1365,
+        "suggested_replacement": null,
+        "suggestion_applicability": null,
+        "text": [
+          {
+            "highlight_end": 65,
+            "highlight_start": 47,
+            "text": "            candidates += black_box(solutions.isolated_solutions()).len();"
+          }
+        ]
+      }
+    ],
+    "code": {
+      "code": "E0599",
+      "explanation": "This error occurs when a method is used on a type which doesn't implement it:\n\nErroneous code example:\n\n```compile_fail,E0599\nstruct Mouth;\n\nlet x = Mouth;\nx.chocolate(); // error: no method named `chocolate` found for type `Mouth`\n               //        in the current scope\n```\n\nIn this case, you need to implement the `chocolate` method to fix the error:\n\n```\nstruct Mouth;\n\nimpl Mouth {\n    fn chocolate(&self) { // We implement the `chocolate` method here.\n        println!(\"Hmmm! I love chocolate!\");\n    }\n}\n\nlet x = Mouth;\nx.chocolate(); // ok!\n```\n"
+    }
+  },
+  {
+    "rendered": "error[E0599]: no method named `families` found for enum `hypercurve::CurveCornerSolutions2<T>` in the current scope\n   --> tests/hypercurve_path_closure.rs:860:33\n    |\n860 |                     }) if value.families().is_empty() && value.isolated_solutions().len() == 1 => {\n    |                                 ^^^^^^^^ method not found in `hypercurve::CurveCornerSolutions2<hypercurve::CurvePath2>`\n\n",
+    "$message_type": "diagnostic",
+    "children": [],
+    "level": "error",
+    "message": "no method named `families` found for enum `hypercurve::CurveCornerSolutions2<T>` in the current scope",
+    "spans": [
+      {
+        "byte_end": 35149,
+        "byte_start": 35141,
+        "column_end": 41,
+        "column_start": 33,
+        "expansion": null,
+        "file_name": "tests/hypercurve_path_closure.rs",
+        "is_primary": true,
+        "label": "method not found in `hypercurve::CurveCornerSolutions2<hypercurve::CurvePath2>`",
+        "line_end": 860,
+        "line_start": 860,
+        "suggested_replacement": null,
+        "suggestion_applicability": null,
+        "text": [
+          {
+            "highlight_end": 41,
+            "highlight_start": 33,
+            "text": "                    }) if value.families().is_empty() && value.isolated_solutions().len() == 1 => {"
+          }
+        ]
+      }
+    ],
+    "code": {
+      "code": "E0599",
+      "explanation": "This error occurs when a method is used on a type which doesn't implement it:\n\nErroneous code example:\n\n```compile_fail,E0599\nstruct Mouth;\n\nlet x = Mouth;\nx.chocolate(); // error: no method named `chocolate` found for type `Mouth`\n               //        in the current scope\n```\n\nIn this case, you need to implement the `chocolate` method to fix the error:\n\n```\nstruct Mouth;\n\nimpl Mouth {\n    fn chocolate(&self) { // We implement the `chocolate` method here.\n        println!(\"Hmmm! I love chocolate!\");\n    }\n}\n\nlet x = Mouth;\nx.chocolate(); // ok!\n```\n"
+    }
+  },
+  {
+    "rendered": "error[E0599]: no method named `isolated_solutions` found for enum `hypercurve::CurveCornerSolutions2<T>` in the current scope\n   --> tests/hypercurve_path_closure.rs:860:64\n    |\n860 |                     }) if value.families().is_empty() && value.isolated_solutions().len() == 1 => {\n    |                                                                ^^^^^^^^^^^^^^^^^^ method not found in `hypercurve::CurveCornerSolutions2<hypercurve::CurvePath2>`\n\n",
+    "$message_type": "diagnostic",
+    "children": [],
+    "level": "error",
+    "message": "no method named `isolated_solutions` found for enum `hypercurve::CurveCornerSolutions2<T>` in the current scope",
+    "spans": [
+      {
+        "byte_end": 35190,
+        "byte_start": 35172,
+        "column_end": 82,
+        "column_start": 64,
+        "expansion": null,
+        "file_name": "tests/hypercurve_path_closure.rs",
+        "is_primary": true,
+        "label": "method not found in `hypercurve::CurveCornerSolutions2<hypercurve::CurvePath2>`",
+        "line_end": 860,
+        "line_start": 860,
+        "suggested_replacement": null,
+        "suggestion_applicability": null,
+        "text": [
+          {
+            "highlight_end": 82,
+            "highlight_start": 64,
+            "text": "                    }) if value.families().is_empty() && value.isolated_solutions().len() == 1 => {"
+          }
+        ]
+      }
+    ],
+    "code": {
+      "code": "E0599",
+      "explanation": "This error occurs when a method is used on a type which doesn't implement it:\n\nErroneous code example:\n\n```compile_fail,E0599\nstruct Mouth;\n\nlet x = Mouth;\nx.chocolate(); // error: no method named `chocolate` found for type `Mouth`\n               //        in the current scope\n```\n\nIn this case, you need to implement the `chocolate` method to fix the error:\n\n```\nstruct Mouth;\n\nimpl Mouth {\n    fn chocolate(&self) { // We implement the `chocolate` method here.\n        println!(\"Hmmm! I love chocolate!\");\n    }\n}\n\nlet x = Mouth;\nx.chocolate(); // ok!\n```\n"
+    }
+  },
+  {
+    "rendered": "error[E0599]: no method named `into_parts` found for enum `hypercurve::CurveCornerSolutions2<T>` in the current scope\n   --> tests/hypercurve_path_closure.rs:861:31\n    |\n861 |                         value.into_parts().0.pop().unwrap()\n    |                               ^^^^^^^^^^ method not found in `hypercurve::CurveCornerSolutions2<hypercurve::CurvePath2>`\n    |\nnote: the method `into_parts` exists on the type `Vec<hypercurve::CurvePath2>`\n   --> /home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/alloc/src/vec/mod.rs:882:5\n    |\n882 |     pub const fn into_parts(self) -> (NonNull<T>, usize, usize) {\n    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\n",
+    "$message_type": "diagnostic",
+    "children": [
+      {
+        "children": [],
+        "code": null,
+        "level": "note",
+        "message": "the method `into_parts` exists on the type `Vec<hypercurve::CurvePath2>`",
+        "rendered": null,
+        "spans": [
+          {
+            "byte_end": 33565,
+            "byte_start": 33506,
+            "column_end": 64,
+            "column_start": 5,
+            "expansion": null,
+            "file_name": "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/alloc/src/vec/mod.rs",
+            "is_primary": true,
+            "label": null,
+            "line_end": 882,
+            "line_start": 882,
+            "suggested_replacement": null,
+            "suggestion_applicability": null,
+            "text": [
+              {
+                "highlight_end": 64,
+                "highlight_start": 5,
+                "text": "    pub const fn into_parts(self) -> (NonNull<T>, usize, usize) {"
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "level": "error",
+    "message": "no method named `into_parts` found for enum `hypercurve::CurveCornerSolutions2<T>` in the current scope",
+    "spans": [
+      {
+        "byte_end": 35249,
+        "byte_start": 35239,
+        "column_end": 41,
+        "column_start": 31,
+        "expansion": null,
+        "file_name": "tests/hypercurve_path_closure.rs",
+        "is_primary": true,
+        "label": "method not found in `hypercurve::CurveCornerSolutions2<hypercurve::CurvePath2>`",
+        "line_end": 861,
+        "line_start": 861,
+        "suggested_replacement": null,
+        "suggestion_applicability": null,
+        "text": [
+          {
+            "highlight_end": 41,
+            "highlight_start": 31,
+            "text": "                        value.into_parts().0.pop().unwrap()"
+          }
+        ]
+      }
+    ],
+    "code": {
+      "code": "E0599",
+      "explanation": "This error occurs when a method is used on a type which doesn't implement it:\n\nErroneous code example:\n\n```compile_fail,E0599\nstruct Mouth;\n\nlet x = Mouth;\nx.chocolate(); // error: no method named `chocolate` found for type `Mouth`\n               //        in the current scope\n```\n\nIn this case, you need to implement the `chocolate` method to fix the error:\n\n```\nstruct Mouth;\n\nimpl Mouth {\n    fn chocolate(&self) { // We implement the `chocolate` method here.\n        println!(\"Hmmm! I love chocolate!\");\n    }\n}\n\nlet x = Mouth;\nx.chocolate(); // ok!\n```\n"
+    }
+  }
+]

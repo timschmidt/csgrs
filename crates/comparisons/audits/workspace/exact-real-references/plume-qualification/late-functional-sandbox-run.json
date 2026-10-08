@@ -1,0 +1,18 @@
+{
+  "name": "quadratic-min",
+  "bits": 0,
+  "args": [
+    "functional",
+    "quadratic-min",
+    "0",
+    "+RTS",
+    "-M256m",
+    "-RTS"
+  ],
+  "timeout": 3000,
+  "status": 0,
+  "signal": null,
+  "error": "EPERM",
+  "stdout": "0 1 1 1 5 5\n",
+  "stderr": ""
+}

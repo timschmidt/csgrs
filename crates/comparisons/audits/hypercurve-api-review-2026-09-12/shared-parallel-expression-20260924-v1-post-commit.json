@@ -1,0 +1,164 @@
+{
+  "head": "9945504d571c15316b9fbca22aa689a63b6dddb2",
+  "parent": "9be44c2eec926e71dc2ea0b140e768e9542008f2",
+  "files": {
+    "src/bezier_offset.rs": "a72e45db68c27c0d25d4d9bb63e2f59509e8ffcb712daff4e6aa1810e4eb0b01"
+  },
+  "all_2044_inputs_match": true,
+  "committed_bytes_match_qualification": true,
+  "all_owned_processes_reaped": true,
+  "repositories": [
+    {
+      "name": "ExactCalculator",
+      "head": "7265aa3a922a7e7c0389dae4b26cca562aa777a6",
+      "clean": true
+    },
+    {
+      "name": "NURBS_BREP_kernel",
+      "head": "1aef37b12a92c993c2046f7886593bb0a555c414",
+      "clean": true
+    },
+    {
+      "name": "alumina-firmware",
+      "head": "bdee397d0b80841f16bf17e7bcd029b4feb2c212",
+      "clean": true
+    },
+    {
+      "name": "alumina-interface",
+      "head": "59a18251cdfe2312e40b194e857d85cd59b6087f",
+      "clean": true
+    },
+    {
+      "name": "citizen-builder",
+      "head": "c4230238e28fd88fc8156fceb2c43698e67c27ca",
+      "clean": true
+    },
+    {
+      "name": "crcalc",
+      "head": "4f398d699c9d498deb45520ea7ebb020627bc640",
+      "clean": true
+    },
+    {
+      "name": "csgrs",
+      "head": "d029e51b5d7324f0df785c5cd3cf2f6c7a3a2cca",
+      "clean": true
+    },
+    {
+      "name": "csgrs-ffi",
+      "head": "6057435ce4c0b37bac99aec29922b90e6652c575",
+      "clean": true
+    },
+    {
+      "name": "exactcore-hyper-comparison",
+      "head": "74b90b328f720997d38da80af5620f167b3b0619",
+      "clean": true
+    },
+    {
+      "name": "hyperbrep",
+      "head": "7874790863d210646338182e548d7eef1aa05c7c",
+      "clean": true
+    },
+    {
+      "name": "hypercircuit",
+      "head": "ad421497ce6e88fe936818ec198c8a1b779776c7",
+      "clean": true
+    },
+    {
+      "name": "hypercurve",
+      "head": "9945504d571c15316b9fbca22aa689a63b6dddb2",
+      "clean": true
+    },
+    {
+      "name": "hyperdrc",
+      "head": "ce49bba5d16f78ae8559a0eabe3e4478b72fd4bf",
+      "clean": true
+    },
+    {
+      "name": "hyperevolution",
+      "head": "99645e3cefb7eea3af86abc15db68f7fcb31ca95",
+      "clean": true
+    },
+    {
+      "name": "hypergraphics",
+      "head": "75219dede7a2387ab30c84664b1293ec71d736d2",
+      "clean": true
+    },
+    {
+      "name": "hyperlattice",
+      "head": "53427ce89f8c82c016e69a04e035787e2753adc8",
+      "clean": true
+    },
+    {
+      "name": "hyperlimit",
+      "head": "0b3226320a7ad6756c923d0d12cd52eb701f36ee",
+      "clean": true
+    },
+    {
+      "name": "hypermesh",
+      "head": "d9db5c45a0cecc2307aa66a6f7f1b0396350e4ee",
+      "clean": true
+    },
+    {
+      "name": "hyperpack",
+      "head": "34857861561d643d7578753b8f8314d0fbca2c5b",
+      "clean": true
+    },
+    {
+      "name": "hyperparts",
+      "head": "d8626e9d36256afc4a8eb0380ae94c9ed5619107",
+      "clean": true
+    },
+    {
+      "name": "hyperpath",
+      "head": "cfe50de3e370ea75a49b916eb70a7b19d31a58fa",
+      "clean": true
+    },
+    {
+      "name": "hyperphysics",
+      "head": "dcbc7cf3489a1299de16a946fd7f5e5658b6f15f",
+      "clean": true
+    },
+    {
+      "name": "hyperreal",
+      "head": "a1a8637b59bf036d9d68dbd34a0279df4626ab49",
+      "clean": true
+    },
+    {
+      "name": "hypersdf",
+      "head": "b37825900457420cb64da385b8525acab33e31c5",
+      "clean": true
+    },
+    {
+      "name": "hypersolve",
+      "head": "e6d6cf56f7c8d27aaa75699bf095feeadcca6aa0",
+      "clean": true
+    },
+    {
+      "name": "hypertri",
+      "head": "6a2092c066964f3b7528299a72ef0ed1af4b1ff0",
+      "clean": true
+    },
+    {
+      "name": "hypervoxel",
+      "head": "0486b1465a249a04973520a4138a39395ded2f23",
+      "clean": true
+    },
+    {
+      "name": "openscad-rs",
+      "head": "f21b39486a6b35403ee8af9e7fba7cb62a045a5a",
+      "clean": true
+    },
+    {
+      "name": "synaps-cad",
+      "head": "da8da78636e573c04f8a5c4cd8cc900162b781ba",
+      "clean": true
+    },
+    {
+      "name": "videos",
+      "head": "4209b983cc0d937981f22a6fa7df384303fcc8bd",
+      "clean": true
+    }
+  ],
+  "pushed": false,
+  "full_goal_complete": false
+}

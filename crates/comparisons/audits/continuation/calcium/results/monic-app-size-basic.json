@@ -1,0 +1,14 @@
+{
+  "tag": "monic-app-size-basic",
+  "started": "2026-09-09T01:15:13.962Z",
+  "finished": "2026-09-09T01:15:13.975Z",
+  "elapsedSeconds": 0.010655198999999995,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "size",
+  "args": [
+    "/tmp/calcium-monic-state.rk70Kr/app-monic-basic",
+    "/tmp/calcium-monic-state.rk70Kr/app-monic-basic.stripped"
+  ],
+  "code": 0,
+  "signal": null
+}

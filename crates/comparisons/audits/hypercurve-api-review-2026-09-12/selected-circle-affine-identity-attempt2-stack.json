@@ -1,0 +1,27 @@
+{
+  "command": [
+    "gdb",
+    "--quiet",
+    "--batch",
+    "-ex",
+    "set pagination off",
+    "-ex",
+    "set confirm off",
+    "-ex",
+    "set debuginfod enabled off",
+    "-ex",
+    "run",
+    "-ex",
+    "thread apply all bt 48",
+    "-ex",
+    "quit",
+    "--args",
+    "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve_curve_intersection-e3a50a789eb6a53e",
+    "selected_circle_tangency_reuses_independent_affine_line_charts",
+    "--exact",
+    "--nocapture",
+    "--test-threads=1"
+  ],
+  "returncode": 0,
+  "elapsed_seconds": 8.032124791003298
+}

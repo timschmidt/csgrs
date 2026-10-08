@@ -1,0 +1,14 @@
+acos	checks=9	failures=0
+acosh	checks=3	failures=0
+asin	checks=9	failures=0
+asinh	checks=21	failures=0
+atan	checks=21	failures=0
+atanh	checks=9	failures=0
+cos	checks=21	failures=0
+cosh	checks=21	failures=0
+erf	checks=21	failures=0
+exp	checks=21	failures=0
+ln	checks=9	failures=0
+sin	checks=21	failures=0
+sinh	checks=21	failures=0
+sqrt	checks=9	failures=0

@@ -1,0 +1,1045 @@
+  % Handle batch mode
+  % to overcome problems with too many open files
+  \let\mypdfximage\pdfximage\def\pdfximage{\immediate\mypdfximage}
+  \RequirePackage{iftex}
+  \ifLuaTeX
+    \directlua{pdf.setminorversion(7)}
+  \fi
+  \ifXeTeX
+    \special{pdf:minorversion 7}
+  \fi
+  \ifPDFTeX
+    \pdfminorversion=7
+  \fi
+  % Set document class depending on configuration
+  \documentclass[twoside]{article}
+  %% moved from doxygen.sty due to workaround for LaTex 2019 version and unmaintained tabu package
+  \usepackage{ifthen}
+  \ifx\requestedLaTeXdate\undefined
+    \usepackage{array}
+  \else
+    \usepackage{array}[=2016-10-06]
+  \fi
+  %%
+  % Packages required by doxygen
+  \makeatletter
+  \providecommand\IfFormatAtLeastTF{\@ifl@t@r\fmtversion}
+  % suppress package identification of infwarerr as it contains the word "warning"
+  \let\@@protected@wlog\protected@wlog
+  \def\protected@wlog#1{\wlog{package info suppressed}}
+  \RequirePackage{infwarerr}
+  \let\protected@wlog\@@protected@wlog
+  \makeatother
+  \IfFormatAtLeastTF{2016/01/01}{}{\usepackage{fixltx2e}} % for \textsubscript
+  \ifPDFTeX
+    \IfFormatAtLeastTF{2015/01/01}{\pdfsuppresswarningpagegroup=1}{}
+  \fi
+  \usepackage{doxygen}
+  \usepackage{graphicx}
+  \iftutex
+    \usepackage{fontspec}
+    \defaultfontfeatures{Ligatures={TeX}}
+    \usepackage{unicode-math}
+  \else
+    \usepackage[utf8]{inputenc}
+  \fi
+  \usepackage{makeidx}
+  \PassOptionsToPackage{warn}{textcomp}
+  \usepackage{textcomp}
+  \usepackage[nointegrals]{wasysym}
+  \usepackage{ifxetex}
+  % NLS support packages
+  % Define default fonts
+  % Font selection
+  \iftutex
+  \else
+    \usepackage[T1]{fontenc}
+  \fi
+  % set main and monospaced font
+  \usepackage[scaled=.90]{helvet}
+\usepackage{courier}
+\renewcommand{\familydefault}{\sfdefault}
+  \doxyallsectionsfont{%
+    \fontseries{bc}\selectfont%
+    \color{darkgray}%
+  }
+  \renewcommand{\DoxyLabelFont}{%
+    \fontseries{bc}\selectfont%
+    \color{darkgray}%
+  }
+  \newcommand{\+}{\discretionary{\mbox{\scriptsize$\hookleftarrow$}}{}{}}
+   % Arguments of doxygenemoji:
+   % 1) ':<text>:' form of the emoji, already LaTeX-escaped
+   % 2) file with the name of the emoji without the .png extension
+   % in case image exist use this otherwise use the ':<text>:' form
+   \newcommand{\doxygenemoji}[2]{%
+     \IfFileExists{./#2.png}{\raisebox{-0.1em}{\includegraphics[height=0.9em]{./#2.png}}}{#1}%
+   }
+  % Page & text layout
+  \usepackage{geometry}
+  \geometry{%
+    a4paper,%
+    top=2.5cm,%
+    bottom=2.5cm,%
+    left=2.5cm,%
+    right=2.5cm%
+  }
+  \usepackage{changepage}
+  % Allow a bit of overflow to go unnoticed by other means
+  \tolerance=750
+  \hfuzz=15pt
+  \hbadness=750
+  \setlength{\emergencystretch}{15pt}
+  \setlength{\parindent}{0cm}
+  \newcommand{\doxynormalparskip}{\setlength{\parskip}{3ex plus 2ex minus 2ex}}
+  \newcommand{\doxytocparskip}{\setlength{\parskip}{1ex plus 0ex minus 0ex}}
+  \doxynormalparskip
+  % Redefine paragraph/subparagraph environments, using sectsty fonts
+  \makeatletter
+  \renewcommand{\paragraph}{%
+    \@startsection{paragraph}{4}{0ex}{-1.0ex}{1.0ex}{%
+      \normalfont\normalsize\bfseries\SS@parafont%
+    }%
+  }
+  \renewcommand{\subparagraph}{%
+    \@startsection{subparagraph}{5}{0ex}{-1.0ex}{1.0ex}{%
+      \normalfont\normalsize\bfseries\SS@subparafont%
+    }%
+  }
+  \makeatother
+  \makeatletter
+  \newcommand\hrulefilll{\leavevmode\leaders\hrule\hskip 0pt plus 1filll\kern\z@}
+  \makeatother
+  % Headers & footers
+  \usepackage{fancyhdr}
+  \pagestyle{fancyplain}
+  \renewcommand{\footrulewidth}{0.4pt}
+  \fancypagestyle{fancyplain}{
+    \fancyhf{}
+    \fancyhead[LE, RO]{\bfseries\thepage}
+    \fancyhead[LO]{\bfseries\rightmark}
+    \fancyhead[RE]{\bfseries\leftmark}
+    \fancyfoot[LO, RE]{\bfseries\scriptsize Generated on Fri Sep 4 2026 13\+:19\+:59 for Ariadne by Doxygen }
+  }
+  \fancypagestyle{plain}{
+    \fancyhf{}
+    \fancyfoot[LO, RE]{\bfseries\scriptsize Generated on Fri Sep 4 2026 13\+:19\+:59 for Ariadne by Doxygen }
+    \renewcommand{\headrulewidth}{0pt}
+  }
+  \pagestyle{fancyplain}
+  \renewcommand{\sectionmark}[1]{%
+    \markright{\thesection\ #1}%
+  }
+  % ToC, LoF, LoT, bibliography, and index
+  % Indices & bibliography
+  \usepackage[numbers]{natbib}
+  \usepackage[titles]{tocloft}
+  \setcounter{tocdepth}{3}
+  \setcounter{secnumdepth}{5}
+  % creating indexes
+  \makeindex
+  % Packages requested by user
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\usepackage{/tmp/ariadne-audit-src2/doc/macros}
+  \ifPDFTeX
+\usepackage{newunicodechar}
+  \makeatletter
+    \def\doxynewunicodechar#1#2{%
+    \@tempswafalse
+    \edef\nuc@tempa{\detokenize{#1}}%
+    \if\relax\nuc@tempa\relax
+      \nuc@emptyargerr
+    \else
+      \edef\@tempb{\expandafter\@car\nuc@tempa\@nil}%
+      \nuc@check
+      \if@tempswa
+        \@namedef{u8:\nuc@tempa}{#2}%
+      \fi
+    \fi
+  }
+  \makeatother
+  \doxynewunicodechar{⁻}{${}^{-}$}% Superscript minus
+  \doxynewunicodechar{²}{${}^{2}$}% Superscript two
+  \doxynewunicodechar{³}{${}^{3}$}% Superscript three
+\fi
+  % Hyperlinks
+    % Hyperlinks (required, but should be loaded last)
+    \ifPDFTeX
+      \usepackage[pdftex,pagebackref=true]{hyperref}
+    \else
+      \ifXeTeX
+        \usepackage[xetex,pagebackref=true]{hyperref}
+      \else
+        \ifLuaTeX
+          \usepackage[luatex,pagebackref=true]{hyperref}
+        \else
+          \usepackage[ps2pdf,pagebackref=true]{hyperref}
+        \fi
+      \fi
+    \fi
+    \hypersetup{%
+      colorlinks=true,%
+      linkcolor=blue,%
+      citecolor=blue,%
+      unicode,%
+      pdftitle={Ariadne},%
+      pdfsubject={}%
+    }
+  % Custom commands used by the header
+  % Custom commands
+  \newcommand{\clearemptydoublepage}{%
+    \newpage{\pagestyle{empty}\cleardoublepage}%
+  }
+  % caption style definition
+  \usepackage{caption}
+  \captionsetup{labelsep=space,justification=centering,font={bf},singlelinecheck=off,skip=4pt,position=top}
+  % in page table of contents
+  \IfFormatAtLeastTF{2023/05/01}{\usepackage[deeplevels]{etoc}}{\usepackage[deeplevels]{etoc_doxygen}}
+  \etocsettocstyle{\doxytocparskip}{\doxynormalparskip}
+  \etocsetlevel{subsubsubsection}{4}
+  \etocsetlevel{subsubsubsubsection}{5}
+  \etocsetlevel{subsubsubsubsubsection}{6}
+  \etocsetlevel{subsubsubsubsubsubsection}{7}
+  \etocsetlevel{paragraph}{8}
+  \etocsetlevel{subparagraph}{9}
+  % prevent numbers overlap the titles in toc
+  \renewcommand{\numberline}[1]{#1~}
+% End of preamble, now comes the document contents
+%===== C O N T E N T S =====
+\begin{document}
+  \raggedbottom
+  % Titlepage & ToC
+    % To avoid duplicate page anchors due to reuse of same numbers for
+    % the index (be it as roman numbers)
+    \hypersetup{pageanchor=false,
+                bookmarksnumbered=true,
+                pdfencoding=unicode
+               }
+  \pagenumbering{alph}
+  \begin{titlepage}
+  \vspace*{7cm}
+  \begin{center}%
+  {\Large Ariadne}\\
+  \vspace*{1cm}
+  {\large Generated on Fri Sep 4 2026 13\+:19\+:59 for Ariadne by Doxygen 1.14.0}\\
+    \vspace*{0.5cm}
+    {\small Fri Sep 4 2026 13:19:59}
+  \end{center}
+  \end{titlepage}
+  \pagenumbering{roman}
+  \tableofcontents
+  \pagenumbering{arabic}
+  % re-enable anchors again
+  \hypersetup{pageanchor=true}
+%--- Begin generated contents ---
+\input{index}
+\input{algebraic_equations_page}
+\input{coding_guidelines_page}
+\input{computable_analysis_page}
+\input{python_computing_pi_page}
+\input{constraint_satisfaction_page}
+\input{differential_algebra_page}
+\input{evolution_page}
+\input{function_evaluation_page}
+\input{function_models_page}
+\input{functional_analysis_page}
+\input{geometry_page}
+\input{hybrid_automaton_page}
+\input{hybrid_automaton_page_0_4}
+\input{hybrid_evolution_page}
+\input{hybrid_evolution_tutorial_page}
+\input{hybrid_systems_page}
+\input{new_hybrid_system_page}
+\input{installation_page}
+\input{integration_methods_page}
+\input{linear_algebra_page}
+\input{linear_programming_page}
+\input{logic_page}
+\input{model_checking_page}
+\input{python_neural_network_page}
+\input{nonlinear_programming_page}
+\input{overview_page}
+\input{python_example_tutorials_page}
+\input{python_interface_page}
+\input{python_module_demonstrations_page}
+\input{python_module_tutorials_page}
+\input{real_numbers_page}
+\input{references_page}
+\input{rigorous_numerics_tutorial_page}
+\input{system_analysis_page}
+\input{system_analysis_page_0_4}
+\input{topology_page}
+\input{type_system_page}
+\input{deprecated}
+\input{todo}
+\doxysection{Topic Documentation}
+\input{group__UserModules}
+\input{group__CoreModules}
+\input{group__OutputModules}
+\input{group__HybridModules}
+\input{group__ExternalModules}
+\doxysection{Namespace Documentation}
+\input{namespaceAriadne}
+\input{namespaceAriadne_1_1Concepts}
+\input{namespaceAriadne_1_1Numeric}
+\doxysection{Concept Documentation}
+\input{conceptAriadne_1_1AnAlgebra}
+\input{conceptAriadne_1_1AnAlgebraOver}
+\input{conceptAriadne_1_1AnInplaceAlgebraOver}
+\input{conceptAriadne_1_1AVectorOver}
+\doxysection{Class Documentation}
+\input{classAriadne_1_1Concepts_1_1Abstract}
+\input{classAriadne_1_1Accuracy}
+\input{classAriadne_1_1Affine}
+\input{classAriadne_1_1AffineDrawer}
+\input{classAriadne_1_1AffineIntegrator}
+\input{classAriadne_1_1AffinePaver}
+\input{classAriadne_1_1AffineSweeper}
+\input{classAriadne_1_1Algebra}
+\input{classAriadne_1_1AlgebraicLoopError}
+\input{classAriadne_1_1AlgebraInterface}
+\input{classAriadne_1_1AlternatingSequence}
+\input{classAriadne_1_1Concepts_1_1Approximate}
+\input{classAriadne_1_1ApproximateDouble}
+\input{classAriadne_1_1ApproximateKleenean}
+\input{classAriadne_1_1ApproximateReal}
+\input{structAriadne_1_1ApproximateTag}
+\input{classAriadne_1_1Approximation}
+\input{classAriadne_1_1ArgumentPack}
+\input{classAriadne_1_1ArgumentParser}
+\input{classAriadne_1_1ArgumentParserBase}
+\input{classAriadne_1_1ArgumentParserInterface}
+\input{classAriadne_1_1ArgumentStream}
+\input{classAriadne_1_1Array}
+\input{classAriadne_1_1Assignment}
+\input{classAriadne_1_1Ball}
+\input{classAriadne_1_1BinaryTreeNode}
+\input{classAriadne_1_1BinaryWord}
+\input{classAriadne_1_1Bits}
+\input{classAriadne_1_1Boolean}
+\input{classAriadne_1_1BoundedConstraintSet}
+\input{classAriadne_1_1BoundedSet}
+\input{classAriadne_1_1BoundedSetInterface}
+\input{classAriadne_1_1BounderInterface}
+\input{classAriadne_1_1Bounds}
+\input{classAriadne_1_1Numeric_1_1Bounds}
+\input{classAriadne_1_1Box}
+\input{classAriadne_1_1BoxDrawer}
+\input{structAriadne_1_1BuiltinTag}
+\input{classAriadne_1_1CalculusBase}
+\input{classAriadne_1_1CanvasBase}
+\input{classAriadne_1_1CanvasInterface}
+\input{classAriadne_1_1ClosedSet}
+\input{classAriadne_1_1ClosedSetInterface}
+\input{classAriadne_1_1CommandLineInterface}
+\input{classAriadne_1_1CompactSet}
+\input{classAriadne_1_1CompactSetInterface}
+\input{classAriadne_1_1Complex}
+\input{classAriadne_1_1CompositeHybridAutomaton}
+\input{classAriadne_1_1Concepts_1_1ConcreteConcept}
+\input{classAriadne_1_1ConfigurationInterface}
+\input{classAriadne_1_1ConjunctiveNormalFormPredicate}
+\input{classAriadne_1_1Constant}
+\input{classAriadne_1_1ConstantFunction}
+\input{classAriadne_1_1ConstrainedImageSet}
+\input{classAriadne_1_1Constraint}
+\input{classAriadne_1_1ConstraintPaver}
+\input{classAriadne_1_1ConstraintSet}
+\input{classAriadne_1_1ConstraintSolver}
+\input{classAriadne_1_1ConstraintSolverInterface}
+\input{classAriadne_1_1ContainerComparison}
+\input{classAriadne_1_1ContinuousValuation}
+\input{classAriadne_1_1ConvergentSequence}
+\input{classAriadne_1_1CoordinateFunction}
+\input{classAriadne_1_1Covector}
+\input{structAriadne_1_1CrossingData}
+\input{classAriadne_1_1Curve}
+\input{classAriadne_1_1CurveInterface}
+\input{classAriadne_1_1Decimal}
+\input{classAriadne_1_1DeclareAnalyticFieldOperations}
+\input{structAriadne_1_1DeclareComparisonOperations}
+\input{structAriadne_1_1DeclareDirectedGroupOperations}
+\input{structAriadne_1_1DeclareFieldOperations}
+\input{structAriadne_1_1DeclareGroupOperations}
+\input{structAriadne_1_1DeclareInplaceMixedDirectedGroupOperators}
+\input{structAriadne_1_1DeclareInplaceMixedDirectedSemifieldOperators}
+\input{structAriadne_1_1DeclareInplaceMixedFieldOperators}
+\input{classAriadne_1_1DeclareLatticeOperations}
+\input{classAriadne_1_1DeclareMonotoneOperations}
+\input{structAriadne_1_1DeclareRingOperations}
+\input{classAriadne_1_1DeclareTranscendentalOperations}
+\input{classAriadne_1_1DecreasingSequence}
+\input{classAriadne_1_1DenotableSetInterface}
+\input{classAriadne_1_1DenseDifferential}
+\input{classAriadne_1_1DiagonalMatrix}
+\input{classAriadne_1_1Differential}
+\input{classAriadne_1_1DifferentialCharacteristics}
+\input{classAriadne_1_1DifferentialInclusion}
+\input{classAriadne_1_1DifferentialInclusionEvolverConfiguration}
+\input{classAriadne_1_1DiscreteEvent}
+\input{classAriadne_1_1DiscreteLocation}
+\input{classAriadne_1_1DiscreteMode}
+\input{classAriadne_1_1DiscreteTransition}
+\input{classAriadne_1_1DiscreteValuation}
+\input{classAriadne_1_1DisjunctivePredicate}
+\input{classAriadne_1_1DispatchFunctionOperations}
+\input{classAriadne_1_1DottedVariable}
+\input{classAriadne_1_1DoublePrecision}
+\input{classAriadne_1_1Drawable2dInterface}
+\input{classAriadne_1_1Drawer}
+\input{classAriadne_1_1DrawerInterface}
+\input{classAriadne_1_1DuplicateEventError}
+\input{classAriadne_1_1Dyadic}
+\input{classAriadne_1_1Numeric_1_1Dyadic}
+\input{classAriadne_1_1Concepts_1_1Effective}
+\input{structAriadne_1_1EffectiveTag}
+\input{classAriadne_1_1Concepts_1_1Effort}
+\input{classAriadne_1_1Effort}
+\input{classAriadne_1_1Concepts_1_1Elementary}
+\input{classAriadne_1_1ElementaryAlgebra}
+\input{classAriadne_1_1ElementaryAlgebraInterface}
+\input{classAriadne_1_1Enclosure}
+\input{classAriadne_1_1Error}
+\input{structAriadne_1_1ErrorTag}
+\input{classAriadne_1_1EuclideanDomain}
+\input{classAriadne_1_1EuclideanSpace}
+\input{classAriadne_1_1EulerBounder}
+\input{classAriadne_1_1EvolverFactoryInterface}
+\input{classAriadne_1_1EvolverInterface}
+\input{classAriadne_1_1ExactDouble}
+\input{structAriadne_1_1ExactTag}
+\input{classAriadne_1_1Expansion}
+\input{classAriadne_1_1Expression}
+\input{classAriadne_1_1ExtendedOperations}
+\input{classAriadne_1_1FactoredKrawczykSolver}
+\input{classAriadne_1_1FastCauchySequence}
+\input{classAriadne_1_1FieldInterface}
+\input{classAriadne_1_1Figure}
+\input{classAriadne_1_1FigureInterface}
+\input{classAriadne_1_1FirstDifferential}
+\input{structAriadne_1_1FirstOrderPDE}
+\input{structAriadne_1_1FirstOrderPDESolution}
+\input{classAriadne_1_1Float_3_01DP_01_4}
+\input{classAriadne_1_1Float_3_01MP_01_4}
+\input{classAriadne_1_1FlowFunctionModel}
+\input{classAriadne_1_1FlowModelType}
+\input{classAriadne_1_1FlowStepModelType}
+\input{structAriadne_1_1FlowTimeStepException}
+\input{classAriadne_1_1Flt64}
+\input{classAriadne_1_1Formula}
+\input{classAriadne_1_1ForwardConstantIteratorHandle}
+\input{classAriadne_1_1Function}
+\input{classAriadne_1_1Concepts_1_1FunctionConcept_3_01R_07AS_8_8_8_08_4}
+\input{classAriadne_1_1FunctionConstructors}
+\input{classAriadne_1_1FunctionFacade}
+\input{classAriadne_1_1FunctionFacade_3_01P_00_01RealScalar_07RealScalar_08_4}
+\input{classAriadne_1_1FunctionFacade_3_01P_00_01RealScalar_07RealVector_08_4}
+\input{classAriadne_1_1FunctionFacade_3_01P_00_01RealVector_07RealScalar_08_4}
+\input{classAriadne_1_1FunctionFacade_3_01P_00_01RealVector_07RealVector_08_4}
+\input{classAriadne_1_1FunctionFactory}
+\input{classAriadne_1_1FunctionInterface}
+\input{classAriadne_1_1FunctionInterface_3_01ApproximateTag_00_01SIG_01_4}
+\input{classAriadne_1_1FunctionInterface_3_01EffectiveTag_00_01SIG_01_4}
+\input{classAriadne_1_1FunctionInterface_3_01ValidatedTag_00_01SIG_01_4}
+\input{classAriadne_1_1FunctionModel}
+\input{classAriadne_1_1FunctionPatch}
+\input{classAriadne_1_1FunctionPatch_3_01P_00_01RealScalar_07ARGS_8_8_8_08_4}
+\input{classAriadne_1_1GeneralHybridEvolver}
+\input{classAriadne_1_1GeneralHybridEvolverConfiguration}
+\input{classAriadne_1_1GeneralHybridEvolverFactory}
+\input{classAriadne_1_1Concepts_1_1GenericConcept}
+\input{classAriadne_1_1GradedAlgebra}
+\input{classAriadne_1_1GradedAlgebraInterface}
+\input{classAriadne_1_1GradedSweeper}
+\input{classAriadne_1_1GradedTaylorSeriesIntegrator}
+\input{classAriadne_1_1GradedThresholdSweeper}
+\input{classAriadne_1_1GraphicsBackend}
+\input{classAriadne_1_1GraphicsBackendInterface}
+\input{classAriadne_1_1GraphicsManager}
+\input{classAriadne_1_1Grid}
+\input{classAriadne_1_1GridAbstractCell}
+\input{classAriadne_1_1GridCell}
+\input{classAriadne_1_1GridDrawer}
+\input{classAriadne_1_1GridOpenCell}
+\input{classAriadne_1_1GridTreeConstIterator}
+\input{classAriadne_1_1GridTreeCursor}
+\input{classAriadne_1_1GridTreePaving}
+\input{classAriadne_1_1GridTreeSubpaving}
+\input{classAriadne_1_1HybridAutomaton}
+\input{classAriadne_1_1HybridAutomatonInterface}
+\input{classAriadne_1_1HybridBasicSet}
+\input{classAriadne_1_1HybridBoundedConstraintSet}
+\input{classAriadne_1_1HybridBox}
+\input{classAriadne_1_1HybridBoxes}
+\input{classAriadne_1_1HybridConstraintSet}
+\input{classAriadne_1_1HybridDenotableSet}
+\input{classAriadne_1_1HybridDrawableInterface}
+\input{classAriadne_1_1HybridEnclosure}
+\input{classAriadne_1_1HybridEvolverBase}
+\input{classAriadne_1_1HybridEvolverBaseConfiguration}
+\input{classAriadne_1_1HybridEvolverFactoryInterface}
+\input{classAriadne_1_1HybridEvolverInterface}
+\input{classAriadne_1_1HybridFigure}
+\input{classAriadne_1_1HybridGrid}
+\input{classAriadne_1_1HybridGridCell}
+\input{classAriadne_1_1HybridGridTreePaving}
+\input{classAriadne_1_1HybridListSet}
+\input{classAriadne_1_1HybridPoint}
+\input{classAriadne_1_1HybridReachabilityAnalyser}
+\input{classAriadne_1_1HybridReachabilityAnalyserFactoryInterface}
+\input{classAriadne_1_1HybridReachabilityAnalyserInterface}
+\input{classAriadne_1_1HybridScalings}
+\input{classAriadne_1_1HybridScalingsInterface}
+\input{classAriadne_1_1HybridSetInterfaceBase}
+\input{classAriadne_1_1HybridSimulator}
+\input{classAriadne_1_1HybridSpace}
+\input{classAriadne_1_1HybridStorage}
+\input{classAriadne_1_1HybridTime}
+\input{classAriadne_1_1HybridValidatedConstrainedImageSet}
+\input{classAriadne_1_1HybridValuation}
+\input{classAriadne_1_1HybridVariablesBox}
+\input{classAriadne_1_1HybridVariablesBoxes}
+\input{classAriadne_1_1Identifier}
+\input{classAriadne_1_1ImageSet}
+\input{structAriadne_1_1IncompleteFlowException}
+\input{classAriadne_1_1IncreasingSequence}
+\input{structAriadne_1_1IndexZero}
+\input{classAriadne_1_1IndistinguishableLocationsError}
+\input{classAriadne_1_1IndistinguishableModeError}
+\input{classAriadne_1_1Integer}
+\input{classAriadne_1_1IntegratorInterface}
+\input{classAriadne_1_1InteriorPointSolver}
+\input{classAriadne_1_1InterpolatedCurve}
+\input{classAriadne_1_1Interval}
+\input{classAriadne_1_1IntervalNewtonSolver}
+\input{classAriadne_1_1InvalidArgumentValueException}
+\input{classAriadne_1_1IsALeafNodeException}
+\input{structAriadne_1_1IsStronger}
+\input{structAriadne_1_1IsWeaker}
+\input{classAriadne_1_1IteratedMap}
+\input{classAriadne_1_1IteratedMapEvolver}
+\input{classAriadne_1_1IteratedMapEvolverConfiguration}
+\input{classAriadne_1_1Kleenean}
+\input{classAriadne_1_1KrawczykSolver}
+\input{classAriadne_1_1LabelledDrawable2dInterface}
+\input{classAriadne_1_1LabelledFigure}
+\input{classAriadne_1_1LabelledInterpolatedCurve}
+\input{classAriadne_1_1LabelledSet}
+\input{classAriadne_1_1LetVariable}
+\input{classAriadne_1_1List}
+\input{classAriadne_1_1ListSet}
+\input{classAriadne_1_1LocatedSet}
+\input{classAriadne_1_1LocatedSetInterface}
+\input{classAriadne_1_1Concepts_1_1Lower}
+\input{classAriadne_1_1LowerBound}
+\input{classAriadne_1_1LowerKleenean}
+\input{classAriadne_1_1LowerNumber}
+\input{classAriadne_1_1LowerReal}
+\input{classAriadne_1_1LRUCache}
+\input{classAriadne_1_1Map}
+\input{classAriadne_1_1Matrix}
+\input{structAriadne_1_1MatrixRange}
+\input{classAriadne_1_1MissingArgumentValueException}
+\input{classAriadne_1_1MissingGuardError}
+\input{classAriadne_1_1MonolithicHybridSpace}
+\input{classAriadne_1_1Monomial}
+\input{classAriadne_1_1Multifunction}
+\input{classAriadne_1_1MultiIndexBound}
+\input{classAriadne_1_1MultipleGuardError}
+\input{classAriadne_1_1MultiplePrecision}
+\input{classAriadne_1_1MultipleTransitionError}
+\input{classAriadne_1_1MultipleUrgentDeclarationError}
+\input{classAriadne_1_1Concepts_1_1Naive}
+\input{classAriadne_1_1NaiveKleenean}
+\input{classAriadne_1_1NaiveReal}
+\input{classAriadne_1_1Natural}
+\input{classAriadne_1_1NegatedSierpinskian}
+\input{classAriadne_1_1NonExistentModeError}
+\input{classAriadne_1_1NonlinearInfeasibleInteriorPointOptimiser}
+\input{classAriadne_1_1NonlinearInteriorPointOptimiser}
+\input{classAriadne_1_1NormedAlgebraInterface}
+\input{classAriadne_1_1NoSolutionException}
+\input{classAriadne_1_1NotALeafNodeException}
+\input{classAriadne_1_1NotAllowedMoveException}
+\input{classAriadne_1_1NullSweeper}
+\input{classAriadne_1_1Number}
+\input{classAriadne_1_1OpenSet}
+\input{classAriadne_1_1OpenSetInterface}
+\input{classAriadne_1_1OperationExpressionWriter}
+\input{classAriadne_1_1OperatorExpressionWriter}
+\input{classAriadne_1_1OptimalConstraintPaver}
+\input{classAriadne_1_1OptimiserBase}
+\input{classAriadne_1_1OptimiserInterface}
+\input{classAriadne_1_1Orbit}
+\input{classAriadne_1_1OverspecifiedDynamicError}
+\input{classAriadne_1_1OverspecifiedLocationException}
+\input{classAriadne_1_1OverspecifiedResetError}
+\input{classAriadne_1_1OverspecifiedSystemError}
+\input{classAriadne_1_1OvertSet}
+\input{classAriadne_1_1OvertSetInterface}
+\input{classAriadne_1_1Path}
+\input{classAriadne_1_1PaverInterface}
+\input{classAriadne_1_1PavingInterface}
+\input{classAriadne_1_1PenaltyFunctionOptimiser}
+\input{classAriadne_1_1PivotMatrix}
+\input{structAriadne_1_1PLUMatrix}
+\input{classAriadne_1_1Point}
+\input{classAriadne_1_1Polyhedron}
+\input{classAriadne_1_1Polynomial}
+\input{classAriadne_1_1Polytope}
+\input{classAriadne_1_1Concepts_1_1Positive}
+\input{classAriadne_1_1Positive}
+\input{classAriadne_1_1PositiveLowerReal}
+\input{classAriadne_1_1PositiveNaiveReal}
+\input{classAriadne_1_1PositiveReal}
+\input{classAriadne_1_1PositiveUpperReal}
+\input{classAriadne_1_1PrimedVariable}
+\input{classAriadne_1_1Procedure}
+\input{classAriadne_1_1Projection}
+\input{classAriadne_1_1Range}
+\input{classAriadne_1_1Rational}
+\input{structAriadne_1_1RawTag}
+\input{classAriadne_1_1ReachabilityAnalyser}
+\input{classAriadne_1_1ReachabilityAnalyserConfiguration}
+\input{classAriadne_1_1ReachabilityAnalyserFactoryInterface}
+\input{classAriadne_1_1ReachabilityAnalyserInterface}
+\input{classAriadne_1_1Real}
+\input{classAriadne_1_1RealDomain}
+\input{classAriadne_1_1RealExpressionBoundedConstraintSet}
+\input{classAriadne_1_1RealExpressionConstraintSet}
+\input{classAriadne_1_1ReducePaver}
+\input{classAriadne_1_1RegularLocatedSet}
+\input{classAriadne_1_1RegularLocatedSetInterface}
+\input{classAriadne_1_1RegularSet}
+\input{classAriadne_1_1RegularSetInterface}
+\input{classAriadne_1_1RelativeThresholdSweeper}
+\input{classAriadne_1_1RingInterface}
+\input{structAriadne_1_1RoundApproximately}
+\input{structAriadne_1_1RoundDownward}
+\input{classAriadne_1_1Rounding}
+\input{structAriadne_1_1RoundToNearest}
+\input{structAriadne_1_1RoundTowardZero}
+\input{structAriadne_1_1RoundUpward}
+\input{classAriadne_1_1RungeKutta4Integrator}
+\input{classAriadne_1_1ScalarMultivariateFormulaFunction}
+\input{structAriadne_1_1ScalarMultivariateFunctionData}
+\input{classAriadne_1_1ScalarUnivariateFormulaFunction}
+\input{classAriadne_1_1ScalarUserFunction}
+\input{classAriadne_1_1ScaledFunctionPatch}
+\input{classAriadne_1_1Scalings}
+\input{classAriadne_1_1SecondDifferential}
+\input{classAriadne_1_1Sequence}
+\input{classAriadne_1_1Series}
+\input{classAriadne_1_1SeriesGeneratorInterface}
+\input{classAriadne_1_1Set}
+\input{classAriadne_1_1SetBase}
+\input{classAriadne_1_1SetInterfaceBase}
+\input{classAriadne_1_1Sierpinskian}
+\input{classAriadne_1_1SimplexSolver}
+\input{classAriadne_1_1SingularJacobianException}
+\input{structAriadne_1_1SizeOne}
+\input{classAriadne_1_1SolverBase}
+\input{classAriadne_1_1SolverException}
+\input{classAriadne_1_1SolverInterface}
+\input{classAriadne_1_1Space}
+\input{classAriadne_1_1StateSpecificationError}
+\input{classAriadne_1_1Storage}
+\input{classAriadne_1_1String}
+\input{classAriadne_1_1SubdivisionPaver}
+\input{classAriadne_1_1SubPavingHandle}
+\input{classAriadne_1_1SubPavingInterface}
+\input{classAriadne_1_1Suggestion}
+\input{classAriadne_1_1Sweeper}
+\input{classAriadne_1_1Concepts_1_1Symbolic}
+\input{classAriadne_1_1SymbolicAlgebra}
+\input{classAriadne_1_1SymbolicAlgebraInterface}
+\input{classAriadne_1_1SymmetricMatrix}
+\input{structAriadne_1_1VectorFieldSimulator_1_1SynchronisedOrbit}
+\input{classAriadne_1_1SystemSpecificationError}
+\input{classAriadne_1_1TaylorModel}
+\input{classAriadne_1_1TaylorPicardIntegrator}
+\input{classAriadne_1_1TaylorSeriesBounderIntegrator}
+\input{classAriadne_1_1TaylorSeriesIntegrator}
+\input{classAriadne_1_1Tensor}
+\input{classAriadne_1_1TensorRow}
+\input{classAriadne_1_1ThresholdSweeper}
+\input{classAriadne_1_1TimeVariable}
+\input{structAriadne_1_1TimingData}
+\input{classAriadne_1_1Concepts_1_1Traits}
+\input{classAriadne_1_1TranscendentalAlgebra}
+\input{classAriadne_1_1TranscendentalAlgebraInterface}
+\input{classAriadne_1_1TranscendentalInterface}
+\input{structAriadne_1_1TransitionData}
+\input{classAriadne_1_1TrivialSweeper}
+\input{structAriadne_1_1Two}
+\input{classAriadne_1_1TwoExp}
+\input{classAriadne_1_1UnaryFunction}
+\input{classAriadne_1_1UnderspecifiedConstraintError}
+\input{classAriadne_1_1UnderspecifiedDynamicError}
+\input{classAriadne_1_1UnderspecifiedResetError}
+\input{classAriadne_1_1UnderspecifiedSystemError}
+\input{classAriadne_1_1UnitBox}
+\input{classAriadne_1_1UnitInterval}
+\input{classAriadne_1_1UnivariateDifferential}
+\input{classAriadne_1_1UnivariateFirstDifferential}
+\input{classAriadne_1_1UnivariateSecondDifferential}
+\input{classAriadne_1_1UnknownSolutionException}
+\input{classAriadne_1_1UntypedVariable}
+\input{classAriadne_1_1Concepts_1_1Upper}
+\input{classAriadne_1_1UpperBound}
+\input{classAriadne_1_1UpperKleenean}
+\input{classAriadne_1_1UpperNumber}
+\input{classAriadne_1_1UpperReal}
+\input{classAriadne_1_1UrgentDeclarationWithMultipleGuardsException}
+\input{classAriadne_1_1Concepts_1_1Validated}
+\input{classAriadne_1_1Concepts_1_1Validated_3_01Real_01_4}
+\input{classAriadne_1_1ValidatedAffineConstrainedImageSet}
+\input{classAriadne_1_1ValidatedConstrainedImageSet}
+\input{classAriadne_1_1ValidatedKleenean}
+\input{classAriadne_1_1ValidatedLowerKleenean}
+\input{classAriadne_1_1ValidatedNegatedSierpinskian}
+\input{classAriadne_1_1ValidatedReal}
+\input{classAriadne_1_1ValidatedSierpinskian}
+\input{structAriadne_1_1ValidatedTag}
+\input{classAriadne_1_1ValidatedUpperKleenean}
+\input{classAriadne_1_1Valuation}
+\input{classAriadne_1_1Variable}
+\input{classAriadne_1_1VariableInterval}
+\input{classAriadne_1_1Variables}
+\input{classAriadne_1_1VariablesBox}
+\input{classAriadne_1_1VariablesPoint}
+\input{classAriadne_1_1Vector}
+\input{classAriadne_1_1Vector_3_01Procedure_3_01Y_01_4_01_4}
+\input{classAriadne_1_1Concepts_1_1VectorAlgebra}
+\input{classAriadne_1_1VectorField}
+\input{classAriadne_1_1VectorFieldEvolver}
+\input{classAriadne_1_1VectorFieldEvolverConfiguration}
+\input{classAriadne_1_1VectorFieldSimulator}
+\input{classAriadne_1_1VectorFieldSimulatorConfiguration}
+\input{structAriadne_1_1VectorFunctionElementReference}
+\input{classAriadne_1_1VectorMultivariateFormulaFunction}
+\input{classAriadne_1_1VectorMultivariateFunctionData}
+\input{classAriadne_1_1VectorRange}
+\input{classAriadne_1_1VectorScaledFunctionPatch}
+\input{classAriadne_1_1VectorUnivariateFormulaFunction}
+\input{classAriadne_1_1VectorUserFunction}
+\input{classAriadne_1_1Zonotope}
+\doxysection{File Documentation}
+\input{algebraic__equations_8dox}
+\input{coding__guidelines_8dox}
+\input{computability_8dox}
+\input{computing__pi_8dox}
+\input{constraint__satisfaction_8dox}
+\input{differential__algebra_8dox}
+\input{evolution_8dox}
+\input{function__evaluation_8dox}
+\input{function__models_8dox}
+\input{functional__analysis_8dox}
+\input{geometric__representation_8dox}
+\input{hybrid__automaton_8dox}
+\input{hybrid__evolution__methods_8dox}
+\input{hybrid__evolution__tutorial_8dox}
+\input{hybrid__systems_8dox}
+\input{installation_8dox}
+\input{integration__methods_8dox}
+\input{linear__algebra_8dox}
+\input{linear__programming_8dox}
+\input{logic_8dox}
+\input{main__page_8dox}
+\input{model__checking_8dox}
+\input{modules_8dox}
+\input{nonlinear__programming_8dox}
+\input{overview_8dox}
+\input{python__example__tutorials_8dox}
+\input{python__interface_8dox}
+\input{python__module__demonstrations_8dox}
+\input{python__module__tutorials_8dox}
+\input{real__numbers_8dox}
+\input{references_8dox}
+\input{rigorous__numerics__tutorial_8dox}
+\input{system__analysis_8dox}
+\input{topology_8dox}
+\input{type__system_8dox}
+\input{pybind11_8hpp}
+\input{utilities_8hpp}
+\input{neural__network_8py}
+\input{algebra_8hpp}
+\input{algebra__concepts_8hpp}
+\input{algebra__interface_8hpp}
+\input{algebra__mixin_8hpp}
+\input{algebra__wrapper_8hpp}
+\input{covector_8hpp}
+\input{dense__differential_8hpp}
+\input{diagonal__matrix_8hpp}
+\input{differential_8decl_8hpp}
+\input{differential_8hpp}
+\input{evaluate_8hpp}
+\input{expansion_8hpp}
+\input{expansion_8tpl_8hpp}
+\input{fixed__differential_8hpp}
+\input{fixed__univariate__differential_8hpp}
+\input{graded_8hpp}
+\input{linear__algebra_8decl_8hpp}
+\input{matrix_8hpp}
+\input{multi__index_8hpp}
+\input{range_8hpp}
+\input{series_8hpp}
+\input{slice_8hpp}
+\input{sweeper_8hpp}
+\input{symmetric__matrix_8hpp}
+\input{tensor_8hpp}
+\input{tensor_8tpl_8hpp}
+\input{univariate__differential_8hpp}
+\input{univariate__differential_8tpl_8hpp}
+\input{vector_8cpp}
+\input{vector_8hpp}
+\input{vector__interface_8hpp}
+\input{ariadne_8hpp}
+\input{ariadne__main_8hpp}
+\input{differential__inclusion_8hpp}
+\input{differential__inclusion__evolver_8hpp}
+\input{enclosure_8hpp}
+\input{evolver__interface_8hpp}
+\input{first__order__pde_8hpp}
+\input{flowtube_8hpp}
+\input{iterated__map_8hpp}
+\input{iterated__map__evolver_8hpp}
+\input{orbit_8hpp}
+\input{reachability__analyser_8hpp}
+\input{reachability__analyser__interface_8hpp}
+\input{scalings_8hpp}
+\input{storage_8hpp}
+\input{vector__field_8hpp}
+\input{vector__field__evolver_8hpp}
+\input{vector__field__simulator_8hpp}
+\input{logical_8cpp}
+\input{logical_8decl_8hpp}
+\input{logical_8hpp}
+\input{paradigm_8hpp}
+\input{affine_8hpp}
+\input{affine__model_8hpp}
+\input{calculus__base_8hpp}
+\input{chebyshev__polynomial_8hpp}
+\input{constraint_8hpp}
+\input{domain_8hpp}
+\input{formula_8hpp}
+\input{function_8decl_8hpp}
+\input{function_8hpp}
+\input{function__interface_8hpp}
+\input{function__model_8hpp}
+\input{function__model__interface_8hpp}
+\input{function__model__mixin_8hpp}
+\input{function__patch_8hpp}
+\input{function__patch__interface_8hpp}
+\input{function__patch__mixin_8hpp}
+\input{function__traits_8hpp}
+\input{measurable__function_8hpp}
+\input{multifunction_8hpp}
+\input{polynomial_8hpp}
+\input{procedure_8hpp}
+\input{projection_8hpp}
+\input{scaled__function__patch_8hpp}
+\input{scaling_8hpp}
+\input{symbolic__function_8hpp}
+\input{taylor__function_8hpp}
+\input{taylor__model_8hpp}
+\input{taylor__multifunction_8hpp}
+\input{taylor__series_8hpp}
+\input{user__function_8hpp}
+\input{affine__set_8hpp}
+\input{box_8cpp}
+\input{box_8hpp}
+\input{box_8tpl_8hpp}
+\input{curve_8hpp}
+\input{function__set_8hpp}
+\input{geometry_8hpp}
+\input{grid_8hpp}
+\input{grid__cell_8hpp}
+\input{grid__paving_8hpp}
+\input{interval_8hpp}
+\input{list__set_8hpp}
+\input{measurable__set_8hpp}
+\input{paver_8hpp}
+\input{paver__interface_8hpp}
+\input{paving__interface_8hpp}
+\input{point_8hpp}
+\input{polyhedron_8hpp}
+\input{polytope_8hpp}
+\input{set_8hpp}
+\input{set__interface_8hpp}
+\input{set__wrapper_8hpp}
+\input{union__of__intervals_8hpp}
+\input{zonotope_8hpp}
+\input{discrete__event_8hpp}
+\input{discrete__location_8hpp}
+\input{hybrid__automata_8hpp}
+\input{hybrid__automaton-composite_8hpp}
+\input{hybrid__automaton_8hpp}
+\input{hybrid__automaton__interface_8hpp}
+\input{hybrid__enclosure_8hpp}
+\input{hybrid__evolver_8hpp}
+\input{hybrid__evolver__interface_8hpp}
+\input{hybrid__expression__set_8hpp}
+\input{hybrid__graphics_8hpp}
+\input{hybrid__graphics__interface_8hpp}
+\input{hybrid__grid_8hpp}
+\input{hybrid__orbit_8hpp}
+\input{hybrid__paving_8hpp}
+\input{hybrid__reachability__analyser_8hpp}
+\input{hybrid__reachability__analyser__interface_8hpp}
+\input{hybrid__scalings_8hpp}
+\input{hybrid__set_8decl_8hpp}
+\input{hybrid__set_8hpp}
+\input{hybrid__set__interface_8hpp}
+\input{hybrid__simulator_8hpp}
+\input{hybrid__space_8hpp}
+\input{hybrid__storage_8hpp}
+\input{hybrid__time_8hpp}
+\input{colour_8hpp}
+\input{command__line__interface_8hpp}
+\input{drawer_8hpp}
+\input{drawer__interface_8hpp}
+\input{figure_8hpp}
+\input{geometry2d_8hpp}
+\input{graphics__backend__interface_8hpp}
+\input{graphics__base_8hpp}
+\input{graphics__interface_8hpp}
+\input{graphics__manager_8hpp}
+\input{null__graphics_8hpp}
+\input{progress__indicator_8hpp}
+\input{accuracy_8hpp}
+\input{archetypes_8hpp}
+\input{arithmetic_8hpp}
+\input{bits_8hpp}
+\input{casts_8hpp}
+\input{complex_8hpp}
+\input{concepts_8hpp}
+\input{decimal_8hpp}
+\input{double_8hpp}
+\input{dyadic_8cpp}
+\input{dyadic_8hpp}
+\input{extended_8hpp}
+\input{field_8hpp}
+\input{float-raw_8hpp}
+\input{float_8decl_8hpp}
+\input{float64-crtp_8hpp}
+\input{float__approximation_8hpp}
+\input{float__ball_8hpp}
+\input{float__bounds_8hpp}
+\input{float__error_8hpp}
+\input{float__factory_8hpp}
+\input{float__literals_8hpp}
+\input{float__lower__bound_8hpp}
+\input{float__operations_8hpp}
+\input{float__traits_8hpp}
+\input{float__upper__bound_8hpp}
+\input{floatdp_8hpp}
+\input{floatmp_8cpp}
+\input{floatmp_8hpp}
+\input{floats_8hpp}
+\input{flt64_8hpp}
+\input{gmp_8hpp}
+\input{int_8hpp}
+\input{integer_8hpp}
+\input{lower__number_8hpp}
+\input{lower__real_8hpp}
+\input{naive__real_8hpp}
+\input{number_8cpp}
+\input{number_8decl_8hpp}
+\input{number_8hpp}
+\input{number__interface_8hpp}
+\input{number__wrapper_8hpp}
+\input{numeric_8hpp}
+\input{operators_8hpp}
+\input{positive_8hpp}
+\input{rational_8cpp}
+\input{rational_8hpp}
+\input{real_8cpp}
+\input{real_8hpp}
+\input{reals_8hpp}
+\input{rounded__float_8hpp}
+\input{rounding_8hpp}
+\input{sequence_8hpp}
+\input{sign_8hpp}
+\input{twoexp_8hpp}
+\input{upper__number_8hpp}
+\input{upper__real_8hpp}
+\input{validated__real_8hpp}
+\input{bounder_8hpp}
+\input{configuration__interface_8hpp}
+\input{constraint__solver_8hpp}
+\input{integrator_8hpp}
+\input{integrator__interface_8hpp}
+\input{linear__programming_8hpp}
+\input{nonlinear__programming_8hpp}
+\input{solver_8hpp}
+\input{solver__interface_8hpp}
+\input{assignment_8hpp}
+\input{constant_8hpp}
+\input{expression_8decl_8hpp}
+\input{expression_8hpp}
+\input{expression__set_8hpp}
+\input{function__expression_8hpp}
+\input{identifier_8hpp}
+\input{algebra_2operations_8hpp}
+\input{symbolic_2operations_8hpp}
+\input{predicate_8hpp}
+\input{space_8cpp}
+\input{space_8hpp}
+\input{templates_8hpp}
+\input{valuation_8hpp}
+\input{variable_8hpp}
+\input{array_8hpp}
+\input{attribute_8hpp}
+\input{binary__word_8hpp}
+\input{numeric_2builtin_8hpp}
+\input{utility_2builtin_8hpp}
+\input{clonable_8hpp}
+\input{container_8hpp}
+\input{declarations_8hpp}
+\input{exceptions_8hpp}
+\input{function_2functional_8hpp}
+\input{utility_2functional_8hpp}
+\input{handle_8hpp}
+\input{iterator_8hpp}
+\input{lru__cache_8hpp}
+\input{macros_8hpp}
+\input{metaprogramming_8hpp}
+\input{numeric_2module_8hpp}
+\input{utility_2module_8hpp}
+\input{path_8hpp}
+\input{pointer_8hpp}
+\input{prototype_8hpp}
+\input{randomiser_8hpp}
+\input{standard_8hpp}
+\input{stdlib_8hpp}
+\input{stopwatch_8hpp}
+\input{string_8hpp}
+\input{tribool_8hpp}
+\input{tuple_8hpp}
+\input{typedefs_8hpp}
+\input{uniform__list_8hpp}
+\input{variant_8hpp}
+\input{writable_8hpp}
+\doxysection{Examples}
+\input{python_2tutorials_2computing_pi_8py-example}
+\input{tutorials_2rigorous_numerics_2rigorous_numerics_tutorial_8cpp-example}
+\input{tutorials_2hybrid_evolution_2hybrid_evolution_tutorial_8cpp-example}
+\input{python_2tutorials_2rigorous_numerics_tutorial_8py-example}
+\input{python_2tutorials_2hybrid_evolution_tutorial_8py-example}
+\input{python_2tutorials_2numeric_demonstration_8py-example}
+\input{python_2tutorials_2algebra_demonstration_8py-example}
+\input{python_2tutorials_2function_demonstration_8py-example}
+\input{python_2tutorials_2geometry_demonstration_8py-example}
+\input{python_2tutorials_2solver_demonstration_8py-example}
+%--- End generated contents ---
+% Index
+  \newpage
+  \phantomsection
+  \clearemptydoublepage
+  \addcontentsline{toc}{section}{\indexname}
+  \printindex
+% Required for some languages (in combination with latexdocumentpre from the header)
+\end{document}

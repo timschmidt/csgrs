@@ -1,0 +1,90 @@
+   Compiling hyperreal v0.13.1 (/tmp/aern-hyper-finite.cYctjI/hyperreal-candidate)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 3.11s
+     Running unittests src/lib.rs (target/debug/deps/hyperreal-99435bbe0ce6f1f3)
+
+running 4 tests
+test rational::arithmetic::tests::f64_enclosure_contains_wide_non_dyadic_rationals ... ok
+test rational::arithmetic::tests::f64_enclosure_stays_finite_at_both_overflow_boundaries ... ok
+test rational::arithmetic::tests::f64_enclosure_contains_varied_exact_rational_corpus ... ok
+test rational::arithmetic::tests::f64_enclosure_bit_length_scaling_matches_gmp ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 713 filtered out; finished in 0.05s
+
+     Running unittests src/main.rs (target/debug/deps/hyperreal-51e453662a7bb7c5)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/adversarial_props.rs (target/debug/deps/adversarial_props-61eb2c6ab955766f)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 7 filtered out; finished in 0.00s
+
+     Running tests/adversarial_regressions.rs (target/debug/deps/adversarial_regressions-15a087f6640d5be3)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 10 filtered out; finished in 0.00s
+
+     Running tests/adversarial_semantics.rs (target/debug/deps/adversarial_semantics-1e440352f3c0a4a9)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 5 filtered out; finished in 0.00s
+
+     Running tests/cli.rs (target/debug/deps/cli-bd2da6dd4a777467)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 2 filtered out; finished in 0.00s
+
+     Running tests/gmp_api_coverage.rs (target/debug/deps/gmp_api_coverage-37303bcadfc0f551)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 1 filtered out; finished in 0.00s
+
+     Running tests/numeric_roundtrip_formats.rs (target/debug/deps/numeric_roundtrip_formats-d679a31941f64b6a)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 10 filtered out; finished in 0.00s
+
+     Running tests/numerical_cross_reference.rs (target/debug/deps/numerical_cross_reference-397104ebd02e8ac0)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 16 filtered out; finished in 0.00s
+
+     Running tests/public_numeric_semantics.rs (target/debug/deps/public_numeric_semantics-446a890ba3ba9f7e)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 9 filtered out; finished in 0.00s
+
+     Running tests/rational_oracle.rs (target/debug/deps/rational_oracle-5e492b4e2e90fc28)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 5 filtered out; finished in 0.00s
+
+     Running tests/readme.rs (target/debug/deps/readme-9a1c81c52469d042)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 2 filtered out; finished in 0.00s
+
+     Running tests/readme_metadata.rs (target/debug/deps/readme_metadata-49f38d9a3be14bc2)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 2 filtered out; finished in 0.00s
+
+     Running tests/real_representations.rs (target/debug/deps/real_representations-3fe7a966562466bb)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 6 filtered out; finished in 0.00s
+

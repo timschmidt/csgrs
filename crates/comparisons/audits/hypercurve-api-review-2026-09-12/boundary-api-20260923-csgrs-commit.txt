@@ -1,0 +1,5 @@
+Render represented vertices through the exact point interface.
+
+Read region boundary curves and open-path endpoints through Curve2 and
+CurvePoint2. Mark available coordinates without inspecting internal
+fragment variants or treating selected points as coordinate payloads.

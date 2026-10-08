@@ -1,0 +1,12 @@
+[package]
+name = "calcium-root-exp-sign-public-trial"
+version = "0.1.0"
+edition = "2024"
+publish = false
+[workspace]
+[dependencies]
+hyperreal = { path = "../root-exp-sign-trial-hyperreal" }
+num = "0.4.3"
+[[bin]]
+name = "calcium-root-exp-sign-public-trial"
+path = "../root-exp-sign-probe.rs"

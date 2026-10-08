@@ -1,0 +1,14 @@
+
+running 8 tests
+test algebraic_binary::tests::binary_point_images_do_not_change_half_open_ownership ... ok
+test algebraic_binary::tests::binary_point_images_do_not_promote_approximately_chosen_extrema ... ok
+test algebraic_binary::tests::binary_point_images_preserve_nonrational_witnesses ... ok
+test algebraic_binary::tests::binary_point_images_preserve_rational_witnesses ... ok
+test algebraic_binary::tests::binary_point_images_preserve_zero_products_with_wide_inputs ... ok
+test algebraic_binary::tests::binary_point_images_require_certified_extrema_for_a_symmetric_product ... symmetric product: strict_interval=true, strict_witness=false, approximate_witness=false
+ok
+test algebraic_binary::tests::binary_point_images_require_strict_equality_even_under_approximate_policy ... ok
+test algebraic_binary::tests::binary_point_images_still_replay_the_polynomial ... ok
+
+test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 438 filtered out; finished in 0.03s
+

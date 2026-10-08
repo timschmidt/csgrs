@@ -1,0 +1,66 @@
+{
+  "status": "committed",
+  "goal_status": "active",
+  "base_commit": "d6bcac5256ed576ca6a6d378a1d8c710bdadfd52",
+  "changes": [
+    "Deflate certified line/circle endpoint contacts, retaining their exact point/parameter identity and deriving the other root without a new radical.",
+    "Use the root order already certified by the circle relation; remove two redundant scalar sorts and duplicate point evaluation during finite arc filtering.",
+    "Consolidate the duplicate arc-endpoint membership predicates; strict geometric equality handles independently represented contacts.",
+    "Exhaust certified finite-domain exclusions before terminal approximation.",
+    "Require strict proof from optional shared-image chord-endpoint and contact-box distinctness shortcuts before falling through to the common exact kernel."
+  ],
+  "regressions": {
+    "new_unit_tests": [
+      "line_arc_reentry_preserves_certified_algebraic_endpoints",
+      "arc_endpoint_membership_survives_an_unresolved_other_endpoint",
+      "line_arc_domain_exclusion_does_not_consume_unneeded_ordering"
+    ],
+    "repaired_public_test": "line_parabola_fillet_extends_the_regular_incident_cell_exactly",
+    "independent_matrix": "native-line-arc-endpoint-matrix-final.json",
+    "independent_curve_pair_queries": 900,
+    "certified_region_intersection_queries": 12,
+    "certified_empty_xors": 4,
+    "policies": [
+      "STRICT",
+      "APPROXIMATE_512"
+    ],
+    "traversals": [
+      "forward",
+      "reversed"
+    ]
+  },
+  "qualification": {
+    "results": "native-line-arc-endpoint-full-results.json",
+    "targets": 49,
+    "passed": 2177,
+    "failed": 6,
+    "ignored": 9,
+    "new_failures": 0,
+    "timeouts": 0,
+    "hypercurve_passed": 1945,
+    "hyperbrep_passed": 232,
+    "remaining_failures": [
+      "approximate_512_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions",
+      "non_ph_bezier_pair_projective_fillet_retains_algebraic_extensions",
+      "nonconvex_algebraic_chord_expansion_is_exact_and_local_collapse_is_explicit",
+      "strict_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions",
+      "unified_mixed_line_arc_erosion_splits_after_a_curved_neck_collapse",
+      "unified_region_non_miter_erosions_split_after_neck_collapse"
+    ],
+    "all_target_checks": true,
+    "immutable_sources": true,
+    "source_files": 396,
+    "formatting_and_whitespace": true,
+    "previously_unqualified_expensive_cases": 8,
+    "full_suite_passing": false,
+    "normal_library_sha256": "107125b7f6aa2ea06cdb1cd2954cfbcb9a473e11835352343c3c19e88a66e816",
+    "all_30_repositories_clean_after_commit": true
+  },
+  "evidence_audit": "native-line-arc-endpoint-evidence-audit.md",
+  "performance_claim": null,
+  "remaining": [
+    "Known promotion failures and eight expensive previously unqualified cases.",
+    "Full-family common intersection dispatch, general trimming, normalized public region admission and the broader architecture goal."
+  ],
+  "commit": "02b419555b7002ec3ea9c94f0f06ed376cc09443"
+}

@@ -1,0 +1,174 @@
+{
+  "diagnostic_only": true,
+  "checks": [
+    {
+      "label": "fmt",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustfmt",
+        "--edition",
+        "2024",
+        "--check",
+        "src/bezier_offset.rs",
+        "src/bezier_parameter.rs",
+        "src/bezier_region.rs",
+        "src/curve.rs",
+        "src/curve_corner_chain.rs",
+        "src/curve_region_boolean.rs",
+        "tests/hypercurve_curve.rs"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 3.4359562860336155,
+      "log": "native-root-ownership-20260925-v64-fmt.log"
+    },
+    {
+      "label": "clippy-0",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "clippy",
+        "--all-targets",
+        "--all-features",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 26.985483558033593,
+      "log": "native-root-ownership-20260925-v64-clippy-0.log"
+    },
+    {
+      "label": "clippy-1",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "clippy",
+        "--all-targets",
+        "--no-default-features",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 25.831205244059674,
+      "log": "native-root-ownership-20260925-v64-clippy-1.log"
+    }
+  ],
+  "binaries": {
+    "hypercurve": {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/native-root-ownership-20260925-v64-hypercurve",
+      "sha256": "050f8a8774707244af92851aac629285ec95d1968b7cf7a49e67a48790acd515"
+    }
+  },
+  "cases": [
+    {
+      "label": "imported_root_comparisons_preserve_owned_and_excluded_endpoints",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/native-root-ownership-20260925-v64-hypercurve",
+        "--exact",
+        "bezier_parameter::conversion_tests::imported_root_comparisons_preserve_owned_and_excluded_endpoints",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 101,
+      "elapsed_seconds": 0.2829995510401204,
+      "log": "native-root-ownership-20260925-v64-imported_root_comparisons_preserve_owned_and_excluded_endpoints.log"
+    },
+    {
+      "label": "decreasing_root_charts_preserve_owned_and_excluded_endpoints",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/native-root-ownership-20260925-v64-hypercurve",
+        "--exact",
+        "bezier_parameter::conversion_tests::decreasing_root_charts_preserve_owned_and_excluded_endpoints",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 101,
+      "elapsed_seconds": 0.33875312795862556,
+      "log": "native-root-ownership-20260925-v64-decreasing_root_charts_preserve_owned_and_excluded_endpoints.log"
+    },
+    {
+      "label": "solver_owned_root_refinement_excludes_repeated_lower_endpoints",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/native-root-ownership-20260925-v64-hypercurve",
+        "--exact",
+        "bezier_parameter::conversion_tests::solver_owned_root_refinement_excludes_repeated_lower_endpoints",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.28095551300793886,
+      "log": "native-root-ownership-20260925-v64-solver_owned_root_refinement_excludes_repeated_lower_endpoints.log"
+    },
+    {
+      "label": "collapsed_exact_real_representation_imports_as_an_exact_parameter",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/native-root-ownership-20260925-v64-hypercurve",
+        "--exact",
+        "bezier_parameter::conversion_tests::collapsed_exact_real_representation_imports_as_an_exact_parameter",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.2907051029615104,
+      "log": "native-root-ownership-20260925-v64-collapsed_exact_real_representation_imports_as_an_exact_parameter.log"
+    },
+    {
+      "label": "isolation_retains_large_rational_roots_until_projection_is_requested",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/native-root-ownership-20260925-v64-hypercurve",
+        "--exact",
+        "bezier_parameter::conversion_tests::isolation_retains_large_rational_roots_until_projection_is_requested",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.2785884849727154,
+      "log": "native-root-ownership-20260925-v64-isolation_retains_large_rational_roots_until_projection_is_requested.log"
+    },
+    {
+      "label": "projective_images_preserve_exterior_singletons_across_unused_poles",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/native-root-ownership-20260925-v64-hypercurve",
+        "--exact",
+        "bezier_parameter::conversion_tests::projective_images_preserve_exterior_singletons_across_unused_poles",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.2966862729517743,
+      "log": "native-root-ownership-20260925-v64-projective_images_preserve_exterior_singletons_across_unused_poles.log"
+    },
+    {
+      "label": "independent_singleton_charts_reuse_nested_root_identity",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/native-root-ownership-20260925-v64-hypercurve",
+        "--exact",
+        "bezier_parameter::conversion_tests::independent_singleton_charts_reuse_nested_root_identity",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.27352180203888565,
+      "log": "native-root-ownership-20260925-v64-independent_singleton_charts_reuse_nested_root_identity.log"
+    }
+  ],
+  "all_processes_reaped": true,
+  "build_returncode": 0,
+  "all_sources_unchanged": true
+}

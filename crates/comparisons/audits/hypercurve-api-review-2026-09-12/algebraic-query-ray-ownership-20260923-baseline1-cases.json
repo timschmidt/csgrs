@@ -1,0 +1,18 @@
+[
+  {
+    "name": "bezier_region::tests::algebraic_native_ray_vertices_use_spatial_endpoint_ownership",
+    "returncode": 101,
+    "passed": false,
+    "limit_seconds": 75,
+    "elapsed_seconds": 0.13742642698343843,
+    "log": "algebraic-query-ray-ownership-20260923-baseline1-case-0.log"
+  },
+  {
+    "name": "bezier_region::tests::algebraic_retained_ray_vertices_use_spatial_endpoint_ownership",
+    "returncode": 101,
+    "passed": false,
+    "limit_seconds": 75,
+    "elapsed_seconds": 0.14105359802488238,
+    "log": "algebraic-query-ray-ownership-20260923-baseline1-case-1.log"
+  }
+]

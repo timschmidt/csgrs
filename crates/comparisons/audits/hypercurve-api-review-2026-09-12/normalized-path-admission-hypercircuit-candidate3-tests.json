@@ -1,0 +1,104 @@
+[
+  {
+    "target": "preview",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/normalized-path-admission-hypercircuit-candidate3-binaries/preview-0183f841261065f3",
+      "--test-threads=2",
+      "--color",
+      "never"
+    ],
+    "binary_sha256": "da193bdbf9f9815b08ee6e6d2f91f3dd027242b50dbef26e070ac7200d49fb94",
+    "returncode": 0,
+    "elapsed_seconds": 0.02392402000259608,
+    "log": "normalized-path-admission-hypercircuit-candidate3-preview.log",
+    "passed": [
+      "native_pcb_svg_retains_source_and_net_identity_with_projection_audit",
+      "native_pcb_svg_filters_copper_by_layer_but_keeps_spanning_vias"
+    ],
+    "failed": [],
+    "ignored": []
+  },
+  {
+    "target": "curved_outline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/normalized-path-admission-hypercircuit-candidate3-binaries/curved_outline-afcf0d993c2bf3da",
+      "--test-threads=2",
+      "--color",
+      "never"
+    ],
+    "binary_sha256": "901fdd74da9fcd68a0587d716e9a6c9e4881d60fed02e8c80b0ef134ec87e72f",
+    "returncode": 0,
+    "elapsed_seconds": 0.0026418790221214294,
+    "log": "normalized-path-admission-hypercircuit-candidate3-curved_outline.log",
+    "passed": [],
+    "failed": [],
+    "ignored": []
+  },
+  {
+    "target": "lib",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/normalized-path-admission-hypercircuit-candidate3-binaries/hypercircuit-19eebc187dfca64a",
+      "--test-threads=2",
+      "--color",
+      "never",
+      "materialize::tests::"
+    ],
+    "binary_sha256": "32fbac35e1335c1edd9374a1ba0512fb1cd5642c87d764800f75abd623516ef0",
+    "returncode": 101,
+    "elapsed_seconds": 0.18216807299177162,
+    "log": "normalized-path-admission-hypercircuit-candidate3-lib.log",
+    "passed": [
+      "materialize::tests::cubic_projection_handles_finite_coordinates_whose_raw_chord_overflows",
+      "materialize::tests::disjoint_additive_compound_does_not_invent_coincident_holes",
+      "materialize::tests::additive_composition_preserves_holes_islands_and_duplicate_profiles",
+      "materialize::tests::overlapping_additive_union_does_not_reclassify_material_as_a_hole",
+      "materialize::tests::pad_local_rotation_precedes_translation_and_board_placement",
+      "materialize::tests::rounded_pads_retain_exact_arcs_and_union_without_boolean_blockers",
+      "materialize::tests::exact_compound_regions_replay_positive_and_negative_curve_loops",
+      "materialize::tests::short_translated_line_stroke_remains_strictly_certified"
+    ],
+    "failed": [
+      "materialize::tests::approximate_materialization_marks_consumed_terminal_pad_ordering"
+    ],
+    "ignored": []
+  },
+  {
+    "target": "fabrication",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/normalized-path-admission-hypercircuit-candidate3-binaries/fabrication-455cf31db8a55449",
+      "--test-threads=2",
+      "--color",
+      "never"
+    ],
+    "binary_sha256": "0c1da3581a39d01d08347825bc3d854d3acd7a4e86a27779429be5b2142c1c1c",
+    "returncode": 0,
+    "elapsed_seconds": 0.05273380602011457,
+    "log": "normalized-path-admission-hypercircuit-candidate3-fabrication.log",
+    "passed": [
+      "certified_layer_images_emit_x2_copper_and_plated_excellon_files",
+      "pad_and_artwork_intent_emit_unit_aware_mask_paste_and_legend_images"
+    ],
+    "failed": [],
+    "ignored": []
+  },
+  {
+    "target": "materialize",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/normalized-path-admission-hypercircuit-candidate3-binaries/materialize-e36a5a07f0646936",
+      "--test-threads=2",
+      "--color",
+      "never"
+    ],
+    "binary_sha256": "25b3621e815721add95372dc5c77485da8b194dcb240eb35f18ceb9008b887c2",
+    "returncode": 0,
+    "elapsed_seconds": 0.33742555099888705,
+    "log": "normalized-path-admission-hypercircuit-candidate3-materialize.log",
+    "passed": [
+      "multi_segment_orthogonal_route_materializes_as_one_source_feature",
+      "zone_island_policy_prunes_unconnected_and_exact_undersized_components",
+      "declarative_board_materializes_source_addressable_copper_and_drills"
+    ],
+    "failed": [],
+    "ignored": []
+  }
+]

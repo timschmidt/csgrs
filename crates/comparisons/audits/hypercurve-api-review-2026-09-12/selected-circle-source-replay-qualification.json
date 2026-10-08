@@ -1,0 +1,117 @@
+{
+  "status": "committed; qualified against the documented baseline",
+  "goal_status": "active",
+  "previous_commit": "384f66735296075ca54d81ce558cabbc16ee8a50",
+  "commit": "63dc97aba4fe578ceb11dee3bdc50ee2307f3884",
+  "targets": 49,
+  "passed": 2245,
+  "passed_by_repo": {
+    "hypercurve": 2013,
+    "hyperbrep": 232
+  },
+  "known_failed": [
+    "approximate_512_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions",
+    "non_ph_bezier_pair_projective_fillet_retains_algebraic_extensions",
+    "nonconvex_algebraic_chord_expansion_is_exact_and_local_collapse_is_explicit",
+    "strict_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions",
+    "unified_mixed_line_arc_erosion_splits_after_a_curved_neck_collapse"
+  ],
+  "new_failures": [],
+  "ignored": 9,
+  "expensive_previously_unqualified_exclusions": 8,
+  "timeouts": 0,
+  "builds_and_checks": {
+    "-check": 0,
+    "-test-build": 0,
+    "-hyperbrep-check": 0,
+    "-hyperbrep-test-build": 0
+  },
+  "formatting_and_whitespace": "passed on final frozen qualification sources",
+  "formatted_files": {
+    "hypercurve": [
+      "src/bezier_offset.rs",
+      "src/curve_point.rs",
+      "tests/hypercurve_curve_intersection.rs"
+    ],
+    "hyperbrep": []
+  },
+  "additional_caller_checks": [
+    {
+      "target": "fuzz",
+      "command": [
+        "cargo",
+        "check",
+        "--manifest-path",
+        "fuzz/Cargo.toml",
+        "--all-targets",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 7.82671797099465,
+      "log": "selected-circle-source-replay-fuzz-check.log"
+    },
+    {
+      "target": "ui",
+      "command": [
+        "cargo",
+        "check",
+        "--manifest-path",
+        "examples/hypercurve_ui/Cargo.toml",
+        "--all-targets",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 8.076822695002193,
+      "log": "selected-circle-source-replay-ui-check.log"
+    },
+    {
+      "target": "hyperbrep-fuzz",
+      "command": [
+        "cargo",
+        "check",
+        "--manifest-path",
+        "fuzz/Cargo.toml",
+        "--all-targets",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 9.6936192150024,
+      "log": "selected-circle-source-replay-hyperbrep-fuzz-check.log"
+    }
+  ],
+  "source_verification": "selected-circle-source-replay-source-verification.json",
+  "focused_regression_checks": "selected-circle-source-replay-final-focused.json",
+  "discovery_probe": "selected-circle-source-replay-baseline.json",
+  "normal_library_sha256": "2b3bafdc18066bab093760e4a78652e8452801d21cf8fe7cf5d134673708c6e8",
+  "independent_probes_and_matrices": [
+    "selected-circle-source-replay-public-replay.json",
+    "selected-circle-source-replay-affine-parallel-replay.json",
+    "selected-circle-source-replay-exterior-completed.json",
+    "selected-circle-source-replay-tangent-matrix.json",
+    "selected-circle-source-replay-finite-circle-probe.json",
+    "selected-circle-source-replay-family-matrix.json",
+    "selected-circle-source-replay-completed.json",
+    "selected-circle-source-replay-unit-replay.json",
+    "selected-circle-source-replay-retained-chord-matrix.json",
+    "selected-circle-source-replay-finite-matrix.json",
+    "selected-circle-source-replay-cubic-replay.json",
+    "selected-circle-source-replay-baseline-recheck.json",
+    "selected-circle-source-replay-replay-matrix-run.json",
+    "selected-circle-source-replay-analytic-probe.json",
+    "selected-circle-source-replay-endpoint-probe.json",
+    "selected-circle-source-replay-completed-probe.json",
+    "selected-circle-source-replay-probe-final.json",
+    "selected-circle-source-replay-circle-matrix.json",
+    "selected-circle-source-replay-region-carrier-matrix.json",
+    "selected-circle-source-replay-general-trim-matrix.json",
+    "selected-circle-source-replay-constant-image-trim-matrix.json"
+  ],
+  "regression_baseline": "finite-circle-affine-parallel-qualification.json",
+  "affected_regression_results": "selected-circle-source-replay-full-hypercurve-hypercurve_curve_intersection.json",
+  "evidence_audit": "selected-circle-source-replay-evidence-audit.md",
+  "performance_claim": null,
+  "remaining": "Nonlinear finite circle/rational, circle/parallel, parallel/rational and parallel/parallel discovery; normalized public region construction; five promotion failures; eight unqualified expensive tests; broader algebraic consolidation, computational measurements, and original architecture goal."
+}

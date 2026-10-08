@@ -1,0 +1,124 @@
+{
+  "diagnostic_only": true,
+  "checks": [],
+  "binaries": {
+    "hypercurve": {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-source-regressions-20260925-v50-hypercurve",
+      "sha256": "5d36b9274cdbcade55ef06b685bf08fd51d46e155c713b850cc90e0a1d5ad49e"
+    },
+    "hypercurve_curve": {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-source-regressions-20260925-v50-hypercurve_curve",
+      "sha256": "11368672542e9788e7047ca515d04aba0324137d20c88589e9c424b42a1550db"
+    }
+  },
+  "cases": [
+    {
+      "label": "represented_scalar_images_and_quotients_refine_past_the_old_limit",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-source-regressions-20260925-v50-hypercurve",
+        "--exact",
+        "bezier_offset::conversion_tests::represented_scalar_images_and_quotients_refine_past_the_old_limit",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 101,
+      "elapsed_seconds": 0.29606985906139016,
+      "log": "retained-source-regressions-20260925-v50-represented_scalar_images_and_quotients_refine_past_the_old_limit.log"
+    },
+    {
+      "label": "retained_analytic_corners_preserve_normalized_sets",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-source-regressions-20260925-v50-hypercurve",
+        "--exact",
+        "bezier_region::tests::retained_analytic_corners_preserve_normalized_sets",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 101,
+      "elapsed_seconds": 0.26822893891949207,
+      "log": "retained-source-regressions-20260925-v50-retained_analytic_corners_preserve_normalized_sets.log"
+    },
+    {
+      "label": "circular_spline_extensions_preserve_complements_and_closed_endpoint_ownership",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-source-regressions-20260925-v50-hypercurve",
+        "--exact",
+        "curve::curve_subdivision::tests::circular_spline_extensions_preserve_complements_and_closed_endpoint_ownership",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 101,
+      "elapsed_seconds": 0.2693046950735152,
+      "log": "retained-source-regressions-20260925-v50-circular_spline_extensions_preserve_complements_and_closed_endpoint_ownership.log"
+    },
+    {
+      "label": "direct_bezier_pair_fillet_retains_both_incident_extensions",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-source-regressions-20260925-v50-hypercurve_curve",
+        "--exact",
+        "direct_bezier_pair_fillet_retains_both_incident_extensions",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 101,
+      "elapsed_seconds": 2.32992065011058,
+      "log": "retained-source-regressions-20260925-v50-direct_bezier_pair_fillet_retains_both_incident_extensions.log"
+    },
+    {
+      "label": "resource_blocked_selected_corner_chamfers_in_its_affine_fiber",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-source-regressions-20260925-v50-hypercurve",
+        "--exact",
+        "bezier_region::tests::resource_blocked_selected_corner_chamfers_in_its_affine_fiber",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 101,
+      "elapsed_seconds": 12.747600695933215,
+      "log": "retained-source-regressions-20260925-v50-resource_blocked_selected_corner_chamfers_in_its_affine_fiber.log"
+    },
+    {
+      "label": "recursive_selected_radial_diameter_chord_intersects_a_rational_quadratic_strict",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-source-regressions-20260925-v50-hypercurve",
+        "--exact",
+        "bezier_offset::conversion_tests::recursive_selected_radial_diameter_chord_intersects_a_rational_quadratic_strict",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 48.94580049300566,
+      "log": "retained-source-regressions-20260925-v50-recursive_selected_radial_diameter_chord_intersects_a_rational_quadratic_strict.log"
+    },
+    {
+      "label": "recursive_selected_radial_diameter_chord_intersects_a_rational_quadratic_approximate",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-source-regressions-20260925-v50-hypercurve",
+        "--exact",
+        "bezier_offset::conversion_tests::recursive_selected_radial_diameter_chord_intersects_a_rational_quadratic_approximate",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 48.65126741898712,
+      "log": "retained-source-regressions-20260925-v50-recursive_selected_radial_diameter_chord_intersects_a_rational_quadratic_approximate.log"
+    }
+  ],
+  "all_processes_reaped": true,
+  "build_returncode": 0,
+  "all_sources_unchanged": true
+}

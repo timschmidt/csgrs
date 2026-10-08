@@ -1,0 +1,24 @@
+import {readFileSync,writeFileSync,existsSync,mkdirSync} from 'node:fs';
+import {createHash} from 'node:crypto';
+import {inflateRawSync} from 'node:zlib';
+import assert from 'node:assert/strict';
+const root=import.meta.dirname,path=root+'/../Ruffini/abstractions.svg',bytes=readFileSync(path),source=bytes.toString('utf8');
+const sha=b=>createHash('sha256').update(b).digest('hex');
+assert.equal(sha(bytes),'770dec9140a009a8436024ed8181d911c5023cbf9f8042f45a6b9751aa2bbe2c');assert(Buffer.from(source).equals(bytes));
+const lines=source.split('\n');if(source.endsWith('\n'))lines.pop();assert.equal(lines.length,12);
+const entities={lt:'<',gt:'>',quot:'"',amp:'&',apos:"'"};
+const xml=s=>s.replace(/&(lt|gt|quot|amp|apos);/g,(_,name)=>entities[name]);
+const attribute=/\bcontent="([^"]*)"/.exec(source);assert(attribute);
+const embedded=xml(attribute[1]),match=/<diagram\b[^>]*>([^<]*)<\/diagram>/.exec(embedded);assert(match);
+const encoded=Buffer.from(match[1],'base64');assert.equal(encoded.toString('base64'),match[1]);
+const inflated=inflateRawSync(encoded,{maxOutputLength:16*1024*1024}).toString('utf8');
+const decoded=decodeURIComponent(inflated);assert(decoded.startsWith('<mxGraphModel'));
+const formatted=[];for(let line=0;line<lines.length;line++)for(let col=0;col<Math.max(1,lines[line].length);col+=160)formatted.push('L'+(line+1)+' C'+(col+1)+'-'+Math.min(col+160,lines[line].length)+'\t'+lines[line].slice(col,col+160));
+const formattedModel=decoded.replace(/></g,'>\n<');assert.equal(formattedModel.replace(/>\n</g,'><'),decoded);
+const meta={source:path,sha256:sha(bytes),bytes:bytes.length,physicalLines:lines.length,lineCharacters:lines.map(s=>s.length),sourceChunks:formatted.length,chunkCharacters:160,embeddedXMLCharacters:embedded.length,compressedPayloadBytes:encoded.length,inflatedURICharacters:inflated.length,decodedXMLCharacters:decoded.length,decodedXMLSha256:sha(decoded),decodedPresentationLines:formattedModel.split('\n').length,hrefs:[...source.matchAll(/(?:xlink:)?href="([^"]*)"/g)].map(m=>m[1]),activeMarkup:/(?:<script\b|\bonload=|<!ENTITY)/i.test(source)};
+if(process.argv[2]==='meta')console.log(JSON.stringify(meta,null,2));
+else if(process.argv[2]==='prepare'){
+ const out=root+'/abstractions-audit';assert(!existsSync(out),'preserve prepared evidence');mkdirSync(out);
+ writeFileSync(out+'/source-chunks.txt',formatted.join('\n')+'\n');writeFileSync(out+'/embedded-mxfile.xml',embedded);writeFileSync(out+'/decoded-model.xml',decoded);writeFileSync(out+'/model-presentation.xml',formattedModel+'\n');
+ writeFileSync(out+'/metadata.json',JSON.stringify({...meta,scriptSha256:sha(readFileSync(import.meta.filename))},null,2)+'\n');console.log(JSON.stringify(meta,null,2));
+}else throw Error('expected meta or prepare');

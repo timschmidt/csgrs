@@ -1,0 +1,12 @@
+Regularize native compound boundaries through the shared arrangement
+
+Take a borrowed contour slice and one explicit global fill rule, then use
+canonical boundary-path admission. Crossing, overlapping and touching
+contours now produce exact regularized regions directly, without a separate
+nesting prepass or a redundant classification wrapper. Keep the private
+nesting evidence used by internal native views.
+
+Migrate all controlled callers directly. Cover winding cancellation,
+recursive islands, algebraic circle overlaps, native round trips and
+Boolean/offset reuse under both policies. Qualification:46 targeted release
+regressions across3 binaries,8 checks, and a pinned baseline reproducer.

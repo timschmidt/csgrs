@@ -1,0 +1,14 @@
+{
+  "tag": "coq-aern-run-release-v85",
+  "started": "2026-09-12T05:36:43.708Z",
+  "finished": "2026-09-12T05:36:43.724Z",
+  "elapsedSeconds": 0.014392123999999996,
+  "cwd": "/home/tim/Documents/GitHub/workspace",
+  "command": "timeout",
+  "args": [
+    "300s",
+    "/tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/release/coq-aern-hyper-v85"
+  ],
+  "code": 0,
+  "signal": null
+}

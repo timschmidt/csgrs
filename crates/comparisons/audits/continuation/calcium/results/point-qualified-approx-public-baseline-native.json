@@ -1,0 +1,11 @@
+{
+  "tag": "point-qualified-approx-public-baseline-native",
+  "started": "2026-09-10T20:49:41.314Z",
+  "finished": "2026-09-10T20:49:41.635Z",
+  "elapsedSeconds": 0.31860618399999996,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "/tmp/calcium-point-qualified-approx.HLxIaq/baseline",
+  "args": [],
+  "code": 0,
+  "signal": null
+}

@@ -1,0 +1,28 @@
+decompose-independent-inputs	checks=54	failures=0
+MPFR-add-direction-ternary-bracket	checks=139968	failures=0
+MPFR-sub-direction-ternary-bracket	checks=139968	failures=0
+MPFR-mul-direction-ternary-bracket	checks=139968	failures=0
+MPFR-div-direction-ternary-bracket	checks=124416	failures=0
+MPFR-neg	checks=2592	failures=0
+MPFR-abs	checks=2592	failures=0
+MPFR-sqr	checks=2592	failures=0
+MPFR-set	checks=2592	failures=0
+MPFR-fma	checks=93312	failures=0
+MPFR-binary-scaling	checks=25920	failures=0
+MPFR-sqrt-rational-square-oracle	checks=1440	failures=0
+exact-add	checks=2916	failures=0
+exact-sub	checks=2916	failures=0
+exact-mul	checks=2916	failures=0
+ball-small-radius-div	checks=17496	failures=2484
+  (4,[(-195) % 81129638414606681695789005144064,(-189) % 81129638414606681695789005144064],[(-1105) % 81129638414606681695789005144064,(-1071) % 81129638414606681695789005144064],Just [2883 % 16384,3261 % 16384])
+  (4,[(-195) % 81129638414606681695789005144064,(-189) % 81129638414606681695789005144064],[(-4369) % 324518553658426726783156020576256,(-4335) % 324518553658426726783156020576256],Just [11379 % 65536,13197 % 65536])
+  (4,[(-195) % 81129638414606681695789005144064,(-189) % 81129638414606681695789005144064],[(-1105) % 64,(-1071) % 64],Just [2883 % 20769187434139310514121985316880384,3261 % 20769187434139310514121985316880384])
+ball-sqrt-square-oracle	checks=162	failures=0
+real-lim-no-false-strict	checks=7	failures=0
+real-lim-requested-accuracy	checks=5	failures=0
+real-limRat-no-false-strict	checks=7	failures=0
+real-limRat-requested-accuracy	checks=5	failures=0
+real-infSum-no-false-strict	checks=7	failures=0
+real-infSum-requested-accuracy	checks=5	failures=0
+real-infSumRec-no-false-strict	checks=7	failures=0
+real-infSumRec-requested-accuracy	checks=5	failures=0

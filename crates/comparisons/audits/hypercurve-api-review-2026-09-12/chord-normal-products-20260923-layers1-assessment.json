@@ -1,0 +1,38 @@
+{
+  "hyperreal_checks": [
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "check",
+        "--all-targets",
+        "--all-features",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "log": "chord-normal-products-20260923-layers1-check-0.log"
+    },
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "check",
+        "--all-targets",
+        "--no-default-features",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "log": "chord-normal-products-20260923-layers1-check-1.log"
+    }
+  ],
+  "hypersolve": {
+    "returncode": 0,
+    "passed": 506,
+    "elapsed_seconds": 29.09731748397462,
+    "binary_sha256": "e10ce4fb7413ca907ce55a3a98e92d45373dabe3ad4a0dad0a1906f0f9efe0e5",
+    "hyperreal_candidate_used": false,
+    "reason": "Cargo cwd resolved the Hypersolve directory symlink to its older sibling dependency snapshots."
+  },
+  "all_sources_unchanged": true,
+  "all_processes_reaped": true
+}

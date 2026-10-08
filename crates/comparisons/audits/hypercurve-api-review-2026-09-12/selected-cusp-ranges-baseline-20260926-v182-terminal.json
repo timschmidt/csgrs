@@ -1,0 +1,110 @@
+{
+  "parents": {
+    "hypercurve": "7941ee50b10bef91a519bfcbd104b759f9cb721a",
+    "hypersolve": "41855c3604cbd18605a020d60758c8e5c489b629",
+    "hyperreal": "0cb5f29aee065c73e234e0ebb0a9e106398515bb"
+  },
+  "source_manifest": "selected-cusp-ranges-baseline-20260926-v182-sources.json",
+  "source_directory": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/source-archives/selected-cusp-ranges-baseline-20260926-v182",
+  "build_source_directory": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/build-workspace-20260925",
+  "workspace_guard": "local-chord-complete-replay-20260924-v182-sources.json",
+  "checks": [],
+  "cases": [
+    {
+      "repo": "hypercurve",
+      "label": "case-00",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/selected-cusp-ranges-baseline-20260926-v182-hypercurve",
+        "--exact",
+        "bezier_region::tests::selected_parallel_offset_partitions_existing_cusps_before_composition",
+        "--test-threads=1",
+        "--nocapture",
+        "--color",
+        "never"
+      ],
+      "returncode": 101,
+      "elapsed_seconds": 0.003707865020260215,
+      "log": "selected-cusp-ranges-baseline-20260926-v182-case-00.log",
+      "name": "bezier_region::tests::selected_parallel_offset_partitions_existing_cusps_before_composition"
+    },
+    {
+      "repo": "hypercurve",
+      "label": "case-01",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/selected-cusp-ranges-baseline-20260926-v182-hypercurve",
+        "--exact",
+        "bezier_region::tests::selected_parallel_coalescing_requires_regular_cells",
+        "--test-threads=1",
+        "--nocapture",
+        "--color",
+        "never"
+      ],
+      "returncode": 101,
+      "elapsed_seconds": 0.003626801073551178,
+      "log": "selected-cusp-ranges-baseline-20260926-v182-case-01.log",
+      "name": "bezier_region::tests::selected_parallel_coalescing_requires_regular_cells"
+    },
+    {
+      "repo": "hypercurve",
+      "label": "case-02",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/selected-cusp-ranges-baseline-20260926-v182-hypercurve",
+        "--exact",
+        "bezier_region::tests::selected_parallel_endpoint_tangents_use_the_incident_branch",
+        "--test-threads=1",
+        "--nocapture",
+        "--color",
+        "never"
+      ],
+      "returncode": 101,
+      "elapsed_seconds": 0.003668748075142503,
+      "log": "selected-cusp-ranges-baseline-20260926-v182-case-02.log",
+      "name": "bezier_region::tests::selected_parallel_endpoint_tangents_use_the_incident_branch"
+    },
+    {
+      "repo": "hypercurve",
+      "label": "case-03",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/selected-cusp-ranges-baseline-20260926-v182-hypercurve",
+        "--exact",
+        "bezier_region::tests::retained_parallel_offset_composition_respects_traversal_orientation",
+        "--test-threads=1",
+        "--nocapture",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.0036482190480455756,
+      "log": "selected-cusp-ranges-baseline-20260926-v182-case-03.log",
+      "name": "bezier_region::tests::retained_parallel_offset_composition_respects_traversal_orientation"
+    },
+    {
+      "repo": "hypercurve",
+      "label": "case-04",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/selected-cusp-ranges-baseline-20260926-v182-hypercurve",
+        "--exact",
+        "bezier_region::tests::retained_parallel_offset_preserves_algebraic_cusp_partition",
+        "--test-threads=1",
+        "--nocapture",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.007622075965628028,
+      "log": "selected-cusp-ranges-baseline-20260926-v182-case-04.log",
+      "name": "bezier_region::tests::retained_parallel_offset_preserves_algebraic_cusp_partition"
+    }
+  ],
+  "binaries": {
+    "hypercurve": {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/selected-cusp-ranges-baseline-20260926-v182-hypercurve",
+      "sha256": "05dc4ccf66092146eb8de43cce6c80f87667802f702ac7b4bf85e4dc7214642e"
+    }
+  },
+  "all_processes_reaped": true,
+  "diagnostic_only": false,
+  "hypercurve_build_returncode": 0,
+  "all_sources_unchanged": true,
+  "qualification_complete": false
+}

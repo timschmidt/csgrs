@@ -1,0 +1,61 @@
+{
+  "builds": [
+    {
+      "label": "check",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "check",
+        "--all-targets",
+        "--all-features",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 18.085358429932967
+    },
+    {
+      "label": "libtest",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "test",
+        "--lib",
+        "--release",
+        "--all-features",
+        "--no-run",
+        "--message-format=json",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 123.79847974702716
+    }
+  ],
+  "passed": 137,
+  "ignored": 1,
+  "failed": [
+    {
+      "label": "candidate",
+      "name": "bezier_offset::conversion_tests::selected_fiber_transverse_mapped_cut_inverts_by_point",
+      "returncode": 101,
+      "elapsed_seconds": 0.00762466702144593,
+      "passed": false,
+      "ignored": false,
+      "log": "root-charts-20260923-final2-candidate-0096.log"
+    }
+  ],
+  "control_replays": [
+    {
+      "label": "control",
+      "name": "bezier_offset::conversion_tests::selected_fiber_transverse_mapped_cut_inverts_by_point",
+      "returncode": 101,
+      "elapsed_seconds": 0.0077451979741454124,
+      "passed": false,
+      "ignored": false,
+      "log": "root-charts-20260923-final2-control-0000.log"
+    }
+  ],
+  "new_failures": [],
+  "binary_sha256": "c47f0501a4cf7bd9d7304b672c6e3157954220beadec01a67175c39bad8f64c1",
+  "all_bound_sources_unchanged": true,
+  "all_processes_reaped": true
+}

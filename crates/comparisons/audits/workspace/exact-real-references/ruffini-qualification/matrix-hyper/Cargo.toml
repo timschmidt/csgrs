@@ -1,0 +1,15 @@
+[package]
+name = "ruffini-matrix-controls"
+version = "0.0.0"
+edition = "2024"
+publish = false
+
+[dependencies]
+hyperreal = { path = "../../../hyperreal" }
+hyperlattice = { path = "../../../hyperlattice" }
+hyperlimit = { path = "../../../hyperlimit" }
+hypersolve = { path = "../../../hypersolve" }
+
+[[bin]]
+name = "ruffini_matrix_hyper"
+path = "controls.rs"

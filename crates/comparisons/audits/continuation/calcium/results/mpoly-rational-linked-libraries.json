@@ -1,0 +1,13 @@
+{
+  "tag": "mpoly-rational-linked-libraries",
+  "started": "2026-09-10T03:35:37.214Z",
+  "finished": "2026-09-10T03:35:37.241Z",
+  "elapsedSeconds": 0.02442993799999999,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison",
+  "command": "ldd",
+  "args": [
+    "/tmp/calcium-mpoly-rational.Hmk8Is/controls"
+  ],
+  "code": 0,
+  "signal": null
+}

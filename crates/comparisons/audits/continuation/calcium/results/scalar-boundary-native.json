@@ -1,0 +1,11 @@
+{
+  "tag": "scalar-boundary-native",
+  "started": "2026-09-08T13:24:42.774Z",
+  "finished": "2026-09-08T13:24:42.788Z",
+  "elapsedSeconds": 0.012105459999999993,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison",
+  "command": "/home/tim/Documents/GitHub/workspace/.audit-builds/calcium-scalar-boundary-probe",
+  "args": [],
+  "code": 1,
+  "signal": null
+}

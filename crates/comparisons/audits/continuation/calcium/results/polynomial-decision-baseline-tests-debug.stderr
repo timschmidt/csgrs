@@ -1,0 +1,9 @@
+    Blocking waiting for file lock on build directory
+    Finished `test` profile [unoptimized] target(s) in 14.45s
+     Running unittests src/lib.rs (/tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/debug/deps/hypersolve-e62b06eabccd5546)
+     Running tests/exactcore_root_families.rs (/tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/debug/deps/exactcore_root_families-bd68d8a2679242b0)
+     Running tests/quadratic_extraction.rs (/tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/debug/deps/quadratic_extraction-4d932b86f54044ff)
+     Running tests/readme.rs (/tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/debug/deps/readme-e2cb461842cb74dd)
+     Running tests/real_representations.rs (/tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/debug/deps/real_representations-117101db576db863)
+     Running tests/residual_props.rs (/tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/debug/deps/residual_props-92313479d8c9bc9d)
+     Running tests/smoke.rs (/tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/debug/deps/smoke-c3cee544aba9a04d)

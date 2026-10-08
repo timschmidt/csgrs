@@ -1,0 +1,34 @@
+{
+  "inputs": {
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/fillet-image-square-free-20260926-v273.rs": "32d277da223df194a7ce405e3b70501aed47d11bfcc8e8486ed89a7e11a9ab18",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/fillet-image-square-free-20260926-v272-image.jsonl": "7c28968beea53a78a70c93c67f9e6776499948613c95c615bc09cb88c7517171",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/run-fillet-image-square-free-20260926-v273.py": "eea02fdf5e684ef5236ec2580159feaf72290b9c0e4c4b91d2ff3018cea8fb48",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlimit-c4930c87ed3f3ffe.rlib": "f7dc3d0fc6ebc7526ce9cc52f1e756c51ccbb19b731f688f71b673ba45a6b790",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperreal-dff9c97d38a41830.rlib": "a12a7052c74726029a9eed7a076293b583d6dae44e036aa0b634e505c5cb987d",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypersolve-dab45c0236e67f19.rlib": "ad92ba22cd981c7f88ffe136224f22b49127df002aab598bb1f04c06565c8cd7"
+  },
+  "source_manifest": "fillet-image-square-free-20260926-v272-sources.json",
+  "workspace_guard": "shared-source-refinement-20260926-v270-sources.json",
+  "command": [
+    "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustc",
+    "--edition=2024",
+    "-C",
+    "opt-level=3",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/fillet-image-square-free-20260926-v273.rs",
+    "-o",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/fillet-image-square-free-20260926-v273",
+    "-L",
+    "dependency=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps",
+    "--extern",
+    "hyperlimit=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlimit-c4930c87ed3f3ffe.rlib",
+    "--extern",
+    "hyperreal=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperreal-dff9c97d38a41830.rlib",
+    "--extern",
+    "hypersolve=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypersolve-dab45c0236e67f19.rlib"
+  ],
+  "all_processes_reaped": true,
+  "build_returncode": 0,
+  "binary_sha256": "d7efaa36dacf533dad6473a2f0f0b248a952eaec392ba248258e478718ea5890",
+  "run_returncode": 0,
+  "elapsed_seconds": 1.1192358969710767
+}

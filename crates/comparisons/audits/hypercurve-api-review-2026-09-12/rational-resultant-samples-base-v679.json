@@ -1,0 +1,5 @@
+{
+  "hypersolve/src/resultant.rs": "d663ec8ae2c5bf36b2b9ebec3d68d44b3667c5328572fd9b2b39ce4a944ebfdc",
+  "hypersolve/src/curve_resultant.rs": "98dba0c18ae7f1b7489ea5b844d7e8cb1e202093b1ff8344a960cee17891dd3c",
+  "hypercurve/src/bezier_offset.rs": "8b26ec33d141d12cdc055f35f3c9360477c809e462001c6adf9371f8b43cd293"
+}

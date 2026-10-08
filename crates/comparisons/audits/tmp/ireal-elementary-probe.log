@@ -1,0 +1,101 @@
+DONE exp
+DONE log
+DONE sin
+DONE cos
+DONE atan
+TIMEOUT point asin 0 ["-1/1"] 
+TIMEOUT point asin 1 ["-1/1"] 
+TIMEOUT point asin 2 ["-1/1"] 
+TIMEOUT point asin 8 ["-1/1"] 
+TIMEOUT point asin 53 ["-1/1"] 
+TIMEOUT point asin 128 ["-1/1"] 
+TIMEOUT point asin 512 ["-1/1"] 
+TIMEOUT warm-coarse asin 128 ["-1/1"] 
+TIMEOUT warm-coarse asin 2 ["-1/1"] 
+TIMEOUT warm-coarse asin 0 ["-1/1"] 
+TIMEOUT point asin 0 ["1/1"] 
+TIMEOUT point asin 1 ["1/1"] 
+TIMEOUT point asin 2 ["1/1"] 
+TIMEOUT point asin 8 ["1/1"] 
+TIMEOUT point asin 53 ["1/1"] 
+TIMEOUT point asin 128 ["1/1"] 
+TIMEOUT point asin 512 ["1/1"] 
+TIMEOUT warm-coarse asin 128 ["1/1"] 
+EXCEPTION warm-coarse asin 2 ["1/1"] heap overflow
+EXCEPTION warm-coarse asin 0 ["1/1"] heap overflow
+DONE asin
+TIMEOUT point acos 0 ["-1/1"] 
+TIMEOUT point acos 1 ["-1/1"] 
+TIMEOUT point acos 2 ["-1/1"] 
+TIMEOUT point acos 8 ["-1/1"] 
+TIMEOUT point acos 53 ["-1/1"] 
+TIMEOUT point acos 128 ["-1/1"] 
+TIMEOUT point acos 512 ["-1/1"] 
+TIMEOUT warm-coarse acos 128 ["-1/1"] 
+EXCEPTION warm-coarse acos 2 ["-1/1"] heap overflow
+EXCEPTION warm-coarse acos 0 ["-1/1"] heap overflow
+TIMEOUT point acos 0 ["1/1"] 
+TIMEOUT point acos 1 ["1/1"] 
+TIMEOUT point acos 2 ["1/1"] 
+TIMEOUT point acos 8 ["1/1"] 
+TIMEOUT point acos 53 ["1/1"] 
+TIMEOUT point acos 128 ["1/1"] 
+TIMEOUT point acos 512 ["1/1"] 
+TIMEOUT warm-coarse acos 128 ["1/1"] 
+EXCEPTION warm-coarse acos 2 ["1/1"] heap overflow
+EXCEPTION warm-coarse acos 0 ["1/1"] heap overflow
+DONE acos
+EXCEPTION point sqrt 0 ["0/1"] Excessive precision required: -9223372032559808512
+CallStack (from HasCallStack):
+  error, called at ./Data/Number/IReal/UnsafeMemo.hs:19:10 in ireal-0.2.3-1adEs5TQUyIfzTsanQTr7:Data.Number.IReal.UnsafeMemo
+EXCEPTION point sqrt 1 ["0/1"] Excessive precision required: -9223372032559808512
+CallStack (from HasCallStack):
+  error, called at ./Data/Number/IReal/UnsafeMemo.hs:19:10 in ireal-0.2.3-1adEs5TQUyIfzTsanQTr7:Data.Number.IReal.UnsafeMemo
+EXCEPTION point sqrt 2 ["0/1"] Excessive precision required: -9223372032559808512
+CallStack (from HasCallStack):
+  error, called at ./Data/Number/IReal/UnsafeMemo.hs:19:10 in ireal-0.2.3-1adEs5TQUyIfzTsanQTr7:Data.Number.IReal.UnsafeMemo
+EXCEPTION point sqrt 8 ["0/1"] Excessive precision required: -9223372032559808512
+CallStack (from HasCallStack):
+  error, called at ./Data/Number/IReal/UnsafeMemo.hs:19:10 in ireal-0.2.3-1adEs5TQUyIfzTsanQTr7:Data.Number.IReal.UnsafeMemo
+EXCEPTION point sqrt 53 ["0/1"] Excessive precision required: -3170534133373861888
+CallStack (from HasCallStack):
+  error, called at ./Data/Number/IReal/UnsafeMemo.hs:19:10 in ireal-0.2.3-1adEs5TQUyIfzTsanQTr7:Data.Number.IReal.UnsafeMemo
+EXCEPTION point sqrt 128 ["0/1"] Excessive precision required: -9223372032559808512
+CallStack (from HasCallStack):
+  error, called at ./Data/Number/IReal/UnsafeMemo.hs:19:10 in ireal-0.2.3-1adEs5TQUyIfzTsanQTr7:Data.Number.IReal.UnsafeMemo
+EXCEPTION point sqrt 512 ["0/1"] Excessive precision required: -9223372032559808512
+CallStack (from HasCallStack):
+  error, called at ./Data/Number/IReal/UnsafeMemo.hs:19:10 in ireal-0.2.3-1adEs5TQUyIfzTsanQTr7:Data.Number.IReal.UnsafeMemo
+EXCEPTION warm-coarse sqrt 128 ["0/1"] Excessive precision required: -9223372032559808512
+CallStack (from HasCallStack):
+  error, called at ./Data/Number/IReal/UnsafeMemo.hs:19:10 in ireal-0.2.3-1adEs5TQUyIfzTsanQTr7:Data.Number.IReal.UnsafeMemo
+EXCEPTION warm-coarse sqrt 2 ["0/1"] Excessive precision required: -9223372032559808512
+CallStack (from HasCallStack):
+  error, called at ./Data/Number/IReal/UnsafeMemo.hs:19:10 in ireal-0.2.3-1adEs5TQUyIfzTsanQTr7:Data.Number.IReal.UnsafeMemo
+EXCEPTION warm-coarse sqrt 0 ["0/1"] Excessive precision required: -9223372032559808512
+CallStack (from HasCallStack):
+  error, called at ./Data/Number/IReal/UnsafeMemo.hs:19:10 in ireal-0.2.3-1adEs5TQUyIfzTsanQTr7:Data.Number.IReal.UnsafeMemo
+FAIL interval sqrt 8 ["15/16","121/128","61/64","123/128","31/32","125/128","63/64","127/128","1/1","129/128","65/64","131/128","33/32","133/128","67/64","135/128","17/16"] 247/256 263/256
+FAIL interval sqrt 53 ["15/16","121/128","61/64","123/128","31/32","125/128","63/64","127/128","1/1","129/128","65/64","131/128","33/32","133/128","67/64","135/128","17/16"] 8721183177395929/9007199254740992 9284408479570445/9007199254740992
+FAIL interval sqrt 128 ["15/16","121/128","61/64","123/128","31/32","125/128","63/64","127/128","1/1","129/128","65/64","131/128","33/32","133/128","67/64","135/128","17/16"] 82369246255802267269540517965985550845/85070591730234615865843651857942052864 10961094854298549240871987549415162603/10633823966279326983230456482242756608
+FAIL interval sqrt 2 ["1/2","9/16","5/8","11/16","3/4","13/16","7/8","15/16","1/1","17/16","9/8","19/16","5/4","21/16","11/8","23/16","3/2"] 1/2 1/1
+FAIL interval sqrt 8 ["1/2","9/16","5/8","11/16","3/4","13/16","7/8","15/16","1/1","17/16","9/8","19/16","5/4","21/16","11/8","23/16","3/2"] 181/256 313/256
+FAIL interval sqrt 53 ["1/2","9/16","5/8","11/16","3/4","13/16","7/8","15/16","1/1","17/16","9/8","19/16","5/4","21/16","11/8","23/16","3/2"] 1592262918131443/2251799813685248 2757880273211543/2251799813685248
+FAIL interval sqrt 128 ["1/2","9/16","5/8","11/16","3/4","13/16","7/8","15/16","1/1","17/16","9/8","19/16","5/4","21/16","11/8","23/16","3/2"] 240615969168004511545033772477625056927/340282366920938463463374607431768211456 416759083711410294120994443847204693107/340282366920938463463374607431768211456
+FAIL interval sqrt 8 ["63/16","505/128","253/64","507/128","127/32","509/128","255/64","511/128","4/1","513/128","257/64","515/128","129/32","517/128","259/64","519/128","65/16"] 507/256 515/256
+FAIL interval sqrt 53 ["63/16","505/128","253/64","507/128","127/32","509/128","255/64","511/128","4/1","513/128","257/64","515/128","129/32","517/128","259/64","519/128","65/16"] 17873106927938237/9007199254740992 18154590495501121/9007199254740992
+FAIL interval sqrt 128 ["63/16","505/128","253/64","507/128","127/32","509/128","255/64","511/128","4/1","513/128","257/64","515/128","129/32","517/128","259/64","519/128","65/16"] 675226888809926259056444897054026340511/340282366920938463463374607431768211456 342930518664713276604942668815741901521/170141183460469231731687303715884105728
+FAIL interval sqrt 8 ["7/2","57/16","29/8","59/16","15/4","61/16","31/8","63/16","4/1","65/16","33/8","67/16","17/4","69/16","35/8","71/16","9/2"] 239/128 543/256
+FAIL interval sqrt 53 ["7/2","57/16","29/8","59/16","15/4","61/16","31/8","63/16","4/1","65/16","33/8","67/16","17/4","69/16","35/8","71/16","9/2"] 8425463406411593/4503599627370496 19107155017577317/9007199254740992
+FAIL interval sqrt 128 ["7/2","57/16","29/8","59/16","15/4","61/16","31/8","63/16","4/1","65/16","33/8","67/16","17/4","69/16","35/8","71/16","9/2"] 318305007944662521603433860153578694457/170141183460469231731687303715884105728 721847907504013534635101317432875170781/340282366920938463463374607431768211456
+FAIL interval sqrt 2 ["2/1","9/4","5/2","11/4","3/1","13/4","7/2","15/4","4/1","17/4","9/2","19/4","5/1","21/4","11/2","23/4","6/1"] 5/4 9/4
+FAIL interval sqrt 8 ["2/1","9/4","5/2","11/4","3/1","13/4","7/2","15/4","4/1","17/4","9/2","19/4","5/1","21/4","11/2","23/4","6/1"] 181/128 627/256
+FAIL interval sqrt 53 ["2/1","9/4","5/2","11/4","3/1","13/4","7/2","15/4","4/1","17/4","9/2","19/4","5/1","21/4","11/2","23/4","6/1"] 12738103345051545/9007199254740992 22063042185692345/9007199254740992
+FAIL interval sqrt 128 ["2/1","9/4","5/2","11/4","3/1","13/4","7/2","15/4","4/1","17/4","9/2","19/4","5/1","21/4","11/2","23/4","6/1"] 240615969168004511545033772477625056927/170141183460469231731687303715884105728 833518167422820588241988887694409386215/340282366920938463463374607431768211456
+DONE sqrt
+DONE erf
+TOTAL PASS 4745
+TOTAL FAIL 17
+TOTAL TIMEOUT 34
+TOTAL EXCEPTION 16
+TOTAL UNRESOLVED 0

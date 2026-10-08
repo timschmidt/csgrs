@@ -1,0 +1,9 @@
+   Compiling hypersolve v0.3.1 (/home/tim/Documents/GitHub/workspace/hypersolve)
+    Finished `release` profile [optimized] target(s) in 17.85s
+     Running unittests src/lib.rs (target/release/deps/hypersolve-f165f92bff40da5b)
+
+running 1 test
+test curve_resultant::tests::exact_bivariate_division_replays_non_monic_ragged_products ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 415 filtered out; finished in 0.00s
+

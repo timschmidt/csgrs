@@ -1,0 +1,29 @@
+{
+  "source_manifest": "retained-native-circle-contact-20260927-v320-sources.json",
+  "source_directory": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/source-archives/retained-native-circle-contact-20260927-v320",
+  "cases": [],
+  "builds": [],
+  "all_processes_reaped": true,
+  "checks": [
+    {
+      "label": "clippy-all-features",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "clippy",
+        "--all-targets",
+        "--all-features",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "returncode": 101,
+      "log": "retained-native-circle-contact-20260927-v320-clippy-all-features.log",
+      "elapsed_seconds": 17.891805000021122
+    }
+  ],
+  "qualification_scope": "Retained native-circle contacts, exact circular reconstruction, fillet and chamfer closure",
+  "failure": "clippy-all-features failed",
+  "qualification_complete": false
+}

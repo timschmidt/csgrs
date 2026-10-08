@@ -1,0 +1,53 @@
+{
+  "inputs": {
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/narrow-selected-sign-20260926-v281.rs": "bff67408491d9578f44e362fbf02a16717f60631f2bd24abef93d8b90b72204b",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/fillet-selected-sign-export-20260926-v279-sign.jsonl": "0e700b30c5a756f163c2d9677833c6f9a58ae5bff155ea5c61c797bbaa5c73bc",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/run-narrow-selected-sign-20260926-v281.py": "5bcc80089e39cdc159392811f1595ec385b3ac9ef4495be391095129b21853e1",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperreal-dff9c97d38a41830.rlib": "b25373a117f84cb7807d43ea4d985fd80b430321a3bc1b8dd99d1b728727f8e5",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlimit-c4930c87ed3f3ffe.rlib": "ce81efba48df9590ba0f7963fd66ec6512d4444848cd47ddeecb0c745a10d1e6",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypersolve-dab45c0236e67f19.rlib": "40e6f89ea168dbf68855dd6c3a7730c97eb0e2c661508daaa541fa8fa81b578d"
+  },
+  "source_manifest": "fillet-selected-sign-export-20260926-v279-sources.json",
+  "workspace_guard": "compact-image-coefficients-20260926-v275-sources.json",
+  "command": [
+    "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustc",
+    "--edition=2024",
+    "-C",
+    "opt-level=3",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/narrow-selected-sign-20260926-v281.rs",
+    "-o",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/narrow-selected-sign-20260926-v281",
+    "-L",
+    "dependency=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps",
+    "--extern",
+    "hyperreal=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperreal-dff9c97d38a41830.rlib",
+    "--extern",
+    "hyperlimit=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlimit-c4930c87ed3f3ffe.rlib",
+    "--extern",
+    "hypersolve=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypersolve-dab45c0236e67f19.rlib"
+  ],
+  "all_processes_reaped": true,
+  "build_returncode": 0,
+  "binary_sha256": "50288f4440bc826daddecb7f601f5199d42d1649466f781aee1084b2895fecfe",
+  "runs": [
+    {
+      "mode": "native",
+      "returncode": 0,
+      "elapsed_seconds": 0.015556862927041948,
+      "log": "narrow-selected-sign-20260926-v281-native.log"
+    },
+    {
+      "mode": "256",
+      "returncode": 0,
+      "elapsed_seconds": 0.003427924937568605,
+      "log": "narrow-selected-sign-20260926-v281-256.log"
+    },
+    {
+      "mode": "128",
+      "returncode": 0,
+      "elapsed_seconds": 0.0034314149525016546,
+      "log": "narrow-selected-sign-20260926-v281-128.log"
+    }
+  ],
+  "elapsed_seconds": 2.4423870850587264
+}

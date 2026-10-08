@@ -1,0 +1,12 @@
+artifact	coverage	status
+Plume/report.txt	1-4871 of4871	complete text read; primary report visual corroboration complete
+Plume/report.pdf	physical pages1-133 of133	all133 pages independently visually read; printed/source discrepancies recorded
+Plume/author-report.pdf	physical20-22,65,77-80,90,104,129 of133	11 independently visually read; all five text-difference pages corroborated; other122 visual pages uncredited under generated-container scope convention
+Plume/index.html	1-618	complete raw HTML read; rendered abstract/contents previously read; linked nodes not automatically credited
+Plume/node91.html	1-80	HTML complete; linked img216.gif independently viewed
+Plume/img216.gif	585x256 complete image	visually read; matches conceptual module layout of primary report figure6.1
+Plume/node97.html	1-82	complete
+Plume/node147.html	1-63	complete
+Plume/dbp-index.html	404 response	excluded; not donor content
+Plume/author-report.txt	1-4871 of4871 independently read; all bytes compared; five diff hunks read	complete independent text read; all extraction-difference pages visually corroborated
+Plume/generated-report-HTML	147 section links indexed from complete index.html	3 section bodies independently read; other144 indexed only, not source-read credit

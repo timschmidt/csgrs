@@ -1,0 +1,17 @@
+[
+  {
+    "name": "float-int-div-zero",
+    "args": [
+      "boundary",
+      "float-int-div-zero",
+      "+RTS",
+      "-M256m",
+      "-RTS"
+    ],
+    "status": 251,
+    "signal": null,
+    "error": "EPERM",
+    "stdout": "",
+    "stderr": "instrumented-probe: Heap exhausted;\ninstrumented-probe: Current maximum heap size is 268435456 bytes (256 MB).\ninstrumented-probe: Use `+RTS -M<size>' to increase it.\n"
+  }
+]

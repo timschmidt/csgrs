@@ -1,0 +1,278 @@
+Benchmarking scalar_ops/hyperreal/powi
+Benchmarking scalar_ops/hyperreal/powi: Warming up for 100.00 ms
+Benchmarking scalar_ops/hyperreal/powi: Collecting 40 samples in estimated 500.02 ms (8.7M iterations)
+Benchmarking scalar_ops/hyperreal/powi: Analyzing
+scalar_ops/hyperreal/powi
+                        time:   [58.121 ns 58.713 ns 59.770 ns]
+                        change: [+0.9669% +1.6975% +2.9254%] (p = 0.00 < 0.05)
+                        Change within noise threshold.
+Found 4 outliers among 40 measurements (10.00%)
+  1 (2.50%) high mild
+  3 (7.50%) high severe
+Benchmarking scalar_ops/hyperreal/exp
+Benchmarking scalar_ops/hyperreal/exp: Warming up for 100.00 ms
+Benchmarking scalar_ops/hyperreal/exp: Collecting 40 samples in estimated 500.05 ms (5.3M iterations)
+Benchmarking scalar_ops/hyperreal/exp: Analyzing
+scalar_ops/hyperreal/exp
+                        time:   [98.332 ns 101.45 ns 105.74 ns]
+                        change: [+1.7211% +4.2810% +8.5070%] (p = 0.00 < 0.05)
+                        Performance has regressed.
+Found 6 outliers among 40 measurements (15.00%)
+  3 (7.50%) high mild
+  3 (7.50%) high severe
+Benchmarking scalar_ops/hyperreal/ln
+Benchmarking scalar_ops/hyperreal/ln: Warming up for 100.00 ms
+Benchmarking scalar_ops/hyperreal/ln: Collecting 40 samples in estimated 500.18 ms (392k iterations)
+Benchmarking scalar_ops/hyperreal/ln: Analyzing
+scalar_ops/hyperreal/ln time:   [1.2641 µs 1.2669 µs 1.2699 µs]
+                        change: [−0.6934% −0.3930% −0.1144%] (p = 0.02 < 0.05)
+                        Change within noise threshold.
+Found 2 outliers among 40 measurements (5.00%)
+  1 (2.50%) high mild
+  1 (2.50%) high severe
+Benchmarking scalar_ops/hyperreal/log10
+Benchmarking scalar_ops/hyperreal/log10: Warming up for 100.00 ms
+Benchmarking scalar_ops/hyperreal/log10: Collecting 40 samples in estimated 500.58 ms (321k iterations)
+Benchmarking scalar_ops/hyperreal/log10: Analyzing
+scalar_ops/hyperreal/log10
+                        time:   [1.5100 µs 1.5195 µs 1.5340 µs]
+                        change: [+0.4338% +1.4433% +3.3857%] (p = 0.02 < 0.05)
+                        Change within noise threshold.
+Found 3 outliers among 40 measurements (7.50%)
+  1 (2.50%) high mild
+  2 (5.00%) high severe
+Benchmarking scalar_ops/hyperreal/log10_abort
+Benchmarking scalar_ops/hyperreal/log10_abort: Warming up for 100.00 ms
+Benchmarking scalar_ops/hyperreal/log10_abort: Collecting 40 samples in estimated 500.46 ms (325k iterations)
+Benchmarking scalar_ops/hyperreal/log10_abort: Analyzing
+scalar_ops/hyperreal/log10_abort
+                        time:   [1.5356 µs 1.5389 µs 1.5424 µs]
+                        change: [+0.6286% +1.1445% +1.7844%] (p = 0.00 < 0.05)
+                        Change within noise threshold.
+Found 4 outliers among 40 measurements (10.00%)
+  2 (5.00%) high mild
+  2 (5.00%) high severe
+Benchmarking scalar_ops/hyperreal/asin
+Benchmarking scalar_ops/hyperreal/asin: Warming up for 100.00 ms
+Benchmarking scalar_ops/hyperreal/asin: Collecting 40 samples in estimated 500.08 ms (3.0M iterations)
+Benchmarking scalar_ops/hyperreal/asin: Analyzing
+scalar_ops/hyperreal/asin
+                        time:   [169.34 ns 171.19 ns 174.05 ns]
+                        change: [−1.9578% +0.3810% +2.8806%] (p = 0.78 > 0.05)
+                        No change in performance detected.
+Found 5 outliers among 40 measurements (12.50%)
+  2 (5.00%) high mild
+  3 (7.50%) high severe
+Benchmarking scalar_ops/hyperreal/asin_abort
+Benchmarking scalar_ops/hyperreal/asin_abort: Warming up for 100.00 ms
+Benchmarking scalar_ops/hyperreal/asin_abort: Collecting 40 samples in estimated 500.09 ms (2.6M iterations)
+Benchmarking scalar_ops/hyperreal/asin_abort: Analyzing
+scalar_ops/hyperreal/asin_abort
+                        time:   [189.65 ns 190.27 ns 191.22 ns]
+                        change: [+0.3699% +1.0545% +1.8020%] (p = 0.00 < 0.05)
+                        Change within noise threshold.
+Found 5 outliers among 40 measurements (12.50%)
+  2 (5.00%) high mild
+  3 (7.50%) high severe
+Benchmarking scalar_ops/hyperreal/acos
+Benchmarking scalar_ops/hyperreal/acos: Warming up for 100.00 ms
+Benchmarking scalar_ops/hyperreal/acos: Collecting 40 samples in estimated 500.09 ms (1.4M iterations)
+Benchmarking scalar_ops/hyperreal/acos: Analyzing
+scalar_ops/hyperreal/acos
+                        time:   [344.62 ns 346.14 ns 348.21 ns]
+                        change: [−1.6549% −1.2034% −0.5827%] (p = 0.00 < 0.05)
+                        Change within noise threshold.
+Found 6 outliers among 40 measurements (15.00%)
+  1 (2.50%) high mild
+  5 (12.50%) high severe
+Benchmarking scalar_ops/hyperreal/acos_abort
+Benchmarking scalar_ops/hyperreal/acos_abort: Warming up for 100.00 ms
+Benchmarking scalar_ops/hyperreal/acos_abort: Collecting 40 samples in estimated 500.15 ms (1.3M iterations)
+Benchmarking scalar_ops/hyperreal/acos_abort: Analyzing
+scalar_ops/hyperreal/acos_abort
+                        time:   [373.88 ns 375.07 ns 376.44 ns]
+                        change: [−3.0422% −2.3106% −1.2791%] (p = 0.00 < 0.05)
+                        Performance has improved.
+Found 6 outliers among 40 measurements (15.00%)
+  2 (5.00%) high mild
+  4 (10.00%) high severe
+Benchmarking scalar_ops/hyperreal/zero_status
+Benchmarking scalar_ops/hyperreal/zero_status: Warming up for 100.00 ms
+Benchmarking scalar_ops/hyperreal/zero_status: Collecting 40 samples in estimated 500.00 ms (428M iterations)
+Benchmarking scalar_ops/hyperreal/zero_status: Analyzing
+scalar_ops/hyperreal/zero_status
+                        time:   [1.2157 ns 1.2567 ns 1.2955 ns]
+                        change: [−5.7086% −1.5077% +3.7391%] (p = 0.54 > 0.05)
+                        No change in performance detected.
+Benchmarking scalar_ops/hyperreal-rational/powi
+Benchmarking scalar_ops/hyperreal-rational/powi: Warming up for 100.00 ms
+Benchmarking scalar_ops/hyperreal-rational/powi: Collecting 40 samples in estimated 500.01 ms (8.2M iterations)
+Benchmarking scalar_ops/hyperreal-rational/powi: Analyzing
+scalar_ops/hyperreal-rational/powi
+                        time:   [59.836 ns 60.406 ns 61.287 ns]
+                        change: [−2.6144% −0.9387% +2.0135%] (p = 0.44 > 0.05)
+                        No change in performance detected.
+Found 3 outliers among 40 measurements (7.50%)
+  1 (2.50%) high mild
+  2 (5.00%) high severe
+Benchmarking scalar_ops/hyperreal-rational/exp
+Benchmarking scalar_ops/hyperreal-rational/exp: Warming up for 100.00 ms
+Benchmarking scalar_ops/hyperreal-rational/exp: Collecting 40 samples in estimated 500.00 ms (5.1M iterations)
+Benchmarking scalar_ops/hyperreal-rational/exp: Analyzing
+scalar_ops/hyperreal-rational/exp
+                        time:   [96.088 ns 96.409 ns 96.819 ns]
+                        change: [−6.3618% −4.5839% −3.2762%] (p = 0.00 < 0.05)
+                        Performance has improved.
+Found 4 outliers among 40 measurements (10.00%)
+  2 (5.00%) high mild
+  2 (5.00%) high severe
+Benchmarking scalar_ops/hyperreal-rational/ln
+Benchmarking scalar_ops/hyperreal-rational/ln: Warming up for 100.00 ms
+Benchmarking scalar_ops/hyperreal-rational/ln: Collecting 40 samples in estimated 500.32 ms (1.1M iterations)
+Benchmarking scalar_ops/hyperreal-rational/ln: Analyzing
+scalar_ops/hyperreal-rational/ln
+                        time:   [489.10 ns 499.68 ns 509.15 ns]
+                        change: [+2.9095% +4.8692% +7.4145%] (p = 0.00 < 0.05)
+                        Performance has regressed.
+Benchmarking scalar_ops/hyperreal-rational/log10
+Benchmarking scalar_ops/hyperreal-rational/log10: Warming up for 100.00 ms
+Benchmarking scalar_ops/hyperreal-rational/log10: Collecting 40 samples in estimated 500.53 ms (673k iterations)
+Benchmarking scalar_ops/hyperreal-rational/log10: Analyzing
+scalar_ops/hyperreal-rational/log10
+                        time:   [686.25 ns 703.15 ns 724.62 ns]
+                        change: [+5.8447% +9.0385% +11.998%] (p = 0.00 < 0.05)
+                        Performance has regressed.
+Found 4 outliers among 40 measurements (10.00%)
+  4 (10.00%) high mild
+Benchmarking scalar_ops/hyperreal-rational/log10_abort
+Benchmarking scalar_ops/hyperreal-rational/log10_abort: Warming up for 100.00 ms
+Benchmarking scalar_ops/hyperreal-rational/log10_abort: Collecting 40 samples in estimated 500.29 ms (729k iterations)
+Benchmarking scalar_ops/hyperreal-rational/log10_abort: Analyzing
+scalar_ops/hyperreal-rational/log10_abort
+                        time:   [686.55 ns 697.25 ns 711.96 ns]
+                        change: [+0.2984% +1.2335% +2.5467%] (p = 0.01 < 0.05)
+                        Change within noise threshold.
+Found 3 outliers among 40 measurements (7.50%)
+  1 (2.50%) high mild
+  2 (5.00%) high severe
+Benchmarking scalar_ops/hyperreal-rational/asin
+Benchmarking scalar_ops/hyperreal-rational/asin: Warming up for 100.00 ms
+Benchmarking scalar_ops/hyperreal-rational/asin: Collecting 40 samples in estimated 500.13 ms (2.9M iterations)
+Benchmarking scalar_ops/hyperreal-rational/asin: Analyzing
+scalar_ops/hyperreal-rational/asin
+                        time:   [169.11 ns 169.46 ns 169.79 ns]
+                        change: [−0.5378% +0.0366% +0.8946%] (p = 0.94 > 0.05)
+                        No change in performance detected.
+Found 1 outliers among 40 measurements (2.50%)
+  1 (2.50%) high severe
+Benchmarking scalar_ops/hyperreal-rational/asin_abort
+Benchmarking scalar_ops/hyperreal-rational/asin_abort: Warming up for 100.00 ms
+Benchmarking scalar_ops/hyperreal-rational/asin_abort: Collecting 40 samples in estimated 500.13 ms (2.6M iterations)
+Benchmarking scalar_ops/hyperreal-rational/asin_abort: Analyzing
+scalar_ops/hyperreal-rational/asin_abort
+                        time:   [191.64 ns 193.34 ns 196.89 ns]
+                        change: [−1.2162% +1.2257% +4.2043%] (p = 0.51 > 0.05)
+                        No change in performance detected.
+Found 5 outliers among 40 measurements (12.50%)
+  1 (2.50%) high mild
+  4 (10.00%) high severe
+Benchmarking scalar_ops/hyperreal-rational/acos
+Benchmarking scalar_ops/hyperreal-rational/acos: Warming up for 100.00 ms
+Benchmarking scalar_ops/hyperreal-rational/acos: Collecting 40 samples in estimated 500.04 ms (1.4M iterations)
+Benchmarking scalar_ops/hyperreal-rational/acos: Analyzing
+scalar_ops/hyperreal-rational/acos
+                        time:   [353.68 ns 357.60 ns 361.97 ns]
+                        change: [−4.9798% −3.2458% −1.5391%] (p = 0.00 < 0.05)
+                        Performance has improved.
+Found 3 outliers among 40 measurements (7.50%)
+  1 (2.50%) high mild
+  2 (5.00%) high severe
+Benchmarking scalar_ops/hyperreal-rational/acos_abort
+Benchmarking scalar_ops/hyperreal-rational/acos_abort: Warming up for 100.00 ms
+Benchmarking scalar_ops/hyperreal-rational/acos_abort: Collecting 40 samples in estimated 500.17 ms (1.3M iterations)
+Benchmarking scalar_ops/hyperreal-rational/acos_abort: Analyzing
+scalar_ops/hyperreal-rational/acos_abort
+                        time:   [383.06 ns 384.06 ns 385.27 ns]
+                        change: [−12.126% −9.4233% −6.8114%] (p = 0.00 < 0.05)
+                        Performance has improved.
+Found 4 outliers among 40 measurements (10.00%)
+  1 (2.50%) high mild
+  3 (7.50%) high severe
+Benchmarking scalar_ops/hyperreal-rational/zero_status
+Benchmarking scalar_ops/hyperreal-rational/zero_status: Warming up for 100.00 ms
+Benchmarking scalar_ops/hyperreal-rational/zero_status: Collecting 40 samples in estimated 500.00 ms (408M iterations)
+Benchmarking scalar_ops/hyperreal-rational/zero_status: Analyzing
+scalar_ops/hyperreal-rational/zero_status
+                        time:   [1.2005 ns 1.2399 ns 1.2821 ns]
+                        change: [−5.3182% −0.1910% +5.0239%] (p = 0.95 > 0.05)
+                        No change in performance detected.
+Found 1 outliers among 40 measurements (2.50%)
+  1 (2.50%) high mild
+
+Benchmarking matrix_ops/hyperreal/mat3 inverse_checked_abort
+Benchmarking matrix_ops/hyperreal/mat3 inverse_checked_abort: Warming up for 100.00 ms
+Benchmarking matrix_ops/hyperreal/mat3 inverse_checked_abort: Collecting 40 samples in estimated 501.23 ms (102k iterations)
+Benchmarking matrix_ops/hyperreal/mat3 inverse_checked_abort: Analyzing
+matrix_ops/hyperreal/mat3 inverse_checked_abort
+                        time:   [4.9028 µs 4.9226 µs 4.9494 µs]
+Found 2 outliers among 40 measurements (5.00%)
+  1 (2.50%) high mild
+  1 (2.50%) high severe
+Benchmarking matrix_ops/hyperreal/mat3 div_matrix_checked_abort
+Benchmarking matrix_ops/hyperreal/mat3 div_matrix_checked_abort: Warming up for 100.00 ms
+Benchmarking matrix_ops/hyperreal/mat3 div_matrix_checked_abort: Collecting 40 samples in estimated 505.37 ms (21k iterations)
+Benchmarking matrix_ops/hyperreal/mat3 div_matrix_checked_abort: Analyzing
+matrix_ops/hyperreal/mat3 div_matrix_checked_abort
+                        time:   [23.767 µs 23.828 µs 23.886 µs]
+Found 1 outliers among 40 measurements (2.50%)
+  1 (2.50%) high mild
+Benchmarking matrix_ops/hyperreal/mat4 inverse_checked_abort
+Benchmarking matrix_ops/hyperreal/mat4 inverse_checked_abort: Warming up for 100.00 ms
+Benchmarking matrix_ops/hyperreal/mat4 inverse_checked_abort: Collecting 40 samples in estimated 502.06 ms (66k iterations)
+Benchmarking matrix_ops/hyperreal/mat4 inverse_checked_abort: Analyzing
+matrix_ops/hyperreal/mat4 inverse_checked_abort
+                        time:   [7.3660 µs 7.3792 µs 7.3919 µs]
+Found 2 outliers among 40 measurements (5.00%)
+  1 (2.50%) high mild
+  1 (2.50%) high severe
+Benchmarking matrix_ops/hyperreal/mat4 div_matrix_checked_abort
+Benchmarking matrix_ops/hyperreal/mat4 div_matrix_checked_abort: Warming up for 100.00 ms
+Benchmarking matrix_ops/hyperreal/mat4 div_matrix_checked_abort: Collecting 40 samples in estimated 518.10 ms (14k iterations)
+Benchmarking matrix_ops/hyperreal/mat4 div_matrix_checked_abort: Analyzing
+matrix_ops/hyperreal/mat4 div_matrix_checked_abort
+                        time:   [37.140 µs 37.768 µs 38.953 µs]
+Found 3 outliers among 40 measurements (7.50%)
+  2 (5.00%) low mild
+  1 (2.50%) high severe
+Benchmarking matrix_ops/hyperreal-rational/mat3 inverse_checked_abort
+Benchmarking matrix_ops/hyperreal-rational/mat3 inverse_checked_abort: Warming up for 100.00 ms
+Benchmarking matrix_ops/hyperreal-rational/mat3 inverse_checked_abort: Collecting 40 samples in estimated 501.68 ms (177k iterations)
+Benchmarking matrix_ops/hyperreal-rational/mat3 inverse_checked_abort: Analyzing
+matrix_ops/hyperreal-rational/mat3 inverse_checked_abort
+                        time:   [2.8111 µs 2.8163 µs 2.8214 µs]
+Found 1 outliers among 40 measurements (2.50%)
+  1 (2.50%) high mild
+Benchmarking matrix_ops/hyperreal-rational/mat3 div_matrix_checked_abort
+Benchmarking matrix_ops/hyperreal-rational/mat3 div_matrix_checked_abort: Warming up for 100.00 ms
+Benchmarking matrix_ops/hyperreal-rational/mat3 div_matrix_checked_abort: Collecting 40 samples in estimated 503.36 ms (78k iterations)
+Benchmarking matrix_ops/hyperreal-rational/mat3 div_matrix_checked_abort: Analyzing
+matrix_ops/hyperreal-rational/mat3 div_matrix_checked_abort
+                        time:   [6.0220 µs 6.0456 µs 6.0690 µs]
+Benchmarking matrix_ops/hyperreal-rational/mat4 inverse_checked_abort
+Benchmarking matrix_ops/hyperreal-rational/mat4 inverse_checked_abort: Warming up for 100.00 ms
+Benchmarking matrix_ops/hyperreal-rational/mat4 inverse_checked_abort: Collecting 40 samples in estimated 502.02 ms (80k iterations)
+Benchmarking matrix_ops/hyperreal-rational/mat4 inverse_checked_abort: Analyzing
+matrix_ops/hyperreal-rational/mat4 inverse_checked_abort
+                        time:   [6.3416 µs 6.4087 µs 6.4811 µs]
+Found 3 outliers among 40 measurements (7.50%)
+  3 (7.50%) high severe
+Benchmarking matrix_ops/hyperreal-rational/mat4 div_matrix_checked_abort
+Benchmarking matrix_ops/hyperreal-rational/mat4 div_matrix_checked_abort: Warming up for 100.00 ms
+Benchmarking matrix_ops/hyperreal-rational/mat4 div_matrix_checked_abort: Collecting 40 samples in estimated 501.88 ms (51k iterations)
+Benchmarking matrix_ops/hyperreal-rational/mat4 div_matrix_checked_abort: Analyzing
+matrix_ops/hyperreal-rational/mat4 div_matrix_checked_abort
+                        time:   [9.9975 µs 10.217 µs 10.493 µs]
+Found 4 outliers among 40 measurements (10.00%)
+  2 (5.00%) high mild
+  2 (5.00%) high severe
+

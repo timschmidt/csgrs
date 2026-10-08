@@ -1,0 +1,23 @@
+{
+  "command": [
+    "gdb",
+    "--quiet",
+    "--batch",
+    "-ex",
+    "set pagination off",
+    "-ex",
+    "set confirm off",
+    "-ex",
+    "set debuginfod enabled off",
+    "-ex",
+    "run",
+    "-ex",
+    "thread apply all bt 48",
+    "-ex",
+    "quit",
+    "--args",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-circle-domain-stages"
+  ],
+  "returncode": 0,
+  "elapsed_seconds": 8.11418597199372
+}

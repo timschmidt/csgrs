@@ -1,0 +1,9 @@
+
+running 2 tests
+test easyduino_scale_process_image_containment_corpus has been running for over 60 seconds
+test easyduino_uno_scale_process_image_with_holes_corpus has been running for over 60 seconds
+test easyduino_scale_process_image_containment_corpus ... ok
+test easyduino_uno_scale_process_image_with_holes_corpus ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 2 filtered out; finished in 605.79s
+

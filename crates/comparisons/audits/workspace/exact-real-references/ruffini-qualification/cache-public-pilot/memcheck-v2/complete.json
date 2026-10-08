@@ -1,0 +1,16 @@
+{
+  "records": [
+    [
+      "0.json",
+      "a2494b9e410c4958d4bcc452ab0d593f0fa9abdc9c0f0301210253268913e7a8"
+    ],
+    [
+      "1.json",
+      "2b77c0f126fbb1830f74b94e12669ca77439d166bfd1f85e1117402d17d0187b"
+    ]
+  ],
+  "testBinaryHash": "5b8522f8cf72eccfb5b9cd04704afd29647a2b15762399c9b671b7631ea603f2",
+  "publicBinaryHash": "5328259d1a6840b303e3583e1ccf20a3f7beae3066287e5aa3fbcfe77abc896a",
+  "scriptHash": "cc93e2435c4daa769f5c963557f2bfe5070d76f238f568533351f4db310d548c",
+  "leakChecking": false
+}

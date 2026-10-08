@@ -1,0 +1,25 @@
+{
+  "tag": "reuse-app-build-reuse",
+  "started": "2026-09-08T22:29:01.207Z",
+  "finished": "2026-09-08T22:30:32.321Z",
+  "elapsedSeconds": 91.11113606300002,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/reuse-consumers/hypercurve",
+  "command": "env",
+  "args": [
+    "CARGO_TARGET_DIR=/tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse",
+    "CARGO_INCREMENTAL=0",
+    "CARGO_PROFILE_DEV_DEBUG=0",
+    "CARGO_BUILD_JOBS=2",
+    "cargo",
+    "build",
+    "--offline",
+    "--locked",
+    "--release",
+    "--example",
+    "basic",
+    "--example",
+    "arrangement"
+  ],
+  "code": 0,
+  "signal": null
+}

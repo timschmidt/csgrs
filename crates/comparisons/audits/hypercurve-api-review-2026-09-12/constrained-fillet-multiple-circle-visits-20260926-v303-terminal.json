@@ -1,0 +1,8 @@
+{
+  "returncode": 0,
+  "elapsed_seconds": 0.6554286149330437,
+  "source_manifest": "constrained-fillet-api-20260926-v302-sources.json",
+  "library_sha256": "34eddbe37957315dcf8b26a3bfb6e77b92e253dca3cdc17ab68f9037a60d71a6",
+  "probe_sha256": "c47d6d66365b61eacd665592f4c9d042fa07caf019985adc71200402cfb880f0",
+  "all_processes_reaped": true
+}

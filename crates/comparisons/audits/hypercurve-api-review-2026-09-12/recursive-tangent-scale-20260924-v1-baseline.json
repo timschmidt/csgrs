@@ -1,0 +1,7 @@
+{
+  "parent": "714138215f94bfbe19f8a5555be28aa9e7f37714",
+  "all_production_and_original_tests_unchanged": true,
+  "added_regression": "recursive_circle_queries_preserve_tangent_scale_and_local_roots",
+  "inputs": 2044,
+  "snapshot": "/tmp/hypercurve-recursive-tangent-scale-v1-20260924"
+}

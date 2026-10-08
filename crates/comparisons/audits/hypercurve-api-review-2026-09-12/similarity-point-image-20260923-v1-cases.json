@@ -1,0 +1,50 @@
+[
+  {
+    "name": "bezier_offset::conversion_tests::selected_fiber_transverse_mapped_cut_inverts_by_point",
+    "returncode": 101,
+    "passed": false,
+    "limit_seconds": 180,
+    "elapsed_seconds": 4.162078300025314,
+    "log": "similarity-point-image-20260923-v1-case-0.log"
+  },
+  {
+    "name": "bezier_offset::conversion_tests::similarity_transported_mapped_cusp_cut_inverts_on_analytic_overlap",
+    "returncode": 0,
+    "passed": true,
+    "limit_seconds": 120,
+    "elapsed_seconds": 0.16932766092941165,
+    "log": "similarity-point-image-20260923-v1-case-1.log"
+  },
+  {
+    "name": "bezier_offset::conversion_tests::similarity_transported_transverse_mapped_cut_inverts_by_point",
+    "returncode": 0,
+    "passed": true,
+    "limit_seconds": 120,
+    "elapsed_seconds": 0.15417335100937635,
+    "log": "similarity-point-image-20260923-v1-case-2.log"
+  },
+  {
+    "name": "bezier_offset::conversion_tests::recursive_projective_kernel_imports_similarity_of_algebraic_endpoints",
+    "returncode": 0,
+    "passed": true,
+    "limit_seconds": 120,
+    "elapsed_seconds": 0.1467954380204901,
+    "log": "similarity-point-image-20260923-v1-case-3.log"
+  },
+  {
+    "name": "bezier_offset::conversion_tests::mapped_compact_point_inverse_preserves_analytic_normal_sheet",
+    "returncode": 0,
+    "passed": true,
+    "limit_seconds": 120,
+    "elapsed_seconds": 0.45137586898636073,
+    "log": "similarity-point-image-20260923-v1-case-4.log"
+  },
+  {
+    "name": "bezier_algebraic_image::policy_tests::arithmetic_adapter_replays_close_nonrational_bounds_strictly",
+    "returncode": 0,
+    "passed": true,
+    "limit_seconds": 120,
+    "elapsed_seconds": 0.1388435340486467,
+    "log": "similarity-point-image-20260923-v1-case-5.log"
+  }
+]

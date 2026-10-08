@@ -1,0 +1,16 @@
+{
+  "tag": "polynomial-facts-fmt",
+  "started": "2026-09-08T23:14:15.483Z",
+  "finished": "2026-09-08T23:14:17.039Z",
+  "elapsedSeconds": 1.5539145330000002,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/polynomial-facts-trial/hypersolve",
+  "command": "cargo",
+  "args": [
+    "fmt",
+    "--all",
+    "--",
+    "--check"
+  ],
+  "code": 0,
+  "signal": null
+}

@@ -1,0 +1,531 @@
+{
+  "schema": 1,
+  "recorded": "2026-09-09T02:48:07.767Z",
+  "files": {
+    "bind-rank-costs.mjs": "b1caeaa5b2bf79d6a563c167940e6f8b47f5545dbf678a5fbc94dc10dd1d9da6",
+    "verify-rank-costs.mjs": "c6fd9c80647552cea431298d788084739db58ea0a706b03061ce162c5c5bcf9e",
+    "capture.mjs": "aaf6df6bbd73025a8541617ce83731ae5ea3fd2272bd98c15e3c4c12b713ce23",
+    "matrix-solve-experiment.json": "728b99ad03ab774ebf813bec3b714c527a16074a8ca4f6306be1ce5430645248",
+    "record-rank-cost-reads.mjs": "cdd61a45ab4062b27f63a1e32b0a326ae9bf62d0fa200820732ac3c166b7281a",
+    "rank-cost-read-selection.json": "05000d7a0579934369db53ed54fadf209dd744631ed84c25cf201e691f3ce7f7",
+    "run-rank-costs.mjs": "22763eb0233811786db9913c192d45e2985dd71234bdb723a572997c5a8ea2ce",
+    "rank-cost-corpus.rs": "535c735c2d654c2c2a9d693142609084318e27333d5acde5fa80d094ce65254f",
+    "rank-cost-cpu.rs": "7beea6cb74bc9e67ccebf8f88a6d902389a418ace96cce9dc85a41a23137c1ed",
+    "rank-cost-allocation.rs": "d71dc1d38aa9ac2ea4af19a4110829525c617284458b074a0c6407a598a20fdb",
+    "rank-cost-binaries.json": "48f76c313a1cc9939c8e794f585af19a38bbee25908cef918fd3b106f8b7dbb5",
+    "rank-cost-cpu-summary.json": "cdfca67b033ef73542aeb8165d74efe7765a90a3465561c036d1525b0554228f",
+    "rank-cost-allocation-summary.json": "632c4f67fa29e3dc7956c9c9d2d6f46f13cfe4e5f7cb0e1d981917e7aece8787",
+    "results/rank-cost-cpu.jsonl": "6306cfa6db226f9ded0327a3c048d0cb06ffe55d97668cf56b58eadffeb99d3b",
+    "results/rank-cost-allocation.jsonl": "9459f3e90b546642a1620c0aafe847965f365e3f76f8d1aaef5d99851ed1a75d",
+    "flint-matrix-support-probe.c": "61fe480a63665fcefdec62dd01eee9313a5c55c91748002975529321b4115f1f",
+    "rank-cost-baseline/Cargo.toml": "a05978c6b71c86431409badb1e973e9f034ecc6ae76a0e8aab94a0b750e8f407",
+    "rank-cost-baseline/Cargo.lock": "644903f0cec62e54cdb43c33efbb9a35ee0580769a11f78f39c893e2e2f0bc13",
+    "rank-cost-candidate/Cargo.toml": "ff8d87841ef2a36d6fbaa7e5164ea08252238964e98c61b8a7ed17b29f940834",
+    "rank-cost-candidate/Cargo.lock": "670d77f100bbdd8e655720b52c021be229b646b365bafda79f7900aeb69bcb05",
+    "results/rank-cost-baseline-build.json": "13e0dbfe1e3ff3d716529053abe6088283c5e6255e42769d24b609ca6ae0b88a",
+    "results/rank-cost-baseline-build.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/rank-cost-baseline-build.stderr": "74292ea15d47c294a0118295b585f21651feead6ab9c284123825f739471478f",
+    "results/rank-cost-candidate-build.json": "5c46e6632f051001dbd389f01e75c2fbabc01b75206b17564b8f409570714b6c",
+    "results/rank-cost-candidate-build.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/rank-cost-candidate-build.stderr": "cd8e82629e6f2471ffc0a21e652f7f9b780dd3d4442c0076e20ac109d773eff7",
+    "results/rank-cost-cpu-run.json": "bafcb856188300a80a3007693272e7b6c7182f641d0711aa36dee359bf0f1a5d",
+    "results/rank-cost-cpu-run.stdout": "4081795d9c09dacf409f7df8c818dcc86c540ead7a538cfdc8f6c64e7b8a27fc",
+    "results/rank-cost-cpu-run.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/rank-cost-allocation-run.json": "9806f2c312fd01fa67337fda88d37e6d9fc3c88931ebd4d14b080361adfe12cc",
+    "results/rank-cost-allocation-run.stdout": "6c6a1f4761e0e8bccad35fe394a2076cab99442f77af5e86b031b7719f66204d",
+    "results/rank-cost-allocation-run.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/matrix-support-native-compile.json": "d44447d4d130f18658010cc12cbfefe2047fb8e14e4fc677392dec7ff055c32a",
+    "results/matrix-support-native-compile.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/matrix-support-native-compile.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/matrix-support-native.json": "6dc257175b83a324be00aaa2c932e388761ccb0ce36e73667ded8e38ef29f6fc",
+    "results/matrix-support-native.stdout": "9cd1bdad8919a7874123c4e042a4f6fcc698dd26f936939ea425c22d2a4858dd",
+    "results/matrix-support-native.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/matrix-support-memcheck.json": "117d8bb011d57840135e4a8de5a99e157b65d962e8e7be00b2b6864f4b47385c",
+    "results/matrix-support-memcheck.stdout": "9cd1bdad8919a7874123c4e042a4f6fcc698dd26f936939ea425c22d2a4858dd",
+    "results/matrix-support-memcheck.stderr": "5cd24b31dd0f8d2fc0ded81e95e870bdadc0bebbb15ed521c5b74f06d1c8216f"
+  },
+  "gates": [
+    "rank-cost-baseline-build",
+    "rank-cost-candidate-build",
+    "rank-cost-cpu-run",
+    "rank-cost-allocation-run",
+    "matrix-support-native-compile",
+    "matrix-support-native",
+    "matrix-support-memcheck"
+  ],
+  "reads": [
+    {
+      "repo": "calcium",
+      "path": "ca_mat/mul.c",
+      "ranges": [
+        [
+          1,
+          274
+        ]
+      ],
+      "note": "Complete independent calcium read: Dimension checks, explicit zero-inner-dimension output, and temporary/swap for whole-input aliases. Rational dispatch for inner dimension>=3 borrows fmpq/fmpz headers, converts output to rational before backend work, writes headers back and frees only temporary header arrays; archived row tables become current stride storage. Common pointer-identical number fields selected for inner>=4 and both outer dimensions>=3. Specials rejected by field scan; no direct ownership port to immutable Rust scalars. Hyper already specializes rational/shared-scale multiplication."
+    },
+    {
+      "repo": "flint",
+      "path": "src/ca_mat/mul.c",
+      "ranges": [
+        [
+          1,
+          267
+        ]
+      ],
+      "note": "Complete independent flint read: Dimension checks, explicit zero-inner-dimension output, and temporary/swap for whole-input aliases. Rational dispatch for inner dimension>=3 borrows fmpq/fmpz headers, converts output to rational before backend work, writes headers back and frees only temporary header arrays; archived row tables become current stride storage. Common pointer-identical number fields selected for inner>=4 and both outer dimensions>=3. Specials rejected by field scan; no direct ownership port to immutable Rust scalars. Hyper already specializes rational/shared-scale multiplication."
+    },
+    {
+      "repo": "calcium",
+      "path": "ca_mat/ca_poly_evaluate.c",
+      "ranges": [
+        [
+          1,
+          87
+        ]
+      ],
+      "note": "Complete independent calcium read: Paterson-Stockmeyer block polynomial evaluation with m=floor(sqrt(length))+1, m+1 stored powers and Horner in A^m. Length0/1/2 use zero/scalar-identity/scaled-matrix shortcuts. Powers copied before output writes, supporting whole-matrix alias. Allocates and clears unused temporary t; repeated output-alias multiplication allocates its own temporary. Scalar-coefficient/entry alias not qualified. Workspace reuse and high-degree matrix evaluation are ideas, not demonstrated Hyper gaps or wins."
+    },
+    {
+      "repo": "flint",
+      "path": "src/ca_mat/ca_poly_evaluate.c",
+      "ranges": [
+        [
+          1,
+          88
+        ]
+      ],
+      "note": "Complete independent flint read: Paterson-Stockmeyer block polynomial evaluation with m=floor(sqrt(length))+1, m+1 stored powers and Horner in A^m. Length0/1/2 use zero/scalar-identity/scaled-matrix shortcuts. Powers copied before output writes, supporting whole-matrix alias. Allocates and clears unused temporary t; repeated output-alias multiplication allocates its own temporary. Scalar-coefficient/entry alias not qualified. Workspace reuse and high-degree matrix evaluation are ideas, not demonstrated Hyper gaps or wins."
+    },
+    {
+      "repo": "calcium",
+      "path": "ca_mat/mul_classical.c",
+      "ranges": [
+        [
+          1,
+          66
+        ]
+      ],
+      "note": "Complete independent calcium read: Dimension check and explicit zero for empty inner product; each cell initializes first product then left-associated addition with one scalar temporary. Whole-input alias delegates through default multiplication into fresh storage, so an aliased classical call need not exercise the classical backend. Current uses flint_throw rather than archived abort."
+    },
+    {
+      "repo": "flint",
+      "path": "src/ca_mat/mul_classical.c",
+      "ranges": [
+        [
+          1,
+          65
+        ]
+      ],
+      "note": "Complete independent flint read: Dimension check and explicit zero for empty inner product; each cell initializes first product then left-associated addition with one scalar temporary. Whole-input alias delegates through default multiplication into fresh storage, so an aliased classical call need not exercise the classical backend. Current uses flint_throw rather than archived abort."
+    },
+    {
+      "repo": "calcium",
+      "path": "ca_mat/addmul_ca.c",
+      "ranges": [
+        [
+          1,
+          32
+        ]
+      ],
+      "note": "Complete independent calcium read: Entrywise y+=a*x using one scalar temporary; whole matrix alias preserves per-entry operands when x is separate. Not a joint dot kernel; scalar x aliasing an output entry is not promised or tested. No unused Rust temporary or ownership transfer inferred."
+    },
+    {
+      "repo": "flint",
+      "path": "src/ca_mat/addmul_ca.c",
+      "ranges": [
+        [
+          1,
+          32
+        ]
+      ],
+      "note": "Complete independent flint read: Entrywise y+=a*x using one scalar temporary; whole matrix alias preserves per-entry operands when x is separate. Not a joint dot kernel; scalar x aliasing an output entry is not promised or tested. No unused Rust temporary or ownership transfer inferred."
+    },
+    {
+      "repo": "calcium",
+      "path": "ca_mat/submul_ca.c",
+      "ranges": [
+        [
+          1,
+          32
+        ]
+      ],
+      "note": "Complete independent calcium read: Independent complete read of entrywise y-=a*x with one temporary. Whole matrix alias is per-entry when x is separate; no blanket scalar-entry alias claim or Hyper transfer."
+    },
+    {
+      "repo": "flint",
+      "path": "src/ca_mat/submul_ca.c",
+      "ranges": [
+        [
+          1,
+          32
+        ]
+      ],
+      "note": "Complete independent flint read: Independent complete read of entrywise y-=a*x with one temporary. Whole matrix alias is per-entry when x is separate; no blanket scalar-entry alias claim or Hyper transfer."
+    },
+    {
+      "repo": "calcium",
+      "path": "ca_mat/pow_ui_binexp.c",
+      "ranges": [
+        [
+          1,
+          62
+        ]
+      ],
+      "note": "Complete independent calcium read: Special empty/exponent0 identity, scalar dimension1, exponent1 copy and exponent2 square. Higher left-to-right binary powers use two owned matrix workspaces with swaps; original input is read until final output swap. Hyper already has repeated squaring and specialized borrowed small powers, so no missing power capability or performance improvement established."
+    },
+    {
+      "repo": "flint",
+      "path": "src/ca_mat/pow_ui_binexp.c",
+      "ranges": [
+        [
+          1,
+          62
+        ]
+      ],
+      "note": "Complete independent flint read: Special empty/exponent0 identity, scalar dimension1, exponent1 copy and exponent2 square. Higher left-to-right binary powers use two owned matrix workspaces with swaps; original input is read until final output swap. Hyper already has repeated squaring and specialized borrowed small powers, so no missing power capability or performance improvement established."
+    },
+    {
+      "repo": "calcium",
+      "path": "ca_mat/trace.c",
+      "ranges": [
+        [
+          1,
+          37
+        ]
+      ],
+      "note": "Complete independent calcium read: Square check, empty trace zero, then A00 and remaining diagonal additions. Whole output scalar alias with a later diagonal entry is not qualified; no general scalar-entry alias guarantee assumed. Hyper immutable scalar/value outputs avoid this write-order interface."
+    },
+    {
+      "repo": "flint",
+      "path": "src/ca_mat/trace.c",
+      "ranges": [
+        [
+          1,
+          36
+        ]
+      ],
+      "note": "Complete independent flint read: Square check, empty trace zero, then A00 and remaining diagonal additions. Whole output scalar alias with a later diagonal entry is not qualified; no general scalar-entry alias guarantee assumed. Hyper immutable scalar/value outputs avoid this write-order interface."
+    },
+    {
+      "repo": "calcium",
+      "path": "ca_mat/test/t-ca_poly_evaluate.c",
+      "ranges": [
+        [
+          1,
+          91
+        ]
+      ],
+      "note": "Complete independent calcium read: Tests additivity f(A)+g(A)=(f+g)(A), not multiplication despite variable fg. Dimensions0..2 and rational polynomials length<=10; one in-place g(A) path and seeded outputs. Equality rejects only False, accepting Unknown; no independent matrix-polynomial coefficient oracle."
+    },
+    {
+      "repo": "flint",
+      "path": "src/ca_mat/test/t-ca_poly_evaluate.c",
+      "ranges": [
+        [
+          1,
+          83
+        ]
+      ],
+      "note": "Complete independent flint read: Tests additivity f(A)+g(A)=(f+g)(A), not multiplication despite variable fg. Dimensions0..2 and rational polynomials length<=10; one in-place g(A) path and seeded outputs. Equality rejects only False, accepting Unknown; no independent matrix-polynomial coefficient oracle."
+    },
+    {
+      "repo": "calcium",
+      "path": "ca_mat/test/t-mul.c",
+      "ranges": [
+        [
+          1,
+          143
+        ]
+      ],
+      "note": "Complete independent calcium read: Associativity on generic dimensions0..3 and rational0..4, seeded outputs, no explicit alias cases. Unknown equality accepted. Generic dimensions never select default same-number-field dispatch requiring inner>=4, so the test does not cover that branch."
+    },
+    {
+      "repo": "flint",
+      "path": "src/ca_mat/test/t-mul.c",
+      "ranges": [
+        [
+          1,
+          134
+        ]
+      ],
+      "note": "Complete independent flint read: Associativity on generic dimensions0..3 and rational0..4, seeded outputs, no explicit alias cases. Unknown equality accepted. Generic dimensions never select default same-number-field dispatch requiring inner>=4, so the test does not cover that branch."
+    },
+    {
+      "repo": "calcium",
+      "path": "ca_mat/test/t-mul_same_nf.c",
+      "ranges": [
+        [
+          1,
+          116
+        ]
+      ],
+      "note": "Complete independent calcium read: Direct same-number-field versus classical binary product, despite associativity comment; only non-rational NF selected. Dimensions0..4, common denominator scale from10-bit integer. Optional left whole alias only when all dimensions equal, no right/simultaneous alias or1000-bit denominator fallback controls. Current trial count one tenth archived; equality accepts Unknown."
+    },
+    {
+      "repo": "flint",
+      "path": "src/ca_mat/test/t-mul_same_nf.c",
+      "ranges": [
+        [
+          1,
+          107
+        ]
+      ],
+      "note": "Complete independent flint read: Direct same-number-field versus classical binary product, despite associativity comment; only non-rational NF selected. Dimensions0..4, common denominator scale from10-bit integer. Optional left whole alias only when all dimensions equal, no right/simultaneous alias or1000-bit denominator fallback controls. Current trial count one tenth archived; equality accepts Unknown."
+    },
+    {
+      "repo": "calcium",
+      "path": "ca_mat/add_ca.c",
+      "ranges": [
+        [
+          1,
+          38
+        ]
+      ],
+      "note": "Complete independent calcium read: Adds scalar times rectangular identity, not scalar to every entry. Whole matrix alias only updates min(rows,cols) diagonal; separate output copies off-diagonals. Assumes matching shapes and separate scalar; no entry-alias guarantee or port needed."
+    },
+    {
+      "repo": "flint",
+      "path": "src/ca_mat/add_ca.c",
+      "ranges": [
+        [
+          1,
+          38
+        ]
+      ],
+      "note": "Complete independent flint read: Adds scalar times rectangular identity, not scalar to every entry. Whole matrix alias only updates min(rows,cols) diagonal; separate output copies off-diagonals. Assumes matching shapes and separate scalar; no entry-alias guarantee or port needed."
+    },
+    {
+      "repo": "calcium",
+      "path": "ca_mat/sub_ca.c",
+      "ranges": [
+        [
+          1,
+          38
+        ]
+      ],
+      "note": "Complete independent calcium read: Independent scalar-identity subtraction read. Same-matrix path changes only diagonal; separate path copies all off-diagonal entries. Mutability/shape and scalar-entry alias preconditions are not inferred away."
+    },
+    {
+      "repo": "flint",
+      "path": "src/ca_mat/sub_ca.c",
+      "ranges": [
+        [
+          1,
+          38
+        ]
+      ],
+      "note": "Complete independent flint read: Independent scalar-identity subtraction read. Same-matrix path changes only diagonal; separate path copies all off-diagonal entries. Mutability/shape and scalar-entry alias preconditions are not inferred away."
+    },
+    {
+      "repo": "calcium",
+      "path": "ca_mat/set_ca.c",
+      "ranges": [
+        [
+          1,
+          29
+        ]
+      ],
+      "note": "Complete independent calcium read: Writes scalar to each diagonal and exact zero elsewhere, including rectangular matrices. Caller-provided scalar must remain valid throughout writes; no scalar-entry alias qualification. Useful distinction between a scalar matrix and an all-constant matrix."
+    },
+    {
+      "repo": "flint",
+      "path": "src/ca_mat/set_ca.c",
+      "ranges": [
+        [
+          1,
+          29
+        ]
+      ],
+      "note": "Complete independent flint read: Writes scalar to each diagonal and exact zero elsewhere, including rectangular matrices. Caller-provided scalar must remain valid throughout writes; no scalar-entry alias qualification. Useful distinction between a scalar matrix and an all-constant matrix."
+    },
+    {
+      "repo": "calcium",
+      "path": "ca_mat/check_equal.c",
+      "ranges": [
+        [
+          1,
+          42
+        ]
+      ],
+      "note": "Complete independent calcium read: Shape mismatch immediately False; otherwise full entry scan remembers Unknown but any later False dominates. Empty matching shapes are True. Confirms three-valued aggregate scheduling already used by retained Hyper polynomial fact-first decisions; does not make all scalar equalities decidable."
+    },
+    {
+      "repo": "flint",
+      "path": "src/ca_mat/check_equal.c",
+      "ranges": [
+        [
+          1,
+          42
+        ]
+      ],
+      "note": "Complete independent flint read: Shape mismatch immediately False; otherwise full entry scan remembers Unknown but any later False dominates. Empty matching shapes are True. Confirms three-valued aggregate scheduling already used by retained Hyper polynomial fact-first decisions; does not make all scalar equalities decidable."
+    },
+    {
+      "repo": "calcium",
+      "path": "ca_mat/check_is_zero.c",
+      "ranges": [
+        [
+          1,
+          36
+        ]
+      ],
+      "note": "Complete independent calcium read: Scans all entries, remembers Unknown, returns False on a later certified nonzero. Empty matrix is vacuously zero. Same-size witness dominance motivates rank idea, but combinatorial cost must be assessed separately from linear entry scans."
+    },
+    {
+      "repo": "flint",
+      "path": "src/ca_mat/check_is_zero.c",
+      "ranges": [
+        [
+          1,
+          36
+        ]
+      ],
+      "note": "Complete independent flint read: Scans all entries, remembers Unknown, returns False on a later certified nonzero. Empty matrix is vacuously zero. Same-size witness dominance motivates rank idea, but combinatorial cost must be assessed separately from linear entry scans."
+    },
+    {
+      "repo": "calcium",
+      "path": "ca_mat/check_is_one.c",
+      "ranges": [
+        [
+          1,
+          39
+        ]
+      ],
+      "note": "Complete independent calcium read: Checks rectangular identity entrywise, with False dominating earlier Unknown; vacuously True for empty shapes and no square-shape restriction. This is a shape-specific identity predicate, not an unconditional scalar one test."
+    },
+    {
+      "repo": "flint",
+      "path": "src/ca_mat/check_is_one.c",
+      "ranges": [
+        [
+          1,
+          39
+        ]
+      ],
+      "note": "Complete independent flint read: Checks rectangular identity entrywise, with False dominating earlier Unknown; vacuously True for empty shapes and no square-shape restriction. This is a shape-specific identity predicate, not an unconditional scalar one test."
+    },
+    {
+      "repo": "calcium",
+      "path": "ca_mat/transpose.c",
+      "ranges": [
+        [
+          1,
+          44
+        ]
+      ],
+      "note": "Complete independent calcium read: Validates transposed dimensions; empty is no-op, exact whole alias is square and swaps only strict off-diagonal pairs; separate output copies each scalar. Current throws instead of archived abort. No overlapping-window alias or mutable-layout transfer assumed."
+    },
+    {
+      "repo": "flint",
+      "path": "src/ca_mat/transpose.c",
+      "ranges": [
+        [
+          1,
+          43
+        ]
+      ],
+      "note": "Complete independent flint read: Validates transposed dimensions; empty is no-op, exact whole alias is square and swaps only strict off-diagonal pairs; separate output copies each scalar. Current throws instead of archived abort. No overlapping-window alias or mutable-layout transfer assumed."
+    },
+    {
+      "repo": "calcium",
+      "path": "ca_mat/zero.c",
+      "ranges": [
+        [
+          1,
+          22
+        ]
+      ],
+      "note": "Complete independent calcium read: Overwrites every live matrix entry with exact scalar zero, unlike a status-only zero shortcut. Supports the earlier seeded zero-RREF output finding. Empty shape is a no-op; no missing production Hyper zeroing capability established."
+    },
+    {
+      "repo": "flint",
+      "path": "src/ca_mat/zero.c",
+      "ranges": [
+        [
+          1,
+          22
+        ]
+      ],
+      "note": "Complete independent flint read: Overwrites every live matrix entry with exact scalar zero, unlike a status-only zero shortcut. Supports the earlier seeded zero-RREF output finding. Empty shape is a no-op; no missing production Hyper zeroing capability established."
+    },
+    {
+      "repo": "calcium",
+      "path": "ca_mat/one.c",
+      "ranges": [
+        [
+          1,
+          25
+        ]
+      ],
+      "note": "Complete independent calcium read: Writes exact one on the diagonal and zero elsewhere for all entries of rectangular as well as square matrices. No refinement/equality query needed to publish the constructive identity fact; existing Hyper constructors already do this."
+    },
+    {
+      "repo": "flint",
+      "path": "src/ca_mat/one.c",
+      "ranges": [
+        [
+          1,
+          25
+        ]
+      ],
+      "note": "Complete independent flint read: Writes exact one on the diagonal and zero elsewhere for all entries of rectangular as well as square matrices. No refinement/equality query needed to publish the constructive identity fact; existing Hyper constructors already do this."
+    },
+    {
+      "repo": "calcium",
+      "path": "ca_mat/ones.c",
+      "ranges": [
+        [
+          1,
+          25
+        ]
+      ],
+      "note": "Complete independent calcium read: Independent read of all-entries-one fill, distinct from scalar identity. Traverses row/column accessors, so archived row pointers and current stride storage share semantics. No algorithmic transfer warranted."
+    },
+    {
+      "repo": "flint",
+      "path": "src/ca_mat/ones.c",
+      "ranges": [
+        [
+          1,
+          25
+        ]
+      ],
+      "note": "Complete independent flint read: Independent read of all-entries-one fill, distinct from scalar identity. Traverses row/column accessors, so archived row pointers and current stride storage share semantics. No algorithmic transfer warranted."
+    }
+  ],
+  "binaries": {
+    "/tmp/calcium-rank-costs.lbsszv/baseline-cpu": "c159ea7b013d23e4ca584013cb8d6a7babe9a1023056553700da5ff31621d56b",
+    "/tmp/calcium-rank-costs.lbsszv/baseline-allocation": "dddaf82d2b30f46a0c44c8525c98fbd717d582ec02087fcd61c4cc41b75b05ca",
+    "/tmp/calcium-rank-costs.lbsszv/candidate-cpu": "698b77b4cb1c2f7fb3f698885b190d3023405aa8a73f474d3f91a29bbe8e163a",
+    "/tmp/calcium-rank-costs.lbsszv/candidate-allocation": "20ff991591c4bbcaf76cd05abe321cfd335f7690769db69cff0900f5f1f6d854",
+    "/tmp/calcium-rank-costs.lbsszv/flint-matrix-support": "e653265294806a3055c4e0494f406dfe9e1e94beab470dc12a2ad785bfae0870"
+  },
+  "status": "Rank v1 is not selected as implemented: same-outcome unresolved scans have severe CPU/allocation costs. The mathematical witness idea remains open for better scheduling/reuse. No production or donor change; entire ecosystem audit incomplete.",
+  "limits": "Costs cover seven patterns, four widths, two warm-input lifecycles on one host, not cold scalar construction. Different-outcome witness gains are not equal-work speedups. Allocation counts are Rust requested bytes/calls, not RSS/native overhead/stack or allocator retention. Per-group paired bootstrap intervals are not multiplicity-adjusted or universal bounds. Driver binary deltas include build-path/layout and do not measure application size. No broader state/downstream qualification for this unselected v1. Native matrix oracles avoid tested matrix kernels but share the scalar backend; sampled shapes, whole aliases and denominator sizes are not full branch coverage. Archived support was read, not executed.",
+  "hyperReadRanges": {
+    "hyperlattice/src/matrix/core.rs": [
+      [
+        1338,
+        1448
+      ],
+      [
+        1740,
+        1820
+      ],
+      [
+        5300,
+        5360
+      ],
+      [
+        5905,
+        5985
+      ]
+    ]
+  },
+  "nativeLibrary": {
+    "path": "/home/tim/Documents/GitHub/workspace/exact-real-references/flint/libflint.so",
+    "sha256": "8dcdbb4aa08d67712b14febd006d1392d07737b1ad8c1f8f5930a152701e0032"
+  }
+}

@@ -1,0 +1,64 @@
+{
+  "snapshot": {
+    "priorSnapshot": "6005103197ad2edeed68e1de612b11993f3c00012e43e0f65111a0e8e31186be",
+    "verifiedHyperFiles": 397,
+    "files": [
+      [
+        "exact-real-references/ruffini-qualification/cache-rescale-pilot/main.rs",
+        "f59878088e88e88e246278dfefb204a05ee44c62a1baa0f22313f4785f4675a2"
+      ],
+      [
+        "exact-real-references/ruffini-qualification/cache-rescale-pilot/allocation.rs",
+        "a9d159c09ce0693dd2b3a27c07997904259dbf6168b867f495adf3428c6e0b67"
+      ],
+      [
+        "exact-real-references/ruffini-qualification/cache-rescale-pilot/Cargo.toml",
+        "476a61f63a87813c267b3bbe0a7b5ddf524815b4ac63350c08fbcdfac59d5a20"
+      ],
+      [
+        "exact-real-references/ruffini-qualification/cache-rescale-pilot/Cargo.lock",
+        "0469d36523084c2fa82afee094f1d02a23245894923881f12c844f0973b2acd5"
+      ],
+      [
+        "exact-real-references/ruffini-qualification/cache-rescale-pilot/qualify.mjs",
+        "9c556c4b26929bd5e23ce5c7780b07c186d1a34051314a3118cc51da6838e8d8"
+      ],
+      [
+        "hyperreal/Cargo.lock",
+        "1c8640884474caa19c0c6cf46cda6472a67aa6143fc0536d902d9a782eafb8c4"
+      ]
+    ]
+  },
+  "binaries": [
+    [
+      "debug",
+      "41c3e2f00aeeea29014b7b6be3f7cf308b1695447224754646f0ff05756db5b3",
+      15185736
+    ],
+    [
+      "release",
+      "e7dde6b73c947c8cfce03b25fe292baa006b03cff7fef04930b100d7d481ca46",
+      573776
+    ],
+    [
+      "memory",
+      "4b0de2a8f16ab92a71bb8d5b3e2f97da1840651382fe156f2e97670545a43c07",
+      580120
+    ]
+  ],
+  "verification": {
+    "mode": "verify",
+    "counts": [
+      149504,
+      149784,
+      149784,
+      149784
+    ],
+    "wide_cases": 2310,
+    "baseline_overflow_skips": 280
+  },
+  "boundary": {
+    "mode": "public-boundary",
+    "result": "panic"
+  }
+}

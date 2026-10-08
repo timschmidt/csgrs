@@ -1,0 +1,16 @@
+{
+  "repos": {
+    "hypercurve": {
+      "commit": "fca8c73f35d535828b46b90ab132e1ba0250d2cb",
+      "parent": "e4cf1735f3b2f6823e47d902182bc6bdd139c4a1",
+      "paths": {
+        "src/bezier_arrangement.rs": "94bc31f52c10c0d3a1c28674261e3d81d4b6ad86fb7cd45007a038731a2e50e1",
+        "src/bezier_tangent_order.rs": "46b3fa53ea980bf2337becf04a7fc9a7a95688a8760b553410a1daed932fa6c2",
+        "tests/hypercurve_bezier_tangent_order.rs": "b20e6d5313c9144e968fdeea616d8fb4a30972fb791d8107a6078412f739cd87"
+      }
+    }
+  },
+  "qualification": "third-order-speed-v861-terminal.json",
+  "verified_source_files": 2048,
+  "clean_repositories": 30
+}

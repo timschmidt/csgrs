@@ -1,0 +1,24 @@
+{
+  "returncode": 0,
+  "elapsed_seconds": 0.06374554801732302,
+  "normal_library_sha256": "68b7eb07dd682f6f27b42ea8f5bf32ff3fb0e3d96d09c29889738e18190708f9",
+  "log": "finite-point-inverse-domains-admission-region-entry.log",
+  "source": "finite-parallel-admission-region-normalized-public.rs",
+  "command": [
+    "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustc",
+    "--edition=2024",
+    "-O",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-parallel-admission-region-normalized-public.rs",
+    "--extern",
+    "hypercurve=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypercurve-e19f31178f76cad1.rlib",
+    "-L",
+    "dependency=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps",
+    "-o",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-point-inverse-domains-admission-region-entry"
+  ],
+  "run_command": [
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-point-inverse-domains-admission-region-entry"
+  ],
+  "source_sha256": "515698e9a503b9cf447c3721d57578f1069792b54dd2078fdd4e57249345e2d8",
+  "executable_sha256": "bc522880a5ec2b9323b3f8cee3daa5240cbfe9808d7691dfb2f263f19f485975"
+}

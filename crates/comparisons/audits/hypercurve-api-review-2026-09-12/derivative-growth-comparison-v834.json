@@ -1,0 +1,265 @@
+{
+  "independent_exact_samples": 36,
+  "domain_cases": 4,
+  "groups": [
+    {
+      "policy": 0,
+      "degree": 1,
+      "order": 3,
+      "samples": 3,
+      "ns": {
+        "before": 56277,
+        "after": 52126,
+        "ratio": 0.9262398493167724
+      },
+      "allocations": {
+        "before": 354,
+        "after": 329,
+        "ratio": 0.9293785310734464
+      },
+      "requested_bytes": {
+        "before": 33536,
+        "after": 31568,
+        "ratio": 0.9413167938931297
+      }
+    },
+    {
+      "policy": 0,
+      "degree": 1,
+      "order": 8,
+      "samples": 3,
+      "ns": {
+        "before": 152180,
+        "after": 158959,
+        "ratio": 1.0445459324484163
+      },
+      "allocations": {
+        "before": 1456,
+        "after": 1150,
+        "ratio": 0.7898351648351648
+      },
+      "requested_bytes": {
+        "before": 127152,
+        "after": 102224,
+        "ratio": 0.803951176544608
+      }
+    },
+    {
+      "policy": 0,
+      "degree": 7,
+      "order": 3,
+      "samples": 3,
+      "ns": {
+        "before": 333027,
+        "after": 268631,
+        "ratio": 0.8066342969188685
+      },
+      "allocations": {
+        "before": 3971,
+        "after": 2817,
+        "ratio": 0.7093930999748175
+      },
+      "requested_bytes": {
+        "before": 314880,
+        "after": 230200,
+        "ratio": 0.7310721544715447
+      }
+    },
+    {
+      "policy": 0,
+      "degree": 7,
+      "order": 8,
+      "samples": 3,
+      "ns": {
+        "before": 1621678,
+        "after": 1286342,
+        "ratio": 0.7932166558342655
+      },
+      "allocations": {
+        "before": 26724,
+        "after": 17954,
+        "ratio": 0.6718305642867834
+      },
+      "requested_bytes": {
+        "before": 1998488,
+        "after": 1367144,
+        "ratio": 0.6840891714135887
+      }
+    },
+    {
+      "policy": 0,
+      "degree": 15,
+      "order": 3,
+      "samples": 3,
+      "ns": {
+        "before": 1486588,
+        "after": 905398,
+        "ratio": 0.6090443350814079
+      },
+      "allocations": {
+        "before": 23358,
+        "after": 15761,
+        "ratio": 0.6747581128521277
+      },
+      "requested_bytes": {
+        "before": 1576184,
+        "after": 1097672,
+        "ratio": 0.6964110789095689
+      }
+    },
+    {
+      "policy": 0,
+      "degree": 15,
+      "order": 8,
+      "samples": 3,
+      "ns": {
+        "before": 6332116,
+        "after": 4292356,
+        "ratio": 0.6778707149395241
+      },
+      "allocations": {
+        "before": 132747,
+        "after": 86730,
+        "ratio": 0.6533480982621076
+      },
+      "requested_bytes": {
+        "before": 8714928,
+        "after": 5806480,
+        "ratio": 0.6662682698009668
+      }
+    },
+    {
+      "policy": 1,
+      "degree": 1,
+      "order": 3,
+      "samples": 3,
+      "ns": {
+        "before": 45347,
+        "after": 46846,
+        "ratio": 1.0330562109952146
+      },
+      "allocations": {
+        "before": 354,
+        "after": 329,
+        "ratio": 0.9293785310734464
+      },
+      "requested_bytes": {
+        "before": 33536,
+        "after": 31568,
+        "ratio": 0.9413167938931297
+      }
+    },
+    {
+      "policy": 1,
+      "degree": 1,
+      "order": 8,
+      "samples": 3,
+      "ns": {
+        "before": 138990,
+        "after": 117052,
+        "ratio": 0.8421613065688179
+      },
+      "allocations": {
+        "before": 1456,
+        "after": 1129,
+        "ratio": 0.7754120879120879
+      },
+      "requested_bytes": {
+        "before": 127152,
+        "after": 100328,
+        "ratio": 0.7890398892663898
+      }
+    },
+    {
+      "policy": 1,
+      "degree": 7,
+      "order": 3,
+      "samples": 3,
+      "ns": {
+        "before": 299399,
+        "after": 222515,
+        "ratio": 0.7432055551287746
+      },
+      "allocations": {
+        "before": 3892,
+        "after": 2761,
+        "ratio": 0.7094039054470709
+      },
+      "requested_bytes": {
+        "before": 307096,
+        "after": 224664,
+        "ratio": 0.731575793888556
+      }
+    },
+    {
+      "policy": 1,
+      "degree": 7,
+      "order": 8,
+      "samples": 3,
+      "ns": {
+        "before": 1602670,
+        "after": 1118053,
+        "ratio": 0.6976189733382419
+      },
+      "allocations": {
+        "before": 26718,
+        "after": 17955,
+        "ratio": 0.6720188636874017
+      },
+      "requested_bytes": {
+        "before": 1997072,
+        "after": 1366600,
+        "ratio": 0.684301817861349
+      }
+    },
+    {
+      "policy": 1,
+      "degree": 15,
+      "order": 3,
+      "samples": 3,
+      "ns": {
+        "before": 1145691,
+        "after": 832363,
+        "ratio": 0.7265161374227431
+      },
+      "allocations": {
+        "before": 23347,
+        "after": 15754,
+        "ratio": 0.6747762025099584
+      },
+      "requested_bytes": {
+        "before": 1574968,
+        "after": 1096440,
+        "ratio": 0.6961665252881328
+      }
+    },
+    {
+      "policy": 1,
+      "degree": 15,
+      "order": 8,
+      "samples": 3,
+      "ns": {
+        "before": 6244312,
+        "after": 4242870,
+        "ratio": 0.6794775789550555
+      },
+      "allocations": {
+        "before": 132754,
+        "after": 86724,
+        "ratio": 0.6532684514214261
+      },
+      "requested_bytes": {
+        "before": 8714360,
+        "after": 5805784,
+        "ratio": 0.6662318288434262
+      }
+    }
+  ],
+  "source_logs": {
+    "derivative-growth-probe-v829-run.log": "1d70eea2e151e575e143a7e022f9aaa61bcffa2bb98076d2ea5a1e50d2046f3b",
+    "derivative-growth-replay-v837-run.log": "ef35cb123587e97058498724aa280b4bfa0079f133c6cb652e888c2f604a6f6e",
+    "derivative-domain-probe-v830-run.log": "e7d49c58005fcfa58c5b3f62d5a437befdb861b9431fe88c4cb29a9c17138bea",
+    "derivative-domain-replay-v838-run.log": "e7d49c58005fcfa58c5b3f62d5a437befdb861b9431fe88c4cb29a9c17138bea"
+  },
+  "scope": "Same standalone source linked to normal release libraries before and after the denominator change. Fresh curves and parameters; three samples per policy/degree/order, all eight derivative values checked independently. Allocator counters measure Rust allocation/reallocation requests and requested bytes, not peak memory or native-library allocations. Timings include allocator instrumentation and are workload-local, not a uniform speedup claim."
+}

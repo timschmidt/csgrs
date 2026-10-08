@@ -1,0 +1,56 @@
+{
+  "normal_production_build": false,
+  "source_manifest": "represented-parameter-domain-baseline-20260928-v596-sources.json",
+  "source_directory": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/source-archives/represented-parameter-domain-baseline-20260928-v596",
+  "builds": [
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "test",
+        "--lib",
+        "--release",
+        "--all-features",
+        "--locked",
+        "--offline",
+        "--no-run",
+        "--message-format=json"
+      ],
+      "returncode": 0,
+      "log": "represented-parameter-domain-baseline-20260928-v596-build.log",
+      "elapsed_seconds": 138.7761974229943,
+      "binaries": {
+        "hypercurve": {
+          "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/represented-parameter-domain-baseline-20260928-v596-hypercurve-tests",
+          "sha256": "784d2c7f5c3a651709975aa6fb0ee9b353f44cbb8433b51974aa05cd15ac4ca6"
+        }
+      }
+    }
+  ],
+  "cases": [
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/represented-parameter-domain-baseline-20260928-v596-hypercurve-tests",
+        "--exact",
+        "bezier_parameter::finite_interval_import_regression::represented_root_imports_admit_exact_values_in_the_requested_domain",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "represented-parameter-domain-baseline-20260928-v596-represented_root_imports_admit_exact_values_in_the_requested_domain.log",
+      "elapsed_seconds": 0.003614882007241249,
+      "target": "hypercurve",
+      "name": "bezier_parameter::finite_interval_import_regression::represented_root_imports_admit_exact_values_in_the_requested_domain",
+      "passed": true
+    }
+  ],
+  "checks": [],
+  "expected_cases": {
+    "hypercurve": [
+      "bezier_parameter::finite_interval_import_regression::represented_root_imports_admit_exact_values_in_the_requested_domain"
+    ]
+  },
+  "all_processes_reaped": true,
+  "probe_complete": true,
+  "qualification_complete": false,
+  "performance": []
+}

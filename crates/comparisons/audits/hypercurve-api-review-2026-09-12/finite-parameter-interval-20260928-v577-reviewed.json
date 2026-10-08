@@ -1,0 +1,24 @@
+{
+  "qualification": "finite-parameter-interval-20260928-v577-terminal.json",
+  "source_manifest": "finite-parameter-interval-20260928-v577-sources.json",
+  "outer_session_reaped": 98930,
+  "validated_files": 2047,
+  "selected_geometry_tests": 483,
+  "checks": 6,
+  "repos": {
+    "hypercurve": {
+      "parent": "9ba4a9860cd8ee00ab50686d6eb0df47d05a913e",
+      "paths": {
+        "src/bezier_offset.rs": "4674e58ccf074f950cf8569f184683c19c51e02f8b15ef5ced32b1b42a7efe5c",
+        "src/bezier_parameter.rs": "92234189774245692b44bb4053942856eb13acc21c8d9b79d9d577425e30a6ac",
+        "src/bezier_region.rs": "8666ba5681ee10d8d959ae500744933354a3a30b8d7f8a1164302962fa936ed6",
+        "src/curve_region_boolean.rs": "62406a339e99b463ca8833ba6d394907dfdcd811218c74e6362aba572cdaa7eb",
+        "src/curve_support_intersection.rs": "8120fd32bd1a63cb57712357e0a256d4e0e64bec3beedd31ab9f804ade587140",
+        "tests/hypercurve_bezier_algebraic_parameter.rs": "6630b62c304463e6460e7ceda3b0b3d707dd012c74a69a48e0be9b7b70450632"
+      }
+    }
+  },
+  "scope": "One ordered finite interval constructor replaces the unit-only/public versus exterior/private split; owning operations keep explicit domain/pole checks; full goal remains active",
+  "performance_changes": [],
+  "workload_changes": []
+}

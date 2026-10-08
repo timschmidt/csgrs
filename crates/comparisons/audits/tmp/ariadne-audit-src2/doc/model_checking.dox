@@ -1,0 +1,125 @@
+/***************************************************************************
+ *            model_checking.dox
+ *
+ *  Copyright  2009  Pieter Collins
+ *
+ ****************************************************************************/
+
+/*
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; either version 2 of the License, or
+ *  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Library General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program; if not, write to the Free Software
+ *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+ */
+
+/*!
+
+\file model_checking.dox
+\brief Documentation on model checking
+
+
+\page model_checking_page Model Checking
+
+\section model_checking_discrete_time Model Checking Discrete-Time Systems using Counterexample-Based Abstraction Refinement
+
+In this section, we consider the model checking problem for discrete time systems without control or noise, as defined by a continuous function \f$f:\R^n\rightarrow \R^n\f$.
+We assume that the system has a set of initial points \f$X_0\subset \R^n\f$ and a safe set \f$S\subset\R^n\f$. Further, we assume that the set of initial points is <em>located</em>, which means that is supports predicates \c intersects, \c separated and \c inside, and that the safe set supports predicates \c covers, \c separated and \c inside.
+
+We need a collection of <em>basic sets</em>, which for simplicity we assume to be boxes, and <em>enclosure sets</em>, which may, for example, be zonotopes.
+
+The model checking problem for continuous-state-space systems differs from that of finite-state-space systems in that
+ - We cannot consider states directly. Instead, we can only work with finite abstractions of the system.
+ - We can only work in a bounded (compact) part of the state space.
+ - Abstract states can be refined infinitely often.
+ - We usually need abstract states to be open or closed sets. In particular, they cannot form a partition of the state space, only an open cover or (closed) topological partition.
+ - We cannot arbitrarily refine abstract states. Instead, we restrict the possible refinements of an abstract state. In the simplest case, there is only one possible way to refine an abstract state.
+ - We cannot compute (or even represent) the successor (image) states of an abstract state completely. Instead, we can only compute an over-approximation to the actual set of (system or abstract) states.
+ - We cannot decide whether a state is a subset of the safe set. However, given an abstract state, we may be able to prove that it is a subset of the safe set, or disjoint from the safe set. If an abstract state contains both safe and unsafe states, then so will at least one of the refined states.
+ - We cannot decide wheter a state is an element of the initial set. Instead, given an abstract state, we may be able to prove that it the closure disjoint from the set of initial states, or that the interior intersects the initial set. Further, if the abstract states form a topological partition, then initial states lying on the boundary of the partition elements cannot be found, so in order to prove counterexamples, we need to use open sets of initial states.
+ - In practice, we can only work to finite precision.
+
+\section counterexample_guided_abstraction_refinement Counterexample-Guided Abstraction Refinement (CEGAR)
+
+In this section, we discuss how to modify counterexample-guided abstraction refinement for finite-state-space systems to the infinite-state-space setting.
+
+For simplicity, we use boxes as the abstract states, and form a topological partition of the state space. We assume that given a box \f$B\f$, we can compute an enclosure \f$E\f$ containing \f$B\f$, that given an enclosure \f$E\f$, we can compute an enclosure containing \f$f(E)\f$, and given an enclosure \f$E\f$, we can compute a box \f$B\f$ containing \f$E\f$, and an outer-approximation of \f$E\f$ on a topological partition into boxes \f$\mathcal{B}\f$.
+
+\par Abstraction data
+
+Given an initial partition of the state space, we compute, for each box \f$B\f$:
+ - A set \f$[f](B)\f$ of <em>successor</em> boxes such that \f$B'\cap f(B)\neq\emptyset \implies B'\in [f](B)\f$.
+ - Whether \f$B\f$ is a subset of \f$S\f$ (\f$s=\top\f$), disjoint from \f$S\f$ (\f$s=\bot\f$) or unknown/undecidable (\f$s=\uparrow\f$).
+ - Whether \f$B\f$ is a disjoint from \f$X_0\f$ (\f$i=\bot\f$), a (small) neighbourhood of \f$B\f$ intersects \f$X_0\f$ (\f$i=\top\f$) or unknown/undecidable (\f$i=\uparrow\f$).
+
+We then decide whether an abstract state (box) is safe.
+ - A box is definitely safe if every path starting from the box definitely remains in \f$S\f$ (\f$v=\top\f$).
+ - A box is definitely unsafe if every path starting from it definitely passes outside \f$S\f$ (\f$v=\bot\f$).
+ - Otherwise, we do not know whether a box is safe (\f$v=\uparrow\f$).
+
+To compute safety, we first compute boxes from which every path goes to a box with \f$s=\bot\f$. This can be done recursively, setting \f$v=\bot\f$ if \f$s=\bot\f$ or if \f$v=\bot\f$ for all sucessor states. A linear-time depth-first search algorithm can be used. A similar algorithm can treat the remaining states for \f$v=\uparrow\f$.
+
+\par System safety
+
+ - If every box which possibly intersects the initial set is safe (i.e. has been validated; \f$v=\top\f$), then the system is safe.
+ - If a box is definitely unsafe, and intersects the initial set, then the system is unsafe.
+ - If a box is definitely unsafe, and possibly intersects the initial set, then the system is unsafe if the neighbourhood maps the the same set of boxes under one iterate. This must be the case for some neighbourhood. We then test either that the box is disjoint from the initial set, or the neighbourhood intersects the initial set.
+
+Otherwise, there is a box which possibly intersects the initial set, and for which the evolution is possibly unsafe. An abstract counterexample is a sequence of boxes which ends in a possibly unsafe set. We choose such a sequence and try to prove that either it corresponds to a real counterexample, or remove the possibility of unsafeness by refinement.
+
+\par Heurisitics
+
+To choose the abstract counterexample to analyse, we may use the following heuristics:
+ - Shortest path
+ - Starting box definitely contains an initial point
+ - Ending box is definitely unsafe
+
+To choose a box to split:
+ - Worst approximation: Choose the box \f$A_i\f$ maximising \f$\vec{d}(f(A_i),A_{i+1})\f$, where \f$\seq{d}(A,B)=\sup_{x\in A} \inf_\{y\in B\} d(x,y)\f$, the Hausdorff semi-distance.
+ - Worst centre approximation: Choose the box \f$A_i\f$ maximising \f$d(f(m(A_i)),A_{i+1})\f$.
+
+Both of the above heurisitics have the advantage that they eventually refine any possibly unsafe box, since they tend to choose relatively large boxes.
+
+ - No concrete trajectory. Compute \f$C_0=A_0\f$ and \f$C_{i+1}=\hat{f}(C_i)\cap A_{i+1}\f$ where \f$\hat{f}\f$ is an over-approximation to \f$f\f$. If possible, split \f$A_i\f$ for which \f$C_{i+1}=\emptyset\f$.
+
+This is closest to the method described in Clarke et al, but might not be so appropriate in this case, since it is not guaranteed to find \f$i\f$, and repeated splitting might not eliminate spurious counterexamples,
+
+To split the box:
+ - Split down the middle of the largest side (unique)
+ - Test various splittings and choose the largest removing the abstract counterexample.
+
+To update the system:
+ - Compute the abstract image of the new boxes
+ - Update the abstract image of all boxes mapping to the old box
+ - Update the \c safe, \c initial and \c validated properties. It may be possible to do this locally.
+
+\par Counterexample checking
+
+To test for a concrete counterexample:
+ - Iterate the initial box forward for \f$n\f$ steps as enclosures, and test whether the result is disjoint from the safe set.
+ - If the initial box cannot be proved to intersect the initial set, enlarge the initial box.
+ - To obtain better results, a subset of the initial box may be used, as long as it definitely intersects the safe set.
+
+Note that testing for a concrete counterexample as above uses the abstract counterexample as a starting heuristic, but is, in fact, a completely different computation.
+
+
+
+\par Advantages
+
+ - The worst approximation splitting should focus refinement in areas where the system modulus of continuity is high.
+ - Verifying counterexamples separately avoids the need to use lower-approximations of the initial set.
+
+
+
+
+
+
+*/

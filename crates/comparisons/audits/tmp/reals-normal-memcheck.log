@@ -1,0 +1,36 @@
+==2== Memcheck, a memory error detector
+==2== Copyright (C) 2002-2026, and GNU GPL'd, by Julian Seward et al.
+==2== Using Valgrind-3.27.1 and LibVEX; rerun with -h for copyright info
+==2== Command: target/release/deps/reals-ade1e5edef992fec --test-threads=1
+==2== Parent PID: 1
+==2== 
+==2== 
+==2== HEAP SUMMARY:
+==2==     in use at exit: 592 bytes in 2 blocks
+==2==   total heap usage: 252 allocs, 250 frees, 42,925 bytes allocated
+==2== 
+==2== 48 bytes in 1 blocks are possibly lost in loss record 1 of 2
+==2==    at 0x4923AE6: malloc (vg_replace_malloc.c:447)
+==2==    by 0x40A664E: <std::thread::thread::Thread>::new (in /home/tim/Documents/GitHub/workspace/exact-real-references/reals-0.4.0/target/release/deps/reals-ade1e5edef992fec)
+==2==    by 0x40B40E9: std::thread::current::init_current (in /home/tim/Documents/GitHub/workspace/exact-real-references/reals-0.4.0/target/release/deps/reals-ade1e5edef992fec)
+==2==    by 0x409B8AF: <std::sync::mpmc::context::Context>::new (in /home/tim/Documents/GitHub/workspace/exact-real-references/reals-0.4.0/target/release/deps/reals-ade1e5edef992fec)
+==2==    by 0x40367FA: <std::sys::thread_local::native::lazy::Storage<core::cell::Cell<core::option::Option<std::sync::mpmc::context::Context>>, ()>>::get_or_init_slow::<<std::sync::mpmc::context::Context>::with::CONTEXT::__rust_std_internal_init_fn> (in /home/tim/Documents/GitHub/workspace/exact-real-references/reals-0.4.0/target/release/deps/reals-ade1e5edef992fec)
+==2==    by 0x404F82F: <std::sync::mpmc::list::Channel<test::event::CompletedTest>>::recv (in /home/tim/Documents/GitHub/workspace/exact-real-references/reals-0.4.0/target/release/deps/reals-ade1e5edef992fec)
+==2==    by 0x405C1D3: test::console::run_tests_console (in /home/tim/Documents/GitHub/workspace/exact-real-references/reals-0.4.0/target/release/deps/reals-ade1e5edef992fec)
+==2==    by 0x40481B7: test::test_main_static (in /home/tim/Documents/GitHub/workspace/exact-real-references/reals-0.4.0/target/release/deps/reals-ade1e5edef992fec)
+==2==    by 0x4034362: std::sys::backtrace::__rust_begin_short_backtrace::<fn(), ()> (in /home/tim/Documents/GitHub/workspace/exact-real-references/reals-0.4.0/target/release/deps/reals-ade1e5edef992fec)
+==2==    by 0x4034378: std::rt::lang_start::<()>::{closure#0} (in /home/tim/Documents/GitHub/workspace/exact-real-references/reals-0.4.0/target/release/deps/reals-ade1e5edef992fec)
+==2==    by 0x40B1FB6: std::rt::lang_start_internal (in /home/tim/Documents/GitHub/workspace/exact-real-references/reals-0.4.0/target/release/deps/reals-ade1e5edef992fec)
+==2==    by 0x4036054: main (in /home/tim/Documents/GitHub/workspace/exact-real-references/reals-0.4.0/target/release/deps/reals-ade1e5edef992fec)
+==2== 
+==2== LEAK SUMMARY:
+==2==    definitely lost: 0 bytes in 0 blocks
+==2==    indirectly lost: 0 bytes in 0 blocks
+==2==      possibly lost: 48 bytes in 1 blocks
+==2==    still reachable: 544 bytes in 1 blocks
+==2==         suppressed: 0 bytes in 0 blocks
+==2== Reachable blocks (those to which a pointer was found) are not shown.
+==2== To see them, rerun with: --leak-check=full --show-leak-kinds=all
+==2== 
+==2== For lists of detected and suppressed errors, rerun with: -s
+==2== ERROR SUMMARY: 1 errors from 1 contexts (suppressed: 0 from 0)

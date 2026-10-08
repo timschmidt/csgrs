@@ -1,0 +1,25 @@
+{
+  "tag": "qqbar-remainder-hyper-clippy-v84",
+  "started": "2026-09-12T04:50:45.411Z",
+  "finished": "2026-09-12T04:50:45.555Z",
+  "elapsedSeconds": 0.14166894500000002,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/qqbar-remainder-hyper-v84",
+  "command": "env",
+  "args": [
+    "CARGO_TARGET_DIR=/tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse",
+    "CARGO_INCREMENTAL=0",
+    "CARGO_PROFILE_DEV_DEBUG=0",
+    "CARGO_BUILD_JOBS=2",
+    "cargo",
+    "clippy",
+    "--offline",
+    "--locked",
+    "--all-targets",
+    "--all-features",
+    "--",
+    "-D",
+    "warnings"
+  ],
+  "code": 101,
+  "signal": null
+}

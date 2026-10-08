@@ -1,0 +1,32 @@
+{
+  "tag": "factor-association-compile",
+  "started": "2026-09-08T20:09:43.680Z",
+  "finished": "2026-09-08T20:09:43.810Z",
+  "elapsedSeconds": 0.127122188,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison",
+  "command": "env",
+  "args": [
+    "TMPDIR=/home/tim/Documents/GitHub/workspace/calcium-build-tmp.gVX5v4",
+    "gcc",
+    "-O2",
+    "-g0",
+    "-Wall",
+    "-Wextra",
+    "-Werror",
+    "-isystem",
+    "../exact-real-references/flint/src",
+    "audits/continuation/calcium/flint-factor-association-probe.c",
+    "-L",
+    "../exact-real-references/flint",
+    "-Wl,-rpath,/home/tim/Documents/GitHub/workspace/exact-real-references/flint",
+    "-lflint",
+    "-lmpfr",
+    "-lgmp",
+    "-lm",
+    "-lpthread",
+    "-o",
+    "/home/tim/Documents/GitHub/workspace/.audit-builds/calcium-factor-association-probe"
+  ],
+  "code": 0,
+  "signal": null
+}

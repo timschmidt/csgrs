@@ -1,0 +1,19 @@
+{
+  "tag": "hyper-proof-release",
+  "started": "2026-09-08T08:30:48.697Z",
+  "finished": "2026-09-08T08:30:58.201Z",
+  "elapsedSeconds": 9.501790204999999,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison",
+  "command": "cargo",
+  "args": [
+    "run",
+    "--manifest-path",
+    "audits/continuation/calcium/hyper-probe/Cargo.toml",
+    "--release",
+    "--offline",
+    "--target-dir",
+    "/tmp/calcium-hyper-proof-target"
+  ],
+  "code": 0,
+  "signal": null
+}

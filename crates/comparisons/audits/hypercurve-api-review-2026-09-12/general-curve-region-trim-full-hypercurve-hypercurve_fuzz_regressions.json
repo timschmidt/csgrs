@@ -1,0 +1,26 @@
+{
+  "repo": "hypercurve",
+  "target": "hypercurve_fuzz_regressions",
+  "binary": "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve_fuzz_regressions-fcd5401022e093dc",
+  "command": [
+    "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve_fuzz_regressions-fcd5401022e093dc",
+    "--test-threads=4",
+    "--color",
+    "never"
+  ],
+  "sha256": "dcb44fb892ea4f12362ce81f5dffe1082628cd131ab2de42103245a5ba9bd16f",
+  "returncode": 0,
+  "timed_out": false,
+  "elapsed_seconds": 0.0034945220104418695,
+  "log": "general-curve-region-trim-full-hypercurve-hypercurve_fuzz_regressions.log",
+  "passed": [
+    "fuzz_line_arc_candidate_outside_finite_line_is_rejected"
+  ],
+  "failed": [],
+  "ignored": [],
+  "summaries": [
+    "test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s"
+  ],
+  "new_failures": [],
+  "known_failures": []
+}

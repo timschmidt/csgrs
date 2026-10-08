@@ -1,0 +1,25 @@
+{
+  "returncode": 0,
+  "elapsed_seconds": 0.0075225030013825744,
+  "normal_library_sha256": "e202ba018058d08c8c82bec93bd0450757fd5fd6645097bea76f6108b6113aa1",
+  "log": "finite-region-bounds-unit-replay.log",
+  "source": "native-rational-publication-unit-replay.rs",
+  "command": [
+    "rustc",
+    "--edition=2024",
+    "-O",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/native-rational-publication-unit-replay.rs",
+    "--extern",
+    "hypercurve=/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/libhypercurve-2c7ff6f3fbe07653.rlib",
+    "-L",
+    "dependency=/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps",
+    "-o",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-region-bounds-unit-replay"
+  ],
+  "source_sha256": "2dd9c8f13fdcf587936d6e5885c9015cb75c093dfb1e27b0a6519d7405adba21",
+  "executable_sha256": "946b9ed9eb43c1984bd342bd0bbfa3c5802063caf6bfc9d16b634f6ab4b35092",
+  "counts": {
+    "complete_queries": 4,
+    "retraced_selected_domain_queries": 2
+  }
+}

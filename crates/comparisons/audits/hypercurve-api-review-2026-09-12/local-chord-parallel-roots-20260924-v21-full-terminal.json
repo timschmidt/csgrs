@@ -1,0 +1,684 @@
+{
+  "reused_focused": [
+    {
+      "target": "hypercurve",
+      "name": "bezier_offset::conversion_tests::recursive_parameter_projection_preserves_roots_through_refinement_and_charts",
+      "returncode": 0,
+      "passed": true,
+      "ignored": false,
+      "elapsed_seconds": 0.2699074079282582,
+      "limit_seconds": 75,
+      "log": "local-chord-parallel-roots-20260924-v21-recursive_parameter_projection_preserves_roots_through_refinement_and_charts.log",
+      "reused_from": "local-chord-parallel-roots-20260924-v21-terminal.json"
+    },
+    {
+      "target": "hypercurve",
+      "name": "bezier_parameter::conversion_tests::independent_singleton_charts_reuse_nested_root_identity",
+      "returncode": 0,
+      "passed": true,
+      "ignored": false,
+      "elapsed_seconds": 0.2652030310127884,
+      "limit_seconds": 75,
+      "log": "local-chord-parallel-roots-20260924-v21-independent_singleton_charts_reuse_nested_root_identity.log",
+      "reused_from": "local-chord-parallel-roots-20260924-v21-terminal.json"
+    },
+    {
+      "target": "hypercurve",
+      "name": "bezier_offset::conversion_tests::retained_parallel_contact_keeps_local_root_through_angular_and_point_queries",
+      "returncode": 0,
+      "passed": true,
+      "ignored": false,
+      "elapsed_seconds": 0.2746477429755032,
+      "limit_seconds": 75,
+      "log": "local-chord-parallel-roots-20260924-v21-retained_parallel_contact_keeps_local_root_through_angular_and_point_queries.log",
+      "reused_from": "local-chord-parallel-roots-20260924-v21-terminal.json"
+    },
+    {
+      "target": "hypercurve",
+      "name": "bezier_offset::conversion_tests::recursive_chord_parallel_zero_norm_midpoint_is_not_a_component",
+      "returncode": 0,
+      "passed": true,
+      "ignored": false,
+      "elapsed_seconds": 0.26851659291423857,
+      "limit_seconds": 75,
+      "log": "local-chord-parallel-roots-20260924-v21-recursive_chord_parallel_zero_norm_midpoint_is_not_a_component.log",
+      "reused_from": "local-chord-parallel-roots-20260924-v21-terminal.json"
+    },
+    {
+      "target": "hypercurve",
+      "name": "bezier_offset::conversion_tests::recursive_chord_parallel_local_roots_reject_conjugates_and_clip_exactly",
+      "returncode": 0,
+      "passed": true,
+      "ignored": false,
+      "elapsed_seconds": 0.2985160850221291,
+      "limit_seconds": 75,
+      "log": "local-chord-parallel-roots-20260924-v21-recursive_chord_parallel_local_roots_reject_conjugates_and_clip_exactly.log",
+      "reused_from": "local-chord-parallel-roots-20260924-v21-terminal.json"
+    },
+    {
+      "target": "hypercurve",
+      "name": "bezier_offset::conversion_tests::common_scalar_gap_refines_mixed_native_parameters_without_projection",
+      "returncode": 0,
+      "passed": true,
+      "ignored": false,
+      "elapsed_seconds": 0.29089410800952464,
+      "limit_seconds": 75,
+      "log": "local-chord-parallel-roots-20260924-v21-common_scalar_gap_refines_mixed_native_parameters_without_projection.log",
+      "reused_from": "local-chord-parallel-roots-20260924-v21-terminal.json"
+    },
+    {
+      "target": "hypercurve",
+      "name": "curve::tests::resource_blocked_selected_parallel_parameter_retains_local_fillet_frame",
+      "returncode": 0,
+      "passed": true,
+      "ignored": false,
+      "elapsed_seconds": 0.271025430993177,
+      "limit_seconds": 75,
+      "log": "local-chord-parallel-roots-20260924-v21-resource_blocked_selected_parallel_parameter_retains_local_fillet_frame.log",
+      "reused_from": "local-chord-parallel-roots-20260924-v21-terminal.json"
+    },
+    {
+      "target": "hypercurve",
+      "name": "bezier_offset::conversion_tests::selected_parallel_normal_circle_intersects_rational_curves_exactly",
+      "returncode": 0,
+      "passed": true,
+      "ignored": false,
+      "elapsed_seconds": 0.2954521350329742,
+      "limit_seconds": 75,
+      "log": "local-chord-parallel-roots-20260924-v21-selected_parallel_normal_circle_intersects_rational_curves_exactly.log",
+      "reused_from": "local-chord-parallel-roots-20260924-v21-terminal.json"
+    },
+    {
+      "target": "hypercurve",
+      "name": "bezier_offset::conversion_tests::selected_parallel_normal_tangent_replay_accepts_an_exact_center_parameter",
+      "returncode": 0,
+      "passed": true,
+      "ignored": false,
+      "elapsed_seconds": 0.2741295989835635,
+      "limit_seconds": 75,
+      "log": "local-chord-parallel-roots-20260924-v21-selected_parallel_normal_tangent_replay_accepts_an_exact_center_parameter.log",
+      "reused_from": "local-chord-parallel-roots-20260924-v21-terminal.json"
+    },
+    {
+      "target": "hypercurve",
+      "name": "bezier_offset::conversion_tests::selected_affine_tangent_source_retains_incident_endpoint_and_contacts_locally",
+      "returncode": 0,
+      "passed": true,
+      "ignored": false,
+      "elapsed_seconds": 0.28300351893994957,
+      "limit_seconds": 75,
+      "log": "local-chord-parallel-roots-20260924-v21-selected_affine_tangent_source_retains_incident_endpoint_and_contacts_locally.log",
+      "reused_from": "local-chord-parallel-roots-20260924-v21-terminal.json"
+    },
+    {
+      "target": "hypercurve",
+      "name": "bezier_region::tests::nonrepresented_chord_parallel_corner_fillets_without_reintersection",
+      "returncode": 0,
+      "passed": true,
+      "ignored": false,
+      "elapsed_seconds": 9.84579551499337,
+      "limit_seconds": 75,
+      "log": "local-chord-parallel-roots-20260924-v21-nonrepresented_chord_parallel_corner_fillets_without_reintersection.log",
+      "reused_from": "local-chord-parallel-roots-20260924-v21-terminal.json"
+    },
+    {
+      "target": "hypercurve",
+      "name": "bezier_region::tests::nonlinear_algebraic_endpoint_fillet_uses_complete_incident_domain",
+      "returncode": 0,
+      "passed": true,
+      "ignored": false,
+      "elapsed_seconds": 40.488849337096326,
+      "limit_seconds": 75,
+      "log": "local-chord-parallel-roots-20260924-v21-nonlinear_algebraic_endpoint_fillet_uses_complete_incident_domain.log",
+      "reused_from": "local-chord-parallel-roots-20260924-v21-terminal.json"
+    },
+    {
+      "target": "hypercurve",
+      "name": "bezier_offset::conversion_tests::recursive_circle_queries_preserve_tangent_scale_and_local_roots",
+      "returncode": 0,
+      "passed": true,
+      "ignored": false,
+      "elapsed_seconds": 2.7485133570153266,
+      "limit_seconds": 75,
+      "log": "local-chord-parallel-roots-20260924-v21-recursive_circle_queries_preserve_tangent_scale_and_local_roots.log",
+      "reused_from": "local-chord-parallel-roots-20260924-v21-terminal.json"
+    },
+    {
+      "target": "hypercurve",
+      "name": "bezier_offset::conversion_tests::recursive_parallel_expression_signs_keep_the_selected_speed_sheet",
+      "returncode": 0,
+      "passed": true,
+      "ignored": false,
+      "elapsed_seconds": 0.301446374040097,
+      "limit_seconds": 75,
+      "log": "local-chord-parallel-roots-20260924-v21-recursive_parallel_expression_signs_keep_the_selected_speed_sheet.log",
+      "reused_from": "local-chord-parallel-roots-20260924-v21-terminal.json"
+    },
+    {
+      "target": "hypercurve",
+      "name": "bezier_offset::conversion_tests::recursive_parallel_expression_signs_reject_poles_and_zero_speed",
+      "returncode": 0,
+      "passed": true,
+      "ignored": false,
+      "elapsed_seconds": 0.3306106720119715,
+      "limit_seconds": 75,
+      "log": "local-chord-parallel-roots-20260924-v21-recursive_parallel_expression_signs_reject_poles_and_zero_speed.log",
+      "reused_from": "local-chord-parallel-roots-20260924-v21-terminal.json"
+    },
+    {
+      "target": "hypercurve",
+      "name": "bezier_offset::conversion_tests::analytic_axis_and_circle_predicates_keep_positive_frame_sheet_and_weight_sign",
+      "returncode": 0,
+      "passed": true,
+      "ignored": false,
+      "elapsed_seconds": 0.2781004949938506,
+      "limit_seconds": 75,
+      "log": "local-chord-parallel-roots-20260924-v21-analytic_axis_and_circle_predicates_keep_positive_frame_sheet_and_weight_sign.log",
+      "reused_from": "local-chord-parallel-roots-20260924-v21-terminal.json"
+    },
+    {
+      "target": "hypercurve",
+      "name": "bezier_offset::conversion_tests::analytic_scalar_predicates_distinguish_stationary_points_from_source_poles",
+      "returncode": 0,
+      "passed": true,
+      "ignored": false,
+      "elapsed_seconds": 0.2718009080272168,
+      "limit_seconds": 75,
+      "log": "local-chord-parallel-roots-20260924-v21-analytic_scalar_predicates_distinguish_stationary_points_from_source_poles.log",
+      "reused_from": "local-chord-parallel-roots-20260924-v21-terminal.json"
+    },
+    {
+      "target": "hypercurve",
+      "name": "bezier_offset::conversion_tests::recursive_polynomial_predicates_reuse_the_retained_field_relation",
+      "returncode": 0,
+      "passed": true,
+      "ignored": false,
+      "elapsed_seconds": 0.2768753400305286,
+      "limit_seconds": 75,
+      "log": "local-chord-parallel-roots-20260924-v21-recursive_polynomial_predicates_reuse_the_retained_field_relation.log",
+      "reused_from": "local-chord-parallel-roots-20260924-v21-terminal.json"
+    },
+    {
+      "target": "hypercurve",
+      "name": "bezier_offset::conversion_tests::recursive_polynomial_queries_reuse_a_selected_proper_factor",
+      "returncode": 0,
+      "passed": true,
+      "ignored": false,
+      "elapsed_seconds": 0.2931798209901899,
+      "limit_seconds": 75,
+      "log": "local-chord-parallel-roots-20260924-v21-recursive_polynomial_queries_reuse_a_selected_proper_factor.log",
+      "reused_from": "local-chord-parallel-roots-20260924-v21-terminal.json"
+    },
+    {
+      "target": "hypercurve",
+      "name": "bezier_offset::conversion_tests::pair_radial_circle_intersects_a_general_analytic_parallel_exactly",
+      "returncode": 0,
+      "passed": true,
+      "ignored": false,
+      "elapsed_seconds": 0.42788160708732903,
+      "limit_seconds": 75,
+      "log": "local-chord-parallel-roots-20260924-v21-pair_radial_circle_intersects_a_general_analytic_parallel_exactly.log",
+      "reused_from": "local-chord-parallel-roots-20260924-v21-terminal.json"
+    },
+    {
+      "target": "hypercurve",
+      "name": "bezier_offset::conversion_tests::represented_circle_retained_point_incidence_observes_requested_policy",
+      "returncode": 0,
+      "passed": true,
+      "ignored": false,
+      "elapsed_seconds": 0.27066602604463696,
+      "limit_seconds": 75,
+      "log": "local-chord-parallel-roots-20260924-v21-represented_circle_retained_point_incidence_observes_requested_policy.log",
+      "reused_from": "local-chord-parallel-roots-20260924-v21-terminal.json"
+    },
+    {
+      "target": "hypercurve",
+      "name": "bezier_region::tests::independent_field_corner_edits_preserve_normalized_sets",
+      "returncode": 0,
+      "passed": true,
+      "ignored": false,
+      "elapsed_seconds": 0.829397093039006,
+      "limit_seconds": 75,
+      "log": "local-chord-parallel-roots-20260924-v21-independent_field_corner_edits_preserve_normalized_sets.log",
+      "reused_from": "local-chord-parallel-roots-20260924-v21-terminal.json"
+    },
+    {
+      "target": "hypercurve",
+      "name": "bezier_offset::conversion_tests::retained_chord_incidence_replays_independently_allocated_coefficient_fields",
+      "returncode": 0,
+      "passed": true,
+      "ignored": false,
+      "elapsed_seconds": 0.33250517200212926,
+      "limit_seconds": 75,
+      "log": "local-chord-parallel-roots-20260924-v21-retained_chord_incidence_replays_independently_allocated_coefficient_fields.log",
+      "reused_from": "local-chord-parallel-roots-20260924-v21-terminal.json"
+    },
+    {
+      "target": "hypercurve",
+      "name": "bezier_offset::conversion_tests::dense_projection_does_not_square_an_absent_radical",
+      "returncode": 0,
+      "passed": true,
+      "ignored": false,
+      "elapsed_seconds": 0.26311194396112114,
+      "limit_seconds": 75,
+      "log": "local-chord-parallel-roots-20260924-v21-dense_projection_does_not_square_an_absent_radical.log",
+      "reused_from": "local-chord-parallel-roots-20260924-v21-terminal.json"
+    },
+    {
+      "target": "hypercurve",
+      "name": "bezier_offset::conversion_tests::dense_projection_single_radical_replays_the_authored_sheet",
+      "returncode": 0,
+      "passed": true,
+      "ignored": false,
+      "elapsed_seconds": 0.26330465101636946,
+      "limit_seconds": 75,
+      "log": "local-chord-parallel-roots-20260924-v21-dense_projection_single_radical_replays_the_authored_sheet.log",
+      "reused_from": "local-chord-parallel-roots-20260924-v21-terminal.json"
+    },
+    {
+      "target": "hypercurve",
+      "name": "bezier_offset::conversion_tests::chord_parallel_monotonicity_covers_the_retained_parameter_range",
+      "returncode": 0,
+      "passed": true,
+      "ignored": false,
+      "elapsed_seconds": 0.2821299589704722,
+      "limit_seconds": 75,
+      "log": "local-chord-parallel-roots-20260924-v21-chord_parallel_monotonicity_covers_the_retained_parameter_range.log",
+      "reused_from": "local-chord-parallel-roots-20260924-v21-terminal.json"
+    },
+    {
+      "target": "hypercurve",
+      "name": "bezier_offset::conversion_tests::recursive_chord_kernel_retains_all_cubic_crossings_with_opposite_endpoint_sides",
+      "returncode": 0,
+      "passed": true,
+      "ignored": false,
+      "elapsed_seconds": 0.2672739689005539,
+      "limit_seconds": 75,
+      "log": "local-chord-parallel-roots-20260924-v21-recursive_chord_kernel_retains_all_cubic_crossings_with_opposite_endpoint_sides.log",
+      "reused_from": "local-chord-parallel-roots-20260924-v21-terminal.json"
+    },
+    {
+      "target": "hypercurve",
+      "name": "bezier_region::tests::independent_field_chord_replays_a_genuine_parallel_endpoint_contact",
+      "returncode": 0,
+      "passed": true,
+      "ignored": false,
+      "elapsed_seconds": 1.4769492259947583,
+      "limit_seconds": 75,
+      "log": "local-chord-parallel-roots-20260924-v21-independent_field_chord_replays_a_genuine_parallel_endpoint_contact.log",
+      "reused_from": "local-chord-parallel-roots-20260924-v21-terminal.json"
+    },
+    {
+      "target": "hypercurve",
+      "name": "bezier_offset::conversion_tests::recursive_chord_unrotated_derived_linear_and_equality_queries_are_complete",
+      "returncode": 0,
+      "passed": true,
+      "ignored": false,
+      "elapsed_seconds": 0.42587119503878057,
+      "limit_seconds": 75,
+      "log": "local-chord-parallel-roots-20260924-v21-recursive_chord_unrotated_derived_linear_and_equality_queries_are_complete.log",
+      "reused_from": "local-chord-parallel-roots-20260924-v21-terminal.json"
+    },
+    {
+      "target": "hypercurve",
+      "name": "bezier_offset::conversion_tests::procedural_endpoint_chord_replays_complete_parallel_contacts",
+      "returncode": 0,
+      "passed": true,
+      "ignored": false,
+      "elapsed_seconds": 0.26127930998336524,
+      "limit_seconds": 75,
+      "log": "local-chord-parallel-roots-20260924-v21-procedural_endpoint_chord_replays_complete_parallel_contacts.log",
+      "reused_from": "local-chord-parallel-roots-20260924-v21-terminal.json"
+    },
+    {
+      "target": "hypercurve",
+      "name": "bezier_offset::conversion_tests::recursive_projective_chord_replays_nonzero_analytic_parallel",
+      "returncode": 0,
+      "passed": true,
+      "ignored": false,
+      "elapsed_seconds": 0.26512329594697803,
+      "limit_seconds": 75,
+      "log": "local-chord-parallel-roots-20260924-v21-recursive_projective_chord_replays_nonzero_analytic_parallel.log",
+      "reused_from": "local-chord-parallel-roots-20260924-v21-terminal.json"
+    },
+    {
+      "target": "hypercurve",
+      "name": "bezier_offset::conversion_tests::recursive_projective_chord_rejects_constant_conjugate_norm_component",
+      "returncode": 0,
+      "passed": true,
+      "ignored": false,
+      "elapsed_seconds": 0.26625916804187,
+      "limit_seconds": 75,
+      "log": "local-chord-parallel-roots-20260924-v21-recursive_projective_chord_rejects_constant_conjugate_norm_component.log",
+      "reused_from": "local-chord-parallel-roots-20260924-v21-terminal.json"
+    },
+    {
+      "target": "hypercurve",
+      "name": "bezier_offset::conversion_tests::recursive_projective_chord_retains_positive_degree_selected_conjugate_fiber",
+      "returncode": 0,
+      "passed": true,
+      "ignored": false,
+      "elapsed_seconds": 0.3374169849557802,
+      "limit_seconds": 75,
+      "log": "local-chord-parallel-roots-20260924-v21-recursive_projective_chord_retains_positive_degree_selected_conjugate_fiber.log",
+      "reused_from": "local-chord-parallel-roots-20260924-v21-terminal.json"
+    },
+    {
+      "target": "hypercurve",
+      "name": "bezier_offset::conversion_tests::recursive_projective_chord_replays_identically_zero_norm_sheet",
+      "returncode": 0,
+      "passed": true,
+      "ignored": false,
+      "elapsed_seconds": 0.2753769319970161,
+      "limit_seconds": 75,
+      "log": "local-chord-parallel-roots-20260924-v21-recursive_projective_chord_replays_identically_zero_norm_sheet.log",
+      "reused_from": "local-chord-parallel-roots-20260924-v21-terminal.json"
+    }
+  ],
+  "isolated_jobs": [
+    [
+      719,
+      [
+        "hypercurve",
+        "bezier_region::tests::one_fragment_nonzero_parallel_loop_extends_chamfer_cuts_on_one_finite_envelope"
+      ]
+    ],
+    [
+      648,
+      [
+        "hypercurve",
+        "bezier_region::curve_corner_chain::tests::extended_fillet_region_classifies_both_sides_of_its_companion"
+      ]
+    ],
+    [
+      713,
+      [
+        "hypercurve",
+        "bezier_region::tests::nonrepresented_chord_and_selected_circle_complete_the_fillet_kernel"
+      ]
+    ],
+    [
+      740,
+      [
+        "hypercurve",
+        "bezier_region::tests::recursive_selected_radial_projective_chamfer_reenters_corner_kernel"
+      ]
+    ]
+  ],
+  "remaining_workers": 2,
+  "checks": [
+    {
+      "label": "fmt",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustfmt",
+        "--edition",
+        "2024",
+        "--check",
+        "src/bezier_offset.rs",
+        "src/bezier_parameter.rs",
+        "src/bezier_region.rs",
+        "src/bezier_split.rs",
+        "src/curve.rs",
+        "src/curve_corner_chain.rs",
+        "src/curve_region_boolean.rs",
+        "src/curve_region_trim.rs",
+        "src/curve_subdivision.rs",
+        "src/curve_support_intersection.rs"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 3.389794550021179,
+      "log": "local-chord-parallel-roots-20260924-v21-fmt.log"
+    },
+    {
+      "label": "clippy-1",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "clippy",
+        "--all-targets",
+        "--all-features",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 25.615127495955676,
+      "log": "local-chord-parallel-roots-20260924-v21-clippy-1.log"
+    },
+    {
+      "label": "clippy-2",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "clippy",
+        "--all-targets",
+        "--no-default-features",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 24.523792245076038,
+      "log": "local-chord-parallel-roots-20260924-v21-clippy-2.log"
+    }
+  ],
+  "command": [
+    "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+    "test",
+    "--release",
+    "--all-features",
+    "--no-run",
+    "--message-format=json",
+    "--locked",
+    "--offline",
+    "--test",
+    "hypercurve_path_closure",
+    "--test",
+    "hypercurve_curve_region_boolean",
+    "--test",
+    "hypercurve_bezier_arrangement",
+    "--test",
+    "hypercurve_curve_region_boolean_fuzz",
+    "--test",
+    "hypercurve_pcb_boolean_regressions",
+    "--test",
+    "hypercurve_curve",
+    "--test",
+    "hypercurve_curve_intersection",
+    "--test",
+    "hypercurve_curve_point",
+    "--test",
+    "hypercurve_curve_range"
+  ],
+  "binaries": {
+    "hypercurve": {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/local-chord-parallel-roots-20260924-v21-libtest",
+      "sha256": "739fcdb4ef46ee353827a9582fbf89f6a551837dbd32fc8e17f3e480bd643652"
+    },
+    "hypercurve_bezier_arrangement": {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/local-chord-parallel-roots-20260924-v21-full-hypercurve_bezier_arrangement",
+      "sha256": "2bb763e9c1d8b022073715eca5537860c88a34b0829ecf2864f78f05e963d50f"
+    },
+    "hypercurve_curve_region_boolean": {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/local-chord-parallel-roots-20260924-v21-full-hypercurve_curve_region_boolean",
+      "sha256": "5666b92e0169af88a3b88e3c38a0377b630b8cc6a81da30b95ba1dfc80ee124b"
+    },
+    "hypercurve_curve_range": {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/local-chord-parallel-roots-20260924-v21-full-hypercurve_curve_range",
+      "sha256": "74809ef7368e0c8d28b44e1f772349942a475e242c4e2e9086b5e713f6cf9c3d"
+    },
+    "hypercurve_curve_region_boolean_fuzz": {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/local-chord-parallel-roots-20260924-v21-full-hypercurve_curve_region_boolean_fuzz",
+      "sha256": "4d0283ff15a6be1dc3a10ac92606c9a647c1fce6ba1a34e9da75ee58d01579c5"
+    },
+    "hypercurve_pcb_boolean_regressions": {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/local-chord-parallel-roots-20260924-v21-full-hypercurve_pcb_boolean_regressions",
+      "sha256": "73924ed3aeff0052ecb4accc30ef47489bc3246d21d666a32b99d3a8c91ccc6d"
+    },
+    "hypercurve_curve_point": {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/local-chord-parallel-roots-20260924-v21-full-hypercurve_curve_point",
+      "sha256": "5d1c44c1890c6b94823f56b23c16653d6033d65690c0c773b8bb2362db459837"
+    },
+    "hypercurve_curve": {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/local-chord-parallel-roots-20260924-v21-full-hypercurve_curve",
+      "sha256": "5713f126c6c8662e759e289ab53286945404b21ad120db5441cfa91def454b99"
+    },
+    "hypercurve_curve_intersection": {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/local-chord-parallel-roots-20260924-v21-full-hypercurve_curve_intersection",
+      "sha256": "8fecd509a325f403f114a00a37c13f3b7760cd39926e6e858aa806883b7903f6"
+    },
+    "hypercurve_path_closure": {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/local-chord-parallel-roots-20260924-v21-full-hypercurve_path_closure",
+      "sha256": "fc269719b3b1c6751e4369499b00346d108712d71fceb447a66c88176914bb49"
+    }
+  },
+  "attempted": 1475,
+  "passed": 1455,
+  "ignored": 6,
+  "nonpasses": [
+    {
+      "target": "hypercurve",
+      "name": "bezier_region::tests::one_fragment_nonzero_parallel_loop_extends_chamfer_cuts_on_one_finite_envelope",
+      "returncode": "timeout",
+      "passed": false,
+      "ignored": false,
+      "elapsed_seconds": 75.01937330805231,
+      "limit_seconds": 75,
+      "log": "local-chord-parallel-roots-20260924-v21-full-case-0719.log"
+    },
+    {
+      "target": "hypercurve",
+      "name": "bezier_offset::conversion_tests::dense_chord_normal_independent_anchor_uses_rank_independent_fallback",
+      "returncode": 101,
+      "passed": false,
+      "ignored": false,
+      "elapsed_seconds": 0.03232486208435148,
+      "limit_seconds": 75,
+      "log": "local-chord-parallel-roots-20260924-v21-full-case-0153.log"
+    },
+    {
+      "target": "hypercurve",
+      "name": "bezier_offset::conversion_tests::finite_circle_components_replay_chord_normal_and_represented_inverses",
+      "returncode": 101,
+      "passed": false,
+      "ignored": false,
+      "elapsed_seconds": 0.2650558720342815,
+      "limit_seconds": 75,
+      "log": "local-chord-parallel-roots-20260924-v21-full-case-0178.log"
+    },
+    {
+      "target": "hypercurve",
+      "name": "bezier_offset::conversion_tests::rank_independent_chord_normal_circle_partitions_folded_rational_overlap",
+      "returncode": "timeout",
+      "passed": false,
+      "ignored": false,
+      "elapsed_seconds": 75.08656178694218,
+      "limit_seconds": 75,
+      "log": "local-chord-parallel-roots-20260924-v21-full-case-0335.log"
+    },
+    {
+      "target": "hypercurve",
+      "name": "bezier_offset::conversion_tests::rank_independent_chord_normal_circle_publishes_rational_overlap",
+      "returncode": 101,
+      "passed": false,
+      "ignored": false,
+      "elapsed_seconds": 1.0661106039769948,
+      "limit_seconds": 75,
+      "log": "local-chord-parallel-roots-20260924-v21-full-case-0337.log"
+    },
+    {
+      "target": "hypercurve",
+      "name": "bezier_offset::conversion_tests::rank_independent_chord_normal_circle_partitions_rational_overlap",
+      "returncode": "timeout",
+      "passed": false,
+      "ignored": false,
+      "elapsed_seconds": 75.01084532297682,
+      "limit_seconds": 75,
+      "log": "local-chord-parallel-roots-20260924-v21-full-case-0336.log"
+    },
+    {
+      "target": "hypercurve",
+      "name": "bezier_offset::conversion_tests::rank_independent_public_booleans_approximate_first_quarter_cusp_first",
+      "returncode": 101,
+      "passed": false,
+      "ignored": false,
+      "elapsed_seconds": 1.0659493649145588,
+      "limit_seconds": 75,
+      "log": "local-chord-parallel-roots-20260924-v21-full-case-0339.log"
+    },
+    {
+      "target": "hypercurve",
+      "name": "bezier_offset::conversion_tests::rank_independent_public_booleans_approximate_first_quarter_cusp_second",
+      "returncode": 101,
+      "passed": false,
+      "ignored": false,
+      "elapsed_seconds": 1.1161577299935743,
+      "limit_seconds": 75,
+      "log": "local-chord-parallel-roots-20260924-v21-full-case-0340.log"
+    },
+    {
+      "target": "hypercurve",
+      "name": "bezier_offset::conversion_tests::rank_independent_public_booleans_strict_first_quarter_cusp_first",
+      "returncode": 101,
+      "passed": false,
+      "ignored": false,
+      "elapsed_seconds": 1.1160832550376654,
+      "limit_seconds": 75,
+      "log": "local-chord-parallel-roots-20260924-v21-full-case-0343.log"
+    },
+    {
+      "target": "hypercurve",
+      "name": "bezier_offset::conversion_tests::rank_independent_public_booleans_strict_first_quarter_cusp_second",
+      "returncode": 101,
+      "passed": false,
+      "ignored": false,
+      "elapsed_seconds": 1.0660747359506786,
+      "limit_seconds": 75,
+      "log": "local-chord-parallel-roots-20260924-v21-full-case-0344.log"
+    },
+    {
+      "target": "hypercurve",
+      "name": "bezier_offset::conversion_tests::rank_independent_public_booleans_strict_second_quarter_cusp_first",
+      "returncode": "timeout",
+      "passed": false,
+      "ignored": false,
+      "elapsed_seconds": 75.0094602080062,
+      "limit_seconds": 75,
+      "log": "local-chord-parallel-roots-20260924-v21-full-case-0345.log"
+    },
+    {
+      "target": "hypercurve",
+      "name": "bezier_offset::conversion_tests::rank_independent_public_booleans_strict_second_quarter_cusp_second",
+      "returncode": "timeout",
+      "passed": false,
+      "ignored": false,
+      "elapsed_seconds": 75.01070328208152,
+      "limit_seconds": 75,
+      "log": "local-chord-parallel-roots-20260924-v21-full-case-0346.log"
+    },
+    {
+      "target": "hypercurve",
+      "name": "bezier_offset::conversion_tests::selected_parallel_normal_circle_intersects_genuinely_analytic_parallel_in_one_fiber",
+      "returncode": "timeout",
+      "passed": false,
+      "ignored": false,
+      "elapsed_seconds": 75.0484776799567,
+      "limit_seconds": 75,
+      "log": "local-chord-parallel-roots-20260924-v21-full-case-0559.log"
+    },
+    {
+      "target": "hypercurve",
+      "name": "bezier_region::tests::pair_native_boolean_algebraic_chord_corner_publishes_a_third_generation_fillet",
+      "returncode": "timeout",
+      "passed": false,
+      "ignored": false,
+      "elapsed_seconds": 75.00290577707347,
+      "limit_seconds": 75,
+      "log": "local-chord-parallel-roots-20260924-v21-full-case-0728.log"
+    }
+  ],
+  "all_sources_unchanged": true,
+  "all_processes_reaped": true
+}

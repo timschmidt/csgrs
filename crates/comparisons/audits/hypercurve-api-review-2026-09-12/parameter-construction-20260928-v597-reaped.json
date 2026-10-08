@@ -1,0 +1,6 @@
+{
+  "outer_session": 59856,
+  "outer_exit_code": 1,
+  "failure": "('hypercurve_bezier_algebraic_parameter', {'exterior_root_images_preserve_equations_and_native_curve_domains', 'positive_unit_weights_do_not_admit_exterior_algebraic_poles'})",
+  "cases": 0
+}

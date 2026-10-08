@@ -1,0 +1,11 @@
+{
+  "commit": "28fd4d6e909686ce0cead19f5a64b176d6bb4206",
+  "verified": [
+    "benches/bezier_region.rs",
+    "fuzz/fuzz_targets/bezier_region.rs",
+    "src/bezier_region.rs",
+    "src/curve_region_boolean.rs",
+    "tests/hypercurve_bezier_region.rs"
+  ],
+  "status": " M src/bezier_offset.rs\n"
+}

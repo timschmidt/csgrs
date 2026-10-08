@@ -1,0 +1,28 @@
+{
+  "tag": "sign-consumer-hyperlattice-baseline-release",
+  "started": "2026-09-08T20:06:03.277Z",
+  "finished": "2026-09-08T20:06:34.662Z",
+  "elapsedSeconds": 31.381871403,
+  "cwd": "/home/tim/Documents/GitHub/workspace",
+  "command": "env",
+  "args": [
+    "TMPDIR=/home/tim/Documents/GitHub/workspace/calcium-build-tmp.gVX5v4",
+    "CARGO_INCREMENTAL=0",
+    "CARGO_PROFILE_DEV_DEBUG=0",
+    "CARGO_BUILD_JOBS=2",
+    "cargo",
+    "test",
+    "--release",
+    "--lib",
+    "--tests",
+    "--all-features",
+    "--offline",
+    "--locked",
+    "--manifest-path",
+    "exactcore-hyper-comparison/audits/continuation/calcium/sign-consumers/baseline/hyperlattice/Cargo.toml",
+    "--target-dir",
+    ".audit-builds/calcium-baseline"
+  ],
+  "code": 101,
+  "signal": null
+}

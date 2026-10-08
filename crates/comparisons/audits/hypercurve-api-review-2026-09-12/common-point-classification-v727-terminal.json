@@ -1,0 +1,140 @@
+{
+  "copied_source_probe": true,
+  "source_manifest": "common-point-classification-v727-sources.json",
+  "production_manifest": "common-point-classification-v727-production-sources.json",
+  "source_directory": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/source-archives/common-point-classification-v727",
+  "builds": [
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "test",
+        "--lib",
+        "--release",
+        "--all-features",
+        "--locked",
+        "--offline",
+        "--no-run",
+        "--message-format=json"
+      ],
+      "returncode": 0,
+      "log": "common-point-classification-v727-hypercurve-build.log",
+      "elapsed_seconds": 137.25896147987805,
+      "binaries": {
+        "hypercurve": {
+          "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/common-point-classification-v727-hypercurve-tests",
+          "sha256": "9143ab9cb8ed7ac778f129d69fadf1c60ec31a1112d9820a5c062823f450862e"
+        }
+      }
+    }
+  ],
+  "cases": [
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/common-point-classification-v727-hypercurve-tests",
+        "--exact",
+        "bezier_region::retained_point_classification_tests::chord_normal_points_classify_on_exact_rectangle_oracles",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "common-point-classification-v727-chord_normal_points_classify_on_exact_rectangle_oracles.log",
+      "elapsed_seconds": 0.06389058101922274,
+      "name": "bezier_region::retained_point_classification_tests::chord_normal_points_classify_on_exact_rectangle_oracles",
+      "target": "hypercurve",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/common-point-classification-v727-hypercurve-tests",
+        "--exact",
+        "bezier_region::retained_point_classification_tests::analytic_parallel_points_classify_on_exact_rectangle_oracles",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "common-point-classification-v727-analytic_parallel_points_classify_on_exact_rectangle_oracles.log",
+      "elapsed_seconds": 0.06380079709924757,
+      "name": "bezier_region::retained_point_classification_tests::analytic_parallel_points_classify_on_exact_rectangle_oracles",
+      "target": "hypercurve",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/common-point-classification-v727-hypercurve-tests",
+        "--exact",
+        "bezier_region::retained_point_classification_tests::similarity_points_classify_on_exact_rectangle_oracles",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "common-point-classification-v727-similarity_points_classify_on_exact_rectangle_oracles.log",
+      "elapsed_seconds": 0.06380973616614938,
+      "name": "bezier_region::retained_point_classification_tests::similarity_points_classify_on_exact_rectangle_oracles",
+      "target": "hypercurve",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/common-point-classification-v727-hypercurve-tests",
+        "--exact",
+        "bezier_region::retained_point_classification_tests::lazy_endpoint_points_classify_on_exact_rectangle_oracles",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "common-point-classification-v727-lazy_endpoint_points_classify_on_exact_rectangle_oracles.log",
+      "elapsed_seconds": 0.06375337997451425,
+      "name": "bezier_region::retained_point_classification_tests::lazy_endpoint_points_classify_on_exact_rectangle_oracles",
+      "target": "hypercurve",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/common-point-classification-v727-hypercurve-tests",
+        "--exact",
+        "bezier_region::retained_point_classification_tests::public_point_queries_preserve_nested_islands_holes_and_empty_regions",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "common-point-classification-v727-public_point_queries_preserve_nested_islands_holes_and_empty_regions.log",
+      "elapsed_seconds": 0.06390343885868788,
+      "name": "bezier_region::retained_point_classification_tests::public_point_queries_preserve_nested_islands_holes_and_empty_regions",
+      "target": "hypercurve",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/common-point-classification-v727-hypercurve-tests",
+        "--exact",
+        "bezier_region::retained_point_classification_tests::generated_point_queries_preserve_the_boundary_of_a_retraced_path",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "common-point-classification-v727-generated_point_queries_preserve_the_boundary_of_a_retraced_path.log",
+      "elapsed_seconds": 0.0076242778450250626,
+      "name": "bezier_region::retained_point_classification_tests::generated_point_queries_preserve_the_boundary_of_a_retraced_path",
+      "target": "hypercurve",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/common-point-classification-v727-hypercurve-tests",
+        "--exact",
+        "bezier_region::retained_point_classification_tests::generated_point_queries_reenter_an_exact_parabolic_offset",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "common-point-classification-v727-generated_point_queries_reenter_an_exact_parabolic_offset.log",
+      "elapsed_seconds": 0.03169404692016542,
+      "name": "bezier_region::retained_point_classification_tests::generated_point_queries_reenter_an_exact_parabolic_offset",
+      "target": "hypercurve",
+      "passed": true
+    }
+  ],
+  "checks": [],
+  "all_processes_reaped": true,
+  "qualification_complete": true
+}

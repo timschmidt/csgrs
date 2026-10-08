@@ -1,0 +1,57 @@
+{
+  "normal_production_build": false,
+  "source_manifest": "stationary-retained-point-constraint-20260928-v565-sources.json",
+  "source_directory": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/source-archives/stationary-retained-point-constraint-20260928-v565",
+  "builds": [
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "test",
+        "--lib",
+        "--release",
+        "--all-features",
+        "--locked",
+        "--offline",
+        "--no-run",
+        "--message-format=json"
+      ],
+      "returncode": 0,
+      "log": "stationary-retained-point-constraint-20260928-v565-build.log",
+      "elapsed_seconds": 134.66373528679833,
+      "binaries": {
+        "hypercurve": {
+          "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/stationary-retained-point-constraint-20260928-v565-hypercurve-tests",
+          "sha256": "a72d593ef8b544e05554dacdbaa0b933b6a0e567996176c50c4cfbb8f213be43"
+        }
+      }
+    }
+  ],
+  "cases": [
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/stationary-retained-point-constraint-20260928-v565-hypercurve-tests",
+        "--exact",
+        "curve::curve_fillet::stationary_retained_point_constraint_regression::stationary_fillet_family_accepts_independent_retained_point_constraints",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 101,
+      "log": "stationary-retained-point-constraint-20260928-v565-stationary_fillet_family_accepts_independent_retained_point_constraints.log",
+      "elapsed_seconds": 15.434582802001387,
+      "target": "hypercurve",
+      "name": "curve::curve_fillet::stationary_retained_point_constraint_regression::stationary_fillet_family_accepts_independent_retained_point_constraints",
+      "passed": false
+    }
+  ],
+  "checks": [],
+  "expected_cases": {
+    "hypercurve": [
+      "curve::curve_fillet::stationary_retained_point_constraint_regression::stationary_fillet_family_accepts_independent_retained_point_constraints"
+    ]
+  },
+  "all_processes_reaped": true,
+  "probe_complete": true,
+  "qualification_complete": false,
+  "performance": [],
+  "failure": "focused regression failure"
+}

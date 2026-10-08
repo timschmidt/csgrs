@@ -1,0 +1,25 @@
+{
+  "returncode": 0,
+  "elapsed_seconds": 0.003452472999924794,
+  "normal_library_sha256": "9ae1c520060940471e48c12e6100d86ee6ea9225a56e2ddd2281e5dd246c03f9",
+  "log": "finite-parallel-admission-baseline-recheck.log",
+  "source": "finite-domain-baseline.rs",
+  "command": [
+    "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustc",
+    "--edition=2024",
+    "-O",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-domain-baseline.rs",
+    "--extern",
+    "hypercurve=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypercurve-cdcdcc6da422cc2c.rlib",
+    "-L",
+    "dependency=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps",
+    "-o",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-parallel-admission-baseline-recheck"
+  ],
+  "source_sha256": "c032cc63c161d14b576b2264b3df28e4a78b35d9210200aaf51b829f64806e59",
+  "executable_sha256": "f6b28fe3e7baa41685832eea4ce8fe2b33a45b17df93274fe421be00ca51466a",
+  "counts": {
+    "complete": 12,
+    "incomplete": 0
+  }
+}

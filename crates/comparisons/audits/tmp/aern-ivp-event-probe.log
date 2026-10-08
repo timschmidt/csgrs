@@ -1,0 +1,7 @@
+possible event with inconsistent child: Nothing
+possible event with unknown child: Nothing
+possible event with fixed-point child: Just [fromList [(HybSysMode "mode",[<1.0>])],fromList [(HybSysMode "mode",[<1.0>])]]
+initial-value sampled hull vs interior: (<-0.0>,<0.25>)
+unwrapped unrestricted IVP: Just [[_-0.0,0.25^]]
+unwrapped invariant-pruned IVP: Nothing
+wrapped invariant-pruned IVP: Just [[_-0.0,0.25^]]

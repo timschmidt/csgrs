@@ -1,0 +1,15 @@
+{
+  "command": [
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve_analytic_parallel_region-072c6a434bb6349d",
+    "--exact",
+    "radical_parallel_cusp_offsets_exactly_under_both_policies",
+    "--test-threads=1",
+    "--nocapture"
+  ],
+  "returncode": 124,
+  "timed_out": true,
+  "elapsed_seconds": 120.00136230202042,
+  "binary_sha256": "ad284fb6f4cc4e366255b28f98565e37d59dc532589f2e750da91a5ea70cb1cf",
+  "log": "finite-parallel-affine-expensive-cusp.log",
+  "scope": "Additional attempt of an unchanged expensive exclusion, separate from the qualified broad test set."
+}

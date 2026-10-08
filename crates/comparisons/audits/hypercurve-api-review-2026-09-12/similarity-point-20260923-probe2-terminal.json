@@ -1,0 +1,41 @@
+{
+  "checks": [
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "check",
+        "--all-targets",
+        "--all-features",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "log": "similarity-point-20260923-probe2-check-0.log"
+    },
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "check",
+        "--all-targets",
+        "--no-default-features",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "log": "similarity-point-20260923-probe2-check-1.log"
+    }
+  ],
+  "cases": [
+    {
+      "name": "bezier_offset::conversion_tests::selected_fiber_transverse_mapped_cut_inverts_by_point",
+      "returncode": 101,
+      "passed": false,
+      "limit_seconds": 120,
+      "elapsed_seconds": 4.156321092974395,
+      "log": "similarity-point-20260923-probe2-case-0.log"
+    }
+  ],
+  "binary_sha256": "6453e884f21b43c5cb411ceeff91d04669ebe69faed33ddf1ceb04b4d64eca19",
+  "all_sources_unchanged": true,
+  "all_processes_reaped": true
+}

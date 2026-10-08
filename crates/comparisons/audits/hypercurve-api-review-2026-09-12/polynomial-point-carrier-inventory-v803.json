@@ -1,0 +1,1274 @@
+[
+  {
+    "path": "hypercurve/benches/bezier_algebraic_parameter.rs",
+    "line": 248,
+    "text": "let point = curve.point_at_algebraic_parameter(&midpoint, &policy)?;",
+    "terms": [
+      "point_at_algebraic_parameter"
+    ]
+  },
+  {
+    "path": "hypercurve/benches/bezier_algebraic_parameter.rs",
+    "line": 269,
+    "text": "let point = decided(conic.point_at_algebraic_parameter(&midpoint, &policy)?);",
+    "terms": [
+      "point_at_algebraic_parameter"
+    ]
+  },
+  {
+    "path": "hypercurve/benches/comparative.rs",
+    "line": 619,
+    "text": ".point_at_algebraic_parameter(&parameter, &policy)",
+    "terms": [
+      "point_at_algebraic_parameter"
+    ]
+  },
+  {
+    "path": "hypercurve/benches/comparative.rs",
+    "line": 624,
+    "text": ".point_at_algebraic_parameter(&parameter, &policy)",
+    "terms": [
+      "point_at_algebraic_parameter"
+    ]
+  },
+  {
+    "path": "hypercurve/benches/editing.rs",
+    "line": 835,
+    "text": ".point_at_algebraic_parameter(parameter, &policy)",
+    "terms": [
+      "point_at_algebraic_parameter"
+    ]
+  },
+  {
+    "path": "hypercurve/benches/editing.rs",
+    "line": 865,
+    "text": ".point_at_algebraic_parameter(&parameter, &policy)",
+    "terms": [
+      "point_at_algebraic_parameter"
+    ]
+  },
+  {
+    "path": "hypercurve/benches/editing.rs",
+    "line": 915,
+    "text": "horizontal(Real::zero())?.point_at_algebraic_parameter(&parameter, &policy)?,",
+    "terms": [
+      "point_at_algebraic_parameter"
+    ]
+  },
+  {
+    "path": "hypercurve/benches/editing.rs",
+    "line": 919,
+    "text": "horizontal(Real::one())?.point_at_algebraic_parameter(&parameter, &policy)?,",
+    "terms": [
+      "point_at_algebraic_parameter"
+    ]
+  },
+  {
+    "path": "hypercurve/benches/editing.rs",
+    "line": 965,
+    "text": ".point_at_algebraic_parameter(&parameter, &policy)",
+    "terms": [
+      "point_at_algebraic_parameter"
+    ]
+  },
+  {
+    "path": "hypercurve/fuzz/fuzz_targets/bezier_algebraic_image.rs",
+    "line": 87,
+    "text": ".point_at_algebraic_parameter(&parameter, &policy)",
+    "terms": [
+      "point_at_algebraic_parameter"
+    ]
+  },
+  {
+    "path": "hypercurve/fuzz/fuzz_targets/bezier_algebraic_image.rs",
+    "line": 116,
+    "text": ".point_at_algebraic_parameter(&parameter, &policy)",
+    "terms": [
+      "point_at_algebraic_parameter"
+    ]
+  },
+  {
+    "path": "hypercurve/src/bezier_algebraic_image.rs",
+    "line": 581,
+    "text": "pub struct BezierAlgebraicPointImage2 {",
+    "terms": [
+      "BezierAlgebraicPointImage2"
+    ]
+  },
+  {
+    "path": "hypercurve/src/bezier_algebraic_image.rs",
+    "line": 589,
+    "text": "impl BezierAlgebraicPointImage2 {",
+    "terms": [
+      "BezierAlgebraicPointImage2"
+    ]
+  },
+  {
+    "path": "hypercurve/src/bezier_algebraic_image.rs",
+    "line": 785,
+    "text": ".point_at_algebraic_parameter(&source.parameter, policy)",
+    "terms": [
+      "point_at_algebraic_parameter"
+    ]
+  },
+  {
+    "path": "hypercurve/src/bezier_algebraic_image.rs",
+    "line": 1789,
+    "text": "pub fn point_at_algebraic_parameter(",
+    "terms": [
+      "point_at_algebraic_parameter"
+    ]
+  },
+  {
+    "path": "hypercurve/src/bezier_algebraic_image.rs",
+    "line": 1793,
+    "text": ") -> CurveResult<BezierAlgebraicPointImage2> {",
+    "terms": [
+      "BezierAlgebraicPointImage2"
+    ]
+  },
+  {
+    "path": "hypercurve/src/bezier_algebraic_image.rs",
+    "line": 1837,
+    "text": "pub fn point_at_algebraic_parameter(",
+    "terms": [
+      "point_at_algebraic_parameter"
+    ]
+  },
+  {
+    "path": "hypercurve/src/bezier_algebraic_image.rs",
+    "line": 1841,
+    "text": ") -> CurveResult<BezierAlgebraicPointImage2> {",
+    "terms": [
+      "BezierAlgebraicPointImage2"
+    ]
+  },
+  {
+    "path": "hypercurve/src/bezier_algebraic_image.rs",
+    "line": 1906,
+    "text": "pub fn point_at_algebraic_parameter(",
+    "terms": [
+      "point_at_algebraic_parameter"
+    ]
+  },
+  {
+    "path": "hypercurve/src/bezier_algebraic_image.rs",
+    "line": 2008,
+    "text": ") -> CurveResult<BezierAlgebraicPointImage2> {",
+    "terms": [
+      "BezierAlgebraicPointImage2"
+    ]
+  },
+  {
+    "path": "hypercurve/src/bezier_algebraic_image.rs",
+    "line": 2011,
+    "text": "return Ok(BezierAlgebraicPointImage2 {",
+    "terms": [
+      "BezierAlgebraicPointImage2"
+    ]
+  },
+  {
+    "path": "hypercurve/src/bezier_algebraic_image.rs",
+    "line": 2020,
+    "text": "return Ok(BezierAlgebraicPointImage2 {",
+    "terms": [
+      "BezierAlgebraicPointImage2"
+    ]
+  },
+  {
+    "path": "hypercurve/src/bezier_algebraic_image.rs",
+    "line": 2029,
+    "text": "return Ok(BezierAlgebraicPointImage2 {",
+    "terms": [
+      "BezierAlgebraicPointImage2"
+    ]
+  },
+  {
+    "path": "hypercurve/src/bezier_algebraic_image.rs",
+    "line": 2037,
+    "text": "Ok(BezierAlgebraicPointImage2 {",
+    "terms": [
+      "BezierAlgebraicPointImage2"
+    ]
+  },
+  {
+    "path": "hypercurve/src/bezier_arrangement.rs",
+    "line": 31,
+    "text": "BezierEndpointPointImage2, BezierEndpointTangentImage2, BezierParameter2,",
+    "terms": [
+      "BezierEndpointPointImage2"
+    ]
+  },
+  {
+    "path": "hypercurve/src/bezier_arrangement.rs",
+    "line": 1569,
+    "text": "fn retained_algebraic_point_key(point: &BezierEndpointPointImage2) -> Option<RetainedEndpointKey> {",
+    "terms": [
+      "BezierEndpointPointImage2"
+    ]
+  },
+  {
+    "path": "hypercurve/src/bezier_arrangement.rs",
+    "line": 1571,
+    "text": "BezierEndpointPointImage2::Polynomial(point) => (",
+    "terms": [
+      "BezierEndpointPointImage2"
+    ]
+  },
+  {
+    "path": "hypercurve/src/bezier_arrangement.rs",
+    "line": 1575,
+    "text": "BezierEndpointPointImage2::Rational(point) => (",
+    "terms": [
+      "BezierEndpointPointImage2"
+    ]
+  },
+  {
+    "path": "hypercurve/src/bezier_offset.rs",
+    "line": 138256,
+    "text": "source.point_at_algebraic_parameter(root, &policy).unwrap(),",
+    "terms": [
+      "point_at_algebraic_parameter"
+    ]
+  },
+  {
+    "path": "hypercurve/src/bezier_offset.rs",
+    "line": 143027,
+    "text": ".point_at_algebraic_parameter(&first_parameter, &policy)",
+    "terms": [
+      "point_at_algebraic_parameter"
+    ]
+  },
+  {
+    "path": "hypercurve/src/bezier_offset.rs",
+    "line": 143032,
+    "text": ".point_at_algebraic_parameter(&second_parameter, &policy)",
+    "terms": [
+      "point_at_algebraic_parameter"
+    ]
+  },
+  {
+    "path": "hypercurve/src/bezier_offset.rs",
+    "line": 143139,
+    "text": ".point_at_algebraic_parameter(&parameter, &policy)",
+    "terms": [
+      "point_at_algebraic_parameter"
+    ]
+  },
+  {
+    "path": "hypercurve/src/bezier_offset.rs",
+    "line": 143274,
+    "text": ".point_at_algebraic_parameter(&parameter, &policy)",
+    "terms": [
+      "point_at_algebraic_parameter"
+    ]
+  },
+  {
+    "path": "hypercurve/src/bezier_offset.rs",
+    "line": 143348,
+    "text": ".point_at_algebraic_parameter(&first_parameter, &policy)",
+    "terms": [
+      "point_at_algebraic_parameter"
+    ]
+  },
+  {
+    "path": "hypercurve/src/bezier_offset.rs",
+    "line": 143353,
+    "text": ".point_at_algebraic_parameter(&second_parameter, &policy)",
+    "terms": [
+      "point_at_algebraic_parameter"
+    ]
+  },
+  {
+    "path": "hypercurve/src/bezier_offset.rs",
+    "line": 143399,
+    "text": ".point_at_algebraic_parameter(&first_parameter, &policy)",
+    "terms": [
+      "point_at_algebraic_parameter"
+    ]
+  },
+  {
+    "path": "hypercurve/src/bezier_offset.rs",
+    "line": 143404,
+    "text": ".point_at_algebraic_parameter(&second_parameter, &policy)",
+    "terms": [
+      "point_at_algebraic_parameter"
+    ]
+  },
+  {
+    "path": "hypercurve/src/bezier_offset.rs",
+    "line": 143694,
+    "text": ".point_at_algebraic_parameter(&start_parameter, &policy)",
+    "terms": [
+      "point_at_algebraic_parameter"
+    ]
+  },
+  {
+    "path": "hypercurve/src/bezier_offset.rs",
+    "line": 143699,
+    "text": ".point_at_algebraic_parameter(&end_parameter, &policy)",
+    "terms": [
+      "point_at_algebraic_parameter"
+    ]
+  },
+  {
+    "path": "hypercurve/src/bezier_offset.rs",
+    "line": 144124,
+    "text": ".point_at_algebraic_parameter(&endpoint_parameter, &policy)",
+    "terms": [
+      "point_at_algebraic_parameter"
+    ]
+  },
+  {
+    "path": "hypercurve/src/bezier_offset.rs",
+    "line": 144278,
+    "text": ".point_at_algebraic_parameter(parameter, &policy)",
+    "terms": [
+      "point_at_algebraic_parameter"
+    ]
+  },
+  {
+    "path": "hypercurve/src/bezier_offset.rs",
+    "line": 144776,
+    "text": ".point_at_algebraic_parameter(&parameter, policy)",
+    "terms": [
+      "point_at_algebraic_parameter"
+    ]
+  },
+  {
+    "path": "hypercurve/src/bezier_offset.rs",
+    "line": 145034,
+    "text": ".point_at_algebraic_parameter(parameter, &policy)",
+    "terms": [
+      "point_at_algebraic_parameter"
+    ]
+  },
+  {
+    "path": "hypercurve/src/bezier_offset.rs",
+    "line": 145127,
+    "text": ".point_at_algebraic_parameter(&first_parameter, &policy)",
+    "terms": [
+      "point_at_algebraic_parameter"
+    ]
+  },
+  {
+    "path": "hypercurve/src/bezier_offset.rs",
+    "line": 145132,
+    "text": ".point_at_algebraic_parameter(&second_parameter, &policy)",
+    "terms": [
+      "point_at_algebraic_parameter"
+    ]
+  },
+  {
+    "path": "hypercurve/src/bezier_offset.rs",
+    "line": 145350,
+    "text": ".point_at_algebraic_parameter(&first_parameter, &policy)",
+    "terms": [
+      "point_at_algebraic_parameter"
+    ]
+  },
+  {
+    "path": "hypercurve/src/bezier_offset.rs",
+    "line": 145355,
+    "text": ".point_at_algebraic_parameter(&second_parameter, &policy)",
+    "terms": [
+      "point_at_algebraic_parameter"
+    ]
+  },
+  {
+    "path": "hypercurve/src/bezier_offset.rs",
+    "line": 145437,
+    "text": ".point_at_algebraic_parameter(&parameter, &policy)",
+    "terms": [
+      "point_at_algebraic_parameter"
+    ]
+  },
+  {
+    "path": "hypercurve/src/bezier_offset.rs",
+    "line": 145476,
+    "text": ".point_at_algebraic_parameter(&parameter, &policy)",
+    "terms": [
+      "point_at_algebraic_parameter"
+    ]
+  },
+  {
+    "path": "hypercurve/src/bezier_offset.rs",
+    "line": 145512,
+    "text": ".point_at_algebraic_parameter(&parameter, &policy)",
+    "terms": [
+      "point_at_algebraic_parameter"
+    ]
+  },
+  {
+    "path": "hypercurve/src/bezier_offset.rs",
+    "line": 147489,
+    "text": ".point_at_algebraic_parameter(&start_parameter, &policy)",
+    "terms": [
+      "point_at_algebraic_parameter"
+    ]
+  },
+  {
+    "path": "hypercurve/src/bezier_offset.rs",
+    "line": 147494,
+    "text": ".point_at_algebraic_parameter(&end_parameter, &policy)",
+    "terms": [
+      "point_at_algebraic_parameter"
+    ]
+  },
+  {
+    "path": "hypercurve/src/bezier_offset.rs",
+    "line": 154297,
+    "text": "crate::tests::decided(curve.point_at_algebraic_parameter(parameter, &policy)?),",
+    "terms": [
+      "point_at_algebraic_parameter"
+    ]
+  },
+  {
+    "path": "hypercurve/src/bezier_offset.rs",
+    "line": 154740,
+    "text": "crate::tests::decided(curve.point_at_algebraic_parameter(parameter, &policy)?),",
+    "terms": [
+      "point_at_algebraic_parameter"
+    ]
+  },
+  {
+    "path": "hypercurve/src/bezier_offset.rs",
+    "line": 154907,
+    "text": "crate::tests::decided(curve.point_at_algebraic_parameter(parameter, &policy)?),",
+    "terms": [
+      "point_at_algebraic_parameter"
+    ]
+  },
+  {
+    "path": "hypercurve/src/bezier_offset.rs",
+    "line": 157292,
+    "text": ".point_at_algebraic_parameter(parameter, &policy)",
+    "terms": [
+      "point_at_algebraic_parameter"
+    ]
+  },
+  {
+    "path": "hypercurve/src/bezier_offset.rs",
+    "line": 157512,
+    "text": ".point_at_algebraic_parameter(parameter, &policy)",
+    "terms": [
+      "point_at_algebraic_parameter"
+    ]
+  },
+  {
+    "path": "hypercurve/src/bezier_offset.rs",
+    "line": 174095,
+    "text": ".point_at_algebraic_parameter(&first_parameter, &policy)",
+    "terms": [
+      "point_at_algebraic_parameter"
+    ]
+  },
+  {
+    "path": "hypercurve/src/bezier_offset.rs",
+    "line": 174100,
+    "text": ".point_at_algebraic_parameter(&second_parameter, &policy)",
+    "terms": [
+      "point_at_algebraic_parameter"
+    ]
+  },
+  {
+    "path": "hypercurve/src/bezier_offset.rs",
+    "line": 184934,
+    "text": ".point_at_algebraic_parameter(&center_parameter, &policy)",
+    "terms": [
+      "point_at_algebraic_parameter"
+    ]
+  },
+  {
+    "path": "hypercurve/src/bezier_offset.rs",
+    "line": 185578,
+    "text": ".point_at_algebraic_parameter(&parameter, &policy)",
+    "terms": [
+      "point_at_algebraic_parameter"
+    ]
+  },
+  {
+    "path": "hypercurve/src/bezier_region.rs",
+    "line": 60,
+    "text": "BezierArrangementTraversal2, BezierEndpoint, BezierEndpointPointImage2,",
+    "terms": [
+      "BezierEndpointPointImage2"
+    ]
+  },
+  {
+    "path": "hypercurve/src/bezier_region.rs",
+    "line": 14105,
+    "text": "point: &BezierEndpointPointImage2,",
+    "terms": [
+      "BezierEndpointPointImage2"
+    ]
+  },
+  {
+    "path": "hypercurve/src/bezier_region.rs",
+    "line": 14109,
+    "text": "BezierEndpointPointImage2::Polynomial(point) => Some(Point2::new(",
+    "terms": [
+      "BezierEndpointPointImage2"
+    ]
+  },
+  {
+    "path": "hypercurve/src/bezier_region.rs",
+    "line": 14113,
+    "text": "BezierEndpointPointImage2::Rational(point) => {",
+    "terms": [
+      "BezierEndpointPointImage2"
+    ]
+  },
+  {
+    "path": "hypercurve/src/bezier_region.rs",
+    "line": 17113,
+    "text": "&curve.point_at_algebraic_parameter(parameter, policy)?,",
+    "terms": [
+      "point_at_algebraic_parameter"
+    ]
+  },
+  {
+    "path": "hypercurve/src/bezier_region.rs",
+    "line": 17119,
+    "text": "&curve.point_at_algebraic_parameter(parameter, policy)?,",
+    "terms": [
+      "point_at_algebraic_parameter"
+    ]
+  },
+  {
+    "path": "hypercurve/src/bezier_region.rs",
+    "line": 17125,
+    "text": "match curve.point_at_algebraic_parameter(parameter, policy)? {",
+    "terms": [
+      "point_at_algebraic_parameter"
+    ]
+  },
+  {
+    "path": "hypercurve/src/bezier_region.rs",
+    "line": 17133,
+    "text": "match curve.point_at_algebraic_parameter(parameter, policy)? {",
+    "terms": [
+      "point_at_algebraic_parameter"
+    ]
+  },
+  {
+    "path": "hypercurve/src/bezier_region.rs",
+    "line": 17151,
+    "text": "image: &crate::BezierAlgebraicPointImage2,",
+    "terms": [
+      "BezierAlgebraicPointImage2"
+    ]
+  },
+  {
+    "path": "hypercurve/src/bezier_region.rs",
+    "line": 17531,
+    "text": "let boundary = crate::tests::decided(curve.point_at_algebraic_parameter(&selected_end, &policy).unwrap());",
+    "terms": [
+      "point_at_algebraic_parameter"
+    ]
+  },
+  {
+    "path": "hypercurve/src/bezier_region.rs",
+    "line": 21687,
+    "text": ".point_at_algebraic_parameter(parameter, policy)",
+    "terms": [
+      "point_at_algebraic_parameter"
+    ]
+  },
+  {
+    "path": "hypercurve/src/bezier_region.rs",
+    "line": 21798,
+    "text": ".point_at_algebraic_parameter(center_parameter, policy)",
+    "terms": [
+      "point_at_algebraic_parameter"
+    ]
+  },
+  {
+    "path": "hypercurve/src/bezier_region.rs",
+    "line": 22441,
+    "text": ".point_at_algebraic_parameter(center_parameter, policy)",
+    "terms": [
+      "point_at_algebraic_parameter"
+    ]
+  },
+  {
+    "path": "hypercurve/src/bezier_region.rs",
+    "line": 24140,
+    "text": ".point_at_algebraic_parameter(&first_parameter, policy)",
+    "terms": [
+      "point_at_algebraic_parameter"
+    ]
+  },
+  {
+    "path": "hypercurve/src/bezier_region.rs",
+    "line": 24145,
+    "text": ".point_at_algebraic_parameter(&second_parameter, policy)",
+    "terms": [
+      "point_at_algebraic_parameter"
+    ]
+  },
+  {
+    "path": "hypercurve/src/bezier_region.rs",
+    "line": 26435,
+    "text": ".point_at_algebraic_parameter(&parameter, &construction_policy)",
+    "terms": [
+      "point_at_algebraic_parameter"
+    ]
+  },
+  {
+    "path": "hypercurve/src/bezier_region.rs",
+    "line": 27040,
+    "text": ".point_at_algebraic_parameter(&parameter, &policy)",
+    "terms": [
+      "point_at_algebraic_parameter"
+    ]
+  },
+  {
+    "path": "hypercurve/src/bezier_region.rs",
+    "line": 27161,
+    "text": ".point_at_algebraic_parameter(alpha_root, &policy)",
+    "terms": [
+      "point_at_algebraic_parameter"
+    ]
+  },
+  {
+    "path": "hypercurve/src/bezier_region.rs",
+    "line": 27236,
+    "text": "line.point_at_algebraic_parameter(alpha_root, &policy)",
+    "terms": [
+      "point_at_algebraic_parameter"
+    ]
+  },
+  {
+    "path": "hypercurve/src/bezier_region.rs",
+    "line": 27303,
+    "text": ".point_at_algebraic_parameter(alpha_root, &policy)",
+    "terms": [
+      "point_at_algebraic_parameter"
+    ]
+  },
+  {
+    "path": "hypercurve/src/bezier_region.rs",
+    "line": 27543,
+    "text": ".point_at_algebraic_parameter(alpha_root, &policy)",
+    "terms": [
+      "point_at_algebraic_parameter"
+    ]
+  },
+  {
+    "path": "hypercurve/src/bezier_region.rs",
+    "line": 27645,
+    "text": ".point_at_algebraic_parameter(alpha_root, &policy)",
+    "terms": [
+      "point_at_algebraic_parameter"
+    ]
+  },
+  {
+    "path": "hypercurve/src/bezier_region.rs",
+    "line": 27829,
+    "text": ".point_at_algebraic_parameter(alpha_root, &policy)",
+    "terms": [
+      "point_at_algebraic_parameter"
+    ]
+  },
+  {
+    "path": "hypercurve/src/bezier_region.rs",
+    "line": 27908,
+    "text": ".point_at_algebraic_parameter(alpha_root, &policy)",
+    "terms": [
+      "point_at_algebraic_parameter"
+    ]
+  },
+  {
+    "path": "hypercurve/src/bezier_region.rs",
+    "line": 28955,
+    "text": ".point_at_algebraic_parameter(parameter, &policy)",
+    "terms": [
+      "point_at_algebraic_parameter"
+    ]
+  },
+  {
+    "path": "hypercurve/src/bezier_region.rs",
+    "line": 29057,
+    "text": ".point_at_algebraic_parameter(parameter, policy)",
+    "terms": [
+      "point_at_algebraic_parameter"
+    ]
+  },
+  {
+    "path": "hypercurve/src/bezier_retained_measure.rs",
+    "line": 29,
+    "text": "Aabb2, Axis2, BezierEndpointPointImage2, BezierParameter2, BezierSplitFragment2,",
+    "terms": [
+      "BezierEndpointPointImage2"
+    ]
+  },
+  {
+    "path": "hypercurve/src/bezier_retained_measure.rs",
+    "line": 777,
+    "text": "fn algebraic_endpoint_interval(point: &BezierEndpointPointImage2) -> Option<EndpointInterval> {",
+    "terms": [
+      "BezierEndpointPointImage2"
+    ]
+  },
+  {
+    "path": "hypercurve/src/bezier_retained_measure.rs",
+    "line": 779,
+    "text": "BezierEndpointPointImage2::Polynomial(point) => Some(EndpointInterval {",
+    "terms": [
+      "BezierEndpointPointImage2"
+    ]
+  },
+  {
+    "path": "hypercurve/src/bezier_retained_measure.rs",
+    "line": 790,
+    "text": "BezierEndpointPointImage2::Rational(point) => Some(EndpointInterval {",
+    "terms": [
+      "BezierEndpointPointImage2"
+    ]
+  },
+  {
+    "path": "hypercurve/src/bezier_split_endpoint.rs",
+    "line": 17,
+    "text": "BezierAlgebraicImageStatus, BezierAlgebraicParameter2, BezierAlgebraicPointImage2,",
+    "terms": [
+      "BezierAlgebraicPointImage2"
+    ]
+  },
+  {
+    "path": "hypercurve/src/bezier_split_endpoint.rs",
+    "line": 26,
+    "text": "pub enum BezierEndpointPointImage2 {",
+    "terms": [
+      "BezierEndpointPointImage2"
+    ]
+  },
+  {
+    "path": "hypercurve/src/bezier_split_endpoint.rs",
+    "line": 28,
+    "text": "Polynomial(BezierAlgebraicPointImage2),",
+    "terms": [
+      "BezierAlgebraicPointImage2"
+    ]
+  },
+  {
+    "path": "hypercurve/src/bezier_split_endpoint.rs",
+    "line": 33,
+    "text": "impl BezierEndpointPointImage2 {",
+    "terms": [
+      "BezierEndpointPointImage2"
+    ]
+  },
+  {
+    "path": "hypercurve/src/bezier_split_endpoint.rs",
+    "line": 91,
+    "text": "point: BezierEndpointPointImage2,",
+    "terms": [
+      "BezierEndpointPointImage2"
+    ]
+  },
+  {
+    "path": "hypercurve/src/bezier_split_endpoint.rs",
+    "line": 100,
+    "text": "point: OnceLock<BezierEndpointPointImage2>,",
+    "terms": [
+      "BezierEndpointPointImage2"
+    ]
+  },
+  {
+    "path": "hypercurve/src/bezier_split_endpoint.rs",
+    "line": 172,
+    "text": "point: BezierEndpointPointImage2::Polynomial(",
+    "terms": [
+      "BezierEndpointPointImage2"
+    ]
+  },
+  {
+    "path": "hypercurve/src/bezier_split_endpoint.rs",
+    "line": 173,
+    "text": "curve.point_at_algebraic_parameter(parameter, policy)?,",
+    "terms": [
+      "point_at_algebraic_parameter"
+    ]
+  },
+  {
+    "path": "hypercurve/src/bezier_split_endpoint.rs",
+    "line": 195,
+    "text": "point: BezierEndpointPointImage2::Polynomial(",
+    "terms": [
+      "BezierEndpointPointImage2"
+    ]
+  },
+  {
+    "path": "hypercurve/src/bezier_split_endpoint.rs",
+    "line": 196,
+    "text": "curve.point_at_algebraic_parameter(parameter, policy)?,",
+    "terms": [
+      "point_at_algebraic_parameter"
+    ]
+  },
+  {
+    "path": "hypercurve/src/bezier_split_endpoint.rs",
+    "line": 217,
+    "text": "let point = match curve.point_at_algebraic_parameter(parameter, policy)? {",
+    "terms": [
+      "point_at_algebraic_parameter"
+    ]
+  },
+  {
+    "path": "hypercurve/src/bezier_split_endpoint.rs",
+    "line": 232,
+    "text": "point: BezierEndpointPointImage2::Rational(point),",
+    "terms": [
+      "BezierEndpointPointImage2"
+    ]
+  },
+  {
+    "path": "hypercurve/src/bezier_split_endpoint.rs",
+    "line": 262,
+    "text": "let point = match curve.point_at_algebraic_parameter(parameter, policy)? {",
+    "terms": [
+      "point_at_algebraic_parameter"
+    ]
+  },
+  {
+    "path": "hypercurve/src/bezier_split_endpoint.rs",
+    "line": 277,
+    "text": "point: BezierEndpointPointImage2::Rational(point),",
+    "terms": [
+      "BezierEndpointPointImage2"
+    ]
+  },
+  {
+    "path": "hypercurve/src/bezier_split_endpoint.rs",
+    "line": 400,
+    "text": "pub fn point(&self) -> CurveResult<Classification<&BezierEndpointPointImage2>> {",
+    "terms": [
+      "BezierEndpointPointImage2"
+    ]
+  },
+  {
+    "path": "hypercurve/src/bezier_split_endpoint.rs",
+    "line": 417,
+    "text": ".point_at_algebraic_parameter(parameter, policy)",
+    "terms": [
+      "point_at_algebraic_parameter"
+    ]
+  },
+  {
+    "path": "hypercurve/src/bezier_split_endpoint.rs",
+    "line": 419,
+    "text": "Classification::Decided(BezierEndpointPointImage2::Polynomial(image))",
+    "terms": [
+      "BezierEndpointPointImage2"
+    ]
+  },
+  {
+    "path": "hypercurve/src/bezier_split_endpoint.rs",
+    "line": 422,
+    "text": ".point_at_algebraic_parameter(parameter, policy)",
+    "terms": [
+      "point_at_algebraic_parameter"
+    ]
+  },
+  {
+    "path": "hypercurve/src/bezier_split_endpoint.rs",
+    "line": 424,
+    "text": "Classification::Decided(BezierEndpointPointImage2::Polynomial(image))",
+    "terms": [
+      "BezierEndpointPointImage2"
+    ]
+  },
+  {
+    "path": "hypercurve/src/bezier_split_endpoint.rs",
+    "line": 427,
+    "text": ".point_at_algebraic_parameter(parameter, policy)",
+    "terms": [
+      "point_at_algebraic_parameter"
+    ]
+  },
+  {
+    "path": "hypercurve/src/bezier_split_endpoint.rs",
+    "line": 428,
+    "text": ".map(|image| image.map(BezierEndpointPointImage2::Rational)),",
+    "terms": [
+      "BezierEndpointPointImage2"
+    ]
+  },
+  {
+    "path": "hypercurve/src/bezier_split_endpoint.rs",
+    "line": 430,
+    "text": ".point_at_algebraic_parameter(parameter, policy)",
+    "terms": [
+      "point_at_algebraic_parameter"
+    ]
+  },
+  {
+    "path": "hypercurve/src/bezier_split_endpoint.rs",
+    "line": 431,
+    "text": ".map(|image| image.map(BezierEndpointPointImage2::Rational)),",
+    "terms": [
+      "BezierEndpointPointImage2"
+    ]
+  },
+  {
+    "path": "hypercurve/src/curve.rs",
+    "line": 14331,
+    "text": ".point_at_algebraic_parameter(&parameter, policy)",
+    "terms": [
+      "point_at_algebraic_parameter"
+    ]
+  },
+  {
+    "path": "hypercurve/src/curve_evaluation.rs",
+    "line": 630,
+    "text": ".point_at_algebraic_parameter(root, &policy)",
+    "terms": [
+      "point_at_algebraic_parameter"
+    ]
+  },
+  {
+    "path": "hypercurve/src/curve_region_boolean.rs",
+    "line": 16773,
+    "text": ".point_at_algebraic_parameter(&parameter, policy)",
+    "terms": [
+      "point_at_algebraic_parameter"
+    ]
+  },
+  {
+    "path": "hypercurve/src/curve_region_boolean.rs",
+    "line": 17396,
+    "text": ".point_at_algebraic_parameter(parameter, &policy)",
+    "terms": [
+      "point_at_algebraic_parameter"
+    ]
+  },
+  {
+    "path": "hypercurve/src/curve_region_boolean.rs",
+    "line": 21326,
+    "text": ".point_at_algebraic_parameter(&endpoint_parameter, &policy)",
+    "terms": [
+      "point_at_algebraic_parameter"
+    ]
+  },
+  {
+    "path": "hypercurve/src/curve_region_trim.rs",
+    "line": 1746,
+    "text": ".point_at_algebraic_parameter(&parameter, &policy)",
+    "terms": [
+      "point_at_algebraic_parameter"
+    ]
+  },
+  {
+    "path": "hypercurve/src/lib.rs",
+    "line": 88,
+    "text": "BezierAlgebraicCoordinateImage, BezierAlgebraicImageStatus, BezierAlgebraicPointImage2,",
+    "terms": [
+      "BezierAlgebraicPointImage2"
+    ]
+  },
+  {
+    "path": "hypercurve/src/lib.rs",
+    "line": 154,
+    "text": "BezierAlgebraicEndpointImage2, BezierEndpointPointImage2, BezierEndpointTangentImage2,",
+    "terms": [
+      "BezierEndpointPointImage2"
+    ]
+  },
+  {
+    "path": "hypercurve/src/rational_bezier_general.rs",
+    "line": 2126,
+    "text": "pub fn point_at_algebraic_parameter(",
+    "terms": [
+      "point_at_algebraic_parameter"
+    ]
+  },
+  {
+    "path": "hypercurve/src/rational_bezier_general.rs",
+    "line": 5305,
+    "text": "self.point_at_algebraic_parameter(refined, policy)?",
+    "terms": [
+      "point_at_algebraic_parameter"
+    ]
+  },
+  {
+    "path": "hypercurve/src/rational_bezier_general.rs",
+    "line": 8699,
+    "text": ".point_at_algebraic_parameter(parameter, policy)?",
+    "terms": [
+      "point_at_algebraic_parameter"
+    ]
+  },
+  {
+    "path": "hypercurve/src/rational_bezier_general.rs",
+    "line": 10061,
+    "text": ".point_at_algebraic_parameter(parameter, &policy)",
+    "terms": [
+      "point_at_algebraic_parameter"
+    ]
+  },
+  {
+    "path": "hypercurve/src/rational_bezier_general.rs",
+    "line": 10232,
+    "text": ".point_at_algebraic_parameter(parameter, &policy)",
+    "terms": [
+      "point_at_algebraic_parameter"
+    ]
+  },
+  {
+    "path": "hypercurve/src/rational_bezier_general.rs",
+    "line": 11003,
+    "text": ".point_at_algebraic_parameter(&parameter, &policy)",
+    "terms": [
+      "point_at_algebraic_parameter"
+    ]
+  },
+  {
+    "path": "hypercurve/src/rational_bezier_general.rs",
+    "line": 11047,
+    "text": ".point_at_algebraic_parameter(&parameter, &policy)",
+    "terms": [
+      "point_at_algebraic_parameter"
+    ]
+  },
+  {
+    "path": "hypercurve/tests/hypercurve_bezier_algebraic_image.rs",
+    "line": 57,
+    "text": ".point_at_algebraic_parameter(&parameter, &policy())",
+    "terms": [
+      "point_at_algebraic_parameter"
+    ]
+  },
+  {
+    "path": "hypercurve/tests/hypercurve_bezier_algebraic_image.rs",
+    "line": 97,
+    "text": ".point_at_algebraic_parameter(&parameter, &policy())",
+    "terms": [
+      "point_at_algebraic_parameter"
+    ]
+  },
+  {
+    "path": "hypercurve/tests/hypercurve_bezier_algebraic_image.rs",
+    "line": 123,
+    "text": ".point_at_algebraic_parameter(&parameter, &policy)",
+    "terms": [
+      "point_at_algebraic_parameter"
+    ]
+  },
+  {
+    "path": "hypercurve/tests/hypercurve_bezier_algebraic_image.rs",
+    "line": 151,
+    "text": ".point_at_algebraic_parameter(&parameter, &policy())",
+    "terms": [
+      "point_at_algebraic_parameter"
+    ]
+  },
+  {
+    "path": "hypercurve/tests/hypercurve_bezier_algebraic_image.rs",
+    "line": 228,
+    "text": ".point_at_algebraic_parameter(&parameter, &policy())",
+    "terms": [
+      "point_at_algebraic_parameter"
+    ]
+  },
+  {
+    "path": "hypercurve/tests/hypercurve_bezier_algebraic_image.rs",
+    "line": 325,
+    "text": ".point_at_algebraic_parameter(&parameter, &policy)",
+    "terms": [
+      "point_at_algebraic_parameter"
+    ]
+  },
+  {
+    "path": "hypercurve/tests/hypercurve_bezier_algebraic_image.rs",
+    "line": 410,
+    "text": "conic.point_at_algebraic_parameter(&pole, &policy),",
+    "terms": [
+      "point_at_algebraic_parameter"
+    ]
+  },
+  {
+    "path": "hypercurve/tests/hypercurve_bezier_algebraic_image.rs",
+    "line": 411,
+    "text": "general.point_at_algebraic_parameter(&pole, &policy),",
+    "terms": [
+      "point_at_algebraic_parameter"
+    ]
+  },
+  {
+    "path": "hypercurve/tests/hypercurve_bezier_algebraic_image.rs",
+    "line": 439,
+    "text": ".point_at_algebraic_parameter(&parameter, &policy)",
+    "terms": [
+      "point_at_algebraic_parameter"
+    ]
+  },
+  {
+    "path": "hypercurve/tests/hypercurve_bezier_algebraic_image.rs",
+    "line": 444,
+    "text": ".point_at_algebraic_parameter(&parameter, &policy)",
+    "terms": [
+      "point_at_algebraic_parameter"
+    ]
+  },
+  {
+    "path": "hypercurve/tests/hypercurve_bezier_algebraic_image.rs",
+    "line": 488,
+    "text": "let point = curve.point_at_algebraic_parameter(&parameter, &policy()).unwrap();",
+    "terms": [
+      "point_at_algebraic_parameter"
+    ]
+  },
+  {
+    "path": "hypercurve/tests/hypercurve_bezier_algebraic_image.rs",
+    "line": 527,
+    "text": "let point = decided(conic.point_at_algebraic_parameter(&parameter, &policy()).unwrap());",
+    "terms": [
+      "point_at_algebraic_parameter"
+    ]
+  },
+  {
+    "path": "hypercurve/tests/hypercurve_bezier_algebraic_parameter.rs",
+    "line": 706,
+    "text": "let image = source.point_at_algebraic_parameter(&root, &policy).unwrap();",
+    "terms": [
+      "point_at_algebraic_parameter"
+    ]
+  },
+  {
+    "path": "hypercurve/tests/hypercurve_bezier_algebraic_parameter.rs",
+    "line": 744,
+    "text": "let image = source.point_at_algebraic_parameter(&root, &policy).unwrap();",
+    "terms": [
+      "point_at_algebraic_parameter"
+    ]
+  },
+  {
+    "path": "hypercurve/tests/hypercurve_bezier_split_materialization.rs",
+    "line": 2,
+    "text": "BezierAlgebraicEndpointImage2, BezierAlgebraicImageStatus, BezierEndpointPointImage2,",
+    "terms": [
+      "BezierEndpointPointImage2"
+    ]
+  },
+  {
+    "path": "hypercurve/tests/hypercurve_bezier_split_materialization.rs",
+    "line": 121,
+    "text": "BezierEndpointPointImage2::Polynomial(point) => {",
+    "terms": [
+      "BezierEndpointPointImage2"
+    ]
+  },
+  {
+    "path": "hypercurve/tests/hypercurve_bezier_split_materialization.rs",
+    "line": 126,
+    "text": "BezierEndpointPointImage2::Rational(_) => {",
+    "terms": [
+      "BezierEndpointPointImage2"
+    ]
+  },
+  {
+    "path": "hypercurve/tests/hypercurve_bezier_split_materialization.rs",
+    "line": 148,
+    "text": "BezierEndpointPointImage2::Rational(point) => {",
+    "terms": [
+      "BezierEndpointPointImage2"
+    ]
+  },
+  {
+    "path": "hypercurve/tests/hypercurve_bezier_split_materialization.rs",
+    "line": 153,
+    "text": "BezierEndpointPointImage2::Polynomial(_) => panic!(\"expected rational point image\"),",
+    "terms": [
+      "BezierEndpointPointImage2"
+    ]
+  },
+  {
+    "path": "hypercurve/tests/hypercurve_curve_point.rs",
+    "line": 53,
+    "text": ".point_at_algebraic_parameter(&parameter, &policy)",
+    "terms": [
+      "point_at_algebraic_parameter"
+    ]
+  },
+  {
+    "path": "hypercurve/tests/hypercurve_curve_region_promotion.rs",
+    "line": 425,
+    "text": ".point_at_algebraic_parameter(&parameter, policy)",
+    "terms": [
+      "point_at_algebraic_parameter"
+    ]
+  },
+  {
+    "path": "hypercurve/tests/hypercurve_curve_region_promotion.rs",
+    "line": 430,
+    "text": ".point_at_algebraic_parameter(&parameter, policy)",
+    "terms": [
+      "point_at_algebraic_parameter"
+    ]
+  },
+  {
+    "path": "hypercurve/tests/hypercurve_curve_region_promotion.rs",
+    "line": 623,
+    "text": ".point_at_algebraic_parameter(parameter, policy)",
+    "terms": [
+      "point_at_algebraic_parameter"
+    ]
+  },
+  {
+    "path": "hypercurve/tests/hypercurve_curve_region_promotion.rs",
+    "line": 802,
+    "text": ".point_at_algebraic_parameter(&parameter, policy)",
+    "terms": [
+      "point_at_algebraic_parameter"
+    ]
+  },
+  {
+    "path": "hypercurve/tests/hypercurve_curve_region_promotion.rs",
+    "line": 866,
+    "text": ".point_at_algebraic_parameter(&parameter, policy)",
+    "terms": [
+      "point_at_algebraic_parameter"
+    ]
+  },
+  {
+    "path": "hypercurve/tests/hypercurve_curve_region_promotion.rs",
+    "line": 2935,
+    "text": ".point_at_algebraic_parameter(&parameter, &policy)",
+    "terms": [
+      "point_at_algebraic_parameter"
+    ]
+  },
+  {
+    "path": "hypercurve/tests/hypercurve_curve_region_promotion.rs",
+    "line": 4173,
+    "text": ".point_at_algebraic_parameter(&parameter, policy)",
+    "terms": [
+      "point_at_algebraic_parameter"
+    ]
+  },
+  {
+    "path": "hypercurve/tests/hypercurve_curve_region_promotion.rs",
+    "line": 4284,
+    "text": ".point_at_algebraic_parameter(&parameter, policy)",
+    "terms": [
+      "point_at_algebraic_parameter"
+    ]
+  },
+  {
+    "path": "hypercurve/tests/hypercurve_curve_region_promotion.rs",
+    "line": 4686,
+    "text": ".point_at_algebraic_parameter(&parameter, policy)",
+    "terms": [
+      "point_at_algebraic_parameter"
+    ]
+  },
+  {
+    "path": "hypercurve/tests/hypercurve_rational_bezier.rs",
+    "line": 994,
+    "text": ".point_at_algebraic_parameter(first_parameter, &policy)",
+    "terms": [
+      "point_at_algebraic_parameter"
+    ]
+  }
+]

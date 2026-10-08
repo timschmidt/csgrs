@@ -1,0 +1,3 @@
+policy: construction Approximate512Consumed
+policy: identity union Certified
+policy: strict closing seam CurveOutcome { value: Uncertain(RealSign), certainty: Certified }

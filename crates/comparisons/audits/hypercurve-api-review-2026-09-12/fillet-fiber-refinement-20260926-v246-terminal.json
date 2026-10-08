@@ -1,0 +1,20 @@
+{
+  "source_manifest": "fillet-fiber-refinement-20260926-v246-sources.json",
+  "source_directory": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/source-archives/fillet-fiber-refinement-20260926-v246",
+  "workspace_guard": "public-fillet-families-full-20260926-v236-sources.json",
+  "fixture": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/fillet-reoffset-compact-20260926-v243-fiber.jsonl",
+  "fixture_sha256": "f5b4f684b499a3c3b525fbf2029e413a5a0d27a6b8fa12e95c2becac081e50bc",
+  "all_processes_reaped": true,
+  "command": [
+    "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+    "build",
+    "--release",
+    "--locked",
+    "--offline",
+    "--message-format=json"
+  ],
+  "build_returncode": 0,
+  "binary_sha256": "79db586ebfe6186e5c84f96d5a9e1132fd34961d4ddfac5457a8aad4bff3f56e",
+  "run_returncode": 0,
+  "elapsed_seconds": 29.167142805061303
+}

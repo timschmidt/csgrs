@@ -1,0 +1,14 @@
+{
+  "tag": "e-plan-verify-full",
+  "started": "2026-09-10T00:49:14.987Z",
+  "finished": "2026-09-10T00:50:00.566Z",
+  "elapsedSeconds": 45.576108526,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "node",
+  "args": [
+    "verify-e-plan.mjs",
+    "--derivative-live"
+  ],
+  "code": 0,
+  "signal": null
+}

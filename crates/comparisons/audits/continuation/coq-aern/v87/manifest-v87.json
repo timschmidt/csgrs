@@ -1,0 +1,494 @@
+{
+  "checkpoint": 87,
+  "status": "qualified-metric-source-and-benchmark-contracts",
+  "previousManifestSha256": "7a175c1f69253e215629ed9e6b60fdf1286c8d5f9ee93891bad10daa47cd4801",
+  "previousDirectArtifacts": 57,
+  "olderDirectArtifacts": [
+    62,
+    4498
+  ],
+  "coverage": {
+    "complete": 36,
+    "partial": 0,
+    "lines": 11984
+  },
+  "delta": {
+    "newComplete": 6,
+    "newLines": 2864
+  },
+  "remainingTextFiles": 52,
+  "model": {
+    "status": "verified-independent-metric-and-boundary-model",
+    "scalarTriples": 35937,
+    "intervalCases": 71874,
+    "convexCases": 2176,
+    "dimensions": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      16,
+      64,
+      256
+    ],
+    "vectorCases": 512,
+    "pathChecks": 8448,
+    "rootCounterexamples": 510,
+    "formalZeroChecks": 16320,
+    "corruptionControls": 8,
+    "counterexample": {
+      "n": 4,
+      "x": "1/64",
+      "inputEnclosure": [
+        "-1/64",
+        "3/64"
+      ],
+      "left": "unknown",
+      "right": "certainly true",
+      "selectedApproximation": "0",
+      "declaredRadius": "1/16",
+      "exactRoot": "1/8"
+    },
+    "records": 55713,
+    "sha256": "35da1b6cb854c77c221298576f498b8fcfd98d3171ea21ae216be6f582f5ca34",
+    "nativeDonorExecution": false
+  },
+  "bench": {
+    "status": "verified-static-benchmark-contract",
+    "activeDispatchers": [
+      "realmaxE",
+      "realmaxH",
+      "realmaxN",
+      "magnitude1E",
+      "magnitude1H",
+      "sqrt1E",
+      "sqrt1H",
+      "sqrt1N",
+      "sqrt2E",
+      "sqrt2H",
+      "sqrt2N",
+      "civt1E",
+      "civt2E",
+      "civt3E",
+      "civt1H",
+      "civt2H",
+      "civt3H"
+    ],
+    "commentedComplexDispatchers": [
+      "magnitude1N",
+      "csqrt0rE",
+      "csqrt0iE",
+      "csqrt1rE",
+      "csqrt1iE",
+      "csqrt2rE",
+      "csqrt2iE",
+      "csqrt3rE",
+      "csqrt3iE",
+      "csqrt4rE",
+      "csqrt4iE",
+      "csqrt5rE",
+      "csqrt5iE"
+    ],
+    "selected": [
+      {
+        "name": "csqrt3ExtractedOnly",
+        "dispatcher": "csqrt3rE",
+        "params": [
+          "100",
+          "1000",
+          "10000",
+          "100000",
+          "1000000"
+        ],
+        "repetitions": 10,
+        "hasActiveDispatcher": false,
+        "hasCommentedDispatcher": true
+      },
+      {
+        "name": "csqrt5ExtractedOnly",
+        "dispatcher": "csqrt5rE",
+        "params": [
+          "100",
+          "1000",
+          "10000",
+          "100000",
+          "1000000"
+        ],
+        "repetitions": 10,
+        "hasActiveDispatcher": false,
+        "hasCommentedDispatcher": true
+      }
+    ],
+    "plannedInvocationsIfAllSucceeded": 100,
+    "syntaxCheck": "passed",
+    "runnerExecuted": false,
+    "nativeHaskellExecuted": false,
+    "failuresDeletedByRunner": true,
+    "overwritesRepeatedParameters": true,
+    "zeroCpuTimesReplaced": true
+  },
+  "environment": {
+    "status": "checked-known-native-tool-locations",
+    "commands": {
+      "ghc": null,
+      "runghc": null,
+      "coqc": null,
+      "rocq": null,
+      "opam": null,
+      "stack": "/usr/bin/stack",
+      "cabal": null,
+      "cargo": "/home/tim/.cargo/bin/cargo",
+      "node": "/usr/bin/node",
+      "valgrind": "/usr/bin/valgrind",
+      "bash": "/usr/bin/bash"
+    },
+    "paths": [
+      {
+        "path": "/tmp/aern2-stack.ryVCFK/programs/x86_64-linux/ghc-tinfo6-9.6.7/bin/ghc",
+        "exists": false
+      },
+      {
+        "path": "/home/tim/.ghcup/bin/ghc",
+        "exists": false
+      },
+      {
+        "path": "/home/tim/.stack/programs/x86_64-linux",
+        "exists": true
+      }
+    ],
+    "historicalBuildNote": {
+      "path": "/home/tim/Documents/GitHub/workspace/exact-real-references/constructible-qualification/boundary-README.md",
+      "sha256": "75c8d816627a4c35ff17b2236e490e5f4647070e04d96eba701028ba9fb2251d"
+    },
+    "tmpAvailableBytes": 13861122048,
+    "installedOrDownloaded": false
+  },
+  "tests": {
+    "debug": [
+      "algebra_fact_packets_cover_zero_nonzero_unknown_and_large_masks",
+      "checked_vector_operations_reject_unknown_zero_divisors",
+      "checked_vector_operations_reject_zero_divisors",
+      "complex_power_status_ownership_and_symbolic_fallbacks_are_covered",
+      "finite_f64_array_boundary_is_checked_and_lossy_export_is_explicit",
+      "generic_shared_scale_surfaces_cover_empty_wide_and_schedule_queries",
+      "owned_shared_scale_vector_retains_one_fact_packet",
+      "owned_shared_scale_vectors_preserve_common_scale_across_lifetimes",
+      "point_views_facts_conversions_collections_and_ownership_forms_are_covered",
+      "scalar_unknown_domain_active_abort_and_projective_general_path_are_covered",
+      "shared_scale_vectors_use_known_exact_cross_products",
+      "shared_scale_vectors_use_known_exact_dot_products",
+      "shared_scale_vectors_use_known_exact_wedge_products",
+      "vector2_structural_facts_certify_signed_unit_axes",
+      "vector2_structural_facts_expose_zero_mask_without_topology",
+      "vector3_and_vector4_structural_facts_expose_sparse_masks_and_homogeneous_kind",
+      "vector3_checked_basis_and_unit_cross_are_owned_lattice_helpers",
+      "vector3_squared_distance_stays_in_hyperreal_space",
+      "vector_affine_aggregate_helpers_keep_components_in_hyperreal_space",
+      "vector_display_forwards_real_formatting",
+      "vector_dot_and_normalize",
+      "vector_exact_facts_carry_common_scale_without_denominator_access",
+      "vector_facts_classify_squared_norm_zero_status_without_self_dot",
+      "vector_public_surface_and_all_abort_sparse_masks_are_covered",
+      "vector_scalar_add_and_subtract_are_componentwise",
+      "vector_shared_scale_views_preserve_borrowed_common_scale_facts",
+      "vector_structural_facts_summarize_symbolic_dependencies"
+    ],
+    "release": [
+      "algebra_fact_packets_cover_zero_nonzero_unknown_and_large_masks",
+      "checked_vector_operations_reject_unknown_zero_divisors",
+      "checked_vector_operations_reject_zero_divisors",
+      "complex_power_status_ownership_and_symbolic_fallbacks_are_covered",
+      "finite_f64_array_boundary_is_checked_and_lossy_export_is_explicit",
+      "generic_shared_scale_surfaces_cover_empty_wide_and_schedule_queries",
+      "owned_shared_scale_vector_retains_one_fact_packet",
+      "owned_shared_scale_vectors_preserve_common_scale_across_lifetimes",
+      "point_views_facts_conversions_collections_and_ownership_forms_are_covered",
+      "scalar_unknown_domain_active_abort_and_projective_general_path_are_covered",
+      "shared_scale_vectors_use_known_exact_cross_products",
+      "shared_scale_vectors_use_known_exact_dot_products",
+      "shared_scale_vectors_use_known_exact_wedge_products",
+      "vector2_structural_facts_certify_signed_unit_axes",
+      "vector2_structural_facts_expose_zero_mask_without_topology",
+      "vector3_and_vector4_structural_facts_expose_sparse_masks_and_homogeneous_kind",
+      "vector3_checked_basis_and_unit_cross_are_owned_lattice_helpers",
+      "vector3_squared_distance_stays_in_hyperreal_space",
+      "vector_affine_aggregate_helpers_keep_components_in_hyperreal_space",
+      "vector_display_forwards_real_formatting",
+      "vector_dot_and_normalize",
+      "vector_exact_facts_carry_common_scale_without_denominator_access",
+      "vector_facts_classify_squared_norm_zero_status_without_self_dot",
+      "vector_public_surface_and_all_abort_sparse_masks_are_covered",
+      "vector_scalar_add_and_subtract_are_componentwise",
+      "vector_shared_scale_views_preserve_borrowed_common_scale_facts",
+      "vector_structural_facts_summarize_symbolic_dependencies"
+    ]
+  },
+  "executables": [
+    {
+      "profile": "debug",
+      "target": "api_surface_coverage",
+      "path": "/tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/debug/deps/api_surface_coverage-ec99cf21593309ae",
+      "bytes": 5390736,
+      "sha256": "0fc077a94ba62a6a348b71e18dac31abf2c13630e447164974593c2eb5220f72"
+    },
+    {
+      "profile": "debug",
+      "target": "vector",
+      "path": "/tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/debug/deps/vector-c1be21ae819b803e",
+      "bytes": 4703280,
+      "sha256": "cbccb38dcbebe89279c79afbf05c031aae50097173b7a72514b5bcd5c8880e7a"
+    },
+    {
+      "profile": "release",
+      "target": "api_surface_coverage",
+      "path": "/tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/release/deps/api_surface_coverage-0a8043ab0e7b0503",
+      "bytes": 3491016,
+      "sha256": "e2424e947e7f2d6d384bee68cfe43d8f53241132e8a66bcf414c9c951b18bf94"
+    },
+    {
+      "profile": "release",
+      "target": "vector",
+      "path": "/tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/release/deps/vector-befe97a0ab5486a7",
+      "bytes": 3120488,
+      "sha256": "cd7afa57b364899d4ceed7f0abc9824226fbcd12ce9cd52165d5d4bbc68af36e"
+    }
+  ],
+  "executableBytes": 16705520,
+  "rereads": [
+    {
+      "path": "hyperreal/AGENTS.md",
+      "ranges": [
+        [
+          1,
+          14
+        ]
+      ],
+      "sha256": "8a5f7cff0d66947deca34eb54b366ec279897d6e38819bf34e2e1e54b8538039",
+      "newDonorReadCredit": false
+    },
+    {
+      "path": "hyperlattice/Cargo.toml",
+      "ranges": [
+        [
+          1,
+          49
+        ]
+      ],
+      "sha256": "f2e6f9d051560b5550e4326c354f96e65af66b38117743f7fa05fb2548df229d",
+      "newDonorReadCredit": false
+    },
+    {
+      "path": "hyperlattice/src/vector.rs",
+      "ranges": [
+        [
+          1090,
+          1245
+        ]
+      ],
+      "sha256": "10b40e2b9f5b7952586521b3de86ba9fac131e1144877db442afb5159d75b363",
+      "newDonorReadCredit": false
+    },
+    {
+      "path": "hyperlattice/tests/vector.rs",
+      "ranges": [
+        [
+          110,
+          175
+        ]
+      ],
+      "sha256": "b32b33fa4a3193cde0df06474014dfd2f6086c38a29caf9ac832dbd82aed26ce",
+      "newDonorReadCredit": false
+    },
+    {
+      "path": "hyperlattice/tests/api_surface_coverage.rs",
+      "ranges": [
+        [
+          270,
+          345
+        ]
+      ],
+      "sha256": "f9e3740670fba398a02eb511f2082425360c48c161ca435830dc3151bdc7653e",
+      "newDonorReadCredit": false
+    },
+    {
+      "path": "exact-real-references/aern2/aern2-real/src/AERN2/Real/Limit.hs",
+      "ranges": [
+        [
+          1,
+          62
+        ]
+      ],
+      "sha256": "b3e94ed687187a11dd0282047544a86e71bfceaa1061072a92e296d48b45350f",
+      "newDonorReadCredit": false
+    },
+    {
+      "path": "exact-real-references/aern2/aern2-real/src/AERN2/Real/CKleenean.hs",
+      "ranges": [
+        [
+          25,
+          199
+        ]
+      ],
+      "sha256": "6fb67457a13ba63e3a935df519012863c71774bd46fe8d4d906290d07c5ba1ea",
+      "newDonorReadCredit": false
+    },
+    {
+      "path": "exact-real-references/aern2/aern2-real/src/AERN2/Continuity/Principles.hs",
+      "ranges": [
+        [
+          1,
+          73
+        ]
+      ],
+      "sha256": "4949ad839a8baf00d2803e3f6f17b6e1029778562248a1d14f4449168a026b7d",
+      "newDonorReadCredit": false
+    },
+    {
+      "path": "exact-real-references/coq-aern/formalization/Analysis/Sqrt.v",
+      "ranges": [
+        [
+          330,
+          378
+        ]
+      ],
+      "sha256": "32135c8b5e517572d9c26d4b3a1375eb43f3a528bc56ebbf87074d0ed2f80f68",
+      "newDonorReadCredit": false
+    },
+    {
+      "path": "exact-real-references/coq-aern/extracted-examples/src/Sqrt.hs",
+      "ranges": [
+        [
+          628,
+          661
+        ]
+      ],
+      "sha256": "3dd3560789a7717ea121b44a4dbc93e5c606b415ca7848921eafb3761cee3513",
+      "newDonorReadCredit": false
+    }
+  ],
+  "gates": [
+    {
+      "tag": "coq-aern-current86-before-v87",
+      "classification": "environment-subprocess-denied",
+      "finished": "2026-09-12T06:27:03.915Z"
+    },
+    {
+      "tag": "coq-aern-current86-before-approved-v87",
+      "classification": "success",
+      "finished": "2026-09-12T06:28:19.590Z"
+    },
+    {
+      "tag": "coq-aern-vector-debug-v87",
+      "classification": "success",
+      "finished": "2026-09-12T06:34:39.095Z"
+    },
+    {
+      "tag": "coq-aern-vector-release-v87",
+      "classification": "success",
+      "finished": "2026-09-12T06:35:35.948Z"
+    },
+    {
+      "tag": "coq-aern-model-v87",
+      "classification": "unusable-empty-sandbox-capture",
+      "finished": "2026-09-12T06:38:05.999Z"
+    },
+    {
+      "tag": "coq-aern-model-approved-v87",
+      "classification": "success",
+      "finished": "2026-09-12T06:38:54.633Z"
+    },
+    {
+      "tag": "coq-aern-bench-contract-v87",
+      "classification": "environment-subprocess-denied",
+      "finished": "2026-09-12T06:38:08.486Z"
+    },
+    {
+      "tag": "coq-aern-bench-contract-approved-v87",
+      "classification": "success",
+      "finished": "2026-09-12T06:38:51.443Z"
+    },
+    {
+      "tag": "coq-aern-environment-v87",
+      "classification": "environment-subprocess-denied",
+      "finished": "2026-09-12T06:38:07.234Z"
+    },
+    {
+      "tag": "coq-aern-environment-approved-v87",
+      "classification": "success",
+      "finished": "2026-09-12T06:38:47.382Z"
+    }
+  ],
+  "files": {
+    "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/results/coq-aern-current86-before-v87.json": "299c71ca3f91eb5ed3734179d39a87225efbcdceec116e9a202dc72a90ac8609",
+    "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/results/coq-aern-current86-before-v87.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/results/coq-aern-current86-before-v87.stderr": "70a5058320e0681087d2f7df79084e6e1641b8f1f7d91f7055b8c26822a35e47",
+    "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/results/coq-aern-current86-before-approved-v87.json": "4fef6cfcf3d7eeb255cb36d5f826538d25f5d93456ad9a9b985ff5a482572523",
+    "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/results/coq-aern-current86-before-approved-v87.stdout": "65a77e544a34bb6a330b5dd3866199184755cfbd896078055cc43f5682b9f176",
+    "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/results/coq-aern-current86-before-approved-v87.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/results/coq-aern-vector-debug-v87.json": "a0572ff85886fd7d8e9789773426785b08d7d6c167f058161d06c7050c2f5196",
+    "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/results/coq-aern-vector-debug-v87.stdout": "98c595e0d6c6e8f7e7a4ea2a731bd4d0f9d0ed871e24bf6f4c5ba83af8ca53b6",
+    "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/results/coq-aern-vector-debug-v87.stderr": "0c1a7afb6a05c6b2a1f30d678a5f0263d1a79879bddfc90264a85c5aa62046ec",
+    "/tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/debug/deps/api_surface_coverage-ec99cf21593309ae": "0fc077a94ba62a6a348b71e18dac31abf2c13630e447164974593c2eb5220f72",
+    "/tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/debug/deps/vector-c1be21ae819b803e": "cbccb38dcbebe89279c79afbf05c031aae50097173b7a72514b5bcd5c8880e7a",
+    "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/results/coq-aern-vector-release-v87.json": "743bcdcfeeeca5ffba35559330b41c95d607168f9bf6f4b8b7af8021e212e1d6",
+    "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/results/coq-aern-vector-release-v87.stdout": "b086348a43e92306ce9d1076772dd1beaa8ffce8e95f861d219d7d28b35f97b0",
+    "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/results/coq-aern-vector-release-v87.stderr": "0b4eabdda61e4f85788554d576465ad87c63069f3c685d7216b49bb65fe9ae79",
+    "/tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/release/deps/api_surface_coverage-0a8043ab0e7b0503": "e2424e947e7f2d6d384bee68cfe43d8f53241132e8a66bcf414c9c951b18bf94",
+    "/tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/release/deps/vector-befe97a0ab5486a7": "cd7afa57b364899d4ceed7f0abc9824226fbcd12ce9cd52165d5d4bbc68af36e",
+    "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/results/coq-aern-model-v87.json": "be1dc7a0ba5238e5a16e1018af0c671ab22add7aefb1f646bf997e5f4bed2af8",
+    "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/results/coq-aern-model-v87.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/results/coq-aern-model-v87.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/results/coq-aern-model-approved-v87.json": "b604567bc582905d5de57983cf44b20feb294a1e33ccd013561a0c7a1dc9a426",
+    "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/results/coq-aern-model-approved-v87.stdout": "c9d497e65a1b52111b48ce058b6aac11c85dad99bfa90fc1d1a9e927eef91e90",
+    "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/results/coq-aern-model-approved-v87.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/results/coq-aern-bench-contract-v87.json": "1161e37e40a99c4cdde5f0f752f98be1c79eb802651f3ad96d65fe78813e0a73",
+    "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/results/coq-aern-bench-contract-v87.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/results/coq-aern-bench-contract-v87.stderr": "46a648f3c87672af23411ed1b3f838a6ad014f15311438261f3f4ac1e0cf9d07",
+    "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/results/coq-aern-bench-contract-approved-v87.json": "50b97917c6bd16ff3e458b4595f96ca93ecb48b50a72b78ee69f38a796b05b68",
+    "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/results/coq-aern-bench-contract-approved-v87.stdout": "45929f4a1433cfa9683cc7dd6ab89c1801d1b3309bd6c0be5b34a998079d48bc",
+    "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/results/coq-aern-bench-contract-approved-v87.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/results/coq-aern-environment-v87.json": "421891fb17c12b9dbaf3c023fbb813a818562f62f5a816975e832835082e5a05",
+    "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/results/coq-aern-environment-v87.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/results/coq-aern-environment-v87.stderr": "892b15eaa6754bf182efaf494df0d56c438d6fb041525e30a9346d8e12fdf3f5",
+    "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/results/coq-aern-environment-approved-v87.json": "8f6208831fb7d091850aa37b74be519f5af8159605781e77c79c5506c2e64cf7",
+    "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/results/coq-aern-environment-approved-v87.stdout": "2109db07431225eb318982c3571d400339b363b53b164c0fded45074b48a3e77",
+    "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/results/coq-aern-environment-approved-v87.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "/home/tim/Documents/GitHub/workspace/exact-real-references/constructible-qualification/boundary-README.md": "75c8d816627a4c35ff17b2236e490e5f4647070e04d96eba701028ba9fb2251d",
+    "/home/tim/Documents/GitHub/workspace/hyperreal/AGENTS.md": "8a5f7cff0d66947deca34eb54b366ec279897d6e38819bf34e2e1e54b8538039",
+    "/home/tim/Documents/GitHub/workspace/hyperlattice/Cargo.toml": "f2e6f9d051560b5550e4326c354f96e65af66b38117743f7fa05fb2548df229d",
+    "/home/tim/Documents/GitHub/workspace/hyperlattice/src/vector.rs": "10b40e2b9f5b7952586521b3de86ba9fac131e1144877db442afb5159d75b363",
+    "/home/tim/Documents/GitHub/workspace/hyperlattice/tests/vector.rs": "b32b33fa4a3193cde0df06474014dfd2f6086c38a29caf9ac832dbd82aed26ce",
+    "/home/tim/Documents/GitHub/workspace/hyperlattice/tests/api_surface_coverage.rs": "f9e3740670fba398a02eb511f2082425360c48c161ca435830dc3151bdc7653e",
+    "/home/tim/Documents/GitHub/workspace/exact-real-references/aern2/aern2-real/src/AERN2/Real/Limit.hs": "b3e94ed687187a11dd0282047544a86e71bfceaa1061072a92e296d48b45350f",
+    "/home/tim/Documents/GitHub/workspace/exact-real-references/aern2/aern2-real/src/AERN2/Real/CKleenean.hs": "6fb67457a13ba63e3a935df519012863c71774bd46fe8d4d906290d07c5ba1ea",
+    "/home/tim/Documents/GitHub/workspace/exact-real-references/aern2/aern2-real/src/AERN2/Continuity/Principles.hs": "4949ad839a8baf00d2803e3f6f17b6e1029778562248a1d14f4449168a026b7d",
+    "/home/tim/Documents/GitHub/workspace/exact-real-references/coq-aern/formalization/Analysis/Sqrt.v": "32135c8b5e517572d9c26d4b3a1375eb43f3a528bc56ebbf87074d0ed2f80f68",
+    "/home/tim/Documents/GitHub/workspace/exact-real-references/coq-aern/extracted-examples/src/Sqrt.hs": "3dd3560789a7717ea121b44a4dbc93e5c606b415ca7848921eafb3761cee3513",
+    "/home/tim/Documents/GitHub/workspace/exact-real-references/coq-aern/formalization/Real/RealMetric.v": "e2360c6e9da483fb6adb0b7e5f09e004eafba3d99596d21c21324c7888445b1e",
+    "/home/tim/Documents/GitHub/workspace/exact-real-references/coq-aern/formalization/Analysis/Euclidean.v": "847c88960c2c303c2a45d594ec581cb2e687394196fee2b851c2de701e3f3d6c",
+    "/home/tim/Documents/GitHub/workspace/exact-real-references/coq-aern/extracted-examples/bench/bench.hs": "c6675c38bee602d40d187e9ab739b82829fa9500f542eed631c94210b2fb5c62",
+    "/home/tim/Documents/GitHub/workspace/exact-real-references/coq-aern/extracted-examples/bench/runBench.sh": "2425d81c45a48439d4d79b8a64f1e2c82822ee2b02f84adf434e80f57c5b702b",
+    "/home/tim/Documents/GitHub/workspace/exact-real-references/coq-aern/extracted-examples/bench/package.yaml": "e15fa613a6a13af35a84086a1e0344d4c2b84a511efdd78f18dd81023a081f6b",
+    "/home/tim/Documents/GitHub/workspace/exact-real-references/coq-aern/extracted-examples/bench/coq-aern-extracted-bench.cabal": "4f2dbf606cb2a83bc400712e1aee8825f85ff0e436df4536f05f73a4bc4eedad",
+    "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/coq-aern/v87/README.md": "465431e046d0f3f91e48ce65df1a8e1882fd65c85b2dcd66514704a38f5a629a",
+    "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/coq-aern/v87/bench-contract-v87.mjs": "d867af0c9d5c1318b18d7f65c994425cf699ce9afd4989d2a388045b9459679c",
+    "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/coq-aern/v87/environment-v87.mjs": "01403a69e901f1b58b0fab7fdf154d87a1d5e7bc59b8e5004c6d4e6b463597fc",
+    "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/coq-aern/v87/evidence-v87.mjs": "c136761b5cd503e6d07f6f71180233c64f0aa221e9f2ea7be81f5a439f695d52",
+    "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/coq-aern/v87/findings-v87.md": "1aaa4fef8be4c822038fa7ffc0b704642e7af8ecdf85a0184e75ba3eeee9b01c",
+    "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/coq-aern/v87/harness-failure-v87.md": "6f0bbb10df3e75124787fddf84dce7aa082bcdc3a3f75a762fe8e883f8743f59",
+    "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/coq-aern/v87/model-v87.mjs": "5088f4e3232cfee39641bf0626f18c6fa44b23c1435584ba8cb0d170489137b6",
+    "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/coq-aern/v87/read-records-v87.json": "0fea4f5729b845cd9f625652ebc91349f1ff3bd9d24eebc196c8b11f197a0aae",
+    "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/coq-aern/v87/read-records-v87.mjs": "9f40007266c10a7644df6a39bdf373ebede2a836c85815c076f5126c37f3abcd",
+    "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/coq-aern/v86/manifest-v86.json": "7a175c1f69253e215629ed9e6b60fdf1286c8d5f9ee93891bad10daa47cd4801",
+    "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/coq-aern/v86/read-records-v86.json": "238e491a473beaaaed54529eb08c5006d4f15581bd91ee93996e206b62691ec0",
+    "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/coq-aern/inventory-v85.json": "b5acb2979cbf21cf9e9bcd5e89602d1ed75be61c8fca207ab70f203c40b8d6e4",
+    "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/capture.mjs": "aaf6df6bbd73025a8541617ce83731ae5ea3fd2272bd98c15e3c4c12b713ce23"
+  },
+  "liveFiles": 957,
+  "isolatedCandidateFiles": 184,
+  "productionChanges": 0,
+  "newRetainedTransfers": 0,
+  "retainedContinuationTransfers": 7,
+  "limits": "Source counterexample and exact mathematical models; no native Haskell/Coq build or wrong-output reproduction. Selected default Hyperlattice tests only; no matched benchmark, memory/size improvement, full-stack/all-feature/WASM or whole-inventory completion."
+}

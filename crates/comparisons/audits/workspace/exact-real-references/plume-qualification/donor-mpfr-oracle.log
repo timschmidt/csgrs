@@ -1,0 +1,12 @@
+FAIL ln 2/1 bits=8 got=0.62890625 expected=0.6931471805599453
+FAIL ln 2/1 bits=24 got=0.6250000596046448 expected=0.6931471805599453
+FAIL ln 2/1 bits=64 got=0.625 expected=0.6931471805599453
+FAIL ln 8/1 bits=24 got=2.080078125 expected=2.0794415416798357
+atan	checks=8	failures=0
+cos	checks=21	failures=0
+exp	checks=27	failures=0
+ln	checks=21	failures=5
+pi	checks=3	failures=0
+sin	checks=18	failures=0
+sqrt	checks=18	failures=0
+TOTAL	checks=116	failures=5

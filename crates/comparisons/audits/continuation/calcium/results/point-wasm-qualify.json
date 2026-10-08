@@ -1,0 +1,20 @@
+{
+  "tag": "point-wasm-qualify",
+  "started": "2026-09-10T23:37:39.884Z",
+  "finished": "2026-09-10T23:38:14.937Z",
+  "elapsedSeconds": 35.05066911,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "taskset",
+  "args": [
+    "-c",
+    "6",
+    "node",
+    "--expose-gc",
+    "--no-liftoff",
+    "--no-wasm-tier-up",
+    "--no-wasm-lazy-compilation",
+    "qualify-point-wasm.mjs"
+  ],
+  "code": 0,
+  "signal": null
+}

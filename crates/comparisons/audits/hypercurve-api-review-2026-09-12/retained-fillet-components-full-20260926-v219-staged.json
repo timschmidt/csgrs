@@ -1,0 +1,12 @@
+{
+  "parent": "5b1d0785125e7eb260dd81343e8030182751b869",
+  "qualified": "retained-fillet-components-full-20260926-v219-qualified.json",
+  "files": {
+    "src/bezier_offset.rs": "999da83387d0d36770a8caa3a5482e22dcb299ab4dae91856358c555d96f996a",
+    "src/curve.rs": "2ac4ff475745d468f237d6073cc04513a0155941ce077189f413ba178b7d6a38",
+    "src/curve_intersection.rs": "727c43a95519ea0704b356ade66bf9e0c9e37c9a2b80bbbdae64dd28f7caf1a4",
+    "src/curve_parameter_component.rs": "cf31b161657a6893f53d905b82417f6c4dcc932ca5867a57b24a1f219f4e7acd",
+    "src/curve_support_intersection.rs": "6268d5353b206c7d070351351ae68aaaef4e950c4fe4cc481f3e523876317c6d"
+  },
+  "index_matches_qualified_sources": true
+}

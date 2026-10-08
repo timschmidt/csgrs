@@ -1,0 +1,40 @@
+{
+  "qualification": "normalized-root-replay-20260927-v454-terminal.json",
+  "source_manifest": "normalized-root-replay-20260927-v454-sources.json",
+  "outer_session_reaped": 99706,
+  "validated_files": 2046,
+  "selected_geometry_tests": 323,
+  "checks": 14,
+  "integration_tests": {
+    "hyperreal-integration": 933,
+    "hypersolve-integration": 898
+  },
+  "repos": {
+    "hypercurve": {
+      "parent": "aa34aa573dbfb405d4589ab1899d3c4a873b65c6",
+      "paths": {
+        "tests/hypercurve_curve_region_promotion.rs": "838263eb3ff3f33fed70f079817ab714320c2ee92b5a596df8487d324f03bf47"
+      }
+    },
+    "hyperreal": {
+      "parent": "320bfe90edb8c0902f0f8b8985f7223c6a31afb7",
+      "paths": {
+        "src/computable/node/quadratic_tower.rs": "3f3a2b11c2302deb8883a6ddbb50e571b7de0f13d5b45a2d7ec2aae311ea8a20"
+      }
+    },
+    "hypersolve": {
+      "parent": "4ba7f2508b8e38f60e66543af688a885cfaa6a8e",
+      "paths": {
+        "src/root_isolation.rs": "738f957c25bd4eaa3e42ec760f723ba0c785099f523c31a90ea054d7fb14b187",
+        "src/root_isolation_monic_tests.rs": "a005c45ca464448877fd04fb3484945ff32a06b4c7aafee29c5a80cbc690cb54",
+        "src/root_sign.rs": "3a22e17aff066434fcb42add7ef2082c25fbec3f094e2a95145f7beda6e335c4"
+      }
+    }
+  },
+  "known_unresolved": [
+    "strict_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions",
+    "approximate_512_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions"
+  ],
+  "captured_root_oracles": "normalized-root-oracles-20260927-v455-terminal.json",
+  "captured_oracle_outer_session_reaped": 8330
+}

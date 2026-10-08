@@ -1,0 +1,21 @@
+{
+  "tag": "polynomial-decision-trial-bench-build",
+  "started": "2026-09-08T22:59:57.774Z",
+  "finished": "2026-09-08T22:59:58.177Z",
+  "elapsedSeconds": 0.401379048,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison",
+  "command": "env",
+  "args": [
+    "CARGO_TARGET_DIR=/tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse",
+    "CARGO_INCREMENTAL=0",
+    "CARGO_BUILD_JOBS=2",
+    "cargo",
+    "build",
+    "--offline",
+    "--release",
+    "--manifest-path",
+    "audits/continuation/calcium/polynomial-decision-trial-bench/Cargo.toml"
+  ],
+  "code": 0,
+  "signal": null
+}

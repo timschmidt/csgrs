@@ -1,0 +1,299 @@
+{
+  "source": "finite-parallel-derivative-bench.rs",
+  "source_sha256": "d728d51f37581fafaefa055e5bf0e6810f4740b38f34db85df388e6e128213cb",
+  "records": [
+    {
+      "kind": "build",
+      "name": "parent",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustc",
+        "--edition=2024",
+        "-O",
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-parallel-derivative-bench.rs",
+        "--extern",
+        "hypercurve=/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-parallel-pruning-libraries/libhypercurve-2c7ff6f3fbe07653.rlib",
+        "-L",
+        "dependency=/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps",
+        "-o",
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-parallel-derivative-bench-parent"
+      ],
+      "library": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-parallel-pruning-libraries/libhypercurve-2c7ff6f3fbe07653.rlib",
+      "library_sha256": "842f8912af49a9068c7457b99c37c39684a414c04f7b82ced8250d1dbfc90a09",
+      "executable_sha256": "2f71644f0f741eaf310605638c692225cf1f04654f2329f509a747c0a8ebf8c2"
+    },
+    {
+      "kind": "build",
+      "name": "candidate",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustc",
+        "--edition=2024",
+        "-O",
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-parallel-derivative-bench.rs",
+        "--extern",
+        "hypercurve=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypercurve-06f4632864d5dd0b.rlib",
+        "-L",
+        "dependency=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps",
+        "-o",
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-parallel-derivative-bench-candidate"
+      ],
+      "library": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypercurve-06f4632864d5dd0b.rlib",
+      "library_sha256": "37daf1a1a2d917459d21a17d15aa98edac3e908ed17267b16f6410189596bafa",
+      "executable_sha256": "a34f07b2731a90b35401623895f75a7b7cd4935630592e831438fc67f022295b"
+    },
+    {
+      "kind": "run",
+      "trial": 0,
+      "name": "parent",
+      "elapsed_seconds": 2.0688457999785896,
+      "results": [
+        {
+          "case": "quadratic",
+          "calls": 100000,
+          "elapsed_ns": 499095808
+        },
+        {
+          "case": "cubic",
+          "calls": 100000,
+          "elapsed_ns": 521736757
+        },
+        {
+          "case": "rational",
+          "calls": 100000,
+          "elapsed_ns": 806078864
+        },
+        {
+          "case": "zero_distance_rational",
+          "calls": 100000,
+          "elapsed_ns": 240000493
+        }
+      ]
+    },
+    {
+      "kind": "run",
+      "trial": 0,
+      "name": "candidate",
+      "elapsed_seconds": 1.2995338080218062,
+      "results": [
+        {
+          "case": "quadratic",
+          "calls": 100000,
+          "elapsed_ns": 283923385
+        },
+        {
+          "case": "cubic",
+          "calls": 100000,
+          "elapsed_ns": 284610418
+        },
+        {
+          "case": "rational",
+          "calls": 100000,
+          "elapsed_ns": 484880781
+        },
+        {
+          "case": "zero_distance_rational",
+          "calls": 100000,
+          "elapsed_ns": 244374084
+        }
+      ]
+    },
+    {
+      "kind": "run",
+      "trial": 1,
+      "name": "candidate",
+      "elapsed_seconds": 1.3141765460022725,
+      "results": [
+        {
+          "case": "quadratic",
+          "calls": 100000,
+          "elapsed_ns": 297249932
+        },
+        {
+          "case": "cubic",
+          "calls": 100000,
+          "elapsed_ns": 276460646
+        },
+        {
+          "case": "rational",
+          "calls": 100000,
+          "elapsed_ns": 489476147
+        },
+        {
+          "case": "zero_distance_rational",
+          "calls": 100000,
+          "elapsed_ns": 249273278
+        }
+      ]
+    },
+    {
+      "kind": "run",
+      "trial": 1,
+      "name": "parent",
+      "elapsed_seconds": 2.0875298799946904,
+      "results": [
+        {
+          "case": "quadratic",
+          "calls": 100000,
+          "elapsed_ns": 521260580
+        },
+        {
+          "case": "cubic",
+          "calls": 100000,
+          "elapsed_ns": 525804989
+        },
+        {
+          "case": "rational",
+          "calls": 100000,
+          "elapsed_ns": 804148376
+        },
+        {
+          "case": "zero_distance_rational",
+          "calls": 100000,
+          "elapsed_ns": 234240538
+        }
+      ]
+    },
+    {
+      "kind": "run",
+      "trial": 2,
+      "name": "parent",
+      "elapsed_seconds": 2.063991081988206,
+      "results": [
+        {
+          "case": "quadratic",
+          "calls": 100000,
+          "elapsed_ns": 501050245
+        },
+        {
+          "case": "cubic",
+          "calls": 100000,
+          "elapsed_ns": 538474361
+        },
+        {
+          "case": "rational",
+          "calls": 100000,
+          "elapsed_ns": 787801465
+        },
+        {
+          "case": "zero_distance_rational",
+          "calls": 100000,
+          "elapsed_ns": 234631961
+        }
+      ]
+    },
+    {
+      "kind": "run",
+      "trial": 2,
+      "name": "candidate",
+      "elapsed_seconds": 1.3845009589858819,
+      "results": [
+        {
+          "case": "quadratic",
+          "calls": 100000,
+          "elapsed_ns": 312087996
+        },
+        {
+          "case": "cubic",
+          "calls": 100000,
+          "elapsed_ns": 297315488
+        },
+        {
+          "case": "rational",
+          "calls": 100000,
+          "elapsed_ns": 521122299
+        },
+        {
+          "case": "zero_distance_rational",
+          "calls": 100000,
+          "elapsed_ns": 252122863
+        }
+      ]
+    }
+  ],
+  "summary": [
+    {
+      "case": "quadratic",
+      "calls": 100000,
+      "elapsed_ns": {
+        "parent": [
+          499095808,
+          521260580,
+          501050245
+        ],
+        "candidate": [
+          283923385,
+          297249932,
+          312087996
+        ]
+      },
+      "median_ns": {
+        "parent": 501050245,
+        "candidate": 297249932
+      },
+      "parent_over_candidate": 1.6856193763569978
+    },
+    {
+      "case": "cubic",
+      "calls": 100000,
+      "elapsed_ns": {
+        "parent": [
+          521736757,
+          525804989,
+          538474361
+        ],
+        "candidate": [
+          284610418,
+          276460646,
+          297315488
+        ]
+      },
+      "median_ns": {
+        "parent": 525804989,
+        "candidate": 284610418
+      },
+      "parent_over_candidate": 1.847455172916404
+    },
+    {
+      "case": "rational",
+      "calls": 100000,
+      "elapsed_ns": {
+        "parent": [
+          806078864,
+          804148376,
+          787801465
+        ],
+        "candidate": [
+          484880781,
+          489476147,
+          521122299
+        ]
+      },
+      "median_ns": {
+        "parent": 804148376,
+        "candidate": 489476147
+      },
+      "parent_over_candidate": 1.642875512787756
+    },
+    {
+      "case": "zero_distance_rational",
+      "calls": 100000,
+      "elapsed_ns": {
+        "parent": [
+          240000493,
+          234240538,
+          234631961
+        ],
+        "candidate": [
+          244374084,
+          249273278,
+          252122863
+        ]
+      },
+      "median_ns": {
+        "parent": 234631961,
+        "candidate": 249273278
+      },
+      "parent_over_candidate": 0.9412639930061015
+    }
+  ],
+  "scope": "Local native-parameter derivative microbenchmark only: same public source, direct stable compiler, warm source cache per run, three alternating process trials. Other-session system load is uncontrolled. No general geometry throughput claim."
+}

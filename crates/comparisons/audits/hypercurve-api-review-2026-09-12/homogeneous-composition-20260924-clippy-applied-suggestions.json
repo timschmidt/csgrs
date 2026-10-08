@@ -1,0 +1,68 @@
+[
+  {
+    "path": "src/bezier_offset.rs",
+    "edits": 31,
+    "before": "bad80c50b39f43afbac74ffad80485d6e25c7b2ad82ac72ca7bf0eaa0727c9cc",
+    "after": "5526a26f2c4a585cc839a1c89c5e47ef730f2de477bda9db48742d9c515a1186"
+  },
+  {
+    "path": "src/curve_corner_chain.rs",
+    "edits": 4,
+    "before": "86e435369725721accd951c42a671fb818810033892ecb2aadb5173cb8958cc2",
+    "after": "6b30cd383963ad20309c17775507dbb37d5181577977220f65acdd43e2c06746"
+  },
+  {
+    "path": "src/bezier_region.rs",
+    "edits": 3,
+    "before": "6f8d8eb78e4f21b58130c213d1ef1f4ae4095f30aafa50190bcf60a5ea398d83",
+    "after": "c610de536440083eedbd3679c383454ca9752df8264f0cf8bc1dcf186a4184e7"
+  },
+  {
+    "path": "src/contour.rs",
+    "edits": 1,
+    "before": "252b8cef466749087edaed21f31ff1d603d463441445ef491ec1543480661024",
+    "after": "50a472d3852ff2749ff8dc1854d24459d9bb108fad05343388f6c7d1dda97600"
+  },
+  {
+    "path": "src/curve.rs",
+    "edits": 2,
+    "before": "ac818e9b30c98a6c8382126c7c2248e21fc79187abf206672f8ab8efd5fe0873",
+    "after": "6633fd92e7e56618afcf84f6f644118772eb9b5f29874f147fc5561c7e975074"
+  },
+  {
+    "path": "src/curve_string.rs",
+    "edits": 5,
+    "before": "f0b82b24d64b5de37e3920400a68344839ce5ac036f80fa00f64ffe863449d0d",
+    "after": "62f9b03f5787c5e1f25e78beca03285ca0ace27af63dc4273091b7ed73e84f88"
+  },
+  {
+    "path": "src/events.rs",
+    "edits": 5,
+    "before": "30fc94aecfe1146fab9d12af8e19151447d2c7c696829235064a459e81e202de",
+    "after": "a4564a0649a025f0c0ae0796ee8c0c367b95bb43d23103d6b08206462bc09e31"
+  },
+  {
+    "path": "src/prepared.rs",
+    "edits": 1,
+    "before": "ffbbd95841b916e0da1efde1cb66061b1a702063ec33bf432154b094cbfda8c8",
+    "after": "98df3db34aab223ba6132ffaade8a3f3ad793a5bb7adfff0a5bb2badb10e2c3a"
+  },
+  {
+    "path": "src/self_intersect.rs",
+    "edits": 2,
+    "before": "9e1d1b5b782b4d0b872c58e9cf4ba950a3cf6958d85626c49c06774b62a448fd",
+    "after": "5bb80c8a77d39b0e2c45505b459c30abd4912ea53a18008ed5c7582564bb21b1"
+  },
+  {
+    "path": "src/curve_region_boolean.rs",
+    "edits": 2,
+    "before": "7e199437639f04438c584e0510a8a084a703ab24d77a3921842bdbe0b0830c18",
+    "after": "3e84afee7a73c2c3f8490b30e32503734f90856407c2a8a7394edac2a6d5c8a7"
+  },
+  {
+    "path": "src/bezier_parameter.rs",
+    "edits": 1,
+    "before": "f2115b07ed332c203083448ecc333ccb439c72cd41078e880f5348bf44b32a4a",
+    "after": "6d848f3c1982b5a6e62e38852632f3b2fda95ffb39292b1afb4ee78ffdbab7cd"
+  }
+]

@@ -1,0 +1,126 @@
+schema = 1
+date = "2026-07-30"
+host = "AMD Ryzen 7 5800X3D"
+kernel = "Linux 7.0.4-100.fc43.x86_64"
+rustc = "1.97.0 (2d8144b78 2026-07-07)"
+llvm = "22.1.6"
+hypertri_revision = "214aaa0a6b6a0ae68c87a42879e3712c71e0a34f"
+hyperlimit_revision = "972c4a66e53e558b8eb39ae84c53cd3d612c7909"
+
+[tests]
+all_feature_runtime = 106
+all_feature_doctests = 4
+
+[layout]
+context_bytes = 1
+certainty_bytes = 1
+
+[runtime.exact_rational_spike_dynamic_policy]
+historical_median_ns = 2662
+current_median_ns = 2650
+
+[runtime.runtime_polygon_triangulation]
+historical_median_ns = 2650
+current_median_ns = 2711
+
+[runtime.delaunay_400_located]
+historical_median_ns = 39026000
+current_median_ns = 17575000
+
+[runtime.nd_4d_delaunay_complex]
+historical_median_ns = 2799400
+current_median_ns = 22287
+
+[size.release.core]
+native_file_bytes = 435760
+native_text_bytes = 324770
+wasm_file_bytes = 48371
+wasm_opt_oz_bytes = 33767
+
+[size.release.earcut]
+native_file_bytes = 1483592
+native_text_bytes = 1076750
+wasm_file_bytes = 872382
+wasm_opt_oz_bytes = 645828
+
+[size.release.cdt]
+native_file_bytes = 1458672
+native_text_bytes = 1057018
+wasm_file_bytes = 850088
+wasm_opt_oz_bytes = 637276
+
+[size.release.nd]
+native_file_bytes = 1332352
+native_text_bytes = 941120
+wasm_file_bytes = 709834
+wasm_opt_oz_bytes = 533900
+
+[size.release.all]
+native_file_bytes = 1663568
+native_text_bytes = 1240786
+wasm_file_bytes = 1058780
+wasm_opt_oz_bytes = 747934
+
+[size.size.core]
+native_file_bytes = 291936
+native_text_bytes = 278412
+wasm_file_bytes = 32030
+wasm_opt_oz_bytes = 28821
+
+[size.size.earcut]
+native_file_bytes = 855680
+native_text_bytes = 634995
+wasm_file_bytes = 385207
+wasm_opt_oz_bytes = 327442
+
+[size.size.cdt]
+native_file_bytes = 835992
+native_text_bytes = 616859
+wasm_file_bytes = 370825
+wasm_opt_oz_bytes = 313922
+
+[size.size.nd]
+native_file_bytes = 773224
+native_text_bytes = 555629
+wasm_file_bytes = 304272
+wasm_opt_oz_bytes = 257387
+
+[size.size.all]
+native_file_bytes = 922552
+native_text_bytes = 699483
+wasm_file_bytes = 445799
+wasm_opt_oz_bytes = 379670
+
+[trace.earcut]
+dispatch_events = 80
+predicate_events = 51
+refinement_events = 0
+
+[trace.delaunay]
+dispatch_events = 209
+predicate_events = 58
+refinement_events = 0
+
+[trace.nd_delaunay]
+dispatch_events = 175
+predicate_events = 10
+refinement_events = 0
+
+[trace.runtime_select]
+dispatch_events = 73
+predicate_events = 51
+refinement_events = 0
+
+[callgraph.source]
+nodes = 18481
+edges = 36338
+hypertri_nodes = 1188
+hypertri_outgoing_edges = 1694
+hypertri_to_hyperlimit_edges = 25
+hypertri_to_hyperlimit_targets = 16
+
+[callgraph.all_evidence]
+nodes = 24706
+edges = 46024
+hypertri_nodes = 1758
+hypertri_outgoing_edges = 2455

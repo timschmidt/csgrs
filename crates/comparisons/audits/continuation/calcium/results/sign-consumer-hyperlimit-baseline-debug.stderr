@@ -1,0 +1,23 @@
+   Compiling hyperreal v0.13.1 (/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/sign-consumers/baseline/hyperreal)
+   Compiling apfp v0.1.1
+   Compiling robust v1.2.0
+   Compiling geometry-predicates v0.3.0
+   Compiling hyperlattice v0.6.1 (/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/sign-consumers/baseline/hyperlattice)
+   Compiling hyperlimit v0.4.1 (/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/sign-consumers/baseline/hyperlimit)
+    Finished `test` profile [unoptimized] target(s) in 8.22s
+     Running unittests src/lib.rs (/home/tim/Documents/GitHub/workspace/.audit-builds/calcium-baseline/debug/deps/hyperlimit-1e4e1af7029571c1)
+     Running tests/adversarial_degeneracies.rs (/home/tim/Documents/GitHub/workspace/.audit-builds/calcium-baseline/debug/deps/adversarial_degeneracies-465f59e87b6a7212)
+     Running tests/adversarial_predicates.rs (/home/tim/Documents/GitHub/workspace/.audit-builds/calcium-baseline/debug/deps/adversarial_predicates-4b93ce52c0e28524)
+     Running tests/adversarial_props.rs (/home/tim/Documents/GitHub/workspace/.audit-builds/calcium-baseline/debug/deps/adversarial_props-f5d2c3aee0e61116)
+     Running tests/batch.rs (/home/tim/Documents/GitHub/workspace/.audit-builds/calcium-baseline/debug/deps/batch-4ec15a75a9ab3a04)
+     Running tests/classification_contracts.rs (/home/tim/Documents/GitHub/workspace/.audit-builds/calcium-baseline/debug/deps/classification_contracts-b217afc71c99b530)
+     Running tests/composite_policy.rs (/home/tim/Documents/GitHub/workspace/.audit-builds/calcium-baseline/debug/deps/composite_policy-edf159d155166060)
+     Running tests/exactcore_xinwei.rs (/home/tim/Documents/GitHub/workspace/.audit-builds/calcium-baseline/debug/deps/exactcore_xinwei-81258c42a56e413f)
+     Running tests/halfspace_feasibility.rs (/home/tim/Documents/GitHub/workspace/.audit-builds/calcium-baseline/debug/deps/halfspace_feasibility-3013b4f2270090af)
+     Running tests/nd_predicates.rs (/home/tim/Documents/GitHub/workspace/.audit-builds/calcium-baseline/debug/deps/nd_predicates-b86f692fba77b44d)
+     Running tests/promoted_mesh_helpers.rs (/home/tim/Documents/GitHub/workspace/.audit-builds/calcium-baseline/debug/deps/promoted_mesh_helpers-d10edaf8af31bdd1)
+     Running tests/readme.rs (/home/tim/Documents/GitHub/workspace/.audit-builds/calcium-baseline/debug/deps/readme-b923f78797727ef0)
+     Running tests/real_representations.rs (/home/tim/Documents/GitHub/workspace/.audit-builds/calcium-baseline/debug/deps/real_representations-a71e06bc2c43bbc8)
+     Running tests/retained_report_contracts.rs (/home/tim/Documents/GitHub/workspace/.audit-builds/calcium-baseline/debug/deps/retained_report_contracts-d971a7f51fe01b52)
+     Running tests/robust_parity.rs (/home/tim/Documents/GitHub/workspace/.audit-builds/calcium-baseline/debug/deps/robust_parity-6277ed524f26c7b7)
+     Running tests/support_dop.rs (/home/tim/Documents/GitHub/workspace/.audit-builds/calcium-baseline/debug/deps/support_dop-66801b34522e0887)

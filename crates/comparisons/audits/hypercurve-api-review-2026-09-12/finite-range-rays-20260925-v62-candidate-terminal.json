@@ -1,0 +1,4362 @@
+{
+  "mode": "candidate",
+  "parent": "7697d69959f9505b1b0efc09802e155b6029f738",
+  "selected_files": [
+    "src/bezier_offset.rs",
+    "src/bezier_region.rs",
+    "src/curve_region_boolean.rs"
+  ],
+  "workspace_changed": [
+    "src/bezier_offset.rs",
+    "src/bezier_parameter.rs",
+    "src/bezier_region.rs",
+    "src/curve.rs",
+    "src/curve_corner_chain.rs",
+    "src/curve_region_boolean.rs",
+    "tests/hypercurve_curve.rs"
+  ],
+  "workspace_guard": "local-chord-complete-replay-20260924-v62-sources.json",
+  "source_manifest": "finite-range-rays-20260925-v62-candidate-sources.json",
+  "patch": "finite-range-rays-20260925-v62.patch",
+  "checks": [
+    {
+      "label": "fmt",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustfmt",
+        "--edition",
+        "2024",
+        "--check",
+        "src/bezier_offset.rs",
+        "src/bezier_region.rs",
+        "src/curve_region_boolean.rs"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 3.265024402993731,
+      "limit_seconds": 60,
+      "log": "finite-range-rays-20260925-v62-candidate-fmt.log",
+      "ignored": false
+    },
+    {
+      "label": "clippy-0",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "clippy",
+        "--all-targets",
+        "--all-features",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 30.957059209002182,
+      "limit_seconds": 1200,
+      "log": "finite-range-rays-20260925-v62-candidate-clippy-0.log",
+      "ignored": false
+    },
+    {
+      "label": "clippy-1",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "clippy",
+        "--all-targets",
+        "--no-default-features",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 31.477098642964847,
+      "limit_seconds": 1200,
+      "log": "finite-range-rays-20260925-v62-candidate-clippy-1.log",
+      "ignored": false
+    }
+  ],
+  "binaries": {
+    "hypercurve": {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-range-rays-20260925-v62-candidate-hypercurve",
+      "sha256": "1a8165d453e1119bbb3c88d4f1c7419786b3bbe85b9b2d4683866e6f48e1ce9a"
+    },
+    "hypercurve_curve_region_boolean": {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-range-rays-20260925-v62-candidate-hypercurve_curve_region_boolean",
+      "sha256": "64f80071cebc482c98886a6180f9e98e56a355392fc559fa8294e7b0d21fa9c3"
+    },
+    "hypercurve_curve_region_boolean_fuzz": {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-range-rays-20260925-v62-candidate-hypercurve_curve_region_boolean_fuzz",
+      "sha256": "af43b8c9d52be49597454f668b66ab80e0b9a52c52e20d6f1a881fdb16f99b7b"
+    },
+    "hypercurve_pcb_boolean_regressions": {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-range-rays-20260925-v62-candidate-hypercurve_pcb_boolean_regressions",
+      "sha256": "e9cdc86dd846618eecca6461bfa5ae03c3171bf5c5ef3f494ce4ea1f4329ce20"
+    },
+    "hypercurve_bezier_arrangement": {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-range-rays-20260925-v62-candidate-hypercurve_bezier_arrangement",
+      "sha256": "3e16a10e73894c0cab0e2345540a30783ae19b44dc67d7c12d5aa87c488d38fc"
+    }
+  },
+  "cases": [
+    {
+      "label": "case-000",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-range-rays-20260925-v62-candidate-hypercurve",
+        "--exact",
+        "bezier_region::tests::algebraic_ray_queries_keep_exterior_roots_and_denominator_orientation",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.2946723400382325,
+      "limit_seconds": 75,
+      "log": "finite-range-rays-20260925-v62-candidate-case-000.log",
+      "ignored": false,
+      "target": "hypercurve",
+      "name": "bezier_region::tests::algebraic_ray_queries_keep_exterior_roots_and_denominator_orientation"
+    },
+    {
+      "label": "case-001",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-range-rays-20260925-v62-candidate-hypercurve",
+        "--exact",
+        "curve_region_boolean::certified_successor_tests::regularization_orders_all_branches_at_a_pinched_algebraic_corner",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.6882215089863166,
+      "limit_seconds": 75,
+      "log": "finite-range-rays-20260925-v62-candidate-case-001.log",
+      "ignored": false,
+      "target": "hypercurve",
+      "name": "curve_region_boolean::certified_successor_tests::regularization_orders_all_branches_at_a_pinched_algebraic_corner"
+    },
+    {
+      "label": "case-002",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-range-rays-20260925-v62-candidate-hypercurve",
+        "--exact",
+        "bezier_region::tests::algebraic_native_ray_vertices_use_spatial_endpoint_ownership",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.284803057089448,
+      "limit_seconds": 75,
+      "log": "finite-range-rays-20260925-v62-candidate-case-002.log",
+      "ignored": false,
+      "target": "hypercurve",
+      "name": "bezier_region::tests::algebraic_native_ray_vertices_use_spatial_endpoint_ownership"
+    },
+    {
+      "label": "case-003",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-range-rays-20260925-v62-candidate-hypercurve",
+        "--exact",
+        "bezier_region::tests::algebraic_query_winding_mixes_genuine_parallel_and_native_fragments",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.2854163049487397,
+      "limit_seconds": 75,
+      "log": "finite-range-rays-20260925-v62-candidate-case-003.log",
+      "ignored": false,
+      "target": "hypercurve",
+      "name": "bezier_region::tests::algebraic_query_winding_mixes_genuine_parallel_and_native_fragments"
+    },
+    {
+      "label": "case-004",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-range-rays-20260925-v62-candidate-hypercurve",
+        "--exact",
+        "bezier_region::tests::algebraic_ray_retains_selected_endpoint_ownership",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.28708118107169867,
+      "limit_seconds": 75,
+      "log": "finite-range-rays-20260925-v62-candidate-case-004.log",
+      "ignored": false,
+      "target": "hypercurve",
+      "name": "bezier_region::tests::algebraic_ray_retains_selected_endpoint_ownership"
+    },
+    {
+      "label": "case-005",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-range-rays-20260925-v62-candidate-hypercurve",
+        "--exact",
+        "bezier_region::tests::algebraic_retained_range_ray_winding_handles_crossing_multiplicity",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.2824097420088947,
+      "limit_seconds": 75,
+      "log": "finite-range-rays-20260925-v62-candidate-case-005.log",
+      "ignored": false,
+      "target": "hypercurve",
+      "name": "bezier_region::tests::algebraic_retained_range_ray_winding_handles_crossing_multiplicity"
+    },
+    {
+      "label": "case-006",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-range-rays-20260925-v62-candidate-hypercurve",
+        "--exact",
+        "bezier_region::tests::algebraic_retained_ray_vertices_use_spatial_endpoint_ownership",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.28421068808529526,
+      "limit_seconds": 75,
+      "log": "finite-range-rays-20260925-v62-candidate-case-006.log",
+      "ignored": false,
+      "target": "hypercurve",
+      "name": "bezier_region::tests::algebraic_retained_ray_vertices_use_spatial_endpoint_ownership"
+    },
+    {
+      "label": "case-007",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-range-rays-20260925-v62-candidate-hypercurve",
+        "--exact",
+        "bezier_region::tests::algebraic_side_ray_skips_coincident_chords_across_loops",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.2793669101083651,
+      "limit_seconds": 75,
+      "log": "finite-range-rays-20260925-v62-candidate-case-007.log",
+      "ignored": false,
+      "target": "hypercurve",
+      "name": "bezier_region::tests::algebraic_side_ray_skips_coincident_chords_across_loops"
+    },
+    {
+      "label": "case-008",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-range-rays-20260925-v62-candidate-hypercurve",
+        "--exact",
+        "bezier_region::tests::algebraic_side_ray_skips_genuine_parallel_contacts_across_loops",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.3131320640677586,
+      "limit_seconds": 75,
+      "log": "finite-range-rays-20260925-v62-candidate-case-008.log",
+      "ignored": false,
+      "target": "hypercurve",
+      "name": "bezier_region::tests::algebraic_side_ray_skips_genuine_parallel_contacts_across_loops"
+    },
+    {
+      "label": "case-009",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-range-rays-20260925-v62-candidate-hypercurve",
+        "--exact",
+        "bezier_region::tests::algebraic_side_ray_skips_retained_rational_contacts_across_loops",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.2909700939198956,
+      "limit_seconds": 75,
+      "log": "finite-range-rays-20260925-v62-candidate-case-009.log",
+      "ignored": false,
+      "target": "hypercurve",
+      "name": "bezier_region::tests::algebraic_side_ray_skips_retained_rational_contacts_across_loops"
+    },
+    {
+      "label": "case-010",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-range-rays-20260925-v62-candidate-hypercurve",
+        "--exact",
+        "bezier_region::tests::boundary_side_rays_preserve_winding_through_reversed_source_charts",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.26754934003110975,
+      "limit_seconds": 75,
+      "log": "finite-range-rays-20260925-v62-candidate-case-010.log",
+      "ignored": false,
+      "target": "hypercurve",
+      "name": "bezier_region::tests::boundary_side_rays_preserve_winding_through_reversed_source_charts"
+    },
+    {
+      "label": "case-011",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-range-rays-20260925-v62-candidate-hypercurve",
+        "--exact",
+        "bezier_region::tests::boundary_side_rays_skip_retained_cusp_contacts_across_loops",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.2788861329900101,
+      "limit_seconds": 75,
+      "log": "finite-range-rays-20260925-v62-candidate-case-011.log",
+      "ignored": false,
+      "target": "hypercurve",
+      "name": "bezier_region::tests::boundary_side_rays_skip_retained_cusp_contacts_across_loops"
+    },
+    {
+      "label": "case-012",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-range-rays-20260925-v62-candidate-hypercurve",
+        "--exact",
+        "bezier_region::tests::nonlinear_algebraic_endpoint_chamfer_uses_complete_incident_ray",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 3.6944417719496414,
+      "limit_seconds": 75,
+      "log": "finite-range-rays-20260925-v62-candidate-case-012.log",
+      "ignored": false,
+      "target": "hypercurve",
+      "name": "bezier_region::tests::nonlinear_algebraic_endpoint_chamfer_uses_complete_incident_ray"
+    },
+    {
+      "label": "case-013",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-range-rays-20260925-v62-candidate-hypercurve",
+        "--exact",
+        "bezier_region::tests::selected_parallel_ray_vertices_use_spatial_endpoint_ownership",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.27636526606511325,
+      "limit_seconds": 75,
+      "log": "finite-range-rays-20260925-v62-candidate-case-013.log",
+      "ignored": false,
+      "target": "hypercurve",
+      "name": "bezier_region::tests::selected_parallel_ray_vertices_use_spatial_endpoint_ownership"
+    },
+    {
+      "label": "case-014",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-range-rays-20260925-v62-candidate-hypercurve",
+        "--exact",
+        "curve_region_boolean::certified_successor_tests::adjacent_general_chord_fallback_excludes_the_authored_endpoint",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.28495325602125376,
+      "limit_seconds": 75,
+      "log": "finite-range-rays-20260925-v62-candidate-case-014.log",
+      "ignored": false,
+      "target": "hypercurve",
+      "name": "curve_region_boolean::certified_successor_tests::adjacent_general_chord_fallback_excludes_the_authored_endpoint"
+    },
+    {
+      "label": "case-015",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-range-rays-20260925-v62-candidate-hypercurve",
+        "--exact",
+        "curve_region_boolean::certified_successor_tests::affine_region_classifies_a_general_algebraic_cusp_point_in_its_source_field",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.29235976899508387,
+      "limit_seconds": 75,
+      "log": "finite-range-rays-20260925-v62-candidate-case-015.log",
+      "ignored": false,
+      "target": "hypercurve",
+      "name": "curve_region_boolean::certified_successor_tests::affine_region_classifies_a_general_algebraic_cusp_point_in_its_source_field"
+    },
+    {
+      "label": "case-016",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-range-rays-20260925-v62-candidate-hypercurve",
+        "--exact",
+        "curve_region_boolean::certified_successor_tests::algebraic_chord_analytic_parallel_pair_replays_contacts_and_overlap",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.3882733409991488,
+      "limit_seconds": 75,
+      "log": "finite-range-rays-20260925-v62-candidate-case-016.log",
+      "ignored": false,
+      "target": "hypercurve",
+      "name": "curve_region_boolean::certified_successor_tests::algebraic_chord_analytic_parallel_pair_replays_contacts_and_overlap"
+    },
+    {
+      "label": "case-017",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-range-rays-20260925-v62-candidate-hypercurve",
+        "--exact",
+        "curve_region_boolean::certified_successor_tests::algebraic_chord_carrier_retains_ordered_interior_splits",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.2702516549034044,
+      "limit_seconds": 75,
+      "log": "finite-range-rays-20260925-v62-candidate-case-017.log",
+      "ignored": false,
+      "target": "hypercurve",
+      "name": "curve_region_boolean::certified_successor_tests::algebraic_chord_carrier_retains_ordered_interior_splits"
+    },
+    {
+      "label": "case-018",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-range-rays-20260925-v62-candidate-hypercurve",
+        "--exact",
+        "curve_region_boolean::certified_successor_tests::algebraic_chord_exact_linear_bezier_pair_replays_all_line_relations",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.2733846699120477,
+      "limit_seconds": 75,
+      "log": "finite-range-rays-20260925-v62-candidate-case-018.log",
+      "ignored": false,
+      "target": "hypercurve",
+      "name": "curve_region_boolean::certified_successor_tests::algebraic_chord_exact_linear_bezier_pair_replays_all_line_relations"
+    },
+    {
+      "label": "case-019",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-range-rays-20260925-v62-candidate-hypercurve",
+        "--exact",
+        "curve_region_boolean::certified_successor_tests::algebraic_chord_pair_overlap_enters_region_intersection_evidence",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.29237194801680744,
+      "limit_seconds": 75,
+      "log": "finite-range-rays-20260925-v62-candidate-case-019.log",
+      "ignored": false,
+      "target": "hypercurve",
+      "name": "curve_region_boolean::certified_successor_tests::algebraic_chord_pair_overlap_enters_region_intersection_evidence"
+    },
+    {
+      "label": "case-020",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-range-rays-20260925-v62-candidate-hypercurve",
+        "--exact",
+        "curve_region_boolean::certified_successor_tests::algebraic_chord_parallel_boolean_keeps_exterior_and_selected_ranges",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.28278769506141543,
+      "limit_seconds": 75,
+      "log": "finite-range-rays-20260925-v62-candidate-case-020.log",
+      "ignored": false,
+      "target": "hypercurve",
+      "name": "curve_region_boolean::certified_successor_tests::algebraic_chord_parallel_boolean_keeps_exterior_and_selected_ranges"
+    },
+    {
+      "label": "case-021",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-range-rays-20260925-v62-candidate-hypercurve",
+        "--exact",
+        "curve_region_boolean::certified_successor_tests::authored_parallel_support_contact_classifies_perpendicular_and_tangent_joins",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.27420083503238857,
+      "limit_seconds": 75,
+      "log": "finite-range-rays-20260925-v62-candidate-case-021.log",
+      "ignored": false,
+      "target": "hypercurve",
+      "name": "curve_region_boolean::certified_successor_tests::authored_parallel_support_contact_classifies_perpendicular_and_tangent_joins"
+    },
+    {
+      "label": "case-022",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-range-rays-20260925-v62-candidate-hypercurve",
+        "--exact",
+        "curve_region_boolean::certified_successor_tests::boolean_topology_seeds_a_general_cusp_run_from_an_adjacent_carrier",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.2885628689546138,
+      "limit_seconds": 75,
+      "log": "finite-range-rays-20260925-v62-candidate-case-022.log",
+      "ignored": false,
+      "target": "hypercurve",
+      "name": "curve_region_boolean::certified_successor_tests::boolean_topology_seeds_a_general_cusp_run_from_an_adjacent_carrier"
+    },
+    {
+      "label": "case-023",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-range-rays-20260925-v62-candidate-hypercurve",
+        "--exact",
+        "curve_region_boolean::certified_successor_tests::boundary_probe_reuses_endpoint_incidence_and_keeps_residual_contacts",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.29578862397465855,
+      "limit_seconds": 75,
+      "log": "finite-range-rays-20260925-v62-candidate-case-023.log",
+      "ignored": false,
+      "target": "hypercurve",
+      "name": "curve_region_boolean::certified_successor_tests::boundary_probe_reuses_endpoint_incidence_and_keeps_residual_contacts"
+    },
+    {
+      "label": "case-024",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-range-rays-20260925-v62-candidate-hypercurve",
+        "--exact",
+        "curve_region_boolean::certified_successor_tests::certified_branch_order_matches_exact_vector_order",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.27125333598814905,
+      "limit_seconds": 75,
+      "log": "finite-range-rays-20260925-v62-candidate-case-024.log",
+      "ignored": false,
+      "target": "hypercurve",
+      "name": "curve_region_boolean::certified_successor_tests::certified_branch_order_matches_exact_vector_order"
+    },
+    {
+      "label": "case-025",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-range-rays-20260925-v62-candidate-hypercurve",
+        "--exact",
+        "curve_region_boolean::certified_successor_tests::classified_crossing_side_recovers_oriented_tangent_cross",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.27891689096577466,
+      "limit_seconds": 75,
+      "log": "finite-range-rays-20260925-v62-candidate-case-025.log",
+      "ignored": false,
+      "target": "hypercurve",
+      "name": "curve_region_boolean::certified_successor_tests::classified_crossing_side_recovers_oriented_tangent_cross"
+    },
+    {
+      "label": "case-026",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-range-rays-20260925-v62-candidate-hypercurve",
+        "--exact",
+        "curve_region_boolean::certified_successor_tests::contact_point_bounds_reject_disjoint_lazy_sources",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.2717768899165094,
+      "limit_seconds": 75,
+      "log": "finite-range-rays-20260925-v62-candidate-case-026.log",
+      "ignored": false,
+      "target": "hypercurve",
+      "name": "curve_region_boolean::certified_successor_tests::contact_point_bounds_reject_disjoint_lazy_sources"
+    },
+    {
+      "label": "case-027",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-range-rays-20260925-v62-candidate-hypercurve",
+        "--exact",
+        "curve_region_boolean::certified_successor_tests::curve_trim_retains_selected_field_algebraic_chord_boundaries",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.30486594093963504,
+      "limit_seconds": 75,
+      "log": "finite-range-rays-20260925-v62-candidate-case-027.log",
+      "ignored": false,
+      "target": "hypercurve",
+      "name": "curve_region_boolean::certified_successor_tests::curve_trim_retains_selected_field_algebraic_chord_boundaries"
+    },
+    {
+      "label": "case-028",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-range-rays-20260925-v62-candidate-hypercurve",
+        "--exact",
+        "curve_region_boolean::certified_successor_tests::curve_trim_retains_selected_field_algebraic_chord_overlaps",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.3318666289560497,
+      "limit_seconds": 75,
+      "log": "finite-range-rays-20260925-v62-candidate-case-028.log",
+      "ignored": false,
+      "target": "hypercurve",
+      "name": "curve_region_boolean::certified_successor_tests::curve_trim_retains_selected_field_algebraic_chord_overlaps"
+    },
+    {
+      "label": "case-029",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-range-rays-20260925-v62-candidate-hypercurve",
+        "--exact",
+        "curve_region_boolean::certified_successor_tests::curved_face_windings_preserve_crossings_tangencies_overlaps_and_nested_holes",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.7879972570808604,
+      "limit_seconds": 75,
+      "log": "finite-range-rays-20260925-v62-candidate-case-029.log",
+      "ignored": false,
+      "target": "hypercurve",
+      "name": "curve_region_boolean::certified_successor_tests::curved_face_windings_preserve_crossings_tangencies_overlaps_and_nested_holes"
+    },
+    {
+      "label": "case-030",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-range-rays-20260925-v62-candidate-hypercurve",
+        "--exact",
+        "curve_region_boolean::certified_successor_tests::cusp_chord_pair_retains_an_independent_field_oblique_contact",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.2865791550138965,
+      "limit_seconds": 75,
+      "log": "finite-range-rays-20260925-v62-candidate-case-030.log",
+      "ignored": false,
+      "target": "hypercurve",
+      "name": "curve_region_boolean::certified_successor_tests::cusp_chord_pair_retains_an_independent_field_oblique_contact"
+    },
+    {
+      "label": "case-031",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-range-rays-20260925-v62-candidate-hypercurve",
+        "--exact",
+        "curve_region_boolean::certified_successor_tests::cusp_chord_pair_retains_an_interior_axis_contact",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.2919010199839249,
+      "limit_seconds": 75,
+      "log": "finite-range-rays-20260925-v62-candidate-case-031.log",
+      "ignored": false,
+      "target": "hypercurve",
+      "name": "curve_region_boolean::certified_successor_tests::cusp_chord_pair_retains_an_interior_axis_contact"
+    },
+    {
+      "label": "case-032",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-range-rays-20260925-v62-candidate-hypercurve",
+        "--exact",
+        "curve_region_boolean::certified_successor_tests::cusp_chord_pair_retains_an_interior_exact_oblique_contact",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.29159925202839077,
+      "limit_seconds": 75,
+      "log": "finite-range-rays-20260925-v62-candidate-case-032.log",
+      "ignored": false,
+      "target": "hypercurve",
+      "name": "curve_region_boolean::certified_successor_tests::cusp_chord_pair_retains_an_interior_exact_oblique_contact"
+    },
+    {
+      "label": "case-033",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-range-rays-20260925-v62-candidate-hypercurve",
+        "--exact",
+        "curve_region_boolean::certified_successor_tests::cusp_overlap_clipping_maps_partial_carriers_in_both_orientations",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.2870330949081108,
+      "limit_seconds": 75,
+      "log": "finite-range-rays-20260925-v62-candidate-case-033.log",
+      "ignored": false,
+      "target": "hypercurve",
+      "name": "curve_region_boolean::certified_successor_tests::cusp_overlap_clipping_maps_partial_carriers_in_both_orientations"
+    },
+    {
+      "label": "case-034",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-range-rays-20260925-v62-candidate-hypercurve",
+        "--exact",
+        "curve_region_boolean::certified_successor_tests::cusp_separated_parallel_contacts_are_not_declared_distinct",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.28328370105009526,
+      "limit_seconds": 75,
+      "log": "finite-range-rays-20260925-v62-candidate-case-034.log",
+      "ignored": false,
+      "target": "hypercurve",
+      "name": "curve_region_boolean::certified_successor_tests::cusp_separated_parallel_contacts_are_not_declared_distinct"
+    },
+    {
+      "label": "case-035",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-range-rays-20260925-v62-candidate-hypercurve",
+        "--exact",
+        "curve_region_boolean::certified_successor_tests::exact_retained_chord_uses_the_canonical_boolean_carrier",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.2735425889259204,
+      "limit_seconds": 75,
+      "log": "finite-range-rays-20260925-v62-candidate-case-035.log",
+      "ignored": false,
+      "target": "hypercurve",
+      "name": "curve_region_boolean::certified_successor_tests::exact_retained_chord_uses_the_canonical_boolean_carrier"
+    },
+    {
+      "label": "case-036",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-range-rays-20260925-v62-candidate-hypercurve",
+        "--exact",
+        "curve_region_boolean::certified_successor_tests::exact_subfragment_of_algebraic_chord_retains_selected_field_witness",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.27795604697894305,
+      "limit_seconds": 75,
+      "log": "finite-range-rays-20260925-v62-candidate-case-036.log",
+      "ignored": false,
+      "target": "hypercurve",
+      "name": "curve_region_boolean::certified_successor_tests::exact_subfragment_of_algebraic_chord_retains_selected_field_witness"
+    },
+    {
+      "label": "case-037",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-range-rays-20260925-v62-candidate-hypercurve",
+        "--exact",
+        "curve_region_boolean::certified_successor_tests::exterior_circular_split_preserves_major_arc_and_algebraic_endpoints",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.28390282904729247,
+      "limit_seconds": 75,
+      "log": "finite-range-rays-20260925-v62-candidate-case-037.log",
+      "ignored": false,
+      "target": "hypercurve",
+      "name": "curve_region_boolean::certified_successor_tests::exterior_circular_split_preserves_major_arc_and_algebraic_endpoints"
+    },
+    {
+      "label": "case-038",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-range-rays-20260925-v62-candidate-hypercurve",
+        "--exact",
+        "curve_region_boolean::certified_successor_tests::finite_parallel_self_contacts_retain_active_domain",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.27351849991828203,
+      "limit_seconds": 75,
+      "log": "finite-range-rays-20260925-v62-candidate-case-038.log",
+      "ignored": false,
+      "target": "hypercurve",
+      "name": "curve_region_boolean::certified_successor_tests::finite_parallel_self_contacts_retain_active_domain"
+    },
+    {
+      "label": "case-039",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-range-rays-20260925-v62-candidate-hypercurve",
+        "--exact",
+        "curve_region_boolean::certified_successor_tests::finite_self_crossing_regions_retain_boundary_ownership_on_reentry",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.2996154219144955,
+      "limit_seconds": 75,
+      "log": "finite-range-rays-20260925-v62-candidate-case-039.log",
+      "ignored": false,
+      "target": "hypercurve",
+      "name": "curve_region_boolean::certified_successor_tests::finite_self_crossing_regions_retain_boundary_ownership_on_reentry"
+    },
+    {
+      "label": "case-040",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-range-rays-20260925-v62-candidate-hypercurve",
+        "--exact",
+        "curve_region_boolean::certified_successor_tests::identical_injective_source_parameters_compare_without_materialization",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.27292983199004084,
+      "limit_seconds": 75,
+      "log": "finite-range-rays-20260925-v62-candidate-case-040.log",
+      "ignored": false,
+      "target": "hypercurve",
+      "name": "curve_region_boolean::certified_successor_tests::identical_injective_source_parameters_compare_without_materialization"
+    },
+    {
+      "label": "case-041",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-range-rays-20260925-v62-candidate-hypercurve",
+        "--exact",
+        "curve_region_boolean::certified_successor_tests::independent_field_algebraic_chord_uses_general_boolean_pair_engine",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.3140730290906504,
+      "limit_seconds": 75,
+      "log": "finite-range-rays-20260925-v62-candidate-case-041.log",
+      "ignored": false,
+      "target": "hypercurve",
+      "name": "curve_region_boolean::certified_successor_tests::independent_field_algebraic_chord_uses_general_boolean_pair_engine"
+    },
+    {
+      "label": "case-042",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-range-rays-20260925-v62-candidate-hypercurve",
+        "--exact",
+        "curve_region_boolean::certified_successor_tests::independent_field_collinear_chord_overlap_enters_all_boolean_topology",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 101,
+      "elapsed_seconds": 0.299707105034031,
+      "limit_seconds": 75,
+      "log": "finite-range-rays-20260925-v62-candidate-case-042.log",
+      "ignored": false,
+      "target": "hypercurve",
+      "name": "curve_region_boolean::certified_successor_tests::independent_field_collinear_chord_overlap_enters_all_boolean_topology"
+    },
+    {
+      "label": "case-043",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-range-rays-20260925-v62-candidate-hypercurve",
+        "--exact",
+        "curve_region_boolean::certified_successor_tests::injective_carrier_topology_vertex_canonicalizes_unorderable_parameter_aliases",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.28359080001246184,
+      "limit_seconds": 75,
+      "log": "finite-range-rays-20260925-v62-candidate-case-043.log",
+      "ignored": false,
+      "target": "hypercurve",
+      "name": "curve_region_boolean::certified_successor_tests::injective_carrier_topology_vertex_canonicalizes_unorderable_parameter_aliases"
+    },
+    {
+      "label": "case-044",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-range-rays-20260925-v62-candidate-hypercurve",
+        "--exact",
+        "curve_region_boolean::certified_successor_tests::isolated_circle_endpoint_contacts_retain_transverse_signs",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.2834452500101179,
+      "limit_seconds": 75,
+      "log": "finite-range-rays-20260925-v62-candidate-case-044.log",
+      "ignored": false,
+      "target": "hypercurve",
+      "name": "curve_region_boolean::certified_successor_tests::isolated_circle_endpoint_contacts_retain_transverse_signs"
+    },
+    {
+      "label": "case-045",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-range-rays-20260925-v62-candidate-hypercurve",
+        "--exact",
+        "curve_region_boolean::certified_successor_tests::monotone_parallel_ranges_remove_only_proven_unary_pairs",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.695718124974519,
+      "limit_seconds": 75,
+      "log": "finite-range-rays-20260925-v62-candidate-case-045.log",
+      "ignored": false,
+      "target": "hypercurve",
+      "name": "curve_region_boolean::certified_successor_tests::monotone_parallel_ranges_remove_only_proven_unary_pairs"
+    },
+    {
+      "label": "case-046",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-range-rays-20260925-v62-candidate-hypercurve",
+        "--exact",
+        "curve_region_boolean::certified_successor_tests::native_region_fast_path_matches_forced_general_arrangement",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.27616197895258665,
+      "limit_seconds": 75,
+      "log": "finite-range-rays-20260925-v62-candidate-case-046.log",
+      "ignored": false,
+      "target": "hypercurve",
+      "name": "curve_region_boolean::certified_successor_tests::native_region_fast_path_matches_forced_general_arrangement"
+    },
+    {
+      "label": "case-047",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-range-rays-20260925-v62-candidate-hypercurve",
+        "--exact",
+        "curve_region_boolean::certified_successor_tests::nonadjacent_source_chord_pair_replays_endpoint_and_residual_contacts",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.29105370899196714,
+      "limit_seconds": 75,
+      "log": "finite-range-rays-20260925-v62-candidate-case-047.log",
+      "ignored": false,
+      "target": "hypercurve",
+      "name": "curve_region_boolean::certified_successor_tests::nonadjacent_source_chord_pair_replays_endpoint_and_residual_contacts"
+    },
+    {
+      "label": "case-048",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-range-rays-20260925-v62-candidate-hypercurve",
+        "--exact",
+        "curve_region_boolean::certified_successor_tests::noninjective_carrier_retains_distinct_branches_at_one_topology_vertex",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.2788812239887193,
+      "limit_seconds": 75,
+      "log": "finite-range-rays-20260925-v62-candidate-case-048.log",
+      "ignored": false,
+      "target": "hypercurve",
+      "name": "curve_region_boolean::certified_successor_tests::noninjective_carrier_retains_distinct_branches_at_one_topology_vertex"
+    },
+    {
+      "label": "case-049",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-range-rays-20260925-v62-candidate-hypercurve",
+        "--exact",
+        "curve_region_boolean::certified_successor_tests::noninjective_collinear_chord_dispatch_retains_contacts_and_overlaps",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.2796072330093011,
+      "limit_seconds": 75,
+      "log": "finite-range-rays-20260925-v62-candidate-case-049.log",
+      "ignored": false,
+      "target": "hypercurve",
+      "name": "curve_region_boolean::certified_successor_tests::noninjective_collinear_chord_dispatch_retains_contacts_and_overlaps"
+    },
+    {
+      "label": "case-050",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-range-rays-20260925-v62-candidate-hypercurve",
+        "--exact",
+        "curve_region_boolean::certified_successor_tests::noninjective_preimages_survive_curve_queries_and_cancel_from_regions",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.3925540370400995,
+      "limit_seconds": 75,
+      "log": "finite-range-rays-20260925-v62-candidate-case-050.log",
+      "ignored": false,
+      "target": "hypercurve",
+      "name": "curve_region_boolean::certified_successor_tests::noninjective_preimages_survive_curve_queries_and_cancel_from_regions"
+    },
+    {
+      "label": "case-051",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-range-rays-20260925-v62-candidate-hypercurve",
+        "--exact",
+        "curve_region_boolean::certified_successor_tests::nontransverse_point_touch_certifies_authored_loop_successors",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.296092392061837,
+      "limit_seconds": 75,
+      "log": "finite-range-rays-20260925-v62-candidate-case-051.log",
+      "ignored": false,
+      "target": "hypercurve",
+      "name": "curve_region_boolean::certified_successor_tests::nontransverse_point_touch_certifies_authored_loop_successors"
+    },
+    {
+      "label": "case-052",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-range-rays-20260925-v62-candidate-hypercurve",
+        "--exact",
+        "curve_region_boolean::certified_successor_tests::operand_bounds_are_lazy_shared_and_policy_neutral",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.27271692594513297,
+      "limit_seconds": 75,
+      "log": "finite-range-rays-20260925-v62-candidate-case-052.log",
+      "ignored": false,
+      "target": "hypercurve",
+      "name": "curve_region_boolean::certified_successor_tests::operand_bounds_are_lazy_shared_and_policy_neutral"
+    },
+    {
+      "label": "case-053",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-range-rays-20260925-v62-candidate-hypercurve",
+        "--exact",
+        "curve_region_boolean::certified_successor_tests::parameter_order_uses_exact_translation_before_approximate_512_terminal",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.28436015802435577,
+      "limit_seconds": 75,
+      "log": "finite-range-rays-20260925-v62-candidate-case-053.log",
+      "ignored": false,
+      "target": "hypercurve",
+      "name": "curve_region_boolean::certified_successor_tests::parameter_order_uses_exact_translation_before_approximate_512_terminal"
+    },
+    {
+      "label": "case-054",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-range-rays-20260925-v62-candidate-hypercurve",
+        "--exact",
+        "curve_region_boolean::certified_successor_tests::polynomial_control_polygon_certifies_only_monotone_injective_axis",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.2792273599188775,
+      "limit_seconds": 75,
+      "log": "finite-range-rays-20260925-v62-candidate-case-054.log",
+      "ignored": false,
+      "target": "hypercurve",
+      "name": "curve_region_boolean::certified_successor_tests::polynomial_control_polygon_certifies_only_monotone_injective_axis"
+    },
+    {
+      "label": "case-055",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-range-rays-20260925-v62-candidate-hypercurve",
+        "--exact",
+        "curve_region_boolean::certified_successor_tests::regularization_removes_symmetric_polynomial_and_rational_retracing",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.28088058694265783,
+      "limit_seconds": 75,
+      "log": "finite-range-rays-20260925-v62-candidate-case-055.log",
+      "ignored": false,
+      "target": "hypercurve",
+      "name": "curve_region_boolean::certified_successor_tests::regularization_removes_symmetric_polynomial_and_rational_retracing"
+    },
+    {
+      "label": "case-056",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-range-rays-20260925-v62-candidate-hypercurve",
+        "--exact",
+        "curve_region_boolean::certified_successor_tests::retained_aabb_candidates_match_cartesian_pairs_in_authored_order",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.3363358130445704,
+      "limit_seconds": 75,
+      "log": "finite-range-rays-20260925-v62-candidate-case-056.log",
+      "ignored": false,
+      "target": "hypercurve",
+      "name": "curve_region_boolean::certified_successor_tests::retained_aabb_candidates_match_cartesian_pairs_in_authored_order"
+    },
+    {
+      "label": "case-057",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-range-rays-20260925-v62-candidate-hypercurve",
+        "--exact",
+        "curve_region_boolean::certified_successor_tests::selected_general_overlap_clips_through_exact_projection",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.2861679239431396,
+      "limit_seconds": 75,
+      "log": "finite-range-rays-20260925-v62-candidate-case-057.log",
+      "ignored": false,
+      "target": "hypercurve",
+      "name": "curve_region_boolean::certified_successor_tests::selected_general_overlap_clips_through_exact_projection"
+    },
+    {
+      "label": "case-058",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-range-rays-20260925-v62-candidate-hypercurve",
+        "--exact",
+        "curve_region_boolean::certified_successor_tests::selected_parameter_component_overlap_clips_in_both_boolean_orders",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.2786607090383768,
+      "limit_seconds": 75,
+      "log": "finite-range-rays-20260925-v62-candidate-case-058.log",
+      "ignored": false,
+      "target": "hypercurve",
+      "name": "curve_region_boolean::certified_successor_tests::selected_parameter_component_overlap_clips_in_both_boolean_orders"
+    },
+    {
+      "label": "case-059",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-range-rays-20260925-v62-candidate-hypercurve",
+        "--exact",
+        "curve_region_boolean::certified_successor_tests::selected_projective_overlap_clips_without_global_parameter_projection",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.2790488119935617,
+      "limit_seconds": 75,
+      "log": "finite-range-rays-20260925-v62-candidate-case-059.log",
+      "ignored": false,
+      "target": "hypercurve",
+      "name": "curve_region_boolean::certified_successor_tests::selected_projective_overlap_clips_without_global_parameter_projection"
+    },
+    {
+      "label": "case-060",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-range-rays-20260925-v62-candidate-hypercurve",
+        "--exact",
+        "curve_region_boolean::certified_successor_tests::shared_chord_splits_contacts_from_independent_selected_circles_in_order",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.284133413922973,
+      "limit_seconds": 75,
+      "log": "finite-range-rays-20260925-v62-candidate-case-060.log",
+      "ignored": false,
+      "target": "hypercurve",
+      "name": "curve_region_boolean::certified_successor_tests::shared_chord_splits_contacts_from_independent_selected_circles_in_order"
+    },
+    {
+      "label": "case-061",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-range-rays-20260925-v62-candidate-hypercurve",
+        "--exact",
+        "curve_region_boolean::certified_successor_tests::sibling_circle_tangency_preserves_half_chart_and_finite_range_ownership",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.28647649206686765,
+      "limit_seconds": 75,
+      "log": "finite-range-rays-20260925-v62-candidate-case-061.log",
+      "ignored": false,
+      "target": "hypercurve",
+      "name": "curve_region_boolean::certified_successor_tests::sibling_circle_tangency_preserves_half_chart_and_finite_range_ownership"
+    },
+    {
+      "label": "case-062",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-range-rays-20260925-v62-candidate-hypercurve",
+        "--exact",
+        "curve_region_boolean::certified_successor_tests::source_related_algebraic_chord_contact_enters_split_topology",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 101,
+      "elapsed_seconds": 0.2939778979634866,
+      "limit_seconds": 75,
+      "log": "finite-range-rays-20260925-v62-candidate-case-062.log",
+      "ignored": false,
+      "target": "hypercurve",
+      "name": "curve_region_boolean::certified_successor_tests::source_related_algebraic_chord_contact_enters_split_topology"
+    },
+    {
+      "label": "case-063",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-range-rays-20260925-v62-candidate-hypercurve",
+        "--exact",
+        "curve_region_boolean::certified_successor_tests::strict_interior_algebraic_chord_pair_contact_splits_both_carriers",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 1.0995371099561453,
+      "limit_seconds": 75,
+      "log": "finite-range-rays-20260925-v62-candidate-case-063.log",
+      "ignored": false,
+      "target": "hypercurve",
+      "name": "curve_region_boolean::certified_successor_tests::strict_interior_algebraic_chord_pair_contact_splits_both_carriers"
+    },
+    {
+      "label": "case-064",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-range-rays-20260925-v62-candidate-hypercurve",
+        "--exact",
+        "curve_region_boolean::certified_successor_tests::transitive_topology_merge_canonicalizes_deferred_injective_aliases",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.287265268038027,
+      "limit_seconds": 75,
+      "log": "finite-range-rays-20260925-v62-candidate-case-064.log",
+      "ignored": false,
+      "target": "hypercurve",
+      "name": "curve_region_boolean::certified_successor_tests::transitive_topology_merge_canonicalizes_deferred_injective_aliases"
+    },
+    {
+      "label": "case-065",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-range-rays-20260925-v62-candidate-hypercurve",
+        "--exact",
+        "curve_region_boolean::certified_successor_tests::transverse_contact_certificates_seed_both_operand_faces",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.27502018795348704,
+      "limit_seconds": 75,
+      "log": "finite-range-rays-20260925-v62-candidate-case-065.log",
+      "ignored": false,
+      "target": "hypercurve",
+      "name": "curve_region_boolean::certified_successor_tests::transverse_contact_certificates_seed_both_operand_faces"
+    },
+    {
+      "label": "case-066",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-range-rays-20260925-v62-candidate-hypercurve",
+        "--exact",
+        "curve_region_boolean::certified_successor_tests::unary_cusp_regularization_samples_sides_in_the_selected_field",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.3885125839151442,
+      "limit_seconds": 75,
+      "log": "finite-range-rays-20260925-v62-candidate-case-066.log",
+      "ignored": false,
+      "target": "hypercurve",
+      "name": "curve_region_boolean::certified_successor_tests::unary_cusp_regularization_samples_sides_in_the_selected_field"
+    },
+    {
+      "label": "case-067",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-range-rays-20260925-v62-candidate-hypercurve",
+        "--exact",
+        "curve_region_boolean::certified_successor_tests::unsupported_parameter_order_obeys_strict_and_approximate_512_policies",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.28419089899398386,
+      "limit_seconds": 75,
+      "log": "finite-range-rays-20260925-v62-candidate-case-067.log",
+      "ignored": false,
+      "target": "hypercurve",
+      "name": "curve_region_boolean::certified_successor_tests::unsupported_parameter_order_obeys_strict_and_approximate_512_policies"
+    },
+    {
+      "label": "case-068",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-range-rays-20260925-v62-candidate-hypercurve",
+        "--exact",
+        "curve_region_boolean::certified_successor_tests::xor_composition_fallback_removes_coincident_seams",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.2988686830503866,
+      "limit_seconds": 75,
+      "log": "finite-range-rays-20260925-v62-candidate-case-068.log",
+      "ignored": false,
+      "target": "hypercurve",
+      "name": "curve_region_boolean::certified_successor_tests::xor_composition_fallback_removes_coincident_seams"
+    },
+    {
+      "label": "case-069",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-range-rays-20260925-v62-candidate-hypercurve",
+        "--exact",
+        "curve_region_boolean::regularization_successor_tests::colliding_contact_claims_remain_unselected",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.27847248094622046,
+      "limit_seconds": 75,
+      "log": "finite-range-rays-20260925-v62-candidate-case-069.log",
+      "ignored": false,
+      "target": "hypercurve",
+      "name": "curve_region_boolean::regularization_successor_tests::colliding_contact_claims_remain_unselected"
+    },
+    {
+      "label": "case-070",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-range-rays-20260925-v62-candidate-hypercurve",
+        "--exact",
+        "curve_region_boolean::regularization_successor_tests::face_sector_claim_forces_the_unmaterialized_complement",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.28053176996763796,
+      "limit_seconds": 75,
+      "log": "finite-range-rays-20260925-v62-candidate-case-070.log",
+      "ignored": false,
+      "target": "hypercurve",
+      "name": "curve_region_boolean::regularization_successor_tests::face_sector_claim_forces_the_unmaterialized_complement"
+    },
+    {
+      "label": "case-071",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-range-rays-20260925-v62-candidate-hypercurve",
+        "--exact",
+        "curve_region_boolean::regularized_face_winding_tests::contradiction_preserves_independent_winding_components",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.2709634059574455,
+      "limit_seconds": 75,
+      "log": "finite-range-rays-20260925-v62-candidate-case-071.log",
+      "ignored": false,
+      "target": "hypercurve",
+      "name": "curve_region_boolean::regularized_face_winding_tests::contradiction_preserves_independent_winding_components"
+    },
+    {
+      "label": "case-072",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-range-rays-20260925-v62-candidate-hypercurve",
+        "--exact",
+        "curve_region_boolean::regularized_face_winding_tests::contradictory_winding_accelerator_is_disabled",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.27161083195824176,
+      "limit_seconds": 75,
+      "log": "finite-range-rays-20260925-v62-candidate-case-072.log",
+      "ignored": false,
+      "target": "hypercurve",
+      "name": "curve_region_boolean::regularized_face_winding_tests::contradictory_winding_accelerator_is_disabled"
+    },
+    {
+      "label": "case-073",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-range-rays-20260925-v62-candidate-hypercurve",
+        "--exact",
+        "curve_region_boolean::regularized_face_winding_tests::contradictory_winding_propagation_is_transactional",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.27393279201351106,
+      "limit_seconds": 75,
+      "log": "finite-range-rays-20260925-v62-candidate-case-073.log",
+      "ignored": false,
+      "target": "hypercurve",
+      "name": "curve_region_boolean::regularized_face_winding_tests::contradictory_winding_propagation_is_transactional"
+    },
+    {
+      "label": "case-074",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-range-rays-20260925-v62-candidate-hypercurve",
+        "--exact",
+        "curve_region_boolean::regularized_face_winding_tests::winding_propagation_publishes_only_a_consistent_component",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.2782172890147194,
+      "limit_seconds": 75,
+      "log": "finite-range-rays-20260925-v62-candidate-case-074.log",
+      "ignored": false,
+      "target": "hypercurve",
+      "name": "curve_region_boolean::regularized_face_winding_tests::winding_propagation_publishes_only_a_consistent_component"
+    },
+    {
+      "label": "case-075",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-range-rays-20260925-v62-candidate-hypercurve",
+        "--exact",
+        "rational_bezier_general::tests::denominator_sign_tracks_the_requested_range_and_keeps_unit_cache_scope",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.2879580509616062,
+      "limit_seconds": 75,
+      "log": "finite-range-rays-20260925-v62-candidate-case-075.log",
+      "ignored": false,
+      "target": "hypercurve",
+      "name": "rational_bezier_general::tests::denominator_sign_tracks_the_requested_range_and_keeps_unit_cache_scope"
+    },
+    {
+      "label": "case-076",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-range-rays-20260925-v62-candidate-hypercurve_curve_region_boolean",
+        "--exact",
+        "affine_line_batch_preserves_material_and_hole_roles",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.2932176699396223,
+      "limit_seconds": 75,
+      "log": "finite-range-rays-20260925-v62-candidate-case-076.log",
+      "ignored": false,
+      "target": "hypercurve_curve_region_boolean",
+      "name": "affine_line_batch_preserves_material_and_hole_roles"
+    },
+    {
+      "label": "case-077",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-range-rays-20260925-v62-candidate-hypercurve_curve_region_boolean",
+        "--exact",
+        "affine_line_batch_reuses_the_authoritative_arrangement_topology",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.28204192605335265,
+      "limit_seconds": 75,
+      "log": "finite-range-rays-20260925-v62-candidate-case-077.log",
+      "ignored": false,
+      "target": "hypercurve_curve_region_boolean",
+      "name": "affine_line_batch_reuses_the_authoritative_arrangement_topology"
+    },
+    {
+      "label": "case-078",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-range-rays-20260925-v62-candidate-hypercurve_curve_region_boolean",
+        "--exact",
+        "algebraic_curved_region_output_can_feed_another_boolean",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.29015708004590124,
+      "limit_seconds": 75,
+      "log": "finite-range-rays-20260925-v62-candidate-case-078.log",
+      "ignored": false,
+      "target": "hypercurve_curve_region_boolean",
+      "name": "algebraic_curved_region_output_can_feed_another_boolean"
+    },
+    {
+      "label": "case-079",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-range-rays-20260925-v62-candidate-hypercurve_curve_region_boolean",
+        "--exact",
+        "approximate_offset_reports_a_consumed_terminal_for_symbolic_zero_distance",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.28203302703332156,
+      "limit_seconds": 75,
+      "log": "finite-range-rays-20260925-v62-candidate-case-079.log",
+      "ignored": false,
+      "target": "hypercurve_curve_region_boolean",
+      "name": "approximate_offset_reports_a_consumed_terminal_for_symbolic_zero_distance"
+    },
+    {
+      "label": "case-080",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-range-rays-20260925-v62-candidate-hypercurve_curve_region_boolean",
+        "--exact",
+        "approximate_policy_reports_a_consumed_terminal_instead_of_relabeling_it_exact",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.29045238008257,
+      "limit_seconds": 75,
+      "log": "finite-range-rays-20260925-v62-candidate-case-080.log",
+      "ignored": false,
+      "target": "hypercurve_curve_region_boolean",
+      "name": "approximate_policy_reports_a_consumed_terminal_instead_of_relabeling_it_exact"
+    },
+    {
+      "label": "case-081",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-range-rays-20260925-v62-candidate-hypercurve_curve_region_boolean",
+        "--exact",
+        "boolean_batch_short_circuits_empty_and_identical_operands",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.2714364640414715,
+      "limit_seconds": 75,
+      "log": "finite-range-rays-20260925-v62-candidate-case-081.log",
+      "ignored": false,
+      "target": "hypercurve_curve_region_boolean",
+      "name": "boolean_batch_short_circuits_empty_and_identical_operands"
+    },
+    {
+      "label": "case-082",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-range-rays-20260925-v62-candidate-hypercurve_curve_region_boolean",
+        "--exact",
+        "circular_boolean_outputs_publish_native_boundaries_under_both_policies",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.31546732399147004,
+      "limit_seconds": 75,
+      "log": "finite-range-rays-20260925-v62-candidate-case-082.log",
+      "ignored": false,
+      "target": "hypercurve_curve_region_boolean",
+      "name": "circular_boolean_outputs_publish_native_boundaries_under_both_policies"
+    },
+    {
+      "label": "case-083",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-range-rays-20260925-v62-candidate-hypercurve_curve_region_boolean",
+        "--exact",
+        "circular_conic_batch_obeys_the_approximate_512_terminal",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.30545484100002795,
+      "limit_seconds": 75,
+      "log": "finite-range-rays-20260925-v62-candidate-case-083.log",
+      "ignored": false,
+      "target": "hypercurve_curve_region_boolean",
+      "name": "circular_conic_batch_obeys_the_approximate_512_terminal"
+    },
+    {
+      "label": "case-084",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-range-rays-20260925-v62-candidate-hypercurve_curve_region_boolean",
+        "--exact",
+        "circular_conic_batch_reuses_one_authoritative_topology",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 2.1991887919139117,
+      "limit_seconds": 75,
+      "log": "finite-range-rays-20260925-v62-candidate-case-084.log",
+      "ignored": false,
+      "target": "hypercurve_curve_region_boolean",
+      "name": "circular_conic_batch_reuses_one_authoritative_topology"
+    },
+    {
+      "label": "case-085",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-range-rays-20260925-v62-candidate-hypercurve_curve_region_boolean",
+        "--exact",
+        "conic_general_batch_obeys_the_approximate_512_terminal",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.31643180805258453,
+      "limit_seconds": 75,
+      "log": "finite-range-rays-20260925-v62-candidate-case-085.log",
+      "ignored": false,
+      "target": "hypercurve_curve_region_boolean",
+      "name": "conic_general_batch_obeys_the_approximate_512_terminal"
+    },
+    {
+      "label": "case-086",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-range-rays-20260925-v62-candidate-hypercurve_curve_region_boolean",
+        "--exact",
+        "curve_path_construction_obeys_the_approximate_512_terminal",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.2785192779265344,
+      "limit_seconds": 75,
+      "log": "finite-range-rays-20260925-v62-candidate-case-086.log",
+      "ignored": false,
+      "target": "hypercurve_curve_region_boolean",
+      "name": "curve_path_construction_obeys_the_approximate_512_terminal"
+    },
+    {
+      "label": "case-087",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-range-rays-20260925-v62-candidate-hypercurve_curve_region_boolean",
+        "--exact",
+        "curved_region_boolean_output_can_feed_another_boolean",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.2978299940004945,
+      "limit_seconds": 75,
+      "log": "finite-range-rays-20260925-v62-candidate-case-087.log",
+      "ignored": false,
+      "target": "hypercurve_curve_region_boolean",
+      "name": "curved_region_boolean_output_can_feed_another_boolean"
+    },
+    {
+      "label": "case-088",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-range-rays-20260925-v62-candidate-hypercurve_curve_region_boolean",
+        "--exact",
+        "curved_region_boolean_respects_nested_hole_roles",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.2820088090375066,
+      "limit_seconds": 75,
+      "log": "finite-range-rays-20260925-v62-candidate-case-088.log",
+      "ignored": false,
+      "target": "hypercurve_curve_region_boolean",
+      "name": "curved_region_boolean_respects_nested_hole_roles"
+    },
+    {
+      "label": "case-089",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-range-rays-20260925-v62-candidate-hypercurve_curve_region_boolean",
+        "--exact",
+        "elevated_circular_boolean_outputs_publish_native_boundaries",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.3027389170601964,
+      "limit_seconds": 75,
+      "log": "finite-range-rays-20260925-v62-candidate-case-089.log",
+      "ignored": false,
+      "target": "hypercurve_curve_region_boolean",
+      "name": "elevated_circular_boolean_outputs_publish_native_boundaries"
+    },
+    {
+      "label": "case-090",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-range-rays-20260925-v62-candidate-hypercurve_curve_region_boolean",
+        "--exact",
+        "empty_output_does_not_certify_an_approximate_normalization",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.2842301659984514,
+      "limit_seconds": 75,
+      "log": "finite-range-rays-20260925-v62-candidate-case-090.log",
+      "ignored": false,
+      "target": "hypercurve_curve_region_boolean",
+      "name": "empty_output_does_not_certify_an_approximate_normalization"
+    },
+    {
+      "label": "case-091",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-range-rays-20260925-v62-candidate-hypercurve_curve_region_boolean",
+        "--exact",
+        "finite_bezier_charts_preserve_bounds_boundary_and_winding",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.3012262409320101,
+      "limit_seconds": 75,
+      "log": "finite-range-rays-20260925-v62-candidate-case-091.log",
+      "ignored": false,
+      "target": "hypercurve_curve_region_boolean",
+      "name": "finite_bezier_charts_preserve_bounds_boundary_and_winding"
+    },
+    {
+      "label": "case-092",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-range-rays-20260925-v62-candidate-hypercurve_curve_region_boolean",
+        "--exact",
+        "general_curve_batch_obeys_the_approximate_512_terminal",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.284673496033065,
+      "limit_seconds": 75,
+      "log": "finite-range-rays-20260925-v62-candidate-case-092.log",
+      "ignored": false,
+      "target": "hypercurve_curve_region_boolean",
+      "name": "general_curve_batch_obeys_the_approximate_512_terminal"
+    },
+    {
+      "label": "case-093",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-range-rays-20260925-v62-candidate-hypercurve_curve_region_boolean",
+        "--exact",
+        "independent_nonlinear_line_parameters_compact_to_reusable_regions",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.2926775070372969,
+      "limit_seconds": 75,
+      "log": "finite-range-rays-20260925-v62-candidate-case-093.log",
+      "ignored": false,
+      "target": "hypercurve_curve_region_boolean",
+      "name": "independent_nonlinear_line_parameters_compact_to_reusable_regions"
+    },
+    {
+      "label": "case-094",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-range-rays-20260925-v62-candidate-hypercurve_curve_region_boolean",
+        "--exact",
+        "line_general_batch_obeys_the_approximate_512_terminal",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.2858189169783145,
+      "limit_seconds": 75,
+      "log": "finite-range-rays-20260925-v62-candidate-case-094.log",
+      "ignored": false,
+      "target": "hypercurve_curve_region_boolean",
+      "name": "line_general_batch_obeys_the_approximate_512_terminal"
+    },
+    {
+      "label": "case-095",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-range-rays-20260925-v62-candidate-hypercurve_curve_region_boolean",
+        "--exact",
+        "mixed_line_circular_conic_batch_obeys_the_approximate_512_terminal",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.31394272902980447,
+      "limit_seconds": 75,
+      "log": "finite-range-rays-20260925-v62-candidate-case-095.log",
+      "ignored": false,
+      "target": "hypercurve_curve_region_boolean",
+      "name": "mixed_line_circular_conic_batch_obeys_the_approximate_512_terminal"
+    },
+    {
+      "label": "case-096",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-range-rays-20260925-v62-candidate-hypercurve_curve_region_boolean",
+        "--exact",
+        "mixed_line_circular_conic_batch_reuses_one_authoritative_topology",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.4052346070529893,
+      "limit_seconds": 75,
+      "log": "finite-range-rays-20260925-v62-candidate-case-096.log",
+      "ignored": false,
+      "target": "hypercurve_curve_region_boolean",
+      "name": "mixed_line_circular_conic_batch_reuses_one_authoritative_topology"
+    },
+    {
+      "label": "case-097",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-range-rays-20260925-v62-candidate-hypercurve_curve_region_boolean",
+        "--exact",
+        "mixed_line_circular_conic_degeneracy_matrix_matches_native_results",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 2.698624638025649,
+      "limit_seconds": 75,
+      "log": "finite-range-rays-20260925-v62-candidate-case-097.log",
+      "ignored": false,
+      "target": "hypercurve_curve_region_boolean",
+      "name": "mixed_line_circular_conic_degeneracy_matrix_matches_native_results"
+    },
+    {
+      "label": "case-098",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-range-rays-20260925-v62-candidate-hypercurve_curve_region_boolean",
+        "--exact",
+        "native_chart_poles_do_not_block_finite_region_queries",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.2874477650038898,
+      "limit_seconds": 75,
+      "log": "finite-range-rays-20260925-v62-candidate-case-098.log",
+      "ignored": false,
+      "target": "hypercurve_curve_region_boolean",
+      "name": "native_chart_poles_do_not_block_finite_region_queries"
+    },
+    {
+      "label": "case-099",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-range-rays-20260925-v62-candidate-hypercurve_curve_region_boolean",
+        "--exact",
+        "noncircular_conic_boolean_output_is_not_mislabeled_as_native_arc",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.27141626505181193,
+      "limit_seconds": 75,
+      "log": "finite-range-rays-20260925-v62-candidate-case-099.log",
+      "ignored": false,
+      "target": "hypercurve_curve_region_boolean",
+      "name": "noncircular_conic_boolean_output_is_not_mislabeled_as_native_arc"
+    },
+    {
+      "label": "case-100",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-range-rays-20260925-v62-candidate-hypercurve_curve_region_boolean",
+        "--exact",
+        "point_query_reports_when_approximate_policy_decides_a_symbolic_boundary",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.2825248830486089,
+      "limit_seconds": 75,
+      "log": "finite-range-rays-20260925-v62-candidate-case-100.log",
+      "ignored": false,
+      "target": "hypercurve_curve_region_boolean",
+      "name": "point_query_reports_when_approximate_policy_decides_a_symbolic_boundary"
+    },
+    {
+      "label": "case-101",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-range-rays-20260925-v62-candidate-hypercurve_curve_region_boolean",
+        "--exact",
+        "region_intersection_carriers_replay_prepared_charts_and_outlive_inputs",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.29044013004750013,
+      "limit_seconds": 75,
+      "log": "finite-range-rays-20260925-v62-candidate-case-101.log",
+      "ignored": false,
+      "target": "hypercurve_curve_region_boolean",
+      "name": "region_intersection_carriers_replay_prepared_charts_and_outlive_inputs"
+    },
+    {
+      "label": "case-102",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-range-rays-20260925-v62-candidate-hypercurve_curve_region_boolean",
+        "--exact",
+        "region_intersection_removes_authored_internal_and_canceled_boundaries",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.2804843640187755,
+      "limit_seconds": 75,
+      "log": "finite-range-rays-20260925-v62-candidate-case-102.log",
+      "ignored": false,
+      "target": "hypercurve_curve_region_boolean",
+      "name": "region_intersection_removes_authored_internal_and_canceled_boundaries"
+    },
+    {
+      "label": "case-103",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-range-rays-20260925-v62-candidate-hypercurve_curve_region_boolean",
+        "--exact",
+        "regularized_affine_contacts_discard_lower_dimensional_intersections",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.29170139401685447,
+      "limit_seconds": 75,
+      "log": "finite-range-rays-20260925-v62-candidate-case-103.log",
+      "ignored": false,
+      "target": "hypercurve_curve_region_boolean",
+      "name": "regularized_affine_contacts_discard_lower_dimensional_intersections"
+    },
+    {
+      "label": "case-104",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-range-rays-20260925-v62-candidate-hypercurve_curve_region_boolean",
+        "--exact",
+        "regularized_conic_tangencies_preserve_regions_but_not_point_intersections",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.2995556649984792,
+      "limit_seconds": 75,
+      "log": "finite-range-rays-20260925-v62-candidate-case-104.log",
+      "ignored": false,
+      "target": "hypercurve_curve_region_boolean",
+      "name": "regularized_conic_tangencies_preserve_regions_but_not_point_intersections"
+    },
+    {
+      "label": "case-105",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-range-rays-20260925-v62-candidate-hypercurve_curve_region_boolean",
+        "--exact",
+        "regularized_partial_shared_edges_resolve_exact_side_ownership",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.2787924500880763,
+      "limit_seconds": 75,
+      "log": "finite-range-rays-20260925-v62-candidate-case-105.log",
+      "ignored": false,
+      "target": "hypercurve_curve_region_boolean",
+      "name": "regularized_partial_shared_edges_resolve_exact_side_ownership"
+    },
+    {
+      "label": "case-106",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-range-rays-20260925-v62-candidate-hypercurve_curve_region_boolean",
+        "--exact",
+        "regularized_topology_does_not_upgrade_terminal_connectivity",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.284697784925811,
+      "limit_seconds": 75,
+      "log": "finite-range-rays-20260925-v62-candidate-case-106.log",
+      "ignored": false,
+      "target": "hypercurve_curve_region_boolean",
+      "name": "regularized_topology_does_not_upgrade_terminal_connectivity"
+    },
+    {
+      "label": "case-107",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-range-rays-20260925-v62-candidate-hypercurve_curve_region_boolean",
+        "--exact",
+        "regularized_topology_retains_only_the_policy_actually_consumed",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.2839623250765726,
+      "limit_seconds": 75,
+      "log": "finite-range-rays-20260925-v62-candidate-case-107.log",
+      "ignored": false,
+      "target": "hypercurve_curve_region_boolean",
+      "name": "regularized_topology_retains_only_the_policy_actually_consumed"
+    },
+    {
+      "label": "case-108",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-range-rays-20260925-v62-candidate-hypercurve_curve_region_boolean",
+        "--exact",
+        "retained_regions_clip_degree_equivalent_shared_images_to_carrier_ranges",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.30314277904108167,
+      "limit_seconds": 75,
+      "log": "finite-range-rays-20260925-v62-candidate-case-108.log",
+      "ignored": false,
+      "target": "hypercurve_curve_region_boolean",
+      "name": "retained_regions_clip_degree_equivalent_shared_images_to_carrier_ranges"
+    },
+    {
+      "label": "case-109",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-range-rays-20260925-v62-candidate-hypercurve_curve_region_boolean",
+        "--exact",
+        "retained_regions_clip_mobius_reparameterized_conics_to_carrier_ranges",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.34905989095568657,
+      "limit_seconds": 75,
+      "log": "finite-range-rays-20260925-v62-candidate-case-109.log",
+      "ignored": false,
+      "target": "hypercurve_curve_region_boolean",
+      "name": "retained_regions_clip_mobius_reparameterized_conics_to_carrier_ranges"
+    },
+    {
+      "label": "case-110",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-range-rays-20260925-v62-candidate-hypercurve_curve_region_boolean",
+        "--exact",
+        "retained_regions_clip_non_axis_monotone_mobius_cubic_components",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.33780924195889384,
+      "limit_seconds": 75,
+      "log": "finite-range-rays-20260925-v62-candidate-case-110.log",
+      "ignored": false,
+      "target": "hypercurve_curve_region_boolean",
+      "name": "retained_regions_clip_non_axis_monotone_mobius_cubic_components"
+    },
+    {
+      "label": "case-111",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-range-rays-20260925-v62-candidate-hypercurve_curve_region_boolean",
+        "--exact",
+        "retained_regions_clip_shared_source_components_to_carrier_ranges",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.29047090804670006,
+      "limit_seconds": 75,
+      "log": "finite-range-rays-20260925-v62-candidate-case-111.log",
+      "ignored": false,
+      "target": "hypercurve_curve_region_boolean",
+      "name": "retained_regions_clip_shared_source_components_to_carrier_ranges"
+    },
+    {
+      "label": "case-112",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-range-rays-20260925-v62-candidate-hypercurve_curve_region_boolean",
+        "--exact",
+        "selected_fillet_region_intersection_closes_through_exterior_cap_booleans",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 3.1471584259998053,
+      "limit_seconds": 75,
+      "log": "finite-range-rays-20260925-v62-candidate-case-112.log",
+      "ignored": false,
+      "target": "hypercurve_curve_region_boolean",
+      "name": "selected_fillet_region_intersection_closes_through_exterior_cap_booleans"
+    },
+    {
+      "label": "case-113",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-range-rays-20260925-v62-candidate-hypercurve_curve_region_boolean_fuzz",
+        "--exact",
+        "algebraic_polyline_contacts_preserve_exact_contact_distinction",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 1.3525912939803675,
+      "limit_seconds": 75,
+      "log": "finite-range-rays-20260925-v62-candidate-case-113.log",
+      "ignored": false,
+      "target": "hypercurve_curve_region_boolean_fuzz",
+      "name": "algebraic_polyline_contacts_preserve_exact_contact_distinction"
+    },
+    {
+      "label": "case-114",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-range-rays-20260925-v62-candidate-hypercurve_curve_region_boolean_fuzz",
+        "--exact",
+        "conic_endpoint_root_isolation_completes",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.2904379810206592,
+      "limit_seconds": 75,
+      "log": "finite-range-rays-20260925-v62-candidate-case-114.log",
+      "ignored": false,
+      "target": "hypercurve_curve_region_boolean_fuzz",
+      "name": "conic_endpoint_root_isolation_completes"
+    },
+    {
+      "label": "case-115",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-range-rays-20260925-v62-candidate-hypercurve_curve_region_boolean_fuzz",
+        "--exact",
+        "deterministic_coincident_curve_family_images_complete",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.33580000000074506,
+      "limit_seconds": 75,
+      "log": "finite-range-rays-20260925-v62-candidate-case-115.log",
+      "ignored": false,
+      "target": "hypercurve_curve_region_boolean_fuzz",
+      "name": "deterministic_coincident_curve_family_images_complete"
+    },
+    {
+      "label": "case-116",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-range-rays-20260925-v62-candidate-hypercurve_curve_region_boolean_fuzz",
+        "--exact",
+        "deterministic_endpoint_curve_family_pair_matrix_completes",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.49057709402404726,
+      "limit_seconds": 75,
+      "log": "finite-range-rays-20260925-v62-candidate-case-116.log",
+      "ignored": false,
+      "target": "hypercurve_curve_region_boolean_fuzz",
+      "name": "deterministic_endpoint_curve_family_pair_matrix_completes"
+    },
+    {
+      "label": "case-117",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-range-rays-20260925-v62-candidate-hypercurve_curve_region_boolean_fuzz",
+        "--exact",
+        "deterministic_tangent_curve_family_pair_matrix_completes",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.4316680550109595,
+      "limit_seconds": 75,
+      "log": "finite-range-rays-20260925-v62-candidate-case-117.log",
+      "ignored": false,
+      "target": "hypercurve_curve_region_boolean_fuzz",
+      "name": "deterministic_tangent_curve_family_pair_matrix_completes"
+    },
+    {
+      "label": "case-118",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-range-rays-20260925-v62-candidate-hypercurve_curve_region_boolean_fuzz",
+        "--exact",
+        "deterministic_transverse_curve_family_pair_matrix_completes",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 1.3896832909667864,
+      "limit_seconds": 75,
+      "log": "finite-range-rays-20260925-v62-candidate-case-118.log",
+      "ignored": false,
+      "target": "hypercurve_curve_region_boolean_fuzz",
+      "name": "deterministic_transverse_curve_family_pair_matrix_completes"
+    },
+    {
+      "label": "case-119",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-range-rays-20260925-v62-candidate-hypercurve_curve_region_boolean_fuzz",
+        "--exact",
+        "explicit_loop_topology_supports_reversed_nonuniform_rational_regions",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.296192626003176,
+      "limit_seconds": 75,
+      "log": "finite-range-rays-20260925-v62-candidate-case-119.log",
+      "ignored": false,
+      "target": "hypercurve_curve_region_boolean_fuzz",
+      "name": "explicit_loop_topology_supports_reversed_nonuniform_rational_regions"
+    },
+    {
+      "label": "case-120",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-range-rays-20260925-v62-candidate-hypercurve_curve_region_boolean_fuzz",
+        "--exact",
+        "generated_exact_curve_region_booleans_complete_and_match_immediate_results",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 1.0901479439344257,
+      "limit_seconds": 75,
+      "log": "finite-range-rays-20260925-v62-candidate-case-120.log",
+      "ignored": false,
+      "target": "hypercurve_curve_region_boolean_fuzz",
+      "name": "generated_exact_curve_region_booleans_complete_and_match_immediate_results"
+    },
+    {
+      "label": "case-121",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-range-rays-20260925-v62-candidate-hypercurve_curve_region_boolean_fuzz",
+        "--exact",
+        "retired_candidate_interval_pruning_completes",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.3902838829671964,
+      "limit_seconds": 75,
+      "log": "finite-range-rays-20260925-v62-candidate-case-121.log",
+      "ignored": false,
+      "target": "hypercurve_curve_region_boolean_fuzz",
+      "name": "retired_candidate_interval_pruning_completes"
+    },
+    {
+      "label": "case-122",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-range-rays-20260925-v62-candidate-hypercurve_curve_region_boolean_fuzz",
+        "--exact",
+        "retired_exact_curve_region_boolean_failures_remain_in_the_corpus",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 2.196448039961979,
+      "limit_seconds": 75,
+      "log": "finite-range-rays-20260925-v62-candidate-case-122.log",
+      "ignored": false,
+      "target": "hypercurve_curve_region_boolean_fuzz",
+      "name": "retired_exact_curve_region_boolean_failures_remain_in_the_corpus"
+    },
+    {
+      "label": "case-123",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-range-rays-20260925-v62-candidate-hypercurve_curve_region_boolean_fuzz",
+        "--exact",
+        "shared_endpoint_xor_completes",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.2893754430115223,
+      "limit_seconds": 75,
+      "log": "finite-range-rays-20260925-v62-candidate-case-123.log",
+      "ignored": false,
+      "target": "hypercurve_curve_region_boolean_fuzz",
+      "name": "shared_endpoint_xor_completes"
+    },
+    {
+      "label": "case-124",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-range-rays-20260925-v62-candidate-hypercurve_pcb_boolean_regressions",
+        "--exact",
+        "easyduino_scale_process_image_containment_corpus",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 6.914326949976385,
+      "limit_seconds": 75,
+      "log": "finite-range-rays-20260925-v62-candidate-case-124.log",
+      "ignored": false,
+      "target": "hypercurve_pcb_boolean_regressions",
+      "name": "easyduino_scale_process_image_containment_corpus"
+    },
+    {
+      "label": "case-125",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-range-rays-20260925-v62-candidate-hypercurve_pcb_boolean_regressions",
+        "--exact",
+        "easyduino_uno_scale_process_image_with_holes_corpus",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 70.4507782519795,
+      "limit_seconds": 75,
+      "log": "finite-range-rays-20260925-v62-candidate-case-125.log",
+      "ignored": false,
+      "target": "hypercurve_pcb_boolean_regressions",
+      "name": "easyduino_uno_scale_process_image_with_holes_corpus"
+    },
+    {
+      "label": "case-126",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-range-rays-20260925-v62-candidate-hypercurve_pcb_boolean_regressions",
+        "--exact",
+        "pcb_process_image_containment_regression_decides_exactly",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.44726743490900844,
+      "limit_seconds": 75,
+      "log": "finite-range-rays-20260925-v62-candidate-case-126.log",
+      "ignored": false,
+      "target": "hypercurve_pcb_boolean_regressions",
+      "name": "pcb_process_image_containment_regression_decides_exactly"
+    },
+    {
+      "label": "case-127",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-range-rays-20260925-v62-candidate-hypercurve_pcb_boolean_regressions",
+        "--exact",
+        "pcb_process_image_hole_ownership_culls_sparse_materials",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 11.11328222998418,
+      "limit_seconds": 75,
+      "log": "finite-range-rays-20260925-v62-candidate-case-127.log",
+      "ignored": false,
+      "target": "hypercurve_pcb_boolean_regressions",
+      "name": "pcb_process_image_hole_ownership_culls_sparse_materials"
+    },
+    {
+      "label": "case-128",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-range-rays-20260925-v62-candidate-hypercurve_bezier_arrangement",
+        "--exact",
+        "algebraic_split_boundary_blocks_graph_traversal",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.2781835310161114,
+      "limit_seconds": 75,
+      "log": "finite-range-rays-20260925-v62-candidate-case-128.log",
+      "ignored": false,
+      "target": "hypercurve_bezier_arrangement",
+      "name": "algebraic_split_boundary_blocks_graph_traversal"
+    },
+    {
+      "label": "case-129",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-range-rays-20260925-v62-candidate-hypercurve_bezier_arrangement",
+        "--exact",
+        "arrangement_graph_accepts_adjacent_reused_source_fragment_ranges",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.27404892491176724,
+      "limit_seconds": 75,
+      "log": "finite-range-rays-20260925-v62-candidate-case-129.log",
+      "ignored": false,
+      "target": "hypercurve_bezier_arrangement",
+      "name": "arrangement_graph_accepts_adjacent_reused_source_fragment_ranges"
+    },
+    {
+      "label": "case-130",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-range-rays-20260925-v62-candidate-hypercurve_bezier_arrangement",
+        "--exact",
+        "arrangement_graph_rejects_duplicate_source_fragment_evidence",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.2704677899600938,
+      "limit_seconds": 75,
+      "log": "finite-range-rays-20260925-v62-candidate-case-130.log",
+      "ignored": false,
+      "target": "hypercurve_bezier_arrangement",
+      "name": "arrangement_graph_rejects_duplicate_source_fragment_evidence"
+    },
+    {
+      "label": "case-131",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-range-rays-20260925-v62-candidate-hypercurve_bezier_arrangement",
+        "--exact",
+        "arrangement_graph_rejects_forged_algebraic_endpoint_image_evidence",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.2777164130238816,
+      "limit_seconds": 75,
+      "log": "finite-range-rays-20260925-v62-candidate-case-131.log",
+      "ignored": false,
+      "target": "hypercurve_bezier_arrangement",
+      "name": "arrangement_graph_rejects_forged_algebraic_endpoint_image_evidence"
+    },
+    {
+      "label": "case-132",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-range-rays-20260925-v62-candidate-hypercurve_bezier_arrangement",
+        "--exact",
+        "arrangement_graph_rejects_invalid_unique_source_fragment_ranges",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.2743973509641364,
+      "limit_seconds": 75,
+      "log": "finite-range-rays-20260925-v62-candidate-case-132.log",
+      "ignored": false,
+      "target": "hypercurve_bezier_arrangement",
+      "name": "arrangement_graph_rejects_invalid_unique_source_fragment_ranges"
+    },
+    {
+      "label": "case-133",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-range-rays-20260925-v62-candidate-hypercurve_bezier_arrangement",
+        "--exact",
+        "arrangement_graph_rejects_overlapping_reused_source_fragment_ranges",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.2734257779084146,
+      "limit_seconds": 75,
+      "log": "finite-range-rays-20260925-v62-candidate-case-133.log",
+      "ignored": false,
+      "target": "hypercurve_bezier_arrangement",
+      "name": "arrangement_graph_rejects_overlapping_reused_source_fragment_ranges"
+    },
+    {
+      "label": "case-134",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-range-rays-20260925-v62-candidate-hypercurve_bezier_arrangement",
+        "--exact",
+        "branch_vertex_is_explicit_uncertainty_not_arbitrary_successor",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.27137524797581136,
+      "limit_seconds": 75,
+      "log": "finite-range-rays-20260925-v62-candidate-case-134.log",
+      "ignored": false,
+      "target": "hypercurve_bezier_arrangement",
+      "name": "branch_vertex_is_explicit_uncertainty_not_arbitrary_successor"
+    },
+    {
+      "label": "case-135",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-range-rays-20260925-v62-candidate-hypercurve_bezier_arrangement",
+        "--exact",
+        "certified_overlap_evidence_replays_across_graph_clones",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.2788321670377627,
+      "limit_seconds": 75,
+      "log": "finite-range-rays-20260925-v62-candidate-case-135.log",
+      "ignored": false,
+      "target": "hypercurve_bezier_arrangement",
+      "name": "certified_overlap_evidence_replays_across_graph_clones"
+    },
+    {
+      "label": "case-136",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-range-rays-20260925-v62-candidate-hypercurve_bezier_arrangement",
+        "--exact",
+        "contact_parameters_follow_their_carrier_domains",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.2869325919309631,
+      "limit_seconds": 75,
+      "log": "finite-range-rays-20260925-v62-candidate-case-136.log",
+      "ignored": false,
+      "target": "hypercurve_bezier_arrangement",
+      "name": "contact_parameters_follow_their_carrier_domains"
+    },
+    {
+      "label": "case-137",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-range-rays-20260925-v62-candidate-hypercurve_bezier_arrangement",
+        "--exact",
+        "empty_overlap_refinement_preserves_exact_unit_fragment",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.27642710192594677,
+      "limit_seconds": 75,
+      "log": "finite-range-rays-20260925-v62-candidate-case-137.log",
+      "ignored": false,
+      "target": "hypercurve_bezier_arrangement",
+      "name": "empty_overlap_refinement_preserves_exact_unit_fragment"
+    },
+    {
+      "label": "case-138",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-range-rays-20260925-v62-candidate-hypercurve_bezier_arrangement",
+        "--exact",
+        "exact_endpoint_buckets_retain_symbolic_matches",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.2745535910362378,
+      "limit_seconds": 75,
+      "log": "finite-range-rays-20260925-v62-candidate-case-138.log",
+      "ignored": false,
+      "target": "hypercurve_bezier_arrangement",
+      "name": "exact_endpoint_buckets_retain_symbolic_matches"
+    },
+    {
+      "label": "case-139",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-range-rays-20260925-v62-candidate-hypercurve_bezier_arrangement",
+        "--exact",
+        "exact_split_fragments_traverse_as_one_closed_bezier_chain",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.2806187740061432,
+      "limit_seconds": 75,
+      "log": "finite-range-rays-20260925-v62-candidate-case-139.log",
+      "ignored": false,
+      "target": "hypercurve_bezier_arrangement",
+      "name": "exact_split_fragments_traverse_as_one_closed_bezier_chain"
+    },
+    {
+      "label": "case-140",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-range-rays-20260925-v62-candidate-hypercurve_bezier_arrangement",
+        "--exact",
+        "monotone_span_rejects_reversed_parameter_evidence",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.27122086903546005,
+      "limit_seconds": 75,
+      "log": "finite-range-rays-20260925-v62-candidate-case-140.log",
+      "ignored": false,
+      "target": "hypercurve_bezier_arrangement",
+      "name": "monotone_span_rejects_reversed_parameter_evidence"
+    },
+    {
+      "label": "case-141",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-range-rays-20260925-v62-candidate-hypercurve_bezier_arrangement",
+        "--exact",
+        "open_quadratic_chain_stays_one_nonclosed_chain",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.2761491200653836,
+      "limit_seconds": 75,
+      "log": "finite-range-rays-20260925-v62-candidate-case-141.log",
+      "ignored": false,
+      "target": "hypercurve_bezier_arrangement",
+      "name": "open_quadratic_chain_stays_one_nonclosed_chain"
+    },
+    {
+      "label": "case-142",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-range-rays-20260925-v62-candidate-hypercurve_bezier_arrangement",
+        "--exact",
+        "retained_arrangement_traversal_constructors_validate_fragment_ownership",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.27385880798101425,
+      "limit_seconds": 75,
+      "log": "finite-range-rays-20260925-v62-candidate-case-142.log",
+      "ignored": false,
+      "target": "hypercurve_bezier_arrangement",
+      "name": "retained_arrangement_traversal_constructors_validate_fragment_ownership"
+    },
+    {
+      "label": "case-143",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-range-rays-20260925-v62-candidate-hypercurve_bezier_arrangement",
+        "--exact",
+        "retained_linear_overlap_refinement_evidence_reversed_span_orientation",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.27859225298743695,
+      "limit_seconds": 75,
+      "log": "finite-range-rays-20260925-v62-candidate-case-143.log",
+      "ignored": false,
+      "target": "hypercurve_bezier_arrangement",
+      "name": "retained_linear_overlap_refinement_evidence_reversed_span_orientation"
+    },
+    {
+      "label": "case-144",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-range-rays-20260925-v62-candidate-hypercurve_bezier_arrangement",
+        "--exact",
+        "retained_linear_overlap_split_graph_rejects_forged_orientation",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.28597014700062573,
+      "limit_seconds": 75,
+      "log": "finite-range-rays-20260925-v62-candidate-case-144.log",
+      "ignored": false,
+      "target": "hypercurve_bezier_arrangement",
+      "name": "retained_linear_overlap_split_graph_rejects_forged_orientation"
+    },
+    {
+      "label": "case-145",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-range-rays-20260925-v62-candidate-hypercurve_bezier_arrangement",
+        "--exact",
+        "retained_linear_overlap_split_graph_rejects_forged_resolved_provenance",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.2733165450626984,
+      "limit_seconds": 75,
+      "log": "finite-range-rays-20260925-v62-candidate-case-145.log",
+      "ignored": false,
+      "target": "hypercurve_bezier_arrangement",
+      "name": "retained_linear_overlap_split_graph_rejects_forged_resolved_provenance"
+    },
+    {
+      "label": "case-146",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-range-rays-20260925-v62-candidate-hypercurve_bezier_arrangement",
+        "--exact",
+        "retained_linear_overlap_split_graph_rejects_forged_split_evidence_geometry",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.2759257360594347,
+      "limit_seconds": 75,
+      "log": "finite-range-rays-20260925-v62-candidate-case-146.log",
+      "ignored": false,
+      "target": "hypercurve_bezier_arrangement",
+      "name": "retained_linear_overlap_split_graph_rejects_forged_split_evidence_geometry"
+    },
+    {
+      "label": "case-147",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-range-rays-20260925-v62-candidate-hypercurve_bezier_arrangement",
+        "--exact",
+        "retained_linear_overlap_split_graph_rejects_missing_refined_provenance",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.29148693894967437,
+      "limit_seconds": 75,
+      "log": "finite-range-rays-20260925-v62-candidate-case-147.log",
+      "ignored": false,
+      "target": "hypercurve_bezier_arrangement",
+      "name": "retained_linear_overlap_split_graph_rejects_missing_refined_provenance"
+    },
+    {
+      "label": "case-148",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-range-rays-20260925-v62-candidate-hypercurve_bezier_arrangement",
+        "--exact",
+        "retained_linear_overlap_split_graph_rejects_missing_split_evidence_evidence",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.2919720159843564,
+      "limit_seconds": 75,
+      "log": "finite-range-rays-20260925-v62-candidate-case-148.log",
+      "ignored": false,
+      "target": "hypercurve_bezier_arrangement",
+      "name": "retained_linear_overlap_split_graph_rejects_missing_split_evidence_evidence"
+    },
+    {
+      "label": "case-149",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-range-rays-20260925-v62-candidate-hypercurve_bezier_arrangement",
+        "--exact",
+        "retained_linear_overlap_traversal_cancels_reversed_internal_span_in_loop",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.28434912802185863,
+      "limit_seconds": 75,
+      "log": "finite-range-rays-20260925-v62-candidate-case-149.log",
+      "ignored": false,
+      "target": "hypercurve_bezier_arrangement",
+      "name": "retained_linear_overlap_traversal_cancels_reversed_internal_span_in_loop"
+    },
+    {
+      "label": "case-150",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-range-rays-20260925-v62-candidate-hypercurve_bezier_arrangement",
+        "--exact",
+        "retained_linear_overlap_traversal_rejects_incomplete_refined_partition",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.2833346970146522,
+      "limit_seconds": 75,
+      "log": "finite-range-rays-20260925-v62-candidate-case-150.log",
+      "ignored": false,
+      "target": "hypercurve_bezier_arrangement",
+      "name": "retained_linear_overlap_traversal_rejects_incomplete_refined_partition"
+    },
+    {
+      "label": "case-151",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-range-rays-20260925-v62-candidate-hypercurve_bezier_arrangement",
+        "--exact",
+        "retained_linear_overlap_traversal_rejects_indices_outside_refinement",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.27671874209772795,
+      "limit_seconds": 75,
+      "log": "finite-range-rays-20260925-v62-candidate-case-151.log",
+      "ignored": false,
+      "target": "hypercurve_bezier_arrangement",
+      "name": "retained_linear_overlap_traversal_rejects_indices_outside_refinement"
+    },
+    {
+      "label": "case-152",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-range-rays-20260925-v62-candidate-hypercurve_bezier_arrangement",
+        "--exact",
+        "retained_linear_overlap_traversal_splits_and_consumes_duplicate_span_in_loop",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.2778856819495559,
+      "limit_seconds": 75,
+      "log": "finite-range-rays-20260925-v62-candidate-case-152.log",
+      "ignored": false,
+      "target": "hypercurve_bezier_arrangement",
+      "name": "retained_linear_overlap_traversal_splits_and_consumes_duplicate_span_in_loop"
+    },
+    {
+      "label": "case-153",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-range-rays-20260925-v62-candidate-hypercurve_bezier_arrangement",
+        "--exact",
+        "retained_overlap_evidence_constructor_rejects_unsorted_or_duplicate_pairs",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.2709537069313228,
+      "limit_seconds": 75,
+      "log": "finite-range-rays-20260925-v62-candidate-case-153.log",
+      "ignored": false,
+      "target": "hypercurve_bezier_arrangement",
+      "name": "retained_overlap_evidence_constructor_rejects_unsorted_or_duplicate_pairs"
+    },
+    {
+      "label": "case-154",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-range-rays-20260925-v62-candidate-hypercurve_bezier_arrangement",
+        "--exact",
+        "retained_overlap_evidence_does_not_call_same_curve_image_a_line_split",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.2766322869574651,
+      "limit_seconds": 75,
+      "log": "finite-range-rays-20260925-v62-candidate-case-154.log",
+      "ignored": false,
+      "target": "hypercurve_bezier_arrangement",
+      "name": "retained_overlap_evidence_does_not_call_same_curve_image_a_line_split"
+    },
+    {
+      "label": "case-155",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-range-rays-20260925-v62-candidate-hypercurve_bezier_arrangement",
+        "--exact",
+        "retained_overlap_evidence_extracts_partial_line_image_split_ranges",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.276544863008894,
+      "limit_seconds": 75,
+      "log": "finite-range-rays-20260925-v62-candidate-case-155.log",
+      "ignored": false,
+      "target": "hypercurve_bezier_arrangement",
+      "name": "retained_overlap_evidence_extracts_partial_line_image_split_ranges"
+    },
+    {
+      "label": "case-156",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-range-rays-20260925-v62-candidate-hypercurve_bezier_arrangement",
+        "--exact",
+        "retained_overlap_evidence_finds_identical_materialized_fragments",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.27547907608095556,
+      "limit_seconds": 75,
+      "log": "finite-range-rays-20260925-v62-candidate-case-156.log",
+      "ignored": false,
+      "target": "hypercurve_bezier_arrangement",
+      "name": "retained_overlap_evidence_finds_identical_materialized_fragments"
+    },
+    {
+      "label": "case-157",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-range-rays-20260925-v62-candidate-hypercurve_bezier_arrangement",
+        "--exact",
+        "retained_overlap_evidence_finds_reversed_degree_elevated_same_image",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.27092147897928953,
+      "limit_seconds": 75,
+      "log": "finite-range-rays-20260925-v62-candidate-case-157.log",
+      "ignored": false,
+      "target": "hypercurve_bezier_arrangement",
+      "name": "retained_overlap_evidence_finds_reversed_degree_elevated_same_image"
+    },
+    {
+      "label": "case-158",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-range-rays-20260925-v62-candidate-hypercurve_bezier_arrangement",
+        "--exact",
+        "retained_overlap_evidence_preserves_strict_rational_overlap_ranges",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.29074223001953214,
+      "limit_seconds": 75,
+      "log": "finite-range-rays-20260925-v62-candidate-case-158.log",
+      "ignored": false,
+      "target": "hypercurve_bezier_arrangement",
+      "name": "retained_overlap_evidence_preserves_strict_rational_overlap_ranges"
+    },
+    {
+      "label": "case-159",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-range-rays-20260925-v62-candidate-hypercurve_bezier_arrangement",
+        "--exact",
+        "retained_overlap_evidence_recognizes_projectively_reversed_rational_fragments",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.27577120694331825,
+      "limit_seconds": 75,
+      "log": "finite-range-rays-20260925-v62-candidate-case-159.log",
+      "ignored": false,
+      "target": "hypercurve_bezier_arrangement",
+      "name": "retained_overlap_evidence_recognizes_projectively_reversed_rational_fragments"
+    },
+    {
+      "label": "case-160",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-range-rays-20260925-v62-candidate-hypercurve_bezier_arrangement",
+        "--exact",
+        "retained_overlap_evidence_rejects_nonlinear_line_image_bezier_ranges",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.2914693399798125,
+      "limit_seconds": 75,
+      "log": "finite-range-rays-20260925-v62-candidate-case-160.log",
+      "ignored": false,
+      "target": "hypercurve_bezier_arrangement",
+      "name": "retained_overlap_evidence_rejects_nonlinear_line_image_bezier_ranges"
+    },
+    {
+      "label": "case-161",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-range-rays-20260925-v62-candidate-hypercurve_bezier_arrangement",
+        "--exact",
+        "retained_overlap_evidence_separates_endpoint_touch_from_overlap",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.280569838010706,
+      "limit_seconds": 75,
+      "log": "finite-range-rays-20260925-v62-candidate-case-161.log",
+      "ignored": false,
+      "target": "hypercurve_bezier_arrangement",
+      "name": "retained_overlap_evidence_separates_endpoint_touch_from_overlap"
+    },
+    {
+      "label": "case-162",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-range-rays-20260925-v62-candidate-hypercurve_bezier_arrangement",
+        "--exact",
+        "retained_overlap_pair_constructor_rejects_non_overlap_line_evidence",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.28975398698821664,
+      "limit_seconds": 75,
+      "log": "finite-range-rays-20260925-v62-candidate-case-162.log",
+      "ignored": false,
+      "target": "hypercurve_bezier_arrangement",
+      "name": "retained_overlap_pair_constructor_rejects_non_overlap_line_evidence"
+    },
+    {
+      "label": "case-163",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-range-rays-20260925-v62-candidate-hypercurve_bezier_arrangement",
+        "--exact",
+        "retained_overlap_pair_constructor_rejects_unordered_indices",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.27532010700087994,
+      "limit_seconds": 75,
+      "log": "finite-range-rays-20260925-v62-candidate-case-163.log",
+      "ignored": false,
+      "target": "hypercurve_bezier_arrangement",
+      "name": "retained_overlap_pair_constructor_rejects_unordered_indices"
+    },
+    {
+      "label": "case-164",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-range-rays-20260925-v62-candidate-hypercurve_bezier_arrangement",
+        "--exact",
+        "retained_overlap_refined_fragment_constructor_validates_local_range",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.2716255800332874,
+      "limit_seconds": 75,
+      "log": "finite-range-rays-20260925-v62-candidate-case-164.log",
+      "ignored": false,
+      "target": "hypercurve_bezier_arrangement",
+      "name": "retained_overlap_refined_fragment_constructor_validates_local_range"
+    },
+    {
+      "label": "case-165",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-range-rays-20260925-v62-candidate-hypercurve_bezier_arrangement",
+        "--exact",
+        "retained_overlap_split_constructors_reject_unordered_indices",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.27897436707280576,
+      "limit_seconds": 75,
+      "log": "finite-range-rays-20260925-v62-candidate-case-165.log",
+      "ignored": false,
+      "target": "hypercurve_bezier_arrangement",
+      "name": "retained_overlap_split_constructors_reject_unordered_indices"
+    },
+    {
+      "label": "case-166",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-range-rays-20260925-v62-candidate-hypercurve_bezier_arrangement",
+        "--exact",
+        "retained_overlap_split_constructors_validate_range_evidence",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.2764558190247044,
+      "limit_seconds": 75,
+      "log": "finite-range-rays-20260925-v62-candidate-case-166.log",
+      "ignored": false,
+      "target": "hypercurve_bezier_arrangement",
+      "name": "retained_overlap_split_constructors_validate_range_evidence"
+    },
+    {
+      "label": "case-167",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-range-rays-20260925-v62-candidate-hypercurve_bezier_arrangement",
+        "--exact",
+        "retained_overlap_traversal_deduplicates_oriented_duplicate_loop_edges",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.2862560369540006,
+      "limit_seconds": 75,
+      "log": "finite-range-rays-20260925-v62-candidate-case-167.log",
+      "ignored": false,
+      "target": "hypercurve_bezier_arrangement",
+      "name": "retained_overlap_traversal_deduplicates_oriented_duplicate_loop_edges"
+    },
+    {
+      "label": "case-168",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-range-rays-20260925-v62-candidate-hypercurve_bezier_arrangement",
+        "--exact",
+        "retained_overlap_traversal_rejects_reversed_duplicate_as_ownership_boundary",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.2861114770639688,
+      "limit_seconds": 75,
+      "log": "finite-range-rays-20260925-v62-candidate-case-168.log",
+      "ignored": false,
+      "target": "hypercurve_bezier_arrangement",
+      "name": "retained_overlap_traversal_rejects_reversed_duplicate_as_ownership_boundary"
+    },
+    {
+      "label": "case-169",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-range-rays-20260925-v62-candidate-hypercurve_bezier_arrangement",
+        "--exact",
+        "retained_rational_overlap_promotes_represented_incidence_root",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.2838976589264348,
+      "limit_seconds": 75,
+      "log": "finite-range-rays-20260925-v62-candidate-case-169.log",
+      "ignored": false,
+      "target": "hypercurve_bezier_arrangement",
+      "name": "retained_rational_overlap_promotes_represented_incidence_root"
+    },
+    {
+      "label": "case-170",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-range-rays-20260925-v62-candidate-hypercurve_bezier_arrangement",
+        "--exact",
+        "retained_rational_overlap_refinement_cancels_reversed_span",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.27927253604866564,
+      "limit_seconds": 75,
+      "log": "finite-range-rays-20260925-v62-candidate-case-170.log",
+      "ignored": false,
+      "target": "hypercurve_bezier_arrangement",
+      "name": "retained_rational_overlap_refinement_cancels_reversed_span"
+    },
+    {
+      "label": "case-171",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-range-rays-20260925-v62-candidate-hypercurve_bezier_arrangement",
+        "--exact",
+        "retained_resolved_overlap_constructor_rejects_unordered_indices",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.2956449829507619,
+      "limit_seconds": 75,
+      "log": "finite-range-rays-20260925-v62-candidate-case-171.log",
+      "ignored": false,
+      "target": "hypercurve_bezier_arrangement",
+      "name": "retained_resolved_overlap_constructor_rejects_unordered_indices"
+    },
+    {
+      "label": "case-172",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-range-rays-20260925-v62-candidate-hypercurve_bezier_arrangement",
+        "--exact",
+        "retained_tangent_order_rejects_equal_algebraic_successors",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.2844416620209813,
+      "limit_seconds": 75,
+      "log": "finite-range-rays-20260925-v62-candidate-case-172.log",
+      "ignored": false,
+      "target": "hypercurve_bezier_arrangement",
+      "name": "retained_tangent_order_rejects_equal_algebraic_successors"
+    },
+    {
+      "label": "case-173",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-range-rays-20260925-v62-candidate-hypercurve_bezier_arrangement",
+        "--exact",
+        "retained_tangent_order_transforms_reversed_algebraic_endpoints_and_tangents",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.289472877047956,
+      "limit_seconds": 75,
+      "log": "finite-range-rays-20260925-v62-candidate-case-173.log",
+      "ignored": false,
+      "target": "hypercurve_bezier_arrangement",
+      "name": "retained_tangent_order_transforms_reversed_algebraic_endpoints_and_tangents"
+    },
+    {
+      "label": "case-174",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-range-rays-20260925-v62-candidate-hypercurve_bezier_arrangement",
+        "--exact",
+        "retained_tangent_order_traverses_algebraic_branch_vertex",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.2777135530486703,
+      "limit_seconds": 75,
+      "log": "finite-range-rays-20260925-v62-candidate-case-174.log",
+      "ignored": false,
+      "target": "hypercurve_bezier_arrangement",
+      "name": "retained_tangent_order_traverses_algebraic_branch_vertex"
+    },
+    {
+      "label": "case-175",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-range-rays-20260925-v62-candidate-hypercurve_bezier_arrangement",
+        "--exact",
+        "retained_tangent_order_uses_algebraic_second_order_for_equal_successors",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.278171231970191,
+      "limit_seconds": 75,
+      "log": "finite-range-rays-20260925-v62-candidate-case-175.log",
+      "ignored": false,
+      "target": "hypercurve_bezier_arrangement",
+      "name": "retained_tangent_order_uses_algebraic_second_order_for_equal_successors"
+    },
+    {
+      "label": "case-176",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-range-rays-20260925-v62-candidate-hypercurve_bezier_arrangement",
+        "--exact",
+        "retained_tangent_order_uses_algebraic_third_order_for_cubic_same_tangent_inflections",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.2762868410209194,
+      "limit_seconds": 75,
+      "log": "finite-range-rays-20260925-v62-candidate-case-176.log",
+      "ignored": false,
+      "target": "hypercurve_bezier_arrangement",
+      "name": "retained_tangent_order_uses_algebraic_third_order_for_cubic_same_tangent_inflections"
+    },
+    {
+      "label": "case-177",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-range-rays-20260925-v62-candidate-hypercurve_bezier_arrangement",
+        "--exact",
+        "retained_tangent_order_uses_rational_algebraic_second_order_for_equal_successors",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.28793056297581643,
+      "limit_seconds": 75,
+      "log": "finite-range-rays-20260925-v62-candidate-case-177.log",
+      "ignored": false,
+      "target": "hypercurve_bezier_arrangement",
+      "name": "retained_tangent_order_uses_rational_algebraic_second_order_for_equal_successors"
+    },
+    {
+      "label": "case-178",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-range-rays-20260925-v62-candidate-hypercurve_bezier_arrangement",
+        "--exact",
+        "tangent_ordered_traversal_rejects_equal_rational_second_order_successors",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.296042256988585,
+      "limit_seconds": 75,
+      "log": "finite-range-rays-20260925-v62-candidate-case-178.log",
+      "ignored": false,
+      "target": "hypercurve_bezier_arrangement",
+      "name": "tangent_ordered_traversal_rejects_equal_rational_second_order_successors"
+    },
+    {
+      "label": "case-179",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-range-rays-20260925-v62-candidate-hypercurve_bezier_arrangement",
+        "--exact",
+        "tangent_ordered_traversal_rejects_equal_second_order_outgoing_tangents",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.2906444959808141,
+      "limit_seconds": 75,
+      "log": "finite-range-rays-20260925-v62-candidate-case-179.log",
+      "ignored": false,
+      "target": "hypercurve_bezier_arrangement",
+      "name": "tangent_ordered_traversal_rejects_equal_second_order_outgoing_tangents"
+    },
+    {
+      "label": "case-180",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-range-rays-20260925-v62-candidate-hypercurve_bezier_arrangement",
+        "--exact",
+        "tangent_ordered_traversal_rejects_equal_third_order_cubic_successors",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.2741547980112955,
+      "limit_seconds": 75,
+      "log": "finite-range-rays-20260925-v62-candidate-case-180.log",
+      "ignored": false,
+      "target": "hypercurve_bezier_arrangement",
+      "name": "tangent_ordered_traversal_rejects_equal_third_order_cubic_successors"
+    },
+    {
+      "label": "case-181",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-range-rays-20260925-v62-candidate-hypercurve_bezier_arrangement",
+        "--exact",
+        "tangent_ordered_traversal_resolves_simple_branch_vertex",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.2737012089928612,
+      "limit_seconds": 75,
+      "log": "finite-range-rays-20260925-v62-candidate-case-181.log",
+      "ignored": false,
+      "target": "hypercurve_bezier_arrangement",
+      "name": "tangent_ordered_traversal_resolves_simple_branch_vertex"
+    },
+    {
+      "label": "case-182",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-range-rays-20260925-v62-candidate-hypercurve_bezier_arrangement",
+        "--exact",
+        "tangent_ordered_traversal_uses_rational_second_order_for_equal_outgoing_tangents",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.28870814002584666,
+      "limit_seconds": 75,
+      "log": "finite-range-rays-20260925-v62-candidate-case-182.log",
+      "ignored": false,
+      "target": "hypercurve_bezier_arrangement",
+      "name": "tangent_ordered_traversal_uses_rational_second_order_for_equal_outgoing_tangents"
+    },
+    {
+      "label": "case-183",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-range-rays-20260925-v62-candidate-hypercurve_bezier_arrangement",
+        "--exact",
+        "tangent_ordered_traversal_uses_second_order_for_equal_outgoing_tangents",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.27711209503468126,
+      "limit_seconds": 75,
+      "log": "finite-range-rays-20260925-v62-candidate-case-183.log",
+      "ignored": false,
+      "target": "hypercurve_bezier_arrangement",
+      "name": "tangent_ordered_traversal_uses_second_order_for_equal_outgoing_tangents"
+    },
+    {
+      "label": "case-184",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-range-rays-20260925-v62-candidate-hypercurve_bezier_arrangement",
+        "--exact",
+        "tangent_ordered_traversal_uses_third_order_for_cubic_same_tangent_inflections",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.27273329498711973,
+      "limit_seconds": 75,
+      "log": "finite-range-rays-20260925-v62-candidate-case-184.log",
+      "ignored": false,
+      "target": "hypercurve_bezier_arrangement",
+      "name": "tangent_ordered_traversal_uses_third_order_for_cubic_same_tangent_inflections"
+    }
+  ],
+  "all_processes_reaped": true,
+  "all_sources_unchanged": true,
+  "build_returncode": 0,
+  "selection": [
+    [
+      "hypercurve",
+      "bezier_region::tests::algebraic_ray_queries_keep_exterior_roots_and_denominator_orientation"
+    ],
+    [
+      "hypercurve",
+      "curve_region_boolean::certified_successor_tests::regularization_orders_all_branches_at_a_pinched_algebraic_corner"
+    ],
+    [
+      "hypercurve",
+      "bezier_region::tests::algebraic_native_ray_vertices_use_spatial_endpoint_ownership"
+    ],
+    [
+      "hypercurve",
+      "bezier_region::tests::algebraic_query_winding_mixes_genuine_parallel_and_native_fragments"
+    ],
+    [
+      "hypercurve",
+      "bezier_region::tests::algebraic_ray_retains_selected_endpoint_ownership"
+    ],
+    [
+      "hypercurve",
+      "bezier_region::tests::algebraic_retained_range_ray_winding_handles_crossing_multiplicity"
+    ],
+    [
+      "hypercurve",
+      "bezier_region::tests::algebraic_retained_ray_vertices_use_spatial_endpoint_ownership"
+    ],
+    [
+      "hypercurve",
+      "bezier_region::tests::algebraic_side_ray_skips_coincident_chords_across_loops"
+    ],
+    [
+      "hypercurve",
+      "bezier_region::tests::algebraic_side_ray_skips_genuine_parallel_contacts_across_loops"
+    ],
+    [
+      "hypercurve",
+      "bezier_region::tests::algebraic_side_ray_skips_retained_rational_contacts_across_loops"
+    ],
+    [
+      "hypercurve",
+      "bezier_region::tests::boundary_side_rays_preserve_winding_through_reversed_source_charts"
+    ],
+    [
+      "hypercurve",
+      "bezier_region::tests::boundary_side_rays_skip_retained_cusp_contacts_across_loops"
+    ],
+    [
+      "hypercurve",
+      "bezier_region::tests::nonlinear_algebraic_endpoint_chamfer_uses_complete_incident_ray"
+    ],
+    [
+      "hypercurve",
+      "bezier_region::tests::selected_parallel_ray_vertices_use_spatial_endpoint_ownership"
+    ],
+    [
+      "hypercurve",
+      "curve_region_boolean::certified_successor_tests::adjacent_general_chord_fallback_excludes_the_authored_endpoint"
+    ],
+    [
+      "hypercurve",
+      "curve_region_boolean::certified_successor_tests::affine_region_classifies_a_general_algebraic_cusp_point_in_its_source_field"
+    ],
+    [
+      "hypercurve",
+      "curve_region_boolean::certified_successor_tests::algebraic_chord_analytic_parallel_pair_replays_contacts_and_overlap"
+    ],
+    [
+      "hypercurve",
+      "curve_region_boolean::certified_successor_tests::algebraic_chord_carrier_retains_ordered_interior_splits"
+    ],
+    [
+      "hypercurve",
+      "curve_region_boolean::certified_successor_tests::algebraic_chord_exact_linear_bezier_pair_replays_all_line_relations"
+    ],
+    [
+      "hypercurve",
+      "curve_region_boolean::certified_successor_tests::algebraic_chord_pair_overlap_enters_region_intersection_evidence"
+    ],
+    [
+      "hypercurve",
+      "curve_region_boolean::certified_successor_tests::algebraic_chord_parallel_boolean_keeps_exterior_and_selected_ranges"
+    ],
+    [
+      "hypercurve",
+      "curve_region_boolean::certified_successor_tests::authored_parallel_support_contact_classifies_perpendicular_and_tangent_joins"
+    ],
+    [
+      "hypercurve",
+      "curve_region_boolean::certified_successor_tests::boolean_topology_seeds_a_general_cusp_run_from_an_adjacent_carrier"
+    ],
+    [
+      "hypercurve",
+      "curve_region_boolean::certified_successor_tests::boundary_probe_reuses_endpoint_incidence_and_keeps_residual_contacts"
+    ],
+    [
+      "hypercurve",
+      "curve_region_boolean::certified_successor_tests::certified_branch_order_matches_exact_vector_order"
+    ],
+    [
+      "hypercurve",
+      "curve_region_boolean::certified_successor_tests::classified_crossing_side_recovers_oriented_tangent_cross"
+    ],
+    [
+      "hypercurve",
+      "curve_region_boolean::certified_successor_tests::contact_point_bounds_reject_disjoint_lazy_sources"
+    ],
+    [
+      "hypercurve",
+      "curve_region_boolean::certified_successor_tests::curve_trim_retains_selected_field_algebraic_chord_boundaries"
+    ],
+    [
+      "hypercurve",
+      "curve_region_boolean::certified_successor_tests::curve_trim_retains_selected_field_algebraic_chord_overlaps"
+    ],
+    [
+      "hypercurve",
+      "curve_region_boolean::certified_successor_tests::curved_face_windings_preserve_crossings_tangencies_overlaps_and_nested_holes"
+    ],
+    [
+      "hypercurve",
+      "curve_region_boolean::certified_successor_tests::cusp_chord_pair_retains_an_independent_field_oblique_contact"
+    ],
+    [
+      "hypercurve",
+      "curve_region_boolean::certified_successor_tests::cusp_chord_pair_retains_an_interior_axis_contact"
+    ],
+    [
+      "hypercurve",
+      "curve_region_boolean::certified_successor_tests::cusp_chord_pair_retains_an_interior_exact_oblique_contact"
+    ],
+    [
+      "hypercurve",
+      "curve_region_boolean::certified_successor_tests::cusp_overlap_clipping_maps_partial_carriers_in_both_orientations"
+    ],
+    [
+      "hypercurve",
+      "curve_region_boolean::certified_successor_tests::cusp_separated_parallel_contacts_are_not_declared_distinct"
+    ],
+    [
+      "hypercurve",
+      "curve_region_boolean::certified_successor_tests::exact_retained_chord_uses_the_canonical_boolean_carrier"
+    ],
+    [
+      "hypercurve",
+      "curve_region_boolean::certified_successor_tests::exact_subfragment_of_algebraic_chord_retains_selected_field_witness"
+    ],
+    [
+      "hypercurve",
+      "curve_region_boolean::certified_successor_tests::exterior_circular_split_preserves_major_arc_and_algebraic_endpoints"
+    ],
+    [
+      "hypercurve",
+      "curve_region_boolean::certified_successor_tests::finite_parallel_self_contacts_retain_active_domain"
+    ],
+    [
+      "hypercurve",
+      "curve_region_boolean::certified_successor_tests::finite_self_crossing_regions_retain_boundary_ownership_on_reentry"
+    ],
+    [
+      "hypercurve",
+      "curve_region_boolean::certified_successor_tests::identical_injective_source_parameters_compare_without_materialization"
+    ],
+    [
+      "hypercurve",
+      "curve_region_boolean::certified_successor_tests::independent_field_algebraic_chord_uses_general_boolean_pair_engine"
+    ],
+    [
+      "hypercurve",
+      "curve_region_boolean::certified_successor_tests::independent_field_collinear_chord_overlap_enters_all_boolean_topology"
+    ],
+    [
+      "hypercurve",
+      "curve_region_boolean::certified_successor_tests::injective_carrier_topology_vertex_canonicalizes_unorderable_parameter_aliases"
+    ],
+    [
+      "hypercurve",
+      "curve_region_boolean::certified_successor_tests::isolated_circle_endpoint_contacts_retain_transverse_signs"
+    ],
+    [
+      "hypercurve",
+      "curve_region_boolean::certified_successor_tests::monotone_parallel_ranges_remove_only_proven_unary_pairs"
+    ],
+    [
+      "hypercurve",
+      "curve_region_boolean::certified_successor_tests::native_region_fast_path_matches_forced_general_arrangement"
+    ],
+    [
+      "hypercurve",
+      "curve_region_boolean::certified_successor_tests::nonadjacent_source_chord_pair_replays_endpoint_and_residual_contacts"
+    ],
+    [
+      "hypercurve",
+      "curve_region_boolean::certified_successor_tests::noninjective_carrier_retains_distinct_branches_at_one_topology_vertex"
+    ],
+    [
+      "hypercurve",
+      "curve_region_boolean::certified_successor_tests::noninjective_collinear_chord_dispatch_retains_contacts_and_overlaps"
+    ],
+    [
+      "hypercurve",
+      "curve_region_boolean::certified_successor_tests::noninjective_preimages_survive_curve_queries_and_cancel_from_regions"
+    ],
+    [
+      "hypercurve",
+      "curve_region_boolean::certified_successor_tests::nontransverse_point_touch_certifies_authored_loop_successors"
+    ],
+    [
+      "hypercurve",
+      "curve_region_boolean::certified_successor_tests::operand_bounds_are_lazy_shared_and_policy_neutral"
+    ],
+    [
+      "hypercurve",
+      "curve_region_boolean::certified_successor_tests::parameter_order_uses_exact_translation_before_approximate_512_terminal"
+    ],
+    [
+      "hypercurve",
+      "curve_region_boolean::certified_successor_tests::polynomial_control_polygon_certifies_only_monotone_injective_axis"
+    ],
+    [
+      "hypercurve",
+      "curve_region_boolean::certified_successor_tests::regularization_removes_symmetric_polynomial_and_rational_retracing"
+    ],
+    [
+      "hypercurve",
+      "curve_region_boolean::certified_successor_tests::retained_aabb_candidates_match_cartesian_pairs_in_authored_order"
+    ],
+    [
+      "hypercurve",
+      "curve_region_boolean::certified_successor_tests::selected_general_overlap_clips_through_exact_projection"
+    ],
+    [
+      "hypercurve",
+      "curve_region_boolean::certified_successor_tests::selected_parameter_component_overlap_clips_in_both_boolean_orders"
+    ],
+    [
+      "hypercurve",
+      "curve_region_boolean::certified_successor_tests::selected_projective_overlap_clips_without_global_parameter_projection"
+    ],
+    [
+      "hypercurve",
+      "curve_region_boolean::certified_successor_tests::shared_chord_splits_contacts_from_independent_selected_circles_in_order"
+    ],
+    [
+      "hypercurve",
+      "curve_region_boolean::certified_successor_tests::sibling_circle_tangency_preserves_half_chart_and_finite_range_ownership"
+    ],
+    [
+      "hypercurve",
+      "curve_region_boolean::certified_successor_tests::source_related_algebraic_chord_contact_enters_split_topology"
+    ],
+    [
+      "hypercurve",
+      "curve_region_boolean::certified_successor_tests::strict_interior_algebraic_chord_pair_contact_splits_both_carriers"
+    ],
+    [
+      "hypercurve",
+      "curve_region_boolean::certified_successor_tests::transitive_topology_merge_canonicalizes_deferred_injective_aliases"
+    ],
+    [
+      "hypercurve",
+      "curve_region_boolean::certified_successor_tests::transverse_contact_certificates_seed_both_operand_faces"
+    ],
+    [
+      "hypercurve",
+      "curve_region_boolean::certified_successor_tests::unary_cusp_regularization_samples_sides_in_the_selected_field"
+    ],
+    [
+      "hypercurve",
+      "curve_region_boolean::certified_successor_tests::unsupported_parameter_order_obeys_strict_and_approximate_512_policies"
+    ],
+    [
+      "hypercurve",
+      "curve_region_boolean::certified_successor_tests::xor_composition_fallback_removes_coincident_seams"
+    ],
+    [
+      "hypercurve",
+      "curve_region_boolean::regularization_successor_tests::colliding_contact_claims_remain_unselected"
+    ],
+    [
+      "hypercurve",
+      "curve_region_boolean::regularization_successor_tests::face_sector_claim_forces_the_unmaterialized_complement"
+    ],
+    [
+      "hypercurve",
+      "curve_region_boolean::regularized_face_winding_tests::contradiction_preserves_independent_winding_components"
+    ],
+    [
+      "hypercurve",
+      "curve_region_boolean::regularized_face_winding_tests::contradictory_winding_accelerator_is_disabled"
+    ],
+    [
+      "hypercurve",
+      "curve_region_boolean::regularized_face_winding_tests::contradictory_winding_propagation_is_transactional"
+    ],
+    [
+      "hypercurve",
+      "curve_region_boolean::regularized_face_winding_tests::winding_propagation_publishes_only_a_consistent_component"
+    ],
+    [
+      "hypercurve",
+      "rational_bezier_general::tests::denominator_sign_tracks_the_requested_range_and_keeps_unit_cache_scope"
+    ],
+    [
+      "hypercurve_curve_region_boolean",
+      "affine_line_batch_preserves_material_and_hole_roles"
+    ],
+    [
+      "hypercurve_curve_region_boolean",
+      "affine_line_batch_reuses_the_authoritative_arrangement_topology"
+    ],
+    [
+      "hypercurve_curve_region_boolean",
+      "algebraic_curved_region_output_can_feed_another_boolean"
+    ],
+    [
+      "hypercurve_curve_region_boolean",
+      "approximate_offset_reports_a_consumed_terminal_for_symbolic_zero_distance"
+    ],
+    [
+      "hypercurve_curve_region_boolean",
+      "approximate_policy_reports_a_consumed_terminal_instead_of_relabeling_it_exact"
+    ],
+    [
+      "hypercurve_curve_region_boolean",
+      "boolean_batch_short_circuits_empty_and_identical_operands"
+    ],
+    [
+      "hypercurve_curve_region_boolean",
+      "circular_boolean_outputs_publish_native_boundaries_under_both_policies"
+    ],
+    [
+      "hypercurve_curve_region_boolean",
+      "circular_conic_batch_obeys_the_approximate_512_terminal"
+    ],
+    [
+      "hypercurve_curve_region_boolean",
+      "circular_conic_batch_reuses_one_authoritative_topology"
+    ],
+    [
+      "hypercurve_curve_region_boolean",
+      "conic_general_batch_obeys_the_approximate_512_terminal"
+    ],
+    [
+      "hypercurve_curve_region_boolean",
+      "curve_path_construction_obeys_the_approximate_512_terminal"
+    ],
+    [
+      "hypercurve_curve_region_boolean",
+      "curved_region_boolean_output_can_feed_another_boolean"
+    ],
+    [
+      "hypercurve_curve_region_boolean",
+      "curved_region_boolean_respects_nested_hole_roles"
+    ],
+    [
+      "hypercurve_curve_region_boolean",
+      "elevated_circular_boolean_outputs_publish_native_boundaries"
+    ],
+    [
+      "hypercurve_curve_region_boolean",
+      "empty_output_does_not_certify_an_approximate_normalization"
+    ],
+    [
+      "hypercurve_curve_region_boolean",
+      "finite_bezier_charts_preserve_bounds_boundary_and_winding"
+    ],
+    [
+      "hypercurve_curve_region_boolean",
+      "general_curve_batch_obeys_the_approximate_512_terminal"
+    ],
+    [
+      "hypercurve_curve_region_boolean",
+      "independent_nonlinear_line_parameters_compact_to_reusable_regions"
+    ],
+    [
+      "hypercurve_curve_region_boolean",
+      "line_general_batch_obeys_the_approximate_512_terminal"
+    ],
+    [
+      "hypercurve_curve_region_boolean",
+      "mixed_line_circular_conic_batch_obeys_the_approximate_512_terminal"
+    ],
+    [
+      "hypercurve_curve_region_boolean",
+      "mixed_line_circular_conic_batch_reuses_one_authoritative_topology"
+    ],
+    [
+      "hypercurve_curve_region_boolean",
+      "mixed_line_circular_conic_degeneracy_matrix_matches_native_results"
+    ],
+    [
+      "hypercurve_curve_region_boolean",
+      "native_chart_poles_do_not_block_finite_region_queries"
+    ],
+    [
+      "hypercurve_curve_region_boolean",
+      "noncircular_conic_boolean_output_is_not_mislabeled_as_native_arc"
+    ],
+    [
+      "hypercurve_curve_region_boolean",
+      "point_query_reports_when_approximate_policy_decides_a_symbolic_boundary"
+    ],
+    [
+      "hypercurve_curve_region_boolean",
+      "region_intersection_carriers_replay_prepared_charts_and_outlive_inputs"
+    ],
+    [
+      "hypercurve_curve_region_boolean",
+      "region_intersection_removes_authored_internal_and_canceled_boundaries"
+    ],
+    [
+      "hypercurve_curve_region_boolean",
+      "regularized_affine_contacts_discard_lower_dimensional_intersections"
+    ],
+    [
+      "hypercurve_curve_region_boolean",
+      "regularized_conic_tangencies_preserve_regions_but_not_point_intersections"
+    ],
+    [
+      "hypercurve_curve_region_boolean",
+      "regularized_partial_shared_edges_resolve_exact_side_ownership"
+    ],
+    [
+      "hypercurve_curve_region_boolean",
+      "regularized_topology_does_not_upgrade_terminal_connectivity"
+    ],
+    [
+      "hypercurve_curve_region_boolean",
+      "regularized_topology_retains_only_the_policy_actually_consumed"
+    ],
+    [
+      "hypercurve_curve_region_boolean",
+      "retained_regions_clip_degree_equivalent_shared_images_to_carrier_ranges"
+    ],
+    [
+      "hypercurve_curve_region_boolean",
+      "retained_regions_clip_mobius_reparameterized_conics_to_carrier_ranges"
+    ],
+    [
+      "hypercurve_curve_region_boolean",
+      "retained_regions_clip_non_axis_monotone_mobius_cubic_components"
+    ],
+    [
+      "hypercurve_curve_region_boolean",
+      "retained_regions_clip_shared_source_components_to_carrier_ranges"
+    ],
+    [
+      "hypercurve_curve_region_boolean",
+      "selected_fillet_region_intersection_closes_through_exterior_cap_booleans"
+    ],
+    [
+      "hypercurve_curve_region_boolean_fuzz",
+      "algebraic_polyline_contacts_preserve_exact_contact_distinction"
+    ],
+    [
+      "hypercurve_curve_region_boolean_fuzz",
+      "conic_endpoint_root_isolation_completes"
+    ],
+    [
+      "hypercurve_curve_region_boolean_fuzz",
+      "deterministic_coincident_curve_family_images_complete"
+    ],
+    [
+      "hypercurve_curve_region_boolean_fuzz",
+      "deterministic_endpoint_curve_family_pair_matrix_completes"
+    ],
+    [
+      "hypercurve_curve_region_boolean_fuzz",
+      "deterministic_tangent_curve_family_pair_matrix_completes"
+    ],
+    [
+      "hypercurve_curve_region_boolean_fuzz",
+      "deterministic_transverse_curve_family_pair_matrix_completes"
+    ],
+    [
+      "hypercurve_curve_region_boolean_fuzz",
+      "explicit_loop_topology_supports_reversed_nonuniform_rational_regions"
+    ],
+    [
+      "hypercurve_curve_region_boolean_fuzz",
+      "generated_exact_curve_region_booleans_complete_and_match_immediate_results"
+    ],
+    [
+      "hypercurve_curve_region_boolean_fuzz",
+      "retired_candidate_interval_pruning_completes"
+    ],
+    [
+      "hypercurve_curve_region_boolean_fuzz",
+      "retired_exact_curve_region_boolean_failures_remain_in_the_corpus"
+    ],
+    [
+      "hypercurve_curve_region_boolean_fuzz",
+      "shared_endpoint_xor_completes"
+    ],
+    [
+      "hypercurve_pcb_boolean_regressions",
+      "easyduino_scale_process_image_containment_corpus"
+    ],
+    [
+      "hypercurve_pcb_boolean_regressions",
+      "easyduino_uno_scale_process_image_with_holes_corpus"
+    ],
+    [
+      "hypercurve_pcb_boolean_regressions",
+      "pcb_process_image_containment_regression_decides_exactly"
+    ],
+    [
+      "hypercurve_pcb_boolean_regressions",
+      "pcb_process_image_hole_ownership_culls_sparse_materials"
+    ],
+    [
+      "hypercurve_bezier_arrangement",
+      "algebraic_split_boundary_blocks_graph_traversal"
+    ],
+    [
+      "hypercurve_bezier_arrangement",
+      "arrangement_graph_accepts_adjacent_reused_source_fragment_ranges"
+    ],
+    [
+      "hypercurve_bezier_arrangement",
+      "arrangement_graph_rejects_duplicate_source_fragment_evidence"
+    ],
+    [
+      "hypercurve_bezier_arrangement",
+      "arrangement_graph_rejects_forged_algebraic_endpoint_image_evidence"
+    ],
+    [
+      "hypercurve_bezier_arrangement",
+      "arrangement_graph_rejects_invalid_unique_source_fragment_ranges"
+    ],
+    [
+      "hypercurve_bezier_arrangement",
+      "arrangement_graph_rejects_overlapping_reused_source_fragment_ranges"
+    ],
+    [
+      "hypercurve_bezier_arrangement",
+      "branch_vertex_is_explicit_uncertainty_not_arbitrary_successor"
+    ],
+    [
+      "hypercurve_bezier_arrangement",
+      "certified_overlap_evidence_replays_across_graph_clones"
+    ],
+    [
+      "hypercurve_bezier_arrangement",
+      "contact_parameters_follow_their_carrier_domains"
+    ],
+    [
+      "hypercurve_bezier_arrangement",
+      "empty_overlap_refinement_preserves_exact_unit_fragment"
+    ],
+    [
+      "hypercurve_bezier_arrangement",
+      "exact_endpoint_buckets_retain_symbolic_matches"
+    ],
+    [
+      "hypercurve_bezier_arrangement",
+      "exact_split_fragments_traverse_as_one_closed_bezier_chain"
+    ],
+    [
+      "hypercurve_bezier_arrangement",
+      "monotone_span_rejects_reversed_parameter_evidence"
+    ],
+    [
+      "hypercurve_bezier_arrangement",
+      "open_quadratic_chain_stays_one_nonclosed_chain"
+    ],
+    [
+      "hypercurve_bezier_arrangement",
+      "retained_arrangement_traversal_constructors_validate_fragment_ownership"
+    ],
+    [
+      "hypercurve_bezier_arrangement",
+      "retained_linear_overlap_refinement_evidence_reversed_span_orientation"
+    ],
+    [
+      "hypercurve_bezier_arrangement",
+      "retained_linear_overlap_split_graph_rejects_forged_orientation"
+    ],
+    [
+      "hypercurve_bezier_arrangement",
+      "retained_linear_overlap_split_graph_rejects_forged_resolved_provenance"
+    ],
+    [
+      "hypercurve_bezier_arrangement",
+      "retained_linear_overlap_split_graph_rejects_forged_split_evidence_geometry"
+    ],
+    [
+      "hypercurve_bezier_arrangement",
+      "retained_linear_overlap_split_graph_rejects_missing_refined_provenance"
+    ],
+    [
+      "hypercurve_bezier_arrangement",
+      "retained_linear_overlap_split_graph_rejects_missing_split_evidence_evidence"
+    ],
+    [
+      "hypercurve_bezier_arrangement",
+      "retained_linear_overlap_traversal_cancels_reversed_internal_span_in_loop"
+    ],
+    [
+      "hypercurve_bezier_arrangement",
+      "retained_linear_overlap_traversal_rejects_incomplete_refined_partition"
+    ],
+    [
+      "hypercurve_bezier_arrangement",
+      "retained_linear_overlap_traversal_rejects_indices_outside_refinement"
+    ],
+    [
+      "hypercurve_bezier_arrangement",
+      "retained_linear_overlap_traversal_splits_and_consumes_duplicate_span_in_loop"
+    ],
+    [
+      "hypercurve_bezier_arrangement",
+      "retained_overlap_evidence_constructor_rejects_unsorted_or_duplicate_pairs"
+    ],
+    [
+      "hypercurve_bezier_arrangement",
+      "retained_overlap_evidence_does_not_call_same_curve_image_a_line_split"
+    ],
+    [
+      "hypercurve_bezier_arrangement",
+      "retained_overlap_evidence_extracts_partial_line_image_split_ranges"
+    ],
+    [
+      "hypercurve_bezier_arrangement",
+      "retained_overlap_evidence_finds_identical_materialized_fragments"
+    ],
+    [
+      "hypercurve_bezier_arrangement",
+      "retained_overlap_evidence_finds_reversed_degree_elevated_same_image"
+    ],
+    [
+      "hypercurve_bezier_arrangement",
+      "retained_overlap_evidence_preserves_strict_rational_overlap_ranges"
+    ],
+    [
+      "hypercurve_bezier_arrangement",
+      "retained_overlap_evidence_recognizes_projectively_reversed_rational_fragments"
+    ],
+    [
+      "hypercurve_bezier_arrangement",
+      "retained_overlap_evidence_rejects_nonlinear_line_image_bezier_ranges"
+    ],
+    [
+      "hypercurve_bezier_arrangement",
+      "retained_overlap_evidence_separates_endpoint_touch_from_overlap"
+    ],
+    [
+      "hypercurve_bezier_arrangement",
+      "retained_overlap_pair_constructor_rejects_non_overlap_line_evidence"
+    ],
+    [
+      "hypercurve_bezier_arrangement",
+      "retained_overlap_pair_constructor_rejects_unordered_indices"
+    ],
+    [
+      "hypercurve_bezier_arrangement",
+      "retained_overlap_refined_fragment_constructor_validates_local_range"
+    ],
+    [
+      "hypercurve_bezier_arrangement",
+      "retained_overlap_split_constructors_reject_unordered_indices"
+    ],
+    [
+      "hypercurve_bezier_arrangement",
+      "retained_overlap_split_constructors_validate_range_evidence"
+    ],
+    [
+      "hypercurve_bezier_arrangement",
+      "retained_overlap_traversal_deduplicates_oriented_duplicate_loop_edges"
+    ],
+    [
+      "hypercurve_bezier_arrangement",
+      "retained_overlap_traversal_rejects_reversed_duplicate_as_ownership_boundary"
+    ],
+    [
+      "hypercurve_bezier_arrangement",
+      "retained_rational_overlap_promotes_represented_incidence_root"
+    ],
+    [
+      "hypercurve_bezier_arrangement",
+      "retained_rational_overlap_refinement_cancels_reversed_span"
+    ],
+    [
+      "hypercurve_bezier_arrangement",
+      "retained_resolved_overlap_constructor_rejects_unordered_indices"
+    ],
+    [
+      "hypercurve_bezier_arrangement",
+      "retained_tangent_order_rejects_equal_algebraic_successors"
+    ],
+    [
+      "hypercurve_bezier_arrangement",
+      "retained_tangent_order_transforms_reversed_algebraic_endpoints_and_tangents"
+    ],
+    [
+      "hypercurve_bezier_arrangement",
+      "retained_tangent_order_traverses_algebraic_branch_vertex"
+    ],
+    [
+      "hypercurve_bezier_arrangement",
+      "retained_tangent_order_uses_algebraic_second_order_for_equal_successors"
+    ],
+    [
+      "hypercurve_bezier_arrangement",
+      "retained_tangent_order_uses_algebraic_third_order_for_cubic_same_tangent_inflections"
+    ],
+    [
+      "hypercurve_bezier_arrangement",
+      "retained_tangent_order_uses_rational_algebraic_second_order_for_equal_successors"
+    ],
+    [
+      "hypercurve_bezier_arrangement",
+      "tangent_ordered_traversal_rejects_equal_rational_second_order_successors"
+    ],
+    [
+      "hypercurve_bezier_arrangement",
+      "tangent_ordered_traversal_rejects_equal_second_order_outgoing_tangents"
+    ],
+    [
+      "hypercurve_bezier_arrangement",
+      "tangent_ordered_traversal_rejects_equal_third_order_cubic_successors"
+    ],
+    [
+      "hypercurve_bezier_arrangement",
+      "tangent_ordered_traversal_resolves_simple_branch_vertex"
+    ],
+    [
+      "hypercurve_bezier_arrangement",
+      "tangent_ordered_traversal_uses_rational_second_order_for_equal_outgoing_tangents"
+    ],
+    [
+      "hypercurve_bezier_arrangement",
+      "tangent_ordered_traversal_uses_second_order_for_equal_outgoing_tangents"
+    ],
+    [
+      "hypercurve_bezier_arrangement",
+      "tangent_ordered_traversal_uses_third_order_for_cubic_same_tangent_inflections"
+    ]
+  ]
+}

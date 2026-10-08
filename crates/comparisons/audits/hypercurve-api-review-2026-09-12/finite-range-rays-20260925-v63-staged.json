@@ -1,0 +1,157 @@
+{
+  "phase": "staged",
+  "parent": "7697d69959f9505b1b0efc09802e155b6029f738",
+  "files": {
+    "src/bezier_offset.rs": "ff6588ed175363323a9efbdd77bb0b9dc5792d025e6e4d57d06b24590dad6302",
+    "src/bezier_region.rs": "e345652489e70f60e37d343f20bb13538e71ba854f6f4600818e9061e61224af",
+    "src/curve_region_boolean.rs": "f892751b043dc11348586ad0b546552245978e87be53db65b2a72f9b2faeb8c5"
+  },
+  "repositories": [
+    {
+      "name": "ExactCalculator",
+      "head": "7265aa3a922a7e7c0389dae4b26cca562aa777a6"
+    },
+    {
+      "name": "NURBS_BREP_kernel",
+      "head": "1aef37b12a92c993c2046f7886593bb0a555c414"
+    },
+    {
+      "name": "alumina-firmware",
+      "head": "bdee397d0b80841f16bf17e7bcd029b4feb2c212"
+    },
+    {
+      "name": "alumina-interface",
+      "head": "b21c9214c59d41e8272b8644dd436b44b7e15e89"
+    },
+    {
+      "name": "citizen-builder",
+      "head": "c4230238e28fd88fc8156fceb2c43698e67c27ca"
+    },
+    {
+      "name": "crcalc",
+      "head": "4f398d699c9d498deb45520ea7ebb020627bc640"
+    },
+    {
+      "name": "csgrs",
+      "head": "d029e51b5d7324f0df785c5cd3cf2f6c7a3a2cca"
+    },
+    {
+      "name": "csgrs-ffi",
+      "head": "6057435ce4c0b37bac99aec29922b90e6652c575"
+    },
+    {
+      "name": "exactcore-hyper-comparison",
+      "head": "74b90b328f720997d38da80af5620f167b3b0619"
+    },
+    {
+      "name": "hyperbrep",
+      "head": "7874790863d210646338182e548d7eef1aa05c7c"
+    },
+    {
+      "name": "hypercircuit",
+      "head": "ad421497ce6e88fe936818ec198c8a1b779776c7"
+    },
+    {
+      "name": "hypercurve",
+      "head": "7697d69959f9505b1b0efc09802e155b6029f738"
+    },
+    {
+      "name": "hyperdrc",
+      "head": "ce49bba5d16f78ae8559a0eabe3e4478b72fd4bf"
+    },
+    {
+      "name": "hyperevolution",
+      "head": "99645e3cefb7eea3af86abc15db68f7fcb31ca95"
+    },
+    {
+      "name": "hypergraphics",
+      "head": "75219dede7a2387ab30c84664b1293ec71d736d2"
+    },
+    {
+      "name": "hyperlattice",
+      "head": "035a8c822ca60e30daf0e3143843a65be0e6aedb"
+    },
+    {
+      "name": "hyperlimit",
+      "head": "d80f53329d7cab4130c62c2cbd4ec2d9f73c7c43"
+    },
+    {
+      "name": "hypermesh",
+      "head": "55cc20ada8bc502f1b3c1651b422f0a040239060"
+    },
+    {
+      "name": "hyperpack",
+      "head": "34857861561d643d7578753b8f8314d0fbca2c5b"
+    },
+    {
+      "name": "hyperparts",
+      "head": "d8626e9d36256afc4a8eb0380ae94c9ed5619107"
+    },
+    {
+      "name": "hyperpath",
+      "head": "96d03475ba4c5e971943a775898cbc697a132154"
+    },
+    {
+      "name": "hyperphysics",
+      "head": "dcbc7cf3489a1299de16a946fd7f5e5658b6f15f"
+    },
+    {
+      "name": "hyperreal",
+      "head": "0cb5f29aee065c73e234e0ebb0a9e106398515bb"
+    },
+    {
+      "name": "hypersdf",
+      "head": "b37825900457420cb64da385b8525acab33e31c5"
+    },
+    {
+      "name": "hypersolve",
+      "head": "a6307b5387282a2c125b71c8f5848282c052dd30"
+    },
+    {
+      "name": "hypertri",
+      "head": "6a2092c066964f3b7528299a72ef0ed1af4b1ff0"
+    },
+    {
+      "name": "hypervoxel",
+      "head": "0486b1465a249a04973520a4138a39395ded2f23"
+    },
+    {
+      "name": "openscad-rs",
+      "head": "f21b39486a6b35403ee8af9e7fba7cb62a045a5a"
+    },
+    {
+      "name": "synaps-cad",
+      "head": "da8da78636e573c04f8a5c4cd8cc900162b781ba"
+    },
+    {
+      "name": "videos",
+      "head": "4209b983cc0d937981f22a6fa7df384303fcc8bd"
+    }
+  ],
+  "source_manifest": "finite-range-rays-20260925-v63-candidate-sources.json",
+  "workspace_guard": "local-chord-complete-replay-20260924-v63-sources.json",
+  "candidate": "finite-range-rays-20260925-v63-candidate-terminal.json",
+  "parent_control": "finite-range-rays-20260925-v62-parent-terminal.json",
+  "checks": 3,
+  "attempted": 185,
+  "passed": 185,
+  "public_passes": 109,
+  "ignored": 0,
+  "newly_passing": [
+    "bezier_region::tests::algebraic_ray_queries_keep_exterior_roots_and_denominator_orientation",
+    "curve_region_boolean::certified_successor_tests::independent_field_collinear_chord_overlap_enters_all_boolean_topology",
+    "curve_region_boolean::certified_successor_tests::regularization_orders_all_branches_at_a_pinched_algebraic_corner",
+    "curve_region_boolean::certified_successor_tests::source_related_algebraic_chord_contact_enters_split_topology"
+  ],
+  "remaining_uncommitted": [
+    "src/bezier_offset.rs",
+    "src/bezier_parameter.rs",
+    "src/bezier_region.rs",
+    "src/curve.rs",
+    "src/curve_corner_chain.rs",
+    "tests/hypercurve_curve.rs"
+  ],
+  "all_inputs_and_executables_match": true,
+  "all_owned_processes_reaped": true,
+  "full_goal_complete": false
+}

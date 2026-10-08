@@ -1,0 +1,17 @@
+FAIL	int-div-overflow	(-4,-9223372036854775808,64)	Right False
+FAIL	int-div-overflow	(-4,-9223372036854775808,80)	Right False
+FAIL	int-div-overflow	(-4,-9223372036854775808,128)	Right False
+FAIL	float-int-div-overflow	(-3,9223372036854775807,64)	Right False
+FAIL	float-int-div-overflow	(-3,9223372036854775807,80)	Right False
+FAIL	float-int-div-overflow	(-3,9223372036854775807,128)	Right False
+operation	checks	failures	exceptions
+decimal-import 195 0 0
+dy-average 11250 0 0
+dy-average-neg 11250 0 0
+dy-convert 150 0 0
+dy-digit-mul 4950 0 0
+dy-multiply 11250 0 0
+dy-negate 150 0 0
+float-int-div-overflow 135 40 0
+int-div-overflow 135 67 0
+TOTAL (39465,107,0)

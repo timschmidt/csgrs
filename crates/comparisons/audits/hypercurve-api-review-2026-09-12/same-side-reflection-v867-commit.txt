@@ -1,0 +1,16 @@
+Preserve orientation when ordering branches on the negative side
+
+Same-side second- and third-order comparisons squared their local witnesses
+and therefore gave reflected curves the same order. Reverse the final
+magnitude order for two certified negative side witnesses in both native
+and represented predicates. Reuse existing side signs and preserve scalar
+arithmetic, source certificates, speed normalization and uncertainty.
+
+Correct the existing traversal fixture using a matched-x polynomial proof:
+the first outgoing branch lies strictly below the second near the junction.
+
+Independent graph tests cover reflection, swapped inputs, both derivative
+orders and both policies. An unchanged 16-case public probe repairs all
+eight previously incorrect decisions. Qualification: 335 selected release
+tests in 12 pinned binaries and seven lint/format/fuzz/doc/downstream checks.
+Evidence: hypercurve-api-review-2026-09-12/same-side-reflection-v867-reviewed.json.

@@ -1,0 +1,9 @@
+     Locking 16 packages to latest Rust 1.97.0 compatible versions
+   Compiling libc v0.2.189
+   Compiling rug v1.30.0
+   Compiling libm v0.2.16
+   Compiling gmp-mpfr-sys v1.7.1
+   Compiling az v1.3.0
+   Compiling hyperreal v0.13.1 (/tmp/haskell-creal-audit.rafb8h/hyperreal-before)
+   Compiling creal-hyper-cache-audit v0.1.0 (/tmp/haskell-creal-audit.rafb8h/hyper-cache)
+    Finished `release` profile [optimized] target(s) in 10.75s

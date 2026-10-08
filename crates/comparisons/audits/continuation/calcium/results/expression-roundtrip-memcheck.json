@@ -1,0 +1,18 @@
+{
+  "tag": "expression-roundtrip-memcheck",
+  "started": "2026-09-08T19:56:18.679Z",
+  "finished": "2026-09-08T19:56:19.696Z",
+  "elapsedSeconds": 1.015653413,
+  "cwd": "/home/tim/Documents/GitHub/workspace",
+  "command": "valgrind",
+  "args": [
+    "--tool=memcheck",
+    "--error-exitcode=99",
+    "--leak-check=full",
+    "--show-leak-kinds=all",
+    "--errors-for-leak-kinds=definite,indirect,possible",
+    ".audit-builds/calcium-expression-roundtrip-probe"
+  ],
+  "code": 1,
+  "signal": null
+}

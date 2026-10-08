@@ -1,0 +1,20 @@
+{
+  "parent": "2d26b0ae4d6178700d5c26ccdab5f8ac25a1f787",
+  "command": [
+    "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustc",
+    "--edition=2024",
+    "-O",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/normalized-retained-admission-public.rs",
+    "--extern",
+    "hypercurve=/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/opposed-endpoint-contact-public-libraries/libhypercurve-bacb55d5ec235376.rlib",
+    "-L",
+    "dependency=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps",
+    "-o",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/normalized-retained-admission-baseline"
+  ],
+  "returncode": 0,
+  "elapsed_seconds": 0.006299067987129092,
+  "source_sha256": "06025feb09817806e1e7e212f78bfd7058fba35d47de275e5674be4b1c0b6d8c",
+  "binary_sha256": "013bf0a8ecd98584bcc982c286e9fd439804a15e8d22b28e29b6b68f3fc2827d",
+  "library_sha256": "e314d2523910509b23aae886ead2a98aef68181343ec712968035bba2cd47032"
+}

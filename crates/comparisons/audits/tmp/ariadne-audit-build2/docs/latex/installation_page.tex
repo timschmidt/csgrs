@@ -1,0 +1,145 @@
+\doxysection{Installation Guide }
+\hypertarget{installation_page}{}\label{installation_page}\index{Installation Guide@{Installation Guide}}
+These installation instructions have been tested on Ubuntu 16.\+04 and OSX 10.\+11.
+
+For the Ubuntu installation, we will refer to packages available on Aptitude. The OSX installation instead will assume you are using the Brew package manager.
+
+The build system is CMake. The compilers we tested the library under Ubuntu are GCC and Clang, while for OSX is Clang.\hypertarget{installation_page_installation_dependencies}{}\doxysubsection{\texorpdfstring{Dependencies}{Dependencies}}\label{installation_page_installation_dependencies}
+Some packages are required to download and compile the sources. The syntax to install a package is\+:
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{sudo\ apt\ install\ <package-\/name>\ }
+
+\end{DoxyCode}
+
+
+The mandatory packages are the following\+:
+
+
+\begin{DoxyItemize}
+\item {\ttfamily git} \+: to download the source code and retrieve a given version of the distribution;
+\item {\ttfamily cmake} \+: to automate the build;
+\item {\ttfamily g++} or {\ttfamily clang++}\+: to compile the C++ sources;
+\item {\ttfamily libgmp-\/dev} {\ttfamily libmpfr-\/dev} \+: internal dependencies (numeric libraries).
+\item {\ttfamily libboost-\/dev} {\ttfamily libboost-\/serialization-\/dev} {\ttfamily libboost-\/thread-\/dev} \+: internal dependencies (support libraries).
+\end{DoxyItemize}
+
+You can install all the mandatory packages with\+:
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{sudo\ apt\ install\ git\ cmake\ g++\ clang\ libgmp-\/dev\ libmpfr-\/dev\ libboost-\/dev\ libboost-\/serialization-\/dev\ libboost-\/thread-\/dev\ }
+
+\end{DoxyCode}
+
+
+The following packages instead are optional\+:
+
+
+\begin{DoxyItemize}
+\item {\ttfamily libbdd-\/dev} \+: enables Binary Decision Diagram support, with improved efficiency (recommended);
+\item {\ttfamily libcairo2-\/dev} \+: allows to plot analysis results (recommended);
+\item {\ttfamily libgtk2.\+0-\/dev} \+: allows pop-\/up graphics windows;
+\item {\ttfamily python2.\+7-\/dev} {\ttfamily libboost-\/python-\/dev} \+: to build the Python interface (recommended).
+\item {\ttfamily doxygen} \+: to build the documentation (recommended).
+\end{DoxyItemize}\hypertarget{installation_page_installation_on_osx}{}\doxysubsubsection{\texorpdfstring{OSX}{OSX}}\label{installation_page_installation_on_osx}
+Install the Command Line Developer Tools (will also be asked when installing Homebrew) from the Apple Store
+
+Install Homebrew from \href{http://brew.sh/}{\texttt{http\+://brew.\+sh/}} \begin{DoxyVerb}Homebrew packages required: \code cmake boost gtk cairo \endcode
+\end{DoxyVerb}
+
+
+Optionally, if you want to build the documentation, you need Doxygen and a working Latex distribution (including the Math packages).\hypertarget{installation_page_installation_download}{}\doxysubsection{\texorpdfstring{Download}{Download}}\label{installation_page_installation_download}
+You can check out the latest development version on the Git repository into a local directory {\ttfamily ariadne-\/development} by typing\+:
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{git\ clone\ https:\textcolor{comment}{//bitbucket.org/ariadne-\/cps/development.git\ ariadne-\/development\ }}
+
+\end{DoxyCode}
+\hypertarget{installation_page_installation_building}{}\doxysubsection{\texorpdfstring{Building}{Building}}\label{installation_page_installation_building}
+To build the library in a clean way, it is preferable that you set up a build subdirectory\+: 
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\$\ mkdir\ build}
+\DoxyCodeLine{\$\ cd\ build}
+
+\end{DoxyCode}
+
+
+Then you can prepare the build environment\+: 
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\$\ cmake\ ..}
+
+\end{DoxyCode}
+
+
+At this point, if no error arises, you can build the library libariadne.\+so itself\+: 
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\$\ make\ ariadne}
+
+\end{DoxyCode}
+ On a multi-\/core processor you can use multiple cores to speed up the build process. e.\+g. To use 4 cores, type 
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\$\ make\ -\/j\ 4\ ariadne}
+
+\end{DoxyCode}
+
+
+If you prefer to use the Python interface rather than the C++ library, you should build the file {\ttfamily ariadne.\+so} with\+: 
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\$\ make\ pyariadne}
+
+\end{DoxyCode}
+
+
+To compile a single example, e.\+g. the tutorial, use\+: 
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\$\ make\ tutorial}
+
+\end{DoxyCode}
+ To compile all examples, use 
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\$\ make\ examples}
+
+\end{DoxyCode}
+
+
+Optionally, you can also build and run the test suite for the library\+: 
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\$\ make\ tests\ test}
+
+\end{DoxyCode}
+ Ideally, no error should appear. Tests named "{}{\ttfamily \+\_\+issue}"{} indicate known problems with the code, and may fail. This should not however impact the correctness of the results, but may indicate problems with accuracy, efficiency, or termination on certain problems.
+
+To build libraries, tests and examples, simply type\+: 
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\$\ make}
+
+\end{DoxyCode}
+ or 
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\$\ make\ all}
+
+\end{DoxyCode}
+
+
+To build the documentation, use\+: 
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\$\ make\ doc}
+
+\end{DoxyCode}
+ The documentation will be placed in the directory {\ttfamily build/docs/} .\hypertarget{installation_page_installation_installing_globally}{}\doxysubsection{\texorpdfstring{Installing globally}{Installing globally}}\label{installation_page_installation_installing_globally}
+To install the library globally, you must do 
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\$\ make\ install}
+
+\end{DoxyCode}
+
+
+To find the installed library under Ubuntu, you may need to set the LD\+\_\+\+LIBRARY\+\_\+\+PATH in the .bashrc file\+: 
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\textcolor{keyword}{export}\ LD\_LIBRARY\_PATH=\$LD\_LIBRARY\_PATH:/usr/local/lib}
+
+\end{DoxyCode}
+ 

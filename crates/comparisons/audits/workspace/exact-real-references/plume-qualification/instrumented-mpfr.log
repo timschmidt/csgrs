@@ -1,0 +1,19 @@
+FAIL sin -4/1 bits=8 got=0 expected=0.7568024953079282
+FAIL sin -4/1 bits=24 got=0 expected=0.7568024953079282
+FAIL sin -4/1 bits=64 got=0 expected=0.7568024953079282
+FAIL sin -1/1 bits=8 got=-0.83203125 expected=-0.8414709848078965
+FAIL ln 2/1 bits=8 got=0.62890625 expected=0.6931471805599453
+FAIL ln 2/1 bits=24 got=0.6250000596046448 expected=0.6931471805599453
+FAIL ln 2/1 bits=64 got=0.625 expected=0.6931471805599453
+FAIL ln 8/1 bits=24 got=2.080078125 expected=2.0794415416798357
+FAIL atan -1/1 bits=8 got=-0.6640625 expected=-0.7853981633974483
+FAIL atan -1/1 bits=24 got=-0.6666666269302368 expected=-0.7853981633974483
+FAIL atan -1/1 bits=64 got=-0.6666666666666666 expected=-0.7853981633974483
+FAIL atan -1/2 bits=8 got=-0.5 expected=-0.4636476090008061
+atan	checks=10	failures=6
+cos	checks=21	failures=0
+exp	checks=27	failures=0
+ln	checks=21	failures=5
+pi	checks=3	failures=0
+sin	checks=18	failures=9
+TOTAL	checks=100	failures=20

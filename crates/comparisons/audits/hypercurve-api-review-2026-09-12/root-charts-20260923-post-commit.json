@@ -1,0 +1,7 @@
+{
+  "head": "a34c0feffa0d7dba5d5e99f1c7e20882a5fd6ff4",
+  "committed_sources_match_qualification": true,
+  "remaining_working_change": "src/bezier_region.rs",
+  "all_owned_processes_reaped": true,
+  "goal_complete": false
+}

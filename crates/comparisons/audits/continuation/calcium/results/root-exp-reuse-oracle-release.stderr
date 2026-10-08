@@ -1,0 +1,26 @@
+   Compiling proc-macro2 v1.0.107
+   Compiling quote v1.0.47
+   Compiling serde_core v1.0.229
+   Compiling syn v3.0.4
+   Compiling serde v1.0.229
+   Compiling syn v2.0.119
+   Compiling serde_derive v1.0.229
+   Compiling zerocopy v0.8.56
+   Compiling zerocopy-derive v0.8.56
+   Compiling zmij v1.0.23
+   Compiling libc v0.2.189
+   Compiling num-bigint v0.4.8
+   Compiling serde_json v1.0.151
+   Compiling num-rational v0.4.2
+   Compiling half v2.7.1
+   Compiling ciborium-ll v0.2.2
+   Compiling num-complex v0.4.6
+   Compiling memchr v2.8.3
+   Compiling gmp-mpfr-sys v1.7.1
+   Compiling num v0.4.3
+   Compiling ciborium v0.2.2
+   Compiling rug v1.30.0
+   Compiling hyperreal v0.13.1 (/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/root-exp-reuse-trial-hyperreal)
+   Compiling calcium-root-exp-reuse-qualification v0.1.0 (/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/root-exp-reuse-qualification)
+    Finished `release` profile [optimized] target(s) in 38.50s
+     Running `/tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/release/calcium-root-exp-reuse-qualification oracle`

@@ -1,0 +1,7 @@
+("negative scale cached min/max vs correct",(0 % 1,(-8) % 1),((-8) % 1,0 % 1))
+Frac stale reciprocal bound: output=((-1) % 2,1 % 2); exact=[(-1) % 1,1 % 1]; contains=[False,False]
+Frac identity radius update: output=(0 % 1,0 % 1); exact=[(-1) % 8,1 % 8]; contains=[False,False]
+PPoly unit-radius derivative scale: output=(7 % 4,9 % 4); exact=[3 % 2,5 % 2]; contains=[False,False]
+PPoly reciprocal input-radius correction: output=(15 % 8,17 % 8); exact=[8 % 5,8 % 3]; contains=[False,False]
+("PowS product coefficients respect retained A=k=1",[True,False,False,False,False,False,False,False,False])
+("PowS partial substitution x=1/2 respects retained A=1",False)

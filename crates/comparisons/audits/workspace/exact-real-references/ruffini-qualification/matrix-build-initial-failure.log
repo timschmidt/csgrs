@@ -1,0 +1,9 @@
+/home/tim/Documents/GitHub/workspace/exact-real-references/ruffini-qualification/RuffiniMatrix.java:129: error: reference to divide is ambiguous
+        probe("int-division-overflow",()-> {var qr=Integers.getInstance().divide(Integer.MIN_VALUE,3);return BigInteger.valueOf(qr.first).multiply(BigInteger.valueOf(3)).add(BigInteger.valueOf(qr.second)).equals(BigInteger.valueOf(Integer.MIN_VALUE));});
+                                                                         ^
+  both method divide(E,int) in EuclideanDomain and method divide(Integer,Integer) in Integers match
+  where E is a type-variable:
+    E extends Object declared in interface EuclideanDomain
+1 error
+
+{"status":1,"error":null}

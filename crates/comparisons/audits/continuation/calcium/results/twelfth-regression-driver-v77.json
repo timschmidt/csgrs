@@ -1,0 +1,13 @@
+{
+  "tag": "twelfth-regression-driver-v77",
+  "started": "2026-09-11T22:58:17.403Z",
+  "finished": "2026-09-11T22:59:41.192Z",
+  "elapsedSeconds": 83.785848777,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "node",
+  "args": [
+    "run-twelfth-relation-v77.mjs"
+  ],
+  "code": 1,
+  "signal": null
+}

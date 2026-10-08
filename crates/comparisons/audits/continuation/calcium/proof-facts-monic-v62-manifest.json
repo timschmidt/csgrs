@@ -1,0 +1,1357 @@
+{
+  "schema": 1,
+  "checkpoint": 62,
+  "recorded": "2026-09-11T01:34:13.125Z",
+  "previousManifest": "retained-statistics-v61-manifest.json",
+  "files": {
+    "proof-facts-monic-v62-findings.md": "8f514391dcef2707a1dddf90ba888d29830df94277d602c389c7ccb92e7c54f5",
+    "proof-facts-monic-v62-analysis.json": "f745b80746585e9ee77aed69768fef6fda2a6e58553090b508c92ac7ba567292",
+    "reanalyse-proof-facts-monic-v62.mjs": "f4f2af3865b71ac353eed30c8215e5feb81fd85f21f27c37971a57409fb5825f",
+    "check-proof-facts-monic-v62.mjs": "f431c3500a3652360dd2eaa9a56c7272d1917c2b3e7fb8a57c1c4b0b4ffeaa7a",
+    "proof-facts-monic-evidence-v62.mjs": "e10d4a11f58b7bf292ebaa9e2071b3feb11f35e9eebf1ab662fa4761ece9c4c8",
+    "record-proof-facts-monic-v62.mjs": "1895cc2bc1743fd3ba25dcb38beb551ea70ea1ee60aad3136e8c989a152400f1",
+    "verify-proof-facts-monic-v62.mjs": "4dad4f302ca86499aac6e55e9b76a93e9dedaecbf775351b69760457ecc63192",
+    "paired-statistics-v60.mjs": "b40e8b928b866a0298a06520ac415ec09013fc8c5f704e2eda8df02d770bbc5d",
+    "retained-statistics-v61-manifest.json": "e81af669713a0849acaebc1a00696154821e9ff13398d1568bda42f98f2fec10",
+    "reanalyse-retained-statistics-v61.mjs": "3662dfd888b8e682485a082aa76e813e697f5108e62a1b02d43cdaac01c98eb1",
+    "point-demand-sources.mjs": "6c10d4c9a336971b3018373508999cd1fe37635d8a336d8b337f2c1997f37700",
+    "capture.mjs": "aaf6df6bbd73025a8541617ce83731ae5ea3fd2272bd98c15e3c4c12b713ce23",
+    "run-polynomial-facts-allocation-bounded.mjs": "349ba1c6f5bcbf53d2860ac30bb44aebfdfd18017ede7c988d17e5924374b801",
+    "root-exp-proof-experiment.json": "bd091bbe36b8be7811f542fc934126bf500dfbbe5d48f431266e7ce1115ee89d",
+    "root-exp-reuse-experiment.json": "b87c3ef332780aef46e6bfccfd90ea0dc210f0ca1e95bb9ecb1324e0933a921c",
+    "reuse-cost-experiment.json": "8380554b0b221e2185948b4aa3171c90887b5f07cb7989f11a8de8d1b33d461d",
+    "polynomial-facts-experiment.json": "e7134b624f7ed3e5b450a513ff85fd9454c8fcaf3e82f5b8cfd9a765a5ef0c7c",
+    "monic-cost-experiment.json": "2cc5251d7c0dcff4499f30b29f1fbe6b86c59eebd04ef4d86ff8c60dc35555a1",
+    "retained-exp-proof.json": "192604cc32e83c42f624c9c1bdeb7a6201797d15165bd28cdd90e6f364df0e2a",
+    "retained-polynomial-facts.json": "5b6662632f11ce4f51caf8172b7064d6e6d6224d96ac14745dfc89ac8eeda1f9",
+    "retained-monic.json": "0e67a5b6ffd84e4d04465d17c8a54f24c915ba5bf3cf4ae4c28c8b4eb9989ed1",
+    "run-root-exp-proof-bench.mjs": "c69610152d60ee02ce99bdc22afd186e98d6d1f5784a63dc138593da54eb0ff7",
+    "verify-root-exp-proof-checkpoint.mjs": "b88e3b1131850b713ff80319afc8c180aa96142e95da48a47723fdff9f291a61",
+    "run-root-exp-reuse-bench.mjs": "6d7e825b435230ca665f9aca710681c441320fcd2e7c3aaef5eed535a43a5e57",
+    "run-root-exp-reuse-confirm-bench.mjs": "be758f4b7681a250edb2303736dd73293d9bd7b3a980d935d688296763da2101",
+    "run-root-exp-reuse-alloc-bench.mjs": "4cbf8d8bd1b7e5a153221220060c5f687a8f85ae8a764f0d4600b0c6e611141b",
+    "verify-root-exp-reuse-checkpoint.mjs": "af9b2649b97e389e10462091dbf202cecd8c159b59ceb06b46014ea6648f2d89",
+    "run-reuse-cost-bench.mjs": "2a9bef0d3277b915e79a15e1432a312c1f450d19c260e60a6b628582ec9b5df5",
+    "verify-reuse-cost-checkpoint.mjs": "b56e9bdc7883f74e8d6b1b0df5752cdf3629daea940ee18184b23b3c45946a70",
+    "run-polynomial-facts-cpu.mjs": "75ac326bd5287de82e61d0af599f9a716254c6c7f6b228f1e6146dc8f7b74b0a",
+    "verify-polynomial-facts.mjs": "b9d24674345b860321810ec932d227203fbc46e745a1d341556da9944b7956b3",
+    "run-monic-costs.mjs": "6ea1693b961c9319c7588fbd27fe79cc664a68565ebf0bc20892d79de56b877b",
+    "verify-monic-costs.mjs": "8fde82f275ca8a49cb5860d325d574f47223f3dd9e7b79d700d717e8eb62145f",
+    "root-exp-proof-query-cpu-summary.json": "2078795a842c363529022d28c6a6a4237c1f14b545ba9d4f2c71ce8d18c7193d",
+    "results/root-exp-proof-query-cpu.jsonl": "5c6655a9d7c74e4437debaa76cbc131718250e7c67b3a0805074abdbafc5aaf6",
+    "root-exp-proof-query-alloc-summary.json": "0c82dd03550d5e1d665a7d45951719a10061da089e01ce400455840abdfc8b4c",
+    "results/root-exp-proof-query-alloc.jsonl": "0ae7ec0bba068d63fc61c682a13887f623aa994481699e2717948fa9b9e94724",
+    "root-exp-proof-numeric-cpu-summary.json": "ecbc783e93c7d31a39d099a1442499ad5f59bdb849d8c5ddbc32678c49ab2563",
+    "results/root-exp-proof-numeric-cpu.jsonl": "d1457f5ccfc0887007d079275f6b9fbb3f05c6767e6f595760145b74377c3639",
+    "root-exp-proof-numeric-alloc-summary.json": "78f5e93b3dfd7208e6bdb7a641ece26744e591e613ce3477692ff0075cf65437",
+    "results/root-exp-proof-numeric-alloc.jsonl": "e929171b15d92d4b47d6d958a9f30203e063f3e62428149498e0230078dc9f41",
+    "root-exp-reuse-cpu-summary.json": "3cc362840e4123075934156e73576f7bfecdb259d9612c65590891c09c57ff39",
+    "results/root-exp-reuse-cpu.jsonl": "097d3684d8bd3ee28d5cba7b282385036becca04731dcfdf02671b8b7f4979fa",
+    "root-exp-reuse-confirm-cpu-summary.json": "10656b5240519c722447206ab430cd9694b34fb66b5f408a591c46e13205936c",
+    "results/root-exp-reuse-confirm-cpu.jsonl": "dee4d81040c9eec3eb13cba504fe58d604b2d7bd5707727425ee861772625f69",
+    "root-exp-reuse-confirm-alloc-summary.json": "d14c8ca3f48745837fd2d5694b96944cdb7c79b050436c0041c54800a07daf3e",
+    "results/root-exp-reuse-confirm-alloc.jsonl": "40de2cec281222ee0e9cc950bb422ada20e632e4782b5b0c2c9d4cab0dac3511",
+    "reuse-cost-numeric-cpu-summary.json": "06ba8df08b522390754b75de6df991193359d9699a074a93710e5bc74f78d969",
+    "results/reuse-cost-numeric-cpu.jsonl": "dedef12fa1968ee2618e8e1fa0d56250632c457bac92e2f4945c2638546e9b6d",
+    "reuse-cost-numeric-alloc-summary.json": "996bbf9306f31020164f21f7bfd33cf69f8efb06e2582b18bb19d62faca39f69",
+    "results/reuse-cost-numeric-alloc.jsonl": "b8b0027c6cc772a95a908d855e44370cbf427bfc6da72334591fe681190d5f01",
+    "reuse-cost-first-touch-cpu-summary.json": "f0b3e09cf1dd1745db55983717c9110d6a8874948264f4f87468659b834910b9",
+    "results/reuse-cost-first-touch-cpu.jsonl": "6607aacf35de51b6ae1bda86f05a3c2881d6b605b61c96235e381c306256b904",
+    "reuse-cost-first-touch-alloc-summary.json": "71b652f256b5f57b6b3b80d778cd6f9590702b8e18fa215c03476d30cd8afd4e",
+    "results/reuse-cost-first-touch-alloc.jsonl": "298bc01d60e8da434ab8876fb6f983db2ea12a43b3b8054ff145413c67feafec",
+    "polynomial-facts-cpu-summary.json": "678573d858c2f50fdb62c2737add5b203ebbb403beb529b7aad6c3dce61cac1d",
+    "results/polynomial-facts-cpu.jsonl": "0de4fb29d42b62d8c9ad077149fff651d9c75634f45e4695c0ac3904c1dc0882",
+    "polynomial-facts-allocation-bounded-summary.json": "a424c41baef4abea02d22fa8022ec9ecf1cbe34b07659936ea0a66ab3c320f44",
+    "results/polynomial-facts-allocation-bounded.jsonl": "6f0226823f1ceed0addd52a61aefb6e2fa8ad2bf1fe96e0e19fe5b5f522f238c",
+    "monic-cost-cpu-summary.json": "eff681bc2a00d5fae15fec4910378775d7f31857daf0ac2b22d76432c5c5cd34",
+    "results/monic-cost-cpu.jsonl": "15fa9540630a3ef647a28298272991b00cd370fa8b2235e226200d1e277a059e",
+    "monic-cost-allocation-summary.json": "7e875de8c71bbfffd41e766ab270c2a65f770c8b20ef6051df5f623ff054009f",
+    "results/monic-cost-allocation.jsonl": "55b653243b96d6f3bb6262cbdf23fca76e2f5794ac51980cb403a44bae931aed",
+    "results/retained-statistics-verify.json": "760b373b0466ba342788fb30c2e6d748678559578481cee3b436e63eeeac2785",
+    "results/retained-statistics-verify.stdout": "103b98ed6e3f9a0b44b0a345cdd9bd5150e55c1cd2528de02921a99ffbe5613d",
+    "results/retained-statistics-verify.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/proof-facts-monic-historical-check.json": "79e916d0ca9624735667fe921914458d1d9834c285401d64f1b5f78bf7f644eb",
+    "results/proof-facts-monic-historical-check.stdout": "e891eb86c759ec18c3e02e3389dfbe8278559bf31fa943a4d1097eb3e26bc7e3",
+    "results/proof-facts-monic-historical-check.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/proof-facts-monic-reanalysis.json": "5265a0ea814ca3f2674a5f65f86d0524399168ff2f7958067fa979755cd806de",
+    "results/proof-facts-monic-reanalysis.stdout": "83a36e5ebb2f03e7d0e368029d118bb72d0c5af81801000af6f11a482b7b426b",
+    "results/proof-facts-monic-reanalysis.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/proof-facts-monic-check.json": "0fb62d0de8d5ad29a7e8c9ed441a49129a08531d2730d8985cf392428763beff",
+    "results/proof-facts-monic-check.stdout": "0d643bda66ee36639c412ee6f3edbf674b837abdaa6e4fe81d208c8a1dd74cfd",
+    "results/proof-facts-monic-check.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/proof-facts-monic-capacity.json": "72b35805fd1b668fa178dd0b211455bf04d9f0bdd072538b94a9c1ea1e69b6e6",
+    "results/proof-facts-monic-capacity.stdout": "d00db2f16503dd732fc612db164c5f092426f52aeb3f31c11317ec02b624bc46",
+    "results/proof-facts-monic-capacity.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "sources": {
+    "previousManifestSha256": "e81af669713a0849acaebc1a00696154821e9ff13398d1568bda42f98f2fec10",
+    "previousArtifacts": 48,
+    "previousFinished": "2026-09-11T01:14:54.853Z",
+    "liveFiles": 956,
+    "pointCandidateFiles": 175,
+    "historical": [
+      {
+        "path": "root-exp-proof-experiment.json",
+        "sha256": "bd091bbe36b8be7811f542fc934126bf500dfbbe5d48f431266e7ce1115ee89d",
+        "artifacts": 95
+      },
+      {
+        "path": "root-exp-reuse-experiment.json",
+        "sha256": "b87c3ef332780aef46e6bfccfd90ea0dc210f0ca1e95bb9ecb1324e0933a921c",
+        "artifacts": 80
+      },
+      {
+        "path": "reuse-cost-experiment.json",
+        "sha256": "8380554b0b221e2185948b4aa3171c90887b5f07cb7989f11a8de8d1b33d461d",
+        "artifacts": 154
+      },
+      {
+        "path": "polynomial-facts-experiment.json",
+        "sha256": "e7134b624f7ed3e5b450a513ff85fd9454c8fcaf3e82f5b8cfd9a765a5ef0c7c",
+        "artifacts": 118
+      },
+      {
+        "path": "monic-cost-experiment.json",
+        "sha256": "2cc5251d7c0dcff4499f30b29f1fbe6b86c59eebd04ef4d86ff8c60dc35555a1",
+        "artifacts": 65
+      },
+      {
+        "path": "retained-exp-proof.json",
+        "sha256": "192604cc32e83c42f624c9c1bdeb7a6201797d15165bd28cdd90e6f364df0e2a",
+        "artifacts": 22
+      },
+      {
+        "path": "retained-polynomial-facts.json",
+        "sha256": "5b6662632f11ce4f51caf8172b7064d6e6d6224d96ac14745dfc89ac8eeda1f9",
+        "artifacts": 23
+      },
+      {
+        "path": "retained-monic.json",
+        "sha256": "0e67a5b6ffd84e4d04465d17c8a54f24c915ba5bf3cf4ae4c28c8b4eb9989ed1",
+        "artifacts": 25
+      }
+    ],
+    "retained": [
+      {
+        "manifest": "retained-exp-proof.json",
+        "root": "root-exp-reuse-trial-hyperreal",
+        "files": 180
+      },
+      {
+        "manifest": "retained-polynomial-facts.json",
+        "root": "polynomial-facts-trial",
+        "files": 953
+      },
+      {
+        "manifest": "retained-monic.json",
+        "root": "polynomial-monic-qualified-trial",
+        "files": 954
+      }
+    ],
+    "reads": [
+      {
+        "path": "run-root-exp-proof-bench.mjs",
+        "sha256": "c69610152d60ee02ce99bdc22afd186e98d6d1f5784a63dc138593da54eb0ff7",
+        "ranges": [
+          [
+            1,
+            68
+          ]
+        ],
+        "lines": 68
+      },
+      {
+        "path": "verify-root-exp-proof-checkpoint.mjs",
+        "sha256": "b88e3b1131850b713ff80319afc8c180aa96142e95da48a47723fdff9f291a61",
+        "ranges": [
+          [
+            1,
+            147
+          ]
+        ],
+        "lines": 147
+      },
+      {
+        "path": "run-root-exp-reuse-bench.mjs",
+        "sha256": "6d7e825b435230ca665f9aca710681c441320fcd2e7c3aaef5eed535a43a5e57",
+        "ranges": [
+          [
+            1,
+            66
+          ]
+        ],
+        "lines": 66
+      },
+      {
+        "path": "run-root-exp-reuse-confirm-bench.mjs",
+        "sha256": "be758f4b7681a250edb2303736dd73293d9bd7b3a980d935d688296763da2101",
+        "ranges": [
+          [
+            1,
+            66
+          ]
+        ],
+        "lines": 66
+      },
+      {
+        "path": "run-root-exp-reuse-alloc-bench.mjs",
+        "sha256": "4cbf8d8bd1b7e5a153221220060c5f687a8f85ae8a764f0d4600b0c6e611141b",
+        "ranges": [
+          [
+            1,
+            66
+          ]
+        ],
+        "lines": 66
+      },
+      {
+        "path": "verify-root-exp-reuse-checkpoint.mjs",
+        "sha256": "af9b2649b97e389e10462091dbf202cecd8c159b59ceb06b46014ea6648f2d89",
+        "ranges": [
+          [
+            1,
+            103
+          ]
+        ],
+        "lines": 103
+      },
+      {
+        "path": "run-reuse-cost-bench.mjs",
+        "sha256": "2a9bef0d3277b915e79a15e1432a312c1f450d19c260e60a6b628582ec9b5df5",
+        "ranges": [
+          [
+            1,
+            100
+          ]
+        ],
+        "lines": 100
+      },
+      {
+        "path": "verify-reuse-cost-checkpoint.mjs",
+        "sha256": "b56e9bdc7883f74e8d6b1b0df5752cdf3629daea940ee18184b23b3c45946a70",
+        "ranges": [
+          [
+            1,
+            127
+          ]
+        ],
+        "lines": 127
+      },
+      {
+        "path": "run-polynomial-facts-cpu.mjs",
+        "sha256": "75ac326bd5287de82e61d0af599f9a716254c6c7f6b228f1e6146dc8f7b74b0a",
+        "ranges": [
+          [
+            1,
+            88
+          ]
+        ],
+        "lines": 88
+      },
+      {
+        "path": "verify-polynomial-facts.mjs",
+        "sha256": "b9d24674345b860321810ec932d227203fbc46e745a1d341556da9944b7956b3",
+        "ranges": [
+          [
+            1,
+            171
+          ]
+        ],
+        "lines": 171
+      },
+      {
+        "path": "run-monic-costs.mjs",
+        "sha256": "6ea1693b961c9319c7588fbd27fe79cc664a68565ebf0bc20892d79de56b877b",
+        "ranges": [
+          [
+            1,
+            84
+          ]
+        ],
+        "lines": 84
+      },
+      {
+        "path": "verify-monic-costs.mjs",
+        "sha256": "8fde82f275ca8a49cb5860d325d574f47223f3dd9e7b79d700d717e8eb62145f",
+        "ranges": [
+          [
+            1,
+            136
+          ]
+        ],
+        "lines": 136
+      }
+    ],
+    "reviewedScriptLines": 1222,
+    "inventoryMatches": 45,
+    "supportingReads": [
+      {
+        "path": "run-polynomial-facts-allocation-bounded.mjs",
+        "sha256": "349ba1c6f5bcbf53d2860ac30bb44aebfdfd18017ede7c988d17e5924374b801",
+        "ranges": [
+          [
+            1,
+            77
+          ]
+        ],
+        "lines": 77
+      }
+    ],
+    "rejectedOverlap": {
+      "first": {
+        "tag": "run-root-exp-reuse-cpu",
+        "started": "2026-09-08T21:21:01.483Z",
+        "finished": "2026-09-08T21:25:09.627Z",
+        "elapsedSeconds": 248.141186081,
+        "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison",
+        "command": "node",
+        "args": [
+          "audits/continuation/calcium/run-root-exp-reuse-bench.mjs",
+          "cpu"
+        ],
+        "code": 0,
+        "signal": null
+      },
+      "memcheck": {
+        "tag": "root-exp-reuse-memcheck-deep-fresh",
+        "started": "2026-09-08T21:21:02.830Z",
+        "finished": "2026-09-08T21:23:17.012Z",
+        "elapsedSeconds": 134.178973247,
+        "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison",
+        "command": "valgrind",
+        "args": [
+          "--leak-check=full",
+          "--show-leak-kinds=all",
+          "--errors-for-leak-kinds=definite,indirect,possible",
+          "--error-exitcode=99",
+          "/tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/release/calcium-root-exp-opaque-reuse-bench",
+          "identity-128",
+          "fresh",
+          "100"
+        ],
+        "code": 0,
+        "signal": null
+      },
+      "confirmation": {
+        "tag": "run-root-exp-reuse-confirm-cpu",
+        "started": "2026-09-08T21:28:30.011Z",
+        "finished": "2026-09-08T21:32:35.770Z",
+        "elapsedSeconds": 245.75683046600003,
+        "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison",
+        "command": "node",
+        "args": [
+          "audits/continuation/calcium/run-root-exp-reuse-confirm-bench.mjs",
+          "cpu"
+        ],
+        "code": 0,
+        "signal": null
+      }
+    }
+  },
+  "gates": [
+    "proof-facts-monic-historical-check",
+    "proof-facts-monic-reanalysis",
+    "proof-facts-monic-check",
+    "proof-facts-monic-capacity"
+  ],
+  "rawRows": 25776,
+  "comparisons": 723,
+  "eligible": {
+    "rawRows": 24048,
+    "comparisons": 675,
+    "changedIntervals": 626,
+    "lostDirectional": 39,
+    "gainedDirectional": 0,
+    "reversedDirectional": 0
+  },
+  "rejectedHistoricalOnly": {
+    "rawRows": 1728,
+    "comparisons": 48,
+    "changedIntervals": 41,
+    "lostDirectional": 2,
+    "gainedDirectional": 0,
+    "reversedDirectional": 0
+  },
+  "allocationRows": 5040,
+  "withdrawnAllocationIntervals": 441,
+  "campaigns": [
+    {
+      "id": "proofQuery",
+      "rawRows": 1584,
+      "inferenceEligible": true,
+      "counts": {
+        "comparisons": 33,
+        "intervals": {
+          "legacy": {
+            "below": 15,
+            "above": 6,
+            "includes": 12
+          },
+          "correctedBootstrap": {
+            "below": 15,
+            "above": 6,
+            "includes": 12
+          },
+          "orderStatistic": {
+            "below": 15,
+            "above": 5,
+            "includes": 13
+          }
+        },
+        "changedIntervals": 31,
+        "lostDirectional": 0,
+        "gainedDirectional": 0,
+        "reversedDirectional": 0
+      },
+      "strata": {
+        "numeric-contract-checked-separately": {
+          "comparisons": 0,
+          "intervals": {
+            "legacy": {
+              "below": 0,
+              "above": 0,
+              "includes": 0
+            },
+            "correctedBootstrap": {
+              "below": 0,
+              "above": 0,
+              "includes": 0
+            },
+            "orderStatistic": {
+              "below": 0,
+              "above": 0,
+              "includes": 0
+            }
+          },
+          "changedIntervals": 0,
+          "lostDirectional": 0,
+          "gainedDirectional": 0,
+          "reversedDirectional": 0
+        },
+        "matching-recorded-outcome": {
+          "comparisons": 18,
+          "intervals": {
+            "legacy": {
+              "below": 0,
+              "above": 6,
+              "includes": 12
+            },
+            "correctedBootstrap": {
+              "below": 0,
+              "above": 6,
+              "includes": 12
+            },
+            "orderStatistic": {
+              "below": 0,
+              "above": 5,
+              "includes": 13
+            }
+          },
+          "changedIntervals": 17,
+          "lostDirectional": 0,
+          "gainedDirectional": 0,
+          "reversedDirectional": 0
+        },
+        "additional-answer": {
+          "comparisons": 15,
+          "intervals": {
+            "legacy": {
+              "below": 15,
+              "above": 0,
+              "includes": 0
+            },
+            "correctedBootstrap": {
+              "below": 15,
+              "above": 0,
+              "includes": 0
+            },
+            "orderStatistic": {
+              "below": 15,
+              "above": 0,
+              "includes": 0
+            }
+          },
+          "changedIntervals": 14,
+          "lostDirectional": 0,
+          "gainedDirectional": 0,
+          "reversedDirectional": 0
+        }
+      }
+    },
+    {
+      "id": "proofNumeric",
+      "rawRows": 3456,
+      "inferenceEligible": true,
+      "counts": {
+        "comparisons": 72,
+        "intervals": {
+          "legacy": {
+            "below": 20,
+            "above": 8,
+            "includes": 44
+          },
+          "correctedBootstrap": {
+            "below": 17,
+            "above": 6,
+            "includes": 49
+          },
+          "orderStatistic": {
+            "below": 14,
+            "above": 3,
+            "includes": 55
+          }
+        },
+        "changedIntervals": 66,
+        "lostDirectional": 5,
+        "gainedDirectional": 0,
+        "reversedDirectional": 0
+      },
+      "strata": {
+        "numeric-contract-checked-separately": {
+          "comparisons": 72,
+          "intervals": {
+            "legacy": {
+              "below": 20,
+              "above": 8,
+              "includes": 44
+            },
+            "correctedBootstrap": {
+              "below": 17,
+              "above": 6,
+              "includes": 49
+            },
+            "orderStatistic": {
+              "below": 14,
+              "above": 3,
+              "includes": 55
+            }
+          },
+          "changedIntervals": 66,
+          "lostDirectional": 5,
+          "gainedDirectional": 0,
+          "reversedDirectional": 0
+        },
+        "matching-recorded-outcome": {
+          "comparisons": 0,
+          "intervals": {
+            "legacy": {
+              "below": 0,
+              "above": 0,
+              "includes": 0
+            },
+            "correctedBootstrap": {
+              "below": 0,
+              "above": 0,
+              "includes": 0
+            },
+            "orderStatistic": {
+              "below": 0,
+              "above": 0,
+              "includes": 0
+            }
+          },
+          "changedIntervals": 0,
+          "lostDirectional": 0,
+          "gainedDirectional": 0,
+          "reversedDirectional": 0
+        },
+        "additional-answer": {
+          "comparisons": 0,
+          "intervals": {
+            "legacy": {
+              "below": 0,
+              "above": 0,
+              "includes": 0
+            },
+            "correctedBootstrap": {
+              "below": 0,
+              "above": 0,
+              "includes": 0
+            },
+            "orderStatistic": {
+              "below": 0,
+              "above": 0,
+              "includes": 0
+            }
+          },
+          "changedIntervals": 0,
+          "lostDirectional": 0,
+          "gainedDirectional": 0,
+          "reversedDirectional": 0
+        }
+      }
+    },
+    {
+      "id": "reuseOverlapped",
+      "rawRows": 1728,
+      "inferenceEligible": false,
+      "counts": {
+        "comparisons": 48,
+        "intervals": {
+          "legacy": {
+            "below": 22,
+            "above": 15,
+            "includes": 11
+          },
+          "correctedBootstrap": {
+            "below": 21,
+            "above": 14,
+            "includes": 13
+          },
+          "orderStatistic": {
+            "below": 19,
+            "above": 13,
+            "includes": 16
+          }
+        },
+        "changedIntervals": 41,
+        "lostDirectional": 2,
+        "gainedDirectional": 0,
+        "reversedDirectional": 0
+      },
+      "strata": {
+        "numeric-contract-checked-separately": {
+          "comparisons": 0,
+          "intervals": {
+            "legacy": {
+              "below": 0,
+              "above": 0,
+              "includes": 0
+            },
+            "correctedBootstrap": {
+              "below": 0,
+              "above": 0,
+              "includes": 0
+            },
+            "orderStatistic": {
+              "below": 0,
+              "above": 0,
+              "includes": 0
+            }
+          },
+          "changedIntervals": 0,
+          "lostDirectional": 0,
+          "gainedDirectional": 0,
+          "reversedDirectional": 0
+        },
+        "matching-recorded-outcome": {
+          "comparisons": 36,
+          "intervals": {
+            "legacy": {
+              "below": 10,
+              "above": 15,
+              "includes": 11
+            },
+            "correctedBootstrap": {
+              "below": 9,
+              "above": 14,
+              "includes": 13
+            },
+            "orderStatistic": {
+              "below": 7,
+              "above": 13,
+              "includes": 16
+            }
+          },
+          "changedIntervals": 31,
+          "lostDirectional": 2,
+          "gainedDirectional": 0,
+          "reversedDirectional": 0
+        },
+        "additional-answer": {
+          "comparisons": 12,
+          "intervals": {
+            "legacy": {
+              "below": 12,
+              "above": 0,
+              "includes": 0
+            },
+            "correctedBootstrap": {
+              "below": 12,
+              "above": 0,
+              "includes": 0
+            },
+            "orderStatistic": {
+              "below": 12,
+              "above": 0,
+              "includes": 0
+            }
+          },
+          "changedIntervals": 10,
+          "lostDirectional": 0,
+          "gainedDirectional": 0,
+          "reversedDirectional": 0
+        }
+      }
+    },
+    {
+      "id": "reuseConfirm",
+      "rawRows": 1728,
+      "inferenceEligible": true,
+      "counts": {
+        "comparisons": 48,
+        "intervals": {
+          "legacy": {
+            "below": 20,
+            "above": 14,
+            "includes": 14
+          },
+          "correctedBootstrap": {
+            "below": 18,
+            "above": 13,
+            "includes": 17
+          },
+          "orderStatistic": {
+            "below": 18,
+            "above": 12,
+            "includes": 18
+          }
+        },
+        "changedIntervals": 44,
+        "lostDirectional": 3,
+        "gainedDirectional": 0,
+        "reversedDirectional": 0
+      },
+      "strata": {
+        "numeric-contract-checked-separately": {
+          "comparisons": 0,
+          "intervals": {
+            "legacy": {
+              "below": 0,
+              "above": 0,
+              "includes": 0
+            },
+            "correctedBootstrap": {
+              "below": 0,
+              "above": 0,
+              "includes": 0
+            },
+            "orderStatistic": {
+              "below": 0,
+              "above": 0,
+              "includes": 0
+            }
+          },
+          "changedIntervals": 0,
+          "lostDirectional": 0,
+          "gainedDirectional": 0,
+          "reversedDirectional": 0
+        },
+        "matching-recorded-outcome": {
+          "comparisons": 36,
+          "intervals": {
+            "legacy": {
+              "below": 8,
+              "above": 14,
+              "includes": 14
+            },
+            "correctedBootstrap": {
+              "below": 6,
+              "above": 13,
+              "includes": 17
+            },
+            "orderStatistic": {
+              "below": 6,
+              "above": 12,
+              "includes": 18
+            }
+          },
+          "changedIntervals": 32,
+          "lostDirectional": 3,
+          "gainedDirectional": 0,
+          "reversedDirectional": 0
+        },
+        "additional-answer": {
+          "comparisons": 12,
+          "intervals": {
+            "legacy": {
+              "below": 12,
+              "above": 0,
+              "includes": 0
+            },
+            "correctedBootstrap": {
+              "below": 12,
+              "above": 0,
+              "includes": 0
+            },
+            "orderStatistic": {
+              "below": 12,
+              "above": 0,
+              "includes": 0
+            }
+          },
+          "changedIntervals": 12,
+          "lostDirectional": 0,
+          "gainedDirectional": 0,
+          "reversedDirectional": 0
+        }
+      }
+    },
+    {
+      "id": "reuseNumeric",
+      "rawRows": 5184,
+      "inferenceEligible": true,
+      "counts": {
+        "comparisons": 144,
+        "intervals": {
+          "legacy": {
+            "below": 40,
+            "above": 11,
+            "includes": 93
+          },
+          "correctedBootstrap": {
+            "below": 33,
+            "above": 9,
+            "includes": 102
+          },
+          "orderStatistic": {
+            "below": 28,
+            "above": 6,
+            "includes": 110
+          }
+        },
+        "changedIntervals": 133,
+        "lostDirectional": 9,
+        "gainedDirectional": 0,
+        "reversedDirectional": 0
+      },
+      "strata": {
+        "numeric-contract-checked-separately": {
+          "comparisons": 144,
+          "intervals": {
+            "legacy": {
+              "below": 40,
+              "above": 11,
+              "includes": 93
+            },
+            "correctedBootstrap": {
+              "below": 33,
+              "above": 9,
+              "includes": 102
+            },
+            "orderStatistic": {
+              "below": 28,
+              "above": 6,
+              "includes": 110
+            }
+          },
+          "changedIntervals": 133,
+          "lostDirectional": 9,
+          "gainedDirectional": 0,
+          "reversedDirectional": 0
+        },
+        "matching-recorded-outcome": {
+          "comparisons": 0,
+          "intervals": {
+            "legacy": {
+              "below": 0,
+              "above": 0,
+              "includes": 0
+            },
+            "correctedBootstrap": {
+              "below": 0,
+              "above": 0,
+              "includes": 0
+            },
+            "orderStatistic": {
+              "below": 0,
+              "above": 0,
+              "includes": 0
+            }
+          },
+          "changedIntervals": 0,
+          "lostDirectional": 0,
+          "gainedDirectional": 0,
+          "reversedDirectional": 0
+        },
+        "additional-answer": {
+          "comparisons": 0,
+          "intervals": {
+            "legacy": {
+              "below": 0,
+              "above": 0,
+              "includes": 0
+            },
+            "correctedBootstrap": {
+              "below": 0,
+              "above": 0,
+              "includes": 0
+            },
+            "orderStatistic": {
+              "below": 0,
+              "above": 0,
+              "includes": 0
+            }
+          },
+          "changedIntervals": 0,
+          "lostDirectional": 0,
+          "gainedDirectional": 0,
+          "reversedDirectional": 0
+        }
+      }
+    },
+    {
+      "id": "reuseFirstTouch",
+      "rawRows": 1728,
+      "inferenceEligible": true,
+      "counts": {
+        "comparisons": 144,
+        "intervals": {
+          "legacy": {
+            "below": 47,
+            "above": 58,
+            "includes": 39
+          },
+          "correctedBootstrap": {
+            "below": 44,
+            "above": 57,
+            "includes": 43
+          },
+          "orderStatistic": {
+            "below": 43,
+            "above": 53,
+            "includes": 48
+          }
+        },
+        "changedIntervals": 135,
+        "lostDirectional": 4,
+        "gainedDirectional": 0,
+        "reversedDirectional": 0
+      },
+      "strata": {
+        "numeric-contract-checked-separately": {
+          "comparisons": 0,
+          "intervals": {
+            "legacy": {
+              "below": 0,
+              "above": 0,
+              "includes": 0
+            },
+            "correctedBootstrap": {
+              "below": 0,
+              "above": 0,
+              "includes": 0
+            },
+            "orderStatistic": {
+              "below": 0,
+              "above": 0,
+              "includes": 0
+            }
+          },
+          "changedIntervals": 0,
+          "lostDirectional": 0,
+          "gainedDirectional": 0,
+          "reversedDirectional": 0
+        },
+        "matching-recorded-outcome": {
+          "comparisons": 108,
+          "intervals": {
+            "legacy": {
+              "below": 12,
+              "above": 57,
+              "includes": 39
+            },
+            "correctedBootstrap": {
+              "below": 9,
+              "above": 56,
+              "includes": 43
+            },
+            "orderStatistic": {
+              "below": 9,
+              "above": 52,
+              "includes": 47
+            }
+          },
+          "changedIntervals": 100,
+          "lostDirectional": 4,
+          "gainedDirectional": 0,
+          "reversedDirectional": 0
+        },
+        "additional-answer": {
+          "comparisons": 36,
+          "intervals": {
+            "legacy": {
+              "below": 35,
+              "above": 1,
+              "includes": 0
+            },
+            "correctedBootstrap": {
+              "below": 35,
+              "above": 1,
+              "includes": 0
+            },
+            "orderStatistic": {
+              "below": 34,
+              "above": 1,
+              "includes": 1
+            }
+          },
+          "changedIntervals": 35,
+          "lostDirectional": 0,
+          "gainedDirectional": 0,
+          "reversedDirectional": 0
+        }
+      }
+    },
+    {
+      "id": "polynomialFacts",
+      "rawRows": 2592,
+      "inferenceEligible": true,
+      "counts": {
+        "comparisons": 72,
+        "intervals": {
+          "legacy": {
+            "below": 30,
+            "above": 8,
+            "includes": 34
+          },
+          "correctedBootstrap": {
+            "below": 28,
+            "above": 8,
+            "includes": 36
+          },
+          "orderStatistic": {
+            "below": 28,
+            "above": 8,
+            "includes": 36
+          }
+        },
+        "changedIntervals": 69,
+        "lostDirectional": 2,
+        "gainedDirectional": 0,
+        "reversedDirectional": 0
+      },
+      "strata": {
+        "numeric-contract-checked-separately": {
+          "comparisons": 0,
+          "intervals": {
+            "legacy": {
+              "below": 0,
+              "above": 0,
+              "includes": 0
+            },
+            "correctedBootstrap": {
+              "below": 0,
+              "above": 0,
+              "includes": 0
+            },
+            "orderStatistic": {
+              "below": 0,
+              "above": 0,
+              "includes": 0
+            }
+          },
+          "changedIntervals": 0,
+          "lostDirectional": 0,
+          "gainedDirectional": 0,
+          "reversedDirectional": 0
+        },
+        "matching-recorded-outcome": {
+          "comparisons": 54,
+          "intervals": {
+            "legacy": {
+              "below": 20,
+              "above": 1,
+              "includes": 33
+            },
+            "correctedBootstrap": {
+              "below": 18,
+              "above": 1,
+              "includes": 35
+            },
+            "orderStatistic": {
+              "below": 18,
+              "above": 1,
+              "includes": 35
+            }
+          },
+          "changedIntervals": 52,
+          "lostDirectional": 2,
+          "gainedDirectional": 0,
+          "reversedDirectional": 0
+        },
+        "additional-answer": {
+          "comparisons": 18,
+          "intervals": {
+            "legacy": {
+              "below": 10,
+              "above": 7,
+              "includes": 1
+            },
+            "correctedBootstrap": {
+              "below": 10,
+              "above": 7,
+              "includes": 1
+            },
+            "orderStatistic": {
+              "below": 10,
+              "above": 7,
+              "includes": 1
+            }
+          },
+          "changedIntervals": 17,
+          "lostDirectional": 0,
+          "gainedDirectional": 0,
+          "reversedDirectional": 0
+        }
+      }
+    },
+    {
+      "id": "monic",
+      "rawRows": 7776,
+      "inferenceEligible": true,
+      "counts": {
+        "comparisons": 162,
+        "intervals": {
+          "legacy": {
+            "below": 60,
+            "above": 10,
+            "includes": 92
+          },
+          "correctedBootstrap": {
+            "below": 48,
+            "above": 6,
+            "includes": 108
+          },
+          "orderStatistic": {
+            "below": 38,
+            "above": 5,
+            "includes": 119
+          }
+        },
+        "changedIntervals": 148,
+        "lostDirectional": 16,
+        "gainedDirectional": 0,
+        "reversedDirectional": 0
+      },
+      "strata": {
+        "numeric-contract-checked-separately": {
+          "comparisons": 0,
+          "intervals": {
+            "legacy": {
+              "below": 0,
+              "above": 0,
+              "includes": 0
+            },
+            "correctedBootstrap": {
+              "below": 0,
+              "above": 0,
+              "includes": 0
+            },
+            "orderStatistic": {
+              "below": 0,
+              "above": 0,
+              "includes": 0
+            }
+          },
+          "changedIntervals": 0,
+          "lostDirectional": 0,
+          "gainedDirectional": 0,
+          "reversedDirectional": 0
+        },
+        "matching-recorded-outcome": {
+          "comparisons": 162,
+          "intervals": {
+            "legacy": {
+              "below": 60,
+              "above": 10,
+              "includes": 92
+            },
+            "correctedBootstrap": {
+              "below": 48,
+              "above": 6,
+              "includes": 108
+            },
+            "orderStatistic": {
+              "below": 38,
+              "above": 5,
+              "includes": 119
+            }
+          },
+          "changedIntervals": 148,
+          "lostDirectional": 16,
+          "gainedDirectional": 0,
+          "reversedDirectional": 0
+        },
+        "additional-answer": {
+          "comparisons": 0,
+          "intervals": {
+            "legacy": {
+              "below": 0,
+              "above": 0,
+              "includes": 0
+            },
+            "correctedBootstrap": {
+              "below": 0,
+              "above": 0,
+              "includes": 0
+            },
+            "orderStatistic": {
+              "below": 0,
+              "above": 0,
+              "includes": 0
+            }
+          },
+          "changedIntervals": 0,
+          "lostDirectional": 0,
+          "gainedDirectional": 0,
+          "reversedDirectional": 0
+        }
+      }
+    }
+  ],
+  "allocations": [
+    {
+      "id": "proofQuery",
+      "rawRows": 396,
+      "groups": 33,
+      "withdrawnTimingIntervals": 33
+    },
+    {
+      "id": "proofNumeric",
+      "rawRows": 864,
+      "groups": 72,
+      "withdrawnTimingIntervals": 72
+    },
+    {
+      "id": "reuseConfirm",
+      "rawRows": 432,
+      "groups": 24,
+      "withdrawnTimingIntervals": 48
+    },
+    {
+      "id": "reuseNumeric",
+      "rawRows": 1296,
+      "groups": 72,
+      "withdrawnTimingIntervals": 144
+    },
+    {
+      "id": "reuseFirstTouch",
+      "rawRows": 432,
+      "groups": 24,
+      "withdrawnTimingIntervals": 144
+    },
+    {
+      "id": "polynomialFacts",
+      "rawRows": 648,
+      "groups": 36,
+      "withdrawnTimingIntervals": 0
+    },
+    {
+      "id": "monic",
+      "rawRows": 972,
+      "groups": 162,
+      "withdrawnTimingIntervals": 0
+    }
+  ],
+  "controls": {
+    "status": "pass",
+    "rejectedMutations": [
+      "proofQuery/wrong-block",
+      "proofQuery/wrong-variant",
+      "proofQuery/invented-baseline-equality",
+      "proofNumeric/missing-row",
+      "proofNumeric/extra-row",
+      "proofNumeric/zero-clock",
+      "proofNumeric/fractional-clock",
+      "proofNumeric/nonzero-cpu-allocation",
+      "reuseConfirm/changed-paired-median",
+      "reuseNumeric/missing-recorded-pilots",
+      "reuseNumeric/changed-marginal",
+      "reuseFirstTouch/wrong-worker-count",
+      "reuseFirstTouch/wrong-warm-count",
+      "reuseFirstTouch/impossible-lifecycle-clock",
+      "reuseFirstTouch/wrong-warm-normalization",
+      "polynomialFacts/wrong-known-count",
+      "polynomialFacts/wrong-descriptor",
+      "monic/wrong-result-degree",
+      "monic/wrong-mode",
+      "monic/wrong-observation-count"
+    ],
+    "threeBlockMedianCoverage": {
+      "covered": 6,
+      "total": 8,
+      "coverage": 0.75,
+      "conclusion": "No finite observed min/max median interval achieves 95% coverage at n=3 under continuous IID sampling; no CPU inference from instrumented allocation clocks."
+    }
+  },
+  "monicMetrics": {
+    "requests": {
+      "lower": 56,
+      "equal": 106,
+      "higher": 0
+    },
+    "requested_bytes": {
+      "lower": 56,
+      "equal": 106,
+      "higher": 0
+    },
+    "peak_delta": {
+      "lower": 44,
+      "equal": 118,
+      "higher": 0
+    }
+  },
+  "remainingMatches": [
+    "check-complex-product-v2.mjs",
+    "check-complex-product.mjs",
+    "check-sign-filter-mask.mjs",
+    "check-sign-filter.mjs",
+    "run-complex-product-costs.mjs",
+    "run-complex-product-v2-costs.mjs",
+    "run-erf-bench.mjs",
+    "run-log-bench.mjs",
+    "run-polynomial-decision-bench.mjs",
+    "run-rank-costs.mjs",
+    "run-root-exp-bench.mjs",
+    "run-root-exp-opaque-bench.mjs",
+    "run-root-exp-sign-bench.mjs",
+    "run-sign-filter-costs.mjs",
+    "run-sign-filter-mask-costs.mjs",
+    "snapshot-v43-check-complex-product-v2.mjs",
+    "snapshot-v43-check-complex-product.mjs",
+    "verify-polynomial-decision.mjs",
+    "verify-rank-costs.mjs",
+    "verify-root-exp-sign-checkpoint.mjs",
+    "verify-sign-work-cost-checkpoint.mjs"
+  ],
+  "analysisBytes": 2254179,
+  "newTemporaryBytes": 0,
+  "next": "Review the remaining 21 known sampler matches/campaign scopes and inventory any other statistical estimators; do not treat corrected accepted datasets as full historical closure. Continue point-candidate attribution/consumer/size work, power sums, supporting donor reads and the complete original ecosystem inventory.",
+  "coverageBefore": [
+    {
+      "repo": "calcium",
+      "reviewed": 552,
+      "complete": 552,
+      "partial": 0,
+      "readLines": 60286
+    },
+    {
+      "repo": "flint",
+      "reviewed": 883,
+      "complete": 863,
+      "partial": 20,
+      "readLines": 123367
+    }
+  ],
+  "coverageAtBinding": [
+    {
+      "repo": "calcium",
+      "reviewed": 552,
+      "complete": 552,
+      "partial": 0,
+      "readLines": 60286
+    },
+    {
+      "repo": "flint",
+      "reviewed": 883,
+      "complete": 863,
+      "partial": 20,
+      "readLines": 123367
+    }
+  ],
+  "newDonorLines": 0,
+  "liveFiles": 956,
+  "production": "No production/donor change, new retained transfer, source copy, benchmark, binary, temporary file, cleanup/deletion, commit or push. Existing completeness-first retentions unchanged with corrected scoped performance evidence and costs preserved.",
+  "scope": "Seven accepted CPU campaigns corrected plus one separately rejected historical run, and allocation metrics rechecked without promoting their instrumented clocks. Historical 18-checkpoint verifier rerun, not new Rust/numerical/memory/consumer/size executions or the full 47-chain. Remaining historical statistics and original ecosystem audit are incomplete."
+}

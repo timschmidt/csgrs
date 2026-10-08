@@ -1,0 +1,127 @@
+{
+  "phase": "qualified",
+  "heads": {
+    "hypercurve": "4fb15347fbd06245498a08c6903f10d25148cf00"
+  },
+  "selected": {
+    "hypercurve": [
+      "src/curve.rs"
+    ]
+  },
+  "source_manifest": "fillet-branches-isolated-20260926-v190-sources.json",
+  "workspace_guard": "local-chord-complete-replay-20260924-v189-sources.json",
+  "qualification": "fillet-branches-isolated-20260926-v190-resumed-terminal.json",
+  "hypercurve_passed": 434,
+  "ignored": 0,
+  "pre_existing_failures": [
+    {
+      "repo": "hypercurve",
+      "label": "case-128",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/fillet-branches-isolated-20260926-v190-hypercurve",
+        "--exact",
+        "bezier_region::tests::general_nonrepresented_chord_and_retained_rational_arc_complete_the_fillet_kernel",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 101,
+      "elapsed_seconds": 0.16386016900651157,
+      "log": "fillet-branches-isolated-20260926-v190-case-128.log",
+      "target": "hypercurve",
+      "name": "bezier_region::tests::general_nonrepresented_chord_and_retained_rational_arc_complete_the_fillet_kernel",
+      "baseline_comparison": "fillet-branches-20260926-v190-arc-boundary-comparison-terminal.json"
+    },
+    {
+      "target": "hypercurve",
+      "name": "bezier_region::tests::major_retained_rational_arc_and_general_chord_share_the_fillet_kernel",
+      "label": "case-135",
+      "returncode": 101,
+      "elapsed_seconds": 0.4643380290362984,
+      "log": "fillet-branches-isolated-20260926-v190-resumed-case-135.log",
+      "binary": {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/fillet-branches-isolated-20260926-v190-hypercurve",
+        "sha256": "efed02dc950d3a20ad409be09c0e1f5fc6bcb138e3a92a5b1c384db2e383d3b5"
+      },
+      "baseline_comparison_index": 0
+    }
+  ],
+  "baseline_comparisons": [
+    {
+      "candidate": {
+        "target": "hypercurve",
+        "name": "bezier_region::tests::major_retained_rational_arc_and_general_chord_share_the_fillet_kernel",
+        "label": "case-135",
+        "returncode": 101,
+        "elapsed_seconds": 0.4643380290362984,
+        "log": "fillet-branches-isolated-20260926-v190-resumed-case-135.log",
+        "binary": {
+          "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/fillet-branches-isolated-20260926-v190-hypercurve",
+          "sha256": "efed02dc950d3a20ad409be09c0e1f5fc6bcb138e3a92a5b1c384db2e383d3b5"
+        },
+        "baseline_comparison_index": 0
+      },
+      "parent": {
+        "target": "hypercurve",
+        "name": "bezier_region::tests::major_retained_rational_arc_and_general_chord_share_the_fillet_kernel",
+        "label": "parent-135",
+        "returncode": 101,
+        "elapsed_seconds": 0.4642813430400565,
+        "log": "fillet-branches-isolated-20260926-v190-resumed-parent-135.log",
+        "binary": {
+          "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/selected-cusp-ranges-isolated-20260926-v185-hypercurve",
+          "sha256": "17748f953bd7a6ffe2c47cd8dd335db8c5d08967ce96a671f8b87cbd45b0ad46"
+        }
+      },
+      "identical_test_body": true,
+      "equivalent_failure": true,
+      "combined": {
+        "target": "hypercurve",
+        "name": "bezier_region::tests::major_retained_rational_arc_and_general_chord_share_the_fillet_kernel",
+        "label": "combined-135",
+        "returncode": 0,
+        "elapsed_seconds": 2.7673002909868956,
+        "log": "fillet-branches-isolated-20260926-v190-resumed-combined-135.log",
+        "binary": {
+          "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/selected-cusp-fillet-fixed-20260926-v189-hypercurve",
+          "sha256": "184b92203d32cbe4cef7f518868997bba1e5db132bbd2932f1d7280b84bcaf88"
+        }
+      }
+    }
+  ],
+  "every_owned_process_reaped": true,
+  "all_bound_sources_and_binaries_unchanged": true,
+  "repository_statuses": {
+    "hypersdf": "",
+    "hyperbrep": "",
+    "hyperparts": "",
+    "alumina-interface": "",
+    "hyperlattice": "",
+    "citizen-builder": "",
+    "csgrs-ffi": "",
+    "alumina-firmware": "",
+    "videos": "",
+    "hypertri": "",
+    "hyperreal": "",
+    "hyperpath": "",
+    "hypervoxel": "",
+    "hypergraphics": "",
+    "hyperevolution": "",
+    "exactcore-hyper-comparison": "",
+    "hypersolve": "",
+    "hypercurve": " M src/bezier_offset.rs\n M src/bezier_region.rs\n M src/curve.rs\n M src/curve_corner_chain.rs\n M src/curve_region_boolean.rs\n",
+    "crcalc": "",
+    "openscad-rs": "",
+    "hypermesh": "",
+    "csgrs": "",
+    "synaps-cad": "",
+    "hyperdrc": "",
+    "hyperphysics": "",
+    "hyperlimit": "",
+    "hyperpack": "",
+    "NURBS_BREP_kernel": "",
+    "ExactCalculator": "",
+    "hypercircuit": ""
+  }
+}

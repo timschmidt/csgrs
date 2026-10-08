@@ -1,0 +1,22 @@
+{
+  "head": "5c47fb199ddcd687ef030811221acdf76db8a624",
+  "command": [
+    "rustc",
+    "--edition=2024",
+    "-O",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-circle-nonlinear-domain-baseline.rs",
+    "--extern",
+    "hypercurve=/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/libhypercurve-2c7ff6f3fbe07653.rlib",
+    "--extern",
+    "hyperreal=/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/libhyperreal-05331ef8b04eb8fa.rlib",
+    "-L",
+    "dependency=/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps",
+    "-o",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-circle-nonlinear-domain-baseline"
+  ],
+  "source_sha256": "a9fbade132a80b1ecb4e255af14f803997fd330a269ed5ac23802433bc36cbd1",
+  "binary_sha256": "5b405dab6ecff852260dde9f22fafe69449e6baa10c5762cf822b3e1c0b16c61",
+  "normal_library_sha256": "4779a85387505cbd6fa56b42f114e107bae20c72d4f054201e3101fc89dadc48",
+  "returncode": 0,
+  "elapsed_seconds": 0.06378438099636696
+}

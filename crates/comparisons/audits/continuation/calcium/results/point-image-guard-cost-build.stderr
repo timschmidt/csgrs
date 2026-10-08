@@ -1,0 +1,4 @@
+     Locking 23 packages to latest Rust 1.97.0 compatible versions
+   Compiling hypersolve v0.3.1 (/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/point-image-guard/hypersolve)
+   Compiling calcium-point-image-guard-cost v0.1.0 (/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/point-image-guard-cost)
+    Finished `release` profile [optimized] target(s) in 17.98s

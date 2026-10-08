@@ -1,0 +1,11 @@
+{
+  "baseline": "polynomial-derivative-v811",
+  "source_sha256": "de4586d6ba870559409f6bfba14c029c4c5294e4addcdabfc0eda2ce9c9205d1",
+  "definition": "struct RationalBezierAlgebraicTangentImageData {\n    status: BezierAlgebraicImageStatus,\n    parameter: AlgebraicRootRepresentation,\n    dx: Option<BezierAlgebraicRationalCoordinateImage>,\n    dy: Option<BezierAlgebraicRationalCoordinateImage>,\n    retained_expression: Option<RetainedRationalTangentExpression>,\n    message: Option<String>,\n}\n\n#[derive(Debug, PartialEq)]\nstruct RetainedRationalTangentExpression {\n    parameter: BezierAlgebraicParameter2,\n    dx_numerator: Vec<Real>,\n    dy_numerator: Vec<Real>,\n    denominator: Vec<Real>,\n}\n\n",
+  "observations": [
+    "The shared derivative carrier still stores status and independently optional dx/dy/expression/message fields.",
+    "rational_tangent_image drops the uncertainty reason returned by RationalCoordinateImagePair::Failed and retains only its status.",
+    "Lazy endpoint tangent caches keep CurveResult reports, including failures; point caches retain only successes."
+  ],
+  "next": "Audit classified derivative construction and one explicit successful definition, preserving diagnostic consumers and derivative demand; no new candidate or reproduced cache failure."
+}

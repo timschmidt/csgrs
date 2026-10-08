@@ -1,0 +1,19 @@
+Compose retained point similarities over the original exact field
+
+Repeated point transport retained a wrapper for every similarity, causing
+later predicates and interval bounds to replay construction history.
+Compose compatible layers at construction with the existing certified
+Similarity2 operation and retain the original point field by shared identity.
+This introduces no new carrier, coordinate materialization, or repeated
+orthogonality/scale certification.
+
+Stop at every retained policy the caller cannot accept. A later permitted
+caller may compose those layers, but approximate evidence remains unavailable
+to strict predicates. Test noncommuting translation/reflection cycles,
+independent exact point images, orientation/scale, original field reuse,
+and both accepted and rejected policy transitions.
+
+Validation: 297 selected release tests across seven binaries; Clippy in
+both feature modes, formatting, editing fuzz compilation, denied-warning
+docs and Hyperbrep compilation. The two recorded extended-fillet re-offset
+performance failures remain open and excluded from passing qualification.

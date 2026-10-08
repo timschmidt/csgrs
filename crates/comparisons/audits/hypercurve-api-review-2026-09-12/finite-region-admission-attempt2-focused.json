@@ -1,0 +1,30 @@
+[
+  {
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve_curve_region_boolean-0a97901ca6765134",
+      "--exact",
+      "region_intersection_removes_authored_internal_and_canceled_boundaries",
+      "--test-threads=1",
+      "--nocapture"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.007539913000073284,
+    "binary": "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve_curve_region_boolean-0a97901ca6765134",
+    "sha256": "fee637e38d040989d4d86e66a3bedf3c9974d8de64ffbe194986cce7b45b46ab",
+    "log": "finite-region-admission-attempt2-region_intersection_removes_authored_internal_and_canceled_boundaries.log"
+  },
+  {
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve_curve_region_boolean-0a97901ca6765134",
+      "--exact",
+      "selected_fillet_region_intersection_closes_through_exterior_cap_booleans",
+      "--test-threads=1",
+      "--nocapture"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 4.370098457002314,
+    "binary": "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve_curve_region_boolean-0a97901ca6765134",
+    "sha256": "fee637e38d040989d4d86e66a3bedf3c9974d8de64ffbe194986cce7b45b46ab",
+    "log": "finite-region-admission-attempt2-selected_fillet_region_intersection_closes_through_exterior_cap_booleans.log"
+  }
+]

@@ -1,0 +1,132 @@
+{
+  "registered": "2026-09-11T02:47:32.433Z",
+  "plan": {
+    "schema": 1,
+    "config": {
+      "blocks": 36,
+      "passes": [
+        "default",
+        "single",
+        "single",
+        "default"
+      ],
+      "cpu": 6,
+      "gcEvery": 8,
+      "qualificationIterations": [
+        1,
+        8
+      ],
+      "emptyControlsPerEnd": 128,
+      "metrics": [
+        "elapsed_ns",
+        "thread_cpu_ns",
+        "process_cpu_ns"
+      ],
+      "cpuCounterZeros": "Legal and preserved. If any paired block median is zero, the whole group/reference/CPU-metric inference is unavailable, without dropping observations.",
+      "primaryComparison": "demand/eager",
+      "statistics": "20,000-replicate corrected v60 bootstrap and separate binomial order-statistic median interval; per pass, unadjusted",
+      "selection": "Eight authored diagnostic groups selected from earlier 59/60 observations before this replay. Not a random sample or confirmation cohort: unchanged-path noisy controls, known Unknown benefit, and three lost-witness retry cases.",
+      "inference": "No exclusion of slow observations; no subtraction of empty-envelope overhead; no pooling passes. GC settings are ABBA at process granularity, not independently randomized interventions. Thread/process CPU envelopes include instrumentation outside the inner wall clock. Resource counters enclose both CPU envelopes. No causal attribution or population-wide performance claim."
+    },
+    "groups": [
+      {
+        "case": 12,
+        "policy": 0,
+        "history": 2,
+        "lifecycle": "retained",
+        "iterations": 93
+      },
+      {
+        "case": 17,
+        "policy": 0,
+        "history": 2,
+        "lifecycle": "fresh",
+        "iterations": 17
+      },
+      {
+        "case": 44,
+        "policy": 1,
+        "history": 3,
+        "lifecycle": "retained",
+        "iterations": 385
+      },
+      {
+        "case": 37,
+        "policy": 1,
+        "history": 0,
+        "lifecycle": "retained",
+        "iterations": 125
+      },
+      {
+        "case": 3,
+        "policy": 1,
+        "history": 3,
+        "lifecycle": "retained",
+        "iterations": 249
+      },
+      {
+        "case": 4,
+        "policy": 0,
+        "history": 2,
+        "lifecycle": "retained",
+        "iterations": 84
+      },
+      {
+        "case": 29,
+        "policy": 0,
+        "history": 3,
+        "lifecycle": "retained",
+        "iterations": 579
+      },
+      {
+        "case": 42,
+        "policy": 1,
+        "history": 2,
+        "lifecycle": "retained",
+        "iterations": 1741
+      }
+    ],
+    "binaries": [
+      {
+        "variant": "baseline",
+        "path": "/tmp/calcium-point-wasm.jPk2WY/baseline.wasm",
+        "bytes": 1614156,
+        "sha256": "f9dc6f45bdb901e9386de7d8ad509a373bf03ce0babaa1805cb306d059d0e877"
+      },
+      {
+        "variant": "eager",
+        "path": "/tmp/calcium-point-wasm.jPk2WY/eager.wasm",
+        "bytes": 1614371,
+        "sha256": "05ba21965eef756746b54fa05ed38802c7663904cad027a2ed70cd9699c41d1c"
+      },
+      {
+        "variant": "demand",
+        "path": "/tmp/calcium-point-wasm.jPk2WY/demand.wasm",
+        "bytes": 1614858,
+        "sha256": "122381ac7e6cf469605119a8d89f331ab9c3d7dc2faafa0c002efcb2148067c2"
+      }
+    ],
+    "initialAttempt": {
+      "point-attribution-protocol-v65.mjs": "00561e0643d9f4682c24e22aa834704f3fcd173be93cf78cae81b331cbe71af3",
+      "run-point-attribution-v65.mjs": "a5db07e92ebd7b77bbb25dffa3f220340b6b36acb2c41848bff8a1ec3ce7d0c7",
+      "point-attribution-plan-v65.json": "77235df43033bf8b0396ba81a121077bbd8a4cfd4714aa42480f8d7c1e98a733",
+      "results/point-attribution-0.json": "cb197016b81f4685ea9b32262ae3bfee07a53f1a35371f88c61cad509d4969d8",
+      "results/point-attribution-0.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "results/point-attribution-0.stderr": "d3b8663c544f00a71294e2fbc0f8fad76bbdb7ed02f2af78fa6164f842515941",
+      "results/point-attribution-0-v65.jsonl": "2b9e0f6ae1e14e2a2d258d7ce0661601e842a83b293e0bcafc74b77d948cc74e",
+      "results/point-attribution-0-controls-v65.jsonl": "201b7f18955b427d3098f105e0adabfd1e7eec39fa53c64dc8be7ac808c0a362",
+      "results/point-attribution-0-failures-v65.jsonl": "e6c6f350bad4d0198eda0662e9b79daac8834cdbb839ca4257831cc832ee137e"
+    },
+    "files": {
+      "point-attribution-runtime-v65.mjs": "a12cba204d30f23921cf532422c9d990cbd48edad642197985a582c57147d070",
+      "run-point-attribution-revised-v65.mjs": "aaeaa77c43a14b9daf1f70c76651913ece74dc94902b17a417c977c18330b3b2",
+      "capture.mjs": "aaf6df6bbd73025a8541617ce83731ae5ea3fd2272bd98c15e3c4c12b713ce23",
+      "point-wasm-protocol.mjs": "ac1de0f9e155e78b0270507d3dfd055153084f7dc3a929dbcaf5170a4763af9b",
+      "point-wasm-binaries.json": "91ebf24a36d7e7c12f5d5bc4d47e57700a24c7639004b9ef4322f5ca57d1eced",
+      "point-wasm-cost-summary.json": "6f528311ed24c7e19858379e00a3c8d2879866b591caf3d49d79b2058085d322",
+      "point-demand-source-binding.json": "d5472beb99abd3f0526d978f4e27fb0446a1ac425dfd52fe3265bdccca4ba80f",
+      "paired-statistics-v60.mjs": "b40e8b928b866a0298a06520ac415ec09013fc8c5f704e2eda8df02d770bbc5d",
+      "statistical-matches-v65.json": "1b997716df5f41b7e5a4420aa60513dabb8b3adf71255d54c0317c86c6170535"
+    }
+  }
+}

@@ -1,0 +1,58 @@
+{
+  "jit": {
+    "junit": {
+      "pass": 10,
+      "fail": 1
+    },
+    "barrett": {
+      "boundedPositivePass": 731,
+      "boundedPositiveFail": 0,
+      "negativeMultipleFail": 60,
+      "otherPass": 1035,
+      "otherFail": 179
+    },
+    "quotientZeroEquivalenceFailures": 5,
+    "loggingSemanticChanges": 2,
+    "invalidZeroInverse": "1/0",
+    "bitLengthOne": "StackOverflowError",
+    "binaryGcdZero": "bounded timeout; source fixed point (0,1)",
+    "dag": {
+      "depths": 8,
+      "maxDepth": 20,
+      "maxRootStringCharacters": 4194301,
+      "estimatorCallsAtMaxDepth": {
+        "constructed": 21,
+        "refined": 22,
+        "after100CachedReads": 22
+      }
+    }
+  },
+  "interpreter": {
+    "junit": {
+      "pass": 10,
+      "fail": 1
+    },
+    "barrett": {
+      "boundedPositivePass": 731,
+      "boundedPositiveFail": 0,
+      "negativeMultipleFail": 60,
+      "otherPass": 1035,
+      "otherFail": 179
+    },
+    "quotientZeroEquivalenceFailures": 5,
+    "loggingSemanticChanges": 2,
+    "invalidZeroInverse": "1/0",
+    "bitLengthOne": "StackOverflowError",
+    "binaryGcdZero": "bounded timeout; source fixed point (0,1)",
+    "dag": {
+      "depths": 8,
+      "maxDepth": 20,
+      "maxRootStringCharacters": 4194301,
+      "estimatorCallsAtMaxDepth": {
+        "constructed": 21,
+        "refined": 22,
+        "after100CachedReads": 22
+      }
+    }
+  }
+}

@@ -1,0 +1,27 @@
+{
+  "repo": "hypercurve",
+  "target": "hypercurve_offset",
+  "binary": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve_offset-d21eb1fdb8d7ba13",
+  "command": [
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve_offset-d21eb1fdb8d7ba13",
+    "--test-threads=4",
+    "--color",
+    "never"
+  ],
+  "sha256": "7658bdc880b9522a69e78ce7e4c6ea8a72aaa9f7e817f569153832522a4b6b6a",
+  "returncode": 0,
+  "timed_out": false,
+  "elapsed_seconds": 0.003395767998881638,
+  "log": "finite-analytic-pair-domains-full-hypercurve-hypercurve_offset.log",
+  "passed": [
+    "primitive_arc_reports_radius_collapse_boundary",
+    "native_line_and_arc_parallel_primitives_are_exact"
+  ],
+  "failed": [],
+  "ignored": [],
+  "summaries": [
+    "test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s"
+  ],
+  "new_failures": [],
+  "known_failures": []
+}

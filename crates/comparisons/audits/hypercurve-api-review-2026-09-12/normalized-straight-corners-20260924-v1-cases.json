@@ -1,0 +1,26 @@
+[
+  {
+    "name": "bezier_region::tests::retained_algebraic_straights_trim_or_extend_chamfer_and_fillet",
+    "returncode": 0,
+    "passed": true,
+    "limit_seconds": 120,
+    "elapsed_seconds": 0.17497236200142652,
+    "log": "normalized-straight-corners-20260924-v1-case-0.log"
+  },
+  {
+    "name": "bezier_region::tests::retained_polynomial_chamfer_extends_exact_and_algebraic_incident_roots",
+    "returncode": 0,
+    "passed": true,
+    "limit_seconds": 120,
+    "elapsed_seconds": 0.1696298799943179,
+    "log": "normalized-straight-corners-20260924-v1-case-1.log"
+  },
+  {
+    "name": "bezier_region::tests::retained_rational_chamfer_extends_exact_and_algebraic_pre_pole_roots",
+    "returncode": 0,
+    "passed": true,
+    "limit_seconds": 120,
+    "elapsed_seconds": 0.20710116799455136,
+    "log": "normalized-straight-corners-20260924-v1-case-2.log"
+  }
+]

@@ -1,0 +1,72 @@
+{
+  "checks": [
+    {
+      "label": "fmt",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustfmt",
+        "--edition",
+        "2024",
+        "--check",
+        "src/bezier_offset.rs",
+        "src/bezier_parameter.rs"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 2.48615441005677,
+      "log": "local-chord-complete-replay-20260924-v9-fmt.log"
+    },
+    {
+      "label": "clippy-1",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "clippy",
+        "--all-targets",
+        "--all-features",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 25.84713112306781,
+      "log": "local-chord-complete-replay-20260924-v9-clippy-1.log"
+    },
+    {
+      "label": "clippy-2",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "clippy",
+        "--all-targets",
+        "--no-default-features",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 25.038745332043618,
+      "log": "local-chord-complete-replay-20260924-v9-clippy-2.log"
+    }
+  ],
+  "cases": [
+    {
+      "label": "closed_parallel_secants_retain_endpoints_and_both_seam_parameters",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/local-chord-complete-replay-20260924-v9-libtest",
+        "--exact",
+        "bezier_offset::conversion_tests::closed_parallel_secants_retain_endpoints_and_both_seam_parameters",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 101,
+      "elapsed_seconds": 0.2752194859785959,
+      "log": "local-chord-complete-replay-20260924-v9-closed_parallel_secants_retain_endpoints_and_both_seam_parameters.log"
+    }
+  ],
+  "all_processes_reaped": true,
+  "binary_sha256": "a0174110d4695736c7b03d099daecb41356afc53aff4085c652f4341224a5593",
+  "all_sources_unchanged": true
+}

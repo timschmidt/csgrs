@@ -1,0 +1,9 @@
+{
+  "modes": 2,
+  "rationalCasesPerMode": 1575,
+  "additionalChecksPerMode": 584,
+  "directedMpfrIrrationalChecksPerMode": 480,
+  "sourceFiles": 81,
+  "status": "PASS",
+  "newProductionChanges": 0
+}

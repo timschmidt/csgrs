@@ -1,0 +1,34 @@
+{
+  "source_manifest": "selected-tuple-replay-20260926-v286-sources.json",
+  "qualification": "selected-tuple-replay-20260926-v286-terminal.json",
+  "validated_files": 2046,
+  "passed_tests": 693,
+  "static_checks": 6,
+  "diagnostics": [
+    {
+      "name": "approximate_512_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions",
+      "returncode": 124
+    },
+    {
+      "name": "strict_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions",
+      "returncode": 124
+    }
+  ],
+  "repos": {
+    "hypersolve": {
+      "parent": "46ee30666664118515c97b6c65831fde15ccd914",
+      "paths": {
+        "src/algebraic_tensor_image.rs": "034d7eece9f0568ea7251d399cf8611d39ea4f3e7d98058f1e6b09c7cf8d76a8",
+        "src/lib.rs": "27af10cbd455b9dcae72fde67b10e18398ab0ee6235e47d1dd9bccfd2c067d12",
+        "src/root_sign.rs": "e9bc62ad045c7e22277936bf2e2424133bf3f67d66ab820a23f541b6e5e24ba6",
+        "src/tensor_resultant.rs": "b2b7284f7622f612be5c81a7a293816beedb725a3a6229501bffdcf8afc1a8db"
+      }
+    },
+    "hypercurve": {
+      "parent": "d8f9614cc943b33dd40836aa6d86a138a25be029",
+      "paths": {
+        "src/bezier_offset.rs": "c205f80c0339a4e56f06e56da83ea482997f4713eb646de21928dcea91a7d528"
+      }
+    }
+  }
+}

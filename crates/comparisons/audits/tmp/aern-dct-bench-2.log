@@ -1,0 +1,104 @@
+("bench 4","direct","terms",9,"maxWidth",0.0,"failures",[])
+("bench 4","DCT","terms",17,"maxWidth",1.0646712588269214e-5,"failures",[])
+("bench 16","direct","terms",33,"maxWidth",0.0,"failures",[])
+("bench 16","DCT","terms",65,"maxWidth",9.483146029238831e-4,"failures",[])
+("bench 32","direct","terms",65,"maxWidth",0.0,"failures",[])
+("bench 32","DCT","terms",129,"maxWidth",1.3145128249418159e-2,"failures",[])
+("bench 64","direct","terms",129,"maxWidth",0.0,"failures",[])
+("bench 64","DCT","terms",257,"maxWidth",0.11396553196184378,"failures",[])
+("bench 128","direct","terms",257,"maxWidth",0.0,"failures",[])
+("bench 128","DCT","terms",513,"maxWidth",1.745930005861617,"failures",[])
+benchmarking 4/direct
+time                 22.72 μs   (22.58 μs .. 22.87 μs)
+                     1.000 R²   (1.000 R² .. 1.000 R²)
+mean                 22.79 μs   (22.67 μs .. 22.91 μs)
+std dev              269.5 ns   (212.9 ns .. 355.8 ns)
+allocated:           1.000 R²   (1.000 R² .. 1.000 R²)
+  iters              126487.995 (126487.642 .. 126488.410)
+  y                  3072.744   (2752.407 .. 3431.255)
+
+benchmarking 4/dct-quiet
+time                 2.650 ms   (2.627 ms .. 2.686 ms)
+                     0.998 R²   (0.996 R² .. 1.000 R²)
+mean                 2.669 ms   (2.645 ms .. 2.720 ms)
+std dev              65.14 μs   (39.33 μs .. 89.38 μs)
+allocated:           1.000 R²   (1.000 R² .. 1.000 R²)
+  iters              8327162.309 (8327072.098 .. 8327269.179)
+  y                  3297.474   (1850.138 .. 4756.494)
+
+benchmarking 16/direct
+time                 269.1 μs   (268.2 μs .. 270.4 μs)
+                     1.000 R²   (1.000 R² .. 1.000 R²)
+mean                 269.1 μs   (268.1 μs .. 270.6 μs)
+std dev              2.484 μs   (1.532 μs .. 4.124 μs)
+allocated:           1.000 R²   (1.000 R² .. 1.000 R²)
+  iters              1550744.005 (1550738.112 .. 1550749.919)
+  y                  3116.606   (2587.494 .. 3694.665)
+
+benchmarking 16/dct-quiet
+time                 7.414 ms   (7.332 ms .. 7.510 ms)
+                     1.000 R²   (0.999 R² .. 1.000 R²)
+mean                 7.429 ms   (7.394 ms .. 7.478 ms)
+std dev              61.45 μs   (35.11 μs .. 97.49 μs)
+allocated:           1.000 R²   (1.000 R² .. 1.000 R²)
+  iters              2.247e7    (2.247e7 .. 2.247e7)
+  y                  2972.000   (2038.449 .. 5386.289)
+
+benchmarking 32/direct
+time                 1.074 ms   (1.061 ms .. 1.092 ms)
+                     0.999 R²   (0.998 R² .. 1.000 R²)
+mean                 1.069 ms   (1.063 ms .. 1.081 ms)
+std dev              16.46 μs   (7.879 μs .. 29.17 μs)
+allocated:           1.000 R²   (1.000 R² .. 1.000 R²)
+  iters              6157320.197 (6157291.363 .. 6157350.052)
+  y                  3104.948   (2275.490 .. 4071.301)
+
+benchmarking 32/dct-quiet
+time                 14.14 ms   (13.94 ms .. 14.32 ms)
+                     1.000 R²   (1.000 R² .. 1.000 R²)
+mean                 14.03 ms   (13.98 ms .. 14.11 ms)
+std dev              82.37 μs   (42.02 μs .. 114.9 μs)
+allocated:           1.000 R²   (1.000 R² .. 1.000 R²)
+  iters              4.269e7    (4.269e7 .. 4.269e7)
+  y                  3412.571   (2272.000 .. 7594.667)
+variance introduced by outliers: 11% (moderately inflated)
+
+benchmarking 64/direct
+time                 5.661 ms   (5.531 ms .. 5.721 ms)
+                     0.999 R²   (0.996 R² .. 1.000 R²)
+mean                 5.738 ms   (5.677 ms .. 6.030 ms)
+std dev              186.6 μs   (26.43 μs .. 328.1 μs)
+allocated:           1.000 R²   (1.000 R² .. 1.000 R²)
+  iters              2.432e7    (2.432e7 .. 2.432e7)
+  y                  2714.971   (2128.410 .. 4353.973)
+
+benchmarking 64/dct-quiet
+time                 27.85 ms   (25.56 ms .. 29.74 ms)
+                     0.998 R²   (0.995 R² .. 1.000 R²)
+mean                 29.68 ms   (28.73 ms .. 30.38 ms)
+std dev              1.084 ms   (823.0 μs .. 1.309 ms)
+allocated:           1.000 R²   (1.000 R² .. 1.000 R²)
+  iters              8.481e7    (8.481e7 .. 8.481e7)
+  y                  2272.000   (2272.000 .. 2272.000)
+variance introduced by outliers: 16% (moderately inflated)
+
+benchmarking 128/direct
+time                 26.20 ms   (25.62 ms .. 26.84 ms)
+                     0.999 R²   (0.998 R² .. 1.000 R²)
+mean                 26.63 ms   (26.28 ms .. 26.98 ms)
+std dev              438.1 μs   (240.4 μs .. 531.5 μs)
+allocated:           1.000 R²   (1.000 R² .. 1.000 R²)
+  iters              9.661e7    (9.661e7 .. 9.661e7)
+  y                  2272.000   (2272.000 .. 2272.000)
+variance introduced by outliers: 16% (moderately inflated)
+
+benchmarking 128/dct-quiet
+time                 62.91 ms   (61.51 ms .. 66.07 ms)
+                     1.000 R²   (0.999 R² .. 1.000 R²)
+mean                 62.65 ms   (62.14 ms .. 63.09 ms)
+std dev              532.0 μs   (451.5 μs .. 609.4 μs)
+allocated:           1.000 R²   (1.000 R² .. 1.000 R²)
+  iters              1.722e8    (1.722e8 .. 1.722e8)
+  y                  2272.000   (2272.000 .. 2272.000)
+variance introduced by outliers: 19% (moderately inflated)
+

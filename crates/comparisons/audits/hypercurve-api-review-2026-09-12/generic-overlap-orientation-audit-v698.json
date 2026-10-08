@@ -1,0 +1,55 @@
+{
+  "identifier": "RationalBezierOverlapOrientation2",
+  "replacement_proposal": "CurveOverlapOrientation2",
+  "uses": [
+    {
+      "path": "hypercurve/src/bezier_offset.rs",
+      "count": 226
+    },
+    {
+      "path": "hypercurve/src/bezier_retained_overlap.rs",
+      "count": 9
+    },
+    {
+      "path": "hypercurve/src/curve_intersection.rs",
+      "count": 12
+    },
+    {
+      "path": "hypercurve/src/curve_region_boolean.rs",
+      "count": 19
+    },
+    {
+      "path": "hypercurve/src/curve_support_intersection.rs",
+      "count": 15
+    },
+    {
+      "path": "hypercurve/src/lib.rs",
+      "count": 1
+    },
+    {
+      "path": "hypercurve/src/rational_bezier_general.rs",
+      "count": 20
+    },
+    {
+      "path": "hypercurve/tests/hypercurve_bezier_arrangement.rs",
+      "count": 5
+    },
+    {
+      "path": "hypercurve/tests/hypercurve_bezier_fit_offset.rs",
+      "count": 27
+    },
+    {
+      "path": "hypercurve/tests/hypercurve_curve.rs",
+      "count": 1
+    },
+    {
+      "path": "hypercurve/tests/hypercurve_curve_intersection.rs",
+      "count": 20
+    },
+    {
+      "path": "hypercurve/tests/hypercurve_rational_bezier.rs",
+      "count": 16
+    }
+  ],
+  "status": "read-only audit; no candidate or production change"
+}

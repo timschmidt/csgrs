@@ -1,0 +1,296 @@
+[
+  {
+    "repo": "hypercurve",
+    "target": "lib",
+    "sha256": "45f799dc034081084d0545edaead54aaac2278890425b1babee7b1e274c2b640",
+    "rerun": true
+  },
+  {
+    "repo": "hypercurve",
+    "target": "hypercurve_bezier_fit_offset",
+    "sha256": "d29295ffcb0caf53d47859f3fbb0497878f637f4385da4d0bbc56766dc2effe2",
+    "rerun": true
+  },
+  {
+    "repo": "hyperbrep",
+    "target": "lib",
+    "sha256": "c7f4aa11a40d210e8da3fbbd9c708ea9bad7e7cb76ee58cf894fef601ab283a2",
+    "rerun": false
+  },
+  {
+    "repo": "hypercurve",
+    "target": "exact_structural_facts",
+    "sha256": "e5a65934e55aa25a83c8563112edea17f0bd5b2073cdfa30e903d850fc908443",
+    "rerun": true
+  },
+  {
+    "repo": "hypercurve",
+    "target": "hypercurve_adversarial_polygons",
+    "sha256": "f42f8919c9c1752a04d9b40f1e764a65f0fb1cee55f6c65bf0744041af5eba06",
+    "rerun": true
+  },
+  {
+    "repo": "hypercurve",
+    "target": "hypercurve_analytic_parallel_region",
+    "sha256": "21faadaff519ec09c8c8534c142feb8986e174c1ff4478cf72c1afc9c977bd27",
+    "rerun": true
+  },
+  {
+    "repo": "hypercurve",
+    "target": "hypercurve_arc_bezier",
+    "sha256": "b7404571e7463f5299e6eb13861c23afab5b65b21a55ff6c23eaf2950308b980",
+    "rerun": true
+  },
+  {
+    "repo": "hypercurve",
+    "target": "hypercurve_bbox",
+    "sha256": "3e18b03c46bb4d13916afe5c8a8558ded51fbbf0b675a9e16be323d57f94d122",
+    "rerun": false
+  },
+  {
+    "repo": "hypercurve",
+    "target": "hypercurve_bezier_algebraic_image",
+    "sha256": "36128a61727898c38b5c8f8d08b3cc46cc2b59e8a6bcfb887f8a35279c309298",
+    "rerun": false
+  },
+  {
+    "repo": "hypercurve",
+    "target": "hypercurve_bezier_algebraic_parameter",
+    "sha256": "e21500476fb132d27d5f42ea3f31bf2659fe7e6297cc05ab1794210897f0a81b",
+    "rerun": false
+  },
+  {
+    "repo": "hypercurve",
+    "target": "hypercurve_bezier_arrangement",
+    "sha256": "46805385ae5fd1a481b02739465f9bd5acef824743f53ff4ae3aa700724a0f69",
+    "rerun": false
+  },
+  {
+    "repo": "hypercurve",
+    "target": "hypercurve_bezier_evaluation",
+    "sha256": "be9f4e02b03f089991eb194221446c64fa1370412d409b3866703a52f25d08d3",
+    "rerun": true
+  },
+  {
+    "repo": "hypercurve",
+    "target": "hypercurve_bezier_region",
+    "sha256": "57e676e3bcbc99a8fcde98d888d58af2390e7a0f37c418b117c6c70f76ae7d97",
+    "rerun": false
+  },
+  {
+    "repo": "hypercurve",
+    "target": "hypercurve_bezier_split_materialization",
+    "sha256": "1dcfcf10c6aba435d87a4e13426880ceacd287ef32d60c911fa2b75e7f7b1785",
+    "rerun": false
+  },
+  {
+    "repo": "hypercurve",
+    "target": "hypercurve_bezier_tangent_order",
+    "sha256": "864f567b5c91fd0d9ee1cd1796fd7cfd65f9e48e3bc26d3232ee4dad025400a2",
+    "rerun": true
+  },
+  {
+    "repo": "hypercurve",
+    "target": "hypercurve_bspline",
+    "sha256": "abfc2b025f153bc2565ed67461c043800290c205b480b79b3e202bde990512bf",
+    "rerun": false
+  },
+  {
+    "repo": "hypercurve",
+    "target": "hypercurve_circle_predicates",
+    "sha256": "66238333b7654ddbbccfc18f00e99367b7b00227021d1e42a0b847e77a3f6459",
+    "rerun": true
+  },
+  {
+    "repo": "hypercurve",
+    "target": "hypercurve_contour",
+    "sha256": "d57cabee44d381cd68d8643877e6a771bfdd0d227c23a67e435a3455d15a033c",
+    "rerun": true
+  },
+  {
+    "repo": "hypercurve",
+    "target": "hypercurve_curve",
+    "sha256": "e2004377a402013b9548bc5e27a9088d6cb799bd39ef7098565fd360a2d5abef",
+    "rerun": false
+  },
+  {
+    "repo": "hypercurve",
+    "target": "hypercurve_curve_intersection",
+    "sha256": "6234582df6417a9fc09e5c79207a49242a474e05148d119c7ffce8cb2c11c33d",
+    "rerun": true
+  },
+  {
+    "repo": "hypercurve",
+    "target": "hypercurve_curve_point",
+    "sha256": "2cd720daadd28cace385f86f66e8ceaefe6a73e8975b871894601b15bac71500",
+    "rerun": true
+  },
+  {
+    "repo": "hypercurve",
+    "target": "hypercurve_curve_region_boolean",
+    "sha256": "5cb43c2783cdd4483fc7f562261b0785360dc4a4c96237dc644418a423af0f7c",
+    "rerun": true
+  },
+  {
+    "repo": "hypercurve",
+    "target": "hypercurve_curve_region_boolean_fuzz",
+    "sha256": "22315e1ca051a9588803f7f883bf134893b86f8f18c2d906bdab5188712f95e2",
+    "rerun": false
+  },
+  {
+    "repo": "hypercurve",
+    "target": "hypercurve_curve_region_promotion",
+    "sha256": "a7a1ff40e6b9d0d79cfcf2c0326cce714b4b30825da72a4c183487c73e1e5520",
+    "rerun": true
+  },
+  {
+    "repo": "hypercurve",
+    "target": "hypercurve_curve_region_stroke",
+    "sha256": "166e32ff550ad9e2223774995d67d4d4964320291acea95b0205d0830663a80f",
+    "rerun": true
+  },
+  {
+    "repo": "hypercurve",
+    "target": "hypercurve_curve_string",
+    "sha256": "f6ca583b3718a1b4f31eebe50c61161213840e9810c82c500d8fd1e0125cf62b",
+    "rerun": true
+  },
+  {
+    "repo": "hypercurve",
+    "target": "hypercurve_derivative_completeness",
+    "sha256": "3a8aac76f85e59caf09b9a76c15b23991fd8a1a6fe0df3b32ad8d2d25a96a819",
+    "rerun": true
+  },
+  {
+    "repo": "hypercurve",
+    "target": "hypercurve_dispatch_trace",
+    "sha256": "52add8511a458c21b5a1934c6a029d183648b8fda04e7e54e7cc3368706aed8e",
+    "rerun": false
+  },
+  {
+    "repo": "hypercurve",
+    "target": "hypercurve_events",
+    "sha256": "5fb54e9460fcdd54be17832cd3059b1e8da90e34bd305e98323454342ed8c1ce",
+    "rerun": true
+  },
+  {
+    "repo": "hypercurve",
+    "target": "hypercurve_exact_closure",
+    "sha256": "5c586fd6b0c1513c7a318712fe6476dd9d8f020eb8a02b6cc933f0269be45ca1",
+    "rerun": true
+  },
+  {
+    "repo": "hypercurve",
+    "target": "hypercurve_fragments",
+    "sha256": "91ecb61843bdbff25ed4d472c9d69c3cb0d515b8f1ac3c06db60f4fc9e784e0f",
+    "rerun": false
+  },
+  {
+    "repo": "hypercurve",
+    "target": "hypercurve_fuzz_regressions",
+    "sha256": "b7ab2f2914a908dc879074613cf4244e060758fef554b0831aa058512ed09992",
+    "rerun": false
+  },
+  {
+    "repo": "hypercurve",
+    "target": "hypercurve_geo_regressions",
+    "sha256": "1a76f448acadbc930cff9197d08320cf227484eea0987f464d28e0d9658e65ef",
+    "rerun": true
+  },
+  {
+    "repo": "hypercurve",
+    "target": "hypercurve_nurbs",
+    "sha256": "36fad6d4d70261a0ccceb0faf1ca1381e9479f26d08a0cd7641e7df174fe02da",
+    "rerun": true
+  },
+  {
+    "repo": "hypercurve",
+    "target": "hypercurve_nurbs_interpolation",
+    "sha256": "dfb1fb29ea1dd63586ad3190fa8abc73967bffd74aafe1b43ee61ef541a0e9a7",
+    "rerun": false
+  },
+  {
+    "repo": "hypercurve",
+    "target": "hypercurve_offset",
+    "sha256": "fc7b98842a130ea319ff48a5fea18ac81db063d05078be1bc928a7c850bac71f",
+    "rerun": true
+  },
+  {
+    "repo": "hypercurve",
+    "target": "hypercurve_path_closure",
+    "sha256": "757bbdf8091acf9bd5771c6e3dae3d42d385cadaab7aa84ccfcc1fb0e4a9986e",
+    "rerun": true
+  },
+  {
+    "repo": "hypercurve",
+    "target": "hypercurve_pcb_boolean_regressions",
+    "sha256": "1274279fbf686475e1bcdf65fe293ade9b69a67858762850ce2840ee32821b05",
+    "rerun": false
+  },
+  {
+    "repo": "hypercurve",
+    "target": "hypercurve_polynomial_spline",
+    "sha256": "46de4f8aaca5487e2541d0ff6d1a298420d056c03e13ab3e0258e8f61dfc334a",
+    "rerun": true
+  },
+  {
+    "repo": "hypercurve",
+    "target": "hypercurve_pr59_shape_regressions",
+    "sha256": "9b5d52d086221199bc70618bf503422dee057fcaebf480e1b1ed7d88d7695338",
+    "rerun": false
+  },
+  {
+    "repo": "hypercurve",
+    "target": "hypercurve_rational_bezier",
+    "sha256": "3ff9a727354e9dd62bc24f0b4f32ef78bb8b29652bc680d2a14938a57ff83c99",
+    "rerun": true
+  },
+  {
+    "repo": "hypercurve",
+    "target": "hypercurve_reconstruct",
+    "sha256": "07ba8caf49ed99d6a563b9b4f80cde895704bf9ed2dc9ff8204fdc10732b7984",
+    "rerun": true
+  },
+  {
+    "repo": "hypercurve",
+    "target": "hypercurve_self_contacts",
+    "sha256": "e42580e846e8f3458d48e606ac78951ccaf1402edcb8a48f87b218f5d2ce1dc4",
+    "rerun": false
+  },
+  {
+    "repo": "hypercurve",
+    "target": "hypercurve_split",
+    "sha256": "86e2abfea58cfb9d7e76807f3257930a34bb0b48b58b90fc8d88d581685e38fd",
+    "rerun": true
+  },
+  {
+    "repo": "hypercurve",
+    "target": "hypercurve_svg",
+    "sha256": "9ecb49529c79e5547b475463e77533ee64dfa26e38ab7952ed2abb692995d510",
+    "rerun": false
+  },
+  {
+    "repo": "hypercurve",
+    "target": "hypercurve_triangulation",
+    "sha256": "17996761c77b07c6731b9f692569ab4aaec6f49a0dece15d67dfcc0b7ac5cc47",
+    "rerun": false
+  },
+  {
+    "repo": "hypercurve",
+    "target": "line_constant_coordinates",
+    "sha256": "5a0ddf62fa8a276fa5c8c95b29439c1dda519ba3642a0401dd4ea880eb69b46a",
+    "rerun": false
+  },
+  {
+    "repo": "hypercurve",
+    "target": "pathological_benchmark_fixture",
+    "sha256": "15c58ef042cae6a9ae9ec296e1a482d99432fe908400ecccc7ab69d750bd3270",
+    "rerun": true
+  },
+  {
+    "repo": "hypercurve",
+    "target": "readme",
+    "sha256": "fbf434cc5241f7669e1d0e98c5f385d2c40074af35d5b4a0bc3c949d54038b62",
+    "rerun": false
+  }
+]

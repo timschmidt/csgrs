@@ -1,0 +1,55 @@
+audits/continuation/calcium/flint-mpoly-rational-controls.c: In function ‘poly’:
+audits/continuation/calcium/flint-mpoly-rational-controls.c:24:3: error: unknown type name ‘mpz_t’; did you mean ‘fmpz_t’?
+   24 |   mpz_t z;
+      |   ^~~~~
+      |   fmpz_t
+audits/continuation/calcium/flint-mpoly-rational-controls.c:25:3: error: implicit declaration of function ‘mpz_init’; did you mean ‘fmpz_init’? [-Wimplicit-function-declaration]
+   25 |   mpz_init(z);
+      |   ^~~~~~~~
+      |   fmpz_init
+audits/continuation/calcium/flint-mpoly-rational-controls.c:34:5: error: implicit declaration of function ‘fmpz_get_mpz’; did you mean ‘fmpz_get_mpn’? [-Wimplicit-function-declaration]
+   34 |     fmpz_get_mpz(z, c);
+      |     ^~~~~~~~~~~~
+      |     fmpz_get_mpn
+audits/continuation/calcium/flint-mpoly-rational-controls.c:35:5: error: implicit declaration of function ‘gmp_printf’; did you mean ‘fmpq_print’? [-Wimplicit-function-declaration]
+   35 |     gmp_printf("[\"%Zx\",[", z);
+      |     ^~~~~~~~~~
+      |     fmpq_print
+audits/continuation/calcium/flint-mpoly-rational-controls.c:45:3: error: implicit declaration of function ‘mpz_clear’; did you mean ‘fmpz_clear’? [-Wimplicit-function-declaration]
+   45 |   mpz_clear(z);
+      |   ^~~~~~~~~
+      |   fmpz_clear
+audits/continuation/calcium/flint-mpoly-rational-controls.c: In function ‘emit’:
+audits/continuation/calcium/flint-mpoly-rational-controls.c:83:3: error: unknown type name ‘mpz_t’; did you mean ‘fmpz_t’?
+   83 |   mpz_t a, b;
+      |   ^~~~~
+      |   fmpz_t
+audits/continuation/calcium/flint-mpoly-rational-controls.c:84:3: error: implicit declaration of function ‘mpz_inits’; did you mean ‘fmpz_init2’? [-Wimplicit-function-declaration]
+   84 |   mpz_inits(a, b, NULL);
+      |   ^~~~~~~~~
+      |   fmpz_init2
+audits/continuation/calcium/flint-mpoly-rational-controls.c:89:3: error: implicit declaration of function ‘mpz_clears’; did you mean ‘fmpz_clear’? [-Wimplicit-function-declaration]
+   89 |   mpz_clears(a, b, NULL);
+      |   ^~~~~~~~~~
+      |   fmpz_clear
+audits/continuation/calcium/flint-mpoly-rational-controls.c: In function ‘large’:
+audits/continuation/calcium/flint-mpoly-rational-controls.c:93:3: error: unknown type name ‘mpz_t’; did you mean ‘fmpz_t’?
+   93 |   mpz_t z;
+      |   ^~~~~
+      |   fmpz_t
+audits/continuation/calcium/flint-mpoly-rational-controls.c:94:3: error: implicit declaration of function ‘mpz_init_set_ui’; did you mean ‘fmpz_init_set_ui’? [-Wimplicit-function-declaration]
+   94 |   mpz_init_set_ui(z, 1);
+      |   ^~~~~~~~~~~~~~~
+      |   fmpz_init_set_ui
+audits/continuation/calcium/flint-mpoly-rational-controls.c:95:3: error: implicit declaration of function ‘mpz_mul_2exp’; did you mean ‘fmpz_mul_2exp’? [-Wimplicit-function-declaration]
+   95 |   mpz_mul_2exp(z, z, bits);
+      |   ^~~~~~~~~~~~
+      |   fmpz_mul_2exp
+audits/continuation/calcium/flint-mpoly-rational-controls.c:96:3: error: implicit declaration of function ‘mpz_add_ui’; did you mean ‘fmpz_add_ui’? [-Wimplicit-function-declaration]
+   96 |   mpz_add_ui(z, z, 7);
+      |   ^~~~~~~~~~
+      |   fmpz_add_ui
+audits/continuation/calcium/flint-mpoly-rational-controls.c:97:3: error: implicit declaration of function ‘fmpz_set_mpz’; did you mean ‘fmpq_set_fmpz’? [-Wimplicit-function-declaration]
+   97 |   fmpz_set_mpz(c, z);
+      |   ^~~~~~~~~~~~
+      |   fmpq_set_fmpz

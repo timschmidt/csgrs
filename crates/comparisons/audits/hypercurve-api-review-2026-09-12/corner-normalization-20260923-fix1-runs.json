@@ -1,0 +1,66 @@
+[
+  {
+    "name": "bezier_region::single_loop_corner_publication_tests::selected_circle_corner_candidates_publish_normalized_single_loops",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/corner-normalization-20260923-fix1-libtest",
+      "--exact",
+      "bezier_region::single_loop_corner_publication_tests::selected_circle_corner_candidates_publish_normalized_single_loops",
+      "--test-threads=1",
+      "--nocapture",
+      "--color",
+      "never"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.031933569931425154,
+    "log": "corner-normalization-20260923-fix1-selected_circle_corner_candidates_publish_normalized_single_loops.log",
+    "binary_sha256": "ff54cf9dbf9ced916718df2bccfc4f42ab182057558f3a5d37659d92bc5475df"
+  },
+  {
+    "name": "bezier_region::tests::general_nonrepresented_chord_and_retained_rational_arc_complete_the_fillet_kernel",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/corner-normalization-20260923-fix1-libtest",
+      "--exact",
+      "bezier_region::tests::general_nonrepresented_chord_and_retained_rational_arc_complete_the_fillet_kernel",
+      "--test-threads=1",
+      "--nocapture",
+      "--color",
+      "never"
+    ],
+    "returncode": 101,
+    "elapsed_seconds": 2.066533631994389,
+    "log": "corner-normalization-20260923-fix1-general_nonrepresented_chord_and_retained_rational_arc_complete_the_fillet_kernel.log",
+    "binary_sha256": "ff54cf9dbf9ced916718df2bccfc4f42ab182057558f3a5d37659d92bc5475df"
+  },
+  {
+    "name": "bezier_region::tests::independent_oblique_chord_pair_fillet_crosses_a_rational_line_exactly",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/corner-normalization-20260923-fix1-libtest",
+      "--exact",
+      "bezier_region::tests::independent_oblique_chord_pair_fillet_crosses_a_rational_line_exactly",
+      "--test-threads=1",
+      "--nocapture",
+      "--color",
+      "never"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 1.615756236948073,
+    "log": "corner-normalization-20260923-fix1-independent_oblique_chord_pair_fillet_crosses_a_rational_line_exactly.log",
+    "binary_sha256": "ff54cf9dbf9ced916718df2bccfc4f42ab182057558f3a5d37659d92bc5475df"
+  },
+  {
+    "name": "bezier_region::tests::independent_oblique_chord_pair_fillet_crosses_algebraic_chords_exactly",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/corner-normalization-20260923-fix1-libtest",
+      "--exact",
+      "bezier_region::tests::independent_oblique_chord_pair_fillet_crosses_algebraic_chords_exactly",
+      "--test-threads=1",
+      "--nocapture",
+      "--color",
+      "never"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 3.5189276019809768,
+    "log": "corner-normalization-20260923-fix1-independent_oblique_chord_pair_fillet_crosses_algebraic_chords_exactly.log",
+    "binary_sha256": "ff54cf9dbf9ced916718df2bccfc4f42ab182057558f3a5d37659d92bc5475df"
+  }
+]

@@ -1,0 +1,27 @@
+{
+  "returncode": 0,
+  "elapsed_seconds": 4.620182883983944,
+  "normal_library_sha256": "3f204f6dcef0133f415650348226026d9a964d24eae3cd2fbd33cc53b4667deb",
+  "log": "finite-parallel-regularity-tangent-matrix.log",
+  "source": "selected-circle-tangent-identity-matrix.rs",
+  "command": [
+    "rustc",
+    "--edition=2024",
+    "-O",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/selected-circle-tangent-identity-matrix.rs",
+    "--extern",
+    "hypercurve=/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/libhypercurve-2c7ff6f3fbe07653.rlib",
+    "-L",
+    "dependency=/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps",
+    "-o",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-parallel-regularity-tangent-matrix"
+  ],
+  "source_sha256": "005a451f7b9e9c4bd551360b7ab627d150c6ad4ed8e0794e17c059c751a6bef5",
+  "executable_sha256": "8c71a2feff47a79c6db252fd365e5fea8de4860343d939234f6ea3fc23de8896",
+  "counts": {
+    "tangent_queries": 120,
+    "opposite_tangent_exclusions": 40,
+    "point_replays": 240,
+    "topologies": 120
+  }
+}

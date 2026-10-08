@@ -1,0 +1,5 @@
+Share division-free polynomial GCD over retained coefficient fields
+
+Reuse exact degree decisions and sign-preserving remainders to compute common roots without field division, monic reconstruction, or independent scalar images. Distinguish an identically zero equation pair from relatively prime equations and retain repeated factors.
+
+Validation: all 14 ordered-field release tests, including independent repeated quadratic-field factors and degenerate equations; both feature-mode Clippy checks and package formatting. Matched 2047 source hashes across the workspace, build mirror and immutable archive.

@@ -1,0 +1,475 @@
+{
+  "baseline": "polynomial-derivative-v817-sources.json",
+  "hits": {
+    "hypercurve/benches/bezier_algebraic_parameter.rs": [
+      {
+        "line": 249,
+        "source": "let tangent = curve.tangent_at_algebraic_parameter(&midpoint, &policy)?;"
+      },
+      {
+        "line": 270,
+        "source": "let tangent = conic.tangent_at_algebraic_parameter(&midpoint, &policy)?;"
+      }
+    ],
+    "hypercurve/benches/bezier_tangent_order.rs": [
+      {
+        "line": 36,
+        "source": ".tangent_at_algebraic_parameter(parameter, policy)"
+      },
+      {
+        "line": 62,
+        "source": ".tangent_at_algebraic_parameter(parameter, policy)"
+      }
+    ],
+    "hypercurve/benches/rational_bezier.rs": [
+      {
+        "line": 464,
+        "source": ".derivatives_at_algebraic_parameter("
+      }
+    ],
+    "hypercurve/fuzz/fuzz_targets/bezier_algebraic_image.rs": [
+      {
+        "line": 94,
+        "source": ".tangent_at_algebraic_parameter(&parameter, &policy)"
+      },
+      {
+        "line": 123,
+        "source": ".tangent_at_algebraic_parameter(&parameter, &policy)"
+      }
+    ],
+    "hypercurve/fuzz/fuzz_targets/bezier_tangent_order.rs": [
+      {
+        "line": 25,
+        "source": ".tangent_at_algebraic_parameter(parameter, policy)"
+      }
+    ],
+    "hypercurve/src/bezier_algebraic_image.rs": [
+      {
+        "line": 1504,
+        "source": "pub struct RationalBezierAlgebraicTangentImage2 {"
+      },
+      {
+        "line": 1526,
+        "source": "impl PartialEq for RationalBezierAlgebraicTangentImage2 {"
+      },
+      {
+        "line": 1532,
+        "source": "impl RationalBezierAlgebraicTangentImage2 {"
+      },
+      {
+        "line": 1700,
+        "source": "pub fn tangent_at_algebraic_parameter("
+      },
+      {
+        "line": 1704,
+        "source": ") -> CurveResult<RationalBezierAlgebraicTangentImage2> {"
+      },
+      {
+        "line": 1719,
+        "source": ") -> CurveResult<RationalBezierAlgebraicTangentImage2> {"
+      },
+      {
+        "line": 1745,
+        "source": "pub fn tangent_at_algebraic_parameter("
+      },
+      {
+        "line": 1749,
+        "source": ") -> CurveResult<RationalBezierAlgebraicTangentImage2> {"
+      },
+      {
+        "line": 1764,
+        "source": ") -> CurveResult<RationalBezierAlgebraicTangentImage2> {"
+      },
+      {
+        "line": 1782,
+        "source": ") -> CurveResult<RationalBezierAlgebraicTangentImage2> {"
+      },
+      {
+        "line": 1830,
+        "source": "pub fn tangent_at_algebraic_parameter("
+      },
+      {
+        "line": 1834,
+        "source": ") -> CurveResult<RationalBezierAlgebraicTangentImage2> {"
+      },
+      {
+        "line": 1860,
+        "source": ") -> CurveResult<RationalBezierAlgebraicTangentImage2> {"
+      },
+      {
+        "line": 1873,
+        "source": "pub fn derivatives_at_algebraic_parameter("
+      },
+      {
+        "line": 1878,
+        "source": ") -> CurveResult<Vec<RationalBezierAlgebraicTangentImage2>> {"
+      },
+      {
+        "line": 2010,
+        "source": ") -> CurveResult<Vec<RationalBezierAlgebraicTangentImage2>> {"
+      },
+      {
+        "line": 2069,
+        "source": ") -> CurveResult<RationalBezierAlgebraicTangentImage2> {"
+      },
+      {
+        "line": 2083,
+        "source": ") -> CurveResult<RationalBezierAlgebraicTangentImage2> {"
+      },
+      {
+        "line": 2097,
+        "source": "} => Ok(RationalBezierAlgebraicTangentImage2::new("
+      },
+      {
+        "line": 2109,
+        "source": "} => Ok(RationalBezierAlgebraicTangentImage2::new("
+      },
+      {
+        "line": 2126,
+        "source": "Ok(RationalBezierAlgebraicTangentImage2::new("
+      },
+      {
+        "line": 2144,
+        "source": ") -> CurveResult<RationalBezierAlgebraicTangentImage2> {"
+      },
+      {
+        "line": 2212,
+        "source": "BezierAlgebraicImageStatus::YImageFailed"
+      },
+      {
+        "line": 2214,
+        "source": "BezierAlgebraicImageStatus::XImageFailed"
+      },
+      {
+        "line": 2217,
+        "source": "BezierAlgebraicImageStatus::InvalidParameterEvidence"
+      },
+      {
+        "line": 2231,
+        "source": "status: BezierAlgebraicImageStatus::XImageFailed,"
+      }
+    ],
+    "hypercurve/src/bezier_arrangement.rs": [
+      {
+        "line": 34,
+        "source": "RationalBezierAlgebraicTangentImage2, UncertaintyReason, ZeroKnowledge,"
+      },
+      {
+        "line": 1408,
+        "source": "let Ok(tangent_image) = image.try_tangent() else {"
+      },
+      {
+        "line": 1581,
+        "source": "tangent: &RationalBezierAlgebraicTangentImage2,"
+      },
+      {
+        "line": 1902,
+        "source": "assert_eq!(lazy.try_tangent(), eager.try_tangent());"
+      },
+      {
+        "line": 1908,
+        "source": "(1, eager.try_tangent().ok()),"
+      },
+      {
+        "line": 2639,
+        "source": ".tangent_at_algebraic_parameter(&source.parameter, policy)"
+      },
+      {
+        "line": 2648,
+        "source": ".tangent_at_algebraic_parameter(&source.parameter, policy)"
+      },
+      {
+        "line": 2659,
+        "source": ".derivatives_at_algebraic_parameter(&source.parameter, order, policy)"
+      },
+      {
+        "line": 2662,
+        "source": ".derivatives_at_algebraic_parameter(&source.parameter, order, policy)"
+      }
+    ],
+    "hypercurve/src/bezier_offset.rs": [
+      {
+        "line": 63,
+        "source": "RationalBezierAlgebraicTangentImage2, RationalBezierIntersectionContacts2,"
+      },
+      {
+        "line": 16222,
+        "source": ") -> CurveResult<RationalBezierAlgebraicTangentImage2> {"
+      },
+      {
+        "line": 17117,
+        "source": ") -> CurveResult<Classification<RationalBezierAlgebraicTangentImage2>> {"
+      },
+      {
+        "line": 145567,
+        "source": "image: &RationalBezierAlgebraicTangentImage2,"
+      },
+      {
+        "line": 145680,
+        "source": "tangent: &RationalBezierAlgebraicTangentImage2,"
+      }
+    ],
+    "hypercurve/src/bezier_parameter.rs": [
+      {
+        "line": 155,
+        "source": "derivatives: Arc<[crate::RationalBezierAlgebraicTangentImage2]>,"
+      },
+      {
+        "line": 1280,
+        "source": ") -> Option<Vec<crate::RationalBezierAlgebraicTangentImage2>> {"
+      },
+      {
+        "line": 1300,
+        "source": "images: Vec<crate::RationalBezierAlgebraicTangentImage2>,"
+      },
+      {
+        "line": 1379,
+        "source": ") -> Option<Vec<crate::RationalBezierAlgebraicTangentImage2>> {"
+      },
+      {
+        "line": 1399,
+        "source": "images: Vec<crate::RationalBezierAlgebraicTangentImage2>,"
+      }
+    ],
+    "hypercurve/src/bezier_split_endpoint.rs": [
+      {
+        "line": 19,
+        "source": "RationalBezierAlgebraicTangentImage2, RationalQuadraticBezier2,"
+      },
+      {
+        "line": 33,
+        "source": "tangent: RationalBezierAlgebraicTangentImage2,"
+      },
+      {
+        "line": 34,
+        "source": "second_derivative: Option<RationalBezierAlgebraicTangentImage2>,"
+      },
+      {
+        "line": 35,
+        "source": "third_derivative: Option<RationalBezierAlgebraicTangentImage2>,"
+      },
+      {
+        "line": 42,
+        "source": "tangent: OnceLock<CurveResult<RationalBezierAlgebraicTangentImage2>>,"
+      },
+      {
+        "line": 51,
+        "source": "&& self.try_tangent() == other.try_tangent()"
+      },
+      {
+        "line": 114,
+        "source": "tangent: curve.tangent_at_algebraic_parameter(parameter, policy)?,"
+      },
+      {
+        "line": 137,
+        "source": "tangent: curve.tangent_at_algebraic_parameter(parameter, policy)?,"
+      },
+      {
+        "line": 159,
+        "source": ".derivatives_at_algebraic_parameter(parameter, 3, policy)?"
+      },
+      {
+        "line": 204,
+        "source": ".derivatives_at_algebraic_parameter(parameter, 3, policy)?"
+      },
+      {
+        "line": 279,
+        "source": "pub fn tangent(&self) -> &RationalBezierAlgebraicTangentImage2 {"
+      },
+      {
+        "line": 280,
+        "source": "self.try_tangent()"
+      },
+      {
+        "line": 286,
+        "source": "pub fn second_derivative(&self) -> Option<&RationalBezierAlgebraicTangentImage2> {"
+      },
+      {
+        "line": 296,
+        "source": "pub fn third_derivative(&self) -> Option<&RationalBezierAlgebraicTangentImage2> {"
+      },
+      {
+        "line": 309,
+        "source": "&& self.try_tangent().is_ok_and(|tangent| {"
+      },
+      {
+        "line": 321,
+        "source": "&& self.try_tangent() == expected.try_tangent()"
+      },
+      {
+        "line": 384,
+        "source": "pub(crate) fn try_tangent(&self) -> CurveResult<&RationalBezierAlgebraicTangentImage2> {"
+      },
+      {
+        "line": 397,
+        "source": "return curve.tangent_at_algebraic_parameter(parameter, policy);"
+      },
+      {
+        "line": 400,
+        "source": "return curve.tangent_at_algebraic_parameter(parameter, policy);"
+      },
+      {
+        "line": 403,
+        "source": "curve.derivatives_at_algebraic_parameter(parameter, 1, policy)"
+      },
+      {
+        "line": 406,
+        "source": "curve.derivatives_at_algebraic_parameter(parameter, 1, policy)"
+      },
+      {
+        "line": 420,
+        "source": "derivative: RationalBezierAlgebraicTangentImage2,"
+      },
+      {
+        "line": 421,
+        "source": ") -> Option<RationalBezierAlgebraicTangentImage2> {"
+      }
+    ],
+    "hypercurve/src/bezier_tangent_order.rs": [
+      {
+        "line": 18,
+        "source": "BezierAlgebraicImageStatus, Classification, CurveContext, RationalBezierAlgebraicTangentImage2,"
+      },
+      {
+        "line": 44,
+        "source": "image: &RationalBezierAlgebraicTangentImage2,"
+      },
+      {
+        "line": 230,
+        "source": "first: &RationalBezierAlgebraicTangentImage2,"
+      },
+      {
+        "line": 231,
+        "source": "second: &RationalBezierAlgebraicTangentImage2,"
+      }
+    ],
+    "hypercurve/src/curve_region_boolean.rs": [
+      {
+        "line": 45,
+        "source": "LineSeg2, LineSide, QuadraticBezier2, RationalBezier2, RationalBezierAlgebraicTangentImage2,"
+      },
+      {
+        "line": 9121,
+        "source": "tangent: &crate::RationalBezierAlgebraicTangentImage2,"
+      },
+      {
+        "line": 14551,
+        "source": ") -> Option<&RationalBezierAlgebraicTangentImage2> {"
+      },
+      {
+        "line": 14565,
+        "source": ".and_then(|image| image.try_tangent().ok());"
+      },
+      {
+        "line": 14570,
+        "source": ".and_then(|image| image.try_tangent().ok());"
+      }
+    ],
+    "hypercurve/src/lib.rs": [
+      {
+        "line": 89,
+        "source": "RationalBezierAlgebraicPointImage2, RationalBezierAlgebraicTangentImage2,"
+      }
+    ],
+    "hypercurve/src/rational_bezier_general.rs": [
+      {
+        "line": 49,
+        "source": "RationalBezierAlgebraicPointImage2, RationalBezierAlgebraicTangentImage2,"
+      },
+      {
+        "line": 2153,
+        "source": "pub fn tangent_at_algebraic_parameter("
+      },
+      {
+        "line": 2157,
+        "source": ") -> CurveResult<RationalBezierAlgebraicTangentImage2> {"
+      },
+      {
+        "line": 2159,
+        "source": ".derivatives_at_algebraic_parameter(parameter, 1, policy)?"
+      },
+      {
+        "line": 2171,
+        "source": "pub fn derivatives_at_algebraic_parameter("
+      },
+      {
+        "line": 2176,
+        "source": ") -> CurveResult<Vec<RationalBezierAlgebraicTangentImage2>> {"
+      }
+    ],
+    "hypercurve/tests/hypercurve_bezier_algebraic_image.rs": [
+      {
+        "line": 62,
+        "source": ".tangent_at_algebraic_parameter(&parameter, &policy())"
+      },
+      {
+        "line": 113,
+        "source": ".tangent_at_algebraic_parameter(&parameter, &policy())"
+      },
+      {
+        "line": 179,
+        "source": ".tangent_at_algebraic_parameter(&parameter, &policy())"
+      },
+      {
+        "line": 405,
+        "source": ".tangent_at_algebraic_parameter(&parameter, &policy())"
+      },
+      {
+        "line": 408,
+        "source": ".tangent_at_algebraic_parameter(&parameter, &policy())"
+      },
+      {
+        "line": 484,
+        "source": ".tangent_at_algebraic_parameter(&pole, &policy)"
+      },
+      {
+        "line": 487,
+        "source": "BezierAlgebraicImageStatus::XImageFailed"
+      },
+      {
+        "line": 513,
+        "source": "let tangent = curve.tangent_at_algebraic_parameter(&parameter, &policy()).unwrap();"
+      },
+      {
+        "line": 552,
+        "source": "let tangent = conic.tangent_at_algebraic_parameter(&parameter, &policy()).unwrap();"
+      },
+      {
+        "line": 673,
+        "source": ".tangent_at_algebraic_parameter(&root, &policy)"
+      },
+      {
+        "line": 689,
+        "source": ".tangent_at_algebraic_parameter(&root, &policy)"
+      }
+    ],
+    "hypercurve/tests/hypercurve_bezier_split_materialization.rs": [
+      {
+        "line": 2,
+        "source": "BezierAlgebraicEndpointImage2, BezierAlgebraicImageStatus, RationalBezierAlgebraicTangentImage2,"
+      },
+      {
+        "line": 114,
+        "source": "fn assert_transformed_tangent(tangent: &RationalBezierAlgebraicTangentImage2) {"
+      }
+    ],
+    "hypercurve/tests/hypercurve_bezier_tangent_order.rs": [
+      {
+        "line": 88,
+        "source": ".tangent_at_algebraic_parameter(parameter, &policy())"
+      }
+    ],
+    "hypercurve/tests/hypercurve_rational_bezier.rs": [
+      {
+        "line": 1015,
+        "source": ".derivatives_at_algebraic_parameter(first_parameter, 3, &policy)"
+      }
+    ]
+  },
+  "source_findings": [
+    "The tangent constructor discards RationalCoordinateImagePair::Failed.reason and returns a tangent object with no exact definition.",
+    "The lazy endpoint tangent OnceLock caches construction errors and failed images.",
+    "The same affine-domain authority already returns Classification for point construction."
+  ],
+  "runtime_counterexample": false
+}

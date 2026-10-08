@@ -1,0 +1,65 @@
+{
+  "checks": [
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "check",
+        "--all-targets",
+        "--all-features",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "log": "biquadratic-basis-20260923-v3-hypercurve-check-0.log"
+    },
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "check",
+        "--all-targets",
+        "--no-default-features",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "log": "biquadratic-basis-20260923-v3-hypercurve-check-1.log"
+    }
+  ],
+  "cases": [
+    {
+      "name": "bezier_offset::conversion_tests::selected_fiber_transverse_mapped_cut_inverts_by_point",
+      "returncode": 101,
+      "passed": false,
+      "limit_seconds": 180,
+      "elapsed_seconds": 4.163434110931121,
+      "log": "biquadratic-basis-20260923-v3-hypercurve-case-0.log"
+    },
+    {
+      "name": "bezier_offset::conversion_tests::selected_fiber_analytic_transverse_cut_inverts_by_point",
+      "returncode": 0,
+      "passed": true,
+      "limit_seconds": 120,
+      "elapsed_seconds": 0.24982113006990403,
+      "log": "biquadratic-basis-20260923-v3-hypercurve-case-1.log"
+    },
+    {
+      "name": "bezier_offset::conversion_tests::selected_fiber_mapped_cut_inverts_on_analytic_overlap",
+      "returncode": 0,
+      "passed": true,
+      "limit_seconds": 120,
+      "elapsed_seconds": 0.2518510699737817,
+      "log": "biquadratic-basis-20260923-v3-hypercurve-case-2.log"
+    },
+    {
+      "name": "bezier_region::tests::nonrepresented_chord_and_retained_rational_arc_share_the_fillet_kernel",
+      "returncode": 0,
+      "passed": true,
+      "limit_seconds": 180,
+      "elapsed_seconds": 0.6559468240011483,
+      "log": "biquadratic-basis-20260923-v3-hypercurve-case-3.log"
+    }
+  ],
+  "binary_sha256": "f8353eec614140b64b87bab9c0719ffae221c24a39bc0c18f98dd039a0fbb537",
+  "all_sources_unchanged": true,
+  "all_processes_reaped": true
+}

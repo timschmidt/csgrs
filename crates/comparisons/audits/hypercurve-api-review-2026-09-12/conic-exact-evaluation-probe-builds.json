@@ -1,0 +1,57 @@
+{
+  "library": "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/libhypercurve-2c7ff6f3fbe07653.rlib",
+  "library_sha256": "16139de37f11e06bd3791e25dc48f7dedaae18a781f9ea6efeab5647e06d3b3e",
+  "builds": [
+    {
+      "source": "exact-real-image-independent-strict-probe.rs",
+      "binary": "exact-real-image-independent-strict-conic-evaluation",
+      "command": [
+        "rustc",
+        "--edition=2024",
+        "-O",
+        "exact-real-image-independent-strict-probe.rs",
+        "--extern",
+        "hypercurve=/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/libhypercurve-2c7ff6f3fbe07653.rlib",
+        "-L",
+        "dependency=/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps",
+        "-o",
+        "exact-real-image-independent-strict-conic-evaluation"
+      ],
+      "binary_sha256": "2ee6cb17e424c3059db7a931031ca7e231440559c22451cce55912ec71f145c6"
+    },
+    {
+      "source": "stationary-ph-offset-inspect.rs",
+      "binary": "stationary-ph-offset-conic-evaluation",
+      "command": [
+        "rustc",
+        "--edition=2024",
+        "-O",
+        "stationary-ph-offset-inspect.rs",
+        "--extern",
+        "hypercurve=/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/libhypercurve-2c7ff6f3fbe07653.rlib",
+        "-L",
+        "dependency=/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps",
+        "-o",
+        "stationary-ph-offset-conic-evaluation"
+      ],
+      "binary_sha256": "fcd4c3f5baace808ce0eebc29206a324067710baafca4c2b6cacbea3edae5fed"
+    },
+    {
+      "source": "stationary-ph-offset-approximate-inspect.rs",
+      "binary": "stationary-ph-offset-conic-evaluation-approximate",
+      "command": [
+        "rustc",
+        "--edition=2024",
+        "-O",
+        "stationary-ph-offset-approximate-inspect.rs",
+        "--extern",
+        "hypercurve=/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/libhypercurve-2c7ff6f3fbe07653.rlib",
+        "-L",
+        "dependency=/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps",
+        "-o",
+        "stationary-ph-offset-conic-evaluation-approximate"
+      ],
+      "binary_sha256": "fc76fb1136498d863460cd08d060ee36ca35a63455d5de2d3a5608e2cd4d340c"
+    }
+  ]
+}

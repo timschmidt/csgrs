@@ -1,0 +1,35 @@
+{
+  "repo": "hypercurve",
+  "target": "lib",
+  "binary": "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve-6e6572a45c5b177b",
+  "filter": "curve_intersection::curve_support_intersection::circle_dispatch_tests",
+  "command": [
+    "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve-6e6572a45c5b177b",
+    "--test-threads=4",
+    "--color",
+    "never",
+    "curve_intersection::curve_support_intersection::circle_dispatch_tests"
+  ],
+  "sha256": "6e5ab53742e333fa5a4484f39adcc2ed13e030b1b6a02396d270a382bf91aa39",
+  "returncode": 0,
+  "timed_out": false,
+  "elapsed_seconds": 1.0653689589962596,
+  "log": "circle-common-dispatch-focused-curve_intersection::curve_support_intersection::circle_dispatch_tests.log",
+  "passed": [
+    "curve_intersection::curve_support_intersection::circle_dispatch_tests::complementary_circle_halves_keep_both_endpoint_contacts",
+    "curve_intersection::curve_support_intersection::circle_dispatch_tests::selected_circle_normal_requires_a_regular_selected_source_point",
+    "curve_intersection::curve_support_intersection::circle_dispatch_tests::selected_circle_overlaps_preserve_oriented_ranges_and_singleton_contacts",
+    "curve_intersection::curve_support_intersection::circle_dispatch_tests::selected_circle_pairs_replay_crossings_tangencies_and_disjointness",
+    "curve_intersection::curve_support_intersection::circle_dispatch_tests::selected_circle_split_results_reenter_intersections",
+    "curve_intersection::curve_support_intersection::circle_dispatch_tests::selected_circle_and_analytic_parallel_keep_contact_authority",
+    "curve_intersection::curve_support_intersection::circle_dispatch_tests::selected_circle_intersects_rational_curves_and_retained_chords",
+    "curve_intersection::curve_support_intersection::circle_dispatch_tests::selected_circle_and_non_ph_parallel_keep_both_crossings"
+  ],
+  "failed": [],
+  "ignored": [],
+  "summaries": [
+    "test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 1091 filtered out; finished in 1.05s"
+  ],
+  "new_failures": [],
+  "known_failures": []
+}

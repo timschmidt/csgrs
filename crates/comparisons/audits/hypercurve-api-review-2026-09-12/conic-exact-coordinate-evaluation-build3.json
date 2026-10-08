@@ -1,0 +1,16 @@
+{
+  "command": [
+    "rustc",
+    "--edition=2024",
+    "-O",
+    "conic-exact-coordinate-evaluation-diagnostic.rs",
+    "--extern",
+    "hypercurve=/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/libhypercurve-2c7ff6f3fbe07653.rlib",
+    "-L",
+    "dependency=/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps",
+    "-o",
+    "conic-exact-coordinate-evaluation-build3"
+  ],
+  "library_sha256": "16139de37f11e06bd3791e25dc48f7dedaae18a781f9ea6efeab5647e06d3b3e",
+  "returncode": 0
+}

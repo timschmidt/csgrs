@@ -1,0 +1,106 @@
+{
+  "source_manifest": "constrained-fillet-api-20260926-v300-sources.json",
+  "source_directory": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/source-archives/constrained-fillet-api-20260926-v300",
+  "cases": [
+    {
+      "binary": "constrained-fillet-api-20260926-v300-hypercurve",
+      "name": "curve::curve_fillet::tests::continuous_fillet_constraints_accept_arbitrary_exact_real_contacts",
+      "returncode": 0,
+      "log": "constrained-fillet-api-20260926-v300-case-000.log",
+      "elapsed_seconds": 0.21405319799669087
+    },
+    {
+      "binary": "constrained-fillet-api-20260926-v300-hypercurve",
+      "name": "curve::curve_fillet::tests::fillet_contacts_use_authored_spline_knots_across_multiple_charts",
+      "returncode": 0,
+      "log": "constrained-fillet-api-20260926-v300-case-001.log",
+      "elapsed_seconds": 0.0035540559329092503
+    },
+    {
+      "binary": "constrained-fillet-api-20260926-v300-hypercurve",
+      "name": "curve::curve_fillet::tests::isolated_fillet_constraints_are_conjunctive_and_use_input_parameters",
+      "returncode": 0,
+      "log": "constrained-fillet-api-20260926-v300-case-002.log",
+      "elapsed_seconds": 0.0035545569844543934
+    },
+    {
+      "binary": "constrained-fillet-api-20260926-v300-hypercurve",
+      "name": "curve::curve_fillet::tests::joined_path_selects_and_replays_a_continuous_fillet_family",
+      "returncode": 0,
+      "log": "constrained-fillet-api-20260926-v300-case-003.log",
+      "elapsed_seconds": 3.167893892969005
+    },
+    {
+      "binary": "constrained-fillet-api-20260926-v300-hypercurve",
+      "name": "curve::curve_fillet::tests::normalized_region_selects_and_reuses_a_continuous_fillet_family",
+      "returncode": 0,
+      "log": "constrained-fillet-api-20260926-v300-case-004.log",
+      "elapsed_seconds": 0.1139068870106712
+    },
+    {
+      "binary": "constrained-fillet-api-20260926-v300-hypercurve",
+      "name": "curve::curve_fillet::tests::promoted_line_contact_constraints_keep_the_nonlinear_source_chart",
+      "returncode": 0,
+      "log": "constrained-fillet-api-20260926-v300-case-005.log",
+      "elapsed_seconds": 0.0035497170174494386
+    },
+    {
+      "binary": "constrained-fillet-api-20260926-v300-hypercurve",
+      "name": "curve::tests::distinct_parallel_sources_keep_a_shared_fillet_center_family",
+      "returncode": 0,
+      "log": "constrained-fillet-api-20260926-v300-case-006.log",
+      "elapsed_seconds": 0.03174159303307533
+    }
+  ],
+  "builds": [
+    {
+      "crate": "hypercurve",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "test",
+        "--lib",
+        "--release",
+        "--all-features",
+        "--no-run",
+        "--message-format=json",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "log": "constrained-fillet-api-20260926-v300-hypercurve-build.log",
+      "elapsed_seconds": 131.7606316099409,
+      "binary": {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/constrained-fillet-api-20260926-v300-hypercurve",
+        "sha256": "c124fa20e6ef949daed27c56aa20a93a305b0ad29859ff9cbfc432af9481b996"
+      }
+    }
+  ],
+  "all_processes_reaped": true,
+  "checks": [
+    {
+      "label": "check-all-targets",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "check",
+        "--all-targets",
+        "--all-features",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "log": "constrained-fillet-api-20260926-v300-check-all-targets.log",
+      "elapsed_seconds": 18.29177291900851
+    }
+  ],
+  "qualification_scope": "Constrained fillet public API and direct caller migration; authored parameter charts, isolated and continuous solutions, region compositions",
+  "expected_cases": [
+    "curve::curve_fillet::tests::continuous_fillet_constraints_accept_arbitrary_exact_real_contacts",
+    "curve::curve_fillet::tests::fillet_contacts_use_authored_spline_knots_across_multiple_charts",
+    "curve::curve_fillet::tests::isolated_fillet_constraints_are_conjunctive_and_use_input_parameters",
+    "curve::curve_fillet::tests::joined_path_selects_and_replays_a_continuous_fillet_family",
+    "curve::curve_fillet::tests::normalized_region_selects_and_reuses_a_continuous_fillet_family",
+    "curve::curve_fillet::tests::promoted_line_contact_constraints_keep_the_nonlinear_source_chart",
+    "curve::tests::distinct_parallel_sources_keep_a_shared_fillet_center_family"
+  ],
+  "qualification_complete": true
+}

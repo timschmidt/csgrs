@@ -1,0 +1,163 @@
+[
+  {
+    "repo": "flint",
+    "path": "src/fmpz_mat/is_reduced.c",
+    "newRanges": [
+      [
+        1,
+        69
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "src/fmpz_mat/is_reduced_gram.c",
+    "newRanges": [
+      [
+        1,
+        99
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "src/fmpz_lll/is_reduced.c",
+    "newRanges": [
+      [
+        1,
+        60
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "src/d_mat/mul_classical.c",
+    "newRanges": [
+      [
+        1,
+        73
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "src/d_mat/transpose.c",
+    "newRanges": [
+      [
+        1,
+        42
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "src/fmpz_mat/get.c",
+    "newRanges": [
+      [
+        1,
+        103
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "src/fmpz_mat/test/t-get_d_mat_transpose.c",
+    "newRanges": [
+      [
+        1,
+        65
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "src/fmpz_lll/context_init_default.c",
+    "newRanges": [
+      [
+        1,
+        23
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "src/fmpz_lll/context_init.c",
+    "newRanges": [
+      [
+        1,
+        24
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "src/gr_mat/is_lll_reduced.c",
+    "newRanges": [
+      [
+        1,
+        107
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "src/fmpz/get.c",
+    "newRanges": [
+      [
+        1,
+        288
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "src/mpn_extras/get_d.c",
+    "newRanges": [
+      [
+        1,
+        232
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "src/fmpz_lll/test/t-lll_is_reduced.c",
+    "newRanges": [
+      [
+        1,
+        150
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "src/fmpz_lll/is_reduced_mpfr.c",
+    "newRanges": [
+      [
+        1,
+        881
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "src/fmpz_lll/is_reduced_d.c",
+    "newRanges": [
+      [
+        1,
+        764
+      ]
+    ],
+    "previous": {
+      "repo": "flint",
+      "path": "src/fmpz_lll/is_reduced_d.c",
+      "ranges": [
+        [
+          765,
+          821
+        ]
+      ],
+      "note": "Only 765..821 read after the instrumented matrix-function abort: final directed-rounding bounds, rounding-mode restoration, exact reduced-basis assertion and return. Earlier function/setup and recursively called reduced-basis checks remain unread; root cause and native reproducibility are not established by this tail."
+    }
+  }
+]

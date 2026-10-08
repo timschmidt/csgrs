@@ -1,0 +1,329 @@
+\doxysubsection{python/tutorials/hybrid\+\_\+evolution\+\_\+tutorial.\+py}
+\hypertarget{python_2tutorials_2hybrid_evolution_tutorial_8py-example}{}\label{python_2tutorials_2hybrid_evolution_tutorial_8py-example}A tutorial on using the Python interface to analyse a system.
+
+
+\begin{DoxyCodeInclude}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{\#!/usr/bin/python3}}
+\DoxyCodeLine{00002\ }
+\DoxyCodeLine{00003\ }
+\DoxyCodeLine{00008\ }
+\DoxyCodeLine{00009\ \textcolor{comment}{\#\ Ariadne\ is\ free\ software:\ you\ can\ redistribute\ it\ and/or\ modify}}
+\DoxyCodeLine{00010\ \textcolor{comment}{\#\ it\ under\ the\ terms\ of\ the\ GNU\ General\ Public\ License\ as\ published\ by}}
+\DoxyCodeLine{00011\ \textcolor{comment}{\#\ the\ Free\ Software\ Foundation,\ either\ version\ 3\ of\ the\ License,\ or}}
+\DoxyCodeLine{00012\ \textcolor{comment}{\#\ (at\ your\ option)\ any\ later\ version.}}
+\DoxyCodeLine{00013\ }
+\DoxyCodeLine{00014\ \textcolor{comment}{\#\ Ariadne\ is\ distributed\ in\ the\ hope\ that\ it\ will\ be\ useful,}}
+\DoxyCodeLine{00015\ \textcolor{comment}{\#\ but\ WITHOUT\ ANY\ WARRANTY;\ without\ even\ the\ implied\ warranty\ of}}
+\DoxyCodeLine{00016\ \textcolor{comment}{\#\ MERCHANTABILITY\ or\ FITNESS\ FOR\ A\ PARTICULAR\ PURPOSE.\ \ See\ the}}
+\DoxyCodeLine{00017\ \textcolor{comment}{\#\ GNU\ General\ Public\ License\ for\ more\ details.}}
+\DoxyCodeLine{00018\ }
+\DoxyCodeLine{00019\ \textcolor{comment}{\#\ You\ should\ have\ received\ a\ copy\ of\ the\ GNU\ General\ Public\ License}}
+\DoxyCodeLine{00020\ \textcolor{comment}{\#\ along\ with\ Ariadne.\ If\ not,\ see\ <https://www.gnu.org/licenses/>.}}
+\DoxyCodeLine{00021\ }
+\DoxyCodeLine{00022\ \textcolor{comment}{\#\ Import\ all\ classes\ in\ the\ ariadne\ module}}
+\DoxyCodeLine{00023\ \textcolor{keyword}{from}\ pyariadne\ \textcolor{keyword}{import}\ *}
+\DoxyCodeLine{00024\ }
+\DoxyCodeLine{00025\ \textcolor{comment}{\#!\ [get\_tank]}}
+\DoxyCodeLine{00026\ \textcolor{keyword}{def\ }get\_tank():}
+\DoxyCodeLine{00027\ \ \ \ \ \textcolor{comment}{\#\ Declare\ the\ system\ constants}}
+\DoxyCodeLine{00028\ \ \ \ \ alpha\ =\ RealConstant(\textcolor{stringliteral}{"{}alpha"{}},dec\_(0.02))}
+\DoxyCodeLine{00029\ \ \ \ \ beta\ =\ RealConstant(\textcolor{stringliteral}{"{}beta"{}},dec\_(0.3))}
+\DoxyCodeLine{00030\ }
+\DoxyCodeLine{00031\ \ \ \ \ \textcolor{comment}{\#\ Declare\ the\ variables\ for\ the\ dynamics}}
+\DoxyCodeLine{00032\ \ \ \ \ aperture\ =\ RealVariable(\textcolor{stringliteral}{"{}aperture"{}})}
+\DoxyCodeLine{00033\ \ \ \ \ height\ =\ RealVariable(\textcolor{stringliteral}{"{}height"{}})}
+\DoxyCodeLine{00034\ }
+\DoxyCodeLine{00035\ \ \ \ \ \textcolor{comment}{\#\ Create\ the\ tank\ automaton}}
+\DoxyCodeLine{00036\ \ \ \ \ automaton\ =\ HybridAutomaton()}
+\DoxyCodeLine{00037\ }
+\DoxyCodeLine{00038\ \ \ \ \ \textcolor{comment}{\#\ The\ water\ level\ is\ always\ given\ by\ the\ same\ dynamic.}}
+\DoxyCodeLine{00039\ \ \ \ \ \textcolor{comment}{\#\ The\ inflow\ is\ controlled\ by\ the\ valve\ aperture,\ the\ outflow\ depends\ on\ the}}
+\DoxyCodeLine{00040\ \ \ \ \ \textcolor{comment}{\#\ pressure,\ which\ is\ proportional\ to\ the\ water\ height.}}
+\DoxyCodeLine{00041\ \ \ \ \ automaton.new\_mode(\{dot(height):beta*aperture-\/alpha*height\})}
+\DoxyCodeLine{00042\ }
+\DoxyCodeLine{00043\ \ \ \ \ \textcolor{keywordflow}{return}\ automaton}
+\DoxyCodeLine{00044\ }
+\DoxyCodeLine{00045\ \textcolor{comment}{\#!\ [/get\_tank]}}
+\DoxyCodeLine{00046\ }
+\DoxyCodeLine{00047\ }
+\DoxyCodeLine{00048\ \textcolor{comment}{\#!\ [get\_valve]}}
+\DoxyCodeLine{00049\ \textcolor{keyword}{def\ }get\_valve():}
+\DoxyCodeLine{00050\ \ \ \ \ \textcolor{comment}{\#\ Declare\ some\ constants.\ Note\ that\ system\ parameters\ should\ be\ given\ as\ variables.}}
+\DoxyCodeLine{00051\ \ \ \ \ T\ =\ RealConstant(\textcolor{stringliteral}{"{}T"{}},4)}
+\DoxyCodeLine{00052\ }
+\DoxyCodeLine{00053\ \ \ \ \ \textcolor{comment}{\#\ Declare\ the\ shared\ system\ variables}}
+\DoxyCodeLine{00054\ \ \ \ \ aperture\ =\ RealVariable(\textcolor{stringliteral}{"{}aperture"{}})}
+\DoxyCodeLine{00055\ }
+\DoxyCodeLine{00056\ \ \ \ \ \textcolor{comment}{\#\ Declare\ the\ events\ we\ use}}
+\DoxyCodeLine{00057\ \ \ \ \ stop\_opening\ =\ DiscreteEvent(\textcolor{stringliteral}{"{}stop\_opening"{}})}
+\DoxyCodeLine{00058\ \ \ \ \ stop\_closing\ =\ DiscreteEvent(\textcolor{stringliteral}{"{}stop\_closing"{}})}
+\DoxyCodeLine{00059\ \ \ \ \ can\_open\ =\ DiscreteEvent(\textcolor{stringliteral}{"{}can\_open"{}})}
+\DoxyCodeLine{00060\ \ \ \ \ can\_close\ =\ DiscreteEvent(\textcolor{stringliteral}{"{}can\_close"{}})}
+\DoxyCodeLine{00061\ }
+\DoxyCodeLine{00062\ \ \ \ \ \textcolor{comment}{\#\ Declare\ the\ variable\ for\ the\ automaton\ name}}
+\DoxyCodeLine{00063\ \ \ \ \ valve\ =\ StringVariable(\textcolor{stringliteral}{"{}valve"{}})}
+\DoxyCodeLine{00064\ }
+\DoxyCodeLine{00065\ \ \ \ \ \textcolor{comment}{\#\ Create\ the\ valve\ automaton}}
+\DoxyCodeLine{00066\ \ \ \ \ automaton\ =\ HybridAutomaton(valve.name())}
+\DoxyCodeLine{00067\ }
+\DoxyCodeLine{00068\ \ \ \ \ \textcolor{comment}{\#\ Declare\ the\ values\ the\ valve\ variable\ can\ have}}
+\DoxyCodeLine{00069\ \ \ \ \ opening\ =\ DiscreteLocation(\{valve:\textcolor{stringliteral}{"{}opening"{}}\})}
+\DoxyCodeLine{00070\ \ \ \ \ closed\ =\ DiscreteLocation(\{valve:\textcolor{stringliteral}{"{}closed"{}}\})}
+\DoxyCodeLine{00071\ \ \ \ \ opened\ =\ DiscreteLocation(\{valve:\textcolor{stringliteral}{"{}opened"{}}\})}
+\DoxyCodeLine{00072\ \ \ \ \ closing\ =\ DiscreteLocation(\{valve:\textcolor{stringliteral}{"{}closing"{}}\})}
+\DoxyCodeLine{00073\ }
+\DoxyCodeLine{00074\ \ \ \ \ \textcolor{comment}{\#\ Define\ the\ algebraic\ equations\ for\ the\ opened/closed\ locations.}}
+\DoxyCodeLine{00075\ \ \ \ \ automaton.new\_mode(opened,\{let(aperture):1\})}
+\DoxyCodeLine{00076\ \ \ \ \ automaton.new\_mode(closed,\{let(aperture):0\})}
+\DoxyCodeLine{00077\ \ \ \ \ \textcolor{comment}{\#\ Define\ the\ differential\ equations\ for\ the\ opening/closing\ locations.}}
+\DoxyCodeLine{00078\ \ \ \ \ automaton.new\_mode(opening,\{dot(aperture):+1/T\})}
+\DoxyCodeLine{00079\ \ \ \ \ automaton.new\_mode(closing,\{dot(aperture):-\/1/T\})}
+\DoxyCodeLine{00080\ }
+\DoxyCodeLine{00081\ \ \ \ \ \textcolor{comment}{\#\ Define\ the\ transitions:\ source\ location,\ event\ and\ target\ location}}
+\DoxyCodeLine{00082\ \ \ \ \ \textcolor{comment}{\#\ then\ a\ mix\ of\ reset,\ guard\ and\ event\ kind\ can\ be\ present;\ if\ the\ event\ kind}}
+\DoxyCodeLine{00083\ \ \ \ \ \textcolor{comment}{\#\ is\ not\ specified,\ then\ also\ the\ guard\ can't\ be\ specified:\ this\ implicitly}}
+\DoxyCodeLine{00084\ \ \ \ \ \textcolor{comment}{\#\ means\ that\ the\ event\ is\ an\ input\ event\ for\ this\ automaton.}}
+\DoxyCodeLine{00085\ \ \ \ \ automaton.new\_transition(closed,can\_open,opening,\{next(aperture):aperture\})}
+\DoxyCodeLine{00086\ \ \ \ \ automaton.new\_transition(opening,stop\_opening,opened,aperture>=1,URGENT)}
+\DoxyCodeLine{00087\ \ \ \ \ automaton.new\_transition(opened,can\_close,closing,\{next(aperture):aperture\})}
+\DoxyCodeLine{00088\ \ \ \ \ automaton.new\_transition(closing,stop\_closing,closed,aperture<=0,URGENT)}
+\DoxyCodeLine{00089\ \ \ \ \ automaton.new\_transition(opening,can\_close,closing,\{next(aperture):aperture\})}
+\DoxyCodeLine{00090\ \ \ \ \ automaton.new\_transition(closing,can\_open,opening,\{next(aperture):aperture\})}
+\DoxyCodeLine{00091\ }
+\DoxyCodeLine{00092\ \ \ \ \ \textcolor{keywordflow}{return}\ automaton}
+\DoxyCodeLine{00093\ }
+\DoxyCodeLine{00094\ \textcolor{comment}{\#!\ [/get\_valve]}}
+\DoxyCodeLine{00095\ }
+\DoxyCodeLine{00096\ }
+\DoxyCodeLine{00097\ \textcolor{comment}{\#!\ [get\_controller]}}
+\DoxyCodeLine{00098\ \textcolor{keyword}{def\ }get\_controller():}
+\DoxyCodeLine{00099\ \ \ \ \ \textcolor{comment}{\#\ Declare\ some\ constants}}
+\DoxyCodeLine{00100\ \ \ \ \ hmin\ =\ RealConstant(\textcolor{stringliteral}{"{}hmin"{}},dec\_(5.75))}
+\DoxyCodeLine{00101\ \ \ \ \ hmax\ =\ RealConstant(\textcolor{stringliteral}{"{}hmax"{}},dec\_(7.75))}
+\DoxyCodeLine{00102\ \ \ \ \ delta\ =\ RealConstant(\textcolor{stringliteral}{"{}delta"{}},dec\_(0.02))}
+\DoxyCodeLine{00103\ }
+\DoxyCodeLine{00104\ \ \ \ \ \textcolor{comment}{\#\ Declare\ the\ shared\ system\ variables}}
+\DoxyCodeLine{00105\ \ \ \ \ height\ =\ RealVariable(\textcolor{stringliteral}{"{}height"{}})}
+\DoxyCodeLine{00106\ }
+\DoxyCodeLine{00107\ \ \ \ \ \textcolor{comment}{\#\ Declare\ the\ events\ we\ use}}
+\DoxyCodeLine{00108\ \ \ \ \ can\_open\ =\ DiscreteEvent(\textcolor{stringliteral}{"{}can\_open"{}})}
+\DoxyCodeLine{00109\ \ \ \ \ can\_close\ =\ DiscreteEvent(\textcolor{stringliteral}{"{}can\_close"{}})}
+\DoxyCodeLine{00110\ \ \ \ \ must\_open\ =\ DiscreteEvent(\textcolor{stringliteral}{"{}must\_open"{}})}
+\DoxyCodeLine{00111\ \ \ \ \ must\_close\ =\ DiscreteEvent(\textcolor{stringliteral}{"{}must\_close"{}})}
+\DoxyCodeLine{00112\ }
+\DoxyCodeLine{00113\ \ \ \ \ \textcolor{comment}{\#\ Declare\ the\ variable\ for\ the\ automaton\ name}}
+\DoxyCodeLine{00114\ \ \ \ \ controller\ =\ StringVariable(\textcolor{stringliteral}{"{}controller"{}})}
+\DoxyCodeLine{00115\ }
+\DoxyCodeLine{00116\ \ \ \ \ \textcolor{comment}{\#\ Create\ the\ controller\ automaton}}
+\DoxyCodeLine{00117\ \ \ \ \ automaton\ =\ HybridAutomaton(controller.name())}
+\DoxyCodeLine{00118\ }
+\DoxyCodeLine{00119\ \ \ \ \ \textcolor{comment}{\#\ Declare\ the\ locations\ for\ the\ controller}}
+\DoxyCodeLine{00120\ \ \ \ \ rising\ =\ DiscreteLocation(\{controller:\textcolor{stringliteral}{"{}rising"{}}\})}
+\DoxyCodeLine{00121\ \ \ \ \ falling\ =\ DiscreteLocation(\{controller:\textcolor{stringliteral}{"{}falling"{}}\})}
+\DoxyCodeLine{00122\ }
+\DoxyCodeLine{00123\ \ \ \ \ \textcolor{comment}{\#\ Instantiate\ modes\ for\ each\ location\ with\ no\ dynamics}}
+\DoxyCodeLine{00124\ \ \ \ \ automaton.new\_mode(rising)}
+\DoxyCodeLine{00125\ \ \ \ \ automaton.new\_mode(falling)}
+\DoxyCodeLine{00126\ }
+\DoxyCodeLine{00127\ \ \ \ \ \textcolor{comment}{\#\ Specify\ the\ invariants\ valid\ in\ each\ mode.\ Note\ that\ every\ invariant}}
+\DoxyCodeLine{00128\ \ \ \ \ \textcolor{comment}{\#\ must\ have\ an\ action\ label.\ This\ is\ used\ internally,\ for\ example,\ to}}
+\DoxyCodeLine{00129\ \ \ \ \ \textcolor{comment}{\#\ check\ non-\/blockingness\ of\ urgent\ actions.}}
+\DoxyCodeLine{00130\ \ \ \ \ automaton.new\_invariant(falling,height>=hmin-\/delta,must\_open)}
+\DoxyCodeLine{00131\ \ \ \ \ automaton.new\_invariant(rising,height<=hmax+delta,must\_close)}
+\DoxyCodeLine{00132\ }
+\DoxyCodeLine{00133\ \ \ \ \ \textcolor{comment}{\#\ Specify\ the\ transitions,\ starting\ from\ the\ source\ location,\ according\ to\ an\ event,\ to\ a\ target\ location}}
+\DoxyCodeLine{00134\ \ \ \ \ \textcolor{comment}{\#\ Following\ those\ arguments\ you\ specify\ a\ guard\ and\ whether\ the\ event\ is\ permissive\ or\ urgent.}}
+\DoxyCodeLine{00135\ \ \ \ \ automaton.new\_transition(falling,can\_open,rising,height<=hmin+delta,PERMISSIVE)}
+\DoxyCodeLine{00136\ \ \ \ \ automaton.new\_transition(rising,can\_close,falling,height>=hmax-\/delta,PERMISSIVE)}
+\DoxyCodeLine{00137\ }
+\DoxyCodeLine{00138\ \ \ \ \ \textcolor{keywordflow}{return}\ automaton}
+\DoxyCodeLine{00139\ }
+\DoxyCodeLine{00140\ \textcolor{comment}{\#!\ [/get\_controller]}}
+\DoxyCodeLine{00141\ }
+\DoxyCodeLine{00142\ }
+\DoxyCodeLine{00143\ \textcolor{comment}{\#!\ [simulate\_evolution]}}
+\DoxyCodeLine{00144\ \textcolor{keyword}{def\ }simulate\_evolution(system,initial\_set,final\_time):}
+\DoxyCodeLine{00145\ \ \ \ \ \textcolor{comment}{\#\ Re-\/introduce\ the\ shared\ system\ variables\ required\ for\ the\ initial\ set}}
+\DoxyCodeLine{00146\ \ \ \ \ aperture\ =\ RealVariable(\textcolor{stringliteral}{"{}aperture"{}})}
+\DoxyCodeLine{00147\ \ \ \ \ height\ =\ RealVariable(\textcolor{stringliteral}{"{}height"{}})}
+\DoxyCodeLine{00148\ }
+\DoxyCodeLine{00149\ \ \ \ \ \textcolor{comment}{\#\ Create\ a\ simulator\ object}}
+\DoxyCodeLine{00150\ \ \ \ \ simulator\ =\ HybridSimulator(system)}
+\DoxyCodeLine{00151\ \ \ \ \ simulator.configuration().set\_step\_size(0.01)}
+\DoxyCodeLine{00152\ }
+\DoxyCodeLine{00153\ \ \ \ \ print(\textcolor{stringliteral}{"{}simulator.configuration()\ =\ "{}},simulator.configuration())}
+\DoxyCodeLine{00154\ }
+\DoxyCodeLine{00155\ \ \ \ \ \textcolor{comment}{\#\ Compute\ a\ simulation\ trajectory}}
+\DoxyCodeLine{00156\ \ \ \ \ print(\textcolor{stringliteral}{"{}Computing\ simulation\ trajectory..."{}})}
+\DoxyCodeLine{00157\ \ \ \ \ orbit\ =\ simulator.orbit(initial\_set,HybridTerminationCriterion(final\_time))}
+\DoxyCodeLine{00158\ }
+\DoxyCodeLine{00159\ \ \ \ \ \textcolor{comment}{\#\ Plot\ the\ simulation\ trajectory\ using\ all\ different\ projections}}
+\DoxyCodeLine{00160\ \ \ \ \ print(\textcolor{stringliteral}{"{}Plotting\ simulation\ trajectory.."{}})}
+\DoxyCodeLine{00161\ \ \ \ \ plot(\textcolor{stringliteral}{"{}simulation\_t-\/height"{}},Axes2d(0,TimeVariable(),30,5,height,9),orbit)}
+\DoxyCodeLine{00162\ \ \ \ \ plot(\textcolor{stringliteral}{"{}simulation\_t-\/aperture"{}},Axes2d(0,TimeVariable(),30,\ -\/0.1,aperture,1.1),orbit)}
+\DoxyCodeLine{00163\ \ \ \ \ plot(\textcolor{stringliteral}{"{}simulation\_height-\/aperture"{}},Axes2d(5,height,9,\ -\/0.1,aperture,1.1),orbit)}
+\DoxyCodeLine{00164\ \ \ \ \ print(\textcolor{stringliteral}{"{}Done\ computing\ and\ plotting\ simulation\ trajectory.."{}})}
+\DoxyCodeLine{00165\ }
+\DoxyCodeLine{00166\ \textcolor{comment}{\#!\ [/simulate\_evolution]}}
+\DoxyCodeLine{00167\ }
+\DoxyCodeLine{00168\ }
+\DoxyCodeLine{00169\ \textcolor{comment}{\#!\ [create\_evolver]}}
+\DoxyCodeLine{00170\ \textcolor{keyword}{def\ }create\_evolver(system):}
+\DoxyCodeLine{00171\ \ \ \ \ \textcolor{comment}{\#\ Create\ a\ GeneralHybridEvolver\ object}}
+\DoxyCodeLine{00172\ \ \ \ \ evolver\ =\ GeneralHybridEvolver(system)}
+\DoxyCodeLine{00173\ }
+\DoxyCodeLine{00174\ \ \ \ \ \textcolor{comment}{\#\ Set\ the\ evolver\ configuration}}
+\DoxyCodeLine{00175\ \ \ \ \ evolver.configuration().set\_maximum\_enclosure\_radius(3.0)}
+\DoxyCodeLine{00176\ \ \ \ \ evolver.configuration().set\_maximum\_step\_size(0.25)}
+\DoxyCodeLine{00177\ }
+\DoxyCodeLine{00178\ \ \ \ \ print(\textcolor{stringliteral}{"{}evolver.configuration()\ ="{}},evolver.configuration())}
+\DoxyCodeLine{00179\ }
+\DoxyCodeLine{00180\ \ \ \ \ \textcolor{keywordflow}{return}\ evolver}
+\DoxyCodeLine{00181\ }
+\DoxyCodeLine{00182\ \textcolor{comment}{\#!\ [/create\_evolver]}}
+\DoxyCodeLine{00183\ }
+\DoxyCodeLine{00184\ }
+\DoxyCodeLine{00185\ \textcolor{comment}{\#!\ [compute\_evolution]}}
+\DoxyCodeLine{00186\ \textcolor{keyword}{def\ }compute\_evolution(evolver,initial\_set,final\_time):}
+\DoxyCodeLine{00187\ \ \ \ \ \textcolor{comment}{\#\ Re-\/introduce\ the\ shared\ system\ variables\ required\ for\ plotting}}
+\DoxyCodeLine{00188\ \ \ \ \ aperture\ =\ RealVariable(\textcolor{stringliteral}{"{}aperture"{}})}
+\DoxyCodeLine{00189\ \ \ \ \ height\ =\ RealVariable(\textcolor{stringliteral}{"{}height"{}})}
+\DoxyCodeLine{00190\ \ \ \ \ time\ =\ TimeVariable()}
+\DoxyCodeLine{00191\ }
+\DoxyCodeLine{00192\ \ \ \ \ \textcolor{comment}{\#\ Compute\ the\ evolution\ flow\ tube\ using\ upper\ semantics}}
+\DoxyCodeLine{00193\ \ \ \ \ print(\textcolor{stringliteral}{"{}Computing\ evolution\ flow\ tube..."{}})}
+\DoxyCodeLine{00194\ \ \ \ \ orbit\ =\ evolver.orbit(initial\_set,HybridTerminationCriterion(final\_time),Semantics.UPPER)}
+\DoxyCodeLine{00195\ }
+\DoxyCodeLine{00196\ }
+\DoxyCodeLine{00197\ \ \ \ \ tmax\ =\ Approximation[FloatDP](final\_time.continuous\_time().get(dp)).get\_d()}
+\DoxyCodeLine{00198\ }
+\DoxyCodeLine{00199\ \ \ \ \ \textcolor{comment}{\#\ Plot\ the\ flow\ tube\ using\ two\ different\ projections}}
+\DoxyCodeLine{00200\ \ \ \ \ print(\textcolor{stringliteral}{"{}Plotting\ evolution\ flow\ tube..."{}})}
+\DoxyCodeLine{00201\ \ \ \ \ plot(\textcolor{stringliteral}{"{}finite\_evolution\_t-\/height"{}},Axes2d(0,time,tmax,\ 5,height,9),orbit)}
+\DoxyCodeLine{00202\ \ \ \ \ plot(\textcolor{stringliteral}{"{}finite\_evolution\_t-\/aperture"{}},Axes2d(0,time,tmax,\ -\/0.1,aperture,1.1),orbit)}
+\DoxyCodeLine{00203\ \ \ \ \ plot(\textcolor{stringliteral}{"{}finite\_evolution\_height-\/aperture"{}},Axes2d(5,height,9,\ -\/0.1,aperture,1.1),orbit)}
+\DoxyCodeLine{00204\ \ \ \ \ print(\textcolor{stringliteral}{"{}Done\ computing\ and\ plotting\ evolution\ flow\ tube!\(\backslash\)n"{}})}
+\DoxyCodeLine{00205\ }
+\DoxyCodeLine{00206\ \textcolor{comment}{\#!\ [/compute\_evolution]}}
+\DoxyCodeLine{00207\ }
+\DoxyCodeLine{00208\ }
+\DoxyCodeLine{00209\ \textcolor{comment}{\#!\ [create\_analyser]}}
+\DoxyCodeLine{00210\ \textcolor{keyword}{def\ }create\_analyser(evolver):}
+\DoxyCodeLine{00211\ \ \ \ \ \textcolor{comment}{\#\ Create\ a\ ReachabilityAnalyser\ object}}
+\DoxyCodeLine{00212\ \ \ \ \ analyser\ =\ HybridReachabilityAnalyser(evolver)}
+\DoxyCodeLine{00213\ }
+\DoxyCodeLine{00214\ \ \ \ \ \textcolor{comment}{\#\ \ Set\ the\ analyser\ configuration}}
+\DoxyCodeLine{00215\ \ \ \ \ analyser.configuration().set\_maximum\_grid\_fineness(6)}
+\DoxyCodeLine{00216\ \ \ \ \ analyser.configuration().set\_lock\_to\_grid\_time(5)}
+\DoxyCodeLine{00217\ }
+\DoxyCodeLine{00218\ \ \ \ \ print(\textcolor{stringliteral}{"{}analyser.configuration()\ ="{}},analyser.configuration())}
+\DoxyCodeLine{00219\ }
+\DoxyCodeLine{00220\ \ \ \ \ \textcolor{keywordflow}{return}\ analyser}
+\DoxyCodeLine{00221\ }
+\DoxyCodeLine{00222\ \textcolor{comment}{\#!\ [/create\_analyser]}}
+\DoxyCodeLine{00223\ }
+\DoxyCodeLine{00224\ }
+\DoxyCodeLine{00225\ \textcolor{comment}{\#!\ [compute\_reachability]}}
+\DoxyCodeLine{00226\ \textcolor{keyword}{def\ }compute\_reachability(analyser,initial\_set,final\_time):}
+\DoxyCodeLine{00227\ \ \ \ \ \textcolor{comment}{\#\ Re-\/introduce\ the\ shared\ system\ variables\ required\ for\ plotting}}
+\DoxyCodeLine{00228\ \ \ \ \ aperture\ =\ RealVariable(\textcolor{stringliteral}{"{}aperture"{}})}
+\DoxyCodeLine{00229\ \ \ \ \ height\ =\ RealVariable(\textcolor{stringliteral}{"{}height"{}})}
+\DoxyCodeLine{00230\ }
+\DoxyCodeLine{00231\ \ \ \ \ \textcolor{comment}{\#\ Compute\ over-\/approximation\ to\ finite-\/time\ reachable\ set\ using\ upper\ semantics.}}
+\DoxyCodeLine{00232\ \ \ \ \ print(\textcolor{stringliteral}{"{}Computing\ upper\ reach\ set..."{}})}
+\DoxyCodeLine{00233\ \ \ \ \ upper\_reach\ =\ analyser.upper\_reach(initial\_set,final\_time)}
+\DoxyCodeLine{00234\ \ \ \ \ print(\textcolor{stringliteral}{"{}Plotting\ upper\ reach\ set..."{}})}
+\DoxyCodeLine{00235\ \ \ \ \ plot(\textcolor{stringliteral}{"{}upper\_reach"{}},Axes2d(5,height,9,\ -\/0.1,aperture,1.1),upper\_reach)}
+\DoxyCodeLine{00236\ \ \ \ \ print(\textcolor{stringliteral}{"{}Done\ computing\ and\ plotting\ upper\ reach\ set!\(\backslash\)n"{}})}
+\DoxyCodeLine{00237\ }
+\DoxyCodeLine{00238\ \ \ \ \ \textcolor{comment}{\#\ Compute\ over-\/approximation\ to\ infinite-\/time\ reachable\ set\ using\ upper\ semantics.}}
+\DoxyCodeLine{00239\ \ \ \ \ print(\textcolor{stringliteral}{"{}Computing\ outer\ chain\ reach\ set..."{}})}
+\DoxyCodeLine{00240\ \ \ \ \ outer\_chain\_reach\ =\ analyser.outer\_chain\_reach(initial\_set)}
+\DoxyCodeLine{00241\ \ \ \ \ print(\textcolor{stringliteral}{"{}Plotting\ outer\ chain\ reach\ set..."{}})}
+\DoxyCodeLine{00242\ \ \ \ \ plot(\textcolor{stringliteral}{"{}outer\_chain\_reach"{}},Axes2d(5,height,9,\ -\/0.1,aperture,1.1),outer\_chain\_reach)}
+\DoxyCodeLine{00243\ \ \ \ \ print(\textcolor{stringliteral}{"{}Done\ computing\ and\ plotting\ outer\ chain\ reach\ set!\(\backslash\)n"{}})}
+\DoxyCodeLine{00244\ }
+\DoxyCodeLine{00245\ \textcolor{comment}{\#!\ [/compute\_reachability]}}
+\DoxyCodeLine{00246\ }
+\DoxyCodeLine{00247\ }
+\DoxyCodeLine{00248\ \textcolor{comment}{\#!\ [get\_system]}}
+\DoxyCodeLine{00249\ \textcolor{keyword}{def\ }get\_system():}
+\DoxyCodeLine{00250\ \ \ \ \ \textcolor{comment}{\#\ Create\ the\ composed\ automaton}}
+\DoxyCodeLine{00251\ \ \ \ \ system\ =\ CompositeHybridAutomaton(\textcolor{stringliteral}{"{}watertank"{}},[get\_tank(),get\_valve(),get\_controller()])}
+\DoxyCodeLine{00252\ }
+\DoxyCodeLine{00253\ \ \ \ \ \textcolor{comment}{\#\ Print\ the\ system\ description\ on\ the\ command\ line}}
+\DoxyCodeLine{00254\ \ \ \ \ print(\textcolor{stringliteral}{"{}system\ ="{}},system)}
+\DoxyCodeLine{00255\ }
+\DoxyCodeLine{00256\ \ \ \ \ \textcolor{keywordflow}{return}\ system}
+\DoxyCodeLine{00257\ }
+\DoxyCodeLine{00258\ \textcolor{comment}{\#!\ [/get\_system]}}
+\DoxyCodeLine{00259\ }
+\DoxyCodeLine{00260\ }
+\DoxyCodeLine{00261\ \textcolor{comment}{\#!\ [get\_initial\_set]}}
+\DoxyCodeLine{00262\ \textcolor{keyword}{def\ }get\_initial\_set():}
+\DoxyCodeLine{00263\ \ \ \ \ \textcolor{comment}{\#\ Re-\/introduce\ variables\ to\ be\ used\ for\ the\ initial\ set}}
+\DoxyCodeLine{00264\ \ \ \ \ height\ =\ RealVariable(\textcolor{stringliteral}{"{}height"{}})}
+\DoxyCodeLine{00265\ \ \ \ \ valve\ =\ StringVariable(\textcolor{stringliteral}{"{}valve"{}})}
+\DoxyCodeLine{00266\ \ \ \ \ controller\ =\ StringVariable(\textcolor{stringliteral}{"{}controller"{}})}
+\DoxyCodeLine{00267\ \ \ \ \ opened\ =\ String(\textcolor{stringliteral}{"{}opened"{}})}
+\DoxyCodeLine{00268\ \ \ \ \ rising\ =\ String(\textcolor{stringliteral}{"{}rising"{}})}
+\DoxyCodeLine{00269\ }
+\DoxyCodeLine{00270\ \ \ \ \ \textcolor{comment}{\#\ Define\ the\ initial\ set,\ by\ supplying\ the\ location\ as\ a\ list\ of\ locations\ for\ each\ composed\ automata,\ and}}
+\DoxyCodeLine{00271\ \ \ \ \ \textcolor{comment}{\#\ the\ continuous\ set\ as\ a\ list\ of\ variable\ assignments\ for\ each\ variable\ controlled\ on\ that\ location}}
+\DoxyCodeLine{00272\ \ \ \ \ \textcolor{comment}{\#\ (the\ assignment\ can\ be\ either\ a\ singleton\ value\ using\ the\ ==\ symbol\ or\ an\ interval\ using\ the\ <=\ symbols)}}
+\DoxyCodeLine{00273\ \ \ \ \ initial\_set\ =\ HybridBoundedConstraintSet(\{valve:opened,controller:rising\},\{height:(dec\_(6.9),7)\})}
+\DoxyCodeLine{00274\ }
+\DoxyCodeLine{00275\ \ \ \ \ \textcolor{comment}{\#\ Print\ the\ initial\ set\ on\ the\ command\ line}}
+\DoxyCodeLine{00276\ \ \ \ \ print(\textcolor{stringliteral}{"{}initial\_set\ ="{}},initial\_set)}
+\DoxyCodeLine{00277\ }
+\DoxyCodeLine{00278\ \ \ \ \ \textcolor{keywordflow}{return}\ initial\_set}
+\DoxyCodeLine{00279\ }
+\DoxyCodeLine{00280\ \textcolor{comment}{\#!\ [/get\_initial\_set]}}
+\DoxyCodeLine{00281\ }
+\DoxyCodeLine{00282\ }
+\DoxyCodeLine{00283\ \textcolor{comment}{\#!\ [get\_final\_time]}}
+\DoxyCodeLine{00284\ \textcolor{keyword}{def\ }get\_final\_time():}
+\DoxyCodeLine{00285\ \ \ \ \ \textcolor{comment}{\#\ Define\ the\ final\ time:\ continuous\ time\ and\ maximum\ number\ of\ transitions}}
+\DoxyCodeLine{00286\ \ \ \ \ final\_time\ =\ HybridTime(dec\_(60.0),5)}
+\DoxyCodeLine{00287\ \ \ \ \ print(\textcolor{stringliteral}{"{}final\_time\ ="{}},final\_time)}
+\DoxyCodeLine{00288\ }
+\DoxyCodeLine{00289\ \ \ \ \ \textcolor{keywordflow}{return}\ final\_time}
+\DoxyCodeLine{00290\ }
+\DoxyCodeLine{00291\ \textcolor{comment}{\#!\ [/get\_final\_time]}}
+\DoxyCodeLine{00292\ }
+\DoxyCodeLine{00293\ }
+\DoxyCodeLine{00294\ \textcolor{comment}{\#!\ [main]}}
+\DoxyCodeLine{00295\ \textcolor{keywordflow}{if}\ \_\_name\_\_\ ==\ \textcolor{stringliteral}{'\_\_main\_\_'}:}
+\DoxyCodeLine{00296\ }
+\DoxyCodeLine{00297\ \ \ \ \ \textcolor{keyword}{from}\ sys\ \textcolor{keyword}{import}\ argv}
+\DoxyCodeLine{00298\ \ \ \ \ \textcolor{keywordflow}{if}\ \textcolor{keywordflow}{not}\ CommandLineInterface.instance().acquire(argv):}
+\DoxyCodeLine{00299\ \ \ \ \ \ \ \ \ exit()}
+\DoxyCodeLine{00300\ }
+\DoxyCodeLine{00301\ \ \ \ \ \textcolor{comment}{\#\ Get\ the\ system}}
+\DoxyCodeLine{00302\ \ \ \ \ system\ =\ get\_system()}
+\DoxyCodeLine{00303\ }
+\DoxyCodeLine{00304\ \ \ \ \ \textcolor{comment}{\#\ Get\ the\ initial\ set}}
+\DoxyCodeLine{00305\ \ \ \ \ initial\_set\ =\ get\_initial\_set()}
+\DoxyCodeLine{00306\ }
+\DoxyCodeLine{00307\ \ \ \ \ \textcolor{comment}{\#\ Get\ the\ final\ time}}
+\DoxyCodeLine{00308\ \ \ \ \ final\_time\ =\ get\_final\_time()}
+\DoxyCodeLine{00309\ }
+\DoxyCodeLine{00310\ \ \ \ \ \textcolor{comment}{\#\ Compute\ an\ approximate\ simulation\ of\ the\ system\ evolution}}
+\DoxyCodeLine{00311\ \ \ \ \ simulate\_evolution(system,initial\_set,final\_time)}
+\DoxyCodeLine{00312\ }
+\DoxyCodeLine{00313\ \ \ \ \ \textcolor{comment}{\#\ Create\ an\ evolver\ object}}
+\DoxyCodeLine{00314\ \ \ \ \ evolver\ =\ create\_evolver(system)}
+\DoxyCodeLine{00315\ }
+\DoxyCodeLine{00316\ \ \ \ \ \textcolor{comment}{\#\ Compute\ the\ system\ evolution}}
+\DoxyCodeLine{00317\ \ \ \ \ compute\_evolution(evolver,initial\_set,final\_time)}
+\DoxyCodeLine{00318\ }
+\DoxyCodeLine{00319\ \ \ \ \ \textcolor{comment}{\#\ Create\ an\ analyser\ object}}
+\DoxyCodeLine{00320\ \ \ \ \ analyser\ =\ create\_analyser(evolver)}
+\DoxyCodeLine{00321\ }
+\DoxyCodeLine{00322\ \ \ \ \ \textcolor{comment}{\#\ Compute\ the\ system\ reachability}}
+\DoxyCodeLine{00323\ \ \ \ \ compute\_reachability(analyser,initial\_set,final\_time)}
+\DoxyCodeLine{00324\ }
+\DoxyCodeLine{00325\ \textcolor{comment}{\#!\ [/main]}}
+
+\end{DoxyCodeInclude}
+ 

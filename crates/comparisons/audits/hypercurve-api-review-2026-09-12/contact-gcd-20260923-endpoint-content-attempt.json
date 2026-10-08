@@ -1,0 +1,7 @@
+{
+  "status": "stopped_without_result",
+  "reason": "Symbolic global subresultants exceeded two minutes; ended verified owned child before further qualification.",
+  "session_id": 48859,
+  "returncode": 143,
+  "all_processes_reaped": true
+}

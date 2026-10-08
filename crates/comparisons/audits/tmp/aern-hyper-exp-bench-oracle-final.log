@@ -1,0 +1,31 @@
+     Locking 16 packages to latest Rust 1.97.0 compatible versions
+      Adding num-bigint v0.4.6 (available: v0.4.8)
+   Compiling autocfg v1.5.1
+   Compiling gmp-mpfr-sys v1.7.1
+   Compiling libc v0.2.189
+   Compiling libm v0.2.16
+   Compiling rug v1.30.0
+   Compiling az v1.3.0
+   Compiling num-traits v0.2.19
+   Compiling num-integer v0.1.47
+   Compiling num-complex v0.4.6
+   Compiling num-bigint v0.4.6
+   Compiling num-iter v0.1.46
+   Compiling num-rational v0.4.2
+   Compiling num v0.4.3
+   Compiling hyperreal v0.13.1 (/tmp/aern-hyper-exp.PdU63J/hyperreal-demand-cached)
+   Compiling aern-bench-oracle v0.0.0 (/tmp/aern-hyper-exp.PdU63J/oracle-final)
+    Finished `release` profile [optimized] target(s) in 10.29s
+     Running `/tmp/aern-hyper-exp.PdU63J/oracle-final/target/release/aern-bench-oracle`
+1/4 p=-128: error=0.23351246 valid=true
+1/2 p=-128: error=0.03781215 valid=true
+7/5 p=-128: error=0.38222892 valid=true
+7/2 p=-128: error=0.38612184 valid=true
+15/2 p=-128: error=0.42685571 valid=true
+-7/2 p=-128: error=0.39198856 valid=true
+2/1 p=-128: error=0.12002443 valid=true
+128/1 p=-128: error=0.44283679 valid=true
+257/1 p=-128: error=0.16606106 valid=true
+-32/1 p=-128: error=0.14271635 valid=true
+3/2 p=1: error=0.24084454 valid=true
+0 invalid benchmark answers

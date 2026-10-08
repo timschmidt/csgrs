@@ -1,0 +1,44 @@
+Review validation, 2026-09-12
+Source: working trees recorded in source-state.json, including pre-existing edits.
+No production source changes made by this review.
+
+From hypercurve/:
+
+cargo test --offline --release --test hypercurve_curve_region_promotion repeated_region_offsets_compose_retained_exact_parallels_under_both_policies -- --exact --nocapture
+Result: 1 passed, 0 failed, 0 ignored; 99 filtered out. Test duration 0.62 s.
+
+cargo test --offline --release --test hypercurve_curve_region_promotion -- --exact unified_region_chamfer_joins_two_algebraic_bezier_cuts materialized_boundary_paths_obey_terminal_policy_once exact_support_cutter_reenters_correlated_chord_collinearly
+Result: 3 passed, 0 failed, 0 ignored; 97 filtered out. Test duration 0.27 s.
+
+cargo test --offline --release --test hypercurve_curve_region_promotion -- --exact non_ph_bezier_pair_fillet_retains_general_selected_circle cusp_chord_boolean_boundary_reoffsets_with_exact_bevels
+Result: 2 passed, 0 failed, 0 ignored; 98 filtered out. Test duration 8.78 s.
+
+From hypercurve-api-review-2026-09-12/:
+
+The initial standalone probes were compiled with rustc against the release
+rlibs produced by the Hypercurve integration build. Their original outputs
+agreed with the subsequently recorded Cargo-built probes.
+
+The final probe Cargo.lock was seeded from ../hypercurve/Cargo.lock.
+The final recorded probe build/run command was:
+cargo run --offline --release --features dispatch-trace --target-dir ../hypercurve/target -- normalization offset
+The final executable also ran these arguments successfully:
+  orientation
+  carriers
+  policy
+  tangent 4
+  tangent 8
+
+Outputs are retained in normalization-trace.txt, orientation.txt, carriers.txt,
+policy.txt, tangent4.txt, and tangent8.txt. Successful execution of an
+observational probe does not mean its geometry operation completed: the
+recorded Unsupported and Predicate blockers are findings of this review.
+
+The tangent probes assert expected loop counts for all four Booleans and five
+exact membership checks per result, for 40 membership assertions total.
+
+python3 prove_cap.py
+Passed all exact Fraction assertions; output in cap-certificate.txt.
+
+No full test-suite run, new fuzz campaign, implementation benchmark,
+production fix, commit, or push is claimed.

@@ -1,0 +1,18 @@
+{
+  "tag": "hyper-proof-complete-snapshot-debug",
+  "started": "2026-09-08T08:38:46.159Z",
+  "finished": "2026-09-08T08:38:49.509Z",
+  "elapsedSeconds": 3.347538376,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison",
+  "command": "cargo",
+  "args": [
+    "run",
+    "--manifest-path",
+    "audits/continuation/calcium/hyper-probe/Cargo.toml",
+    "--offline",
+    "--target-dir",
+    "/tmp/calcium-hyper-proof-target"
+  ],
+  "code": 0,
+  "signal": null
+}

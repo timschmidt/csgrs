@@ -1,0 +1,12 @@
+{
+  "parent": "c46890e2694b50d8ed5dc0baddd43023e757dc3e",
+  "baseline_manifest": "retained-coordinate-identity-20260924-v4-sources.json",
+  "physical_snapshot": "/tmp/hypercurve-retained-coordinate-identity-v5-20260924",
+  "changed_files_from_full_run": [
+    "hypercurve/src/bezier_region.rs"
+  ],
+  "production_identical_to_full_run": true,
+  "all_other_tests_unchanged": true,
+  "test_change": "Pair traversal endpoints with source end/start when the selected fragment is reversed; retain exact replay and certainty assertions.",
+  "baseline_full_qualification": "retained-coordinate-identity-20260924-v4-full-terminal.json"
+}

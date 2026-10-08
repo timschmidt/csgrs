@@ -1,0 +1,38 @@
+\doxysubsection{source/symbolic/expression\+\_\+set.hpp File Reference}
+\hypertarget{expression__set_8hpp}{}\label{expression__set_8hpp}\index{source/symbolic/expression\_set.hpp@{source/symbolic/expression\_set.hpp}}
+
+
+\doxysubsubsection{Description}
+Sets defined using expressions over real variables. 
+
+{\ttfamily \#include $<$iostream$>$}\newline
+{\ttfamily \#include "{}utility/container.\+hpp"{}}\newline
+{\ttfamily \#include "{}utility/declarations.\+hpp"{}}\newline
+{\ttfamily \#include "{}symbolic/variable.\+hpp"{}}\newline
+{\ttfamily \#include "{}symbolic/expression.\+hpp"{}}\newline
+{\ttfamily \#include "{}symbolic/assignment.\+hpp"{}}\newline
+{\ttfamily \#include "{}symbolic/space.\+hpp"{}}\newline
+{\ttfamily \#include "{}numeric/floats.\+hpp"{}}\newline
+{\ttfamily \#include "{}numeric/real.\+hpp"{}}\newline
+{\ttfamily \#include "{}function/projection.\+hpp"{}}\newline
+{\ttfamily \#include "{}geometry/box.\+hpp"{}}\newline
+\doxysubsubsubsection*{Classes}
+\begin{DoxyCompactItemize}
+\item 
+class \mbox{\hyperlink{classAriadne_1_1VariableInterval}{Variable\+Interval$<$ UB $>$}}
+\begin{DoxyCompactList}\small\item\em An interval range for a real variable. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1VariablesPoint}{Variables\+Point$<$ X $>$}}
+\begin{DoxyCompactList}\small\item\em An point defining values for a collection of real variables. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1VariablesBox}{Variables\+Box$<$ IVL $>$}}
+\begin{DoxyCompactList}\small\item\em An box defining ranges for a collection of real variables. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1RealExpressionConstraintSet}{Real\+Expression\+Constraint\+Set}}
+\begin{DoxyCompactList}\small\item\em A set defined as the preimage of a box under a continuous function. The set is described as $S=g^{-1}(C)$ where $g$ the constraint function and $C$ the codomain. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1RealExpressionBoundedConstraintSet}{Real\+Expression\+Bounded\+Constraint\+Set}}
+\begin{DoxyCompactList}\small\item\em A set defined as the intersection of a box and the preimage of a box under a continuous function. The set is described as $S=D\cap g^{-1}(C)$ where $D$ is the domain, $g$ the constraint function and $C$ the codomain. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1LabelledSet}{Labelled\+Set$<$ S $>$}}
+\begin{DoxyCompactList}\small\item\em A set formed by labelling the variables of a Euclidean set of type {\itshape S}. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsubsection*{Namespaces}
+\begin{DoxyCompactItemize}
+\item 
+namespace \mbox{\hyperlink{namespaceAriadne}{Ariadne}}
+\begin{DoxyCompactList}\small\item\em Top-\/level Ariadne namespace. \end{DoxyCompactList}\end{DoxyCompactItemize}

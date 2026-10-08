@@ -1,0 +1,115 @@
+{
+  "status": "committed; qualified against the documented baseline",
+  "goal_status": "active",
+  "previous_commit": "b3df58f65925a8f3ec54a2cb8bcacf3a97c37d3a",
+  "commit": "384f66735296075ca54d81ce558cabbc16ee8a50",
+  "targets": 49,
+  "passed": 2244,
+  "passed_by_repo": {
+    "hypercurve": 2012,
+    "hyperbrep": 232
+  },
+  "known_failed": [
+    "approximate_512_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions",
+    "non_ph_bezier_pair_projective_fillet_retains_algebraic_extensions",
+    "nonconvex_algebraic_chord_expansion_is_exact_and_local_collapse_is_explicit",
+    "strict_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions",
+    "unified_mixed_line_arc_erosion_splits_after_a_curved_neck_collapse"
+  ],
+  "new_failures": [],
+  "ignored": 9,
+  "expensive_previously_unqualified_exclusions": 8,
+  "timeouts": 0,
+  "builds_and_checks": {
+    "-check": 0,
+    "-test-build": 0,
+    "-hyperbrep-check": 0,
+    "-hyperbrep-test-build": 0
+  },
+  "formatting_and_whitespace": "passed on final frozen qualification sources",
+  "formatted_files": {
+    "hypercurve": [
+      "src/bezier_offset.rs",
+      "src/curve_support_intersection.rs"
+    ],
+    "hyperbrep": []
+  },
+  "additional_caller_checks": [
+    {
+      "target": "fuzz",
+      "command": [
+        "cargo",
+        "check",
+        "--manifest-path",
+        "fuzz/Cargo.toml",
+        "--all-targets",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 4.821422296008677,
+      "log": "finite-circle-affine-parallel-fuzz-check.log"
+    },
+    {
+      "target": "ui",
+      "command": [
+        "cargo",
+        "check",
+        "--manifest-path",
+        "examples/hypercurve_ui/Cargo.toml",
+        "--all-targets",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 5.072034355995129,
+      "log": "finite-circle-affine-parallel-ui-check.log"
+    },
+    {
+      "target": "hyperbrep-fuzz",
+      "command": [
+        "cargo",
+        "check",
+        "--manifest-path",
+        "fuzz/Cargo.toml",
+        "--all-targets",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 5.322343576990534,
+      "log": "finite-circle-affine-parallel-hyperbrep-fuzz-check.log"
+    }
+  ],
+  "source_verification": "finite-circle-affine-parallel-source-verification.json",
+  "focused_regression_checks": "finite-circle-affine-parallel-final-focused.json",
+  "discovery_probe": "finite-circle-affine-parallel-baseline.json",
+  "normal_library_sha256": "d3636b0200434ee04c2f0ca37c4236df104c9465328a13f80ce382f76424a30b",
+  "independent_probes_and_matrices": [
+    "finite-circle-affine-parallel-public-replay.json",
+    "finite-circle-affine-parallel-exterior-completed.json",
+    "finite-circle-affine-parallel-tangent-matrix.json",
+    "finite-circle-affine-parallel-finite-circle-probe.json",
+    "finite-circle-affine-parallel-family-matrix.json",
+    "finite-circle-affine-parallel-completed.json",
+    "finite-circle-affine-parallel-unit-replay.json",
+    "finite-circle-affine-parallel-retained-chord-matrix.json",
+    "finite-circle-affine-parallel-finite-matrix.json",
+    "finite-circle-affine-parallel-cubic-replay.json",
+    "finite-circle-affine-parallel-baseline-recheck.json",
+    "finite-circle-affine-parallel-replay-matrix-run.json",
+    "finite-circle-affine-parallel-analytic-probe.json",
+    "finite-circle-affine-parallel-endpoint-probe.json",
+    "finite-circle-affine-parallel-completed-probe.json",
+    "finite-circle-affine-parallel-probe-final.json",
+    "finite-circle-affine-parallel-circle-matrix.json",
+    "finite-circle-affine-parallel-region-carrier-matrix.json",
+    "finite-circle-affine-parallel-general-trim-matrix.json",
+    "finite-circle-affine-parallel-constant-image-trim-matrix.json"
+  ],
+  "regression_baseline": "finite-circle-affine-qualification.json",
+  "affected_regression_results": "finite-circle-affine-parallel-full-hypercurve-lib.json",
+  "evidence_audit": "finite-circle-affine-parallel-evidence-audit.md",
+  "performance_claim": null,
+  "remaining": "Nonlinear finite circle/rational, circle/parallel, parallel/rational and parallel/parallel discovery; normalized public region construction; five promotion failures; eight unqualified expensive tests; broader algebraic consolidation, computational measurements, and original architecture goal."
+}

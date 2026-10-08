@@ -1,0 +1,50 @@
+{
+  "phase": "staged",
+  "heads": {
+    "hypercurve": "f06e89f37c52befbdab6a6f664165fffab6888f9"
+  },
+  "selected": {
+    "hypercurve": [
+      "src/bezier_offset.rs"
+    ]
+  },
+  "source_manifest": "bivariate-affine-isolated-20260926-v121-sources.json",
+  "workspace_guard": "local-chord-complete-replay-20260924-v119-sources.json",
+  "qualification": "bivariate-affine-isolated-20260926-v121-terminal.json",
+  "hypercurve_passed": 271,
+  "ignored": 0,
+  "every_owned_process_reaped": true,
+  "all_bound_sources_and_binaries_unchanged": true,
+  "repository_statuses": {
+    "hypersdf": "",
+    "hyperbrep": "",
+    "hyperparts": "",
+    "alumina-interface": "",
+    "hyperlattice": "",
+    "citizen-builder": "",
+    "csgrs-ffi": "",
+    "alumina-firmware": "",
+    "videos": "",
+    "hypertri": "",
+    "hyperreal": "",
+    "hyperpath": "",
+    "hypervoxel": "",
+    "hypergraphics": "",
+    "hyperevolution": "",
+    "exactcore-hyper-comparison": "",
+    "hypersolve": "",
+    "hypercurve": "MM src/bezier_offset.rs\n M src/bezier_region.rs\n M src/curve.rs\n M src/curve_corner_chain.rs\n",
+    "crcalc": "",
+    "openscad-rs": "",
+    "hypermesh": "",
+    "csgrs": "",
+    "synaps-cad": "",
+    "hyperdrc": "",
+    "hyperphysics": "",
+    "hyperlimit": "",
+    "hyperpack": "",
+    "NURBS_BREP_kernel": "",
+    "ExactCalculator": "",
+    "hypercircuit": ""
+  }
+}

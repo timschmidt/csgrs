@@ -1,0 +1,405 @@
+{
+  "schema": 1,
+  "checkpoint": 55,
+  "recorded": "2026-09-10T21:29:44.724Z",
+  "previousManifest": "point-qualified-manifest.json",
+  "files": {
+    "point-extended-findings.md": "fdcb1217d14649b4cb8de65fe688c65aab805830d75b4aef4f8578e9fc0a9a28",
+    "point-extended-evidence.mjs": "53ba7e71eceb6fccad1d9f0f66f7a50d5049a23b8ca3840e4634c6580445b350",
+    "record-point-extended.mjs": "dcd8470f15edbc48f3d3d121a2c3b5f99145820e2cc5eab46346407a0ad19f92",
+    "verify-point-extended.mjs": "b879baad53b4524a02aebb825c9b0cc46e7a1b7d96a4bb2d3a42a1f178f247e5",
+    "point-extended.rs": "1e884bd64d0c9cf744d7fac8a2af8eff0a995f34f5124c8e7f87ba177eb3b152",
+    "point-extended-cpu.rs": "56b0b5b9bbe539054ee5b286b499e8242457e03cd798c10860f6575ff99a85cc",
+    "build-point-extended.mjs": "3bd2e5bc23cb4888e2b91c89d3a45d5a670db47b5fab0bc1835282ecf553aad0",
+    "point-extended-origin.json": "483fdb57eb6e31cee1e6b75a50336908907042490d9ce3cc3c73648e1e111897",
+    "point-extended-binaries.json": "9dcf69b0ec0cfae86d0df5b85c938be8ac528321a0af3630c82768d53f1937b3",
+    "run-point-extended.mjs": "5738d464a3f3dc4ccc6b9059f2cb6354516dc019780995d3ae2087ee9c31beb2",
+    "run-point-extended-memory.mjs": "52987ad3b4708296d5494ac6a1c95abb7997fd75b4de98214aff0207c3a98fcb",
+    "probe-point-extended-field.mjs": "39f07a7d71deb41ab19317d2ecaa896e65d846d98dc4bafbbc7f51eefb06f0a4",
+    "point-extended-field-v1.mjs": "3c06f05d8d36b0f5e3d370de876e2f541a604b88bc54f6062a9ce113616de2b5",
+    "point-extended-field.mjs": "795154da44b1502c04db4aaa880adb470eec16a4970e2d928410d44ffa6b6424",
+    "check-point-extended-v1.mjs": "5a8dda74d7c32d60c4c5899e7fafe3aabcb4874eb852b8b84d3aa1a96213b052",
+    "check-point-extended.mjs": "925384f7417d82a808907b34b7866bee5239559d42c08fb86daf284255cc09b1",
+    "point-qualified-manifest.json": "a61f35d53ae032ba896f4151664dbf15f1150c20d9bd0849a1eff1f7d82808fd",
+    "point-qualified-origin.json": "36e6ede1b9857e1680add0c4d7697261bca063c422cc316fb539fa1bc26a3c71",
+    "point-qualified-sources.mjs": "418966d05873911d79682a4b4563059b78733cc26955ba4cdd15cdccf0a6ffe9",
+    "point-qualified-capture.mjs": "8b574f18a85c470ef47f9eafc780c462a93e811ebe15695f0950cfef17ada66e",
+    "capture.mjs": "aaf6df6bbd73025a8541617ce83731ae5ea3fd2272bd98c15e3c4c12b713ce23",
+    "point-extended-baseline/Cargo.toml": "fc5f6ad9cea55bcd83f9aafbf50574ce87cc79a7be1ed75829ad9799bd7e2627",
+    "point-extended-baseline/Cargo.lock": "7afdcebb8833911dfa7c11ce16292d46067de852961fa398db867890e4936a1f",
+    "point-extended-candidate/Cargo.toml": "5e71f34b5ca0432be77c369c52c698830e4ca192abadbf9386b3e86d490ba1ff",
+    "point-extended-candidate/Cargo.lock": "fbd98ca0708057cb1a16c167c2842089b9c4a87fc35a4e6756600eed0ccefbf5",
+    "results/point-qualified-verify.json": "b7fecd8d0e0124cbf33f67a2eb92e116038df999a5ffc0b83a0c262fa3ec49af",
+    "results/point-qualified-verify.stdout": "d3ca34e2a104b80289b2efd878400740b6dd5b7eccc98baa0564adc95a945fa0",
+    "results/point-qualified-verify.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/point-extended-build.json": "22bf261675c5ae934fb73de027ee8daefc81aec64923343fbfe955fa05f41402",
+    "results/point-extended-build.stdout": "c96c9534a4f06da177901de5e5c42741978e2f9596aa2509c1c3288480670aa3",
+    "results/point-extended-build.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/point-extended-public.json": "5b68130fea977505986a90ccf6266cc1bbcb9703021ea9db5bac5068a54edfcd",
+    "results/point-extended-public.stdout": "213b38a826ec5d74c8d0446340f37cb77b96f2e9cc147d50803ebc322b036e34",
+    "results/point-extended-public.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/point-extended-memory.json": "2afc80437c22ba278b14db556ad809687f72adcbad834943cd76812872026dfc",
+    "results/point-extended-memory.stdout": "bbf002985435ba0ce1f57a450212501c90791bab3a58004469f5feb4c564e3ca",
+    "results/point-extended-memory.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/point-extended-decode-v1.json": "a7a955f1ea7354af58fe2b42800344ab3cc3cfd9e90485533c24b803e1f5cea6",
+    "results/point-extended-decode-v1.stdout": "a4a6cd95de0ed84df837ca1a240b32c417364110b11dedc9d000054122e36909",
+    "results/point-extended-decode-v1.stderr": "3453183539f7f8ae3b8117d3925b486ddcffc9b7929351c2cc32d91419f63064",
+    "results/point-extended-decode.json": "41ca4565431ecff13568fe2f9fdce99f0a736adb7dcbe42b2a7eacf449c8b6ae",
+    "results/point-extended-decode.stdout": "8f92d4fdf995175cccb6c07ac71c3d69f0e056147c89fe0269e1671a27f4ed31",
+    "results/point-extended-decode.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/point-extended-mathematical.json": "cf9c086dfde91aa2f635979c816d404fe6ae301fe8c68581d23a9b4c3df0adcf",
+    "results/point-extended-mathematical.stdout": "943fbffc6c898be264fa852a3a9ffaf6d59788ee938dd7accd778e99153cf60a",
+    "results/point-extended-mathematical.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/point-extended-mathematical-complete.json": "69c7b12efe6fca3206ee0c69cf0028ad0ec06e21f561f0a72272deac15265654",
+    "results/point-extended-mathematical-complete.stdout": "b10faddba6ff810d43484215c00b17ecc0cd43ef720d328b03c636d6ba12f3a0",
+    "results/point-extended-mathematical-complete.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/point-extended-baseline-lock.json": "a94ee9f0075237dd0c2f75f73b4944d82e5e867fce09eb3e9acc23588a17403e",
+    "results/point-extended-baseline-lock.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/point-extended-baseline-lock.stderr": "e6be2fc21f61ee2ca9174470fbbef09ec82d1768d4642489a358e3e3a667848a",
+    "results/point-extended-baseline-build.json": "315b9b0bcaf61a1d32d20eb202c46c5deab81bb7dcf975ec44f4c089e1de754d",
+    "results/point-extended-baseline-build.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/point-extended-baseline-build.stderr": "b473fb504cb337cdc1e7684cd4c219ee2b1513c032a1dccd7774bcafb7abde49",
+    "results/point-extended-public-baseline.json": "343d53c2b1a040a78da3bd6dcd9cf78e2afa99b7e352b635ff2a5e5e53534862",
+    "results/point-extended-public-baseline.stdout": "18f53a198743774c452fa066e21ed4f7eeb3c3978ed046f602964b73fb07150c",
+    "results/point-extended-public-baseline.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/point-extended-memory-baseline.json": "1476e18918d32a284bf6a5d737eb1fdfef3e377a49dc023e0773beda257ce2e2",
+    "results/point-extended-memory-baseline.stdout": "18f53a198743774c452fa066e21ed4f7eeb3c3978ed046f602964b73fb07150c",
+    "results/point-extended-memory-baseline.stderr": "db3fa58bd7b805d1ab02b40308925d4adffa488f948b9dd0a9b44042e966506a",
+    "results/point-extended-candidate-lock.json": "5dd3ea14ebabbf3885473ca1db1e1b9acff8f9dc5ac49b32b9dc6169ea6f10d7",
+    "results/point-extended-candidate-lock.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/point-extended-candidate-lock.stderr": "e6be2fc21f61ee2ca9174470fbbef09ec82d1768d4642489a358e3e3a667848a",
+    "results/point-extended-candidate-build.json": "66b332c27e263d2ffa2a4065fa06cfc43be6c0062562f9c2e8eda0ccd111adda",
+    "results/point-extended-candidate-build.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/point-extended-candidate-build.stderr": "f88111eaa881caf1595aeeb3b38cc777c3289faef96a9a8aab27a9edd5b6926a",
+    "results/point-extended-public-candidate.json": "3a7ebc30d59e4278982c862997b4019f3cab37013b806ed34744c14e00bd9e06",
+    "results/point-extended-public-candidate.stdout": "fa94ed3ec2891b612b14e7ccb61c52802b5a4fef7c28aeb7f18b8ab51f23e2c8",
+    "results/point-extended-public-candidate.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/point-extended-memory-candidate.json": "b3a17f988cbcdf4f6f6f90a592366eba117b58a8a9f63628a139430cf5842e3c",
+    "results/point-extended-memory-candidate.stdout": "fa94ed3ec2891b612b14e7ccb61c52802b5a4fef7c28aeb7f18b8ab51f23e2c8",
+    "results/point-extended-memory-candidate.stderr": "17bb9b90bc145e9a6fa188d6c75791d57554f52f5654cb41eb9990d9124ecbfe"
+  },
+  "gates": [
+    "point-extended-build",
+    "point-extended-public",
+    "point-extended-memory",
+    "point-extended-decode-v1",
+    "point-extended-decode",
+    "point-extended-mathematical",
+    "point-extended-mathematical-complete",
+    "point-extended-baseline-lock",
+    "point-extended-baseline-build",
+    "point-extended-public-baseline",
+    "point-extended-memory-baseline",
+    "point-extended-candidate-lock",
+    "point-extended-candidate-build",
+    "point-extended-public-candidate",
+    "point-extended-memory-candidate"
+  ],
+  "failedGate": "point-extended-decode-v1",
+  "sourceOriginSha256": "36e6ede1b9857e1680add0c4d7697261bca063c422cc316fb539fa1bc26a3c71",
+  "artifacts": [
+    {
+      "variant": "baseline",
+      "path": "/tmp/calcium-point-extended.ejZUdW/baseline-cpu",
+      "bytes": 3189288,
+      "sha256": "4f5971bb9f3d6cadf5b1a4c44438236d51b8cc58fd639712ba901ddd20af8ea9"
+    },
+    {
+      "variant": "candidate",
+      "path": "/tmp/calcium-point-extended.ejZUdW/candidate-cpu",
+      "bytes": 3190560,
+      "sha256": "2f0c5cd019118dfa0f16fcce52587da3c382614a966b4582ec8b0024e982e5d6"
+    }
+  ],
+  "dedicatedBytes": 6379848,
+  "mathematical": {
+    "status": "pass",
+    "summaries": {
+      "baseline": {
+        "rows": 384,
+        "statuses": {
+          "InvalidTransformedEvidence": 128,
+          "Transformed": 188,
+          "DenominatorMayContainZero": 24,
+          "Undecided": 6,
+          "NonIsolatingImageInterval": 6,
+          "InvalidEvidence": 32
+        },
+        "checks": {
+          "left-exact-rational-carrier": 384,
+          "left-metadata": 384,
+          "left-ordered": 384,
+          "left-selected-value-contained": 384,
+          "left-full-polynomial": 384,
+          "left-polynomial-vanishing": 384,
+          "left-exact-witness": 160,
+          "left-witness-vanishing": 160,
+          "left-distinct-root-count": 384,
+          "right-exact-rational-carrier": 384,
+          "right-metadata": 384,
+          "right-ordered": 384,
+          "right-selected-value-contained": 384,
+          "right-full-polynomial": 384,
+          "right-polynomial-vanishing": 384,
+          "right-exact-witness": 288,
+          "right-witness-vanishing": 288,
+          "right-distinct-root-count": 384,
+          "left-authored-interval": 384,
+          "right-authored-interval": 384,
+          "operation": 384,
+          "no-result-on-failure": 196,
+          "known-failure-status": 196,
+          "successful-report": 188,
+          "nonzero-divisor": 188,
+          "output-exact-rational-carrier": 188,
+          "output-metadata": 188,
+          "output-ordered": 188,
+          "output-selected-value-contained": 188,
+          "output-full-polynomial": 188,
+          "output-polynomial-vanishing": 188,
+          "output-distinct-root-count": 188,
+          "refined-image-contained": 188,
+          "output-exact-witness": 124,
+          "output-witness-vanishing": 124,
+          "denominator-guard": 24
+        },
+        "totalChecks": 9968,
+        "failures": []
+      },
+      "candidate": {
+        "rows": 384,
+        "statuses": {
+          "Transformed": 316,
+          "DenominatorMayContainZero": 24,
+          "Undecided": 6,
+          "NonIsolatingImageInterval": 6,
+          "InvalidEvidence": 32
+        },
+        "checks": {
+          "left-exact-rational-carrier": 384,
+          "left-metadata": 384,
+          "left-ordered": 384,
+          "left-selected-value-contained": 384,
+          "left-full-polynomial": 384,
+          "left-polynomial-vanishing": 384,
+          "left-exact-witness": 160,
+          "left-witness-vanishing": 160,
+          "left-distinct-root-count": 384,
+          "right-exact-rational-carrier": 384,
+          "right-metadata": 384,
+          "right-ordered": 384,
+          "right-selected-value-contained": 384,
+          "right-full-polynomial": 384,
+          "right-polynomial-vanishing": 384,
+          "right-exact-witness": 288,
+          "right-witness-vanishing": 288,
+          "right-distinct-root-count": 384,
+          "left-authored-interval": 384,
+          "right-authored-interval": 384,
+          "operation": 384,
+          "successful-report": 316,
+          "nonzero-divisor": 316,
+          "output-exact-rational-carrier": 316,
+          "output-metadata": 316,
+          "output-ordered": 316,
+          "output-selected-value-contained": 316,
+          "output-full-polynomial": 316,
+          "output-polynomial-vanishing": 316,
+          "output-exact-witness": 252,
+          "output-witness-vanishing": 252,
+          "output-distinct-root-count": 316,
+          "refined-image-contained": 316,
+          "no-result-on-failure": 68,
+          "known-failure-status": 68,
+          "denominator-guard": 24
+        },
+        "totalChecks": 11248,
+        "failures": []
+      }
+    },
+    "improved": 128,
+    "unchanged": 257,
+    "tamper": [
+      {
+        "kind": "witness",
+        "rejectedBy": [
+          "output-exact-witness",
+          "output-witness-vanishing"
+        ]
+      },
+      {
+        "kind": "polynomial",
+        "rejectedBy": [
+          "output-full-polynomial",
+          "output-polynomial-vanishing",
+          "output-witness-vanishing"
+        ]
+      },
+      {
+        "kind": "endpoint",
+        "rejectedBy": [
+          "output-ordered",
+          "output-selected-value-contained",
+          "output-distinct-root-count"
+        ]
+      }
+    ],
+    "historyChanges": [
+      {
+        "variant": "baseline",
+        "case": 36,
+        "policy": 0,
+        "statuses": [
+          "Undecided",
+          "Undecided",
+          "Transformed",
+          "Undecided"
+        ]
+      },
+      {
+        "variant": "baseline",
+        "case": 36,
+        "policy": 1,
+        "statuses": [
+          "NonIsolatingImageInterval",
+          "NonIsolatingImageInterval",
+          "Transformed",
+          "NonIsolatingImageInterval"
+        ]
+      },
+      {
+        "variant": "baseline",
+        "case": 37,
+        "policy": 0,
+        "statuses": [
+          "Undecided",
+          "Undecided",
+          "Transformed",
+          "Undecided"
+        ]
+      },
+      {
+        "variant": "baseline",
+        "case": 37,
+        "policy": 1,
+        "statuses": [
+          "NonIsolatingImageInterval",
+          "NonIsolatingImageInterval",
+          "Transformed",
+          "NonIsolatingImageInterval"
+        ]
+      },
+      {
+        "variant": "candidate",
+        "case": 36,
+        "policy": 0,
+        "statuses": [
+          "Undecided",
+          "Undecided",
+          "Transformed",
+          "Undecided"
+        ]
+      },
+      {
+        "variant": "candidate",
+        "case": 36,
+        "policy": 1,
+        "statuses": [
+          "NonIsolatingImageInterval",
+          "NonIsolatingImageInterval",
+          "Transformed",
+          "NonIsolatingImageInterval"
+        ]
+      },
+      {
+        "variant": "candidate",
+        "case": 37,
+        "policy": 0,
+        "statuses": [
+          "Undecided",
+          "Undecided",
+          "Transformed",
+          "Undecided"
+        ]
+      },
+      {
+        "variant": "candidate",
+        "case": 37,
+        "policy": 1,
+        "statuses": [
+          "NonIsolatingImageInterval",
+          "NonIsolatingImageInterval",
+          "Transformed",
+          "NonIsolatingImageInterval"
+        ]
+      }
+    ],
+    "limits": "384 authored queries per variant, 48 operations, two policies, four ordered in-process constructed/coarse-refined/deep-refined/deserialized histories. Independent full serialized computational semantics in Q(sqrt(2),sqrt(3)) with the explicit common-argument sine/cosine identity and nonzero pi/e divisors. Exact authored source bounds/witnesses, rational carrier shape, all carrier coefficients after monic normalization (including multiplicities, up to a nonzero rational factor), exact signs, root counts, selected values, witnesses and interval images checked without Hyper comparisons, floating-point overlap or donor arithmetic. Known analytic identities establish values of internally Unknown expressions; arbitrary transcendental nodes/divisors are rejected. Global caches are not cold processes, and no CPU/allocator/WASM/retention qualification is implied."
+  },
+  "initialChecks": 17640,
+  "decodedValues": 10664,
+  "memories": {
+    "baseline": {
+      "errors": 0,
+      "definite": 0,
+      "indirect": 0,
+      "possible": 0,
+      "reachableBytes": 47632,
+      "reachableBlocks": 346,
+      "allocations": 675746,
+      "frees": 675400,
+      "cumulativeBytes": 123272240
+    },
+    "candidate": {
+      "errors": 0,
+      "definite": 0,
+      "indirect": 0,
+      "possible": 0,
+      "reachableBytes": 48648,
+      "reachableBlocks": 353,
+      "allocations": 729203,
+      "frees": 728850,
+      "cumulativeBytes": 131069337
+    }
+  },
+  "memoryLimits": "Whole ordered collector including constructors, serialization and all histories. Zero errors/lost blocks, not zero live, peak RSS, marginal kernel costs or a general boundedness proof. Candidate performs additional certified work.",
+  "harnessLimits": "Both builds preserve an unnecessary-mut warning in the collector closure. No Clippy or debug/full-suite qualification of this new harness. Its CPU/allocation modes are present but have not been exercised or accepted as benchmark evidence.",
+  "coverageBefore": [
+    {
+      "repo": "calcium",
+      "reviewed": 552,
+      "complete": 552,
+      "partial": 0,
+      "readLines": 60286
+    },
+    {
+      "repo": "flint",
+      "reviewed": 883,
+      "complete": 863,
+      "partial": 20,
+      "readLines": 123367
+    }
+  ],
+  "coverageAtBinding": [
+    {
+      "repo": "calcium",
+      "reviewed": 552,
+      "complete": 552,
+      "partial": 0,
+      "readLines": 60286
+    },
+    {
+      "repo": "flint",
+      "reviewed": 883,
+      "complete": 863,
+      "partial": 20,
+      "readLines": 123367
+    }
+  ],
+  "newDonorLines": 0,
+  "liveFiles": 956,
+  "qualification": "Extended serialized exact-value oracle passes 21216 checks: 384 queries per variant, two policies/four histories, 128 gains and 256 unchanged queries. Focused native/Memcheck outputs agree. Initial decoder coverage failure and compiler warning are preserved. No matched CPU/allocator, new full-suite or WASM qualification.",
+  "production": "No production/donor edit or retained transfer; five retained continuation transfers and all 956 live hashes remain unchanged.",
+  "next": "Finalize/qualify full-result and state-aware CPU/allocation harness, run matched endpoint/history costs and relevant WASM qualification, then decide guarded-repair retention. Separate power-sum performance work follows.",
+  "scope": "No donor coverage added; all original references, supporting kernels, unresolved transfers and full inventory reconciliation remain incomplete."
+}

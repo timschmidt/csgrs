@@ -1,0 +1,11 @@
+{
+  "source_manifest": "retained-native-circle-contact-20260927-v323-sources.json",
+  "binary": {
+    "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-native-circle-contact-20260927-v323-hypercurve",
+    "sha256": "9327dd443bb639e6822b07f48a38624228a24d854432c2e833f8b263a4c427a7"
+  },
+  "gdb_returncode": 0,
+  "all_processes_reaped": true,
+  "log_sha256": "22a23a100434fd7a83c952eeb2b9fab28a931890dfdca0dbae6f66fc43317c74",
+  "finding": "Optional endpoint-projective overlap correspondence consumed approximation while normalizing the native radical circle witness"
+}

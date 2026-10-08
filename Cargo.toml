@@ -95,9 +95,11 @@ harness = false
 resolver = "3"
 members = ["crates/*"]
 # Nested packages keep their own lockfiles and are built from their own
-# directories; hypervoxel is a separate workspace for its voxelis crates.
+# directories; hypervoxel owns its voxelis crates, and comparisons requires
+# the external exactCorelib C++ oracle and serialized native tests.
 exclude = [
   "fuzz",
+  "crates/comparisons",
   "crates/hypervoxel",
   "crates/hyperbrep/fuzz",
   "crates/hypercurve/fuzz",

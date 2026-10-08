@@ -1,0 +1,37 @@
+{
+  "repo": "hypercurve",
+  "target": "hypercurve_reconstruct",
+  "binary": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve_reconstruct-986bbdf4fe9da4d7",
+  "command": [
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve_reconstruct-986bbdf4fe9da4d7",
+    "--test-threads=4",
+    "--color",
+    "never"
+  ],
+  "sha256": "cc54f520072d3ed498a8bc0e1f27660ee082f1752ad837b4b884dda44515e024",
+  "returncode": 0,
+  "timed_out": false,
+  "elapsed_seconds": 0.0034707720042206347,
+  "log": "opposed-endpoint-contact-full1-full-hypercurve-hypercurve_reconstruct.log",
+  "passed": [
+    "finite_ring_import_counts_signed_zero_duplicates_at_the_input_boundary",
+    "finite_ring_import_rejects_all_duplicate_source_edges",
+    "finite_ring_import_discards_adjacent_duplicate_source_edges",
+    "finite_ring_import_rejects_nonfinite_points_even_when_adjacent",
+    "real_line_string_rejects_zero_length_source_edges_without_import_record",
+    "reconstruction_accepts_closed_polyline_with_repeated_first_point",
+    "reconstruction_accepts_closed_polyline_without_repeated_first_point",
+    "reconstruction_keeps_single_corner_as_two_lines_by_default",
+    "reconstruction_merges_collinear_polyline_to_one_line",
+    "reconstruction_rejects_invalid_options",
+    "reconstruction_removes_adjacent_duplicate_samples",
+    "reconstruction_splits_arcs_at_semicircle_boundary"
+  ],
+  "failed": [],
+  "ignored": [],
+  "summaries": [
+    "test result: ok. 12 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s"
+  ],
+  "new_failures": [],
+  "known_failures": []
+}

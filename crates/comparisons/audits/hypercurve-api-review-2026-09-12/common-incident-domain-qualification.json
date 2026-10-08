@@ -1,0 +1,37 @@
+{
+  "date": "2026-09-14",
+  "status": "qualified_domain_construction_cleanup_goal_active",
+  "commits": {
+    "hypercurve": "70e2bfb",
+    "hyperbrep": "d82bc14"
+  },
+  "scope": "One incident_domain_from_parameter boundary accepts CurveParameter2; ordinary and retained anchor proofs share barrier/domain construction. Native retained polynomial signs use the common replay operation. Remove the Bezier-only fillet admissibility adapter and update all six callers.",
+  "tests": {
+    "focused_passed": 28,
+    "failed": 0,
+    "new_tests": 0
+  },
+  "checks": {
+    "hypercurve_all_targets_all_features": "passed",
+    "hyperbrep_all_targets_all_features": "passed",
+    "hypercurve_ui_offline_all_targets": "passed",
+    "hypercurve_docs_broken_links_denied": "passed",
+    "changed_rust_files_formatting": "passed",
+    "staged_whitespace": "passed"
+  },
+  "behavioral_parent_qualification": {
+    "commit": "9dfb2ad",
+    "record": "fixed-distance-parameter-qualification.json",
+    "total_unique_passed": 1225,
+    "note": "Anchor refinement schedules, native predicates, barrier construction and bridge semantics are preserved. The current extraction and private interface cleanup has 28 focused tests and separate compiler/UI/docs checks; the full broad runtime gate was not repeated."
+  },
+  "logs": [
+    "common-incident-domain-focused.log",
+    "common-incident-domain-all-targets.log",
+    "common-incident-domain-hyperbrep-check.log",
+    "common-incident-domain-ui-check.log",
+    "common-incident-domain-docs.log"
+  ],
+  "performance_claim": "No matched runtime benchmark. Source weight coefficients are borrowed, and common polynomial replay avoids the selected-field outer product with the constant one. Net reduction: 61 source lines.",
+  "pushed": false
+}

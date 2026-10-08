@@ -1,0 +1,30 @@
+{
+  "returncode": 0,
+  "elapsed_seconds": 22.747412008000538,
+  "normal_library_sha256": "80e20958e5d3b5d992cd8a64349c236522867b1c89147c36fd889e417c5c85ba",
+  "log": "finite-analytic-native-poles-region-public.log",
+  "source": "finite-circle-rational-domains-public.rs",
+  "command": [
+    "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustc",
+    "--edition=2024",
+    "-O",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-circle-rational-domains-public.rs",
+    "--extern",
+    "hypercurve=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypercurve-49e17f22910a7047.rlib",
+    "-L",
+    "dependency=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps",
+    "-o",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-analytic-native-poles-region-public"
+  ],
+  "source_sha256": "c9ddfb41cb7a077523ca9b35bdbed81886b9fe5b3957e3973ae881dd65a67bef",
+  "executable_sha256": "bb26a47f53197fb34585d808baf7e6916628590b93890f149fce8b8cddb7137e",
+  "counts": {
+    "queries": 48,
+    "point_replays": 96,
+    "topologies": 48,
+    "splits": 96,
+    "child_queries": 192,
+    "region_queries": 12,
+    "boolean_reentries": 12
+  }
+}

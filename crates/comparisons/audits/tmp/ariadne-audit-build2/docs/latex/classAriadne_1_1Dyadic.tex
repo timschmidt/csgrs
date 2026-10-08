@@ -1,0 +1,304 @@
+\doxysubsection{Dyadic Class Reference}
+\hypertarget{classAriadne_1_1Dyadic}{}\label{classAriadne_1_1Dyadic}\index{Dyadic@{Dyadic}}
+
+
+{\ttfamily \#include $<$dyadic.\+hpp$>$}
+
+
+
+\doxysubsubsection{Description}
+A dyadic number of the form $p/2^q$ for integers $p$, $q$; equivalently, a number with a finite binary expansion. 
+
+\begin{DoxySeeAlso}{See also}
+\doxylink{classAriadne_1_1Integer}{Integer}, \doxylink{classAriadne_1_1Decimal}{Decimal}, \doxylink{classAriadne_1_1Rational}{Rational}, \doxylink{classAriadne_1_1Float_3_01DP_01_4}{Float$<$\+DP$>$}, \doxylink{classAriadne_1_1Float_3_01MP_01_4}{Float$<$\+MP$>$}
+\end{DoxySeeAlso}
+The number $1.375$ is an example of a dyadic number, since it is equal to $1.375=11/8=11/2^3=1.101_2$. The number $0.1375$ is not a dyadic number, since $0.1375=11/80=11/(2^4\times 5)=0.0010\overline{0011}_2$, so the denominator is not a power of $2$, and its binary expansion is recurring. \doxysubsubsubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1Dyadic_a80ce55255d2aebdce35d3657ee9945b1}\label{classAriadne_1_1Dyadic_a80ce55255d2aebdce35d3657ee9945b1} 
+{\bfseries Dyadic} (mpf\+\_\+t mpf)
+\begin{DoxyCompactList}\small\item\em Construct a \doxylink{classAriadne_1_1Dyadic}{Dyadic} number from a GNU mpf object. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Dyadic_a71da3e1dec543cbc061e18a15fbc4317}\label{classAriadne_1_1Dyadic_a71da3e1dec543cbc061e18a15fbc4317} 
+{\bfseries Dyadic} (\mbox{\hyperlink{classAriadne_1_1Integer}{Integer}} const \&p, \mbox{\hyperlink{namespaceAriadne_aae901a69a841b1a085a0dfe218e38fe9}{Nat}} q)
+\begin{DoxyCompactList}\small\item\em Construct the \doxylink{classAriadne_1_1Dyadic}{Dyadic} number {\itshape p/2\textsuperscript{q}}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Dyadic_abccc0b57bfe31883bc74ad99afe52763}\label{classAriadne_1_1Dyadic_abccc0b57bfe31883bc74ad99afe52763} 
+{\bfseries \texorpdfstring{$\sim$}{\string~}\+Dyadic} ()
+\begin{DoxyCompactList}\small\item\em Destructor. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Dyadic_a7e6af3362cf603c54f3d84045d5c4588}\label{classAriadne_1_1Dyadic_a7e6af3362cf603c54f3d84045d5c4588} 
+{\bfseries Dyadic} ()
+\begin{DoxyCompactList}\small\item\em Default constructor creates the number 0 (zero). \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Dyadic_a7b86b1d359da0b6ddeda85fc38fa3efb}\label{classAriadne_1_1Dyadic_a7b86b1d359da0b6ddeda85fc38fa3efb} 
+{\bfseries Dyadic} (\mbox{\hyperlink{classAriadne_1_1Dyadic}{Dyadic}} const \&n)
+\begin{DoxyCompactList}\small\item\em Copy constructor. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Dyadic_ac4df376f3e63c12c1432891693998044}\label{classAriadne_1_1Dyadic_ac4df376f3e63c12c1432891693998044} 
+\mbox{\hyperlink{classAriadne_1_1Dyadic}{Dyadic}} \& {\bfseries operator=} (\mbox{\hyperlink{classAriadne_1_1Dyadic}{Dyadic}} const \&n)
+\begin{DoxyCompactList}\small\item\em \doxylink{classAriadne_1_1Assignment}{Assignment} constructor. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Dyadic_ad8ef86648235376dc52c680fe3b638a7}\label{classAriadne_1_1Dyadic_ad8ef86648235376dc52c680fe3b638a7} 
+{\footnotesize template$<$Builtin\+Integral N$>$ }\\{\bfseries Dyadic} (N n)
+\begin{DoxyCompactList}\small\item\em Convert from a built-\/in integer. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Dyadic_a35088caeab909eaad3c9342e01e8c3f8}\label{classAriadne_1_1Dyadic_a35088caeab909eaad3c9342e01e8c3f8} 
+{\bfseries Dyadic} (const \mbox{\hyperlink{classAriadne_1_1ExactDouble}{Exact\+Double}} \&d)
+\begin{DoxyCompactList}\small\item\em Convert from an exact double-\/precision number. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Dyadic_a2dc73997169634304282fb8f55174ce7}\label{classAriadne_1_1Dyadic_a2dc73997169634304282fb8f55174ce7} 
+{\bfseries Dyadic} (const \mbox{\hyperlink{classAriadne_1_1Integer}{Integer}} \&z)
+\begin{DoxyCompactList}\small\item\em Convert from an integer. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Dyadic_abb6054d3de7e16e129d871efaea843d7}\label{classAriadne_1_1Dyadic_abb6054d3de7e16e129d871efaea843d7} 
+{\bfseries Dyadic} (const \mbox{\hyperlink{classAriadne_1_1TwoExp}{Two\+Exp}} \&t)
+\begin{DoxyCompactList}\small\item\em Convert from a power of two. \end{DoxyCompactList}\item 
+\mbox{\hyperlink{classAriadne_1_1Dyadic_a4f64e8a0ce17cddfa2d36b97cda58f2e}{Dyadic}} (double x)
+\begin{DoxyCompactList}\small\item\em Explicit construction from a built-\/in double-\/precision value. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Dyadic_a8751792bd1ef3329daba18445eed161d}\label{classAriadne_1_1Dyadic_a8751792bd1ef3329daba18445eed161d} 
+{\bfseries Dyadic} (\mbox{\hyperlink{classAriadne_1_1String}{String}} const \&)
+\begin{DoxyCompactList}\small\item\em Construct from a string representation. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Dyadic_a199a243df73e92a4c48c97f35ab6ae7b}\label{classAriadne_1_1Dyadic_a199a243df73e92a4c48c97f35ab6ae7b} 
+{\bfseries operator Exact\+Number} () const
+\begin{DoxyCompactList}\small\item\em Convert to a generic number. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Dyadic_acb9e92e691f328073fd24ec9cf9ccb63}\label{classAriadne_1_1Dyadic_acb9e92e691f328073fd24ec9cf9ccb63} 
+\mbox{\hyperlink{classAriadne_1_1Integer}{Integer}} {\bfseries mantissa} () const
+\begin{DoxyCompactList}\small\item\em The smallest integer {\itshape p} such that {\itshape x=p/2\textsuperscript{q}} \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Dyadic_aa10674b58dbbd070afdeb142ddb78c73}\label{classAriadne_1_1Dyadic_aa10674b58dbbd070afdeb142ddb78c73} 
+\mbox{\hyperlink{namespaceAriadne_a008e7f6ae8f621fbb1d876061812b9b2}{Int}} {\bfseries exponent} () const
+\begin{DoxyCompactList}\small\item\em The (negative) integer {\itshape -\/q} such that {\itshape x=p/2\textsuperscript{q}} \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Dyadic_a4c0fda7346d15cc92f1aa5b2d3769e88}\label{classAriadne_1_1Dyadic_a4c0fda7346d15cc92f1aa5b2d3769e88} 
+double {\bfseries get\+\_\+d} () const
+\begin{DoxyCompactList}\small\item\em A double-\/precision approximation. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Dyadic_abe52483f91da873e8369c9775465ae67}\label{classAriadne_1_1Dyadic_abe52483f91da873e8369c9775465ae67} 
+\mbox{\hyperlink{classAriadne_1_1String}{String}} {\bfseries literal} () const
+\begin{DoxyCompactList}\small\item\em A string literal, comprising the exact value in decimal format. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsubsection*{Static Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1Dyadic_a0badc37db7ebf1a86b6868df7b378cfb}\label{classAriadne_1_1Dyadic_a0badc37db7ebf1a86b6868df7b378cfb} 
+static \mbox{\hyperlink{classAriadne_1_1Dyadic}{Dyadic}} {\bfseries inf} (\mbox{\hyperlink{namespaceAriadne_aaed75bcf4435a6d8be243fbf9f2e375b}{Sign}} \mbox{\hyperlink{classAriadne_1_1Dyadic_acacacd6ad127d0e7b06044655c7eb029}{sgn}})
+\begin{DoxyCompactList}\small\item\em A representation of ±∞ or NaN. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Dyadic_a494da15232f8bc75f44a777b8317beff}\label{classAriadne_1_1Dyadic_a494da15232f8bc75f44a777b8317beff} 
+static \mbox{\hyperlink{classAriadne_1_1Dyadic}{Dyadic}} {\bfseries inf} ()
+\begin{DoxyCompactList}\small\item\em A representation of +∞. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Dyadic_af72ec92fca48ef3818fc293a045f8fa3}\label{classAriadne_1_1Dyadic_af72ec92fca48ef3818fc293a045f8fa3} 
+static \mbox{\hyperlink{classAriadne_1_1Dyadic}{Dyadic}} {\bfseries nan} ()
+\begin{DoxyCompactList}\small\item\em A representation of NaN (not-\/a-\/number). \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsubsection*{Friends}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1Dyadic_aa16baa7990af7e4e4a830e731cdaf866}\label{classAriadne_1_1Dyadic_aa16baa7990af7e4e4a830e731cdaf866} 
+\mbox{\hyperlink{classAriadne_1_1Dyadic}{Dyadic}} {\bfseries operator"{}"{}\+\_\+bin} (long double x)
+\begin{DoxyCompactList}\small\item\em Convert a floating-\/point literal to \doxylink{classAriadne_1_1Dyadic}{Dyadic} i.\+e. long binary format. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Dyadic_aff0b01972535ad21e063e3bb0b5e3e23}\label{classAriadne_1_1Dyadic_aff0b01972535ad21e063e3bb0b5e3e23} 
+\mbox{\hyperlink{classAriadne_1_1Dyadic}{Dyadic}} {\bfseries operator"{}"{}\+\_\+dyadic} (long double x)
+\begin{DoxyCompactList}\small\item\em Convert a floating-\/point literal to \doxylink{classAriadne_1_1Dyadic}{Dyadic}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Dyadic_ae43e56855be18671d6d87ba98a636a75}\label{classAriadne_1_1Dyadic_ae43e56855be18671d6d87ba98a636a75} 
+\mbox{\hyperlink{classAriadne_1_1Dyadic}{Dyadic}} {\bfseries operator"{}"{}\+\_\+dy} (long double x)
+\begin{DoxyCompactList}\small\item\em Shorthand for operator"{}"{}\+\_\+dyadic. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Dyadic_a41ef5fd5ef08cda400230737c4afa334}\label{classAriadne_1_1Dyadic_a41ef5fd5ef08cda400230737c4afa334} 
+\mbox{\hyperlink{classAriadne_1_1Dyadic}{Dyadic}} {\bfseries dy\+\_\+} (long double x)
+\begin{DoxyCompactList}\small\item\em Alternative for operator"{}"{}\+\_\+dyadic for use in Python interface. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\begin{Indent}\textbf{ Arithmetic operators}\par
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1Dyadic_a1611662a3f66373e00e76e76819bd6d8}\label{classAriadne_1_1Dyadic_a1611662a3f66373e00e76e76819bd6d8} 
+\mbox{\hyperlink{classAriadne_1_1Dyadic}{Dyadic}} {\bfseries operator+} (\mbox{\hyperlink{classAriadne_1_1Dyadic}{Dyadic}} const \&w)
+\item 
+\Hypertarget{classAriadne_1_1Dyadic_a67aa134d731a25567c4457df11f45b61}\label{classAriadne_1_1Dyadic_a67aa134d731a25567c4457df11f45b61} 
+\mbox{\hyperlink{classAriadne_1_1Dyadic}{Dyadic}} {\bfseries operator-\/} (\mbox{\hyperlink{classAriadne_1_1Dyadic}{Dyadic}} const \&w)
+\item 
+\Hypertarget{classAriadne_1_1Dyadic_a043180fb588eef9ae68e15c05823c337}\label{classAriadne_1_1Dyadic_a043180fb588eef9ae68e15c05823c337} 
+\mbox{\hyperlink{classAriadne_1_1Dyadic}{Dyadic}} {\bfseries operator+} (\mbox{\hyperlink{classAriadne_1_1Dyadic}{Dyadic}} const \&w1, \mbox{\hyperlink{classAriadne_1_1Dyadic}{Dyadic}} const \&w2)
+\item 
+\Hypertarget{classAriadne_1_1Dyadic_a1a88c8c15c728ffafb604ef602c2fb95}\label{classAriadne_1_1Dyadic_a1a88c8c15c728ffafb604ef602c2fb95} 
+\mbox{\hyperlink{classAriadne_1_1Dyadic}{Dyadic}} {\bfseries operator-\/} (\mbox{\hyperlink{classAriadne_1_1Dyadic}{Dyadic}} const \&w1, \mbox{\hyperlink{classAriadne_1_1Dyadic}{Dyadic}} const \&w2)
+\item 
+\Hypertarget{classAriadne_1_1Dyadic_a0a763db3bcd17358196d9e5953d6cff6}\label{classAriadne_1_1Dyadic_a0a763db3bcd17358196d9e5953d6cff6} 
+\mbox{\hyperlink{classAriadne_1_1Dyadic}{Dyadic}} {\bfseries operator\texorpdfstring{$\ast$}{*}} (\mbox{\hyperlink{classAriadne_1_1Dyadic}{Dyadic}} const \&w1, \mbox{\hyperlink{classAriadne_1_1Dyadic}{Dyadic}} const \&w2)
+\item 
+\Hypertarget{classAriadne_1_1Dyadic_a4d98d578093fa43fb3b48adf61a0b029}\label{classAriadne_1_1Dyadic_a4d98d578093fa43fb3b48adf61a0b029} 
+\mbox{\hyperlink{classAriadne_1_1Dyadic}{Dyadic}} \& {\bfseries operator+=} (\mbox{\hyperlink{classAriadne_1_1Dyadic}{Dyadic}} \&w1, \mbox{\hyperlink{classAriadne_1_1Dyadic}{Dyadic}} const \&w2)
+\item 
+\Hypertarget{classAriadne_1_1Dyadic_a8f816ffb4f91f4a6806ec22f9170086a}\label{classAriadne_1_1Dyadic_a8f816ffb4f91f4a6806ec22f9170086a} 
+\mbox{\hyperlink{classAriadne_1_1Dyadic}{Dyadic}} \& {\bfseries operator-\/=} (\mbox{\hyperlink{classAriadne_1_1Dyadic}{Dyadic}} \&w1, \mbox{\hyperlink{classAriadne_1_1Dyadic}{Dyadic}} const \&w2)
+\item 
+\Hypertarget{classAriadne_1_1Dyadic_a645d5a7dd337831fb88ddfc9f72a410f}\label{classAriadne_1_1Dyadic_a645d5a7dd337831fb88ddfc9f72a410f} 
+\mbox{\hyperlink{classAriadne_1_1Dyadic}{Dyadic}} \& {\bfseries operator\texorpdfstring{$\ast$}{*}=} (\mbox{\hyperlink{classAriadne_1_1Dyadic}{Dyadic}} \&w1, \mbox{\hyperlink{classAriadne_1_1Dyadic}{Dyadic}} const \&w2)
+\end{DoxyCompactItemize}
+\end{Indent}
+\begin{Indent}\textbf{ Comparison operators}\par
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1Dyadic_aab5c3ade328f1d7918da906933f202c8}\label{classAriadne_1_1Dyadic_aab5c3ade328f1d7918da906933f202c8} 
+\mbox{\hyperlink{classAriadne_1_1Boolean}{Boolean}} {\bfseries operator==} (\mbox{\hyperlink{classAriadne_1_1Dyadic}{Dyadic}} const \&w1, \mbox{\hyperlink{classAriadne_1_1Dyadic}{Dyadic}} const \&w2)
+\item 
+\Hypertarget{classAriadne_1_1Dyadic_a84961fbaeaee7ba82a67cce7a14fe0e6}\label{classAriadne_1_1Dyadic_a84961fbaeaee7ba82a67cce7a14fe0e6} 
+\mbox{\hyperlink{classAriadne_1_1Boolean}{Boolean}} {\bfseries operator!=} (\mbox{\hyperlink{classAriadne_1_1Dyadic}{Dyadic}} const \&w1, \mbox{\hyperlink{classAriadne_1_1Dyadic}{Dyadic}} const \&w2)
+\item 
+\Hypertarget{classAriadne_1_1Dyadic_a2734440059ebfd6c4808ea075b03ec3a}\label{classAriadne_1_1Dyadic_a2734440059ebfd6c4808ea075b03ec3a} 
+\mbox{\hyperlink{classAriadne_1_1Boolean}{Boolean}} {\bfseries operator$<$=} (\mbox{\hyperlink{classAriadne_1_1Dyadic}{Dyadic}} const \&w1, \mbox{\hyperlink{classAriadne_1_1Dyadic}{Dyadic}} const \&w2)
+\item 
+\Hypertarget{classAriadne_1_1Dyadic_aef90b878853570d3b62efb6ed1aeb741}\label{classAriadne_1_1Dyadic_aef90b878853570d3b62efb6ed1aeb741} 
+\mbox{\hyperlink{classAriadne_1_1Boolean}{Boolean}} {\bfseries operator$>$=} (\mbox{\hyperlink{classAriadne_1_1Dyadic}{Dyadic}} const \&w1, \mbox{\hyperlink{classAriadne_1_1Dyadic}{Dyadic}} const \&w2)
+\item 
+\Hypertarget{classAriadne_1_1Dyadic_ae45141c1415df20ee7bf3737684eb408}\label{classAriadne_1_1Dyadic_ae45141c1415df20ee7bf3737684eb408} 
+\mbox{\hyperlink{classAriadne_1_1Boolean}{Boolean}} {\bfseries operator$<$} (\mbox{\hyperlink{classAriadne_1_1Dyadic}{Dyadic}} const \&w1, \mbox{\hyperlink{classAriadne_1_1Dyadic}{Dyadic}} const \&w2)
+\item 
+\Hypertarget{classAriadne_1_1Dyadic_aa919351ca7f783435fbec0ce07280e46}\label{classAriadne_1_1Dyadic_aa919351ca7f783435fbec0ce07280e46} 
+\mbox{\hyperlink{classAriadne_1_1Boolean}{Boolean}} {\bfseries operator$>$} (\mbox{\hyperlink{classAriadne_1_1Dyadic}{Dyadic}} const \&w1, \mbox{\hyperlink{classAriadne_1_1Dyadic}{Dyadic}} const \&w2)
+\end{DoxyCompactItemize}
+\end{Indent}
+\begin{Indent}\textbf{ Arithmetic operations}\par
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1Dyadic_a4cadbb411b0d7828c824980b588365d7}\label{classAriadne_1_1Dyadic_a4cadbb411b0d7828c824980b588365d7} 
+\mbox{\hyperlink{classAriadne_1_1Dyadic}{Dyadic}} {\bfseries nul} (\mbox{\hyperlink{classAriadne_1_1Dyadic}{Dyadic}} const \&w)
+\begin{DoxyCompactList}\small\item\em Zero {\itshape 0}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Dyadic_a19a119ac27f9339959350b46feac582f}\label{classAriadne_1_1Dyadic_a19a119ac27f9339959350b46feac582f} 
+\mbox{\hyperlink{classAriadne_1_1Dyadic}{Dyadic}} {\bfseries pos} (\mbox{\hyperlink{classAriadne_1_1Dyadic}{Dyadic}} const \&w)
+\begin{DoxyCompactList}\small\item\em Positive {\itshape +w}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Dyadic_a3eb19c2664a4c9feb49651d5ed00c630}\label{classAriadne_1_1Dyadic_a3eb19c2664a4c9feb49651d5ed00c630} 
+\mbox{\hyperlink{classAriadne_1_1Dyadic}{Dyadic}} {\bfseries neg} (\mbox{\hyperlink{classAriadne_1_1Dyadic}{Dyadic}} const \&w)
+\begin{DoxyCompactList}\small\item\em Negative {\itshape -\/w}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Dyadic_a0531327ff05fddc7a80bd8a93a3e7811}\label{classAriadne_1_1Dyadic_a0531327ff05fddc7a80bd8a93a3e7811} 
+\mbox{\hyperlink{classAriadne_1_1Positive}{Positive}}$<$ \mbox{\hyperlink{classAriadne_1_1Dyadic}{Dyadic}} $>$ {\bfseries sqr} (\mbox{\hyperlink{classAriadne_1_1Dyadic}{Dyadic}} const \&w)
+\begin{DoxyCompactList}\small\item\em Square {\itshape w\textsuperscript{2}}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Dyadic_a339ff0585fa694b573641a3272d9895a}\label{classAriadne_1_1Dyadic_a339ff0585fa694b573641a3272d9895a} 
+\mbox{\hyperlink{classAriadne_1_1Dyadic}{Dyadic}} {\bfseries hlf} (\mbox{\hyperlink{classAriadne_1_1Dyadic}{Dyadic}} const \&w)
+\begin{DoxyCompactList}\small\item\em Half {\itshape w/2}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Dyadic_ad94cd6091d8695611db39b933194629d}\label{classAriadne_1_1Dyadic_ad94cd6091d8695611db39b933194629d} 
+\mbox{\hyperlink{classAriadne_1_1Dyadic}{Dyadic}} {\bfseries add} (\mbox{\hyperlink{classAriadne_1_1Dyadic}{Dyadic}} const \&w1, \mbox{\hyperlink{classAriadne_1_1Dyadic}{Dyadic}} const \&w2)
+\begin{DoxyCompactList}\small\item\em Add {\itshape w1+w2}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Dyadic_ac0ad1382d8b06b05d2632850482cf8ad}\label{classAriadne_1_1Dyadic_ac0ad1382d8b06b05d2632850482cf8ad} 
+\mbox{\hyperlink{classAriadne_1_1Dyadic}{Dyadic}} {\bfseries sub} (\mbox{\hyperlink{classAriadne_1_1Dyadic}{Dyadic}} const \&w1, \mbox{\hyperlink{classAriadne_1_1Dyadic}{Dyadic}} const \&w2)
+\begin{DoxyCompactList}\small\item\em Subtract {\itshape w1-\/w2}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Dyadic_ac7da0bdc8232941b483cd0e516585a58}\label{classAriadne_1_1Dyadic_ac7da0bdc8232941b483cd0e516585a58} 
+\mbox{\hyperlink{classAriadne_1_1Dyadic}{Dyadic}} {\bfseries mul} (\mbox{\hyperlink{classAriadne_1_1Dyadic}{Dyadic}} const \&w1, \mbox{\hyperlink{classAriadne_1_1Dyadic}{Dyadic}} const \&w2)
+\begin{DoxyCompactList}\small\item\em Multiply {\itshape w1×w2}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Dyadic_affe29bb7529e57ba510b70d6c75027fb}\label{classAriadne_1_1Dyadic_affe29bb7529e57ba510b70d6c75027fb} 
+\mbox{\hyperlink{classAriadne_1_1Dyadic}{Dyadic}} {\bfseries pow} (\mbox{\hyperlink{classAriadne_1_1Dyadic}{Dyadic}} const \&w, \mbox{\hyperlink{namespaceAriadne_aae901a69a841b1a085a0dfe218e38fe9}{Nat}} m)
+\begin{DoxyCompactList}\small\item\em Power {\itshape w\textsuperscript{m}} where {\itshape m} is positive. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Dyadic_a9209cfe92073287f0d04fe62385dad9d}\label{classAriadne_1_1Dyadic_a9209cfe92073287f0d04fe62385dad9d} 
+\mbox{\hyperlink{classAriadne_1_1Rational}{Rational}} {\bfseries pow} (\mbox{\hyperlink{classAriadne_1_1Dyadic}{Dyadic}} const \&w, \mbox{\hyperlink{namespaceAriadne_a008e7f6ae8f621fbb1d876061812b9b2}{Int}} n)
+\begin{DoxyCompactList}\small\item\em Power {\itshape w\textsuperscript{n}}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Dyadic_ada17a9381abac179bb54b16082412547}\label{classAriadne_1_1Dyadic_ada17a9381abac179bb54b16082412547} 
+\mbox{\hyperlink{classAriadne_1_1Dyadic}{Dyadic}} {\bfseries fma} (\mbox{\hyperlink{classAriadne_1_1Dyadic}{Dyadic}} const \&w1, \mbox{\hyperlink{classAriadne_1_1Dyadic}{Dyadic}} const \&w2, \mbox{\hyperlink{classAriadne_1_1Dyadic}{Dyadic}} const \&w3)
+\begin{DoxyCompactList}\small\item\em Fused multiply-\/and-\/add {\itshape w1×w2+w3}. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\end{Indent}
+\begin{Indent}\textbf{ Lattice operations}\par
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1Dyadic_ac59d7b1bf137e16a65566d981b516958}\label{classAriadne_1_1Dyadic_ac59d7b1bf137e16a65566d981b516958} 
+\mbox{\hyperlink{classAriadne_1_1Positive}{Positive}}$<$ \mbox{\hyperlink{classAriadne_1_1Dyadic}{Dyadic}} $>$ {\bfseries abs} (\mbox{\hyperlink{classAriadne_1_1Dyadic}{Dyadic}} const \&w)
+\begin{DoxyCompactList}\small\item\em Absolute value {\itshape \texorpdfstring{$\vert$}{|}w\texorpdfstring{$\vert$}{|}}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Dyadic_a80c18b147cd22df0b2b3549700bfbc1c}\label{classAriadne_1_1Dyadic_a80c18b147cd22df0b2b3549700bfbc1c} 
+\mbox{\hyperlink{classAriadne_1_1Dyadic}{Dyadic}} {\bfseries min} (\mbox{\hyperlink{classAriadne_1_1Dyadic}{Dyadic}} const \&w1, \mbox{\hyperlink{classAriadne_1_1Dyadic}{Dyadic}} const \&w2)
+\begin{DoxyCompactList}\small\item\em Minimum {\itshape w1∧w2}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Dyadic_a63647a733f41f7a615cb66ca4c5b9e94}\label{classAriadne_1_1Dyadic_a63647a733f41f7a615cb66ca4c5b9e94} 
+\mbox{\hyperlink{classAriadne_1_1Dyadic}{Dyadic}} {\bfseries max} (\mbox{\hyperlink{classAriadne_1_1Dyadic}{Dyadic}} const \&w1, \mbox{\hyperlink{classAriadne_1_1Dyadic}{Dyadic}} const \&w2)
+\begin{DoxyCompactList}\small\item\em Maximum {\itshape w1∨w2}. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\end{Indent}
+\begin{Indent}\textbf{ Rounding operations}\par
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1Dyadic_a1afbde28ef1ef37903e6483fba419eec}\label{classAriadne_1_1Dyadic_a1afbde28ef1ef37903e6483fba419eec} 
+\mbox{\hyperlink{classAriadne_1_1Integer}{Integer}} {\bfseries floor} (\mbox{\hyperlink{classAriadne_1_1Dyadic}{Dyadic}} const \&w)
+\begin{DoxyCompactList}\small\item\em Round down to the nearest lower integer. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Dyadic_a0b7fdceca43cd716121655638ea3b4a8}\label{classAriadne_1_1Dyadic_a0b7fdceca43cd716121655638ea3b4a8} 
+\mbox{\hyperlink{classAriadne_1_1Integer}{Integer}} {\bfseries round} (\mbox{\hyperlink{classAriadne_1_1Dyadic}{Dyadic}} const \&w)
+\begin{DoxyCompactList}\small\item\em Round to the nearest integer. Rounding of halves is implementation-\/dependent. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Dyadic_a6b5faeead2240f903d7caf687f5c8a63}\label{classAriadne_1_1Dyadic_a6b5faeead2240f903d7caf687f5c8a63} 
+\mbox{\hyperlink{classAriadne_1_1Integer}{Integer}} {\bfseries ceil} (\mbox{\hyperlink{classAriadne_1_1Dyadic}{Dyadic}} const \&w)
+\begin{DoxyCompactList}\small\item\em Round up to the nearest higher integer. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\end{Indent}
+\begin{Indent}\textbf{ Comparison operations}\par
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1Dyadic_acacacd6ad127d0e7b06044655c7eb029}\label{classAriadne_1_1Dyadic_acacacd6ad127d0e7b06044655c7eb029} 
+\mbox{\hyperlink{namespaceAriadne_aaed75bcf4435a6d8be243fbf9f2e375b}{Sign}} {\bfseries sgn} (\mbox{\hyperlink{classAriadne_1_1Dyadic}{Dyadic}} const \&w)
+\begin{DoxyCompactList}\small\item\em The sign of {\itshape w}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Dyadic_ae928893ba48cc9fd2b9c795599135284}\label{classAriadne_1_1Dyadic_ae928893ba48cc9fd2b9c795599135284} 
+\mbox{\hyperlink{namespaceAriadne_a0e36a4c4b857737f71444bff61a9edb6}{Comparison}} {\bfseries cmp} (\mbox{\hyperlink{classAriadne_1_1Dyadic}{Dyadic}} const \&w1, \mbox{\hyperlink{classAriadne_1_1Dyadic}{Dyadic}} const \&w2)
+\begin{DoxyCompactList}\small\item\em Compares which of {\itshape w1} and {\itshape w2} is larger. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Dyadic_ac249eac5921504e2c993cd3a88ffdb94}\label{classAriadne_1_1Dyadic_ac249eac5921504e2c993cd3a88ffdb94} 
+\mbox{\hyperlink{classAriadne_1_1Boolean}{Boolean}} {\bfseries eq} (\mbox{\hyperlink{classAriadne_1_1Dyadic}{Dyadic}} const \&w1, \mbox{\hyperlink{classAriadne_1_1Dyadic}{Dyadic}} const \&w2)
+\begin{DoxyCompactList}\small\item\em Tests if {\itshape w1} is equal to {\itshape w2}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Dyadic_aa816ba47e2990942d9f4a46d5c12690e}\label{classAriadne_1_1Dyadic_aa816ba47e2990942d9f4a46d5c12690e} 
+\mbox{\hyperlink{classAriadne_1_1Boolean}{Boolean}} {\bfseries lt} (\mbox{\hyperlink{classAriadne_1_1Dyadic}{Dyadic}} const \&w1, \mbox{\hyperlink{classAriadne_1_1Dyadic}{Dyadic}} const \&w2)
+\begin{DoxyCompactList}\small\item\em Tests if {\itshape w1} is less than {\itshape w2}. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\end{Indent}
+\begin{Indent}\textbf{ Special value tests}\par
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1Dyadic_a05381e681aa7f9b7452eedc5a6387a12}\label{classAriadne_1_1Dyadic_a05381e681aa7f9b7452eedc5a6387a12} 
+\mbox{\hyperlink{namespaceAriadne_a76a8b016e5ad61faf9062cc387df5016}{Bool}} {\bfseries is\+\_\+nan} (\mbox{\hyperlink{classAriadne_1_1Dyadic}{Dyadic}} const \&w)
+\begin{DoxyCompactList}\small\item\em Tests whether {\itshape w} is NaN (not-\/a-\/number). \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Dyadic_a3fff9a82bbb6e2c8986ea5636dd8fa6a}\label{classAriadne_1_1Dyadic_a3fff9a82bbb6e2c8986ea5636dd8fa6a} 
+\mbox{\hyperlink{namespaceAriadne_a76a8b016e5ad61faf9062cc387df5016}{Bool}} {\bfseries is\+\_\+inf} (\mbox{\hyperlink{classAriadne_1_1Dyadic}{Dyadic}} const \&w)
+\begin{DoxyCompactList}\small\item\em Tests whether {\itshape w} is ±∞. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Dyadic_aad3a7b7e3f4ffca1857b4fca5a5b0bd0}\label{classAriadne_1_1Dyadic_aad3a7b7e3f4ffca1857b4fca5a5b0bd0} 
+\mbox{\hyperlink{namespaceAriadne_a76a8b016e5ad61faf9062cc387df5016}{Bool}} {\bfseries is\+\_\+finite} (\mbox{\hyperlink{classAriadne_1_1Dyadic}{Dyadic}} const \&w)
+\begin{DoxyCompactList}\small\item\em Tests whether {\itshape w} is finite. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Dyadic_ac8beef62501ddf7e0630246f32a0d567}\label{classAriadne_1_1Dyadic_ac8beef62501ddf7e0630246f32a0d567} 
+\mbox{\hyperlink{namespaceAriadne_a76a8b016e5ad61faf9062cc387df5016}{Bool}} {\bfseries is\+\_\+zero} (\mbox{\hyperlink{classAriadne_1_1Dyadic}{Dyadic}} const \&w)
+\begin{DoxyCompactList}\small\item\em Tests whether {\itshape w} is zero. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\end{Indent}
+\begin{Indent}\textbf{ Input/output operations}\par
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1Dyadic_a67ca57ed9156e684cf2ceb8395ecb81f}\label{classAriadne_1_1Dyadic_a67ca57ed9156e684cf2ceb8395ecb81f} 
+\mbox{\hyperlink{namespaceAriadne_acbb98ddc4385af4599070e65a1a47ec1}{Output\+Stream}} \& {\bfseries operator$<$$<$} (\mbox{\hyperlink{namespaceAriadne_acbb98ddc4385af4599070e65a1a47ec1}{Output\+Stream}} \&os, \mbox{\hyperlink{classAriadne_1_1Dyadic}{Dyadic}} const \&w)
+\begin{DoxyCompactList}\small\item\em Write to an output stream. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\end{Indent}
+\doxysubsubsubsection*{Related Types and Functions}
+(Note that these are not member symbols.) \begin{Indent}\textbf{ Type synonyms}\par
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1Dyadic_acb338d1e5663407eab31b6c5aaf70a77}\label{classAriadne_1_1Dyadic_acb338d1e5663407eab31b6c5aaf70a77} 
+using {\bfseries Dyadic\+Bounds} = \mbox{\hyperlink{classAriadne_1_1Bounds}{Bounds}}$<$\mbox{\hyperlink{classAriadne_1_1Dyadic}{Dyadic}}$>$
+\begin{DoxyCompactList}\small\item\em Alias for dyadic bounds on a number. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Dyadic_ad7359708f4c43f5bcb06c5817f5ddde3}\label{classAriadne_1_1Dyadic_ad7359708f4c43f5bcb06c5817f5ddde3} 
+using {\bfseries Dyadic\+Ball} = \mbox{\hyperlink{classAriadne_1_1Ball}{Ball}}$<$\mbox{\hyperlink{classAriadne_1_1Dyadic}{Dyadic}},\mbox{\hyperlink{classAriadne_1_1Dyadic}{Dyadic}}$>$
+\begin{DoxyCompactList}\small\item\em Alias for ball about a number with dyadic value and error. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Dyadic_ac7d68d4c7bbb9474cc59b5dda9820783}\label{classAriadne_1_1Dyadic_ac7d68d4c7bbb9474cc59b5dda9820783} 
+using {\bfseries Dyadic\+Upper\+Bound} = \mbox{\hyperlink{classAriadne_1_1UpperBound}{Upper\+Bound}}$<$\mbox{\hyperlink{classAriadne_1_1Dyadic}{Dyadic}}$>$
+\begin{DoxyCompactList}\small\item\em Alias for dyadic upper bound for a number. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Dyadic_ae459546902c6e6362d66db8973ec459c}\label{classAriadne_1_1Dyadic_ae459546902c6e6362d66db8973ec459c} 
+using {\bfseries Dyadic\+Lower\+Bound} = \mbox{\hyperlink{classAriadne_1_1LowerBound}{Lower\+Bound}}$<$\mbox{\hyperlink{classAriadne_1_1Dyadic}{Dyadic}}$>$
+\begin{DoxyCompactList}\small\item\em Alias for dyadic lower bound for a number. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Dyadic_a22d8bf86abd6f7aae82b4eeba53a54b2}\label{classAriadne_1_1Dyadic_a22d8bf86abd6f7aae82b4eeba53a54b2} 
+using {\bfseries Dyadic\+Approximation} = \mbox{\hyperlink{classAriadne_1_1Approximation}{Approximation}}$<$\mbox{\hyperlink{classAriadne_1_1Dyadic}{Dyadic}}$>$
+\begin{DoxyCompactList}\small\item\em Alias for dyadic approximateion to a number. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Dyadic_a0d519b57e950de441a8ed8c6875182f0}\label{classAriadne_1_1Dyadic_a0d519b57e950de441a8ed8c6875182f0} 
+using {\bfseries Positive\+Dyadic\+Approximation} = \mbox{\hyperlink{classAriadne_1_1Positive}{Positive}}$<$\mbox{\hyperlink{classAriadne_1_1Approximation}{Approximation}}$<$\mbox{\hyperlink{classAriadne_1_1Dyadic}{Dyadic}}$>$$>$
+\item 
+\Hypertarget{classAriadne_1_1Dyadic_ad75a20a7772061625e452c1031001f79}\label{classAriadne_1_1Dyadic_ad75a20a7772061625e452c1031001f79} 
+using {\bfseries Positive\+Dyadic\+Lower\+Bound} = \mbox{\hyperlink{classAriadne_1_1Positive}{Positive}}$<$\mbox{\hyperlink{classAriadne_1_1LowerBound}{Lower\+Bound}}$<$\mbox{\hyperlink{classAriadne_1_1Dyadic}{Dyadic}}$>$$>$
+\item 
+\Hypertarget{classAriadne_1_1Dyadic_a102e70b7577cd1ae2d4502d47b2e1cda}\label{classAriadne_1_1Dyadic_a102e70b7577cd1ae2d4502d47b2e1cda} 
+using {\bfseries Positive\+Dyadic\+Upper\+Bound} = \mbox{\hyperlink{classAriadne_1_1Positive}{Positive}}$<$\mbox{\hyperlink{classAriadne_1_1UpperBound}{Upper\+Bound}}$<$\mbox{\hyperlink{classAriadne_1_1Dyadic}{Dyadic}}$>$$>$
+\item 
+\Hypertarget{classAriadne_1_1Dyadic_ac273b7983bf953ea2d5c738f16baacd9}\label{classAriadne_1_1Dyadic_ac273b7983bf953ea2d5c738f16baacd9} 
+using {\bfseries Positive\+Dyadic\+Bounds} = \mbox{\hyperlink{classAriadne_1_1Positive}{Positive}}$<$\mbox{\hyperlink{classAriadne_1_1Bounds}{Bounds}}$<$\mbox{\hyperlink{classAriadne_1_1Dyadic}{Dyadic}}$>$$>$
+\end{DoxyCompactItemize}
+\end{Indent}
+
+
+\label{doc-constructors}
+\Hypertarget{classAriadne_1_1Dyadic_doc-constructors}
+\doxysubsubsection{Constructor \& Destructor Documentation}
+\Hypertarget{classAriadne_1_1Dyadic_a4f64e8a0ce17cddfa2d36b97cda58f2e}\index{Dyadic@{Dyadic}!Dyadic@{Dyadic}}
+\index{Dyadic@{Dyadic}!Dyadic@{Dyadic}}
+\doxyparagraph{\texorpdfstring{Dyadic()}{Dyadic()}}
+{\footnotesize\ttfamily \label{classAriadne_1_1Dyadic_a4f64e8a0ce17cddfa2d36b97cda58f2e} 
+\mbox{\hyperlink{classAriadne_1_1Dyadic}{Dyadic}} (\begin{DoxyParamCaption}\item[{double}]{x}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [explicit]}}
+
+
+
+Explicit construction from a built-\/in double-\/precision value. 
+
+Tests to ensure that the number is not \textquotesingle{}accidentally\textquotesingle{} created from a rounded version of a string literal, by comparing the input with it\textquotesingle{}s single-\/precision approximation. 
+
+References \mbox{\hyperlink{classAriadne_1_1Dyadic_a80ce55255d2aebdce35d3657ee9945b1}{Dyadic()}}.
+
+
+
+The documentation for this class was generated from the following files\+:\begin{DoxyCompactItemize}
+\item 
+source/numeric/\mbox{\hyperlink{dyadic_8hpp}{dyadic.\+hpp}}\item 
+source/numeric/\mbox{\hyperlink{dyadic_8cpp}{dyadic.\+cpp}}\item 
+source/numeric/\mbox{\hyperlink{number_8cpp}{number.\+cpp}}\end{DoxyCompactItemize}

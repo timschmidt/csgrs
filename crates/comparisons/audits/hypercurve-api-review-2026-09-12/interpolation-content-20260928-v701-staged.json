@@ -1,0 +1,12 @@
+{
+  "repos": {
+    "hypersolve": {
+      "parent": "840eb679c5a9abee799aaef3971d8a988660b48b",
+      "paths": {
+        "src/curve_resultant.rs": "e1ed254682daf44b1737bd6f09e2df17f6f2d465ad8cf1a0ac095503739dfc94"
+      }
+    }
+  },
+  "qualification": "interpolation-content-20260928-v701-terminal.json",
+  "verified_source_files": 2047
+}

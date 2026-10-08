@@ -1,0 +1,38 @@
+==531906== Memcheck, a memory error detector
+==531906== Copyright (C) 2002-2026, and GNU GPL'd, by Julian Seward et al.
+==531906== Using Valgrind-3.27.1 and LibVEX; rerun with -h for copyright info
+==531906== Command: /tmp/calcium-qqbar-remainder-v84.1aubRO/cleanup-cubic cleanup 4 1
+==531906== 
+==531906== 
+==531906== HEAP SUMMARY:
+==531906==     in use at exit: 408 bytes in 4 blocks
+==531906==   total heap usage: 129 allocs, 125 frees, 12,376 bytes allocated
+==531906== 
+==531906== 48 bytes in 3 blocks are indirectly lost in loss record 1 of 2
+==531906==    at 0x48486CD: calloc (vg_replace_malloc.c:1616)
+==531906==    by 0x48DCE09: flint_calloc (in /home/tim/Documents/GitHub/workspace/exact-real-references/flint/libflint.so.25.0.0)
+==531906==    by 0x4AC5624: fmpz_poly_realloc (in /home/tim/Documents/GitHub/workspace/exact-real-references/flint/libflint.so.25.0.0)
+==531906==    by 0x4AC8A47: fmpz_poly_set_coeff_si (in /home/tim/Documents/GitHub/workspace/exact-real-references/flint/libflint.so.25.0.0)
+==531906==    by 0x51B0D4A: qqbar_init (in /home/tim/Documents/GitHub/workspace/exact-real-references/flint/libflint.so.25.0.0)
+==531906==    by 0x50B7ABF: _gr_qqbar_poly_roots.part.0 (in /home/tim/Documents/GitHub/workspace/exact-real-references/flint/libflint.so.25.0.0)
+==531906==    by 0x400D87: gr_poly_roots (gr_poly.h:631)
+==531906==    by 0x400D87: root_cleanup.isra.0 (flint-qqbar-cleanup-cubic-v84.c:51)
+==531906==    by 0x40073C: main (flint-qqbar-cleanup-cubic-v84.c:81)
+==531906== 
+==531906== 408 (360 direct, 48 indirect) bytes in 1 blocks are definitely lost in loss record 2 of 2
+==531906==    at 0x4840AE6: malloc (vg_replace_malloc.c:447)
+==531906==    by 0x48DCD79: flint_malloc (in /home/tim/Documents/GitHub/workspace/exact-real-references/flint/libflint.so.25.0.0)
+==531906==    by 0x50B7A93: _gr_qqbar_poly_roots.part.0 (in /home/tim/Documents/GitHub/workspace/exact-real-references/flint/libflint.so.25.0.0)
+==531906==    by 0x400D87: gr_poly_roots (gr_poly.h:631)
+==531906==    by 0x400D87: root_cleanup.isra.0 (flint-qqbar-cleanup-cubic-v84.c:51)
+==531906==    by 0x40073C: main (flint-qqbar-cleanup-cubic-v84.c:81)
+==531906== 
+==531906== LEAK SUMMARY:
+==531906==    definitely lost: 360 bytes in 1 blocks
+==531906==    indirectly lost: 48 bytes in 3 blocks
+==531906==      possibly lost: 0 bytes in 0 blocks
+==531906==    still reachable: 0 bytes in 0 blocks
+==531906==         suppressed: 0 bytes in 0 blocks
+==531906== 
+==531906== For lists of detected and suppressed errors, rerun with: -s
+==531906== ERROR SUMMARY: 2 errors from 2 contexts (suppressed: 0 from 0)

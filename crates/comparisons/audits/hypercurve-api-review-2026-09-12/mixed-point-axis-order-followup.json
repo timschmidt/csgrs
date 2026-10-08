@@ -1,0 +1,69 @@
+{
+  "status": "implemented and committed in 8006617; public inward closure qualified with 2025587; original goal active",
+  "observed_in_commits": {
+    "hypercurve": "025dcd123335ace6426c2ed4903607d2cc33a6ea",
+    "hypersolve": "3ac2e7510936a11c7bf2eac5dfbe3f9f851afe55",
+    "hyperreal": "a2da8e2b5de9a1a4653d3662f2f05cb6533fd7ef",
+    "hyperbrep": "8a84ee7db02fd2720ac89a1a6a227ee4ec2a8171"
+  },
+  "qualification_preceding_followup": "refined-chord-envelope-qualification.json",
+  "profile": "stationary-ph-refined-chord-envelope-stack.log",
+  "runtime_finding": "A single-axis comparison in chord_intersections_once reaches algebraic_chord_point_coordinate_order_by_refinement, which requests represented_point_evidence_coordinates for both operands and then selects one coordinate index. The sampled call reconstructs a chord-pair point, then an analytic endpoint through represented_ratio, tensor resultants and Bareiss.",
+  "source_finding": "The existing recursive_projective_point_evidence_axis_order can order one homogeneous coordinate in a shared retained field. Its generic caller is currently guarded by a history-specific recursive_composite whitelist that excludes AnalyticParallel, Algebraic and Exact. The common fallback instead tries a special zero-frame native-parameter comparison, then publishes complete Cartesian coordinates.",
+  "evidence_limit": "The profile proves the chord-pair reconstruction path, not the other operand kind. Capture or reproduce the actual mixed input pair and demonstrate that the existing shared field can decide it before assuming the whitelist is the only blocker. A changed sampled stack is not a chronology proof.",
+  "next_action": [
+    "Follow interval-arithmetic-policy-followup.json while preserving the now-qualified inward regression and the full original review scope."
+  ],
+  "source_locations": [
+    "hypercurve/src/bezier_offset.rs: algebraic_chord_point_coordinate_order, recursive_composite gate near 82599",
+    "hypercurve/src/bezier_offset.rs: algebraic_chord_point_coordinate_order_by_refinement near 82957",
+    "hypercurve/src/bezier_offset.rs: represented_point_evidence_coordinates near 83183",
+    "hypercurve/src/bezier_offset.rs: recursive_projective_point_evidence_axis_order near 98638",
+    "hypercurve/src/bezier_offset.rs: BezierAlgebraicChordPairPoint2::represented_coordinates near 96661"
+  ],
+  "goal_status": "active",
+  "input_capture": {
+    "script": "profile-mixed-axis-order.py",
+    "log": "mixed-point-axis-order-input-profile.log",
+    "binary": "stationary-ph-offset-refined-chord-envelope",
+    "binary_sha256": "90af7a6b840a771625ba7041e6200a62b3e085248b33be529c9a99a2f618e811",
+    "finding": "After the first inward offset completes, the next cold axis query in chord_intersections_once has a ChordPair first operand and AnalyticParallel second operand. It enters Cartesian publication after short bounds and native zero-frame query fail to decide.",
+    "layout_validation": "Immutable binary guard; disassembled function prologue retains first/second in r15/r14. Break at ELF 0x656ea0. represented_point_evidence_coordinates loads tag byte at offset 8; jump-table entries resolve tag 4 to ChordPair::represented_coordinates and tag 8 to AnalyticParallel::predicate_point_evidence. No source-order Rust enum layout assumption.",
+    "returned_tags": [
+      4,
+      8
+    ],
+    "returned_axis_register": 1,
+    "limit": "This proves the operand families, not that this larger native field query will complete within the observation window."
+  },
+  "regression": {
+    "test": "mixed_chord_pair_axis_order_keeps_oblique_supports_in_the_retained_field",
+    "baseline": "mixed-point-axis-order-baseline-trace.log",
+    "baseline_exit_code": 101,
+    "finding": "The mathematically equal first comparison is Certified, but takes represented-cold-fallback once and does not populate the existing native intersection field.",
+    "coverage": "P(t)=(t,t^2) at the positive root t^2=1/2, nonzero normal distances +/-1/20 and tangent displacement 1/30. Two oblique translated supports meet exactly at P. Both axes, both operand orders, equality and +/-2^-600 shifts, STRICT and APPROXIMATE_512."
+  },
+  "production_change_under_test": [
+    "Removed the recursive_composite family whitelist and its duplicated interval loop.",
+    "All callers migrate from the misleading by_refinement helper name to coordinate_order_fallback.",
+    "The common fallback preserves short interval filtering, native polynomial-parameter queries and the bounded-pass exit, then reuses the existing homogeneous shared-field axis predicate before Cartesian publication.",
+    "No new point carrier, field representation, cache, compatibility interface or root solver."
+  ],
+  "focused_result": {
+    "log": "mixed-point-axis-order-focused.log",
+    "passed": 5,
+    "exit_code": 0,
+    "new_regression_seconds_scope": "All five focused tests together complete in 0.19s; no baseline-to-production runtime ratio claimed."
+  },
+  "qualification_in_progress": {
+    "status": "complete",
+    "hypercurve_passed": 1461,
+    "hyperbrep_passed": 232,
+    "all_target_checks": 2,
+    "source": "mixed-point-axis-order-qualification.json",
+    "initial_trace_correction": "The initial stale diagnostic assertion was migrated directly; all selected suites and checks were rerun successfully."
+  },
+  "commit": "8006617e8605eacf20969b5c11fb19df1590a8f8",
+  "qualification": "mixed-point-axis-order-qualification.json",
+  "subsequent_qualification": "certified-chord-pair-enclosure-qualification.json"
+}

@@ -1,0 +1,16 @@
+Return reusable curves from general intersection topology
+
+Expose traversal-ordered Curve2 pieces for curve and path intersections,
+preserving selected cuts and source charts without native Bezier promotion.
+Prepare and share the arrangement within operation certainty tracking, keep
+authored-curve provenance, and update callers of the removed materialization
+and graph-view APIs directly.
+
+Reuse prepared native trim spans and parameters. Add geometric regressions
+for generated chords, selected overlaps, endpoint-only cuts, reversed
+non-unit source charts, and both sides of discontinuous spline knots.
+
+Validation: 2,169 passes across 49 Hypercurve/HyperBREP targets, the same nine
+known promotion failures, no new failures or timeouts. Nine ignored tests
+and eight previously unqualified expensive cases remain. Both all-target
+checks, formatting, caller audit and source-integrity checks pass.

@@ -1,0 +1,19 @@
+{
+  "tag": "nfloat-controls-memcheck",
+  "started": "2026-09-09T16:14:09.740Z",
+  "finished": "2026-09-09T16:14:40.189Z",
+  "elapsedSeconds": 30.446523652,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison",
+  "command": "valgrind",
+  "args": [
+    "--vgdb=no",
+    "--tool=memcheck",
+    "--error-exitcode=97",
+    "--leak-check=full",
+    "--show-leak-kinds=all",
+    "--errors-for-leak-kinds=definite,indirect,possible",
+    "/tmp/calcium-nfloat-controls.A4BEA9/nfloat-controls"
+  ],
+  "code": 0,
+  "signal": null
+}

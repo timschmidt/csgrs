@@ -1,0 +1,228 @@
+{
+  "passed": 1194,
+  "ignored": 6,
+  "failed": [
+    {
+      "name": "bezier_offset::conversion_tests::independently_encoded_nonrepresented_analytic_circle_publishes_overlap",
+      "returncode": 101,
+      "passed": false,
+      "ignored": false,
+      "elapsed_seconds": 0.11429874401073903,
+      "limit_seconds": 75,
+      "log": "spatial-ray-ownership-20260923-broad1-case-0216.log"
+    },
+    {
+      "name": "bezier_offset::conversion_tests::nonrepresented_center_nonrational_chamfer_inverts_with_retained_authority",
+      "returncode": 101,
+      "passed": false,
+      "ignored": false,
+      "elapsed_seconds": 0.16442000400274992,
+      "limit_seconds": 75,
+      "log": "spatial-ray-ownership-20260923-broad1-case-0258.log"
+    },
+    {
+      "name": "bezier_offset::conversion_tests::selected_fiber_transverse_mapped_cut_inverts_by_point",
+      "returncode": 101,
+      "passed": false,
+      "ignored": false,
+      "elapsed_seconds": 0.008474617963656783,
+      "limit_seconds": 75,
+      "log": "spatial-ray-ownership-20260923-broad1-case-0532.log"
+    },
+    {
+      "name": "bezier_offset::conversion_tests::selected_parallel_normal_circle_intersects_genuinely_analytic_parallel_in_one_fiber",
+      "returncode": 101,
+      "passed": false,
+      "ignored": false,
+      "elapsed_seconds": 45.17520020692609,
+      "limit_seconds": 75,
+      "log": "spatial-ray-ownership-20260923-broad1-case-0536.log"
+    },
+    {
+      "name": "bezier_region::tests::algebraic_endpoint_images_reenter_shared_corner_carriers",
+      "returncode": 101,
+      "passed": false,
+      "ignored": false,
+      "elapsed_seconds": 0.06508487195242196,
+      "limit_seconds": 75,
+      "log": "spatial-ray-ownership-20260923-broad1-case-0627.log"
+    },
+    {
+      "name": "bezier_region::curve_corner_chain::tests::extended_fillet_region_classifies_both_sides_of_its_companion",
+      "returncode": "timeout",
+      "passed": false,
+      "ignored": false,
+      "elapsed_seconds": 75.00457432004623,
+      "limit_seconds": 75,
+      "log": "spatial-ray-ownership-20260923-broad1-case-0623.log"
+    },
+    {
+      "name": "bezier_region::tests::nonlinear_algebraic_endpoint_fillet_uses_complete_incident_domain",
+      "returncode": "timeout",
+      "passed": false,
+      "ignored": false,
+      "elapsed_seconds": 75.00270478799939,
+      "limit_seconds": 75,
+      "log": "spatial-ray-ownership-20260923-broad1-case-0678.log"
+    },
+    {
+      "name": "bezier_region::tests::nonrepresented_chord_and_retained_rational_arc_share_the_fillet_kernel",
+      "returncode": 101,
+      "passed": false,
+      "ignored": false,
+      "elapsed_seconds": 0.11508783104363829,
+      "limit_seconds": 75,
+      "log": "spatial-ray-ownership-20260923-broad1-case-0683.log"
+    },
+    {
+      "name": "bezier_region::tests::nonlinear_selected_corner_chamfers_through_retained_fixed_distance_image",
+      "returncode": "timeout",
+      "passed": false,
+      "ignored": false,
+      "elapsed_seconds": 75.91528825706337,
+      "limit_seconds": 75,
+      "log": "spatial-ray-ownership-20260923-broad1-case-0681.log"
+    },
+    {
+      "name": "bezier_region::tests::nonrepresented_chord_and_selected_circle_complete_the_fillet_kernel",
+      "returncode": "timeout",
+      "passed": false,
+      "ignored": false,
+      "elapsed_seconds": 75.00362387602217,
+      "limit_seconds": 75,
+      "log": "spatial-ray-ownership-20260923-broad1-case-0684.log"
+    },
+    {
+      "name": "bezier_region::tests::one_fragment_materialized_loop_chamfers_to_one_middle_interval",
+      "returncode": "timeout",
+      "passed": false,
+      "ignored": false,
+      "elapsed_seconds": 75.03673077200074,
+      "limit_seconds": 75,
+      "log": "spatial-ray-ownership-20260923-broad1-case-0688.log"
+    },
+    {
+      "name": "bezier_region::tests::one_fragment_materialized_loop_extends_algebraic_chamfer_cuts_once",
+      "returncode": "timeout",
+      "passed": false,
+      "ignored": false,
+      "elapsed_seconds": 75.04052725096699,
+      "limit_seconds": 75,
+      "log": "spatial-ray-ownership-20260923-broad1-case-0689.log"
+    },
+    {
+      "name": "bezier_region::tests::one_fragment_nonzero_parallel_loop_extends_chamfer_cuts_on_one_finite_envelope",
+      "returncode": "timeout",
+      "passed": false,
+      "ignored": false,
+      "elapsed_seconds": 75.02194204798434,
+      "limit_seconds": 75,
+      "log": "spatial-ray-ownership-20260923-broad1-case-0690.log"
+    },
+    {
+      "name": "bezier_region::tests::one_fragment_ph_loop_projective_corners_retain_one_extended_interval",
+      "returncode": 101,
+      "passed": false,
+      "ignored": false,
+      "elapsed_seconds": 0.06532916601281613,
+      "limit_seconds": 75,
+      "log": "spatial-ray-ownership-20260923-broad1-case-0692.log"
+    },
+    {
+      "name": "bezier_region::tests::one_fragment_ph_loop_fillets_through_rational_self_contact",
+      "returncode": "timeout",
+      "passed": false,
+      "ignored": false,
+      "elapsed_seconds": 75.00665119406767,
+      "limit_seconds": 75,
+      "log": "spatial-ray-ownership-20260923-broad1-case-0691.log"
+    },
+    {
+      "name": "bezier_region::tests::one_fragment_selected_loop_chamfers_from_one_interval",
+      "returncode": "timeout",
+      "passed": false,
+      "ignored": false,
+      "elapsed_seconds": 75.03339707606938,
+      "limit_seconds": 75,
+      "log": "spatial-ray-ownership-20260923-broad1-case-0694.log"
+    },
+    {
+      "name": "bezier_region::tests::one_fragment_selected_loop_extends_chamfer_cuts_on_its_analytic_carrier",
+      "returncode": "timeout",
+      "passed": false,
+      "ignored": false,
+      "elapsed_seconds": 75.03691360191442,
+      "limit_seconds": 75,
+      "log": "spatial-ray-ownership-20260923-broad1-case-0695.log"
+    },
+    {
+      "name": "bezier_region::tests::pair_native_boolean_algebraic_chord_corner_publishes_a_third_generation_fillet",
+      "returncode": "timeout",
+      "passed": false,
+      "ignored": false,
+      "elapsed_seconds": 75.00315407000016,
+      "limit_seconds": 75,
+      "log": "spatial-ray-ownership-20260923-broad1-case-0700.log"
+    },
+    {
+      "name": "bezier_region::tests::retained_algebraic_straights_trim_or_extend_chamfer_and_fillet",
+      "returncode": 101,
+      "passed": false,
+      "ignored": false,
+      "elapsed_seconds": 0.00880128494463861,
+      "limit_seconds": 75,
+      "log": "spatial-ray-ownership-20260923-broad1-case-0724.log"
+    },
+    {
+      "name": "bezier_region::tests::retained_analytic_multifragment_corner_extends_chamfer_and_fillet",
+      "returncode": 101,
+      "passed": false,
+      "ignored": false,
+      "elapsed_seconds": 0.008802696014754474,
+      "limit_seconds": 75,
+      "log": "spatial-ray-ownership-20260923-broad1-case-0725.log"
+    },
+    {
+      "name": "bezier_region::tests::selected_parallel_companion_fillets_without_range_promotion",
+      "returncode": "timeout",
+      "passed": false,
+      "ignored": false,
+      "elapsed_seconds": 75.00270273000933,
+      "limit_seconds": 75,
+      "log": "spatial-ray-ownership-20260923-broad1-case-0758.log"
+    }
+  ],
+  "new_failures": [],
+  "changed_existing_nonpasses": [],
+  "improved": [
+    "bezier_region::tests::selected_circle_and_analytic_parallel_extend_on_full_supports"
+  ],
+  "checks": [
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "check",
+        "--all-targets",
+        "--all-features",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0
+    },
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "check",
+        "--all-targets",
+        "--no-default-features",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0
+    }
+  ],
+  "binary_sha256": "f78bc03a84ae15d7743570f63f645319a322d6ad537720c4116c947ecd811dd5",
+  "parent_binary_sha256": "acd3e7ff0b54b946343b3fe7b0229b88814d0536914d38beeea8b17e58ee2f42",
+  "all_sources_unchanged": true,
+  "all_processes_reaped": true
+}

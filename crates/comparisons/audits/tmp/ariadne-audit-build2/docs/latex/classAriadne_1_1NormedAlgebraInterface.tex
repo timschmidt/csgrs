@@ -1,0 +1,64 @@
+\doxysubsection{Normed\+Algebra\+Interface\texorpdfstring{$<$}{<} X \texorpdfstring{$>$}{>} Class Template Reference}
+\hypertarget{classAriadne_1_1NormedAlgebraInterface}{}\label{classAriadne_1_1NormedAlgebraInterface}\index{NormedAlgebraInterface$<$ X $>$@{NormedAlgebraInterface$<$ X $>$}}
+
+
+{\ttfamily \#include $<$algebra\+\_\+interface.\+hpp$>$}
+
+
+
+\doxysubsubsection{Description}
+\subsubsection*{template$<$class X$>$\newline
+class Ariadne\+::\+Normed\+Algebra\+Interface$<$ X $>$}
+Interface for a normed unital algebra over a field {\itshape X}. Inheritance diagram for Normed\+Algebra\+Interface\texorpdfstring{$<$}{<} X \texorpdfstring{$>$}{>}\+:\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[height=2.000000cm]{classAriadne_1_1NormedAlgebraInterface}
+\end{center}
+\end{figure}
+\doxysubsubsubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1NormedAlgebraInterface_a3054631f6778cae1bec1ff9aae5b47a7}\label{classAriadne_1_1NormedAlgebraInterface_a3054631f6778cae1bec1ff9aae5b47a7} 
+virtual \mbox{\hyperlink{classAriadne_1_1NormedAlgebraInterface}{Normed\+Algebra\+Interface}}$<$ X $>$ \texorpdfstring{$\ast$}{*} {\bfseries \+\_\+create\+\_\+copy} () const =0
+\begin{DoxyCompactList}\small\item\em Create a dynamically-\/allocated copy. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1NormedAlgebraInterface_a5008420c9edd68853a72af762207f364}\label{classAriadne_1_1NormedAlgebraInterface_a5008420c9edd68853a72af762207f364} 
+virtual \mbox{\hyperlink{classAriadne_1_1NormedAlgebraInterface}{Normed\+Algebra\+Interface}}$<$ X $>$ \texorpdfstring{$\ast$}{*} {\bfseries \+\_\+create\+\_\+zero} () const =0
+\begin{DoxyCompactList}\small\item\em Create the zero element in the same algebra as the current object. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1NormedAlgebraInterface_a01bcae881ba9357e7dd7b6b1b70cdb30}\label{classAriadne_1_1NormedAlgebraInterface_a01bcae881ba9357e7dd7b6b1b70cdb30} 
+virtual \mbox{\hyperlink{classAriadne_1_1NormedAlgebraInterface}{Normed\+Algebra\+Interface}}$<$ X $>$ \texorpdfstring{$\ast$}{*} {\bfseries \+\_\+create\+\_\+constant} (X const \&c) const =0
+\begin{DoxyCompactList}\small\item\em Create a constant multiple of the unit element in the same algebra as the current object. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1NormedAlgebraInterface_ab53dfcace607dfe944694159446968c2}\label{classAriadne_1_1NormedAlgebraInterface_ab53dfcace607dfe944694159446968c2} 
+virtual Raw\+Float\+DP {\bfseries tolerance} () const =0
+\begin{DoxyCompactList}\small\item\em A value {\ttfamily e} such that analytic functions are evaluated to a tolerance of {\ttfamily e}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1NormedAlgebraInterface_af79d56992e42ad97cf0e3480217fd7ee}\label{classAriadne_1_1NormedAlgebraInterface_af79d56992e42ad97cf0e3480217fd7ee} 
+virtual Value\+Type {\bfseries average} () const =0
+\begin{DoxyCompactList}\small\item\em A value {\ttfamily c} such that {\ttfamily \texorpdfstring{$\vert$}{|}a-\/c1\texorpdfstring{$\vert$}{|}} is approximately minimised. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1NormedAlgebraInterface_a327bc69ead2b8b085b1db7fd7e998bf0}\label{classAriadne_1_1NormedAlgebraInterface_a327bc69ead2b8b085b1db7fd7e998bf0} 
+virtual Norm\+Type {\bfseries radius} () const =0
+\begin{DoxyCompactList}\small\item\em A value {\ttfamily c} such that {\ttfamily \texorpdfstring{$\vert$}{|}a-\/c1\texorpdfstring{$\vert$}{|}} is approximately minimised. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1NormedAlgebraInterface_a50aa8ec475ef736375d3988edcff008f}\label{classAriadne_1_1NormedAlgebraInterface_a50aa8ec475ef736375d3988edcff008f} 
+virtual Range\+Type {\bfseries range} () const =0
+\begin{DoxyCompactList}\small\item\em The interval {\ttfamily }\mbox{[}c-\/r,c+r\mbox{]} where {\ttfamily \texorpdfstring{$\vert$}{|}a-\/c1\texorpdfstring{$\vert$}{|}\texorpdfstring{$<$}{<}=r}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1NormedAlgebraInterface_a98f49c02a02233c4fa49f93a1a4e45ed}\label{classAriadne_1_1NormedAlgebraInterface_a98f49c02a02233c4fa49f93a1a4e45ed} 
+virtual Norm\+Type {\bfseries norm} () const =0
+\begin{DoxyCompactList}\small\item\em An over-\/approximation to the norm. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxyparagraph*{Public Member Functions inherited from \mbox{\hyperlink{classAriadne_1_1AlgebraInterface}{Algebra\+Interface$<$ X $>$}}}
+\begin{DoxyCompactItemize}
+\item 
+virtual {\bfseries \texorpdfstring{$\sim$}{\string~}\+Algebra\+Interface} ()=default
+\begin{DoxyCompactList}\small\item\em Virtual destructor. \end{DoxyCompactList}\item 
+virtual \mbox{\hyperlink{classAriadne_1_1AlgebraInterface}{Algebra\+Interface}}$<$ X $>$ \texorpdfstring{$\ast$}{*} {\bfseries \+\_\+copy} () const =0
+\begin{DoxyCompactList}\small\item\em Create a dynamically-\/allocated copy. \end{DoxyCompactList}\item 
+virtual \mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} {\bfseries \+\_\+iadd} (const X \&c)=0
+\begin{DoxyCompactList}\small\item\em Add a constant numerical scalar {\ttfamily r+=c} . \end{DoxyCompactList}\item 
+virtual \mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} {\bfseries \+\_\+imul} (const X \&c)=0
+\begin{DoxyCompactList}\small\item\em Multiply by a numerical scalar {\ttfamily r\texorpdfstring{$\ast$}{*}=c} . \end{DoxyCompactList}\item 
+virtual \mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} {\bfseries \+\_\+isma} (const X \&c1, const \mbox{\hyperlink{classAriadne_1_1AlgebraInterface}{Algebra\+Interface}}$<$ X $>$ \&x2)=0
+\begin{DoxyCompactList}\small\item\em Fused scalar multiply and add {\ttfamily r+=x1\texorpdfstring{$\ast$}{*}x2} . \end{DoxyCompactList}\item 
+virtual \mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} {\bfseries \+\_\+ifma} (const \mbox{\hyperlink{classAriadne_1_1AlgebraInterface}{Algebra\+Interface}}$<$ X $>$ \&x1, const \mbox{\hyperlink{classAriadne_1_1AlgebraInterface}{Algebra\+Interface}}$<$ X $>$ \&x2)=0
+\begin{DoxyCompactList}\small\item\em Fused multiply and add {\ttfamily r+=x1\texorpdfstring{$\ast$}{*}x2} . \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+The documentation for this class was generated from the following file\+:\begin{DoxyCompactItemize}
+\item 
+source/algebra/\mbox{\hyperlink{algebra__interface_8hpp}{algebra\+\_\+interface.\+hpp}}\end{DoxyCompactItemize}

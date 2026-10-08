@@ -1,0 +1,20 @@
+{
+  "parent": "2d26b0ae4d6178700d5c26ccdab5f8ac25a1f787",
+  "command": [
+    "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustc",
+    "--edition=2024",
+    "-O",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/normalized-traversal-admission-public.rs",
+    "--extern",
+    "hypercurve=/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/opposed-endpoint-contact-public-libraries/libhypercurve-bacb55d5ec235376.rlib",
+    "-L",
+    "dependency=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps",
+    "-o",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/normalized-traversal-admission-baseline"
+  ],
+  "returncode": 0,
+  "elapsed_seconds": 0.005558188975555822,
+  "source_sha256": "e08ecea2beced6b44cb18f48771dbb9c8331385d92f4c1de07b5393d5042420b",
+  "binary_sha256": "a104a20abf79e6aca1949d44bdd136401f83ddc3bc2753c1eb4dc670021e50d5",
+  "library_sha256": "e314d2523910509b23aae886ead2a98aef68181343ec712968035bba2cd47032"
+}

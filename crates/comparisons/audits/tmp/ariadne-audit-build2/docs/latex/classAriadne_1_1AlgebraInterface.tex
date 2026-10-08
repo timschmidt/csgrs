@@ -1,0 +1,52 @@
+\doxysubsection{Algebra\+Interface\texorpdfstring{$<$}{<} X \texorpdfstring{$>$}{>} Class Template Reference}
+\hypertarget{classAriadne_1_1AlgebraInterface}{}\label{classAriadne_1_1AlgebraInterface}\index{AlgebraInterface$<$ X $>$@{AlgebraInterface$<$ X $>$}}
+
+
+{\ttfamily \#include $<$algebra\+\_\+interface.\+hpp$>$}
+
+
+
+\doxysubsubsection{Description}
+\subsubsection*{template$<$class X$>$\newline
+class Ariadne\+::\+Algebra\+Interface$<$ X $>$}
+Interface for a unital algebra over a field {\itshape X}. Inheritance diagram for Algebra\+Interface\texorpdfstring{$<$}{<} X \texorpdfstring{$>$}{>}\+:\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[height=1.876047cm]{classAriadne_1_1AlgebraInterface}
+\end{center}
+\end{figure}
+\doxysubsubsubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1AlgebraInterface_ab618c93dd277fb1e60c61f4b50ecdd30}\label{classAriadne_1_1AlgebraInterface_ab618c93dd277fb1e60c61f4b50ecdd30} 
+virtual {\bfseries \texorpdfstring{$\sim$}{\string~}\+Algebra\+Interface} ()=default
+\begin{DoxyCompactList}\small\item\em Virtual destructor. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1AlgebraInterface_a5e9d6b9fdd1bafccb06a0a90e0f34ef5}\label{classAriadne_1_1AlgebraInterface_a5e9d6b9fdd1bafccb06a0a90e0f34ef5} 
+virtual \mbox{\hyperlink{classAriadne_1_1AlgebraInterface}{Algebra\+Interface}}$<$ X $>$ \texorpdfstring{$\ast$}{*} {\bfseries \+\_\+copy} () const =0
+\begin{DoxyCompactList}\small\item\em Create a dynamically-\/allocated copy. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1AlgebraInterface_aef60162b576796560c1ce02a12790c23}\label{classAriadne_1_1AlgebraInterface_aef60162b576796560c1ce02a12790c23} 
+virtual \mbox{\hyperlink{classAriadne_1_1AlgebraInterface}{Algebra\+Interface}}$<$ X $>$ \texorpdfstring{$\ast$}{*} {\bfseries \+\_\+create\+\_\+copy} () const =0
+\begin{DoxyCompactList}\small\item\em Create a dynamically-\/allocated copy. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1AlgebraInterface_a6f8457ade18ea8aebf9410951288a181}\label{classAriadne_1_1AlgebraInterface_a6f8457ade18ea8aebf9410951288a181} 
+virtual \mbox{\hyperlink{classAriadne_1_1AlgebraInterface}{Algebra\+Interface}}$<$ X $>$ \texorpdfstring{$\ast$}{*} {\bfseries \+\_\+create\+\_\+zero} () const =0
+\begin{DoxyCompactList}\small\item\em Create the zero element in the same algebra as the current object. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1AlgebraInterface_ab3b36ba7e4363b54c5e1e02df570d56b}\label{classAriadne_1_1AlgebraInterface_ab3b36ba7e4363b54c5e1e02df570d56b} 
+virtual \mbox{\hyperlink{classAriadne_1_1AlgebraInterface}{Algebra\+Interface}}$<$ X $>$ \texorpdfstring{$\ast$}{*} {\bfseries \+\_\+create\+\_\+constant} (X const \&c) const =0
+\begin{DoxyCompactList}\small\item\em Create a constant multiple of the unit element in the same algebra as the current object. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1AlgebraInterface_af1d72280e809f4846df1d9493fa25a02}\label{classAriadne_1_1AlgebraInterface_af1d72280e809f4846df1d9493fa25a02} 
+virtual \mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} {\bfseries \+\_\+iadd} (const X \&c)=0
+\begin{DoxyCompactList}\small\item\em Add a constant numerical scalar {\ttfamily r+=c} . \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1AlgebraInterface_ac66ffd2efde5a19f12df745b85e019d2}\label{classAriadne_1_1AlgebraInterface_ac66ffd2efde5a19f12df745b85e019d2} 
+virtual \mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} {\bfseries \+\_\+imul} (const X \&c)=0
+\begin{DoxyCompactList}\small\item\em Multiply by a numerical scalar {\ttfamily r\texorpdfstring{$\ast$}{*}=c} . \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1AlgebraInterface_ac180f86548901be02bf116b6db28ce9b}\label{classAriadne_1_1AlgebraInterface_ac180f86548901be02bf116b6db28ce9b} 
+virtual \mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} {\bfseries \+\_\+isma} (const X \&c1, const \mbox{\hyperlink{classAriadne_1_1AlgebraInterface}{Algebra\+Interface}}$<$ X $>$ \&x2)=0
+\begin{DoxyCompactList}\small\item\em Fused scalar multiply and add {\ttfamily r+=x1\texorpdfstring{$\ast$}{*}x2} . \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1AlgebraInterface_a89a4137b5ae6a35ee83f5cc20683af32}\label{classAriadne_1_1AlgebraInterface_a89a4137b5ae6a35ee83f5cc20683af32} 
+virtual \mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} {\bfseries \+\_\+ifma} (const \mbox{\hyperlink{classAriadne_1_1AlgebraInterface}{Algebra\+Interface}}$<$ X $>$ \&x1, const \mbox{\hyperlink{classAriadne_1_1AlgebraInterface}{Algebra\+Interface}}$<$ X $>$ \&x2)=0
+\begin{DoxyCompactList}\small\item\em Fused multiply and add {\ttfamily r+=x1\texorpdfstring{$\ast$}{*}x2} . \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+The documentation for this class was generated from the following file\+:\begin{DoxyCompactItemize}
+\item 
+source/algebra/\mbox{\hyperlink{algebra__interface_8hpp}{algebra\+\_\+interface.\+hpp}}\end{DoxyCompactItemize}

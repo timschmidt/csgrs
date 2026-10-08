@@ -1,0 +1,10 @@
+[
+  {
+    "name": "bezier_region::tests::selected_circle_and_promoted_line_extend_through_the_chord_support_cell",
+    "returncode": "timeout",
+    "passed": false,
+    "limit_seconds": 60,
+    "elapsed_seconds": 60.13922755094245,
+    "log": "circle-line-normalization-20260923-trace1-case-0.log"
+  }
+]

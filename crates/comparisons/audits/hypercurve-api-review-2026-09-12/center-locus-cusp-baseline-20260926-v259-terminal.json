@@ -1,0 +1,23 @@
+{
+  "source_manifest": "center-locus-cusp-baseline-20260926-v258-sources.json",
+  "source_directory": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/source-archives/center-locus-cusp-baseline-20260926-v258",
+  "workspace_guard": "retained-fiber-refinement-20260926-v248-sources.json",
+  "binary": {
+    "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/center-locus-cusp-baseline-20260926-v258-hypercurve-lib",
+    "sha256": "6d59b33ea0ed2bb67c2460399ebc7a7fb69adc20a40f2bc32c028da6ebc46101"
+  },
+  "command": [
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/center-locus-cusp-baseline-20260926-v258-hypercurve-lib",
+    "--exact",
+    "bezier_offset::conversion_tests::selected_parallel_normal_circle_accepts_a_center_locus_cusp",
+    "--nocapture",
+    "--test-threads=1"
+  ],
+  "name": "bezier_offset::conversion_tests::selected_parallel_normal_circle_accepts_a_center_locus_cusp",
+  "log": "center-locus-cusp-baseline-20260926-v259.log",
+  "returncode": 101,
+  "elapsed_seconds": 0.2918306990759447,
+  "expected_failure_reproduced": true,
+  "all_processes_reaped": true,
+  "all_sources_unchanged": true
+}

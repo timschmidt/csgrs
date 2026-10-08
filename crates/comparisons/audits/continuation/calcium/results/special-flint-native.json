@@ -1,0 +1,11 @@
+{
+  "tag": "special-flint-native",
+  "started": "2026-09-08T09:37:49.730Z",
+  "finished": "2026-09-08T09:37:49.744Z",
+  "elapsedSeconds": 0.011335072999999994,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison",
+  "command": "/home/tim/Documents/GitHub/workspace/.audit-builds/calcium-flint-special-probe",
+  "args": [],
+  "code": 0,
+  "signal": null
+}

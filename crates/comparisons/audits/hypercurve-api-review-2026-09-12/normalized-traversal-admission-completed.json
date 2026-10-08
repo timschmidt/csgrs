@@ -1,0 +1,20 @@
+{
+  "command": [
+    "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustc",
+    "--edition=2024",
+    "-O",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/normalized-traversal-admission-completed.rs",
+    "--extern",
+    "hypercurve=/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/normalized-traversal-candidate3-libraries/libhypercurve-bacb55d5ec235376.rlib",
+    "-L",
+    "dependency=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps",
+    "-o",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/normalized-traversal-admission-completed"
+  ],
+  "returncode": 0,
+  "elapsed_seconds": 0.005080751987406984,
+  "source_sha256": "3784cbb66835f5dd0f6edb8c168d1121d79329910135ad5a93c2e965c76bfe35",
+  "binary_sha256": "8c83d34a4fa31967af538369448ae888146fd9ee95e584dd544350c7d94e4365",
+  "library": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/normalized-traversal-candidate3-libraries/libhypercurve-bacb55d5ec235376.rlib",
+  "library_sha256": "87b2705938e05376c8d72a82432390c39b6f061c7a197333e018610234e25c58"
+}

@@ -1,0 +1,39 @@
+{
+  "baseline": "region-admission-v763-sources.json",
+  "rlib": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypercurve-85a9105cd1c82df7.rlib",
+  "rlib_sha256": "d07d368b7de88e598663969ced2408d44587f2d0fec8176e45320ba0d8c5654d",
+  "source_sha256": "da739f4a5a7827d12aa616ab9ea474ffdc45812d30c39e87653406fd5dfa18d3",
+  "processes": [
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustc",
+        "--edition=2024",
+        "--crate-name",
+        "compound_fill_probe",
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/compound-fill-probe-v764.rs",
+        "--extern",
+        "hypercurve=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypercurve-85a9105cd1c82df7.rlib",
+        "-L",
+        "dependency=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps",
+        "-C",
+        "opt-level=3",
+        "-o",
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/compound-fill-probe-v764-binary"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.26422859192825854,
+      "log": "compound-fill-probe-v764-compile.log"
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/compound-fill-probe-v764-binary"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.0035675461404025555,
+      "log": "compound-fill-probe-v764-run.log"
+    }
+  ],
+  "all_processes_reaped": true,
+  "binary_sha256": "8325774360cdcc13df81d1edbd7b5747d7ec2865dfc0504fe9fc594a6ba855dd",
+  "reproduced_compound_winding_defects": true
+}

@@ -1,0 +1,142 @@
+{
+  "sourceSha256": "c82aaeb43c165216ff7b618968918293e880863e537f9fa2f58f167f6b49e85f",
+  "controls": 120,
+  "matrices": [
+    {
+      "name": "matrix04",
+      "n": 6,
+      "physicalLines": 36,
+      "sha256": "371383216356eac95f579807f6aaf245149e394e6d58d7dc0fc51d802b14b13a",
+      "finalNewline": false,
+      "determinantModuloAdvertisedModulus": "15128650646133250449515897205845016501560550762764125790445223720860757441626",
+      "oneByOneMinors": 36,
+      "twoByTwoMinors": 225,
+      "checkedDeterminantsAreUnits": true
+    },
+    {
+      "name": "matrix05",
+      "n": 7,
+      "physicalLines": 49,
+      "sha256": "b129a30563f7745f36d507e8ce333cc7b6178ab6b5669b0659a63958f71fde70",
+      "finalNewline": false,
+      "determinantModuloAdvertisedModulus": "17993442244750611023790197880544789828463359253567732073716852535774583723156",
+      "oneByOneMinors": 49,
+      "twoByTwoMinors": 441,
+      "checkedDeterminantsAreUnits": true
+    },
+    {
+      "name": "matrix06",
+      "n": 8,
+      "physicalLines": 64,
+      "sha256": "eff6e066994e067c804005d5cd2acf1a4b2f1c0a2c37151569bcd94dc3fba461",
+      "finalNewline": false,
+      "determinantModuloAdvertisedModulus": "10168852226665054663378303163620281107847623227105278966272058905855396027964",
+      "oneByOneMinors": 64,
+      "twoByTwoMinors": 784,
+      "checkedDeterminantsAreUnits": true
+    },
+    {
+      "name": "matrix07",
+      "n": 9,
+      "physicalLines": 81,
+      "sha256": "5d0da9bb2bf0b42236a3f2054f8cb9dd9c0f89a41367a214041c30b3d5412ed2",
+      "finalNewline": false,
+      "determinantModuloAdvertisedModulus": "3069191606681854308712778913569950414255175640486383358334840066350622223772",
+      "oneByOneMinors": 81,
+      "twoByTwoMinors": 1296,
+      "checkedDeterminantsAreUnits": true
+    },
+    {
+      "name": "matrix08",
+      "n": 10,
+      "physicalLines": 100,
+      "sha256": "a3ac5ac80b945d874e663ebab0645bfe5c26e4aaf11ed9d30a6fba5d8d5dfbcf",
+      "finalNewline": false,
+      "determinantModuloAdvertisedModulus": "17616215000004710068412347522979425710212914435016903165416883820641621667266",
+      "oneByOneMinors": 100,
+      "twoByTwoMinors": 2025,
+      "checkedDeterminantsAreUnits": true
+    },
+    {
+      "name": "matrix09",
+      "n": 11,
+      "physicalLines": 121,
+      "sha256": "cac4bbb1f53ee2e0f6343b009e35dc34ce4142e468927e5236ad4a3ca776eddf",
+      "finalNewline": false,
+      "determinantModuloAdvertisedModulus": "10816107013128925227432193611069263790633098726880318645090654079257104083043",
+      "oneByOneMinors": 121,
+      "twoByTwoMinors": 3025,
+      "checkedDeterminantsAreUnits": true
+    },
+    {
+      "name": "matrix10",
+      "n": 12,
+      "physicalLines": 144,
+      "sha256": "71914f329ae8d116f9d51aea265a2d9b2ee627448f68217757fd7d09083d692a",
+      "finalNewline": false,
+      "determinantModuloAdvertisedModulus": "2686838257433086506495925147169514967346312644212351078385637808814488030261",
+      "oneByOneMinors": 144,
+      "twoByTwoMinors": 4356,
+      "checkedDeterminantsAreUnits": true
+    },
+    {
+      "name": "matrix11",
+      "n": 13,
+      "physicalLines": 169,
+      "sha256": "50b2abf0d6e23d3c6a21f323fc8d2d0335219c2c34f4a3e74ddaa631cb7317fa",
+      "finalNewline": false,
+      "determinantModuloAdvertisedModulus": "2094826042373184968900568780200329947680328562146865819878420331332460188059",
+      "oneByOneMinors": 169,
+      "twoByTwoMinors": 6084,
+      "checkedDeterminantsAreUnits": true
+    },
+    {
+      "name": "matrix12",
+      "n": 14,
+      "physicalLines": 196,
+      "sha256": "518462fe675234197a1d239229e9cd15a85154fc75a2fc66dd5f830c5030ff53",
+      "finalNewline": false,
+      "determinantModuloAdvertisedModulus": "9963638324673808183615305562008082332720360155783976240264395068650592153384",
+      "oneByOneMinors": 196,
+      "twoByTwoMinors": 8281,
+      "checkedDeterminantsAreUnits": true
+    },
+    {
+      "name": "matrix13",
+      "n": 15,
+      "physicalLines": 225,
+      "sha256": "68ab512f277cca0258f5323338c1496f6758eecb69b891813c12738d6c87ad9f",
+      "finalNewline": false,
+      "determinantModuloAdvertisedModulus": "6361069350812218632519161862709399812460067172633225735598285205525507279160",
+      "oneByOneMinors": 225,
+      "twoByTwoMinors": 11025,
+      "checkedDeterminantsAreUnits": true
+    },
+    {
+      "name": "matrix14",
+      "n": 16,
+      "physicalLines": 256,
+      "sha256": "6747fbbfb0b994629824fd215fcc8ccc375d41a3720c0e7427e6e7d30570c146",
+      "finalNewline": false,
+      "determinantModuloAdvertisedModulus": "19728499242307320244237473856654781728926629398927726165867465531482495692192",
+      "oneByOneMinors": 256,
+      "twoByTwoMinors": 14400,
+      "checkedDeterminantsAreUnits": true
+    },
+    {
+      "name": "matrix15",
+      "n": 17,
+      "physicalLines": 289,
+      "sha256": "4453310c33f73066e4033d03a22bf4190a6eae76ff8a70d15846a0c65a337245",
+      "finalNewline": false,
+      "determinantModuloAdvertisedModulus": "9314014461404015751530991315962108104251374942268885406730541680816086034458",
+      "oneByOneMinors": 289,
+      "twoByTwoMinors": 18496,
+      "checkedDeterminantsAreUnits": true
+    }
+  ],
+  "entries": 1730,
+  "twoByTwoMinors": 70438,
+  "fullDeterminants": 12,
+  "scope": "format, range, unit-entry, two-by-two and full-determinant checks only; no all-minor, primality or cryptographic qualification; no read credit from execution"
+}

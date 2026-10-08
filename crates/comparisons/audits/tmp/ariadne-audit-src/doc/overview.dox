@@ -1,0 +1,178 @@
+/***************************************************************************
+ *            overview.dox
+ *
+ *  Copyright  2004-20  Pieter Collins
+ *
+ ****************************************************************************/
+
+/*
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; either version 2 of the License, or
+ *  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Library General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program; if not, write to the Free Software
+ *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+ */
+
+/*! \file overview.dox
+ *  \brief Overview of %Ariadne's capabilities
+ */
+
+namespace Ariadne {
+
+/*!
+
+\page overview_page Overview
+
+\section overview_reachability Reachability Analysis of Hybrid Systems
+
+The main functionality of %Ariadne is to perform reachability analysis and verification of hybrid systems.
+A <em>hybrid system</em> is a dynamic system in which continuous evolution is interspersed with discrete jumps.
+The state space of a hybrid system is of the form \f$X=\bigcup_{q\in Q} \{q\}\times \R^{n_q}\f$ with \f$Q\f$ a finite set of <em>locations</em>.
+The evolution of a hybrid system proceeds via a differential equation \f$\dot{x}(t) = f_q(x(t))\f$ in location \f$q\f$
+until a <em>guard condition</em> \f$g_e(x)\geq 0\f$ is satisfied, in which case the <em>event</em> \f$e\f$ occurs,
+the location jumps to a target location \f$q'=\tau(q,e)\f$ and the continuous state jumps to \f$x'=r_{q,e}(x)\f$.
+
+A <em>trajectory</em> or <em>execution</em> of a hybrid system comprises continuous evolution interspersed with discrete events.
+We let \f$t_0\f$ be the <em>starting time</em> (canonically \f$t_0=0\f$)
+and \f$t_n\f$ the time when the \f$n^\mathrm{th}\f$ event \f$e_n\f$ occurs.
+Since more than one event may occur at the same time, we keep track of both the total number of events
+as well as the elapsed time when describing a trajectory.
+A trajectory is therefore a partial function \f$\xi(t,n)\f$ defined whenever \f$t_n\leq t\leq t_{n+1}\f$.
+The domain of \f$\xi\f$ is a <em>hybrid time domain</em> \f$T=\{ (t,n)\in\R^+\times\Z^+ \mid t\in[t_n,t_{n+1}]\f$.
+A trajectory is <em>Zeno</em> if the total number of event \f$N\f$ equals \f$\infty\f$, and \f$\lim_{n\to\infty} t_n < \infty\f$.
+
+In <em>reachability analysis</em> we are given an <em>initial set</em> \f$X_0 \subset X\f$,
+and aim to compute the set of points which are reachable by a trajectory starting in \f$x_0\f$.
+The reachability analysis may be performed over a <em>finite</em> time interval,
+in which case a bound on the total time \f$T\f$ and the maximum number of events \f$N\f$ is given,
+or over an <em>infinite</em> time interval.
+
+In both cases, we can compute either an over-approximation to the reachable set \f$R\f$, or a <em>lower</em> approximation.
+A set \f$A\f$ is said to be an \f$\epsilon\f$-lower approximation to \f$S\f$ if \f$A\subset N_\epsilon(S)\f$,
+and an over-approximation if \f$A\supset S\f$.
+For general systems it is impossible to compute a sequence of over-approximations converging to the infinite-time reachable set.
+Instead, we compute over-approximations to the reachable set which converge to the <em>chain-reachable set</em>
+as the accuracy parameters governing the computation are improved.
+
+\sa \ref hybrid_systems_page
+
+
+\section overview_function Function Calculus
+
+The computational kernel of %Ariadne is based on a calculus of continuous functions on Euclidean space.
+The core type is of (multivariable, vector-valued) functions \f$f:\R^n\rightarrow\R^m\f$.
+These functions can be built from scalar-valued functions \f$\R^n\rightarrow\R\f$ componentwise,
+starting from the constant functions \f$f(x_1,\ldots,x_n)=c\f$,
+the coordinate projection functions \f$f(x_1,\ldots,x_n)=x_i\f$,
+arithmetical operations \f$+,-,\times,\div\f$,
+the absolute value operation \f$|x|\f$ and simple functions
+such as \f$\mathrm{sqrt}\f$, \f$\exp\f$, \f$\log\f$ and \f$\sin\f$.
+
+The results of operations on functions are expressed in terms of <em>interval functions</em>
+on bounded domains.
+An interval function is a map \f$\mathbb{IF}^n\rightarrow\mathbb{IF}^m\f$ where
+\f$\mathbb{IF}\f$ is the set of intervals in \f$\R\f$ with endpoints in a subset
+\f$\mathbb{F}\f$ of \f$\R\f$.
+An interval function \f$\hat{f}:\mathbb{IF}^n\rightarrow\mathbb{IF}^m\f$
+is an <em>interval extension</em> of \f$f:\R^n\rightarrow\R^m\f$ if for every
+box \f$\ivl{x}=[a_1,b_1]\times\cdots\times[a_n,b_n]\in\mathbb{IF}^n\f$ and every
+\f$x\in\ivl{x}\f$, we have \f$f(x)\in \hat{f}(\ivl{x})\f$.
+
+If the result of an exact operation is a continuous function \f$f:U\fto\R^m\f$
+where \f$U\f$ is an open subset of \f$\R^n\f$, then the computed solution is
+typically an interval function \f$\hat{f}:\IF^n\fto\IF^m\f$
+which is a valid interval extension of \f$f\f$ on a box \f$D\subset U\f$.
+
+
+The main operations which %Ariadne can perform are
+ - Solution of differential equations:
+   Given a differential equation of the form \f$\dot{x}=f(x)\f$,
+   computes the flow \f$\phi(x,t)\f$ satisfying \f$\phi(x,0)=x\f$ and \f$\dot{\phi}(x,t) = f(\phi(x,t))\f$.
+ - Solution of (parameterised) algebraic equations:
+   Given an algebraic equation \f$f(a,x)=0\f$, find a
+   function \f$h(a)\f$ satisfying \f$f(a,h(a))=0\f$.
+ - Nonlinear feasibility problems: Given a set of nonlinear constraints \f$g_i(x)\in C_i\f$,
+   determine whether there exists a solution with \f$x\in D\f$.
+ - Solution of nonlinear programming problems: Given a nonlinear programming problem
+   \f$ \max f(x) \text{ such that } x\in D,\ g(x)\leq 0\text{ and } h(x) = 0 \f$
+   where \f$D\f$ is a bounded domain, find all (local) solutions.
+ .
+
+
+
+\section overview_classes Main Classes
+
+%Ariadne comprises a number of modules, which may be roughly classifies into <em>user modules</em>, including core data types, system classes and analysis tools, and <em>internal modules</em> which are used by the kernel and which the average user need not be concerned about.
+
+- Main user classes for reachability analysis of hybrid systems.
+   - System classes implementing \ref HybridAutomatonInterface for defining hybrid systems,
+   - Evolution classes implementing \ref HybridEvolverInterface for computing the evolution of a hybrid system from a given initial set, and a \ref HybridReachabilityAnalyser for performing global reachability analysis
+   - Output classes \ref Figure for plotting sets and orbits.
+   .
+- Auxiliary user classes, used to define systems and store output.
+   - Numeric classes, including \ref Real, \link Bounds \c Bounds<F> \endlink and \link Approximation \c Approximation<F> \endlink based on floating-point types \ref FloatDP and \ref FloatMP, and concrete \ref Integer, \ref Dyadic, \ref Decimal and \ref Rational classes.
+   - Linear algebra classes, \link Vector \c Vector<X> \endlink and \link Matrix \c Matrix<X> \endlink, templated on the numerical type.
+   - %Function classes, including the general \ref Function type, with \ref ScalarUnivariateFunction, \ref VectorUnivariateFunction, \ref ScalarMultivariateFunction and \ref VectorMultivariateFunction, specific \ref ConstantFunction, \ref CoordinateFunction, \ref Affine function, and \ref Polynomial function types.
+   - Geometric classes, including affine geometric types such as \ref Point, \ref Box and \ref Polyhedron, and general \ref ImageSet, \ref ConstraintSet and \ref ConstrainedImageSet objects, and generic sets such as \ref OpenSet, \ref OvertSet and \ref CompactSet defined by abstract interfaces.
+   - Storage class \link Orbit Orbit< S > \endlink for storing evolution traces and \ref GridTreePaving for storing reached sets.
+   .
+- Internal classes, used in computations.
+  - Automatic differentiation classes \link Differential Differential<X> \endlink.
+  - %Differential calculus classes, including \ref TaylorModel class for high-order polynomial approximation to dependent quantities.
+ - %Function patch models, such as the \ref ScalarMultivariateTaylorFunctionModel and \ref VectorMultivariateTaylorFunctionModel classes, for storing approximation to functions over bounded sets.
+
+- Evaluation classes for performing nontrivial internal computations.
+  - %Differential equation solvers satisfying the \ref IntegratorInterface.
+  - Algebraic equation solvers satisfying the \ref SolverInterface.
+  - Nonlinear programming classes satisfying the \ref OptimiserInterface.
+  - %Constraint propagation classes satisfying the \ref ConstraintSolverInterface.
+
+
+\section overview_system Building a Hybrid System
+
+In order to use %Ariadne for reachability analysis, it is first necessary to build a hybrid system. The \ref HybridAutomaton class is the main %Ariadne class for describing hybrid systems as a single hybrid automaton. A %MonolithicHybridAutomaton comprises \ref DiscreteMode and \ref DiscreteTransition objects to describe the modes (including continuous dynamics and invariants) and the discrete transitions (describing guards/activation predicates and reset relations.
+
+An %Ariadne automaton must be built explicitly using the
+  \link HybridAutomaton::new_mode() \c new_mode \endlink,
+  \link HybridAutomaton::new_invariant() \c new_invariant \endlink
+and
+  \link HybridAutomaton::new_transition() \c new_transition \endlink
+methods.
+
+All resets, flows and guards are specified using <em>functions</em>. A function is just a mapping from \f$\R^m\f$ to \f$\R^n\f$.
+Unfortunately, since %Ariadne uses specialised automatic differentiation functionality, an %Ariadne function cannot be specified directly from a C++ function, but must be defined using the a function object.
+The \ref ScalarFunction and \ref VectorFunction classes can be used to build and represent simple functions.
+The \link ScalarUserFunction \c ScalarUserFunction<F> \endlink and \link VectorUserFunction \c VectorUserFunction<F> \endlink can be used to wrap more complex user function objects to conform to the %Ariadne interface.
+
+
+\section overview_analyser Building an Evolver or Analyser
+
+In order to analyse a hybrid system, we need an <em>Evolver</em> or <em>Analyser</em> class.
+An Evolver class is used to perform simulations, and computes the evolution up to a given time starting from an initial <em>enclosure</em> set. An Analyser class is used to perform global analysis, and computes the evolution starting from an arbitrary given set. Internally, an Analyser class typically uses an Evolver to perform the evolution, and then performs a discretization of the evolved set on a grid.
+
+An evolver class satisfies the interface \link EvolverInterface \c EvolverInterface<SYS,ES> \endlink, where \c ES is the template parameter giving the type used for the enclosure sets. The \link HybridEvolverInterface HybridEvolverInterface \endlink class is an interface for evolvers for hybrid systems using the type \c HybridEnclosure to specify the continuous part of the enclosure set.
+To build an Evolver class, we need to give <em>evolution parameters</em> to specify the accuracy of the computation. The evolution parameters are passed using the evolver's configuration class. Note that not all parameters need be used by a given Evolver class.
+
+A reachability analyser class satisfies the interface \link ReachabilityAnalyserInterface \c ReachabilityAnalyserInterface<SYS> \endlink.
+The class \ref HybridReachabilityAnalyser may be used to perform reachability analysis of hybrid systems. It can be constructed from a \ref HybridEvolverInterface class.
+
+\remark We use Evolver and Analyser classes rather than functions to perform the analysis since different methods require different user parameters to specify the accuracy.
+
+A reachability analyser class satisfies the interface \ref ReachabilityAnalyserInterface "ReachabilityAnalyserInterface<SYS>".
+The class \ref HybridReachabilityAnalyser may be used to perform reachability analysis of hybrid systems. It can be constructed from a \ref HybridEvolverInterface class.
+
+\section tutorial_system_hybrid Performing Simulations or Reachability Analysis
+
+The functionality available for computing (rigorous) simulations, and performing reachability analysis can be found in the documentation for \link EvolverInterface \c EvolverInterface<SYS,ES> \endlink and \link ReachabilityAnalyserInterface \c ReachabilityAnalyserInterface<SYS> \endlink.
+
+*/
+
+} // namespace Ariadne

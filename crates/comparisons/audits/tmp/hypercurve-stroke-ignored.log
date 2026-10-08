@@ -1,0 +1,9 @@
+
+running 3 tests
+test exact_path_stroke_splits_an_interior_source_cusp ... ok
+test exact_path_stroke_preserves_an_even_multiplicity_stationary_source ... ok
+test exact_path_stroke_splits_a_nonuniform_rational_source_cusp has been running for over 60 seconds
+test exact_path_stroke_splits_a_nonuniform_rational_source_cusp ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 15 filtered out; finished in 66.39s
+

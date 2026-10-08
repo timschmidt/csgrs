@@ -1,0 +1,26 @@
+
+uncompressed/Data/Real/CReal.hs:1:17: warning: [-Wdeprecated-flags]
+    -fglasgow-exts is deprecated: Use individual extensions instead
+  |
+1 | {-# OPTIONS_GHC -fglasgow-exts #-}
+  |                 ^^^^^^^^^^^^^^
+
+uncompressed/Data/Interval.hs:1:17: warning: [-Wdeprecated-flags]
+    -fglasgow-exts is deprecated: Use individual extensions instead
+  |
+1 | {-# OPTIONS_GHC -fglasgow-exts #-}
+  |                 ^^^^^^^^^^^^^^
+
+uncompressed/Data/Multinomial.hs:1:17: warning: [-Wdeprecated-flags]
+    -fglasgow-exts is deprecated: Use individual extensions instead
+  |
+1 | {-# OPTIONS_GHC -fglasgow-exts #-}
+  |                 ^^^^^^^^^^^^^^
+
+uncompressed/Data/Real/Complete.hs:1:17: warning: [-Wdeprecated-flags]
+    -fglasgow-exts is deprecated: Use individual extensions instead
+  |
+1 | {-# OPTIONS_GHC -fglasgow-exts #-}
+  |                 ^^^^^^^^^^^^^^
+[8 of 9] Compiling Main             ( FewCompressionBench.hs, uncompressed-build/Main.o ) [Source file changed]
+[9 of 9] Linking few-uncompressed [Objects changed]

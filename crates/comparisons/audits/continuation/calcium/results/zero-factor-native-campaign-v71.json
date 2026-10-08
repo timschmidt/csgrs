@@ -1,0 +1,16 @@
+{
+  "tag": "zero-factor-native-campaign-v71",
+  "started": "2026-09-11T19:30:58.448Z",
+  "finished": "2026-09-11T19:32:34.424Z",
+  "elapsedSeconds": 95.973029121,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "taskset",
+  "args": [
+    "-c",
+    "0",
+    "node",
+    "run-zero-factor-native-v71.mjs"
+  ],
+  "code": 0,
+  "signal": null
+}

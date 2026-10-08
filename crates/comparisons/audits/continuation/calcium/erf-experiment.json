@@ -1,0 +1,25 @@
+{
+  "status": "not selected as implemented; no production transfer",
+  "baseline": "baseline-hyperreal.json",
+  "sourceHashes": {
+    "erf-trial-hyperreal/src/computable/node/algebra.rs": "a2d35e704e07569b7e4123f581e10cd2240a657030e62a4c9fcf26160cddeda3",
+    "erf-trial-hyperreal/src/computable/approximation/statistics.rs": "0cf4006af99c2eef34c691557e4843e5c9626cffe9196513935e0d5b1ad01fc0",
+    "erf-qualification.rs": "adc6e080469f03fd30027d0e3a7c9e3bf9a0d58ed9e07efc3edeaf79f11bed9c",
+    "erf-bench.rs": "30840042fbcff56b52f6805f0428676c59de65024608c8ea9583e29fffc48bcb",
+    "run-erf-bench.mjs": "90c59969d73a8d85ed17a1d68b4bd99bd2a7303e965d92d11bf2dca8c6798138"
+  },
+  "qualifyingChanges": [
+    "Retain erf as one minus a canonical Erfc expression; preserve explicit argument reflection/oddness.",
+    "Move the unchanged expanded erf constructor to an internal helper called by the Erfc kernel to avoid representation recursion.",
+    "Recognize bounded nested x + (c - x) structural cancellation symmetrically."
+  ],
+  "failedGates": [
+    "Four reflected Erfc structural positive signs disappear after serialization; baseline preserves all four.",
+    "Repeated-refinement CPU and allocation regressions despite cheaper construction and exact complement cancellation."
+  ],
+  "limits": [
+    "No new public node variant, serialized format field, cache field or production dependency.",
+    "No downstream qualification because this isolated candidate already fails the scalar retention gate.",
+    "The general nested cancellation rule remains independently unqualified; the combined prototype does not establish its standalone payoff."
+  ]
+}

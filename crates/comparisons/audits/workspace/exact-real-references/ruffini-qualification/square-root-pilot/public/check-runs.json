@@ -1,0 +1,186 @@
+[
+  {
+    "name": "release-baseline",
+    "command": "/home/tim/Documents/GitHub/workspace/.audit-square-root.C42NO5BC/public-binaries/release-baseline",
+    "args": [
+      "check"
+    ],
+    "capMs": 300000,
+    "started": "2026-09-07T02:50:49.691Z",
+    "finished": "2026-09-07T02:50:49.776Z",
+    "status": 0,
+    "signal": null,
+    "error": null,
+    "file": "check-release-baseline.log",
+    "sha256": "4401356c1abf75daa5db46d5706ef75dea6c8beb504b63bb192b605e7bcfaaef",
+    "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "sources": [
+      [
+        "main.rs",
+        "7c9941578382650f90bbb7feb613a1ad0efa2431f6352cd44f80b780d0d9faea"
+      ],
+      [
+        "Cargo.toml",
+        "21e383603ff09f7e6779e3140a5f948d5e9895ae830bbc4548f40b074433d8b0"
+      ],
+      [
+        "../diagonal.rs",
+        "fe7e844196357e900969c6a919d5aafca192839f6f42a34814845e8f5fbf5fd8"
+      ],
+      [
+        "../baseline.rs",
+        "f09fb430259ecd9ca39a7821e738ea9c881cbe0e6f65cf410d62f6a5f9c5b2f4"
+      ],
+      [
+        "../hypersolve-diagonal/Cargo.toml",
+        "bba95fd7524cd4f03b44349a90741e84e9bea37bd3f7ef1e711ee64e83ce138d"
+      ],
+      [
+        "../hypersolve-diagonal/src/curve_resultant.rs",
+        "2c1ded93b509069082a3f239fbe7f51e436f740be2abac5def3500b3f147f315"
+      ]
+    ],
+    "runnerSha256": "f568963dbe30c5c5b75a60fd80eb825638923562b4ac05febaa922bb2508b4b4",
+    "lockSha256": "06db3534c53c01cad1e1cf66d2220ad3cf8fcc26761369d566e3b1311cb5d5d1",
+    "binary": "/home/tim/Documents/GitHub/workspace/.audit-square-root.C42NO5BC/public-binaries/release-baseline",
+    "binarySha256": "74b9eb062f105fa6d1b97d53394afbef2d524f2ed892a7fbd1e855dfdd9a1475"
+  },
+  {
+    "name": "release-diagonal",
+    "command": "/home/tim/Documents/GitHub/workspace/.audit-square-root.C42NO5BC/public-binaries/release-diagonal",
+    "args": [
+      "check"
+    ],
+    "capMs": 300000,
+    "started": "2026-09-07T02:50:49.780Z",
+    "finished": "2026-09-07T02:50:49.861Z",
+    "status": 0,
+    "signal": null,
+    "error": null,
+    "file": "check-release-diagonal.log",
+    "sha256": "4401356c1abf75daa5db46d5706ef75dea6c8beb504b63bb192b605e7bcfaaef",
+    "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "sources": [
+      [
+        "main.rs",
+        "7c9941578382650f90bbb7feb613a1ad0efa2431f6352cd44f80b780d0d9faea"
+      ],
+      [
+        "Cargo.toml",
+        "21e383603ff09f7e6779e3140a5f948d5e9895ae830bbc4548f40b074433d8b0"
+      ],
+      [
+        "../diagonal.rs",
+        "fe7e844196357e900969c6a919d5aafca192839f6f42a34814845e8f5fbf5fd8"
+      ],
+      [
+        "../baseline.rs",
+        "f09fb430259ecd9ca39a7821e738ea9c881cbe0e6f65cf410d62f6a5f9c5b2f4"
+      ],
+      [
+        "../hypersolve-diagonal/Cargo.toml",
+        "bba95fd7524cd4f03b44349a90741e84e9bea37bd3f7ef1e711ee64e83ce138d"
+      ],
+      [
+        "../hypersolve-diagonal/src/curve_resultant.rs",
+        "2c1ded93b509069082a3f239fbe7f51e436f740be2abac5def3500b3f147f315"
+      ]
+    ],
+    "runnerSha256": "f568963dbe30c5c5b75a60fd80eb825638923562b4ac05febaa922bb2508b4b4",
+    "lockSha256": "06db3534c53c01cad1e1cf66d2220ad3cf8fcc26761369d566e3b1311cb5d5d1",
+    "binary": "/home/tim/Documents/GitHub/workspace/.audit-square-root.C42NO5BC/public-binaries/release-diagonal",
+    "binarySha256": "b34844958eee982daf84bf4ccac64bd85af14a0a11d5cb34066ec0554d69170d"
+  },
+  {
+    "name": "debug-baseline",
+    "command": "/home/tim/Documents/GitHub/workspace/.audit-square-root.C42NO5BC/public-binaries/debug-baseline",
+    "args": [
+      "check"
+    ],
+    "capMs": 1200000,
+    "started": "2026-09-07T02:50:49.865Z",
+    "finished": "2026-09-07T02:50:50.556Z",
+    "status": 0,
+    "signal": null,
+    "error": null,
+    "file": "check-debug-baseline.log",
+    "sha256": "4401356c1abf75daa5db46d5706ef75dea6c8beb504b63bb192b605e7bcfaaef",
+    "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "sources": [
+      [
+        "main.rs",
+        "7c9941578382650f90bbb7feb613a1ad0efa2431f6352cd44f80b780d0d9faea"
+      ],
+      [
+        "Cargo.toml",
+        "21e383603ff09f7e6779e3140a5f948d5e9895ae830bbc4548f40b074433d8b0"
+      ],
+      [
+        "../diagonal.rs",
+        "fe7e844196357e900969c6a919d5aafca192839f6f42a34814845e8f5fbf5fd8"
+      ],
+      [
+        "../baseline.rs",
+        "f09fb430259ecd9ca39a7821e738ea9c881cbe0e6f65cf410d62f6a5f9c5b2f4"
+      ],
+      [
+        "../hypersolve-diagonal/Cargo.toml",
+        "bba95fd7524cd4f03b44349a90741e84e9bea37bd3f7ef1e711ee64e83ce138d"
+      ],
+      [
+        "../hypersolve-diagonal/src/curve_resultant.rs",
+        "2c1ded93b509069082a3f239fbe7f51e436f740be2abac5def3500b3f147f315"
+      ]
+    ],
+    "runnerSha256": "f568963dbe30c5c5b75a60fd80eb825638923562b4ac05febaa922bb2508b4b4",
+    "lockSha256": "06db3534c53c01cad1e1cf66d2220ad3cf8fcc26761369d566e3b1311cb5d5d1",
+    "binary": "/home/tim/Documents/GitHub/workspace/.audit-square-root.C42NO5BC/public-binaries/debug-baseline",
+    "binarySha256": "21c25b0e12c4e7060892ff9ed7c38eae3490a103f37de12ac5cf300b26615414"
+  },
+  {
+    "name": "debug-diagonal",
+    "command": "/home/tim/Documents/GitHub/workspace/.audit-square-root.C42NO5BC/public-binaries/debug-diagonal",
+    "args": [
+      "check"
+    ],
+    "capMs": 1200000,
+    "started": "2026-09-07T02:50:50.610Z",
+    "finished": "2026-09-07T02:50:51.273Z",
+    "status": 0,
+    "signal": null,
+    "error": null,
+    "file": "check-debug-diagonal.log",
+    "sha256": "4401356c1abf75daa5db46d5706ef75dea6c8beb504b63bb192b605e7bcfaaef",
+    "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "sources": [
+      [
+        "main.rs",
+        "7c9941578382650f90bbb7feb613a1ad0efa2431f6352cd44f80b780d0d9faea"
+      ],
+      [
+        "Cargo.toml",
+        "21e383603ff09f7e6779e3140a5f948d5e9895ae830bbc4548f40b074433d8b0"
+      ],
+      [
+        "../diagonal.rs",
+        "fe7e844196357e900969c6a919d5aafca192839f6f42a34814845e8f5fbf5fd8"
+      ],
+      [
+        "../baseline.rs",
+        "f09fb430259ecd9ca39a7821e738ea9c881cbe0e6f65cf410d62f6a5f9c5b2f4"
+      ],
+      [
+        "../hypersolve-diagonal/Cargo.toml",
+        "bba95fd7524cd4f03b44349a90741e84e9bea37bd3f7ef1e711ee64e83ce138d"
+      ],
+      [
+        "../hypersolve-diagonal/src/curve_resultant.rs",
+        "2c1ded93b509069082a3f239fbe7f51e436f740be2abac5def3500b3f147f315"
+      ]
+    ],
+    "runnerSha256": "f568963dbe30c5c5b75a60fd80eb825638923562b4ac05febaa922bb2508b4b4",
+    "lockSha256": "06db3534c53c01cad1e1cf66d2220ad3cf8fcc26761369d566e3b1311cb5d5d1",
+    "binary": "/home/tim/Documents/GitHub/workspace/.audit-square-root.C42NO5BC/public-binaries/debug-diagonal",
+    "binarySha256": "5d6481b6550bf859d22d13e50a56d711872950f94fbed25f66dcc069e33a3300"
+  }
+]

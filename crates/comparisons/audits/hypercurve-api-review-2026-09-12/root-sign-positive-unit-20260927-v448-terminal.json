@@ -1,0 +1,70 @@
+{
+  "source_manifest": "root-sign-positive-unit-20260927-v448-sources.json",
+  "source_directory": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/source-archives/root-sign-positive-unit-20260927-v448",
+  "cases": [
+    {
+      "binary": "root-sign-positive-unit-20260927-v448-hypersolve",
+      "name": "root_sign::captured_quadratic_field_queries::selected_root_query_002",
+      "returncode": 0,
+      "log": "root-sign-positive-unit-20260927-v448-case-000.log",
+      "elapsed_seconds": 23.142820400884375
+    },
+    {
+      "binary": "root-sign-positive-unit-20260927-v448-hypersolve",
+      "name": "root_sign::captured_quadratic_field_queries::selected_root_query_000",
+      "returncode": 0,
+      "log": "root-sign-positive-unit-20260927-v448-case-001.log",
+      "elapsed_seconds": 4.869862759951502
+    },
+    {
+      "binary": "root-sign-positive-unit-20260927-v448-hypersolve",
+      "name": "root_sign::captured_quadratic_field_queries::selected_root_query_001",
+      "returncode": 0,
+      "log": "root-sign-positive-unit-20260927-v448-case-002.log",
+      "elapsed_seconds": 5.570997314993292
+    }
+  ],
+  "builds": [
+    {
+      "crate": "hypersolve",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "test",
+        "--lib",
+        "--release",
+        "--all-features",
+        "--no-run",
+        "--message-format=json",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "log": "root-sign-positive-unit-20260927-v448-hypersolve-build.log",
+      "elapsed_seconds": 54.58713688701391,
+      "binary": {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/root-sign-positive-unit-20260927-v448-hypersolve",
+        "sha256": "341329892d39d5e77c8b25c824709c48b6da529171ab12cb390168f465492b28"
+      }
+    }
+  ],
+  "trial": {
+    "hypersolve/src/root_sign.rs": "059b52129bb49f0acec75f283bceca6de365900d9b784a0f62f80ccf0e64f43e",
+    "hyperreal/src/computable/node/quadratic_tower.rs": "600a9a0671a26437bca02ff4af1b922776b134df4597c6cb86099b39ced39c6e",
+    "hypersolve/src/root_isolation.rs": "70d69c3759a5cd6ba758365080c51ed30b12158eb33c2a6ef79faaeff28cc7d4"
+  },
+  "all_processes_reaped": true,
+  "checks": [],
+  "qualification_scope": "Standalone captured quartic-field root-sign queries, using positive leading-unit normalization and fused scalar arithmetic with independently proved signs",
+  "expected_cases": {
+    "hypersolve": [
+      "root_sign::captured_quadratic_field_queries::selected_root_query_002",
+      "root_sign::captured_quadratic_field_queries::selected_root_query_000",
+      "root_sign::captured_quadratic_field_queries::selected_root_query_001"
+    ]
+  },
+  "known_unresolved": [
+    "strict_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions",
+    "approximate_512_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions"
+  ],
+  "qualification_complete": true
+}

@@ -1,0 +1,23 @@
+{
+  "tag": "coq-aern-metadata-v85",
+  "started": "2026-09-12T05:44:42.518Z",
+  "finished": "2026-09-12T05:44:42.583Z",
+  "elapsedSeconds": 0.06305825,
+  "cwd": "/home/tim/Documents/GitHub/workspace",
+  "command": "env",
+  "args": [
+    "CARGO_TARGET_DIR=/tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse",
+    "CARGO_INCREMENTAL=0",
+    "CARGO_PROFILE_DEV_DEBUG=0",
+    "CARGO_BUILD_JOBS=2",
+    "cargo",
+    "metadata",
+    "--offline",
+    "--format-version",
+    "1",
+    "--manifest-path",
+    "exactcore-hyper-comparison/audits/continuation/coq-aern/hyper-v85/Cargo.toml"
+  ],
+  "code": 0,
+  "signal": null
+}

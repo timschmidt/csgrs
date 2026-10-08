@@ -1,0 +1,13 @@
+{
+  "tag": "complex-roundtrip-check-v83",
+  "started": "2026-09-12T03:50:33.925Z",
+  "finished": "2026-09-12T03:50:35.643Z",
+  "elapsedSeconds": 1.715807071,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "node",
+  "args": [
+    "check-complex-roundtrip-v83.mjs"
+  ],
+  "code": 0,
+  "signal": null
+}

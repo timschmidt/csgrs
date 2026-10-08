@@ -1,0 +1,9 @@
+Check straight corner edits across normalized boundaries
+
+Use strict CurvePoint equality to recognize endpoints independently of their
+payload. Search all loops in each candidate for both exterior cuts and retain
+the candidate-completeness assertions. Require certified interior/exterior
+classifications, the exterior material lobe, and filled-left topology.
+
+All three helper callers pass under their existing policy/traversal matrices;
+both all-target feature checks are clean. Production code is unchanged.

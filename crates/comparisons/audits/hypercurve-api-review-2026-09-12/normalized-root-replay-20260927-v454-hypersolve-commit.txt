@@ -1,0 +1,5 @@
+Normalize selected-root remainder chains without losing signs
+
+Remove the initial polynomial quotient and normalize subsequent remainders by positive leading units, reusing compact exact scalar proofs. Trim zero queries before requesting a defining-degree decision. Reuse the existing monic normalization kernel under its general name and update every caller directly. Original root equations, isolators, endpoint ownership and coarser certified replay remain authoritative.
+
+Validation: 933 Hyperreal and 898 Hypersolve tests, 323 selected Hypercurve release tests, three independently proved captured root queries, Clippy, formatting, denied-warning docs, editing fuzz compilation, and Hyperbrep compilation. The two original extended-fillet re-offset tests remain unresolved and are excluded from the passing geometry scope.

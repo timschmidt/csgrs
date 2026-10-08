@@ -1,0 +1,1135 @@
+{
+  "schema": 1,
+  "checkpoint": 48,
+  "recorded": "2026-09-10T05:12:40.060Z",
+  "files": {
+    "record-fexpr-representation-reads.mjs": "13def90fdd877edf6b1a33ba2f7e9e585d6915d1018f17ddcc771986e795d55d",
+    "verify-fexpr-representation.mjs": "9e6c9af344f39b91d4284559e6589a9d8965ea7c8472c34d6db9ac26f3c84bca",
+    "fexpr-representation-findings.md": "bc6ed02f4faf1a70e1616f8f6f80ce4e7cd80021baab39b1b3033e19d66de6ed",
+    "fexpr-representation-read-records.json": "8a7249bf2d06cb57eff487e40c31988563dd79db51c50a6988e64ce918ad1bca",
+    "inventory.json": "5f9ef82294df7476427acc0acfc72ce525808dcaf47ea9162c9abc2733162f95",
+    "effective-coverage.mjs": "b884fd5eb462ede70cb9b3c2bed2cfad14d5700301e92e37156c7ec5104b17e0",
+    "mpoly-bridge-experiment.json": "b8873a79dc8dca3b9cc4044b56ee20c92e76b4cf8bbd8011d4145fe6f2e69694",
+    "results/mpoly-bridge-verify-full.json": "63c6aa3ec23063195ccfe4f4afa43a75f9c81600d8fd983f5783a2dfef33c8ee",
+    "results/mpoly-bridge-verify-full.stdout": "4212cad64506bd2c9da0242f58ef3588b56485e9c0b23bf7e355d875ca787307",
+    "results/mpoly-bridge-verify-full.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "donorSources": {
+    "calcium:doc/source/fexpr.rst": "250612682a1584117167da4f24a282d3718482aeb9ed5c7ce87b69d8f58ceb3f",
+    "calcium:fexpr.h": "113c7d1be64cedb7502887724a3992938ecbb2e80d381243226992308ecdb973",
+    "calcium:fexpr/arg.c": "d7661601638e02d3f348397cf9da577a3d81b11592cce9e76b412fb0f4411c33",
+    "calcium:fexpr/arithmetic.c": "4e9953229edbccad5aa8045864b7ddd59fca763120106de785724a5024809b8d",
+    "calcium:fexpr/arithmetic_nodes.c": "cfa5c8fe42c774ccc1aca303eeea8410a06960d0e5c10e9b599eb83ad1d8edc6",
+    "calcium:fexpr/call0.c": "103fe2e469718b430157ef1beb11fd0891be6625fb64dc5739d165e989ed1682",
+    "calcium:fexpr/call1.c": "9ff42e736e39b5885645002752f9594f5c787a30386214329cf94aa5382793f2",
+    "calcium:fexpr/call2.c": "8b3d38fd173d7e5784f0b5b38d40ae3f653ef33da74db68f8dd41a0a80e0a386",
+    "calcium:fexpr/call3.c": "0cabf50dd83b7e7dc9524d6ea2305e6ca9e5a73330a4ad5b4680cba5a4f4525b",
+    "calcium:fexpr/call4.c": "3ff175ee96320c8c97efd3e5febff9e2eff2c912a2f258db0083db0713455a2a",
+    "calcium:fexpr/call_vec.c": "a7bd0615f0c6a4932a40ad7950fab3ccda7b0931b7349608e9381df066faaf96",
+    "calcium:fexpr/cmp_fast.c": "1176fb8fbbce78d9b7e80ebd530f09a2bc79bdab2d1de8208a1023c007306d35",
+    "calcium:fexpr/contains.c": "b0937094734490c42e581760a87b4c1a253ad95c8dd9a6322bb7240472c570ca",
+    "calcium:fexpr/depth.c": "c936e4cb5676dedc99f7e3382452c4c328e58530a0b60dc19f25ec519fc59b16",
+    "calcium:fexpr/equal_si.c": "f322dd886f7912e89cd039b0d6140b25373cb306872afed4f18c7a56f88f42d9",
+    "calcium:fexpr/equal_ui.c": "973389e84507bd7ac9b0c03dbe1c0b5ccc03367b874042eeb6e791fc15a85add",
+    "calcium:fexpr/expanded_normal_form.c": "2ce50177445f7d0d97c582197eddf48a9a6b22c78eda3bd22d5f4651ebfb6827",
+    "calcium:fexpr/func.c": "a49ec474326bdfa27874e15f5268cc9062fb20f991d286eebc8ba89894273346",
+    "calcium:fexpr/get_fmpz.c": "069fb7ae5964627c60e0472b370e35914352976a5a5287e9f5e19550d3422da6",
+    "calcium:fexpr/get_string.c": "44c50e332346647fe1782d0625b7fd1dadd76d02ed8299220d635d78d8fc9c5d",
+    "calcium:fexpr/get_symbol_str.c": "30e5a53ce1a77955e1e3710285d600dceab63a29c70e9f320eca5c0388d2f872",
+    "calcium:fexpr/hash.c": "b793602c58522374e2a73934e16ca137284f0a541aa116ee86e0886142f7bb4d",
+    "calcium:fexpr/inlines.c": "54e0bac9d33c5532c4fdc6c2decfe2d11ae226ef5dce3b5fea95b7fbf826ded5",
+    "calcium:fexpr/is_any_builtin_call.c": "dbdd57786392828eb99faf0ae2bc3cb2492fa59557504c0247e5ec14da5c12f3",
+    "calcium:fexpr/is_arithmetic_operation.c": "580321a3190175f5ff0570affb33663447d9cf199fbd5f4db5226a7d86b0303a",
+    "calcium:fexpr/is_builtin_call.c": "45b5b2d638463fb77daaf8c582f160e0a308263d8b31fdc171545173415b92b6",
+    "calcium:fexpr/is_neg_integer.c": "081d8086018f55197afb197aa217aeb5b02c15b2b842b6bd69cfe21b4b404cf4",
+    "calcium:fexpr/num_leaves.c": "367476c5159f1314d2122f4aa8c4241a0f44b2e0c7abd08f94b0cbbcc4ad2357",
+    "calcium:fexpr/numerical_enclosure.c": "37cba9cb28075b33b4809a97719e87308634d03984e08e91df7d091d97520c93",
+    "calcium:fexpr/print.c": "1615f5d609416351a83d1e5ebc7eac7c70cfa1543a6cfd55736600e567970356",
+    "calcium:fexpr/replace.c": "ad7757ec324bdd405af8291ab28b61f1356f1d1c587232c78c9184eaa6529c77",
+    "calcium:fexpr/set_arf.c": "5d15d7872ecce1df2893fc03b05e09b0054e7b2f081cab251ed5a2ab06499c7a",
+    "calcium:fexpr/set_d.c": "832473ff93cc08b76977380cb62d37e78848ac9a204306085d375444f1a5c2c3",
+    "calcium:fexpr/set_fmpq.c": "7706901462846eeddb0a6b0d16eda68cfd6494113057f71224a4441e97227850",
+    "calcium:fexpr/set_fmpz.c": "d1acfbeffbb2f2ae7074aeda4ca1b745d88f7e213d86f6b47294d568bbced1f0",
+    "calcium:fexpr/set_fmpz_mpoly.c": "e99793e93c07b965c6e78630aacaa5ca388a99c681a739c3bdd885e2efeada91",
+    "calcium:fexpr/set_si.c": "11220cba99f6827fa2bf96740998fb76c01df72edf309d2cf4c3bc99f94d1cbc",
+    "calcium:fexpr/set_string.c": "bd0d3834d03d4836943ae946da584dcf5fc346d2b39029b7cf824a45c8c94d60",
+    "calcium:fexpr/set_symbol_str.c": "c1b60fe56dbabfa55000174eede103cfc98a1e74c51bef7d40869e3d4d479217",
+    "calcium:fexpr/set_ui.c": "d0e06cd08648072e75338a9ed938e70540ed3c21bba530147271679ab0c1438d",
+    "calcium:fexpr/test/t-builtins.c": "8f671abc15faeb37f855d184e9304ec51e801cab529bfb6c06650791082ed54b",
+    "calcium:fexpr/test/t-call_vec.c": "ba366362e967b8006c372d61ff4ff785edaf285e01d689613e645fb050eb4551",
+    "calcium:fexpr/test/t-replace.c": "7a759742b97ea21759f34d712510bd0953602a181d2638e2f0dff9a75c80640f",
+    "calcium:fexpr/test/t-set_fmpz.c": "9113606133c772b5d6959235832e7b9d6a4d0c0b1ffd8c8106327d31e62a4627",
+    "calcium:fexpr/test/t-write_latex.c": "29769c87217a06e3763c73a9ed5b1985c5ba60196eb7b9e1fe116bc01cb0e315",
+    "flint:doc/source/fexpr.rst": "0e88648814f8fa6acb493303354fd4af328f318ad796cd5ffc5d21281a0f7413",
+    "flint:src/fexpr.h": "b565ab623222f3b0434964ff8674139f44ff0f021a4fd9a98d9afc2a40ea279b",
+    "flint:src/fexpr/arg.c": "a55d5a7fd171ae8bf8f88b617e5b205a7fe8aac8f1e85eaa67f7977d7761768e",
+    "flint:src/fexpr/arithmetic.c": "d606cb65e4291acb9308bd7944f182161b0f6576215d34edc941f87ed459891c",
+    "flint:src/fexpr/call0.c": "67e0b9307346b8b970a9feb1efae2de71e15867b850b2447d919f1c5e12ef059",
+    "flint:src/fexpr/call1.c": "1e6c00e147dfac426b86e687fb0a2566ac75b2161e7ea23e95a77c083da4d5c5",
+    "flint:src/fexpr/call2.c": "5b8c47154288d7ad01e960802cbdc3f597089062ba2961968c0a29b3bb6cc09a",
+    "flint:src/fexpr/call3.c": "50112e615041fc5aeae28f41d7cc060b5c1a04bbecbc107be9d6e10449b83530",
+    "flint:src/fexpr/call4.c": "5341f349c7b4f7fae4b2c1d0d4b46880cd400dd4ab0ddb6cd5a930cf6cd82f9e",
+    "flint:src/fexpr/call_vec.c": "9c30877f61e3ef18c8557c8793d2bd47da4a275355fe2cdbccf23a8656ebdcee",
+    "flint:src/fexpr/cmp_fast.c": "48b2ce8c89b00cb4ef06d6ea715632139d4baa4b8987fe94daab6ee4d254b8c3",
+    "flint:src/fexpr/contains.c": "c0d2d69696474434753a268770dc713f9d4d8ad256ebcd5056d492dc8fa8bedf",
+    "flint:src/fexpr/depth.c": "1b69653d9ab5c95930b1e572b3fc66515026a92ff9c6e8bbe7255e06c5c33d20",
+    "flint:src/fexpr/equal_si.c": "6cd9924bcda6e887af9805b05644a3f81f21fef22fde6a7b510ec60438c3dd0b",
+    "flint:src/fexpr/equal_ui.c": "92470011fe98b7fd125ffb0dc4a77162e58d33e98e9f1963c85bf09122700dd3",
+    "flint:src/fexpr/func.c": "e783241eea5d10a9674b86b40404483528c4571e767314cb9afb978deb707f41",
+    "flint:src/fexpr/get_fmpz.c": "52b646ba3dc1635dcc6c6b574ccd751ce7d87487a51b31ba9d9d1237918e7a88",
+    "flint:src/fexpr/get_string.c": "3b5ca922f92ea6daf1c14eb8f7723529691fd5cdbc4f1b3c01c0774710f09380",
+    "flint:src/fexpr/get_symbol_str.c": "03d2df77cb3834d30947186e528aa1ff35b4521a00f0003db1447947e27c5682",
+    "flint:src/fexpr/hash.c": "04fdb2b0816ad638edc66fd9f535482c110a22772cd13ba87063fc250ff966e9",
+    "flint:src/fexpr/inlines.c": "91358c5e0ac3ce039eebbe19efe972f8dc1a11cf8cfa95de948ea922c46bef17",
+    "flint:src/fexpr/is_any_builtin_call.c": "bbc4b030917f64a593620d86a9f6a8afe7ec3f21281a3c502b47190b31c7809f",
+    "flint:src/fexpr/is_builtin_call.c": "522bf62ca48c9a67db7ebd9de4d7a1ff9fa7ee29f96ee18deb08fd395e27715f",
+    "flint:src/fexpr/is_neg_integer.c": "522246e7603bd5a3c059e803cf1a1ed0457e5a4b79663fc43300cca59642c295",
+    "flint:src/fexpr/num_leaves.c": "ad112755ea0d430724ae3a9bf5f3ee93c0dac24773cceea46763703c2f14402e",
+    "flint:src/fexpr/numerical_enclosure.c": "d39dc5c749ad5b918dce4260e2e3047a77845c37189c2cf509b20ec71c3b587f",
+    "flint:src/fexpr/print.c": "941c511d4975e2478132d11a8302e8e511107bf64f080f2443b7d8380d61483e",
+    "flint:src/fexpr/replace.c": "4ec27707d1a5d4706993cc19cf308761d4795371f4439f3f2ec13ffabb7eb18e",
+    "flint:src/fexpr/set_arf.c": "3cd9fa493fa9382825582947e415c943dfc3868361aff6d03c153779fb93b966",
+    "flint:src/fexpr/set_d.c": "a899eefc463b6233921f5496fa27e98f750d4586885af67abb66d26e794393df",
+    "flint:src/fexpr/set_fmpq.c": "949a22eea0aee2e3b5fea42b66eb9661b2e04fb7515f7c377537fc9b94280fe1",
+    "flint:src/fexpr/set_fmpz.c": "a8e7007b3135af6e68c64a74a769bec55c83591a778a030dc3d2485e95a2d735",
+    "flint:src/fexpr/set_si.c": "23585aef3d5c8c8f747cecdf466503e9ad7a83a9a7a312b466a8689b51e2d534",
+    "flint:src/fexpr/set_string.c": "edc8c9478af7bbc442ac0efcca3e87f2b108b56d435e75b474a68b219be1f239",
+    "flint:src/fexpr/set_symbol_str.c": "f8303291d37c548edb60bd02681fe402419fcd46ee8cadac9694758eb4776e2a",
+    "flint:src/fexpr/set_ui.c": "a2788112dea9b73f0cf54047f31f34e861a6d9fa8f9eebd494b56943318a5467",
+    "flint:src/fexpr/test/main.c": "5642d826a83d978c81accbe10fafedba25521e1da6e6b3f18b9cc762868bcf5a",
+    "flint:src/fexpr/test/t-builtins.c": "94e044bfe614e51a3db233a65efaaff48565ab4d4fee9c190438186107ef4b7c",
+    "flint:src/fexpr/test/t-call_vec.c": "5cc3e3b30dba076e886326f6e3036a8c3e26c204c8c9bf5a45a6a0bd46f12cbf",
+    "flint:src/fexpr/test/t-replace.c": "41ba8f4324bb81ba4dfbaf5dc1ece76c973eed6153259bb1a5b809ab76f66051",
+    "flint:src/fexpr/test/t-set_fmpz.c": "27471801a2473a76fbdd3502c03c1eef75ababa20d6f85273ca6479cbbcf9d83",
+    "flint:src/fexpr/test/t-write_latex.c": "b1ea406ac171eff28493be0585a3ad0d44daffca5af7d5ef0cb713c13edf4731",
+    "flint:src/fexpr/vec_sort_fast.c": "37762bbb35d314ef2cc6bdddf065a9d0d66ed9a87365d18d1a1a7727ee0cc692"
+  },
+  "readRecords": [
+    {
+      "repo": "calcium",
+      "path": "doc/source/fexpr.rst",
+      "ranges": [
+        [
+          1,
+          620
+        ]
+      ],
+      "note": "Checkpoint48: Entire manual: formal syntax and structural equality, ownership/views/alias restrictions, compact representations, numeric conversion, printing, formal normalization and vector contracts. Source/documentation distinctions are in findings; existing current490..585 credit excluded."
+    },
+    {
+      "repo": "calcium",
+      "path": "fexpr.h",
+      "ranges": [
+        [
+          1,
+          592
+        ]
+      ],
+      "note": "Checkpoint48: Entire public representation and inline operations: flat tagged words, owned capacity, borrowed views, indexed general calls, builtin alias wrappers, vector lifecycle and API declarations. No DAG sharing or numerical approximation cache."
+    },
+    {
+      "repo": "calcium",
+      "path": "fexpr/arg.c",
+      "ranges": [
+        [
+          1,
+          85
+        ]
+      ],
+      "note": "Checkpoint48: Owned argument copy and in-bounds view lookup using small-call skips or every-four-argument index; no newly exercised invalid indexes or overlap."
+    },
+    {
+      "repo": "calcium",
+      "path": "fexpr/arithmetic.c",
+      "ranges": [
+        [
+          1,
+          49
+        ]
+      ],
+      "note": "Checkpoint48: Pos/Neg/Add/Sub/Mul/Div/Pow convenience constructors use builtin alias-supporting wrappers, without semantic normalization."
+    },
+    {
+      "repo": "calcium",
+      "path": "fexpr/arithmetic_nodes.c",
+      "ranges": [
+        [
+          1,
+          59
+        ]
+      ],
+      "note": "Checkpoint48: Archived recursive formal-leaf collection, arithmetic/integer-power traversal and structural unique insertion; current counterpart already47."
+    },
+    {
+      "repo": "calcium",
+      "path": "fexpr/call0.c",
+      "ranges": [
+        [
+          1,
+          29
+        ]
+      ],
+      "note": "Checkpoint48: Zero-argument generic call concatenates header and copied function with output distinct from inputs."
+    },
+    {
+      "repo": "calcium",
+      "path": "fexpr/call1.c",
+      "ranges": [
+        [
+          1,
+          54
+        ]
+      ],
+      "note": "Checkpoint48: One-argument call layout and builtin unary wrapper with temporary/swap for whole-output alias."
+    },
+    {
+      "repo": "calcium",
+      "path": "fexpr/call2.c",
+      "ranges": [
+        [
+          1,
+          56
+        ]
+      ],
+      "note": "Checkpoint48: Two-argument call layout and builtin binary wrapper with temporary/swap for whole-output alias."
+    },
+    {
+      "repo": "calcium",
+      "path": "fexpr/call3.c",
+      "ranges": [
+        [
+          1,
+          35
+        ]
+      ],
+      "note": "Checkpoint48: Three-argument flat constructor copies all children; generic nonoverlap precondition."
+    },
+    {
+      "repo": "calcium",
+      "path": "fexpr/call4.c",
+      "ranges": [
+        [
+          1,
+          37
+        ]
+      ],
+      "note": "Checkpoint48: Four-argument flat constructor copies all children; generic nonoverlap precondition."
+    },
+    {
+      "repo": "calcium",
+      "path": "fexpr/call_vec.c",
+      "ranges": [
+        [
+          1,
+          77
+        ]
+      ],
+      "note": "Checkpoint48: Dispatch to small constructors or generic argument-count/function-offset/every-four-argument index layout; all subexpressions copied."
+    },
+    {
+      "repo": "calcium",
+      "path": "fexpr/cmp_fast.c",
+      "ranges": [
+        [
+          1,
+          43
+        ]
+      ],
+      "note": "Checkpoint48: Representation-first total ordering over encoded expressions, not mathematical real comparison."
+    },
+    {
+      "repo": "calcium",
+      "path": "fexpr/contains.c",
+      "ranges": [
+        [
+          1,
+          52
+        ]
+      ],
+      "note": "Checkpoint48: Structural whole/subexpression search, including function heads and equality/size shortcuts."
+    },
+    {
+      "repo": "calcium",
+      "path": "fexpr/depth.c",
+      "ranges": [
+        [
+          1,
+          41
+        ]
+      ],
+      "note": "Checkpoint48: Recursive maximum expression depth including function head and arguments; atoms terminate."
+    },
+    {
+      "repo": "calcium",
+      "path": "fexpr/equal_si.c",
+      "ranges": [
+        [
+          1,
+          23
+        ]
+      ],
+      "note": "Checkpoint48: Compact signed-integer representation comparison, not approximate numerical equality."
+    },
+    {
+      "repo": "calcium",
+      "path": "fexpr/equal_ui.c",
+      "ranges": [
+        [
+          1,
+          22
+        ]
+      ],
+      "note": "Checkpoint48: Compact unsigned-integer representation comparison, not approximate numerical equality."
+    },
+    {
+      "repo": "calcium",
+      "path": "fexpr/expanded_normal_form.c",
+      "ranges": [
+        [
+          1,
+          43
+        ]
+      ],
+      "note": "Checkpoint48: Archived rational-function normalization pipeline and preserve-original failure fallback; current counterpart already47. Does not prove leaf independence or domains."
+    },
+    {
+      "repo": "calcium",
+      "path": "fexpr/func.c",
+      "ranges": [
+        [
+          1,
+          62
+        ]
+      ],
+      "note": "Checkpoint48: Owned function extraction and borrowed function view for small/general call layouts; fast builtin recognition."
+    },
+    {
+      "repo": "calcium",
+      "path": "fexpr/get_fmpz.c",
+      "ranges": [
+        [
+          1,
+          56
+        ]
+      ],
+      "note": "Checkpoint48: Exact structural integer decoding and failure status for nonintegers; manual failure wording differs. No invalid-input probe."
+    },
+    {
+      "repo": "calcium",
+      "path": "fexpr/get_string.c",
+      "ranges": [
+        [
+          1,
+          46
+        ]
+      ],
+      "note": "Checkpoint48: String atom extraction into owned text."
+    },
+    {
+      "repo": "calcium",
+      "path": "fexpr/get_symbol_str.c",
+      "ranges": [
+        [
+          1,
+          55
+        ]
+      ],
+      "note": "Checkpoint48: Builtin/small/long symbol extraction into caller-freed text, distinct from semantic evaluation."
+    },
+    {
+      "repo": "calcium",
+      "path": "fexpr/hash.c",
+      "ranges": [
+        [
+          1,
+          27
+        ]
+      ],
+      "note": "Checkpoint48: Complete structural word-array hash; not semantic equality or a studied adversarial/hash-performance claim."
+    },
+    {
+      "repo": "calcium",
+      "path": "fexpr/inlines.c",
+      "ranges": [
+        [
+          1,
+          14
+        ]
+      ],
+      "note": "Checkpoint48: Translation-unit emission of inline definitions."
+    },
+    {
+      "repo": "calcium",
+      "path": "fexpr/is_any_builtin_call.c",
+      "ranges": [
+        [
+          1,
+          25
+        ]
+      ],
+      "note": "Checkpoint48: Recognizes any builtin head in call layouts, distinct from evaluation support."
+    },
+    {
+      "repo": "calcium",
+      "path": "fexpr/is_arithmetic_operation.c",
+      "ranges": [
+        [
+          1,
+          41
+        ]
+      ],
+      "note": "Checkpoint48: Archived structural arithmetic-head recognition, distinct from arity and domain checks; current counterpart already47."
+    },
+    {
+      "repo": "calcium",
+      "path": "fexpr/is_builtin_call.c",
+      "ranges": [
+        [
+          1,
+          25
+        ]
+      ],
+      "note": "Checkpoint48: Fast structural builtin-head comparison across call layouts; not arithmetic arity/domain validation."
+    },
+    {
+      "repo": "calcium",
+      "path": "fexpr/is_neg_integer.c",
+      "ranges": [
+        [
+          1,
+          26
+        ]
+      ],
+      "note": "Checkpoint48: Tag/sign structural recognition for small and multiword integer atoms."
+    },
+    {
+      "repo": "calcium",
+      "path": "fexpr/num_leaves.c",
+      "ranges": [
+        [
+          1,
+          40
+        ]
+      ],
+      "note": "Checkpoint48: Recursive atom count including function heads, independent of semantic arithmetic complexity."
+    },
+    {
+      "repo": "calcium",
+      "path": "fexpr/numerical_enclosure.c",
+      "ranges": [
+        [
+          1,
+          533
+        ]
+      ],
+      "note": "Checkpoint48: Entire fixed-precision Acb interpreter and finite capped decimal retry. Evaluation success and requested accuracy are distinct; output suppresses radius. All special-function dispatch read, not newly numerically qualified."
+    },
+    {
+      "repo": "calcium",
+      "path": "fexpr/print.c",
+      "ranges": [
+        [
+          1,
+          157
+        ]
+      ],
+      "note": "Checkpoint48: Structural plain printing and vector printing, integer/symbol/string/call routes; not general escaped serialization."
+    },
+    {
+      "repo": "calcium",
+      "path": "fexpr/replace.c",
+      "ranges": [
+        [
+          1,
+          214
+        ]
+      ],
+      "note": "Checkpoint48: Simultaneous structural replacement, first-rule priority, function-head recursion, borrowed unchanged branches and temporary changed owners; documented whole-expression alias route."
+    },
+    {
+      "repo": "calcium",
+      "path": "fexpr/set_arf.c",
+      "ranges": [
+        [
+          1,
+          87
+        ]
+      ],
+      "note": "Checkpoint48: Exact mantissa/exponent constructor, compact integer/rational exponent ranges and general power-of-two structure; symbolic nonfinite atoms."
+    },
+    {
+      "repo": "calcium",
+      "path": "fexpr/set_d.c",
+      "ranges": [
+        [
+          1,
+          70
+        ]
+      ],
+      "note": "Checkpoint48: Exact binary64-to-ARF construction and explicit complex imaginary-unit syntax; no decimal-intent inference."
+    },
+    {
+      "repo": "calcium",
+      "path": "fexpr/set_fmpq.c",
+      "ranges": [
+        [
+          1,
+          53
+        ]
+      ],
+      "note": "Checkpoint48: Canonical rational constructor: unit denominator integer route, small direct Div encoding or owned numerator/denominator construction."
+    },
+    {
+      "repo": "calcium",
+      "path": "fexpr/set_fmpz.c",
+      "ranges": [
+        [
+          1,
+          32
+        ]
+      ],
+      "note": "Checkpoint48: Exact immediate/multiword integer encoding, fitting storage then copying magnitude limbs."
+    },
+    {
+      "repo": "calcium",
+      "path": "fexpr/set_fmpz_mpoly.c",
+      "ranges": [
+        [
+          1,
+          131
+        ]
+      ],
+      "note": "Checkpoint48: Archived expanded polynomial-to-expression conversion, term factor lists and exact constants; current counterpart already47."
+    },
+    {
+      "repo": "calcium",
+      "path": "fexpr/set_si.c",
+      "ranges": [
+        [
+          1,
+          27
+        ]
+      ],
+      "note": "Checkpoint48: Compact signed integer construction and multiword fallback; source generation differences only, no old signed-boundary reproduction."
+    },
+    {
+      "repo": "calcium",
+      "path": "fexpr/set_string.c",
+      "ranges": [
+        [
+          1,
+          44
+        ]
+      ],
+      "note": "Checkpoint48: Compact or padded multiword string atom construction."
+    },
+    {
+      "repo": "calcium",
+      "path": "fexpr/set_symbol_str.c",
+      "ranges": [
+        [
+          1,
+          53
+        ]
+      ],
+      "note": "Checkpoint48: Builtin lookup and compact/long symbol storage for documented valid names; no new malformed-name tests."
+    },
+    {
+      "repo": "calcium",
+      "path": "fexpr/set_ui.c",
+      "ranges": [
+        [
+          1,
+          27
+        ]
+      ],
+      "note": "Checkpoint48: Compact unsigned integer construction and multiword fallback."
+    },
+    {
+      "repo": "calcium",
+      "path": "fexpr/test/t-builtins.c",
+      "ranges": [
+        [
+          1,
+          68
+        ]
+      ],
+      "note": "Checkpoint48: All builtin index/order/lookup consistency tests and named absence controls; source-read only."
+    },
+    {
+      "repo": "calcium",
+      "path": "fexpr/test/t-call_vec.c",
+      "ranges": [
+        [
+          1,
+          86
+        ]
+      ],
+      "note": "Checkpoint48: Generated0..19-argument calls, exact integer children and owned/borrowed function/argument comparisons; shared constructors, source-read only."
+    },
+    {
+      "repo": "calcium",
+      "path": "fexpr/test/t-replace.c",
+      "ranges": [
+        [
+          1,
+          229
+        ]
+      ],
+      "note": "Checkpoint48: Entire generated expression/rule test and naive recursive reference, contains and documented in-place replacement checks. Shared structural backend, source-read only."
+    },
+    {
+      "repo": "calcium",
+      "path": "fexpr/test/t-set_fmpz.c",
+      "ranges": [
+        [
+          1,
+          60
+        ]
+      ],
+      "note": "Checkpoint48: Repeated bounded generated integer roundtrips through set/get, sharing integer backend; source-read only."
+    },
+    {
+      "repo": "calcium",
+      "path": "fexpr/test/t-write_latex.c",
+      "ranges": [
+        [
+          1,
+          128
+        ]
+      ],
+      "note": "Checkpoint48: Arbitrary-syntax generator and string-return smoke test, not mathematical/display correctness; source-read only, not run."
+    },
+    {
+      "repo": "flint",
+      "path": "doc/source/fexpr.rst",
+      "ranges": [
+        [
+          1,
+          489
+        ],
+        [
+          586,
+          620
+        ]
+      ],
+      "note": "Checkpoint48: Entire manual: formal syntax and structural equality, ownership/views/alias restrictions, compact representations, numeric conversion, printing, formal normalization and vector contracts. Source/documentation distinctions are in findings; existing current490..585 credit excluded."
+    },
+    {
+      "repo": "flint",
+      "path": "src/fexpr.h",
+      "ranges": [
+        [
+          1,
+          585
+        ]
+      ],
+      "note": "Checkpoint48: Entire public representation and inline operations: flat tagged words, owned capacity, borrowed views, indexed general calls, builtin alias wrappers, vector lifecycle and API declarations. No DAG sharing or numerical approximation cache."
+    },
+    {
+      "repo": "flint",
+      "path": "src/fexpr/arg.c",
+      "ranges": [
+        [
+          1,
+          84
+        ]
+      ],
+      "note": "Checkpoint48: Owned argument copy and in-bounds view lookup using small-call skips or every-four-argument index; no newly exercised invalid indexes or overlap."
+    },
+    {
+      "repo": "flint",
+      "path": "src/fexpr/arithmetic.c",
+      "ranges": [
+        [
+          1,
+          49
+        ]
+      ],
+      "note": "Checkpoint48: Pos/Neg/Add/Sub/Mul/Div/Pow convenience constructors use builtin alias-supporting wrappers, without semantic normalization."
+    },
+    {
+      "repo": "flint",
+      "path": "src/fexpr/call0.c",
+      "ranges": [
+        [
+          1,
+          30
+        ]
+      ],
+      "note": "Checkpoint48: Zero-argument generic call concatenates header and copied function with output distinct from inputs."
+    },
+    {
+      "repo": "flint",
+      "path": "src/fexpr/call1.c",
+      "ranges": [
+        [
+          1,
+          55
+        ]
+      ],
+      "note": "Checkpoint48: One-argument call layout and builtin unary wrapper with temporary/swap for whole-output alias."
+    },
+    {
+      "repo": "flint",
+      "path": "src/fexpr/call2.c",
+      "ranges": [
+        [
+          1,
+          57
+        ]
+      ],
+      "note": "Checkpoint48: Two-argument call layout and builtin binary wrapper with temporary/swap for whole-output alias."
+    },
+    {
+      "repo": "flint",
+      "path": "src/fexpr/call3.c",
+      "ranges": [
+        [
+          1,
+          36
+        ]
+      ],
+      "note": "Checkpoint48: Three-argument flat constructor copies all children; generic nonoverlap precondition."
+    },
+    {
+      "repo": "flint",
+      "path": "src/fexpr/call4.c",
+      "ranges": [
+        [
+          1,
+          38
+        ]
+      ],
+      "note": "Checkpoint48: Four-argument flat constructor copies all children; generic nonoverlap precondition."
+    },
+    {
+      "repo": "flint",
+      "path": "src/fexpr/call_vec.c",
+      "ranges": [
+        [
+          1,
+          78
+        ]
+      ],
+      "note": "Checkpoint48: Dispatch to small constructors or generic argument-count/function-offset/every-four-argument index layout; all subexpressions copied."
+    },
+    {
+      "repo": "flint",
+      "path": "src/fexpr/cmp_fast.c",
+      "ranges": [
+        [
+          1,
+          43
+        ]
+      ],
+      "note": "Checkpoint48: Representation-first total ordering over encoded expressions, not mathematical real comparison."
+    },
+    {
+      "repo": "flint",
+      "path": "src/fexpr/contains.c",
+      "ranges": [
+        [
+          1,
+          58
+        ]
+      ],
+      "note": "Checkpoint48: Structural whole/subexpression search, including function heads and equality/size shortcuts."
+    },
+    {
+      "repo": "flint",
+      "path": "src/fexpr/depth.c",
+      "ranges": [
+        [
+          1,
+          41
+        ]
+      ],
+      "note": "Checkpoint48: Recursive maximum expression depth including function head and arguments; atoms terminate."
+    },
+    {
+      "repo": "flint",
+      "path": "src/fexpr/equal_si.c",
+      "ranges": [
+        [
+          1,
+          23
+        ]
+      ],
+      "note": "Checkpoint48: Compact signed-integer representation comparison, not approximate numerical equality."
+    },
+    {
+      "repo": "flint",
+      "path": "src/fexpr/equal_ui.c",
+      "ranges": [
+        [
+          1,
+          22
+        ]
+      ],
+      "note": "Checkpoint48: Compact unsigned-integer representation comparison, not approximate numerical equality."
+    },
+    {
+      "repo": "flint",
+      "path": "src/fexpr/func.c",
+      "ranges": [
+        [
+          1,
+          61
+        ]
+      ],
+      "note": "Checkpoint48: Owned function extraction and borrowed function view for small/general call layouts; fast builtin recognition."
+    },
+    {
+      "repo": "flint",
+      "path": "src/fexpr/get_fmpz.c",
+      "ranges": [
+        [
+          1,
+          57
+        ]
+      ],
+      "note": "Checkpoint48: Exact structural integer decoding and failure status for nonintegers; manual failure wording differs. No invalid-input probe."
+    },
+    {
+      "repo": "flint",
+      "path": "src/fexpr/get_string.c",
+      "ranges": [
+        [
+          1,
+          46
+        ]
+      ],
+      "note": "Checkpoint48: String atom extraction into owned text."
+    },
+    {
+      "repo": "flint",
+      "path": "src/fexpr/get_symbol_str.c",
+      "ranges": [
+        [
+          1,
+          55
+        ]
+      ],
+      "note": "Checkpoint48: Builtin/small/long symbol extraction into caller-freed text, distinct from semantic evaluation."
+    },
+    {
+      "repo": "flint",
+      "path": "src/fexpr/hash.c",
+      "ranges": [
+        [
+          1,
+          27
+        ]
+      ],
+      "note": "Checkpoint48: Complete structural word-array hash; not semantic equality or a studied adversarial/hash-performance claim."
+    },
+    {
+      "repo": "flint",
+      "path": "src/fexpr/inlines.c",
+      "ranges": [
+        [
+          1,
+          13
+        ]
+      ],
+      "note": "Checkpoint48: Translation-unit emission of inline definitions."
+    },
+    {
+      "repo": "flint",
+      "path": "src/fexpr/is_any_builtin_call.c",
+      "ranges": [
+        [
+          1,
+          25
+        ]
+      ],
+      "note": "Checkpoint48: Recognizes any builtin head in call layouts, distinct from evaluation support."
+    },
+    {
+      "repo": "flint",
+      "path": "src/fexpr/is_builtin_call.c",
+      "ranges": [
+        [
+          1,
+          25
+        ]
+      ],
+      "note": "Checkpoint48: Fast structural builtin-head comparison across call layouts; not arithmetic arity/domain validation."
+    },
+    {
+      "repo": "flint",
+      "path": "src/fexpr/is_neg_integer.c",
+      "ranges": [
+        [
+          1,
+          26
+        ]
+      ],
+      "note": "Checkpoint48: Tag/sign structural recognition for small and multiword integer atoms."
+    },
+    {
+      "repo": "flint",
+      "path": "src/fexpr/num_leaves.c",
+      "ranges": [
+        [
+          1,
+          40
+        ]
+      ],
+      "note": "Checkpoint48: Recursive atom count including function heads, independent of semantic arithmetic complexity."
+    },
+    {
+      "repo": "flint",
+      "path": "src/fexpr/numerical_enclosure.c",
+      "ranges": [
+        [
+          1,
+          535
+        ]
+      ],
+      "note": "Checkpoint48: Entire fixed-precision Acb interpreter and finite capped decimal retry. Evaluation success and requested accuracy are distinct; output suppresses radius. All special-function dispatch read, not newly numerically qualified."
+    },
+    {
+      "repo": "flint",
+      "path": "src/fexpr/print.c",
+      "ranges": [
+        [
+          1,
+          159
+        ]
+      ],
+      "note": "Checkpoint48: Structural plain printing and vector printing, integer/symbol/string/call routes; not general escaped serialization."
+    },
+    {
+      "repo": "flint",
+      "path": "src/fexpr/replace.c",
+      "ranges": [
+        [
+          1,
+          213
+        ]
+      ],
+      "note": "Checkpoint48: Simultaneous structural replacement, first-rule priority, function-head recursion, borrowed unchanged branches and temporary changed owners; documented whole-expression alias route."
+    },
+    {
+      "repo": "flint",
+      "path": "src/fexpr/set_arf.c",
+      "ranges": [
+        [
+          1,
+          88
+        ]
+      ],
+      "note": "Checkpoint48: Exact mantissa/exponent constructor, compact integer/rational exponent ranges and general power-of-two structure; symbolic nonfinite atoms."
+    },
+    {
+      "repo": "flint",
+      "path": "src/fexpr/set_d.c",
+      "ranges": [
+        [
+          1,
+          71
+        ]
+      ],
+      "note": "Checkpoint48: Exact binary64-to-ARF construction and explicit complex imaginary-unit syntax; no decimal-intent inference."
+    },
+    {
+      "repo": "flint",
+      "path": "src/fexpr/set_fmpq.c",
+      "ranges": [
+        [
+          1,
+          54
+        ]
+      ],
+      "note": "Checkpoint48: Canonical rational constructor: unit denominator integer route, small direct Div encoding or owned numerator/denominator construction."
+    },
+    {
+      "repo": "flint",
+      "path": "src/fexpr/set_fmpz.c",
+      "ranges": [
+        [
+          1,
+          33
+        ]
+      ],
+      "note": "Checkpoint48: Exact immediate/multiword integer encoding, fitting storage then copying magnitude limbs."
+    },
+    {
+      "repo": "flint",
+      "path": "src/fexpr/set_si.c",
+      "ranges": [
+        [
+          1,
+          27
+        ]
+      ],
+      "note": "Checkpoint48: Compact signed integer construction and multiword fallback; source generation differences only, no old signed-boundary reproduction."
+    },
+    {
+      "repo": "flint",
+      "path": "src/fexpr/set_string.c",
+      "ranges": [
+        [
+          1,
+          45
+        ]
+      ],
+      "note": "Checkpoint48: Compact or padded multiword string atom construction."
+    },
+    {
+      "repo": "flint",
+      "path": "src/fexpr/set_symbol_str.c",
+      "ranges": [
+        [
+          1,
+          54
+        ]
+      ],
+      "note": "Checkpoint48: Builtin lookup and compact/long symbol storage for documented valid names; no new malformed-name tests."
+    },
+    {
+      "repo": "flint",
+      "path": "src/fexpr/set_ui.c",
+      "ranges": [
+        [
+          1,
+          27
+        ]
+      ],
+      "note": "Checkpoint48: Compact unsigned integer construction and multiword fallback."
+    },
+    {
+      "repo": "flint",
+      "path": "src/fexpr/test/main.c",
+      "ranges": [
+        [
+          1,
+          33
+        ]
+      ],
+      "note": "Checkpoint48: Current fexpr test registration: five included tests and common driver. Read only; no suite execution this checkpoint."
+    },
+    {
+      "repo": "flint",
+      "path": "src/fexpr/test/t-builtins.c",
+      "ranges": [
+        [
+          1,
+          60
+        ]
+      ],
+      "note": "Checkpoint48: All builtin index/order/lookup consistency tests and named absence controls; source-read only."
+    },
+    {
+      "repo": "flint",
+      "path": "src/fexpr/test/t-call_vec.c",
+      "ranges": [
+        [
+          1,
+          78
+        ]
+      ],
+      "note": "Checkpoint48: Generated0..19-argument calls, exact integer children and owned/borrowed function/argument comparisons; shared constructors, source-read only."
+    },
+    {
+      "repo": "flint",
+      "path": "src/fexpr/test/t-replace.c",
+      "ranges": [
+        [
+          1,
+          220
+        ]
+      ],
+      "note": "Checkpoint48: Entire generated expression/rule test and naive recursive reference, contains and documented in-place replacement checks. Shared structural backend, source-read only."
+    },
+    {
+      "repo": "flint",
+      "path": "src/fexpr/test/t-set_fmpz.c",
+      "ranges": [
+        [
+          1,
+          52
+        ]
+      ],
+      "note": "Checkpoint48: Repeated bounded generated integer roundtrips through set/get, sharing integer backend; source-read only."
+    },
+    {
+      "repo": "flint",
+      "path": "src/fexpr/test/t-write_latex.c",
+      "ranges": [
+        [
+          1,
+          121
+        ]
+      ],
+      "note": "Checkpoint48: Arbitrary-syntax generator and string-return smoke test, not mathematical/display correctness; source-read only, not run."
+    },
+    {
+      "repo": "flint",
+      "path": "src/fexpr/vec_sort_fast.c",
+      "ranges": [
+        [
+          1,
+          20
+        ]
+      ],
+      "note": "Checkpoint48: qsort wrapper over vector entries using structural fast ordering."
+    }
+  ],
+  "newDonorLines": 8321,
+  "newFiles": 87,
+  "completedPartialFiles": 1,
+  "coverageBefore": [
+    {
+      "repo": "calcium",
+      "reviewed": 422,
+      "complete": 421,
+      "partial": 1,
+      "readLines": 41035
+    },
+    {
+      "repo": "flint",
+      "reviewed": 756,
+      "complete": 735,
+      "partial": 21,
+      "readLines": 104761
+    }
+  ],
+  "coverageAtBinding": [
+    {
+      "repo": "calcium",
+      "reviewed": 467,
+      "complete": 466,
+      "partial": 1,
+      "readLines": 45368
+    },
+    {
+      "repo": "flint",
+      "reviewed": 798,
+      "complete": 778,
+      "partial": 20,
+      "readLines": 108749
+    }
+  ],
+  "hyperReadRanges": {
+    "hyperreal/src/computable/node/representation.rs": [
+      [
+        1,
+        330
+      ]
+    ],
+    "hyperreal/src/computable/README.md": [
+      [
+        1,
+        170
+      ]
+    ]
+  },
+  "previousManifest": "mpoly-bridge-experiment.json",
+  "previousLiveFiles": 956,
+  "qualification": "Source and recorded-evidence integrity only. No new numerical tests, Memcheck, benchmark or complete historical chain rerun.",
+  "production": "No production/donor edit, new retained transfer, /tmp allocation, build, cleanup/deletion, commit, push or external report.",
+  "scope": "Both fexpr headers/manuals and both directories except write_latex.c are source-read. Builtin headers/tables, LaTeX implementations, recursive support and full original ecosystem remain incomplete."
+}

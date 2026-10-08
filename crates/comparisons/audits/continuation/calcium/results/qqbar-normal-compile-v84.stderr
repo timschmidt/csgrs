@@ -1,0 +1,17 @@
+flint-qqbar-normal-v84.c: In function ‘main’:
+flint-qqbar-normal-v84.c:44:19: error: implicit declaration of function ‘fmpq_poly_init’; did you mean ‘fmpz_mpoly_init’? [-Wimplicit-function-declaration]
+   44 |     fmpq_init(q); fmpq_poly_init(qp);
+      |                   ^~~~~~~~~~~~~~
+      |                   fmpz_mpoly_init
+flint-qqbar-normal-v84.c:49:9: error: implicit declaration of function ‘fmpq_poly_zero’; did you mean ‘fmpz_mpoly_zero’? [-Wimplicit-function-declaration]
+   49 |         fmpq_poly_zero(qp); fmpq_set_si(q, -n, 7); fmpq_poly_set_coeff_fmpq(qp, 0, q);
+      |         ^~~~~~~~~~~~~~
+      |         fmpz_mpoly_zero
+flint-qqbar-normal-v84.c:49:52: error: implicit declaration of function ‘fmpq_poly_set_coeff_fmpq’; did you mean ‘fmpz_mpoly_set_coeff_ui_fmpz’? [-Wimplicit-function-declaration]
+   49 |         fmpq_poly_zero(qp); fmpq_set_si(q, -n, 7); fmpq_poly_set_coeff_fmpq(qp, 0, q);
+      |                                                    ^~~~~~~~~~~~~~~~~~~~~~~~
+      |                                                    fmpz_mpoly_set_coeff_ui_fmpz
+flint-qqbar-normal-v84.c:73:20: error: implicit declaration of function ‘fmpq_poly_clear’; did you mean ‘fmpz_mpoly_clear’? [-Wimplicit-function-declaration]
+   73 |     fmpq_clear(q); fmpq_poly_clear(qp); qqbar_clear(out); qqbar_clear(s2); qqbar_clear(s3);
+      |                    ^~~~~~~~~~~~~~~
+      |                    fmpz_mpoly_clear

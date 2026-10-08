@@ -1,0 +1,9 @@
+{
+  "parent": "11c5e0faaf13846869bc8d447aaadfea539b86e7",
+  "qualified": "fillet-normal-components-full-20260926-v214-qualified.json",
+  "files": {
+    "src/bezier_offset.rs": "20dec5c6012b39074f34f1e91ea8101e597cdc2fd907abdbdcce025805fb4e16",
+    "src/curve.rs": "29ec33adf4a615eef9a4929722e031022637e1c205e1aa115c9c8fa85156f65a"
+  },
+  "index_matches_qualified_sources": true
+}

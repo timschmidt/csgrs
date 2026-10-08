@@ -1,0 +1,30 @@
+{
+  "target": "hypercurve_curve_region_boolean_fuzz",
+  "command": [
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve_curve_region_boolean_fuzz-29fd9499b42edab1",
+    "--test-threads=4",
+    "--color",
+    "never"
+  ],
+  "returncode": 0,
+  "elapsed_seconds": 3.9900427229877096,
+  "binary_sha256": "046b440793edfeeb930ed0c2742d3d208efdbb79e8a1a07ecb055af47cc912aa",
+  "passed": [
+    "deterministic_coincident_curve_family_images_complete",
+    "conic_endpoint_root_isolation_completes",
+    "deterministic_tangent_curve_family_pair_matrix_completes",
+    "explicit_loop_topology_supports_reversed_nonuniform_rational_regions",
+    "deterministic_endpoint_curve_family_pair_matrix_completes",
+    "generated_exact_curve_region_booleans_complete_and_match_immediate_results",
+    "retired_candidate_interval_pruning_completes",
+    "shared_endpoint_xor_completes",
+    "algebraic_polyline_contacts_preserve_exact_contact_distinction",
+    "deterministic_transverse_curve_family_pair_matrix_completes",
+    "retired_exact_curve_region_boolean_failures_remain_in_the_corpus"
+  ],
+  "failed": [],
+  "ignored": [],
+  "summaries": [
+    "test result: ok. 11 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 3.95s"
+  ]
+}

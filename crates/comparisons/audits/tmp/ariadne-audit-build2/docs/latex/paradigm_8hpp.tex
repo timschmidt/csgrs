@@ -1,0 +1,42 @@
+\doxysubsection{source/foundations/paradigm.hpp File Reference}
+\hypertarget{paradigm_8hpp}{}\label{paradigm_8hpp}\index{source/foundations/paradigm.hpp@{source/foundations/paradigm.hpp}}
+{\ttfamily \#include $<$cstdint$>$}\newline
+{\ttfamily \#include "{}utility/metaprogramming.\+hpp"{}}\newline
+\doxysubsubsubsection*{Classes}
+\begin{DoxyCompactItemize}
+\item 
+struct \mbox{\hyperlink{structAriadne_1_1BuiltinTag}{Builtin\+Tag}}
+\begin{DoxyCompactList}\small\item\em A tag meaning that the object is of a builtin type. Such objects should be converted to Ariadne internal types before use. \end{DoxyCompactList}\item 
+struct \mbox{\hyperlink{structAriadne_1_1RawTag}{Raw\+Tag}}
+\begin{DoxyCompactList}\small\item\em A tag meaning that the object decribes raw data. Such objects should not be used in high-\/level code, as they probably do not provide safe guarantees on their values. \end{DoxyCompactList}\item 
+struct \mbox{\hyperlink{structAriadne_1_1ApproximateTag}{Approximate\+Tag}}
+\begin{DoxyCompactList}\small\item\em A tag meaning that the object provides an approximation to a quantity with no guarantees on the error. \end{DoxyCompactList}\item 
+struct \mbox{\hyperlink{structAriadne_1_1ValidatedTag}{Validated\+Tag}}
+\begin{DoxyCompactList}\small\item\em A tag meaning that the object represents an approximation to a quantity with a bound on the error in some metric, or lower and upper bounds on a quantity. \end{DoxyCompactList}\item 
+struct \mbox{\hyperlink{structAriadne_1_1EffectiveTag}{Effective\+Tag}}
+\begin{DoxyCompactList}\small\item\em A tag meaning that the object represents a quantity exactly, but equality is undecidable. \end{DoxyCompactList}\item 
+struct \mbox{\hyperlink{structAriadne_1_1ExactTag}{Exact\+Tag}}
+\begin{DoxyCompactList}\small\item\em A tag meaning that the object represents a quantity exactly, and equality is decidable. Only available for discrete types i.\+e. elements of countable spaces, or for computational types such as floating-\/point numbers. \end{DoxyCompactList}\item 
+struct \mbox{\hyperlink{structAriadne_1_1ErrorTag}{Error\+Tag}}
+\begin{DoxyCompactList}\small\item\em A tag meaning that the object provides a positive upper bound for a quantity. \end{DoxyCompactList}\item 
+struct \mbox{\hyperlink{structAriadne_1_1IsWeaker}{Is\+Weaker$<$ P1, P2 $>$}}
+\begin{DoxyCompactList}\small\item\em Inherits from {\ttfamily True\+Type} if paradigm {\itshape P1} is weaker than {\itshape P2}. \end{DoxyCompactList}\item 
+struct \mbox{\hyperlink{structAriadne_1_1IsStronger}{Is\+Stronger$<$ P1, P2 $>$}}
+\begin{DoxyCompactList}\small\item\em Inherits from {\ttfamily True\+Type} if paradigm {\itshape P1} is stronger than {\itshape P2}. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsubsection*{Namespaces}
+\begin{DoxyCompactItemize}
+\item 
+namespace \mbox{\hyperlink{namespaceAriadne}{Ariadne}}
+\begin{DoxyCompactList}\small\item\em Top-\/level Ariadne namespace. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsubsection*{Typedefs}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{namespaceAriadne_a8db63fe3c811b0cb1e1ee876b1b0e340}\label{namespaceAriadne_a8db63fe3c811b0cb1e1ee876b1b0e340} 
+{\footnotesize template$<$class T$>$ }\\using {\bfseries Paradigm} = typename T\+::\+Paradigm
+\begin{DoxyCompactList}\small\item\em The {\itshape computational paradigm} supported by the object. User paradigms are \doxylink{structAriadne_1_1ExactTag}{Exact\+Tag}, \doxylink{structAriadne_1_1EffectiveTag}{Effective\+Tag}, \doxylink{structAriadne_1_1ValidatedTag}{Validated\+Tag},Validated\+Bounded\+Tag, Validated\+Upper\+Tag, Validated\+Lower\+Tag or \doxylink{structAriadne_1_1ApproximateTag}{Approximate\+Tag}. Internal paradigms are \doxylink{structAriadne_1_1BuiltinTag}{Builtin\+Tag} and \doxylink{structAriadne_1_1RawTag}{Raw\+Tag}. \end{DoxyCompactList}\item 
+\Hypertarget{namespaceAriadne_a316aacd8f2a36e1abbe651e4a6d61890}\label{namespaceAriadne_a316aacd8f2a36e1abbe651e4a6d61890} 
+{\footnotesize template$<$class T$>$ }\\using {\bfseries Paradigm\+Tag} = typename T\+::\+Paradigm
+\begin{DoxyCompactList}\small\item\em The {\itshape computational paradigm} supported by the object. Equivalent to \doxylink{namespaceAriadne_a8db63fe3c811b0cb1e1ee876b1b0e340}{Paradigm$<$\+T$>$}. \end{DoxyCompactList}\item 
+\Hypertarget{namespaceAriadne_adeaa7a0ec0b9b19cd7a7d32ac6aa4111}\label{namespaceAriadne_adeaa7a0ec0b9b19cd7a7d32ac6aa4111} 
+{\footnotesize template$<$class P1, class P2$>$ }\\using {\bfseries Weaker} = typename Paradigm\+Traits$<$P1,P2$>$\+::\+Weaker
+\begin{DoxyCompactList}\small\item\em The weaker of {\itshape P1} and {\itshape P2}. \end{DoxyCompactList}\end{DoxyCompactItemize}

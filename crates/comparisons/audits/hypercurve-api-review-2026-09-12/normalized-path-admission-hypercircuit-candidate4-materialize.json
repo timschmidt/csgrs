@@ -1,0 +1,20 @@
+{
+  "target": "materialize",
+  "command": [
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/normalized-path-admission-hypercircuit-candidate4-binaries/materialize-cebb64ca09be4f16",
+    "--test-threads=2",
+    "--color",
+    "never"
+  ],
+  "binary_sha256": "a295133649fed91fb7b255cb2f0f08d61b5494b6ec5e67131e706f29228ebda1",
+  "returncode": 0,
+  "elapsed_seconds": 0.34474322202731855,
+  "log": "normalized-path-admission-hypercircuit-candidate4-materialize.log",
+  "passed": [
+    "multi_segment_orthogonal_route_materializes_as_one_source_feature",
+    "zone_island_policy_prunes_unconnected_and_exact_undersized_components",
+    "declarative_board_materializes_source_addressable_copper_and_drills"
+  ],
+  "failed": [],
+  "ignored": []
+}

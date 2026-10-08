@@ -1,0 +1,115 @@
+{
+  "checks": [
+    {
+      "label": "fmt",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustfmt",
+        "--edition",
+        "2024",
+        "--check",
+        "src/algebraic.rs"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.3272106220247224,
+      "log": "root-identity-20260925-v51-fmt.log"
+    },
+    {
+      "label": "clippy-1",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "clippy",
+        "--all-targets",
+        "--all-features",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 9.69931756798178,
+      "log": "root-identity-20260925-v51-clippy-1.log"
+    },
+    {
+      "label": "clippy-2",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "clippy",
+        "--all-targets",
+        "--no-default-features",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 9.29993537592236,
+      "log": "root-identity-20260925-v51-clippy-2.log"
+    }
+  ],
+  "cases": [
+    {
+      "label": "algebraic_root_comparison_reuses_nested_singleton_evidence",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/root-identity-20260925-v51-libtest",
+        "--exact",
+        "algebraic::tests::algebraic_root_comparison_reuses_nested_singleton_evidence",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.27633676305413246,
+      "log": "root-identity-20260925-v51-algebraic_root_comparison_reuses_nested_singleton_evidence.log"
+    },
+    {
+      "label": "algebraic_root_comparison_keeps_overlapping_conjugates_distinct",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/root-identity-20260925-v51-libtest",
+        "--exact",
+        "algebraic::tests::algebraic_root_comparison_keeps_overlapping_conjugates_distinct",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.2668876410461962,
+      "log": "root-identity-20260925-v51-algebraic_root_comparison_keeps_overlapping_conjugates_distinct.log"
+    },
+    {
+      "label": "algebraic_root_comparison_respects_owned_interval_endpoints",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/root-identity-20260925-v51-libtest",
+        "--exact",
+        "algebraic::tests::algebraic_root_comparison_respects_owned_interval_endpoints",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.2738641418982297,
+      "log": "root-identity-20260925-v51-algebraic_root_comparison_respects_owned_interval_endpoints.log"
+    },
+    {
+      "label": "full-library",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/root-identity-20260925-v51-libtest",
+        "--test-threads=2",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 2.6434351220959798,
+      "log": "root-identity-20260925-v51-full-library.log"
+    }
+  ],
+  "all_processes_reaped": true,
+  "plan": "root-identity-20260925-v51-plan.json",
+  "binary": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/root-identity-20260925-v51-libtest",
+  "binary_sha256": "94e184110894883f29a448a1a5724b4c126a6b00c8e106892c99e7672a6ff986",
+  "library_case_count": 513,
+  "passed": 513,
+  "ignored": 0,
+  "all_sources_unchanged": true
+}

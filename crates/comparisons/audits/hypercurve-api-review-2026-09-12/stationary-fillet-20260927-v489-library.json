@@ -1,0 +1,6 @@
+{
+  "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypercurve-85a9105cd1c82df7.rlib",
+  "sha256": "926508994a59604385a3daa83750d917c0a99108504d84a82d8c5c50262b0025",
+  "source_manifest": "stationary-fillet-20260927-v489-sources.json",
+  "build_log": "stationary-fillet-20260927-v489-hypercurve_curve_region_boolean-build.log"
+}

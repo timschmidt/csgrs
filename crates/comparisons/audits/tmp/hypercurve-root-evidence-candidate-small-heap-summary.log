@@ -1,0 +1,10 @@
+reading file "/tmp/hypercurve-root-evidence-candidate-small.heap.zst" - please wait, this might take some time...
+Debuggee command was: /tmp/hypercurve-root-evidence-frozen-candidate-test bezier_offset::conversion_tests::specialized_common_fiber_counts_even_multiplicity_in_a_coupled_system --exact --nocapture --test-threads=1
+finished reading file, now analyzing data:
+
+total runtime: 0.054000s.
+calls to allocation functions: 11668 (216074/s)
+temporary memory allocations: 471 (8722/s)
+peak heap memory consumption: 243.57K
+peak RSS (including heaptrack overhead): 14.26M
+total memory leaked: 89.98K

@@ -1,0 +1,11 @@
+tangent degree 4 Union; five analytic membership checks passed: Ok((Certified, 2))
+tangent degree 4 Intersection; five analytic membership checks passed: Ok((Certified, 0))
+tangent degree 4 Difference; five analytic membership checks passed: Ok((Certified, 1))
+tangent degree 4 Xor; five analytic membership checks passed: Ok((Certified, 2))
+dispatch/hypercurve/algebraic-chord-pair/general-rational=8
+dispatch/hypercurve/algebraic-chord-pair/source-complete=8
+dispatch/hypercurve/algebraic-chord-side-kernel/cardinal-coordinate-precedence=24
+dispatch/hypercurve/boolean-successor/nontransverse-authored-continuity=4
+dispatch/hypercurve/curve-region-disjoint-loop-roles-blocker/overlapping-bounds=2
+dispatch/hypercurve/retained-endpoint-scope/tangent-order-immediate=1
+dispatch/hypercurve/retained-endpoint-scope/topology-connectivity-first=3

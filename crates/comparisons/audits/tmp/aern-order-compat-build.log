@@ -1,0 +1,189 @@
+aern-order> build (lib) with ghc-9.6.7
+Preprocessing library for aern-order-0.5.0..
+Building library for aern-order-0.5.0..
+[19 of 35] Compiling Numeric.AERN.NumericOrder.Arbitrary
+
+/tmp/aern-audit.zp9Mzz/source/aern-order/src/Numeric/AERN/NumericOrder/Arbitrary.hs:168:33: warning: [GHC-58520] [-Wtype-equality-requires-operators]
+    The use of ‘~’ without TypeOperators
+    will become an error in a future GHC release.
+    Suggested fix: Perhaps you intended to use TypeOperators
+    |
+168 |     (ArbitraryOrderedTuple t, a ~ Area t) 
+    |                                 ^
+
+/tmp/aern-audit.zp9Mzz/source/aern-order/src/Numeric/AERN/NumericOrder/Arbitrary.hs:179:33: warning: [GHC-58520] [-Wtype-equality-requires-operators]
+    The use of ‘~’ without TypeOperators
+    will become an error in a future GHC release.
+    Suggested fix: Perhaps you intended to use TypeOperators
+    |
+179 |     (ArbitraryOrderedTuple t, a ~ Area t)
+    |                                 ^
+
+/tmp/aern-audit.zp9Mzz/source/aern-order/src/Numeric/AERN/NumericOrder/Arbitrary.hs:191:33: warning: [GHC-58520] [-Wtype-equality-requires-operators]
+    The use of ‘~’ without TypeOperators
+    will become an error in a future GHC release.
+    Suggested fix: Perhaps you intended to use TypeOperators
+    |
+191 |     (ArbitraryOrderedTuple t, a ~ Area t) 
+    |                                 ^
+
+/tmp/aern-audit.zp9Mzz/source/aern-order/src/Numeric/AERN/NumericOrder/Arbitrary.hs:216:33: warning: [GHC-58520] [-Wtype-equality-requires-operators]
+    The use of ‘~’ without TypeOperators
+    will become an error in a future GHC release.
+    Suggested fix: Perhaps you intended to use TypeOperators
+    |
+216 |     (ArbitraryOrderedTuple t, a ~ Area t) 
+    |                                 ^
+
+/tmp/aern-audit.zp9Mzz/source/aern-order/src/Numeric/AERN/NumericOrder/Arbitrary.hs:229:33: warning: [GHC-58520] [-Wtype-equality-requires-operators]
+    The use of ‘~’ without TypeOperators
+    will become an error in a future GHC release.
+    Suggested fix: Perhaps you intended to use TypeOperators
+    |
+229 |     (ArbitraryOrderedTuple t, a ~ Area t) 
+    |                                 ^
+
+/tmp/aern-audit.zp9Mzz/source/aern-order/src/Numeric/AERN/NumericOrder/Arbitrary.hs:240:33: warning: [GHC-58520] [-Wtype-equality-requires-operators]
+    The use of ‘~’ without TypeOperators
+    will become an error in a future GHC release.
+    Suggested fix: Perhaps you intended to use TypeOperators
+    |
+240 |     (ArbitraryOrderedTuple t, a ~ Area t)
+    |                                 ^
+
+/tmp/aern-audit.zp9Mzz/source/aern-order/src/Numeric/AERN/NumericOrder/Arbitrary.hs:261:33: warning: [GHC-58520] [-Wtype-equality-requires-operators]
+    The use of ‘~’ without TypeOperators
+    will become an error in a future GHC release.
+    Suggested fix: Perhaps you intended to use TypeOperators
+    |
+261 |     (ArbitraryOrderedTuple t, a ~ Area t) 
+    |                                 ^
+
+/tmp/aern-audit.zp9Mzz/source/aern-order/src/Numeric/AERN/NumericOrder/Arbitrary.hs:283:33: warning: [GHC-58520] [-Wtype-equality-requires-operators]
+    The use of ‘~’ without TypeOperators
+    will become an error in a future GHC release.
+    Suggested fix: Perhaps you intended to use TypeOperators
+    |
+283 |     (ArbitraryOrderedTuple t, a ~ Area t) 
+    |                                 ^
+[20 of 35] Compiling Numeric.AERN.NumericOrder.Arbitrary.Linear
+[22 of 35] Compiling Numeric.AERN.NumericOrder.PartialComparison
+[23 of 35] Compiling Numeric.AERN.NumericOrder.RoundedLattice
+[24 of 35] Compiling Numeric.AERN.RefinementOrder.Arbitrary
+
+/tmp/aern-audit.zp9Mzz/source/aern-order/src/Numeric/AERN/RefinementOrder/Arbitrary.hs:159:33: warning: [GHC-58520] [-Wtype-equality-requires-operators]
+    The use of ‘~’ without TypeOperators
+    will become an error in a future GHC release.
+    Suggested fix: Perhaps you intended to use TypeOperators
+    |
+159 |     (ArbitraryOrderedTuple t, a ~ Area t) 
+    |                                 ^
+
+/tmp/aern-audit.zp9Mzz/source/aern-order/src/Numeric/AERN/RefinementOrder/Arbitrary.hs:171:33: warning: [GHC-58520] [-Wtype-equality-requires-operators]
+    The use of ‘~’ without TypeOperators
+    will become an error in a future GHC release.
+    Suggested fix: Perhaps you intended to use TypeOperators
+    |
+171 |     (ArbitraryOrderedTuple t, a ~ Area t)
+    |                                 ^
+
+/tmp/aern-audit.zp9Mzz/source/aern-order/src/Numeric/AERN/RefinementOrder/Arbitrary.hs:182:33: warning: [GHC-58520] [-Wtype-equality-requires-operators]
+    The use of ‘~’ without TypeOperators
+    will become an error in a future GHC release.
+    Suggested fix: Perhaps you intended to use TypeOperators
+    |
+182 |     (ArbitraryOrderedTuple t, a ~ Area t)
+    |                                 ^
+
+/tmp/aern-audit.zp9Mzz/source/aern-order/src/Numeric/AERN/RefinementOrder/Arbitrary.hs:206:33: warning: [GHC-58520] [-Wtype-equality-requires-operators]
+    The use of ‘~’ without TypeOperators
+    will become an error in a future GHC release.
+    Suggested fix: Perhaps you intended to use TypeOperators
+    |
+206 |     (ArbitraryOrderedTuple t, a ~ Area t) 
+    |                                 ^
+
+/tmp/aern-audit.zp9Mzz/source/aern-order/src/Numeric/AERN/RefinementOrder/Arbitrary.hs:233:33: warning: [GHC-58520] [-Wtype-equality-requires-operators]
+    The use of ‘~’ without TypeOperators
+    will become an error in a future GHC release.
+    Suggested fix: Perhaps you intended to use TypeOperators
+    |
+233 |     (ArbitraryOrderedTuple t, a ~ Area t) 
+    |                                 ^
+
+/tmp/aern-audit.zp9Mzz/source/aern-order/src/Numeric/AERN/RefinementOrder/Arbitrary.hs:244:33: warning: [GHC-58520] [-Wtype-equality-requires-operators]
+    The use of ‘~’ without TypeOperators
+    will become an error in a future GHC release.
+    Suggested fix: Perhaps you intended to use TypeOperators
+    |
+244 |     (ArbitraryOrderedTuple t, a ~ Area t)
+    |                                 ^
+
+/tmp/aern-audit.zp9Mzz/source/aern-order/src/Numeric/AERN/RefinementOrder/Arbitrary.hs:257:33: warning: [GHC-58520] [-Wtype-equality-requires-operators]
+    The use of ‘~’ without TypeOperators
+    will become an error in a future GHC release.
+    Suggested fix: Perhaps you intended to use TypeOperators
+    |
+257 |     (ArbitraryOrderedTuple t, a ~ Area t) 
+    |                                 ^
+
+/tmp/aern-audit.zp9Mzz/source/aern-order/src/Numeric/AERN/RefinementOrder/Arbitrary.hs:270:33: warning: [GHC-58520] [-Wtype-equality-requires-operators]
+    The use of ‘~’ without TypeOperators
+    will become an error in a future GHC release.
+    Suggested fix: Perhaps you intended to use TypeOperators
+    |
+270 |     (ArbitraryOrderedTuple t, a ~ Area t) 
+    |                                 ^
+
+/tmp/aern-audit.zp9Mzz/source/aern-order/src/Numeric/AERN/RefinementOrder/Arbitrary.hs:281:33: warning: [GHC-58520] [-Wtype-equality-requires-operators]
+    The use of ‘~’ without TypeOperators
+    will become an error in a future GHC release.
+    Suggested fix: Perhaps you intended to use TypeOperators
+    |
+281 |     (ArbitraryOrderedTuple t, a ~ Area t)
+    |                                 ^
+
+/tmp/aern-audit.zp9Mzz/source/aern-order/src/Numeric/AERN/RefinementOrder/Arbitrary.hs:305:33: warning: [GHC-58520] [-Wtype-equality-requires-operators]
+    The use of ‘~’ without TypeOperators
+    will become an error in a future GHC release.
+    Suggested fix: Perhaps you intended to use TypeOperators
+    |
+305 |     (ArbitraryOrderedTuple t, a ~ Area t) 
+    |                                 ^
+[26 of 35] Compiling Numeric.AERN.RefinementOrder.PartialComparison
+[27 of 35] Compiling Numeric.AERN.RefinementOrder.IntervalLike
+[28 of 35] Compiling Numeric.AERN.RefinementOrder.RoundedBasis
+[29 of 35] Compiling Numeric.AERN.RefinementOrder.RoundedLattice
+[30 of 35] Compiling Numeric.AERN.RefinementOrder
+[31 of 35] Compiling Numeric.AERN.RefinementOrder.Operators
+[32 of 35] Compiling Numeric.AERN.NumericOrder.RefinementRoundedLattice
+[33 of 35] Compiling Numeric.AERN.NumericOrder
+[34 of 35] Compiling Numeric.AERN.NumericOrder.Operators
+[35 of 35] Compiling Numeric.AERN.Basics.Bench
+
+/tmp/aern-audit.zp9Mzz/source/aern-order/src/Numeric/AERN/Basics/Bench.hs:79:24: warning: [GHC-68441] [-Wdeprecations]
+    In the use of ‘next’
+    (imported from System.Random, but defined in System.Random.Internal):
+    Deprecated: "No longer used"
+   |
+79 |         iterate (snd . R.next) $ QCR.mkQCGen 111111321
+   |                        ^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-order/src/Numeric/AERN/Basics/Bench.hs:109:24: warning: [GHC-68441] [-Wdeprecations]
+    In the use of ‘next’
+    (imported from System.Random, but defined in System.Random.Internal):
+    Deprecated: "No longer used"
+    |
+109 |         iterate (snd . R.next) $ QCR.mkQCGen 1587346765
+    |                        ^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-order/src/Numeric/AERN/Basics/Bench.hs:114:24: warning: [GHC-68441] [-Wdeprecations]
+    In the use of ‘next’
+    (imported from System.Random, but defined in System.Random.Internal):
+    Deprecated: "No longer used"
+    |
+114 |         iterate (snd . R.next) $ QCR.mkQCGen 658246234
+    |                        ^^^^^^
+aern-order> copy/register
+Installing library in /tmp/aern-audit.zp9Mzz/.stack-work/install/x86_64-linux-tinfo6/a9cdb111ba43c34a9894161df33edb1b290c1c61f1b004418a8411cbdf470c15/9.6.7/lib/x86_64-linux-ghc-9.6.7/aern-order-0.5.0-H6cJcmLkc6YCnKhaf2zhqP
+Registering library for aern-order-0.5.0..

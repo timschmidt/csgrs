@@ -1,0 +1,105 @@
+{
+  "checks": [
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "check",
+        "--all-targets",
+        "--all-features",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "log": "selected-overlap-cache-20260923-v2-check-0.log"
+    },
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "check",
+        "--all-targets",
+        "--no-default-features",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "log": "selected-overlap-cache-20260923-v2-check-1.log"
+    }
+  ],
+  "cases": [
+    {
+      "name": "bezier_offset::conversion_tests::mapped_circle_inverse_cache_retains_policy_without_strong_source_ownership",
+      "returncode": 0,
+      "passed": true,
+      "limit_seconds": 60,
+      "elapsed_seconds": 0.14561977598350495,
+      "log": "selected-overlap-cache-20260923-v2-case-0.log"
+    },
+    {
+      "name": "bezier_offset::conversion_tests::nonrepresented_center_nonrational_chamfer_inverts_with_retained_authority",
+      "returncode": 0,
+      "passed": true,
+      "limit_seconds": 60,
+      "elapsed_seconds": 0.45157354802358896,
+      "log": "selected-overlap-cache-20260923-v2-case-1.log"
+    },
+    {
+      "name": "bezier_offset::conversion_tests::mapped_circle_rational_cache_preserves_consumed_policy",
+      "returncode": 0,
+      "passed": true,
+      "limit_seconds": 60,
+      "elapsed_seconds": 0.1461113520199433,
+      "log": "selected-overlap-cache-20260923-v2-case-2.log"
+    },
+    {
+      "name": "bezier_offset::conversion_tests::mapped_circle_diameter_cache_preserves_consumed_policy",
+      "returncode": 0,
+      "passed": true,
+      "limit_seconds": 60,
+      "elapsed_seconds": 0.1406709960428998,
+      "log": "selected-overlap-cache-20260923-v2-case-3.log"
+    },
+    {
+      "name": "bezier_offset::conversion_tests::mapped_parallel_bracket_cache_does_not_launder_a_terminal",
+      "returncode": 0,
+      "passed": true,
+      "limit_seconds": 60,
+      "elapsed_seconds": 0.1526992500294,
+      "log": "selected-overlap-cache-20260923-v2-case-4.log"
+    },
+    {
+      "name": "bezier_offset::conversion_tests::selected_fiber_circle_overlap_does_not_prove_source_parameter_identity",
+      "returncode": 0,
+      "passed": true,
+      "limit_seconds": 60,
+      "elapsed_seconds": 0.15309311309829354,
+      "log": "selected-overlap-cache-20260923-v2-case-5.log"
+    },
+    {
+      "name": "bezier_offset::conversion_tests::selected_fiber_overlap_inverts_transported_mapped_cusp_cut",
+      "returncode": 0,
+      "passed": true,
+      "limit_seconds": 120,
+      "elapsed_seconds": 0.19927832297980785,
+      "log": "selected-overlap-cache-20260923-v2-case-6.log"
+    },
+    {
+      "name": "bezier_offset::conversion_tests::selected_fiber_transverse_mapped_cut_inverts_by_point",
+      "returncode": 101,
+      "passed": false,
+      "limit_seconds": 180,
+      "elapsed_seconds": 0.19885512301698327,
+      "log": "selected-overlap-cache-20260923-v2-case-7.log"
+    },
+    {
+      "name": "bezier_offset::conversion_tests::selected_fiber_analytic_transverse_cut_inverts_by_point",
+      "returncode": 0,
+      "passed": true,
+      "limit_seconds": 120,
+      "elapsed_seconds": 0.2522210800088942,
+      "log": "selected-overlap-cache-20260923-v2-case-8.log"
+    }
+  ],
+  "binary_sha256": "e828a744d70b57e0862a877e09b3033545bc2ace6729d0fc1baeac866bcf00c2",
+  "all_sources_unchanged": true,
+  "all_processes_reaped": true
+}

@@ -1,0 +1,305 @@
+\doxysubsection{Box\texorpdfstring{$<$}{<} I \texorpdfstring{$>$}{>} Class Template Reference}
+\hypertarget{classAriadne_1_1Box}{}\label{classAriadne_1_1Box}\index{Box$<$ I $>$@{Box$<$ I $>$}}
+
+
+{\ttfamily \#include $<$box.\+hpp$>$}
+
+
+
+\doxysubsubsection{Description}
+\subsubsection*{template$<$class I$>$\newline
+class Ariadne\+::\+Box$<$ I $>$}
+A box in Euclidean space. \doxysubsubsubsection*{Public Types}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1Box_a40e3875f31a15566b88ebd53cca5eadd}\label{classAriadne_1_1Box_a40e3875f31a15566b88ebd53cca5eadd} 
+typedef \mbox{\hyperlink{classAriadne_1_1Drawable2dInterface}{Drawable2d\+Interface}} {\bfseries Drawable\+Interface\+Type}
+\begin{DoxyCompactList}\small\item\em The type used for drawing \doxylink{classAriadne_1_1ListSet}{List\+Set} of \doxylink{classAriadne_1_1Box}{Box}. FIXME\+: Should not be present. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Box_a701d909f69fa61048cd46ad597eb48b0}\label{classAriadne_1_1Box_a701d909f69fa61048cd46ad597eb48b0} 
+typedef Ariadne\+::\+Dimension\+Type {\bfseries Dimension\+Type}
+\begin{DoxyCompactList}\small\item\em The type returned by the \doxylink{classAriadne_1_1Box_a3c1a15a3831a647991a6a2c5bbe1e029}{dimension()} method. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Box_a33b3040f1ee6d9cc3ec4c2bb7c5dcf3c}\label{classAriadne_1_1Box_a33b3040f1ee6d9cc3ec4c2bb7c5dcf3c} 
+typedef I {\bfseries Interval\+Type}
+\begin{DoxyCompactList}\small\item\em The type used for a component interval. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Box_a4286cd5cc35a0ad6929cb0d886b2d43a}\label{classAriadne_1_1Box_a4286cd5cc35a0ad6929cb0d886b2d43a} 
+typedef L {\bfseries Lower\+Bound\+Type}
+\begin{DoxyCompactList}\small\item\em The type used for the lower bound of a component interval. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Box_adecf34fdf13079532010db23a743294b}\label{classAriadne_1_1Box_adecf34fdf13079532010db23a743294b} 
+typedef U {\bfseries Upper\+Bound\+Type}
+\begin{DoxyCompactList}\small\item\em The type used for the upper bound of a component interval. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Box_a44f4754e3400f8f8759d351a9fc184e7}\label{classAriadne_1_1Box_a44f4754e3400f8f8759d351a9fc184e7} 
+typedef C {\bfseries Centre\+Value\+Type}
+\begin{DoxyCompactList}\small\item\em The type used for the centre of a component interval. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Box_a0e493af688bab219971900373f705173}\label{classAriadne_1_1Box_a0e493af688bab219971900373f705173} 
+typedef M {\bfseries Midpoint\+Value\+Type}
+\begin{DoxyCompactList}\small\item\em The type used for the midpoint of a component interval. Must be convertible to both the lower and upper bound types. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Box_a6c3e527d5ae5fa3674d40ee6b52d31a9}\label{classAriadne_1_1Box_a6c3e527d5ae5fa3674d40ee6b52d31a9} 
+typedef V {\bfseries Vertex\+Bound\+Type}
+\begin{DoxyCompactList}\small\item\em A type which can be used for the both the lower and upper bound of a component interval. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Box_a081796bb006e007e6b101766329191f4}\label{classAriadne_1_1Box_a081796bb006e007e6b101766329191f4} 
+typedef R {\bfseries Radius\+Type}
+\begin{DoxyCompactList}\small\item\em A type which can be used for the radius or length of a side. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Box_a425a19e8c31f0ed42d16c881dd5819dc}\label{classAriadne_1_1Box_a425a19e8c31f0ed42d16c881dd5819dc} 
+typedef R {\bfseries Measure\+Type}
+\begin{DoxyCompactList}\small\item\em A type which can be used for the measure (area, volume) of the box. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Box_a4760f5e48efe43a7e83b2e1484788a2e}\label{classAriadne_1_1Box_a4760f5e48efe43a7e83b2e1484788a2e} 
+typedef \mbox{\hyperlink{classAriadne_1_1Point}{Point}}$<$ V $>$ {\bfseries Vertex\+Type}
+\begin{DoxyCompactList}\small\item\em A type which can be used for the vertices of the box. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Box_a9d400ab16f7d61bc05b5365c7adfa36b}\label{classAriadne_1_1Box_a9d400ab16f7d61bc05b5365c7adfa36b} 
+typedef \mbox{\hyperlink{classAriadne_1_1Point}{Point}}$<$ M $>$ {\bfseries Midpoint\+Type}
+\begin{DoxyCompactList}\small\item\em A type which can be used for the midpoint of the box. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Box_aa82601822e55a85ce4cc581ba26c60a5}\label{classAriadne_1_1Box_aa82601822e55a85ce4cc581ba26c60a5} 
+typedef \mbox{\hyperlink{classAriadne_1_1Point}{Point}}$<$ C $>$ {\bfseries Centre\+Type}
+\begin{DoxyCompactList}\small\item\em A type which can be used for the exact centre of the box. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1Box_ad499a760dcc4e597b259032b282cd410}\label{classAriadne_1_1Box_ad499a760dcc4e597b259032b282cd410} 
+{\footnotesize template$<$class II$>$ \newline
+requires Convertible$<$II,I$>$}\\{\bfseries Box} (const \mbox{\hyperlink{classAriadne_1_1Box}{Box}}$<$ II $>$ \&bx)
+\begin{DoxyCompactList}\small\item\em Convert from a box of a different type. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Box_aad57b7818c64652ce241c9c61b3d2335}\label{classAriadne_1_1Box_aad57b7818c64652ce241c9c61b3d2335} 
+{\footnotesize template$<$class II$>$ \newline
+requires Explicitly\+Convertible$<$II,I$>$}\\{\bfseries Box} (const \mbox{\hyperlink{classAriadne_1_1Box}{Box}}$<$ II $>$ \&bx)
+\begin{DoxyCompactList}\small\item\em Construct from a box of a different type. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Box_ae026d5fa448d3e69dd9c18342125898e}\label{classAriadne_1_1Box_ae026d5fa448d3e69dd9c18342125898e} 
+{\footnotesize template$<$class II$>$ \newline
+requires Convertible$<$II,I$>$}\\{\bfseries Box} (const \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ II $>$ \&vec)
+\begin{DoxyCompactList}\small\item\em Convert from a box of a different type. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Box_a8893cd9e94e73e6d92073dc37bf85ad0}\label{classAriadne_1_1Box_a8893cd9e94e73e6d92073dc37bf85ad0} 
+{\footnotesize template$<$class II$>$ \newline
+requires Explicitly\+Convertible$<$II,I$>$}\\{\bfseries Box} (const \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ II $>$ \&vec)
+\begin{DoxyCompactList}\small\item\em Construct from a box of a different type. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Box_a0f57a1fef5339357b8ec4611dffd3487}\label{classAriadne_1_1Box_a0f57a1fef5339357b8ec4611dffd3487} 
+{\footnotesize template$<$class II$>$ \newline
+requires Constructible\+Given\+Default\+Precision$<$I,II$>$ and (not Constructible$<$I,II$>$)}\\{\bfseries Box} (\mbox{\hyperlink{classAriadne_1_1Box}{Box}}$<$ II $>$ const \&x)
+\begin{DoxyCompactList}\small\item\em Construct from an interval of a different type using a default precision. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Box_a81afa40956f19bce848c131b44381d0a}\label{classAriadne_1_1Box_a81afa40956f19bce848c131b44381d0a} 
+{\footnotesize template$<$class G$>$ \newline
+requires Invocable\+Returning$<$I,G,Size\+Type$>$}\\{\bfseries Box} (Size\+Type n, G const \&g)
+\begin{DoxyCompactList}\small\item\em Generate from a function (object) {\itshape g} of type {\itshape G} mapping an index to a value. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Box_a4cbcc08b9766654217b9183856a52595}\label{classAriadne_1_1Box_a4cbcc08b9766654217b9183856a52595} 
+Uniform\+Array$<$ I $>$ const \& {\bfseries array} () const
+\begin{DoxyCompactList}\small\item\em An array of the data values. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Box_a0472c48c2838a924eac36b19cbe017d0}\label{classAriadne_1_1Box_a0472c48c2838a924eac36b19cbe017d0} 
+Size\+Type {\bfseries size} () const
+\begin{DoxyCompactList}\small\item\em The dimension of the set. DEPRECATED. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Box_a3c1a15a3831a647991a6a2c5bbe1e029}\label{classAriadne_1_1Box_a3c1a15a3831a647991a6a2c5bbe1e029} 
+\mbox{\hyperlink{classAriadne_1_1Box_a701d909f69fa61048cd46ad597eb48b0}{Dimension\+Type}} {\bfseries dimension} () const
+\begin{DoxyCompactList}\small\item\em The dimension of the set. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Box_abd12151d237be7663350001ecea1a62b}\label{classAriadne_1_1Box_abd12151d237be7663350001ecea1a62b} 
+const \mbox{\hyperlink{classAriadne_1_1Box_a33b3040f1ee6d9cc3ec4c2bb7c5dcf3c}{Interval\+Type}} \& {\bfseries operator\mbox{[}$\,$\mbox{]}} (Size\+Type i) const
+\begin{DoxyCompactList}\small\item\em Indexing the bounds in each dimension yields an exact interval. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Box_a83d8853463f1234ab6fbd0dc4b2774b9}\label{classAriadne_1_1Box_a83d8853463f1234ab6fbd0dc4b2774b9} 
+\mbox{\hyperlink{classAriadne_1_1Box_a4760f5e48efe43a7e83b2e1484788a2e}{Vertex\+Type}} {\bfseries lower\+\_\+bounds} () const
+\begin{DoxyCompactList}\small\item\em The lower corner of the box. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Box_abee16b056bae0f02ae317e03ca05dda2}\label{classAriadne_1_1Box_abee16b056bae0f02ae317e03ca05dda2} 
+\mbox{\hyperlink{classAriadne_1_1Box_a4760f5e48efe43a7e83b2e1484788a2e}{Vertex\+Type}} {\bfseries upper\+\_\+bounds} () const
+\begin{DoxyCompactList}\small\item\em The upper corner of the box. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Box_aa5692aef59c8dddbab5f741e49f8f120}\label{classAriadne_1_1Box_aa5692aef59c8dddbab5f741e49f8f120} 
+\mbox{\hyperlink{classAriadne_1_1List}{List}}$<$ \mbox{\hyperlink{classAriadne_1_1Box_a4760f5e48efe43a7e83b2e1484788a2e}{Vertex\+Type}} $>$ {\bfseries vertices} () const
+\begin{DoxyCompactList}\small\item\em The vertices of the box. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Box_a35f3b3d5035d80b3a673846248ec740a}\label{classAriadne_1_1Box_a35f3b3d5035d80b3a673846248ec740a} 
+\mbox{\hyperlink{classAriadne_1_1Box}{Box}}$<$ \mbox{\hyperlink{classAriadne_1_1Box_a33b3040f1ee6d9cc3ec4c2bb7c5dcf3c}{Interval\+Type}} $>$ {\bfseries bounding\+\_\+box} () const
+\begin{DoxyCompactList}\small\item\em The bounding box. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Box_a705ded42aedb4253e5f6d10316b00fbd}\label{classAriadne_1_1Box_a705ded42aedb4253e5f6d10316b00fbd} 
+auto {\bfseries is\+\_\+empty} () const -\/$>$ decltype(declval$<$ \mbox{\hyperlink{classAriadne_1_1Box_a33b3040f1ee6d9cc3ec4c2bb7c5dcf3c}{Interval\+Type}} $>$().is\+\_\+empty())
+\begin{DoxyCompactList}\small\item\em Test if the box is empty. Returns the same type as Interval\+Type\+::is\+\_\+empty(). \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Box_a1946968210845be4f2eebb4b261e55c1}\label{classAriadne_1_1Box_a1946968210845be4f2eebb4b261e55c1} 
+auto {\bfseries is\+\_\+bounded} () const -\/$>$ decltype(declval$<$ \mbox{\hyperlink{classAriadne_1_1Box_a33b3040f1ee6d9cc3ec4c2bb7c5dcf3c}{Interval\+Type}} $>$().is\+\_\+bounded())
+\begin{DoxyCompactList}\small\item\em Test if the box is bounded.\+Returns the same type as Interval\+Type\+::is\+\_\+bounded(). \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Box_ac774055d843053c2c667e8e68b03edf9}\label{classAriadne_1_1Box_ac774055d843053c2c667e8e68b03edf9} 
+\mbox{\hyperlink{classAriadne_1_1Box}{Box}}$<$ \mbox{\hyperlink{classAriadne_1_1Box_a33b3040f1ee6d9cc3ec4c2bb7c5dcf3c}{Interval\+Type}} $>$ {\bfseries split} (Size\+Type k, Split\+Part lmu) const
+\begin{DoxyCompactList}\small\item\em Splits the box along coordinate {\itshape k} and takes the lower , middle, or upper part as given by {\itshape lmu}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Box_a640746921d4193445e579d7000b90270}\label{classAriadne_1_1Box_a640746921d4193445e579d7000b90270} 
+\mbox{\hyperlink{classAriadne_1_1Box}{Box}}$<$ \mbox{\hyperlink{classAriadne_1_1Box_a33b3040f1ee6d9cc3ec4c2bb7c5dcf3c}{Interval\+Type}} $>$ {\bfseries split} (Split\+Part lmu) const
+\begin{DoxyCompactList}\small\item\em Splits the box along the longest direction {\itshape k} and takes the lower , middle, or upper part as given by {\itshape lmu}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Box_ad2271295f83309d5bcdd4a7b5ec15a9a}\label{classAriadne_1_1Box_ad2271295f83309d5bcdd4a7b5ec15a9a} 
+\mbox{\hyperlink{namespaceAriadne_abbe0884d033ed6289d1f654576d7bb07}{Pair}}$<$ \mbox{\hyperlink{classAriadne_1_1Box}{Box}}$<$ \mbox{\hyperlink{classAriadne_1_1Box_a33b3040f1ee6d9cc3ec4c2bb7c5dcf3c}{Interval\+Type}} $>$, \mbox{\hyperlink{classAriadne_1_1Box}{Box}}$<$ \mbox{\hyperlink{classAriadne_1_1Box_a33b3040f1ee6d9cc3ec4c2bb7c5dcf3c}{Interval\+Type}} $>$ $>$ {\bfseries split} (Size\+Type k) const
+\begin{DoxyCompactList}\small\item\em Splits the box along widest coordinate {\itshape k} and takes the lower and upper parts. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Box_aef3fb6a5cf295cea194566d97daa997b}\label{classAriadne_1_1Box_aef3fb6a5cf295cea194566d97daa997b} 
+\mbox{\hyperlink{namespaceAriadne_abbe0884d033ed6289d1f654576d7bb07}{Pair}}$<$ \mbox{\hyperlink{classAriadne_1_1Box}{Box}}$<$ \mbox{\hyperlink{classAriadne_1_1Box_a33b3040f1ee6d9cc3ec4c2bb7c5dcf3c}{Interval\+Type}} $>$, \mbox{\hyperlink{classAriadne_1_1Box}{Box}}$<$ \mbox{\hyperlink{classAriadne_1_1Box_a33b3040f1ee6d9cc3ec4c2bb7c5dcf3c}{Interval\+Type}} $>$ $>$ {\bfseries split} () const
+\begin{DoxyCompactList}\small\item\em Splits the box along widest coordinate {\itshape k} and takes the lower and upper parts. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Box_a1ebc3c2abfa19bf3893c227c7edce55d}\label{classAriadne_1_1Box_a1ebc3c2abfa19bf3893c227c7edce55d} 
+{\footnotesize template$<$class X$>$ }\\auto {\bfseries contains} (const \mbox{\hyperlink{classAriadne_1_1Point}{Point}}$<$ X $>$ \&pt) const -\/$>$ decltype(Ariadne\+::contains(declval$<$ I $>$(), declval$<$ X $>$()))
+\begin{DoxyCompactList}\small\item\em Test if the box contains the point {\itshape pt}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Box_a936f0f3679b167c51250fc09ca67db63}\label{classAriadne_1_1Box_a936f0f3679b167c51250fc09ca67db63} 
+\mbox{\hyperlink{classAriadne_1_1Box_aa82601822e55a85ce4cc581ba26c60a5}{Centre\+Type}} {\bfseries centre} () const
+\begin{DoxyCompactList}\small\item\em The exact centre of the box. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Box_aac371c58be3342014f8dea0886a5d10e}\label{classAriadne_1_1Box_aac371c58be3342014f8dea0886a5d10e} 
+\mbox{\hyperlink{classAriadne_1_1Box_a9d400ab16f7d61bc05b5365c7adfa36b}{Midpoint\+Type}} {\bfseries midpoint} () const
+\begin{DoxyCompactList}\small\item\em The (mid)point of the box. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Box_a3f79e83ee7c9e205fe69fbda5e4af02c}\label{classAriadne_1_1Box_a3f79e83ee7c9e205fe69fbda5e4af02c} 
+\mbox{\hyperlink{classAriadne_1_1Box_a081796bb006e007e6b101766329191f4}{Radius\+Type}} {\bfseries radius} () const
+\begin{DoxyCompactList}\small\item\em Half the length of the longest side. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Box_a5f82efee0eba84ef3df30d602bda02b3}\label{classAriadne_1_1Box_a5f82efee0eba84ef3df30d602bda02b3} 
+\mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ \mbox{\hyperlink{classAriadne_1_1Box_a081796bb006e007e6b101766329191f4}{Radius\+Type}} $>$ {\bfseries radii} () const
+\begin{DoxyCompactList}\small\item\em The radii of the sides. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Box_a9a51139025802880a5bc7227042d3b6f}\label{classAriadne_1_1Box_a9a51139025802880a5bc7227042d3b6f} 
+\mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ \mbox{\hyperlink{classAriadne_1_1Box_a081796bb006e007e6b101766329191f4}{Radius\+Type}} $>$ {\bfseries widths} () const
+\begin{DoxyCompactList}\small\item\em The widths of the sides. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Box_ac53a9ca150de81e8e708029179d602c3}\label{classAriadne_1_1Box_ac53a9ca150de81e8e708029179d602c3} 
+\mbox{\hyperlink{classAriadne_1_1Box_a081796bb006e007e6b101766329191f4}{Radius\+Type}} {\bfseries semiperimeter} () const
+\begin{DoxyCompactList}\small\item\em The sum of the lengths of the sides. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Box_a17f5302eb204ea8e0be4ecc6393eafea}\label{classAriadne_1_1Box_a17f5302eb204ea8e0be4ecc6393eafea} 
+\mbox{\hyperlink{classAriadne_1_1Box_a425a19e8c31f0ed42d16c881dd5819dc}{Measure\+Type}} {\bfseries measure} () const
+\begin{DoxyCompactList}\small\item\em The measure (area or volume) of the box. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsubsection*{Static Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1Box_aaf7b18ee77cc7d90e973d8b34258f629}\label{classAriadne_1_1Box_aaf7b18ee77cc7d90e973d8b34258f629} 
+static \mbox{\hyperlink{classAriadne_1_1Box}{Box}}$<$ \mbox{\hyperlink{classAriadne_1_1Box_a33b3040f1ee6d9cc3ec4c2bb7c5dcf3c}{Interval\+Type}} $>$ {\bfseries unit\+\_\+box} (Size\+Type n)
+\begin{DoxyCompactList}\small\item\em The unit box $[-1,1]^n$ in {\itshape n} dimensions. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Box_a0bc0385c6527c49646457bc3f9b445bc}\label{classAriadne_1_1Box_a0bc0385c6527c49646457bc3f9b445bc} 
+static \mbox{\hyperlink{classAriadne_1_1Box}{Box}}$<$ \mbox{\hyperlink{classAriadne_1_1Box_a33b3040f1ee6d9cc3ec4c2bb7c5dcf3c}{Interval\+Type}} $>$ {\bfseries upper\+\_\+orthant} (Size\+Type n)
+\begin{DoxyCompactList}\small\item\em The upper quadrant box $[0,\infty]^n$ in {\itshape n} dimensions. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsubsection*{Related Types and Functions}
+(Note that these are not member symbols.) \begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1Box_ad6d968e0c0167964f91c517cf0a8e8c8}\label{classAriadne_1_1Box_ad6d968e0c0167964f91c517cf0a8e8c8} 
+{\footnotesize template$<$class I$>$ }\\\mbox{\hyperlink{classAriadne_1_1Box}{Box}}$<$ I $>$ {\bfseries product} (const \mbox{\hyperlink{classAriadne_1_1Box}{Box}}$<$ I $>$ \&bx1, const \mbox{\hyperlink{classAriadne_1_1Box}{Box}}$<$ I $>$ \&bx2)
+\begin{DoxyCompactList}\small\item\em The Cartesian product of two boxes, defined as $ B_1 \times B_2 = \{ (x_1,x_2) \mid x_1 \in B_1 \wedge x_2 \in B_2 \} $. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Box_aa56702adcfe625dc7bfa5f38eccabc9e}\label{classAriadne_1_1Box_aa56702adcfe625dc7bfa5f38eccabc9e} 
+{\footnotesize template$<$class I$>$ }\\\mbox{\hyperlink{classAriadne_1_1Box}{Box}}$<$ I $>$ {\bfseries product} (const \mbox{\hyperlink{classAriadne_1_1Interval}{Interval}}$<$ I $>$ \&ivl1, const \mbox{\hyperlink{classAriadne_1_1Box}{Box}}$<$ I $>$ \&bx2)
+\begin{DoxyCompactList}\small\item\em The Cartesian product of an interval and a box. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Box_a0ecc7b0a04d75ab654e61197c0bb9f99}\label{classAriadne_1_1Box_a0ecc7b0a04d75ab654e61197c0bb9f99} 
+{\footnotesize template$<$class I$>$ }\\\mbox{\hyperlink{classAriadne_1_1Box}{Box}}$<$ I $>$ {\bfseries product} (const \mbox{\hyperlink{classAriadne_1_1Box}{Box}}$<$ I $>$ \&bx1, const I \&ivl2)
+\begin{DoxyCompactList}\small\item\em The Cartesian product of a box and an interval. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Box_a71bb71aa8e0939683f93ad00669c8b24}\label{classAriadne_1_1Box_a71bb71aa8e0939683f93ad00669c8b24} 
+{\footnotesize template$<$class I$>$ }\\\mbox{\hyperlink{classAriadne_1_1Box}{Box}}$<$ I $>$ {\bfseries product} (const \mbox{\hyperlink{classAriadne_1_1Box}{Box}}$<$ I $>$ \&bx1, const \mbox{\hyperlink{classAriadne_1_1Box}{Box}}$<$ I $>$ \&bx2, const \mbox{\hyperlink{classAriadne_1_1Box}{Box}}$<$ I $>$ \&bx3)
+\begin{DoxyCompactList}\small\item\em The Cartesian product of three boxes. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Box_afabf6d5a798d376f6dffcfb9072b9c2f}\label{classAriadne_1_1Box_afabf6d5a798d376f6dffcfb9072b9c2f} 
+\mbox{\hyperlink{group__FunctionModule_gadb510bd9aa076e5ae44245b498901ca6}{Upper\+Box\+Type}} {\bfseries apply} (Validated\+Vector\+Multivariate\+Function const \&f, \mbox{\hyperlink{group__FunctionModule_ga7b38f183a458f335ba2f31e0bcdbadc9}{Upper\+Interval\+Type}} const \&ivl)
+\begin{DoxyCompactList}\small\item\em Compute an over-\/approximation to the image $f(I) = \{ f(x) \mid x\in I \}$. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Box_a5071bb7d2e360046b0cab9671f29b996}\label{classAriadne_1_1Box_a5071bb7d2e360046b0cab9671f29b996} 
+\mbox{\hyperlink{group__FunctionModule_ga7b38f183a458f335ba2f31e0bcdbadc9}{Upper\+Interval\+Type}} {\bfseries apply} (Validated\+Scalar\+Multivariate\+Function const \&f, \mbox{\hyperlink{group__FunctionModule_gadb510bd9aa076e5ae44245b498901ca6}{Upper\+Box\+Type}} const \&bx)
+\begin{DoxyCompactList}\small\item\em Compute an over-\/approximation to the image $f(B) = \{ f(x) \mid x\in B \}$. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Box_af62316475e86a353eaf7b25dd4c95f6e}\label{classAriadne_1_1Box_af62316475e86a353eaf7b25dd4c95f6e} 
+\mbox{\hyperlink{group__FunctionModule_gadb510bd9aa076e5ae44245b498901ca6}{Upper\+Box\+Type}} {\bfseries apply} (Validated\+Vector\+Multivariate\+Function const \&f, \mbox{\hyperlink{group__FunctionModule_gadb510bd9aa076e5ae44245b498901ca6}{Upper\+Box\+Type}} const \&bx)
+\begin{DoxyCompactList}\small\item\em Compute an over-\/approximation to the image $f(B) = \{ f(x) \mid x\in B \}$. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Box_ae74ebcfa108d660fa520d30cbc3f6e76}\label{classAriadne_1_1Box_ae74ebcfa108d660fa520d30cbc3f6e76} 
+\mbox{\hyperlink{group__FunctionModule_gadb510bd9aa076e5ae44245b498901ca6}{Upper\+Box\+Type}} {\bfseries image} (\mbox{\hyperlink{group__FunctionModule_ga7b38f183a458f335ba2f31e0bcdbadc9}{Upper\+Interval\+Type}} const \&ivl, Validated\+Vector\+Univariate\+Function const \&f)
+\begin{DoxyCompactList}\small\item\em Compute an over-\/approximation to the image $f(I) = \{ f(x) \mid x\in I \}$. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Box_ad21b0be2c752ad7691ca38a939263b26}\label{classAriadne_1_1Box_ad21b0be2c752ad7691ca38a939263b26} 
+\mbox{\hyperlink{group__FunctionModule_ga7b38f183a458f335ba2f31e0bcdbadc9}{Upper\+Interval\+Type}} {\bfseries image} (\mbox{\hyperlink{group__FunctionModule_gadb510bd9aa076e5ae44245b498901ca6}{Upper\+Box\+Type}} const \&bx, Validated\+Scalar\+Multivariate\+Function const \&f)
+\begin{DoxyCompactList}\small\item\em Compute an over-\/approximation to the image $f(B) = \{ f(x) \mid x\in B \}$. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Box_ada4c62c53b31872a363e65592104b8a0}\label{classAriadne_1_1Box_ada4c62c53b31872a363e65592104b8a0} 
+\mbox{\hyperlink{group__FunctionModule_gadb510bd9aa076e5ae44245b498901ca6}{Upper\+Box\+Type}} {\bfseries image} (\mbox{\hyperlink{group__FunctionModule_gadb510bd9aa076e5ae44245b498901ca6}{Upper\+Box\+Type}} const \&bx, Validated\+Vector\+Multivariate\+Function const \&f)
+\begin{DoxyCompactList}\small\item\em Compute an over-\/approximation to the image $f(B) = \{ f(x) \mid x\in B \}$. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Box_a37207bb6b7b94d8722f94298af542a90}\label{classAriadne_1_1Box_a37207bb6b7b94d8722f94298af542a90} 
+{\footnotesize template$<$class I$>$ }\\\mbox{\hyperlink{classAriadne_1_1Box}{Box}}$<$ I $>$ {\bfseries project} (const \mbox{\hyperlink{classAriadne_1_1Box}{Box}}$<$ I $>$ \&bx, \mbox{\hyperlink{classAriadne_1_1Array}{Array}}$<$ Size\+Type $>$ const \&rng)
+\begin{DoxyCompactList}\small\item\em Project onto the variables {\itshape rng}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Box_ab5a4080ed18c7e7eb23c25457d26e9a7}\label{classAriadne_1_1Box_ab5a4080ed18c7e7eb23c25457d26e9a7} 
+{\footnotesize template$<$class I1, class I2$>$ }\\\mbox{\hyperlink{classAriadne_1_1Box}{Box}}$<$ decltype(hull(declval$<$ I1 $>$(), declval$<$ I2 $>$()))$>$ {\bfseries hull} (const \mbox{\hyperlink{classAriadne_1_1Box}{Box}}$<$ I1 $>$ \&bx1, const \mbox{\hyperlink{classAriadne_1_1Box}{Box}}$<$ I2 $>$ \&bx2)
+\begin{DoxyCompactList}\small\item\em The smallest box containing the two boxes. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Box_ab54a436f3ec4dcb2a7eed5291e21e97c}\label{classAriadne_1_1Box_ab54a436f3ec4dcb2a7eed5291e21e97c} 
+{\footnotesize template$<$class I, class X$>$ }\\\mbox{\hyperlink{classAriadne_1_1Box}{Box}}$<$ I $>$ {\bfseries hull} (const \mbox{\hyperlink{classAriadne_1_1Box}{Box}}$<$ I $>$ \&bx1, const \mbox{\hyperlink{classAriadne_1_1Point}{Point}}$<$ X $>$ \&pt2)
+\begin{DoxyCompactList}\small\item\em The smallest box containing the box and a point. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Box_af7c093a7300859d1aed635a98d93b49d}\label{classAriadne_1_1Box_af7c093a7300859d1aed635a98d93b49d} 
+{\footnotesize template$<$class I, class X$>$ }\\\mbox{\hyperlink{classAriadne_1_1Box}{Box}}$<$ I $>$ {\bfseries hull} (const \mbox{\hyperlink{classAriadne_1_1Point}{Point}}$<$ X $>$ \&pt1, const \mbox{\hyperlink{classAriadne_1_1Box}{Box}}$<$ I $>$ \&bx2)
+\begin{DoxyCompactList}\small\item\em The smallest box containing the box and a point. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Box_a63946e876957ef6704c4aa2668a09bdd}\label{classAriadne_1_1Box_a63946e876957ef6704c4aa2668a09bdd} 
+{\footnotesize template$<$class I1, class I2$>$ }\\\mbox{\hyperlink{classAriadne_1_1Box}{Box}}$<$ decltype(intersection(declval$<$ I1 $>$(), declval$<$ I2 $>$()))$>$ {\bfseries intersection} (const \mbox{\hyperlink{classAriadne_1_1Box}{Box}}$<$ I1 $>$ \&bx1, const \mbox{\hyperlink{classAriadne_1_1Box}{Box}}$<$ I2 $>$ \&bx2)
+\begin{DoxyCompactList}\small\item\em The intersection of the two boxes. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Box_a66cf7cb06adb68818759c2a6e267c88a}\label{classAriadne_1_1Box_a66cf7cb06adb68818759c2a6e267c88a} 
+{\footnotesize template$<$class I, class X$>$ }\\decltype(element(declval$<$ X $>$(), declval$<$ I $>$())) {\bfseries element} (const \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ X $>$ \&x1, const \mbox{\hyperlink{classAriadne_1_1Box}{Box}}$<$ I $>$ \&bx2)
+\begin{DoxyCompactList}\small\item\em Tests if a value is an element of a box. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Box_a835c079851a612df211321895cb2112a}\label{classAriadne_1_1Box_a835c079851a612df211321895cb2112a} 
+{\footnotesize template$<$class I, class X$>$ }\\decltype(contains(declval$<$ I $>$(), declval$<$ X $>$())) {\bfseries contains} (const \mbox{\hyperlink{classAriadne_1_1Box}{Box}}$<$ I $>$ \&bx1, const \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ X $>$ \&x2)
+\begin{DoxyCompactList}\small\item\em Tests if a box contains a value. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Box_a1b4e9fe472b533e5289a98748cbc4304}\label{classAriadne_1_1Box_a1b4e9fe472b533e5289a98748cbc4304} 
+{\footnotesize template$<$class I, class X$>$ }\\decltype(contains(declval$<$ I $>$(), declval$<$ X $>$())) {\bfseries contains} (const \mbox{\hyperlink{classAriadne_1_1Box}{Box}}$<$ I $>$ \&bx1, const \mbox{\hyperlink{classAriadne_1_1Point}{Point}}$<$ X $>$ \&pt2)
+\begin{DoxyCompactList}\small\item\em Tests if a box contains a point. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Box_a3e9108c11da4615c88d8e1b5e7fe3908}\label{classAriadne_1_1Box_a3e9108c11da4615c88d8e1b5e7fe3908} 
+{\footnotesize template$<$class I1, class I2$>$ }\\decltype(disjoint(declval$<$ I1 $>$(), declval$<$ I2 $>$())) {\bfseries disjoint} (const \mbox{\hyperlink{classAriadne_1_1Box}{Box}}$<$ I1 $>$ \&bx1, const \mbox{\hyperlink{classAriadne_1_1Box}{Box}}$<$ I2 $>$ \&bx2)
+\begin{DoxyCompactList}\small\item\em Tests if two boxes are disjoint. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Box_a6f2c900726e1c13b2c42f8d0494c5ba2}\label{classAriadne_1_1Box_a6f2c900726e1c13b2c42f8d0494c5ba2} 
+{\footnotesize template$<$class I1, class I2$>$ }\\decltype(intersect(declval$<$ I1 $>$(), declval$<$ I2 $>$())) {\bfseries intersect} (const \mbox{\hyperlink{classAriadne_1_1Box}{Box}}$<$ I1 $>$ \&bx1, const \mbox{\hyperlink{classAriadne_1_1Box}{Box}}$<$ I2 $>$ \&bx2)
+\begin{DoxyCompactList}\small\item\em Tests if two boxes intersect. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Box_a1c84d7156aa811363d3d005d33541d11}\label{classAriadne_1_1Box_a1c84d7156aa811363d3d005d33541d11} 
+{\footnotesize template$<$class I1, class I2$>$ }\\decltype(equal(declval$<$ I1 $>$(), declval$<$ I2 $>$())) {\bfseries equal} (const \mbox{\hyperlink{classAriadne_1_1Box}{Box}}$<$ I1 $>$ \&bx1, const \mbox{\hyperlink{classAriadne_1_1Box}{Box}}$<$ I2 $>$ \&bx2)
+\begin{DoxyCompactList}\small\item\em Tests if two boxes are equal. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Box_a064faab340267a29fd4a7a35c75235f1}\label{classAriadne_1_1Box_a064faab340267a29fd4a7a35c75235f1} 
+{\footnotesize template$<$class I1, class I2$>$ }\\decltype(subset(declval$<$ I1 $>$(), declval$<$ I2 $>$())) {\bfseries subset} (const \mbox{\hyperlink{classAriadne_1_1Box}{Box}}$<$ I1 $>$ \&bx1, const \mbox{\hyperlink{classAriadne_1_1Box}{Box}}$<$ I2 $>$ \&bx2)
+\begin{DoxyCompactList}\small\item\em Tests if a box is a subset of another. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Box_a9216213c21495bb9e38fcddc3fccc794}\label{classAriadne_1_1Box_a9216213c21495bb9e38fcddc3fccc794} 
+{\footnotesize template$<$class I1, class I2$>$ }\\decltype(superset(declval$<$ I1 $>$(), declval$<$ I2 $>$())) {\bfseries superset} (const \mbox{\hyperlink{classAriadne_1_1Box}{Box}}$<$ I1 $>$ \&bx1, const \mbox{\hyperlink{classAriadne_1_1Box}{Box}}$<$ I2 $>$ \&bx2)
+\begin{DoxyCompactList}\small\item\em Tests if a box is a superset of another. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Box_af58078c080219034e523cd9047359cf0}\label{classAriadne_1_1Box_af58078c080219034e523cd9047359cf0} 
+{\footnotesize template$<$class I1, class I2$>$ }\\decltype(covers(declval$<$ I1 $>$(), declval$<$ I2 $>$())) {\bfseries covers} (const \mbox{\hyperlink{classAriadne_1_1Box}{Box}}$<$ I1 $>$ \&bx1, const \mbox{\hyperlink{classAriadne_1_1Box}{Box}}$<$ I2 $>$ \&bx2)
+\begin{DoxyCompactList}\small\item\em Tests if the interior of a box is a superset of the closure of another. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Box_a61e82090547093a3dfc208eda0435474}\label{classAriadne_1_1Box_a61e82090547093a3dfc208eda0435474} 
+{\footnotesize template$<$class I1, class I2$>$ }\\decltype(overlap(declval$<$ I1 $>$(), declval$<$ I2 $>$())) {\bfseries overlap} (const \mbox{\hyperlink{classAriadne_1_1Box}{Box}}$<$ I1 $>$ \&bx1, const \mbox{\hyperlink{classAriadne_1_1Box}{Box}}$<$ I2 $>$ \&bx2)
+\begin{DoxyCompactList}\small\item\em Tests if the interiors of two boxes intersect. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Box_a1094782be0296a0192375621e5d01910}\label{classAriadne_1_1Box_a1094782be0296a0192375621e5d01910} 
+{\footnotesize template$<$class I1, class I2$>$ }\\decltype(separated(declval$<$ I1 $>$(), declval$<$ I2 $>$())) {\bfseries separated} (const \mbox{\hyperlink{classAriadne_1_1Box}{Box}}$<$ I1 $>$ \&bx1, const \mbox{\hyperlink{classAriadne_1_1Box}{Box}}$<$ I2 $>$ \&bx2)
+\begin{DoxyCompactList}\small\item\em Tests if the closures of two boxes are disjoint. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Box_aa0494c9cffde8a8a1ab51f4e2eb3784f}\label{classAriadne_1_1Box_aa0494c9cffde8a8a1ab51f4e2eb3784f} 
+{\footnotesize template$<$class I1, class I2$>$ }\\decltype(inside(declval$<$ I1 $>$(), declval$<$ I2 $>$())) {\bfseries inside} (const \mbox{\hyperlink{classAriadne_1_1Box}{Box}}$<$ I1 $>$ \&bx1, const \mbox{\hyperlink{classAriadne_1_1Box}{Box}}$<$ I2 $>$ \&bx2)
+\begin{DoxyCompactList}\small\item\em Tests if the closure of a box is a subset of the interior of another. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Box_a6aa8c08792d03a9107cb9115c56ab94d}\label{classAriadne_1_1Box_a6aa8c08792d03a9107cb9115c56ab94d} 
+{\footnotesize template$<$class I$>$ }\\decltype(refines(declval$<$ I $>$(), declval$<$ I $>$())) {\bfseries refines} (const \mbox{\hyperlink{classAriadne_1_1Box}{Box}}$<$ typename \mbox{\hyperlink{classAriadne_1_1Box}{Box}}$<$ I $>$\mbox{\hyperlink{classAriadne_1_1Box_a33b3040f1ee6d9cc3ec4c2bb7c5dcf3c}{\+::\+Interval\+Type}} $>$ \&bx1, const \mbox{\hyperlink{classAriadne_1_1Box}{Box}}$<$ I $>$ \&bx2)
+\begin{DoxyCompactList}\small\item\em Tests if an over-\/approximation to a box is a tighter over-\/approximation than another. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Box_a921c41ce3e8fa643343b47689eb22ba4}\label{classAriadne_1_1Box_a921c41ce3e8fa643343b47689eb22ba4} 
+\mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} {\bfseries draw} (\mbox{\hyperlink{classAriadne_1_1CanvasInterface}{Canvas\+Interface}} \&c, Projection2d const \&p, \mbox{\hyperlink{group__FunctionModule_gac26293ef26d158369e62afb319a71474}{Approximate\+Box\+Type}} const \&bx)
+\begin{DoxyCompactList}\small\item\em Draws a two-\/dimensional projection by {\itshape p} of box {\itshape bx}. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\begin{Indent}\textbf{ Type synonyms}\par
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1Box_ad5cab6b03cbb1c747945d9c68c9adca6}\label{classAriadne_1_1Box_ad5cab6b03cbb1c747945d9c68c9adca6} 
+using {\bfseries Dyadic\+Box} = \mbox{\hyperlink{classAriadne_1_1Box}{Box}}$<$Dyadic\+Interval$>$
+\item 
+\Hypertarget{classAriadne_1_1Box_aa9f6a623623dbc4d23973d43adbeb966}\label{classAriadne_1_1Box_aa9f6a623623dbc4d23973d43adbeb966} 
+using {\bfseries Decimal\+Box} = \mbox{\hyperlink{classAriadne_1_1Box}{Box}}$<$Decimal\+Interval$>$
+\item 
+\Hypertarget{classAriadne_1_1Box_a2e3db9ec8e792bfc501af814e2f843b5}\label{classAriadne_1_1Box_a2e3db9ec8e792bfc501af814e2f843b5} 
+using {\bfseries Rational\+Box} = \mbox{\hyperlink{classAriadne_1_1Box}{Box}}$<$Rational\+Interval$>$
+\item 
+\Hypertarget{classAriadne_1_1Box_a77d7dbe3639d2679da02197acb00ab5f}\label{classAriadne_1_1Box_a77d7dbe3639d2679da02197acb00ab5f} 
+using {\bfseries Real\+Box} = \mbox{\hyperlink{classAriadne_1_1Box}{Box}}$<$\mbox{\hyperlink{classAriadne_1_1Interval}{Real\+Interval}}$>$
+\item 
+\Hypertarget{classAriadne_1_1Box_a60bf38bf9d8b0c504f646431c4010dd2}\label{classAriadne_1_1Box_a60bf38bf9d8b0c504f646431c4010dd2} 
+using {\bfseries Float\+DPExact\+Box} = \mbox{\hyperlink{classAriadne_1_1Box}{Box}}$<$Float\+DPExact\+Interval$>$
+\item 
+\Hypertarget{classAriadne_1_1Box_a0b411270d84ba47b4c5640af67972b20}\label{classAriadne_1_1Box_a0b411270d84ba47b4c5640af67972b20} 
+using {\bfseries Float\+DPBall\+Box} = \mbox{\hyperlink{classAriadne_1_1Box}{Box}}$<$Float\+DPBall\+Interval$>$
+\item 
+\Hypertarget{classAriadne_1_1Box_ab4cf5df2bd6f23bfaa896e44dbd70f15}\label{classAriadne_1_1Box_ab4cf5df2bd6f23bfaa896e44dbd70f15} 
+using {\bfseries Float\+DPBounds\+Box} = \mbox{\hyperlink{classAriadne_1_1Box}{Box}}$<$Float\+DPBounds\+Interval$>$
+\item 
+\Hypertarget{classAriadne_1_1Box_aa7b08ed87af42f6b2f5429de3429f20c}\label{classAriadne_1_1Box_aa7b08ed87af42f6b2f5429de3429f20c} 
+using {\bfseries Float\+DPUpper\+Box} = \mbox{\hyperlink{classAriadne_1_1Box}{Box}}$<$Float\+DPUpper\+Interval$>$
+\item 
+\Hypertarget{classAriadne_1_1Box_aa045ae06ee06a0494fbb07864e0e0a5f}\label{classAriadne_1_1Box_aa045ae06ee06a0494fbb07864e0e0a5f} 
+using {\bfseries Float\+DPLower\+Box} = \mbox{\hyperlink{classAriadne_1_1Box}{Box}}$<$Float\+DPLower\+Interval$>$
+\item 
+\Hypertarget{classAriadne_1_1Box_aa9c325be0d7c191756c8f8d3871fb07f}\label{classAriadne_1_1Box_aa9c325be0d7c191756c8f8d3871fb07f} 
+using {\bfseries Float\+DPApproximate\+Box} = \mbox{\hyperlink{classAriadne_1_1Box}{Box}}$<$Float\+DPApproximate\+Interval$>$
+\item 
+\Hypertarget{classAriadne_1_1Box_abdedf626250e10fab1e80afec305d21c}\label{classAriadne_1_1Box_abdedf626250e10fab1e80afec305d21c} 
+using {\bfseries Float\+MPExact\+Box} = \mbox{\hyperlink{classAriadne_1_1Box}{Box}}$<$Float\+MPExact\+Interval$>$
+\item 
+\Hypertarget{classAriadne_1_1Box_afbe87ea0a633519b1c86de26724b3e34}\label{classAriadne_1_1Box_afbe87ea0a633519b1c86de26724b3e34} 
+using {\bfseries Float\+MPBall\+Box} = \mbox{\hyperlink{classAriadne_1_1Box}{Box}}$<$Float\+MPBall\+Interval$>$
+\item 
+\Hypertarget{classAriadne_1_1Box_a11db0c5528e0ef81383f57ee1f2dd0ea}\label{classAriadne_1_1Box_a11db0c5528e0ef81383f57ee1f2dd0ea} 
+using {\bfseries Float\+MPBounds\+Box} = \mbox{\hyperlink{classAriadne_1_1Box}{Box}}$<$Float\+MPBounds\+Interval$>$
+\item 
+\Hypertarget{classAriadne_1_1Box_a89f409463d0ff8e4b2aa2825af1f315c}\label{classAriadne_1_1Box_a89f409463d0ff8e4b2aa2825af1f315c} 
+using {\bfseries Float\+MPUpper\+Box} = \mbox{\hyperlink{classAriadne_1_1Box}{Box}}$<$Float\+MPUpper\+Interval$>$
+\item 
+\Hypertarget{classAriadne_1_1Box_aa5730d350ee5c26cf5d0118f037fbbaf}\label{classAriadne_1_1Box_aa5730d350ee5c26cf5d0118f037fbbaf} 
+using {\bfseries Float\+MPLower\+Box} = \mbox{\hyperlink{classAriadne_1_1Box}{Box}}$<$Float\+MPLower\+Interval$>$
+\item 
+\Hypertarget{classAriadne_1_1Box_ad3ff2149838a2ee9f9e87cd898c2a3f7}\label{classAriadne_1_1Box_ad3ff2149838a2ee9f9e87cd898c2a3f7} 
+using {\bfseries Float\+MPApproximate\+Box} = \mbox{\hyperlink{classAriadne_1_1Box}{Box}}$<$Float\+MPApproximate\+Interval$>$
+\end{DoxyCompactItemize}
+\end{Indent}
+
+
+The documentation for this class was generated from the following files\+:\begin{DoxyCompactItemize}
+\item 
+source/geometry/box.\+decl.\+hpp\item 
+source/geometry/\mbox{\hyperlink{box_8hpp}{box.\+hpp}}\item 
+source/geometry/\mbox{\hyperlink{box_8cpp}{box.\+cpp}}\item 
+source/geometry/\mbox{\hyperlink{box_8tpl_8hpp}{box.\+tpl.\+hpp}}\end{DoxyCompactItemize}

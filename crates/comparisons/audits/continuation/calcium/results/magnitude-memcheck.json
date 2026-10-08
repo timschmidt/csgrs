@@ -1,0 +1,19 @@
+{
+  "tag": "magnitude-memcheck",
+  "started": "2026-09-09T23:02:30.964Z",
+  "finished": "2026-09-09T23:02:39.533Z",
+  "elapsedSeconds": 8.566454549,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison",
+  "command": "valgrind",
+  "args": [
+    "--vgdb=no",
+    "--tool=memcheck",
+    "--error-exitcode=97",
+    "--leak-check=full",
+    "--show-leak-kinds=all",
+    "--errors-for-leak-kinds=definite,indirect,possible",
+    "/tmp/calcium-magnitude.ipqBZw/magnitude-controls"
+  ],
+  "code": 0,
+  "signal": null
+}

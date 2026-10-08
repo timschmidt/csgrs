@@ -1,0 +1,130 @@
+\doxysection{Computing Pi }
+\hypertarget{python_computing_pi_page}{}\label{python_computing_pi_page}\index{Computing Pi@{Computing Pi}}
+On this page, we illustrate the use of Ariadne\textquotesingle{}s \doxylink{group__NumericModule}{Numeric} module by computing $\pi$. The full code for this example can be found in the file \doxylink{python_2tutorials_2computing_pi_8py-example}{computing\+\_\+pi.\+py},
+
+There are many formulae for pi. We will use the identity tan(pi/6)=1/sqrt(3), yielding pi=6\texorpdfstring{$\ast$}{*}atan(1/sqrt(3)) 
+\begin{DoxyCode}{0}
+\DoxyCodeLine{>>>\ r\ =\ 6*atan(rec(sqrt(3)))\ }
+
+\end{DoxyCode}
+ Displaying r shows that it is represented by a symbolic formula, and has type the Ariadne class \doxylink{classAriadne_1_1Real}{Real} 
+\begin{DoxyCode}{0}
+\DoxyCodeLine{>>>\ print(\textcolor{stringliteral}{"{}r:"{}},r,type(r))}
+\DoxyCodeLine{r:\ mul(6,atan(rec(sqrt(3))))\ <\textcolor{keyword}{class\ }'pyariadne.Real'>}
+
+\end{DoxyCode}
+
+
+To compute $\pi$, we first need to give the accuracy of the approximation we want. Let\textquotesingle{}s assume we want 20 binary digits of accuracy, so the {\itshape absolute} error should be less than $2^{-20}$. 
+\begin{DoxyCode}{0}
+\DoxyCodeLine{>>>\ acc\ =\ \mbox{\hyperlink{classAriadne_1_1Accuracy}{Accuracy}}(1/two**20)}
+
+\end{DoxyCode}
+ Note that Ariadne does not allow us to use 
+\begin{DoxyCode}{0}
+\DoxyCodeLine{>>>\ acc\ =\ \mbox{\hyperlink{classAriadne_1_1Accuracy}{Accuracy}}(1/2**20)\ \textcolor{preprocessor}{\#\ Wrong!}}
+
+\end{DoxyCode}
+ which yields an error 
+\begin{DoxyCode}{0}
+\DoxyCodeLine{TypeError:\ \_\_init\_\_():\ incompatible\ constructor\ arguments.\ The\ following\ argument\ types\ are\ supported:}
+\DoxyCodeLine{\ \ \ \ 1.\ pyariadne.\mbox{\hyperlink{classAriadne_1_1Accuracy}{Accuracy}}(arg0:\ \mbox{\hyperlink{namespaceAriadne}{Ariadne}}::\mbox{\hyperlink{classAriadne_1_1Dyadic}{Dyadic}})}
+
+\end{DoxyCode}
+ since the {\ttfamily  1/2\texorpdfstring{$\ast$}{*}\texorpdfstring{$\ast$}{*}20 } is evaluated as a Python {\ttfamily float}, which is subject to rounding errors and may be inaccurate. (In this case there happens to be no rounding error, but since Python yields a result of type {\ttfamily float}, the constructor is still disabled.)
+
+We can then compute {\ttfamily r} to the given accuracy\+: 
+\begin{DoxyCode}{0}
+\DoxyCodeLine{>>>\ v\ =\ r.compute(acc)}
+\DoxyCodeLine{>>>\ print(\textcolor{stringliteral}{"{}v"{}}:\textcolor{stringliteral}{"{},v,type(v))}}
+\DoxyCodeLine{\textcolor{stringliteral}{v:\ [3.14159265358979222781954376841895282268524169921875:3.141592653589794448265593018732033669948577880859375]\ <class\ 'pyariadne.ValidatedReal'>}}
+
+\end{DoxyCode}
+ The type of the result {\ttfamily v} is \doxylink{classAriadne_1_1ValidatedReal}{Validated\+Real}, which means that {\ttfamily v} provides a guaranteed set of possible values for the true value of {\ttfamily r}. In this case, the set is given as an interval of values. Comparing significant digits, the result is $3.14159265358979[22278...\!:\!44482...]$, so has 15 correct decimal places, which is more than requested. The bounds of the interval are given as their exact values. Internally, they may be represented by dyadic numbers.
+
+If we want to work efficiently with $\pi$, it is better to convert to a concrete representation using floating-\/point numbers. Ariadne supports standard double-\/precision numbers. Double-\/precision bounds for {\ttfamily r} can be extracted from {\ttfamily v} as a class Float\+DPBounds by 
+\begin{DoxyCode}{0}
+\DoxyCodeLine{>>>\ pr\ =\ double\_precision}
+\DoxyCodeLine{>>>\ x\ =\ v.get(pr)}
+\DoxyCodeLine{>>>\ print(\textcolor{stringliteral}{"{}x"{}}:\textcolor{stringliteral}{"{},x,type(x))}}
+\DoxyCodeLine{\textcolor{stringliteral}{x:\ 3.14159265358979[222:445]\ <class\ 'pyariadne.FloatDPBounds'>}}
+
+\end{DoxyCode}
+ We can then work using {\ttfamily x} to give bounds for calculations about $\pi$. For example, we can compute $\sin(\pi/6)$ by 
+\begin{DoxyCode}{0}
+\DoxyCodeLine{>>>\ print(\textcolor{stringliteral}{"{}sin(x/6):"{}},sin(x/6),type(sin(x/6)))}
+\DoxyCodeLine{sin(x/6):\ 0.[499999999999999611:500000000000000556]\ <class\ 'pyariadne.FloatDPBounds'>}
+\DoxyCodeLine{>>>\ print(\textcolor{stringliteral}{"{}sin(x/4):"{}},sin(x/4),type(sin(x/4)))}
+\DoxyCodeLine{sin(x/4):\ 0.707106781186547[128:906]}
+
+\end{DoxyCode}
+ However, since {\ttfamily x} stores only limited-\/accuracy bounds for $\pi$, the accuracy of further computations using {\ttfamily x} is also limited.
+
+To work using more accuracy, we can use a higher accuracy. Suppose we want to work compute to 120 binary places of accuracy, which is roughly 40 decimal places. 
+\begin{DoxyCode}{0}
+\DoxyCodeLine{>>>\ acc\ =\ \mbox{\hyperlink{classAriadne_1_1Accuracy}{Accuracy}}(1/two**120)\ \textcolor{preprocessor}{\#\ Wrong!}}
+\DoxyCodeLine{>>>\ v\ =\ r.compute(acc)}
+\DoxyCodeLine{>>>\ print(\textcolor{stringliteral}{"{}v"{}}:\textcolor{stringliteral}{"{},v,type(v))}}
+\DoxyCodeLine{\textcolor{stringliteral}{v:\ [3.141592653589793238462643383279502884171776471280999285698823952014915457789560348004186118853198195211007259786128997802734375:3.1415926535897932384626433832795028842305511888221136610972607788760277416804936258427904949286357805249281227588653564453125]\ <class\ 'pyariadne.ValidatedReal'>}}
+
+\end{DoxyCode}
+ So we find $v=3.141592653589793238462643383279502884[17177\cdots \!:\! 23055...] \subset 3.141592653589793238462643383279502884[17\!:\!24] $. We could again extract double-\/precision bounds 
+\begin{DoxyCode}{0}
+\DoxyCodeLine{>>>\ x\ =\ v.get(double\_precision)}
+\DoxyCodeLine{x:\ 3.141592653589793[115:561]}
+
+\end{DoxyCode}
+ but this loses the accuracy of the computation, since double-\/precision only allows $53$ significant binary places, roughly $16$ significant decimal places.
+
+To keep the high accuracy, we can instead extract bounds in a multiple-\/precision floating-\/point type, yielding a Float\+MPBounds object. If we want 128 significant binary places, we use 
+\begin{DoxyCode}{0}
+\DoxyCodeLine{>>>\ pr\ =\ precision(128)}
+\DoxyCodeLine{>>>\ pr\ =\ multiple\_precision(128)}
+\DoxyCodeLine{>>>\ pr\ =\ \mbox{\hyperlink{classAriadne_1_1MultiplePrecision}{MultiplePrecision}}(128)}
+\DoxyCodeLine{>>>\ x\ =\ v.get(pr)}
+\DoxyCodeLine{>>>\ print(\textcolor{stringliteral}{"{}x"{}}:\textcolor{stringliteral}{"{},x,type(x))}}
+\DoxyCodeLine{\textcolor{stringliteral}{x:\ 3.141592653589793238462643383279502884[1:3]\ <class\ 'pyariadne.FloatMPBounds'>}}
+
+\end{DoxyCode}
+ To see the internal structure of {\ttfamily x}, we can use Python\textquotesingle{}s representation\+: 
+\begin{DoxyCode}{0}
+\DoxyCodeLine{>>>\ print(\textcolor{stringliteral}{"{}repr(x)"{}}:\textcolor{stringliteral}{"{},repr(x))}}
+\DoxyCodeLine{\textcolor{stringliteral}{repr(x):\ FloatMPBounds(3.1415926535897932384626433832795028842,3.1415926535897932384626433832795028842)}}
+
+\end{DoxyCode}
+ To see the precision of {\ttfamily x}, we can use 
+\begin{DoxyCode}{0}
+\DoxyCodeLine{>>>\ print(\textcolor{stringliteral}{"{}x.precision():"{}},x.precision())}
+\DoxyCodeLine{\mbox{\hyperlink{classAriadne_1_1MultiplePrecision}{MultiplePrecision}}(128)}
+
+\end{DoxyCode}
+ Again we can work with {\ttfamily x} as an approximation to $\pi$. 
+\begin{DoxyCode}{0}
+\DoxyCodeLine{>>>\ print(\textcolor{stringliteral}{"{}sin(x/6):"{}},sin(x/6),type(sin(x/6)))}
+\DoxyCodeLine{sin(x/6):\ 0.[499999999999999611:500000000000000556]\ <class\ 'pyariadne.FloatDPBounds'>}
+\DoxyCodeLine{>>>\ print(\textcolor{stringliteral}{"{}sin(x/4):"{}},sin(x/4),type(sin(x/4)))}
+\DoxyCodeLine{sin(x/4):\ 0.707106781186547524400844362104849039[27:30]}
+
+\end{DoxyCode}
+
+
+Note that we could instead compute $\pi$ directly using a given precision from the formula used, since Ariadne evaluates all expressions using a "{}concrete"{} Float\+Bounds class using this concrete class. 
+\begin{DoxyCode}{0}
+\DoxyCodeLine{>>>\ three=FloatMPBounds(3,precision(128))}
+\DoxyCodeLine{>>>\ x=6*atan(1/sqrt(three))}
+\DoxyCodeLine{>>>\ print(\textcolor{stringliteral}{"{}x:"{}},x,type(x))}
+\DoxyCodeLine{x:\ 3.141592653589793238462643383279502884[1:3]\ <\textcolor{keyword}{class\ }'pyariadne.FloatMPBounds'>}
+
+\end{DoxyCode}
+
+
+Note that Ariadne has a builtin constant {\ttfamily pi}, which should be used in real code!! 
+\begin{DoxyCode}{0}
+\DoxyCodeLine{>>>\ print(\textcolor{stringliteral}{"{}pi:"{}},pi,type(pi))}
+\DoxyCodeLine{pi:\ mul(4,atan(1))\ <\textcolor{keyword}{class\ }'pyariadne.Real'>}
+\DoxyCodeLine{>>>\ acc=\mbox{\hyperlink{classAriadne_1_1Accuracy}{Accuracy}}(1/two**20)}
+\DoxyCodeLine{>>>\ print(\textcolor{stringliteral}{"{}pi.compute(acc):"{}},pi.compute(acc))}
+\DoxyCodeLine{pi.compute(acc):\ [3.141592653589793115997963468544185161590576171875:3.141592653589793560087173318606801331043243408203125]}
+
+\end{DoxyCode}
+ 

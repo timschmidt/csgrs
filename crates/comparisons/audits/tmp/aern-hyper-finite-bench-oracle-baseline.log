@@ -1,0 +1,33 @@
+     Locking 16 packages to latest Rust 1.97.0 compatible versions
+      Adding num-bigint v0.4.6 (available: v0.4.8)
+   Compiling autocfg v1.5.1
+   Compiling gmp-mpfr-sys v1.7.1
+   Compiling libc v0.2.189
+   Compiling libm v0.2.16
+   Compiling rug v1.30.0
+   Compiling az v1.3.0
+   Compiling num-traits v0.2.19
+   Compiling num-integer v0.1.47
+   Compiling num-complex v0.4.6
+   Compiling num-bigint v0.4.6
+   Compiling num-iter v0.1.46
+   Compiling num-rational v0.4.2
+   Compiling num v0.4.3
+   Compiling hyperreal v0.13.1 (/tmp/aern-hyper-finite.cYctjI/hyperreal-baseline)
+   Compiling aern-finite-oracle v0.0.0 (/tmp/aern-hyper-finite.cYctjI/oracle-baseline)
+    Finished `release` profile [optimized] target(s) in 10.43s
+     Running `/tmp/aern-hyper-finite.cYctjI/oracle-baseline/target/release/aern-finite-oracle`
+exact_word: bits=Some([4604930618986332160, 4604930618986332160]); finite-exact-enclosure=true
+exact_wide: bits=Some([7759702157959364608, 7759702157959364608]); finite-exact-enclosure=true
+exact_subnormal: bits=Some([17, 17]); finite-exact-enclosure=true
+inexact_word: bits=Some([4836865999795912703, 4836865999795912705]); finite-exact-enclosure=true
+inexact_wide: bits=Some([4697254411347427327, 4697254411347427329]); finite-exact-enclosure=true
+non_dyadic: bits=Some([4599676419421066579, 4599676419421066583]); finite-exact-enclosure=true
+non_dyadic_wide: bits=Some([4607182418800017404, 4607182418800017411]); finite-exact-enclosure=true
+near_max_below: bits=Some([9218868437227405310, 9218868437227405312]); finite-exact-enclosure=false
+near_max_above: bits=Some([9218868437227405310, 9218868437227405312]); finite-exact-enclosure=false
+near_max_negative: bits=Some([18442240474082181120, 18442240474082181118]); finite-exact-enclosure=false
+near_max_deep: bits=Some([9218868437227405310, 9218868437227405312]); finite-exact-enclosure=false
+overflow: bits=None; finite-exact-enclosure=true
+unsupported_subnormal: bits=None; finite-exact-enclosure=true
+exact_max: bits=Some([9218868437227405311, 9218868437227405311]); finite-exact-enclosure=true

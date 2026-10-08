@@ -1,0 +1,1082 @@
+[
+  {
+    "round": 0,
+    "family": "rational",
+    "variant": "before",
+    "args": [
+      "-c",
+      "6",
+      "/home/tim/Documents/GitHub/workspace/.audit-plume-boundary.XNOLY9/format-before",
+      "rational"
+    ],
+    "status": 0,
+    "signal": null,
+    "stdout": "rational\t512\t616828\t622677\t13681\t364079\t10836400986152735857\n",
+    "stderr": ""
+  },
+  {
+    "round": 0,
+    "family": "rational",
+    "variant": "after",
+    "args": [
+      "-c",
+      "6",
+      "/home/tim/Documents/GitHub/workspace/.audit-plume-boundary.XNOLY9/format-after",
+      "rational"
+    ],
+    "status": 0,
+    "signal": null,
+    "stdout": "rational\t512\t643717\t650325\t13681\t364079\t10836400986152735857\n",
+    "stderr": ""
+  },
+  {
+    "round": 0,
+    "family": "tiny-rational",
+    "variant": "before",
+    "args": [
+      "-c",
+      "6",
+      "/home/tim/Documents/GitHub/workspace/.audit-plume-boundary.XNOLY9/format-before",
+      "tiny-rational"
+    ],
+    "status": 0,
+    "signal": null,
+    "stdout": "tiny-rational\t512\t44856666\t45041289\t371866\t74973843\t7666661065442098176\n",
+    "stderr": ""
+  },
+  {
+    "round": 0,
+    "family": "tiny-rational",
+    "variant": "after",
+    "args": [
+      "-c",
+      "6",
+      "/home/tim/Documents/GitHub/workspace/.audit-plume-boundary.XNOLY9/format-after",
+      "tiny-rational"
+    ],
+    "status": 0,
+    "signal": null,
+    "stdout": "tiny-rational\t512\t45401983\t45560394\t371866\t74973843\t7666661065442098176\n",
+    "stderr": ""
+  },
+  {
+    "round": 0,
+    "family": "tiny-radical",
+    "variant": "before",
+    "args": [
+      "-c",
+      "6",
+      "/home/tim/Documents/GitHub/workspace/.audit-plume-boundary.XNOLY9/format-before",
+      "tiny-radical"
+    ],
+    "status": 0,
+    "signal": null,
+    "stdout": "tiny-radical\t512\t46616170\t46779200\t387520\t75703168\t8508768789774737920\n",
+    "stderr": ""
+  },
+  {
+    "round": 0,
+    "family": "tiny-radical",
+    "variant": "after",
+    "args": [
+      "-c",
+      "6",
+      "/home/tim/Documents/GitHub/workspace/.audit-plume-boundary.XNOLY9/format-after",
+      "tiny-radical"
+    ],
+    "status": 0,
+    "signal": null,
+    "stdout": "tiny-radical\t512\t326134\t330527\t3584\t213504\t8508768789774737920\n",
+    "stderr": ""
+  },
+  {
+    "round": 0,
+    "family": "ordinary-radical",
+    "variant": "before",
+    "args": [
+      "-c",
+      "6",
+      "/home/tim/Documents/GitHub/workspace/.audit-plume-boundary.XNOLY9/format-before",
+      "ordinary-radical"
+    ],
+    "status": 0,
+    "signal": null,
+    "stdout": "ordinary-radical\t512\t1226527\t1233365\t24384\t659072\t1309636151134433664\n",
+    "stderr": ""
+  },
+  {
+    "round": 0,
+    "family": "ordinary-radical",
+    "variant": "after",
+    "args": [
+      "-c",
+      "6",
+      "/home/tim/Documents/GitHub/workspace/.audit-plume-boundary.XNOLY9/format-after",
+      "ordinary-radical"
+    ],
+    "status": 0,
+    "signal": null,
+    "stdout": "ordinary-radical\t512\t1197680\t1206197\t24384\t659072\t1309636151134433664\n",
+    "stderr": ""
+  },
+  {
+    "round": 1,
+    "family": "rational",
+    "variant": "after",
+    "args": [
+      "-c",
+      "6",
+      "/home/tim/Documents/GitHub/workspace/.audit-plume-boundary.XNOLY9/format-after",
+      "rational"
+    ],
+    "status": 0,
+    "signal": null,
+    "stdout": "rational\t512\t641286\t649166\t13681\t364079\t10836400986152735857\n",
+    "stderr": ""
+  },
+  {
+    "round": 1,
+    "family": "rational",
+    "variant": "before",
+    "args": [
+      "-c",
+      "6",
+      "/home/tim/Documents/GitHub/workspace/.audit-plume-boundary.XNOLY9/format-before",
+      "rational"
+    ],
+    "status": 0,
+    "signal": null,
+    "stdout": "rational\t512\t609919\t611048\t13681\t364079\t10836400986152735857\n",
+    "stderr": ""
+  },
+  {
+    "round": 1,
+    "family": "tiny-rational",
+    "variant": "after",
+    "args": [
+      "-c",
+      "6",
+      "/home/tim/Documents/GitHub/workspace/.audit-plume-boundary.XNOLY9/format-after",
+      "tiny-rational"
+    ],
+    "status": 0,
+    "signal": null,
+    "stdout": "tiny-rational\t512\t44992045\t45208528\t371866\t74973843\t7666661065442098176\n",
+    "stderr": ""
+  },
+  {
+    "round": 1,
+    "family": "tiny-rational",
+    "variant": "before",
+    "args": [
+      "-c",
+      "6",
+      "/home/tim/Documents/GitHub/workspace/.audit-plume-boundary.XNOLY9/format-before",
+      "tiny-rational"
+    ],
+    "status": 0,
+    "signal": null,
+    "stdout": "tiny-rational\t512\t45014595\t45166590\t371866\t74973843\t7666661065442098176\n",
+    "stderr": ""
+  },
+  {
+    "round": 1,
+    "family": "tiny-radical",
+    "variant": "after",
+    "args": [
+      "-c",
+      "6",
+      "/home/tim/Documents/GitHub/workspace/.audit-plume-boundary.XNOLY9/format-after",
+      "tiny-radical"
+    ],
+    "status": 0,
+    "signal": null,
+    "stdout": "tiny-radical\t512\t330392\t331607\t3584\t213504\t8508768789774737920\n",
+    "stderr": ""
+  },
+  {
+    "round": 1,
+    "family": "tiny-radical",
+    "variant": "before",
+    "args": [
+      "-c",
+      "6",
+      "/home/tim/Documents/GitHub/workspace/.audit-plume-boundary.XNOLY9/format-before",
+      "tiny-radical"
+    ],
+    "status": 0,
+    "signal": null,
+    "stdout": "tiny-radical\t512\t46434595\t46621501\t387520\t75703168\t8508768789774737920\n",
+    "stderr": ""
+  },
+  {
+    "round": 1,
+    "family": "ordinary-radical",
+    "variant": "after",
+    "args": [
+      "-c",
+      "6",
+      "/home/tim/Documents/GitHub/workspace/.audit-plume-boundary.XNOLY9/format-after",
+      "ordinary-radical"
+    ],
+    "status": 0,
+    "signal": null,
+    "stdout": "ordinary-radical\t512\t1165252\t1170170\t24384\t659072\t1309636151134433664\n",
+    "stderr": ""
+  },
+  {
+    "round": 1,
+    "family": "ordinary-radical",
+    "variant": "before",
+    "args": [
+      "-c",
+      "6",
+      "/home/tim/Documents/GitHub/workspace/.audit-plume-boundary.XNOLY9/format-before",
+      "ordinary-radical"
+    ],
+    "status": 0,
+    "signal": null,
+    "stdout": "ordinary-radical\t512\t1202659\t1208247\t24384\t659072\t1309636151134433664\n",
+    "stderr": ""
+  },
+  {
+    "round": 2,
+    "family": "rational",
+    "variant": "before",
+    "args": [
+      "-c",
+      "6",
+      "/home/tim/Documents/GitHub/workspace/.audit-plume-boundary.XNOLY9/format-before",
+      "rational"
+    ],
+    "status": 0,
+    "signal": null,
+    "stdout": "rational\t512\t610469\t611638\t13681\t364079\t10836400986152735857\n",
+    "stderr": ""
+  },
+  {
+    "round": 2,
+    "family": "rational",
+    "variant": "after",
+    "args": [
+      "-c",
+      "6",
+      "/home/tim/Documents/GitHub/workspace/.audit-plume-boundary.XNOLY9/format-after",
+      "rational"
+    ],
+    "status": 0,
+    "signal": null,
+    "stdout": "rational\t512\t602950\t610828\t13681\t364079\t10836400986152735857\n",
+    "stderr": ""
+  },
+  {
+    "round": 2,
+    "family": "tiny-rational",
+    "variant": "before",
+    "args": [
+      "-c",
+      "6",
+      "/home/tim/Documents/GitHub/workspace/.audit-plume-boundary.XNOLY9/format-before",
+      "tiny-rational"
+    ],
+    "status": 0,
+    "signal": null,
+    "stdout": "tiny-rational\t512\t45405449\t45645448\t371866\t74973843\t7666661065442098176\n",
+    "stderr": ""
+  },
+  {
+    "round": 2,
+    "family": "tiny-rational",
+    "variant": "after",
+    "args": [
+      "-c",
+      "6",
+      "/home/tim/Documents/GitHub/workspace/.audit-plume-boundary.XNOLY9/format-after",
+      "tiny-rational"
+    ],
+    "status": 0,
+    "signal": null,
+    "stdout": "tiny-rational\t512\t45252543\t45410994\t371866\t74973843\t7666661065442098176\n",
+    "stderr": ""
+  },
+  {
+    "round": 2,
+    "family": "tiny-radical",
+    "variant": "before",
+    "args": [
+      "-c",
+      "6",
+      "/home/tim/Documents/GitHub/workspace/.audit-plume-boundary.XNOLY9/format-before",
+      "tiny-radical"
+    ],
+    "status": 0,
+    "signal": null,
+    "stdout": "tiny-radical\t512\t46500949\t46660418\t387520\t75703168\t8508768789774737920\n",
+    "stderr": ""
+  },
+  {
+    "round": 2,
+    "family": "tiny-radical",
+    "variant": "after",
+    "args": [
+      "-c",
+      "6",
+      "/home/tim/Documents/GitHub/workspace/.audit-plume-boundary.XNOLY9/format-after",
+      "tiny-radical"
+    ],
+    "status": 0,
+    "signal": null,
+    "stdout": "tiny-radical\t512\t333312\t338677\t3584\t213504\t8508768789774737920\n",
+    "stderr": ""
+  },
+  {
+    "round": 2,
+    "family": "ordinary-radical",
+    "variant": "before",
+    "args": [
+      "-c",
+      "6",
+      "/home/tim/Documents/GitHub/workspace/.audit-plume-boundary.XNOLY9/format-before",
+      "ordinary-radical"
+    ],
+    "status": 0,
+    "signal": null,
+    "stdout": "ordinary-radical\t512\t1218208\t1240135\t24384\t659072\t1309636151134433664\n",
+    "stderr": ""
+  },
+  {
+    "round": 2,
+    "family": "ordinary-radical",
+    "variant": "after",
+    "args": [
+      "-c",
+      "6",
+      "/home/tim/Documents/GitHub/workspace/.audit-plume-boundary.XNOLY9/format-after",
+      "ordinary-radical"
+    ],
+    "status": 0,
+    "signal": null,
+    "stdout": "ordinary-radical\t512\t1185572\t1192558\t24384\t659072\t1309636151134433664\n",
+    "stderr": ""
+  },
+  {
+    "round": 3,
+    "family": "rational",
+    "variant": "after",
+    "args": [
+      "-c",
+      "6",
+      "/home/tim/Documents/GitHub/workspace/.audit-plume-boundary.XNOLY9/format-after",
+      "rational"
+    ],
+    "status": 0,
+    "signal": null,
+    "stdout": "rational\t512\t827631\t834133\t13681\t364079\t10836400986152735857\n",
+    "stderr": ""
+  },
+  {
+    "round": 3,
+    "family": "rational",
+    "variant": "before",
+    "args": [
+      "-c",
+      "6",
+      "/home/tim/Documents/GitHub/workspace/.audit-plume-boundary.XNOLY9/format-before",
+      "rational"
+    ],
+    "status": 0,
+    "signal": null,
+    "stdout": "rational\t512\t813662\t838833\t13681\t364079\t10836400986152735857\n",
+    "stderr": ""
+  },
+  {
+    "round": 3,
+    "family": "tiny-rational",
+    "variant": "after",
+    "args": [
+      "-c",
+      "6",
+      "/home/tim/Documents/GitHub/workspace/.audit-plume-boundary.XNOLY9/format-after",
+      "tiny-rational"
+    ],
+    "status": 0,
+    "signal": null,
+    "stdout": "tiny-rational\t512\t45710735\t45914730\t371866\t74973843\t7666661065442098176\n",
+    "stderr": ""
+  },
+  {
+    "round": 3,
+    "family": "tiny-rational",
+    "variant": "before",
+    "args": [
+      "-c",
+      "6",
+      "/home/tim/Documents/GitHub/workspace/.audit-plume-boundary.XNOLY9/format-before",
+      "tiny-rational"
+    ],
+    "status": 0,
+    "signal": null,
+    "stdout": "tiny-rational\t512\t44997414\t45166140\t371866\t74973843\t7666661065442098176\n",
+    "stderr": ""
+  },
+  {
+    "round": 3,
+    "family": "tiny-radical",
+    "variant": "after",
+    "args": [
+      "-c",
+      "6",
+      "/home/tim/Documents/GitHub/workspace/.audit-plume-boundary.XNOLY9/format-after",
+      "tiny-radical"
+    ],
+    "status": 0,
+    "signal": null,
+    "stdout": "tiny-radical\t512\t338811\t343157\t3584\t213504\t8508768789774737920\n",
+    "stderr": ""
+  },
+  {
+    "round": 3,
+    "family": "tiny-radical",
+    "variant": "before",
+    "args": [
+      "-c",
+      "6",
+      "/home/tim/Documents/GitHub/workspace/.audit-plume-boundary.XNOLY9/format-before",
+      "tiny-radical"
+    ],
+    "status": 0,
+    "signal": null,
+    "stdout": "tiny-radical\t512\t46583182\t46726084\t387520\t75703168\t8508768789774737920\n",
+    "stderr": ""
+  },
+  {
+    "round": 3,
+    "family": "ordinary-radical",
+    "variant": "after",
+    "args": [
+      "-c",
+      "6",
+      "/home/tim/Documents/GitHub/workspace/.audit-plume-boundary.XNOLY9/format-after",
+      "ordinary-radical"
+    ],
+    "status": 0,
+    "signal": null,
+    "stdout": "ordinary-radical\t512\t1164483\t1176690\t24384\t659072\t1309636151134433664\n",
+    "stderr": ""
+  },
+  {
+    "round": 3,
+    "family": "ordinary-radical",
+    "variant": "before",
+    "args": [
+      "-c",
+      "6",
+      "/home/tim/Documents/GitHub/workspace/.audit-plume-boundary.XNOLY9/format-before",
+      "ordinary-radical"
+    ],
+    "status": 0,
+    "signal": null,
+    "stdout": "ordinary-radical\t512\t1222308\t1243045\t24384\t659072\t1309636151134433664\n",
+    "stderr": ""
+  },
+  {
+    "round": 4,
+    "family": "rational",
+    "variant": "before",
+    "args": [
+      "-c",
+      "6",
+      "/home/tim/Documents/GitHub/workspace/.audit-plume-boundary.XNOLY9/format-before",
+      "rational"
+    ],
+    "status": 0,
+    "signal": null,
+    "stdout": "rational\t512\t613869\t620088\t13681\t364079\t10836400986152735857\n",
+    "stderr": ""
+  },
+  {
+    "round": 4,
+    "family": "rational",
+    "variant": "after",
+    "args": [
+      "-c",
+      "6",
+      "/home/tim/Documents/GitHub/workspace/.audit-plume-boundary.XNOLY9/format-after",
+      "rational"
+    ],
+    "status": 0,
+    "signal": null,
+    "stdout": "rational\t512\t703041\t709061\t13681\t364079\t10836400986152735857\n",
+    "stderr": ""
+  },
+  {
+    "round": 4,
+    "family": "tiny-rational",
+    "variant": "before",
+    "args": [
+      "-c",
+      "6",
+      "/home/tim/Documents/GitHub/workspace/.audit-plume-boundary.XNOLY9/format-before",
+      "tiny-rational"
+    ],
+    "status": 0,
+    "signal": null,
+    "stdout": "tiny-rational\t512\t44817400\t44999642\t371866\t74973843\t7666661065442098176\n",
+    "stderr": ""
+  },
+  {
+    "round": 4,
+    "family": "tiny-rational",
+    "variant": "after",
+    "args": [
+      "-c",
+      "6",
+      "/home/tim/Documents/GitHub/workspace/.audit-plume-boundary.XNOLY9/format-after",
+      "tiny-rational"
+    ],
+    "status": 0,
+    "signal": null,
+    "stdout": "tiny-rational\t512\t45263193\t45410035\t371866\t74973843\t7666661065442098176\n",
+    "stderr": ""
+  },
+  {
+    "round": 4,
+    "family": "tiny-radical",
+    "variant": "before",
+    "args": [
+      "-c",
+      "6",
+      "/home/tim/Documents/GitHub/workspace/.audit-plume-boundary.XNOLY9/format-before",
+      "tiny-radical"
+    ],
+    "status": 0,
+    "signal": null,
+    "stdout": "tiny-radical\t512\t46681744\t46869624\t387520\t75703168\t8508768789774737920\n",
+    "stderr": ""
+  },
+  {
+    "round": 4,
+    "family": "tiny-radical",
+    "variant": "after",
+    "args": [
+      "-c",
+      "6",
+      "/home/tim/Documents/GitHub/workspace/.audit-plume-boundary.XNOLY9/format-after",
+      "tiny-radical"
+    ],
+    "status": 0,
+    "signal": null,
+    "stdout": "tiny-radical\t512\t322564\t327068\t3584\t213504\t8508768789774737920\n",
+    "stderr": ""
+  },
+  {
+    "round": 4,
+    "family": "ordinary-radical",
+    "variant": "before",
+    "args": [
+      "-c",
+      "6",
+      "/home/tim/Documents/GitHub/workspace/.audit-plume-boundary.XNOLY9/format-before",
+      "ordinary-radical"
+    ],
+    "status": 0,
+    "signal": null,
+    "stdout": "ordinary-radical\t512\t1183343\t1189679\t24384\t659072\t1309636151134433664\n",
+    "stderr": ""
+  },
+  {
+    "round": 4,
+    "family": "ordinary-radical",
+    "variant": "after",
+    "args": [
+      "-c",
+      "6",
+      "/home/tim/Documents/GitHub/workspace/.audit-plume-boundary.XNOLY9/format-after",
+      "ordinary-radical"
+    ],
+    "status": 0,
+    "signal": null,
+    "stdout": "ordinary-radical\t512\t1182052\t1189218\t24384\t659072\t1309636151134433664\n",
+    "stderr": ""
+  },
+  {
+    "round": 5,
+    "family": "rational",
+    "variant": "after",
+    "args": [
+      "-c",
+      "6",
+      "/home/tim/Documents/GitHub/workspace/.audit-plume-boundary.XNOLY9/format-after",
+      "rational"
+    ],
+    "status": 0,
+    "signal": null,
+    "stdout": "rational\t512\t612289\t620057\t13681\t364079\t10836400986152735857\n",
+    "stderr": ""
+  },
+  {
+    "round": 5,
+    "family": "rational",
+    "variant": "before",
+    "args": [
+      "-c",
+      "6",
+      "/home/tim/Documents/GitHub/workspace/.audit-plume-boundary.XNOLY9/format-before",
+      "rational"
+    ],
+    "status": 0,
+    "signal": null,
+    "stdout": "rational\t512\t613479\t614908\t13681\t364079\t10836400986152735857\n",
+    "stderr": ""
+  },
+  {
+    "round": 5,
+    "family": "tiny-rational",
+    "variant": "after",
+    "args": [
+      "-c",
+      "6",
+      "/home/tim/Documents/GitHub/workspace/.audit-plume-boundary.XNOLY9/format-after",
+      "tiny-rational"
+    ],
+    "status": 0,
+    "signal": null,
+    "stdout": "tiny-rational\t512\t44881164\t45042699\t371866\t74973843\t7666661065442098176\n",
+    "stderr": ""
+  },
+  {
+    "round": 5,
+    "family": "tiny-rational",
+    "variant": "before",
+    "args": [
+      "-c",
+      "6",
+      "/home/tim/Documents/GitHub/workspace/.audit-plume-boundary.XNOLY9/format-before",
+      "tiny-rational"
+    ],
+    "status": 0,
+    "signal": null,
+    "stdout": "tiny-rational\t512\t44899180\t45063028\t371866\t74973843\t7666661065442098176\n",
+    "stderr": ""
+  },
+  {
+    "round": 5,
+    "family": "tiny-radical",
+    "variant": "after",
+    "args": [
+      "-c",
+      "6",
+      "/home/tim/Documents/GitHub/workspace/.audit-plume-boundary.XNOLY9/format-after",
+      "tiny-radical"
+    ],
+    "status": 0,
+    "signal": null,
+    "stdout": "tiny-radical\t512\t331952\t337437\t3584\t213504\t8508768789774737920\n",
+    "stderr": ""
+  },
+  {
+    "round": 5,
+    "family": "tiny-radical",
+    "variant": "before",
+    "args": [
+      "-c",
+      "6",
+      "/home/tim/Documents/GitHub/workspace/.audit-plume-boundary.XNOLY9/format-before",
+      "tiny-radical"
+    ],
+    "status": 0,
+    "signal": null,
+    "stdout": "tiny-radical\t512\t46495810\t46658458\t387520\t75703168\t8508768789774737920\n",
+    "stderr": ""
+  },
+  {
+    "round": 5,
+    "family": "ordinary-radical",
+    "variant": "after",
+    "args": [
+      "-c",
+      "6",
+      "/home/tim/Documents/GitHub/workspace/.audit-plume-boundary.XNOLY9/format-after",
+      "ordinary-radical"
+    ],
+    "status": 0,
+    "signal": null,
+    "stdout": "ordinary-radical\t512\t1172353\t1180199\t24384\t659072\t1309636151134433664\n",
+    "stderr": ""
+  },
+  {
+    "round": 5,
+    "family": "ordinary-radical",
+    "variant": "before",
+    "args": [
+      "-c",
+      "6",
+      "/home/tim/Documents/GitHub/workspace/.audit-plume-boundary.XNOLY9/format-before",
+      "ordinary-radical"
+    ],
+    "status": 0,
+    "signal": null,
+    "stdout": "ordinary-radical\t512\t1237707\t1244494\t24384\t659072\t1309636151134433664\n",
+    "stderr": ""
+  },
+  {
+    "round": 6,
+    "family": "rational",
+    "variant": "before",
+    "args": [
+      "-c",
+      "6",
+      "/home/tim/Documents/GitHub/workspace/.audit-plume-boundary.XNOLY9/format-before",
+      "rational"
+    ],
+    "status": 0,
+    "signal": null,
+    "stdout": "rational\t512\t615838\t630716\t13681\t364079\t10836400986152735857\n",
+    "stderr": ""
+  },
+  {
+    "round": 6,
+    "family": "rational",
+    "variant": "after",
+    "args": [
+      "-c",
+      "6",
+      "/home/tim/Documents/GitHub/workspace/.audit-plume-boundary.XNOLY9/format-after",
+      "rational"
+    ],
+    "status": 0,
+    "signal": null,
+    "stdout": "rational\t512\t607059\t613428\t13681\t364079\t10836400986152735857\n",
+    "stderr": ""
+  },
+  {
+    "round": 6,
+    "family": "tiny-rational",
+    "variant": "before",
+    "args": [
+      "-c",
+      "6",
+      "/home/tim/Documents/GitHub/workspace/.audit-plume-boundary.XNOLY9/format-before",
+      "tiny-rational"
+    ],
+    "status": 0,
+    "signal": null,
+    "stdout": "tiny-rational\t512\t47760615\t48007505\t371866\t74973843\t7666661065442098176\n",
+    "stderr": ""
+  },
+  {
+    "round": 6,
+    "family": "tiny-rational",
+    "variant": "after",
+    "args": [
+      "-c",
+      "6",
+      "/home/tim/Documents/GitHub/workspace/.audit-plume-boundary.XNOLY9/format-after",
+      "tiny-rational"
+    ],
+    "status": 0,
+    "signal": null,
+    "stdout": "tiny-rational\t512\t44948045\t45093356\t371866\t74973843\t7666661065442098176\n",
+    "stderr": ""
+  },
+  {
+    "round": 6,
+    "family": "tiny-radical",
+    "variant": "before",
+    "args": [
+      "-c",
+      "6",
+      "/home/tim/Documents/GitHub/workspace/.audit-plume-boundary.XNOLY9/format-before",
+      "tiny-radical"
+    ],
+    "status": 0,
+    "signal": null,
+    "stdout": "tiny-radical\t512\t46383417\t46528258\t387520\t75703168\t8508768789774737920\n",
+    "stderr": ""
+  },
+  {
+    "round": 6,
+    "family": "tiny-radical",
+    "variant": "after",
+    "args": [
+      "-c",
+      "6",
+      "/home/tim/Documents/GitHub/workspace/.audit-plume-boundary.XNOLY9/format-after",
+      "tiny-radical"
+    ],
+    "status": 0,
+    "signal": null,
+    "stdout": "tiny-radical\t512\t327012\t328268\t3584\t213504\t8508768789774737920\n",
+    "stderr": ""
+  },
+  {
+    "round": 6,
+    "family": "ordinary-radical",
+    "variant": "before",
+    "args": [
+      "-c",
+      "6",
+      "/home/tim/Documents/GitHub/workspace/.audit-plume-boundary.XNOLY9/format-before",
+      "ordinary-radical"
+    ],
+    "status": 0,
+    "signal": null,
+    "stdout": "ordinary-radical\t512\t1172933\t1178649\t24384\t659072\t1309636151134433664\n",
+    "stderr": ""
+  },
+  {
+    "round": 6,
+    "family": "ordinary-radical",
+    "variant": "after",
+    "args": [
+      "-c",
+      "6",
+      "/home/tim/Documents/GitHub/workspace/.audit-plume-boundary.XNOLY9/format-after",
+      "ordinary-radical"
+    ],
+    "status": 0,
+    "signal": null,
+    "stdout": "ordinary-radical\t512\t1192432\t1204927\t24384\t659072\t1309636151134433664\n",
+    "stderr": ""
+  },
+  {
+    "round": 7,
+    "family": "rational",
+    "variant": "after",
+    "args": [
+      "-c",
+      "6",
+      "/home/tim/Documents/GitHub/workspace/.audit-plume-boundary.XNOLY9/format-after",
+      "rational"
+    ],
+    "status": 0,
+    "signal": null,
+    "stdout": "rational\t512\t616159\t622657\t13681\t364079\t10836400986152735857\n",
+    "stderr": ""
+  },
+  {
+    "round": 7,
+    "family": "rational",
+    "variant": "before",
+    "args": [
+      "-c",
+      "6",
+      "/home/tim/Documents/GitHub/workspace/.audit-plume-boundary.XNOLY9/format-before",
+      "rational"
+    ],
+    "status": 0,
+    "signal": null,
+    "stdout": "rational\t512\t614929\t616177\t13681\t364079\t10836400986152735857\n",
+    "stderr": ""
+  },
+  {
+    "round": 7,
+    "family": "tiny-rational",
+    "variant": "after",
+    "args": [
+      "-c",
+      "6",
+      "/home/tim/Documents/GitHub/workspace/.audit-plume-boundary.XNOLY9/format-after",
+      "tiny-rational"
+    ],
+    "status": 0,
+    "signal": null,
+    "stdout": "tiny-rational\t512\t44877545\t45076507\t371866\t74973843\t7666661065442098176\n",
+    "stderr": ""
+  },
+  {
+    "round": 7,
+    "family": "tiny-rational",
+    "variant": "before",
+    "args": [
+      "-c",
+      "6",
+      "/home/tim/Documents/GitHub/workspace/.audit-plume-boundary.XNOLY9/format-before",
+      "tiny-rational"
+    ],
+    "status": 0,
+    "signal": null,
+    "stdout": "tiny-rational\t512\t44733147\t44884470\t371866\t74973843\t7666661065442098176\n",
+    "stderr": ""
+  },
+  {
+    "round": 7,
+    "family": "tiny-radical",
+    "variant": "after",
+    "args": [
+      "-c",
+      "6",
+      "/home/tim/Documents/GitHub/workspace/.audit-plume-boundary.XNOLY9/format-after",
+      "tiny-radical"
+    ],
+    "status": 0,
+    "signal": null,
+    "stdout": "tiny-radical\t512\t329072\t334467\t3584\t213504\t8508768789774737920\n",
+    "stderr": ""
+  },
+  {
+    "round": 7,
+    "family": "tiny-radical",
+    "variant": "before",
+    "args": [
+      "-c",
+      "6",
+      "/home/tim/Documents/GitHub/workspace/.audit-plume-boundary.XNOLY9/format-before",
+      "tiny-radical"
+    ],
+    "status": 0,
+    "signal": null,
+    "stdout": "tiny-radical\t512\t46321506\t46471761\t387520\t75703168\t8508768789774737920\n",
+    "stderr": ""
+  },
+  {
+    "round": 7,
+    "family": "ordinary-radical",
+    "variant": "after",
+    "args": [
+      "-c",
+      "6",
+      "/home/tim/Documents/GitHub/workspace/.audit-plume-boundary.XNOLY9/format-after",
+      "ordinary-radical"
+    ],
+    "status": 0,
+    "signal": null,
+    "stdout": "ordinary-radical\t512\t1178902\t1190138\t24384\t659072\t1309636151134433664\n",
+    "stderr": ""
+  },
+  {
+    "round": 7,
+    "family": "ordinary-radical",
+    "variant": "before",
+    "args": [
+      "-c",
+      "6",
+      "/home/tim/Documents/GitHub/workspace/.audit-plume-boundary.XNOLY9/format-before",
+      "ordinary-radical"
+    ],
+    "status": 0,
+    "signal": null,
+    "stdout": "ordinary-radical\t512\t1171433\t1176659\t24384\t659072\t1309636151134433664\n",
+    "stderr": ""
+  },
+  {
+    "round": 8,
+    "family": "rational",
+    "variant": "before",
+    "args": [
+      "-c",
+      "6",
+      "/home/tim/Documents/GitHub/workspace/.audit-plume-boundary.XNOLY9/format-before",
+      "rational"
+    ],
+    "status": 0,
+    "signal": null,
+    "stdout": "rational\t512\t601880\t603099\t13681\t364079\t10836400986152735857\n",
+    "stderr": ""
+  },
+  {
+    "round": 8,
+    "family": "rational",
+    "variant": "after",
+    "args": [
+      "-c",
+      "6",
+      "/home/tim/Documents/GitHub/workspace/.audit-plume-boundary.XNOLY9/format-after",
+      "rational"
+    ],
+    "status": 0,
+    "signal": null,
+    "stdout": "rational\t512\t605610\t606828\t13681\t364079\t10836400986152735857\n",
+    "stderr": ""
+  },
+  {
+    "round": 8,
+    "family": "tiny-rational",
+    "variant": "before",
+    "args": [
+      "-c",
+      "6",
+      "/home/tim/Documents/GitHub/workspace/.audit-plume-boundary.XNOLY9/format-before",
+      "tiny-rational"
+    ],
+    "status": 0,
+    "signal": null,
+    "stdout": "tiny-rational\t512\t44990804\t45163741\t371866\t74973843\t7666661065442098176\n",
+    "stderr": ""
+  },
+  {
+    "round": 8,
+    "family": "tiny-rational",
+    "variant": "after",
+    "args": [
+      "-c",
+      "6",
+      "/home/tim/Documents/GitHub/workspace/.audit-plume-boundary.XNOLY9/format-after",
+      "tiny-rational"
+    ],
+    "status": 0,
+    "signal": null,
+    "stdout": "tiny-rational\t512\t44901541\t45517727\t371866\t74973843\t7666661065442098176\n",
+    "stderr": ""
+  },
+  {
+    "round": 8,
+    "family": "tiny-radical",
+    "variant": "before",
+    "args": [
+      "-c",
+      "6",
+      "/home/tim/Documents/GitHub/workspace/.audit-plume-boundary.XNOLY9/format-before",
+      "tiny-radical"
+    ],
+    "status": 0,
+    "signal": null,
+    "stdout": "tiny-radical\t512\t46370222\t46504839\t387520\t75703168\t8508768789774737920\n",
+    "stderr": ""
+  },
+  {
+    "round": 8,
+    "family": "tiny-radical",
+    "variant": "after",
+    "args": [
+      "-c",
+      "6",
+      "/home/tim/Documents/GitHub/workspace/.audit-plume-boundary.XNOLY9/format-after",
+      "tiny-radical"
+    ],
+    "status": 0,
+    "signal": null,
+    "stdout": "tiny-radical\t512\t328002\t329257\t3584\t213504\t8508768789774737920\n",
+    "stderr": ""
+  },
+  {
+    "round": 8,
+    "family": "ordinary-radical",
+    "variant": "before",
+    "args": [
+      "-c",
+      "6",
+      "/home/tim/Documents/GitHub/workspace/.audit-plume-boundary.XNOLY9/format-before",
+      "ordinary-radical"
+    ],
+    "status": 0,
+    "signal": null,
+    "stdout": "ordinary-radical\t512\t1207420\t1213007\t24384\t659072\t1309636151134433664\n",
+    "stderr": ""
+  },
+  {
+    "round": 8,
+    "family": "ordinary-radical",
+    "variant": "after",
+    "args": [
+      "-c",
+      "6",
+      "/home/tim/Documents/GitHub/workspace/.audit-plume-boundary.XNOLY9/format-after",
+      "ordinary-radical"
+    ],
+    "status": 0,
+    "signal": null,
+    "stdout": "ordinary-radical\t512\t1176502\t1181579\t24384\t659072\t1309636151134433664\n",
+    "stderr": ""
+  }
+]

@@ -1,0 +1,82 @@
+\doxysubsection{Constraint\texorpdfstring{$<$}{<} F, R \texorpdfstring{$>$}{>} Class Template Reference}
+\hypertarget{classAriadne_1_1Constraint}{}\label{classAriadne_1_1Constraint}\index{Constraint$<$ F, R $>$@{Constraint$<$ F, R $>$}}
+
+
+{\ttfamily \#include $<$constraint.\+hpp$>$}
+
+
+
+\doxysubsubsection{Description}
+\subsubsection*{template$<$class F, class R$>$\newline
+class Ariadne\+::\+Constraint$<$ F, R $>$}
+A constraint defined by requiring values of a function $f$ to lie in a range $R$. i.\+e. restricts point $x$ to satsify $f(x)\in R$. 
+
+
+\begin{DoxyParams}{Parameters}
+{\em F} & The type of the function \\
+\hline
+{\em R} & The type of the range of values. \\
+\hline
+\end{DoxyParams}
+\doxysubsubsubsection*{Public Types}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1Constraint_a1586bac7122d897618eff69ae90aab49}\label{classAriadne_1_1Constraint_a1586bac7122d897618eff69ae90aab49} 
+typedef F {\bfseries Function\+Type}
+\item 
+\Hypertarget{classAriadne_1_1Constraint_a24eb68bd99fea32d8949bb99225df546}\label{classAriadne_1_1Constraint_a24eb68bd99fea32d8949bb99225df546} 
+typedef R {\bfseries Bound\+Type}
+\item 
+\Hypertarget{classAriadne_1_1Constraint_afcc429108e370b26becd13edfa00f4ca}\label{classAriadne_1_1Constraint_afcc429108e370b26becd13edfa00f4ca} 
+typedef R {\bfseries Upper\+Bound\+Type}
+\item 
+\Hypertarget{classAriadne_1_1Constraint_a919bc44578e9e942685949c383db71d2}\label{classAriadne_1_1Constraint_a919bc44578e9e942685949c383db71d2} 
+typedef Negation\+Type$<$ R $>$ {\bfseries Lower\+Bound\+Type}
+\end{DoxyCompactItemize}
+\doxysubsubsubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1Constraint_a5e6f582bce69192eaa6ab0a5513d598e}\label{classAriadne_1_1Constraint_a5e6f582bce69192eaa6ab0a5513d598e} 
+{\bfseries Constraint} (\mbox{\hyperlink{classAriadne_1_1Constraint_a919bc44578e9e942685949c383db71d2}{Lower\+Bound\+Type}} const \&l, \mbox{\hyperlink{classAriadne_1_1Constraint_a1586bac7122d897618eff69ae90aab49}{Function\+Type}} const \&f, \mbox{\hyperlink{classAriadne_1_1Constraint_afcc429108e370b26becd13edfa00f4ca}{Upper\+Bound\+Type}} const \&u)
+\item 
+\Hypertarget{classAriadne_1_1Constraint_a753c9a4f3cbb87fdfe01a98e67597914}\label{classAriadne_1_1Constraint_a753c9a4f3cbb87fdfe01a98e67597914} 
+{\bfseries Constraint} (\mbox{\hyperlink{classAriadne_1_1Constraint_a1586bac7122d897618eff69ae90aab49}{Function\+Type}} const \&f, \mbox{\hyperlink{classAriadne_1_1Constraint_a24eb68bd99fea32d8949bb99225df546}{Bound\+Type}} const \&x)
+\item 
+\Hypertarget{classAriadne_1_1Constraint_a209644d9a43c8c5cedd020c7dfab9657}\label{classAriadne_1_1Constraint_a209644d9a43c8c5cedd020c7dfab9657} 
+\mbox{\hyperlink{classAriadne_1_1Constraint_a1586bac7122d897618eff69ae90aab49}{Function\+Type}} const \& {\bfseries function} () const
+\item 
+\Hypertarget{classAriadne_1_1Constraint_ac553426d3e8c493742606dbe03855b08}\label{classAriadne_1_1Constraint_ac553426d3e8c493742606dbe03855b08} 
+\mbox{\hyperlink{namespaceAriadne_acd8b5f68421eb22a84277ef7c9c0ee2a}{Size\+Type}} {\bfseries argument\+\_\+size} () const
+\item 
+\Hypertarget{classAriadne_1_1Constraint_ad3f0a1e61414f6d9788c886d8ee5a33d}\label{classAriadne_1_1Constraint_ad3f0a1e61414f6d9788c886d8ee5a33d} 
+\mbox{\hyperlink{classAriadne_1_1Constraint_a919bc44578e9e942685949c383db71d2}{Lower\+Bound\+Type}} const \& {\bfseries lower\+\_\+bound} () const
+\item 
+\Hypertarget{classAriadne_1_1Constraint_acd7efed29913e7bf4b709a883d477881}\label{classAriadne_1_1Constraint_acd7efed29913e7bf4b709a883d477881} 
+\mbox{\hyperlink{classAriadne_1_1Constraint_afcc429108e370b26becd13edfa00f4ca}{Upper\+Bound\+Type}} const \& {\bfseries upper\+\_\+bound} () const
+\end{DoxyCompactItemize}
+\doxysubsubsubsection*{Related Types and Functions}
+(Note that these are not member symbols.) \begin{Indent}\textbf{ Type synonyms}\par
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1Constraint_ad10f5dd393710e8fbb1ba8dd1fb7a20c}\label{classAriadne_1_1Constraint_ad10f5dd393710e8fbb1ba8dd1fb7a20c} 
+using {\bfseries Real\+Constraint} = \mbox{\hyperlink{classAriadne_1_1Constraint}{Constraint}}$<$Real\+Scalar\+Multivariate\+Function,\mbox{\hyperlink{classAriadne_1_1Real}{Real}}$>$
+\item 
+\Hypertarget{classAriadne_1_1Constraint_a161e2fdac653fc364e3dd1dda4e15613}\label{classAriadne_1_1Constraint_a161e2fdac653fc364e3dd1dda4e15613} 
+using {\bfseries Effective\+Constraint} = \mbox{\hyperlink{classAriadne_1_1Constraint}{Constraint}}$<$Effective\+Scalar\+Multivariate\+Function,Effective\+Number$>$
+\item 
+\Hypertarget{classAriadne_1_1Constraint_a2f3df4d3a01923c8215991272a2a21dd}\label{classAriadne_1_1Constraint_a2f3df4d3a01923c8215991272a2a21dd} 
+using {\bfseries Validated\+Constraint} = \mbox{\hyperlink{classAriadne_1_1Constraint}{Constraint}}$<$Validated\+Scalar\+Multivariate\+Function,Validated\+Number$>$
+\item 
+\Hypertarget{classAriadne_1_1Constraint_adde8dab553be0181ba37c9f4ed622d0d}\label{classAriadne_1_1Constraint_adde8dab553be0181ba37c9f4ed622d0d} 
+using {\bfseries Approximate\+Constraint} = \mbox{\hyperlink{classAriadne_1_1Constraint}{Constraint}}$<$Approximate\+Scalar\+Multivariate\+Function,Approximate\+Number$>$
+\item 
+\Hypertarget{classAriadne_1_1Constraint_abd7fa6642267def48dbddd5813a3cc85}\label{classAriadne_1_1Constraint_abd7fa6642267def48dbddd5813a3cc85} 
+using {\bfseries Validated\+Exact\+Constraint} = \mbox{\hyperlink{classAriadne_1_1Constraint}{Constraint}}$<$Validated\+Scalar\+Multivariate\+Function,\mbox{\hyperlink{namespaceAriadne_1_1Numeric_ab0e8de419e55b58a1f7cc1f4a129f34a}{Exact\+Number}}$>$
+\end{DoxyCompactItemize}
+\end{Indent}
+
+
+The documentation for this class was generated from the following files\+:\begin{DoxyCompactItemize}
+\item 
+source/dynamics/\mbox{\hyperlink{enclosure_8hpp}{enclosure.\+hpp}}\item 
+source/function/\mbox{\hyperlink{constraint_8hpp}{constraint.\+hpp}}\end{DoxyCompactItemize}

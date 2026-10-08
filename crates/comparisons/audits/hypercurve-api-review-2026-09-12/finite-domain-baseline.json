@@ -1,0 +1,20 @@
+{
+  "commit": "dfc8ff21c6f86f4feb8e75f90da010cd5c0f3bf2",
+  "command": [
+    "rustc",
+    "--edition=2024",
+    "-O",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-domain-baseline.rs",
+    "--extern",
+    "hypercurve=/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/libhypercurve-2c7ff6f3fbe07653.rlib",
+    "-L",
+    "dependency=/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps",
+    "-o",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-domain-baseline"
+  ],
+  "returncode": 0,
+  "elapsed_seconds": 0.005181026004720479,
+  "source_sha256": "c032cc63c161d14b576b2264b3df28e4a78b35d9210200aaf51b829f64806e59",
+  "executable_sha256": "7bf230b40bfd1d688c39c656140821309a3c1fb2f602876e3286f35958054fac",
+  "normal_library_sha256": "ac087dcc452fada528c2564ba2c289aa0b5bd7d1eeeabc4b5e9db6e2ce224d75"
+}

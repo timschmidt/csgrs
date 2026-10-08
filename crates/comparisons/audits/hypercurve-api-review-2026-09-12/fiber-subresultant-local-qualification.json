@@ -1,0 +1,44 @@
+{
+  "status": "passed for the Hypersolve change",
+  "goal_status": "active",
+  "parent": "3ac2e7510936a11c7bf2eac5dfbe3f9f851afe55",
+  "commit": "c96ed424fa6de0ea889652315095e7c7a17aade9",
+  "source_sha256": {
+    "src/algebraic_fiber.rs": "62f970f9c039511a0908bfb6b023ebef58189dfd6b4fd58d391c3c0804f6390f",
+    "src/algebraic_fiber/subresultant.rs": "45d5b16b5229cc17c90b389d1c123f58501377af5532543da4ead6232a8745d9",
+    "src/lib.rs": "b95673bc3f9bcefc8b74cc21de43006e6755dcb58e813c047b3e3b7f2f6f2b4a"
+  },
+  "library_tests": 494,
+  "new_tests": 2,
+  "failed": 0,
+  "check": {
+    "command": [
+      "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+      "check",
+      "--all-targets",
+      "--no-default-features",
+      "--locked",
+      "--offline"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 14.184967662993586
+  },
+  "tests": {
+    "command": [
+      "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypersolve-2e681fec2f29f4bd",
+      "--test-threads=4",
+      "--color",
+      "never"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.41434164901147597,
+    "binary_sha256": "4b05fae9ee5ccaa8ba42ffc8a8ddcc85112bf6a04fa7145e53a90dd6ce38509d"
+  },
+  "archived_binary": "fiber-subresultant-local-artifacts/hypersolve-2e681fec2f29f4bd",
+  "source_snapshot": "/tmp/hypercurve-mapped-point-qualification/hypersolve",
+  "dependencies": "finite-parallel-pruning-isolated-sources.json",
+  "hyperreal_working_tree_used": false,
+  "downstream_candidate": "mapped-point-inverse-attempt11",
+  "downstream_scope": "27 of 28 focused Hypercurve tests pass; compact analytic normal-sheet point inversion remains uncertain on a reduced coefficient. The field subresultant is constructed. This is not full Hypercurve qualification.",
+  "changes": "Compute subresultants modulo the retained base and source equations. Reuse the polynomial Berkowitz determinant with quotient reduction after every product and clear one common base-field denominator scale across all target coefficients."
+}

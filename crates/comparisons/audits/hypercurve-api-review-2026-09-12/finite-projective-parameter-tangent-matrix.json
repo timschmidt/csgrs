@@ -1,0 +1,30 @@
+{
+  "returncode": 0,
+  "elapsed_seconds": 4.820053472009022,
+  "normal_library_sha256": "5cc578428c0ecd41b54f2dca195f416779e365698dcb4ad46588dd84bd0ef96a",
+  "log": "finite-projective-parameter-tangent-matrix.log",
+  "source": "selected-circle-tangent-identity-matrix.rs",
+  "command": [
+    "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustc",
+    "--edition=2024",
+    "-O",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/selected-circle-tangent-identity-matrix.rs",
+    "--extern",
+    "hypercurve=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypercurve-1201b30e361703ad.rlib",
+    "-L",
+    "dependency=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps",
+    "-o",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-projective-parameter-tangent-matrix"
+  ],
+  "run_command": [
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-projective-parameter-tangent-matrix"
+  ],
+  "source_sha256": "005a451f7b9e9c4bd551360b7ab627d150c6ad4ed8e0794e17c059c751a6bef5",
+  "executable_sha256": "a6c73b41c8a21aeb8ee2971807e6a89a427b160243277253eb8ad3198dbdbff3",
+  "counts": {
+    "tangent_queries": 120,
+    "opposite_tangent_exclusions": 40,
+    "point_replays": 240,
+    "topologies": 120
+  }
+}

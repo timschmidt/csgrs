@@ -1,0 +1,153 @@
+/***************************************************************************
+ *            installation.dox
+ *
+ *  Copyright  2004-2014  Pieter Collins, Luca Geretti
+ *
+ ****************************************************************************/
+
+/*
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; either version 2 of the License, or
+ *  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Library General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program; if not, write to the Free Software
+ *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+ */
+
+/*!
+
+\file installation.dox
+\brief Installation guide for Doxygen documentation
+
+
+\page installation_page Installation Guide
+
+These installation instructions have been tested on Ubuntu 16.04 and OSX 10.11.
+
+For the Ubuntu installation, we will refer to packages available on Aptitude. The OSX installation instead will assume you are using the Brew package manager.
+
+The build system is CMake. The compilers we tested the library under Ubuntu are GCC and Clang, while for OSX is Clang.
+
+
+\section installation_dependencies Dependencies
+
+Some packages are required to download and compile the sources. The syntax to install a package is:
+
+  \code sudo apt install <package-name> \endcode
+
+The mandatory packages are the following:
+
+ - \c git : to download the source code and retrieve a given version of the distribution;
+ - \c cmake : to automate the build;
+ - \c g++ or \c clang++: to compile the C++ sources;
+ - \c libgmp-dev \c libmpfr-dev : internal dependencies (numeric libraries).
+ - \c libboost-dev \c libboost-serialization-dev \c libboost-thread-dev : internal dependencies (support libraries).
+
+You can install all the mandatory packages with:
+
+\code sudo apt install git cmake g++ clang libgmp-dev libmpfr-dev libboost-dev libboost-serialization-dev libboost-thread-dev \endcode
+
+The following packages instead are optional:
+
+ - \c libbdd-dev : enables Binary Decision Diagram support, with improved efficiency (recommended);
+ - \c libcairo2-dev : allows to plot analysis results (recommended);
+ - \c libgtk2.0-dev : allows pop-up graphics windows;
+ - \c python2.7-dev \c libboost-python-dev : to build the Python interface (recommended).
+ - \c doxygen : to build the documentation (recommended).
+
+\subsection installation_on_osx OSX
+
+Install the Command Line Developer Tools (will also be asked when installing Homebrew) from the Apple Store
+
+Install Homebrew from <a href="http://brew.sh/">http://brew.sh/</a>
+
+    Homebrew packages required: \code cmake boost gtk cairo \endcode
+
+Optionally, if you want to build the documentation, you need Doxygen and a working Latex distribution (including the Math packages).
+
+\section installation_download Download
+
+You can check out the latest development version on the Git repository into a local directory \c ariadne-development by typing:
+
+  \code git clone https://bitbucket.org/ariadne-cps/development.git ariadne-development \endcode
+
+\section installation_building Building
+
+To build the library in a clean way, it is preferable that you set up a build subdirectory:
+\code
+$ mkdir build
+$ cd build
+\endcode
+
+
+Then you can prepare the build environment:
+\code
+$ cmake ..
+\endcode
+
+At this point, if no error arises, you can build the library libariadne.so itself:
+\code
+$ make ariadne
+\endcode
+On a multi-core processor you can use multiple cores to speed up the build process. e.g. To use 4 cores, type
+\code
+$ make -j 4 ariadne
+\endcode
+
+If you prefer to use the Python interface rather than the C++ library, you should build the file \c ariadne.so with:
+\code
+$ make pyariadne
+\endcode
+
+To compile a single example, e.g. the tutorial, use:
+\code
+$ make tutorial
+\endcode
+To compile all examples, use
+\code
+$ make examples
+\endcode
+
+Optionally, you can also build and run the test suite for the library:
+\code
+$ make tests test
+\endcode
+Ideally, no error should appear. 
+Tests named  \"<tt>_issue</tt>\"  indicate known problems with the code, and may fail.
+This should not however impact the correctness of the results, but may indicate problems with accuracy, efficiency, or termination on certain problems.
+
+To build libraries, tests and examples, simply type:
+\code
+$ make
+\endcode
+or
+\code
+$ make all
+\endcode
+
+To build the documentation, use:
+\code
+$ make doc
+\endcode
+The documentation will be placed in the directory \c build/docs/ .
+
+\section installation_installing_globally Installing globally
+
+To install the library globally, you must do
+\code
+$ make install
+\endcode
+
+To find the installed library under Ubuntu, you may need to set the LD_LIBRARY_PATH in the .bashrc file:
+\code
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib
+\endcode
+
+*/

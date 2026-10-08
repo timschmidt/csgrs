@@ -1,0 +1,14 @@
+{
+  "tag": "derivative-app-candidate-size-arrangement",
+  "started": "2026-09-09T15:39:27.348Z",
+  "finished": "2026-09-09T15:39:27.361Z",
+  "elapsedSeconds": 0.011158145000000005,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "size",
+  "args": [
+    "/tmp/calcium-derivative-apps.5K06wk/candidate-arrangement",
+    "/tmp/calcium-derivative-apps.5K06wk/candidate-arrangement.stripped"
+  ],
+  "code": 0,
+  "signal": null
+}

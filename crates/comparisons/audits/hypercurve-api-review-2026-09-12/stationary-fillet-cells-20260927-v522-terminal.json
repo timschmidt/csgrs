@@ -1,0 +1,79 @@
+{
+  "diagnostic_only": true,
+  "source_manifest": "empty-incident-components-20260927-v523-sources.json",
+  "source_directory": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/source-archives/empty-incident-components-20260927-v523",
+  "fixtures": {
+    "stationary-fillet-line-chart-v516.rs": "821d506394f407af75465776f6835ff581c0d85df67e7680d198e87bb9103808"
+  },
+  "library": {
+    "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/libhypercurve-stationary-fillet-cells-20260927-v522.rlib",
+    "sha256": "2c1ca6b764f72cdf27ba1bdbef19779e817b95d86824e0692a2fe514e3d4c812",
+    "qualified_library": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/libhypercurve.rlib",
+    "dependency_directory": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release",
+    "source_manifest": "empty-incident-components-20260927-v523-sources.json"
+  },
+  "expected_cases": [
+    [
+      "line_chart",
+      "stationary-fillet-line-chart-v516.rs",
+      [
+        "regular_parabola_strict",
+        "stationary_reparameterization_strict",
+        "one_sided_cusp_strict",
+        "regular_parabola_approximate",
+        "stationary_reparameterization_approximate",
+        "one_sided_cusp_approximate",
+        "interior_stationary_contact_strict",
+        "interior_stationary_contact_approximate",
+        "regular_parabola_extend_strict",
+        "stationary_reparameterization_extend_strict",
+        "one_sided_cusp_extend_strict",
+        "interior_stationary_contact_extend_strict",
+        "regular_parabola_extend_approximate",
+        "stationary_reparameterization_extend_approximate",
+        "one_sided_cusp_extend_approximate",
+        "interior_stationary_contact_extend_approximate"
+      ]
+    ]
+  ],
+  "builds": [
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "build",
+        "--lib",
+        "--release",
+        "--all-features",
+        "--locked",
+        "--offline",
+        "--message-format=json"
+      ],
+      "returncode": 0,
+      "log": "stationary-fillet-cells-20260927-v522-library-build.log",
+      "elapsed_seconds": 78.02033521886915
+    },
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustc",
+        "--edition=2024",
+        "--test",
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/stationary-fillet-line-chart-v516.rs",
+        "-C",
+        "opt-level=3",
+        "-L",
+        "dependency=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release",
+        "--extern",
+        "hypercurve=/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/libhypercurve-stationary-fillet-cells-20260927-v522.rlib",
+        "-o",
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/stationary-fillet-cells-20260927-v522-line_chart-tests"
+      ],
+      "returncode": 1,
+      "log": "stationary-fillet-cells-20260927-v522-line_chart-build.log",
+      "elapsed_seconds": 0.031799938064068556
+    }
+  ],
+  "cases": [],
+  "all_processes_reaped": true,
+  "probe_complete": false,
+  "failure": "line_chart build failed"
+}

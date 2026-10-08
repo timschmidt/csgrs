@@ -1,0 +1,22 @@
+[
+  {
+    "mode": "debug",
+    "sourceSha256": "abd34b6e4d558fc6ffa05194bfd40d6b5200de31617ef13d4087bf43f3af3500",
+    "binary": "/home/tim/Documents/GitHub/workspace/.audit-targets/ireal-derivative-18555/debug/ruffini_hyper_boundary",
+    "binarySha256": "94c8534e3d08828c0b49214d91738a1a937f0b312af0d1aec2f1e5b9c0ba4cd7",
+    "status": 0,
+    "error": null,
+    "signal": null,
+    "outputSha256": "0468914da477410a9b3acfd105aae6abdb7fe2b4cea3f397bc73497a81fd00e7"
+  },
+  {
+    "mode": "release",
+    "sourceSha256": "abd34b6e4d558fc6ffa05194bfd40d6b5200de31617ef13d4087bf43f3af3500",
+    "binary": "/home/tim/Documents/GitHub/workspace/.audit-targets/ireal-derivative-18555/release/ruffini_hyper_boundary",
+    "binarySha256": "78b1a8b32ac3977618fa5800225f85314500fb77eba15202e19a55317eef38ae",
+    "status": 0,
+    "error": null,
+    "signal": null,
+    "outputSha256": "0468914da477410a9b3acfd105aae6abdb7fe2b4cea3f397bc73497a81fd00e7"
+  }
+]

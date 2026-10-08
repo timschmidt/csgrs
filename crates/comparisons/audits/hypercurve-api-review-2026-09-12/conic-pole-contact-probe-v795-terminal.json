@@ -1,0 +1,39 @@
+{
+  "baseline": "contact-fallback-consolidation-v793-sources.json",
+  "rlib": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypercurve-85a9105cd1c82df7.rlib",
+  "rlib_sha256": "33098305b482a548d9254e67389717304a29cefeebdd55678e0bbd84ac45541f",
+  "source_sha256": "1fab925f17adf38e61c51b4eef35d05d67e6600fdb79aa59e960c5dfafc609f2",
+  "processes": [
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustc",
+        "--edition=2024",
+        "--crate-name",
+        "conic_pole_contact_probe",
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/conic-pole-contact-probe-v795.rs",
+        "--extern",
+        "hypercurve=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypercurve-85a9105cd1c82df7.rlib",
+        "-L",
+        "dependency=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps",
+        "-C",
+        "opt-level=3",
+        "-o",
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/conic-pole-contact-probe-v795-binary"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.4644467099569738,
+      "log": "conic-pole-contact-probe-v795-compile.log"
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/conic-pole-contact-probe-v795-binary"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.007619488053023815,
+      "log": "conic-pole-contact-probe-v795-run.log"
+    }
+  ],
+  "all_processes_reaped": true,
+  "binary_sha256": "ec43ad121191c0456f7f0c410d64c3f6880d6eb3ab16b1cd741e0dc1cbb4a7b6",
+  "probe_complete": true
+}

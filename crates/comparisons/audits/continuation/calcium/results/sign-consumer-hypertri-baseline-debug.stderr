@@ -1,0 +1,16 @@
+    Blocking waiting for file lock on build directory
+   Compiling hyperlimit v0.4.1 (/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/sign-consumers/baseline/hyperlimit)
+   Compiling itertools v0.14.0
+   Compiling criterion v0.5.1
+   Compiling delaunator v1.1.0
+   Compiling earcutr v0.5.0
+   Compiling hypertri v0.4.1 (/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/sign-consumers/baseline/hypertri)
+    Finished `test` profile [unoptimized] target(s) in 12.84s
+     Running unittests src/lib.rs (/home/tim/Documents/GitHub/workspace/.audit-builds/calcium-baseline/debug/deps/hypertri-287ed092140eebdf)
+     Running tests/adversarial.rs (/home/tim/Documents/GitHub/workspace/.audit-builds/calcium-baseline/debug/deps/adversarial-80b7ffff6f88f18c)
+     Running tests/api_surface_coverage.rs (/home/tim/Documents/GitHub/workspace/.audit-builds/calcium-baseline/debug/deps/api_surface_coverage-8b9e11daea000689)
+     Running tests/earcutr_differential.rs (/home/tim/Documents/GitHub/workspace/.audit-builds/calcium-baseline/debug/deps/earcutr_differential-c97faa8040713708)
+     Running tests/fuzz_properties.rs (/home/tim/Documents/GitHub/workspace/.audit-builds/calcium-baseline/debug/deps/fuzz_properties-e194a809530c47ce)
+     Running tests/predicate_policy.rs (/home/tim/Documents/GitHub/workspace/.audit-builds/calcium-baseline/debug/deps/predicate_policy-1e3bb6df3ccc832e)
+     Running tests/readme.rs (/home/tim/Documents/GitHub/workspace/.audit-builds/calcium-baseline/debug/deps/readme-3e5efcdbc50a9c17)
+     Running tests/real_representations.rs (/home/tim/Documents/GitHub/workspace/.audit-builds/calcium-baseline/debug/deps/real_representations-ef0a04f18ce576ac)

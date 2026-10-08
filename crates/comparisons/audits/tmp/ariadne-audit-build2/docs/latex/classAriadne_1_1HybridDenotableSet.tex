@@ -1,0 +1,43 @@
+\doxysubsection{Hybrid\+Denotable\+Set\texorpdfstring{$<$}{<} EDS \texorpdfstring{$>$}{>} Class Template Reference}
+\hypertarget{classAriadne_1_1HybridDenotableSet}{}\label{classAriadne_1_1HybridDenotableSet}\index{HybridDenotableSet$<$ EDS $>$@{HybridDenotableSet$<$ EDS $>$}}
+
+
+{\ttfamily \#include $<$hybrid\+\_\+set.\+hpp$>$}
+
+
+
+\doxysubsubsection{Description}
+\subsubsection*{template$<$class EDS$>$\newline
+class Ariadne\+::\+Hybrid\+Denotable\+Set$<$ EDS $>$}
+A hybrid set defined in a single location obtained from a Euclidean set by naming variables. Inheritance diagram for Hybrid\+Denotable\+Set\texorpdfstring{$<$}{<} EDS \texorpdfstring{$>$}{>}\+:\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[height=2.916667cm]{classAriadne_1_1HybridDenotableSet}
+\end{center}
+\end{figure}
+\doxysubsubsubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1HybridDenotableSet_a871b57c436a217532db50299af20caf3}\label{classAriadne_1_1HybridDenotableSet_a871b57c436a217532db50299af20caf3} 
+\mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} {\bfseries insert} (const \mbox{\hyperlink{classAriadne_1_1DiscreteLocation}{Discrete\+Location}} \&loc, const \mbox{\hyperlink{classAriadne_1_1LabelledSet}{Labelled\+Set}}$<$ EDS $>$ \&eset)
+\begin{DoxyCompactList}\small\item\em \doxylink{classAriadne_1_1Set}{Set} the continuous state set in location {\itshape loc} to {\itshape vbx}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1HybridDenotableSet_ad0f2e89adecf753e9d43389a6e3ecf23}\label{classAriadne_1_1HybridDenotableSet_ad0f2e89adecf753e9d43389a6e3ecf23} 
+\mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} {\bfseries insert} (const \mbox{\hyperlink{classAriadne_1_1DiscreteLocation}{Discrete\+Location}} \&loc, const \mbox{\hyperlink{classAriadne_1_1Space}{Real\+Space}} \&spc, const EDS \&set)
+\begin{DoxyCompactList}\small\item\em \doxylink{classAriadne_1_1Set}{Set} the continuous state set in location {\itshape loc} to box {\itshape bx} using {\itshape spc} to order the variables. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1HybridDenotableSet_a01618894e44f5f067f6f6dcbff0332ba}\label{classAriadne_1_1HybridDenotableSet_a01618894e44f5f067f6f6dcbff0332ba} 
+\mbox{\hyperlink{classAriadne_1_1Set}{Set}}$<$ \mbox{\hyperlink{classAriadne_1_1DiscreteLocation}{Discrete\+Location}} $>$ {\bfseries locations} () const
+\begin{DoxyCompactList}\small\item\em The set of discrete locations in which the set is nontrivial. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1HybridDenotableSet_ad8fbd2a97ef3c9c030e0f01c2e0f53c2}\label{classAriadne_1_1HybridDenotableSet_ad8fbd2a97ef3c9c030e0f01c2e0f53c2} 
+\mbox{\hyperlink{classAriadne_1_1Space}{Real\+Space}} const \& {\bfseries space} (const \mbox{\hyperlink{classAriadne_1_1DiscreteLocation}{Discrete\+Location}} \&loc) const
+\begin{DoxyCompactList}\small\item\em The ordering of variables used to define the Euclidean box in location {\itshape loc}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1HybridDenotableSet_a0e108fe3d0865d6e97cd3c9457edc8b5}\label{classAriadne_1_1HybridDenotableSet_a0e108fe3d0865d6e97cd3c9457edc8b5} 
+EDS const \& {\bfseries continuous\+\_\+set} (const \mbox{\hyperlink{classAriadne_1_1DiscreteLocation}{Discrete\+Location}} \&loc) const
+\begin{DoxyCompactList}\small\item\em The Euclidean box in location {\itshape loc}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1HybridDenotableSet_ac306d232c463e56cf019d769e562c439}\label{classAriadne_1_1HybridDenotableSet_ac306d232c463e56cf019d769e562c439} 
+EDS {\bfseries euclidean\+\_\+set} (const \mbox{\hyperlink{classAriadne_1_1DiscreteLocation}{Discrete\+Location}} \&loc, const \mbox{\hyperlink{classAriadne_1_1Space}{Real\+Space}} \&spc) const
+\begin{DoxyCompactList}\small\item\em The subset of $\mathbb{R}^n$ obtained by restricting to location {\itshape loc} and ordering the variables as defined by {\itshape spc}. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+The documentation for this class was generated from the following file\+:\begin{DoxyCompactItemize}
+\item 
+source/hybrid/\mbox{\hyperlink{hybrid__set_8hpp}{hybrid\+\_\+set.\+hpp}}\end{DoxyCompactItemize}

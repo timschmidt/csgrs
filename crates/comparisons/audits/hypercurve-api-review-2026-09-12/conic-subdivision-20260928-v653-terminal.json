@@ -1,0 +1,2161 @@
+{
+  "normal_production_build": false,
+  "source_manifest": "conic-subdivision-20260928-v651-sources.json",
+  "source_directory": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/source-archives/conic-subdivision-20260928-v651",
+  "builds": [
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "test",
+        "--lib",
+        "--test",
+        "hypercurve_bezier_split_materialization",
+        "--test",
+        "hypercurve_bezier_region",
+        "--test",
+        "hypercurve_bezier_arrangement",
+        "--release",
+        "--all-features",
+        "--locked",
+        "--offline",
+        "--no-run",
+        "--message-format=json"
+      ],
+      "returncode": 0,
+      "log": "conic-subdivision-20260928-v651-build.log",
+      "elapsed_seconds": 192.5933731899131,
+      "binaries": {
+        "hypercurve_bezier_arrangement": {
+          "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/conic-subdivision-20260928-v651-hypercurve_bezier_arrangement-tests",
+          "sha256": "4080c2d4a5c5f2ef2751ebfdb586e8ec2c938b893640a6e5118891b3f8703e6e"
+        },
+        "hypercurve_bezier_split_materialization": {
+          "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/conic-subdivision-20260928-v651-hypercurve_bezier_split_materialization-tests",
+          "sha256": "bb05f106d6149767ea823a5031066f83c3f7d6279e8a9e5ce64693fe27303496"
+        },
+        "hypercurve_bezier_region": {
+          "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/conic-subdivision-20260928-v651-hypercurve_bezier_region-tests",
+          "sha256": "a2980c2860e95332c8001a384d344ef709cc0baebdfaf01a26cbd497ae8c5e25"
+        },
+        "hypercurve": {
+          "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/conic-subdivision-20260928-v651-hypercurve-tests",
+          "sha256": "0f00311cbacaa7f5e6474e6186dd5c25b174290fb65c2aade087652b04f85a08"
+        }
+      }
+    }
+  ],
+  "cases": [
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/conic-subdivision-20260928-v651-hypercurve-tests",
+        "--exact",
+        "bezier_split::finite_conic_split_regression::finite_conic_split_retains_zero_intermediate_homogeneous_weight",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "conic-subdivision-20260928-v651-finite_conic_split_retains_zero_intermediate_homogeneous_weight-660a7c244b.log",
+      "elapsed_seconds": 0.007578781107440591,
+      "target": "hypercurve",
+      "name": "bezier_split::finite_conic_split_regression::finite_conic_split_retains_zero_intermediate_homogeneous_weight",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/conic-subdivision-20260928-v651-hypercurve-tests",
+        "--exact",
+        "bezier_split::finite_conic_split_regression::conic_homogeneous_cuts_retain_circle_and_tangent_evidence",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "conic-subdivision-20260928-v651-conic_homogeneous_cuts_retain_circle_and_tangent_evidence-ab667fd0a0.log",
+      "elapsed_seconds": 0.003497219877317548,
+      "target": "hypercurve",
+      "name": "bezier_split::finite_conic_split_regression::conic_homogeneous_cuts_retain_circle_and_tangent_evidence",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/conic-subdivision-20260928-v651-hypercurve-tests",
+        "--exact",
+        "bezier_split::finite_conic_split_regression::conic_exterior_cuts_do_not_export_unit_weight_signs_across_poles",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "conic-subdivision-20260928-v651-conic_exterior_cuts_do_not_export_unit_weight_signs_across_poles-3c9e3eb236.log",
+      "elapsed_seconds": 0.0034916410222649574,
+      "target": "hypercurve",
+      "name": "bezier_split::finite_conic_split_regression::conic_exterior_cuts_do_not_export_unit_weight_signs_across_poles",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/conic-subdivision-20260928-v651-hypercurve-tests",
+        "--exact",
+        "bezier_moment::tests::rational_quadratic_first_moments_are_exactly_additive_under_subdivision",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "conic-subdivision-20260928-v651-rational_quadratic_first_moments_are_exactly_additive_under_subdivision-7df4db703e.log",
+      "elapsed_seconds": 0.0075782909989356995,
+      "target": "hypercurve",
+      "name": "bezier_moment::tests::rational_quadratic_first_moments_are_exactly_additive_under_subdivision",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/conic-subdivision-20260928-v651-hypercurve-tests",
+        "--exact",
+        "bezier_moment::tests::rational_quadratic_quarter_circle_has_exact_green_first_moments",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "conic-subdivision-20260928-v651-rational_quadratic_quarter_circle_has_exact_green_first_moments-de7918e771.log",
+      "elapsed_seconds": 0.0317355040460825,
+      "target": "hypercurve",
+      "name": "bezier_moment::tests::rational_quadratic_quarter_circle_has_exact_green_first_moments",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/conic-subdivision-20260928-v651-hypercurve-tests",
+        "--exact",
+        "bezier_moment::tests::rational_quadratic_linear_weight_denominator_keeps_geometric_line_moments",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "conic-subdivision-20260928-v651-rational_quadratic_linear_weight_denominator_keeps_geometric_line_moments-b616c8ed20.log",
+      "elapsed_seconds": 0.0035213991068303585,
+      "target": "hypercurve",
+      "name": "bezier_moment::tests::rational_quadratic_linear_weight_denominator_keeps_geometric_line_moments",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/conic-subdivision-20260928-v651-hypercurve-tests",
+        "--exact",
+        "bezier_moment::tests::rational_quadratic_area_cache_reuses_equal_weight_integrals",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "conic-subdivision-20260928-v651-rational_quadratic_area_cache_reuses_equal_weight_integrals-3a691e8150.log",
+      "elapsed_seconds": 0.003495920915156603,
+      "target": "hypercurve",
+      "name": "bezier_moment::tests::rational_quadratic_area_cache_reuses_equal_weight_integrals",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/conic-subdivision-20260928-v651-hypercurve-tests",
+        "--exact",
+        "rational_bezier_general::tests::homogeneous_representation_preserves_exact_split",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "conic-subdivision-20260928-v651-homogeneous_representation_preserves_exact_split-051d9b7c50.log",
+      "elapsed_seconds": 0.00351043906994164,
+      "target": "hypercurve",
+      "name": "rational_bezier_general::tests::homogeneous_representation_preserves_exact_split",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/conic-subdivision-20260928-v651-hypercurve-tests",
+        "--exact",
+        "rational_bezier_general::tests::affine_subcurve_retains_zero_intermediate_weight_without_a_pole",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "conic-subdivision-20260928-v651-affine_subcurve_retains_zero_intermediate_weight_without_a_pole-7eb7d66a58.log",
+      "elapsed_seconds": 0.003615991910919547,
+      "target": "hypercurve",
+      "name": "rational_bezier_general::tests::affine_subcurve_retains_zero_intermediate_weight_without_a_pole",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/conic-subdivision-20260928-v651-hypercurve-tests",
+        "--exact",
+        "rational_bezier_general::tests::affine_subcurve_rejects_a_crossed_projective_pole",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "conic-subdivision-20260928-v651-affine_subcurve_rejects_a_crossed_projective_pole-4ca61d009c.log",
+      "elapsed_seconds": 0.003512549912557006,
+      "target": "hypercurve",
+      "name": "rational_bezier_general::tests::affine_subcurve_rejects_a_crossed_projective_pole",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/conic-subdivision-20260928-v651-hypercurve-tests",
+        "--exact",
+        "arc_bezier::tests::one_arc_decomposition_shares_exact_conic_provenance",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "conic-subdivision-20260928-v651-one_arc_decomposition_shares_exact_conic_provenance-0e67c7cc0a.log",
+      "elapsed_seconds": 0.003522138111293316,
+      "target": "hypercurve",
+      "name": "arc_bezier::tests::one_arc_decomposition_shares_exact_conic_provenance",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/conic-subdivision-20260928-v651-hypercurve-tests",
+        "--exact",
+        "arc_bezier::tests::mixed_weight_major_circle_is_recognized_without_a_projective_pole",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "conic-subdivision-20260928-v651-mixed_weight_major_circle_is_recognized_without_a_projective_pole-6d38fe6c47.log",
+      "elapsed_seconds": 0.0035029088612645864,
+      "target": "hypercurve",
+      "name": "arc_bezier::tests::mixed_weight_major_circle_is_recognized_without_a_projective_pole",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/conic-subdivision-20260928-v651-hypercurve-tests",
+        "--exact",
+        "arc_bezier::tests::mixed_weight_conic_with_a_projective_pole_is_not_a_regular_arc",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "conic-subdivision-20260928-v651-mixed_weight_conic_with_a_projective_pole_is_not_a_regular_arc-372e76ad10.log",
+      "elapsed_seconds": 0.003509140107780695,
+      "target": "hypercurve",
+      "name": "arc_bezier::tests::mixed_weight_conic_with_a_projective_pole_is_not_a_regular_arc",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/conic-subdivision-20260928-v651-hypercurve_bezier_split_materialization-tests",
+        "--exact",
+        "algebraic_boundary_carries_endpoint_images_without_approximate_materialization",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "conic-subdivision-20260928-v651-algebraic_boundary_carries_endpoint_images_without_approximate_materialization-4f51bda165.log",
+      "elapsed_seconds": 0.0035106490831822157,
+      "target": "hypercurve_bezier_split_materialization",
+      "name": "algebraic_boundary_carries_endpoint_images_without_approximate_materialization",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/conic-subdivision-20260928-v651-hypercurve_bezier_split_materialization-tests",
+        "--exact",
+        "algebraic_endpoint_image_is_a_clone_shared_handle",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "conic-subdivision-20260928-v651-algebraic_endpoint_image_is_a_clone_shared_handle-bda63a0d5d.log",
+      "elapsed_seconds": 0.0014573500957340002,
+      "target": "hypercurve_bezier_split_materialization",
+      "name": "algebraic_endpoint_image_is_a_clone_shared_handle",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/conic-subdivision-20260928-v651-hypercurve_bezier_split_materialization-tests",
+        "--exact",
+        "algebraic_fragment_reversal_retains_source_evidence_and_toggles_traversal",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "conic-subdivision-20260928-v651-algebraic_fragment_reversal_retains_source_evidence_and_toggles_traversal-6b1592591a.log",
+      "elapsed_seconds": 0.003498079953715205,
+      "target": "hypercurve_bezier_split_materialization",
+      "name": "algebraic_fragment_reversal_retains_source_evidence_and_toggles_traversal",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/conic-subdivision-20260928-v651-hypercurve_bezier_split_materialization-tests",
+        "--exact",
+        "broad_singleton_isolator_materializes_exact_endpoint_images",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "conic-subdivision-20260928-v651-broad_singleton_isolator_materializes_exact_endpoint_images-b5e5c72c0e.log",
+      "elapsed_seconds": 0.003499580081552267,
+      "target": "hypercurve_bezier_split_materialization",
+      "name": "broad_singleton_isolator_materializes_exact_endpoint_images",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/conic-subdivision-20260928-v651-hypercurve_bezier_split_materialization-tests",
+        "--exact",
+        "exact_cubic_subcurve_matches_original_endpoints_at_range_bounds",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "conic-subdivision-20260928-v651-exact_cubic_subcurve_matches_original_endpoints_at_range_bounds-d37372df1b.log",
+      "elapsed_seconds": 0.0035065698903054,
+      "target": "hypercurve_bezier_split_materialization",
+      "name": "exact_cubic_subcurve_matches_original_endpoints_at_range_bounds",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/conic-subdivision-20260928-v651-hypercurve_bezier_split_materialization-tests",
+        "--exact",
+        "exact_quadratic_split_endpoints_match_original",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "conic-subdivision-20260928-v651-exact_quadratic_split_endpoints_match_original-db9b5ed2f0.log",
+      "elapsed_seconds": 0.007595879025757313,
+      "target": "hypercurve_bezier_split_materialization",
+      "name": "exact_quadratic_split_endpoints_match_original",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/conic-subdivision-20260928-v651-hypercurve_bezier_split_materialization-tests",
+        "--exact",
+        "exact_quadratic_split_materializes_native_subcurves",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "conic-subdivision-20260928-v651-exact_quadratic_split_materializes_native_subcurves-472729719d.log",
+      "elapsed_seconds": 0.0035559372045099735,
+      "target": "hypercurve_bezier_split_materialization",
+      "name": "exact_quadratic_split_materializes_native_subcurves",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/conic-subdivision-20260928-v651-hypercurve_bezier_split_materialization-tests",
+        "--exact",
+        "exact_rational_quadratic_split_preserves_conic_endpoint_evaluation",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "conic-subdivision-20260928-v651-exact_rational_quadratic_split_preserves_conic_endpoint_evaluation-1cd9a65b4c.log",
+      "elapsed_seconds": 0.003556526033207774,
+      "target": "hypercurve_bezier_split_materialization",
+      "name": "exact_rational_quadratic_split_preserves_conic_endpoint_evaluation",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/conic-subdivision-20260928-v651-hypercurve_bezier_split_materialization-tests",
+        "--exact",
+        "linear_algebraic_boundary_materializes_native_subcurves",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "conic-subdivision-20260928-v651-linear_algebraic_boundary_materializes_native_subcurves-f2241d23d2.log",
+      "elapsed_seconds": 0.003511799033731222,
+      "target": "hypercurve_bezier_split_materialization",
+      "name": "linear_algebraic_boundary_materializes_native_subcurves",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/conic-subdivision-20260928-v651-hypercurve_bezier_split_materialization-tests",
+        "--exact",
+        "rational_algebraic_boundary_carries_conic_endpoint_images",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "conic-subdivision-20260928-v651-rational_algebraic_boundary_carries_conic_endpoint_images-baf15b7113.log",
+      "elapsed_seconds": 0.0034909509122371674,
+      "target": "hypercurve_bezier_split_materialization",
+      "name": "rational_algebraic_boundary_carries_conic_endpoint_images",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/conic-subdivision-20260928-v651-hypercurve_bezier_split_materialization-tests",
+        "--exact",
+        "rational_algebraic_boundary_with_zero_denominator_returns_explicit_uncertainty",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "conic-subdivision-20260928-v651-rational_algebraic_boundary_with_zero_denominator_returns_explicit_uncertainty-19ea781c90.log",
+      "elapsed_seconds": 0.003512068884447217,
+      "target": "hypercurve_bezier_split_materialization",
+      "name": "rational_algebraic_boundary_with_zero_denominator_returns_explicit_uncertainty",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/conic-subdivision-20260928-v651-hypercurve_bezier_split_materialization-tests",
+        "--exact",
+        "rational_algebraic_endpoint_retains_second_derivative_when_constructed",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "conic-subdivision-20260928-v651-rational_algebraic_endpoint_retains_second_derivative_when_constructed-bc5a108128.log",
+      "elapsed_seconds": 0.003507860004901886,
+      "target": "hypercurve_bezier_split_materialization",
+      "name": "rational_algebraic_endpoint_retains_second_derivative_when_constructed",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/conic-subdivision-20260928-v651-hypercurve_bezier_split_materialization-tests",
+        "--exact",
+        "split_materialization_constructor_rejects_disconnected_materialized_fragments",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "conic-subdivision-20260928-v651-split_materialization_constructor_rejects_disconnected_materialized_fragments-6ad44b63bc.log",
+      "elapsed_seconds": 0.0035037589259445667,
+      "target": "hypercurve_bezier_split_materialization",
+      "name": "split_materialization_constructor_rejects_disconnected_materialized_fragments",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/conic-subdivision-20260928-v651-hypercurve_bezier_split_materialization-tests",
+        "--exact",
+        "split_materialization_constructor_rejects_duplicate_fragments",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "conic-subdivision-20260928-v651-split_materialization_constructor_rejects_duplicate_fragments-357bb31955.log",
+      "elapsed_seconds": 0.0034948401153087616,
+      "target": "hypercurve_bezier_split_materialization",
+      "name": "split_materialization_constructor_rejects_duplicate_fragments",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/conic-subdivision-20260928-v651-hypercurve_bezier_split_materialization-tests",
+        "--exact",
+        "split_materialization_constructor_rejects_forged_algebraic_endpoint_evidence",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "conic-subdivision-20260928-v651-split_materialization_constructor_rejects_forged_algebraic_endpoint_evidence-f00c868fd4.log",
+      "elapsed_seconds": 0.0035406569950282574,
+      "target": "hypercurve_bezier_split_materialization",
+      "name": "split_materialization_constructor_rejects_forged_algebraic_endpoint_evidence",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/conic-subdivision-20260928-v651-hypercurve_bezier_split_materialization-tests",
+        "--exact",
+        "split_materialization_constructor_rejects_incomplete_source_coverage",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "conic-subdivision-20260928-v651-split_materialization_constructor_rejects_incomplete_source_coverage-be013d83c2.log",
+      "elapsed_seconds": 0.003545246087014675,
+      "target": "hypercurve_bezier_split_materialization",
+      "name": "split_materialization_constructor_rejects_incomplete_source_coverage",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/conic-subdivision-20260928-v651-hypercurve_bezier_split_materialization-tests",
+        "--exact",
+        "split_materialization_constructor_rejects_materialized_algebraic_range",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "conic-subdivision-20260928-v651-split_materialization_constructor_rejects_materialized_algebraic_range-42e2f225bd.log",
+      "elapsed_seconds": 0.0035308280494064093,
+      "target": "hypercurve_bezier_split_materialization",
+      "name": "split_materialization_constructor_rejects_materialized_algebraic_range",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/conic-subdivision-20260928-v651-hypercurve_bezier_split_materialization-tests",
+        "--exact",
+        "split_materialization_constructor_rejects_noncontiguous_fragments",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "conic-subdivision-20260928-v651-split_materialization_constructor_rejects_noncontiguous_fragments-0be5b7b5f7.log",
+      "elapsed_seconds": 0.003529747948050499,
+      "target": "hypercurve_bezier_split_materialization",
+      "name": "split_materialization_constructor_rejects_noncontiguous_fragments",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/conic-subdivision-20260928-v651-hypercurve_bezier_region-tests",
+        "--exact",
+        "arrangement_admission_regularizes_crossings_and_canceled_seams",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "conic-subdivision-20260928-v651-arrangement_admission_regularizes_crossings_and_canceled_seams-0a6a718811.log",
+      "elapsed_seconds": 0.0075703810434788465,
+      "target": "hypercurve_bezier_region",
+      "name": "arrangement_admission_regularizes_crossings_and_canceled_seams",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/conic-subdivision-20260928-v651-hypercurve_bezier_region-tests",
+        "--exact",
+        "arrangement_admission_retains_selected_curve_evidence_for_reentry",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "conic-subdivision-20260928-v651-arrangement_admission_retains_selected_curve_evidence_for_reentry-928a4449f4.log",
+      "elapsed_seconds": 0.007587498985230923,
+      "target": "hypercurve_bezier_region",
+      "name": "arrangement_admission_retains_selected_curve_evidence_for_reentry",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/conic-subdivision-20260928-v651-hypercurve_bezier_region-tests",
+        "--exact",
+        "closed_polynomial_arrangement_materializes_retained_region_with_exact_area",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "conic-subdivision-20260928-v651-closed_polynomial_arrangement_materializes_retained_region_with_exact_area-732c79c434.log",
+      "elapsed_seconds": 0.0035602159332484007,
+      "target": "hypercurve_bezier_region",
+      "name": "closed_polynomial_arrangement_materializes_retained_region_with_exact_area",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/conic-subdivision-20260928-v651-hypercurve_bezier_region-tests",
+        "--exact",
+        "conic_area_rejects_uncertified_projective_denominator",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "conic-subdivision-20260928-v651-conic_area_rejects_uncertified_projective_denominator-3750b78e3e.log",
+      "elapsed_seconds": 0.0035142989363521338,
+      "target": "hypercurve_bezier_region",
+      "name": "conic_area_rejects_uncertified_projective_denominator",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/conic-subdivision-20260928-v651-hypercurve_bezier_region-tests",
+        "--exact",
+        "conic_region_boundary_materializes_with_exact_area",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "conic-subdivision-20260928-v651-conic_region_boundary_materializes_with_exact_area-8c8052d55e.log",
+      "elapsed_seconds": 0.0035147189628332853,
+      "target": "hypercurve_bezier_region",
+      "name": "conic_region_boundary_materializes_with_exact_area",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/conic-subdivision-20260928-v651-hypercurve_bezier_region-tests",
+        "--exact",
+        "empty_boundary_loops_do_not_certify_signed_area",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "conic-subdivision-20260928-v651-empty_boundary_loops_do_not_certify_signed_area-08a8ac62b6.log",
+      "elapsed_seconds": 0.003564845072105527,
+      "target": "hypercurve_bezier_region",
+      "name": "empty_boundary_loops_do_not_certify_signed_area",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/conic-subdivision-20260928-v651-hypercurve_bezier_region-tests",
+        "--exact",
+        "equal_weight_rational_quadratic_area_matches_polynomial_exactly",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "conic-subdivision-20260928-v651-equal_weight_rational_quadratic_area_matches_polynomial_exactly-ba363c191a.log",
+      "elapsed_seconds": 0.0035298180300742388,
+      "target": "hypercurve_bezier_region",
+      "name": "equal_weight_rational_quadratic_area_matches_polynomial_exactly",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/conic-subdivision-20260928-v651-hypercurve_bezier_region-tests",
+        "--exact",
+        "exact_conic_splits_and_reversal_retain_denominator_and_area_facts",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "conic-subdivision-20260928-v651-exact_conic_splits_and_reversal_retain_denominator_and_area_facts-5096aa5600.log",
+      "elapsed_seconds": 0.00757250003516674,
+      "target": "hypercurve_bezier_region",
+      "name": "exact_conic_splits_and_reversal_retain_denominator_and_area_facts",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/conic-subdivision-20260928-v651-hypercurve_bezier_region-tests",
+        "--exact",
+        "material_components_keep_recursive_hole_ownership_and_recompose_exactly",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "conic-subdivision-20260928-v651-material_components_keep_recursive_hole_ownership_and_recompose_exactly-39e02f6cad.log",
+      "elapsed_seconds": 0.015644838102161884,
+      "target": "hypercurve_bezier_region",
+      "name": "material_components_keep_recursive_hole_ownership_and_recompose_exactly",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/conic-subdivision-20260928-v651-hypercurve_bezier_region-tests",
+        "--exact",
+        "native_boundary_loop_constructor_rejects_open_fragment_cycle",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "conic-subdivision-20260928-v651-native_boundary_loop_constructor_rejects_open_fragment_cycle-54d6430f60.log",
+      "elapsed_seconds": 0.0035765739157795906,
+      "target": "hypercurve_bezier_region",
+      "name": "native_boundary_loop_constructor_rejects_open_fragment_cycle",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/conic-subdivision-20260928-v651-hypercurve_bezier_region-tests",
+        "--exact",
+        "open_arrangement_chain_does_not_materialize_region",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "conic-subdivision-20260928-v651-open_arrangement_chain_does_not_materialize_region-69b8b967de.log",
+      "elapsed_seconds": 0.0035449769347906113,
+      "target": "hypercurve_bezier_region",
+      "name": "open_arrangement_chain_does_not_materialize_region",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/conic-subdivision-20260928-v651-hypercurve_bezier_region-tests",
+        "--exact",
+        "quarter_circle_rational_conic_area_is_exact_symbolic_sector",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "conic-subdivision-20260928-v651-quarter_circle_rational_conic_area_is_exact_symbolic_sector-0fd997855c.log",
+      "elapsed_seconds": 0.003507769899442792,
+      "target": "hypercurve_bezier_region",
+      "name": "quarter_circle_rational_conic_area_is_exact_symbolic_sector",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/conic-subdivision-20260928-v651-hypercurve_bezier_region-tests",
+        "--exact",
+        "rational_quadratic_area_is_invariant_under_negative_projective_scale",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "conic-subdivision-20260928-v651-rational_quadratic_area_is_invariant_under_negative_projective_scale-b5ddbf680c.log",
+      "elapsed_seconds": 0.0034994499292224646,
+      "target": "hypercurve_bezier_region",
+      "name": "rational_quadratic_area_is_invariant_under_negative_projective_scale",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/conic-subdivision-20260928-v651-hypercurve_bezier_region-tests",
+        "--exact",
+        "resolved_linear_overlap_traversal_materializes_unified_region",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "conic-subdivision-20260928-v651-resolved_linear_overlap_traversal_materializes_unified_region-6f6c7b95ea.log",
+      "elapsed_seconds": 0.0035095789935439825,
+      "target": "hypercurve_bezier_region",
+      "name": "resolved_linear_overlap_traversal_materializes_unified_region",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/conic-subdivision-20260928-v651-hypercurve_bezier_region-tests",
+        "--exact",
+        "resolved_rational_overlap_traversal_materializes_unified_region",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "conic-subdivision-20260928-v651-resolved_rational_overlap_traversal_materializes_unified_region-b64ab71b81.log",
+      "elapsed_seconds": 0.0035103291738778353,
+      "target": "hypercurve_bezier_region",
+      "name": "resolved_rational_overlap_traversal_materializes_unified_region",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/conic-subdivision-20260928-v651-hypercurve_bezier_region-tests",
+        "--exact",
+        "retained_algebraic_line_images_normalize_crossing_loops_under_both_policies",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "conic-subdivision-20260928-v651-retained_algebraic_line_images_normalize_crossing_loops_under_both_policies-7de828d2eb.log",
+      "elapsed_seconds": 0.007587559055536985,
+      "target": "hypercurve_bezier_region",
+      "name": "retained_algebraic_line_images_normalize_crossing_loops_under_both_policies",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/conic-subdivision-20260928-v651-hypercurve_bezier_region-tests",
+        "--exact",
+        "retained_boundary_loop_constructor_rejects_duplicate_arrangement_sources",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "conic-subdivision-20260928-v651-retained_boundary_loop_constructor_rejects_duplicate_arrangement_sources-021df50f82.log",
+      "elapsed_seconds": 0.003547476837411523,
+      "target": "hypercurve_bezier_region",
+      "name": "retained_boundary_loop_constructor_rejects_duplicate_arrangement_sources",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/conic-subdivision-20260928-v651-hypercurve_bezier_region-tests",
+        "--exact",
+        "retained_boundary_loop_constructor_rejects_forged_materialized_range_order",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "conic-subdivision-20260928-v651-retained_boundary_loop_constructor_rejects_forged_materialized_range_order-2347314b72.log",
+      "elapsed_seconds": 0.003510809037834406,
+      "target": "hypercurve_bezier_region",
+      "name": "retained_boundary_loop_constructor_rejects_forged_materialized_range_order",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/conic-subdivision-20260928-v651-hypercurve_bezier_region-tests",
+        "--exact",
+        "retained_boundary_loop_constructor_rejects_forged_source_endpoint_image",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "conic-subdivision-20260928-v651-retained_boundary_loop_constructor_rejects_forged_source_endpoint_image-6792dc8229.log",
+      "elapsed_seconds": 0.00355082587338984,
+      "target": "hypercurve_bezier_region",
+      "name": "retained_boundary_loop_constructor_rejects_forged_source_endpoint_image",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/conic-subdivision-20260928-v651-hypercurve_bezier_region-tests",
+        "--exact",
+        "retained_boundary_loop_constructor_rejects_incomplete_algebraic_endpoint_evidence",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "conic-subdivision-20260928-v651-retained_boundary_loop_constructor_rejects_incomplete_algebraic_endpoint_evidence-870ec2395b.log",
+      "elapsed_seconds": 0.003588333958759904,
+      "target": "hypercurve_bezier_region",
+      "name": "retained_boundary_loop_constructor_rejects_incomplete_algebraic_endpoint_evidence",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/conic-subdivision-20260928-v651-hypercurve_bezier_region-tests",
+        "--exact",
+        "retained_boundary_loop_constructor_rejects_open_fragment_cycle",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "conic-subdivision-20260928-v651-retained_boundary_loop_constructor_rejects_open_fragment_cycle-b20929b973.log",
+      "elapsed_seconds": 0.0035281688906252384,
+      "target": "hypercurve_bezier_region",
+      "name": "retained_boundary_loop_constructor_rejects_open_fragment_cycle",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/conic-subdivision-20260928-v651-hypercurve_bezier_region-tests",
+        "--exact",
+        "retained_boundary_loop_constructor_rejects_source_only_algebraic_endpoint_evidence",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "conic-subdivision-20260928-v651-retained_boundary_loop_constructor_rejects_source_only_algebraic_endpoint_evidence-a02def7ed5.log",
+      "elapsed_seconds": 0.0035201788414269686,
+      "target": "hypercurve_bezier_region",
+      "name": "retained_boundary_loop_constructor_rejects_source_only_algebraic_endpoint_evidence",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/conic-subdivision-20260928-v651-hypercurve_bezier_region-tests",
+        "--exact",
+        "retained_certified_nonlinear_line_image_uses_authoritative_roles",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "conic-subdivision-20260928-v651-retained_certified_nonlinear_line_image_uses_authoritative_roles-45365092d8.log",
+      "elapsed_seconds": 0.0034567818511277437,
+      "target": "hypercurve_bezier_region",
+      "name": "retained_certified_nonlinear_line_image_uses_authoritative_roles",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/conic-subdivision-20260928-v651-hypercurve_bezier_region-tests",
+        "--exact",
+        "retained_curve_envelope_includes_native_bezier_interior_extrema",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "conic-subdivision-20260928-v651-retained_curve_envelope_includes_native_bezier_interior_extrema-ee3c79f3d1.log",
+      "elapsed_seconds": 0.003582723904401064,
+      "target": "hypercurve_bezier_region",
+      "name": "retained_curve_envelope_includes_native_bezier_interior_extrema",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/conic-subdivision-20260928-v651-hypercurve_bezier_region-tests",
+        "--exact",
+        "retained_curve_envelope_uses_algebraic_endpoint_image_before_interval_hull",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "conic-subdivision-20260928-v651-retained_curve_envelope_uses_algebraic_endpoint_image_before_interval_hull-9483512065.log",
+      "elapsed_seconds": 0.003518767887726426,
+      "target": "hypercurve_bezier_region",
+      "name": "retained_curve_envelope_uses_algebraic_endpoint_image_before_interval_hull",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/conic-subdivision-20260928-v651-hypercurve_bezier_region-tests",
+        "--exact",
+        "retained_curve_envelope_uses_algebraic_parameter_interval_hull",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "conic-subdivision-20260928-v651-retained_curve_envelope_uses_algebraic_parameter_interval_hull-c69df19e3a.log",
+      "elapsed_seconds": 0.003550285939127207,
+      "target": "hypercurve_bezier_region",
+      "name": "retained_curve_envelope_uses_algebraic_parameter_interval_hull",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/conic-subdivision-20260928-v651-hypercurve_bezier_region-tests",
+        "--exact",
+        "retained_curve_envelope_uses_source_bounds_for_algebraic_split_fragments",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "conic-subdivision-20260928-v651-retained_curve_envelope_uses_source_bounds_for_algebraic_split_fragments-045c490e23.log",
+      "elapsed_seconds": 0.0035197390243411064,
+      "target": "hypercurve_bezier_region",
+      "name": "retained_curve_envelope_uses_source_bounds_for_algebraic_split_fragments",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/conic-subdivision-20260928-v651-hypercurve_bezier_region-tests",
+        "--exact",
+        "retained_curved_nesting_role_evidence_assigns_same_orientation_nonlinear_hole",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "conic-subdivision-20260928-v651-retained_curved_nesting_role_evidence_assigns_same_orientation_nonlinear_hole-2fed47f9c1.log",
+      "elapsed_seconds": 0.0034875310957431793,
+      "target": "hypercurve_bezier_region",
+      "name": "retained_curved_nesting_role_evidence_assigns_same_orientation_nonlinear_hole",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/conic-subdivision-20260928-v651-hypercurve_bezier_region-tests",
+        "--exact",
+        "retained_exact_algebraic_endpoint_line_images_assign_roles",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "conic-subdivision-20260928-v651-retained_exact_algebraic_endpoint_line_images_assign_roles-b333026976.log",
+      "elapsed_seconds": 0.0035500959493219852,
+      "target": "hypercurve_bezier_region",
+      "name": "retained_exact_algebraic_endpoint_line_images_assign_roles",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/conic-subdivision-20260928-v651-hypercurve_bezier_region-tests",
+        "--exact",
+        "retained_exact_line_images_assign_nested_material_and_hole",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "conic-subdivision-20260928-v651-retained_exact_line_images_assign_nested_material_and_hole-141e3d7158.log",
+      "elapsed_seconds": 0.003513028845191002,
+      "target": "hypercurve_bezier_region",
+      "name": "retained_exact_line_images_assign_nested_material_and_hole",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/conic-subdivision-20260928-v651-hypercurve_bezier_region-tests",
+        "--exact",
+        "retained_nesting_evidence_constructor_rejects_mismatched_evidence",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "conic-subdivision-20260928-v651-retained_nesting_evidence_constructor_rejects_mismatched_evidence-34975d0325.log",
+      "elapsed_seconds": 0.0035206780303269625,
+      "target": "hypercurve_bezier_region",
+      "name": "retained_nesting_evidence_constructor_rejects_mismatched_evidence",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/conic-subdivision-20260928-v651-hypercurve_bezier_region-tests",
+        "--exact",
+        "retained_nonlinear_algebraic_carriers_classify_without_materialization",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "conic-subdivision-20260928-v651-retained_nonlinear_algebraic_carriers_classify_without_materialization-c9fcc38559.log",
+      "elapsed_seconds": 0.0035346869844943285,
+      "target": "hypercurve_bezier_region",
+      "name": "retained_nonlinear_algebraic_carriers_classify_without_materialization",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/conic-subdivision-20260928-v651-hypercurve_bezier_region-tests",
+        "--exact",
+        "reversed_internal_overlap_traversal_materializes_union_boundary",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "conic-subdivision-20260928-v651-reversed_internal_overlap_traversal_materializes_union_boundary-136424b4a6.log",
+      "elapsed_seconds": 0.0035130090545862913,
+      "target": "hypercurve_bezier_region",
+      "name": "reversed_internal_overlap_traversal_materializes_union_boundary",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/conic-subdivision-20260928-v651-hypercurve_bezier_region-tests",
+        "--exact",
+        "symmetric_quadratic_lens_area_scales_exactly",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "conic-subdivision-20260928-v651-symmetric_quadratic_lens_area_scales_exactly-51bbaa707c.log",
+      "elapsed_seconds": 0.11384840286336839,
+      "target": "hypercurve_bezier_region",
+      "name": "symmetric_quadratic_lens_area_scales_exactly",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/conic-subdivision-20260928-v651-hypercurve_bezier_arrangement-tests",
+        "--exact",
+        "algebraic_split_boundary_blocks_graph_traversal",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "conic-subdivision-20260928-v651-algebraic_split_boundary_blocks_graph_traversal-6d56565e53.log",
+      "elapsed_seconds": 0.003521688049659133,
+      "target": "hypercurve_bezier_arrangement",
+      "name": "algebraic_split_boundary_blocks_graph_traversal",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/conic-subdivision-20260928-v651-hypercurve_bezier_arrangement-tests",
+        "--exact",
+        "arrangement_graph_accepts_adjacent_reused_source_fragment_ranges",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "conic-subdivision-20260928-v651-arrangement_graph_accepts_adjacent_reused_source_fragment_ranges-45d853dd9b.log",
+      "elapsed_seconds": 0.003523468039929867,
+      "target": "hypercurve_bezier_arrangement",
+      "name": "arrangement_graph_accepts_adjacent_reused_source_fragment_ranges",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/conic-subdivision-20260928-v651-hypercurve_bezier_arrangement-tests",
+        "--exact",
+        "arrangement_graph_rejects_duplicate_source_fragment_evidence",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "conic-subdivision-20260928-v651-arrangement_graph_rejects_duplicate_source_fragment_evidence-19cf3efa9a.log",
+      "elapsed_seconds": 0.003556055948138237,
+      "target": "hypercurve_bezier_arrangement",
+      "name": "arrangement_graph_rejects_duplicate_source_fragment_evidence",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/conic-subdivision-20260928-v651-hypercurve_bezier_arrangement-tests",
+        "--exact",
+        "arrangement_graph_rejects_forged_algebraic_endpoint_image_evidence",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "conic-subdivision-20260928-v651-arrangement_graph_rejects_forged_algebraic_endpoint_image_evidence-046a807184.log",
+      "elapsed_seconds": 0.0035313679836690426,
+      "target": "hypercurve_bezier_arrangement",
+      "name": "arrangement_graph_rejects_forged_algebraic_endpoint_image_evidence",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/conic-subdivision-20260928-v651-hypercurve_bezier_arrangement-tests",
+        "--exact",
+        "arrangement_graph_rejects_invalid_unique_source_fragment_ranges",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "conic-subdivision-20260928-v651-arrangement_graph_rejects_invalid_unique_source_fragment_ranges-3f967e74b3.log",
+      "elapsed_seconds": 0.0035142789129167795,
+      "target": "hypercurve_bezier_arrangement",
+      "name": "arrangement_graph_rejects_invalid_unique_source_fragment_ranges",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/conic-subdivision-20260928-v651-hypercurve_bezier_arrangement-tests",
+        "--exact",
+        "arrangement_graph_rejects_overlapping_reused_source_fragment_ranges",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "conic-subdivision-20260928-v651-arrangement_graph_rejects_overlapping_reused_source_fragment_ranges-e4b0de3ca7.log",
+      "elapsed_seconds": 0.0035312881227582693,
+      "target": "hypercurve_bezier_arrangement",
+      "name": "arrangement_graph_rejects_overlapping_reused_source_fragment_ranges",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/conic-subdivision-20260928-v651-hypercurve_bezier_arrangement-tests",
+        "--exact",
+        "branch_vertex_is_explicit_uncertainty_not_arbitrary_successor",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "conic-subdivision-20260928-v651-branch_vertex_is_explicit_uncertainty_not_arbitrary_successor-419d7949cf.log",
+      "elapsed_seconds": 0.003524258965626359,
+      "target": "hypercurve_bezier_arrangement",
+      "name": "branch_vertex_is_explicit_uncertainty_not_arbitrary_successor",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/conic-subdivision-20260928-v651-hypercurve_bezier_arrangement-tests",
+        "--exact",
+        "certified_overlap_evidence_replays_across_graph_clones",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "conic-subdivision-20260928-v651-certified_overlap_evidence_replays_across_graph_clones-887edcb9a6.log",
+      "elapsed_seconds": 0.0035228279884904623,
+      "target": "hypercurve_bezier_arrangement",
+      "name": "certified_overlap_evidence_replays_across_graph_clones",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/conic-subdivision-20260928-v651-hypercurve_bezier_arrangement-tests",
+        "--exact",
+        "contact_parameters_follow_their_carrier_domains",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "conic-subdivision-20260928-v651-contact_parameters_follow_their_carrier_domains-8c6fd7e7c1.log",
+      "elapsed_seconds": 0.003518457990139723,
+      "target": "hypercurve_bezier_arrangement",
+      "name": "contact_parameters_follow_their_carrier_domains",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/conic-subdivision-20260928-v651-hypercurve_bezier_arrangement-tests",
+        "--exact",
+        "empty_overlap_refinement_preserves_exact_unit_fragment",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "conic-subdivision-20260928-v651-empty_overlap_refinement_preserves_exact_unit_fragment-be8de4dbb3.log",
+      "elapsed_seconds": 0.003508918918669224,
+      "target": "hypercurve_bezier_arrangement",
+      "name": "empty_overlap_refinement_preserves_exact_unit_fragment",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/conic-subdivision-20260928-v651-hypercurve_bezier_arrangement-tests",
+        "--exact",
+        "exact_endpoint_buckets_retain_symbolic_matches",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "conic-subdivision-20260928-v651-exact_endpoint_buckets_retain_symbolic_matches-b3c24411a1.log",
+      "elapsed_seconds": 0.0034745410084724426,
+      "target": "hypercurve_bezier_arrangement",
+      "name": "exact_endpoint_buckets_retain_symbolic_matches",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/conic-subdivision-20260928-v651-hypercurve_bezier_arrangement-tests",
+        "--exact",
+        "exact_split_fragments_traverse_as_one_closed_bezier_chain",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "conic-subdivision-20260928-v651-exact_split_fragments_traverse_as_one_closed_bezier_chain-191f37d720.log",
+      "elapsed_seconds": 0.003484131069853902,
+      "target": "hypercurve_bezier_arrangement",
+      "name": "exact_split_fragments_traverse_as_one_closed_bezier_chain",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/conic-subdivision-20260928-v651-hypercurve_bezier_arrangement-tests",
+        "--exact",
+        "monotone_span_rejects_reversed_parameter_evidence",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "conic-subdivision-20260928-v651-monotone_span_rejects_reversed_parameter_evidence-d088768ac0.log",
+      "elapsed_seconds": 0.0014604500029236078,
+      "target": "hypercurve_bezier_arrangement",
+      "name": "monotone_span_rejects_reversed_parameter_evidence",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/conic-subdivision-20260928-v651-hypercurve_bezier_arrangement-tests",
+        "--exact",
+        "open_quadratic_chain_stays_one_nonclosed_chain",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "conic-subdivision-20260928-v651-open_quadratic_chain_stays_one_nonclosed_chain-f4bd9f5164.log",
+      "elapsed_seconds": 0.0034964000806212425,
+      "target": "hypercurve_bezier_arrangement",
+      "name": "open_quadratic_chain_stays_one_nonclosed_chain",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/conic-subdivision-20260928-v651-hypercurve_bezier_arrangement-tests",
+        "--exact",
+        "retained_arrangement_traversal_constructors_validate_fragment_ownership",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "conic-subdivision-20260928-v651-retained_arrangement_traversal_constructors_validate_fragment_ownership-7504c4d04f.log",
+      "elapsed_seconds": 0.0014739788603037596,
+      "target": "hypercurve_bezier_arrangement",
+      "name": "retained_arrangement_traversal_constructors_validate_fragment_ownership",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/conic-subdivision-20260928-v651-hypercurve_bezier_arrangement-tests",
+        "--exact",
+        "retained_linear_overlap_refinement_evidence_reversed_span_orientation",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "conic-subdivision-20260928-v651-retained_linear_overlap_refinement_evidence_reversed_span_orientation-93956bd549.log",
+      "elapsed_seconds": 0.003492219839245081,
+      "target": "hypercurve_bezier_arrangement",
+      "name": "retained_linear_overlap_refinement_evidence_reversed_span_orientation",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/conic-subdivision-20260928-v651-hypercurve_bezier_arrangement-tests",
+        "--exact",
+        "retained_linear_overlap_split_graph_rejects_forged_orientation",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "conic-subdivision-20260928-v651-retained_linear_overlap_split_graph_rejects_forged_orientation-bfc7a69a81.log",
+      "elapsed_seconds": 0.00351013895124197,
+      "target": "hypercurve_bezier_arrangement",
+      "name": "retained_linear_overlap_split_graph_rejects_forged_orientation",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/conic-subdivision-20260928-v651-hypercurve_bezier_arrangement-tests",
+        "--exact",
+        "retained_linear_overlap_split_graph_rejects_forged_resolved_provenance",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "conic-subdivision-20260928-v651-retained_linear_overlap_split_graph_rejects_forged_resolved_provenance-300304249c.log",
+      "elapsed_seconds": 0.00351043906994164,
+      "target": "hypercurve_bezier_arrangement",
+      "name": "retained_linear_overlap_split_graph_rejects_forged_resolved_provenance",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/conic-subdivision-20260928-v651-hypercurve_bezier_arrangement-tests",
+        "--exact",
+        "retained_linear_overlap_split_graph_rejects_forged_split_evidence_geometry",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "conic-subdivision-20260928-v651-retained_linear_overlap_split_graph_rejects_forged_split_evidence_geometry-1c8b6f414d.log",
+      "elapsed_seconds": 0.0035449769347906113,
+      "target": "hypercurve_bezier_arrangement",
+      "name": "retained_linear_overlap_split_graph_rejects_forged_split_evidence_geometry",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/conic-subdivision-20260928-v651-hypercurve_bezier_arrangement-tests",
+        "--exact",
+        "retained_linear_overlap_split_graph_rejects_missing_refined_provenance",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "conic-subdivision-20260928-v651-retained_linear_overlap_split_graph_rejects_missing_refined_provenance-13962e5bc1.log",
+      "elapsed_seconds": 0.00144471088424325,
+      "target": "hypercurve_bezier_arrangement",
+      "name": "retained_linear_overlap_split_graph_rejects_missing_refined_provenance",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/conic-subdivision-20260928-v651-hypercurve_bezier_arrangement-tests",
+        "--exact",
+        "retained_linear_overlap_split_graph_rejects_missing_split_evidence_evidence",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "conic-subdivision-20260928-v651-retained_linear_overlap_split_graph_rejects_missing_split_evidence_evidence-208ee31777.log",
+      "elapsed_seconds": 0.003517598146572709,
+      "target": "hypercurve_bezier_arrangement",
+      "name": "retained_linear_overlap_split_graph_rejects_missing_split_evidence_evidence",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/conic-subdivision-20260928-v651-hypercurve_bezier_arrangement-tests",
+        "--exact",
+        "retained_linear_overlap_traversal_cancels_reversed_internal_span_in_loop",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "conic-subdivision-20260928-v651-retained_linear_overlap_traversal_cancels_reversed_internal_span_in_loop-fcbdcdbf7b.log",
+      "elapsed_seconds": 0.0035142588894814253,
+      "target": "hypercurve_bezier_arrangement",
+      "name": "retained_linear_overlap_traversal_cancels_reversed_internal_span_in_loop",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/conic-subdivision-20260928-v651-hypercurve_bezier_arrangement-tests",
+        "--exact",
+        "retained_linear_overlap_traversal_rejects_incomplete_refined_partition",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "conic-subdivision-20260928-v651-retained_linear_overlap_traversal_rejects_incomplete_refined_partition-93b67724c9.log",
+      "elapsed_seconds": 0.003517958801239729,
+      "target": "hypercurve_bezier_arrangement",
+      "name": "retained_linear_overlap_traversal_rejects_incomplete_refined_partition",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/conic-subdivision-20260928-v651-hypercurve_bezier_arrangement-tests",
+        "--exact",
+        "retained_linear_overlap_traversal_rejects_indices_outside_refinement",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "conic-subdivision-20260928-v651-retained_linear_overlap_traversal_rejects_indices_outside_refinement-2a3f65bf3a.log",
+      "elapsed_seconds": 0.0035132288467139006,
+      "target": "hypercurve_bezier_arrangement",
+      "name": "retained_linear_overlap_traversal_rejects_indices_outside_refinement",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/conic-subdivision-20260928-v651-hypercurve_bezier_arrangement-tests",
+        "--exact",
+        "retained_linear_overlap_traversal_splits_and_consumes_duplicate_span_in_loop",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "conic-subdivision-20260928-v651-retained_linear_overlap_traversal_splits_and_consumes_duplicate_span_in_loop-bd3935513c.log",
+      "elapsed_seconds": 0.0035015600733458996,
+      "target": "hypercurve_bezier_arrangement",
+      "name": "retained_linear_overlap_traversal_splits_and_consumes_duplicate_span_in_loop",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/conic-subdivision-20260928-v651-hypercurve_bezier_arrangement-tests",
+        "--exact",
+        "retained_overlap_evidence_constructor_rejects_unsorted_or_duplicate_pairs",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "conic-subdivision-20260928-v651-retained_overlap_evidence_constructor_rejects_unsorted_or_duplicate_pairs-e844179d3d.log",
+      "elapsed_seconds": 0.001458439975976944,
+      "target": "hypercurve_bezier_arrangement",
+      "name": "retained_overlap_evidence_constructor_rejects_unsorted_or_duplicate_pairs",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/conic-subdivision-20260928-v651-hypercurve_bezier_arrangement-tests",
+        "--exact",
+        "retained_overlap_evidence_does_not_call_same_curve_image_a_line_split",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "conic-subdivision-20260928-v651-retained_overlap_evidence_does_not_call_same_curve_image_a_line_split-b8bb462f34.log",
+      "elapsed_seconds": 0.003523397957906127,
+      "target": "hypercurve_bezier_arrangement",
+      "name": "retained_overlap_evidence_does_not_call_same_curve_image_a_line_split",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/conic-subdivision-20260928-v651-hypercurve_bezier_arrangement-tests",
+        "--exact",
+        "retained_overlap_evidence_extracts_partial_line_image_split_ranges",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "conic-subdivision-20260928-v651-retained_overlap_evidence_extracts_partial_line_image_split_ranges-22c9bcab56.log",
+      "elapsed_seconds": 0.0035108390729874372,
+      "target": "hypercurve_bezier_arrangement",
+      "name": "retained_overlap_evidence_extracts_partial_line_image_split_ranges",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/conic-subdivision-20260928-v651-hypercurve_bezier_arrangement-tests",
+        "--exact",
+        "retained_overlap_evidence_finds_identical_materialized_fragments",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "conic-subdivision-20260928-v651-retained_overlap_evidence_finds_identical_materialized_fragments-62465af7da.log",
+      "elapsed_seconds": 0.003530707908794284,
+      "target": "hypercurve_bezier_arrangement",
+      "name": "retained_overlap_evidence_finds_identical_materialized_fragments",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/conic-subdivision-20260928-v651-hypercurve_bezier_arrangement-tests",
+        "--exact",
+        "retained_overlap_evidence_finds_reversed_degree_elevated_same_image",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "conic-subdivision-20260928-v651-retained_overlap_evidence_finds_reversed_degree_elevated_same_image-8297a5549f.log",
+      "elapsed_seconds": 0.0035261481534689665,
+      "target": "hypercurve_bezier_arrangement",
+      "name": "retained_overlap_evidence_finds_reversed_degree_elevated_same_image",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/conic-subdivision-20260928-v651-hypercurve_bezier_arrangement-tests",
+        "--exact",
+        "retained_overlap_evidence_preserves_strict_rational_overlap_ranges",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "conic-subdivision-20260928-v651-retained_overlap_evidence_preserves_strict_rational_overlap_ranges-de70503488.log",
+      "elapsed_seconds": 0.003521017963066697,
+      "target": "hypercurve_bezier_arrangement",
+      "name": "retained_overlap_evidence_preserves_strict_rational_overlap_ranges",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/conic-subdivision-20260928-v651-hypercurve_bezier_arrangement-tests",
+        "--exact",
+        "retained_overlap_evidence_recognizes_projectively_reversed_rational_fragments",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "conic-subdivision-20260928-v651-retained_overlap_evidence_recognizes_projectively_reversed_rational_fragments-6919973718.log",
+      "elapsed_seconds": 0.0035242990124970675,
+      "target": "hypercurve_bezier_arrangement",
+      "name": "retained_overlap_evidence_recognizes_projectively_reversed_rational_fragments",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/conic-subdivision-20260928-v651-hypercurve_bezier_arrangement-tests",
+        "--exact",
+        "retained_overlap_evidence_rejects_nonlinear_line_image_bezier_ranges",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "conic-subdivision-20260928-v651-retained_overlap_evidence_rejects_nonlinear_line_image_bezier_ranges-940a2bf57d.log",
+      "elapsed_seconds": 0.003516478929668665,
+      "target": "hypercurve_bezier_arrangement",
+      "name": "retained_overlap_evidence_rejects_nonlinear_line_image_bezier_ranges",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/conic-subdivision-20260928-v651-hypercurve_bezier_arrangement-tests",
+        "--exact",
+        "retained_overlap_evidence_separates_endpoint_touch_from_overlap",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "conic-subdivision-20260928-v651-retained_overlap_evidence_separates_endpoint_touch_from_overlap-34743cdf40.log",
+      "elapsed_seconds": 0.0035486069973558187,
+      "target": "hypercurve_bezier_arrangement",
+      "name": "retained_overlap_evidence_separates_endpoint_touch_from_overlap",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/conic-subdivision-20260928-v651-hypercurve_bezier_arrangement-tests",
+        "--exact",
+        "retained_overlap_pair_constructor_rejects_non_overlap_line_evidence",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "conic-subdivision-20260928-v651-retained_overlap_pair_constructor_rejects_non_overlap_line_evidence-5df5f81732.log",
+      "elapsed_seconds": 0.0035324678756296635,
+      "target": "hypercurve_bezier_arrangement",
+      "name": "retained_overlap_pair_constructor_rejects_non_overlap_line_evidence",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/conic-subdivision-20260928-v651-hypercurve_bezier_arrangement-tests",
+        "--exact",
+        "retained_overlap_pair_constructor_rejects_unordered_indices",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "conic-subdivision-20260928-v651-retained_overlap_pair_constructor_rejects_unordered_indices-4acffff4e4.log",
+      "elapsed_seconds": 0.0036463600117713213,
+      "target": "hypercurve_bezier_arrangement",
+      "name": "retained_overlap_pair_constructor_rejects_unordered_indices",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/conic-subdivision-20260928-v651-hypercurve_bezier_arrangement-tests",
+        "--exact",
+        "retained_overlap_refined_fragment_constructor_validates_local_range",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "conic-subdivision-20260928-v651-retained_overlap_refined_fragment_constructor_validates_local_range-3699cb4752.log",
+      "elapsed_seconds": 0.0035277479328215122,
+      "target": "hypercurve_bezier_arrangement",
+      "name": "retained_overlap_refined_fragment_constructor_validates_local_range",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/conic-subdivision-20260928-v651-hypercurve_bezier_arrangement-tests",
+        "--exact",
+        "retained_overlap_split_constructors_reject_unordered_indices",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "conic-subdivision-20260928-v651-retained_overlap_split_constructors_reject_unordered_indices-034dc7763a.log",
+      "elapsed_seconds": 0.003525238949805498,
+      "target": "hypercurve_bezier_arrangement",
+      "name": "retained_overlap_split_constructors_reject_unordered_indices",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/conic-subdivision-20260928-v651-hypercurve_bezier_arrangement-tests",
+        "--exact",
+        "retained_overlap_split_constructors_validate_range_evidence",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "conic-subdivision-20260928-v651-retained_overlap_split_constructors_validate_range_evidence-7b162ed050.log",
+      "elapsed_seconds": 0.0036278311163187027,
+      "target": "hypercurve_bezier_arrangement",
+      "name": "retained_overlap_split_constructors_validate_range_evidence",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/conic-subdivision-20260928-v651-hypercurve_bezier_arrangement-tests",
+        "--exact",
+        "retained_overlap_traversal_deduplicates_oriented_duplicate_loop_edges",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "conic-subdivision-20260928-v651-retained_overlap_traversal_deduplicates_oriented_duplicate_loop_edges-7d96e5d881.log",
+      "elapsed_seconds": 0.0035049100406467915,
+      "target": "hypercurve_bezier_arrangement",
+      "name": "retained_overlap_traversal_deduplicates_oriented_duplicate_loop_edges",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/conic-subdivision-20260928-v651-hypercurve_bezier_arrangement-tests",
+        "--exact",
+        "retained_overlap_traversal_rejects_reversed_duplicate_as_ownership_boundary",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "conic-subdivision-20260928-v651-retained_overlap_traversal_rejects_reversed_duplicate_as_ownership_boundary-79d3ca9bf7.log",
+      "elapsed_seconds": 0.0035148090682923794,
+      "target": "hypercurve_bezier_arrangement",
+      "name": "retained_overlap_traversal_rejects_reversed_duplicate_as_ownership_boundary",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/conic-subdivision-20260928-v651-hypercurve_bezier_arrangement-tests",
+        "--exact",
+        "retained_rational_overlap_promotes_represented_incidence_root",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "conic-subdivision-20260928-v651-retained_rational_overlap_promotes_represented_incidence_root-76e691e0a5.log",
+      "elapsed_seconds": 0.003576205112040043,
+      "target": "hypercurve_bezier_arrangement",
+      "name": "retained_rational_overlap_promotes_represented_incidence_root",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/conic-subdivision-20260928-v651-hypercurve_bezier_arrangement-tests",
+        "--exact",
+        "retained_rational_overlap_refinement_cancels_reversed_span",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "conic-subdivision-20260928-v651-retained_rational_overlap_refinement_cancels_reversed_span-5b06fef4bd.log",
+      "elapsed_seconds": 0.0035168291069567204,
+      "target": "hypercurve_bezier_arrangement",
+      "name": "retained_rational_overlap_refinement_cancels_reversed_span",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/conic-subdivision-20260928-v651-hypercurve_bezier_arrangement-tests",
+        "--exact",
+        "retained_resolved_overlap_constructor_rejects_unordered_indices",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "conic-subdivision-20260928-v651-retained_resolved_overlap_constructor_rejects_unordered_indices-2dac64a8a9.log",
+      "elapsed_seconds": 0.003551607020199299,
+      "target": "hypercurve_bezier_arrangement",
+      "name": "retained_resolved_overlap_constructor_rejects_unordered_indices",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/conic-subdivision-20260928-v651-hypercurve_bezier_arrangement-tests",
+        "--exact",
+        "retained_tangent_order_rejects_equal_algebraic_successors",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "conic-subdivision-20260928-v651-retained_tangent_order_rejects_equal_algebraic_successors-8c3c11c234.log",
+      "elapsed_seconds": 0.0035157990641891956,
+      "target": "hypercurve_bezier_arrangement",
+      "name": "retained_tangent_order_rejects_equal_algebraic_successors",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/conic-subdivision-20260928-v651-hypercurve_bezier_arrangement-tests",
+        "--exact",
+        "retained_tangent_order_transforms_reversed_algebraic_endpoints_and_tangents",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "conic-subdivision-20260928-v651-retained_tangent_order_transforms_reversed_algebraic_endpoints_and_tangents-b2389077dd.log",
+      "elapsed_seconds": 0.0035450069699436426,
+      "target": "hypercurve_bezier_arrangement",
+      "name": "retained_tangent_order_transforms_reversed_algebraic_endpoints_and_tangents",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/conic-subdivision-20260928-v651-hypercurve_bezier_arrangement-tests",
+        "--exact",
+        "retained_tangent_order_traverses_algebraic_branch_vertex",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "conic-subdivision-20260928-v651-retained_tangent_order_traverses_algebraic_branch_vertex-c586eae87c.log",
+      "elapsed_seconds": 0.0035272580571472645,
+      "target": "hypercurve_bezier_arrangement",
+      "name": "retained_tangent_order_traverses_algebraic_branch_vertex",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/conic-subdivision-20260928-v651-hypercurve_bezier_arrangement-tests",
+        "--exact",
+        "retained_tangent_order_uses_algebraic_second_order_for_equal_successors",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "conic-subdivision-20260928-v651-retained_tangent_order_uses_algebraic_second_order_for_equal_successors-6d3636e46c.log",
+      "elapsed_seconds": 0.003527228021994233,
+      "target": "hypercurve_bezier_arrangement",
+      "name": "retained_tangent_order_uses_algebraic_second_order_for_equal_successors",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/conic-subdivision-20260928-v651-hypercurve_bezier_arrangement-tests",
+        "--exact",
+        "retained_tangent_order_uses_algebraic_third_order_for_cubic_same_tangent_inflections",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "conic-subdivision-20260928-v651-retained_tangent_order_uses_algebraic_third_order_for_cubic_same_tangent_inflections-f49cc1d6e3.log",
+      "elapsed_seconds": 0.0035652259830385447,
+      "target": "hypercurve_bezier_arrangement",
+      "name": "retained_tangent_order_uses_algebraic_third_order_for_cubic_same_tangent_inflections",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/conic-subdivision-20260928-v651-hypercurve_bezier_arrangement-tests",
+        "--exact",
+        "retained_tangent_order_uses_rational_algebraic_second_order_for_equal_successors",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "conic-subdivision-20260928-v651-retained_tangent_order_uses_rational_algebraic_second_order_for_equal_successors-8387797c43.log",
+      "elapsed_seconds": 0.0035614948719739914,
+      "target": "hypercurve_bezier_arrangement",
+      "name": "retained_tangent_order_uses_rational_algebraic_second_order_for_equal_successors",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/conic-subdivision-20260928-v651-hypercurve_bezier_arrangement-tests",
+        "--exact",
+        "tangent_ordered_traversal_rejects_equal_rational_second_order_successors",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "conic-subdivision-20260928-v651-tangent_ordered_traversal_rejects_equal_rational_second_order_successors-2012d7b81e.log",
+      "elapsed_seconds": 0.0035315880086272955,
+      "target": "hypercurve_bezier_arrangement",
+      "name": "tangent_ordered_traversal_rejects_equal_rational_second_order_successors",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/conic-subdivision-20260928-v651-hypercurve_bezier_arrangement-tests",
+        "--exact",
+        "tangent_ordered_traversal_rejects_equal_second_order_outgoing_tangents",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "conic-subdivision-20260928-v651-tangent_ordered_traversal_rejects_equal_second_order_outgoing_tangents-b6e04f2a38.log",
+      "elapsed_seconds": 0.003851595800369978,
+      "target": "hypercurve_bezier_arrangement",
+      "name": "tangent_ordered_traversal_rejects_equal_second_order_outgoing_tangents",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/conic-subdivision-20260928-v651-hypercurve_bezier_arrangement-tests",
+        "--exact",
+        "tangent_ordered_traversal_rejects_equal_third_order_cubic_successors",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "conic-subdivision-20260928-v651-tangent_ordered_traversal_rejects_equal_third_order_cubic_successors-b64e063e08.log",
+      "elapsed_seconds": 0.003525937907397747,
+      "target": "hypercurve_bezier_arrangement",
+      "name": "tangent_ordered_traversal_rejects_equal_third_order_cubic_successors",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/conic-subdivision-20260928-v651-hypercurve_bezier_arrangement-tests",
+        "--exact",
+        "tangent_ordered_traversal_resolves_simple_branch_vertex",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "conic-subdivision-20260928-v651-tangent_ordered_traversal_resolves_simple_branch_vertex-4009e78e5b.log",
+      "elapsed_seconds": 0.0035228480119258165,
+      "target": "hypercurve_bezier_arrangement",
+      "name": "tangent_ordered_traversal_resolves_simple_branch_vertex",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/conic-subdivision-20260928-v651-hypercurve_bezier_arrangement-tests",
+        "--exact",
+        "tangent_ordered_traversal_uses_rational_second_order_for_equal_outgoing_tangents",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "conic-subdivision-20260928-v651-tangent_ordered_traversal_uses_rational_second_order_for_equal_outgoing_tangents-765e6c978b.log",
+      "elapsed_seconds": 0.00351228890940547,
+      "target": "hypercurve_bezier_arrangement",
+      "name": "tangent_ordered_traversal_uses_rational_second_order_for_equal_outgoing_tangents",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/conic-subdivision-20260928-v651-hypercurve_bezier_arrangement-tests",
+        "--exact",
+        "tangent_ordered_traversal_uses_second_order_for_equal_outgoing_tangents",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "conic-subdivision-20260928-v651-tangent_ordered_traversal_uses_second_order_for_equal_outgoing_tangents-25dc63d1d8.log",
+      "elapsed_seconds": 0.0034731319174170494,
+      "target": "hypercurve_bezier_arrangement",
+      "name": "tangent_ordered_traversal_uses_second_order_for_equal_outgoing_tangents",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/conic-subdivision-20260928-v651-hypercurve_bezier_arrangement-tests",
+        "--exact",
+        "tangent_ordered_traversal_uses_third_order_for_cubic_same_tangent_inflections",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "conic-subdivision-20260928-v651-tangent_ordered_traversal_uses_third_order_for_cubic_same_tangent_inflections-76ab9ce43e.log",
+      "elapsed_seconds": 0.0034836719278246164,
+      "target": "hypercurve_bezier_arrangement",
+      "name": "tangent_ordered_traversal_uses_third_order_for_cubic_same_tangent_inflections",
+      "passed": true
+    }
+  ],
+  "checks": [
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "clippy",
+        "--all-targets",
+        "--all-features",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "returncode": 0,
+      "log": "conic-subdivision-20260928-v653-hypercurve-clippy-all-features.log",
+      "elapsed_seconds": 21.496423566015437,
+      "label": "hypercurve-clippy-all-features"
+    },
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "clippy",
+        "--all-targets",
+        "--no-default-features",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "returncode": 0,
+      "log": "conic-subdivision-20260928-v653-hypercurve-clippy-no-default.log",
+      "elapsed_seconds": 20.344698042143136,
+      "label": "hypercurve-clippy-no-default"
+    },
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustfmt",
+        "--edition",
+        "2024",
+        "--config",
+        "skip_children=true",
+        "--check",
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/build-workspace-20260925/hypercurve/src/bezier_moment.rs",
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/build-workspace-20260925/hypercurve/src/bezier_retained_measure.rs",
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/build-workspace-20260925/hypercurve/src/bezier_retained_overlap.rs",
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/build-workspace-20260925/hypercurve/src/bezier_split.rs",
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/build-workspace-20260925/hypercurve/src/curve.rs",
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/build-workspace-20260925/hypercurve/src/rational_bezier.rs",
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/build-workspace-20260925/hypercurve/tests/hypercurve_bezier_split_materialization.rs"
+      ],
+      "returncode": 0,
+      "log": "conic-subdivision-20260928-v653-format.log",
+      "elapsed_seconds": 0.3141969230491668,
+      "label": "format"
+    },
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "check",
+        "--manifest-path",
+        "fuzz/Cargo.toml",
+        "--bin",
+        "curve_string_editing",
+        "--bin",
+        "bezier_arrangement",
+        "--bin",
+        "bezier_region",
+        "--bin",
+        "bezier_split_materialization",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "log": "conic-subdivision-20260928-v653-fuzz-check.log",
+      "elapsed_seconds": 11.430337888887152,
+      "label": "fuzz-check"
+    },
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "doc",
+        "--no-deps",
+        "--all-features",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "log": "conic-subdivision-20260928-v653-hypercurve-documentation.log",
+      "elapsed_seconds": 10.329910165863112,
+      "label": "hypercurve-documentation"
+    },
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "check",
+        "--all-targets",
+        "--all-features",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "log": "conic-subdivision-20260928-v653-hyperbrep-check.log",
+      "elapsed_seconds": 15.135514726862311,
+      "label": "hyperbrep-check"
+    }
+  ],
+  "expected_cases": {
+    "hypercurve": [
+      "bezier_split::finite_conic_split_regression::finite_conic_split_retains_zero_intermediate_homogeneous_weight",
+      "bezier_split::finite_conic_split_regression::conic_homogeneous_cuts_retain_circle_and_tangent_evidence",
+      "bezier_split::finite_conic_split_regression::conic_exterior_cuts_do_not_export_unit_weight_signs_across_poles",
+      "bezier_moment::tests::rational_quadratic_first_moments_are_exactly_additive_under_subdivision",
+      "bezier_moment::tests::rational_quadratic_quarter_circle_has_exact_green_first_moments",
+      "bezier_moment::tests::rational_quadratic_linear_weight_denominator_keeps_geometric_line_moments",
+      "bezier_moment::tests::rational_quadratic_area_cache_reuses_equal_weight_integrals",
+      "rational_bezier_general::tests::homogeneous_representation_preserves_exact_split",
+      "rational_bezier_general::tests::affine_subcurve_retains_zero_intermediate_weight_without_a_pole",
+      "rational_bezier_general::tests::affine_subcurve_rejects_a_crossed_projective_pole",
+      "arc_bezier::tests::one_arc_decomposition_shares_exact_conic_provenance",
+      "arc_bezier::tests::mixed_weight_major_circle_is_recognized_without_a_projective_pole",
+      "arc_bezier::tests::mixed_weight_conic_with_a_projective_pole_is_not_a_regular_arc"
+    ],
+    "hypercurve_bezier_split_materialization": [
+      "algebraic_boundary_carries_endpoint_images_without_approximate_materialization",
+      "algebraic_endpoint_image_is_a_clone_shared_handle",
+      "algebraic_fragment_reversal_retains_source_evidence_and_toggles_traversal",
+      "broad_singleton_isolator_materializes_exact_endpoint_images",
+      "exact_cubic_subcurve_matches_original_endpoints_at_range_bounds",
+      "exact_quadratic_split_endpoints_match_original",
+      "exact_quadratic_split_materializes_native_subcurves",
+      "exact_rational_quadratic_split_preserves_conic_endpoint_evaluation",
+      "linear_algebraic_boundary_materializes_native_subcurves",
+      "rational_algebraic_boundary_carries_conic_endpoint_images",
+      "rational_algebraic_boundary_with_zero_denominator_returns_explicit_uncertainty",
+      "rational_algebraic_endpoint_retains_second_derivative_when_constructed",
+      "split_materialization_constructor_rejects_disconnected_materialized_fragments",
+      "split_materialization_constructor_rejects_duplicate_fragments",
+      "split_materialization_constructor_rejects_forged_algebraic_endpoint_evidence",
+      "split_materialization_constructor_rejects_incomplete_source_coverage",
+      "split_materialization_constructor_rejects_materialized_algebraic_range",
+      "split_materialization_constructor_rejects_noncontiguous_fragments"
+    ],
+    "hypercurve_bezier_region": [
+      "arrangement_admission_regularizes_crossings_and_canceled_seams",
+      "arrangement_admission_retains_selected_curve_evidence_for_reentry",
+      "closed_polynomial_arrangement_materializes_retained_region_with_exact_area",
+      "conic_area_rejects_uncertified_projective_denominator",
+      "conic_region_boundary_materializes_with_exact_area",
+      "empty_boundary_loops_do_not_certify_signed_area",
+      "equal_weight_rational_quadratic_area_matches_polynomial_exactly",
+      "exact_conic_splits_and_reversal_retain_denominator_and_area_facts",
+      "material_components_keep_recursive_hole_ownership_and_recompose_exactly",
+      "native_boundary_loop_constructor_rejects_open_fragment_cycle",
+      "open_arrangement_chain_does_not_materialize_region",
+      "quarter_circle_rational_conic_area_is_exact_symbolic_sector",
+      "rational_quadratic_area_is_invariant_under_negative_projective_scale",
+      "resolved_linear_overlap_traversal_materializes_unified_region",
+      "resolved_rational_overlap_traversal_materializes_unified_region",
+      "retained_algebraic_line_images_normalize_crossing_loops_under_both_policies",
+      "retained_boundary_loop_constructor_rejects_duplicate_arrangement_sources",
+      "retained_boundary_loop_constructor_rejects_forged_materialized_range_order",
+      "retained_boundary_loop_constructor_rejects_forged_source_endpoint_image",
+      "retained_boundary_loop_constructor_rejects_incomplete_algebraic_endpoint_evidence",
+      "retained_boundary_loop_constructor_rejects_open_fragment_cycle",
+      "retained_boundary_loop_constructor_rejects_source_only_algebraic_endpoint_evidence",
+      "retained_certified_nonlinear_line_image_uses_authoritative_roles",
+      "retained_curve_envelope_includes_native_bezier_interior_extrema",
+      "retained_curve_envelope_uses_algebraic_endpoint_image_before_interval_hull",
+      "retained_curve_envelope_uses_algebraic_parameter_interval_hull",
+      "retained_curve_envelope_uses_source_bounds_for_algebraic_split_fragments",
+      "retained_curved_nesting_role_evidence_assigns_same_orientation_nonlinear_hole",
+      "retained_exact_algebraic_endpoint_line_images_assign_roles",
+      "retained_exact_line_images_assign_nested_material_and_hole",
+      "retained_nesting_evidence_constructor_rejects_mismatched_evidence",
+      "retained_nonlinear_algebraic_carriers_classify_without_materialization",
+      "reversed_internal_overlap_traversal_materializes_union_boundary",
+      "symmetric_quadratic_lens_area_scales_exactly"
+    ],
+    "hypercurve_bezier_arrangement": [
+      "algebraic_split_boundary_blocks_graph_traversal",
+      "arrangement_graph_accepts_adjacent_reused_source_fragment_ranges",
+      "arrangement_graph_rejects_duplicate_source_fragment_evidence",
+      "arrangement_graph_rejects_forged_algebraic_endpoint_image_evidence",
+      "arrangement_graph_rejects_invalid_unique_source_fragment_ranges",
+      "arrangement_graph_rejects_overlapping_reused_source_fragment_ranges",
+      "branch_vertex_is_explicit_uncertainty_not_arbitrary_successor",
+      "certified_overlap_evidence_replays_across_graph_clones",
+      "contact_parameters_follow_their_carrier_domains",
+      "empty_overlap_refinement_preserves_exact_unit_fragment",
+      "exact_endpoint_buckets_retain_symbolic_matches",
+      "exact_split_fragments_traverse_as_one_closed_bezier_chain",
+      "monotone_span_rejects_reversed_parameter_evidence",
+      "open_quadratic_chain_stays_one_nonclosed_chain",
+      "retained_arrangement_traversal_constructors_validate_fragment_ownership",
+      "retained_linear_overlap_refinement_evidence_reversed_span_orientation",
+      "retained_linear_overlap_split_graph_rejects_forged_orientation",
+      "retained_linear_overlap_split_graph_rejects_forged_resolved_provenance",
+      "retained_linear_overlap_split_graph_rejects_forged_split_evidence_geometry",
+      "retained_linear_overlap_split_graph_rejects_missing_refined_provenance",
+      "retained_linear_overlap_split_graph_rejects_missing_split_evidence_evidence",
+      "retained_linear_overlap_traversal_cancels_reversed_internal_span_in_loop",
+      "retained_linear_overlap_traversal_rejects_incomplete_refined_partition",
+      "retained_linear_overlap_traversal_rejects_indices_outside_refinement",
+      "retained_linear_overlap_traversal_splits_and_consumes_duplicate_span_in_loop",
+      "retained_overlap_evidence_constructor_rejects_unsorted_or_duplicate_pairs",
+      "retained_overlap_evidence_does_not_call_same_curve_image_a_line_split",
+      "retained_overlap_evidence_extracts_partial_line_image_split_ranges",
+      "retained_overlap_evidence_finds_identical_materialized_fragments",
+      "retained_overlap_evidence_finds_reversed_degree_elevated_same_image",
+      "retained_overlap_evidence_preserves_strict_rational_overlap_ranges",
+      "retained_overlap_evidence_recognizes_projectively_reversed_rational_fragments",
+      "retained_overlap_evidence_rejects_nonlinear_line_image_bezier_ranges",
+      "retained_overlap_evidence_separates_endpoint_touch_from_overlap",
+      "retained_overlap_pair_constructor_rejects_non_overlap_line_evidence",
+      "retained_overlap_pair_constructor_rejects_unordered_indices",
+      "retained_overlap_refined_fragment_constructor_validates_local_range",
+      "retained_overlap_split_constructors_reject_unordered_indices",
+      "retained_overlap_split_constructors_validate_range_evidence",
+      "retained_overlap_traversal_deduplicates_oriented_duplicate_loop_edges",
+      "retained_overlap_traversal_rejects_reversed_duplicate_as_ownership_boundary",
+      "retained_rational_overlap_promotes_represented_incidence_root",
+      "retained_rational_overlap_refinement_cancels_reversed_span",
+      "retained_resolved_overlap_constructor_rejects_unordered_indices",
+      "retained_tangent_order_rejects_equal_algebraic_successors",
+      "retained_tangent_order_transforms_reversed_algebraic_endpoints_and_tangents",
+      "retained_tangent_order_traverses_algebraic_branch_vertex",
+      "retained_tangent_order_uses_algebraic_second_order_for_equal_successors",
+      "retained_tangent_order_uses_algebraic_third_order_for_cubic_same_tangent_inflections",
+      "retained_tangent_order_uses_rational_algebraic_second_order_for_equal_successors",
+      "tangent_ordered_traversal_rejects_equal_rational_second_order_successors",
+      "tangent_ordered_traversal_rejects_equal_second_order_outgoing_tangents",
+      "tangent_ordered_traversal_rejects_equal_third_order_cubic_successors",
+      "tangent_ordered_traversal_resolves_simple_branch_vertex",
+      "tangent_ordered_traversal_uses_rational_second_order_for_equal_outgoing_tangents",
+      "tangent_ordered_traversal_uses_second_order_for_equal_outgoing_tangents",
+      "tangent_ordered_traversal_uses_third_order_for_cubic_same_tangent_inflections"
+    ]
+  },
+  "test_listings": {
+    "hypercurve": {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/conic-subdivision-20260928-v651-hypercurve-tests",
+        "--list"
+      ],
+      "returncode": 0,
+      "log": "conic-subdivision-20260928-v651-hypercurve-list.log",
+      "elapsed_seconds": 0.0076623649802058935
+    },
+    "hypercurve_bezier_split_materialization": {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/conic-subdivision-20260928-v651-hypercurve_bezier_split_materialization-tests",
+        "--list"
+      ],
+      "returncode": 0,
+      "log": "conic-subdivision-20260928-v651-hypercurve_bezier_split_materialization-list.log",
+      "elapsed_seconds": 0.0015043369494378567
+    },
+    "hypercurve_bezier_region": {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/conic-subdivision-20260928-v651-hypercurve_bezier_region-tests",
+        "--list"
+      ],
+      "returncode": 0,
+      "log": "conic-subdivision-20260928-v651-hypercurve_bezier_region-list.log",
+      "elapsed_seconds": 0.003505498869344592
+    },
+    "hypercurve_bezier_arrangement": {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/conic-subdivision-20260928-v651-hypercurve_bezier_arrangement-tests",
+        "--list"
+      ],
+      "returncode": 0,
+      "log": "conic-subdivision-20260928-v651-hypercurve_bezier_arrangement-list.log",
+      "elapsed_seconds": 0.0035080001689493656
+    }
+  },
+  "all_processes_reaped": true,
+  "probe_complete": true,
+  "qualification_complete": true,
+  "promoted_candidate_qualification": true,
+  "tests_reused_from": "conic-subdivision-20260928-v651-terminal.json"
+}

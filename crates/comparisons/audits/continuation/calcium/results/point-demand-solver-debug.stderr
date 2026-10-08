@@ -1,0 +1,3 @@
+   Compiling hypersolve v0.3.1 (/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/point-demand-candidate/hypersolve)
+    Finished `test` profile [unoptimized] target(s) in 7.41s
+     Running unittests src/lib.rs (/tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/debug/deps/hypersolve-ae5d100e7c4be56f)

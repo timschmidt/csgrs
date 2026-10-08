@@ -1,0 +1,35 @@
+\doxysubsection{Drawable2d\+Interface Class Reference}
+\hypertarget{classAriadne_1_1Drawable2dInterface}{}\label{classAriadne_1_1Drawable2dInterface}\index{Drawable2dInterface@{Drawable2dInterface}}
+
+
+{\ttfamily \#include $<$graphics\+\_\+interface.\+hpp$>$}
+
+
+
+\doxysubsubsection{Description}
+Base interface for drawable objects. Inheritance diagram for Drawable2d\+Interface\+:\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[height=12.000000cm]{classAriadne_1_1Drawable2dInterface}
+\end{center}
+\end{figure}
+\doxysubsubsubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1Drawable2dInterface_ad682465debd5ef1e829c63d358ceeba8}\label{classAriadne_1_1Drawable2dInterface_ad682465debd5ef1e829c63d358ceeba8} 
+virtual {\bfseries \texorpdfstring{$\sim$}{\string~}\+Drawable2d\+Interface} ()=default
+\begin{DoxyCompactList}\small\item\em brief Virtual destructor. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Drawable2dInterface_ab85525b05b0fc6e39f752e0dc2b12f8c}\label{classAriadne_1_1Drawable2dInterface_ab85525b05b0fc6e39f752e0dc2b12f8c} 
+virtual \mbox{\hyperlink{classAriadne_1_1Drawable2dInterface}{Drawable2d\+Interface}} \texorpdfstring{$\ast$}{*} {\bfseries clone} () const =0
+\begin{DoxyCompactList}\small\item\em brief Make a dynamically-\/allocated copy. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Drawable2dInterface_adf092da7990b6b5fbff4d5f123ce9eff}\label{classAriadne_1_1Drawable2dInterface_adf092da7990b6b5fbff4d5f123ce9eff} 
+virtual \mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} {\bfseries draw} (\mbox{\hyperlink{classAriadne_1_1CanvasInterface}{Canvas\+Interface}} \&c, const Projection2d \&p) const =0
+\begin{DoxyCompactList}\small\item\em brief Draw the object on the canvas {\itshape c} using line segments and fill/stroke commands. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Drawable2dInterface_a20229d111f40efba6bd023a69794d261}\label{classAriadne_1_1Drawable2dInterface_a20229d111f40efba6bd023a69794d261} 
+virtual Dimension\+Type {\bfseries dimension} () const =0
+\begin{DoxyCompactList}\small\item\em brief The dimension of the object in Euclidean space \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+The documentation for this class was generated from the following file\+:\begin{DoxyCompactItemize}
+\item 
+source/io/\mbox{\hyperlink{graphics__interface_8hpp}{graphics\+\_\+interface.\+hpp}}\end{DoxyCompactItemize}

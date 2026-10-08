@@ -1,0 +1,29 @@
+{
+  "returncode": 0,
+  "elapsed_seconds": 1.7159667990054004,
+  "normal_library_sha256": "714b601f333b40798493e6ce128734b3d2364e200468ebb07c5e34bf947b443d",
+  "log": "finite-fixed-distance-domains-cubic-replay.log",
+  "source": "finite-domain-chord-cubic-replay.rs",
+  "command": [
+    "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustc",
+    "--edition=2024",
+    "-O",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-domain-chord-cubic-replay.rs",
+    "--extern",
+    "hypercurve=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypercurve-96140573e602b0b0.rlib",
+    "-L",
+    "dependency=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps",
+    "-o",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-fixed-distance-domains-cubic-replay"
+  ],
+  "run_command": [
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-fixed-distance-domains-cubic-replay"
+  ],
+  "source_sha256": "883ea6bc0007433637ee9f49c1c4e5ace7731f236e56789a82fec053fde7d508",
+  "executable_sha256": "69f14c4852337fef2f7ee6bc0bfefdb8968de600f653094dc19e07d80a0baba7",
+  "counts": {
+    "queries": 44,
+    "point_replays": 16,
+    "splits": 4
+  }
+}

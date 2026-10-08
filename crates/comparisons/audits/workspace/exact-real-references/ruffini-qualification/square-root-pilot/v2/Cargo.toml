@@ -1,0 +1,19 @@
+[package]
+name = "ruffini_hyper_square_root_oracle_v2"
+version = "0.0.0"
+edition = "2024"
+publish = false
+
+[[bin]]
+name = "ruffini_hyper_square_root_oracle_v2"
+path = "main.rs"
+
+[dependencies]
+hyperreal = { path = "../snapshot/hyperreal", default-features = false }
+hyperlimit = { path = "../snapshot/hyperlimit", default-features = false }
+num = "0.4.3"
+
+[features]
+live-allocations = []
+
+[workspace]

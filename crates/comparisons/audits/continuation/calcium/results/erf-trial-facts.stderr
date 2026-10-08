@@ -1,0 +1,6 @@
+
+thread 'main' (46) panicked at ../erf-qualification.rs:104:5:
+assertion `left == right` failed: previously structural positive facts lost across serialization
+  left: 4
+ right: 0
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace

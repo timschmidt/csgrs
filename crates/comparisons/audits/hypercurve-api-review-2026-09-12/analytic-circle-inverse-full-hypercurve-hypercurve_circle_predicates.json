@@ -1,0 +1,29 @@
+{
+  "repo": "hypercurve",
+  "target": "hypercurve_circle_predicates",
+  "binary": "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve_circle_predicates-cfdf6d81e1cae410",
+  "command": [
+    "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve_circle_predicates-cfdf6d81e1cae410",
+    "--test-threads=4",
+    "--color",
+    "never"
+  ],
+  "sha256": "5d042a03f5861ded6e447174c0eb0efee726762874e676f8b09079bc8987fd09",
+  "returncode": 0,
+  "timed_out": false,
+  "elapsed_seconds": 0.0033773289978853427,
+  "log": "analytic-circle-inverse-full-hypercurve-hypercurve_circle_predicates.log",
+  "passed": [
+    "circle_circle_relation_classifies_coincident_disjoint_tangent_and_secant_cases",
+    "arc_arc_intersection_reuses_circle_relation_witnesses_before_sweep_filtering",
+    "supporting_line_circle_relation_classifies_disjoint_tangent_and_secant_cases",
+    "line_arc_intersection_reuses_supporting_circle_relation_roots"
+  ],
+  "failed": [],
+  "ignored": [],
+  "summaries": [
+    "test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s"
+  ],
+  "new_failures": [],
+  "known_failures": []
+}

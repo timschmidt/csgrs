@@ -1,0 +1,6 @@
+{
+  "outer_handle": 96193,
+  "outer_exit_code": 0,
+  "complete_cases": 4,
+  "finding": "Pi centering leaves an exactly normalizable rational scale power in a symbolic expression; nth-root extraction before normalization loses that equality."
+}

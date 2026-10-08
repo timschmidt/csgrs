@@ -1,0 +1,13 @@
+   Compiling autocfg v1.5.0
+   Compiling num-traits v0.2.19
+   Compiling num-integer v0.1.46
+   Compiling num-complex v0.4.6
+   Compiling num-bigint v0.4.6
+   Compiling num-iter v0.1.45
+   Compiling num-rational v0.4.2
+   Compiling num v0.4.3
+   Compiling hyperreal v0.13.1 (/tmp/aern-quadratic-fix.fsxgfP/hyperreal)
+   Compiling hyperlattice v0.6.1 (/tmp/aern-quadratic-fix.fsxgfP/hyperlattice)
+   Compiling hyperlimit v0.4.1 (/tmp/aern-quadratic-fix.fsxgfP/hyperlimit)
+   Compiling hypersolve v0.3.1 (/tmp/aern-quadratic-fix.fsxgfP/hypersolve-baseline)
+    Finished `release` profile [optimized] target(s) in 17.63s

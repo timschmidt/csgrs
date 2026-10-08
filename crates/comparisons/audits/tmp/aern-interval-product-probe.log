@@ -1,0 +1,6 @@
+all-unknown sample result: (1,4)
+full-information cases: 225 pass outward/inward
+partial-information cases: 57600; outward violations: 0; inward violations: 0
+[]
+[]
+All consistent-interval checks pass; no product defect reproduced.

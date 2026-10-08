@@ -1,0 +1,14 @@
+{
+  "tag": "matrix-solve-verify-full",
+  "started": "2026-09-09T02:22:46.065Z",
+  "finished": "2026-09-09T02:22:53.991Z",
+  "elapsedSeconds": 7.922959664,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "node",
+  "args": [
+    "verify-matrix-solves.mjs",
+    "--monic-live"
+  ],
+  "code": 0,
+  "signal": null
+}

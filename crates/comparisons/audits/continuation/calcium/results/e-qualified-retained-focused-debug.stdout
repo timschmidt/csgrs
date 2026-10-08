@@ -1,0 +1,9 @@
+
+running 4 tests
+test computable::approximation::e_plan_tests::shared_e_recovers_from_cancellation_and_serialization ... ok
+test computable::approximation::e_plan_tests::shared_e_refines_and_coarsens_within_its_enclosure ... ok
+test computable::approximation::e_plan_tests::term_planner_preserves_exact_factorial_thresholds ... ok
+test computable::approximation::e_plan_tests::direct_e_kernel_has_strict_directed_enclosures ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 780 filtered out; finished in 0.39s
+

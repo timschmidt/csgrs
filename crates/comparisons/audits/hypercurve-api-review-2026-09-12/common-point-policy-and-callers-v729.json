@@ -1,0 +1,30 @@
+{
+  "merged_paths": [
+    "hypercurve/tests/hypercurve_curve_region_stroke.rs",
+    "hypercurve/tests/hypercurve_curve_region_boolean.rs",
+    "hypercurve/tests/hypercurve_pr59_shape_regressions.rs",
+    "hypercurve/tests/hypercurve_curve.rs",
+    "hypercurve/tests/hypercurve_curve_region_promotion.rs",
+    "hypercurve/examples/arrangement.rs",
+    "hypercurve/tests/exact_structural_facts.rs",
+    "hypercurve/examples/basic.rs",
+    "hypercurve/tests/hypercurve_bbox.rs",
+    "hypercurve/tests/hypercurve_svg.rs",
+    "hypercurve/tests/hypercurve_geo_regressions.rs",
+    "hypercurve/tests/hypercurve_analytic_parallel_region.rs",
+    "hypercurve/tests/hypercurve_bezier_region.rs",
+    "hypercurve/tests/hypercurve_exact_closure.rs",
+    "hypercurve/tests/hypercurve_pcb_boolean_regressions.rs",
+    "hypercurve/tests/hypercurve_bezier_fit_offset.rs",
+    "hypercurve/tests/hypercurve_path_closure.rs",
+    "hypercurve/tests/hypercurve_curve_intersection.rs",
+    "hypercurve/benches/dispatch_trace.rs",
+    "hypercurve/benches/containment.rs",
+    "hypercurve/benches/arc.rs",
+    "hypercurve/benches/bezier_region.rs",
+    "hypercurve/README.md",
+    "hypercurve/fuzz/fuzz_targets/region_boolean.rs"
+  ],
+  "core_change": "Generated closed-path queries preserve uncertain boundary preparation as Classification::Uncertain, matching the scalar query; extend existing approximate/strict boundary replay test to a retained endpoint.",
+  "production_unchanged": true
+}

@@ -1,0 +1,336 @@
+{
+  "schema": "hypercurve.performance-checkpoint.v1",
+  "captured_on": "2026-08-07",
+  "checkpoint": "general oblique selected-circle/algebraic-chord Boolean and exact bevel re-offset",
+  "implementation_revision": "5d5513b4bef0610f562fba508d1e0fdc5639c475",
+  "benchmark_revision": "20e064dbd3b36033cd1d5dabdf471dfd34c7abb9",
+  "historical_rejecting_revision": "12ffea6d39c5aa468f267bbde100518377406344",
+  "historical_benchmark_revision": "cd79206b84850ee9ce09c0ee0cc56554420bd4f9",
+  "correctness_equivalent_pre_optimization_revision": null,
+  "correctness_equivalent_control_note": "This checkpoint crosses a capability boundary in one implementation commit. The immediate semantic parent rejects the public selected-field fixture, so no historical timing is presented as a correctness-equivalent regression baseline.",
+  "preceding_checkpoint": "2026-08-07-cusp-chord-boundary-reoffset.json",
+  "dependency_revisions": {
+    "hyperreal": "f09c147b0352884f8efe88e875c37d8f0f439ba5",
+    "hyperlattice": "a475bb752c1e0fb0cfdb80f4db74a56caa6962c0",
+    "hyperlimit": "b0418bddff50183fa782e5caa6da6974a2b969a1",
+    "hypertri": "86189ff6e87f056a3686d81b57952d799945663a",
+    "hypersolve": "f3cf7467219abdf5c6a27459e330ed158bbc590e",
+    "hyperbrep": "6336697cd124ef6ef8384166b1f90ef2fceb6663",
+    "lower_layer_modified": false,
+    "hypermesh_modified_or_benchmarked": false
+  },
+  "scope": {
+    "completed": [
+      "one exact analytic kernel intersects a selected algebraic circle with a finite chord whose two endpoints and circle center inhabit three independent selected-root fields",
+      "the existing cardinal-axis and exact-rational endpoint routes remain first-tier fast paths; only a genuinely algebraic oblique support enters the trivariate fallback",
+      "transverse, tangent, support-disjoint, finite-segment-clipped, half-circle-clipped, endpoint, and reversed-traversal outcomes are explicitly represented and tested",
+      "the contact retains exact circle and chord parameters plus a correlated point map without constructing a joint primitive element",
+      "parameter order, coordinate and linear-form order, equality, conservative bounds, derived affine points, winding, splitting, and branch signs replay from the retained map",
+      "nonsingular certified similarities retain one shared exact unit tangent for an oblique chord, enabling exact repeated offsets without materializing endpoint fields",
+      "selected-circle endpoint tangents and circle/chord contact tangents survive rational rotation and feed the existing bevel join and unary regularization authority",
+      "a public rotated selected-round intersection completes evidence, all four Booleans, and a later bevel re-offset under STRICT and APPROXIMATE_512"
+    ],
+    "remaining": [
+      "arbitrary algebraic chords without a construction-certified exact unit tangent remain unsupported for direct finite parallel materialization",
+      "the dense trivariate tensor route deliberately caps retained controls at 16384; higher-degree complete support needs a bounded streaming, factorized, or reusable Hypersolve representation",
+      "general retained-algebraic fillet centers and non-structural selected-circle endpoint tangencies remain incomplete",
+      "non-endpoint mapped cuts across the remaining rational, analytic-parallel, chord-pair, and cusp/chord-derived carrier combinations remain incomplete",
+      "coupled material/hole wavefront events and remaining global non-orthogonal erosion cases remain incomplete"
+    ]
+  },
+  "mathematical_kernel": {
+    "field_model": "Endpoint A, endpoint B, and selected center C remain in independent isolated univariate fields. Projective denominators are normalized positive before signs are interpreted geometrically.",
+    "line_elimination": "For d = B-A and v = A-C, the infinite-line parameter is s = bw*(-vd +/- sqrt(K))/(cw*d2), with d2 = dot(d,d), vd = dot(v,d), v2r = dot(v,v)-r^2*(aw*cw)^2, and K = vd^2-d2*v2r after homogeneous denominator clearing.",
+    "branch_filters": "Each radical branch is filtered exactly by the selected semicircle half, diameter boundary, q = -vd +/- sqrt(K), bw*q-cw*d2 finite-segment predicates, duplicate endpoint ownership, and traversal orientation.",
+    "radical_sign": "A trivariate rational-plus-square-root expression signs rational and radical terms first and squares only when their signs require comparison; the selected-root refinement graph remains authoritative.",
+    "tensor_correctness_fix": "Trivariate coefficient tensors are rectangularized before restriction and trim only whole zero planes, rows, or columns. Per-row trimming was invalid for the rectangular restriction algorithm.",
+    "resource_limit": {
+      "max_trivariate_bernstein_controls": 16384,
+      "max_exact_factor_splits": 24,
+      "on_exhaustion": "Classification::Uncertain(Unsupported); never an approximate construction"
+    }
+  },
+  "authority": {
+    "boolean_route": "CurveRegion2::intersect_region/boolean_regions -> CurveRegionBooleanContext::build_intersection_evidence/build_split_topology -> pair_result -> BezierAlgebraicCuspSemicircle2::chord_intersections -> axis, rational-endpoint, or general oblique analytic lane",
+    "offset_route": "CurveRegion2::offset -> offset_raw -> offset_exact_general_raw -> exact_offset_span_from_algebraic_chord/exact_offset_span_from_algebraic_cusp_semicircle -> append_exact_offset_join -> regularized_region_raw -> CurveRegionBooleanContext::build_regularized_region",
+    "fast_path_order": [
+      "construction-certified cardinal chord",
+      "exact-rational finite chord",
+      "general algebraic oblique chord"
+    ],
+    "persistent_state_added": "One Option<Arc<[Real; 2]>> field in private BezierAlgebraicChordData2. Cardinal chords allocate no tangent; mapped certified oblique chords share exactly two Real values.",
+    "public_handle_layout": "BezierAlgebraicChord2 remains one Arc word and its existing layout regression passes.",
+    "compatibility_shim_added": false,
+    "duplicate_region_boolean_or_offset_engine_added": false,
+    "primitive_element_added": false,
+    "approximate_geometry_added": false
+  },
+  "policy_evidence": {
+    "strict": "All public rotated evidence, Boolean topology, and re-offset results are Certified from exact selected-root, radical, support, finite-domain, tangent, and topology predicates.",
+    "approximate_512": "The identical graph returns Certified for the supportable public fixture and consumes no approximate terminal. Unproved equalities elsewhere retain the existing shared 512-bit terminal semantics.",
+    "construction_rule": "Approximate equality is never retained as a coordinate, tangent, support, or reusable topology certificate.",
+    "direct_matrix": "Both policies cover transverse secant, exact tangency, disjoint support, finite clipping, and forward/reversed traversal with three independent selected fields.",
+    "public_fixture": "A 3/5,-4/5;4/5,3/5 rational rotation of the selected-round rectangle is translated by (1/100,11/200), intersected, Booleaned, and re-offset by 1/500 with bevel corners.",
+    "no_policy_upgrade": true
+  },
+  "benchmark_method": {
+    "group": "algebraic_round_boolean/oblique_cusp_chord_bevel_reoffset",
+    "fixture": "The public rotated selected-round fixture is reconstructed before timing. Hypercurve retains its three independent selected fields. Cavalier runs the rigidly equivalent unrotated binary64 bulge-polyline fixture because its representation has no selected-field frame cost.",
+    "timed_variants": [
+      "intersection evidence",
+      "one shared Hypercurve all-four Boolean batch versus four Cavalier calls",
+      "all-four Boolean batch followed by a 1/500 bevel re-offset of the intersection"
+    ],
+    "wall_command": "env HYPERCURVE_COMPARE_GROUP=oblique_cusp_chord HYPERCURVE_COMPARE_SAMPLES=9 HYPERCURVE_COMPARE_SAMPLE_MS=120 <comparative-executable>",
+    "historical_control": "Detached 12ffea6 plus the identical benchmark-only commit cd79206. It rejects the selected-field fixture and is capability context only.",
+    "competitive_control": "Cavalier Contours 0.7.0 binary64 polyline Boolean/parallel_offset throughput sentinel; it does not provide exact selected-root geometry, STRICT/APPROXIMATE_512 outcomes, or retained exact topology.",
+    "perf_method": "taskset CPU 11; perf stat user-space instructions, cycles, branches, branch misses, and cache misses; 64 fixed timed iterations plus one Runner warm-up; subtract the implementation-filter=disabled process and divide by 65",
+    "heap_method": "Heaptrack record-only; 32 fixed timed iterations plus one Runner warm-up; subtract the implementation-filter=disabled process and divide allocation counters by 33; peak is the exact maximum mem_heap_B from Heaptrack Massif export",
+    "linked_size_method": "GNU size and stat on matched comparative release executables with identical benchmark source and dependency revisions",
+    "profile_method": "perf cycles:u sampling of the current end-to-end executable; flat percentages are directional hotspot evidence rather than deterministic counters"
+  },
+  "wall_performance": {
+    "samples_per_variant": 9,
+    "current": {
+      "exact_evidence": {
+        "median_ns": 9737681.8,
+        "min_ns": 9437381.6,
+        "max_ns": 10190070.8,
+        "iterations_per_sample": 13
+      },
+      "exact_four_booleans": {
+        "median_ns": 10174392.6,
+        "min_ns": 9809036.8,
+        "max_ns": 10807815.8,
+        "iterations_per_sample": 12
+      },
+      "exact_boolean_reoffset": {
+        "median_ns": 29205976.4,
+        "min_ns": 28748471.8,
+        "max_ns": 30887415.4,
+        "iterations_per_sample": 5
+      }
+    },
+    "historical_12ffea6": {
+      "evidence_result": "rejected",
+      "evidence_median_ns": 3575806.0,
+      "evidence_min_ns": 3430402.4,
+      "evidence_max_ns": 3725228.7,
+      "four_booleans_result": "rejected",
+      "four_booleans_median_ns": 224470.1,
+      "four_booleans_min_ns": 217140.9,
+      "four_booleans_max_ns": 242758.9,
+      "boolean_reoffset_result": "rejected",
+      "boolean_reoffset_median_ns": 227270.0,
+      "boolean_reoffset_min_ns": 220199.5,
+      "boolean_reoffset_max_ns": 237911.1
+    },
+    "cavalier_binary64": {
+      "intersection_median_ns": 2014.2,
+      "intersection_min_ns": 1951.5,
+      "intersection_max_ns": 2135.0,
+      "four_calls_median_ns": 9776.5,
+      "four_calls_min_ns": 9173.0,
+      "four_calls_max_ns": 10089.8,
+      "boolean_reoffset_median_ns": 4028.4,
+      "boolean_reoffset_min_ns": 3897.2,
+      "boolean_reoffset_max_ns": 4448.8
+    },
+    "context_ratios": {
+      "current_evidence_over_historical_rejection": 2.723213,
+      "current_four_booleans_over_historical_rejection": 45.326271,
+      "current_boolean_reoffset_over_historical_rejection": 128.507838,
+      "current_evidence_over_cavalier": 4834.515838,
+      "current_four_booleans_over_cavalier": 1040.698880,
+      "current_boolean_reoffset_over_cavalier": 7250.018965
+    },
+    "interpretation": "Current produces complete exact geometry. Historical and Cavalier ratios are not equivalent-algorithm regressions; the former stops at uncertainty and the latter has materially weaker numeric and topology guarantees."
+  },
+  "deterministic_perf": {
+    "raw_array_order": [
+      "instructions",
+      "cycles",
+      "branches",
+      "branch_misses",
+      "cache_misses"
+    ],
+    "fixed_timed_iterations": 64,
+    "normalized_operation_invocations": 65,
+    "current": {
+      "raw_disabled_process": [476868521, 205705642, 91315443, 1271037, 983755],
+      "exact_evidence_raw_process": [6872127677, 2887550173, 1317728164, 14331632, 12075104],
+      "exact_evidence_normalized": [98388602.400, 41259146.631, 18867888.015, 200932.231, 170636.138],
+      "exact_four_booleans_raw_process": [7063849652, 2956236050, 1354672643, 14797758, 13209062],
+      "exact_four_booleans_normalized": [101338171.246, 42315852.431, 19436264.615, 208103.400, 188081.646],
+      "exact_boolean_reoffset_raw_process": [17882350733, 7810927200, 3423996552, 50437621, 37799985],
+      "exact_boolean_reoffset_normalized": [267776649.415, 117003408.585, 51272017.062, 756408.985, 566403.538]
+    },
+    "historical_rejection": {
+      "raw_disabled_process": [45307723, 23808708, 8767248, 170239, 249552],
+      "evidence_raw_process": [2193235071, 965873969, 425025158, 5571312, 5451979],
+      "evidence_normalized": [33045036.123, 14493311.708, 6403967.846, 83093.431, 80037.338],
+      "four_booleans_raw_process": [172951745, 82996225, 33733467, 444535, 1169437],
+      "four_booleans_normalized": [1963754.185, 910577.185, 384095.677, 4219.938, 14152.077],
+      "boolean_reoffset_raw_process": [172960196, 87347591, 33735217, 459176, 1296975],
+      "boolean_reoffset_normalized": [1963884.200, 977521.277, 384122.600, 4445.185, 16114.200]
+    },
+    "interpretation": "Exact evidence and the shared four-result batch retire about 98.39M and 101.34M instructions. The end-to-end Boolean plus re-offset retires about 267.78M. Historical values measure early rejection only."
+  },
+  "allocation_evidence": {
+    "fixed_timed_iterations": 32,
+    "normalized_operation_invocations": 33,
+    "current": {
+      "disabled": {
+        "allocation_calls": 788646,
+        "temporary_allocations": 97312,
+        "peak_heap_bytes": 1448828
+      },
+      "exact_evidence_raw": {
+        "allocation_calls": 6472232,
+        "temporary_allocations": 513310,
+        "peak_heap_bytes": 1449941
+      },
+      "exact_evidence_normalized": {
+        "allocation_calls": 172229.878788,
+        "temporary_allocations": 12606.0,
+        "peak_increment_bytes": 1113
+      },
+      "exact_four_booleans_raw": {
+        "allocation_calls": 6649244,
+        "temporary_allocations": 530866,
+        "peak_heap_bytes": 1451170
+      },
+      "exact_four_booleans_normalized": {
+        "allocation_calls": 177593.878788,
+        "temporary_allocations": 13138.0,
+        "peak_increment_bytes": 2342
+      },
+      "exact_boolean_reoffset_raw": {
+        "allocation_calls": 14793024,
+        "temporary_allocations": 2425627,
+        "peak_heap_bytes": 1557853
+      },
+      "exact_boolean_reoffset_normalized": {
+        "allocation_calls": 424375.090909,
+        "temporary_allocations": 70555.0,
+        "peak_increment_bytes": 109025,
+        "peak_increment_kib": 106.469727
+      }
+    },
+    "historical_rejection": {
+      "disabled": {
+        "allocation_calls": 79614,
+        "temporary_allocations": 10360,
+        "peak_heap_bytes": 469583
+      },
+      "evidence_normalized": {
+        "allocation_calls": 63551.090909,
+        "temporary_allocations": 9064.0,
+        "peak_increment_bytes": 68804
+      },
+      "four_booleans_normalized": {
+        "allocation_calls": 2211.0,
+        "temporary_allocations": 135.0,
+        "peak_increment_observed": "none; the rejecting run's process peak was below the disabled preflight peak"
+      },
+      "boolean_reoffset_normalized": {
+        "allocation_calls": 2211.0,
+        "temporary_allocations": 135.0,
+        "peak_increment_observed": "none; the rejecting run's process peak was below the disabled preflight peak"
+      }
+    },
+    "interpretation": "The private shared tangent adds no per-axis-chord allocation. Most measured traffic is short-lived exact rational/resultant work; allocation reduction is a priority for the next optimization pass."
+  },
+  "runtime_profile": {
+    "artifact": "/tmp/hypercurve-oblique-reoffset.perf",
+    "flat_cycle_observation": "The largest named samples are libc comparison/allocation/free plus Hyperreal small-rational normalization: memcmp 4.34%, _int_malloc 4.16%, malloc 3.54%, Rational::gcd_word 3.31%, free 3.26%, from_reduced_word_parts 2.63%, and quotient_ring_resultant_polynomial 1.66%.",
+    "interpretation": "No single Hypercurve dispatcher dominates. Exact scalar normalization and allocation traffic are the broad optimization target; the retained three-field formulation avoids a much larger primitive-element construction."
+  },
+  "linked_size": {
+    "artifact": "matched comparative release executable with identical benchmark source",
+    "all_features": {
+      "historical_file_bytes": 13024448,
+      "current_file_bytes": 13144544,
+      "file_delta_bytes": 120096,
+      "file_delta_percent": 0.922081,
+      "historical_text_bytes": 9932447,
+      "current_text_bytes": 10040371,
+      "text_delta_bytes": 107924,
+      "text_delta_percent": 1.086580,
+      "historical_data_bytes": 310072,
+      "current_data_bytes": 311016,
+      "data_delta_bytes": 944,
+      "historical_bss_bytes": 3752,
+      "current_bss_bytes": 5464,
+      "bss_delta_bytes": 1712,
+      "historical_allocated_total_bytes": 10246271,
+      "current_allocated_total_bytes": 10356851,
+      "allocated_total_delta_bytes": 110580,
+      "allocated_total_delta_percent": 1.079222
+    },
+    "no_default_features_with_comparative_dependencies": {
+      "historical_file_bytes": 11413096,
+      "current_file_bytes": 11423752,
+      "file_delta_bytes": 10656,
+      "file_delta_percent": 0.093366,
+      "historical_text_bytes": 8589458,
+      "current_text_bytes": 8601590,
+      "text_delta_bytes": 12132,
+      "text_delta_percent": 0.141243,
+      "historical_data_bytes": 299784,
+      "current_data_bytes": 300032,
+      "data_delta_bytes": 248,
+      "historical_bss_bytes": 5200,
+      "current_bss_bytes": 5096,
+      "bss_delta_bytes": -104,
+      "historical_allocated_total_bytes": 8894442,
+      "current_allocated_total_bytes": 8906718,
+      "allocated_total_delta_bytes": 12276,
+      "allocated_total_delta_percent": 0.138019
+    },
+    "interpretation": "The predicates-enabled exact kernel adds about 108 KiB of text and the lean carrier path adds about 12 KiB. This is explicit size debt; performance and allocation reduction take precedence, but factorization and shared predicate helpers should be used to recover code size where they do not obscure proof authority."
+  },
+  "static_callgraph": {
+    "utility": "tools/hyper-callgraph/target/release/hyper-callgraph",
+    "current_command": "tools/hyper-callgraph/target/release/hyper-callgraph --root hypercurve --out-dir hypercurve/target/callgraph-oblique-cusp-chord-20e064d-all --format json --crate-name hypercurve --include-examples --include-tests --include-bench --include-fuzz",
+    "historical_command": "tools/hyper-callgraph/target/release/hyper-callgraph --root .benchmark-hypercurve-oblique-history-12ffea6 --out-dir hypercurve/target/callgraph-oblique-cusp-chord-history-12ffea6-all --format json --crate-name hypercurve --include-examples --include-tests --include-bench --include-fuzz",
+    "current_artifact": "target/callgraph-oblique-cusp-chord-20e064d-all/callgraph.json",
+    "historical_artifact": "target/callgraph-oblique-cusp-chord-history-12ffea6-all/callgraph.json",
+    "current": {
+      "libraries_discovered": 1,
+      "nodes": 29808,
+      "edges": 57191
+    },
+    "historical_with_identical_benchmark": {
+      "libraries_discovered": 1,
+      "nodes": 29632,
+      "edges": 56672
+    },
+    "delta": {
+      "nodes": 176,
+      "edges": 519
+    },
+    "authority_edges_observed": [
+      "CurveRegion2::offset -> offset_raw -> offset_exact_general_raw",
+      "offset_exact_general_raw -> exact_offset_span_from_algebraic_chord and exact_offset_span_from_algebraic_cusp_semicircle",
+      "offset_exact_general_raw -> regularized_region_raw",
+      "build_intersection_evidence/build_split_topology -> CurveRegionBooleanContext::pair_result",
+      "pair_result -> cusp/chord dispatch -> BezierAlgebraicCuspSemicircle2::chord_intersections",
+      "BezierAlgebraicCuspSemicircle2::chord_intersections -> axis_chord_intersections or oblique_chord_intersections"
+    ],
+    "duplicate_public_engine_found": false,
+    "caveat": "The graph is syntax-level navigation and source-complexity evidence, not runtime reachability or linked-size evidence."
+  },
+  "verification": {
+    "all_features_library": "cargo test --all-features --lib: 486 passed, 0 failed, 1 ignored",
+    "public_promotion": "cargo test --all-features --test hypercurve_curve_region_promotion: 66 passed, 0 failed",
+    "minimal_library": "cargo test --no-default-features --lib: 324 passed, 0 failed",
+    "all_features_clippy": "cargo clippy --all-features --all-targets -- -D warnings: passed for Hypercurve; only the pre-existing Hypertri dependency dead-code warning was emitted",
+    "minimal_clippy": "cargo clippy --no-default-features --all-targets -- -D warnings: passed",
+    "benchmark_build": "cargo check/build --release --all-features --bench comparative: passed; predicates-disabled comparative build also passed",
+    "direct_regression": "algebraic_cusp_semicircle_intersects_independent_field_oblique_chords_exactly",
+    "carrier_regression": "cusp_chord_pair_retains_an_independent_field_oblique_contact",
+    "public_regression": "rotated_algebraic_round_regions_boolean_through_oblique_three_field_contacts",
+    "policy_result": "STRICT and APPROXIMATE_512 both return Certified geometry for every supportable public operation"
+  }
+}

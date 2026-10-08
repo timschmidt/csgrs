@@ -1,0 +1,565 @@
+{
+  "checkpoint": 87,
+  "commit": "bc11353f450cf866b47c3985eee6150a5f99cf00",
+  "inventorySha256": "b5acb2979cbf21cf9e9bcd5e89602d1ed75be61c8fca207ab70f203c40b8d6e4",
+  "previousReadRecordsSha256": "238e491a473beaaaed54529eb08c5006d4f15581bd91ee93996e206b62691ec0",
+  "records": [
+    {
+      "path": "formalization/Real/RealMetric.v",
+      "sha256": "e2360c6e9da483fb6adb0b7e5f09e004eafba3d99596d21c21324c7888445b1e",
+      "totalLines": 1046,
+      "ranges": [
+        [
+          1,
+          1046
+        ]
+      ],
+      "complete": true,
+      "note": "Complete scalar absolute value, distance, sign/triangle/scaling, convexity and interval-distance equivalence. Continuous abs uses overlapping selection and two-bit slack; classical sign case analysis proves properties, not an executable exact sign oracle."
+    },
+    {
+      "path": "formalization/Analysis/Euclidean.v",
+      "sha256": "847c88960c2c303c2a45d594ec581cb2e687394196fee2b851c2de701e3f3d6c",
+      "totalLines": 1108,
+      "ranges": [
+        [
+          1,
+          1108
+        ]
+      ],
+      "complete": true,
+      "note": "Complete dimension-indexed vectors and maximum-coordinate metric, coordinatewise fast limits, uniqueness, closed predicates and coherent multivalued paths with state. This is not the Euclidean-length metric; dimensions/shapes are proof guarded before extraction."
+    },
+    {
+      "path": "extracted-examples/bench/bench.hs",
+      "sha256": "c6675c38bee602d40d187e9ab739b82829fa9500f542eed631c94210b2fb5c62",
+      "totalLines": 289,
+      "ranges": [
+        [
+          1,
+          289
+        ]
+      ],
+      "complete": true,
+      "note": "Complete hand/extracted/native benchmark dispatcher, helpers and commented complex cases. Hand sqrt2 uses 2^-n, unlike proved/extracted 2^(-2n-1), permitting an uncertified zero approximation. Actual Haskell wrong output not yet reproduced. All complex dispatch cases are commented out."
+    },
+    {
+      "path": "extracted-examples/bench/runBench.sh",
+      "sha256": "2425d81c45a48439d4d79b8a64f1e2c82822ee2b02f84adf434e80f57c5b702b",
+      "totalLines": 320,
+      "ranges": [
+        [
+          1,
+          320
+        ]
+      ],
+      "complete": true,
+      "note": "Complete runner. Enabled csqrt3/csqrt5 names have no active Haskell dispatcher. Repeated fixed parameters overwrite logs; failures remove their log; 0.00 CPU readings become 0.01; target accuracy column is blank. No native timing qualification inferred from historical CSVs."
+    },
+    {
+      "path": "extracted-examples/bench/package.yaml",
+      "sha256": "e15fa613a6a13af35a84086a1e0344d4c2b84a511efdd78f18dd81023a081f6b",
+      "totalLines": 60,
+      "ranges": [
+        [
+          1,
+          60
+        ]
+      ],
+      "complete": true,
+      "note": "Complete dependency/optimization/threaded-runtime declaration and commented Criterion setup. -N chooses available capabilities; measurements would need controlled threading and independent accuracy checks."
+    },
+    {
+      "path": "extracted-examples/bench/coq-aern-extracted-bench.cabal",
+      "sha256": "4f2dbf606cb2a83bc400712e1aee8825f85ff0e436df4536f05f73a4bc4eedad",
+      "totalLines": 41,
+      "ranges": [
+        [
+          1,
+          41
+        ]
+      ],
+      "complete": true,
+      "note": "Complete generated executable manifest agrees with YAML, uses AERN >=0.2.15.1 and all-capabilities threaded RTS. Not proof of a successful installed dependency graph."
+    }
+  ],
+  "cumulative": [
+    {
+      "path": "extracted-examples/bench/bench.hs",
+      "sha256": "c6675c38bee602d40d187e9ab739b82829fa9500f542eed631c94210b2fb5c62",
+      "totalLines": 289,
+      "ranges": [
+        [
+          1,
+          289
+        ]
+      ],
+      "complete": true,
+      "note": "Complete hand/extracted/native benchmark dispatcher, helpers and commented complex cases. Hand sqrt2 uses 2^-n, unlike proved/extracted 2^(-2n-1), permitting an uncertified zero approximation. Actual Haskell wrong output not yet reproduced. All complex dispatch cases are commented out."
+    },
+    {
+      "path": "extracted-examples/bench/coq-aern-extracted-bench.cabal",
+      "sha256": "4f2dbf606cb2a83bc400712e1aee8825f85ff0e436df4536f05f73a4bc4eedad",
+      "totalLines": 41,
+      "ranges": [
+        [
+          1,
+          41
+        ]
+      ],
+      "complete": true,
+      "note": "Complete generated executable manifest agrees with YAML, uses AERN >=0.2.15.1 and all-capabilities threaded RTS. Not proof of a successful installed dependency graph."
+    },
+    {
+      "path": "extracted-examples/bench/package.yaml",
+      "sha256": "e15fa613a6a13af35a84086a1e0344d4c2b84a511efdd78f18dd81023a081f6b",
+      "totalLines": 60,
+      "ranges": [
+        [
+          1,
+          60
+        ]
+      ],
+      "complete": true,
+      "note": "Complete dependency/optimization/threaded-runtime declaration and commented Criterion setup. -N chooses available capabilities; measurements would need controlled threading and independent accuracy checks."
+    },
+    {
+      "path": "extracted-examples/bench/runBench.sh",
+      "sha256": "2425d81c45a48439d4d79b8a64f1e2c82822ee2b02f84adf434e80f57c5b702b",
+      "totalLines": 320,
+      "ranges": [
+        [
+          1,
+          320
+        ]
+      ],
+      "complete": true,
+      "note": "Complete runner. Enabled csqrt3/csqrt5 names have no active Haskell dispatcher. Repeated fixed parameters overwrite logs; failures remove their log; 0.00 CPU readings become 0.01; target accuracy column is blank. No native timing qualification inferred from historical CSVs."
+    },
+    {
+      "path": "extracted-examples/package.yaml",
+      "sha256": "1f0fd022be868ff01ee501208cb8af46ee3ab6da826e4db7cbd53f9bb9f22b5c",
+      "totalLines": 62,
+      "ranges": [
+        [
+          1,
+          62
+        ]
+      ],
+      "complete": true,
+      "note": "Optimized Haskell library and fractal executable; generated helpers exported without proof-level preconditions."
+    },
+    {
+      "path": "extracted-examples/src/CSqrt.hs",
+      "sha256": "bb6c102e13cbf5991984aa64097447dbbc48e6797001eeaaeac5b4f050d2fd34",
+      "totalLines": 1319,
+      "ranges": [
+        [
+          1,
+          1319
+        ]
+      ],
+      "complete": true,
+      "note": "Entire generated module, integer/vector helpers and proof-erasure boilerplate. Recomputed foldl prefixes and coordinatewise limits; zero/root Bool state commits to a root once found. Generic vector shapes and integer naturals retain erased-precondition hazards; no invalid-input defect is claimed."
+    },
+    {
+      "path": "extracted-examples/src/Magnitude.hs",
+      "sha256": "4f3e13c034cfabd4b55848b67f04fc3cc155742a6c57e5ab56075d960c1db1b2",
+      "totalLines": 318,
+      "ranges": [
+        [
+          1,
+          318
+        ]
+      ],
+      "complete": true,
+      "note": "Entire extracted positive magnitude algorithm and integer helper boilerplate; formal domain erased, no invalid-input runtime bug claimed."
+    },
+    {
+      "path": "extracted-examples/src/Max.hs",
+      "sha256": "ad7781f8e086c70af6a18c6de3dde3b0f67a040941a8fa1a9f87aa5641dff472",
+      "totalLines": 71,
+      "ranges": [
+        [
+          1,
+          71
+        ]
+      ],
+      "complete": true,
+      "note": "Entire extracted max uses limit of overlapping operand choices; boilerplate and imports included in reading."
+    },
+    {
+      "path": "extracted-examples/src/Sqrt.hs",
+      "sha256": "3dd3560789a7717ea121b44a4dbc93e5c606b415ca7848921eafb3761cee3513",
+      "totalLines": 661,
+      "ranges": [
+        [
+          1,
+          661
+        ]
+      ],
+      "complete": true,
+      "note": "Entire extracted Newton/scaling/nonnegative-limit algorithm and helpers. Only log2 call uses succ n, excluding zero for valid natural n; formal sqrt proof not read here."
+    },
+    {
+      "path": "extracted-examples/stack.yaml",
+      "sha256": "c12b711a9d7c387dde625ce2f6a6017b926bcdcd9c821d034f5c850fc3038fd1",
+      "totalLines": 80,
+      "ranges": [
+        [
+          1,
+          80
+        ]
+      ],
+      "complete": true,
+      "note": "Pinned resolver and AERN2 package versions; existing AERN2 checkout is a separate source specimen."
+    },
+    {
+      "path": "formalization/_CoqProject",
+      "sha256": "88594fc61e9d74f9cd2ece541ac11e91eb96ae47ad85e0721a22d5e64153d5cc",
+      "totalLines": 64,
+      "ranges": [
+        [
+          1,
+          64
+        ]
+      ],
+      "complete": true,
+      "note": "Actual project membership differs from whole inventory; omitted analytic/legacy files remain in audit scope."
+    },
+    {
+      "path": "formalization/Analysis/Complex.v",
+      "sha256": "b80d84407192d236bde9ae78c5fccf9c15ba62a92d6bba04008d984b1b66c213",
+      "totalLines": 222,
+      "ranges": [
+        [
+          1,
+          222
+        ]
+      ],
+      "complete": true,
+      "note": "Two-coordinate Euclidean complex representation, constructors, ring arithmetic and algebraic laws. No independent native complex scalar implementation or branch convention inferred."
+    },
+    {
+      "path": "formalization/Analysis/Euclidean.v",
+      "sha256": "847c88960c2c303c2a45d594ec581cb2e687394196fee2b851c2de701e3f3d6c",
+      "totalLines": 1108,
+      "ranges": [
+        [
+          1,
+          1108
+        ]
+      ],
+      "complete": true,
+      "note": "Complete dimension-indexed vectors and maximum-coordinate metric, coordinatewise fast limits, uniqueness, closed predicates and coherent multivalued paths with state. This is not the Euclidean-length metric; dimensions/shapes are proof guarded before extraction."
+    },
+    {
+      "path": "formalization/Analysis/Magnitude.v",
+      "sha256": "df5b2c999fa72d09ad95b3b5e48b9663d32f5e49dff9683603f4162de67df8e3",
+      "totalLines": 416,
+      "ranges": [
+        [
+          1,
+          416
+        ]
+      ],
+      "complete": true,
+      "note": "Positive-domain coarse exponent between powers separated by two bits; scale/reciprocal cases and overlapping choice, not correctly rounded log2."
+    },
+    {
+      "path": "formalization/Analysis/Minmax.v",
+      "sha256": "fdedc0a89b2b982aa45acef8fb57ab9af43685ccd5bc103450746cbcaca0f8bf",
+      "totalLines": 583,
+      "ranges": [
+        [
+          1,
+          583
+        ]
+      ],
+      "complete": true,
+      "note": "Overlapping strict predicates approximate a common maximum; dual minimum and order laws. Suspicious committed intro/real T_lt_plus_lt text at 205-206 remains an uncompiled source anomaly."
+    },
+    {
+      "path": "formalization/Analysis/MultiLimit.v",
+      "sha256": "eda4ee3f3568e46fa21fab5e85d5bad2b8211e410d4e3ec8f3083c8a8c71d150",
+      "totalLines": 272,
+      "ranges": [
+        [
+          1,
+          272
+        ]
+      ],
+      "complete": true,
+      "note": "Consecutive displacement <=2^(-n-1) proves fast Cauchy; closed predicates and coherent M_paths preserve membership, with optional Q state invariant. Nearness alone cannot guarantee convergence or limit membership."
+    },
+    {
+      "path": "formalization/Analysis/RealSubsets.v",
+      "sha256": "bb0854dabb7f203081e7ed1065e23098e4cd213100c2ad51f69aec15206d0c42",
+      "totalLines": 78,
+      "ranges": [
+        [
+          1,
+          78
+        ]
+      ],
+      "complete": true,
+      "note": "Open/closed and sequentially closed predicates, approximation witnesses, two-bit slack in closedness proof. Nonzero/positive sets are not closed under arbitrary limits."
+    },
+    {
+      "path": "formalization/Analysis/Rounding.v",
+      "sha256": "0e9581cb2a01d490912498e19ed45b2e0060e66b727dfca4dd681cf6c3bf6843",
+      "totalLines": 437,
+      "ranges": [
+        [
+          1,
+          437
+        ]
+      ],
+      "complete": true,
+      "note": "Coarse integer bracketing and multivalued error-less-than-one rounding; dyadic approximation and all-choice Cauchy proof, not exact floor or ties-to-even."
+    },
+    {
+      "path": "formalization/Analysis/Sqrt.v",
+      "sha256": "32135c8b5e517572d9c26d4b3a1375eb43f3a528bc56ebbf87074d0ed2f80f68",
+      "totalLines": 812,
+      "ranges": [
+        [
+          1,
+          812
+        ]
+      ],
+      "complete": true,
+      "note": "Complete real and complex roots. Normalized Newton error <=2^(-2^s), floor-based signed scale and near-zero overlap. csqrt_solutions and csqrt_small are Admitted at 628/710 and used by general complex-root construction. This is a proof gap, not an observed wrong answer."
+    },
+    {
+      "path": "formalization/Analysis/Testsearch.v",
+      "sha256": "8fb64ab55030a95c74249144066e5624d58cad710069e41f4e19736eee0f52eb",
+      "totalLines": 119,
+      "ranges": [
+        [
+          1,
+          119
+        ]
+      ],
+      "complete": true,
+      "note": "Search requires an existing witness excluding Q; returned first selected P is not necessarily the least true P when predicates overlap."
+    },
+    {
+      "path": "formalization/Base/Base.v",
+      "sha256": "7c39dfe1331a4ec84460a0268c361b0cddcd2f63129b7c79771ebac58df37338",
+      "totalLines": 188,
+      "ranges": [
+        [
+          1,
+          188
+        ]
+      ],
+      "complete": true,
+      "note": "Type/Prop boundary, propositional and functional extensionality, proof irrelevance and dependent-choice assumptions; no executable total equality implied."
+    },
+    {
+      "path": "formalization/Base/Kleene.v",
+      "sha256": "c2503a5ac6eda34a4018d7157af6c1b6f6e9e6aca59ca13fb83211685f946510",
+      "totalLines": 36,
+      "ranges": [
+        [
+          1,
+          36
+        ]
+      ],
+      "complete": true,
+      "note": "Three-valued semidecision axioms and definedness precondition; countable OR is not an arbitrary exact-decision oracle."
+    },
+    {
+      "path": "formalization/Base/Monad.v",
+      "sha256": "7a81fa458e2be85a70c02c2b8eccae76392e8158d9bece67f824abe15563e8a9",
+      "totalLines": 58,
+      "ranges": [
+        [
+          1,
+          58
+        ]
+      ],
+      "complete": true,
+      "note": "Functor, unit, multiplication and coherence laws; these are part of the semantic contract erased by extraction."
+    },
+    {
+      "path": "formalization/Base/MultivalueMonad.v",
+      "sha256": "bcaad17f362be60da1d8c64a3e8c286ccb545e363479b0ccfc071f75f64c6a76",
+      "totalLines": 1077,
+      "ranges": [
+        [
+          1,
+          1077
+        ]
+      ],
+      "complete": true,
+      "note": "Monad definitions, trace-lift relation, strong choice/continuity axioms and initial picture lemmas only; lines 201-1077 remain unread. Checkpoint 86 completes remaining lines; see delta record."
+    },
+    {
+      "path": "formalization/Extract.v",
+      "sha256": "219c3e7646d50a0042851847c2844a9e02504c45efab08099a5ca8d8789cadf9",
+      "totalLines": 391,
+      "ranges": [
+        [
+          1,
+          391
+        ]
+      ],
+      "complete": true,
+      "note": "Abstract Real/K/M runtime substitutions, erased proof preconditions, countable selection, limit and trace mappings; explicit unrealized boolean eliminator."
+    },
+    {
+      "path": "formalization/ExtractMB.v",
+      "sha256": "2edba15d973ff0c9f279dbbaffedee91141bcd2bca50ae306c0eb63edcf1c5b4",
+      "totalLines": 144,
+      "ranges": [
+        [
+          1,
+          144
+        ]
+      ],
+      "complete": true,
+      "note": "Explicitly marked broken fixed-precision/restart variant; wrong monad/error interpretation is not a transferable implementation."
+    },
+    {
+      "path": "formalization/Makefile",
+      "sha256": "e754aacbedfc6cce2fda50f24cd9f09a009b94de999b64361fcc0cc46f56b780",
+      "totalLines": 14,
+      "ranges": [
+        [
+          1,
+          14
+        ]
+      ],
+      "complete": true,
+      "note": "coq_makefile build and tests target; no compile was run and tests directory is absent from inventory."
+    },
+    {
+      "path": "formalization/Real/Real.v",
+      "sha256": "bd7f897f7b23cd043013b36598d7ed5d4d99c822d126d05f1f9915110268b7a7",
+      "totalLines": 14,
+      "ranges": [
+        [
+          1,
+          14
+        ]
+      ],
+      "complete": true,
+      "note": "Aggregation of real dependencies; transitive imports do not receive read credit here."
+    },
+    {
+      "path": "formalization/Real/RealAssumption.v",
+      "sha256": "8db2de5e8eecca2b97114ee8bd6a931d68678f299693802c0294340231410b7b",
+      "totalLines": 72,
+      "ranges": [
+        [
+          1,
+          72
+        ]
+      ],
+      "complete": true,
+      "note": "Bundled real/monad assumptions, naming and notations; not a concrete proved runtime instance."
+    },
+    {
+      "path": "formalization/Real/RealAxioms.v",
+      "sha256": "f2e72169026fffa53990b09119f301076232bfe9df3e2d27d867b0b820ba5151",
+      "totalLines": 233,
+      "ranges": [
+        [
+          1,
+          233
+        ]
+      ],
+      "complete": true,
+      "note": "Ordered-field, nonzero inverse, strict semidecision, Archimedean and fast-Cauchy/limit axioms; dyadic precision and total Prop order distinguished."
+    },
+    {
+      "path": "formalization/Real/RealLimit0.v",
+      "sha256": "334061be704c335266adfc3dcdc00e83175f2dbde5eb5b30eb5f2ba86b984862",
+      "totalLines": 438,
+      "ranges": [
+        [
+          1,
+          438
+        ]
+      ],
+      "complete": true,
+      "note": "Classical weak-Cauchy subsequence and order-completeness proofs use countable choice and Prop-level excluded middle. No executable arbitrary-set supremum procedure follows from these proofs."
+    },
+    {
+      "path": "formalization/Real/RealLimit1.v",
+      "sha256": "4beb66081785f83e33d5ca0242499e1c5d47dd1cd8c92008d2fd2be83469638c",
+      "totalLines": 382,
+      "ranges": [
+        [
+          1,
+          382
+        ]
+      ],
+      "complete": true,
+      "note": "Classical fast limit and uniqueness, then strict/non-strict predicate limits and multivalued elimination with unique existence. Precision-indexed approximants require a common exact result."
+    },
+    {
+      "path": "formalization/Real/RealLimit2.v",
+      "sha256": "52614444334df3dd1a49d712d5b16263727e59bc7670fddce10492f08a024dae",
+      "totalLines": 355,
+      "ranges": [
+        [
+          1,
+          355
+        ]
+      ],
+      "complete": true,
+      "note": "All-branch fast Cauchy and shared-limit conditions, coherent selection, uniqueness and hprop elimination; arbitrary branch histories do not suffice."
+    },
+    {
+      "path": "formalization/Real/RealMetric.v",
+      "sha256": "e2360c6e9da483fb6adb0b7e5f09e004eafba3d99596d21c21324c7888445b1e",
+      "totalLines": 1046,
+      "ranges": [
+        [
+          1,
+          1046
+        ]
+      ],
+      "complete": true,
+      "note": "Complete scalar absolute value, distance, sign/triangle/scaling, convexity and interval-distance equivalence. Continuous abs uses overlapping selection and two-bit slack; classical sign case analysis proves properties, not an executable exact sign oracle."
+    },
+    {
+      "path": "formalization/Real/RealRing.v",
+      "sha256": "de29b5f43319f3959038e28f91fbfdbdbb8856f33f747a8687a206dda5c65e29",
+      "totalLines": 54,
+      "ranges": [
+        [
+          1,
+          54
+        ]
+      ],
+      "complete": true,
+      "note": "Ring theory registration and linear recursive natural power, with raw CRLF retained. Power remains a runtime DAG/cost hypothesis, not a benchmarked change."
+    },
+    {
+      "path": "README.md",
+      "sha256": "dca3d1e430525a6568cf5e4cb23fce90732b252b67cf9f0130f855349d365de6",
+      "totalLines": 150,
+      "ranges": [
+        [
+          1,
+          150
+        ]
+      ],
+      "complete": true,
+      "note": "Setup, tested historical Coq versions, extraction postprocessing and historical benchmark conditions; no current native verification inferred."
+    }
+  ],
+  "delta": {
+    "newComplete": 6,
+    "newLines": 2864
+  },
+  "totals": {
+    "complete": 36,
+    "partial": 0,
+    "lines": 11984
+  }
+}

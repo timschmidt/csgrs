@@ -1,0 +1,71 @@
+\doxysubsection{Vector\+Field\+Evolver Class Reference}
+\hypertarget{classAriadne_1_1VectorFieldEvolver}{}\label{classAriadne_1_1VectorFieldEvolver}\index{VectorFieldEvolver@{VectorFieldEvolver}}
+
+
+{\ttfamily \#include $<$vector\+\_\+field\+\_\+evolver.\+hpp$>$}
+
+
+
+\doxysubsubsection{Description}
+A class for computing the evolution of a vector\+\_\+field system. 
+
+The actual evolution steps are performed by the Integrator class. Inheritance diagram for Vector\+Field\+Evolver\+:\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[height=2.000000cm]{classAriadne_1_1VectorFieldEvolver}
+\end{center}
+\end{figure}
+\doxysubsubsubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1VectorFieldEvolver_a4e1971552ebe750e1fa7aac2a739c19f}\label{classAriadne_1_1VectorFieldEvolver_a4e1971552ebe750e1fa7aac2a739c19f} 
+{\bfseries Vector\+Field\+Evolver} (\mbox{\hyperlink{classAriadne_1_1VectorField}{System\+Type}} const \&, \mbox{\hyperlink{classAriadne_1_1IntegratorInterface}{Integrator\+Interface}} const \&)
+\begin{DoxyCompactList}\small\item\em Construct from parameters and an integrator to compute the flow. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1VectorFieldEvolver_a5e2b294dbd8517545229ba540081f775}\label{classAriadne_1_1VectorFieldEvolver_a5e2b294dbd8517545229ba540081f775} 
+\mbox{\hyperlink{classAriadne_1_1VectorFieldEvolver}{Vector\+Field\+Evolver}} \texorpdfstring{$\ast$}{*} {\bfseries clone} () const
+\begin{DoxyCompactList}\small\item\em Make a dynamically-\/allocated copy. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1VectorFieldEvolver_a65ae282d92cc2693505d894043c8ffad}\label{classAriadne_1_1VectorFieldEvolver_a65ae282d92cc2693505d894043c8ffad} 
+virtual const \mbox{\hyperlink{classAriadne_1_1VectorField}{System\+Type}} \& {\bfseries system} () const
+\begin{DoxyCompactList}\small\item\em Get the internal system. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1VectorFieldEvolver_ac93f4debd5c2047dbeaa0a82ac19cb74}\label{classAriadne_1_1VectorFieldEvolver_ac93f4debd5c2047dbeaa0a82ac19cb74} 
+\mbox{\hyperlink{classAriadne_1_1EvolverInterface_a3eee62b15617b80a9cd7a2f4ba905cff}{Enclosure\+Type}} {\bfseries enclosure} (\mbox{\hyperlink{group__FunctionModule_gafdd31b4d01081cd09aad2ce11117f867}{Exact\+Box\+Type}} const \&) const
+\begin{DoxyCompactList}\small\item\em Make an enclosure from a computed box set. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\begin{Indent}\textbf{ Configuration for the class.}\par
+{\em A reference to the configuration controlling the evolution. }\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1VectorFieldEvolver_a814d5512c653a55f05b001b85b9f570d}\label{classAriadne_1_1VectorFieldEvolver_a814d5512c653a55f05b001b85b9f570d} 
+const Function\+Factory\+Type \& {\bfseries function\+\_\+factory} () const
+\begin{DoxyCompactList}\small\item\em The class which constructs functions for the enclosures. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\end{Indent}
+\begin{Indent}\textbf{ Evolution using abstract sets.}\par
+{\em Compute an approximation to the orbit set using upper semantics. }\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1VectorFieldEvolver_a154d83649fd1eb2d2d5245f4c51a66ef}\label{classAriadne_1_1VectorFieldEvolver_a154d83649fd1eb2d2d5245f4c51a66ef} 
+\mbox{\hyperlink{classAriadne_1_1Orbit}{Orbit\+Type}} {\bfseries orbit} (\mbox{\hyperlink{classAriadne_1_1EvolverInterface_a3eee62b15617b80a9cd7a2f4ba905cff}{Enclosure\+Type}} const \&initial\+\_\+set, \mbox{\hyperlink{classAriadne_1_1Real}{Time\+Type}} const \&time, \mbox{\hyperlink{group__DynamicsModule_gafd43cf1b14dd42f7ac8ca23dcc3837b3}{Semantics}} semantics) const
+\begin{DoxyCompactList}\small\item\em Compute an approximation to the evolved set under the given semantics. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\end{Indent}
+\doxyparagraph*{Public Member Functions inherited from \mbox{\hyperlink{classAriadne_1_1EvolverInterface}{Evolver\+Interface$<$ Vector\+Field, Labelled\+Enclosure, Vector\+Field\+::\+Time\+Type $>$}}}
+\begin{DoxyCompactItemize}
+\item 
+virtual {\bfseries \texorpdfstring{$\sim$}{\string~}\+Evolver\+Interface} ()=default
+\begin{DoxyCompactList}\small\item\em Virtual destructor. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsubsection*{Additional Inherited Members}
+\doxyparagraph*{Public Types inherited from \mbox{\hyperlink{classAriadne_1_1EvolverInterface}{Evolver\+Interface$<$ Vector\+Field, Labelled\+Enclosure, Vector\+Field\+::\+Time\+Type $>$}}}
+\begin{DoxyCompactItemize}
+\item 
+typedef \mbox{\hyperlink{classAriadne_1_1VectorField}{Vector\+Field}} {\bfseries System\+Type}
+\begin{DoxyCompactList}\small\item\em The type of system the evolver can compute the behaviour of. \end{DoxyCompactList}\item 
+typedef \mbox{\hyperlink{classAriadne_1_1VectorField_aa7e10c5fd6c960b4f9238ffa5a1f95c4}{System\+Type\+::\+Time\+Type}} {\bfseries Time\+Type}
+\begin{DoxyCompactList}\small\item\em The type used to represent the evolution time of the system. \end{DoxyCompactList}\item 
+typedef \mbox{\hyperlink{classAriadne_1_1VectorField_aa7e10c5fd6c960b4f9238ffa5a1f95c4}{Vector\+Field\+::\+Time\+Type}} {\bfseries Termination\+Type}
+\begin{DoxyCompactList}\small\item\em The type used to represent conditions under which system evolution may be terminated. \end{DoxyCompactList}\item 
+typedef Labelled\+Enclosure {\bfseries Enclosure\+Type}
+\begin{DoxyCompactList}\small\item\em The type of set used to enclose the flow tubes. \end{DoxyCompactList}\item 
+typedef \mbox{\hyperlink{classAriadne_1_1ListSet}{List\+Set}}$<$ \mbox{\hyperlink{classAriadne_1_1EvolverInterface_a3eee62b15617b80a9cd7a2f4ba905cff}{Enclosure\+Type}} $>$ {\bfseries Enclosure\+List\+Type}
+\begin{DoxyCompactList}\small\item\em The type of a list of enclosure sets. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+The documentation for this class was generated from the following files\+:\begin{DoxyCompactItemize}
+\item 
+source/dynamics/\mbox{\hyperlink{vector__field__evolver_8hpp}{vector\+\_\+field\+\_\+evolver.\+hpp}}\item 
+source/dynamics/vector\+\_\+field\+\_\+evolver.\+cpp\end{DoxyCompactItemize}

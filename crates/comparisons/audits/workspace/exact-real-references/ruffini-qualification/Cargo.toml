@@ -1,0 +1,13 @@
+[package]
+name = "ruffini-qualification"
+version = "0.0.0"
+edition = "2024"
+publish = false
+
+[dependencies]
+hyperreal = { path = "../../hyperreal" }
+rug = { version = "1.30.0", default-features = false, features = ["float", "integer", "rational", "std"] }
+
+[[bin]]
+name = "ruffini_hyper_boundary"
+path = "hyper_boundary.rs"

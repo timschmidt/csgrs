@@ -1,0 +1,76 @@
+{
+  "status": "committed",
+  "goal_status": "active",
+  "base_commit": "0facb05f1c0949c475a98be078dcbc389b522cfd",
+  "change": [
+    "Return traversal-ordered Curve2 pieces from general curve/path split topology, preserving selected parameters without native Bezier promotion.",
+    "Share one retained arrangement graph and borrow it directly; prepare it within operation certainty tracking.",
+    "Use common support charts for cuts and existing flat source restrictions for repeated subdivision.",
+    "Remove the obsolete general materialization/view APIs and splitter, updating callers directly without compatibility shims.",
+    "Reuse already prepared native trim spans and parameters, removing repeat promotion and aggregate materialization storage.",
+    "Identify authored curves and traversal-ordered fragments in arrangement provenance."
+  ],
+  "regressions": {
+    "new_public_tests": [
+      "generated_chord_topology_publishes_reusable_curve_pieces",
+      "selected_tail_topology_keeps_reversed_and_nonunit_source_charts",
+      "split_topology_preserves_both_sides_of_a_discontinuous_spline_knot"
+    ],
+    "expanded_public_tests": [
+      "generated_chord_overlaps_retain_independent_and_selected_boundaries",
+      "generated_chord_cuts_reenter_collinear_endpoint_intersections"
+    ],
+    "additional_topology_queries": 256,
+    "additional_piece_reentry_intersections": 96,
+    "setup_intersections_in_new_tests": 8,
+    "policies": [
+      "STRICT",
+      "APPROXIMATE_512"
+    ],
+    "oracles": "Independent exact endpoint coordinates, parameter evaluation, split-piece reentry, one-sided discontinuous knot limits, and authored-curve graph provenance."
+  },
+  "qualification": {
+    "results": "general-split-topology-full-results.json",
+    "targets": 49,
+    "passed": 2169,
+    "failed": 9,
+    "ignored": 9,
+    "new_failures": 0,
+    "hypercurve_passed": 1937,
+    "hyperbrep_passed": 232,
+    "remaining_failures": [
+      "approximate_512_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions",
+      "arc_parabola_fillet_recovers_exact_complement_contacts",
+      "axis_aligned_algebraic_chords_reenter_exact_region_offsets",
+      "line_parabola_fillet_extends_the_regular_incident_cell_exactly",
+      "non_ph_bezier_pair_projective_fillet_retains_algebraic_extensions",
+      "nonconvex_algebraic_chord_expansion_is_exact_and_local_collapse_is_explicit",
+      "strict_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions",
+      "unified_mixed_line_arc_erosion_splits_after_a_curved_neck_collapse",
+      "unified_region_non_miter_erosions_split_after_neck_collapse"
+    ],
+    "timeouts": 0,
+    "previously_unqualified_expensive_cases": 8,
+    "full_suite_passing": false,
+    "all_target_checks": true,
+    "immutable_sources": true,
+    "source_files": 396,
+    "formatting_and_whitespace_checks": true,
+    "caller_audit": "general-split-topology-caller-audit.json",
+    "rlib_sha256": "a71fa77b975a2f93d1e9160bfe99797a10cac804e223f6c4fbec3eb632acd868",
+    "all_30_repositories_clean_after_commit": true,
+    "workspace_after_commit": "general-split-topology-workspace-after-commit.json"
+  },
+  "evidence_audit": "general-split-topology-evidence-audit.md",
+  "performance_claim": null,
+  "remaining": [
+    "General curve/region trimming beyond native span representative points.",
+    "Selected-circle and analytic-parallel common pair dispatch.",
+    "Finite exterior source domains and complete partially coincident non-injective/retraced parameter relations.",
+    "Inverse branch transport for a later narrower chord domain in a chord/rational correspondence.",
+    "Direct propagation of contact topology identities into arrangement vertices and further reuse/scheduling measurements.",
+    "Nine pre-existing promotion failures and eight expensive unqualified cases.",
+    "The broader full-family API, region-normalization and computational-closure architecture plan."
+  ],
+  "commit": "753074a2a5c63455ee7e6583ee59f0bb272ecdcd"
+}

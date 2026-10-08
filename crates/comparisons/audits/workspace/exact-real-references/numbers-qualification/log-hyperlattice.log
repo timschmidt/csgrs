@@ -1,0 +1,28 @@
+   Compiling hyperreal v0.13.1 (/home/tim/Documents/GitHub/workspace/hyperreal)
+   Compiling hyperlattice v0.6.1 (/home/tim/Documents/GitHub/workspace/hyperlattice)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 3.21s
+     Running unittests src/lib.rs (.audit-targets/ireal-derivative-18555/debug/deps/hyperlattice-8f15e1f41831c0be)
+
+running 19 tests
+test algebra2::tests::displacement2_builds_coordinate_difference ... ok
+test algebra2::tests::displacement2_facts_expose_axis_and_zero_masks ... ok
+test algebra2::tests::orient2_expr_facts_track_axis_collinear_and_perpendicular_cases ... ok
+test algebra2::tests::orient2_expr_matches_counter_clockwise_triangle ... ok
+test algebra2::tests::product_sum_facts_track_structurally_zero_terms ... ok
+test algebra2::tests::product_sum_helpers_preserve_short_exact_expressions ... ok
+test algebra2::tests::squared_distance2_avoids_square_root ... ok
+test algebra2::tests::squared_norm2_reuses_cached_displacement ... ok
+test algebra2::tests::wedge2_builds_signed_area_expression ... ok
+test matrix::core::fact_layout_tests::immediate_matrix_facts_retain_one_exact_set_summary ... ok
+test point::tests::point_boundary_arrays_reject_nonfinite_values ... ok
+test point::tests::point_centroid_weighted_sum_and_lerp_stay_in_real_coordinates ... ok
+test projective::tests::nonsparse_or_symbolic_rows_use_the_expanded_fallback ... ok
+test projective::tests::parallel_planes_produce_point_at_infinity_without_affine_division ... ok
+test projective::tests::sparse_exact_row_matches_expanded_cofactors_for_every_position ... ok
+test projective::tests::sparse_intersection_handles_multiple_sparse_and_degenerate_rows ... ok
+test projective::tests::three_plane_intersection_preserves_homogeneous_point ... ok
+test projective::tests::two_plane_line_and_line_plane_match_three_plane_intersection ... ok
+test projective::tests::wide_dyadic_affine_point_matches_independent_exact_division ... ok
+
+test result: ok. 19 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+

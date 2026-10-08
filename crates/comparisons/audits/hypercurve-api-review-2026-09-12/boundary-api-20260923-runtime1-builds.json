@@ -1,0 +1,83 @@
+[
+  {
+    "label": "parent",
+    "command": [
+      "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+      "test",
+      "--release",
+      "--all-features",
+      "--no-run",
+      "--message-format=json",
+      "--locked",
+      "--offline",
+      "--test",
+      "hypercurve_adversarial_polygons",
+      "--test",
+      "hypercurve_analytic_parallel_region",
+      "--test",
+      "hypercurve_arc_bezier",
+      "--test",
+      "hypercurve_curve",
+      "--test",
+      "hypercurve_curve_region_boolean",
+      "--test",
+      "hypercurve_curve_region_promotion",
+      "--test",
+      "hypercurve_curve_region_stroke",
+      "--test",
+      "hypercurve_svg"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 14.787123198970221,
+    "log": "boundary-api-20260923-runtime1-parent-build.log"
+  },
+  {
+    "label": "candidate",
+    "command": [
+      "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+      "test",
+      "--release",
+      "--all-features",
+      "--no-run",
+      "--message-format=json",
+      "--locked",
+      "--offline",
+      "--lib",
+      "--test",
+      "hypercurve_adversarial_polygons",
+      "--test",
+      "hypercurve_analytic_parallel_region",
+      "--test",
+      "hypercurve_arc_bezier",
+      "--test",
+      "hypercurve_curve",
+      "--test",
+      "hypercurve_curve_region_boolean",
+      "--test",
+      "hypercurve_curve_region_promotion",
+      "--test",
+      "hypercurve_curve_region_stroke",
+      "--test",
+      "hypercurve_svg"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 233.23666592501104,
+    "log": "boundary-api-20260923-runtime1-candidate-build.log"
+  },
+  {
+    "label": "hyperbrep",
+    "command": [
+      "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+      "test",
+      "--release",
+      "--all-features",
+      "--no-run",
+      "--message-format=json",
+      "--locked",
+      "--offline"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 170.57890570594463,
+    "log": "boundary-api-20260923-runtime1-hyperbrep-build.log"
+  }
+]

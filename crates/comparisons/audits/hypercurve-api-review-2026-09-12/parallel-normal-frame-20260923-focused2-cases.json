@@ -1,0 +1,42 @@
+[
+  {
+    "name": "bezier_offset::conversion_tests::parallel_normal_recursive_frame_preserves_source_parameter_and_positive_speed",
+    "returncode": 0,
+    "passed": true,
+    "limit_seconds": 75,
+    "elapsed_seconds": 0.19649318407755345,
+    "log": "parallel-normal-frame-20260923-focused2-case-0.log"
+  },
+  {
+    "name": "bezier_region::tests::selected_circle_and_promoted_line_extend_through_the_chord_support_cell",
+    "returncode": 0,
+    "passed": true,
+    "limit_seconds": 75,
+    "elapsed_seconds": 6.659542636014521,
+    "log": "parallel-normal-frame-20260923-focused2-case-1.log"
+  },
+  {
+    "name": "bezier_offset::conversion_tests::selected_parallel_normal_circle_pair_decides_every_concentric_case",
+    "returncode": 0,
+    "passed": true,
+    "limit_seconds": 75,
+    "elapsed_seconds": 0.13927732105366886,
+    "log": "parallel-normal-frame-20260923-focused2-case-2.log"
+  },
+  {
+    "name": "bezier_region::tests::selected_circle_and_analytic_parallel_extend_on_full_supports",
+    "returncode": 101,
+    "passed": false,
+    "limit_seconds": 75,
+    "elapsed_seconds": 2.007805592031218,
+    "log": "parallel-normal-frame-20260923-focused2-case-3.log"
+  },
+  {
+    "name": "bezier_region::tests::selected_parallel_companion_fillets_without_range_promotion",
+    "returncode": "timeout",
+    "passed": false,
+    "limit_seconds": 75,
+    "elapsed_seconds": 75.13944756204728,
+    "log": "parallel-normal-frame-20260923-focused2-case-4.log"
+  }
+]

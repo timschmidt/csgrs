@@ -1,0 +1,17 @@
+{
+  "tag": "power-rebased-memory-candidate-approx-v68",
+  "started": "2026-09-11T16:58:06.189Z",
+  "finished": "2026-09-11T16:58:16.040Z",
+  "elapsedSeconds": 9.848587440000001,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "valgrind",
+  "args": [
+    "--leak-check=full",
+    "--show-leak-kinds=all",
+    "--errors-for-leak-kinds=definite,indirect,possible",
+    "--error-exitcode=99",
+    "/tmp/calcium-power-rebased.xUuvlb/fixed-approx"
+  ],
+  "code": 0,
+  "signal": null
+}

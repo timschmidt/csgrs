@@ -1,0 +1,203 @@
+{
+  "source_manifest": "cached-tower-approximation-20260927-v352-sources.json",
+  "source_directory": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/source-archives/cached-tower-approximation-20260927-v352",
+  "cases": [
+    {
+      "binary": "cached-tower-approximation-20260927-v352-hyperreal",
+      "name": "computable::node::quadratic_tower_tests::approximation_reuses_a_retained_tower_without_evaluating_its_history",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v352-case-000.log",
+      "elapsed_seconds": 0.007574329967610538
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v352-hyperreal",
+      "name": "computable::node::quadratic_tower_tests::cold_tower_proofs_replay_wide_dags_without_refinement",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v352-case-001.log",
+      "elapsed_seconds": 0.0075867100385949016
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v352-hyperreal",
+      "name": "computable::node::quadratic_tower_tests::nested_radical_below_two_is_negative",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v352-case-002.log",
+      "elapsed_seconds": 0.0035371469566598535
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v352-hyperreal",
+      "name": "computable::node::quadratic_tower_tests::nested_unit_normal_square_cancels",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v352-case-003.log",
+      "elapsed_seconds": 0.00357371405698359
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v352-hyperreal",
+      "name": "computable::node::quadratic_tower_tests::retained_forms_preserve_shared_dag_memoization",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v352-case-004.log",
+      "elapsed_seconds": 0.003537946962751448
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v352-hyperreal",
+      "name": "computable::node::quadratic_tower_tests::square_content_uses_one_primitive_radicand",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v352-case-005.log",
+      "elapsed_seconds": 0.003541596932336688
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v352-hyperreal",
+      "name": "computable::node::quadratic_tower_tests::tower_and_approximation_caches_can_publish_concurrently",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v352-case-006.log",
+      "elapsed_seconds": 0.003613141947425902
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v352-hyperreal",
+      "name": "computable::node::quadratic_tower_tests::tower_replay_handles_deep_and_exponentially_shared_graphs",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v352-case-007.log",
+      "elapsed_seconds": 0.015638726064935327
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v352-hyperreal",
+      "name": "computable::node::quadratic_tower_tests::transcendental_nodes_stay_undecided",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v352-case-008.log",
+      "elapsed_seconds": 0.00377349101472646
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v352-hyperreal",
+      "name": "real::arithmetic::quadratic_tower_real_tests::biquadratic_bases_share_sums_products_and_inverses",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v352-case-009.log",
+      "elapsed_seconds": 0.0035381369525566697
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v352-hyperreal",
+      "name": "real::arithmetic::quadratic_tower_real_tests::compact_towers_preserve_nested_roots_after_repeated_arithmetic",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v352-case-010.log",
+      "elapsed_seconds": 0.0038536859210580587
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v352-hyperreal",
+      "name": "real::arithmetic::quadratic_tower_real_tests::compact_towers_promote_proven_rationals_and_leave_other_fields_available",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v352-case-011.log",
+      "elapsed_seconds": 0.0035457370104268193
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v352-hyperreal",
+      "name": "real::arithmetic::quadratic_tower_real_tests::independently_normalized_chord_normals_replay_exactly",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v352-case-012.log",
+      "elapsed_seconds": 0.0035918630892410874
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v352-hyperreal",
+      "name": "real::arithmetic::quadratic_tower_real_tests::polynomial_linear_term_follows_the_selected_square_root",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v352-case-013.log",
+      "elapsed_seconds": 0.003536477917805314
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v352-hyperreal",
+      "name": "real::arithmetic::quadratic_tower_real_tests::polynomial_vanishes_at_both_square_roots_of_one_half",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v352-case-014.log",
+      "elapsed_seconds": 0.0035414770245552063
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v352-hyperreal",
+      "name": "real::arithmetic::quadratic_tower_real_tests::scaled_nested_normal_square_cancels",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v352-case-015.log",
+      "elapsed_seconds": 0.0036161120515316725
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v352-hyperreal",
+      "name": "real::arithmetic::quadratic_tower_real_tests::scaled_tower_sign_retains_the_shared_payload_proof",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v352-case-016.log",
+      "elapsed_seconds": 0.0034758519614115357
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v352-hyperreal",
+      "name": "real::arithmetic::quadratic_tower_real_tests::shifted_fourth_root_has_a_rational_annihilator",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v352-case-017.log",
+      "elapsed_seconds": 0.003541875979863107
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v352-hyperreal",
+      "name": "real::tests::tests::certified_dyadic_interval_encloses_rational_points_and_scaled_computables",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v352-case-018.log",
+      "elapsed_seconds": 0.003526107990182936
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v352-hyperreal",
+      "name": "real::tests::tests::certified_rational_interval_is_exact_for_rationals_and_bounds_symbolic_values",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v352-case-019.log",
+      "elapsed_seconds": 0.003520188038237393
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v352-hypercurve_curve_region_promotion",
+      "name": "strict_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions",
+      "returncode": 124,
+      "log": "cached-tower-approximation-20260927-v352-case-020.log",
+      "elapsed_seconds": 240.0740223689936
+    }
+  ],
+  "builds": [
+    {
+      "crate": "hyperreal",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "test",
+        "--lib",
+        "--release",
+        "--all-features",
+        "--no-run",
+        "--message-format=json",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v352-hyperreal-build.log",
+      "elapsed_seconds": 29.906647037016228,
+      "binary": {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/cached-tower-approximation-20260927-v352-hyperreal",
+        "sha256": "d8cae87f824c808d164ed37e7d95939a82d420c32d17576da3168eed30533406"
+      }
+    },
+    {
+      "crate": "hypercurve",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "test",
+        "--test",
+        "hypercurve_curve_region_promotion",
+        "--release",
+        "--all-features",
+        "--no-run",
+        "--message-format=json",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v352-hypercurve_curve_region_promotion-build.log",
+      "elapsed_seconds": 111.72070773597807,
+      "binary": {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/cached-tower-approximation-20260927-v352-hypercurve_curve_region_promotion",
+        "sha256": "c7e509a86f3f2cfb429f468bf5896f373b5eed0f66361f32a7e508f42294f691"
+      }
+    }
+  ],
+  "all_processes_reaped": true,
+  "checks": [],
+  "qualification_scope": "Reuse retained exact scalar reductions during approximation and original full region re-offset composition",
+  "failure": "case failure",
+  "qualification_complete": false
+}

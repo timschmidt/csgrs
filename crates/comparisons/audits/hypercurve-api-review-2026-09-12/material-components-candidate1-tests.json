@@ -1,0 +1,45 @@
+[
+  {
+    "repo": "hypercurve",
+    "target": "hypercurve_bezier_region",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/material-components-candidate1-libraries/hypercurve_bezier_region-95990204ab2cc359",
+      "--test-threads=2",
+      "--color",
+      "never"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.11384226899826899,
+    "sha256": "9d31eb352d3cab3f12d6f2bd41d23b51c2d933be058fc9d1a6affbbc07954adf",
+    "log": "material-components-candidate1-hypercurve-hypercurve_bezier_region-test.log"
+  },
+  {
+    "repo": "hypercurve",
+    "target": "hypercurve",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/material-components-candidate1-libraries/hypercurve-0b4591d2a89c50f8",
+      "--test-threads=2",
+      "--color",
+      "never",
+      "bezier_region::tests::material_component_"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.0034586330002639443,
+    "sha256": "2cbf629294ead0b36b89d76007738930c6d9e2bca3cf5f10e507c6f2b21b2b14",
+    "log": "material-components-candidate1-hypercurve-hypercurve-test.log"
+  },
+  {
+    "repo": "hyperbrep",
+    "target": "hyperbrep",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/material-components-candidate1-libraries/hyperbrep-223959a1c21ea81e",
+      "--test-threads=2",
+      "--color",
+      "never"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 4.721446807991015,
+    "sha256": "211a1a78148032f212d228bb8a5479f066a12dd5bc53fb6873560525dcdacd26",
+    "log": "material-components-candidate1-hyperbrep-hyperbrep-test.log"
+  }
+]

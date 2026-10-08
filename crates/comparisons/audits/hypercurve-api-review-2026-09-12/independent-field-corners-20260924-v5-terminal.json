@@ -1,0 +1,209 @@
+{
+  "checks": [
+    {
+      "label": "fmt",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustfmt",
+        "--edition",
+        "2024",
+        "--check",
+        "src/bezier_offset.rs",
+        "src/bezier_region.rs",
+        "src/curve.rs",
+        "src/curve_region_boolean.rs"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 3.653301052050665,
+      "log": "independent-field-corners-20260924-v5-fmt.log"
+    },
+    {
+      "label": "clippy-1",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "clippy",
+        "--all-targets",
+        "--all-features",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 29.10681165603455,
+      "log": "independent-field-corners-20260924-v5-clippy-1.log"
+    },
+    {
+      "label": "clippy-2",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "clippy",
+        "--all-targets",
+        "--no-default-features",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 27.318688987055793,
+      "log": "independent-field-corners-20260924-v5-clippy-2.log"
+    }
+  ],
+  "cases": [
+    {
+      "label": "independent_field_corner_edits_preserve_normalized_sets",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/independent-field-corners-20260924-v5-libtest",
+        "--exact",
+        "bezier_region::tests::independent_field_corner_edits_preserve_normalized_sets",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 1.0495253610424697,
+      "log": "independent-field-corners-20260924-v5-independent_field_corner_edits_preserve_normalized_sets.log"
+    },
+    {
+      "label": "independent_field_algebraic_chord_closes_and_classifies_a_region",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/independent-field-corners-20260924-v5-libtest",
+        "--exact",
+        "bezier_region::tests::independent_field_algebraic_chord_closes_and_classifies_a_region",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.3070435600820929,
+      "log": "independent-field-corners-20260924-v5-independent_field_algebraic_chord_closes_and_classifies_a_region.log"
+    },
+    {
+      "label": "independent_field_chord_publishes_nonzero_parallel_line_overlap",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/independent-field-corners-20260924-v5-libtest",
+        "--exact",
+        "bezier_region::tests::independent_field_chord_publishes_nonzero_parallel_line_overlap",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.39805066701956093,
+      "log": "independent-field-corners-20260924-v5-independent_field_chord_publishes_nonzero_parallel_line_overlap.log"
+    },
+    {
+      "label": "nonlinear_algebraic_endpoint_chamfer_uses_complete_incident_ray",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/independent-field-corners-20260924-v5-libtest",
+        "--exact",
+        "bezier_region::tests::nonlinear_algebraic_endpoint_chamfer_uses_complete_incident_ray",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 4.753635918023065,
+      "log": "independent-field-corners-20260924-v5-nonlinear_algebraic_endpoint_chamfer_uses_complete_incident_ray.log"
+    },
+    {
+      "label": "closed_ph_corner_edits_preserve_both_normalized_source_lobes",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/independent-field-corners-20260924-v5-libtest",
+        "--exact",
+        "bezier_region::tests::closed_ph_corner_edits_preserve_both_normalized_source_lobes",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.39289499004371464,
+      "log": "independent-field-corners-20260924-v5-closed_ph_corner_edits_preserve_both_normalized_source_lobes.log"
+    },
+    {
+      "label": "algebraic_cusp_semicircle_point_incidence_selects_exactly_one_half",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/independent-field-corners-20260924-v5-libtest",
+        "--exact",
+        "bezier_offset::conversion_tests::algebraic_cusp_semicircle_point_incidence_selects_exactly_one_half",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.28308980201836675,
+      "log": "independent-field-corners-20260924-v5-algebraic_cusp_semicircle_point_incidence_selects_exactly_one_half.log"
+    },
+    {
+      "label": "algebraic_cusp_semicircle_replays_a_selected_circle_component",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/independent-field-corners-20260924-v5-libtest",
+        "--exact",
+        "bezier_offset::conversion_tests::algebraic_cusp_semicircle_replays_a_selected_circle_component",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 20.90268937300425,
+      "log": "independent-field-corners-20260924-v5-algebraic_cusp_semicircle_replays_a_selected_circle_component.log"
+    },
+    {
+      "label": "algebraic_cusp_semicircle_intersects_exact_oblique_chords_exactly",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/independent-field-corners-20260924-v5-libtest",
+        "--exact",
+        "bezier_offset::conversion_tests::algebraic_cusp_semicircle_intersects_exact_oblique_chords_exactly",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.2906522339908406,
+      "log": "independent-field-corners-20260924-v5-algebraic_cusp_semicircle_intersects_exact_oblique_chords_exactly.log"
+    },
+    {
+      "label": "selected_parallel_normal_circle_uses_direct_exact_winding",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/independent-field-corners-20260924-v5-libtest",
+        "--exact",
+        "bezier_offset::conversion_tests::selected_parallel_normal_circle_uses_direct_exact_winding",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.2822111430577934,
+      "log": "independent-field-corners-20260924-v5-selected_parallel_normal_circle_uses_direct_exact_winding.log"
+    },
+    {
+      "label": "boundary_side_rays_skip_retained_cusp_contacts_across_loops",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/independent-field-corners-20260924-v5-libtest",
+        "--exact",
+        "bezier_region::tests::boundary_side_rays_skip_retained_cusp_contacts_across_loops",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.2880030859960243,
+      "log": "independent-field-corners-20260924-v5-boundary_side_rays_skip_retained_cusp_contacts_across_loops.log"
+    }
+  ],
+  "all_processes_reaped": true,
+  "binary_sha256": "441b7ff128240f6815c8cdc3745d143eee4c1af3cb8b978a7009449e9b752e3c",
+  "all_sources_unchanged": true
+}

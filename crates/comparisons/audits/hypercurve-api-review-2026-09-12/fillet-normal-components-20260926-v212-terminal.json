@@ -1,0 +1,101 @@
+{
+  "parents": {
+    "hypercurve": "11c5e0faaf13846869bc8d447aaadfea539b86e7",
+    "hypersolve": "42308d704df777b3e627aa344424afa3f215e456",
+    "hyperreal": "0cb5f29aee065c73e234e0ebb0a9e106398515bb"
+  },
+  "workspace_guard": "fillet-normal-components-20260926-v212-sources.json",
+  "source_manifest": "fillet-normal-components-20260926-v212-sources.json",
+  "source_directory": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/source-archives/fillet-normal-components-20260926-v212",
+  "build_source_directory": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/build-workspace-20260925",
+  "cases": [
+    {
+      "name": "bezier_offset::conversion_tests::original_parallel_normal_constraints_clip_finite_and_incident_components",
+      "returncode": 0,
+      "elapsed_seconds": 0.03190891107078642,
+      "log": "fillet-normal-components-20260926-v212-case-000.log"
+    },
+    {
+      "name": "curve::tests::selected_parallel_fillet_clips_a_positive_dimensional_center_component_locally",
+      "returncode": 0,
+      "elapsed_seconds": 0.0318074079696089,
+      "log": "fillet-normal-components-20260926-v212-case-001.log"
+    },
+    {
+      "name": "curve::tests::selected_parallel_fillet_keeps_contacts_beyond_interior_cusps",
+      "returncode": 0,
+      "elapsed_seconds": 0.007620216929353774,
+      "log": "fillet-normal-components-20260926-v212-case-002.log"
+    },
+    {
+      "name": "curve::tests::fillet_center_contacts_keep_source_orientation_across_support_cusps",
+      "returncode": 0,
+      "elapsed_seconds": 0.007610238040797412,
+      "log": "fillet-normal-components-20260926-v212-case-003.log"
+    },
+    {
+      "name": "curve::tests::distinct_parallel_sources_keep_a_shared_fillet_center_family",
+      "returncode": 0,
+      "elapsed_seconds": 0.01569740299601108,
+      "log": "fillet-normal-components-20260926-v212-case-004.log"
+    }
+  ],
+  "all_processes_reaped": true,
+  "checks": [
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustfmt",
+        "--edition",
+        "2024",
+        "--check",
+        "src/bezier_offset.rs",
+        "src/curve.rs"
+      ],
+      "returncode": 0,
+      "log": "fillet-normal-components-20260926-v212-check-0.log"
+    },
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "clippy",
+        "--all-targets",
+        "--all-features",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "returncode": 0,
+      "log": "fillet-normal-components-20260926-v212-check-1.log"
+    },
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "clippy",
+        "--all-targets",
+        "--no-default-features",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "returncode": 0,
+      "log": "fillet-normal-components-20260926-v212-check-2.log"
+    }
+  ],
+  "build_returncode": 0,
+  "binary": {
+    "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/fillet-normal-components-20260926-v212-hypercurve",
+    "sha256": "3b852175a18038c1b99146d286a137ddeb19d2cc49af6a6265fa572e5f0f5f09"
+  },
+  "selection": [
+    "bezier_offset::conversion_tests::original_parallel_normal_constraints_clip_finite_and_incident_components",
+    "curve::tests::selected_parallel_fillet_clips_a_positive_dimensional_center_component_locally",
+    "curve::tests::selected_parallel_fillet_keeps_contacts_beyond_interior_cusps",
+    "curve::tests::fillet_center_contacts_keep_source_orientation_across_support_cusps",
+    "curve::tests::distinct_parallel_sources_keep_a_shared_fillet_center_family"
+  ],
+  "all_sources_unchanged": true
+}

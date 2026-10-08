@@ -1,0 +1,13 @@
+{"label":"0-before-asin-rational","args":["asin","rational","256"],"status":0,"error":"EPERM","signal":null,"stdout":"asin\trational\t256\t2425226\t3566036\t20178\t1237720\t4901665716729041920\n","stderr":"","sha256":"a6445ed8b7bc6af34869a243a2e5a1b3291b127f51481baf931bc9a9dbb51f50","source":"62c0679bf765377d72300d99b1d7ed61fa6ab08640d8d7010f01411553094d8c"}
+file:///home/tim/Documents/GitHub/workspace/exact-real-references/numbers-qualification/run-neighbor-repair.mjs:12
+  if(r.error||r.status!==0||r.stdout.startsWith('FAIL'))throw Error('failed request '+label);
+                                                              ^
+
+Error: failed request 0-before-asin-rational
+    at run (file:///home/tim/Documents/GitHub/workspace/exact-real-references/numbers-qualification/run-neighbor-repair.mjs:12:63)
+    at file:///home/tim/Documents/GitHub/workspace/exact-real-references/numbers-qualification/run-neighbor-repair.mjs:21:67
+    at ModuleJob.run (node:internal/modules/esm/module_job:343:25)
+    at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:665:26)
+    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+
+Node.js v22.22.2

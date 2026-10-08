@@ -1,0 +1,33 @@
+{
+  "status": "implemented, qualified, committed; original goal active",
+  "commit": "cbe81518b359e22473a6b4fe562abaadb5f46456",
+  "preceding_commit": "e226446925e62af7e75c7bac9644ac3c3a475089",
+  "change": "One retained parallel composer accepts ordinary and selected CurveParameterRange2 boundaries. It retains certified one-sided stationary-source endpoint limits, composes distance over the original source chart, shares cut points, and anchors tangent supports on the original region corner. Two separate composition implementations were removed and callers migrated directly.",
+  "compact_output": "Existing certified selected-parameter promotion remains shared with corner preparation. Stationary endpoint payloads bypass it; no new public API or cache fields.",
+  "tests": {
+    "hypercurve_library": 1024,
+    "hypercurve_integration": 413,
+    "hyperbrep_library": 232,
+    "unique_total": 1669,
+    "library_ignored": 6,
+    "established_expensive_library_exclusions": 4
+  },
+  "logs": [
+    "retained-offset-composition-final-release.log",
+    "retained-offset-composition-final-hyperbrep-release.log",
+    "retained-offset-composition-all-targets.log",
+    "retained-offset-composition-hyperbrep-all-targets.log"
+  ],
+  "regression": "Degree-five PH source with a stationary endpoint: outward offset composition, direct-offset XOR equivalence, exact boundary path reentry, cancellation, both contexts and both traversals. A private span test checks the original degree/source and old-corner tangent anchor through three compositions.",
+  "superseded_attempt": "retained-offset-composition-release.log failed one compact-output assertion; parameter promotion was restored and the complete final run passed. The focused repair is in retained-offset-composition-parameter-promotion-test.log.",
+  "formatting": "Changed Rust formatting and git diff --check passed.",
+  "source_sha256": {
+    "src/bezier_offset.rs": "127df08511ab5c99cc32755ea718ea395832b00773ee504e9bf0175e33ada200",
+    "src/bezier_region.rs": "82afc8c0f7670307d1631810028d7ee7fbfddc1219646b94268408b4f12e6ecd",
+    "tests/hypercurve_bezier_fit_offset.rs": "f8101f9bb89d4a6c4ada6b68026f7183f36ffd1f5d51c1aaaebb3d06140db8ff"
+  },
+  "inward_followup": "stationary-ph-offset-inspect-retained-composition.log: first inward offset Certified in 3.813 seconds with degree-five source; second did not return within the 60-second total diagnostic limit. Timings are observations, not a controlled benchmark; prior recursive-refinement stack remains a follow-up lead.",
+  "workspace_status": "retained-offset-composition-workspace-after-commit.json",
+  "clean_repository_count": 30,
+  "goal_status": "active"
+}

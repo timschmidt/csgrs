@@ -1,0 +1,13 @@
+   Compiling hyperreal v0.13.1 (/home/tim/Documents/GitHub/workspace/hyperreal)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 2.44s
+     Running unittests src/lib.rs (.audit-targets/ireal-derivative-18555/debug/deps/hyperreal-99435bbe0ce6f1f3)
+
+running 5 tests
+test computable::node::tests::log1p_domain_guard_preserves_abort_and_lazy_construction ... ok
+test computable::node::tests::log1p_domain_guard_survives_serialization ... ok
+test computable::node::tests::log1p_domain_guard_covers_public_residuals_outside_the_series_range ... ok
+test computable::node::tests::log1p_domain_guard_covers_extreme_scales_and_cache_histories ... ok
+test computable::node::tests::log1p_domain_guard_rechecks_every_working_sample_boundary_rounding ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 742 filtered out; finished in 0.07s
+

@@ -1,0 +1,1108 @@
+{
+  "hypercurve/benches/bezier_algebraic_parameter.rs": [
+    {
+      "line": 248,
+      "text": "let point = curve.point_at_algebraic_parameter(&midpoint, &policy)?;"
+    },
+    {
+      "line": 269,
+      "text": "let point = conic.point_at_algebraic_parameter(&midpoint, &policy)?;"
+    }
+  ],
+  "hypercurve/benches/comparative.rs": [
+    {
+      "line": 612,
+      "text": ".point_at_algebraic_parameter(&parameter, &policy)"
+    },
+    {
+      "line": 617,
+      "text": ".point_at_algebraic_parameter(&parameter, &policy)"
+    }
+  ],
+  "hypercurve/benches/editing.rs": [
+    {
+      "line": 835,
+      "text": ".point_at_algebraic_parameter(parameter, &policy)"
+    },
+    {
+      "line": 865,
+      "text": ".point_at_algebraic_parameter(&parameter, &policy)"
+    },
+    {
+      "line": 915,
+      "text": "horizontal(Real::zero())?.point_at_algebraic_parameter(&parameter, &policy)?,"
+    },
+    {
+      "line": 918,
+      "text": "horizontal(Real::one())?.point_at_algebraic_parameter(&parameter, &policy)?,"
+    },
+    {
+      "line": 963,
+      "text": ".point_at_algebraic_parameter(&parameter, &policy)"
+    }
+  ],
+  "hypercurve/fuzz/fuzz_targets/bezier_algebraic_image.rs": [
+    {
+      "line": 87,
+      "text": ".point_at_algebraic_parameter(&parameter, &policy)"
+    },
+    {
+      "line": 116,
+      "text": ".point_at_algebraic_parameter(&parameter, &policy)"
+    }
+  ],
+  "hypercurve/src/bezier_algebraic_image.rs": [
+    {
+      "line": 284,
+      "text": "use super::{RationalBezierAlgebraicPointImage2, parameter_representation};"
+    },
+    {
+      "line": 308,
+      "text": "RationalBezierAlgebraicPointImage2::from_retained_expression("
+    },
+    {
+      "line": 366,
+      "text": "let image = RationalBezierAlgebraicPointImage2::from_parametric_source("
+    },
+    {
+      "line": 637,
+      "text": "pub struct RationalBezierAlgebraicPointImage2 {"
+    },
+    {
+      "line": 664,
+      "text": "resolved: OnceLock<Option<RationalBezierAlgebraicPointImage2>>,"
+    },
+    {
+      "line": 668,
+      "text": "image: &'a RationalBezierAlgebraicPointImage2,"
+    },
+    {
+      "line": 683,
+      "text": "impl PartialEq for RationalBezierAlgebraicPointImage2 {"
+    },
+    {
+      "line": 689,
+      "text": "impl RationalBezierAlgebraicPointImage2 {"
+    },
+    {
+      "line": 775,
+      "text": ".point_at_algebraic_parameter(&source.parameter, policy)"
+    },
+    {
+      "line": 1445,
+      "text": "pub(crate) const fn point_image(&self) -> &RationalBezierAlgebraicPointImage2 {"
+    },
+    {
+      "line": 1766,
+      "text": "pub fn point_at_algebraic_parameter("
+    },
+    {
+      "line": 1814,
+      "text": "pub fn point_at_algebraic_parameter("
+    },
+    {
+      "line": 1881,
+      "text": "pub fn point_at_algebraic_parameter("
+    },
+    {
+      "line": 1885,
+      "text": ") -> CurveResult<RationalBezierAlgebraicPointImage2> {"
+    },
+    {
+      "line": 2021,
+      "text": ") -> CurveResult<RationalBezierAlgebraicPointImage2> {"
+    },
+    {
+      "line": 2037,
+      "text": ") -> CurveResult<RationalBezierAlgebraicPointImage2> {"
+    },
+    {
+      "line": 2049,
+      "text": "} => Ok(RationalBezierAlgebraicPointImage2::new("
+    },
+    {
+      "line": 2061,
+      "text": "} => Ok(RationalBezierAlgebraicPointImage2::new("
+    },
+    {
+      "line": 2076,
+      "text": "RationalCoordinateImagePair::Failed(status) => Ok(RationalBezierAlgebraicPointImage2::new("
+    },
+    {
+      "line": 2093,
+      "text": ") -> CurveResult<RationalBezierAlgebraicPointImage2> {"
+    }
+  ],
+  "hypercurve/src/bezier_offset.rs": [
+    {
+      "line": 63,
+      "text": "RationalBezierAlgebraicPointImage2, RationalBezierAlgebraicTangentImage2,"
+    },
+    {
+      "line": 437,
+      "text": "direct_center: Option<RationalBezierAlgebraicPointImage2>,"
+    },
+    {
+      "line": 6790,
+      "text": "Algebraic(RationalBezierAlgebraicPointImage2),"
+    },
+    {
+      "line": 10601,
+      "text": ") -> CurveResult<Option<RationalBezierAlgebraicPointImage2>> {"
+    },
+    {
+      "line": 10644,
+      "text": "RationalBezierAlgebraicPointImage2::from_parametric_source("
+    },
+    {
+      "line": 10724,
+      "text": "Ok(RationalBezierAlgebraicPointImage2::from_parametric_source("
+    },
+    {
+      "line": 13412,
+      "text": ") -> CurveResult<Option<RationalBezierAlgebraicPointImage2>> {"
+    },
+    {
+      "line": 13432,
+      "text": "point: &RationalBezierAlgebraicPointImage2,"
+    },
+    {
+      "line": 13523,
+      "text": "point: &RationalBezierAlgebraicPointImage2,"
+    },
+    {
+      "line": 14699,
+      "text": "start: RationalBezierAlgebraicPointImage2,"
+    },
+    {
+      "line": 14700,
+      "text": "end: RationalBezierAlgebraicPointImage2,"
+    },
+    {
+      "line": 15013,
+      "text": "start_point_image: OnceLock<Option<RationalBezierAlgebraicPointImage2>>,"
+    },
+    {
+      "line": 15014,
+      "text": "end_point_image: OnceLock<Option<RationalBezierAlgebraicPointImage2>>,"
+    },
+    {
+      "line": 15047,
+      "text": "start: RationalBezierAlgebraicPointImage2,"
+    },
+    {
+      "line": 15048,
+      "text": "end: RationalBezierAlgebraicPointImage2,"
+    },
+    {
+      "line": 15049,
+      "text": "center: RationalBezierAlgebraicPointImage2,"
+    },
+    {
+      "line": 15875,
+      "text": ") -> CurveResult<RationalBezierAlgebraicPointImage2> {"
+    },
+    {
+      "line": 16007,
+      "text": "RationalBezierAlgebraicPointImage2::from_retained_expression("
+    },
+    {
+      "line": 16169,
+      "text": ") -> CurveResult<RationalBezierAlgebraicPointImage2> {"
+    },
+    {
+      "line": 16198,
+      "text": "RationalBezierAlgebraicPointImage2::from_retained_expression("
+    },
+    {
+      "line": 16238,
+      "text": ") -> CurveResult<RationalBezierAlgebraicPointImage2> {"
+    },
+    {
+      "line": 16968,
+      "text": ") -> CurveResult<Classification<RationalBezierAlgebraicPointImage2>> {"
+    },
+    {
+      "line": 17239,
+      "text": "Ok(RationalBezierAlgebraicPointImage2::from_parametric_source("
+    },
+    {
+      "line": 18119,
+      "text": ") -> CurveResult<RationalBezierAlgebraicPointImage2> {"
+    },
+    {
+      "line": 18129,
+      "text": ") -> CurveResult<RationalBezierAlgebraicPointImage2> {"
+    },
+    {
+      "line": 18139,
+      "text": ") -> CurveResult<RationalBezierAlgebraicPointImage2> {"
+    },
+    {
+      "line": 37877,
+      "text": "RationalBezierAlgebraicPointImage2::from_parametric_source("
+    },
+    {
+      "line": 40639,
+      "text": "CurvePoint2::from(RationalBezierAlgebraicPointImage2::from_parametric_source("
+    },
+    {
+      "line": 40723,
+      "text": "RationalBezierAlgebraicPointImage2::from_parametric_source("
+    },
+    {
+      "line": 41063,
+      "text": "RationalBezierAlgebraicPointImage2::from_parametric_source("
+    },
+    {
+      "line": 44377,
+      "text": "RationalBezierAlgebraicPointImage2::from_parametric_source("
+    },
+    {
+      "line": 50083,
+      "text": ") -> CurveResult<Option<RationalBezierAlgebraicPointImage2>> {"
+    },
+    {
+      "line": 50135,
+      "text": "RationalBezierAlgebraicPointImage2::from_retained_expression("
+    },
+    {
+      "line": 51593,
+      "text": ") -> CurveResult<Classification<Option<RationalBezierAlgebraicPointImage2>>> {"
+    },
+    {
+      "line": 51640,
+      "text": "RationalBezierAlgebraicPointImage2::from_parametric_source("
+    },
+    {
+      "line": 51827,
+      "text": ") -> CurveResult<Classification<Option<RationalBezierAlgebraicPointImage2>>> {"
+    },
+    {
+      "line": 53222,
+      "text": ") -> RationalBezierAlgebraicPointImage2 {"
+    },
+    {
+      "line": 53223,
+      "text": "RationalBezierAlgebraicPointImage2::from_retained_expression("
+    },
+    {
+      "line": 53513,
+      "text": "point: &RationalBezierAlgebraicPointImage2,"
+    },
+    {
+      "line": 63619,
+      "text": "point: &RationalBezierAlgebraicPointImage2,"
+    },
+    {
+      "line": 73777,
+      "text": "let point = RationalBezierAlgebraicPointImage2::from_retained_expression("
+    },
+    {
+      "line": 73854,
+      "text": "let point = RationalBezierAlgebraicPointImage2::from_retained_expression("
+    },
+    {
+      "line": 75069,
+      "text": "let translated = RationalBezierAlgebraicPointImage2::from_retained_expression("
+    },
+    {
+      "line": 75137,
+      "text": "RationalBezierAlgebraicPointImage2::from_retained_expression("
+    },
+    {
+      "line": 75214,
+      "text": "RationalBezierAlgebraicPointImage2::from_retained_expression("
+    },
+    {
+      "line": 83498,
+      "text": "RationalBezierAlgebraicPointImage2::from_parametric_source("
+    },
+    {
+      "line": 84685,
+      "text": "point: &RationalBezierAlgebraicPointImage2,"
+    },
+    {
+      "line": 87804,
+      "text": "image: &RationalBezierAlgebraicPointImage2,"
+    },
+    {
+      "line": 87830,
+      "text": ") -> CurveResult<Classification<[RationalBezierAlgebraicPointImage2; 2]>> {"
+    },
+    {
+      "line": 87906,
+      "text": ") -> CurveResult<Classification<RationalBezierAlgebraicPointImage2>> {"
+    },
+    {
+      "line": 103974,
+      "text": ") -> CurveResult<Classification<RationalBezierAlgebraicPointImage2>> {"
+    },
+    {
+      "line": 104117,
+      "text": ") -> CurveResult<Option<RationalBezierAlgebraicPointImage2>> {"
+    },
+    {
+      "line": 104127,
+      "text": ") -> CurveResult<Option<RationalBezierAlgebraicPointImage2>> {"
+    },
+    {
+      "line": 117166,
+      "text": "RationalBezierAlgebraicPointImage2::from_retained_expression("
+    },
+    {
+      "line": 120893,
+      "text": ") -> CurveResult<Classification<Option<RationalBezierAlgebraicPointImage2>>> {"
+    },
+    {
+      "line": 138231,
+      "text": "source.point_at_algebraic_parameter(root, &policy).unwrap(),"
+    },
+    {
+      "line": 143002,
+      "text": ".point_at_algebraic_parameter(&first_parameter, &policy)"
+    },
+    {
+      "line": 143007,
+      "text": ".point_at_algebraic_parameter(&second_parameter, &policy)"
+    },
+    {
+      "line": 143114,
+      "text": ".point_at_algebraic_parameter(&parameter, &policy)"
+    },
+    {
+      "line": 143249,
+      "text": ".point_at_algebraic_parameter(&parameter, &policy)"
+    },
+    {
+      "line": 143323,
+      "text": ".point_at_algebraic_parameter(&first_parameter, &policy)"
+    },
+    {
+      "line": 143328,
+      "text": ".point_at_algebraic_parameter(&second_parameter, &policy)"
+    },
+    {
+      "line": 143374,
+      "text": ".point_at_algebraic_parameter(&first_parameter, &policy)"
+    },
+    {
+      "line": 143379,
+      "text": ".point_at_algebraic_parameter(&second_parameter, &policy)"
+    },
+    {
+      "line": 143669,
+      "text": ".point_at_algebraic_parameter(&start_parameter, &policy)"
+    },
+    {
+      "line": 143674,
+      "text": ".point_at_algebraic_parameter(&end_parameter, &policy)"
+    },
+    {
+      "line": 144099,
+      "text": ".point_at_algebraic_parameter(&endpoint_parameter, &policy)"
+    },
+    {
+      "line": 144253,
+      "text": ".point_at_algebraic_parameter(parameter, &policy)"
+    },
+    {
+      "line": 144751,
+      "text": ".point_at_algebraic_parameter(&parameter, policy)"
+    },
+    {
+      "line": 145009,
+      "text": ".point_at_algebraic_parameter(parameter, &policy)"
+    },
+    {
+      "line": 145102,
+      "text": ".point_at_algebraic_parameter(&first_parameter, &policy)"
+    },
+    {
+      "line": 145107,
+      "text": ".point_at_algebraic_parameter(&second_parameter, &policy)"
+    },
+    {
+      "line": 145325,
+      "text": ".point_at_algebraic_parameter(&first_parameter, &policy)"
+    },
+    {
+      "line": 145330,
+      "text": ".point_at_algebraic_parameter(&second_parameter, &policy)"
+    },
+    {
+      "line": 145412,
+      "text": ".point_at_algebraic_parameter(&parameter, &policy)"
+    },
+    {
+      "line": 145451,
+      "text": ".point_at_algebraic_parameter(&parameter, &policy)"
+    },
+    {
+      "line": 145487,
+      "text": ".point_at_algebraic_parameter(&parameter, &policy)"
+    },
+    {
+      "line": 145526,
+      "text": "image: &RationalBezierAlgebraicPointImage2,"
+    },
+    {
+      "line": 145583,
+      "text": "first: &RationalBezierAlgebraicPointImage2,"
+    },
+    {
+      "line": 145584,
+      "text": "second: &RationalBezierAlgebraicPointImage2,"
+    },
+    {
+      "line": 145621,
+      "text": "first: &RationalBezierAlgebraicPointImage2,"
+    },
+    {
+      "line": 145622,
+      "text": "second: &RationalBezierAlgebraicPointImage2,"
+    },
+    {
+      "line": 145623,
+      "text": "midpoint: &RationalBezierAlgebraicPointImage2,"
+    },
+    {
+      "line": 145653,
+      "text": "point: &RationalBezierAlgebraicPointImage2,"
+    },
+    {
+      "line": 145654,
+      "text": "center: &RationalBezierAlgebraicPointImage2,"
+    },
+    {
+      "line": 145835,
+      "text": "let image = RationalBezierAlgebraicPointImage2::from_retained_expression("
+    },
+    {
+      "line": 146094,
+      "text": "RationalBezierAlgebraicPointImage2::from_retained_expression("
+    },
+    {
+      "line": 146254,
+      "text": "RationalBezierAlgebraicPointImage2::from_retained_expression("
+    },
+    {
+      "line": 146370,
+      "text": "RationalBezierAlgebraicPointImage2::from_retained_expression("
+    },
+    {
+      "line": 146476,
+      "text": "RationalBezierAlgebraicPointImage2::from_retained_expression("
+    },
+    {
+      "line": 146664,
+      "text": "RationalBezierAlgebraicPointImage2::from_retained_expression("
+    },
+    {
+      "line": 147321,
+      "text": "RationalBezierAlgebraicPointImage2::from_retained_expression("
+    },
+    {
+      "line": 147428,
+      "text": "RationalBezierAlgebraicPointImage2::from_retained_expression("
+    },
+    {
+      "line": 147464,
+      "text": ".point_at_algebraic_parameter(&start_parameter, &policy)"
+    },
+    {
+      "line": 147469,
+      "text": ".point_at_algebraic_parameter(&end_parameter, &policy)"
+    },
+    {
+      "line": 147713,
+      "text": "RationalBezierAlgebraicPointImage2::from_retained_expression("
+    },
+    {
+      "line": 154272,
+      "text": "curve.point_at_algebraic_parameter(parameter, &policy)?,"
+    },
+    {
+      "line": 154715,
+      "text": "curve.point_at_algebraic_parameter(parameter, &policy)?,"
+    },
+    {
+      "line": 154882,
+      "text": "curve.point_at_algebraic_parameter(parameter, &policy)?,"
+    },
+    {
+      "line": 157267,
+      "text": ".point_at_algebraic_parameter(parameter, &policy)"
+    },
+    {
+      "line": 157487,
+      "text": ".point_at_algebraic_parameter(parameter, &policy)"
+    },
+    {
+      "line": 159312,
+      "text": "let inside = RationalBezierAlgebraicPointImage2::from_parametric_source("
+    },
+    {
+      "line": 159325,
+      "text": "let outside = RationalBezierAlgebraicPointImage2::from_parametric_source("
+    },
+    {
+      "line": 159504,
+      "text": "let inside = RationalBezierAlgebraicPointImage2::from_parametric_source("
+    },
+    {
+      "line": 159515,
+      "text": "let outside = RationalBezierAlgebraicPointImage2::from_parametric_source("
+    },
+    {
+      "line": 159531,
+      "text": "let boundary = RationalBezierAlgebraicPointImage2::from_parametric_source("
+    },
+    {
+      "line": 159566,
+      "text": "RationalBezierAlgebraicPointImage2::from_retained_expression("
+    },
+    {
+      "line": 160469,
+      "text": "RationalBezierAlgebraicPointImage2::from_retained_expression("
+    },
+    {
+      "line": 162385,
+      "text": "RationalBezierAlgebraicPointImage2::from_retained_expression("
+    },
+    {
+      "line": 163354,
+      "text": "RationalBezierAlgebraicPointImage2::from_retained_expression("
+    },
+    {
+      "line": 163515,
+      "text": "RationalBezierAlgebraicPointImage2::from_retained_expression("
+    },
+    {
+      "line": 163792,
+      "text": "let query: CurvePoint2 = RationalBezierAlgebraicPointImage2::from_retained_expression("
+    },
+    {
+      "line": 163897,
+      "text": "RationalBezierAlgebraicPointImage2::from_retained_expression("
+    },
+    {
+      "line": 164203,
+      "text": "RationalBezierAlgebraicPointImage2::from_retained_expression("
+    },
+    {
+      "line": 170392,
+      "text": "RationalBezierAlgebraicPointImage2::from_retained_expression("
+    },
+    {
+      "line": 170684,
+      "text": "RationalBezierAlgebraicPointImage2::from_retained_expression("
+    },
+    {
+      "line": 170787,
+      "text": "RationalBezierAlgebraicPointImage2::from_retained_expression("
+    },
+    {
+      "line": 173844,
+      "text": "RationalBezierAlgebraicPointImage2::from_retained_expression("
+    },
+    {
+      "line": 174070,
+      "text": ".point_at_algebraic_parameter(&first_parameter, &policy)"
+    },
+    {
+      "line": 174075,
+      "text": ".point_at_algebraic_parameter(&second_parameter, &policy)"
+    },
+    {
+      "line": 175014,
+      "text": "let source_point = RationalBezierAlgebraicPointImage2::from_retained_expression("
+    },
+    {
+      "line": 178637,
+      "text": "RationalBezierAlgebraicPointImage2::from_retained_expression("
+    },
+    {
+      "line": 180006,
+      "text": "RationalBezierAlgebraicPointImage2::from_parametric_source("
+    },
+    {
+      "line": 180062,
+      "text": "let point: CurvePoint2 = RationalBezierAlgebraicPointImage2::from_parametric_source("
+    },
+    {
+      "line": 180124,
+      "text": "let query = RationalBezierAlgebraicPointImage2::from_parametric_source("
+    },
+    {
+      "line": 180183,
+      "text": "RationalBezierAlgebraicPointImage2::from_parametric_source("
+    },
+    {
+      "line": 184908,
+      "text": ".point_at_algebraic_parameter(&center_parameter, &policy)"
+    },
+    {
+      "line": 185550,
+      "text": ".point_at_algebraic_parameter(&parameter, &policy)"
+    }
+  ],
+  "hypercurve/src/bezier_parameter.rs": [
+    {
+      "line": 154,
+      "text": "point: Option<crate::RationalBezierAlgebraicPointImage2>,"
+    },
+    {
+      "line": 1231,
+      "text": ") -> Option<crate::RationalBezierAlgebraicPointImage2> {"
+    },
+    {
+      "line": 1251,
+      "text": "image: crate::RationalBezierAlgebraicPointImage2,"
+    },
+    {
+      "line": 1330,
+      "text": ") -> Option<crate::RationalBezierAlgebraicPointImage2> {"
+    },
+    {
+      "line": 1350,
+      "text": "image: crate::RationalBezierAlgebraicPointImage2,"
+    }
+  ],
+  "hypercurve/src/bezier_region.rs": [
+    {
+      "line": 31,
+      "text": "use crate::RationalBezierAlgebraicPointImage2;"
+    },
+    {
+      "line": 12667,
+      "text": "point: &RationalBezierAlgebraicPointImage2,"
+    },
+    {
+      "line": 12675,
+      "text": "point: &RationalBezierAlgebraicPointImage2,"
+    },
+    {
+      "line": 12683,
+      "text": "point: &RationalBezierAlgebraicPointImage2,"
+    },
+    {
+      "line": 12949,
+      "text": "point: &RationalBezierAlgebraicPointImage2,"
+    },
+    {
+      "line": 17098,
+      "text": "&curve.point_at_algebraic_parameter(parameter, policy)?,"
+    },
+    {
+      "line": 17104,
+      "text": "&curve.point_at_algebraic_parameter(parameter, policy)?,"
+    },
+    {
+      "line": 17110,
+      "text": "&curve.point_at_algebraic_parameter(parameter, policy)?,"
+    },
+    {
+      "line": 17116,
+      "text": "&curve.point_at_algebraic_parameter(parameter, policy)?,"
+    },
+    {
+      "line": 17145,
+      "text": "image: &crate::RationalBezierAlgebraicPointImage2,"
+    },
+    {
+      "line": 17512,
+      "text": "let boundary = curve.point_at_algebraic_parameter(&selected_end, &policy).unwrap();"
+    },
+    {
+      "line": 17537,
+      "text": "let point = RationalBezierAlgebraicPointImage2::from_retained_expression("
+    },
+    {
+      "line": 21667,
+      "text": ".point_at_algebraic_parameter(parameter, policy)"
+    },
+    {
+      "line": 21778,
+      "text": ".point_at_algebraic_parameter(center_parameter, policy)"
+    },
+    {
+      "line": 22420,
+      "text": ".point_at_algebraic_parameter(center_parameter, policy)"
+    },
+    {
+      "line": 24119,
+      "text": ".point_at_algebraic_parameter(&first_parameter, policy)"
+    },
+    {
+      "line": 24124,
+      "text": ".point_at_algebraic_parameter(&second_parameter, policy)"
+    },
+    {
+      "line": 26414,
+      "text": ".point_at_algebraic_parameter(&parameter, &construction_policy)"
+    },
+    {
+      "line": 27018,
+      "text": ".point_at_algebraic_parameter(&parameter, &policy)"
+    },
+    {
+      "line": 27137,
+      "text": ".point_at_algebraic_parameter(alpha_root, &policy)"
+    },
+    {
+      "line": 27211,
+      "text": ".point_at_algebraic_parameter(alpha_root, &policy)"
+    },
+    {
+      "line": 27276,
+      "text": ".point_at_algebraic_parameter(alpha_root, &policy)"
+    },
+    {
+      "line": 27514,
+      "text": ".point_at_algebraic_parameter(alpha_root, &policy)"
+    },
+    {
+      "line": 27614,
+      "text": ".point_at_algebraic_parameter(alpha_root, &policy)"
+    },
+    {
+      "line": 27797,
+      "text": ".point_at_algebraic_parameter(alpha_root, &policy)"
+    },
+    {
+      "line": 27874,
+      "text": ".point_at_algebraic_parameter(alpha_root, &policy)"
+    },
+    {
+      "line": 28913,
+      "text": ".point_at_algebraic_parameter(parameter, &policy)"
+    },
+    {
+      "line": 29015,
+      "text": ".point_at_algebraic_parameter(parameter, policy)"
+    }
+  ],
+  "hypercurve/src/bezier_split_endpoint.rs": [
+    {
+      "line": 19,
+      "text": "QuadraticBezier2, RationalBezierAlgebraicPointImage2, RationalBezierAlgebraicTangentImage2,"
+    },
+    {
+      "line": 30,
+      "text": "Rational(RationalBezierAlgebraicPointImage2),"
+    },
+    {
+      "line": 169,
+      "text": "curve.point_at_algebraic_parameter(parameter, policy)?,"
+    },
+    {
+      "line": 192,
+      "text": "curve.point_at_algebraic_parameter(parameter, policy)?,"
+    },
+    {
+      "line": 225,
+      "text": "curve.point_at_algebraic_parameter(parameter, policy)?,"
+    },
+    {
+      "line": 268,
+      "text": "curve.point_at_algebraic_parameter(parameter, policy)?,"
+    },
+    {
+      "line": 407,
+      "text": ".point_at_algebraic_parameter(parameter, policy)"
+    },
+    {
+      "line": 410,
+      "text": ".point_at_algebraic_parameter(parameter, policy)"
+    },
+    {
+      "line": 413,
+      "text": ".point_at_algebraic_parameter(parameter, policy)"
+    },
+    {
+      "line": 416,
+      "text": ".point_at_algebraic_parameter(parameter, policy)"
+    }
+  ],
+  "hypercurve/src/curve.rs": [
+    {
+      "line": 14322,
+      "text": ".point_at_algebraic_parameter(&parameter, policy)"
+    }
+  ],
+  "hypercurve/src/curve_evaluation.rs": [
+    {
+      "line": 276,
+      "text": "crate::RationalBezierAlgebraicPointImage2::from_parametric_source("
+    },
+    {
+      "line": 629,
+      "text": ".point_at_algebraic_parameter(root, &policy)"
+    }
+  ],
+  "hypercurve/src/curve_point.rs": [
+    {
+      "line": 6,
+      "text": "RationalBezierAlgebraicPointImage2, UncertaintyReason,"
+    },
+    {
+      "line": 147,
+      "text": "RationalBezierAlgebraicPointImage2 => Algebraic,"
+    },
+    {
+      "line": 165,
+      "text": "Algebraic(RationalBezierAlgebraicPointImage2),"
+    },
+    {
+      "line": 240,
+      "text": "pub(crate) const fn as_algebraic(&self) -> Option<&RationalBezierAlgebraicPointImage2> {"
+    }
+  ],
+  "hypercurve/src/curve_region_boolean.rs": [
+    {
+      "line": 9120,
+      "text": "representative: &crate::RationalBezierAlgebraicPointImage2,"
+    },
+    {
+      "line": 10059,
+      "text": "representative: &crate::RationalBezierAlgebraicPointImage2,"
+    },
+    {
+      "line": 16088,
+      "text": "LineSeg2, Point2, QuadraticBezier2, RationalBezier2, RationalBezierAlgebraicPointImage2,"
+    },
+    {
+      "line": 16772,
+      "text": ".point_at_algebraic_parameter(&parameter, policy)"
+    },
+    {
+      "line": 17069,
+      "text": "RationalBezierAlgebraicPointImage2::from_retained_expression("
+    },
+    {
+      "line": 17134,
+      "text": "RationalBezierAlgebraicPointImage2::from_retained_expression("
+    },
+    {
+      "line": 17248,
+      "text": "RationalBezierAlgebraicPointImage2::from_retained_expression("
+    },
+    {
+      "line": 17366,
+      "text": "RationalBezierAlgebraicPointImage2::from_retained_expression("
+    },
+    {
+      "line": 17395,
+      "text": ".point_at_algebraic_parameter(parameter, &policy)"
+    },
+    {
+      "line": 17493,
+      "text": "RationalBezierAlgebraicPointImage2::from_retained_expression("
+    },
+    {
+      "line": 20060,
+      "text": "RationalBezierAlgebraicPointImage2::from_retained_expression("
+    },
+    {
+      "line": 21012,
+      "text": "let chord_midpoint = RationalBezierAlgebraicPointImage2::from_retained_expression("
+    },
+    {
+      "line": 21316,
+      "text": ".point_at_algebraic_parameter(&endpoint_parameter, &policy)"
+    },
+    {
+      "line": 21802,
+      "text": "RationalBezierAlgebraicPointImage2::from_parametric_source("
+    },
+    {
+      "line": 21887,
+      "text": "let boundary = RationalBezierAlgebraicPointImage2::from_parametric_source("
+    },
+    {
+      "line": 21907,
+      "text": "let parabola_boundary = RationalBezierAlgebraicPointImage2::from_parametric_source("
+    },
+    {
+      "line": 21942,
+      "text": "let dyadic_ray_point = RationalBezierAlgebraicPointImage2::from_parametric_source("
+    },
+    {
+      "line": 22011,
+      "text": "let line_extension = RationalBezierAlgebraicPointImage2::from_parametric_source("
+    },
+    {
+      "line": 22023,
+      "text": "let negative_denominator = RationalBezierAlgebraicPointImage2::from_retained_expression("
+    },
+    {
+      "line": 23295,
+      "text": "let first = CurvePoint2::from(RationalBezierAlgebraicPointImage2::from_parametric_source("
+    },
+    {
+      "line": 23300,
+      "text": "let second = CurvePoint2::from(RationalBezierAlgebraicPointImage2::from_parametric_source("
+    },
+    {
+      "line": 23337,
+      "text": "let first = CurvePoint2::from(RationalBezierAlgebraicPointImage2::from_parametric_source("
+    },
+    {
+      "line": 23342,
+      "text": "let second = CurvePoint2::from(RationalBezierAlgebraicPointImage2::from_parametric_source("
+    }
+  ],
+  "hypercurve/src/curve_region_trim.rs": [
+    {
+      "line": 1746,
+      "text": ".point_at_algebraic_parameter(&parameter, &policy)"
+    }
+  ],
+  "hypercurve/src/lib.rs": [
+    {
+      "line": 90,
+      "text": "RationalBezierAlgebraicPointImage2, RationalBezierAlgebraicTangentImage2,"
+    }
+  ],
+  "hypercurve/src/rational_bezier_general.rs": [
+    {
+      "line": 49,
+      "text": "RationalBezierAlgebraicPointImage2, RationalBezierAlgebraicTangentImage2,"
+    },
+    {
+      "line": 2110,
+      "text": "pub fn point_at_algebraic_parameter("
+    },
+    {
+      "line": 2114,
+      "text": ") -> CurveResult<RationalBezierAlgebraicPointImage2> {"
+    },
+    {
+      "line": 3722,
+      "text": "RationalBezierAlgebraicPointImage2::from_parametric_source("
+    },
+    {
+      "line": 5239,
+      "text": "let image = self.point_at_algebraic_parameter(refined, policy)?;"
+    },
+    {
+      "line": 8628,
+      "text": "let image = curve.point_at_algebraic_parameter(parameter, policy)?;"
+    },
+    {
+      "line": 10013,
+      "text": ".point_at_algebraic_parameter(parameter, &policy)"
+    },
+    {
+      "line": 10776,
+      "text": "let deferred = RationalBezierAlgebraicPointImage2::from_parametric_source("
+    },
+    {
+      "line": 10782,
+      "text": ".point_at_algebraic_parameter(&parameter, &policy)"
+    },
+    {
+      "line": 10824,
+      "text": ".point_at_algebraic_parameter(&parameter, &policy)"
+    }
+  ],
+  "hypercurve/tests/hypercurve_bezier_algebraic_image.rs": [
+    {
+      "line": 57,
+      "text": ".point_at_algebraic_parameter(&parameter, &policy())"
+    },
+    {
+      "line": 97,
+      "text": ".point_at_algebraic_parameter(&parameter, &policy())"
+    },
+    {
+      "line": 123,
+      "text": ".point_at_algebraic_parameter(&parameter, &policy)"
+    },
+    {
+      "line": 150,
+      "text": ".point_at_algebraic_parameter(&parameter, &policy())"
+    },
+    {
+      "line": 225,
+      "text": ".point_at_algebraic_parameter(&parameter, &policy())"
+    },
+    {
+      "line": 320,
+      "text": ".point_at_algebraic_parameter(&parameter, &policy)"
+    },
+    {
+      "line": 398,
+      "text": ".point_at_algebraic_parameter(&parameter, &policy())"
+    },
+    {
+      "line": 429,
+      "text": "let point = curve.point_at_algebraic_parameter(&parameter, &policy()).unwrap();"
+    },
+    {
+      "line": 468,
+      "text": "let point = conic.point_at_algebraic_parameter(&parameter, &policy()).unwrap();"
+    }
+  ],
+  "hypercurve/tests/hypercurve_bezier_algebraic_parameter.rs": [
+    {
+      "line": 706,
+      "text": "let image = source.point_at_algebraic_parameter(&root, &policy).unwrap();"
+    },
+    {
+      "line": 744,
+      "text": "let image = source.point_at_algebraic_parameter(&root, &policy).unwrap();"
+    }
+  ],
+  "hypercurve/tests/hypercurve_curve_point.rs": [
+    {
+      "line": 53,
+      "text": ".point_at_algebraic_parameter(&parameter, &policy)"
+    }
+  ],
+  "hypercurve/tests/hypercurve_curve_region_promotion.rs": [
+    {
+      "line": 425,
+      "text": ".point_at_algebraic_parameter(&parameter, policy)"
+    },
+    {
+      "line": 430,
+      "text": ".point_at_algebraic_parameter(&parameter, policy)"
+    },
+    {
+      "line": 623,
+      "text": ".point_at_algebraic_parameter(parameter, policy)"
+    },
+    {
+      "line": 802,
+      "text": ".point_at_algebraic_parameter(&parameter, policy)"
+    },
+    {
+      "line": 866,
+      "text": ".point_at_algebraic_parameter(&parameter, policy)"
+    },
+    {
+      "line": 2935,
+      "text": ".point_at_algebraic_parameter(&parameter, &policy)"
+    },
+    {
+      "line": 4173,
+      "text": ".point_at_algebraic_parameter(&parameter, policy)"
+    },
+    {
+      "line": 4284,
+      "text": ".point_at_algebraic_parameter(&parameter, policy)"
+    },
+    {
+      "line": 4686,
+      "text": ".point_at_algebraic_parameter(&parameter, policy)"
+    }
+  ],
+  "hypercurve/tests/hypercurve_rational_bezier.rs": [
+    {
+      "line": 993,
+      "text": ".point_at_algebraic_parameter(first_parameter, &policy)"
+    }
+  ]
+}

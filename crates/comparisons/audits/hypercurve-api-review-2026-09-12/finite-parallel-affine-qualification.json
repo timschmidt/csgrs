@@ -1,0 +1,165 @@
+{
+  "status": "passed within the recorded broad qualification scope",
+  "goal_status": "active",
+  "previous_commit": "4ac78841cc571f3f802296e0af1e19fd520544b4",
+  "commit": "b7a4fa4e078fbbcd692a644a306d93296699e093",
+  "targets": 49,
+  "passed": 2286,
+  "passed_by_repo": {
+    "hypercurve": 2054,
+    "hyperbrep": 232
+  },
+  "known_failed": [
+    "approximate_512_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions",
+    "non_ph_bezier_pair_projective_fillet_retains_algebraic_extensions",
+    "nonconvex_algebraic_chord_expansion_is_exact_and_local_collapse_is_explicit",
+    "strict_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions",
+    "unified_mixed_line_arc_erosion_splits_after_a_curved_neck_collapse"
+  ],
+  "new_failures": [],
+  "ignored": 9,
+  "expensive_previously_unqualified_exclusions": 8,
+  "timeouts_in_broad_run": 0,
+  "builds": [
+    {
+      "repository": "hypercurve",
+      "kind": "check",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "check",
+        "--all-targets",
+        "--no-default-features",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 6.625379150995286,
+      "log": "finite-parallel-affine-check.log"
+    },
+    {
+      "repository": "hypercurve",
+      "kind": "test-build",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "test",
+        "--release",
+        "--all-features",
+        "--locked",
+        "--offline",
+        "--lib",
+        "--tests",
+        "--no-run",
+        "--message-format=json"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 220.94146586200804,
+      "log": "finite-parallel-affine-test-build.log"
+    },
+    {
+      "repository": "hyperbrep",
+      "kind": "check",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "check",
+        "--all-targets",
+        "--no-default-features",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 4.120195359020727,
+      "log": "finite-parallel-affine-hyperbrep-check.log"
+    },
+    {
+      "repository": "hyperbrep",
+      "kind": "test-build",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "test",
+        "--release",
+        "--all-features",
+        "--locked",
+        "--offline",
+        "--lib",
+        "--tests",
+        "--no-run",
+        "--message-format=json"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 112.17994978500064,
+      "log": "finite-parallel-affine-hyperbrep-test-build.log"
+    }
+  ],
+  "focused_checks": 10,
+  "public_matrices_and_probes": [
+    "finite-parallel-affine-affine-parallel-replay.json",
+    "finite-parallel-affine-analytic-probe.json",
+    "finite-parallel-affine-baseline-recheck.json",
+    "finite-parallel-affine-bounds-public.json",
+    "finite-parallel-affine-circle-matrix.json",
+    "finite-parallel-affine-completed-probe.json",
+    "finite-parallel-affine-completed.json",
+    "finite-parallel-affine-constant-image-trim-matrix.json",
+    "finite-parallel-affine-cubic-replay.json",
+    "finite-parallel-affine-endpoint-probe.json",
+    "finite-parallel-affine-exterior-completed.json",
+    "finite-parallel-affine-family-matrix.json",
+    "finite-parallel-affine-finite-circle-probe.json",
+    "finite-parallel-affine-finite-matrix.json",
+    "finite-parallel-affine-general-trim-matrix.json",
+    "finite-parallel-affine-probe-final.json",
+    "finite-parallel-affine-public-replay.json",
+    "finite-parallel-affine-public.json",
+    "finite-parallel-affine-region-carrier-matrix.json",
+    "finite-parallel-affine-region-explicit.json",
+    "finite-parallel-affine-region-public.json",
+    "finite-parallel-affine-replay-matrix-run.json",
+    "finite-parallel-affine-retained-chord-matrix.json",
+    "finite-parallel-affine-retrace-public.json",
+    "finite-parallel-affine-self-public.json",
+    "finite-parallel-affine-tangent-matrix.json",
+    "finite-parallel-affine-trim-public.json",
+    "finite-parallel-affine-unit-replay.json",
+    "finite-parallel-affine-winding-public.json"
+  ],
+  "public_cusp_representation_checks": 80,
+  "source_files_verified": {
+    "working": 396,
+    "isolated": 1005
+  },
+  "dependency_commits": "finite-parallel-pruning-isolated-sources.json",
+  "isolated_dependency_sources": true,
+  "workspace_clean_claim": false,
+  "other_session_owns": "Hyperreal verified/ and verification/ changes; left untouched",
+  "normal_library": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypercurve-06f4632864d5dd0b.rlib",
+  "normal_library_sha256": "37daf1a1a2d917459d21a17d15aa98edac3e908ed17267b16f6410189596bafa",
+  "archived_library": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-parallel-affine-libraries/libhypercurve-06f4632864d5dd0b.rlib",
+  "libtest_sha256": "47ae4e699dfb512b716e9d7e67334f602408e43d94604c962592bf9eab1fac79",
+  "toolchain": "finite-parallel-pruning-toolchain.json",
+  "baseline": "finite-parallel-affine-baseline/result.json",
+  "failed_runtime_candidate": "finite-parallel-affine-attempt1/",
+  "compile_only_attempts": [
+    "finite-parallel-affine-compile-attempt2/",
+    "finite-parallel-affine-public-compile-attempt1/",
+    "finite-parallel-affine-public-compile-attempt2/"
+  ],
+  "derivative_microbenchmark": "finite-parallel-affine-derivative-benchmark.json",
+  "additional_expensive_cusp_attempt": {
+    "command": [
+      "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve_analytic_parallel_region-072c6a434bb6349d",
+      "--exact",
+      "radical_parallel_cusp_offsets_exactly_under_both_policies",
+      "--test-threads=1",
+      "--nocapture"
+    ],
+    "returncode": 124,
+    "timed_out": true,
+    "elapsed_seconds": 120.00136230202042,
+    "binary_sha256": "ad284fb6f4cc4e366255b28f98565e37d59dc532589f2e750da91a5ea70cb1cf",
+    "log": "finite-parallel-affine-expensive-cusp.log",
+    "scope": "Additional attempt of an unchanged expensive exclusion, separate from the qualified broad test set."
+  },
+  "evidence_audit": "finite-parallel-affine-worklog.md",
+  "remaining": "Range-owned convex-turn proof, finite analytic fragment and boundary-loop admission, finite analytic pair domains and incidence, normalized public-region construction, independent inverse replay, known failures/exclusions and the broader algebraic/computational architecture goal.",
+  "performance_observation": "Native nonzero derivative microbenchmarks: median 1.64\u20131.85x faster; zero-distance rational: about 6% slower. Local 100000-call samples, uncontrolled other-session load; no general throughput claim."
+}

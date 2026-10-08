@@ -1,0 +1,26 @@
+{
+  "returncode": 0,
+  "elapsed_seconds": 1.0150708149885759,
+  "normal_library_sha256": "4779a85387505cbd6fa56b42f114e107bae20c72d4f054201e3101fc89dadc48",
+  "log": "circle-closed-clipping-cubic-replay.log",
+  "source": "finite-domain-chord-cubic-replay.rs",
+  "command": [
+    "rustc",
+    "--edition=2024",
+    "-O",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-domain-chord-cubic-replay.rs",
+    "--extern",
+    "hypercurve=/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/libhypercurve-2c7ff6f3fbe07653.rlib",
+    "-L",
+    "dependency=/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps",
+    "-o",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/circle-closed-clipping-cubic-replay"
+  ],
+  "source_sha256": "883ea6bc0007433637ee9f49c1c4e5ace7731f236e56789a82fec053fde7d508",
+  "executable_sha256": "35493ac3a94fd378b37d3de11a423b11bc418ed27db2f4ad2626781a19f74ba3",
+  "counts": {
+    "queries": 44,
+    "point_replays": 16,
+    "splits": 4
+  }
+}

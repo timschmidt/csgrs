@@ -1,0 +1,131 @@
+schema = 1
+date = "2026-08-03"
+host = "AMD Ryzen 7 5800X3D"
+kernel = "Linux 7.0.4-100.fc43.x86_64"
+rustc = "1.97.0 (2d8144b78 2026-07-07)"
+llvm = "22.1.6"
+implementation_revision = "42f82979cf4e199c1cb102e483b5bf71d6c8e377"
+direct_parent_revision = "c47601266e0b9b17d0c5a0764fa22b18168ada73"
+hyperreal_revision = "6c7b8325382135e424dfdb1d7442d454c9665d75"
+hyperlattice_revision = "d11ca2f0e825d8e26048cfda5d1101df21dcfef0"
+hyperlimit_revision = "bb1c5e7c418bb8af25701c8201f833fa485b9e9a"
+hypermesh_revision = "4a3f83c287960b94421a61a2c51f4bcf75f24e16"
+
+[correctness]
+all_feature_runtime_tests = 115
+all_feature_doctests = 4
+strict_policy_suite_passed = true
+approximate_512_policy_suite_passed = true
+clippy_warning_denied = true
+rustdoc_warning_denied = true
+
+[fuzz.topology_invariants]
+address_sanitizer = true
+leak_sanitizer = false
+leak_sanitizer_disabled_reason = "unsupported under managed process tracer"
+initial_corpus_files = 966
+runs = 11783
+seconds = 31
+coverage = 4141
+features = 15041
+failures = 0
+
+[runtime.delaunay_400_located]
+historical_median_ns = 39026000
+july_checkpoint_median_ns = 16390000
+current_median_ns = 5267500
+current_lower_ns = 5233100
+current_upper_ns = 5306400
+cpu = 11
+
+[callgrind.delaunay_400_located.direct_parent]
+instructions = 198595355
+branches = 33027262
+branch_mispredicts = 1778211
+
+[callgrind.delaunay_400_located.current]
+instructions = 89325448
+branches = 19660067
+branch_mispredicts = 486058
+
+[massif.delaunay_400_located.direct_parent]
+useful_peak_bytes = 400798
+total_peak_bytes = 436264
+
+[massif.delaunay_400_located.current]
+useful_peak_bytes = 376151
+total_peak_bytes = 411512
+
+[size.release.cdt.direct_parent]
+native_file_bytes = 1540968
+native_text_bytes = 1129958
+wasm_file_bytes = 932782
+wasm_opt_oz_bytes = 701789
+
+[size.release.cdt.current]
+native_file_bytes = 1535704
+native_text_bytes = 1125926
+wasm_file_bytes = 926146
+wasm_opt_oz_bytes = 697013
+
+[size.size.cdt.direct_parent]
+native_file_bytes = 872640
+native_text_bytes = 652439
+wasm_file_bytes = 405539
+wasm_opt_oz_bytes = 341778
+
+[size.size.cdt.current]
+native_file_bytes = 869296
+native_text_bytes = 649239
+wasm_file_bytes = 402972
+wasm_opt_oz_bytes = 342176
+
+[size.release.all.direct_parent]
+native_file_bytes = 1780792
+native_text_bytes = 1343690
+wasm_file_bytes = 1176748
+wasm_opt_oz_bytes = 814960
+
+[size.release.all.current]
+native_file_bytes = 1775464
+native_text_bytes = 1339682
+wasm_file_bytes = 1170305
+wasm_opt_oz_bytes = 810283
+
+[size.size.all.direct_parent]
+native_file_bytes = 959760
+native_text_bytes = 735619
+wasm_file_bytes = 482287
+wasm_opt_oz_bytes = 409465
+
+[size.size.all.current]
+native_file_bytes = 956784
+native_text_bytes = 732787
+wasm_file_bytes = 479951
+wasm_opt_oz_bytes = 409551
+
+[callgraph.five_crate_current]
+nodes = 20215
+edges = 40325
+
+[callgraph.hypertri_current]
+nodes = 1298
+edges = 1892
+
+[source.implementation_commit]
+insertions = 99
+deletions = 22
+
+[rejected.hypermesh_whole_domain_cdt]
+retained = false
+large_fixture_input_triangles = 6144
+general_fixture_output_vertices = 2410
+general_fixture_output_triangles = 4816
+general_fixture_useful_peak_bytes = 28730032
+certified_fixture_output_vertices = 27
+certified_fixture_output_triangles = 50
+certified_fixture_useful_peak_bytes = 1063718
+strict_and_approximate_512_topology_equal = true
+retained_path_dense_instructions = 369110783
+whole_domain_cdt_dense_instructions = 2746096252
+sparse_adjacency_cdt_dense_instructions = 1425968819

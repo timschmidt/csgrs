@@ -1,0 +1,569 @@
+[
+  {
+    "file": "hypercurve/src/bbox.rs",
+    "before_sha256": "e856dbdd87c8d16fe3247df6aeef6ad9af2cf4e25e0a072a146e777e005ea76c",
+    "after_sha256": "b48b0762ccfe767a14b2c636449b603aeb2eed63042e90bc5ef2e1bc4ed746e4",
+    "deletions": [
+      {
+        "byte_start": 25714,
+        "byte_end": 25723,
+        "old": ", attempt"
+      },
+      {
+        "byte_start": 25874,
+        "byte_end": 25915,
+        "old": ",\n                                attempt"
+      },
+      {
+        "byte_start": 26133,
+        "byte_end": 26142,
+        "old": ", attempt"
+      },
+      {
+        "byte_start": 26337,
+        "byte_end": 26346,
+        "old": ", attempt"
+      },
+      {
+        "byte_start": 28857,
+        "byte_end": 28864,
+        "old": "attempt"
+      },
+      {
+        "byte_start": 29650,
+        "byte_end": 29659,
+        "old": ", attempt"
+      },
+      {
+        "byte_start": 30502,
+        "byte_end": 30511,
+        "old": ", attempt"
+      }
+    ]
+  },
+  {
+    "file": "hypercurve/src/bezier_fit.rs",
+    "before_sha256": "2a4ca968faf86ec298157773095e92c0ee8810e6c2f3a7d713469de8d09985a2",
+    "after_sha256": "71f21a7bce38a80996c397fa4c7e9533fda689b4efa73c1de4bc90800c29756d",
+    "deletions": [
+      {
+        "byte_start": 17693,
+        "byte_end": 17701,
+        "old": ", policy"
+      },
+      {
+        "byte_start": 21486,
+        "byte_end": 21494,
+        "old": ", policy"
+      }
+    ]
+  },
+  {
+    "file": "hypercurve/src/bezier_offset.rs",
+    "before_sha256": "aa3e2ac907b3322968335e1ef8b0333ff6897040f0b9137ee5f9af00a5a001a6",
+    "after_sha256": "cba19499becf7ccf8f5975ca13869e0f7aac567750bb9c5668ecc4f8842e8ea8",
+    "deletions": [
+      {
+        "byte_start": 3240970,
+        "byte_end": 3240993,
+        "old": ", &CurveContext::STRICT"
+      },
+      {
+        "byte_start": 3856385,
+        "byte_end": 3856408,
+        "old": ", &CurveContext::STRICT"
+      },
+      {
+        "byte_start": 3856457,
+        "byte_end": 3856480,
+        "old": ", &CurveContext::STRICT"
+      },
+      {
+        "byte_start": 4158088,
+        "byte_end": 4158111,
+        "old": ", &CurveContext::STRICT"
+      }
+    ]
+  },
+  {
+    "file": "hypercurve/src/bezier_region.rs",
+    "before_sha256": "179b690776db621c9acc8e2fea331c1b0304fedfb0d11d4fca84b8595f48be99",
+    "after_sha256": "94cf92e43a4a34e7e10b74e9f0564fd312b0aded57ac92370ba69da3c8bae09b",
+    "deletions": [
+      {
+        "byte_start": 626746,
+        "byte_end": 626754,
+        "old": ", policy"
+      },
+      {
+        "byte_start": 626839,
+        "byte_end": 626847,
+        "old": ", policy"
+      },
+      {
+        "byte_start": 627119,
+        "byte_end": 627127,
+        "old": ", policy"
+      },
+      {
+        "byte_start": 735975,
+        "byte_end": 735983,
+        "old": ", policy"
+      },
+      {
+        "byte_start": 737055,
+        "byte_end": 737063,
+        "old": ", policy"
+      },
+      {
+        "byte_start": 756600,
+        "byte_end": 756608,
+        "old": ", policy"
+      },
+      {
+        "byte_start": 756693,
+        "byte_end": 756701,
+        "old": ", policy"
+      },
+      {
+        "byte_start": 756886,
+        "byte_end": 756894,
+        "old": ", policy"
+      },
+      {
+        "byte_start": 1359164,
+        "byte_end": 1359173,
+        "old": ", &policy"
+      }
+    ]
+  },
+  {
+    "file": "hypercurve/src/bezier_retained_measure.rs",
+    "before_sha256": "893bd7563651771538e1342eef26ae87d10b1a4584208a65df2c7009c1784b8f",
+    "after_sha256": "9a8b246ecf2e43cc077f76dcb1e3775160ef2a1ac887866063321ca638a5ce11",
+    "deletions": [
+      {
+        "byte_start": 2674,
+        "byte_end": 2682,
+        "old": ", policy"
+      },
+      {
+        "byte_start": 14263,
+        "byte_end": 14271,
+        "old": ", policy"
+      },
+      {
+        "byte_start": 33172,
+        "byte_end": 33180,
+        "old": ", policy"
+      },
+      {
+        "byte_start": 33467,
+        "byte_end": 33475,
+        "old": ", policy"
+      }
+    ]
+  },
+  {
+    "file": "hypercurve/src/bezier_retained_overlap.rs",
+    "before_sha256": "2af2d746706f0105d029bfb01d9e9d4299da4d67cda4988a58ddc7632e60e5a8",
+    "after_sha256": "72e833923d85a65d9d14057a6a42a59f517ba9fb135f0c869adf95acf12a4bb6",
+    "deletions": [
+      {
+        "byte_start": 114454,
+        "byte_end": 114462,
+        "old": ", policy"
+      },
+      {
+        "byte_start": 114547,
+        "byte_end": 114555,
+        "old": ", policy"
+      },
+      {
+        "byte_start": 114721,
+        "byte_end": 114729,
+        "old": ", policy"
+      }
+    ]
+  },
+  {
+    "file": "hypercurve/src/bezier_topology.rs",
+    "before_sha256": "ca7a283a997ca42c8c5db69e1ed01faaf3f580b5e38c5ca4e34d2b5eeb0d132e",
+    "after_sha256": "d84cd35d74f3b7b255dc35a414fb3bbfcec572d88a73a7b25b36e56d6f810aab",
+    "deletions": [
+      {
+        "byte_start": 37958,
+        "byte_end": 37966,
+        "old": ", policy"
+      },
+      {
+        "byte_start": 43898,
+        "byte_end": 43906,
+        "old": ", policy"
+      },
+      {
+        "byte_start": 43967,
+        "byte_end": 43975,
+        "old": ", policy"
+      },
+      {
+        "byte_start": 107470,
+        "byte_end": 107478,
+        "old": ", policy"
+      },
+      {
+        "byte_start": 136557,
+        "byte_end": 136565,
+        "old": ", policy"
+      }
+    ]
+  },
+  {
+    "file": "hypercurve/src/bspline.rs",
+    "before_sha256": "e23c48d1b137563940deb67c3a59098fc2e2a69e2362828687e35d9d290cbab8",
+    "after_sha256": "02df39fd5137514bd41bd497eb67741b17dda57d67f6b1c39a1c4a00b61679f1",
+    "deletions": [
+      {
+        "byte_start": 30052,
+        "byte_end": 30058,
+        "old": "policy"
+      }
+    ]
+  },
+  {
+    "file": "hypercurve/src/contour.rs",
+    "before_sha256": "d6f89a4032135431106a7420ea6939166fa79862a0f736699c64b551051dfb83",
+    "after_sha256": "9cdaefd247eedb77d6242f839aa2cc5781bf0b62b0851dbc0162977611a6b9d1",
+    "deletions": [
+      {
+        "byte_start": 13204,
+        "byte_end": 13212,
+        "old": ", policy"
+      },
+      {
+        "byte_start": 13995,
+        "byte_end": 14003,
+        "old": ", policy"
+      },
+      {
+        "byte_start": 15520,
+        "byte_end": 15528,
+        "old": ", policy"
+      },
+      {
+        "byte_start": 23177,
+        "byte_end": 23185,
+        "old": ", policy"
+      }
+    ]
+  },
+  {
+    "file": "hypercurve/src/curve.rs",
+    "before_sha256": "cbf2e23b9bc0d03caaba86b1030d968249f5dd15057b75920818a744a9c97331",
+    "after_sha256": "3d8008b20e4a882349f377c25363e28e18ed2cb83d8b45b6a3157dea0d0008d3",
+    "deletions": [
+      {
+        "byte_start": 83336,
+        "byte_end": 83345,
+        "old": ", &policy"
+      },
+      {
+        "byte_start": 100023,
+        "byte_end": 100032,
+        "old": ", &policy"
+      },
+      {
+        "byte_start": 100436,
+        "byte_end": 100445,
+        "old": ", &policy"
+      },
+      {
+        "byte_start": 100571,
+        "byte_end": 100580,
+        "old": ", &policy"
+      },
+      {
+        "byte_start": 101261,
+        "byte_end": 101270,
+        "old": ", &policy"
+      },
+      {
+        "byte_start": 101594,
+        "byte_end": 101600,
+        "old": "policy"
+      },
+      {
+        "byte_start": 101667,
+        "byte_end": 101673,
+        "old": "policy"
+      }
+    ]
+  },
+  {
+    "file": "hypercurve/src/curve_intersection.rs",
+    "before_sha256": "c3e202e208b46f4b5995859af6f14b898692a81d2e2eb4ba0c4e71f58b69d63e",
+    "after_sha256": "ff7c97b600d0d9cfa83ca51bfc59e775ff31e982fda6946a54fbbf23292af9bf",
+    "deletions": [
+      {
+        "byte_start": 17065,
+        "byte_end": 17073,
+        "old": ", policy"
+      }
+    ]
+  },
+  {
+    "file": "hypercurve/src/curve_region_boolean.rs",
+    "before_sha256": "5b66f18b9a607c93b5166c323337bd2df4248117edcc9b02d4c67f031728ba08",
+    "after_sha256": "db1d906a85522da3ba35b550c148c5044608e16ebcf239b0c8e4436ca9906c8b",
+    "deletions": [
+      {
+        "byte_start": 27783,
+        "byte_end": 27806,
+        "old": ", &CurveContext::STRICT"
+      },
+      {
+        "byte_start": 444169,
+        "byte_end": 444192,
+        "old": ", &CurveContext::STRICT"
+      },
+      {
+        "byte_start": 547299,
+        "byte_end": 547318,
+        "old": ", &self.data.policy"
+      }
+    ]
+  },
+  {
+    "file": "hypercurve/src/curve_string.rs",
+    "before_sha256": "b5f912ebaeba126ad0640c02c53c76c1935b9c2c01fe98c4762c48e99db06b23",
+    "after_sha256": "6f47e3898f30e932e81a4d2c7694ccff1e49ebdfab372ae93b75461b62c1daa7",
+    "deletions": [
+      {
+        "byte_start": 18209,
+        "byte_end": 18217,
+        "old": ", policy"
+      },
+      {
+        "byte_start": 18390,
+        "byte_end": 18398,
+        "old": ", policy"
+      },
+      {
+        "byte_start": 18567,
+        "byte_end": 18575,
+        "old": ", policy"
+      },
+      {
+        "byte_start": 30250,
+        "byte_end": 30258,
+        "old": ", policy"
+      },
+      {
+        "byte_start": 30424,
+        "byte_end": 30432,
+        "old": ", policy"
+      }
+    ]
+  },
+  {
+    "file": "hypercurve/src/curve_support.rs",
+    "before_sha256": "980072a06b3aef7e4cfd9c1de6f7b05ade49ac9985ff2b5646ff7ae3f7ed1398",
+    "after_sha256": "b14bdb85c6bb2190ab084ba7856472110f77812bae0c59f7aaf3a5acf0bc3f57",
+    "deletions": [
+      {
+        "byte_start": 1207,
+        "byte_end": 1213,
+        "old": "policy"
+      },
+      {
+        "byte_start": 1280,
+        "byte_end": 1286,
+        "old": "policy"
+      }
+    ]
+  },
+  {
+    "file": "hypercurve/src/events.rs",
+    "before_sha256": "9f23edda5be313763b2f3e7db9dc32c87060516c931ed2be14e3a7c2855232b6",
+    "after_sha256": "30fc94aecfe1146fab9d12af8e19151447d2c7c696829235064a459e81e202de",
+    "deletions": [
+      {
+        "byte_start": 14562,
+        "byte_end": 14570,
+        "old": ", policy"
+      },
+      {
+        "byte_start": 14611,
+        "byte_end": 14619,
+        "old": ", policy"
+      },
+      {
+        "byte_start": 14737,
+        "byte_end": 14745,
+        "old": ", policy"
+      },
+      {
+        "byte_start": 14883,
+        "byte_end": 14891,
+        "old": ", policy"
+      },
+      {
+        "byte_start": 22865,
+        "byte_end": 22873,
+        "old": ", policy"
+      },
+      {
+        "byte_start": 58888,
+        "byte_end": 58897,
+        "old": ", &policy"
+      },
+      {
+        "byte_start": 58953,
+        "byte_end": 58962,
+        "old": ", &policy"
+      },
+      {
+        "byte_start": 59096,
+        "byte_end": 59105,
+        "old": ", &policy"
+      },
+      {
+        "byte_start": 59275,
+        "byte_end": 59284,
+        "old": ", &policy"
+      }
+    ]
+  },
+  {
+    "file": "hypercurve/src/prepared.rs",
+    "before_sha256": "6943b1ec6c753675bfaf97d5eec89c3254408d1e8375793f5697c0525f532ecb",
+    "after_sha256": "b75ed69b1dc0bb8e8fd2aab47c25860417c3e38f5439da546ea6c233466f4ff7",
+    "deletions": [
+      {
+        "byte_start": 20301,
+        "byte_end": 20309,
+        "old": ", policy"
+      },
+      {
+        "byte_start": 36285,
+        "byte_end": 36293,
+        "old": ", policy"
+      }
+    ]
+  },
+  {
+    "file": "hypercurve/src/rational_bezier.rs",
+    "before_sha256": "11c8e6ecf1219946e142bdecbb6c53929c335ce06bf87296b6e20cc99e1edae3",
+    "after_sha256": "83138a96be9cb9fc17fece1d148cdc828f6e81d171b0c4e6c177a5db77eb20ac",
+    "deletions": [
+      {
+        "byte_start": 27877,
+        "byte_end": 27885,
+        "old": ", policy"
+      },
+      {
+        "byte_start": 30078,
+        "byte_end": 30086,
+        "old": ", policy"
+      },
+      {
+        "byte_start": 30331,
+        "byte_end": 30339,
+        "old": ", policy"
+      },
+      {
+        "byte_start": 82916,
+        "byte_end": 82924,
+        "old": ", policy"
+      },
+      {
+        "byte_start": 82993,
+        "byte_end": 83001,
+        "old": ", policy"
+      },
+      {
+        "byte_start": 101756,
+        "byte_end": 101764,
+        "old": ", policy"
+      },
+      {
+        "byte_start": 146626,
+        "byte_end": 146634,
+        "old": ", policy"
+      }
+    ]
+  },
+  {
+    "file": "hypercurve/src/rational_bezier_general.rs",
+    "before_sha256": "1f93186a5ca1b1dc907a7f19b701771e7727e6bc5c7dd5cd62aa8db6b22dcfca",
+    "after_sha256": "a4962e9c6d491e98bed8e4c5531cae0921525971fb3fc99f9d920cbc1c55281a",
+    "deletions": [
+      {
+        "byte_start": 87624,
+        "byte_end": 87632,
+        "old": ", policy"
+      },
+      {
+        "byte_start": 89195,
+        "byte_end": 89203,
+        "old": ", policy"
+      },
+      {
+        "byte_start": 89503,
+        "byte_end": 89511,
+        "old": ", policy"
+      }
+    ]
+  },
+  {
+    "file": "hypercurve/src/region.rs",
+    "before_sha256": "d801b70a26203b78ebf2859476a9be30f1c09a9ded8893ca12a4be7eb5f8788c",
+    "after_sha256": "50ad9ed1ebfbf586f514d00c044d0d1efb53514009accf19eee60690bf192fef",
+    "deletions": [
+      {
+        "byte_start": 6443,
+        "byte_end": 6451,
+        "old": ", policy"
+      },
+      {
+        "byte_start": 8143,
+        "byte_end": 8151,
+        "old": ", policy"
+      }
+    ]
+  },
+  {
+    "file": "hypercurve/src/self_intersect.rs",
+    "before_sha256": "257ac3dd7a68d6e7f17b2a323ca9bcf559647a097e848936bfea0a2db21287d0",
+    "after_sha256": "9e1d1b5b782b4d0b872c58e9cf4ba950a3cf6958d85626c49c06774b62a448fd",
+    "deletions": [
+      {
+        "byte_start": 710,
+        "byte_end": 718,
+        "old": ", policy"
+      },
+      {
+        "byte_start": 1168,
+        "byte_end": 1176,
+        "old": ", policy"
+      }
+    ]
+  },
+  {
+    "file": "hypercurve/src/svg.rs",
+    "before_sha256": "5b69ada741080716913b2b665890cefe38699d94eb4f337eb5678ab19480ce12",
+    "after_sha256": "7db9b91291315ff74d2a661d7d421e3fcc0efa189f1c5a14a16330f2eeca5650",
+    "deletions": [
+      {
+        "byte_start": 63910,
+        "byte_end": 63919,
+        "old": ", &policy"
+      },
+      {
+        "byte_start": 65267,
+        "byte_end": 65275,
+        "old": ", policy"
+      }
+    ]
+  }
+]

@@ -1,0 +1,18 @@
+{
+  "tag": "point-cold-format",
+  "started": "2026-09-10T23:17:01.785Z",
+  "finished": "2026-09-10T23:17:01.811Z",
+  "elapsedSeconds": 0.023576075000000002,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "rustfmt",
+  "args": [
+    "--edition",
+    "2024",
+    "--check",
+    "point-cold-common.rs",
+    "point-cold-native.rs",
+    "point-cold-platform.rs"
+  ],
+  "code": 0,
+  "signal": null
+}

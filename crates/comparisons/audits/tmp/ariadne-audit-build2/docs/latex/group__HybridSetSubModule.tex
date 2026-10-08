@@ -1,0 +1,38 @@
+\doxysubsubsection{Hybrid sets }
+\hypertarget{group__HybridSetSubModule}{}\label{group__HybridSetSubModule}\index{Hybrid sets@{Hybrid sets}}
+
+
+\doxysubsubsubsection{Description}
+Sets in spaces with many components. 
+
+The state space of a hybrid system consists of many disconnected components, one for each discrete mode. Hybrid sets consist of a union of many different sets, one for each component of the state space. \doxysubsubsubsubsection*{Classes}
+\begin{DoxyCompactItemize}
+\item 
+class \mbox{\hyperlink{classAriadne_1_1HybridEnclosure}{Hybrid\+Enclosure}}
+\begin{DoxyCompactList}\small\item\em A class representing an enclosure for a hybrid evolution. Handles progress, activation and guard constraints internally. The set is represented as the image of a box $D$ under a function model $\xi(s)=\hat{f}(s)$, under the constraints $\hat{c}(s) \leq 0$ and $\hat{e}(s)=0$. Also keeps track of the current time $\tau(s)=\hat{t}(s)$. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1HybridVariablesBox}{Hybrid\+Variables\+Box$<$ IVL $>$}}
+\begin{DoxyCompactList}\small\item\em A hybrid set defined by a box in a single location. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1HybridVariablesBoxes}{Hybrid\+Variables\+Boxes$<$ IVL $>$}}
+\begin{DoxyCompactList}\small\item\em A hybrid set defined by a box in each of a set of locations. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1HybridConstraintSet}{Hybrid\+Constraint\+Set}}
+\begin{DoxyCompactList}\small\item\em A hybrid set defined by a constraint system in each location. NOTE\+: If a location is not specified, the set is considered empty. This may be changed in future to the set being considered unconstrained (entire). \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1HybridBoundedConstraintSet}{Hybrid\+Bounded\+Constraint\+Set}}
+\begin{DoxyCompactList}\small\item\em A hybrid set defined by the intersection of a box and a constraint system in each location. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1HybridGridTreePaving}{Hybrid\+Grid\+Tree\+Paving}}
+\begin{DoxyCompactList}\small\item\em A set comprising a Grid\+Tree\+Set in each location. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1HybridBasicSet}{Hybrid\+Basic\+Set$<$ EBS $>$}}
+\begin{DoxyCompactList}\small\item\em A hybrid set defined in a single location obtained from a Euclidean set by naming variables. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1HybridDenotableSet}{Hybrid\+Denotable\+Set$<$ EDS $>$}}
+\begin{DoxyCompactList}\small\item\em A hybrid set defined in a single location obtained from a Euclidean set by naming variables. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1HybridPoint}{Hybrid\+Point$<$ X $>$}}
+\begin{DoxyCompactList}\small\item\em A point in a location of a hybrid space. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1HybridBox}{Hybrid\+Box$<$ IVL $>$}}
+\begin{DoxyCompactList}\small\item\em A box in a location of a hybrid space. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1HybridBoxes}{Hybrid\+Boxes$<$ IVL $>$}}
+\begin{DoxyCompactList}\small\item\em A collection of boxes, one in each location of a hybrid space. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1HybridValidatedConstrainedImageSet}{Hybrid\+Validated\+Constrained\+Image\+Set}}
+\begin{DoxyCompactList}\small\item\em A hybrid set defined by the intersection of a box and a constraint system in each location. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1HybridListSet}{Hybrid\+List\+Set$<$ ES $>$}}
+\begin{DoxyCompactList}\small\item\em A set comprising a List\+Set in each location. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1HybridStorage}{Hybrid\+Storage}}
+\begin{DoxyCompactList}\small\item\em A class representing global reach or evolve set for a hybrid system. \end{DoxyCompactList}\end{DoxyCompactItemize}

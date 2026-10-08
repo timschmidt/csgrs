@@ -1,0 +1,14 @@
+{
+  "diagnostic_only": true,
+  "binary": {
+    "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-field-refinement-20260928-v559-hypercurve_curve_region_promotion-tests",
+    "sha256": "0b817751736f77bcc8e5adbdf6ac5e714976ef1914ca32be57d5fcf52b9b05da"
+  },
+  "source_directory": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/source-archives/finite-field-refinement-20260928-v559",
+  "production_sources": "finite-field-refinement-20260928-v559-production-sources.json",
+  "all_processes_reaped": true,
+  "pid": 3319344,
+  "gdb_returncode": 0,
+  "diagnostic_case_returncode": -9,
+  "elapsed_seconds": 15.465083941118792
+}

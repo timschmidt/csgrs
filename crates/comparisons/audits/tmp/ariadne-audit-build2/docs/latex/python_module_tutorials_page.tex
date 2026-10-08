@@ -1,0 +1,458 @@
+\doxysection{Python Module Tutorials }
+\hypertarget{python_module_tutorials_page}{}\label{python_module_tutorials_page}\index{Python Module Tutorials@{Python Module Tutorials}}
+On this page, we illustrate how to use Ariadne via the Python interface.
+\begin{DoxyItemize}
+\item A guide to working with numbers is given in the \doxysectlink{python_module_tutorials_page_python_numerical_tutorial_section}{Numeric module}{1} tutorial.
+\item A guide to working with functions is given in the \doxysectlink{python_module_tutorials_page_python_function_tutorial_section}{Function module}{1} tutorial.
+\item A guide to functionality for solving algebraic equations is given in the \doxysectlink{python_module_tutorials_page_python_algebraic_equation_tutorial_section}{Solving Algebraic Equations}{2} tutorial, including how to compute fixed-\/points of functions and solving parametrised equations.
+\end{DoxyItemize}
+
+The full code of the tutorials are given in the following files in the \doxylink{dir_eaddda9c7dcb7bbc500deddd3c210e00}{python/tutorials}/ directory\+: \doxylink{}{numeric\+\_\+tutorial.\+py}, \doxylink{}{function\+\_\+tutorial.\+py}, \doxylink{}{algebraic\+\_\+equation\+\_\+tutorial.\+py}
+
+Links are given to the main classes used in the tutorials. The documentation for these classes is automatically generated from comments in the C++ code. To help Python users unfamiliar with C++ understand this documentation, a guide on the main differences between C++ and Python can be found on the \doxysectlink{python_interface_page}{Python Interface}{0} page.\hypertarget{python_module_tutorials_page_python_introspection_tutorial}{}\doxysubsection{\texorpdfstring{The Ariadne module}{The Ariadne module}}\label{python_module_tutorials_page_python_introspection_tutorial}
+First, import the Ariadne module. For ease-\/of-\/use, the {\ttfamily from} version of {\ttfamily import} is recommended\+: 
+\begin{DoxyCode}{0}
+\DoxyCodeLine{from\ pyariadne\ \textcolor{keyword}{import}\ *\ }
+
+\end{DoxyCode}
+ To see all the classes and functions available in Ariadne, type\+: 
+\begin{DoxyCode}{0}
+\DoxyCodeLine{print(dir(ariadne))\ }
+
+\end{DoxyCode}
+\hypertarget{python_module_tutorials_page_python_numerical_tutorial_section}{}\doxysubsection{\texorpdfstring{The Numeric module}{The Numeric module}}\label{python_module_tutorials_page_python_numerical_tutorial_section}
+
+
+The full code of this tutorial is given in the file \doxylink{}{python/tutorials/numeric\+\_\+tutorial.\+py}.
+
+In this tutorial, we will study iterated dynamical systems of the form $x_{n+1}=f(x_n)$.
+
+We define a function which computes {\itshape n} iterates of {\itshape f} starting at {\itshape x0\+:} 
+\begin{DoxyCodeInclude}{0}
+\DoxyCodeLine{00000\ \textcolor{keyword}{def\ }compute\_iterates(f,x0,n):}
+\DoxyCodeLine{00030\ \ \ \ \ xs=[x0]}
+\DoxyCodeLine{00031\ \ \ \ \ \textcolor{keywordflow}{for}\ i\ \textcolor{keywordflow}{in}\ range(n):}
+\DoxyCodeLine{00032\ \ \ \ \ \ \ \ \ xs.append(f(xs[-\/1]))}
+\DoxyCodeLine{00033\ \ \ \ \ \textcolor{keywordflow}{return}\ xs}
+
+\end{DoxyCodeInclude}
+\hypertarget{python_module_tutorials_page_python_exact_arithmetic_subsection}{}\doxysubsubsection{\texorpdfstring{Exact arithmetic}{Exact arithmetic}}\label{python_module_tutorials_page_python_exact_arithmetic_subsection}
+Ariadne has a number of classes supporting exact arithmetical operations, namely \doxylink{classAriadne_1_1Integer}{Integer}, \doxylink{classAriadne_1_1Dyadic}{Dyadic}, \doxylink{classAriadne_1_1Decimal}{Decimal} and \doxylink{classAriadne_1_1Rational}{Rational}. Further, there is a \doxylink{classAriadne_1_1Real}{Real} number class which also supports elementary transcendental operations; the use of \doxylink{classAriadne_1_1Real}{Real} is illustrated in \doxysectlink{python_module_tutorials_page_python_real_subsection}{Effective real arithmetic}{2} section. All these numeric classes support standard arithmetical operators. A full list of these operations is given in the list of \doxylink{group__NumericModule_supported_operations_anchor}{supported operations}. Since these are easiest to understand, we will start here.
+
+Let\textquotesingle{}s study the unimodal function $f(x)=ax(b-x)$ with parameters $a=3.625$ and $b=1$.
+
+Since $b$ is an integer, it can be represented by the Ariadne \doxylink{classAriadne_1_1Integer}{Integer} class. Like Python\textquotesingle{}s {\ttfamily int} type (but unlike C++ {\ttfamily int}), Ariadne\textquotesingle{}s \doxylink{classAriadne_1_1Integer}{Integer} class can hold arbitrary-\/sized numbers. 
+\begin{DoxyCodeInclude}{0}
+\DoxyCodeLine{00034\ \ \ \ \ b=Integer(1)}
+
+\end{DoxyCodeInclude}
+ The parameter $a$ is a {\itshape dyadic} number, of the form $p/2^q$ where $p$ and $q$ are integers; equivalently, a number with a terminating binary expansion, since $a=3.625=29/2^3=11.101_2$. We can therefore use that \doxylink{classAriadne_1_1Dyadic}{Dyadic} class to represent $a$\+: 
+\begin{DoxyCodeInclude}{0}
+\DoxyCodeLine{00046\ \ \ \ \ a=Dyadic(29,3)\ \ \textcolor{comment}{\#\ Constructs\ the\ number\ 3.625=29/2\string^3.}}
+
+\end{DoxyCodeInclude}
+There are alternative ways to construct a dyadic number using the builtin constant two\+: 
+\begin{DoxyCodeInclude}{0}
+\DoxyCodeLine{00050\ \ \ \ \ a=29/two**3\ \ \ \ \ \textcolor{comment}{\#\ Alternative\ syntax\ for\ 3.625=29/2\string^3}}
+\DoxyCodeLine{00051\ \ \ \ \ a=3+5/two**3\ \ \ \ \ \textcolor{comment}{\#\ Alternative\ formula\ for\ 3.625=3+5/2\string^3}}
+
+\end{DoxyCodeInclude}
+Note that the following code is not valid\+: 
+\begin{DoxyCode}{0}
+\DoxyCodeLine{a=\mbox{\hyperlink{classAriadne_1_1Dyadic}{Dyadic}}(3.625)\ }
+
+\end{DoxyCode}
+ since a Python {\ttfamily float} value may typically represent the result of an approximate computation, and should not be used in an exact context.
+
+We can define $f$ as a basic Python function. (Ariadne has its own builtin function classes; see the \doxylink{group__FunctionModule}{Function Module} and python\+\_\+function\+\_\+tutorial for more details.) 
+\begin{DoxyCodeInclude}{0}
+\DoxyCodeLine{00052\ \ \ \ \ \textcolor{keyword}{def\ }f(x):}
+\DoxyCodeLine{00055\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ a*x*(b-\/x)}
+
+\end{DoxyCodeInclude}
+ Let\textquotesingle{}s start the iteration at $x_0=0.5$. This is also a dyadic number, so we can compute using dyadic arithmetic\+: 
+\begin{DoxyCodeInclude}{0}
+\DoxyCodeLine{00056\ \ \ \ \ x0=1/two}
+\DoxyCodeLine{00059\ \ \ \ \ xs=compute\_iterates(f,x0,8)}
+
+\end{DoxyCodeInclude}
+Looking at the values, we see that the length of the iterates approximately doubles at each step, quickly leading to representations which are too large to efficiently work with.
+
+We can iterate the map using rational arithmetic by defining the initial point as a rational number. 
+\begin{DoxyCodeInclude}{0}
+\DoxyCodeLine{00060\ \ \ \ \ x0=Rational(1,2)}
+
+\end{DoxyCodeInclude}
+We then compute iterates 
+\begin{DoxyCodeInclude}{0}
+\DoxyCodeLine{00064\ \ \ \ \ xs=compute\_iterates(f,x0,8)}
+
+\end{DoxyCodeInclude}
+Here too, the length of the denominator roughly doubles every iterate.
+
+In general, the \doxylink{classAriadne_1_1Dyadic}{Dyadic} and \doxylink{classAriadne_1_1Rational}{Rational} class are useful for problem specification, but unsuitable for computations. In many cases, the result cannot be expressed exactly as a number of the same kind, and even if it can be, the length of the description typically grows rapidly through the computation.\hypertarget{python_module_tutorials_page_python_float_issue_subsection}{}\doxysubsubsection{\texorpdfstring{The issue with \textquotesingle{}float\textquotesingle{}s}{The issue with \textquotesingle{}float\textquotesingle{}s}}\label{python_module_tutorials_page_python_float_issue_subsection}
+Since Python\textquotesingle{}s builtin {\ttfamily float} class uses rounded arithmetic, such numbers may not be an exact representation of a value, leading to unsafe computation. If a Python {\ttfamily float} is indeed an exact value, (e.\+g. $3.625$ is an exact double-\/precision floating-\/point number), this must first be converted to an Ariadne \doxylink{classAriadne_1_1ExactDouble}{Exact\+Double} class\+: 
+\begin{DoxyCodeInclude}{0}
+\DoxyCodeLine{00065\ \ \ \ \ a=ExactDouble(3.625)}
+\DoxyCodeLine{00073\ \ \ \ \ a=x\_(3.625)}
+
+\end{DoxyCodeInclude}
+Numbers which are not exactly representable in double-\/precision should be converted to the \doxylink{classAriadne_1_1Decimal}{Decimal} class instead. 
+\begin{DoxyCodeInclude}{0}
+\DoxyCodeLine{00074\ \ \ \ \ a=Decimal(3.625)}
+
+\end{DoxyCodeInclude}
+or as string literals 
+\begin{DoxyCodeInclude}{0}
+\DoxyCodeLine{00076\ \ \ \ \ a=Decimal(\textcolor{stringliteral}{"{}3.625"{}})}
+
+\end{DoxyCodeInclude}
+The \doxylink{classAriadne_1_1Decimal}{Decimal} number class is intended to allow input of human-\/readable decimal values, and not for computation, though it does support standard arithmetical operations.
+
+Python {\ttfamily float} numbers can also be converted to Ariadne numbers by using Python equivalents \doxylink{classAriadne_1_1Dyadic_a41ef5fd5ef08cda400230737c4afa334}{dy\+\_\+}, \doxylink{classAriadne_1_1Decimal_a697c1c2a499acb83928711938d3619ea}{dec\+\_\+} and \doxylink{classAriadne_1_1Rational_ae5cffada7fef0a5a5556a637be67726e}{q\+\_\+} of the C++ literals {\ttfamily \+\_\+dy}, {\ttfamily \+\_\+dec} and {\ttfamily \+\_\+q}. 
+\begin{DoxyCodeInclude}{0}
+\DoxyCodeLine{00077\ \ \ \ \ a=dy\_(3.625)}
+\DoxyCodeLine{00079\ \ \ \ \ a=dec\_(3.625)}
+\DoxyCodeLine{00080\ \ \ \ \ a=q\_(3.625)}
+
+\end{DoxyCodeInclude}
+Python {\ttfamily int} numbers can be converted to Ariadne Integers by using the Python equivalent z\+\_\+ of the C++ literal {\ttfamily \+\_\+z}. 
+\begin{DoxyCodeInclude}{0}
+\DoxyCodeLine{00081\ \ \ \ \ b=z\_(1)}
+
+\end{DoxyCodeInclude}
+ Hence an alternative way of defining $f$ would be as 
+\begin{DoxyCodeInclude}{0}
+\DoxyCodeLine{00082\ \ \ \ \ a=Decimal(3.625)}
+\DoxyCodeLine{00084\ \ \ \ \ b=Integer(1)}
+\DoxyCodeLine{00085\ \ \ \ \ \textcolor{keyword}{def\ }f(x):}
+\DoxyCodeLine{00086\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ a*x*(b-\/x)}
+
+\end{DoxyCodeInclude}
+or more succinctly as 
+\begin{DoxyCodeInclude}{0}
+\DoxyCodeLine{00087\ \ \ \ \ \textcolor{keyword}{def\ }f(x):}
+\DoxyCodeLine{00089\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ dec\_(3.625)*x*(1-\/x)}
+
+\end{DoxyCodeInclude}
+\hypertarget{python_module_tutorials_page_python_floating_point_subsection}{}\doxysubsubsection{\texorpdfstring{Floating-\/point arithmetic}{Floating-\/point arithmetic}}\label{python_module_tutorials_page_python_floating_point_subsection}
+Computations in Ariadne are usually most efficiently performed using floating-\/point number types. Ariadne supports the \doxylink{namespaceAriadne_af915b9f1459c9691328efa71c6f39c6e}{Float\+DP} and \doxylink{namespaceAriadne_a07966b67e613cc8779412beecb60651d}{Float\+MP} types, which are respectively based on builtin IEEE double-\/precision floating-\/point numbers, and multiple-\/precision floating-\/point numbers from the MPFR library.
+
+Raw floating-\/point numbers only support \doxylink{python_module_tutorials_page_python_float_rounded_arithmetic_anchor}{rounded arithmetic}, so are best avoided in user code. Instead, they can be used in safe correctly-\/rounded generic types, notably \doxylink{classAriadne_1_1Bounds}{Bounds\texorpdfstring{$<$}{<}F\texorpdfstring{$>$}{>}}, \doxylink{classAriadne_1_1Ball}{Ball\texorpdfstring{$<$}{<}F,FE\texorpdfstring{$>$}{>}}, and \doxylink{classAriadne_1_1Approximation}{Approximation\texorpdfstring{$<$}{<}F\texorpdfstring{$>$}{>}}, though Value\texorpdfstring{$<$}{<}F\texorpdfstring{$>$}{>}, \doxylink{classAriadne_1_1UpperBound}{Upper\+Bound\texorpdfstring{$<$}{<}F\texorpdfstring{$>$}{>}}, \doxylink{classAriadne_1_1LowerBound}{Lower\+Bound\texorpdfstring{$<$}{<}F\texorpdfstring{$>$}{>}} are also available.
+
+In Python, the template parameter is appended to the class name, so Float\+DPBounds is the Python name for \doxylink{classAriadne_1_1Bounds}{Bounds\texorpdfstring{$<$}{<}Float\+DP\texorpdfstring{$>$}{>}}, and Float\+MPBounds is the name for \doxylink{classAriadne_1_1Bounds}{Bounds\texorpdfstring{$<$}{<}Float\+MP\texorpdfstring{$>$}{>}}. \begin{DoxyNote}{Note}
+In a future version, it is planned to use square brackets for Python equivalents to C++ template classes, so C++ {\ttfamily \doxylink{classAriadne_1_1Bounds}{Bounds$<$\+Float\+MP$>$}} would translate to Python {\ttfamily Bounds\mbox{[}Float\+MP\mbox{]}}.
+\end{DoxyNote}
+The \doxylink{classAriadne_1_1Bounds}{Bounds} classes support outward-\/rounded {\itshape interval arithmetic}; see \doxysectlink{real_numbers_page_intervalarithmetic}{Interval Arithmetic}{1} for details.
+
+To construct a \doxylink{classAriadne_1_1Bounds}{Bounds} object based on \doxylink{namespaceAriadne_af915b9f1459c9691328efa71c6f39c6e}{Float\+DP} or \doxylink{namespaceAriadne_a07966b67e613cc8779412beecb60651d}{Float\+MP}, we must always provide the {\itshape precision} as one of the arguments. We can iterate the system using double-\/precision interval arithmetic by taking initial condition\+: 
+\begin{DoxyCodeInclude}{0}
+\DoxyCodeLine{00090\ \ \ \ \ x0=FloatDPBounds(q\_(1/2),double\_precision)}
+
+\end{DoxyCodeInclude}
+and then iterating the function 
+\begin{DoxyCodeInclude}{0}
+\DoxyCodeLine{00096\ \ \ \ \ x0=Bounds[FloatDP](q\_(1/2),double\_precision)}
+\DoxyCodeLine{00097\ \ \ \ \ xs=compute\_iterates(f,x0,16)}
+
+\end{DoxyCodeInclude}
+Note that the iterates are also of clas Float\+DPBounds; this is because binary operations between exact values such as \doxylink{classAriadne_1_1Rational}{Rational}, and "{}concrete"{} values based on a {\ttfamily Float} always return a concrete value. Unlike rational arithmetic, the length of the representation does not change, but the accuracy decreases through the computation.
+
+To attain more accuracy, the Float\+MPBounds class can be used\+: 
+\begin{DoxyCodeInclude}{0}
+\DoxyCodeLine{00098\ \ \ \ \ x0=Bounds[FloatMP](q\_(1/2),precision(bits=192))}
+\DoxyCodeLine{00102\ \ \ \ \ xs=compute\_iterates(f,x0,16)}
+
+\end{DoxyCodeInclude}
+ Guaranteed over-\/approximations can also be computed using the \doxylink{classAriadne_1_1Ball}{Ball} classes, which use an approximation of the form $x=x_c\pm e_x$. Here, it sometimes makes sense to use a higher precision for the centre of the ball than the radius, such as the Float\+MPDPBall class\+: 
+\begin{DoxyCodeInclude}{0}
+\DoxyCodeLine{00103\ \ \ \ \ x0=Ball[FloatMP,FloatDP](q\_(1/2),precision(bits=192))}
+\DoxyCodeLine{00107\ \ \ \ \ xs=compute\_iterates(f,x0,16)}
+
+\end{DoxyCodeInclude}
+ If we only need approximate results with no guarantees on the accuracy, we can use an \doxylink{classAriadne_1_1Approximation}{Approximation} object, such as the Float\+DPApproximation class\+: 
+\begin{DoxyCodeInclude}{0}
+\DoxyCodeLine{00108\ \ \ \ \ x0=Approximation[FloatDP](0.5,double\_precision)}
+\DoxyCodeLine{00112\ \ \ \ \ xs=compute\_iterates(f,x0,16)}
+
+\end{DoxyCodeInclude}
+
+
+\begin{DoxyNote}{Note}
+\label{python_module_tutorials_page_python_float_rounded_arithmetic_anchor}%
+\Hypertarget{python_module_tutorials_page_python_float_rounded_arithmetic_anchor}%
+To construct a raw \doxylink{namespaceAriadne_af915b9f1459c9691328efa71c6f39c6e}{Float\+DP} object, one must always supply the {\itshape precision} as an argument\+: 
+\begin{DoxyCodeInclude}{0}
+\DoxyCodeLine{00113\ \ \ \ \ a=FloatDP(exact(3.625),double\_precision)}
+
+\end{DoxyCodeInclude}
+Since all binary floating-\/point numbers are dyadic, only Python {\ttfamily int}, \doxylink{classAriadne_1_1Integer}{Integer}, \doxylink{classAriadne_1_1ExactDouble}{Exact\+Double} and \doxylink{classAriadne_1_1Dyadic}{Dyadic} are possible numerical arguments. A \doxylink{classAriadne_1_1Rational}{Rational} argument must be rounded, either \doxylink{group__NumericModule_gaf5c792cfa75f61390a4d3e51efb223e5}{upward}, \doxylink{group__NumericModule_ga6e90b4c1e041590cd9713739bd662aab}{downward}, or \doxylink{group__NumericModule_ga8fe1087fba3fafcf0af365dfd7e4d7c9}{to\+\_\+nearest} representable value, also abbreviated \doxylink{group__NumericModule_gaf2afab3884f1860d5e0ba6f8004a132f}{up}, \doxylink{group__NumericModule_ga54a3e0b3f2deed7e8fb80c5211414f2e}{down} and \doxylink{group__NumericModule_ga0ae8cc613c31723d1122d0627a20152a}{near}. Hence to compute an approximation to $f(x)$, we would need the following code\+: 
+\begin{DoxyCodeInclude}{0}
+\DoxyCodeLine{00120\ \ \ \ \ a=FloatDP(Rational(38,10),to\_nearest,double\_precision)}
+\DoxyCodeLine{00122\ \ \ \ \ b=FloatDP(1,double\_precision)}
+\DoxyCodeLine{00123\ \ \ \ \ x=FloatDP(Dyadic(1/two),double\_precision)}
+\DoxyCodeLine{00124\ \ \ \ \ fx=mul(near,a,mul(near,x,sub(near,b,x)))}
+
+\end{DoxyCodeInclude}
+This is obviously clunky, but even more importantly, the result is based on rounded computation, so may be inaccurate! For simplicity, safety, and clarity, users should use the \doxylink{classAriadne_1_1Bounds}{Bounds}, \doxylink{classAriadne_1_1Ball}{Ball} and \doxylink{classAriadne_1_1Approximation}{Approximation} class for floating-\/point computations.
+\end{DoxyNote}
+\hypertarget{python_module_tutorials_page_python_real_subsection}{}\doxysubsubsection{\texorpdfstring{Effective real arithmetic}{Effective real arithmetic}}\label{python_module_tutorials_page_python_real_subsection}
+Although the \doxylink{classAriadne_1_1Bounds}{Bounds} and \doxylink{classAriadne_1_1Ball}{Ball} classes allow for arbitrary accuracy, the precision is specified a-\/priori, limiting future accuracy. Ariadne also provides a \doxylink{classAriadne_1_1Real}{Real} number class which allows computation to attain a given, specified accuracy.
+
+We can compute an iterate of $f$ using real number arithmetic\+: 
+\begin{DoxyCodeInclude}{0}
+\DoxyCodeLine{00125\ \ \ \ \ x=Real(q\_(3/5))}
+\DoxyCodeLine{00135\ \ \ \ \ \textcolor{keywordflow}{for}\ i\ \textcolor{keywordflow}{in}\ range(8):\ x=f(x)}
+
+\end{DoxyCodeInclude}
+The result is stored as a symbolic formula, which can be computed to a given (metric) accuracy. 
+\begin{DoxyCodeInclude}{0}
+\DoxyCodeLine{00136\ \ \ \ \ y=x.compute(Accuracy(bips=128))}
+
+\end{DoxyCodeInclude}
+The result is a \doxylink{classAriadne_1_1ValidatedReal}{Validated\+Real}, which is an abstract class storing guaranteed bounds on a real number. These bounds can be extracted as dyadic numbers\+: 
+\begin{DoxyCodeInclude}{0}
+\DoxyCodeLine{00139\ \ \ \ \ w=y.get()}
+
+\end{DoxyCodeInclude}
+or using a specified precision\+: 
+\begin{DoxyCodeInclude}{0}
+\DoxyCodeLine{00141\ \ \ \ \ w=y.get(double\_precision)}
+\DoxyCodeLine{00143\ \ \ \ \ w=y.get(precision(bits=128))}
+
+\end{DoxyCodeInclude}
+One can also compute using an \doxylink{classAriadne_1_1Effort}{Effort} parameter. Increasing the effort garantees convergence, but not at a given rate. 
+\begin{DoxyCodeInclude}{0}
+\DoxyCodeLine{00145\ \ \ \ \ y=x.compute(Effort(2))}
+
+\end{DoxyCodeInclude}
+It is aso possible to specify computation using a given precision\+: 
+\begin{DoxyCodeInclude}{0}
+\DoxyCodeLine{00149\ \ \ \ \ w=x.compute\_using(precision(bits=128))}
+
+\end{DoxyCodeInclude}
+The \doxylink{classAriadne_1_1Real}{Real} number class is also the most appropriate to use in problem specifications where irrational numbers are required.\hypertarget{python_module_tutorials_page_python_function_tutorial_section}{}\doxysubsection{\texorpdfstring{The Function module}{The Function module}}\label{python_module_tutorials_page_python_function_tutorial_section}
+
+
+The full code of this tutorial is given in the file \doxylink{}{python/tutorials/function\+\_\+tutorial.\+py}.
+
+In this tutorial, we will study iterated dynamical systems of the form $x_{n+1}=f(x_n)$ by studying the iterated maps $f^n$.\hypertarget{python_module_tutorials_page_python_univariate_function_subsection}{}\doxysubsubsection{\texorpdfstring{Univariate functions}{Univariate functions}}\label{python_module_tutorials_page_python_univariate_function_subsection}
+Consider the unimodal function $f(x)=a x (b-x)$.
+
+Since the function has a single argument, and returns a single result, it is a \doxylink{group__FunctionModule_ga4a215a0a287e522d9422c606425448ec}{Scalar\+Univariate\+Function}. Since it is exactly specified and can be evaluated arbitrarily accurately, it is {\ttfamily \doxylink{classAriadne_1_1Concepts_1_1Effective}{Effective}}. Hence the Python class name is \doxylink{classAriadne_1_1Function_a91c3811cfb016061f1d24582b89bede1}{Effective\+Scalar\+Univariate\+Function}. (The C++ template class is \doxylink{classAriadne_1_1Function}{Function\texorpdfstring{$<$}{<}Effective\+Tag,Real(Real)\texorpdfstring{$>$}{>}}.)
+
+There are two main ways of defining $f$. We show how to define $f$ in terms of the identity function $\mathrm{id}(x)=x$\+: 
+\begin{DoxyCodeInclude}{0}
+\DoxyCodeLine{00000\ \ \ \ \ id=EffectiveScalarUnivariateFunction.coordinate()}
+\DoxyCodeLine{00031\ \ \ \ \ a=dec\_(3.712)}
+\DoxyCodeLine{00032\ \ \ \ \ b=z\_(1)}
+\DoxyCodeLine{00033\ \ \ \ \ f=a*id*(b-\/id)}
+
+\end{DoxyCodeInclude}
+Alternatively, we can define $f$ in terms of a variable $x$. Using $\lambda$-\/calculus syntax $f=\lambda{x}.ax(b-x)$ (in pure Python we would write {\ttfamily lambda x \+: a\texorpdfstring{$\ast$}{*}x\texorpdfstring{$\ast$}{*}(b-\/x)} ) we have\+: 
+\begin{DoxyCodeInclude}{0}
+\DoxyCodeLine{00034\ \ \ \ \ x=RealVariable(\textcolor{stringliteral}{"{}x"{}})}
+\DoxyCodeLine{00037\ \ \ \ \ f=make\_function(x,a*x*(b-\/x))}
+
+\end{DoxyCodeInclude}
+ We can define iterates of the function using the compose method\+: 
+\begin{DoxyCodeInclude}{0}
+\DoxyCodeLine{00038\ \ \ \ \ f2=compose(f,f)}
+\DoxyCodeLine{00041\ \ \ \ \ f3=compose(f,f2)}
+
+\end{DoxyCodeInclude}
+\hypertarget{python_module_tutorials_page_python_multivariate_function_subsection}{}\doxysubsubsection{\texorpdfstring{Multivariate functions}{Multivariate functions}}\label{python_module_tutorials_page_python_multivariate_function_subsection}
+Consider the {\itshape real Ikeda map} $f(x,y)=(1+a(x\cos(t)-y\sin(t)),a(x\sin(t)+y\cos(t))\bigr)$ where $t=b-c/(1+x^2+y^2)$. For parameter values $a=0.7$, $b=0.4$ and $c=6$, the system is chaotic. Since the function has a two-\/element vector argument, and returns a two-\/element vector result, it is a \doxylink{group__FunctionModule_ga1abdce965f7ad2f9aa70af013de6b045}{Vector\+Multivariate\+Function}.
+
+We first define the parameters\+: 
+\begin{DoxyCodeInclude}{0}
+\DoxyCodeLine{00042\ \ \ \ \ a=dec\_(0.7)}
+\DoxyCodeLine{00068\ \ \ \ \ b=dec\_(0.4)}
+\DoxyCodeLine{00069\ \ \ \ \ c=6}
+
+\end{DoxyCodeInclude}
+Again, we can define the function in terms of the identity and coordinate functions\+: 
+\begin{DoxyCodeInclude}{0}
+\DoxyCodeLine{00070\ \ \ \ \ id=EffectiveVectorMultivariateFunction.identity(2)}
+\DoxyCodeLine{00072\ \ \ \ \ x=id[0]}
+\DoxyCodeLine{00073\ \ \ \ \ y=id[1]}
+\DoxyCodeLine{00074\ \ \ \ \ t=EffectiveScalarMultivariateFunction(b-\/c/(1+sqr(x)+sqr(y)))}
+\DoxyCodeLine{00075\ \ \ \ \ f=EffectiveVectorMultivariateFunction([1+a*(x*cos(t)-\/y*sin(t)),a*(x*sin(t)+y*cos(t))])}
+
+\end{DoxyCodeInclude}
+or in terms of variables\+: 
+\begin{DoxyCodeInclude}{0}
+\DoxyCodeLine{00076\ \ \ \ \ x=RealVariable(\textcolor{stringliteral}{"{}x"{}})}
+\DoxyCodeLine{00083\ \ \ \ \ y=RealVariable(\textcolor{stringliteral}{"{}y"{}})}
+\DoxyCodeLine{00084\ \ \ \ \ t=b-\/c/(1+x*x+y*y)}
+\DoxyCodeLine{00085\ \ \ \ \ f=make\_function([x,y],[1+a*(x*cos(t)-\/y*sin(t)),\ a*(x*sin(t)+y*cos(t))])}
+
+\end{DoxyCodeInclude}
+ Again, we can compute iterates of the function\+: 
+\begin{DoxyCodeInclude}{0}
+\DoxyCodeLine{00086\ \ \ \ \ f2=compose(f,f)}
+
+\end{DoxyCodeInclude}
+and compute partial derivatives with respect to the components\+: 
+\begin{DoxyCodeInclude}{0}
+\DoxyCodeLine{00088\ \ \ \ \ df0dx1=derivative(f[0],1)}
+
+\end{DoxyCodeInclude}
+ We can evaluate the entire Jacobian derivative matrix at a point 
+\begin{DoxyCodeInclude}{0}
+\DoxyCodeLine{00089\ \ \ \ \ jfx=jacobian(f,x)}
+
+\end{DoxyCodeInclude}
+Alternatively, we can compute all derivatives up to a given degree 
+\begin{DoxyCodeInclude}{0}
+\DoxyCodeLine{00104\ \ \ \ \ ddfx=differential(f,x,2)}
+
+\end{DoxyCodeInclude}
+\hypertarget{python_module_tutorials_page_python_function_models_subsection}{}\doxysubsubsection{\texorpdfstring{Function models}{Function models}}\label{python_module_tutorials_page_python_function_models_subsection}
+When computing operations which {\itshape return} functions, we usually can only compute over a bounded domain, and obtain an approximation, such as by a polynomial, together with some error bound. A concrete approximation over a bounded domain is called a \doxylink{classAriadne_1_1FunctionModel}{Function\+Model} in Ariadne, and is a Validated\+Function\+Model if an error bound is given. The domain of the approximation must be a bounded set, which we take to be an \doxylink{group__FunctionModule_ga5f13c1d70d7770b9aa4ff0dc2d515ffe}{Interval\+Domain\+Type} in the case of {\ttfamily Univariate} functions, and a coordinate-\/aligned \doxylink{group__FunctionModule_gaf5c0b733c80abb59b1c3d1eb58c20099}{Box\+Domain\+Type} in the case of {\ttfamily Multivariate} functions. The floating-\/point types used for the precision of the coefficients and the error bound are also specified in the class signature. Hence a Taylor polynomial approximation with uniform error bound to a vector-\/valued multivariate function over a box using double-\/precision numbers for the coefficients and error bound is a \doxylink{group__FunctionModelSubModule_ga2c22c0befb7ccf11c80015eee7e7a78b}{Validated\+Vector\+Multivariate\+Taylor\+Function\+Model\+DP}.
+
+We first define the domain of definition of the function model\+: 
+\begin{DoxyCodeInclude}{0}
+\DoxyCodeLine{00107\ \ \ \ \ dom=BoxDomainType([[x\_(-\/0.25),x\_(0.25)],[0,x\_(0.5)]])}
+
+\end{DoxyCodeInclude}
+\begin{DoxyNote}{Note}
+The non-\/integer numbers must be prefixed with the modifier \doxylink{classAriadne_1_1Dyadic_a41ef5fd5ef08cda400230737c4afa334}{dy\+\_\+}, which indicates that the written values should be interpreted exactly as dyadic numbers. It is an error to use a non-\/dyadic number. The requirement that the bounds of the domain type must be exact dyadic numbers may be dropped in a future release of Ariadne.
+\end{DoxyNote}
+To control the accuracy of the approximation, we use a \doxylink{classAriadne_1_1Sweeper}{Sweeper} class. A general-\/purpose sweeper is the {\itshape threshold sweeper} \doxylink{classAriadne_1_1ThresholdSweeper}{Threshold\+Sweeper}, which discards terms of the polynomial if they fall below a certain threshold. 
+\begin{DoxyCodeInclude}{0}
+\DoxyCodeLine{00113\ \ \ \ \ swp=ThresholdSweeper[FloatDP](dp,1e-\/3)}
+
+\end{DoxyCodeInclude}
+We can then compute a polynomial approximation to the original function. 
+\begin{DoxyCodeInclude}{0}
+\DoxyCodeLine{00114\ \ \ \ \ p=ValidatedVectorMultivariateTaylorFunctionModelDP(dom,f,swp)}
+
+\end{DoxyCodeInclude}
+ The usual operations can be performed on function models, including composition 
+\begin{DoxyCodeInclude}{0}
+\DoxyCodeLine{00115\ \ \ \ \ fp=compose(f,p)}
+
+\end{DoxyCodeInclude}
+and evaluation 
+\begin{DoxyCodeInclude}{0}
+\DoxyCodeLine{00118\ \ \ \ \ x=Vector[Bounds[FloatDP]]([dec\_(0.1),dec\_(0.2)],dp)}
+\DoxyCodeLine{00120\ \ \ \ \ px=p(x)}
+
+\end{DoxyCodeInclude}
+Here, the floating-\/point type used for the argument must match that used for the function model coefficients.
+
+Additionally, function models can be integrated with respect to any of their variables 
+\begin{DoxyCodeInclude}{0}
+\DoxyCodeLine{00121\ \ \ \ \ If0x1=antiderivative(p[0],1)}
+
+\end{DoxyCodeInclude}
+\hypertarget{python_module_tutorials_page_python_solver_tutorial_section}{}\doxysubsection{\texorpdfstring{The Solver module}{The Solver module}}\label{python_module_tutorials_page_python_solver_tutorial_section}
+\hypertarget{python_module_tutorials_page_python_algebraic_equation_tutorial_section}{}\doxysubsubsection{\texorpdfstring{Solving Algebraic Equations}{Solving Algebraic Equations}}\label{python_module_tutorials_page_python_algebraic_equation_tutorial_section}
+
+
+In this tutorial, we\textquotesingle{}ll look at solving some simple algebraic equations, including parametrised equations.
+
+The full code of this tutorial is given in the file \doxylink{}{python/tutorials/algebraic\+\_\+equation\+\_\+tutorial.\+py}.\hypertarget{python_module_tutorials_page_python_fixed_point_tutorial_section}{}\doxysubsubsubsection{\texorpdfstring{Computing roots and fixed-\/points}{Computing roots and fixed-\/points}}\label{python_module_tutorials_page_python_fixed_point_tutorial_section}
+First, we will make a function and compute its fixed points 
+\begin{DoxyCodeInclude}{0}
+\DoxyCodeLine{00000\ \ \ \ \ x=RealVariable(\textcolor{stringliteral}{"{}x"{}})}
+\DoxyCodeLine{00029\ \ \ \ \ f=make\_function([x],[x**3+x/3])}
+
+\end{DoxyCodeInclude}
+ To compute a fixed-\/point of $f$, we need to solve the equation $f(x)-x=0$. We define a new function $g$ given by $g(x)=f(x)-x$. 
+\begin{DoxyCodeInclude}{0}
+\DoxyCodeLine{00030\ \ \ \ \ g=make\_function([x],[(x**3+x/3)-\/x])}
+
+\end{DoxyCodeInclude}
+Note that currently, Ariadne only directly supports computing roots of multivalued functions $g:\R^n\to\R^n$, so for a univariate function, we need to define it on one-\/element vectors, so $g:\R^1\to\R^1$.
+
+Since $f(1/2)=7/24<1/2$ and $f(1)=4/3>1$, by the intermediate value theorem, $f$ has a fixed-\/point in $[1/2\!:\!1]$ We use this as the search region. 
+\begin{DoxyCodeInclude}{0}
+\DoxyCodeLine{00034\ \ \ \ \ region=BoxDomainType([\ [x\_(0.5),x\_(1)]\ ])}
+\DoxyCodeLine{00038\ \ \ \ \ region=BoxDomainType([\ [pr\_(0.5),pr\_(1)]\ ])}
+
+\end{DoxyCodeInclude}
+\begin{DoxyWarning}{Warning}
+Currently, the search region is defined by an exact double-\/precision box. This means that the bounds must be given by exact integer, double-\/precision or dyadic numbers. To indicate that the user is aware of possible inaccuracies caused by use of the Python {\ttfamily float} class, floating-\/point numbers should be wrapped in a checker function x\+\_\+() if the value is exact or pr\+\_\+() if the written value can be {\itshape interpreted} as the nearest representable Python {\ttfamily float}. See the \doxylink{group__ExtendedLiteralsSubModule}{Extended numeric literals} section for more details.
+\end{DoxyWarning}
+Specifiy the accuracy required of the solver, and provide a maximum number of iteration steps to use to prevent infinite loops. 
+\begin{DoxyCodeInclude}{0}
+\DoxyCodeLine{00040\ \ \ \ \ tolerance=1e-\/9}
+\DoxyCodeLine{00045\ \ \ \ \ max\_steps=32}
+
+\end{DoxyCodeInclude}
+ In Ariadne, algebraic equations are solved using a {\ttfamily Solver} class. A basic, but accurate and efficient solver is the \doxylink{classAriadne_1_1IntervalNewtonSolver}{Interval\+Newton\+Solver}. 
+\begin{DoxyCodeInclude}{0}
+\DoxyCodeLine{00046\ \ \ \ \ solver=IntervalNewtonSolver(tolerance,max\_steps)}
+\DoxyCodeLine{00049\ \ \ \ \ p=solver.solve(g,region)}
+
+\end{DoxyCodeInclude}
+Alternatively, we can use the related \doxylink{classAriadne_1_1KrawczykSolver}{Krawczyk\+Solver}, which may be slightly more reliable, but less efficient. 
+\begin{DoxyCodeInclude}{0}
+\DoxyCodeLine{00051\ \ \ \ \ solver=KrawczykSolver(tolerance,max\_steps)}
+\DoxyCodeLine{00056\ \ \ \ \ p=solver.solve(g,region)}
+
+\end{DoxyCodeInclude}
+\hypertarget{python_module_tutorials_page_python_inverse_function_tutorial_section}{}\doxysubsubsubsection{\texorpdfstring{Computing implicit and inverse functions}{Computing implicit and inverse functions}}\label{python_module_tutorials_page_python_inverse_function_tutorial_section}
+In this section,we will make a function and compute its inverse.
+
+Declare variables and define the function $f(x)=x^3+x/3$\+: 
+\begin{DoxyCodeInclude}{0}
+\DoxyCodeLine{00058\ \ \ \ \ x=RealVariable(\textcolor{stringliteral}{"{}x"{}})}
+\DoxyCodeLine{00066\ \ \ \ \ y=RealVariable(\textcolor{stringliteral}{"{}y"{}})}
+\DoxyCodeLine{00067\ \ \ \ \ f=make\_function([x],[x**3+x/3])}
+
+\end{DoxyCodeInclude}
+ A function $h$ is an {\itshape inverse} of $f$ in a domain $D$ if $f(h(x))=x$ for all $x \in D$. To compute the inverse, define the function $g(x,y)=f(y)-x$, and solve the implicit function problem $g(x,h(x))=0$. 
+\begin{DoxyCodeInclude}{0}
+\DoxyCodeLine{00068\ \ \ \ \ x=RealVariable(\textcolor{stringliteral}{"{}x"{}})}
+\DoxyCodeLine{00073\ \ \ \ \ g=make\_function([x,y],[(y**3+y/3)-\/x])}
+
+\end{DoxyCodeInclude}
+ Look for the inverse over the interval $[0\!:\!1]$. Since f is increasing, $f(0)=0$ and $f(1)=4/3>1$, the inverse maps $[0:1]$ into $[0:1]$. 
+\begin{DoxyCodeInclude}{0}
+\DoxyCodeLine{00074\ \ \ \ \ domain=BoxDomainType([[0,1]])}
+\DoxyCodeLine{00080\ \ \ \ \ codomain=BoxDomainType([[0,1]])}
+
+\end{DoxyCodeInclude}
+ Again, define the solver parameters. This time, we choose the slightly more robust \doxylink{classAriadne_1_1KrawczykSolver}{Krawczyk\+Solver} for the problem. 
+\begin{DoxyCodeInclude}{0}
+\DoxyCodeLine{00081\ \ \ \ \ tolerance=1e-\/6}
+\DoxyCodeLine{00083\ \ \ \ \ max\_steps=32}
+\DoxyCodeLine{00084\ \ \ \ \ solver=KrawczykSolver(tolerance,max\_steps)}
+
+\end{DoxyCodeInclude}
+ Try to compute the inverse over $[0\!:\!1]$\+: 
+\begin{DoxyCodeInclude}{0}
+\DoxyCodeLine{00085\ \ \ \ \ \textcolor{keywordflow}{try}:}
+\DoxyCodeLine{00089\ \ \ \ \ \ \ \ \ invf=solver.implicit(g,domain,codomain)}
+\DoxyCodeLine{00090\ \ \ \ \ \ \ \ \ print(\textcolor{stringliteral}{"{}invf:"{}},invf)}
+
+\end{DoxyCodeInclude}
+ Unfortunately, the interval Newton solver does not converge and yields an exception\+: 
+\begin{DoxyCodeInclude}{0}
+\DoxyCodeLine{00091\ \ \ \ \ \textcolor{keywordflow}{except}:}
+\DoxyCodeLine{00092\ \ \ \ \ \ \ \ \ print(\textcolor{stringliteral}{"{}Caught\ exception\ (method\ does\ not\ converge\ over\ domain\ "{}},domain,\textcolor{stringliteral}{"{})"{}},sep=\textcolor{stringliteral}{''})}
+
+\end{DoxyCodeInclude}
+ Instead, look for inverse over smaller domains whose union is $[0\!:\!1]$\+: 
+\begin{DoxyCodeInclude}{0}
+\DoxyCodeLine{00093\ \ \ \ \ domains=[BoxDomainType([[x\_(0.0),x\_(0.125)]]),BoxDomainType([[x\_(0.125),x\_(0.375)]]),BoxDomainType([[x\_(0.375),x\_(1.0)]])]}
+\DoxyCodeLine{00097\ \ \ \ \ codomains=[BoxDomainType([[x\_(-\/0.125),x\_(0.5)]]),BoxDomainType([[x\_(0.0),x\_(0.75)]]),BoxDomainType([[x\_(0.25),x\_(1.25)]])]}
+\DoxyCodeLine{00098\ \ \ \ \ \textcolor{keywordflow}{for}\ i\ \textcolor{keywordflow}{in}\ range(3):}
+\DoxyCodeLine{00100\ \ \ \ \ \ \ \ \ invf=solver.implicit(g,domains[i],codomains[i])}
+\DoxyCodeLine{00101\ \ \ \ \ \ \ \ \ print(\textcolor{stringliteral}{"{}invf"{}},i,\textcolor{stringliteral}{"{}:\ "{}},invf,sep=\textcolor{stringliteral}{''})}
+
+\end{DoxyCodeInclude}
+
+
+The \doxylink{classAriadne_1_1IntervalNewtonSolver}{Interval\+Newton\+Solver} is rather more sensitive, but we can still compute the inverse given sufficiently tight bounds\+: 
+\begin{DoxyCodeInclude}{0}
+\DoxyCodeLine{00102\ \ \ \ \ newton\_solver=IntervalNewtonSolver(tolerance,max\_steps)}
+\DoxyCodeLine{00109\ \ \ \ \ domain=BoxDomainType([[dy\_(0.125),dy\_(0.375)]])}
+\DoxyCodeLine{00110\ \ \ \ \ codomain=BoxDomainType([[dy\_(0.25),dy\_(0.625)]])}
+\DoxyCodeLine{00111\ \ \ \ \ invf=newton\_solver.implicit(g,domain,codomain)}
+\DoxyCodeLine{00112\ \ \ \ \ print(\textcolor{stringliteral}{"{}invf:"{}},invf)}
+
+\end{DoxyCodeInclude}

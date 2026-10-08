@@ -1,0 +1,14 @@
+{
+  "tag": "nfixed-inventory",
+  "started": "2026-09-09T16:40:21.503Z",
+  "finished": "2026-09-09T16:40:21.954Z",
+  "elapsedSeconds": 0.448686167,
+  "cwd": "/home/tim/Documents/GitHub/workspace",
+  "command": "node",
+  "args": [
+    "exactcore-hyper-comparison/audits/continuation/calcium/inventory.mjs",
+    "verify"
+  ],
+  "code": 0,
+  "signal": null
+}

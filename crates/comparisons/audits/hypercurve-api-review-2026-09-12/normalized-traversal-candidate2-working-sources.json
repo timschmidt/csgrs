@@ -1,0 +1,26 @@
+[
+  {
+    "file": "benches/bezier_region.rs",
+    "sha256": "07d1320524e4f303c898f0beccd81e56fb31b5a04bded389db8ac55b60645d85"
+  },
+  {
+    "file": "fuzz/fuzz_targets/bezier_region.rs",
+    "sha256": "d48f77a3ee52b335115874bfdb3e022b36052dde0395a36d6745b0589f332142"
+  },
+  {
+    "file": "src/bezier_region.rs",
+    "sha256": "00ed79d16168208af6590e6b5aa0e54160c6c1550366159492ebc3ec91b846a3"
+  },
+  {
+    "file": "src/curve_region_boolean.rs",
+    "sha256": "0de4a41c4bb8205d7fc9c6c64e3ad6d4f5a14752f135819eab80b6f239518ecf"
+  },
+  {
+    "file": "tests/hypercurve_bezier_region.rs",
+    "sha256": "cadc7c241895ae92ec36fbe2d86b3b3cf8e52280013241430704826639dac89d"
+  },
+  {
+    "file": "src/bezier_offset.rs",
+    "sha256": "3297b5740d2e63c8fc5cb8acb27121054bc160d3f233a898a0f78f5103664875"
+  }
+]

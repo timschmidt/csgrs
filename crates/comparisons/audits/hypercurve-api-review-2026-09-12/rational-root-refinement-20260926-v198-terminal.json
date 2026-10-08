@@ -1,0 +1,127 @@
+{
+  "parents": {
+    "hypercurve": "9370aa67a692d651b46ad32d836fed62f9da726f",
+    "hypersolve": "42308d704df777b3e627aa344424afa3f215e456",
+    "hyperreal": "0cb5f29aee065c73e234e0ebb0a9e106398515bb"
+  },
+  "source_manifest": "rational-root-refinement-20260926-v198-sources.json",
+  "source_directory": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/source-archives/rational-root-refinement-20260926-v198",
+  "build_source_directory": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/build-workspace-20260925",
+  "workspace_guard": "rational-root-refinement-20260926-v198-workspace.json",
+  "checks": [],
+  "cases": [
+    {
+      "repo": "hypercurve",
+      "label": "case-00",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/rational-root-refinement-20260926-v198-hypercurve",
+        "--exact",
+        "bezier_offset::conversion_tests::retained_normal_contact_requires_its_undisplaced_regular_source",
+        "--test-threads=1",
+        "--nocapture",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.0035145690198987722,
+      "log": "rational-root-refinement-20260926-v198-case-00.log",
+      "name": "bezier_offset::conversion_tests::retained_normal_contact_requires_its_undisplaced_regular_source"
+    },
+    {
+      "repo": "hypercurve",
+      "label": "case-01",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/rational-root-refinement-20260926-v198-hypercurve",
+        "--exact",
+        "bezier_offset::conversion_tests::retained_parallel_normal_contacts_preserve_native_roots_and_sheets",
+        "--test-threads=1",
+        "--nocapture",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.5144611980067566,
+      "log": "rational-root-refinement-20260926-v198-case-01.log",
+      "name": "bezier_offset::conversion_tests::retained_parallel_normal_contacts_preserve_native_roots_and_sheets"
+    },
+    {
+      "repo": "hypercurve",
+      "label": "case-02",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/rational-root-refinement-20260926-v198-hypercurve",
+        "--exact",
+        "bezier_offset::conversion_tests::chord_normal_parallel_contacts_reuse_the_retained_center_field",
+        "--test-threads=1",
+        "--nocapture",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.007616106886416674,
+      "log": "rational-root-refinement-20260926-v198-case-02.log",
+      "name": "bezier_offset::conversion_tests::chord_normal_parallel_contacts_reuse_the_retained_center_field"
+    },
+    {
+      "repo": "hypercurve",
+      "label": "case-03",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/rational-root-refinement-20260926-v198-hypercurve",
+        "--exact",
+        "bezier_offset::conversion_tests::chord_normal_recursive_frame_retains_center_and_oriented_unit_normal",
+        "--test-threads=1",
+        "--nocapture",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.03167706506792456,
+      "log": "rational-root-refinement-20260926-v198-case-03.log",
+      "name": "bezier_offset::conversion_tests::chord_normal_recursive_frame_retains_center_and_oriented_unit_normal"
+    },
+    {
+      "repo": "hypercurve",
+      "label": "case-04",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/rational-root-refinement-20260926-v198-hypercurve",
+        "--exact",
+        "bezier_offset::conversion_tests::selected_source_range_retains_incident_endpoint_and_contacts_locally",
+        "--test-threads=1",
+        "--nocapture",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.0075579710537567735,
+      "log": "rational-root-refinement-20260926-v198-case-04.log",
+      "name": "bezier_offset::conversion_tests::selected_source_range_retains_incident_endpoint_and_contacts_locally"
+    },
+    {
+      "repo": "hypercurve",
+      "label": "case-05",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/rational-root-refinement-20260926-v198-hypercurve",
+        "--exact",
+        "curve_region_boolean::certified_successor_tests::selected_parallel_arrangement_splits_interior_cusps",
+        "--test-threads=1",
+        "--nocapture",
+        "--color",
+        "never"
+      ],
+      "returncode": "timeout",
+      "elapsed_seconds": 180.00506376405247,
+      "log": "rational-root-refinement-20260926-v198-case-05.log",
+      "name": "curve_region_boolean::certified_successor_tests::selected_parallel_arrangement_splits_interior_cusps"
+    }
+  ],
+  "binaries": {
+    "hypercurve": {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/rational-root-refinement-20260926-v198-hypercurve",
+      "sha256": "09641b238dfe5b7ff19e8c12bf67c8daf0e86c5a5c73c7afdead562a5391e730"
+    }
+  },
+  "all_processes_reaped": true,
+  "diagnostic_only": false,
+  "hypercurve_build_returncode": 0,
+  "all_sources_unchanged": true,
+  "qualification_complete": false
+}

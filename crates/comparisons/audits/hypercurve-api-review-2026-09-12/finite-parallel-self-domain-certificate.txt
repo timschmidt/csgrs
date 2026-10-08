@@ -1,0 +1,9 @@
+Candidate analytic continuation of P(t)=(t²−1,t³−t), t∈[-2,2], left distance d=1/10.
+
+Let z=t², V=|P′|²=9z²−2z+1=(9(z−1/9)²+8/9), K=cross(P′,P″)=6z+2.
+O(t)=(z−1−d(3z−1)/sqrt(V), t(z−1)+2dt/sqrt(V)). x is even and y is odd.
+For a positive off-diagonal visit t=a<1 to the x axis, (1−z)sqrt(V)=2d. Squaring with the explicit branch 0<z<1 gives 225z⁴−500z³+350z²−100z+24=0. At z=9/10 this is 249/400>0; at z=1 it is −1. The unsquared branch is positive on (0,1), and derivative of (1−z)²V is 4(z−1)(3z−1)², so exactly one such z exists. The two visits ±sqrt(z) have the same x=−(1−z)(1+3z)/2. The squared equation also has an exterior z>1 branch that this positive-distance normal must exclude.
+
+Source speed never vanishes. The positive offset has no cusps: for z∈[0,1], V³≥512/729>16/25≥d²K²; for z≥1, V≥8z² and K≤8z, hence V³≥512z⁶>16z²/25≥d²K². Thus 1−dK/V^(3/2)>0 throughout [-2,2]. The unit source chart has a monotone x coordinate, but that theorem cannot omit the exterior self-contact.
+
+The regular leftmost point is O(0)=(−9/10,0). Endpoint coordinates O(±2)=(3−11/(10sqrt(129)), ±(6+2/(5sqrt(129)))) are exactly representable radicals and close with a vertical chord. Use retained parameter/root incidence and the unsquared normal sheet, not a rounded contact coordinate. This note supplies a candidate exact oracle; no runtime result is claimed here.

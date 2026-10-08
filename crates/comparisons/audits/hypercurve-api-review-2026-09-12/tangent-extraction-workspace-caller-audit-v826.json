@@ -1,0 +1,428 @@
+{
+  "repositories": 30,
+  "tracked_rust_markdown_files": 35848,
+  "historical_reference_files": [
+    {
+      "repo": "exactcore-hyper-comparison",
+      "path": "audits/continuation/calcium/complex-product-candidate/hypercurve/tests/hypercurve_bezier_tangent_order.rs"
+    },
+    {
+      "repo": "exactcore-hyper-comparison",
+      "path": "audits/continuation/calcium/complex-product-candidate/hypercurve/src/bezier_tangent_order.rs"
+    },
+    {
+      "repo": "exactcore-hyper-comparison",
+      "path": "audits/continuation/calcium/complex-product-candidate/hypercurve/src/lib.rs"
+    },
+    {
+      "repo": "exactcore-hyper-comparison",
+      "path": "audits/continuation/calcium/complex-product-candidate/hyperlimit/STACK_RETAINED_FACT_AUDIT.md"
+    },
+    {
+      "repo": "exactcore-hyper-comparison",
+      "path": "audits/continuation/calcium/complex-product-v2-candidate/hypercurve/src/bezier_tangent_order.rs"
+    },
+    {
+      "repo": "exactcore-hyper-comparison",
+      "path": "audits/continuation/calcium/complex-product-v2-candidate/hypercurve/tests/hypercurve_bezier_tangent_order.rs"
+    },
+    {
+      "repo": "exactcore-hyper-comparison",
+      "path": "audits/continuation/calcium/complex-product-v2-candidate/hypercurve/src/lib.rs"
+    },
+    {
+      "repo": "exactcore-hyper-comparison",
+      "path": "audits/continuation/calcium/complex-product-v2-candidate/hyperlimit/STACK_RETAINED_FACT_AUDIT.md"
+    },
+    {
+      "repo": "exactcore-hyper-comparison",
+      "path": "audits/continuation/calcium/derivative-demand-baseline/hypercurve/src/bezier_tangent_order.rs"
+    },
+    {
+      "repo": "exactcore-hyper-comparison",
+      "path": "audits/continuation/calcium/derivative-demand-baseline/hypercurve/tests/hypercurve_bezier_tangent_order.rs"
+    },
+    {
+      "repo": "exactcore-hyper-comparison",
+      "path": "audits/continuation/calcium/derivative-demand-baseline/hypercurve/src/lib.rs"
+    },
+    {
+      "repo": "exactcore-hyper-comparison",
+      "path": "audits/continuation/calcium/derivative-demand-candidate/hypercurve/src/bezier_tangent_order.rs"
+    },
+    {
+      "repo": "exactcore-hyper-comparison",
+      "path": "audits/continuation/calcium/derivative-demand-candidate/hypercurve/tests/hypercurve_bezier_tangent_order.rs"
+    },
+    {
+      "repo": "exactcore-hyper-comparison",
+      "path": "audits/continuation/calcium/e-plan-qualified-candidate/hypercurve/src/bezier_tangent_order.rs"
+    },
+    {
+      "repo": "exactcore-hyper-comparison",
+      "path": "audits/continuation/calcium/derivative-demand-candidate/hypercurve/src/lib.rs"
+    },
+    {
+      "repo": "exactcore-hyper-comparison",
+      "path": "audits/continuation/calcium/e-plan-qualified-candidate/hypercurve/src/lib.rs"
+    },
+    {
+      "repo": "exactcore-hyper-comparison",
+      "path": "audits/continuation/calcium/e-plan-qualified-candidate/hyperlimit/STACK_RETAINED_FACT_AUDIT.md"
+    },
+    {
+      "repo": "exactcore-hyper-comparison",
+      "path": "audits/continuation/calcium/point-demand-consumer-v66/hypercurve/src/lib.rs"
+    },
+    {
+      "repo": "exactcore-hyper-comparison",
+      "path": "audits/continuation/calcium/point-demand-consumer-v66/hypercurve/src/bezier_tangent_order.rs"
+    },
+    {
+      "repo": "exactcore-hyper-comparison",
+      "path": "audits/continuation/calcium/e-plan-qualified-candidate/hypercurve/tests/hypercurve_bezier_tangent_order.rs"
+    },
+    {
+      "repo": "exactcore-hyper-comparison",
+      "path": "audits/continuation/calcium/point-demand-consumer-v66/hypercurve/tests/hypercurve_bezier_tangent_order.rs"
+    },
+    {
+      "repo": "exactcore-hyper-comparison",
+      "path": "audits/continuation/calcium/point-image-candidate/hypercurve/src/bezier_tangent_order.rs"
+    },
+    {
+      "repo": "exactcore-hyper-comparison",
+      "path": "audits/continuation/calcium/point-image-candidate/hypercurve/tests/hypercurve_bezier_tangent_order.rs"
+    },
+    {
+      "repo": "exactcore-hyper-comparison",
+      "path": "audits/continuation/calcium/point-image-candidate/hypercurve/src/lib.rs"
+    },
+    {
+      "repo": "exactcore-hyper-comparison",
+      "path": "audits/continuation/calcium/point-image-candidate/hyperlimit/STACK_RETAINED_FACT_AUDIT.md"
+    },
+    {
+      "repo": "exactcore-hyper-comparison",
+      "path": "audits/continuation/calcium/point-image-qualified-candidate/hypercurve/src/bezier_tangent_order.rs"
+    },
+    {
+      "repo": "exactcore-hyper-comparison",
+      "path": "audits/continuation/calcium/point-image-qualified-candidate/hypercurve/tests/hypercurve_bezier_tangent_order.rs"
+    },
+    {
+      "repo": "exactcore-hyper-comparison",
+      "path": "audits/continuation/calcium/point-image-qualified-candidate/hypercurve/src/lib.rs"
+    },
+    {
+      "repo": "exactcore-hyper-comparison",
+      "path": "audits/continuation/calcium/point-image-qualified-candidate/hyperlimit/STACK_RETAINED_FACT_AUDIT.md"
+    },
+    {
+      "repo": "exactcore-hyper-comparison",
+      "path": "audits/continuation/calcium/polynomial-facts-trial/hypercurve/src/bezier_tangent_order.rs"
+    },
+    {
+      "repo": "exactcore-hyper-comparison",
+      "path": "audits/continuation/calcium/polynomial-decision-trial/hyperlimit/STACK_RETAINED_FACT_AUDIT.md"
+    },
+    {
+      "repo": "exactcore-hyper-comparison",
+      "path": "audits/continuation/calcium/polynomial-facts-trial/hypercurve/src/lib.rs"
+    },
+    {
+      "repo": "exactcore-hyper-comparison",
+      "path": "audits/continuation/calcium/polynomial-facts-trial/hypercurve/tests/hypercurve_bezier_tangent_order.rs"
+    },
+    {
+      "repo": "exactcore-hyper-comparison",
+      "path": "audits/continuation/calcium/polynomial-monic-qualified-trial/hypercurve/src/lib.rs"
+    },
+    {
+      "repo": "exactcore-hyper-comparison",
+      "path": "audits/continuation/calcium/polynomial-monic-qualified-trial/hyperlimit/STACK_RETAINED_FACT_AUDIT.md"
+    },
+    {
+      "repo": "exactcore-hyper-comparison",
+      "path": "audits/continuation/calcium/polynomial-facts-trial/hyperlimit/STACK_RETAINED_FACT_AUDIT.md"
+    },
+    {
+      "repo": "exactcore-hyper-comparison",
+      "path": "audits/continuation/calcium/polynomial-monic-qualified-trial/hypercurve/tests/hypercurve_bezier_tangent_order.rs"
+    },
+    {
+      "repo": "exactcore-hyper-comparison",
+      "path": "audits/continuation/calcium/polynomial-monic-trial/hyperlimit/STACK_RETAINED_FACT_AUDIT.md"
+    },
+    {
+      "repo": "exactcore-hyper-comparison",
+      "path": "audits/continuation/calcium/polynomial-monic-qualified-trial/hypercurve/src/bezier_tangent_order.rs"
+    },
+    {
+      "repo": "exactcore-hyper-comparison",
+      "path": "audits/continuation/calcium/power-sums-candidate/hypercurve/src/bezier_tangent_order.rs"
+    },
+    {
+      "repo": "exactcore-hyper-comparison",
+      "path": "audits/continuation/calcium/power-sums-candidate/hypercurve/tests/hypercurve_bezier_tangent_order.rs"
+    },
+    {
+      "repo": "exactcore-hyper-comparison",
+      "path": "audits/continuation/calcium/power-sums-candidate/hypercurve/src/lib.rs"
+    },
+    {
+      "repo": "exactcore-hyper-comparison",
+      "path": "audits/continuation/calcium/power-sums-candidate/hyperlimit/STACK_RETAINED_FACT_AUDIT.md"
+    },
+    {
+      "repo": "exactcore-hyper-comparison",
+      "path": "audits/continuation/calcium/rank-dominance-trial/hypercurve/src/bezier_tangent_order.rs"
+    },
+    {
+      "repo": "exactcore-hyper-comparison",
+      "path": "audits/continuation/calcium/rank-dominance-trial/hypercurve/src/lib.rs"
+    },
+    {
+      "repo": "exactcore-hyper-comparison",
+      "path": "audits/continuation/calcium/rank-dominance-trial/hypercurve/tests/hypercurve_bezier_tangent_order.rs"
+    },
+    {
+      "repo": "exactcore-hyper-comparison",
+      "path": "audits/continuation/calcium/rank-dominance-trial/hyperlimit/STACK_RETAINED_FACT_AUDIT.md"
+    },
+    {
+      "repo": "exactcore-hyper-comparison",
+      "path": "audits/continuation/calcium/reuse-consumers/hypercurve/src/bezier_tangent_order.rs"
+    },
+    {
+      "repo": "exactcore-hyper-comparison",
+      "path": "audits/continuation/calcium/reuse-consumers/hypercurve/tests/hypercurve_bezier_tangent_order.rs"
+    },
+    {
+      "repo": "exactcore-hyper-comparison",
+      "path": "audits/continuation/calcium/reuse-consumers/hyperlimit/STACK_RETAINED_FACT_AUDIT.md"
+    },
+    {
+      "repo": "exactcore-hyper-comparison",
+      "path": "audits/continuation/calcium/reuse-consumers/hypercurve/src/lib.rs"
+    },
+    {
+      "repo": "exactcore-hyper-comparison",
+      "path": "audits/continuation/calcium/sign-consumers/baseline/hypercurve/src/bezier_tangent_order.rs"
+    },
+    {
+      "repo": "exactcore-hyper-comparison",
+      "path": "audits/continuation/calcium/sign-consumers/baseline/hypercurve/src/lib.rs"
+    },
+    {
+      "repo": "exactcore-hyper-comparison",
+      "path": "audits/continuation/calcium/sign-consumers/baseline/hypercurve/tests/hypercurve_bezier_tangent_order.rs"
+    },
+    {
+      "repo": "exactcore-hyper-comparison",
+      "path": "audits/continuation/calcium/sign-consumers/baseline/hyperlimit/STACK_RETAINED_FACT_AUDIT.md"
+    },
+    {
+      "repo": "exactcore-hyper-comparison",
+      "path": "audits/continuation/calcium/sign-consumers/sign/hypercurve/src/lib.rs"
+    },
+    {
+      "repo": "exactcore-hyper-comparison",
+      "path": "audits/continuation/calcium/sign-consumers/sign/hyperlimit/STACK_RETAINED_FACT_AUDIT.md"
+    },
+    {
+      "repo": "exactcore-hyper-comparison",
+      "path": "audits/continuation/calcium/sign-filter-candidate/hyperlimit/STACK_RETAINED_FACT_AUDIT.md"
+    },
+    {
+      "repo": "exactcore-hyper-comparison",
+      "path": "audits/continuation/calcium/sign-consumers/sign/hypercurve/src/bezier_tangent_order.rs"
+    },
+    {
+      "repo": "exactcore-hyper-comparison",
+      "path": "audits/continuation/calcium/sign-consumers/sign/hypercurve/tests/hypercurve_bezier_tangent_order.rs"
+    },
+    {
+      "repo": "exactcore-hyper-comparison",
+      "path": "audits/continuation/calcium/sign-filter-mask/hyperlimit/STACK_RETAINED_FACT_AUDIT.md"
+    },
+    {
+      "repo": "exactcore-hyper-comparison",
+      "path": "audits/continuation/calcium/sign-filter-baseline/hyperlimit/STACK_RETAINED_FACT_AUDIT.md"
+    },
+    {
+      "repo": "exactcore-hyper-comparison",
+      "path": "audits/continuation/calcium/zero-factor-consumer-v74/hypercurve/src/bezier_tangent_order.rs"
+    },
+    {
+      "repo": "exactcore-hyper-comparison",
+      "path": "audits/continuation/calcium/zero-factor-consumer-v74/hypercurve/tests/hypercurve_bezier_tangent_order.rs"
+    },
+    {
+      "repo": "exactcore-hyper-comparison",
+      "path": "audits/continuation/calcium/zero-factor-consumer-v74/hypercurve/src/lib.rs"
+    },
+    {
+      "repo": "exactcore-hyper-comparison",
+      "path": "audits/tmp/aern-quadratic-fix.fsxgfP/hyperlimit/STACK_RETAINED_FACT_AUDIT.md"
+    },
+    {
+      "repo": "exactcore-hyper-comparison",
+      "path": "audits/tmp/hyper-bernstein-scale.xDkXjE/hyperlimit/STACK_RETAINED_FACT_AUDIT.md"
+    },
+    {
+      "repo": "exactcore-hyper-comparison",
+      "path": "audits/tmp/hyper-krawczyk-ab.WlCBFy/hyperlimit/STACK_RETAINED_FACT_AUDIT.md"
+    },
+    {
+      "repo": "exactcore-hyper-comparison",
+      "path": "audits/tmp/hypercurve-aabb-baseline.FfueBu/src/bezier_tangent_order.rs"
+    },
+    {
+      "repo": "exactcore-hyper-comparison",
+      "path": "audits/tmp/hypercurve-aabb-baseline.FfueBu/src/lib.rs"
+    },
+    {
+      "repo": "exactcore-hyper-comparison",
+      "path": "audits/tmp/hypercurve-aabb-baseline.FfueBu/tests/hypercurve_bezier_tangent_order.rs"
+    },
+    {
+      "repo": "exactcore-hyper-comparison",
+      "path": "audits/tmp/hypercurve-affine-offset-control.JVwgaq/hypercurve/src/bezier_tangent_order.rs"
+    },
+    {
+      "repo": "exactcore-hyper-comparison",
+      "path": "audits/tmp/hypercurve-affine-offset-control.JVwgaq/hypercurve/tests/hypercurve_bezier_tangent_order.rs"
+    },
+    {
+      "repo": "exactcore-hyper-comparison",
+      "path": "audits/tmp/hypercurve-affine-offset-control.JVwgaq/hyperlimit/STACK_RETAINED_FACT_AUDIT.md"
+    },
+    {
+      "repo": "exactcore-hyper-comparison",
+      "path": "audits/tmp/hypercurve-affine-offset-control.JVwgaq/hypercurve/src/lib.rs"
+    },
+    {
+      "repo": "exactcore-hyper-comparison",
+      "path": "audits/tmp/hypercurve-dyadic-bernstein-control.a5ZKq2/hypercurve/src/bezier_tangent_order.rs"
+    },
+    {
+      "repo": "exactcore-hyper-comparison",
+      "path": "audits/tmp/hypercurve-dyadic-bernstein-control.a5ZKq2/hypercurve/src/lib.rs"
+    },
+    {
+      "repo": "exactcore-hyper-comparison",
+      "path": "audits/tmp/hypercurve-dyadic-bernstein-control.a5ZKq2/hypercurve/tests/hypercurve_bezier_tangent_order.rs"
+    },
+    {
+      "repo": "exactcore-hyper-comparison",
+      "path": "audits/tmp/hypercurve-dyadic-bernstein-control.a5ZKq2/hyperlimit/STACK_RETAINED_FACT_AUDIT.md"
+    },
+    {
+      "repo": "exactcore-hyper-comparison",
+      "path": "audits/tmp/hypercurve-head.ypdthU/hypercurve/src/bezier_tangent_order.rs"
+    },
+    {
+      "repo": "exactcore-hyper-comparison",
+      "path": "audits/tmp/hypercurve-history.x2rRnk/hypercurve/src/lib.rs"
+    },
+    {
+      "repo": "exactcore-hyper-comparison",
+      "path": "audits/tmp/hypercurve-history.x2rRnk/hypercurve/tests/hypercurve_bezier_tangent_order.rs"
+    },
+    {
+      "repo": "exactcore-hyper-comparison",
+      "path": "audits/tmp/hypercurve-head.ypdthU/hypercurve/tests/hypercurve_bezier_tangent_order.rs"
+    },
+    {
+      "repo": "exactcore-hyper-comparison",
+      "path": "audits/tmp/hypercurve-head.ypdthU/hypercurve/src/lib.rs"
+    },
+    {
+      "repo": "exactcore-hyper-comparison",
+      "path": "audits/tmp/hypercurve-history.x2rRnk/hypercurve/src/bezier_tangent_order.rs"
+    },
+    {
+      "repo": "exactcore-hyper-comparison",
+      "path": "audits/tmp/hypercurve-pages-layout.DBTFUF/hypercurve/tests/hypercurve_bezier_tangent_order.rs"
+    },
+    {
+      "repo": "exactcore-hyper-comparison",
+      "path": "audits/tmp/hypercurve-pages-layout.DBTFUF/hypercurve/src/lib.rs"
+    },
+    {
+      "repo": "exactcore-hyper-comparison",
+      "path": "audits/tmp/hypercurve-history.x2rRnk/hyperlimit/STACK_RETAINED_FACT_AUDIT.md"
+    },
+    {
+      "repo": "exactcore-hyper-comparison",
+      "path": "audits/tmp/hypercurve-sturm-control.B3w9V8/hypercurve/src/lib.rs"
+    },
+    {
+      "repo": "exactcore-hyper-comparison",
+      "path": "audits/tmp/hypercurve-sturm-control.B3w9V8/hypercurve/src/bezier_tangent_order.rs"
+    },
+    {
+      "repo": "exactcore-hyper-comparison",
+      "path": "audits/tmp/hypercurve-pages-layout.DBTFUF/hypercurve/src/bezier_tangent_order.rs"
+    },
+    {
+      "repo": "exactcore-hyper-comparison",
+      "path": "audits/tmp/hypercurve-sturm-control.B3w9V8/hypercurve/tests/hypercurve_bezier_tangent_order.rs"
+    },
+    {
+      "repo": "exactcore-hyper-comparison",
+      "path": "audits/tmp/hypercurve-sturm-control.B3w9V8/hyperlimit/STACK_RETAINED_FACT_AUDIT.md"
+    },
+    {
+      "repo": "exactcore-hyper-comparison",
+      "path": "audits/workspace/.audit-coefficient-control.UPsrn7/hypercurve/src/bezier_tangent_order.rs"
+    },
+    {
+      "repo": "exactcore-hyper-comparison",
+      "path": "audits/workspace/.audit-coefficient-control.UPsrn7/hypercurve/src/lib.rs"
+    },
+    {
+      "repo": "exactcore-hyper-comparison",
+      "path": "audits/workspace/.audit-coefficient-control.UPsrn7/hypercurve/tests/hypercurve_bezier_tangent_order.rs"
+    },
+    {
+      "repo": "exactcore-hyper-comparison",
+      "path": "audits/workspace/.audit-fractional-control.pXHyjP/hypercurve/src/lib.rs"
+    },
+    {
+      "repo": "exactcore-hyper-comparison",
+      "path": "audits/workspace/.audit-fractional-control.pXHyjP/hypercurve/src/bezier_tangent_order.rs"
+    },
+    {
+      "repo": "exactcore-hyper-comparison",
+      "path": "audits/workspace/.audit-fractional-control.pXHyjP/hypercurve/tests/hypercurve_bezier_tangent_order.rs"
+    },
+    {
+      "repo": "exactcore-hyper-comparison",
+      "path": "audits/workspace/.audit-fractional-control.pXHyjP/hyperlimit/STACK_RETAINED_FACT_AUDIT.md"
+    },
+    {
+      "repo": "exactcore-hyper-comparison",
+      "path": "audits/workspace/exact-real-references/ruffini-qualification/cache-public-pilot/before-source/hypercurve/src/lib.rs"
+    },
+    {
+      "repo": "exactcore-hyper-comparison",
+      "path": "audits/workspace/exact-real-references/ruffini-qualification/cache-public-pilot/before-source/hypercurve/src/bezier_tangent_order.rs"
+    },
+    {
+      "repo": "exactcore-hyper-comparison",
+      "path": "audits/workspace/exact-real-references/ruffini-qualification/cache-public-pilot/before-source/hypercurve/tests/hypercurve_bezier_tangent_order.rs"
+    },
+    {
+      "repo": "exactcore-hyper-comparison",
+      "path": "audits/workspace/exact-real-references/ruffini-qualification/cache-public-pilot/before-source/hyperlimit/STACK_RETAINED_FACT_AUDIT.md"
+    },
+    {
+      "repo": "hyperlimit",
+      "path": "STACK_RETAINED_FACT_AUDIT.md"
+    }
+  ],
+  "active_references": 0,
+  "scope": "Historical audit snapshots and the dated July declaration inventory are preserved unchanged."
+}

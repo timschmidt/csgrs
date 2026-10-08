@@ -1,0 +1,63 @@
+{
+  "cases": [
+    {
+      "name": "bezier_offset::conversion_tests::chord_normal_recursive_frame_retains_center_and_oriented_unit_normal",
+      "returncode": "timeout",
+      "passed": false,
+      "limit_seconds": 75,
+      "elapsed_seconds": 75.14086244499777,
+      "log": "chord-normal-frame-20260923-focused1-case-0.log"
+    },
+    {
+      "name": "bezier_offset::conversion_tests::parallel_normal_recursive_frame_preserves_source_parameter_and_positive_speed",
+      "returncode": 0,
+      "passed": true,
+      "limit_seconds": 75,
+      "elapsed_seconds": 0.19887045805808157,
+      "log": "chord-normal-frame-20260923-focused1-case-1.log"
+    },
+    {
+      "name": "bezier_offset::conversion_tests::rank_independent_chord_normal_circle_publishes_rational_overlap",
+      "returncode": 0,
+      "passed": true,
+      "limit_seconds": 75,
+      "elapsed_seconds": 0.19794854207430035,
+      "log": "chord-normal-frame-20260923-focused1-case-2.log"
+    },
+    {
+      "name": "bezier_offset::conversion_tests::dense_chord_normal_independent_anchor_uses_rank_independent_fallback",
+      "returncode": 0,
+      "passed": true,
+      "limit_seconds": 75,
+      "elapsed_seconds": 29.343215478002094,
+      "log": "chord-normal-frame-20260923-focused1-case-3.log"
+    },
+    {
+      "name": "bezier_region::tests::nonrepresented_chord_and_selected_circle_complete_the_fillet_kernel",
+      "returncode": "timeout",
+      "passed": false,
+      "limit_seconds": 75,
+      "elapsed_seconds": 75.13694844802376,
+      "log": "chord-normal-frame-20260923-focused1-case-4.log"
+    },
+    {
+      "name": "bezier_region::tests::nonrepresented_chord_and_retained_rational_arc_share_the_fillet_kernel",
+      "returncode": 101,
+      "passed": false,
+      "limit_seconds": 75,
+      "elapsed_seconds": 0.2544494110625237,
+      "log": "chord-normal-frame-20260923-focused1-case-5.log"
+    },
+    {
+      "name": "bezier_region::tests::selected_circle_and_promoted_line_extend_through_the_chord_support_cell",
+      "returncode": 0,
+      "passed": true,
+      "limit_seconds": 75,
+      "elapsed_seconds": 6.656599510926753,
+      "log": "chord-normal-frame-20260923-focused1-case-6.log"
+    }
+  ],
+  "binary_sha256": "8831d6bc538776a74bcc07dedaf6a9c4cb649b568e2a044a8a6112d6cf403361",
+  "all_sources_unchanged": true,
+  "all_processes_reaped": true
+}

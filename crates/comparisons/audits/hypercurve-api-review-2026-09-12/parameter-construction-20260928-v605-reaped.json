@@ -1,0 +1,7 @@
+{
+  "outer_session": 60112,
+  "outer_exit_code": 1,
+  "qualification": "parameter-construction-20260928-v605-terminal.json",
+  "passed_cases": 439,
+  "failed_case": "radical_parallel_cusp_offsets_exactly_under_both_policies"
+}

@@ -1,0 +1,26 @@
+{
+  "name": "material-components-policy-public",
+  "command": [
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/material-components-policy-public"
+  ],
+  "timeout": 60,
+  "library": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/material-components-candidate1-libraries/libhypercurve-bacb55d5ec235376.rlib",
+  "library_sha256": "ed110ff14e04eb225360c3917d2d82af6ec6fb90823ed526f7e6268991e6dc44",
+  "binary_sha256": "9d3e459870235042b1b3140df5d582afb4fc7d58eeab5511449c187c0bba2f93",
+  "source_sha256": "c1193a7c13d59d12e3595bafe804607b066e78ad434393976fd8c14f1ad896ac",
+  "compile_command": [
+    "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustc",
+    "--edition=2024",
+    "-O",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/material-components-policy-public.rs",
+    "--extern",
+    "hypercurve=/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/material-components-candidate1-libraries/libhypercurve-bacb55d5ec235376.rlib",
+    "-L",
+    "dependency=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps",
+    "-o",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/material-components-policy-public"
+  ],
+  "returncode": 0,
+  "timed_out": false,
+  "elapsed_seconds": 2.6178262979956344
+}

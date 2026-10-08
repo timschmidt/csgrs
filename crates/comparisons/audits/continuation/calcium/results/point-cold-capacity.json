@@ -1,0 +1,15 @@
+{
+  "tag": "point-cold-capacity",
+  "started": "2026-09-10T23:11:17.910Z",
+  "finished": "2026-09-10T23:11:17.923Z",
+  "elapsedSeconds": 0.01088114499999999,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "df",
+  "args": [
+    "-B1",
+    "/tmp",
+    "."
+  ],
+  "code": 0,
+  "signal": null
+}

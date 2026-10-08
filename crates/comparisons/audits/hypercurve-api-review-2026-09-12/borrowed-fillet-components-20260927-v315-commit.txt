@@ -1,0 +1,7 @@
+Resolve fillet components within the prepared carrier solver
+
+Return finite corner solutions directly after applying exact center and contact constraints. Replay retained components against borrowed offsets while their prepared sources remain alive, preserving source charts, normal constraints, selected roots, and shared cut reconstruction.
+
+Remove FilletCandidates2 and the owned FilletCornerFamily2 groups, their center-support copies, and deferred resolution in path and region callers. Connected line fillets apply the same exact constraints before accumulating candidates. Migrate callers and low-level tests directly without compatibility interfaces.
+
+Validation: the same 131 selected release tests across seven binaries and six static/downstream checks as the preceding contact-replay commit. The two known extended-fillet re-offset timeouts remain unresolved and were excluded.

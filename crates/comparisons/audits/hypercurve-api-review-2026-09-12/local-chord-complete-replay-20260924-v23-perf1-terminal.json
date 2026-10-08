@@ -1,0 +1,30 @@
+{
+  "command": [
+    "/usr/bin/perf",
+    "record",
+    "--quiet",
+    "-e",
+    "cpu-clock:u",
+    "-F",
+    "99",
+    "--call-graph",
+    "dwarf,8192",
+    "-o",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/local-chord-complete-replay-20260924-v23-perf1.data",
+    "--",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/local-chord-complete-replay-20260924-v23-libtest",
+    "--exact",
+    "bezier_region::tests::one_fragment_nonzero_parallel_loop_extends_chamfer_cuts_on_one_finite_envelope",
+    "--test-threads=1",
+    "--nocapture"
+  ],
+  "returncode": -2,
+  "interrupted": true,
+  "elapsed_seconds": 20.537372287013568,
+  "all_processes_reaped": true,
+  "all_snapshot_sources_unchanged": true,
+  "binary_sha256": "210b2efecf94f0db0a1b23501acee776c96c392932e06c61aef84b0b60f89e95",
+  "diagnostic_only": true,
+  "concurrent_build": true,
+  "qualification_limits_unchanged": true
+}

@@ -1,0 +1,24 @@
+{
+  "returncode": 0,
+  "elapsed_seconds": 0.0034615229815244675,
+  "normal_library_sha256": "68b7eb07dd682f6f27b42ea8f5bf32ff3fb0e3d96d09c29889738e18190708f9",
+  "log": "finite-point-inverse-domains-bounds-public.log",
+  "source": "finite-region-bounds-public.rs",
+  "command": [
+    "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustc",
+    "--edition=2024",
+    "-O",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-region-bounds-public.rs",
+    "--extern",
+    "hypercurve=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypercurve-e19f31178f76cad1.rlib",
+    "-L",
+    "dependency=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps",
+    "-o",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-point-inverse-domains-bounds-public"
+  ],
+  "run_command": [
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-point-inverse-domains-bounds-public"
+  ],
+  "source_sha256": "60ae3a84f343f48af491042682a68fa866ff85402e5d51e3294aebd9f2a58dd9",
+  "executable_sha256": "0e2bee691b0bbd226e56345981cef865bb9e1d123fa101a4f22e45f41e5fab6a"
+}

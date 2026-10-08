@@ -1,0 +1,27 @@
+{
+  "cases": [
+    {
+      "input": "query-000.json",
+      "sha256": "cae1f2a3bc739c4aa4727e4ac71f6064b0776075711c2305a0fe63392b0edf23",
+      "complete": false,
+      "error": "Invalid literal for Fraction: '32 152/625'",
+      "elapsed_seconds": 0.00010778289288282394
+    },
+    {
+      "input": "query-001.json",
+      "sha256": "b86b96c587ea34a526140c5668898b8702eaf0931925c777201291ddb5c41f68",
+      "complete": false,
+      "error": "Invalid literal for Fraction: '32 152/625'",
+      "elapsed_seconds": 7.970398291945457e-05
+    },
+    {
+      "input": "query-002.json",
+      "sha256": "1465469220cf7281acc15f74c7984ecedf342e4ec2f5ecd1903a03a79086f37d",
+      "complete": false,
+      "error": "Invalid literal for Fraction: '32 152/625'",
+      "elapsed_seconds": 7.801409810781479e-05
+    }
+  ],
+  "complete": false,
+  "method": "Exact Q(sqrt(5),sqrt(50-20sqrt(5))) arithmetic with positive rational polynomial content removal"
+}

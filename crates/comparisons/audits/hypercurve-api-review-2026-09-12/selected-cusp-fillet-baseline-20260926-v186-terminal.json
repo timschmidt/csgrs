@@ -1,0 +1,76 @@
+{
+  "parents": {
+    "hypercurve": "4fb15347fbd06245498a08c6903f10d25148cf00",
+    "hypersolve": "41855c3604cbd18605a020d60758c8e5c489b629",
+    "hyperreal": "0cb5f29aee065c73e234e0ebb0a9e106398515bb"
+  },
+  "source_manifest": "selected-cusp-fillet-baseline-20260926-v186-sources.json",
+  "source_directory": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/source-archives/selected-cusp-fillet-baseline-20260926-v186",
+  "build_source_directory": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/build-workspace-20260925",
+  "workspace_guard": "local-chord-complete-replay-20260924-v186-sources.json",
+  "checks": [],
+  "cases": [
+    {
+      "repo": "hypercurve",
+      "label": "case-00",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/selected-cusp-fillet-baseline-20260926-v186-hypercurve",
+        "--exact",
+        "curve::tests::selected_parallel_fillet_keeps_contacts_beyond_interior_cusps",
+        "--test-threads=1",
+        "--nocapture",
+        "--color",
+        "never"
+      ],
+      "returncode": 101,
+      "elapsed_seconds": 0.00355477596167475,
+      "log": "selected-cusp-fillet-baseline-20260926-v186-case-00.log",
+      "name": "curve::tests::selected_parallel_fillet_keeps_contacts_beyond_interior_cusps"
+    },
+    {
+      "repo": "hypercurve",
+      "label": "case-01",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/selected-cusp-fillet-baseline-20260926-v186-hypercurve",
+        "--exact",
+        "curve::tests::fillet_center_contacts_keep_source_orientation_across_support_cusps",
+        "--test-threads=1",
+        "--nocapture",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.007579619996249676,
+      "log": "selected-cusp-fillet-baseline-20260926-v186-case-01.log",
+      "name": "curve::tests::fillet_center_contacts_keep_source_orientation_across_support_cusps"
+    },
+    {
+      "repo": "hypercurve",
+      "label": "case-02",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/selected-cusp-fillet-baseline-20260926-v186-hypercurve",
+        "--exact",
+        "bezier_region::tests::selected_parallel_offset_partitions_existing_cusps_before_composition",
+        "--test-threads=1",
+        "--nocapture",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.00758131907787174,
+      "log": "selected-cusp-fillet-baseline-20260926-v186-case-02.log",
+      "name": "bezier_region::tests::selected_parallel_offset_partitions_existing_cusps_before_composition"
+    }
+  ],
+  "binaries": {
+    "hypercurve": {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/selected-cusp-fillet-baseline-20260926-v186-hypercurve",
+      "sha256": "2176e2c50c5db6eb970b554ee337e0bf996c808b513b6b9a010a174b7144c46d"
+    }
+  },
+  "all_processes_reaped": true,
+  "diagnostic_only": false,
+  "hypercurve_build_returncode": 0,
+  "all_sources_unchanged": true,
+  "qualification_complete": false
+}

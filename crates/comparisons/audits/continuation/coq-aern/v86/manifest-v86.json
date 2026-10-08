@@ -1,0 +1,379 @@
+{
+  "checkpoint": 86,
+  "status": "qualified-source-and-square-root-contract-models",
+  "previousSha256": "a881348d36696bc4a4be653eb8f34e2c1efaf222e1c1086f66884d54f0c25bfd",
+  "previousDirectArtifacts": 62,
+  "previousTransitiveArtifacts": 4498,
+  "coverage": {
+    "complete": 30,
+    "partial": 0,
+    "lines": 9120
+  },
+  "delta": {
+    "newComplete": 8,
+    "completedPartial": 1,
+    "newLines": 4454
+  },
+  "remainingTextFiles": 58,
+  "proofHoles": [
+    {
+      "file": "formalization/Analysis/Sqrt.v",
+      "line": 628,
+      "lemma": "csqrt_solutions"
+    },
+    {
+      "file": "formalization/Analysis/Sqrt.v",
+      "line": 710,
+      "lemma": "csqrt_small"
+    }
+  ],
+  "rereads": [
+    {
+      "path": "hyperreal/AGENTS.md",
+      "ranges": [
+        [
+          1,
+          14
+        ]
+      ],
+      "sha256": "8a5f7cff0d66947deca34eb54b366ec279897d6e38819bf34e2e1e54b8538039",
+      "newDonorReadCredit": false
+    },
+    {
+      "path": "hyperreal/Cargo.toml",
+      "ranges": [
+        [
+          1,
+          84
+        ]
+      ],
+      "sha256": "dacb1c2a948f09a75173b5a1891b282624d0a422abdf21f669a0cfaefdf949be",
+      "newDonorReadCredit": false
+    },
+    {
+      "path": "hyperreal/src/computable/approximation/exp_sqrt.rs",
+      "ranges": [
+        [
+          110,
+          265
+        ]
+      ],
+      "sha256": "8cd59dcc8923ccc0a7bdaf289773b951868f86c27ffcb2723af6489962c394f2",
+      "newDonorReadCredit": false
+    },
+    {
+      "path": "hyperreal/src/computable/node/roots_inverse_hyperbolic.rs",
+      "ranges": [
+        [
+          1,
+          140
+        ]
+      ],
+      "sha256": "ec631190625f987238bf7d1f76a2f9e88633f42671c0e1870e63ad28f65282ae",
+      "newDonorReadCredit": false
+    },
+    {
+      "path": "hyperreal/src/real/arithmetic/elementary_functions.rs",
+      "ranges": [
+        [
+          130,
+          235
+        ]
+      ],
+      "sha256": "46e3e19125a205306982e3a054fdcf39bdbe8beb8cefc1a91194058490bf88db",
+      "newDonorReadCredit": false
+    },
+    {
+      "path": "hyperreal/src/computable/node/tests.rs",
+      "ranges": [
+        [
+          815,
+          945
+        ]
+      ],
+      "sha256": "bafee0865639f035a4b481ba6cc1570c004267b2118b809da1b2581e0655363a",
+      "newDonorReadCredit": false
+    },
+    {
+      "path": "hyperlimit/src/lib.rs",
+      "ranges": [
+        [
+          1,
+          125
+        ]
+      ],
+      "sha256": "e964032b948286eb47d6cd44d6037b859ea582bacf22ec690db9442c971d6d07",
+      "newDonorReadCredit": false
+    },
+    {
+      "path": "hyperlattice/src/lib.rs",
+      "ranges": [
+        [
+          1,
+          97
+        ]
+      ],
+      "sha256": "e59f6a1c584b160b3ef5883c56a8f2d236cc06d0f52e68ad29d58b4fcca6b56b",
+      "newDonorReadCredit": false
+    },
+    {
+      "path": "hyperlattice/src/complex.rs",
+      "ranges": [
+        [
+          1,
+          165
+        ]
+      ],
+      "sha256": "93977c0de29a4e1598f92e7437987a6b7fa4ba8eefb63864ef0e93ef1ba40923",
+      "newDonorReadCredit": false
+    },
+    {
+      "path": "hyperlimit/STACK_RETAINED_FACT_AUDIT.md",
+      "ranges": [
+        [
+          1,
+          80
+        ]
+      ],
+      "sha256": "ea460c0199f3637ecb2f736b416d4c0ed08e2ef25ebc5964e346b1ccd16fad12",
+      "newDonorReadCredit": false
+    }
+  ],
+  "model": {
+    "status": "verified-independent-exact-rational-model",
+    "normalizedInputs": 35,
+    "normalizedBounds": 350,
+    "fastBounds": 17920,
+    "savedIdealNewtonIterations": 315,
+    "maxRationalComponentBits": 17035,
+    "plannerChecks": 65589,
+    "plannerSavings": 34,
+    "scaleCases": 1161,
+    "zeroPairs": 8481,
+    "admissibleZeroBranches": 4112,
+    "complexSquareRoots": 1089,
+    "distinctComplexSquares": 545,
+    "complexSmallPremises": 7837,
+    "complexSmallExcluded": 10676,
+    "semanticCountermodels": 2,
+    "corruptionControls": 6,
+    "checkedRecords": 67100,
+    "sha256": "a54e7ce5625d38e1f1934b0911750d8788298a11f9def96b1bf4e12d6ffd4615",
+    "limits": "Mathematical model and deterministic operation counts only; not Coq/Haskell execution, a donor proof-hole repair, Hyper guard-bit proof or native performance/memory comparison."
+  },
+  "branches": {
+    "status": "verified-rational-branch-model",
+    "inputs": 1089,
+    "nonzeroInputs": 1088,
+    "branches": 2048,
+    "branchCounts": {
+      "b-positive": 512,
+      "a-positive": 512,
+      "b-negative": 512,
+      "a-negative": 512
+    },
+    "ambiguousOutputs": 240,
+    "negativeQuadrantExample": [
+      {
+        "branch": "a-negative",
+        "root": [
+          [
+            "-1",
+            "1"
+          ],
+          [
+            "2",
+            "1"
+          ]
+        ]
+      },
+      {
+        "branch": "b-negative",
+        "root": [
+          [
+            "1",
+            "1"
+          ],
+          [
+            "-2",
+            "1"
+          ]
+        ]
+      }
+    ],
+    "corruptionControls": 5,
+    "sha256": "42c01ef9c211b4f7a0ffc56a43d2f0658dc380df0e97438e7fdb8eeed1fedb24",
+    "limits": "Every admissible source-derived formula on a finite rational-root grid; not Haskell execution, a principal-root contract, or a repair of admitted proofs."
+  },
+  "tests": {
+    "debug": [
+      "computable::node::tests::demand_sized_sqrt_seeds_match_directed_mpfr",
+      "computable::node::tests::ln_sqrt_pi",
+      "computable::node::tests::sqrt_of_exact_rational_square_is_exact",
+      "computable::node::tests::sqrt_of_exactly_scaled_square_collapses_at_construction",
+      "computable::node::tests::sqrt_of_scaled_square_tracks_structural_msd",
+      "computable::node::tests::sqrt_of_square_of_negative_value_returns_absolute_value",
+      "computable::node::tests::sqrt_square_raw_nodes_preserve_exact_prefix_bounds_and_history",
+      "computable::node::tests::sqrt_square_round_trip",
+      "computable::node::tests::sqrt_square_unresolved_sign_reuses_one_child_and_does_not_cache_aborts",
+      "computable::node::tests::sqrt_squarefree_two_three_reuses_shared_constants",
+      "computable::node::tests::square_of_sqrt_of_positive_value_collapses_at_construction",
+      "rational::arithmetic::tests::sqrt_trouble",
+      "real::tests::tests::atan2_sqrt_three_anchor_matches_pi_third",
+      "real::tests::tests::log2_of_sqrt_two_is_half",
+      "real::tests::tests::oversized_rational_sqrt_retains_exact_computable_without_recursive_reconstruction",
+      "real::tests::tests::sqrt_3045512",
+      "real::tests::tests::sqrt_exact",
+      "real::tests::tests::sqrt_rational_denominator_uses_the_canonical_quadratic_surd",
+      "real::tests::tests::sqrt_recovers_quadratic_surds_with_perfect_square_norms",
+      "real::tests::tests::sqrt_scaled_squarefree_reuses_symbolic_residual",
+      "real::tests::tests::sqrt_sum_and_difference_identity_is_certified_for_rational_pairs",
+      "real::tests::tests::square_sqrt",
+      "real::tests::tests::unlike_sqrts"
+    ],
+    "release": [
+      "computable::node::tests::demand_sized_sqrt_seeds_match_directed_mpfr",
+      "computable::node::tests::ln_sqrt_pi",
+      "computable::node::tests::sqrt_of_exact_rational_square_is_exact",
+      "computable::node::tests::sqrt_of_exactly_scaled_square_collapses_at_construction",
+      "computable::node::tests::sqrt_of_scaled_square_tracks_structural_msd",
+      "computable::node::tests::sqrt_of_square_of_negative_value_returns_absolute_value",
+      "computable::node::tests::sqrt_square_raw_nodes_preserve_exact_prefix_bounds_and_history",
+      "computable::node::tests::sqrt_square_round_trip",
+      "computable::node::tests::sqrt_square_unresolved_sign_reuses_one_child_and_does_not_cache_aborts",
+      "computable::node::tests::sqrt_squarefree_two_three_reuses_shared_constants",
+      "computable::node::tests::square_of_sqrt_of_positive_value_collapses_at_construction",
+      "rational::arithmetic::tests::sqrt_trouble",
+      "real::tests::tests::atan2_sqrt_three_anchor_matches_pi_third",
+      "real::tests::tests::log2_of_sqrt_two_is_half",
+      "real::tests::tests::oversized_rational_sqrt_retains_exact_computable_without_recursive_reconstruction",
+      "real::tests::tests::sqrt_3045512",
+      "real::tests::tests::sqrt_exact",
+      "real::tests::tests::sqrt_rational_denominator_uses_the_canonical_quadratic_surd",
+      "real::tests::tests::sqrt_recovers_quadratic_surds_with_perfect_square_norms",
+      "real::tests::tests::sqrt_scaled_squarefree_reuses_symbolic_residual",
+      "real::tests::tests::sqrt_sum_and_difference_identity_is_certified_for_rational_pairs",
+      "real::tests::tests::square_sqrt",
+      "real::tests::tests::unlike_sqrts"
+    ]
+  },
+  "reusedExecutables": [
+    {
+      "path": "/tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/debug/deps/hyperreal-799e2176ce30c90d",
+      "bytes": 10993640,
+      "sha256": "a8615e00c8f78e1ad9c512998448ca74977b3f693ddd52c782090a7e6373bcd1"
+    },
+    {
+      "path": "/tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/release/deps/hyperreal-f3a6d4fcdbc4d626",
+      "bytes": 7185544,
+      "sha256": "13d19a91a57092c5221512e852639df4e5f67671563f76f80b1e6351a13d616f"
+    }
+  ],
+  "gates": [
+    {
+      "tag": "coq-aern-current85-before-v86",
+      "classification": "environment-subprocess-denied",
+      "finished": "2026-09-12T05:59:36.077Z"
+    },
+    {
+      "tag": "coq-aern-current85-before-approved-v86",
+      "classification": "success",
+      "finished": "2026-09-12T06:00:28.295Z"
+    },
+    {
+      "tag": "coq-aern-sqrt-regression-debug-v86",
+      "classification": "unusable-zero-test-filter",
+      "finished": "2026-09-12T06:03:04.217Z"
+    },
+    {
+      "tag": "coq-aern-sqrt-regression-debug-qualified-v86",
+      "classification": "success",
+      "finished": "2026-09-12T06:03:40.009Z"
+    },
+    {
+      "tag": "coq-aern-sqrt-regression-release-qualified-v86",
+      "classification": "success",
+      "finished": "2026-09-12T06:03:41.121Z"
+    },
+    {
+      "tag": "coq-aern-model-v86",
+      "classification": "success",
+      "finished": "2026-09-12T06:08:33.058Z"
+    },
+    {
+      "tag": "coq-aern-branches-v86",
+      "classification": "unusable-empty-sandbox-capture",
+      "finished": "2026-09-12T06:15:55.654Z"
+    },
+    {
+      "tag": "coq-aern-branches-approved-v86",
+      "classification": "success",
+      "finished": "2026-09-12T06:18:36.625Z"
+    }
+  ],
+  "files": {
+    "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/results/coq-aern-current85-before-v86.json": "c7e82a416b6e31f76691108d1d384bc30bc7becd30435ad03bdcba674b3d50ff",
+    "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/results/coq-aern-current85-before-v86.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/results/coq-aern-current85-before-v86.stderr": "b49d5ec1a9892a4fc393e99037410be23380fc344ca4f156815a37b69fd416ff",
+    "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/results/coq-aern-current85-before-approved-v86.json": "bd2af6da262e48dadcc88eca311d325d6aae27f301152208a97eef3db0edca2d",
+    "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/results/coq-aern-current85-before-approved-v86.stdout": "3bc142b941f05a81d19b115aa4688d069ff7440b391aa985160eb31721d54229",
+    "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/results/coq-aern-current85-before-approved-v86.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/results/coq-aern-sqrt-regression-debug-v86.json": "84e33c859e9fd48178d91d12d3486d34d4b58efab08da1a4211b8f778f11fa1a",
+    "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/results/coq-aern-sqrt-regression-debug-v86.stdout": "642c7cfbff86399bd9414a0636d87872dce22e2de168e56a0ebe60154b0a9905",
+    "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/results/coq-aern-sqrt-regression-debug-v86.stderr": "ed464a98a6b0b776386acce921b5e590b8cf70b079a911a6a205782f66d7d5e9",
+    "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/results/coq-aern-sqrt-regression-debug-qualified-v86.json": "1a7b37dbbc0c97843bd38ec48f6b3a13deb79d3b5d142148ee511a765c0207cd",
+    "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/results/coq-aern-sqrt-regression-debug-qualified-v86.stdout": "9b01d704b9e8328be35e684cbf44f63a6cb4f4b327313b986d8574ecf65d5ec5",
+    "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/results/coq-aern-sqrt-regression-debug-qualified-v86.stderr": "7b98fc70295f0d1cd11b5c8bf8f1c95a40c5cd29366a5d74ce09c459a3b9600c",
+    "/tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/debug/deps/hyperreal-799e2176ce30c90d": "a8615e00c8f78e1ad9c512998448ca74977b3f693ddd52c782090a7e6373bcd1",
+    "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/results/coq-aern-sqrt-regression-release-qualified-v86.json": "fdb798b5d7edf6bbe640abbc0dcbabc6b6e3ea75203c31c65b5bd3a1d35ea37a",
+    "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/results/coq-aern-sqrt-regression-release-qualified-v86.stdout": "9538e516ad01a1a7f10383ae2660177e9397069e7690b8f7c9e9cfd78c1c429f",
+    "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/results/coq-aern-sqrt-regression-release-qualified-v86.stderr": "30072d83824c18f7c5afec88db69aa76221147fb5a9a6e4c406ae646e1547be9",
+    "/tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/release/deps/hyperreal-f3a6d4fcdbc4d626": "13d19a91a57092c5221512e852639df4e5f67671563f76f80b1e6351a13d616f",
+    "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/results/coq-aern-model-v86.json": "5fb2c7ffd436600a23e87427f6c94bd475fc0b0113e028985f2eecc8144e37dd",
+    "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/results/coq-aern-model-v86.stdout": "87019494098110b69ac58ee9820fc361b4c8c032c804884905d40644323b1627",
+    "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/results/coq-aern-model-v86.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/results/coq-aern-branches-v86.json": "e4a14135610c74dbc77e54ac4b9805c4e7fa5968575d1729cdcf42f64d965255",
+    "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/results/coq-aern-branches-v86.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/results/coq-aern-branches-v86.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/results/coq-aern-branches-approved-v86.json": "811afae06bb489aaba5ef0e0c79f80b209344c2d5611c70e127b1f3d2a44cc67",
+    "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/results/coq-aern-branches-approved-v86.stdout": "c57fbd8a82b3982229a460bae36801101918d55d74d18445f5114f9a5f4e8a6f",
+    "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/results/coq-aern-branches-approved-v86.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "/home/tim/Documents/GitHub/workspace/hyperreal/AGENTS.md": "8a5f7cff0d66947deca34eb54b366ec279897d6e38819bf34e2e1e54b8538039",
+    "/home/tim/Documents/GitHub/workspace/hyperreal/Cargo.toml": "dacb1c2a948f09a75173b5a1891b282624d0a422abdf21f669a0cfaefdf949be",
+    "/home/tim/Documents/GitHub/workspace/hyperreal/src/computable/approximation/exp_sqrt.rs": "8cd59dcc8923ccc0a7bdaf289773b951868f86c27ffcb2723af6489962c394f2",
+    "/home/tim/Documents/GitHub/workspace/hyperreal/src/computable/node/roots_inverse_hyperbolic.rs": "ec631190625f987238bf7d1f76a2f9e88633f42671c0e1870e63ad28f65282ae",
+    "/home/tim/Documents/GitHub/workspace/hyperreal/src/real/arithmetic/elementary_functions.rs": "46e3e19125a205306982e3a054fdcf39bdbe8beb8cefc1a91194058490bf88db",
+    "/home/tim/Documents/GitHub/workspace/hyperreal/src/computable/node/tests.rs": "bafee0865639f035a4b481ba6cc1570c004267b2118b809da1b2581e0655363a",
+    "/home/tim/Documents/GitHub/workspace/hyperlimit/src/lib.rs": "e964032b948286eb47d6cd44d6037b859ea582bacf22ec690db9442c971d6d07",
+    "/home/tim/Documents/GitHub/workspace/hyperlattice/src/lib.rs": "e59f6a1c584b160b3ef5883c56a8f2d236cc06d0f52e68ad29d58b4fcca6b56b",
+    "/home/tim/Documents/GitHub/workspace/hyperlattice/src/complex.rs": "93977c0de29a4e1598f92e7437987a6b7fa4ba8eefb63864ef0e93ef1ba40923",
+    "/home/tim/Documents/GitHub/workspace/hyperlimit/STACK_RETAINED_FACT_AUDIT.md": "ea460c0199f3637ecb2f736b416d4c0ed08e2ef25ebc5964e346b1ccd16fad12",
+    "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/coq-aern/v86/README.md": "0a35c81370e9f2e601fb6ed9e1562f4be6b53d6695e89b203fe26530edeb31e2",
+    "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/coq-aern/v86/branches-v86.mjs": "c7b733e7c5a6b7a466b575c5da588e0800db237c616fd2c0e78f86aa139540e3",
+    "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/coq-aern/v86/evidence-v86.mjs": "0777800fd45d35c4fa155405daa9900cfee18e2928ce64d96200f72c0463c92f",
+    "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/coq-aern/v86/findings-v86.md": "25ab64a7569e801f0e77599139235497c4ccec9630259bef508271e6e396dcb9",
+    "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/coq-aern/v86/model-v86.mjs": "b91963a4fa846621472532c6f9cc7cc263c4ac6d0eae6522aab8e37af57ec903",
+    "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/coq-aern/v86/protocol-v86.md": "10db4fd091a8965652a46570cc037bdf993053a5bd797009cc7ddcfd7d01f846",
+    "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/coq-aern/v86/read-records-v86.json": "238e491a473beaaaed54529eb08c5006d4f15581bd91ee93996e206b62691ec0",
+    "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/coq-aern/v86/read-records-v86.mjs": "a971ee05534405f00d8bc64de527b7b9bdbf341370a8eff23ac0d135047b71d6",
+    "/home/tim/Documents/GitHub/workspace/exact-real-references/coq-aern/formalization/Base/MultivalueMonad.v": "bcaad17f362be60da1d8c64a3e8c286ccb545e363479b0ccfc071f75f64c6a76",
+    "/home/tim/Documents/GitHub/workspace/exact-real-references/coq-aern/formalization/Real/RealLimit0.v": "334061be704c335266adfc3dcdc00e83175f2dbde5eb5b30eb5f2ba86b984862",
+    "/home/tim/Documents/GitHub/workspace/exact-real-references/coq-aern/formalization/Real/RealLimit1.v": "4beb66081785f83e33d5ca0242499e1c5d47dd1cd8c92008d2fd2be83469638c",
+    "/home/tim/Documents/GitHub/workspace/exact-real-references/coq-aern/formalization/Analysis/Sqrt.v": "32135c8b5e517572d9c26d4b3a1375eb43f3a528bc56ebbf87074d0ed2f80f68",
+    "/home/tim/Documents/GitHub/workspace/exact-real-references/coq-aern/formalization/Analysis/Complex.v": "b80d84407192d236bde9ae78c5fccf9c15ba62a92d6bba04008d984b1b66c213",
+    "/home/tim/Documents/GitHub/workspace/exact-real-references/coq-aern/formalization/Analysis/MultiLimit.v": "eda4ee3f3568e46fa21fab5e85d5bad2b8211e410d4e3ec8f3083c8a8c71d150",
+    "/home/tim/Documents/GitHub/workspace/exact-real-references/coq-aern/formalization/Analysis/RealSubsets.v": "bb0854dabb7f203081e7ed1065e23098e4cd213100c2ad51f69aec15206d0c42",
+    "/home/tim/Documents/GitHub/workspace/exact-real-references/coq-aern/formalization/Real/RealRing.v": "de29b5f43319f3959038e28f91fbfdbdbb8856f33f747a8687a206dda5c65e29",
+    "/home/tim/Documents/GitHub/workspace/exact-real-references/coq-aern/extracted-examples/src/CSqrt.hs": "bb6c102e13cbf5991984aa64097447dbbc48e6797001eeaaeac5b4f050d2fd34",
+    "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/coq-aern/manifest-v85.json": "a881348d36696bc4a4be653eb8f34e2c1efaf222e1c1086f66884d54f0c25bfd",
+    "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/coq-aern/inventory-v85.json": "b5acb2979cbf21cf9e9bcd5e89602d1ed75be61c8fca207ab70f203c40b8d6e4",
+    "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/coq-aern/read-records-v85.json": "ebb875e5bb65376056a48ad2044bb9a0fc6e1dac95043516ef675b5a458a18a7",
+    "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/capture.mjs": "aaf6df6bbd73025a8541617ce83731ae5ea3fd2272bd98c15e3c4c12b713ce23"
+  },
+  "liveFiles": 957,
+  "isolatedCandidateFiles": 184,
+  "productionChanges": 0,
+  "newRetainedTransfers": 0,
+  "retainedContinuationTransfers": 7,
+  "limits": "Focused default Hyper tests and independent rational models only; no Coq/GHC build, proof repair, matched timing/memory/size improvement, all-feature/full-stack/WASM or whole-inventory completion."
+}

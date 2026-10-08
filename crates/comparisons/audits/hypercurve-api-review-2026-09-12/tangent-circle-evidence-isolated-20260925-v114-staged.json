@@ -1,0 +1,51 @@
+{
+  "phase": "staged",
+  "heads": {
+    "hypercurve": "190adc7a1d3a94263f87a9ade8a68b588f54527a"
+  },
+  "selected": {
+    "hypercurve": [
+      "src/bezier_offset.rs",
+      "src/curve_region_boolean.rs"
+    ]
+  },
+  "source_manifest": "tangent-circle-evidence-isolated-20260925-v114-sources.json",
+  "workspace_guard": "local-chord-complete-replay-20260924-v114-sources.json",
+  "qualification": "tangent-circle-evidence-isolated-20260925-v114-terminal.json",
+  "hypercurve_passed": 265,
+  "ignored": 0,
+  "every_owned_process_reaped": true,
+  "all_bound_sources_and_binaries_unchanged": true,
+  "repository_statuses": {
+    "hypersdf": "",
+    "hyperbrep": "",
+    "hyperparts": "",
+    "alumina-interface": "",
+    "hyperlattice": "",
+    "citizen-builder": "",
+    "csgrs-ffi": "",
+    "alumina-firmware": "",
+    "videos": "",
+    "hypertri": "",
+    "hyperreal": " M src/real/arithmetic/add_sub.rs\n M src/real/arithmetic/inversion.rs\n M src/real/arithmetic/mul_div.rs\n M src/real/arithmetic/representation.rs\n M tests/exact_quadratic_normal_form.rs\n",
+    "hyperpath": "",
+    "hypervoxel": "",
+    "hypergraphics": "",
+    "hyperevolution": "",
+    "exactcore-hyper-comparison": "",
+    "hypersolve": " M src/algebraic.rs\n M src/algebraic_fiber.rs\n M src/algebraic_polynomial_image.rs\n M src/root_isolation.rs\n",
+    "hypercurve": "MM src/bezier_offset.rs\n M src/bezier_region.rs\n M src/curve.rs\n M src/curve_corner_chain.rs\nM  src/curve_region_boolean.rs\n",
+    "crcalc": "",
+    "openscad-rs": "",
+    "hypermesh": "",
+    "csgrs": "",
+    "synaps-cad": "",
+    "hyperdrc": "",
+    "hyperphysics": "",
+    "hyperlimit": "",
+    "hyperpack": "",
+    "NURBS_BREP_kernel": "",
+    "ExactCalculator": "",
+    "hypercircuit": ""
+  }
+}

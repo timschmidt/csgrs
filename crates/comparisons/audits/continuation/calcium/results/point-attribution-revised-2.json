@@ -1,0 +1,22 @@
+{
+  "tag": "point-attribution-revised-2",
+  "started": "2026-09-11T02:48:37.719Z",
+  "finished": "2026-09-11T02:48:55.286Z",
+  "elapsedSeconds": 17.564672242,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "taskset",
+  "args": [
+    "-c",
+    "6",
+    "node",
+    "--expose-gc",
+    "--no-liftoff",
+    "--no-wasm-tier-up",
+    "--no-wasm-lazy-compilation",
+    "--single-threaded-gc",
+    "run-point-attribution-revised-v65.mjs",
+    "2"
+  ],
+  "code": 0,
+  "signal": null
+}

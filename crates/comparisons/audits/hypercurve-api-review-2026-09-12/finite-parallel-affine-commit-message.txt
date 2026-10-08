@@ -1,0 +1,16 @@
+Unify finite parallel evaluation and share exact derivative scale
+
+Retained parameters outside the authored unit range could replay parallel
+points but failed derivative and source evaluation. Make the existing support
+evaluators accept finite affine parameters and remove the separate affine and
+unchecked point interfaces. Keep parameter admission with fragment and
+operation ranges, and reject source poles before certifying a tangent.
+
+Factor both derivative coordinates through one exact scalar. Reuse the local
+squared speed/curvature relation and represented cusp identities on both
+normal sheets, without rediscovering a whole-unit root set. Use the existing
+rational quotient worker for first derivatives instead of a full series.
+
+Add regressions for exterior charts, reversal, homogeneous gauges, radical
+cusps, poles, stationary sources and retained representative points. Update
+all controlled callers directly.

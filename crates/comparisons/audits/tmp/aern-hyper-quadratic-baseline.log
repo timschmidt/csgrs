@@ -1,0 +1,20 @@
+     Locking 12 packages to latest Rust 1.97.0 compatible versions
+   Compiling autocfg v1.5.1
+   Compiling num-traits v0.2.19
+   Compiling num-integer v0.1.47
+   Compiling num-complex v0.4.6
+   Compiling num-bigint v0.4.8
+   Compiling num-iter v0.1.46
+   Compiling num-rational v0.4.2
+   Compiling num v0.4.3
+   Compiling hyperreal v0.13.1 (/home/tim/Documents/GitHub/workspace/hyperreal)
+   Compiling hyperlattice v0.6.1 (/home/tim/Documents/GitHub/workspace/hyperlattice)
+   Compiling hyperlimit v0.4.1 (/home/tim/Documents/GitHub/workspace/hyperlimit)
+   Compiling hypersolve v0.3.1 (/home/tim/Documents/GitHub/workspace/hypersolve)
+   Compiling aern-hyper-quadratic-probe v0.0.0 (/tmp/aern-hyper-quadratic.m4tTz4)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 13.58s
+     Running `/tmp/aern-hyper-quadratic.m4tTz4/target/debug/aern-hyper-quadratic-probe`
+different degrees: source=Real { rational: Rational { sign: Minus, numerator: 8, denominator: 1 }, class: One, computable: None, primitive_approx_cache: Empty }; univariate=Some(Real { rational: Rational { sign: NoSign, numerator: 0, denominator: 1 }, class: One, computable: None, primitive_approx_cache: Empty }); multivariate=Some(Real { rational: Rational { sign: NoSign, numerator: 0, denominator: 1 }, class: One, computable: None, primitive_approx_cache: Empty })
+different cubic monomials: source=Real { rational: Rational { sign: Minus, numerator: 4, denominator: 1 }, class: One, computable: None, primitive_approx_cache: Empty }; univariate=None; multivariate=Some(Real { rational: Rational { sign: NoSign, numerator: 0, denominator: 1 }, class: One, computable: None, primitive_approx_cache: Empty })
+quadratic plus discarded nonquadratic: source=Real { rational: Rational { sign: NoSign, numerator: 0, denominator: 1 }, class: One, computable: None, primitive_approx_cache: Empty }; univariate=None; multivariate=Some(Real { rational: Rational { sign: Plus, numerator: 4, denominator: 1 }, class: One, computable: None, primitive_approx_cache: Empty })
+ProblemAnalysis degree guard rejects all three nonquadratic rows; no solver certificate defect claimed.

@@ -1,0 +1,8 @@
+getrandom v0.4.2
+└── rand v0.10.2
+    ├── curvo v0.1.91
+    │   └── hypercurve v0.3.1 (/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/derivative-demand-candidate/hypercurve)
+    └── geo v0.33.1
+        └── curvo v0.1.91 (*)
+        [dev-dependencies]
+        └── hypercurve v0.3.1 (/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/derivative-demand-candidate/hypercurve)

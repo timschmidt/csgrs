@@ -1,0 +1,152 @@
+{
+  "status": "passed within the recorded broad qualification scope",
+  "goal_status": "active",
+  "previous_commit": "b7a4fa4e078fbbcd692a644a306d93296699e093",
+  "commit": "d74648a256a03494c247cb965158af09a49cae33",
+  "targets": 49,
+  "passed": 2289,
+  "passed_by_repo": {
+    "hypercurve": 2057,
+    "hyperbrep": 232
+  },
+  "known_failed": [
+    "approximate_512_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions",
+    "non_ph_bezier_pair_projective_fillet_retains_algebraic_extensions",
+    "nonconvex_algebraic_chord_expansion_is_exact_and_local_collapse_is_explicit",
+    "strict_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions",
+    "unified_mixed_line_arc_erosion_splits_after_a_curved_neck_collapse"
+  ],
+  "new_failures": [],
+  "ignored": 9,
+  "expensive_previously_unqualified_exclusions": 8,
+  "timeouts_in_broad_run": 0,
+  "builds": [
+    {
+      "repository": "hypercurve",
+      "kind": "check",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "check",
+        "--all-targets",
+        "--no-default-features",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 26.60790086101042,
+      "log": "finite-parallel-admission-check.log"
+    },
+    {
+      "repository": "hypercurve",
+      "kind": "test-build",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "test",
+        "--release",
+        "--all-features",
+        "--locked",
+        "--offline",
+        "--lib",
+        "--tests",
+        "--no-run",
+        "--message-format=json"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 230.94251229299698,
+      "log": "finite-parallel-admission-test-build.log"
+    },
+    {
+      "repository": "hyperbrep",
+      "kind": "check",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "check",
+        "--all-targets",
+        "--no-default-features",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 23.451123976992676,
+      "log": "finite-parallel-admission-hyperbrep-check.log"
+    },
+    {
+      "repository": "hyperbrep",
+      "kind": "test-build",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "test",
+        "--release",
+        "--all-features",
+        "--locked",
+        "--offline",
+        "--lib",
+        "--tests",
+        "--no-run",
+        "--message-format=json"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 139.23570720499265,
+      "log": "finite-parallel-admission-hyperbrep-test-build.log"
+    }
+  ],
+  "focused_checks": 7,
+  "public_matrices_and_probes": [
+    "finite-parallel-admission-affine-parallel-replay.json",
+    "finite-parallel-admission-affine-public.json",
+    "finite-parallel-admission-analytic-probe.json",
+    "finite-parallel-admission-baseline-recheck.json",
+    "finite-parallel-admission-bounds-public.json",
+    "finite-parallel-admission-circle-matrix.json",
+    "finite-parallel-admission-completed-probe.json",
+    "finite-parallel-admission-completed.json",
+    "finite-parallel-admission-constant-image-trim-matrix.json",
+    "finite-parallel-admission-constructor-public.json",
+    "finite-parallel-admission-cubic-replay.json",
+    "finite-parallel-admission-endpoint-probe.json",
+    "finite-parallel-admission-exterior-completed.json",
+    "finite-parallel-admission-family-matrix.json",
+    "finite-parallel-admission-finite-circle-probe.json",
+    "finite-parallel-admission-finite-matrix.json",
+    "finite-parallel-admission-general-trim-matrix.json",
+    "finite-parallel-admission-probe-final.json",
+    "finite-parallel-admission-public-replay.json",
+    "finite-parallel-admission-region-carrier-matrix.json",
+    "finite-parallel-admission-region-entry.json",
+    "finite-parallel-admission-region-explicit.json",
+    "finite-parallel-admission-region-public.json",
+    "finite-parallel-admission-replay-matrix-run.json",
+    "finite-parallel-admission-retained-chord-matrix.json",
+    "finite-parallel-admission-retrace-public.json",
+    "finite-parallel-admission-self-public.json",
+    "finite-parallel-admission-tangent-matrix.json",
+    "finite-parallel-admission-trim-public.json",
+    "finite-parallel-admission-unit-replay.json",
+    "finite-parallel-admission-winding-public.json"
+  ],
+  "public_constructor_admissions": 8,
+  "public_region_admission_reentry_and_normalization_checks": 208,
+  "raw_filled_side_gap": {
+    "cases": 8,
+    "status": "Uncertain(Unsupported) for native/exterior caps after authored path re-entry; normalization succeeds",
+    "original_failing_probe": "finite-parallel-admission-region-raw-side/",
+    "not_repaired_in_this_commit": true
+  },
+  "source_files_verified": {
+    "working": 396,
+    "isolated": 1005
+  },
+  "dependency_commits": "finite-parallel-pruning-isolated-sources.json",
+  "isolated_dependency_sources": true,
+  "workspace_clean_claim": false,
+  "other_session_owns": "Hyperreal verified/ and verification/ changes; left untouched",
+  "normal_library": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypercurve-cdcdcc6da422cc2c.rlib",
+  "normal_library_sha256": "9ae1c520060940471e48c12e6100d86ee6ea9225a56e2ddd2281e5dd246c03f9",
+  "archived_library": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-parallel-admission-libraries/libhypercurve-cdcdcc6da422cc2c.rlib",
+  "libtest_sha256": "77bbd7df80cc0d91432267567f74217b8e4fd43fab82c362b47ab0ef7b29bd42",
+  "toolchain": "finite-parallel-pruning-toolchain.json",
+  "baseline": "finite-parallel-admission-baseline/result.json",
+  "public_baseline": "finite-parallel-admission-baseline/public.json",
+  "evidence_audit": "finite-parallel-admission-worklog.md",
+  "remaining": "Finite analytic pair domains and incidence, normalized public-region construction, independent inverse replay, source-cusp endpoint admission, known failures/exclusions and the broader algebraic/computational architecture goal."
+}

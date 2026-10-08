@@ -1,0 +1,37 @@
+[package]
+name = "boehm-reals-audit"
+version = "0.0.0"
+edition = "2024"
+
+[dependencies]
+boehm_reals = { path = "/home/tim/Documents/GitHub/workspace/exact-real-references/boehm_reals" }
+hyperreal = { path = "/home/tim/Documents/GitHub/workspace/hyperreal" }
+num = "0.4.3"
+num-bigint = "=0.4.8"
+num-integer = "=0.1.47"
+num-iter = "=0.1.46"
+rug = { version = "1.30.0", default-features = false, features = ["float", "rational", "std"] }
+
+[[bin]]
+name = "numerical"
+path = "numerical.rs"
+
+[[bin]]
+name = "float_performance"
+path = "float_performance.rs"
+
+[[bin]]
+name = "performance"
+path = "performance.rs"
+
+[[bin]]
+name = "aern_oracle"
+path = "/tmp/aern2-audit/oracle.rs"
+
+[[bin]]
+name = "aern_performance"
+path = "/tmp/aern2-audit/performance.rs"
+
+[[bin]]
+name = "aern_dct_oracle"
+path = "/tmp/aern2-audit/dct-oracle.rs"

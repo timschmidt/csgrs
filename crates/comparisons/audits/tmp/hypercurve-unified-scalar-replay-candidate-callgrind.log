@@ -1,0 +1,17 @@
+==51== Callgrind, a call-graph generating cache profiler
+==51== Copyright (C) 2002-2017, and GNU GPL'd, by Josef Weidendorfer et al.
+==51== Using Valgrind-3.27.1 and LibVEX; rerun with -h for copyright info
+==51== Command: /tmp/hypercurve-unified-scalar-replay-test bezier_offset::conversion_tests::recursive_scalar_native_replay_preserves_selected_source_authority --exact --nocapture --test-threads=1
+==51== 
+==51== For interactive control, run 'callgrind_control -h'.
+
+running 1 test
+test bezier_offset::conversion_tests::recursive_scalar_native_replay_preserves_selected_source_authority ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 894 filtered out; finished in 0.15s
+
+==51== 
+==51== Events    : Ir
+==51== Collected : 2121891
+==51== 
+==51== I   refs:      2,121,891

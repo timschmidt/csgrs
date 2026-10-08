@@ -1,0 +1,49 @@
+Name:           aern-realfn-plot-gtk
+Version:        0.5.0
+Cabal-Version:  >= 1.8
+Build-Type:     Simple
+License:        BSD3
+License-File:   LICENCE
+Author:         Michal Konecny
+Copyright:      (c) 2012 Michal Konecny
+Maintainer:     mikkonecny@gmail.com
+Homepage:       http://code.google.com/p/aern/
+Stability:      experimental
+Category:       Data, Math
+Synopsis:       cairo/gtk plotting of real function approximations
+Tested-with:    GHC==7.6.3
+Description:
+    A type class for cairo-plottable real function approximations
+    and a gtk widget for plotting and interactively inspecting
+    graphs of such approximations.
+
+Extra-Source-Files:
+    FnView.glade
+
+Library
+  hs-source-dirs: src
+  Build-Depends:
+        base >= 4.4,
+        containers >= 0.3,
+        gtk >= 0.12.0,
+        cairo >= 0.12.0,
+        stm >= 2.1.2.1,
+        filepath >= 1.1.0.4,
+        directory >= 1.0.1.1,
+        aern-order == 0.5.*,
+        aern-real == 0.5.*,
+        aern-interval == 0.5.*,
+        aern-realfn == 0.5.*
+  exposed-modules:       
+        Numeric.AERN.RmToRn.Plot.Simple
+        Numeric.AERN.RmToRn.Plot.Params
+        Numeric.AERN.RmToRn.Plot.CairoDrawable
+        Numeric.AERN.RmToRn.Plot.FromEval
+        Numeric.AERN.RmToRn.Plot.FnView
+        Numeric.AERN.RmToRn.Plot.FnView.New
+        Numeric.AERN.RmToRn.Plot.FnView.FnData
+        Numeric.AERN.RmToRn.Plot.FnView.State
+        Numeric.AERN.RmToRn.Plot.FnView.Layout
+        Numeric.AERN.RmToRn.Plot.FnView.WatchData
+        Numeric.AERN.RmToRn.Plot.FnView.Canvas
+  ghc-options:    -Wall

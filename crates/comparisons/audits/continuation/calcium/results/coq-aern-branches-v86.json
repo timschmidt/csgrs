@@ -1,0 +1,13 @@
+{
+  "tag": "coq-aern-branches-v86",
+  "started": "2026-09-12T06:15:55.521Z",
+  "finished": "2026-09-12T06:15:55.654Z",
+  "elapsedSeconds": 0.130903807,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/coq-aern/v86",
+  "command": "node",
+  "args": [
+    "branches-v86.mjs"
+  ],
+  "code": 0,
+  "signal": null
+}

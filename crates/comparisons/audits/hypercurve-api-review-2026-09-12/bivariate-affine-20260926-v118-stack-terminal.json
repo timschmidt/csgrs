@@ -1,0 +1,53 @@
+{
+  "binary": {
+    "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/bivariate-affine-20260925-v118-hypercurve",
+    "sha256": "1cf1a868d89c572364aa9a17701011967833f85783c7d38d1cc365c4aa56a47b"
+  },
+  "source_manifest": "local-chord-complete-replay-20260924-v118-sources.json",
+  "diagnostic_only": true,
+  "cases": [
+    {
+      "name": "bezier_region::tests::one_fragment_nonzero_parallel_loop_extends_chamfer_cuts_on_one_finite_envelope",
+      "log": "bivariate-affine-20260926-v118-stack-0.log",
+      "command": [
+        "/usr/bin/gdb",
+        "-nx",
+        "-nh",
+        "--batch",
+        "-ex",
+        "set pagination off",
+        "-ex",
+        "set confirm off",
+        "-ex",
+        "set debuginfod enabled off",
+        "-ex",
+        "set print frame-arguments none",
+        "-ex",
+        "set print entry-values no",
+        "-ex",
+        "run",
+        "-ex",
+        "thread apply all bt 12",
+        "-ex",
+        "thread apply all bt -45",
+        "-ex",
+        "kill",
+        "-ex",
+        "quit",
+        "--args",
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/bivariate-affine-20260925-v118-hypercurve",
+        "--exact",
+        "bezier_region::tests::one_fragment_nonzero_parallel_loop_extends_chamfer_cuts_on_one_finite_envelope",
+        "--test-threads=1",
+        "--nocapture"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 20.06455696700141,
+      "interrupted": true,
+      "sample_obtained": true,
+      "debugger_reaped": true
+    }
+  ],
+  "all_processes_reaped": true,
+  "all_sources_unchanged": true
+}

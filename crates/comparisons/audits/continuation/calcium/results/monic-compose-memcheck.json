@@ -1,0 +1,17 @@
+{
+  "tag": "monic-compose-memcheck",
+  "started": "2026-09-09T00:44:11.604Z",
+  "finished": "2026-09-09T00:44:22.187Z",
+  "elapsedSeconds": 10.581114621000001,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison",
+  "command": "valgrind",
+  "args": [
+    "--leak-check=full",
+    "--show-leak-kinds=all",
+    "--errors-for-leak-kinds=definite,indirect,possible",
+    "--error-exitcode=99",
+    "/tmp/calcium-monic-costs.U6fpvm/flint-polynomial-compose-probe"
+  ],
+  "code": 0,
+  "signal": null
+}

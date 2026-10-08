@@ -1,0 +1,30 @@
+[
+  {
+    "label": "parent",
+    "returncode": 101,
+    "counts": {
+      "transverse=false cross=None": 32,
+      "transverse=true cross=None": 40,
+      "transverse=true cross=Some(Positive)": 12,
+      "transverse=true cross=Some(Negative)": 12
+    },
+    "normal_library_sha256": "d680fbce859f7d1e7f470916621fb407de5f877a836cacaf4fe3a7fa514000c0",
+    "source_sha256": "3957f89040e4b354534891052ad32712a5dab4c5087d4b688fe42602d9609156",
+    "executable_sha256": "0938c26a2c010bffe76b6dd1e2009033bf1e846aef1b0f183e7a87f9f073be4e",
+    "log": "finite-analytic-native-poles-transverse-parent.log"
+  },
+  {
+    "label": "candidate",
+    "returncode": 0,
+    "counts": {
+      "transverse=false cross=None": 32,
+      "transverse=true cross=Some(Positive)": 28,
+      "transverse=true cross=Some(Negative)": 28,
+      "transverse=true cross=None": 40
+    },
+    "normal_library_sha256": "1009979d5810efa1b84886db7d49eff7a84d8c2de7860bca7d90557645fe4b3b",
+    "source_sha256": "3957f89040e4b354534891052ad32712a5dab4c5087d4b688fe42602d9609156",
+    "executable_sha256": "690ce8ce77fbd606089bae7c6ea349a7cba5f61cb49b297ebefa6f2321ba12c1",
+    "log": "finite-analytic-native-poles-transverse-candidate.log"
+  }
+]

@@ -1,0 +1,16 @@
+{
+  "tag": "polynomial-decision-trial-fmt",
+  "started": "2026-09-08T23:02:55.008Z",
+  "finished": "2026-09-08T23:02:56.581Z",
+  "elapsedSeconds": 1.571271152,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/polynomial-decision-trial/hypersolve",
+  "command": "cargo",
+  "args": [
+    "fmt",
+    "--all",
+    "--",
+    "--check"
+  ],
+  "code": 0,
+  "signal": null
+}

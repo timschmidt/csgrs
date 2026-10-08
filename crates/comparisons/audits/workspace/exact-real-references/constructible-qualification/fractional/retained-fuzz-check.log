@@ -1,0 +1,632 @@
+    Blocking waiting for file lock on build directory
+   Compiling quote v1.0.46
+   Compiling zerocopy v0.8.54
+   Compiling shlex v2.0.1
+   Compiling zmij v1.0.23
+   Compiling serde_json v1.0.150
+    Checking memchr v2.8.3
+   Compiling libc v0.2.186
+    Checking num-traits v0.2.19
+   Compiling syn v2.0.119
+    Checking num-integer v0.1.46
+   Compiling jobserver v0.1.35
+    Checking num-iter v0.1.46
+   Compiling cc v1.2.67
+   Compiling libfuzzer-sys v0.4.13
+warning: libfuzzer-sys@0.4.13: ccache: error: Read-only file system
+warning: libfuzzer-sys@0.4.13: ToolExecError: command did not execute successfully (status code exit status: 1): LC_ALL="C" "c++" "-O0" "-ffunction-sections" "-fdata-sections" "-fPIC" "-g" "-gdwarf-4" "-fno-omit-frame-pointer" "-m64" "-std=c++17" "-w" "-o" "/home/tim/Documents/GitHub/workspace/.audit-targets/ireal-derivative-18555/debug/build/libfuzzer-sys-8f94da5fbde3a7c0/out/e5f0d71fb86e9d6b-FuzzerIO.o" "-c" "libfuzzer/FuzzerIO.cpp"cargo:warning=ccache: error: Read-only file system
+warning: libfuzzer-sys@0.4.13: ToolExecError: command did not execute successfully (status code exit status: 1): LC_ALL="C" "c++" "-O0" "-ffunction-sections" "-fdata-sections" "-fPIC" "-g" "-gdwarf-4" "-fno-omit-frame-pointer" "-m64" "-std=c++17" "-w" "-o" "/home/tim/Documents/GitHub/workspace/.audit-targets/ireal-derivative-18555/debug/build/libfuzzer-sys-8f94da5fbde3a7c0/out/e5f0d71fb86e9d6b-FuzzerExtFunctionsWeak.o" "-c" "libfuzzer/FuzzerExtFunctionsWeak.cpp"cargo:warning=ccache: error: Read-only file system
+warning: libfuzzer-sys@0.4.13: ToolExecError: command did not execute successfully (status code exit status: 1): LC_ALL="C" "c++" "-O0" "-ffunction-sections" "-fdata-sections" "-fPIC" "-g" "-gdwarf-4" "-fno-omit-frame-pointer" "-m64" "-std=c++17" "-w" "-o" "/home/tim/Documents/GitHub/workspace/.audit-targets/ireal-derivative-18555/debug/build/libfuzzer-sys-8f94da5fbde3a7c0/out/e5f0d71fb86e9d6b-FuzzerExtraCountersWindows.o" "-c" "libfuzzer/FuzzerExtraCountersWindows.cpp"cargo:warning=ccache: error: Read-only file system
+warning: libfuzzer-sys@0.4.13: ToolExecError: command did not execute successfully (status code exit status: 1): LC_ALL="C" "c++" "-O0" "-ffunction-sections" "-fdata-sections" "-fPIC" "-g" "-gdwarf-4" "-fno-omit-frame-pointer" "-m64" "-std=c++17" "-w" "-o" "/home/tim/Documents/GitHub/workspace/.audit-targets/ireal-derivative-18555/debug/build/libfuzzer-sys-8f94da5fbde3a7c0/out/e5f0d71fb86e9d6b-FuzzerUtilDarwin.o" "-c" "libfuzzer/FuzzerUtilDarwin.cpp"cargo:warning=ccache: error: Read-only file system
+warning: libfuzzer-sys@0.4.13: ToolExecError: command did not execute successfully (status code exit status: 1): LC_ALL="C" "c++" "-O0" "-ffunction-sections" "-fdata-sections" "-fPIC" "-g" "-gdwarf-4" "-fno-omit-frame-pointer" "-m64" "-std=c++17" "-w" "-o" "/home/tim/Documents/GitHub/workspace/.audit-targets/ireal-derivative-18555/debug/build/libfuzzer-sys-8f94da5fbde3a7c0/out/e5f0d71fb86e9d6b-FuzzerIOWindows.o" "-c" "libfuzzer/FuzzerIOWindows.cpp"cargo:warning=ccache: error: Read-only file system
+warning: libfuzzer-sys@0.4.13: ToolExecError: command did not execute successfully (status code exit status: 1): LC_ALL="C" "c++" "-O0" "-ffunction-sections" "-fdata-sections" "-fPIC" "-g" "-gdwarf-4" "-fno-omit-frame-pointer" "-m64" "-std=c++17" "-w" "-o" "/home/tim/Documents/GitHub/workspace/.audit-targets/ireal-derivative-18555/debug/build/libfuzzer-sys-8f94da5fbde3a7c0/out/e5f0d71fb86e9d6b-FuzzerLoop.o" "-c" "libfuzzer/FuzzerLoop.cpp"cargo:warning=ccache: error: Read-only file system
+warning: libfuzzer-sys@0.4.13: ToolExecError: command did not execute successfully (status code exit status: 1): LC_ALL="C" "c++" "-O0" "-ffunction-sections" "-fdata-sections" "-fPIC" "-g" "-gdwarf-4" "-fno-omit-frame-pointer" "-m64" "-std=c++17" "-w" "-o" "/home/tim/Documents/GitHub/workspace/.audit-targets/ireal-derivative-18555/debug/build/libfuzzer-sys-8f94da5fbde3a7c0/out/e5f0d71fb86e9d6b-FuzzerSHA1.o" "-c" "libfuzzer/FuzzerSHA1.cpp"cargo:warning=ccache: error: Read-only file system
+warning: libfuzzer-sys@0.4.13: ToolExecError: command did not execute successfully (status code exit status: 1): LC_ALL="C" "c++" "-O0" "-ffunction-sections" "-fdata-sections" "-fPIC" "-g" "-gdwarf-4" "-fno-omit-frame-pointer" "-m64" "-std=c++17" "-w" "-o" "/home/tim/Documents/GitHub/workspace/.audit-targets/ireal-derivative-18555/debug/build/libfuzzer-sys-8f94da5fbde3a7c0/out/e5f0d71fb86e9d6b-FuzzerUtilPosix.o" "-c" "libfuzzer/FuzzerUtilPosix.cpp"cargo:warning=ccache: error: Read-only file system
+warning: libfuzzer-sys@0.4.13: ToolExecError: command did not execute successfully (status code exit status: 1): LC_ALL="C" "c++" "-O0" "-ffunction-sections" "-fdata-sections" "-fPIC" "-g" "-gdwarf-4" "-fno-omit-frame-pointer" "-m64" "-std=c++17" "-w" "-o" "/home/tim/Documents/GitHub/workspace/.audit-targets/ireal-derivative-18555/debug/build/libfuzzer-sys-8f94da5fbde3a7c0/out/e5f0d71fb86e9d6b-FuzzerExtraCountersDarwin.o" "-c" "libfuzzer/FuzzerExtraCountersDarwin.cpp"cargo:warning=ccache: error: Read-only file system
+warning: libfuzzer-sys@0.4.13: ToolExecError: command did not execute successfully (status code exit status: 1): LC_ALL="C" "c++" "-O0" "-ffunction-sections" "-fdata-sections" "-fPIC" "-g" "-gdwarf-4" "-fno-omit-frame-pointer" "-m64" "-std=c++17" "-w" "-o" "/home/tim/Documents/GitHub/workspace/.audit-targets/ireal-derivative-18555/debug/build/libfuzzer-sys-8f94da5fbde3a7c0/out/e5f0d71fb86e9d6b-FuzzerTracePC.o" "-c" "libfuzzer/FuzzerTracePC.cpp"cargo:warning=ccache: error: Read-only file system
+warning: libfuzzer-sys@0.4.13: ToolExecError: command did not execute successfully (status code exit status: 1): LC_ALL="C" "c++" "-O0" "-ffunction-sections" "-fdata-sections" "-fPIC" "-g" "-gdwarf-4" "-fno-omit-frame-pointer" "-m64" "-std=c++17" "-w" "-o" "/home/tim/Documents/GitHub/workspace/.audit-targets/ireal-derivative-18555/debug/build/libfuzzer-sys-8f94da5fbde3a7c0/out/e5f0d71fb86e9d6b-FuzzerUtilWindows.o" "-c" "libfuzzer/FuzzerUtilWindows.cpp"cargo:rerun-if-env-changed=CXX_x86_64-unknown-linux-gnu
+warning: libfuzzer-sys@0.4.13: ccache: error: Read-only file system
+warning: libfuzzer-sys@0.4.13: ToolExecError: command did not execute successfully (status code exit status: 1): LC_ALL="C" "c++" "-O0" "-ffunction-sections" "-fdata-sections" "-fPIC" "-g" "-gdwarf-4" "-fno-omit-frame-pointer" "-m64" "-std=c++17" "-w" "-o" "/home/tim/Documents/GitHub/workspace/.audit-targets/ireal-derivative-18555/debug/build/libfuzzer-sys-8f94da5fbde3a7c0/out/e5f0d71fb86e9d6b-FuzzerUtilFuchsia.o" "-c" "libfuzzer/FuzzerUtilFuchsia.cpp"cargo:warning=ccache: error: Read-only file system
+warning: libfuzzer-sys@0.4.13: ToolExecError: command did not execute successfully (status code exit status: 1): LC_ALL="C" "c++" "-O0" "-ffunction-sections" "-fdata-sections" "-fPIC" "-g" "-gdwarf-4" "-fno-omit-frame-pointer" "-m64" "-std=c++17" "-w" "-o" "/home/tim/Documents/GitHub/workspace/.audit-targets/ireal-derivative-18555/debug/build/libfuzzer-sys-8f94da5fbde3a7c0/out/e5f0d71fb86e9d6b-FuzzerMerge.o" "-c" "libfuzzer/FuzzerMerge.cpp"cargo:warning=ccache: error: Read-only file system
+warning: libfuzzer-sys@0.4.13: ToolExecError: command did not execute successfully (status code exit status: 1): LC_ALL="C" "c++" "-O0" "-ffunction-sections" "-fdata-sections" "-fPIC" "-g" "-gdwarf-4" "-fno-omit-frame-pointer" "-m64" "-std=c++17" "-w" "-o" "/home/tim/Documents/GitHub/workspace/.audit-targets/ireal-derivative-18555/debug/build/libfuzzer-sys-8f94da5fbde3a7c0/out/e5f0d71fb86e9d6b-FuzzerExtraCounters.o" "-c" "libfuzzer/FuzzerExtraCounters.cpp"cargo:warning=ccache: error: Read-only file system
+warning: libfuzzer-sys@0.4.13: ToolExecError: command did not execute successfully (status code exit status: 1): LC_ALL="C" "c++" "-O0" "-ffunction-sections" "-fdata-sections" "-fPIC" "-g" "-gdwarf-4" "-fno-omit-frame-pointer" "-m64" "-std=c++17" "-w" "-o" "/home/tim/Documents/GitHub/workspace/.audit-targets/ireal-derivative-18555/debug/build/libfuzzer-sys-8f94da5fbde3a7c0/out/e5f0d71fb86e9d6b-FuzzerUtil.o" "-c" "libfuzzer/FuzzerUtil.cpp"cargo:warning=ccache: error: Read-only file system
+warning: libfuzzer-sys@0.4.13: ToolExecError: command did not execute successfully (status code exit status: 1): LC_ALL="C" "c++" "-O0" "-ffunction-sections" "-fdata-sections" "-fPIC" "-g" "-gdwarf-4" "-fno-omit-frame-pointer" "-m64" "-std=c++17" "-w" "-o" "/home/tim/Documents/GitHub/workspace/.audit-targets/ireal-derivative-18555/debug/build/libfuzzer-sys-8f94da5fbde3a7c0/out/e5f0d71fb86e9d6b-FuzzerMutate.o" "-c" "libfuzzer/FuzzerMutate.cpp"cargo:warning=ccache: error: Read-only file system
+warning: libfuzzer-sys@0.4.13: ToolExecError: command did not execute successfully (status code exit status: 1): LC_ALL="C" "c++" "-O0" "-ffunction-sections" "-fdata-sections" "-fPIC" "-g" "-gdwarf-4" "-fno-omit-frame-pointer" "-m64" "-std=c++17" "-w" "-o" "/home/tim/Documents/GitHub/workspace/.audit-targets/ireal-derivative-18555/debug/build/libfuzzer-sys-8f94da5fbde3a7c0/out/e5f0d71fb86e9d6b-FuzzerExtFunctionsDlsym.o" "-c" "libfuzzer/FuzzerExtFunctionsDlsym.cpp"cargo:warning=ccache: error: Read-only file system
+warning: libfuzzer-sys@0.4.13: ToolExecError: command did not execute successfully (status code exit status: 1): LC_ALL="C" "c++" "-O0" "-ffunction-sections" "-fdata-sections" "-fPIC" "-g" "-gdwarf-4" "-fno-omit-frame-pointer" "-m64" "-std=c++17" "-w" "-o" "/home/tim/Documents/GitHub/workspace/.audit-targets/ireal-derivative-18555/debug/build/libfuzzer-sys-8f94da5fbde3a7c0/out/e5f0d71fb86e9d6b-FuzzerDriver.o" "-c" "libfuzzer/FuzzerDriver.cpp"cargo:warning=ccache: error: Read-only file system
+warning: libfuzzer-sys@0.4.13: ToolExecError: command did not execute successfully (status code exit status: 1): LC_ALL="C" "c++" "-O0" "-ffunction-sections" "-fdata-sections" "-fPIC" "-g" "-gdwarf-4" "-fno-omit-frame-pointer" "-m64" "-std=c++17" "-w" "-o" "/home/tim/Documents/GitHub/workspace/.audit-targets/ireal-derivative-18555/debug/build/libfuzzer-sys-8f94da5fbde3a7c0/out/e5f0d71fb86e9d6b-FuzzerExtFunctionsWindows.o" "-c" "libfuzzer/FuzzerExtFunctionsWindows.cpp"cargo:warning=ccache: error: Read-only file system
+warning: libfuzzer-sys@0.4.13: ToolExecError: command did not execute successfully (status code exit status: 1): LC_ALL="C" "c++" "-O0" "-ffunction-sections" "-fdata-sections" "-fPIC" "-g" "-gdwarf-4" "-fno-omit-frame-pointer" "-m64" "-std=c++17" "-w" "-o" "/home/tim/Documents/GitHub/workspace/.audit-targets/ireal-derivative-18555/debug/build/libfuzzer-sys-8f94da5fbde3a7c0/out/e5f0d71fb86e9d6b-FuzzerUtilLinux.o" "-c" "libfuzzer/FuzzerUtilLinux.cpp"cargo:warning=ccache: error: Read-only file system
+warning: libfuzzer-sys@0.4.13: ToolExecError: command did not execute successfully (status code exit status: 1): LC_ALL="C" "c++" "-O0" "-ffunction-sections" "-fdata-sections" "-fPIC" "-g" "-gdwarf-4" "-fno-omit-frame-pointer" "-m64" "-std=c++17" "-w" "-o" "/home/tim/Documents/GitHub/workspace/.audit-targets/ireal-derivative-18555/debug/build/libfuzzer-sys-8f94da5fbde3a7c0/out/e5f0d71fb86e9d6b-FuzzerDataFlowTrace.o" "-c" "libfuzzer/FuzzerDataFlowTrace.cpp"cargo:warning=ccache: error: Read-only file system
+warning: libfuzzer-sys@0.4.13: ToolExecError: command did not execute successfully (status code exit status: 1): LC_ALL="C" "c++" "-O0" "-ffunction-sections" "-fdata-sections" "-fPIC" "-g" "-gdwarf-4" "-fno-omit-frame-pointer" "-m64" "-std=c++17" "-w" "-o" "/home/tim/Documents/GitHub/workspace/.audit-targets/ireal-derivative-18555/debug/build/libfuzzer-sys-8f94da5fbde3a7c0/out/e5f0d71fb86e9d6b-FuzzerIOPosix.o" "-c" "libfuzzer/FuzzerIOPosix.cpp"cargo:warning=ccache: error: Read-only file system
+warning: libfuzzer-sys@0.4.13: ToolExecError: command did not execute successfully (status code exit status: 1): LC_ALL="C" "c++" "-O0" "-ffunction-sections" "-fdata-sections" "-fPIC" "-g" "-gdwarf-4" "-fno-omit-frame-pointer" "-m64" "-std=c++17" "-w" "-o" "/home/tim/Documents/GitHub/workspace/.audit-targets/ireal-derivative-18555/debug/build/libfuzzer-sys-8f94da5fbde3a7c0/out/e5f0d71fb86e9d6b-FuzzerMain.o" "-c" "libfuzzer/FuzzerMain.cpp"cargo:warning=ccache: error: Read-only file system
+warning: libfuzzer-sys@0.4.13: ToolExecError: command did not execute successfully (status code exit status: 1): LC_ALL="C" "c++" "-O0" "-ffunction-sections" "-fdata-sections" "-fPIC" "-g" "-gdwarf-4" "-fno-omit-frame-pointer" "-m64" "-std=c++17" "-w" "-o" "/home/tim/Documents/GitHub/workspace/.audit-targets/ireal-derivative-18555/debug/build/libfuzzer-sys-8f94da5fbde3a7c0/out/e5f0d71fb86e9d6b-FuzzerFork.o" "-c" "libfuzzer/FuzzerFork.cpp"cargo:warning=ccache: error: Read-only file system
+warning: libfuzzer-sys@0.4.13: ToolExecError: command did not execute successfully (status code exit status: 1): LC_ALL="C" "c++" "-O0" "-ffunction-sections" "-fdata-sections" "-fPIC" "-g" "-gdwarf-4" "-fno-omit-frame-pointer" "-m64" "-std=c++17" "-w" "-o" "/home/tim/Documents/GitHub/workspace/.audit-targets/ireal-derivative-18555/debug/build/libfuzzer-sys-8f94da5fbde3a7c0/out/e5f0d71fb86e9d6b-FuzzerCrossOver.o" "-c" "libfuzzer/FuzzerCrossOver.cpp"cargo:warning=ccache: error: Read-only file system
+warning: libfuzzer-sys@0.4.13: ToolExecError: command did not execute successfully (status code exit status: 1): LC_ALL="C" "c++" "-O0" "-ffunction-sections" "-fdata-sections" "-fPIC" "-g" "-gdwarf-4" "-fno-omit-frame-pointer" "-m64" "-std=c++17" "-w" "-o" "/home/tim/Documents/GitHub/workspace/.audit-targets/ireal-derivative-18555/debug/build/libfuzzer-sys-8f94da5fbde3a7c0/out/e5f0d71fb86e9d6b-FuzzerInterceptors.o" "-c" "libfuzzer/FuzzerInterceptors.cpp"
+error: failed to run custom build command for `libfuzzer-sys v0.4.13`
+
+Caused by:
+  process didn't exit successfully: `/home/tim/Documents/GitHub/workspace/.audit-targets/ireal-derivative-18555/debug/build/libfuzzer-sys-fed7a5deb70ef1a6/build-script-build` (exit status: 1)
+  --- stdout
+  cargo:rerun-if-env-changed=CUSTOM_LIBFUZZER_PATH
+  cargo:rerun-if-changed=libfuzzer/FuzzerIO.cpp
+  cargo:rerun-if-changed=libfuzzer/FuzzerExtFunctionsWeak.cpp
+  cargo:rerun-if-changed=libfuzzer/FuzzerExtraCountersWindows.cpp
+  cargo:rerun-if-changed=libfuzzer/FuzzerUtilDarwin.cpp
+  cargo:rerun-if-changed=libfuzzer/FuzzerIOWindows.cpp
+  cargo:rerun-if-changed=libfuzzer/FuzzerLoop.cpp
+  cargo:rerun-if-changed=libfuzzer/FuzzerSHA1.cpp
+  cargo:rerun-if-changed=libfuzzer/FuzzerUtilPosix.cpp
+  cargo:rerun-if-changed=libfuzzer/FuzzerExtraCountersDarwin.cpp
+  cargo:rerun-if-changed=libfuzzer/FuzzerTracePC.cpp
+  cargo:rerun-if-changed=libfuzzer/FuzzerUtilWindows.cpp
+  cargo:rerun-if-changed=libfuzzer/FuzzerUtilFuchsia.cpp
+  cargo:rerun-if-changed=libfuzzer/FuzzerMerge.cpp
+  cargo:rerun-if-changed=libfuzzer/FuzzerExtraCounters.cpp
+  cargo:rerun-if-changed=libfuzzer/FuzzerUtil.cpp
+  cargo:rerun-if-changed=libfuzzer/FuzzerMutate.cpp
+  cargo:rerun-if-changed=libfuzzer/FuzzerExtFunctionsDlsym.cpp
+  cargo:rerun-if-changed=libfuzzer/FuzzerDriver.cpp
+  cargo:rerun-if-changed=libfuzzer/FuzzerExtFunctionsWindows.cpp
+  cargo:rerun-if-changed=libfuzzer/FuzzerUtilLinux.cpp
+  cargo:rerun-if-changed=libfuzzer/FuzzerDataFlowTrace.cpp
+  cargo:rerun-if-changed=libfuzzer/FuzzerIOPosix.cpp
+  cargo:rerun-if-changed=libfuzzer/FuzzerMain.cpp
+  cargo:rerun-if-changed=libfuzzer/FuzzerFork.cpp
+  cargo:rerun-if-changed=libfuzzer/FuzzerCrossOver.cpp
+  cargo:rerun-if-changed=libfuzzer/FuzzerInterceptors.cpp
+  cargo:rerun-if-env-changed=CC_FORCE_DISABLE
+  CC_FORCE_DISABLE = None
+  cargo:rerun-if-env-changed=CXX_x86_64-unknown-linux-gnu
+  CXX_x86_64-unknown-linux-gnu = None
+  cargo:rerun-if-env-changed=CXX_x86_64_unknown_linux_gnu
+  CXX_x86_64_unknown_linux_gnu = None
+  cargo:rerun-if-env-changed=HOST_CXX
+  HOST_CXX = None
+  cargo:rerun-if-env-changed=CXX
+  CXX = None
+  cargo:rerun-if-env-changed=CC_ENABLE_DEBUG_OUTPUT
+  cargo:rerun-if-env-changed=CRATE_CC_NO_DEFAULTS
+  CRATE_CC_NO_DEFAULTS = None
+  cargo:rerun-if-env-changed=CXXFLAGS
+  CXXFLAGS = None
+  cargo:rerun-if-env-changed=HOST_CXXFLAGS
+  HOST_CXXFLAGS = None
+  cargo:rerun-if-env-changed=CXXFLAGS_x86_64_unknown_linux_gnu
+  CXXFLAGS_x86_64_unknown_linux_gnu = None
+  cargo:rerun-if-env-changed=CXXFLAGS_x86_64-unknown-linux-gnu
+  CXXFLAGS_x86_64-unknown-linux-gnu = None
+  cargo:rerun-if-env-changed=CXX_x86_64-unknown-linux-gnu
+  CXX_x86_64-unknown-linux-gnu = None
+  cargo:rerun-if-env-changed=CXX_x86_64_unknown_linux_gnu
+  CXX_x86_64_unknown_linux_gnu = None
+  cargo:rerun-if-env-changed=HOST_CXX
+  HOST_CXX = None
+  cargo:rerun-if-env-changed=CXX
+  CXX = None
+  cargo:rerun-if-env-changed=CRATE_CC_NO_DEFAULTS
+  CRATE_CC_NO_DEFAULTS = None
+  cargo:rerun-if-env-changed=CXXFLAGS
+  CXXFLAGS = None
+  cargo:rerun-if-env-changed=HOST_CXXFLAGS
+  HOST_CXXFLAGS = None
+  cargo:rerun-if-env-changed=CXXFLAGS_x86_64_unknown_linux_gnu
+  CXXFLAGS_x86_64_unknown_linux_gnu = None
+  cargo:rerun-if-env-changed=CXXFLAGS_x86_64-unknown-linux-gnu
+  CXXFLAGS_x86_64-unknown-linux-gnu = None
+  cargo:rerun-if-env-changed=CXX_x86_64-unknown-linux-gnu
+  CXX_x86_64-unknown-linux-gnu = None
+  cargo:rerun-if-env-changed=CXX_x86_64_unknown_linux_gnu
+  CXX_x86_64_unknown_linux_gnu = None
+  cargo:rerun-if-env-changed=HOST_CXX
+  HOST_CXX = None
+  cargo:rerun-if-env-changed=CXX
+  CXX = None
+  cargo:rerun-if-env-changed=CRATE_CC_NO_DEFAULTS
+  CRATE_CC_NO_DEFAULTS = None
+  cargo:rerun-if-env-changed=CXXFLAGS
+  CXXFLAGS = None
+  cargo:rerun-if-env-changed=HOST_CXXFLAGS
+  HOST_CXXFLAGS = None
+  cargo:rerun-if-env-changed=CXXFLAGS_x86_64_unknown_linux_gnu
+  CXXFLAGS_x86_64_unknown_linux_gnu = None
+  cargo:rerun-if-env-changed=CXXFLAGS_x86_64-unknown-linux-gnu
+  CXXFLAGS_x86_64-unknown-linux-gnu = None
+  cargo:rerun-if-env-changed=CXX_x86_64-unknown-linux-gnu
+  CXX_x86_64-unknown-linux-gnu = None
+  cargo:rerun-if-env-changed=CXX_x86_64_unknown_linux_gnu
+  CXX_x86_64_unknown_linux_gnu = None
+  cargo:rerun-if-env-changed=HOST_CXX
+  HOST_CXX = None
+  cargo:rerun-if-env-changed=CXX
+  CXX = None
+  cargo:rerun-if-env-changed=CRATE_CC_NO_DEFAULTS
+  CRATE_CC_NO_DEFAULTS = None
+  cargo:rerun-if-env-changed=CXXFLAGS
+  CXXFLAGS = None
+  cargo:rerun-if-env-changed=HOST_CXXFLAGS
+  HOST_CXXFLAGS = None
+  cargo:rerun-if-env-changed=CXXFLAGS_x86_64_unknown_linux_gnu
+  CXXFLAGS_x86_64_unknown_linux_gnu = None
+  cargo:rerun-if-env-changed=CXXFLAGS_x86_64-unknown-linux-gnu
+  CXXFLAGS_x86_64-unknown-linux-gnu = None
+  cargo:rerun-if-env-changed=CXX_x86_64-unknown-linux-gnu
+  CXX_x86_64-unknown-linux-gnu = None
+  cargo:rerun-if-env-changed=CXX_x86_64_unknown_linux_gnu
+  CXX_x86_64_unknown_linux_gnu = None
+  cargo:rerun-if-env-changed=HOST_CXX
+  HOST_CXX = None
+  cargo:rerun-if-env-changed=CXX
+  CXX = None
+  cargo:rerun-if-env-changed=CRATE_CC_NO_DEFAULTS
+  CRATE_CC_NO_DEFAULTS = None
+  cargo:rerun-if-env-changed=CXXFLAGS
+  CXXFLAGS = None
+  cargo:rerun-if-env-changed=HOST_CXXFLAGS
+  HOST_CXXFLAGS = None
+  cargo:rerun-if-env-changed=CXXFLAGS_x86_64_unknown_linux_gnu
+  CXXFLAGS_x86_64_unknown_linux_gnu = None
+  cargo:rerun-if-env-changed=CXXFLAGS_x86_64-unknown-linux-gnu
+  CXXFLAGS_x86_64-unknown-linux-gnu = None
+  cargo:rerun-if-env-changed=CXX_x86_64-unknown-linux-gnu
+  CXX_x86_64-unknown-linux-gnu = None
+  cargo:rerun-if-env-changed=CXX_x86_64_unknown_linux_gnu
+  CXX_x86_64_unknown_linux_gnu = None
+  cargo:rerun-if-env-changed=HOST_CXX
+  HOST_CXX = None
+  cargo:rerun-if-env-changed=CXX
+  CXX = None
+  cargo:rerun-if-env-changed=CRATE_CC_NO_DEFAULTS
+  CRATE_CC_NO_DEFAULTS = None
+  cargo:rerun-if-env-changed=CXXFLAGS
+  CXXFLAGS = None
+  cargo:rerun-if-env-changed=HOST_CXXFLAGS
+  HOST_CXXFLAGS = None
+  cargo:rerun-if-env-changed=CXXFLAGS_x86_64_unknown_linux_gnu
+  CXXFLAGS_x86_64_unknown_linux_gnu = None
+  cargo:rerun-if-env-changed=CXXFLAGS_x86_64-unknown-linux-gnu
+  CXXFLAGS_x86_64-unknown-linux-gnu = None
+  cargo:rerun-if-env-changed=CXX_x86_64-unknown-linux-gnu
+  CXX_x86_64-unknown-linux-gnu = None
+  cargo:rerun-if-env-changed=CXX_x86_64_unknown_linux_gnu
+  CXX_x86_64_unknown_linux_gnu = None
+  cargo:rerun-if-env-changed=HOST_CXX
+  HOST_CXX = None
+  cargo:rerun-if-env-changed=CXX
+  CXX = None
+  cargo:rerun-if-env-changed=CRATE_CC_NO_DEFAULTS
+  CRATE_CC_NO_DEFAULTS = None
+  cargo:rerun-if-env-changed=CXXFLAGS
+  CXXFLAGS = None
+  cargo:rerun-if-env-changed=HOST_CXXFLAGS
+  HOST_CXXFLAGS = None
+  cargo:rerun-if-env-changed=CXXFLAGS_x86_64_unknown_linux_gnu
+  CXXFLAGS_x86_64_unknown_linux_gnu = None
+  cargo:rerun-if-env-changed=CXXFLAGS_x86_64-unknown-linux-gnu
+  CXXFLAGS_x86_64-unknown-linux-gnu = None
+  cargo:rerun-if-env-changed=CXX_x86_64-unknown-linux-gnu
+  CXX_x86_64-unknown-linux-gnu = None
+  cargo:rerun-if-env-changed=CXX_x86_64_unknown_linux_gnu
+  CXX_x86_64_unknown_linux_gnu = None
+  cargo:rerun-if-env-changed=HOST_CXX
+  HOST_CXX = None
+  cargo:rerun-if-env-changed=CXX
+  CXX = None
+  cargo:rerun-if-env-changed=CRATE_CC_NO_DEFAULTS
+  CRATE_CC_NO_DEFAULTS = None
+  cargo:rerun-if-env-changed=CXXFLAGS
+  CXXFLAGS = None
+  cargo:rerun-if-env-changed=HOST_CXXFLAGS
+  HOST_CXXFLAGS = None
+  cargo:rerun-if-env-changed=CXXFLAGS_x86_64_unknown_linux_gnu
+  CXXFLAGS_x86_64_unknown_linux_gnu = None
+  cargo:rerun-if-env-changed=CXXFLAGS_x86_64-unknown-linux-gnu
+  CXXFLAGS_x86_64-unknown-linux-gnu = None
+  cargo:rerun-if-env-changed=CXX_x86_64-unknown-linux-gnu
+  CXX_x86_64-unknown-linux-gnu = None
+  cargo:rerun-if-env-changed=CXX_x86_64_unknown_linux_gnu
+  CXX_x86_64_unknown_linux_gnu = None
+  cargo:rerun-if-env-changed=HOST_CXX
+  HOST_CXX = None
+  cargo:rerun-if-env-changed=CXX
+  CXX = None
+  cargo:rerun-if-env-changed=CRATE_CC_NO_DEFAULTS
+  CRATE_CC_NO_DEFAULTS = None
+  cargo:rerun-if-env-changed=CXXFLAGS
+  CXXFLAGS = None
+  cargo:rerun-if-env-changed=HOST_CXXFLAGS
+  HOST_CXXFLAGS = None
+  cargo:rerun-if-env-changed=CXXFLAGS_x86_64_unknown_linux_gnu
+  CXXFLAGS_x86_64_unknown_linux_gnu = None
+  cargo:rerun-if-env-changed=CXXFLAGS_x86_64-unknown-linux-gnu
+  CXXFLAGS_x86_64-unknown-linux-gnu = None
+  cargo:rerun-if-env-changed=CXX_x86_64-unknown-linux-gnu
+  CXX_x86_64-unknown-linux-gnu = None
+  cargo:rerun-if-env-changed=CXX_x86_64_unknown_linux_gnu
+  CXX_x86_64_unknown_linux_gnu = None
+  cargo:rerun-if-env-changed=HOST_CXX
+  HOST_CXX = None
+  cargo:rerun-if-env-changed=CXX
+  CXX = None
+  cargo:rerun-if-env-changed=CRATE_CC_NO_DEFAULTS
+  CRATE_CC_NO_DEFAULTS = None
+  cargo:rerun-if-env-changed=CXXFLAGS
+  CXXFLAGS = None
+  cargo:rerun-if-env-changed=HOST_CXXFLAGS
+  HOST_CXXFLAGS = None
+  cargo:rerun-if-env-changed=CXXFLAGS_x86_64_unknown_linux_gnu
+  CXXFLAGS_x86_64_unknown_linux_gnu = None
+  cargo:rerun-if-env-changed=CXXFLAGS_x86_64-unknown-linux-gnu
+  CXXFLAGS_x86_64-unknown-linux-gnu = None
+  cargo:rerun-if-env-changed=CXX_x86_64-unknown-linux-gnu
+  CXX_x86_64-unknown-linux-gnu = None
+  cargo:rerun-if-env-changed=CXX_x86_64_unknown_linux_gnu
+  CXX_x86_64_unknown_linux_gnu = None
+  cargo:rerun-if-env-changed=HOST_CXX
+  HOST_CXX = None
+  cargo:rerun-if-env-changed=CXX
+  CXX = None
+  cargo:rerun-if-env-changed=CRATE_CC_NO_DEFAULTS
+  CRATE_CC_NO_DEFAULTS = None
+  cargo:rerun-if-env-changed=CXXFLAGS
+  CXXFLAGS = None
+  cargo:rerun-if-env-changed=HOST_CXXFLAGS
+  HOST_CXXFLAGS = None
+  cargo:rerun-if-env-changed=CXXFLAGS_x86_64_unknown_linux_gnu
+  CXXFLAGS_x86_64_unknown_linux_gnu = None
+  cargo:rerun-if-env-changed=CXXFLAGS_x86_64-unknown-linux-gnu
+  CXXFLAGS_x86_64-unknown-linux-gnu = None
+  cargo:rerun-if-env-changed=CXX_x86_64-unknown-linux-gnu
+  CXX_x86_64-unknown-linux-gnu = None
+  cargo:rerun-if-env-changed=CXX_x86_64_unknown_linux_gnu
+  CXX_x86_64_unknown_linux_gnu = None
+  cargo:rerun-if-env-changed=HOST_CXX
+  HOST_CXX = None
+  cargo:rerun-if-env-changed=CXX
+  CXX = None
+  cargo:rerun-if-env-changed=CRATE_CC_NO_DEFAULTS
+  CRATE_CC_NO_DEFAULTS = None
+  cargo:rerun-if-env-changed=CXXFLAGS
+  CXXFLAGS = None
+  cargo:rerun-if-env-changed=HOST_CXXFLAGS
+  HOST_CXXFLAGS = None
+  cargo:rerun-if-env-changed=CXXFLAGS_x86_64_unknown_linux_gnu
+  CXXFLAGS_x86_64_unknown_linux_gnu = None
+  cargo:rerun-if-env-changed=CXXFLAGS_x86_64-unknown-linux-gnu
+  CXXFLAGS_x86_64-unknown-linux-gnu = None
+  cargo:rerun-if-env-changed=CXX_x86_64-unknown-linux-gnu
+  CXX_x86_64-unknown-linux-gnu = None
+  cargo:rerun-if-env-changed=CXX_x86_64_unknown_linux_gnu
+  CXX_x86_64_unknown_linux_gnu = None
+  cargo:rerun-if-env-changed=HOST_CXX
+  HOST_CXX = None
+  cargo:rerun-if-env-changed=CXX
+  CXX = None
+  cargo:rerun-if-env-changed=CRATE_CC_NO_DEFAULTS
+  CRATE_CC_NO_DEFAULTS = None
+  cargo:rerun-if-env-changed=CXXFLAGS
+  CXXFLAGS = None
+  cargo:rerun-if-env-changed=HOST_CXXFLAGS
+  HOST_CXXFLAGS = None
+  cargo:rerun-if-env-changed=CXXFLAGS_x86_64_unknown_linux_gnu
+  CXXFLAGS_x86_64_unknown_linux_gnu = None
+  cargo:rerun-if-env-changed=CXXFLAGS_x86_64-unknown-linux-gnu
+  CXXFLAGS_x86_64-unknown-linux-gnu = None
+  cargo:rerun-if-env-changed=CXX_x86_64-unknown-linux-gnu
+  CXX_x86_64-unknown-linux-gnu = None
+  cargo:rerun-if-env-changed=CXX_x86_64_unknown_linux_gnu
+  CXX_x86_64_unknown_linux_gnu = None
+  cargo:rerun-if-env-changed=HOST_CXX
+  HOST_CXX = None
+  cargo:rerun-if-env-changed=CXX
+  CXX = None
+  cargo:rerun-if-env-changed=CRATE_CC_NO_DEFAULTS
+  CRATE_CC_NO_DEFAULTS = None
+  cargo:rerun-if-env-changed=CXXFLAGS
+  CXXFLAGS = None
+  cargo:rerun-if-env-changed=HOST_CXXFLAGS
+  HOST_CXXFLAGS = None
+  cargo:rerun-if-env-changed=CXXFLAGS_x86_64_unknown_linux_gnu
+  CXXFLAGS_x86_64_unknown_linux_gnu = None
+  cargo:rerun-if-env-changed=CXXFLAGS_x86_64-unknown-linux-gnu
+  CXXFLAGS_x86_64-unknown-linux-gnu = None
+  cargo:rerun-if-env-changed=CXX_x86_64-unknown-linux-gnu
+  CXX_x86_64-unknown-linux-gnu = None
+  cargo:rerun-if-env-changed=CXX_x86_64_unknown_linux_gnu
+  CXX_x86_64_unknown_linux_gnu = None
+  cargo:rerun-if-env-changed=HOST_CXX
+  HOST_CXX = None
+  cargo:rerun-if-env-changed=CXX
+  CXX = None
+  cargo:rerun-if-env-changed=CRATE_CC_NO_DEFAULTS
+  CRATE_CC_NO_DEFAULTS = None
+  cargo:rerun-if-env-changed=CXXFLAGS
+  CXXFLAGS = None
+  cargo:rerun-if-env-changed=HOST_CXXFLAGS
+  HOST_CXXFLAGS = None
+  cargo:rerun-if-env-changed=CXXFLAGS_x86_64_unknown_linux_gnu
+  CXXFLAGS_x86_64_unknown_linux_gnu = None
+  cargo:rerun-if-env-changed=CXXFLAGS_x86_64-unknown-linux-gnu
+  CXXFLAGS_x86_64-unknown-linux-gnu = None
+  cargo:rerun-if-env-changed=CXX_x86_64-unknown-linux-gnu
+  CXX_x86_64-unknown-linux-gnu = None
+  cargo:rerun-if-env-changed=CXX_x86_64_unknown_linux_gnu
+  CXX_x86_64_unknown_linux_gnu = None
+  cargo:rerun-if-env-changed=HOST_CXX
+  HOST_CXX = None
+  cargo:rerun-if-env-changed=CXX
+  CXX = None
+  cargo:rerun-if-env-changed=CRATE_CC_NO_DEFAULTS
+  CRATE_CC_NO_DEFAULTS = None
+  cargo:rerun-if-env-changed=CXXFLAGS
+  CXXFLAGS = None
+  cargo:rerun-if-env-changed=HOST_CXXFLAGS
+  HOST_CXXFLAGS = None
+  cargo:rerun-if-env-changed=CXXFLAGS_x86_64_unknown_linux_gnu
+  CXXFLAGS_x86_64_unknown_linux_gnu = None
+  cargo:rerun-if-env-changed=CXXFLAGS_x86_64-unknown-linux-gnu
+  CXXFLAGS_x86_64-unknown-linux-gnu = None
+  cargo:warning=ccache: error: Read-only file system
+  exit status: 1
+  cargo:warning=ToolExecError: command did not execute successfully (status code exit status: 1): LC_ALL="C" "c++" "-O0" "-ffunction-sections" "-fdata-sections" "-fPIC" "-g" "-gdwarf-4" "-fno-omit-frame-pointer" "-m64" "-std=c++17" "-w" "-o" "/home/tim/Documents/GitHub/workspace/.audit-targets/ireal-derivative-18555/debug/build/libfuzzer-sys-8f94da5fbde3a7c0/out/e5f0d71fb86e9d6b-FuzzerIO.o" "-c" "libfuzzer/FuzzerIO.cpp"cargo:warning=ccache: error: Read-only file system
+
+  exit status: 1
+  cargo:warning=ToolExecError: command did not execute successfully (status code exit status: 1): LC_ALL="C" "c++" "-O0" "-ffunction-sections" "-fdata-sections" "-fPIC" "-g" "-gdwarf-4" "-fno-omit-frame-pointer" "-m64" "-std=c++17" "-w" "-o" "/home/tim/Documents/GitHub/workspace/.audit-targets/ireal-derivative-18555/debug/build/libfuzzer-sys-8f94da5fbde3a7c0/out/e5f0d71fb86e9d6b-FuzzerExtFunctionsWeak.o" "-c" "libfuzzer/FuzzerExtFunctionsWeak.cpp"cargo:warning=ccache: error: Read-only file system
+
+  exit status: 1
+  cargo:warning=ToolExecError: command did not execute successfully (status code exit status: 1): LC_ALL="C" "c++" "-O0" "-ffunction-sections" "-fdata-sections" "-fPIC" "-g" "-gdwarf-4" "-fno-omit-frame-pointer" "-m64" "-std=c++17" "-w" "-o" "/home/tim/Documents/GitHub/workspace/.audit-targets/ireal-derivative-18555/debug/build/libfuzzer-sys-8f94da5fbde3a7c0/out/e5f0d71fb86e9d6b-FuzzerExtraCountersWindows.o" "-c" "libfuzzer/FuzzerExtraCountersWindows.cpp"cargo:warning=ccache: error: Read-only file system
+
+  exit status: 1
+  cargo:warning=ToolExecError: command did not execute successfully (status code exit status: 1): LC_ALL="C" "c++" "-O0" "-ffunction-sections" "-fdata-sections" "-fPIC" "-g" "-gdwarf-4" "-fno-omit-frame-pointer" "-m64" "-std=c++17" "-w" "-o" "/home/tim/Documents/GitHub/workspace/.audit-targets/ireal-derivative-18555/debug/build/libfuzzer-sys-8f94da5fbde3a7c0/out/e5f0d71fb86e9d6b-FuzzerUtilDarwin.o" "-c" "libfuzzer/FuzzerUtilDarwin.cpp"cargo:warning=ccache: error: Read-only file system
+
+  exit status: 1
+  cargo:warning=ToolExecError: command did not execute successfully (status code exit status: 1): LC_ALL="C" "c++" "-O0" "-ffunction-sections" "-fdata-sections" "-fPIC" "-g" "-gdwarf-4" "-fno-omit-frame-pointer" "-m64" "-std=c++17" "-w" "-o" "/home/tim/Documents/GitHub/workspace/.audit-targets/ireal-derivative-18555/debug/build/libfuzzer-sys-8f94da5fbde3a7c0/out/e5f0d71fb86e9d6b-FuzzerIOWindows.o" "-c" "libfuzzer/FuzzerIOWindows.cpp"cargo:warning=ccache: error: Read-only file system
+
+  exit status: 1
+  cargo:warning=ToolExecError: command did not execute successfully (status code exit status: 1): LC_ALL="C" "c++" "-O0" "-ffunction-sections" "-fdata-sections" "-fPIC" "-g" "-gdwarf-4" "-fno-omit-frame-pointer" "-m64" "-std=c++17" "-w" "-o" "/home/tim/Documents/GitHub/workspace/.audit-targets/ireal-derivative-18555/debug/build/libfuzzer-sys-8f94da5fbde3a7c0/out/e5f0d71fb86e9d6b-FuzzerLoop.o" "-c" "libfuzzer/FuzzerLoop.cpp"cargo:warning=ccache: error: Read-only file system
+
+  exit status: 1
+  cargo:warning=ToolExecError: command did not execute successfully (status code exit status: 1): LC_ALL="C" "c++" "-O0" "-ffunction-sections" "-fdata-sections" "-fPIC" "-g" "-gdwarf-4" "-fno-omit-frame-pointer" "-m64" "-std=c++17" "-w" "-o" "/home/tim/Documents/GitHub/workspace/.audit-targets/ireal-derivative-18555/debug/build/libfuzzer-sys-8f94da5fbde3a7c0/out/e5f0d71fb86e9d6b-FuzzerSHA1.o" "-c" "libfuzzer/FuzzerSHA1.cpp"cargo:warning=ccache: error: Read-only file system
+
+  exit status: 1
+  cargo:warning=ToolExecError: command did not execute successfully (status code exit status: 1): LC_ALL="C" "c++" "-O0" "-ffunction-sections" "-fdata-sections" "-fPIC" "-g" "-gdwarf-4" "-fno-omit-frame-pointer" "-m64" "-std=c++17" "-w" "-o" "/home/tim/Documents/GitHub/workspace/.audit-targets/ireal-derivative-18555/debug/build/libfuzzer-sys-8f94da5fbde3a7c0/out/e5f0d71fb86e9d6b-FuzzerUtilPosix.o" "-c" "libfuzzer/FuzzerUtilPosix.cpp"cargo:warning=ccache: error: Read-only file system
+
+  exit status: 1
+  cargo:warning=ToolExecError: command did not execute successfully (status code exit status: 1): LC_ALL="C" "c++" "-O0" "-ffunction-sections" "-fdata-sections" "-fPIC" "-g" "-gdwarf-4" "-fno-omit-frame-pointer" "-m64" "-std=c++17" "-w" "-o" "/home/tim/Documents/GitHub/workspace/.audit-targets/ireal-derivative-18555/debug/build/libfuzzer-sys-8f94da5fbde3a7c0/out/e5f0d71fb86e9d6b-FuzzerExtraCountersDarwin.o" "-c" "libfuzzer/FuzzerExtraCountersDarwin.cpp"cargo:warning=ccache: error: Read-only file system
+
+  exit status: 1
+  cargo:warning=ToolExecError: command did not execute successfully (status code exit status: 1): LC_ALL="C" "c++" "-O0" "-ffunction-sections" "-fdata-sections" "-fPIC" "-g" "-gdwarf-4" "-fno-omit-frame-pointer" "-m64" "-std=c++17" "-w" "-o" "/home/tim/Documents/GitHub/workspace/.audit-targets/ireal-derivative-18555/debug/build/libfuzzer-sys-8f94da5fbde3a7c0/out/e5f0d71fb86e9d6b-FuzzerTracePC.o" "-c" "libfuzzer/FuzzerTracePC.cpp"cargo:warning=ccache: error: Read-only file system
+
+  exit status: 1
+  cargo:warning=ToolExecError: command did not execute successfully (status code exit status: 1): LC_ALL="C" "c++" "-O0" "-ffunction-sections" "-fdata-sections" "-fPIC" "-g" "-gdwarf-4" "-fno-omit-frame-pointer" "-m64" "-std=c++17" "-w" "-o" "/home/tim/Documents/GitHub/workspace/.audit-targets/ireal-derivative-18555/debug/build/libfuzzer-sys-8f94da5fbde3a7c0/out/e5f0d71fb86e9d6b-FuzzerUtilWindows.o" "-c" "libfuzzer/FuzzerUtilWindows.cpp"cargo:rerun-if-env-changed=CXX_x86_64-unknown-linux-gnu
+  CXX_x86_64-unknown-linux-gnu = None
+  cargo:rerun-if-env-changed=CXX_x86_64_unknown_linux_gnu
+  CXX_x86_64_unknown_linux_gnu = None
+  cargo:rerun-if-env-changed=HOST_CXX
+  HOST_CXX = None
+  cargo:rerun-if-env-changed=CXX
+  CXX = None
+  cargo:rerun-if-env-changed=CRATE_CC_NO_DEFAULTS
+  CRATE_CC_NO_DEFAULTS = None
+  cargo:rerun-if-env-changed=CXXFLAGS
+  CXXFLAGS = None
+  cargo:rerun-if-env-changed=HOST_CXXFLAGS
+  HOST_CXXFLAGS = None
+  cargo:rerun-if-env-changed=CXXFLAGS_x86_64_unknown_linux_gnu
+  CXXFLAGS_x86_64_unknown_linux_gnu = None
+  cargo:rerun-if-env-changed=CXXFLAGS_x86_64-unknown-linux-gnu
+  CXXFLAGS_x86_64-unknown-linux-gnu = None
+  cargo:rerun-if-env-changed=CXX_x86_64-unknown-linux-gnu
+  CXX_x86_64-unknown-linux-gnu = None
+  cargo:rerun-if-env-changed=CXX_x86_64_unknown_linux_gnu
+  CXX_x86_64_unknown_linux_gnu = None
+  cargo:rerun-if-env-changed=HOST_CXX
+  HOST_CXX = None
+  cargo:rerun-if-env-changed=CXX
+  CXX = None
+  cargo:rerun-if-env-changed=CRATE_CC_NO_DEFAULTS
+  CRATE_CC_NO_DEFAULTS = None
+  cargo:rerun-if-env-changed=CXXFLAGS
+  CXXFLAGS = None
+  cargo:rerun-if-env-changed=HOST_CXXFLAGS
+  HOST_CXXFLAGS = None
+  cargo:rerun-if-env-changed=CXXFLAGS_x86_64_unknown_linux_gnu
+  CXXFLAGS_x86_64_unknown_linux_gnu = None
+  cargo:rerun-if-env-changed=CXXFLAGS_x86_64-unknown-linux-gnu
+  CXXFLAGS_x86_64-unknown-linux-gnu = None
+  cargo:rerun-if-env-changed=CXX_x86_64-unknown-linux-gnu
+  CXX_x86_64-unknown-linux-gnu = None
+  cargo:rerun-if-env-changed=CXX_x86_64_unknown_linux_gnu
+  CXX_x86_64_unknown_linux_gnu = None
+  cargo:rerun-if-env-changed=HOST_CXX
+  HOST_CXX = None
+  cargo:rerun-if-env-changed=CXX
+  CXX = None
+  cargo:rerun-if-env-changed=CRATE_CC_NO_DEFAULTS
+  CRATE_CC_NO_DEFAULTS = None
+  cargo:rerun-if-env-changed=CXXFLAGS
+  CXXFLAGS = None
+  cargo:rerun-if-env-changed=HOST_CXXFLAGS
+  HOST_CXXFLAGS = None
+  cargo:rerun-if-env-changed=CXXFLAGS_x86_64_unknown_linux_gnu
+  CXXFLAGS_x86_64_unknown_linux_gnu = None
+  cargo:rerun-if-env-changed=CXXFLAGS_x86_64-unknown-linux-gnu
+  CXXFLAGS_x86_64-unknown-linux-gnu = None
+  cargo:rerun-if-env-changed=CXX_x86_64-unknown-linux-gnu
+  CXX_x86_64-unknown-linux-gnu = None
+  cargo:rerun-if-env-changed=CXX_x86_64_unknown_linux_gnu
+  CXX_x86_64_unknown_linux_gnu = None
+  cargo:rerun-if-env-changed=HOST_CXX
+  HOST_CXX = None
+  cargo:rerun-if-env-changed=CXX
+  CXX = None
+  cargo:rerun-if-env-changed=CRATE_CC_NO_DEFAULTS
+  CRATE_CC_NO_DEFAULTS = None
+  cargo:rerun-if-env-changed=CXXFLAGS
+  CXXFLAGS = None
+  cargo:rerun-if-env-changed=HOST_CXXFLAGS
+  HOST_CXXFLAGS = None
+  cargo:rerun-if-env-changed=CXXFLAGS_x86_64_unknown_linux_gnu
+  CXXFLAGS_x86_64_unknown_linux_gnu = None
+  cargo:rerun-if-env-changed=CXXFLAGS_x86_64-unknown-linux-gnu
+  CXXFLAGS_x86_64-unknown-linux-gnu = None
+  cargo:rerun-if-env-changed=CXX_x86_64-unknown-linux-gnu
+  CXX_x86_64-unknown-linux-gnu = None
+  cargo:rerun-if-env-changed=CXX_x86_64_unknown_linux_gnu
+  CXX_x86_64_unknown_linux_gnu = None
+  cargo:rerun-if-env-changed=HOST_CXX
+  HOST_CXX = None
+  cargo:rerun-if-env-changed=CXX
+  CXX = None
+  cargo:rerun-if-env-changed=CRATE_CC_NO_DEFAULTS
+  CRATE_CC_NO_DEFAULTS = None
+  cargo:rerun-if-env-changed=CXXFLAGS
+  CXXFLAGS = None
+  cargo:rerun-if-env-changed=HOST_CXXFLAGS
+  HOST_CXXFLAGS = None
+  cargo:rerun-if-env-changed=CXXFLAGS_x86_64_unknown_linux_gnu
+  CXXFLAGS_x86_64_unknown_linux_gnu = None
+  cargo:rerun-if-env-changed=CXXFLAGS_x86_64-unknown-linux-gnu
+  CXXFLAGS_x86_64-unknown-linux-gnu = None
+  cargo:rerun-if-env-changed=CXX_x86_64-unknown-linux-gnu
+  CXX_x86_64-unknown-linux-gnu = None
+  cargo:rerun-if-env-changed=CXX_x86_64_unknown_linux_gnu
+  CXX_x86_64_unknown_linux_gnu = None
+  cargo:rerun-if-env-changed=HOST_CXX
+  HOST_CXX = None
+  cargo:rerun-if-env-changed=CXX
+  CXX = None
+  cargo:rerun-if-env-changed=CRATE_CC_NO_DEFAULTS
+  CRATE_CC_NO_DEFAULTS = None
+  cargo:rerun-if-env-changed=CXXFLAGS
+  CXXFLAGS = None
+  cargo:rerun-if-env-changed=HOST_CXXFLAGS
+  HOST_CXXFLAGS = None
+  cargo:rerun-if-env-changed=CXXFLAGS_x86_64_unknown_linux_gnu
+  CXXFLAGS_x86_64_unknown_linux_gnu = None
+  cargo:rerun-if-env-changed=CXXFLAGS_x86_64-unknown-linux-gnu
+  CXXFLAGS_x86_64-unknown-linux-gnu = None
+  cargo:rerun-if-env-changed=CXX_x86_64-unknown-linux-gnu
+  CXX_x86_64-unknown-linux-gnu = None
+  cargo:rerun-if-env-changed=CXX_x86_64_unknown_linux_gnu
+  CXX_x86_64_unknown_linux_gnu = None
+  cargo:rerun-if-env-changed=HOST_CXX
+  HOST_CXX = None
+  cargo:rerun-if-env-changed=CXX
+  CXX = None
+  cargo:rerun-if-env-changed=CRATE_CC_NO_DEFAULTS
+  CRATE_CC_NO_DEFAULTS = None
+  cargo:rerun-if-env-changed=CXXFLAGS
+  CXXFLAGS = None
+  cargo:rerun-if-env-changed=HOST_CXXFLAGS
+  HOST_CXXFLAGS = None
+  cargo:rerun-if-env-changed=CXXFLAGS_x86_64_unknown_linux_gnu
+  CXXFLAGS_x86_64_unknown_linux_gnu = None
+  cargo:rerun-if-env-changed=CXXFLAGS_x86_64-unknown-linux-gnu
+  CXXFLAGS_x86_64-unknown-linux-gnu = None
+  cargo:rerun-if-env-changed=CXX_x86_64-unknown-linux-gnu
+  CXX_x86_64-unknown-linux-gnu = None
+  cargo:rerun-if-env-changed=CXX_x86_64_unknown_linux_gnu
+  CXX_x86_64_unknown_linux_gnu = None
+  cargo:rerun-if-env-changed=HOST_CXX
+  HOST_CXX = None
+  cargo:rerun-if-env-changed=CXX
+  CXX = None
+  cargo:rerun-if-env-changed=CRATE_CC_NO_DEFAULTS
+  CRATE_CC_NO_DEFAULTS = None
+  cargo:rerun-if-env-changed=CXXFLAGS
+  CXXFLAGS = None
+  cargo:rerun-if-env-changed=HOST_CXXFLAGS
+  HOST_CXXFLAGS = None
+  cargo:rerun-if-env-changed=CXXFLAGS_x86_64_unknown_linux_gnu
+  CXXFLAGS_x86_64_unknown_linux_gnu = None
+  cargo:rerun-if-env-changed=CXXFLAGS_x86_64-unknown-linux-gnu
+  CXXFLAGS_x86_64-unknown-linux-gnu = None
+  cargo:rerun-if-env-changed=CXX_x86_64-unknown-linux-gnu
+  CXX_x86_64-unknown-linux-gnu = None
+  cargo:rerun-if-env-changed=CXX_x86_64_unknown_linux_gnu
+  CXX_x86_64_unknown_linux_gnu = None
+  cargo:rerun-if-env-changed=HOST_CXX
+  HOST_CXX = None
+  cargo:rerun-if-env-changed=CXX
+  CXX = None
+  cargo:rerun-if-env-changed=CRATE_CC_NO_DEFAULTS
+  CRATE_CC_NO_DEFAULTS = None
+  cargo:rerun-if-env-changed=CXXFLAGS
+  CXXFLAGS = None
+  cargo:rerun-if-env-changed=HOST_CXXFLAGS
+  HOST_CXXFLAGS = None
+  cargo:rerun-if-env-changed=CXXFLAGS_x86_64_unknown_linux_gnu
+  CXXFLAGS_x86_64_unknown_linux_gnu = None
+  cargo:rerun-if-env-changed=CXXFLAGS_x86_64-unknown-linux-gnu
+  CXXFLAGS_x86_64-unknown-linux-gnu = None
+  cargo:rerun-if-env-changed=CXX_x86_64-unknown-linux-gnu
+  CXX_x86_64-unknown-linux-gnu = None
+  cargo:rerun-if-env-changed=CXX_x86_64_unknown_linux_gnu
+  CXX_x86_64_unknown_linux_gnu = None
+  cargo:rerun-if-env-changed=HOST_CXX
+  HOST_CXX = None
+  cargo:rerun-if-env-changed=CXX
+  CXX = None
+  cargo:rerun-if-env-changed=CRATE_CC_NO_DEFAULTS
+  CRATE_CC_NO_DEFAULTS = None
+  cargo:rerun-if-env-changed=CXXFLAGS
+  CXXFLAGS = None
+  cargo:rerun-if-env-changed=HOST_CXXFLAGS
+  HOST_CXXFLAGS = None
+  cargo:rerun-if-env-changed=CXXFLAGS_x86_64_unknown_linux_gnu
+  CXXFLAGS_x86_64_unknown_linux_gnu = None
+  cargo:rerun-if-env-changed=CXXFLAGS_x86_64-unknown-linux-gnu
+  CXXFLAGS_x86_64-unknown-linux-gnu = None
+  cargo:warning=ccache: error: Read-only file system
+
+  exit status: 1
+  cargo:warning=ToolExecError: command did not execute successfully (status code exit status: 1): LC_ALL="C" "c++" "-O0" "-ffunction-sections" "-fdata-sections" "-fPIC" "-g" "-gdwarf-4" "-fno-omit-frame-pointer" "-m64" "-std=c++17" "-w" "-o" "/home/tim/Documents/GitHub/workspace/.audit-targets/ireal-derivative-18555/debug/build/libfuzzer-sys-8f94da5fbde3a7c0/out/e5f0d71fb86e9d6b-FuzzerUtilFuchsia.o" "-c" "libfuzzer/FuzzerUtilFuchsia.cpp"cargo:warning=ccache: error: Read-only file system
+
+  exit status: 1
+  cargo:warning=ToolExecError: command did not execute successfully (status code exit status: 1): LC_ALL="C" "c++" "-O0" "-ffunction-sections" "-fdata-sections" "-fPIC" "-g" "-gdwarf-4" "-fno-omit-frame-pointer" "-m64" "-std=c++17" "-w" "-o" "/home/tim/Documents/GitHub/workspace/.audit-targets/ireal-derivative-18555/debug/build/libfuzzer-sys-8f94da5fbde3a7c0/out/e5f0d71fb86e9d6b-FuzzerMerge.o" "-c" "libfuzzer/FuzzerMerge.cpp"cargo:warning=ccache: error: Read-only file system
+
+  exit status: 1
+  cargo:warning=ToolExecError: command did not execute successfully (status code exit status: 1): LC_ALL="C" "c++" "-O0" "-ffunction-sections" "-fdata-sections" "-fPIC" "-g" "-gdwarf-4" "-fno-omit-frame-pointer" "-m64" "-std=c++17" "-w" "-o" "/home/tim/Documents/GitHub/workspace/.audit-targets/ireal-derivative-18555/debug/build/libfuzzer-sys-8f94da5fbde3a7c0/out/e5f0d71fb86e9d6b-FuzzerExtraCounters.o" "-c" "libfuzzer/FuzzerExtraCounters.cpp"cargo:warning=ccache: error: Read-only file system
+
+  exit status: 1
+  cargo:warning=ToolExecError: command did not execute successfully (status code exit status: 1): LC_ALL="C" "c++" "-O0" "-ffunction-sections" "-fdata-sections" "-fPIC" "-g" "-gdwarf-4" "-fno-omit-frame-pointer" "-m64" "-std=c++17" "-w" "-o" "/home/tim/Documents/GitHub/workspace/.audit-targets/ireal-derivative-18555/debug/build/libfuzzer-sys-8f94da5fbde3a7c0/out/e5f0d71fb86e9d6b-FuzzerUtil.o" "-c" "libfuzzer/FuzzerUtil.cpp"cargo:warning=ccache: error: Read-only file system
+
+  exit status: 1
+  cargo:warning=ToolExecError: command did not execute successfully (status code exit status: 1): LC_ALL="C" "c++" "-O0" "-ffunction-sections" "-fdata-sections" "-fPIC" "-g" "-gdwarf-4" "-fno-omit-frame-pointer" "-m64" "-std=c++17" "-w" "-o" "/home/tim/Documents/GitHub/workspace/.audit-targets/ireal-derivative-18555/debug/build/libfuzzer-sys-8f94da5fbde3a7c0/out/e5f0d71fb86e9d6b-FuzzerMutate.o" "-c" "libfuzzer/FuzzerMutate.cpp"cargo:warning=ccache: error: Read-only file system
+
+  exit status: 1
+  cargo:warning=ToolExecError: command did not execute successfully (status code exit status: 1): LC_ALL="C" "c++" "-O0" "-ffunction-sections" "-fdata-sections" "-fPIC" "-g" "-gdwarf-4" "-fno-omit-frame-pointer" "-m64" "-std=c++17" "-w" "-o" "/home/tim/Documents/GitHub/workspace/.audit-targets/ireal-derivative-18555/debug/build/libfuzzer-sys-8f94da5fbde3a7c0/out/e5f0d71fb86e9d6b-FuzzerExtFunctionsDlsym.o" "-c" "libfuzzer/FuzzerExtFunctionsDlsym.cpp"cargo:warning=ccache: error: Read-only file system
+
+  exit status: 1
+  cargo:warning=ToolExecError: command did not execute successfully (status code exit status: 1): LC_ALL="C" "c++" "-O0" "-ffunction-sections" "-fdata-sections" "-fPIC" "-g" "-gdwarf-4" "-fno-omit-frame-pointer" "-m64" "-std=c++17" "-w" "-o" "/home/tim/Documents/GitHub/workspace/.audit-targets/ireal-derivative-18555/debug/build/libfuzzer-sys-8f94da5fbde3a7c0/out/e5f0d71fb86e9d6b-FuzzerDriver.o" "-c" "libfuzzer/FuzzerDriver.cpp"cargo:warning=ccache: error: Read-only file system
+
+  exit status: 1
+  cargo:warning=ToolExecError: command did not execute successfully (status code exit status: 1): LC_ALL="C" "c++" "-O0" "-ffunction-sections" "-fdata-sections" "-fPIC" "-g" "-gdwarf-4" "-fno-omit-frame-pointer" "-m64" "-std=c++17" "-w" "-o" "/home/tim/Documents/GitHub/workspace/.audit-targets/ireal-derivative-18555/debug/build/libfuzzer-sys-8f94da5fbde3a7c0/out/e5f0d71fb86e9d6b-FuzzerExtFunctionsWindows.o" "-c" "libfuzzer/FuzzerExtFunctionsWindows.cpp"cargo:warning=ccache: error: Read-only file system
+
+  exit status: 1
+  cargo:warning=ToolExecError: command did not execute successfully (status code exit status: 1): LC_ALL="C" "c++" "-O0" "-ffunction-sections" "-fdata-sections" "-fPIC" "-g" "-gdwarf-4" "-fno-omit-frame-pointer" "-m64" "-std=c++17" "-w" "-o" "/home/tim/Documents/GitHub/workspace/.audit-targets/ireal-derivative-18555/debug/build/libfuzzer-sys-8f94da5fbde3a7c0/out/e5f0d71fb86e9d6b-FuzzerUtilLinux.o" "-c" "libfuzzer/FuzzerUtilLinux.cpp"cargo:warning=ccache: error: Read-only file system
+
+  exit status: 1
+  cargo:warning=ToolExecError: command did not execute successfully (status code exit status: 1): LC_ALL="C" "c++" "-O0" "-ffunction-sections" "-fdata-sections" "-fPIC" "-g" "-gdwarf-4" "-fno-omit-frame-pointer" "-m64" "-std=c++17" "-w" "-o" "/home/tim/Documents/GitHub/workspace/.audit-targets/ireal-derivative-18555/debug/build/libfuzzer-sys-8f94da5fbde3a7c0/out/e5f0d71fb86e9d6b-FuzzerDataFlowTrace.o" "-c" "libfuzzer/FuzzerDataFlowTrace.cpp"cargo:warning=ccache: error: Read-only file system
+
+  exit status: 1
+  cargo:warning=ToolExecError: command did not execute successfully (status code exit status: 1): LC_ALL="C" "c++" "-O0" "-ffunction-sections" "-fdata-sections" "-fPIC" "-g" "-gdwarf-4" "-fno-omit-frame-pointer" "-m64" "-std=c++17" "-w" "-o" "/home/tim/Documents/GitHub/workspace/.audit-targets/ireal-derivative-18555/debug/build/libfuzzer-sys-8f94da5fbde3a7c0/out/e5f0d71fb86e9d6b-FuzzerIOPosix.o" "-c" "libfuzzer/FuzzerIOPosix.cpp"cargo:warning=ccache: error: Read-only file system
+
+  exit status: 1
+  cargo:warning=ToolExecError: command did not execute successfully (status code exit status: 1): LC_ALL="C" "c++" "-O0" "-ffunction-sections" "-fdata-sections" "-fPIC" "-g" "-gdwarf-4" "-fno-omit-frame-pointer" "-m64" "-std=c++17" "-w" "-o" "/home/tim/Documents/GitHub/workspace/.audit-targets/ireal-derivative-18555/debug/build/libfuzzer-sys-8f94da5fbde3a7c0/out/e5f0d71fb86e9d6b-FuzzerMain.o" "-c" "libfuzzer/FuzzerMain.cpp"cargo:warning=ccache: error: Read-only file system
+
+  exit status: 1
+  cargo:warning=ToolExecError: command did not execute successfully (status code exit status: 1): LC_ALL="C" "c++" "-O0" "-ffunction-sections" "-fdata-sections" "-fPIC" "-g" "-gdwarf-4" "-fno-omit-frame-pointer" "-m64" "-std=c++17" "-w" "-o" "/home/tim/Documents/GitHub/workspace/.audit-targets/ireal-derivative-18555/debug/build/libfuzzer-sys-8f94da5fbde3a7c0/out/e5f0d71fb86e9d6b-FuzzerFork.o" "-c" "libfuzzer/FuzzerFork.cpp"cargo:warning=ccache: error: Read-only file system
+
+  exit status: 1
+  cargo:warning=ToolExecError: command did not execute successfully (status code exit status: 1): LC_ALL="C" "c++" "-O0" "-ffunction-sections" "-fdata-sections" "-fPIC" "-g" "-gdwarf-4" "-fno-omit-frame-pointer" "-m64" "-std=c++17" "-w" "-o" "/home/tim/Documents/GitHub/workspace/.audit-targets/ireal-derivative-18555/debug/build/libfuzzer-sys-8f94da5fbde3a7c0/out/e5f0d71fb86e9d6b-FuzzerCrossOver.o" "-c" "libfuzzer/FuzzerCrossOver.cpp"cargo:warning=ccache: error: Read-only file system
+
+  exit status: 1
+  cargo:warning=ToolExecError: command did not execute successfully (status code exit status: 1): LC_ALL="C" "c++" "-O0" "-ffunction-sections" "-fdata-sections" "-fPIC" "-g" "-gdwarf-4" "-fno-omit-frame-pointer" "-m64" "-std=c++17" "-w" "-o" "/home/tim/Documents/GitHub/workspace/.audit-targets/ireal-derivative-18555/debug/build/libfuzzer-sys-8f94da5fbde3a7c0/out/e5f0d71fb86e9d6b-FuzzerInterceptors.o" "-c" "libfuzzer/FuzzerInterceptors.cpp"
+
+  --- stderr
+
+
+  error occurred in cc-rs: command did not execute successfully (status code exit status: 1): LC_ALL="C" "c++" "-O0" "-ffunction-sections" "-fdata-sections" "-fPIC" "-g" "-gdwarf-4" "-fno-omit-frame-pointer" "-m64" "-std=c++17" "-w" "-o" "/home/tim/Documents/GitHub/workspace/.audit-targets/ireal-derivative-18555/debug/build/libfuzzer-sys-8f94da5fbde3a7c0/out/e5f0d71fb86e9d6b-FuzzerInterceptors.o" "-c" "libfuzzer/FuzzerInterceptors.cpp"
+
+
+warning: build failed, waiting for other jobs to finish...

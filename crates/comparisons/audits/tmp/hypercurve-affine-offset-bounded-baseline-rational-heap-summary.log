@@ -1,0 +1,10 @@
+reading file "/tmp/hypercurve-affine-offset-bounded-baseline-rational.heap.zst" - please wait, this might take some time...
+Debuggee command was: /tmp/hypercurve-native-horner-frozen-candidate-rational
+finished reading file, now analyzing data:
+
+total runtime: 0.067000s.
+calls to allocation functions: 6192 (92417/s)
+temporary memory allocations: 425 (6343/s)
+peak heap memory consumption: 272.53K
+peak RSS (including heaptrack overhead): 7.88M
+total memory leaked: 166.57K

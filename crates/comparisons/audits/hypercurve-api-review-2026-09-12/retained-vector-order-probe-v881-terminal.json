@@ -1,0 +1,40 @@
+{
+  "baseline": "mixed-endpoint-order-v877-sources.json",
+  "rlib": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypercurve-85a9105cd1c82df7.rlib",
+  "rlib_sha256": "a090511f594f019b0b650facf14d6bb0ada374300fa97663879f4b3e647878fd",
+  "source_sha256": "f5722114567039eaea152c4489bf2d58800161ded1cc0a39ca48b24ae70aede1",
+  "processes": [
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustc",
+        "--edition=2024",
+        "--crate-name",
+        "retained_vector_order_probe",
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-vector-order-probe-v881.rs",
+        "--extern",
+        "hypercurve=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypercurve-85a9105cd1c82df7.rlib",
+        "-L",
+        "dependency=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps",
+        "-C",
+        "opt-level=3",
+        "-o",
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-vector-order-probe-v881-binary"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.564545436995104,
+      "log": "retained-vector-order-probe-v881-compile.log"
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-vector-order-probe-v881-binary"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.0035593658685684204,
+      "log": "retained-vector-order-probe-v881-cases.log"
+    }
+  ],
+  "all_processes_reaped": true,
+  "binary_sha256": "8d707fbb76a94858e87df598fec9aee06fc381255eb25dba0af6db0c0a8df916",
+  "output": "policy=0 point_represented=true retained_tangent=true vector_represented=false\npolicy=0 blocked=Boundary\npolicy=1 point_represented=true retained_tangent=true vector_represented=false\npolicy=1 blocked=Boundary\ncomplete requests=2 blocked=2\n",
+  "probe_complete": true
+}

@@ -1,0 +1,27 @@
+{
+  "tag": "sign-consumer-hypersolve-sign-debug",
+  "started": "2026-09-08T19:51:40.847Z",
+  "finished": "2026-09-08T19:52:15.184Z",
+  "elapsedSeconds": 34.334135262000004,
+  "cwd": "/home/tim/Documents/GitHub/workspace",
+  "command": "env",
+  "args": [
+    "TMPDIR=/home/tim/Documents/GitHub/workspace/calcium-build-tmp.gVX5v4",
+    "CARGO_INCREMENTAL=0",
+    "CARGO_PROFILE_DEV_DEBUG=0",
+    "CARGO_BUILD_JOBS=2",
+    "cargo",
+    "test",
+    "--lib",
+    "--tests",
+    "--all-features",
+    "--offline",
+    "--locked",
+    "--manifest-path",
+    "exactcore-hyper-comparison/audits/continuation/calcium/sign-consumers/sign/hypersolve/Cargo.toml",
+    "--target-dir",
+    ".audit-builds/calcium-prototype"
+  ],
+  "code": 0,
+  "signal": null
+}

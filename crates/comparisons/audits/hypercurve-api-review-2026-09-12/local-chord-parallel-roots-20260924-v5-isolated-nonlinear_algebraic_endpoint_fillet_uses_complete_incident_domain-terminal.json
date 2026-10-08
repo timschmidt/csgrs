@@ -1,0 +1,16 @@
+{
+  "command": [
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/local-chord-parallel-roots-20260924-v5-libtest",
+    "--exact",
+    "bezier_region::tests::nonlinear_algebraic_endpoint_fillet_uses_complete_incident_domain",
+    "--nocapture",
+    "--test-threads=1"
+  ],
+  "returncode": 101,
+  "elapsed_seconds": 0.3423264459706843,
+  "limit_seconds": 75,
+  "source_manifest": "local-chord-parallel-roots-20260924-v5-sources.json",
+  "binary_sha256": "e964ccf5fb59961baf8545b094d95c2ce216a183bc2bc53e03e4ea8cec4a8d11",
+  "all_processes_reaped": true,
+  "all_sources_unchanged": true
+}

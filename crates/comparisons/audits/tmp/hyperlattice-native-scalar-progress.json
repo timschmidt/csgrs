@@ -1,0 +1,43 @@
+{
+  "schema": 1,
+  "stage": "canonical-native-scalar-api",
+  "status": "committed_and_qualified",
+  "goal_status": "active",
+  "commits": {
+    "hyperlimit": "dd79d47",
+    "hypercurve": "fb8aba8",
+    "hyperlattice": "53427ce",
+    "evidence": "9227a7b"
+  },
+  "checkpoint": "/home/tim/Documents/GitHub/workspace/hypercurve/benchmarks/checkpoints/2026-09-05-native-scalar-api.json",
+  "checkpoint_sha256": "1931ddb8c6601c7c9ee4fc246be9798011bf81d4c34b914e3eb0e0b34f5a2c33",
+  "running": null,
+  "scalar_exports_removed": 36,
+  "private_matrix_helpers_removed": 21,
+  "public_noop_triangular_abort_methods_removed": 8,
+  "production_line_delta": -689,
+  "validation": {
+    "hyperlattice_default": 203,
+    "hyperlattice_all_features": 205,
+    "hyperlattice_release": 203,
+    "hypercurve_all_features_including_ignored": 1747,
+    "hypercurve_minimal": 1709,
+    "hypercurve_ui": 37,
+    "hyperlimit_all_features": 361,
+    "hyperlimit_minimal": 348,
+    "hypertri": 191,
+    "hypersolve": 794,
+    "hypermesh": 222,
+    "hypermesh_ignored": 7,
+    "scalar_fuzz_runs": 1024,
+    "wasm": "passed"
+  },
+  "remaining": [
+    "Full Hypercurve release readiness",
+    "Uniform geometry performance",
+    "Retained matrix timing deltas up to +3.32%",
+    "Full slow-fixture memory accounting",
+    "Further authoritative-kernel deduplication"
+  ],
+  "no_push": true
+}

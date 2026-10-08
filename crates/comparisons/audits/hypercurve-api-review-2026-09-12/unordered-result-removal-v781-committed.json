@@ -1,0 +1,21 @@
+{
+  "repos": {
+    "hypercurve": {
+      "commit": "bc02ec0b7480df015e51ad2b61ec38d99c7abd44",
+      "parent": "4660c95620c0f58a84f9e3b8b740d61c9d85d2b1",
+      "paths": {
+        "PERFORMANCE.md": "c56881949de40aee56da9fe3824d194fe0d3952220f2b15fee4bfa6bab391f23",
+        "README.md": "fb87f9c64616ddf17110fd99d7ec091c8423afef2443f68cd72c3ec54da44f22",
+        "benches/editing.rs": "b5937067f2be6cd8d4a6d3bf9a5b88b8e714c0b80858d48ee79d36f609a366bc",
+        "examples/arrangement.rs": "4b41b3d6b2fc2cff05dd3f1b651ec2e72a5b4be24092275a49e3e1fe5b9173db",
+        "src/bezier_region.rs": "1b96505a2dc83c810bcce6b9194846237fab502909b114454fd1b4786c1c7a96",
+        "src/lib.rs": "c75d85e50c0767c45cb11d33bebaa39d7e57f13c3fe05d372dd38e4a897b9d08",
+        "src/native_region_tests.rs": "2db08dffe324be1f26ee0d1b9a267dfe36f9bd87eb3af1c6c097819d9e5e3459",
+        "tests/hypercurve_curve_region_promotion.rs": "e358a6ee6793f13b66af8d7e61b649d27053aef7d41caf9458cefb50947fabde"
+      }
+    }
+  },
+  "qualification": "unordered-result-removal-v781-terminal.json",
+  "verified_source_files": 2048,
+  "clean_repositories": 30
+}

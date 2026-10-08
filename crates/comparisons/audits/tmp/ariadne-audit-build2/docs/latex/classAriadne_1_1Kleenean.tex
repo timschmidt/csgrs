@@ -1,0 +1,61 @@
+\doxysubsection{Kleenean Class Reference}
+\hypertarget{classAriadne_1_1Kleenean}{}\label{classAriadne_1_1Kleenean}\index{Kleenean@{Kleenean}}
+
+
+{\ttfamily \#include $<$logical.\+hpp$>$}
+
+
+
+\doxysubsubsection{Description}
+A logical class representing the result of a quasidecidable predicate over a continuous (uncountable) data type. 
+
+A canonical example is (strict) positivity of a real number, which is undecidable for zero, since positivity cannot be determined from arbitrarily accurate approximations. \doxysubsubsubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1Kleenean_ac1bcbe20cb740af2139ead1f15bf8e18}\label{classAriadne_1_1Kleenean_ac1bcbe20cb740af2139ead1f15bf8e18} 
+{\bfseries Kleenean} (bool b=true)
+\begin{DoxyCompactList}\small\item\em Convert from a built-\/in boolean value, defaulting to {\ttfamily true}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Kleenean_afcbcc8dc42398816c413ed878c602994}\label{classAriadne_1_1Kleenean_afcbcc8dc42398816c413ed878c602994} 
+{\bfseries Kleenean} (Indeterminate)
+\begin{DoxyCompactList}\small\item\em Convert from the Indeterminate constant value. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Kleenean_a4eb842247954f3883e75610ce6b2977c}\label{classAriadne_1_1Kleenean_a4eb842247954f3883e75610ce6b2977c} 
+{\bfseries Kleenean} (\mbox{\hyperlink{classAriadne_1_1Boolean}{Boolean}} b)
+\begin{DoxyCompactList}\small\item\em Convert from a Boolean constant value. May be checked with effort 0. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Kleenean_a5d658311e219cd188a04a6486377bfd9}\label{classAriadne_1_1Kleenean_a5d658311e219cd188a04a6486377bfd9} 
+{\bfseries Kleenean} (\mbox{\hyperlink{classAriadne_1_1Sierpinskian}{Sierpinskian}} s)
+\begin{DoxyCompactList}\small\item\em Convert from a Sierpinskian predicate. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Kleenean_aff3ac6c5ee860a62dc96aaca57052bd0}\label{classAriadne_1_1Kleenean_aff3ac6c5ee860a62dc96aaca57052bd0} 
+{\bfseries Kleenean} (\mbox{\hyperlink{classAriadne_1_1NegatedSierpinskian}{Negated\+Sierpinskian}} ns)
+\begin{DoxyCompactList}\small\item\em Convert from a negated Sierpinskian predicate. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Kleenean_af3fb110cf264150f8e81cf0ad6952204}\label{classAriadne_1_1Kleenean_af3fb110cf264150f8e81cf0ad6952204} 
+\mbox{\hyperlink{classAriadne_1_1ValidatedKleenean}{Validated\+Kleenean}} {\bfseries check} (\mbox{\hyperlink{classAriadne_1_1Effort}{Effort}} e) const
+\begin{DoxyCompactList}\small\item\em Check the value using effort {\itshape e}. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsubsection*{Friends}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1Kleenean_aa74da2b5ddd8774a00ef643b48b7ecfb}\label{classAriadne_1_1Kleenean_aa74da2b5ddd8774a00ef643b48b7ecfb} 
+\mbox{\hyperlink{classAriadne_1_1ValidatedKleenean}{Validated\+Kleenean}} {\bfseries check} (\mbox{\hyperlink{classAriadne_1_1Kleenean}{Kleenean}} const \&k, \mbox{\hyperlink{classAriadne_1_1Effort}{Effort}} e)
+\begin{DoxyCompactList}\small\item\em Check the value of {\itshape k} using effort {\itshape e}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Kleenean_ac4636bd5d4ecfff4be8a5b17e4ae3ffb}\label{classAriadne_1_1Kleenean_ac4636bd5d4ecfff4be8a5b17e4ae3ffb} 
+\mbox{\hyperlink{classAriadne_1_1Kleenean}{Kleenean}} {\bfseries operator!} (\mbox{\hyperlink{classAriadne_1_1Kleenean}{Kleenean}} const \&k)
+\begin{DoxyCompactList}\small\item\em Logical negation. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Kleenean_ab283a248338fe5464d431a3d1b248f7c}\label{classAriadne_1_1Kleenean_ab283a248338fe5464d431a3d1b248f7c} 
+\mbox{\hyperlink{classAriadne_1_1Kleenean}{Kleenean}} {\bfseries operator\&\&} (\mbox{\hyperlink{classAriadne_1_1Kleenean}{Kleenean}} const \&k1, \mbox{\hyperlink{classAriadne_1_1Kleenean}{Kleenean}} const \&k2)
+\begin{DoxyCompactList}\small\item\em Logical conjunction. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Kleenean_ab10cdafa663865320df68928038ee38d}\label{classAriadne_1_1Kleenean_ab10cdafa663865320df68928038ee38d} 
+\mbox{\hyperlink{classAriadne_1_1Kleenean}{Kleenean}} {\bfseries operator\texorpdfstring{$\vert$}{|}\texorpdfstring{$\vert$}{|}} (\mbox{\hyperlink{classAriadne_1_1Kleenean}{Kleenean}} const \&k1, \mbox{\hyperlink{classAriadne_1_1Kleenean}{Kleenean}} const \&k2)
+\begin{DoxyCompactList}\small\item\em Logical disjunction. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Kleenean_a060ab8ccb1e709221f58de32aafc6198}\label{classAriadne_1_1Kleenean_a060ab8ccb1e709221f58de32aafc6198} 
+\mbox{\hyperlink{classAriadne_1_1Kleenean}{Kleenean}} {\bfseries operator\texorpdfstring{$^\wedge$}{\string^}} (\mbox{\hyperlink{classAriadne_1_1Kleenean}{Kleenean}} const \&k1, \mbox{\hyperlink{classAriadne_1_1Kleenean}{Kleenean}} const \&k2)
+\begin{DoxyCompactList}\small\item\em Logical exclusive or. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsubsection*{Related Types and Functions}
+(Note that these are not member symbols.) \begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1Kleenean_aae3eaac96769adc21a37576dcc9e30e9}\label{classAriadne_1_1Kleenean_aae3eaac96769adc21a37576dcc9e30e9} 
+{\footnotesize template$<$class L$>$ }\\bool {\bfseries decide} (L const \&)
+\begin{DoxyCompactList}\small\item\em Force a decision of a logical type. Returns {\ttfamily true} for logical values of {\ttfamily TRUE}, and {\ttfamily LIKELY} for a non-\/effective type, and {\ttfamily decide(check(l,e))} for the default effort {\ttfamily e}. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+The documentation for this class was generated from the following file\+:\begin{DoxyCompactItemize}
+\item 
+source/foundations/\mbox{\hyperlink{logical_8hpp}{logical.\+hpp}}\end{DoxyCompactItemize}

@@ -1,0 +1,47 @@
+{
+  "date": "2026-09-14",
+  "status": "qualified_increment_goal_active",
+  "commits": {"hypercurve": "e110d04", "hyperbrep": "d82bc14"},
+  "tests": {
+    "hypercurve_library": {"passed": 955, "failed": 0, "ignored": 6, "filtered_out": 4},
+    "hypercurve_integrations": {
+      "hypercurve_arc_bezier": 12,
+      "hypercurve_bspline": 28,
+      "hypercurve_curve": 48,
+      "hypercurve_curve_intersection": 29,
+      "hypercurve_nurbs": 38,
+      "hypercurve_path_closure": 8,
+      "hypercurve_polynomial_spline": 18
+    },
+    "hyperbrep_path_tests": {"passed": 19, "failed": 0},
+    "total_passed": 1155,
+    "focused_cases_included_in_library": 9
+  },
+  "original_library_exclusions": [
+    "selected_parallel_normal_circle_intersects_genuinely_analytic_parallel_in_one_fiber",
+    "independent_oblique_chord_pair_fillets_extend_on_infinite_supports",
+    "selected_circle_and_analytic_parallel_extend_on_full_supports",
+    "pair_native_boolean_algebraic_chord_corner_publishes_a_third_generation_fillet"
+  ],
+  "checks": {
+    "hypercurve_all_targets_all_features": "passed",
+    "hyperbrep_all_targets_all_features": "passed",
+    "hypercurve_ui_offline_all_targets": "passed",
+    "hypercurve_docs_broken_links_denied": "passed",
+    "changed_rust_files_formatting": "passed",
+    "both_crates_whitespace": "passed"
+  },
+  "logs": [
+    "native-span-publication-before.log",
+    "native-span-publication-focused.log",
+    "native-span-publication-qualification.log",
+    "native-span-hyperbrep-paths.log",
+    "native-span-all-targets.log",
+    "native-span-hyperbrep-check.log",
+    "native-span-ui-check.log",
+    "native-span-docs.log"
+  ],
+  "removed_api": ["Curve2::clamped_subcurve"],
+  "performance_claim": "Repeated downstream spline reconstruction was removed. No matched benchmark claim.",
+  "pushed": false
+}

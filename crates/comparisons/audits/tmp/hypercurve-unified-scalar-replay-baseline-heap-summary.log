@@ -1,0 +1,10 @@
+reading file "/tmp/hypercurve-unified-scalar-replay-baseline.heap.zst" - please wait, this might take some time...
+Debuggee command was: /tmp/hypercurve-positive-denominator-bounds-qualified-test bezier_offset::conversion_tests::recursive_scalar_native_replay_preserves_selected_source_authority --exact --nocapture --test-threads=1
+finished reading file, now analyzing data:
+
+total runtime: 0.044000s.
+calls to allocation functions: 2101 (47750/s)
+temporary memory allocations: 143 (3250/s)
+peak heap memory consumption: 245.09K
+peak RSS (including heaptrack overhead): 13.58M
+total memory leaked: 9.42K

@@ -1,0 +1,17 @@
+{
+  "tag": "power-rebased-memory-candidate-extended-v68",
+  "started": "2026-09-11T16:58:16.136Z",
+  "finished": "2026-09-11T16:58:20.340Z",
+  "elapsedSeconds": 4.201820638,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "valgrind",
+  "args": [
+    "--leak-check=full",
+    "--show-leak-kinds=all",
+    "--errors-for-leak-kinds=definite,indirect,possible",
+    "--error-exitcode=99",
+    "/tmp/calcium-power-rebased.xUuvlb/fixed-extended"
+  ],
+  "code": 0,
+  "signal": null
+}

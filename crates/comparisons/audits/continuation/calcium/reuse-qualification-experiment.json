@@ -1,0 +1,893 @@
+{
+  "schema": 1,
+  "recorded": "2026-09-08T22:10:44.244Z",
+  "status": "V3 passes additional scalar/consumer correctness gates; isolated pending remaining cost and production qualification.",
+  "sourceHashes": {
+    "root-exp-reuse-experiment.json": "b87c3ef332780aef46e6bfccfd90ea0dc210f0ca1e95bb9ecb1324e0933a921c",
+    "prepare-reuse-consumers.mjs": "c3076d574a3c9599fd64239f7528fa1d62cb32586434684df84d24e48a0e3cc5",
+    "reuse-consumers.json": "34a6172e95419c51cbd7927bc8068e178961ce35106599bdd49a86a9bf424783",
+    "run-reuse-scalar-gates.mjs": "f0b444c3134ccddec83761e227f5b2a435ef134692ba876b10a1e02e416a6e8d",
+    "run-reuse-memory.mjs": "0d966b1c915f7a6c5c672ca39c8cc55150817246c5c527e016cd13569072055e",
+    "reuse-live-memory.rs": "e3a4b6b466a79d0d80cfe499cc9a1528c5f3a4f8b04f1a7816b410121cd4ec5e",
+    "reuse-proof-state.rs": "d1b9298c33821f8ba3193829b8f22658f1c982eedc20caeab1f2aa89ecc82430",
+    "scoped-thread-control.rs": "d0bf393823625035724a06018f40b4eb0b55a8362075dbe9fdea103f1c86fa97",
+    "root-exp-qualification.rs": "27d4e533a7b68b153b3ee3012eeaeee92a249ac07d089723ac377bacb2a77f3b",
+    "root-exp-probe.rs": "7b9f12952c698e6235f03f10eaed2053828c8611f6e2a7e76044d472afc68a7b",
+    "root-exp-sign-probe.rs": "fff2685755673f8a7a38b208d2d8677148f0f13beb030a522ba11823edaef694",
+    "sign-consumer-probe.rs": "bcad8a224f4385b5c6ee35fc21fc1357dd0c64967ea8646886fc0adfa89b1fd5",
+    "bind-reuse-qualification-experiment.mjs": "33414133a61b024f507b3aecbbc248499e6f28bfcb3c7b39cf452d15645f1b0b",
+    "verify-reuse-qualification-checkpoint.mjs": "dce37711c9ca67669a3aecb725f903486a800a6b1f87ae033d9fb78568054a28",
+    "root-exp-reuse-qualification/Cargo.toml": "01f681dc6fd999eb9ec677adc5211192d9095f621b261431511462ebd119f324",
+    "root-exp-reuse-qualification/Cargo.lock": "d7e14697978eb0bec8fdf31f0cd7c5b30e0edebec11644a7824a6b01e802dae8",
+    "root-exp-reuse-probe/Cargo.toml": "170674385f27839e05e0d57711a606854b2dddbcb5269418db1b45ce92a8f714",
+    "root-exp-reuse-probe/Cargo.lock": "eb73bbd980ada20c52da66b831d0c63f50ce6d5fac3407ece0d2ccadadfa9f25",
+    "root-exp-reuse-public-trial/Cargo.toml": "e51bc081d109cb0b5a81249c8c65ce2231de244f68bbde9aa937824901080417",
+    "root-exp-reuse-public-trial/Cargo.lock": "f2e198bbbbac613d0bdb5e7acb6743a18777fea0f402cd8c5681f360d2704e22",
+    "sign-consumer-probe-reuse/Cargo.toml": "ee6d0ba99a68f62e70a9e474b91f8128dd049610a9db73b5f2aa67bfa5734402",
+    "sign-consumer-probe-reuse/Cargo.lock": "032d11d8604ea11acae35229cea2371b4b98aa408edd7dfafd996047037ca40c",
+    "reuse-proof-state/Cargo.toml": "e7d70fe38718fbf95953d4e795e67eeed4faa33a5529897a1d0fa61f2d0e51c3",
+    "reuse-proof-state/Cargo.lock": "86245d91d7d6c4adfd998dab646b61858ac3084c2985a8f01e8042dfb3bb0e7c",
+    "reuse-live-memory-baseline/Cargo.toml": "0db1ad4fe727264dde70062fc80c03156f9c25b0b519bfe6712f102260618f03",
+    "reuse-live-memory-baseline/Cargo.lock": "b15f0f89b3c17f8447d9ecfcf487f3677ee82c38c336e452e1359d03c739ec86",
+    "reuse-live-memory-sign/Cargo.toml": "7aa078f92931283b5f637b7d12b48810a201eb8b9e1c240652c2776ba01b1a55",
+    "reuse-live-memory-sign/Cargo.lock": "1349c1eb80aa9184e4888a0388a6f758ad0189a7d237eb6f6692fc516d417f5c",
+    "reuse-live-memory-reuse/Cargo.toml": "2ed018aa002ea7c4fbf773d38b16993dc86ace87b5eb7e69424491c4de865a66",
+    "reuse-live-memory-reuse/Cargo.lock": "f8f18925c1ed5aa032e0ac497d1bb58ece5bedb6b3c61144ebff86e4f7f69af7"
+  },
+  "evidenceHashes": {
+    "results/reuse-consumer-hypercurve-debug.json": "be04e1e9600f0eee062529dcd9de98fff1e823d290f7a47a0f8b60311d0b047a",
+    "results/reuse-consumer-hypercurve-debug.stdout": "12b4e41cd3079285b1a095b363826d7664feb75e8933d589e2eaa84aab514900",
+    "results/reuse-consumer-hypercurve-debug.stderr": "f49ef2e58d9caca42dc678ee50d52655bb08299addeee2f8d7cd7ff33cf698e4",
+    "results/reuse-consumer-hyperlimit-debug.json": "acfb8aa22c59e84eab817001fa347fc5e3ea13b1831394e6c60a209f00963f8d",
+    "results/reuse-consumer-hyperlimit-debug.stdout": "2e887fceb8d4d14b9a7b8b789bf44e4281dbfa2a48871ec05e907cf410f5c290",
+    "results/reuse-consumer-hyperlimit-debug.stderr": "e94b2d6f93386c121799e7297c28cc0130cdb5f03d6899c1b4b261eda3be2641",
+    "results/reuse-consumer-hypersolve-debug.json": "8f6542b7958333cda3e0b6960a60a2d5f663fba4f6fb49d29d367ed70e10e59d",
+    "results/reuse-consumer-hypersolve-debug.stdout": "6b84d626ce5491fe145eb1f6ccd27b0d50661ddd9ad7b4df4e5b10e1c0713402",
+    "results/reuse-consumer-hypersolve-debug.stderr": "3c7f9dc1b4c3491cbc7d7323e7f8994c90cbaf2e2aae7ac83615c63b2d818565",
+    "results/reuse-consumer-hypertri-debug.json": "ee5a707dcc84143497f1faf32b69c368a522c51159081444dc741354cf38290f",
+    "results/reuse-consumer-hypertri-debug.stdout": "13ebd4ee2bd8ef3b46214946b7d01d9e80ec7f384f2740eb3f516418b87855bb",
+    "results/reuse-consumer-hypertri-debug.stderr": "bbe9e8e9c82c6c2f126ddc4c1337ea7708bfb12dee53ded3b6ca5adb4b7b32cc",
+    "results/reuse-consumer-hyperlattice-release.json": "4d935ceb94a66a2b40c6ed65fffc6f95792e787d0ab94701da4e3c16afccd407",
+    "results/reuse-consumer-hyperlattice-release.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/reuse-consumer-hyperlattice-release.stderr": "71359948b0618e516cf3c6583bd60b29e750583bd08b2df886a6a865d79a44fe",
+    "results/reuse-consumer-hyperlattice-release-unsandboxed.json": "3bb135bef89cc71eb0748f3dd335799e72ff5db4a061c4fcb7cd9ca8b61829f2",
+    "results/reuse-consumer-hyperlattice-release-unsandboxed.stdout": "0c1984d2189be8f7a733d90242c06af291a663239784e4dbee3842c4d2f6becb",
+    "results/reuse-consumer-hyperlattice-release-unsandboxed.stderr": "e9790e1f77c37e44630e16aea3f186c043b47c4d5dc698754f1300b798f5f837",
+    "results/reuse-consumer-metadata-all-features.json": "0283541a0a78c451e058fd0dbf04a3d64500642ed1e2c535edb62e276d6596bb",
+    "results/reuse-consumer-metadata-all-features.stdout": "8b4365601d25711fa5ac0ba7672a3b9cbcb94d14c2e9701189d9670e42901aed",
+    "results/reuse-consumer-metadata-all-features.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/reuse-consumer-probe-build.json": "a16772993963d03464d274f33b261c1fd2991266b08308f4de531850e8e4f66a",
+    "results/reuse-consumer-probe-build.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/reuse-consumer-probe-build.stderr": "292640ddd1a635754b9fbf3c695bbc650600444b5e0750df281493f7da9166ca",
+    "results/reuse-consumer-probe-release.json": "02ec4cc1c7ec2560913cadbf39a407c06137027e1497af22966c40721a8eb76f",
+    "results/reuse-consumer-probe-release.stdout": "fdcba47a969e02fe563c3d0fa703369dcd5d2f4f0ce4acd14a866ecf57c5ecb2",
+    "results/reuse-consumer-probe-release.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/reuse-consumer-probe-memcheck.json": "21f6a2334cce64ac514fde1d0fdfd8727ad2c2ee831fba1469e1c29788ac9fe9",
+    "results/reuse-consumer-probe-memcheck.stdout": "fdcba47a969e02fe563c3d0fa703369dcd5d2f4f0ce4acd14a866ecf57c5ecb2",
+    "results/reuse-consumer-probe-memcheck.stderr": "f7a2e14d3d12f7120ba1c20575ea815ec3e790541a3431ea9b9cddf33f8a9fcc",
+    "results/reuse-memory-build.json": "861a310b5ff9e1d4b3ee760ef4ea9674768e4ce6d12845bfbe37dd7ad76e24cc",
+    "results/reuse-memory-build.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/reuse-memory-build.stderr": "469ac064a025b10611fc7e352a6a8d2ec37321e11a07840ae46e4d2872dbe9e2",
+    "results/reuse-memory-baseline-build.json": "16c6200b7d7a1460f971e8c347dfdc4a0ff9e22ee881852955ebf5ca6dd35e6f",
+    "results/reuse-memory-baseline-build.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/reuse-memory-baseline-build.stderr": "57def6b0695467c72bd87317ec62b62244ff4bb13cf2018d241a8442710163a7",
+    "results/reuse-memory-sign-build.json": "6a30bdf6b6f65a85242a65a93a2800ce8edcbfb0efc462420baff293e419bdc7",
+    "results/reuse-memory-sign-build.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/reuse-memory-sign-build.stderr": "c4bdca51f8eed844c89aee47416b5e8d372a3f61114a6bb5cc453475fa64ce08",
+    "results/reuse-memory-pilot.json": "f0cb453eed5cb7c3e93470ece1df85576a89325d1be0f0a095d24adf0b2fdcf5",
+    "results/reuse-memory-pilot.stdout": "2bda0dda0680421688eb2bdc546190507914c4c0cdb358a66edfbe6384a39c16",
+    "results/reuse-memory-pilot.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/run-reuse-memory.json": "1567bb9c5725e5448ac2b7ba47bdaeb030e868ef472e0593683cc38c6136b19c",
+    "results/run-reuse-memory.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/run-reuse-memory.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/reuse-memory-memcheck.json": "b1b2a5a759391cd5074b318d3f013d67e6649f453bb9d9850ffffc45493394ad",
+    "results/reuse-memory-memcheck.stdout": "ab12f3161c632a92ee9e4bce7965e77a242d5d224b3a5b6a73b5836269ccbcb5",
+    "results/reuse-memory-memcheck.stderr": "e5cd9e225d388983818e0621be4e35731ee2745bd6a3b61af1da7162dbbf219e",
+    "results/reuse-proof-state-debug.json": "0775b27905ad60003d008588bbe6636168f21988cb79dd78154d9cf15bd8e4ac",
+    "results/reuse-proof-state-debug.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/reuse-proof-state-debug.stderr": "e767f984db642016baba9bb0011089b9f73cc9f40013566bbc20eac61dc77cc8",
+    "results/reuse-proof-state-release.json": "ba8ed9b10af7652ba27ffa21ec2eb12c71e42e7cb64e4298dff804c17d308691",
+    "results/reuse-proof-state-release.stdout": "d2bac58b0c12f2bf0ed34483ef05baa3d55e0f284c624910ea3e60d5865a9b6c",
+    "results/reuse-proof-state-release.stderr": "03f605a4f12ac9b9ea17a085f44e9b0f1c6b97d69ccb949b25ede82c801988f3",
+    "results/reuse-proof-state-public-debug.json": "40343b2d72ce1ea590454e09f8099da190682fa0e3b9ec9234bbf55445762436",
+    "results/reuse-proof-state-public-debug.stdout": "d2bac58b0c12f2bf0ed34483ef05baa3d55e0f284c624910ea3e60d5865a9b6c",
+    "results/reuse-proof-state-public-debug.stderr": "41f145715d67f6e1b3778ec835a757455d3a584bc39e55c19af6969a1e782317",
+    "results/reuse-proof-state-public-release.json": "7bc025acd86e2457ec020947eefa23a56a7f8b8c1f39cae3b308ca825dfbb55b",
+    "results/reuse-proof-state-public-release.stdout": "d2bac58b0c12f2bf0ed34483ef05baa3d55e0f284c624910ea3e60d5865a9b6c",
+    "results/reuse-proof-state-public-release.stderr": "c6303ca058c48c456a4a965efa5325716be5a607487a5a0ee0aa66f0ce43b105",
+    "results/reuse-proof-state-memcheck.json": "9a367955fc7c3ca6127473a864e66c9c014b62eab27521d34d9b684a528fa6b8",
+    "results/reuse-proof-state-memcheck.stdout": "d2bac58b0c12f2bf0ed34483ef05baa3d55e0f284c624910ea3e60d5865a9b6c",
+    "results/reuse-proof-state-memcheck.stderr": "18bef842ed36fa33ddfe169baa4b1701dfde005e90331aa18dd7c588f0dff7af",
+    "results/reuse-thread-control-build.json": "fa5599d99ba03b73bdd13caf7bff25933bcb6ec9dc69085c7d96b79b6661a1b9",
+    "results/reuse-thread-control-build.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/reuse-thread-control-build.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/reuse-thread-control-memcheck.json": "d4f5bd64859c3f65bd8df4a4c31c041d7506c7fbb1c6a7edf37fff1a4ecba91b",
+    "results/reuse-thread-control-memcheck.stdout": "122b097e8e63af92434516ba1d6c68e07ca39ee6a5f847afdd5f92cdac3994b5",
+    "results/reuse-thread-control-memcheck.stderr": "d9a0f8886188b183a52a877f74e1079399e57373a4d1c0d838ad996a07f4490a",
+    "results/root-exp-reuse-oracle-debug.json": "a2d4fcbde80f1a8f26335c1f3c4dd516bcb7c9e3da01772e0e45a4a851adbfcc",
+    "results/root-exp-reuse-oracle-debug.stdout": "5b57771fab4ffca15ed82b697fcc837cef4b7e2829d85596db5b6edb8a91580a",
+    "results/root-exp-reuse-oracle-debug.stderr": "efcfcd1849b83d2d8750784ea0d9418fc156e9966641bfd8f3942d695a0de7ee",
+    "results/root-exp-reuse-state-debug.json": "3524e78f31f2d8bb5200491b08474efb8c4c1a537736fcca463a907ec9de59f5",
+    "results/root-exp-reuse-state-debug.stdout": "283e4c602fe4da750fa32084b897439b7d42181bb5588b4994fcd9139948d7cf",
+    "results/root-exp-reuse-state-debug.stderr": "1fc42bb8a602dab682f3752d236741f2f149aefc304c6bc023e477683d74e124",
+    "results/root-exp-reuse-public-debug.json": "18806d8aaec68d971db593059420cab2766a2ab90a68e2b640f4b4fdf2659287",
+    "results/root-exp-reuse-public-debug.stdout": "7e1f33f61edc3183268105993ac0b2c8226082ab927cf8a7af712e2ff38369b1",
+    "results/root-exp-reuse-public-debug.stderr": "57fa6becf22893a775e4202ce9b852c4e43c463d2ffbb9fc7ecfed621b7f9f79",
+    "results/root-exp-reuse-tiny-debug.json": "06b3119140052aa480ba66705c089ff7eb53f1297154016ca3048891a2db8ecf",
+    "results/root-exp-reuse-tiny-debug.stdout": "8e7a9e922d95ddce77c7fba7ab97f757d543e70dcfbaa13e4f44dfb9916d9abc",
+    "results/root-exp-reuse-tiny-debug.stderr": "7632d29df863a3c03d264abd40be1bb88c81485ec32899f0d2e6b8c7dde9f2e0",
+    "results/root-exp-reuse-oracle-release.json": "35c3c759b4fc070a62b4ce590d20fd0cd4b58224f546d5844cb9b5fd49162d2e",
+    "results/root-exp-reuse-oracle-release.stdout": "5b57771fab4ffca15ed82b697fcc837cef4b7e2829d85596db5b6edb8a91580a",
+    "results/root-exp-reuse-oracle-release.stderr": "6eb12b739e42cc5a4197baaada631362bad55a613330282b449519ca465e4e73",
+    "results/root-exp-reuse-state-release.json": "de2b5106ea93518eefd87caa919a3eec2cf85af9db42f65b235c72b367af32b6",
+    "results/root-exp-reuse-state-release.stdout": "283e4c602fe4da750fa32084b897439b7d42181bb5588b4994fcd9139948d7cf",
+    "results/root-exp-reuse-state-release.stderr": "f7fbcc8c8030f240155b47236bc806dd7e2ecbbe1ffe5be49f7246a7ca055a55",
+    "results/root-exp-reuse-public-release.json": "d52ffd6cfb5c2b0f4817964c92b207496b4f8e6ff9ce0a7c11fcd001b531a2ae",
+    "results/root-exp-reuse-public-release.stdout": "7e1f33f61edc3183268105993ac0b2c8226082ab927cf8a7af712e2ff38369b1",
+    "results/root-exp-reuse-public-release.stderr": "9eadcb00fb72fe32ac7b77cbc4d07d6f5232d9abc752611223caaab3566f3f79",
+    "results/root-exp-reuse-tiny-release.json": "7ad4c914fe3402aa9c196070a02193347b4e0fdd0f973104f88d38febe21a7d4",
+    "results/root-exp-reuse-tiny-release.stdout": "8e7a9e922d95ddce77c7fba7ab97f757d543e70dcfbaa13e4f44dfb9916d9abc",
+    "results/root-exp-reuse-tiny-release.stderr": "54761e7757be9c1ada17e715be347c9cb631ab3003825fff98e325f4b770219c",
+    "results/reuse-memory-elf-baseline.json": "dffcb6248135bc02e2dbd255496b923580a19a56a6144a823186f6b1c44cc02d",
+    "results/reuse-memory-elf-baseline.stdout": "b4f6e72ccc89e49e4e55a922f13401d19e67a810b89a1aa8ab787e5e976537fb",
+    "results/reuse-memory-elf-baseline.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/reuse-memory-elf-sign.json": "9a285bb192da05bbe6b68cda467548990f6f000ca6f0cffb4d2475eb5fa9a88a",
+    "results/reuse-memory-elf-sign.stdout": "78e95abb218451b1d3970eabdc7bd3715acda76732cbe08b8d1d987d6d78a229",
+    "results/reuse-memory-elf-sign.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/reuse-memory-elf-reuse.json": "272284759255ed45cd8fec304b37d1a1ab63fca88f7688b7059b5277c0b1c9d4",
+    "results/reuse-memory-elf-reuse.stdout": "651da553b6f483815e7f5f0f51bba7e29569e6ac0d1538c9595627089f2cb813",
+    "results/reuse-memory-elf-reuse.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/reuse-memory.jsonl": "8d9bed1308d9810217f30359450f68aa559835ef580133da7e2f49b0b4961d90",
+    "reuse-memory-summary.json": "b16f17d098185229124bd6a466061cc1a7f7cb335ad089929419a606d209bca4"
+  },
+  "expectedCaptureCodes": {
+    "reuse-consumer-hypercurve-debug": 0,
+    "reuse-consumer-hyperlimit-debug": 0,
+    "reuse-consumer-hypersolve-debug": 0,
+    "reuse-consumer-hypertri-debug": 0,
+    "reuse-consumer-hyperlattice-release": 101,
+    "reuse-consumer-hyperlattice-release-unsandboxed": 0,
+    "reuse-consumer-metadata-all-features": 0,
+    "reuse-consumer-probe-build": 0,
+    "reuse-consumer-probe-release": 0,
+    "reuse-consumer-probe-memcheck": 0,
+    "reuse-memory-build": 0,
+    "reuse-memory-baseline-build": 0,
+    "reuse-memory-sign-build": 0,
+    "reuse-memory-pilot": 0,
+    "run-reuse-memory": 0,
+    "reuse-memory-memcheck": 0,
+    "reuse-proof-state-debug": 101,
+    "reuse-proof-state-release": 0,
+    "reuse-proof-state-public-debug": 0,
+    "reuse-proof-state-public-release": 0,
+    "reuse-proof-state-memcheck": 99,
+    "reuse-thread-control-build": 0,
+    "reuse-thread-control-memcheck": 99,
+    "root-exp-reuse-oracle-debug": 0,
+    "root-exp-reuse-state-debug": 0,
+    "root-exp-reuse-public-debug": 0,
+    "root-exp-reuse-tiny-debug": 0,
+    "root-exp-reuse-oracle-release": 0,
+    "root-exp-reuse-state-release": 0,
+    "root-exp-reuse-public-release": 0,
+    "root-exp-reuse-tiny-release": 0,
+    "reuse-memory-elf-baseline": 0,
+    "reuse-memory-elf-sign": 0,
+    "reuse-memory-elf-reuse": 0
+  },
+  "scalarChecksPerProfile": {
+    "mpfr": 15050,
+    "state": 261,
+    "public": 96,
+    "tiny": 144
+  },
+  "concurrentChecks": {
+    "signs": 1732,
+    "enclosures": 3456,
+    "workersPerCase": 8
+  },
+  "consumerTests": {
+    "hyperlattice": 203,
+    "hyperlimit": 361,
+    "hypersolve": 797,
+    "hypertri": 187,
+    "hypercurve": 1761
+  },
+  "ignoredConsumerTests": {
+    "hypercurve": 9
+  },
+  "consumerQueries": {
+    "total": 224,
+    "known": 160,
+    "unknown": 64
+  },
+  "donorTestCoverage": [
+    {
+      "repo": "calcium",
+      "path": "ca/test/t-mul.c",
+      "ranges": [
+        [
+          1,
+          170
+        ]
+      ],
+      "note": "Complete archived read: Five explicit special-value results require T_TRUE. Random associativity/distributivity and both in-place operand aliases permit Unknown; distributivity excludes known infinite operands. Special-value algebra is not silently transferred to Hyper's finite-real contract."
+    },
+    {
+      "repo": "flint",
+      "path": "src/ca/test/t-mul.c",
+      "ranges": [
+        [
+          1,
+          161
+        ]
+      ],
+      "note": "Independent complete current read: Five explicit special-value results require T_TRUE. Random associativity/distributivity and both in-place operand aliases permit Unknown; distributivity excludes known infinite operands. Special-value algebra is not silently transferred to Hyper's finite-real contract."
+    },
+    {
+      "repo": "calcium",
+      "path": "ca/test/t-div.c",
+      "ranges": [
+        [
+          1,
+          213
+        ]
+      ],
+      "note": "Complete archived read: Twelve explicit zero/unsigned/directed-infinity cases require exact expected results. Random nested division/distribution and destination aliases permit Unknown; distribution excludes zero divisor or infinite addends. Donor division-by-zero extensions are not Hyper finite-real semantics."
+    },
+    {
+      "repo": "flint",
+      "path": "src/ca/test/t-div.c",
+      "ranges": [
+        [
+          1,
+          204
+        ]
+      ],
+      "note": "Independent complete current read: Twelve explicit zero/unsigned/directed-infinity cases require exact expected results. Random nested division/distribution and destination aliases permit Unknown; distribution excludes zero divisor or infinite addends. Donor division-by-zero extensions are not Hyper finite-real semantics."
+    },
+    {
+      "repo": "calcium",
+      "path": "ca/test/t-sqrt.c",
+      "ranges": [
+        [
+          1,
+          91
+        ]
+      ],
+      "note": "Complete archived read: Random sqrt(x)^2 recovery and default/inert comparison reject only T_FALSE; no requirement that every principal-root relation become decidable. Current random depth/bit parameters are four versus archived five."
+    },
+    {
+      "repo": "flint",
+      "path": "src/ca/test/t-sqrt.c",
+      "ranges": [
+        [
+          1,
+          82
+        ]
+      ],
+      "note": "Independent complete current read: Random sqrt(x)^2 recovery and default/inert comparison reject only T_FALSE; no requirement that every principal-root relation become decidable. Current random depth/bit parameters are four versus archived five."
+    },
+    {
+      "repo": "calcium",
+      "path": "ca/test/t-sqrt_factor.c",
+      "ranges": [
+        [
+          1,
+          93
+        ]
+      ],
+      "note": "Complete archived read: Random-special inputs use only SMOOTH|POLY_FULL factor flags. Squared recovery and inert comparison allow Unknown. A computed difference is unused; this is not coverage of every flag, exact branch decision, or output-alias state."
+    },
+    {
+      "repo": "flint",
+      "path": "src/ca/test/t-sqrt_factor.c",
+      "ranges": [
+        [
+          1,
+          84
+        ]
+      ],
+      "note": "Independent complete current read: Random-special inputs use only SMOOTH|POLY_FULL factor flags. Squared recovery and inert comparison allow Unknown. A computed difference is unused; this is not coverage of every flag, exact branch decision, or output-alias state."
+    },
+    {
+      "repo": "calcium",
+      "path": "ca/test/t-pow_si_arithmetic.c",
+      "ranges": [
+        [
+          1,
+          79
+        ]
+      ],
+      "note": "Complete archived read: Retries until random x is proved nonzero, then checks the exponent-addition law for small signed powers, permitting Unknown. Retry count is not bounded; sampled exponents use unsigned subtraction converted to signed. No new general integer-power kernel established."
+    },
+    {
+      "repo": "flint",
+      "path": "src/ca/test/t-pow_si_arithmetic.c",
+      "ranges": [
+        [
+          1,
+          71
+        ]
+      ],
+      "note": "Independent complete current read: Retries until random x is proved nonzero, then checks the exponent-addition law for small signed powers, permitting Unknown. Retry count is not bounded; sampled exponents use unsigned subtraction converted to signed. No new general integer-power kernel established."
+    },
+    {
+      "repo": "calcium",
+      "path": "ca/test/t-conj.c",
+      "ranges": [
+        [
+          1,
+          73
+        ]
+      ],
+      "note": "Complete archived read: Double-conjugation test independently chooses automatic, shallow, or deep implementation for each step. Random specials included, but Unknown equality allowed and outputs separate; no complete in-place-state oracle."
+    },
+    {
+      "repo": "flint",
+      "path": "src/ca/test/t-conj.c",
+      "ranges": [
+        [
+          1,
+          64
+        ]
+      ],
+      "note": "Independent complete current read: Double-conjugation test independently chooses automatic, shallow, or deep implementation for each step. Random specials included, but Unknown equality allowed and outputs separate; no complete in-place-state oracle."
+    },
+    {
+      "repo": "calcium",
+      "path": "ca/test/t-re_im.c",
+      "ranges": [
+        [
+          1,
+          98
+        ]
+      ],
+      "note": "Complete archived read: Checks real/imaginary reconstruction and absolute-value identity permitting Unknown equality. CA_TEST_PROPERTY strictly requires expected T_TRUE for realness, unlike those equality checks. Ordinary random generator, not an exhaustive special-value truth table."
+    },
+    {
+      "repo": "flint",
+      "path": "src/ca/test/t-re_im.c",
+      "ranges": [
+        [
+          1,
+          89
+        ]
+      ],
+      "note": "Independent complete current read: Checks real/imaginary reconstruction and absolute-value identity permitting Unknown equality. CA_TEST_PROPERTY strictly requires expected T_TRUE for realness, unlike those equality checks. Ordinary random generator, not an exhaustive special-value truth table."
+    },
+    {
+      "repo": "calcium",
+      "path": "ca/test/t-fmpz_mpoly_evaluate.c",
+      "ranges": [
+        [
+          1,
+          96
+        ]
+      ],
+      "note": "Complete archived read: One to five LEX variables, sparse random polynomials, checks evaluation of f+g equals sum of evaluations, permitting Unknown. All evaluations use the same dispatcher; correlated implementation errors can escape. This is not the separately reproduced univariate stale-output case or a destination-alias oracle."
+    },
+    {
+      "repo": "flint",
+      "path": "src/ca/test/t-fmpz_mpoly_evaluate.c",
+      "ranges": [
+        [
+          1,
+          88
+        ]
+      ],
+      "note": "Independent complete current read: One to five LEX variables, sparse random polynomials, checks evaluation of f+g equals sum of evaluations, permitting Unknown. All evaluations use the same dispatcher; correlated implementation errors can escape. This is not the separately reproduced univariate stale-output case or a destination-alias oracle."
+    },
+    {
+      "repo": "calcium",
+      "path": "ca/test/t-pow.c",
+      "ranges": [
+        [
+          1,
+          151
+        ]
+      ],
+      "note": "Complete archived read: Random complex-ball overlap checks use 10-109-bit precision and include exponential/nested-power inputs. Nonzero-base exponent-addition law permits Unknown and retries nonzero selection without a limit; QQBAR degree cap40 bounds some cost. Not exhaustive branch/large-exponent coverage."
+    },
+    {
+      "repo": "flint",
+      "path": "src/ca/test/t-pow.c",
+      "ranges": [
+        [
+          1,
+          143
+        ]
+      ],
+      "note": "Independent complete current read: Random complex-ball overlap checks use 10-109-bit precision and include exponential/nested-power inputs. Nonzero-base exponent-addition law permits Unknown and retries nonzero selection without a limit; QQBAR degree cap40 bounds some cost. Not exhaustive branch/large-exponent coverage."
+    },
+    {
+      "repo": "calcium",
+      "path": "ca/test/t-properties.c",
+      "ranges": [
+        [
+          1,
+          393
+        ]
+      ],
+      "note": "Complete archived read: Explicit strict truth matrices cover 20 predicates over small constants, rational, Unknown, Undefined and unsigned/directed infinities. Pi algebraicity/rationality and pi*i algebraicity explicitly expect Unknown (TODO). exp(exp(-400)) is known not one/integer; exp(exp(-1000000)) deliberately remains Unknown for one/integer while known positive/nonzero. These distinguish incomplete knowledge from false equality; not a universal decidability claim."
+    },
+    {
+      "repo": "flint",
+      "path": "src/ca/test/t-properties.c",
+      "ranges": [
+        [
+          1,
+          384
+        ]
+      ],
+      "note": "Independent complete current read: Explicit strict truth matrices cover 20 predicates over small constants, rational, Unknown, Undefined and unsigned/directed infinities. Pi algebraicity/rationality and pi*i algebraicity explicitly expect Unknown (TODO). exp(exp(-400)) is known not one/integer; exp(exp(-1000000)) deliberately remains Unknown for one/integer while known positive/nonzero. These distinguish incomplete knowledge from false equality; not a universal decidability claim."
+    },
+    {
+      "repo": "flint",
+      "path": "src/ca.h",
+      "ranges": [
+        [
+          1,
+          531
+        ]
+      ],
+      "note": "Complete current public header read. Low pointer-bit tags distinguish Unknown/Undefined/directed infinity; field and generator caches live in mutable contexts. Separate representation predicates/order/hash from tri-state value predicates; option access is unchecked inline indexing. Function constructors intern arguments before resetting output. Scalar arithmetic/root/special/numeric/factor APIs preserve these contracts. CA_TEST_PROPERTY compares truth values exactly, so expected T_TRUE and T_UNKNOWN are mandatory, not permissive checks. Declarations do not independently credit implementation files."
+    },
+    {
+      "repo": "calcium",
+      "path": "ca/test/t-erf.c",
+      "ranges": [
+        [
+          1,
+          213
+        ]
+      ],
+      "note": "Complete archived read: Random correlated erf/erfc/erfi arguments add either literal zero or sqrt(5+2sqrt(6))-sqrt(2)-sqrt(3), then sign/imaginary rotations and powers; checks only acb sum overlap. Three deterministic regressions require T_TRUE for an algebraic-log erf identity and imaginary erfi square/fourth-power identities. The real log example combines two still-open transfer ideas, not an already-qualified Hyper improvement."
+    },
+    {
+      "repo": "flint",
+      "path": "src/ca/test/t-erf.c",
+      "ranges": [
+        [
+          1,
+          205
+        ]
+      ],
+      "note": "Independent complete current read: Random correlated erf/erfc/erfi arguments add either literal zero or sqrt(5+2sqrt(6))-sqrt(2)-sqrt(3), then sign/imaginary rotations and powers; checks only acb sum overlap. Three deterministic regressions require T_TRUE for an algebraic-log erf identity and imaginary erfi square/fourth-power identities. The real log example combines two still-open transfer ideas, not an already-qualified Hyper improvement."
+    },
+    {
+      "repo": "calcium",
+      "path": "ca/test/t-exp.c",
+      "ranges": [
+        [
+          1,
+          106
+        ]
+      ],
+      "note": "Complete archived read: Random exp(x+y+z)=exp(x)exp(y)exp(z) consistency permits Unknown; includes log-derived and pi*i-scaled exponents but does not require the identity to be decided. Known-number retry loop has no explicit iteration bound; not a production evaluator schedule."
+    },
+    {
+      "repo": "flint",
+      "path": "src/ca/test/t-exp.c",
+      "ranges": [
+        [
+          1,
+          97
+        ]
+      ],
+      "note": "Independent complete current read: Random exp(x+y+z)=exp(x)exp(y)exp(z) consistency permits Unknown; includes log-derived and pi*i-scaled exponents but does not require the identity to be decided. Known-number retry loop has no explicit iteration bound; not a production evaluator schedule."
+    },
+    {
+      "repo": "calcium",
+      "path": "ca/test/t-tan.c",
+      "ranges": [
+        [
+          1,
+          78
+        ]
+      ],
+      "note": "Complete archived read: Four direct/exponential/sine-cosine/automatic implementations are compared using fresh zero destinations and only T_FALSE rejects. Does not exercise previous destination Unknown tags or in-place aliasing; explains the earlier destination-state defect escaping this gate."
+    },
+    {
+      "repo": "flint",
+      "path": "src/ca/test/t-tan.c",
+      "ranges": [
+        [
+          1,
+          70
+        ]
+      ],
+      "note": "Independent complete current read: Four direct/exponential/sine-cosine/automatic implementations are compared using fresh zero destinations and only T_FALSE rejects. Does not exercise previous destination Unknown tags or in-place aliasing; explains the earlier destination-state defect escaping this gate."
+    },
+    {
+      "repo": "calcium",
+      "path": "ca/test/t-add.c",
+      "ranges": [
+        [
+          1,
+          133
+        ]
+      ],
+      "note": "Complete archived read: Four explicit infinity/undefined addition cases require T_TRUE. Random associativity uses prior randomized destination contents and both left/right in-place positions, but permits Unknown; good output-state discipline without a completeness guarantee."
+    },
+    {
+      "repo": "flint",
+      "path": "src/ca/test/t-add.c",
+      "ranges": [
+        [
+          1,
+          123
+        ]
+      ],
+      "note": "Independent complete current read: Four explicit infinity/undefined addition cases require T_TRUE. Random associativity uses prior randomized destination contents and both left/right in-place positions, but permits Unknown; good output-state discipline without a completeness guarantee."
+    },
+    {
+      "repo": "calcium",
+      "path": "ca/test/t-sub.c",
+      "ranges": [
+        [
+          1,
+          76
+        ]
+      ],
+      "note": "Complete archived read: Random (x-y)-z=x-(y+z) checks left/right destination aliases and randomized old destinations; only disproved equality fails. Special values are sampled, not an exhaustive arithmetic table."
+    },
+    {
+      "repo": "flint",
+      "path": "src/ca/test/t-sub.c",
+      "ranges": [
+        [
+          1,
+          67
+        ]
+      ],
+      "note": "Independent complete current read: Random (x-y)-z=x-(y+z) checks left/right destination aliases and randomized old destinations; only disproved equality fails. Special values are sampled, not an exhaustive arithmetic table."
+    },
+    {
+      "repo": "calcium",
+      "path": "ca/test/t-neg.c",
+      "ranges": [
+        [
+          1,
+          142
+        ]
+      ],
+      "note": "Complete archived read: Nine deterministic classes cover signed infinities, unsigned infinity, Undefined, i, one, and Unknown, with separate and in-place outputs. Predicates require T_TRUE except direct boolean Unknown checks. Several copied diagnostic labels are inaccurate but assertions target the intended values."
+    },
+    {
+      "repo": "flint",
+      "path": "src/ca/test/t-neg.c",
+      "ranges": [
+        [
+          1,
+          132
+        ]
+      ],
+      "note": "Independent complete current read: Nine deterministic classes cover signed infinities, unsigned infinity, Undefined, i, one, and Unknown, with separate and in-place outputs. Predicates require T_TRUE except direct boolean Unknown checks. Several copied diagnostic labels are inaccurate but assertions target the intended values."
+    },
+    {
+      "repo": "calcium",
+      "path": "ca/test/t-log.c",
+      "ranges": [
+        [
+          1,
+          172
+        ]
+      ],
+      "note": "Complete archived read: random exp/power/log 10–109-bit enclosure overlap plus log-product consistency with abs(x),abs(y), arbitrary z. Both equality and zero checks permit Unknown; includes a fixed nested-root rational regression but no mandatory proof there. Only two factors are made nonnegative, avoiding unjustified generic complex-log additivity; branch tests are not exhaustive."
+    },
+    {
+      "repo": "calcium",
+      "path": "ca/test/t-ctx_init_clear.c",
+      "ranges": [
+        [
+          1,
+          32
+        ]
+      ],
+      "note": "Complete archived read: Single empty context initialization/teardown smoke test; no populated-cache lifetime, aliasing, or thread-sharing coverage."
+    },
+    {
+      "repo": "flint",
+      "path": "src/ca/test/t-ctx_init_clear.c",
+      "ranges": [
+        [
+          1,
+          23
+        ]
+      ],
+      "note": "Independent complete current read: Single empty context initialization/teardown smoke test; no populated-cache lifetime, aliasing, or thread-sharing coverage."
+    },
+    {
+      "repo": "calcium",
+      "path": "ca/test/t-field_init_clear.c",
+      "ranges": [
+        [
+          1,
+          60
+        ]
+      ],
+      "note": "Complete archived read: Initializes Q(i), a pi constant field, and an empty multi-generator field, then clears all before context teardown. Generator-population/printing example is commented out; it does not test a populated multi-field."
+    },
+    {
+      "repo": "flint",
+      "path": "src/ca/test/t-field_init_clear.c",
+      "ranges": [
+        [
+          1,
+          50
+        ]
+      ],
+      "note": "Independent complete current read: Initializes Q(i), a pi constant field, and an empty multi-generator field, then clears all before context teardown. Generator-population/printing example is commented out; it does not test a populated multi-field."
+    },
+    {
+      "repo": "calcium",
+      "path": "ca/test/t-init_clear.c",
+      "ranges": [
+        [
+          1,
+          44
+        ]
+      ],
+      "note": "Complete archived read: Asserts canonical initial zero numerator/one denominator, then tears down value before context. Does not exercise arbitrary reset transitions or the random same_nf constructor."
+    },
+    {
+      "repo": "flint",
+      "path": "src/ca/test/t-init_clear.c",
+      "ranges": [
+        [
+          1,
+          34
+        ]
+      ],
+      "note": "Independent complete current read: Asserts canonical initial zero numerator/one denominator, then tears down value before context. Does not exercise arbitrary reset transitions or the random same_nf constructor."
+    },
+    {
+      "repo": "calcium",
+      "path": "ca/test/t-get_str.c",
+      "ranges": [
+        [
+          1,
+          51
+        ]
+      ],
+      "note": "Complete archived read: Explicit crash-only random-special string test: obtains string, calls strlen, frees it. No assertion of value preservation, digit rounding, or parse roundtrip; current loop multiplier is 0.1 of archived nominal count."
+    },
+    {
+      "repo": "flint",
+      "path": "src/ca/test/t-get_str.c",
+      "ranges": [
+        [
+          1,
+          42
+        ]
+      ],
+      "note": "Independent complete current read: Explicit crash-only random-special string test: obtains string, calls strlen, frees it. No assertion of value preservation, digit rounding, or parse roundtrip; current loop multiplier is 0.1 of archived nominal count."
+    },
+    {
+      "repo": "calcium",
+      "path": "ca/test/t-transfer.c",
+      "ranges": [
+        [
+          1,
+          76
+        ]
+      ],
+      "note": "Complete archived read: Two-context random-special roundtrip checks known sources return T_TRUE, allowing Unknown only for an originally Unknown source. Its limited random generator lacks Arg nodes, so it misses the reproduced Arg exporter loss. Repeated destination overwrites and context-specific teardown are exercised."
+    },
+    {
+      "repo": "flint",
+      "path": "src/ca/test/t-transfer.c",
+      "ranges": [
+        [
+          1,
+          68
+        ]
+      ],
+      "note": "Independent complete current read: Two-context random-special roundtrip checks known sources return T_TRUE, allowing Unknown only for an originally Unknown source. Its limited random generator lacks Arg nodes, so it misses the reproduced Arg exporter loss. Repeated destination overwrites and context-specific teardown are exercised."
+    },
+    {
+      "repo": "calcium",
+      "path": "ca/test/t-gamma.c",
+      "ranges": [
+        [
+          1,
+          95
+        ]
+      ],
+      "note": "Complete archived read: Finite-expression/rational random Gamma and sum tests compare 53-bit acb overlap, not a special-value truth table or exact output equality. No randtest_special call; explains why the special Gamma predicate defect escapes this gate. Overlap alone is not proof of containment or completeness."
+    },
+    {
+      "repo": "flint",
+      "path": "src/ca/test/t-gamma.c",
+      "ranges": [
+        [
+          1,
+          87
+        ]
+      ],
+      "note": "Independent complete current read: Finite-expression/rational random Gamma and sum tests compare 53-bit acb overlap, not a special-value truth table or exact output equality. No randtest_special call; explains why the special Gamma predicate defect escapes this gate. Overlap alone is not proof of containment or completeness."
+    },
+    {
+      "repo": "calcium",
+      "path": "ca/test/t-acos.c",
+      "ranges": [
+        [
+          1,
+          87
+        ]
+      ],
+      "note": "Complete archived read: Compares direct and logarithmic arccos without accepting a proved mismatch, then checks cos roundtrip except known infinity/undefined outputs. Unknown is allowed in both equalities; separate destinations only, so no in-place branch/alias coverage. Periodically clears/recreates an otherwise reused context."
+    },
+    {
+      "repo": "flint",
+      "path": "src/ca/test/t-acos.c",
+      "ranges": [
+        [
+          1,
+          79
+        ]
+      ],
+      "note": "Independent complete current read: Compares direct and logarithmic arccos without accepting a proved mismatch, then checks cos roundtrip except known infinity/undefined outputs. Unknown is allowed in both equalities; separate destinations only, so no in-place branch/alias coverage. Periodically clears/recreates an otherwise reused context."
+    },
+    {
+      "repo": "calcium",
+      "path": "ca/test/t-asin.c",
+      "ranges": [
+        [
+          1,
+          87
+        ]
+      ],
+      "note": "Complete archived read: Direct/logarithmic arcsin comparison and sin roundtrip permit Unknown; exceptional infinity/undefined outputs are excluded. No input-output alias test or mandatory proof of identity; periodic context reset contrasts warm-context iterations."
+    },
+    {
+      "repo": "flint",
+      "path": "src/ca/test/t-asin.c",
+      "ranges": [
+        [
+          1,
+          79
+        ]
+      ],
+      "note": "Independent complete current read: Direct/logarithmic arcsin comparison and sin roundtrip permit Unknown; exceptional infinity/undefined outputs are excluded. No input-output alias test or mandatory proof of identity; periodic context reset contrasts warm-context iterations."
+    },
+    {
+      "repo": "calcium",
+      "path": "ca/test/t-atan.c",
+      "ranges": [
+        [
+          1,
+          87
+        ]
+      ],
+      "note": "Complete archived read: Direct/logarithmic arctan and tan roundtrip only reject T_FALSE; unsigned infinity/undefined are excluded. The known in-place 2i branch defect is outside the separate-destination test. Context reuse and periodic reset are covered, not every branch."
+    },
+    {
+      "repo": "flint",
+      "path": "src/ca/test/t-atan.c",
+      "ranges": [
+        [
+          1,
+          79
+        ]
+      ],
+      "note": "Independent complete current read: Direct/logarithmic arctan and tan roundtrip only reject T_FALSE; unsigned infinity/undefined are excluded. The known in-place 2i branch defect is outside the separate-destination test. Context reuse and periodic reset are covered, not every branch."
+    },
+    {
+      "repo": "calcium",
+      "path": "ca/test/t-get_fexpr.c",
+      "ranges": [
+        [
+          1,
+          93
+        ]
+      ],
+      "note": "Complete archived test read: random special-expression round trips require parse success and known equality for non-Unknown inputs, with a duplicated unequal check. Only default export flags tested; generation does not establish coverage of every function head. The stricter final check would detect lost-value Arg cases if generated."
+    },
+    {
+      "repo": "flint",
+      "path": "src/ca/test/t-get_fexpr.c",
+      "ranges": [
+        [
+          1,
+          85
+        ]
+      ],
+      "note": "Independent complete current test read: same assertions and default-only export mode, iteration multiplier reduced to 0.1. New deterministic public probe covers both flags and reproduces six lost-value cases among48; this does not contradict passing limited random coverage."
+    },
+    {
+      "repo": "calcium",
+      "path": "ca/test/t-log_identities.c",
+      "ranges": [
+        [
+          1,
+          217
+        ]
+      ],
+      "note": "Complete archived read: eight arctangent Machin and seven hyperbolic-log formulas require canonical rational zero, not merely Unknown-compatible comparison. Helper atan is explicitly real-only and uses its own log formula, so it does not test the production complex logarithmic atan alias path."
+    },
+    {
+      "repo": "calcium",
+      "path": "ca/test/t-sin_cos.c",
+      "ranges": [
+        [
+          1,
+          94
+        ]
+      ],
+      "note": "Complete archived test read: random special inputs compare four representations, reject only known unequal, permit Unknown. Destinations distinct; no output-state or in-place special tangent coverage. Counts use 200 times historical multiplier."
+    },
+    {
+      "repo": "flint",
+      "path": "src/ca/test/t-sin_cos.c",
+      "ranges": [
+        [
+          1,
+          85
+        ]
+      ],
+      "note": "Independent current test read: same comparisons and permissive Unknown policy; current loop scales to 20 times multiplier. Passing native suite does not establish exact completeness or alias equivalence."
+    },
+    {
+      "repo": "flint",
+      "path": "src/ca/test/t-log.c",
+      "ranges": [
+        [
+          1,
+          163
+        ]
+      ],
+      "note": "Random ball-overlap checks plus positive-factor log identities; Unknown allowed by second loop. Tests alone do not establish enclosure or completeness generally."
+    },
+    {
+      "repo": "flint",
+      "path": "src/ca/test/t-log_identities.c",
+      "ranges": [
+        [
+          1,
+          206
+        ]
+      ],
+      "note": "Eight arctangent Machin and seven hyperbolic logarithm formulas demand canonical exact rational zero; complex logarithm branch-sensitive identities."
+    },
+    {
+      "repo": "flint",
+      "path": "src/ca/test/main.c",
+      "ranges": [
+        [
+          1,
+          81
+        ]
+      ],
+      "note": "Enumerates 29 native Calcium scalar test functions; make check MOD=ca executed each successfully."
+    }
+  ],
+  "coverage": {
+    "calcium": {
+      "complete": 172,
+      "partial": 1,
+      "lines": 19886
+    },
+    "flint": {
+      "complete": 176,
+      "partial": 6,
+      "lines": 21512
+    }
+  },
+  "memory": {
+    "observations": 162,
+    "maxRequestedRetainedBytesPerWorker": 2304,
+    "maxRequestedRetainedBlocksPerWorker": 32,
+    "requestedPostExitDelta": 0,
+    "linkedStaticTlsByteDelta": 400
+  },
+  "dispositions": {
+    "compilerCache": "Original Hyperlattice sandbox run fails101 with ccache read-only filesystem; unchanged approved rerun passes.",
+    "privateApi": "First debug proof-state harness fails101 on private shift_right; public multiplication replacement passes. First release was queued on Cargo lock until after correction and also passes; later release duplicate is preserved.",
+    "memcheck": "Concurrent proof-state and standalone std-only scoped-thread control both return99 for one 48-byte possibly-lost Thread::new/current::init_current record. No suppression used; not a clean Memcheck claim. Separate consumer and live-worker probes have zero errors.",
+    "memoryCapture": "run-reuse-memory console captures are empty despite code0. Complete162 raw rows, matching summary rows and binary hashes, not code0 alone, establish campaign coverage."
+  },
+  "limits": "No production transfer or full ecosystem completion. Consumer tests use debug except Hyperlattice release, not full CI/both profiles; overlapping clocks are not performance evidence. Memory measures requested Rust heap and separately linked ELF TLS on this platform, not RSS, allocator overhead or complete thread storage. Native TLS increases400 bytes even for threads that never query this proof path. Worst-case uncached structural comparison, other sharing/collision patterns, cold-TLS latency, numerical-kernel costs and application-wide size remain open."
+}

@@ -1,0 +1,45 @@
+{
+  "checks": [
+    {
+      "label": "fmt",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustfmt",
+        "--edition",
+        "2024",
+        "--check",
+        "src/bezier_offset.rs",
+        "src/bezier_parameter.rs",
+        "src/bezier_region.rs",
+        "src/curve.rs",
+        "src/curve_corner_chain.rs"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 3.3585154060274363,
+      "log": "local-chord-complete-replay-20260924-v47-fmt.log"
+    }
+  ],
+  "cases": [
+    {
+      "label": "retained_rational_chamfer_extends_exact_and_algebraic_pre_pole_roots",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/local-chord-complete-replay-20260924-v47-libtest",
+        "--exact",
+        "bezier_region::tests::retained_rational_chamfer_extends_exact_and_algebraic_pre_pole_roots",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 8.209827163023874,
+      "log": "local-chord-complete-replay-20260924-v47-retained_rational_chamfer_extends_exact_and_algebraic_pre_pole_roots.log"
+    }
+  ],
+  "all_processes_reaped": true,
+  "diagnostic_only": true,
+  "diagnostic_environment": {
+    "HYPERCURVE_DEBUG_NATIVE_COMPARISON": "1"
+  },
+  "binary_sha256": "3e7d18ae74fc1cf06408b1c9f4bb79acce20204e94011975a67fe141267d237b",
+  "all_sources_unchanged": true
+}

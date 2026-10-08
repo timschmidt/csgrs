@@ -1,0 +1,79 @@
+{
+  "diagnostic_only": true,
+  "checks": [],
+  "binaries": {
+    "hypercurve": {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-source-regressions-20260925-v55-hypercurve",
+      "sha256": "a7c4a63cac9aaaed3530b08782f33dcd9adbd09c2024c937da8c379c4f95f6c2"
+    },
+    "hypercurve_curve": {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-source-regressions-20260925-v55-hypercurve_curve",
+      "sha256": "a3a662cb29ebf322dba14e7aee75b5135ef16b1f2436ad021279092a3d798f5d"
+    }
+  },
+  "cases": [
+    {
+      "label": "retained_polynomial_chamfer_extends_exact_and_algebraic_incident_roots",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-source-regressions-20260925-v55-hypercurve",
+        "--exact",
+        "bezier_region::tests::retained_polynomial_chamfer_extends_exact_and_algebraic_incident_roots",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 101,
+      "elapsed_seconds": 0.3935365999350324,
+      "log": "retained-source-regressions-20260925-v55-retained_polynomial_chamfer_extends_exact_and_algebraic_incident_roots.log"
+    },
+    {
+      "label": "retained_rational_chamfer_extends_exact_and_algebraic_pre_pole_roots",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-source-regressions-20260925-v55-hypercurve",
+        "--exact",
+        "bezier_region::tests::retained_rational_chamfer_extends_exact_and_algebraic_pre_pole_roots",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 101,
+      "elapsed_seconds": 0.42773840797599405,
+      "log": "retained-source-regressions-20260925-v55-retained_rational_chamfer_extends_exact_and_algebraic_pre_pole_roots.log"
+    },
+    {
+      "label": "resource_blocked_selected_corner_chamfers_in_its_affine_fiber",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-source-regressions-20260925-v55-hypercurve",
+        "--exact",
+        "bezier_region::tests::resource_blocked_selected_corner_chamfers_in_its_affine_fiber",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 47.09878825501073,
+      "log": "retained-source-regressions-20260925-v55-resource_blocked_selected_corner_chamfers_in_its_affine_fiber.log"
+    },
+    {
+      "label": "direct_bezier_pair_fillet_retains_both_incident_extensions",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-source-regressions-20260925-v55-hypercurve_curve",
+        "--exact",
+        "direct_bezier_pair_fillet_retains_both_incident_extensions",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": "timeout",
+      "elapsed_seconds": 90.26571220904589,
+      "log": "retained-source-regressions-20260925-v55-direct_bezier_pair_fillet_retains_both_incident_extensions.log"
+    }
+  ],
+  "all_processes_reaped": true,
+  "build_returncode": 0,
+  "all_sources_unchanged": true
+}

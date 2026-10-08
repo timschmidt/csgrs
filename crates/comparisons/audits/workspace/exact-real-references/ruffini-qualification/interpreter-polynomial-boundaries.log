@@ -1,0 +1,37 @@
+WRONG	sparse-equality-zero
+WRONG	sparse-equality-nonzero
+WRONG	trailing-zero-equality
+EXCEPTION	constant-derivative-zero	NoSuchElementException
+EXCEPTION	empty-polynomial-zero	NoSuchElementException
+WRONG	builder-snapshot
+WRONG	copy-snapshot
+WRONG	fastdivision-monomial
+PASS	field-division-nonmonic-control
+WRONG	karatsuba-field-division-nonmonic
+PASS	batch-zero-1
+EXCEPTION	batch-sparse-1	NullPointerException
+PASS	batch-zero-2
+EXCEPTION	batch-sparse-2	NullPointerException
+EXCEPTION	batch-zero-3	IllegalArgumentException
+EXCEPTION	batch-sparse-3	IllegalArgumentException
+PASS	batch-zero-4
+EXCEPTION	batch-sparse-4	NullPointerException
+PASS	batch-zero-8
+EXCEPTION	batch-sparse-8	NullPointerException
+PASS	tree-interpolation-1
+PASS	lagrange-control-1
+PASS	tree-interpolation-2
+PASS	lagrange-control-2
+EXCEPTION	tree-interpolation-4	NullPointerException
+PASS	lagrange-control-4
+EXCEPTION	tree-interpolation-8	NullPointerException
+PASS	lagrange-control-8
+WRONG	fft-cyclic-not-polynomial
+WRONG	fft-oversize-import
+EXCEPTION	fft-zero-polynomial	NoSuchElementException
+WRONG	multivariate-leading-coefficient
+WRONG	multivariate-snapshot
+PASS	multivariate-equality-explicit-zero
+WRONG	monomial-array-snapshot
+WRONG	recursive-add-alias
+SUMMARY	36

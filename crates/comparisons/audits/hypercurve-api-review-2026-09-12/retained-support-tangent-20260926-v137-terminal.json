@@ -1,0 +1,364 @@
+{
+  "parents": {
+    "hypercurve": "7dbb1b89aadd491ed1b4de27c3761392dd617162",
+    "hypersolve": "e479259c182835aa05d2a67308fd346699785f87",
+    "hyperreal": "0cb5f29aee065c73e234e0ebb0a9e106398515bb"
+  },
+  "source_manifest": "local-chord-complete-replay-20260924-v137-sources.json",
+  "source_directory": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/source-archives/hypercurve-local-chord-complete-replay-v137-20260924",
+  "build_source_directory": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/build-workspace-20260925",
+  "checks": [
+    {
+      "repo": "hypercurve",
+      "label": "hypercurve-fmt",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustfmt",
+        "--edition",
+        "2024",
+        "--check",
+        "src/bezier_offset.rs",
+        "src/bezier_region.rs",
+        "src/curve.rs",
+        "src/curve_corner_chain.rs"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 2.81837374297902,
+      "log": "retained-support-tangent-20260926-v137-hypercurve-fmt.log"
+    },
+    {
+      "repo": "hypercurve",
+      "label": "hypercurve-clippy-0",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "clippy",
+        "--all-targets",
+        "--all-features",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 24.804636345943436,
+      "log": "retained-support-tangent-20260926-v137-hypercurve-clippy-0.log"
+    },
+    {
+      "repo": "hypercurve",
+      "label": "hypercurve-clippy-1",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "clippy",
+        "--all-targets",
+        "--no-default-features",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 24.859875796944834,
+      "log": "retained-support-tangent-20260926-v137-hypercurve-clippy-1.log"
+    },
+    {
+      "repo": "hyperbrep",
+      "label": "hyperbrep-check",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "check",
+        "--all-targets",
+        "--all-features",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 18.695159713970497,
+      "log": "retained-support-tangent-20260926-v137-hyperbrep-check.log"
+    }
+  ],
+  "cases": [
+    {
+      "repo": "hypercurve",
+      "label": "case-00",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-support-tangent-20260926-v137-hypercurve",
+        "--exact",
+        "bezier_offset::conversion_tests::split_chord_linear_tangents_reuse_the_oriented_support",
+        "--test-threads=1",
+        "--nocapture",
+        "--color",
+        "never"
+      ],
+      "returncode": 101,
+      "elapsed_seconds": 0.0036324800457805395,
+      "log": "retained-support-tangent-20260926-v137-case-00.log",
+      "name": "bezier_offset::conversion_tests::split_chord_linear_tangents_reuse_the_oriented_support"
+    },
+    {
+      "repo": "hypercurve",
+      "label": "case-01",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-support-tangent-20260926-v137-hypercurve",
+        "--exact",
+        "bezier_offset::conversion_tests::chord_parallel_extension_keeps_target_and_chord_domains_independent",
+        "--test-threads=1",
+        "--nocapture",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.007612506975419819,
+      "log": "retained-support-tangent-20260926-v137-case-01.log",
+      "name": "bezier_offset::conversion_tests::chord_parallel_extension_keeps_target_and_chord_domains_independent"
+    },
+    {
+      "repo": "hypercurve",
+      "label": "case-02",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-support-tangent-20260926-v137-hypercurve",
+        "--exact",
+        "bezier_offset::conversion_tests::nested_procedural_chord_reversals_match_exact_side_and_winding",
+        "--test-threads=1",
+        "--nocapture",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.0076504049357026815,
+      "log": "retained-support-tangent-20260926-v137-case-02.log",
+      "name": "bezier_offset::conversion_tests::nested_procedural_chord_reversals_match_exact_side_and_winding"
+    },
+    {
+      "repo": "hypercurve",
+      "label": "case-03",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-support-tangent-20260926-v137-hypercurve",
+        "--exact",
+        "bezier_offset::conversion_tests::procedural_endpoint_chord_replays_complete_parallel_contacts",
+        "--test-threads=1",
+        "--nocapture",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.0035801740596070886,
+      "log": "retained-support-tangent-20260926-v137-case-03.log",
+      "name": "bezier_offset::conversion_tests::procedural_endpoint_chord_replays_complete_parallel_contacts"
+    },
+    {
+      "repo": "hypercurve",
+      "label": "case-04",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-support-tangent-20260926-v137-hypercurve",
+        "--exact",
+        "bezier_offset::conversion_tests::recursive_chord_parallel_local_roots_reject_conjugates_and_clip_exactly",
+        "--test-threads=1",
+        "--nocapture",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.03179223998449743,
+      "log": "retained-support-tangent-20260926-v137-case-04.log",
+      "name": "bezier_offset::conversion_tests::recursive_chord_parallel_local_roots_reject_conjugates_and_clip_exactly"
+    },
+    {
+      "repo": "hypercurve",
+      "label": "case-05",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-support-tangent-20260926-v137-hypercurve",
+        "--exact",
+        "bezier_offset::conversion_tests::recursive_chord_parallel_retains_owned_roots_across_exterior_ranges",
+        "--test-threads=1",
+        "--nocapture",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.06399547006003559,
+      "log": "retained-support-tangent-20260926-v137-case-05.log",
+      "name": "bezier_offset::conversion_tests::recursive_chord_parallel_retains_owned_roots_across_exterior_ranges"
+    },
+    {
+      "repo": "hypercurve",
+      "label": "case-06",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-support-tangent-20260926-v137-hypercurve",
+        "--exact",
+        "bezier_offset::conversion_tests::recursive_chord_parallel_zero_norm_midpoint_is_not_a_component",
+        "--test-threads=1",
+        "--nocapture",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.01586435199715197,
+      "log": "retained-support-tangent-20260926-v137-case-06.log",
+      "name": "bezier_offset::conversion_tests::recursive_chord_parallel_zero_norm_midpoint_is_not_a_component"
+    },
+    {
+      "repo": "hypercurve",
+      "label": "case-07",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-support-tangent-20260926-v137-hypercurve",
+        "--exact",
+        "bezier_offset::conversion_tests::recursive_ordered_field_isolation_does_not_guess_polynomial_degree",
+        "--test-threads=1",
+        "--nocapture",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.0037102149799466133,
+      "log": "retained-support-tangent-20260926-v137-case-07.log",
+      "name": "bezier_offset::conversion_tests::recursive_ordered_field_isolation_does_not_guess_polynomial_degree"
+    },
+    {
+      "repo": "hypercurve",
+      "label": "case-08",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-support-tangent-20260926-v137-hypercurve",
+        "--exact",
+        "bezier_offset::conversion_tests::recursive_polynomial_isolators_keep_the_selected_root_after_endpoint_deflation",
+        "--test-threads=1",
+        "--nocapture",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.0035659949062392116,
+      "log": "retained-support-tangent-20260926-v137-case-08.log",
+      "name": "bezier_offset::conversion_tests::recursive_polynomial_isolators_keep_the_selected_root_after_endpoint_deflation"
+    },
+    {
+      "repo": "hypercurve",
+      "label": "case-09",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-support-tangent-20260926-v137-hypercurve",
+        "--exact",
+        "bezier_offset::conversion_tests::recursive_polynomial_queries_reuse_a_selected_proper_factor",
+        "--test-threads=1",
+        "--nocapture",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.031756622018292546,
+      "log": "retained-support-tangent-20260926-v137-case-09.log",
+      "name": "bezier_offset::conversion_tests::recursive_polynomial_queries_reuse_a_selected_proper_factor"
+    },
+    {
+      "repo": "hypercurve",
+      "label": "case-10",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-support-tangent-20260926-v137-hypercurve",
+        "--exact",
+        "bezier_offset::conversion_tests::recursive_projective_chord_rejects_constant_conjugate_norm_component",
+        "--test-threads=1",
+        "--nocapture",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.0077530789421871305,
+      "log": "retained-support-tangent-20260926-v137-case-10.log",
+      "name": "bezier_offset::conversion_tests::recursive_projective_chord_rejects_constant_conjugate_norm_component"
+    },
+    {
+      "repo": "hypercurve",
+      "label": "case-11",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-support-tangent-20260926-v137-hypercurve",
+        "--exact",
+        "bezier_offset::conversion_tests::recursive_projective_chord_replays_nonzero_analytic_parallel",
+        "--test-threads=1",
+        "--nocapture",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.008001831942237914,
+      "log": "retained-support-tangent-20260926-v137-case-11.log",
+      "name": "bezier_offset::conversion_tests::recursive_projective_chord_replays_nonzero_analytic_parallel"
+    },
+    {
+      "repo": "hypercurve",
+      "label": "case-12",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-support-tangent-20260926-v137-hypercurve",
+        "--exact",
+        "bezier_offset::conversion_tests::selected_parallel_normal_circle_intersects_genuinely_analytic_parallel_in_one_fiber",
+        "--test-threads=1",
+        "--nocapture",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 12.18277534598019,
+      "log": "retained-support-tangent-20260926-v137-case-12.log",
+      "name": "bezier_offset::conversion_tests::selected_parallel_normal_circle_intersects_genuinely_analytic_parallel_in_one_fiber"
+    },
+    {
+      "repo": "hypercurve",
+      "label": "case-13",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-support-tangent-20260926-v137-hypercurve",
+        "--exact",
+        "bezier_offset::conversion_tests::translated_parallel_endpoint_does_not_certify_source_incidence",
+        "--test-threads=1",
+        "--nocapture",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.003618431044742465,
+      "log": "retained-support-tangent-20260926-v137-case-13.log",
+      "name": "bezier_offset::conversion_tests::translated_parallel_endpoint_does_not_certify_source_incidence"
+    },
+    {
+      "repo": "hypercurve",
+      "label": "case-14",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-support-tangent-20260926-v137-hypercurve",
+        "--exact",
+        "bezier_region::tests::one_fragment_nonzero_parallel_loop_extends_chamfer_cuts_on_one_finite_envelope",
+        "--test-threads=1",
+        "--nocapture",
+        "--color",
+        "never"
+      ],
+      "returncode": "timeout",
+      "elapsed_seconds": 90.00649468204938,
+      "log": "retained-support-tangent-20260926-v137-case-14.log",
+      "name": "bezier_region::tests::one_fragment_nonzero_parallel_loop_extends_chamfer_cuts_on_one_finite_envelope"
+    }
+  ],
+  "binaries": {
+    "hypercurve": {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-support-tangent-20260926-v137-hypercurve",
+      "sha256": "02e97b7aff2578701507c29980561598cbbc0a877fbade4e48c1cd1966eff79c"
+    }
+  },
+  "all_processes_reaped": true,
+  "diagnostic_only": true,
+  "hypercurve_build_returncode": 0,
+  "selection": [
+    "bezier_offset::conversion_tests::split_chord_linear_tangents_reuse_the_oriented_support",
+    "bezier_offset::conversion_tests::chord_parallel_extension_keeps_target_and_chord_domains_independent",
+    "bezier_offset::conversion_tests::nested_procedural_chord_reversals_match_exact_side_and_winding",
+    "bezier_offset::conversion_tests::procedural_endpoint_chord_replays_complete_parallel_contacts",
+    "bezier_offset::conversion_tests::recursive_chord_parallel_local_roots_reject_conjugates_and_clip_exactly",
+    "bezier_offset::conversion_tests::recursive_chord_parallel_retains_owned_roots_across_exterior_ranges",
+    "bezier_offset::conversion_tests::recursive_chord_parallel_zero_norm_midpoint_is_not_a_component",
+    "bezier_offset::conversion_tests::recursive_ordered_field_isolation_does_not_guess_polynomial_degree",
+    "bezier_offset::conversion_tests::recursive_polynomial_isolators_keep_the_selected_root_after_endpoint_deflation",
+    "bezier_offset::conversion_tests::recursive_polynomial_queries_reuse_a_selected_proper_factor",
+    "bezier_offset::conversion_tests::recursive_projective_chord_rejects_constant_conjugate_norm_component",
+    "bezier_offset::conversion_tests::recursive_projective_chord_replays_nonzero_analytic_parallel",
+    "bezier_offset::conversion_tests::selected_parallel_normal_circle_intersects_genuinely_analytic_parallel_in_one_fiber",
+    "bezier_offset::conversion_tests::translated_parallel_endpoint_does_not_certify_source_incidence",
+    "bezier_region::tests::one_fragment_nonzero_parallel_loop_extends_chamfer_cuts_on_one_finite_envelope"
+  ],
+  "all_sources_unchanged": true
+}

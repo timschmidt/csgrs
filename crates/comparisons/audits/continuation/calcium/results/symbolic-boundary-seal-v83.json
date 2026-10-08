@@ -1,0 +1,14 @@
+{
+  "tag": "symbolic-boundary-seal-v83",
+  "started": "2026-09-12T04:05:31.108Z",
+  "finished": "2026-09-12T04:05:34.578Z",
+  "elapsedSeconds": 3.467586982,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "node",
+  "args": [
+    "verify-symbolic-boundary-v83.mjs",
+    "--record"
+  ],
+  "code": 0,
+  "signal": null
+}

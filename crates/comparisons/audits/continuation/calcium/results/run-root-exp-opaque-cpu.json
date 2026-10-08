@@ -1,0 +1,14 @@
+{
+  "tag": "run-root-exp-opaque-cpu",
+  "started": "2026-09-08T20:33:35.884Z",
+  "finished": "2026-09-08T20:34:44.295Z",
+  "elapsedSeconds": 68.409286248,
+  "cwd": "/home/tim/Documents/GitHub/workspace",
+  "command": "node",
+  "args": [
+    "exactcore-hyper-comparison/audits/continuation/calcium/run-root-exp-opaque-bench.mjs",
+    "cpu"
+  ],
+  "code": 0,
+  "signal": null
+}

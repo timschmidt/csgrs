@@ -1,0 +1,17 @@
+{
+  "status": "Public probe completed against committed V910 normal release libraries; exact outer32183 reaped0",
+  "construction": "P(t)=4*t^3-pi. A(t)=(P(t),t*P(t)); B(u)=(P(u^2),u^2*P(u^2)+P(u^2)^2). Both trimmed from their selected positive zero to one.",
+  "selection": "alpha is the positive root of 4*t^3-pi; beta is the positive root of 4*u^6-pi, so alpha=beta^2, with both in (0,1).",
+  "oracle": "For the positive charts x=P(t)>0 and t=u^2, B_y-A_y=x^2>0. Counter-clockwise traversal from the incoming positive horizontal must choose A first: chains [0,1], [2].",
+  "coefficient_conversion": "Degree-twelve Bernstein controls use u^j = sum_k (choose(k,j)/choose(12,j))*B_k^12(u). All coefficient construction is exact.",
+  "baseline": "affine-field-v910",
+  "source": "nonlinear-source-scalar-probe-v907.rs",
+  "result": {
+    "requests": 2,
+    "blocked": 2,
+    "classification": "RealSign under STRICT and APPROXIMATE_512",
+    "represented_points": 4,
+    "retained_unprojected_tangents": 4
+  },
+  "source_audit": "The owned field currently certifies identity and affine parameter transport. The selected generators here have degrees three and six, with alpha=beta^2. A reusable verified polynomial embedding and a common field capable of representing both parameters are needed; root identity must not be relaxed. This is source-based analysis, not an internal dispatch trace."
+}

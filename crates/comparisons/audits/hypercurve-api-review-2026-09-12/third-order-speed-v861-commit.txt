@@ -1,0 +1,18 @@
+Preserve parameterization invariance in third-order tangent ordering
+
+The local curves (t,t^3) and (2u,8u^3) received different orders despite
+tracing one graph. Squared third-order determinants require |v|^8, not
+|v|^4, when both curvature witnesses vanish. Correct this normalization
+in native and represented arithmetic.
+
+Require both saved curvature signs to be zero before the retained
+third-order fallback. Equal nonzero curvature alone does not justify
+that rule: (u+a*u^2,(u+a*u^2)^2) describes the same parabola for different
+a, while its raw third derivatives differ.
+
+Validate independent cubic graph orders at nine speed pairs under both
+policies, native/represented parity and the reparameterized parabola.
+The unchanged six-case public probe repairs all four baseline mismatches.
+Qualification: 333 selected release tests in 12 pinned binaries, seven
+format/lint/fuzz/doc/downstream checks. Evidence is in
+hypercurve-api-review-2026-09-12/third-order-speed-v861-reviewed.json.

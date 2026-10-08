@@ -1,0 +1,357 @@
+{
+  "builds": [
+    {
+      "label": "candidate",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "test",
+        "--lib",
+        "--release",
+        "--all-features",
+        "--no-run",
+        "--message-format=json",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 123.40310880192555
+    },
+    {
+      "label": "parent",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "test",
+        "--lib",
+        "--release",
+        "--all-features",
+        "--no-run",
+        "--message-format=json",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 160.00825264502782
+    }
+  ],
+  "check": {
+    "command": [
+      "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+      "check",
+      "--all-targets",
+      "--all-features",
+      "--locked",
+      "--offline"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 23.060055001988076
+  },
+  "focused": [
+    {
+      "label": "focused",
+      "name": "bezier_parameter::conversion_tests::composed_projective_charts_share_one_root_without_growing_history_or_scale",
+      "returncode": 0,
+      "elapsed_seconds": 0.003625481971539557,
+      "passed": true,
+      "ignored": false,
+      "log": "root-charts-20260923-final1-focused-case-0000.log"
+    },
+    {
+      "label": "focused",
+      "name": "bezier_offset::conversion_tests::selected_fiber_comparison_reuses_high_degree_affine_root_identity",
+      "returncode": 0,
+      "elapsed_seconds": 0.003555835923179984,
+      "passed": true,
+      "ignored": false,
+      "log": "root-charts-20260923-final1-focused-case-0001.log"
+    },
+    {
+      "label": "focused",
+      "name": "bezier_offset::conversion_tests::selected_fiber_comparison_replays_composed_projective_charts_with_signed_denominators",
+      "returncode": 0,
+      "elapsed_seconds": 0.003580194083042443,
+      "passed": true,
+      "ignored": false,
+      "log": "root-charts-20260923-final1-focused-case-0002.log"
+    }
+  ],
+  "parent_regression": {
+    "label": "parent-regression",
+    "name": "bezier_offset::conversion_tests::selected_fiber_comparison_reuses_high_degree_affine_root_identity",
+    "returncode": 101,
+    "elapsed_seconds": 0.00767788290977478,
+    "passed": false,
+    "ignored": false,
+    "log": "root-charts-20260923-final1-parent-regression-case-0000.log"
+  },
+  "passed": 1187,
+  "ignored": 6,
+  "failed": [
+    {
+      "label": "candidate",
+      "name": "bezier_offset::conversion_tests::independently_encoded_nonrepresented_analytic_circle_publishes_overlap",
+      "returncode": 101,
+      "elapsed_seconds": 0.11388391896616668,
+      "passed": false,
+      "ignored": false,
+      "log": "root-charts-20260923-final1-candidate-case-0216.log"
+    },
+    {
+      "label": "candidate",
+      "name": "bezier_offset::conversion_tests::nonrepresented_center_nonrational_chamfer_inverts_with_retained_authority",
+      "returncode": 101,
+      "elapsed_seconds": 0.16396249399986118,
+      "passed": false,
+      "ignored": false,
+      "log": "root-charts-20260923-final1-candidate-case-0258.log"
+    },
+    {
+      "label": "candidate",
+      "name": "bezier_offset::conversion_tests::selected_fiber_transverse_mapped_cut_inverts_by_point",
+      "returncode": 101,
+      "elapsed_seconds": 0.00765820499509573,
+      "passed": false,
+      "ignored": false,
+      "log": "root-charts-20260923-final1-candidate-case-0527.log"
+    },
+    {
+      "label": "candidate",
+      "name": "bezier_region::tests::algebraic_endpoint_images_reenter_shared_corner_carriers",
+      "returncode": 101,
+      "elapsed_seconds": 0.06386601901613176,
+      "passed": false,
+      "ignored": false,
+      "log": "root-charts-20260923-final1-candidate-case-0617.log"
+    },
+    {
+      "label": "candidate",
+      "name": "bezier_region::tests::nonlinear_selected_corner_chamfers_through_retained_fixed_distance_image",
+      "returncode": "timeout",
+      "elapsed_seconds": 75.02369356807321,
+      "passed": false,
+      "ignored": false,
+      "log": "root-charts-20260923-final1-candidate-case-0669.log"
+    },
+    {
+      "label": "candidate",
+      "name": "bezier_region::tests::nonrepresented_chord_and_retained_rational_arc_share_the_fillet_kernel",
+      "returncode": 101,
+      "elapsed_seconds": 0.113947314908728,
+      "passed": false,
+      "ignored": false,
+      "log": "root-charts-20260923-final1-candidate-case-0671.log"
+    },
+    {
+      "label": "candidate",
+      "name": "bezier_region::tests::one_fragment_materialized_loop_chamfers_to_one_middle_interval",
+      "returncode": "timeout",
+      "elapsed_seconds": 75.03585911099799,
+      "passed": false,
+      "ignored": false,
+      "log": "root-charts-20260923-final1-candidate-case-0676.log"
+    },
+    {
+      "label": "candidate",
+      "name": "bezier_region::tests::one_fragment_materialized_loop_extends_algebraic_chamfer_cuts_once",
+      "returncode": "timeout",
+      "elapsed_seconds": 75.03380604600534,
+      "passed": false,
+      "ignored": false,
+      "log": "root-charts-20260923-final1-candidate-case-0677.log"
+    },
+    {
+      "label": "candidate",
+      "name": "bezier_region::tests::one_fragment_nonzero_parallel_loop_extends_chamfer_cuts_on_one_finite_envelope",
+      "returncode": "timeout",
+      "elapsed_seconds": 75.02170463302173,
+      "passed": false,
+      "ignored": false,
+      "log": "root-charts-20260923-final1-candidate-case-0678.log"
+    },
+    {
+      "label": "candidate",
+      "name": "bezier_region::tests::one_fragment_ph_loop_projective_corners_retain_one_extended_interval",
+      "returncode": 101,
+      "elapsed_seconds": 0.06398153002373874,
+      "passed": false,
+      "ignored": false,
+      "log": "root-charts-20260923-final1-candidate-case-0680.log"
+    },
+    {
+      "label": "candidate",
+      "name": "bezier_region::tests::one_fragment_selected_loop_chamfers_from_one_interval",
+      "returncode": "timeout",
+      "elapsed_seconds": 75.03614973300137,
+      "passed": false,
+      "ignored": false,
+      "log": "root-charts-20260923-final1-candidate-case-0682.log"
+    },
+    {
+      "label": "candidate",
+      "name": "bezier_region::tests::one_fragment_selected_loop_extends_chamfer_cuts_on_its_analytic_carrier",
+      "returncode": "timeout",
+      "elapsed_seconds": 75.0407904459862,
+      "passed": false,
+      "ignored": false,
+      "log": "root-charts-20260923-final1-candidate-case-0683.log"
+    },
+    {
+      "label": "candidate",
+      "name": "bezier_region::tests::retained_algebraic_straights_trim_or_extend_chamfer_and_fillet",
+      "returncode": 101,
+      "elapsed_seconds": 0.009551845025271177,
+      "passed": false,
+      "ignored": false,
+      "log": "root-charts-20260923-final1-candidate-case-0711.log"
+    },
+    {
+      "label": "candidate",
+      "name": "bezier_region::tests::retained_analytic_multifragment_corner_extends_chamfer_and_fillet",
+      "returncode": 101,
+      "elapsed_seconds": 0.007643286022357643,
+      "passed": false,
+      "ignored": false,
+      "log": "root-charts-20260923-final1-candidate-case-0712.log"
+    }
+  ],
+  "parent_replays": [
+    {
+      "label": "parent",
+      "name": "bezier_offset::conversion_tests::independently_encoded_nonrepresented_analytic_circle_publishes_overlap",
+      "returncode": 101,
+      "elapsed_seconds": 0.11424070200882852,
+      "passed": false,
+      "ignored": false,
+      "log": "root-charts-20260923-final1-parent-case-0000.log"
+    },
+    {
+      "label": "parent",
+      "name": "bezier_offset::conversion_tests::nonrepresented_center_nonrational_chamfer_inverts_with_retained_authority",
+      "returncode": 101,
+      "elapsed_seconds": 0.1642197739565745,
+      "passed": false,
+      "ignored": false,
+      "log": "root-charts-20260923-final1-parent-case-0001.log"
+    },
+    {
+      "label": "parent",
+      "name": "bezier_offset::conversion_tests::selected_fiber_transverse_mapped_cut_inverts_by_point",
+      "returncode": 101,
+      "elapsed_seconds": 0.007773766992613673,
+      "passed": false,
+      "ignored": false,
+      "log": "root-charts-20260923-final1-parent-case-0002.log"
+    },
+    {
+      "label": "parent",
+      "name": "bezier_region::tests::algebraic_endpoint_images_reenter_shared_corner_carriers",
+      "returncode": 101,
+      "elapsed_seconds": 0.06386861798819155,
+      "passed": false,
+      "ignored": false,
+      "log": "root-charts-20260923-final1-parent-case-0003.log"
+    },
+    {
+      "label": "parent",
+      "name": "bezier_region::tests::nonlinear_selected_corner_chamfers_through_retained_fixed_distance_image",
+      "returncode": "timeout",
+      "elapsed_seconds": 75.02167791803367,
+      "passed": false,
+      "ignored": false,
+      "log": "root-charts-20260923-final1-parent-case-0004.log"
+    },
+    {
+      "label": "parent",
+      "name": "bezier_region::tests::nonrepresented_chord_and_retained_rational_arc_share_the_fillet_kernel",
+      "returncode": 101,
+      "elapsed_seconds": 0.16414481902029365,
+      "passed": false,
+      "ignored": false,
+      "log": "root-charts-20260923-final1-parent-case-0005.log"
+    },
+    {
+      "label": "parent",
+      "name": "bezier_region::tests::one_fragment_materialized_loop_chamfers_to_one_middle_interval",
+      "returncode": "timeout",
+      "elapsed_seconds": 75.03767184005119,
+      "passed": false,
+      "ignored": false,
+      "log": "root-charts-20260923-final1-parent-case-0006.log"
+    },
+    {
+      "label": "parent",
+      "name": "bezier_region::tests::one_fragment_materialized_loop_extends_algebraic_chamfer_cuts_once",
+      "returncode": "timeout",
+      "elapsed_seconds": 75.03333935898263,
+      "passed": false,
+      "ignored": false,
+      "log": "root-charts-20260923-final1-parent-case-0007.log"
+    },
+    {
+      "label": "parent",
+      "name": "bezier_region::tests::one_fragment_nonzero_parallel_loop_extends_chamfer_cuts_on_one_finite_envelope",
+      "returncode": "timeout",
+      "elapsed_seconds": 75.02178072207607,
+      "passed": false,
+      "ignored": false,
+      "log": "root-charts-20260923-final1-parent-case-0008.log"
+    },
+    {
+      "label": "parent",
+      "name": "bezier_region::tests::one_fragment_ph_loop_projective_corners_retain_one_extended_interval",
+      "returncode": 101,
+      "elapsed_seconds": 0.06397993001155555,
+      "passed": false,
+      "ignored": false,
+      "log": "root-charts-20260923-final1-parent-case-0009.log"
+    },
+    {
+      "label": "parent",
+      "name": "bezier_region::tests::one_fragment_selected_loop_chamfers_from_one_interval",
+      "returncode": "timeout",
+      "elapsed_seconds": 75.03863231604919,
+      "passed": false,
+      "ignored": false,
+      "log": "root-charts-20260923-final1-parent-case-0010.log"
+    },
+    {
+      "label": "parent",
+      "name": "bezier_region::tests::one_fragment_selected_loop_extends_chamfer_cuts_on_its_analytic_carrier",
+      "returncode": "timeout",
+      "elapsed_seconds": 75.03611331805587,
+      "passed": false,
+      "ignored": false,
+      "log": "root-charts-20260923-final1-parent-case-0011.log"
+    },
+    {
+      "label": "parent",
+      "name": "bezier_region::tests::retained_algebraic_straights_trim_or_extend_chamfer_and_fillet",
+      "returncode": 101,
+      "elapsed_seconds": 0.0077623570105060935,
+      "passed": false,
+      "ignored": false,
+      "log": "root-charts-20260923-final1-parent-case-0012.log"
+    },
+    {
+      "label": "parent",
+      "name": "bezier_region::tests::retained_analytic_multifragment_corner_extends_chamfer_and_fillet",
+      "returncode": 101,
+      "elapsed_seconds": 0.007660144008696079,
+      "passed": false,
+      "ignored": false,
+      "log": "root-charts-20260923-final1-parent-case-0013.log"
+    }
+  ],
+  "excluded": [
+    "bezier_offset::conversion_tests::selected_parallel_normal_circle_intersects_genuinely_analytic_parallel_in_one_fiber",
+    "bezier_region::tests::independent_oblique_chord_pair_fillets_extend_on_infinite_supports",
+    "bezier_region::tests::pair_native_boolean_algebraic_chord_corner_publishes_a_third_generation_fillet",
+    "bezier_region::tests::selected_circle_and_analytic_parallel_extend_on_full_supports"
+  ],
+  "new_failures": [],
+  "binary_sha256": {
+    "candidate": "7c22c52c5364b08f9f87bcc1e9b1c0ef52f8da2dc2a71bccc124608cb68c73e6",
+    "parent": "bb47599dbf54f9683b7db55894740de6429b727f2377825e4798e79c5f5d272f"
+  },
+  "all_bound_sources_unchanged": true,
+  "all_processes_reaped": true
+}

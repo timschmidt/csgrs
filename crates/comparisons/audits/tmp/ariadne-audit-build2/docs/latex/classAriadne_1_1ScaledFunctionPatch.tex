@@ -1,0 +1,200 @@
+\doxysubsection{Scaled\+Function\+Patch\texorpdfstring{$<$}{<} M \texorpdfstring{$>$}{>} Class Template Reference}
+\hypertarget{classAriadne_1_1ScaledFunctionPatch}{}\label{classAriadne_1_1ScaledFunctionPatch}\index{ScaledFunctionPatch$<$ M $>$@{ScaledFunctionPatch$<$ M $>$}}
+
+
+{\ttfamily \#include $<$scaled\+\_\+function\+\_\+patch.\+hpp$>$}
+
+
+
+\doxysubsubsection{Description}
+\subsubsection*{template$<$class M$>$\newline
+class Ariadne\+::\+Scaled\+Function\+Patch$<$ M $>$}
+A a type of function model in which a the restriction of a scalar function $f:\R^n\rightarrow\R$ on a domain $D$ is approximated by the composition of a scaling function $s^{-1}:D\fto\I^n=[-1\!:\!+1]^n$ with a scaled function model, such as a polynomial $p$ on $\I^n$ with uniform error $e$. 
+
+
+\begin{DoxyTemplParams}{Template Parameters}
+{\em M} & The class used for the function model over the box $[-1\!:\!+1]^n$. For example, \doxylink{classAriadne_1_1TaylorModel_a2b9341268568a075b2bc5d7c9c588447}{Validated\+Taylor\+Model\texorpdfstring{$<$}{<}F\texorpdfstring{$>$}{>}} would give a scaled representation which is a polynomial with coefficients of type {\ttfamily F}, with a uniform error bound.\\
+\hline
+\end{DoxyTemplParams}
+Formally, a \doxylink{group__FunctionModelSubModule_ga05c1c7011f989b1ec0ba7f5d4e81580f}{Validated\+Scalar\+Multivariate\+Taylor\+Function\+Model\+DP} is a triple $(D,p,e)$ representing a set of continuous functions $\mathrm{T}(D,p,e)$ by \[ \mathrm{T}(D,p,e) = \{ f:\R^n\rightarrow \R \mid \sup_{x\in D}|f(x)-p(x)| \leq e \} . \] Note that there is no need for the functions $f$ to be themselves polynomial, and that no information is given about the values of $f$ outside of $D$. Information about the derivatives of $f$ is also unavailable. However, integrals of $f$ can be computed.
+
+Internally, the polynomial $p$ is represented as the composition $p=m\circ s^{-1}$, where $m:[-1,+1]^n\rightarrow\R$ and $s:[-1,+1]^n\rightarrow D$ is a scaling function, $s_i(y_i)=(a_i+b_i)/2+(b_i-a_i)y_i/2$ where $D_i=[a_i,b_i]$ is the $i^\textrm{th}$ subinterval of $D$.
+
+When solving algebraic equations by iterative Newton-\/like methods, it is necessary to compute the derivatives of $f$. For these applications, it suffices to compute the derivative of $p$, since only a uniform approximation to the solution is required.
+
+Finding exact bounds for the range of $p$ over $D$ is an NP-\/complete problem, for but there are a number of techniques available.
+
+\begin{DoxySeeAlso}{See also}
+\doxylink{classAriadne_1_1VectorScaledFunctionPatch}{Vector\+Scaled\+Function\+Patch}, \doxylink{classAriadne_1_1Expansion}{Expansion}, \doxylink{classAriadne_1_1TaylorModel}{Taylor\+Model}, \doxylink{group__FunctionModelSubModule_ga2c22c0befb7ccf11c80015eee7e7a78b}{Validated\+Vector\+Multivariate\+Taylor\+Function\+Model\+DP}, Taylor\+Constrained\+Image\+Set. 
+\end{DoxySeeAlso}
+\doxysubsubsubsection*{Public Member Functions}
+\begin{Indent}\textbf{ Constructors and destructors.}\par
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1ScaledFunctionPatch_a2946bdab8bf89625d5054291af55fd46}\label{classAriadne_1_1ScaledFunctionPatch_a2946bdab8bf89625d5054291af55fd46} 
+{\bfseries Scaled\+Function\+Patch} (const \mbox{\hyperlink{classAriadne_1_1Box}{Domain\+Type}} \&d, Properties\+Type prp)
+\begin{DoxyCompactList}\small\item\em Construct a Scaled\+Function\+Patch$<$\+M$>$ over the domain {\itshape d}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1ScaledFunctionPatch_a205fac50d6ac680a343ff885cfdd637f}\label{classAriadne_1_1ScaledFunctionPatch_a205fac50d6ac680a343ff885cfdd637f} 
+{\bfseries Scaled\+Function\+Patch} (const \mbox{\hyperlink{classAriadne_1_1Box}{Domain\+Type}} \&d, const Model\+Type \&m)
+\begin{DoxyCompactList}\small\item\em Construct a Scaled\+Function\+Patch$<$\+M$>$ over the domain {\itshape d}, based on the scaled model {\itshape m}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1ScaledFunctionPatch_a80706414cd021fa6ac3e8180fab66e93}\label{classAriadne_1_1ScaledFunctionPatch_a80706414cd021fa6ac3e8180fab66e93} 
+{\bfseries Scaled\+Function\+Patch} (const \mbox{\hyperlink{classAriadne_1_1Box}{Domain\+Type}} \&d, const Scalar\+Function\+Type$<$ M $>$ \&f, Properties\+Type prp)
+\begin{DoxyCompactList}\small\item\em Construct a \doxylink{classAriadne_1_1ScaledFunctionPatch}{Scaled\+Function\+Patch} over the domain {\itshape d} from the function {\itshape f}. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\end{Indent}
+\begin{Indent}\textbf{ Assignment to constant values.}\par
+{\em \doxylink{classAriadne_1_1Set}{Set} equal to a constant, keeping the same number of arguments. }\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1ScaledFunctionPatch_a58642d64ed38a11c8ffd900b38751db2}\label{classAriadne_1_1ScaledFunctionPatch_a58642d64ed38a11c8ffd900b38751db2} 
+\mbox{\hyperlink{classAriadne_1_1ScaledFunctionPatch}{Scaled\+Function\+Patch}}$<$ M $>$ \& {\bfseries operator=} (const \mbox{\hyperlink{classAriadne_1_1Number}{Generic\+Numeric\+Type}} c)
+\begin{DoxyCompactList}\small\item\em \doxylink{classAriadne_1_1Set}{Set} equal to a constant, keeping the same number of arguments. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\end{Indent}
+\begin{Indent}\textbf{ Data access}\par
+{\em The domain of the quantity. }\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1ScaledFunctionPatch_ab72077df2e6957ddf9d6e5d55b55c242}\label{classAriadne_1_1ScaledFunctionPatch_ab72077df2e6957ddf9d6e5d55b55c242} 
+const Model\+Type \& {\bfseries model} () const
+\begin{DoxyCompactList}\small\item\em The scaled expansion over a unit box with error bound. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1ScaledFunctionPatch_a92af1f1f932e5c4f3638b2133d6422ce}\label{classAriadne_1_1ScaledFunctionPatch_a92af1f1f932e5c4f3638b2133d6422ce} 
+Model\+Type \& {\bfseries model} ()
+\begin{DoxyCompactList}\small\item\em A reference to the scaled expansion over a unit box with error bound. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1ScaledFunctionPatch_aeda382da8cc359e9c035b287f936258d}\label{classAriadne_1_1ScaledFunctionPatch_aeda382da8cc359e9c035b287f936258d} 
+const Codomain\+Type {\bfseries codomain} () const
+\begin{DoxyCompactList}\small\item\em An over-\/approximation to the range of the quantity; not necessarily tight. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1ScaledFunctionPatch_a3024c6ae13e52ebb2eb4b04e77f8b351}\label{classAriadne_1_1ScaledFunctionPatch_a3024c6ae13e52ebb2eb4b04e77f8b351} 
+const Expansion\+Type \& {\bfseries expansion} () const
+\begin{DoxyCompactList}\small\item\em The scaled expansion over a unit box. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1ScaledFunctionPatch_a03bfff2fddc24447bd7935905b945676}\label{classAriadne_1_1ScaledFunctionPatch_a03bfff2fddc24447bd7935905b945676} 
+const Error\+Type {\bfseries error} () const
+\begin{DoxyCompactList}\small\item\em The error of the expansion over the domain. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1ScaledFunctionPatch_a5d56faca91b250e16f0d60db804ded74}\label{classAriadne_1_1ScaledFunctionPatch_a5d56faca91b250e16f0d60db804ded74} 
+Characteristics\+Type {\bfseries characteristics} () const
+\begin{DoxyCompactList}\small\item\em The arguments needed to crease a compatible zero function model. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1ScaledFunctionPatch_a2ab0950ae7e02ce972000bfb7df6d8bf}\label{classAriadne_1_1ScaledFunctionPatch_a2ab0950ae7e02ce972000bfb7df6d8bf} 
+Properties\+Type {\bfseries properties} () const
+\begin{DoxyCompactList}\small\item\em The accuracy parameter used to control approximation of the function model. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1ScaledFunctionPatch_ad6bf2be97424a4ac1b4d9f6ca1cc2324}\label{classAriadne_1_1ScaledFunctionPatch_ad6bf2be97424a4ac1b4d9f6ca1cc2324} 
+Precision\+Type {\bfseries precision} () const
+\begin{DoxyCompactList}\small\item\em The precision of the numbers used. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1ScaledFunctionPatch_a132a01d3bc359cabf7f8c4007246597d}\label{classAriadne_1_1ScaledFunctionPatch_a132a01d3bc359cabf7f8c4007246597d} 
+Expansion\+Type \& {\bfseries expansion} ()
+\begin{DoxyCompactList}\small\item\em A reference to the expansion. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1ScaledFunctionPatch_a597e420955123af5396023ab111e01af}\label{classAriadne_1_1ScaledFunctionPatch_a597e420955123af5396023ab111e01af} 
+Error\+Type \& {\bfseries error} ()
+\begin{DoxyCompactList}\small\item\em A reference to the error of the expansion over the domain. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1ScaledFunctionPatch_a6015810868b61a560242ea857fa5f1e7}\label{classAriadne_1_1ScaledFunctionPatch_a6015810868b61a560242ea857fa5f1e7} 
+const Value\+Type {\bfseries value} () const
+\begin{DoxyCompactList}\small\item\em The constant term in the expansion. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1ScaledFunctionPatch_a234fc1e31af87554ffa79dac8b4bea0c}\label{classAriadne_1_1ScaledFunctionPatch_a234fc1e31af87554ffa79dac8b4bea0c} 
+\mbox{\hyperlink{classAriadne_1_1Polynomial}{Multivariate\+Polynomial}}$<$ Numeric\+Type $>$ {\bfseries polynomial} () const
+\begin{DoxyCompactList}\small\item\em A polynomial representation. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1ScaledFunctionPatch_af16e8971737f86aa5b5fc0a7848b6156}\label{classAriadne_1_1ScaledFunctionPatch_af16e8971737f86aa5b5fc0a7848b6156} 
+Scalar\+Function\+Type$<$ M $>$ {\bfseries function} () const
+\begin{DoxyCompactList}\small\item\em A multivalued function equal to the model on the domain. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1ScaledFunctionPatch_a2af5e1e4072c746fcaf1efaeb211ce7d}\label{classAriadne_1_1ScaledFunctionPatch_a2af5e1e4072c746fcaf1efaeb211ce7d} 
+Scalar\+Function\+Type$<$ M $>$ {\bfseries generic} () const
+\begin{DoxyCompactList}\small\item\em Cast to a generic function. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1ScaledFunctionPatch_afe72a0721132d23d476cc28d7bf5af6b}\label{classAriadne_1_1ScaledFunctionPatch_afe72a0721132d23d476cc28d7bf5af6b} 
+\mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} {\bfseries set\+\_\+error} (const Error\+Type \&ne)
+\begin{DoxyCompactList}\small\item\em \doxylink{classAriadne_1_1Set}{Set} the error of the expansion. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1ScaledFunctionPatch_a688b80a70379cdce635ad0f7802df187}\label{classAriadne_1_1ScaledFunctionPatch_a688b80a70379cdce635ad0f7802df187} 
+\mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} {\bfseries set\+\_\+value} (const Coefficient\+Type \&c)
+\begin{DoxyCompactList}\small\item\em \doxylink{classAriadne_1_1Set}{Set} the constant term in the expansion. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1ScaledFunctionPatch_af3b8aea563cd1c8997a3560d9ef416b2}\label{classAriadne_1_1ScaledFunctionPatch_af3b8aea563cd1c8997a3560d9ef416b2} 
+const Coefficient\+Type \& {\bfseries operator\mbox{[}$\,$\mbox{]}} (const Multi\+Index \&a) const
+\begin{DoxyCompactList}\small\item\em The coefficient of the term in \$x\texorpdfstring{$^\wedge$}{\string^}a\$. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1ScaledFunctionPatch_ad0b7e16d74da625d8353533641ba535f}\label{classAriadne_1_1ScaledFunctionPatch_ad0b7e16d74da625d8353533641ba535f} 
+Coefficient\+Type \& {\bfseries operator\mbox{[}$\,$\mbox{]}} (const Multi\+Index \&a)
+\begin{DoxyCompactList}\small\item\em A read/write reference to the coefficient of the term in \$x\texorpdfstring{$^\wedge$}{\string^}a\$. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1ScaledFunctionPatch_ac553426d3e8c493742606dbe03855b08}\label{classAriadne_1_1ScaledFunctionPatch_ac553426d3e8c493742606dbe03855b08} 
+Size\+Type {\bfseries argument\+\_\+size} () const
+\begin{DoxyCompactList}\small\item\em The number of variables in the argument of the quantity. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1ScaledFunctionPatch_aa90f03ffb355037c9cfb6beb2ce1f6cf}\label{classAriadne_1_1ScaledFunctionPatch_aa90f03ffb355037c9cfb6beb2ce1f6cf} 
+\mbox{\hyperlink{structAriadne_1_1SizeOne}{Size\+One}} {\bfseries result\+\_\+size} () const
+\begin{DoxyCompactList}\small\item\em The number of variables in the argument of the quantity. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1ScaledFunctionPatch_a84847fadf9927f5cafdc5d68331bb74c}\label{classAriadne_1_1ScaledFunctionPatch_a84847fadf9927f5cafdc5d68331bb74c} 
+\mbox{\hyperlink{namespaceAriadne_a80311bc831cfc870fd65158180330a77}{Degree\+Type}} {\bfseries degree} () const
+\begin{DoxyCompactList}\small\item\em The maximum degree of terms in the expansion expansion. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1ScaledFunctionPatch_af3ae472488b3e75e891dfe8a432665bb}\label{classAriadne_1_1ScaledFunctionPatch_af3ae472488b3e75e891dfe8a432665bb} 
+Size\+Type {\bfseries number\+\_\+of\+\_\+nonzeros} () const
+\begin{DoxyCompactList}\small\item\em The number of nonzero terms in the expansion expansion. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\end{Indent}
+\begin{Indent}\textbf{ Function operations.}\par
+{\em An over-\/approximation to the range of the function. }\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1ScaledFunctionPatch_a30c6c8e615eccdb2e532e54f1ae8d530}\label{classAriadne_1_1ScaledFunctionPatch_a30c6c8e615eccdb2e532e54f1ae8d530} 
+Arithmetic\+Type$<$ Coefficient\+Type, \mbox{\hyperlink{group__NumericModule_ga1e049524e162af01e451c9183315a982}{Float\+Bounds}}$<$ PR $>$ $>$ {\bfseries operator()} (const \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ \mbox{\hyperlink{group__NumericModule_ga1e049524e162af01e451c9183315a982}{Float\+Bounds}}$<$ PR $>$ $>$ \&x) const
+\begin{DoxyCompactList}\small\item\em Evaluate the function at the point {\itshape x}. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\end{Indent}
+\begin{Indent}\textbf{ Simplification operations.}\par
+{\em Compute an approximation to gradient derivative of the function at the point {\itshape x}.
+
+Remove all terms whose coefficient has magnitude lower than the cutoff threshold of the quantity. }\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1ScaledFunctionPatch_a709197167f942ff7438ac8f12782f662}\label{classAriadne_1_1ScaledFunctionPatch_a709197167f942ff7438ac8f12782f662} 
+\mbox{\hyperlink{classAriadne_1_1ScaledFunctionPatch}{Scaled\+Function\+Patch}}$<$ M $>$ \& {\bfseries simplify} (const Properties\+Type \&prp)
+\begin{DoxyCompactList}\small\item\em Remove all terms whose degree is higher than {\itshape deg} or whose coefficient has magnitude less than {\itshape eps}. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\end{Indent}
+\begin{Indent}\textbf{ Accuracy parameters.}\par
+\end{Indent}
+\begin{Indent}\textbf{ Non-\/arithmetic operations.}\par
+\end{Indent}
+\doxysubsubsubsection*{Static Public Member Functions}
+\begin{Indent}\textbf{ Named constructors.}\par
+{\em Construct a zero function over domain {\itshape d}. }\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1ScaledFunctionPatch_af2e199b3978f7fa8510091abd5ee4854}\label{classAriadne_1_1ScaledFunctionPatch_af2e199b3978f7fa8510091abd5ee4854} 
+static \mbox{\hyperlink{classAriadne_1_1ScaledFunctionPatch}{Scaled\+Function\+Patch}}$<$ M $>$ {\bfseries constant} (const \mbox{\hyperlink{classAriadne_1_1Box}{Domain\+Type}} \&d, const Numeric\+Type \&c, Properties\+Type prp)
+\begin{DoxyCompactList}\small\item\em Construct a constant quantity in {\itshape as} independent variables. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1ScaledFunctionPatch_a2493606c5f0b444d7097a7d7051bebbe}\label{classAriadne_1_1ScaledFunctionPatch_a2493606c5f0b444d7097a7d7051bebbe} 
+static \mbox{\hyperlink{classAriadne_1_1ScaledFunctionPatch}{Scaled\+Function\+Patch}}$<$ M $>$ {\bfseries coordinate} (const \mbox{\hyperlink{classAriadne_1_1Box}{Domain\+Type}} \&d, Size\+Type j, Properties\+Type prp)
+\begin{DoxyCompactList}\small\item\em Construct the coordinate $x_{j}$ over the domain {\itshape d}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1ScaledFunctionPatch_a11b9536ca94b90972713b12a75b24a9d}\label{classAriadne_1_1ScaledFunctionPatch_a11b9536ca94b90972713b12a75b24a9d} 
+static \mbox{\hyperlink{classAriadne_1_1ScaledFunctionPatch}{Scaled\+Function\+Patch}}$<$ M $>$ {\bfseries unit\+\_\+ball} (const \mbox{\hyperlink{classAriadne_1_1Box}{Domain\+Type}} \&d, Properties\+Type prp)
+\begin{DoxyCompactList}\small\item\em Construct a constant quantity in {\itshape as} independent variables with value zero and uniform error {\itshape 1}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1ScaledFunctionPatch_a024dbf019b8e1013d360635fb1c82f0c}\label{classAriadne_1_1ScaledFunctionPatch_a024dbf019b8e1013d360635fb1c82f0c} 
+static \mbox{\hyperlink{classAriadne_1_1ScaledFunctionPatch}{Scaled\+Function\+Patch}}$<$ M $>$ {\bfseries projection} (const \mbox{\hyperlink{group__FunctionModule_gaf5c0b733c80abb59b1c3d1eb58c20099}{Box\+Domain\+Type}} \&d, Size\+Type j, Properties\+Type prp)
+\begin{DoxyCompactList}\small\item\em Construct the coordinate $x_{j}$ over the domain {\itshape d}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1ScaledFunctionPatch_aa4fd26be050bb12c0273148f5a78a1ca}\label{classAriadne_1_1ScaledFunctionPatch_aa4fd26be050bb12c0273148f5a78a1ca} 
+static \mbox{\hyperlink{classAriadne_1_1VectorScaledFunctionPatch}{Vector\+Scaled\+Function\+Patch}}$<$ M $>$ {\bfseries projection} (const \mbox{\hyperlink{group__FunctionModule_gaf5c0b733c80abb59b1c3d1eb58c20099}{Box\+Domain\+Type}} \&d, \mbox{\hyperlink{classAriadne_1_1Range}{Range}} js, Properties\+Type prp)
+\begin{DoxyCompactList}\small\item\em Return the vector function of coordinates in the range {\itshape js} over domain {\itshape d}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1ScaledFunctionPatch_a10a2460387ca76bf08582d7a34b179d9}\label{classAriadne_1_1ScaledFunctionPatch_a10a2460387ca76bf08582d7a34b179d9} 
+static \mbox{\hyperlink{classAriadne_1_1VectorScaledFunctionPatch}{Vector\+Scaled\+Function\+Patch}}$<$ M $>$ {\bfseries identity} (const \mbox{\hyperlink{classAriadne_1_1Box}{Domain\+Type}} \&d, Properties\+Type prp)
+\begin{DoxyCompactList}\small\item\em Construct the identity function over the domain {\itshape d}. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\end{Indent}
+\doxysubsubsubsection*{Friends}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1ScaledFunctionPatch_aa3d2103cde9e4c67e53848dfbbf2bf08}\label{classAriadne_1_1ScaledFunctionPatch_aa3d2103cde9e4c67e53848dfbbf2bf08} 
+\mbox{\hyperlink{classAriadne_1_1ScaledFunctionPatch}{Scaled\+Function\+Patch}}$<$ M $>$ {\bfseries restriction} (const \mbox{\hyperlink{classAriadne_1_1ScaledFunctionPatch}{Scaled\+Function\+Patch}}$<$ M $>$ \&f, const \mbox{\hyperlink{group__FunctionModule_gaf5c0b733c80abb59b1c3d1eb58c20099}{Box\+Domain\+Type}} \&dom)
+\begin{DoxyCompactList}\small\item\em Restrict to a subdomain. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1ScaledFunctionPatch_ac45f23fb817854652ad0f842c9a7ad07}\label{classAriadne_1_1ScaledFunctionPatch_ac45f23fb817854652ad0f842c9a7ad07} 
+\mbox{\hyperlink{classAriadne_1_1ScaledFunctionPatch}{Scaled\+Function\+Patch}}$<$ M $>$ {\bfseries partial\+\_\+restriction} (const \mbox{\hyperlink{classAriadne_1_1ScaledFunctionPatch}{Scaled\+Function\+Patch}}$<$ M $>$ \&f, Size\+Type k, const \mbox{\hyperlink{group__FunctionModule_ga5f13c1d70d7770b9aa4ff0dc2d515ffe}{Interval\+Domain\+Type}} \&ivl)
+\begin{DoxyCompactList}\small\item\em Restrict a component to a subdomain. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1ScaledFunctionPatch_a029f7e5841ff6fc537dd0f1874095883}\label{classAriadne_1_1ScaledFunctionPatch_a029f7e5841ff6fc537dd0f1874095883} 
+\mbox{\hyperlink{classAriadne_1_1ScaledFunctionPatch}{Scaled\+Function\+Patch}}$<$ M $>$ {\bfseries embed} (const \mbox{\hyperlink{group__FunctionModule_gaf5c0b733c80abb59b1c3d1eb58c20099}{Box\+Domain\+Type}} \&dom1, const \mbox{\hyperlink{classAriadne_1_1ScaledFunctionPatch}{Scaled\+Function\+Patch}}$<$ M $>$ \&f2, const \mbox{\hyperlink{group__FunctionModule_gaf5c0b733c80abb59b1c3d1eb58c20099}{Box\+Domain\+Type}} \&dom3)
+\begin{DoxyCompactList}\small\item\em Pre-\/compose with a projection from the Cartesian product of the given domains. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1ScaledFunctionPatch_a2a6eb4ded0d6b0e8b5ddcfce7f1a421b}\label{classAriadne_1_1ScaledFunctionPatch_a2a6eb4ded0d6b0e8b5ddcfce7f1a421b} 
+\mbox{\hyperlink{namespaceAriadne_abbe0884d033ed6289d1f654576d7bb07}{Pair}}$<$ \mbox{\hyperlink{classAriadne_1_1ScaledFunctionPatch}{Scaled\+Function\+Patch}}$<$ M $>$, \mbox{\hyperlink{classAriadne_1_1ScaledFunctionPatch}{Scaled\+Function\+Patch}}$<$ M $>$ $>$ {\bfseries split} (const \mbox{\hyperlink{classAriadne_1_1ScaledFunctionPatch}{Scaled\+Function\+Patch}}$<$ M $>$ \&f, Size\+Type j)
+\begin{DoxyCompactList}\small\item\em Split the domain into two. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsubsection*{Prototype constructors.}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1ScaledFunctionPatch_afc22bb0613288d637ef83442df9043db}\label{classAriadne_1_1ScaledFunctionPatch_afc22bb0613288d637ef83442df9043db} 
+\mbox{\hyperlink{classAriadne_1_1ScaledFunctionPatch}{Scaled\+Function\+Patch}}$<$ M $>$ {\bfseries create\+\_\+zero} () const
+\begin{DoxyCompactList}\small\item\em Construct a constant function over the same domain with the same computational properties. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1ScaledFunctionPatch_a1f7f1960f3f2e01903729a0c770fbd11}\label{classAriadne_1_1ScaledFunctionPatch_a1f7f1960f3f2e01903729a0c770fbd11} 
+\mbox{\hyperlink{classAriadne_1_1ScaledFunctionPatch}{Scaled\+Function\+Patch}}$<$ M $>$ {\bfseries create\+\_\+constant} (Numeric\+Type const \&c) const
+\begin{DoxyCompactList}\small\item\em Construct a zero function over the same domain with the same computational properties. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsubsection*{Stream input/output operators.}
+Write a full representation to an output stream. \begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1ScaledFunctionPatch_ad494ad707371c8f810d9ffd84fca28d2}\label{classAriadne_1_1ScaledFunctionPatch_ad494ad707371c8f810d9ffd84fca28d2} 
+\mbox{\hyperlink{namespaceAriadne_acbb98ddc4385af4599070e65a1a47ec1}{Output\+Stream}} \& {\bfseries operator$<$$<$} (\mbox{\hyperlink{namespaceAriadne_acbb98ddc4385af4599070e65a1a47ec1}{Output\+Stream}} \&os, const \mbox{\hyperlink{classAriadne_1_1ScaledFunctionPatch}{Scaled\+Function\+Patch}}$<$ M $>$ \&x)
+\begin{DoxyCompactList}\small\item\em Write to an output stream. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+The documentation for this class was generated from the following files\+:\begin{DoxyCompactItemize}
+\item 
+source/function/\mbox{\hyperlink{function__model_8hpp}{function\+\_\+model.\+hpp}}\item 
+source/function/\mbox{\hyperlink{scaled__function__patch_8hpp}{scaled\+\_\+function\+\_\+patch.\+hpp}}\item 
+source/function/scaled\+\_\+function\+\_\+patch.\+tpl.\+hpp\end{DoxyCompactItemize}

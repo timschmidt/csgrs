@@ -1,0 +1,957 @@
+{
+  "parents": {
+    "hypercurve": "9370aa67a692d651b46ad32d836fed62f9da726f",
+    "hypersolve": "42308d704df777b3e627aa344424afa3f215e456",
+    "hyperreal": "0cb5f29aee065c73e234e0ebb0a9e106398515bb"
+  },
+  "source_manifest": "rational-root-refinement-20260926-v198-sources.json",
+  "source_directory": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/source-archives/rational-root-refinement-20260926-v198",
+  "build_source_directory": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/build-workspace-20260925",
+  "binaries": {
+    "hypercurve": {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/rational-root-refinement-20260926-v198-hypercurve",
+      "sha256": "09641b238dfe5b7ff19e8c12bf67c8daf0e86c5a5c73c7afdead562a5391e730"
+    }
+  },
+  "checks": [
+    {
+      "label": "fmt",
+      "repo": "hypercurve",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustfmt",
+        "--edition",
+        "2024",
+        "--check",
+        "src/bezier_parameter.rs"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.11379066400695592,
+      "log": "rational-root-refinement-20260926-v198-parameters-fmt.log"
+    },
+    {
+      "label": "clippy-all",
+      "repo": "hypercurve",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "clippy",
+        "--all-targets",
+        "--all-features",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 22.195434580091387,
+      "log": "rational-root-refinement-20260926-v198-parameters-clippy-all.log"
+    },
+    {
+      "label": "clippy-default",
+      "repo": "hypercurve",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "clippy",
+        "--all-targets",
+        "--no-default-features",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 21.393390623037703,
+      "log": "rational-root-refinement-20260926-v198-parameters-clippy-default.log"
+    }
+  ],
+  "cases": [
+    {
+      "label": "case-00",
+      "repo": "hypercurve",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/rational-root-refinement-20260926-v198-hypercurve",
+        "--exact",
+        "bezier_parameter::conversion_tests::algebraic_sign_filter_has_no_fixed_refinement_cap",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.0035127790179103613,
+      "log": "rational-root-refinement-20260926-v198-parameters-case-00.log",
+      "name": "bezier_parameter::conversion_tests::algebraic_sign_filter_has_no_fixed_refinement_cap"
+    },
+    {
+      "label": "case-01",
+      "repo": "hypercurve",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/rational-root-refinement-20260926-v198-hypercurve",
+        "--exact",
+        "bezier_parameter::conversion_tests::algebraic_sign_filter_preserves_selected_root_and_boundary_ownership",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.0035151790361851454,
+      "log": "rational-root-refinement-20260926-v198-parameters-case-01.log",
+      "name": "bezier_parameter::conversion_tests::algebraic_sign_filter_preserves_selected_root_and_boundary_ownership"
+    },
+    {
+      "label": "case-02",
+      "repo": "hypercurve",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/rational-root-refinement-20260926-v198-hypercurve",
+        "--exact",
+        "bezier_parameter::conversion_tests::algebraic_sign_queries_reuse_the_singleton_for_tiny_separations",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.003472301992587745,
+      "log": "rational-root-refinement-20260926-v198-parameters-case-02.log",
+      "name": "bezier_parameter::conversion_tests::algebraic_sign_queries_reuse_the_singleton_for_tiny_separations"
+    },
+    {
+      "label": "case-03",
+      "repo": "hypercurve",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/rational-root-refinement-20260926-v198-hypercurve",
+        "--exact",
+        "bezier_parameter::conversion_tests::algebraic_unit_complement_preserves_the_exact_singleton_root",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.0034935110015794635,
+      "log": "rational-root-refinement-20260926-v198-parameters-case-03.log",
+      "name": "bezier_parameter::conversion_tests::algebraic_unit_complement_preserves_the_exact_singleton_root"
+    },
+    {
+      "label": "case-04",
+      "repo": "hypercurve",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/rational-root-refinement-20260926-v198-hypercurve",
+        "--exact",
+        "bezier_parameter::conversion_tests::arbitrary_degree_nonrational_bernstein_isolates_every_simple_root",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.003477261052466929,
+      "log": "rational-root-refinement-20260926-v198-parameters-case-04.log",
+      "name": "bezier_parameter::conversion_tests::arbitrary_degree_nonrational_bernstein_isolates_every_simple_root"
+    },
+    {
+      "label": "case-05",
+      "repo": "hypercurve",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/rational-root-refinement-20260926-v198-hypercurve",
+        "--exact",
+        "bezier_parameter::conversion_tests::authoritative_sturm_sequence_has_no_historical_degree_cap",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.007562610087916255,
+      "log": "rational-root-refinement-20260926-v198-parameters-case-05.log",
+      "name": "bezier_parameter::conversion_tests::authoritative_sturm_sequence_has_no_historical_degree_cap"
+    },
+    {
+      "label": "case-06",
+      "repo": "hypercurve",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/rational-root-refinement-20260926-v198-hypercurve",
+        "--exact",
+        "bezier_parameter::conversion_tests::bernstein_simple_root_certificates_avoid_multiplicity_sturm_rebuilds",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.0034827309427782893,
+      "log": "rational-root-refinement-20260926-v198-parameters-case-06.log",
+      "name": "bezier_parameter::conversion_tests::bernstein_simple_root_certificates_avoid_multiplicity_sturm_rebuilds"
+    },
+    {
+      "label": "case-07",
+      "repo": "hypercurve",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/rational-root-refinement-20260926-v198-hypercurve",
+        "--exact",
+        "bezier_parameter::conversion_tests::bernstein_to_power_remains_exact_beyond_u64_binomials",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.0034863410983234644,
+      "log": "rational-root-refinement-20260926-v198-parameters-case-07.log",
+      "name": "bezier_parameter::conversion_tests::bernstein_to_power_remains_exact_beyond_u64_binomials"
+    },
+    {
+      "label": "case-08",
+      "repo": "hypercurve",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/rational-root-refinement-20260926-v198-hypercurve",
+        "--exact",
+        "bezier_parameter::conversion_tests::cached_scalar_refinement_preserves_the_selected_root_authority",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.003493419964797795,
+      "log": "rational-root-refinement-20260926-v198-parameters-case-08.log",
+      "name": "bezier_parameter::conversion_tests::cached_scalar_refinement_preserves_the_selected_root_authority"
+    },
+    {
+      "label": "case-09",
+      "repo": "hypercurve",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/rational-root-refinement-20260926-v198-hypercurve",
+        "--exact",
+        "bezier_parameter::conversion_tests::carried_sturm_variations_match_partition_root_counts",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.003497679950669408,
+      "log": "rational-root-refinement-20260926-v198-parameters-case-09.log",
+      "name": "bezier_parameter::conversion_tests::carried_sturm_variations_match_partition_root_counts"
+    },
+    {
+      "label": "case-10",
+      "repo": "hypercurve",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/rational-root-refinement-20260926-v198-hypercurve",
+        "--exact",
+        "bezier_parameter::conversion_tests::collapsed_exact_real_representation_imports_as_an_exact_parameter",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.0034937700256705284,
+      "log": "rational-root-refinement-20260926-v198-parameters-case-10.log",
+      "name": "bezier_parameter::conversion_tests::collapsed_exact_real_representation_imports_as_an_exact_parameter"
+    },
+    {
+      "label": "case-11",
+      "repo": "hypercurve",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/rational-root-refinement-20260926-v198-hypercurve",
+        "--exact",
+        "bezier_parameter::conversion_tests::composed_projective_charts_share_one_root_without_growing_history_or_scale",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.0035481760278344154,
+      "log": "rational-root-refinement-20260926-v198-parameters-case-11.log",
+      "name": "bezier_parameter::conversion_tests::composed_projective_charts_share_one_root_without_growing_history_or_scale"
+    },
+    {
+      "label": "case-12",
+      "repo": "hypercurve",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/rational-root-refinement-20260926-v198-hypercurve",
+        "--exact",
+        "bezier_parameter::conversion_tests::decreasing_root_charts_preserve_owned_and_excluded_endpoints",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.003451613010838628,
+      "log": "rational-root-refinement-20260926-v198-parameters-case-12.log",
+      "name": "bezier_parameter::conversion_tests::decreasing_root_charts_preserve_owned_and_excluded_endpoints"
+    },
+    {
+      "label": "case-13",
+      "repo": "hypercurve",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/rational-root-refinement-20260926-v198-hypercurve",
+        "--exact",
+        "bezier_parameter::conversion_tests::finite_interval_isolation_has_no_fixed_dyadic_depth_limit",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.03167282498907298,
+      "log": "rational-root-refinement-20260926-v198-parameters-case-13.log",
+      "name": "bezier_parameter::conversion_tests::finite_interval_isolation_has_no_fixed_dyadic_depth_limit"
+    },
+    {
+      "label": "case-14",
+      "repo": "hypercurve",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/rational-root-refinement-20260926-v198-hypercurve",
+        "--exact",
+        "bezier_parameter::conversion_tests::imported_root_comparisons_preserve_owned_and_excluded_endpoints",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.0034932700218632817,
+      "log": "rational-root-refinement-20260926-v198-parameters-case-14.log",
+      "name": "bezier_parameter::conversion_tests::imported_root_comparisons_preserve_owned_and_excluded_endpoints"
+    },
+    {
+      "label": "case-15",
+      "repo": "hypercurve",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/rational-root-refinement-20260926-v198-hypercurve",
+        "--exact",
+        "bezier_parameter::conversion_tests::incident_ray_isolation_orders_exact_roots_away_from_the_anchor",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.0036117519484832883,
+      "log": "rational-root-refinement-20260926-v198-parameters-case-15.log",
+      "name": "bezier_parameter::conversion_tests::incident_ray_isolation_orders_exact_roots_away_from_the_anchor"
+    },
+    {
+      "label": "case-16",
+      "repo": "hypercurve",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/rational-root-refinement-20260926-v198-hypercurve",
+        "--exact",
+        "bezier_parameter::conversion_tests::incident_ray_isolation_retains_irrational_exterior_root_authority",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.0034995099995285273,
+      "log": "rational-root-refinement-20260926-v198-parameters-case-16.log",
+      "name": "bezier_parameter::conversion_tests::incident_ray_isolation_retains_irrational_exterior_root_authority"
+    },
+    {
+      "label": "case-17",
+      "repo": "hypercurve",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/rational-root-refinement-20260926-v198-hypercurve",
+        "--exact",
+        "bezier_parameter::conversion_tests::independent_singleton_charts_reuse_nested_root_identity",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.0034824709873646498,
+      "log": "rational-root-refinement-20260926-v198-parameters-case-17.log",
+      "name": "bezier_parameter::conversion_tests::independent_singleton_charts_reuse_nested_root_identity"
+    },
+    {
+      "label": "case-18",
+      "repo": "hypercurve",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/rational-root-refinement-20260926-v198-hypercurve",
+        "--exact",
+        "bezier_parameter::conversion_tests::interior_probes_do_not_embed_endpoint_expressions",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.0035854539601132274,
+      "log": "rational-root-refinement-20260926-v198-parameters-case-18.log",
+      "name": "bezier_parameter::conversion_tests::interior_probes_do_not_embed_endpoint_expressions"
+    },
+    {
+      "label": "case-19",
+      "repo": "hypercurve",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/rational-root-refinement-20260926-v198-hypercurve",
+        "--exact",
+        "bezier_parameter::conversion_tests::interval_root_isolation_uses_original_polynomial_and_closed_boundaries",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.0035233480157330632,
+      "log": "rational-root-refinement-20260926-v198-parameters-case-19.log",
+      "name": "bezier_parameter::conversion_tests::interval_root_isolation_uses_original_polynomial_and_closed_boundaries"
+    },
+    {
+      "label": "case-20",
+      "repo": "hypercurve",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/rational-root-refinement-20260926-v198-hypercurve",
+        "--exact",
+        "bezier_parameter::conversion_tests::isolation_retains_large_rational_roots_until_projection_is_requested",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.007566959946416318,
+      "log": "rational-root-refinement-20260926-v198-parameters-case-20.log",
+      "name": "bezier_parameter::conversion_tests::isolation_retains_large_rational_roots_until_projection_is_requested"
+    },
+    {
+      "label": "case-21",
+      "repo": "hypercurve",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/rational-root-refinement-20260926-v198-hypercurve",
+        "--exact",
+        "bezier_parameter::conversion_tests::modular_sieve_rejects_only_rootless_rational_reductions",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.0034882199252024293,
+      "log": "rational-root-refinement-20260926-v198-parameters-case-21.log",
+      "name": "bezier_parameter::conversion_tests::modular_sieve_rejects_only_rootless_rational_reductions"
+    },
+    {
+      "label": "case-22",
+      "repo": "hypercurve",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/rational-root-refinement-20260926-v198-hypercurve",
+        "--exact",
+        "bezier_parameter::conversion_tests::modular_sieve_retains_polynomials_with_known_rational_roots",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.003518097917549312,
+      "log": "rational-root-refinement-20260926-v198-parameters-case-22.log",
+      "name": "bezier_parameter::conversion_tests::modular_sieve_retains_polynomials_with_known_rational_roots"
+    },
+    {
+      "label": "case-23",
+      "repo": "hypercurve",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/rational-root-refinement-20260926-v198-hypercurve",
+        "--exact",
+        "bezier_parameter::conversion_tests::native_small_modulus_matches_bigint_floor_remainder",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.0034709719475358725,
+      "log": "rational-root-refinement-20260926-v198-parameters-case-23.log",
+      "name": "bezier_parameter::conversion_tests::native_small_modulus_matches_bigint_floor_remainder"
+    },
+    {
+      "label": "case-24",
+      "repo": "hypercurve",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/rational-root-refinement-20260926-v198-hypercurve",
+        "--exact",
+        "bezier_parameter::conversion_tests::nested_nonrational_quadratic_root_materializes_exactly",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.003518178011290729,
+      "log": "rational-root-refinement-20260926-v198-parameters-case-24.log",
+      "name": "bezier_parameter::conversion_tests::nested_nonrational_quadratic_root_materializes_exactly"
+    },
+    {
+      "label": "case-25",
+      "repo": "hypercurve",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/rational-root-refinement-20260926-v198-hypercurve",
+        "--exact",
+        "bezier_parameter::conversion_tests::nonlinear_and_approximate_zeroes_do_not_create_scalar_witnesses",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.0034836409613490105,
+      "log": "rational-root-refinement-20260926-v198-parameters-case-25.log",
+      "name": "bezier_parameter::conversion_tests::nonlinear_and_approximate_zeroes_do_not_create_scalar_witnesses"
+    },
+    {
+      "label": "case-26",
+      "repo": "hypercurve",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/rational-root-refinement-20260926-v198-hypercurve",
+        "--exact",
+        "bezier_parameter::conversion_tests::nonrational_low_degree_roots_materialize_without_sturm_work",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.003452031989581883,
+      "log": "rational-root-refinement-20260926-v198-parameters-case-26.log",
+      "name": "bezier_parameter::conversion_tests::nonrational_low_degree_roots_materialize_without_sturm_work"
+    },
+    {
+      "label": "case-27",
+      "repo": "hypercurve",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/rational-root-refinement-20260926-v198-hypercurve",
+        "--exact",
+        "bezier_parameter::conversion_tests::nonrational_power_evaluation_uses_exact_endpoint_identities",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.003487010020762682,
+      "log": "rational-root-refinement-20260926-v198-parameters-case-27.log",
+      "name": "bezier_parameter::conversion_tests::nonrational_power_evaluation_uses_exact_endpoint_identities"
+    },
+    {
+      "label": "case-28",
+      "repo": "hypercurve",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/rational-root-refinement-20260926-v198-hypercurve",
+        "--exact",
+        "bezier_parameter::conversion_tests::polynomial_sign_queries_do_not_require_a_known_degree",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.0034960299963131547,
+      "log": "rational-root-refinement-20260926-v198-parameters-case-28.log",
+      "name": "bezier_parameter::conversion_tests::polynomial_sign_queries_do_not_require_a_known_degree"
+    },
+    {
+      "label": "case-29",
+      "repo": "hypercurve",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/rational-root-refinement-20260926-v198-hypercurve",
+        "--exact",
+        "bezier_parameter::conversion_tests::polynomial_signs_use_the_retained_interval_before_algebraic_replay",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.0034995999885722995,
+      "log": "rational-root-refinement-20260926-v198-parameters-case-29.log",
+      "name": "bezier_parameter::conversion_tests::polynomial_signs_use_the_retained_interval_before_algebraic_replay"
+    },
+    {
+      "label": "case-30",
+      "repo": "hypercurve",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/rational-root-refinement-20260926-v198-hypercurve",
+        "--exact",
+        "bezier_parameter::conversion_tests::progressive_refinement_matches_one_pass_proof_budget",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.0035283479373902082,
+      "log": "rational-root-refinement-20260926-v198-parameters-case-30.log",
+      "name": "bezier_parameter::conversion_tests::progressive_refinement_matches_one_pass_proof_budget"
+    },
+    {
+      "label": "case-31",
+      "repo": "hypercurve",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/rational-root-refinement-20260926-v198-hypercurve",
+        "--exact",
+        "bezier_parameter::conversion_tests::projective_images_preserve_exterior_singletons_across_unused_poles",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.007539052981883287,
+      "log": "rational-root-refinement-20260926-v198-parameters-case-31.log",
+      "name": "bezier_parameter::conversion_tests::projective_images_preserve_exterior_singletons_across_unused_poles"
+    },
+    {
+      "label": "case-32",
+      "repo": "hypercurve",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/rational-root-refinement-20260926-v198-hypercurve",
+        "--exact",
+        "bezier_parameter::conversion_tests::rational_basis_subdivision_matches_the_shared_bernstein_kernel",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.0035080990055575967,
+      "log": "rational-root-refinement-20260926-v198-parameters-case-32.log",
+      "name": "bezier_parameter::conversion_tests::rational_basis_subdivision_matches_the_shared_bernstein_kernel"
+    },
+    {
+      "label": "case-33",
+      "repo": "hypercurve",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/rational-root-refinement-20260926-v198-hypercurve",
+        "--exact",
+        "bezier_parameter::conversion_tests::rational_reconstruction_reuses_sturm_ownership_across_both_children",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.0035251480294391513,
+      "log": "rational-root-refinement-20260926-v198-parameters-case-33.log",
+      "name": "bezier_parameter::conversion_tests::rational_reconstruction_reuses_sturm_ownership_across_both_children"
+    },
+    {
+      "label": "case-34",
+      "repo": "hypercurve",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/rational-root-refinement-20260926-v198-hypercurve",
+        "--exact",
+        "bezier_parameter::conversion_tests::refinement_to_an_exact_root_precedes_touching_interval_order",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.0034666620194911957,
+      "log": "rational-root-refinement-20260926-v198-parameters-case-34.log",
+      "name": "bezier_parameter::conversion_tests::refinement_to_an_exact_root_precedes_touching_interval_order"
+    },
+    {
+      "label": "case-35",
+      "repo": "hypercurve",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/rational-root-refinement-20260926-v198-hypercurve",
+        "--exact",
+        "bezier_parameter::conversion_tests::retained_refinement_matches_square_free_reference_and_shares_sturm_work",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.0034731320338323712,
+      "log": "rational-root-refinement-20260926-v198-parameters-case-35.log",
+      "name": "bezier_parameter::conversion_tests::retained_refinement_matches_square_free_reference_and_shares_sturm_work"
+    },
+    {
+      "label": "case-36",
+      "repo": "hypercurve",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/rational-root-refinement-20260926-v198-hypercurve",
+        "--exact",
+        "bezier_parameter::conversion_tests::retained_sturm_certificate_classifies_mixed_root_multiplicity",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.003481670981273055,
+      "log": "rational-root-refinement-20260926-v198-parameters-case-36.log",
+      "name": "bezier_parameter::conversion_tests::retained_sturm_certificate_classifies_mixed_root_multiplicity"
+    },
+    {
+      "label": "case-37",
+      "repo": "hypercurve",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/rational-root-refinement-20260926-v198-hypercurve",
+        "--exact",
+        "bezier_parameter::conversion_tests::root_refinement_does_not_embed_irrational_isolator_bounds",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.007546651992015541,
+      "log": "rational-root-refinement-20260926-v198-parameters-case-37.log",
+      "name": "bezier_parameter::conversion_tests::root_refinement_does_not_embed_irrational_isolator_bounds"
+    },
+    {
+      "label": "case-38",
+      "repo": "hypercurve",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/rational-root-refinement-20260926-v198-hypercurve",
+        "--exact",
+        "bezier_parameter::conversion_tests::simple_root_certificate_accepts_an_endpoint_deflated_algebraic_carrier",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.003471311996690929,
+      "log": "rational-root-refinement-20260926-v198-parameters-case-38.log",
+      "name": "bezier_parameter::conversion_tests::simple_root_certificate_accepts_an_endpoint_deflated_algebraic_carrier"
+    },
+    {
+      "label": "case-39",
+      "repo": "hypercurve",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/rational-root-refinement-20260926-v198-hypercurve",
+        "--exact",
+        "bezier_parameter::conversion_tests::simple_root_certificate_distinguishes_algebraic_multiplicity",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.0034479929599910975,
+      "log": "rational-root-refinement-20260926-v198-parameters-case-39.log",
+      "name": "bezier_parameter::conversion_tests::simple_root_certificate_distinguishes_algebraic_multiplicity"
+    },
+    {
+      "label": "case-40",
+      "repo": "hypercurve",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/rational-root-refinement-20260926-v198-hypercurve",
+        "--exact",
+        "bezier_parameter::conversion_tests::simple_root_certificate_distinguishes_exact_multiplicity",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.0034788409247994423,
+      "log": "rational-root-refinement-20260926-v198-parameters-case-40.log",
+      "name": "bezier_parameter::conversion_tests::simple_root_certificate_distinguishes_exact_multiplicity"
+    },
+    {
+      "label": "case-41",
+      "repo": "hypercurve",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/rational-root-refinement-20260926-v198-hypercurve",
+        "--exact",
+        "bezier_parameter::conversion_tests::solver_owned_root_refinement_excludes_repeated_lower_endpoints",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.0034872699761763215,
+      "log": "rational-root-refinement-20260926-v198-parameters-case-41.log",
+      "name": "bezier_parameter::conversion_tests::solver_owned_root_refinement_excludes_repeated_lower_endpoints"
+    },
+    {
+      "label": "case-42",
+      "repo": "hypercurve",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/rational-root-refinement-20260926-v198-hypercurve",
+        "--exact",
+        "bezier_parameter::conversion_tests::square_free_bernstein_preserves_wide_signed_scale_certificates",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.007519164006225765,
+      "log": "rational-root-refinement-20260926-v198-parameters-case-42.log",
+      "name": "bezier_parameter::conversion_tests::square_free_bernstein_preserves_wide_signed_scale_certificates"
+    },
+    {
+      "label": "case-43",
+      "repo": "hypercurve",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/rational-root-refinement-20260926-v198-hypercurve",
+        "--exact",
+        "bezier_parameter::conversion_tests::square_free_bernstein_scaled_endpoint_and_midpoint_roots_keep_fallback",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.003535096999257803,
+      "log": "rational-root-refinement-20260926-v198-parameters-case-43.log",
+      "name": "bezier_parameter::conversion_tests::square_free_bernstein_scaled_endpoint_and_midpoint_roots_keep_fallback"
+    },
+    {
+      "label": "case-44",
+      "repo": "hypercurve",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/rational-root-refinement-20260926-v198-hypercurve",
+        "--exact",
+        "bezier_parameter::conversion_tests::square_free_degree_128_bernstein_isolates_every_unit_root",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.015627305954694748,
+      "log": "rational-root-refinement-20260926-v198-parameters-case-44.log",
+      "name": "bezier_parameter::conversion_tests::square_free_degree_128_bernstein_isolates_every_unit_root"
+    },
+    {
+      "label": "case-45",
+      "repo": "hypercurve",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/rational-root-refinement-20260926-v198-hypercurve",
+        "--exact",
+        "bezier_parameter::conversion_tests::strict_gap_preserves_irrational_and_repeated_root_ownership",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.007550681009888649,
+      "log": "rational-root-refinement-20260926-v198-parameters-case-45.log",
+      "name": "bezier_parameter::conversion_tests::strict_gap_preserves_irrational_and_repeated_root_ownership"
+    },
+    {
+      "label": "case-46",
+      "repo": "hypercurve",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/rational-root-refinement-20260926-v198-hypercurve",
+        "--exact",
+        "bezier_parameter::conversion_tests::strict_gap_refines_both_overlapping_algebraic_parameters",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.0034875900018960238,
+      "log": "rational-root-refinement-20260926-v198-parameters-case-46.log",
+      "name": "bezier_parameter::conversion_tests::strict_gap_refines_both_overlapping_algebraic_parameters"
+    },
+    {
+      "label": "case-47",
+      "repo": "hypercurve",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/rational-root-refinement-20260926-v198-hypercurve",
+        "--exact",
+        "bezier_parameter::conversion_tests::strict_linear_queries_retain_witnesses_after_rational_reconstruction_declines",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.003483311040326953,
+      "log": "rational-root-refinement-20260926-v198-parameters-case-47.log",
+      "name": "bezier_parameter::conversion_tests::strict_linear_queries_retain_witnesses_after_rational_reconstruction_declines"
+    },
+    {
+      "label": "case-48",
+      "repo": "hypercurve",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/rational-root-refinement-20260926-v198-hypercurve",
+        "--exact",
+        "bezier_parameter::conversion_tests::strict_scalar_equalities_retain_arbitrary_real_parameter_witnesses",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.00348847103305161,
+      "log": "rational-root-refinement-20260926-v198-parameters-case-48.log",
+      "name": "bezier_parameter::conversion_tests::strict_scalar_equalities_retain_arbitrary_real_parameter_witnesses"
+    }
+  ],
+  "all_processes_reaped": true,
+  "selection": [
+    "bezier_parameter::conversion_tests::algebraic_sign_filter_has_no_fixed_refinement_cap",
+    "bezier_parameter::conversion_tests::algebraic_sign_filter_preserves_selected_root_and_boundary_ownership",
+    "bezier_parameter::conversion_tests::algebraic_sign_queries_reuse_the_singleton_for_tiny_separations",
+    "bezier_parameter::conversion_tests::algebraic_unit_complement_preserves_the_exact_singleton_root",
+    "bezier_parameter::conversion_tests::arbitrary_degree_nonrational_bernstein_isolates_every_simple_root",
+    "bezier_parameter::conversion_tests::authoritative_sturm_sequence_has_no_historical_degree_cap",
+    "bezier_parameter::conversion_tests::bernstein_simple_root_certificates_avoid_multiplicity_sturm_rebuilds",
+    "bezier_parameter::conversion_tests::bernstein_to_power_remains_exact_beyond_u64_binomials",
+    "bezier_parameter::conversion_tests::cached_scalar_refinement_preserves_the_selected_root_authority",
+    "bezier_parameter::conversion_tests::carried_sturm_variations_match_partition_root_counts",
+    "bezier_parameter::conversion_tests::collapsed_exact_real_representation_imports_as_an_exact_parameter",
+    "bezier_parameter::conversion_tests::composed_projective_charts_share_one_root_without_growing_history_or_scale",
+    "bezier_parameter::conversion_tests::decreasing_root_charts_preserve_owned_and_excluded_endpoints",
+    "bezier_parameter::conversion_tests::finite_interval_isolation_has_no_fixed_dyadic_depth_limit",
+    "bezier_parameter::conversion_tests::imported_root_comparisons_preserve_owned_and_excluded_endpoints",
+    "bezier_parameter::conversion_tests::incident_ray_isolation_orders_exact_roots_away_from_the_anchor",
+    "bezier_parameter::conversion_tests::incident_ray_isolation_retains_irrational_exterior_root_authority",
+    "bezier_parameter::conversion_tests::independent_singleton_charts_reuse_nested_root_identity",
+    "bezier_parameter::conversion_tests::interior_probes_do_not_embed_endpoint_expressions",
+    "bezier_parameter::conversion_tests::interval_root_isolation_uses_original_polynomial_and_closed_boundaries",
+    "bezier_parameter::conversion_tests::isolation_retains_large_rational_roots_until_projection_is_requested",
+    "bezier_parameter::conversion_tests::modular_sieve_rejects_only_rootless_rational_reductions",
+    "bezier_parameter::conversion_tests::modular_sieve_retains_polynomials_with_known_rational_roots",
+    "bezier_parameter::conversion_tests::native_small_modulus_matches_bigint_floor_remainder",
+    "bezier_parameter::conversion_tests::nested_nonrational_quadratic_root_materializes_exactly",
+    "bezier_parameter::conversion_tests::nonlinear_and_approximate_zeroes_do_not_create_scalar_witnesses",
+    "bezier_parameter::conversion_tests::nonrational_low_degree_roots_materialize_without_sturm_work",
+    "bezier_parameter::conversion_tests::nonrational_power_evaluation_uses_exact_endpoint_identities",
+    "bezier_parameter::conversion_tests::polynomial_sign_queries_do_not_require_a_known_degree",
+    "bezier_parameter::conversion_tests::polynomial_signs_use_the_retained_interval_before_algebraic_replay",
+    "bezier_parameter::conversion_tests::progressive_refinement_matches_one_pass_proof_budget",
+    "bezier_parameter::conversion_tests::projective_images_preserve_exterior_singletons_across_unused_poles",
+    "bezier_parameter::conversion_tests::rational_basis_subdivision_matches_the_shared_bernstein_kernel",
+    "bezier_parameter::conversion_tests::rational_reconstruction_reuses_sturm_ownership_across_both_children",
+    "bezier_parameter::conversion_tests::refinement_to_an_exact_root_precedes_touching_interval_order",
+    "bezier_parameter::conversion_tests::retained_refinement_matches_square_free_reference_and_shares_sturm_work",
+    "bezier_parameter::conversion_tests::retained_sturm_certificate_classifies_mixed_root_multiplicity",
+    "bezier_parameter::conversion_tests::root_refinement_does_not_embed_irrational_isolator_bounds",
+    "bezier_parameter::conversion_tests::simple_root_certificate_accepts_an_endpoint_deflated_algebraic_carrier",
+    "bezier_parameter::conversion_tests::simple_root_certificate_distinguishes_algebraic_multiplicity",
+    "bezier_parameter::conversion_tests::simple_root_certificate_distinguishes_exact_multiplicity",
+    "bezier_parameter::conversion_tests::solver_owned_root_refinement_excludes_repeated_lower_endpoints",
+    "bezier_parameter::conversion_tests::square_free_bernstein_preserves_wide_signed_scale_certificates",
+    "bezier_parameter::conversion_tests::square_free_bernstein_scaled_endpoint_and_midpoint_roots_keep_fallback",
+    "bezier_parameter::conversion_tests::square_free_degree_128_bernstein_isolates_every_unit_root",
+    "bezier_parameter::conversion_tests::strict_gap_preserves_irrational_and_repeated_root_ownership",
+    "bezier_parameter::conversion_tests::strict_gap_refines_both_overlapping_algebraic_parameters",
+    "bezier_parameter::conversion_tests::strict_linear_queries_retain_witnesses_after_rational_reconstruction_declines",
+    "bezier_parameter::conversion_tests::strict_scalar_equalities_retain_arbitrary_real_parameter_witnesses"
+  ],
+  "all_sources_unchanged": true,
+  "qualification_complete": true
+}

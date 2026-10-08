@@ -1,0 +1,42 @@
+{
+  "parents": {
+    "hypercurve": "6989bdd4ba3d21cfededa8a72be5df8a0862e30b",
+    "hypersolve": "41855c3604cbd18605a020d60758c8e5c489b629",
+    "hyperreal": "0cb5f29aee065c73e234e0ebb0a9e106398515bb"
+  },
+  "source_manifest": "cusp-finite-chart-20260926-v169-sources.json",
+  "source_directory": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/source-archives/cusp-finite-chart-20260926-v169",
+  "build_source_directory": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/build-workspace-20260925",
+  "workspace_guard": "local-chord-complete-replay-20260924-v168-sources.json",
+  "checks": [],
+  "cases": [
+    {
+      "repo": "hypercurve",
+      "label": "case-00",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/cusp-finite-chart-20260926-v169-hypercurve",
+        "--exact",
+        "curve_region_boolean::certified_successor_tests::selected_parallel_arrangement_splits_interior_cusps",
+        "--test-threads=1",
+        "--nocapture",
+        "--color",
+        "never"
+      ],
+      "returncode": 101,
+      "elapsed_seconds": 42.96821706800256,
+      "log": "cusp-finite-chart-20260926-v169-case-00.log",
+      "name": "curve_region_boolean::certified_successor_tests::selected_parallel_arrangement_splits_interior_cusps"
+    }
+  ],
+  "binaries": {
+    "hypercurve": {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/cusp-finite-chart-20260926-v169-hypercurve",
+      "sha256": "153ede751007d1137ccd6a998b5a79b5b6881fab83ae3ad63219533a49c9056c"
+    }
+  },
+  "all_processes_reaped": true,
+  "diagnostic_only": true,
+  "hypercurve_build_returncode": 0,
+  "all_sources_unchanged": true,
+  "qualification_complete": false
+}

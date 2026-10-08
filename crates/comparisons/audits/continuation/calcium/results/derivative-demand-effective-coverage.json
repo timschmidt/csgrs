@@ -1,0 +1,14 @@
+{
+  "tag": "derivative-demand-effective-coverage",
+  "started": "2026-09-09T04:28:25.328Z",
+  "finished": "2026-09-09T04:28:25.464Z",
+  "elapsedSeconds": 0.133131213,
+  "cwd": "/home/tim/Documents/GitHub/workspace",
+  "command": "node",
+  "args": [
+    "exactcore-hyper-comparison/audits/continuation/calcium/effective-coverage.mjs",
+    "--effective-summary"
+  ],
+  "code": 0,
+  "signal": null
+}

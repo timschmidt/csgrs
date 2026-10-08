@@ -1,0 +1,201 @@
+\doxysection{Proposals for a Hybrid System Data Type (version 0.\+5) }
+\hypertarget{new_hybrid_system_page}{}\label{new_hybrid_system_page}\index{Proposals for a Hybrid System Data Type (version 0.5)@{Proposals for a Hybrid System Data Type (version 0.5)}}
+An Ariadne hybrid system is a model of a deterministic or nondeterministic system with finitely many variables and finitely many possible events, but without stochastic or distributed (i.\+e. described by a partial diffferential equations) behaviour.
+
+A hybrid system lives in a {\itshape universe}, the states of which are described by variables, and the transitions by real time and discrete actions.
+\begin{DoxyItemize}
+\item A countable set of \doxylink{classAriadne_1_1DiscreteEvent}{Discrete\+Events}, each labelled by a valid {\ttfamily \doxylink{classAriadne_1_1String}{String}} identifier.
+\item A countable set of \doxylink{classAriadne_1_1Variable}{Variables}, each labelled by a unique {\ttfamily \doxylink{classAriadne_1_1String}{String}} identifier, and each with a {\ttfamily type}, which can be
+\begin{DoxyItemize}
+\item {\ttfamily Discrete\+Variable\+:} A quantity lying in a denumerable discrete topological space e.\+g {\ttfamily Enumerated\+Variable}, {\ttfamily Integer\+Variable}. Testing for equality of two values of a discrete variable must be a decidable operation.
+\item {\ttfamily Continuous\+Variable\+:} A quantity lying in a countably-\/based (connected) topological space e.\+g. {\ttfamily Real\+Variable}. Testing for equality of two values of a continuous variable is (typically) undecidable, though in most cases inequality is verifiable.
+\end{DoxyItemize}
+\end{DoxyItemize}
+
+Initially, all possible behaviour is possible in the universe; variables can change arbitrarily, and actions can occur at any time with arbitrary updates. A system model is a finite set of {\itshape Rules}, which restrict the possible behaviour of the universe.
+
+\begin{DoxyParagraph}{Rationale}
+The main rationale for defining systems by rules is that adding new rules can only restrict the behaviour of the system. This is vital for assume-\/guarantee reasoning. A secondary benefit it that the behaviour is independent of the order in which the rules are given.
+\end{DoxyParagraph}
+Since Ariadne is a computational tool for analysing system evolution, the rules governing the system have to be {\itshape intensional} (defined using explicit assignments of variables) rather than {\itshape extensional} (defined by equations relating the variables). Since we wish to assign a rigorous computational semantics, all functions must be computable, in particular, all functions must be {\itshape continuous}. This means that a discrete variable can only (sensibly) be defined in terms of other discrete variables.
+
+The main types of rules proposed for Ariadne are
+\begin{DoxyItemize}
+\item Continuous assignments\+: {\ttfamily  p(q) -\/\texorpdfstring{$>$}{>} x\textsubscript{i}=f(x\textsubscript{1},...,x\textsubscript{k}) }
+\item Differential assignments\+: {\ttfamily  p(q) -\/\texorpdfstring{$>$}{>} dot(x\textsubscript{i})=f(x\textsubscript{1},...,x\textsubscript{k}) }
+\item Invariant predicates\+: {\ttfamily  p(q) -\/\texorpdfstring{$>$}{>} g(x\textsubscript{1},...,x\textsubscript{k}) }
+\item Discrete updates\+: {\ttfamily  p(q) \& s(e) -\/\texorpdfstring{$>$}{>} next(q\textsubscript{i})=u(q\textsubscript{i},...,q\textsubscript{k}) }
+\item Continuous updates\+: {\ttfamily  p(q) \& s(e) -\/\texorpdfstring{$>$}{>} next(x\textsubscript{i})=f(x\textsubscript{1},...,x\textsubscript{k}) }
+\item Guard predicates\+: {\ttfamily  p(q) \& s(e) -\/\texorpdfstring{$>$}{>} g(x\textsubscript{1},...,x\textsubscript{k}) }
+\end{DoxyItemize}
+
+Each rule is valid given a predicate {\ttfamily p(q)} on the discrete state. Rules relating to action transitions are valid for single events.
+
+Note that if no continuous or differential assignment is given to a continuous variable, then the value of that variable is arbitrary during time transitions. To ensure that a continuous variable remains constant, use {\ttfamily  dot(x) = 0 }. Discrete variables cannot change during time transitions, so there is no need to provide a behaviour.
+
+Note that the guard condition {\ttfamily  p(q) \& s(e) $\implies$ g(x\textsubscript{1},...,x\textsubscript{k}) } only implies a restriction on the conditions under which event {\ttfamily e} can occur if {\ttfamily p(q)} is true. For other states, the guard conditions places {\itshape no restriction} on when {\ttfamily e} can occur. Hence if {\ttfamily e} can {\itshape only} occur when {\ttfamily e} is true, then both the guard conditions {\ttfamily  p(q) \& s(e) -\/\texorpdfstring{$>$}{>} g(x) } and {\ttfamily  \texorpdfstring{$\sim$}{\string~}p(q) \& s(e) -\/\texorpdfstring{$>$}{>} false } need to be used.
+
+Note that there is no default update for variables. During an action transition, if no {\ttfamily next(x)=} assignment is given, and no {\ttfamily x=} assignment is valid in the next discrete location, then the value of {\ttfamily x} is undefined. Hence if the value of {\ttfamily x} does not change during a discrete transition {\ttfamily e} in location {\ttfamily q}, then the predicate {\ttfamily  q \& e -\/\texorpdfstring{$>$}{>} next(x)=x } needs to be used.
+
+Note that since there is no variable hiding, any variable can be affected by any event. In order to make sure that a variable {\ttfamily x} can only change during events {\ttfamily e1} and {\ttfamily e2}, then the condition {\ttfamily  \texorpdfstring{$\sim$}{\string~}\{e1,e2\} -\/\texorpdfstring{$>$}{>} next(x)=x } needs to be used. If {\ttfamily x} can never jump, then the condition {\ttfamily  next(x) = x } should be used. In order to analyse a system, a rule of the form {\ttfamily \texorpdfstring{$\sim$}{\string~}\{e\textsubscript{1},...,e\textsubscript{k}\} -\/\texorpdfstring{$>$}{>} next(x)=x} needs to be given for all variables {\ttfamily x}. In other words, we need to specify the only events which can cause {\ttfamily x} to change.
+
+\begin{DoxyParagraph}{Rationale}
+The rationale for providing explicit rules for constant and nonjumping variables is that otherwise one component may change the behaviour of another. For example, if a system has only rule {\ttfamily dot(x)=a-\/x}, and {\ttfamily a} were implicitly taken to be constant duing time transitions, then composing with the system {\ttfamily dot(a)=-\/a} would change the behaviour. This would make it impossible to use assume-\/guarantee reasoning.
+\end{DoxyParagraph}
+\begin{DoxyParagraph}{Comparison with CIF}
+The Compositional Interchange Format (CIF) uses an operator {\ttfamily Non\+Jmp} to declare a variable as nonjumping in an action transition unless it has already explicitly been declared as jumping. The advantage of using explicit rules is that the ordering of rules is immaterial, whereas the ordering of CIF operators is critical.
+\end{DoxyParagraph}
+\begin{DoxyParagraph}{Explicit simple functions}
+It may be useful to add an explicit {\ttfamily constant(x)} operator as a shorthand for {\ttfamily dot(x)=0}, an explicit {\ttfamily timer(x)} for {\ttfamily dot(x)=1} and an explicit {\ttfamily nonjump(x)} operator as a shorthand for {\ttfamily next(x)=x}. This could potentially be exploited in the solver routines.
+\end{DoxyParagraph}
+\begin{DoxyParagraph}{Urgent actions}
+It might be useful to have explicit urgent actions, {\ttfamily  p(q) -\/\texorpdfstring{$>$}{>} e \texorpdfstring{$<$}{<}-\/\texorpdfstring{$>$}{>} g(x\textsubscript{1},...,x\textsubscript{k}) }. The rationale is the same as the rationale in the Hybrid\+Automaton class (Version 0.\+4); that for lower semantics we need to know when an invariant is the complement of a guard. Alternatively, it might be useful to have "{}may"{} and "{}must"{} guard predicates {\ttfamily  p(q) -\/\texorpdfstring{$>$}{>} ( g\textsubscript{may}(x\textsubscript{1},...,x\textsubscript{k}) \texorpdfstring{$<$}{<}-\/ e \texorpdfstring{$<$}{<}-\/ g\textsubscript{must}(x\textsubscript{1},...,x\textsubscript{k}) ) }
+\end{DoxyParagraph}
+\begin{DoxyParagraph}{More general rules}
+It might be useful to allow more general rules than those given above. For example, if an event {\ttfamily e} is only possible in discrete states {\ttfamily p(q)} and continuous states {\ttfamily g(x)}, then it would be easier to write {\ttfamily e -\/\texorpdfstring{$>$}{>} p(q) \& g(x)} rather than {\ttfamily p(q) \& e -\/\texorpdfstring{$>$}{>} g(x); \texorpdfstring{$\sim$}{\string~}p(q) \& e -\/\texorpdfstring{$>$}{>} false}.
+\end{DoxyParagraph}
+\begin{DoxyParagraph}{Variable bounds}
+It is almost certainly useful to be able to specify bounds on variables, such as {\ttfamily  p(q) -\/\texorpdfstring{$>$}{>} -\/1 \texorpdfstring{$<$}{<}= x \texorpdfstring{$<$}{<}= 2 }. This is useful in bounding inputs within differential equations.
+\end{DoxyParagraph}
+\begin{DoxyParagraph}{Parallel composition}
+The parallel composition of two systems is formed by taking the conjunction of all rules i.\+e. the union of the two sets of rules. This means that composition is trivial to implement, and that it is trivial to check that it acts as a restriction on the behaviour of both subsystems!
+\end{DoxyParagraph}
+\hypertarget{new_hybrid_system_page_hybrid_system_semantics}{}\doxysubsection{\texorpdfstring{Semantics and validity}{Semantics and validity}}\label{new_hybrid_system_page_hybrid_system_semantics}
+Not all hybrid systems defined as a list of rules are valid system models. However, the situation is complicated since the model may be valid for some discrete states or discrete transitions, but not for others. We have the following validity rules\+:
+\begin{DoxyItemize}
+\item A discrete state q is valid if
+\begin{DoxyItemize}
+\item Every continuous variable {\ttfamily y} has exacly one defining equation
+\begin{DoxyItemize}
+\item A continuous variable {\itshape y} defined by a differential equation {\ttfamily dot(y)=f(x)} is a {\itshape continuous state variable}
+\item A continuous variable {\itshape y} defined by an algebraic equation {\ttfamily y=f(x)} is an {\itshape auxiliary variable}
+\end{DoxyItemize}
+\item There are no {\itshape algebraic loops} of assignments of algebraic variables.
+\end{DoxyItemize}
+\item A discrete transition e from a discrete state q is valid if
+\begin{DoxyItemize}
+\item Every discrete variable {\ttfamily q} has exactly one defining update next(q)=r(p)
+\item Every continuous variable {\ttfamily y} has exactly one defining equation, either
+\begin{DoxyItemize}
+\item An update rule {\ttfamily next(y)=r(x)}, or
+\item An algebraic equation {\ttfamily y=f(x)} in the {\itshape next} discrete state {\ttfamily next(q)}.
+\end{DoxyItemize}
+\end{DoxyItemize}
+\end{DoxyItemize}
+
+A system is {\itshape overspecified} if a variable has more than one defining rule in a given context. Since Ariadne requires intensional semantics for the continuous variables, evolution cannot proceed in a context where a continuous variable is overspecified, even if the assignments match. An overspecified discrete variable can in principle be handled, but is at best "{}bad practice"{} and we may decide to ban this as well.
+
+A system is {\itshape underspecified} if a variable has no defining rule in a given context, {\itshape and is used in that context}. Systems with inputs are by their nature underspecified. An underspecified system can only be analysed in parallel with assumptions which give assignments (or constraints) for the undefined variables.
+
+A system which has invalid discrete contexts can still be analysed if these contexts do not arise during the evolution. However, it is important to provide a static analysis of the system to find the contexts in which it is invalid.\hypertarget{new_hybrid_system_page_hybrid_system_conversion}{}\doxysubsection{\texorpdfstring{Conversion to a Hybrid Automaton}{Conversion to a Hybrid Automaton}}\label{new_hybrid_system_page_hybrid_system_conversion}
+In order to simulate or verify a hybrid system, the system description must contain enough information to be able to solve for all the variables of interest. In particular, we should be able to convert the description to a hybrid automaton, which is a {\itshape constructive} description of a hybrid system.
+
+Since there may be some discrete valuations which naturally arise during modelling but do not correspond to valid discrete modes e.\+g. because some variable is overspecified, we construct a hybrid automaton from a set of initial discrete states. The automaton is {\itshape statically valid} if every discrete state reachable from an initial discrete state in the discrete abstraction of the hybrid system is valid.
+
+We need the following definitions
+\begin{DoxyItemize}
+\item {\bfseries{Discrete states}}
+\begin{DoxyItemize}
+\item A discrete valuation q\textquotesingle{} is a {\itshape refinement} of q if every variable q\textsubscript{i} occuring in q also occurs in q\textquotesingle{} and has the same value.
+\item A set of {\itshape discrete states} is a set of valuations, none of which is a refinement of another.
+\end{DoxyItemize}
+\item {\bfseries{Continuous variables}} For a discrete valuation {\ttfamily q}, a continuous variable x\textsubscript{i} is
+\begin{DoxyItemize}
+\item A {\itshape state variable} if it is defined by a differential equation dot(x\textsubscript{i})=f(x\textsubscript{1},...,x\textsubscript{k}).
+\item An {\itshape output} or {\itshape auxiliary variable } if it is defined by an algebraic equation x\textsubscript{i}=f(x\textsubscript{1},...,x\textsubscript{k}).
+\item An {\itshape input variable} if it is used in the description of a state or auxiliary variable, in a guard condition or in a reset relation, but is not defined by a differential or algebraic equation.
+\end{DoxyItemize}
+\item {\bfseries{Trivial events}} An event e is {\itshape trivial} in discrete state q if {\itshape either} 
+\begin{DoxyItemize}
+\item the guard condition is the constant {\ttfamily false}, {\itshape or} 
+\item during a discrete transition, the discrete updates are of the form next(q\textsubscript{i})=q\textsubscript{i} and the continuous resets are of the form next(x\textsubscript{i})=x\textsubscript{i}.
+\item Since no valuation may refine another, no extra discrete assignments are allowed.
+\end{DoxyItemize}
+\end{DoxyItemize}
+
+A hybrid system is {\itshape convertable to a hybrid automaton} if the following conditions are satisfied.
+\begin{DoxyItemize}
+\item {\bfseries{State refinement}} It is not possible to reach a discrete valuation which is a refinement of another discrete valuation.
+\begin{DoxyItemize}
+\item This condition is not strictly necessary, but it results in no loss of generality in the dynamics, and may help find modelling errors. Further, it means that the algorithm to convert to a hybrid automaton terminates if all discrete variables take on finitely many values.
+\end{DoxyItemize}
+\item {\bfseries{State predicates}} Any discrete predicate p(q) is computable in any discrete state q.
+\item {\bfseries{No unbounded input variables}} In any discrete state, there are no input variables.
+\begin{DoxyItemize}
+\item As a weaker condition (resulting in a nondeterministic automaton), we can require\+: {\bfseries{No unbounded input variables}} In any discrete state, any input variable x\textsubscript{i} lies in a bounded interval \mbox{[}a,b\mbox{]}.
+\end{DoxyItemize}
+\item {\bfseries{Algebraic loops}} In a discrete state q, the graph giving the dependencies of the auxiliary variables must be acyclic.
+\begin{DoxyItemize}
+\item This means that there is an order of computation of the auxiliary variables in which each only depends on already computed variables.
+\end{DoxyItemize}
+\item {\bfseries{Guard conditions}} Every guard condition g(x\textsubscript{1},...,x\textsubscript{k}) defined in a discrete state q may only use state and auxiliary variables.
+\item {\bfseries{Reset relations}} Every reset relation next(x\textsubscript{i})=r(x\textsubscript{1},...,x\textsubscript{k}) defined in a discrete state q, must {\itshape either} only use state and auxiliary variables in q, {\itshape or} the guard condition must be the constant {\ttfamily false}.
+\item {\bfseries{Transitions}} In every discrete transition, all the state variables in the new mode are specified by a reset, but none of the discrete variables are.
+\item {\bfseries{Finitely many events}} In a discrete state q, there can be only finitely many nontrivial discrete events.
+\begin{DoxyItemize}
+\item This is required in order that the discrete automaton has only a finite number of arrows from any discrete state.
+\end{DoxyItemize}
+\end{DoxyItemize}
+
+Note that in a subsystem i.\+e. a system which may be composed with others, there is a difference between an event with guard condition {\ttfamily false} and a guard with all resets of the form {\ttfamily next}(v\textsubscript{i})=v\textsubscript{i}. In the former, the event cannot happen at all in any parallel composition, whereas in the latter, the event may happen, but just does not directly affect the state of the subsystem.
+
+To convert a hybrid system to a hybrid automaton, we use the following algorithm\+:
+\begin{DoxyItemize}
+\item For each new discrete valuation\+:
+\begin{DoxyItemize}
+\item Check if the valuation is not a refinement of an existing valuation.
+\item Extract the continuous state variables x\textsubscript{i}.
+\item Solve for the output/auxiliary variables in terms of the state variables.
+\item Substitute the auxiliary variables in terms of the state variables in the dynamic equations.
+\item Substitute the auxiliary variables in terms of the state variables in the invariants.
+\item Compute the set of nontrivial events and check that this is finite.
+\end{DoxyItemize}
+\item For each nontrivial event\+:
+\begin{DoxyItemize}
+\item Compute the target discrete state. If this is new, insert in the set of uncomputed discrete states.
+\item Substitute the auxiliary variables in terms of the state variables in the guard predicates.
+\item Substitute the auxiliary variables in terms of the state variables in the reset equations.
+\end{DoxyItemize}
+\end{DoxyItemize}
+
+The main difficulty is to test triviality, since it requires proving triviality for all but finitely many events. To do this, we use the fact that since the only atomic test allowed on the current event {\itshape e} is testing for equality with a constant event {\itshape e\textsubscript{i}}, every set of events is either computably finite or cofinite. It is simple to prove triviality for a cofinite set of events.\hypertarget{new_hybrid_system_page_hybrid_system_example}{}\doxysubsection{\texorpdfstring{Example -\/ A simple heating system}{Example -\/ A simple heating system}}\label{new_hybrid_system_page_hybrid_system_example}
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\textcolor{comment}{//\ Declare\ the\ hyrbid\ system\ object}}
+\DoxyCodeLine{HybridSystem\ system;}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{comment}{//\ Declare\ the\ events,\ types\ and\ variables}}
+\DoxyCodeLine{\mbox{\hyperlink{classAriadne_1_1DiscreteEvent}{DiscreteEvent}}\ turn\_on(\textcolor{stringliteral}{"{}turn\_on"{}});}
+\DoxyCodeLine{\mbox{\hyperlink{classAriadne_1_1DiscreteEvent}{DiscreteEvent}}\ turn\_off(\textcolor{stringliteral}{"{}turn\_off"{}});}
+\DoxyCodeLine{\mbox{\hyperlink{classAriadne_1_1DiscreteEvent}{DiscreteEvent}}\ midnight(\textcolor{stringliteral}{"{}midnight"{}});}
+\DoxyCodeLine{}
+\DoxyCodeLine{DiscreteType\ swtch(\textcolor{stringliteral}{"{}Switch"{}},(build\_array,\textcolor{stringliteral}{"{}on"{}},\textcolor{stringliteral}{"{}off"{}}));}
+\DoxyCodeLine{}
+\DoxyCodeLine{DiscreteVariable\ heater(\textcolor{stringliteral}{"{}heater"{}},swtch);}
+\DoxyCodeLine{RealVariable\ T(\textcolor{stringliteral}{"{}T"{}});}
+\DoxyCodeLine{RealVariable\ t(\textcolor{stringliteral}{"{}t"{}});}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{comment}{//\ Define\ the\ continuous\ dynamics}}
+\DoxyCodeLine{system.new\_dynamic(heater==\textcolor{stringliteral}{"{}on"{}},\ dot(T)=20+cos(t));}
+\DoxyCodeLine{system.new\_dynamic(heater==\textcolor{stringliteral}{"{}off"{}},\ dot(T)=10+cos(t));}
+\DoxyCodeLine{system.new\_dynamic(dot(t)=1);}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{comment}{//\ Define\ the\ nontrivial\ update\ rules}}
+\DoxyCodeLine{system.new\_reset(turn\_off,heater==\textcolor{stringliteral}{"{}on"{}},next(heater)=\textcolor{stringliteral}{"{}off"{}});}
+\DoxyCodeLine{system.new\_reset(turn\_on,next(heater)=DiscreteValue(\textcolor{stringliteral}{"{}on"{}}));}
+\DoxyCodeLine{system.new\_reset(midnight,next(t)=0.0);}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{comment}{//\ Define\ the\ guard\ sets\ and\ invariants}}
+\DoxyCodeLine{system.new\_guard(turn\_on,T<=16.0);}
+\DoxyCodeLine{system.new\_guard(turn\_off,T>=22.0);}
+\DoxyCodeLine{system.new\_guard(midnight,t>=1.0);}
+\DoxyCodeLine{system.new\_invariant(T>=16.0);}
+\DoxyCodeLine{system.new\_invariant(T<=22.0);}
+\DoxyCodeLine{system.new\_invariant(t<=1.0);}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{comment}{//\ Define\ the\ trivial\ resets\ for\ nonjumping\ variables.}}
+\DoxyCodeLine{system.new\_reset(next(T)=T);}
+\DoxyCodeLine{system.new\_reset(!midnight,next(t)=t);}
+
+\end{DoxyCode}
+ 

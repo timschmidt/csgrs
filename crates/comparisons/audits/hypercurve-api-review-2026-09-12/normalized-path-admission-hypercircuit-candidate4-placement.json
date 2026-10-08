@@ -1,0 +1,26 @@
+{
+  "target": "placement",
+  "command": [
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/normalized-path-admission-hypercircuit-candidate4-binaries/placement-8ae579b1f7adcfb1",
+    "--test-threads=2",
+    "--color",
+    "never"
+  ],
+  "binary_sha256": "2f41661f14f4e4f15847e3a1c42b3362a08ff4a0d1d5eb9e57149084ad668ed9",
+  "returncode": 0,
+  "elapsed_seconds": 0.17856076199677773,
+  "log": "normalized-path-admission-hypercircuit-candidate4-placement.log",
+  "passed": [
+    "deterministic_search_moves_only_the_colliding_unconstrained_package",
+    "fixed_collisions_are_reported_without_breaking_constraints",
+    "optional_optimization_improves_a_legal_authored_connectivity_cost",
+    "pin_access_audit_observes_escape_policy_keepouts_and_foreign_pads",
+    "exact_pin_access_feedback_moves_a_terminal_out_of_a_board_edge_trap",
+    "regional_search_keeps_the_package_envelope_out_of_board_cutouts",
+    "retained_rotation_and_side_choices_are_searched_and_audited",
+    "placement_search_uses_exact_arc_board_envelopes",
+    "routability_aware_optimization_reduces_exact_net_box_congestion"
+  ],
+  "failed": [],
+  "ignored": []
+}

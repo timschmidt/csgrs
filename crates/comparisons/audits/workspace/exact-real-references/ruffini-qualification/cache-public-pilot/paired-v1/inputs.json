@@ -1,0 +1,530 @@
+{
+  "cases": [
+    {
+      "family": "root",
+      "negative": false,
+      "mode": "warm",
+      "bits": 64,
+      "gap": 0,
+      "reps": 100000
+    },
+    {
+      "family": "root",
+      "negative": false,
+      "mode": "warm",
+      "bits": 64,
+      "gap": 1,
+      "reps": 100000
+    },
+    {
+      "family": "root",
+      "negative": false,
+      "mode": "warm",
+      "bits": 64,
+      "gap": 32,
+      "reps": 100000
+    },
+    {
+      "family": "root",
+      "negative": false,
+      "mode": "warm",
+      "bits": 64,
+      "gap": 72,
+      "reps": 100000
+    },
+    {
+      "family": "root",
+      "negative": false,
+      "mode": "warm",
+      "bits": 4096,
+      "gap": 1,
+      "reps": 30000
+    },
+    {
+      "family": "root",
+      "negative": false,
+      "mode": "warm",
+      "bits": 4096,
+      "gap": 2048,
+      "reps": 30000
+    },
+    {
+      "family": "root",
+      "negative": false,
+      "mode": "warm",
+      "bits": 4096,
+      "gap": 4104,
+      "reps": 30000
+    },
+    {
+      "family": "root",
+      "negative": false,
+      "mode": "warm",
+      "bits": 65536,
+      "gap": 1,
+      "reps": 5000
+    },
+    {
+      "family": "root",
+      "negative": false,
+      "mode": "warm",
+      "bits": 65536,
+      "gap": 32768,
+      "reps": 5000
+    },
+    {
+      "family": "root",
+      "negative": false,
+      "mode": "warm",
+      "bits": 65536,
+      "gap": 65408,
+      "reps": 5000
+    },
+    {
+      "family": "root",
+      "negative": false,
+      "mode": "warm",
+      "bits": 65536,
+      "gap": 65544,
+      "reps": 5000
+    },
+    {
+      "family": "root",
+      "negative": false,
+      "mode": "cold",
+      "bits": 64,
+      "gap": 0,
+      "reps": 1000
+    },
+    {
+      "family": "root",
+      "negative": false,
+      "mode": "cold",
+      "bits": 128,
+      "gap": 0,
+      "reps": 1000
+    },
+    {
+      "family": "root",
+      "negative": true,
+      "mode": "warm",
+      "bits": 64,
+      "gap": 0,
+      "reps": 100000
+    },
+    {
+      "family": "root",
+      "negative": true,
+      "mode": "warm",
+      "bits": 64,
+      "gap": 1,
+      "reps": 100000
+    },
+    {
+      "family": "root",
+      "negative": true,
+      "mode": "warm",
+      "bits": 64,
+      "gap": 32,
+      "reps": 100000
+    },
+    {
+      "family": "root",
+      "negative": true,
+      "mode": "warm",
+      "bits": 64,
+      "gap": 72,
+      "reps": 100000
+    },
+    {
+      "family": "root",
+      "negative": true,
+      "mode": "warm",
+      "bits": 4096,
+      "gap": 1,
+      "reps": 30000
+    },
+    {
+      "family": "root",
+      "negative": true,
+      "mode": "warm",
+      "bits": 4096,
+      "gap": 2048,
+      "reps": 30000
+    },
+    {
+      "family": "root",
+      "negative": true,
+      "mode": "warm",
+      "bits": 4096,
+      "gap": 4104,
+      "reps": 30000
+    },
+    {
+      "family": "root",
+      "negative": true,
+      "mode": "warm",
+      "bits": 65536,
+      "gap": 1,
+      "reps": 5000
+    },
+    {
+      "family": "root",
+      "negative": true,
+      "mode": "warm",
+      "bits": 65536,
+      "gap": 32768,
+      "reps": 5000
+    },
+    {
+      "family": "root",
+      "negative": true,
+      "mode": "warm",
+      "bits": 65536,
+      "gap": 65408,
+      "reps": 5000
+    },
+    {
+      "family": "root",
+      "negative": true,
+      "mode": "warm",
+      "bits": 65536,
+      "gap": 65544,
+      "reps": 5000
+    },
+    {
+      "family": "root",
+      "negative": true,
+      "mode": "cold",
+      "bits": 64,
+      "gap": 0,
+      "reps": 1000
+    },
+    {
+      "family": "root",
+      "negative": true,
+      "mode": "cold",
+      "bits": 128,
+      "gap": 0,
+      "reps": 1000
+    },
+    {
+      "family": "rational",
+      "negative": false,
+      "mode": "warm",
+      "bits": 64,
+      "gap": 0,
+      "reps": 100000
+    },
+    {
+      "family": "rational",
+      "negative": false,
+      "mode": "warm",
+      "bits": 64,
+      "gap": 1,
+      "reps": 100000
+    },
+    {
+      "family": "rational",
+      "negative": false,
+      "mode": "warm",
+      "bits": 64,
+      "gap": 32,
+      "reps": 100000
+    },
+    {
+      "family": "rational",
+      "negative": false,
+      "mode": "warm",
+      "bits": 64,
+      "gap": 72,
+      "reps": 100000
+    },
+    {
+      "family": "rational",
+      "negative": false,
+      "mode": "warm",
+      "bits": 4096,
+      "gap": 1,
+      "reps": 30000
+    },
+    {
+      "family": "rational",
+      "negative": false,
+      "mode": "warm",
+      "bits": 4096,
+      "gap": 2048,
+      "reps": 30000
+    },
+    {
+      "family": "rational",
+      "negative": false,
+      "mode": "warm",
+      "bits": 4096,
+      "gap": 4104,
+      "reps": 30000
+    },
+    {
+      "family": "rational",
+      "negative": false,
+      "mode": "warm",
+      "bits": 65536,
+      "gap": 1,
+      "reps": 5000
+    },
+    {
+      "family": "rational",
+      "negative": false,
+      "mode": "warm",
+      "bits": 65536,
+      "gap": 32768,
+      "reps": 5000
+    },
+    {
+      "family": "rational",
+      "negative": false,
+      "mode": "warm",
+      "bits": 65536,
+      "gap": 65408,
+      "reps": 5000
+    },
+    {
+      "family": "rational",
+      "negative": false,
+      "mode": "warm",
+      "bits": 65536,
+      "gap": 65544,
+      "reps": 5000
+    },
+    {
+      "family": "rational",
+      "negative": false,
+      "mode": "cold",
+      "bits": 64,
+      "gap": 0,
+      "reps": 1000
+    },
+    {
+      "family": "rational",
+      "negative": false,
+      "mode": "cold",
+      "bits": 128,
+      "gap": 0,
+      "reps": 1000
+    },
+    {
+      "family": "rational",
+      "negative": true,
+      "mode": "warm",
+      "bits": 64,
+      "gap": 0,
+      "reps": 100000
+    },
+    {
+      "family": "rational",
+      "negative": true,
+      "mode": "warm",
+      "bits": 64,
+      "gap": 1,
+      "reps": 100000
+    },
+    {
+      "family": "rational",
+      "negative": true,
+      "mode": "warm",
+      "bits": 64,
+      "gap": 32,
+      "reps": 100000
+    },
+    {
+      "family": "rational",
+      "negative": true,
+      "mode": "warm",
+      "bits": 64,
+      "gap": 72,
+      "reps": 100000
+    },
+    {
+      "family": "rational",
+      "negative": true,
+      "mode": "warm",
+      "bits": 4096,
+      "gap": 1,
+      "reps": 30000
+    },
+    {
+      "family": "rational",
+      "negative": true,
+      "mode": "warm",
+      "bits": 4096,
+      "gap": 2048,
+      "reps": 30000
+    },
+    {
+      "family": "rational",
+      "negative": true,
+      "mode": "warm",
+      "bits": 4096,
+      "gap": 4104,
+      "reps": 30000
+    },
+    {
+      "family": "rational",
+      "negative": true,
+      "mode": "warm",
+      "bits": 65536,
+      "gap": 1,
+      "reps": 5000
+    },
+    {
+      "family": "rational",
+      "negative": true,
+      "mode": "warm",
+      "bits": 65536,
+      "gap": 32768,
+      "reps": 5000
+    },
+    {
+      "family": "rational",
+      "negative": true,
+      "mode": "warm",
+      "bits": 65536,
+      "gap": 65408,
+      "reps": 5000
+    },
+    {
+      "family": "rational",
+      "negative": true,
+      "mode": "warm",
+      "bits": 65536,
+      "gap": 65544,
+      "reps": 5000
+    },
+    {
+      "family": "rational",
+      "negative": true,
+      "mode": "cold",
+      "bits": 64,
+      "gap": 0,
+      "reps": 1000
+    },
+    {
+      "family": "rational",
+      "negative": true,
+      "mode": "cold",
+      "bits": 128,
+      "gap": 0,
+      "reps": 1000
+    }
+  ],
+  "variants": [
+    "before",
+    "before-control",
+    "after"
+  ],
+  "stages": {
+    "before": {
+      "evidence": "before-4NY2F6",
+      "changed": [
+        [
+          "src/computable/node.rs",
+          "1e6da5db27d78d0a7df2a801e423116f38327b1b8624dc9d2647290700643fe2"
+        ]
+      ],
+      "sources": [
+        [
+          "Cargo.toml",
+          "9fa43c7ce7236c1db5590b4a7bea416a0d555de5ba7fc7f29ae955a915917dd3"
+        ],
+        [
+          "Cargo.lock",
+          "220327e588b8b6afaf9162a72c731f6d047b3480da83eb2a4b2d93c37410764e"
+        ],
+        [
+          "main.rs",
+          "a11989576955c3ee2da456269345c56136089802bd987b091c0969a342562ef8"
+        ],
+        [
+          "cache_rescale_tests.rs",
+          "fa939105b340ceef618b520bb145a220d148e741e54f55e97e85ffe078f50e25"
+        ],
+        [
+          "qualify.mjs",
+          "ad3a11d7410853b02b81bcd9e6cc32471dc0a6caa219d090419a2eaa8cd5cc66"
+        ],
+        [
+          "../cache-rescale-pilot/allocation.rs",
+          "a9d159c09ce0693dd2b3a27c07997904259dbf6168b867f495adf3428c6e0b67"
+        ]
+      ],
+      "binaries": [
+        [
+          "release",
+          "a96cfa3bd4b416c7cdff56f3718924d3a5c0e4d92a3ff117533df8cd96662913",
+          1552016
+        ],
+        [
+          "memory",
+          "49924458a461e63bcdc7ee5b2aeadf8cf752fdd84bc930d9c0d86633a83739ba",
+          1557112
+        ]
+      ],
+      "commands": 7,
+      "publicCases": 160
+    },
+    "after": {
+      "evidence": "after-UaEfGm",
+      "changed": [
+        [
+          "src/computable/node.rs",
+          "1e6da5db27d78d0a7df2a801e423116f38327b1b8624dc9d2647290700643fe2"
+        ],
+        [
+          "src/computable/node/representation.rs",
+          "6901ebf2795947942eea4356b0031fa2a5794187f79e30c076e5c6a01351d940"
+        ]
+      ],
+      "sources": [
+        [
+          "Cargo.toml",
+          "9fa43c7ce7236c1db5590b4a7bea416a0d555de5ba7fc7f29ae955a915917dd3"
+        ],
+        [
+          "Cargo.lock",
+          "220327e588b8b6afaf9162a72c731f6d047b3480da83eb2a4b2d93c37410764e"
+        ],
+        [
+          "main.rs",
+          "a11989576955c3ee2da456269345c56136089802bd987b091c0969a342562ef8"
+        ],
+        [
+          "cache_rescale_tests.rs",
+          "fa939105b340ceef618b520bb145a220d148e741e54f55e97e85ffe078f50e25"
+        ],
+        [
+          "qualify.mjs",
+          "ad3a11d7410853b02b81bcd9e6cc32471dc0a6caa219d090419a2eaa8cd5cc66"
+        ],
+        [
+          "../cache-rescale-pilot/allocation.rs",
+          "a9d159c09ce0693dd2b3a27c07997904259dbf6168b867f495adf3428c6e0b67"
+        ]
+      ],
+      "binaries": [
+        [
+          "release",
+          "5328259d1a6840b303e3583e1ccf20a3f7beae3066287e5aa3fbcfe77abc896a",
+          1553216
+        ],
+        [
+          "memory",
+          "087dfe9e04be0dbbef2ff996ceb4640b6c0841e426ba87951ca811b9233e6e04",
+          1558320
+        ]
+      ],
+      "commands": 9,
+      "publicCases": 160
+    }
+  },
+  "scriptHash": "75d67c86be8c98f287c25f177dd95b5f73bb79faefaa5e911d44a0bf8dc9fb29"
+}

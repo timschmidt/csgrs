@@ -1,0 +1,39 @@
+
+running 1 test
+approximate-512 consumed caller=src/bezier_offset.rs:90069
+   0: <hypercurve::policy::CurveContext>::observe_approximate_512
+   1: <hypercurve::bezier_offset::BezierAlgebraicChordPairPoint2>::axis_coordinate_order_to_real
+   2: hypercurve::bezier_offset::algebraic_chord_point_coordinate_order
+   3: <hypercurve::bezier_offset::BezierAlgebraicChord2>::chord_intersections_once
+   4: <hypercurve::bezier_offset::BezierAlgebraicChord2>::chord_intersections
+   5: <hypercurve::curve_region_boolean::CurveRegionBooleanContext>::pair_result
+   6: <hypercurve::curve_region_boolean::CurveRegionBooleanContext>::build_split_topology
+   7: <hypercurve::curve_region_boolean::CurveRegionBooleanContext>::build_boolean_topology
+   8: <hypercurve::curve_region_boolean::CurveRegionBooleanContext>::build_boolean_region
+   9: <hypercurve::bezier_region::CurveRegion2>::boolean_region_raw
+  10: <hypercurve::bezier_region::CurveRegion2>::offset::{closure#0}
+  11: <hypercurve::bezier_region::CurveRegion2>::offset
+  12: <hypercurve_curve_region_promotion::sheared_algebraic_chord_erosion_splits_a_collapsed_neck_exactly::{closure#0} as core::ops::function::FnOnce<()>>::call_once
+  13: test::__rust_begin_short_backtrace::<core::result::Result<(), alloc::string::String>, fn() -> core::result::Result<(), alloc::string::String>>
+  14: test::run_test::{closure#0}
+  15: std::sys::backtrace::__rust_begin_short_backtrace::<test::run_test::{closure#1}, ()>
+  16: <std::thread::lifecycle::spawn_unchecked<test::run_test::{closure#1}, ()>::{closure#1} as core::ops::function::FnOnce<()>>::call_once::{shim:vtable#0}
+  17: <std::sys::thread::unix::Thread>::new::thread_start
+  18: start_thread
+  19: __clone3
+
+
+thread 'sheared_algebraic_chord_erosion_splits_a_collapsed_neck_exactly' (37) panicked at tests/hypercurve_curve_region_promotion.rs:6036:9:
+assertion `left == right` failed
+  left: Approximate512Consumed
+ right: Certified
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+test sheared_algebraic_chord_erosion_splits_a_collapsed_neck_exactly ... FAILED
+
+failures:
+
+failures:
+    sheared_algebraic_chord_erosion_splits_a_collapsed_neck_exactly
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 99 filtered out; finished in 8.42s
+

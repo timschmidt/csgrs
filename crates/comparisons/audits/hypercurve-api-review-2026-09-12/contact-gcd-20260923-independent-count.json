@@ -1,0 +1,30 @@
+{
+  "fixture_sha256": "ee9a5dfdbb08fecb1a384343998ba669c72144eee90ce4529428319768c7db65",
+  "source_root_count": 1,
+  "selected_factor_degree": 34,
+  "nonzero_subresultant_degrees": [
+    8,
+    6,
+    5,
+    4,
+    3,
+    2,
+    1
+  ],
+  "leading_signs": [
+    1,
+    1,
+    -1,
+    1,
+    -1,
+    -1,
+    -1
+  ],
+  "gcd_degree": 1,
+  "gcd_endpoint_signs": [
+    1,
+    -1
+  ],
+  "distinct_common_root_count": 1,
+  "seconds": 3.7233315090416
+}

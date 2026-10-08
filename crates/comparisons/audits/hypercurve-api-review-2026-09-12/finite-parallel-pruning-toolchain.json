@@ -1,0 +1,15 @@
+{
+  "direct_toolchain_directory": "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/",
+  "versions": {
+    "rustc": "rustc 1.97.0 (2d8144b78 2026-07-07)\nbinary: rustc\ncommit-hash: 2d8144b7880597b6e6d3dfd63a9a9efae3f533d3\ncommit-date: 2026-07-07\nhost: x86_64-unknown-linux-gnu\nrelease: 1.97.0\nLLVM version: 22.1.6",
+    "cargo": "cargo 1.97.0 (c980f4866 2026-06-30)",
+    "rustfmt": "rustfmt 1.9.0-stable (2d8144b788 2026-07-07)"
+  },
+  "reason": "rustup launcher attempted to remove read-only /home/tim/.cargo/bin/rustup-init; direct installed stable binaries preserve the prior rustc 1.97.0 toolchain without modifying tool installation",
+  "binary_sha256": {
+    "cargo": "eff12bab37b9d9e01324db4583eaf55b2cd82ac3008a7e59876e4cd2e9a028f5",
+    "rustc": "df13f58759c0662831983e3a6501c63c1fc12ea60ec4e1d1ac35e5fe43c500c0",
+    "rustfmt": "fbdba7404a80bc6d36fa2bb4cdd7ca3fc7f060a109207ef03eaef63058cd1216",
+    "rustdoc": "ed74ac3f2be8270ed5da788cdecb8cd0e530fb6b5b380e63aedb62323beb7c85"
+  }
+}

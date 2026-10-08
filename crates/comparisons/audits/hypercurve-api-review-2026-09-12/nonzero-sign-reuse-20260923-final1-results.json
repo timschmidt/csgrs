@@ -1,0 +1,2517 @@
+[
+  {
+    "name": "algebraic_fiber::tests::certified_nonzero_signs_distinguish_small_values_from_selected_zeros",
+    "returncode": 0,
+    "elapsed_seconds": 0.0037497030571103096
+  },
+  {
+    "name": "algebraic_fiber::tests::certified_nonzero_signs_share_the_refined_degree_41_endpoint",
+    "returncode": 0,
+    "elapsed_seconds": 3.068485678988509
+  },
+  {
+    "name": "active_set::tests::active_set_audit_accepts_binding_and_inactive_strict_inequalities",
+    "returncode": 0,
+    "elapsed_seconds": 0.003633660962805152
+  },
+  {
+    "name": "active_set::tests::active_set_audit_reports_mask_mismatches_and_violations",
+    "returncode": 0,
+    "elapsed_seconds": 0.0035118400119245052
+  },
+  {
+    "name": "active_set::tests::active_set_loop_rejects_bad_masks_and_violated_candidates",
+    "returncode": 0,
+    "elapsed_seconds": 0.0034993509761989117
+  },
+  {
+    "name": "active_set::tests::active_set_loop_stabilizes_mask_without_mutating_problem",
+    "returncode": 0,
+    "elapsed_seconds": 0.0034761519636958838
+  },
+  {
+    "name": "active_set::tests::active_set_update_proposes_exact_mask_repairs_without_mutation",
+    "returncode": 0,
+    "elapsed_seconds": 0.0035471669398248196
+  },
+  {
+    "name": "active_set::tests::active_set_update_rejects_violated_candidate_instead_of_repairing",
+    "returncode": 0,
+    "elapsed_seconds": 0.003487410955131054
+  },
+  {
+    "name": "active_set::tests::affine_regeneration_reports_bad_masks_and_non_affine_active_sets",
+    "returncode": 0,
+    "elapsed_seconds": 0.0034904710482805967
+  },
+  {
+    "name": "active_set::tests::affine_regeneration_solves_masked_active_equalities_and_audits_candidate",
+    "returncode": 0,
+    "elapsed_seconds": 0.00352892791852355
+  },
+  {
+    "name": "active_set::tests::generated_affine_regeneration_solves_two_variable_systems",
+    "returncode": 0,
+    "elapsed_seconds": 0.003469001967459917
+  },
+  {
+    "name": "active_set::tests::generated_less_equal_active_masks_follow_exact_sign",
+    "returncode": 0,
+    "elapsed_seconds": 0.003517839009873569
+  },
+  {
+    "name": "active_set::tests::generated_quadratic_regeneration_selects_nonnegative_root",
+    "returncode": 0,
+    "elapsed_seconds": 0.00756101100705564
+  },
+  {
+    "name": "active_set::tests::quadratic_regeneration_enumerates_roots_and_audits_active_mask",
+    "returncode": 0,
+    "elapsed_seconds": 0.0034933510469272733
+  },
+  {
+    "name": "active_set::tests::quadratic_regeneration_reports_invalid_masks_no_roots_and_limits",
+    "returncode": 0,
+    "elapsed_seconds": 0.0034936309093609452
+  },
+  {
+    "name": "algebraic::tests::affine_exact_real_horner_matches_retained_power_sum",
+    "returncode": 0,
+    "elapsed_seconds": 0.003486890927888453
+  },
+  {
+    "name": "algebraic::tests::affine_homogeneous_horner_matches_retained_power_sum",
+    "returncode": 0,
+    "elapsed_seconds": 0.0034856610000133514
+  },
+  {
+    "name": "algebraic::tests::algebraic_root_affine_relation_certifies_scale_and_offset_beyond_512_bits",
+    "returncode": 0,
+    "elapsed_seconds": 0.0034942199708893895
+  },
+  {
+    "name": "algebraic::tests::algebraic_root_affine_transform_constructs_represented_values",
+    "returncode": 0,
+    "elapsed_seconds": 0.003480841056443751
+  },
+  {
+    "name": "algebraic::tests::algebraic_root_affine_transform_handles_degree_128_without_machine_binomials",
+    "returncode": 0,
+    "elapsed_seconds": 0.01561165100429207
+  },
+  {
+    "name": "algebraic::tests::algebraic_root_affine_transform_preserves_exact_real_coefficients",
+    "returncode": 0,
+    "elapsed_seconds": 0.0035691560478881
+  },
+  {
+    "name": "algebraic::tests::algebraic_root_affine_transform_preserves_exact_real_scale_and_offset",
+    "returncode": 0,
+    "elapsed_seconds": 0.003520368947647512
+  },
+  {
+    "name": "algebraic::tests::algebraic_root_affine_transform_replays_cached_source_validation_strictly",
+    "returncode": 0,
+    "elapsed_seconds": 0.0034898410085588694
+  },
+  {
+    "name": "algebraic::tests::algebraic_root_affine_transform_retains_an_arbitrary_exact_point_witness",
+    "returncode": 0,
+    "elapsed_seconds": 0.0035428869305178523
+  },
+  {
+    "name": "algebraic::tests::algebraic_root_arithmetic_certifies_zero_dividend_and_touching_nonzero_divisor",
+    "returncode": 0,
+    "elapsed_seconds": 0.0034962999634444714
+  },
+  {
+    "name": "algebraic::tests::algebraic_root_arithmetic_divides_by_policy_certified_exact_point",
+    "returncode": 0,
+    "elapsed_seconds": 0.0035064000403508544
+  },
+  {
+    "name": "algebraic::tests::algebraic_root_arithmetic_reduces_same_quadratic_square_to_affine_relation",
+    "returncode": 0,
+    "elapsed_seconds": 0.003532207920216024
+  },
+  {
+    "name": "algebraic::tests::algebraic_root_arithmetic_rejects_interval_only_and_invalid_inputs",
+    "returncode": 0,
+    "elapsed_seconds": 0.003485491033643484
+  },
+  {
+    "name": "algebraic::tests::algebraic_root_arithmetic_rejects_missing_binary_operand_before_routing",
+    "returncode": 0,
+    "elapsed_seconds": 0.0035121390828862786
+  },
+  {
+    "name": "algebraic::tests::algebraic_root_arithmetic_replays_cached_input_validation_strictly",
+    "returncode": 0,
+    "elapsed_seconds": 0.003531527938321233
+  },
+  {
+    "name": "algebraic::tests::algebraic_root_arithmetic_returns_exact_nonrational_real_witnesses",
+    "returncode": 0,
+    "elapsed_seconds": 0.0035142289707437158
+  },
+  {
+    "name": "algebraic::tests::algebraic_root_arithmetic_supports_exact_real_scalars_and_reports_unsupported_fields",
+    "returncode": 0,
+    "elapsed_seconds": 0.0035235279938206077
+  },
+  {
+    "name": "algebraic::tests::algebraic_root_arithmetic_transforms_interval_only_roots_by_rational_scalars",
+    "returncode": 0,
+    "elapsed_seconds": 0.003558526048436761
+  },
+  {
+    "name": "algebraic::tests::algebraic_root_arithmetic_uses_exact_rational_witnesses_only",
+    "returncode": 0,
+    "elapsed_seconds": 0.003504699910990894
+  },
+  {
+    "name": "algebraic::tests::algebraic_root_arithmetic_uses_the_explicit_policy",
+    "returncode": 0,
+    "elapsed_seconds": 0.003475362085737288
+  },
+  {
+    "name": "algebraic::tests::algebraic_root_comparison_and_sign_replay_cached_valid_payloads",
+    "returncode": 0,
+    "elapsed_seconds": 0.0034974500304087996
+  },
+  {
+    "name": "algebraic::tests::algebraic_root_comparison_orders_disjoint_intervals_and_witnesses",
+    "returncode": 0,
+    "elapsed_seconds": 0.0035678260028362274
+  },
+  {
+    "name": "algebraic::tests::algebraic_root_comparison_recognizes_equal_irrational_singletons",
+    "returncode": 0,
+    "elapsed_seconds": 0.003456922946497798
+  },
+  {
+    "name": "algebraic::tests::algebraic_root_comparison_reports_overlap_and_invalid_evidence",
+    "returncode": 0,
+    "elapsed_seconds": 0.0035397480241954327
+  },
+  {
+    "name": "algebraic::tests::algebraic_root_comparison_uses_exact_witness_as_effective_interval",
+    "returncode": 0,
+    "elapsed_seconds": 0.0035379279870539904
+  },
+  {
+    "name": "algebraic::tests::algebraic_root_difference_certifies_exact_translation_beyond_512_bits",
+    "returncode": 0,
+    "elapsed_seconds": 0.0035470359725877643
+  },
+  {
+    "name": "algebraic::tests::algebraic_root_difference_comparison_certifies_shared_polynomial_root",
+    "returncode": 0,
+    "elapsed_seconds": 0.0035479270154610276
+  },
+  {
+    "name": "algebraic::tests::algebraic_root_difference_comparison_matches_exact_point_to_isolator",
+    "returncode": 0,
+    "elapsed_seconds": 0.0034945800434798002
+  },
+  {
+    "name": "algebraic::tests::algebraic_root_difference_comparison_orders_constructed_overlap",
+    "returncode": 0,
+    "elapsed_seconds": 0.003510448965243995
+  },
+  {
+    "name": "algebraic::tests::algebraic_root_difference_comparison_returns_direct_orders_without_construction",
+    "returncode": 0,
+    "elapsed_seconds": 0.0035059889778494835
+  },
+  {
+    "name": "algebraic::tests::algebraic_root_evaluation_distinguishes_exact_real_values_and_replays_input",
+    "returncode": 0,
+    "elapsed_seconds": 0.0035801141057163477
+  },
+  {
+    "name": "algebraic::tests::algebraic_root_polynomial_evaluation_certifies_witnesses_and_intervals",
+    "returncode": 0,
+    "elapsed_seconds": 0.003494211006909609
+  },
+  {
+    "name": "algebraic::tests::algebraic_root_rational_evaluation_checks_denominator_domain",
+    "returncode": 0,
+    "elapsed_seconds": 0.0034730620682239532
+  },
+  {
+    "name": "algebraic::tests::algebraic_root_refinement_comparison_orders_overlapping_intervals",
+    "returncode": 0,
+    "elapsed_seconds": 0.0035068000433966517
+  },
+  {
+    "name": "algebraic::tests::algebraic_root_refinement_skips_exact_point_operand",
+    "returncode": 0,
+    "elapsed_seconds": 0.003499630023725331
+  },
+  {
+    "name": "algebraic::tests::algebraic_root_refinement_supports_exact_real_coefficient_fields",
+    "returncode": 0,
+    "elapsed_seconds": 0.0034634519834071398
+  },
+  {
+    "name": "algebraic::tests::decreasing_affine_transform_excludes_a_foreign_source_endpoint_root",
+    "returncode": 0,
+    "elapsed_seconds": 0.0036217219894751906
+  },
+  {
+    "name": "algebraic::tests::decreasing_affine_transform_retains_an_owned_upper_endpoint_root",
+    "returncode": 0,
+    "elapsed_seconds": 0.003549296990968287
+  },
+  {
+    "name": "algebraic::tests::endpoint_root_detection_falls_back_after_inconclusive_modular_images",
+    "returncode": 0,
+    "elapsed_seconds": 0.003535836935043335
+  },
+  {
+    "name": "algebraic::tests::exact_rational_witnesses_replay_against_polynomial",
+    "returncode": 0,
+    "elapsed_seconds": 0.0035322579788044095
+  },
+  {
+    "name": "algebraic::tests::generated_affine_exact_real_horner_matches_retained_power_sum",
+    "returncode": 0,
+    "elapsed_seconds": 0.007563191000372171
+  },
+  {
+    "name": "algebraic::tests::generated_endpoint_root_detection_matches_integer_horner",
+    "returncode": 0,
+    "elapsed_seconds": 0.003500320017337799
+  },
+  {
+    "name": "algebraic::tests::generated_exact_real_point_arithmetic_never_claims_rational_witness",
+    "returncode": 0,
+    "elapsed_seconds": 0.0035507059656083584
+  },
+  {
+    "name": "algebraic::tests::generated_interval_only_addition_by_rational_scalar_matches_affine_transform",
+    "returncode": 0,
+    "elapsed_seconds": 0.003539987956173718
+  },
+  {
+    "name": "algebraic::tests::generated_interval_only_negation_reflects_polynomial_and_interval",
+    "returncode": 0,
+    "elapsed_seconds": 0.0035140999825671315
+  },
+  {
+    "name": "algebraic::tests::generated_linear_roots_become_valid_represented_intervals",
+    "returncode": 0,
+    "elapsed_seconds": 0.0034956600284203887
+  },
+  {
+    "name": "algebraic::tests::generated_rational_affine_horner_matches_retained_power_sum",
+    "returncode": 0,
+    "elapsed_seconds": 0.0035118790110573173
+  },
+  {
+    "name": "algebraic::tests::generated_rational_interval_product_matches_all_endpoint_products",
+    "returncode": 0,
+    "elapsed_seconds": 0.00354325701482594
+  },
+  {
+    "name": "algebraic::tests::generated_rational_witness_affine_transform_preserves_exact_root",
+    "returncode": 0,
+    "elapsed_seconds": 0.0035329879028722644
+  },
+  {
+    "name": "algebraic::tests::generated_rational_witness_arithmetic_matches_integer_arithmetic",
+    "returncode": 0,
+    "elapsed_seconds": 0.0035144389839842916
+  },
+  {
+    "name": "algebraic::tests::generated_rational_witness_comparisons_match_integer_order",
+    "returncode": 0,
+    "elapsed_seconds": 0.0034947399981319904
+  },
+  {
+    "name": "algebraic::tests::generated_rational_witness_polynomial_evaluation_matches_integer_arithmetic",
+    "returncode": 0,
+    "elapsed_seconds": 0.003479041042737663
+  },
+  {
+    "name": "algebraic::tests::generated_rational_witness_rational_evaluation_matches_integer_arithmetic",
+    "returncode": 0,
+    "elapsed_seconds": 0.0035275790141895413
+  },
+  {
+    "name": "algebraic::tests::generated_refinement_comparison_preserves_rational_witness_order",
+    "returncode": 0,
+    "elapsed_seconds": 0.003511488903313875
+  },
+  {
+    "name": "algebraic::tests::invalid_representations_are_rejected_antagonistically",
+    "returncode": 0,
+    "elapsed_seconds": 0.0014664990594610572
+  },
+  {
+    "name": "algebraic::tests::represented_root_sign_respects_zero_endpoint_ownership",
+    "returncode": 0,
+    "elapsed_seconds": 0.0035085000563412905
+  },
+  {
+    "name": "algebraic::tests::represented_root_sign_uses_exact_zero_endpoint_evidence",
+    "returncode": 0,
+    "elapsed_seconds": 0.0035237290430814028
+  },
+  {
+    "name": "algebraic::tests::represented_roots_accept_exact_real_coefficient_fields",
+    "returncode": 0,
+    "elapsed_seconds": 0.003517308970913291
+  },
+  {
+    "name": "algebraic::tests::represented_roots_preserve_polynomial_and_interval_evidence",
+    "returncode": 0,
+    "elapsed_seconds": 0.0034807019401341677
+  },
+  {
+    "name": "algebraic_binary::tests::binary_constructs_difference_of_independent_square_roots",
+    "returncode": 0,
+    "elapsed_seconds": 0.003571104956790805
+  },
+  {
+    "name": "algebraic_binary::tests::binary_constructs_product_of_independent_cubic_roots",
+    "returncode": 0,
+    "elapsed_seconds": 0.003502040053717792
+  },
+  {
+    "name": "algebraic_binary::tests::binary_constructs_product_of_independent_square_roots",
+    "returncode": 0,
+    "elapsed_seconds": 0.003495871089398861
+  },
+  {
+    "name": "algebraic_binary::tests::binary_constructs_quotient_of_independent_square_roots",
+    "returncode": 0,
+    "elapsed_seconds": 0.0034760719863697886
+  },
+  {
+    "name": "algebraic_binary::tests::binary_constructs_sum_of_independent_square_roots",
+    "returncode": 0,
+    "elapsed_seconds": 0.003508348949253559
+  },
+  {
+    "name": "algebraic_binary::tests::binary_interval_division_reuses_policy_nonzero_endpoints",
+    "returncode": 0,
+    "elapsed_seconds": 0.003493449999950826
+  },
+  {
+    "name": "algebraic_binary::tests::binary_keeps_the_resultant_cap_after_square_free_reduction",
+    "returncode": 0,
+    "elapsed_seconds": 0.0035100190434604883
+  },
+  {
+    "name": "algebraic_binary::tests::binary_point_images_do_not_change_half_open_ownership",
+    "returncode": 0,
+    "elapsed_seconds": 0.003496980993077159
+  },
+  {
+    "name": "algebraic_binary::tests::binary_point_images_do_not_promote_approximately_chosen_extrema",
+    "returncode": 0,
+    "elapsed_seconds": 0.0035311980172991753
+  },
+  {
+    "name": "algebraic_binary::tests::binary_point_images_preserve_nonrational_witnesses",
+    "returncode": 0,
+    "elapsed_seconds": 0.003483241074718535
+  },
+  {
+    "name": "algebraic_binary::tests::binary_point_images_preserve_rational_witnesses",
+    "returncode": 0,
+    "elapsed_seconds": 0.007548991939984262
+  },
+  {
+    "name": "algebraic_binary::tests::binary_point_images_preserve_zero_products_with_wide_inputs",
+    "returncode": 0,
+    "elapsed_seconds": 0.003538546967320144
+  },
+  {
+    "name": "algebraic_binary::tests::binary_point_images_require_certified_extrema_for_a_symmetric_product",
+    "returncode": 0,
+    "elapsed_seconds": 0.0035348080564290285
+  },
+  {
+    "name": "algebraic_binary::tests::binary_point_images_require_strict_equality_even_under_approximate_policy",
+    "returncode": 0,
+    "elapsed_seconds": 0.003521139035001397
+  },
+  {
+    "name": "algebraic_binary::tests::binary_point_images_still_replay_the_polynomial",
+    "returncode": 0,
+    "elapsed_seconds": 0.0035025899996981025
+  },
+  {
+    "name": "algebraic_binary::tests::binary_refuses_division_when_denominator_interval_may_contain_zero",
+    "returncode": 0,
+    "elapsed_seconds": 0.0035291279200464487
+  },
+  {
+    "name": "algebraic_binary::tests::binary_rejects_nonisolating_image_interval",
+    "returncode": 0,
+    "elapsed_seconds": 0.003618472022935748
+  },
+  {
+    "name": "algebraic_binary::tests::binary_replays_source_validation_instead_of_trusting_stale_status",
+    "returncode": 0,
+    "elapsed_seconds": 0.0034428139915689826
+  },
+  {
+    "name": "algebraic_binary::tests::binary_resultant_clears_source_denominators_before_elimination",
+    "returncode": 0,
+    "elapsed_seconds": 0.003472752054221928
+  },
+  {
+    "name": "algebraic_binary::tests::binary_reuses_a_shared_square_free_carrier_for_distinct_conjugates",
+    "returncode": 0,
+    "elapsed_seconds": 0.003523648949339986
+  },
+  {
+    "name": "algebraic_binary::tests::binary_reuses_square_free_sources_beyond_the_stored_degree_cap",
+    "returncode": 0,
+    "elapsed_seconds": 0.0035114000784233212
+  },
+  {
+    "name": "algebraic_binary::tests::exact_rational_resultant_trimming_fails_closed",
+    "returncode": 0,
+    "elapsed_seconds": 0.003471213043667376
+  },
+  {
+    "name": "algebraic_binary::tests::generated_signed_unit_linear_compositions_evaluate_exactly",
+    "returncode": 0,
+    "elapsed_seconds": 0.0034815410617738962
+  },
+  {
+    "name": "algebraic_binary::tests::generated_square_root_products_match_expected_resultant_shape",
+    "returncode": 0,
+    "elapsed_seconds": 0.015643807942979038
+  },
+  {
+    "name": "algebraic_binary::zero_factor_tests::division_admits_only_the_reduced_degree_bound",
+    "returncode": 0,
+    "elapsed_seconds": 0.003491329960525036
+  },
+  {
+    "name": "algebraic_binary::zero_factor_tests::division_deflates_after_shared_oversized_square_free_reduction",
+    "returncode": 0,
+    "elapsed_seconds": 0.00347628106828779
+  },
+  {
+    "name": "algebraic_binary::zero_factor_tests::division_keeps_zero_interval_and_invalid_payload_guards",
+    "returncode": 0,
+    "elapsed_seconds": 0.003502769977785647
+  },
+  {
+    "name": "algebraic_binary::zero_factor_tests::division_preserves_signed_nonzero_resultants",
+    "returncode": 0,
+    "elapsed_seconds": 0.003469981951639056
+  },
+  {
+    "name": "algebraic_binary::zero_factor_tests::division_recovers_unused_common_zero_roots",
+    "returncode": 0,
+    "elapsed_seconds": 0.0034764519659802318
+  },
+  {
+    "name": "algebraic_binary::zero_factor_tests::divisor_deflation_borrows_or_reuses_owned_storage",
+    "returncode": 0,
+    "elapsed_seconds": 0.003458213061094284
+  },
+  {
+    "name": "algebraic_binary::zero_factor_tests::divisor_deflation_requires_strict_nonzero_and_nonconstant_residual",
+    "returncode": 0,
+    "elapsed_seconds": 0.0035138590028509498
+  },
+  {
+    "name": "algebraic_fiber::refinement::tests::refiner_replays_point_witnesses_and_rejects_stale_or_ambiguous_ownership",
+    "returncode": 0,
+    "elapsed_seconds": 0.003535058000124991
+  },
+  {
+    "name": "algebraic_fiber::refinement::tests::repeated_root_refinement_reuses_one_sequence_across_roots_and_requests",
+    "returncode": 0,
+    "elapsed_seconds": 0.015619789017364383
+  },
+  {
+    "name": "algebraic_fiber::refinement::tests::simple_refinement_preserves_exact_base_coefficients_without_sturm",
+    "returncode": 0,
+    "elapsed_seconds": 0.0035038089845329523
+  },
+  {
+    "name": "algebraic_fiber::subresultant::tests::fiber_determinants_keep_zero_divisors_without_scalar_units",
+    "returncode": 0,
+    "elapsed_seconds": 0.0034861320164054632
+  },
+  {
+    "name": "algebraic_fiber::subresultant::tests::fiber_determinants_preserve_all_row_and_column_permutation_signs",
+    "returncode": 0,
+    "elapsed_seconds": 0.0035049699945375323
+  },
+  {
+    "name": "algebraic_fiber::subresultant::tests::subresultants_preserve_one_scale_across_all_target_coefficients",
+    "returncode": 0,
+    "elapsed_seconds": 0.003477002028375864
+  },
+  {
+    "name": "algebraic_fiber::subresultant::tests::subresultants_reduce_source_conjugates_without_global_projection",
+    "returncode": 0,
+    "elapsed_seconds": 0.0034538640175014734
+  },
+  {
+    "name": "algebraic_fiber::tests::diagonal_fiber_deflation_removes_the_exact_local_multiplicity",
+    "returncode": 0,
+    "elapsed_seconds": 0.0034882110776379704
+  },
+  {
+    "name": "algebraic_fiber::tests::local_constant_signs_keep_the_unresolved_native_fact_fallback",
+    "returncode": 0,
+    "elapsed_seconds": 0.0034413340035825968
+  },
+  {
+    "name": "algebraic_fiber::tests::local_constant_signs_reuse_native_proofs_without_field_cache_entries",
+    "returncode": 0,
+    "elapsed_seconds": 0.003606881946325302
+  },
+  {
+    "name": "algebraic_fiber::tests::local_division_preserves_arbitrary_exact_base_coefficients",
+    "returncode": 0,
+    "elapsed_seconds": 0.0034842609893530607
+  },
+  {
+    "name": "algebraic_fiber::tests::local_division_preserves_wide_exact_quotients_beyond_modular_reconstruction",
+    "returncode": 0,
+    "elapsed_seconds": 0.16388786991592497
+  },
+  {
+    "name": "algebraic_fiber::tests::local_division_removes_only_foreign_factors_and_reuses_older_values",
+    "returncode": 0,
+    "elapsed_seconds": 0.0035413469886407256
+  },
+  {
+    "name": "algebraic_fiber::tests::local_exact_division_preserves_skipped_degrees_and_reduced_coefficients",
+    "returncode": 0,
+    "elapsed_seconds": 0.0035056290216743946
+  },
+  {
+    "name": "algebraic_fiber::tests::local_fiber_count_preserves_half_open_selected_root_ownership",
+    "returncode": 0,
+    "elapsed_seconds": 0.0034917209995910525
+  },
+  {
+    "name": "algebraic_fiber::tests::local_fiber_count_preserves_uncached_singleton_identities",
+    "returncode": 0,
+    "elapsed_seconds": 0.0035925540141761303
+  },
+  {
+    "name": "algebraic_fiber::tests::local_fiber_export_moves_ragged_coefficients_in_both_orientations",
+    "returncode": 0,
+    "elapsed_seconds": 0.0034924799110740423
+  },
+  {
+    "name": "algebraic_fiber::tests::local_field_gcd_handles_specialized_degree_drops_in_both_orientations",
+    "returncode": 0,
+    "elapsed_seconds": 0.0035119890235364437
+  },
+  {
+    "name": "algebraic_fiber::tests::local_field_replays_stale_root_payloads_before_constant_fiber_shortcuts",
+    "returncode": 0,
+    "elapsed_seconds": 0.003542468068189919
+  },
+  {
+    "name": "algebraic_fiber::tests::local_field_sturm_batches_candidate_intervals_without_changing_reports",
+    "returncode": 0,
+    "elapsed_seconds": 0.0035063199466094375
+  },
+  {
+    "name": "algebraic_fiber::tests::local_field_sturm_batches_preserve_endpoint_reports_in_both_orientations",
+    "returncode": 0,
+    "elapsed_seconds": 0.0034883409971371293
+  },
+  {
+    "name": "algebraic_fiber::tests::local_field_sturm_counts_even_multiplicity_in_both_orientations",
+    "returncode": 0,
+    "elapsed_seconds": 0.0034631029702723026
+  },
+  {
+    "name": "algebraic_fiber::tests::local_field_sturm_handles_a_reducible_defining_polynomial",
+    "returncode": 0,
+    "elapsed_seconds": 0.0035342680057510734
+  },
+  {
+    "name": "algebraic_fiber::tests::local_field_sturm_reports_an_identically_zero_specialization",
+    "returncode": 0,
+    "elapsed_seconds": 0.003441283944994211
+  },
+  {
+    "name": "algebraic_fiber::tests::local_field_sturm_reports_rational_endpoint_roots_and_input_boundaries",
+    "returncode": 0,
+    "elapsed_seconds": 0.003492599935270846
+  },
+  {
+    "name": "algebraic_fiber::tests::local_field_zero_test_recognizes_an_uncached_singleton",
+    "returncode": 0,
+    "elapsed_seconds": 0.003548557055182755
+  },
+  {
+    "name": "algebraic_fiber::tests::local_image_convolution_preserves_sparse_zero_slots",
+    "returncode": 0,
+    "elapsed_seconds": 0.0035784149076789618
+  },
+  {
+    "name": "algebraic_fiber::tests::local_refinement_preserves_exact_point_payloads",
+    "returncode": 0,
+    "elapsed_seconds": 0.003521748003549874
+  },
+  {
+    "name": "algebraic_fiber::tests::local_refinement_preserves_half_open_selected_root_ownership",
+    "returncode": 0,
+    "elapsed_seconds": 0.0034998400369659066
+  },
+  {
+    "name": "algebraic_fiber::tests::local_sign_refinement_retains_nested_quadratic_root_certificates",
+    "returncode": 0,
+    "elapsed_seconds": 0.0035032801097258925
+  },
+  {
+    "name": "algebraic_fiber::tests::local_small_determinant_preserves_row_major_orientation",
+    "returncode": 0,
+    "elapsed_seconds": 0.0035741549218073487
+  },
+  {
+    "name": "algebraic_fiber::tests::polynomial_fiber_image_preserves_a_degree_135_selected_tower",
+    "returncode": 0,
+    "elapsed_seconds": 0.007586949970573187
+  },
+  {
+    "name": "algebraic_fiber::tests::polynomial_fiber_image_projects_a_nonsquare_radical_relation_directly",
+    "returncode": 0,
+    "elapsed_seconds": 0.003479651059024036
+  },
+  {
+    "name": "algebraic_fiber::tests::polynomial_fiber_image_retains_base_parameter_axis",
+    "returncode": 0,
+    "elapsed_seconds": 0.003521537990309298
+  },
+  {
+    "name": "algebraic_fiber::tests::polynomial_fiber_image_saturates_a_fourfold_multicoefficient_component",
+    "returncode": 0,
+    "elapsed_seconds": 0.03168635896872729
+  },
+  {
+    "name": "algebraic_fiber::tests::polynomial_fiber_image_saturates_an_identically_zero_source_conjugate",
+    "returncode": 0,
+    "elapsed_seconds": 0.0036792379105463624
+  },
+  {
+    "name": "algebraic_fiber::tests::polynomial_fiber_image_trims_only_strictly_exact_zero_degree",
+    "returncode": 0,
+    "elapsed_seconds": 0.003546527004800737
+  },
+  {
+    "name": "algebraic_fiber::tests::primitive_local_image_content_accepts_policy_certified_zero_remainders",
+    "returncode": 0,
+    "elapsed_seconds": 0.0034923299681395292
+  },
+  {
+    "name": "algebraic_fiber::tests::primitive_local_image_content_rejects_unsupported_zero_remainders",
+    "returncode": 0,
+    "elapsed_seconds": 0.003482511965557933
+  },
+  {
+    "name": "algebraic_fiber::tests::quotient_ring_fiber_projection_obeys_an_explicit_degree_budget",
+    "returncode": 0,
+    "elapsed_seconds": 0.0034889510134235024
+  },
+  {
+    "name": "algebraic_fiber::tests::quotient_ring_fiber_projection_retains_the_complete_norm_roots",
+    "returncode": 0,
+    "elapsed_seconds": 0.0034990799613296986
+  },
+  {
+    "name": "algebraic_fiber::tests::quotient_ring_fiber_projection_shares_local_field_admission_in_both_orientations",
+    "returncode": 0,
+    "elapsed_seconds": 0.0034755620872601867
+  },
+  {
+    "name": "algebraic_fiber::tests::rational_fiber_reduction_preserves_degree_fifteen_correlation",
+    "returncode": 0,
+    "elapsed_seconds": 0.003503509913571179
+  },
+  {
+    "name": "algebraic_fiber::tests::rational_fiber_reduction_preserves_ragged_zero_and_dependent_residuals",
+    "returncode": 0,
+    "elapsed_seconds": 0.0034580230712890625
+  },
+  {
+    "name": "algebraic_fiber::tests::rational_sturm_preserves_degree_changes_and_general_exact_coefficients",
+    "returncode": 0,
+    "elapsed_seconds": 0.003489000955596566
+  },
+  {
+    "name": "algebraic_fiber::tests::rational_sturm_preserves_selected_multiplicity_and_negative_scales",
+    "returncode": 0,
+    "elapsed_seconds": 0.003533627954311669
+  },
+  {
+    "name": "algebraic_fiber::tests::rational_subresultants_preserve_common_roots_across_degree_gaps",
+    "returncode": 0,
+    "elapsed_seconds": 0.003497099969536066
+  },
+  {
+    "name": "algebraic_fiber::tests::rational_subresultants_preserve_selected_degree_changes_and_exact_coefficients",
+    "returncode": 0,
+    "elapsed_seconds": 0.003532908041961491
+  },
+  {
+    "name": "algebraic_fiber::tests::rational_subresultants_replay_degree_41_fillet_contact_in_both_orientations",
+    "returncode": 0,
+    "elapsed_seconds": 2.4167331679491326
+  },
+  {
+    "name": "algebraic_fiber::tests::selected_algebraic_fiber_isolation_falls_back_for_repeated_irrational_root",
+    "returncode": 0,
+    "elapsed_seconds": 0.0036165419733151793
+  },
+  {
+    "name": "algebraic_fiber::tests::selected_algebraic_fiber_isolation_uses_division_free_bernstein_path",
+    "returncode": 0,
+    "elapsed_seconds": 0.0035388170508667827
+  },
+  {
+    "name": "algebraic_fiber::tests::selected_fiber_accepts_exact_real_base_coefficients",
+    "returncode": 0,
+    "elapsed_seconds": 0.003508139052428305
+  },
+  {
+    "name": "algebraic_fiber::tests::selected_fiber_fallback_partitions_at_a_deflated_rational_root",
+    "returncode": 0,
+    "elapsed_seconds": 0.0035179489059373736
+  },
+  {
+    "name": "algebraic_fiber::tests::selected_fiber_repeated_and_rational_roots_complete",
+    "returncode": 0,
+    "elapsed_seconds": 0.015638998011127114
+  },
+  {
+    "name": "algebraic_fiber::tests::sturm_rows_preserve_variations_and_repeated_roots",
+    "returncode": 0,
+    "elapsed_seconds": 0.003515989985316992
+  },
+  {
+    "name": "algebraic_mobius::tests::decreasing_mobius_transform_excludes_a_foreign_source_endpoint_root",
+    "returncode": 0,
+    "elapsed_seconds": 0.0034783610608428717
+  },
+  {
+    "name": "algebraic_mobius::tests::exact_real_homogeneous_horner_matches_retained_power_sum",
+    "returncode": 0,
+    "elapsed_seconds": 0.003515989053994417
+  },
+  {
+    "name": "algebraic_mobius::tests::generated_exact_real_homogeneous_horner_matches_retained_power_sum",
+    "returncode": 0,
+    "elapsed_seconds": 0.015631937887519598
+  },
+  {
+    "name": "algebraic_mobius::tests::generated_interval_mobius_keeps_endpoint_order_away_from_a_pole",
+    "returncode": 0,
+    "elapsed_seconds": 0.0035662759328261018
+  },
+  {
+    "name": "algebraic_mobius::tests::generated_rational_homogeneous_horner_matches_retained_power_sum",
+    "returncode": 0,
+    "elapsed_seconds": 0.007597459014505148
+  },
+  {
+    "name": "algebraic_mobius::tests::generated_rational_witness_mobius_matches_exact_fraction",
+    "returncode": 0,
+    "elapsed_seconds": 0.0035096099600195885
+  },
+  {
+    "name": "algebraic_mobius::tests::linear_fractional_composition_clears_the_authored_denominator",
+    "returncode": 0,
+    "elapsed_seconds": 0.0035113500198349357
+  },
+  {
+    "name": "algebraic_mobius::tests::mobius_exact_point_ignores_foreign_poles_in_its_outer_interval",
+    "returncode": 0,
+    "elapsed_seconds": 0.0035933840554207563
+  },
+  {
+    "name": "algebraic_mobius::tests::mobius_interval_reuses_policy_nonzero_denominator",
+    "returncode": 0,
+    "elapsed_seconds": 0.0034971600398421288
+  },
+  {
+    "name": "algebraic_mobius::tests::mobius_transform_constructs_inverse_of_sqrt_two",
+    "returncode": 0,
+    "elapsed_seconds": 0.0034549740375950933
+  },
+  {
+    "name": "algebraic_mobius::tests::mobius_transform_constructs_shifted_reciprocal",
+    "returncode": 0,
+    "elapsed_seconds": 0.0034987099934369326
+  },
+  {
+    "name": "algebraic_mobius::tests::mobius_transform_preserves_exact_rational_witnesses",
+    "returncode": 0,
+    "elapsed_seconds": 0.0035266579361632466
+  },
+  {
+    "name": "algebraic_mobius::tests::mobius_transform_preserves_exact_real_source_coefficients",
+    "returncode": 0,
+    "elapsed_seconds": 0.0034914009738713503
+  },
+  {
+    "name": "algebraic_mobius::tests::mobius_transform_refines_away_from_an_excluded_endpoint_pole",
+    "returncode": 0,
+    "elapsed_seconds": 0.0035055599873885512
+  },
+  {
+    "name": "algebraic_mobius::tests::mobius_transform_refines_away_from_an_interior_foreign_pole",
+    "returncode": 0,
+    "elapsed_seconds": 0.0035431580618023872
+  },
+  {
+    "name": "algebraic_mobius::tests::mobius_transform_refines_foreign_poles_and_rejects_constant_maps",
+    "returncode": 0,
+    "elapsed_seconds": 0.003485030960291624
+  },
+  {
+    "name": "algebraic_mobius::tests::mobius_transform_rejects_a_pole_at_the_owned_root",
+    "returncode": 0,
+    "elapsed_seconds": 0.0035153889330103993
+  },
+  {
+    "name": "algebraic_mobius::tests::mobius_transform_replays_cached_source_validation_strictly",
+    "returncode": 0,
+    "elapsed_seconds": 0.0035374979488551617
+  },
+  {
+    "name": "algebraic_mobius::tests::mobius_transform_retains_an_arbitrary_exact_point_witness",
+    "returncode": 0,
+    "elapsed_seconds": 0.0035163690336048603
+  },
+  {
+    "name": "algebraic_mobius::tests::rational_homogeneous_horner_matches_retained_power_sum",
+    "returncode": 0,
+    "elapsed_seconds": 0.0035281180171296
+  },
+  {
+    "name": "algebraic_polynomial_image::tests::generated_constant_source_relations_are_detected_exactly",
+    "returncode": 0,
+    "elapsed_seconds": 0.00358406500890851
+  },
+  {
+    "name": "algebraic_polynomial_image::tests::generated_interval_horner_contains_endpoint_and_midpoint_values",
+    "returncode": 0,
+    "elapsed_seconds": 0.003541226964443922
+  },
+  {
+    "name": "algebraic_polynomial_image::tests::generated_rational_witness_polynomial_image_matches_integer_evaluation",
+    "returncode": 0,
+    "elapsed_seconds": 0.0035714460536837578
+  },
+  {
+    "name": "algebraic_polynomial_image::tests::polynomial_image_clears_disparate_denominators_before_elimination",
+    "returncode": 0,
+    "elapsed_seconds": 0.0035065090050920844
+  },
+  {
+    "name": "algebraic_polynomial_image::tests::polynomial_image_constructs_quadratic_expression_of_sqrt_two",
+    "returncode": 0,
+    "elapsed_seconds": 0.003505480010062456
+  },
+  {
+    "name": "algebraic_polynomial_image::tests::polynomial_image_constructs_square_of_sqrt_two",
+    "returncode": 0,
+    "elapsed_seconds": 0.0034983400255441666
+  },
+  {
+    "name": "algebraic_polynomial_image::tests::polynomial_image_detects_a_constant_source_relation",
+    "returncode": 0,
+    "elapsed_seconds": 0.0034842609893530607
+  },
+  {
+    "name": "algebraic_polynomial_image::tests::polynomial_image_keeps_the_degree_cap_after_square_free_reduction",
+    "returncode": 0,
+    "elapsed_seconds": 0.0035234279930591583
+  },
+  {
+    "name": "algebraic_polynomial_image::tests::polynomial_image_preserves_rational_witnesses",
+    "returncode": 0,
+    "elapsed_seconds": 0.0035389370750635862
+  },
+  {
+    "name": "algebraic_polynomial_image::tests::polynomial_image_refines_a_nonmonotone_source_interval",
+    "returncode": 0,
+    "elapsed_seconds": 0.0035054399631917477
+  },
+  {
+    "name": "algebraic_polynomial_image::tests::polynomial_image_refines_away_a_foreign_resultant_root",
+    "returncode": 0,
+    "elapsed_seconds": 0.0035239780554547906
+  },
+  {
+    "name": "algebraic_polynomial_image::tests::polynomial_image_rejects_empty_and_nonrational_authored_storage",
+    "returncode": 0,
+    "elapsed_seconds": 0.0034990800777450204
+  },
+  {
+    "name": "algebraic_polynomial_image::tests::polynomial_image_replays_cached_source_validation_strictly",
+    "returncode": 0,
+    "elapsed_seconds": 0.003505980013869703
+  },
+  {
+    "name": "algebraic_polynomial_image::tests::polynomial_image_represents_a_stationary_algebraic_map",
+    "returncode": 0,
+    "elapsed_seconds": 0.0035874239401891828
+  },
+  {
+    "name": "algebraic_polynomial_image::tests::polynomial_image_square_frees_an_oversized_repeated_carrier",
+    "returncode": 0,
+    "elapsed_seconds": 0.0035047000274062157
+  },
+  {
+    "name": "algebraic_rational_image::tests::bounded_rational_image_retains_boundary_touching_enclosures",
+    "returncode": 0,
+    "elapsed_seconds": 0.0034981409553438425
+  },
+  {
+    "name": "algebraic_rational_image::tests::bounded_rational_image_skips_disjoint_elimination",
+    "returncode": 0,
+    "elapsed_seconds": 0.0035033499589189887
+  },
+  {
+    "name": "algebraic_rational_image::tests::generated_rational_image_batches_match_singleton_order",
+    "returncode": 0,
+    "elapsed_seconds": 0.015636398922652006
+  },
+  {
+    "name": "algebraic_rational_image::tests::generated_rational_witness_rational_image_matches_exact_fraction",
+    "returncode": 0,
+    "elapsed_seconds": 0.003533047973178327
+  },
+  {
+    "name": "algebraic_rational_image::tests::generated_shared_factors_preserve_the_selected_rational_image",
+    "returncode": 0,
+    "elapsed_seconds": 0.015645448002032936
+  },
+  {
+    "name": "algebraic_rational_image::tests::rational_image_batch_matches_independent_shared_denominator_transforms",
+    "returncode": 0,
+    "elapsed_seconds": 0.003528787987306714
+  },
+  {
+    "name": "algebraic_rational_image::tests::rational_image_batch_preserves_invalid_source_reports_and_empty_noop",
+    "returncode": 0,
+    "elapsed_seconds": 0.0034548130352050066
+  },
+  {
+    "name": "algebraic_rational_image::tests::rational_image_batch_shares_strengthened_domain_evidence_exactly",
+    "returncode": 0,
+    "elapsed_seconds": 0.0034783020382747054
+  },
+  {
+    "name": "algebraic_rational_image::tests::rational_image_cancels_a_common_factor_outside_the_isolated_root",
+    "returncode": 0,
+    "elapsed_seconds": 0.0034869409864768386
+  },
+  {
+    "name": "algebraic_rational_image::tests::rational_image_certifies_an_algebraic_pole_before_cancellation",
+    "returncode": 0,
+    "elapsed_seconds": 0.003479392034932971
+  },
+  {
+    "name": "algebraic_rational_image::tests::rational_image_clears_disparate_denominators_before_elimination",
+    "returncode": 0,
+    "elapsed_seconds": 0.0035057199420407414
+  },
+  {
+    "name": "algebraic_rational_image::tests::rational_image_constructs_linear_fractional_value",
+    "returncode": 0,
+    "elapsed_seconds": 0.0035401680506765842
+  },
+  {
+    "name": "algebraic_rational_image::tests::rational_image_direct_resultant_accepts_nonmonotone_denominator_image",
+    "returncode": 0,
+    "elapsed_seconds": 0.003539577010087669
+  },
+  {
+    "name": "algebraic_rational_image::tests::rational_image_distinguishes_unsupported_nonlinear_map_coefficients",
+    "returncode": 0,
+    "elapsed_seconds": 0.00349355093203485
+  },
+  {
+    "name": "algebraic_rational_image::tests::rational_image_divisions_reuse_policy_nonzero_evidence",
+    "returncode": 0,
+    "elapsed_seconds": 0.003507630084641278
+  },
+  {
+    "name": "algebraic_rational_image::tests::rational_image_norm_keeps_a_shared_scale_when_sample_degree_drops",
+    "returncode": 0,
+    "elapsed_seconds": 0.003482972038909793
+  },
+  {
+    "name": "algebraic_rational_image::tests::rational_image_preserves_a_refinement_discovered_rational_root",
+    "returncode": 0,
+    "elapsed_seconds": 0.003479472012259066
+  },
+  {
+    "name": "algebraic_rational_image::tests::rational_image_preserves_partition_ownership_for_reversed_maps",
+    "returncode": 0,
+    "elapsed_seconds": 0.003482700907625258
+  },
+  {
+    "name": "algebraic_rational_image::tests::rational_image_preserves_rational_witnesses",
+    "returncode": 0,
+    "elapsed_seconds": 0.003490180941298604
+  },
+  {
+    "name": "algebraic_rational_image::tests::rational_image_promotes_a_repeated_rational_image_root",
+    "returncode": 0,
+    "elapsed_seconds": 0.003461702959612012
+  },
+  {
+    "name": "algebraic_rational_image::tests::rational_image_reduces_an_oversized_map_before_the_degree_budget",
+    "returncode": 0,
+    "elapsed_seconds": 0.0034898510202765465
+  },
+  {
+    "name": "algebraic_rational_image::tests::rational_image_reduces_both_map_sides_modulo_the_source_relation",
+    "returncode": 0,
+    "elapsed_seconds": 0.003480241051875055
+  },
+  {
+    "name": "algebraic_rational_image::tests::rational_image_refines_a_dependency_broadened_denominator_interval",
+    "returncode": 0,
+    "elapsed_seconds": 0.003475421923212707
+  },
+  {
+    "name": "algebraic_rational_image::tests::rational_image_refines_a_nonmonotone_source_interval",
+    "returncode": 0,
+    "elapsed_seconds": 0.003481852007098496
+  },
+  {
+    "name": "algebraic_rational_image::tests::rational_image_refines_away_a_foreign_resultant_root",
+    "returncode": 0,
+    "elapsed_seconds": 0.0034852009266614914
+  },
+  {
+    "name": "algebraic_rational_image::tests::rational_image_refines_away_an_excluded_endpoint_pole",
+    "returncode": 0,
+    "elapsed_seconds": 0.003454093006439507
+  },
+  {
+    "name": "algebraic_rational_image::tests::rational_image_represents_a_stationary_algebraic_map",
+    "returncode": 0,
+    "elapsed_seconds": 0.003499120008200407
+  },
+  {
+    "name": "algebraic_rational_image::tests::rational_image_retains_an_arbitrary_exact_point_witness",
+    "returncode": 0,
+    "elapsed_seconds": 0.003590123960748315
+  },
+  {
+    "name": "algebraic_rational_image::tests::rational_image_reuses_mobius_support_for_an_exact_real_source",
+    "returncode": 0,
+    "elapsed_seconds": 0.003715236089192331
+  },
+  {
+    "name": "algebraic_rational_image::tests::rational_image_reuses_mobius_support_for_exact_real_map_coefficients",
+    "returncode": 0,
+    "elapsed_seconds": 0.0034554729936644435
+  },
+  {
+    "name": "algebraic_rational_image::tests::rational_image_supports_degree_twelve_source_with_cubic_map",
+    "returncode": 0,
+    "elapsed_seconds": 0.007573471055366099
+  },
+  {
+    "name": "algebraic_rational_image::tests::rational_map_caches_a_source_reduced_map_without_forcing_a_resultant",
+    "returncode": 0,
+    "elapsed_seconds": 0.003485250985249877
+  },
+  {
+    "name": "algebraic_rational_image::tests::rational_map_falls_back_for_a_distinct_source_polynomial",
+    "returncode": 0,
+    "elapsed_seconds": 0.0034702520351856947
+  },
+  {
+    "name": "algebraic_rational_image::tests::rational_map_reuses_elimination_across_source_roots",
+    "returncode": 0,
+    "elapsed_seconds": 0.0034787520999088883
+  },
+  {
+    "name": "algebraic_rational_image::tests::rational_map_target_rejection_keeps_construction_caches_cold",
+    "returncode": 0,
+    "elapsed_seconds": 0.003517979057505727
+  },
+  {
+    "name": "algebraic_sqrt::tests::every_zero_square_root_branch_canonicalizes_exactly",
+    "returncode": 0,
+    "elapsed_seconds": 0.0035054798936471343
+  },
+  {
+    "name": "algebraic_sqrt::tests::exact_rational_source_shortcut_retains_an_independent_unit_isolator",
+    "returncode": 0,
+    "elapsed_seconds": 0.01562892901711166
+  },
+  {
+    "name": "algebraic_sqrt::tests::irrational_square_root_of_an_exact_witness_uses_an_isolator",
+    "returncode": 0,
+    "elapsed_seconds": 0.003510378999635577
+  },
+  {
+    "name": "algebraic_sqrt::tests::negative_square_root_preserves_excluded_and_selected_endpoint_ownership",
+    "returncode": 0,
+    "elapsed_seconds": 0.003493060008622706
+  },
+  {
+    "name": "algebraic_sqrt::tests::nonzero_exact_witness_keeps_an_exact_square_root_witness",
+    "returncode": 0,
+    "elapsed_seconds": 0.0034831420052796602
+  },
+  {
+    "name": "algebraic_sqrt::tests::signed_square_root_images_keep_exact_branch_isolators",
+    "returncode": 0,
+    "elapsed_seconds": 0.003484720946289599
+  },
+  {
+    "name": "algebraic_sqrt::tests::square_composition_places_every_source_coefficient_exactly",
+    "returncode": 0,
+    "elapsed_seconds": 0.003497019992209971
+  },
+  {
+    "name": "algebraic_sqrt::tests::square_root_exact_bounds_do_not_absorb_arbitrarily_close_foreign_roots",
+    "returncode": 0,
+    "elapsed_seconds": 0.0034990799613296986
+  },
+  {
+    "name": "algebraic_sqrt::tests::square_root_of_an_arbitrary_exact_witness_keeps_its_quadratic_relation",
+    "returncode": 0,
+    "elapsed_seconds": 0.003476391895674169
+  },
+  {
+    "name": "algebraic_sqrt::tests::square_root_rejects_negative_and_nonzero_zero_branches",
+    "returncode": 0,
+    "elapsed_seconds": 0.003493509953841567
+  },
+  {
+    "name": "algebraic_sqrt::tests::square_root_replays_cached_source_validation_strictly",
+    "returncode": 0,
+    "elapsed_seconds": 0.0035010200226679444
+  },
+  {
+    "name": "algebraic_sqrt::tests::square_root_transports_the_selected_source_isolator",
+    "returncode": 0,
+    "elapsed_seconds": 0.0034905910724774003
+  },
+  {
+    "name": "algebraic_tensor_image::tests::direct_tag_difference_square_matches_tensor_arithmetic",
+    "returncode": 0,
+    "elapsed_seconds": 0.0034661219688132405
+  },
+  {
+    "name": "algebraic_tensor_image::tests::exact_small_rational_image_candidates_require_exact_replay",
+    "returncode": 0,
+    "elapsed_seconds": 0.0034852909157052636
+  },
+  {
+    "name": "algebraic_tensor_image::tests::flat_first_parameter_handoff_matches_public_primitive_component",
+    "returncode": 0,
+    "elapsed_seconds": 0.0034916800213977695
+  },
+  {
+    "name": "algebraic_tensor_image::tests::selected_root_quadratic_compaction_requires_exact_factor",
+    "returncode": 0,
+    "elapsed_seconds": 0.0035095589701086283
+  },
+  {
+    "name": "algebraic_tensor_image::tests::selected_root_rational_compaction_requires_exact_replay",
+    "returncode": 0,
+    "elapsed_seconds": 0.0035933339968323708
+  },
+  {
+    "name": "algebraic_tensor_image::tests::tagged_norm_projects_nonzero_selected_fiber_past_foreign_wide_components",
+    "returncode": 0,
+    "elapsed_seconds": 0.0034871810348704457
+  },
+  {
+    "name": "algebraic_tensor_image::tests::tagged_norm_reuses_a_square_free_exact_witness_carrier",
+    "returncode": 0,
+    "elapsed_seconds": 0.0035116788931190968
+  },
+  {
+    "name": "algebraic_tensor_image::tests::tensor_image_collapses_certified_affine_selected_source_axes",
+    "returncode": 0,
+    "elapsed_seconds": 0.0035001400392502546
+  },
+  {
+    "name": "algebraic_tensor_image::tests::tensor_image_counts_collapsed_axes_before_a_later_elimination_failure",
+    "returncode": 0,
+    "elapsed_seconds": 0.003504420048557222
+  },
+  {
+    "name": "algebraic_tensor_image::tests::tensor_image_does_not_select_an_extraneous_cardinal_conjugate_image",
+    "returncode": 0,
+    "elapsed_seconds": 0.003522378974594176
+  },
+  {
+    "name": "algebraic_tensor_image::tests::tensor_image_identifies_duplicate_selected_source_axes_exactly",
+    "returncode": 0,
+    "elapsed_seconds": 0.0034980999771505594
+  },
+  {
+    "name": "algebraic_tensor_image::tests::tensor_image_materializes_a_unique_cardinal_factor_of_a_nonlinear_eliminant",
+    "returncode": 0,
+    "elapsed_seconds": 0.003562436089850962
+  },
+  {
+    "name": "algebraic_tensor_image::tests::tensor_image_materializes_an_enclosed_exact_linear_eliminant",
+    "returncode": 0,
+    "elapsed_seconds": 0.0035339079331606627
+  },
+  {
+    "name": "algebraic_tensor_image::tests::tensor_image_rejects_nonisolating_and_misshaped_evidence",
+    "returncode": 0,
+    "elapsed_seconds": 0.0034896410070359707
+  },
+  {
+    "name": "algebraic_tensor_image::tests::tensor_image_represents_four_correlated_selected_roots",
+    "returncode": 0,
+    "elapsed_seconds": 0.00350076996255666
+  },
+  {
+    "name": "algebraic_tensor_image::tests::tensor_image_retains_carriers_for_a_complete_nonrational_point_tuple",
+    "returncode": 0,
+    "elapsed_seconds": 0.003503498970530927
+  },
+  {
+    "name": "algebraic_tensor_image::tests::tensor_image_retains_exact_real_coefficient_fields",
+    "returncode": 0,
+    "elapsed_seconds": 0.003480770974420011
+  },
+  {
+    "name": "algebraic_tensor_image::tests::tensor_image_reuses_square_free_constraint_for_selected_conjugates",
+    "returncode": 0,
+    "elapsed_seconds": 0.003496119985356927
+  },
+  {
+    "name": "algebraic_tensor_image::tests::tensor_image_substitutes_exact_source_axes_before_elimination",
+    "returncode": 0,
+    "elapsed_seconds": 0.003514179028570652
+  },
+  {
+    "name": "algebraic_tensor_image::tests::tensor_images_remove_irrelevant_wide_rational_content",
+    "returncode": 0,
+    "elapsed_seconds": 0.0035306080244481564
+  },
+  {
+    "name": "bareiss::tests::bareiss_determinant_reports_swaps_and_exact_value",
+    "returncode": 0,
+    "elapsed_seconds": 0.0035257790004834533
+  },
+  {
+    "name": "bareiss::tests::bareiss_determinant_retains_general_rational_fallback",
+    "returncode": 0,
+    "elapsed_seconds": 0.0034850520314648747
+  },
+  {
+    "name": "bareiss::tests::bareiss_determinant_uses_pivot_free_exact_fallback_before_policy_decision",
+    "returncode": 0,
+    "elapsed_seconds": 0.003500979975797236
+  },
+  {
+    "name": "bareiss::tests::bareiss_multi_rhs_solve_shares_elimination_and_replays_each_solution",
+    "returncode": 0,
+    "elapsed_seconds": 0.0034966509556397796
+  },
+  {
+    "name": "bareiss::tests::bareiss_multi_rhs_solve_swaps_every_augmented_column",
+    "returncode": 0,
+    "elapsed_seconds": 0.0035055290209129453
+  },
+  {
+    "name": "bareiss::tests::bareiss_rejects_bad_shapes_and_singular_solves",
+    "returncode": 0,
+    "elapsed_seconds": 0.0034897709265351295
+  },
+  {
+    "name": "bareiss::tests::bareiss_solve_obeys_terminal_residual_policy",
+    "returncode": 0,
+    "elapsed_seconds": 0.003478951985016465
+  },
+  {
+    "name": "bareiss::tests::bareiss_solve_replays_exact_solution",
+    "returncode": 0,
+    "elapsed_seconds": 0.003482040949165821
+  },
+  {
+    "name": "bareiss::tests::bareiss_solve_swaps_augmented_rhs_with_the_pivot_row",
+    "returncode": 0,
+    "elapsed_seconds": 0.003490481059998274
+  },
+  {
+    "name": "bareiss::tests::generated_diagonal_systems_solve_and_replay_exactly",
+    "returncode": 0,
+    "elapsed_seconds": 0.003491090959869325
+  },
+  {
+    "name": "bareiss::tests::generated_nonsingular_two_by_two_systems_solve_and_replay_exactly",
+    "returncode": 0,
+    "elapsed_seconds": 0.003483362030237913
+  },
+  {
+    "name": "bareiss::tests::generated_pattern_preserving_diagonal_systems_solve_and_replay_exactly",
+    "returncode": 0,
+    "elapsed_seconds": 0.003502319916151464
+  },
+  {
+    "name": "bareiss::tests::generated_sparse_diagonal_systems_solve_and_replay_exactly",
+    "returncode": 0,
+    "elapsed_seconds": 0.0034559830091893673
+  },
+  {
+    "name": "bareiss::tests::generated_triangular_determinants_match_diagonal_product",
+    "returncode": 0,
+    "elapsed_seconds": 0.003485850989818573
+  },
+  {
+    "name": "bareiss::tests::integer_and_arbitrary_real_matrices_keep_their_native_determinant_path",
+    "returncode": 0,
+    "elapsed_seconds": 0.0034951899433508515
+  },
+  {
+    "name": "bareiss::tests::minimum_degree_sparse_bareiss_reduces_arrowhead_fill_and_replays_source_order",
+    "returncode": 0,
+    "elapsed_seconds": 0.003507529036141932
+  },
+  {
+    "name": "bareiss::tests::pivot_free_determinant_matches_closed_forms_through_order_three",
+    "returncode": 0,
+    "elapsed_seconds": 0.0035047190031036735
+  },
+  {
+    "name": "bareiss::tests::rational_determinants_and_pivot_minors_match_independent_laplace_expansion",
+    "returncode": 0,
+    "elapsed_seconds": 0.015644707949832082
+  },
+  {
+    "name": "bareiss::tests::rational_row_scales_preserve_original_pivots_through_swaps",
+    "returncode": 0,
+    "elapsed_seconds": 0.003484032000415027
+  },
+  {
+    "name": "bareiss::tests::sparse_bareiss_rejects_bad_shapes_bounds_and_singular_systems",
+    "returncode": 0,
+    "elapsed_seconds": 0.003509290050715208
+  },
+  {
+    "name": "bareiss::tests::sparse_bareiss_reuses_strictly_certified_nonzero_pivot",
+    "returncode": 0,
+    "elapsed_seconds": 0.0034910310059785843
+  },
+  {
+    "name": "bareiss::tests::sparse_bareiss_solve_accumulates_terms_and_replays_sparse_input",
+    "returncode": 0,
+    "elapsed_seconds": 0.0035067800199612975
+  },
+  {
+    "name": "bareiss::tests::sparse_pattern_preserving_bareiss_rejects_singular_and_bad_terms",
+    "returncode": 0,
+    "elapsed_seconds": 0.0035137690138071775
+  },
+  {
+    "name": "bareiss::tests::sparse_pattern_preserving_bareiss_tracks_fill_and_replays_solution",
+    "returncode": 0,
+    "elapsed_seconds": 0.003498931066133082
+  },
+  {
+    "name": "batch::tests::generated_predicate_schedules_cover_every_active_row_per_candidate",
+    "returncode": 0,
+    "elapsed_seconds": 0.007541602943092585
+  },
+  {
+    "name": "batch::tests::predicate_schedule_chunks_active_rows_deterministically",
+    "returncode": 0,
+    "elapsed_seconds": 0.003486779984086752
+  },
+  {
+    "name": "batch::tests::predicate_schedule_rejects_zero_sized_chunks",
+    "returncode": 0,
+    "elapsed_seconds": 0.003491789917461574
+  },
+  {
+    "name": "curve_resultant::tests::axis_saturation_preserves_rootful_fibers_and_closed_boundaries",
+    "returncode": 0,
+    "elapsed_seconds": 0.0035906039411202073
+  },
+  {
+    "name": "curve_resultant::tests::axis_saturation_uses_the_requested_exact_rectangle",
+    "returncode": 0,
+    "elapsed_seconds": 0.0035216689575463533
+  },
+  {
+    "name": "curve_resultant::tests::bivariate_axis_factor_preserves_nonrational_coefficient_tower",
+    "returncode": 0,
+    "elapsed_seconds": 0.0035072399768978357
+  },
+  {
+    "name": "curve_resultant::tests::bivariate_axis_factors_extract_both_axes_sequentially",
+    "returncode": 0,
+    "elapsed_seconds": 0.003657990018837154
+  },
+  {
+    "name": "curve_resultant::tests::bivariate_axis_factors_extract_first_parameter_content_exactly",
+    "returncode": 0,
+    "elapsed_seconds": 0.0035943230614066124
+  },
+  {
+    "name": "curve_resultant::tests::bivariate_axis_factors_leave_primitive_system_unallocated",
+    "returncode": 0,
+    "elapsed_seconds": 0.0035525569692254066
+  },
+  {
+    "name": "curve_resultant::tests::bivariate_axis_factors_reduce_one_zero_equation_without_losing_evidence",
+    "returncode": 0,
+    "elapsed_seconds": 0.003495931043289602
+  },
+  {
+    "name": "curve_resultant::tests::bivariate_axis_factors_remove_independent_nonrational_equation_scales",
+    "returncode": 0,
+    "elapsed_seconds": 0.0035363880451768637
+  },
+  {
+    "name": "curve_resultant::tests::bivariate_axis_factors_report_zero_and_reduce_transcendental_content",
+    "returncode": 0,
+    "elapsed_seconds": 0.003510509035550058
+  },
+  {
+    "name": "curve_resultant::tests::bivariate_component_removes_independent_nonrational_equation_scales",
+    "returncode": 0,
+    "elapsed_seconds": 0.0035106289433315396
+  },
+  {
+    "name": "curve_resultant::tests::bivariate_component_retains_an_identically_zero_equation",
+    "returncode": 0,
+    "elapsed_seconds": 0.0035244979662820697
+  },
+  {
+    "name": "curve_resultant::tests::bivariate_component_retains_an_irreducible_quadratic_fiber",
+    "returncode": 0,
+    "elapsed_seconds": 0.003537677926942706
+  },
+  {
+    "name": "curve_resultant::tests::bivariate_component_retains_degree_four_common_fiber_implicitly",
+    "returncode": 0,
+    "elapsed_seconds": 0.0034936609445139766
+  },
+  {
+    "name": "curve_resultant::tests::bivariate_component_retains_square_free_distinct_cubic_implicitly",
+    "returncode": 0,
+    "elapsed_seconds": 0.0035211590584367514
+  },
+  {
+    "name": "curve_resultant::tests::bivariate_linear_lifts_recover_a_nonlinear_common_root",
+    "returncode": 0,
+    "elapsed_seconds": 0.0035233880626037717
+  },
+  {
+    "name": "curve_resultant::tests::bivariate_linear_lifts_recover_either_parameter_from_adjugate_ratios",
+    "returncode": 0,
+    "elapsed_seconds": 0.003487661015242338
+  },
+  {
+    "name": "curve_resultant::tests::bivariate_linear_lifts_report_nonlinear_fibers_explicitly",
+    "returncode": 0,
+    "elapsed_seconds": 0.0034988800762221217
+  },
+  {
+    "name": "curve_resultant::tests::bivariate_rational_component_extracts_repeated_cubic_factor",
+    "returncode": 0,
+    "elapsed_seconds": 0.003533278009854257
+  },
+  {
+    "name": "curve_resultant::tests::bivariate_rational_component_extracts_repeated_quadratic_factor",
+    "returncode": 0,
+    "elapsed_seconds": 0.0034966900711879134
+  },
+  {
+    "name": "curve_resultant::tests::bivariate_rational_component_extracts_triple_cubic_factor",
+    "returncode": 0,
+    "elapsed_seconds": 0.0034750219201669097
+  },
+  {
+    "name": "curve_resultant::tests::bivariate_rational_component_extracts_two_linear_quadratic_factors",
+    "returncode": 0,
+    "elapsed_seconds": 0.003489699913188815
+  },
+  {
+    "name": "curve_resultant::tests::bivariate_rational_component_handles_unequal_degrees_in_both_orientations",
+    "returncode": 0,
+    "elapsed_seconds": 0.003494231030344963
+  },
+  {
+    "name": "curve_resultant::tests::bivariate_rational_component_preserves_nonrational_map_coefficients",
+    "returncode": 0,
+    "elapsed_seconds": 0.003477501915767789
+  },
+  {
+    "name": "curve_resultant::tests::bivariate_rational_component_recovers_primitive_nonlinear_map",
+    "returncode": 0,
+    "elapsed_seconds": 0.00348187203053385
+  },
+  {
+    "name": "curve_resultant::tests::bivariate_system_eliminates_either_parameter_with_the_same_root",
+    "returncode": 0,
+    "elapsed_seconds": 0.003477591904811561
+  },
+  {
+    "name": "curve_resultant::tests::bivariate_system_reports_an_identically_degenerate_equation",
+    "returncode": 0,
+    "elapsed_seconds": 0.0035192889627069235
+  },
+  {
+    "name": "curve_resultant::tests::constrained_quadrivariate_fourth_axis_recovers_a_specialized_tangent_gcd",
+    "returncode": 0,
+    "elapsed_seconds": 0.0034859420266002417
+  },
+  {
+    "name": "curve_resultant::tests::constrained_trivariate_resultant_uses_strict_constraint_normalization",
+    "returncode": 0,
+    "elapsed_seconds": 0.0034917709417641163
+  },
+  {
+    "name": "curve_resultant::tests::constrained_trivariate_subresultant_recovers_a_specialized_tangent_gcd",
+    "returncode": 0,
+    "elapsed_seconds": 0.0034925610525533557
+  },
+  {
+    "name": "curve_resultant::tests::curve_resultant_degree_helpers_complete_strict_exact_boundaries",
+    "returncode": 0,
+    "elapsed_seconds": 0.0034897610312327743
+  },
+  {
+    "name": "curve_resultant::tests::curve_resultant_finds_parabola_horizontal_intersections",
+    "returncode": 0,
+    "elapsed_seconds": 0.0034926809603348374
+  },
+  {
+    "name": "curve_resultant::tests::curve_resultant_rejects_empty_inputs_and_degree_over_budget",
+    "returncode": 0,
+    "elapsed_seconds": 0.0034759819973260164
+  },
+  {
+    "name": "curve_resultant::tests::curve_resultant_reports_parallel_disjoint_line_constant",
+    "returncode": 0,
+    "elapsed_seconds": 0.003471472067758441
+  },
+  {
+    "name": "curve_resultant::tests::curve_resultant_retaining_second_swaps_parameters",
+    "returncode": 0,
+    "elapsed_seconds": 0.00348570104688406
+  },
+  {
+    "name": "curve_resultant::tests::equal_degree_bezout_matches_sylvester_through_degree_five",
+    "returncode": 0,
+    "elapsed_seconds": 0.031668240088038146
+  },
+  {
+    "name": "curve_resultant::tests::equal_degree_bezout_resultant_preserves_exact_orientation_on_either_axis",
+    "returncode": 0,
+    "elapsed_seconds": 0.0035362880444154143
+  },
+  {
+    "name": "curve_resultant::tests::exact_bivariate_division_replays_non_monic_ragged_products",
+    "returncode": 0,
+    "elapsed_seconds": 0.0035025799879804254
+  },
+  {
+    "name": "curve_resultant::tests::exact_bivariate_monomial_division_retains_nonrational_coefficients",
+    "returncode": 0,
+    "elapsed_seconds": 0.0035237690899521112
+  },
+  {
+    "name": "curve_resultant::tests::exact_univariate_gcd_and_division_replay_axis_content",
+    "returncode": 0,
+    "elapsed_seconds": 0.003498040954582393
+  },
+  {
+    "name": "curve_resultant::tests::generated_exact_bivariate_division_rejects_a_perturbed_product",
+    "returncode": 0,
+    "elapsed_seconds": 0.007548222900368273
+  },
+  {
+    "name": "curve_resultant::tests::generated_exact_bivariate_division_replays_ragged_products",
+    "returncode": 0,
+    "elapsed_seconds": 0.0034847810165956616
+  },
+  {
+    "name": "curve_resultant::tests::generated_horizontal_line_intersects_parabola_at_exact_height",
+    "returncode": 0,
+    "elapsed_seconds": 0.003503290005028248
+  },
+  {
+    "name": "curve_resultant::tests::generated_polynomial_determinant_matches_scalar_permutation_expansion",
+    "returncode": 0,
+    "elapsed_seconds": 0.11378353391773999
+  },
+  {
+    "name": "curve_resultant::tests::generated_rational_weighted_parabola_resultant_cross_multiplies_height",
+    "returncode": 0,
+    "elapsed_seconds": 0.0035950340097770095
+  },
+  {
+    "name": "curve_resultant::tests::polynomial_determinant_preserves_singular_and_swapped_pivots",
+    "returncode": 0,
+    "elapsed_seconds": 0.00354847707785666
+  },
+  {
+    "name": "curve_resultant::tests::quadrivariate_fourth_axis_resultant_retains_all_three_source_axes",
+    "returncode": 0,
+    "elapsed_seconds": 0.0035245679318904877
+  },
+  {
+    "name": "curve_resultant::tests::rational_curve_resultant_cross_multiplies_weighted_parabola",
+    "returncode": 0,
+    "elapsed_seconds": 0.0035153789212927222
+  },
+  {
+    "name": "curve_resultant::tests::rational_curve_resultant_rejects_certified_zero_weight",
+    "returncode": 0,
+    "elapsed_seconds": 0.0035217180848121643
+  },
+  {
+    "name": "curve_resultant::tests::rational_resultant_skips_specialized_degree_drop_samples",
+    "returncode": 0,
+    "elapsed_seconds": 0.003492980031296611
+  },
+  {
+    "name": "curve_resultant::tests::sampled_fiber_gcd_removes_high_degree_cofactor_scale_exactly",
+    "returncode": 0,
+    "elapsed_seconds": 0.0034932909766212106
+  },
+  {
+    "name": "curve_resultant::tests::trivariate_constraint_resultant_eliminates_every_tensor_axis",
+    "returncode": 0,
+    "elapsed_seconds": 0.0034999699564650655
+  },
+  {
+    "name": "curve_resultant::tests::trivariate_constraint_resultant_obeys_each_retained_degree_budget",
+    "returncode": 0,
+    "elapsed_seconds": 0.003489651018753648
+  },
+  {
+    "name": "curve_resultant::tests::trivariate_system_resultant_eliminates_every_tensor_axis",
+    "returncode": 0,
+    "elapsed_seconds": 0.0034944399958476424
+  },
+  {
+    "name": "curve_resultant::tests::trivariate_system_resultant_handles_constant_eliminated_operand",
+    "returncode": 0,
+    "elapsed_seconds": 0.003495411016047001
+  },
+  {
+    "name": "curve_resultant::tests::trivariate_system_resultant_ignores_trailing_zero_storage",
+    "returncode": 0,
+    "elapsed_seconds": 0.0034898510202765465
+  },
+  {
+    "name": "curve_resultant::tests::trivariate_system_resultant_preserves_nominal_degree_at_grid_drop",
+    "returncode": 0,
+    "elapsed_seconds": 0.0034791920334100723
+  },
+  {
+    "name": "curve_resultant::tests::trivariate_system_subresultant_recovers_tangent_selected_pair_gcd",
+    "returncode": 0,
+    "elapsed_seconds": 0.0035019000060856342
+  },
+  {
+    "name": "curve_resultant::tests::zero_dividend_still_requires_a_certified_nonzero_divisor",
+    "returncode": 0,
+    "elapsed_seconds": 0.0035270979860797524
+  },
+  {
+    "name": "curve_substitution::tests::bezier_substitution_reports_empty_and_degree_limit",
+    "returncode": 0,
+    "elapsed_seconds": 0.0034986010286957026
+  },
+  {
+    "name": "curve_substitution::tests::bspline_span_reports_bad_knots_ranges_and_zero_spans",
+    "returncode": 0,
+    "elapsed_seconds": 0.0035305680939927697
+  },
+  {
+    "name": "curve_substitution::tests::generated_linear_bezier_substitution_matches_endpoint_delta",
+    "returncode": 0,
+    "elapsed_seconds": 0.0034815719118341804
+  },
+  {
+    "name": "curve_substitution::tests::generated_linear_bspline_span_matches_segment_endpoints",
+    "returncode": 0,
+    "elapsed_seconds": 0.003472002106718719
+  },
+  {
+    "name": "curve_substitution::tests::generated_linear_nurbs_span_matches_homogeneous_segment",
+    "returncode": 0,
+    "elapsed_seconds": 0.0034867010544985533
+  },
+  {
+    "name": "curve_substitution::tests::generated_linear_rational_bezier_substitution_keeps_homogeneous_weights",
+    "returncode": 0,
+    "elapsed_seconds": 0.00348014198243618
+  },
+  {
+    "name": "curve_substitution::tests::nurbs_span_reuses_bspline_validation_statuses",
+    "returncode": 0,
+    "elapsed_seconds": 0.0034727719612419605
+  },
+  {
+    "name": "curve_substitution::tests::quadratic_bezier_substitution_expands_exact_power_basis",
+    "returncode": 0,
+    "elapsed_seconds": 0.0034960709745064378
+  },
+  {
+    "name": "curve_substitution::tests::quadratic_bspline_span_extracts_middle_bezier_segment_exactly",
+    "returncode": 0,
+    "elapsed_seconds": 0.003492640913464129
+  },
+  {
+    "name": "curve_substitution::tests::quadratic_nurbs_span_extracts_homogeneous_bezier_segment_exactly",
+    "returncode": 0,
+    "elapsed_seconds": 0.0034627029672265053
+  },
+  {
+    "name": "curve_substitution::tests::rational_bezier_substitution_reports_empty_and_degree_limit",
+    "returncode": 0,
+    "elapsed_seconds": 0.0034709220053628087
+  },
+  {
+    "name": "curve_substitution::tests::rational_quadratic_bezier_substitution_expands_homogeneous_power_basis",
+    "returncode": 0,
+    "elapsed_seconds": 0.003470351919531822
+  },
+  {
+    "name": "integer_interpolation::tests::exact_quotient_declines_nondivisibility_and_nonrational_coefficients",
+    "returncode": 0,
+    "elapsed_seconds": 0.0035673159873113036
+  },
+  {
+    "name": "integer_interpolation::tests::generated_exact_quotient_preserves_independent_rational_scales",
+    "returncode": 0,
+    "elapsed_seconds": 0.00759490008931607
+  },
+  {
+    "name": "integer_interpolation::tests::generated_modular_inverse_preserves_rational_scales",
+    "returncode": 0,
+    "elapsed_seconds": 0.007626598002389073
+  },
+  {
+    "name": "integer_interpolation::tests::generated_primitive_integer_gcd_recovers_shared_factor",
+    "returncode": 0,
+    "elapsed_seconds": 0.0075623319717124104
+  },
+  {
+    "name": "integer_interpolation::tests::limb_modulo_matches_exact_signed_remainders",
+    "returncode": 0,
+    "elapsed_seconds": 0.0035011899890378118
+  },
+  {
+    "name": "integer_interpolation::tests::modular_gcd_certifies_coprimality_without_integer_coefficient_growth",
+    "returncode": 0,
+    "elapsed_seconds": 0.0034998999908566475
+  },
+  {
+    "name": "integer_interpolation::tests::modular_gcd_retains_a_shared_factor",
+    "returncode": 0,
+    "elapsed_seconds": 0.0034916900331154466
+  },
+  {
+    "name": "integer_interpolation::tests::modular_inverse_reconstructs_wide_coefficients_and_rejects_nonunits",
+    "returncode": 0,
+    "elapsed_seconds": 0.01562158903107047
+  },
+  {
+    "name": "integer_interpolation::tests::modular_reconstruction_certifies_a_wide_primitive_gcd",
+    "returncode": 0,
+    "elapsed_seconds": 0.0035447569098323584
+  },
+  {
+    "name": "integer_interpolation::tests::primitive_integer_gcd_avoids_rational_coefficient_growth",
+    "returncode": 0,
+    "elapsed_seconds": 0.0034780320711433887
+  },
+  {
+    "name": "integer_interpolation::tests::rational_product_modulo_handles_wide_coefficients_and_guards_its_domain",
+    "returncode": 0,
+    "elapsed_seconds": 0.015667615924030542
+  },
+  {
+    "name": "integer_interpolation::tests::rational_product_modulo_preserves_the_exact_scale",
+    "returncode": 0,
+    "elapsed_seconds": 0.015607791021466255
+  },
+  {
+    "name": "integer_interpolation::tests::scaled_integer_interpolation_preserves_primitive_power_basis",
+    "returncode": 0,
+    "elapsed_seconds": 0.0034897909499704838
+  },
+  {
+    "name": "integer_interpolation::tests::scaled_integer_interpolation_rejects_fractional_samples",
+    "returncode": 0,
+    "elapsed_seconds": 0.00347802194301039
+  },
+  {
+    "name": "integer_interpolation::tests::scaled_integer_interpolation_supports_factorials_beyond_i64",
+    "returncode": 0,
+    "elapsed_seconds": 0.003481202060356736
+  },
+  {
+    "name": "interval::tests::joint_inverse_and_scalar_solve_satisfy_independent_rational_identities",
+    "returncode": 0,
+    "elapsed_seconds": 0.1138997949892655
+  },
+  {
+    "name": "interval::tests::joint_inverse_preserves_algebraic_pivots_and_partial_decisions",
+    "returncode": 0,
+    "elapsed_seconds": 0.0036378699587658048
+  },
+  {
+    "name": "interval::tests::krawczyk_divisions_reuse_policy_certified_nonzero_evidence",
+    "returncode": 0,
+    "elapsed_seconds": 0.0035468669375404716
+  },
+  {
+    "name": "interval::tests::multivariate_krawczyk_contraction_is_dimensionless_across_scales",
+    "returncode": 0,
+    "elapsed_seconds": 0.0035349379759281874
+  },
+  {
+    "name": "interval::tests::multivariate_krawczyk_coupled_unequal_radii_match_exact_operator_norm",
+    "returncode": 0,
+    "elapsed_seconds": 0.0035195789532735944
+  },
+  {
+    "name": "interval::tests::multivariate_krawczyk_rejects_two_roots_in_small_box",
+    "returncode": 0,
+    "elapsed_seconds": 0.0035298989387229085
+  },
+  {
+    "name": "ordered_field_roots::tests::clustered_simple_roots_survive_periodic_coefficient_recomposition",
+    "returncode": 0,
+    "elapsed_seconds": 0.0034948899410665035
+  },
+  {
+    "name": "ordered_field_roots::tests::excluding_a_deflated_boundary_can_find_another_exact_root",
+    "returncode": 0,
+    "elapsed_seconds": 0.003497070982120931
+  },
+  {
+    "name": "ordered_field_roots::tests::linear_quotient_reuses_certified_nonrational_roots_without_predicates",
+    "returncode": 0,
+    "elapsed_seconds": 0.0036301709478721023
+  },
+  {
+    "name": "ordered_field_roots::tests::midpoint_tableau_matches_authored_polynomial_on_both_children",
+    "returncode": 0,
+    "elapsed_seconds": 0.007566842017695308
+  },
+  {
+    "name": "ordered_field_roots::tests::rational_endpoint_and_midpoint_roots_deflate_to_distinct_witnesses",
+    "returncode": 0,
+    "elapsed_seconds": 0.0035100890090689063
+  },
+  {
+    "name": "ordered_field_roots::tests::repeated_irrational_root_requests_the_complete_fallback",
+    "returncode": 0,
+    "elapsed_seconds": 0.003545557032339275
+  },
+  {
+    "name": "ordered_field_roots::tests::repeated_root_subdivision_keeps_coefficient_expression_depth_bounded",
+    "returncode": 0,
+    "elapsed_seconds": 0.0035274679539725184
+  },
+  {
+    "name": "ordered_field_roots::tests::retained_intervals_exclude_previously_deflated_endpoint_and_interior_roots",
+    "returncode": 0,
+    "elapsed_seconds": 0.003521907958202064
+  },
+  {
+    "name": "ordered_field_roots::tests::sign_remainder_keeps_distinct_roots_and_degenerate_relations_separate",
+    "returncode": 0,
+    "elapsed_seconds": 0.0035214689560234547
+  },
+  {
+    "name": "ordered_field_roots::tests::sign_remainder_preserves_nonmonic_relations_without_division",
+    "returncode": 0,
+    "elapsed_seconds": 0.0035268180072307587
+  },
+  {
+    "name": "residual_replay::tests::dense_replay_accepts_exact_solution_and_reports_zero_rows",
+    "returncode": 0,
+    "elapsed_seconds": 0.0035202979343011975
+  },
+  {
+    "name": "residual_replay::tests::dense_replay_obeys_terminal_equality_policy_and_retains_certainty",
+    "returncode": 0,
+    "elapsed_seconds": 0.003544506966136396
+  },
+  {
+    "name": "residual_replay::tests::dense_replay_rejects_bad_shapes_antagonistically",
+    "returncode": 0,
+    "elapsed_seconds": 0.0035395780578255653
+  },
+  {
+    "name": "residual_replay::tests::dense_replay_rejects_nonzero_residual_without_hiding_sign",
+    "returncode": 0,
+    "elapsed_seconds": 0.0034887109650298953
+  },
+  {
+    "name": "residual_replay::tests::generated_diagonal_systems_replay_exactly",
+    "returncode": 0,
+    "elapsed_seconds": 0.0034408540232107043
+  },
+  {
+    "name": "residual_replay::tests::generated_sparse_batches_preserve_candidate_status",
+    "returncode": 0,
+    "elapsed_seconds": 0.00347476196475327
+  },
+  {
+    "name": "residual_replay::tests::generated_sparse_diagonal_systems_replay_exactly",
+    "returncode": 0,
+    "elapsed_seconds": 0.003509290050715208
+  },
+  {
+    "name": "residual_replay::tests::sparse_batch_rejects_bad_candidate_shapes",
+    "returncode": 0,
+    "elapsed_seconds": 0.0034456440480425954
+  },
+  {
+    "name": "residual_replay::tests::sparse_batch_replay_preserves_order_and_failed_row_probes",
+    "returncode": 0,
+    "elapsed_seconds": 0.0035723350010812283
+  },
+  {
+    "name": "residual_replay::tests::sparse_replay_accepts_exact_solution_and_duplicate_terms",
+    "returncode": 0,
+    "elapsed_seconds": 0.0036083830054849386
+  },
+  {
+    "name": "residual_replay::tests::sparse_replay_rejects_bad_shapes_antagonistically",
+    "returncode": 0,
+    "elapsed_seconds": 0.003533118055202067
+  },
+  {
+    "name": "residual_replay::tests::sparse_replay_rejects_nonzero_residual_without_hiding_sign",
+    "returncode": 0,
+    "elapsed_seconds": 0.0034945999504998326
+  },
+  {
+    "name": "residual_replay::tests::sparse_replay_uses_strict_exact_zero_fallback_without_guessing",
+    "returncode": 0,
+    "elapsed_seconds": 0.0034829109208658338
+  },
+  {
+    "name": "resultant::tests::constant_quotient_relation_retains_padded_pseudo_scale",
+    "returncode": 0,
+    "elapsed_seconds": 0.0035166690358892083
+  },
+  {
+    "name": "resultant::tests::constant_resultant_uses_exact_binary_power_for_high_degree",
+    "returncode": 0,
+    "elapsed_seconds": 0.0035990040050819516
+  },
+  {
+    "name": "resultant::tests::flat_integer_bareiss_matches_reported_determinants",
+    "returncode": 0,
+    "elapsed_seconds": 0.0035623559961095452
+  },
+  {
+    "name": "resultant::tests::generated_common_linear_factor_resultant_is_zero",
+    "returncode": 0,
+    "elapsed_seconds": 0.0034939009929075837
+  },
+  {
+    "name": "resultant::tests::generated_exact_rational_scalar_resultants_match_full_reports",
+    "returncode": 0,
+    "elapsed_seconds": 0.0035742149921134114
+  },
+  {
+    "name": "resultant::tests::generated_flat_integer_bareiss_matches_reported_four_by_four",
+    "returncode": 0,
+    "elapsed_seconds": 0.007548762019723654
+  },
+  {
+    "name": "resultant::tests::generated_linear_resultants_match_root_difference",
+    "returncode": 0,
+    "elapsed_seconds": 0.0036004530265927315
+  },
+  {
+    "name": "resultant::tests::generated_monic_quotient_ring_samples_match_sylvester_up_to_scale",
+    "returncode": 0,
+    "elapsed_seconds": 0.015651558060199022
+  },
+  {
+    "name": "resultant::tests::generated_resultant_schedule_classifies_linear_pairs",
+    "returncode": 0,
+    "elapsed_seconds": 0.0034868810325860977
+  },
+  {
+    "name": "resultant::tests::generated_subresultant_chain_detects_common_linear_factor",
+    "returncode": 0,
+    "elapsed_seconds": 0.0034789410419762135
+  },
+  {
+    "name": "resultant::tests::polynomial_zero_truth_lets_nonzero_dominate_unknown",
+    "returncode": 0,
+    "elapsed_seconds": 0.0034873810363933444
+  },
+  {
+    "name": "resultant::tests::quotient_ring_samples_match_sylvester_resultants_up_to_one_scale",
+    "returncode": 0,
+    "elapsed_seconds": 0.003489281050860882
+  },
+  {
+    "name": "resultant::tests::resultant_of_linear_polynomials_is_exact_difference",
+    "returncode": 0,
+    "elapsed_seconds": 0.003499000915326178
+  },
+  {
+    "name": "resultant::tests::resultant_reports_common_linear_root_as_zero",
+    "returncode": 0,
+    "elapsed_seconds": 0.003476331941783428
+  },
+  {
+    "name": "resultant::tests::resultant_schedule_classifies_coprime_common_and_bad_pairs",
+    "returncode": 0,
+    "elapsed_seconds": 0.003485260996967554
+  },
+  {
+    "name": "resultant::tests::resultant_trimming_uses_strict_exact_signs_without_guessing",
+    "returncode": 0,
+    "elapsed_seconds": 0.0034649730660021305
+  },
+  {
+    "name": "resultant::tests::resultant_validates_empty_and_zero_polynomials",
+    "returncode": 0,
+    "elapsed_seconds": 0.0034822209272533655
+  },
+  {
+    "name": "resultant::tests::scalar_integer_resultant_matches_full_report_at_binary_dimension_limit",
+    "returncode": 0,
+    "elapsed_seconds": 0.003506458946503699
+  },
+  {
+    "name": "resultant::tests::scalar_resultant_keeps_the_exact_rational_fallback",
+    "returncode": 0,
+    "elapsed_seconds": 0.0035032700980082154
+  },
+  {
+    "name": "resultant::tests::subresultant_and_scheduler_complete_strict_exact_boundaries",
+    "returncode": 0,
+    "elapsed_seconds": 0.00355927599593997
+  },
+  {
+    "name": "resultant::tests::subresultant_chain_keeps_unknown_lower_coefficients",
+    "returncode": 0,
+    "elapsed_seconds": 0.0034921109909191728
+  },
+  {
+    "name": "resultant::tests::subresultant_chain_reports_common_factor",
+    "returncode": 0,
+    "elapsed_seconds": 0.0034499840112403035
+  },
+  {
+    "name": "resultant::tests::subresultant_chain_reports_coprime_linear_inputs",
+    "returncode": 0,
+    "elapsed_seconds": 0.0014355219900608063
+  },
+  {
+    "name": "resultant::tests::subresultant_chain_still_rejects_unknown_leading_degree",
+    "returncode": 0,
+    "elapsed_seconds": 0.0035034699831157923
+  },
+  {
+    "name": "root_isolation::monic_tests::monic_normalization_keeps_scalar_and_failed_reciprocal_boundaries",
+    "returncode": 0,
+    "elapsed_seconds": 0.0034997710026800632
+  },
+  {
+    "name": "root_isolation::monic_tests::monic_normalization_preserves_lower_coefficients_and_certified_unit",
+    "returncode": 0,
+    "elapsed_seconds": 0.00349962105974555
+  },
+  {
+    "name": "root_isolation::monic_tests::square_free_log_factors_do_not_rebuild_an_opaque_leading_unit",
+    "returncode": 0,
+    "elapsed_seconds": 0.0034814419923350215
+  },
+  {
+    "name": "root_isolation::tests::algebraic_image_admission_uses_half_open_ownership_and_replays_exact_witnesses",
+    "returncode": 0,
+    "elapsed_seconds": 0.003477921010926366
+  },
+  {
+    "name": "root_isolation::tests::bernstein_counts_interval_roots_and_endpoint_witnesses",
+    "returncode": 0,
+    "elapsed_seconds": 0.003477021004073322
+  },
+  {
+    "name": "root_isolation::tests::bernstein_generated_quadratic_interval_counts_one_interior_root",
+    "returncode": 0,
+    "elapsed_seconds": 0.007527224021032453
+  },
+  {
+    "name": "root_isolation::tests::bernstein_public_coefficients_keep_actual_magnitudes",
+    "returncode": 0,
+    "elapsed_seconds": 0.0035216889809817076
+  },
+  {
+    "name": "root_isolation::tests::bernstein_subdivision_keeps_an_interior_root_beside_an_endpoint_root",
+    "returncode": 0,
+    "elapsed_seconds": 0.003495390061289072
+  },
+  {
+    "name": "root_isolation::tests::bernstein_subdivision_keeps_nonrational_and_undecided_controls",
+    "returncode": 0,
+    "elapsed_seconds": 0.00350449001416564
+  },
+  {
+    "name": "root_isolation::tests::bernstein_subdivision_partitions_empty_endpoint_isolating_and_depth_limit",
+    "returncode": 0,
+    "elapsed_seconds": 0.0036005229922011495
+  },
+  {
+    "name": "root_isolation::tests::bernstein_subdivision_partitions_known_rational_root_multisets",
+    "returncode": 0,
+    "elapsed_seconds": 0.007572631002403796
+  },
+  {
+    "name": "root_isolation::tests::bernstein_subdivision_preserves_nonrational_interval_and_unknown_reports",
+    "returncode": 0,
+    "elapsed_seconds": 0.003507860004901886
+  },
+  {
+    "name": "root_isolation::tests::bounded_refinement_and_rational_witness_replay_are_explicit",
+    "returncode": 0,
+    "elapsed_seconds": 0.0034553329460322857
+  },
+  {
+    "name": "root_isolation::tests::descartes_counts_positive_negative_and_zero_root_bounds",
+    "returncode": 0,
+    "elapsed_seconds": 0.003524677944369614
+  },
+  {
+    "name": "root_isolation::tests::dyadic_fujiwara_bound_contains_generated_rational_roots",
+    "returncode": 0,
+    "elapsed_seconds": 0.0075952199986204505
+  },
+  {
+    "name": "root_isolation::tests::dyadic_fujiwara_bound_is_exact_and_tightens_large_middle_coefficients",
+    "returncode": 0,
+    "elapsed_seconds": 0.0034815409453585744
+  },
+  {
+    "name": "root_isolation::tests::fixed_degree_remainder_does_not_predicate_on_unresolved_correlated_coefficients",
+    "returncode": 0,
+    "elapsed_seconds": 0.0034970800625160336
+  },
+  {
+    "name": "root_isolation::tests::fraction_free_bernstein_exceeds_machine_binomial_range_exactly",
+    "returncode": 0,
+    "elapsed_seconds": 0.0034964109072461724
+  },
+  {
+    "name": "root_isolation::tests::generated_interval_presence_helpers_match_distinct_root_sets",
+    "returncode": 0,
+    "elapsed_seconds": 0.015636218013241887
+  },
+  {
+    "name": "root_isolation::tests::integer_bernstein_subdivision_preserves_one_positive_scale",
+    "returncode": 0,
+    "elapsed_seconds": 0.26407878496684134
+  },
+  {
+    "name": "root_isolation::tests::interval_presence_helpers_preserve_exact_real_and_undecided_boundaries",
+    "returncode": 0,
+    "elapsed_seconds": 0.0035857140319421887
+  },
+  {
+    "name": "root_isolation::tests::isolated_interval_refinement_accepts_exact_real_coefficient_fields",
+    "returncode": 0,
+    "elapsed_seconds": 0.0035422469954937696
+  },
+  {
+    "name": "root_isolation::tests::isolated_interval_refinement_matches_generated_half_open_quadratic_counts",
+    "returncode": 0,
+    "elapsed_seconds": 0.007599219912663102
+  },
+  {
+    "name": "root_isolation::tests::isolated_interval_refinement_obeys_width_and_step_budgets_exactly",
+    "returncode": 0,
+    "elapsed_seconds": 0.0035355380969122052
+  },
+  {
+    "name": "root_isolation::tests::isolated_interval_refinement_preserves_generated_repeated_root_carriers",
+    "returncode": 0,
+    "elapsed_seconds": 0.015622889972291887
+  },
+  {
+    "name": "root_isolation::tests::isolated_interval_refinement_rejects_bad_evidence_antagonistically",
+    "returncode": 0,
+    "elapsed_seconds": 0.003498660051263869
+  },
+  {
+    "name": "root_isolation::tests::isolated_interval_refinement_separates_nested_quadratic_roots",
+    "returncode": 0,
+    "elapsed_seconds": 0.003463192959316075
+  },
+  {
+    "name": "root_isolation::tests::isolated_interval_refinement_solves_trimmed_linear_carriers_exactly",
+    "returncode": 0,
+    "elapsed_seconds": 0.0035402970388531685
+  },
+  {
+    "name": "root_isolation::tests::isolated_interval_refinement_strictly_replays_exact_witnesses",
+    "returncode": 0,
+    "elapsed_seconds": 0.0035225381143391132
+  },
+  {
+    "name": "root_isolation::tests::isolated_interval_refinement_uses_half_open_endpoint_ownership",
+    "returncode": 0,
+    "elapsed_seconds": 0.0035211279755458236
+  },
+  {
+    "name": "root_isolation::tests::midpoint_de_casteljau_matches_direct_exact_bernstein_conversion",
+    "returncode": 0,
+    "elapsed_seconds": 0.007572070928290486
+  },
+  {
+    "name": "root_isolation::tests::nonzero_constant_sturm_chains_need_no_derivative",
+    "returncode": 0,
+    "elapsed_seconds": 0.0035121889086440206
+  },
+  {
+    "name": "root_isolation::tests::open_interval_one_root_excludes_endpoint_roots_without_discarding_interior_roots",
+    "returncode": 0,
+    "elapsed_seconds": 0.0035474669421091676
+  },
+  {
+    "name": "root_isolation::tests::open_interval_one_root_falls_back_after_inconclusive_bernstein_bound",
+    "returncode": 0,
+    "elapsed_seconds": 0.0035018299240618944
+  },
+  {
+    "name": "root_isolation::tests::polynomial_division_recovers_generated_exact_products",
+    "returncode": 0,
+    "elapsed_seconds": 0.0075740410247817636
+  },
+  {
+    "name": "root_isolation::tests::quadratic_multiple_bernstein_variation_distinguishes_repeated_root",
+    "returncode": 0,
+    "elapsed_seconds": 0.0035292579559609294
+  },
+  {
+    "name": "root_isolation::tests::square_free_part_preserves_rational_and_exact_real_gcd_paths",
+    "returncode": 0,
+    "elapsed_seconds": 0.0035179590340703726
+  },
+  {
+    "name": "root_isolation::tests::sturm_isolates_distinct_repeated_and_no_real_roots",
+    "returncode": 0,
+    "elapsed_seconds": 0.0035122099798172712
+  },
+  {
+    "name": "root_isolation::tests::sturm_rejects_multivariate_rows_explicitly",
+    "returncode": 0,
+    "elapsed_seconds": 0.0035088500007987022
+  },
+  {
+    "name": "root_sign::tests::exact_real_coefficients_and_endpoint_ownership_remain_explicit",
+    "returncode": 0,
+    "elapsed_seconds": 0.003492149990051985
+  },
+  {
+    "name": "root_sign::tests::generated_signs_match_exact_evaluation_at_the_owned_root",
+    "returncode": 0,
+    "elapsed_seconds": 0.015605230000801384
+  },
+  {
+    "name": "root_sign::tests::ordered_field_query_declines_unknown_degrees_and_invalid_selection",
+    "returncode": 0,
+    "elapsed_seconds": 0.0034883409971371293
+  },
+  {
+    "name": "root_sign::tests::ordered_field_query_preserves_proper_factors_and_tiny_signs",
+    "returncode": 0,
+    "elapsed_seconds": 0.0034973800648003817
+  },
+  {
+    "name": "root_sign::tests::ordered_field_replay_bounds_irrelevant_polynomial_scale",
+    "returncode": 0,
+    "elapsed_seconds": 0.007540263002738357
+  },
+  {
+    "name": "root_sign::tests::signs_select_the_owned_conjugate_and_allow_repeated_roots",
+    "returncode": 0,
+    "elapsed_seconds": 0.003494490054436028
+  },
+  {
+    "name": "simplex_projection::tests::affine_dependent_faces_do_not_hide_a_valid_projection",
+    "returncode": 0,
+    "elapsed_seconds": 0.003502389998175204
+  },
+  {
+    "name": "simplex_projection::tests::segment_projection_has_exact_barycentric_witness",
+    "returncode": 0,
+    "elapsed_seconds": 0.003504819003865123
+  },
+  {
+    "name": "simplex_projection::tests::tetrahedron_containing_origin_projects_to_zero",
+    "returncode": 0,
+    "elapsed_seconds": 0.0034816719125956297
+  },
+  {
+    "name": "simplex_projection::tests::triangle_containing_origin_projects_to_zero",
+    "returncode": 0,
+    "elapsed_seconds": 0.003512008930556476
+  },
+  {
+    "name": "sparse_pattern::tests::generated_diagonal_patterns_have_no_fill",
+    "returncode": 0,
+    "elapsed_seconds": 0.0036269910633563995
+  },
+  {
+    "name": "sparse_pattern::tests::sparse_pattern_audit_rejects_bad_shapes_and_bounds",
+    "returncode": 0,
+    "elapsed_seconds": 0.003494670963846147
+  },
+  {
+    "name": "sparse_pattern::tests::sparse_pattern_audit_reports_fill_and_zero_cancellation",
+    "returncode": 0,
+    "elapsed_seconds": 0.003487951005809009
+  },
+  {
+    "name": "sparse_pattern::tests::sparse_pattern_row_swaps_touch_only_active_cyclic_entries",
+    "returncode": 0,
+    "elapsed_seconds": 0.0034968999680131674
+  },
+  {
+    "name": "sparse_pattern::tests::sparse_pattern_uses_strict_exact_fallback_without_guessing",
+    "returncode": 0,
+    "elapsed_seconds": 0.003499590093269944
+  },
+  {
+    "name": "tensor_resultant::tests::constant_quadratic_norm_uses_the_same_nominal_fast_path",
+    "returncode": 0,
+    "elapsed_seconds": 0.0034920310135930777
+  },
+  {
+    "name": "tensor_resultant::tests::constrained_tensor_resultant_uses_strict_constraint_normalization",
+    "returncode": 0,
+    "elapsed_seconds": 0.003495801007375121
+  },
+  {
+    "name": "tensor_resultant::tests::dense_tensor_affine_axis_substitution_expands_exactly",
+    "returncode": 0,
+    "elapsed_seconds": 0.0034810820361599326
+  },
+  {
+    "name": "tensor_resultant::tests::dense_tensor_arithmetic_preserves_rank_and_power_axes",
+    "returncode": 0,
+    "elapsed_seconds": 0.0035981329856440425
+  },
+  {
+    "name": "tensor_resultant::tests::dense_tensor_axis_reduction_matches_coordinate_reference_on_every_axis",
+    "returncode": 0,
+    "elapsed_seconds": 0.0035096199717372656
+  },
+  {
+    "name": "tensor_resultant::tests::dense_tensor_axis_reduction_preserves_nominal_shape_and_opaque_fibers",
+    "returncode": 0,
+    "elapsed_seconds": 0.003500760067254305
+  },
+  {
+    "name": "tensor_resultant::tests::dense_tensor_axis_reduction_uses_the_exact_selected_quotient_ring",
+    "returncode": 0,
+    "elapsed_seconds": 0.003545577055774629
+  },
+  {
+    "name": "tensor_resultant::tests::dense_tensor_equal_axis_substitution_adds_source_powers",
+    "returncode": 0,
+    "elapsed_seconds": 0.003479801001958549
+  },
+  {
+    "name": "tensor_resultant::tests::dense_tensor_exact_axis_substitution_preserves_row_major_layout",
+    "returncode": 0,
+    "elapsed_seconds": 0.0035084099508821964
+  },
+  {
+    "name": "tensor_resultant::tests::dense_tensor_multiplication_does_not_refine_opaque_coefficients_for_zero_pruning",
+    "returncode": 0,
+    "elapsed_seconds": 0.0035028699785470963
+  },
+  {
+    "name": "tensor_resultant::tests::dense_tensor_removes_only_certified_independent_axes",
+    "returncode": 0,
+    "elapsed_seconds": 0.003491601091809571
+  },
+  {
+    "name": "tensor_resultant::tests::dense_tensor_square_accumulates_symmetric_terms_once",
+    "returncode": 0,
+    "elapsed_seconds": 0.0035035000182688236
+  },
+  {
+    "name": "tensor_resultant::tests::direct_tensor_norm_preserves_a_certified_degree_below_padded_storage",
+    "returncode": 0,
+    "elapsed_seconds": 0.0034900810569524765
+  },
+  {
+    "name": "tensor_resultant::tests::direct_tensor_norm_trims_strictly_exact_zero_output_degree",
+    "returncode": 0,
+    "elapsed_seconds": 0.0035338480956852436
+  },
+  {
+    "name": "tensor_resultant::tests::final_axis_quotient_norm_preserves_a_quadratic_source_fiber",
+    "returncode": 0,
+    "elapsed_seconds": 0.0035068700090050697
+  },
+  {
+    "name": "tensor_resultant::tests::nominal_linear_quadratic_norm_does_not_require_leading_sign",
+    "returncode": 0,
+    "elapsed_seconds": 0.003591393935494125
+  },
+  {
+    "name": "tensor_resultant::tests::quadratic_closed_form_compacts_only_structural_padding",
+    "returncode": 0,
+    "elapsed_seconds": 0.003484200919046998
+  },
+  {
+    "name": "tensor_resultant::tests::rank_five_eliminates_four_selected_square_roots_without_a_degree_cap",
+    "returncode": 0,
+    "elapsed_seconds": 0.007529253954999149
+  },
+  {
+    "name": "tensor_resultant::tests::sampled_tensor_resultant_skips_only_structural_padding",
+    "returncode": 0,
+    "elapsed_seconds": 0.0034987899707630277
+  },
+  {
+    "name": "tensor_resultant::tests::tensor_resultant_helpers_complete_strict_exact_boundaries",
+    "returncode": 0,
+    "elapsed_seconds": 0.0035201290156692266
+  },
+  {
+    "name": "tensor_resultant::tests::tensor_resultant_preserves_a_correlated_product_image",
+    "returncode": 0,
+    "elapsed_seconds": 0.003520369064062834
+  },
+  {
+    "name": "tensor_resultant::tests::tensor_resultant_reports_invalid_axes_and_constraints",
+    "returncode": 0,
+    "elapsed_seconds": 0.0034698720555752516
+  }
+]

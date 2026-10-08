@@ -1,0 +1,22 @@
+{
+  "tag": "retained-monic-release",
+  "started": "2026-09-09T01:45:17.828Z",
+  "finished": "2026-09-09T01:46:31.321Z",
+  "elapsedSeconds": 73.49163630000001,
+  "cwd": "/home/tim/Documents/GitHub/workspace/hypersolve",
+  "command": "env",
+  "args": [
+    "CARGO_TARGET_DIR=/tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse",
+    "CARGO_INCREMENTAL=0",
+    "CARGO_PROFILE_DEV_DEBUG=0",
+    "CARGO_BUILD_JOBS=2",
+    "cargo",
+    "test",
+    "--offline",
+    "--locked",
+    "--all-features",
+    "--release"
+  ],
+  "code": 0,
+  "signal": null
+}

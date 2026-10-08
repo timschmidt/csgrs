@@ -1,0 +1,24 @@
+[
+  {
+    "name": "16-16-32-dense",
+    "command": "/home/tim/Documents/GitHub/workspace/exact-real-references/ruffini-qualification/hyper-polynomial-pilot/binaries/memory",
+    "args": [
+      "memory",
+      "16",
+      "16",
+      "32",
+      "dense"
+    ],
+    "cap": 180000,
+    "started": "2026-09-07T00:30:14.862Z",
+    "finished": "2026-09-07T00:30:14.867Z",
+    "status": 101,
+    "signal": null,
+    "error": null,
+    "file": "memory-16-16-32-dense.log",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderrSha256": "1c70f9fbe5c3af35571deacc149203e175aeca3bc386a76156a5b582a7fa0a9f",
+    "harnessSha256": "1f581e68efeaf5f99afa25f61b9467c0b364de010ad56dab999b5a7a816523d7",
+    "baselineSha256": "a70fe73900071228accf81b1ac2d9a91b23b76e52423e6b0243e1ab0b61735b3"
+  }
+]

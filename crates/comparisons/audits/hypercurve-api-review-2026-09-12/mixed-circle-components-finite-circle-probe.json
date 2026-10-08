@@ -1,0 +1,25 @@
+{
+  "returncode": 0,
+  "elapsed_seconds": 0.031673021003371105,
+  "normal_library_sha256": "afb7e837f49d41ad1dce4d9ab147b8080a87df90720cd11eb5dd2be9f57fdfd7",
+  "log": "mixed-circle-components-finite-circle-probe.log",
+  "source": "finite-circle-domain-next.rs",
+  "command": [
+    "rustc",
+    "--edition=2024",
+    "-O",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-circle-domain-next.rs",
+    "--extern",
+    "hypercurve=/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/libhypercurve-2c7ff6f3fbe07653.rlib",
+    "-L",
+    "dependency=/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps",
+    "-o",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/mixed-circle-components-finite-circle-probe"
+  ],
+  "source_sha256": "f427b563be65e95beaa9471b48ad919e3decaacc593810b7cb19910d91bad6dd",
+  "executable_sha256": "4bda15c2284858ee7bf57c4628bd86000d16f877e18268f957c5537d7fcfacee",
+  "counts": {
+    "complete": 8,
+    "incomplete": 0
+  }
+}

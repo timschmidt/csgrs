@@ -1,0 +1,13 @@
+{
+  "tag": "power-rebased-check-v68",
+  "started": "2026-09-11T17:00:39.090Z",
+  "finished": "2026-09-11T17:00:40.885Z",
+  "elapsedSeconds": 1.793615031,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "node",
+  "args": [
+    "check-power-rebased-v68.mjs"
+  ],
+  "code": 0,
+  "signal": null
+}

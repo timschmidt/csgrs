@@ -1,0 +1,6 @@
+{
+  "outer_session": 60158,
+  "outer_exit_code": 1,
+  "baseline_timeout": true,
+  "stack_attempt": "gdb lacked executable symbols"
+}

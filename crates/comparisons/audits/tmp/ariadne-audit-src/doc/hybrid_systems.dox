@@ -1,0 +1,393 @@
+/***************************************************************************
+ *            hybrid_systems.dox
+ *
+ *  Copyright  2004-9  Pieter Collins
+ *
+ ****************************************************************************/
+
+/*
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; either version 2 of the License, or
+ *  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Library General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program; if not, write to the Free Software
+ *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+ */
+
+//! \file hybrid_systems.dox
+//! \brief Documentation on hybrid systems.
+
+namespace Ariadne {
+
+/*!
+
+\page hybrid_systems_page Hybrid Systems
+
+\section hybrid_automaton_definition Mathematical Definition of a Hybrid Automaton
+
+A traditional mathematical definition of a hybrid automaton is as follows:
+
+A <em>hybrid automaton</em> is a tuple \f$H=(Q,E,\gamma,n_q,f_q,I_q,r_{q,e},G_{q,e})\f$ where
+ - The discrete behaviour is
+   - \f$Q\f$ is a finite set of <em>discrete states</em>
+   - \f$E\f$ is a finite set of <em>discrete events</em>
+   - \f$\gamma:\subset Q\times E\rightarrow Q\f$ is a partial function giving the <em>discrete transitions</em>
+
+ - For each \f$q\in Q\f$,
+   - \f$n_q\f$ defines the <em>dimension</em> of the continuous state space \f$\R^{n_q}\f$.
+   - \f$f_q:\R^{n_q}\rightarrow \R^{n_q}\f$ defines the <em>continuous dynamics</em> by \f$\dot{x}=f_q(x)\f$.
+   - \f$I_q\subset \R^{n_q}\f$ is the <em>invariant</em> which must hold throughout the evolution in mode \f$q\f$.
+
+ - For each \f$(q,e)\in\mathrm{dom}(\gamma)\subset Q\times E\f$,
+   - \f$r_{q,e}:\R^{n_q}\rightarrow \R^{n_\gamma(q,e)}\f$ defines the <em>reset</em> by \f$x'=r_{q,e}(x)\f$.
+   - \f$G_{q,e}\subset \R^{n_q}\f$ is the <em>guard</em> which must hold for event \f$e\f$ to be possible.
+
+The <em>standard operational semantics</em> of a hybrid automaton \f$H\f$ is as follows.
+ - The <em>state</em> of the system is a pair \f$(q,x)\f$ with \f$q\in Q\f$ and \f$x\in\R^{n_q}\f$.
+ - The state may evolve according to the differential equation \f$\dot{x}=f_q(x)\f$ as long as \f$x\in I_q\f$.
+ - The state may evolve according to the discrete transition \f$(q',x')=(\gamma(q,e),r_{q,e}(x))\f$ as long as \f$x\in R_{q,e}\f$.
+
+This definition has some disadvantages:
+ -# The main disadvantage concerns the modelling of <em>urgent transitions</em>.
+    These are transitions which occur as soon as the guard set is entered, for example, as soon as \f$g(x)\geq0\f$.
+    The traditional way of modelling these transitions is to introduce the constraint \f$g(x)\leq 0\f$ into the invariant.
+    However, the condition that the event occurs exactly when \f$g(x)=0\f$ is lost,
+    and this is often very useful in computing the evolution.
+ -# The invariant and guards in a mode determining the coupling between continuous
+    and discrete dynamics. During the evolution, we usually need to consider both
+    simultaneously. For this reason, it is preferable to consider invariant and guard sets
+    at the same level.
+ -# An invariant may prevent a transition from occurring by being violated in the new state.
+    This entails some "look-ahead" in the definition of the evolution.
+    Some systems e.g. CIF introduce "progress predicates" to prevent continuous evolution without preventing a jump into the point.
+ -# There is no "concrete" format for sets. Although this is not strictly necessary,
+    many numerical operations can be efficiently computed on sets defined by inequality
+    constraints \f$c(x)\leq 0\f$ and equality constraints \f$e(x)=0\f$.
+
+More generally, there are many different ways of specifying when continuous evolution is allowed, and when discrete transitions are allowed.
+ - Invariant/Guard Set: Continuous evolution allowed when \f$x\in I_q\f$; discrete transtions allowed when \f$x\in G_{q,e}\f$.
+
+\section monolithic_hybrid_automaton_old The Ariadne Hybrid Automaton Data Type (Version 0.4)
+
+The hybrid automaton interface in %Ariadne is essentially equivalent to the enhanced mathematical definition given above. The dynamic and resets are defined using the VectorFunction class. The guards and invariants are defined using the class ScalarFunction class, with invariants \f$i(x)\leq0\f$ and guards \f$g(x)\geq0\f$.
+A <em>DiscreteMode</em> is a triple \f$(q,f_q,I_q)\f$ where
+ - \f$q\f$ is a DiscreteState.
+ - \f$f_q\f$ is a VectorFunction giving the dynamic \f$\dot{x}=f_q(x)\f$.
+ - \f$I_q\f$ is a List of ScalarFunction with each \f$i_j:\R^{n_q}\rightarrow \R\f$ giving the invariants \f$i_j(x)\lesssim 0\f$.
+
+A <em>DiscreteTransition</em> is a triple \f$(e,s,t,r,g,u)\f$ where
+ - \f$e\f$ is a DiscreteEvent.
+ - \f$s\f$ and \f$t\f$ are the <em>source</em> and <em>target</em> DiscreteState.
+ - \f$r:\R^{n_s}\rightarrow\R^{n_t}\f$ is a VectorFunction giving the reset \f$x'=r(x)\f$.
+ - \f$g:\R^{n_s}\rightarrow\R\f$ is a ScalarFunction giving the guard \f$g(x)\gtrsim 0\f$.
+ - \f$u\in\{\top,\bot\}\f$ is a flag determining whether the transition is <em>urgent</em> or not.
+
+A <em>HybridAutomaton</em> is a pair \f$(M,T)\f$ where
+ - \f$M\f$ is a set of discrete modes, and
+ - \f$T\f$ is a set of discrete transitions such that
+    - for every transition, the source \f$s\f$ and target \f$t\f$ correspond to modes in \f$M\f$, and
+    - for every event \f$e\f$, there is at most one transition with a given source \f$s\f$.
+
+
+\section monolithic_hybrid_automaton The Ariadne Hybrid Automaton Framework
+
+A <em>Mode</em> is a tuple \f$(q,f_q)\f$ where
+ - \f$q\f$ is a DiscreteLocation.
+ - \f$f_q\f$ is a VectorFunction giving the dynamic \f$\dot{x}=f_q(x)\f$.
+
+A <em>Guard</em> is a tuple \f$(q,e,c,k)\f$ where
+ - \f$q\f$ is a DiscreteLocation.
+ - \f$e\in E\f$ is an Event label.
+ - \f$c:\R^{n_s}\rightarrow\R^{n_t}\f$ is a ScalarFunction giving the condition \f$c(x)\geq0\f$.
+ - \f$k\in K\f$ determines the action to be taken when \f$c(x)\geq 0\f$ is satisfied.
+    For example, in an urgent event, the transition corresponding to event \f$e\f$ in location \f$q\f$
+    must be taken as soon as the condition is satisfied, whereas for an invariant, the evolution is
+    terminated (unless a transition corresponding to another event is activated.
+
+A <em>Transition</em> is a tuple \f$(s,e,t,r)\f$ where
+ - \f$s\f$ is the <em>source</em> DiscreteLocation.
+ - \f$e\f$ is the DiscreteEvent.
+ - \f$t\f$ is the <em>target</em> DiscreteLocation.
+ - \f$r:\R^{n_s}\rightarrow\R^{n_t}\f$ is a VectorFunction giving the guard \f$g(x)\gtrsim 0\f$.
+
+
+\section hybrid_sytem_interface The Ariadne Interface for Hybrid Systems
+
+So that the evolution routines in %Ariadne are independent of the class of hybrid system used,
+all hybrid systems need to correspond to the HybridAutomatonInterface,
+which specifies a minimal set of operators which the system must provide.
+
+A hybrid automaton is defined by the data
+  \f[ \bigl( Q, E, \{ n_q, f_q \mid q\in Q\}, \{ c_{q,e},k_{q,e} \} , \{t_{q,a},r_{q,a}\} \bigr) \f]
+where
+ - \f$n_{q}\in \N\f$ is the dimension of the continuous state space in location \f$q\f$.
+ - \f$f_{q}:\R^{n_q}\rightarrow\R^{n_q}\f$ defines the continuous dynamics \f$\dot{x}=f(x)\f$ in location \f$q\f$.
+ - \f$c_{q,e}:\R^{n_q}\rightarrow \R\f$ defines the activation condition \f$c_{q,e}(x)\geq0\f$ for the event \f$e\f$ in location \f$q\f$.
+ - \f$k_{q,e}\f$ is the kind of the event \f$e\f$ in location \f$q\f$.
+ - \f$t_{q,e}\in Q\f$ is the target of the transition \f$a\f$ in location \f$q\f$.
+ - \f$r_{q,e}:\R^{n_q}\rightarrow\R^{n_{t_{q,e}}}\f$ is the reset map for the transition \f$a\f$ in location \f$q\f$.
+
+Additionally, we provide the data \f$G_q\f$ defining a "grid" in location \f$q\f$.
+
+
+
+Possible future extensions:
+ - Extend the range of continuous dynamics beyond vector fields \f$\dot{x}=f(x)\f$
+   to allow more general systems e.g. explicit flows \f$x(t)=\phi(x_0,t-t_0)\f$
+   or differential inclusions \f$\dot{x}(t) = f(x(t),v(t));\ v(t)\in V\f$.
+ - Extend the range of discrete dynamics beyond continuous maps
+   e.g. multivalued maps \f$x' \in \{ r(x,w) \mid w\in W\}\f$.
+ - Extend the activation conditions to allow non-smooth functions or logical predicates.
+   e.g. \f$\min(c_1(x),c_2(x)) \geq 0\f$ or \f$c_1(x)\geq 0\wedge c_2(x)\geq 0\f$.
+
+
+
+\section hybrid_system_glossary Glossary of Terms describing Hybrid Systems
+
+There are many terms used to describe features of a hybrid system in the literature.
+However, the precise use of these terms is non-standard.
+In order to fix the terminology used in %Ariadne, we use the following definitions.
+Some of these definitions may be different from what is "common" in the literature;
+this will usually be due to internal considerations (e.g. labelling),
+or the fact that existing frameworks typically do not consider computability issues,
+and hence blur concepts which should be kept separate.
+
+ - <b>(Discrete) Event</b>: A label for any behaviour of the system other than continuous evolution.
+   - <b>Action</b>: An event causing a change in the state of the system.
+ - <b>(Discrete) Location</b>: A value of the discrete state of the system.
+ - <b>(Discrete) Mode</b>: The specification of the (continuous) behaviour in a discrete location.
+ - <b>Condition</b>: A predicate \f$X\fto \{\top,\bot\}\f$ determining when an event is active.
+      Typically defined using a constraint function \f$c:X\rightarrow\R\f$ as \f$c(x)\geq0\f$; may also be defined as \f$x\in C\f$ for some set \f$C\f$.
+   - <b>Invariant Condition</b>: A predicate \f$\mathrm{inv}_q(x)\f$ which must hold at all states reached by the system evolution.
+   - <b>(Time-Can-)Progress Condition/Predicate</b>: A predicate \f$\mathrm{tcp}_q(x)\f$ which must hold whenever continuous evolution is possible. Given by a function \f$p_{q,e}(x)\leq0\f$
+   - <b>Guard Condition</b>: A condition \f$\mathrm{act}_q(x)\f$, usually given by a function \f$g_{q,e}(x)\geq0\f$, such that the event \a e only occurs when the condition is satisfied.
+      - <b>Urgent Guard</b>: A condition \f$\mathrm{act}_q(x)\f$, usually given by a function \f$g_{q,e}(x)\geq0\f$ which implies that event \a e occurs as soon as the condition is satisfied. Formally equivalent to introducing the progress predicate \f$g_{q,e}(x)\leq0\f$.
+      - <b>Permissive Guard</b>: A condition \f$\mathrm{act}_q(x)\f$, usually given by a function \f$g_{q,e}(x)\geq0\f$ which implies that event \a e occurs as soon as the condition is satisfied. Note that if another event is also possible, then although an event <em>must</em> occcur, both the event with the urgent guard and the other event <em>may</em> occur.
+   - <b>Activation Condition</b>: A synonym for a permissive guard.
+ - <b>Active</b>: An event is active when its constraint condition is satisfied.
+ - <b>Update</b>: A rule governing how the state changes upon an event. For a given \em source location, comprises a \em target location and \em reset map.
+   - <b>Target</b>: The location forming the discrete state after a transition.
+   - <b>Reset</b>: A function mapping continuous states in the source location to continuous states in the target location upon a discrete transition.
+    \internal I don't like the use of the term "event" to describe a progress predicate
+ - <b>(Discrete) Transition</b>:
+    - A rule for determining when and how the state changes for a given event in a given location. Comprises a guard predicate, an event kind, a target location and a reset map. Also, the act of updating the state.
+ - <b>Jump</b> An instantaneous change in the state of the system.
+
+ - <b>State</b>: The information about the system needed to determine the future evolution.
+   - <b>Discrete State</b>: The part of the state determined by discrete (e.g. String or Integer) variables. The operation of testing whether two points have the same discrete state must be decidable.
+   - <b>Continuous State</b>: The part of the state described by continuous (e.g. Real) variables. The
+   - <b>Hybrid State</b>: Synonym for <b>State</b> (if the state is described by the discrete and continuous states). Used to emphasise the distinction with Discrete State or Continuous State.
+
+\internal <b>QUESTIONS</b>
+
+ - Should we always/never/sometimes use the word "Discrete" in "Discrete Event", "Discrete Location" etc?
+ - Should the meaning of "(Discrete) Transition" more closely mirror that of "Jump" or "Update"?
+ - Should the meaning of "(Discrete) Mode" contain the invariants/guards?
+ - Should switch the meanings of the words "Event" and "Action"?
+
+
+
+*/
+
+
+/*!
+
+\page new_hybrid_system_page Proposals for a Hybrid System Data Type (version 0.5)
+
+An %Ariadne hybrid system is a model of a deterministic or nondeterministic system with finitely many variables and finitely many possible events, but without stochastic or distributed (i.e. described by a partial diffferential equations) behaviour.
+
+A hybrid system lives in a \em universe, the states of which are described by variables, and the transitions by real time and discrete actions.
+ - A countable set of \link DiscreteEvent DiscreteEvents\endlink, each labelled by a valid \c String identifier.
+ - A countable set of \link Variable Variables\endlink, each labelled by a unique \c String identifier, and each with a \c type, which can be
+  - \c DiscreteVariable: A quantity lying in a denumerable discrete topological space e.g \c EnumeratedVariable, \c IntegerVariable.
+       Testing for equality of two values of a discrete variable must be a decidable operation.
+  - \c ContinuousVariable: A quantity lying in a countably-based (connected) topological space e.g. \c RealVariable.
+       Testing for equality of two values of a continuous variable is (typically) undecidable, though in most cases inequality is verifiable.
+
+Initially, all possible behaviour is possible in the universe; variables can change arbitrarily, and actions can occur at any time with arbitrary updates. A system model is a finite set of \em Rules, which restrict the possible behaviour of the universe.
+
+\par Rationale
+The main rationale for defining systems by rules is that adding new rules can only restrict the behaviour of the system. This is vital for assume-guarantee reasoning. A secondary benefit it that the behaviour is independent of the order in which the rules are given.
+
+Since %Ariadne is a computational tool for analysing system evolution, the rules governing the system have to be \em intensional (defined using explicit assignments of variables) rather than \em extensional (defined by equations relating the variables). Since we wish to assign a rigorous computational semantics, all functions must be computable, in particular, all functions must be \em continuous. This means that a discrete variable can only (sensibly) be defined in terms of other discrete variables.
+
+The main types of rules proposed for %Ariadne are
+ - Continuous assignments: <tt> p(q) -> x<sub>i</sub>=f(x<sub>1</sub>,...,x<sub>k</sub>) </tt>
+ - %Differential assignments: <tt> p(q) -> dot(x<sub>i</sub>)=f(x<sub>1</sub>,...,x<sub>k</sub>) </tt>
+ - Invariant predicates: <tt> p(q) -> g(x<sub>1</sub>,...,x<sub>k</sub>) </tt>
+ - Discrete updates: <tt> p(q) & s(e) -> next(q<sub>i</sub>)=u(q<sub>i</sub>,...,q<sub>k</sub>) </tt>
+ - Continuous updates: <tt> p(q) & s(e) -> next(x<sub>i</sub>)=f(x<sub>1</sub>,...,x<sub>k</sub>) </tt>
+ - Guard predicates: <tt> p(q) & s(e) -> g(x<sub>1</sub>,...,x<sub>k</sub>) </tt>
+
+Each rule is valid given a predicate \c p(q) on the discrete state. Rules relating to action transitions are valid for single events.
+
+Note that if no continuous or differential assignment is given to a continuous variable, then the value of that variable is arbitrary during time transitions. To ensure that a continuous variable remains constant, use
+<tt> dot(x) = 0 </tt>. Discrete variables cannot change during time transitions, so there is no need to provide a behaviour.
+
+Note that the guard condition <tt> p(q) & s(e) \f$\implies\f$ g(x<sub>1</sub>,...,x<sub>k</sub>) </tt> only implies a restriction on the conditions under which event \c e can occur if \c p(q) is true. For other states, the guard conditions places <em>no restriction</em> on when \c e can occur. Hence if \c e can \em only occur when \c e is true, then both the guard conditions
+<tt> p(q) & s(e) -> g(x) </tt> and <tt> ~p(q) & s(e) -> false </tt>
+need to be used.
+
+Note that there is no default update for variables. During an action transition, if no \c next(x)= assignment is given, and no \c x= assignment is valid in the next discrete location, then the value of \c x is undefined. Hence if the value of \c x does not change during a discrete transition \c e in location \c q, then the predicate
+<tt> q & e -> next(x)=x </tt>
+needs to be used.
+
+Note that since there is no variable hiding, any variable can be affected by any event. In order to make sure that a variable \c x can only change during events \c e1 and \c e2, then the condition
+<tt> ~{e1,e2} -> next(x)=x </tt>
+needs to be used. If \c x can never jump, then the condition <tt> next(x) = x </tt> should be used.
+In order to analyse a system, a rule of the form <tt>~{e<sub>1</sub>,...,e<sub>k</sub>} -> next(x)=x</tt> needs to be given for all variables \c x. In other words, we need to specify the only events which can cause \c x to change.
+
+\par Rationale
+The rationale for providing explicit rules for constant and nonjumping variables is that otherwise one component may change the behaviour of another. For example, if a system has only rule <tt>dot(x)=a-x</tt>, and \c a were implicitly taken to be constant duing time transitions, then composing with the system <tt>dot(a)=-a</tt> would change the behaviour. This would make it impossible to use assume-guarantee reasoning.
+
+\par Comparison with CIF
+The Compositional Interchange Format (CIF) uses an operator \c NonJmp to declare a variable as nonjumping in an action transition unless it has already explicitly been declared as jumping. The advantage of using explicit rules is that the ordering of rules is immaterial, whereas the ordering of CIF operators is critical.
+
+\par Explicit simple functions
+It may be useful to add an explicit \c constant(x) operator as a shorthand for \c dot(x)=0, an explicit \c timer(x) for \c dot(x)=1 and an explicit \c nonjump(x) operator as a shorthand for \c next(x)=x. This could potentially be exploited in the solver routines.
+
+\par Urgent actions
+It might be useful to have explicit urgent actions,
+<tt>  p(q) -> e <-> g(x<sub>1</sub>,...,x<sub>k</sub>) </tt>.
+The rationale is the same as the rationale in the %HybridAutomaton class (Version 0.4); that for lower semantics we need to know when an invariant is the complement of a guard.
+Alternatively, it might be useful to have "may" and "must" guard predicates
+  <tt> p(q) -> ( g<sub>may</sub>(x<sub>1</sub>,...,x<sub>k</sub>)
+                  <- e <- g<sub>must</sub>(x<sub>1</sub>,...,x<sub>k</sub>) ) </tt>
+
+\par More general rules
+It might be useful to allow more general rules than those given above. For example, if an event \c e is only possible in discrete states \c p(q) and continuous states \c g(x), then it would be easier to write <tt>e -> p(q) & g(x)</tt> rather than <tt>p(q) & e -> g(x); ~p(q) & e -> false</tt>.
+
+\par Variable bounds
+It is almost certainly useful to be able to specify bounds on variables, such as
+<tt> p(q) -> -1 <= x <= 2 </tt>. This is useful in bounding inputs within differential equations.
+
+\par Parallel composition
+The parallel composition of two systems is formed by taking the conjunction of all rules i.e. the union of the two sets of rules. This means that composition is trivial to implement, and that it is trivial to check that it acts as a restriction on the behaviour of both subsystems!
+
+\section hybrid_system_semantics Semantics and validity
+
+Not all hybrid systems defined as a list of rules are valid system models. However, the situation is complicated since the model may be valid for some discrete states or discrete transitions, but not for others. We have the following validity rules:
+ - A discrete state q is valid if
+    - Every continuous variable \c y has exacly one defining equation
+       - A continuous variable \a y defined by a differential equation \c dot(y)=f(x) is a <em>continuous state variable</em>
+       - A continuous variable \a y defined by an algebraic equation \c y=f(x) is an <em>auxiliary variable</em>
+    - There are no <em>algebraic loops</em> of assignments of algebraic variables.
+ - A discrete transition e from a discrete state q is valid if
+    - Every discrete variable \c q has exactly one defining update next(q)=r(p)
+    - Every continuous variable \c y has exactly one defining equation, either
+       - An update rule \c next(y)=r(x), or
+       - An algebraic equation \c y=f(x) in the \em next discrete state \c next(q).
+
+A system is \em overspecified if a variable has more than one defining rule in a given context. Since %Ariadne requires intensional semantics for the continuous variables, evolution cannot proceed in a context where a continuous variable is overspecified, even if the assignments match. An overspecified discrete variable can in principle be handled, but is at best "bad practice" and we may decide to ban this as well.
+
+A system is \em underspecified if a variable has no defining rule in a given context, <em>and is used in that context</em>. Systems with inputs are by their nature underspecified. An underspecified system can only be analysed in parallel with assumptions which give assignments (or constraints) for the undefined variables.
+
+A system which has invalid discrete contexts can still be analysed if these contexts do not arise during the evolution. However, it is important to provide a static analysis of the system to find the contexts in which it is invalid.
+
+
+\section hybrid_system_conversion Conversion to a Hybrid Automaton
+
+In order to simulate or verify a hybrid system, the system description must contain enough information to be able to solve for all the variables of interest. In particular, we should be able to convert the description to a hybrid automaton, which is a \em constructive description of a hybrid system.
+
+Since there may be some discrete valuations which naturally arise during modelling but do not correspond to valid discrete modes e.g. because some variable is overspecified, we construct a hybrid automaton from a set of initial discrete states. The automaton is <em>statically valid</em> if every discrete state reachable from an initial discrete state in the discrete abstraction of the hybrid system is valid.
+
+We need the following definitions
+ - <b>Discrete states</b>
+    - A discrete valuation q' is a \em refinement of q if every variable q<sub>i</sub> occuring in q also occurs in q' and has the same value.
+    - A set of <em>discrete states</em> is a set of valuations, none of which is a refinement of another.
+ - <b>Continuous variables</b> For a discrete valuation <tt>q</tt>, a continuous variable x<sub>i</sub> is
+    - A <em>state variable</em> if it is defined by a differential equation
+        dot(x<sub>i</sub>)=f(x<sub>1</sub>,...,x<sub>k</sub>).
+    - An <em>output</em> or <em>auxiliary variable </em> if it is defined by an algebraic equation
+        x<sub>i</sub>=f(x<sub>1</sub>,...,x<sub>k</sub>).
+    - An <em>input variable</em>  if it is used in the description of a state or auxiliary variable,
+        in a guard condition or in a reset relation, but is not defined by a differential or algebraic equation.
+ - <b>Trivial events</b> An event e is \em trivial in discrete state q if \em either
+    - the guard condition is the constant <tt>false</tt>, \em or
+    - during a discrete transition, the discrete updates are of the form next(q<sub>i</sub>)=q<sub>i</sub>
+      and the continuous resets are of the form next(x<sub>i</sub>)=x<sub>i</sub>.
+    - Since no valuation may refine another, no extra discrete assignments are allowed.
+
+A hybrid system is <em>convertable to a hybrid automaton</em> if the following conditions are satisfied.
+ - <b>State refinement</b> It is not possible to reach a discrete valuation which is a refinement of another discrete valuation.
+    - This condition is not strictly necessary, but it results in no loss of generality in the dynamics, and may help find modelling errors. Further, it means that the algorithm to convert to a hybrid automaton terminates if all discrete variables take on finitely many values.
+ - <b>State predicates</b> Any discrete predicate p(q) is computable in any discrete state q.
+ - <b>No unbounded input variables</b> In any discrete state, there are no input variables.
+   - As a weaker condition (resulting in a nondeterministic automaton), we can require: <b>No unbounded input variables</b> In any discrete state, any input variable x<sub>i</sub> lies in a bounded interval [a,b].
+ - <b>Algebraic loops</b> In a discrete state q, the graph giving the dependencies of the auxiliary variables must be acyclic.
+    - This means that there is an order of computation of the auxiliary variables in which each only depends on already computed variables.
+ - <b>Guard conditions</b> Every guard condition g(x<sub>1</sub>,...,x<sub>k</sub>) defined in a discrete state q
+        may only use state and auxiliary variables.
+ - <b>Reset relations</b> Every reset relation next(x<sub>i</sub>)=r(x<sub>1</sub>,...,x<sub>k</sub>) defined in a discrete state q, must \em either only use state and auxiliary variables in q, \em or the guard condition must be the constant <tt>false</tt>.
+ - <b>Transitions</b> In every discrete transition, all the state variables in the new mode are specified by a reset, but none of the discrete variables are.
+ - <b>Finitely many events</b> In a discrete state q, there can be only finitely many nontrivial discrete events.
+    - This is required in order that the discrete automaton has only a finite number of arrows from any discrete state.
+
+Note that in a subsystem i.e. a system which may be composed with others, there is a difference between an event with guard condition <tt>false</tt> and a guard with all resets of the form <tt>next</tt>(v<sub>i</sub>)=v<sub>i</sub>. In the former, the event cannot happen at all in any parallel composition, whereas in the latter, the event may happen, but just does not directly affect the state of the subsystem.
+
+To convert a hybrid system to a hybrid automaton, we use the following algorithm:
+ - For each new discrete valuation:
+   - Check if the valuation is not a refinement of an existing valuation.
+   - Extract the continuous state variables x<sub>i</sub>.
+   - Solve for the output/auxiliary variables in terms of the state variables.
+   - Substitute the auxiliary variables in terms of the state variables in the dynamic equations.
+   - Substitute the auxiliary variables in terms of the state variables in the invariants.
+   - Compute the set of nontrivial events and check that this is finite.
+ - For each nontrivial event:
+   - Compute the target discrete state. If this is new, insert in the set of uncomputed discrete states.
+   - Substitute the auxiliary variables in terms of the state variables in the guard predicates.
+   - Substitute the auxiliary variables in terms of the state variables in the reset equations.
+
+The main difficulty is to test triviality, since it requires proving triviality for all but finitely many events.
+To do this, we use the fact that since the only atomic test allowed on the current event \a e is testing for equality with a constant event \a e<sub>i</sub>, every set of events is either computably finite or cofinite. It is simple to prove triviality for a cofinite set of events.
+
+\section hybrid_system_example Example - A simple heating system
+
+\code
+    // Declare the hyrbid system object
+    HybridSystem system;
+
+    // Declare the events, types and variables
+    DiscreteEvent turn_on("turn_on");
+    DiscreteEvent turn_off("turn_off");
+    DiscreteEvent midnight("midnight");
+
+    DiscreteType swtch("Switch",(build_array,"on","off"));
+
+    DiscreteVariable heater("heater",swtch);
+    RealVariable T("T");
+    RealVariable t("t");
+
+    // Define the continuous dynamics
+    system.new_dynamic(heater=="on", dot(T)=20+cos(t));
+    system.new_dynamic(heater=="off", dot(T)=10+cos(t));
+    system.new_dynamic(dot(t)=1);
+
+    // Define the nontrivial update rules
+    system.new_reset(turn_off,heater=="on",next(heater)="off");
+    system.new_reset(turn_on,next(heater)=DiscreteValue("on"));
+    system.new_reset(midnight,next(t)=0.0);
+
+    // Define the guard sets and invariants
+    system.new_guard(turn_on,T<=16.0);
+    system.new_guard(turn_off,T>=22.0);
+    system.new_guard(midnight,t>=1.0);
+    system.new_invariant(T>=16.0);
+    system.new_invariant(T<=22.0);
+    system.new_invariant(t<=1.0);
+
+    // Define the trivial resets for nonjumping variables.
+    system.new_reset(next(T)=T);
+    system.new_reset(!midnight,next(t)=t);
+\endcode
+
+*/
+
+} // namespace Ariadne;

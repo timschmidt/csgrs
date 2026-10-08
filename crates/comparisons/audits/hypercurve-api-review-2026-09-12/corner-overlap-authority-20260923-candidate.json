@@ -1,0 +1,6 @@
+{
+  "src/bezier_offset.rs": "56ae445b32c69905d46506b4bc1ffde9b558cce804c8a411206feb93d307bc8e",
+  "src/rational_bezier_general.rs": "7354f4500a3c9eea3dff4e33bddffe250563ea976d96dc0ffd4fe8a00e2e1a50",
+  "src/bezier_region.rs": "1bc26463270fbe520873708bc6909db19a7af36356367f8bbc366b92696ed720",
+  "tests/hypercurve_curve_region_promotion.rs": "1e365844e9c2651408c8d707b2c933b118507c40e64d6e735901f12a4f38895f"
+}

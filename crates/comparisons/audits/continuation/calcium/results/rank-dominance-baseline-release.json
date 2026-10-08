@@ -1,0 +1,21 @@
+{
+  "tag": "rank-dominance-baseline-release",
+  "started": "2026-09-09T02:13:11.211Z",
+  "finished": "2026-09-09T02:13:44.737Z",
+  "elapsedSeconds": 33.523134744,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/rank-dominance-baseline",
+  "command": "env",
+  "args": [
+    "CARGO_TARGET_DIR=/tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse",
+    "CARGO_INCREMENTAL=0",
+    "CARGO_PROFILE_DEV_DEBUG=0",
+    "CARGO_BUILD_JOBS=2",
+    "cargo",
+    "run",
+    "--offline",
+    "--locked",
+    "--release"
+  ],
+  "code": 0,
+  "signal": null
+}

@@ -1,0 +1,1621 @@
+{
+  "mode": "cpu",
+  "started": "2026-09-10T19:54:12.585Z",
+  "finished": "2026-09-10T19:54:57.248Z",
+  "cpu": 6,
+  "binaries": {
+    "baseline": {
+      "path": "/tmp/calcium-power-sums.2CGTky/baseline-cpu",
+      "bytes": 2691008,
+      "sha256": "374a2020c46eda1bf4bc999c4c0d79935a05317f9b1a0e312a21f9b6a501d838"
+    },
+    "candidate": {
+      "path": "/tmp/calcium-point-image.4f6mja/guard-cpu",
+      "sha256": "548616b7c6a99f808b815914e2acc03570e8614147c60fa085cee46d8c742d5f",
+      "bytes": 2691360
+    }
+  },
+  "summaries": [
+    {
+      "case": 0,
+      "lifecycle": "retained",
+      "iterations": 1816,
+      "observations": 48,
+      "sameFullResult": false,
+      "statuses": {
+        "baseline": "InvalidTransformedEvidence",
+        "candidate": "Transformed"
+      },
+      "pairedMedianRatio": 1.157502982914968,
+      "pairedMedianBootstrap95": [
+        1.0286465356864607,
+        1.203274935806836
+      ],
+      "nsPerQuery": {
+        "baseline": 2410.6577643171804,
+        "candidate": 2706.6894273127755
+      }
+    },
+    {
+      "case": 0,
+      "lifecycle": "fresh",
+      "iterations": 1602,
+      "observations": 48,
+      "sameFullResult": false,
+      "statuses": {
+        "baseline": "InvalidTransformedEvidence",
+        "candidate": "Transformed"
+      },
+      "pairedMedianRatio": 1.116732581801438,
+      "pairedMedianBootstrap95": [
+        1.034449611660519,
+        1.2295635303778165
+      ],
+      "nsPerQuery": {
+        "baseline": 3305.694132334582,
+        "candidate": 3545.5621098626716
+      }
+    },
+    {
+      "case": 1,
+      "lifecycle": "retained",
+      "iterations": 1811,
+      "observations": 48,
+      "sameFullResult": false,
+      "statuses": {
+        "baseline": "InvalidTransformedEvidence",
+        "candidate": "Transformed"
+      },
+      "pairedMedianRatio": 1.167275066347118,
+      "pairedMedianBootstrap95": [
+        1.03446386015107,
+        1.2480765514587242
+      ],
+      "nsPerQuery": {
+        "baseline": 2449.7020982882386,
+        "candidate": 2838.910822749862
+      }
+    },
+    {
+      "case": 1,
+      "lifecycle": "fresh",
+      "iterations": 1769,
+      "observations": 48,
+      "sameFullResult": false,
+      "statuses": {
+        "baseline": "InvalidTransformedEvidence",
+        "candidate": "Transformed"
+      },
+      "pairedMedianRatio": 1.0880980093498507,
+      "pairedMedianBootstrap95": [
+        0.991298581198492,
+        1.1019723272577686
+      ],
+      "nsPerQuery": {
+        "baseline": 3245.353872244206,
+        "candidate": 3440.467778405879
+      }
+    },
+    {
+      "case": 2,
+      "lifecycle": "retained",
+      "iterations": 2665,
+      "observations": 48,
+      "sameFullResult": false,
+      "statuses": {
+        "baseline": "InvalidTransformedEvidence",
+        "candidate": "Transformed"
+      },
+      "pairedMedianRatio": 1.07453122583803,
+      "pairedMedianBootstrap95": [
+        1.0439972604788854,
+        1.1259882428091448
+      ],
+      "nsPerQuery": {
+        "baseline": 2282.196247654784,
+        "candidate": 2490.8161350844275
+      }
+    },
+    {
+      "case": 2,
+      "lifecycle": "fresh",
+      "iterations": 1079,
+      "observations": 48,
+      "sameFullResult": false,
+      "statuses": {
+        "baseline": "InvalidTransformedEvidence",
+        "candidate": "Transformed"
+      },
+      "pairedMedianRatio": 1.0407243043330825,
+      "pairedMedianBootstrap95": [
+        1.0019323215187184,
+        1.075975604127308
+      ],
+      "nsPerQuery": {
+        "baseline": 2948.3197405004635,
+        "candidate": 3148.537998146432
+      }
+    },
+    {
+      "case": 3,
+      "lifecycle": "retained",
+      "iterations": 3097,
+      "observations": 48,
+      "sameFullResult": false,
+      "statuses": {
+        "baseline": "InvalidTransformedEvidence",
+        "candidate": "Transformed"
+      },
+      "pairedMedianRatio": 1.07749917156662,
+      "pairedMedianBootstrap95": [
+        1.0287841532526323,
+        1.1086460097577922
+      ],
+      "nsPerQuery": {
+        "baseline": 2372.6044559250886,
+        "candidate": 2555.9063609945106
+      }
+    },
+    {
+      "case": 3,
+      "lifecycle": "fresh",
+      "iterations": 1332,
+      "observations": 48,
+      "sameFullResult": false,
+      "statuses": {
+        "baseline": "InvalidTransformedEvidence",
+        "candidate": "Transformed"
+      },
+      "pairedMedianRatio": 1.0636999785880388,
+      "pairedMedianBootstrap95": [
+        1.0332603362423112,
+        1.0970462692303913
+      ],
+      "nsPerQuery": {
+        "baseline": 3215.7665165165163,
+        "candidate": 3433.4433183183182
+      }
+    },
+    {
+      "case": 4,
+      "lifecycle": "retained",
+      "iterations": 361,
+      "observations": 48,
+      "sameFullResult": true,
+      "statuses": {
+        "baseline": "Transformed",
+        "candidate": "Transformed"
+      },
+      "pairedMedianRatio": 1.0089704262647397,
+      "pairedMedianBootstrap95": [
+        0.9650215219795768,
+        1.0365245187237273
+      ],
+      "nsPerQuery": {
+        "baseline": 17399.73545706371,
+        "candidate": 17542.106648199446
+      }
+    },
+    {
+      "case": 4,
+      "lifecycle": "fresh",
+      "iterations": 296,
+      "observations": 48,
+      "sameFullResult": true,
+      "statuses": {
+        "baseline": "Transformed",
+        "candidate": "Transformed"
+      },
+      "pairedMedianRatio": 0.9971081420830739,
+      "pairedMedianBootstrap95": [
+        0.9525554079835129,
+        1.0165105102768321
+      ],
+      "nsPerQuery": {
+        "baseline": 18093.54054054054,
+        "candidate": 17814.251689189186
+      }
+    },
+    {
+      "case": 5,
+      "lifecycle": "retained",
+      "iterations": 340,
+      "observations": 48,
+      "sameFullResult": true,
+      "statuses": {
+        "baseline": "Transformed",
+        "candidate": "Transformed"
+      },
+      "pairedMedianRatio": 0.9848841137315825,
+      "pairedMedianBootstrap95": [
+        0.9433413842847926,
+        1.0097611412588912
+      ],
+      "nsPerQuery": {
+        "baseline": 17501.358823529412,
+        "candidate": 17545.20882352941
+      }
+    },
+    {
+      "case": 5,
+      "lifecycle": "fresh",
+      "iterations": 236,
+      "observations": 48,
+      "sameFullResult": true,
+      "statuses": {
+        "baseline": "Transformed",
+        "candidate": "Transformed"
+      },
+      "pairedMedianRatio": 1.006949858052553,
+      "pairedMedianBootstrap95": [
+        1.0036388974760164,
+        1.0094840330193482
+      ],
+      "nsPerQuery": {
+        "baseline": 17821.150423728814,
+        "candidate": 17833.332627118645
+      }
+    },
+    {
+      "case": 6,
+      "lifecycle": "retained",
+      "iterations": 295,
+      "observations": 48,
+      "sameFullResult": true,
+      "statuses": {
+        "baseline": "Transformed",
+        "candidate": "Transformed"
+      },
+      "pairedMedianRatio": 0.9886048850315861,
+      "pairedMedianBootstrap95": [
+        0.9743215507097247,
+        1.0371945957824522
+      ],
+      "nsPerQuery": {
+        "baseline": 21913.51525423729,
+        "candidate": 21603.027118644066
+      }
+    },
+    {
+      "case": 6,
+      "lifecycle": "fresh",
+      "iterations": 331,
+      "observations": 48,
+      "sameFullResult": true,
+      "statuses": {
+        "baseline": "Transformed",
+        "candidate": "Transformed"
+      },
+      "pairedMedianRatio": 0.9974566459801261,
+      "pairedMedianBootstrap95": [
+        0.9770740612839816,
+        1.0348482519867352
+      ],
+      "nsPerQuery": {
+        "baseline": 22357.152567975834,
+        "candidate": 22310.827794561934
+      }
+    },
+    {
+      "case": 7,
+      "lifecycle": "retained",
+      "iterations": 213,
+      "observations": 48,
+      "sameFullResult": true,
+      "statuses": {
+        "baseline": "Transformed",
+        "candidate": "Transformed"
+      },
+      "pairedMedianRatio": 1.010542892963342,
+      "pairedMedianBootstrap95": [
+        0.9829849595204253,
+        1.0170433195612103
+      ],
+      "nsPerQuery": {
+        "baseline": 22386.56103286385,
+        "candidate": 22609.62441314554
+      }
+    },
+    {
+      "case": 7,
+      "lifecycle": "fresh",
+      "iterations": 295,
+      "observations": 48,
+      "sameFullResult": true,
+      "statuses": {
+        "baseline": "Transformed",
+        "candidate": "Transformed"
+      },
+      "pairedMedianRatio": 1.0158112588070605,
+      "pairedMedianBootstrap95": [
+        0.9920735447406874,
+        1.0649942628944058
+      ],
+      "nsPerQuery": {
+        "baseline": 23459.461016949153,
+        "candidate": 23768.303389830508
+      }
+    },
+    {
+      "case": 8,
+      "lifecycle": "retained",
+      "iterations": 133,
+      "observations": 48,
+      "sameFullResult": true,
+      "statuses": {
+        "baseline": "Transformed",
+        "candidate": "Transformed"
+      },
+      "pairedMedianRatio": 1.0097583487655826,
+      "pairedMedianBootstrap95": [
+        0.9977090759187068,
+        1.015560142584298
+      ],
+      "nsPerQuery": {
+        "baseline": 61728.92857142857,
+        "candidate": 62385.23308270676
+      }
+    },
+    {
+      "case": 8,
+      "lifecycle": "fresh",
+      "iterations": 95,
+      "observations": 48,
+      "sameFullResult": true,
+      "statuses": {
+        "baseline": "Transformed",
+        "candidate": "Transformed"
+      },
+      "pairedMedianRatio": 0.9846860618291233,
+      "pairedMedianBootstrap95": [
+        0.8930282158321031,
+        1.0244923919466173
+      ],
+      "nsPerQuery": {
+        "baseline": 62918,
+        "candidate": 63166.45789473684
+      }
+    },
+    {
+      "case": 9,
+      "lifecycle": "retained",
+      "iterations": 111,
+      "observations": 48,
+      "sameFullResult": true,
+      "statuses": {
+        "baseline": "Transformed",
+        "candidate": "Transformed"
+      },
+      "pairedMedianRatio": 1.0035280145452583,
+      "pairedMedianBootstrap95": [
+        0.9912684501457116,
+        1.0111798480046879
+      ],
+      "nsPerQuery": {
+        "baseline": 58633.18918918919,
+        "candidate": 59474.48198198198
+      }
+    },
+    {
+      "case": 9,
+      "lifecycle": "fresh",
+      "iterations": 126,
+      "observations": 48,
+      "sameFullResult": true,
+      "statuses": {
+        "baseline": "Transformed",
+        "candidate": "Transformed"
+      },
+      "pairedMedianRatio": 1.0031900016784872,
+      "pairedMedianBootstrap95": [
+        0.9825681417332727,
+        1.0226220330705758
+      ],
+      "nsPerQuery": {
+        "baseline": 60012.43650793651,
+        "candidate": 60208.80952380953
+      }
+    },
+    {
+      "case": 10,
+      "lifecycle": "retained",
+      "iterations": 158,
+      "observations": 48,
+      "sameFullResult": true,
+      "statuses": {
+        "baseline": "Transformed",
+        "candidate": "Transformed"
+      },
+      "pairedMedianRatio": 0.9815743257150593,
+      "pairedMedianBootstrap95": [
+        0.9566487455850219,
+        1.0198546076318316
+      ],
+      "nsPerQuery": {
+        "baseline": 49453.284810126584,
+        "candidate": 49381.582278481015
+      }
+    },
+    {
+      "case": 10,
+      "lifecycle": "fresh",
+      "iterations": 149,
+      "observations": 48,
+      "sameFullResult": true,
+      "statuses": {
+        "baseline": "Transformed",
+        "candidate": "Transformed"
+      },
+      "pairedMedianRatio": 0.9966291096902432,
+      "pairedMedianBootstrap95": [
+        0.9804282487400862,
+        1.0100781394250857
+      ],
+      "nsPerQuery": {
+        "baseline": 50758.93288590604,
+        "candidate": 50879.19798657719
+      }
+    },
+    {
+      "case": 11,
+      "lifecycle": "retained",
+      "iterations": 154,
+      "observations": 48,
+      "sameFullResult": true,
+      "statuses": {
+        "baseline": "Transformed",
+        "candidate": "Transformed"
+      },
+      "pairedMedianRatio": 1.007801593203683,
+      "pairedMedianBootstrap95": [
+        0.9954208041526688,
+        1.0302905876874202
+      ],
+      "nsPerQuery": {
+        "baseline": 51099.74350649351,
+        "candidate": 51379.17207792208
+      }
+    },
+    {
+      "case": 11,
+      "lifecycle": "fresh",
+      "iterations": 149,
+      "observations": 48,
+      "sameFullResult": true,
+      "statuses": {
+        "baseline": "Transformed",
+        "candidate": "Transformed"
+      },
+      "pairedMedianRatio": 1.0126706016630465,
+      "pairedMedianBootstrap95": [
+        0.9985879875502685,
+        1.053167513890294
+      ],
+      "nsPerQuery": {
+        "baseline": 52494.724832214764,
+        "candidate": 53380.402684563756
+      }
+    },
+    {
+      "case": 12,
+      "lifecycle": "retained",
+      "iterations": 129,
+      "observations": 48,
+      "sameFullResult": true,
+      "statuses": {
+        "baseline": "Transformed",
+        "candidate": "Transformed"
+      },
+      "pairedMedianRatio": 0.9928548612263991,
+      "pairedMedianBootstrap95": [
+        0.9748845673291954,
+        0.9997432481334867
+      ],
+      "nsPerQuery": {
+        "baseline": 62706.748062015504,
+        "candidate": 61671.5503875969
+      }
+    },
+    {
+      "case": 12,
+      "lifecycle": "fresh",
+      "iterations": 125,
+      "observations": 48,
+      "sameFullResult": true,
+      "statuses": {
+        "baseline": "Transformed",
+        "candidate": "Transformed"
+      },
+      "pairedMedianRatio": 0.9968254600170396,
+      "pairedMedianBootstrap95": [
+        0.9777791965816771,
+        1.0089319311352323
+      ],
+      "nsPerQuery": {
+        "baseline": 62693.064,
+        "candidate": 62564.588
+      }
+    },
+    {
+      "case": 13,
+      "lifecycle": "retained",
+      "iterations": 126,
+      "observations": 48,
+      "sameFullResult": true,
+      "statuses": {
+        "baseline": "Transformed",
+        "candidate": "Transformed"
+      },
+      "pairedMedianRatio": 0.989772018598585,
+      "pairedMedianBootstrap95": [
+        0.9783634377485904,
+        1.0070276045721245
+      ],
+      "nsPerQuery": {
+        "baseline": 61361.90873015873,
+        "candidate": 61114.81349206349
+      }
+    },
+    {
+      "case": 13,
+      "lifecycle": "fresh",
+      "iterations": 112,
+      "observations": 48,
+      "sameFullResult": true,
+      "statuses": {
+        "baseline": "Transformed",
+        "candidate": "Transformed"
+      },
+      "pairedMedianRatio": 0.9824521424303826,
+      "pairedMedianBootstrap95": [
+        0.9229634871806115,
+        1.0051766201733756
+      ],
+      "nsPerQuery": {
+        "baseline": 61845.267857142855,
+        "candidate": 61671.352678571435
+      }
+    },
+    {
+      "case": 14,
+      "lifecycle": "retained",
+      "iterations": 126,
+      "observations": 48,
+      "sameFullResult": true,
+      "statuses": {
+        "baseline": "Transformed",
+        "candidate": "Transformed"
+      },
+      "pairedMedianRatio": 0.9900158915421974,
+      "pairedMedianBootstrap95": [
+        0.9652569519555739,
+        1.0500712129734724
+      ],
+      "nsPerQuery": {
+        "baseline": 52138.607142857145,
+        "candidate": 51997.11111111111
+      }
+    },
+    {
+      "case": 14,
+      "lifecycle": "fresh",
+      "iterations": 147,
+      "observations": 48,
+      "sameFullResult": true,
+      "statuses": {
+        "baseline": "Transformed",
+        "candidate": "Transformed"
+      },
+      "pairedMedianRatio": 0.9898029507821737,
+      "pairedMedianBootstrap95": [
+        0.9834879603656506,
+        0.999470855940421
+      ],
+      "nsPerQuery": {
+        "baseline": 54425.10884353741,
+        "candidate": 53485.24149659864
+      }
+    },
+    {
+      "case": 15,
+      "lifecycle": "retained",
+      "iterations": 117,
+      "observations": 48,
+      "sameFullResult": true,
+      "statuses": {
+        "baseline": "Transformed",
+        "candidate": "Transformed"
+      },
+      "pairedMedianRatio": 0.9771541403942868,
+      "pairedMedianBootstrap95": [
+        0.8973285699272651,
+        1.0892515761054926
+      ],
+      "nsPerQuery": {
+        "baseline": 55320.77777777778,
+        "candidate": 54783.679487179485
+      }
+    },
+    {
+      "case": 15,
+      "lifecycle": "fresh",
+      "iterations": 136,
+      "observations": 48,
+      "sameFullResult": true,
+      "statuses": {
+        "baseline": "Transformed",
+        "candidate": "Transformed"
+      },
+      "pairedMedianRatio": 1.0527019774075164,
+      "pairedMedianBootstrap95": [
+        1.0217641131495385,
+        1.0788933817224498
+      ],
+      "nsPerQuery": {
+        "baseline": 55612.180147058825,
+        "candidate": 55913.70220588235
+      }
+    },
+    {
+      "case": 16,
+      "lifecycle": "retained",
+      "iterations": 135,
+      "observations": 48,
+      "sameFullResult": true,
+      "statuses": {
+        "baseline": "Transformed",
+        "candidate": "Transformed"
+      },
+      "pairedMedianRatio": 0.985376652162876,
+      "pairedMedianBootstrap95": [
+        0.9809035553378698,
+        1.004806440400258
+      ],
+      "nsPerQuery": {
+        "baseline": 47208.874074074076,
+        "candidate": 46890.892592592594
+      }
+    },
+    {
+      "case": 16,
+      "lifecycle": "fresh",
+      "iterations": 157,
+      "observations": 48,
+      "sameFullResult": true,
+      "statuses": {
+        "baseline": "Transformed",
+        "candidate": "Transformed"
+      },
+      "pairedMedianRatio": 1.0252688994092958,
+      "pairedMedianBootstrap95": [
+        1.002781987303473,
+        1.0669941077624903
+      ],
+      "nsPerQuery": {
+        "baseline": 48678.41719745223,
+        "candidate": 49447.56369426752
+      }
+    },
+    {
+      "case": 17,
+      "lifecycle": "retained",
+      "iterations": 151,
+      "observations": 48,
+      "sameFullResult": true,
+      "statuses": {
+        "baseline": "Transformed",
+        "candidate": "Transformed"
+      },
+      "pairedMedianRatio": 0.9967359168278016,
+      "pairedMedianBootstrap95": [
+        0.9772823681442366,
+        1.049221883487113
+      ],
+      "nsPerQuery": {
+        "baseline": 47170.00993377484,
+        "candidate": 46784.77483443709
+      }
+    },
+    {
+      "case": 17,
+      "lifecycle": "fresh",
+      "iterations": 158,
+      "observations": 48,
+      "sameFullResult": true,
+      "statuses": {
+        "baseline": "Transformed",
+        "candidate": "Transformed"
+      },
+      "pairedMedianRatio": 0.9951154219220859,
+      "pairedMedianBootstrap95": [
+        0.9692338068112614,
+        1.009223381093459
+      ],
+      "nsPerQuery": {
+        "baseline": 48084.70886075949,
+        "candidate": 47983.92405063291
+      }
+    },
+    {
+      "case": 18,
+      "lifecycle": "retained",
+      "iterations": 179,
+      "observations": 48,
+      "sameFullResult": true,
+      "statuses": {
+        "baseline": "Transformed",
+        "candidate": "Transformed"
+      },
+      "pairedMedianRatio": 0.9565347425767217,
+      "pairedMedianBootstrap95": [
+        0.9322659700479055,
+        1.0005069982894876
+      ],
+      "nsPerQuery": {
+        "baseline": 44923.3156424581,
+        "candidate": 44898.40223463687
+      }
+    },
+    {
+      "case": 18,
+      "lifecycle": "fresh",
+      "iterations": 164,
+      "observations": 48,
+      "sameFullResult": true,
+      "statuses": {
+        "baseline": "Transformed",
+        "candidate": "Transformed"
+      },
+      "pairedMedianRatio": 0.9987853042675628,
+      "pairedMedianBootstrap95": [
+        0.98955725640145,
+        1.0175861125065955
+      ],
+      "nsPerQuery": {
+        "baseline": 46838.67987804878,
+        "candidate": 46763.868902439026
+      }
+    },
+    {
+      "case": 19,
+      "lifecycle": "retained",
+      "iterations": 180,
+      "observations": 48,
+      "sameFullResult": true,
+      "statuses": {
+        "baseline": "Transformed",
+        "candidate": "Transformed"
+      },
+      "pairedMedianRatio": 1.0001361428662676,
+      "pairedMedianBootstrap95": [
+        0.9905894011026004,
+        1.0034017201753436
+      ],
+      "nsPerQuery": {
+        "baseline": 45424.302777777775,
+        "candidate": 45555.85
+      }
+    },
+    {
+      "case": 19,
+      "lifecycle": "fresh",
+      "iterations": 168,
+      "observations": 48,
+      "sameFullResult": true,
+      "statuses": {
+        "baseline": "Transformed",
+        "candidate": "Transformed"
+      },
+      "pairedMedianRatio": 1.008486906633009,
+      "pairedMedianBootstrap95": [
+        0.9865743749726505,
+        1.0213503219095545
+      ],
+      "nsPerQuery": {
+        "baseline": 48053.91071428571,
+        "candidate": 48019.92261904762
+      }
+    },
+    {
+      "case": 20,
+      "lifecycle": "retained",
+      "iterations": 372,
+      "observations": 48,
+      "sameFullResult": true,
+      "statuses": {
+        "baseline": "Transformed",
+        "candidate": "Transformed"
+      },
+      "pairedMedianRatio": 1.009262793101278,
+      "pairedMedianBootstrap95": [
+        0.9539105239345034,
+        1.0697689635278356
+      ],
+      "nsPerQuery": {
+        "baseline": 19384.625,
+        "candidate": 19992.084677419356
+      }
+    },
+    {
+      "case": 20,
+      "lifecycle": "fresh",
+      "iterations": 307,
+      "observations": 48,
+      "sameFullResult": true,
+      "statuses": {
+        "baseline": "Transformed",
+        "candidate": "Transformed"
+      },
+      "pairedMedianRatio": 1.0804096410152777,
+      "pairedMedianBootstrap95": [
+        0.9854795855698817,
+        1.1074394245368748
+      ],
+      "nsPerQuery": {
+        "baseline": 20061.636807817587,
+        "candidate": 20652.037459283387
+      }
+    },
+    {
+      "case": 21,
+      "lifecycle": "retained",
+      "iterations": 406,
+      "observations": 48,
+      "sameFullResult": true,
+      "statuses": {
+        "baseline": "Transformed",
+        "candidate": "Transformed"
+      },
+      "pairedMedianRatio": 0.9818183900777251,
+      "pairedMedianBootstrap95": [
+        0.9378066694073507,
+        1.0225707303422995
+      ],
+      "nsPerQuery": {
+        "baseline": 19118.331280788178,
+        "candidate": 19238.65763546798
+      }
+    },
+    {
+      "case": 21,
+      "lifecycle": "fresh",
+      "iterations": 361,
+      "observations": 48,
+      "sameFullResult": true,
+      "statuses": {
+        "baseline": "Transformed",
+        "candidate": "Transformed"
+      },
+      "pairedMedianRatio": 0.9795106771685935,
+      "pairedMedianBootstrap95": [
+        0.9285083736665525,
+        0.9968976707432862
+      ],
+      "nsPerQuery": {
+        "baseline": 19976.788088642657,
+        "candidate": 19715.36565096953
+      }
+    },
+    {
+      "case": 22,
+      "lifecycle": "retained",
+      "iterations": 357,
+      "observations": 48,
+      "sameFullResult": true,
+      "statuses": {
+        "baseline": "Transformed",
+        "candidate": "Transformed"
+      },
+      "pairedMedianRatio": 0.9876935055517911,
+      "pairedMedianBootstrap95": [
+        0.9405433653992521,
+        1.0135398692609516
+      ],
+      "nsPerQuery": {
+        "baseline": 20731.337535014005,
+        "candidate": 20647.939775910367
+      }
+    },
+    {
+      "case": 22,
+      "lifecycle": "fresh",
+      "iterations": 332,
+      "observations": 48,
+      "sameFullResult": true,
+      "statuses": {
+        "baseline": "Transformed",
+        "candidate": "Transformed"
+      },
+      "pairedMedianRatio": 1.001218628714017,
+      "pairedMedianBootstrap95": [
+        0.9917411601245709,
+        1.012618441180983
+      ],
+      "nsPerQuery": {
+        "baseline": 21578.54969879518,
+        "candidate": 21608.21686746988
+      }
+    },
+    {
+      "case": 23,
+      "lifecycle": "retained",
+      "iterations": 850,
+      "observations": 48,
+      "sameFullResult": true,
+      "statuses": {
+        "baseline": "Transformed",
+        "candidate": "Transformed"
+      },
+      "pairedMedianRatio": 0.9557448197202765,
+      "pairedMedianBootstrap95": [
+        0.8994124128293751,
+        1.0441440009358212
+      ],
+      "nsPerQuery": {
+        "baseline": 8926.534705882354,
+        "candidate": 8621.603529411765
+      }
+    },
+    {
+      "case": 23,
+      "lifecycle": "fresh",
+      "iterations": 783,
+      "observations": 48,
+      "sameFullResult": true,
+      "statuses": {
+        "baseline": "Transformed",
+        "candidate": "Transformed"
+      },
+      "pairedMedianRatio": 0.9536622822225744,
+      "pairedMedianBootstrap95": [
+        0.9193031223924991,
+        0.9778672888589721
+      ],
+      "nsPerQuery": {
+        "baseline": 9860.594508301405,
+        "candidate": 9638.930395913154
+      }
+    },
+    {
+      "case": 24,
+      "lifecycle": "retained",
+      "iterations": 57,
+      "observations": 48,
+      "sameFullResult": true,
+      "statuses": {
+        "baseline": "Transformed",
+        "candidate": "Transformed"
+      },
+      "pairedMedianRatio": 0.9875151610823596,
+      "pairedMedianBootstrap95": [
+        0.968545560328975,
+        0.9918223262440344
+      ],
+      "nsPerQuery": {
+        "baseline": 139848.3947368421,
+        "candidate": 138226.65789473685
+      }
+    },
+    {
+      "case": 24,
+      "lifecycle": "fresh",
+      "iterations": 58,
+      "observations": 48,
+      "sameFullResult": true,
+      "statuses": {
+        "baseline": "Transformed",
+        "candidate": "Transformed"
+      },
+      "pairedMedianRatio": 0.9916387949183731,
+      "pairedMedianBootstrap95": [
+        0.9878570004385998,
+        1.000956290752206
+      ],
+      "nsPerQuery": {
+        "baseline": 140691.8275862069,
+        "candidate": 139445.9568965517
+      }
+    },
+    {
+      "case": 25,
+      "lifecycle": "retained",
+      "iterations": 59,
+      "observations": 48,
+      "sameFullResult": true,
+      "statuses": {
+        "baseline": "Transformed",
+        "candidate": "Transformed"
+      },
+      "pairedMedianRatio": 1.011393852531966,
+      "pairedMedianBootstrap95": [
+        0.9997652775173931,
+        1.019255523323523
+      ],
+      "nsPerQuery": {
+        "baseline": 137907.2372881356,
+        "candidate": 138473.12711864407
+      }
+    },
+    {
+      "case": 25,
+      "lifecycle": "fresh",
+      "iterations": 59,
+      "observations": 48,
+      "sameFullResult": true,
+      "statuses": {
+        "baseline": "Transformed",
+        "candidate": "Transformed"
+      },
+      "pairedMedianRatio": 0.9943091782799688,
+      "pairedMedianBootstrap95": [
+        0.9878498023460645,
+        0.9982762140808835
+      ],
+      "nsPerQuery": {
+        "baseline": 139695.93220338982,
+        "candidate": 138550.59322033898
+      }
+    },
+    {
+      "case": 26,
+      "lifecycle": "retained",
+      "iterations": 57,
+      "observations": 48,
+      "sameFullResult": true,
+      "statuses": {
+        "baseline": "Transformed",
+        "candidate": "Transformed"
+      },
+      "pairedMedianRatio": 0.993701670483661,
+      "pairedMedianBootstrap95": [
+        0.9841438306862137,
+        1.0098678003867854
+      ],
+      "nsPerQuery": {
+        "baseline": 128937.65789473685,
+        "candidate": 127298.90350877194
+      }
+    },
+    {
+      "case": 26,
+      "lifecycle": "fresh",
+      "iterations": 58,
+      "observations": 48,
+      "sameFullResult": true,
+      "statuses": {
+        "baseline": "Transformed",
+        "candidate": "Transformed"
+      },
+      "pairedMedianRatio": 0.999789277684642,
+      "pairedMedianBootstrap95": [
+        0.9783988534024308,
+        1.0351420380858216
+      ],
+      "nsPerQuery": {
+        "baseline": 128643.7672413793,
+        "candidate": 128761.94827586207
+      }
+    },
+    {
+      "case": 27,
+      "lifecycle": "retained",
+      "iterations": 54,
+      "observations": 48,
+      "sameFullResult": true,
+      "statuses": {
+        "baseline": "Transformed",
+        "candidate": "Transformed"
+      },
+      "pairedMedianRatio": 1.002443986981236,
+      "pairedMedianBootstrap95": [
+        0.9899351930387994,
+        1.0268745910550252
+      ],
+      "nsPerQuery": {
+        "baseline": 128287.67592592593,
+        "candidate": 128339.15740740742
+      }
+    },
+    {
+      "case": 27,
+      "lifecycle": "fresh",
+      "iterations": 62,
+      "observations": 48,
+      "sameFullResult": true,
+      "statuses": {
+        "baseline": "Transformed",
+        "candidate": "Transformed"
+      },
+      "pairedMedianRatio": 0.9929070411212102,
+      "pairedMedianBootstrap95": [
+        0.9827982296104812,
+        0.9981126330010959
+      ],
+      "nsPerQuery": {
+        "baseline": 131248.09677419355,
+        "candidate": 129997.21774193548
+      }
+    },
+    {
+      "case": 28,
+      "lifecycle": "retained",
+      "iterations": 1296,
+      "observations": 48,
+      "sameFullResult": true,
+      "statuses": {
+        "baseline": "UnsupportedDegree",
+        "candidate": "UnsupportedDegree"
+      },
+      "pairedMedianRatio": 0.994371255451917,
+      "pairedMedianBootstrap95": [
+        0.9824124322886113,
+        1.038203130202238
+      ],
+      "nsPerQuery": {
+        "baseline": 5058.908564814816,
+        "candidate": 5021.939814814815
+      }
+    },
+    {
+      "case": 28,
+      "lifecycle": "fresh",
+      "iterations": 998,
+      "observations": 48,
+      "sameFullResult": true,
+      "statuses": {
+        "baseline": "UnsupportedDegree",
+        "candidate": "UnsupportedDegree"
+      },
+      "pairedMedianRatio": 0.9629958504044516,
+      "pairedMedianBootstrap95": [
+        0.9080606759244736,
+        0.9812084618361201
+      ],
+      "nsPerQuery": {
+        "baseline": 5846.978456913827,
+        "candidate": 5668.699398797595
+      }
+    },
+    {
+      "case": 29,
+      "lifecycle": "retained",
+      "iterations": 1070,
+      "observations": 48,
+      "sameFullResult": true,
+      "statuses": {
+        "baseline": "UnsupportedDegree",
+        "candidate": "UnsupportedDegree"
+      },
+      "pairedMedianRatio": 0.9626658995291129,
+      "pairedMedianBootstrap95": [
+        0.9164864645950277,
+        0.9876737061928227
+      ],
+      "nsPerQuery": {
+        "baseline": 5168.066355140187,
+        "candidate": 4980.471495327103
+      }
+    },
+    {
+      "case": 29,
+      "lifecycle": "fresh",
+      "iterations": 1101,
+      "observations": 48,
+      "sameFullResult": true,
+      "statuses": {
+        "baseline": "UnsupportedDegree",
+        "candidate": "UnsupportedDegree"
+      },
+      "pairedMedianRatio": 0.9804650617766895,
+      "pairedMedianBootstrap95": [
+        0.9612231653908345,
+        0.9925131938742857
+      ],
+      "nsPerQuery": {
+        "baseline": 5793.203905540418,
+        "candidate": 5727.827429609446
+      }
+    },
+    {
+      "case": 30,
+      "lifecycle": "retained",
+      "iterations": 1213,
+      "observations": 48,
+      "sameFullResult": true,
+      "statuses": {
+        "baseline": "UnsupportedDegree",
+        "candidate": "UnsupportedDegree"
+      },
+      "pairedMedianRatio": 1.0042836122056564,
+      "pairedMedianBootstrap95": [
+        0.960844619973956,
+        1.0246549340167652
+      ],
+      "nsPerQuery": {
+        "baseline": 5041.77328936521,
+        "candidate": 4949.772052761748
+      }
+    },
+    {
+      "case": 30,
+      "lifecycle": "fresh",
+      "iterations": 1331,
+      "observations": 48,
+      "sameFullResult": true,
+      "statuses": {
+        "baseline": "UnsupportedDegree",
+        "candidate": "UnsupportedDegree"
+      },
+      "pairedMedianRatio": 0.9993248269626822,
+      "pairedMedianBootstrap95": [
+        0.9319589192836102,
+        1.0398321087946654
+      ],
+      "nsPerQuery": {
+        "baseline": 5880.7314049586785,
+        "candidate": 5837.7370398196845
+      }
+    },
+    {
+      "case": 31,
+      "lifecycle": "retained",
+      "iterations": 1196,
+      "observations": 48,
+      "sameFullResult": true,
+      "statuses": {
+        "baseline": "UnsupportedDegree",
+        "candidate": "UnsupportedDegree"
+      },
+      "pairedMedianRatio": 0.9780376315547539,
+      "pairedMedianBootstrap95": [
+        0.9664209322865112,
+        0.987643613968388
+      ],
+      "nsPerQuery": {
+        "baseline": 5053.938963210702,
+        "candidate": 4951.545568561873
+      }
+    },
+    {
+      "case": 31,
+      "lifecycle": "fresh",
+      "iterations": 1000,
+      "observations": 48,
+      "sameFullResult": true,
+      "statuses": {
+        "baseline": "UnsupportedDegree",
+        "candidate": "UnsupportedDegree"
+      },
+      "pairedMedianRatio": 0.987564106877695,
+      "pairedMedianBootstrap95": [
+        0.9663614186620022,
+        1.002366850083586
+      ],
+      "nsPerQuery": {
+        "baseline": 5838.3,
+        "candidate": 5754.1755
+      }
+    },
+    {
+      "case": 32,
+      "lifecycle": "retained",
+      "iterations": 1483,
+      "observations": 48,
+      "sameFullResult": true,
+      "statuses": {
+        "baseline": "Transformed",
+        "candidate": "Transformed"
+      },
+      "pairedMedianRatio": 0.9302344264412887,
+      "pairedMedianBootstrap95": [
+        0.8668178406687603,
+        0.9571381649070192
+      ],
+      "nsPerQuery": {
+        "baseline": 4302.604517869184,
+        "candidate": 4058.427174645988
+      }
+    },
+    {
+      "case": 32,
+      "lifecycle": "fresh",
+      "iterations": 1239,
+      "observations": 48,
+      "sameFullResult": true,
+      "statuses": {
+        "baseline": "Transformed",
+        "candidate": "Transformed"
+      },
+      "pairedMedianRatio": 0.9486664115046981,
+      "pairedMedianBootstrap95": [
+        0.9406628950549109,
+        0.9782160360942342
+      ],
+      "nsPerQuery": {
+        "baseline": 5020.136400322841,
+        "candidate": 4812.479015334948
+      }
+    },
+    {
+      "case": 33,
+      "lifecycle": "retained",
+      "iterations": 1856,
+      "observations": 48,
+      "sameFullResult": true,
+      "statuses": {
+        "baseline": "Transformed",
+        "candidate": "Transformed"
+      },
+      "pairedMedianRatio": 0.9434512399364166,
+      "pairedMedianBootstrap95": [
+        0.920356924621408,
+        0.9591451190129203
+      ],
+      "nsPerQuery": {
+        "baseline": 4334.6651400862065,
+        "candidate": 4064.643318965517
+      }
+    },
+    {
+      "case": 33,
+      "lifecycle": "fresh",
+      "iterations": 1440,
+      "observations": 48,
+      "sameFullResult": true,
+      "statuses": {
+        "baseline": "Transformed",
+        "candidate": "Transformed"
+      },
+      "pairedMedianRatio": 0.9757781167924948,
+      "pairedMedianBootstrap95": [
+        0.9678973798045302,
+        0.9964016259703342
+      ],
+      "nsPerQuery": {
+        "baseline": 4932.2243055555555,
+        "candidate": 4792.487499999999
+      }
+    },
+    {
+      "case": 34,
+      "lifecycle": "retained",
+      "iterations": 3075,
+      "observations": 48,
+      "sameFullResult": false,
+      "statuses": {
+        "baseline": "InvalidTransformedEvidence",
+        "candidate": "Transformed"
+      },
+      "pairedMedianRatio": 0.9865764548733906,
+      "pairedMedianBootstrap95": [
+        0.975318564672212,
+        1.044264516784013
+      ],
+      "nsPerQuery": {
+        "baseline": 2153.665365853659,
+        "candidate": 2144.3717073170733
+      }
+    },
+    {
+      "case": 34,
+      "lifecycle": "fresh",
+      "iterations": 2295,
+      "observations": 48,
+      "sameFullResult": false,
+      "statuses": {
+        "baseline": "InvalidTransformedEvidence",
+        "candidate": "Transformed"
+      },
+      "pairedMedianRatio": 1.0018404315856786,
+      "pairedMedianBootstrap95": [
+        0.9555457124455019,
+        1.013435517445781
+      ],
+      "nsPerQuery": {
+        "baseline": 2459.1080610021786,
+        "candidate": 2450.6925925925925
+      }
+    },
+    {
+      "case": 35,
+      "lifecycle": "retained",
+      "iterations": 10000,
+      "observations": 48,
+      "sameFullResult": true,
+      "statuses": {
+        "baseline": "DenominatorMayContainZero",
+        "candidate": "DenominatorMayContainZero"
+      },
+      "pairedMedianRatio": 0.9597368093134296,
+      "pairedMedianBootstrap95": [
+        0.9308671933087144,
+        0.9659086191822983
+      ],
+      "nsPerQuery": {
+        "baseline": 108.20405,
+        "candidate": 108.70205
+      }
+    },
+    {
+      "case": 35,
+      "lifecycle": "fresh",
+      "iterations": 10000,
+      "observations": 48,
+      "sameFullResult": true,
+      "statuses": {
+        "baseline": "DenominatorMayContainZero",
+        "candidate": "DenominatorMayContainZero"
+      },
+      "pairedMedianRatio": 1.0277656742906962,
+      "pairedMedianBootstrap95": [
+        0.9492901761773757,
+        1.0436703102182128
+      ],
+      "nsPerQuery": {
+        "baseline": 425.78380000000004,
+        "candidate": 441.69075
+      }
+    },
+    {
+      "case": 36,
+      "lifecycle": "retained",
+      "iterations": 100,
+      "observations": 48,
+      "sameFullResult": true,
+      "statuses": {
+        "baseline": "Transformed",
+        "candidate": "Transformed"
+      },
+      "pairedMedianRatio": 1.0305054663280282,
+      "pairedMedianBootstrap95": [
+        1.0054943008067272,
+        1.0728537361783417
+      ],
+      "nsPerQuery": {
+        "baseline": 78077.745,
+        "candidate": 78972.035
+      }
+    },
+    {
+      "case": 36,
+      "lifecycle": "fresh",
+      "iterations": 92,
+      "observations": 48,
+      "sameFullResult": true,
+      "statuses": {
+        "baseline": "Transformed",
+        "candidate": "Transformed"
+      },
+      "pairedMedianRatio": 1.0063429365786152,
+      "pairedMedianBootstrap95": [
+        0.9918735137842094,
+        1.0393198418510041
+      ],
+      "nsPerQuery": {
+        "baseline": 78440.11413043478,
+        "candidate": 79408.47282608696
+      }
+    },
+    {
+      "case": 37,
+      "lifecycle": "retained",
+      "iterations": 110,
+      "observations": 48,
+      "sameFullResult": true,
+      "statuses": {
+        "baseline": "NonIsolatingImageInterval",
+        "candidate": "NonIsolatingImageInterval"
+      },
+      "pairedMedianRatio": 1.0169110747208967,
+      "pairedMedianBootstrap95": [
+        1.0051908730510164,
+        1.0395341714683162
+      ],
+      "nsPerQuery": {
+        "baseline": 72401.99545454545,
+        "candidate": 72610.65454545454
+      }
+    },
+    {
+      "case": 37,
+      "lifecycle": "fresh",
+      "iterations": 111,
+      "observations": 48,
+      "sameFullResult": true,
+      "statuses": {
+        "baseline": "NonIsolatingImageInterval",
+        "candidate": "NonIsolatingImageInterval"
+      },
+      "pairedMedianRatio": 0.9876443391129974,
+      "pairedMedianBootstrap95": [
+        0.9191791272733956,
+        1.0630139019589082
+      ],
+      "nsPerQuery": {
+        "baseline": 74629.3018018018,
+        "candidate": 73347.71621621621
+      }
+    },
+    {
+      "case": 38,
+      "lifecycle": "retained",
+      "iterations": 129,
+      "observations": 48,
+      "sameFullResult": true,
+      "statuses": {
+        "baseline": "Transformed",
+        "candidate": "Transformed"
+      },
+      "pairedMedianRatio": 0.9528282459518796,
+      "pairedMedianBootstrap95": [
+        0.9209132921557848,
+        0.9674296094334356
+      ],
+      "nsPerQuery": {
+        "baseline": 61495.317829457366,
+        "candidate": 60167.00387596899
+      }
+    },
+    {
+      "case": 38,
+      "lifecycle": "fresh",
+      "iterations": 125,
+      "observations": 48,
+      "sameFullResult": true,
+      "statuses": {
+        "baseline": "Transformed",
+        "candidate": "Transformed"
+      },
+      "pairedMedianRatio": 0.9869320073366403,
+      "pairedMedianBootstrap95": [
+        0.9607785226605066,
+        1.004537274050303
+      ],
+      "nsPerQuery": {
+        "baseline": 62536.712,
+        "candidate": 61527.18
+      }
+    },
+    {
+      "case": 39,
+      "lifecycle": "retained",
+      "iterations": 131,
+      "observations": 48,
+      "sameFullResult": true,
+      "statuses": {
+        "baseline": "Transformed",
+        "candidate": "Transformed"
+      },
+      "pairedMedianRatio": 0.9938464338438644,
+      "pairedMedianBootstrap95": [
+        0.9528595181389972,
+        1.0363620191462593
+      ],
+      "nsPerQuery": {
+        "baseline": 61056.80916030535,
+        "candidate": 59777.19847328244
+      }
+    },
+    {
+      "case": 39,
+      "lifecycle": "fresh",
+      "iterations": 133,
+      "observations": 48,
+      "sameFullResult": true,
+      "statuses": {
+        "baseline": "Transformed",
+        "candidate": "Transformed"
+      },
+      "pairedMedianRatio": 1.0231071677164438,
+      "pairedMedianBootstrap95": [
+        0.9896408717555228,
+        1.077247812441968
+      ],
+      "nsPerQuery": {
+        "baseline": 61088.55639097744,
+        "candidate": 61960.67669172932
+      }
+    }
+  ],
+  "limits": "Forty authored public queries, retained/fresh inputs, eight preconditioning calls per child. CPU pinned to core 6, twelve alternating ABBA/BAAB blocks, independently instrumented allocation binary. Fresh includes input construction/drop but not cold-process caches. Exact expected report and checksum checked for every observation. Changed outcomes are additional certified work, not equal-work speedups. Bootstrap intervals are per-group, not multiplicity-adjusted or universal. Rust requested bytes/live/peak omit native allocation overhead, RSS and stacks. No production retention or representative application-size qualification at this stage."
+}

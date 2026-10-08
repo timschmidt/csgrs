@@ -1,0 +1,101 @@
+[ 1 of 11] Compiling DyDigitM         ( /home/tim/Documents/GitHub/workspace/.audit-plume-perform.LVoj1D/compat/DyDigitM.hs, nothing )
+
+/home/tim/Documents/GitHub/workspace/.audit-plume-perform.LVoj1D/compat/DyDigitM.hs:132:1: warning: [GHC-94817] [-Wtabs]
+    Tab character found here, and in 34 further locations.
+    Suggested fix: Please use spaces instead.
+    |
+132 |                      | otherwise = dydNormalise (a `div` 2, b - 1, x)
+    | ^^^^^^^^
+[ 2 of 11] Compiling DyStreamM        ( /home/tim/Documents/GitHub/workspace/.audit-plume-perform.LVoj1D/compat/DyStreamM.hs, nothing )
+
+/home/tim/Documents/GitHub/workspace/.audit-plume-perform.LVoj1D/compat/DyStreamM.hs:48:38: warning: [GHC-94817] [-Wtabs]
+    Tab character found here, and in 27 further locations.
+    Suggested fix: Please use spaces instead.
+   |
+48 | dys_OneL           = dydList dys_One'           :: DyStream 
+   |                                      ^^^
+
+/home/tim/Documents/GitHub/workspace/.audit-plume-perform.LVoj1D/compat/DyStreamM.hs:83:1: warning: [GHC-53633] [-Woverlapping-patterns]
+    Pattern match is redundant
+    In an equation for ‘dysDigAdd’: dysDigAdd d (h : x) = ...
+   |
+83 | dysDigAdd d    (h:x) = (a:dysDigAdd b x)
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^...
+[ 3 of 11] Compiling DyFloatM         ( /home/tim/Documents/GitHub/workspace/.audit-plume-perform.LVoj1D/compat/DyFloatM.hs, nothing )
+
+/home/tim/Documents/GitHub/workspace/.audit-plume-perform.LVoj1D/compat/DyFloatM.hs:47:35: warning: [GHC-94817] [-Wtabs]
+    Tab character found here, and in 14 further locations.
+    Suggested fix: Please use spaces instead.
+   |
+47 | dyf_Half           = (0, dys_Half)         :: DyFloat
+   |                                   ^^^^^^
+[ 4 of 11] Compiling LookInt          ( /home/tim/Documents/GitHub/workspace/.audit-plume-perform.LVoj1D/compat/LookInt.hs, nothing )
+
+/home/tim/Documents/GitHub/workspace/.audit-plume-perform.LVoj1D/compat/LookInt.hs:2:1: warning: [GHC-94817] [-Wtabs]
+    Tab character found here, and in 36 further locations.
+    Suggested fix: Please use spaces instead.
+  |
+2 |                liglist, lignewl,
+  | ^^^^^^^^
+[ 5 of 11] Compiling Utils            ( /home/tim/Documents/GitHub/workspace/.audit-plume-perform.LVoj1D/compat/Utils.hs, nothing )
+
+/home/tim/Documents/GitHub/workspace/.audit-plume-perform.LVoj1D/compat/Utils.hs:7:1: warning: [GHC-94817] [-Wtabs]
+    Tab character found here.
+    Suggested fix: Please use spaces instead.
+  |
+7 |          where
+  | ^^^^^^^^
+[ 6 of 11] Compiling SBinStreamM      ( /home/tim/Documents/GitHub/workspace/.audit-plume-perform.LVoj1D/compat/SBinStreamM.hs, nothing )
+
+/home/tim/Documents/GitHub/workspace/.audit-plume-perform.LVoj1D/compat/SBinStreamM.hs:36:33: warning: [GHC-47854] [-Wduplicate-exports]
+    ‘sbMul’ is exported by ‘sbMul’ and ‘sbMul’
+   |
+36 | sbAdd3, sbSub3, sbAv3, sbAv3Ny, sbMul,
+   |                                 ^^^^^
+
+/home/tim/Documents/GitHub/workspace/.audit-plume-perform.LVoj1D/compat/SBinStreamM.hs:45:1: warning: [GHC-94817] [-Wtabs]
+    Tab character found here, and in 80 further locations.
+    Suggested fix: Please use spaces instead.
+   |
+45 |         where
+   | ^^^^^^^^
+[ 7 of 11] Compiling SBinFloatM       ( /home/tim/Documents/GitHub/workspace/.audit-plume-perform.LVoj1D/compat/SBinFloatM.hs, nothing )
+
+/home/tim/Documents/GitHub/workspace/.audit-plume-perform.LVoj1D/compat/SBinFloatM.hs:28:2: warning: [GHC-94817] [-Wtabs]
+    Tab character found here, and in three further locations.
+    Suggested fix: Please use spaces instead.
+   |
+28 | )       where
+   |  ^^^^^^^
+[ 8 of 11] Compiling ConvertM         ( /home/tim/Documents/GitHub/workspace/.audit-plume-perform.LVoj1D/compat/ConvertM.hs, nothing )
+
+/home/tim/Documents/GitHub/workspace/.audit-plume-perform.LVoj1D/compat/ConvertM.hs:31:1: warning: [GHC-94817] [-Wtabs]
+    Tab character found here, and in 7 further locations.
+    Suggested fix: Please use spaces instead.
+   |
+31 |         | dydGTE c dyd_Quarter      =
+   | ^^^^^^^^
+[ 9 of 11] Compiling IRealM           ( /home/tim/Documents/GitHub/workspace/.audit-plume-perform.LVoj1D/compat/IRealM.hs, nothing )
+
+/home/tim/Documents/GitHub/workspace/.audit-plume-perform.LVoj1D/compat/IRealM.hs:30:1: warning: [GHC-94817] [-Wtabs]
+    Tab character found here, and in 10 further locations.
+    Suggested fix: Please use spaces instead.
+   |
+30 |                  = ((lig1 0 r_lo'): sbBB (p 0 x) (p 0 y) (p 0 z))
+   | ^^^^^^^^
+[10 of 11] Compiling X_RepnM          ( /home/tim/Documents/GitHub/workspace/.audit-plume-perform.LVoj1D/compat/X_RepnM.hs, nothing )
+
+/home/tim/Documents/GitHub/workspace/.audit-plume-perform.LVoj1D/compat/X_RepnM.hs:33:1: warning: [GHC-94817] [-Wtabs]
+    Tab character found here, and in 33 further locations.
+    Suggested fix: Please use spaces instead.
+   |
+33 |            | a == 4  = (dyd_Look dyd_One look : sbDiv' x y)
+   | ^^^^^^^^
+[11 of 11] Compiling FunctionsM       ( .audit-plume-perform.LVoj1D/compat/FunctionsM.hs, nothing )
+
+.audit-plume-perform.LVoj1D/compat/FunctionsM.hs:2:1: warning: [GHC-94817] [-Wtabs]
+    Tab character found here, and in 90 further locations.
+    Suggested fix: Please use spaces instead.
+  |
+2 |                   sbfLn) 
+  | ^^^^^^^^

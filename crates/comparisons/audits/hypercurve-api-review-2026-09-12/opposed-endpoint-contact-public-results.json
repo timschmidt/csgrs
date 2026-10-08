@@ -1,0 +1,36 @@
+[
+  {
+    "fixture": "normalized-admission-cycloidal-rack",
+    "arguments": [
+      "1"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.03420647600432858,
+    "source_sha256": "aeb1550b9ab56dc0874e06e57465e27a57d97d8b72f80353835bd52b3440f291",
+    "library_sha256": "e314d2523910509b23aae886ead2a98aef68181343ec712968035bba2cd47032",
+    "executable_sha256": "0e1c7019dc153e70dc3f06e78529e5018e418e810b20ce2431d659d20eb53ce2",
+    "log": "opposed-endpoint-contact-cycloidal-rack-1.log"
+  },
+  {
+    "fixture": "normalized-admission-cycloidal-rack",
+    "arguments": [
+      "4"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.2960940169868991,
+    "source_sha256": "aeb1550b9ab56dc0874e06e57465e27a57d97d8b72f80353835bd52b3440f291",
+    "library_sha256": "e314d2523910509b23aae886ead2a98aef68181343ec712968035bba2cd47032",
+    "executable_sha256": "0e1c7019dc153e70dc3f06e78529e5018e418e810b20ce2431d659d20eb53ce2",
+    "log": "opposed-endpoint-contact-cycloidal-rack-4.log"
+  },
+  {
+    "fixture": "normalized-admission-cycloidal-rack-pairs",
+    "arguments": [],
+    "returncode": 0,
+    "elapsed_seconds": 0.03282554098404944,
+    "source_sha256": "0a382b1c254e440577419f90ef61b1c78981f9a942880e4cb12be154b2ef8519",
+    "library_sha256": "e314d2523910509b23aae886ead2a98aef68181343ec712968035bba2cd47032",
+    "executable_sha256": "9b6a4567aaadef95b59ea1d935ef31e24967ab314d2e2061dcd7160d970430b7",
+    "log": "opposed-endpoint-contact-cycloidal-rack-pairs.log"
+  }
+]

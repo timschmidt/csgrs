@@ -1,0 +1,46 @@
+\doxysubsection{Boolean Class Reference}
+\hypertarget{classAriadne_1_1Boolean}{}\label{classAriadne_1_1Boolean}\index{Boolean@{Boolean}}
+
+
+{\ttfamily \#include $<$logical.\+hpp$>$}
+
+
+
+\doxysubsubsection{Description}
+A logical class representing the result of a decidable predicate. 
+
+\begin{DoxySeeAlso}{See also}
+Logic\+Sub\+Module 
+\end{DoxySeeAlso}
+\doxysubsubsubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1Boolean_a8d5f44251e81d71fa73bca96108dac30}\label{classAriadne_1_1Boolean_a8d5f44251e81d71fa73bca96108dac30} 
+{\bfseries Boolean} (bool b=true)
+\begin{DoxyCompactList}\small\item\em Convert from a built-\/in boolean value, defaulting to {\ttfamily true}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Boolean_a67b76affb3b5d35fa419ac234144038b}\label{classAriadne_1_1Boolean_a67b76affb3b5d35fa419ac234144038b} 
+{\bfseries operator bool} () const
+\begin{DoxyCompactList}\small\item\em Convert to a built-\/in boolean value. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsubsection*{Friends}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1Boolean_a358feeb9edde28aa5bf559d3edef91f5}\label{classAriadne_1_1Boolean_a358feeb9edde28aa5bf559d3edef91f5} 
+\mbox{\hyperlink{classAriadne_1_1Boolean}{Boolean}} {\bfseries operator!} (\mbox{\hyperlink{classAriadne_1_1Boolean}{Boolean}} const \&b)
+\begin{DoxyCompactList}\small\item\em Logical negation. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Boolean_a6793020b859c9895ffde2d9be481b18e}\label{classAriadne_1_1Boolean_a6793020b859c9895ffde2d9be481b18e} 
+\mbox{\hyperlink{classAriadne_1_1Boolean}{Boolean}} {\bfseries operator\&\&} (\mbox{\hyperlink{classAriadne_1_1Boolean}{Boolean}} const \&b1, \mbox{\hyperlink{classAriadne_1_1Boolean}{Boolean}} const \&b2)
+\begin{DoxyCompactList}\small\item\em Logical conjunction. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Boolean_a47168fce2a4db40eea3c363345a99237}\label{classAriadne_1_1Boolean_a47168fce2a4db40eea3c363345a99237} 
+\mbox{\hyperlink{classAriadne_1_1Boolean}{Boolean}} {\bfseries operator\texorpdfstring{$\vert$}{|}\texorpdfstring{$\vert$}{|}} (\mbox{\hyperlink{classAriadne_1_1Boolean}{Boolean}} const \&b1, \mbox{\hyperlink{classAriadne_1_1Boolean}{Boolean}} const \&b2)
+\begin{DoxyCompactList}\small\item\em Logical disjunction. {\ttfamily b1 or b2} is equivalent to {\ttfamily not ( (not b1) and (not b2) )} \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Boolean_a12e09c7cff7a970ebab39edc07ef2c01}\label{classAriadne_1_1Boolean_a12e09c7cff7a970ebab39edc07ef2c01} 
+\mbox{\hyperlink{classAriadne_1_1Boolean}{Boolean}} {\bfseries operator\texorpdfstring{$^\wedge$}{\string^}} (\mbox{\hyperlink{classAriadne_1_1Boolean}{Boolean}} const \&b1, \mbox{\hyperlink{classAriadne_1_1Boolean}{Boolean}} const \&b2)
+\begin{DoxyCompactList}\small\item\em Logical exclusive or. {\ttfamily b1 xor b2} is equivalent to {\ttfamily (b1 or b2) and ((not b1) or (not b2))} and to {\ttfamily (b1 or b2) and not (b1 and b2)} \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Boolean_a80abe134d27fdda8ccae6837ccd0be56}\label{classAriadne_1_1Boolean_a80abe134d27fdda8ccae6837ccd0be56} 
+\mbox{\hyperlink{classAriadne_1_1Boolean}{Boolean}} {\bfseries operator==} (\mbox{\hyperlink{classAriadne_1_1Boolean}{Boolean}} const \&b1, \mbox{\hyperlink{classAriadne_1_1Boolean}{Boolean}} const \&b2)
+\begin{DoxyCompactList}\small\item\em Logical equality. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+The documentation for this class was generated from the following file\+:\begin{DoxyCompactItemize}
+\item 
+source/foundations/\mbox{\hyperlink{logical_8hpp}{logical.\+hpp}}\end{DoxyCompactItemize}

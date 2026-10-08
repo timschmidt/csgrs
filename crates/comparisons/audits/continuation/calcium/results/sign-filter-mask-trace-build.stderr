@@ -1,0 +1,6 @@
+    Blocking waiting for file lock on build directory
+   Compiling hyperreal v0.13.1 (/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/sign-filter-mask/hyperreal)
+   Compiling hyperlattice v0.6.1 (/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/sign-filter-mask/hyperlattice)
+   Compiling hyperlimit v0.4.1 (/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/sign-filter-mask/hyperlimit)
+   Compiling audit-sign-filter-mask v0.0.0 (/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/sign-filter-app-mask)
+    Finished `release` profile [optimized] target(s) in 55.41s

@@ -1,0 +1,13 @@
+{
+  "repos": {
+    "hypercurve": {
+      "parent": "8c013bc7a54bcc4f430b4c78eae4e98fb8f90311",
+      "paths": {
+        "src/bezier_parameter.rs": "a00accb41d634ba9875516cb8df44f136b8e0d95f94d2672b8d916e430a05ae4",
+        "src/curve_fillet.rs": "5517b665614f103a4aee1a5eb6d8f727b0c4cab5f2b6312964166f8b2dbb661f"
+      }
+    }
+  },
+  "qualification": "finite-field-root-identity-20260928-v563-terminal.json",
+  "verified_source_files": 2047
+}

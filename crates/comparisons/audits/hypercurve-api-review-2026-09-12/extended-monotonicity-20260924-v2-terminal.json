@@ -1,0 +1,118 @@
+{
+  "checks": [
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "clippy",
+        "--all-targets",
+        "--all-features",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "returncode": 0,
+      "log": "extended-monotonicity-20260924-v2-check-0.log"
+    },
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "clippy",
+        "--all-targets",
+        "--no-default-features",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "returncode": 0,
+      "log": "extended-monotonicity-20260924-v2-check-1.log"
+    }
+  ],
+  "command": [
+    "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+    "test",
+    "--lib",
+    "--release",
+    "--all-features",
+    "--no-run",
+    "--message-format=json",
+    "--locked",
+    "--offline",
+    "--test",
+    "hypercurve_path_closure",
+    "--test",
+    "hypercurve_curve_region_boolean",
+    "--test",
+    "hypercurve_bezier_arrangement",
+    "--test",
+    "hypercurve_curve_region_boolean_fuzz",
+    "--test",
+    "hypercurve_pcb_boolean_regressions"
+  ],
+  "binaries": {
+    "hypercurve_pcb_boolean_regressions": {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/extended-monotonicity-20260924-v2-hypercurve_pcb_boolean_regressions",
+      "sha256": "22cdcdc9e8e4f9837ef24397a180e1e715cae6af3e4bb2b45e1290b9b0333a67"
+    },
+    "hypercurve_bezier_arrangement": {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/extended-monotonicity-20260924-v2-hypercurve_bezier_arrangement",
+      "sha256": "c6d47d89afe78be7c97b2f6e60405d4bdaac28a783dff2f4f8eb6df15558f57f"
+    },
+    "hypercurve_path_closure": {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/extended-monotonicity-20260924-v2-hypercurve_path_closure",
+      "sha256": "ea06f5cb7d9537b8cfde4019b1f497f648a58209b584a13405d540f0d3d99839"
+    },
+    "hypercurve_curve_region_boolean": {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/extended-monotonicity-20260924-v2-hypercurve_curve_region_boolean",
+      "sha256": "068c7c5f74b7761ec13b7b2469cf9fbcaad8c5cd346a52a7df76b648d2f9d75b"
+    },
+    "hypercurve_curve_region_boolean_fuzz": {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/extended-monotonicity-20260924-v2-hypercurve_curve_region_boolean_fuzz",
+      "sha256": "49e805d2be4cc2d3991994f1137f52b6652deadcefded72fcb11961db3442492"
+    },
+    "hypercurve": {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/extended-monotonicity-20260924-v2-hypercurve",
+      "sha256": "f095ad947e2113e1139b2a20c9dd7f5859d0313a0ded4611b250cb60c2ca662d"
+    }
+  },
+  "attempted": 233,
+  "passed": 230,
+  "ignored": 0,
+  "nonpasses": [
+    {
+      "target": "hypercurve",
+      "name": "bezier_region::curve_corner_chain::tests::extended_fillet_region_classifies_both_sides_of_its_companion",
+      "returncode": "timeout",
+      "passed": false,
+      "ignored": false,
+      "elapsed_seconds": 75.00432485702913,
+      "limit_seconds": 75,
+      "log": "extended-monotonicity-20260924-v2-case-0150.log"
+    },
+    {
+      "target": "hypercurve",
+      "name": "bezier_region::tests::one_fragment_ph_loop_projective_corners_retain_one_extended_interval",
+      "returncode": 101,
+      "passed": false,
+      "ignored": false,
+      "elapsed_seconds": 0.06435396592132747,
+      "limit_seconds": 75,
+      "log": "extended-monotonicity-20260924-v2-case-0154.log"
+    },
+    {
+      "target": "hypercurve",
+      "name": "bezier_region::tests::nonlinear_selected_corner_chamfers_through_retained_fixed_distance_image",
+      "returncode": "timeout",
+      "passed": false,
+      "ignored": false,
+      "elapsed_seconds": 75.943715884001,
+      "limit_seconds": 75,
+      "log": "extended-monotonicity-20260924-v2-case-0153.log"
+    }
+  ],
+  "all_sources_unchanged": true,
+  "all_processes_reaped": true
+}

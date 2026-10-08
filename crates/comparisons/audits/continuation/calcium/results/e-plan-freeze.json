@@ -1,0 +1,14 @@
+{
+  "tag": "e-plan-freeze",
+  "started": "2026-09-10T00:36:24.788Z",
+  "finished": "2026-09-10T00:36:25.054Z",
+  "elapsedSeconds": 0.26358847100000005,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "node",
+  "args": [
+    "run-e-plan-costs.mjs",
+    "freeze"
+  ],
+  "code": 0,
+  "signal": null
+}

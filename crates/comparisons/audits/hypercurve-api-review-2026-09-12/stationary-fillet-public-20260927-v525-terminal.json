@@ -1,0 +1,536 @@
+{
+  "normal_production_build": true,
+  "source_manifest": "stationary-fillet-public-20260927-v525-sources.json",
+  "source_directory": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/source-archives/stationary-fillet-public-20260927-v525",
+  "builds": [
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "test",
+        "--test",
+        "hypercurve_stationary_fillets",
+        "--release",
+        "--all-features",
+        "--locked",
+        "--offline",
+        "--no-run",
+        "--message-format=json"
+      ],
+      "returncode": 0,
+      "log": "stationary-fillet-public-20260927-v525-build.log",
+      "elapsed_seconds": 79.12293403712101,
+      "binary": {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/stationary-fillet-public-20260927-v525-tests",
+        "sha256": "40de64fdd7b89d73780486aad6b00edde2ac81103ac590665211a94c8d0e0f22"
+      }
+    }
+  ],
+  "cases": [
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/stationary-fillet-public-20260927-v525-tests",
+        "--exact",
+        "contacts::stationary_reparameterization_reversed_strict",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "stationary-fillet-public-20260927-v525-stationary_reparameterization_reversed_strict.log",
+      "elapsed_seconds": 0.06381607078947127,
+      "name": "contacts::stationary_reparameterization_reversed_strict",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/stationary-fillet-public-20260927-v525-tests",
+        "--exact",
+        "contacts::stationary_reparameterization_reversed_approximate",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "stationary-fillet-public-20260927-v525-stationary_reparameterization_reversed_approximate.log",
+      "elapsed_seconds": 0.06373991700820625,
+      "name": "contacts::stationary_reparameterization_reversed_approximate",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/stationary-fillet-public-20260927-v525-tests",
+        "--exact",
+        "contacts::one_sided_cusp_reversed_strict",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "stationary-fillet-public-20260927-v525-one_sided_cusp_reversed_strict.log",
+      "elapsed_seconds": 0.0035367279779165983,
+      "name": "contacts::one_sided_cusp_reversed_strict",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/stationary-fillet-public-20260927-v525-tests",
+        "--exact",
+        "contacts::one_sided_cusp_reversed_approximate",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "stationary-fillet-public-20260927-v525-one_sided_cusp_reversed_approximate.log",
+      "elapsed_seconds": 0.003560155862942338,
+      "name": "contacts::one_sided_cusp_reversed_approximate",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/stationary-fillet-public-20260927-v525-tests",
+        "--exact",
+        "contacts::regular_parabola_strict",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "stationary-fillet-public-20260927-v525-regular_parabola_strict.log",
+      "elapsed_seconds": 0.003549066837877035,
+      "name": "contacts::regular_parabola_strict",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/stationary-fillet-public-20260927-v525-tests",
+        "--exact",
+        "contacts::stationary_reparameterization_strict",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "stationary-fillet-public-20260927-v525-stationary_reparameterization_strict.log",
+      "elapsed_seconds": 0.015625747153535485,
+      "name": "contacts::stationary_reparameterization_strict",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/stationary-fillet-public-20260927-v525-tests",
+        "--exact",
+        "contacts::one_sided_cusp_strict",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "stationary-fillet-public-20260927-v525-one_sided_cusp_strict.log",
+      "elapsed_seconds": 0.003567224834114313,
+      "name": "contacts::one_sided_cusp_strict",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/stationary-fillet-public-20260927-v525-tests",
+        "--exact",
+        "contacts::regular_parabola_approximate",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "stationary-fillet-public-20260927-v525-regular_parabola_approximate.log",
+      "elapsed_seconds": 0.0035190091002732515,
+      "name": "contacts::regular_parabola_approximate",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/stationary-fillet-public-20260927-v525-tests",
+        "--exact",
+        "contacts::stationary_reparameterization_approximate",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "stationary-fillet-public-20260927-v525-stationary_reparameterization_approximate.log",
+      "elapsed_seconds": 0.01564022689126432,
+      "name": "contacts::stationary_reparameterization_approximate",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/stationary-fillet-public-20260927-v525-tests",
+        "--exact",
+        "contacts::one_sided_cusp_approximate",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "stationary-fillet-public-20260927-v525-one_sided_cusp_approximate.log",
+      "elapsed_seconds": 0.0035305980127304792,
+      "name": "contacts::one_sided_cusp_approximate",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/stationary-fillet-public-20260927-v525-tests",
+        "--exact",
+        "contacts::interior_stationary_contact_reversed_strict",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "stationary-fillet-public-20260927-v525-interior_stationary_contact_reversed_strict.log",
+      "elapsed_seconds": 0.007544621825218201,
+      "name": "contacts::interior_stationary_contact_reversed_strict",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/stationary-fillet-public-20260927-v525-tests",
+        "--exact",
+        "contacts::interior_stationary_contact_reversed_approximate",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "stationary-fillet-public-20260927-v525-interior_stationary_contact_reversed_approximate.log",
+      "elapsed_seconds": 0.007570431102067232,
+      "name": "contacts::interior_stationary_contact_reversed_approximate",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/stationary-fillet-public-20260927-v525-tests",
+        "--exact",
+        "contacts::interior_stationary_contact_strict",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "stationary-fillet-public-20260927-v525-interior_stationary_contact_strict.log",
+      "elapsed_seconds": 0.007604778045788407,
+      "name": "contacts::interior_stationary_contact_strict",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/stationary-fillet-public-20260927-v525-tests",
+        "--exact",
+        "contacts::interior_stationary_contact_approximate",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "stationary-fillet-public-20260927-v525-interior_stationary_contact_approximate.log",
+      "elapsed_seconds": 0.007594989147037268,
+      "name": "contacts::interior_stationary_contact_approximate",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/stationary-fillet-public-20260927-v525-tests",
+        "--exact",
+        "contacts::opposite_stationary_sheet_strict",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "stationary-fillet-public-20260927-v525-opposite_stationary_sheet_strict.log",
+      "elapsed_seconds": 0.007576130097731948,
+      "name": "contacts::opposite_stationary_sheet_strict",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/stationary-fillet-public-20260927-v525-tests",
+        "--exact",
+        "contacts::opposite_stationary_sheet_approximate",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "stationary-fillet-public-20260927-v525-opposite_stationary_sheet_approximate.log",
+      "elapsed_seconds": 0.007554891984909773,
+      "name": "contacts::opposite_stationary_sheet_approximate",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/stationary-fillet-public-20260927-v525-tests",
+        "--exact",
+        "contacts::opposite_stationary_sheet_reversed_strict",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "stationary-fillet-public-20260927-v525-opposite_stationary_sheet_reversed_strict.log",
+      "elapsed_seconds": 0.007550822105258703,
+      "name": "contacts::opposite_stationary_sheet_reversed_strict",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/stationary-fillet-public-20260927-v525-tests",
+        "--exact",
+        "contacts::opposite_stationary_sheet_reversed_approximate",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "stationary-fillet-public-20260927-v525-opposite_stationary_sheet_reversed_approximate.log",
+      "elapsed_seconds": 0.007510724943131208,
+      "name": "contacts::opposite_stationary_sheet_reversed_approximate",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/stationary-fillet-public-20260927-v525-tests",
+        "--exact",
+        "composition::stationary_fillet_region_strict",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "stationary-fillet-public-20260927-v525-stationary_fillet_region_strict.log",
+      "elapsed_seconds": 0.007569270906969905,
+      "name": "composition::stationary_fillet_region_strict",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/stationary-fillet-public-20260927-v525-tests",
+        "--exact",
+        "composition::stationary_fillet_region_approximate",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "stationary-fillet-public-20260927-v525-stationary_fillet_region_approximate.log",
+      "elapsed_seconds": 0.007573421113193035,
+      "name": "composition::stationary_fillet_region_approximate",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/stationary-fillet-public-20260927-v525-tests",
+        "--exact",
+        "composition::stationary_fillet_offset_strict",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "stationary-fillet-public-20260927-v525-stationary_fillet_offset_strict.log",
+      "elapsed_seconds": 18.337538811843842,
+      "name": "composition::stationary_fillet_offset_strict",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/stationary-fillet-public-20260927-v525-tests",
+        "--exact",
+        "composition::stationary_fillet_offset_approximate",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "stationary-fillet-public-20260927-v525-stationary_fillet_offset_approximate.log",
+      "elapsed_seconds": 18.33742969110608,
+      "name": "composition::stationary_fillet_offset_approximate",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/stationary-fillet-public-20260927-v525-tests",
+        "--exact",
+        "exact_scalars::stationary_contact_exact_scalars_strict",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "stationary-fillet-public-20260927-v525-stationary_contact_exact_scalars_strict.log",
+      "elapsed_seconds": 0.11398169910535216,
+      "name": "exact_scalars::stationary_contact_exact_scalars_strict",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/stationary-fillet-public-20260927-v525-tests",
+        "--exact",
+        "exact_scalars::stationary_contact_exact_scalars_approximate",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "stationary-fillet-public-20260927-v525-stationary_contact_exact_scalars_approximate.log",
+      "elapsed_seconds": 0.16394514008425176,
+      "name": "exact_scalars::stationary_contact_exact_scalars_approximate",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/stationary-fillet-public-20260927-v525-tests",
+        "--exact",
+        "retained_domains::retained_regular_source_range_strict",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "stationary-fillet-public-20260927-v525-retained_regular_source_range_strict.log",
+      "elapsed_seconds": 0.007626666920259595,
+      "name": "retained_domains::retained_regular_source_range_strict",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/stationary-fillet-public-20260927-v525-tests",
+        "--exact",
+        "retained_domains::retained_regular_source_range_approximate",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "stationary-fillet-public-20260927-v525-retained_regular_source_range_approximate.log",
+      "elapsed_seconds": 0.007641596021130681,
+      "name": "retained_domains::retained_regular_source_range_approximate",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/stationary-fillet-public-20260927-v525-tests",
+        "--exact",
+        "retained_domains::retained_nonzero_parallel_range_strict",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "stationary-fillet-public-20260927-v525-retained_nonzero_parallel_range_strict.log",
+      "elapsed_seconds": 2.116406259825453,
+      "name": "retained_domains::retained_nonzero_parallel_range_strict",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/stationary-fillet-public-20260927-v525-tests",
+        "--exact",
+        "retained_domains::retained_nonzero_parallel_range_approximate",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "stationary-fillet-public-20260927-v525-retained_nonzero_parallel_range_approximate.log",
+      "elapsed_seconds": 2.116531392093748,
+      "name": "retained_domains::retained_nonzero_parallel_range_approximate",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/stationary-fillet-public-20260927-v525-tests",
+        "--exact",
+        "contacts::quadratic_line_extends_stationary_contacts_strict",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "stationary-fillet-public-20260927-v525-quadratic_line_extends_stationary_contacts_strict.log",
+      "elapsed_seconds": 0.46443768008612096,
+      "name": "contacts::quadratic_line_extends_stationary_contacts_strict",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/stationary-fillet-public-20260927-v525-tests",
+        "--exact",
+        "contacts::quadratic_line_extends_stationary_contacts_approximate",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "stationary-fillet-public-20260927-v525-quadratic_line_extends_stationary_contacts_approximate.log",
+      "elapsed_seconds": 0.4643605351448059,
+      "name": "contacts::quadratic_line_extends_stationary_contacts_approximate",
+      "passed": true
+    }
+  ],
+  "checks": [
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "clippy",
+        "--all-targets",
+        "--all-features",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "returncode": 0,
+      "log": "stationary-fillet-public-20260927-v525-hypercurve-clippy-all-features.log",
+      "elapsed_seconds": 0.3141787808854133,
+      "label": "hypercurve-clippy-all-features"
+    },
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "clippy",
+        "--all-targets",
+        "--no-default-features",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "returncode": 0,
+      "log": "stationary-fillet-public-20260927-v525-hypercurve-clippy-no-default.log",
+      "elapsed_seconds": 0.26413469505496323,
+      "label": "hypercurve-clippy-no-default"
+    },
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustfmt",
+        "--edition",
+        "2024",
+        "--config",
+        "skip_children=true",
+        "--check",
+        "tests/hypercurve_stationary_fillets.rs"
+      ],
+      "returncode": 0,
+      "log": "stationary-fillet-public-20260927-v525-hypercurve-format.log",
+      "elapsed_seconds": 0.015728990780189633,
+      "label": "hypercurve-format"
+    }
+  ],
+  "expected_cases": [
+    "contacts::stationary_reparameterization_reversed_strict",
+    "contacts::stationary_reparameterization_reversed_approximate",
+    "contacts::one_sided_cusp_reversed_strict",
+    "contacts::one_sided_cusp_reversed_approximate",
+    "contacts::regular_parabola_strict",
+    "contacts::stationary_reparameterization_strict",
+    "contacts::one_sided_cusp_strict",
+    "contacts::regular_parabola_approximate",
+    "contacts::stationary_reparameterization_approximate",
+    "contacts::one_sided_cusp_approximate",
+    "contacts::interior_stationary_contact_reversed_strict",
+    "contacts::interior_stationary_contact_reversed_approximate",
+    "contacts::interior_stationary_contact_strict",
+    "contacts::interior_stationary_contact_approximate",
+    "contacts::opposite_stationary_sheet_strict",
+    "contacts::opposite_stationary_sheet_approximate",
+    "contacts::opposite_stationary_sheet_reversed_strict",
+    "contacts::opposite_stationary_sheet_reversed_approximate",
+    "composition::stationary_fillet_region_strict",
+    "composition::stationary_fillet_region_approximate",
+    "composition::stationary_fillet_offset_strict",
+    "composition::stationary_fillet_offset_approximate",
+    "exact_scalars::stationary_contact_exact_scalars_strict",
+    "exact_scalars::stationary_contact_exact_scalars_approximate",
+    "retained_domains::retained_regular_source_range_strict",
+    "retained_domains::retained_regular_source_range_approximate",
+    "retained_domains::retained_nonzero_parallel_range_strict",
+    "retained_domains::retained_nonzero_parallel_range_approximate",
+    "contacts::quadratic_line_extends_stationary_contacts_strict",
+    "contacts::quadratic_line_extends_stationary_contacts_approximate"
+  ],
+  "all_processes_reaped": true,
+  "probe_complete": true,
+  "qualification_complete": true
+}

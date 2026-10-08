@@ -1,0 +1,7 @@
+{
+  "returncode": "timeout",
+  "elapsed_seconds": 45.121170619037,
+  "binary_sha256": "8674609e6fcd07e39672694dadd4534e34a514377cb33f11d221f7b5d8fd2f05",
+  "sources_unchanged": true,
+  "all_processes_reaped": true
+}

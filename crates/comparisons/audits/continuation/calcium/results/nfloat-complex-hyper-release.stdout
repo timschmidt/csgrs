@@ -1,0 +1,11 @@
+
+running 6 tests
+test checked_complex_operations_reject_zero_denominators ... ok
+test complex_display_forwards_real_formatting ... ok
+test complex_division_preserves_exact_components_for_all_ownership_forms ... ok
+test complex_i_squared ... ok
+test complex_multiplication_preserves_exact_components_for_all_ownership_forms ... ok
+test complex_negative_one_power_uses_reciprocal_semantics ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+

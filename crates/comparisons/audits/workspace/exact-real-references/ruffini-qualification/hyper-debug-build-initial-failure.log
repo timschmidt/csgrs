@@ -1,0 +1,17 @@
+     Locking 16 packages to latest Rust 1.97.0 compatible versions
+   Compiling ruffini-qualification v0.0.0 (/home/tim/Documents/GitHub/workspace/exact-real-references/ruffini-qualification)
+error[E0282]: type annotations needed
+  --> hyper_boundary.rs:57:13
+   |
+57 |         let exact = Integer::from(n) * 3;
+   |             ^^^^^
+58 |         assert_eq!(Real::from(n) * Real::from(3), Real::from(exact.to_string().parse::<Rational>().unwrap()));
+   |                                                              ----- type must be known at this point
+   |
+help: consider giving `exact` an explicit type
+   |
+57 |         let exact: /* Type */ = Integer::from(n) * 3;
+   |                  ++++++++++++
+
+For more information about this error, try `rustc --explain E0282`.
+error: could not compile `ruffini-qualification` (bin "ruffini_hyper_boundary") due to 1 previous error

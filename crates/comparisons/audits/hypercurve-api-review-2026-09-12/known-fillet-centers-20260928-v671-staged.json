@@ -1,0 +1,14 @@
+{
+  "repos": {
+    "hypercurve": {
+      "parent": "4cdcf51203133b698a0712311968d38d31c575e1",
+      "paths": {
+        "src/bezier_offset.rs": "8b26ec33d141d12cdc055f35f3c9360477c809e462001c6adf9371f8b43cd293",
+        "src/curve.rs": "6db43f9c9f0e7569513af21372f523fb58dc897d6c6236220add969fe0d4e2be",
+        "src/curve_fillet.rs": "e879a47d2439576380201c2eed949ba1e62da9eac68df51529ff3bb0dfcb4391"
+      }
+    }
+  },
+  "qualification": "known-fillet-centers-20260928-v671-terminal.json",
+  "verified_source_files": 2047
+}

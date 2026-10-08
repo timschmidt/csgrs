@@ -1,0 +1,221 @@
+diff --git a/home/tim/Documents/GitHub/workspace/exact-real-references/hera-0.2/Data/Number/Ball.hs b/tmp/hera-audit.UOikl9/compat/Data/Number/Ball.hs
+index 278d25d..2f4d30b 100644
+--- a/home/tim/Documents/GitHub/workspace/exact-real-references/hera-0.2/Data/Number/Ball.hs
++++ b/tmp/hera-audit.UOikl9/compat/Data/Number/Ball.hs
+@@ -145,7 +145,7 @@ contains     :: Ball -> D.Dyadic -> Bool
+ contains b d = lower_ b <= d && upper_ b >= d
+ 
+ -- | Returns an intersection of two balls. If balls are disjoint then computation fails with fail.
+-intersectA         :: Monad m => D.Precision -- ^ precision of the resulting ball's center
++intersectA         :: MonadFail m => D.Precision -- ^ precision of the resulting ball's center
+                       -> Ball -> Ball -> m Ball
+ intersectA p b1 b2 | l <= u = return $ makeA p l u
+                    | otherwise = fail "cannot intersect disjoint intervals"
+@@ -153,7 +153,7 @@ intersectA p b1 b2 | l <= u = return $ makeA p l u
+                            u = D.minD D.Up p (upper p b1) (upper p b2)
+ 
+ -- | Intersection of two balls exactly (no precision is lost).
+-intersect                              :: Monad m => Ball -> Ball -> m Ball
++intersect                              :: MonadFail m => Ball -> Ball -> m Ball
+ intersect b1@(Ball c _) b2@(Ball c' _) = intersectA (D.addPrec c c') b1 b2
+ 
+ -- | Addition of two balls.
+@@ -258,7 +258,7 @@ mul p b1 b2 = if D.sgn (center b1) * D.sgn (center b2) < 0 then neg p ret else r
+ -- Rounding errors are added to the radius.
+ --
+ -- If divisor ball contains zero compuatation fails with fail.
+-div         :: (Monad m) => D.Precision -> Ball -> Ball -> m Ball
++div         :: (MonadFail m) => D.Precision -> Ball -> Ball -> m Ball
+ div p b1 b2 = if sgnLower b2 > 0 then return (div' b1 b2)
+               else if sgnUpper b2 < 0 then return (neg p (div' b1 (neg p b2)))
+                    else fail "Division by interval containing zero"
+@@ -284,7 +284,7 @@ div p b1 b2 = if sgnLower b2 > 0 then return (div' b1 b2)
+                                           u2 = upper p b'
+ 
+ -- | Square root of a ball. If interval contains 0 then computation fails.
+-sqrt                :: Monad m => D.Precision -> Ball -> m Ball
++sqrt                :: MonadFail m => D.Precision -> Ball -> m Ball
+ sqrt p b@(Ball c r) = if lower_ b < 0 then fail "Sqrt of a interval containing negative numbers"
+                         else if radSmall then return sqrt_small
+                                else return sqrt_large
+@@ -304,7 +304,7 @@ exp p (Ball c r) = makeA p l u
+                          u = D.exp D.Up p (D.add D.Up p c r)
+ 
+ -- | Natural logarithm of a ball. If interval contains 0 then computation fails.
+-log                :: Monad m => D.Precision -> Ball -> m Ball
++log                :: MonadFail m => D.Precision -> Ball -> m Ball
+ log p b@(Ball c r) = if lower_ b <= 0 then fail "Domain of log is R+"
+                        else return (makeA p l u)
+                      where l = D.log D.Down p (D.add D.Down p c r)
+diff --git a/home/tim/Documents/GitHub/workspace/exact-real-references/hera-0.2/Data/Number/DyadicInterval.hs b/tmp/hera-audit.UOikl9/compat/Data/Number/DyadicInterval.hs
+index 26f3079..004850f 100644
+--- a/home/tim/Documents/GitHub/workspace/exact-real-references/hera-0.2/Data/Number/DyadicInterval.hs
++++ b/tmp/hera-audit.UOikl9/compat/Data/Number/DyadicInterval.hs
+@@ -137,30 +137,30 @@ minI :: D.Precision -> Interval -> Interval -> Interval
+ minI = wrap B.minB
+ 
+ -- | Center of interval. Center on _|_ will result in fail.
+-center                     :: (Monad m) => Interval -> m D.Dyadic
++center                     :: (MonadFail m) => Interval -> m D.Dyadic
+ center Nothing             = fail "center of _|_ is not defined"
+ center (Just (B.Ball c _)) = return c
+ 
+ -- | Radius of interval. Radius on _|_ will result in fail.
+-radius                     :: (Monad m) => Interval -> m D.Dyadic
++radius                     :: (MonadFail m) => Interval -> m D.Dyadic
+ radius Nothing             = fail "radius of _|_ is infinity"
+ radius (Just (B.Ball _ r)) = return r
+ 
+ -- | Lower endpoint of interval with precision of the center. 
+ -- Lower on _|_ will result in fail.
+-lower              :: (Monad m) => Interval -> m D.Dyadic
++lower              :: (MonadFail m) => Interval -> m D.Dyadic
+ lower Nothing  = fail "lower bound of _|_ is -infinity"
+ lower (Just b) = return (B.lower_ b)
+ 
+ -- | Upper endpoint of interval with precision of the center. 
+ -- Upper on _|_ will result in fail.
+-upper              :: (Monad m) => Interval -> m D.Dyadic
++upper              :: (MonadFail m) => Interval -> m D.Dyadic
+ upper Nothing  = fail "upper bound of _|_ is +infinity"
+ upper (Just b) = return (B.upper_ b)
+ 
+ 
+ -- | Width of the interval. Widht on _|_ will result in fail.
+-width          :: (Monad m) => Interval -> m D.Dyadic
++width          :: (MonadFail m) => Interval -> m D.Dyadic
+ width Nothing  = fail "width of _|_ is infinity"
+ width (Just b) = return (B.width b)
+ 
+@@ -178,4 +178,4 @@ fromWord p d = Just (B.fromWord p d)
+ 
+ toString          :: Interval -> String
+ toString Nothing  = "_|_"
+-toString (Just b) = show b
+\ No newline at end of file
++toString (Just b) = show b
+diff --git a/home/tim/Documents/GitHub/workspace/exact-real-references/hera-0.2/Data/Number/FFIhelper.hsc b/tmp/hera-audit.UOikl9/compat/Data/Number/FFIhelper.hsc
+index 46297a7..8fdec86 100644
+--- a/home/tim/Documents/GitHub/workspace/exact-real-references/hera-0.2/Data/Number/FFIhelper.hsc
++++ b/tmp/hera-audit.UOikl9/compat/Data/Number/FFIhelper.hsc
+@@ -9,7 +9,7 @@ import Data.Word
+ import Data.Int
+ 
+ import Foreign.C.String(CString)
+-import Foreign.C.Types(CULong, CLong, CInt, CUInt, CDouble, CChar)
++import Foreign.C.Types(CULong(..), CLong(..), CInt(..), CUInt(..), CDouble(..), CChar(..), CSize(..))
+ import Foreign.Ptr(FunPtr, Ptr)
+ 
+ 
+@@ -23,15 +23,13 @@ instance Enum RoundMode where
+     fromEnum Zero        = #{const GMP_RNDZ} 
+     fromEnum Up          = #{const GMP_RNDU} 
+     fromEnum Down        = #{const GMP_RNDD} 
+-    fromEnum GMP_RND_MAX = #{const GMP_RND_MAX}
+-    fromEnum GMP_RNDNA    = #{const GMP_RNDNA}
++    fromEnum GMP_RND_MAX = error "obsolete rounding tag excluded from audit"
++    fromEnum GMP_RNDNA = error "obsolete rounding tag excluded from audit"
+     
+     toEnum #{const GMP_RNDN}    = Near
+     toEnum #{const GMP_RNDZ}    = Zero
+     toEnum #{const GMP_RNDU}    = Up
+     toEnum #{const GMP_RNDD}    = Down
+-    toEnum #{const GMP_RND_MAX} = GMP_RND_MAX
+-    toEnum (#{const GMP_RNDNA}) = GMP_RNDNA
+     toEnum i                    = error $ "RoundMode.toEnum called with illegal argument :" ++ show i 
+ 
+ 
+@@ -39,7 +37,7 @@ data MPFR_T = MP CPrecision Sign Exp !(ForeignPtr Limb)
+ 
+ instance Storable MPFR_T where
+     sizeOf _ = #size __mpfr_struct
+-    alignment _ = (undefined :: Int)
++    alignment _ = #{alignment __mpfr_struct}
+     peek = error "Not needed and not applicable"
+     poke p (MP prec s e fp) = do withForeignPtr fp $ \p1 -> do 
+                                       #{poke __mpfr_struct, _mpfr_prec} p prec
+@@ -64,7 +62,7 @@ type Sign = #type mpfr_sign_t
+ 
+ type CPrecision = #type mpfr_prec_t
+ 
+-type Exp = #type mp_exp_t
++type Exp = #type mpfr_exp_t
+ 
+ type MpSize = #type mp_size_t
+ 
+@@ -105,10 +103,10 @@ foreign import ccall unsafe "mpfr_set_d"
+ --TODO set_decimal64, set_z, set_q, set_f
+ 
+ foreign import ccall unsafe "mpfr_set_ui_2exp"
+-        mpfr_set_ui_2exp :: Ptr MPFR_T -> CULong -> CInt -> CRoundMode -> IO CInt
++        mpfr_set_ui_2exp :: Ptr MPFR_T -> CULong -> Exp -> CRoundMode -> IO CInt
+ 
+ foreign import ccall unsafe "mpfr_set_si_2exp"
+-        mpfr_set_si_2exp :: Ptr MPFR_T -> CLong -> CInt -> CRoundMode -> IO CInt
++        mpfr_set_si_2exp :: Ptr MPFR_T -> CLong -> Exp -> CRoundMode -> IO CInt
+ 
+ --TODO set_uj_2exp, set_sj_2exp
+ 
+@@ -160,7 +158,7 @@ foreign import ccall unsafe "mpfr_get_uj_wrap"
+ --TODO get_z_exp, get_z, get_f, 
+ 
+ foreign import ccall unsafe "mpfr_get_str"
+-        mpfr_get_str :: CString -> Ptr CInt -> CInt -> CUInt -> Ptr MPFR_T ->  CRoundMode -> IO CString
++        mpfr_get_str :: CString -> Ptr Exp -> CInt -> CSize -> Ptr MPFR_T -> CRoundMode -> IO CString
+ 
+ foreign import ccall unsafe "mpfr_free_str"
+         mpfr_free_str :: CString -> IO ()
+@@ -324,10 +322,10 @@ foreign import ccall unsafe "mpfr_cmp_d"
+ --TODO cmp_ld, cmp_z, cmp_q, cmp_f
+ 
+ foreign import ccall unsafe "mpfr_cmp_ui_2exp"
+-        mpfr_cmp_ui_2exp :: Ptr MPFR_T -> CULong -> CInt -> IO CInt
++        mpfr_cmp_ui_2exp :: Ptr MPFR_T -> CULong -> Exp -> IO CInt
+ 
+ foreign import ccall unsafe "mpfr_cmp_si_2exp"
+-        mpfr_cmp_si_2exp :: Ptr MPFR_T -> CLong -> CInt -> IO CInt
++        mpfr_cmp_si_2exp :: Ptr MPFR_T -> CLong -> Exp -> IO CInt
+ 
+ foreign import ccall unsafe "mpfr_cmpabs"
+         mpfr_cmpabs :: Ptr MPFR_T -> Ptr MPFR_T -> IO CInt
+@@ -597,8 +595,7 @@ foreign import ccall unsafe "mpfr_max"
+ 
+ -- TODO urandomb
+ 
+-foreign import ccall unsafe "mpfr_random2"
+-        mpfr_random2 :: Ptr MPFR_T -> MpSize -> Exp -> IO ()
++-- Obsolete unused random2 import excluded from the compatibility audit build.
+ 
+ 
+ foreign import ccall unsafe "mpfr_get_exp_wrap"
+@@ -716,10 +713,9 @@ foreign import ccall unsafe "mpfr_custom_get_mantissa_wrap"
+         mpfr_custom_get_mantissa :: Ptr MPFR_T -> IO (Ptr Limb)
+ 
+ foreign import ccall unsafe "mpfr_custom_get_exp_wrap"
+-        mpfr_custom_get_exp :: Ptr MPFR_T -> IO CInt
++        mpfr_custom_get_exp :: Ptr MPFR_T -> IO Exp
+ 
+ foreign import ccall unsafe "mpfr_custom_move_wrap"
+         mpfr_custom_move :: Ptr MPFR_T -> Ptr #{type mp_limb_t} -> IO ()
+ 
+ -------------------------------------------------
+-
+diff --git a/home/tim/Documents/GitHub/workspace/exact-real-references/hera-0.2/Data/Number/MPFR.hs b/tmp/hera-audit.UOikl9/compat/Data/Number/MPFR.hs
+index 6e2903f..b2e2c00 100644
+--- a/home/tim/Documents/GitHub/workspace/exact-real-references/hera-0.2/Data/Number/MPFR.hs
++++ b/tmp/hera-audit.UOikl9/compat/Data/Number/MPFR.hs
+@@ -76,7 +76,8 @@ import Data.Number.FFIhelper
+ 
+ import Foreign.C(CInt, CLong, CULong, withCString, peekCString)
+ import Foreign.Marshal(alloca, peekArray)
+-import Foreign(unsafePerformIO, peek, Ptr, mallocForeignPtrBytes, with)
++import Foreign(peek, Ptr, mallocForeignPtrBytes, with)
++import System.IO.Unsafe(unsafePerformIO)
+ 
+ import Data.Bits(shiftL)
+ 
+@@ -874,4 +875,3 @@ addPrec d1 d2 = max e1 e2 + 1 - min (e1 - p1) (p2 - e2)
+                       p2 = getPrec d2
+ -}
+ 
+-

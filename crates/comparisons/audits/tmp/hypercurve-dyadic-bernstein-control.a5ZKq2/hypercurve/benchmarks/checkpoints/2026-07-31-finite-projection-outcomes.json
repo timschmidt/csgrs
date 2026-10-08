@@ -1,0 +1,268 @@
+{
+  "schema": 1,
+  "captured_on": "2026-07-31",
+  "checkpoint": "finite-projection-outcomes",
+  "source_revision": "7e9caea5589c02cbee0ce2e04e5a944914ef3d70",
+  "parent_revision": "3558aea93dd6cc9af512cfc61868c06feecdba35",
+  "implementation_revisions": [
+    "e009a7768a71724597486e27fa84c8cec2ae4381",
+    "7e9caea5589c02cbee0ce2e04e5a944914ef3d70"
+  ],
+  "frozen_baseline_revision": "dfc4ec5f9546560765bd33d4a88292581869adb8",
+  "baseline": "../baselines/2026-07-31/baseline.json",
+  "semantic_evidence": {
+    "policy_explicit_public_projection_apis": [
+      "CurvePath2::project_to_finite_polyline",
+      "CurveRegion2::project_to_finite_curve_paths",
+      "CurveRegion2::project_to_finite_profiles",
+      "CurveRegion2::project_to_finite_profiles_exact",
+      "LineArcRegion2::project_to_finite_profiles",
+      "RegionView2::project_to_finite_profiles"
+    ],
+    "projection_return_contract": "CurveOutcome<T>",
+    "internal_composition_uses_raw_projection_kernels": true,
+    "projection_geometry_is_evaluated_once": true,
+    "operation_certainty_is_aggregated_once": true,
+    "strict_symbolic_path_result": "CurveError::Topology because endpoint closure remains undecidable",
+    "approximate_512_symbolic_path_result": "finite boundary polyline with Approximate512Consumed",
+    "strict_symbolic_materialized_join_result": "Certified outcome containing Classification::Uncertain(Unsupported)",
+    "approximate_512_symbolic_materialized_join_result": "exact native curve path with Approximate512Consumed",
+    "materialized_curve_path_fast_path_preserves_exact_carriers": true,
+    "materialized_circle_retains_circular_conic_provenance": true,
+    "rational_weight_signs_and_split_parameters_use_the_selected_policy": true,
+    "strict_outcomes_bypass_approximate_consumption_observation": true,
+    "authoritative_source_geometry_remains_exact_and_unmodified": true,
+    "finite_polylines_and_profiles_are_explicitly_lossy_output_adapters": true,
+    "finite_projection_never_feeds_authoritative_topology": true,
+    "historical_segment_to_finite_profiles_alias_removed": true,
+    "compatibility_overload_or_implicit_value_shim_added": false
+  },
+  "caller_cutover": {
+    "csgrs_revision": "59c86ecb2d1cd585b50d2b5a052566b91bc07fdf",
+    "strict_then_approximate_classify_curve_replay_removed": true,
+    "curve_projection_outcome_consumed_once": true,
+    "symbolic_projection_regression": "STRICT remains uncertain; APPROXIMATE_512 decides and the CSGRS operation reports Approximate512Consumed",
+    "hypermesh_modified": false
+  },
+  "matched_projection_benchmarks": {
+    "command": "seven interleaved parent/candidate executions of the release finite_projection benchmark with HYPERCURVE_PROJECTION_BENCH_ITERATIONS=200, reversing execution order on alternate pairs",
+    "benchmark_harness": "benches/finite_projection.rs",
+    "parent_revision": "3558aea93dd6cc9af512cfc61868c06feecdba35",
+    "candidate_revision": "7e9caea5589c02cbee0ce2e04e5a944914ef3d70",
+    "curve_path_rational_projection_ms": {
+      "parent_samples": [
+        2.784419415,
+        2.846252975,
+        2.789240130,
+        2.796489785,
+        2.810516975,
+        2.827080740,
+        2.778759200
+      ],
+      "candidate_samples": [
+        2.833886525,
+        2.818021360,
+        2.830949120,
+        2.842384035,
+        2.838579450,
+        2.789531960,
+        2.784378265
+      ],
+      "parent_median": 2.796489785,
+      "candidate_median": 2.830949120,
+      "change_percent": 1.2322
+    },
+    "curve_region_exact_profile_projection_us": {
+      "parent_samples": [
+        576.007581,
+        583.656817,
+        576.045779,
+        583.910389,
+        570.627280,
+        574.986912,
+        577.891142
+      ],
+      "candidate_samples": [
+        567.718370,
+        571.601453,
+        563.253216,
+        566.823482,
+        555.145072,
+        568.380624,
+        568.111142
+      ],
+      "parent_median": 576.045779,
+      "candidate_median": 567.718370,
+      "change_percent": -1.4456
+    },
+    "curve_region_curve_path_projection_ns": {
+      "parent_samples": [
+        591.836976,
+        661.799830,
+        597.411534,
+        596.262113,
+        588.499105,
+        595.628987,
+        588.754457
+      ],
+      "candidate_samples": [
+        495.067751,
+        494.088087,
+        491.197615,
+        493.180510,
+        488.442555,
+        501.804808,
+        515.645209
+      ],
+      "parent_median": 595.628987,
+      "candidate_median": 494.088087,
+      "change_percent": -17.0477
+    },
+    "interpretation": "the authoritative materialized-curve fast path removes 17.05 percent from native CurveRegion path projection while retaining exact carriers and conic provenance; exact profile projection improves 1.45 percent; rational subdivision moves 1.23 percent with overlapping ranges and is treated as neutral"
+  },
+  "pathological_curve_region2": {
+    "command": "seven independent executions of target/release/deps/pathological_regions-524727024aa54dcb --bench",
+    "cells": 67,
+    "operations": 268,
+    "completed_operations": 268,
+    "blockers": 0,
+    "checksum": 6,
+    "candidate_pairs": 603,
+    "retained_fragments": 3248,
+    "point_classifications": 134,
+    "candidate_all_four_native_booleans_ms": [
+      464.626287,
+      463.914326,
+      461.435816,
+      466.193170,
+      465.624279,
+      466.394586,
+      472.703624
+    ],
+    "candidate_median_ms": 465.624279,
+    "preceding_checkpoint_median_ms": 464.033737,
+    "frozen_baseline_median_ms": 471.450000,
+    "change_from_preceding_checkpoint_percent": 0.3428,
+    "change_from_frozen_baseline_percent": -1.2357,
+    "candidate_build_ms": [
+      73.051042,
+      74.240140,
+      74.801622,
+      72.621341,
+      69.973283,
+      71.192299,
+      74.333145
+    ],
+    "candidate_build_median_ms": 73.051042,
+    "preceding_checkpoint_build_median_ms": 73.461513,
+    "build_change_percent": -0.5588,
+    "candidate_observed_rss_delta_mib": [
+      34.5,
+      34.7,
+      34.5,
+      34.6,
+      34.6,
+      34.6,
+      34.7
+    ],
+    "candidate_observed_rss_delta_mib_median": 34.6,
+    "interpretation": "deterministic topology is identical; Boolean execution is within 0.35 percent of the preceding checkpoint, construction improves 0.56 percent, and process-scale RSS is unchanged"
+  },
+  "comparative_release_medians_ns": {
+    "command": "HYPERCURVE_COMPARE_SAMPLES=7 HYPERCURVE_COMPARE_SAMPLE_MS=75 cargo bench --locked --features comparative-benchmarks --bench comparative",
+    "candidate_revision": "7e9caea5589c02cbee0ce2e04e5a944914ef3d70",
+    "rectangle_union": {
+      "hypercurve": 4658.8,
+      "hypercurve_contours": 4712.3,
+      "hypercurve_loops": 5090.1,
+      "cavalier_contours": 898.7,
+      "i_overlay": 1014.7,
+      "geo": 1226.7,
+      "change_from_preceding_checkpoint_percent": -4.0689
+    },
+    "star64_intersection": {
+      "hypercurve": 35917.8,
+      "hypercurve_contours": 36219.5,
+      "hypercurve_loops": 100661.9,
+      "cavalier_contours": 27493.6,
+      "i_overlay": 33893.3,
+      "geo": 35740.2,
+      "change_from_preceding_checkpoint_percent": 0.3030
+    },
+    "star256_intersection": {
+      "hypercurve": 432210.9,
+      "hypercurve_contours": 303816.7,
+      "hypercurve_loops": 848950.3,
+      "cavalier_contours": 486279.7,
+      "i_overlay": 502370.4,
+      "geo": 519338.1,
+      "change_from_preceding_checkpoint_percent": 2.9674
+    },
+    "star1024_intersection": {
+      "hypercurve": 5222279.3,
+      "hypercurve_contours": 3963792.6,
+      "hypercurve_loops": 10859652.7,
+      "cavalier_contours": 19480507.0,
+      "i_overlay": 10053924.5,
+      "geo": 10033349.6,
+      "change_from_preceding_checkpoint_percent": 3.2526
+    },
+    "inward_capsule_offset": {
+      "hypercurve": 18574.9,
+      "cavalier_contours": 928.8,
+      "preceding_tight_checkpoint_median": 18635.0,
+      "change_from_preceding_tight_checkpoint_percent": -0.3225
+    },
+    "certified_open_cubic_offset": {
+      "hypercurve": 29646494.0,
+      "curvo_heuristic": 8041.4,
+      "change_from_preceding_checkpoint_percent": 1.0055
+    },
+    "source_chord_cubic_fallback": {
+      "hypercurve": 907202.7,
+      "change_from_preceding_checkpoint_percent": 0.2619
+    },
+    "rational_cubic_nurbs_evaluation": {
+      "hypercurve": 1582.6,
+      "curvo": 57.6,
+      "change_from_preceding_checkpoint_percent": 3.6751
+    },
+    "interpretation": "the largest movement is a 4.07 percent rectangle improvement; every other exact Hypercurve lane remains within 3.7 percent of the preceding checkpoint while the touched projection lane improves independently"
+  },
+  "release_pathological_binary": {
+    "measurement": "copy of the release executable stripped with strip --strip-all",
+    "preceding_checkpoint_bytes": 5512272,
+    "candidate_bytes": 5514328,
+    "delta_bytes": 2056,
+    "delta_percent": 0.0373,
+    "frozen_baseline_bytes": 5531293,
+    "delta_from_frozen_baseline_bytes": -16965,
+    "delta_from_frozen_baseline_percent": -0.3067,
+    "candidate_text_bytes": 5243701,
+    "candidate_data_bytes": 266744,
+    "candidate_bss_bytes": 4504
+  },
+  "static_callgraph": {
+    "command": "hyper-callgraph --root /home/tim/Documents/GitHub/workspace --out-dir /tmp/hypercurve-projection-callgraph --crate-name hypercurve --include-examples --include-tests --include-bench --include-fuzz --format json",
+    "nodes": 22408,
+    "edges": 38297,
+    "artifact": "/tmp/hypercurve-projection-callgraph/callgraph.json",
+    "public_and_raw_projection_nodes_present": true,
+    "persistent_finite_projection_benchmark_node_present": true
+  },
+  "verification": {
+    "cargo_test_all_features": "pass",
+    "unit_tests": 257,
+    "exact_curve_region2_corpus_seconds": 166.04,
+    "pathological_operations": "268/268 decided with no blockers",
+    "cargo_clippy_all_features_all_targets_deny_warnings": "pass",
+    "cargo_clippy_no_default_features_all_targets_deny_warnings": "pass",
+    "cargo_check_fuzz_all_targets": "pass",
+    "cargo_doc_all_features_deny_warnings": "pass",
+    "cargo_fmt_all_check": "pass",
+    "git_diff_check": "pass",
+    "csgrs_all_feature_check_and_clippy": "pass",
+    "csgrs_finite_profiles_consume_curve_projection_policy_once": "pass",
+    "csgrs_full_all_feature_suite_at_caller_commit": "pass"
+  }
+}

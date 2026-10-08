@@ -1,0 +1,46 @@
+{
+  "repo": "hypercurve",
+  "target": "hypercurve_fragments",
+  "binary": "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve_fragments-e938c3a4d5e10f01",
+  "command": [
+    "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve_fragments-e938c3a4d5e10f01",
+    "--test-threads=4",
+    "--color",
+    "never"
+  ],
+  "sha256": "7a6ddee3be434bf8cfe406510e9f8847837e44ae0533464e7ae433e0b2eaa628",
+  "returncode": 0,
+  "timed_out": false,
+  "elapsed_seconds": 5.670961643001647,
+  "log": "analytic-circle-inverse-full-hypercurve-hypercurve_fragments.log",
+  "passed": [
+    "approximate_arc_fragment_uses_source_radius_for_policy_on_circle_split_points",
+    "contour_fragment_set_constructor_rejects_duplicate_fragments",
+    "contour_fragment_set_constructor_validates_source_ranges",
+    "contour_fragments_reject_forged_arc_split_marker_geometry",
+    "contour_fragments_reject_forged_line_split_marker_geometry",
+    "contour_fragments_split_arc_segments_at_event_points",
+    "contour_fragments_split_line_segments_at_overlap_endpoints",
+    "contour_fragments_split_arc_segments_at_overlap_endpoints",
+    "contour_fragments_split_line_segments_at_point_events",
+    "contour_self_fragments_split_adjacent_line_arc_extra_crossing",
+    "contour_self_fragments_split_nonadjacent_line_arc_crossing",
+    "contour_self_split_rejects_events_outside_supplied_contour",
+    "contour_split_rejects_events_outside_supplied_contour",
+    "edge_preview_retains_rotated_arc_arc_event_regression",
+    "pair_line_arc_slices_fuzz_rotated_secants",
+    "self_event_fuzz_retains_direct_mixed_segment_hits",
+    "self_line_arc_slices_fuzz_adjacent_crossings",
+    "self_line_arc_slices_fuzz_nonadjacent_crossings",
+    "contour_event_fuzz_retains_direct_mixed_segment_hits",
+    "self_line_arc_slices_fuzz_rotated_secants",
+    "approximate_arc_heavy_slices_do_not_surface_radius_mismatch"
+  ],
+  "failed": [],
+  "ignored": [],
+  "summaries": [
+    "test result: ok. 21 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 5.63s"
+  ],
+  "new_failures": [],
+  "known_failures": []
+}

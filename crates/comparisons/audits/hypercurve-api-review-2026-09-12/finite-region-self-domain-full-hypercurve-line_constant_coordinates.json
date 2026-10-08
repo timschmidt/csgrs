@@ -1,0 +1,26 @@
+{
+  "repo": "hypercurve",
+  "target": "line_constant_coordinates",
+  "binary": "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/line_constant_coordinates-561125af2ee80f7f",
+  "command": [
+    "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/line_constant_coordinates-561125af2ee80f7f",
+    "--test-threads=4",
+    "--color",
+    "never"
+  ],
+  "sha256": "64297af10fd558812ef6277c0d45500d9ec8a6f7265f1bcb40bcc615444896eb",
+  "returncode": 0,
+  "timed_out": false,
+  "elapsed_seconds": 0.0034225250128656626,
+  "log": "finite-region-self-domain-full-hypercurve-line_constant_coordinates.log",
+  "passed": [
+    "line_subdivision_preserves_constant_coordinate_identity"
+  ],
+  "failed": [],
+  "ignored": [],
+  "summaries": [
+    "test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s"
+  ],
+  "new_failures": [],
+  "known_failures": []
+}

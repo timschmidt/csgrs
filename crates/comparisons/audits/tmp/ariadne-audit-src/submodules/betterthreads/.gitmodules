@@ -1,0 +1,6 @@
+[submodule "submodules/conclog"]
+	path = submodules/conclog
+	url = https://github.com/ariadne-cps/conclog
+[submodule "submodules/helper"]
+	path = submodules/helper
+	url = https://github.com/ariadne-cps/helper

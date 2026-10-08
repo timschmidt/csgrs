@@ -1,0 +1,14 @@
+{
+  "tag": "point-qualified-approx-public-baseline-wasm",
+  "started": "2026-09-10T20:49:41.728Z",
+  "finished": "2026-09-10T20:49:42.446Z",
+  "elapsedSeconds": 0.715867697,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "node",
+  "args": [
+    "run-point-qualified-approx-wasm.mjs",
+    "baseline"
+  ],
+  "code": 0,
+  "signal": null
+}

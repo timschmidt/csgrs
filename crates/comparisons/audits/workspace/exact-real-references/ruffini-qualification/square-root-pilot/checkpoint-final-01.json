@@ -1,0 +1,17 @@
+{
+  "status": "VALIDATING",
+  "stages": [
+    {
+      "script": "analyze.mjs",
+      "sourceSha256": "935b66effb5573f5a0aab7c49132343cf8a60fa0bdb8ad1e1392bd44c48a94ff",
+      "started": "2026-09-07T03:07:41.110Z",
+      "finished": "2026-09-07T03:07:41.425Z",
+      "status": 0,
+      "signal": null,
+      "error": "EPERM",
+      "file": "/home/tim/Documents/GitHub/workspace/exact-real-references/ruffini-qualification/square-root-pilot/checkpoint-final-01-0.log",
+      "outputSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  ]
+}

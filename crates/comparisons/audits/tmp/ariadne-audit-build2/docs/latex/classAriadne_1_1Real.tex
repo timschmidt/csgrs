@@ -1,0 +1,350 @@
+\doxysubsection{Real Class Reference}
+\hypertarget{classAriadne_1_1Real}{}\label{classAriadne_1_1Real}\index{Real@{Real}}
+
+
+{\ttfamily \#include $<$real.\+hpp$>$}
+
+
+
+\doxysubsubsection{Description}
+Real number type $\R$ supporting elementary functions, comparisons and limits. 
+
+Effectively computable real numbers can be computed to arbitrary given accuracy as a (dyadic) rational approximation; equivalently, as arbitrarily tight (dyadic) rational intervals. They can be given as fast-\/converging Cauchy sequence of (dyadic) rationals, or as a nested sequence of nested (dyadic) rational intervals whose intersection is the number itself.
+
+{\bfseries{Example}} The follow code creates a real number, computes it to an accuracy of 128 binary digits, a and outputs the result as floating-\/point bounds with 96 bits of precision\+: 
+\begin{DoxyCodeInclude}{0}
+
+\end{DoxyCodeInclude}
+
+
+\begin{DoxySeeAlso}{See also}
+\doxylink{classAriadne_1_1LowerReal}{Lower\+Real}, \doxylink{classAriadne_1_1UpperReal}{Upper\+Real}, \doxylink{classAriadne_1_1NaiveReal}{Naive\+Real}, \doxylink{classAriadne_1_1ValidatedReal}{Validated\+Real}, \doxylink{classAriadne_1_1Rational}{Rational}, \doxylink{classAriadne_1_1Decimal}{Decimal}, \doxylink{classAriadne_1_1Dyadic}{Dyadic}, \doxylink{classAriadne_1_1Integer}{Integer} 
+\end{DoxySeeAlso}
+\begin{Desc}
+\item[Examples]\par
+\mbox{\hyperlink{tutorials_2rigorous_numerics_2rigorous_numerics_tutorial_8cpp-example}{tutorials/rigorous\+\_\+numerics/rigorous\+\_\+numerics\+\_\+tutorial.\+cpp}}.\end{Desc}
+Inheritance diagram for Real\+:\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[height=1.302326cm]{classAriadne_1_1Real}
+\end{center}
+\end{figure}
+\doxysubsubsubsection*{Public Member Functions}
+\begin{Indent}\textbf{ Constructors}\par
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1Real_a78bd927d6bd5c9cc846f2ad2b1ddca28}\label{classAriadne_1_1Real_a78bd927d6bd5c9cc846f2ad2b1ddca28} 
+{\bfseries Real} ()
+\begin{DoxyCompactList}\small\item\em Default constructor yields the integer {\ttfamily 0} as a real number. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Real_a240514ce67eb56fe4f9fc5def94caf40}\label{classAriadne_1_1Real_a240514ce67eb56fe4f9fc5def94caf40} 
+{\bfseries Real} (\mbox{\hyperlink{namespaceAriadne_a536cc349b9d52657c9d01d3f09c4633e}{Shared\+Pointer}}$<$ const Interface $>$)
+\begin{DoxyCompactList}\small\item\em Construct from any class implementing the real number interface. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Real_a818473d5071d8acc3ab1c056c7f7431d}\label{classAriadne_1_1Real_a818473d5071d8acc3ab1c056c7f7431d} 
+{\bfseries Real} (\mbox{\hyperlink{classAriadne_1_1ConvergentSequence}{Convergent\+Sequence}}$<$ Dyadic\+Bounds $>$ const \&)
+\begin{DoxyCompactList}\small\item\em Construct from a sequence of dyadic bounds converging to a singleton intersection. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Real_a55097263c36c5508c9cf26cecb1ef310}\label{classAriadne_1_1Real_a55097263c36c5508c9cf26cecb1ef310} 
+{\bfseries Real} (\mbox{\hyperlink{classAriadne_1_1FastCauchySequence}{Fast\+Cauchy\+Sequence}}$<$ \mbox{\hyperlink{classAriadne_1_1Dyadic}{Dyadic}} $>$ const \&)
+\begin{DoxyCompactList}\small\item\em Construct from a fast convergent sequence of dyadic numbers i.\+e. $|w_m-w_n|\leq 2 ^\min(m,n)$. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\end{Indent}
+\begin{Indent}\textbf{ Conversion operators}\par
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1Real_a1c2d61caf33318ed2532cc4a1e394af2}\label{classAriadne_1_1Real_a1c2d61caf33318ed2532cc4a1e394af2} 
+{\bfseries Real} (double)=delete
+\begin{DoxyCompactList}\small\item\em Unsafe construction from a double is DEPRECATED. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Real_ab049d274ff94169a8adf1ebdecceb897}\label{classAriadne_1_1Real_ab049d274ff94169a8adf1ebdecceb897} 
+{\bfseries Real} (\mbox{\hyperlink{namespaceAriadne_a008e7f6ae8f621fbb1d876061812b9b2}{Int}} n)
+\begin{DoxyCompactList}\small\item\em Convert from a builtin integer. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Real_aaa08bb20387ad86f28407f4ce8a5732b}\label{classAriadne_1_1Real_aaa08bb20387ad86f28407f4ce8a5732b} 
+{\bfseries Real} (\mbox{\hyperlink{classAriadne_1_1ExactDouble}{Exact\+Double}} d)
+\begin{DoxyCompactList}\small\item\em Construct from a double-\/precision value representing a number exactly. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Real_a109e8e55113d1e531af28e23cbac11ff}\label{classAriadne_1_1Real_a109e8e55113d1e531af28e23cbac11ff} 
+{\bfseries Real} (\mbox{\hyperlink{classAriadne_1_1Integer}{Integer}} const \&n)
+\begin{DoxyCompactList}\small\item\em Construct from an integer. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Real_ad0aa32178a78e493e3ad75c01feb8519}\label{classAriadne_1_1Real_ad0aa32178a78e493e3ad75c01feb8519} 
+{\bfseries Real} (\mbox{\hyperlink{classAriadne_1_1Dyadic}{Dyadic}} const \&d)
+\begin{DoxyCompactList}\small\item\em Construct from a dyadic number {\itshape d=p/2\textsuperscript{q}} for integers {\itshape p}, {\itshape q}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Real_a1a0bf48169e2116200daf371ba2782bf}\label{classAriadne_1_1Real_a1a0bf48169e2116200daf371ba2782bf} 
+{\bfseries Real} (\mbox{\hyperlink{classAriadne_1_1Decimal}{Decimal}} const \&d)
+\begin{DoxyCompactList}\small\item\em Construct from a decimal number, given by its decimal expansion. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Real_abc791ba6622961796199bd1964d6270b}\label{classAriadne_1_1Real_abc791ba6622961796199bd1964d6270b} 
+{\bfseries Real} (\mbox{\hyperlink{classAriadne_1_1Rational}{Rational}} const \&q)
+\begin{DoxyCompactList}\small\item\em Construct from a rational number. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Real_a556f55c3737aeb1555020264a3ed6b1c}\label{classAriadne_1_1Real_a556f55c3737aeb1555020264a3ed6b1c} 
+{\bfseries Real} (Float\+DP x)
+\begin{DoxyCompactList}\small\item\em DEPRECATED. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Real_aa8aee08f74787bf6e751888bde302ca5}\label{classAriadne_1_1Real_aa8aee08f74787bf6e751888bde302ca5} 
+{\bfseries Real} (Effective\+Number r)
+\begin{DoxyCompactList}\small\item\em DEPRECATED. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Real_a104f0250c15c1db7407fd272ec658eb1}\label{classAriadne_1_1Real_a104f0250c15c1db7407fd272ec658eb1} 
+{\bfseries operator Effective\+Number} () const
+\begin{DoxyCompactList}\small\item\em Convert to an effective number for computations. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\end{Indent}
+\begin{Indent}\textbf{ Convert to real number types describing less information.}\par
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1Real_a43a2684f76271afdbddb942d54789807}\label{classAriadne_1_1Real_a43a2684f76271afdbddb942d54789807} 
+\mbox{\hyperlink{classAriadne_1_1UpperReal}{Upper\+Real}} {\bfseries upper} () const
+\begin{DoxyCompactList}\small\item\em A real number allowing only computation of upper bounds. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Real_a1a3fdd64bdb41be1f8e165c355e8564e}\label{classAriadne_1_1Real_a1a3fdd64bdb41be1f8e165c355e8564e} 
+\mbox{\hyperlink{classAriadne_1_1LowerReal}{Lower\+Real}} {\bfseries lower} () const
+\begin{DoxyCompactList}\small\item\em A real number allowing only computation of lower bounds. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\end{Indent}
+\begin{Indent}\textbf{ Computation of rigorous validated bounds on the number.}\par
+{\em Compute a concrete approximation with an error of at most {\itshape 2\textsuperscript{-\/acc}} i.\+e. {\itshape acc} binary digits. }\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1Real_a80625f6ff1788dbd2584e3658b58a725}\label{classAriadne_1_1Real_a80625f6ff1788dbd2584e3658b58a725} 
+\mbox{\hyperlink{classAriadne_1_1ValidatedReal}{Validated\+Real}} {\bfseries compute} (\mbox{\hyperlink{classAriadne_1_1Effort}{Effort}} eff) const
+\begin{DoxyCompactList}\small\item\em Compute a concrete approximation with a bound on the error. The error bound converges to {\itshape 0} as {\itshape eff} approaches infinity. The time taken should be roughly polynomial in {\itshape eff}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Real_a68a8277907ac5e6a678d7b523b6efe56}\label{classAriadne_1_1Real_a68a8277907ac5e6a678d7b523b6efe56} 
+Dyadic\+Bounds {\bfseries compute\+\_\+get} (\mbox{\hyperlink{classAriadne_1_1Effort}{Effort}} eff) const
+\begin{DoxyCompactList}\small\item\em Compute a concrete approximation using dyadic bounds. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Real_ad9fe315cf7e3976bf923f1e3ea56b780}\label{classAriadne_1_1Real_ad9fe315cf7e3976bf923f1e3ea56b780} 
+Float\+DPBounds {\bfseries compute\+\_\+get} (\mbox{\hyperlink{classAriadne_1_1Effort}{Effort}} eff, \mbox{\hyperlink{classAriadne_1_1DoublePrecision}{Double\+Precision}} pr) const
+\begin{DoxyCompactList}\small\item\em Compute a concrete approximation using double-\/precision. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Real_a7e5f8a17d1ac6eb5160c3a0ebad96a92}\label{classAriadne_1_1Real_a7e5f8a17d1ac6eb5160c3a0ebad96a92} 
+\mbox{\hyperlink{classAriadne_1_1Bounds}{Float\+MPBounds}} {\bfseries compute\+\_\+get} (\mbox{\hyperlink{classAriadne_1_1Effort}{Effort}} eff, \mbox{\hyperlink{classAriadne_1_1MultiplePrecision}{Multiple\+Precision}} pr) const
+\begin{DoxyCompactList}\small\item\em Compute a concrete approximation using the given precision. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Real_aeca4b4a8e230ed2c0c3386145cbaf3d9}\label{classAriadne_1_1Real_aeca4b4a8e230ed2c0c3386145cbaf3d9} 
+Float\+DPBounds {\bfseries get} (\mbox{\hyperlink{classAriadne_1_1DoublePrecision}{Double\+Precision}} pr) const
+\begin{DoxyCompactList}\small\item\em Compute a concrete approximation using double-\/precision. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Real_a1913534d85422b1c9157fb720bde753d}\label{classAriadne_1_1Real_a1913534d85422b1c9157fb720bde753d} 
+\mbox{\hyperlink{classAriadne_1_1Bounds}{Float\+MPBounds}} {\bfseries get} (\mbox{\hyperlink{classAriadne_1_1MultiplePrecision}{Multiple\+Precision}} pr) const
+\begin{DoxyCompactList}\small\item\em Compute a concrete approximation using the given precision. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Real_a75aaf35513bb326febb318cb83930be6}\label{classAriadne_1_1Real_a75aaf35513bb326febb318cb83930be6} 
+Float\+DPBounds {\bfseries compute\+\_\+using} (\mbox{\hyperlink{classAriadne_1_1DoublePrecision}{Double\+Precision}} pr) const
+\begin{DoxyCompactList}\small\item\em Compute a concrete approximation using double-\/precision. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Real_a7bcab9e7030a1f6281e8d1c1afb49aa0}\label{classAriadne_1_1Real_a7bcab9e7030a1f6281e8d1c1afb49aa0} 
+\mbox{\hyperlink{classAriadne_1_1Bounds}{Float\+MPBounds}} {\bfseries compute\+\_\+using} (\mbox{\hyperlink{classAriadne_1_1MultiplePrecision}{Multiple\+Precision}} pr) const
+\begin{DoxyCompactList}\small\item\em Compute a concrete approximation using the given precision. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\end{Indent}
+\doxysubsubsubsection*{Friends}
+\begin{Indent}\textbf{ Standard arithmetic operators}\par
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1Real_a9f44748a7950ecef351aa3fd263c8acd}\label{classAriadne_1_1Real_a9f44748a7950ecef351aa3fd263c8acd} 
+\mbox{\hyperlink{classAriadne_1_1Real}{Real}} {\bfseries operator+} (\mbox{\hyperlink{classAriadne_1_1Real}{Real}} const \&r)
+\begin{DoxyCompactList}\small\item\em Unary plus. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Real_aa7f141407e2f1f5f67cf3225d21d776e}\label{classAriadne_1_1Real_aa7f141407e2f1f5f67cf3225d21d776e} 
+\mbox{\hyperlink{classAriadne_1_1Real}{Real}} {\bfseries operator-\/} (\mbox{\hyperlink{classAriadne_1_1Real}{Real}} const \&r)
+\begin{DoxyCompactList}\small\item\em Unary minus. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Real_a42a912b9943661f9b684b59db052ae9a}\label{classAriadne_1_1Real_a42a912b9943661f9b684b59db052ae9a} 
+\mbox{\hyperlink{classAriadne_1_1Real}{Real}} {\bfseries operator+} (\mbox{\hyperlink{classAriadne_1_1Real}{Real}} const \&r1, \mbox{\hyperlink{classAriadne_1_1Real}{Real}} const \&r2)
+\begin{DoxyCompactList}\small\item\em Plus. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Real_ae3ac20bc242964bef09feffdd3eac368}\label{classAriadne_1_1Real_ae3ac20bc242964bef09feffdd3eac368} 
+\mbox{\hyperlink{classAriadne_1_1Real}{Real}} {\bfseries operator-\/} (\mbox{\hyperlink{classAriadne_1_1Real}{Real}} const \&r1, \mbox{\hyperlink{classAriadne_1_1Real}{Real}} const \&r2)
+\begin{DoxyCompactList}\small\item\em Minus. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Real_a7877f94abe68339fff63455e17edecd1}\label{classAriadne_1_1Real_a7877f94abe68339fff63455e17edecd1} 
+\mbox{\hyperlink{classAriadne_1_1Real}{Real}} {\bfseries operator\texorpdfstring{$\ast$}{*}} (\mbox{\hyperlink{classAriadne_1_1Real}{Real}} const \&r1, \mbox{\hyperlink{classAriadne_1_1Real}{Real}} const \&r2)
+\begin{DoxyCompactList}\small\item\em Times. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Real_a03d924908db3d1c9754d5eeea9e3f0f9}\label{classAriadne_1_1Real_a03d924908db3d1c9754d5eeea9e3f0f9} 
+\mbox{\hyperlink{classAriadne_1_1Real}{Real}} {\bfseries operator/} (\mbox{\hyperlink{classAriadne_1_1Real}{Real}} const \&r1, \mbox{\hyperlink{classAriadne_1_1Real}{Real}} const \&r2)
+\begin{DoxyCompactList}\small\item\em Divides. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Real_ada583d5e35b9cbad05adfe62f890541e}\label{classAriadne_1_1Real_ada583d5e35b9cbad05adfe62f890541e} 
+\mbox{\hyperlink{classAriadne_1_1Real}{Real}} \& {\bfseries operator+=} (\mbox{\hyperlink{classAriadne_1_1Real}{Real}} \&r1, \mbox{\hyperlink{classAriadne_1_1Real}{Real}} const \&r2)
+\begin{DoxyCompactList}\small\item\em Inplace plus. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Real_a09807156d1eb24390d2757952e4af1bb}\label{classAriadne_1_1Real_a09807156d1eb24390d2757952e4af1bb} 
+\mbox{\hyperlink{classAriadne_1_1Real}{Real}} \& {\bfseries operator-\/=} (\mbox{\hyperlink{classAriadne_1_1Real}{Real}} \&r1, \mbox{\hyperlink{classAriadne_1_1Real}{Real}} const \&r2)
+\begin{DoxyCompactList}\small\item\em Inplace minus. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Real_ac25bff1a101dac12949e96232fdddd29}\label{classAriadne_1_1Real_ac25bff1a101dac12949e96232fdddd29} 
+\mbox{\hyperlink{classAriadne_1_1Real}{Real}} \& {\bfseries operator\texorpdfstring{$\ast$}{*}=} (\mbox{\hyperlink{classAriadne_1_1Real}{Real}} \&r1, \mbox{\hyperlink{classAriadne_1_1Real}{Real}} const \&r2)
+\begin{DoxyCompactList}\small\item\em Inplace times. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Real_aaea788a945489fff4d28fba68dae6146}\label{classAriadne_1_1Real_aaea788a945489fff4d28fba68dae6146} 
+\mbox{\hyperlink{classAriadne_1_1Real}{Real}} \& {\bfseries operator/=} (\mbox{\hyperlink{classAriadne_1_1Real}{Real}} \&r1, \mbox{\hyperlink{classAriadne_1_1Real}{Real}} const \&r2)
+\begin{DoxyCompactList}\small\item\em Inplace divides. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\end{Indent}
+\begin{Indent}\textbf{ Standard comparison operators.}\par
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1Real_a4b33a96af0fb5115549493a1dacc22dd}\label{classAriadne_1_1Real_a4b33a96af0fb5115549493a1dacc22dd} 
+\mbox{\hyperlink{classAriadne_1_1NegatedSierpinskian}{Negated\+Sierpinskian}} {\bfseries operator==} (\mbox{\hyperlink{classAriadne_1_1Real}{Real}} const \&r1, \mbox{\hyperlink{classAriadne_1_1Real}{Real}} const \&r2)
+\begin{DoxyCompactList}\small\item\em Equality is undecidable and may only robustly be falsified. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Real_a4ce8335dbc7e987a75a5493987dac83b}\label{classAriadne_1_1Real_a4ce8335dbc7e987a75a5493987dac83b} 
+\mbox{\hyperlink{classAriadne_1_1Sierpinskian}{Sierpinskian}} {\bfseries operator!=} (\mbox{\hyperlink{classAriadne_1_1Real}{Real}} const \&r1, \mbox{\hyperlink{classAriadne_1_1Real}{Real}} const \&r2)
+\begin{DoxyCompactList}\small\item\em Inequality is undecidable and may only robustly be verified. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Real_aebe06f3864f009ca29f3ae6e424b5606}\label{classAriadne_1_1Real_aebe06f3864f009ca29f3ae6e424b5606} 
+\mbox{\hyperlink{classAriadne_1_1Kleenean}{Kleenean}} {\bfseries operator$<$=} (\mbox{\hyperlink{classAriadne_1_1Real}{Real}} const \&r1, \mbox{\hyperlink{classAriadne_1_1Real}{Real}} const \&r2)
+\begin{DoxyCompactList}\small\item\em \doxylink{namespaceAriadne_a0e36a4c4b857737f71444bff61a9edb6}{Comparison} {\ttfamily leq}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Real_adbed2a6ec9064fc28b5777d4d958cd33}\label{classAriadne_1_1Real_adbed2a6ec9064fc28b5777d4d958cd33} 
+\mbox{\hyperlink{classAriadne_1_1Kleenean}{Kleenean}} {\bfseries operator$>$=} (\mbox{\hyperlink{classAriadne_1_1Real}{Real}} const \&r1, \mbox{\hyperlink{classAriadne_1_1Real}{Real}} const \&r2)
+\begin{DoxyCompactList}\small\item\em \doxylink{namespaceAriadne_a0e36a4c4b857737f71444bff61a9edb6}{Comparison} . \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Real_abf3160c5b6bb9550dbd883032d5d1296}\label{classAriadne_1_1Real_abf3160c5b6bb9550dbd883032d5d1296} 
+\mbox{\hyperlink{classAriadne_1_1Kleenean}{Kleenean}} {\bfseries operator$<$} (\mbox{\hyperlink{classAriadne_1_1Real}{Real}} const \&r1, \mbox{\hyperlink{classAriadne_1_1Real}{Real}} const \&r2)
+\begin{DoxyCompactList}\small\item\em \doxylink{namespaceAriadne_a0e36a4c4b857737f71444bff61a9edb6}{Comparison} . \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Real_a0dce98fc99e8e1ac436b69fa8119f14b}\label{classAriadne_1_1Real_a0dce98fc99e8e1ac436b69fa8119f14b} 
+\mbox{\hyperlink{classAriadne_1_1Kleenean}{Kleenean}} {\bfseries operator$>$} (\mbox{\hyperlink{classAriadne_1_1Real}{Real}} const \&r1, \mbox{\hyperlink{classAriadne_1_1Real}{Real}} const \&r2)
+\begin{DoxyCompactList}\small\item\em \doxylink{namespaceAriadne_a0e36a4c4b857737f71444bff61a9edb6}{Comparison} . \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Real_abe1171dff9ba597d79b7c9a43ec68412}\label{classAriadne_1_1Real_abe1171dff9ba597d79b7c9a43ec68412} 
+\mbox{\hyperlink{classAriadne_1_1Boolean}{Boolean}} {\bfseries operator$>$} (\mbox{\hyperlink{classAriadne_1_1Real}{Real}} const \&r1, \mbox{\hyperlink{namespaceAriadne_abbe0884d033ed6289d1f654576d7bb07}{Pair}}$<$ \mbox{\hyperlink{classAriadne_1_1Real}{Real}}, \mbox{\hyperlink{classAriadne_1_1Real}{Real}} $>$ lu)
+\begin{DoxyCompactList}\small\item\em Given {\itshape l\texorpdfstring{$<$}{<}u}, returns {\itshape true} if r\texorpdfstring{$>$}{>}l and {\itshape false} if r\texorpdfstring{$<$}{<}u. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\end{Indent}
+\begin{Indent}\textbf{ Named arithmetical functions}\par
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1Real_a72641ff1c9d074de5d719ad82825ec1c}\label{classAriadne_1_1Real_a72641ff1c9d074de5d719ad82825ec1c} 
+\mbox{\hyperlink{classAriadne_1_1Real}{Real}} {\bfseries nul} (\mbox{\hyperlink{classAriadne_1_1Real}{Real}} const \&r)
+\begin{DoxyCompactList}\small\item\em Zero {\itshape 0}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Real_a0df6286e3d61ea4b3a8434ce2813b2d0}\label{classAriadne_1_1Real_a0df6286e3d61ea4b3a8434ce2813b2d0} 
+\mbox{\hyperlink{classAriadne_1_1Real}{Real}} {\bfseries pos} (\mbox{\hyperlink{classAriadne_1_1Real}{Real}} const \&r)
+\begin{DoxyCompactList}\small\item\em Identity {\itshape +r}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Real_a30bd1636345afb6bece93c5c9f7f38f0}\label{classAriadne_1_1Real_a30bd1636345afb6bece93c5c9f7f38f0} 
+\mbox{\hyperlink{classAriadne_1_1Real}{Real}} {\bfseries neg} (\mbox{\hyperlink{classAriadne_1_1Real}{Real}} const \&r)
+\begin{DoxyCompactList}\small\item\em Negative {\itshape -\/r}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Real_a124b75e86a01497fd97352b1c05ed126}\label{classAriadne_1_1Real_a124b75e86a01497fd97352b1c05ed126} 
+\mbox{\hyperlink{classAriadne_1_1Real}{Real}} {\bfseries hlf} (\mbox{\hyperlink{classAriadne_1_1Real}{Real}} const \&r)
+\begin{DoxyCompactList}\small\item\em Half {\itshape r÷2}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Real_a44e8e8760cf4f50dfbef41743e5076aa}\label{classAriadne_1_1Real_a44e8e8760cf4f50dfbef41743e5076aa} 
+\mbox{\hyperlink{classAriadne_1_1Real}{Real}} {\bfseries sqr} (\mbox{\hyperlink{classAriadne_1_1Real}{Real}} const \&r)
+\begin{DoxyCompactList}\small\item\em Square {\itshape r\textsuperscript{2}}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Real_a96f64ffeb3debbada26933a4d28eea7b}\label{classAriadne_1_1Real_a96f64ffeb3debbada26933a4d28eea7b} 
+\mbox{\hyperlink{classAriadne_1_1Real}{Real}} {\bfseries rec} (\mbox{\hyperlink{classAriadne_1_1Real}{Real}} const \&r)
+\begin{DoxyCompactList}\small\item\em Reciprocal {\itshape 1/r}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Real_ac6ce28dc8b516c6fd778c67c3f8d0a78}\label{classAriadne_1_1Real_ac6ce28dc8b516c6fd778c67c3f8d0a78} 
+\mbox{\hyperlink{classAriadne_1_1Real}{Real}} {\bfseries add} (\mbox{\hyperlink{classAriadne_1_1Real}{Real}} const \&r1, \mbox{\hyperlink{classAriadne_1_1Real}{Real}} const \&r2)
+\begin{DoxyCompactList}\small\item\em Add {\itshape r1+r2}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Real_a9ff64f267bb1009bea9facdc5a2bfa2e}\label{classAriadne_1_1Real_a9ff64f267bb1009bea9facdc5a2bfa2e} 
+\mbox{\hyperlink{classAriadne_1_1Real}{Real}} {\bfseries sub} (\mbox{\hyperlink{classAriadne_1_1Real}{Real}} const \&r1, \mbox{\hyperlink{classAriadne_1_1Real}{Real}} const \&r2)
+\begin{DoxyCompactList}\small\item\em Subtract {\itshape r1-\/r2}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Real_af2a866b9deca0b2dbe19c353a6de0c79}\label{classAriadne_1_1Real_af2a866b9deca0b2dbe19c353a6de0c79} 
+\mbox{\hyperlink{classAriadne_1_1Real}{Real}} {\bfseries mul} (\mbox{\hyperlink{classAriadne_1_1Real}{Real}} const \&r1, \mbox{\hyperlink{classAriadne_1_1Real}{Real}} const \&r2)
+\begin{DoxyCompactList}\small\item\em Multiply {\itshape r1×r2}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Real_ac06e6941cb74ad678f16a3ae1437819b}\label{classAriadne_1_1Real_ac06e6941cb74ad678f16a3ae1437819b} 
+\mbox{\hyperlink{classAriadne_1_1Real}{Real}} {\bfseries div} (\mbox{\hyperlink{classAriadne_1_1Real}{Real}} const \&r1, \mbox{\hyperlink{classAriadne_1_1Real}{Real}} const \&r2)
+\begin{DoxyCompactList}\small\item\em Divide {\itshape r1÷r2}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Real_a21a78ae2266336ae627e4bd5e002aa8b}\label{classAriadne_1_1Real_a21a78ae2266336ae627e4bd5e002aa8b} 
+\mbox{\hyperlink{classAriadne_1_1Real}{Real}} {\bfseries fma} (\mbox{\hyperlink{classAriadne_1_1Real}{Real}} const \&r1, \mbox{\hyperlink{classAriadne_1_1Real}{Real}} const \&r2, \mbox{\hyperlink{classAriadne_1_1Real}{Real}} const \&r3)
+\begin{DoxyCompactList}\small\item\em Fused multiply-\/and-\/add {\itshape r1×r2+r3}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Real_a8d91a26df9d6149b2385764052e0f41c}\label{classAriadne_1_1Real_a8d91a26df9d6149b2385764052e0f41c} 
+\mbox{\hyperlink{classAriadne_1_1Real}{Real}} {\bfseries pow} (\mbox{\hyperlink{classAriadne_1_1Real}{Real}} const \&r, \mbox{\hyperlink{namespaceAriadne_a008e7f6ae8f621fbb1d876061812b9b2}{Int}} n)
+\begin{DoxyCompactList}\small\item\em Power {\itshape r\textsuperscript{n}}. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\end{Indent}
+\begin{Indent}\textbf{ Algebraic and transcendental functions}\par
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1Real_a228615bf237f52173286ed94d388441c}\label{classAriadne_1_1Real_a228615bf237f52173286ed94d388441c} 
+\mbox{\hyperlink{classAriadne_1_1Real}{Real}} {\bfseries sqrt} (\mbox{\hyperlink{classAriadne_1_1Real}{Real}} const \&r)
+\begin{DoxyCompactList}\small\item\em The square root of {\itshape r}, √{\itshape r}. Requires {\itshape r} ≥ 0. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Real_a2d8008080c22e07fba52754cd429f680}\label{classAriadne_1_1Real_a2d8008080c22e07fba52754cd429f680} 
+\mbox{\hyperlink{classAriadne_1_1Real}{Real}} {\bfseries exp} (\mbox{\hyperlink{classAriadne_1_1Real}{Real}} const \&r)
+\begin{DoxyCompactList}\small\item\em The natural exponent of {\itshape r}, {\itshape e\textsuperscript{r}}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Real_a92096c2c551c027ab85b3ef1dff818d6}\label{classAriadne_1_1Real_a92096c2c551c027ab85b3ef1dff818d6} 
+\mbox{\hyperlink{classAriadne_1_1Real}{Real}} {\bfseries log} (\mbox{\hyperlink{classAriadne_1_1Real}{Real}} const \&r)
+\begin{DoxyCompactList}\small\item\em The natural logarithm of {\itshape r}, log{\itshape \textsubscript{e} r} or ln {\itshape r}. Requires {\itshape r} ≥ 0. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Real_a4fd78d90aec9762c84afac884eed89ec}\label{classAriadne_1_1Real_a4fd78d90aec9762c84afac884eed89ec} 
+\mbox{\hyperlink{classAriadne_1_1Real}{Real}} {\bfseries sin} (\mbox{\hyperlink{classAriadne_1_1Real}{Real}} const \&r)
+\begin{DoxyCompactList}\small\item\em The sine of {\itshape r}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Real_a2d5b20d95022239e75aa02b0de44d81e}\label{classAriadne_1_1Real_a2d5b20d95022239e75aa02b0de44d81e} 
+\mbox{\hyperlink{classAriadne_1_1Real}{Real}} {\bfseries cos} (\mbox{\hyperlink{classAriadne_1_1Real}{Real}} const \&r)
+\begin{DoxyCompactList}\small\item\em The cosine of {\itshape r}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Real_a8570976833bdb0cb83de290e6f19b5b5}\label{classAriadne_1_1Real_a8570976833bdb0cb83de290e6f19b5b5} 
+\mbox{\hyperlink{classAriadne_1_1Real}{Real}} {\bfseries tan} (\mbox{\hyperlink{classAriadne_1_1Real}{Real}} const \&r)
+\begin{DoxyCompactList}\small\item\em The tangent of {\itshape r}, sin({\itshape r})/cos({\itshape r}). \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Real_a71a1496364921f42d41fc1f236500968}\label{classAriadne_1_1Real_a71a1496364921f42d41fc1f236500968} 
+\mbox{\hyperlink{classAriadne_1_1Real}{Real}} {\bfseries asin} (\mbox{\hyperlink{classAriadne_1_1Real}{Real}} const \&r)
+\begin{DoxyCompactList}\small\item\em The arc-\/sine of {\itshape r}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Real_acd0fca8a24d938cfd26ab8d48a757044}\label{classAriadne_1_1Real_acd0fca8a24d938cfd26ab8d48a757044} 
+\mbox{\hyperlink{classAriadne_1_1Real}{Real}} {\bfseries acos} (\mbox{\hyperlink{classAriadne_1_1Real}{Real}} const \&r)
+\begin{DoxyCompactList}\small\item\em The arc-\/cosine of {\itshape r}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Real_a73d03e874bf261a80b906b8f5225c1cf}\label{classAriadne_1_1Real_a73d03e874bf261a80b906b8f5225c1cf} 
+\mbox{\hyperlink{classAriadne_1_1Real}{Real}} {\bfseries atan} (\mbox{\hyperlink{classAriadne_1_1Real}{Real}} const \&r)
+\begin{DoxyCompactList}\small\item\em The arc-\/tangent of {\itshape r}. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\end{Indent}
+\begin{Indent}\textbf{ Lattice operations}\par
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1Real_aee4fd573452752c93720ed8b434b30bc}\label{classAriadne_1_1Real_aee4fd573452752c93720ed8b434b30bc} 
+\mbox{\hyperlink{classAriadne_1_1PositiveReal}{Positive\+Real}} {\bfseries abs} (\mbox{\hyperlink{classAriadne_1_1Real}{Real}} const \&r)
+\begin{DoxyCompactList}\small\item\em Absolute value {\itshape \texorpdfstring{$\vert$}{|}r\texorpdfstring{$\vert$}{|}}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Real_a86a8b17c04a16d86614da973cba41ab4}\label{classAriadne_1_1Real_a86a8b17c04a16d86614da973cba41ab4} 
+\mbox{\hyperlink{classAriadne_1_1Real}{Real}} {\bfseries min} (\mbox{\hyperlink{classAriadne_1_1Real}{Real}} const \&r1, \mbox{\hyperlink{classAriadne_1_1Real}{Real}} const \&r2)
+\begin{DoxyCompactList}\small\item\em Mimimum {\itshape r1∧r2}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Real_a2218acb330e809e41a7686b7e1acd0e8}\label{classAriadne_1_1Real_a2218acb330e809e41a7686b7e1acd0e8} 
+\mbox{\hyperlink{classAriadne_1_1Real}{Real}} {\bfseries max} (\mbox{\hyperlink{classAriadne_1_1Real}{Real}} const \&r1, \mbox{\hyperlink{classAriadne_1_1Real}{Real}} const \&r2)
+\begin{DoxyCompactList}\small\item\em Maximum {\itshape r1∨r2}. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\end{Indent}
+\begin{Indent}\textbf{ Operations based on the metric structure.}\par
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1Real_ae1a24a8a19701b7bdbc791fc3863ed91}\label{classAriadne_1_1Real_ae1a24a8a19701b7bdbc791fc3863ed91} 
+\mbox{\hyperlink{classAriadne_1_1PositiveReal}{Positive\+Real}} {\bfseries dist} (\mbox{\hyperlink{classAriadne_1_1Real}{Real}} const \&r1, \mbox{\hyperlink{classAriadne_1_1Real}{Real}} const \&r2)
+\begin{DoxyCompactList}\small\item\em The distance \texorpdfstring{$\vert$}{|}{\itshape r} \textsubscript{1}-\/{\itshape r} \textsubscript{2}\texorpdfstring{$\vert$}{|} between {\itshape r\textsubscript{1}} and {\itshape r\textsubscript{2}}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Real_a1e62bd38bd96d216e67f160e4f230639}\label{classAriadne_1_1Real_a1e62bd38bd96d216e67f160e4f230639} 
+\mbox{\hyperlink{classAriadne_1_1PositiveUpperReal}{Positive\+Upper\+Real}} {\bfseries mag} (\mbox{\hyperlink{classAriadne_1_1Real}{Real}} const \&r)
+\begin{DoxyCompactList}\small\item\em An over-\/approximation to the absolute value of {\itshape r}. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\end{Indent}
+\begin{Indent}\textbf{ Comparison operations.}\par
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1Real_a38dfc77dd6432194980dfe66058396f7}\label{classAriadne_1_1Real_a38dfc77dd6432194980dfe66058396f7} 
+\mbox{\hyperlink{classAriadne_1_1NegatedSierpinskian}{Negated\+Sierpinskian}} {\bfseries eq} (\mbox{\hyperlink{classAriadne_1_1Real}{Real}} const \&r1, \mbox{\hyperlink{classAriadne_1_1Real}{Real}} const \&r2)
+\begin{DoxyCompactList}\small\item\em Returns {\ttfamily false} if {\itshape r1!=r2} and {\ttfamily indeterminate} if {\itshape r1==r2}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Real_a82f6e7bf78d2f40c4dec05865fb2dc1d}\label{classAriadne_1_1Real_a82f6e7bf78d2f40c4dec05865fb2dc1d} 
+\mbox{\hyperlink{classAriadne_1_1Kleenean}{Kleenean}} {\bfseries lt} (\mbox{\hyperlink{classAriadne_1_1Real}{Real}} const \&r1, \mbox{\hyperlink{classAriadne_1_1Real}{Real}} const \&r2)
+\begin{DoxyCompactList}\small\item\em Returns {\ttfamily true} if {\itshape r1\texorpdfstring{$<$}{<}r2}, {\ttfamily false} if {\itshape r1\texorpdfstring{$>$}{>}r2}, and {\ttfamily indetermiate} if {\itshape r1==r2}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Real_a8edaff916d37b0eb16c73802283170e8}\label{classAriadne_1_1Real_a8edaff916d37b0eb16c73802283170e8} 
+\mbox{\hyperlink{classAriadne_1_1Kleenean}{Kleenean}} {\bfseries leq} (\mbox{\hyperlink{classAriadne_1_1Real}{Real}} const \&r1, \mbox{\hyperlink{classAriadne_1_1Real}{Real}} const \&r2)
+\begin{DoxyCompactList}\small\item\em Returns {\ttfamily true} if {\itshape r1\texorpdfstring{$<$}{<}r2}, {\ttfamily false} if {\itshape r1\texorpdfstring{$>$}{>}r2}, and {\ttfamily indetermiate} if {\itshape r1==r2}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Real_a14f34eddad245d8bae71f196dfa79a8a}\label{classAriadne_1_1Real_a14f34eddad245d8bae71f196dfa79a8a} 
+\mbox{\hyperlink{classAriadne_1_1Kleenean}{Kleenean}} {\bfseries sgn} (\mbox{\hyperlink{classAriadne_1_1Real}{Real}} const \&r)
+\begin{DoxyCompactList}\small\item\em Returns {\ttfamily true} if {\itshape r\texorpdfstring{$>$}{>}0}, {\ttfamily false} if {\itshape r\texorpdfstring{$<$}{<}0}, and {\ttfamily indeterminate} if {\itshape r==0}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Real_a2871e8a6ab07da2b3089a54731f7fd2d}\label{classAriadne_1_1Real_a2871e8a6ab07da2b3089a54731f7fd2d} 
+\mbox{\hyperlink{classAriadne_1_1ValidatedKleenean}{Validated\+Kleenean}} {\bfseries check\+\_\+sgn} (\mbox{\hyperlink{classAriadne_1_1Real}{Real}} r, \mbox{\hyperlink{classAriadne_1_1Effort}{Effort}} eff)
+\begin{DoxyCompactList}\small\item\em Equivalent to {\ttfamily sgn(r)}.check(eff). \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Real_a147ce664d76dfcc0858e706d8bbec8b5}\label{classAriadne_1_1Real_a147ce664d76dfcc0858e706d8bbec8b5} 
+\mbox{\hyperlink{classAriadne_1_1Boolean}{Boolean}} {\bfseries nondeterministic\+\_\+greater} (\mbox{\hyperlink{classAriadne_1_1Real}{Real}} const \&r, \mbox{\hyperlink{classAriadne_1_1Rational}{Rational}} const \&a, \mbox{\hyperlink{classAriadne_1_1Rational}{Rational}} const \&b)
+\begin{DoxyCompactList}\small\item\em Given {\itshape a\texorpdfstring{$<$}{<}b}, returns {\itshape true} if r\texorpdfstring{$>$}{>}a and {\itshape false} if r\texorpdfstring{$<$}{<}b. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Real_a68178e17007d73fe66a3f4fbb6d514fc}\label{classAriadne_1_1Real_a68178e17007d73fe66a3f4fbb6d514fc} 
+\mbox{\hyperlink{classAriadne_1_1Real}{Real}} {\bfseries choose} (Case$<$ \mbox{\hyperlink{classAriadne_1_1LowerKleenean}{Lower\+Kleenean}}, \mbox{\hyperlink{classAriadne_1_1Real}{Real}} $>$ const \&c1, Case$<$ \mbox{\hyperlink{classAriadne_1_1LowerKleenean}{Lower\+Kleenean}}, \mbox{\hyperlink{classAriadne_1_1Real}{Real}} $>$ const \&c2)
+\begin{DoxyCompactList}\small\item\em A nonextensional choice, between the value of any of the valid cases. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Real_abfe664b4fe866305c56f1e37e59847b1}\label{classAriadne_1_1Real_abfe664b4fe866305c56f1e37e59847b1} 
+\mbox{\hyperlink{classAriadne_1_1Real}{Real}} {\bfseries when} (Case$<$ \mbox{\hyperlink{classAriadne_1_1UpperKleenean}{Upper\+Kleenean}}, \mbox{\hyperlink{classAriadne_1_1Real}{Real}} $>$ const \&c1, Case$<$ \mbox{\hyperlink{classAriadne_1_1UpperKleenean}{Upper\+Kleenean}}, \mbox{\hyperlink{classAriadne_1_1Real}{Real}} $>$ const \&c2)
+\begin{DoxyCompactList}\small\item\em A value equal to that of each of the valid cases. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\end{Indent}
+\begin{Indent}\textbf{ Limit operations.}\par
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1Real_aca421665caa1811887ce10447806f454}\label{classAriadne_1_1Real_aca421665caa1811887ce10447806f454} 
+\mbox{\hyperlink{classAriadne_1_1Real}{Real}} {\bfseries limit} (\mbox{\hyperlink{classAriadne_1_1ConvergentSequence}{Convergent\+Sequence}}$<$ Dyadic\+Bounds $>$ const \&qbs)
+\begin{DoxyCompactList}\small\item\em Create a real number from a sequence of dyadic bounds whose width converges to 0. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Real_adc5a4eb3e8da29d6c4800c36b3021ce9}\label{classAriadne_1_1Real_adc5a4eb3e8da29d6c4800c36b3021ce9} 
+\mbox{\hyperlink{classAriadne_1_1Real}{Real}} {\bfseries limit} (\mbox{\hyperlink{classAriadne_1_1FastCauchySequence}{Fast\+Cauchy\+Sequence}}$<$ \mbox{\hyperlink{classAriadne_1_1Dyadic}{Dyadic}} $>$ const \&qs)
+\begin{DoxyCompactList}\small\item\em Create a real number from a sequence of dyadic numbers $q_n$ for which $|q_{n_1}-q_{n_2}|\leq 2^{\min(n_1,n_2)}$. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Real_ab71719801cefbdcd1e546955e12485c7}\label{classAriadne_1_1Real_ab71719801cefbdcd1e546955e12485c7} 
+\mbox{\hyperlink{classAriadne_1_1Real}{Real}} {\bfseries limit} (\mbox{\hyperlink{classAriadne_1_1FastCauchySequence}{Fast\+Cauchy\+Sequence}}$<$ \mbox{\hyperlink{classAriadne_1_1Real}{Real}} $>$ const \&rs)
+\begin{DoxyCompactList}\small\item\em The limit of a sequence of real numbers $r_n$ for which $|r_{n_1}-r_{n_2}|\leq 2^{\min(n_1,n_2)}$. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\end{Indent}
+\begin{Indent}\textbf{ Rounding operations.}\par
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1Real_abb967992c5371ac0977e40343055b222}\label{classAriadne_1_1Real_abb967992c5371ac0977e40343055b222} 
+\mbox{\hyperlink{classAriadne_1_1Integer}{Integer}} {\bfseries round} (\mbox{\hyperlink{classAriadne_1_1Real}{Real}} const \&r)
+\begin{DoxyCompactList}\small\item\em Round to a "{}nearby"{} integer. This integer {\itshape need not} be the {\itshape closest} integer. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\end{Indent}
+\begin{Indent}\textbf{ Operations on the representation.}\par
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1Real_a9ece4585d97d31f1a3f00f166a9022ab}\label{classAriadne_1_1Real_a9ece4585d97d31f1a3f00f166a9022ab} 
+\mbox{\hyperlink{namespaceAriadne_a76a8b016e5ad61faf9062cc387df5016}{Bool}} {\bfseries same} (\mbox{\hyperlink{classAriadne_1_1Real}{Real}} const \&r1, \mbox{\hyperlink{classAriadne_1_1Real}{Real}} const \&r2)
+\begin{DoxyCompactList}\small\item\em Test equivalence of representation. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\end{Indent}
+\begin{Indent}\textbf{ Input/output operations}\par
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1Real_a345447f1579a1402250e6b61f96c63c7}\label{classAriadne_1_1Real_a345447f1579a1402250e6b61f96c63c7} 
+\mbox{\hyperlink{namespaceAriadne_acbb98ddc4385af4599070e65a1a47ec1}{Output\+Stream}} \& {\bfseries operator$<$$<$} (\mbox{\hyperlink{namespaceAriadne_acbb98ddc4385af4599070e65a1a47ec1}{Output\+Stream}} \&os, \mbox{\hyperlink{classAriadne_1_1Real}{Real}} const \&r)
+\begin{DoxyCompactList}\small\item\em Write to an output stream. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\end{Indent}
+\doxyparagraph*{Friends inherited from \mbox{\hyperlink{structAriadne_1_1DeclareFieldOperations}{Declare\+Field\+Operations$<$ Real, Real $>$}}}
+\doxyparagraph*{Friends inherited from \mbox{\hyperlink{structAriadne_1_1DeclareRingOperations}{Declare\+Ring\+Operations$<$ Real, Real $>$}}}
+\doxyparagraph*{Friends inherited from \mbox{\hyperlink{structAriadne_1_1DeclareDirectedGroupOperations}{Declare\+Directed\+Group\+Operations$<$ Real, Real, Real $>$}}}
+\doxyparagraph*{Friends inherited from \mbox{\hyperlink{classAriadne_1_1DeclareTranscendentalOperations}{Declare\+Transcendental\+Operations$<$ Real, Real $>$}}}
+\doxyparagraph*{Friends inherited from \mbox{\hyperlink{classAriadne_1_1DeclareMonotoneOperations}{Declare\+Monotone\+Operations$<$ Real, Real $>$}}}
+\doxyparagraph*{Friends inherited from \mbox{\hyperlink{classAriadne_1_1DeclareLatticeOperations}{Declare\+Lattice\+Operations$<$ Real, Positive\+Real $>$}}}
+\doxyparagraph*{Friends inherited from \mbox{\hyperlink{structAriadne_1_1DeclareComparisonOperations}{Declare\+Comparison\+Operations$<$ Real, Kleenean, Negated\+Sierpinskian $>$}}}
+
+
+The documentation for this class was generated from the following files\+:\begin{DoxyCompactItemize}
+\item 
+source/numeric/\mbox{\hyperlink{real_8hpp}{real.\+hpp}}\item 
+source/numeric/\mbox{\hyperlink{number_8cpp}{number.\+cpp}}\item 
+source/numeric/\mbox{\hyperlink{real_8cpp}{real.\+cpp}}\end{DoxyCompactItemize}

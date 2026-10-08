@@ -1,0 +1,29 @@
+{
+  "diagnostic_only": true,
+  "cases": [
+    {
+      "name": "stationary_reparameterization_strict",
+      "returncode": 0,
+      "stack_captured": false,
+      "log": "stationary-boundary-20260927-v477-stationary_reparameterization_strict.log",
+      "elapsed_seconds": 0.21414540498517454
+    },
+    {
+      "name": "one_sided_cusp_strict",
+      "returncode": 0,
+      "stack_captured": false,
+      "log": "stationary-boundary-20260927-v477-one_sided_cusp_strict.log",
+      "elapsed_seconds": 0.17261601518839598
+    },
+    {
+      "name": "interior_stationary_contact_strict",
+      "returncode": 0,
+      "stack_captured": false,
+      "log": "stationary-boundary-20260927-v477-interior_stationary_contact_strict.log",
+      "elapsed_seconds": 0.1640715110115707
+    }
+  ],
+  "all_processes_reaped": true,
+  "source_manifest": "restricted-fiber-sign-20260927-v474-sources.json",
+  "binary_sha256": "cc066f9cfdaa3eceac73f97771fe2aef8021706a4434739c4cb134db47ad2374"
+}

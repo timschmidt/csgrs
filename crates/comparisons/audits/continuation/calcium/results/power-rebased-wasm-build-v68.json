@@ -1,0 +1,25 @@
+{
+  "tag": "power-rebased-wasm-build-v68",
+  "started": "2026-09-11T16:58:20.437Z",
+  "finished": "2026-09-11T16:58:46.708Z",
+  "elapsedSeconds": 26.268307914,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/power-rebased-v68/hypersolve",
+  "command": "env",
+  "args": [
+    "CARGO_TARGET_DIR=/tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse",
+    "CARGO_INCREMENTAL=0",
+    "CARGO_PROFILE_DEV_DEBUG=0",
+    "CARGO_BUILD_JOBS=2",
+    "cargo",
+    "build",
+    "--offline",
+    "--locked",
+    "--release",
+    "--lib",
+    "--all-features",
+    "--target",
+    "wasm32-unknown-unknown"
+  ],
+  "code": 0,
+  "signal": null
+}

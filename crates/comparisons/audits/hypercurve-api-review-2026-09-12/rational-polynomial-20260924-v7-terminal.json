@@ -1,0 +1,82 @@
+{
+  "checks": [
+    {
+      "label": "clippy-0",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "clippy",
+        "--all-targets",
+        "--all-features",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 5.458491567056626,
+      "log": "rational-polynomial-20260924-v7-clippy-0.log"
+    },
+    {
+      "label": "clippy-1",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "clippy",
+        "--all-targets",
+        "--no-default-features",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 4.753431636025198,
+      "log": "rational-polynomial-20260924-v7-clippy-1.log"
+    }
+  ],
+  "tests": [
+    {
+      "label": "canonical-reentry",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/rational-polynomial-20260924-v7-libtest",
+        "unreduced_arithmetic_preserves_canonical_queries_and_hashes",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.3204965889453888,
+      "log": "rational-polynomial-20260924-v7-canonical-reentry.log"
+    },
+    {
+      "label": "focused",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/rational-polynomial-20260924-v7-libtest",
+        "polynomial_evaluation",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.32014362304471433,
+      "log": "rational-polynomial-20260924-v7-focused.log"
+    },
+    {
+      "label": "all",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/rational-polynomial-20260924-v7-libtest",
+        "--test-threads=2",
+        "--color",
+        "never"
+      ],
+      "returncode": 101,
+      "elapsed_seconds": 3.7038454220164567,
+      "log": "rational-polynomial-20260924-v7-all.log"
+    }
+  ],
+  "probe_source_sha256": "a42aa87991aa471103561c8f1a2099581e9d88c0d8dcffd83da128926ac548fe",
+  "all_processes_reaped": true,
+  "binary_sha256": "29afcf2250e755699925e161c4d4b6773de39000bc0cdf519a99d4b40ac8b926",
+  "all_sources_unchanged": true
+}

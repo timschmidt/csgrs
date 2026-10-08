@@ -1,0 +1,23 @@
+{
+  "command": [
+    "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+    "test",
+    "--release",
+    "--all-features",
+    "--lib",
+    "--test",
+    "hypercurve_curve_region_promotion",
+    "--test",
+    "hypercurve_curve_range",
+    "--test",
+    "hypercurve_path_closure",
+    "--test",
+    "hypercurve_curve_intersection",
+    "--no-run",
+    "--message-format=json",
+    "--locked",
+    "--offline"
+  ],
+  "returncode": 0,
+  "elapsed_seconds": 14.236586977000115
+}

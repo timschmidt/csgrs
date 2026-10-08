@@ -1,0 +1,39 @@
+{
+  "source": "/home/tim/Documents/GitHub/workspace/exact-real-references/ruffini-qualification/FiniteBoundaries.java",
+  "sourceSha256": "b6a56b55b22950a410ff1062eecf730f73b977c4c7bb3bced5fabfe9a6abe9d5",
+  "classes": [
+    [
+      "FiniteBoundaries$BoundedRandom.class",
+      "3def8fa0859c3e8ff091f6626b2efb372e219d0207b95ba36e38c27014002236"
+    ],
+    [
+      "FiniteBoundaries$DrawBudget.class",
+      "f2e3723befa730d346839a498038a72f3bdc9e6e30cb6b6a875073677df60f79"
+    ],
+    [
+      "FiniteBoundaries$Oracle.class",
+      "3075c8c35f718d3663cdbe81e672af0073be9fe7a27a74104b3c74d83533551d"
+    ],
+    [
+      "FiniteBoundaries.class",
+      "fe0f6a00d7d32be95b1f15923ad8d9ddea07656895d74a0f5cf5e0bbaae8bc57"
+    ]
+  ],
+  "dependencies": [
+    [
+      "native-build-manifest.json",
+      "00763b9eca620f1ac67486bbe43f087366b2871d767f489110e4045e48096844"
+    ],
+    [
+      "matrix-build-manifest.json",
+      "0ac8a19300c1fe575051ee4975f352a9ce620c5b8e45e1813d9bd4fb1e1b76cd"
+    ],
+    [
+      "polynomial-build-manifest.json",
+      "a3473385f5920dcd88d18c15aedd430b65f8f516424ae12b28e5b65fbbe1dfec"
+    ]
+  ],
+  "release": 16,
+  "buildRecord": "/home/tim/Documents/GitHub/workspace/exact-real-references/ruffini-qualification/finite-boundaries-host-build.json",
+  "preexistingClassBytesIdentical": true
+}

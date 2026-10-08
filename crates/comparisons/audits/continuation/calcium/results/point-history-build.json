@@ -1,0 +1,13 @@
+{
+  "tag": "point-history-build",
+  "started": "2026-09-10T21:40:43.538Z",
+  "finished": "2026-09-10T21:41:00.627Z",
+  "elapsedSeconds": 17.085971789000002,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "node",
+  "args": [
+    "build-point-history.mjs"
+  ],
+  "code": 0,
+  "signal": null
+}

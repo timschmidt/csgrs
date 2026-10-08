@@ -1,0 +1,7 @@
+    Blocking waiting for file lock on build directory
+    Checking hyperreal v0.13.1 (/home/tim/Documents/GitHub/workspace/hyperreal)
+    Checking hyperlattice v0.6.1 (/home/tim/Documents/GitHub/workspace/hyperlattice)
+    Checking hyperlimit v0.4.1 (/home/tim/Documents/GitHub/workspace/hyperlimit)
+ Documenting hypersolve v0.3.1 (/home/tim/Documents/GitHub/workspace/hypersolve)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 11.15s
+   Generated /home/tim/Documents/GitHub/workspace/hypersolve/target/doc/hypersolve/index.html

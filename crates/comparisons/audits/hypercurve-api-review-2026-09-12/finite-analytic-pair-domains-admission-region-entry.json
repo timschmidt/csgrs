@@ -1,0 +1,21 @@
+{
+  "returncode": 0,
+  "elapsed_seconds": 0.06366379201062955,
+  "normal_library_sha256": "d680fbce859f7d1e7f470916621fb407de5f877a836cacaf4fe3a7fa514000c0",
+  "log": "finite-analytic-pair-domains-admission-region-entry.log",
+  "source": "finite-parallel-admission-region-normalized-public.rs",
+  "command": [
+    "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustc",
+    "--edition=2024",
+    "-O",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-parallel-admission-region-normalized-public.rs",
+    "--extern",
+    "hypercurve=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypercurve-a7ee000b69ee5146.rlib",
+    "-L",
+    "dependency=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps",
+    "-o",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-analytic-pair-domains-admission-region-entry"
+  ],
+  "source_sha256": "515698e9a503b9cf447c3721d57578f1069792b54dd2078fdd4e57249345e2d8",
+  "executable_sha256": "0f0f91f472884c2835ea19bbd085ad87dd49f551ea2f5acf4691a0cfb3d839cf"
+}

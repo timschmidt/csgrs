@@ -1,0 +1,23 @@
+   Compiling hypersolve v0.3.1 (/home/tim/Documents/GitHub/workspace/hypersolve)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 2.08s
+     Running unittests src/lib.rs (target/debug/deps/hypersolve-82921a3f6b3e0d80)
+
+running 1 test
+radical midpoint probe: old=Some(Equal), native=Some(Equal), point=Some(Equal), same_value=Some(Equal)
+radical midpoint probe: old=None, native=None, point=Some(Equal), same_value=Some(Equal)
+
+thread 'algebraic_fiber::tests::local_sign_refinement_retains_nested_quadratic_root_certificates' (331) panicked at src/algebraic_fiber.rs:4301:17:
+assertion `left == right` failed
+  left: Err(Undecided)
+ right: Ok(true)
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+test algebraic_fiber::tests::local_sign_refinement_retains_nested_quadratic_root_certificates ... FAILED
+
+failures:
+
+failures:
+    algebraic_fiber::tests::local_sign_refinement_retains_nested_quadratic_root_certificates
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 429 filtered out; finished in 0.00s
+
+error: test failed, to rerun pass `--lib`

@@ -1,0 +1,8 @@
+{
+  "parent": "1210fbd67a43d910652d9a8cf6d5a8ac4127484f",
+  "baseline_manifest": "retained-coordinate-identity-20260924-v5-sources.json",
+  "physical_snapshot": "/tmp/hypercurve-retained-parallel-expression-v1-20260924",
+  "test_only": true,
+  "all_production_and_original_tests_unchanged": true,
+  "new_test": "recursive_parallel_expression_signs_keep_the_selected_speed_sheet"
+}

@@ -1,0 +1,15 @@
+{
+  "args": [
+    "literal",
+    "",
+    "+RTS",
+    "-M256m",
+    "-RTS"
+  ],
+  "timeout": 750,
+  "status": 0,
+  "signal": null,
+  "error": "EPERM",
+  "stdout": "(1,[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0])\n",
+  "stderr": ""
+}

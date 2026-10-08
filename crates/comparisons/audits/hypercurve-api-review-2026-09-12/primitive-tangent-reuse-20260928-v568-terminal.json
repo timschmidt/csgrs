@@ -1,0 +1,347 @@
+{
+  "normal_production_build": false,
+  "source_manifest": "primitive-tangent-reuse-20260928-v568-sources.json",
+  "source_directory": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/source-archives/primitive-tangent-reuse-20260928-v568",
+  "builds": [
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "test",
+        "--lib",
+        "--release",
+        "--all-features",
+        "--locked",
+        "--offline",
+        "--no-run",
+        "--message-format=json"
+      ],
+      "returncode": 0,
+      "log": "primitive-tangent-reuse-20260928-v568-build.log",
+      "elapsed_seconds": 137.01501817302778,
+      "binaries": {
+        "hypercurve": {
+          "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/primitive-tangent-reuse-20260928-v568-hypercurve-tests",
+          "sha256": "0e42cd9bab48dcd949e57c9ff0722e0eac59c7c24f345ebab3344a10a3322d11"
+        }
+      }
+    }
+  ],
+  "cases": [
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/primitive-tangent-reuse-20260928-v568-hypercurve-tests",
+        "--exact",
+        "bezier_offset::regular_parallel_contact_tests::primitive_source_frames_share_factorization_across_distances_and_branches",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "primitive-tangent-reuse-20260928-v568-primitive_source_frames_share_factorization_across_distances_and_branches.log",
+      "elapsed_seconds": 0.003597013186663389,
+      "target": "hypercurve",
+      "name": "bezier_offset::regular_parallel_contact_tests::primitive_source_frames_share_factorization_across_distances_and_branches",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/primitive-tangent-reuse-20260928-v568-hypercurve-tests",
+        "--exact",
+        "curve::curve_fillet::stationary_retained_point_constraint_regression::stationary_fillet_family_accepts_independent_retained_point_constraints",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "primitive-tangent-reuse-20260928-v568-stationary_fillet_family_accepts_independent_retained_point_constraints.log",
+      "elapsed_seconds": 18.38735413295217,
+      "target": "hypercurve",
+      "name": "curve::curve_fillet::stationary_retained_point_constraint_regression::stationary_fillet_family_accepts_independent_retained_point_constraints",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/primitive-tangent-reuse-20260928-v568-hypercurve-tests",
+        "--exact",
+        "bezier_offset::conversion_tests::opaque_retracing_line_uses_constant_direction_rank_component",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "primitive-tangent-reuse-20260928-v568-opaque_retracing_line_uses_constant_direction_rank_component.log",
+      "elapsed_seconds": 0.03173978487029672,
+      "target": "hypercurve",
+      "name": "bezier_offset::conversion_tests::opaque_retracing_line_uses_constant_direction_rank_component",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/primitive-tangent-reuse-20260928-v568-hypercurve-tests",
+        "--exact",
+        "bezier_offset::regular_parallel_contact_tests::regular_source_frames_retain_unprojectable_selected_parameters",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "primitive-tangent-reuse-20260928-v568-regular_source_frames_retain_unprojectable_selected_parameters.log",
+      "elapsed_seconds": 0.003509809961542487,
+      "target": "hypercurve",
+      "name": "bezier_offset::regular_parallel_contact_tests::regular_source_frames_retain_unprojectable_selected_parameters",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/primitive-tangent-reuse-20260928-v568-hypercurve-tests",
+        "--exact",
+        "bezier_offset::regular_parallel_contact_tests::regular_source_frames_accept_every_retained_parameter_authority",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "primitive-tangent-reuse-20260928-v568-regular_source_frames_accept_every_retained_parameter_authority.log",
+      "elapsed_seconds": 0.0076013789512217045,
+      "target": "hypercurve",
+      "name": "bezier_offset::regular_parallel_contact_tests::regular_source_frames_accept_every_retained_parameter_authority",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/primitive-tangent-reuse-20260928-v568-hypercurve-tests",
+        "--exact",
+        "bezier_offset::regular_parallel_contact_tests::regular_source_cells_preserve_reversed_and_algebraic_range_boundaries",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "primitive-tangent-reuse-20260928-v568-regular_source_cells_preserve_reversed_and_algebraic_range_boundaries.log",
+      "elapsed_seconds": 0.01571626286022365,
+      "target": "hypercurve",
+      "name": "bezier_offset::regular_parallel_contact_tests::regular_source_cells_preserve_reversed_and_algebraic_range_boundaries",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/primitive-tangent-reuse-20260928-v568-hypercurve-tests",
+        "--exact",
+        "bezier_offset::regular_parallel_contact_tests::rational_pair_endpoint_tangents_preserve_both_operand_roles",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "primitive-tangent-reuse-20260928-v568-rational_pair_endpoint_tangents_preserve_both_operand_roles.log",
+      "elapsed_seconds": 0.0035372369457036257,
+      "target": "hypercurve",
+      "name": "bezier_offset::regular_parallel_contact_tests::rational_pair_endpoint_tangents_preserve_both_operand_roles",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/primitive-tangent-reuse-20260928-v568-hypercurve-tests",
+        "--exact",
+        "bezier_offset::regular_parallel_contact_tests::general_regular_pair_replays_unequal_contact_scale_changes",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "primitive-tangent-reuse-20260928-v568-general_regular_pair_replays_unequal_contact_scale_changes.log",
+      "elapsed_seconds": 1.015057068085298,
+      "target": "hypercurve",
+      "name": "bezier_offset::regular_parallel_contact_tests::general_regular_pair_replays_unequal_contact_scale_changes",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/primitive-tangent-reuse-20260928-v568-hypercurve-tests",
+        "--exact",
+        "bezier_offset::regular_parallel_contact_tests::stationary_component_queries_keep_one_sided_endpoints_and_exact_constraints",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "primitive-tangent-reuse-20260928-v568-stationary_component_queries_keep_one_sided_endpoints_and_exact_constraints.log",
+      "elapsed_seconds": 1.9161835128907114,
+      "target": "hypercurve",
+      "name": "bezier_offset::regular_parallel_contact_tests::stationary_component_queries_keep_one_sided_endpoints_and_exact_constraints",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/primitive-tangent-reuse-20260928-v568-hypercurve-tests",
+        "--exact",
+        "curve::curve_fillet::tests::joined_path_selects_and_replays_a_continuous_fillet_family",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "primitive-tangent-reuse-20260928-v568-joined_path_selects_and_replays_a_continuous_fillet_family.log",
+      "elapsed_seconds": 5.521114745177329,
+      "target": "hypercurve",
+      "name": "curve::curve_fillet::tests::joined_path_selects_and_replays_a_continuous_fillet_family",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/primitive-tangent-reuse-20260928-v568-hypercurve-tests",
+        "--exact",
+        "curve::curve_fillet::tests::nonlinear_linear_fillet_components_retain_unique_contacts_and_tangents",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "primitive-tangent-reuse-20260928-v568-nonlinear_linear_fillet_components_retain_unique_contacts_and_tangents.log",
+      "elapsed_seconds": 3.868668887997046,
+      "target": "hypercurve",
+      "name": "curve::curve_fillet::tests::nonlinear_linear_fillet_components_retain_unique_contacts_and_tangents",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/primitive-tangent-reuse-20260928-v568-hypercurve-tests",
+        "--exact",
+        "bezier_offset::conversion_tests::regular_ph_branch_pairs_retain_exact_cusp_incidence",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "primitive-tangent-reuse-20260928-v568-regular_ph_branch_pairs_retain_exact_cusp_incidence.log",
+      "elapsed_seconds": 2.817513843998313,
+      "target": "hypercurve",
+      "name": "bezier_offset::conversion_tests::regular_ph_branch_pairs_retain_exact_cusp_incidence",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/primitive-tangent-reuse-20260928-v568-hypercurve-tests",
+        "--exact",
+        "bezier_offset::conversion_tests::independent_oblique_chords_support_constrained_fillet_families",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "primitive-tangent-reuse-20260928-v568-independent_oblique_chords_support_constrained_fillet_families.log",
+      "elapsed_seconds": 21.491958072176203,
+      "target": "hypercurve",
+      "name": "bezier_offset::conversion_tests::independent_oblique_chords_support_constrained_fillet_families",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/primitive-tangent-reuse-20260928-v568-hypercurve-tests",
+        "--exact",
+        "curve::curve_fillet::stationary_continuous_family_regression::continuous_fillets_preserve_stationary_reparameterization",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "primitive-tangent-reuse-20260928-v568-continuous_fillets_preserve_stationary_reparameterization.log",
+      "elapsed_seconds": 33.55710973008536,
+      "target": "hypercurve",
+      "name": "curve::curve_fillet::stationary_continuous_family_regression::continuous_fillets_preserve_stationary_reparameterization",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/primitive-tangent-reuse-20260928-v568-hypercurve-tests",
+        "--exact",
+        "curve::curve_fillet::tests::normalized_region_selects_and_reuses_a_continuous_fillet_family",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "primitive-tangent-reuse-20260928-v568-normalized_region_selects_and_reuses_a_continuous_fillet_family.log",
+      "elapsed_seconds": 0.1139892979990691,
+      "target": "hypercurve",
+      "name": "curve::curve_fillet::tests::normalized_region_selects_and_reuses_a_continuous_fillet_family",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/primitive-tangent-reuse-20260928-v568-hypercurve-tests",
+        "--exact",
+        "curve::curve_fillet::stationary_family_composition_regression::normalized_region_selects_and_reuses_a_stationary_fillet_family",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "primitive-tangent-reuse-20260928-v568-normalized_region_selects_and_reuses_a_stationary_fillet_family.log",
+      "elapsed_seconds": 1.9164859219454229,
+      "target": "hypercurve",
+      "name": "curve::curve_fillet::stationary_family_composition_regression::normalized_region_selects_and_reuses_a_stationary_fillet_family",
+      "passed": true
+    }
+  ],
+  "checks": [],
+  "expected_cases": {
+    "hypercurve": [
+      "bezier_offset::regular_parallel_contact_tests::primitive_source_frames_share_factorization_across_distances_and_branches",
+      "curve::curve_fillet::stationary_retained_point_constraint_regression::stationary_fillet_family_accepts_independent_retained_point_constraints",
+      "bezier_offset::conversion_tests::opaque_retracing_line_uses_constant_direction_rank_component",
+      "bezier_offset::regular_parallel_contact_tests::regular_source_frames_retain_unprojectable_selected_parameters",
+      "bezier_offset::regular_parallel_contact_tests::regular_source_frames_accept_every_retained_parameter_authority",
+      "bezier_offset::regular_parallel_contact_tests::regular_source_cells_preserve_reversed_and_algebraic_range_boundaries",
+      "bezier_offset::regular_parallel_contact_tests::rational_pair_endpoint_tangents_preserve_both_operand_roles",
+      "bezier_offset::regular_parallel_contact_tests::general_regular_pair_replays_unequal_contact_scale_changes",
+      "bezier_offset::regular_parallel_contact_tests::stationary_component_queries_keep_one_sided_endpoints_and_exact_constraints",
+      "curve::curve_fillet::tests::joined_path_selects_and_replays_a_continuous_fillet_family",
+      "curve::curve_fillet::tests::nonlinear_linear_fillet_components_retain_unique_contacts_and_tangents",
+      "bezier_offset::conversion_tests::regular_ph_branch_pairs_retain_exact_cusp_incidence",
+      "bezier_offset::conversion_tests::independent_oblique_chords_support_constrained_fillet_families",
+      "curve::curve_fillet::stationary_continuous_family_regression::continuous_fillets_preserve_stationary_reparameterization",
+      "curve::curve_fillet::tests::normalized_region_selects_and_reuses_a_continuous_fillet_family",
+      "curve::curve_fillet::stationary_family_composition_regression::normalized_region_selects_and_reuses_a_stationary_fillet_family"
+    ]
+  },
+  "all_processes_reaped": true,
+  "probe_complete": true,
+  "qualification_complete": false,
+  "performance": [
+    {
+      "name": "curve::curve_fillet::stationary_retained_point_constraint_regression::stationary_fillet_family_accepts_independent_retained_point_constraints",
+      "before": 18.74039125093259,
+      "after": 18.38735413295217
+    },
+    {
+      "name": "bezier_offset::regular_parallel_contact_tests::general_regular_pair_replays_unequal_contact_scale_changes",
+      "before": 1.0150686770211905,
+      "after": 1.015057068085298
+    },
+    {
+      "name": "bezier_offset::regular_parallel_contact_tests::stationary_component_queries_keep_one_sided_endpoints_and_exact_constraints",
+      "before": 1.9665768120903522,
+      "after": 1.9161835128907114
+    },
+    {
+      "name": "curve::curve_fillet::tests::joined_path_selects_and_replays_a_continuous_fillet_family",
+      "before": 5.471331343054771,
+      "after": 5.521114745177329
+    },
+    {
+      "name": "curve::curve_fillet::tests::nonlinear_linear_fillet_components_retain_unique_contacts_and_tangents",
+      "before": 3.9693148389924318,
+      "after": 3.868668887997046
+    },
+    {
+      "name": "bezier_offset::conversion_tests::regular_ph_branch_pairs_retain_exact_cusp_incidence",
+      "before": 2.8173458059318364,
+      "after": 2.817513843998313
+    },
+    {
+      "name": "bezier_offset::conversion_tests::independent_oblique_chords_support_constrained_fillet_families",
+      "before": 21.895335427019745,
+      "after": 21.491958072176203
+    },
+    {
+      "name": "curve::curve_fillet::stationary_continuous_family_regression::continuous_fillets_preserve_stationary_reparameterization",
+      "before": 34.011939534917474,
+      "after": 33.55710973008536
+    },
+    {
+      "name": "curve::curve_fillet::tests::normalized_region_selects_and_reuses_a_continuous_fillet_family",
+      "before": 0.11408832692541182,
+      "after": 0.1139892979990691
+    },
+    {
+      "name": "curve::curve_fillet::stationary_family_composition_regression::normalized_region_selects_and_reuses_a_stationary_fillet_family",
+      "before": 1.966449029976502,
+      "after": 1.9164859219454229
+    }
+  ]
+}

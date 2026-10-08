@@ -1,0 +1,13 @@
+{
+  "tag": "e-plan-native-baseline-state",
+  "started": "2026-09-10T00:37:18.287Z",
+  "finished": "2026-09-10T00:37:18.314Z",
+  "elapsedSeconds": 0.024736165999999997,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "/tmp/calcium-e-plan.mOIsBs/baseline-check",
+  "args": [
+    "state"
+  ],
+  "code": 0,
+  "signal": null
+}

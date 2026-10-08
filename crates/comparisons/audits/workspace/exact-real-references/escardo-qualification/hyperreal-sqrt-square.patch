@@ -1,0 +1,134 @@
+diff --git a/PERFORMANCE.md b/PERFORMANCE.md
+index 4cf73f5..683f223 100644
+--- a/PERFORMANCE.md
++++ b/PERFORMANCE.md
+@@ -41,6 +41,32 @@ cargo bench --manifest-path ../hyperlimit/Cargo.toml --bench predicates
+ cargo bench --manifest-path ../hyperlimit/Cargo.toml --bench predicates --features dispatch-trace -- --write-dispatch-trace-md
+ ```
+ 
++## Unresolved absolute-value evaluation
++
++`sqrt(Square(x))` now approximates `x` once at the requested precision and
++takes the integer magnitude. Absolute value is 1-Lipschitz, so this preserves
++the existing one-unit approximation bound even when the sign is unresolved.
++No node variant, field, public API or serialization format changes. Known-sign
++constructor simplifications remain unchanged; the squared intermediate is not
++evaluated or cached, and aborted evaluations do not publish a result.
++
++The 2026-09-05 Escardo comparison uses fresh graphs, CPU6-pinned process CPU,
++nine alternating-order samples per case, and separate allocation-count runs.
++Across 32/128/512/2048-bit demands, unresolved positive/negative examples are
++2.68--3.70x faster and allocate49--78% fewer cumulative bytes. An opaque
++trigonometric identity perturbed by +/-2^-256 is2.01--2.69x faster once the
++request resolves the perturbation; exact zero is effectively unchanged at
++2048bits. Ordinary square-root controls are within1.5%, with identical
++allocation counts/bytes. Initial short-run noise is excluded from these claims.
++
++The linked serde/oracle driver changes text by-368 bytes, data by0 and BSS
++by+384; this is a scoped artifact observation, not a general binary-size claim.
++Independent MPFR/exact controls cover coarse requests, both signs, zero,
++cancellation, cache history and serde. Two regressions additionally verify
++raw-node rational bounds and abort/cache behavior. Raw sources,480 final
++timing/allocation rows and the pilot are retained in the workspace's
++`exact-real-references/escardo-qualification/` directory.
++
+ ## Binary32 export fast path
+ 
+ Exact-rational `Real::to_f32_lossy` now narrows the allocation-free binary64
+diff --git a/src/computable/approximation/exp_sqrt.rs b/src/computable/approximation/exp_sqrt.rs
+index dcc778c..add08e8 100644
+--- a/src/computable/approximation/exp_sqrt.rs
++++ b/src/computable/approximation/exp_sqrt.rs
+@@ -119,6 +119,13 @@ fn expm1(signal: &Option<Signal>, c: &Computable, p: Precision) -> BigInt {
+ }
+ 
+ fn sqrt(signal: &Option<Signal>, c: &Computable, p: Precision) -> BigInt {
++    // sqrt(x^2) is |x| even when x's sign is unresolved. Absolute value is
++    // 1-Lipschitz, so applying it to one p-precision integer approximation
++    // preserves the same one-unit error bound without evaluating x^2.
++    if let Some(child) = c.square_operand() {
++        return child.approx_signal(signal, p).abs();
++    }
++
+     // Sqrt uses a fixed-size integer sqrt for moderate precision and recursive
+     // Newton refinement for deeper requests. This avoids pulling in floating
+     // approximations while keeping high-precision sqrt from scaling quadratically.
+diff --git a/src/computable/node/roots_inverse_hyperbolic.rs b/src/computable/node/roots_inverse_hyperbolic.rs
+index 2f4e5e1..c1ff7a0 100644
+--- a/src/computable/node/roots_inverse_hyperbolic.rs
++++ b/src/computable/node/roots_inverse_hyperbolic.rs
+@@ -1,4 +1,11 @@
+ impl Computable {
++    pub(super) fn square_operand(&self) -> Option<&Computable> {
++        match &self.internal.approximation {
++            Approximation::Square(child) => Some(child),
++            _ => None,
++        }
++    }
++
+     pub(crate) const MAX_DIRECT_NTH_ROOT_DEGREE: u32 = 9;
+ 
+     pub(crate) fn sqrt_rational(r: Rational) -> Self {
+diff --git a/src/computable/node/tests.rs b/src/computable/node/tests.rs
+index 066716b..f0ef349 100644
+--- a/src/computable/node/tests.rs
++++ b/src/computable/node/tests.rs
+@@ -5,6 +5,58 @@ mod tests {
+     use num::bigint::BigUint;
+     use std::mem::size_of;
+ 
++    #[test]
++    fn sqrt_square_raw_nodes_preserve_exact_prefix_bounds_and_history() {
++        use rug::{Integer, Rational as RugRational};
++
++        let raw = |kind| Computable {
++            internal: Arc::new(Node::new(kind, BoundCache::Invalid, ExactSignCache::Invalid)),
++            signal: None,
++        };
++        for numerator in [-65_i64, -17, -1, 0, 1, 17, 65] {
++            for denominator in [1_u64, 2, 3, 16, 257] {
++                let q = Rational::fraction(numerator, denominator).unwrap();
++                let leaf = Computable::rational(q);
++                let squared = raw(Approximation::Square(leaf.clone()));
++                let value = raw(Approximation::Sqrt(squared.clone()));
++                for precision in [64, 1, 0, -1, -8, -59, -128, -512, -2048, -16, 0] {
++                    let actual =
++                        Integer::from_str_radix(&value.approx(precision).to_string(), 10).unwrap();
++                    let mut expected = RugRational::from((numerator.unsigned_abs(), denominator));
++                    if precision < 0 {
++                        expected *= Integer::from(1) << -precision;
++                    } else {
++                        expected /= Integer::from(1) << precision;
++                    }
++                    assert!((RugRational::from(actual) - expected).abs() <= 1);
++                }
++                // The fused evaluator never materializes the squared approximation.
++                assert!(squared.cached().is_none());
++            }
++        }
++    }
++
++    #[test]
++    fn sqrt_square_unresolved_sign_reuses_one_child_and_does_not_cache_aborts() {
++        use std::sync::atomic::{AtomicBool, Ordering};
++        let x = Computable::rational(Rational::fraction(1, 8).unwrap())
++            .sin()
++            .add(Computable::rational(Rational::fraction(-1, 2).unwrap()));
++        assert_eq!(x.exact_sign(), None);
++        let squared = x.clone().square();
++        let value = squared.clone().sqrt();
++        let signal = Arc::new(AtomicBool::new(true));
++        let _ = value.approx_signal(&Some(signal.clone()), -256);
++        assert!(value.cached().is_none());
++        assert!(squared.cached().is_none());
++        signal.store(false, Ordering::Relaxed);
++        let actual = value.approx_signal(&Some(signal), -256);
++        let (precision, child) = x.cached().expect("child approximation retained");
++        assert_eq!(precision, -256);
++        assert_eq!(actual, child.abs());
++        assert!(squared.cached().is_none());
++    }
++
+     #[test]
+     fn exp_constructor_and_deferred_kernel_match_directed_mpfr() {
+         use rug::{Float, Integer, Rational as RugRational, float::Round};

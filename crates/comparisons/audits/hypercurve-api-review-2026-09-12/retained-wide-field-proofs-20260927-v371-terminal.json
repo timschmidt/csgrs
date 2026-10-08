@@ -1,0 +1,83 @@
+{
+  "source_manifest": "retained-wide-field-proofs-20260927-v371-sources.json",
+  "source_directory": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/source-archives/retained-wide-field-proofs-20260927-v371",
+  "cases": [
+    {
+      "binary": "retained-wide-field-proofs-20260927-v371-hyperreal",
+      "name": "computable::node::quadratic_tower_tests::exact_tower_replay_retains_wide_cancellation_proofs",
+      "returncode": 0,
+      "log": "retained-wide-field-proofs-20260927-v371-case-000.log",
+      "elapsed_seconds": 0.0035425479291006923
+    },
+    {
+      "binary": "retained-wide-field-proofs-20260927-v371-hypercurve_curve_region_promotion",
+      "name": "strict_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions",
+      "returncode": 124,
+      "log": "retained-wide-field-proofs-20260927-v371-case-001.log",
+      "elapsed_seconds": 240.03511619090568
+    }
+  ],
+  "builds": [
+    {
+      "crate": "hyperreal",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "test",
+        "--lib",
+        "--release",
+        "--all-features",
+        "--no-run",
+        "--message-format=json",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "log": "retained-wide-field-proofs-20260927-v371-hyperreal-build.log",
+      "elapsed_seconds": 30.81162014300935,
+      "binary": {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-wide-field-proofs-20260927-v371-hyperreal",
+        "sha256": "5d710f821b15507bf1b8ce0ca985b33363828b930ebead666b83f5c7620cda01"
+      }
+    },
+    {
+      "crate": "hypercurve",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "test",
+        "--test",
+        "hypercurve_curve_region_promotion",
+        "--release",
+        "--all-features",
+        "--no-run",
+        "--message-format=json",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "log": "retained-wide-field-proofs-20260927-v371-hypercurve_curve_region_promotion-build.log",
+      "elapsed_seconds": 116.29543616005685,
+      "binary": {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-wide-field-proofs-20260927-v371-hypercurve_curve_region_promotion",
+        "sha256": "941d3a9565e5026f9275a7e8177a4b4756d4be50a9f97947e89b387a700a066d"
+      }
+    }
+  ],
+  "all_processes_reaped": true,
+  "checks": [
+    {
+      "label": "hyperreal-tower-tests",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-wide-field-proofs-20260927-v371-hyperreal",
+        "quadratic_tower",
+        "--nocapture",
+        "--test-threads=2"
+      ],
+      "returncode": 0,
+      "log": "retained-wide-field-proofs-20260927-v371-hyperreal-tower-tests.log",
+      "elapsed_seconds": 0.01570346299558878
+    }
+  ],
+  "qualification_scope": "Focused scalar regression and original strict full extended-fillet re-offset after removing coefficient-size gates from field arithmetic and proof reuse",
+  "failure": "case failure",
+  "qualification_complete": false
+}

@@ -1,0 +1,79 @@
+{
+  "status": "committed; original goal remains active",
+  "goal_status": "active",
+  "base_commit": "349c4bad9c5e0a1355fce05d7e8d096d4a1e30b5",
+  "change": [
+    "Prepare native, retained-fragment and restricted-source spans as support, active range, affine public chart and traversal.",
+    "Reuse the existing rational intersection replay on retained unit-chart supports; clip both parameter domains and preserve exact contact/overlap witnesses.",
+    "Retain singleton overlap intersections as open-curve contacts; keep regularized region positive-length semantics in the region consumer.",
+    "Retain original overlap chart ranges with their correspondence so later clipping cannot reinterpret the map basis.",
+    "Use the common correspondence clipping authority in the region consumer; remove the obsolete projective_reversal accessor and update its test.",
+    "Reuse certified paired overlap boundaries before reconstructing a parameter image over independent exact fields.",
+    "Preserve chart reversal, traversal cross signs and cross-span contact deduplication.",
+    "Replay off-diagonal contacts for full-domain projectively corresponding non-injective supports through the existing diagonal-deflated self-contact solver; retain its evidence once per prepared source span.",
+    "Keep continuously retraced or partial non-injective shared components explicitly incomplete until their whole parameter correspondence is replayed."
+  ],
+  "regressions": {
+    "retained_source_intersections_clip_contacts_and_reuse_selected_locations": "192 primary curve/open-path queries across polynomial, elevated rational, B-spline and NURBS sources, both policies, reversal, operand order; independent crossing/exclusion/endpoint expectations, evaluation and subdivision.",
+    "retained_source_overlaps_preserve_independent_ranges_and_singleton_contacts": "24 queries covering independently authored full/partial overlaps and a singleton prefix/tail intersection.",
+    "generated_chamfer_tails_reuse_paired_overlap_boundaries": "8 queries using a quartic setback root and independently authored radical controls; both operand orders and traversal directions.",
+    "reversed_retained_spline_charts_deduplicate_seams_and_map_interior_contacts": "32 queries on multi-span B-splines/NURBS, including descending affine span charts and seam deduplication.",
+    "retained_noninjective_domains_keep_off_diagonal_contacts_and_traversal_signs": "32 queries on a cubic whose selected prefix/tail meet at both the shared cut and a crossing with different parameters. Includes independent source construction, both policies, both traversal directions and operand order; checks the crossing parameters, point and tangent cross certificate.",
+    "retained_retraced_domains_cannot_certify_a_missing_positive_overlap": "Both policies must not label the diagonal-only intersection of a retraced quadratic as complete when a positive image overlap exists."
+  },
+  "qualification": {
+    "results": "retained-support-intersection-full-results.json",
+    "targets": 49,
+    "passed": 2163,
+    "failed": 9,
+    "ignored": 9,
+    "new_failures": 0,
+    "hypercurve_passed": 1931,
+    "hyperbrep_passed": 232,
+    "timeouts": 0,
+    "remaining_failures": [
+      "approximate_512_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions",
+      "arc_parabola_fillet_recovers_exact_complement_contacts",
+      "axis_aligned_algebraic_chords_reenter_exact_region_offsets",
+      "line_parabola_fillet_extends_the_regular_incident_cell_exactly",
+      "non_ph_bezier_pair_projective_fillet_retains_algebraic_extensions",
+      "nonconvex_algebraic_chord_expansion_is_exact_and_local_collapse_is_explicit",
+      "strict_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions",
+      "unified_mixed_line_arc_erosion_splits_after_a_curved_neck_collapse",
+      "unified_region_non_miter_erosions_split_after_neck_collapse"
+    ],
+    "previously_unqualified_expensive_cases": 8,
+    "full_suite_passing": false,
+    "all_target_checks": true,
+    "immutable_sources": true,
+    "source_files": 396,
+    "source_manifest": "retained-support-intersection-source-before-tests.json",
+    "formatting_and_whitespace_checks": true,
+    "removed_api_audit": "retained-support-intersection-removed-api-audit.json"
+  },
+  "generated_pair_probe": {
+    "record": "retained-support-intersection-generated-pairs-probe-final.json",
+    "baseline_unresolved_pairs": 44,
+    "remaining_unresolved_pairs": 18,
+    "independent_region_empty_xors": 8,
+    "rlib_sha256": "4115bb5ea8d11d89f928f126b1ede4823da16e665b9706202016c632d679d85c"
+  },
+  "self_contact_diagnostic": {
+    "before": "retained-support-self-contact-probe.log",
+    "after": "retained-support-self-contact-probe-after.log",
+    "audit": "retained-support-intersection-self-contact-audit.md",
+    "before_count": 1,
+    "after_count": 2,
+    "missing_origin_contact_restored": true
+  },
+  "remaining": [
+    "18 incomplete chord pairs remain in the final generated chamfer diagnostic (both policies), reduced from 44 baseline unresolved pairs; all eight independent generated/readmitted region XOR checks are exact and empty.",
+    "Generated circle and analytic parallel pair dispatch remains unimplemented in the common support resolver.",
+    "Exterior rational source domains explicitly block because the reused resultant context isolates only the unit source chart. Complete finite-domain replay and expose its chart semantics before lifting this guard.",
+    "Curve/path topology still requests native Bezier split materializations; migrate to general curve pieces and their proof-bearing arrangement.",
+    "The original nine promotion failures and eight expensive unqualified cases remain tracked; no full-suite or original-goal completion claim.",
+    "Partial non-injective and continuously retraced rational coincidences still need complete component/branch coverage in the common retained-domain resolver."
+  ],
+  "performance_scope": "No throughput, allocation, expression-depth or memory-size improvement is claimed. Self-contact replay is retained once per prepared span in each pair query.",
+  "commit": "ef0354f60e200c64c52e609ded7dadd63cb24f70"
+}

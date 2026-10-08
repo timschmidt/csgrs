@@ -1,0 +1,7 @@
+{
+  "path": "hypercurve/src/bezier_region.rs",
+  "base_sha256": "d31e48b76a81f550991a16f828f53137c4bb078a1fb121f9c8d99ed8e8eeea22",
+  "old": "    /// Produces authoritative all-family nesting evidence for native contours.\n    ///\n    /// This is the only role classifier used by native boundary construction,\n    /// unordered native arrangement, and retained exact line images. Native\n    /// segments are promoted to exact Bezier/conic carriers, distinct loop\n    /// pairs are validated through the general curve-pair kernel, and\n    /// containment then uses the same boundary classifier as every other\n    /// `CurveRegion2` carrier. Returning full evidence lets every caller reuse\n    /// the certified depths without maintaining another contour-nesting path.\n",
+  "new": "    /// Classifies native contours through the shared raw-loop nesting authority.\n    ///\n    /// Contours become exact Bezier/conic paths. The general path-intersection\n    /// kernel checks pair contacts before containment assigns roles. The\n    /// result supplies roles and signed areas without copying boundary\n    /// provenance into a separate report.\n",
+  "reason": "The old helper comment still describes the removed report and depth output. Apply only after exact V755 reap; executable code unchanged."
+}

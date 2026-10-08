@@ -1,0 +1,26 @@
+{
+  "repo": "hypercurve",
+  "target": "line_constant_coordinates",
+  "binary": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/line_constant_coordinates-cc42cb1559c64a0b",
+  "command": [
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/line_constant_coordinates-cc42cb1559c64a0b",
+    "--test-threads=4",
+    "--color",
+    "never"
+  ],
+  "sha256": "ca4d4cf9ae4c2c9e39ae8668a8150f0b8bc136e538a1218f42db3c3b6ff4fc2b",
+  "returncode": 0,
+  "timed_out": false,
+  "elapsed_seconds": 0.0013410579995252192,
+  "log": "finite-circle-projection-full-hypercurve-line_constant_coordinates.log",
+  "passed": [
+    "line_subdivision_preserves_constant_coordinate_identity"
+  ],
+  "failed": [],
+  "ignored": [],
+  "summaries": [
+    "test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s"
+  ],
+  "new_failures": [],
+  "known_failures": []
+}

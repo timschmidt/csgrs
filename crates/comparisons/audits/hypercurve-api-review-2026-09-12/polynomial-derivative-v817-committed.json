@@ -1,0 +1,24 @@
+{
+  "repos": {
+    "hypercurve": {
+      "commit": "55d2cfbef91a09f57b13a6e853069ab1727a420f",
+      "parent": "1f210047efcdae2fa6f62140be2b360b8261b899",
+      "paths": {
+        "benches/bezier_tangent_order.rs": "08922b9d6fa854a684394bdeddde223070972fbd9bdff22b9a4e68c01b744345",
+        "fuzz/fuzz_targets/bezier_tangent_order.rs": "8416bba0e99a52f545b68acadf709a417a4efad86b06ba8b6376c8c7eb0817fd",
+        "src/bezier_algebraic_image.rs": "7c09c113b1e390d65c2c7c428dcff48a1ecb753d080d39871fed55fe1cabdad5",
+        "src/bezier_arrangement.rs": "5ffc1cb5eea4055fd50834f5138178b604ee39e5f7d3461705de66f298de9111",
+        "src/bezier_split_endpoint.rs": "221fa8d32cbb3b1e00d81f70a520ecf43a5f61fe90ab2221460887314d8e8126",
+        "src/bezier_tangent_order.rs": "0fb01ea2a0ea0ec026f3d218d8f0be5e549315dd7321336e12a60c3018cfcc40",
+        "src/curve_region_boolean.rs": "5fe889a565ff00a664fcce29f119587f5b7f836632b4cb2b9cacc14ee9107b9a",
+        "src/lib.rs": "44c01355008d479cb6c61a8d27a073b47e0e3e10a964d87f1924796f1a7f0f87",
+        "tests/hypercurve_bezier_algebraic_image.rs": "262763bc43d0eefbaac8e3582645351c63a15b8f4b707638a5de301f70a6ff53",
+        "tests/hypercurve_bezier_split_materialization.rs": "b1dd11c3dfc8116638ab580efa2a9409d9f7e98bb6b4fca47e4c7559f23c6b5f",
+        "tests/hypercurve_bezier_tangent_order.rs": "186794114be41e5d22d642e4117d457454d2938f28e42e1169690a32e1cdaaa8"
+      }
+    }
+  },
+  "qualification": "polynomial-derivative-v817-terminal.json",
+  "verified_source_files": 2048,
+  "clean_repositories": 30
+}

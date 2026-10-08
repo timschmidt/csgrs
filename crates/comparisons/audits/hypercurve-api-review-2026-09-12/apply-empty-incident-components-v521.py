@@ -1,0 +1,14 @@
+from pathlib import Path
+A=Path(__file__).resolve().parent;W=A.parent
+p=W/'hypercurve/src/bezier_parameter.rs';s=p.read_text()
+marker="pub(crate) struct BezierParameterRay2<'a> {\n    pub(crate) anchor: &'a Real,\n    pub(crate) direction: BezierParameterRayDirection2,\n    pub(crate) barrier: Option<&'a BezierParameter2>,\n}\n"
+addition="\nimpl BezierParameterRay2<'_> {\n    /// The open extension is empty when its excluded barrier is at or behind\n    /// the anchor. Compare exact values, retaining an algebraic barrier's\n    /// root authority rather than constructing a compact zero-length range.\n    pub(crate) fn is_empty(\n        &self,\n        policy: &CurveContext,\n    ) -> CurveResult<Classification<bool>> {\n        let Some(barrier) = self.barrier else {\n            return Ok(Classification::Decided(false));\n        };\n        let strict = policy.strict_counterpart();\n        Ok(barrier\n            .cmp_by_refinement(&BezierParameter2::Exact(self.anchor.clone()), &strict)?\n            .map(|order| match self.direction {\n                BezierParameterRayDirection2::Increasing => !order.is_gt(),\n                BezierParameterRayDirection2::Decreasing => !order.is_lt(),\n            }))\n    }\n}\n"
+assert s.count(marker)==1 and 'impl BezierParameterRay2' not in s;s=s.replace(marker,marker+addition);p.write_text(s)
+p=W/'hypercurve/src/bezier_offset.rs';s=p.read_text()
+old='        if extended {\n            Ok(Classification::Decided(domains[axis].extension.map(\n                |extension| ParameterComponentChart2 {\n                    domain: domains[axis],\n                    mapping: ParameterComponentMap2::Incident(extension),\n                    range: &ranges[axis][1],\n                },\n            )))\n        } else {\n'
+new='        if extended {\n            let Some(extension) = domains[axis].extension else {\n                return Ok(Classification::Decided(None));\n            };\n            match extension.is_empty(policy)? {\n                Classification::Decided(true) => return Ok(Classification::Decided(None)),\n                Classification::Decided(false) => {}\n                Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),\n            }\n            Ok(Classification::Decided(Some(ParameterComponentChart2 {\n                domain: domains[axis],\n                mapping: ParameterComponentMap2::Incident(extension),\n                range: &ranges[axis][1],\n            })))\n        } else {\n'
+assert s.count(old)==1;s=s.replace(old,new)
+fixture=(A/'empty-incident-components-v520.rs').read_text();assert 'mod empty_incident_component_tests'not in s
+cut=fixture.rfind('\n}');assert cut>=0
+fixture=fixture[:cut]+(A/'empty-incident-algebraic-barrier-v521.rs').read_text()+fixture[cut:]
+p.write_text(s+fixture)

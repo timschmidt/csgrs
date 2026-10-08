@@ -1,0 +1,223 @@
+{
+  "schema": 1,
+  "captured_on": "2026-07-31",
+  "checkpoint": "split-rational-component-residual",
+  "source_revision": "47d78726c20266c9217b8a39be126be3c1ec4de8",
+  "component_transport_revision": "d9f26ffbde34cffdd552063724c8a27b3fe8a425",
+  "residual_exclusion_revision": "89e4eb83f5d8a67aadd1f8b43c7ecceadfcce9b9",
+  "cached_dispatch_revision": "47d78726c20266c9217b8a39be126be3c1ec4de8",
+  "historical_control_revision": "d9f26ffbde34cffdd552063724c8a27b3fe8a425",
+  "hypersolve_revision": "4e0a13bf9a5f899afdd22890a2d84b1a4402c1ff",
+  "scope": {
+    "operation": "complete finite analytic-parallel/rational-Bezier intersections after exact extraction of one rational positive-dimensional parameter component",
+    "completed_families": [
+      "multiple monotone branches of a noninjective rational parameter map",
+      "finite branches split by exact projective denominator poles",
+      "stationary boundaries with and without orientation reversal",
+      "exact clipping at lifted images zero and one",
+      "isolated closed-domain component touches",
+      "positive-dimensional overlaps and isolated contacts in one result",
+      "isolated residual intersections after exact component division",
+      "rootless residual exclusion on the authored unit parameter square",
+      "STRICT and APPROXIMATE_512 through the identical proof graph"
+    ],
+    "public_api": "BezierParallel2::intersections returns BezierParallelIntersectionSet2 with independent clone-shared contact, overlap, and incomplete-projection storage",
+    "compatibility_shims_added": false,
+    "hypermesh_modified": false
+  },
+  "mathematical_contract": {
+    "factorization": "Hypersolve divides both authored bivariate equations exactly by the certified rational component and retains both cofactor equations; multiplication by the published component reconstructs each authored equation exactly",
+    "partition_events": [
+      "D(r)=0 projective poles",
+      "N'(r)D(r)-N(r)D'(r)=0 stationary parameters",
+      "N(r)=0 lifted-domain entry or touch",
+      "N(r)-D(r)=0 lifted-domain exit or touch",
+      "authored retained endpoints zero and one"
+    ],
+    "branch_domains": "every open cell is classified by an exact rational sample, exact derivative sign, and exact lifted range; adjacent cells merge only when orientation agrees and no pole separates them",
+    "overlap_orientation": "retained and lifted ranges are transported into canonical analytic-parallel-first order with explicit same or reversed orientation",
+    "isolated_points": "uncovered finite authored endpoints or zero/unit lifted-image boundaries are replayed as exact parameter pairs and may coexist with overlap branches",
+    "residuals": "the divided cofactor system remains authoritative for all isolated intersections not lying on the extracted component",
+    "fast_disjointness": "a residual equation is declared rootless only when exact tensor-product Bernstein conversion over [0,1]^2 gives every control coefficient one common strict sign; mixed, zero, or undecidable controls fall through to complete resultants",
+    "selected_parallel": "each overlap domain and isolated component pair independently replays the signed selected-normal branch; negative branch evidence is discarded and a vanishing branch is rejected",
+    "strict": "STRICT accepts only exact division, root isolation, ordering, rational images, Bernstein signs, branch signs, and parameter equality",
+    "approximate_512": "APPROXIMATE_512 uses the same construction and may terminate only where the inherited Hyperreal policy permits the 512-bit equality decision; it does not construct approximate parameters, components, contacts, or ranges",
+    "failure_semantics": "unsupported coefficient towers, additional positive-dimensional residual components, and unresolved higher-nullity systems retain explicit incomplete candidate evidence"
+  },
+  "implementation": {
+    "result_shape": "BezierParallelIntersectionSet2 stores Arc<[contact]>, Arc<[overlap]>, and Option<Arc<candidates>> so complete contacts and overlaps are not mutually exclusive and successful results do not retain full projection vectors",
+    "component_shape": "RationalParameterComponentSystem2 transports overlap slices, isolated parameter-pair slices, and the two exactly divided residual equations",
+    "partition": "rational_parameter_component_domains sorts and exact-deduplicates every pole, stationary, zero-image, unit-image, and authored-endpoint boundary before cell classification",
+    "residual_projection": "parallel_candidate_system_from_rational_component first attempts the exact Bernstein unit-square exclusion and otherwise sends the cofactors through the existing complete projection, axis-saturation, and replay spine",
+    "cached_candidates": "candidate-only calls reuse a cached certified rational PH projection even when it reports the permitted DegenerateResultant marker",
+    "cached_overlaps": "full intersection calls accept an early rational overlap only when the rational authority certifies one overlap; noninjective or mixed components remain degenerate there and continue into multi-branch component partition",
+    "regression_guard": "the noninjective public test performs a candidate query first, then proves that the same cached object still returns both oriented overlap branches under both policies"
+  },
+  "matched_release_benchmark": {
+    "method": "five sequential all-feature release-binary processes per revision pinned to CPU 11 with identical fixtures and iterations; visible whole-process contention samples are retained and medians are reported",
+    "machine": "AMD Ryzen 7 5800X3D, Linux 7.0.4-100.fc43.x86_64, rustc 1.97.0, cargo 1.97.0",
+    "historical_checkout": "/tmp/hypercurve-residual-baseline.5rUj3C/hypercurve",
+    "historical_semantics": "the extracted overlap is complete, but both divided residual equations are sent through generic degree-32 projections even when one is sign-definite over the authored square; simple cached overlaps also rebuild generic bivariate systems",
+    "candidate_semantics": "the same overlap is returned with residual disjointness exactly certified; residual systems with actual isolated roots continue through complete resultants",
+    "lanes": {
+      "nonlinear_rational_component_candidates": {
+        "iterations_per_process": 5,
+        "historical_samples_milliseconds": [346.296698, 323.885869, 307.445229, 304.988601, 305.550317],
+        "candidate_samples_milliseconds": [39.887827, 36.987633, 49.349391, 38.383035, 37.273725],
+        "historical_median_milliseconds": 307.445229,
+        "candidate_median_milliseconds": 38.383035,
+        "median_change_percent": -87.515488,
+        "speedup": 8.009925
+      },
+      "nonlinear_rational_component_contacts": {
+        "iterations_per_process": 5,
+        "historical_samples_milliseconds": [307.861236, 444.530303, 314.100008, 305.274036, 304.120293],
+        "candidate_samples_milliseconds": [60.222866, 36.485375, 68.229924, 36.912188, 36.184974],
+        "historical_median_milliseconds": 307.861236,
+        "candidate_median_milliseconds": 36.912188,
+        "median_change_percent": -88.010122,
+        "speedup": 8.340368
+      },
+      "line_overlap_candidates": {
+        "iterations_per_process": 1000,
+        "historical_samples_microseconds": [154.547, 158.637, 85.432, 83.185, 87.012],
+        "candidate_samples_microseconds": [2.357, 2.355, 2.326, 2.409, 2.383],
+        "historical_median_microseconds": 87.012,
+        "candidate_median_microseconds": 2.383,
+        "median_change_percent": -97.261297,
+        "speedup": 36.513638
+      },
+      "line_overlap_contacts": {
+        "iterations_per_process": 1000,
+        "historical_samples_microseconds": [157.061, 169.381, 86.485, 83.247, 87.336],
+        "candidate_samples_microseconds": [7.512, 7.480, 7.443, 7.722, 7.344],
+        "historical_median_microseconds": 87.336,
+        "candidate_median_microseconds": 7.480,
+        "median_change_percent": -91.435376,
+        "speedup": 11.675936
+      },
+      "warm_ph_overlap_candidates": {
+        "iterations_per_process": 10,
+        "historical_samples_microseconds": [903.379, 932.907, 469.841, 476.410, 464.489],
+        "candidate_samples_microseconds": [1.857, 1.819, 3.181, 1.881, 1.779],
+        "historical_median_microseconds": 476.410,
+        "candidate_median_microseconds": 1.857,
+        "median_change_percent": -99.610210,
+        "speedup": 256.548196,
+        "interpretation": "ten-iteration sub-four-microsecond sentinel; direction is authoritative but fine-grained magnitude is noisy"
+      },
+      "warm_ph_overlap_contacts": {
+        "iterations_per_process": 10,
+        "historical_samples_microseconds": [871.473, 895.526, 452.802, 459.322, 438.759],
+        "candidate_samples_microseconds": [6.687, 9.805, 7.719, 11.703, 6.736],
+        "historical_median_microseconds": 459.322,
+        "candidate_median_microseconds": 7.719,
+        "median_change_percent": -98.319480,
+        "speedup": 59.505376
+      }
+    },
+    "ordinary_sentinels": {
+      "exact_candidates_historical_median_microseconds": 38.307,
+      "exact_candidates_candidate_median_microseconds": 38.908,
+      "exact_candidates_change_percent": 1.568904,
+      "exact_contacts_historical_median_microseconds": 46.555,
+      "exact_contacts_candidate_median_microseconds": 47.039,
+      "exact_contacts_change_percent": 1.039631,
+      "higher_nullity_contacts_historical_median_milliseconds": 2.126423,
+      "higher_nullity_contacts_candidate_median_milliseconds": 2.132039,
+      "higher_nullity_contacts_change_percent": 0.264109,
+      "interpretation": "ordinary exact and higher-nullity medians remain within 1.57 percent of the immediate parent while the new fast paths are restricted to certified component residuals and cached rational parallels"
+    }
+  },
+  "matched_heaptrack": {
+    "method": "identical complete release benchmark processes pinned to CPU 11 under Heaptrack record-only; heaptrack_print summaries are authoritative",
+    "historical_profile": "/tmp/hypercurve-residual-baseline-d9f26ff.zst.zst",
+    "candidate_profile": "/tmp/hypercurve-residual-current-47d7872.zst.zst",
+    "historical": {
+      "runtime_seconds": 60.577,
+      "allocation_calls": 107213475,
+      "temporary_allocations": 20832560,
+      "peak_heap_mebibytes_reported": 8.85,
+      "peak_rss_mebibytes_reported": 22.33,
+      "retained_at_exit_mebibytes_reported": 8.57
+    },
+    "candidate": {
+      "runtime_seconds": 15.125,
+      "allocation_calls": 23149608,
+      "temporary_allocations": 1465598,
+      "peak_heap_mebibytes_reported": 8.54,
+      "peak_rss_mebibytes_reported": 21.68,
+      "retained_at_exit_mebibytes_reported": 8.37
+    },
+    "change_percent": {
+      "runtime": -75.031778,
+      "allocation_calls": -78.407931,
+      "temporary_allocations": -92.964868,
+      "peak_heap": -3.502825,
+      "peak_rss": -2.910882,
+      "retained_at_exit": -2.333722
+    }
+  },
+  "release_size": {
+    "matched_offset_microbenchmark": {
+      "historical_file_bytes": 7079912,
+      "candidate_file_bytes": 7093696,
+      "file_change_percent": 0.194692,
+      "historical_text_bytes": 5381202,
+      "candidate_text_bytes": 5388342,
+      "text_change_percent": 0.132684,
+      "historical_loadable_bytes": 5650010,
+      "candidate_loadable_bytes": 5658190,
+      "loadable_change_percent": 0.144779
+    },
+    "interpretation": "the proof-producing rejection and two cached dispatch guards cost 13.8 KiB in the benchmark image while eliminating tens of millions of exact-arithmetic allocations"
+  },
+  "static_callgraph": {
+    "tool": "tools/hyper-callgraph",
+    "command": "hyper-callgraph --root {isolated source root} --out-dir {artifact} --crate-name hypercurve --include-examples --include-tests --include-bench --include-fuzz --format json",
+    "historical_nodes": 23788,
+    "candidate_nodes": 23887,
+    "node_change": 99,
+    "node_change_percent": 0.416176,
+    "historical_edges": 41734,
+    "candidate_edges": 42145,
+    "edge_change": 411,
+    "edge_change_percent": 0.984809,
+    "historical_artifact": "/tmp/hypercurve-residual-baseline-callgraph/callgraph.json",
+    "candidate_artifact": "/tmp/hypercurve-residual-current-callgraph/callgraph.json",
+    "interpretation": "the static parser counts test and benchmark call sites and is a navigation aid, not reachability or binary-size proof"
+  },
+  "verification": {
+    "all_features": {
+      "library_tests": 287,
+      "parallel_fit_offset_integration_tests": 83,
+      "curve_region_boolean_tests": 29,
+      "curve_region_boolean_fuzz_tests": 11,
+      "pathological_exact_boolean_operations": 268,
+      "full_cargo_test": "passed"
+    },
+    "no_default_features": {
+      "library_tests": 254,
+      "parallel_fit_offset_integration_tests": 73,
+      "full_cargo_test": "passed"
+    },
+    "quality": [
+      "cargo clippy --all-targets --all-features -- -D warnings",
+      "cargo clippy --all-targets --no-default-features -- -D warnings",
+      "cargo fmt --all -- --check",
+      "git diff --check",
+      "readme and rustdoc tests"
+    ]
+  },
+  "competitive_interpretation": {
+    "direct_external_peer_lane": null,
+    "reason": "the surveyed polygon and spline peers do not expose a semantically matched exact analytic-parallel/rational-Bezier intersection API with algebraic parameter evidence, positive-dimensional overlap ranges, and STRICT/APPROXIMATE_512 policy terminals",
+    "claim_boundary": "this checkpoint reports only matched Hypercurve historical controls; the root plan retains the separate polygon Boolean competitive baselines and does not infer peer superiority from incomparable semantics"
+  },
+  "remaining": [
+    "multiple independent positive-dimensional residual components and generic higher-nullity component decomposition",
+    "supported non-rational coefficient towers",
+    "remaining exact parallel carrier traversal, transform, trim, and serialization surfaces",
+    "authoritative CurveRegion2 offset-piece regularization and unified corner engine"
+  ]
+}

@@ -1,0 +1,27 @@
+{
+  "returncode": 0,
+  "elapsed_seconds": 0.16386457098997198,
+  "normal_library_sha256": "80e20958e5d3b5d992cd8a64349c236522867b1c89147c36fd889e417c5c85ba",
+  "log": "finite-analytic-native-poles-exterior-completed.log",
+  "source": "finite-circle-affine-completed.rs",
+  "command": [
+    "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustc",
+    "--edition=2024",
+    "-O",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-circle-affine-completed.rs",
+    "--extern",
+    "hypercurve=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypercurve-49e17f22910a7047.rlib",
+    "-L",
+    "dependency=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps",
+    "-o",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-analytic-native-poles-exterior-completed"
+  ],
+  "source_sha256": "8cf0ac89526f9eb5b9a11532f6c4342c72840c80b608f5b843a0b7766b93bf97",
+  "executable_sha256": "2c887aae8a06585fd0c0ac97418e1a7a33b4267f3038bbe07266ece04844a955",
+  "counts": {
+    "complete": 8,
+    "incomplete": 0,
+    "point_replays": 16,
+    "topologies": 8
+  }
+}

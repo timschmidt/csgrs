@@ -1,0 +1,6 @@
+{
+  "started": "2026-09-09T00:42:44.370Z",
+  "finished": "2026-09-09T00:42:46.957Z",
+  "observations": 108,
+  "limits": "Nine recipes at 1/100/1000 queries and both lifecycles. Requested live/peak deltas only, not RSS, no timing claim and no assumption of deterministic weak-cache occupancy."
+}

@@ -1,0 +1,106 @@
+[
+  {
+    "label": "debug-asin-184000",
+    "args": [
+      "asin",
+      "184000"
+    ],
+    "status": 0,
+    "signal": null,
+    "stdout": "PASS asin(1/16) bits=184000 elapsed_ns=2122587790\n",
+    "stderr": "START asin(1/16) bits=184000 oracle_bits=184256\n",
+    "sha256": "6f3e856c756430c952247a2d051a0fad31e86bfe482c7d3a3dc4edb704fef26b",
+    "source": "532e283afdbd070a6dd0d53b0def3c62293b97a4e2a32c94e0eb5e1cf5839069"
+  },
+  {
+    "label": "debug-asinh-184000",
+    "args": [
+      "asinh",
+      "184000"
+    ],
+    "status": 0,
+    "signal": null,
+    "stdout": "PASS asinh(1/16) bits=184000 elapsed_ns=3421538827\n",
+    "stderr": "START asinh(1/16) bits=184000 oracle_bits=184256\n",
+    "sha256": "6f3e856c756430c952247a2d051a0fad31e86bfe482c7d3a3dc4edb704fef26b",
+    "source": "532e283afdbd070a6dd0d53b0def3c62293b97a4e2a32c94e0eb5e1cf5839069"
+  },
+  {
+    "label": "debug-asin-192000",
+    "args": [
+      "asin",
+      "192000"
+    ],
+    "status": 0,
+    "signal": null,
+    "stdout": "PASS asin(1/16) bits=192000 elapsed_ns=7501644647\n",
+    "stderr": "START asin(1/16) bits=192000 oracle_bits=192256\n",
+    "sha256": "6f3e856c756430c952247a2d051a0fad31e86bfe482c7d3a3dc4edb704fef26b",
+    "source": "532e283afdbd070a6dd0d53b0def3c62293b97a4e2a32c94e0eb5e1cf5839069"
+  },
+  {
+    "label": "debug-asinh-192000",
+    "args": [
+      "asinh",
+      "192000"
+    ],
+    "status": 0,
+    "signal": null,
+    "stdout": "PASS asinh(1/16) bits=192000 elapsed_ns=4862038835\n",
+    "stderr": "START asinh(1/16) bits=192000 oracle_bits=192256\n",
+    "sha256": "6f3e856c756430c952247a2d051a0fad31e86bfe482c7d3a3dc4edb704fef26b",
+    "source": "532e283afdbd070a6dd0d53b0def3c62293b97a4e2a32c94e0eb5e1cf5839069"
+  },
+  {
+    "label": "debug-asin-256000",
+    "args": [
+      "asin",
+      "256000"
+    ],
+    "status": 0,
+    "signal": null,
+    "stdout": "PASS asin(1/16) bits=256000 elapsed_ns=5646821164\n",
+    "stderr": "START asin(1/16) bits=256000 oracle_bits=256256\n",
+    "sha256": "6f3e856c756430c952247a2d051a0fad31e86bfe482c7d3a3dc4edb704fef26b",
+    "source": "532e283afdbd070a6dd0d53b0def3c62293b97a4e2a32c94e0eb5e1cf5839069"
+  },
+  {
+    "label": "debug-asinh-256000",
+    "args": [
+      "asinh",
+      "256000"
+    ],
+    "status": 0,
+    "signal": null,
+    "stdout": "PASS asinh(1/16) bits=256000 elapsed_ns=4314133802\n",
+    "stderr": "START asinh(1/16) bits=256000 oracle_bits=256256\n",
+    "sha256": "6f3e856c756430c952247a2d051a0fad31e86bfe482c7d3a3dc4edb704fef26b",
+    "source": "532e283afdbd070a6dd0d53b0def3c62293b97a4e2a32c94e0eb5e1cf5839069"
+  },
+  {
+    "label": "debug-asin-524288",
+    "args": [
+      "asin",
+      "524288"
+    ],
+    "status": 0,
+    "signal": null,
+    "stdout": "PASS asin(1/16) bits=524288 elapsed_ns=17865773702\n",
+    "stderr": "START asin(1/16) bits=524288 oracle_bits=524544\n",
+    "sha256": "6f3e856c756430c952247a2d051a0fad31e86bfe482c7d3a3dc4edb704fef26b",
+    "source": "532e283afdbd070a6dd0d53b0def3c62293b97a4e2a32c94e0eb5e1cf5839069"
+  },
+  {
+    "label": "debug-asinh-524288",
+    "args": [
+      "asinh",
+      "524288"
+    ],
+    "status": 0,
+    "signal": null,
+    "stdout": "PASS asinh(1/16) bits=524288 elapsed_ns=18000491843\n",
+    "stderr": "START asinh(1/16) bits=524288 oracle_bits=524544\n",
+    "sha256": "6f3e856c756430c952247a2d051a0fad31e86bfe482c7d3a3dc4edb704fef26b",
+    "source": "532e283afdbd070a6dd0d53b0def3c62293b97a4e2a32c94e0eb5e1cf5839069"
+  }
+]

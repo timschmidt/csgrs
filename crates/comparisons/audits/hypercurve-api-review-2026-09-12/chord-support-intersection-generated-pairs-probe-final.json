@@ -1,0 +1,11 @@
+{
+  "returncode": 0,
+  "seconds": 1.0152495060028741,
+  "command": [
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/chord-support-intersection-generated-pairs-probe-final"
+  ],
+  "rlib": "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/libhypercurve-2c7ff6f3fbe07653.rlib",
+  "rlib_sha256": "2fd7279d1e56cf56de0db69880ebdb9ebe2f4f31dc62e7a11aa9b767263b2758",
+  "unresolved_pairs": [],
+  "xor_empty": 8
+}

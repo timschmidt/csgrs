@@ -1,0 +1,25 @@
+{
+  "commit": "b7a4fa4e078fbbcd692a644a306d93296699e093",
+  "verified_source_files": 396,
+  "statuses": {
+    "hypercurve": [],
+    "hyperbrep": [],
+    "hyperreal": [
+      " M .github/workflows/ci.yml",
+      " M Cargo.toml",
+      " M README.md",
+      " M src/lib.rs",
+      " M src/rational/arithmetic/aggregate_products.rs",
+      " M src/rational/arithmetic/comparison.rs",
+      " M src/rational/arithmetic/tests.rs",
+      " M src/rational/convert.rs",
+      " M tests/gmp_api_coverage.rs",
+      " M tests/rational_oracle.rs",
+      "?? scripts/verify_verus.py",
+      "?? src/verified/",
+      "?? verification/"
+    ]
+  },
+  "other_session_owns": "hyperreal",
+  "workspace_clean_claim": false
+}

@@ -1,0 +1,12 @@
+{
+  "head": "905e2bc74e2ba01a4dcf0b3e7fbee8d854383949",
+  "parent": "fc0197e60fbe79b37a8d144a338828f76d531b03",
+  "files": {
+    "src/bezier_offset.rs": "f6f224096b0e388fb9187a978cfa85a52c743b7bc3316fc4a95b56f05fa45423",
+    "src/rational_bezier_general.rs": "7354f4500a3c9eea3dff4e33bddffe250563ea976d96dc0ffd4fe8a00e2e1a50"
+  },
+  "head_matches_qualified_and_staged": true,
+  "preserved_unqualified_region_sha256": "1bc26463270fbe520873708bc6909db19a7af36356367f8bbc366b92696ed720",
+  "status": " M src/bezier_region.rs\n",
+  "all_owned_processes_reaped": true
+}

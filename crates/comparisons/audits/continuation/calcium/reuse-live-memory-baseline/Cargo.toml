@@ -1,0 +1,12 @@
+[package]
+name = "calcium-reuse-live-memory-baseline"
+version = "0.1.0"
+edition = "2024"
+publish = false
+[workspace]
+[dependencies]
+hyperreal = { path = "../baseline-hyperreal" }
+num = "0.4.3"
+[[bin]]
+name = "calcium-reuse-live-memory-baseline"
+path = "../reuse-live-memory.rs"

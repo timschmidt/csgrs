@@ -1,0 +1,16 @@
+{
+  "name": "bezier_region::tests::nonrepresented_chord_and_retained_rational_arc_share_the_fillet_kernel",
+  "command": [
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/corner-normalization-20260923-fix6-libtest",
+    "--exact",
+    "bezier_region::tests::nonrepresented_chord_and_retained_rational_arc_share_the_fillet_kernel",
+    "--test-threads=1",
+    "--nocapture",
+    "--color",
+    "never"
+  ],
+  "returncode": 101,
+  "elapsed_seconds": 0.21394011401571333,
+  "binary_sha256": "ceee350303db3b7f5d6e022358523e96646b8e94c6b2599664ea6841b8170cc9",
+  "log": "corner-normalization-20260923-fix6-replay-nonrepresented_chord_and_retained_rational_arc_share_the_fillet_kernel.log"
+}

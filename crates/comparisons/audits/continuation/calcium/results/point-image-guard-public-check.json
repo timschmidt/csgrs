@@ -1,0 +1,15 @@
+{
+  "tag": "point-image-guard-public-check",
+  "started": "2026-09-10T19:49:09.151Z",
+  "finished": "2026-09-10T19:49:09.836Z",
+  "elapsedSeconds": 0.682412084,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "node",
+  "args": [
+    "check-point-image.mjs",
+    "results/power-sums-public-baseline.stdout",
+    "results/point-image-guard-public.stdout"
+  ],
+  "code": 0,
+  "signal": null
+}

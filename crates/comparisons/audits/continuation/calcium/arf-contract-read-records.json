@@ -1,0 +1,573 @@
+[
+  {
+    "repo": "flint",
+    "path": "src/arf/test/main.c",
+    "ranges": [
+      [
+        1,
+        145
+      ]
+    ],
+    "note": "Checkpoint44. Source-read: public finite-dyadic/rounding/storage contract, wrapper consistency, destination reuse, comparison or valid conversion/I-O tests. Special/unbounded/exceptional paths are read-only here, not newly executed."
+  },
+  {
+    "repo": "flint",
+    "path": "src/arf/test/t-abs_bound_le_2exp_fmpz.c",
+    "ranges": [
+      [
+        1,
+        59
+      ]
+    ],
+    "note": "Checkpoint44. Source-read: public finite-dyadic/rounding/storage contract, wrapper consistency, destination reuse, comparison or valid conversion/I-O tests. Special/unbounded/exceptional paths are read-only here, not newly executed."
+  },
+  {
+    "repo": "flint",
+    "path": "src/arf/test/t-abs_bound_lt_2exp_fmpz.c",
+    "ranges": [
+      [
+        1,
+        59
+      ]
+    ],
+    "note": "Checkpoint44. Source-read: public finite-dyadic/rounding/storage contract, wrapper consistency, destination reuse, comparison or valid conversion/I-O tests. Special/unbounded/exceptional paths are read-only here, not newly executed."
+  },
+  {
+    "repo": "flint",
+    "path": "src/arf/test/t-abs_bound_lt_2exp_si.c",
+    "ranges": [
+      [
+        1,
+        80
+      ]
+    ],
+    "note": "Checkpoint44. Source-read: public finite-dyadic/rounding/storage contract, wrapper consistency, destination reuse, comparison or valid conversion/I-O tests. Special/unbounded/exceptional paths are read-only here, not newly executed."
+  },
+  {
+    "repo": "flint",
+    "path": "src/arf/test/t-add.c",
+    "ranges": [
+      [
+        1,
+        200
+      ]
+    ],
+    "note": "Checkpoint44. Source-read: randomized mode is overwritten by ARF_RND_DOWN; naive reference uses the same arithmetic family. Not an all-mode independent oracle."
+  },
+  {
+    "repo": "flint",
+    "path": "src/arf/test/t-add_fmpz.c",
+    "ranges": [
+      [
+        1,
+        105
+      ]
+    ],
+    "note": "Checkpoint44. Source-read: public finite-dyadic/rounding/storage contract, wrapper consistency, destination reuse, comparison or valid conversion/I-O tests. Special/unbounded/exceptional paths are read-only here, not newly executed."
+  },
+  {
+    "repo": "flint",
+    "path": "src/arf/test/t-add_fmpz_2exp.c",
+    "ranges": [
+      [
+        1,
+        111
+      ]
+    ],
+    "note": "Checkpoint44. Source-read: public finite-dyadic/rounding/storage contract, wrapper consistency, destination reuse, comparison or valid conversion/I-O tests. Special/unbounded/exceptional paths are read-only here, not newly executed."
+  },
+  {
+    "repo": "flint",
+    "path": "src/arf/test/t-add_si.c",
+    "ranges": [
+      [
+        1,
+        104
+      ]
+    ],
+    "note": "Checkpoint44. Source-read: n_randint(state,1) makes the in-place branch unreachable. Other wrappers have two branches; this is a test-coverage gap, not a proved library failure."
+  },
+  {
+    "repo": "flint",
+    "path": "src/arf/test/t-add_ui.c",
+    "ranges": [
+      [
+        1,
+        104
+      ]
+    ],
+    "note": "Checkpoint44. Source-read: public finite-dyadic/rounding/storage contract, wrapper consistency, destination reuse, comparison or valid conversion/I-O tests. Special/unbounded/exceptional paths are read-only here, not newly executed."
+  },
+  {
+    "repo": "flint",
+    "path": "src/arf/test/t-addmul_fmpz.c",
+    "ranges": [
+      [
+        1,
+        114
+      ]
+    ],
+    "note": "Checkpoint44. Source-read: public finite-dyadic/rounding/storage contract, wrapper consistency, destination reuse, comparison or valid conversion/I-O tests. Special/unbounded/exceptional paths are read-only here, not newly executed."
+  },
+  {
+    "repo": "flint",
+    "path": "src/arf/test/t-addmul_si.c",
+    "ranges": [
+      [
+        1,
+        113
+      ]
+    ],
+    "note": "Checkpoint44. Source-read: public finite-dyadic/rounding/storage contract, wrapper consistency, destination reuse, comparison or valid conversion/I-O tests. Special/unbounded/exceptional paths are read-only here, not newly executed."
+  },
+  {
+    "repo": "flint",
+    "path": "src/arf/test/t-addmul_ui.c",
+    "ranges": [
+      [
+        1,
+        112
+      ]
+    ],
+    "note": "Checkpoint44. Source-read: public finite-dyadic/rounding/storage contract, wrapper consistency, destination reuse, comparison or valid conversion/I-O tests. Special/unbounded/exceptional paths are read-only here, not newly executed."
+  },
+  {
+    "repo": "flint",
+    "path": "src/arf/test/t-approx_dot.c",
+    "ranges": [
+      [
+        1,
+        231
+      ]
+    ],
+    "note": "Checkpoint44. Source-read: reference error sum indexes both vectors with revx even when revy differs. Reversal and inflated Arb containment share backend machinery and are not an independent exact oracle. No crash/invalid-memory reproduction."
+  },
+  {
+    "repo": "flint",
+    "path": "src/arf/test/t-ceil.c",
+    "ranges": [
+      [
+        1,
+        94
+      ]
+    ],
+    "note": "Checkpoint44. Source-read: public finite-dyadic/rounding/storage contract, wrapper consistency, destination reuse, comparison or valid conversion/I-O tests. Special/unbounded/exceptional paths are read-only here, not newly executed."
+  },
+  {
+    "repo": "flint",
+    "path": "src/arf/test/t-cmp.c",
+    "ranges": [
+      [
+        1,
+        116
+      ]
+    ],
+    "note": "Checkpoint44. Source-read: public finite-dyadic/rounding/storage contract, wrapper consistency, destination reuse, comparison or valid conversion/I-O tests. Special/unbounded/exceptional paths are read-only here, not newly executed."
+  },
+  {
+    "repo": "flint",
+    "path": "src/arf/test/t-cmp_2exp_si.c",
+    "ranges": [
+      [
+        1,
+        55
+      ]
+    ],
+    "note": "Checkpoint44. Source-read: public finite-dyadic/rounding/storage contract, wrapper consistency, destination reuse, comparison or valid conversion/I-O tests. Special/unbounded/exceptional paths are read-only here, not newly executed."
+  },
+  {
+    "repo": "flint",
+    "path": "src/arf/test/t-cmpabs.c",
+    "ranges": [
+      [
+        1,
+        119
+      ]
+    ],
+    "note": "Checkpoint44. Source-read: public finite-dyadic/rounding/storage contract, wrapper consistency, destination reuse, comparison or valid conversion/I-O tests. Special/unbounded/exceptional paths are read-only here, not newly executed."
+  },
+  {
+    "repo": "flint",
+    "path": "src/arf/test/t-cmpabs_2exp_si.c",
+    "ranges": [
+      [
+        1,
+        55
+      ]
+    ],
+    "note": "Checkpoint44. Source-read: public finite-dyadic/rounding/storage contract, wrapper consistency, destination reuse, comparison or valid conversion/I-O tests. Special/unbounded/exceptional paths are read-only here, not newly executed."
+  },
+  {
+    "repo": "flint",
+    "path": "src/arf/test/t-div.c",
+    "ranges": [
+      [
+        1,
+        175
+      ]
+    ],
+    "note": "Checkpoint44. Source-read: public finite-dyadic/rounding/storage contract, wrapper consistency, destination reuse, comparison or valid conversion/I-O tests. Special/unbounded/exceptional paths are read-only here, not newly executed."
+  },
+  {
+    "repo": "flint",
+    "path": "src/arf/test/t-dump_file.c",
+    "ranges": [
+      [
+        1,
+        91
+      ]
+    ],
+    "note": "Checkpoint44. Source-read: public finite-dyadic/rounding/storage contract, wrapper consistency, destination reuse, comparison or valid conversion/I-O tests. Special/unbounded/exceptional paths are read-only here, not newly executed."
+  },
+  {
+    "repo": "flint",
+    "path": "src/arf/test/t-dump_str.c",
+    "ranges": [
+      [
+        1,
+        66
+      ]
+    ],
+    "note": "Checkpoint44. Source-read: public finite-dyadic/rounding/storage contract, wrapper consistency, destination reuse, comparison or valid conversion/I-O tests. Special/unbounded/exceptional paths are read-only here, not newly executed."
+  },
+  {
+    "repo": "flint",
+    "path": "src/arf/test/t-floor.c",
+    "ranges": [
+      [
+        1,
+        94
+      ]
+    ],
+    "note": "Checkpoint44. Source-read: public finite-dyadic/rounding/storage contract, wrapper consistency, destination reuse, comparison or valid conversion/I-O tests. Special/unbounded/exceptional paths are read-only here, not newly executed."
+  },
+  {
+    "repo": "flint",
+    "path": "src/arf/test/t-frexp.c",
+    "ranges": [
+      [
+        1,
+        78
+      ]
+    ],
+    "note": "Checkpoint44. Source-read: public finite-dyadic/rounding/storage contract, wrapper consistency, destination reuse, comparison or valid conversion/I-O tests. Special/unbounded/exceptional paths are read-only here, not newly executed."
+  },
+  {
+    "repo": "flint",
+    "path": "src/arf/test/t-get_d.c",
+    "ranges": [
+      [
+        1,
+        147
+      ]
+    ],
+    "note": "Checkpoint44. Source-read: first/third n_randint(state,4) switches have unreachable nearest-even defaults; roundtrip/backend agreement is narrower than all-mode correct rounding."
+  },
+  {
+    "repo": "flint",
+    "path": "src/arf/test/t-get_fmpz.c",
+    "ranges": [
+      [
+        1,
+        163
+      ]
+    ],
+    "note": "Checkpoint44. Source-read: public finite-dyadic/rounding/storage contract, wrapper consistency, destination reuse, comparison or valid conversion/I-O tests. Special/unbounded/exceptional paths are read-only here, not newly executed."
+  },
+  {
+    "repo": "flint",
+    "path": "src/arf/test/t-get_mpfr.c",
+    "ranges": [
+      [
+        1,
+        132
+      ]
+    ],
+    "note": "Checkpoint44. Source-read: public finite-dyadic/rounding/storage contract, wrapper consistency, destination reuse, comparison or valid conversion/I-O tests. Special/unbounded/exceptional paths are read-only here, not newly executed."
+  },
+  {
+    "repo": "flint",
+    "path": "src/arf/test/t-get_str.c",
+    "ranges": [
+      [
+        1,
+        59
+      ]
+    ],
+    "note": "Checkpoint44. Source-read: public finite-dyadic/rounding/storage contract, wrapper consistency, destination reuse, comparison or valid conversion/I-O tests. Special/unbounded/exceptional paths are read-only here, not newly executed."
+  },
+  {
+    "repo": "flint",
+    "path": "src/arf/test/t-is_int_2exp_si.c",
+    "ranges": [
+      [
+        1,
+        88
+      ]
+    ],
+    "note": "Checkpoint44. Source-read: public finite-dyadic/rounding/storage contract, wrapper consistency, destination reuse, comparison or valid conversion/I-O tests. Special/unbounded/exceptional paths are read-only here, not newly executed."
+  },
+  {
+    "repo": "flint",
+    "path": "src/arf/test/t-mul_fmpz.c",
+    "ranges": [
+      [
+        1,
+        103
+      ]
+    ],
+    "note": "Checkpoint44. Source-read: public finite-dyadic/rounding/storage contract, wrapper consistency, destination reuse, comparison or valid conversion/I-O tests. Special/unbounded/exceptional paths are read-only here, not newly executed."
+  },
+  {
+    "repo": "flint",
+    "path": "src/arf/test/t-mul_si.c",
+    "ranges": [
+      [
+        1,
+        102
+      ]
+    ],
+    "note": "Checkpoint44. Source-read: public finite-dyadic/rounding/storage contract, wrapper consistency, destination reuse, comparison or valid conversion/I-O tests. Special/unbounded/exceptional paths are read-only here, not newly executed."
+  },
+  {
+    "repo": "flint",
+    "path": "src/arf/test/t-mul_ui.c",
+    "ranges": [
+      [
+        1,
+        102
+      ]
+    ],
+    "note": "Checkpoint44. Source-read: public finite-dyadic/rounding/storage contract, wrapper consistency, destination reuse, comparison or valid conversion/I-O tests. Special/unbounded/exceptional paths are read-only here, not newly executed."
+  },
+  {
+    "repo": "flint",
+    "path": "src/arf/test/t-nint.c",
+    "ranges": [
+      [
+        1,
+        74
+      ]
+    ],
+    "note": "Checkpoint44. Source-read: public finite-dyadic/rounding/storage contract, wrapper consistency, destination reuse, comparison or valid conversion/I-O tests. Special/unbounded/exceptional paths are read-only here, not newly executed."
+  },
+  {
+    "repo": "flint",
+    "path": "src/arf/test/t-root.c",
+    "ranges": [
+      [
+        1,
+        131
+      ]
+    ],
+    "note": "Checkpoint44. Source-read: four directed modes omit nearest-even; reference shares MPFR root backend. Independent exact-power midpoint/neighbor checks are needed for stronger numerical evidence."
+  },
+  {
+    "repo": "flint",
+    "path": "src/arf/test/t-rsqrt.c",
+    "ranges": [
+      [
+        1,
+        106
+      ]
+    ],
+    "note": "Checkpoint44. Source-read: four directed modes omit nearest-even; reference shares MPFR root backend. Independent exact-power midpoint/neighbor checks are needed for stronger numerical evidence."
+  },
+  {
+    "repo": "flint",
+    "path": "src/arf/test/t-set_d.c",
+    "ranges": [
+      [
+        1,
+        51
+      ]
+    ],
+    "note": "Checkpoint44. Source-read: public finite-dyadic/rounding/storage contract, wrapper consistency, destination reuse, comparison or valid conversion/I-O tests. Special/unbounded/exceptional paths are read-only here, not newly executed."
+  },
+  {
+    "repo": "flint",
+    "path": "src/arf/test/t-set_fmpq.c",
+    "ranges": [
+      [
+        1,
+        55
+      ]
+    ],
+    "note": "Checkpoint44. Source-read: public finite-dyadic/rounding/storage contract, wrapper consistency, destination reuse, comparison or valid conversion/I-O tests. Special/unbounded/exceptional paths are read-only here, not newly executed."
+  },
+  {
+    "repo": "flint",
+    "path": "src/arf/test/t-set_fmpz_2exp.c",
+    "ranges": [
+      [
+        1,
+        57
+      ]
+    ],
+    "note": "Checkpoint44. Source-read: public finite-dyadic/rounding/storage contract, wrapper consistency, destination reuse, comparison or valid conversion/I-O tests. Special/unbounded/exceptional paths are read-only here, not newly executed."
+  },
+  {
+    "repo": "flint",
+    "path": "src/arf/test/t-set_round_fmpz.c",
+    "ranges": [
+      [
+        1,
+        101
+      ]
+    ],
+    "note": "Checkpoint44. Source-read: public finite-dyadic/rounding/storage contract, wrapper consistency, destination reuse, comparison or valid conversion/I-O tests. Special/unbounded/exceptional paths are read-only here, not newly executed."
+  },
+  {
+    "repo": "flint",
+    "path": "src/arf/test/t-sgn.c",
+    "ranges": [
+      [
+        1,
+        58
+      ]
+    ],
+    "note": "Checkpoint44. Source-read: public finite-dyadic/rounding/storage contract, wrapper consistency, destination reuse, comparison or valid conversion/I-O tests. Special/unbounded/exceptional paths are read-only here, not newly executed."
+  },
+  {
+    "repo": "flint",
+    "path": "src/arf/test/t-sqrt.c",
+    "ranges": [
+      [
+        1,
+        112
+      ]
+    ],
+    "note": "Checkpoint44. Source-read: four directed modes omit nearest-even; reference shares MPFR root backend. Independent exact-power midpoint/neighbor checks are needed for stronger numerical evidence."
+  },
+  {
+    "repo": "flint",
+    "path": "src/arf/test/t-sub.c",
+    "ranges": [
+      [
+        1,
+        165
+      ]
+    ],
+    "note": "Checkpoint44. Source-read: randomized mode is overwritten by ARF_RND_DOWN; naive reference uses the same arithmetic family. Not an all-mode independent oracle."
+  },
+  {
+    "repo": "flint",
+    "path": "src/arf/test/t-sub_fmpz.c",
+    "ranges": [
+      [
+        1,
+        105
+      ]
+    ],
+    "note": "Checkpoint44. Source-read: public finite-dyadic/rounding/storage contract, wrapper consistency, destination reuse, comparison or valid conversion/I-O tests. Special/unbounded/exceptional paths are read-only here, not newly executed."
+  },
+  {
+    "repo": "flint",
+    "path": "src/arf/test/t-sub_si.c",
+    "ranges": [
+      [
+        1,
+        104
+      ]
+    ],
+    "note": "Checkpoint44. Source-read: public finite-dyadic/rounding/storage contract, wrapper consistency, destination reuse, comparison or valid conversion/I-O tests. Special/unbounded/exceptional paths are read-only here, not newly executed."
+  },
+  {
+    "repo": "flint",
+    "path": "src/arf/test/t-sub_ui.c",
+    "ranges": [
+      [
+        1,
+        104
+      ]
+    ],
+    "note": "Checkpoint44. Source-read: public finite-dyadic/rounding/storage contract, wrapper consistency, destination reuse, comparison or valid conversion/I-O tests. Special/unbounded/exceptional paths are read-only here, not newly executed."
+  },
+  {
+    "repo": "flint",
+    "path": "src/arf/test/t-submul_fmpz.c",
+    "ranges": [
+      [
+        1,
+        114
+      ]
+    ],
+    "note": "Checkpoint44. Source-read: public finite-dyadic/rounding/storage contract, wrapper consistency, destination reuse, comparison or valid conversion/I-O tests. Special/unbounded/exceptional paths are read-only here, not newly executed."
+  },
+  {
+    "repo": "flint",
+    "path": "src/arf/test/t-submul_si.c",
+    "ranges": [
+      [
+        1,
+        113
+      ]
+    ],
+    "note": "Checkpoint44. Source-read: public finite-dyadic/rounding/storage contract, wrapper consistency, destination reuse, comparison or valid conversion/I-O tests. Special/unbounded/exceptional paths are read-only here, not newly executed."
+  },
+  {
+    "repo": "flint",
+    "path": "src/arf/test/t-submul_ui.c",
+    "ranges": [
+      [
+        1,
+        112
+      ]
+    ],
+    "note": "Checkpoint44. Source-read: public finite-dyadic/rounding/storage contract, wrapper consistency, destination reuse, comparison or valid conversion/I-O tests. Special/unbounded/exceptional paths are read-only here, not newly executed."
+  },
+  {
+    "repo": "flint",
+    "path": "src/arf.h",
+    "ranges": [
+      [
+        229,
+        376
+      ],
+      [
+        531,
+        564
+      ],
+      [
+        607,
+        609
+      ],
+      [
+        651,
+        699
+      ],
+      [
+        786,
+        820
+      ],
+      [
+        863,
+        999
+      ],
+      [
+        1136,
+        1171
+      ]
+    ],
+    "note": "Checkpoint44. Source-read: public finite-dyadic/rounding/storage contract, wrapper consistency, destination reuse, comparison or valid conversion/I-O tests. Special/unbounded/exceptional paths are read-only here, not newly executed."
+  },
+  {
+    "repo": "flint",
+    "path": "doc/source/arf.rst",
+    "ranges": [
+      [
+        116,
+        180
+      ],
+      [
+        251,
+        549
+      ],
+      [
+        671,
+        709
+      ]
+    ],
+    "note": "Checkpoint44. Source-read: public finite-dyadic/rounding/storage contract, wrapper consistency, destination reuse, comparison or valid conversion/I-O tests. Special/unbounded/exceptional paths are read-only here, not newly executed."
+  }
+]

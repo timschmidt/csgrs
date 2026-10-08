@@ -1,0 +1,13 @@
+{
+  "tag": "verify-scalar-boundary-checkpoint-unsandboxed",
+  "started": "2026-09-08T13:29:44.718Z",
+  "finished": "2026-09-08T13:29:45.799Z",
+  "elapsedSeconds": 1.078601347,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison",
+  "command": "node",
+  "args": [
+    "audits/continuation/calcium/verify-scalar-boundary-checkpoint.mjs"
+  ],
+  "code": 0,
+  "signal": null
+}

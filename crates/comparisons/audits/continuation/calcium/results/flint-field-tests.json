@@ -1,0 +1,15 @@
+{
+  "tag": "flint-field-tests",
+  "started": "2026-09-08T08:40:53.237Z",
+  "finished": "2026-09-08T08:40:55.670Z",
+  "elapsedSeconds": 2.429600281,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exact-real-references/flint",
+  "command": "make",
+  "args": [
+    "-j4",
+    "check",
+    "MOD=ca_ext ca_field qqbar fmpz_mpoly_q"
+  ],
+  "code": 0,
+  "signal": null
+}

@@ -1,0 +1,45 @@
+{
+  "hypercurve_commit": "f58561e",
+  "hyperbrep_commit": "e6b3832",
+  "library": {
+    "passed": 941,
+    "failed": 0,
+    "ignored": 6,
+    "filtered": 4,
+    "seconds": 148.97,
+    "threads": 4,
+    "log": "/tmp/hypercurve-parameter-evaluation-library.log"
+  },
+  "curve": {
+    "passed": 47,
+    "seconds": 50.6
+  },
+  "arc": {
+    "passed": 11
+  },
+  "nurbs": {
+    "passed": 38
+  },
+  "polynomial_spline": {
+    "passed": 18
+  },
+  "analytic_region": {
+    "passed": 14,
+    "failed": 0,
+    "filtered": 1,
+    "seconds": 34.68
+  },
+  "focused_evaluation": {
+    "passed": 7,
+    "failed": 0
+  },
+  "checks": {
+    "hypercurve_all_targets_all_features": "passed",
+    "hyperbrep_all_targets_all_features": "passed"
+  },
+  "open_cases": [
+    "Previous four costly library exclusions, six ignored library cases, and radical_parallel_cusp_offsets_exactly_under_both_policies remain excluded; earlier promotion failures and other costly cases have not been requalified.",
+    "The evaluation-replay binary confirms Uncertain(Unsupported) for equality of the selected major-arc image and its independently expanded Real-coordinate evaluation under STRICT. The defining source/chart evaluation is certified; local Real-coefficient polynomial signs for expanded coordinate comparison remain unresolved."
+  ],
+  "performance_note": "Builds and test executables overlapped, and the library suite used four threads. These wall-clock times are qualification records, not a matched performance comparison."
+}

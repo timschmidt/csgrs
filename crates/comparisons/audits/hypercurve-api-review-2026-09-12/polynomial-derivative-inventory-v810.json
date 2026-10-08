@@ -1,0 +1,761 @@
+[
+  {
+    "path": "hypercurve/benches/bezier_tangent_order.rs",
+    "line": 5,
+    "text": "BezierAlgebraicParameter2, BezierAlgebraicTangentVector2, BezierEndpointTangentImage2,",
+    "terms": [
+      "BezierEndpointTangentImage2"
+    ]
+  },
+  {
+    "path": "hypercurve/benches/bezier_tangent_order.rs",
+    "line": 39,
+    "text": "BezierAlgebraicTangentVector2::from_endpoint_image(&BezierEndpointTangentImage2::Polynomial(",
+    "terms": [
+      "BezierEndpointTangentImage2",
+      "from_endpoint_image"
+    ]
+  },
+  {
+    "path": "hypercurve/benches/bezier_tangent_order.rs",
+    "line": 54,
+    "text": "BezierAlgebraicTangentVector2::from_endpoint_image(&BezierEndpointTangentImage2::Polynomial(",
+    "terms": [
+      "BezierEndpointTangentImage2",
+      "from_endpoint_image"
+    ]
+  },
+  {
+    "path": "hypercurve/benches/bezier_tangent_order.rs",
+    "line": 69,
+    "text": "BezierAlgebraicTangentVector2::from_endpoint_image(&BezierEndpointTangentImage2::Rational(",
+    "terms": [
+      "BezierEndpointTangentImage2",
+      "from_endpoint_image"
+    ]
+  },
+  {
+    "path": "hypercurve/benches/bezier_tangent_order.rs",
+    "line": 84,
+    "text": "BezierAlgebraicTangentVector2::from_endpoint_image(&BezierEndpointTangentImage2::Rational(",
+    "terms": [
+      "BezierEndpointTangentImage2",
+      "from_endpoint_image"
+    ]
+  },
+  {
+    "path": "hypercurve/fuzz/fuzz_targets/bezier_tangent_order.rs",
+    "line": 5,
+    "text": "BezierEndpointTangentImage2, BezierParameterInterval, BezierParameterPolynomial,",
+    "terms": [
+      "BezierEndpointTangentImage2"
+    ]
+  },
+  {
+    "path": "hypercurve/fuzz/fuzz_targets/bezier_tangent_order.rs",
+    "line": 28,
+    "text": "BezierAlgebraicTangentVector2::from_endpoint_image(&BezierEndpointTangentImage2::Polynomial(",
+    "terms": [
+      "BezierEndpointTangentImage2",
+      "from_endpoint_image"
+    ]
+  },
+  {
+    "path": "hypercurve/fuzz/fuzz_targets/bezier_tangent_order.rs",
+    "line": 42,
+    "text": "BezierAlgebraicTangentVector2::from_endpoint_image(&BezierEndpointTangentImage2::Polynomial(",
+    "terms": [
+      "BezierEndpointTangentImage2",
+      "from_endpoint_image"
+    ]
+  },
+  {
+    "path": "hypercurve/fuzz/fuzz_targets/bezier_tangent_order.rs",
+    "line": 56,
+    "text": "BezierAlgebraicTangentVector2::from_endpoint_image(&BezierEndpointTangentImage2::Rational(",
+    "terms": [
+      "BezierEndpointTangentImage2",
+      "from_endpoint_image"
+    ]
+  },
+  {
+    "path": "hypercurve/src/bezier_algebraic_image.rs",
+    "line": 66,
+    "text": "pub struct BezierAlgebraicCoordinateImage {",
+    "terms": [
+      "BezierAlgebraicCoordinateImage"
+    ]
+  },
+  {
+    "path": "hypercurve/src/bezier_algebraic_image.rs",
+    "line": 114,
+    "text": "impl BezierAlgebraicCoordinateImage {",
+    "terms": [
+      "BezierAlgebraicCoordinateImage"
+    ]
+  },
+  {
+    "path": "hypercurve/src/bezier_algebraic_image.rs",
+    "line": 566,
+    "text": "impl BezierAlgebraicCoordinateImage {",
+    "terms": [
+      "BezierAlgebraicCoordinateImage"
+    ]
+  },
+  {
+    "path": "hypercurve/src/bezier_algebraic_image.rs",
+    "line": 581,
+    "text": "pub struct BezierAlgebraicTangentImage2 {",
+    "terms": [
+      "BezierAlgebraicTangentImage2"
+    ]
+  },
+  {
+    "path": "hypercurve/src/bezier_algebraic_image.rs",
+    "line": 584,
+    "text": "dx: Option<BezierAlgebraicCoordinateImage>,",
+    "terms": [
+      "BezierAlgebraicCoordinateImage"
+    ]
+  },
+  {
+    "path": "hypercurve/src/bezier_algebraic_image.rs",
+    "line": 585,
+    "text": "dy: Option<BezierAlgebraicCoordinateImage>,",
+    "terms": [
+      "BezierAlgebraicCoordinateImage"
+    ]
+  },
+  {
+    "path": "hypercurve/src/bezier_algebraic_image.rs",
+    "line": 1717,
+    "text": "impl BezierAlgebraicTangentImage2 {",
+    "terms": [
+      "BezierAlgebraicTangentImage2"
+    ]
+  },
+  {
+    "path": "hypercurve/src/bezier_algebraic_image.rs",
+    "line": 1729,
+    "text": "pub const fn dx(&self) -> Option<&BezierAlgebraicCoordinateImage> {",
+    "terms": [
+      "BezierAlgebraicCoordinateImage"
+    ]
+  },
+  {
+    "path": "hypercurve/src/bezier_algebraic_image.rs",
+    "line": 1734,
+    "text": "pub const fn dy(&self) -> Option<&BezierAlgebraicCoordinateImage> {",
+    "terms": [
+      "BezierAlgebraicCoordinateImage"
+    ]
+  },
+  {
+    "path": "hypercurve/src/bezier_algebraic_image.rs",
+    "line": 1769,
+    "text": ") -> CurveResult<BezierAlgebraicTangentImage2> {",
+    "terms": [
+      "BezierAlgebraicTangentImage2"
+    ]
+  },
+  {
+    "path": "hypercurve/src/bezier_algebraic_image.rs",
+    "line": 1784,
+    "text": ") -> CurveResult<BezierAlgebraicTangentImage2> {",
+    "terms": [
+      "BezierAlgebraicTangentImage2"
+    ]
+  },
+  {
+    "path": "hypercurve/src/bezier_algebraic_image.rs",
+    "line": 1814,
+    "text": ") -> CurveResult<BezierAlgebraicTangentImage2> {",
+    "terms": [
+      "BezierAlgebraicTangentImage2"
+    ]
+  },
+  {
+    "path": "hypercurve/src/bezier_algebraic_image.rs",
+    "line": 1829,
+    "text": ") -> CurveResult<BezierAlgebraicTangentImage2> {",
+    "terms": [
+      "BezierAlgebraicTangentImage2"
+    ]
+  },
+  {
+    "path": "hypercurve/src/bezier_algebraic_image.rs",
+    "line": 1847,
+    "text": ") -> CurveResult<BezierAlgebraicTangentImage2> {",
+    "terms": [
+      "BezierAlgebraicTangentImage2"
+    ]
+  },
+  {
+    "path": "hypercurve/src/bezier_algebraic_image.rs",
+    "line": 2134,
+    "text": ") -> CurveResult<BezierAlgebraicTangentImage2> {",
+    "terms": [
+      "BezierAlgebraicTangentImage2"
+    ]
+  },
+  {
+    "path": "hypercurve/src/bezier_algebraic_image.rs",
+    "line": 2137,
+    "text": "return Ok(BezierAlgebraicTangentImage2 {",
+    "terms": [
+      "BezierAlgebraicTangentImage2"
+    ]
+  },
+  {
+    "path": "hypercurve/src/bezier_algebraic_image.rs",
+    "line": 2146,
+    "text": "return Ok(BezierAlgebraicTangentImage2 {",
+    "terms": [
+      "BezierAlgebraicTangentImage2"
+    ]
+  },
+  {
+    "path": "hypercurve/src/bezier_algebraic_image.rs",
+    "line": 2155,
+    "text": "return Ok(BezierAlgebraicTangentImage2 {",
+    "terms": [
+      "BezierAlgebraicTangentImage2"
+    ]
+  },
+  {
+    "path": "hypercurve/src/bezier_algebraic_image.rs",
+    "line": 2163,
+    "text": "Ok(BezierAlgebraicTangentImage2 {",
+    "terms": [
+      "BezierAlgebraicTangentImage2"
+    ]
+  },
+  {
+    "path": "hypercurve/src/bezier_algebraic_image.rs",
+    "line": 2257,
+    "text": ") -> Option<BezierAlgebraicCoordinateImage> {",
+    "terms": [
+      "BezierAlgebraicCoordinateImage"
+    ]
+  },
+  {
+    "path": "hypercurve/src/bezier_algebraic_image.rs",
+    "line": 2261,
+    "text": "return Some(BezierAlgebraicCoordinateImage {",
+    "terms": [
+      "BezierAlgebraicCoordinateImage"
+    ]
+  },
+  {
+    "path": "hypercurve/src/bezier_algebraic_image.rs",
+    "line": 2273,
+    "text": "return Some(BezierAlgebraicCoordinateImage {",
+    "terms": [
+      "BezierAlgebraicCoordinateImage"
+    ]
+  },
+  {
+    "path": "hypercurve/src/bezier_algebraic_image.rs",
+    "line": 2371,
+    "text": ") -> Option<BezierAlgebraicCoordinateImage> {",
+    "terms": [
+      "BezierAlgebraicCoordinateImage"
+    ]
+  },
+  {
+    "path": "hypercurve/src/bezier_algebraic_image.rs",
+    "line": 2378,
+    "text": "BezierAlgebraicCoordinateImage {",
+    "terms": [
+      "BezierAlgebraicCoordinateImage"
+    ]
+  },
+  {
+    "path": "hypercurve/src/bezier_arrangement.rs",
+    "line": 31,
+    "text": "BezierEndpointTangentImage2, BezierParameter2, BezierRetainedOverlapEvidence2,",
+    "terms": [
+      "BezierEndpointTangentImage2"
+    ]
+  },
+  {
+    "path": "hypercurve/src/bezier_arrangement.rs",
+    "line": 1581,
+    "text": "tangent: &BezierEndpointTangentImage2,",
+    "terms": [
+      "BezierEndpointTangentImage2"
+    ]
+  },
+  {
+    "path": "hypercurve/src/bezier_arrangement.rs",
+    "line": 1583,
+    "text": "BezierAlgebraicTangentVector2::from_endpoint_image(tangent)",
+    "terms": [
+      "from_endpoint_image"
+    ]
+  },
+  {
+    "path": "hypercurve/src/bezier_arrangement.rs",
+    "line": 2646,
+    "text": ".map(|derivative| derivative.map(BezierEndpointTangentImage2::Polynomial)),",
+    "terms": [
+      "BezierEndpointTangentImage2"
+    ]
+  },
+  {
+    "path": "hypercurve/src/bezier_arrangement.rs",
+    "line": 2659,
+    "text": ".map(|derivative| derivative.map(BezierEndpointTangentImage2::Polynomial)),",
+    "terms": [
+      "BezierEndpointTangentImage2"
+    ]
+  },
+  {
+    "path": "hypercurve/src/bezier_arrangement.rs",
+    "line": 2666,
+    "text": ".map(BezierEndpointTangentImage2::Rational)",
+    "terms": [
+      "BezierEndpointTangentImage2"
+    ]
+  },
+  {
+    "path": "hypercurve/src/bezier_arrangement.rs",
+    "line": 2674,
+    "text": ".map(BezierEndpointTangentImage2::Rational)",
+    "terms": [
+      "BezierEndpointTangentImage2"
+    ]
+  },
+  {
+    "path": "hypercurve/src/bezier_split_endpoint.rs",
+    "line": 17,
+    "text": "BezierAlgebraicImageStatus, BezierAlgebraicParameter2, BezierAlgebraicTangentImage2,",
+    "terms": [
+      "BezierAlgebraicTangentImage2"
+    ]
+  },
+  {
+    "path": "hypercurve/src/bezier_split_endpoint.rs",
+    "line": 26,
+    "text": "pub enum BezierEndpointTangentImage2 {",
+    "terms": [
+      "BezierEndpointTangentImage2"
+    ]
+  },
+  {
+    "path": "hypercurve/src/bezier_split_endpoint.rs",
+    "line": 28,
+    "text": "Polynomial(BezierAlgebraicTangentImage2),",
+    "terms": [
+      "BezierAlgebraicTangentImage2"
+    ]
+  },
+  {
+    "path": "hypercurve/src/bezier_split_endpoint.rs",
+    "line": 33,
+    "text": "impl BezierEndpointTangentImage2 {",
+    "terms": [
+      "BezierEndpointTangentImage2"
+    ]
+  },
+  {
+    "path": "hypercurve/src/bezier_split_endpoint.rs",
+    "line": 63,
+    "text": "tangent: BezierEndpointTangentImage2,",
+    "terms": [
+      "BezierEndpointTangentImage2"
+    ]
+  },
+  {
+    "path": "hypercurve/src/bezier_split_endpoint.rs",
+    "line": 64,
+    "text": "second_derivative: Option<Box<BezierEndpointTangentImage2>>,",
+    "terms": [
+      "BezierEndpointTangentImage2"
+    ]
+  },
+  {
+    "path": "hypercurve/src/bezier_split_endpoint.rs",
+    "line": 65,
+    "text": "third_derivative: Option<Box<BezierEndpointTangentImage2>>,",
+    "terms": [
+      "BezierEndpointTangentImage2"
+    ]
+  },
+  {
+    "path": "hypercurve/src/bezier_split_endpoint.rs",
+    "line": 72,
+    "text": "tangent: OnceLock<CurveResult<BezierEndpointTangentImage2>>,",
+    "terms": [
+      "BezierEndpointTangentImage2"
+    ]
+  },
+  {
+    "path": "hypercurve/src/bezier_split_endpoint.rs",
+    "line": 144,
+    "text": "tangent: BezierEndpointTangentImage2::Polynomial(",
+    "terms": [
+      "BezierEndpointTangentImage2"
+    ]
+  },
+  {
+    "path": "hypercurve/src/bezier_split_endpoint.rs",
+    "line": 147,
+    "text": "second_derivative: Some(Box::new(BezierEndpointTangentImage2::Polynomial(",
+    "terms": [
+      "BezierEndpointTangentImage2"
+    ]
+  },
+  {
+    "path": "hypercurve/src/bezier_split_endpoint.rs",
+    "line": 169,
+    "text": "tangent: BezierEndpointTangentImage2::Polynomial(",
+    "terms": [
+      "BezierEndpointTangentImage2"
+    ]
+  },
+  {
+    "path": "hypercurve/src/bezier_split_endpoint.rs",
+    "line": 172,
+    "text": "second_derivative: Some(Box::new(BezierEndpointTangentImage2::Polynomial(",
+    "terms": [
+      "BezierEndpointTangentImage2"
+    ]
+  },
+  {
+    "path": "hypercurve/src/bezier_split_endpoint.rs",
+    "line": 175,
+    "text": "third_derivative: Some(Box::new(BezierEndpointTangentImage2::Polynomial(",
+    "terms": [
+      "BezierEndpointTangentImage2"
+    ]
+  },
+  {
+    "path": "hypercurve/src/bezier_split_endpoint.rs",
+    "line": 204,
+    "text": "tangent: BezierEndpointTangentImage2::Rational(tangent),",
+    "terms": [
+      "BezierEndpointTangentImage2"
+    ]
+  },
+  {
+    "path": "hypercurve/src/bezier_split_endpoint.rs",
+    "line": 249,
+    "text": "tangent: BezierEndpointTangentImage2::Rational(tangent),",
+    "terms": [
+      "BezierEndpointTangentImage2"
+    ]
+  },
+  {
+    "path": "hypercurve/src/bezier_split_endpoint.rs",
+    "line": 313,
+    "text": "pub fn tangent(&self) -> &BezierEndpointTangentImage2 {",
+    "terms": [
+      "BezierEndpointTangentImage2"
+    ]
+  },
+  {
+    "path": "hypercurve/src/bezier_split_endpoint.rs",
+    "line": 320,
+    "text": "pub fn second_derivative(&self) -> Option<&BezierEndpointTangentImage2> {",
+    "terms": [
+      "BezierEndpointTangentImage2"
+    ]
+  },
+  {
+    "path": "hypercurve/src/bezier_split_endpoint.rs",
+    "line": 330,
+    "text": "pub fn third_derivative(&self) -> Option<&BezierEndpointTangentImage2> {",
+    "terms": [
+      "BezierEndpointTangentImage2"
+    ]
+  },
+  {
+    "path": "hypercurve/src/bezier_split_endpoint.rs",
+    "line": 412,
+    "text": "pub(crate) fn try_tangent(&self) -> CurveResult<&BezierEndpointTangentImage2> {",
+    "terms": [
+      "BezierEndpointTangentImage2"
+    ]
+  },
+  {
+    "path": "hypercurve/src/bezier_split_endpoint.rs",
+    "line": 427,
+    "text": ".map(BezierEndpointTangentImage2::Polynomial);",
+    "terms": [
+      "BezierEndpointTangentImage2"
+    ]
+  },
+  {
+    "path": "hypercurve/src/bezier_split_endpoint.rs",
+    "line": 432,
+    "text": ".map(BezierEndpointTangentImage2::Polynomial);",
+    "terms": [
+      "BezierEndpointTangentImage2"
+    ]
+  },
+  {
+    "path": "hypercurve/src/bezier_split_endpoint.rs",
+    "line": 443,
+    "text": "Ok(BezierEndpointTangentImage2::Rational(tangent))",
+    "terms": [
+      "BezierEndpointTangentImage2"
+    ]
+  },
+  {
+    "path": "hypercurve/src/bezier_split_endpoint.rs",
+    "line": 453,
+    "text": ") -> Option<Box<BezierEndpointTangentImage2>> {",
+    "terms": [
+      "BezierEndpointTangentImage2"
+    ]
+  },
+  {
+    "path": "hypercurve/src/bezier_split_endpoint.rs",
+    "line": 455,
+    "text": ".then(|| Box::new(BezierEndpointTangentImage2::Rational(derivative)))",
+    "terms": [
+      "BezierEndpointTangentImage2"
+    ]
+  },
+  {
+    "path": "hypercurve/src/bezier_tangent_order.rs",
+    "line": 18,
+    "text": "BezierAlgebraicImageStatus, BezierEndpointTangentImage2, Classification, CurveContext,",
+    "terms": [
+      "BezierEndpointTangentImage2"
+    ]
+  },
+  {
+    "path": "hypercurve/src/bezier_tangent_order.rs",
+    "line": 43,
+    "text": "pub fn from_endpoint_image(",
+    "terms": [
+      "from_endpoint_image"
+    ]
+  },
+  {
+    "path": "hypercurve/src/bezier_tangent_order.rs",
+    "line": 44,
+    "text": "image: &BezierEndpointTangentImage2,",
+    "terms": [
+      "BezierEndpointTangentImage2"
+    ]
+  },
+  {
+    "path": "hypercurve/src/bezier_tangent_order.rs",
+    "line": 55,
+    "text": "BezierEndpointTangentImage2::Polynomial(image) => {",
+    "terms": [
+      "BezierEndpointTangentImage2"
+    ]
+  },
+  {
+    "path": "hypercurve/src/bezier_tangent_order.rs",
+    "line": 64,
+    "text": "BezierEndpointTangentImage2::Rational(image) => {",
+    "terms": [
+      "BezierEndpointTangentImage2"
+    ]
+  },
+  {
+    "path": "hypercurve/src/bezier_tangent_order.rs",
+    "line": 244,
+    "text": "first: &BezierEndpointTangentImage2,",
+    "terms": [
+      "BezierEndpointTangentImage2"
+    ]
+  },
+  {
+    "path": "hypercurve/src/bezier_tangent_order.rs",
+    "line": 245,
+    "text": "second: &BezierEndpointTangentImage2,",
+    "terms": [
+      "BezierEndpointTangentImage2"
+    ]
+  },
+  {
+    "path": "hypercurve/src/bezier_tangent_order.rs",
+    "line": 248,
+    "text": "let first = BezierAlgebraicTangentVector2::from_endpoint_image(first);",
+    "terms": [
+      "from_endpoint_image"
+    ]
+  },
+  {
+    "path": "hypercurve/src/bezier_tangent_order.rs",
+    "line": 249,
+    "text": "let second = BezierAlgebraicTangentVector2::from_endpoint_image(second);",
+    "terms": [
+      "from_endpoint_image"
+    ]
+  },
+  {
+    "path": "hypercurve/src/curve_region_boolean.rs",
+    "line": 38,
+    "text": "BezierEndpoint, BezierEndpointTangentImage2, BezierLineContactRelation,",
+    "terms": [
+      "BezierEndpointTangentImage2"
+    ]
+  },
+  {
+    "path": "hypercurve/src/curve_region_boolean.rs",
+    "line": 14551,
+    "text": ") -> Option<&BezierEndpointTangentImage2> {",
+    "terms": [
+      "BezierEndpointTangentImage2"
+    ]
+  },
+  {
+    "path": "hypercurve/src/lib.rs",
+    "line": 88,
+    "text": "BezierAlgebraicCoordinateImage, BezierAlgebraicImageStatus,",
+    "terms": [
+      "BezierAlgebraicCoordinateImage"
+    ]
+  },
+  {
+    "path": "hypercurve/src/lib.rs",
+    "line": 89,
+    "text": "BezierAlgebraicRationalCoordinateImage, BezierAlgebraicTangentImage2,",
+    "terms": [
+      "BezierAlgebraicTangentImage2"
+    ]
+  },
+  {
+    "path": "hypercurve/src/lib.rs",
+    "line": 153,
+    "text": "pub use bezier_split_endpoint::{BezierAlgebraicEndpointImage2, BezierEndpointTangentImage2};",
+    "terms": [
+      "BezierEndpointTangentImage2"
+    ]
+  },
+  {
+    "path": "hypercurve/tests/hypercurve_bezier_split_materialization.rs",
+    "line": 2,
+    "text": "BezierAlgebraicEndpointImage2, BezierAlgebraicImageStatus, BezierEndpointTangentImage2,",
+    "terms": [
+      "BezierEndpointTangentImage2"
+    ]
+  },
+  {
+    "path": "hypercurve/tests/hypercurve_bezier_split_materialization.rs",
+    "line": 124,
+    "text": "BezierEndpointTangentImage2::Polynomial(tangent) => {",
+    "terms": [
+      "BezierEndpointTangentImage2"
+    ]
+  },
+  {
+    "path": "hypercurve/tests/hypercurve_bezier_split_materialization.rs",
+    "line": 129,
+    "text": "BezierEndpointTangentImage2::Rational(_) => {",
+    "terms": [
+      "BezierEndpointTangentImage2"
+    ]
+  },
+  {
+    "path": "hypercurve/tests/hypercurve_bezier_split_materialization.rs",
+    "line": 145,
+    "text": "BezierEndpointTangentImage2::Rational(tangent) => {",
+    "terms": [
+      "BezierEndpointTangentImage2"
+    ]
+  },
+  {
+    "path": "hypercurve/tests/hypercurve_bezier_split_materialization.rs",
+    "line": 150,
+    "text": "BezierEndpointTangentImage2::Polynomial(_) => panic!(\"expected rational tangent image\"),",
+    "terms": [
+      "BezierEndpointTangentImage2"
+    ]
+  },
+  {
+    "path": "hypercurve/tests/hypercurve_bezier_split_materialization.rs",
+    "line": 154,
+    "text": "BezierEndpointTangentImage2::Rational(second_derivative) => {",
+    "terms": [
+      "BezierEndpointTangentImage2"
+    ]
+  },
+  {
+    "path": "hypercurve/tests/hypercurve_bezier_split_materialization.rs",
+    "line": 172,
+    "text": "BezierEndpointTangentImage2::Polynomial(_) => {",
+    "terms": [
+      "BezierEndpointTangentImage2"
+    ]
+  },
+  {
+    "path": "hypercurve/tests/hypercurve_bezier_split_materialization.rs",
+    "line": 184,
+    "text": "BezierEndpointTangentImage2::Rational(second_derivative) => {",
+    "terms": [
+      "BezierEndpointTangentImage2"
+    ]
+  },
+  {
+    "path": "hypercurve/tests/hypercurve_bezier_split_materialization.rs",
+    "line": 202,
+    "text": "BezierEndpointTangentImage2::Polynomial(_) => {",
+    "terms": [
+      "BezierEndpointTangentImage2"
+    ]
+  },
+  {
+    "path": "hypercurve/tests/hypercurve_bezier_split_materialization.rs",
+    "line": 210,
+    "text": "BezierEndpointTangentImage2::Rational(third_derivative) => {",
+    "terms": [
+      "BezierEndpointTangentImage2"
+    ]
+  },
+  {
+    "path": "hypercurve/tests/hypercurve_bezier_split_materialization.rs",
+    "line": 228,
+    "text": "BezierEndpointTangentImage2::Polynomial(_) => {",
+    "terms": [
+      "BezierEndpointTangentImage2"
+    ]
+  },
+  {
+    "path": "hypercurve/tests/hypercurve_bezier_tangent_order.rs",
+    "line": 5,
+    "text": "BezierAlgebraicTangentVectorStatus, BezierEndpointTangentImage2, BezierParameterInterval,",
+    "terms": [
+      "BezierEndpointTangentImage2"
+    ]
+  },
+  {
+    "path": "hypercurve/tests/hypercurve_bezier_tangent_order.rs",
+    "line": 91,
+    "text": "BezierAlgebraicTangentVector2::from_endpoint_image(",
+    "terms": [
+      "from_endpoint_image"
+    ]
+  },
+  {
+    "path": "hypercurve/tests/hypercurve_bezier_tangent_order.rs",
+    "line": 92,
+    "text": "&BezierEndpointTangentImage2::Polynomial(tangent),",
+    "terms": [
+      "BezierEndpointTangentImage2"
+    ]
+  },
+  {
+    "path": "hypercurve/tests/hypercurve_bezier_tangent_order.rs",
+    "line": 113,
+    "text": "let tangent = BezierAlgebraicTangentVector2::from_endpoint_image(image.tangent());",
+    "terms": [
+      "from_endpoint_image"
+    ]
+  },
+  {
+    "path": "hypercurve/tests/hypercurve_bezier_tangent_order.rs",
+    "line": 118,
+    "text": "let second_derivative = BezierAlgebraicTangentVector2::from_endpoint_image(",
+    "terms": [
+      "from_endpoint_image"
+    ]
+  }
+]

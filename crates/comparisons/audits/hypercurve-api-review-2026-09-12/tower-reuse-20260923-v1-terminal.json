@@ -1,0 +1,12 @@
+{
+  "checks": [
+    {
+      "feature": "--all-features",
+      "returncode": 101,
+      "log": "tower-reuse-20260923-v1-check-0.log"
+    }
+  ],
+  "tests": [],
+  "all_processes_reaped": true,
+  "all_sources_unchanged": true
+}

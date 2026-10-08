@@ -1,0 +1,163 @@
+{
+  "parent_commit": "08ca2e24c2658d2b50d2c10f1e2e0e2779dab417",
+  "source": "finite-fixed-distance-public.rs",
+  "source_sha256": "83628c4431d5c785814d16d61162b97aa1d353ba60aaae1ae217ebc3d9fa224b",
+  "executable": "finite-point-inverse-domains-fixed-distance-public",
+  "executable_sha256": "0e04c011ca5a1274a7e28e770fd51c0a4750b398e4c9a55083e663ef6f61c47a",
+  "normal_library": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypercurve-e19f31178f76cad1.rlib",
+  "normal_library_sha256": "68b7eb07dd682f6f27b42ea8f5bf32ff3fb0e3d96d09c29889738e18190708f9",
+  "compile_command": [
+    "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustc",
+    "--edition=2024",
+    "-O",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-fixed-distance-public.rs",
+    "--extern",
+    "hypercurve=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypercurve-e19f31178f76cad1.rlib",
+    "-L",
+    "dependency=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps",
+    "-o",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-point-inverse-domains-fixed-distance-public"
+  ],
+  "queries": [
+    {
+      "chart": 0,
+      "repeat": false,
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-point-inverse-domains-fixed-distance-public",
+        "0"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.003472501994110644,
+      "log": "finite-point-inverse-domains-fixed-distance-public-chart0-repeat0.log",
+      "counts": {
+        "cases": 4,
+        "successes": 4,
+        "point_replays": 16,
+        "failures": 0
+      }
+    },
+    {
+      "chart": 1,
+      "repeat": false,
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-point-inverse-domains-fixed-distance-public",
+        "1"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.007456990017089993,
+      "log": "finite-point-inverse-domains-fixed-distance-public-chart1-repeat0.log",
+      "counts": {
+        "cases": 4,
+        "successes": 4,
+        "point_replays": 16,
+        "failures": 0
+      }
+    },
+    {
+      "chart": 2,
+      "repeat": false,
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-point-inverse-domains-fixed-distance-public",
+        "2"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.015519298001891002,
+      "log": "finite-point-inverse-domains-fixed-distance-public-chart2-repeat0.log",
+      "counts": {
+        "cases": 4,
+        "successes": 4,
+        "point_replays": 16,
+        "failures": 0
+      }
+    },
+    {
+      "chart": 3,
+      "repeat": false,
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-point-inverse-domains-fixed-distance-public",
+        "3"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.01550155898439698,
+      "log": "finite-point-inverse-domains-fixed-distance-public-chart3-repeat0.log",
+      "counts": {
+        "cases": 4,
+        "successes": 4,
+        "point_replays": 16,
+        "failures": 0
+      }
+    },
+    {
+      "chart": 0,
+      "repeat": true,
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-point-inverse-domains-fixed-distance-public",
+        "0",
+        "repeat"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 1.3653834229917265,
+      "log": "finite-point-inverse-domains-fixed-distance-public-chart0-repeat1.log",
+      "counts": {
+        "cases": 4,
+        "successes": 4,
+        "point_replays": 28,
+        "failures": 0
+      }
+    },
+    {
+      "chart": 1,
+      "repeat": true,
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-point-inverse-domains-fixed-distance-public",
+        "1",
+        "repeat"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 5.170258380996529,
+      "log": "finite-point-inverse-domains-fixed-distance-public-chart1-repeat1.log",
+      "counts": {
+        "cases": 4,
+        "successes": 4,
+        "point_replays": 28,
+        "failures": 0
+      }
+    },
+    {
+      "chart": 2,
+      "repeat": true,
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-point-inverse-domains-fixed-distance-public",
+        "2",
+        "repeat"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 11.227930447028484,
+      "log": "finite-point-inverse-domains-fixed-distance-public-chart2-repeat1.log",
+      "counts": {
+        "cases": 4,
+        "successes": 4,
+        "point_replays": 28,
+        "failures": 0
+      }
+    },
+    {
+      "chart": 3,
+      "repeat": true,
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-point-inverse-domains-fixed-distance-public",
+        "3",
+        "repeat"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 11.278236904996447,
+      "log": "finite-point-inverse-domains-fixed-distance-public-chart3-repeat1.log",
+      "counts": {
+        "cases": 4,
+        "successes": 4,
+        "point_replays": 28,
+        "failures": 0
+      }
+    }
+  ]
+}

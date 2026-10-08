@@ -1,0 +1,41 @@
+{
+  "parents": {
+    "hypercurve": "7dbb1b89aadd491ed1b4de27c3761392dd617162",
+    "hypersolve": "e479259c182835aa05d2a67308fd346699785f87",
+    "hyperreal": "0cb5f29aee065c73e234e0ebb0a9e106398515bb"
+  },
+  "source_manifest": "subdivision-progress-20260926-v136-sources.json",
+  "source_directory": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/source-archives/subdivision-progress-20260926-v136",
+  "build_source_directory": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/build-workspace-20260925",
+  "workspace_guard": "local-chord-complete-replay-20260924-v135-sources.json",
+  "checks": [],
+  "cases": [
+    {
+      "repo": "hypercurve",
+      "label": "case-00",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/subdivision-progress-20260926-v136-hypercurve",
+        "--exact",
+        "bezier_region::tests::one_fragment_nonzero_parallel_loop_extends_chamfer_cuts_on_one_finite_envelope",
+        "--test-threads=1",
+        "--nocapture",
+        "--color",
+        "never"
+      ],
+      "returncode": "timeout",
+      "elapsed_seconds": 25.00675682502333,
+      "log": "subdivision-progress-20260926-v136-case-00.log",
+      "name": "bezier_region::tests::one_fragment_nonzero_parallel_loop_extends_chamfer_cuts_on_one_finite_envelope"
+    }
+  ],
+  "binaries": {
+    "hypercurve": {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/subdivision-progress-20260926-v136-hypercurve",
+      "sha256": "567f93870af4eeacae67022d93e6bab4e2d07599476fbc718dcd0354feeb2be7"
+    }
+  },
+  "all_processes_reaped": true,
+  "diagnostic_only": true,
+  "hypercurve_build_returncode": 0,
+  "all_sources_unchanged": true
+}

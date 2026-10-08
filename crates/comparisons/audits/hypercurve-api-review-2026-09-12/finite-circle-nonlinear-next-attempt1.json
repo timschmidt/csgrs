@@ -1,0 +1,20 @@
+{
+  "returncode": 101,
+  "elapsed_seconds": 4.820215918996837,
+  "normal_library_sha256": "d3636b0200434ee04c2f0ca37c4236df104c9465328a13f80ce382f76424a30b",
+  "source_sha256": "bd0de217eb14a328532d11c29648c0078911fc38d014b76e283a385968662631",
+  "executable_sha256": "752c823da6a38fa41e52df3389f874f68658901b0ec5fbfefb7d1408e5b1aeaa",
+  "production_commit": "384f66735296075ca54d81ce558cabbc16ee8a50",
+  "command": [
+    "rustc",
+    "--edition=2024",
+    "-O",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-circle-nonlinear-next.rs",
+    "--extern",
+    "hypercurve=/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/libhypercurve-2c7ff6f3fbe07653.rlib",
+    "-L",
+    "dependency=/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps",
+    "-o",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-circle-nonlinear-next"
+  ]
+}

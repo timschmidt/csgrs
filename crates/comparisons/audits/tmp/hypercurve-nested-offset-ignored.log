@@ -1,0 +1,7 @@
+
+running 2 tests
+test bezier_region::tests::recursively_nested_selected_radial_public_offset_regularizes_approximate_512 ... ok
+test bezier_region::tests::recursively_nested_selected_radial_public_offset_regularizes_strict ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 874 filtered out; finished in 3.20s
+

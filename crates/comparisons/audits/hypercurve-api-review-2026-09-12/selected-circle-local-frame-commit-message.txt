@@ -1,0 +1,16 @@
+Validate selected circle centers at their defining parameter
+
+A retained circle can have a finite regular center even when its source
+has a pole elsewhere. Use the existing local source-frame certificate
+for that selected center instead of requiring whole-source finiteness.
+Keep full-domain validation for candidate curves and unrestricted centers.
+
+Add an independent unit-circle regression with a remote rational-source
+pole, rejection at the pole itself, exact circle/line replay and non-PH
+parallel crossings across both policies, operand orders and traversals.
+
+Validation: both all-target no-default-features checks and 49 release
+all-features test targets; 2,207 passes, five unchanged known failures,
+nine ignored and eight previously unqualified expensive cases excluded.
+No new failures or timeouts. Independent intersection and trimming
+matrices pass against the final library; all 396 source hashes match.

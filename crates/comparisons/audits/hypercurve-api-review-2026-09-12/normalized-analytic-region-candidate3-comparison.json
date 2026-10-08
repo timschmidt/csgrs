@@ -1,0 +1,11 @@
+{
+  "failed": [
+    "radical_parallel_cusp_offsets_exactly_under_both_policies",
+    "retained_rational_arc_and_analytic_parallel_fillet_exactly"
+  ],
+  "baseline_failures": [
+    "radical_parallel_cusp_offsets_exactly_under_both_policies",
+    "retained_rational_arc_and_analytic_parallel_fillet_exactly"
+  ],
+  "new_failures": []
+}

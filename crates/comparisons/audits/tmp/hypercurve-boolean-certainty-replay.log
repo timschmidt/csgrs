@@ -1,0 +1,43 @@
+    Blocking waiting for file lock on build directory
+   Compiling hyperreal v0.13.1 (/home/tim/Documents/GitHub/workspace/hyperreal)
+   Compiling hyperlattice v0.6.1 (/home/tim/Documents/GitHub/workspace/hyperlattice)
+   Compiling hyperlimit v0.4.1 (/home/tim/Documents/GitHub/workspace/hyperlimit)
+   Compiling hypertri v0.4.1 (/home/tim/Documents/GitHub/workspace/hypertri)
+   Compiling hypersolve v0.3.1 (/home/tim/Documents/GitHub/workspace/hypersolve)
+   Compiling hypercurve v0.3.1 (/home/tim/Documents/GitHub/workspace/hypercurve)
+    Finished `release` profile [optimized] target(s) in 2m 34s
+     Running tests/hypercurve_curve_region_boolean.rs (target/release/deps/hypercurve_curve_region_boolean-0a97901ca6765134)
+
+running 29 tests
+test curve_path_construction_obeys_the_approximate_512_terminal ... ok
+test approximate_offset_reports_a_consumed_terminal_for_symbolic_zero_distance ... ok
+test affine_line_batch_preserves_material_and_hole_roles ... ok
+test affine_line_batch_reuses_the_authoritative_arrangement_topology ... ok
+test curved_region_boolean_respects_nested_hole_roles ... ok
+test algebraic_curved_region_output_can_feed_another_boolean ... ok
+test boolean_batch_short_circuits_empty_and_identical_operands ... ok
+test curved_region_boolean_output_can_feed_another_boolean ... ok
+test noncircular_conic_boolean_output_is_not_mislabeled_as_native_arc ... ok
+test line_general_batch_obeys_the_approximate_512_terminal ... ok
+test point_query_reports_when_approximate_policy_decides_a_symbolic_boundary ... ok
+test regularized_partial_shared_edges_resolve_exact_side_ownership ... ok
+test regularized_affine_contacts_discard_lower_dimensional_intersections ... ok
+test general_curve_batch_obeys_the_approximate_512_terminal ... ok
+test approximate_policy_reports_a_consumed_terminal_instead_of_relabeling_it_exact ... ok
+test independent_nonlinear_line_parameters_compact_to_reusable_regions ... ok
+test regularized_conic_tangencies_preserve_regions_but_not_point_intersections ... ok
+test retained_regions_clip_shared_source_components_to_carrier_ranges ... ok
+test elevated_circular_boolean_outputs_publish_native_boundaries ... ok
+test retained_regions_clip_degree_equivalent_shared_images_to_carrier_ranges ... ok
+test conic_general_batch_obeys_the_approximate_512_terminal ... ok
+test circular_conic_batch_obeys_the_approximate_512_terminal ... ok
+test circular_boolean_outputs_publish_native_boundaries_under_both_policies ... ok
+test mixed_line_circular_conic_batch_obeys_the_approximate_512_terminal ... ok
+test retained_regions_clip_mobius_reparameterized_conics_to_carrier_ranges ... ok
+test retained_regions_clip_non_axis_monotone_mobius_cubic_components ... ok
+test mixed_line_circular_conic_batch_reuses_one_authoritative_topology ... ok
+test circular_conic_batch_reuses_one_authoritative_topology ... ok
+test mixed_line_circular_conic_degeneracy_matrix_matches_native_results ... ok
+
+test result: ok. 29 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.86s
+

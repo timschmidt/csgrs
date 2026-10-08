@@ -1,0 +1,12 @@
+{
+  "parent_commit": "34ae22f1ca9059356b2a6a1fcb3f9263b2c46577",
+  "baseline": "finite-selected-point-baseline.json",
+  "hashes_verified": true,
+  "cases": 16,
+  "successes": 12,
+  "point_replays": 48,
+  "failures": 4,
+  "timeouts": 0,
+  "independent_certificate": "finite-selected-point-certificate.md",
+  "implementation_started": false
+}

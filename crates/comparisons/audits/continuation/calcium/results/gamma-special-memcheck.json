@@ -1,0 +1,17 @@
+{
+  "tag": "gamma-special-memcheck",
+  "started": "2026-09-08T10:40:56.681Z",
+  "finished": "2026-09-08T10:40:57.340Z",
+  "elapsedSeconds": 0.65747783,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison",
+  "command": "valgrind",
+  "args": [
+    "--error-exitcode=97",
+    "--leak-check=full",
+    "--show-leak-kinds=definite,indirect,possible",
+    "--errors-for-leak-kinds=definite,indirect,possible",
+    "/home/tim/Documents/GitHub/workspace/.audit-builds/calcium-flint-gamma-special-probe"
+  ],
+  "code": 1,
+  "signal": null
+}

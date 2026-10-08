@@ -1,0 +1,7 @@
+Preserve retained source frames at rational pair endpoints
+
+Rational parallel images retained exact cusp contacts but reduced their one-sided tangent relation to two zero derivatives. At retained endpoints, replay missing tangent directions from the original source frames and contact-local derivative scale while preserving the selected parameters and root identity. Ordinary contacts retain their existing signs without constructing tangent supports.
+
+Share one point factory for regular and one-sided source frames. The renamed private helper accepts general CurveParameter2 evidence, proves nonzero source weight and primitive speed, and retains selected or recursive parameters without global projection. Remove the duplicate narrower point constructor and migrate every caller directly.
+
+Validation: 373 selected Hypercurve release tests across eight binaries, all-target Clippy with all and no default features, formatting, denied-warning documentation, editing fuzz compilation, and Hyperbrep compilation. New tests cover both sides of stationary endpoints through native, selected-fiber and recursive parameters, unprojectable selected roots without global reconstruction, exact source-pole rejection, and endpoint tangent signs under both operand orders and range orientations. The PH cusp regression independently certifies the original branch directions before checking pair evidence.

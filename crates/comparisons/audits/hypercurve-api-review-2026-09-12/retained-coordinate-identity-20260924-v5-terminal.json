@@ -1,0 +1,207 @@
+{
+  "checks": [
+    {
+      "label": "fmt",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustfmt",
+        "--edition",
+        "2024",
+        "--check",
+        "src/bezier_offset.rs",
+        "src/bezier_region.rs"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 2.7411094589624554,
+      "log": "retained-coordinate-identity-20260924-v5-fmt.log"
+    },
+    {
+      "label": "clippy-1",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "clippy",
+        "--all-targets",
+        "--all-features",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 26.37642283202149,
+      "log": "retained-coordinate-identity-20260924-v5-clippy-1.log"
+    },
+    {
+      "label": "clippy-2",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "clippy",
+        "--all-targets",
+        "--no-default-features",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 25.0286858829204,
+      "log": "retained-coordinate-identity-20260924-v5-clippy-2.log"
+    }
+  ],
+  "cases": [
+    {
+      "label": "one_fragment_materialized_loop_chamfers_to_one_middle_interval",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-coordinate-identity-20260924-v5-libtest",
+        "--exact",
+        "bezier_region::tests::one_fragment_materialized_loop_chamfers_to_one_middle_interval",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.5808456650702283,
+      "log": "retained-coordinate-identity-20260924-v5-one_fragment_materialized_loop_chamfers_to_one_middle_interval.log"
+    },
+    {
+      "label": "one_fragment_selected_loop_chamfers_from_one_interval",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-coordinate-identity-20260924-v5-libtest",
+        "--exact",
+        "bezier_region::tests::one_fragment_selected_loop_chamfers_from_one_interval",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.527953930082731,
+      "log": "retained-coordinate-identity-20260924-v5-one_fragment_selected_loop_chamfers_from_one_interval.log"
+    },
+    {
+      "label": "analytic_axis_order_replays_a_local_root_in_the_other_points_field",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-coordinate-identity-20260924-v5-libtest",
+        "--exact",
+        "bezier_offset::conversion_tests::analytic_axis_order_replays_a_local_root_in_the_other_points_field",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.27204334596171975,
+      "log": "retained-coordinate-identity-20260924-v5-analytic_axis_order_replays_a_local_root_in_the_other_points_field.log"
+    },
+    {
+      "label": "retained_chord_coordinate_and_linear_queries_observe_requested_policy",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-coordinate-identity-20260924-v5-libtest",
+        "--exact",
+        "bezier_offset::conversion_tests::retained_chord_coordinate_and_linear_queries_observe_requested_policy",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.32793122495058924,
+      "log": "retained-coordinate-identity-20260924-v5-retained_chord_coordinate_and_linear_queries_observe_requested_policy.log"
+    },
+    {
+      "label": "algebraic_chord_source_incidence_deflates_only_the_retained_contact",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-coordinate-identity-20260924-v5-libtest",
+        "--exact",
+        "bezier_offset::conversion_tests::algebraic_chord_source_incidence_deflates_only_the_retained_contact",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.2733853639801964,
+      "log": "retained-coordinate-identity-20260924-v5-algebraic_chord_source_incidence_deflates_only_the_retained_contact.log"
+    },
+    {
+      "label": "recursive_projective_kernel_imports_similarity_of_algebraic_endpoints",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-coordinate-identity-20260924-v5-libtest",
+        "--exact",
+        "bezier_offset::conversion_tests::recursive_projective_kernel_imports_similarity_of_algebraic_endpoints",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.27127413800917566,
+      "log": "retained-coordinate-identity-20260924-v5-recursive_projective_kernel_imports_similarity_of_algebraic_endpoints.log"
+    },
+    {
+      "label": "algebraic_chord_retains_independent_endpoint_fields_under_both_policies",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-coordinate-identity-20260924-v5-libtest",
+        "--exact",
+        "bezier_offset::conversion_tests::algebraic_chord_retains_independent_endpoint_fields_under_both_policies",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.2809856719104573,
+      "log": "retained-coordinate-identity-20260924-v5-algebraic_chord_retains_independent_endpoint_fields_under_both_policies.log"
+    },
+    {
+      "label": "independent_field_corner_edits_preserve_normalized_sets",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-coordinate-identity-20260924-v5-libtest",
+        "--exact",
+        "bezier_region::tests::independent_field_corner_edits_preserve_normalized_sets",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.8258139520185068,
+      "log": "retained-coordinate-identity-20260924-v5-independent_field_corner_edits_preserve_normalized_sets.log"
+    },
+    {
+      "label": "one_fragment_materialized_loop_extends_algebraic_chamfer_cuts_once",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-coordinate-identity-20260924-v5-libtest",
+        "--exact",
+        "bezier_region::tests::one_fragment_materialized_loop_extends_algebraic_chamfer_cuts_once",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 2.2417453619418666,
+      "log": "retained-coordinate-identity-20260924-v5-one_fragment_materialized_loop_extends_algebraic_chamfer_cuts_once.log"
+    },
+    {
+      "label": "one_fragment_selected_loop_extends_chamfer_cuts_on_its_analytic_carrier",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-coordinate-identity-20260924-v5-libtest",
+        "--exact",
+        "bezier_region::tests::one_fragment_selected_loop_extends_chamfer_cuts_on_its_analytic_carrier",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 4.736268623964861,
+      "log": "retained-coordinate-identity-20260924-v5-one_fragment_selected_loop_extends_chamfer_cuts_on_its_analytic_carrier.log"
+    }
+  ],
+  "all_processes_reaped": true,
+  "binary_sha256": "a3e55ae92218bd52ea3be185443515e7c3938ac58998fbceadbe2d7b5075e5ed",
+  "all_sources_unchanged": true
+}

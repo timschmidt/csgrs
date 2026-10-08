@@ -1,0 +1,6 @@
+{
+  "immutable_sources": true,
+  "source_manifest": "conic-exact-evaluation-build3-source.json",
+  "formatting_check": true,
+  "diff_check": true
+}

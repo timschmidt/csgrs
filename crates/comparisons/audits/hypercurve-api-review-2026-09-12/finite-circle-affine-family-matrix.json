@@ -1,0 +1,27 @@
+{
+  "returncode": 0,
+  "elapsed_seconds": 0.21398747600323986,
+  "normal_library_sha256": "0f5b28637814fb423462fabccda416f4be464138d2d6ef53a1d2513f48a0584c",
+  "log": "finite-circle-affine-family-matrix.log",
+  "source": "native-rational-publication-family-matrix.rs",
+  "command": [
+    "rustc",
+    "--edition=2024",
+    "-O",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/native-rational-publication-family-matrix.rs",
+    "--extern",
+    "hypercurve=/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/libhypercurve-2c7ff6f3fbe07653.rlib",
+    "-L",
+    "dependency=/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps",
+    "-o",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-circle-affine-family-matrix"
+  ],
+  "source_sha256": "4997d7958bc2ef9da3b91d65b97732be5c8c6d142015708f8360c02b5866c6bb",
+  "executable_sha256": "334b14c95ba9e79290be63dfadc9d99879bf4a6260605c8e5c4dda93b46264f2",
+  "counts": {
+    "complete_queries": 416,
+    "restrictions": 1440,
+    "point_replays": 5120,
+    "path_topologies": 8
+  }
+}

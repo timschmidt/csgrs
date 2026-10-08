@@ -1,0 +1,25 @@
+{
+  "returncode": 0,
+  "elapsed_seconds": 0.007537835015682504,
+  "normal_library_sha256": "476ce4085af4463f86d6182e476e0fa13af9266727aaefa54be4b0293d704b2a",
+  "log": "selected-point-frame-replay-affine-public.log",
+  "source": "finite-parallel-affine-public.rs",
+  "command": [
+    "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustc",
+    "--edition=2024",
+    "-O",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-parallel-affine-public.rs",
+    "--extern",
+    "hypercurve=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypercurve-930b1fe968ca3c94.rlib",
+    "-L",
+    "dependency=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps",
+    "-o",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/selected-point-frame-replay-affine-public"
+  ],
+  "source_sha256": "fdb1c041bb096abd84b94247a19970625b3f06bb3ed020149a3cb7525065df8b",
+  "executable_sha256": "3bfe7edde90bb833077aab96f691249d10c6c0b02dd4676088fb14cc8dad1cb5",
+  "counts": {
+    "cusp_representations": 5,
+    "checks": 80
+  }
+}

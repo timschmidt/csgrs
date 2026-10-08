@@ -1,0 +1,24 @@
+{
+  "parameter_bracket": [
+    "69/100",
+    "7/10"
+  ],
+  "F_at_lower_strict_lower_bound": "427147/62000000",
+  "F_at_upper_strict_upper_bound": "-2577/1075000",
+  "center_x_bounds": [
+    "70937/170000",
+    "7477/17300"
+  ],
+  "center_y_bounds": [
+    "13317/17300",
+    "133/170"
+  ],
+  "line_contact_y_lower_bound": "5333761/7490900",
+  "disk_witness": [
+    "9/20",
+    "3/4"
+  ],
+  "maximum_witness_squared_distance": "2/625",
+  "radius_squared": "1/100",
+  "branch": "left offset of parabola and left offset of incoming line"
+}

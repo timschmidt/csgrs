@@ -1,0 +1,106 @@
+{
+  "status": "committed and qualified against the documented baseline",
+  "goal_status": "active",
+  "previous_commit": "ddf739955d5586ac5257888433d35c8e09614538",
+  "commit": "dfc8ff21c6f86f4feb8e75f90da010cd5c0f3bf2",
+  "targets": 49,
+  "passed": 2227,
+  "passed_by_repo": {
+    "hypercurve": 1995,
+    "hyperbrep": 232
+  },
+  "known_failed": [
+    "approximate_512_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions",
+    "non_ph_bezier_pair_projective_fillet_retains_algebraic_extensions",
+    "nonconvex_algebraic_chord_expansion_is_exact_and_local_collapse_is_explicit",
+    "strict_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions",
+    "unified_mixed_line_arc_erosion_splits_after_a_curved_neck_collapse"
+  ],
+  "new_failures": [],
+  "ignored": 9,
+  "expensive_previously_unqualified_exclusions": 8,
+  "timeouts": 0,
+  "builds_and_checks": {
+    "-check": 0,
+    "-test-build": 0,
+    "-hyperbrep-check": 0,
+    "-hyperbrep-test-build": 0
+  },
+  "formatting_and_whitespace": "passed on final frozen qualification sources",
+  "formatted_files": {
+    "hypercurve": [
+      "src/bezier_offset.rs",
+      "src/curve_intersection.rs",
+      "src/curve_region_boolean.rs",
+      "src/curve_region_trim.rs",
+      "src/curve_support_intersection.rs",
+      "tests/hypercurve_curve_region_boolean.rs"
+    ],
+    "hyperbrep": []
+  },
+  "additional_caller_checks": [
+    {
+      "target": "fuzz",
+      "command": [
+        "cargo",
+        "check",
+        "--manifest-path",
+        "fuzz/Cargo.toml",
+        "--all-targets",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 10.02938438799174,
+      "log": "region-overlap-correspondence-fuzz-check.log"
+    },
+    {
+      "target": "ui",
+      "command": [
+        "cargo",
+        "check",
+        "--manifest-path",
+        "examples/hypercurve_ui/Cargo.toml",
+        "--all-targets",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 10.529637647006894,
+      "log": "region-overlap-correspondence-ui-check.log"
+    },
+    {
+      "target": "hyperbrep-fuzz",
+      "command": [
+        "cargo",
+        "check",
+        "--manifest-path",
+        "fuzz/Cargo.toml",
+        "--all-targets",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 21.093783253003494,
+      "log": "region-overlap-correspondence-hyperbrep-fuzz-check.log"
+    }
+  ],
+  "source_verification": "region-overlap-correspondence-source-verification.json",
+  "normal_library_sha256": "ac087dcc452fada528c2564ba2c289aa0b5bd7d1eeeabc4b5e9db6e2ce224d75",
+  "independent_probes_and_matrices": [
+    "region-overlap-correspondence-replay-matrix-run.json",
+    "region-overlap-correspondence-analytic-probe.json",
+    "region-overlap-correspondence-endpoint-probe.json",
+    "region-overlap-correspondence-completed-probe.json",
+    "region-overlap-correspondence-probe-final.json",
+    "region-overlap-correspondence-circle-matrix.json",
+    "region-overlap-correspondence-region-carrier-matrix.json",
+    "region-overlap-correspondence-general-trim-matrix.json",
+    "region-overlap-correspondence-constant-image-trim-matrix.json"
+  ],
+  "regression_baseline": "native-point-components-qualification.json",
+  "affected_regression_results": "region-overlap-correspondence-full-hypercurve-lib.json",
+  "evidence_audit": "region-overlap-correspondence-evidence-audit.md",
+  "performance_claim": null,
+  "remaining": "Complete finite exterior and retraced domains; normalized public region construction; five promotion failures; eight unqualified expensive tests; broader algebraic consolidation, computational measurements, and original architecture goal."
+}

@@ -1,0 +1,25 @@
+{
+  "returncode": 0,
+  "elapsed_seconds": 0.003452343007666059,
+  "normal_library_sha256": "4f31e2ad099d11b75a71df9f3c58671aa71af68816db9260c69ae286f65e7add",
+  "log": "finite-rational-pairs-endpoint-probe.log",
+  "source": "singleton-endpoint-parameter-completed.rs",
+  "command": [
+    "rustc",
+    "--edition=2024",
+    "-O",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/singleton-endpoint-parameter-completed.rs",
+    "--extern",
+    "hypercurve=/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/libhypercurve-2c7ff6f3fbe07653.rlib",
+    "-L",
+    "dependency=/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps",
+    "-o",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-rational-pairs-endpoint-probe"
+  ],
+  "source_sha256": "7fe239b2f4d8b0577cdbd11311f6e9c8dcdf8ae9e7bbb6d1fd3ba9493a68b63f",
+  "executable_sha256": "7e10da81dbf4778cc6327bfbb52696791c53c441041fee7ba3eb6ed642a7a770",
+  "counts": {
+    "queries": 4,
+    "parameter_visits": 8
+  }
+}

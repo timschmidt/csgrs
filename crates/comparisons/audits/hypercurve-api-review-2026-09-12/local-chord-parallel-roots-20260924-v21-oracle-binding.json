@@ -1,0 +1,9 @@
+{
+  "baseline": "v20",
+  "all_production_instructions_unchanged": true,
+  "production_documentation": "Chord/parallel intersection documentation now describes local-first enumeration and projection fallback.",
+  "all_five_new_regressions_unchanged": true,
+  "endpoint_regression_correction": "The negative-contact branch violates finite incoming-chord cut admission. Replace it with an independently certified admissible exterior branch at 69/100<t<7/10; retain five exact point witnesses and all previous assertions.",
+  "derivation": "endpoint-fillet-normalization-20260924-v2.md",
+  "exact_rational_bounds": "endpoint-fillet-normalization-20260924-v2-algebra.json"
+}

@@ -1,0 +1,20 @@
+{
+  "scope": "Pinned import integrity; historical numerical claims remain unverified.",
+  "revision": "1e3b1f7a8114b6bcf5078c31706719b054d87d46",
+  "verified": {
+    "files": 74821,
+    "symlinks": 44,
+    "lfs_payloads": 5,
+    "adapted_files": 13,
+    "bytes": 3779236823
+  },
+  "staged_blobs_verified": true,
+  "legacy_migration_discrepancies": [
+    {
+      "path": "audits/workspace/EXACTCORELIB_AUDIT_PROGRESS.md",
+      "manifest_sha256": "27c9e13a4dd9df7a5ec0c8753b3361d367e4fd056e302a90db2c0ccce1e88608",
+      "pinned_revision_sha256": "1d5a0e9b9bb9aa2bece323afd7664cac4cf9329ec565ff9f8659c0e2f80c6d17",
+      "status": "Pre-existing difference between the older migration manifest and the pinned upstream tree; both preserved unchanged."
+    }
+  ]
+}

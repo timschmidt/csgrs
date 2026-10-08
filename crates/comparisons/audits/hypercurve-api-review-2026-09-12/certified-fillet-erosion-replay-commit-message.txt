@@ -1,0 +1,7 @@
+Require certified fillet construction and erosion replay
+
+Check certification of fixture reversal, region admission, and represented/selected fillet construction before their Boolean composition regression.
+
+The neck-collapse erosion test previously required approximate point classification for round joins under APPROXIMATE_512 even though all queries now certify. Require Certified for all corner styles and both policies while preserving component and inside/outside checks.
+
+Validation: 96 promotion tests pass; five known failures remain with no new failures. The all-target check, formatting, and immutable-source checks pass. An independent probe certifies six offsets and eighteen point queries. Production sources and the library hash are unchanged from the 49-target qualification at 02b4195.

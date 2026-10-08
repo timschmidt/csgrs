@@ -1,0 +1,59 @@
+\doxysubsection{Closed\+Set\+Interface\texorpdfstring{$<$}{<} P, T \texorpdfstring{$>$}{>} Class Template Reference}
+\hypertarget{classAriadne_1_1ClosedSetInterface}{}\label{classAriadne_1_1ClosedSetInterface}\index{ClosedSetInterface$<$ P, T $>$@{ClosedSetInterface$<$ P, T $>$}}
+
+
+{\ttfamily \#include $<$set\+\_\+interface.\+hpp$>$}
+
+
+
+\doxysubsubsection{Description}
+\subsubsection*{template$<$class P, class T$>$\newline
+class Ariadne\+::\+Closed\+Set\+Interface$<$ P, T $>$}
+Interface for closed sets. Inheritance diagram for Closed\+Set\+Interface\texorpdfstring{$<$}{<} P, T \texorpdfstring{$>$}{>}\+:\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[height=2.488889cm]{classAriadne_1_1ClosedSetInterface}
+\end{center}
+\end{figure}
+\doxysubsubsubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1ClosedSetInterface_ad27b39bfcdea8e55937c21c91b3aac04}\label{classAriadne_1_1ClosedSetInterface_ad27b39bfcdea8e55937c21c91b3aac04} 
+virtual \mbox{\hyperlink{classAriadne_1_1ClosedSetInterface}{Closed\+Set\+Interface}}$<$ P, T $>$ \texorpdfstring{$\ast$}{*} {\bfseries clone} () const =0
+\begin{DoxyCompactList}\small\item\em Construct a dynamically-\/allocated copy. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1ClosedSetInterface_a01ed7701fb862e1cc11ca2935f315077}\label{classAriadne_1_1ClosedSetInterface_a01ed7701fb862e1cc11ca2935f315077} 
+virtual Lower\+Kleenean\+Type$<$ P $>$ {\bfseries separated} (const \mbox{\hyperlink{classAriadne_1_1SetInterfaceBase_a621a6488ff988ea56df9398b55b4241f}{Basic\+Set\+Type}} \&bx) const =0
+\begin{DoxyCompactList}\small\item\em Tests if the set is separated from {\itshape bx}. A set {\itshape A} is {\itshape separated} from {\itshape B} if the closures of {\itshape A} and {\itshape B} are disjoint. A set $A$ is {\itshape separated} from $B$ if $\,\overline{\!A} \cap \overline{B} = \emptyset$. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxyparagraph*{Public Member Functions inherited from \mbox{\hyperlink{classAriadne_1_1SetInterfaceBase}{Set\+Interface\+Base$<$ T $>$}}}
+\begin{DoxyCompactItemize}
+\item 
+virtual {\bfseries \texorpdfstring{$\sim$}{\string~}\+Set\+Interface\+Base} ()=default
+\begin{DoxyCompactList}\small\item\em Virtual destructor. \end{DoxyCompactList}\item 
+virtual \mbox{\hyperlink{classAriadne_1_1SetInterfaceBase_aa7182f86fbdcb1b29488c09b3340918d}{Dimension\+Type}} {\bfseries dimension} () const =0
+\begin{DoxyCompactList}\small\item\em The dimension of the set. \end{DoxyCompactList}\item 
+virtual \mbox{\hyperlink{namespaceAriadne_acbb98ddc4385af4599070e65a1a47ec1}{Output\+Stream}} \& {\bfseries \+\_\+write} (\mbox{\hyperlink{namespaceAriadne_acbb98ddc4385af4599070e65a1a47ec1}{Output\+Stream}} \&os) const =0
+\begin{DoxyCompactList}\small\item\em Write to an output stream. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsubsection*{Friends}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1ClosedSetInterface_a39d25235cfe054256a70edc1affe5d7a}\label{classAriadne_1_1ClosedSetInterface_a39d25235cfe054256a70edc1affe5d7a} 
+Lower\+Kleenean\+Type$<$ P $>$ {\bfseries separated} (const \mbox{\hyperlink{classAriadne_1_1CompactSetInterface}{Compact\+Set\+Interface}}$<$ P, T $>$ \&cps, const \mbox{\hyperlink{classAriadne_1_1ClosedSetInterface}{Closed\+Set\+Interface}}$<$ P, T $>$ \&cls)
+\begin{DoxyCompactList}\small\item\em Tests if {\itshape cps} is disjoint from {\itshape cls}, to a tolerance of {\itshape eps}. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsubsection*{Additional Inherited Members}
+\doxyparagraph*{Public Types inherited from \mbox{\hyperlink{classAriadne_1_1SetInterfaceBase}{Set\+Interface\+Base$<$ T $>$}}}
+\begin{DoxyCompactItemize}
+\item 
+typedef T {\bfseries Element\+Type}
+\begin{DoxyCompactList}\small\item\em The type of element of the set. \end{DoxyCompactList}\item 
+typedef Set\+Traits$<$ T $>$\+::\+Dimension\+Type {\bfseries Dimension\+Type}
+\begin{DoxyCompactList}\small\item\em The type representing the dimension of the set. \end{DoxyCompactList}\item 
+typedef Set\+Traits$<$ T $>$\+::\+Basic\+Set\+Type {\bfseries Basic\+Set\+Type}
+\begin{DoxyCompactList}\small\item\em The type of basic set in the space. \end{DoxyCompactList}\item 
+typedef Set\+Traits$<$ T $>$\+::\+Bounding\+Set\+Type {\bfseries Bounding\+Set\+Type}
+\begin{DoxyCompactList}\small\item\em The type of basic set in the space. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+The documentation for this class was generated from the following files\+:\begin{DoxyCompactItemize}
+\item 
+source/geometry/set.\+decl.\+hpp\item 
+source/geometry/\mbox{\hyperlink{set__interface_8hpp}{set\+\_\+interface.\+hpp}}\end{DoxyCompactItemize}

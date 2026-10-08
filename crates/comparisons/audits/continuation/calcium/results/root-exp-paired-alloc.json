@@ -1,0 +1,14 @@
+{
+  "tag": "root-exp-paired-alloc",
+  "started": "2026-09-08T11:34:35.185Z",
+  "finished": "2026-09-08T11:34:39.765Z",
+  "elapsedSeconds": 4.577622712999999,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison",
+  "command": "node",
+  "args": [
+    "audits/continuation/calcium/run-root-exp-bench.mjs",
+    "alloc"
+  ],
+  "code": 0,
+  "signal": null
+}

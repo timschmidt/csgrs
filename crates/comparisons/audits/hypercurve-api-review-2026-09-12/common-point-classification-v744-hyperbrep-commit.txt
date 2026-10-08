@@ -1,0 +1,5 @@
+Classify retained planar endpoints without coordinate projection
+
+Migrate region and path queries to CurvePoint2. Wire nesting, profile nesting and closed face splitting pass retained endpoints directly, removing nine stored-coordinate requirements. Author the prism query point once before testing its outer boundary and holes. Add an exact parabolic-offset nesting regression with a nonmaterialized endpoint.
+
+Validation: 730 release regressions across 20 executables, including all affected Hypercurve integration suites, stationary fillets, downstream nesting and native planar adapters. Eight feature/lint, formatting, documentation, doctest, fuzz and downstream checks pass.

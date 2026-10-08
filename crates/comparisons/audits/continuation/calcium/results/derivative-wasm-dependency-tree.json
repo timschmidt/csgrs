@@ -1,0 +1,20 @@
+{
+  "tag": "derivative-wasm-dependency-tree",
+  "started": "2026-09-09T15:32:29.476Z",
+  "finished": "2026-09-09T15:32:29.650Z",
+  "elapsedSeconds": 0.171865095,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/derivative-demand-candidate/hypercurve",
+  "command": "cargo",
+  "args": [
+    "tree",
+    "--offline",
+    "--locked",
+    "--all-features",
+    "--target",
+    "wasm32-unknown-unknown",
+    "-i",
+    "getrandom@0.4.2"
+  ],
+  "code": 0,
+  "signal": null
+}

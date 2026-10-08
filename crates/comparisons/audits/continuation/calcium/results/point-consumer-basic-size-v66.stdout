@@ -1,0 +1,7 @@
+   text	   data	    bss	    dec	    hex	filename
+10702455	 306488	   2800	11011743	 a8069f	/tmp/calcium-e-qualified-apps.AHiwfn/candidate-hypercurve-basic
+10702455	 306488	   2800	11011743	 a8069f	/tmp/calcium-e-qualified-apps.AHiwfn/candidate-hypercurve-basic.stripped
+10703579	 306488	   1664	11011731	 a80693	/tmp/calcium-point-qualified-apps.QIBZlE/candidate-hypercurve-basic
+10703579	 306488	   1664	11011731	 a80693	/tmp/calcium-point-qualified-apps.QIBZlE/candidate-hypercurve-basic.stripped
+10704011	 306488	   5328	11015827	 a81693	/tmp/calcium-point-consumer.qyV59b/demand-basic
+10704011	 306488	   5328	11015827	 a81693	/tmp/calcium-point-consumer.qyV59b/demand-basic.stripped

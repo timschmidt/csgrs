@@ -1,0 +1,203 @@
+/***************************************************************************
+ *            hybrid_automaton.dox
+ *
+ *  Copyright  2004-9  Pieter Collins
+ *
+ ****************************************************************************/
+
+/*
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; either version 2 of the License, or
+ *  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Library General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program; if not, write to the Free Software
+ *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+ */
+
+/*!
+ * \file hybrid_automaton.dox
+ * \brief Documentation on the Ariadne hybrid automaton model.
+ */
+
+
+namespace Ariadne {
+
+/*!
+\page hybrid_automaton_page Building a Hybrid Automaton
+
+\todo This page has not been written yet.
+See the \ref hybrid_automaton_page_0_4 page for a description of how to build a hybrid automaton in %Ariadne 0.4.
+See the \ref hybrid_evolution_tutorial_page for a tutorial.
+See the documentation on the \ref Ariadne::HybridAutomaton and \ref Ariadne::CompositeHybridAutomaton classes for an up-to-date description of the API.
+
+*/
+
+/*!
+
+\page hybrid_automaton_page_0_4 Building a Hybrid Automaton (version 0.4)
+
+Building a hybrid automaton in %Ariadne involves two main steps. We first define the real-valued functions used in the automaton, and then build the automaton from these pieces. However, first we need to know about the core numeric and linear algebra types used by %Ariadne.
+
+\section hybrid_automaton_core Ariadne Core Types
+
+\subsection hybrid_automaton_numeric Numerical Types
+
+%Ariadne supports \ref FloatApproximation and \ref FloatBounds types, representing an approximate floating-point value, and an approximation to a real value given by an interval \f$[l,u]\f$.
+
+Additionally, %Ariadne supports \ref Integer and \ref Rational types if the Gnu Multiple-Precision library (GMP) is available. However, these types are typically not used for defining systems.
+
+
+\subsection hybrid_automaton_vector_matrix Vectors and Matrices
+
+Most of the builtin functions rely on the construction of Vector and Matrix objects. The simplest way to construct a vector or matrix is using a variable-size argument list.
+
+\code
+// Create a vector of size n with values v[i].
+Vector<Float> v(n, v[0], v[1], ..., v[n-1]);
+
+// Create a matrix of size m x n with values a[i][j].
+Matrix<Float> A(m,n, a[0][0],a[0][1],..,a[0][n-1],
+                     a[1][0],a[1][1],...,a[1][n-1],
+                       ...,
+                     a[m-1][0],a[m-1][1],...,a[m-1][n-1]);
+\endcode
+
+
+
+\section hybrid_automaton_functions Ariadne Functions
+
+An %Ariadne \ref HybridAutomaton object is built out of vector-valued functions on Euclidean space \f$f:\R^m\rightarrow\R^n\f$.
+Since %Ariadne internally needs to be able to evaluate the function on different data types, all functions used in an %Ariadne \ref HybridAutomaton must inherit from the \ref ScalarFunctionInterface or \ref VectorFunctionInterface class.
+The \ref ScalarFunction and \ref VectorFunction classes can be used to build general-purpose functions.
+A number of builtin function types are provided, including \ref IdentityFunction, \ref ScalarConstantFunction, \ref ScalarAffineFunction and \ref ScalarPolynomialFunction.
+Additionally, a \link ScalarUserFunction ScalarUserFunction<T> \endlink template is provided to facilitate the creation of more complicated nonlinear functions.
+
+
+
+
+\subsection hybrid_automaton_builtin_functions Builtin Functions
+
+To create an IdentityFunction, only the dimension of the space needs to be given.
+\code
+IdentityFunction(n);
+\endcode
+
+To create ConstantFunction and AffineFunction objects, the simplest way is to use variable-size argument lists.
+\code
+// Create a constant function y=c with values c[i].
+ConstantFunction(m, c[0], c[1], ..., c[m-1], n);
+
+// Create the constant function y[0]=1.0; y[1]=2.0 in three variables.
+ConstantFunction(2, 1.0,2.0, 3);
+
+// Create an affine function y=Ax+b with values b[i] and a[i][j].
+AffineFunction(m, b[0], ..., b[m-1], n, a[0][0],...,a[0][n-1], a[1][0],...,a[1][n-1], ..., a[m-1][0],...,a[m-1][n-1]);
+
+// Create the affine function y[0]=4.0+x[0]+2*x[1], y[1]=0.5-x[0]+3*x[1].
+AffineFunction(2, 4.0,0.5, 3, 1.0,0.0,2.0, -1.0,3.0,0.0);
+\endcode
+
+\warning When using variable-size argument lists, the floating-point values MUST have a decimal point.
+
+To create a \ref ScalarPolynomialFunction object, it is easiest to first create polynomial variables and unit vectors.
+\code
+// Create polynomials x[0] and x[1] in two independent variables.
+Vector<Polynomial<Float> > x=Polynomial<Float>::variables(2);
+
+// Create basis unit vectors e[0] and e[1] in two dimensions.
+array<Vector<Float> > e=Vector<Float>::basis(2);
+\endcode
+
+The polynomial function can now be written directly as:
+\code
+// Create the polynomial function y[0]=1.5-x[0]^2-0.5*x[1]; y[1]=x[0].
+PolynomialFunction p( (1.5-x[0]*x[0]-0.5*x[1])*e[0] + x[0]*e[1] );
+\endcode
+
+\if false
+Create the polynomial function \f$p(x_0,x_1)=(1.5-x_0^2-0.5x_1,x_0)\f$:
+<tt>%PolynomialFunction p( (1.5-x[0]*x[0]-0.5*x[1])*e[0] + x[0]*e[1] );</tt>
+\endif
+
+
+\subsection hybrid_automaton_user_functions User Functions
+
+The simplest way to generate a nonlinear function is to use the templates
+ - \ref VectorFunctionData "template<int RS, int AS, int PS=0, int SM=SMOOTH> class VectorFunctionData"
+ - \ref VectorUserFunction "template<class T> class VectorUserFunction"
+<p>
+The \ref VectorFunctionData template sets the \a result_size, \a argument_size, \a parameters_size and \a smoothness of the function.
+<p>
+The \ref VectorUserFunction template sets defines polymorphic call() methods which evaluate the function on different argument types.
+The template parameter is the name of the derived class.
+
+\code
+// Construct a function with two arguments and one output value.
+struct RadiusFunction : ScalarUserFunction<RadiusFunction>, ScalarFunctionData<1,2> {
+    template<class Res, class Arg> void compute(Res& r, const Arg& x) {
+        r[0] = sqrt( x[0]*x[1] + x[1]*x[1] ); }
+};
+\endcode
+
+
+\section hybrid_automaton_building Building a Hybrid Automaton
+
+First, construct a \ref HybridAutomaton object with no modes and no transitions:
+\code
+HybridAutomaton automaton;
+\endcode
+
+Then declare the discrete states and discrete events. The \ref DiscreteLocation and \ref DiscreteEvent classes are just integer labels and can be created as follows:
+\code
+DiscreteLocation location1(1);
+DiscreteLocation location2(2);
+DiscreteEvent event12(3);
+\endcode
+
+
+Finally, build up the system using the methods:
+ - \ref HybridAutomaton::new_mode "HybridAutomaton::new_mode(DiscreteState location, FunctionInterface dynamic)"
+ - \ref HybridAutomaton::new_invariant "HybridAutomaton::new_invariant(DiscreteState location, FunctionInterface predicate)"
+ - \ref HybridAutomaton::new_transition "HybridAutomaton::new_transition(DiscreteEvent event, DiscreteState source, DiscreteState target, FunctionInterface reset, FunctionInterface guard, bool urgency)"
+
+bearing in mind:
+ - Every mode must correspond to different discrete state.
+ - The \a dynamic in location \f$q\f$ must be a function \f$f:\R^{n_q}\rightarrow \R^{n_q}\f$, so as to define a differential equation \f$\dot{x}=f(x)\f$. The constant \f$n_q\f$ is the <em>dimension</em> of the location.
+ - The \a predicate defining an invariant in location \f$q\f$, and the \a guard of a transition with \a source \f$q\f$ must scalar functions \f$\R^{n_q}\rightarrow\R\f$
+ - There may be multiple invariants in a given location.
+ - There can be at most one transition with a given \a event and \a source.
+ - The \a reset of a transition with \a source \f$s\f$ and \a target \f$t\f$ must be a function \f$r:\R^{n_s}\rightarrow \R^{n_t}\f$.
+ - If \a urgency flag is true, then the transition occurs as soon as the \a guard is positive. Otherwise, the transition is \e permissive, and occurs nondeterministically at any time (or not at all).
+
+A simple hybrid automaton might be built as follows:
+
+\code
+// Create a new mode with the given dynamic.
+automaton.new_mode(location1,dynamic1);
+
+// Impose some invariants in the mode.
+// Note that the invariant must be a scalar function.
+automaton.new_invariant(location1,invariant1);
+automaton.new_invariant(location1,invariant2);
+
+// Create another mode.
+automaton.new_mode(location2,dynamic2);
+
+// Add a new transition based on the DiscreteEvent event12, with source location1, target location2, reset reset12, guard condition guard12 and urgency urgent12.
+// Note that the guard must be a scalar function.
+automaton.new_transition(event12,location1,location2,reset12,guard12,urgent12);
+\endcode
+
+The main restriction to the invariants and guards is that they must be scalar functions. This is due to the way %Ariadne performs event detection. These restrictions will be lifted in a later version of %Ariadne.
+
+
+*/
+
+}

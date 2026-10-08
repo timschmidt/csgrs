@@ -1,0 +1,13 @@
+{
+  "tag": "point-attribution-verify",
+  "started": "2026-09-11T02:56:36.543Z",
+  "finished": "2026-09-11T02:57:01.555Z",
+  "elapsedSeconds": 25.009490545000002,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "node",
+  "args": [
+    "verify-point-attribution-v65.mjs"
+  ],
+  "code": 0,
+  "signal": null
+}

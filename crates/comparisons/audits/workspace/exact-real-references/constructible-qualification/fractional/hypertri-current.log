@@ -1,0 +1,65 @@
+    Blocking waiting for file lock on build directory
+   Compiling hyperlimit v0.4.1 (/home/tim/Documents/GitHub/workspace/hyperlimit)
+   Compiling hypertri v0.4.1 (/home/tim/Documents/GitHub/workspace/hypertri)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 17.77s
+     Running unittests src/lib.rs (.audit-targets/ireal-derivative-18555/debug/deps/hypertri-ef97354cbad17875)
+
+running 3 tests
+test context::tests::policy_context_and_certainty_remain_one_byte ... ok
+test types::tests::polygon_input_facts_carry_symbolic_dependencies_without_exact_claims ... ok
+test types::tests::polygon_input_facts_carry_exact_coordinate_summary ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/adversarial.rs (.audit-targets/ireal-derivative-18555/debug/deps/adversarial-a171b760fa8454ae)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/api_surface_coverage.rs (.audit-targets/ireal-derivative-18555/debug/deps/api_surface_coverage-cd4bf36cd06a9b9d)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/earcutr_differential.rs (.audit-targets/ireal-derivative-18555/debug/deps/earcutr_differential-d65100df3d584ee7)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/fuzz_properties.rs (.audit-targets/ireal-derivative-18555/debug/deps/fuzz_properties-2a4d8a35dfcd371b)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/predicate_policy.rs (.audit-targets/ireal-derivative-18555/debug/deps/predicate_policy-b1ea530e025e8cd5)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/readme.rs (.audit-targets/ireal-derivative-18555/debug/deps/readme-bc0d4c3f84679a0b)
+
+running 2 tests
+test readme_quickstart_matches_the_runnable_example ... ok
+test readme_release_metadata_matches_the_manifest ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/real_representations.rs (.audit-targets/ireal-derivative-18555/debug/deps/real_representations-af937164ddb5fac3)
+
+running 2 tests
+test unresolved_opaque_terminal_form_still_crosses_policy_boundary ... ok
+test finite_real_certificate_inventory_is_current ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests hypertri
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+

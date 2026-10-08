@@ -1,0 +1,6 @@
+{
+  "outer_session": 1222,
+  "outer_exit_code": 1,
+  "baseline_timeout": true,
+  "symbolic_stack": "conic-separation-stack-20260928-v602-backtrace.txt"
+}

@@ -1,0 +1,9 @@
+   Compiling hyperlimit v0.4.1 (/home/tim/Documents/GitHub/workspace/hyperlimit)
+    Finished `release` profile [optimized] target(s) in 4.02s
+     Running unittests src/lib.rs (target/release/deps/hyperlimit-a247824e5f14034d)
+
+running 1 test
+test predicates::order::tests::exact_normal_form_precedes_terminal_approximate_equality ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 251 filtered out; finished in 0.00s
+

@@ -1,0 +1,26 @@
+{
+  "returncode": 0,
+  "elapsed_seconds": 0.6644972390204202,
+  "normal_library_sha256": "3f204f6dcef0133f415650348226026d9a964d24eae3cd2fbd33cc53b4667deb",
+  "log": "finite-parallel-regularity-finite-matrix.log",
+  "source": "finite-rational-pairs-matrix.rs",
+  "command": [
+    "rustc",
+    "--edition=2024",
+    "-O",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-rational-pairs-matrix.rs",
+    "--extern",
+    "hypercurve=/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/libhypercurve-2c7ff6f3fbe07653.rlib",
+    "-L",
+    "dependency=/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps",
+    "-o",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-parallel-regularity-finite-matrix"
+  ],
+  "source_sha256": "dfcf4c581f86b772b183a73a53f9fe78e93f7b716731a73618d8b69a2cea69e4",
+  "executable_sha256": "376233050bfa083215d874e318fa218a3a77f0ab69528732d60358555155cb3f",
+  "counts": {
+    "queries": 176,
+    "point_replays": 736,
+    "restrictions": 80
+  }
+}

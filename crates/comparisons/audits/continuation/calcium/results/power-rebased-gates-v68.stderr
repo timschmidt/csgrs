@@ -1,0 +1,11 @@
+file:///home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/point-qualified-capture.mjs:17
+  p.on('error',fail);p.on('close',(code,signal)=>code===0&&!signal?ok():fail(Error(JSON.stringify({tag,code,signal}))));
+                                                                             ^
+
+Error: {"tag":"power-rebased-clippy-v68","code":1,"signal":null}
+    at ChildProcess.<anonymous> (file:///home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/point-qualified-capture.mjs:17:78)
+    at ChildProcess.emit (node:events:519:28)
+    at maybeClose (node:internal/child_process:1101:16)
+    at ChildProcess._handle.onexit (node:internal/child_process:304:5)
+
+Node.js v22.22.2

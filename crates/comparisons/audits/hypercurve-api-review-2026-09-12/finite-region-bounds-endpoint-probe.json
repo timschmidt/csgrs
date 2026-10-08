@@ -1,0 +1,25 @@
+{
+  "returncode": 0,
+  "elapsed_seconds": 0.0034610630245879292,
+  "normal_library_sha256": "e202ba018058d08c8c82bec93bd0450757fd5fd6645097bea76f6108b6113aa1",
+  "log": "finite-region-bounds-endpoint-probe.log",
+  "source": "singleton-endpoint-parameter-completed.rs",
+  "command": [
+    "rustc",
+    "--edition=2024",
+    "-O",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/singleton-endpoint-parameter-completed.rs",
+    "--extern",
+    "hypercurve=/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/libhypercurve-2c7ff6f3fbe07653.rlib",
+    "-L",
+    "dependency=/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps",
+    "-o",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-region-bounds-endpoint-probe"
+  ],
+  "source_sha256": "7fe239b2f4d8b0577cdbd11311f6e9c8dcdf8ae9e7bbb6d1fd3ba9493a68b63f",
+  "executable_sha256": "690c33c7c69eea10944e99f7fdbecff329c7ade18af49637e68df6b46254d42c",
+  "counts": {
+    "queries": 4,
+    "parameter_visits": 8
+  }
+}

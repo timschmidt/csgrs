@@ -1,0 +1,42 @@
+{
+  "parents": {
+    "hypercurve": "f7bb46a2869097219d316b6af22ae26c2459492c",
+    "hypersolve": "42308d704df777b3e627aa344424afa3f215e456",
+    "hyperreal": "0cb5f29aee065c73e234e0ebb0a9e106398515bb"
+  },
+  "source_manifest": "circle-order-evidence-20260926-v201-sources.json",
+  "source_directory": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/source-archives/circle-order-evidence-20260926-v201",
+  "build_source_directory": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/build-workspace-20260925",
+  "workspace_guard": "circle-contact-evidence-20260926-v200-workspace.json",
+  "checks": [],
+  "cases": [
+    {
+      "repo": "hypercurve",
+      "label": "case-00",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/circle-order-evidence-20260926-v201-hypercurve",
+        "--exact",
+        "curve_region_boolean::certified_successor_tests::selected_parallel_arrangement_splits_interior_cusps",
+        "--test-threads=1",
+        "--nocapture",
+        "--color",
+        "never"
+      ],
+      "returncode": "timeout",
+      "elapsed_seconds": 30.00194534205366,
+      "log": "circle-order-evidence-20260926-v201-case-00.log",
+      "name": "curve_region_boolean::certified_successor_tests::selected_parallel_arrangement_splits_interior_cusps"
+    }
+  ],
+  "binaries": {
+    "hypercurve": {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/circle-order-evidence-20260926-v201-hypercurve",
+      "sha256": "5d279586b6fa9a3ca06bb8f9efdaaace08e7e2a4f2440580ae6886cc8d47a486"
+    }
+  },
+  "all_processes_reaped": true,
+  "diagnostic_only": true,
+  "hypercurve_build_returncode": 0,
+  "all_sources_unchanged": true,
+  "qualification_complete": false
+}

@@ -1,0 +1,16 @@
+   Compiling num-complex v0.4.6
+   Compiling serde v1.0.228
+   Compiling simba v0.9.1
+   Compiling num v0.4.3
+   Compiling symjit v2.14.9
+   Compiling xprec v0.2.2
+   Compiling numerica v1.4.3
+   Compiling graphica v1.2.1
+   Compiling hyperreal v0.13.1 (/home/tim/Documents/GitHub/workspace/hyperreal)
+   Compiling ciborium v0.2.2
+   Compiling tinytemplate v1.2.1
+   Compiling criterion v0.7.0
+   Compiling hyperlattice v0.6.1 (/home/tim/Documents/GitHub/workspace/hyperlattice)
+   Compiling symbolica v1.5.1
+    Finished `release` profile [optimized] target(s) in 2m 35s
+     Running tests/complex.rs (/tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/release/deps/complex-91dfe20cda1d9bc5)

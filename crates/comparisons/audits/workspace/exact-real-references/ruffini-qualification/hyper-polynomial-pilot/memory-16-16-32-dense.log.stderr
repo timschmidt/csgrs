@@ -1,0 +1,6 @@
+
+thread 'main' (916775) panicked at main.rs:376:9:
+assertion `left == right` failed: allocation accounting escaped measured window
+  left: 21384
+ right: 0
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace

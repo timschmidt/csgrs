@@ -1,0 +1,14 @@
+Keep boundary provenance construction inside curve operations
+
+Remove the unused public boundary-with-source constructor and make source
+record creation crate-private. Completed boundaries retain the same
+read-only provenance. Keep all private count, uniqueness, connectivity
+and endpoint-source validation and operation certificates unchanged.
+
+Migrate internal fixtures through ordinary geometry validation and the
+existing private constructor. Test mismatched counts, duplicate indices,
+empty chains and valid records directly under both policies; retain
+cross-loop uniqueness, malformed endpoint and public provenance checks.
+
+Validation:48 release regressions across3 binaries,7 lint/format/fuzz/docs
+and downstream checks,plus exact production-source preservation audit.

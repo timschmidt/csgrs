@@ -1,0 +1,71 @@
+[package]
+name = "numbers-qualification"
+version = "0.0.0"
+edition = "2024"
+publish = false
+autobins = false
+
+[dependencies]
+hyperreal = { path = "../../hyperreal" }
+rug = { version = "1.30.0", default-features = false, features = ["float", "integer", "rational", "std"] }
+
+[[bin]]
+name = "numbers_oracle"
+path = "oracle.rs"
+
+[[bin]]
+name = "numbers_atan_controls"
+path = "atan_controls.rs"
+
+[[bin]]
+name = "numbers_atan_grid"
+path = "atan_grid.rs"
+
+[[bin]]
+name = "numbers_neighbor_probe"
+path = "neighbor_probe.rs"
+
+[[bin]]
+name = "numbers_log_boundary"
+path = "log_boundary.rs"
+
+[[bin]]
+name = "numbers_neighbor_controls"
+path = "neighbor_controls.rs"
+
+[[bin]]
+name = "numbers_log_controls"
+path = "log_controls.rs"
+
+[[bin]]
+name = "numbers_series_limit"
+path = "series_limit.rs"
+
+[[bin]]
+name = "numbers_coefficient_controls"
+path = "coefficient_controls.rs"
+
+[[bin]]
+name = "constructible_hyper_boundary"
+path = "../constructible-qualification/hyper_boundary.rs"
+
+[[bin]]
+name = "constructible_hyper_field_probe"
+path = "../constructible-qualification/hyper_field_probe.rs"
+
+[[bin]]
+name = "constructible_hyper_field_bench"
+path = "../constructible-qualification/hyper_field_bench.rs"
+
+[[bin]]
+name = "constructible_float_oracle"
+path = "../constructible-qualification/float_oracle.rs"
+
+[[bin]]
+name = "constructible_hyper_field_memory"
+path = "../constructible-qualification/hyper_field_memory.rs"
+
+[profile.release]
+debug = 0
+incremental = false
+codegen-units = 16

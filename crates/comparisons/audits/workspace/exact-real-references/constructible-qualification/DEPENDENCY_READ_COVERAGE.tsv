@@ -1,0 +1,6 @@
+path	physical_lines	sha256	read_ranges
+binary-search-0.0/Numeric/Search/Integer.hs	125	11612ba4be4dfd5b613deb450820f2ebdfbc47231f8a7c49ccf4346db1f09039	1-125
+binary-search-0.0/binary-search.cabal	21	49b2507801cd803cfa40831818788083a66bf340326cdd9504d72fcb0220bd1a	1-21
+complex-generic-0.1.1.1/Data/Complex/Generic/TH.hs	214	1888d94b6479b67b43a498c00a87d97e8de8e24c6ab6c18eb5b2d6bb01f50749	1-214
+complex-generic-0.1.1.1/complex-generic.cabal	38	440fd9de41fb8eb8f7668c9f77f447daac8ffcfbf01547c1db18b49650627079	1-38
+integer-roots-1.0.4.0/integer-roots.cabal	68	36abf0ce8f1e901c87adfb640755449f7b0321c6cc75d819c0e026f4a1bd140c	1-68

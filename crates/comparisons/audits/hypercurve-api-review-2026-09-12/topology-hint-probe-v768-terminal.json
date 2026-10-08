@@ -1,0 +1,39 @@
+{
+  "baseline": "compound-fill-v766-sources.json",
+  "rlib": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypercurve-85a9105cd1c82df7.rlib",
+  "rlib_sha256": "ab659d031e71dff6070ea485fbbf23c952b9a0f31f7d0d5fc41903e0a275bffd",
+  "source_sha256": "0e5100a075dd5f54ff8169755c1130217cfba40a8f5a560eda9f783d614920bb",
+  "processes": [
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustc",
+        "--edition=2024",
+        "--crate-name",
+        "topology_hint_probe",
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/topology-hint-probe-v768.rs",
+        "--extern",
+        "hypercurve=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypercurve-85a9105cd1c82df7.rlib",
+        "-L",
+        "dependency=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps",
+        "-C",
+        "opt-level=3",
+        "-o",
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/topology-hint-probe-v768-binary"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.4646695349365473,
+      "log": "topology-hint-probe-v768-compile.log"
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/topology-hint-probe-v768-binary"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.0076070791110396385,
+      "log": "topology-hint-probe-v768-run.log"
+    }
+  ],
+  "all_processes_reaped": true,
+  "binary_sha256": "a9d531eb20b740568f9f92e2e4c7e46815a44f43b4e5a79f4cb94fdf1f36625c",
+  "probe_complete": true
+}

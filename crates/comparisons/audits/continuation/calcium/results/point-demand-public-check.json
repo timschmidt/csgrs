@@ -1,0 +1,13 @@
+{
+  "tag": "point-demand-public-check",
+  "started": "2026-09-10T22:34:02.345Z",
+  "finished": "2026-09-10T22:34:03.886Z",
+  "elapsedSeconds": 1.539018332,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "node",
+  "args": [
+    "check-point-demand-public.mjs"
+  ],
+  "code": 0,
+  "signal": null
+}

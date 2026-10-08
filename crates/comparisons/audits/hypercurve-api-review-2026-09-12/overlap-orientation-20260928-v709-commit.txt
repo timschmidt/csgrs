@@ -1,0 +1,5 @@
+Use one generic curve overlap orientation vocabulary
+
+Rename RationalBezierOverlapOrientation2 to CurveOverlapOrientation2 and move its definition/export to the common curve intersection API. Same and Reversed already describe rational spans, retained circles, analytic parallels and generic curve intersections equally. Update all controlled callers and remove the old name without a compatibility alias.
+
+Validation: exact source transformation checked for all twelve files, including formatter effects; no geometry or evidence logic changed. All-target Clippy under all/no-default features, formatting, three affected fuzz targets, documentation and downstream Hyperbrep Clippy pass. Existing mathematical tests are retained.

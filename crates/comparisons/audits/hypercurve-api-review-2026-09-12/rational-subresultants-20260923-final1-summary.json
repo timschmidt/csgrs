@@ -1,0 +1,31 @@
+{
+  "tests": 501,
+  "failures": [],
+  "checks": [
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "check",
+        "--all-targets",
+        "--all-features",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0
+    },
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "check",
+        "--all-targets",
+        "--no-default-features",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0
+    }
+  ],
+  "binary_sha256": "428b971e44e183ebf450152a34f305251ad79b3c684044ba728db87162f518f8",
+  "sources_unchanged": true,
+  "all_processes_reaped": true
+}

@@ -1,0 +1,56 @@
+
+This GDB supports auto-downloading debuginfo from the following URLs:
+  <ima:enforcing>
+  <https://debuginfod.fedoraproject.org/>
+  <ima:ignore>
+Enable debuginfod for this session? (y or [n]) [answered N; input not from terminal]
+Debuginfod has been disabled.
+To make this setting permanent, add 'set debuginfod enabled off' to .gdbinit.
+[New LWP 250155]
+warning: Target and debugger are in different PID namespaces; thread lists and other data are likely unreliable.  Connect to gdbserver inside the container.
+[Thread debugging using libthread_db enabled]
+Using host libthread_db library "/lib64/libthread_db.so.1".
+0x00007f343064024d in syscall () from /lib64/libc.so.6
+
+Thread 2 (Thread 0x7f343031e6c0 (LWP 250155) "bezier_region::"):
+#0  0x0000562dd58e5583 in num_bigint::biguint::division::div_rem_core ()
+#1  0x0000562dd58e4fed in num_bigint::biguint::division::div_rem_ref ()
+#2  0x0000562dd582a612 in <&num_bigint::biguint::BigUint as core::ops::arith::Rem>::rem ()
+#3  0x0000562dd5813031 in <hyperreal::rational::arithmetic::Rational>::gcd_wide_magnitudes ()
+#4  0x0000562dd5820b07 in <hyperreal::rational::arithmetic::Rational>::gcd_magnitudes_with_mixed_width_fast_path ()
+#5  0x0000562dd580dc0f in <hyperreal::rational::arithmetic::Rational>::reduce ()
+#6  0x0000562dd58265ee in <&hyperreal::rational::arithmetic::Rational as core::ops::arith::Mul>::mul ()
+#7  0x0000562dd584d77f in <hyperreal::real::arithmetic::Real>::eval_poly ()
+#8  0x0000562dd5731399 in hypersolve::root_isolation::sign_at ()
+#9  0x0000562dd5723b57 in <hypersolve::root_isolation::UnivariateSturmSequence>::classify_point ()
+#10 0x0000562dd5074b04 in <hypercurve::bezier_parameter::RefinedParameter>::refine_once ()
+#11 0x0000562dd5064d5e in <hypercurve::bezier_parameter::BezierAlgebraicParameter2>::represented_rational_root_with_sequence ()
+#12 0x0000562dd50a2833 in hypercurve::bezier_parameter::isolate_roots_in_interval ()
+#13 0x0000562dd507a4e1 in <hypercurve::bezier_parameter::BezierParameterPolynomial>::isolate_unit_interval_roots_with_trace ()
+#14 0x0000562dd5078881 in <hypercurve::bezier_parameter::BezierParameterPolynomial>::isolate_incident_ray_roots_impl ()
+#15 0x0000562dd5535b53 in hypercurve::rational_bezier_general::resultant_parameter_projection ()
+#16 0x0000562dd4a3c70c in hypercurve::bezier_offset::project_parallel_intersection_system ()
+#17 0x0000562dd4ac9e26 in hypercurve::bezier_offset::project_parallel_pair_without_components_in_domain ()
+#18 0x0000562dd489ca80 in <hypercurve::bezier_offset::BezierParallel2>::ordered_self_intersections_in_domain ()
+#19 0x0000562dd5012113 in hypercurve::curve::fillet_offset_centers ()
+#20 0x0000562dd5024f51 in hypercurve::curve::solve_carrier_fillet_corner ()
+#21 0x0000562dd50233f8 in hypercurve::curve::solve_exact_fillet_corner ()
+#22 0x0000562dd511b565 in <hypercurve::bezier_region::curve_corner_chain::CurveCornerChain2>::fillet_vertex_by_radius ()
+#23 0x0000562dd520d7e3 in <hypercurve::bezier_region::CurveRegion2>::fillet_loop_vertex_by_radius ()
+#24 0x0000562dd53ea8d5 in hypercurve::bezier_region::tests::one_fragment_retained_ph_loop_extends_fillet_on_one_analytic_carrier ()
+#25 0x0000562dd50d7be9 in <hypercurve::bezier_region::tests::one_fragment_retained_ph_loop_extends_fillet_on_one_analytic_carrier::{closure#0} as core::ops::function::FnOnce<()>>::call_once ()
+#26 0x0000562dd566b07b in test::__rust_begin_short_backtrace::<core::result::Result<(), alloc::string::String>, fn() -> core::result::Result<(), alloc::string::String>> ()
+#27 0x0000562dd56788f5 in test::run_test::{closure#0} ()
+
+Thread 1 (Thread 0x7f3430549f00 (LWP 249059) "hypercurve-6e65"):
+#0  0x00007f343064024d in syscall () from /lib64/libc.so.6
+#1  0x0000562dd590e4a6 in <std::thread::thread::Thread>::park ()
+#2  0x0000562dd56796d5 in <std::sync::mpmc::list::Channel<test::event::CompletedTest>>::recv::{closure#1} ()
+#3  0x0000562dd56847b9 in <std::sync::mpmc::list::Channel<test::event::CompletedTest>>::recv ()
+#4  0x0000562dd5691fd9 in test::console::run_tests_console ()
+#5  0x0000562dd567d178 in test::test_main_static ()
+#6  0x0000562dd54c7103 in std::sys::backtrace::__rust_begin_short_backtrace::<fn(), ()> ()
+#7  0x0000562dd5574829 in std::rt::lang_start::<()>::{closure#0} ()
+#8  0x0000562dd5919e57 in std::rt::lang_start_internal ()
+#9  0x0000562dd50fd7b5 in main ()
+[Inferior 1 (process 249059) detached]

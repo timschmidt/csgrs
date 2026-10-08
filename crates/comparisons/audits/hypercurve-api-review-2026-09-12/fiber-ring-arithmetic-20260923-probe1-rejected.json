@@ -1,0 +1,5 @@
+{
+  "reason": "Constructed determinant still has an undecided scalar zero when consumed by topology; the caller hit 120 seconds rather than completing.",
+  "production_changes": false,
+  "all_processes_reaped": true
+}

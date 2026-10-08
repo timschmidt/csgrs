@@ -1,0 +1,4 @@
+caught AERN operation domain violation exception: probe
+scalar exception captured
+nested exception escaped the pure wrapper; result was Right
+raisesAERNException reports False for the unevaluated nested exception

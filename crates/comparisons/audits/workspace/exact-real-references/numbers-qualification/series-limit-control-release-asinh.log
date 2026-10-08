@@ -1,0 +1,2 @@
+START asinh(1/16) bits=184000 oracle_bits=184256
+PASS asinh(1/16) bits=184000 elapsed_ns=305015171

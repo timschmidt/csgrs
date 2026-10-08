@@ -1,0 +1,398 @@
+{
+  "PolynomialBSplineCurve2": {
+    "hypercurve/benches/bspline.rs": [
+      6,
+      127
+    ],
+    "hypercurve/fuzz/fuzz_targets/bspline.rs": [
+      4,
+      46
+    ],
+    "hypercurve/src/bspline.rs": [
+      30,
+      133,
+      1669,
+      1702
+    ],
+    "hypercurve/src/lib.rs": [
+      174
+    ],
+    "hypercurve/src/polynomial_spline.rs": [
+      14,
+      22,
+      148
+    ],
+    "hypercurve/tests/hypercurve_bspline.rs": [
+      5,
+      45,
+      113,
+      146,
+      181,
+      190,
+      199,
+      212,
+      273,
+      282,
+      365,
+      439,
+      587
+    ]
+  },
+  "RationalBSplineCurve2": {
+    "hypercurve/benches/bspline.rs": [
+      6,
+      195,
+      217,
+      242
+    ],
+    "hypercurve/fuzz/fuzz_targets/bspline.rs": [
+      5,
+      68,
+      69
+    ],
+    "hypercurve/src/bspline.rs": [
+      59,
+      68,
+      294,
+      1536,
+      1537,
+      1681
+    ],
+    "hypercurve/src/lib.rs": [
+      175
+    ],
+    "hypercurve/src/nurbs.rs": [
+      15,
+      25,
+      172,
+      210,
+      223
+    ],
+    "hypercurve/tests/hypercurve_bspline.rs": [
+      5,
+      68,
+      90,
+      248,
+      315,
+      368,
+      395,
+      442,
+      476,
+      499,
+      509,
+      536,
+      563,
+      616,
+      643,
+      663,
+      690,
+      722,
+      726,
+      730,
+      744,
+      755,
+      775,
+      785
+    ]
+  },
+  "PolynomialSplineCurve2": {
+    "csgrs/src/curve/native.rs": [
+      16,
+      1850
+    ],
+    "hypercurve/PERFORMANCE.md": [
+      6922
+    ],
+    "hypercurve/README.md": [
+      28,
+      187
+    ],
+    "hypercurve/benches/bspline.rs": [
+      6,
+      150
+    ],
+    "hypercurve/benchmarks/checkpoints/2026-07-31-spline-construction-interpolation-policy.json": [
+      15
+    ],
+    "hypercurve/benchmarks/checkpoints/2026-07-31-spline-edit-policy.json": [
+      19,
+      305
+    ],
+    "hypercurve/benchmarks/checkpoints/2026-07-31-spline-evaluation-decomposition-policy.json": [
+      16,
+      20
+    ],
+    "hypercurve/benchmarks/checkpoints/2026-07-31-spline-subdivision-policy.json": [
+      17
+    ],
+    "hypercurve/src/curve.rs": [
+      42,
+      217,
+      417,
+      440,
+      2551,
+      2552
+    ],
+    "hypercurve/src/curve_evaluation.rs": [
+      686
+    ],
+    "hypercurve/src/curve_subdivision.rs": [
+      723,
+      972,
+      1225
+    ],
+    "hypercurve/src/lib.rs": [
+      241
+    ],
+    "hypercurve/src/polynomial_spline.rs": [
+      40,
+      52,
+      990,
+      1249,
+      1253
+    ],
+    "hypercurve/src/svg.rs": [
+      24,
+      953
+    ],
+    "hypercurve/src/svg/exact.rs": [
+      4,
+      420
+    ],
+    "hypercurve/tests/hypercurve_curve.rs": [
+      27,
+      36
+    ],
+    "hypercurve/tests/hypercurve_curve_intersection.rs": [
+      984,
+      994
+    ],
+    "hypercurve/tests/hypercurve_nurbs.rs": [
+      2124
+    ],
+    "hypercurve/tests/hypercurve_path_closure.rs": [
+      35,
+      45
+    ],
+    "hypercurve/tests/hypercurve_polynomial_spline.rs": [
+      5,
+      21,
+      22,
+      32,
+      35,
+      63,
+      75,
+      86,
+      307,
+      386,
+      438,
+      482,
+      518,
+      606,
+      691,
+      728,
+      771,
+      832,
+      902
+    ],
+    "hypercurve/tests/hypercurve_svg.rs": [
+      5,
+      345
+    ]
+  },
+  "NurbsCurve2": {
+    "hyperbrep/src/persistence.rs": [
+      184,
+      1324,
+      1326,
+      1346
+    ],
+    "hypercurve/PERFORMANCE.md": [
+      6922
+    ],
+    "hypercurve/README.md": [
+      28,
+      190
+    ],
+    "hypercurve/benches/api_surface.rs": [
+      5,
+      79
+    ],
+    "hypercurve/benches/bspline.rs": [
+      5,
+      71,
+      95,
+      274,
+      367,
+      385,
+      415,
+      548,
+      631,
+      644,
+      658,
+      673
+    ],
+    "hypercurve/benches/comparative.rs": [
+      24,
+      1939,
+      2022,
+      2034,
+      2065
+    ],
+    "hypercurve/benches/dispatch_trace.rs": [
+      5,
+      103
+    ],
+    "hypercurve/benchmarks/checkpoints/2026-07-31-spline-construction-interpolation-policy.json": [
+      14,
+      19,
+      20,
+      21,
+      22,
+      23
+    ],
+    "hypercurve/benchmarks/checkpoints/2026-07-31-spline-edit-policy.json": [
+      16
+    ],
+    "hypercurve/benchmarks/checkpoints/2026-07-31-spline-evaluation-decomposition-policy.json": [
+      15,
+      19
+    ],
+    "hypercurve/benchmarks/checkpoints/2026-07-31-spline-subdivision-policy.json": [
+      16,
+      381
+    ],
+    "hypercurve/fuzz/fuzz_targets/bspline.rs": [
+      103
+    ],
+    "hypercurve/src/curve.rs": [
+      42,
+      219,
+      429,
+      452,
+      2557,
+      2558
+    ],
+    "hypercurve/src/curve_subdivision.rs": [
+      977,
+      1228,
+      1576
+    ],
+    "hypercurve/src/lib.rs": [
+      235
+    ],
+    "hypercurve/src/nurbs.rs": [
+      29,
+      30,
+      32,
+      42,
+      77,
+      1500,
+      1628,
+      1636,
+      1686,
+      1832,
+      1836
+    ],
+    "hypercurve/src/nurbs_interpolation.rs": [
+      12,
+      36,
+      48,
+      70,
+      90,
+      106,
+      132,
+      153,
+      227,
+      244,
+      354,
+      680
+    ],
+    "hypercurve/src/polynomial_spline.rs": [
+      14,
+      892,
+      894,
+      907
+    ],
+    "hypercurve/src/straight_skeleton.rs": [
+      2715
+    ],
+    "hypercurve/src/svg.rs": [
+      23,
+      967
+    ],
+    "hypercurve/src/svg/exact.rs": [
+      3,
+      435
+    ],
+    "hypercurve/tests/hypercurve_curve.rs": [
+      27,
+      39
+    ],
+    "hypercurve/tests/hypercurve_curve_intersection.rs": [
+      984,
+      997
+    ],
+    "hypercurve/tests/hypercurve_nurbs.rs": [
+      6,
+      21,
+      22,
+      33,
+      36,
+      66,
+      78,
+      95,
+      491,
+      547,
+      576,
+      608,
+      654,
+      709,
+      780,
+      850,
+      935,
+      967,
+      1021,
+      1078,
+      1118,
+      1156,
+      1189,
+      1451,
+      1488,
+      1525,
+      1588,
+      1627,
+      1649,
+      1720,
+      1786,
+      1895,
+      1941,
+      1971,
+      1972,
+      2039,
+      2050,
+      2132
+    ],
+    "hypercurve/tests/hypercurve_nurbs_interpolation.rs": [
+      3,
+      31,
+      70,
+      83,
+      103,
+      118,
+      146,
+      174,
+      221
+    ],
+    "hypercurve/tests/hypercurve_path_closure.rs": [
+      35,
+      48,
+      604
+    ],
+    "hypercurve/tests/hypercurve_svg.rs": [
+      5,
+      60,
+      355
+    ]
+  }
+}

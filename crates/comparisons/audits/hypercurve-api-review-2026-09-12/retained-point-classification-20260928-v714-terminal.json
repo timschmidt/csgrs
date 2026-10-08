@@ -1,0 +1,51 @@
+{
+  "copied_source_probe": true,
+  "source_manifest": "retained-point-classification-20260928-v714-sources.json",
+  "production_manifest": "retained-point-classification-20260928-v714-production-sources.json",
+  "source_directory": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/source-archives/retained-point-classification-20260928-v714",
+  "builds": [
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "test",
+        "--lib",
+        "--release",
+        "--all-features",
+        "--locked",
+        "--offline",
+        "--no-run",
+        "--message-format=json"
+      ],
+      "returncode": 0,
+      "log": "retained-point-classification-20260928-v714-hypercurve-build.log",
+      "elapsed_seconds": 135.20739576406777,
+      "binaries": {
+        "hypercurve": {
+          "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-point-classification-20260928-v714-hypercurve-tests",
+          "sha256": "8093c30c7531db7c7af1a67ff142b59ec5a323c96e02cea85bafab205fecbd34"
+        }
+      }
+    }
+  ],
+  "cases": [
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-point-classification-20260928-v714-hypercurve-tests",
+        "--exact",
+        "bezier_region::retained_point_classification_probe_v713::chord_normal_points_classify_on_exact_rectangle_oracles",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 101,
+      "log": "retained-point-classification-20260928-v714-chord_normal.log",
+      "elapsed_seconds": 0.031756974989548326,
+      "name": "bezier_region::retained_point_classification_probe_v713::chord_normal_points_classify_on_exact_rectangle_oracles",
+      "target": "hypercurve",
+      "passed": false
+    }
+  ],
+  "checks": [],
+  "all_processes_reaped": true,
+  "qualification_complete": false,
+  "failure": "chord_normal point probe failed"
+}

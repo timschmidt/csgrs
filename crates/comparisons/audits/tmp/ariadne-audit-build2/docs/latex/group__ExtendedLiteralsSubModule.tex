@@ -1,0 +1,45 @@
+\doxysubsubsubsection{Extended numeric literals }
+\hypertarget{group__ExtendedLiteralsSubModule}{}\label{group__ExtendedLiteralsSubModule}\index{Extended numeric literals@{Extended numeric literals}}
+
+
+\doxysubsubsubsubsection{Description}
+Extended numeric literals. 
+
+In Python, the C++ operator is used as a function, e.\+g. {\ttfamily 1.\+23\+\_\+pr} is replaced by {\ttfamily pr\+\_\+}(1.\+23) . \doxysubsubsubsubsubsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\hyperlink{classAriadne_1_1ExactDouble}{Exact\+Double}} \mbox{\hyperlink{group__ExtendedLiteralsSubModule_gac570de32fd257bd0dfb686f134ad621e}{operator"{}"{}\+\_\+x}} (long double lx)
+\begin{DoxyCompactList}\small\item\em Indicate that a floating-\/point literal is the exact value of a number in double-\/precision. \end{DoxyCompactList}\item 
+\Hypertarget{group__ExtendedLiteralsSubModule_ga1bced5e299618e2f50075c1850984a0c}\label{group__ExtendedLiteralsSubModule_ga1bced5e299618e2f50075c1850984a0c} 
+\mbox{\hyperlink{classAriadne_1_1ExactDouble}{Exact\+Double}} {\bfseries exact} (long double lx)
+\begin{DoxyCompactList}\small\item\em Indicate that a floating-\/point literal is sufficiently precise that it can safely be taken to represent the closest double-\/precision floating-\/point number. \end{DoxyCompactList}\item 
+\mbox{\hyperlink{classAriadne_1_1ExactDouble}{Exact\+Double}} \mbox{\hyperlink{group__ExtendedLiteralsSubModule_gabd313746e70a0e828a8a9d12483ada8d}{operator"{}"{}\+\_\+pr}} (long double lx)
+\begin{DoxyCompactList}\small\item\em Indicate that a floating-\/point literal is sufficiently precise that it can safely be taken to represent the closest double-\/precision floating-\/point number. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\label{doc-func-members}
+\Hypertarget{group__ExtendedLiteralsSubModule_doc-func-members}
+\doxysubsubsubsubsection{Function Documentation}
+\Hypertarget{group__ExtendedLiteralsSubModule_gac570de32fd257bd0dfb686f134ad621e}\index{Extended numeric literals@{Extended numeric literals}!operator"{}"{}\_x@{operator""""\_x}}
+\index{operator"{}"{}\_x@{operator""""\_x}!Extended numeric literals@{Extended numeric literals}}
+\doxyparagraph{\texorpdfstring{operator""""\_x()}{operator""\_x()}}
+{\footnotesize\ttfamily \label{group__ExtendedLiteralsSubModule_gac570de32fd257bd0dfb686f134ad621e} 
+\mbox{\hyperlink{namespaceAriadne_af915b9f1459c9691328efa71c6f39c6e}{Float\+DP}} operator"{}"{}\+\_\+x (\begin{DoxyParamCaption}\item[{long double}]{lx}{}\end{DoxyParamCaption})}
+
+
+
+Indicate that a floating-\/point literal is the exact value of a number in double-\/precision. 
+
+The input {\itshape lx} is converted first converted to a double-\/precision value {\itshape x}. If {\itshape lx} and {\itshape x} differ, then the decimal literal input to {\itshape lx} almost certainly does not represent a double-\/precision number exactly, and an assertion fails. 
+
+For example, {\ttfamily 0.\+625\+\_\+x} yields the exact double-\/precision value $5/2^3$, but {\ttfamily 0.\+6\+\_\+x} fails, since $3/5$ is not exactly representable as a double-\/precision number. \Hypertarget{group__ExtendedLiteralsSubModule_gabd313746e70a0e828a8a9d12483ada8d}\index{Extended numeric literals@{Extended numeric literals}!operator"{}"{}\_pr@{operator""""\_pr}}
+\index{operator"{}"{}\_pr@{operator""""\_pr}!Extended numeric literals@{Extended numeric literals}}
+\doxyparagraph{\texorpdfstring{operator""""\_pr()}{operator""\_pr()}}
+{\footnotesize\ttfamily \label{group__ExtendedLiteralsSubModule_gabd313746e70a0e828a8a9d12483ada8d} 
+\mbox{\hyperlink{classAriadne_1_1ExactDouble}{Exact\+Double}} operator"{}"{}\+\_\+pr (\begin{DoxyParamCaption}\item[{long double}]{lx}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Indicate that a floating-\/point literal is sufficiently precise that it can safely be taken to represent the closest double-\/precision floating-\/point number. 
+
+For example, writing {\ttfamily 0.\+14285714285714285\+\_\+pr} claims that the exact decimal "{}0.\+14285714285714285"{} should be interpreted as the closest double-\/precision floating-\/point number, which has exact value $0.142857142857142849212692681248881854116916656494140625$. 

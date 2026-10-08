@@ -1,0 +1,18 @@
+Separate exact tangent values from construction blockers
+
+A tangent image now contains one exact definition: materialized coordinates or
+a finite retained source expression. Return denominator and construction
+blockers through Classification instead of publishing an empty tangent object
+and discarding its uncertainty reason. Remove the three obsolete failure
+statuses and the unused allocating tangent diagnostic.
+
+Expose one classified endpoint tangent accessor and retain only successful
+lazy images. Migrate derivative batches, arrangement/offset consumers, tests,
+benchmarks and fuzz callers directly. Keep quotient recurrence, selected-root
+reduction, derivative-order demand and parameter-cache ownership rules intact.
+
+Validation: 323 release cases across 12 executables and seven checks covering
+both Hypercurve Clippy configurations, formatting, four fuzz targets, rustdoc,
+Hyperbrep Clippy and csgrs all targets. New independent tests check exact first
+through third derivatives on both sides of a rational pole, domain blockers,
+zero requested orders, and derivative signs at a nonrational cubic source root.

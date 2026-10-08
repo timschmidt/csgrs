@@ -1,0 +1,111 @@
+{
+  "parent": "c980fed50380fdf26ec5ef0c633e61ed98cb8fea",
+  "scope": "Retained circle contact and incremental face winding reuse; selected-circle publication exception remains unchanged.",
+  "library": {
+    "passed": 1183,
+    "failed": 8,
+    "timeouts": 6,
+    "ignored": [
+      "bezier_offset::conversion_tests::benchmark_correlated_circle_partition_offset_driver",
+      "bezier_offset::conversion_tests::benchmark_independent_oblique_chord_cap_offset_driver",
+      "bezier_offset::conversion_tests::benchmark_nested_chord_mapped_cap_offset_driver",
+      "bezier_offset::conversion_tests::benchmark_nonendpoint_rational_mapped_cap_offset_driver",
+      "bezier_offset::conversion_tests::benchmark_pair_mapped_lens_offset_driver",
+      "bezier_offset::conversion_tests::selected_fiber_genuinely_analytic_contacts_complete_region_booleans"
+    ],
+    "excluded": [
+      "bezier_offset::conversion_tests::selected_parallel_normal_circle_intersects_genuinely_analytic_parallel_in_one_fiber",
+      "bezier_region::tests::independent_oblique_chord_pair_fillets_extend_on_infinite_supports",
+      "bezier_region::tests::pair_native_boolean_algebraic_chord_corner_publishes_a_third_generation_fillet",
+      "bezier_region::tests::selected_circle_and_analytic_parallel_extend_on_full_supports"
+    ],
+    "parent_comparison": [
+      {
+        "name": "bezier_offset::conversion_tests::independently_encoded_nonrepresented_analytic_circle_publishes_overlap",
+        "returncode": 101,
+        "same_failure_text": true
+      },
+      {
+        "name": "bezier_offset::conversion_tests::nonrepresented_center_nonrational_chamfer_inverts_with_retained_authority",
+        "returncode": 101,
+        "same_failure_text": true
+      },
+      {
+        "name": "bezier_offset::conversion_tests::selected_fiber_transverse_mapped_cut_inverts_by_point",
+        "returncode": 101,
+        "same_failure_text": true
+      },
+      {
+        "name": "bezier_region::tests::algebraic_endpoint_images_reenter_shared_corner_carriers",
+        "returncode": 101,
+        "same_failure_text": true
+      },
+      {
+        "name": "bezier_region::tests::nonlinear_selected_corner_chamfers_through_retained_fixed_distance_image",
+        "returncode": "timeout",
+        "same_failure_text": null
+      },
+      {
+        "name": "bezier_region::tests::nonrepresented_chord_and_retained_rational_arc_share_the_fillet_kernel",
+        "returncode": 101,
+        "same_failure_text": true
+      },
+      {
+        "name": "bezier_region::tests::one_fragment_materialized_loop_chamfers_to_one_middle_interval",
+        "returncode": "timeout",
+        "same_failure_text": null
+      },
+      {
+        "name": "bezier_region::tests::one_fragment_materialized_loop_extends_algebraic_chamfer_cuts_once",
+        "returncode": "timeout",
+        "same_failure_text": null
+      },
+      {
+        "name": "bezier_region::tests::one_fragment_nonzero_parallel_loop_extends_chamfer_cuts_on_one_finite_envelope",
+        "returncode": "timeout",
+        "same_failure_text": null
+      },
+      {
+        "name": "bezier_region::tests::one_fragment_ph_loop_projective_corners_retain_one_extended_interval",
+        "returncode": 101,
+        "same_failure_text": true
+      },
+      {
+        "name": "bezier_region::tests::one_fragment_selected_loop_chamfers_from_one_interval",
+        "returncode": "timeout",
+        "same_failure_text": null
+      },
+      {
+        "name": "bezier_region::tests::one_fragment_selected_loop_extends_chamfer_cuts_on_its_analytic_carrier",
+        "returncode": "timeout",
+        "same_failure_text": null
+      },
+      {
+        "name": "bezier_region::tests::retained_algebraic_straights_trim_or_extend_chamfer_and_fillet",
+        "returncode": 101,
+        "same_failure_text": true
+      },
+      {
+        "name": "bezier_region::tests::retained_analytic_multifragment_corner_extends_chamfer_and_fillet",
+        "returncode": 101,
+        "same_failure_text": true
+      }
+    ]
+  },
+  "integration": {
+    "passed": 52,
+    "ignored": [
+      "exact_path_stroke_preserves_an_even_multiplicity_stationary_source",
+      "exact_path_stroke_splits_a_nonuniform_rational_source_cusp",
+      "exact_path_stroke_splits_an_interior_source_cusp"
+    ]
+  },
+  "sources": "winding-contact-reuse-20260923-final1-sources.json",
+  "stage_sources": "winding-contact-reuse-20260923-stage-sources.json",
+  "checks": [
+    "all-target no-default-features check passed",
+    "release all-features library and Boolean/stroke integration builds passed with fresh executables"
+  ],
+  "sources_unchanged_after_terminal_reports": true,
+  "runner_note": "The original unified exec handle was lost during context compaction. Its final library report records all child processes reaped, including all parent replays. Integration completed earlier. Source bindings were verified again after both terminal reports."
+}

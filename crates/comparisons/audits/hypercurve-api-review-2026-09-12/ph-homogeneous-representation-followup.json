@@ -1,0 +1,66 @@
+{
+  "status": "PH homogeneous materialization and exterior regular branch fixtures implemented and qualified; wider goal remains active",
+  "observed_commit": "aa9b2ba2f407ef33597d48e954bf47e390cbd2a0",
+  "authored_unit_pole": {
+    "parameter": "w=t-1/2",
+    "source": "P(t)=((3w^2-1)/w^3,3w/w^3)",
+    "homogeneous_hodograph": "H=3w^2(1-w^2,-2w)",
+    "primitive_hodograph": "(1-w^2,-2w)",
+    "primitive_speed": "1+w^2",
+    "regular_range": [
+      "2",
+      "3"
+    ],
+    "distance": "1/4",
+    "witness_parameter": "2",
+    "expected_source_point": [
+      "46/27",
+      "4/3"
+    ],
+    "expected_offset_point": [
+      "679/351",
+      "193/156"
+    ],
+    "source_level_rejection": "General regular PH materialization still isolates the source weight over [0,1], where w^3 has a pole, although the retained exterior range is finite and regular."
+  },
+  "positive_weight_degree_growth": {
+    "ph_tangent": "((t-1/2)^2-epsilon,2 sqrt(epsilon)(t-1/2))",
+    "source": "(t^3/3-t^2/2+(1/4-epsilon)t,sqrt(epsilon)(t^2-t))",
+    "speed": "(t-1/2)^2+epsilon",
+    "natural_parallel_degree": 5,
+    "degree_n_denominator_coefficient": "b_i=i(i-1)/(n(n-1))-i/n+1/4+epsilon",
+    "minimum_even_n": "epsilon-1/(4(n-1))",
+    "minimum_odd_n": "epsilon-1/(4n)",
+    "epsilon_1_over_64": {
+      "first_all_positive_degree": 17,
+      "natural_degree_weights": [
+        "17/64",
+        "21/320",
+        "-11/320",
+        "-11/320",
+        "21/320",
+        "17/64"
+      ]
+    },
+    "epsilon_1_over_65536": {
+      "first_all_positive_degree": 16385
+    },
+    "source_level_cost": "The PH constructor repeatedly elevates weights until every Bernstein coefficient is positive before converting homogeneous controls to affine form. A degree-five exact image can therefore acquire arbitrarily high degree solely to satisfy this representation shortcut. This is a mathematical coefficient calculation, not a measured kernel runtime."
+  },
+  "required_followup": [
+    "Continue the homogeneous authority through the retained rational B-spline/NURBS representation and its recomposition; see homogeneous-representation-next-closure.json.",
+    "Preserve the full original semantic, representational, evidentiary and computational closure objective; the qualified fixtures do not redefine its scope."
+  ],
+  "goal_status": "active",
+  "completed_source_proof_reuse": {
+    "commit": "17ec44aed44bfb14a92af22aa71eb7d769d91283",
+    "qualification": "ph-speed-sharing-qualification.json",
+    "scope": "The complete source unit PH speed polynomial and proof of unit root exclusion are now retained across distances. Primitive regular fields and source weight proofs are not newly shared."
+  },
+  "completed_homogeneous_migration": {
+    "hypercurve_commit": "d52d725650e642f50edea33bd493ace993b74f70",
+    "hyperbrep_commit": "bfcc970b4886e7dc394462191008ac7198f7c3e1",
+    "qualification": "homogeneous-representation-qualification.json",
+    "kernel_result": "Natural degree five retained for epsilon 1/64, 1/20, 1/256 and 1/65536; exterior [2,3] rational branch witness and reversal pass under both policies."
+  }
+}

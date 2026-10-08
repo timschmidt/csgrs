@@ -1,0 +1,11 @@
+file:///home/tim/Documents/GitHub/workspace/exact-real-references/plume-qualification/run-instrumented.mjs:34
+    if(r.error?.code==='EPERM') throw Error('sandbox error; request approval');
+                                      ^
+
+Error: sandbox error; request approval
+    at file:///home/tim/Documents/GitHub/workspace/exact-real-references/plume-qualification/run-instrumented.mjs:34:39
+    at ModuleJob.run (node:internal/modules/esm/module_job:343:25)
+    at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:665:26)
+    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+
+Node.js v22.22.2

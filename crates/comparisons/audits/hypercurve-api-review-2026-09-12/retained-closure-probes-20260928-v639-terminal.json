@@ -1,0 +1,151 @@
+{
+  "normal_production_build": false,
+  "source_manifest": "retained-closure-probes-20260928-v639-sources.json",
+  "source_directory": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/source-archives/retained-closure-probes-20260928-v639",
+  "builds": [
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "test",
+        "--lib",
+        "--release",
+        "--all-features",
+        "--locked",
+        "--offline",
+        "--no-run",
+        "--message-format=json"
+      ],
+      "returncode": 0,
+      "log": "retained-closure-probes-20260928-v639-build.log",
+      "elapsed_seconds": 137.16765713016503,
+      "binaries": {
+        "hypercurve": {
+          "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-closure-probes-20260928-v639-hypercurve-tests",
+          "sha256": "98031e20b516c9c0841c102a41ecadfac77baa0bb9e79272badf5c209df0ce59"
+        }
+      }
+    }
+  ],
+  "cases": [
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-closure-probes-20260928-v639-hypercurve-tests",
+        "--exact",
+        "bezier_split::finite_conic_split_regression::finite_conic_split_retains_zero_intermediate_homogeneous_weight",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 101,
+      "log": "retained-closure-probes-20260928-v639-finite_conic_split_retains_zero_intermediate_homogeneous_weight.log",
+      "elapsed_seconds": 0.0035655449610203505,
+      "target": "hypercurve",
+      "name": "bezier_split::finite_conic_split_regression::finite_conic_split_retains_zero_intermediate_homogeneous_weight",
+      "passed": false
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-closure-probes-20260928-v639-hypercurve-tests",
+        "--exact",
+        "bezier_offset::structural_overlap_trace_regression::monotone_reparameterization_preserves_structural_pair_crossings_strict",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 124,
+      "log": "retained-closure-probes-20260928-v639-monotone_reparameterization_preserves_structural_pair_crossings_strict.log",
+      "elapsed_seconds": 187.7322512299288,
+      "target": "hypercurve",
+      "name": "bezier_offset::structural_overlap_trace_regression::monotone_reparameterization_preserves_structural_pair_crossings_strict",
+      "passed": false
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-closure-probes-20260928-v639-hypercurve-tests",
+        "--exact",
+        "bezier_offset::structural_overlap_trace_regression::monotone_reparameterization_preserves_structural_pair_crossings_approximate",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 124,
+      "log": "retained-closure-probes-20260928-v639-monotone_reparameterization_preserves_structural_pair_crossings_approximate.log",
+      "elapsed_seconds": 186.4382301941514,
+      "target": "hypercurve",
+      "name": "bezier_offset::structural_overlap_trace_regression::monotone_reparameterization_preserves_structural_pair_crossings_approximate",
+      "passed": false
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-closure-probes-20260928-v639-hypercurve-tests",
+        "--exact",
+        "bezier_offset::structural_overlap_trace_regression::reversed_monotone_reparameterization_preserves_structural_pair_crossings_strict",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 124,
+      "log": "retained-closure-probes-20260928-v639-reversed_monotone_reparameterization_preserves_structural_pair_crossings_strict.log",
+      "elapsed_seconds": 186.48837081505917,
+      "target": "hypercurve",
+      "name": "bezier_offset::structural_overlap_trace_regression::reversed_monotone_reparameterization_preserves_structural_pair_crossings_strict",
+      "passed": false
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-closure-probes-20260928-v639-hypercurve-tests",
+        "--exact",
+        "bezier_offset::structural_overlap_trace_regression::reversed_monotone_reparameterization_preserves_structural_pair_crossings_approximate",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 124,
+      "log": "retained-closure-probes-20260928-v639-reversed_monotone_reparameterization_preserves_structural_pair_crossings_approximate.log",
+      "elapsed_seconds": 186.36337855714373,
+      "target": "hypercurve",
+      "name": "bezier_offset::structural_overlap_trace_regression::reversed_monotone_reparameterization_preserves_structural_pair_crossings_approximate",
+      "passed": false
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-closure-probes-20260928-v639-hypercurve-tests",
+        "--exact",
+        "curve::curve_fillet::incident_parallel_cusp_fillet_regression::incident_parallel_cusp_fillet_retains_native_line_contact",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 101,
+      "log": "retained-closure-probes-20260928-v639-incident_parallel_cusp_fillet_retains_native_line_contact.log",
+      "elapsed_seconds": 0.06475861906073987,
+      "target": "hypercurve",
+      "name": "curve::curve_fillet::incident_parallel_cusp_fillet_regression::incident_parallel_cusp_fillet_retains_native_line_contact",
+      "passed": false
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-closure-probes-20260928-v639-hypercurve-tests",
+        "--exact",
+        "curve::curve_fillet::incident_parallel_cusp_fillet_regression::incident_parallel_cusp_fillet_retains_polynomial_line_contact",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 101,
+      "log": "retained-closure-probes-20260928-v639-incident_parallel_cusp_fillet_retains_polynomial_line_contact.log",
+      "elapsed_seconds": 0.06401567091234028,
+      "target": "hypercurve",
+      "name": "curve::curve_fillet::incident_parallel_cusp_fillet_regression::incident_parallel_cusp_fillet_retains_polynomial_line_contact",
+      "passed": false
+    }
+  ],
+  "checks": [],
+  "expected_cases": {
+    "hypercurve": [
+      "bezier_split::finite_conic_split_regression::finite_conic_split_retains_zero_intermediate_homogeneous_weight",
+      "bezier_offset::structural_overlap_trace_regression::monotone_reparameterization_preserves_structural_pair_crossings_strict",
+      "bezier_offset::structural_overlap_trace_regression::monotone_reparameterization_preserves_structural_pair_crossings_approximate",
+      "bezier_offset::structural_overlap_trace_regression::reversed_monotone_reparameterization_preserves_structural_pair_crossings_strict",
+      "bezier_offset::structural_overlap_trace_regression::reversed_monotone_reparameterization_preserves_structural_pair_crossings_approximate",
+      "curve::curve_fillet::incident_parallel_cusp_fillet_regression::incident_parallel_cusp_fillet_retains_native_line_contact",
+      "curve::curve_fillet::incident_parallel_cusp_fillet_regression::incident_parallel_cusp_fillet_retains_polynomial_line_contact"
+    ]
+  },
+  "all_processes_reaped": true,
+  "probe_complete": true,
+  "qualification_complete": false
+}

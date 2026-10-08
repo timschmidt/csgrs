@@ -1,0 +1,28 @@
+{
+  "source": "/home/tim/Documents/GitHub/workspace/exact-real-references/ruffini-qualification/FiniteDiagnostics.java",
+  "sourceSha256": "f3c15451e0516c5d7ae88bcd36ca15bce32b072f881c995042f28844f8b8578f",
+  "classes": [
+    [
+      "FiniteDiagnostics.class",
+      "6e7593a68c21013c49b4bdf061c9d88a028639f05c21ee69e716aaf1753c68ad"
+    ]
+  ],
+  "dependencies": [
+    [
+      "native-build-manifest.json",
+      "00763b9eca620f1ac67486bbe43f087366b2871d767f489110e4045e48096844"
+    ],
+    [
+      "matrix-build-manifest.json",
+      "0ac8a19300c1fe575051ee4975f352a9ce620c5b8e45e1813d9bd4fb1e1b76cd"
+    ],
+    [
+      "polynomial-build-manifest.json",
+      "a3473385f5920dcd88d18c15aedd430b65f8f516424ae12b28e5b65fbbe1dfec"
+    ],
+    [
+      "finite-boundaries-build-manifest.json",
+      "1eb73fb1b087d16dec50a783592f5e5556170f169c340ccdf41eb5876734ae9c"
+    ]
+  ]
+}

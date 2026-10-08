@@ -1,0 +1,128 @@
+[
+  {
+    "debug": false,
+    "mode": "grid",
+    "executable": "/home/tim/Documents/GitHub/workspace/.audit-plume-perform.LVoj1D/instrumented-probe",
+    "args": [
+      "+RTS",
+      "-M512m",
+      "-RTS"
+    ],
+    "status": 0,
+    "signal": null,
+    "output": "instrumented-grid.log",
+    "bytes": 1334,
+    "sha256": "b4e485a5a89f527b0329f5e992896ac8d109cb5e6c375dfaaa56bcaf26570989"
+  },
+  {
+    "debug": false,
+    "mode": "extra",
+    "executable": "/home/tim/Documents/GitHub/workspace/.audit-plume-perform.LVoj1D/instrumented-probe",
+    "args": [
+      "extra",
+      "+RTS",
+      "-M512m",
+      "-RTS"
+    ],
+    "status": 0,
+    "signal": null,
+    "output": "instrumented-extra.log",
+    "bytes": 1190,
+    "sha256": "6d36abdd68762246ecfe1f0412c37a4dae91de6a95ee137c2e3d149eaca59e7e"
+  },
+  {
+    "debug": false,
+    "mode": "demand",
+    "executable": "/home/tim/Documents/GitHub/workspace/.audit-plume-perform.LVoj1D/instrumented-probe",
+    "args": [
+      "demand",
+      "+RTS",
+      "-M512m",
+      "-RTS"
+    ],
+    "status": 0,
+    "signal": null,
+    "output": "instrumented-demand.tsv",
+    "bytes": 3934049,
+    "sha256": "7ccf1cdc322bbc530f35784a8ac6c5907c39b42a2775905a0542206c9180cc5e"
+  },
+  {
+    "debug": false,
+    "mode": "examples",
+    "executable": "/home/tim/Documents/GitHub/workspace/.audit-plume-perform.LVoj1D/instrumented-probe",
+    "args": [
+      "examples",
+      "+RTS",
+      "-M512m",
+      "-RTS"
+    ],
+    "status": 0,
+    "signal": null,
+    "output": "instrumented-examples.log",
+    "bytes": 696,
+    "sha256": "a9c125d6154215c01fbe0defe82dc8fadfbe422111d8b4da82eb427fbb152590"
+  },
+  {
+    "debug": true,
+    "mode": "grid",
+    "executable": "/home/tim/Documents/GitHub/workspace/.audit-plume-perform.LVoj1D/instrumented-probe-debug",
+    "args": [
+      "+RTS",
+      "-M512m",
+      "-RTS"
+    ],
+    "status": 0,
+    "signal": null,
+    "output": "instrumented-debug-grid.log",
+    "bytes": 1334,
+    "sha256": "b4e485a5a89f527b0329f5e992896ac8d109cb5e6c375dfaaa56bcaf26570989"
+  },
+  {
+    "debug": true,
+    "mode": "extra",
+    "executable": "/home/tim/Documents/GitHub/workspace/.audit-plume-perform.LVoj1D/instrumented-probe-debug",
+    "args": [
+      "extra",
+      "+RTS",
+      "-M512m",
+      "-RTS"
+    ],
+    "status": 0,
+    "signal": null,
+    "output": "instrumented-debug-extra.log",
+    "bytes": 1190,
+    "sha256": "6d36abdd68762246ecfe1f0412c37a4dae91de6a95ee137c2e3d149eaca59e7e"
+  },
+  {
+    "debug": true,
+    "mode": "demand",
+    "executable": "/home/tim/Documents/GitHub/workspace/.audit-plume-perform.LVoj1D/instrumented-probe-debug",
+    "args": [
+      "demand",
+      "+RTS",
+      "-M512m",
+      "-RTS"
+    ],
+    "status": 0,
+    "signal": null,
+    "output": "instrumented-debug-demand.tsv",
+    "bytes": 3934049,
+    "sha256": "7ccf1cdc322bbc530f35784a8ac6c5907c39b42a2775905a0542206c9180cc5e"
+  },
+  {
+    "debug": true,
+    "mode": "examples",
+    "executable": "/home/tim/Documents/GitHub/workspace/.audit-plume-perform.LVoj1D/instrumented-probe-debug",
+    "args": [
+      "examples",
+      "+RTS",
+      "-M512m",
+      "-RTS"
+    ],
+    "status": 0,
+    "signal": null,
+    "output": "instrumented-debug-examples.log",
+    "bytes": 696,
+    "sha256": "a9c125d6154215c01fbe0defe82dc8fadfbe422111d8b4da82eb427fbb152590"
+  }
+]

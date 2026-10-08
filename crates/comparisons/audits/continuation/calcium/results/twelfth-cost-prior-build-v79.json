@@ -1,0 +1,22 @@
+{
+  "tag": "twelfth-cost-prior-build-v79",
+  "started": "2026-09-12T00:50:01.822Z",
+  "finished": "2026-09-12T00:50:01.862Z",
+  "elapsedSeconds": 0.037490689,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/twelfth-cost-candidate-app-v78",
+  "command": "env",
+  "args": [
+    "CARGO_TARGET_DIR=/tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse",
+    "CARGO_INCREMENTAL=0",
+    "CARGO_PROFILE_DEV_DEBUG=0",
+    "CARGO_BUILD_JOBS=2",
+    "cargo",
+    "build",
+    "--locked",
+    "--offline",
+    "--release",
+    "--bins"
+  ],
+  "code": 0,
+  "signal": null
+}

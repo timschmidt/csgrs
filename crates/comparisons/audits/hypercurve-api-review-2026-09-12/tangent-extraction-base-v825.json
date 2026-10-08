@@ -1,0 +1,8 @@
+{
+  "hypercurve/src/bezier_tangent_order.rs": "0fb01ea2a0ea0ec026f3d218d8f0be5e549315dd7321336e12a60c3018cfcc40",
+  "hypercurve/src/bezier_arrangement.rs": "2e52604c3643eabdebfc035e37583dc2e65e81229b57324e71de217d8c12476d",
+  "hypercurve/src/lib.rs": "44c01355008d479cb6c61a8d27a073b47e0e3e10a964d87f1924796f1a7f0f87",
+  "hypercurve/benches/bezier_tangent_order.rs": "f62b07939b2c5cce56273dc01e15ff24dfa24638cb5c26f218898f45657d9830",
+  "hypercurve/fuzz/fuzz_targets/bezier_tangent_order.rs": "d1b4ade831cc08ef8fa90d994ac8062ee39fe539fb2ef31ed149949baadbdb8c",
+  "hypercurve/tests/hypercurve_bezier_tangent_order.rs": "a2946ff7b193536d169bd5444986aed449946614012c42e6c5ee2b38ecd3dfbf"
+}

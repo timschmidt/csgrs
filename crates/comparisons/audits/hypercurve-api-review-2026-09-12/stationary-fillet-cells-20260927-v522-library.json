@@ -1,0 +1,7 @@
+{
+  "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/libhypercurve-stationary-fillet-cells-20260927-v522.rlib",
+  "sha256": "2c1ca6b764f72cdf27ba1bdbef19779e817b95d86824e0692a2fe514e3d4c812",
+  "qualified_library": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/libhypercurve.rlib",
+  "dependency_directory": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release",
+  "source_manifest": "empty-incident-components-20260927-v523-sources.json"
+}

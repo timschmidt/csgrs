@@ -1,0 +1,122 @@
+[
+  {
+    "repository": "ExactCalculator",
+    "status": ""
+  },
+  {
+    "repository": "NURBS_BREP_kernel",
+    "status": ""
+  },
+  {
+    "repository": "alumina-firmware",
+    "status": ""
+  },
+  {
+    "repository": "alumina-interface",
+    "status": ""
+  },
+  {
+    "repository": "citizen-builder",
+    "status": ""
+  },
+  {
+    "repository": "crcalc",
+    "status": ""
+  },
+  {
+    "repository": "csgrs",
+    "status": ""
+  },
+  {
+    "repository": "csgrs-ffi",
+    "status": ""
+  },
+  {
+    "repository": "exactcore-hyper-comparison",
+    "status": ""
+  },
+  {
+    "repository": "hyperbrep",
+    "status": " M src/boolean.rs\n M src/builder.rs\n M src/geometry.rs\n M src/model.rs\n M src/persistence.rs\n"
+  },
+  {
+    "repository": "hypercircuit",
+    "status": ""
+  },
+  {
+    "repository": "hypercurve",
+    "status": " M README.md\n M benches/offset.rs\n M benches/rational_bezier.rs\n M fuzz/fuzz_targets/svg.rs\n M src/arc_bezier.rs\n M src/bezier_fit.rs\n M src/bezier_flatten.rs\n M src/bezier_moment.rs\n M src/bezier_offset.rs\n M src/bezier_region.rs\n M src/curve.rs\n M src/curve_evaluation.rs\n M src/curve_intersection.rs\n M src/finite_projection.rs\n M src/lib.rs\n M src/nurbs.rs\n M src/rational_bezier.rs\n M src/rational_bezier_general.rs\n M src/svg.rs\n M src/svg/exact.rs\n M tests/hypercurve_bezier_fit_offset.rs\n M tests/hypercurve_curve_intersection.rs\n M tests/hypercurve_nurbs.rs\n M tests/hypercurve_path_closure.rs\n M tests/hypercurve_rational_bezier.rs\n M tests/hypercurve_svg.rs\n"
+  },
+  {
+    "repository": "hyperdrc",
+    "status": ""
+  },
+  {
+    "repository": "hyperevolution",
+    "status": ""
+  },
+  {
+    "repository": "hypergraphics",
+    "status": ""
+  },
+  {
+    "repository": "hyperlattice",
+    "status": ""
+  },
+  {
+    "repository": "hyperlimit",
+    "status": ""
+  },
+  {
+    "repository": "hypermesh",
+    "status": ""
+  },
+  {
+    "repository": "hyperpack",
+    "status": ""
+  },
+  {
+    "repository": "hyperparts",
+    "status": ""
+  },
+  {
+    "repository": "hyperpath",
+    "status": ""
+  },
+  {
+    "repository": "hyperphysics",
+    "status": ""
+  },
+  {
+    "repository": "hyperreal",
+    "status": ""
+  },
+  {
+    "repository": "hypersdf",
+    "status": ""
+  },
+  {
+    "repository": "hypersolve",
+    "status": ""
+  },
+  {
+    "repository": "hypertri",
+    "status": ""
+  },
+  {
+    "repository": "hypervoxel",
+    "status": ""
+  },
+  {
+    "repository": "openscad-rs",
+    "status": ""
+  },
+  {
+    "repository": "synaps-cad",
+    "status": ""
+  },
+  {
+    "repository": "videos",
+    "status": ""
+  }
+]

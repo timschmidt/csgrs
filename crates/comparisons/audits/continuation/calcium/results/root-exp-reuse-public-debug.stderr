@@ -1,0 +1,8 @@
+   Compiling num-bigint v0.4.8
+   Compiling num-complex v0.4.6
+   Compiling num-rational v0.4.2
+   Compiling num v0.4.3
+   Compiling hyperreal v0.13.1 (/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/root-exp-reuse-trial-hyperreal)
+   Compiling calcium-root-exp-reuse-probe v0.1.0 (/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/root-exp-reuse-probe)
+    Finished `dev` profile [unoptimized] target(s) in 9.53s
+     Running `/tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/debug/calcium-root-exp-reuse-probe`

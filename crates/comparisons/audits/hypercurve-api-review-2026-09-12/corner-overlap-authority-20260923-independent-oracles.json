@@ -1,0 +1,28 @@
+{
+  "method": "Python fractions; independent rational coefficient and circle-coordinate identities",
+  "source_denominator_minimum": "1/4",
+  "reparameterized_denominator_minimum": "3/7",
+  "projective_samples": [
+    {
+      "t": "0",
+      "u": "0",
+      "reversed_u": "1"
+    },
+    {
+      "t": "1/3",
+      "u": "1/5",
+      "reversed_u": "4/5"
+    },
+    {
+      "t": "1",
+      "u": "1",
+      "reversed_u": "0"
+    }
+  ],
+  "circle_point": [
+    "-4/5",
+    "3/5"
+  ],
+  "rotated_circle_parameter": "1/3",
+  "reversed_circle_parameter": "2/3"
+}

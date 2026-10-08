@@ -1,0 +1,93 @@
+{
+  "parents": {
+    "hypercurve": "9370aa67a692d651b46ad32d836fed62f9da726f",
+    "hypersolve": "41855c3604cbd18605a020d60758c8e5c489b629",
+    "hyperreal": "0cb5f29aee065c73e234e0ebb0a9e106398515bb"
+  },
+  "source_manifest": "circle-refinement-schedule-20260926-v197-sources.json",
+  "source_directory": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/source-archives/circle-refinement-schedule-20260926-v197",
+  "build_source_directory": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/build-workspace-20260925",
+  "workspace_guard": "translated-root-compaction-20260926-v196-workspace.json",
+  "checks": [
+    {
+      "repo": "hypersolve",
+      "label": "hypersolve-fmt",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustfmt",
+        "--edition",
+        "2024",
+        "--check",
+        "src/algebraic_tensor_image.rs"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.06379252707120031,
+      "log": "circle-refinement-schedule-20260926-v197-hypersolve-fmt.log"
+    },
+    {
+      "repo": "hypersolve",
+      "label": "hypersolve-clippy-all",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "clippy",
+        "--all-targets",
+        "--all-features",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 6.222893327008933,
+      "log": "circle-refinement-schedule-20260926-v197-hypersolve-clippy-all.log"
+    },
+    {
+      "repo": "hypersolve",
+      "label": "hypersolve-clippy-default",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "clippy",
+        "--all-targets",
+        "--no-default-features",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 5.922739921952598,
+      "log": "circle-refinement-schedule-20260926-v197-hypersolve-clippy-default.log"
+    }
+  ],
+  "cases": [
+    {
+      "repo": "hypercurve",
+      "label": "case-00",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/circle-refinement-schedule-20260926-v197-hypercurve",
+        "--exact",
+        "curve_region_boolean::certified_successor_tests::selected_parallel_arrangement_splits_interior_cusps",
+        "--test-threads=1",
+        "--nocapture",
+        "--color",
+        "never"
+      ],
+      "returncode": "timeout",
+      "elapsed_seconds": 30.004750536056235,
+      "log": "circle-refinement-schedule-20260926-v197-case-00.log",
+      "name": "curve_region_boolean::certified_successor_tests::selected_parallel_arrangement_splits_interior_cusps"
+    }
+  ],
+  "binaries": {
+    "hypercurve": {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/circle-refinement-schedule-20260926-v197-hypercurve",
+      "sha256": "f45474b4c69e6233be486d13f426e4e049fde6fad68380e00652b32292f4c215"
+    }
+  },
+  "all_processes_reaped": true,
+  "diagnostic_only": true,
+  "hypercurve_build_returncode": 0,
+  "all_sources_unchanged": true,
+  "qualification_complete": false
+}

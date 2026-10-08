@@ -1,0 +1,28 @@
+\doxysubsection{Validated\+Kleenean Class Reference}
+\hypertarget{classAriadne_1_1ValidatedKleenean}{}\label{classAriadne_1_1ValidatedKleenean}\index{ValidatedKleenean@{ValidatedKleenean}}
+
+
+{\ttfamily \#include $<$logical.\+hpp$>$}
+
+
+
+\doxysubsubsection{Description}
+A logical class representing a value of a quasidecidable predicate, either a \doxylink{classAriadne_1_1Kleenean}{Kleenean} value \doxylink{classAriadne_1_1Kleenean_af3fb110cf264150f8e81cf0ad6952204}{check}ed using some \doxylink{classAriadne_1_1Effort}{Effort}, or applied directly to a \doxylink{classAriadne_1_1Concepts_1_1Validated}{Validated} object. 
+
+\begin{DoxySeeAlso}{See also}
+\doxylink{classAriadne_1_1Kleenean}{Kleenean} 
+\end{DoxySeeAlso}
+\doxysubsubsubsection*{Related Types and Functions}
+(Note that these are not member symbols.) \begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1ValidatedKleenean_a752fd0d36f2a1a79f5de9ce0e6a0f6ca}\label{classAriadne_1_1ValidatedKleenean_a752fd0d36f2a1a79f5de9ce0e6a0f6ca} 
+{\footnotesize template$<$class L$>$ }\\bool {\bfseries definitely} (L const \&)
+\begin{DoxyCompactList}\small\item\em Returns {\ttfamily true} if a finite (non-\/effective) logical type is definitely true, otherwise {\ttfamily false}. In particular, always returns {\ttfamily false} for a \doxylink{classAriadne_1_1ValidatedUpperKleenean}{Validated\+Upper\+Kleenean} or \doxylink{classAriadne_1_1ApproximateKleenean}{Approximate\+Kleenean}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1ValidatedKleenean_abfbb9f684fa1e7e58d92bbef2ede4a51}\label{classAriadne_1_1ValidatedKleenean_abfbb9f684fa1e7e58d92bbef2ede4a51} 
+{\footnotesize template$<$class L$>$ }\\bool {\bfseries possibly} (L const \&)
+\begin{DoxyCompactList}\small\item\em Returns {\ttfamily false} if a finite (non-\/effective) logical type is definitely false, otherwise {\ttfamily true}. In particular, always returns {\ttfamily false} for a \doxylink{classAriadne_1_1ValidatedLowerKleenean}{Validated\+Lower\+Kleenean} or \doxylink{classAriadne_1_1ApproximateKleenean}{Approximate\+Kleenean}. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+The documentation for this class was generated from the following file\+:\begin{DoxyCompactItemize}
+\item 
+source/foundations/\mbox{\hyperlink{logical_8hpp}{logical.\+hpp}}\end{DoxyCompactItemize}

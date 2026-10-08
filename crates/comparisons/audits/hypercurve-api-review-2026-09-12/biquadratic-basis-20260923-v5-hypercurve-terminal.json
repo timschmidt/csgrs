@@ -1,0 +1,49 @@
+{
+  "checks": [
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "check",
+        "--all-targets",
+        "--all-features",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "log": "biquadratic-basis-20260923-v5-hypercurve-check-0.log"
+    },
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "check",
+        "--all-targets",
+        "--no-default-features",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "log": "biquadratic-basis-20260923-v5-hypercurve-check-1.log"
+    }
+  ],
+  "cases": [
+    {
+      "name": "bezier_algebraic_image::policy_tests::arithmetic_adapter_replays_close_nonrational_bounds_strictly",
+      "returncode": 0,
+      "passed": true,
+      "limit_seconds": 120,
+      "elapsed_seconds": 0.1470430699409917,
+      "log": "biquadratic-basis-20260923-v5-hypercurve-case-0.log"
+    },
+    {
+      "name": "bezier_offset::conversion_tests::selected_fiber_transverse_mapped_cut_inverts_by_point",
+      "returncode": 101,
+      "passed": false,
+      "limit_seconds": 180,
+      "elapsed_seconds": 4.218450131942518,
+      "log": "biquadratic-basis-20260923-v5-hypercurve-case-1.log"
+    }
+  ],
+  "binary_sha256": "0e2c08aa9a4ea7214b11fad11d9e0ee4f2c2f347ecfdcea323e90215a0057559",
+  "all_sources_unchanged": true,
+  "all_processes_reaped": true
+}

@@ -1,0 +1,9 @@
+Share domain projection for parallel overlap and self-contact queries
+
+A certified source correspondence does not prove that off-correspondence contacts are absent. Remove both unit-domain fallbacks that claimed a complete overlap after residual projection failed. Unit, finite-domain and self-contact queries now share axis extraction, norm constraints, component selection and residual projection. Retained contacts survive replay, and self-contact queries preserve the increasing-parameter filter.
+
+Remove the duplicate unit saturation helper and its forwarding result wrapper. Update the independent support/norm regression to exercise the common extractor directly.
+
+Validation: 637 release geometry/API cases across 12 pinned binaries, plus 6 lint, formatting, fuzz, documentation and downstream checks. Includes radical components, ordered self contacts, finite/exterior ownership, source cusps and both full reoffset policies.
+
+The separate degree-six monotone-reparameterization probe still exceeds its diagnostic time limit; this change does not claim to resolve that resultant cost.

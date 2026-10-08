@@ -1,0 +1,11 @@
+{
+  "tag": "power-rebased-candidate-extended-v68",
+  "started": "2026-09-11T03:52:07.880Z",
+  "finished": "2026-09-11T03:52:07.994Z",
+  "elapsedSeconds": 0.111286827,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "/tmp/calcium-power-rebased.xUuvlb/candidate-extended",
+  "args": [],
+  "code": 0,
+  "signal": null
+}

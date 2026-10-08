@@ -1,0 +1,6 @@
+{
+  "hypersolve/src/root_sign.rs": "3b5a29028e28b8004535ed39128e78c4be49460bad2b0ab97779009f9affbeed",
+  "hypersolve/src/ordered_field_roots.rs": "0446e1919f3524551b22dba9334ec3e733d5256d544fcce4dec88f9d0615a4c9",
+  "hypersolve/src/algebraic_fiber.rs": "7a95383c46a6b8023fcbbb1a75d03eb8d5d3c058241fdf1c66fc333644155acf",
+  "hypercurve/src/bezier_offset.rs": "bc671ff6fbf5801d23a9e044a48754227050871b2dfd922d31603f26b991e006"
+}

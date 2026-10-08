@@ -1,0 +1,11 @@
+{
+  "tag": "point-consumer-arrangement-baseline-run-v66",
+  "started": "2026-09-11T03:16:11.644Z",
+  "finished": "2026-09-11T03:16:11.656Z",
+  "elapsedSeconds": 0.010176913,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "/tmp/calcium-e-qualified-apps.AHiwfn/candidate-hypercurve-arrangement.stripped",
+  "args": [],
+  "code": 0,
+  "signal": null
+}

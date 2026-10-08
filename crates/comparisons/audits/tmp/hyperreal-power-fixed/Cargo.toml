@@ -1,0 +1,11 @@
+[package]
+name = "hyperreal-power-audit"
+version = "0.0.0"
+edition = "2024"
+
+[dependencies]
+hyperreal = { path = "/home/tim/Documents/GitHub/workspace/hyperreal" }
+
+[[bin]]
+name = "hyperreal-power-audit"
+path = "/tmp/hyperreal-power-audit.rs"

@@ -1,0 +1,17 @@
+{
+  "command": [
+    "rustc",
+    "--edition=2024",
+    "-O",
+    "analytic-circle-rational-replay-probe.rs",
+    "--extern",
+    "hypercurve=/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/libhypercurve-2c7ff6f3fbe07653.rlib",
+    "-L",
+    "dependency=/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps",
+    "-o",
+    "analytic-circle-rational-replay-probe"
+  ],
+  "library_sha256": "f51ec1040402d6e33eab91b5badbb1271c5b509a9f23fee2c8caa1ffa342bb6c",
+  "binary_sha256": "05f68397dc08cba07bdd64c3e5e1aecc7f2605a21b2506837d3bbccc0af7f9dc",
+  "exit": 0
+}

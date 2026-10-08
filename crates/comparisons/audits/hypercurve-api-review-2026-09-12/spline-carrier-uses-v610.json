@@ -1,0 +1,62 @@
+{
+  "PolynomialBSplineCurve2": {
+    "hypercurve/benches/bspline.rs": 2,
+    "hypercurve/fuzz/fuzz_targets/bspline.rs": 2,
+    "hypercurve/src/bspline.rs": 4,
+    "hypercurve/src/lib.rs": 1,
+    "hypercurve/src/polynomial_spline.rs": 3,
+    "hypercurve/tests/hypercurve_bspline.rs": 13
+  },
+  "RationalBSplineCurve2": {
+    "hypercurve/benches/bspline.rs": 4,
+    "hypercurve/fuzz/fuzz_targets/bspline.rs": 3,
+    "hypercurve/src/bspline.rs": 6,
+    "hypercurve/src/lib.rs": 1,
+    "hypercurve/src/nurbs.rs": 5,
+    "hypercurve/tests/hypercurve_bspline.rs": 24
+  },
+  "PolynomialSplineCurve2": {
+    "csgrs/src/curve/native.rs": 2,
+    "hypercurve/PERFORMANCE.md": 1,
+    "hypercurve/README.md": 2,
+    "hypercurve/benches/bspline.rs": 2,
+    "hypercurve/src/curve.rs": 6,
+    "hypercurve/src/curve_evaluation.rs": 1,
+    "hypercurve/src/curve_subdivision.rs": 3,
+    "hypercurve/src/lib.rs": 1,
+    "hypercurve/src/polynomial_spline.rs": 6,
+    "hypercurve/src/svg.rs": 2,
+    "hypercurve/src/svg/exact.rs": 2,
+    "hypercurve/tests/hypercurve_curve.rs": 2,
+    "hypercurve/tests/hypercurve_curve_intersection.rs": 2,
+    "hypercurve/tests/hypercurve_nurbs.rs": 1,
+    "hypercurve/tests/hypercurve_path_closure.rs": 2,
+    "hypercurve/tests/hypercurve_polynomial_spline.rs": 19,
+    "hypercurve/tests/hypercurve_svg.rs": 2
+  },
+  "NurbsCurve2": {
+    "hyperbrep/src/persistence.rs": 4,
+    "hypercurve/PERFORMANCE.md": 1,
+    "hypercurve/README.md": 2,
+    "hypercurve/benches/api_surface.rs": 2,
+    "hypercurve/benches/bspline.rs": 12,
+    "hypercurve/benches/comparative.rs": 5,
+    "hypercurve/benches/dispatch_trace.rs": 2,
+    "hypercurve/fuzz/fuzz_targets/bspline.rs": 1,
+    "hypercurve/src/curve.rs": 6,
+    "hypercurve/src/curve_subdivision.rs": 3,
+    "hypercurve/src/lib.rs": 1,
+    "hypercurve/src/nurbs.rs": 12,
+    "hypercurve/src/nurbs_interpolation.rs": 12,
+    "hypercurve/src/polynomial_spline.rs": 4,
+    "hypercurve/src/straight_skeleton.rs": 1,
+    "hypercurve/src/svg.rs": 2,
+    "hypercurve/src/svg/exact.rs": 2,
+    "hypercurve/tests/hypercurve_curve.rs": 2,
+    "hypercurve/tests/hypercurve_curve_intersection.rs": 2,
+    "hypercurve/tests/hypercurve_nurbs.rs": 38,
+    "hypercurve/tests/hypercurve_nurbs_interpolation.rs": 9,
+    "hypercurve/tests/hypercurve_path_closure.rs": 3,
+    "hypercurve/tests/hypercurve_svg.rs": 3
+  }
+}

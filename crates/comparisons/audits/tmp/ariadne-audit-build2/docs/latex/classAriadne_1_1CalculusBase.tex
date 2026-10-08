@@ -1,0 +1,167 @@
+\doxysubsection{Calculus\+Base\texorpdfstring{$<$}{<} Var \texorpdfstring{$>$}{>} Class Template Reference}
+\hypertarget{classAriadne_1_1CalculusBase}{}\label{classAriadne_1_1CalculusBase}\index{CalculusBase$<$ Var $>$@{CalculusBase$<$ Var $>$}}
+
+
+{\ttfamily \#include $<$calculus\+\_\+base.\+hpp$>$}
+
+
+
+\doxysubsubsection{Description}
+\subsubsection*{template$<$class Var$>$\newline
+class Ariadne\+::\+Calculus\+Base$<$ Var $>$}
+Tools for analysing dynamical systems based on function models. \doxysubsubsubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1CalculusBase_a360323fa79f05d0337a42ee478679db5}\label{classAriadne_1_1CalculusBase_a360323fa79f05d0337a42ee478679db5} 
+\mbox{\hyperlink{classAriadne_1_1ValidatedKleenean}{Validated\+Kleenean}} {\bfseries active} (const \mbox{\hyperlink{classAriadne_1_1Function}{Scalar\+Multivariate\+Function\+Type}} \&guard, const \mbox{\hyperlink{classAriadne_1_1Box}{Box\+Type}} \&box) const
+\begin{DoxyCompactList}\small\item\em Test if a box satisfies the constraint given by the guard. Returns {\itshape true} is all points in the box satisfy the constraint, {\itshape false} if all points do not satisfy the constraint, and indeterminate otherwise. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1CalculusBase_a7e04ba83c9a3ece5ea6db04a9af44fb0}\label{classAriadne_1_1CalculusBase_a7e04ba83c9a3ece5ea6db04a9af44fb0} 
+\mbox{\hyperlink{classAriadne_1_1ValidatedKleenean}{Validated\+Kleenean}} {\bfseries active} (const \mbox{\hyperlink{classAriadne_1_1Function}{Scalar\+Multivariate\+Function\+Type}} \&guard, const Set\+Model\+Type \&set\+\_\+model) const
+\begin{DoxyCompactList}\small\item\em Test if a set satisfied the constraint given by the guard. Returns {\itshape true} is all points in the set satisfy the constraint, {\itshape false} if all points do not satisfy the constraint, and indeterminate otherwise. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1CalculusBase_af3380656a4add3f618a0f9fa6b9a4e43}\label{classAriadne_1_1CalculusBase_af3380656a4add3f618a0f9fa6b9a4e43} 
+Set\+Model\+Type {\bfseries reset\+\_\+step} (const \mbox{\hyperlink{classAriadne_1_1Function}{Vector\+Multivariate\+Function\+Type}} \&map, const Set\+Model\+Type \&set\+\_\+model) const
+\begin{DoxyCompactList}\small\item\em Computes the image of the set defined by {\itshape set\+\_\+model} under the {\itshape map}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1CalculusBase_a7d33851df147a6c68b875e72fba67018}\label{classAriadne_1_1CalculusBase_a7d33851df147a6c68b875e72fba67018} 
+Set\+Model\+Type {\bfseries integration\+\_\+step} (const Flow\+Model\+Type \&\mbox{\hyperlink{classAriadne_1_1CalculusBase_af4017a5c300a4b5728b257d2a36e6253}{flow\+\_\+model}}, const Set\+Model\+Type \&initial\+\_\+set\+\_\+model, const Time\+Type \&integration\+\_\+time) const
+\begin{DoxyCompactList}\small\item\em Computes the points reached by evolution of the {\itshape initial\+\_\+set\+\_\+model} under the flow given by {\itshape flow\+\_\+model}. The {\itshape integration\+\_\+time} gives the time all points should be flowed. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1CalculusBase_a0252e59d387d8151f9e4dab6180c8480}\label{classAriadne_1_1CalculusBase_a0252e59d387d8151f9e4dab6180c8480} 
+Set\+Model\+Type {\bfseries reachability\+\_\+step} (const Flow\+Model\+Type \&\mbox{\hyperlink{classAriadne_1_1CalculusBase_af4017a5c300a4b5728b257d2a36e6253}{flow\+\_\+model}}, const Set\+Model\+Type \&initial\+\_\+set\+\_\+model, const Time\+Type \&initial\+\_\+time, const Time\+Type \&final\+\_\+time) const
+\begin{DoxyCompactList}\small\item\em Computes the points reached by evolution of the {\itshape initial\+\_\+set\+\_\+model} under the flow given by {\itshape flow\+\_\+model} for times between {\itshape initial\+\_\+time} and {\itshape final\+\_\+time}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1CalculusBase_a897c4cc0ea624e39e686a71bdeb11195}\label{classAriadne_1_1CalculusBase_a897c4cc0ea624e39e686a71bdeb11195} 
+Set\+Model\+Type {\bfseries reachability\+\_\+step} (const Flow\+Model\+Type \&\mbox{\hyperlink{classAriadne_1_1CalculusBase_af4017a5c300a4b5728b257d2a36e6253}{flow\+\_\+model}}, const Set\+Model\+Type \&initial\+\_\+set\+\_\+model, const Time\+Type \&initial\+\_\+time, const Time\+Model\+Type \&final\+\_\+time\+\_\+model) const
+\begin{DoxyCompactList}\small\item\em Computes the points reached by evolution of the {\itshape initial\+\_\+set\+\_\+model} under the flow given by {\itshape flow\+\_\+model} for times between {\itshape initial\+\_\+time} and {\itshape final\+\_\+time\+\_\+model}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1CalculusBase_a6a5aecce627ccc82e0f70a419bc1f99d}\label{classAriadne_1_1CalculusBase_a6a5aecce627ccc82e0f70a419bc1f99d} 
+Set\+Model\+Type {\bfseries reachability\+\_\+step} (const Flow\+Model\+Type \&\mbox{\hyperlink{classAriadne_1_1CalculusBase_af4017a5c300a4b5728b257d2a36e6253}{flow\+\_\+model}}, const Set\+Model\+Type \&initial\+\_\+set\+\_\+model, const Time\+Model\+Type \&initial\+\_\+time\+\_\+model, const Time\+Type \&final\+\_\+time) const
+\begin{DoxyCompactList}\small\item\em Computes the points reached by evolution of the {\itshape initial\+\_\+set\+\_\+model} under the flow given by {\itshape flow\+\_\+model} for times between {\itshape initial\+\_\+time\+\_\+model} and {\itshape final\+\_\+time}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1CalculusBase_a9a75472d1e271f74ffb75701c76cb7df}\label{classAriadne_1_1CalculusBase_a9a75472d1e271f74ffb75701c76cb7df} 
+Time\+Model\+Type {\bfseries reachability\+\_\+time} (const Time\+Type \&initial\+\_\+time, const Time\+Model\+Type \&final\+\_\+time\+\_\+model) const
+\begin{DoxyCompactList}\small\item\em Gives the extended time model for the reachability step between the {\itshape initial\+\_\+time} and the {\itshape final\+\_\+time\+\_\+model}. The new time is given by $\tau\textnormal{\textquotesingle}(e,s) = (1-s)\tau_0+s\tau_1(e)$. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1CalculusBase_ab2577ed156234912c5b382a6d7952b91}\label{classAriadne_1_1CalculusBase_ab2577ed156234912c5b382a6d7952b91} 
+Time\+Model\+Type {\bfseries reachability\+\_\+time} (const Time\+Model\+Type \&initial\+\_\+time\+\_\+model, const Time\+Type \&final\+\_\+time) const
+\begin{DoxyCompactList}\small\item\em Gives the extended time model for the reachability step between the {\itshape initial\+\_\+time\+\_\+model} and the {\itshape final\+\_\+time}. The new time is given by $\tau\textnormal{\textquotesingle}(e,s) = (1-s)\tau_0(e)+s\tau_1$. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\begin{Indent}\textbf{ Dynamical operations}\par
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1CalculusBase_ae32254ad4b2cd03ce0dbac3670a6273a}\label{classAriadne_1_1CalculusBase_ae32254ad4b2cd03ce0dbac3670a6273a} 
+virtual Set\+Model\+Type {\bfseries reset\+\_\+step} (const Map\+Model\+Type \&map\+\_\+model, const Set\+Model\+Type \&set\+\_\+model) const =0
+\begin{DoxyCompactList}\small\item\em Computes the image of the set defined by {\itshape set\+\_\+model} under the approximation of the map given by {\itshape map\+\_\+model}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1CalculusBase_a5bd2a1b4b46b2e09f911c6a78b07681f}\label{classAriadne_1_1CalculusBase_a5bd2a1b4b46b2e09f911c6a78b07681f} 
+virtual \mbox{\hyperlink{classAriadne_1_1ValidatedKleenean}{Validated\+Kleenean}} {\bfseries active} (const Predicate\+Model\+Type \&guard\+\_\+model, const Set\+Model\+Type \&set\+\_\+model) const =0
+\begin{DoxyCompactList}\small\item\em Test if a set satisfied the constraint given by the guard model. Returns {\itshape true} is all points in the set satisfy the constraint, {\itshape false} if all points do not satisfy the constraint, and indeterminate otherwise. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1CalculusBase_aec4c09d741732f03bacce91a070a8545}\label{classAriadne_1_1CalculusBase_aec4c09d741732f03bacce91a070a8545} 
+virtual \mbox{\hyperlink{group__FunctionModule_ga5f13c1d70d7770b9aa4ff0dc2d515ffe}{Interval\+Domain\+Type}} {\bfseries touching\+\_\+time\+\_\+interval} (const Predicate\+Model\+Type \&guard\+\_\+model, const Flow\+Model\+Type \&\mbox{\hyperlink{classAriadne_1_1CalculusBase_af4017a5c300a4b5728b257d2a36e6253}{flow\+\_\+model}}, const Set\+Model\+Type \&initial\+\_\+set\+\_\+model) const =0
+\begin{DoxyCompactList}\small\item\em Computes an over-\/approximation to the time interval for which the {\itshape initial\+\_\+set\+\_\+model} touch the set specified by the {\itshape guard} model under the {\itshape flow\+\_\+model}. The {\itshape minimum} and {\itshape maximum\+\_\+time} gives the minimum and maximum time for which the evolution is valid. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1CalculusBase_a3bdffbe73a3848e7831e18f72632b13b}\label{classAriadne_1_1CalculusBase_a3bdffbe73a3848e7831e18f72632b13b} 
+virtual \mbox{\hyperlink{group__FunctionModule_ga5f13c1d70d7770b9aa4ff0dc2d515ffe}{Interval\+Domain\+Type}} {\bfseries touching\+\_\+time\+\_\+interval} (const \mbox{\hyperlink{group__FunctionModule_gaec600ea23399c725519b926e6b012451}{Scalar\+Multivariate\+Function}} \&guard, const Flow\+Model\+Type \&\mbox{\hyperlink{classAriadne_1_1CalculusBase_af4017a5c300a4b5728b257d2a36e6253}{flow\+\_\+model}}, const Set\+Model\+Type \&initial\+\_\+set\+\_\+model) const
+\begin{DoxyCompactList}\small\item\em Computes an over-\/approximation to the time interval for which the {\itshape initial\+\_\+set\+\_\+model} touch the set specified by the {\itshape guard} model under the {\itshape flow\+\_\+model}. The {\itshape minimum} and {\itshape maximum\+\_\+time} gives the minimum and maximum time for which the evolution is valid. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1CalculusBase_a98dacef04cb5084c97258c21500d8e17}\label{classAriadne_1_1CalculusBase_a98dacef04cb5084c97258c21500d8e17} 
+virtual \mbox{\hyperlink{group__FunctionModule_ga5f13c1d70d7770b9aa4ff0dc2d515ffe}{Interval\+Domain\+Type}} {\bfseries scaled\+\_\+touching\+\_\+time\+\_\+interval} (const Base\+Model\+Type \&guard\+\_\+flow\+\_\+set\+\_\+model) const =0
+\begin{DoxyCompactList}\small\item\em Computes an over-\/approximation to the touching time interval scaling the flow step to \mbox{[}-\/1,+1\mbox{]}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1CalculusBase_a65c8430a300603ecc4eec83312194b28}\label{classAriadne_1_1CalculusBase_a65c8430a300603ecc4eec83312194b28} 
+virtual \mbox{\hyperlink{group__FunctionModule_ga5f13c1d70d7770b9aa4ff0dc2d515ffe}{Interval\+Domain\+Type}} {\bfseries scaled\+\_\+touching\+\_\+time\+\_\+interval} (const \mbox{\hyperlink{group__FunctionModule_gaec600ea23399c725519b926e6b012451}{Scalar\+Multivariate\+Function}} \&guard, const Flow\+Set\+Model\+Type \&flow\+\_\+set\+\_\+model) const
+\begin{DoxyCompactList}\small\item\em Computes an over-\/approximation to the time interval for which the {\itshape initial\+\_\+set\+\_\+model} touch the set specified by the {\itshape guard} model under the {\itshape flow\+\_\+model}. The {\itshape minimum} and {\itshape maximum\+\_\+time} gives the minimum and maximum time for which the evolution is valid. Deprecated. \end{DoxyCompactList}\item 
+virtual Time\+Model\+Type \mbox{\hyperlink{classAriadne_1_1CalculusBase_a9c95b3d145f4f622bb9da2fbb41e3837}{crossing\+\_\+time}} (const Predicate\+Model\+Type \&guard\+\_\+model, const Flow\+Model\+Type \&\mbox{\hyperlink{classAriadne_1_1CalculusBase_af4017a5c300a4b5728b257d2a36e6253}{flow\+\_\+model}}, const Set\+Model\+Type \&initial\+\_\+set\+\_\+model) const =0
+\begin{DoxyCompactList}\small\item\em Computes the time at which points in the {\itshape initial\+\_\+set\+\_\+model} cross the zero-\/set of the the {\itshape guard} under evolution of the {\itshape flow\+\_\+model}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1CalculusBase_a25c19ae254666d3e025301dee20bdee9}\label{classAriadne_1_1CalculusBase_a25c19ae254666d3e025301dee20bdee9} 
+virtual Time\+Model\+Type {\bfseries crossing\+\_\+time} (const \mbox{\hyperlink{group__FunctionModule_gaec600ea23399c725519b926e6b012451}{Scalar\+Multivariate\+Function}} \&guard, const Flow\+Model\+Type \&\mbox{\hyperlink{classAriadne_1_1CalculusBase_af4017a5c300a4b5728b257d2a36e6253}{flow\+\_\+model}}, const Set\+Model\+Type \&initial\+\_\+set\+\_\+model) const
+\begin{DoxyCompactList}\small\item\em Computes the time at which points in the {\itshape initial\+\_\+set\+\_\+model} cross the zero-\/set of the the {\itshape guard} under evolution of the {\itshape flow\+\_\+model}. The crossing must be (differentiably) transverse. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1CalculusBase_a7f81043a70782e0b9e95140a19fe4209}\label{classAriadne_1_1CalculusBase_a7f81043a70782e0b9e95140a19fe4209} 
+virtual Time\+Model\+Type {\bfseries scaled\+\_\+crossing\+\_\+time} (const Base\+Model\+Type \&guard\+\_\+flow\+\_\+set\+\_\+model) const =0
+\begin{DoxyCompactList}\small\item\em The crossing must be (differentiably) transverse. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1CalculusBase_a461fee4fae49e50881ac23535d2b38ad}\label{classAriadne_1_1CalculusBase_a461fee4fae49e50881ac23535d2b38ad} 
+virtual Time\+Model\+Type {\bfseries scaled\+\_\+crossing\+\_\+time} (const \mbox{\hyperlink{group__FunctionModule_gaec600ea23399c725519b926e6b012451}{Scalar\+Multivariate\+Function}} \&guard, const Flow\+Set\+Model\+Type \&flow\+\_\+set\+\_\+model) const
+\begin{DoxyCompactList}\small\item\em Computes the time at which points in the {\itshape initial\+\_\+set\+\_\+model} cross the zero-\/set of the the {\itshape guard} under evolution of the {\itshape flow\+\_\+model}. The crossing must be (differentiably) transverse. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1CalculusBase_a74dbb1e191507ab999133800cc0b1b3a}\label{classAriadne_1_1CalculusBase_a74dbb1e191507ab999133800cc0b1b3a} 
+virtual Set\+Model\+Type {\bfseries integration\+\_\+step} (const Flow\+Model\+Type \&\mbox{\hyperlink{classAriadne_1_1CalculusBase_af4017a5c300a4b5728b257d2a36e6253}{flow\+\_\+model}}, const Set\+Model\+Type \&initial\+\_\+set\+\_\+model, const Time\+Model\+Type \&integration\+\_\+time\+\_\+model) const =0
+\begin{DoxyCompactList}\small\item\em Computes the points reached by evolution of the {\itshape initial\+\_\+set\+\_\+model} under the flow given by {\itshape flow\+\_\+model}. The {\itshape integration\+\_\+time\+\_\+model} $\tau(e)$ gives the time the point starting at $x(e)$ should be flowed. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1CalculusBase_a2b2af2f0dfd15cf36a9e0542437cc898}\label{classAriadne_1_1CalculusBase_a2b2af2f0dfd15cf36a9e0542437cc898} 
+virtual Set\+Model\+Type {\bfseries reachability\+\_\+step} (const Flow\+Model\+Type \&\mbox{\hyperlink{classAriadne_1_1CalculusBase_af4017a5c300a4b5728b257d2a36e6253}{flow\+\_\+model}}, const Set\+Model\+Type \&initial\+\_\+set\+\_\+model, const Time\+Model\+Type \&initial\+\_\+time\+\_\+model, const Time\+Model\+Type \&final\+\_\+time\+\_\+model) const =0
+\begin{DoxyCompactList}\small\item\em Computes the points reached by evolution of the {\itshape initial\+\_\+set\+\_\+model} under the flow given by {\itshape flow\+\_\+model} for times between {\itshape initial\+\_\+time\+\_\+model} and {\itshape final\+\_\+time\+\_\+model}. \end{DoxyCompactList}\item 
+virtual Set\+Model\+Type \mbox{\hyperlink{classAriadne_1_1CalculusBase_a313e6eb7aee0b8b03e3ecec251293398}{reachability\+\_\+step}} (const Flow\+Model\+Type \&\mbox{\hyperlink{classAriadne_1_1CalculusBase_af4017a5c300a4b5728b257d2a36e6253}{flow\+\_\+model}}, const Set\+Model\+Type \&initial\+\_\+set\+\_\+model, const Time\+Model\+Type \&reachability\+\_\+time\+\_\+model) const =0
+\begin{DoxyCompactList}\small\item\em Computes the points reached by evolution of the {\itshape initial\+\_\+set\+\_\+model} under the flow given by {\itshape flow\+\_\+model} for times given by {\itshape reachability\+\_\+time\+\_\+model}. The {\itshape reachability\+\_\+time\+\_\+model} must have one more independent variable than the {\itshape initial\+\_\+set\+\_\+model}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1CalculusBase_a3c61229cb21b22174406bdf6257c97d6}\label{classAriadne_1_1CalculusBase_a3c61229cb21b22174406bdf6257c97d6} 
+virtual \mbox{\hyperlink{namespaceAriadne_abbe0884d033ed6289d1f654576d7bb07}{Pair}}$<$ Time\+Type, \mbox{\hyperlink{classAriadne_1_1Box}{Box\+Type}} $>$ {\bfseries flow\+\_\+bounds} (const \mbox{\hyperlink{classAriadne_1_1Function}{Vector\+Multivariate\+Function\+Type}} \&vf, const \mbox{\hyperlink{classAriadne_1_1Box}{Box\+Type}} \&d, const Real\+Type \&maximum\+\_\+step\+\_\+size, const Real\+Type \&maximum\+\_\+bound\+\_\+diameter) const =0
+\begin{DoxyCompactList}\small\item\em Computed a pair $(h,B)$ such that the flow of the vector\+\_\+field {\itshape vf} starting in domain {\itshape d} remains in {\itshape B} for times up to {\itshape h}. The maximum allowable {\itshape h} and maximum allowable diameter of {\itshape B} are given. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1CalculusBase_aef98c2110b5d3a3a09b63c2fe56853ab}\label{classAriadne_1_1CalculusBase_aef98c2110b5d3a3a09b63c2fe56853ab} 
+virtual \mbox{\hyperlink{namespaceAriadne_abbe0884d033ed6289d1f654576d7bb07}{Pair}}$<$ Time\+Type, \mbox{\hyperlink{classAriadne_1_1Box}{Box\+Type}} $>$ {\bfseries flow\+\_\+bounds} (const \mbox{\hyperlink{classAriadne_1_1Function}{Vector\+Multivariate\+Function\+Type}} \&vf, const \mbox{\hyperlink{classAriadne_1_1Box}{Box\+Type}} \&d, const Real\+Type \&maximum\+\_\+step\+\_\+size) const
+\begin{DoxyCompactList}\small\item\em Computed a pair $(h,B)$ such that the flow of the vector\+\_\+field {\itshape vf} starting in domain {\itshape d} remains in {\itshape B} for times up to {\itshape h}. The maximum allowable {\itshape h} is given. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\end{Indent}
+\begin{Indent}\textbf{ Constructing models for functions}\par
+{\em A model for the map {\itshape f} over the domain {\itshape d}. }\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1CalculusBase_af4017a5c300a4b5728b257d2a36e6253}\label{classAriadne_1_1CalculusBase_af4017a5c300a4b5728b257d2a36e6253} 
+virtual Flow\+Model\+Type {\bfseries flow\+\_\+model} (const \mbox{\hyperlink{classAriadne_1_1Function}{Vector\+Multivariate\+Function\+Type}} \&vf, const \mbox{\hyperlink{classAriadne_1_1Box}{Box\+Type}} \&d, const Time\+Type \&h, const \mbox{\hyperlink{classAriadne_1_1Box}{Box\+Type}} \&b) const =0
+\begin{DoxyCompactList}\small\item\em A model for the flow determined by the vector field {\itshape vf} over the initial domain {\itshape d}, valid for times up to {\itshape h}, assuming that the state remains in the bounding box {\itshape b}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1CalculusBase_aabf5b1e51422b3a1216461e365e18b45}\label{classAriadne_1_1CalculusBase_aabf5b1e51422b3a1216461e365e18b45} 
+virtual Predicate\+Model\+Type {\bfseries predicate\+\_\+model} (const \mbox{\hyperlink{classAriadne_1_1Function}{Scalar\+Multivariate\+Function\+Type}} \&g, const \mbox{\hyperlink{classAriadne_1_1Box}{Box\+Type}} \&d) const =0
+\begin{DoxyCompactList}\small\item\em A model for the real-\/valued function {\itshape g} over the domain {\itshape d}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1CalculusBase_aee10bbfb3e4b804785fbc27cfba38a2b}\label{classAriadne_1_1CalculusBase_aee10bbfb3e4b804785fbc27cfba38a2b} 
+virtual Time\+Model\+Type {\bfseries time\+\_\+model} (const \mbox{\hyperlink{namespaceAriadne_af915b9f1459c9691328efa71c6f39c6e}{Float\+DP}} \&t, const \mbox{\hyperlink{classAriadne_1_1Box}{Box\+Type}} \&d) const =0
+\begin{DoxyCompactList}\small\item\em A model for the constant time {\itshape t} over the box {\itshape d}. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\end{Indent}
+\begin{Indent}\textbf{ Set-\/based operations}\par
+{\em Compute a model for the given box {\itshape bx}. }\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1CalculusBase_ac75f6a3506bdf2807c8af0f3b35327a4}\label{classAriadne_1_1CalculusBase_ac75f6a3506bdf2807c8af0f3b35327a4} 
+virtual Enclosure\+Type {\bfseries enclosure} (const Set\+Model\+Type \&s) const =0
+\begin{DoxyCompactList}\small\item\em Compute an enclosure for the set model {\itshape s}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1CalculusBase_a4e7b1e3f16dfa792aa256e0da92fba42}\label{classAriadne_1_1CalculusBase_a4e7b1e3f16dfa792aa256e0da92fba42} 
+virtual \mbox{\hyperlink{classAriadne_1_1ValidatedKleenean}{Validated\+Kleenean}} {\bfseries separated} (const Set\+Model\+Type \&s, const \mbox{\hyperlink{classAriadne_1_1Box}{Box\+Type}} \&bx) const =0
+\begin{DoxyCompactList}\small\item\em Tests if the set described by the model {\itshape s} is disjoint from the box {\itshape box}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1CalculusBase_a7b35a2d5e8b91590c0c229ceef708c00}\label{classAriadne_1_1CalculusBase_a7b35a2d5e8b91590c0c229ceef708c00} 
+virtual \mbox{\hyperlink{classAriadne_1_1Box}{Box\+Type}} {\bfseries bounding\+\_\+box} (const Set\+Model\+Type \&s) const =0
+\begin{DoxyCompactList}\small\item\em A box containing the set {\itshape s}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1CalculusBase_a6174fbf70116b168da49a9b05b224462}\label{classAriadne_1_1CalculusBase_a6174fbf70116b168da49a9b05b224462} 
+virtual \mbox{\hyperlink{classAriadne_1_1Array}{Array}}$<$ Set\+Model\+Type $>$ {\bfseries subdivide} (const Set\+Model\+Type \&s) const =0
+\begin{DoxyCompactList}\small\item\em A list of sets obtained by subdividing the set {\itshape s} into at least two smaller pieces. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1CalculusBase_aba33ebe8a0671036eae639ca29161b7f}\label{classAriadne_1_1CalculusBase_aba33ebe8a0671036eae639ca29161b7f} 
+virtual Set\+Model\+Type {\bfseries simplify} (const Set\+Model\+Type \&s) const =0
+\begin{DoxyCompactList}\small\item\em An over-\/approximation to the set {\itshape s} with a simplified description. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\end{Indent}
+
+
+\label{doc-func-members}
+\Hypertarget{classAriadne_1_1CalculusBase_doc-func-members}
+\doxysubsubsection{Member Function Documentation}
+\Hypertarget{classAriadne_1_1CalculusBase_a9c95b3d145f4f622bb9da2fbb41e3837}\index{CalculusBase$<$ Var $>$@{CalculusBase$<$ Var $>$}!crossing\_time@{crossing\_time}}
+\index{crossing\_time@{crossing\_time}!CalculusBase$<$ Var $>$@{CalculusBase$<$ Var $>$}}
+\doxyparagraph{\texorpdfstring{crossing\_time()}{crossing\_time()}}
+{\footnotesize\ttfamily \label{classAriadne_1_1CalculusBase_a9c95b3d145f4f622bb9da2fbb41e3837} 
+template$<$class Var$>$ \\
+virtual Time\+Model\+Type crossing\+\_\+time (\begin{DoxyParamCaption}\item[{const Predicate\+Model\+Type \&}]{guard\+\_\+model}{, }\item[{const Flow\+Model\+Type \&}]{flow\+\_\+model}{, }\item[{const Set\+Model\+Type \&}]{initial\+\_\+set\+\_\+model}{}\end{DoxyParamCaption}) const\hspace{0.3cm}{\ttfamily [pure virtual]}}
+
+
+
+Computes the time at which points in the {\itshape initial\+\_\+set\+\_\+model} cross the zero-\/set of the the {\itshape guard} under evolution of the {\itshape flow\+\_\+model}. 
+
+Computes the time at which points in the {\itshape initial\+\_\+set\+\_\+model} cross the zero-\/set of the the {\itshape guard\+\_\+model} under evolution of the {\itshape flow\+\_\+model}. The crossing must be (differentiably) transverse. 
+
+References \mbox{\hyperlink{classAriadne_1_1CalculusBase_af4017a5c300a4b5728b257d2a36e6253}{flow\+\_\+model()}}.
+
+
+
+Referenced by \mbox{\hyperlink{classAriadne_1_1CalculusBase_a25c19ae254666d3e025301dee20bdee9}{crossing\+\_\+time()}}.
+
+\Hypertarget{classAriadne_1_1CalculusBase_a313e6eb7aee0b8b03e3ecec251293398}\index{CalculusBase$<$ Var $>$@{CalculusBase$<$ Var $>$}!reachability\_step@{reachability\_step}}
+\index{reachability\_step@{reachability\_step}!CalculusBase$<$ Var $>$@{CalculusBase$<$ Var $>$}}
+\doxyparagraph{\texorpdfstring{reachability\_step()}{reachability\_step()}}
+{\footnotesize\ttfamily \label{classAriadne_1_1CalculusBase_a313e6eb7aee0b8b03e3ecec251293398} 
+template$<$class Var$>$ \\
+virtual Set\+Model\+Type reachability\+\_\+step (\begin{DoxyParamCaption}\item[{const Flow\+Model\+Type \&}]{flow\+\_\+model}{, }\item[{const Set\+Model\+Type \&}]{initial\+\_\+set\+\_\+model}{, }\item[{const Time\+Model\+Type \&}]{reachability\+\_\+time\+\_\+model}{}\end{DoxyParamCaption}) const\hspace{0.3cm}{\ttfamily [pure virtual]}}
+
+
+
+Computes the points reached by evolution of the {\itshape initial\+\_\+set\+\_\+model} under the flow given by {\itshape flow\+\_\+model} for times given by {\itshape reachability\+\_\+time\+\_\+model}. The {\itshape reachability\+\_\+time\+\_\+model} must have one more independent variable than the {\itshape initial\+\_\+set\+\_\+model}. 
+
+\begin{DoxyInvariant}{Invariant}
+{\ttfamily reachability\+\_\+time\+\_\+model.\+argument\+\_\+size()==initial\+\_\+set\+\_\+model.\+argument\+\_\+size()+1} 
+\end{DoxyInvariant}
+
+
+References \mbox{\hyperlink{classAriadne_1_1CalculusBase_af4017a5c300a4b5728b257d2a36e6253}{flow\+\_\+model()}}.
+
+
+
+The documentation for this class was generated from the following file\+:\begin{DoxyCompactItemize}
+\item 
+source/function/\mbox{\hyperlink{calculus__base_8hpp}{calculus\+\_\+base.\+hpp}}\end{DoxyCompactItemize}

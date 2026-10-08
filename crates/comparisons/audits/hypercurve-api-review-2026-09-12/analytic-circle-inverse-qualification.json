@@ -1,0 +1,55 @@
+{
+  "status": "implemented and committed; two baseline completeness failures fixed; original goal remains active",
+  "commit": "1dc591efe7f3dca0ac5b0dce60ed1603caf0ecb1",
+  "base_commit": "330edacf73d34ef7524e2dd904d5ef3016821b83",
+  "implementation": [
+    "When a circle inverse chart cannot certify a nonzero radical-elimination divisor, reuse an existing certified rational parallel image if available; otherwise preserve the exceptional fiber for general replay.",
+    "The same inverse-chart calculation and contact replay retain source/target parameters, exact point, tangent cross sign, and tangent dot sign. No new carrier, compatibility API or cache is introduced.",
+    "Return a certified empty supporting-circle intersection immediately, before conic decomposition, inverse charts, or general algebraic replay. This also covers empty major-circle charts."
+  ],
+  "regressions": {
+    "fixed_tests": [
+      "analytic_parallel_circle_tangency_retains_zero_cross_evidence",
+      "analytic_parallel_intersects_independently_parameterized_circles_exactly"
+    ],
+    "tangency_orientations": 16,
+    "independent_circle_cases": 6,
+    "focused": "analytic-circle-inverse-test-build-focused-results.json",
+    "preserved_exceptional_fiber_regression": "parallel_circle_intersections_retain_exceptional_inverse_fibers",
+    "baseline": "bezier-bounds-policy-full-results.json",
+    "direct_rational_replay_probe": "analytic-circle-rational-replay-probe.json",
+    "independent_empty_case_proof": "analytic-circle-empty-incidence-probe-status.json"
+  },
+  "qualification": {
+    "results": "analytic-circle-inverse-full-results.json",
+    "targets": 49,
+    "passed": 2146,
+    "hypercurve_passed": 1914,
+    "hyperbrep_passed": 232,
+    "failed": 15,
+    "ignored": 9,
+    "new_failures": 0,
+    "timed_out_targets": [],
+    "previously_unqualified_expensive_cases_excluded": 8,
+    "full_suite_passing": false,
+    "comparison": "analytic-circle-inverse-baseline-comparison.json"
+  },
+  "checks": {
+    "hypercurve_all_targets": "analytic-circle-inverse-hypercurve-check.exit",
+    "hyperbrep_all_targets": "analytic-circle-inverse-hyperbrep-check.exit",
+    "source_hashes": "analytic-circle-inverse-source-before-tests.json",
+    "immutable_sources_format_and_whitespace": "analytic-circle-inverse-source-checks.json"
+  },
+  "inward_composition": {
+    "builds": "analytic-circle-inverse-probe-builds.json",
+    "results": "analytic-circle-inverse-inward-probes.json",
+    "strict_total_seconds": 25.016108317,
+    "approximate_512_total_seconds": 23.507884742,
+    "status": "Both offsets Certified and one output loop under both policies. Sequential unloaded observations; no speedup claim."
+  },
+  "workspace": "analytic-circle-inverse-workspace-after-commit.json",
+  "clean_repositories": 30,
+  "next": "promotion-native-export-assumptions-followup.json",
+  "remaining_scope": "The original review, 15 existing promotion assertions, eight expensive unqualified cases, and the independent exact-Real equality replay gap remain. Some promotion failures are optional native-export/storage assertions after successful exact operations; migrate them to independent semantic oracles rather than introducing compatibility carriers.",
+  "goal_status": "active"
+}

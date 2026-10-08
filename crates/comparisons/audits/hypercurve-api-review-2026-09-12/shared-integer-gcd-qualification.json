@@ -1,0 +1,142 @@
+{
+  "status": "implemented, qualified and committed; original goal active",
+  "commits": {
+    "hyperreal": "a2da8e2b5de9a1a4653d3662f2f05cb6533fd7ef",
+    "hypersolve": "3ac2e7510936a11c7bf2eac5dfbe3f9f851afe55",
+    "hypercurve": "6a69c9c71d96ac13a77c32aa7bf0281718ec7514",
+    "hyperbrep": "8a84ee7db02fd2720ac89a1a6a227ee4ec2a8171"
+  },
+  "implementation": [
+    "All six Hypersolve integer-GCD consumers now call Hyperreal Rational::gcd_magnitudes with borrowed magnitudes. The duplicate Euclidean BigInt loop is removed rather than wrapped.",
+    "Polynomial content, fraction-free leading cancellation, denominator reconstruction and coprimality certification retain the same nonnegative exact GCD semantics. Actual-value polynomial scales and rational-payload guards are unchanged.",
+    "The existing scalar method now documents algebraic production use and is included in API documentation. Hyperreal arithmetic implementation and backend selection are unchanged. No compatibility interface or additional cache is added."
+  ],
+  "tests": {
+    "hypercurve": {
+      "passed": 1459,
+      "ignored": 6,
+      "targets": 13,
+      "log": "shared-integer-gcd-hypercurve-tests.log",
+      "exit_code": 0,
+      "fresh": true
+    },
+    "hyperbrep": {
+      "passed": 232,
+      "ignored": 0,
+      "targets": 1,
+      "log": "shared-integer-gcd-hyperbrep-tests.log",
+      "exit_code": 0,
+      "fresh": true
+    },
+    "hypersolve": {
+      "passed": 492,
+      "ignored": 0,
+      "targets": 1,
+      "log": "shared-integer-gcd-hypersolve-tests.log",
+      "exit_code": 0,
+      "fresh": true
+    },
+    "hyperreal": {
+      "passed": 12,
+      "ignored": 0,
+      "targets": 1,
+      "log": "shared-integer-gcd-hyperreal-focused.log",
+      "exit_code": 0,
+      "fresh": true,
+      "scope": "12 existing GCD tests; production implementation in Hyperreal is unchanged. Its edit documents and exposes the existing shared method in generated API docs."
+    }
+  },
+  "freshly_run_total": 2195,
+  "focused_geometry": "shared-integer-gcd-hypercurve-focused.log: 4 library tests and outward PH integration pass. These library/integration tests are also in the broader qualification and are not double counted.",
+  "checks": {
+    "hyperreal": {
+      "command": "cargo check --all-features --all-targets",
+      "log": "shared-integer-gcd-hyperreal-check.log",
+      "exit_code": 0
+    },
+    "hypersolve": {
+      "command": "cargo check --all-features --all-targets",
+      "log": "shared-integer-gcd-hypersolve-check.log",
+      "exit_code": 0
+    },
+    "hypercurve": {
+      "command": "cargo check --all-features --all-targets",
+      "log": "shared-integer-gcd-hypercurve-check.log",
+      "exit_code": 0
+    },
+    "hyperbrep": {
+      "command": "cargo check --all-features --all-targets",
+      "log": "shared-integer-gcd-hyperbrep-check.log",
+      "exit_code": 0
+    }
+  },
+  "source_sha256": {
+    "hypersolve/src/integer_interpolation.rs": "f6fd80a63c4979332406d986f64013ee17bacdd53e74f7b4c51b19656866d191",
+    "hyperreal/src/rational/arithmetic/aggregate_products.rs": "a9000f037ea1fca439961ac4ad9989c808d5b5f922691514b768d499cbb9ea5b",
+    "hypercurve/src/bezier_offset.rs": "953ebec74a61a2e33f7cd4030bae377c41864075560a66a4a86527eed082f2b8"
+  },
+  "formatting": "Hypersolve changed-file rustfmt --check and both git diff --check passes. Hyperreal changes only documentation and its documentation visibility attribute; unrelated formatting from a whole-file rustfmt pass was discarded before compilation.",
+  "retired_helper_scan": "euclidean_bigint_gcd is absent from live workspace sources and documentation; historical audits and review artifacts are excluded.",
+  "comparison": "shared-integer-gcd-query-comparison.json",
+  "comparison_scope": "Three interleaved process pairs after all qualification, profiling and held-out retries ended. Every one of the eight captured exact signs passes in each run.",
+  "comparison_ratio_range": [
+    1.7420509058223634,
+    2.427206066335868
+  ],
+  "performance_limit": "The 1.7\u20132.4x improvement is measured on captured scalar replay queries, not complete offset operations.",
+  "held_out_retries": [
+    {
+      "test": "bezier_offset::conversion_tests::selected_parallel_normal_circle_intersects_genuinely_analytic_parallel_in_one_fiber",
+      "exit_code": null,
+      "timeout": true,
+      "child_state": "subprocess.run killed and waited for its child",
+      "log": "shared-integer-gcd-heldout-1.log",
+      "timeout_seconds": 60,
+      "elapsed_seconds": 60.01137459599704
+    },
+    {
+      "test": "bezier_region::tests::independent_oblique_chord_pair_fillets_extend_on_infinite_supports",
+      "exit_code": null,
+      "timeout": true,
+      "child_state": "subprocess.run killed and waited for its child",
+      "log": "shared-integer-gcd-heldout-2.log",
+      "timeout_seconds": 60,
+      "elapsed_seconds": 60.01188869199541
+    },
+    {
+      "test": "bezier_region::tests::selected_circle_and_analytic_parallel_extend_on_full_supports",
+      "exit_code": null,
+      "timeout": true,
+      "child_state": "subprocess.run killed and waited for its child",
+      "log": "shared-integer-gcd-heldout-3.log",
+      "timeout_seconds": 60,
+      "elapsed_seconds": 60.00556752499688
+    },
+    {
+      "test": "bezier_region::tests::pair_native_boolean_algebraic_chord_corner_publishes_a_third_generation_fillet",
+      "exit_code": null,
+      "timeout": true,
+      "child_state": "subprocess.run killed and waited for its child",
+      "log": "shared-integer-gcd-heldout-4.log",
+      "timeout_seconds": 60,
+      "elapsed_seconds": 60.0021257039989
+    }
+  ],
+  "held_out_status": "All four established expensive exclusions were rerun separately; each child was killed and waited after its 60-second limit. All remain unqualified. Earlier retries overlapped qualification.",
+  "diagnostics": {
+    "binary": "stationary-ph-offset-shared-integer-gcd",
+    "binary_sha256": "9eabbdca0acc4274e960539480effbe51e43f46c9d39a2ba9a78f10129bd7ebf",
+    "log": "stationary-ph-offset-shared-integer-gcd.log",
+    "timeout_seconds": 60,
+    "exit_code": 124,
+    "first_offset_seconds": 3.935060758,
+    "second_offset": "No result before total timeout.",
+    "timing_scope": "Final unloaded probe ran after qualification, profiling, held-out retries and interleaved comparison ended.",
+    "stack": "stationary-ph-shared-integer-gcd-stack.log",
+    "finding": "The current sample reaches expensive scalar zero-status/Laurent reconstruction while merging conservative chord endpoint boxes, through Aabb2::union. A changed sampled stack alone does not prove chronological progress."
+  },
+  "next_work": "conservative-chord-bound-union-followup.json: reuse certified outer envelopes without imposing a fixed refinement ceiling. Broader original review requirements remain active.",
+  "clean_repository_count": 30,
+  "workspace_state": "shared-integer-gcd-workspace-after-commit.json",
+  "goal_status": "active"
+}

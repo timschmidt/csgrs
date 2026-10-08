@@ -1,0 +1,78 @@
+hmpfr    > configure
+hmpfr    > Configuring hmpfr-0.4.5...
+hmpfr    > build with ghc-9.6.7
+hmpfr    > Preprocessing library for hmpfr-0.4.5..
+hmpfr    > Building library for hmpfr-0.4.5..
+hmpfr    > [ 1 of 20] Compiling Data.Number.MPFR.FFIhelper
+hmpfr    > [ 2 of 20] Compiling Data.Number.MPFR.Internal
+hmpfr    > [ 3 of 20] Compiling Data.Number.MPFR.Integer
+hmpfr    > [ 4 of 20] Compiling Data.Number.MPFR.Comparison
+hmpfr    > [ 5 of 20] Compiling Data.Number.MPFR.Arithmetic
+hmpfr    > [ 6 of 20] Compiling Data.Number.MPFR.Assignment
+hmpfr    > [ 7 of 20] Compiling Data.Number.MPFR.Misc
+hmpfr    > [ 8 of 20] Compiling Data.Number.MPFR.Conversion
+hmpfr    > [ 9 of 20] Compiling Data.Number.MPFR.Mutable.Internal
+hmpfr    > [10 of 20] Compiling Data.Number.MPFR.Mutable.Integer
+hmpfr    > [11 of 20] Compiling Data.Number.MPFR.Mutable.Arithmetic
+hmpfr    > [12 of 20] Compiling Data.Number.MPFR.Mutable.Misc
+hmpfr    > [13 of 20] Compiling Data.Number.MPFR.Mutable.Special
+hmpfr    > [14 of 20] Compiling Data.Number.MPFR.Mutable
+hmpfr    > [15 of 20] Compiling Data.Number.MPFR.Special
+hmpfr    > [16 of 20] Compiling Data.Number.MPFR.Instances.Zero
+hmpfr    > [17 of 20] Compiling Data.Number.MPFR.Instances.Up
+hmpfr    > [18 of 20] Compiling Data.Number.MPFR.Instances.Near
+hmpfr    > [19 of 20] Compiling Data.Number.MPFR.Instances.Down
+hmpfr    > [20 of 20] Compiling Data.Number.MPFR
+hmpfr    > copy/register
+hmpfr    > Installing library in /tmp/aern2-stack.ryVCFK/snapshots/x86_64-linux-tinfo6/679cc64c76e222dbde5fd44af4907e261fb8c246ed2bc968e58bc5dabf57e98b/9.6.7/lib/x86_64-linux-ghc-9.6.7/hmpfr-0.4.5-AcKhzz1ny7lIj622ttPRRF
+hmpfr    > Registering library for hmpfr-0.4.5..
+aern-mpfr> configure (lib)
+Configuring aern-mpfr-0.5.0...
+aern-mpfr> build (lib) with ghc-9.6.7
+Preprocessing library for aern-mpfr-0.5.0..
+Building library for aern-mpfr-0.5.0..
+[ 1 of 14] Compiling Numeric.AERN.RealArithmetic.Basis.MPFR.Effort
+[ 2 of 14] Compiling Numeric.AERN.RealArithmetic.Basis.MPFR.Elementary
+[ 3 of 14] Compiling Numeric.AERN.RealArithmetic.Basis.MPFR.ExactOps
+[ 4 of 14] Compiling Numeric.AERN.RealArithmetic.Basis.MPFR.NumericOrder
+[ 5 of 14] Compiling Numeric.AERN.RealArithmetic.Basis.MPFR.ShowInternals
+[ 6 of 14] Compiling Numeric.AERN.RealArithmetic.Basis.MPFR.SpecialConst
+[ 7 of 14] Compiling Numeric.AERN.RealArithmetic.Basis.MPFR.Utilities
+[ 8 of 14] Compiling Numeric.AERN.RealArithmetic.Basis.MPFR.FieldOps
+[ 9 of 14] Compiling Numeric.AERN.RealArithmetic.Basis.MPFR.Conversion
+[10 of 14] Compiling Numeric.AERN.RealArithmetic.Basis.MPFR.MixedFieldOps
+[11 of 14] Compiling Numeric.AERN.RealArithmetic.Interval.MPFR
+[12 of 14] Compiling Numeric.AERN.RealArithmetic.Basis.MPFR.Measures
+[13 of 14] Compiling Numeric.AERN.RealArithmetic.Basis.MPFR
+
+/tmp/aern-audit.zp9Mzz/source/aern-mpfr/src/Numeric/AERN/RealArithmetic/Basis/MPFR.hs:53:10: warning: [GHC-06201] [-Wmissing-methods]
+    • No explicit implementation for
+        ‘rrEffortSelfMixedField’
+    • In the instance declaration for ‘RoundedReal M.MPFR’
+   |
+53 | instance RoundedReal M.MPFR where
+   |          ^^^^^^^^^^^^^^^^^^
+[14 of 14] Compiling Numeric.AERN.MPFRBasis.Interval
+
+/tmp/aern-audit.zp9Mzz/source/aern-mpfr/src/Numeric/AERN/MPFRBasis/Interval.hs:138:17: error:
+    Ambiguous occurrence ‘<*>’
+    It could refer to
+       either ‘Prelude.<*>’,
+              imported from ‘Prelude’ at src/Numeric/AERN/MPFRBasis/Interval.hs:15:8-38
+              (and originally defined in ‘GHC.Base’)
+           or ‘Numeric.AERN.MPFRBasis.Interval.<*>’,
+              defined at src/Numeric/AERN/MPFRBasis/Interval.hs:466:1
+    |
+138 |     (<+>),(<->),(<*>),(</>),
+    |                 ^^^^^
+Completed 2 action(s).
+
+Error: [S-7282]
+       Stack failed to execute the build plan.
+       
+       While executing the build plan, Stack encountered the error:
+       
+       [S-7011]
+       While building package aern-mpfr-0.5.0 (scroll up to its section to see the error) using:
+       /tmp/aern2-stack.ryVCFK/setup-exe-cache/x86_64-linux-tinfo6/Cabal-simple_O_vy6YIf_3.10.3.0_ghc-9.6.7 --verbose=1 --builddir=.stack-work/dist/x86_64-linux-tinfo6/ghc-9.6.7 build lib:aern-mpfr --ghc-options ""
+       Process exited with code: ExitFailure 1 

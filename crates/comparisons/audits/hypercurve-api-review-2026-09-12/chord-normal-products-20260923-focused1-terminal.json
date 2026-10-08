@@ -1,0 +1,16 @@
+{
+  "candidate": {
+    "returncode": 0,
+    "elapsed_seconds": 0.08876895590219647,
+    "binary_sha256": "5b2fc2ca878dcded0ef6df0b44bb3304ebcc5e1be64b0f67af566478d9dee68f",
+    "log": "chord-normal-products-20260923-focused1-candidate-tests.log"
+  },
+  "parent": {
+    "returncode": 0,
+    "elapsed_seconds": 0.0947133080335334,
+    "binary_sha256": "5b2fc2ca878dcded0ef6df0b44bb3304ebcc5e1be64b0f67af566478d9dee68f",
+    "log": "chord-normal-products-20260923-focused1-parent-tests.log"
+  },
+  "all_sources_unchanged": true,
+  "all_processes_reaped": true
+}

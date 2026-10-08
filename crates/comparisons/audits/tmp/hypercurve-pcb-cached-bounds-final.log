@@ -1,0 +1,12 @@
+   Compiling hypercurve v0.3.1 (/home/tim/Documents/GitHub/workspace/hypercurve)
+    Finished `release` profile [optimized] target(s) in 1m 01s
+     Running tests/hypercurve_pcb_boolean_regressions.rs (target/release/deps/hypercurve_pcb_boolean_regressions-0dbf8726743f88eb)
+
+running 4 tests
+test easyduino_scale_process_image_containment_corpus ... ok
+test easyduino_uno_scale_process_image_with_holes_corpus ... ok
+test pcb_process_image_containment_regression_decides_exactly ... ok
+test pcb_process_image_hole_ownership_culls_sparse_materials ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 5.86s
+

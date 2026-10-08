@@ -1,0 +1,17 @@
+Expose selectable exact fillet contact families
+
+Return isolated edits and retained contact families from path and region
+fillet queries. Share cut reconstruction and source-chart ownership between
+isolated results and explicit family selection, retaining policy and component
+evidence. Keep borrowed finite fast paths and update all controlled callers.
+
+Do not treat a singular center locus as a singular source tangent. Preserve
+certified circle contacts and allow selected region edits to re-enter chamfer,
+offset, and Boolean operations.
+
+Validation: formatting, both all-target Clippy configurations, downstream
+Hyperbrep checking, and 635 of 637 release regressions pass across 11 binaries.
+The two extended analytic-parallel fillet re-offset tests remain blocked in
+selected-fiber root isolation under STRICT and APPROXIMATE_512. Correct their
+stale single-loop assertion so the unresolved composition stays observable.
+The larger closure implementation remains in progress.

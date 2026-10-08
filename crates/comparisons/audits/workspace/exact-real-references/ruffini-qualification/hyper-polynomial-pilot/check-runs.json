@@ -1,0 +1,40 @@
+[
+  {
+    "name": "debug",
+    "command": "/home/tim/Documents/GitHub/workspace/exact-real-references/ruffini-qualification/hyper-polynomial-pilot/binaries/debug",
+    "args": [
+      "check"
+    ],
+    "cap": 240000,
+    "started": "2026-09-07T00:28:28.311Z",
+    "finished": "2026-09-07T00:29:55.052Z",
+    "status": 0,
+    "signal": null,
+    "error": null,
+    "file": "check-debug.log",
+    "sha256": "fc7a9f8a15f896cbaa7488710f99d9abd5c66e9a2ba728b18171f46e6a023a11",
+    "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "harnessSha256": "1f581e68efeaf5f99afa25f61b9467c0b364de010ad56dab999b5a7a816523d7",
+    "baselineSha256": "a70fe73900071228accf81b1ac2d9a91b23b76e52423e6b0243e1ab0b61735b3",
+    "binarySha256": "58908b9e57a1eb5aa1ccb1451df12b668727bca7eccb4cc9a7af160a7ef85b23"
+  },
+  {
+    "name": "release",
+    "command": "/home/tim/Documents/GitHub/workspace/exact-real-references/ruffini-qualification/hyper-polynomial-pilot/binaries/release",
+    "args": [
+      "check"
+    ],
+    "cap": 240000,
+    "started": "2026-09-07T00:29:55.084Z",
+    "finished": "2026-09-07T00:29:59.132Z",
+    "status": 0,
+    "signal": null,
+    "error": null,
+    "file": "check-release.log",
+    "sha256": "fc7a9f8a15f896cbaa7488710f99d9abd5c66e9a2ba728b18171f46e6a023a11",
+    "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "harnessSha256": "1f581e68efeaf5f99afa25f61b9467c0b364de010ad56dab999b5a7a816523d7",
+    "baselineSha256": "a70fe73900071228accf81b1ac2d9a91b23b76e52423e6b0243e1ab0b61735b3",
+    "binarySha256": "0b0cd16fb41e4bcf2291c11ccc0e4176d29f193bfe01a9dbe372c574d594b9c0"
+  }
+]

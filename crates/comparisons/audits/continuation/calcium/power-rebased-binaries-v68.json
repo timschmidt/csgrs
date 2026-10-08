@@ -1,0 +1,63 @@
+{
+  "dir": "/tmp/calcium-power-rebased.xUuvlb",
+  "artifacts": [
+    {
+      "variant": "baseline",
+      "mode": "cpu",
+      "path": "/tmp/calcium-power-rebased.xUuvlb/baseline-cpu",
+      "bytes": 2711688,
+      "sha256": "c375b188a0d0a4bab82ad965cc74ddfeaf2a05266ce00bdf6429f82968cfdf10"
+    },
+    {
+      "variant": "baseline",
+      "mode": "allocation",
+      "path": "/tmp/calcium-power-rebased.xUuvlb/baseline-allocation",
+      "bytes": 2720592,
+      "sha256": "95fb7c4df0ee1266a958512167ffe9ea8f77fb500de4689afe26d960278f5a80"
+    },
+    {
+      "variant": "baseline",
+      "mode": "approx",
+      "path": "/tmp/calcium-power-rebased.xUuvlb/baseline-approx",
+      "bytes": 2691768,
+      "sha256": "205f6c99043e9699d1484f016125900ff582a3795a76bc32f78b37e153069c27"
+    },
+    {
+      "variant": "baseline",
+      "mode": "extended",
+      "path": "/tmp/calcium-power-rebased.xUuvlb/baseline-extended",
+      "bytes": 3176504,
+      "sha256": "3c6f975673245d074bd437ef482d55a1d549d3cab736743d0756f368c997a610"
+    },
+    {
+      "variant": "candidate",
+      "mode": "cpu",
+      "path": "/tmp/calcium-power-rebased.xUuvlb/candidate-cpu",
+      "bytes": 2725544,
+      "sha256": "a8a4aa6a61ac954bda2a24f9b1a303cf594757ab9d0b7f3f67916a1c7bac4617"
+    },
+    {
+      "variant": "candidate",
+      "mode": "allocation",
+      "path": "/tmp/calcium-power-rebased.xUuvlb/candidate-allocation",
+      "bytes": 2734456,
+      "sha256": "cafcddfae078f0d49090f030c75469a7b8ac08843c3f3cbe56e54faa60013b15"
+    },
+    {
+      "variant": "candidate",
+      "mode": "approx",
+      "path": "/tmp/calcium-power-rebased.xUuvlb/candidate-approx",
+      "bytes": 2705504,
+      "sha256": "9aeea5c3d4629e0a897a898c759b70889822eadf41f7c4545c08a32cff9c2324"
+    },
+    {
+      "variant": "candidate",
+      "mode": "extended",
+      "path": "/tmp/calcium-power-rebased.xUuvlb/candidate-extended",
+      "bytes": 3190312,
+      "sha256": "0e0e55cc59fa17ebac0aedf082ad7dff70e69500a98984744c74ed0199834933"
+    }
+  ],
+  "bindingSha256": "8509900bd4c1cb371c4f832e8237869331a0520c11dccf0c8e55eba5e142abc2",
+  "recorded": "2026-09-11T03:50:28.227Z"
+}

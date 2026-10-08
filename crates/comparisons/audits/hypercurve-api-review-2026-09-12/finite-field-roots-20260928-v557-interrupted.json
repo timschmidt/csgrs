@@ -1,0 +1,6 @@
+{
+  "driver_pid": 3304869,
+  "completed_cases": 394,
+  "reason": "Full strict reoffset exceeds twice its qualified 113.56-second baseline; preserve completed cases and test tighter retained root intervals before qualification",
+  "signal": "SIGINT"
+}

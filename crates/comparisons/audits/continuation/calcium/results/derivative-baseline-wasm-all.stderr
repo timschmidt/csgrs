@@ -1,0 +1,17 @@
+    Blocking waiting for file lock on build directory
+    Checking hyperreal v0.13.1 (/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/derivative-demand-baseline/hyperreal)
+    Checking rstar v0.12.2
+    Checking getrandom v0.4.2
+error: The wasm32-unknown-unknown targets are not supported by default; you may need to enable the "wasm_js" crate feature. For more information see: https://docs.rs/getrandom/0.4.2/#webassembly-support
+   --> /home/tim/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/getrandom-0.4.2/src/backends.rs:176:17
+    |
+176 | /                 compile_error!(concat!(
+177 | |                     "The wasm32-unknown-unknown targets are not supported by default; \
+178 | |                     you may need to enable the \"wasm_js\" crate feature. \
+179 | |                     For more information see: \
+180 | |                     https://docs.rs/getrandom/", env!("CARGO_PKG_VERSION"), "/#webassembly-support"
+181 | |                 ));
+    | |__________________^
+
+error: could not compile `getrandom` (lib) due to 1 previous error
+warning: build failed, waiting for other jobs to finish...

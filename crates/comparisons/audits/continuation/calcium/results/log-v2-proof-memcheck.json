@@ -1,0 +1,19 @@
+{
+  "tag": "log-v2-proof-memcheck",
+  "started": "2026-09-08T09:39:10.441Z",
+  "finished": "2026-09-08T09:39:14.893Z",
+  "elapsedSeconds": 4.449140015999999,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison",
+  "command": "valgrind",
+  "args": [
+    "--error-exitcode=97",
+    "--leak-check=full",
+    "--show-leak-kinds=all",
+    "--errors-for-leak-kinds=definite,indirect,possible",
+    "/home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype/release/deps/hyperreal-1cc0b97c8fd55e9c",
+    "log_relation",
+    "--test-threads=1"
+  ],
+  "code": 97,
+  "signal": null
+}

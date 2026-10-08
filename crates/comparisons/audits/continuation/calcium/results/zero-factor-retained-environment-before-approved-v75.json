@@ -1,0 +1,13 @@
+{
+  "tag": "zero-factor-retained-environment-before-approved-v75",
+  "started": "2026-09-11T22:04:44.391Z",
+  "finished": "2026-09-11T22:04:44.545Z",
+  "elapsedSeconds": 0.152321275,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "node",
+  "args": [
+    "point-qualified-environment.mjs"
+  ],
+  "code": 0,
+  "signal": null
+}

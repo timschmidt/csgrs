@@ -1,0 +1,31 @@
+{
+  "checks": [
+    {
+      "feature": "--all-features",
+      "returncode": 0,
+      "log": "tower-reuse-20260924-v3-check-0.log"
+    },
+    {
+      "feature": "--no-default-features",
+      "returncode": 0,
+      "log": "tower-reuse-20260924-v3-check-1.log"
+    }
+  ],
+  "tests": [
+    {
+      "label": "focused",
+      "returncode": 0,
+      "elapsed_seconds": 0.15265634504612535,
+      "log": "tower-reuse-20260924-v3-focused.log"
+    },
+    {
+      "label": "all",
+      "returncode": 0,
+      "elapsed_seconds": 3.555588274030015,
+      "log": "tower-reuse-20260924-v3-all.log"
+    }
+  ],
+  "all_processes_reaped": true,
+  "binary_sha256": "3ee1f3695785c9c9aaf66ca482fb02e82b47a08ff658b9abac9d46bb29ad7e62",
+  "all_sources_unchanged": true
+}

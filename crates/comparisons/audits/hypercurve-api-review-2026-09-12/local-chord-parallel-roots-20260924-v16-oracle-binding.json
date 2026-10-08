@@ -1,0 +1,16 @@
+{
+  "baseline": "v15",
+  "both_initial_regressions_unchanged": true,
+  "regressions": [
+    {
+      "name": "recursive_chord_parallel_zero_norm_midpoint_is_not_a_component",
+      "sha256": "29bfb0919acfd3c30437342abb9ed189ce9d8c6e9eaecfa76bb1a03bb64c8deb"
+    },
+    {
+      "name": "recursive_chord_parallel_local_roots_reject_conjugates_and_clip_exactly",
+      "sha256": "718e3dbe881bac2b6bdcfc6adff6825b8e259b1d6095775537d9b05c92cbb0be"
+    }
+  ],
+  "contact_regression_unchanged": true,
+  "projection_regression_strengthened": "Projection of a chart created before native demand retains the source map; repeated inverse charts recover the original selection; intervening refinement remains tighter after inverse composition."
+}

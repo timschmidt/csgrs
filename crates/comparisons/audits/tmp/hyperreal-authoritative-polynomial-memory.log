@@ -1,0 +1,24 @@
+   Compiling hyperreal v0.13.1 (/home/tim/Documents/GitHub/workspace/hyperreal)
+    Finished `release` profile [optimized] target(s) in 9.36s
+     Running `target/release/examples/allocation_profile 4`
+representation,iterations,allocations,deallocations,reallocations,allocated_bytes,deallocated_bytes,peak_live_delta_bytes,retained_bytes
+One,4,34,32,0,2672,2560,752,112
+Pi,4,49,44,0,2744,2272,880,472
+PiPow,4,88,88,0,4704,4704,656,0
+PiInv,4,48,48,0,2528,2528,408,0
+PiExp,4,79,76,0,4184,4064,776,120
+PiInvExp,4,76,76,0,4032,4032,648,0
+PiSqrt,4,250,238,8,11272,10384,1704,888
+ConstProduct,4,176,176,0,8832,8832,1096,0
+ConstOffset,4,52,52,0,2400,2400,360,0
+ConstProductSqrt,4,284,284,0,13728,13728,1448,0
+Sqrt,4,136,136,8,4640,4640,568,0
+Exp,4,116,112,0,5352,5056,880,296
+Ln,4,48,48,0,2368,2368,408,0
+LnAffine,4,144,144,0,6656,6656,728,0
+LnProduct,4,92,92,0,4288,4288,664,0
+Log10,4,120,120,4,5344,5344,800,0
+Log2,4,120,120,4,5472,5472,808,0
+SinPi,4,312,312,0,12096,12096,1000,0
+TanPi,4,820,820,16,27040,27040,1000,0
+Irrational,4,232,232,0,8128,8128,480,0

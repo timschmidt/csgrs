@@ -1,0 +1,54 @@
+#! /usr/local/bin/perl
+
+while (<STDIN>) {
+  @x = split(/,/);
+
+  $basex = 0; 
+  $basey = 900;
+  $yfrom = 9;
+  $diffx = 240;
+  $diffy = 1200;
+  $axy = 120;
+
+  $pre1 = "2 1 0 1 0 7 0 0 -1 0.000 0 0 -1 0 0";
+  $pre2 = "         ";
+
+  
+
+  print "#FIG 3.2\nLandscape\nCenter\nInches\nLetter\n100.00\nSingle\n";
+  $m = ($#x + 1);
+  $n = 2*$m;
+  $n2 = 2*$m + int($m/5);
+
+  print "-$n2\n1200 2\n$pre1 $n\n$pre2";
+
+  $i = 1;
+  foreach (@x) {
+    if ($_ != "") { 
+	$j=$_-$i;
+
+	print "$i $j \n";
+        } 
+    $i++; }
+
+
+  $i = 1;
+  foreach (@x) {
+    if ($_ != "") { 
+	$j=$_-$i;
+	$a = $basex+($i * $diffx);
+	$b = $basey+($yfrom - $j)*$diffy;
+	print "$a $b ";
+	$a = $a + $diffx;
+	print "$a $b ";
+        } 
+    $i++; }
+
+  for ($i=0;$i <= $m; $i += 5) {
+    $a = $basex+(($i+1) * $diffx);
+    $b = $basey+($yfrom * $diffy);
+    $c = $basey+($yfrom * $diffy)+$axy;
+    print "\n$pre1 2\n$pre2$a $b $a $c\n";
+  }
+}
+

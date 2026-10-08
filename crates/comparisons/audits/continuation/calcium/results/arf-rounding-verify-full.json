@@ -1,0 +1,14 @@
+{
+  "tag": "arf-rounding-verify-full",
+  "started": "2026-09-09T20:31:47.108Z",
+  "finished": "2026-09-09T20:32:05.814Z",
+  "elapsedSeconds": 18.703304417,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "node",
+  "args": [
+    "verify-arf-rounding.mjs",
+    "--derivative-live"
+  ],
+  "code": 1,
+  "signal": null
+}

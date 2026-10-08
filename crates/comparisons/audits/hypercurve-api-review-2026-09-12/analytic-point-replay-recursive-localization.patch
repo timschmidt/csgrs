@@ -1,0 +1,63 @@
+diff --git a/src/curve_region_boolean.rs b/src/curve_region_boolean.rs
+index 38265a9..3370cb9 100644
+--- a/src/curve_region_boolean.rs
++++ b/src/curve_region_boolean.rs
+@@ -18701,6 +18701,9 @@ mod certified_successor_tests {
+         range: CurveParameterRange2,
+         policy: CurveContext,
+     ) -> (RegionPairResult, CurveRegionIntersectionResult2) {
++        static CASE: std::sync::atomic::AtomicUsize = std::sync::atomic::AtomicUsize::new(0);
++        let case = CASE.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
++        eprintln!("replay case {case}: pair start");
+         let empty_first = CurveRegion2::empty();
+         let empty_second = CurveRegion2::empty();
+         // Region carriers store increasing bounds and a separate traversal
+@@ -18801,6 +18804,27 @@ mod certified_successor_tests {
+         let evidence = context
+             .build_intersection_evidence()
+             .expect("the chord/analytic-parallel evidence must complete");
++        eprintln!(
++            "replay case {case}: report ready, contacts={}, overlaps={}",
++            evidence.contacts().len(),
++            evidence.overlaps().len()
++        );
++        if case == 5 {
++            let overlap = &evidence.overlaps()[0];
++            let first =
++                evidence_carrier_point(&evidence, true, overlap.first_range().start(), &policy);
++            let second =
++                evidence_carrier_point(&evidence, false, overlap.second_range().start(), &policy);
++            eprintln!("case 5 recursive equality start");
++            let equal = crate::bezier_offset::recursive_projective_point_evidence_equality(
++                &first, &second, &policy,
++            )
++            .unwrap();
++            eprintln!("case 5 recursive equality {equal:?}");
++            assert_eq!(equal, Classification::Decided(Some(true)));
++        }
++        assert_chord_parallel_evidence_replays(&evidence, &policy);
++        eprintln!("replay case {case}: complete");
+         (result, evidence)
+     }
+ 
+@@ -18809,12 +18833,20 @@ mod certified_successor_tests {
+         policy: &CurveContext,
+     ) {
+         let replay = |first, second| {
++            eprintln!("replay first point");
+             let first = evidence_carrier_point(evidence, true, first, policy);
++            eprintln!("replay second point");
+             let second = evidence_carrier_point(evidence, false, second, policy);
++            eprintln!(
++                "compare points {:?} {:?}",
++                std::mem::discriminant(&first.0),
++                std::mem::discriminant(&second.0)
++            );
+             assert_eq!(
+                 first.same_point(&second, policy),
+                 Classification::Decided(true)
+             );
++            eprintln!("points equal");
+         };
+         for contact in evidence.contacts() {
+             replay(contact.first_parameter(), contact.second_parameter());

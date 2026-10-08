@@ -1,0 +1,19 @@
+   Compiling autocfg v1.5.1
+   Compiling num-traits v0.2.19
+   Compiling num-integer v0.1.47
+   Compiling num-complex v0.4.6
+   Compiling num-bigint v0.4.8
+   Compiling num-iter v0.1.46
+   Compiling num-rational v0.4.2
+error: failed to write to `/tmp/calcium-prototype-target/release/deps/rmetaDrHrpc/full.rmeta`: Disk quota exceeded (os error 122)
+
+error: could not compile `num-rational` (lib) due to 1 previous error
+warning: build failed, waiting for other jobs to finish...
+rustc-LLVM ERROR: IO failure on output stream: Disk quota exceeded
+error: could not compile `num-bigint` (lib)
+
+Caused by:
+  Disk quota exceeded (os error 122)
+
+Caused by:
+  failed to parse process output: `/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustc --crate-name num_bigint --edition=2021 /home/tim/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/num-bigint-0.4.8/src/lib.rs --error-format=json --json=diagnostic-rendered-ansi,artifacts,future-incompat --crate-type lib --emit=dep-info,metadata,link -C opt-level=3 -C embed-bitcode=no --cfg 'feature="std"' --check-cfg 'cfg(docsrs,test)' --check-cfg 'cfg(feature, values("arbitrary", "default", "quickcheck", "rand", "serde", "std"))' -C metadata=f60130b2c8aef3e6 -C extra-filename=-a59f48b4b1f8555d --out-dir /tmp/calcium-prototype-target/release/deps -C strip=debuginfo -L dependency=/tmp/calcium-prototype-target/release/deps --extern num_integer=/tmp/calcium-prototype-target/release/deps/libnum_integer-f4879b2c83ea449a.rmeta --extern num_traits=/tmp/calcium-prototype-target/release/deps/libnum_traits-a2dd639d368d0d19.rmeta --cap-lints allow` (exit status: 101)

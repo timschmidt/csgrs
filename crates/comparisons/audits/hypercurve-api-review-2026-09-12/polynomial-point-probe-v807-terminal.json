@@ -1,0 +1,39 @@
+{
+  "baseline": "polynomial-point-v806-sources.json",
+  "rlib": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypercurve-85a9105cd1c82df7.rlib",
+  "rlib_sha256": "1da175efc988604c6f8a4bfb7a90213e02c9186127572bfa774faa4039b2da7e",
+  "source_sha256": "76f47a362e54f8a596eb49bb9960988bb5d8269fa688543556b6f9c3ba4fb127",
+  "processes": [
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustc",
+        "--edition=2024",
+        "--crate-name",
+        "polynomial_point_probe",
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/polynomial-point-probe-v807.rs",
+        "--extern",
+        "hypercurve=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypercurve-85a9105cd1c82df7.rlib",
+        "-L",
+        "dependency=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps",
+        "-C",
+        "opt-level=3",
+        "-o",
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/polynomial-point-probe-v807-binary"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.46442495309747756,
+      "log": "polynomial-point-probe-v807-compile.log"
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/polynomial-point-probe-v807-binary"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.0035950441379100084,
+      "log": "polynomial-point-probe-v807-run.log"
+    }
+  ],
+  "all_processes_reaped": true,
+  "binary_sha256": "5d0da5e5dc550c36943c4a501ac82501a90e43481dfdded0529acfe287048c4f",
+  "failure": ""
+}

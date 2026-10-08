@@ -1,0 +1,163 @@
+{
+  "commit": "fedd740a91a89456b7e655db32f94dd8f702136c",
+  "source": "finite-fixed-distance-public.rs",
+  "source_sha256": "83628c4431d5c785814d16d61162b97aa1d353ba60aaae1ae217ebc3d9fa224b",
+  "executable": "finite-fixed-distance-baseline",
+  "executable_sha256": "003f3ec208c41391f1507ca9447ba846e61eb1e3e25e0bf4c08b1ce55fbde908",
+  "normal_library": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-circle-source-domain-libraries/libhypercurve-3abe3d9bfe83911d.rlib",
+  "normal_library_sha256": "2664818a3d8832ddbf1351350562e105a7fd486401f71db0f2cd3661e4180048",
+  "compile_command": [
+    "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustc",
+    "--edition=2024",
+    "-O",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-fixed-distance-public.rs",
+    "--extern",
+    "hypercurve=/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-circle-source-domain-libraries/libhypercurve-3abe3d9bfe83911d.rlib",
+    "-L",
+    "dependency=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps",
+    "-o",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-fixed-distance-baseline"
+  ],
+  "queries": [
+    {
+      "chart": 0,
+      "repeat": false,
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-fixed-distance-baseline",
+        "0"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.007627267972566187,
+      "log": "finite-fixed-distance-baseline-chart0-repeat0.log",
+      "counts": {
+        "cases": 4,
+        "successes": 4,
+        "point_replays": 16,
+        "failures": 0
+      }
+    },
+    {
+      "chart": 1,
+      "repeat": false,
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-fixed-distance-baseline",
+        "1"
+      ],
+      "returncode": 101,
+      "elapsed_seconds": 0.0033933969971258193,
+      "log": "finite-fixed-distance-baseline-chart1-repeat0.log",
+      "counts": {
+        "cases": 4,
+        "successes": 0,
+        "point_replays": 0,
+        "failures": 4
+      }
+    },
+    {
+      "chart": 2,
+      "repeat": false,
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-fixed-distance-baseline",
+        "2"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.015506228985032067,
+      "log": "finite-fixed-distance-baseline-chart2-repeat0.log",
+      "counts": {
+        "cases": 4,
+        "successes": 4,
+        "point_replays": 16,
+        "failures": 0
+      }
+    },
+    {
+      "chart": 3,
+      "repeat": false,
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-fixed-distance-baseline",
+        "3"
+      ],
+      "returncode": 101,
+      "elapsed_seconds": 0.003392288024770096,
+      "log": "finite-fixed-distance-baseline-chart3-repeat0.log",
+      "counts": {
+        "cases": 4,
+        "successes": 0,
+        "point_replays": 0,
+        "failures": 4
+      }
+    },
+    {
+      "chart": 0,
+      "repeat": true,
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-fixed-distance-baseline",
+        "0",
+        "repeat"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 1.365470661985455,
+      "log": "finite-fixed-distance-baseline-chart0-repeat1.log",
+      "counts": {
+        "cases": 4,
+        "successes": 4,
+        "point_replays": 28,
+        "failures": 0
+      }
+    },
+    {
+      "chart": 1,
+      "repeat": true,
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-fixed-distance-baseline",
+        "1",
+        "repeat"
+      ],
+      "returncode": 101,
+      "elapsed_seconds": 0.003458103019511327,
+      "log": "finite-fixed-distance-baseline-chart1-repeat1.log",
+      "counts": {
+        "cases": 4,
+        "successes": 0,
+        "point_replays": 0,
+        "failures": 4
+      }
+    },
+    {
+      "chart": 2,
+      "repeat": true,
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-fixed-distance-baseline",
+        "2",
+        "repeat"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 11.681602617987664,
+      "log": "finite-fixed-distance-baseline-chart2-repeat1.log",
+      "counts": {
+        "cases": 4,
+        "successes": 4,
+        "point_replays": 28,
+        "failures": 0
+      }
+    },
+    {
+      "chart": 3,
+      "repeat": true,
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-fixed-distance-baseline",
+        "3",
+        "repeat"
+      ],
+      "returncode": 101,
+      "elapsed_seconds": 0.003548007021890953,
+      "log": "finite-fixed-distance-baseline-chart3-repeat1.log",
+      "counts": {
+        "cases": 4,
+        "successes": 0,
+        "point_replays": 0,
+        "failures": 4
+      }
+    }
+  ]
+}

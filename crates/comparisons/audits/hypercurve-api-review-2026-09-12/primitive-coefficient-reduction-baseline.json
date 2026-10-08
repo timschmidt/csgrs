@@ -1,0 +1,11 @@
+{
+  "status": "baseline bounded tensor reduction is exact; repeated content computation identified in source and preceding profile",
+  "hypercurve_head": "6c6fdad97a46d5f6efcd653c631b058b6db29ae9",
+  "hypersolve_head": "9fa774c843b32f7a9f423e2784f0e3376df16e5a",
+  "source": "primitive-coefficient-reduction.rs",
+  "log": "primitive-coefficient-reduction-baseline.log",
+  "binary_sha256": "bcf9521717c708a401b4b3ffcb45dbf2dad45d9bf4eda912338b6a2cdf4da721",
+  "method": "Consecutive Fibonacci coefficients have unit common content. Reduce their degree-two polynomial modulo t^2-2 under positive and negative modulus gauges, and verify exact coefficients. Setup is excluded from the measured reduction.",
+  "source_finding": "Hyperreal Rational::primitive_bigint_ratio already removes positive common integer content. Hypersolve primitive_integer_coefficients repeats primitive_integer_part, whose first step recomputes that content with Euclidean BigInt GCD. Canonical degree and positive-leading sign are still required.",
+  "hypersolve_dependency": "Matched hypercurve-2c7ff6f3fbe07653 fingerprint to hypersolve-5000fd64285a9ffb before linking the baseline; same Hyperreal scalar type."
+}

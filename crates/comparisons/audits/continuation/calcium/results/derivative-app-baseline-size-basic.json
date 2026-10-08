@@ -1,0 +1,14 @@
+{
+  "tag": "derivative-app-baseline-size-basic",
+  "started": "2026-09-09T15:38:15.440Z",
+  "finished": "2026-09-09T15:38:15.454Z",
+  "elapsedSeconds": 0.011241698999999997,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "size",
+  "args": [
+    "/tmp/calcium-derivative-apps.5K06wk/baseline-basic",
+    "/tmp/calcium-derivative-apps.5K06wk/baseline-basic.stripped"
+  ],
+  "code": 0,
+  "signal": null
+}

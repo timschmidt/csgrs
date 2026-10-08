@@ -1,0 +1,10 @@
+[
+  {
+    "name": "bezier_region::tests::selected_circle_and_analytic_parallel_extend_on_full_supports",
+    "returncode": 0,
+    "passed": true,
+    "limit_seconds": 75,
+    "elapsed_seconds": 1.5554739240324125,
+    "log": "extended-line-membership-20260923-trace2-case-0.log"
+  }
+]

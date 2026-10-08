@@ -1,0 +1,17 @@
+{
+  "hypercurve/src/bezier_algebraic_image.rs": "7c09c113b1e390d65c2c7c428dcff48a1ecb753d080d39871fed55fe1cabdad5",
+  "hypercurve/src/rational_bezier_general.rs": "6452057d67dc5ccb74601e8e9ccc465bb483f31886bc9cd98bf9ba0b5434166d",
+  "hypercurve/src/bezier_split_endpoint.rs": "221fa8d32cbb3b1e00d81f70a520ecf43a5f61fe90ab2221460887314d8e8126",
+  "hypercurve/src/bezier_arrangement.rs": "5ffc1cb5eea4055fd50834f5138178b604ee39e5f7d3461705de66f298de9111",
+  "hypercurve/src/curve_region_boolean.rs": "5fe889a565ff00a664fcce29f119587f5b7f836632b4cb2b9cacc14ee9107b9a",
+  "hypercurve/src/bezier_offset.rs": "5eb38301fb0d1e5d0ae5ea9f61b10547948335eb643f1e4f2c170fcc410b5b2c",
+  "hypercurve/tests/hypercurve_bezier_algebraic_image.rs": "262763bc43d0eefbaac8e3582645351c63a15b8f4b707638a5de301f70a6ff53",
+  "hypercurve/tests/hypercurve_bezier_tangent_order.rs": "186794114be41e5d22d642e4117d457454d2938f28e42e1169690a32e1cdaaa8",
+  "hypercurve/tests/hypercurve_rational_bezier.rs": "22389bf6485023546a850335d47a27835c7c967b8cde5b5a11725e4579a87e86",
+  "hypercurve/benches/bezier_tangent_order.rs": "08922b9d6fa854a684394bdeddde223070972fbd9bdff22b9a4e68c01b744345",
+  "hypercurve/tests/hypercurve_bezier_split_materialization.rs": "b1dd11c3dfc8116638ab580efa2a9409d9f7e98bb6b4fca47e4c7559f23c6b5f",
+  "hypercurve/benches/bezier_algebraic_parameter.rs": "3c74cffc50a151bd7ed2c0ad774e46074e9774d0bcb6ccd02b65b8a0ab1b6316",
+  "hypercurve/benches/rational_bezier.rs": "3041d10fef71dd9c2589e91006dcb13d0d42613596501a040fc00af8448583cf",
+  "hypercurve/fuzz/fuzz_targets/bezier_tangent_order.rs": "8416bba0e99a52f545b68acadf709a417a4efad86b06ba8b6376c8c7eb0817fd",
+  "hypercurve/fuzz/fuzz_targets/bezier_algebraic_image.rs": "388f160f8c8b901f41ff5afcef9121f4dac3416b9347b4a91b20a6801f92fb59"
+}

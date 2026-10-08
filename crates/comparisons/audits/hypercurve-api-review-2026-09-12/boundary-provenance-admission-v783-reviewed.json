@@ -1,0 +1,20 @@
+{
+  "qualification": "boundary-provenance-admission-v783-terminal.json",
+  "source_manifest": "boundary-provenance-admission-v783-sources.json",
+  "outer_session_reaped": 9896,
+  "validated_files": 2048,
+  "tests": 48,
+  "checks": 7,
+  "repos": {
+    "hypercurve": {
+      "parent": "bc02ec0b7480df015e51ad2b61ec38d99c7abd44",
+      "paths": {
+        "README.md": "1514f90fcc3c310080216304a2b40497df3d568aa379b91ada5836b8e6a5607f",
+        "src/bezier_region.rs": "98ac948dfc8937ea3fd3016ce9ed7cf41aad3ff500601241d9eace4133fcd12b",
+        "tests/hypercurve_bezier_region.rs": "e35394aaa9a24ce0e4816d827c766ffe15fc1731ec80eb049358c861014f25f7"
+      }
+    }
+  },
+  "scope": "Remove unused public provenance authoring,retain read-only operation records and all private geometry/source validation,verify invalid/valid source gates directly",
+  "unresolved": "The full exact-geometry implementation goal remains active; this cleanup does not claim full spatial BREP closure or a measured speedup."
+}

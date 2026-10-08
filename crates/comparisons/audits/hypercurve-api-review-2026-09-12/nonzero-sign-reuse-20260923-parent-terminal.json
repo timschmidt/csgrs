@@ -1,0 +1,19 @@
+{
+  "results": [
+    {
+      "name": "algebraic_fiber::tests::certified_nonzero_signs_distinguish_small_values_from_selected_zeros",
+      "returncode": 101,
+      "elapsed_seconds": 0.0035710249794647098,
+      "log": "nonzero-sign-reuse-20260923-parent-case-0.log"
+    },
+    {
+      "name": "algebraic_fiber::tests::certified_nonzero_signs_share_the_refined_degree_41_endpoint",
+      "returncode": 101,
+      "elapsed_seconds": 18.8911235909909,
+      "log": "nonzero-sign-reuse-20260923-parent-case-1.log"
+    }
+  ],
+  "binary_sha256": "7ba75f92c25d89b9c80e7ef9d91ea48509c85f2eb21c3926dc99819d0f2c68e0",
+  "sources_unchanged": true,
+  "all_processes_reaped": true
+}

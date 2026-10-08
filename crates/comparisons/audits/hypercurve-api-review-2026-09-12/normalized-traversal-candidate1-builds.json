@@ -1,0 +1,45 @@
+[
+  {
+    "kind": "check",
+    "returncode": 0,
+    "elapsed_seconds": 17.04094544198597,
+    "command": [
+      "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+      "check",
+      "--all-targets",
+      "--no-default-features",
+      "--locked",
+      "--offline"
+    ]
+  },
+  {
+    "kind": "test-build",
+    "returncode": 0,
+    "elapsed_seconds": 79.68810022898833,
+    "command": [
+      "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+      "test",
+      "--release",
+      "--all-features",
+      "--test",
+      "hypercurve_bezier_region",
+      "--no-run",
+      "--locked",
+      "--offline",
+      "--message-format=json"
+    ]
+  },
+  {
+    "kind": "fuzz-check",
+    "returncode": 0,
+    "elapsed_seconds": 21.997727874986595,
+    "command": [
+      "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+      "check",
+      "--bin",
+      "bezier_region",
+      "--locked",
+      "--offline"
+    ]
+  }
+]

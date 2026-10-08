@@ -1,0 +1,123 @@
+{
+  "status": "passed for the independently scoped Hypersolve determinant change",
+  "goal_status": "active",
+  "parent": "c96ed424fa6de0ea889652315095e7c7a17aade9",
+  "commit": "3d900ee8e426893c0c315b6399e9313ab791538e",
+  "source_sha256": {
+    "src/algebraic_fiber.rs": "b2ba652d2ada5c133f8297a01914c2056aeba442635a027f5f6fe4cbee913f22",
+    "src/algebraic_fiber/subresultant.rs": "dc8b6ae4d3e5557ed5d5b53c2b86d9ab3e61d52389dbf43104509baf05dcc1ea"
+  },
+  "library_tests": 496,
+  "new_tests": 2,
+  "failed": 0,
+  "build": {
+    "command": [
+      "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+      "test",
+      "--release",
+      "--all-features",
+      "--locked",
+      "--offline",
+      "--lib",
+      "--no-run",
+      "--message-format=json"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 33.56864247302292,
+    "source_files": {
+      "src/algebraic_fiber.rs": "b2ba652d2ada5c133f8297a01914c2056aeba442635a027f5f6fe4cbee913f22",
+      "src/algebraic_fiber/subresultant.rs": "dc8b6ae4d3e5557ed5d5b53c2b86d9ab3e61d52389dbf43104509baf05dcc1ea"
+    },
+    "parent": "c96ed424fa6de0ea889652315095e7c7a17aade9"
+  },
+  "full": {
+    "command": [
+      "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypersolve-2e681fec2f29f4bd",
+      "--test-threads=4"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.4141589660139289,
+    "binary": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypersolve-2e681fec2f29f4bd",
+    "sha256": "feca90810819f4e657abb289071a46263f3cde1c42a0577628a68503dd6aa360",
+    "archived_binary": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/fiber-unit-pivots-candidate1-sources/hypersolve-2e681fec2f29f4bd"
+  },
+  "check": {
+    "command": [
+      "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+      "check",
+      "--all-targets",
+      "--no-default-features",
+      "--locked",
+      "--offline"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 5.121462520008208
+  },
+  "normal_libraries": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/fiber-unit-pivots-libraries",
+  "timings": {
+    "cases": [
+      {
+        "trial": 0,
+        "label": "parent",
+        "returncode": 0,
+        "log": "fiber-unit-pivots-identity-parent-trial0.log",
+        "binary_sha256": "2c9e98e294cae894e945ca34c6de16e112fde8289acecc974fec1c14e3f879f1",
+        "construction_ms": 12.050225
+      },
+      {
+        "trial": 0,
+        "label": "candidate",
+        "returncode": 0,
+        "log": "fiber-unit-pivots-identity-candidate-trial0.log",
+        "binary_sha256": "3df724cf0b84d1296a851df46eccda3502ce551790a502e20c04b28babeb3d69",
+        "construction_ms": 0.7321
+      },
+      {
+        "trial": 1,
+        "label": "parent",
+        "returncode": 0,
+        "log": "fiber-unit-pivots-identity-parent-trial1.log",
+        "binary_sha256": "2c9e98e294cae894e945ca34c6de16e112fde8289acecc974fec1c14e3f879f1",
+        "construction_ms": 11.121058
+      },
+      {
+        "trial": 1,
+        "label": "candidate",
+        "returncode": 0,
+        "log": "fiber-unit-pivots-identity-candidate-trial1.log",
+        "binary_sha256": "3df724cf0b84d1296a851df46eccda3502ce551790a502e20c04b28babeb3d69",
+        "construction_ms": 0.720051
+      },
+      {
+        "trial": 2,
+        "label": "parent",
+        "returncode": 0,
+        "log": "fiber-unit-pivots-identity-parent-trial2.log",
+        "binary_sha256": "2c9e98e294cae894e945ca34c6de16e112fde8289acecc974fec1c14e3f879f1",
+        "construction_ms": 11.552548
+      },
+      {
+        "trial": 2,
+        "label": "candidate",
+        "returncode": 0,
+        "log": "fiber-unit-pivots-identity-candidate-trial2.log",
+        "binary_sha256": "3df724cf0b84d1296a851df46eccda3502ce551790a502e20c04b28babeb3d69",
+        "construction_ms": 0.843082
+      }
+    ],
+    "medians_ms": {
+      "parent": 11.552548,
+      "candidate": 0.7321
+    },
+    "scope": "One retained-field resultant fixture, three fresh-process samples each; scalar equality still undecided. No general throughput claim."
+  },
+  "hypercurve_candidate": "mapped-point-inverse-attempt15",
+  "hypercurve_focused_passed": 27,
+  "hypercurve_focused_total": 28,
+  "remaining_required_failure": "bezier_offset::conversion_tests::mapped_compact_point_inverse_preserves_analytic_normal_sheet",
+  "failure_status": "Unchanged exact scalar identity uncertainty; required test retained and not excluded.",
+  "dependency_sources": "finite-projective-parameter-snapshot.json",
+  "hyperreal_pin": "a2da8e2b5de9a1a4653d3662f2f05cb6533fd7ef",
+  "other_session_changes": "Hyperreal working changes left untouched; no build uses them.",
+  "computational_scope": "Schur complements eliminate manifest nonzero rational units, reduce each product modulo the source fiber, and retain the division-free fallback. No source-coordinate element is inverted. One resultant fixture has lower construction cost; no general throughput or complete closure claim."
+}

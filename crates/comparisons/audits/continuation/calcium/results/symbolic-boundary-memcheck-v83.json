@@ -1,0 +1,21 @@
+{
+  "tag": "symbolic-boundary-memcheck-v83",
+  "started": "2026-09-12T03:38:07.174Z",
+  "finished": "2026-09-12T03:38:08.508Z",
+  "elapsedSeconds": 1.332184338,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "timeout",
+  "args": [
+    "120s",
+    "valgrind",
+    "--tool=memcheck",
+    "--leak-check=full",
+    "--show-leak-kinds=all",
+    "--errors-for-leak-kinds=definite,indirect,possible",
+    "--error-exitcode=97",
+    "/tmp/calcium-symbolic-boundary-v83.JuGH8X/controls",
+    "angles"
+  ],
+  "code": 0,
+  "signal": null
+}

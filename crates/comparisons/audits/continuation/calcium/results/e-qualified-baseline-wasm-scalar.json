@@ -1,0 +1,25 @@
+{
+  "tag": "e-qualified-baseline-wasm-scalar",
+  "started": "2026-09-10T01:10:15.523Z",
+  "finished": "2026-09-10T01:14:10.632Z",
+  "elapsedSeconds": 235.10661942099998,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/derivative-demand-candidate/hyperreal",
+  "command": "env",
+  "args": [
+    "CARGO_TARGET_DIR=/tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse",
+    "CARGO_INCREMENTAL=0",
+    "CARGO_PROFILE_DEV_DEBUG=0",
+    "CARGO_BUILD_JOBS=2",
+    "cargo",
+    "build",
+    "--locked",
+    "--offline",
+    "--release",
+    "--lib",
+    "--all-features",
+    "--target",
+    "wasm32-unknown-unknown"
+  ],
+  "code": 0,
+  "signal": null
+}

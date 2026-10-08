@@ -1,0 +1,32 @@
+{
+  "repo": "hypercurve",
+  "target": "hypercurve_pr59_shape_regressions",
+  "binary": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve_pr59_shape_regressions-83ef5073a340cf21",
+  "command": [
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve_pr59_shape_regressions-83ef5073a340cf21",
+    "--test-threads=4",
+    "--color",
+    "never"
+  ],
+  "sha256": "54f84cd219e03e47bf88eeb7f40c12f6f66795273c1d462c7de32fe599a787fa",
+  "returncode": 0,
+  "timed_out": false,
+  "elapsed_seconds": 0.007516665005823597,
+  "log": "finite-point-inverse-domains-full-hypercurve-hypercurve_pr59_shape_regressions.log",
+  "passed": [
+    "pr59_bridge_overlaps_two_islands",
+    "pr59_multi_island_disjoint_identities",
+    "pr59_large_coordinate_hole_overlap_keeps_membership",
+    "pr59_near_coincident_island_in_hole_is_not_cancelled",
+    "pr59_chain_bridge_merges_three_islands",
+    "pr59_ring_difference_adds_second_hole",
+    "pr59_deep_island_lake_nesting_survives_all_ops"
+  ],
+  "failed": [],
+  "ignored": [],
+  "summaries": [
+    "test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s"
+  ],
+  "new_failures": [],
+  "known_failures": []
+}

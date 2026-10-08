@@ -1,0 +1,33 @@
+{
+  "returncode": 0,
+  "elapsed_seconds": 27.355115493992344,
+  "normal_library_sha256": "68b7eb07dd682f6f27b42ea8f5bf32ff3fb0e3d96d09c29889738e18190708f9",
+  "log": "finite-point-inverse-domains-public-replay.log",
+  "source": "selected-circle-source-replay-public.rs",
+  "command": [
+    "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustc",
+    "--edition=2024",
+    "-O",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/selected-circle-source-replay-public.rs",
+    "--extern",
+    "hypercurve=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypercurve-e19f31178f76cad1.rlib",
+    "-L",
+    "dependency=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps",
+    "-o",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-point-inverse-domains-public-replay"
+  ],
+  "run_command": [
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-point-inverse-domains-public-replay"
+  ],
+  "source_sha256": "99425adc8eb402a83c8eabb6fba7bb52098b3b1eb02f92033f7cd941af1a9716",
+  "executable_sha256": "b60ea8249b74321ce27a5dc7d5e0c2dfabfe9f3ae9bf9fa165e3e87a30f3af78",
+  "counts": {
+    "queries": 80,
+    "point_replays": 160,
+    "equality_queries": 320,
+    "coordinate_orders": 640,
+    "topologies": 80,
+    "splits": 160,
+    "child_queries": 320
+  }
+}

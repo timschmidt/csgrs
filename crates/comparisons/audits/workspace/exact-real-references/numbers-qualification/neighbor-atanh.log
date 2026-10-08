@@ -1,0 +1,2 @@
+constructed atanh terms=740 input~0.9909229225916945
+FAIL atanh terms=740 precision=32 error_ulps=-3.590945256234169

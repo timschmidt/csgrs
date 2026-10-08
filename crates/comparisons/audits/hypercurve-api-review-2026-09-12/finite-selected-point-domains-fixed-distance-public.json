@@ -1,0 +1,163 @@
+{
+  "parent_commit": "34ae22f1ca9059356b2a6a1fcb3f9263b2c46577",
+  "source": "finite-fixed-distance-public.rs",
+  "source_sha256": "83628c4431d5c785814d16d61162b97aa1d353ba60aaae1ae217ebc3d9fa224b",
+  "executable": "finite-selected-point-domains-fixed-distance-public",
+  "executable_sha256": "66e37aeb6b940c5149f57fa0e1ca788b21b01078a6fcec03f9513ee67ae92d4d",
+  "normal_library": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypercurve-9eb8c540d8ca7826.rlib",
+  "normal_library_sha256": "5ab0beb19caab2b6ecaf12007a8f07af332a198e59837ce063f5b418f4003187",
+  "compile_command": [
+    "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustc",
+    "--edition=2024",
+    "-O",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-fixed-distance-public.rs",
+    "--extern",
+    "hypercurve=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypercurve-9eb8c540d8ca7826.rlib",
+    "-L",
+    "dependency=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps",
+    "-o",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-selected-point-domains-fixed-distance-public"
+  ],
+  "queries": [
+    {
+      "chart": 0,
+      "repeat": false,
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-selected-point-domains-fixed-distance-public",
+        "0"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.005161897017387673,
+      "log": "finite-selected-point-domains-fixed-distance-public-chart0-repeat0.log",
+      "counts": {
+        "cases": 4,
+        "successes": 4,
+        "point_replays": 16,
+        "failures": 0
+      }
+    },
+    {
+      "chart": 1,
+      "repeat": false,
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-selected-point-domains-fixed-distance-public",
+        "1"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.008282052993308753,
+      "log": "finite-selected-point-domains-fixed-distance-public-chart1-repeat0.log",
+      "counts": {
+        "cases": 4,
+        "successes": 4,
+        "point_replays": 16,
+        "failures": 0
+      }
+    },
+    {
+      "chart": 2,
+      "repeat": false,
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-selected-point-domains-fixed-distance-public",
+        "2"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.03263083699857816,
+      "log": "finite-selected-point-domains-fixed-distance-public-chart2-repeat0.log",
+      "counts": {
+        "cases": 4,
+        "successes": 4,
+        "point_replays": 16,
+        "failures": 0
+      }
+    },
+    {
+      "chart": 3,
+      "repeat": false,
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-selected-point-domains-fixed-distance-public",
+        "3"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.0322135949973017,
+      "log": "finite-selected-point-domains-fixed-distance-public-chart3-repeat0.log",
+      "counts": {
+        "cases": 4,
+        "successes": 4,
+        "point_replays": 16,
+        "failures": 0
+      }
+    },
+    {
+      "chart": 0,
+      "repeat": true,
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-selected-point-domains-fixed-distance-public",
+        "0",
+        "repeat"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 1.8690346550138202,
+      "log": "finite-selected-point-domains-fixed-distance-public-chart0-repeat1.log",
+      "counts": {
+        "cases": 4,
+        "successes": 4,
+        "point_replays": 28,
+        "failures": 0
+      }
+    },
+    {
+      "chart": 1,
+      "repeat": true,
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-selected-point-domains-fixed-distance-public",
+        "1",
+        "repeat"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 5.872436278994428,
+      "log": "finite-selected-point-domains-fixed-distance-public-chart1-repeat1.log",
+      "counts": {
+        "cases": 4,
+        "successes": 4,
+        "point_replays": 28,
+        "failures": 0
+      }
+    },
+    {
+      "chart": 2,
+      "repeat": true,
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-selected-point-domains-fixed-distance-public",
+        "2",
+        "repeat"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 13.782513033016585,
+      "log": "finite-selected-point-domains-fixed-distance-public-chart2-repeat1.log",
+      "counts": {
+        "cases": 4,
+        "successes": 4,
+        "point_replays": 28,
+        "failures": 0
+      }
+    },
+    {
+      "chart": 3,
+      "repeat": true,
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-selected-point-domains-fixed-distance-public",
+        "3",
+        "repeat"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 12.1299669870059,
+      "log": "finite-selected-point-domains-fixed-distance-public-chart3-repeat1.log",
+      "counts": {
+        "cases": 4,
+        "successes": 4,
+        "point_replays": 28,
+        "failures": 0
+      }
+    }
+  ]
+}

@@ -1,0 +1,100 @@
+[
+  {
+    "command": [
+      "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve-7bbb8c17f1bd2565",
+      "--exact",
+      "bezier_region::tests::retained_fragment_turn_certificates_own_the_consumed_range",
+      "--test-threads=1",
+      "--nocapture"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.0035952639882452786,
+    "binary": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve-7bbb8c17f1bd2565",
+    "sha256": "77bbd7df80cc0d91432267567f74217b8e4fd43fab82c362b47ab0ef7b29bd42",
+    "log": "finite-parallel-admission-focused-retained_fragment_turn_certificates_own_the_consumed_range.log"
+  },
+  {
+    "command": [
+      "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve-7bbb8c17f1bd2565",
+      "--exact",
+      "bezier_region::tests::zero_distance_parallel_admission_excludes_source_poles",
+      "--test-threads=1",
+      "--nocapture"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.0035680850269272923,
+    "binary": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve-7bbb8c17f1bd2565",
+    "sha256": "77bbd7df80cc0d91432267567f74217b8e4fd43fab82c362b47ab0ef7b29bd42",
+    "log": "finite-parallel-admission-focused-zero_distance_parallel_admission_excludes_source_poles.log"
+  },
+  {
+    "command": [
+      "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve-7bbb8c17f1bd2565",
+      "--exact",
+      "bezier_region::tests::finite_parallel_admission_preserves_regular_and_zero_distance_images",
+      "--test-threads=1",
+      "--nocapture"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.007678113994188607,
+    "binary": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve-7bbb8c17f1bd2565",
+    "sha256": "77bbd7df80cc0d91432267567f74217b8e4fd43fab82c362b47ab0ef7b29bd42",
+    "log": "finite-parallel-admission-focused-finite_parallel_admission_preserves_regular_and_zero_distance_images.log"
+  },
+  {
+    "command": [
+      "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve-7bbb8c17f1bd2565",
+      "--exact",
+      "bezier_offset::conversion_tests::finite_parallel_regularity_clips_against_selected_endpoint_authorities",
+      "--test-threads=1",
+      "--nocapture"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.0036262020003050566,
+    "binary": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve-7bbb8c17f1bd2565",
+    "sha256": "77bbd7df80cc0d91432267567f74217b8e4fd43fab82c362b47ab0ef7b29bd42",
+    "log": "finite-parallel-admission-focused-finite_parallel_regularity_clips_against_selected_endpoint_authorities.log"
+  },
+  {
+    "command": [
+      "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve-7bbb8c17f1bd2565",
+      "--exact",
+      "bezier_offset::conversion_tests::denominator_sign_excludes_a_pole_outside_selected_bounds",
+      "--test-threads=1",
+      "--nocapture"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.007602479017805308,
+    "binary": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve-7bbb8c17f1bd2565",
+    "sha256": "77bbd7df80cc0d91432267567f74217b8e4fd43fab82c362b47ab0ef7b29bd42",
+    "log": "finite-parallel-admission-focused-denominator_sign_excludes_a_pole_outside_selected_bounds.log"
+  },
+  {
+    "command": [
+      "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve_bezier_fit_offset-cc242384efdd44fd",
+      "--exact",
+      "quadratic_parallel_materializes_radical_cusp_parameter",
+      "--test-threads=1",
+      "--nocapture"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.0035189890186302364,
+    "binary": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve_bezier_fit_offset-cc242384efdd44fd",
+    "sha256": "72fb90ee7c6784ec808acdb4dd11b68de486c91a40e977c4f48d8694a5b3c810",
+    "log": "finite-parallel-admission-focused-quadratic_parallel_materializes_radical_cusp_parameter.log"
+  },
+  {
+    "command": [
+      "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve_bezier_fit_offset-cc242384efdd44fd",
+      "--exact",
+      "quadratic_parallel_isolates_distance_dependent_interior_cusp",
+      "--test-threads=1",
+      "--nocapture"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.003494061005767435,
+    "binary": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve_bezier_fit_offset-cc242384efdd44fd",
+    "sha256": "72fb90ee7c6784ec808acdb4dd11b68de486c91a40e977c4f48d8694a5b3c810",
+    "log": "finite-parallel-admission-focused-quadratic_parallel_isolates_distance_dependent_interior_cusp.log"
+  }
+]

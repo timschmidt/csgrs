@@ -1,0 +1,27 @@
+     Locking 12 packages to latest Rust 1.97.0 compatible versions
+   Compiling hyperlattice v0.6.1 (/home/tim/Documents/GitHub/workspace/hyperlattice)
+   Compiling hyperlimit v0.4.1 (/home/tim/Documents/GitHub/workspace/hyperlimit)
+   Compiling hypersolve v0.3.1 (/home/tim/Documents/GitHub/workspace/hypersolve)
+   Compiling ruffini-matrix-controls v0.0.0 (/home/tim/Documents/GitHub/workspace/exact-real-references/ruffini-qualification/matrix-hyper)
+error[E0599]: no associated function or constant named `default` found for struct `PredicatePolicy` in the current scope
+  --> controls.rs:28:84
+   |
+28 |         let got=solve_dense_linear_system_bareiss(&real,&rhs,-256,PredicatePolicy::default()).unwrap();
+   |                                                                                    ^^^^^^^ associated function or constant not found in `PredicatePolicy`
+
+error[E0599]: no associated function or constant named `default` found for struct `PredicatePolicy` in the current scope
+  --> controls.rs:33:118
+   |
+33 | ...om(1)],-128,PredicatePolicy::default()),Err(BareissError::Singular{..})));checks+=1;
+   |                                 ^^^^^^^ associated function or constant not found in `PredicatePolicy`
+
+error[E0599]: no associated function or constant named `default` found for struct `PredicatePolicy` in the current scope
+  --> controls.rs:59:118
+   |
+59 | ...,&rhs,-1024,PredicatePolicy::default()).unwrap();
+   |                                 ^^^^^^^ associated function or constant not found in `PredicatePolicy`
+
+For more information about this error, try `rustc --explain E0599`.
+error: could not compile `ruffini-matrix-controls` (bin "ruffini_matrix_hyper") due to 3 previous errors
+
+{"status":101,"error":null}

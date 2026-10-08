@@ -1,0 +1,8 @@
+{
+  "files": [
+    "src/bezier_parameter.rs",
+    "src/bezier_split.rs",
+    "src/rational_bezier_general.rs"
+  ],
+  "patch_sha256": "600f54a2f9b786476770d163820e3eed2025612d34193bb953914ae9ad3169f9"
+}

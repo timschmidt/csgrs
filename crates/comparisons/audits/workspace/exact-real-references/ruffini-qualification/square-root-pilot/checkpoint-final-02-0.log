@@ -1,0 +1,516 @@
+{
+  "snapshotFiles": 397,
+  "currentDrift": [],
+  "checksPerMode": 1956,
+  "semanticCases": 652,
+  "algorithms": "baseline, identical-code control, diagonal",
+  "oracleUsesHyperEqualityForRationalCoefficients": false,
+  "initialOracleDraft": "not executed; independently noticed wrong radical x^2 coefficient corrected in v2, original source/binaries preserved",
+  "buildFailures": "sandboxed linker bus error and explicit host /tmp quota failure preserved; unchanged numerical sources build in workspace",
+  "processes": 48,
+  "observations": 1152,
+  "measuredBatches": 864,
+  "verifiedCalls": 67353600,
+  "minCPU": 0.190103546,
+  "families": [
+    {
+      "family": "1-32-dense-fresh-square",
+      "ratios": {
+        "control": {
+          "cpuMedian": 0.9994549698131683,
+          "cpuProcessMedianRange": [
+            0.9920934832643065,
+            1.000389077725815
+          ],
+          "wallMedian": 1.0003103179699595,
+          "wallProcessMedianRange": [
+            0.9929475716042098,
+            1.0003606768548425
+          ]
+        },
+        "diagonal": {
+          "cpuMedian": 0.9474502475034317,
+          "cpuProcessMedianRange": [
+            0.9367977094459806,
+            0.9493081707237598
+          ],
+          "wallMedian": 0.9509156588387034,
+          "wallProcessMedianRange": [
+            0.9394343914214307,
+            0.9519995233123542
+          ]
+        }
+      },
+      "controlWithinTenPercent": true
+    },
+    {
+      "family": "1-32-dense-reused-square",
+      "ratios": {
+        "control": {
+          "cpuMedian": 0.9953408268492703,
+          "cpuProcessMedianRange": [
+            0.9850750593593544,
+            1.0119138280762685
+          ],
+          "wallMedian": 0.99540682687389,
+          "wallProcessMedianRange": [
+            0.985936359253295,
+            1.011365287106869
+          ]
+        },
+        "diagonal": {
+          "cpuMedian": 0.8295624487101929,
+          "cpuProcessMedianRange": [
+            0.8243799248192323,
+            0.8462379983785735
+          ],
+          "wallMedian": 0.8453928020365915,
+          "wallProcessMedianRange": [
+            0.8380457588371892,
+            0.8594780223539633
+          ]
+        }
+      },
+      "controlWithinTenPercent": true
+    },
+    {
+      "family": "2-32-dense-fresh-square",
+      "ratios": {
+        "control": {
+          "cpuMedian": 1.0052131978700702,
+          "cpuProcessMedianRange": [
+            0.9954466021340558,
+            1.0053494799993985
+          ],
+          "wallMedian": 1.004357177298929,
+          "wallProcessMedianRange": [
+            0.9956914182889431,
+            1.0055306547120224
+          ]
+        },
+        "diagonal": {
+          "cpuMedian": 0.8529196905242094,
+          "cpuProcessMedianRange": [
+            0.845033479622232,
+            0.8584235207853077
+          ],
+          "wallMedian": 0.8561973732932047,
+          "wallProcessMedianRange": [
+            0.8482769232060655,
+            0.8612392196393869
+          ]
+        }
+      },
+      "controlWithinTenPercent": true
+    },
+    {
+      "family": "2-32-dense-reused-square",
+      "ratios": {
+        "control": {
+          "cpuMedian": 1.0050254252019641,
+          "cpuProcessMedianRange": [
+            0.9921827713426985,
+            1.0182812337250347
+          ],
+          "wallMedian": 1.005838442417724,
+          "wallProcessMedianRange": [
+            0.9921210731702881,
+            1.017635729559255
+          ]
+        },
+        "diagonal": {
+          "cpuMedian": 0.7078475456183029,
+          "cpuProcessMedianRange": [
+            0.7015690486735795,
+            0.7184812873853801
+          ],
+          "wallMedian": 0.7216934458791243,
+          "wallProcessMedianRange": [
+            0.7139287619347073,
+            0.7313069336645407
+          ]
+        }
+      },
+      "controlWithinTenPercent": true
+    },
+    {
+      "family": "4-32-dense-fresh-square",
+      "ratios": {
+        "control": {
+          "cpuMedian": 0.9971357251961086,
+          "cpuProcessMedianRange": [
+            0.986320468531103,
+            1.0058409840925857
+          ],
+          "wallMedian": 0.9975593755276405,
+          "wallProcessMedianRange": [
+            0.9888052630358617,
+            1.005710627026034
+          ]
+        },
+        "diagonal": {
+          "cpuMedian": 0.6768101368528532,
+          "cpuProcessMedianRange": [
+            0.6728107306990296,
+            0.6818628826631608
+          ],
+          "wallMedian": 0.6794039779267896,
+          "wallProcessMedianRange": [
+            0.6770108765881698,
+            0.684179590414369
+          ]
+        }
+      },
+      "controlWithinTenPercent": true
+    },
+    {
+      "family": "4-32-dense-reused-square",
+      "ratios": {
+        "control": {
+          "cpuMedian": 1.0057917604347564,
+          "cpuProcessMedianRange": [
+            0.9965077608014659,
+            1.0143055113821338
+          ],
+          "wallMedian": 1.006595331486176,
+          "wallProcessMedianRange": [
+            0.9967875743502554,
+            1.014557984091602
+          ]
+        },
+        "diagonal": {
+          "cpuMedian": 0.5398735659367547,
+          "cpuProcessMedianRange": [
+            0.5335535457120922,
+            0.5667644881339002
+          ],
+          "wallMedian": 0.5463339049163352,
+          "wallProcessMedianRange": [
+            0.5407450814187456,
+            0.5717465546875653
+          ]
+        }
+      },
+      "controlWithinTenPercent": true
+    },
+    {
+      "family": "8-32-dense-fresh-square",
+      "ratios": {
+        "control": {
+          "cpuMedian": 0.9959812170364751,
+          "cpuProcessMedianRange": [
+            0.9958075463708256,
+            0.9960993411353914
+          ],
+          "wallMedian": 0.9960031230021047,
+          "wallProcessMedianRange": [
+            0.9955459964507236,
+            0.9960587633434201
+          ]
+        },
+        "diagonal": {
+          "cpuMedian": 0.42359775367296487,
+          "cpuProcessMedianRange": [
+            0.4232130125924608,
+            0.43045880461301445
+          ],
+          "wallMedian": 0.42477369742927773,
+          "wallProcessMedianRange": [
+            0.4243228751417096,
+            0.4314528682607405
+          ]
+        }
+      },
+      "controlWithinTenPercent": true
+    },
+    {
+      "family": "8-32-dense-reused-square",
+      "ratios": {
+        "control": {
+          "cpuMedian": 1.0063976754913952,
+          "cpuProcessMedianRange": [
+            0.9956326774497269,
+            1.0119727552473516
+          ],
+          "wallMedian": 1.0062486354070732,
+          "wallProcessMedianRange": [
+            0.9958721422090531,
+            1.011881082484383
+          ]
+        },
+        "diagonal": {
+          "cpuMedian": 0.3666356081012895,
+          "cpuProcessMedianRange": [
+            0.35999618293228886,
+            0.3676914324428243
+          ],
+          "wallMedian": 0.3685230160177751,
+          "wallProcessMedianRange": [
+            0.36180082030566924,
+            0.36919380251058737
+          ]
+        }
+      },
+      "controlWithinTenPercent": true
+    },
+    {
+      "family": "16-256-dense-fresh-square",
+      "ratios": {
+        "control": {
+          "cpuMedian": 0.9980094331254161,
+          "cpuProcessMedianRange": [
+            0.9855202156578997,
+            1.0143474235491396
+          ],
+          "wallMedian": 0.9993822443664,
+          "wallProcessMedianRange": [
+            0.9851162568128586,
+            1.0144745660146997
+          ]
+        },
+        "diagonal": {
+          "cpuMedian": 0.26611903335114895,
+          "cpuProcessMedianRange": [
+            0.2645361371280231,
+            0.2678545584703518
+          ],
+          "wallMedian": 0.2662431348947979,
+          "wallProcessMedianRange": [
+            0.2647555398559912,
+            0.2679486249528005
+          ]
+        }
+      },
+      "controlWithinTenPercent": true
+    },
+    {
+      "family": "16-256-dense-reused-square",
+      "ratios": {
+        "control": {
+          "cpuMedian": 1.0017440436139955,
+          "cpuProcessMedianRange": [
+            1.000556593584086,
+            1.007967790191671
+          ],
+          "wallMedian": 1.0019790716247712,
+          "wallProcessMedianRange": [
+            1.0004130419855004,
+            1.00801237093863
+          ]
+        },
+        "diagonal": {
+          "cpuMedian": 0.24374314872395567,
+          "cpuProcessMedianRange": [
+            0.24174376357974758,
+            0.24402518307612917
+          ],
+          "wallMedian": 0.24398601367160225,
+          "wallProcessMedianRange": [
+            0.24189587798419712,
+            0.24420380033634825
+          ]
+        }
+      },
+      "controlWithinTenPercent": true
+    },
+    {
+      "family": "32-32-dense-fresh-square",
+      "ratios": {
+        "control": {
+          "cpuMedian": 0.9974489422618831,
+          "cpuProcessMedianRange": [
+            0.9931674392587526,
+            1.0111273624639252
+          ],
+          "wallMedian": 0.9975225760427017,
+          "wallProcessMedianRange": [
+            0.9931463841001036,
+            1.0114711718880323
+          ]
+        },
+        "diagonal": {
+          "cpuMedian": 0.11856124805465384,
+          "cpuProcessMedianRange": [
+            0.1175380114135679,
+            0.118831006357352
+          ],
+          "wallMedian": 0.11866576457640507,
+          "wallProcessMedianRange": [
+            0.117593307087871,
+            0.11892198282580752
+          ]
+        }
+      },
+      "controlWithinTenPercent": true
+    },
+    {
+      "family": "32-32-dense-reused-square",
+      "ratios": {
+        "control": {
+          "cpuMedian": 0.9960377185096831,
+          "cpuProcessMedianRange": [
+            0.9894925031189123,
+            1.0006599148523185
+          ],
+          "wallMedian": 0.9964514160453528,
+          "wallProcessMedianRange": [
+            0.9895635544765734,
+            1.000470076132011
+          ]
+        },
+        "diagonal": {
+          "cpuMedian": 0.11161162891281237,
+          "cpuProcessMedianRange": [
+            0.11034199987229631,
+            0.11209992168600588
+          ],
+          "wallMedian": 0.11165724201092274,
+          "wallProcessMedianRange": [
+            0.11041463293109696,
+            0.11211144606509454
+          ]
+        }
+      },
+      "controlWithinTenPercent": true
+    },
+    {
+      "family": "16-256-sparse-fresh-square",
+      "ratios": {
+        "control": {
+          "cpuMedian": 1.0025667206806483,
+          "cpuProcessMedianRange": [
+            0.9982485416397211,
+            1.009668930494346
+          ],
+          "wallMedian": 1.0022345133796295,
+          "wallProcessMedianRange": [
+            0.9983646417930774,
+            1.0103589977537473
+          ]
+        },
+        "diagonal": {
+          "cpuMedian": 0.20616384998969728,
+          "cpuProcessMedianRange": [
+            0.20363707038906118,
+            0.2084619988045277
+          ],
+          "wallMedian": 0.20678508297743797,
+          "wallProcessMedianRange": [
+            0.20429011555638707,
+            0.20912270013678502
+          ]
+        }
+      },
+      "controlWithinTenPercent": true
+    },
+    {
+      "family": "16-256-sparse-reused-square",
+      "ratios": {
+        "control": {
+          "cpuMedian": 0.9996908868905293,
+          "cpuProcessMedianRange": [
+            0.9931544199876983,
+            1.0047449422521073
+          ],
+          "wallMedian": 0.9998637196079078,
+          "wallProcessMedianRange": [
+            0.9935552440540277,
+            1.004847265549777
+          ]
+        },
+        "diagonal": {
+          "cpuMedian": 0.1277948545903324,
+          "cpuProcessMedianRange": [
+            0.12314759096216048,
+            0.13143272566260342
+          ],
+          "wallMedian": 0.12852714225757092,
+          "wallProcessMedianRange": [
+            0.12405639851378972,
+            0.13215742565460586
+          ]
+        }
+      },
+      "controlWithinTenPercent": true
+    },
+    {
+      "family": "8-256-fraction-fresh-nonsquare",
+      "ratios": {
+        "control": {
+          "cpuMedian": 1.0031373947930298,
+          "cpuProcessMedianRange": [
+            0.9902464226725278,
+            1.0219481918920912
+          ],
+          "wallMedian": 1.003155216701746,
+          "wallProcessMedianRange": [
+            0.9902140744360037,
+            1.0219435214417505
+          ]
+        },
+        "diagonal": {
+          "cpuMedian": 0.5228747655021737,
+          "cpuProcessMedianRange": [
+            0.5193588077714687,
+            0.5367958244977354
+          ],
+          "wallMedian": 0.5235584482992918,
+          "wallProcessMedianRange": [
+            0.5196488792743637,
+            0.5373043467326049
+          ]
+        }
+      },
+      "controlWithinTenPercent": true
+    },
+    {
+      "family": "8-256-fraction-reused-nonsquare",
+      "ratios": {
+        "control": {
+          "cpuMedian": 0.997258133067163,
+          "cpuProcessMedianRange": [
+            0.9945485197201956,
+            0.9973530929134589
+          ],
+          "wallMedian": 0.9970051816702015,
+          "wallProcessMedianRange": [
+            0.994220801317393,
+            0.997424521815375
+          ]
+        },
+        "diagonal": {
+          "cpuMedian": 0.4703967959909655,
+          "cpuProcessMedianRange": [
+            0.46483358841148215,
+            0.47664418859004687
+          ],
+          "wallMedian": 0.4706922811393848,
+          "wallProcessMedianRange": [
+            0.46522487610332924,
+            0.47700508811860975
+          ]
+        }
+      },
+      "controlWithinTenPercent": true
+    }
+  ],
+  "allocationSummary": {
+    "cases": 96,
+    "profiles": 288,
+    "allMeasuredOwnersReleased": true,
+    "identicalCodeControlsMatch": true,
+    "fields": [
+      "calls",
+      "bytes",
+      "peakExtraLive",
+      "beforeOutputDropDelta",
+      "afterOutputDropDelta",
+      "afterAllOwnersDropDelta"
+    ],
+    "nonincreasingCalls": false,
+    "nonincreasingBytes": true,
+    "nonincreasingPeak": false
+  },
+  "newProductionChanges": 0,
+  "status": "isolated caller experiment; public caller, binary/code-size and downstream retention gates still open"
+}

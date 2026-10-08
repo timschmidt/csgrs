@@ -1,0 +1,21 @@
+{
+  "name": "hyperreal-wasm",
+  "command": "cargo",
+  "args": [
+    "check",
+    "--offline",
+    "--locked",
+    "--manifest-path",
+    "/home/tim/Documents/GitHub/workspace/hyperreal/Cargo.toml",
+    "--lib",
+    "--target",
+    "wasm32-unknown-unknown"
+  ],
+  "begin": "2026-09-07T06:14:33.488Z",
+  "end": "2026-09-07T06:14:34.877Z",
+  "status": 0,
+  "signal": null,
+  "error": null,
+  "stdout": "",
+  "stderr": "    Checking hyperreal v0.13.1 (/home/tim/Documents/GitHub/workspace/hyperreal)\n    Finished `dev` profile [unoptimized] target(s) in 1.37s\n"
+}

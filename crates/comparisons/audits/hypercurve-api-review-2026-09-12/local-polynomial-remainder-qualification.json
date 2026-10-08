@@ -1,0 +1,54 @@
+{
+  "status": "implemented, qualified, committed; original goal active",
+  "commits": {
+    "hypercurve": "827b4164f62b633e173873890b6f734f50664015",
+    "hypersolve": "9211d62fe0b2322e60110da19afb95fdbda3704b"
+  },
+  "tests": {
+    "hypersolve": {
+      "passed": 487,
+      "ignored": 0,
+      "targets": 1
+    },
+    "hypercurve": {
+      "passed": 1441,
+      "ignored": 6,
+      "targets": 13
+    },
+    "hyperbrep": {
+      "passed": 232,
+      "ignored": 0,
+      "targets": 1
+    }
+  },
+  "unique_total": 2160,
+  "established_expensive_hypercurve_exclusions": 4,
+  "baseline": "local-polynomial-remainder-baseline.log: the new retained-field regression returns Uncertain(Predicate) instead of exact zero before the implementation",
+  "regression": "The local root t^3=sqrt(5)/3 retains its recursive coefficient field. A polynomial multiple of its defining relation plus 0 or +/-2^-600 certifies under both contexts in a bounded pass, including a -pi gauge on the defining polynomial. Shared Hypersolve tests include nonmonic signs, exact nonrational coefficients, trailing-zero degree drops, zero and constant moduli, and distinct-root queries.",
+  "implementation": "One division-free ordered-field sign remainder in Hypersolve; controlled context implementations gain exact multiplication. Hypercurve keeps cheap interval separation first, reduces signs through the retained defining relation, and respects bounded predicate passes without global promotion. No new cache fields or compatibility interfaces.",
+  "checks": [
+    "hypersolve --all-features --all-targets",
+    "hypercurve --all-features --all-targets",
+    "hyperbrep --all-features --all-targets",
+    "changed-file rustfmt",
+    "git diff --check"
+  ],
+  "source_sha256": {
+    "hypercurve/src/bezier_offset.rs": "cca73efc4ce715bd846a5e57e7610313946f6e863648d8cdbf01ca24c799effa",
+    "hypersolve/src/ordered_field_roots.rs": "424d011668c8fb4c94c437eb953f924983b83c50384acc09264a88cc37da777f",
+    "hypersolve/src/algebraic_fiber.rs": "9f90046e3a147ccd8fd6cc1e17baab31a97647abe43308e0c342882213ab12d6",
+    "hypersolve/src/lib.rs": "efa487c23248823e98fca38bacc04a3fecf8024b2346d7ddb81461cd1df96648"
+  },
+  "probe": {
+    "binary": "stationary-ph-offset-inspect-local-remainder",
+    "binary_sha256": "2c3dd0826742de60d9b85e4511060c11c6f5953d7ad91469853452d45d16c610",
+    "log": "stationary-ph-offset-inspect-local-remainder.log",
+    "timeout_seconds": 60,
+    "exit_code": 124,
+    "result": "First inward offset Certified in about 3.88 seconds, retaining degree-five source; second result not returned before total timeout. Diagnostic only; no application speedup or inward closure fix claimed."
+  },
+  "clean_repository_count": 30,
+  "workspace_state": "local-polynomial-remainder-workspace-after-commit.json",
+  "next": "Evaluate analytic point axis predicates in the retained parameter field before demanding global Cartesian coordinate reconstruction.",
+  "goal_status": "active"
+}

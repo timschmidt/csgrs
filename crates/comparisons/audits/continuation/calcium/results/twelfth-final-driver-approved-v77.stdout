@@ -1,0 +1,14 @@
+{"reusedGate":"twelfth-clippy-final-v77","finished":"2026-09-11T23:01:32.885Z"}
+{"reusedGate":"twelfth-fmt-final-v77","finished":"2026-09-11T23:01:33.407Z"}
+{"reusedGate":"twelfth-private-fmt-final-v77","finished":"2026-09-11T23:01:33.543Z"}
+{"reusedGate":"twelfth-candidate-default-debug-final-v77","finished":"2026-09-11T23:01:47.508Z"}
+{"reusedGate":"twelfth-candidate-all-debug-final-v77","finished":"2026-09-11T23:02:03.673Z"}
+{"reusedGate":"twelfth-candidate-default-release-final-v77","finished":"2026-09-11T23:02:36.546Z"}
+{"reusedGate":"twelfth-candidate-all-release-final-v77","finished":"2026-09-11T23:03:22.363Z"}
+{"reusedGate":"twelfth-baseline-default-debug-final-v77","finished":"2026-09-11T23:03:35.777Z"}
+{"reusedGate":"twelfth-baseline-all-debug-final-v77","finished":"2026-09-11T23:03:51.127Z"}
+{"reusedGate":"twelfth-baseline-default-release-final-v77","finished":"2026-09-11T23:04:23.555Z"}
+{"reusedGate":"twelfth-baseline-all-release-final-v77","finished":"2026-09-11T23:05:09.036Z"}
+{"reusedGate":"twelfth-capability-debug-final-v77","finished":"2026-09-11T23:05:12.120Z"}
+{"reusedGate":"twelfth-capability-release-final-v77","finished":"2026-09-11T23:05:28.510Z"}
+{"checkpoint":77,"status":"matched-final-source-regression-and-capability-captures-finished","candidateFiles":183,"retained":false}

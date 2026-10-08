@@ -1,0 +1,175 @@
+path	read_ranges	status
+versioned/perform/ConvertM.hs	1-84	complete
+versioned/perform/DyDigitM.hs	1-288	complete
+versioned/perform/DyFloatM.hs	1-160	complete
+versioned/perform/DyStreamM.hs	1-167	complete
+versioned/perform/FunctionsM.hs	1-397	complete
+versioned/perform/IReal.hs	1-130	complete
+versioned/perform/IRealM.hs	1-117	complete
+versioned/perform/LookInt.hs	1-214	complete
+versioned/perform/README	1-11	complete
+versioned/perform/SBinDecM.hs	1-348	complete
+versioned/perform/SBinFloatM.hs	1-237	complete
+versioned/perform/SBinStreamM.hs	1-489	complete
+versioned/perform/Testing.hs	1-23	complete
+versioned/perform/TestsM.hs	1-90	complete
+versioned/perform/Utils.hs	1-66	complete
+versioned/perform/X_RepnM.hs	1-90	complete
+versioned/perform/abyb.eps	1-234	complete; rendered and visually read
+versioned/perform/abyb.fig	1-82	complete; original modern-render failure recorded
+versioned/perform/abyb.fig.bak	1-73	complete
+versioned/perform/abyb2.fig	1-82	complete
+versioned/perform/form.fig	1-11	complete
+versioned/perform/form.fig.bak	1-13	complete
+versioned/perform/form2.fig	1-18	complete
+versioned/perform/plot_look	1-12	complete
+versioned/perform/plotf	1-10	complete
+versioned/perform/plotfig	1-54	complete
+versioned/perform/real_sbmul.eps	1-229	complete; rendered and visually read
+versioned/perform/real_sbmul.fig	1-88	complete; original modern-render failure recorded
+versioned/perform/real_sbmul.fig.bak	1-88	complete
+versioned/perform/res1	1-136	complete
+versioned/perform/res2	1-25	complete
+versioned/perform/sbMul.fix	1-67	complete
+versioned/perform/test1.fig	1-43	complete
+versioned/perform/test2.fig	1-93	complete; original modern-render failure; header-only bridge confirms data contamination
+versioned/perform/thirdbyone.fig	1-68	complete
+versioned/perform/xplot	1-28	complete; numerical data, not executable
+versioned/v1.2/Alex.hs	1-379	complete
+versioned/v1.2/Calc.hs	1-102	complete
+versioned/v1.2/Convert.hs	1-86	complete
+versioned/v1.2/Database.hs	1-57	complete
+versioned/v1.2/Demos.hs	1-16	complete
+versioned/v1.2/DyDigit.hs	1-204	complete
+versioned/v1.2/DyFloat.hs	1-147	complete
+versioned/v1.2/DyStream.hs	1-134	complete
+versioned/v1.2/Functions.hs	1-465	complete
+versioned/v1.2/ICalc.hs	1-168	complete
+versioned/v1.2/IDatabase.hs	1-57	complete
+versioned/v1.2/ILexer.hs	1-189	complete; independently read generated copy
+versioned/v1.2/ILexer.x	1-52	complete
+versioned/v1.2/IMain.hs	1-21	complete
+versioned/v1.2/IParseTree.hs	1-107	complete
+versioned/v1.2/IParser.hs	1-995	complete; independently read generated copy
+versioned/v1.2/IParser.y	1-114	complete
+versioned/v1.2/IReal.hs	1-135	complete
+versioned/v1.2/Integr.hs	1-215	complete
+versioned/v1.2/Interact.hs	1-72	complete
+versioned/v1.2/Lexer.hs	1-169	complete; independently read generated copy
+versioned/v1.2/Lexer.x	1-49	complete
+versioned/v1.2/Main.hs	1-23	complete
+versioned/v1.2/Makefile	1-260	complete
+versioned/v1.2/ParseTree.hs	1-100	complete
+versioned/v1.2/Parser.hs	1-834	complete; independently read generated copy
+versioned/v1.2/Parser.y	1-107	complete
+versioned/v1.2/README	1-78	complete
+versioned/v1.2/README~	1-36	complete
+versioned/v1.2/SBinDec.hs	1-327	complete
+versioned/v1.2/SBinFloat.hs	1-220	complete
+versioned/v1.2/SBinStream.hs	1-441	complete
+versioned/v1.2/Test.hs	1-8	complete
+versioned/v1.2/Tests.hs	1-134	complete
+versioned/v1.2/Utils.hs	1-66	complete
+versioned/v1.2/X_Repn.hs	1-92	complete
+versioned/v1.2/demo1.hs	1-26	complete
+cgi/Alex.hs	1-379	complete; independently read duplicate
+cgi/CGI.hs	1-33	complete
+cgi/CGISystem.hs	1-54	complete
+cgi/Calc.hs	1-102	complete; independently read duplicate
+cgi/Convert.hs	1-86	complete; independently read duplicate
+cgi/Counter.hs	1-43	complete
+cgi/Database.hs	1-57	complete; independently read duplicate
+cgi/Demo.hs	1-42	complete
+cgi/Demos.hs	1-16	complete; independently read duplicate
+cgi/DyDigit.hs	1-204	complete; independently read duplicate
+cgi/DyFloat.hs	1-147	complete; independently read duplicate
+cgi/DyStream.hs	1-134	complete; independently read duplicate
+cgi/EnvPassed.hs	1-24	complete
+cgi/Functions.hs	1-465	complete; independently read duplicate
+cgi/HTML.hs	1-59	complete
+cgi/HTMLWizard.hs	1-371	complete
+cgi/Hello.hs	1-19	complete
+cgi/ICalc.hs	1-168	complete; independently read duplicate
+cgi/IDatabase.hs	1-57	complete; independently read duplicate
+cgi/ILexer.hs	1-189	complete; independently read duplicate
+cgi/IMain.hs	1-21	complete; independently read duplicate
+cgi/IParseTree.hs	1-107	complete; independently read duplicate
+cgi/IParser.hs	1-995	complete; independently read duplicate
+cgi/IReal.hs	1-135	complete; independently read duplicate
+cgi/Integr.hs	1-215	complete; independently read duplicate
+cgi/Interact.hs	1-72	complete; independently read duplicate
+cgi/Lexer.hs	1-169	complete; independently read duplicate
+cgi/Lexer.x	1-49	complete; independently read duplicate
+cgi/Main.hs	1-23	complete; independently read duplicate
+cgi/Makefile	1-341	complete
+cgi/Mime.hs	1-60	complete
+cgi/ParseTree.hs	1-100	complete; independently read duplicate
+cgi/Parser.hs	1-834	complete; independently read duplicate
+cgi/Parser.y	1-107	complete; independently read duplicate
+cgi/Parsing.hs	1-191	complete
+cgi/Pretty.hs	1-242	complete
+cgi/PrettyHTML.hs	1-45	complete
+cgi/Request.hs	1-39	complete
+cgi/Response.hs	1-55	complete
+cgi/SBinDec.hs	1-327	complete; independently read duplicate
+cgi/SBinFloat.hs	1-220	complete; independently read duplicate
+cgi/SBinStream.hs	1-441	complete; independently read duplicate
+cgi/Test.hs	1-57	complete
+cgi/Test2.hs	1-64	complete; registration side effects not executed
+cgi/Tests.hs	1-134	complete; independently read duplicate
+cgi/URL.hs	1-3	complete
+cgi/UrlEncoded.hs	1-76	complete
+cgi/Utils.hs	1-66	complete; independently read duplicate
+cgi/WebSite.hs	1-82	complete
+cgi/X_Repn.hs	1-92	complete; independently read duplicate
+cgi/demo.cgi	1-1	complete; not executed
+cgi/demo.hs	1-21	complete
+cgi/demo1.hs	1-26	complete; independently read duplicate
+cgi/hello.hs	1-25	complete; unfinished experiment
+cgi/hellodave.hs	1-19	complete
+cgi/trial.cgi	1-1	complete; not executed
+cgi/world.pl	1-6	complete; not executed
+performance/perform/ConvertM.hs	1-84	complete; independently read duplicate
+performance/perform/DyDigitM.hs	1-288	complete; independently read duplicate
+performance/perform/DyFloatM.hs	1-160	complete; independently read duplicate
+performance/perform/DyStreamM.hs	1-167	complete; independently read duplicate
+performance/perform/FunctionsM.hs	1-397	complete; independently read duplicate
+performance/perform/IReal.hs	1-130	complete; independently read duplicate
+performance/perform/IRealM.hs	1-117	complete; independently read duplicate
+performance/perform/LookInt.hs	1-214	complete; independently read duplicate
+performance/perform/README	1-11	complete; independently read duplicate
+performance/perform/SBinDecM.hs	1-348	complete; independently read duplicate
+performance/perform/SBinFloatM.hs	1-237	complete; independently read duplicate
+performance/perform/SBinStreamM.hs	1-489	complete; independently read duplicate
+performance/perform/Testing.hs	1-23	complete; independently read duplicate
+performance/perform/TestsM.hs	1-90	complete; independently read duplicate
+performance/perform/Utils.hs	1-66	complete; independently read duplicate
+performance/perform/X_RepnM.hs	1-90	complete; independently read duplicate
+performance/perform/abyb.eps	1-234	complete; independently read duplicate
+performance/perform/abyb.fig	1-82	complete; independently read duplicate
+performance/perform/abyb.fig.bak	1-73	complete; independently read duplicate
+performance/perform/abyb2.fig	1-82	complete; independently read duplicate
+performance/perform/form.fig	1-11	complete; independently read duplicate
+performance/perform/form.fig.bak	1-13	complete; independently read duplicate
+performance/perform/form2.fig	1-18	complete; independently read duplicate
+performance/perform/plot_look	1-12	complete; independently read duplicate
+performance/perform/plotf	1-10	complete; independently read duplicate
+performance/perform/plotfig	1-54	complete; independently read duplicate
+performance/perform/real_sbmul.eps	1-229	complete; independently read duplicate
+performance/perform/real_sbmul.fig	1-88	complete; independently read duplicate
+performance/perform/real_sbmul.fig.bak	1-88	complete; independently read duplicate
+performance/perform/res1	1-136	complete; independently read duplicate
+performance/perform/res2	1-25	complete; independently read duplicate
+performance/perform/sbMul.fix	1-67	complete; independently read duplicate
+performance/perform/test1.fig	1-43	complete; independently read duplicate
+performance/perform/test2.fig	1-93	complete; independently read duplicate
+performance/perform/thirdbyone.fig	1-68	complete; independently read duplicate
+performance/perform/xplot	1-28	complete; independently read duplicate
+solaris/calc		identified; not executed
+solaris/demo1		identified; not executed
+solaris/fp_logmap		identified; not executed
+solaris/icalc		identified; not executed
+solaris/test1.era	1-6	complete
+solaris/test1.mws	1-28	complete; serialized worksheet read, not executed
+solaris/test2.mws	1-115	complete; serialized worksheet/plot data read, not rendered or executed
+references.bib	1-375	complete; citation inventory, not cited-work audit credit

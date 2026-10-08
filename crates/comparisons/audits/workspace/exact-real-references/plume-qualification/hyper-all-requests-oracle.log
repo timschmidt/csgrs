@@ -1,0 +1,9 @@
+atan	checks=60	failures=0
+cos	checks=84	failures=0
+exp	checks=108	failures=0
+ln	checks=84	failures=0
+pi	checks=12	failures=0
+sin	checks=84	failures=0
+sqrt	checks=84	failures=0
+TOTAL	checks=516	failures=0
+PASS exact Hyper scalar/history controls=26232

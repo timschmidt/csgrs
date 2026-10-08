@@ -1,0 +1,14 @@
+{
+  "hypercurve/src/bezier_offset.rs": "a1773e21bea1063e085ddd5ebf444cba35cc37e33fb969df061d13e1577c1d39",
+  "hypercurve/src/bezier_retained_overlap.rs": "e095e19b5f6b85755b8198585952117f1c436e092f402f6b0af33e312585d060",
+  "hypercurve/src/curve_intersection.rs": "727c43a95519ea0704b356ade66bf9e0c9e37c9a2b80bbbdae64dd28f7caf1a4",
+  "hypercurve/src/curve_region_boolean.rs": "62406a339e99b463ca8833ba6d394907dfdcd811218c74e6362aba572cdaa7eb",
+  "hypercurve/src/curve_support_intersection.rs": "b647474f6aa7e7c76b067d010f91b22f3ede6904e4dc926e5d3079d79946ee95",
+  "hypercurve/src/lib.rs": "f94866f518301f89a146c76deab687419cd237ed50e037ea44941a184c0e7f20",
+  "hypercurve/src/rational_bezier_general.rs": "45f299230728350c718d4d7d64474b1fe87a57d6184a1e10c6c12040d553f451",
+  "hypercurve/tests/hypercurve_bezier_arrangement.rs": "3d0e1743b4c2f2afa65e87e87b6f6312bf9b9648c52b791d2b46914addc39b80",
+  "hypercurve/tests/hypercurve_bezier_fit_offset.rs": "c353167c3c51f1139f77ed05716af1279d75a3d40be9dbad9231cb399e9aef5b",
+  "hypercurve/tests/hypercurve_curve.rs": "e67e9a52ed7400c9709d1e976da910f166ce11da8c87034a0ef359993c8e0e0d",
+  "hypercurve/tests/hypercurve_curve_intersection.rs": "b11618ecd2db192744c34c72ca4e85d293dd4d5c8a80e3b4a1220199a7797bbb",
+  "hypercurve/tests/hypercurve_rational_bezier.rs": "5a6b26e36ce4d0e173abf31387b36c9e657075ae61af72a8547e1d1b39e499f6"
+}

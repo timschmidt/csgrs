@@ -1,0 +1,40 @@
+{
+  "parent": "9be9353cce8ead47e22547fed3711a52c157bd5b",
+  "main_files_verified": 368,
+  "offset_sha256": "62ee5ef8e3e86ea0c3e178b1e042f9e719b7fdf50591eec0c9e0bdab04186aaf",
+  "checks": {
+    "checks": [
+      {
+        "command": [
+          "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+          "check",
+          "--all-targets",
+          "--all-features",
+          "--locked",
+          "--offline"
+        ],
+        "returncode": 0,
+        "elapsed_seconds": 23.447478713002056,
+        "log": "mapped-cut-scalars-20260923-check-0.log"
+      },
+      {
+        "command": [
+          "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+          "check",
+          "--all-targets",
+          "--no-default-features",
+          "--locked",
+          "--offline"
+        ],
+        "returncode": 0,
+        "elapsed_seconds": 22.43949579494074,
+        "log": "mapped-cut-scalars-20260923-check-1.log"
+      }
+    ],
+    "all_sources_unchanged": true,
+    "all_processes_reaped": true
+  },
+  "change_scope": "Private identifiers, comments, diagnostic strings, and formatting only; algorithms, guards, assertions and cache ownership unchanged.",
+  "all_owned_processes_reaped": true,
+  "full_goal_complete": false
+}

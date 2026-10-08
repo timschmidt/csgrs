@@ -1,0 +1,11 @@
+Performace Testing code.
+
+This code is adapted from the main program and is used to track the
+input lookahead required to generate output digits.
+
+There are also perl scripts here for generating graphs for xgraph and
+xfig to illustrate these.
+
+The code is largely uncommented and has not been comprehensively
+tested. Feel free to hack around if you like and see what I've done,
+but there are no promises about anything here.

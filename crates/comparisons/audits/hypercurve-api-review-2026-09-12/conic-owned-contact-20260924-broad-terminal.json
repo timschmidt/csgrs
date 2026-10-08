@@ -1,0 +1,117 @@
+{
+  "checks": [
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "clippy",
+        "--all-targets",
+        "--all-features",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "returncode": 0,
+      "log": "conic-owned-contact-20260924-v6-check-0.log"
+    },
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "clippy",
+        "--all-targets",
+        "--no-default-features",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "returncode": 0,
+      "log": "conic-owned-contact-20260924-v6-check-1.log"
+    }
+  ],
+  "command": [
+    "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+    "test",
+    "--release",
+    "--all-features",
+    "--no-run",
+    "--message-format=json",
+    "--locked",
+    "--offline",
+    "--test",
+    "hypercurve_path_closure",
+    "--test",
+    "hypercurve_curve_region_boolean",
+    "--test",
+    "hypercurve_bezier_arrangement",
+    "--test",
+    "hypercurve_curve_region_boolean_fuzz",
+    "--test",
+    "hypercurve_pcb_boolean_regressions"
+  ],
+  "binaries": {
+    "hypercurve": {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/conic-owned-contact-20260924-v6-libtest",
+      "sha256": "84df22bf56d3a3c22d34fdca4d87338f4dd3d44c10742e0d38c1ad9f6df57708"
+    },
+    "hypercurve_pcb_boolean_regressions": {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/conic-owned-contact-20260924-broad-hypercurve_pcb_boolean_regressions",
+      "sha256": "0262103e1305a88ee1eaca9081b679a284a73b60cabe1150063f4e9367c202e0"
+    },
+    "hypercurve_curve_region_boolean": {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/conic-owned-contact-20260924-broad-hypercurve_curve_region_boolean",
+      "sha256": "9ca5a217c3e5311332cb55e074a82dfd1d344301b9339f42db51922b5e8c51f1"
+    },
+    "hypercurve_path_closure": {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/conic-owned-contact-20260924-broad-hypercurve_path_closure",
+      "sha256": "47529366f1ea9c0a89e812fcb35e15682dbeaac254115d9af39fd9184ef760b8"
+    },
+    "hypercurve_curve_region_boolean_fuzz": {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/conic-owned-contact-20260924-broad-hypercurve_curve_region_boolean_fuzz",
+      "sha256": "d8dbca9e477b46766decacad8a0db668f3ebf12733d834725cb1f0529aa3b474"
+    },
+    "hypercurve_bezier_arrangement": {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/conic-owned-contact-20260924-broad-hypercurve_bezier_arrangement",
+      "sha256": "37905539d104faa6e2bdd935bb93059684abd0f0ff57c4bdb725220be7ca2742"
+    }
+  },
+  "attempted": 436,
+  "passed": 430,
+  "ignored": 3,
+  "nonpasses": [
+    {
+      "target": "hypercurve",
+      "name": "bezier_region::curve_corner_chain::tests::extended_fillet_region_classifies_both_sides_of_its_companion",
+      "returncode": "timeout",
+      "passed": false,
+      "ignored": false,
+      "elapsed_seconds": 75.00345930701587,
+      "limit_seconds": 75,
+      "log": "conic-owned-contact-20260924-broad-case-0190.log"
+    },
+    {
+      "target": "hypercurve",
+      "name": "bezier_region::tests::one_fragment_ph_loop_projective_corners_retain_one_extended_interval",
+      "returncode": 101,
+      "passed": false,
+      "ignored": false,
+      "elapsed_seconds": 0.06449845700990409,
+      "limit_seconds": 75,
+      "log": "conic-owned-contact-20260924-broad-case-0210.log"
+    },
+    {
+      "target": "hypercurve",
+      "name": "bezier_region::tests::pair_native_boolean_algebraic_chord_corner_publishes_a_third_generation_fillet",
+      "returncode": "timeout",
+      "passed": false,
+      "ignored": false,
+      "elapsed_seconds": 75.00266000209376,
+      "limit_seconds": 75,
+      "log": "conic-owned-contact-20260924-broad-case-0212.log"
+    }
+  ],
+  "all_sources_unchanged": true,
+  "all_processes_reaped": true
+}

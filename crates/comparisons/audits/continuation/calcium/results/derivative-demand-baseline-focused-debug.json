@@ -1,0 +1,23 @@
+{
+  "tag": "derivative-demand-baseline-focused-debug",
+  "started": "2026-09-09T04:00:01.727Z",
+  "finished": "2026-09-09T04:00:38.536Z",
+  "elapsedSeconds": 36.806747192,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/derivative-demand-baseline/hypercurve",
+  "command": "env",
+  "args": [
+    "CARGO_INCREMENTAL=0",
+    "CARGO_PROFILE_DEV_DEBUG=0",
+    "CARGO_BUILD_JOBS=2",
+    "CARGO_TARGET_DIR=/tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse",
+    "cargo",
+    "test",
+    "--offline",
+    "--lib",
+    "derivative_demand",
+    "--",
+    "--test-threads=1"
+  ],
+  "code": 0,
+  "signal": null
+}

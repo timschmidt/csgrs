@@ -1,0 +1,109 @@
+Name:           aern-mpfr
+Version:        0.5.0
+Cabal-Version:  >= 1.8
+Build-Type:     Simple
+License:        BSD3
+License-File:   LICENCE
+Author:         Michal Konecny
+Copyright:      (c) 2012 Michal Konecny
+Maintainer:     mikkonecny@gmail.com
+Homepage:       http://code.google.com/p/aern/
+Stability:      experimental
+Category:       Data, Math
+Synopsis:       arbitrary precision real interval arithmetic
+Tested-with:
+                GHC==7.6.3
+Description:
+    This package provides bindings and tests for using arbitrary precision floating-point numbers 
+    provided by the library MPFR (via the Haskell library hmpfr)
+    as endpoints for the /interval arithmetic/ defined in the package 
+    aern-interval, which implements the real number approximation abstractions
+    provided by packages aern-order and aern-real.
+    .
+    Most users of this package will only need to import one end-user API module.
+    At present one such module is available:
+    .
+    * "Numeric.AERN.MPFRBasis.Interval" gives full access to the interval type,
+      including its MPFR endpoints.
+    .
+    In future we may add further API modules analogous to those available in aern-double.  
+    .
+    /Since MPFR uses GMP, this library s infrequent but serious errors/
+    /with a ghc that has been compiled with the default integer-gmp./  
+    /When using ghc, it is recommended to use one compiled with a modified integer-gmp,/
+    /as described at/ 
+    .
+    <http://code.google.com/p/hmpfr/wiki/GHCWithRenamedGMP>
+    .
+    /or/
+    /with integer-simple, as described at/
+    .
+    <http://code.google.com/p/hmpfr/wiki/GHCWithoutGMP>
+    .
+    /There is a hope that at some point future versions of ghc will not need any modification for/
+    /aern-mpfr to work with them correctly./
+
+Library
+  hs-source-dirs: src
+  Build-Depends:
+        base >= 4.4,
+        QuickCheck >= 2.4,
+        hmpfr >= 0.3.3,
+        aern-order == 0.5.*,
+        aern-real == 0.5.*,
+        aern-interval == 0.5.*
+  Exposed-modules:
+                  Numeric.AERN.MPFRBasis.Interval,
+                  Numeric.AERN.RealArithmetic.Basis.MPFR,
+                  Numeric.AERN.RealArithmetic.Interval.MPFR
+
+  Other-modules:
+    Numeric.AERN.RealArithmetic.Basis.MPFR.Conversion,
+    Numeric.AERN.RealArithmetic.Basis.MPFR.Effort,
+    Numeric.AERN.RealArithmetic.Basis.MPFR.Elementary,
+    Numeric.AERN.RealArithmetic.Basis.MPFR.ExactOps,
+    Numeric.AERN.RealArithmetic.Basis.MPFR.FieldOps,
+    Numeric.AERN.RealArithmetic.Basis.MPFR.Measures,
+    Numeric.AERN.RealArithmetic.Basis.MPFR.MixedFieldOps,
+    Numeric.AERN.RealArithmetic.Basis.MPFR.NumericOrder,
+    Numeric.AERN.RealArithmetic.Basis.MPFR.ShowInternals,
+    Numeric.AERN.RealArithmetic.Basis.MPFR.SpecialConst,
+    Numeric.AERN.RealArithmetic.Basis.MPFR.Utilities
+
+Executable testAERN-Real-MPFR
+  hs-source-dirs: src, tests
+  main-is: Main.hs
+  Build-Depends:
+        base >= 4.4,
+        QuickCheck >= 2.4,
+        test-framework >= 0.3.3, 
+        test-framework-quickcheck2 >= 0.2,
+        hmpfr >= 0.3.3,
+        aern-order == 0.5.*,
+        aern-real == 0.5.*,
+        aern-interval == 0.5.*
+
+Executable demoAERN-Real-MPFR-Minimal
+  hs-source-dirs: src, demos
+  main-is: Minimal.hs
+  Build-Depends:
+        base >= 4.4,
+        QuickCheck >= 2.4,
+        hmpfr >= 0.3.3,
+        aern-order == 0.5.*,
+        aern-real == 0.5.*,
+        aern-interval == 0.5.*
+
+Executable demoAERN-Real-MPFR-LogisticMap
+  hs-source-dirs: src, demos
+  main-is: LogisticMap.hs
+  Build-Depends:
+        base >= 4.4,
+        QuickCheck >= 2.4,
+        hmpfr >= 0.3.3,
+        aern-order == 0.5.*,
+        aern-real == 0.5.*,
+        aern-interval == 0.5.*
+
+      
+    

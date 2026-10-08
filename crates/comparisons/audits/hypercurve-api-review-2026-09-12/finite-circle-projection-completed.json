@@ -1,0 +1,26 @@
+{
+  "returncode": 0,
+  "elapsed_seconds": 0.007498907012632117,
+  "normal_library_sha256": "6c28d291cd5328445f25eacc8c02c951baf90fd360386492128e9e4ae5795757",
+  "log": "finite-circle-projection-completed.log",
+  "source": "native-rational-publication-completed.rs",
+  "command": [
+    "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustc",
+    "--edition=2024",
+    "-O",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/native-rational-publication-completed.rs",
+    "--extern",
+    "hypercurve=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypercurve-42c2716056451e86.rlib",
+    "-L",
+    "dependency=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps",
+    "-o",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-circle-projection-completed"
+  ],
+  "source_sha256": "1bbe6652ed98df1740369ba6e0a1ec5d93f477f4829784c9c414d5c81322250b",
+  "executable_sha256": "fad441211e6d473e640983090c7af20afb443dc3991c8f4b902ed57137026d58",
+  "counts": {
+    "complete_queries": 6,
+    "restrictions": 2,
+    "transverse_node_contacts": 4
+  }
+}

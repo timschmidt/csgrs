@@ -1,0 +1,10 @@
+{
+  "parent": "c46890e2694b50d8ed5dc0baddd43023e757dc3e",
+  "files": {
+    "src/bezier_offset.rs": "9e3581e73002f71ce781daae586bcde2878d14162524c7f53d0ad31aaa02a2f2",
+    "src/bezier_region.rs": "b0f9a169ce066b9659378f74666a88e7c43cf4880aa1067b84f55e6d5dd62cf7"
+  },
+  "all_2044_inputs_match": true,
+  "index_matches_qualified_sources": true,
+  "all_owned_processes_reaped": true
+}

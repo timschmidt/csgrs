@@ -1,0 +1,31 @@
+\doxysubsection{source/hybrid/hybrid\+\_\+enclosure.hpp File Reference}
+\hypertarget{hybrid__enclosure_8hpp}{}\label{hybrid__enclosure_8hpp}\index{source/hybrid/hybrid\_enclosure.hpp@{source/hybrid/hybrid\_enclosure.hpp}}
+
+
+\doxysubsubsection{Description}
+Enclosure sets for hybrid systems. 
+
+{\ttfamily \#include $<$string$>$}\newline
+{\ttfamily \#include $<$vector$>$}\newline
+{\ttfamily \#include $<$list$>$}\newline
+{\ttfamily \#include $<$iostream$>$}\newline
+{\ttfamily \#include "{}conclog/logging.\+hpp"{}}\newline
+{\ttfamily \#include "{}utility/declarations.\+hpp"{}}\newline
+{\ttfamily \#include "{}utility/pointer.\+hpp"{}}\newline
+{\ttfamily \#include "{}utility/container.\+hpp"{}}\newline
+{\ttfamily \#include "{}hybrid/hybrid\+\_\+set.\+decl.\+hpp"{}}\newline
+{\ttfamily \#include "{}hybrid/discrete\+\_\+location.\+hpp"{}}\newline
+{\ttfamily \#include "{}hybrid/discrete\+\_\+event.\+hpp"{}}\newline
+{\ttfamily \#include "{}hybrid/hybrid\+\_\+graphics\+\_\+interface.\+hpp"{}}\newline
+{\ttfamily \#include "{}geometry/box.\+hpp"{}}\newline
+{\ttfamily \#include "{}dynamics/enclosure.\+hpp"{}}\newline
+\doxysubsubsubsection*{Classes}
+\begin{DoxyCompactItemize}
+\item 
+class \mbox{\hyperlink{classAriadne_1_1HybridEnclosure}{Hybrid\+Enclosure}}
+\begin{DoxyCompactList}\small\item\em A class representing an enclosure for a hybrid evolution. Handles progress, activation and guard constraints internally. The set is represented as the image of a box $D$ under a function model $\xi(s)=\hat{f}(s)$, under the constraints $\hat{c}(s) \leq 0$ and $\hat{e}(s)=0$. Also keeps track of the current time $\tau(s)=\hat{t}(s)$. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsubsection*{Namespaces}
+\begin{DoxyCompactItemize}
+\item 
+namespace \mbox{\hyperlink{namespaceAriadne}{Ariadne}}
+\begin{DoxyCompactList}\small\item\em Top-\/level Ariadne namespace. \end{DoxyCompactList}\end{DoxyCompactItemize}

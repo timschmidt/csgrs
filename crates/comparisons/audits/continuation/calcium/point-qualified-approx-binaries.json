@@ -1,0 +1,37 @@
+{
+  "root": "/tmp/calcium-point-qualified-approx.HLxIaq",
+  "artifacts": [
+    {
+      "variant": "baseline",
+      "platform": "native",
+      "path": "/tmp/calcium-point-qualified-approx.HLxIaq/baseline",
+      "bytes": 2670952,
+      "sha256": "98375d375595f3f149cd4e0b482d87540ef2d540f5e453cf727ba30632e3513e"
+    },
+    {
+      "variant": "baseline",
+      "platform": "wasm",
+      "path": "/tmp/calcium-point-qualified-approx.HLxIaq/baseline.wasm",
+      "bytes": 1211336,
+      "sha256": "e6e30fa71118102581134ca754fb76f572a52f1bad1d7fda95997e20129964b2"
+    },
+    {
+      "variant": "candidate",
+      "platform": "native",
+      "path": "/tmp/calcium-point-qualified-approx.HLxIaq/candidate",
+      "bytes": 2672032,
+      "sha256": "1e2f36640afdf57b49756f5f2c6c2dc77cf823e94a4e5b1f76eeaa74f749dff7"
+    },
+    {
+      "variant": "candidate",
+      "platform": "wasm",
+      "path": "/tmp/calcium-point-qualified-approx.HLxIaq/candidate.wasm",
+      "bytes": 1211883,
+      "sha256": "d7b88d97b9e739c6e2e38a16022bbca76547e666cf57958b9e60984cc5893eab"
+    }
+  ],
+  "originSha256": "36e6ede1b9857e1680add0c4d7697261bca063c422cc316fb539fa1bc26a3c71",
+  "harnessSha256": "598aef2b96d4d2c9f56bebd865f7cda53c6fb1c3b84216c626fa0b17fc8d5923",
+  "sharedCollectorSha256": "68abb7309ae0a23ffa4e53a48e91002a1e047cff3b4dcc78a71dcc7340e7643e",
+  "recorded": "2026-09-10T20:48:15.400Z"
+}

@@ -1,0 +1,6 @@
+{
+  "outer_session": 81697,
+  "outer_exit_code": 1,
+  "passed_cases": 1,
+  "failure": "stress geometry compared equal but cold-continuation trace assertion failed; scalar candidate could be selected before excluding a foreign algebraic candidate"
+}

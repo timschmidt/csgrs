@@ -1,0 +1,36 @@
+{
+  "binaries": [
+    {
+      "name": "wide",
+      "path": "/tmp/calcium-zero-factor.1YCn5a/wide",
+      "sha256": "8fe3c6cf8cf846d934e9bbf028e7edb9a3a2dcd1782f4a8707ca265be710a716",
+      "bytes": 2804696
+    },
+    {
+      "name": "public",
+      "path": "/tmp/calcium-zero-factor.1YCn5a/public",
+      "sha256": "35f66f4a18ac3bb42ced14d04e34c511a2bf4aeda218d0db753e9936d2020268",
+      "bytes": 2714816
+    },
+    {
+      "name": "approx",
+      "path": "/tmp/calcium-zero-factor.1YCn5a/approx",
+      "sha256": "de96d9a2c2a36ab2a3bf19c41817751ee186f62071c4cd51494683087e5f0f96",
+      "bytes": 2694712
+    },
+    {
+      "name": "extended",
+      "path": "/tmp/calcium-zero-factor.1YCn5a/extended",
+      "sha256": "c60259f03fc8c9d281260fe23009028e6ad78ec93c5c166123c57c649c8f2026",
+      "bytes": 3179240
+    }
+  ],
+  "baseline": {
+    "variant": "baseline",
+    "path": "/tmp/calcium-power-wide.ijyxgC/baseline",
+    "sha256": "3f2cf8690e7132778b2283de3628600c9b19078f0512f80ab6d5bc1247da5719",
+    "bytes": 2801240
+  },
+  "originSha256": "326f1abbe7e270a5b3d33d3d6128a3e17a786288d545ea014677b2e17a4dff8f",
+  "recorded": "2026-09-11T19:07:41.034Z"
+}

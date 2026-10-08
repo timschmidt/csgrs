@@ -1,0 +1,24 @@
+{
+  "tag": "derivative-candidate-wasm",
+  "started": "2026-09-09T15:18:36.536Z",
+  "finished": "2026-09-09T15:18:53.161Z",
+  "elapsedSeconds": 16.622478493000003,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/derivative-demand-candidate/hypercurve",
+  "command": "env",
+  "args": [
+    "CARGO_TARGET_DIR=/tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse",
+    "CARGO_INCREMENTAL=0",
+    "CARGO_PROFILE_DEV_DEBUG=0",
+    "CARGO_BUILD_JOBS=2",
+    "cargo",
+    "check",
+    "--offline",
+    "--locked",
+    "--all-features",
+    "--lib",
+    "--target",
+    "wasm32-unknown-unknown"
+  ],
+  "code": 101,
+  "signal": null
+}

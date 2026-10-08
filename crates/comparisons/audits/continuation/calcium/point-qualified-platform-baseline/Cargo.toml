@@ -1,0 +1,16 @@
+[package]
+name = "calcium-point-qualified-platform-baseline"
+version = "0.0.0"
+edition = "2024"
+[workspace]
+[dependencies]
+hyperreal = { path = "../e-plan-qualified-candidate/hyperreal" }
+hyperlimit = { path = "../e-plan-qualified-candidate/hyperlimit" }
+hypersolve = { path = "../e-plan-qualified-candidate/hypersolve" }
+serde_json = "1.0"
+[lib]
+crate-type = ["cdylib"]
+path = "../point-qualified-platform.rs"
+[[bin]]
+name = "point-qualified-platform-baseline"
+path = "../point-qualified-platform.rs"

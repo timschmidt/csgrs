@@ -1,0 +1,4 @@
+   Compiling hypersolve v0.3.1 (/tmp/hypercurve-dyadic-bernstein-control.a5ZKq2/hypersolve)
+   Compiling hypercurve v0.3.1 (/tmp/hypercurve-dyadic-bernstein-control.a5ZKq2/hypercurve)
+    Finished `release` profile [optimized] target(s) in 1m 54s
+  Executable unittests src/lib.rs (target/release/deps/hypercurve-ed424c00381a9206)

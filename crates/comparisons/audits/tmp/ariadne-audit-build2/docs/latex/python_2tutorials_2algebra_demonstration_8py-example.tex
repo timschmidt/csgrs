@@ -1,0 +1,70 @@
+\doxysubsection{python/tutorials/algebra\+\_\+demonstration.\+py}
+\hypertarget{python_2tutorials_2algebra_demonstration_8py-example}{}\label{python_2tutorials_2algebra_demonstration_8py-example}A demonstration of the functionality of the Algebra module.
+
+
+\begin{DoxyCodeInclude}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{\#!/usr/bin/python3}}
+\DoxyCodeLine{00002\ }
+\DoxyCodeLine{00003\ }
+\DoxyCodeLine{00008\ }
+\DoxyCodeLine{00009\ \textcolor{comment}{\#\ This\ file\ is\ part\ of\ Ariadne.}}
+\DoxyCodeLine{00010\ }
+\DoxyCodeLine{00011\ \textcolor{comment}{\#\ Ariadne\ is\ free\ software:\ you\ can\ redistribute\ it\ and/or\ modify}}
+\DoxyCodeLine{00012\ \textcolor{comment}{\#\ it\ under\ the\ terms\ of\ the\ GNU\ General\ Public\ License\ as\ published\ by}}
+\DoxyCodeLine{00013\ \textcolor{comment}{\#\ the\ Free\ Software\ Foundation,\ either\ version\ 3\ of\ the\ License,\ or}}
+\DoxyCodeLine{00014\ \textcolor{comment}{\#\ (at\ your\ option)\ any\ later\ version.}}
+\DoxyCodeLine{00015\ }
+\DoxyCodeLine{00016\ \textcolor{comment}{\#\ Ariadne\ is\ distributed\ in\ the\ hope\ that\ it\ will\ be\ useful,}}
+\DoxyCodeLine{00017\ \textcolor{comment}{\#\ but\ WITHOUT\ ANY\ WARRANTY;\ without\ even\ the\ implied\ warranty\ of}}
+\DoxyCodeLine{00018\ \textcolor{comment}{\#\ MERCHANTABILITY\ or\ FITNESS\ FOR\ A\ PARTICULAR\ PURPOSE.\ \ See\ the}}
+\DoxyCodeLine{00019\ \textcolor{comment}{\#\ GNU\ General\ Public\ License\ for\ more\ details.}}
+\DoxyCodeLine{00020\ }
+\DoxyCodeLine{00021\ \textcolor{comment}{\#\ You\ should\ have\ received\ a\ copy\ of\ the\ GNU\ General\ Public\ License}}
+\DoxyCodeLine{00022\ \textcolor{comment}{\#\ along\ with\ Ariadne.\ If\ not,\ see\ <https://www.gnu.org/licenses/>.}}
+\DoxyCodeLine{00023\ }
+\DoxyCodeLine{00024\ \textcolor{comment}{\#\ Import\ all\ classes\ in\ the\ ariadne\ module}}
+\DoxyCodeLine{00025\ \textcolor{keyword}{from}\ pyariadne\ \textcolor{keyword}{import}\ *}
+\DoxyCodeLine{00026\ }
+\DoxyCodeLine{00027\ }
+\DoxyCodeLine{00028\ \textcolor{keyword}{def\ }linear\_algebra\_demonstration():}
+\DoxyCodeLine{00029\ \ \ \ \ \textcolor{comment}{\#!\ [Linear\ Algebra\ demonstration]}}
+\DoxyCodeLine{00030\ }
+\DoxyCodeLine{00031\ \ \ \ \ \textcolor{comment}{\#\ Create\ a\ rational\ vector}}
+\DoxyCodeLine{00032\ \ \ \ \ bq=RationalVector([1,q\_(2.4),Rational(31,8)])}
+\DoxyCodeLine{00033\ \ \ \ \ \textcolor{comment}{\#\ Create\ a\ rational\ vector\ using\ Vector\ generic}}
+\DoxyCodeLine{00034\ \ \ \ \ bq=Vector[Rational]([1,q\_(2.4),Rational(31,8)])}
+\DoxyCodeLine{00035\ \ \ \ \ print(\textcolor{stringliteral}{"{}bq:"{}},bq)}
+\DoxyCodeLine{00036\ \ \ \ \ \textcolor{comment}{\#\ Create\ a\ rational\ matrix}}
+\DoxyCodeLine{00037\ \ \ \ \ Aq=RationalMatrix([[1,2,4],[3,q\_(1.5),2],[0,0,1]])}
+\DoxyCodeLine{00038\ \ \ \ \ Aq=Matrix[Rational]([[1,2,4],[3,q\_(1.5),2],[0,-\/1,1]])}
+\DoxyCodeLine{00039\ \ \ \ \ print(\textcolor{stringliteral}{"{}Aq:"{}},Aq)}
+\DoxyCodeLine{00040\ \ \ \ \ \textcolor{comment}{\#\ Solve\ the\ linear\ equation\ Ax=b}}
+\DoxyCodeLine{00041\ \ \ \ \ xq=solve(Aq,bq)}
+\DoxyCodeLine{00042\ \ \ \ \ print(\textcolor{stringliteral}{"{}Aq\(\backslash\)\(\backslash\)bq:"{}},xq)}
+\DoxyCodeLine{00043\ }
+\DoxyCodeLine{00044\ }
+\DoxyCodeLine{00045\ }
+\DoxyCodeLine{00046\ \ \ \ \ \textcolor{comment}{\#\ Create\ an\ interval\ vector}}
+\DoxyCodeLine{00047\ \ \ \ \ b=FloatDPBoundsVector([1,\textcolor{stringliteral}{"{}2.5"{}},\{x\_(3.75):x\_(4.0)\}],dp)}
+\DoxyCodeLine{00048\ \ \ \ \ b=Vector[FloatDPBounds]([1,\textcolor{stringliteral}{"{}2.4"{}},\{x\_(3.75):x\_(4.0)\}],dp)}
+\DoxyCodeLine{00049\ \ \ \ \ b=Vector[Bounds[FloatDP]]([1,\textcolor{stringliteral}{"{}2.4"{}},\{x\_(3.75):x\_(4.0)\}],dp)}
+\DoxyCodeLine{00050\ \ \ \ \ b=Vector[Bounds[Float[DP]]]([1,\textcolor{stringliteral}{"{}2.4"{}},\{x\_(3.75):x\_(4.0)\}],dp)}
+\DoxyCodeLine{00051\ \ \ \ \ print(\textcolor{stringliteral}{"{}b:"{}},b)}
+\DoxyCodeLine{00052\ }
+\DoxyCodeLine{00053\ \ \ \ \ \textcolor{comment}{\#\ Create\ an\ interval\ matrix}}
+\DoxyCodeLine{00054\ \ \ \ \ A=FloatDPBoundsMatrix([[1,2,4],[3,x\_(1.5),2],[0,-\/1,1]],dp)}
+\DoxyCodeLine{00055\ \ \ \ \ print(\textcolor{stringliteral}{"{}A:"{}},A)}
+\DoxyCodeLine{00056\ }
+\DoxyCodeLine{00057\ \ \ \ \ \textcolor{comment}{\#\ Solve\ the\ linear\ equation\ Ax=b}}
+\DoxyCodeLine{00058\ \ \ \ \ x=solve(A,b)}
+\DoxyCodeLine{00059\ \ \ \ \ print(\textcolor{stringliteral}{"{}A\(\backslash\)\(\backslash\)b:"{}},x)}
+\DoxyCodeLine{00060\ \ \ \ \ \textcolor{comment}{\#!\ [Linear\ Algebra\ demonstration]}}
+\DoxyCodeLine{00061\ }
+\DoxyCodeLine{00062\ }
+\DoxyCodeLine{00063\ }
+\DoxyCodeLine{00064\ }
+\DoxyCodeLine{00065\ \textcolor{keywordflow}{if}\ \_\_name\_\_==\textcolor{stringliteral}{'\_\_main\_\_'}:}
+\DoxyCodeLine{00066\ \ \ \ \ linear\_algebra\_demonstration()}
+
+\end{DoxyCodeInclude}
+ 

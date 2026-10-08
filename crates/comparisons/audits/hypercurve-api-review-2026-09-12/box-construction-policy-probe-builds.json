@@ -1,0 +1,20 @@
+{
+  "library_sha256": "0e71ba65c8849dd3971d071508a6d1e3311c5c00c1c69c2168cfc90fac0057d3",
+  "builds": [
+    {
+      "source": "stationary-ph-offset-inspect.rs",
+      "binary": "stationary-ph-offset-box-construction-policy",
+      "binary_sha256": "7db44ee0b2a91a0c58a78f04e383ce07e259ac79ccc3d46d7a245e9a92f35806"
+    },
+    {
+      "source": "stationary-ph-offset-approximate-inspect.rs",
+      "binary": "stationary-ph-offset-box-construction-policy-approximate",
+      "binary_sha256": "4145c28b8f21b6a09b6ef842ce0c74a38a4e1a37ce5f4610101210f968c82eb6"
+    },
+    {
+      "source": "bezier-extrema-bound-policy-probe.rs",
+      "binary": "bezier-extrema-bound-policy-probe",
+      "binary_sha256": "94f1b683b06644d70f077a54a9eaca8d40ed9ffd9d26757260a83c6ccc169c79"
+    }
+  ]
+}

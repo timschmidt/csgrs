@@ -1,0 +1,11 @@
+Order retained source tangents across exact affine charts
+
+Use Hypersolve selected-field arithmetic when the existing source bilinear
+sign kernel is unresolved. Certified parameter substitution lets the same
+geometric branch ordering survive an affine reparameterization without
+requiring projected scalar coordinates.
+
+Preserve native and represented arithmetic, derivative normalization formulas,
+and topology guards. Migrate all affine-relation callers to the strict API.
+Extend curvature and both third-order graph-jet regressions across different
+charts, plus reflected and swapped public arrangement traversal cases.

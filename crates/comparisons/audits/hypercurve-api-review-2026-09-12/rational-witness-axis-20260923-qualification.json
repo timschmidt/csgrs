@@ -1,0 +1,111 @@
+{
+  "parent": "383f3e96599c975e82023149dd821ff57e7ec404",
+  "main_files_verified": 185,
+  "sha256": "4f11e433a42448acb2aa54afa0d1a38a0394af72a82fe37a2acfffbb7f8d4b70",
+  "hypersolve": {
+    "candidate": {
+      "returncode": 0,
+      "elapsed_seconds": 29.29267998295836,
+      "binary_sha256": "b93a644e01942d1486d1ca93f6ad53a6c83ec397c76caf55b61d279ea2e3b7bb",
+      "checks": [
+        {
+          "command": [
+            "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+            "check",
+            "--all-targets",
+            "--all-features",
+            "--locked",
+            "--offline"
+          ],
+          "returncode": 0,
+          "log": "rational-witness-axis-20260923-candidate-check-0.log"
+        },
+        {
+          "command": [
+            "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+            "check",
+            "--all-targets",
+            "--no-default-features",
+            "--locked",
+            "--offline"
+          ],
+          "returncode": 0,
+          "log": "rational-witness-axis-20260923-candidate-check-1.log"
+        }
+      ]
+    },
+    "parent": {
+      "returncode": 101,
+      "elapsed_seconds": 0.14416489202994853,
+      "binary_sha256": "2ce29d207d3e34fb02c8a34cbe4c16cb94618ae7065413666e6a5cb67a6e5428"
+    },
+    "all_sources_unchanged": true,
+    "all_processes_reaped": true
+  },
+  "hypercurve_focused": {
+    "cases": [
+      {
+        "name": "bezier_offset::conversion_tests::chord_normal_recursive_frame_retains_center_and_oriented_unit_normal",
+        "returncode": 0,
+        "passed": true,
+        "limit_seconds": 75,
+        "elapsed_seconds": 0.21224593895021826,
+        "log": "rational-witness-axis-20260923-hypercurve-focused1-case-0.log"
+      },
+      {
+        "name": "bezier_offset::conversion_tests::represented_recursive_contact_centers_handle_exact_tangency",
+        "returncode": 0,
+        "passed": true,
+        "limit_seconds": 75,
+        "elapsed_seconds": 31.405200539971702,
+        "log": "rational-witness-axis-20260923-hypercurve-focused1-case-1.log"
+      },
+      {
+        "name": "bezier_offset::conversion_tests::nonstructural_recursive_centers_handle_exact_tangency",
+        "returncode": 0,
+        "passed": true,
+        "limit_seconds": 75,
+        "elapsed_seconds": 0.45824771898332983,
+        "log": "rational-witness-axis-20260923-hypercurve-focused1-case-2.log"
+      },
+      {
+        "name": "bezier_offset::conversion_tests::parallel_normal_recursive_frame_preserves_source_parameter_and_positive_speed",
+        "returncode": 0,
+        "passed": true,
+        "limit_seconds": 75,
+        "elapsed_seconds": 0.20579525199718773,
+        "log": "rational-witness-axis-20260923-hypercurve-focused1-case-3.log"
+      },
+      {
+        "name": "bezier_offset::conversion_tests::rank_independent_chord_normal_circle_publishes_rational_overlap",
+        "returncode": 0,
+        "passed": true,
+        "limit_seconds": 75,
+        "elapsed_seconds": 0.20641222898848355,
+        "log": "rational-witness-axis-20260923-hypercurve-focused1-case-4.log"
+      },
+      {
+        "name": "bezier_offset::conversion_tests::dense_chord_normal_independent_anchor_uses_rank_independent_fallback",
+        "returncode": 0,
+        "passed": true,
+        "limit_seconds": 75,
+        "elapsed_seconds": 29.699903195956722,
+        "log": "rational-witness-axis-20260923-hypercurve-focused1-case-5.log"
+      },
+      {
+        "name": "bezier_region::tests::selected_circle_and_promoted_line_extend_through_the_chord_support_cell",
+        "returncode": 0,
+        "passed": true,
+        "limit_seconds": 75,
+        "elapsed_seconds": 6.561662185005844,
+        "log": "rational-witness-axis-20260923-hypercurve-focused1-case-6.log"
+      }
+    ],
+    "binary_sha256": "05272dc4a8588dbaa08f03d5253c78aaa568bfc0c953bcb9d5e37138981576e6",
+    "all_sources_unchanged": true,
+    "all_processes_reaped": true
+  },
+  "hypercurve_broad_qualification_pending": true,
+  "all_owned_processes_reaped": true,
+  "full_goal_complete": false
+}

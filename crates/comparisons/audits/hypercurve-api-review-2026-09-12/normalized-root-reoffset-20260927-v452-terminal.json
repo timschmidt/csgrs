@@ -1,0 +1,54 @@
+{
+  "source_manifest": "normalized-root-reoffset-20260927-v452-sources.json",
+  "source_directory": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/source-archives/normalized-root-reoffset-20260927-v452",
+  "cases": [
+    {
+      "binary": "normalized-root-reoffset-20260927-v452-hypercurve_curve_region_promotion",
+      "name": "strict_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions",
+      "returncode": 124,
+      "log": "normalized-root-reoffset-20260927-v452-case-000.log",
+      "elapsed_seconds": 360.0328457360156
+    }
+  ],
+  "builds": [
+    {
+      "crate": "hypercurve",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "test",
+        "--test",
+        "hypercurve_curve_region_promotion",
+        "--release",
+        "--all-features",
+        "--no-run",
+        "--message-format=json",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "log": "normalized-root-reoffset-20260927-v452-hypercurve_curve_region_promotion-build.log",
+      "elapsed_seconds": 112.27026713592932,
+      "binary": {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/normalized-root-reoffset-20260927-v452-hypercurve_curve_region_promotion",
+        "sha256": "5876b6e452344049438ca12788794790e1a362a5cacdcd7503bb21fa31a8973e"
+      }
+    }
+  ],
+  "trial": {
+    "hypersolve/src/root_sign.rs": "17fce0b76e5b2e4198fcee967277ac47396efee5d00748078ca0a68c72606496",
+    "hyperreal/src/computable/node/quadratic_tower.rs": "1dd0791099eb4dc6b759437926ee0bb6f439fcbca332df3c86bcdada4e74a938",
+    "hypersolve/src/root_isolation.rs": "70d69c3759a5cd6ba758365080c51ed30b12158eb33c2a6ef79faaeff28cc7d4",
+    "hypercurve/tests/hypercurve_curve_region_promotion.rs": "5dc09efb4af1881a11d83551a68039740a17b28b79d73bf742f2d7f083b43015"
+  },
+  "all_processes_reaped": true,
+  "checks": [],
+  "qualification_scope": "Extended-fillet re-offset with reduced normalized root queries, tower branch signs, and fillet chart ownership across all regularized loops",
+  "expected_cases": {
+    "hypercurve_curve_region_promotion": [
+      "strict_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions",
+      "approximate_512_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions"
+    ]
+  },
+  "failure": "case failure or missing exact test",
+  "qualification_complete": false
+}

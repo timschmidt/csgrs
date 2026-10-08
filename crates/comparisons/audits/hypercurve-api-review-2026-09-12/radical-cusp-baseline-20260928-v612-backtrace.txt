@@ -1,0 +1,65 @@
+
+This GDB supports auto-downloading debuginfo from the following URLs:
+  <ima:enforcing>
+  <https://debuginfod.fedoraproject.org/>
+  <ima:ignore>
+Enable debuginfod for this session? (y or [n]) [answered N; input not from terminal]
+Debuginfod has been disabled.
+To make this setting permanent, add 'set debuginfod enabled off' to .gdbinit.
+[New LWP 3625480]
+Error while mapping shared library sections:
+Could not open `target:/lib64/libgcc_s.so.1' as an executable file: Input/output error
+Error while mapping shared library sections:
+Could not open `target:/lib64/libm.so.6' as an executable file: Input/output error
+Error while mapping shared library sections:
+Could not open `target:/lib64/libc.so.6' as an executable file: Input/output error
+Error while mapping shared library sections:
+Could not open `target:/lib64/ld-linux-x86-64.so.2' as an executable file: Input/output error
+
+warning: Unable to find dynamic linker breakpoint function.
+GDB will be unable to debug shared library initializers
+and track explicitly loaded dynamic code.
+
+warning: Target and debugger are in different PID namespaces; thread lists and other data are likely unreliable.  Connect to gdbserver inside the container.
+0x00007f51ae23c24d in ?? ()
+[Thread debugging using libthread_db enabled]
+Using host libthread_db library "/lib64/libthread_db.so.1".
+
+Thread 2 (Thread 0x7f51ae1476c0 (LWP 3625480) "radical_paralle"):
+#0  0x000055e95cdac42a in <hyperreal::real::arithmetic::Real as core::ops::arith::AddAssign>::add_assign ()
+#1  0x000055e95cd8f322 in hypersolve::curve_resultant::interpolate_samples ()
+#2  0x000055e95cd937ac in hypersolve::curve_resultant::interpolate_parameter_values ()
+#3  0x000055e95cda6bf5 in hypersolve::curve_resultant::linear_parameter_lifts_bivariate_polynomial_system ()
+#4  0x000055e95c842fac in hypercurve::bezier_offset::linear_parameter_lifts_bivariate_polynomial_system_complete ()
+#5  0x000055e95c75b5a6 in hypercurve::bezier_offset::replay_bivariate_parameter_pair ()
+#6  0x000055e95c608254 in <hypercurve::bezier_offset::BezierParallel2>::replay_parallel_pair_projection_with_ranges ()
+#7  0x000055e95c60b4a3 in <hypercurve::bezier_offset::BezierParallel2>::parallel_intersections_from_system_in_domain ()
+#8  0x000055e95c603eaa in <hypercurve::bezier_offset::BezierParallel2>::parallel_intersections_on_regular_domains ()
+#9  0x000055e95caca752 in <hypercurve::curve_region_boolean::CurveRegionBooleanContext>::pair_result ()
+#10 0x000055e95cad30ee in <hypercurve::curve_region_boolean::CurveRegionBooleanContext>::build_split_topology ()
+#11 0x000055e95cae009f in <hypercurve::curve_region_boolean::CurveRegionBooleanContext>::build_regularized_region ()
+#12 0x000055e95ca0129a in <hypercurve::bezier_region::CurveRegion2>::regularized_region_raw ()
+#13 0x000055e95c9fb2e3 in <hypercurve::bezier_region::CurveRegion2>::try_from_boundary_paths_with_loop_topology::{closure#0} ()
+#14 0x000055e95ca12b1a in <hypercurve::bezier_region::CurveRegion2>::try_from_boundary_paths_with_loop_topology ()
+#15 0x000055e95c37e2cd in hypercurve_analytic_parallel_region::radical_cusp_split_parallel_region ()
+#16 0x000055e95c386a0f in <hypercurve_analytic_parallel_region::radical_parallel_cusp_offsets_exactly_under_both_policies::{closure#0} as core::ops::function::FnOnce<()>>::call_once ()
+#17 0x000055e95c3c1b8b in test::__rust_begin_short_backtrace::<core::result::Result<(), alloc::string::String>, fn() -> core::result::Result<(), alloc::string::String>> ()
+#18 0x000055e95c3cf1d5 in test::run_test::{closure#0} ()
+#19 0x000055e95c3c8b84 in std::sys::backtrace::__rust_begin_short_backtrace::<test::run_test::{closure#1}, ()> ()
+#20 0x000055e95c3d2322 in <std::thread::lifecycle::spawn_unchecked<test::run_test::{closure#1}, ()>::{closure#1} as core::ops::function::FnOnce<()>>::call_once::{shim:vtable#0} ()
+#21 0x000055e95cf23e6f in <std::sys::thread::unix::Thread>::new::thread_start ()
+#22 0x00007f51ae1bbac4 in start_thread () from /proc/3625479/root/lib64/libc.so.6
+#23 0x00007f51ae23e4ac in __clone3 () from /proc/3625479/root/lib64/libc.so.6
+
+Thread 1 (Thread 0x7f51ae149300 (LWP 3625479) "common-point-in"):
+#0  0x00007f51ae23c24d in syscall () from /proc/3625479/root/lib64/libc.so.6
+#1  0x000055e95cf0fcf6 in <std::thread::thread::Thread>::park ()
+#2  0x000055e95c3cffc5 in <std::sync::mpmc::list::Channel<test::event::CompletedTest>>::recv::{closure#1} ()
+#3  0x000055e95c3db10a in <std::sync::mpmc::list::Channel<test::event::CompletedTest>>::recv ()
+#4  0x000055e95c3e7bd6 in test::console::run_tests_console ()
+#5  0x000055e95c3d3c3b in test::test_main_static ()
+#6  0x000055e95c3ae543 in std::sys::backtrace::__rust_begin_short_backtrace::<fn(), ()> ()
+#7  0x000055e95c3ae739 in std::rt::lang_start::<()>::{closure#0} ()
+#8  0x000055e95cf1b677 in std::rt::lang_start_internal ()
+#9  0x000055e95c38f405 in main ()
+[Inferior 1 (process 3625479) detached]

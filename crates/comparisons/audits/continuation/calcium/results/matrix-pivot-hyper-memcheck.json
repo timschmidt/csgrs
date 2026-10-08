@@ -1,0 +1,19 @@
+{
+  "tag": "matrix-pivot-hyper-memcheck",
+  "started": "2026-09-09T01:36:25.177Z",
+  "finished": "2026-09-09T01:36:32.231Z",
+  "elapsedSeconds": 7.044303063999999,
+  "cwd": "/home/tim/Documents/GitHub/workspace",
+  "command": "valgrind",
+  "args": [
+    "--vgdb=no",
+    "--tool=memcheck",
+    "--error-exitcode=97",
+    "--leak-check=full",
+    "--show-leak-kinds=all",
+    "--errors-for-leak-kinds=definite,indirect,possible",
+    "/tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/debug/calcium-matrix-pivot-hyper"
+  ],
+  "code": 0,
+  "signal": null
+}

@@ -1,0 +1,17 @@
+{
+  "repos": {
+    "hypercurve": {
+      "parent": "e3fbb1ede41edb94ec86ae77dc16541234749ecb",
+      "paths": {
+        "benches/bezier_tangent_order.rs": "69ebbce96c35131fee82de2e7987df737623962954a44db21dbf3601eb646d6c",
+        "fuzz/fuzz_targets/bezier_tangent_order.rs": "68581dfd1082c8a278f36c074eeed1888121bfb71d9a4396e6213d1dfce530e4",
+        "src/bezier_arrangement.rs": "4ea3b0ef8fc4601fd19ce9c0a800e677e6c0690a185eefcbb184947d225fc848",
+        "src/bezier_tangent_order.rs": "b1dc7c56833ab626e37d757de05de6097fa9d7620a20886e708a4ff1d91d59a3",
+        "src/lib.rs": "b95f10f1a30fb913b675ae4dd5009367916d3a05909e838998ad5295ca877f1c",
+        "tests/hypercurve_bezier_tangent_order.rs": "1e66b25f7bfe68ac3a73b9a1b71c3d6a86123e143b0c986cdbf2b080ca60dde4"
+      }
+    }
+  },
+  "qualification": "tangent-extraction-v825-terminal.json",
+  "verified_source_files": 2048
+}

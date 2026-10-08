@@ -1,0 +1,19 @@
+{
+  "tag": "derivative-state-baseline-memcheck",
+  "started": "2026-09-09T15:40:16.092Z",
+  "finished": "2026-09-09T15:40:46.705Z",
+  "elapsedSeconds": 30.610087514000003,
+  "cwd": "/home/tim/Documents/GitHub/workspace",
+  "command": "valgrind",
+  "args": [
+    "--vgdb=no",
+    "--tool=memcheck",
+    "--error-exitcode=97",
+    "--leak-check=full",
+    "--show-leak-kinds=all",
+    "--errors-for-leak-kinds=definite,indirect,possible",
+    "/tmp/calcium-derivative-apps.5K06wk/baseline-state"
+  ],
+  "code": 97,
+  "signal": null
+}

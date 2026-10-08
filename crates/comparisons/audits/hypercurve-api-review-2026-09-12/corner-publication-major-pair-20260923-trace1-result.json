@@ -1,0 +1,8 @@
+{
+  "returncode": "timeout",
+  "elapsed_seconds": 45.001306129968725,
+  "log": "corner-publication-major-pair-20260923-trace1.log",
+  "bytes": 223962098,
+  "binary_sha256": "112f98a02511d87efb1986baf0d9ad8a70438728a46f953a2839627840b2d73d",
+  "all_processes_reaped": true
+}

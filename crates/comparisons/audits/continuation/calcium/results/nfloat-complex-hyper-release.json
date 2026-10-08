@@ -1,0 +1,25 @@
+{
+  "tag": "nfloat-complex-hyper-release",
+  "started": "2026-09-09T17:06:27.764Z",
+  "finished": "2026-09-09T17:09:03.338Z",
+  "elapsedSeconds": 155.571474341,
+  "cwd": "/home/tim/Documents/GitHub/workspace/hyperlattice",
+  "command": "env",
+  "args": [
+    "CARGO_TARGET_DIR=/tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse",
+    "CARGO_INCREMENTAL=0",
+    "CARGO_PROFILE_DEV_DEBUG=0",
+    "CARGO_BUILD_JOBS=2",
+    "cargo",
+    "test",
+    "--offline",
+    "--locked",
+    "--release",
+    "--test",
+    "complex",
+    "--",
+    "--test-threads=1"
+  ],
+  "code": 0,
+  "signal": null
+}

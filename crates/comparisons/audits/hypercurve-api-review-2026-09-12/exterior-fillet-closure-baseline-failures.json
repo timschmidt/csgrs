@@ -1,0 +1,12 @@
+{
+  "hypercurve_curve_region_promotion": [
+    "approximate_512_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions",
+    "arc_parabola_fillet_recovers_exact_complement_contacts",
+    "line_parabola_fillet_extends_the_regular_incident_cell_exactly",
+    "non_ph_bezier_pair_projective_fillet_retains_algebraic_extensions",
+    "nonconvex_algebraic_chord_expansion_is_exact_and_local_collapse_is_explicit",
+    "strict_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions",
+    "unified_mixed_line_arc_erosion_splits_after_a_curved_neck_collapse",
+    "unified_region_non_miter_erosions_split_after_neck_collapse"
+  ]
+}

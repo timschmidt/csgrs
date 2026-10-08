@@ -1,0 +1,292 @@
+[
+  {
+    "reason": "compiler-message",
+    "package_id": "path+file:///home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/build-workspace-20260925/csgrs#0.23.0",
+    "manifest_path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/build-workspace-20260925/csgrs/Cargo.toml",
+    "target": {
+      "kind": [
+        "cdylib",
+        "rlib"
+      ],
+      "crate_types": [
+        "cdylib",
+        "rlib"
+      ],
+      "name": "csgrs",
+      "src_path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/build-workspace-20260925/csgrs/src/lib.rs",
+      "edition": "2024",
+      "doc": true,
+      "doctest": true,
+      "test": true
+    },
+    "message": {
+      "rendered": "error[E0308]: mismatched types\n     --> src/curve/native.rs:3073:29\n      |\n 3073 |             .classify_point(&Point2::new(x, y), decisions.curve_policy())\n      |              -------------- ^^^^^^^^^^^^^^^^^^ expected `&CurvePoint2`, found `&Point2`\n      |              |\n      |              arguments to this method are incorrect\n      |\n      = note: expected reference `&CurvePoint2`\n                 found reference `&hypercurve::Point2`\nnote: method defined here\n     --> /home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/build-workspace-20260925/hypercurve/src/bezier_region.rs:12979:12\n      |\n12979 |     pub fn classify_point(\n      |            ^^^^^^^^^^^^^^\n\n",
+      "$message_type": "diagnostic",
+      "children": [
+        {
+          "children": [],
+          "code": null,
+          "level": "note",
+          "message": "expected reference `&CurvePoint2`\n   found reference `&hypercurve::Point2`",
+          "rendered": null,
+          "spans": []
+        },
+        {
+          "children": [],
+          "code": null,
+          "level": "note",
+          "message": "method defined here",
+          "rendered": null,
+          "spans": [
+            {
+              "byte_end": 531776,
+              "byte_start": 531762,
+              "column_end": 26,
+              "column_start": 12,
+              "expansion": null,
+              "file_name": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/build-workspace-20260925/hypercurve/src/bezier_region.rs",
+              "is_primary": true,
+              "label": null,
+              "line_end": 12979,
+              "line_start": 12979,
+              "suggested_replacement": null,
+              "suggestion_applicability": null,
+              "text": [
+                {
+                  "highlight_end": 26,
+                  "highlight_start": 12,
+                  "text": "    pub fn classify_point("
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "level": "error",
+      "message": "mismatched types",
+      "spans": [
+        {
+          "byte_end": 110165,
+          "byte_start": 110147,
+          "column_end": 47,
+          "column_start": 29,
+          "expansion": null,
+          "file_name": "src/curve/native.rs",
+          "is_primary": true,
+          "label": "expected `&CurvePoint2`, found `&Point2`",
+          "line_end": 3073,
+          "line_start": 3073,
+          "suggested_replacement": null,
+          "suggestion_applicability": null,
+          "text": [
+            {
+              "highlight_end": 47,
+              "highlight_start": 29,
+              "text": "            .classify_point(&Point2::new(x, y), decisions.curve_policy())"
+            }
+          ]
+        },
+        {
+          "byte_end": 110146,
+          "byte_start": 110132,
+          "column_end": 28,
+          "column_start": 14,
+          "expansion": null,
+          "file_name": "src/curve/native.rs",
+          "is_primary": false,
+          "label": "arguments to this method are incorrect",
+          "line_end": 3073,
+          "line_start": 3073,
+          "suggested_replacement": null,
+          "suggestion_applicability": null,
+          "text": [
+            {
+              "highlight_end": 28,
+              "highlight_start": 14,
+              "text": "            .classify_point(&Point2::new(x, y), decisions.curve_policy())"
+            }
+          ]
+        }
+      ],
+      "code": {
+        "code": "E0308",
+        "explanation": "Expected type did not match the received type.\n\nErroneous code examples:\n\n```compile_fail,E0308\nfn plus_one(x: i32) -> i32 {\n    x + 1\n}\n\nplus_one(\"Not a number\");\n//       ^^^^^^^^^^^^^^ expected `i32`, found `&str`\n\nif \"Not a bool\" {\n// ^^^^^^^^^^^^ expected `bool`, found `&str`\n}\n\nlet x: f32 = \"Not a float\";\n//     ---   ^^^^^^^^^^^^^ expected `f32`, found `&str`\n//     |\n//     expected due to this\n```\n\nThis error occurs when an expression was used in a place where the compiler\nexpected an expression of a different type. It can occur in several cases, the\nmost common being when calling a function and passing an argument which has a\ndifferent type than the matching type in the function declaration.\n"
+      }
+    }
+  },
+  {
+    "reason": "compiler-message",
+    "package_id": "path+file:///home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/build-workspace-20260925/csgrs#0.23.0",
+    "manifest_path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/build-workspace-20260925/csgrs/Cargo.toml",
+    "target": {
+      "kind": [
+        "cdylib",
+        "rlib"
+      ],
+      "crate_types": [
+        "cdylib",
+        "rlib"
+      ],
+      "name": "csgrs",
+      "src_path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/build-workspace-20260925/csgrs/src/lib.rs",
+      "edition": "2024",
+      "doc": true,
+      "doctest": true,
+      "test": true
+    },
+    "message": {
+      "rendered": "error[E0308]: mismatched types\n     --> src/curve/native.rs:3073:29\n      |\n 3073 |             .classify_point(&Point2::new(x, y), decisions.curve_policy())\n      |              -------------- ^^^^^^^^^^^^^^^^^^ expected `&CurvePoint2`, found `&Point2`\n      |              |\n      |              arguments to this method are incorrect\n      |\n      = note: expected reference `&CurvePoint2`\n                 found reference `&hypercurve::Point2`\nnote: method defined here\n     --> /home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/build-workspace-20260925/hypercurve/src/bezier_region.rs:12979:12\n      |\n12979 |     pub fn classify_point(\n      |            ^^^^^^^^^^^^^^\n\n",
+      "$message_type": "diagnostic",
+      "children": [
+        {
+          "children": [],
+          "code": null,
+          "level": "note",
+          "message": "expected reference `&CurvePoint2`\n   found reference `&hypercurve::Point2`",
+          "rendered": null,
+          "spans": []
+        },
+        {
+          "children": [],
+          "code": null,
+          "level": "note",
+          "message": "method defined here",
+          "rendered": null,
+          "spans": [
+            {
+              "byte_end": 531776,
+              "byte_start": 531762,
+              "column_end": 26,
+              "column_start": 12,
+              "expansion": null,
+              "file_name": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/build-workspace-20260925/hypercurve/src/bezier_region.rs",
+              "is_primary": true,
+              "label": null,
+              "line_end": 12979,
+              "line_start": 12979,
+              "suggested_replacement": null,
+              "suggestion_applicability": null,
+              "text": [
+                {
+                  "highlight_end": 26,
+                  "highlight_start": 12,
+                  "text": "    pub fn classify_point("
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "level": "error",
+      "message": "mismatched types",
+      "spans": [
+        {
+          "byte_end": 110165,
+          "byte_start": 110147,
+          "column_end": 47,
+          "column_start": 29,
+          "expansion": null,
+          "file_name": "src/curve/native.rs",
+          "is_primary": true,
+          "label": "expected `&CurvePoint2`, found `&Point2`",
+          "line_end": 3073,
+          "line_start": 3073,
+          "suggested_replacement": null,
+          "suggestion_applicability": null,
+          "text": [
+            {
+              "highlight_end": 47,
+              "highlight_start": 29,
+              "text": "            .classify_point(&Point2::new(x, y), decisions.curve_policy())"
+            }
+          ]
+        },
+        {
+          "byte_end": 110146,
+          "byte_start": 110132,
+          "column_end": 28,
+          "column_start": 14,
+          "expansion": null,
+          "file_name": "src/curve/native.rs",
+          "is_primary": false,
+          "label": "arguments to this method are incorrect",
+          "line_end": 3073,
+          "line_start": 3073,
+          "suggested_replacement": null,
+          "suggestion_applicability": null,
+          "text": [
+            {
+              "highlight_end": 28,
+              "highlight_start": 14,
+              "text": "            .classify_point(&Point2::new(x, y), decisions.curve_policy())"
+            }
+          ]
+        }
+      ],
+      "code": {
+        "code": "E0308",
+        "explanation": "Expected type did not match the received type.\n\nErroneous code examples:\n\n```compile_fail,E0308\nfn plus_one(x: i32) -> i32 {\n    x + 1\n}\n\nplus_one(\"Not a number\");\n//       ^^^^^^^^^^^^^^ expected `i32`, found `&str`\n\nif \"Not a bool\" {\n// ^^^^^^^^^^^^ expected `bool`, found `&str`\n}\n\nlet x: f32 = \"Not a float\";\n//     ---   ^^^^^^^^^^^^^ expected `f32`, found `&str`\n//     |\n//     expected due to this\n```\n\nThis error occurs when an expression was used in a place where the compiler\nexpected an expression of a different type. It can occur in several cases, the\nmost common being when calling a function and passing an argument which has a\ndifferent type than the matching type in the function declaration.\n"
+      }
+    }
+  },
+  {
+    "reason": "compiler-message",
+    "package_id": "path+file:///home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/build-workspace-20260925/csgrs#0.23.0",
+    "manifest_path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/build-workspace-20260925/csgrs/Cargo.toml",
+    "target": {
+      "kind": [
+        "cdylib",
+        "rlib"
+      ],
+      "crate_types": [
+        "cdylib",
+        "rlib"
+      ],
+      "name": "csgrs",
+      "src_path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/build-workspace-20260925/csgrs/src/lib.rs",
+      "edition": "2024",
+      "doc": true,
+      "doctest": true,
+      "test": true
+    },
+    "message": {
+      "rendered": "For more information about this error, try `rustc --explain E0308`.\n",
+      "$message_type": "diagnostic",
+      "children": [],
+      "level": "failure-note",
+      "message": "For more information about this error, try `rustc --explain E0308`.",
+      "spans": [],
+      "code": null
+    }
+  },
+  {
+    "reason": "compiler-message",
+    "package_id": "path+file:///home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/build-workspace-20260925/csgrs#0.23.0",
+    "manifest_path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/build-workspace-20260925/csgrs/Cargo.toml",
+    "target": {
+      "kind": [
+        "cdylib",
+        "rlib"
+      ],
+      "crate_types": [
+        "cdylib",
+        "rlib"
+      ],
+      "name": "csgrs",
+      "src_path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/build-workspace-20260925/csgrs/src/lib.rs",
+      "edition": "2024",
+      "doc": true,
+      "doctest": true,
+      "test": true
+    },
+    "message": {
+      "rendered": "For more information about this error, try `rustc --explain E0308`.\n",
+      "$message_type": "diagnostic",
+      "children": [],
+      "level": "failure-note",
+      "message": "For more information about this error, try `rustc --explain E0308`.",
+      "spans": [],
+      "code": null
+    }
+  }
+]

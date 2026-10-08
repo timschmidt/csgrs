@@ -1,0 +1,133 @@
+[
+  {
+    "repository": "ExactCalculator",
+    "status": []
+  },
+  {
+    "repository": "NURBS_BREP_kernel",
+    "status": []
+  },
+  {
+    "repository": "alumina-firmware",
+    "status": []
+  },
+  {
+    "repository": "alumina-interface",
+    "status": []
+  },
+  {
+    "repository": "citizen-builder",
+    "status": []
+  },
+  {
+    "repository": "crcalc",
+    "status": []
+  },
+  {
+    "repository": "csgrs",
+    "status": []
+  },
+  {
+    "repository": "csgrs-ffi",
+    "status": []
+  },
+  {
+    "repository": "exactcore-hyper-comparison",
+    "status": []
+  },
+  {
+    "repository": "hyperbrep",
+    "status": []
+  },
+  {
+    "repository": "hypercircuit",
+    "status": []
+  },
+  {
+    "repository": "hypercurve",
+    "status": [
+      " M README.md",
+      " M benches/curve_path.rs",
+      " M src/bezier_arrangement.rs",
+      " M src/curve_intersection.rs",
+      " M src/curve_path_intersection.rs",
+      " M src/curve_region_trim.rs",
+      " M src/curve_subdivision.rs",
+      " M src/curve_support_intersection.rs",
+      " M tests/hypercurve_curve_intersection.rs",
+      " M tests/hypercurve_curve_region_boolean.rs"
+    ]
+  },
+  {
+    "repository": "hyperdrc",
+    "status": []
+  },
+  {
+    "repository": "hyperevolution",
+    "status": []
+  },
+  {
+    "repository": "hypergraphics",
+    "status": []
+  },
+  {
+    "repository": "hyperlattice",
+    "status": []
+  },
+  {
+    "repository": "hyperlimit",
+    "status": []
+  },
+  {
+    "repository": "hypermesh",
+    "status": []
+  },
+  {
+    "repository": "hyperpack",
+    "status": []
+  },
+  {
+    "repository": "hyperparts",
+    "status": []
+  },
+  {
+    "repository": "hyperpath",
+    "status": []
+  },
+  {
+    "repository": "hyperphysics",
+    "status": []
+  },
+  {
+    "repository": "hyperreal",
+    "status": []
+  },
+  {
+    "repository": "hypersdf",
+    "status": []
+  },
+  {
+    "repository": "hypersolve",
+    "status": []
+  },
+  {
+    "repository": "hypertri",
+    "status": []
+  },
+  {
+    "repository": "hypervoxel",
+    "status": []
+  },
+  {
+    "repository": "openscad-rs",
+    "status": []
+  },
+  {
+    "repository": "synaps-cad",
+    "status": []
+  },
+  {
+    "repository": "videos",
+    "status": []
+  }
+]

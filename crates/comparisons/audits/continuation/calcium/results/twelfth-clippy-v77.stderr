@@ -1,0 +1,31 @@
+    Checking hyperreal v0.13.1 (/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/twelfth-relation-candidate-v77/hyperreal)
+error: the loop variable `y` is only used to index `polynomial`
+  --> src/computable/node/twelfth_relation_tests.rs:37:18
+   |
+37 |         for y in 0..2 {
+   |                  ^^^^
+   |
+   = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.97.0/index.html#needless_range_loop
+   = note: `-D clippy::needless-range-loop` implied by `-D warnings`
+   = help: to override `-D warnings` add `#[allow(clippy::needless_range_loop)]`
+help: consider using an iterator
+   |
+37 -         for y in 0..2 {
+37 +         for <item> in polynomial.iter_mut().take(2) {
+   |
+
+error: the loop variable `column` is used to index `matrix`
+  --> src/computable/node/twelfth_relation_tests.rs:50:23
+   |
+50 |         for column in 0..4 {
+   |                       ^^^^
+   |
+   = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.97.0/index.html#needless_range_loop
+help: consider using an iterator and enumerate()
+   |
+50 -         for column in 0..4 {
+50 +         for (column, <item>) in matrix.iter_mut().enumerate() {
+   |
+
+error: could not compile `hyperreal` (lib test) due to 2 previous errors
+warning: build failed, waiting for other jobs to finish...

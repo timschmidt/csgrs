@@ -1,0 +1,5 @@
+   Compiling hyperreal v0.13.1 (/home/tim/Documents/GitHub/workspace/hyperreal)
+   Compiling hyperlattice v0.6.1 (/home/tim/Documents/GitHub/workspace/hyperlattice)
+    Finished `test` profile [unoptimized] target(s) in 3.72s
+     Running tests/api_surface_coverage.rs (/tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/debug/deps/api_surface_coverage-ec99cf21593309ae)
+     Running tests/vector.rs (/tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/debug/deps/vector-c1be21ae819b803e)

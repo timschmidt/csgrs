@@ -1,0 +1,249 @@
+{
+  "schema": "hypercurve.performance-checkpoint.v1",
+  "captured_on": "2026-09-04",
+  "checkpoint": "retained polynomial sign refinement and complete constant Sturm chains",
+  "baseline_revision": "a6cde93",
+  "implementation_revision": "7d58421",
+  "solver_implementation_revision": "0c4f601",
+  "solver_report_revision": "2bca88c",
+  "final_validation_revisions": {
+    "hypercurve": "7d58421",
+    "hypersolve": "2bca88c",
+    "hyperreal": "3f57867",
+    "hyperlimit": "7bf9261",
+    "hyperlattice": "d783af0",
+    "hypertri": "6a2092c",
+    "hypermesh": "d9db5c45",
+    "hypergraphics_demo_dependency": "05d66a3"
+  },
+  "retained_change": "Polynomial sign queries reuse the existing retained parameter refinement state and build the filter Sturm chain only once per query. The separate raw-isolator sign entry point and its duplicate bisection loop are deleted. Hypersolve accepts a certified nonzero constant as a complete one-row field Sturm chain without trying to normalize its zero derivative.",
+  "exactness": {
+    "reproduced_failure": "Before the solver fix, a constant pi filter at the selected root of 2t^2-1 returned Uncertain(RealSign), and the direct nonzero-constant Sturm regression failed. Both pass after the three-line field-kernel fix.",
+    "retained_certificates": "The selected-root GCD proof, non-root interval endpoints, checked Sturm root counts, exact midpoint witnesses, and retryable uncertainty remain authoritative. A common polynomial factor outside the selected interval does not certify a zero at the selected root.",
+    "sign_regression": {
+      "filter_classifications": 84,
+      "structurally_zero_classifications": 6,
+      "midpoint_or_exact_classifications": 4,
+      "coverage": "Both policies; simple and even-multiplicity roots; a common root outside the selected interval; filters rooted at either or both endpoints; midpoint filter cuts; shared selected roots; nonzero constants; rational and pi scaling. Repeated sign queries populate the retained source certificate; a source midpoint root needs no source Sturm chain."
+    },
+    "constant_chain_regression": {
+      "polynomial_policy_combinations": 36,
+      "coverage": "Positive and negative pi, sqrt(2), and rational 5; zero, one, or two trailing structural zeros; both policies. Every chain has one terminal coefficient, zero variations at -1, 0, and pi, and zero roots in [-1,1]. Empty and all-zero polynomials remain rejected."
+    },
+    "unbounded_refinement": "The retained regression separates sqrt(1/2) from half the 104th continued-fraction convergent of sqrt(2), requiring more than the retired 256 bisections. Both measured variants use the same regression fixture and pass it.",
+    "public_api_added": false,
+    "compatibility_shims_added": false,
+    "removed_interfaces": [
+      "signed_polynomial_on_isolating_interval"
+    ]
+  },
+  "source_size": {
+    "hypercurve_production_delta_lines": -46,
+    "hypersolve_production_delta_lines": 3,
+    "combined_production_delta_lines": -43,
+    "combined_regression_delta_lines": 79,
+    "combined_rust_delta_lines": 36,
+    "scope": "Formatted physical source lines in the two implementation commits. Hypercurve's parameter production prefix shrinks from 4,334 to 4,288 lines. The removed offset import is test-only; moving and simplifying its existing deep-refinement fixture plus adding the boundary matrix grows test code by 45 lines. Hypersolve adds 34 test lines and three production lines. Reports and this checkpoint are excluded."
+  },
+  "measurement": {
+    "compiler": "rustc 1.97.0 (2d8144b78 2026-07-07)",
+    "profile": "release",
+    "features": "all",
+    "frozen_dependency_revisions": {
+      "hyperreal": "93c44ab",
+      "hyperlimit": "7bf9261",
+      "hyperlattice": "d783af0",
+      "hypersolve": "1a742c6",
+      "hypertri": "6a2092c"
+    },
+    "method": "A six-repository archived workspace freezes dependencies. Identical new test fixtures were added before building and preserving the baseline executable; only Hypercurve's production sign-refinement changes were then applied for the candidate. Both artifacts were confirmed rebuilt. The constant-field solver fix is deliberately excluded from this isolated performance comparison; full correctness validation uses the final workspace revisions.",
+    "production_prefix_sha256": "b2491d42b4cac8ce773b540ec64f6e875dca431acd0a9f439e34c6434d2b44ad",
+    "production_prefix_hash_scope": "The first 4,288 lines of candidate bezier_parameter.rs, before its test module, match the final checked-in production source.",
+    "timed_test": "bezier_parameter::conversion_tests::algebraic_sign_filter_has_no_fixed_refinement_cap",
+    "command": "/usr/bin/time -v taskset -c 7 bash -c 'for sign_filter_iteration in {1..1000}; do <variant executable> bezier_parameter::conversion_tests::algebraic_sign_filter_has_no_fixed_refinement_cap --exact > /dev/null || exit; done'",
+    "repetitions": "Three alternating batches per variant; 1,000 independent test-process executions in each batch. An exact-filter dry run of each executable confirms one test executes and passes.",
+    "caveat": "Each batch includes process and libtest startup. The machine was not exclusive; batches received 95-96 percent CPU. These measurements describe this deliberately deep refinement case, not a general workload speedup.",
+    "medians": {
+      "baseline_user_seconds": 4.15,
+      "candidate_user_seconds": 0.85,
+      "user_cpu_speedup": 4.882352941176471,
+      "baseline_wall_seconds": 5.99,
+      "candidate_wall_seconds": 2.5,
+      "wall_speedup": 2.396,
+      "baseline_peak_rss_kib": 7872,
+      "candidate_peak_rss_kib": 7808
+    },
+    "samples": [
+      {
+        "variant": "baseline",
+        "run": 1,
+        "user_seconds": 4.12,
+        "system_seconds": 1.65,
+        "wall_seconds": "0:05.99",
+        "peak_rss_kib": 7812,
+        "cpu_percent": 96,
+        "exit_code": 0
+      },
+      {
+        "variant": "baseline",
+        "run": 2,
+        "user_seconds": 4.15,
+        "system_seconds": 1.62,
+        "wall_seconds": "0:05.96",
+        "peak_rss_kib": 7872,
+        "cpu_percent": 96,
+        "exit_code": 0
+      },
+      {
+        "variant": "baseline",
+        "run": 3,
+        "user_seconds": 4.22,
+        "system_seconds": 1.62,
+        "wall_seconds": "0:06.06",
+        "peak_rss_kib": 7872,
+        "cpu_percent": 96,
+        "exit_code": 0
+      },
+      {
+        "variant": "candidate",
+        "run": 1,
+        "user_seconds": 0.85,
+        "system_seconds": 1.54,
+        "wall_seconds": "0:02.50",
+        "peak_rss_kib": 7804,
+        "cpu_percent": 95,
+        "exit_code": 0
+      },
+      {
+        "variant": "candidate",
+        "run": 2,
+        "user_seconds": 0.85,
+        "system_seconds": 1.53,
+        "wall_seconds": "0:02.48",
+        "peak_rss_kib": 7808,
+        "cpu_percent": 96,
+        "exit_code": 0
+      },
+      {
+        "variant": "candidate",
+        "run": 3,
+        "user_seconds": 0.85,
+        "system_seconds": 1.55,
+        "wall_seconds": "0:02.51",
+        "peak_rss_kib": 7860,
+        "cpu_percent": 95,
+        "exit_code": 0
+      }
+    ],
+    "linked_size": {
+      "workload": "bezier_algebraic_parameter benchmark executable, excluding unit-test code",
+      "benchmark_source_sha256": "4c83588f94c6e544d38cf72db4002d38dae979554d011cb35d922a2ff00ec497",
+      "benchmark_source_note": "Both frozen variants use identical benchmark source. Only rustfmt line wrapping differs from the checked-in benchmark.",
+      "baseline": {
+        "text_bytes": 3631722,
+        "data_bytes": 243352,
+        "bss_bytes": 4744,
+        "allocated_bytes": 3879818
+      },
+      "candidate": {
+        "text_bytes": 3628458,
+        "data_bytes": 243296,
+        "bss_bytes": 3968,
+        "allocated_bytes": 3875722
+      },
+      "allocated_delta_bytes": -4096,
+      "scope": "Matched frozen dependencies, benchmark source, and feature/profile settings. No matched library-archive baseline was preserved, so no rlib-size claim is made."
+    }
+  },
+  "validation": {
+    "hypercurve": {
+      "release_all_features": {
+        "passed": 1719,
+        "failed": 0,
+        "ignored": 9,
+        "targets": 45,
+        "active_unit_tests": 878
+      },
+      "release_minimal": {
+        "passed": 1690,
+        "failed": 0,
+        "ignored": 4,
+        "targets": 45,
+        "active_unit_tests": 874
+      },
+      "explicit_ignored_units": {
+        "passed": 6,
+        "seconds": 93.22,
+        "manual_drivers_complete": true
+      },
+      "explicit_ignored_strokes": {
+        "passed": 3,
+        "seconds": 56.71
+      },
+      "parameter_units_passed": 30,
+      "other_gates_passed": [
+        "cargo fmt --all -- --check",
+        "cargo clippy --locked --all-targets --all-features -- -D warnings",
+        "RUSTDOCFLAGS='-D warnings' cargo doc --locked --no-deps --all-features",
+        "cargo bench --locked --all-features --no-run",
+        "cargo check --locked --manifest-path fuzz/Cargo.toml --bins",
+        "UI: cargo test --locked --no-fail-fast (37 passed)",
+        "UI: cargo clippy --locked --all-targets -- -D warnings",
+        "UI: env -u NO_COLOR TRUNK_COLOR=never trunk build --release --locked"
+      ]
+    },
+    "hypersolve": {
+      "all_targets_all_features_passed": 770,
+      "minimal_passed": 767,
+      "root_isolation_units_passed": 31,
+      "representation_configurations_passed": 4,
+      "allocation": {
+        "iterations": 4,
+        "certificate_operation_pairs": 66,
+        "end_live_delta_bytes": 0
+      },
+      "other_gates_passed": [
+        "cargo fmt --all -- --check",
+        "rustfmt --edition 2024 --check fuzz/fuzz_targets/hyperreal_representations.rs",
+        "cargo check --locked --all-targets --all-features",
+        "cargo clippy --locked --all-targets --all-features -- -D warnings",
+        "cargo check --locked --manifest-path fuzz/Cargo.toml --bins",
+        "cargo clippy --locked --manifest-path fuzz/Cargo.toml --bin hyperreal_representations -- -D warnings",
+        "RUSTDOCFLAGS='-D warnings' cargo doc --locked --no-deps --all-features"
+      ],
+      "release_report_refresh": "Built algebraic_fiber with default features and dispatch_trace with dispatch-trace, then ran each release executable on CPU 7. Exact fiber validation checksums are unchanged. These refresh existing reports, not a controlled speedup comparison against their old timing tables.",
+      "production_coverage": {
+        "status": "passed",
+        "command": "HYPERSOLVE_SKIP_BENCHMARK_REPORTS=1 scripts/coverage.sh (isolated temporary CARGO_TARGET_DIR)",
+        "executable_lines": 38423,
+        "covered_lines": 33064,
+        "coverage_percent": 86.05,
+        "required_percent": 85
+      }
+    },
+    "hypermesh": {
+      "default_passed": 221,
+      "all_features_passed": 222,
+      "normally_ignored_per_matrix": 7,
+      "large_policy_equality_stress": {
+        "passed": 1,
+        "triangles": 1572,
+        "crossings": 16900,
+        "seconds": 77.33
+      },
+      "other_gates_passed": [
+        "cargo fmt --all -- --check",
+        "cargo check --locked --no-default-features",
+        "cargo clippy --locked --all-features -- -D warnings",
+        "cargo doc --locked --all-features --no-deps",
+        "cargo bench --locked --no-run",
+        "cargo check --locked --manifest-path fuzz/Cargo.toml --bins",
+        "cargo build --locked --manifest-path benchmarks/size-harness/Cargo.toml --profile size",
+        "cargo build --locked --manifest-path benchmarks/size-harness/Cargo.toml --profile size --target wasm32-unknown-unknown",
+        "UI: env -u NO_COLOR TRUNK_COLOR=never trunk build --release --locked"
+      ],
+      "scope": "The mesh core shares the lower scalar stack; its demo also consumes the changed Hypercurve and Hypersolve sources. The six other ignored mesh cases were not rerun in this checkpoint."
+    }
+  },
+  "release_scope": "Local source qualification only. ExactCorelib mining and recorded uplift slices remain closed. The previously recorded registry dependency-release coordination issue is not resolved or rechecked here. No publication, push, dependency downgrade, compatibility layer, or old-API alias was added."
+}

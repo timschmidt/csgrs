@@ -1,0 +1,9 @@
+   Compiling hyperreal v0.13.1 (/home/tim/Documents/GitHub/workspace/hyperreal)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1.31s
+     Running unittests src/lib.rs (.audit-targets/ireal-derivative-18555/debug/deps/hyperreal-a346315a45113d5d)
+
+running 1 test
+test computable::node::tests::log1p_domain_guard_covers_public_residuals_outside_the_series_range ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 658 filtered out; finished in 0.00s
+

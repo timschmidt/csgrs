@@ -1,0 +1,43 @@
+{
+  "diagnostic_only": true,
+  "binary": {
+    "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-source-regressions-20260925-v51-hypercurve",
+    "sha256": "ac7c5f8bc82743355e60de8494f6b670492f7c7d7a657b9a4c3ffbddbc78056f"
+  },
+  "source_manifest": "local-chord-complete-replay-20260924-v51-sources.json",
+  "workspace_guard_manifest": "local-chord-complete-replay-20260924-v52-sources.json",
+  "cases": [
+    {
+      "name": "retained_polynomial_chamfer_extends_exact_and_algebraic_incident_roots",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-source-regressions-20260925-v51-hypercurve",
+        "--exact",
+        "bezier_region::tests::retained_polynomial_chamfer_extends_exact_and_algebraic_incident_roots",
+        "--test-threads=1",
+        "--nocapture",
+        "--color",
+        "never"
+      ],
+      "returncode": 101,
+      "elapsed_seconds": 0.42610276804771274,
+      "log": "retained-source-regressions-20260925-v51-extension-control-retained_polynomial_chamfer_extends_exact_and_algebraic_incident_roots.log"
+    },
+    {
+      "name": "retained_rational_chamfer_extends_exact_and_algebraic_pre_pole_roots",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-source-regressions-20260925-v51-hypercurve",
+        "--exact",
+        "bezier_region::tests::retained_rational_chamfer_extends_exact_and_algebraic_pre_pole_roots",
+        "--test-threads=1",
+        "--nocapture",
+        "--color",
+        "never"
+      ],
+      "returncode": 101,
+      "elapsed_seconds": 0.4795589910354465,
+      "log": "retained-source-regressions-20260925-v51-extension-control-retained_rational_chamfer_extends_exact_and_algebraic_pre_pole_roots.log"
+    }
+  ],
+  "all_processes_reaped": true,
+  "all_sources_unchanged": true
+}

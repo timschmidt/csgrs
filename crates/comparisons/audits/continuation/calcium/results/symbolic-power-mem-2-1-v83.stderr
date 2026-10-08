@@ -1,0 +1,36 @@
+==501648== Memcheck, a memory error detector
+==501648== Copyright (C) 2002-2026, and GNU GPL'd, by Julian Seward et al.
+==501648== Using Valgrind-3.27.1 and LibVEX; rerun with -h for copyright info
+==501648== Command: /tmp/calcium-symbolic-boundary-v83.JuGH8X/controls powers 2 1
+==501648== 
+==501648== 
+==501648== HEAP SUMMARY:
+==501648==     in use at exit: 69,648 bytes in 2 blocks
+==501648==   total heap usage: 4,090 allocs, 4,088 frees, 204,512 bytes allocated
+==501648== 
+==501648== 16 bytes in 1 blocks are indirectly lost in loss record 1 of 2
+==501648==    at 0x4840AE6: malloc (vg_replace_malloc.c:447)
+==501648==    by 0x56FC524: __gmp_default_allocate (memory.c:53)
+==501648==    by 0x570CD67: __gmpz_init2 (init2.c:47)
+==501648==    by 0x4A5970A: _fmpz_new_mpz (in /home/tim/Documents/GitHub/workspace/exact-real-references/flint/libflint.so.25.0.0)
+==501648==    by 0x4A59AC5: _fmpz_promote (in /home/tim/Documents/GitHub/workspace/exact-real-references/flint/libflint.so.25.0.0)
+==501648==    by 0x4A61151: fmpz_mul_2exp (in /home/tim/Documents/GitHub/workspace/exact-real-references/flint/libflint.so.25.0.0)
+==501648==    by 0x400679: main (in /tmp/calcium-symbolic-boundary-v83.JuGH8X/controls)
+==501648== 
+==501648== 69,648 (69,632 direct, 16 indirect) bytes in 1 blocks are definitely lost in loss record 2 of 2
+==501648==    at 0x4840AE6: malloc (vg_replace_malloc.c:447)
+==501648==    by 0x48DCD79: flint_malloc (in /home/tim/Documents/GitHub/workspace/exact-real-references/flint/libflint.so.25.0.0)
+==501648==    by 0x4A59651: _fmpz_new_mpz (in /home/tim/Documents/GitHub/workspace/exact-real-references/flint/libflint.so.25.0.0)
+==501648==    by 0x4A59AC5: _fmpz_promote (in /home/tim/Documents/GitHub/workspace/exact-real-references/flint/libflint.so.25.0.0)
+==501648==    by 0x4A61151: fmpz_mul_2exp (in /home/tim/Documents/GitHub/workspace/exact-real-references/flint/libflint.so.25.0.0)
+==501648==    by 0x400679: main (in /tmp/calcium-symbolic-boundary-v83.JuGH8X/controls)
+==501648== 
+==501648== LEAK SUMMARY:
+==501648==    definitely lost: 69,632 bytes in 1 blocks
+==501648==    indirectly lost: 16 bytes in 1 blocks
+==501648==      possibly lost: 0 bytes in 0 blocks
+==501648==    still reachable: 0 bytes in 0 blocks
+==501648==         suppressed: 0 bytes in 0 blocks
+==501648== 
+==501648== For lists of detected and suppressed errors, rerun with: -s
+==501648== ERROR SUMMARY: 2 errors from 2 contexts (suppressed: 0 from 0)

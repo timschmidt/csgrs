@@ -1,0 +1,21 @@
+{
+  "sourceHash": "50348c07dde0dc2d1d9b1ecf95b9056bc8164bfcb1b64d2e13d9f35377d66c4f",
+  "reportHash": "1e08410b19402f9baaebdac0e5e10005be4de58032f06e2fb4349de5ecb24e8e",
+  "reportTextLinesRead": 4871,
+  "visualReviewComplete": false,
+  "perBuild": {
+    "hyperRealExactChecks": 200,
+    "hyperComputableChecks": 1200,
+    "donorCancellationDecimal": 1,
+    "archivedMaximumPrefix": true,
+    "correctDyadicIdentities": 6561,
+    "correctCarryInvariants": 189,
+    "rejectedPrintedCrossTermFailures": 6016,
+    "rejectedPrintedInequalityFailures": 88
+  },
+  "debugReleasePassLinesIdentical": true,
+  "memcheckErrors": 0,
+  "leakQualification": false,
+  "newHyperProductionChange": false,
+  "performanceClaim": false
+}

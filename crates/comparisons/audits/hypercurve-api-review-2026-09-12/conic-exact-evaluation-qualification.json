@@ -1,0 +1,61 @@
+{
+  "status": "committed; original goal remains active",
+  "goal_status": "active",
+  "base_commit": "281368bacaa0f11586d895e84e1af4da5703f3e5",
+  "production_line_reduction": 28,
+  "changes": [
+    "Remove the rational-only power-evaluation gate and duplicate general Bernstein evaluator.",
+    "Share degree-two basis coefficients across conic evaluation, general rational curves, and retained polynomial/rational coordinate images.",
+    "Reuse endpoint coordinates only after certifying the authored weight is nonzero.",
+    "Keep conjugation only for rational parameters and control coordinates, unit endpoint weights, and a middle weight whose square is genuinely rational. The fast path uses a structural nonzero proof without a topology policy."
+  ],
+  "closure_regressions": {
+    "original_independent_strict_probe": "exact-real-image-independent-strict-conic-evaluation-final.exit",
+    "matrix_cases": 288,
+    "strict_coordinate_comparisons": 3456,
+    "coverage": "Two exact translations, six weight triples including mixed-sign and transcendental weights, two traversals, two axes, three rational/algebraic/transcendental parameters, both contexts, conic and promoted rational-curve evaluations, equality and both order directions.",
+    "projective_pole": "W(t)=1-pi*t at t=1/pi remains Boundary; authored endpoints remain exact."
+  },
+  "qualification": {
+    "results": "conic-exact-evaluation-final-full-results.json",
+    "targets": 49,
+    "passed": 2152,
+    "hypercurve_passed": 1920,
+    "hyperbrep_passed": 232,
+    "failed": 11,
+    "ignored": 9,
+    "previously_unqualified_expensive_cases": 8,
+    "new_failures": [],
+    "remaining_failures": [
+      "approximate_512_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions",
+      "arc_parabola_fillet_recovers_exact_complement_contacts",
+      "axis_aligned_algebraic_chords_reenter_exact_region_offsets",
+      "line_parabola_fillet_extends_the_regular_incident_cell_exactly",
+      "nonconvex_algebraic_chord_expansion_is_exact_and_local_collapse_is_explicit",
+      "non_ph_bezier_pair_projective_fillet_retains_algebraic_extensions",
+      "strict_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions",
+      "unified_region_chamfer_joins_two_algebraic_bezier_cuts",
+      "unified_mixed_line_arc_erosion_splits_after_a_curved_neck_collapse",
+      "unified_region_chamfer_retains_algebraic_bezier_cut",
+      "unified_region_non_miter_erosions_split_after_neck_collapse"
+    ],
+    "all_target_checks": true,
+    "source_hashes": "conic-exact-evaluation-build4-source.json",
+    "source_checks": "conic-exact-evaluation-final-source-checks.json",
+    "immutable_sources": true,
+    "full_suite_passing": false
+  },
+  "performance": {
+    "benchmark": "conic-exact-evaluation-final-bench-results.json",
+    "profile_comparison": "conic-exact-evaluation-benchmark-build-profile-comparison.json",
+    "measured_construction_and_refinement_cases_improved": 9,
+    "total_construction_and_refinement_cases": 9,
+    "tradeoff": "Raw construction increases in the unequal-weight 1/pi and unit-pi rational-parameter cases. Both become cheaper when coordinate refinement is included. The quadratic-weight rational midpoint retains its baseline speed. These microbenchmarks do not establish a whole-operation speedup.",
+    "inward_probes": "conic-exact-evaluation-final-inward-probes.json",
+    "strict_total_seconds": 25.252228492,
+    "approximate_512_total_seconds": 23.947726537,
+    "inward_results": "Both successive inward offsets remain Certified with one loop under both policies."
+  },
+  "next": "Continue independent geometry and operation-reuse oracles for the remaining promotion failures; retain the eight expensive unqualified cases and broader architectural closure work.",
+  "commit": "a3c843cbfa3ded3acd388dbd81371055fc40a633"
+}

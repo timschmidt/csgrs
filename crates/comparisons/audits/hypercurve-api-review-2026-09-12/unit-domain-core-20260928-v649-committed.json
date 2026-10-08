@@ -1,0 +1,14 @@
+{
+  "repos": {
+    "hypercurve": {
+      "commit": "ada3cd00de4b9ddb430aeb4f2d32f512ca9b248e",
+      "parent": "d0a90d53507d11aff1e1e04339f3bde615a38beb",
+      "paths": {
+        "src/bezier_offset.rs": "5527228c8dde12e5d61cfbb3b17d460a9627a87744c2263f6047428956233629"
+      }
+    }
+  },
+  "qualification": "unit-domain-core-20260928-v649-terminal.json",
+  "verified_source_files": 2047,
+  "clean_repositories": 30
+}

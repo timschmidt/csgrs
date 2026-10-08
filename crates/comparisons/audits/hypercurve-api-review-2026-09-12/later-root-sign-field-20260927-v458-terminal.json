@@ -1,0 +1,163 @@
+{
+  "cases": [
+    {
+      "input": "query-008.json",
+      "sha256": "cae1f2a3bc739c4aa4727e4ac71f6064b0776075711c2305a0fe63392b0edf23",
+      "raw_max_bits": 1686,
+      "canonical_max_bits": 5778,
+      "raw_coordinate_exponent_range": [
+        726,
+        741
+      ],
+      "root_count": 1,
+      "sign": 1,
+      "complete": true,
+      "elapsed_seconds": 2.426686327904463
+    },
+    {
+      "input": "query-009.json",
+      "sha256": "b86b96c587ea34a526140c5668898b8702eaf0931925c777201291ddb5c41f68",
+      "raw_max_bits": 1682,
+      "canonical_max_bits": 5764,
+      "raw_coordinate_exponent_range": [
+        722,
+        736
+      ],
+      "root_count": 1,
+      "sign": -1,
+      "complete": true,
+      "elapsed_seconds": 2.385783154051751
+    },
+    {
+      "input": "query-010.json",
+      "sha256": "1465469220cf7281acc15f74c7984ecedf342e4ec2f5ecd1903a03a79086f37d",
+      "raw_max_bits": 3381,
+      "canonical_max_bits": 11566,
+      "raw_coordinate_exponent_range": [
+        1468,
+        1481
+      ],
+      "root_count": 1,
+      "sign": 1,
+      "complete": true,
+      "elapsed_seconds": 8.754818927962333
+    },
+    {
+      "input": "query-011.json",
+      "sha256": "51a221c0260b9e4f4408837d33a456d5a5b85d5a61c3f29f0e9be22079b2f452",
+      "raw_max_bits": 1678,
+      "canonical_max_bits": 5752,
+      "raw_coordinate_exponent_range": [
+        721,
+        734
+      ],
+      "root_count": 1,
+      "sign": 1,
+      "complete": true,
+      "elapsed_seconds": 2.3870704059954733
+    },
+    {
+      "input": "query-012.json",
+      "sha256": "9505520e8a6e5011e6e6568d82a9798f99cd8f0eda849c2e0094dcd51dd920e8",
+      "raw_max_bits": 1676,
+      "canonical_max_bits": 5741,
+      "raw_coordinate_exponent_range": [
+        719,
+        733
+      ],
+      "root_count": 1,
+      "sign": -1,
+      "complete": true,
+      "elapsed_seconds": 2.3826779869850725
+    },
+    {
+      "input": "query-013.json",
+      "sha256": "27e48fd5709e8f4a28533dc6e11c4a35a526a12c16a93267ce865e455d753883",
+      "raw_max_bits": 3368,
+      "canonical_max_bits": 11516,
+      "raw_coordinate_exponent_range": [
+        1458,
+        1472
+      ],
+      "root_count": 1,
+      "sign": -1,
+      "complete": true,
+      "elapsed_seconds": 8.596632891101763
+    },
+    {
+      "input": "query-014.json",
+      "sha256": "f0b28a86bf364780f426b72289a89bbd29285f0c3190780cbb9d60679985d964",
+      "raw_max_bits": 3344,
+      "canonical_max_bits": 11473,
+      "raw_coordinate_exponent_range": [
+        1457,
+        1471
+      ],
+      "root_count": 1,
+      "sign": -1,
+      "complete": true,
+      "elapsed_seconds": 8.295748732052743
+    },
+    {
+      "input": "query-015.json",
+      "sha256": "8fc409edc2ccd41810077e943b5d648fae2d6be798d4e292905128344fdb01d4",
+      "raw_max_bits": 3342,
+      "canonical_max_bits": 11473,
+      "raw_coordinate_exponent_range": [
+        1453,
+        1468
+      ],
+      "projective_replay_of": "query-014.json",
+      "root_count": 1,
+      "sign": 1,
+      "complete": true,
+      "elapsed_seconds": 0.03331752400845289
+    },
+    {
+      "input": "query-016.json",
+      "sha256": "26fe3a85bc0a25486d3d6b61e8693be7895b4e0bddf8eb68b14d9f3a30510bdc",
+      "raw_max_bits": 1691,
+      "canonical_max_bits": 5780,
+      "raw_coordinate_exponent_range": [
+        738,
+        744
+      ],
+      "root_count": 1,
+      "sign": 1,
+      "complete": true,
+      "elapsed_seconds": 2.407600736944005
+    },
+    {
+      "input": "query-017.json",
+      "sha256": "b7a476fb47d4d366ca58c93859d86bf2688ba657d855db37b5d154af3d026221",
+      "raw_max_bits": 1687,
+      "canonical_max_bits": 5766,
+      "raw_coordinate_exponent_range": [
+        733,
+        740
+      ],
+      "root_count": 1,
+      "sign": -1,
+      "complete": true,
+      "elapsed_seconds": 2.406661730958149
+    },
+    {
+      "input": "query-018.json",
+      "sha256": "96d5d5370e9d5dd245ef6da0eb932cd923b11924faeab02ee71843009fb4b1f9",
+      "raw_max_bits": 3387,
+      "canonical_max_bits": 11569,
+      "raw_coordinate_exponent_range": [
+        1479,
+        1484
+      ],
+      "root_count": 1,
+      "sign": 1,
+      "complete": true,
+      "elapsed_seconds": 8.771514571970329
+    }
+  ],
+  "complete": true,
+  "method": "Independent exact Q(sqrt(5),sqrt(50-20sqrt(5))) arithmetic with positive leading-unit normalization; exact projective query comparisons",
+  "distinct_root_selections": 2,
+  "distinct_projective_queries": 10
+}

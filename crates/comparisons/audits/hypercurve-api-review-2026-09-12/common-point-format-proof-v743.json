@@ -1,0 +1,19 @@
+{
+  "path": "csgrs/src/curve/native.rs",
+  "before_sha256": "4f90720652fd83b7101347254c7b7ba6bb670890c592628dcb0942e6653a1021",
+  "after_sha256": "c8a277a11cb8aeeb021df19fb9df495a2f1630b742838cd248acb3527e281039",
+  "config": "csgrs/.rustfmt.toml",
+  "config_sha256": "766c73ae19da812c2c9606b8732cb691c720919aaaef89e82bf7ff6c1254e601",
+  "command": [
+    "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustfmt",
+    "--edition",
+    "2024",
+    "--config",
+    "skip_children=true",
+    "--config-path",
+    "/home/tim/Documents/GitHub/workspace/csgrs/.rustfmt.toml",
+    "--emit",
+    "stdout"
+  ],
+  "scope": "Only the output of the repository-configured rustfmt; no algorithm or test-oracle edits."
+}

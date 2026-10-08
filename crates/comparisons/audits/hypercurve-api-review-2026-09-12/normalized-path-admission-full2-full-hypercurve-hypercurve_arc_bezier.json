@@ -1,0 +1,37 @@
+{
+  "repo": "hypercurve",
+  "target": "hypercurve_arc_bezier",
+  "binary": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve_arc_bezier-8d783486b08bd618",
+  "command": [
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve_arc_bezier-8d783486b08bd618",
+    "--test-threads=4",
+    "--color",
+    "never"
+  ],
+  "sha256": "aa9b6a5977eeb073af16e90beeb538774e54a2cc4b71a8d5b83c1137785013e9",
+  "returncode": 0,
+  "timed_out": false,
+  "elapsed_seconds": 0.003476390993455425,
+  "log": "normalized-path-admission-full2-full-hypercurve-hypercurve_arc_bezier.log",
+  "passed": [
+    "full_circle_uses_four_quarter_spans",
+    "inverse_sweep_witness_replays_exact_point_across_existing_clone",
+    "major_arc_preserves_rational_charts_and_requested_orientation",
+    "quarter_arc_decomposes_to_one_exact_conic",
+    "rationally_trimmed_semicircle_redecomposes_exactly",
+    "semicircle_uses_two_quarter_spans_with_exact_join",
+    "directed_sweep_evaluation_round_trips_minor_major_and_full_arcs",
+    "angular_inverse_selects_unequal_major_arc_charts",
+    "sweep_fraction_orders_full_circle_cardinal_points_exactly",
+    "sweep_fraction_orders_major_arc_cardinal_points_exactly",
+    "top_level_arc_reuses_promotion_and_builds_mixed_boundary",
+    "public_arc_native_topology_obeys_terminal_policy_once"
+  ],
+  "failed": [],
+  "ignored": [],
+  "summaries": [
+    "test result: ok. 12 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s"
+  ],
+  "new_failures": [],
+  "known_failures": []
+}

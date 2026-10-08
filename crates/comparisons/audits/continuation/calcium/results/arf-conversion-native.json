@@ -1,0 +1,11 @@
+{
+  "tag": "arf-conversion-native",
+  "started": "2026-09-10T03:08:19.728Z",
+  "finished": "2026-09-10T03:08:19.762Z",
+  "elapsedSeconds": 0.03236419400000001,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison",
+  "command": "/tmp/calcium-arf-conversion.ZnmLMf/controls",
+  "args": [],
+  "code": 1,
+  "signal": null
+}

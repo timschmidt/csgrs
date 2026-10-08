@@ -1,0 +1,14 @@
+{
+  "tag": "point-cold-native-eager",
+  "started": "2026-09-10T23:10:48.588Z",
+  "finished": "2026-09-10T23:10:55.995Z",
+  "elapsedSeconds": 7.40423879,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "node",
+  "args": [
+    "run-point-cold-native.mjs",
+    "eager"
+  ],
+  "code": 0,
+  "signal": null
+}

@@ -1,0 +1,34 @@
+{
+  "passed": true,
+  "dist": "/tmp/hypercurve-pages-dist.K4FHfm",
+  "profile": "/tmp/hypercurve-browser-profile.0O0tJ9",
+  "state": {
+    "ready": true,
+    "title": "hypercurve UI",
+    "pathname": "/hypercurve/",
+    "baseURI": "http://127.0.0.1:38225/hypercurve/",
+    "width": 1100,
+    "height": 617
+  },
+  "requests": [
+    {
+      "pathname": "/hypercurve/",
+      "status": 200,
+      "bytes": 1691
+    },
+    {
+      "pathname": "/hypercurve/hypercurve_ui.js",
+      "status": 200,
+      "bytes": 72209
+    },
+    {
+      "pathname": "/hypercurve/hypercurve_ui_bg.wasm",
+      "status": 200,
+      "bytes": 12429630
+    }
+  ],
+  "exceptions": [],
+  "failures": [],
+  "consoleErrors": [],
+  "screenshot": "/tmp/hypercurve-native-constant-sign-pages-startup.png"
+}

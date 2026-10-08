@@ -1,0 +1,21 @@
+{
+  "returncode": 0,
+  "elapsed_seconds": 0.0014574599917978048,
+  "command": [
+    "rustc",
+    "--edition=2024",
+    "-O",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/singleton-endpoint-parameter-baseline.rs",
+    "--extern",
+    "hypercurve=/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/libhypercurve-2c7ff6f3fbe07653.rlib",
+    "-L",
+    "dependency=/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps",
+    "-o",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/singleton-endpoint-parameter-baseline"
+  ],
+  "source_sha256": "ec206dc732c82fb173f1c82569c042cbdb3a77ee8a34c0906e8fd64bfe40b948",
+  "executable_sha256": "299ed2615a7d1eb1419f32615d003fc1ee2512dfae27cc2e17bff17e7328fa22",
+  "normal_library_sha256": "85e42999ed5b1bfd5cc18db3eb8bcc325f98e6d73ee9c02408d6eb7d9e4d1628",
+  "baseline_commit": "6b05bf1fcebfe49442e47c5aff55facca5ba4f38",
+  "source_manifest": "analytic-common-dispatch-source-before-tests.json"
+}

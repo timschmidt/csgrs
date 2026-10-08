@@ -1,0 +1,27 @@
+{
+  "returncode": 0,
+  "elapsed_seconds": 0.21391083701746538,
+  "normal_library_sha256": "3e352ef20e456aae00e39f18109487148b4f957e923ef3e055d8fb622380b13d",
+  "log": "finite-region-admission-family-matrix.log",
+  "source": "native-rational-publication-family-matrix.rs",
+  "command": [
+    "rustc",
+    "--edition=2024",
+    "-O",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/native-rational-publication-family-matrix.rs",
+    "--extern",
+    "hypercurve=/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/libhypercurve-2c7ff6f3fbe07653.rlib",
+    "-L",
+    "dependency=/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps",
+    "-o",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-region-admission-family-matrix"
+  ],
+  "source_sha256": "4997d7958bc2ef9da3b91d65b97732be5c8c6d142015708f8360c02b5866c6bb",
+  "executable_sha256": "8844a7eb833ff115f6aa43986d350a0e8c9c169c48768b956ef2d5645368e6a9",
+  "counts": {
+    "complete_queries": 416,
+    "restrictions": 1440,
+    "point_replays": 5120,
+    "path_topologies": 8
+  }
+}

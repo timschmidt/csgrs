@@ -1,0 +1,5 @@
+Give exact parameter intervals one ordered finite domain
+
+Remove the separate private exterior-interval constructor and update every caller. An interval now certifies ordering of exact bounds, while the native root importer explicitly enforces its unit domain. Correct the range documentation to include retained exterior charts.
+
+Validation: 483 release regressions across nine binaries and six static/downstream checks. The complete public algebraic-parameter suite includes negative and exterior roots, exact polynomial images, native curve-domain rejection, and true exterior rational poles despite positive unit-span weights. A private regression preserves the unit import restriction. No compatibility alias remains.

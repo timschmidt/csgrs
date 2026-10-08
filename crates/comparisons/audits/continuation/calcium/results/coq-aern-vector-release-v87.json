@@ -1,0 +1,25 @@
+{
+  "tag": "coq-aern-vector-release-v87",
+  "started": "2026-09-12T06:35:20.372Z",
+  "finished": "2026-09-12T06:35:35.948Z",
+  "elapsedSeconds": 15.574304677,
+  "cwd": "/home/tim/Documents/GitHub/workspace/hyperlattice",
+  "command": "env",
+  "args": [
+    "CARGO_TARGET_DIR=/tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse",
+    "CARGO_INCREMENTAL=0",
+    "CARGO_PROFILE_DEV_DEBUG=0",
+    "CARGO_BUILD_JOBS=2",
+    "cargo",
+    "test",
+    "--offline",
+    "--locked",
+    "--release",
+    "--test",
+    "vector",
+    "--test",
+    "api_surface_coverage"
+  ],
+  "code": 0,
+  "signal": null
+}

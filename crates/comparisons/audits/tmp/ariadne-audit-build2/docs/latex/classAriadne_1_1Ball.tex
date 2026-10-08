@@ -1,0 +1,374 @@
+\doxysubsection{Ball\texorpdfstring{$<$}{<} F, FE \texorpdfstring{$>$}{>} Class Template Reference}
+\hypertarget{classAriadne_1_1Ball}{}\label{classAriadne_1_1Ball}\index{Ball$<$ F, FE $>$@{Ball$<$ F, FE $>$}}
+
+
+{\ttfamily \#include $<$float\+\_\+ball.\+hpp$>$}
+
+
+
+\doxysubsubsection{Description}
+\subsubsection*{template$<$class F, class FE$>$\newline
+class Ariadne\+::\+Ball$<$ F, FE $>$}
+Floating point approximations to a real number with guaranteed error bounds. 
+
+\begin{DoxySeeAlso}{See also}
+\doxylink{classAriadne_1_1Real}{Real}, \doxylink{namespaceAriadne_af915b9f1459c9691328efa71c6f39c6e}{Float\+DP}, \doxylink{namespaceAriadne_a07966b67e613cc8779412beecb60651d}{Float\+MP}, \doxylink{classAriadne_1_1Error}{Error}, Float, \doxylink{classAriadne_1_1Bounds}{Bounds}, \doxylink{classAriadne_1_1Approximation}{Approximation}. 
+\end{DoxySeeAlso}
+Inheritance diagram for Ball\texorpdfstring{$<$}{<} F, FE \texorpdfstring{$>$}{>}\+:\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[height=2.000000cm]{classAriadne_1_1Ball}
+\end{center}
+\end{figure}
+\doxysubsubsubsection*{Public Types}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1Ball_a980476c72b14e019de0b57954c4f28da}\label{classAriadne_1_1Ball_a980476c72b14e019de0b57954c4f28da} 
+typedef \mbox{\hyperlink{structAriadne_1_1ValidatedTag}{P}} {\bfseries Paradigm}
+\item 
+\Hypertarget{classAriadne_1_1Ball_a5fa1e2c889c5372d6721d09bc0b76b97}\label{classAriadne_1_1Ball_a5fa1e2c889c5372d6721d09bc0b76b97} 
+typedef \mbox{\hyperlink{classAriadne_1_1Ball}{Ball}}$<$ F, FE $>$ {\bfseries Numeric\+Type}
+\item 
+\Hypertarget{classAriadne_1_1Ball_a21e742d2ecee03a3ee6dfe1f8d5b00c9}\label{classAriadne_1_1Ball_a21e742d2ecee03a3ee6dfe1f8d5b00c9} 
+typedef \mbox{\hyperlink{classAriadne_1_1Number}{Number}}$<$ \mbox{\hyperlink{structAriadne_1_1ValidatedTag}{P}} $>$ {\bfseries Generic\+Type}
+\item 
+\Hypertarget{classAriadne_1_1Ball_a9f44c412812f88eb23a7be7e44de50f2}\label{classAriadne_1_1Ball_a9f44c412812f88eb23a7be7e44de50f2} 
+typedef F {\bfseries Raw\+Type}
+\item 
+\Hypertarget{classAriadne_1_1Ball_a9bcef846acbf60e4a4b07083b7738d40}\label{classAriadne_1_1Ball_a9bcef846acbf60e4a4b07083b7738d40} 
+typedef FE {\bfseries Raw\+Error\+Type}
+\item 
+\Hypertarget{classAriadne_1_1Ball_ada08cc26488a5693eb7e60f9dda08200}\label{classAriadne_1_1Ball_ada08cc26488a5693eb7e60f9dda08200} 
+typedef PR {\bfseries Precision\+Type}
+\item 
+\Hypertarget{classAriadne_1_1Ball_aef23e9bcd3723dc5aee7e3f73518b479}\label{classAriadne_1_1Ball_aef23e9bcd3723dc5aee7e3f73518b479} 
+typedef PRE {\bfseries Error\+Precision\+Type}
+\item 
+\Hypertarget{classAriadne_1_1Ball_acc53f806ca06a12a4e8d0ee59a9e6943}\label{classAriadne_1_1Ball_acc53f806ca06a12a4e8d0ee59a9e6943} 
+typedef \mbox{\hyperlink{namespaceAriadne_abbe0884d033ed6289d1f654576d7bb07}{Pair}}$<$ PR, PRE $>$ {\bfseries Characteristics\+Type}
+\end{DoxyCompactItemize}
+\doxysubsubsubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1Ball_ada2cb81384335dcd134fd2957dac81bc}\label{classAriadne_1_1Ball_ada2cb81384335dcd134fd2957dac81bc} 
+{\bfseries Ball} (\mbox{\hyperlink{classAriadne_1_1Ball_ada08cc26488a5693eb7e60f9dda08200}{Precision\+Type}} pr)
+\begin{DoxyCompactList}\small\item\em Construct a ball of radius $0$ about zero, using precision {\itshape pr} for the centre (value), and using either value {\itshape pr} for the precision of the radius (error), or the default value. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Ball_ab1733a2d4ac047591d5368f5dde4a3f3}\label{classAriadne_1_1Ball_ab1733a2d4ac047591d5368f5dde4a3f3} 
+{\bfseries Ball} (\mbox{\hyperlink{classAriadne_1_1Ball_ada08cc26488a5693eb7e60f9dda08200}{Precision\+Type}} pr, \mbox{\hyperlink{classAriadne_1_1Ball_aef23e9bcd3723dc5aee7e3f73518b479}{Error\+Precision\+Type}} pre)
+\begin{DoxyCompactList}\small\item\em Construct a ball of radius $0$ about zero, using precision {\itshape pr} for the centre (value), and {\itshape pre} for the radius (error). \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Ball_ae56b872f1bb9429f918ec83612c9110e}\label{classAriadne_1_1Ball_ae56b872f1bb9429f918ec83612c9110e} 
+{\bfseries Ball} (F const \&v, FE const \&e)
+\begin{DoxyCompactList}\small\item\em Construct a ball of radius {\itshape e} about {\itshape v}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Ball_a61f3f0d83d8e6922c6fb684d7dd8367f}\label{classAriadne_1_1Ball_a61f3f0d83d8e6922c6fb684d7dd8367f} 
+{\bfseries Ball} (F const \&v, \mbox{\hyperlink{classAriadne_1_1Error}{Error}}$<$ FE $>$ const \&\mbox{\hyperlink{classAriadne_1_1Ball_acfd7de3473b5ebd0931319bd5c23aa78}{error}})
+\begin{DoxyCompactList}\small\item\em Construct a ball of radius {\itshape error} about {\itshape v}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Ball_a016d8ff2d5bcc71420862936ef300e19}\label{classAriadne_1_1Ball_a016d8ff2d5bcc71420862936ef300e19} 
+{\bfseries Ball} (\mbox{\hyperlink{classAriadne_1_1Bounds}{Bounds}}$<$ F $>$ const \&x, PRE pre)
+\begin{DoxyCompactList}\small\item\em Construct a ball containing the bounds {\itshape x}, with error bound of precision {\itshape pre}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Ball_a8481619a9011909116356e67b4128534}\label{classAriadne_1_1Ball_a8481619a9011909116356e67b4128534} 
+{\bfseries Ball} (const Validated\+Number \&y, PR pr, PRE pre)
+\begin{DoxyCompactList}\small\item\em Construct a ball guaranteed to contain the generic validated number {\itshape y}, using precision {\itshape pr} for the centre (value), and {\itshape pre} for the radius (error). \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Ball_aabe9938d48285cce11d76025a2c0b1eb}\label{classAriadne_1_1Ball_aabe9938d48285cce11d76025a2c0b1eb} 
+{\bfseries Ball} (\mbox{\hyperlink{classAriadne_1_1Bounds}{Bounds}}$<$ F $>$ const \&x)
+\begin{DoxyCompactList}\small\item\em Construct a ball containing the bounds {\itshape x}. The precision of the error is either that of {\itshape F}, or the default value. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Ball_a06406219e28b5bcdfb1cdc9372bec615}\label{classAriadne_1_1Ball_a06406219e28b5bcdfb1cdc9372bec615} 
+\mbox{\hyperlink{classAriadne_1_1Ball}{Ball}}$<$ F, FE $>$ \& {\bfseries operator=} (const Validated\+Number \&y)
+\begin{DoxyCompactList}\small\item\em Assign from generic validated bounds {\itshape y}, keeping the same characteristics. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Ball_a2cc335237e4150c607808f5bb409f7b4}\label{classAriadne_1_1Ball_a2cc335237e4150c607808f5bb409f7b4} 
+{\bfseries operator Validated\+Number} () const
+\begin{DoxyCompactList}\small\item\em Downcast to a generic validated value. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Ball_a1feeefd6e85b18656fc91f66ae976fe4}\label{classAriadne_1_1Ball_a1feeefd6e85b18656fc91f66ae976fe4} 
+\mbox{\hyperlink{classAriadne_1_1Ball}{Ball}}$<$ F, FE $>$ {\bfseries create} (const Validated\+Number \&y) const
+\begin{DoxyCompactList}\small\item\em Create a ball from the generic validated number {\itshape y} with the same characteristics as {\itshape this}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Ball_ab698d4c66badb93deea47611f50b7931}\label{classAriadne_1_1Ball_ab698d4c66badb93deea47611f50b7931} 
+\mbox{\hyperlink{classAriadne_1_1LowerBound}{Lower\+Bound}}$<$ F $>$ const {\bfseries lower} () const
+\begin{DoxyCompactList}\small\item\em A lower bound. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Ball_a95d52e39854d8a85601f7742e277ffa2}\label{classAriadne_1_1Ball_a95d52e39854d8a85601f7742e277ffa2} 
+\mbox{\hyperlink{classAriadne_1_1UpperBound}{Upper\+Bound}}$<$ F $>$ const {\bfseries upper} () const
+\begin{DoxyCompactList}\small\item\em An upper bound. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Ball_a3e6f9e340d26e75d5ced9368c5afeaa1}\label{classAriadne_1_1Ball_a3e6f9e340d26e75d5ced9368c5afeaa1} 
+F const {\bfseries value} () const
+\begin{DoxyCompactList}\small\item\em The centre value of the ball. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Ball_acfd7de3473b5ebd0931319bd5c23aa78}\label{classAriadne_1_1Ball_acfd7de3473b5ebd0931319bd5c23aa78} 
+\mbox{\hyperlink{classAriadne_1_1Error}{Error}}$<$ FE $>$ const {\bfseries error} () const
+\begin{DoxyCompactList}\small\item\em The radius of the ball, giving a bound on the error of \doxylink{classAriadne_1_1Ball_a3e6f9e340d26e75d5ced9368c5afeaa1}{value()}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Ball_a4c0fda7346d15cc92f1aa5b2d3769e88}\label{classAriadne_1_1Ball_a4c0fda7346d15cc92f1aa5b2d3769e88} 
+double {\bfseries get\+\_\+d} () const
+\begin{DoxyCompactList}\small\item\em \doxylink{classAriadne_1_1Concepts_1_1Approximate}{Approximate} by a builtin double-\/precision value. DEPRECATED. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Ball_ad6bf2be97424a4ac1b4d9f6ca1cc2324}\label{classAriadne_1_1Ball_ad6bf2be97424a4ac1b4d9f6ca1cc2324} 
+\mbox{\hyperlink{classAriadne_1_1Ball_ada08cc26488a5693eb7e60f9dda08200}{Precision\+Type}} {\bfseries precision} () const
+\begin{DoxyCompactList}\small\item\em The precision of the floating-\/point type used for the centre value. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Ball_a6383d038075dfd92305f38d67ce61b54}\label{classAriadne_1_1Ball_a6383d038075dfd92305f38d67ce61b54} 
+\mbox{\hyperlink{classAriadne_1_1Ball_aef23e9bcd3723dc5aee7e3f73518b479}{Error\+Precision\+Type}} {\bfseries error\+\_\+precision} () const
+\begin{DoxyCompactList}\small\item\em The precision of the floating-\/point type used for the error bound. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Ball_a5d56faca91b250e16f0d60db804ded74}\label{classAriadne_1_1Ball_a5d56faca91b250e16f0d60db804ded74} 
+\mbox{\hyperlink{classAriadne_1_1Ball_acc53f806ca06a12a4e8d0ee59a9e6943}{Characteristics\+Type}} {\bfseries characteristics} () const
+\begin{DoxyCompactList}\small\item\em The compuational characteristics needed to create the ball; equivalent to the precision and error-\/precision. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Ball_ab601937b3ff0b3b79f85ac57a6e6341c}\label{classAriadne_1_1Ball_ab601937b3ff0b3b79f85ac57a6e6341c} 
+\mbox{\hyperlink{classAriadne_1_1Ball_a21e742d2ecee03a3ee6dfe1f8d5b00c9}{Generic\+Type}} {\bfseries generic} () const
+\begin{DoxyCompactList}\small\item\em Downcast to a generic validated ball. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Ball_a7422f6fef156360abe5af9f98920961e}\label{classAriadne_1_1Ball_a7422f6fef156360abe5af9f98920961e} 
+\mbox{\hyperlink{classAriadne_1_1Ball}{Ball}}$<$ F, FE $>$ {\bfseries pm} (\mbox{\hyperlink{classAriadne_1_1Error}{Error}}$<$ FE $>$ const \&e) const
+\begin{DoxyCompactList}\small\item\em Add {\itshape e} to error bound. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsubsection*{Friends}
+\begin{Indent}\textbf{ Arithmetic operators}\par
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1Ball_a7fefc5c9ca5b373d6e0ad4f5f76694d5}\label{classAriadne_1_1Ball_a7fefc5c9ca5b373d6e0ad4f5f76694d5} 
+\mbox{\hyperlink{classAriadne_1_1Ball}{Ball}}$<$ F, FE $>$ {\bfseries operator+} (\mbox{\hyperlink{classAriadne_1_1Ball}{Ball}}$<$ F, FE $>$ const \&x)
+\item 
+\Hypertarget{classAriadne_1_1Ball_a4ed271a6d0169fffa29579692810912b}\label{classAriadne_1_1Ball_a4ed271a6d0169fffa29579692810912b} 
+\mbox{\hyperlink{classAriadne_1_1Ball}{Ball}}$<$ F, FE $>$ {\bfseries operator-\/} (\mbox{\hyperlink{classAriadne_1_1Ball}{Ball}}$<$ F, FE $>$ const \&x)
+\item 
+\Hypertarget{classAriadne_1_1Ball_aa4ccc672d7940d621e38b3c33753120a}\label{classAriadne_1_1Ball_aa4ccc672d7940d621e38b3c33753120a} 
+\mbox{\hyperlink{classAriadne_1_1Ball}{Ball}}$<$ F, FE $>$ {\bfseries operator+} (\mbox{\hyperlink{classAriadne_1_1Ball}{Ball}}$<$ F, FE $>$ const \&x1, \mbox{\hyperlink{classAriadne_1_1Ball}{Ball}}$<$ F, FE $>$ const \&x2)
+\item 
+\Hypertarget{classAriadne_1_1Ball_aed971d6fca917af834e2d243c2312ce7}\label{classAriadne_1_1Ball_aed971d6fca917af834e2d243c2312ce7} 
+\mbox{\hyperlink{classAriadne_1_1Ball}{Ball}}$<$ F, FE $>$ {\bfseries operator-\/} (\mbox{\hyperlink{classAriadne_1_1Ball}{Ball}}$<$ F, FE $>$ const \&x1, \mbox{\hyperlink{classAriadne_1_1Ball}{Ball}}$<$ F, FE $>$ const \&x2)
+\item 
+\Hypertarget{classAriadne_1_1Ball_a708d85f2f3c3b69b53fe2831b669812f}\label{classAriadne_1_1Ball_a708d85f2f3c3b69b53fe2831b669812f} 
+\mbox{\hyperlink{classAriadne_1_1Ball}{Ball}}$<$ F, FE $>$ {\bfseries operator\texorpdfstring{$\ast$}{*}} (\mbox{\hyperlink{classAriadne_1_1Ball}{Ball}}$<$ F, FE $>$ const \&x1, \mbox{\hyperlink{classAriadne_1_1Ball}{Ball}}$<$ F, FE $>$ const \&x2)
+\item 
+\Hypertarget{classAriadne_1_1Ball_a4588f536316d1ff09a3cc6eed94408ef}\label{classAriadne_1_1Ball_a4588f536316d1ff09a3cc6eed94408ef} 
+\mbox{\hyperlink{classAriadne_1_1Ball}{Ball}}$<$ F, FE $>$ {\bfseries operator/} (\mbox{\hyperlink{classAriadne_1_1Ball}{Ball}}$<$ F, FE $>$ const \&x1, \mbox{\hyperlink{classAriadne_1_1Ball}{Ball}}$<$ F, FE $>$ const \&x2)
+\item 
+\Hypertarget{classAriadne_1_1Ball_a5712e9aa7ba01dbd987bcd58022c1080}\label{classAriadne_1_1Ball_a5712e9aa7ba01dbd987bcd58022c1080} 
+\mbox{\hyperlink{classAriadne_1_1Ball}{Ball}}$<$ F, FE $>$ \& {\bfseries operator+=} (\mbox{\hyperlink{classAriadne_1_1Ball}{Ball}}$<$ F, FE $>$ \&x1, \mbox{\hyperlink{classAriadne_1_1Ball}{Ball}}$<$ F, FE $>$ const \&x2)
+\item 
+\Hypertarget{classAriadne_1_1Ball_a3ecc177cbac70cccdbfbd6761a123aa4}\label{classAriadne_1_1Ball_a3ecc177cbac70cccdbfbd6761a123aa4} 
+\mbox{\hyperlink{classAriadne_1_1Ball}{Ball}}$<$ F, FE $>$ \& {\bfseries operator-\/=} (\mbox{\hyperlink{classAriadne_1_1Ball}{Ball}}$<$ F, FE $>$ \&x1, \mbox{\hyperlink{classAriadne_1_1Ball}{Ball}}$<$ F, FE $>$ const \&x2)
+\item 
+\Hypertarget{classAriadne_1_1Ball_a4417c5362fdb6e2adb1e2bc77fb3dc37}\label{classAriadne_1_1Ball_a4417c5362fdb6e2adb1e2bc77fb3dc37} 
+\mbox{\hyperlink{classAriadne_1_1Ball}{Ball}}$<$ F, FE $>$ \& {\bfseries operator\texorpdfstring{$\ast$}{*}=} (\mbox{\hyperlink{classAriadne_1_1Ball}{Ball}}$<$ F, FE $>$ \&x1, \mbox{\hyperlink{classAriadne_1_1Ball}{Ball}}$<$ F, FE $>$ const \&x2)
+\item 
+\Hypertarget{classAriadne_1_1Ball_a3a7ee129be2f6024a75437d251b21b43}\label{classAriadne_1_1Ball_a3a7ee129be2f6024a75437d251b21b43} 
+\mbox{\hyperlink{classAriadne_1_1Ball}{Ball}}$<$ F, FE $>$ \& {\bfseries operator/=} (\mbox{\hyperlink{classAriadne_1_1Ball}{Ball}}$<$ F, FE $>$ \&x1, \mbox{\hyperlink{classAriadne_1_1Ball}{Ball}}$<$ F, FE $>$ const \&x2)
+\end{DoxyCompactItemize}
+\end{Indent}
+\begin{Indent}\textbf{ Comparison operators}\par
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1Ball_a75135fe1ac3a7993154d40af92be69be}\label{classAriadne_1_1Ball_a75135fe1ac3a7993154d40af92be69be} 
+\mbox{\hyperlink{classAriadne_1_1ValidatedKleenean}{Validated\+Kleenean}} {\bfseries operator==} (\mbox{\hyperlink{classAriadne_1_1Ball}{Ball}}$<$ F, FE $>$ const \&x1, \mbox{\hyperlink{classAriadne_1_1Ball}{Ball}}$<$ F, FE $>$ const \&x2)
+\item 
+\Hypertarget{classAriadne_1_1Ball_aed233467419685df7c7bbc63f902f473}\label{classAriadne_1_1Ball_aed233467419685df7c7bbc63f902f473} 
+\mbox{\hyperlink{classAriadne_1_1ValidatedKleenean}{Validated\+Kleenean}} {\bfseries operator!=} (\mbox{\hyperlink{classAriadne_1_1Ball}{Ball}}$<$ F, FE $>$ const \&x1, \mbox{\hyperlink{classAriadne_1_1Ball}{Ball}}$<$ F, FE $>$ const \&x2)
+\item 
+\Hypertarget{classAriadne_1_1Ball_af4b9543f7bf5ac43a4d56d3b21a6e503}\label{classAriadne_1_1Ball_af4b9543f7bf5ac43a4d56d3b21a6e503} 
+\mbox{\hyperlink{classAriadne_1_1ValidatedKleenean}{Validated\+Kleenean}} {\bfseries operator$<$=} (\mbox{\hyperlink{classAriadne_1_1Ball}{Ball}}$<$ F, FE $>$ const \&x1, \mbox{\hyperlink{classAriadne_1_1Ball}{Ball}}$<$ F, FE $>$ const \&x2)
+\item 
+\Hypertarget{classAriadne_1_1Ball_a08c266065125ceab6c8890e543a641fb}\label{classAriadne_1_1Ball_a08c266065125ceab6c8890e543a641fb} 
+\mbox{\hyperlink{classAriadne_1_1ValidatedKleenean}{Validated\+Kleenean}} {\bfseries operator$>$=} (\mbox{\hyperlink{classAriadne_1_1Ball}{Ball}}$<$ F, FE $>$ const \&x1, \mbox{\hyperlink{classAriadne_1_1Ball}{Ball}}$<$ F, FE $>$ const \&x2)
+\item 
+\Hypertarget{classAriadne_1_1Ball_a82e1e8d13a07f90f77517f44ba5a85fa}\label{classAriadne_1_1Ball_a82e1e8d13a07f90f77517f44ba5a85fa} 
+\mbox{\hyperlink{classAriadne_1_1ValidatedKleenean}{Validated\+Kleenean}} {\bfseries operator$<$} (\mbox{\hyperlink{classAriadne_1_1Ball}{Ball}}$<$ F, FE $>$ const \&x1, \mbox{\hyperlink{classAriadne_1_1Ball}{Ball}}$<$ F, FE $>$ const \&x2)
+\item 
+\Hypertarget{classAriadne_1_1Ball_a5b583bdc3f31d6ded0c56a9ed5a06aeb}\label{classAriadne_1_1Ball_a5b583bdc3f31d6ded0c56a9ed5a06aeb} 
+\mbox{\hyperlink{classAriadne_1_1ValidatedKleenean}{Validated\+Kleenean}} {\bfseries operator$>$} (\mbox{\hyperlink{classAriadne_1_1Ball}{Ball}}$<$ F, FE $>$ const \&x1, \mbox{\hyperlink{classAriadne_1_1Ball}{Ball}}$<$ F, FE $>$ const \&x2)
+\end{DoxyCompactItemize}
+\end{Indent}
+\begin{Indent}\textbf{ Arithmetic operations}\par
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1Ball_a0438b7b1433682f4a86e59313d34b5c2}\label{classAriadne_1_1Ball_a0438b7b1433682f4a86e59313d34b5c2} 
+\mbox{\hyperlink{classAriadne_1_1Ball}{Ball}}$<$ F, FE $>$ {\bfseries nul} (\mbox{\hyperlink{classAriadne_1_1Ball}{Ball}}$<$ F, FE $>$ const \&x)
+\item 
+\Hypertarget{classAriadne_1_1Ball_ab89118221f791cf30aa50a76d7f42ee6}\label{classAriadne_1_1Ball_ab89118221f791cf30aa50a76d7f42ee6} 
+\mbox{\hyperlink{classAriadne_1_1Ball}{Ball}}$<$ F, FE $>$ {\bfseries pos} (\mbox{\hyperlink{classAriadne_1_1Ball}{Ball}}$<$ F, FE $>$ const \&x)
+\item 
+\Hypertarget{classAriadne_1_1Ball_af784b3b1405d0c84783db71086ab0cb1}\label{classAriadne_1_1Ball_af784b3b1405d0c84783db71086ab0cb1} 
+\mbox{\hyperlink{classAriadne_1_1Ball}{Ball}}$<$ F, FE $>$ {\bfseries neg} (\mbox{\hyperlink{classAriadne_1_1Ball}{Ball}}$<$ F, FE $>$ const \&x)
+\item 
+\Hypertarget{classAriadne_1_1Ball_a4ece72cafa135f6496acccb76a713a0e}\label{classAriadne_1_1Ball_a4ece72cafa135f6496acccb76a713a0e} 
+\mbox{\hyperlink{classAriadne_1_1Ball}{Ball}}$<$ F, FE $>$ {\bfseries hlf} (\mbox{\hyperlink{classAriadne_1_1Ball}{Ball}}$<$ F, FE $>$ const \&x)
+\item 
+\Hypertarget{classAriadne_1_1Ball_afb01ac8c1ad0d64952ad23a7b11eba05}\label{classAriadne_1_1Ball_afb01ac8c1ad0d64952ad23a7b11eba05} 
+\mbox{\hyperlink{classAriadne_1_1Ball}{Ball}}$<$ F, FE $>$ {\bfseries sqr} (\mbox{\hyperlink{classAriadne_1_1Ball}{Ball}}$<$ F, FE $>$ const \&x)
+\item 
+\Hypertarget{classAriadne_1_1Ball_a77c2ce0bb6d6dd27829c36bcc4ea79c6}\label{classAriadne_1_1Ball_a77c2ce0bb6d6dd27829c36bcc4ea79c6} 
+\mbox{\hyperlink{classAriadne_1_1Ball}{Ball}}$<$ F, FE $>$ {\bfseries rec} (\mbox{\hyperlink{classAriadne_1_1Ball}{Ball}}$<$ F, FE $>$ const \&x)
+\item 
+\Hypertarget{classAriadne_1_1Ball_a3cdba97ed82b73a6b5031da2b509ade9}\label{classAriadne_1_1Ball_a3cdba97ed82b73a6b5031da2b509ade9} 
+\mbox{\hyperlink{classAriadne_1_1Ball}{Ball}}$<$ F, FE $>$ {\bfseries add} (\mbox{\hyperlink{classAriadne_1_1Ball}{Ball}}$<$ F, FE $>$ const \&x1, \mbox{\hyperlink{classAriadne_1_1Ball}{Ball}}$<$ F, FE $>$ const \&x2)
+\item 
+\Hypertarget{classAriadne_1_1Ball_aa254d402547f7e10727a915e80c1b24e}\label{classAriadne_1_1Ball_aa254d402547f7e10727a915e80c1b24e} 
+\mbox{\hyperlink{classAriadne_1_1Ball}{Ball}}$<$ F, FE $>$ {\bfseries sub} (\mbox{\hyperlink{classAriadne_1_1Ball}{Ball}}$<$ F, FE $>$ const \&x1, \mbox{\hyperlink{classAriadne_1_1Ball}{Ball}}$<$ F, FE $>$ const \&x2)
+\item 
+\Hypertarget{classAriadne_1_1Ball_a6a076ba904793ca8639a1ea05c1803fa}\label{classAriadne_1_1Ball_a6a076ba904793ca8639a1ea05c1803fa} 
+\mbox{\hyperlink{classAriadne_1_1Ball}{Ball}}$<$ F, FE $>$ {\bfseries mul} (\mbox{\hyperlink{classAriadne_1_1Ball}{Ball}}$<$ F, FE $>$ const \&x1, \mbox{\hyperlink{classAriadne_1_1Ball}{Ball}}$<$ F, FE $>$ const \&x2)
+\item 
+\Hypertarget{classAriadne_1_1Ball_a9320bddf9a75156dff56c3120cb84aad}\label{classAriadne_1_1Ball_a9320bddf9a75156dff56c3120cb84aad} 
+\mbox{\hyperlink{classAriadne_1_1Ball}{Ball}}$<$ F, FE $>$ {\bfseries div} (\mbox{\hyperlink{classAriadne_1_1Ball}{Ball}}$<$ F, FE $>$ const \&x1, \mbox{\hyperlink{classAriadne_1_1Ball}{Ball}}$<$ F, FE $>$ const \&x2)
+\item 
+\Hypertarget{classAriadne_1_1Ball_ab6e8b73025734da994228f72d528c733}\label{classAriadne_1_1Ball_ab6e8b73025734da994228f72d528c733} 
+\mbox{\hyperlink{classAriadne_1_1Ball}{Ball}}$<$ F, FE $>$ {\bfseries fma} (\mbox{\hyperlink{classAriadne_1_1Ball}{Ball}}$<$ F, FE $>$ const \&x1, \mbox{\hyperlink{classAriadne_1_1Ball}{Ball}}$<$ F, FE $>$ const \&x2, \mbox{\hyperlink{classAriadne_1_1Ball}{Ball}}$<$ F, FE $>$ const \&x3)
+\item 
+\Hypertarget{classAriadne_1_1Ball_a7a30c6d2b6aaa5e922af12116b68e082}\label{classAriadne_1_1Ball_a7a30c6d2b6aaa5e922af12116b68e082} 
+\mbox{\hyperlink{classAriadne_1_1Ball}{Ball}}$<$ F, FE $>$ {\bfseries pow} (\mbox{\hyperlink{classAriadne_1_1Ball}{Ball}}$<$ F, FE $>$ const \&x, \mbox{\hyperlink{namespaceAriadne_a008e7f6ae8f621fbb1d876061812b9b2}{Int}} n)
+\item 
+\Hypertarget{classAriadne_1_1Ball_a00ac5ca605d7f2aa2c922870cc65a47c}\label{classAriadne_1_1Ball_a00ac5ca605d7f2aa2c922870cc65a47c} 
+\mbox{\hyperlink{classAriadne_1_1Ball}{Ball}}$<$ F, FE $>$ {\bfseries pow} (\mbox{\hyperlink{classAriadne_1_1Ball}{Ball}}$<$ F, FE $>$ const \&x, \mbox{\hyperlink{namespaceAriadne_aae901a69a841b1a085a0dfe218e38fe9}{Nat}} m)
+\end{DoxyCompactItemize}
+\end{Indent}
+\begin{Indent}\textbf{ Algebraic and transcendental operations}\par
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1Ball_a917dd44b3ff217e2f1b2ee56402fd161}\label{classAriadne_1_1Ball_a917dd44b3ff217e2f1b2ee56402fd161} 
+\mbox{\hyperlink{classAriadne_1_1Ball}{Ball}}$<$ F, FE $>$ {\bfseries sqrt} (\mbox{\hyperlink{classAriadne_1_1Ball}{Ball}}$<$ F, FE $>$ const \&x)
+\item 
+\Hypertarget{classAriadne_1_1Ball_a69947343dcd98c5c3fd0621f06af115e}\label{classAriadne_1_1Ball_a69947343dcd98c5c3fd0621f06af115e} 
+\mbox{\hyperlink{classAriadne_1_1Ball}{Ball}}$<$ F, FE $>$ {\bfseries exp} (\mbox{\hyperlink{classAriadne_1_1Ball}{Ball}}$<$ F, FE $>$ const \&x)
+\item 
+\Hypertarget{classAriadne_1_1Ball_a84590099ba3d23efd947aefc22a4bab4}\label{classAriadne_1_1Ball_a84590099ba3d23efd947aefc22a4bab4} 
+\mbox{\hyperlink{classAriadne_1_1Ball}{Ball}}$<$ F, FE $>$ {\bfseries log} (\mbox{\hyperlink{classAriadne_1_1Ball}{Ball}}$<$ F, FE $>$ const \&x)
+\item 
+\Hypertarget{classAriadne_1_1Ball_aad8be5aa79db77ed88f46fcfe9e3d3ca}\label{classAriadne_1_1Ball_aad8be5aa79db77ed88f46fcfe9e3d3ca} 
+\mbox{\hyperlink{classAriadne_1_1Ball}{Ball}}$<$ F, FE $>$ {\bfseries sin} (\mbox{\hyperlink{classAriadne_1_1Ball}{Ball}}$<$ F, FE $>$ const \&x)
+\item 
+\Hypertarget{classAriadne_1_1Ball_a69add348bf9859561d87731cf6838081}\label{classAriadne_1_1Ball_a69add348bf9859561d87731cf6838081} 
+\mbox{\hyperlink{classAriadne_1_1Ball}{Ball}}$<$ F, FE $>$ {\bfseries cos} (\mbox{\hyperlink{classAriadne_1_1Ball}{Ball}}$<$ F, FE $>$ const \&x)
+\item 
+\Hypertarget{classAriadne_1_1Ball_ae1d75a6ebb1529c342429b66fe83ef0c}\label{classAriadne_1_1Ball_ae1d75a6ebb1529c342429b66fe83ef0c} 
+\mbox{\hyperlink{classAriadne_1_1Ball}{Ball}}$<$ F, FE $>$ {\bfseries tan} (\mbox{\hyperlink{classAriadne_1_1Ball}{Ball}}$<$ F, FE $>$ const \&x)
+\item 
+\Hypertarget{classAriadne_1_1Ball_aa03635c2c7e198c6bce74ac731aefac9}\label{classAriadne_1_1Ball_aa03635c2c7e198c6bce74ac731aefac9} 
+\mbox{\hyperlink{classAriadne_1_1Ball}{Ball}}$<$ F, FE $>$ {\bfseries asin} (\mbox{\hyperlink{classAriadne_1_1Ball}{Ball}}$<$ F, FE $>$ const \&x)
+\item 
+\Hypertarget{classAriadne_1_1Ball_aaade8ef60e901122ef29db2a5ea66c50}\label{classAriadne_1_1Ball_aaade8ef60e901122ef29db2a5ea66c50} 
+\mbox{\hyperlink{classAriadne_1_1Ball}{Ball}}$<$ F, FE $>$ {\bfseries acos} (\mbox{\hyperlink{classAriadne_1_1Ball}{Ball}}$<$ F, FE $>$ const \&x)
+\item 
+\Hypertarget{classAriadne_1_1Ball_a8a116ee45fbdba9db2a12e8b75332eda}\label{classAriadne_1_1Ball_a8a116ee45fbdba9db2a12e8b75332eda} 
+\mbox{\hyperlink{classAriadne_1_1Ball}{Ball}}$<$ F, FE $>$ {\bfseries atan} (\mbox{\hyperlink{classAriadne_1_1Ball}{Ball}}$<$ F, FE $>$ const \&x)
+\end{DoxyCompactItemize}
+\end{Indent}
+\begin{Indent}\textbf{ Lattice operations}\par
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1Ball_a5144ee883ce187bcd6be44352a87dc25}\label{classAriadne_1_1Ball_a5144ee883ce187bcd6be44352a87dc25} 
+\mbox{\hyperlink{classAriadne_1_1Ball}{Ball}}$<$ F, FE $>$ {\bfseries abs} (\mbox{\hyperlink{classAriadne_1_1Ball}{Ball}}$<$ F, FE $>$ const \&x)
+\item 
+\Hypertarget{classAriadne_1_1Ball_a14838a2db1f1a6bdb95aa1120cb07d49}\label{classAriadne_1_1Ball_a14838a2db1f1a6bdb95aa1120cb07d49} 
+\mbox{\hyperlink{classAriadne_1_1Ball}{Ball}}$<$ F, FE $>$ {\bfseries max} (\mbox{\hyperlink{classAriadne_1_1Ball}{Ball}}$<$ F, FE $>$ const \&x1, \mbox{\hyperlink{classAriadne_1_1Ball}{Ball}}$<$ F, FE $>$ const \&x2)
+\item 
+\Hypertarget{classAriadne_1_1Ball_ab60ad212dd7ac8f59c82c5f57e61268a}\label{classAriadne_1_1Ball_ab60ad212dd7ac8f59c82c5f57e61268a} 
+\mbox{\hyperlink{classAriadne_1_1Ball}{Ball}}$<$ F, FE $>$ {\bfseries min} (\mbox{\hyperlink{classAriadne_1_1Ball}{Ball}}$<$ F, FE $>$ const \&x1, \mbox{\hyperlink{classAriadne_1_1Ball}{Ball}}$<$ F, FE $>$ const \&x2)
+\item 
+\Hypertarget{classAriadne_1_1Ball_a49ac5583d53177c8c39bf07972ad5c63}\label{classAriadne_1_1Ball_a49ac5583d53177c8c39bf07972ad5c63} 
+Positive\+Lower\+Bound$<$ F $>$ {\bfseries mig} (\mbox{\hyperlink{classAriadne_1_1Ball}{Ball}}$<$ F, FE $>$ const \&x)
+\item 
+\Hypertarget{classAriadne_1_1Ball_a5f635d746015ec7f0c2b9038ec0220f7}\label{classAriadne_1_1Ball_a5f635d746015ec7f0c2b9038ec0220f7} 
+Positive\+Upper\+Bound$<$ F $>$ {\bfseries mag} (\mbox{\hyperlink{classAriadne_1_1Ball}{Ball}}$<$ F, FE $>$ const \&x)
+\end{DoxyCompactItemize}
+\end{Indent}
+\begin{Indent}\textbf{ Comparison operations}\par
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\hyperlink{classAriadne_1_1ValidatedKleenean}{Validated\+Kleenean}} \mbox{\hyperlink{classAriadne_1_1Ball_ac91f753bf789a6ffb68b3bad5f7b6472}{sgn}} (\mbox{\hyperlink{classAriadne_1_1Ball}{Ball}}$<$ F, FE $>$ const \&x)
+\item 
+Logical\+Type$<$ \mbox{\hyperlink{structAriadne_1_1ValidatedTag}{Validated\+Tag}} $>$ \mbox{\hyperlink{classAriadne_1_1Ball_a7b84222608defa4c9a85a00b22d80bea}{eq}} (\mbox{\hyperlink{classAriadne_1_1Ball}{Ball}}$<$ F, FE $>$ const \&x1, \mbox{\hyperlink{classAriadne_1_1Ball}{Ball}}$<$ F, FE $>$ const \&x2)
+\item 
+\Hypertarget{classAriadne_1_1Ball_ae1c1757adef5219a20203aab78f2d2b5}\label{classAriadne_1_1Ball_ae1c1757adef5219a20203aab78f2d2b5} 
+Logical\+Type$<$ \mbox{\hyperlink{structAriadne_1_1ValidatedTag}{Validated\+Tag}} $>$ {\bfseries lt} (\mbox{\hyperlink{classAriadne_1_1Ball}{Ball}}$<$ F, FE $>$ const \&x1, \mbox{\hyperlink{classAriadne_1_1Ball}{Ball}}$<$ F, FE $>$ const \&x2)
+\end{DoxyCompactItemize}
+\end{Indent}
+\begin{Indent}\textbf{ Rounding operations}\par
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1Ball_ae3b43ea7d6129a40bb4889bd7da1d365}\label{classAriadne_1_1Ball_ae3b43ea7d6129a40bb4889bd7da1d365} 
+\mbox{\hyperlink{classAriadne_1_1Ball}{Ball}}$<$ F, FE $>$ {\bfseries round} (\mbox{\hyperlink{classAriadne_1_1Ball}{Ball}}$<$ F, FE $>$ const \&x)
+\begin{DoxyCompactList}\small\item\em Round lower and upper bounds to nearest integer values. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Ball_a382b11c70b10e5e0196013dce295ad47}\label{classAriadne_1_1Ball_a382b11c70b10e5e0196013dce295ad47} 
+\mbox{\hyperlink{classAriadne_1_1Ball}{Ball}}$<$ F, FE $>$ {\bfseries widen} (\mbox{\hyperlink{classAriadne_1_1Ball}{Ball}}$<$ F, FE $>$ const \&x)
+\begin{DoxyCompactList}\small\item\em Round outward by 1 ulp. i.\+e. increase the error. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Ball_a6e8b20e9c7a0ba9ee57554e9ec2d76db}\label{classAriadne_1_1Ball_a6e8b20e9c7a0ba9ee57554e9ec2d76db} 
+\mbox{\hyperlink{classAriadne_1_1Ball}{Ball}}$<$ F, FE $>$ {\bfseries narrow} (\mbox{\hyperlink{classAriadne_1_1Ball}{Ball}}$<$ F, FE $>$ const \&x)
+\begin{DoxyCompactList}\small\item\em Round inward by 1 ulp. i.\+e. decrease the error. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Ball_a475b8833227b50c2248375a49348c359}\label{classAriadne_1_1Ball_a475b8833227b50c2248375a49348c359} 
+\mbox{\hyperlink{classAriadne_1_1Ball}{Ball}}$<$ F, FE $>$ {\bfseries trunc} (\mbox{\hyperlink{classAriadne_1_1Ball}{Ball}}$<$ F, FE $>$ const \&x)
+\begin{DoxyCompactList}\small\item\em Truncate to lower precision. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Ball_acf463ef881ca39eb6f4e47c310006c61}\label{classAriadne_1_1Ball_acf463ef881ca39eb6f4e47c310006c61} 
+\mbox{\hyperlink{classAriadne_1_1Ball}{Ball}}$<$ F, FE $>$ {\bfseries trunc} (\mbox{\hyperlink{classAriadne_1_1Ball}{Ball}}$<$ F, FE $>$ const \&x, \mbox{\hyperlink{namespaceAriadne_aae901a69a841b1a085a0dfe218e38fe9}{Nat}} n)
+\begin{DoxyCompactList}\small\item\em Truncate to lower precision. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Ball_af37862e3c997c40143b314084d9403e2}\label{classAriadne_1_1Ball_af37862e3c997c40143b314084d9403e2} 
+\mbox{\hyperlink{classAriadne_1_1Integer}{Integer}} {\bfseries cast\+\_\+integer} (\mbox{\hyperlink{classAriadne_1_1Ball}{Ball}}$<$ F, FE $>$ const \&x)
+\begin{DoxyCompactList}\small\item\em Round to the nearest integer to the midpoint. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\end{Indent}
+\begin{Indent}\textbf{ Special value tests}\par
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1Ball_a274a659dc0c5d1f0f7094a10baca488e}\label{classAriadne_1_1Ball_a274a659dc0c5d1f0f7094a10baca488e} 
+\mbox{\hyperlink{namespaceAriadne_a76a8b016e5ad61faf9062cc387df5016}{Bool}} {\bfseries is\+\_\+nan} (\mbox{\hyperlink{classAriadne_1_1Ball}{Ball}}$<$ F, FE $>$ const \&x)
+\begin{DoxyCompactList}\small\item\em Tests whether {\itshape x} is NaN (not-\/a-\/number). \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Ball_a6b18b27eeabc48fa7fcb52421f5200b1}\label{classAriadne_1_1Ball_a6b18b27eeabc48fa7fcb52421f5200b1} 
+auto {\bfseries is\+\_\+zero} (\mbox{\hyperlink{classAriadne_1_1Ball}{Ball}}$<$ F, FE $>$ const \&x) -\/$>$ Logical\+Type$<$ \mbox{\hyperlink{structAriadne_1_1ValidatedTag}{Validated\+Tag}} $>$
+\begin{DoxyCompactList}\small\item\em Tests whether {\itshape x} is a model of zero. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Ball_a1279e4547ba2716556d9a046e882745f}\label{classAriadne_1_1Ball_a1279e4547ba2716556d9a046e882745f} 
+auto {\bfseries is\+\_\+positive} (\mbox{\hyperlink{classAriadne_1_1Ball}{Ball}}$<$ F, FE $>$ const \&x) -\/$>$ Logical\+Type$<$ \mbox{\hyperlink{structAriadne_1_1ValidatedTag}{Validated\+Tag}} $>$
+\begin{DoxyCompactList}\small\item\em Tests whether {\itshape x} is a model of a positive number. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\end{Indent}
+\begin{Indent}\textbf{ Validated information tests and operations}\par
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1Ball_ac56c32df959f8de3adfffe17a95118ea}\label{classAriadne_1_1Ball_ac56c32df959f8de3adfffe17a95118ea} 
+\mbox{\hyperlink{namespaceAriadne_a76a8b016e5ad61faf9062cc387df5016}{Bool}} {\bfseries same} (\mbox{\hyperlink{classAriadne_1_1Ball}{Ball}}$<$ F, FE $>$ const \&x1, \mbox{\hyperlink{classAriadne_1_1Ball}{Ball}}$<$ F, FE $>$ const \&x2)
+\begin{DoxyCompactList}\small\item\em Tests is {\itshape x1} and {\itshape x2} have the same representation i.\+e. the same centre value and error bound. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Ball_ac9f4b935a03ab58cdb4ac807f79dedf6}\label{classAriadne_1_1Ball_ac9f4b935a03ab58cdb4ac807f79dedf6} 
+\mbox{\hyperlink{namespaceAriadne_a76a8b016e5ad61faf9062cc387df5016}{Bool}} {\bfseries models} (\mbox{\hyperlink{classAriadne_1_1Ball}{Ball}}$<$ F, FE $>$ const \&x1, F const \&x2)
+\begin{DoxyCompactList}\small\item\em Tests is {\itshape x1} is a valid approximation for {\itshape x2} i.\+e. if {\itshape x2} is within the error of the centre value of {\itshape x1}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Ball_a1c6e756a1a0d8432fc60bef3f4abba22}\label{classAriadne_1_1Ball_a1c6e756a1a0d8432fc60bef3f4abba22} 
+\mbox{\hyperlink{namespaceAriadne_a76a8b016e5ad61faf9062cc387df5016}{Bool}} {\bfseries consistent} (\mbox{\hyperlink{classAriadne_1_1Ball}{Ball}}$<$ F, FE $>$ const \&x1, \mbox{\hyperlink{classAriadne_1_1Ball}{Ball}}$<$ F, FE $>$ const \&x2)
+\begin{DoxyCompactList}\small\item\em Tests is {\itshape x1} and {\itshape x2} are consistent with being a model of the same value i.\+e. they intersect. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Ball_aa40ab17fc79756d4e44d05533f77e234}\label{classAriadne_1_1Ball_aa40ab17fc79756d4e44d05533f77e234} 
+\mbox{\hyperlink{namespaceAriadne_a76a8b016e5ad61faf9062cc387df5016}{Bool}} {\bfseries inconsistent} (\mbox{\hyperlink{classAriadne_1_1Ball}{Ball}}$<$ F, FE $>$ const \&x1, \mbox{\hyperlink{classAriadne_1_1Ball}{Ball}}$<$ F, FE $>$ const \&x2)
+\begin{DoxyCompactList}\small\item\em Tests is {\itshape x1} and {\itshape x2} are inconsistent with being a model of the same value i.\+e. they are disjoint. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Ball_a7f6e7309f7c07ddcde8a0adc804173a5}\label{classAriadne_1_1Ball_a7f6e7309f7c07ddcde8a0adc804173a5} 
+\mbox{\hyperlink{namespaceAriadne_a76a8b016e5ad61faf9062cc387df5016}{Bool}} {\bfseries refines} (\mbox{\hyperlink{classAriadne_1_1Ball}{Ball}}$<$ F, FE $>$ const \&x1, \mbox{\hyperlink{classAriadne_1_1Ball}{Ball}}$<$ F, FE $>$ const \&x2)
+\begin{DoxyCompactList}\small\item\em Tests is {\itshape x1} is a tighter representation than {\itshape x2}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Ball_a74bb7261af2ffdd3c95cb87ebac170ce}\label{classAriadne_1_1Ball_a74bb7261af2ffdd3c95cb87ebac170ce} 
+\mbox{\hyperlink{classAriadne_1_1Ball}{Ball}}$<$ F, FE $>$ {\bfseries refinement} (\mbox{\hyperlink{classAriadne_1_1Ball}{Ball}}$<$ F, FE $>$ const \&x1, \mbox{\hyperlink{classAriadne_1_1Ball}{Ball}}$<$ F, FE $>$ const \&x2)
+\begin{DoxyCompactList}\small\item\em The common refinement of {\itshape x1} and \textbackslash{}x2. Requires {\itshape x1} and {\itshape x2} to be consistent. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\end{Indent}
+\begin{Indent}\textbf{ Input/output operations}\par
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1Ball_a27862124cbf5acde516302a7c9d711bf}\label{classAriadne_1_1Ball_a27862124cbf5acde516302a7c9d711bf} 
+\mbox{\hyperlink{namespaceAriadne_acbb98ddc4385af4599070e65a1a47ec1}{Output\+Stream}} \& {\bfseries operator$<$$<$} (\mbox{\hyperlink{namespaceAriadne_acbb98ddc4385af4599070e65a1a47ec1}{Output\+Stream}} \&os, \mbox{\hyperlink{classAriadne_1_1Ball}{Ball}}$<$ F, FE $>$ const \&x)
+\begin{DoxyCompactList}\small\item\em Write to an output stream. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Ball_a4b99522458c0755633d8dec82484884d}\label{classAriadne_1_1Ball_a4b99522458c0755633d8dec82484884d} 
+\mbox{\hyperlink{namespaceAriadne_a3c42889d7ee562011f1dc63874e51d0e}{Input\+Stream}} \& {\bfseries operator$>$$>$} (\mbox{\hyperlink{namespaceAriadne_a3c42889d7ee562011f1dc63874e51d0e}{Input\+Stream}} \&is, \mbox{\hyperlink{classAriadne_1_1Ball}{Ball}}$<$ F, FE $>$ \&x)
+\begin{DoxyCompactList}\small\item\em Read from an input stream. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\end{Indent}
+
+
+\label{doc-related-members}
+\Hypertarget{classAriadne_1_1Ball_doc-related-members}
+\doxysubsubsection{Friends And Related Symbol Documentation}
+\Hypertarget{classAriadne_1_1Ball_ac91f753bf789a6ffb68b3bad5f7b6472}\index{Ball$<$ F, FE $>$@{Ball$<$ F, FE $>$}!sgn@{sgn}}
+\index{sgn@{sgn}!Ball$<$ F, FE $>$@{Ball$<$ F, FE $>$}}
+\doxyparagraph{\texorpdfstring{sgn}{sgn}}
+{\footnotesize\ttfamily \label{classAriadne_1_1Ball_ac91f753bf789a6ffb68b3bad5f7b6472} 
+template$<$class F, class FE$>$ \\
+\mbox{\hyperlink{classAriadne_1_1ValidatedKleenean}{Validated\+Kleenean}} sgn (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{classAriadne_1_1Ball}{Ball}}$<$ F, FE $>$ const \&}]{x}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [friend]}}
+
+
+
+
+
+Equality comparison operator. Tests equality of represented real-\/point value. \Hypertarget{classAriadne_1_1Ball_a7b84222608defa4c9a85a00b22d80bea}\index{Ball$<$ F, FE $>$@{Ball$<$ F, FE $>$}!eq@{eq}}
+\index{eq@{eq}!Ball$<$ F, FE $>$@{Ball$<$ F, FE $>$}}
+\doxyparagraph{\texorpdfstring{eq}{eq}}
+{\footnotesize\ttfamily \label{classAriadne_1_1Ball_a7b84222608defa4c9a85a00b22d80bea} 
+template$<$class F, class FE$>$ \\
+Logical\+Type$<$ \mbox{\hyperlink{structAriadne_1_1ValidatedTag}{Validated\+Tag}} $>$ eq (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{classAriadne_1_1Ball}{Ball}}$<$ F, FE $>$ const \&}]{x1}{, }\item[{\mbox{\hyperlink{classAriadne_1_1Ball}{Ball}}$<$ F, FE $>$ const \&}]{x2}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [friend]}}
+
+
+
+
+
+Strict less-\/than comparison operator. Tests equality of represented real-\/point value. 
+
+The documentation for this class was generated from the following files\+:\begin{DoxyCompactItemize}
+\item 
+source/numeric/\mbox{\hyperlink{float_8decl_8hpp}{float.\+decl.\+hpp}}\item 
+source/numeric/\mbox{\hyperlink{float__ball_8hpp}{float\+\_\+ball.\+hpp}}\item 
+source/numeric/float\+\_\+ball.\+tpl.\+hpp\end{DoxyCompactItemize}

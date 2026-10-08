@@ -1,0 +1,131 @@
+Name:           aern-poly-plot-gtk
+Version:        0.5.0
+Cabal-Version:  >= 1.8
+Build-type:     Simple
+License:        BSD3
+License-File:   LICENCE
+Author:         Michal Konecny (Aston University)
+Copyright:      (c) 2012 Michal Konecny
+Maintainer:     mikkonecny@gmail.com
+Homepage:       http://code.google.com/p/aern/
+Stability:      experimental
+Category:       Data, Math
+Synopsis:       support for solving ODE IVPs using the interval polynomial Picard operator
+Tested-with:    GHC==7.6.3
+Description:    Support for interactive plotting of types from aern-poly.
+    .
+    Includes several example plot executables.
+
+library
+  hs-source-dirs:  src demos
+  ghc-options:     -Wall
+  Build-Depends:   
+        base >= 4.4,
+        containers >= 0.3,
+        random >= 1.0,
+        gtk >= 0.12.0,
+        cairo >= 0.12.0,
+        stm >= 2.1.2.1,
+        filepath >= 1.1.0.4,
+        directory >= 1.0.1.1,
+        aern-order == 0.5.*,
+        aern-real == 0.5.*,
+        aern-interval == 0.5.*,
+        aern-realfn == 0.5.*,
+        aern-realfn-plot-gtk == 0.5.*,
+        aern-poly == 0.5.*,
+        aern-double == 0.5.*
+  exposed-modules: 
+        Numeric.AERN.Poly.IntPoly.Plot
+  other-modules:
+        Quickstart, Quickstart1, Integrate, TestSineCosine
+
+executable plot
+  hs-source-dirs:  demos
+  ghc-options:     -Wall -rtsopts
+  main-is:         plot.hs
+  Build-Depends:   
+        base >= 4.4,
+        containers >= 0.3,
+        random >= 1.0,
+        gtk >= 0.12.0,
+        cairo >= 0.12.0,
+        stm >= 2.1.2.1,
+        filepath >= 1.1.0.4,
+        directory >= 1.0.1.1,
+        aern-order == 0.5.*,
+        aern-real == 0.5.*,
+        aern-interval == 0.5.*,
+        aern-double == 0.5.*,
+        aern-realfn == 0.5.*,
+        aern-realfn-plot-gtk == 0.5.*,
+        aern-poly == 0.5.*,
+        aern-poly-plot-gtk == 0.5.*
+
+executable plotPicard
+  hs-source-dirs:  demos
+  ghc-options:     -Wall -rtsopts
+  main-is:         plotPicard.hs
+  Build-Depends:   
+        base >= 4.4,
+        containers >= 0.3,
+        random >= 1.0,
+        gtk >= 0.12.0,
+        cairo >= 0.12.0,
+        stm >= 2.1.2.1,
+        filepath >= 1.1.0.4,
+        directory >= 1.0.1.1,
+        aern-order == 0.5.*,
+        aern-real == 0.5.*,
+        aern-interval == 0.5.*,
+        aern-double == 0.5.*,
+        aern-realfn == 0.5.*,
+        aern-realfn-plot-gtk == 0.5.*,
+        aern-poly == 0.5.*,
+        aern-poly-plot-gtk == 0.5.*
+
+executable LogisticMap
+  hs-source-dirs:  demos
+  ghc-options:     -Wall -rtsopts
+  main-is:         LogisticMap.hs
+  Build-Depends:   
+        base >= 4.4,
+        containers >= 0.3,
+        random >= 1.0,
+        gtk >= 0.12.0,
+        cairo >= 0.12.0,
+        stm >= 2.1.2.1,
+        filepath >= 1.1.0.4,
+        directory >= 1.0.1.1,
+        aern-order == 0.5.*,
+        aern-real == 0.5.*,
+        aern-interval == 0.5.*,
+        aern-double == 0.5.*,
+        aern-mpfr == 0.5.*,
+        aern-realfn == 0.5.*,
+        aern-realfn-plot-gtk == 0.5.*,
+        aern-poly == 0.5.*,
+        aern-poly-plot-gtk == 0.5.*
+
+executable Inclusion
+  hs-source-dirs:  demos
+  ghc-options:     -Wall -rtsopts
+  main-is:         Inclusion.hs
+  Build-Depends:   
+        base >= 4.4,
+        containers >= 0.3,
+        random >= 1.0,
+        gtk >= 0.12.0,
+        cairo >= 0.12.0,
+        stm >= 2.1.2.1,
+        filepath >= 1.1.0.4,
+        directory >= 1.0.1.1,
+        aern-order == 0.5.*,
+        aern-real == 0.5.*,
+        aern-interval == 0.5.*,
+        aern-double == 0.5.*,
+        aern-realfn == 0.5.*,
+        aern-realfn-plot-gtk == 0.5.*,
+        aern-poly == 0.5.*,
+        aern-poly-plot-gtk == 0.5.*
+

@@ -1,0 +1,10 @@
+{
+  "parent": {
+    "returncode": 101,
+    "elapsed_seconds": 0.08147414692211896,
+    "binary_sha256": "95712e9f52a512eea453405e51882f2b6809fae4814dc3c6754b533ba7acfb6d",
+    "log": "chord-normal-products-20260923-parent2-parent-tests.log"
+  },
+  "all_sources_unchanged": true,
+  "all_processes_reaped": true
+}

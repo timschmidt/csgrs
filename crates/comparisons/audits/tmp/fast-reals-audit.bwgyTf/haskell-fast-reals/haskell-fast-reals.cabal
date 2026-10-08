@@ -1,0 +1,70 @@
+name:                haskell-fast-reals
+version:             0.1.0.0
+-- synopsis:
+-- description:
+license:             BSD2
+license-file:        LICENSE
+author:              Andrej Bauer
+maintainer:          ivo.list@guest.arnes.si
+-- copyright:
+category:            Math
+build-type:          Simple
+extra-source-files:  README.txt
+cabal-version:       >=1.10
+
+library
+    exposed-modules: Data.Reals.Reals
+                     Data.Reals.Lipschitz
+                     Data.Approximate.ApproximateField
+                     Data.Approximate.Floating.MPFR
+                     Data.Reals.Staged
+                     Data.Approximate.Interval
+                     Data.Reals.Space
+                   --Data.Approximate.Floating.HMPFR
+    -- other-modules:
+    other-extensions:Arrows, MultiParamTypeClasses, FunctionalDependencies,
+                     TypeSynonymInstances, FlexibleInstances
+    build-depends:   Cabal   >= 1.22.1.1
+                   , base    >= 4.7 && <4.8
+                   , haskell-mpfr >= 0.1
+                   , time >= 1.4.2
+                   , HTF
+    hs-source-dirs:  src
+    default-language:Haskell2010
+
+Test-Suite test-reals
+    type:            exitcode-stdio-1.0
+    main-is:         HTFTestReals.hs
+    build-depends:   Cabal >= 1.22.1.1
+                   , base
+                   , haskell-fast-reals == 0.1.0.0
+                   , haskell-mpfr >= 0.1
+                   , HTF
+    hs-source-dirs:  testsuite/tests
+    default-language:Haskell2010
+
+Benchmark bench-dyadic
+    type:            exitcode-stdio-1.0
+    main-is:         bench-float.hs
+    build-depends:   base
+                   , haskell-fast-reals == 0.1.0.0
+                   , haskell-mpfr >= 0.1
+                   , time
+                   , HTF
+    hs-source-dirs:  testsuite/benchmarks
+    default-language:Haskell2010
+
+Benchmark bench-reals
+    type:            exitcode-stdio-1.0
+    main-is:         bench-reals.hs
+    build-depends:   base
+                   , haskell-fast-reals == 0.1.0.0
+                   , haskell-mpfr >= 0.1
+                   , time
+                   , HTF
+    hs-source-dirs:  testsuite/benchmarks
+--    ghc-options:     -O2
+--                     -threaded
+--                     -fprof-auto
+--                     "-with-rtsopts=-N -p -s -h -i0.1"
+    default-language:Haskell2010

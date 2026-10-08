@@ -1,0 +1,5 @@
+Record matched exact composition replay measurements
+
+Preserve all twelve passing runs, source snapshot identifiers and four executable hashes for joined continuous-fillet replay and degree-six offset overlap. The joined regression now measures 0.314 seconds median against 3.018 seconds for the historical passing baseline; document the 68-request workload and its unchanged exactness assertions. Record the separate 47.878-to-45.834-second common-content interpolation comparison.
+
+The evidence describes full regression workloads and does not claim uniform speedups or isolate every intervening fillet change. Documentation-only validation audits original logs, timings, source hashes and pinned binaries; no redundant build or test rerun.

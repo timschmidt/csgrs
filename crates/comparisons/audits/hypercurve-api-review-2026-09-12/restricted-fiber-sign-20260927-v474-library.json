@@ -1,0 +1,7 @@
+{
+  "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypercurve-85a9105cd1c82df7.rlib",
+  "sha256": "510021aca58d092b35c712e5c49081fd2dc92fafe60e5b0f95bdcbe42c364f50",
+  "source_sha256": "5d0c940155709699740e97fe713730c14c9a009abd8bcd2efecf7c6031649367",
+  "cargo_build_log": "restricted-fiber-sign-20260927-v474-hypercurve_curve_region_promotion-build.log",
+  "recorded_after_compiler_artifact": true
+}

@@ -1,0 +1,26 @@
+[
+  {
+    "name": "bezier_offset::conversion_tests::selected_fiber_transverse_mapped_cut_inverts_by_point",
+    "returncode": 101,
+    "passed": false,
+    "limit_seconds": 180,
+    "elapsed_seconds": 115.97017526102718,
+    "log": "contact-callers-20260923-focused2-case-0.log"
+  },
+  {
+    "name": "bezier_offset::conversion_tests::selected_parallel_normal_circle_intersects_genuinely_analytic_parallel_in_one_fiber",
+    "returncode": 101,
+    "passed": false,
+    "limit_seconds": 360,
+    "elapsed_seconds": 45.875031361938454,
+    "log": "contact-callers-20260923-focused2-case-1.log"
+  },
+  {
+    "name": "bezier_region::tests::nonrepresented_chord_and_selected_circle_complete_the_fillet_kernel",
+    "returncode": 0,
+    "passed": true,
+    "limit_seconds": 600,
+    "elapsed_seconds": 147.1178042680258,
+    "log": "contact-callers-20260923-focused2-case-2.log"
+  }
+]

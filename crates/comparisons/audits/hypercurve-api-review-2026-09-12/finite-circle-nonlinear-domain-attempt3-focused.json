@@ -1,0 +1,58 @@
+[
+  {
+    "name": "denominator_sign_tracks_the_requested_range_and_keeps_unit_cache_scope",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve-6e6572a45c5b177b",
+      "denominator_sign_tracks_the_requested_range_and_keeps_unit_cache_scope",
+      "--nocapture",
+      "--test-threads=1"
+    ],
+    "binary": "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve-6e6572a45c5b177b",
+    "sha256": "ebcb7f2beac344b66654a1bf277ac2a547d17860d605572fc7c45413cbee07dd",
+    "returncode": 0,
+    "elapsed_seconds": 0.037990346987498924,
+    "log": "finite-circle-nonlinear-domain-attempt3-denominator_sign_tracks_the_requested_range_and_keeps_unit_cache_scope.log"
+  },
+  {
+    "name": "denominator_sign_excludes_a_pole_outside_selected_bounds",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve-6e6572a45c5b177b",
+      "denominator_sign_excludes_a_pole_outside_selected_bounds",
+      "--nocapture",
+      "--test-threads=1"
+    ],
+    "binary": "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve-6e6572a45c5b177b",
+    "sha256": "ebcb7f2beac344b66654a1bf277ac2a547d17860d605572fc7c45413cbee07dd",
+    "returncode": 0,
+    "elapsed_seconds": 0.034494185994844884,
+    "log": "finite-circle-nonlinear-domain-attempt3-denominator_sign_excludes_a_pole_outside_selected_bounds.log"
+  },
+  {
+    "name": "rational_circle_component_adapter_preserves_mixed_evidence_when_clipped",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve-6e6572a45c5b177b",
+      "rational_circle_component_adapter_preserves_mixed_evidence_when_clipped",
+      "--nocapture",
+      "--test-threads=1"
+    ],
+    "binary": "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve-6e6572a45c5b177b",
+    "sha256": "ebcb7f2beac344b66654a1bf277ac2a547d17860d605572fc7c45413cbee07dd",
+    "returncode": 0,
+    "elapsed_seconds": 0.08344136201776564,
+    "log": "finite-circle-nonlinear-domain-attempt3-rational_circle_component_adapter_preserves_mixed_evidence_when_clipped.log"
+  },
+  {
+    "name": "selected_fiber_circle_overlap_preserves_an_isolated_parameter_visit",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve-6e6572a45c5b177b",
+      "selected_fiber_circle_overlap_preserves_an_isolated_parameter_visit",
+      "--nocapture",
+      "--test-threads=1"
+    ],
+    "binary": "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve-6e6572a45c5b177b",
+    "sha256": "ebcb7f2beac344b66654a1bf277ac2a547d17860d605572fc7c45413cbee07dd",
+    "returncode": 0,
+    "elapsed_seconds": 57.109632984997006,
+    "log": "finite-circle-nonlinear-domain-attempt3-selected_fiber_circle_overlap_preserves_an_isolated_parameter_visit.log"
+  }
+]

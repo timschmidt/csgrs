@@ -1,0 +1,66 @@
+Test the generator of IReal numbers, i.e. that generated values are
+proper numbers (satisfy the Cauchy criterion) in the intended range.
+    range is (0,10)             +++ OK, passed 100 tests.
+    range is (0,1000)           +++ OK, passed 100 tests.
+    range is (0,10^6)           +++ OK, passed 100 tests.
+    range is (0,10^10)          +++ OK, passed 100 tests.
+Test the generator of IReal intervals, i.e. that generated values are
+proper intervals (the end points are proper numbers and left end point
+smaller than right end point) and have midpoint in the intended range.
+    range is (0,10)             +++ OK, passed 100 tests.
+    range is (0,1000)           +++ OK, passed 100 tests.
+    range is (0,10^6)           +++ OK, passed 100 tests.
+    range is (0,10^10)          +++ OK, passed 100 tests.
+Test that function values are proper real numbers, i.e. function
+values for random arguments satisfy Cauchy criterion.
+   exp over (0,100)             +++ OK, passed 100 tests.
+   sin over (0,100)             +++ OK, passed 100 tests.
+   log over (0,100)             +++ OK, passed 100 tests.
+   atan over (0,100)            +++ OK, passed 100 tests.
+Test that function values for interval arguments are proper intervals,
+i.e. the end points are proper numbers and left end point smaller
+than right end point.
+   exp over (0,10)              +++ OK, passed 100 tests.
+   sin over (0,10)              +++ OK, passed 100 tests.
+   log . (+1) . abs over (1,10) +++ OK, passed 100 tests.
+   atan over (0,10)             +++ OK, passed 100 tests.
+Test that randomly generated expression values are proper real numbers.
+   range is (0,1)               +++ OK, passed 100 tests.
+   range is (0,5)               +++ OK, passed 100 tests.
+Test that functions in Floating give consistent results in
+instances for IReal and Double, i.e. differ in at most two
+last bits of Double mantissa.
+   log over (1,10^6)            +++ OK, passed 100 tests.
+   sin over (0,pi)              +++ OK, passed 100 tests.
+   exp over (0,100)             +++ OK, passed 100 tests.
+   atan over (0,10^6)           +++ OK, passed 100 tests.
+   sqrt over (0,10^6)           +++ OK, passed 100 tests.
+Test commutativity of addition  +++ OK, passed 100 tests.
+Test commutativity of multiplication+++ OK, passed 100 tests.
+Test associativity of addition  +++ OK, passed 100 tests.
+Test associativity of multiplication+++ OK, passed 100 tests.
+Test that the following functions are the identity function.
+Use random inputs, uniformly distributed over given intervals.
+True equality cannot be tested; test passes if |f(x) - x| < 1e-200.
+   exp . log over (0,10)        +++ OK, passed 100 tests.
+   exp . log over (0,1000)      +++ OK, passed 100 tests.
+   exp . log over (0,10^10)     +++ OK, passed 100 tests.
+   sq . sqrt over (0,10)        +++ OK, passed 100 tests.
+   sq . sqrt over (0,1000)      +++ OK, passed 100 tests.
+   sq . sqrt over (0,10^10)     +++ OK, passed 100 tests.
+   tan . atan over (0,10)       +++ OK, passed 100 tests.
+   tan . atan over (0,1000)     +++ OK, passed 100 tests.
+   tan . atan over (0,10^10)    +++ OK, passed 100 tests.
+   asin . sin over (-1,1)       +++ OK, passed 100 tests.
+   asinh . sinh over (0,100)    +++ OK, passed 100 tests.
+   recip . recip over (0,1000)  +++ OK, passed 100 tests.
+Test pi, by testing the following identities up to 1e-200.
+   sin pi = 0                   +++ OK, passed 1 test.
+   cos pi = -1                  +++ OK, passed 1 test.
+   atan 1 = pi/4                +++ OK, passed 1 test.
+Test the following identities up to 1e-200, for random real numbers.
+    cos x^2 + sin x^2 = 1       +++ OK, passed 100 tests.
+    sin (2*x) = 2*sin x*cos x   +++ OK, passed 100 tests.
+Test the following identities up to 1e-200, for random non-zero numbers.
+    log |x*y| = log |x|+log |y| +++ OK, passed 100 tests.
+    x * recip x = 1             +++ OK, passed 100 tests.

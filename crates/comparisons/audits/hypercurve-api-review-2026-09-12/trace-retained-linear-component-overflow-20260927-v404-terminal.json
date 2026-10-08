@@ -1,0 +1,17 @@
+{
+  "source_manifest": "retained-linear-component-replay-20260927-v403-sources.json",
+  "binary": {
+    "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-linear-component-replay-20260927-v403-hypercurve",
+    "sha256": "ab5c27778cb2e4573e83bf0bf7a49410402b823c1f36b20de610818cae05e3ba"
+  },
+  "all_processes_reaped": true,
+  "command": [
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-linear-component-replay-20260927-v403-hypercurve",
+    "--exact",
+    "curve::curve_fillet::tests::nonlinear_linear_fillet_components_retain_unique_contacts_and_tangents",
+    "--nocapture",
+    "--test-threads=1"
+  ],
+  "returncode": 101,
+  "elapsed_seconds": 0.5645158370025456
+}

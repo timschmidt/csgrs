@@ -1,0 +1,39 @@
+{
+  "checkpoint": 80,
+  "recorded": "2026-09-12T01:45:16.653Z",
+  "source": {
+    "checkpoint": 75,
+    "originSha256": "f14634eec550e7d166e63ba28852460782668e42a288c2356e8541680e5b0191",
+    "changed": [
+      "hypersolve/src/algebraic_binary.rs",
+      "hypersolve/src/algebraic_binary/zero_factor_tests.rs"
+    ],
+    "previousLiveFiles": 956,
+    "liveFiles": 957,
+    "unchangedPreviousFiles": 955,
+    "qualifiedSolverFiles": 176,
+    "qualifiedConsumerFiles": 355,
+    "mainSha256": "63b08c8d7523d3e3410d3d6e84a04088fa9f4f7c3b66ab586bfe9af37fa1b002",
+    "testSha256": "8f8e2b7617f9c9b993f1190139bbbe960a723309bf09989b5001d061f2c49961",
+    "previousMainSha256": "e97877da6029f26e256943ca70f4005576574689f33288b71874165b4c8e87e6",
+    "historicalArtifacts": 1279,
+    "previousFinished": "2026-09-11T21:51:02.880Z",
+    "scope": "Exact promotion of the fully qualified zero-factor candidate; no other recorded live source/support change. Historical live flags describe older states. Source identity is separate from successful live regression/retention gates."
+  },
+  "files": {
+    "run-qqbar-inverse-hyper-v80.mjs": "1f4b37c752e2be552b54c69c396508a0d38b98f00c301a98acd947fb1f265048",
+    "qqbar-inverse-hyper-protocol-v80.md": "0d69f7847d10b50276e7243801b9de0a7f7cd039fcd623eb0860081670fb48c9",
+    "qqbar-inverse-hyper-v80/src/main.rs": "cf13189370fb6c495d293f3718c5ecfa4ff4ad7b77b302e470be6842a0db0163",
+    "qqbar-inverse-hyper-v80/Cargo.toml": "fd4ca7dfb21d03feb4fde9e5cee29d4b50652d4a3d4d8d944aef783a3a040362",
+    "qqbar-inverse-hyper-v80/Cargo.lock": "e97c8e666b12b07d26e5c547582f8addc2513b2048c4d1d2715e663f0694780a",
+    "point-qualified-capture.mjs": "8b574f18a85c470ef47f9eafc780c462a93e811ebe15695f0950cfef17ada66e",
+    "point-qualified-environment.mjs": "51947315ab10dc3618c03e296e3c64ceed5ead142691ae9553460a016352efbb",
+    "capture.mjs": "aaf6df6bbd73025a8541617ce83731ae5ea3fd2272bd98c15e3c4c12b713ce23"
+  },
+  "cargoEnv": [
+    "CARGO_TARGET_DIR=/tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse",
+    "CARGO_INCREMENTAL=0",
+    "CARGO_PROFILE_DEV_DEBUG=0",
+    "CARGO_BUILD_JOBS=2"
+  ]
+}

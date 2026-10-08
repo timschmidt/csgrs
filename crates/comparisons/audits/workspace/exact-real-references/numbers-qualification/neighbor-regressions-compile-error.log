@@ -1,0 +1,17 @@
+   Compiling hyperreal v0.13.1 (/home/tim/Documents/GitHub/workspace/hyperreal)
+error[E0282]: type annotations needed
+   --> src/computable/node/tests.rs:131:13
+    |
+131 |         let upper = b / 64 + d * 740 / 2048;
+    |             ^^^^^
+...
+134 |             let (lo, hi) = if negative { (-upper.clone(), -lower.clone()) } else { (lower.clone(), upper.clone()) };
+    |                                            ----- type must be known at this point
+    |
+help: consider giving `upper` an explicit type
+    |
+131 |         let upper: /* Type */ = b / 64 + d * 740 / 2048;
+    |                  ++++++++++++
+
+For more information about this error, try `rustc --explain E0282`.
+error: could not compile `hyperreal` (lib test) due to 1 previous error

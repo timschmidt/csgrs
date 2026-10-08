@@ -1,0 +1,40 @@
+\doxysubsection{source/geometry/set.hpp File Reference}
+\hypertarget{set_8hpp}{}\label{set_8hpp}\index{source/geometry/set.hpp@{source/geometry/set.hpp}}
+
+
+\doxysubsubsection{Description}
+Handles for open, closed, overt and compact subsets of Euclidean space. 
+
+{\ttfamily \#include $<$iosfwd$>$}\newline
+{\ttfamily \#include "{}utility/tribool.\+hpp"{}}\newline
+{\ttfamily \#include "{}geometry/box.\+hpp"{}}\newline
+{\ttfamily \#include "{}utility/handle.\+hpp"{}}\newline
+{\ttfamily \#include "{}geometry/set.\+decl.\+hpp"{}}\newline
+{\ttfamily \#include "{}geometry/set\+\_\+interface.\+hpp"{}}\newline
+{\ttfamily \#include "{}geometry/geometry\+\_\+concepts.\+hpp"{}}\newline
+\doxysubsubsubsection*{Classes}
+\begin{DoxyCompactItemize}
+\item 
+class \mbox{\hyperlink{classAriadne_1_1SetBase}{Set\+Base$<$ T $>$}}
+\begin{DoxyCompactList}\small\item\em Base handle class for sets. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1BoundedSet}{Bounded\+Set$<$ P, T $>$}}
+\begin{DoxyCompactList}\small\item\em Bounded sets. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1OvertSet}{Overt\+Set$<$ P, T $>$}}
+\begin{DoxyCompactList}\small\item\em Overt sets, defined by a verifyable intersection with open sets. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1OpenSet}{Open\+Set$<$ P, T $>$}}
+\begin{DoxyCompactList}\small\item\em Open sets, defined by a verifyable membership predicate. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1ClosedSet}{Closed\+Set$<$ P, T $>$}}
+\begin{DoxyCompactList}\small\item\em Closed sets, defined by a falsifyable membership predicate. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1CompactSet}{Compact\+Set$<$ P, T $>$}}
+\begin{DoxyCompactList}\small\item\em Compact sets, defined by a verifyable disjointness with closed sets. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1RegularSet}{Regular\+Set$<$ P, T $>$}}
+\begin{DoxyCompactList}\small\item\em Regular (open and closed) sets. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1LocatedSet}{Located\+Set$<$ P, T $>$}}
+\begin{DoxyCompactList}\small\item\em Located (overt and compact) sets. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1RegularLocatedSet}{Regular\+Located\+Set$<$ P, T $>$}}
+\begin{DoxyCompactList}\small\item\em Regular located sets; equivalently bounded regular or open located. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsubsection*{Namespaces}
+\begin{DoxyCompactItemize}
+\item 
+namespace \mbox{\hyperlink{namespaceAriadne}{Ariadne}}
+\begin{DoxyCompactList}\small\item\em Top-\/level Ariadne namespace. \end{DoxyCompactList}\end{DoxyCompactItemize}

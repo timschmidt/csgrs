@@ -1,0 +1,22 @@
+{
+  "source_manifest": "corner-source-chart-full-20260926-v207-sources.json",
+  "binary": {
+    "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/corner-source-chart-full-20260926-v207-hypercurve",
+    "sha256": "885456d0c10d5429fc4688054f6118b1f68de95e5d3a1951d02fb70cdd60c79d"
+  },
+  "cases": [
+    {
+      "name": "bezier_offset::conversion_tests::retained_chord_coordinate_and_linear_queries_observe_requested_policy",
+      "returncode": 101,
+      "log": "retained-contact-policy-fixtures-20260926-v207-case-0.log",
+      "elapsed_seconds": 0.0036299499915912747
+    },
+    {
+      "name": "bezier_offset::conversion_tests::retained_chord_derived_queries_match_exact_affine_oracles_and_requested_policy",
+      "returncode": 101,
+      "log": "retained-contact-policy-fixtures-20260926-v207-case-1.log",
+      "elapsed_seconds": 0.0035304269986227155
+    }
+  ],
+  "all_processes_reaped": true
+}

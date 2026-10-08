@@ -1,0 +1,13 @@
+     Locking 9 packages to latest Rust 1.97.0 compatible versions
+   Compiling autocfg v1.5.1
+   Compiling num-traits v0.2.19
+   Compiling num-integer v0.1.47
+   Compiling num-complex v0.4.6
+   Compiling num-bigint v0.4.8
+   Compiling num-iter v0.1.46
+   Compiling num-rational v0.4.2
+   Compiling num v0.4.3
+   Compiling hyperreal v0.13.1 (/home/tim/Documents/GitHub/workspace/hyperreal)
+   Compiling calcium-hyper-proof-probe v0.1.0 (/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/hyper-probe)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 6.59s
+     Running `/tmp/calcium-hyper-proof-target/debug/calcium-hyper-proof-probe`

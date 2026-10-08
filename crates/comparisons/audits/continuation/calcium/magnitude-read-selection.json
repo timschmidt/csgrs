@@ -1,0 +1,406 @@
+[
+  {
+    "repo": "flint",
+    "path": "src/mag/add.c",
+    "newRanges": [
+      [
+        1,
+        116
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "src/mag/addmul.c",
+    "newRanges": [
+      [
+        1,
+        66
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "src/mag/mul.c",
+    "newRanges": [
+      [
+        1,
+        54
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "src/mag/sub.c",
+    "newRanges": [
+      [
+        1,
+        47
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "src/mag/sub_lower.c",
+    "newRanges": [
+      [
+        1,
+        85
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "src/mag/div.c",
+    "newRanges": [
+      [
+        1,
+        55
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "src/mag/div_lower.c",
+    "newRanges": [
+      [
+        1,
+        54
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "src/mag/add_2exp_fmpz.c",
+    "newRanges": [
+      [
+        1,
+        58
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "src/mag/set_ui.c",
+    "newRanges": [
+      [
+        1,
+        75
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "src/mag/set_ui_2exp_si.c",
+    "newRanges": [
+      [
+        1,
+        57
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "src/mag/set_fmpz_2exp_fmpz.c",
+    "newRanges": [
+      [
+        1,
+        48
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "src/mag/cmp.c",
+    "newRanges": [
+      [
+        1,
+        36
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "src/mag/cmp_2exp_si.c",
+    "newRanges": [
+      [
+        1,
+        56
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "src/mag/mul_2exp_si.c",
+    "newRanges": [
+      [
+        1,
+        29
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "src/mag/mul_2exp_fmpz.c",
+    "newRanges": [
+      [
+        1,
+        26
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "src/mag/add_ui.c",
+    "newRanges": [
+      [
+        1,
+        30
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "src/mag/add_ui_2exp_si.c",
+    "newRanges": [
+      [
+        1,
+        22
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "src/mag/clear.c",
+    "newRanges": [
+      [
+        1,
+        20
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "src/mag/sqrt.c",
+    "newRanges": [
+      [
+        1,
+        99
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "src/mag/rsqrt.c",
+    "newRanges": [
+      [
+        1,
+        109
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "src/mag/hypot.c",
+    "newRanges": [
+      [
+        1,
+        34
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "src/mag/pow_ui.c",
+    "newRanges": [
+      [
+        1,
+        87
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "src/mag/pow_fmpz.c",
+    "newRanges": [
+      [
+        1,
+        91
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "src/fmpz/abs_ubound_ui_2exp.c",
+    "newRanges": [
+      [
+        1,
+        97
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "src/fmpz/abs_lbound_ui_2exp.c",
+    "newRanges": [
+      [
+        1,
+        72
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "src/mag/test/t-add.c",
+    "newRanges": [
+      [
+        1,
+        133
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "src/mag/test/t-addmul.c",
+    "newRanges": [
+      [
+        1,
+        157
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "src/mag/test/t-sub.c",
+    "newRanges": [
+      [
+        1,
+        98
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "src/mag/test/t-sub_lower.c",
+    "newRanges": [
+      [
+        1,
+        98
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "src/mag/test/t-div.c",
+    "newRanges": [
+      [
+        1,
+        74
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "src/mag/test/t-div_lower.c",
+    "newRanges": [
+      [
+        1,
+        75
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "src/mag/test/t-mul.c",
+    "newRanges": [
+      [
+        1,
+        155
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "src/mag/test/t-mul_lower.c",
+    "newRanges": [
+      [
+        1,
+        77
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "src/mag/test/t-sqrt.c",
+    "newRanges": [
+      [
+        1,
+        76
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "src/mag/test/t-sqrt_lower.c",
+    "newRanges": [
+      [
+        1,
+        76
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "doc/source/mag.rst",
+    "newRanges": [
+      [
+        1,
+        533
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "src/arf/get.c",
+    "newRanges": [
+      [
+        440,
+        530
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "src/mag.h",
+    "newRanges": [
+      [
+        1,
+        94
+      ],
+      [
+        146,
+        698
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "src/arf.h",
+    "newRanges": [
+      [
+        1000,
+        1135
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "src/arb.h",
+    "newRanges": [
+      [
+        298,
+        326
+      ]
+    ]
+  }
+]

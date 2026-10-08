@@ -1,0 +1,19 @@
+{
+  "command": [
+    "rustc",
+    "--edition=2024",
+    "-O",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-circle-affine-completed.rs",
+    "--extern",
+    "hypercurve=/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/libhypercurve-2c7ff6f3fbe07653.rlib",
+    "-L",
+    "dependency=/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps",
+    "-o",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-circle-affine-attempt3-public"
+  ],
+  "returncode": 101,
+  "elapsed_seconds": 1.2154157079930883,
+  "normal_library_sha256": "a0b3c21732e163996f6e7a2196498a5abd4c904ecb5c881c5721124e19f042af",
+  "source_sha256": "8cf0ac89526f9eb5b9a11532f6c4342c72840c80b608f5b843a0b7766b93bf97",
+  "executable_sha256": "cb2a394b3cd53005dbacd80ec5e24b20adc875d22144c5be1cc5d8dd279bd34a"
+}

@@ -1,0 +1,115 @@
+{
+  "status": "committed; qualified against the documented baseline",
+  "goal_status": "active",
+  "previous_commit": "aeb43c01161c0be71fe10845533a0c5f01f68ad4",
+  "commit": "236ed5a00bf6f22425badbae8d77552e48a457d5",
+  "targets": 49,
+  "passed": 2240,
+  "passed_by_repo": {
+    "hypercurve": 2008,
+    "hyperbrep": 232
+  },
+  "known_failed": [
+    "approximate_512_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions",
+    "non_ph_bezier_pair_projective_fillet_retains_algebraic_extensions",
+    "nonconvex_algebraic_chord_expansion_is_exact_and_local_collapse_is_explicit",
+    "strict_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions",
+    "unified_mixed_line_arc_erosion_splits_after_a_curved_neck_collapse"
+  ],
+  "new_failures": [],
+  "ignored": 9,
+  "expensive_previously_unqualified_exclusions": 8,
+  "timeouts": 0,
+  "builds_and_checks": {
+    "-check": 0,
+    "-test-build": 0,
+    "-hyperbrep-check": 0,
+    "-hyperbrep-test-build": 0
+  },
+  "formatting_and_whitespace": "passed on final frozen qualification sources",
+  "formatted_files": {
+    "hypercurve": [
+      "src/bezier_offset.rs",
+      "src/curve_point.rs",
+      "src/curve_support_intersection.rs",
+      "tests/hypercurve_curve_intersection.rs"
+    ],
+    "hyperbrep": []
+  },
+  "additional_caller_checks": [
+    {
+      "target": "fuzz",
+      "command": [
+        "cargo",
+        "check",
+        "--manifest-path",
+        "fuzz/Cargo.toml",
+        "--all-targets",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 6.373538618005114,
+      "log": "selected-circle-tangent-identity-fuzz-check.log"
+    },
+    {
+      "target": "ui",
+      "command": [
+        "cargo",
+        "check",
+        "--manifest-path",
+        "examples/hypercurve_ui/Cargo.toml",
+        "--all-targets",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 6.42332514798909,
+      "log": "selected-circle-tangent-identity-ui-check.log"
+    },
+    {
+      "target": "hyperbrep-fuzz",
+      "command": [
+        "cargo",
+        "check",
+        "--manifest-path",
+        "fuzz/Cargo.toml",
+        "--all-targets",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 6.6243568409990985,
+      "log": "selected-circle-tangent-identity-hyperbrep-fuzz-check.log"
+    }
+  ],
+  "source_verification": "selected-circle-tangent-identity-source-verification.json",
+  "focused_regression_checks": "selected-circle-tangent-identity-final-focused.json",
+  "discovery_probe": "finite-circle-domain-next.json",
+  "normal_library_sha256": "120d642b35bdeafbd22da08cb7297559ee10a429c46d668e78773f44ce8737cf",
+  "independent_probes_and_matrices": [
+    "selected-circle-tangent-identity-tangent-matrix.json",
+    "selected-circle-tangent-identity-finite-circle-probe.json",
+    "selected-circle-tangent-identity-family-matrix.json",
+    "selected-circle-tangent-identity-completed.json",
+    "selected-circle-tangent-identity-unit-replay.json",
+    "selected-circle-tangent-identity-retained-chord-matrix.json",
+    "selected-circle-tangent-identity-finite-matrix.json",
+    "selected-circle-tangent-identity-cubic-replay.json",
+    "selected-circle-tangent-identity-baseline-recheck.json",
+    "selected-circle-tangent-identity-replay-matrix-run.json",
+    "selected-circle-tangent-identity-analytic-probe.json",
+    "selected-circle-tangent-identity-endpoint-probe.json",
+    "selected-circle-tangent-identity-completed-probe.json",
+    "selected-circle-tangent-identity-probe-final.json",
+    "selected-circle-tangent-identity-circle-matrix.json",
+    "selected-circle-tangent-identity-region-carrier-matrix.json",
+    "selected-circle-tangent-identity-general-trim-matrix.json",
+    "selected-circle-tangent-identity-constant-image-trim-matrix.json"
+  ],
+  "regression_baseline": "native-point-components-qualification.json",
+  "affected_regression_results": "selected-circle-tangent-identity-full-hypercurve-lib.json",
+  "evidence_audit": "selected-circle-tangent-identity-evidence-audit.md",
+  "performance_claim": null,
+  "remaining": "Finite circle/rational, circle/parallel, parallel/rational and parallel/parallel discovery; normalized public region construction; five promotion failures; eight unqualified expensive tests; broader algebraic consolidation, computational measurements, and original architecture goal."
+}

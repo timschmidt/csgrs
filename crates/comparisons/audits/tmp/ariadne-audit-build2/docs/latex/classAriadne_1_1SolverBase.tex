@@ -1,0 +1,84 @@
+\doxysubsection{Solver\+Base Class Reference}
+\hypertarget{classAriadne_1_1SolverBase}{}\label{classAriadne_1_1SolverBase}\index{SolverBase@{SolverBase}}
+
+
+{\ttfamily \#include $<$solver.\+hpp$>$}
+
+
+
+\doxysubsubsection{Description}
+Common functionality for solving (nonlinear) equations. Inheritance diagram for Solver\+Base\+:\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[height=4.000000cm]{classAriadne_1_1SolverBase}
+\end{center}
+\end{figure}
+\doxysubsubsubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1SolverBase_a2844e86246e347af7627f884033fae5b}\label{classAriadne_1_1SolverBase_a2844e86246e347af7627f884033fae5b} 
+{\bfseries Solver\+Base} (\mbox{\hyperlink{classAriadne_1_1ApproximateDouble}{Approximate\+Double}} max\+\_\+error, \mbox{\hyperlink{namespaceAriadne_aae901a69a841b1a085a0dfe218e38fe9}{Nat}} max\+\_\+steps)
+\begin{DoxyCompactList}\small\item\em Constructor. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1SolverBase_a0d97d5f11ce8296e99da0f630cabf1ca}\label{classAriadne_1_1SolverBase_a0d97d5f11ce8296e99da0f630cabf1ca} 
+\mbox{\hyperlink{classAriadne_1_1ExactDouble}{Exact\+Double}} {\bfseries maximum\+\_\+error} () const
+\begin{DoxyCompactList}\small\item\em The maximum permissible error of the solution. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1SolverBase_abbb444028a0221d4406b8b4d476e316f}\label{classAriadne_1_1SolverBase_abbb444028a0221d4406b8b4d476e316f} 
+\mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} {\bfseries set\+\_\+maximum\+\_\+error} (\mbox{\hyperlink{classAriadne_1_1ApproximateDouble}{Approximate\+Double}} max\+\_\+error)
+\begin{DoxyCompactList}\small\item\em \doxylink{classAriadne_1_1Set}{Set} the maximum error. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1SolverBase_aed747d3a657f83de64e9987915d9a2b1}\label{classAriadne_1_1SolverBase_aed747d3a657f83de64e9987915d9a2b1} 
+\mbox{\hyperlink{namespaceAriadne_aae901a69a841b1a085a0dfe218e38fe9}{Nat}} {\bfseries maximum\+\_\+number\+\_\+of\+\_\+steps} () const
+\begin{DoxyCompactList}\small\item\em The maximum number of steps allowed before the method must quit. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1SolverBase_a98ec596851d505d758521775a58cb4d5}\label{classAriadne_1_1SolverBase_a98ec596851d505d758521775a58cb4d5} 
+\mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} {\bfseries set\+\_\+maximum\+\_\+number\+\_\+of\+\_\+steps} (\mbox{\hyperlink{namespaceAriadne_aae901a69a841b1a085a0dfe218e38fe9}{Nat}} max\+\_\+steps)
+\begin{DoxyCompactList}\small\item\em \doxylink{classAriadne_1_1Set}{Set} the maximum number of steps. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1SolverBase_a94516cc393795478697b24af9bcb8caa}\label{classAriadne_1_1SolverBase_a94516cc393795478697b24af9bcb8caa} 
+const Function\+Patch\+Factory\+Interface$<$ \mbox{\hyperlink{structAriadne_1_1ValidatedTag}{Validated\+Tag}} $>$ \& {\bfseries function\+\_\+factory} () const
+\begin{DoxyCompactList}\small\item\em The class which constructs functions for the implicit function solver. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1SolverBase_ae5da2fcaabd6c68c12e55954d6d75ba6}\label{classAriadne_1_1SolverBase_ae5da2fcaabd6c68c12e55954d6d75ba6} 
+\mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} {\bfseries set\+\_\+function\+\_\+factory} (const Function\+Patch\+Factory\+Interface$<$ \mbox{\hyperlink{structAriadne_1_1ValidatedTag}{Validated\+Tag}} $>$ \&factory)
+\begin{DoxyCompactList}\small\item\em \doxylink{classAriadne_1_1Set}{Set} the class which constructs functions for the implicit function solver. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1SolverBase_afc41cda0196bf7775c8f2a70cf308edf}\label{classAriadne_1_1SolverBase_afc41cda0196bf7775c8f2a70cf308edf} 
+virtual \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ \mbox{\hyperlink{classAriadne_1_1Bounds}{Validated\+Numeric\+Type}} $>$ {\bfseries zero} (const Validated\+Vector\+Multivariate\+Function \&f, const \mbox{\hyperlink{group__FunctionModule_gafdd31b4d01081cd09aad2ce11117f867}{Exact\+Box\+Type}} \&bx) const
+\begin{DoxyCompactList}\small\item\em Solve $f(x)=0$, starting in the box {\itshape bx}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1SolverBase_add26802b897e764b692c351e078fea21}\label{classAriadne_1_1SolverBase_add26802b897e764b692c351e078fea21} 
+virtual \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ \mbox{\hyperlink{classAriadne_1_1Bounds}{Validated\+Numeric\+Type}} $>$ {\bfseries fixed\+\_\+point} (const Validated\+Vector\+Multivariate\+Function \&f, const \mbox{\hyperlink{group__FunctionModule_gafdd31b4d01081cd09aad2ce11117f867}{Exact\+Box\+Type}} \&bx) const
+\begin{DoxyCompactList}\small\item\em Solve $f(x)=0$, starting in the box {\itshape bx}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1SolverBase_a947e359cf0f84c00082b71d1a8813de9}\label{classAriadne_1_1SolverBase_a947e359cf0f84c00082b71d1a8813de9} 
+virtual \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ \mbox{\hyperlink{classAriadne_1_1Bounds}{Validated\+Numeric\+Type}} $>$ {\bfseries solve} (const Validated\+Vector\+Multivariate\+Function \&f, const \mbox{\hyperlink{group__FunctionModule_gafdd31b4d01081cd09aad2ce11117f867}{Exact\+Box\+Type}} \&bx) const
+\begin{DoxyCompactList}\small\item\em Solve $f(x)=0$, starting in the box {\itshape bx}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1SolverBase_a1d61616453e31a9be7a85756e6356b9e}\label{classAriadne_1_1SolverBase_a1d61616453e31a9be7a85756e6356b9e} 
+virtual \mbox{\hyperlink{classAriadne_1_1FunctionPatch}{Validated\+Vector\+Multivariate\+Function\+Patch}} {\bfseries implicit} (const Validated\+Vector\+Multivariate\+Function \&f, const \mbox{\hyperlink{group__FunctionModule_gafdd31b4d01081cd09aad2ce11117f867}{Exact\+Box\+Type}} \&par, const \mbox{\hyperlink{group__FunctionModule_gafdd31b4d01081cd09aad2ce11117f867}{Exact\+Box\+Type}} \&ix) const
+\begin{DoxyCompactList}\small\item\em Solve $f(a,x)=0$ for a in {\itshape par}, looking for a solution with x in {\itshape ix}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1SolverBase_a2fad486120c3053251b77fd5d5e80288}\label{classAriadne_1_1SolverBase_a2fad486120c3053251b77fd5d5e80288} 
+virtual \mbox{\hyperlink{classAriadne_1_1FunctionPatch}{Validated\+Scalar\+Multivariate\+Function\+Patch}} {\bfseries implicit} (const Validated\+Scalar\+Multivariate\+Function \&f, const \mbox{\hyperlink{group__FunctionModule_gafdd31b4d01081cd09aad2ce11117f867}{Exact\+Box\+Type}} \&par, const \mbox{\hyperlink{group__FunctionModule_gab4f81d909c87bd33486c446890723bb1}{Exact\+Interval\+Type}} \&ix) const
+\begin{DoxyCompactList}\small\item\em Solve $f(a,x)=0$ for a in {\itshape par}, looking for a solution with x in {\itshape ix}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1SolverBase_ae7f23bb1bb93049be0d20d0ed1667e2e}\label{classAriadne_1_1SolverBase_ae7f23bb1bb93049be0d20d0ed1667e2e} 
+virtual \mbox{\hyperlink{classAriadne_1_1FunctionPatch}{Validated\+Vector\+Multivariate\+Function\+Patch}} {\bfseries continuation} (const Validated\+Vector\+Multivariate\+Function \&f, const \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ \mbox{\hyperlink{classAriadne_1_1Approximation}{Approximate\+Numeric\+Type}} $>$ \&a, const \mbox{\hyperlink{group__FunctionModule_gafdd31b4d01081cd09aad2ce11117f867}{Exact\+Box\+Type}} \&X, const \mbox{\hyperlink{group__FunctionModule_gafdd31b4d01081cd09aad2ce11117f867}{Exact\+Box\+Type}} \&A) const
+\begin{DoxyCompactList}\small\item\em Solve $f(a,x)=0$ yielding a function $x=h(a)$ for a in {\itshape A}, looking for a solution with $h(A) \subset X$ and $h(a)\in x$. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1SolverBase_a8bf36a2bb8bb3212a2d4d64828aa6f62}\label{classAriadne_1_1SolverBase_a8bf36a2bb8bb3212a2d4d64828aa6f62} 
+virtual \mbox{\hyperlink{classAriadne_1_1Set}{Set}}$<$ \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ \mbox{\hyperlink{classAriadne_1_1Bounds}{Validated\+Numeric\+Type}} $>$ $>$ {\bfseries solve\+\_\+all} (const Validated\+Vector\+Multivariate\+Function \&f, const \mbox{\hyperlink{group__FunctionModule_gafdd31b4d01081cd09aad2ce11117f867}{Exact\+Box\+Type}} \&bx) const
+\begin{DoxyCompactList}\small\item\em Solve $f(x)=0$, starting in the interval point {\itshape pt}. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxyparagraph*{Public Member Functions inherited from \mbox{\hyperlink{classAriadne_1_1SolverInterface}{Solver\+Interface}}}
+\begin{DoxyCompactItemize}
+\item 
+virtual {\bfseries \texorpdfstring{$\sim$}{\string~}\+Solver\+Interface} ()=default
+\begin{DoxyCompactList}\small\item\em Virtual destructor. \end{DoxyCompactList}\item 
+virtual \mbox{\hyperlink{classAriadne_1_1SolverInterface}{Solver\+Interface}} \texorpdfstring{$\ast$}{*} {\bfseries clone} () const =0
+\begin{DoxyCompactList}\small\item\em Make a dynamically-\/allocated copy. \end{DoxyCompactList}\item 
+virtual \mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} {\bfseries \+\_\+write} (\mbox{\hyperlink{namespaceAriadne_acbb98ddc4385af4599070e65a1a47ec1}{Output\+Stream}} \&os) const =0
+\begin{DoxyCompactList}\small\item\em Write to an output stream. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsubsection*{Protected Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1SolverBase_a4662f43acd6a40c08870c4da5005f1c1}\label{classAriadne_1_1SolverBase_a4662f43acd6a40c08870c4da5005f1c1} 
+virtual \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ \mbox{\hyperlink{classAriadne_1_1Bounds}{Validated\+Numeric\+Type}} $>$ {\bfseries step} (const Validated\+Vector\+Multivariate\+Function \&f, const \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ \mbox{\hyperlink{classAriadne_1_1Bounds}{Validated\+Numeric\+Type}} $>$ \&pt) const =0
+\begin{DoxyCompactList}\small\item\em Perform one iterative step of the contractor. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1SolverBase_aab859c9bf77a8f11e72bacca5328f5dd}\label{classAriadne_1_1SolverBase_aab859c9bf77a8f11e72bacca5328f5dd} 
+virtual \mbox{\hyperlink{classAriadne_1_1FunctionPatch}{Validated\+Vector\+Multivariate\+Function\+Patch}} {\bfseries implicit\+\_\+step} (const Validated\+Vector\+Multivariate\+Function \&f, const \mbox{\hyperlink{classAriadne_1_1FunctionPatch}{Validated\+Vector\+Multivariate\+Function\+Patch}} \&p, const \mbox{\hyperlink{classAriadne_1_1FunctionPatch}{Validated\+Vector\+Multivariate\+Function\+Patch}} \&x) const =0
+\begin{DoxyCompactList}\small\item\em Perform one iterative step of the contractor. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+The documentation for this class was generated from the following files\+:\begin{DoxyCompactItemize}
+\item 
+source/solvers/\mbox{\hyperlink{solver_8hpp}{solver.\+hpp}}\item 
+source/solvers/solver.\+cpp\end{DoxyCompactItemize}

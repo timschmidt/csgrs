@@ -1,0 +1,1151 @@
+ansi-terminal-types                > using precompiled package
+base-compat-batteries              > using precompiled package
+contravariant                      > using precompiled package
+os-string                          > using precompiled package
+parallel                           > using precompiled package
+primitive                          > using precompiled package
+regex-base                         > using precompiled package
+splitmix                           > using precompiled package
+ansi-terminal                      > using precompiled package
+tagged                             > using precompiled package
+th-abstraction                     > using precompiled package
+hashable                           > using precompiled package
+transformers-compat                > using precompiled package
+vector-stream                      > using precompiled package
+random                             > using precompiled package
+distributive                       > using precompiled package
+data-fix                           > using precompiled package
+scientific                         > using precompiled package
+QuickCheck                         > using precompiled package
+comonad                            > using precompiled package
+text-short                         > using precompiled package
+attoparsec                         > using precompiled package
+these                              > using precompiled package
+bifunctors                         > using precompiled package
+time-compat                        > using precompiled package
+unordered-containers               > using precompiled package
+strict                             > using precompiled package
+uuid-types                         > using precompiled package
+vector                             > using precompiled package
+semigroupoids                      > using precompiled package
+indexed-traversable-instances      > using precompiled package
+semialign                          > using precompiled package
+Only                               > configure
+Only                               > Configuring Only-0.1...
+witherable                         > using precompiled package
+code-page                          > configure
+data-default-class                 > configure
+data-default-class                 > Configuring data-default-class-0.1.2.2...
+code-page                          > Configuring code-page-0.2.1...
+extensible-exceptions              > configure
+extensible-exceptions              > Warning: extensible-exceptions.cabal:30:33: version operators used. To use
+extensible-exceptions              > version operators the package needs to specify at least 'cabal-version: >=
+extensible-exceptions              > 1.8'.
+extensible-exceptions              > Configuring extensible-exceptions-0.1.1.4...
+Only                               > build with ghc-9.6.7
+Only                               > Preprocessing library for Only-0.1..
+Only                               > Building library for Only-0.1..
+Only                               > [1 of 1] Compiling Data.Tuple.Only
+hostname                           > configure
+js-chart                           > configure
+hostname                           > Warning: hostname.cabal:15:38: version operators used. To use version
+hostname                           > operators the package needs to specify at least 'cabal-version: >= 1.8'.
+hostname                           > Configuring hostname-1.0...
+js-chart                           > Warning: js-chart.cabal:1:27: Packages with 'cabal-version: 1.12' or later
+js-chart                           > should specify a specific version of the Cabal spec of the form
+js-chart                           > 'cabal-version: x.y'. Use 'cabal-version: 1.18'.
+js-chart                           > Configuring js-chart-2.9.4.1...
+data-default-class                 > build with ghc-9.6.7
+data-default-class                 > Preprocessing library for data-default-class-0.1.2.2..
+data-default-class                 > Building library for data-default-class-0.1.2.2..
+code-page                          > build with ghc-9.6.7
+code-page                          > Preprocessing library for code-page-0.2.1..
+data-default-class                 > [1 of 1] Compiling Data.Default.Class
+old-locale                         > configure
+old-locale                         > Configuring old-locale-1.0.0.7...
+prettyprinter                      > configure
+prettyprinter                      > Configuring prettyprinter-1.7.1...
+code-page                          > Building library for code-page-0.2.1..
+extensible-exceptions              > build with ghc-9.6.7
+extensible-exceptions              > Preprocessing library for extensible-exceptions-0.1.1.4..
+extensible-exceptions              > Building library for extensible-exceptions-0.1.1.4..
+code-page                          > [1 of 3] Compiling System.IO.CodePage.Internal
+extensible-exceptions              > [1 of 1] Compiling Control.Exception.Extensible
+Only                               > copy/register
+regex-posix                        > configure
+xml                                > configure
+regex-posix                        > Configuring regex-posix-0.96.0.2...
+xml                                > Warning: xml.cabal:18:32: version operators used. To use version operators the
+xml                                > package needs to specify at least 'cabal-version: >= 1.8'.
+xml                                > Configuring xml-1.3.14...
+Only                               > Installing library in /tmp/aern2-stack.ryVCFK/snapshots/x86_64-linux-tinfo6/a9cdb111ba43c34a9894161df33edb1b290c1c61f1b004418a8411cbdf470c15/9.6.7/lib/x86_64-linux-ghc-9.6.7/Only-0.1-EKDJd7lVV8nkLGYR4MAJC
+code-page                          > [2 of 3] Compiling System.IO.CodePage
+js-chart                           > build with ghc-9.6.7
+Only                               > Registering library for Only-0.1..
+hostname                           > build with ghc-9.6.7
+js-chart                           > Preprocessing library for js-chart-2.9.4.1..
+js-chart                           > Building library for js-chart-2.9.4.1..
+hostname                           > Preprocessing library for hostname-1.0..
+hostname                           > Building library for hostname-1.0..
+data-default-class                 > copy/register
+data-default-class                 > Installing library in /tmp/aern2-stack.ryVCFK/snapshots/x86_64-linux-tinfo6/a9cdb111ba43c34a9894161df33edb1b290c1c61f1b004418a8411cbdf470c15/9.6.7/lib/x86_64-linux-ghc-9.6.7/data-default-class-0.1.2.2-34OxjWPjutq73lxTWxPfnC
+code-page                          > [3 of 3] Compiling System.Win32.CodePage
+hostname                           > [1 of 1] Compiling Network.HostName
+js-chart                           > [1 of 2] Compiling Paths_js_chart
+aeson                              > configure
+aeson                              > Configuring aeson-2.1.2.1...
+data-default-class                 > Registering library for data-default-class-0.1.2.2..
+prettyprinter                      > build with ghc-9.6.7
+old-locale                         > build with ghc-9.6.7
+extensible-exceptions              > copy/register
+old-locale                         > Preprocessing library for old-locale-1.0.0.7..
+old-locale                         > Building library for old-locale-1.0.0.7..
+js-chart                           > [2 of 2] Compiling Language.Javascript.Chart
+prettyprinter                      > Preprocessing library for prettyprinter-1.7.1..
+prettyprinter                      > Building library for prettyprinter-1.7.1..
+extensible-exceptions              > Installing library in /tmp/aern2-stack.ryVCFK/snapshots/x86_64-linux-tinfo6/a9cdb111ba43c34a9894161df33edb1b290c1c61f1b004418a8411cbdf470c15/9.6.7/lib/x86_64-linux-ghc-9.6.7/extensible-exceptions-0.1.1.4-CNAlK8LvrH1EafsJXtad6L
+old-locale                         > [1 of 1] Compiling System.Locale
+async                              > configure
+Glob                               > configure
+async                              > Configuring async-2.2.5...
+Glob                               > Configuring Glob-0.10.2...
+extensible-exceptions              > Registering library for extensible-exceptions-0.1.1.4..
+prettyprinter                      > [ 1 of 28] Compiling Prettyprinter.Render.Util.Panic
+code-page                          > copy/register
+code-page                          > Installing library in /tmp/aern2-stack.ryVCFK/snapshots/x86_64-linux-tinfo6/a9cdb111ba43c34a9894161df33edb1b290c1c61f1b004418a8411cbdf470c15/9.6.7/lib/x86_64-linux-ghc-9.6.7/code-page-0.2.1-KL0sq19EuMI4bUG2N1N8uf
+regex-posix                        > build with ghc-9.6.7
+xml                                > build with ghc-9.6.7
+prettyprinter                      > [ 2 of 28] Compiling Prettyprinter.Internal
+regex-posix                        > Preprocessing library for regex-posix-0.96.0.2..
+xml                                > Preprocessing library for xml-1.3.14..
+xml                                > Building library for xml-1.3.14..
+code-page                          > Registering library for code-page-0.2.1..
+xml                                > [1 of 7] Compiling Text.XML.Light.Types
+hostname                           > copy/register
+hostname                           > Installing library in /tmp/aern2-stack.ryVCFK/snapshots/x86_64-linux-tinfo6/a9cdb111ba43c34a9894161df33edb1b290c1c61f1b004418a8411cbdf470c15/9.6.7/lib/x86_64-linux-ghc-9.6.7/hostname-1.0-xkxiqQRZX59zMVmgMJSea
+regex-posix                        > Building library for regex-posix-0.96.0.2..
+regex-posix                        > [1 of 7] Compiling Paths_regex_posix
+bitvec                             > configure
+vector-binary-instances            > configure
+vector-binary-instances            > Configuring vector-binary-instances-0.2.5.2...
+bitvec                             > Configuring bitvec-1.1.5.0...
+hostname                           > Registering library for hostname-1.0..
+aeson                              > build with ghc-9.6.7
+vector-th-unbox                    > configure
+vector-th-unbox                    > Configuring vector-th-unbox-0.2.2...
+old-locale                         > copy/register
+old-locale                         > Installing library in /tmp/aern2-stack.ryVCFK/snapshots/x86_64-linux-tinfo6/a9cdb111ba43c34a9894161df33edb1b290c1c61f1b004418a8411cbdf470c15/9.6.7/lib/x86_64-linux-ghc-9.6.7/old-locale-1.0.0.7-HSvLS5bQrOr2jPp7CISS55
+aeson                              > Preprocessing library for aeson-2.1.2.1..
+aeson                              > Building library for aeson-2.1.2.1..
+regex-posix                        > [2 of 7] Compiling Text.Regex.Posix.Wrap
+async                              > build with ghc-9.6.7
+old-locale                         > Registering library for old-locale-1.0.0.7..
+Glob                               > build with ghc-9.6.7
+async                              > Preprocessing library for async-2.2.5..
+async                              > Building library for async-2.2.5..
+js-chart                           > copy/register
+js-chart                           > Installing library in /tmp/aern2-stack.ryVCFK/snapshots/x86_64-linux-tinfo6/a9cdb111ba43c34a9894161df33edb1b290c1c61f1b004418a8411cbdf470c15/9.6.7/lib/x86_64-linux-ghc-9.6.7/js-chart-2.9.4.1-ApLUoR9Z74r1yyHu8DdEAV
+Glob                               > Preprocessing library for Glob-0.10.2..
+Glob                               > Building library for Glob-0.10.2..
+async                              > [1 of 2] Compiling Control.Concurrent.Async.Internal
+Glob                               > [1 of 7] Compiling System.FilePath.Glob.Utils
+js-chart                           > Registering library for js-chart-2.9.4.1..
+aeson                              > [ 1 of 35] Compiling Data.Aeson.Internal.ByteString
+async                              > 
+async                              > /tmp/stack-3845e94856386e57/async-2.2.5/Control/Concurrent/Async/Internal.hs:50:1: warning: [-Wunused-imports]
+async                              >     The import of ‘Data.Semigroup’ is redundant
+async                              >       except perhaps to import instances from ‘Data.Semigroup’
+async                              >     To import instances alone, use: import Data.Semigroup()
+async                              >    |
+async                              > 50 | import Data.Semigroup (Semigroup((<>)))
+async                              >    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+aeson                              > [ 2 of 35] Compiling Data.Aeson.Internal.Functions
+bitvec                             > build with ghc-9.6.7
+vector-binary-instances            > build with ghc-9.6.7
+regex-posix                        > [3 of 7] Compiling Text.Regex.Posix.String
+vector-binary-instances            > Preprocessing library for vector-binary-instances-0.2.5.2..
+vector-binary-instances            > Building library for vector-binary-instances-0.2.5.2..
+bitvec                             > Preprocessing library for bitvec-1.1.5.0..
+bitvec                             > Building library for bitvec-1.1.5.0..
+vector-th-unbox                    > build with ghc-9.6.7
+vector-th-unbox                    > Preprocessing library for vector-th-unbox-0.2.2..
+vector-th-unbox                    > Building library for vector-th-unbox-0.2.2..
+vector-binary-instances            > [1 of 1] Compiling Data.Vector.Binary
+aeson                              > [ 3 of 35] Compiling Data.Aeson.Internal.TH
+Glob                               > [2 of 7] Compiling System.FilePath.Glob.Base
+regex-posix                        > [4 of 7] Compiling Text.Regex.Posix.Sequence
+vector-th-unbox                    > [1 of 1] Compiling Data.Vector.Unboxed.Deriving
+aeson                              > [ 4 of 35] Compiling Data.Aeson.Internal.Text
+aeson                              > [ 5 of 35] Compiling Data.Aeson.Internal.Word8
+cassava                            > configure
+math-functions                     > configure
+cassava                            > Configuring cassava-0.5.3.2...
+math-functions                     > Configuring math-functions-0.3.4.4...
+bitvec                             > [ 1 of 13] Compiling Data.Bit.PdepPext
+aeson                              > [ 6 of 35] Compiling Data.Aeson.Internal.Integer
+xml                                > [2 of 7] Compiling Text.XML.Light.Proc
+regex-posix                        > [5 of 7] Compiling Text.Regex.Posix.ByteString
+aeson                              > [ 7 of 35] Compiling Data.Aeson.Key
+bitvec                             > [ 2 of 13] Compiling Data.Bit.SIMD
+xml                                > [3 of 7] Compiling Text.XML.Light.Output
+bitvec                             > [ 3 of 13] Compiling Data.Bit.Utils
+bitvec                             > [ 4 of 13] Compiling Data.Bit.InternalTS
+regex-posix                        > [6 of 7] Compiling Text.Regex.Posix.ByteString.Lazy
+xml                                > [4 of 7] Compiling Text.XML.Light.Lexer
+regex-posix                        > [7 of 7] Compiling Text.Regex.Posix
+xml                                > 
+xml                                > /tmp/stack-3845e94856386e57/xml-1.3.14/Text/XML/Light/Lexer.hs:119:1: warning: [GHC-94817] [-Wtabs]
+xml                                >     Tab character found here, and in one further location.
+xml                                >     Suggested fix: Please use spaces instead.
+xml                                >     |
+xml                                > 119 |          | otherwise           = munch ('>':acc) (nesting-1) ds
+xml                                >     | ^^^^^^^^
+aeson                              > [ 8 of 35] Compiling Data.Aeson.Decoding.Tokens
+math-functions                     > build with ghc-9.6.7
+cassava                            > build with ghc-9.6.7
+cassava                            > Preprocessing library for cassava-0.5.3.2..
+cassava                            > Building library for cassava-0.5.3.2..
+math-functions                     > Preprocessing library for math-functions-0.3.4.4..
+math-functions                     > Building library for math-functions-0.3.4.4..
+vector-th-unbox                    > copy/register
+vector-th-unbox                    > Installing library in /tmp/aern2-stack.ryVCFK/snapshots/x86_64-linux-tinfo6/a9cdb111ba43c34a9894161df33edb1b290c1c61f1b004418a8411cbdf470c15/9.6.7/lib/x86_64-linux-ghc-9.6.7/vector-th-unbox-0.2.2-7NoaSSm9toK3PP6SitgtbY
+math-functions                     > [ 1 of 11] Compiling Numeric.MathFunctions.Comparison
+Glob                               > [3 of 7] Compiling System.FilePath.Glob.Simplify
+cassava                            > [ 1 of 10] Compiling Data.Csv.Types
+Glob                               > [4 of 7] Compiling System.FilePath.Glob.Primitive
+vector-th-unbox                    > Registering library for vector-th-unbox-0.2.2..
+Glob                               > [5 of 7] Compiling System.FilePath.Glob.Match
+regex-posix                        > copy/register
+math-functions                     > [ 2 of 11] Compiling Numeric.MathFunctions.Constants
+regex-posix                        > Installing library in /tmp/aern2-stack.ryVCFK/snapshots/x86_64-linux-tinfo6/a9cdb111ba43c34a9894161df33edb1b290c1c61f1b004418a8411cbdf470c15/9.6.7/lib/x86_64-linux-ghc-9.6.7/regex-posix-0.96.0.2-8X3afbLAgFDBQQjxBBdwB1
+math-functions                     > [ 3 of 11] Compiling Numeric.Polynomial
+xml                                > [5 of 7] Compiling Text.XML.Light.Input
+Glob                               > [6 of 7] Compiling System.FilePath.Glob.Directory
+cassava                            > [ 2 of 10] Compiling Data.Csv.Util
+async                              > [2 of 2] Compiling Control.Concurrent.Async
+regex-posix                        > Registering library for regex-posix-0.96.0.2..
+xml                                > [6 of 7] Compiling Text.XML.Light.Cursor
+vector-binary-instances            > copy/register
+vector-binary-instances            > Installing library in /tmp/aern2-stack.ryVCFK/snapshots/x86_64-linux-tinfo6/a9cdb111ba43c34a9894161df33edb1b290c1c61f1b004418a8411cbdf470c15/9.6.7/lib/x86_64-linux-ghc-9.6.7/vector-binary-instances-0.2.5.2-5IHf9ZO09NK4HFYl1uVAGV
+math-functions                     > [ 4 of 11] Compiling Numeric.Polynomial.Chebyshev
+cassava                            > [ 3 of 10] Compiling Data.Csv.Parser
+math-functions                     > [ 5 of 11] Compiling Numeric.RootFinding
+aeson                              > [ 9 of 35] Compiling Data.Aeson.Decoding.Internal
+vector-binary-instances            > Registering library for vector-binary-instances-0.2.5.2..
+aeson                              > [10 of 35] Compiling Data.Aeson.KeyMap
+async                              > copy/register
+async                              > Installing library in /tmp/aern2-stack.ryVCFK/snapshots/x86_64-linux-tinfo6/a9cdb111ba43c34a9894161df33edb1b290c1c61f1b004418a8411cbdf470c15/9.6.7/lib/x86_64-linux-ghc-9.6.7/async-2.2.5-DdkxuZaIgaC1H19aGslTVS
+xml                                > [7 of 7] Compiling Text.XML.Light
+Glob                               > [7 of 7] Compiling System.FilePath.Glob
+async                              > Registering library for async-2.2.5..
+Glob                               > copy/register
+Glob                               > Installing library in /tmp/aern2-stack.ryVCFK/snapshots/x86_64-linux-tinfo6/a9cdb111ba43c34a9894161df33edb1b290c1c61f1b004418a8411cbdf470c15/9.6.7/lib/x86_64-linux-ghc-9.6.7/Glob-0.10.2-Bm5cRssMl9rAzuFwfOXayB
+Glob                               > Registering library for Glob-0.10.2..
+xml                                > copy/register
+xml                                > Installing library in /tmp/aern2-stack.ryVCFK/snapshots/x86_64-linux-tinfo6/a9cdb111ba43c34a9894161df33edb1b290c1c61f1b004418a8411cbdf470c15/9.6.7/lib/x86_64-linux-ghc-9.6.7/xml-1.3.14-4HpQGm3DtXB96G8MyFm2th
+xml                                > Registering library for xml-1.3.14..
+aeson                              > [11 of 35] Compiling Data.Aeson.Parser.UnescapePure
+cassava                            > [ 4 of 10] Compiling Data.Csv.Conversion.Internal
+aeson                              > [12 of 35] Compiling Data.Aeson.Parser.Unescape
+aeson                              > [13 of 35] Compiling Data.Aeson.Decoding.ByteString.Lazy
+bitvec                             > [ 5 of 13] Compiling Data.Bit.MutableTS
+math-functions                     > [ 6 of 11] Compiling Numeric.Series
+math-functions                     > 
+math-functions                     > /tmp/stack-3845e94856386e57/math-functions-0.3.4.4/Numeric/Series.hs:29:1: warning: [-Wunused-imports]
+math-functions                     >     The import of ‘Control.Applicative’ is redundant
+math-functions                     >       except perhaps to import instances from ‘Control.Applicative’
+math-functions                     >     To import instances alone, use: import Control.Applicative()
+math-functions                     >    |
+math-functions                     > 29 | import Control.Applicative
+math-functions                     >    | ^^^^^^^^^^^^^^^^^^^^^^^^^^
+math-functions                     > [ 7 of 11] Compiling Numeric.SpecFunctions.Compat
+math-functions                     > [ 8 of 11] Compiling Numeric.SpecFunctions.Internal
+math-functions                     > 
+math-functions                     > /tmp/stack-3845e94856386e57/math-functions-0.3.4.4/Numeric/SpecFunctions/Internal.hs:859:9: warning: [GHC-62161] [-Wincomplete-uni-patterns]
+math-functions                     >     Pattern match(es) are non-exhaustive
+math-functions                     >     In a pattern binding:
+math-functions                     >         Patterns of type ‘Root Double’ not matched:
+math-functions                     >             NotBracketed
+math-functions                     >             SearchFailed
+math-functions                     >     |
+math-functions                     > 859 |         Root x0 = newtonRaphson def{newtonTol=RelTol 1e-8} (lower, x_guess, upper) func
+math-functions                     >     |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+aeson                              > [14 of 35] Compiling Data.Aeson.Decoding.ByteString
+cassava                            > [ 5 of 10] Compiling Data.Csv.Conversion
+aeson                              > [15 of 35] Compiling Data.Aeson.Types.Generic
+aeson                              > [16 of 35] Compiling Data.Aeson.Types.Internal
+prettyprinter                      > [ 3 of 28] Compiling Prettyprinter.Render.String
+prettyprinter                      > [ 4 of 28] Compiling Data.Text.Prettyprint.Doc.Render.String
+prettyprinter                      > [ 5 of 28] Compiling Prettyprinter.Internal.Type
+prettyprinter                      > [ 6 of 28] Compiling Data.Text.Prettyprint.Doc.Internal.Type
+prettyprinter                      > [ 7 of 28] Compiling Prettyprinter.Internal.Debug
+prettyprinter                      > [ 8 of 28] Compiling Data.Text.Prettyprint.Doc.Internal.Debug
+prettyprinter                      > [ 9 of 28] Compiling Data.Text.Prettyprint.Doc.Internal
+prettyprinter                      > [10 of 28] Compiling Data.Text.Prettyprint.Doc.Render.Util.Panic
+prettyprinter                      > [11 of 28] Compiling Prettyprinter.Render.Util.StackMachine
+prettyprinter                      > 
+prettyprinter                      > /tmp/stack-3845e94856386e57/prettyprinter-1.7.1/src/Prettyprinter/Render/Util/StackMachine.hs:34:1: warning: [-Wunused-imports]
+prettyprinter                      >     The import of ‘Control.Applicative’ is redundant
+prettyprinter                      >       except perhaps to import instances from ‘Control.Applicative’
+prettyprinter                      >     To import instances alone, use: import Control.Applicative()
+prettyprinter                      >    |
+prettyprinter                      > 34 | import           Control.Applicative
+prettyprinter                      >    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+prettyprinter                      > [12 of 28] Compiling Data.Text.Prettyprint.Doc.Render.Util.StackMachine
+prettyprinter                      > [13 of 28] Compiling Prettyprinter.Symbols.Ascii
+prettyprinter                      > [14 of 28] Compiling Prettyprinter
+prettyprinter                      > [15 of 28] Compiling Prettyprinter.Render.Util.SimpleDocTree
+aeson                              > [17 of 35] Compiling Data.Aeson.Parser.Internal
+prettyprinter                      > [16 of 28] Compiling Data.Text.Prettyprint.Doc.Render.Util.SimpleDocTree
+prettyprinter                      > [17 of 28] Compiling Prettyprinter.Render.Tutorials.TreeRenderingTutorial
+prettyprinter                      > [18 of 28] Compiling Data.Text.Prettyprint.Doc.Render.Tutorials.TreeRenderingTutorial
+prettyprinter                      > [19 of 28] Compiling Prettyprinter.Render.Tutorials.StackMachineTutorial
+math-functions                     > [ 9 of 11] Compiling Numeric.SpecFunctions.Extra
+math-functions                     > [10 of 11] Compiling Numeric.SpecFunctions
+cassava                            > [ 6 of 10] Compiling Data.Csv.Encoding
+math-functions                     > [11 of 11] Compiling Numeric.Sum
+math-functions                     > 
+math-functions                     > /tmp/stack-3845e94856386e57/math-functions-0.3.4.4/Numeric/Sum.hs:56:1: warning: [-Wunused-imports]
+math-functions                     >     The import of ‘Data.Semigroup’ is redundant
+math-functions                     >       except perhaps to import instances from ‘Data.Semigroup’
+math-functions                     >     To import instances alone, use: import Data.Semigroup()
+math-functions                     >    |
+math-functions                     > 56 | import Data.Semigroup               (Semigroup(..)) -- Needed for GHC <8.4
+math-functions                     >    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+prettyprinter                      > [20 of 28] Compiling Data.Text.Prettyprint.Doc.Render.Tutorials.StackMachineTutorial
+prettyprinter                      > 
+prettyprinter                      > /tmp/stack-3845e94856386e57/prettyprinter-1.7.1/src/Data/Text/Prettyprint/Doc/Render/Tutorials/StackMachineTutorial.hs:7:1: warning: [-Wdeprecations]
+prettyprinter                      >     Module ‘Prettyprinter.Render.Tutorials.StackMachineTutorial’ is deprecated:
+prettyprinter                      >       "Writing your own stack machine is probably more efficient and customizable; also consider using »renderSimplyDecorated(A)« instead"
+prettyprinter                      >   |
+prettyprinter                      > 7 | import Prettyprinter.Render.Tutorials.StackMachineTutorial
+prettyprinter                      >   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+prettyprinter                      > [21 of 28] Compiling Prettyprinter.Render.Text
+prettyprinter                      > [22 of 28] Compiling Data.Text.Prettyprint.Doc.Render.Text
+prettyprinter                      > [23 of 28] Compiling Data.Text.Prettyprint.Doc
+prettyprinter                      > [24 of 28] Compiling Data.Text.Prettyprint.Doc.Symbols.Ascii
+prettyprinter                      > [25 of 28] Compiling Prettyprinter.Symbols.Unicode
+prettyprinter                      > [26 of 28] Compiling Data.Text.Prettyprint.Doc.Symbols.Unicode
+prettyprinter                      > [27 of 28] Compiling Prettyprinter.Util
+prettyprinter                      > [28 of 28] Compiling Data.Text.Prettyprint.Doc.Util
+prettyprinter                      > copy/register
+prettyprinter                      > Installing library in /tmp/aern2-stack.ryVCFK/snapshots/x86_64-linux-tinfo6/a9cdb111ba43c34a9894161df33edb1b290c1c61f1b004418a8411cbdf470c15/9.6.7/lib/x86_64-linux-ghc-9.6.7/prettyprinter-1.7.1-BxNhIqpyTtt2Mpd5bWf0h1
+prettyprinter                      > Registering library for prettyprinter-1.7.1..
+prettyprinter-ansi-terminal        > configure
+prettyprinter-ansi-terminal        > Configuring prettyprinter-ansi-terminal-1.1.3...
+prettyprinter-ansi-terminal        > build with ghc-9.6.7
+prettyprinter-ansi-terminal        > Preprocessing library for prettyprinter-ansi-terminal-1.1.3..
+prettyprinter-ansi-terminal        > Building library for prettyprinter-ansi-terminal-1.1.3..
+prettyprinter-ansi-terminal        > [1 of 4] Compiling Prettyprinter.Render.Terminal.Internal
+bitvec                             > [ 6 of 13] Compiling Data.Bit.Internal
+math-functions                     > copy/register
+math-functions                     > Installing library in /tmp/aern2-stack.ryVCFK/snapshots/x86_64-linux-tinfo6/a9cdb111ba43c34a9894161df33edb1b290c1c61f1b004418a8411cbdf470c15/9.6.7/lib/x86_64-linux-ghc-9.6.7/math-functions-0.3.4.4-73ZZYXsuUsm3eiyqxKBOES
+math-functions                     > Registering library for math-functions-0.3.4.4..
+prettyprinter-ansi-terminal        > [2 of 4] Compiling Prettyprinter.Render.Terminal
+prettyprinter-ansi-terminal        > [3 of 4] Compiling Data.Text.Prettyprint.Doc.Render.Terminal
+prettyprinter-ansi-terminal        > [4 of 4] Compiling Data.Text.Prettyprint.Doc.Render.Terminal.Internal
+prettyprinter-ansi-terminal        > copy/register
+mwc-random                         > configure
+mwc-random                         > Configuring mwc-random-0.15.2.0...
+prettyprinter-ansi-terminal        > Installing library in /tmp/aern2-stack.ryVCFK/snapshots/x86_64-linux-tinfo6/a9cdb111ba43c34a9894161df33edb1b290c1c61f1b004418a8411cbdf470c15/9.6.7/lib/x86_64-linux-ghc-9.6.7/prettyprinter-ansi-terminal-1.1.3-FJebhv5bWcCHbai3Z6t53k
+cassava                            > [ 7 of 10] Compiling Data.Csv.Incremental
+prettyprinter-ansi-terminal        > Registering library for prettyprinter-ansi-terminal-1.1.3..
+mwc-random                         > build with ghc-9.6.7
+mwc-random                         > Preprocessing library for mwc-random-0.15.2.0..
+mwc-random                         > Building library for mwc-random-0.15.2.0..
+mwc-random                         > [1 of 4] Compiling System.Random.MWC.CondensedTable
+optparse-applicative               > configure
+prettyprinter-compat-ansi-wl-pprint> configure
+prettyprinter-compat-ansi-wl-pprint> Configuring prettyprinter-compat-ansi-wl-pprint-1.0.2...
+optparse-applicative               > Configuring optparse-applicative-0.18.1.0...
+cassava                            > [ 8 of 10] Compiling Data.Csv.Streaming
+cassava                            > [ 9 of 10] Compiling Data.Csv.Builder
+cassava                            > [10 of 10] Compiling Data.Csv
+optparse-applicative               > build with ghc-9.6.7
+optparse-applicative               > Preprocessing library for optparse-applicative-0.18.1.0..
+optparse-applicative               > Building library for optparse-applicative-0.18.1.0..
+prettyprinter-compat-ansi-wl-pprint> build with ghc-9.6.7
+prettyprinter-compat-ansi-wl-pprint> Preprocessing library for prettyprinter-compat-ansi-wl-pprint-1.0.2..
+prettyprinter-compat-ansi-wl-pprint> Building library for prettyprinter-compat-ansi-wl-pprint-1.0.2..
+prettyprinter-compat-ansi-wl-pprint> [1 of 1] Compiling Text.PrettyPrint.ANSI.Leijen
+optparse-applicative               > [ 1 of 17] Compiling Options.Applicative.Help.Levenshtein
+cassava                            > copy/register
+cassava                            > Installing library in /tmp/aern2-stack.ryVCFK/snapshots/x86_64-linux-tinfo6/a9cdb111ba43c34a9894161df33edb1b290c1c61f1b004418a8411cbdf470c15/9.6.7/lib/x86_64-linux-ghc-9.6.7/cassava-0.5.3.2-8ajVtSGNPlHHYvQDtf5Dqh
+optparse-applicative               > [ 2 of 17] Compiling Options.Applicative.Help.Pretty
+cassava                            > Registering library for cassava-0.5.3.2..
+optparse-applicative               > [ 3 of 17] Compiling Options.Applicative.Help.Chunk
+prettyprinter-compat-ansi-wl-pprint> copy/register
+optparse-applicative               > [ 4 of 17] Compiling Options.Applicative.Help.Types
+prettyprinter-compat-ansi-wl-pprint> Installing library in /tmp/aern2-stack.ryVCFK/snapshots/x86_64-linux-tinfo6/a9cdb111ba43c34a9894161df33edb1b290c1c61f1b004418a8411cbdf470c15/9.6.7/lib/x86_64-linux-ghc-9.6.7/prettyprinter-compat-ansi-wl-pprint-1.0.2-SxqAI7NrH51tJIpAbRsuu
+optparse-applicative               > [ 5 of 17] Compiling Options.Applicative.Types
+prettyprinter-compat-ansi-wl-pprint> Registering library for prettyprinter-compat-ansi-wl-pprint-1.0.2..
+optparse-applicative               > 
+optparse-applicative               > /tmp/stack-3845e94856386e57/optparse-applicative-0.18.1.0/src/Options/Applicative/Types.hs:58:1: warning: [-Wdodgy-imports]
+optparse-applicative               >     Module ‘Data.Semigroup’ does not export ‘Option’
+optparse-applicative               >    |
+optparse-applicative               > 58 | import Data.Semigroup hiding (Option)
+optparse-applicative               >    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ansi-wl-pprint                     > configure
+ansi-wl-pprint                     > Configuring ansi-wl-pprint-1.0.2...
+optparse-applicative               > [ 6 of 17] Compiling Options.Applicative.NonEmpty
+optparse-applicative               > [ 7 of 17] Compiling Options.Applicative.Internal
+ansi-wl-pprint                     > build with ghc-9.6.7
+ansi-wl-pprint                     > Preprocessing library for ansi-wl-pprint-1.0.2..
+ansi-wl-pprint                     > Building library for ansi-wl-pprint-1.0.2..
+ansi-wl-pprint                     > [1 of 1] Compiling Text.PrettyPrint.ANSI.Leijen
+ansi-wl-pprint                     > 
+ansi-wl-pprint                     > /tmp/stack-3845e94856386e57/ansi-wl-pprint-1.0.2/Text/PrettyPrint/ANSI/Leijen.hs:165:1: warning: [-Wdeprecations]
+ansi-wl-pprint                     >     Module ‘Text.PrettyPrint.ANSI.Leijen’ is deprecated:
+ansi-wl-pprint                     >       "Compatibility module for users of ansi-wl-pprint - use \"Prettyprinter\" instead"
+ansi-wl-pprint                     >     |
+ansi-wl-pprint                     > 165 | import "prettyprinter-compat-ansi-wl-pprint"  Text.PrettyPrint.ANSI.Leijen
+ansi-wl-pprint                     >     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ansi-wl-pprint                     > copy/register
+ansi-wl-pprint                     > Installing library in /tmp/aern2-stack.ryVCFK/snapshots/x86_64-linux-tinfo6/a9cdb111ba43c34a9894161df33edb1b290c1c61f1b004418a8411cbdf470c15/9.6.7/lib/x86_64-linux-ghc-9.6.7/ansi-wl-pprint-1.0.2-Ld5R16iQctDHYbEWPOEKgU
+optparse-applicative               > [ 8 of 17] Compiling Options.Applicative.Common
+ansi-wl-pprint                     > Registering library for ansi-wl-pprint-1.0.2..
+optparse-applicative               > [ 9 of 17] Compiling Options.Applicative.Help.Core
+test-framework                     > configure
+test-framework                     > Configuring test-framework-0.8.2.2...
+optparse-applicative               > [10 of 17] Compiling Options.Applicative.Help
+optparse-applicative               > [11 of 17] Compiling Options.Applicative.Builder.Internal
+optparse-applicative               > 
+optparse-applicative               > /tmp/stack-3845e94856386e57/optparse-applicative-0.18.1.0/src/Options/Applicative/Builder/Internal.hs:29:1: warning: [-Wdodgy-imports]
+optparse-applicative               >     Module ‘Data.Semigroup’ does not export ‘Option’
+optparse-applicative               >    |
+optparse-applicative               > 29 | import Data.Semigroup hiding (Option)
+optparse-applicative               >    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+optparse-applicative               > [12 of 17] Compiling Options.Applicative.Builder.Completer
+optparse-applicative               > [13 of 17] Compiling Options.Applicative.Builder
+mwc-random                         > [2 of 4] Compiling System.Random.MWC.Distributions
+test-framework                     > build with ghc-9.6.7
+optparse-applicative               > [14 of 17] Compiling Options.Applicative.BashCompletion
+optparse-applicative               > 
+optparse-applicative               > /tmp/stack-3845e94856386e57/optparse-applicative-0.18.1.0/src/Options/Applicative/BashCompletion.hs:16:1: warning: [-Wunused-imports]
+optparse-applicative               >     The import of ‘Data.Foldable’ is redundant
+optparse-applicative               >       except perhaps to import instances from ‘Data.Foldable’
+optparse-applicative               >     To import instances alone, use: import Data.Foldable()
+optparse-applicative               >    |
+optparse-applicative               > 16 | import Data.Foldable ( asum )
+optparse-applicative               >    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+test-framework                     > Preprocessing library for test-framework-0.8.2.2..
+test-framework                     > Building library for test-framework-0.8.2.2..
+aeson                              > [18 of 35] Compiling Data.Aeson.Parser
+aeson                              > [19 of 35] Compiling Data.Attoparsec.Time.Internal
+optparse-applicative               > [15 of 17] Compiling Options.Applicative.Extra
+aeson                              > [20 of 35] Compiling Data.Attoparsec.Time
+aeson                              > 
+aeson                              > /tmp/stack-3845e94856386e57/aeson-2.1.2.1/attoparsec-iso8601/src/Data/Attoparsec/Time.hs:132:21: warning: [GHC-68441] [-Wdeprecations]
+aeson                              >     In the use of ‘toPico’
+aeson                              >     (imported from Data.Attoparsec.Time.Internal):
+aeson                              >     Deprecated: "Use MkFixed"
+aeson                              >     |
+aeson                              > 132 |   parsePicos a0 t = toPico (fromIntegral (t' * 10^n))
+aeson                              >     |                     ^^^^^^
+test-framework                     > [ 1 of 24] Compiling Test.Framework.Improving
+test-framework                     > [ 2 of 24] Compiling Test.Framework.Runners.Console.Colors
+optparse-applicative               > [16 of 17] Compiling Options.Applicative
+optparse-applicative               > [17 of 17] Compiling Options.Applicative.Arrows
+test-framework                     > [ 3 of 24] Compiling Test.Framework.Runners.Console.ProgressBar
+test-framework                     > [ 4 of 24] Compiling Test.Framework.Runners.Console.Utilities
+test-framework                     > [ 5 of 24] Compiling Test.Framework.Runners.Processors
+test-framework                     > [ 6 of 24] Compiling Test.Framework.Runners.ThreadPool
+test-framework                     > [ 7 of 24] Compiling Test.Framework.Utilities
+test-framework                     > [ 8 of 24] Compiling Test.Framework.Seed
+optparse-applicative               > copy/register
+optparse-applicative               > Installing library in /tmp/aern2-stack.ryVCFK/snapshots/x86_64-linux-tinfo6/a9cdb111ba43c34a9894161df33edb1b290c1c61f1b004418a8411cbdf470c15/9.6.7/lib/x86_64-linux-ghc-9.6.7/optparse-applicative-0.18.1.0-Cy8N2QzbLZxI47omJ1iC3G
+test-framework                     > [ 9 of 24] Compiling Test.Framework.Runners.TimedConsumption
+test-framework                     > [10 of 24] Compiling Test.Framework.Runners.TestPattern
+optparse-applicative               > Registering library for optparse-applicative-0.18.1.0..
+test-framework                     > [11 of 24] Compiling Test.Framework.Runners.Console.Table
+test-framework                     > [12 of 24] Compiling Test.Framework.Options
+test-framework                     > [13 of 24] Compiling Test.Framework.Runners.Options
+test-framework                     > [14 of 24] Compiling Test.Framework.Core
+aeson                              > [21 of 35] Compiling Data.Aeson.Parser.Time
+aeson                              > [22 of 35] Compiling Data.Aeson.Types.FromJSON
+test-framework                     > [15 of 24] Compiling Test.Framework.Runners.Core
+test-framework                     > [16 of 24] Compiling Test.Framework.Runners.XML.JUnitWriter
+aeson                              > 
+aeson                              > /tmp/stack-3845e94856386e57/aeson-2.1.2.1/src/Data/Aeson/Types/FromJSON.hs:81:47: warning: [-Wunused-imports]
+aeson                              >     The import of ‘liftA2’
+aeson                              >     from module ‘Control.Applicative’ is redundant
+aeson                              >    |
+aeson                              > 81 | import Control.Applicative ((<|>), Const(..), liftA2)
+aeson                              >    |                                               ^^^^^^
+test-framework                     > [17 of 24] Compiling Test.Framework.Runners.Statistics
+test-framework                     > [18 of 24] Compiling Test.Framework.Runners.XML
+test-framework                     > [19 of 24] Compiling Test.Framework.Runners.Console.Statistics
+test-framework                     > [20 of 24] Compiling Test.Framework.Runners.API
+test-framework                     > [21 of 24] Compiling Test.Framework.Runners.Console.Run
+test-framework                     > [22 of 24] Compiling Test.Framework.Runners.Console
+test-framework                     > [23 of 24] Compiling Test.Framework.Providers.API
+test-framework                     > [24 of 24] Compiling Test.Framework
+mwc-random                         > [3 of 4] Compiling System.Random.MWC.SeedSource
+test-framework                     > copy/register
+test-framework                     > Installing library in /tmp/aern2-stack.ryVCFK/snapshots/x86_64-linux-tinfo6/a9cdb111ba43c34a9894161df33edb1b290c1c61f1b004418a8411cbdf470c15/9.6.7/lib/x86_64-linux-ghc-9.6.7/test-framework-0.8.2.2-50CQBhNkOa250iRpqzVVR0
+mwc-random                         > [4 of 4] Compiling System.Random.MWC
+test-framework                     > Registering library for test-framework-0.8.2.2..
+bitvec                             > [ 7 of 13] Compiling Data.Bit.Mutable
+test-framework-quickcheck2         > configure
+test-framework-quickcheck2         > Configuring test-framework-quickcheck2-0.3.0.6...
+test-framework-quickcheck2         > build with ghc-9.6.7
+test-framework-quickcheck2         > Preprocessing library for test-framework-quickcheck2-0.3.0.6..
+test-framework-quickcheck2         > Building library for test-framework-quickcheck2-0.3.0.6..
+test-framework-quickcheck2         > [1 of 1] Compiling Test.Framework.Providers.QuickCheck2
+test-framework-quickcheck2         > copy/register
+test-framework-quickcheck2         > Installing library in /tmp/aern2-stack.ryVCFK/snapshots/x86_64-linux-tinfo6/a9cdb111ba43c34a9894161df33edb1b290c1c61f1b004418a8411cbdf470c15/9.6.7/lib/x86_64-linux-ghc-9.6.7/test-framework-quickcheck2-0.3.0.6-E0KXsBhWANkEofHQ7rMpxC
+test-framework-quickcheck2         > Registering library for test-framework-quickcheck2-0.3.0.6..
+bitvec                             > [ 8 of 13] Compiling Data.Bit.ImmutableTS
+mwc-random                         > copy/register
+mwc-random                         > Installing library in /tmp/aern2-stack.ryVCFK/snapshots/x86_64-linux-tinfo6/a9cdb111ba43c34a9894161df33edb1b290c1c61f1b004418a8411cbdf470c15/9.6.7/lib/x86_64-linux-ghc-9.6.7/mwc-random-0.15.2.0-3TscmMmlO8I8Za5JN77vXf
+mwc-random                         > Registering library for mwc-random-0.15.2.0..
+bitvec                             > [ 9 of 13] Compiling Data.Bit.Immutable
+bitvec                             > [10 of 13] Compiling Data.Bit.F2PolyTS
+aeson                              > [23 of 35] Compiling Data.Aeson.Internal
+aeson                              > [24 of 35] Compiling Data.Aeson.Internal.Time
+aeson                              > [25 of 35] Compiling Data.Aeson.Encoding.Builder
+bitvec                             > [11 of 13] Compiling Data.Bit.ThreadSafe
+bitvec                             > [12 of 13] Compiling Data.Bit.F2Poly
+aeson                              > [26 of 35] Compiling Data.Aeson.Encoding.Internal
+aeson                              > [27 of 35] Compiling Data.Aeson.Encoding
+aeson                              > [28 of 35] Compiling Data.Aeson.Types.ToJSON
+bitvec                             > [13 of 13] Compiling Data.Bit
+bitvec                             > copy/register
+bitvec                             > Installing library in /tmp/aern2-stack.ryVCFK/snapshots/x86_64-linux-tinfo6/a9cdb111ba43c34a9894161df33edb1b290c1c61f1b004418a8411cbdf470c15/9.6.7/lib/x86_64-linux-ghc-9.6.7/bitvec-1.1.5.0-16LadTbCenJI7D1jJxQ7DB
+bitvec                             > Registering library for bitvec-1.1.5.0..
+vector-algorithms                  > configure
+vector-algorithms                  > Configuring vector-algorithms-0.9.1.0...
+vector-algorithms                  > build with ghc-9.6.7
+vector-algorithms                  > Preprocessing library for vector-algorithms-0.9.1.0..
+vector-algorithms                  > Building library for vector-algorithms-0.9.1.0..
+vector-algorithms                  > [ 1 of 11] Compiling Data.Vector.Algorithms.Common
+vector-algorithms                  > [ 2 of 11] Compiling Data.Vector.Algorithms.Optimal
+vector-algorithms                  > [ 3 of 11] Compiling Data.Vector.Algorithms.Insertion
+vector-algorithms                  > [ 4 of 11] Compiling Data.Vector.Algorithms.Merge
+vector-algorithms                  > [ 5 of 11] Compiling Data.Vector.Algorithms.AmericanFlag
+vector-algorithms                  > [ 6 of 11] Compiling Data.Vector.Algorithms.Heap
+vector-algorithms                  > [ 7 of 11] Compiling Data.Vector.Algorithms.Intro
+vector-algorithms                  > [ 8 of 11] Compiling Data.Vector.Algorithms.Radix
+vector-algorithms                  > [ 9 of 11] Compiling Data.Vector.Algorithms.Search
+vector-algorithms                  > [10 of 11] Compiling Data.Vector.Algorithms
+vector-algorithms                  > [11 of 11] Compiling Data.Vector.Algorithms.Tim
+aeson                              > [29 of 35] Compiling Data.Aeson.Types.Class
+aeson                              > [30 of 35] Compiling Data.Aeson.Types
+aeson                              > [31 of 35] Compiling Data.Aeson.Text
+aeson                              > [32 of 35] Compiling Data.Aeson
+aeson                              > 
+aeson                              > /tmp/stack-3845e94856386e57/aeson-2.1.2.1/src/Data/Aeson.hs:166:35: warning: [-Wunused-imports]
+aeson                              >     The import of ‘ifromJSON’
+aeson                              >     from module ‘Data.Aeson.Types.FromJSON’ is redundant
+aeson                              >     |
+aeson                              > 166 | import Data.Aeson.Types.FromJSON (ifromJSON, parseIndexedJSON)
+aeson                              >     |                                   ^^^^^^^^^
+aeson                              > 
+aeson                              > /tmp/stack-3845e94856386e57/aeson-2.1.2.1/src/Data/Aeson.hs:170:1: warning: [-Wunused-imports]
+aeson                              >     The import of ‘Data.Aeson.Types.Internal’ is redundant
+aeson                              >       except perhaps to import instances from ‘Data.Aeson.Types.Internal’
+aeson                              >     To import instances alone, use: import Data.Aeson.Types.Internal()
+aeson                              >     |
+aeson                              > 170 | import Data.Aeson.Types.Internal (formatError)
+aeson                              >     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+aeson                              > [33 of 35] Compiling Data.Aeson.TH
+aeson                              > 
+aeson                              > /tmp/stack-3845e94856386e57/aeson-2.1.2.1/src/Data/Aeson/TH.hs:984:7: warning: [GHC-62161] [-Wincomplete-uni-patterns]
+aeson                              >     Pattern match(es) are non-exhaustive
+aeson                              >     In a pattern binding: Patterns of type ‘[Q Exp]’ not matched: []
+aeson                              >     |
+aeson                              > 984 |       x:xs = [ [|lookupField|]
+aeson                              >     |       ^^^^^^^^^^^^^^^^^^^^^^^^...
+aeson                              > 
+aeson                              > /tmp/stack-3845e94856386e57/aeson-2.1.2.1/src/Data/Aeson/TH.hs:1100:14: warning: [GHC-62161] [-Wincomplete-uni-patterns]
+aeson                              >     Pattern match(es) are non-exhaustive
+aeson                              >     In a pattern binding: Patterns of type ‘[Q Exp]’ not matched: []
+aeson                              >      |
+aeson                              > 1100 |          let x:xs = [ dispatchParseJSON jc conName tvMap argTy
+aeson                              >      |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^...
+aeson                              > [34 of 35] Compiling Data.Aeson.QQ.Simple
+aeson                              > [35 of 35] Compiling Data.Aeson.Decoding
+aeson                              > copy/register
+aeson                              > Installing library in /tmp/aern2-stack.ryVCFK/snapshots/x86_64-linux-tinfo6/a9cdb111ba43c34a9894161df33edb1b290c1c61f1b004418a8411cbdf470c15/9.6.7/lib/x86_64-linux-ghc-9.6.7/aeson-2.1.2.1-9IKR24LsbQlKwAhcR1THGC
+aeson                              > Registering library for aeson-2.1.2.1..
+criterion-measurement              > configure
+microstache                        > configure
+criterion-measurement              > Configuring criterion-measurement-0.2.3.0...
+microstache                        > Configuring microstache-1.0.2.3...
+criterion-measurement              > build with ghc-9.6.7
+microstache                        > build with ghc-9.6.7
+criterion-measurement              > Preprocessing library for criterion-measurement-0.2.3.0..
+criterion-measurement              > Building library for criterion-measurement-0.2.3.0..
+microstache                        > Preprocessing library for microstache-1.0.2.3..
+microstache                        > Building library for microstache-1.0.2.3..
+criterion-measurement              > [1 of 3] Compiling Criterion.Measurement.Types.Internal
+microstache                        > [1 of 5] Compiling Text.Microstache.Type
+criterion-measurement              > [2 of 3] Compiling Criterion.Measurement.Types
+microstache                        > 
+microstache                        > /tmp/stack-3845e94856386e57/microstache-1.0.2.3/src/Text/Microstache/Type.hs:37:1: warning: [-Wunused-imports]
+microstache                        >     The import of ‘Data.Monoid’ is redundant
+microstache                        >       except perhaps to import instances from ‘Data.Monoid’
+microstache                        >     To import instances alone, use: import Data.Monoid()
+microstache                        >    |
+microstache                        > 37 | import Data.Monoid       (Monoid (..))
+microstache                        >    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+microstache                        > 
+microstache                        > /tmp/stack-3845e94856386e57/microstache-1.0.2.3/src/Text/Microstache/Type.hs:38:1: warning: [-Wunused-imports]
+microstache                        >     The import of ‘Data.Semigroup’ is redundant
+microstache                        >       except perhaps to import instances from ‘Data.Semigroup’
+microstache                        >     To import instances alone, use: import Data.Semigroup()
+microstache                        >    |
+microstache                        > 38 | import Data.Semigroup    (Semigroup (..))
+microstache                        >    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+microstache                        > 
+microstache                        > /tmp/stack-3845e94856386e57/microstache-1.0.2.3/src/Text/Microstache/Type.hs:42:1: warning: [-Wunused-imports]
+microstache                        >     The import of ‘Data.Word’ is redundant
+microstache                        >       except perhaps to import instances from ‘Data.Word’
+microstache                        >     To import instances alone, use: import Data.Word()
+microstache                        >    |
+microstache                        > 42 | import Data.Word         (Word)
+microstache                        >    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+microstache                        > [2 of 5] Compiling Text.Microstache.Render
+microstache                        > 
+microstache                        > /tmp/stack-3845e94856386e57/microstache-1.0.2.3/src/Text/Microstache/Render.hs:27:1: warning: [-Wunused-imports]
+microstache                        >     The import of ‘Data.Monoid’ is redundant
+microstache                        >       except perhaps to import instances from ‘Data.Monoid’
+microstache                        >     To import instances alone, use: import Data.Monoid()
+microstache                        >    |
+microstache                        > 27 | import Data.Monoid                (mempty)
+microstache                        >    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+microstache                        > 
+microstache                        > /tmp/stack-3845e94856386e57/microstache-1.0.2.3/src/Text/Microstache/Render.hs:28:1: warning: [-Wunused-imports]
+microstache                        >     The import of ‘Data.Semigroup’ is redundant
+microstache                        >       except perhaps to import instances from ‘Data.Semigroup’
+microstache                        >     To import instances alone, use: import Data.Semigroup()
+microstache                        >    |
+microstache                        > 28 | import Data.Semigroup             ((<>))
+microstache                        >    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+microstache                        > 
+microstache                        > /tmp/stack-3845e94856386e57/microstache-1.0.2.3/src/Text/Microstache/Render.hs:30:1: warning: [-Wunused-imports]
+microstache                        >     The import of ‘Data.Word’ is redundant
+microstache                        >       except perhaps to import instances from ‘Data.Word’
+microstache                        >     To import instances alone, use: import Data.Word()
+microstache                        >    |
+microstache                        > 30 | import Data.Word                  (Word)
+microstache                        >    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+criterion-measurement              > [3 of 3] Compiling Criterion.Measurement
+microstache                        > [3 of 5] Compiling Text.Microstache.Parser
+microstache                        > 
+microstache                        > /tmp/stack-3845e94856386e57/microstache-1.0.2.3/src/Text/Microstache/Parser.hs:19:1: warning: [-Wunused-imports]
+microstache                        >     The import of ‘<$, <$>’
+microstache                        >     from module ‘Control.Applicative’ is redundant
+microstache                        >    |
+microstache                        > 19 | import Control.Applicative   (Alternative (..), (<$), (<$>))
+microstache                        >    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+microstache                        > 
+microstache                        > /tmp/stack-3845e94856386e57/microstache-1.0.2.3/src/Text/Microstache/Parser.hs:26:1: warning: [-Wunused-imports]
+microstache                        >     The import of ‘Data.Word’ is redundant
+microstache                        >       except perhaps to import instances from ‘Data.Word’
+microstache                        >     To import instances alone, use: import Data.Word()
+microstache                        >    |
+microstache                        > 26 | import Data.Word             (Word)
+microstache                        >    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+vector-algorithms                  > copy/register
+vector-algorithms                  > Installing library in /tmp/aern2-stack.ryVCFK/snapshots/x86_64-linux-tinfo6/a9cdb111ba43c34a9894161df33edb1b290c1c61f1b004418a8411cbdf470c15/9.6.7/lib/x86_64-linux-ghc-9.6.7/vector-algorithms-0.9.1.0-Ey1FRczYmBRI5RPTEMS2A3
+vector-algorithms                  > Registering library for vector-algorithms-0.9.1.0..
+microstache                        > [4 of 5] Compiling Text.Microstache.Compile
+microstache                        > [5 of 5] Compiling Text.Microstache
+dense-linear-algebra               > configure
+dense-linear-algebra               > Configuring dense-linear-algebra-0.1.0.0...
+criterion-measurement              > copy/register
+criterion-measurement              > Installing library in /tmp/aern2-stack.ryVCFK/snapshots/x86_64-linux-tinfo6/a9cdb111ba43c34a9894161df33edb1b290c1c61f1b004418a8411cbdf470c15/9.6.7/lib/x86_64-linux-ghc-9.6.7/criterion-measurement-0.2.3.0-CYl2ZrtUTKxKXKEhzKz57q
+criterion-measurement              > Registering library for criterion-measurement-0.2.3.0..
+microstache                        > copy/register
+microstache                        > Installing library in /tmp/aern2-stack.ryVCFK/snapshots/x86_64-linux-tinfo6/a9cdb111ba43c34a9894161df33edb1b290c1c61f1b004418a8411cbdf470c15/9.6.7/lib/x86_64-linux-ghc-9.6.7/microstache-1.0.2.3-6TDKVhssYTZAV9w8WhEhyE
+microstache                        > Registering library for microstache-1.0.2.3..
+dense-linear-algebra               > build with ghc-9.6.7
+dense-linear-algebra               > Preprocessing library for dense-linear-algebra-0.1.0.0..
+dense-linear-algebra               > Building library for dense-linear-algebra-0.1.0.0..
+dense-linear-algebra               > [1 of 5] Compiling Statistics.Matrix.Function
+dense-linear-algebra               > [2 of 5] Compiling Statistics.Matrix.Types
+dense-linear-algebra               > [3 of 5] Compiling Statistics.Matrix.Mutable
+dense-linear-algebra               > 
+dense-linear-algebra               > /tmp/stack-3845e94856386e57/dense-linear-algebra-0.1.0.0/src/Statistics/Matrix/Mutable.hs:24:1: warning: [-Wunused-imports]
+dense-linear-algebra               >     The import of ‘Control.Applicative’ is redundant
+dense-linear-algebra               >       except perhaps to import instances from ‘Control.Applicative’
+dense-linear-algebra               >     To import instances alone, use: import Control.Applicative()
+dense-linear-algebra               >    |
+dense-linear-algebra               > 24 | import Control.Applicative ((<$>))
+dense-linear-algebra               >    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+dense-linear-algebra               > [4 of 5] Compiling Statistics.Matrix
+dense-linear-algebra               > 
+dense-linear-algebra               > /tmp/stack-3845e94856386e57/dense-linear-algebra-0.1.0.0/src/Statistics/Matrix.hs:50:1: warning: [-Wunused-imports]
+dense-linear-algebra               >     The import of ‘Control.Applicative’ is redundant
+dense-linear-algebra               >       except perhaps to import instances from ‘Control.Applicative’
+dense-linear-algebra               >     To import instances alone, use: import Control.Applicative()
+dense-linear-algebra               >    |
+dense-linear-algebra               > 50 | import Control.Applicative ((<$>))
+dense-linear-algebra               >    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+dense-linear-algebra               > 
+dense-linear-algebra               > /tmp/stack-3845e94856386e57/dense-linear-algebra-0.1.0.0/src/Statistics/Matrix.hs:96:5: warning: [GHC-62161] [-Wincomplete-uni-patterns]
+dense-linear-algebra               >     Pattern match(es) are non-exhaustive
+dense-linear-algebra               >     In a pattern binding: Patterns of type ‘[Int]’ not matched: []
+dense-linear-algebra               >    |
+dense-linear-algebra               > 96 |     nCol:ns = U.length <$> xs
+dense-linear-algebra               >    |     ^^^^^^^^^^^^^^^^^^^^^^^^^
+dense-linear-algebra               > [5 of 5] Compiling Statistics.Matrix.Algorithms
+dense-linear-algebra               > 
+dense-linear-algebra               > /tmp/stack-3845e94856386e57/dense-linear-algebra-0.1.0.0/src/Statistics/Matrix/Algorithms.hs:13:1: warning: [-Wunused-imports]
+dense-linear-algebra               >     The import of ‘Control.Applicative’ is redundant
+dense-linear-algebra               >       except perhaps to import instances from ‘Control.Applicative’
+dense-linear-algebra               >     To import instances alone, use: import Control.Applicative()
+dense-linear-algebra               >    |
+dense-linear-algebra               > 13 | import Control.Applicative ((<$>), (<*>))
+dense-linear-algebra               >    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+dense-linear-algebra               > copy/register
+dense-linear-algebra               > Installing library in /tmp/aern2-stack.ryVCFK/snapshots/x86_64-linux-tinfo6/a9cdb111ba43c34a9894161df33edb1b290c1c61f1b004418a8411cbdf470c15/9.6.7/lib/x86_64-linux-ghc-9.6.7/dense-linear-algebra-0.1.0.0-JZo0eGOvAq64GHfsGuRE4f
+dense-linear-algebra               > Registering library for dense-linear-algebra-0.1.0.0..
+statistics                         > configure
+statistics                         > Configuring statistics-0.16.3.0...
+statistics                         > build with ghc-9.6.7
+statistics                         > Preprocessing library for statistics-0.16.3.0..
+statistics                         > Building library for statistics-0.16.3.0..
+statistics                         > [ 1 of 49] Compiling Statistics.Correlation.Kendall
+statistics                         > [ 2 of 49] Compiling Statistics.Distribution.Poisson.Internal
+statistics                         > [ 3 of 49] Compiling Statistics.Function
+statistics                         > [ 4 of 49] Compiling Statistics.Internal
+statistics                         > [ 5 of 49] Compiling Statistics.Quantile
+statistics                         > [ 6 of 49] Compiling Statistics.Sample.Histogram
+statistics                         > [ 7 of 49] Compiling Statistics.Sample.Internal
+statistics                         > [ 8 of 49] Compiling Statistics.Distribution
+statistics                         > [ 9 of 49] Compiling Statistics.Distribution.Uniform
+statistics                         > [10 of 49] Compiling Statistics.Distribution.Transform
+statistics                         > [11 of 49] Compiling Statistics.Distribution.StudentT
+statistics                         > [12 of 49] Compiling Statistics.Distribution.Poisson
+statistics                         > [13 of 49] Compiling Statistics.Distribution.NegativeBinomial
+statistics                         > [14 of 49] Compiling Statistics.Distribution.Hypergeometric
+statistics                         > [15 of 49] Compiling Statistics.Distribution.Geometric
+statistics                         > [16 of 49] Compiling Statistics.Distribution.Gamma
+statistics                         > [17 of 49] Compiling Statistics.Distribution.FDistribution
+statistics                         > [18 of 49] Compiling Statistics.Distribution.DiscreteUniform
+statistics                         > [19 of 49] Compiling Statistics.Distribution.ChiSquared
+statistics                         > [20 of 49] Compiling Statistics.Distribution.CauchyLorentz
+statistics                         > [21 of 49] Compiling Statistics.Distribution.Binomial
+statistics                         > [22 of 49] Compiling Statistics.Distribution.Beta
+statistics                         > [23 of 49] Compiling Statistics.Sample.Powers
+statistics                         > [24 of 49] Compiling Statistics.Test.Internal
+statistics                         > [25 of 49] Compiling Statistics.Transform
+statistics                         > [26 of 49] Compiling Statistics.Sample.KernelDensity
+statistics                         > [27 of 49] Compiling Statistics.Types.Internal
+statistics                         > [28 of 49] Compiling Statistics.Sample
+statistics                         > [29 of 49] Compiling Statistics.Sample.Normalize
+statistics                         > [30 of 49] Compiling Statistics.Sample.KernelDensity.Simple
+statistics                         > [31 of 49] Compiling Statistics.Distribution.Weibull
+statistics                         > [32 of 49] Compiling Statistics.Distribution.Normal
+statistics                         > [33 of 49] Compiling Statistics.Types
+statistics                         > [34 of 49] Compiling Statistics.Test.Types
+statistics                         > [35 of 49] Compiling Statistics.Test.StudentT
+statistics                         > [36 of 49] Compiling Statistics.Test.KruskalWallis
+statistics                         > [37 of 49] Compiling Statistics.Test.KolmogorovSmirnov
+statistics                         > [38 of 49] Compiling Statistics.Test.ChiSquared
+statistics                         > [39 of 49] Compiling Statistics.Resampling
+statistics                         > [40 of 49] Compiling Statistics.Regression
+statistics                         > 
+statistics                         > /tmp/stack-3845e94856386e57/statistics-0.16.3.0/Statistics/Regression.hs:72:5: warning: [GHC-62161] [-Wincomplete-uni-patterns]
+statistics                         >     Pattern match(es) are non-exhaustive
+statistics                         >     In a pattern binding: Patterns of type ‘[Int]’ not matched: []
+statistics                         >    |
+statistics                         > 72 |     lss@(n:ls) = map G.length preds
+statistics                         >    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+statistics                         > [41 of 49] Compiling Statistics.ConfidenceInt
+statistics                         > [42 of 49] Compiling Statistics.Test.WilcoxonT
+statistics                         > [43 of 49] Compiling Statistics.Test.MannWhitneyU
+statistics                         > 
+statistics                         > /tmp/stack-3845e94856386e57/statistics-0.16.3.0/Statistics/Test/MannWhitneyU.hs:164:13: warning: [GHC-62161] [-Wincomplete-uni-patterns]
+statistics                         >     Pattern match(es) are non-exhaustive
+statistics                         >     In a pattern binding:
+statistics                         >         Patterns of type ‘[[Double]]’ not matched:
+statistics                         >             []
+statistics                         >             [_]
+statistics                         >     |
+statistics                         > 164 |             (predmList : mList : _) = drop (m-2) predBigNList
+statistics                         >     |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+statistics                         > [44 of 49] Compiling Statistics.Resampling.Bootstrap
+statistics                         > [45 of 49] Compiling Statistics.Distribution.Lognormal
+statistics                         > [46 of 49] Compiling Statistics.Distribution.Laplace
+statistics                         > [47 of 49] Compiling Statistics.Distribution.Exponential
+statistics                         > [48 of 49] Compiling Statistics.Correlation
+statistics                         > [49 of 49] Compiling Statistics.Autocorrelation
+statistics                         > copy/register
+statistics                         > Installing library in /tmp/aern2-stack.ryVCFK/snapshots/x86_64-linux-tinfo6/a9cdb111ba43c34a9894161df33edb1b290c1c61f1b004418a8411cbdf470c15/9.6.7/lib/x86_64-linux-ghc-9.6.7/statistics-0.16.3.0-H99HdnnmdSQBs5Ztu6PpOQ
+statistics                         > Registering library for statistics-0.16.3.0..
+criterion                          > configure
+criterion                          > Configuring criterion-1.6.4.0...
+criterion                          > build with ghc-9.6.7
+criterion                          > Preprocessing library for criterion-1.6.4.0..
+criterion                          > Building library for criterion-1.6.4.0..
+criterion                          > [ 1 of 12] Compiling Criterion.Types
+criterion                          > [ 2 of 12] Compiling Criterion.Monad.Internal
+criterion                          > [ 3 of 12] Compiling Criterion.Monad
+criterion                          > [ 4 of 12] Compiling Criterion.IO.Printf
+criterion                          > [ 5 of 12] Compiling Criterion.Analysis
+criterion                          > [ 6 of 12] Compiling Paths_criterion
+criterion                          > [ 7 of 12] Compiling Criterion.Report
+criterion                          > [ 8 of 12] Compiling Criterion.Main.Options
+criterion                          > [ 9 of 12] Compiling Criterion.IO
+criterion                          > [10 of 12] Compiling Criterion.Internal
+criterion                          > [11 of 12] Compiling Criterion.Main
+criterion                          > [12 of 12] Compiling Criterion
+criterion                          > Preprocessing executable 'criterion-report' for criterion-1.6.4.0..
+criterion                          > Building executable 'criterion-report' for criterion-1.6.4.0..
+criterion                          > [1 of 3] Compiling Paths_criterion
+criterion                          > [2 of 3] Compiling Options
+criterion                          > [3 of 3] Compiling Main
+criterion                          > [4 of 4] Linking .stack-work/dist/x86_64-linux-tinfo6/ghc-9.6.7/build/criterion-report/criterion-report
+criterion                          > copy/register
+criterion                          > Installing library in /tmp/aern2-stack.ryVCFK/snapshots/x86_64-linux-tinfo6/a9cdb111ba43c34a9894161df33edb1b290c1c61f1b004418a8411cbdf470c15/9.6.7/lib/x86_64-linux-ghc-9.6.7/criterion-1.6.4.0-IzEInlsABZsAzfVRERJnVa
+criterion                          > Installing executable criterion-report in /tmp/aern2-stack.ryVCFK/snapshots/x86_64-linux-tinfo6/a9cdb111ba43c34a9894161df33edb1b290c1c61f1b004418a8411cbdf470c15/9.6.7/bin
+criterion                          > Registering library for criterion-1.6.4.0..
+aern-order                         > configure (lib)
+Configuring aern-order-0.5.0...
+aern-order                         > build (lib) with ghc-9.6.7
+Preprocessing library for aern-order-0.5.0..
+Building library for aern-order-0.5.0..
+[ 1 of 35] Compiling Numeric.AERN.Basics.Exception
+[ 2 of 35] Compiling Numeric.AERN.Basics.PartialOrdering
+[ 3 of 35] Compiling Numeric.AERN.Basics.ShowInternals
+[ 4 of 35] Compiling Numeric.AERN.Misc.Bool
+[ 5 of 35] Compiling Numeric.AERN.Basics.Laws.Relation
+[ 6 of 35] Compiling Numeric.AERN.Misc.Debug
+[ 7 of 35] Compiling Numeric.AERN.Misc.List
+
+/tmp/aern-audit.zp9Mzz/source/aern-order/src/Numeric/AERN/Misc/List.hs:65:36: warning: [GHC-68441] [-Wdeprecations]
+    In the use of ‘next’
+    (imported from System.Random, but defined in System.Random.Internal):
+    Deprecated: "No longer used"
+   |
+65 |                 drop 13 $ iterate (R.next . snd) (0,g)
+   |                                    ^^^^^^
+[ 8 of 35] Compiling Numeric.AERN.Basics.Effort
+[ 9 of 35] Compiling Numeric.AERN.Basics.SizeLimits
+[10 of 35] Compiling Numeric.AERN.Basics.Laws.Utilities
+[11 of 35] Compiling Numeric.AERN.Basics.Laws.Operation
+[12 of 35] Compiling Numeric.AERN.Misc.Maybe
+[13 of 35] Compiling Numeric.AERN.Basics.Laws.RoundedOperation
+[14 of 35] Compiling Numeric.AERN.Basics.Laws.PartialRelation
+[15 of 35] Compiling Numeric.AERN.Basics.Laws.OperationRelation
+[16 of 35] Compiling Numeric.AERN.Basics.Consistency
+[17 of 35] Compiling Numeric.AERN.Misc.QuickCheck
+
+/tmp/aern-audit.zp9Mzz/source/aern-order/src/Numeric/AERN/Misc/QuickCheck.hs:81:40: warning: [GHC-68441] [-Wdeprecations]
+    In the use of ‘next’
+    (imported from System.Random, but defined in System.Random.Internal):
+    Deprecated: "No longer used"
+   |
+81 |         = map snd $ drop 13 $ iterate (R.next . snd) (0,g)
+   |                                        ^^^^^^
+[18 of 35] Compiling Numeric.AERN.Basics.Arbitrary
+
+/tmp/aern-audit.zp9Mzz/source/aern-order/src/Numeric/AERN/Basics/Arbitrary.hs:39:34: warning: [GHC-58520] [-Wtype-equality-requires-operators]
+    The use of ‘~’ without TypeOperators
+    will become an error in a future GHC release.
+    Suggested fix: Perhaps you intended to use TypeOperators
+   |
+39 |     (ArbitraryWithArea t, Area t ~ a)
+   |                                  ^
+
+/tmp/aern-audit.zp9Mzz/source/aern-order/src/Numeric/AERN/Basics/Arbitrary.hs:50:34: warning: [GHC-58520] [-Wtype-equality-requires-operators]
+    The use of ‘~’ without TypeOperators
+    will become an error in a future GHC release.
+    Suggested fix: Perhaps you intended to use TypeOperators
+   |
+50 |     (ArbitraryWithArea t, Area t ~ a)
+   |                                  ^
+
+/tmp/aern-audit.zp9Mzz/source/aern-order/src/Numeric/AERN/Basics/Arbitrary.hs:62:34: warning: [GHC-58520] [-Wtype-equality-requires-operators]
+    The use of ‘~’ without TypeOperators
+    will become an error in a future GHC release.
+    Suggested fix: Perhaps you intended to use TypeOperators
+   |
+62 |     (ArbitraryWithArea t, Area t ~ a)
+   |                                  ^
+[19 of 35] Compiling Numeric.AERN.NumericOrder.Arbitrary
+
+/tmp/aern-audit.zp9Mzz/source/aern-order/src/Numeric/AERN/NumericOrder/Arbitrary.hs:91:13: error: [GHC-39999]
+    • Could not deduce ‘MonadFail Gen’
+        arising from a do statement
+        with the failable pattern ‘[e1, e2]’
+      from the context: ArbitraryOrderedTuple t
+        bound by the type signature for:
+                   arbitraryPairRelatedBy :: forall t.
+                                             ArbitraryOrderedTuple t =>
+                                             PartialOrdering -> Maybe (Gen (t, t))
+        at src/Numeric/AERN/NumericOrder/Arbitrary.hs:(82,1)-(85,21)
+    • In a stmt of a 'do' block: [e1, e2] <- gen
+      In the second argument of ‘($)’, namely
+        ‘do [e1, e2] <- gen
+            return (e1, e2)’
+      In the expression:
+        Just
+          $ do [e1, e2] <- gen
+               return (e1, e2)
+   |
+91 |             [e1,e2] <- gen 
+   |             ^^^^^^^^^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-order/src/Numeric/AERN/NumericOrder/Arbitrary.hs:104:13: error: [GHC-39999]
+    • Could not deduce ‘MonadFail Gen’
+        arising from a do statement
+        with the failable pattern ‘[e1, e2]’
+      from the context: ArbitraryOrderedTuple t
+        bound by the type signature for:
+                   arbitraryPairInAreaRelatedBy :: forall t.
+                                                   ArbitraryOrderedTuple t =>
+                                                   Area t -> PartialOrdering -> Maybe (Gen (t, t))
+        at src/Numeric/AERN/NumericOrder/Arbitrary.hs:(94,1)-(98,21)
+    • In a stmt of a 'do' block: [e1, e2] <- gen
+      In the second argument of ‘($)’, namely
+        ‘do [e1, e2] <- gen
+            return (e1, e2)’
+      In the expression:
+        Just
+          $ do [e1, e2] <- gen
+               return (e1, e2)
+    |
+104 |             [e1,e2] <- gen 
+    |             ^^^^^^^^^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-order/src/Numeric/AERN/NumericOrder/Arbitrary.hs:116:13: error: [GHC-39999]
+    • Could not deduce ‘MonadFail Gen’
+        arising from a do statement
+        with the failable pattern ‘[e1, e2, e3]’
+      from the context: ArbitraryOrderedTuple t
+        bound by the type signature for:
+                   arbitraryTripleRelatedBy :: forall t.
+                                               ArbitraryOrderedTuple t =>
+                                               (PartialOrdering, PartialOrdering, PartialOrdering)
+                                               -> Maybe (Gen (t, t, t))
+        at src/Numeric/AERN/NumericOrder/Arbitrary.hs:(107,1)-(110,23)
+    • In a stmt of a 'do' block: [e1, e2, e3] <- gen
+      In the second argument of ‘($)’, namely
+        ‘do [e1, e2, e3] <- gen
+            return (e1, e2, e3)’
+      In the expression:
+        Just
+          $ do [e1, e2, e3] <- gen
+               return (e1, e2, e3)
+    |
+116 |             [e1,e2,e3] <- gen
+    |             ^^^^^^^^^^^^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-order/src/Numeric/AERN/NumericOrder/Arbitrary.hs:131:13: error: [GHC-39999]
+    • Could not deduce ‘MonadFail Gen’
+        arising from a do statement
+        with the failable pattern ‘[e1, e2, e3]’
+      from the context: ArbitraryOrderedTuple t
+        bound by the type signature for:
+                   arbitraryTripleInAreaRelatedBy :: forall t.
+                                                     ArbitraryOrderedTuple t =>
+                                                     Area t
+                                                     -> (PartialOrdering, PartialOrdering,
+                                                         PartialOrdering)
+                                                     -> Maybe (Gen (t, t, t))
+        at src/Numeric/AERN/NumericOrder/Arbitrary.hs:(121,1)-(125,23)
+    • In a stmt of a 'do' block: [e1, e2, e3] <- gen
+      In the second argument of ‘($)’, namely
+        ‘do [e1, e2, e3] <- gen
+            return (e1, e2, e3)’
+      In the expression:
+        Just
+          $ do [e1, e2, e3] <- gen
+               return (e1, e2, e3)
+    |
+131 |             [e1,e2,e3] <- gen
+    |             ^^^^^^^^^^^^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-order/src/Numeric/AERN/NumericOrder/Arbitrary.hs:162:9: error: [GHC-39999]
+    • Could not deduce ‘MonadFail Gen’
+        arising from a do statement
+        with the failable pattern ‘[elem]’
+      from the context: ArbitraryOrderedTuple t
+        bound by the instance declaration
+        at src/Numeric/AERN/NumericOrder/Arbitrary.hs:(156,5)-(158,43)
+    • In a stmt of a 'do' block: [elem] <- gen
+      In the expression:
+        do [elem] <- gen
+           return $ UniformlyOrderedSingleton elem
+      In an equation for ‘arbitrary’:
+          arbitrary
+            = do [elem] <- gen
+                 return $ UniformlyOrderedSingleton elem
+            where
+                Just gen = arbitraryTupleRelatedBy [1] []
+    |
+162 |         [elem] <- gen
+    |         ^^^^^^^^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-order/src/Numeric/AERN/NumericOrder/Arbitrary.hs:197:9: error: [GHC-39999]
+    • Could not deduce ‘MonadFail Gen’
+        arising from a do statement
+        with the failable pattern ‘[elem]’
+      from the context: (ArbitraryOrderedTuple t, a ~ Area t)
+        bound by the instance declaration
+        at src/Numeric/AERN/NumericOrder/Arbitrary.hs:(191,5)-(193,54)
+    • In a stmt of a 'do' block: [elem] <- gen
+      In the expression:
+        do [elem] <- gen
+           return $ UniformlyOrderedSingleton elem
+      In an equation for ‘arbitraryWithParam’:
+          arbitraryWithParam area
+            = do [elem] <- gen
+                 return $ UniformlyOrderedSingleton elem
+            where
+                Just gen = arbitraryTupleInAreaRelatedBy area [1 :: Int] []
+    |
+197 |         [elem] <- gen
+    |         ^^^^^^^^^^^^^
+[21 of 35] Compiling Numeric.AERN.NumericOrder.Extrema
+[24 of 35] Compiling Numeric.AERN.RefinementOrder.Arbitrary
+
+/tmp/aern-audit.zp9Mzz/source/aern-order/src/Numeric/AERN/RefinementOrder/Arbitrary.hs:84:13: error: [GHC-39999]
+    • Could not deduce ‘MonadFail Gen’
+        arising from a do statement
+        with the failable pattern ‘[e1, e2]’
+      from the context: ArbitraryOrderedTuple t
+        bound by the type signature for:
+                   arbitraryPairRelatedBy :: forall t.
+                                             ArbitraryOrderedTuple t =>
+                                             PartialOrdering -> Maybe (Gen (t, t))
+        at src/Numeric/AERN/RefinementOrder/Arbitrary.hs:(77,1)-(78,69)
+    • In a stmt of a 'do' block: [e1, e2] <- gen
+      In the second argument of ‘($)’, namely
+        ‘do [e1, e2] <- gen
+            return (e1, e2)’
+      In the expression:
+        Just
+          $ do [e1, e2] <- gen
+               return (e1, e2)
+   |
+84 |             [e1,e2] <- gen 
+   |             ^^^^^^^^^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-order/src/Numeric/AERN/RefinementOrder/Arbitrary.hs:97:13: error: [GHC-39999]
+    • Could not deduce ‘MonadFail Gen’
+        arising from a do statement
+        with the failable pattern ‘[e1, e2]’
+      from the context: ArbitraryOrderedTuple t
+        bound by the type signature for:
+                   arbitraryPairInAreaRelatedBy :: forall t.
+                                                   ArbitraryOrderedTuple t =>
+                                                   Area t -> PartialOrdering -> Maybe (Gen (t, t))
+        at src/Numeric/AERN/RefinementOrder/Arbitrary.hs:(87,1)-(91,21)
+    • In a stmt of a 'do' block: [e1, e2] <- gen
+      In the second argument of ‘($)’, namely
+        ‘do [e1, e2] <- gen
+            return (e1, e2)’
+      In the expression:
+        Just
+          $ do [e1, e2] <- gen
+               return (e1, e2)
+   |
+97 |             [e1,e2] <- gen 
+   |             ^^^^^^^^^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-order/src/Numeric/AERN/RefinementOrder/Arbitrary.hs:108:13: error: [GHC-39999]
+    • Could not deduce ‘MonadFail Gen’
+        arising from a do statement
+        with the failable pattern ‘[e1, e2, e3]’
+      from the context: ArbitraryOrderedTuple t
+        bound by the type signature for:
+                   arbitraryTripleRelatedBy :: forall t.
+                                               ArbitraryOrderedTuple t =>
+                                               (PartialOrdering, PartialOrdering, PartialOrdering)
+                                               -> Maybe (Gen (t, t, t))
+        at src/Numeric/AERN/RefinementOrder/Arbitrary.hs:(100,1)-(102,78)
+    • In a stmt of a 'do' block: [e1, e2, e3] <- gen
+      In the second argument of ‘($)’, namely
+        ‘do [e1, e2, e3] <- gen
+            return (e1, e2, e3)’
+      In the expression:
+        Just
+          $ do [e1, e2, e3] <- gen
+               return (e1, e2, e3)
+    |
+108 |             [e1,e2,e3] <- gen
+    |             ^^^^^^^^^^^^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-order/src/Numeric/AERN/RefinementOrder/Arbitrary.hs:123:13: error: [GHC-39999]
+    • Could not deduce ‘MonadFail Gen’
+        arising from a do statement
+        with the failable pattern ‘[e1, e2, e3]’
+      from the context: ArbitraryOrderedTuple t
+        bound by the type signature for:
+                   arbitraryTripleInAreaRelatedBy :: forall t.
+                                                     ArbitraryOrderedTuple t =>
+                                                     Area t
+                                                     -> (PartialOrdering, PartialOrdering,
+                                                         PartialOrdering)
+                                                     -> Maybe (Gen (t, t, t))
+        at src/Numeric/AERN/RefinementOrder/Arbitrary.hs:(113,1)-(117,23)
+    • In a stmt of a 'do' block: [e1, e2, e3] <- gen
+      In the second argument of ‘($)’, namely
+        ‘do [e1, e2, e3] <- gen
+            return (e1, e2, e3)’
+      In the expression:
+        Just
+          $ do [e1, e2, e3] <- gen
+               return (e1, e2, e3)
+    |
+123 |             [e1,e2,e3] <- gen
+    |             ^^^^^^^^^^^^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-order/src/Numeric/AERN/RefinementOrder/Arbitrary.hs:153:9: error: [GHC-39999]
+    • Could not deduce ‘MonadFail Gen’
+        arising from a do statement
+        with the failable pattern ‘[elem]’
+      from the context: ArbitraryOrderedTuple t
+        bound by the instance declaration
+        at src/Numeric/AERN/RefinementOrder/Arbitrary.hs:150:10-77
+    • In a stmt of a 'do' block: [elem] <- gen
+      In the expression:
+        do [elem] <- gen
+           return $ UniformlyOrderedSingleton elem
+      In an equation for ‘arbitrary’:
+          arbitrary
+            = do [elem] <- gen
+                 return $ UniformlyOrderedSingleton elem
+            where
+                Just gen = arbitraryTupleRelatedBy [1] []
+    |
+153 |         [elem] <- gen
+    |         ^^^^^^^^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-order/src/Numeric/AERN/RefinementOrder/Arbitrary.hs:165:9: error: [GHC-39999]
+    • Could not deduce ‘MonadFail Gen’
+        arising from a do statement
+        with the failable pattern ‘[elem]’
+      from the context: (ArbitraryOrderedTuple t, a ~ Area t)
+        bound by the instance declaration
+        at src/Numeric/AERN/RefinementOrder/Arbitrary.hs:(159,5)-(161,54)
+    • In a stmt of a 'do' block: [elem] <- gen
+      In the expression:
+        do [elem] <- gen
+           return $ UniformlyOrderedSingleton elem
+      In an equation for ‘arbitraryWithParam’:
+          arbitraryWithParam area
+            = do [elem] <- gen
+                 return $ UniformlyOrderedSingleton elem
+            where
+                Just gen = arbitraryTupleInAreaRelatedBy area [1 :: Int] []
+    |
+165 |         [elem] <- gen
+    |         ^^^^^^^^^^^^^
+[25 of 35] Compiling Numeric.AERN.RefinementOrder.Extrema
+Completed 65 action(s).
+
+Error: [S-7282]
+       Stack failed to execute the build plan.
+       
+       While executing the build plan, Stack encountered the error:
+       
+       [S-7011]
+       While building package aern-order-0.5.0 (scroll up to its section to see the error) using:
+       /tmp/aern2-stack.ryVCFK/setup-exe-cache/x86_64-linux-tinfo6/Cabal-simple_O_vy6YIf_3.10.3.0_ghc-9.6.7 --verbose=1 --builddir=.stack-work/dist/x86_64-linux-tinfo6/ghc-9.6.7 build lib:aern-order --ghc-options ""
+       Process exited with code: ExitFailure 1 

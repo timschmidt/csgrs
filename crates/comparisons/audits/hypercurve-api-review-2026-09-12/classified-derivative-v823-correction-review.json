@@ -1,0 +1,8 @@
+{
+  "failed_qualification": "classified-derivative-v820-terminal.json",
+  "source_delta": [
+    "hypercurve/src/bezier_split_endpoint.rs"
+  ],
+  "production_prefix_identical": true,
+  "reason": "The new sign regression must exercise a retained nonlinear image but allow constant and affine derivatives to materialize exactly. The source equation is now cubic, and only the first derivative is required to use retained-expression storage."
+}

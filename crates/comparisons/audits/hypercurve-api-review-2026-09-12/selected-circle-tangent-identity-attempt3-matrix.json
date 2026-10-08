@@ -1,0 +1,9 @@
+{
+  "returncode": 0,
+  "elapsed_seconds": 7.373731383006088,
+  "normal_library_sha256": "120d642b35bdeafbd22da08cb7297559ee10a429c46d668e78773f44ce8737cf",
+  "source": "selected-circle-tangent-identity-matrix.rs",
+  "source_sha256": "005a451f7b9e9c4bd551360b7ab627d150c6ad4ed8e0794e17c059c751a6bef5",
+  "executable_sha256": "d34baf9f43b69e5c00a7c2fd49ef5863f895e331dedd42e38852f3437c3dbda6",
+  "log": "selected-circle-tangent-identity-attempt3-matrix.log"
+}

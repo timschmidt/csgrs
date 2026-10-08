@@ -1,0 +1,13 @@
+{
+  "tag": "erf-checkpoint-verification",
+  "started": "2026-09-08T11:04:01.855Z",
+  "finished": "2026-09-08T11:04:02.024Z",
+  "elapsedSeconds": 0.16673074000000002,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison",
+  "command": "node",
+  "args": [
+    "audits/continuation/calcium/verify-erf-checkpoint.mjs"
+  ],
+  "code": 0,
+  "signal": null
+}

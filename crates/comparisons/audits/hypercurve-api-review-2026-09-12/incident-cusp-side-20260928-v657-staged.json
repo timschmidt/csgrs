@@ -1,0 +1,14 @@
+{
+  "repos": {
+    "hypercurve": {
+      "parent": "7695ddc6ca2583102bca05327b08c4e0f6053f4b",
+      "paths": {
+        "src/bezier_offset.rs": "10c349280c89ef30ae1f705f2860be662d2b5a6fc648cb2d4cf9acebf1c77aaa",
+        "src/curve.rs": "3107ab56233c6aab6e20f941d4e59dae127ebf767e11cf509357368f87e3ca17",
+        "src/curve_fillet.rs": "f1aa11fc75f7072ab9bb3883db6b7c54c08726d86d6844de8fa0abaa815459d2"
+      }
+    }
+  },
+  "qualification": "incident-cusp-side-20260928-v657-terminal.json",
+  "verified_source_files": 2047
+}

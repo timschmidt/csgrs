@@ -1,0 +1,425 @@
+{
+  "schema_version": 1,
+  "title": "Use the authoritative native polynomial evaluator in remaining scalar consumers",
+  "status": "Solver committed; all live gates and allocation controls passed; pinned matched performance comparison running",
+  "commits": {
+    "hypersolve_parent": "0d3a33f68c3e2479e88e2aa149bbec23508d4254",
+    "hypersolve_candidate": "d9726e1265f3ab9a55121f612e2a35003d410089",
+    "hypercurve_parent": "6d97eaf49bea2c657845732b71c07b54f1222c94",
+    "hypercurve_candidate": null
+  },
+  "change": {
+    "removed_helpers": 6,
+    "new_public_api": false,
+    "compatibility_shims_added": false,
+    "production_line_delta": -52,
+    "total_rust_line_delta": 20,
+    "new_tests": 2,
+    "contract_specific_helpers_retained": [
+      "Rational-only admission in algebraic_polynomial_image",
+      "Symbolic-constant sign canonicalization in algebraic",
+      "Interval evaluation and simultaneous derivative evaluation"
+    ],
+    "files": [
+      {
+        "file": "hypersolve/src/algebraic_fiber.rs",
+        "before_sha256": "6e6bab431bbd7e25b04389aac03d5fdb366e0017fdf9517f625b00cb6acb4c85",
+        "candidate_sha256": "f4c567e821e175ff61d35ae1e2bc3357a0bab597458717cdc88596239615b96c",
+        "total_lines": {
+          "before": 6007,
+          "after": 6025,
+          "delta": 18
+        },
+        "production_lines": {
+          "before": 3797,
+          "after": 3785,
+          "delta": -12
+        }
+      },
+      {
+        "file": "hypersolve/src/algebraic_rational_image.rs",
+        "before_sha256": "52ef0f9249cdfee38ec53157a298baa12bca019c686afcc97bfe57cc80324603",
+        "candidate_sha256": "b3979d43bcfd730228612cc10a613c2048e2e07291ccbb706f73bb052daa67ae",
+        "total_lines": {
+          "before": 2944,
+          "after": 2940,
+          "delta": -4
+        },
+        "production_lines": {
+          "before": 1790,
+          "after": 1786,
+          "delta": -4
+        }
+      },
+      {
+        "file": "hypersolve/src/root_isolation.rs",
+        "before_sha256": "25ef14f3f50bdbf713dd5c353a53da75f11aba90da5601d5574f4806c5476cbf",
+        "candidate_sha256": "22c816c2830bcf91e95f87bcb1f0529155355ed0c2f526b2494e0b1dd640453a",
+        "total_lines": {
+          "before": 5134,
+          "after": 5128,
+          "delta": -6
+        },
+        "production_lines": {
+          "before": 3369,
+          "after": 3363,
+          "delta": -6
+        }
+      },
+      {
+        "file": "hypercurve/src/bezier_algebraic_image.rs",
+        "before_sha256": "ab19c69e1179b1a350382be0d12b3d55e9226cbc654e86b299abde6be187f337",
+        "candidate_sha256": "d9508e4503131c3a5613b902e7d724a63e68b42a60d3aa2566325e45949faa34",
+        "total_lines": {
+          "before": 2565,
+          "after": 2602,
+          "delta": 37
+        },
+        "production_lines": {
+          "before": 2478,
+          "after": 2469,
+          "delta": -9
+        }
+      },
+      {
+        "file": "hypercurve/src/bezier_moment.rs",
+        "before_sha256": "0743ffa1e942656257c4fca4b2855e2d49107c8be6674b2fe6805c6f5c35af62",
+        "candidate_sha256": "de5383a1294d00f76b4ef412eb23cbd2ae1044a482ce249fb6b465b1fb031b30",
+        "total_lines": {
+          "before": 3350,
+          "after": 3338,
+          "delta": -12
+        },
+        "production_lines": {
+          "before": 2595,
+          "after": 2583,
+          "delta": -12
+        }
+      },
+      {
+        "file": "hypercurve/src/rational_bezier_general.rs",
+        "before_sha256": "5364d4b2ae54a622030cd0d4e8821cf5c489e3a951ce9ff283a75a79a58014ce",
+        "candidate_sha256": "7eff254897dd6c7cede0fd5bfd74c397380704ba66c7287b515a58c8999841c8",
+        "total_lines": {
+          "before": 11667,
+          "after": 11654,
+          "delta": -13
+        },
+        "production_lines": {
+          "before": 9893,
+          "after": 9884,
+          "delta": -9
+        }
+      }
+    ]
+  },
+  "qualification": {
+    "hypersolve-minimal": {
+      "path": "/tmp/hypersolve-native-eval-minimal.log",
+      "targets": 8,
+      "passed": 793,
+      "failed": 0,
+      "ignored": 0,
+      "failures": [],
+      "longest_targets": [
+        {
+          "passed": 131,
+          "seconds": 5.27
+        },
+        {
+          "passed": 429,
+          "seconds": 4.12
+        },
+        {
+          "passed": 7,
+          "seconds": 0.43
+        },
+        {
+          "passed": 4,
+          "seconds": 0.1
+        },
+        {
+          "passed": 9,
+          "seconds": 0.09
+        },
+        {
+          "passed": 211,
+          "seconds": 0.05
+        }
+      ],
+      "tail": [
+        "running 0 tests",
+        "",
+        "test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s"
+      ]
+    },
+    "hypersolve-all-targets": {
+      "path": "/tmp/hypersolve-native-eval-all-targets.log",
+      "targets": 10,
+      "passed": 796,
+      "failed": 0,
+      "ignored": 0,
+      "failures": [],
+      "longest_targets": [
+        {
+          "passed": 131,
+          "seconds": 5.09
+        },
+        {
+          "passed": 430,
+          "seconds": 3.83
+        },
+        {
+          "passed": 7,
+          "seconds": 0.4
+        },
+        {
+          "passed": 4,
+          "seconds": 0.1
+        },
+        {
+          "passed": 9,
+          "seconds": 0.08
+        },
+        {
+          "passed": 211,
+          "seconds": 0.04
+        }
+      ],
+      "tail": [
+        "test benchmark_report::tests::manifest_catalog_matches_registered_targets ... ok",
+        "",
+        "test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s"
+      ]
+    },
+    "hypersolve-release": {
+      "path": "/tmp/hypersolve-native-eval-release.log",
+      "targets": 8,
+      "passed": 794,
+      "failed": 0,
+      "ignored": 0,
+      "failures": [],
+      "longest_targets": [
+        {
+          "passed": 131,
+          "seconds": 1.35
+        },
+        {
+          "passed": 430,
+          "seconds": 0.26
+        },
+        {
+          "passed": 7,
+          "seconds": 0.02
+        },
+        {
+          "passed": 211,
+          "seconds": 0.02
+        },
+        {
+          "passed": 9,
+          "seconds": 0.01
+        },
+        {
+          "passed": 4,
+          "seconds": 0.01
+        }
+      ],
+      "tail": [
+        "running 0 tests",
+        "",
+        "test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s"
+      ]
+    },
+    "hypercurve-initial-all-features": {
+      "path": "/tmp/hypercurve-native-eval-initial-all-features.log",
+      "targets": 45,
+      "passed": 1732,
+      "failed": 0,
+      "ignored": 9,
+      "failures": [],
+      "longest_targets": [
+        {
+          "passed": 890,
+          "seconds": 182.43
+        },
+        {
+          "passed": 47,
+          "seconds": 51.38
+        },
+        {
+          "passed": 100,
+          "seconds": 47.17
+        },
+        {
+          "passed": 101,
+          "seconds": 8.81
+        },
+        {
+          "passed": 14,
+          "seconds": 7.81
+        },
+        {
+          "passed": 11,
+          "seconds": 3.72
+        }
+      ],
+      "tail": [
+        "running 0 tests",
+        "",
+        "test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s"
+      ]
+    },
+    "hypercurve-minimal": {
+      "path": "/tmp/hypercurve-native-eval-minimal.log",
+      "targets": 45,
+      "passed": 1703,
+      "failed": 0,
+      "ignored": 4,
+      "failures": [],
+      "longest_targets": [
+        {
+          "passed": 886,
+          "seconds": 155.82
+        },
+        {
+          "passed": 47,
+          "seconds": 44.46
+        },
+        {
+          "passed": 100,
+          "seconds": 39.89
+        },
+        {
+          "passed": 101,
+          "seconds": 7.75
+        },
+        {
+          "passed": 14,
+          "seconds": 7.26
+        },
+        {
+          "passed": 11,
+          "seconds": 3.65
+        }
+      ],
+      "tail": [
+        "running 0 tests",
+        "",
+        "test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s"
+      ]
+    },
+    "hypercurve-ignored-units": {
+      "path": "/tmp/hypercurve-native-eval-ignored-units.log",
+      "targets": 1,
+      "passed": 6,
+      "failed": 0,
+      "ignored": 0,
+      "failures": [],
+      "longest_targets": [
+        {
+          "passed": 6,
+          "seconds": 52.26
+        }
+      ],
+      "tail": [
+        "test bezier_offset::conversion_tests::selected_fiber_genuinely_analytic_contacts_complete_region_booleans ... ok",
+        "",
+        "test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 890 filtered out; finished in 52.26s"
+      ]
+    },
+    "hypercurve-ignored-stroke": {
+      "path": "/tmp/hypercurve-native-eval-ignored-stroke.log",
+      "targets": 1,
+      "passed": 3,
+      "failed": 0,
+      "ignored": 0,
+      "failures": [],
+      "longest_targets": [
+        {
+          "passed": 3,
+          "seconds": 54.53
+        }
+      ],
+      "tail": [
+        "test exact_path_stroke_splits_an_interior_source_cusp ... ok",
+        "",
+        "test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 15 filtered out; finished in 54.53s"
+      ]
+    },
+    "hypercurve-ui-tests": {
+      "path": "/tmp/hypercurve-native-eval-ui-tests.log",
+      "targets": 1,
+      "passed": 37,
+      "failed": 0,
+      "ignored": 0,
+      "failures": [],
+      "longest_targets": [
+        {
+          "passed": 37,
+          "seconds": 35.69
+        }
+      ],
+      "tail": [
+        "test scenes::tests::shared_polyline_boolean_state_resolves_all_boolean_modes ... ok",
+        "",
+        "test result: ok. 37 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 35.69s"
+      ]
+    }
+  },
+  "inputs": {
+    "hyperreal/Cargo.toml": "dacb1c2a948f09a75173b5a1891b282624d0a422abdf21f669a0cfaefdf949be",
+    "hyperreal/Cargo.lock": "1c8640884474caa19c0c6cf46cda6472a67aa6143fc0536d902d9a782eafb8c4",
+    "hyperlimit/Cargo.toml": "0c5b6e7b3d7460898971309d06d8b5c2f75b3d04d410fbc11df0ed1c671c4d6c",
+    "hyperlimit/Cargo.lock": "4cf83bb216a16c47b2894d748a7ef52ab22c9f6460e67ece710b6195130fe73f",
+    "hyperlattice/Cargo.toml": "f2e6f9d051560b5550e4326c354f96e65af66b38117743f7fa05fb2548df229d",
+    "hyperlattice/Cargo.lock": "5028a9aaa4a26c4e96736fb4ba236c9a0476a7de1b78c67df165ea2093f9d290",
+    "hypertri/Cargo.toml": "12188eae885cdd8a203ed8335551fa3e73f3a18d010b080873ef879017fa3498",
+    "hypertri/Cargo.lock": "359e116bfe5613b39b1b7da550c9bfdba7e26d84d8a83db234347bfceecf11a8",
+    "hypermesh/Cargo.toml": "f9f8271377c95904eaaaca5f73dd07804c58beea4705e4acc223f3f26da15bff",
+    "hypermesh/Cargo.lock": "025a2b68b5bb9cd19dd405f1602565f476de17af0aac3ab4662000ab35ec8c46",
+    "hypersolve/Cargo.toml": "4240ea96fc7dfddd243fa47d19f65212773a4895ca5ac17aff4307479ef37dfd",
+    "hypersolve/Cargo.lock": "a3bd1655b3b08ac34afd084b1c74392c107a06a243672180f2d3a986ff442e43",
+    "hypercurve/Cargo.toml": "e6fa04394c7417807b4b5fcfa609fa1ce0e7b23b1519cd5e6cc325cf48c9d934",
+    "hypercurve/Cargo.lock": "dd5d29eaf1ab3a6ca6f7d1362ad75f68e6045b124eb3c5033f379c3ab77cc05a",
+    "hypercurve/benches/bezier_region.rs": "2b13d3562d5f9b08c13e5c4e968b29f62f375ce1840998e75c00731daec97c91",
+    "hypercurve/benches/rational_bezier.rs": "f10c38dccbcddac214390b1662ba78770ee2c66c1bf7cb652442ecf2d00c4ba4",
+    "hyperreal/src/real/arithmetic/linear_algebra.rs": "a63a592796f236f331923d312e5e43b29a4d9f6df3c6ec2243cea874f6db1eb9"
+  },
+  "frozen_control": {
+    "workspace": "/tmp/hypercurve-dyadic-bernstein-control.a5ZKq2",
+    "parent_checkpoint": "2026-09-05-root-evidence-api.json",
+    "hyperreal_revision": "d219a350462357af07d035fd316cba3b1cc339c9",
+    "concurrent_quadratic_extraction_excluded_on_both_sides": "bb85085438e398b92ef56b0855332fc686403562",
+    "changed_files_identical_to_live": true,
+    "driver_source_unchanged": true,
+    "native_evaluator_source_identical_to_live": true
+  },
+  "matched": {
+    "status": "running",
+    "start": "2026-09-05 21:30:49 UTC",
+    "cpu": 7,
+    "order": [
+      "baseline-1",
+      "candidate-1",
+      "candidate-2",
+      "baseline-2",
+      "baseline-3",
+      "candidate-3"
+    ],
+    "script": "/tmp/hypercurve-native-eval-matched.sh"
+  },
+  "known_completeness_limit": {
+    "status": "pre-existing and unresolved",
+    "formula": "alpha=sqrt(1/2), r=sqrt(alpha+1/4)-1/2, p(x)=-pi*(x*x+x-alpha), m=average_pair(r-1/8,r+1/8)",
+    "result": "At 512-bit certification: old Horner p(r) undecided; native p(r) certified zero. Both p(m) undecided although m-r is certified zero. Adding zero, distributing the half scale, or using mul_add to construct the average also remain undecided.",
+    "probe": "/tmp/hypercurve-native-eval-radical-probe.rs",
+    "probe_sha256": "e883eac7232b84454ccae7c1d1ab1ce3400dba8e3130417d466ca6ac49bbc9e7",
+    "output": "/tmp/hypercurve-native-eval-radical-probe.log"
+  },
+  "limits": [
+    "Full Hypercurve release readiness and uniformly competitive operation performance remain unproven.",
+    "Allocation measurements cover two small processes, not the full slow Boolean workload.",
+    "No push, browser deployment, or publication performed."
+  ]
+}

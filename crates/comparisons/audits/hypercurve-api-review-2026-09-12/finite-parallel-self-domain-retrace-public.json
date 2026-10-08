@@ -1,0 +1,21 @@
+{
+  "returncode": 0,
+  "elapsed_seconds": 0.031685989000834525,
+  "normal_library_sha256": "3373e039ed600e993316e2c8e687894bd65f5f108406e16140a53166e454f13e",
+  "log": "finite-parallel-self-domain-retrace-public.log",
+  "source": "finite-region-self-retrace-public.rs",
+  "command": [
+    "rustc",
+    "--edition=2024",
+    "-O",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-region-self-retrace-public.rs",
+    "--extern",
+    "hypercurve=/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/libhypercurve-2c7ff6f3fbe07653.rlib",
+    "-L",
+    "dependency=/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps",
+    "-o",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-parallel-self-domain-retrace-public"
+  ],
+  "source_sha256": "9813c7863594cd854538b5415ee03bac41c1c3149c16c29dd7a806646b9d73d0",
+  "executable_sha256": "f62634b51a75214a7eda9159290fe8f517a5920a4474df081e806760ea4b8081"
+}

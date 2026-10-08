@@ -1,0 +1,1586 @@
+[
+  {
+    "file": "hypercurve/.github/workflows/ci.yml",
+    "sha256": "d61e0e2f2b69d13c2d0bbed545d951826963975254e43db12509b3d31d47355c"
+  },
+  {
+    "file": "hypercurve/.github/workflows/deploy-ui-pages.yml",
+    "sha256": "3ef786f13158ff1ea3c5d48292ae57e270936b98abbabf1607782c54062e3f45"
+  },
+  {
+    "file": "hypercurve/.gitignore",
+    "sha256": "9ca2071742ab28ce90c8b77a3d06f4c563a7a422e071651fae1fff4f4a4679d5"
+  },
+  {
+    "file": "hypercurve/BLOCKER_REGRESSIONS.md",
+    "sha256": "0742a9587d6d908a1bf6ba178ca31925c017c496a4f2799fa4a35b2eb0066468"
+  },
+  {
+    "file": "hypercurve/COMPARATIVE_BENCHMARKS.md",
+    "sha256": "9a353fc57a5ab0eb0d3b6f04344a00a56aa224654f5375c18f850c1e6641e1e1"
+  },
+  {
+    "file": "hypercurve/Cargo.lock",
+    "sha256": "dd5d29eaf1ab3a6ca6f7d1362ad75f68e6045b124eb3c5033f379c3ab77cc05a"
+  },
+  {
+    "file": "hypercurve/Cargo.toml",
+    "sha256": "e6fa04394c7417807b4b5fcfa609fa1ce0e7b23b1519cd5e6cc325cf48c9d934"
+  },
+  {
+    "file": "hypercurve/LICENSE",
+    "sha256": "1bd6f730e72e7a1e04a3d4c28001efc23869d953c2d35a19f53935f6e55bd335"
+  },
+  {
+    "file": "hypercurve/PERFORMANCE.md",
+    "sha256": "a2203fa4798654ca112a334a3347da39241fe45be23a7bab5e7eca1ec2440849"
+  },
+  {
+    "file": "hypercurve/README.md",
+    "sha256": "83baec668ca92d87bfeb4855b6f48b7dbde3c624111dfd963ffcaa9eb78ee86b"
+  },
+  {
+    "file": "hypercurve/audit.txt",
+    "sha256": "6eba0359bd095edb5b25518ba59805f2a6c2ef001602f3ff0f47ae6052496099"
+  },
+  {
+    "file": "hypercurve/benches/api_surface.rs",
+    "sha256": "9900544ea2991b2ae5b0a6e29fc017ec58e89d8d885086e9399ca57b753a1f84"
+  },
+  {
+    "file": "hypercurve/benches/arc.rs",
+    "sha256": "7d279ce68ef29ff3430759b9689d1e05eb942e66f6e7bd4128fd84628975934b"
+  },
+  {
+    "file": "hypercurve/benches/bezier_algebraic_parameter.rs",
+    "sha256": "6cac0534c8b3787357948f9d1182b1b698af2292144edc0b043f45d44294ea36"
+  },
+  {
+    "file": "hypercurve/benches/bezier_arrangement.rs",
+    "sha256": "0a1932fd58a8982334608f3032787069c0e87a49b29950ca52032e671e92903a"
+  },
+  {
+    "file": "hypercurve/benches/bezier_evaluation.rs",
+    "sha256": "b509bd49d20cfd1ba5d2eeacdaae99c2c49ac7f600a1b688fe969763db630d9f"
+  },
+  {
+    "file": "hypercurve/benches/bezier_rational_overlap.rs",
+    "sha256": "01f46acdeb68cc102395434af5f18649c53931fb1f1decc738304c79dad18950"
+  },
+  {
+    "file": "hypercurve/benches/bezier_region.rs",
+    "sha256": "96ec9739c6d244c4ee8b9ea926c7cfee463100f50e53090e5d9681835820ac03"
+  },
+  {
+    "file": "hypercurve/benches/bezier_split_materialization.rs",
+    "sha256": "818960fa1000b49cb8e68bf822b8fada75ca78d30231f3a0f44a295027a26d91"
+  },
+  {
+    "file": "hypercurve/benches/bezier_tangent_order.rs",
+    "sha256": "6abc38ce01ff763fac5d7af83ca465acaa5d5278b44795c08ed670465b7e4701"
+  },
+  {
+    "file": "hypercurve/benches/bspline.rs",
+    "sha256": "132b7aa48528e7bef7cd1bdff19810c264108cc875cb059c89df6be7b17f8458"
+  },
+  {
+    "file": "hypercurve/benches/common/pathological.rs",
+    "sha256": "b9c464ac1ad6c1c31cdca92fa595ee8eed049d0ed25418a847a80d7bcea0b79f"
+  },
+  {
+    "file": "hypercurve/benches/comparative.rs",
+    "sha256": "0a9ba6d238280deba314e5f68b94ab61928662363f0c33d0d1f0d47cb8094da5"
+  },
+  {
+    "file": "hypercurve/benches/containment.rs",
+    "sha256": "56bcf16fcaf842859d386a3fec68aa4e799e68282be3a234af90eecba02f1881"
+  },
+  {
+    "file": "hypercurve/benches/curve_path.rs",
+    "sha256": "5ecc7f17e9fe7fc1e62d739e497b3513442515fc7544ebd2bd5a385d633cd7da"
+  },
+  {
+    "file": "hypercurve/benches/curve_region_boolean_batch.rs",
+    "sha256": "7bc6dafd2eb19f6a94cf7569c7fc0f2e638ab225f7c0c40bfdd929f9e0bcd2ba"
+  },
+  {
+    "file": "hypercurve/benches/dispatch_trace.rs",
+    "sha256": "5ce84055bda91cebb1998abd0f2a425d0f258de6e37fbb96033d3bc315869beb"
+  },
+  {
+    "file": "hypercurve/benches/editing.rs",
+    "sha256": "9db9db2ffc127bbc4b6cba56e63e6bd2548e5f848754eead7e2b8ac0621569f6"
+  },
+  {
+    "file": "hypercurve/benches/finite_projection.rs",
+    "sha256": "a3e4ba7e91db34cd6b1c1076637a889054ffdc35a5f39b47e3b141dff38f79cc"
+  },
+  {
+    "file": "hypercurve/benches/intersection.rs",
+    "sha256": "fac72764bf59809405db7b664a75e7e7a07e666d8650ee3e61710e527ed93e0d"
+  },
+  {
+    "file": "hypercurve/benches/intersection_sweep.rs",
+    "sha256": "3eafb59a8d6afe80a35b944062b1d6da45b400342b81ffca28bf976c855e75f1"
+  },
+  {
+    "file": "hypercurve/benches/offset.rs",
+    "sha256": "a9c38d748108e073fdd16f9e69fe58c8357e0c59e853b162c14ccdc0725d02af"
+  },
+  {
+    "file": "hypercurve/benches/pathological_regions.rs",
+    "sha256": "377ea7950752755064ca94628face7940f19e24dbaee683f6ec62111dc5bb5d5"
+  },
+  {
+    "file": "hypercurve/benches/rational_bezier.rs",
+    "sha256": "bddd5710fe6983a0445cd65a9a90eb9afa5cc2dbcbf0b43748890749efd04867"
+  },
+  {
+    "file": "hypercurve/benches/reconstruction.rs",
+    "sha256": "359030970aa4f326b0233b28ed939c86b787b89cc9981270927e38dbb015b214"
+  },
+  {
+    "file": "hypercurve/benches/straight_skeleton.rs",
+    "sha256": "9708a98c5144edbd899422d21f82e0533f9354e9a21952288b009c1ad21e7162"
+  },
+  {
+    "file": "hypercurve/benchmarks/baselines/2026-07-31/README.md",
+    "sha256": "fd482f8d290bd37e0d0cadc74e50ef7f6827133a8cb7d9ec562bebb95e4c3284"
+  },
+  {
+    "file": "hypercurve/benchmarks/baselines/2026-07-31/baseline.json",
+    "sha256": "14f74982525888f6a99ef7bbb51edd707f8f82342721282d335e49ace008d87d"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-07-31-affine-curve-region-boolean.json",
+    "sha256": "9bbc5a656ccbbeefda4669bcc02c2e98108ffbbd6b0b4ea0bc357ead5c9cf6f6"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-07-31-authoritative-curve-region-boolean-batch.json",
+    "sha256": "0bb9aedfd285259a9ebc887b09514e61faad4752c1db6bc7805cd376579f2509"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-07-31-authoritative-line-image-boolean.json",
+    "sha256": "9e45e677bd58396b2b11d4872f29d41a3c8ddb36a2617db6e550da3e0eee4be0"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-07-31-circular-conic-curve-region-boolean.json",
+    "sha256": "1263b436b2d62b5416abbdf7a0ffad1d764fd9294ada639337cee2382cddf692"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-07-31-closed-curve-path-policy.json",
+    "sha256": "18b6f16d336c1f8688f3c5ff0c1fe9f910b7d5b6d5acf365e3db61ca94c1c629"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-07-31-compact-curve-region-carrier.json",
+    "sha256": "f9b546817ec798f280d4ea47b6bce50ba96d477370ea0e887ddf3ffff40921af"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-07-31-curve-intersection-policy.json",
+    "sha256": "dd08cf166fdc9c22c3c8cfb1cae5c2eb91b76ed5fdd92afc7a49ab04d1115301"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-07-31-curve-region-construction-outcomes.json",
+    "sha256": "b43e3fd419d4507ee5db6b644ad066712cee3259e60887d2f679958746a6df95"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-07-31-curve-region-measurement-outcomes.json",
+    "sha256": "20d6c97358a233aa4942676502038ba830940fe7ca31d9d85472e80db51221f1"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-07-31-curve-region-mutation-outcomes.json",
+    "sha256": "48c851734160914eba8618808bc935f10155ceb30b921fc3b93a92047c8ae4f0"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-07-31-curve-region-query-outcomes.json",
+    "sha256": "7c98ff0c700c9574e90a6b3c9a7bf4a9fc14efefb2c05f9bbbfd3667df20a60c"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-07-31-even-multiplicity-fiber-sturm.json",
+    "sha256": "484b0d1967e90159ac8fb2d010f3295226594f0c39c1c3dbe1092a9b0fe2776a"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-07-31-exact-rational-bezier-parallel-carrier.json",
+    "sha256": "6d92649850f13e39d35fa90c223f0707e0e59d211091230c5b8e26ece907113c"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-07-31-finite-projection-outcomes.json",
+    "sha256": "dc92ede31862f9e0d5c59914b14b5205744ef3537141700a8ecd20389e015d48"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-07-31-general-pair-curve-region-policy.json",
+    "sha256": "301fb623a00d61e5d83f9f62b7e723597fd9922836b54848a9c82fda64bd87b6"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-07-31-higher-order-edit-policy.json",
+    "sha256": "e7aa7e512e385dd8899bc66804b7d648511ad2f31966dcba153dd513cb4260f2"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-07-31-hypersolve-interpolation-policy-bridge.json",
+    "sha256": "4c4437abf16c10a5f072933554bedec1f303355214efd8b3c8031e5f0c68b166"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-07-31-lower-dimensional-boolean-ownership.json",
+    "sha256": "a874dfa8cf7f4020878acbf976233d7fe32cf4edbfa44cfcd0241b4c5f023526"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-07-31-materialized-boundary-policy.json",
+    "sha256": "8b9c710111057cb10e21cf084e86d0731f82777398cfa7f0d88e83a76f6df719"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-07-31-mixed-line-conic-curve-region-boolean.json",
+    "sha256": "ab01054e8cdc030dc9bd90a7b6b81548794bcca87fc653d73bd204da2c549964"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-07-31-multiple-turning-implicit-graphs.json",
+    "sha256": "21e45021e7491cff7aea70df553b87365342058ba31c12df2e8121ffd8cbd090"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-07-31-native-circular-boolean-publication.json",
+    "sha256": "2614222e1b2c4505ca49f445f622a32588b781030324aac5b438186822d5251b"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-07-31-native-curve-topology-policy.json",
+    "sha256": "2560b6ba271e17d0210739e3e1f29a23c99ccb27430b1df4eb9cc1ae5a3530e6"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-07-31-one-byte-curve-context.json",
+    "sha256": "20dd7573a6344a49cf6044a6b4863bc864c05e8e1941983c3953ee39b1a559c0"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-07-31-one-pass-certainty.json",
+    "sha256": "0e484e239fcac8c5458355e0eb0ad2606a4c65755ddf156dfc5e331a42193fd5"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-07-31-overlap-parameter-correspondence.json",
+    "sha256": "1ba109100eae035aefd9ca2233194873409e0274c4f921cfa266a11517062d62"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-07-31-parallel-contact-fiber-replay.json",
+    "sha256": "9b5fdd5ae104b1a22ffaa6e8b6f5b0cd5a205c55ee12c70d9046216c2b4cd32c"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-07-31-policy-explicit-curve-region-construction.json",
+    "sha256": "702fc79931db7e01cc8e26c6c10a9cded4e2ee1081028a990a0b943b221ab04b"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-07-31-projective-cubic-shared-component.json",
+    "sha256": "f78686bc0466d2381410d49d44fd2bb801715685fef75ca344f6d7951db9af44"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-07-31-rational-parallel-overlap.json",
+    "sha256": "b45b8c937847d049f5e8dcfc219492cc56d185e2e0a12392a8d75f250bb769bc"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-07-31-rational-parameter-component.json",
+    "sha256": "3be0e58eb19ca8cce75ccff0f91274924461e814912cf35e1a6d72bd23b470d5"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-07-31-regular-implicit-component-cells.json",
+    "sha256": "aa8fbd9af4483c9e5e6035c5a41bf2f23461e1621e003a46927e46ffa354f3d2"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-07-31-regular-implicit-parameter-components.json",
+    "sha256": "5dfea173de44ac565280ede1df383e55878531da691cc81932f1d4e0b55745b2"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-07-31-repeated-cubic-common-fibers.json",
+    "sha256": "d91cd85cefdf8d000580fd275e9dfbde301410b559681fd335d35982d8405cce"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-07-31-retained-overlap-clipping.json",
+    "sha256": "f70e40ef4ab562f0187e14d0ec4dcce8293a7429f06d3b22895b39942ca0b4cb"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-07-31-rootless-axis-saturation.json",
+    "sha256": "26b5261b2be0598841c3559cd07de46e83cb9f3694dc388726ac92144e04b71e"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-07-31-specialized-common-fiber.json",
+    "sha256": "6c9b4680301fcbc9fa61e2373185d615f4ebec9c2875d1e96a7ebfc2c3726402"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-07-31-spline-construction-interpolation-policy.json",
+    "sha256": "3036627493424e90bdf22e1acc1c43bf283c808ff1c748c44ed9dcacc8246874"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-07-31-spline-edit-policy.json",
+    "sha256": "ad2884f1095642927ba0068c076ee39f76e3cd5abdfab5fc3befffb4ce7fae2c"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-07-31-spline-evaluation-decomposition-policy.json",
+    "sha256": "e9dd89e51c02a432cf24cd372968f51c3601eb79ca82d7438fe19a57dbb2b786"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-07-31-spline-subdivision-policy.json",
+    "sha256": "cc9d2d261f2ff3d31b9f968ea42585c3e013ee07e2119428d242967a627bb5f9"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-07-31-split-quadratic-common-fibers.json",
+    "sha256": "23199b0b13565a4c08ca8eac485e14ef56093c3c20feb2e8f059a3db6004dcd1"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-07-31-split-rational-component-residual.json",
+    "sha256": "93d2ca3acc913fc523caef50f186afa9130b0277e5ea4df6d4a846cf5c651706"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-08-01-exact-parallel-similarity-export.json",
+    "sha256": "1fcf60f9de0c96b748206ed3b824370c5cf6147c85a9fcc9423e60ad40ca8548"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-08-01-isolated-branch-zero-partition.json",
+    "sha256": "8783ef9908bb3ececfb04fa176899fb7d22cca74304434cb4818e6d189b457b6"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-08-01-isolated-singular-implicit-vertices.json",
+    "sha256": "0f3016846c72d86a620c21de870f57071e2040586ca852bf19396ec215a71bdb"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-08-01-point-image-parameter-components.json",
+    "sha256": "df42db1f982b115011c554c749d1d5496b1522241c37d9bbb6f7d28eea70fb1c"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-08-01-smooth-implicit-component-cells.json",
+    "sha256": "e197ab9750b58e2b5294edbfe4096a7134286d1f67c400ba0aa71bd7d21f49d3"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-08-01-square-free-implicit-parameter-components.json",
+    "sha256": "2fa9160507c197fc93b9b2e13d1786963f882f8617ec26bcf5de11a113b6cd04"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-08-01-supported-nonrational-parameter-components.json",
+    "sha256": "e9cfb9c44e9a0d17ca6f15b2bca578f3692282dcc7361e64d30b2b01d0b63015"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-08-01-zero-selected-parameter-components.json",
+    "sha256": "831e8a39e13362d9e4be84744ffaa84b86e3b30b1d3438cf44c0ae4d74505f32"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-08-02-algebraic-cross-map-cusp-cuts.json",
+    "sha256": "9e3933126aaa169f69f7a9d8e478648d1a558ac9f3d81d86d8dfe8716894586a"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-08-02-algebraic-cusp-analytic-parallel-intersections.json",
+    "sha256": "6d6fccb92afbc70f9d10f09774eea0bf898533b3dba29d59c00ab1ae6a2d0b78"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-08-02-algebraic-cusp-arrangement-topology.json",
+    "sha256": "31b0e094e60114412f71566fb024d156fa2b25e462c4ec2a9e7c4f03f6957bce"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-08-02-algebraic-cusp-overlap-arrangement.json",
+    "sha256": "fbf3eb2d36b6a4373622313638577cdf023246c0472a9ee17de3432e48e6cc7b"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-08-02-algebraic-cusp-parallel-components.json",
+    "sha256": "57e7c3f353e40f7ca4678765216819bc3c1eb4c0a30f9a93c5028aa31c1a7e2e"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-08-02-algebraic-cusp-parallel-partial-clipping.json",
+    "sha256": "b07943ddb76239764617487e51229ff72ddf59f946810254b913e4f1c59db361"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-08-02-algebraic-cusp-rational-components.json",
+    "sha256": "8edd60e2798fcaaca01a31fde84d894128b10c2c9c222961dff0f46fa32cd6fe"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-08-02-algebraic-cusp-region-classification.json",
+    "sha256": "a86fb60f02328236344ed635f3336bee0f903e5cba38297732857cb3b089c0d6"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-08-02-algebraic-cusp-semicircle-overlaps.json",
+    "sha256": "eeec4561951a8d90079bffdeb8b4a84b53c14def75697c58691b5913255d385d"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-08-02-algebraic-cusp-semicircle-pairs.json",
+    "sha256": "78ddc2defadf921dbb86eaa1d402de978e00016f0313ca4ba2c7d3fcb240e3f2"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-08-02-algebraic-cusp-subfragment-winding.json",
+    "sha256": "e2fee35bcde2349dbf9eb2eada239a807657a4bef1fdd681dbe9078a3581bacc"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-08-02-algebraic-cusp-subfragments.json",
+    "sha256": "57da6b6ce08ec4b4bbec5611e2f03e91b87d2f4e506a3fed132c97b0006715dc"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-08-02-algebraic-parameter-policy-ordering.json",
+    "sha256": "c23bdad164e7ae1868dce55c00e5bcd300bf990bed1c304ce2708d5242050934"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-08-02-algebraic-partition-exact-offset.json",
+    "sha256": "f3a024b71eed726e220ca203799eacaa9c55d66b7fd4887f1a2e553321a899b3"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-08-02-analytic-parallel-curve-region-boolean.json",
+    "sha256": "428ce3cb5ac01dd6e15fbeaa040fa458d9431e30f70cac0c6f8e18c7d3d18d68"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-08-02-authoritative-exact-curve-region-offset.json",
+    "sha256": "b00956011f1f28439dd4e5df49487ba4d3a97feb8f036cb9aa60101afb1b222c"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-08-02-cyclic-algebraic-offset-seam.json",
+    "sha256": "71cc18a0238835ab5ee6f0fc61b46137098edf855c90e28765dee8136862c3d3"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-08-02-exact-parallel-pair-components.json",
+    "sha256": "256f2c7e0284d2cf7981c64996da004f5cf723d811a570a18eaaafe284203e3c"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-08-02-exact-rational-cross-field-cusp-cuts.json",
+    "sha256": "4dcc3e3d3fecd7c34634ff366be1e523c439a95fff156f3e3fbdd949d46a3a42"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-08-02-general-algebraic-cusp-point-images.json",
+    "sha256": "f093c1deb05bbadb7aa1246a3173e955bc70e3a265ccb7c066fc80e3077950d3"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-08-02-monotone-exact-offset-topology.json",
+    "sha256": "b9d67e52593df2fcddfbd41c9330d7e9f13e4ab2338207f679974aea3abf85dd"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-08-02-nonlinear-algebraic-region-classification.json",
+    "sha256": "e2de32ebe5bf0b77db40148451f7a4e5aa4044b4e7e6b12b4108fc67205e2f2f"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-08-02-radical-cusp-exact-offset-topology.json",
+    "sha256": "7ae232193c23a04e4aa71c198349495a53762a5e7ebfc31d1379e74ed9a4afe2"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-08-02-rational-bezier-self-regularization.json",
+    "sha256": "ce1f2e63bb41a0552d4e0ab774e97480967cd656c75233f4bdc2435d7d85cdf1"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-08-02-rational-image-interval-proof-performance.json",
+    "sha256": "96207cb75a980f3bc34061f34f690cf6150ce641cfe71d643827286496248bac"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-08-02-rational-image-map-reuse.json",
+    "sha256": "fdad33d3a11556188fc45c9ef23de82d49c604b34221122fc0a6d7f9e127605a"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-08-02-represented-range-repeated-exact-offset.json",
+    "sha256": "115f116635959ecac317211fb758fdef5ecdfb152907a14359c68880b429b9ef"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-08-02-stationary-algebraic-image-intervals.json",
+    "sha256": "04fd826da6e31198dfc992aaf67a1a410fb70353d8ec0897c699e1b2818cd9c7"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-08-02-topology-backed-carrier-aliases.json",
+    "sha256": "493dd480138ff7a4b84fc449d7d63a51923b29d188568fb3a80edcab7e3f6dd9"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-08-03-affine-distinct-field-winding.json",
+    "sha256": "8c3df5891e9f89930f7ea5931298d94365cf875eedfa8dd59879606c29af59b0"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-08-03-cusp-pair-overlap-rational-transport.json",
+    "sha256": "211cebd0916f5150b5a41f34b60455e4c8a15040c2ae2c41bae88e4a074687c1"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-08-03-distinct-field-algebraic-cusp-winding.json",
+    "sha256": "117c3c60cc7b75e0f7ef19d65b34c65400dc9536d230353ad47a05ef9e666e74"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-08-03-exact-quadratic-trivariate-factorization.json",
+    "sha256": "f43df08d123234f494b96ba83091e1f79012bd26c73eb50082c69f99baf1c89c"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-08-03-exact-quartic-trivariate-factorization.json",
+    "sha256": "f8459d3b7911f30e3a25cf5f0ebeac44f9f7afe1b77d279dc9a7c5b7086dd57f"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-08-03-exact-quintic-trivariate-factorization.json",
+    "sha256": "8e3f0a05fbb38dc4175e7181ae0589cf7a99a1aa5ae2bf190d09b5709378109d"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-08-03-exact-repeated-cubic-trivariate-factorization.json",
+    "sha256": "8597fee6045334353e671462eedff087ee135c55c2bcb77af200de3d32d47bdc"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-08-03-exact-septic-trivariate-factorization.json",
+    "sha256": "a96041ff5cf78db6d46d75c42fb58430fd76b8aa9eebb6cd67b1cc413eeb80cc"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-08-03-exact-sextic-trivariate-factorization.json",
+    "sha256": "aba679c58b606cc08bb84c4fdc5f2c54f43f81f97fc9ffa5d8e9508790fede7c"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-08-03-exact-square-free-cubic-trivariate-factorization.json",
+    "sha256": "00e4cd4e3501e54ffdb45f8cfdb63f43e146a469742466963122dc91429b087c"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-08-03-exact-trivariate-axis-content.json",
+    "sha256": "423fd5342e40d5677098615aa6bb8653fac8368ea618d37d43407910598f6d2d"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-08-03-independent-algebraic-cusp-winding.json",
+    "sha256": "0df1fbbd1aece79f938a4062b6e3df755e64ce3ca272cdec8769c42639ece006"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-08-03-linear-axis-distinct-field-winding.json",
+    "sha256": "03002f3fb6d30e328861792b33cbbbda25dd8f73dbbc712a2566056a804bffb2"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-08-03-nonlinear-analytic-cusp-map-transport.json",
+    "sha256": "f5178207de6781cfc69602158ff028067876aef9c99be817564cfda757e2dfbc"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-08-03-nonlinear-rational-cusp-map-transport.json",
+    "sha256": "fe2a38e75bb376467584f0a6daf6262163f3687563fda5f94a9db11a257a8748"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-08-03-resource-bounded-rational-multi-affine-factorization.json",
+    "sha256": "d299f42c11471fa20a1f8d6f4761e43056ab628ad9775e7c5f8b7a7e800059c5"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-08-03-selected-root-binary-relations.json",
+    "sha256": "632c0dc7b4899b1ad96e6c9044f308a1fdd249c9c4c91d265a11ed49399bd2ea"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-08-03-selected-root-quotient-reduction.json",
+    "sha256": "adc86b8e54726c38357d57999514844010d4272148e1d3bda49b3997748a9fc7"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-08-04-exact-line-corner-solver.json",
+    "sha256": "422c8983ac1445c2bb5a49ed4968f6d72f754ecab9bde176dd9bcdc48d390168"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-08-04-native-arc-chamfer-solver.json",
+    "sha256": "7c136a41012bc7e52fe60fa1106e38f3494f0fd6556b0971b8d192aadcd75b46"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-08-04-native-arc-fillet-solver.json",
+    "sha256": "02f94e18a0c22c23d0c384075e22840d724462db648f030608f693b26bdc904e"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-08-04-represented-bezier-corner-incidence.json",
+    "sha256": "4ca300041bb57d964669fe1e320fe8dbf04ea94bf5719631de1c1ef04c688347"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-08-04-retained-rational-circle-corner-carriers.json",
+    "sha256": "b44714e1a55d8e4bd40d5eb565d23be56fced6fa55c9afc7c497a6cec50be3f3"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-08-04-spline-corner-span-promotion.json",
+    "sha256": "40a98fcefcc1b1b72d8160d0890047ba390b2f880b0a9505a93398f231684a49"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-08-05-algebraic-chord-contact-regularization.json",
+    "sha256": "57f47823641748b28c69671bfc3b8f81cef4416a6e1d2d1ce9bd79f7f79f180c"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-08-05-algebraic-curve-region-boolean.json",
+    "sha256": "988704f9a5ade1aa8cd9fcfdbd63c34928a0d80ea1fb187d2e38e92ede940bb4"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-08-05-algebraic-curve-region-chamfer.json",
+    "sha256": "2dd52d61f5afb212517364182a7436025c74e888b6846d56126a9462928d05fa"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-08-05-axis-aligned-algebraic-chord-offset.json",
+    "sha256": "db0dc4300b1f73cdd0843b69cb512bec26bedac2ae226e32334fa863b71102c0"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-08-05-exact-orthogonal-algebraic-erosion.json",
+    "sha256": "445b4b01372ded9b9aee2c684ba90831a304bb7926ce38e2635550501c5b0f1d"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-08-05-independent-field-algebraic-chord-boolean.json",
+    "sha256": "57320a39d49c066163f3f695a851669042ec51ea6dec64cb4889e0fd72a36c93"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-08-05-noninjective-algebraic-chord-overlap.json",
+    "sha256": "82a95e45556f5de0e5aca5e0dbce87faa10a48a0cc7b7e28b582ead00c58d493"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-08-05-selected-algebraic-circle-chord-boolean.json",
+    "sha256": "9a567850d61a884b745b850811de5a9ce51883ad47a2f138211f3fc402a1beb4"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-08-05-selected-algebraic-round-offset.json",
+    "sha256": "c21c694e1cd69d60a697d1dd62098ec1294db11ea4d791096eb4f2f4fe26b820"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-08-05-strict-interior-algebraic-chord-boolean.json",
+    "sha256": "485c3582457d917e056abe5bce18da919ccef13a84be88315a21b4a54d648f83"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-08-06-correlated-endpoint-reentry-xor-reuse.json",
+    "sha256": "f810e5fbc28a87000ec32c6e9a28395f40e71871323a44d6a888c4e7fadad57d"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-08-06-shared-chord-circle-ordering.json",
+    "sha256": "0fbf507c3203f51c40be070b0453433b4c6e18f670dea12b83cf7e4aa6d9f3a1"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-08-06-shared-chord-collinear-reentry.json",
+    "sha256": "c3383c334c387c9d8c337b6fa1070c3be8df05c1c3a582795a4a281aeafaa87b"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-08-06-shared-chord-line-reentry.json",
+    "sha256": "78e5fa882c32141eda99c2a3bfa43af08d05387dfba0822e9e31a1d4bc5609a5"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-08-07-cardinal-convex-reoffset-regularization-bypass.json",
+    "sha256": "6f3990e5dc86962d0eceda61b1bab9941797e0382a96299c833f7cba8653594f"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-08-07-cardinal-selected-circle-endpoint-translation.json",
+    "sha256": "2f2cee9ed489de0a4f6155298d902f00abc59ca65e624d1fbd964758b320ddb0"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-08-07-correlated-chord-pair-transform-offset.json",
+    "sha256": "ea76b1c2ba2d3e4a3b3a7e51a61fd7b2226f80bce9f93005c6859093974fa8b2"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-08-07-correlated-circle-partition-offset.json",
+    "sha256": "b5122980c79a9fda844ed106fed5044b0a72a7613914e8d2df5a1f99f3c46c8b"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-08-07-cusp-chord-boundary-reoffset.json",
+    "sha256": "5d9ac14cd654d04830ee4904a222ac2e94437470ed31ded3e5f4683ae8eccebf"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-08-07-derived-circle-incidence-identity.json",
+    "sha256": "39917fae6cf2cbc1a6f0d38610a77d4ee17951e3ed31378f5f0d4d45e770f4be"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-08-07-general-oblique-cusp-chord-reoffset.json",
+    "sha256": "5bb9a6380b0f88bd7f2d4251a196145a79de296b94e3db6a0e4e2b670de60de4"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-08-07-mapped-circle-similarity-transport.json",
+    "sha256": "51dbe11870a7f20e3f195f270a518ff24ceb57b338df03e550b8f45ce55c4836"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-08-07-nonendpoint-analytic-parallel-mapped-reoffset.json",
+    "sha256": "e301e3a736c9efcc99ec2e4c8a2c0061feb3760f92334fb2b8426397887d5f98"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-08-07-nonendpoint-rational-mapped-cap-reoffset.json",
+    "sha256": "ec1fa1712aec2a7e09f50a69840388ed831b891253fe11a309bfa96a7de83f69"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-08-07-oblique-tensor-fusion.json",
+    "sha256": "dc2430235ee7b827734f351c65bae4df6f5974a9c173a82eac61b54934de10fc"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-08-07-retained-selected-circle-reoffset.json",
+    "sha256": "dc0b22744568ee8979875d4dad5902b2e34418a69f67cad2718ec53bcd927e18"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-08-08-circle-pair-mapped-lens-reoffset.json",
+    "sha256": "d9398b7a93fb8de42c92c39dab5b691b5a44be309c4de7a3e86f82ece7fc784d"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-08-08-nested-chord-mapped-cap-reoffset.json",
+    "sha256": "6a4c84d5d3deccab83eb2b4d36627c0840269c63f9972eff5e6e3ec00f10f051"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-08-08-nonendpoint-analytic-parallel-pair-mapped-reoffset.json",
+    "sha256": "a03dbdf28543844f3af9a9f24abca8649dc27ddb3ae8a1bf3bc41c259a389959"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-08-08-retained-oblique-chord-reoffset.json",
+    "sha256": "89060feb85fa9322c570e55efdaf35214ee27729bb774b00e457f50897de8479"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-09-02-exact-point-payload-alias-reconciliation.json",
+    "sha256": "0037b7b7b7bec0cf8a8615055018359bc897192fe067eff3f1cdf81617c5b69d"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-09-02-exact-real-algebraic-image-bridge.json",
+    "sha256": "949255ad1cba98dbc5be1ea042efdbb715c34739a04d5bef9ff8f580b2236555"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-09-04-authoritative-polynomial-evaluation.json",
+    "sha256": "c1371cd98b8e842c27cb98d9010b49638ef43e28bd1ce1c9a69f500e3ba784f5"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-09-04-retained-aabb-scheduling.json",
+    "sha256": "32e1475abb9e1561be7f3ea3dc1ba5228c00b5f33f8caa3e77c00e4146bcf77f"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-09-04-retained-sign-refinement.json",
+    "sha256": "99e3ead4ec152e405d25e58c186bebe02d8406cbd87cb93ed5795ed8b794b77b"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-09-04-shared-parameter-refinement.json",
+    "sha256": "ea14379c3c59caebc0032da43104a5240c40bd31b97418a8af1e03b24258b04c"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-09-04-sturm-reconstruction-reuse.json",
+    "sha256": "a0254f9ff8e9a989ae7659aa12675a807bac208efa5e9ccc597205e47384a78a"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-09-04-unbounded-sturm-isolation.json",
+    "sha256": "97a559cf515e89e76ff8bf27aedfd3f7d6c77f231407f6e138849f88fa76aa65"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-09-05-active-radical-projection.json",
+    "sha256": "da6091d0aea8df01f458359abec980562dfc5ffa0fa5cd1dd9635ccfc3303b22"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-09-05-certified-projective-scalar-bounds.json",
+    "sha256": "dfffe27eb26bb7705b19befbe3785a565bc40abdb9f78ce9ddbe2fa8df9abc1b"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-09-05-dyadic-bernstein-isolation.json",
+    "sha256": "80d1e2582257c0508b6cad12dd90735fcbe74cad0f46aeba8a4f339bdca78114"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-09-05-native-affine-offsets.json",
+    "sha256": "f9424c47088245cab79c3b580e1c5e9421765e1f91976de6923e0e04384f150a"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-09-05-native-local-field-signs.json",
+    "sha256": "0c730454598cd2373bb7a7450daa712b37f204766dc919307d1297fff9684ecb"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-09-05-native-polynomial-kernel.json",
+    "sha256": "37106c0e60adcbfd4a4140c1bf92aea067cc5845a7c184491ea533442e144933"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-09-05-native-scalar-api.json",
+    "sha256": "1931ddb8c6601c7c9ee4fc246be9798011bf81d4c34b914e3eb0e0b34f5a2c33"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-09-05-owned-local-field-identities.json",
+    "sha256": "af2b21c7285d94820c86f979027344ad76828b08c09d3b16e1df7a37a0efd74e"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-09-05-retained-normal-form-sign-proofs.json",
+    "sha256": "7155df68cabd83df763733fe3fe92c54474067615bd0c8e562571f02d03245ef"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-09-05-root-evidence-api.json",
+    "sha256": "b3aebc15951b6e27c98e26fe08d0d660d17421c85796efe9ee811f3c1d6a6b0b"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-09-06-angular-query-kernel.json",
+    "sha256": "a2643f4719acee2d5f94fb6e1a13bcb6369a2a1c0219e682de9e86445ef42454"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-09-06-authored-circle-components.json",
+    "sha256": "45ceb15ef02367105a57c0c8975c692ef1bdf05b6026776057582864f7017ac8"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-09-06-certified-contact-replay.json",
+    "sha256": "41163aa11c2e10e3af4406e3824e8effffe62fe982e8bfa01f186344627f8017"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-09-06-late-exact-fiber-refinement.json",
+    "sha256": "34de1cfd41fc8759716b88b7a53c55250ac0f49039f46a633bfbb48a8dcb8e6b"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-09-06-mapped-circle-policy.json",
+    "sha256": "9968c654c8a72ae251a89d2543e7fe8adddc6b0168decdbc93b1cbf617184a21"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-09-06-native-fiber-specialization.json",
+    "sha256": "a9521d1e340aafae90e7fa6a00cbe0f657f55ca0bce37b53219faf6920b8c9e0"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-09-06-ordered-field-subdivision.json",
+    "sha256": "646cd2e9e77a95380cd2b25d5b2a16f5daf99a3927ebc766f48f58c96a0e33cb"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-09-06-shared-fiber-seeding.json",
+    "sha256": "22fc88631cb99dba2ee38aad9bc55221110cc7b3acfcb0c624aa42aaa5c5a7d4"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-09-07-recursive-transformed-bounds.json",
+    "sha256": "bbcd76c3d422e80f93f3ffd960f6994a9f646e4548b9ea6ab6cdb5a139484cab"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-09-07-retained-chord-affine-kernel.json",
+    "sha256": "43f102fe692b4d71a1af3fd1ac535753dd6ccf6814d5745a932964b5694e60f7"
+  },
+  {
+    "file": "hypercurve/benchmarks/checkpoints/2026-09-08-selected-radial-affine-kernel.json",
+    "sha256": "6fd971efc00b05e7adea381612cc6b6c74f57604f8a986af389cb0ffb3361421"
+  },
+  {
+    "file": "hypercurve/doc/hypercurve.png",
+    "sha256": "65c55cd354669cd48e9ea30c0df430bda9d58b1e39fcfbdadb98a91f963532e8"
+  },
+  {
+    "file": "hypercurve/examples/arrangement.rs",
+    "sha256": "8671397787a16f3ed11cdd2ac2c07518a38b4af4f68cd6ce6206e82648324576"
+  },
+  {
+    "file": "hypercurve/examples/basic.rs",
+    "sha256": "0641fa285fd2550e83c2b6b3dc29e3161fb4d9954ca3c5010633aae25f4c5aa1"
+  },
+  {
+    "file": "hypercurve/examples/hypercurve_ui/.gitignore",
+    "sha256": "4b8448c63b5ca9a51b9c70b8147371d65bf5069f7a0eec32d5400b7ce14b80c0"
+  },
+  {
+    "file": "hypercurve/examples/hypercurve_ui/Cargo.lock",
+    "sha256": "1b4253c544d02e231b1dec89557b98c9a692aff8092cecda4aa7d1fc79af2891"
+  },
+  {
+    "file": "hypercurve/examples/hypercurve_ui/Cargo.toml",
+    "sha256": "d8f31ef9003f88344ad9a6a8ee9efb250922d96400f0a63c4abfcfe1bb61a6ee"
+  },
+  {
+    "file": "hypercurve/examples/hypercurve_ui/README.md",
+    "sha256": "1cfb63eb16ba50ac72082d280c8bd5691b703d6dcbc7fb142cdca8456e264ccd"
+  },
+  {
+    "file": "hypercurve/examples/hypercurve_ui/Trunk.toml",
+    "sha256": "e996a27c64e0601278f8a1382fdaa72e55abdddfabc0d37a5df0d463f2977f45"
+  },
+  {
+    "file": "hypercurve/examples/hypercurve_ui/index.html",
+    "sha256": "9da8ff3b31fd944f1b9ff6466ab42e868a10709576f7a8bea708fff6e019c65e"
+  },
+  {
+    "file": "hypercurve/examples/hypercurve_ui/proptest-regressions/geometry.txt",
+    "sha256": "cfa0c7b77386667773be9ad5a0bb3dd34c995b7b50f22df29cf0d448a2dac4c8"
+  },
+  {
+    "file": "hypercurve/examples/hypercurve_ui/src/app.rs",
+    "sha256": "857f82600e8c83d8b7616c23ab7f4e01eee0ea7139685cb0d6b4a5b0d9c7733c"
+  },
+  {
+    "file": "hypercurve/examples/hypercurve_ui/src/corner_scenes.rs",
+    "sha256": "db7b6833418684fcf3b8d121feaf397fdf760e1a2e347a13432bff5461d13385"
+  },
+  {
+    "file": "hypercurve/examples/hypercurve_ui/src/editor.rs",
+    "sha256": "6b577fde2684adf4e0a76ab374af26d047861b00d382cfc92a61e35ac1a23f91"
+  },
+  {
+    "file": "hypercurve/examples/hypercurve_ui/src/geometry.rs",
+    "sha256": "dbbb89569eb12d40708ed72e280af515f1295523472b88e809ce4621a75dc983"
+  },
+  {
+    "file": "hypercurve/examples/hypercurve_ui/src/main.rs",
+    "sha256": "7d2615befce0e454ddc2dfd92b8232b3456db3fb70e39138eb746e14fa3f6257"
+  },
+  {
+    "file": "hypercurve/examples/hypercurve_ui/src/plotting.rs",
+    "sha256": "ef76a28686758dbf7f40a4e10c11168195d10f6b127486008e4b1584287b9806"
+  },
+  {
+    "file": "hypercurve/examples/hypercurve_ui/src/scenes.rs",
+    "sha256": "cb11dee22c3038692bbf2c02f74f94e4416f4a39bb6334fb91a023f6577b21c1"
+  },
+  {
+    "file": "hypercurve/examples/hypercurve_ui/src/share.rs",
+    "sha256": "104fd1cc6c0974e5e169a0c2291d8270810ab42ea0cae41f4d8f8312e48625a8"
+  },
+  {
+    "file": "hypercurve/examples/hypercurve_ui/src/theme.rs",
+    "sha256": "4687cc2280eaf24a16e60c893c2d5fa41f1b0fc44a6b7aa33b636d358bfdb69e"
+  },
+  {
+    "file": "hypercurve/examples/hypercurve_ui/src/torture_scene.rs",
+    "sha256": "b32f9ae2be097658da48a97e41c09194a1052f471372d5fe53edb5e98af1bec0"
+  },
+  {
+    "file": "hypercurve/fuzz/.gitignore",
+    "sha256": "aa955853301dfbb52525a6640a9c6bd64d3fc2d8d3c757145283513e6dfb9e39"
+  },
+  {
+    "file": "hypercurve/fuzz/Cargo.lock",
+    "sha256": "7c4a84b0b03daa9d548c1938df5420ebd42f8e32571170dd47f4b87baf362df2"
+  },
+  {
+    "file": "hypercurve/fuzz/Cargo.toml",
+    "sha256": "0087b0225d7e049c1069f12281ddd3c5f3ec7701bc3efe371e075eebe81b3de5"
+  },
+  {
+    "file": "hypercurve/fuzz/README.md",
+    "sha256": "f0542776a0bddfba8454eb60fcc19c0163aef99481d8070de2605da912d1941a"
+  },
+  {
+    "file": "hypercurve/fuzz/fuzz_targets/bezier_algebraic_image.rs",
+    "sha256": "b79952c309efb084be81f140df8c9bbf5ca5cdb4bf332bebecea840fa219a0e0"
+  },
+  {
+    "file": "hypercurve/fuzz/fuzz_targets/bezier_algebraic_parameter.rs",
+    "sha256": "7a647701e367237714645901e152d5c30324d14b2a782cc66127c6ba1e664713"
+  },
+  {
+    "file": "hypercurve/fuzz/fuzz_targets/bezier_arrangement.rs",
+    "sha256": "5b8d8bc433994a49f89a693108cfbd1b27f439d92d770486044567b06fd66f83"
+  },
+  {
+    "file": "hypercurve/fuzz/fuzz_targets/bezier_region.rs",
+    "sha256": "e88da846f867fa4eaeb42625500a9f184e2b68be2697a00d2eb6dcdad886ec50"
+  },
+  {
+    "file": "hypercurve/fuzz/fuzz_targets/bezier_split_materialization.rs",
+    "sha256": "aa3e96002cbe8a1c7687168dce9a10e0fda16e6a0e7c8708e177b79298363085"
+  },
+  {
+    "file": "hypercurve/fuzz/fuzz_targets/bezier_tangent_order.rs",
+    "sha256": "6584c863ec522aaf131ae9a40c43fc7e7b6275337857415de2a0243027c9ba22"
+  },
+  {
+    "file": "hypercurve/fuzz/fuzz_targets/bspline.rs",
+    "sha256": "d211b59ef44d7693bbb0ab8149588eb759695087bbe4dfa67dd09ee3a2c8aef5"
+  },
+  {
+    "file": "hypercurve/fuzz/fuzz_targets/curve_string_editing.rs",
+    "sha256": "7b76e01a5ceb61fe9e69686674016b48618cf91b99824bf8425867a3cb819900"
+  },
+  {
+    "file": "hypercurve/fuzz/fuzz_targets/hyperreal_representations.rs",
+    "sha256": "2f952d72b5230be91f669175a9bfbcd743f39d577ea8a904228b5cbaf5c47285"
+  },
+  {
+    "file": "hypercurve/fuzz/fuzz_targets/region_boolean.rs",
+    "sha256": "8baea9e50baf9cdf6c403112d1344172c23c198e269b72b7da34d18eee90e2b5"
+  },
+  {
+    "file": "hypercurve/fuzz/fuzz_targets/retained_import.rs",
+    "sha256": "3cf2713c1670ba796f8199f21a3df4efcc4c72b18df39b152154f5a53b94f341"
+  },
+  {
+    "file": "hypercurve/fuzz/fuzz_targets/straight_skeleton.rs",
+    "sha256": "70d797e4e6ad50195508496e884127b740375e2b5e65cb131929cc0573ab9c16"
+  },
+  {
+    "file": "hypercurve/fuzz/fuzz_targets/svg.rs",
+    "sha256": "0f1627ac3bb3bd2cfbf88b45f212de45daf435f40661e7190fb171769a21fd29"
+  },
+  {
+    "file": "hypercurve/plan.txt",
+    "sha256": "af1b48f73a55980ad6199c909a9ed3838afa1121f06c38478feca4ee28057d87"
+  },
+  {
+    "file": "hypercurve/scripts/prepared-removal-all-hyper-gate.sh",
+    "sha256": "a33c1ccbd41286faa6d21b79a1ac21f3464b02866e422d8d88a4d93da5cffcba"
+  },
+  {
+    "file": "hypercurve/src/arc_bezier.rs",
+    "sha256": "d8b127cc321783fe5ca83932502c014669b15bb03ddf03adcde30f78a064e045"
+  },
+  {
+    "file": "hypercurve/src/bbox.rs",
+    "sha256": "53bd35590b0063494f2eaeccaf89d72597be88f57f64cb90a954bda461652943"
+  },
+  {
+    "file": "hypercurve/src/bezier.rs",
+    "sha256": "65f7967f1c2ff893f3e3e5648b6d1bd875feff85f0e12e0dbf2f4c8a97c84263"
+  },
+  {
+    "file": "hypercurve/src/bezier_algebraic_image.rs",
+    "sha256": "65a9880df92978d89a07dbfcdad3fd19b4c11a4aea15ea3637a547ccb2c008f2"
+  },
+  {
+    "file": "hypercurve/src/bezier_arrangement.rs",
+    "sha256": "f9f0b51088055ca0681220cc13f0fcf2218d0aa6811d42754810cfdbc2a43cb5"
+  },
+  {
+    "file": "hypercurve/src/bezier_fit.rs",
+    "sha256": "71f21a7bce38a80996c397fa4c7e9533fda689b4efa73c1de4bc90800c29756d"
+  },
+  {
+    "file": "hypercurve/src/bezier_flatten.rs",
+    "sha256": "a310b6ca0d9dab126f59a34d4be242c5d4d944b09cf786cd3a67860b882e85cb"
+  },
+  {
+    "file": "hypercurve/src/bezier_metric.rs",
+    "sha256": "6fe148bd641dc300b0ab83e4a850bc14ed3783207d032a456fd0ce440173bebe"
+  },
+  {
+    "file": "hypercurve/src/bezier_moment.rs",
+    "sha256": "b1739be5ecd0e456c2667328a23f60ff7eb1aabe0dfc12d3dfefd97a78ab3b80"
+  },
+  {
+    "file": "hypercurve/src/bezier_offset.rs",
+    "sha256": "4ba3fec8b84ad7982a0a8d9f06a4517864f808bcd03d808b98535ecf75e82326"
+  },
+  {
+    "file": "hypercurve/src/bezier_parameter.rs",
+    "sha256": "b70c517d0180d986469aae5f497f5773965491ece32a12c26b4d331de1dd45fd"
+  },
+  {
+    "file": "hypercurve/src/bezier_region.rs",
+    "sha256": "31471afb05a6ec10e9bbc90e968cfde3b2f1f2a1f2adb86be755795efdcc7bce"
+  },
+  {
+    "file": "hypercurve/src/bezier_retained_measure.rs",
+    "sha256": "3ba0a82714a4cb6b4c1a7cb77ab3c8f0056bfcd9a22798125f74559ccff3f164"
+  },
+  {
+    "file": "hypercurve/src/bezier_retained_overlap.rs",
+    "sha256": "61b115d3b203ecbce94aea0ba1a43e65f9e7bb7f5958e5b45677832ed5b41699"
+  },
+  {
+    "file": "hypercurve/src/bezier_split.rs",
+    "sha256": "2e7113d7b96e4b59fccfa3cab100ccfe7477f3b7bd8deb31d88d57e161c52147"
+  },
+  {
+    "file": "hypercurve/src/bezier_split_endpoint.rs",
+    "sha256": "cdec17955b46ad365b75ddbb911b54c452291f59cf71fbc18509399ea171244f"
+  },
+  {
+    "file": "hypercurve/src/bezier_tangent_order.rs",
+    "sha256": "515d1af1e54271952d7f9eefdd3ecfb662d70eb84c31835e97300d5fd784ba24"
+  },
+  {
+    "file": "hypercurve/src/bezier_topology.rs",
+    "sha256": "e05fa95af23dd9f02fe2cf9ac5899a7c8370f8a02139dd9a77915677de21fc95"
+  },
+  {
+    "file": "hypercurve/src/boolean_op.rs",
+    "sha256": "75cc8f8a420981709e406d94489be115a791f0e8a5d95543474a328bf7a2c032"
+  },
+  {
+    "file": "hypercurve/src/bspline.rs",
+    "sha256": "6c691632bad9bca80d836293734dda37b9609dc912d1341061efe9c2c6f48919"
+  },
+  {
+    "file": "hypercurve/src/bulge.rs",
+    "sha256": "9b3929b17070e64462bc09cbf1de02f9831f2e63cebea9a0fd4ac824df2235b0"
+  },
+  {
+    "file": "hypercurve/src/classify.rs",
+    "sha256": "fa658a66f6cb345f4d4a3c76459375e727f3036310b79b28ab7bf0ec493921ad"
+  },
+  {
+    "file": "hypercurve/src/contour.rs",
+    "sha256": "252b8cef466749087edaed21f31ff1d603d463441445ef491ec1543480661024"
+  },
+  {
+    "file": "hypercurve/src/curve.rs",
+    "sha256": "9fb6c5154d2b89a598cdaeee017acac3efe4612aaca9f70eaccbdc841c0395fb"
+  },
+  {
+    "file": "hypercurve/src/curve_corner_chain.rs",
+    "sha256": "dfff6ce598219b0a7dbf292f83d4feb6034ac0303567e4cff5561d3e77984402"
+  },
+  {
+    "file": "hypercurve/src/curve_corner_domain.rs",
+    "sha256": "6c6cc7e89b7554ccbc135b4a80b94dabf0f307e6dfd3bebb46b45dfc0cf343a8"
+  },
+  {
+    "file": "hypercurve/src/curve_corner_reconstruction.rs",
+    "sha256": "88cd7080badb52bc808e188a91aecf46ad420c0000be9da3573994b66d5b3b9f"
+  },
+  {
+    "file": "hypercurve/src/curve_evaluation.rs",
+    "sha256": "efb327d8654508d0af953f964b7df2d6c0ede243f8efb08475c8801d39e756b5"
+  },
+  {
+    "file": "hypercurve/src/curve_intersection.rs",
+    "sha256": "17cb96dd1b182b079b234f8025b0cc40ef060026682bb3c73510ad245fe11812"
+  },
+  {
+    "file": "hypercurve/src/curve_path_intersection.rs",
+    "sha256": "297343a3d0d1880eef17260091ea085e2de5620ed9b69eb5c905ba81bde5dc0a"
+  },
+  {
+    "file": "hypercurve/src/curve_point.rs",
+    "sha256": "60524d9e0463708ef61273cbc29ae07e072dfb1c890942960c9aa3af4e888ff2"
+  },
+  {
+    "file": "hypercurve/src/curve_region_boolean.rs",
+    "sha256": "3da16bdbdef9fc8d8118efa1de5a7022f8c3822f280f5b9314279f10c9c07e51"
+  },
+  {
+    "file": "hypercurve/src/curve_region_trim.rs",
+    "sha256": "300f3cb1a466ba03a198981ccd06cb56c3c980160e084b950ba68c92e50a73eb"
+  },
+  {
+    "file": "hypercurve/src/curve_string.rs",
+    "sha256": "f0b82b24d64b5de37e3920400a68344839ce5ac036f80fa00f64ffe863449d0d"
+  },
+  {
+    "file": "hypercurve/src/curve_subdivision.rs",
+    "sha256": "78d77f0b85d51e336ea0f1636a0999828b209336606b3cec947752eb2a94c4df"
+  },
+  {
+    "file": "hypercurve/src/curve_support.rs",
+    "sha256": "efd1ae296241cdcba2e05cc20d4432eef2f77537654d7928d599ec564b91f25a"
+  },
+  {
+    "file": "hypercurve/src/curve_support_intersection.rs",
+    "sha256": "c75230a828244c4c970226bdd04ff77d57a89ca8ad4be66d81eac13c9bb26e31"
+  },
+  {
+    "file": "hypercurve/src/derivative_demand_tests.rs",
+    "sha256": "dfe0937088100bd1baf508825c24c3e8f42cbe9b630b5eee895a6f58c3a664eb"
+  },
+  {
+    "file": "hypercurve/src/direction.rs",
+    "sha256": "d058a5fddc8eeaa51fef12d519519b5b9d749f246e9d9242c918864f3122835d"
+  },
+  {
+    "file": "hypercurve/src/error.rs",
+    "sha256": "2b36969ab31c12b74994fdf9de0f66a94ddf2953ec99a869681796b411380658"
+  },
+  {
+    "file": "hypercurve/src/events.rs",
+    "sha256": "30fc94aecfe1146fab9d12af8e19151447d2c7c696829235064a459e81e202de"
+  },
+  {
+    "file": "hypercurve/src/facts.rs",
+    "sha256": "a0e4921c1aebde121d784a4c0d277982f69c62bc3d2ea969613173d8b15593f6"
+  },
+  {
+    "file": "hypercurve/src/finite_projection.rs",
+    "sha256": "d24c36111ec6529b5873db775fbf4a2a6edf455312c4005aa64912a2ccbc448a"
+  },
+  {
+    "file": "hypercurve/src/fragment.rs",
+    "sha256": "97c3aa385d80b0c9263820ff87d4fc6818de1ea3ad588eaa77f61ef7f91c4c95"
+  },
+  {
+    "file": "hypercurve/src/hershey.rs",
+    "sha256": "95701beb8e6c616deee08a72ec9190bcd4a766be3c378fed23fdd22fe43576f5"
+  },
+  {
+    "file": "hypercurve/src/hershey_data.rs",
+    "sha256": "bad3e5cf2f5fd32344d723f9a7fc6a3efa3ef2bbc4044d67b66a654569aafc6b"
+  },
+  {
+    "file": "hypercurve/src/intersect.rs",
+    "sha256": "869f1d164683642ee7a8b5bb958ec479ebf90e9146b806ed6e0852be468b5271"
+  },
+  {
+    "file": "hypercurve/src/lib.rs",
+    "sha256": "2c1df0c340599a2f95426986f3e45f25aa385e02e717dc97be5010d1f82dc64a"
+  },
+  {
+    "file": "hypercurve/src/native_region_tests.rs",
+    "sha256": "183535314908dfeec9d2a1b0c8f5a7dfbf7386e852a3d21c9948780c67f12871"
+  },
+  {
+    "file": "hypercurve/src/nurbs.rs",
+    "sha256": "390e388c9f933e80af9cbe4b0f6462b75eab8f8fbdd9bd379ed5acced3913d9b"
+  },
+  {
+    "file": "hypercurve/src/nurbs_interpolation.rs",
+    "sha256": "4aaf25e86a735666069a5e030d8d89dfbafee6bd1412868f72ad60a97df507d6"
+  },
+  {
+    "file": "hypercurve/src/offset.rs",
+    "sha256": "344e0651c32d99ac52faa83a26782c2cf8bf8b49e41a107d3f4d35be74753c47"
+  },
+  {
+    "file": "hypercurve/src/point.rs",
+    "sha256": "70de75e092d7596b5bb2ac9269ab4f06733c6c1aa0ac436463c2c2cc4f2168a6"
+  },
+  {
+    "file": "hypercurve/src/policy.rs",
+    "sha256": "3e7ac6f9b2d49b4984ec5dc49c255b744588a2aea489269060916b8901461200"
+  },
+  {
+    "file": "hypercurve/src/polynomial_spline.rs",
+    "sha256": "a57e77b85559383f7f88a6846570cf5c94199aca78dc7c46069e1ba99ab078ac"
+  },
+  {
+    "file": "hypercurve/src/prepared.rs",
+    "sha256": "ffbbd95841b916e0da1efde1cb66061b1a702063ec33bf432154b094cbfda8c8"
+  },
+  {
+    "file": "hypercurve/src/rational_bezier.rs",
+    "sha256": "e393fe505e550a59e16c877affa1abe0a188b367f93b9ff8614267dc82989a3b"
+  },
+  {
+    "file": "hypercurve/src/rational_bezier_general.rs",
+    "sha256": "145d8d337a81896638948856ea6f04a829eb01fa7afd229f4dd70437fb1ed803"
+  },
+  {
+    "file": "hypercurve/src/reconstruct.rs",
+    "sha256": "857ab572fea41f0fed90cb9689199c690306665b51a54a1d24ef7114b8d029f7"
+  },
+  {
+    "file": "hypercurve/src/region.rs",
+    "sha256": "c5fac7f79c315b3974442aaa922500c66d5773eee163f20f0bbf333d0e3eadc7"
+  },
+  {
+    "file": "hypercurve/src/region_nesting.rs",
+    "sha256": "4c8810ba845469c63c6fb912c69668d7e497e43ea4b3dd38155f3576435b90d8"
+  },
+  {
+    "file": "hypercurve/src/retained_status.rs",
+    "sha256": "4514736a54304ff996274328c7bc5883e242eaff5adc3eff6022c667175dc90f"
+  },
+  {
+    "file": "hypercurve/src/segment.rs",
+    "sha256": "c76b46534cabfdb8b1e602dc862236b67433cedfcf91a56d32a68f3b1a81243a"
+  },
+  {
+    "file": "hypercurve/src/self_intersect.rs",
+    "sha256": "9e1d1b5b782b4d0b872c58e9cf4ba950a3cf6958d85626c49c06774b62a448fd"
+  },
+  {
+    "file": "hypercurve/src/spline_periodic.rs",
+    "sha256": "3f9cb5c28e93961b108c8648a4c47c0b9ceca175e7a504cd6227b26ad3820b7d"
+  },
+  {
+    "file": "hypercurve/src/split.rs",
+    "sha256": "2a29a5118c18669d5e33681d6a9bf85a9d66f3e8480884943ba06bb0f8ba5006"
+  },
+  {
+    "file": "hypercurve/src/straight_skeleton.rs",
+    "sha256": "b83727aa93f5aed5a2b2a642931e0c16c254086fcc64691125d2b55b830cad0a"
+  },
+  {
+    "file": "hypercurve/src/svg.rs",
+    "sha256": "1160e8168708c46243013e3bcf7aa4a4796c4e23636c92175d83a7e6ea7d0dc4"
+  },
+  {
+    "file": "hypercurve/src/svg/exact.rs",
+    "sha256": "f25f1ece9ea0d2fcdb5e38972e3518b927e12e5064b027f6da36988d6359bdbd"
+  },
+  {
+    "file": "hypercurve/src/transform.rs",
+    "sha256": "999c3f1fdd2cd7b1e8f03132a639f2ae42497a73a0423a4604788f4e999fbf5a"
+  },
+  {
+    "file": "hypercurve/src/translation_obstacle.rs",
+    "sha256": "fc8ce2b989bf15b5363b8e3a8d62c67ee89a32cebefc643a14d477305e47a34c"
+  },
+  {
+    "file": "hypercurve/src/triangulation.rs",
+    "sha256": "36f17f1345042b14f8ada3d6aed45e596a8719da8f7dcd2a2171d13ef252b709"
+  },
+  {
+    "file": "hypercurve/tests/exact_structural_facts.rs",
+    "sha256": "f5ad4b9e2f9972251a310e9afac04bd2130b44edcee24b97789ca42f16137756"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_adversarial_polygons.proptest-regressions",
+    "sha256": "598ba5b6d09a8cb08ca8722c178aa1b72783d99590b30370cf67973fc29124b2"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_adversarial_polygons.rs",
+    "sha256": "d6f33d5333ddcc2aafb4c1b8af69df5ab1485fb17f0d30dc425c86d0a89fe060"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_analytic_parallel_region.rs",
+    "sha256": "8f28618157bb4bd953d2b95271203045b19d44080ce39ce84b3b124eb70fba2b"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_arc_bezier.rs",
+    "sha256": "7dfce925db8ac2a08e0ca0f4bbe893f676f293ce7298b1ef9813fdf0ad37e868"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_bbox.rs",
+    "sha256": "86051777097b50459477880338fcc69306dbea824b4c74984e98e190d78a849b"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_bezier.proptest-regressions",
+    "sha256": "602b7acac61583ed480cbe95af3b2a0b4c5274f992950ba2b86c7ed1ea4e444e"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_bezier_algebraic_image.proptest-regressions",
+    "sha256": "341aa43d1a9e7798efb56856290dcb0669a834f9417eed2ba0d6a84c8bf96c8f"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_bezier_algebraic_image.rs",
+    "sha256": "49f000f6edc48e9b6e688fd8811dcb82418e2cc987b6100e1d819d64a80d4a34"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_bezier_algebraic_parameter.rs",
+    "sha256": "b3e7e914eee4013757d416a75c8c628109b8964858e20cee9e7f81c9e3dbee9e"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_bezier_arrangement.rs",
+    "sha256": "f893ef269dd2148429d487cf5e03ab717a2f2c63c5934eb8e95efe18eb1191fa"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_bezier_evaluation.rs",
+    "sha256": "8df92dcabccc4bc707137cf714e0219e42f96b8878e520d477d3ebc3e355e901"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_bezier_fit_offset.proptest-regressions",
+    "sha256": "abdf2bd4be0a2cdd4c51abdeea3d4aa67864cd42b8988e4025dd48285a226952"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_bezier_fit_offset.rs",
+    "sha256": "b17a9806e479dfec48f76d71dbaf57a3cf8227c93be96601f75fc62bc405642e"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_bezier_region.rs",
+    "sha256": "41fe023f9d09508032e710330e5a1a500c56ae0ca3ac1f81986a79cbdcde27b0"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_bezier_split_materialization.rs",
+    "sha256": "819680c29314a5b708e128188eeed1507f44f17277c5a9eb53edc5eb81b22c6e"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_bezier_tangent_order.rs",
+    "sha256": "8028112819b908d5eab4b3d21c5f8b26c30696238ad4d85573d78036e67c5609"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_bspline.rs",
+    "sha256": "11b79a740cab3be4de1e1747e2bdfc51af35c4b6a3e43645cd36063ece6e2e19"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_circle_predicates.rs",
+    "sha256": "c0a579bc53972c1c5e1ac6ded985ac9c465110127e2062c849bdf6519666f9c3"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_contour.rs",
+    "sha256": "f2adab28e9f92cd1980fb9682ab854f6313af7d8396a082d5be3350c95a8e239"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_curve.rs",
+    "sha256": "e38b56cd723ad83d41fc27e1ca21d68b249ab8aa1dc530905a501618314dab56"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_curve_intersection.rs",
+    "sha256": "6dd9756424e793441076473892e6502492a25a6dde7ae73b2911cb4d47be40ed"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_curve_point.rs",
+    "sha256": "2fa2528af330fbff87324142526637916e5031d5816409e09091d3fca6648776"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_curve_region_boolean.rs",
+    "sha256": "acc8810e33a95a14c8bda0c730a123cda3c914436c70f33528d7ea5e574f340d"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_curve_region_boolean_fuzz.proptest-regressions",
+    "sha256": "50f4bd010f21a51db334aa626395fa74329b4fd9717e7a9a4e39cc75e71c6c3a"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_curve_region_boolean_fuzz.rs",
+    "sha256": "da800e042f45cb46bd17a8db4525fe83eb8d78143be4b364f58a5352afc9f4a7"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_curve_region_promotion.rs",
+    "sha256": "64ad1fe266b9bb63b043da45efd04e6ab6a67b396b09cc358364949d939d8e5b"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_curve_region_stroke.rs",
+    "sha256": "ce170a9116017637150fa573e11ffc7cb92fda52420b8ad090780d5f9eb326bb"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_curve_string.rs",
+    "sha256": "29bab382aa356f32bf5bef905b70125b6f9a60c3679ee72fd3a1c0aba42d61ec"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_derivative_completeness.rs",
+    "sha256": "f2c9064a080ee82f96e24faf239d9797e596be6785b2564bcf790532a31a42e8"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_dispatch_trace.rs",
+    "sha256": "1d5c83afdd36c50135d7f24d29e1a41c16d55b2b71b71a964015bd73ca12ba14"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_events.rs",
+    "sha256": "be6ef0a09e4ac304a3609f5fdd341c5f2e78efcfaa7b2b0e8824a01c1316130c"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_exact_closure.rs",
+    "sha256": "32d81fdec27c27e0ea5ba50dfb9144d5f22702b1f51beaa9efe520c0cdb03231"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_fragments.proptest-regressions",
+    "sha256": "ae7e0c2b828cc26e866c16ff3be8770441c49671e2bef42de2161482f831c6f4"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_fragments.rs",
+    "sha256": "63e5cee53155f7fd4003b197284cf32d289407af9de98a5a0e6f8403d2ab2a52"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_fuzz_invariants.proptest-regressions",
+    "sha256": "ff09f954eb820ff5db26a3a1055ac0793bd33916ecc567f49ecdbe353d07063e"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_fuzz_regressions.rs",
+    "sha256": "9711d09cb54dcc31cd46c744d195a0db2ece34183be1c1d50569f5bee7ae6e94"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_geo_regressions.rs",
+    "sha256": "8efe5e534e41404f14ef27961e5d05d2f05302a1fee69431332bfe91a217fd36"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_nurbs.rs",
+    "sha256": "25ad8f494be1228e9cb3ab9dcfa426d76474cc6f07176c989fc80d30605b6dfa"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_nurbs_interpolation.rs",
+    "sha256": "b0949a0e095edff7a988db2ff077657555e3cdd485a0b68fb699ad974233e520"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_offset.rs",
+    "sha256": "a26fd8c673e7e69724bc3320110c283084f7d0bc325211c20917ae874e92dd22"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_path_closure.rs",
+    "sha256": "2757388103125f1ddc8d29c9cd46d3f436d4b94e187bbf5ee15de8f4eb550a20"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_pcb_boolean_regressions.rs",
+    "sha256": "89422d27cf9b71f439c257ea3a69d5897bf2e28a8f7fd0fc9a847ffad87b1f24"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_polynomial_spline.rs",
+    "sha256": "0cee4d5d55210a7f5c1612840ca14042bd0892a49dfa1c33d8f9d05bea7c4432"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_pr59_shape_regressions.rs",
+    "sha256": "69df0908e79193805ca93056f592b5e72fdd418e160f945e71ff50411932d468"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_rational_bezier.rs",
+    "sha256": "cfec8d332f261358adeaa2a36e675257e9985f22d4a4dc8f064a43db75843fd3"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_reconstruct.rs",
+    "sha256": "da7ca30682868bd5a11331556deeaa7d62a3f09149c95612ea04daca3b3ce0dd"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_self_contacts.rs",
+    "sha256": "272c2053c6a5962099a33d03c34f8e2a760761de0773089ae6edbaf2a119a805"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_split.rs",
+    "sha256": "27a3f4e8f30e68cffadf2abf7ea3c30af85f81370ecc6bf76e45216846005681"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_svg.rs",
+    "sha256": "22f68ba14ccc1571a65cb4433638e9a6ce2f64fa067e58e7c3a2e25eebf6b279"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_triangulation.rs",
+    "sha256": "d381f095a7b6ccacf6de42f99484a267bc6f1045f95549d938ef402422918646"
+  },
+  {
+    "file": "hypercurve/tests/line_constant_coordinates.rs",
+    "sha256": "7874d5f0c9d4e8a50a1334260d6d52cb32b337118fbe1001bd6054ebf24e2c47"
+  },
+  {
+    "file": "hypercurve/tests/pathological_benchmark_fixture.rs",
+    "sha256": "044a56bfae6a13e9195aa882c12e22205bca3eb26c898846c775c398dfd45e06"
+  },
+  {
+    "file": "hypercurve/tests/readme.rs",
+    "sha256": "5e48480c48e741d10906a54b00f008230f31dd2f6de1fcaaf29fb1b6e82bb149"
+  },
+  {
+    "file": "hypercurve/tests/support/mod.rs",
+    "sha256": "7dc9010188bf704bf90092c6eaccbecdcf13dadf91762f204253f3914dc5abaa"
+  },
+  {
+    "file": "hyperbrep/.gitignore",
+    "sha256": "44c92e3a70ad3307b7056871c2bdb096d8bfa9373f5bf06a79bb6324a20ff2fb"
+  },
+  {
+    "file": "hyperbrep/Cargo.lock",
+    "sha256": "61568670c40dc6b86aa1b10eb5d0d217cf486c3ced53559eb232bf78ed659770"
+  },
+  {
+    "file": "hyperbrep/Cargo.toml",
+    "sha256": "3c80594686e2079fa9fe14b5cf5caae0c985cec74ebd27a274bccd159efc8a0b"
+  },
+  {
+    "file": "hyperbrep/PERFORMANCE.md",
+    "sha256": "a49d62e87a4b16f1a98113b8bcf5eab1a91ac64de6063a71dcdcd4e45e6520f9"
+  },
+  {
+    "file": "hyperbrep/README.md",
+    "sha256": "b0aaf16c101ed2a9ba9683b86fc78c89bd3ea96665f2cb69e8937b82d16f2d10"
+  },
+  {
+    "file": "hyperbrep/benches/kernel.rs",
+    "sha256": "37b55d7d641c7c6b40e8360a43ee09e3315e6706f040d4033284c9dd35fbc036"
+  },
+  {
+    "file": "hyperbrep/docs/ARCHITECTURE.md",
+    "sha256": "6e3564d31623a460bebac882575cab1aff8822cd04837e7a1e50aaf664d546c7"
+  },
+  {
+    "file": "hyperbrep/docs/PHASE_0_INVENTORY.md",
+    "sha256": "e36d092f78d945d4b1999847b4a793d86e895b15bd6e3d25a8f9f7ebffd53160"
+  },
+  {
+    "file": "hyperbrep/docs/SUPPORT_MATRIX.md",
+    "sha256": "73d179cec19e6615ad63e6251db0a99e2e7391761d0b07a21d665c0a40c88fc1"
+  },
+  {
+    "file": "hyperbrep/docs/architecture/0001-exact-decision-contract.md",
+    "sha256": "e3963ab39196b0295fcfb85f550a7ab5939793c10372dc2e460996c6b16e0673"
+  },
+  {
+    "file": "hyperbrep/docs/architecture/0002-model-ownership-and-validity.md",
+    "sha256": "225039fda20a269901e2044b6f45bc352b31e09fed95b50c83726d75bb3e1195"
+  },
+  {
+    "file": "hyperbrep/examples/basic.rs",
+    "sha256": "6039bce68dbed19e15311f331e56a2c3cd71cb9925fd2d04c245d3607864c628"
+  },
+  {
+    "file": "hyperbrep/examples/path_extrusion.rs",
+    "sha256": "e280a6e2ae599b5784929c5734d947398921b8e45e41fd76b7868dac98b717a1"
+  },
+  {
+    "file": "hyperbrep/examples/planar_face.rs",
+    "sha256": "9e65fc06df2017fcd2dcbd129fccf8e71831984dd3c634f7cfec3731b2c46ff7"
+  },
+  {
+    "file": "hyperbrep/fuzz/.gitignore",
+    "sha256": "98d82ee4130b95c404bd9aa51fd5b75af36694f5a20fbc0d7694c8a19705f5b8"
+  },
+  {
+    "file": "hyperbrep/fuzz/Cargo.lock",
+    "sha256": "3aaefd83a91c2459192df38f2d1d05b4315afc8d82b9e0f25485643a30e1c64a"
+  },
+  {
+    "file": "hyperbrep/fuzz/Cargo.toml",
+    "sha256": "ca38588461c02bfe15a3242904a9225f6cc3a3288a94957e79b0eb0d5f4aaa21"
+  },
+  {
+    "file": "hyperbrep/fuzz/README.md",
+    "sha256": "89fe02a8dca245f47582e3f6da4e11374be961596f25da80b3e8e0e286dc0255"
+  },
+  {
+    "file": "hyperbrep/fuzz/fuzz_targets/analytic_solid_roundtrip.rs",
+    "sha256": "a6c71c1b96e478d3049b8ca2e3250aa3772fc7ff1535914a0694fa2ce24df279"
+  },
+  {
+    "file": "hyperbrep/fuzz/fuzz_targets/model_builder.rs",
+    "sha256": "c94d0fe0f96e5d3d986360af56201ab2434acf2224cc5af616b867dbd5967bb7"
+  },
+  {
+    "file": "hyperbrep/fuzz/fuzz_targets/topology_edit_roundtrip.rs",
+    "sha256": "99623a143cb9a68c951f276fe652518492f3d6d264524b59f2bd5edbf90ce994"
+  },
+  {
+    "file": "hyperbrep/src/boolean.rs",
+    "sha256": "f7857e22f246b803fbfa4dc44baf2ab6c5210a78fa379edc553bc532647c7386"
+  },
+  {
+    "file": "hyperbrep/src/builder.rs",
+    "sha256": "ae32c41a5e349f7e5dfeb4de7a9d94ed054f080db640f402e6e89e72c44594e0"
+  },
+  {
+    "file": "hyperbrep/src/error.rs",
+    "sha256": "2cf6ca1ef249ad3c044d29b67399c6e95bef4a2c4b6e6cda024eb44e96a9ddc7"
+  },
+  {
+    "file": "hyperbrep/src/geometry.rs",
+    "sha256": "fbdcfa685a1dcf6a25fb8e86cfb88904814d840b001fac15ea97b265459029d3"
+  },
+  {
+    "file": "hyperbrep/src/lib.rs",
+    "sha256": "f0f0a9638cc16fc8c31665ff6ce564b8bb62910b0b05dfa57ca109a36a4b53fa"
+  },
+  {
+    "file": "hyperbrep/src/model.rs",
+    "sha256": "7ade6913a3a06cf04304730217c2795551a471db759d46559d3265dfe34bb821"
+  },
+  {
+    "file": "hyperbrep/src/persistence.rs",
+    "sha256": "015e358b5d4fb4b375295c13eedf51c54ec2704cbe3e093ebaae9e80b80e936a"
+  },
+  {
+    "file": "hyperbrep/src/tessellation.rs",
+    "sha256": "bd786e78950b853231d69a6b69164a608ea86494ba264f272849ab7d1c6c7343"
+  }
+]

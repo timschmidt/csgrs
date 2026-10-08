@@ -1,0 +1,7 @@
+Unify finite point inversion around selected fibers
+
+Share finite-domain point inversion for rational curves and analytic parallels, retaining correlated roots and signed normal-sheet evidence. Preserve local source evaluation, selected endpoint policies, and the distinction between empty and entire parameter fibers.
+
+Complete selected-fiber sign replay with certified Real intervals and reuse common-root decisions instead of repeatedly refining a separated radical value.
+
+Validation: 2312 passes across 49 targets, 19 focused checks and 37 public probes. The same five known failures, nine ignored tests and eight previous expensive exclusions remain. Dependencies were isolated from the other session's Hyperreal changes.

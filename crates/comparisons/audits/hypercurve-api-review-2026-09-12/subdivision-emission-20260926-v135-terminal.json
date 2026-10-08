@@ -1,0 +1,397 @@
+{
+  "parents": {
+    "hypercurve": "7dbb1b89aadd491ed1b4de27c3761392dd617162",
+    "hypersolve": "5df3f496c7c2c5620381ac7a4e00fcdf27060ba8",
+    "hyperreal": "0cb5f29aee065c73e234e0ebb0a9e106398515bb"
+  },
+  "source_manifest": "local-chord-complete-replay-20260924-v135-sources.json",
+  "source_directory": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/source-archives/hypercurve-local-chord-complete-replay-v135-20260924",
+  "build_source_directory": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/build-workspace-20260925",
+  "checks": [
+    {
+      "repo": "hypersolve",
+      "label": "hypersolve-fmt",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustfmt",
+        "--edition",
+        "2024",
+        "--check",
+        "src/ordered_field_roots.rs"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.031738653080537915,
+      "log": "subdivision-emission-20260926-v135-hypersolve-fmt.log"
+    },
+    {
+      "repo": "hypersolve",
+      "label": "hypersolve-clippy-0",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "clippy",
+        "--all-targets",
+        "--all-features",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 6.625112729961984,
+      "log": "subdivision-emission-20260926-v135-hypersolve-clippy-0.log"
+    },
+    {
+      "repo": "hypersolve",
+      "label": "hypersolve-clippy-1",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "clippy",
+        "--all-targets",
+        "--no-default-features",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 6.474413069081493,
+      "log": "subdivision-emission-20260926-v135-hypersolve-clippy-1.log"
+    },
+    {
+      "repo": "hypercurve",
+      "label": "hypercurve-fmt",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustfmt",
+        "--edition",
+        "2024",
+        "--check",
+        "src/bezier_offset.rs",
+        "src/bezier_region.rs",
+        "src/curve.rs",
+        "src/curve_corner_chain.rs"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 2.918742306996137,
+      "log": "subdivision-emission-20260926-v135-hypercurve-fmt.log"
+    },
+    {
+      "repo": "hypercurve",
+      "label": "hypercurve-clippy-0",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "clippy",
+        "--all-targets",
+        "--all-features",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 24.85498235397972,
+      "log": "subdivision-emission-20260926-v135-hypercurve-clippy-0.log"
+    },
+    {
+      "repo": "hypercurve",
+      "label": "hypercurve-clippy-1",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "clippy",
+        "--all-targets",
+        "--no-default-features",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 23.302656746003777,
+      "log": "subdivision-emission-20260926-v135-hypercurve-clippy-1.log"
+    },
+    {
+      "repo": "hyperbrep",
+      "label": "hyperbrep-check",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "check",
+        "--all-targets",
+        "--all-features",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 18.1936720199883,
+      "log": "subdivision-emission-20260926-v135-hyperbrep-check.log"
+    }
+  ],
+  "cases": [
+    {
+      "repo": "hypersolve",
+      "label": "hypersolve-full",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/subdivision-emission-20260926-v135-hypersolve",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 3.920281008933671,
+      "log": "subdivision-emission-20260926-v135-hypersolve-full.log"
+    },
+    {
+      "repo": "hypercurve",
+      "label": "case-00",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/subdivision-emission-20260926-v135-hypercurve",
+        "--exact",
+        "bezier_offset::conversion_tests::chord_parallel_extension_keeps_target_and_chord_domains_independent",
+        "--test-threads=1",
+        "--nocapture",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.007691232021898031,
+      "log": "subdivision-emission-20260926-v135-case-00.log",
+      "name": "bezier_offset::conversion_tests::chord_parallel_extension_keeps_target_and_chord_domains_independent"
+    },
+    {
+      "repo": "hypercurve",
+      "label": "case-01",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/subdivision-emission-20260926-v135-hypercurve",
+        "--exact",
+        "bezier_offset::conversion_tests::procedural_endpoint_chord_replays_complete_parallel_contacts",
+        "--test-threads=1",
+        "--nocapture",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.003507288987748325,
+      "log": "subdivision-emission-20260926-v135-case-01.log",
+      "name": "bezier_offset::conversion_tests::procedural_endpoint_chord_replays_complete_parallel_contacts"
+    },
+    {
+      "repo": "hypercurve",
+      "label": "case-02",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/subdivision-emission-20260926-v135-hypercurve",
+        "--exact",
+        "bezier_offset::conversion_tests::recursive_chord_parallel_local_roots_reject_conjugates_and_clip_exactly",
+        "--test-threads=1",
+        "--nocapture",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.03174508095253259,
+      "log": "subdivision-emission-20260926-v135-case-02.log",
+      "name": "bezier_offset::conversion_tests::recursive_chord_parallel_local_roots_reject_conjugates_and_clip_exactly"
+    },
+    {
+      "repo": "hypercurve",
+      "label": "case-03",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/subdivision-emission-20260926-v135-hypercurve",
+        "--exact",
+        "bezier_offset::conversion_tests::recursive_chord_parallel_retains_owned_roots_across_exterior_ranges",
+        "--test-threads=1",
+        "--nocapture",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.06381524098105729,
+      "log": "subdivision-emission-20260926-v135-case-03.log",
+      "name": "bezier_offset::conversion_tests::recursive_chord_parallel_retains_owned_roots_across_exterior_ranges"
+    },
+    {
+      "repo": "hypercurve",
+      "label": "case-04",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/subdivision-emission-20260926-v135-hypercurve",
+        "--exact",
+        "bezier_offset::conversion_tests::recursive_chord_parallel_zero_norm_midpoint_is_not_a_component",
+        "--test-threads=1",
+        "--nocapture",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.015795656014233828,
+      "log": "subdivision-emission-20260926-v135-case-04.log",
+      "name": "bezier_offset::conversion_tests::recursive_chord_parallel_zero_norm_midpoint_is_not_a_component"
+    },
+    {
+      "repo": "hypercurve",
+      "label": "case-05",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/subdivision-emission-20260926-v135-hypercurve",
+        "--exact",
+        "bezier_offset::conversion_tests::recursive_ordered_field_isolation_does_not_guess_polynomial_degree",
+        "--test-threads=1",
+        "--nocapture",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.00367533799726516,
+      "log": "subdivision-emission-20260926-v135-case-05.log",
+      "name": "bezier_offset::conversion_tests::recursive_ordered_field_isolation_does_not_guess_polynomial_degree"
+    },
+    {
+      "repo": "hypercurve",
+      "label": "case-06",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/subdivision-emission-20260926-v135-hypercurve",
+        "--exact",
+        "bezier_offset::conversion_tests::recursive_polynomial_isolators_keep_the_selected_root_after_endpoint_deflation",
+        "--test-threads=1",
+        "--nocapture",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.003619480994530022,
+      "log": "subdivision-emission-20260926-v135-case-06.log",
+      "name": "bezier_offset::conversion_tests::recursive_polynomial_isolators_keep_the_selected_root_after_endpoint_deflation"
+    },
+    {
+      "repo": "hypercurve",
+      "label": "case-07",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/subdivision-emission-20260926-v135-hypercurve",
+        "--exact",
+        "bezier_offset::conversion_tests::recursive_polynomial_queries_reuse_a_selected_proper_factor",
+        "--test-threads=1",
+        "--nocapture",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.031704504042863846,
+      "log": "subdivision-emission-20260926-v135-case-07.log",
+      "name": "bezier_offset::conversion_tests::recursive_polynomial_queries_reuse_a_selected_proper_factor"
+    },
+    {
+      "repo": "hypercurve",
+      "label": "case-08",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/subdivision-emission-20260926-v135-hypercurve",
+        "--exact",
+        "bezier_offset::conversion_tests::recursive_projective_chord_rejects_constant_conjugate_norm_component",
+        "--test-threads=1",
+        "--nocapture",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.0036147820064797997,
+      "log": "subdivision-emission-20260926-v135-case-08.log",
+      "name": "bezier_offset::conversion_tests::recursive_projective_chord_rejects_constant_conjugate_norm_component"
+    },
+    {
+      "repo": "hypercurve",
+      "label": "case-09",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/subdivision-emission-20260926-v135-hypercurve",
+        "--exact",
+        "bezier_offset::conversion_tests::recursive_projective_chord_replays_nonzero_analytic_parallel",
+        "--test-threads=1",
+        "--nocapture",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.007583510014228523,
+      "log": "subdivision-emission-20260926-v135-case-09.log",
+      "name": "bezier_offset::conversion_tests::recursive_projective_chord_replays_nonzero_analytic_parallel"
+    },
+    {
+      "repo": "hypercurve",
+      "label": "case-10",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/subdivision-emission-20260926-v135-hypercurve",
+        "--exact",
+        "bezier_offset::conversion_tests::selected_parallel_normal_circle_intersects_genuinely_analytic_parallel_in_one_fiber",
+        "--test-threads=1",
+        "--nocapture",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 12.332651914097369,
+      "log": "subdivision-emission-20260926-v135-case-10.log",
+      "name": "bezier_offset::conversion_tests::selected_parallel_normal_circle_intersects_genuinely_analytic_parallel_in_one_fiber"
+    },
+    {
+      "repo": "hypercurve",
+      "label": "case-11",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/subdivision-emission-20260926-v135-hypercurve",
+        "--exact",
+        "bezier_offset::conversion_tests::translated_parallel_endpoint_does_not_certify_source_incidence",
+        "--test-threads=1",
+        "--nocapture",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.00385516497772187,
+      "log": "subdivision-emission-20260926-v135-case-11.log",
+      "name": "bezier_offset::conversion_tests::translated_parallel_endpoint_does_not_certify_source_incidence"
+    },
+    {
+      "repo": "hypercurve",
+      "label": "case-12",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/subdivision-emission-20260926-v135-hypercurve",
+        "--exact",
+        "bezier_region::tests::one_fragment_nonzero_parallel_loop_extends_chamfer_cuts_on_one_finite_envelope",
+        "--test-threads=1",
+        "--nocapture",
+        "--color",
+        "never"
+      ],
+      "returncode": "timeout",
+      "elapsed_seconds": 90.00636851496529,
+      "log": "subdivision-emission-20260926-v135-case-12.log",
+      "name": "bezier_region::tests::one_fragment_nonzero_parallel_loop_extends_chamfer_cuts_on_one_finite_envelope"
+    }
+  ],
+  "binaries": {
+    "hypersolve": {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/subdivision-emission-20260926-v135-hypersolve",
+      "sha256": "140cf3bc3f6d16b300c5e592ad80ef6c820a26d62ce1feb58a5a1ea5bf559885"
+    },
+    "hypercurve": {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/subdivision-emission-20260926-v135-hypercurve",
+      "sha256": "f52eaf23e0bb5543d1a33d25bd01267fe863b1e2b1e1169c13edfe8d268557dc"
+    }
+  },
+  "all_processes_reaped": true,
+  "diagnostic_only": true,
+  "hypersolve_build_returncode": 0,
+  "hypersolve_passed": 517,
+  "hypercurve_build_returncode": 0,
+  "selection": [
+    "bezier_offset::conversion_tests::chord_parallel_extension_keeps_target_and_chord_domains_independent",
+    "bezier_offset::conversion_tests::procedural_endpoint_chord_replays_complete_parallel_contacts",
+    "bezier_offset::conversion_tests::recursive_chord_parallel_local_roots_reject_conjugates_and_clip_exactly",
+    "bezier_offset::conversion_tests::recursive_chord_parallel_retains_owned_roots_across_exterior_ranges",
+    "bezier_offset::conversion_tests::recursive_chord_parallel_zero_norm_midpoint_is_not_a_component",
+    "bezier_offset::conversion_tests::recursive_ordered_field_isolation_does_not_guess_polynomial_degree",
+    "bezier_offset::conversion_tests::recursive_polynomial_isolators_keep_the_selected_root_after_endpoint_deflation",
+    "bezier_offset::conversion_tests::recursive_polynomial_queries_reuse_a_selected_proper_factor",
+    "bezier_offset::conversion_tests::recursive_projective_chord_rejects_constant_conjugate_norm_component",
+    "bezier_offset::conversion_tests::recursive_projective_chord_replays_nonzero_analytic_parallel",
+    "bezier_offset::conversion_tests::selected_parallel_normal_circle_intersects_genuinely_analytic_parallel_in_one_fiber",
+    "bezier_offset::conversion_tests::translated_parallel_endpoint_does_not_certify_source_incidence",
+    "bezier_region::tests::one_fragment_nonzero_parallel_loop_extends_chamfer_cuts_on_one_finite_envelope"
+  ],
+  "all_sources_unchanged": true
+}

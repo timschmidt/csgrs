@@ -1,0 +1,40 @@
+{
+  "baseline": "affine-field-v910-sources.json",
+  "rlib": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypercurve-85a9105cd1c82df7.rlib",
+  "rlib_sha256": "5bdc05a873ec172d1ea46b33a4c2de5ff1e8ff56dc3a77e35c577227f70958cf",
+  "source_sha256": "8dd4be91f1b05332c231370262ad439e84bc5b7e5b1beadaf115864085ca26cb",
+  "processes": [
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustc",
+        "--edition=2024",
+        "--crate-name",
+        "affine_source_scalar_probe",
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/affine-source-scalar-probe-v895.rs",
+        "--extern",
+        "hypercurve=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypercurve-85a9105cd1c82df7.rlib",
+        "-L",
+        "dependency=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps",
+        "-C",
+        "opt-level=3",
+        "-o",
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/affine-field-replay-v911-binary"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.6146469709929079,
+      "log": "affine-field-replay-v911-compile.log"
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/affine-field-replay-v911-binary"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.007661814801394939,
+      "log": "affine-field-replay-v911-cases.log"
+    }
+  ],
+  "all_processes_reaped": true,
+  "binary_sha256": "1b2d2fe3c282b27fbea445d369688dc97461294d5fe07916a7c2b21ec2c46211",
+  "output": "policy=0 second=false point_represented=true retained_tangent=true vector_represented=false\npolicy=0 second=true point_represented=true retained_tangent=true vector_represented=false\npolicy=0 decided=true\npolicy=1 second=false point_represented=true retained_tangent=true vector_represented=false\npolicy=1 second=true point_represented=true retained_tangent=true vector_represented=false\npolicy=1 decided=true\ncomplete requests=2 blocked=0\n",
+  "probe_complete": true
+}

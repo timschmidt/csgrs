@@ -1,0 +1,11 @@
+{
+  "tag": "arf-fused-native",
+  "started": "2026-09-09T20:45:24.422Z",
+  "finished": "2026-09-09T20:45:28.313Z",
+  "elapsedSeconds": 3.888694105,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison",
+  "command": "/tmp/calcium-arf-fused.rUeaCU/arf-fused-controls",
+  "args": [],
+  "code": 0,
+  "signal": null
+}

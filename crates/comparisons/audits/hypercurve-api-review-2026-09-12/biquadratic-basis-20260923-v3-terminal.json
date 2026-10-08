@@ -1,0 +1,31 @@
+{
+  "checks": [
+    {
+      "feature": "--all-features",
+      "returncode": 0,
+      "log": "biquadratic-basis-20260923-v3-check-0.log"
+    },
+    {
+      "feature": "--no-default-features",
+      "returncode": 0,
+      "log": "biquadratic-basis-20260923-v3-check-1.log"
+    }
+  ],
+  "tests": [
+    {
+      "label": "focused",
+      "returncode": 0,
+      "elapsed_seconds": 0.1417826219694689,
+      "log": "biquadratic-basis-20260923-v3-focused.log"
+    },
+    {
+      "label": "all",
+      "returncode": 0,
+      "elapsed_seconds": 3.5629099919460714,
+      "log": "biquadratic-basis-20260923-v3-all.log"
+    }
+  ],
+  "all_processes_reaped": true,
+  "binary_sha256": "4fed02967c25e6b96b1b44bdebdc725ca3dbc5bec0d9a2d24688c0b304ae3754",
+  "all_sources_unchanged": true
+}

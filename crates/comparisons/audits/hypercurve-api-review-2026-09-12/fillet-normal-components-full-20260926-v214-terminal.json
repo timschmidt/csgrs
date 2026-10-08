@@ -1,0 +1,121 @@
+{
+  "parents": {
+    "hypercurve": "11c5e0faaf13846869bc8d447aaadfea539b86e7",
+    "hypersolve": "42308d704df777b3e627aa344424afa3f215e456",
+    "hyperreal": "0cb5f29aee065c73e234e0ebb0a9e106398515bb"
+  },
+  "workspace_guard": "fillet-normal-components-full-20260926-v214-sources.json",
+  "source_manifest": "fillet-normal-components-full-20260926-v214-sources.json",
+  "source_directory": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/source-archives/fillet-normal-components-full-20260926-v214",
+  "build_source_directory": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/build-workspace-20260925",
+  "checks": [
+    {
+      "repo": "hypercurve",
+      "label": "hypercurve-fmt",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustfmt",
+        "--edition",
+        "2024",
+        "--check",
+        "src/bezier_offset.rs",
+        "src/bezier_region.rs",
+        "src/curve.rs",
+        "src/curve_corner_chain.rs",
+        "src/curve_region_boolean.rs",
+        "src/curve_support_intersection.rs"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 2.96755336294882,
+      "log": "fillet-normal-components-full-20260926-v214-hypercurve-fmt.log"
+    },
+    {
+      "repo": "hypercurve",
+      "label": "hypercurve-clippy-all",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "clippy",
+        "--all-targets",
+        "--all-features",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 19.74179569701664,
+      "log": "fillet-normal-components-full-20260926-v214-hypercurve-clippy-all.log"
+    },
+    {
+      "repo": "hypercurve",
+      "label": "hypercurve-clippy-default",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "clippy",
+        "--all-targets",
+        "--no-default-features",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 19.24104799993802,
+      "log": "fillet-normal-components-full-20260926-v214-hypercurve-clippy-default.log"
+    },
+    {
+      "repo": "hyperbrep",
+      "label": "hyperbrep-check",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "check",
+        "--all-targets",
+        "--all-features",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 14.132533326977864,
+      "log": "fillet-normal-components-full-20260926-v214-hyperbrep-check.log"
+    }
+  ],
+  "cases": [],
+  "binaries": {
+    "hypercurve": {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/fillet-normal-components-full-20260926-v214-hypercurve",
+      "sha256": "2dbf994500377e58a8e5e5d6376839a5db8a7eeab2a11687e5a837490c0c7b26"
+    },
+    "hypercurve_analytic_parallel_region": {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/fillet-normal-components-full-20260926-v214-hypercurve_analytic_parallel_region",
+      "sha256": "e45cf2484c16edf5dd31a890723e13e6d0e0e6448ff4be49a0cafe9357ded60e"
+    },
+    "hypercurve_arc_bezier": {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/fillet-normal-components-full-20260926-v214-hypercurve_arc_bezier",
+      "sha256": "2a503ddcbbf3ace1a60062a426c9840a4af08d8e62ff0b020fa9d065747b78e3"
+    },
+    "hypercurve_bezier_arrangement": {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/fillet-normal-components-full-20260926-v214-hypercurve_bezier_arrangement",
+      "sha256": "cee8d03b9a7d30307f785c0bf73b0597bc6f07a59b3e9b75e2ceb8f88ef2b5f6"
+    },
+    "hypercurve_curve": {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/fillet-normal-components-full-20260926-v214-hypercurve_curve",
+      "sha256": "232be9e52da6050a5a960e7009f66e6f5732895448fa307a78080f835aa120c5"
+    },
+    "hypercurve_curve_region_boolean": {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/fillet-normal-components-full-20260926-v214-hypercurve_curve_region_boolean",
+      "sha256": "b33816cbc4562385966ae896e29482e47ff9b5b25a12ac7078f0521686065839"
+    },
+    "hypercurve_curve_region_boolean_fuzz": {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/fillet-normal-components-full-20260926-v214-hypercurve_curve_region_boolean_fuzz",
+      "sha256": "6832afd49211736d65dcee8e106da8da789f81bc799b21e10f5d4d6d3fa8413c"
+    },
+    "hypercurve_pcb_boolean_regressions": {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/fillet-normal-components-full-20260926-v214-hypercurve_pcb_boolean_regressions",
+      "sha256": "3160c329c71ed34db61373f58cc4bf941cd90a4b33a30128ed0a9e6d6130ccf7"
+    }
+  },
+  "all_processes_reaped": false,
+  "all_sources_unchanged": true,
+  "hypercurve_build_returncode": 0
+}

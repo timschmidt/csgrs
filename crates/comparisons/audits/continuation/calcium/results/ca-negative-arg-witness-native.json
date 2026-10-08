@@ -1,0 +1,11 @@
+{
+  "tag": "ca-negative-arg-witness-native",
+  "started": "2026-09-09T03:12:01.001Z",
+  "finished": "2026-09-09T03:12:01.014Z",
+  "elapsedSeconds": 0.010761254000000008,
+  "cwd": "/home/tim/Documents/GitHub/workspace",
+  "command": "/tmp/calcium-charpoly-solves.lbZlN8/flint-ca-negative-arg-witness",
+  "args": [],
+  "code": 0,
+  "signal": null
+}

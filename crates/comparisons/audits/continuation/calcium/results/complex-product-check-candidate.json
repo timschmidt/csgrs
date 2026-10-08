@@ -1,0 +1,11 @@
+{
+  "tag": "complex-product-check-candidate",
+  "started": "2026-09-09T21:38:07.004Z",
+  "finished": "2026-09-09T21:38:08.638Z",
+  "elapsedSeconds": 1.631882035,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "/tmp/calcium-complex-product.0bkAWH/candidate-check",
+  "args": [],
+  "code": 0,
+  "signal": null
+}

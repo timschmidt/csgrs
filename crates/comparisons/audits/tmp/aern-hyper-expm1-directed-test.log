@@ -1,0 +1,87 @@
+   Compiling proc-macro2 v1.0.106
+   Compiling libc v0.2.186
+   Compiling unicode-ident v1.0.24
+   Compiling quote v1.0.45
+   Compiling cfg-if v1.0.4
+   Compiling autocfg v1.5.0
+   Compiling zerocopy v0.8.48
+   Compiling crossbeam-utils v0.8.21
+   Compiling serde_core v1.0.228
+   Compiling getrandom v0.3.4
+   Compiling getrandom v0.4.2
+   Compiling zmij v1.0.21
+   Compiling serde v1.0.228
+   Compiling rustix v1.1.4
+   Compiling bitflags v2.11.1
+   Compiling regex-syntax v0.8.10
+   Compiling gmp-mpfr-sys v1.7.1
+   Compiling serde_json v1.0.149
+   Compiling either v1.15.0
+   Compiling linux-raw-sys v0.12.1
+   Compiling rayon-core v1.13.0
+   Compiling once_cell v1.21.4
+   Compiling libm v0.2.16
+   Compiling fastrand v2.4.1
+   Compiling plotters-backend v0.3.7
+   Compiling itoa v1.0.18
+   Compiling ciborium-io v0.2.2
+   Compiling memchr v2.8.0
+   Compiling anstyle v1.0.14
+   Compiling num-traits v0.2.19
+   Compiling clap_lex v1.1.0
+   Compiling itertools v0.10.5
+   Compiling plotters-svg v0.3.7
+   Compiling fnv v1.0.7
+   Compiling bit-vec v0.8.0
+   Compiling clap_builder v4.6.0
+   Compiling cast v0.3.0
+   Compiling crossbeam-epoch v0.9.18
+   Compiling rug v1.30.0
+   Compiling quick-error v1.2.3
+   Compiling same-file v1.0.6
+   Compiling bit-set v0.8.0
+   Compiling az v1.3.0
+   Compiling unarray v0.1.4
+   Compiling crossbeam-deque v0.8.6
+   Compiling walkdir v2.5.0
+   Compiling anes v0.1.6
+   Compiling syn v2.0.117
+   Compiling oorandom v11.1.5
+   Compiling wait-timeout v0.2.1
+   Compiling is-terminal v0.4.17
+   Compiling num-integer v0.1.46
+   Compiling rand_core v0.9.5
+   Compiling plotters v0.3.7
+   Compiling num-complex v0.4.6
+   Compiling rayon v1.12.0
+   Compiling num-bigint v0.4.6
+   Compiling num-iter v0.1.45
+   Compiling criterion-plot v0.5.0
+   Compiling rand_xorshift v0.4.0
+   Compiling rand v0.9.4
+   Compiling regex-automata v0.4.14
+   Compiling tempfile v3.27.0
+   Compiling clap v4.6.1
+   Compiling rusty-fork v0.3.1
+   Compiling num-rational v0.4.2
+   Compiling num v0.4.3
+   Compiling regex v1.12.3
+   Compiling zerocopy-derive v0.8.48
+   Compiling serde_derive v1.0.228
+   Compiling tinytemplate v1.2.1
+   Compiling half v2.7.1
+   Compiling ppv-lite86 v0.2.21
+   Compiling ciborium-ll v0.2.2
+   Compiling rand_chacha v0.9.0
+   Compiling ciborium v0.2.2
+   Compiling proptest v1.11.0
+   Compiling criterion v0.5.1
+   Compiling hyperreal v0.13.1 (/tmp/aern-hyper-exp.PdU63J/hyperreal-expm1)
+    Finished `release` profile [optimized] target(s) in 21.27s
+     Running unittests src/lib.rs (target/release/deps/hyperreal-f3a6d4fcdbc4d626)
+
+running 1 test
+test computable::node::tests::expm1_range_guard_and_cache_orders_match_directed_mpfr ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 631 filtered out; finished in 0.35s
+

@@ -1,0 +1,18 @@
+{
+  "tag": "qqbar-inverse-counterexample-native-v80",
+  "started": "2026-09-12T01:36:27.133Z",
+  "finished": "2026-09-12T01:36:27.877Z",
+  "elapsedSeconds": 0.741732254,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "timeout",
+  "args": [
+    "45s",
+    "prlimit",
+    "--as=1073741824",
+    "--cpu=30",
+    "--",
+    "/tmp/calcium-qqbar-inverse-v80.uoobbg/counterexample"
+  ],
+  "code": 0,
+  "signal": null
+}

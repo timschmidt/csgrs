@@ -1,0 +1,7 @@
+{
+  "outer_session": 55658,
+  "outer_exit_code": 1,
+  "formatter_session": 24530,
+  "formatter_exit_code": 0,
+  "failure": "caller regression failed: algebraic_tensor_image::tests::tensor_image_represents_four_correlated_selected_roots"
+}

@@ -1,0 +1,14 @@
+==2683675== Memcheck, a memory error detector
+==2683675== Copyright (C) 2002-2026, and GNU GPL'd, by Julian Seward et al.
+==2683675== Using Valgrind-3.27.1 and LibVEX; rerun with -h for copyright info
+==2683675== Command: /tmp/calcium-rank-costs.lbsszv/flint-matrix-support
+==2683675== 
+==2683675== 
+==2683675== HEAP SUMMARY:
+==2683675==     in use at exit: 0 bytes in 0 blocks
+==2683675==   total heap usage: 739,893 allocs, 739,893 frees, 37,263,684 bytes allocated
+==2683675== 
+==2683675== All heap blocks were freed -- no leaks are possible
+==2683675== 
+==2683675== For lists of detected and suppressed errors, rerun with: -s
+==2683675== ERROR SUMMARY: 0 errors from 0 contexts (suppressed: 0 from 0)

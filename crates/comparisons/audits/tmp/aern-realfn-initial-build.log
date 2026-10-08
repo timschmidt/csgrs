@@ -1,0 +1,621 @@
+aern-realfn> configure (lib)
+Configuring aern-realfn-0.5.0...
+aern-realfn> build (lib) with ghc-9.6.7
+Preprocessing library for aern-realfn-0.5.0..
+Building library for aern-realfn-0.5.0..
+[ 1 of 14] Compiling Numeric.AERN.RmToRn.Domain
+
+/tmp/aern-audit.zp9Mzz/source/aern-realfn/src/Numeric/AERN/RmToRn/Domain.hs:50:22: warning: [GHC-39567] [-Wstar-is-type]
+    Using ‘*’ (or its Unicode variant) to mean ‘Data.Kind.Type’
+    relies on the StarIsType extension, which will become
+    deprecated in the future.
+    Suggested fix: Use ‘Type’ from ‘Data.Kind’ instead.
+   |
+50 |     type VarBox f :: * -> * 
+   |                      ^
+
+/tmp/aern-audit.zp9Mzz/source/aern-realfn/src/Numeric/AERN/RmToRn/Domain.hs:50:27: warning: [GHC-39567] [-Wstar-is-type]
+    Using ‘*’ (or its Unicode variant) to mean ‘Data.Kind.Type’
+    relies on the StarIsType extension, which will become
+    deprecated in the future.
+    Suggested fix: Use ‘Type’ from ‘Data.Kind’ instead.
+   |
+50 |     type VarBox f :: * -> * 
+   |                           ^
+
+/tmp/aern-audit.zp9Mzz/source/aern-realfn/src/Numeric/AERN/RmToRn/Domain.hs:85:1: warning: [GHC-38417] [-Wmissing-signatures]
+    Top-level binding with no type signature:
+      defaultDomSplitUsingEndpointsDefaultEffort :: (ArithInOut.RoundedAdd
+                                                       b,
+                                                     ArithInOut.RoundedMixedDivide b Int,
+                                                     RefOrd.IntervalLike b) =>
+                                                    b -> (b, b)
+   |
+85 | defaultDomSplitUsingEndpointsDefaultEffort dom =
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-realfn/src/Numeric/AERN/RmToRn/Domain.hs:93:1: warning: [GHC-38417] [-Wmissing-signatures]
+    Top-level binding with no type signature:
+      defaultDomSplitUsingEndpointsEff :: (ArithInOut.RoundedAdd b,
+                                           ArithInOut.RoundedMixedDivide b Int,
+                                           RefOrd.IntervalLike b) =>
+                                          (RefOrd.FromEndpointsEffortIndicator b,
+                                           RefOrd.GetEndpointsEffortIndicator b,
+                                           ArithInOut.AddEffortIndicator b,
+                                           ArithInOut.MixedDivEffortIndicator b Int)
+                                          -> b -> (b, b)
+   |
+93 | defaultDomSplitUsingEndpointsEff (effFromE, effGetE, effAdd, effIntDiv) dom =
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-realfn/src/Numeric/AERN/RmToRn/Domain.hs:104:1: warning: [GHC-38417] [-Wmissing-signatures]
+    Top-level binding with no type signature:
+      getNSamplesFromInsideDomainBoxUsingEndpointsDefaultEffort :: (RefOrd.GetEndpointsEffortIndicator
+                                                                      t
+                                                                    ~ RefOrd.GetEndpointsEffortIndicator
+                                                                        (Domain f),
+                                                                    HasDomainBox f,
+                                                                    RefOrd.IntervalLike t,
+                                                                    RefOrd.IntervalLike (Domain f),
+                                                                    HasVarValue a var (Domain f)) =>
+                                                                   t -> f -> a -> Int -> [a]
+    |
+104 | getNSamplesFromInsideDomainBoxUsingEndpointsDefaultEffort dom =
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-realfn/src/Numeric/AERN/RmToRn/Domain.hs:112:1: warning: [GHC-38417] [-Wmissing-signatures]
+    Top-level binding with no type signature:
+      getNSamplesFromInsideDomainBoxUsingEndpointsEff :: (HasDomainBox f,
+                                                          RefOrd.IntervalLike (Domain f),
+                                                          HasVarValue a var (Domain f)) =>
+                                                         RefOrd.GetEndpointsEffortIndicator
+                                                           (Domain f)
+                                                         -> f -> a -> Int -> [a]
+    |
+112 | getNSamplesFromInsideDomainBoxUsingEndpointsEff 
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-realfn/src/Numeric/AERN/RmToRn/Domain.hs:121:24: warning: [GHC-63397] [-Wname-shadowing]
+    This binding for ‘dombox’ shadows the existing binding
+      bound at src/Numeric/AERN/RmToRn/Domain.hs:115:9
+    |
+121 |         gsbAux setVars dombox =
+    |                        ^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-realfn/src/Numeric/AERN/RmToRn/Domain.hs:133:47: warning: [GHC-63397] [-Wname-shadowing]
+    This binding for ‘dom’ shadows the existing binding
+      bound at src/Numeric/AERN/RmToRn/Domain.hs:130:23
+    |
+133 |         gsdAux (takeLEndpoint, takeREndpoint) dom =
+    |                                               ^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-realfn/src/Numeric/AERN/RmToRn/Domain.hs:159:9: warning: [-Wunused-matches]
+    Defined but not used: ‘n’
+    |
+159 |     aux n [] = []
+    |         ^
+
+/tmp/aern-audit.zp9Mzz/source/aern-realfn/src/Numeric/AERN/RmToRn/Domain.hs:160:11: warning: [GHC-63397] [-Wname-shadowing]
+    This binding for ‘lists’ shadows the existing binding
+      bound at src/Numeric/AERN/RmToRn/Domain.hs:157:19
+    |
+160 |     aux n lists =
+    |           ^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-realfn/src/Numeric/AERN/RmToRn/Domain.hs:172:21: warning: [GHC-63397] [-Wname-shadowing]
+    This binding for ‘lists’ shadows the existing binding
+      bound at src/Numeric/AERN/RmToRn/Domain.hs:160:11
+    |
+172 |             (elems, lists) = scanHeads remLists
+    |                     ^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-realfn/src/Numeric/AERN/RmToRn/Domain.hs:174:1: warning: [GHC-38417] [-Wmissing-signatures]
+    Top-level binding with no type signature:
+      getSampleFromInsideDomainBoxUsingEndpointsDefaultEffort :: (RefOrd.GetEndpointsEffortIndicator
+                                                                    t
+                                                                  ~ RefOrd.GetEndpointsEffortIndicator
+                                                                      (Domain f),
+                                                                  HasDomainBox f,
+                                                                  RefOrd.IntervalLike t,
+                                                                  RefOrd.IntervalLike (Domain f),
+                                                                  HasVarValue vbox1 var (Domain f),
+                                                                  HasVarValue
+                                                                    vbox2 var (Domain f)) =>
+                                                                 t -> f -> vbox2 -> vbox1
+    |
+174 | getSampleFromInsideDomainBoxUsingEndpointsDefaultEffort dom =
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-realfn/src/Numeric/AERN/RmToRn/Domain.hs:179:1: warning: [GHC-38417] [-Wmissing-signatures]
+    Top-level binding with no type signature:
+      getSampleFromInsideDomainBoxUsingEndpointsEff :: (HasDomainBox f,
+                                                        RefOrd.IntervalLike (Domain f),
+                                                        HasVarValue vbox1 var (Domain f),
+                                                        HasVarValue vbox2 var (Domain f)) =>
+                                                       RefOrd.GetEndpointsEffortIndicator (Domain f)
+                                                       -> f -> vbox2 -> vbox1
+    |
+179 | getSampleFromInsideDomainBoxUsingEndpointsEff 
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-realfn/src/Numeric/AERN/RmToRn/Domain.hs:225:15: warning: [GHC-63397] [-Wname-shadowing]
+    This binding for ‘map’ shadows the existing binding
+      imported from ‘Prelude’ at src/Numeric/AERN/RmToRn/Domain.hs:21:8-33
+      (and originally defined in ‘GHC.Base’)
+    |
+225 |     lookupVar map var = IntMap.lookup var map
+    |               ^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-realfn/src/Numeric/AERN/RmToRn/Domain.hs:240:15: warning: [GHC-63397] [-Wname-shadowing]
+    This binding for ‘map’ shadows the existing binding
+      imported from ‘Prelude’ at src/Numeric/AERN/RmToRn/Domain.hs:21:8-33
+      (and originally defined in ‘GHC.Base’)
+    |
+240 |     lookupVar map var = Map.lookup var map
+    |               ^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-realfn/src/Numeric/AERN/RmToRn/Domain.hs:245:1: warning: [GHC-90177] [-Worphans]
+    Orphan instance: instance (ArbitraryWithArea val, Show val,
+                               AreaHasConsistencyConstraint val, Show (Area val),
+                               RefOrd.AreaHasBoundsConstraints val) =>
+                              ArbitraryWithArea (IntMap.IntMap val)
+    Suggested fix:
+      Move the instance declaration to the module of the class or of the type, or
+      wrap the type with a newtype and declare the instance on the new type.
+    |
+245 | instance
+    | ^^^^^^^^...
+
+/tmp/aern-audit.zp9Mzz/source/aern-realfn/src/Numeric/AERN/RmToRn/Domain.hs:279:1: warning: [GHC-90177] [-Worphans]
+    Orphan instance: instance (Ord var, Show var, Show val,
+                               ArbitraryWithArea val, Show (Area val),
+                               AreaHasConsistencyConstraint val,
+                               RefOrd.AreaHasBoundsConstraints val) =>
+                              ArbitraryWithArea (Map.Map var val)
+    Suggested fix:
+      Move the instance declaration to the module of the class or of the type, or
+      wrap the type with a newtype and declare the instance on the new type.
+    |
+279 | instance
+    | ^^^^^^^^...
+
+/tmp/aern-audit.zp9Mzz/source/aern-realfn/src/Numeric/AERN/RmToRn/Domain.hs:314:1: warning: [GHC-90177] [-Worphans]
+    Orphan instance: instance (RefOrd.ArbitraryOrderedTuple val,
+                               Show val, Show (Area val), AreaHasConsistencyConstraint val,
+                               RefOrd.AreaHasBoundsConstraints val) =>
+                              RefOrd.ArbitraryOrderedTuple (IntMap.IntMap val)
+    Suggested fix:
+      Move the instance declaration to the module of the class or of the type, or
+      wrap the type with a newtype and declare the instance on the new type.
+    |
+314 | instance
+    | ^^^^^^^^...
+
+/tmp/aern-audit.zp9Mzz/source/aern-realfn/src/Numeric/AERN/RmToRn/Domain.hs:350:1: warning: [GHC-90177] [-Worphans]
+    Orphan instance: instance (Ord var, Show var, Show val,
+                               RefOrd.ArbitraryOrderedTuple val, Show (Area val),
+                               AreaHasConsistencyConstraint val,
+                               RefOrd.AreaHasBoundsConstraints val) =>
+                              RefOrd.ArbitraryOrderedTuple (Map.Map var val)
+    Suggested fix:
+      Move the instance declaration to the module of the class or of the type, or
+      wrap the type with a newtype and declare the instance on the new type.
+    |
+350 | instance
+    | ^^^^^^^^...
+
+/tmp/aern-audit.zp9Mzz/source/aern-realfn/src/Numeric/AERN/RmToRn/Domain.hs:417:40: warning: [GHC-18042] [-Wtype-defaults]
+    • Defaulting the type variable ‘a0’ to type ‘Integer’ in the following constraints
+        (Show a0)
+          arising from a use of ‘show’
+          at src/Numeric/AERN/RmToRn/Domain.hs:417:40-43
+        (Num a0)
+          arising from the literal ‘1’
+          at src/Numeric/AERN/RmToRn/Domain.hs:417:49
+        (Enum a0)
+          arising from the arithmetic sequence ‘1 .. ’
+          at src/Numeric/AERN/RmToRn/Domain.hs:417:48-52
+    • In the second argument of ‘(++)’, namely ‘show i’
+      In the expression: "x" ++ show i
+      In the first argument of ‘map’, namely ‘(\ i -> "x" ++ show i)’
+    |
+417 |             take n $ map (\i -> "x" ++ show i) [1..]  
+    |                                        ^^^^
+[ 2 of 14] Compiling Numeric.AERN.RmToRn.Differentiation
+[ 3 of 14] Compiling Numeric.AERN.RmToRn.Integration
+[ 4 of 14] Compiling Numeric.AERN.RmToRn.New
+
+/tmp/aern-audit.zp9Mzz/source/aern-realfn/src/Numeric/AERN/RmToRn/New.hs:20:1: warning: [-Wunused-imports]
+    The import of ‘Numeric.AERN.Basics.Effort’ is redundant
+      except perhaps to import instances from ‘Numeric.AERN.Basics.Effort’
+    To import instances alone, use: import Numeric.AERN.Basics.Effort()
+   |
+20 | import Numeric.AERN.Basics.Effort
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[ 5 of 14] Compiling Numeric.AERN.RmToRn.Evaluation
+
+/tmp/aern-audit.zp9Mzz/source/aern-realfn/src/Numeric/AERN/RmToRn/Evaluation.hs:38:23: warning: [GHC-39567] [-Wstar-is-type]
+    Using ‘*’ (or its Unicode variant) to mean ‘Data.Kind.Type’
+    relies on the StarIsType extension, which will become
+    deprecated in the future.
+    Suggested fix: Use ‘Type’ from ‘Data.Kind’ instead.
+   |
+38 |     type EvalOps f :: * -> *
+   |                       ^
+
+/tmp/aern-audit.zp9Mzz/source/aern-realfn/src/Numeric/AERN/RmToRn/Evaluation.hs:38:28: warning: [GHC-39567] [-Wstar-is-type]
+    Using ‘*’ (or its Unicode variant) to mean ‘Data.Kind.Type’
+    relies on the StarIsType extension, which will become
+    deprecated in the future.
+    Suggested fix: Use ‘Type’ from ‘Data.Kind’ instead.
+   |
+38 |     type EvalOps f :: * -> *
+   |                            ^
+
+/tmp/aern-audit.zp9Mzz/source/aern-realfn/src/Numeric/AERN/RmToRn/Evaluation.hs:177:13: warning: [GHC-62161] [-Wincomplete-uni-patterns]
+    Pattern match(es) are non-exhaustive
+    In a pattern binding: Patterns of type ‘[Domain f]’ not matched: []
+    |
+177 |             v1L : _ = v1Increasing
+    |             ^^^^^^^^^^^^^^^^^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-realfn/src/Numeric/AERN/RmToRn/Evaluation.hs:178:13: warning: [GHC-62161] [-Wincomplete-uni-patterns]
+    Pattern match(es) are non-exhaustive
+    In a pattern binding: Patterns of type ‘[Domain f]’ not matched: []
+    |
+178 |             v1R : _ = v1Decreasing
+    |             ^^^^^^^^^^^^^^^^^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-realfn/src/Numeric/AERN/RmToRn/Evaluation.hs:179:13: warning: [GHC-62161] [-Wincomplete-uni-patterns]
+    Pattern match(es) are non-exhaustive
+    In a pattern binding: Patterns of type ‘[Domain f]’ not matched: []
+    |
+179 |             v2L : _ = v2Increasing
+    |             ^^^^^^^^^^^^^^^^^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-realfn/src/Numeric/AERN/RmToRn/Evaluation.hs:180:13: warning: [GHC-62161] [-Wincomplete-uni-patterns]
+    Pattern match(es) are non-exhaustive
+    In a pattern binding: Patterns of type ‘[Domain f]’ not matched: []
+    |
+180 |             v2R : _ = v2Decreasing
+    |             ^^^^^^^^^^^^^^^^^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-realfn/src/Numeric/AERN/RmToRn/Evaluation.hs:225:5: warning: [-Wunused-local-binds]
+    Defined but not used: ‘areaCoords’
+    |
+225 |     areaCoords = toAscList area
+    |     ^^^^^^^^^^
+[ 6 of 14] Compiling Numeric.AERN.RmToRn.Laws
+
+/tmp/aern-audit.zp9Mzz/source/aern-realfn/src/Numeric/AERN/RmToRn/Laws.hs:234:33: warning: [GHC-58520] [-Wtype-equality-requires-operators]
+    The use of ‘~’ without TypeOperators
+    will become an error in a future GHC release.
+    Suggested fix: Perhaps you intended to use TypeOperators
+    |
+234 |      Area (VarBox f (Domain f)) ~ VarBox f (Domain  f),
+    |                                 ^
+
+/tmp/aern-audit.zp9Mzz/source/aern-realfn/src/Numeric/AERN/RmToRn/Laws.hs:268:25: warning: [GHC-58520] [-Wtype-equality-requires-operators]
+    The use of ‘~’ without TypeOperators
+    will become an error in a future GHC release.
+    Suggested fix: Perhaps you intended to use TypeOperators
+    |
+268 |      Area (DomainBox f) ~ (DomainBox f))
+    |                         ^
+
+/tmp/aern-audit.zp9Mzz/source/aern-realfn/src/Numeric/AERN/RmToRn/Laws.hs:305:25: warning: [GHC-58520] [-Wtype-equality-requires-operators]
+    The use of ‘~’ without TypeOperators
+    will become an error in a future GHC release.
+    Suggested fix: Perhaps you intended to use TypeOperators
+    |
+305 |      Area (DomainBox f) ~ (DomainBox f))
+    |                         ^
+
+/tmp/aern-audit.zp9Mzz/source/aern-realfn/src/Numeric/AERN/RmToRn/Laws.hs:351:25: warning: [GHC-58520] [-Wtype-equality-requires-operators]
+    The use of ‘~’ without TypeOperators
+    will become an error in a future GHC release.
+    Suggested fix: Perhaps you intended to use TypeOperators
+    |
+351 |      Area (DomainBox f) ~ (DomainBox f))
+    |                         ^
+[ 7 of 14] Compiling Numeric.AERN.RmToRn
+[ 8 of 14] Compiling Numeric.AERN.RmToRn.Interval
+
+/tmp/aern-audit.zp9Mzz/source/aern-realfn/src/Numeric/AERN/RmToRn/Interval.hs:194:52: warning: [-Wunused-matches]
+    Defined but not used: ‘i’
+    |
+194 |     evalAtPointOutEff eff dombox (IntervalApprox o i) =
+    |                                                    ^
+
+/tmp/aern-audit.zp9Mzz/source/aern-realfn/src/Numeric/AERN/RmToRn/Interval.hs:322:1: warning: [GHC-08585] [-Wmissing-methods]
+    • No explicit associated type or default declaration for ‘RoundedRealFnEffortIndicator’
+    • In the instance declaration for ‘RoundedRealFn (Interval f)’
+    |
+322 | instance
+    | ^^^^^^^^...
+
+/tmp/aern-audit.zp9Mzz/source/aern-realfn/src/Numeric/AERN/RmToRn/Interval.hs:323:5: warning: [GHC-06201] [-Wmissing-methods]
+    • No explicit implementation for
+        ‘roundedRealFnDefaultEffort’, ‘fnEffortReal’, ‘fnEffortDomReal’,
+        ‘fnEffortDomGetEndpoints’,
+        ‘fnEffortDomFromEndpoints’, and ‘fnEffortEval’
+    • In the instance declaration for ‘RoundedRealFn (Interval f)’
+    |
+323 |     (
+    |     ^...
+[ 9 of 14] Compiling Numeric.AERN.RmToRn.NumericOrder.FromInOutRingOps.Arbitrary
+
+/tmp/aern-audit.zp9Mzz/source/aern-realfn/src/Numeric/AERN/RmToRn/NumericOrder/FromInOutRingOps/Arbitrary.hs:32:1: warning: [-Wunused-imports]
+    The qualified import of ‘Numeric.AERN.RealArithmetic.NumericOrderRounding’ is redundant
+      except perhaps to import instances from ‘Numeric.AERN.RealArithmetic.NumericOrderRounding’
+    To import instances alone, use: import Numeric.AERN.RealArithmetic.NumericOrderRounding()
+   |
+32 | import qualified Numeric.AERN.RealArithmetic.NumericOrderRounding as ArithUpDn
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-realfn/src/Numeric/AERN/RmToRn/NumericOrder/FromInOutRingOps/Arbitrary.hs:46:1: warning: [-Wunused-imports]
+    The import of ‘Numeric.AERN.Basics.Consistency’ is redundant
+      except perhaps to import instances from ‘Numeric.AERN.Basics.Consistency’
+    To import instances alone, use: import Numeric.AERN.Basics.Consistency()
+   |
+46 | import Numeric.AERN.Basics.Consistency
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-realfn/src/Numeric/AERN/RmToRn/NumericOrder/FromInOutRingOps/Arbitrary.hs:48:1: warning: [-Wunused-imports]
+    The import of ‘Numeric.AERN.Misc.Debug’ is redundant
+      except perhaps to import instances from ‘Numeric.AERN.Misc.Debug’
+    To import instances alone, use: import Numeric.AERN.Misc.Debug()
+   |
+48 | import Numeric.AERN.Misc.Debug
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-realfn/src/Numeric/AERN/RmToRn/NumericOrder/FromInOutRingOps/Arbitrary.hs:59:1: warning: [GHC-38417] [-Wmissing-signatures]
+    Top-level binding with no type signature:
+      areaWhole4FunFromRingOps :: a1 -> (a1, Maybe a2)
+   |
+59 | areaWhole4FunFromRingOps sampleFn =
+   | ^^^^^^^^^^^^^^^^^^^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-realfn/src/Numeric/AERN/RmToRn/NumericOrder/FromInOutRingOps/Arbitrary.hs:105:11: warning: [-Wunused-matches]
+    Defined but not used: ‘effDom’
+    |
+105 |         ((effDom, effGetEndptsDom, effEval), 
+    |           ^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-realfn/src/Numeric/AERN/RmToRn/NumericOrder/FromInOutRingOps/Arbitrary.hs:105:19: warning: [-Wunused-matches]
+    Defined but not used: ‘effGetEndptsDom’
+    |
+105 |         ((effDom, effGetEndptsDom, effEval), 
+    |                   ^^^^^^^^^^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-realfn/src/Numeric/AERN/RmToRn/NumericOrder/FromInOutRingOps/Arbitrary.hs:105:36: warning: [-Wunused-matches]
+    Defined but not used: ‘effEval’
+    |
+105 |         ((effDom, effGetEndptsDom, effEval), 
+    |                                    ^^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-realfn/src/Numeric/AERN/RmToRn/NumericOrder/FromInOutRingOps/Arbitrary.hs:106:11: warning: [-Wunused-matches]
+    Defined but not used: ‘effAddFn’
+    |
+106 |          (effAddFn, effMultFn), 
+    |           ^^^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-realfn/src/Numeric/AERN/RmToRn/NumericOrder/FromInOutRingOps/Arbitrary.hs:106:21: warning: [-Wunused-matches]
+    Defined but not used: ‘effMultFn’
+    |
+106 |          (effAddFn, effMultFn), 
+    |                     ^^^^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-realfn/src/Numeric/AERN/RmToRn/NumericOrder/FromInOutRingOps/Arbitrary.hs:107:11: warning: [-Wunused-matches]
+    Defined but not used: ‘effAddFnDFn’
+    |
+107 |          (effAddFnDFn, effMultFnDFn))
+    |           ^^^^^^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-realfn/src/Numeric/AERN/RmToRn/NumericOrder/FromInOutRingOps/Arbitrary.hs:107:24: warning: [-Wunused-matches]
+    Defined but not used: ‘effMultFnDFn’
+    |
+107 |          (effAddFnDFn, effMultFnDFn))
+    |                        ^^^^^^^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-realfn/src/Numeric/AERN/RmToRn/NumericOrder/FromInOutRingOps/Arbitrary.hs:110:9: warning: [-Wunused-matches]
+    Defined but not used: ‘area’
+    |
+110 |         area@(sampleFn, maybeRange)
+    |         ^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-realfn/src/Numeric/AERN/RmToRn/NumericOrder/FromInOutRingOps/Arbitrary.hs:110:15: warning: [-Wunused-matches]
+    Defined but not used: ‘sampleFn’
+    |
+110 |         area@(sampleFn, maybeRange)
+    |               ^^^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-realfn/src/Numeric/AERN/RmToRn/NumericOrder/FromInOutRingOps/Arbitrary.hs:110:25: warning: [-Wunused-matches]
+    Defined but not used: ‘maybeRange’
+    |
+110 |         area@(sampleFn, maybeRange)
+    |                         ^^^^^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-realfn/src/Numeric/AERN/RmToRn/NumericOrder/FromInOutRingOps/Arbitrary.hs:116:27: warning: [GHC-63397] [-Wname-shadowing]
+    This binding for ‘seq’ shadows the existing binding
+      imported from ‘Prelude’ at src/Numeric/AERN/RmToRn/NumericOrder/FromInOutRingOps/Arbitrary.hs:22:1-32
+      (and originally defined in ‘ghc-prim-0.10.0:GHC.Prim’)
+    |
+116 |     arbitraryFromSequence seq 
+    |                           ^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-realfn/src/Numeric/AERN/RmToRn/NumericOrder/FromInOutRingOps/Arbitrary.hs:224:5: warning: [GHC-62161] [-Wincomplete-patterns]
+    Pattern match(es) are non-exhaustive
+    In an equation for ‘ensureOverlap’:
+        Patterns of type ‘[fn]’ not matched:
+            []
+            [_]
+            (_:_:_:_)
+    |
+224 |     ensureOverlap fns@[fn1,fn2] = [fn1,fn2Shifted]
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^...
+
+/tmp/aern-audit.zp9Mzz/source/aern-realfn/src/Numeric/AERN/RmToRn/NumericOrder/FromInOutRingOps/Arbitrary.hs:224:19: warning: [-Wunused-matches]
+    Defined but not used: ‘fns’
+    |
+224 |     ensureOverlap fns@[fn1,fn2] = [fn1,fn2Shifted]
+    |                   ^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-realfn/src/Numeric/AERN/RmToRn/NumericOrder/FromInOutRingOps/Arbitrary.hs:243:13: warning: [GHC-62161] [-Wincomplete-patterns]
+    Pattern match(es) are non-exhaustive
+    In an equation for ‘pick’:
+        Patterns of type ‘t’, ‘(a, Domain a, Domain a)’,
+                         ‘[(Bool, (a, Domain a, Domain a))]’ not matched:
+            _ (_, _, _) []
+    |
+243 |             pick n (fnPrev, lowerPrev, upperPrev) ((copyPrev, current@(fn,lower,upper)):rest) 
+    |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^...
+
+/tmp/aern-audit.zp9Mzz/source/aern-realfn/src/Numeric/AERN/RmToRn/NumericOrder/FromInOutRingOps/Arbitrary.hs:243:18: warning: [GHC-63397] [-Wname-shadowing]
+    This binding for ‘n’ shadows the existing binding
+      bound at src/Numeric/AERN/RmToRn/NumericOrder/FromInOutRingOps/Arbitrary.hs:236:32
+    |
+243 |             pick n (fnPrev, lowerPrev, upperPrev) ((copyPrev, current@(fn,lower,upper)):rest) 
+    |                  ^
+
+/tmp/aern-audit.zp9Mzz/source/aern-realfn/src/Numeric/AERN/RmToRn/NumericOrder/FromInOutRingOps/Arbitrary.hs:243:89: warning: [GHC-63397] [-Wname-shadowing]
+    This binding for ‘rest’ shadows the existing binding
+      bound at src/Numeric/AERN/RmToRn/NumericOrder/FromInOutRingOps/Arbitrary.hs:262:29
+    |
+243 |             pick n (fnPrev, lowerPrev, upperPrev) ((copyPrev, current@(fn,lower,upper)):rest) 
+    |                                                                                         ^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-realfn/src/Numeric/AERN/RmToRn/NumericOrder/FromInOutRingOps/Arbitrary.hs:256:17: warning: [-Wunused-local-binds]
+    Defined but not used: ‘upperPrevTr’
+    |
+256 |                 upperPrevTr = upperPrev .<+>. dist
+    |                 ^^^^^^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-realfn/src/Numeric/AERN/RmToRn/NumericOrder/FromInOutRingOps/Arbitrary.hs:260:17: warning: [GHC-63397] [-Wname-shadowing]
+    This binding for ‘sampleDom’ shadows the existing binding
+      bound at src/Numeric/AERN/RmToRn/NumericOrder/FromInOutRingOps/Arbitrary.hs:216:5
+    |
+260 |                 sampleDom = snd $ head $ toAscList $ getDomainBox fn
+    |                 ^^^^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-realfn/src/Numeric/AERN/RmToRn/NumericOrder/FromInOutRingOps/Arbitrary.hs:262:13: warning: [-Wunused-local-binds]
+    Defined but not used: ‘fnBounds’
+    |
+262 |             fnBounds@(first:rest) = map addBounds list
+    |             ^^^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-realfn/src/Numeric/AERN/RmToRn/NumericOrder/FromInOutRingOps/Arbitrary.hs:262:13: warning: [GHC-62161] [-Wincomplete-uni-patterns]
+    Pattern match(es) are non-exhaustive
+    In a pattern binding:
+        Patterns of type ‘[(a, Domain a, Domain a)]’ not matched: []
+    |
+262 |             fnBounds@(first:rest) = map addBounds list
+    |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-realfn/src/Numeric/AERN/RmToRn/NumericOrder/FromInOutRingOps/Arbitrary.hs:266:44: warning: [GHC-68441] [-Wdeprecations]
+    In the use of ‘next’
+    (imported from System.Random, but defined in System.Random.Internal):
+    Deprecated: "No longer used"
+    |
+266 |                         drop 13 $ iterate (R.next . snd) (0,g)
+    |                                            ^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-realfn/src/Numeric/AERN/RmToRn/NumericOrder/FromInOutRingOps/Arbitrary.hs:269:27: warning: [GHC-63397] [-Wname-shadowing]
+    This binding for ‘list’ shadows the existing binding
+      bound at src/Numeric/AERN/RmToRn/NumericOrder/FromInOutRingOps/Arbitrary.hs:236:34
+    |
+269 |             shrinkToRange list =
+    |                           ^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-realfn/src/Numeric/AERN/RmToRn/NumericOrder/FromInOutRingOps/Arbitrary.hs:274:17: warning: [GHC-63397] [-Wname-shadowing]
+    This binding for ‘shrink’ shadows the existing binding
+      imported from ‘Test.QuickCheck’ at src/Numeric/AERN/RmToRn/NumericOrder/FromInOutRingOps/Arbitrary.hs:50:1-22
+      (and originally defined in ‘Test.QuickCheck.Arbitrary’)
+    |
+274 |                 shrink range (fn,_) =
+    |                 ^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-realfn/src/Numeric/AERN/RmToRn/NumericOrder/FromInOutRingOps/Arbitrary.hs:345:45: warning: [GHC-62161] [-Wincomplete-uni-patterns]
+    Pattern match(es) are non-exhaustive
+    In a lambda abstraction:
+        Patterns of type ‘Maybe (Gen [Domain fn])’ not matched: Nothing
+    |
+345 |     coeffsL <- vectorOf (3 * constrTerms) ((\(Just a) -> a) $ RefOrd.arbitraryTuple 1)
+    |                                             ^^^^^^^^^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-realfn/src/Numeric/AERN/RmToRn/NumericOrder/FromInOutRingOps/Arbitrary.hs:352:5: warning: [GHC-62161] [-Wincomplete-patterns]
+    Pattern match(es) are non-exhaustive
+    In an equation for ‘getEndpoint’:
+        Patterns of type ‘[b]’ not matched:
+            []
+            (_:_:_)
+    |
+352 |     getEndpoint [a] = fst $ RefOrd.getEndpointsOutEff effGetEndptsDom a
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[10 of 14] Compiling Numeric.AERN.RmToRn.NumericOrder.FromInOutRingOps.Comparison
+[11 of 14] Compiling Numeric.AERN.RmToRn.RefinementOrderRounding.BernsteinPoly
+[12 of 14] Compiling Numeric.AERN.RmToRn.NumericOrder.FromInOutRingOps.Minmax
+
+/tmp/aern-audit.zp9Mzz/source/aern-realfn/src/Numeric/AERN/RmToRn/NumericOrder/FromInOutRingOps/Minmax.hs:343:5: warning: [GHC-62161] [-Wincomplete-uni-patterns]
+    Pattern match(es) are non-exhaustive
+    In a pattern binding:
+        Patterns of type ‘Maybe (Domain f)’ not matched: Nothing
+    |
+343 |     Just aUp = maybeaUp
+    |     ^^^^^^^^^^^^^^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-realfn/src/Numeric/AERN/RmToRn/NumericOrder/FromInOutRingOps/Minmax.hs:344:5: warning: [GHC-62161] [-Wincomplete-uni-patterns]
+    Pattern match(es) are non-exhaustive
+    In a pattern binding:
+        Patterns of type ‘Maybe (Domain f)’ not matched: Nothing
+    |
+344 |     Just aDn = maybeaDn
+    |     ^^^^^^^^^^^^^^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-realfn/src/Numeric/AERN/RmToRn/NumericOrder/FromInOutRingOps/Minmax.hs:354:5: warning: [GHC-62161] [-Wincomplete-uni-patterns]
+    Pattern match(es) are non-exhaustive
+    In a pattern binding: Patterns of type ‘[Var f]’ not matched: []
+    |
+354 |     (var:_) = getVars $ getDomainBox $ x
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-realfn/src/Numeric/AERN/RmToRn/NumericOrder/FromInOutRingOps/Minmax.hs:470:5: warning: [-Wunused-local-binds]
+    Defined but not used: ‘sampleF’
+    |
+470 |     sampleF = x
+    |     ^^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-realfn/src/Numeric/AERN/RmToRn/NumericOrder/FromInOutRingOps/Minmax.hs:471:5: warning: [GHC-62161] [-Wincomplete-uni-patterns]
+    Pattern match(es) are non-exhaustive
+    In a pattern binding: Patterns of type ‘[Var f]’ not matched: []
+    |
+471 |     (var:_) = getVars $ getDomainBox $ x
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-realfn/src/Numeric/AERN/RmToRn/NumericOrder/FromInOutRingOps/Minmax.hs:568:5: warning: [GHC-62161] [-Wincomplete-uni-patterns]
+    Pattern match(es) are non-exhaustive
+    In a pattern binding: Patterns of type ‘[Var f]’ not matched: []
+    |
+568 |     (var:_) = getVars $ getDomainBox $ x
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-realfn/src/Numeric/AERN/RmToRn/NumericOrder/FromInOutRingOps/Minmax.hs:589:5: warning: [-Wunused-local-binds]
+    Defined but not used: ‘sampleF’
+    |
+589 |     sampleF = x
+    |     ^^^^^^^
+[13 of 14] Compiling Numeric.AERN.RmToRn.RefinementOrderRounding.ChebyshevPoly
+[14 of 14] Compiling Numeric.AERN.RmToRn.RefinementOrderRounding.Reciprocal
+
+/tmp/aern-audit.zp9Mzz/source/aern-realfn/src/Numeric/AERN/RmToRn/RefinementOrderRounding/Reciprocal.hs:134:9: warning: [GHC-62161] [-Wincomplete-uni-patterns]
+    Pattern match(es) are non-exhaustive
+    In a pattern binding:
+        Patterns of type ‘[Domain f]’ not matched:
+            []
+            [_]
+    |
+134 |         (c1Pre : c2Pre : _) = coeffs1ToKPre
+    |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+aern-realfn> copy/register
+Installing library in /tmp/aern-audit.zp9Mzz/.stack-work/install/x86_64-linux-tinfo6/679cc64c76e222dbde5fd44af4907e261fb8c246ed2bc968e58bc5dabf57e98b/9.6.7/lib/x86_64-linux-ghc-9.6.7/aern-realfn-0.5.0-G5MXSpaJtRTKYaCFF2hxDE
+Registering library for aern-realfn-0.5.0..

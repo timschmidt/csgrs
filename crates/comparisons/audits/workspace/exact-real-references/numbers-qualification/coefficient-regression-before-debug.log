@@ -1,0 +1,43 @@
+   Compiling hyperreal v0.13.1 (/home/tim/Documents/GitHub/workspace/hyperreal)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 2.41s
+     Running unittests src/lib.rs (.audit-targets/ireal-derivative-18555/debug/deps/hyperreal-a346315a45113d5d)
+
+running 4 tests
+test computable::node::tests::asinh_rational_series_wide_coefficients ... FAILED
+test computable::node::tests::asinh_computable_series_wide_coefficients ... FAILED
+test computable::node::tests::asin_computable_series_wide_coefficients ... FAILED
+test computable::node::tests::asin_rational_series_wide_coefficients ... FAILED
+
+failures:
+
+---- computable::node::tests::asinh_rational_series_wide_coefficients stdout ----
+
+thread 'computable::node::tests::asinh_rational_series_wide_coefficients' (307) panicked at src/computable/approximation/inverse_hyperbolic.rs:107:26:
+attempt to multiply with overflow
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+---- computable::node::tests::asinh_computable_series_wide_coefficients stdout ----
+
+thread 'computable::node::tests::asinh_computable_series_wide_coefficients' (306) panicked at src/computable/approximation/inverse_hyperbolic.rs:70:26:
+attempt to multiply with overflow
+
+---- computable::node::tests::asin_computable_series_wide_coefficients stdout ----
+
+thread 'computable::node::tests::asin_computable_series_wide_coefficients' (304) panicked at src/computable/approximation/inverse_trig.rs:404:25:
+attempt to multiply with overflow
+
+---- computable::node::tests::asin_rational_series_wide_coefficients stdout ----
+
+thread 'computable::node::tests::asin_rational_series_wide_coefficients' (305) panicked at src/computable/approximation/inverse_trig.rs:352:25:
+attempt to multiply with overflow
+
+
+failures:
+    computable::node::tests::asin_computable_series_wide_coefficients
+    computable::node::tests::asin_rational_series_wide_coefficients
+    computable::node::tests::asinh_computable_series_wide_coefficients
+    computable::node::tests::asinh_rational_series_wide_coefficients
+
+test result: FAILED. 0 passed; 4 failed; 0 ignored; 0 measured; 664 filtered out; finished in 3.00s
+
+error: test failed, to rerun pass `--lib`

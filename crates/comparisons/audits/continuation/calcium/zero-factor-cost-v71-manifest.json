@@ -1,0 +1,1819 @@
+{
+  "checkpoint": 71,
+  "status": "isolated-native-cost-qualified",
+  "recorded": "2026-09-11T19:53:02.029Z",
+  "files": {
+    "build-zero-factor-cost-v71.mjs": "0e9945a26865b7f8bb3fb14e9207581f821707c172c180b82817ea90aa6d96b2",
+    "capture.mjs": "aaf6df6bbd73025a8541617ce83731ae5ea3fd2272bd98c15e3c4c12b713ce23",
+    "check-zero-factor-cost-controls-v71.mjs": "44e87d2f364b1ea3d3131c16736c19cf41e44c72674b4f1835380b39769d5717",
+    "check-zero-factor-native-v71.mjs": "2ada653f2afdf97dbeefdc326e148ff1ba52a815ae8996647925b1b3cda28839",
+    "check-zero-factor-v70.mjs": "54515bfcd5e21a970a678ad4b658459b5db0c887801a775ad62da5eb026bb7bb",
+    "paired-statistics-v60.mjs": "b40e8b928b866a0298a06520ac415ec09013fc8c5f704e2eda8df02d770bbc5d",
+    "point-qualified-capture.mjs": "8b574f18a85c470ef47f9eafc780c462a93e811ebe15695f0950cfef17ada66e",
+    "power-rational-oracle-v69.mjs": "54b42d8af861f589b2c399c7b3d3d555d6dc69e6df98c4eca3c8007a1ed5c645",
+    "power-sums-allocation.rs": "61e4e5d40ca41a9540aab3e1d43f1f8266dce6e4d8f5952d375b700ffdd7d0f4",
+    "power-sums-polynomial-oracle.mjs": "91a277ede6c566a0d6e74e368ef989a3f9fe842f10a495347efc1b4f8a73efb7",
+    "power-sums-public.rs": "68abb7309ae0a23ffa4e53a48e91002a1e047cff3b4dcc78a71dcc7340e7643e",
+    "power-wide-cases-v69.mjs": "87e0ff4443dfb9390681c3f4ccd5f50ed1810f385eb221930b9fc9fc37ef5905",
+    "power-wide-input-v69.json": "3fe69641fcee2e2822d027113fc541888ed9fc03e02fc6fae8c2e8ec96597700",
+    "probe-zero-factor-allocation-v71.mjs": "377fe636afdd38d207e54ae739b48dc96b44028478a5afcb99556761d56efa15",
+    "results/power-rebased-baseline-approx-v68.stdout": "7b628db1453275c3ad4700523e7bdf36d1384904dd92f1afc78ad651a81ae350",
+    "results/power-rebased-baseline-extended-v68.stdout": "fa94ed3ec2891b612b14e7ccb61c52802b5a4fef7c28aeb7f18b8ab51f23e2c8",
+    "results/power-rebased-baseline-public-v68.stdout": "7b628db1453275c3ad4700523e7bdf36d1384904dd92f1afc78ad651a81ae350",
+    "results/power-wide-baseline-run-v69.stdout": "e4787cc908c2d16f68e8d27fffed8d37716743f058defdd3ba57559007048396",
+    "results/zero-factor-allocation-probe-10-0-baseline-v71.json": "513774f4065527129287b62b2dc71e48cbfff54e770c7bdee51e4ff066e05663",
+    "results/zero-factor-allocation-probe-10-0-baseline-v71.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/zero-factor-allocation-probe-10-0-baseline-v71.stdout": "fd3d712d650d4cf22832b87715df4fcc4ff7ad8c9cec8df91d5d9318d8a268e0",
+    "results/zero-factor-allocation-probe-10-0-candidate-v71.json": "407dcf81ce97395d6ff8425a0ee7b42bd0a67b05567f3c5c06d8b11ad39f04e2",
+    "results/zero-factor-allocation-probe-10-0-candidate-v71.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/zero-factor-allocation-probe-10-0-candidate-v71.stdout": "3ae22a5fa6ef1dd50212d6988c2c2868ccddde8accac719585d069bdbd05e2c7",
+    "results/zero-factor-allocation-probe-10-1-baseline-v71.json": "8ccb680db9209ea13b18b00d3abe9c15fc8c675ec541ade53a80304906f44444",
+    "results/zero-factor-allocation-probe-10-1-baseline-v71.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/zero-factor-allocation-probe-10-1-baseline-v71.stdout": "f0ea85aa08057cd2fdcc3de8f80beb3e73216d6d56b7cab57ba661a3ab6258ed",
+    "results/zero-factor-allocation-probe-10-1-candidate-v71.json": "e184e9c79ef6d9569084bf6276b983eb89b9a738d8dd1a8cbe55ad4b13c6f2c3",
+    "results/zero-factor-allocation-probe-10-1-candidate-v71.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/zero-factor-allocation-probe-10-1-candidate-v71.stdout": "a003c9f8d3b601621e50de68bc4ffb5b42b34d6e947e3f129c0a34c9027bea98",
+    "results/zero-factor-allocation-probe-10-2-baseline-v71.json": "8aa8d6cdb1dd8f144e1b74a0378b8f9f13ee35c081b74e97867df733f1ebe77c",
+    "results/zero-factor-allocation-probe-10-2-baseline-v71.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/zero-factor-allocation-probe-10-2-baseline-v71.stdout": "d58561512c9394a3f7d4421552b5ecf57788f981ba8ae437545cd05331ee333f",
+    "results/zero-factor-allocation-probe-10-2-candidate-v71.json": "89ca0508a4a0a7d50a1cc6e1ac3c54f81866396d68ae557758d371252cfcf423",
+    "results/zero-factor-allocation-probe-10-2-candidate-v71.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/zero-factor-allocation-probe-10-2-candidate-v71.stdout": "f4d19e35a4eafd126df9681c698acf4e892f8c7f3ec8aa42f2a199b13b097628",
+    "results/zero-factor-allocation-probe-10-3-baseline-v71.json": "6938018542ca227b624a89bb5fb2a3d8ea5fe0b4a4776a7b9a875527e3b3960e",
+    "results/zero-factor-allocation-probe-10-3-baseline-v71.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/zero-factor-allocation-probe-10-3-baseline-v71.stdout": "811a7937464b9f888937a7420966acb7b0a8fa06a3120e8e0b6515bd84aa9901",
+    "results/zero-factor-allocation-probe-10-3-candidate-v71.json": "9012928770399a3d27e70ecbb2bb21a46e1a20a12f657289a20146778f5e91bb",
+    "results/zero-factor-allocation-probe-10-3-candidate-v71.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/zero-factor-allocation-probe-10-3-candidate-v71.stdout": "9395625c5015ae6d6c284ca1cf79a332156b9696478ce26ea04601844d767453",
+    "results/zero-factor-allocation-probe-107-0-baseline-v71.json": "5740d6bba78c706ae0af8145afd36edc06c09b9ba890adf9f0818d75e6e0762d",
+    "results/zero-factor-allocation-probe-107-0-baseline-v71.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/zero-factor-allocation-probe-107-0-baseline-v71.stdout": "288c3d74931556786ede85db74b2630875661000bf3145cd9c16c32e41e091b2",
+    "results/zero-factor-allocation-probe-107-0-candidate-v71.json": "dc235ead42195b4cc42ac29fe40fed7ed8611358f9e20e963b869f7c8c22cabc",
+    "results/zero-factor-allocation-probe-107-0-candidate-v71.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/zero-factor-allocation-probe-107-0-candidate-v71.stdout": "b4823620f9c40c1b5e39eaed50dbbf8b6f6e363f50c30e79239a23a6590ee3a5",
+    "results/zero-factor-allocation-probe-107-1-baseline-v71.json": "8a11195b2f6ecf86f08861a8cbf96eab634cc13646f0b4485257a51232418158",
+    "results/zero-factor-allocation-probe-107-1-baseline-v71.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/zero-factor-allocation-probe-107-1-baseline-v71.stdout": "69567dd981fee5e44d095e673f508f930efe732ec1d62490bc5dbe7f21a77ce5",
+    "results/zero-factor-allocation-probe-107-1-candidate-v71.json": "903e9926b0babf6c88862a638151cae0acb74c5c31be9551656096822b36efd2",
+    "results/zero-factor-allocation-probe-107-1-candidate-v71.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/zero-factor-allocation-probe-107-1-candidate-v71.stdout": "2bcb7776ee4caf3047662ea79dbb7ada1f962b8c7beed4a141a0190b94a16c6b",
+    "results/zero-factor-allocation-probe-107-2-baseline-v71.json": "8f0cecdb7029c7bb6e5adf2765909a366fa16a4c3d1e403e3f0831c19ba9e40f",
+    "results/zero-factor-allocation-probe-107-2-baseline-v71.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/zero-factor-allocation-probe-107-2-baseline-v71.stdout": "ea753ae7eed4fca6cfc184824489f46b94b256209d265fc2bf30f07c9b16084b",
+    "results/zero-factor-allocation-probe-107-2-candidate-v71.json": "faa8d84056173411bb0ad0c94d586ec2fc7b56e83567d61ac956be1ff432f8ee",
+    "results/zero-factor-allocation-probe-107-2-candidate-v71.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/zero-factor-allocation-probe-107-2-candidate-v71.stdout": "2a9a7321a935a2483159fa505e3b40c5714462c98746463e436d6ef26b829eed",
+    "results/zero-factor-allocation-probe-107-3-baseline-v71.json": "c4e9df6012e5c2d4ce293f440e4e36c2b5f9b62bf8e16064086daf1a9e09c97e",
+    "results/zero-factor-allocation-probe-107-3-baseline-v71.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/zero-factor-allocation-probe-107-3-baseline-v71.stdout": "105327adb6b1a8f62cda3e15844c7de4d8f6609239f78b3fde587baf8325605e",
+    "results/zero-factor-allocation-probe-107-3-candidate-v71.json": "ade1a1f76acb3975b4d9213d17cab35a7c9ede3a3d18196dca5b28479811a342",
+    "results/zero-factor-allocation-probe-107-3-candidate-v71.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/zero-factor-allocation-probe-107-3-candidate-v71.stdout": "857999f172e82abed738b74fc9bd5f8a437a5816ad78c96eae06657fd107215d",
+    "results/zero-factor-allocation-probe-11-0-baseline-v71.json": "99a33b07e04bc4f75cc64d7e1963557cb0aa3cbbe78a89defd1455fe01ea0ba6",
+    "results/zero-factor-allocation-probe-11-0-baseline-v71.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/zero-factor-allocation-probe-11-0-baseline-v71.stdout": "fb36cf54743284a2ee8a54344311eaad238055225d3ae1a8b790b74243d2fe45",
+    "results/zero-factor-allocation-probe-11-0-candidate-v71.json": "e8903a9f267bf364310576fd4d7751c5c5c7438ba13867dee68c5fb8061978cb",
+    "results/zero-factor-allocation-probe-11-0-candidate-v71.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/zero-factor-allocation-probe-11-0-candidate-v71.stdout": "d55a31a93d528c20f4e877c86a7e8106ac5ad44ebcdf551658d0a48f8437debc",
+    "results/zero-factor-allocation-probe-11-1-baseline-v71.json": "52c39b2e9a59dbb606a37d23475ab4c8277b91aabd6f5f7551541df0d1948ce8",
+    "results/zero-factor-allocation-probe-11-1-baseline-v71.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/zero-factor-allocation-probe-11-1-baseline-v71.stdout": "0ae645619c8634c6eb7df6b872a96d8878d6170328d8f1256ebce89284538b34",
+    "results/zero-factor-allocation-probe-11-1-candidate-v71.json": "fe51ed655385980c4e14f6f94589b239b174b7d5d20413efa7873b34d094cb56",
+    "results/zero-factor-allocation-probe-11-1-candidate-v71.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/zero-factor-allocation-probe-11-1-candidate-v71.stdout": "b87b5a9145c552cc1b2e7154667be37d668ce5d9a4ec40bdb0d16088b4348c93",
+    "results/zero-factor-allocation-probe-11-2-baseline-v71.json": "fdf1e6908b89edb2b6175be906e5f99b34313d67c02faf8b072ae853600e7445",
+    "results/zero-factor-allocation-probe-11-2-baseline-v71.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/zero-factor-allocation-probe-11-2-baseline-v71.stdout": "dcb973d64ec2407cbb90f4608623a3d1db88da27f80835968084aa3b81ac7a9a",
+    "results/zero-factor-allocation-probe-11-2-candidate-v71.json": "49fc1b3e8934701f346c84a2b737ecb643b9aea79c141660d20f33f81b16b219",
+    "results/zero-factor-allocation-probe-11-2-candidate-v71.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/zero-factor-allocation-probe-11-2-candidate-v71.stdout": "f64f32102c968a36e8e42c19bb548b10952cc07ec4d180790c2a7036f284a44a",
+    "results/zero-factor-allocation-probe-11-3-baseline-v71.json": "9f93fba83c7b909f90ce25472b220c1d794d57468004941ebcbefe31c406597c",
+    "results/zero-factor-allocation-probe-11-3-baseline-v71.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/zero-factor-allocation-probe-11-3-baseline-v71.stdout": "f48e5b76526f595ebd7e408eacac381b2269649001b7c24a0a702f5c0cbddefe",
+    "results/zero-factor-allocation-probe-11-3-candidate-v71.json": "fe8a2c63c37b1d48d2708b8c41593c09a54e812dd750e5e36d9f349261141ae6",
+    "results/zero-factor-allocation-probe-11-3-candidate-v71.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/zero-factor-allocation-probe-11-3-candidate-v71.stdout": "3b36223f2253e604d721133739a849c4f533e646c2ea6084f349ed735e1101e8",
+    "results/zero-factor-allocation-probe-111-0-baseline-v71.json": "63b9fa3bb1e24b00f062d1d63d0a05b77a6edcaa91a802cf3f7190e2aed093ff",
+    "results/zero-factor-allocation-probe-111-0-baseline-v71.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/zero-factor-allocation-probe-111-0-baseline-v71.stdout": "55ef63e298e05a198628e82ca8a9f4107c6d8e928041f7454b9e81c21b1bebe3",
+    "results/zero-factor-allocation-probe-111-0-candidate-v71.json": "f3545208fc4776c08732180ca744cbf241631ce90515447fb0707e21008d1123",
+    "results/zero-factor-allocation-probe-111-0-candidate-v71.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/zero-factor-allocation-probe-111-0-candidate-v71.stdout": "25b8e70ceef8258272bcbcf3a4df4b2d997aef266d71d3dca45fa52620787948",
+    "results/zero-factor-allocation-probe-111-1-baseline-v71.json": "3b38de2fe85255d574dd5b7e18c1babe72cea376131aac9d033f6bf04b17280b",
+    "results/zero-factor-allocation-probe-111-1-baseline-v71.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/zero-factor-allocation-probe-111-1-baseline-v71.stdout": "7b4168479a69b66d1a30291c7733ca5c9bdd6435a1059172332842e2ac5b9c03",
+    "results/zero-factor-allocation-probe-111-1-candidate-v71.json": "5437ee0da68af485e784a91e9dd0f139c7efcdda578f2688d736e28a4b79486c",
+    "results/zero-factor-allocation-probe-111-1-candidate-v71.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/zero-factor-allocation-probe-111-1-candidate-v71.stdout": "6ee9052df8382a49f874e74dff34f2c4ceb3ae3cf23a4d59c17240b3a5b61015",
+    "results/zero-factor-allocation-probe-111-2-baseline-v71.json": "b8244d025aeadd317a0a30e24761e2d021311b581ed8dd8f7378cb5437a48433",
+    "results/zero-factor-allocation-probe-111-2-baseline-v71.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/zero-factor-allocation-probe-111-2-baseline-v71.stdout": "d3a2cca245d507042d8c8b0c39b0994d56b1a52ac93e2901d6dcf3302f71ddb8",
+    "results/zero-factor-allocation-probe-111-2-candidate-v71.json": "f3f0ab6c7367cced7f7a2a4c41db45972645f4ea447c4d2fe3433efd5834a3ba",
+    "results/zero-factor-allocation-probe-111-2-candidate-v71.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/zero-factor-allocation-probe-111-2-candidate-v71.stdout": "1a4da819136a7031d4f32bc2b00454721a19c91ecbeab3485b77c58272284140",
+    "results/zero-factor-allocation-probe-111-3-baseline-v71.json": "a9fbb028c800f6d8b0ac48b7644cf6a075a2ca8a1bfa714e479dad0881fa51af",
+    "results/zero-factor-allocation-probe-111-3-baseline-v71.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/zero-factor-allocation-probe-111-3-baseline-v71.stdout": "cbe5bf285e844f09a5962d12be5ba7229fe6f1ab8d7d21a43cd05a4f8b3857b8",
+    "results/zero-factor-allocation-probe-111-3-candidate-v71.json": "ea62258815846fd91efa20f634322e2b5fca2312b609eead60a8722e52c44126",
+    "results/zero-factor-allocation-probe-111-3-candidate-v71.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/zero-factor-allocation-probe-111-3-candidate-v71.stdout": "fc6c64f4f863976024af478135ecf9e05c8383a43cc1d63d032d367a1a0cd367",
+    "results/zero-factor-allocation-probe-36-0-baseline-v71.json": "cfc473a71ff9b1797677409db51d79045934e33e2e90853d5660523173da7699",
+    "results/zero-factor-allocation-probe-36-0-baseline-v71.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/zero-factor-allocation-probe-36-0-baseline-v71.stdout": "b39f9c638085773d248897709cab0fe6abadcacc0ab7f933a75ee971c448d740",
+    "results/zero-factor-allocation-probe-36-0-candidate-v71.json": "76d6d5c2f4aacecf3d5f3f97af1a3a9981a0cfbd43a48987d4ff0497b0ede306",
+    "results/zero-factor-allocation-probe-36-0-candidate-v71.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/zero-factor-allocation-probe-36-0-candidate-v71.stdout": "d3a9c968147c9a7ac044e9951afe313aba9ac47b022a61fd9f1d77c896ebe385",
+    "results/zero-factor-allocation-probe-36-1-baseline-v71.json": "90c005f353b71f17da2f21a778bd02eb18683ed3fd591583534e306b910b7f87",
+    "results/zero-factor-allocation-probe-36-1-baseline-v71.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/zero-factor-allocation-probe-36-1-baseline-v71.stdout": "833b92a3f8f91a51942a18eff787cd14d882395f04f1356ff5d53c5aa82679d7",
+    "results/zero-factor-allocation-probe-36-1-candidate-v71.json": "ddf8d49f735787e8e69af21ff1b005aff0023b322f0566e40e0573808085a152",
+    "results/zero-factor-allocation-probe-36-1-candidate-v71.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/zero-factor-allocation-probe-36-1-candidate-v71.stdout": "e3f5119d5e24f17aa213b1a20b86ef1b4010513fd2ecc05199d59ac074e8d16a",
+    "results/zero-factor-allocation-probe-36-2-baseline-v71.json": "a2405d12dda711232e41dd069c8e0fa76c48a24afede4cf9d99b51cc35958510",
+    "results/zero-factor-allocation-probe-36-2-baseline-v71.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/zero-factor-allocation-probe-36-2-baseline-v71.stdout": "f09e8758b51d1495ac427fb48d46f68249e2e7d51f785bb8ce62ef8f0b199493",
+    "results/zero-factor-allocation-probe-36-2-candidate-v71.json": "c555baf53d51a9bbecaebe74c84c1ce40250daa8307d40057161d6ce97f91ca4",
+    "results/zero-factor-allocation-probe-36-2-candidate-v71.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/zero-factor-allocation-probe-36-2-candidate-v71.stdout": "2f3fdc6ac896f41affe62249de216487eec8f345137c75cdfdda3161e606e8fd",
+    "results/zero-factor-allocation-probe-36-3-baseline-v71.json": "1e3f1f9836d591acc9acd2932644dfdbb7897a4a14bd49758d34a64907247364",
+    "results/zero-factor-allocation-probe-36-3-baseline-v71.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/zero-factor-allocation-probe-36-3-baseline-v71.stdout": "b3ce4a3b123f910e601a0b47465f4f958f88213543fabb1a59bbba5a4941f855",
+    "results/zero-factor-allocation-probe-36-3-candidate-v71.json": "af1b39974b25cba4bfcb9bacda486a0a1e4f3255b4ffd2573d8028288f087186",
+    "results/zero-factor-allocation-probe-36-3-candidate-v71.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/zero-factor-allocation-probe-36-3-candidate-v71.stdout": "8f6989bebc344f5919e88045520d2bc8d92133ca5d590e2cb254f0323ee7e751",
+    "results/zero-factor-allocation-probe-38-0-baseline-v71.json": "f102d38a60be4cb19b60593ff5323e83dd0ed13d8b7fc80a91b9e4d0bad6c2eb",
+    "results/zero-factor-allocation-probe-38-0-baseline-v71.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/zero-factor-allocation-probe-38-0-baseline-v71.stdout": "33f550c4cf46680d091c5ec39163faff9bf752d19fefc99dae8b55cb0f42024c",
+    "results/zero-factor-allocation-probe-38-0-candidate-v71.json": "3280ac84e55745948f5e5ae2dff4cbf87928f35bf681ce4cada1ced13afa1f0c",
+    "results/zero-factor-allocation-probe-38-0-candidate-v71.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/zero-factor-allocation-probe-38-0-candidate-v71.stdout": "7c28df9f171348c87c680911e4635005cd11d7cfaedcc48985002832fa0fe956",
+    "results/zero-factor-allocation-probe-38-1-baseline-v71.json": "24ac33ab6562117228e57fa4c366ce573089fb9c407657fafa9cf913e68c6b52",
+    "results/zero-factor-allocation-probe-38-1-baseline-v71.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/zero-factor-allocation-probe-38-1-baseline-v71.stdout": "88b5ba0db4154f591a4f76cc27961caa3d4421ebfa06a17bd8022b01f1dac7bb",
+    "results/zero-factor-allocation-probe-38-1-candidate-v71.json": "3207c33acd37a2ef0aafab74619cd516b67fb224382f05d5a3ff6d8d75cf6f79",
+    "results/zero-factor-allocation-probe-38-1-candidate-v71.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/zero-factor-allocation-probe-38-1-candidate-v71.stdout": "8c57924e615a8d68191f4e749928a8881929ce86ab26382634e374ee56a07a4f",
+    "results/zero-factor-allocation-probe-38-2-baseline-v71.json": "5b193686e35d1026e4a426050fd1cc585bc28d3441aaf6d2c2135a9f7613a39e",
+    "results/zero-factor-allocation-probe-38-2-baseline-v71.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/zero-factor-allocation-probe-38-2-baseline-v71.stdout": "7d4dab8e4b51993b74e126c5fde02d60d808b79279b847b5b01dfc7e14ffd47c",
+    "results/zero-factor-allocation-probe-38-2-candidate-v71.json": "34315e118ea2ea64949a9f8a3cf17f7133f5d1452c3a09b55b482386d2139cdd",
+    "results/zero-factor-allocation-probe-38-2-candidate-v71.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/zero-factor-allocation-probe-38-2-candidate-v71.stdout": "5854b28e537a2b75cc82e39ecc7e468f4c98fb9169cebf42422c7114111c73f0",
+    "results/zero-factor-allocation-probe-38-3-baseline-v71.json": "04363b9029aaa3e95e13cca05aeff00ad07cb613a34ef5663543972cbdbde494",
+    "results/zero-factor-allocation-probe-38-3-baseline-v71.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/zero-factor-allocation-probe-38-3-baseline-v71.stdout": "76a7d73bd18d8bcb7321e726038f278a38dc6def74a29a335b4d2b0ae678ef87",
+    "results/zero-factor-allocation-probe-38-3-candidate-v71.json": "3fe79aec461e969d95d708019315bd630d691598d0948e08cab0b3830ab2fec0",
+    "results/zero-factor-allocation-probe-38-3-candidate-v71.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/zero-factor-allocation-probe-38-3-candidate-v71.stdout": "d67b7b5b4704ce616716a50a6a1e046cc1fe960107210667bff29bd3120d0f85",
+    "results/zero-factor-allocation-probe-39-0-baseline-v71.json": "7f2c008903cef92b33265e54331849f8d8dd20a1c8444d0421e14a9fdaefb485",
+    "results/zero-factor-allocation-probe-39-0-baseline-v71.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/zero-factor-allocation-probe-39-0-baseline-v71.stdout": "21293ab2404a9607f017684ecb419f4fce8a8f71ba7d99d6a0e6c49de3f51169",
+    "results/zero-factor-allocation-probe-39-0-candidate-v71.json": "e79f0880bdbd512ee8ca637127f07fb80954665a6a022ed6aa7f0422f8ebacca",
+    "results/zero-factor-allocation-probe-39-0-candidate-v71.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/zero-factor-allocation-probe-39-0-candidate-v71.stdout": "eadfd5044b276d6056170669380316858f648ad253cb10d062e30ff8b49cf09a",
+    "results/zero-factor-allocation-probe-39-1-baseline-v71.json": "2ebdc597cdcc47cc95bef7908592a0f822138ce48f2abb11276affbdd5657044",
+    "results/zero-factor-allocation-probe-39-1-baseline-v71.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/zero-factor-allocation-probe-39-1-baseline-v71.stdout": "b93416eb2c8a7d4f7bcbdd572afc6250133e07f77bd34e1ec70bba4d9830b5a2",
+    "results/zero-factor-allocation-probe-39-1-candidate-v71.json": "ef499b31cfb1a92ef855ba82a53b420f00677819c4cf25a93ebb726ccb35da14",
+    "results/zero-factor-allocation-probe-39-1-candidate-v71.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/zero-factor-allocation-probe-39-1-candidate-v71.stdout": "1f6873e408b6be9c89c37753356854c4cd84a420bb438e940c756d7f3ddd17d6",
+    "results/zero-factor-allocation-probe-39-2-baseline-v71.json": "d40d81fd0af84673fa2022e4f174e0cfb8db8227cfd6b6941b36092ceebfbce4",
+    "results/zero-factor-allocation-probe-39-2-baseline-v71.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/zero-factor-allocation-probe-39-2-baseline-v71.stdout": "b4655c3376dec0c603d2c8920424e60840c6a54d188d4d3909d7d9178f66adef",
+    "results/zero-factor-allocation-probe-39-2-candidate-v71.json": "b818d32c0799e3e5ae7f008cddaaff27af98549b985c899790f9b697323b500e",
+    "results/zero-factor-allocation-probe-39-2-candidate-v71.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/zero-factor-allocation-probe-39-2-candidate-v71.stdout": "be0a2b5f3e0439a2e00fe95b7db0e926d5c351a56fbfb0f324be269033829873",
+    "results/zero-factor-allocation-probe-39-3-baseline-v71.json": "c7775a33e05ee61cfc39df7d2e8188ab2a00e181a878d65045d685948b3c52bf",
+    "results/zero-factor-allocation-probe-39-3-baseline-v71.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/zero-factor-allocation-probe-39-3-baseline-v71.stdout": "0ce4802ed730c374f3c905bf2564ade3ddcff1e89f8382ebc7e8c15f7d212075",
+    "results/zero-factor-allocation-probe-39-3-candidate-v71.json": "29548df7b895be3f17829097cd2b02c27386bdc09c1dac9cf45e134b99a688b0",
+    "results/zero-factor-allocation-probe-39-3-candidate-v71.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/zero-factor-allocation-probe-39-3-candidate-v71.stdout": "70a02594fb7c3dcb25c9d98dec512717e589a2255fa3909c37c3b79f36f0f098",
+    "results/zero-factor-allocation-probe-v71.json": "8180fe1048f191078803bb095d7a4b81cbae478bb728b72b253c50f0f1294edb",
+    "results/zero-factor-allocation-probe-v71.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/zero-factor-allocation-probe-v71.stdout": "b0331cd35580e714b3a74e4a2f8a8514b6a5858458cf7eafdf56d59337c693c0",
+    "results/zero-factor-approx-run-v70.stdout": "bfa5c87bac36bc866b9f1954eb2c4cf3ed4c0739528266780f8aa250e56eadf5",
+    "results/zero-factor-cost-baseline-allocation-check-v71.json": "a70aa2a44bae5d6bcb923a63456f903e67c4d56a1f42e13df2c40f4b5d63ce54",
+    "results/zero-factor-cost-baseline-allocation-check-v71.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/zero-factor-cost-baseline-allocation-check-v71.stdout": "85e812516c0bda0f90e88f551ba2abb517f6ce0f3842aa10f27003087831c89e",
+    "results/zero-factor-cost-baseline-build-v71.json": "e5092d464f87a2cbc55a4afa71206a145b6e032bd993a29159df2d56b88d7b67",
+    "results/zero-factor-cost-baseline-build-v71.stderr": "9af60b3976e0ef8a0556ad306a7433359b5ff549e946d1281adbf3e4a160ae84",
+    "results/zero-factor-cost-baseline-build-v71.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/zero-factor-cost-baseline-clippy-v71.json": "e78e77142626ae11d6fce8ee6372bece8949f17c67f555cedb73d1ad761a4738",
+    "results/zero-factor-cost-baseline-clippy-v71.stderr": "cfaac5581b5d50d23b6bf4537bd21370ad80936f95efe30da6dd86c007978374",
+    "results/zero-factor-cost-baseline-clippy-v71.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/zero-factor-cost-baseline-cpu-check-v71.json": "59c14fd55686c896682b61a6838f5847fdce71d0772c4e2ab0949e1a5bed132d",
+    "results/zero-factor-cost-baseline-cpu-check-v71.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/zero-factor-cost-baseline-cpu-check-v71.stdout": "c194c3bca024e351de1f80c37635ba1352f1c3ac37b4e567e2f8ce78a9fc7aff",
+    "results/zero-factor-cost-baseline-lock-v71.json": "4b012d1c5eae91ca2afd628e8d5eb478d8b671405e262edbd27572d1b355d696",
+    "results/zero-factor-cost-baseline-lock-v71.stderr": "e6be2fc21f61ee2ca9174470fbbef09ec82d1768d4642489a358e3e3a667848a",
+    "results/zero-factor-cost-baseline-lock-v71.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/zero-factor-cost-baseline-metadata-v71.json": "12958f7d45ca0b2d26cc87175b791ae38206cdcf0da02dc91c39eada2649fe1a",
+    "results/zero-factor-cost-baseline-metadata-v71.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/zero-factor-cost-baseline-metadata-v71.stdout": "3d8ccccd7ea3dcf6343b63c17d4d237656ab8e6fa01020ebfff61b4a30868cc2",
+    "results/zero-factor-cost-build-v71.json": "a0484495e3f833829f02fa98a2d50b82dbc9fc0eab128d719ad83a200cb6d43b",
+    "results/zero-factor-cost-build-v71.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/zero-factor-cost-build-v71.stdout": "032d491d8188e34660fb18038cb9c70c003730ad56dd0ffbf8c770bfaf402df0",
+    "results/zero-factor-cost-candidate-allocation-check-v71.json": "7d7153ccff6b1a6712d229f00ce0777d5565d39aefb7b4a6e8090aa88bdb9df2",
+    "results/zero-factor-cost-candidate-allocation-check-v71.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/zero-factor-cost-candidate-allocation-check-v71.stdout": "4a976f62a00e52acddc15d3b82d95feef30e8fc10a88616fb99bd4569a533320",
+    "results/zero-factor-cost-candidate-build-v71.json": "f50b6a37104ca1372bfe3afaf11791e6d720fe1b7490921e1bd2465c53ab44a0",
+    "results/zero-factor-cost-candidate-build-v71.stderr": "bdd455b6807c3dfcb55f0632a035a464670555c26309a47b94de41b2cfe8197b",
+    "results/zero-factor-cost-candidate-build-v71.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/zero-factor-cost-candidate-clippy-v71.json": "e6d5c62ef9b1963e06492ce03f1f4c1942f5583758a7ba9f084db32047528912",
+    "results/zero-factor-cost-candidate-clippy-v71.stderr": "ad5348c80736d7c54fc2c6510020d8405df8b8e7d87261a28614875af98521e6",
+    "results/zero-factor-cost-candidate-clippy-v71.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/zero-factor-cost-candidate-cpu-check-v71.json": "caccb6d539c77efa18ac4071fd5c21bae10ccc96cdcc8afd50c1759ea8840f8a",
+    "results/zero-factor-cost-candidate-cpu-check-v71.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/zero-factor-cost-candidate-cpu-check-v71.stdout": "b9758df95d336ebba642d9a07b175b374abdba48e596aca3d941b478a93d8480",
+    "results/zero-factor-cost-candidate-lock-v71.json": "34a48785994bb8d119b932e8ce2182f23abe64ce6a6468c1e5782f6b8fed3897",
+    "results/zero-factor-cost-candidate-lock-v71.stderr": "e6be2fc21f61ee2ca9174470fbbef09ec82d1768d4642489a358e3e3a667848a",
+    "results/zero-factor-cost-candidate-lock-v71.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/zero-factor-cost-candidate-metadata-v71.json": "bd8396473c598f79f4786068df79eb8892827c5f0fd479c792cc65b0405da7f9",
+    "results/zero-factor-cost-candidate-metadata-v71.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/zero-factor-cost-candidate-metadata-v71.stdout": "a28bb80f4c0bf9e4dd355db03304388640eae84b14f182e6625ddfa34c549196",
+    "results/zero-factor-cost-controls-v71.json": "db7a6be169cce9cdb66c088b57dee907a2a8fe78b6c52d83337cf28f1d4c2a7c",
+    "results/zero-factor-cost-controls-v71.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/zero-factor-cost-controls-v71.stdout": "cd34762686b4c49d1881a7e6e6ecc8d4072ac3e509832a991c1eb80109b7f670",
+    "results/zero-factor-cost-evidence-v71.json": "6bdfe54b3c67eefca9677544aa20f05b8c19520b88401554eae1727e76ec042d",
+    "results/zero-factor-cost-evidence-v71.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/zero-factor-cost-evidence-v71.stdout": "a8f023103f9a57c9b661b2e2afde3f63bbae619385fa0ac5c81c46cf0ee83934",
+    "results/zero-factor-cost-fmt-v71.json": "5cc1ba4482f77e59d2d8f1ba4b7d0340bf82e09c64aae14e874f7ce5ce78ed95",
+    "results/zero-factor-cost-fmt-v71.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/zero-factor-cost-fmt-v71.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/zero-factor-degree-baseline-v70.stdout": "ce061edb360c39addf2ea68d6d639029fc2acf451bca43ccec29ad9131958fc8",
+    "results/zero-factor-degree-run-v70.stdout": "623a952bf55a541a74722e6b978b8867f0134af2e0879defc2248138e76cd3af",
+    "results/zero-factor-native-allocation-0-baseline-v71.json": "91a72f21bcd7b8c482f02ac672c852dca16894cd74a5c8e9e5dbc82368c2022d",
+    "results/zero-factor-native-allocation-0-baseline-v71.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/zero-factor-native-allocation-0-baseline-v71.stdout": "8775cf4b577cb93d6a83765d65e32d9bfa4817c8e23c0eaf9c7277682e4fe5f9",
+    "results/zero-factor-native-allocation-0-candidate-v71.json": "c675ab20c95f9a2985c6527fc83dc4187a8455c8b48069164cff3ba3a7890eed",
+    "results/zero-factor-native-allocation-0-candidate-v71.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/zero-factor-native-allocation-0-candidate-v71.stdout": "2c96fa72cdb02217fc31bded09e0301ae23a7b7d1e88fa71710f935ef5f71bfa",
+    "results/zero-factor-native-allocation-1-baseline-v71.json": "627795d0e8c9ece988858bb6247870df3229fe38fe7f4201906a4955303fcd51",
+    "results/zero-factor-native-allocation-1-baseline-v71.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/zero-factor-native-allocation-1-baseline-v71.stdout": "00aee610d70b2063751025b2caca4ce6c02c85fa1a34c86e6061e0e45d6f38e7",
+    "results/zero-factor-native-allocation-1-candidate-v71.json": "7bdfb7d78b35a81788f2febe55236aa4d10fe58d0f8c11dfb4246d1f007841c6",
+    "results/zero-factor-native-allocation-1-candidate-v71.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/zero-factor-native-allocation-1-candidate-v71.stdout": "584bd303a765fb17aa39ec65455c406fdd883fac8d2fbc2fa58e3085e4906aaa",
+    "results/zero-factor-native-allocation-2-baseline-v71.json": "581748e83b1e509399a313e21bfaf6d6f240e37de63baff84b2d604584c4dc2e",
+    "results/zero-factor-native-allocation-2-baseline-v71.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/zero-factor-native-allocation-2-baseline-v71.stdout": "77e633d134f9a89a5196a7241ff7d6132594aa7eb45185d2ddba817200bc4e6b",
+    "results/zero-factor-native-allocation-2-candidate-v71.json": "8fcb882f7d99551065b43c0e703158baf8b113c4aeba393769392fe2a0fc7832",
+    "results/zero-factor-native-allocation-2-candidate-v71.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/zero-factor-native-allocation-2-candidate-v71.stdout": "4d547a6c939b2255041a8e61810d9f82a99b70a53733c4635c8b21ce4d470c0e",
+    "results/zero-factor-native-allocation-3-baseline-v71.json": "36d98b81d180b40673d33cff19b5ba8b2867ce5e14c608b3c9018489f0a7e089",
+    "results/zero-factor-native-allocation-3-baseline-v71.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/zero-factor-native-allocation-3-baseline-v71.stdout": "82a40a0c9b13a01ba4929d4a505ddbdab03265b3c2495f06bca057326f9ee357",
+    "results/zero-factor-native-allocation-3-candidate-v71.json": "af62cf28d8f7087e98c7d4d4a176a12885262fd14f445c3832f3df0da6b1db04",
+    "results/zero-factor-native-allocation-3-candidate-v71.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/zero-factor-native-allocation-3-candidate-v71.stdout": "bee29fd38d3c52b5ac36334bc4b872d0f01b8a59ab86a6a8579fdf5b23b43c53",
+    "results/zero-factor-native-campaign-v71.json": "d7a0ea9e2de184daa6bd1df77beb46322625c0d47da2f696e7bd9c0eb38b1d0c",
+    "results/zero-factor-native-campaign-v71.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/zero-factor-native-campaign-v71.stdout": "d09aa2d70535bdb552dfc7c0a9ed3b19e26a22e2edc9c3dfcb2f5942914cc4d7",
+    "results/zero-factor-native-check-v71.json": "d8319f659928412693683f9706decf00f710f7f72bb8f32545d4a1799d3706cd",
+    "results/zero-factor-native-check-v71.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/zero-factor-native-check-v71.stdout": "6de1ba298e01cea8119b4506c19efcc8fb8e7f6e974a76ec662af49e0d8cacc8",
+    "results/zero-factor-native-cpu-0-baseline-v71.json": "16d9a28939def5241bae07083d7fde4119a5f91ff28ac11f3ab4753cd3d71720",
+    "results/zero-factor-native-cpu-0-baseline-v71.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/zero-factor-native-cpu-0-baseline-v71.stdout": "1f2d6f64ba5ef36645060d4d9dc1d1974ea91858d3b67e3278b68af16d824535",
+    "results/zero-factor-native-cpu-0-candidate-v71.json": "dbcded46d5d209a147eea2d64fca4525f846ccf5c137bef35171783a1642eebf",
+    "results/zero-factor-native-cpu-0-candidate-v71.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/zero-factor-native-cpu-0-candidate-v71.stdout": "8b95b166dc093f5ce3148560e66de01792467ad1f5ac2bbe3fbcb0edc321a79f",
+    "results/zero-factor-native-cpu-1-baseline-v71.json": "96ec5a77bfc26dabab9cd0fe37d3761b3bd92e33ee6d74c588f1f03a807d9aac",
+    "results/zero-factor-native-cpu-1-baseline-v71.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/zero-factor-native-cpu-1-baseline-v71.stdout": "36b2defe790c74630894ad55a18eaa286a5af54d034bb109ff3857cabcadd46b",
+    "results/zero-factor-native-cpu-1-candidate-v71.json": "2aa52ec175ac7682392776fe6fbb9cf67a0bd10776f67069d8b724c8356afea9",
+    "results/zero-factor-native-cpu-1-candidate-v71.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/zero-factor-native-cpu-1-candidate-v71.stdout": "ed30d6781260a6a263a22633fbfc7ce576779e581b7c323145180e6c65f84236",
+    "results/zero-factor-native-cpu-10-baseline-v71.json": "da17bb30d6df40db1aca1f2f5c077dac76693de78e12336eb600581e141522e0",
+    "results/zero-factor-native-cpu-10-baseline-v71.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/zero-factor-native-cpu-10-baseline-v71.stdout": "ca507786a2f731309f042a881f96265fa17cff50644a3d6e12ae4276ee5c8cbc",
+    "results/zero-factor-native-cpu-10-candidate-v71.json": "2dc18e0699b7114fa52a5b43730691ab5b77cd52865438b4d695f677a558d3f8",
+    "results/zero-factor-native-cpu-10-candidate-v71.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/zero-factor-native-cpu-10-candidate-v71.stdout": "caef1152d7def8406d31ef5ba653d80d25f094d03024046211113274947a19c5",
+    "results/zero-factor-native-cpu-11-baseline-v71.json": "feb6d71b1495eea2a9712554d585f2a047854c833ae892b0bccf204c1fce70fb",
+    "results/zero-factor-native-cpu-11-baseline-v71.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/zero-factor-native-cpu-11-baseline-v71.stdout": "77e856f88d00f902dfb4b3e0544cf50164bcf9859c9dc27f8002bf8dee00b9c2",
+    "results/zero-factor-native-cpu-11-candidate-v71.json": "f93fc89545eaf05990427dff6d3d6786f1ea336201e022f2eba02e8acad7296c",
+    "results/zero-factor-native-cpu-11-candidate-v71.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/zero-factor-native-cpu-11-candidate-v71.stdout": "c46202cd6373c5717f282adbced4a537c580f5870625ae8a00d90613018e0b79",
+    "results/zero-factor-native-cpu-12-baseline-v71.json": "bd6955b00f2ef8142fa1426560fda692652da846cdf2a0ca74e39329f0b19077",
+    "results/zero-factor-native-cpu-12-baseline-v71.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/zero-factor-native-cpu-12-baseline-v71.stdout": "9bc51d63edc59bc447700fb6236ebe87831863d4587e917546e9ef12b04e9e10",
+    "results/zero-factor-native-cpu-12-candidate-v71.json": "4713eccf375c2a765ff8c610c37293505db6e8d23e9e36f5c24e36e5318e8640",
+    "results/zero-factor-native-cpu-12-candidate-v71.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/zero-factor-native-cpu-12-candidate-v71.stdout": "e1609f9071846951525be5f52792e083b005315720a5fdcf1a393684d4699e67",
+    "results/zero-factor-native-cpu-13-baseline-v71.json": "eecff8768370e8ec15e0b6d755dc9c981ee17414fef9c7c8e5fc223a28787b5f",
+    "results/zero-factor-native-cpu-13-baseline-v71.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/zero-factor-native-cpu-13-baseline-v71.stdout": "43948761a846c3647ed80fbfae7a2b48e02c7ad351b0f9d3587c43a14cc2b387",
+    "results/zero-factor-native-cpu-13-candidate-v71.json": "e97fa7800e57db347d77db2e21f94c3f4edd05da1149663c7bfdf7ae1aedb8da",
+    "results/zero-factor-native-cpu-13-candidate-v71.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/zero-factor-native-cpu-13-candidate-v71.stdout": "016e9beac68bd1ab9b09dea0a60cd824ee42f013946abc85c421d5aea83ad625",
+    "results/zero-factor-native-cpu-14-baseline-v71.json": "773f87998ebff3df6b3b7433c4c208177d190fcce5acbc7829f2367ce25b7a38",
+    "results/zero-factor-native-cpu-14-baseline-v71.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/zero-factor-native-cpu-14-baseline-v71.stdout": "c10f74d4a0ce44c8ab6185de261a0ee2468068358f32e5dd668d2494a20b8c9d",
+    "results/zero-factor-native-cpu-14-candidate-v71.json": "8acfaa29e55e63970beb49f4fbce621724dced2cd14a976a41df8cad4a31b00b",
+    "results/zero-factor-native-cpu-14-candidate-v71.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/zero-factor-native-cpu-14-candidate-v71.stdout": "fe7aaff3d84cf6f2932b0e2e8b8c10d401741f366e80204fc1ba60238838f03b",
+    "results/zero-factor-native-cpu-15-baseline-v71.json": "1d59a29c6d7a11bb1939ca42576f22b3da2c2638b4d9ff0b6ca572cf01b56bb7",
+    "results/zero-factor-native-cpu-15-baseline-v71.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/zero-factor-native-cpu-15-baseline-v71.stdout": "3120d5aebcac88ccba4137dc52ded93f06fcefd0447c1e53fc0637209ddf9458",
+    "results/zero-factor-native-cpu-15-candidate-v71.json": "3d4ae068e8544bc9c835106966546e428e9e432a34684ab7f5bf8078d6fa75ac",
+    "results/zero-factor-native-cpu-15-candidate-v71.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/zero-factor-native-cpu-15-candidate-v71.stdout": "2bead514ebd8a37d349891b85c920b927929e1e5ef58c986d3d269becaabf8b1",
+    "results/zero-factor-native-cpu-16-baseline-v71.json": "76a07f5d14b37c922052af51ec144df2c2f38da49b6084facefa3b00a29c2e68",
+    "results/zero-factor-native-cpu-16-baseline-v71.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/zero-factor-native-cpu-16-baseline-v71.stdout": "c30e7ce2f87b77ec2f8bd41c7b091b6cc14689662a0072726d787bad60837f4b",
+    "results/zero-factor-native-cpu-16-candidate-v71.json": "c8c32da33d1055b8c32156dcde2e2fb3f51c550f7ab9a43f72fc0ffbe48bc3f7",
+    "results/zero-factor-native-cpu-16-candidate-v71.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/zero-factor-native-cpu-16-candidate-v71.stdout": "ba8d8bed263f81ec05360fb789fa720268e80acacaf89ae7bb80a438ba751b10",
+    "results/zero-factor-native-cpu-17-baseline-v71.json": "9891a2d0b83ca04220417ccb46787691301070dd1a777efc0bb342290029bb2a",
+    "results/zero-factor-native-cpu-17-baseline-v71.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/zero-factor-native-cpu-17-baseline-v71.stdout": "8d7782a5ca6c333873cf31ed568b56d96801254b9e03cebb854afa09eadd516b",
+    "results/zero-factor-native-cpu-17-candidate-v71.json": "3763186f8aac955a4918929d57fca8b4910def463824a30b20c4217b1f3f9bd6",
+    "results/zero-factor-native-cpu-17-candidate-v71.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/zero-factor-native-cpu-17-candidate-v71.stdout": "8803f600be8040b15fffb8de8aff8fe5fab24a27457afb630464abc19d4a0b67",
+    "results/zero-factor-native-cpu-18-baseline-v71.json": "4ed84bb3f86ec646c3e2a85c72f916c0f95017194b29c04ada08561420fe56c2",
+    "results/zero-factor-native-cpu-18-baseline-v71.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/zero-factor-native-cpu-18-baseline-v71.stdout": "6398d5ea65a6237627c49d8d4e9837283e9244da62976a8d968f96988cc33a6e",
+    "results/zero-factor-native-cpu-18-candidate-v71.json": "c2cc86c27079a696142c5f572b095e97ca5e21ac2604c4f2aab694da55c6fa04",
+    "results/zero-factor-native-cpu-18-candidate-v71.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/zero-factor-native-cpu-18-candidate-v71.stdout": "1ac524f49ec20fc1dce74cbdc822b3861ee2db3be1c4e34f52d185c615c2a26d",
+    "results/zero-factor-native-cpu-19-baseline-v71.json": "66964f626ecb858f0f636bbf9e5a63c368b2bd3272f771c664ca1e6ce431e943",
+    "results/zero-factor-native-cpu-19-baseline-v71.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/zero-factor-native-cpu-19-baseline-v71.stdout": "f5bd2fa45ae99386c301afe7be5e603b2e09ec48cf792de122360856b91f6ad5",
+    "results/zero-factor-native-cpu-19-candidate-v71.json": "c011bccae5915c02423f2c34c25ad23125459295898129bbc9e4a7dce0c8259e",
+    "results/zero-factor-native-cpu-19-candidate-v71.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/zero-factor-native-cpu-19-candidate-v71.stdout": "99a54998bbc22600e4f58090020ccc223aabdf44c8020ef809611f951e7e9a19",
+    "results/zero-factor-native-cpu-2-baseline-v71.json": "c6c721d69edd31da45f8012a1ead27562d578c408a79a6418e76950eae7062b1",
+    "results/zero-factor-native-cpu-2-baseline-v71.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/zero-factor-native-cpu-2-baseline-v71.stdout": "de1dd800f555d96f0d273fe58f7db9023f3bed7bdb4211914d7620d6dc422c62",
+    "results/zero-factor-native-cpu-2-candidate-v71.json": "08f363961d5aaba14f5144d0bf3254d2afea5372d3334dfcbe1d4d2df361b48b",
+    "results/zero-factor-native-cpu-2-candidate-v71.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/zero-factor-native-cpu-2-candidate-v71.stdout": "2b1c5575d85d5ef5a6a425f13f344ff987e8becb40b7c25288342665aa30365d",
+    "results/zero-factor-native-cpu-20-baseline-v71.json": "7b8aa38a73ff1e236b43e13b29d6b68430289c2129bdab13da43b8b72c1c9daf",
+    "results/zero-factor-native-cpu-20-baseline-v71.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/zero-factor-native-cpu-20-baseline-v71.stdout": "2ae5b767200b1da0df121070090f92572eb7b4da213a0a98725ef6538614f3a0",
+    "results/zero-factor-native-cpu-20-candidate-v71.json": "62f052cd348debdce9b65eb7bac862345fadd70f867856fa1cd61dcee36dcc79",
+    "results/zero-factor-native-cpu-20-candidate-v71.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/zero-factor-native-cpu-20-candidate-v71.stdout": "79829533e341890a78c533918cebfedecb5c7efd0b834391efa11984184f64f2",
+    "results/zero-factor-native-cpu-21-baseline-v71.json": "1ba04b73b1fc7df486a5fc97eb09530018bf64491da9fdc9b02cc32fe1ec51ec",
+    "results/zero-factor-native-cpu-21-baseline-v71.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/zero-factor-native-cpu-21-baseline-v71.stdout": "72b345f88c222cea464bd1f62be452662f235f7ce8b1886112aa2e37fd9a1dcb",
+    "results/zero-factor-native-cpu-21-candidate-v71.json": "e43c93bf4f376a6b374eb62c731f94637c8456a8c72e3abf5fe75e40cab702fd",
+    "results/zero-factor-native-cpu-21-candidate-v71.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/zero-factor-native-cpu-21-candidate-v71.stdout": "a3eaf70ff51f80a68fba0a7438a3f0fcb3e37662822876ad1ea62521dec4239e",
+    "results/zero-factor-native-cpu-22-baseline-v71.json": "f6a9ef4997095c38742e4c0dedfcc1ee4b399615b899aac37bb49d305574f7f6",
+    "results/zero-factor-native-cpu-22-baseline-v71.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/zero-factor-native-cpu-22-baseline-v71.stdout": "69d058882d1a735289a4c266c2b71788053dd76586b7e11e83d5945f8abb8278",
+    "results/zero-factor-native-cpu-22-candidate-v71.json": "19e74141f51a7b40bc21e82d720e081452184f3fcfc1d6fc76ec588866cff99c",
+    "results/zero-factor-native-cpu-22-candidate-v71.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/zero-factor-native-cpu-22-candidate-v71.stdout": "e95d7966a3e7a20ad250451abafa27578257233dbd11b5a4834c0dc1b5854c1e",
+    "results/zero-factor-native-cpu-23-baseline-v71.json": "0dd1c4ce20558365e23e4327541853161b3350f1d8b7730b69216f8f82dad1ff",
+    "results/zero-factor-native-cpu-23-baseline-v71.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/zero-factor-native-cpu-23-baseline-v71.stdout": "5b28efd480aa2d322a3716ae72d83d7b944ec5e3b062748ef1191eec15578b39",
+    "results/zero-factor-native-cpu-23-candidate-v71.json": "0de06348cdbbc169fc2813a51338409a842a81ac01e2fe4ad7fe96346a327cc3",
+    "results/zero-factor-native-cpu-23-candidate-v71.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/zero-factor-native-cpu-23-candidate-v71.stdout": "221f69d46118617dc49d993bdd7f8c9705b66c146df650b9b2fc4a6626759b38",
+    "results/zero-factor-native-cpu-3-baseline-v71.json": "15740b28d6859a9a8f7f15dd0c67c94a6eee1459e1c795e5d9e8841c05e5c70c",
+    "results/zero-factor-native-cpu-3-baseline-v71.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/zero-factor-native-cpu-3-baseline-v71.stdout": "278c8945a6b60723d9e3efcf11052fc321a12f6dd93a4b0e70697f8bf7c5dbf4",
+    "results/zero-factor-native-cpu-3-candidate-v71.json": "767b2a171934d7db5ae2d95a4f02fa7166d27eb8818cb144ae4875829c99636d",
+    "results/zero-factor-native-cpu-3-candidate-v71.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/zero-factor-native-cpu-3-candidate-v71.stdout": "3580e387e24de5afb8220142fead894b8f50990d31a20c1ebe1c06fb9d57ace4",
+    "results/zero-factor-native-cpu-4-baseline-v71.json": "2db70a2badd2dcbd50ead0fa248b0c33f8b99e6b97d23aa1de4fe2704b8a9197",
+    "results/zero-factor-native-cpu-4-baseline-v71.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/zero-factor-native-cpu-4-baseline-v71.stdout": "fa3dd6a6fd33f800c345c79623b7ca45c6599b2315c3b3a39a6e66271cd34c76",
+    "results/zero-factor-native-cpu-4-candidate-v71.json": "a1b1a486bebb73e96f765e1983dbc820931cef4f6310e5ad95a04323713eedbb",
+    "results/zero-factor-native-cpu-4-candidate-v71.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/zero-factor-native-cpu-4-candidate-v71.stdout": "789d41838325f413a26e907a291e6c77b41613ccf528e560dca76f8b71b26417",
+    "results/zero-factor-native-cpu-5-baseline-v71.json": "12715d8071247870e2e2a80743683a4d7068d5da903278cc3fc290c74c6f0e61",
+    "results/zero-factor-native-cpu-5-baseline-v71.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/zero-factor-native-cpu-5-baseline-v71.stdout": "32857326621a1f3a0987da35581ac3e4826ff5de8760a955cb3b3014dbe619c9",
+    "results/zero-factor-native-cpu-5-candidate-v71.json": "c9e03a79e3cfb7b6d81c5a62f97673a0f0ac6ed49800f91dc5c77aa0a75c8ef5",
+    "results/zero-factor-native-cpu-5-candidate-v71.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/zero-factor-native-cpu-5-candidate-v71.stdout": "fbd1ee27798f82023ad9595d8bad1e6946a617d8d740b7d46c96166c9d868fde",
+    "results/zero-factor-native-cpu-6-baseline-v71.json": "5ea339221450997d81443256b68c123c7835b12695492d5880cb4601cd763244",
+    "results/zero-factor-native-cpu-6-baseline-v71.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/zero-factor-native-cpu-6-baseline-v71.stdout": "f96e3114e812cd7eac30239f63521925315b6340eeccf080f7103b16aa3ebb1f",
+    "results/zero-factor-native-cpu-6-candidate-v71.json": "69fbc350f5fb2a33d9b701ed28b848d7df43aff3afd82adc3b3a66f33f6ae97b",
+    "results/zero-factor-native-cpu-6-candidate-v71.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/zero-factor-native-cpu-6-candidate-v71.stdout": "b74b58be8d93767acb03f8ad12e589f52891bccc976c55db89acecae5b0dd35d",
+    "results/zero-factor-native-cpu-7-baseline-v71.json": "f332035342225c7c7f98f28a2006623aca7c02f827741ba09a7caeea13815f05",
+    "results/zero-factor-native-cpu-7-baseline-v71.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/zero-factor-native-cpu-7-baseline-v71.stdout": "cb2501b189ea329686b0b6e690d6f87ad45c43e9823a393d98774154bfc08b69",
+    "results/zero-factor-native-cpu-7-candidate-v71.json": "d6c8e1701f5dad8847fccd231fe5e6a7fa97034271ac0d1da89a3b8ea6cce750",
+    "results/zero-factor-native-cpu-7-candidate-v71.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/zero-factor-native-cpu-7-candidate-v71.stdout": "da1b309bffc011fd8fc0c1500ebcfa4adc981abbebda25620fca131eafd68e92",
+    "results/zero-factor-native-cpu-8-baseline-v71.json": "d6409536314ed70a7a880d3b04edd94b9a2c338bb8dd5284bd9d211127eb890d",
+    "results/zero-factor-native-cpu-8-baseline-v71.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/zero-factor-native-cpu-8-baseline-v71.stdout": "37af3a837200e81fe7bef183e992f7be09406f77c684815fe2b41d129dd9953a",
+    "results/zero-factor-native-cpu-8-candidate-v71.json": "643bdf9bf1f561b6179601fbc2707e28d034269a401af34cd106a8f91336d40b",
+    "results/zero-factor-native-cpu-8-candidate-v71.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/zero-factor-native-cpu-8-candidate-v71.stdout": "693a9b4f0d21822bdb940cb6eddf86d55f4497466a53766de2ce068b48c19c2f",
+    "results/zero-factor-native-cpu-9-baseline-v71.json": "32ef69d37ce9ce3e32ebef4158cd6f2f1112786f56ad9d4c4bed3fdc1215a7be",
+    "results/zero-factor-native-cpu-9-baseline-v71.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/zero-factor-native-cpu-9-baseline-v71.stdout": "5bcc5ae19e14599d3f801cbd932a1bc0b044fc07cd65c1a12f7e8435ed2fc45f",
+    "results/zero-factor-native-cpu-9-candidate-v71.json": "f0f453829f4ef43c47b913a43039fa04497e95d61a657fa179b73f9b0640ee31",
+    "results/zero-factor-native-cpu-9-candidate-v71.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/zero-factor-native-cpu-9-candidate-v71.stdout": "57e99b8615d4cd6cc94553b0f9dc173da0c9cb816537e32a9d4543a59aff0087",
+    "results/zero-factor-native-environment-after-v71.json": "067dafafb79b6c6ef668d2e1420faa709ab8fc0bb4e420f4fe7f1945710d55b6",
+    "results/zero-factor-native-environment-after-v71.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/zero-factor-native-environment-after-v71.stdout": "919f06885cd0e3a676bd7eee62e407052f2e7b8042e504c3f90651d1bbe5ed50",
+    "results/zero-factor-native-environment-before-v71.json": "185d5d1e0a1d2980a92fe694a34b3dee062a3a42f5a8ac960d615cc64549cccf",
+    "results/zero-factor-native-environment-before-v71.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/zero-factor-native-environment-before-v71.stdout": "494bdd738db629bf1e941d149756a82c1892cd8bac72d3e7fb9eaefcc84a4d23",
+    "results/zero-factor-native-environment-between-v71.json": "f4cefe7d10c8c007394ea4f27958e23c5a4b7b18385efa73f4f18781f3c22c11",
+    "results/zero-factor-native-environment-between-v71.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/zero-factor-native-environment-between-v71.stdout": "5a7faed4ca1793bc81e480a257e53b805a36020544aa26f2e40c428a2dae8ec3",
+    "results/zero-factor-native-pilot-1-baseline-v71.json": "8fe602699ff57cbe16bba9a2ed4021476a85da0d4d9f1badd1d29f55e3b1bd32",
+    "results/zero-factor-native-pilot-1-baseline-v71.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/zero-factor-native-pilot-1-baseline-v71.stdout": "da82e4827f567be1c0f626aede0011e04caaaa73280204e7188288f0db29bc25",
+    "results/zero-factor-native-pilot-1-candidate-v71.json": "d3b606576690a764859d6da8f13d5fc83ebffd932f7cec5b37d7e3e94df00b23",
+    "results/zero-factor-native-pilot-1-candidate-v71.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/zero-factor-native-pilot-1-candidate-v71.stdout": "0ec14adf77bebe41f533cee5d6e97d5be4bd64944e01d10bd453e0ac0dc1e264",
+    "results/zero-factor-native-pilot-32-baseline-v71.json": "06aeadee8358bfa4063eef4d36d2cf73c7d0e842d8d0ffc64f3df0f487c5be31",
+    "results/zero-factor-native-pilot-32-baseline-v71.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/zero-factor-native-pilot-32-baseline-v71.stdout": "3e85cc3f270620ee2e5aac043472d551f2b308341c65bc7132db88f4c3d3bd2c",
+    "results/zero-factor-native-pilot-32-candidate-v71.json": "6773d54864a38a75ffd82ecb80c2a40c4209b34cf1a787c72073f4ad77ea17a6",
+    "results/zero-factor-native-pilot-32-candidate-v71.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/zero-factor-native-pilot-32-candidate-v71.stdout": "dfe16811747a83f2e119924a440cfdf034a22119cc1acc5362a3740c91acd5e4",
+    "results/zero-factor-public-run-v70.stdout": "bfa5c87bac36bc866b9f1954eb2c4cf3ed4c0739528266780f8aa250e56eadf5",
+    "results/zero-factor-verify-v70.json": "f58f0ca4600c5bda79580efdb401ece9a51134bac49ef0dde2aacc5873d24355",
+    "results/zero-factor-verify-v70.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/zero-factor-verify-v70.stdout": "841b5cfc54eeba2d5000a88c0bb8af4e00fcdd09ef3b7c11db71aa7a936c8701",
+    "results/zero-factor-wide-run-v70.stdout": "033c5ca9fd33b391a1ae95fcc6cfb5204367593f62080fb5718a1a9340cf656c",
+    "run-zero-factor-native-v71.mjs": "02dabf9e24e4abd346d48b24d71805e538b5ad5259839c646704a0556c76418f",
+    "verify-zero-factor-cost-v71.mjs": "ac890843e570c63b706da4eacefe8a3e0af321ec0626cddf2dde96822b055b6a",
+    "zero-factor-allocation-probe-10-0-plan-v71.json": "dbc8f4d0d93c5b12c4bf0a183dd52873385d6045d2db176dc852b17b0cfde6da",
+    "zero-factor-allocation-probe-10-1-plan-v71.json": "9be1db1f90ddeefd119cdb1e6f3f7ec80e583bfe9c97d4e394852e26cb377603",
+    "zero-factor-allocation-probe-10-2-plan-v71.json": "21d780c24f1e0f8788ff276f6dd2be1b4687b9530cc4938313e4868c805b2dc1",
+    "zero-factor-allocation-probe-10-3-plan-v71.json": "434cdf8faaf1e652ce89b1352609d409d2009441916d9f0dc5606163a356e2cc",
+    "zero-factor-allocation-probe-107-0-plan-v71.json": "a272000a8ebff63abd632e2544db324609f402ea8127dadd17a191078ab48a6f",
+    "zero-factor-allocation-probe-107-1-plan-v71.json": "9998ccf7f620d274d4e3dedf19283d015dce41caa2a044a9426f9005466e6c9c",
+    "zero-factor-allocation-probe-107-2-plan-v71.json": "95a1e872b74b2c93a543d03aa049792f846e9cbb3a704872e9b05e774c6ec367",
+    "zero-factor-allocation-probe-107-3-plan-v71.json": "37796ea9b6b763bd294486574fc46dd26b542aa5d2cdeabdf5f03033713e46af",
+    "zero-factor-allocation-probe-11-0-plan-v71.json": "7c55059080d1a6a9391820e9db39360b0ea697ceb35a1e292a6e01fa8f8a3a4a",
+    "zero-factor-allocation-probe-11-1-plan-v71.json": "9e25dd3dce94eb4602c259b56bc98975d0c0678d3411795cd31d70b7faedebe7",
+    "zero-factor-allocation-probe-11-2-plan-v71.json": "bc93940e3b70b7a13a9f9b0537b43f3e15eb1aa0494062e459924135e3484b63",
+    "zero-factor-allocation-probe-11-3-plan-v71.json": "c09e34d106b11f7a5eeecc81e9e1c0473863a99b8cbf037341ffb356910cb8f9",
+    "zero-factor-allocation-probe-111-0-plan-v71.json": "0966663baa7eacc8dd9823aa701aa6f5696304dc77945fa358ab6ed8272725e2",
+    "zero-factor-allocation-probe-111-1-plan-v71.json": "3245ffbe34b4fed33442650a843ccd3edbbaca6f8406299784fb85579c4216ab",
+    "zero-factor-allocation-probe-111-2-plan-v71.json": "5a72044150119fd3f790c17bd6a0510ba93fd7d4cb207da1439e315f441a8fb7",
+    "zero-factor-allocation-probe-111-3-plan-v71.json": "b7b609ad6eaca7c241b5dc9b6fdfdf6efab663ef1e3ed5e42f0f17db8c1dc4fa",
+    "zero-factor-allocation-probe-36-0-plan-v71.json": "2aefe286d1cbbafbe9c542270b151d1697dc0eb55a9e0d506cae46c68be2f6b2",
+    "zero-factor-allocation-probe-36-1-plan-v71.json": "71f017feb115a70cac89b457523541bcf472a5228cdff860e63c9cbed5416c23",
+    "zero-factor-allocation-probe-36-2-plan-v71.json": "c5f86151cee89b1a5b198f15567baaed8dc7a7a6c264f26d94d33b1a4c40ef44",
+    "zero-factor-allocation-probe-36-3-plan-v71.json": "598afd8b7215ae90dddc75d1ea15f83a735f01ca60f4439f90cc75813891698d",
+    "zero-factor-allocation-probe-38-0-plan-v71.json": "6f11fe71d2241003615647b8faf4f1b8440af39e3153a2473b0e2a83af397fe8",
+    "zero-factor-allocation-probe-38-1-plan-v71.json": "5bde80fd0e9432d0ee6b12a104283a4902782639a70655b278e05889a3fc9638",
+    "zero-factor-allocation-probe-38-2-plan-v71.json": "1a28059308f6d1d98f662fd4de88bd134dcab1827d5905173645061592e6bce9",
+    "zero-factor-allocation-probe-38-3-plan-v71.json": "351b83d4ab86029ec14a65026e916ae7b9c493482a3275e8a3375cf3bca7c892",
+    "zero-factor-allocation-probe-39-0-plan-v71.json": "afe34329eab3be4b86ef2e5ac3a458a7c84b4f9c0f53811535946f25b336b221",
+    "zero-factor-allocation-probe-39-1-plan-v71.json": "df252570679c35874da6f92071003a0bd9c6e8eae9dc60159209417db6e760ed",
+    "zero-factor-allocation-probe-39-2-plan-v71.json": "7278a9e61ef491bc465291ab0a9beb33becd03ea0c09315b9e904e85f975f468",
+    "zero-factor-allocation-probe-39-3-plan-v71.json": "7ef8b4b076586c4a08d114fc4fa8dd558e3f4e3b044b20aca3ad0bcfe587557c",
+    "zero-factor-allocation-probe-origin-v71.json": "2c7ff3578820d7c8d4632e4d36d601ffd1736353035d61c20f4edcc005435cdc",
+    "zero-factor-allocation-probe-v71.json": "1d2d05c4072631338cab89adebdb580fb138fbe9f6d10003232ae6d66ecf2761",
+    "zero-factor-allocation-v71.rs": "7149d00ba65cc64960ada2a859e1f0d9560ea02b938b65ebb4051586fa46440a",
+    "zero-factor-cost-baseline-app-v71/Cargo.lock": "45b5140db461a57bf2e8c4104f0542e26bbe095e1a41f752bd79060093191c18",
+    "zero-factor-cost-baseline-app-v71/Cargo.toml": "ebf35412def939211723913b41b1f749e4faaa80eb27f45dc50fff45edd99f8e",
+    "zero-factor-cost-binaries-v71.json": "4a658d70fde738de5e987983397cc0e3f5722b922f42a54839dc7936570984a1",
+    "zero-factor-cost-candidate-app-v71/Cargo.lock": "45b5140db461a57bf2e8c4104f0542e26bbe095e1a41f752bd79060093191c18",
+    "zero-factor-cost-candidate-app-v71/Cargo.toml": "d959cb2a3a414e13a2f1f48af662c2caea774f01bbcf4eb1d55e3f5a80339798",
+    "zero-factor-cost-check-plan-v71.json": "08f91c6186f3b6b3707a15cd071aa8b388b4b68224aef779b5fc6b6936b868e2",
+    "zero-factor-cost-control-backward-clock-v71.jsonl": "b8bb37516ccd5d77244a8bca2d5f34c5c8fd71ad192f8d1d894735f9da2df8f0",
+    "zero-factor-cost-control-checksum-v71.jsonl": "b23fcdb527e069c4a871c75a8bc272ed712f66f36598b900943dfad7ed71aee2",
+    "zero-factor-cost-control-coefficient-sign-v71.jsonl": "528cbd2f66d4b05af217480d5e1cf1c5803bed4325d4e78930e2ab5f381a7449",
+    "zero-factor-cost-control-elapsed-zero-v71.jsonl": "a73e3c22e71b52b6c1fd42fb75068a8a680affbf2e3800354fab45122c5fd14b",
+    "zero-factor-cost-control-endpoint-v71.jsonl": "9037922efb0af424468e2f818a5d9167ab1d4249d80a81390c8a842705cc15a2",
+    "zero-factor-cost-control-final-mismatch-v71.jsonl": "27ba23ac9e96522a82d60978584252c2028bc733e5cffac199857180d0749793",
+    "zero-factor-cost-control-instrumented-cpu-v71.jsonl": "d5828c14cbde157c3eac57baa71476d8933941b6cfd5f60e65f52a84b02f3ceb",
+    "zero-factor-cost-control-iterations-v71.jsonl": "91866a1890e47a4ac6420f7ba6becf9caaa8a17af2726ae829536a2d3bc3fc12",
+    "zero-factor-cost-control-valid-v71.jsonl": "7a5058716964167ddd16cbee4060f536ea2f5d8469d3c0521541a075aefcb41b",
+    "zero-factor-cost-control-wrong-policy-v71.jsonl": "bf39b2aeb8e3ed95e91fd5c51d50f51df34ef968b6856ad364dcd69669b68d59",
+    "zero-factor-cost-controls-v71.json": "86ac5af8e9944dc0a4591469ad0b261d307ccdb35bb5e99ea9d24fcf96fac16e",
+    "zero-factor-cost-evidence-v71.mjs": "4f65e57e4d267d6812b61592372d3e913d469cde07bb8b02d70464ec8712453f",
+    "zero-factor-cost-input-v71.json": "ace3833519612e16a4cc3bfc5780fbb455fae742ef91db607bbc59b3a49d31d8",
+    "zero-factor-cost-input-v71.mjs": "b2f2cb178e80dab878e1722fe6992bed30e4f3f4b7495d1b9d7555d0c1e7bf61",
+    "zero-factor-cost-origin-v71.json": "b9c021183a40d34e6acb829389bba46d27114c4f62edd1e2fff05ac56f6f92a3",
+    "zero-factor-cost-protocol-v71.md": "fd5b8c17c46c0175b7adfb2d2a8d47a76a04e2119f77b81dbcba7a60d0a5ea69",
+    "zero-factor-cost-protocol-v71.mjs": "5f007e0f44f0586ce0e7782ebd4b030625e6842ad7bf062b9208a6edbc3744e6",
+    "zero-factor-cost-sources-v71.mjs": "fe40129545ccda6d75a55e0cfdfb5da3d0ffb82bb05c59b59941202632630ccc",
+    "zero-factor-cost-v71.rs": "88de804b75c9cb4628ec2fda99a0986658eba7e6d5e4474c780ed3f3414a9fa3",
+    "zero-factor-cpu-v71.rs": "17b0f6d44a5e688dfd85b12441a697816315cea5a3bf895629331198325fe616",
+    "zero-factor-degree-cases-v70.mjs": "8679a91b2c6d770214f528174e9cc3206c0658b656cc2901bd1ed44e903995af",
+    "zero-factor-degree-input-v70.json": "fbf4fcd31bb2fb0bdab126c00828ca3d50bf9158e689063a6844dfed62122d69",
+    "zero-factor-final-binding-v70.json": "93a8b6de487f3a85f877e5f74a79e1cd118831c434c4fc08ce864c933f8817c3",
+    "zero-factor-final-sources-v70.mjs": "98163e8deb534c27a02af157c69708e74cca0936cbd7a90f17fdfc677d980c40",
+    "zero-factor-native-allocation-0-plan-v71.json": "ab0d6775aa34d2544972edb9643daa8101547a6c494f65c557e5128cf7b3bd7d",
+    "zero-factor-native-allocation-1-plan-v71.json": "9df29f55229574a3c74a4dfc7ba4d5a583e1c4f33988fa52a183aee40988264b",
+    "zero-factor-native-allocation-2-plan-v71.json": "f3499ba44ad7d72499be43017e8ef431b8e52e436d9c798ee1bf3f295bd3230a",
+    "zero-factor-native-allocation-3-plan-v71.json": "ae222896e574b7ad8e0f942875e9867a3c33618627ee7b7f93e89566a42be9d9",
+    "zero-factor-native-cpu-0-plan-v71.json": "9a17d124b966cbc81d5b972426410fb103719ff66d9468250d1c7c27d573e633",
+    "zero-factor-native-cpu-1-plan-v71.json": "e154d1f5b89c9c1e3aa03dbebb2293849dd966ecc8b0310239dfef7ac9a613b5",
+    "zero-factor-native-cpu-10-plan-v71.json": "90168e497cf2629989ea34fe375a634c64fce6ad034d1155c892503ffd99e174",
+    "zero-factor-native-cpu-11-plan-v71.json": "17714f084efc7ada10da03d7244105075ae6fb85d5662531f1df0adf42d5a34a",
+    "zero-factor-native-cpu-12-plan-v71.json": "732115897b9d059f6e7239fdf2d1df2960bc5329a5db2e5131a923a83347837e",
+    "zero-factor-native-cpu-13-plan-v71.json": "f9f4a9b1a4c34ba03444286fa89b33e1da6cb0ec69ed884b82b1d5c03a591e7b",
+    "zero-factor-native-cpu-14-plan-v71.json": "11edb7417982a3ffd74f88c97f6cecda8bde3a4eaae493dd59db87f8b8045eec",
+    "zero-factor-native-cpu-15-plan-v71.json": "11db7c7db55f8ce3559ab876e8de8760842bbe591008fab5cfb5e0a9ed361994",
+    "zero-factor-native-cpu-16-plan-v71.json": "5f8458ba924f43cff23db917db698bea9cbedef4d69867e38b488ccd48977e63",
+    "zero-factor-native-cpu-17-plan-v71.json": "2603773aa97e38f8d8eee1ccaddd8b8904e97613ae1f917005e2b0572ac84aad",
+    "zero-factor-native-cpu-18-plan-v71.json": "ca316e8e3244fc69f847bfe878f3d16c13d807b6fcb346e645c3831ec691a299",
+    "zero-factor-native-cpu-19-plan-v71.json": "f3ff0486e97f69502fdf5c0259d74e2e428fe16c27a7a82d3edf6e2f462c1318",
+    "zero-factor-native-cpu-2-plan-v71.json": "a018d9ff2d2956b33c7bd4e4029400a50d6e47ac657a1ed2cbe477e73afe768d",
+    "zero-factor-native-cpu-20-plan-v71.json": "8bdd00ee2b97fa29bb72c24fda9a53a904f22f8d49d63beea85615f00efc8bee",
+    "zero-factor-native-cpu-21-plan-v71.json": "ad1d3ad812c8ff35ffa79ec18c30cc0cbd2a251050c877e9bcaaa5fdeb5ae9ca",
+    "zero-factor-native-cpu-22-plan-v71.json": "14137dc16168c17c7f2499851aae2af4128bd95f1680fd9af0d746952b3d1997",
+    "zero-factor-native-cpu-23-plan-v71.json": "aa6209e30fafe848e5ef82643f1f9c7da04086f39fdd244a4383afb051c1a42d",
+    "zero-factor-native-cpu-3-plan-v71.json": "a7b43edfbf8f8edf7f4d762ba3a3de67a4a12170dca3a86d72691642ea787ae6",
+    "zero-factor-native-cpu-4-plan-v71.json": "c67bbfd899975d283e39da93430c4c94923bf1aef366d5d4adb43fcce127ffcf",
+    "zero-factor-native-cpu-5-plan-v71.json": "e97ee621f4e70a9354b7c06beb69425210c41734ca5b93558fc597825bda72bf",
+    "zero-factor-native-cpu-6-plan-v71.json": "cd821244d92dfde4cb967006f43552978576fb49f28e61d8fd1c3fb91656040e",
+    "zero-factor-native-cpu-7-plan-v71.json": "0c7f53ce16e3e79f89f3525519efd6034edd456dd6a42b29d7c3ce6fde1f6cfb",
+    "zero-factor-native-cpu-8-plan-v71.json": "04cc526a411bf6b690690a7fa23caf86be5b841c9b625eb0ac3d6719b3d60ecc",
+    "zero-factor-native-cpu-9-plan-v71.json": "79befd1010c8a6e0b68dc5cd087abb1967709cfbdf95079b8564ab909efa679f",
+    "zero-factor-native-environment-v71.mjs": "b313cd2bd569450f298d22f286e7b6ab28796d7d293bf3fd464763549256f890",
+    "zero-factor-native-iterations-v71.json": "6091bcf92d854f28b2bcb57e7df876bf4d2e0291ceab940750ec050a5566879e",
+    "zero-factor-native-origin-v71.json": "145effc9c1947e37abdab51eea4475e000689293b8665ee3d8fced5fa623bd79",
+    "zero-factor-native-pilot-1-plan-v71.json": "f055c80c0e3cd012604b8db2fc589f2fa5a201a9363b4aca96e56cad5382621b",
+    "zero-factor-native-pilot-32-plan-v71.json": "7ac16e17007fb7ae08cda047223f49608fff8fae15cbecea72e3a6d140130e0e",
+    "zero-factor-native-runs-v71.json": "f137241f7b96982e9f4204acc2f8f9ae5856a94eead68850da7a802ef17e9ed9",
+    "zero-factor-native-summary-v71.json": "a68288ecbd3dbf53795280725307cfa1c0f2d1e9655fc6261f5f27c8d75c0af4",
+    "zero-factor-native-v71-findings.md": "de6ff1afc248e560606a86a8be766468731deabec838e9af77415ab99fb758b3",
+    "zero-factor-polynomial-v70.mjs": "7ffbe327450d46ce39cc2edbc9762d347c8766e5eb511b3de7595303238ad7b7",
+    "zero-factor-v70-manifest.json": "a27fbf9d62e873684c67d8547e75bc7b44385566c0792564cce45bc357f4bbf4"
+  },
+  "gates": [
+    "zero-factor-cost-baseline-lock-v71",
+    "zero-factor-cost-baseline-metadata-v71",
+    "zero-factor-cost-baseline-build-v71",
+    "zero-factor-cost-baseline-clippy-v71",
+    "zero-factor-cost-baseline-cpu-check-v71",
+    "zero-factor-cost-baseline-allocation-check-v71",
+    "zero-factor-cost-candidate-lock-v71",
+    "zero-factor-cost-candidate-metadata-v71",
+    "zero-factor-cost-candidate-build-v71",
+    "zero-factor-cost-candidate-clippy-v71",
+    "zero-factor-cost-candidate-cpu-check-v71",
+    "zero-factor-cost-candidate-allocation-check-v71",
+    "zero-factor-cost-build-v71",
+    "zero-factor-native-environment-before-v71",
+    "zero-factor-native-pilot-1-baseline-v71",
+    "zero-factor-native-pilot-1-candidate-v71",
+    "zero-factor-native-pilot-32-candidate-v71",
+    "zero-factor-native-pilot-32-baseline-v71",
+    "zero-factor-native-cpu-0-baseline-v71",
+    "zero-factor-native-cpu-0-candidate-v71",
+    "zero-factor-native-cpu-1-baseline-v71",
+    "zero-factor-native-cpu-1-candidate-v71",
+    "zero-factor-native-cpu-2-baseline-v71",
+    "zero-factor-native-cpu-2-candidate-v71",
+    "zero-factor-native-cpu-3-candidate-v71",
+    "zero-factor-native-cpu-3-baseline-v71",
+    "zero-factor-native-cpu-4-candidate-v71",
+    "zero-factor-native-cpu-4-baseline-v71",
+    "zero-factor-native-cpu-5-candidate-v71",
+    "zero-factor-native-cpu-5-baseline-v71",
+    "zero-factor-native-cpu-6-baseline-v71",
+    "zero-factor-native-cpu-6-candidate-v71",
+    "zero-factor-native-cpu-7-candidate-v71",
+    "zero-factor-native-cpu-7-baseline-v71",
+    "zero-factor-native-cpu-8-baseline-v71",
+    "zero-factor-native-cpu-8-candidate-v71",
+    "zero-factor-native-cpu-9-baseline-v71",
+    "zero-factor-native-cpu-9-candidate-v71",
+    "zero-factor-native-cpu-10-baseline-v71",
+    "zero-factor-native-cpu-10-candidate-v71",
+    "zero-factor-native-cpu-11-candidate-v71",
+    "zero-factor-native-cpu-11-baseline-v71",
+    "zero-factor-native-cpu-12-baseline-v71",
+    "zero-factor-native-cpu-12-candidate-v71",
+    "zero-factor-native-cpu-13-baseline-v71",
+    "zero-factor-native-cpu-13-candidate-v71",
+    "zero-factor-native-cpu-14-candidate-v71",
+    "zero-factor-native-cpu-14-baseline-v71",
+    "zero-factor-native-cpu-15-candidate-v71",
+    "zero-factor-native-cpu-15-baseline-v71",
+    "zero-factor-native-cpu-16-baseline-v71",
+    "zero-factor-native-cpu-16-candidate-v71",
+    "zero-factor-native-cpu-17-candidate-v71",
+    "zero-factor-native-cpu-17-baseline-v71",
+    "zero-factor-native-cpu-18-candidate-v71",
+    "zero-factor-native-cpu-18-baseline-v71",
+    "zero-factor-native-cpu-19-candidate-v71",
+    "zero-factor-native-cpu-19-baseline-v71",
+    "zero-factor-native-cpu-20-candidate-v71",
+    "zero-factor-native-cpu-20-baseline-v71",
+    "zero-factor-native-cpu-21-candidate-v71",
+    "zero-factor-native-cpu-21-baseline-v71",
+    "zero-factor-native-cpu-22-baseline-v71",
+    "zero-factor-native-cpu-22-candidate-v71",
+    "zero-factor-native-cpu-23-baseline-v71",
+    "zero-factor-native-cpu-23-candidate-v71",
+    "zero-factor-native-environment-between-v71",
+    "zero-factor-native-allocation-0-baseline-v71",
+    "zero-factor-native-allocation-0-candidate-v71",
+    "zero-factor-native-allocation-1-candidate-v71",
+    "zero-factor-native-allocation-1-baseline-v71",
+    "zero-factor-native-allocation-2-baseline-v71",
+    "zero-factor-native-allocation-2-candidate-v71",
+    "zero-factor-native-allocation-3-candidate-v71",
+    "zero-factor-native-allocation-3-baseline-v71",
+    "zero-factor-native-environment-after-v71",
+    "zero-factor-native-campaign-v71",
+    "zero-factor-native-check-v71",
+    "zero-factor-allocation-probe-10-0-baseline-v71",
+    "zero-factor-allocation-probe-10-0-candidate-v71",
+    "zero-factor-allocation-probe-10-1-candidate-v71",
+    "zero-factor-allocation-probe-10-1-baseline-v71",
+    "zero-factor-allocation-probe-10-2-baseline-v71",
+    "zero-factor-allocation-probe-10-2-candidate-v71",
+    "zero-factor-allocation-probe-10-3-candidate-v71",
+    "zero-factor-allocation-probe-10-3-baseline-v71",
+    "zero-factor-allocation-probe-11-0-baseline-v71",
+    "zero-factor-allocation-probe-11-0-candidate-v71",
+    "zero-factor-allocation-probe-11-1-candidate-v71",
+    "zero-factor-allocation-probe-11-1-baseline-v71",
+    "zero-factor-allocation-probe-11-2-baseline-v71",
+    "zero-factor-allocation-probe-11-2-candidate-v71",
+    "zero-factor-allocation-probe-11-3-candidate-v71",
+    "zero-factor-allocation-probe-11-3-baseline-v71",
+    "zero-factor-allocation-probe-36-0-baseline-v71",
+    "zero-factor-allocation-probe-36-0-candidate-v71",
+    "zero-factor-allocation-probe-36-1-candidate-v71",
+    "zero-factor-allocation-probe-36-1-baseline-v71",
+    "zero-factor-allocation-probe-36-2-baseline-v71",
+    "zero-factor-allocation-probe-36-2-candidate-v71",
+    "zero-factor-allocation-probe-36-3-candidate-v71",
+    "zero-factor-allocation-probe-36-3-baseline-v71",
+    "zero-factor-allocation-probe-38-0-baseline-v71",
+    "zero-factor-allocation-probe-38-0-candidate-v71",
+    "zero-factor-allocation-probe-38-1-candidate-v71",
+    "zero-factor-allocation-probe-38-1-baseline-v71",
+    "zero-factor-allocation-probe-38-2-baseline-v71",
+    "zero-factor-allocation-probe-38-2-candidate-v71",
+    "zero-factor-allocation-probe-38-3-candidate-v71",
+    "zero-factor-allocation-probe-38-3-baseline-v71",
+    "zero-factor-allocation-probe-39-0-baseline-v71",
+    "zero-factor-allocation-probe-39-0-candidate-v71",
+    "zero-factor-allocation-probe-39-1-candidate-v71",
+    "zero-factor-allocation-probe-39-1-baseline-v71",
+    "zero-factor-allocation-probe-39-2-baseline-v71",
+    "zero-factor-allocation-probe-39-2-candidate-v71",
+    "zero-factor-allocation-probe-39-3-candidate-v71",
+    "zero-factor-allocation-probe-39-3-baseline-v71",
+    "zero-factor-allocation-probe-107-0-baseline-v71",
+    "zero-factor-allocation-probe-107-0-candidate-v71",
+    "zero-factor-allocation-probe-107-1-candidate-v71",
+    "zero-factor-allocation-probe-107-1-baseline-v71",
+    "zero-factor-allocation-probe-107-2-baseline-v71",
+    "zero-factor-allocation-probe-107-2-candidate-v71",
+    "zero-factor-allocation-probe-107-3-candidate-v71",
+    "zero-factor-allocation-probe-107-3-baseline-v71",
+    "zero-factor-allocation-probe-111-0-baseline-v71",
+    "zero-factor-allocation-probe-111-0-candidate-v71",
+    "zero-factor-allocation-probe-111-1-candidate-v71",
+    "zero-factor-allocation-probe-111-1-baseline-v71",
+    "zero-factor-allocation-probe-111-2-baseline-v71",
+    "zero-factor-allocation-probe-111-2-candidate-v71",
+    "zero-factor-allocation-probe-111-3-candidate-v71",
+    "zero-factor-allocation-probe-111-3-baseline-v71",
+    "zero-factor-allocation-probe-v71",
+    "zero-factor-cost-controls-v71",
+    "zero-factor-cost-fmt-v71",
+    "zero-factor-cost-evidence-v71"
+  ],
+  "evidence": {
+    "checkpoint": 71,
+    "status": "isolated-native-cost-qualified",
+    "sourceOriginSha256": "b9c021183a40d34e6acb829389bba46d27114c4f62edd1e2fff05ac56f6f92a3",
+    "liveFiles": 956,
+    "candidateFiles": 176,
+    "retainedContinuationTransfers": 6,
+    "newDonorLines": 0,
+    "gates": [
+      "zero-factor-cost-baseline-lock-v71",
+      "zero-factor-cost-baseline-metadata-v71",
+      "zero-factor-cost-baseline-build-v71",
+      "zero-factor-cost-baseline-clippy-v71",
+      "zero-factor-cost-baseline-cpu-check-v71",
+      "zero-factor-cost-baseline-allocation-check-v71",
+      "zero-factor-cost-candidate-lock-v71",
+      "zero-factor-cost-candidate-metadata-v71",
+      "zero-factor-cost-candidate-build-v71",
+      "zero-factor-cost-candidate-clippy-v71",
+      "zero-factor-cost-candidate-cpu-check-v71",
+      "zero-factor-cost-candidate-allocation-check-v71",
+      "zero-factor-cost-build-v71",
+      "zero-factor-native-environment-before-v71",
+      "zero-factor-native-pilot-1-baseline-v71",
+      "zero-factor-native-pilot-1-candidate-v71",
+      "zero-factor-native-pilot-32-candidate-v71",
+      "zero-factor-native-pilot-32-baseline-v71",
+      "zero-factor-native-cpu-0-baseline-v71",
+      "zero-factor-native-cpu-0-candidate-v71",
+      "zero-factor-native-cpu-1-baseline-v71",
+      "zero-factor-native-cpu-1-candidate-v71",
+      "zero-factor-native-cpu-2-baseline-v71",
+      "zero-factor-native-cpu-2-candidate-v71",
+      "zero-factor-native-cpu-3-candidate-v71",
+      "zero-factor-native-cpu-3-baseline-v71",
+      "zero-factor-native-cpu-4-candidate-v71",
+      "zero-factor-native-cpu-4-baseline-v71",
+      "zero-factor-native-cpu-5-candidate-v71",
+      "zero-factor-native-cpu-5-baseline-v71",
+      "zero-factor-native-cpu-6-baseline-v71",
+      "zero-factor-native-cpu-6-candidate-v71",
+      "zero-factor-native-cpu-7-candidate-v71",
+      "zero-factor-native-cpu-7-baseline-v71",
+      "zero-factor-native-cpu-8-baseline-v71",
+      "zero-factor-native-cpu-8-candidate-v71",
+      "zero-factor-native-cpu-9-baseline-v71",
+      "zero-factor-native-cpu-9-candidate-v71",
+      "zero-factor-native-cpu-10-baseline-v71",
+      "zero-factor-native-cpu-10-candidate-v71",
+      "zero-factor-native-cpu-11-candidate-v71",
+      "zero-factor-native-cpu-11-baseline-v71",
+      "zero-factor-native-cpu-12-baseline-v71",
+      "zero-factor-native-cpu-12-candidate-v71",
+      "zero-factor-native-cpu-13-baseline-v71",
+      "zero-factor-native-cpu-13-candidate-v71",
+      "zero-factor-native-cpu-14-candidate-v71",
+      "zero-factor-native-cpu-14-baseline-v71",
+      "zero-factor-native-cpu-15-candidate-v71",
+      "zero-factor-native-cpu-15-baseline-v71",
+      "zero-factor-native-cpu-16-baseline-v71",
+      "zero-factor-native-cpu-16-candidate-v71",
+      "zero-factor-native-cpu-17-candidate-v71",
+      "zero-factor-native-cpu-17-baseline-v71",
+      "zero-factor-native-cpu-18-candidate-v71",
+      "zero-factor-native-cpu-18-baseline-v71",
+      "zero-factor-native-cpu-19-candidate-v71",
+      "zero-factor-native-cpu-19-baseline-v71",
+      "zero-factor-native-cpu-20-candidate-v71",
+      "zero-factor-native-cpu-20-baseline-v71",
+      "zero-factor-native-cpu-21-candidate-v71",
+      "zero-factor-native-cpu-21-baseline-v71",
+      "zero-factor-native-cpu-22-baseline-v71",
+      "zero-factor-native-cpu-22-candidate-v71",
+      "zero-factor-native-cpu-23-baseline-v71",
+      "zero-factor-native-cpu-23-candidate-v71",
+      "zero-factor-native-environment-between-v71",
+      "zero-factor-native-allocation-0-baseline-v71",
+      "zero-factor-native-allocation-0-candidate-v71",
+      "zero-factor-native-allocation-1-candidate-v71",
+      "zero-factor-native-allocation-1-baseline-v71",
+      "zero-factor-native-allocation-2-baseline-v71",
+      "zero-factor-native-allocation-2-candidate-v71",
+      "zero-factor-native-allocation-3-candidate-v71",
+      "zero-factor-native-allocation-3-baseline-v71",
+      "zero-factor-native-environment-after-v71",
+      "zero-factor-native-campaign-v71",
+      "zero-factor-native-check-v71",
+      "zero-factor-allocation-probe-10-0-baseline-v71",
+      "zero-factor-allocation-probe-10-0-candidate-v71",
+      "zero-factor-allocation-probe-10-1-candidate-v71",
+      "zero-factor-allocation-probe-10-1-baseline-v71",
+      "zero-factor-allocation-probe-10-2-baseline-v71",
+      "zero-factor-allocation-probe-10-2-candidate-v71",
+      "zero-factor-allocation-probe-10-3-candidate-v71",
+      "zero-factor-allocation-probe-10-3-baseline-v71",
+      "zero-factor-allocation-probe-11-0-baseline-v71",
+      "zero-factor-allocation-probe-11-0-candidate-v71",
+      "zero-factor-allocation-probe-11-1-candidate-v71",
+      "zero-factor-allocation-probe-11-1-baseline-v71",
+      "zero-factor-allocation-probe-11-2-baseline-v71",
+      "zero-factor-allocation-probe-11-2-candidate-v71",
+      "zero-factor-allocation-probe-11-3-candidate-v71",
+      "zero-factor-allocation-probe-11-3-baseline-v71",
+      "zero-factor-allocation-probe-36-0-baseline-v71",
+      "zero-factor-allocation-probe-36-0-candidate-v71",
+      "zero-factor-allocation-probe-36-1-candidate-v71",
+      "zero-factor-allocation-probe-36-1-baseline-v71",
+      "zero-factor-allocation-probe-36-2-baseline-v71",
+      "zero-factor-allocation-probe-36-2-candidate-v71",
+      "zero-factor-allocation-probe-36-3-candidate-v71",
+      "zero-factor-allocation-probe-36-3-baseline-v71",
+      "zero-factor-allocation-probe-38-0-baseline-v71",
+      "zero-factor-allocation-probe-38-0-candidate-v71",
+      "zero-factor-allocation-probe-38-1-candidate-v71",
+      "zero-factor-allocation-probe-38-1-baseline-v71",
+      "zero-factor-allocation-probe-38-2-baseline-v71",
+      "zero-factor-allocation-probe-38-2-candidate-v71",
+      "zero-factor-allocation-probe-38-3-candidate-v71",
+      "zero-factor-allocation-probe-38-3-baseline-v71",
+      "zero-factor-allocation-probe-39-0-baseline-v71",
+      "zero-factor-allocation-probe-39-0-candidate-v71",
+      "zero-factor-allocation-probe-39-1-candidate-v71",
+      "zero-factor-allocation-probe-39-1-baseline-v71",
+      "zero-factor-allocation-probe-39-2-baseline-v71",
+      "zero-factor-allocation-probe-39-2-candidate-v71",
+      "zero-factor-allocation-probe-39-3-candidate-v71",
+      "zero-factor-allocation-probe-39-3-baseline-v71",
+      "zero-factor-allocation-probe-107-0-baseline-v71",
+      "zero-factor-allocation-probe-107-0-candidate-v71",
+      "zero-factor-allocation-probe-107-1-candidate-v71",
+      "zero-factor-allocation-probe-107-1-baseline-v71",
+      "zero-factor-allocation-probe-107-2-baseline-v71",
+      "zero-factor-allocation-probe-107-2-candidate-v71",
+      "zero-factor-allocation-probe-107-3-candidate-v71",
+      "zero-factor-allocation-probe-107-3-baseline-v71",
+      "zero-factor-allocation-probe-111-0-baseline-v71",
+      "zero-factor-allocation-probe-111-0-candidate-v71",
+      "zero-factor-allocation-probe-111-1-candidate-v71",
+      "zero-factor-allocation-probe-111-1-baseline-v71",
+      "zero-factor-allocation-probe-111-2-baseline-v71",
+      "zero-factor-allocation-probe-111-2-candidate-v71",
+      "zero-factor-allocation-probe-111-3-candidate-v71",
+      "zero-factor-allocation-probe-111-3-baseline-v71",
+      "zero-factor-allocation-probe-v71",
+      "zero-factor-cost-controls-v71",
+      "zero-factor-cost-fmt-v71"
+    ],
+    "captures": [
+      {
+        "tag": "zero-factor-cost-build-v71",
+        "started": "2026-09-11T19:27:22.574Z",
+        "finished": "2026-09-11T19:27:31.030Z",
+        "records": 25,
+        "nested": 12
+      },
+      {
+        "tag": "zero-factor-native-campaign-v71",
+        "started": "2026-09-11T19:30:58.448Z",
+        "finished": "2026-09-11T19:32:34.424Z",
+        "records": 155,
+        "nested": 63
+      },
+      {
+        "tag": "zero-factor-allocation-probe-v71",
+        "started": "2026-09-11T19:37:29.522Z",
+        "finished": "2026-09-11T19:37:47.135Z",
+        "records": 113,
+        "nested": 56
+      }
+    ],
+    "dependencyGraph": {
+      "packages": 33,
+      "nodes": 33,
+      "fullMetadataEqualAfterPaths": true,
+      "locksEqual": true
+    },
+    "preflightChecks": 1824,
+    "campaign": {
+      "started": "2026-09-11T19:30:58.448Z",
+      "finished": "2026-09-11T19:32:34.424Z",
+      "pairs": 24,
+      "allocationPairs": 4,
+      "groups": 456,
+      "cases": 114,
+      "counts": {
+        "pilot": 1824,
+        "cpu": 21888,
+        "allocation": 7296
+      },
+      "subMillisecondRows": {
+        "pilot": 1524,
+        "cpu": 1636,
+        "allocation": 6688
+      },
+      "commonIterationRange": [
+        3,
+        20000
+      ],
+      "orchestratorCpu": 0,
+      "measuredCpu": 2
+    },
+    "categories": {
+      "equal:nondivision-bypass": {
+        "groups": 136,
+        "below": 4,
+        "above": 7,
+        "inconclusive": 125,
+        "pairedMedianRange": [
+          0.9740092712977675,
+          1.0379510001896728
+        ]
+      },
+      "equal:nonzero-constant-bypass": {
+        "groups": 40,
+        "below": 0,
+        "above": 1,
+        "inconclusive": 39,
+        "pairedMedianRange": [
+          0.9858519676939494,
+          1.0169218147325314
+        ]
+      },
+      "equal:deflated-bounded": {
+        "groups": 196,
+        "below": 196,
+        "above": 0,
+        "inconclusive": 0,
+        "pairedMedianRange": [
+          0.2101956800271102,
+          0.8093480003843853
+        ]
+      },
+      "equal:zero-divisor-guard": {
+        "groups": 20,
+        "below": 0,
+        "above": 11,
+        "inconclusive": 9,
+        "pairedMedianRange": [
+          0.9963699680556543,
+          1.074142807674594
+        ]
+      },
+      "new-answer:deflated-oversized": {
+        "groups": 40,
+        "below": 24,
+        "above": 16,
+        "inconclusive": 0,
+        "pairedMedianRange": [
+          0.9171918759065203,
+          6.991738197935753
+        ]
+      },
+      "equal:deflated-oversized": {
+        "groups": 16,
+        "below": 0,
+        "above": 11,
+        "inconclusive": 5,
+        "pairedMedianRange": [
+          1.0041640504619458,
+          1.027141131895724
+        ]
+      },
+      "new-answer:deflated-bounded": {
+        "groups": 8,
+        "below": 8,
+        "above": 0,
+        "inconclusive": 0,
+        "pairedMedianRange": [
+          0.512245303403493,
+          0.6447625713032659
+        ]
+      }
+    },
+    "allocationComparisons": 912,
+    "allocationTallies": {
+      "equal:nondivision-bypass:n1": {
+        "groups": 136,
+        "requests": {
+          "lower": 0,
+          "equal": 124,
+          "higher": 12
+        },
+        "bytes": {
+          "lower": 0,
+          "equal": 124,
+          "higher": 12
+        },
+        "peak": {
+          "lower": 0,
+          "equal": 136,
+          "higher": 0
+        },
+        "live": {
+          "lower": 0,
+          "equal": 136,
+          "higher": 0
+        }
+      },
+      "equal:nondivision-bypass:n16": {
+        "groups": 136,
+        "requests": {
+          "lower": 0,
+          "equal": 124,
+          "higher": 12
+        },
+        "bytes": {
+          "lower": 0,
+          "equal": 124,
+          "higher": 12
+        },
+        "peak": {
+          "lower": 0,
+          "equal": 136,
+          "higher": 0
+        },
+        "live": {
+          "lower": 0,
+          "equal": 136,
+          "higher": 0
+        }
+      },
+      "equal:nonzero-constant-bypass:n1": {
+        "groups": 40,
+        "requests": {
+          "lower": 0,
+          "equal": 24,
+          "higher": 16
+        },
+        "bytes": {
+          "lower": 0,
+          "equal": 24,
+          "higher": 16
+        },
+        "peak": {
+          "lower": 0,
+          "equal": 40,
+          "higher": 0
+        },
+        "live": {
+          "lower": 0,
+          "equal": 40,
+          "higher": 0
+        }
+      },
+      "equal:nonzero-constant-bypass:n16": {
+        "groups": 40,
+        "requests": {
+          "lower": 0,
+          "equal": 24,
+          "higher": 16
+        },
+        "bytes": {
+          "lower": 0,
+          "equal": 24,
+          "higher": 16
+        },
+        "peak": {
+          "lower": 0,
+          "equal": 40,
+          "higher": 0
+        },
+        "live": {
+          "lower": 0,
+          "equal": 40,
+          "higher": 0
+        }
+      },
+      "equal:deflated-bounded:n1": {
+        "groups": 196,
+        "requests": {
+          "lower": 196,
+          "equal": 0,
+          "higher": 0
+        },
+        "bytes": {
+          "lower": 196,
+          "equal": 0,
+          "higher": 0
+        },
+        "peak": {
+          "lower": 196,
+          "equal": 0,
+          "higher": 0
+        },
+        "live": {
+          "lower": 0,
+          "equal": 196,
+          "higher": 0
+        }
+      },
+      "equal:deflated-bounded:n16": {
+        "groups": 196,
+        "requests": {
+          "lower": 196,
+          "equal": 0,
+          "higher": 0
+        },
+        "bytes": {
+          "lower": 196,
+          "equal": 0,
+          "higher": 0
+        },
+        "peak": {
+          "lower": 196,
+          "equal": 0,
+          "higher": 0
+        },
+        "live": {
+          "lower": 0,
+          "equal": 196,
+          "higher": 0
+        }
+      },
+      "equal:zero-divisor-guard:n1": {
+        "groups": 20,
+        "requests": {
+          "lower": 0,
+          "equal": 20,
+          "higher": 0
+        },
+        "bytes": {
+          "lower": 0,
+          "equal": 20,
+          "higher": 0
+        },
+        "peak": {
+          "lower": 0,
+          "equal": 20,
+          "higher": 0
+        },
+        "live": {
+          "lower": 0,
+          "equal": 20,
+          "higher": 0
+        }
+      },
+      "equal:zero-divisor-guard:n16": {
+        "groups": 20,
+        "requests": {
+          "lower": 0,
+          "equal": 20,
+          "higher": 0
+        },
+        "bytes": {
+          "lower": 0,
+          "equal": 20,
+          "higher": 0
+        },
+        "peak": {
+          "lower": 0,
+          "equal": 20,
+          "higher": 0
+        },
+        "live": {
+          "lower": 0,
+          "equal": 20,
+          "higher": 0
+        }
+      },
+      "new-answer:deflated-oversized:n1": {
+        "groups": 40,
+        "requests": {
+          "lower": 24,
+          "equal": 0,
+          "higher": 16
+        },
+        "bytes": {
+          "lower": 24,
+          "equal": 0,
+          "higher": 16
+        },
+        "peak": {
+          "lower": 0,
+          "equal": 24,
+          "higher": 16
+        },
+        "live": {
+          "lower": 0,
+          "equal": 40,
+          "higher": 0
+        }
+      },
+      "new-answer:deflated-oversized:n16": {
+        "groups": 40,
+        "requests": {
+          "lower": 24,
+          "equal": 0,
+          "higher": 16
+        },
+        "bytes": {
+          "lower": 24,
+          "equal": 0,
+          "higher": 16
+        },
+        "peak": {
+          "lower": 0,
+          "equal": 24,
+          "higher": 16
+        },
+        "live": {
+          "lower": 0,
+          "equal": 40,
+          "higher": 0
+        }
+      },
+      "equal:deflated-oversized:n1": {
+        "groups": 16,
+        "requests": {
+          "lower": 0,
+          "equal": 16,
+          "higher": 0
+        },
+        "bytes": {
+          "lower": 0,
+          "equal": 16,
+          "higher": 0
+        },
+        "peak": {
+          "lower": 0,
+          "equal": 16,
+          "higher": 0
+        },
+        "live": {
+          "lower": 0,
+          "equal": 16,
+          "higher": 0
+        }
+      },
+      "equal:deflated-oversized:n16": {
+        "groups": 16,
+        "requests": {
+          "lower": 0,
+          "equal": 16,
+          "higher": 0
+        },
+        "bytes": {
+          "lower": 0,
+          "equal": 16,
+          "higher": 0
+        },
+        "peak": {
+          "lower": 0,
+          "equal": 16,
+          "higher": 0
+        },
+        "live": {
+          "lower": 0,
+          "equal": 16,
+          "higher": 0
+        }
+      },
+      "new-answer:deflated-bounded:n1": {
+        "groups": 8,
+        "requests": {
+          "lower": 8,
+          "equal": 0,
+          "higher": 0
+        },
+        "bytes": {
+          "lower": 8,
+          "equal": 0,
+          "higher": 0
+        },
+        "peak": {
+          "lower": 0,
+          "equal": 0,
+          "higher": 8
+        },
+        "live": {
+          "lower": 0,
+          "equal": 8,
+          "higher": 0
+        }
+      },
+      "new-answer:deflated-bounded:n16": {
+        "groups": 8,
+        "requests": {
+          "lower": 8,
+          "equal": 0,
+          "higher": 0
+        },
+        "bytes": {
+          "lower": 8,
+          "equal": 0,
+          "higher": 0
+        },
+        "peak": {
+          "lower": 0,
+          "equal": 0,
+          "higher": 8
+        },
+        "live": {
+          "lower": 0,
+          "equal": 8,
+          "higher": 0
+        }
+      }
+    },
+    "examples": [
+      {
+        "case": 3,
+        "label": "old-3",
+        "equalResult": true,
+        "category": "nonzero-constant-bypass",
+        "transition": "Transformed -> Transformed",
+        "baselineNs": 2629.845851528384,
+        "candidateNs": 2652.4991266375546,
+        "pairedMedianRatio": 1.0138747052514625,
+        "bootstrap": [
+          0.9985025100030617,
+          1.0325765786360181
+        ],
+        "orderStatistic": [
+          0.9981033339358166,
+          1.036015919054379
+        ],
+        "allocation": {
+          "requestsPerQuery": {
+            "baseline": 31,
+            "candidate": 31,
+            "baselineRange": [
+              31,
+              31
+            ],
+            "candidateRange": [
+              31,
+              31
+            ],
+            "pairedDelta": 0,
+            "pairedRatio": 1
+          },
+          "bytesPerQuery": {
+            "baseline": 3017,
+            "candidate": 3017,
+            "baselineRange": [
+              3017,
+              3017
+            ],
+            "candidateRange": [
+              3017,
+              3017
+            ],
+            "pairedDelta": 0,
+            "pairedRatio": 1
+          },
+          "batchLiveDelta": {
+            "baseline": 0,
+            "candidate": 0,
+            "baselineRange": [
+              0,
+              0
+            ],
+            "candidateRange": [
+              0,
+              0
+            ],
+            "pairedDelta": 0,
+            "pairedRatio": null
+          },
+          "batchPeakAboveStart": {
+            "baseline": 1536,
+            "candidate": 1536,
+            "baselineRange": [
+              1536,
+              1536
+            ],
+            "candidateRange": [
+              1536,
+              1536
+            ],
+            "pairedDelta": 0,
+            "pairedRatio": 1
+          }
+        }
+      },
+      {
+        "case": 23,
+        "label": "old-23",
+        "equalResult": true,
+        "category": "deflated-bounded",
+        "transition": "Transformed -> Transformed",
+        "baselineNs": 8943.8622754491,
+        "candidateNs": 4956.5149700598795,
+        "pairedMedianRatio": 0.5590819857939434,
+        "bootstrap": [
+          0.5456132938081918,
+          0.5649392415460144
+        ],
+        "orderStatistic": [
+          0.5430584412350682,
+          0.5668389744252983
+        ],
+        "allocation": {
+          "requestsPerQuery": {
+            "baseline": 55,
+            "candidate": 43,
+            "baselineRange": [
+              55,
+              55
+            ],
+            "candidateRange": [
+              43,
+              43
+            ],
+            "pairedDelta": -12,
+            "pairedRatio": 0.7818181818181819
+          },
+          "bytesPerQuery": {
+            "baseline": 9000,
+            "candidate": 5240,
+            "baselineRange": [
+              9000,
+              9000
+            ],
+            "candidateRange": [
+              5240,
+              5240
+            ],
+            "pairedDelta": -3760,
+            "pairedRatio": 0.5822222222222222
+          },
+          "batchLiveDelta": {
+            "baseline": 0,
+            "candidate": 0,
+            "baselineRange": [
+              0,
+              0
+            ],
+            "candidateRange": [
+              0,
+              0
+            ],
+            "pairedDelta": 0,
+            "pairedRatio": null
+          },
+          "batchPeakAboveStart": {
+            "baseline": 2584,
+            "candidate": 1816,
+            "baselineRange": [
+              2584,
+              2584
+            ],
+            "candidateRange": [
+              1816,
+              1816
+            ],
+            "pairedDelta": -768,
+            "pairedRatio": 0.7027863777089783
+          }
+        }
+      },
+      {
+        "case": 35,
+        "label": "old-35",
+        "equalResult": true,
+        "category": "zero-divisor-guard",
+        "transition": "DenominatorMayContainZero -> DenominatorMayContainZero",
+        "baselineNs": 100.164625,
+        "candidateNs": 107.65559999999999,
+        "pairedMedianRatio": 1.074142807674594,
+        "bootstrap": [
+          1.0610761969813114,
+          1.079077097345712
+        ],
+        "orderStatistic": [
+          1.0602643018418385,
+          1.0818230859041604
+        ],
+        "allocation": {
+          "requestsPerQuery": {
+            "baseline": 1,
+            "candidate": 1,
+            "baselineRange": [
+              1,
+              1
+            ],
+            "candidateRange": [
+              1,
+              1
+            ],
+            "pairedDelta": 0,
+            "pairedRatio": 1
+          },
+          "bytesPerQuery": {
+            "baseline": 70,
+            "candidate": 70,
+            "baselineRange": [
+              70,
+              70
+            ],
+            "candidateRange": [
+              70,
+              70
+            ],
+            "pairedDelta": 0,
+            "pairedRatio": 1
+          },
+          "batchLiveDelta": {
+            "baseline": 0,
+            "candidate": 0,
+            "baselineRange": [
+              0,
+              0
+            ],
+            "candidateRange": [
+              0,
+              0
+            ],
+            "pairedDelta": 0,
+            "pairedRatio": null
+          },
+          "batchPeakAboveStart": {
+            "baseline": 70,
+            "candidate": 70,
+            "baselineRange": [
+              70,
+              70
+            ],
+            "candidateRange": [
+              70,
+              70
+            ],
+            "pairedDelta": 0,
+            "pairedRatio": 1
+          }
+        }
+      },
+      {
+        "case": 41,
+        "label": "degree-1",
+        "equalResult": false,
+        "category": "deflated-oversized",
+        "transition": "UnsupportedDegree -> Transformed",
+        "baselineNs": 6574.404411764706,
+        "candidateNs": 44507.970588235294,
+        "pairedMedianRatio": 6.810609170194125,
+        "bootstrap": [
+          6.673129725943162,
+          6.830086530537497
+        ],
+        "orderStatistic": [
+          6.612934879954064,
+          6.911802829758101
+        ],
+        "allocation": {
+          "requestsPerQuery": {
+            "baseline": 26,
+            "candidate": 153,
+            "baselineRange": [
+              26,
+              26
+            ],
+            "candidateRange": [
+              153,
+              157
+            ],
+            "pairedDelta": 127,
+            "pairedRatio": 5.884615384615385
+          },
+          "bytesPerQuery": {
+            "baseline": 2128,
+            "candidate": 30249,
+            "baselineRange": [
+              2128,
+              2128
+            ],
+            "candidateRange": [
+              30249,
+              30665
+            ],
+            "pairedDelta": 28121,
+            "pairedRatio": 14.214755639097744
+          },
+          "batchLiveDelta": {
+            "baseline": 0,
+            "candidate": 0,
+            "baselineRange": [
+              0,
+              0
+            ],
+            "candidateRange": [
+              0,
+              0
+            ],
+            "pairedDelta": 0,
+            "pairedRatio": null
+          },
+          "batchPeakAboveStart": {
+            "baseline": 1096,
+            "candidate": 6664,
+            "baselineRange": [
+              1096,
+              1096
+            ],
+            "candidateRange": [
+              6664,
+              6664
+            ],
+            "pairedDelta": 5568,
+            "pairedRatio": 6.08029197080292
+          }
+        }
+      },
+      {
+        "case": 104,
+        "label": "degree-64",
+        "equalResult": false,
+        "category": "deflated-oversized",
+        "transition": "Undecided -> Transformed",
+        "baselineNs": 25072.058558558558,
+        "candidateNs": 23001.216216216217,
+        "pairedMedianRatio": 0.9171918759065203,
+        "bootstrap": [
+          0.9067580826349404,
+          0.937832488430072
+        ],
+        "orderStatistic": [
+          0.9041710239217828,
+          0.9435794160878463
+        ],
+        "allocation": {
+          "requestsPerQuery": {
+            "baseline": 138,
+            "candidate": 136,
+            "baselineRange": [
+              138,
+              139
+            ],
+            "candidateRange": [
+              136,
+              137
+            ],
+            "pairedDelta": -2,
+            "pairedRatio": 0.9855072463768116
+          },
+          "bytesPerQuery": {
+            "baseline": 15903,
+            "candidate": 13145,
+            "baselineRange": [
+              15903,
+              16007
+            ],
+            "candidateRange": [
+              13145,
+              13249
+            ],
+            "pairedDelta": -2758,
+            "pairedRatio": 0.8265736024649437
+          },
+          "batchLiveDelta": {
+            "baseline": 0,
+            "candidate": 0,
+            "baselineRange": [
+              0,
+              0
+            ],
+            "candidateRange": [
+              0,
+              0
+            ],
+            "pairedDelta": 0,
+            "pairedRatio": null
+          },
+          "batchPeakAboveStart": {
+            "baseline": 3688,
+            "candidate": 3688,
+            "baselineRange": [
+              3688,
+              3688
+            ],
+            "candidateRange": [
+              3688,
+              3688
+            ],
+            "pairedDelta": 0,
+            "pairedRatio": 1
+          }
+        }
+      },
+      {
+        "case": 113,
+        "label": "wide-1275",
+        "equalResult": false,
+        "category": "deflated-bounded",
+        "transition": "Undecided -> Transformed",
+        "baselineNs": 288411.2,
+        "candidateNs": 147231.84999999998,
+        "pairedMedianRatio": 0.512245303403493,
+        "bootstrap": [
+          0.5011931292322662,
+          0.5196057763438627
+        ],
+        "orderStatistic": [
+          0.4930813127566629,
+          0.5227359729219037
+        ],
+        "allocation": {
+          "requestsPerQuery": {
+            "baseline": 1893.5,
+            "candidate": 1384,
+            "baselineRange": [
+              1892,
+              1895
+            ],
+            "candidateRange": [
+              1384,
+              1384
+            ],
+            "pairedDelta": -509.5,
+            "pairedRatio": 0.7309220324990098
+          },
+          "bytesPerQuery": {
+            "baseline": 475687,
+            "candidate": 286553,
+            "baselineRange": [
+              475495,
+              475879
+            ],
+            "candidateRange": [
+              286553,
+              286553
+            ],
+            "pairedDelta": -189134,
+            "pairedRatio": 0.6023983137728437
+          },
+          "batchLiveDelta": {
+            "baseline": 0,
+            "candidate": 0,
+            "baselineRange": [
+              0,
+              0
+            ],
+            "candidateRange": [
+              0,
+              0
+            ],
+            "pairedDelta": 0,
+            "pairedRatio": null
+          },
+          "batchPeakAboveStart": {
+            "baseline": 11528,
+            "candidate": 12072,
+            "baselineRange": [
+              11528,
+              11528
+            ],
+            "candidateRange": [
+              12072,
+              12072
+            ],
+            "pairedDelta": 544,
+            "pairedRatio": 1.0471894517696045
+          }
+        }
+      }
+    ],
+    "attribution": {
+      "cases": 7,
+      "processes": 56,
+      "records": 448,
+      "pairedChecks": 224,
+      "allCountsEqual": true,
+      "examples": [
+        {
+          "case": 10,
+          "requests": 170,
+          "bytes": 33544,
+          "peak": 4840,
+          "live": 0
+        },
+        {
+          "case": 11,
+          "requests": 183,
+          "bytes": 33088,
+          "peak": 4944,
+          "live": 0
+        },
+        {
+          "case": 36,
+          "requests": 363,
+          "bytes": 56136,
+          "peak": 18232,
+          "live": 0
+        },
+        {
+          "case": 38,
+          "requests": 225,
+          "bytes": 40520,
+          "peak": 10400,
+          "live": 0
+        },
+        {
+          "case": 39,
+          "requests": 211,
+          "bytes": 38848,
+          "peak": 7584,
+          "live": 0
+        },
+        {
+          "case": 107,
+          "requests": 3625,
+          "bytes": 418737,
+          "peak": 11256,
+          "live": 0
+        },
+        {
+          "case": 111,
+          "requests": 4679,
+          "bytes": 1650961,
+          "peak": 24648,
+          "live": 0
+        }
+      ],
+      "interpretation": "Small mixed-workload increases are not reproduced in case-isolated warmed processes. This supports dependence on preceding work/state, not a specified cache mechanism or universal absence of allocation costs. Original campaign rows are unchanged."
+    },
+    "negativeControls": {
+      "valid": 1,
+      "rejected": 9
+    },
+    "binaries": {
+      "files": 4,
+      "bytes": 11304616,
+      "dir": "/tmp/calcium-zero-cost.cEHSth",
+      "noNewSolverCopy": true
+    },
+    "rawObservationBytes": 25135254,
+    "limits": "All rows retained. Full reports and source identities checked; instrumented durations excluded from CPU analysis. Fresh sources are not cold processes. Peak/live values are batch deltas above a nonzero starting footprint, not RSS. No universally independent samples, fixed frequency, multiplicity adjustment, representative consumer/size, WASM execution or seventh retention is claimed."
+  },
+  "retainedContinuationTransfers": 6,
+  "newDonorLines": 0,
+  "scope": "Isolated native cost qualification with unchanged live sources; WASM execution, representative consumer/size and full ecosystem audit remain open."
+}

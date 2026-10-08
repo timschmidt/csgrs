@@ -1,0 +1,15 @@
+{
+  "head": "91ddad8970b8ffda7053a38bce3e72a0400d7abe",
+  "parent": "c13778eb15662d3b12093a54e518e9fb137c39d1",
+  "files": {
+    "src/bezier_offset.rs": "894e6c47e7bdc7d96cf695b6089f292b629543bff9ebeb186728ad5ebd136039",
+    "src/bezier_region.rs": "4ad84e3b01c967d9d9ed3d8b097ffd76091376aeb7b2f1a3b07216ebd347c6f0",
+    "src/curve.rs": "5c9d342ffd12f5b194e122aff057ce32f2861c904c1a6636040be771d5157ec9",
+    "src/curve_region_boolean.rs": "f3c1e255a6857e49a34677ebe44f3ef5e7a2403fd26d58f950e146d52559a910"
+  },
+  "repository_count": 30,
+  "all_repositories_clean": true,
+  "all_owned_processes_reaped": true,
+  "pushed": false,
+  "full_goal_complete": false
+}

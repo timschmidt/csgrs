@@ -1,0 +1,13 @@
+{
+  "tag": "prototype-statistics-inventory-corrected",
+  "started": "2026-09-11T01:53:43.993Z",
+  "finished": "2026-09-11T01:53:44.429Z",
+  "elapsedSeconds": 0.43392864499999995,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "node",
+  "args": [
+    "prototype-statistics-inventory-v63.mjs"
+  ],
+  "code": 1,
+  "signal": null
+}

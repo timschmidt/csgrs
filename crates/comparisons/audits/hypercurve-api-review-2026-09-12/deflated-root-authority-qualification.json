@@ -1,0 +1,75 @@
+{
+  "status": "implemented, qualified, committed; original goal active",
+  "commits": {
+    "hypercurve": "52eec14407afd459b4fe7d668b95a79ac0c48cad",
+    "hypersolve": "c0742ace4a762d701df6241bdfa919c313e6cec4",
+    "hyperbrep": "8a84ee7db02fd2720ac89a1a6a227ee4ec2a8171"
+  },
+  "preceding_hypercurve_commit": "5060fbb018ce18c850d5c4a4a4d4e49fd85c825a",
+  "preceding_hypersolve_commit": "54859d54c7f112bc421712aec1862138da8cca42",
+  "implementation": "The shared ordered-field Bernstein isolator now continues its existing refinement loop until a nonpoint interval excludes every separately emitted exact root from both boundaries. Mandatory ownership refinement is independent of requested extra accuracy. If a sign or the subdivision budget cannot establish that separation, the accelerator requests its complete fallback. A newly discovered exact midpoint restarts ordinary deflation. No API variant, root representation, compatibility wrapper or alias was added.",
+  "established_defect": "The ordered-field isolator deflated t=0 from t*(t^3-2^-29), then published the other root in an interval still starting at zero. Hypercurve retained the original polynomial and returned Decided(Equal) when comparing the nonzero root to zero. Its refiner could likewise select the removed endpoint.",
+  "regressions": [
+    "Hypercurve preserves the nonzero local root through comparisons to zero, 2^-10 and 2^-9 and through 16 refinement steps, in both contexts.",
+    "Hypersolve excludes removed double roots at 0, 1 and 1/2 from nearby irrational-root boundaries for both signs and with zero or eight requested refinements. The original polynomial has opposite nonzero signs at each published interval boundary.",
+    "A zero-depth budget requests CompleteFallbackRequired rather than publishing a boundary with a removed root.",
+    "Boundary separation can discover another exact root (1/1024); ordinary deflation then returns both distinct exact witnesses."
+  ],
+  "baselines": [
+    "deflated-root-authority-hypercurve-baseline.log: Decided(Equal), expected Greater.",
+    "deflated-root-authority-hypersolve-baseline.log: a removed root remains on the nonpoint interval boundary."
+  ],
+  "focused": "deflated-root-authority-hypercurve-focused.log: both focused tests pass in 0.00 seconds.",
+  "tests": {
+    "hypercurve": {
+      "passed": 1451,
+      "ignored": 6,
+      "targets": 13,
+      "log": "deflated-root-authority-hypercurve-tests.log",
+      "exit_code": 0
+    },
+    "hyperbrep": {
+      "passed": 232,
+      "ignored": 0,
+      "targets": 1,
+      "log": "deflated-root-authority-hyperbrep-tests.log",
+      "exit_code": 0
+    },
+    "hypersolve": {
+      "passed": 489,
+      "ignored": 0,
+      "targets": 1,
+      "log": "deflated-root-authority-hypersolve-tests.log",
+      "exit_code": 0
+    }
+  },
+  "freshly_run_total": 2172,
+  "established_expensive_hypercurve_exclusions": 4,
+  "checks": [
+    "deflated-root-authority-hypercurve-check.log: exit 0",
+    "deflated-root-authority-hyperbrep-check.log: exit 0",
+    "deflated-root-authority-hypersolve-check.log: exit 0",
+    "changed-file rustfmt --check and both git diff --check: exit 0"
+  ],
+  "source_sha256": {
+    "hypercurve/src/bezier_offset.rs": "8627b05f3c728b5fe79d4448dbfa47845e626aff7bc9ba5da28685a9e99960a9",
+    "hypersolve/src/ordered_field_roots.rs": "7086f5c20db31b4f5d8fab2ef96937f3b7c02a6536d3b5f315bbeda7775b4abe"
+  },
+  "diagnostics": {
+    "binary": "stationary-ph-offset-deflated-root-authority",
+    "binary_sha256": "376efc9da328e15730f460e4aed4f4c3c1bcbe462438f5023c65a1d24561ad60",
+    "log": "stationary-ph-offset-deflated-root-authority.log",
+    "timeout_seconds": 60,
+    "exit_code": 124,
+    "first_offset": "Certified with degree-five analytic source, 3.862021553 seconds.",
+    "second_offset": "No result before total timeout; no inward composition repair or application speedup claimed.",
+    "stack": "stationary-ph-deflated-root-authority-stack.log",
+    "finding": "Coefficient signing during local polynomial refinement still reaches the shared selected-root sign query and expensive integer remainder content. The sample does not distinguish an old endpoint sign from a new midpoint sign.",
+    "library_duration_seconds": 102.58,
+    "timing_scope": "Library qualification overlapped the short profile; duration is not a controlled performance benchmark."
+  },
+  "related_authority": "The complete bivariate-fiber Sturm fallback already excludes deflated roots at both interval endpoints (hypersolve/src/algebraic_fiber.rs around 705). The shared Bernstein path now honors that same original-polynomial ownership requirement.",
+  "clean_repository_count": 30,
+  "workspace_state": "deflated-root-authority-workspace-after-commit.json",
+  "goal_status": "active"
+}

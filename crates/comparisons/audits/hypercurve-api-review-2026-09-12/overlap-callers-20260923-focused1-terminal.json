@@ -1,0 +1,23 @@
+{
+  "cases": [
+    {
+      "name": "bezier_offset::conversion_tests::independently_encoded_nonrepresented_analytic_circle_publishes_overlap",
+      "returncode": 0,
+      "passed": true,
+      "limit_seconds": 180,
+      "elapsed_seconds": 1.2558142018970102,
+      "log": "overlap-callers-20260923-focused1-case-0.log"
+    },
+    {
+      "name": "bezier_offset::conversion_tests::nonrepresented_center_nonrational_chamfer_inverts_with_retained_authority",
+      "returncode": 0,
+      "passed": true,
+      "limit_seconds": 180,
+      "elapsed_seconds": 0.45628726994618773,
+      "log": "overlap-callers-20260923-focused1-case-1.log"
+    }
+  ],
+  "binary_sha256": "2a24b78e58f5dc9f4c047d6c69fcd07b545b8892ee346b38ad641ec7f30da60a",
+  "all_sources_unchanged": true,
+  "all_processes_reaped": true
+}

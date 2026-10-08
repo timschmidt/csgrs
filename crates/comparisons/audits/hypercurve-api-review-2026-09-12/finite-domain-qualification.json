@@ -1,0 +1,58 @@
+{
+  "date": "2026-09-14",
+  "status": "qualified_finite_contact_domains_goal_active",
+  "commits": {
+    "hypercurve": "e0a6b01",
+    "hyperbrep": "d82bc14"
+  },
+  "scope": "One borrowed CurveParameterDomain2 carries a closed retained finite range and an optional open barrier-limited ray through resultant projection, component constraints and selection, parallel pair solving, and ordered self-contact solving. TrimOrExtend parallel callers supply their actual ranges plus certified endpoint bridges. Exterior finite component topology uses invertible affine charts; original endpoint and root evidence remains authoritative. Callers migrate directly and the unused unit-only ownership helper is removed.",
+  "tests": {
+    "final_focused_passed": 16,
+    "broad_library_passed": 980,
+    "broad_integration_passed": 229,
+    "hyperbrep_path_passed": 19,
+    "additional_unique_final_regressions_passed": 1,
+    "total_unique_passed": 1229,
+    "failed": 0,
+    "new_tests": 4,
+    "existing_ignored_drivers": 6,
+    "existing_costly_exclusions": [
+      "selected_parallel_normal_circle_intersects_genuinely_analytic_parallel_in_one_fiber",
+      "independent_oblique_chord_pair_fillets_extend_on_infinite_supports",
+      "selected_circle_and_analytic_parallel_extend_on_full_supports",
+      "pair_native_boolean_algebraic_chord_corner_publishes_a_third_generation_fillet"
+    ],
+    "snapshot_note": "The broad and downstream suites compiled the final production source. The final nonrational-boundary test was added after those immutable binaries were built and passed in the final 16-test focused release run. The other 15 focused tests overlap the broad gate."
+  },
+  "checks": {
+    "hypercurve_all_targets_all_features": "passed",
+    "hyperbrep_all_targets_all_features": "passed",
+    "hypercurve_ui_offline_all_targets": "passed",
+    "hypercurve_docs_broken_links_denied": "passed",
+    "changed_rust_files_formatting": "passed",
+    "staged_whitespace": "passed"
+  },
+  "regression_coverage": [
+    "Original resultant root certificates on trimmed, exterior, reversed and irrational finite intervals",
+    "Ray roots inside the original unit interval but outside the actual finite range",
+    "Finite ownership beyond an overlapping ray barrier and strict excluded ray barriers",
+    "Disjoint finite component domains retaining an independent isolated residual pair",
+    "Selected degree-135 endpoints with unavailable bounded ordinary-parameter promotion",
+    "Exterior affine chart transport of selected events and closed finite axis components",
+    "Nonrational exact Real chart coefficients from sqrt(2) and sqrt(3) boundaries",
+    "Ordered self-contact roles on actual finite intervals around interior and exterior roots",
+    "Certified bridge expansion never shrinking a containing authored range"
+  ],
+  "logs": [
+    "finite-domain-final-focused.log",
+    "finite-domain-broad.log",
+    "finite-domain-brep-path.log",
+    "finite-domain-all-targets.log",
+    "finite-domain-brep-check.log",
+    "finite-domain-ui-check.log",
+    "finite-domain-docs.log"
+  ],
+  "performance_claim": "No matched runtime benchmark. Unit-chart fast paths, original-polynomial finite root isolation, shared symmetric resultants and equal-domain roots, lazy per-query component chart preparation, and native endpoint comparison are preserved. Common range intersection now borrows boundaries and clones only the surviving pair.",
+  "remaining": "Whole authored-circle ownership, full authored-domain TrimOrExtend enumeration/publication, and the broader API/representation/operation closure obligations remain active.",
+  "pushed": false
+}

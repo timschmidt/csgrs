@@ -1,0 +1,23 @@
+{
+  "tag": "symbolic-power-mem-2-256-v83",
+  "started": "2026-09-12T03:38:20.353Z",
+  "finished": "2026-09-12T03:38:21.005Z",
+  "elapsedSeconds": 0.650037554,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "timeout",
+  "args": [
+    "120s",
+    "valgrind",
+    "--tool=memcheck",
+    "--leak-check=full",
+    "--show-leak-kinds=all",
+    "--errors-for-leak-kinds=definite,indirect,possible",
+    "--error-exitcode=97",
+    "/tmp/calcium-symbolic-boundary-v83.JuGH8X/controls",
+    "powers",
+    "2",
+    "256"
+  ],
+  "code": 97,
+  "signal": null
+}

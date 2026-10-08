@@ -1,0 +1,480 @@
+{
+  "snapshotFiles": 397,
+  "candidateFiles": 152,
+  "candidateChanges": [
+    "Cargo package/paths",
+    "square-root backward coefficient loop"
+  ],
+  "publicChecksPerModePerAlgorithm": 81,
+  "identicalCheckOutput": true,
+  "helperHitsPerProbe": 1,
+  "sizes": {
+    "baseline": {
+      "fileBytes": 2826536,
+      "sections": {
+        ".interp": 28,
+        ".note.ABI-tag": 32,
+        ".note.gnu.build-id": 36,
+        ".dynsym": 1776,
+        ".gnu.version": 148,
+        ".gnu.version_r": 352,
+        ".gnu.hash": 28,
+        ".dynstr": 1146,
+        ".rela.dyn": 40104,
+        ".rela.plt": 48,
+        ".gcc_except_table": 415544,
+        ".rodata": 80520,
+        ".eh_frame_hdr": 15820,
+        ".eh_frame": 113528,
+        ".text": 1367991,
+        ".init": 27,
+        ".fini": 13,
+        ".plt": 48,
+        ".tdata": 32,
+        ".tbss": 632,
+        ".data.rel.ro": 24560,
+        ".fini_array": 8,
+        ".init_array": 16,
+        ".dynamic": 480,
+        ".got": 4280,
+        ".got.plt": 40,
+        ".relro_padding": 1112,
+        ".tm_clone_table": 0,
+        ".data": 197200,
+        ".bss": 208,
+        ".comment": 231,
+        ".annobin.notes": 247,
+        ".gnu.build.attributes": 324
+      },
+      "totalSections": 2266559
+    },
+    "diagonal": {
+      "fileBytes": 2830856,
+      "sections": {
+        ".interp": 28,
+        ".note.ABI-tag": 32,
+        ".note.gnu.build-id": 36,
+        ".dynsym": 1776,
+        ".gnu.version": 148,
+        ".gnu.version_r": 352,
+        ".gnu.hash": 28,
+        ".dynstr": 1146,
+        ".rela.dyn": 40152,
+        ".rela.plt": 48,
+        ".gcc_except_table": 415496,
+        ".rodata": 80520,
+        ".eh_frame_hdr": 15820,
+        ".eh_frame": 113528,
+        ".text": 1367863,
+        ".init": 27,
+        ".fini": 13,
+        ".plt": 48,
+        ".tdata": 32,
+        ".tbss": 632,
+        ".data.rel.ro": 24608,
+        ".fini_array": 8,
+        ".init_array": 16,
+        ".dynamic": 480,
+        ".got": 4280,
+        ".got.plt": 40,
+        ".relro_padding": 1192,
+        ".tm_clone_table": 0,
+        ".data": 197200,
+        ".bss": 208,
+        ".comment": 231,
+        ".annobin.notes": 247,
+        ".gnu.build.attributes": 324
+      },
+      "totalSections": 2266559
+    }
+  },
+  "sizeCaveat": "separate package identities change symbol/debug-string sizes; no production binary-size saving claimed",
+  "processes": 108,
+  "observations": 864,
+  "measuredBatches": 648,
+  "verifiedCalls": 3876864,
+  "minCPU": 0.478315654,
+  "families": [
+    {
+      "family": "1-8-terminal-fresh",
+      "seedGroups": 3,
+      "ratios": {
+        "control": {
+          "cpuMedian": 1.0055792826486671,
+          "cpuRange": [
+            0.986874841894111,
+            1.0117800954049365
+          ],
+          "wallMedian": 1.0055577174335422,
+          "wallRange": [
+            0.9864229142797155,
+            1.0119382722137904
+          ]
+        },
+        "diagonal": {
+          "cpuMedian": 1.0049540893397566,
+          "cpuRange": [
+            0.9874775049195693,
+            1.005832879678871
+          ],
+          "wallMedian": 1.004779151366678,
+          "wallRange": [
+            0.9873455255383785,
+            1.0056774373312531
+          ]
+        }
+      },
+      "controlWithinTenPercent": true
+    },
+    {
+      "family": "1-8-terminal-reused",
+      "seedGroups": 3,
+      "ratios": {
+        "control": {
+          "cpuMedian": 1.003830874275734,
+          "cpuRange": [
+            0.9747911689187925,
+            1.0111828044980822
+          ],
+          "wallMedian": 1.0039875699396608,
+          "wallRange": [
+            0.9745006362049086,
+            1.0118843933013548
+          ]
+        },
+        "diagonal": {
+          "cpuMedian": 0.9824239276321596,
+          "cpuRange": [
+            0.9759852503211892,
+            0.9889946092012051
+          ],
+          "wallMedian": 0.9823885307168522,
+          "wallRange": [
+            0.9762417958384174,
+            0.9888063277926029
+          ]
+        }
+      },
+      "controlWithinTenPercent": true
+    },
+    {
+      "family": "2-8-terminal-fresh",
+      "seedGroups": 3,
+      "ratios": {
+        "control": {
+          "cpuMedian": 1.0058369667975038,
+          "cpuRange": [
+            0.9945894550296316,
+            1.0118792588248882
+          ],
+          "wallMedian": 1.0057674473098,
+          "wallRange": [
+            0.9947030307932271,
+            1.012205193663789
+          ]
+        },
+        "diagonal": {
+          "cpuMedian": 0.9870622059432758,
+          "cpuRange": [
+            0.9674992662112236,
+            1.0001597064989
+          ],
+          "wallMedian": 0.9869298096538307,
+          "wallRange": [
+            0.9676039120700206,
+            1.0002001647028147
+          ]
+        }
+      },
+      "controlWithinTenPercent": true
+    },
+    {
+      "family": "2-8-terminal-reused",
+      "seedGroups": 3,
+      "ratios": {
+        "control": {
+          "cpuMedian": 0.9926532933419151,
+          "cpuRange": [
+            0.9760214759011816,
+            0.9935989003295751
+          ],
+          "wallMedian": 0.9924181597061423,
+          "wallRange": [
+            0.9760546781455429,
+            0.9933591920108629
+          ]
+        },
+        "diagonal": {
+          "cpuMedian": 0.9864214114420051,
+          "cpuRange": [
+            0.9527172440842238,
+            1.0424802175948282
+          ],
+          "wallMedian": 0.9863224471405759,
+          "wallRange": [
+            0.9526302236050568,
+            1.0421910589340382
+          ]
+        }
+      },
+      "controlWithinTenPercent": true
+    },
+    {
+      "family": "4-8-terminal-fresh",
+      "seedGroups": 3,
+      "ratios": {
+        "control": {
+          "cpuMedian": 0.9946009690834783,
+          "cpuRange": [
+            0.9461417813423049,
+            1.003115131944363
+          ],
+          "wallMedian": 0.9945221817226303,
+          "wallRange": [
+            0.9460991819464138,
+            1.003051274957947
+          ]
+        },
+        "diagonal": {
+          "cpuMedian": 1.013955849692021,
+          "cpuRange": [
+            1.0075321689719572,
+            1.032613208984281
+          ],
+          "wallMedian": 1.013912591545387,
+          "wallRange": [
+            1.006984818810806,
+            1.0326767570622783
+          ]
+        }
+      },
+      "controlWithinTenPercent": true
+    },
+    {
+      "family": "4-8-terminal-reused",
+      "seedGroups": 3,
+      "ratios": {
+        "control": {
+          "cpuMedian": 1.011281253872933,
+          "cpuRange": [
+            0.9769517242343703,
+            1.0338378458721582
+          ],
+          "wallMedian": 1.0113815838271318,
+          "wallRange": [
+            0.9767447014258165,
+            1.0339006112192177
+          ]
+        },
+        "diagonal": {
+          "cpuMedian": 1.01004205997847,
+          "cpuRange": [
+            0.99899671507131,
+            1.0175003817076147
+          ],
+          "wallMedian": 1.009696144505182,
+          "wallRange": [
+            0.9990847785102919,
+            1.0173777303032492
+          ]
+        }
+      },
+      "controlWithinTenPercent": true
+    },
+    {
+      "family": "8-32-terminal-fresh",
+      "seedGroups": 3,
+      "ratios": {
+        "control": {
+          "cpuMedian": 1.0137831897779066,
+          "cpuRange": [
+            0.9947451693099645,
+            1.0298436603444392
+          ],
+          "wallMedian": 1.0138555410676442,
+          "wallRange": [
+            0.994567376394044,
+            1.0321697712744808
+          ]
+        },
+        "diagonal": {
+          "cpuMedian": 1.0075866956117416,
+          "cpuRange": [
+            0.9941085457356768,
+            1.0953965427004444
+          ],
+          "wallMedian": 1.0080203390024756,
+          "wallRange": [
+            0.994036729598557,
+            1.0952682059877343
+          ]
+        }
+      },
+      "controlWithinTenPercent": true
+    },
+    {
+      "family": "8-32-terminal-reused",
+      "seedGroups": 3,
+      "ratios": {
+        "control": {
+          "cpuMedian": 1.0037899440532478,
+          "cpuRange": [
+            0.9966765789138283,
+            1.0061866835049016
+          ],
+          "wallMedian": 1.0037347236067589,
+          "wallRange": [
+            0.9968934183334499,
+            1.0060604213173996
+          ]
+        },
+        "diagonal": {
+          "cpuMedian": 0.9961759393998111,
+          "cpuRange": [
+            0.986049019198855,
+            1.0113644471501737
+          ],
+          "wallMedian": 0.9960265765160248,
+          "wallRange": [
+            0.986016129199743,
+            1.0111691858587333
+          ]
+        }
+      },
+      "controlWithinTenPercent": true
+    },
+    {
+      "family": "1-8-sampled-fresh",
+      "seedGroups": 3,
+      "ratios": {
+        "control": {
+          "cpuMedian": 1.006959712431313,
+          "cpuRange": [
+            1.00693246830821,
+            1.0126087422379584
+          ],
+          "wallMedian": 1.0069200087567933,
+          "wallRange": [
+            1.006378908327209,
+            1.0127439877664621
+          ]
+        },
+        "diagonal": {
+          "cpuMedian": 1.0027418336985787,
+          "cpuRange": [
+            0.994683548036904,
+            1.0047815246439726
+          ],
+          "wallMedian": 1.0029519689705648,
+          "wallRange": [
+            0.9939524954377,
+            1.0049727889642583
+          ]
+        }
+      },
+      "controlWithinTenPercent": true
+    },
+    {
+      "family": "1-8-sampled-reused",
+      "seedGroups": 3,
+      "ratios": {
+        "control": {
+          "cpuMedian": 0.9971192507790528,
+          "cpuRange": [
+            0.9965010415114707,
+            0.9980004860264371
+          ],
+          "wallMedian": 0.9967010012601816,
+          "wallRange": [
+            0.9947202006420875,
+            0.9980887970026007
+          ]
+        },
+        "diagonal": {
+          "cpuMedian": 0.9844601534182073,
+          "cpuRange": [
+            0.9795377111942568,
+            1.0006303252291324
+          ],
+          "wallMedian": 0.9847724248989695,
+          "wallRange": [
+            0.9765269694261378,
+            1.0008315466202111
+          ]
+        }
+      },
+      "controlWithinTenPercent": true
+    },
+    {
+      "family": "4-32-sampled-fresh",
+      "seedGroups": 3,
+      "ratios": {
+        "control": {
+          "cpuMedian": 1.0123108047752614,
+          "cpuRange": [
+            0.9948192273844344,
+            1.0444563437657945
+          ],
+          "wallMedian": 1.0121552538382217,
+          "wallRange": [
+            0.9946082424691584,
+            1.044535964481744
+          ]
+        },
+        "diagonal": {
+          "cpuMedian": 1.015196096875488,
+          "cpuRange": [
+            0.9914790923847842,
+            1.0383630387834473
+          ],
+          "wallMedian": 1.0150509929949216,
+          "wallRange": [
+            0.9914707719712186,
+            1.038756110454902
+          ]
+        }
+      },
+      "controlWithinTenPercent": true
+    },
+    {
+      "family": "4-32-sampled-reused",
+      "seedGroups": 3,
+      "ratios": {
+        "control": {
+          "cpuMedian": 1.0107467948624929,
+          "cpuRange": [
+            0.9946134234094757,
+            1.0180169476572527
+          ],
+          "wallMedian": 1.0105760664581283,
+          "wallRange": [
+            0.9944336339205835,
+            1.0181685615554243
+          ]
+        },
+        "diagonal": {
+          "cpuMedian": 1.0230948229779215,
+          "cpuRange": [
+            0.9970885817956745,
+            1.025776528411735
+          ],
+          "wallMedian": 1.0229082851877986,
+          "wallRange": [
+            0.9971505764413944,
+            1.0260943401769727
+          ]
+        }
+      },
+      "controlWithinTenPercent": true
+    }
+  ],
+  "limitations": [
+    "shared host, pinned CPU not exclusive",
+    "separate binaries/processes; code-layout and time-order effects remain",
+    "six measured batches per process after warmup/calibration",
+    "seed-dependent order cycles use two of three cyclic orders, not full counterbalancing",
+    "CPU and wall ranges are descriptive across three seed groups, not confidence bounds"
+  ],
+  "status": "exploratory public timing; fully counterbalanced retention study still required",
+  "newProductionChanges": 0
+}

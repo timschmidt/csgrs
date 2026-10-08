@@ -1,0 +1,17 @@
+{
+  "tag": "polynomial-state-memcheck",
+  "started": "2026-09-08T13:41:19.608Z",
+  "finished": "2026-09-08T13:41:20.122Z",
+  "elapsedSeconds": 0.511356544,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison",
+  "command": "valgrind",
+  "args": [
+    "--leak-check=full",
+    "--show-leak-kinds=all",
+    "--errors-for-leak-kinds=definite,indirect,possible",
+    "--error-exitcode=97",
+    "/home/tim/Documents/GitHub/workspace/.audit-builds/calcium-polynomial-state-probe"
+  ],
+  "code": 1,
+  "signal": null
+}

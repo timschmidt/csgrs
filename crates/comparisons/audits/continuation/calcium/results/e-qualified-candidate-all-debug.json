@@ -1,0 +1,25 @@
+{
+  "tag": "e-qualified-candidate-all-debug",
+  "started": "2026-09-10T01:01:27.690Z",
+  "finished": "2026-09-10T01:01:45.791Z",
+  "elapsedSeconds": 18.099129205999997,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/e-plan-qualified-candidate/hyperreal",
+  "command": "env",
+  "args": [
+    "CARGO_TARGET_DIR=/tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse",
+    "CARGO_INCREMENTAL=0",
+    "CARGO_PROFILE_DEV_DEBUG=0",
+    "CARGO_BUILD_JOBS=2",
+    "cargo",
+    "test",
+    "--locked",
+    "--offline",
+    "--all-features",
+    "--lib",
+    "--tests",
+    "--",
+    "--test-threads=4"
+  ],
+  "code": 0,
+  "signal": null
+}

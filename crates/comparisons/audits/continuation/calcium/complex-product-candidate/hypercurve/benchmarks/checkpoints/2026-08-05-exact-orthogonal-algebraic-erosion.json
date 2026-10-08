@@ -1,0 +1,269 @@
+{
+  "schema": "hypercurve.performance-checkpoint.v1",
+  "captured_on": "2026-08-05",
+  "checkpoint": "exact orthogonal retained-algebraic CurveRegion2 erosion scheduling",
+  "source_revision": "dc98de0b18c51d3be1a742d35ebd111bb61e30de",
+  "semantic_revision": "0c42d45",
+  "arrangement_optimization_revision": "c2f6bb3",
+  "source_kernel_optimization_revision": "dc98de0",
+  "benchmark_revision": "c2f6bb3",
+  "preceding_offset_checkpoint": "2026-08-05-axis-aligned-algebraic-chord-offset.json",
+  "dependency_revisions": {
+    "hyperreal": "492882c16ec6f649051285a5e215371750b3c967",
+    "hyperlattice": "a475bb752c1e0fb0cfdb80f4db74a56caa6962c0",
+    "hyperlimit": "b0418bddff50183fa782e5caa6da6974a2b969a1",
+    "hypertri": "fcc5a60936d85e46347f2348e2230ed4152c9641",
+    "hypersolve": "f3cf7467219abdf5c6a27459e330ed158bbc590e",
+    "hyperbrep": "6336697cd124ef6ef8384166b1f90ef2fceb6663",
+    "hypermesh_modified_or_benchmarked": false
+  },
+  "scope": {
+    "completed": [
+      "single-material nonconvex axis-aligned retained-algebraic erosion before, at, and beyond local wavefront collapses",
+      "exact disappearance of a locally collapsed arm",
+      "exact component split at and past a collapsed neck",
+      "exact full disappearance after erosion",
+      "STRICT and APPROXIMATE_512 execution through the same exact scheduler",
+      "NonZero and EvenOdd winding plus forward and reversed authored orientation",
+      "lazy policy-aware reuse of source direction, coordinate-fiber, order, bounds, and erosion evidence",
+      "historical, native exact, competitive floating, allocation, peak-memory, linked-size, and static-callgraph evidence"
+    ],
+    "remaining": [
+      "coupled wavefront events between multiple material and hole loops",
+      "retained algebraic circular arcs for selected-field round joins and fillets",
+      "diagonal selected-field chord parallels and their exact joins",
+      "general non-orthogonal post-collapse wavefront scheduling",
+      "finite transform, projection, and export of correlated retained evidence",
+      "final deletion and caller migration of displaced historical region-operation surfaces"
+    ]
+  },
+  "mathematical_contract": {
+    "source_recognition": "Every scheduled span is first proved to be a nonzero axis-aligned retained algebraic chord. Its certified traversal direction is retained with the source span and reused; failure to prove the family rejoins the established general path or remains an explicit blocker.",
+    "erosion_arrangement": "The scheduler forms the exact finite arrangement of source coordinate fibers translated by the signed erosion radius. Coordinates remain retained rational images in their original selected fields. Exact ordering and equality define integer grid indices; no dyadic, rational sample point, epsilon, or binary64 coordinate is constructed.",
+    "cell_classification": "A compact occupancy bitmap is filled from exact integer winding ranges under the loop's authored NonZero or EvenOdd rule. Erosion selects exactly those cells whose closed axis-aligned radius box lies within the source material.",
+    "topology": "Boundary edges are emitted only across occupied/unoccupied cell incidence, traced into nonreversing oriented cycles, and returned as retained algebraic subchords and correlated perpendicular crossing points. Arm collapse, neck equality, post-neck separation, and total disappearance are consequences of the same cell arrangement rather than special-case output geometry.",
+    "regularization": "The private scheduler returns raw exact loops to CurveRegion2::regularized_region_raw and the existing CurveRegionBooleanContext. It is not a second public Boolean or offset engine.",
+    "policy": "STRICT accepts only exact retained-field direction, order, crossing, winding, and topology evidence. APPROXIMATE_512 follows the same graph and may terminate only through the shared 512-bit scalar decision authority; a cache hit replays Approximate512Consumed into the enclosing operation when the cached construction consumed it. Neither policy constructs approximate geometry.",
+    "failure_semantics": "Unsupported multi-material event coupling, algebraic-centered round joins, diagonal carriers, and non-orthogonal post-collapse paths remain typed blockers rather than malformed, sampled, or silently empty results."
+  },
+  "implementation": {
+    "authoritative_route": [
+      "CurveRegion2::offset",
+      "CurveRegion2::offset_raw",
+      "CurveRegion2::offset_exact_general_raw",
+      "CurveRegion2::exact_axis_aligned_algebraic_source_loops",
+      "exact_axis_aligned_algebraic_offset_loop",
+      "exact_axis_aligned_algebraic_erosion",
+      "CurveRegion2::regularized_region_raw",
+      "CurveRegionBooleanContext"
+    ],
+    "compact_source_kernel": "CurveRegionData2 owns one policy/certainty-aware OnceLock. Each recognized loop retains Arc-shared source fibers and lazily derives sorted x/y fibers and exact bounds only when an erosion needs them. Repeated offsets therefore reuse source proof without forcing ordinary or expansion-only regions to materialize erosion state.",
+    "certified_construction_fast_paths": [
+      "exact translations use BezierAlgebraicChord2::from_certified_axis_aligned_endpoints instead of replaying endpoint equality and direction",
+      "perpendicular coordinate fibers construct one correlated exact crossing carrier from already-proved bracketing and direction evidence",
+      "grid occupancy uses sorted-coordinate indices and precomputed winding/box ranges instead of selected-root sample points",
+      "the nonconvex contraction route classifies convexity from retained direction proofs before constructing distance-specific joined spans"
+    ],
+    "rejected_optimization": "A three-way merge of original, plus-radius, and minus-radius coordinate lists was slower because cross-field comparisons exceeded the saved insertion work; the final source does not contain it.",
+    "public_curve_region_size_bytes": 8,
+    "duplicate_public_engine_added": false,
+    "compatibility_shim_added": false,
+    "approximate_geometry_added": false
+  },
+  "correctness_matrix": {
+    "ordinary_contraction": "one connected nonconvex retained-algebraic component remains exact before its first event",
+    "local_arm_collapse": "the collapsed arm is removed and the surviving component is a four-edge retained exact loop",
+    "neck_split": "radius equal to the neck half-width and a strictly larger radius both emit two material components with four exact fragments each",
+    "full_disappearance": "erosion beyond the surviving inradius emits the empty region",
+    "policies": [
+      "STRICT",
+      "APPROXIMATE_512"
+    ],
+    "fill_rules": [
+      "NonZero",
+      "EvenOdd"
+    ],
+    "orientations": [
+      "forward",
+      "reversed"
+    ],
+    "output_certainty": "Every scheduler fixture is proved exactly and reports Certified under both policies; independent policy-terminal offset tests continue to prove that only APPROXIMATE_512 may report Approximate512Consumed."
+  },
+  "verification": {
+    "cargo_test_all_features_lib": "469 passed",
+    "cargo_test_all_features_hypercurve_curve_region_promotion": "57 passed",
+    "cargo_check_no_default_features": "passed",
+    "cargo_clippy_all_features_all_targets_deny_warnings": "Hypercurve passed; the dependency build emitted only Hypertri's pre-existing unused ExactKernel::sub warning",
+    "git_diff_check": "passed",
+    "public_layout_regression": "CurveRegion2 remains one machine word and empty data remains process-shared"
+  },
+  "benchmark_environment": {
+    "host": "AMD Ryzen 7 5800X3D",
+    "cpu": 11,
+    "toolchain": "rustc 1.97.0 (2d8144b78 2026-07-07), LLVM 22.1.6, x86_64-unknown-linux-gnu",
+    "fixture": "A selected-field axis-aligned algebraic dumbbell eroded through a collapsed neck. Fixture construction is outside the timed loop; every operation emits two four-fragment components, so the checksum is 8000 fragments for 1000 operations.",
+    "editing_command": "taskset -c 11 env HYPERCURVE_EDIT_BENCH=represented-bezier-corner HYPERCURVE_EDIT_CORNER_LANE=curve_region_axis_algebraic_neck_split HYPERCURVE_EDIT_ITERATIONS=1000 <editing-binary>",
+    "perf_command": "taskset -c 11 perf stat -r 5 -e instructions:u,cycles:u,branches:u,branch-misses:u -- env HYPERCURVE_EDIT_BENCH=represented-bezier-corner HYPERCURVE_EDIT_CORNER_LANE=curve_region_axis_algebraic_neck_split HYPERCURVE_EDIT_ITERATIONS=1000 <editing-binary>",
+    "historical_method": "The checked-in c2f6bb3 editing benchmark source was copied without production changes into an archive of 0c42d45 and both revisions were rebuilt against the same live lower-layer revisions in isolated target directories.",
+    "historical_editing_sha256": "2f3be233be8ec9fa975d52047fb0bbbdda3ebbccddb42c8e09cfbec06099e518",
+    "current_editing_sha256": "a86076789499b6955c07421ecc1b82092edc1b458a9992c3a7c54078a7050609"
+  },
+  "matched_historical_performance": {
+    "historical_revision": "0c42d45",
+    "current_revision": "dc98de0",
+    "wall_samples_us_per_operation": {
+      "historical": [
+        881.210042,
+        894.829428,
+        893.698655,
+        893.010953,
+        888.139667
+      ],
+      "current": [
+        334.011793,
+        343.433457,
+        332.643567,
+        341.881423,
+        339.948956
+      ]
+    },
+    "wall_median_us_per_operation": {
+      "historical": 893.010953,
+      "current": 339.948956,
+      "change_percent": -61.932275
+    },
+    "perf_totals_for_1000_operations": {
+      "historical": {
+        "instructions": 8783335099,
+        "cycles": 3749734446,
+        "branches": 1786572208,
+        "branch_misses": 7416148
+      },
+      "current": {
+        "instructions": 3246518761,
+        "cycles": 1431056016,
+        "branches": 656639895,
+        "branch_misses": 2809372
+      }
+    },
+    "deterministic_change_percent": {
+      "instructions": -63.037744,
+      "cycles": -61.835804,
+      "branches": -63.245824,
+      "branch_misses": -62.118178
+    },
+    "interpretation": "The same complete exact result is 2.63 times faster. Most eliminated work was repeated selected-field direction, side, coordinate-order, and sample-point construction rather than retained live geometry."
+  },
+  "native_exact_control": {
+    "lane": "curve_region_native_orthogonal_neck_split",
+    "wall_samples_us_per_operation": [
+      153.121223,
+      162.458383,
+      156.713858,
+      154.600992,
+      155.352220
+    ],
+    "wall_median_us_per_operation": 155.352220,
+    "perf_totals_for_1000_operations": {
+      "instructions": 2131302078,
+      "cycles": 663423670,
+      "branches": 423634032,
+      "branch_misses": 923868
+    },
+    "retained_algebraic_to_native_ratio": {
+      "wall_median": 2.188247,
+      "instructions": 1.523256,
+      "cycles": 2.157077,
+      "branches": 1.550017,
+      "branch_misses": 3.040880
+    },
+    "contract": "Both lanes use canonical Real and exact CurveRegion2 topology. The native lane starts from represented exact coordinates; the algebraic lane additionally retains and replays selected-root endpoint fields and correlated contact evidence."
+  },
+  "allocation_evidence": {
+    "method": "Heaptrack record-only traces over 100 target operations; counts include identical fixed process setup and recorder bookkeeping.",
+    "historical_trace": "/tmp/hypercurve-orthogonal-0c42.heaptrack.zst",
+    "current_trace": "/tmp/hypercurve-orthogonal-dc98.heaptrack.zst",
+    "historical": {
+      "allocation_calls": 2329058,
+      "temporary_allocations": 273797,
+      "peak_heap_kib": 259.19,
+      "recorder_inclusive_peak_rss_mib": 13.05
+    },
+    "current": {
+      "allocation_calls": 800409,
+      "temporary_allocations": 56661,
+      "peak_heap_kib": 234.46,
+      "recorder_inclusive_peak_rss_mib": 12.41
+    },
+    "change_percent": {
+      "allocation_calls": -65.633788,
+      "temporary_allocations": -79.305471,
+      "peak_heap": -9.541263,
+      "recorder_inclusive_peak_rss": -4.904215
+    },
+    "interpretation": "The Arc/OnceLock source kernel adds retained evidence only to predicate-enabled region data, while removing substantially more short-lived selected-root and rational sample construction. Public CurveRegion2 storage remains one word."
+  },
+  "competitive_context": {
+    "command": "taskset -c 11 env HYPERCURVE_COMPARE_SAMPLES=11 HYPERCURVE_COMPARE_SAMPLE_MS=100 HYPERCURVE_COMPARE_GROUP=orthogonal_offset/neck_split comparative-68819996ab3fdf67",
+    "binary_sha256": "42186ff909daed7acb264e350b561290080912722fd60420f82e89d7f5505562",
+    "hypercurve_curve_region_median_ns": 150386.7,
+    "cavalier_contours_median_ns": 11091.8,
+    "ratio": 13.558367,
+    "contract_note": "This lane deliberately compares Hypercurve's native canonical-Real exact region/topology result with Cavalier Contours' binary64 polyline contour result. Cavalier cannot retain selected algebraic fields or obey Hyper's STRICT/APPROXIMATE_512 contract, so the ratio is competitive throughput context rather than a correctness-equivalent regression gate."
+  },
+  "representative_linked_size": {
+    "method": "Matched all-feature and no-default-feature curve_region_boolean_batch release artifacts at 0c42d45 and dc98de0, built against identical live dependency revisions in isolated target directories.",
+    "all_features": {
+      "historical_sha256": "e8d3f7ca095f37a9fc565102361c06a4d943da0119f386ebd710a10b7ef53e17",
+      "current_sha256": "1556fc73773761ef4b11770a1068844d1b702fcb22dc803c4a8f0b380a33a4d4",
+      "historical_file_bytes": 8988216,
+      "current_file_bytes": 8992328,
+      "file_change_bytes": 4112,
+      "file_change_percent": 0.045749,
+      "historical_stripped_bytes": 7161560,
+      "current_stripped_bytes": 7164104,
+      "stripped_change_bytes": 2544,
+      "stripped_change_percent": 0.035523,
+      "historical_text_bytes": 6883430,
+      "current_text_bytes": 6885934,
+      "text_change_bytes": 2504,
+      "text_change_percent": 0.036377,
+      "data_change_bytes": 32,
+      "bss_change_bytes": 1552
+    },
+    "no_default_features": {
+      "historical_sha256": "8fa1359a34020bce9668b98fd4e9fdfdc9de42decc2d0f9229560bcdcdd184bd",
+      "current_sha256": "7132c01806eb0dc2611bb145f7c46603ad7fe9edd7276458f2ee717999960a80",
+      "historical_file_bytes": 8005840,
+      "current_file_bytes": 8005712,
+      "file_change_bytes": -128,
+      "historical_stripped_bytes": 6360280,
+      "current_stripped_bytes": 6360280,
+      "historical_text_bytes": 6087861,
+      "current_text_bytes": 6087861,
+      "allocated_section_change_bytes": 0
+    },
+    "interpretation": "The complete optimization tranche costs 0.036% all-feature linked text and no allocated bytes in the feature-disabled artifact. This is accepted for a 61.93% exact-path runtime reduction and lower measured heap traffic."
+  },
+  "static_callgraph": {
+    "command": "tools/hyper-callgraph/target/release/hyper-callgraph --root /home/tim/Documents/GitHub/workspace --out-dir /tmp/hypercurve-orthogonal-erosion-callgraph --crate-name hypercurve,hypersolve --include-examples --include-tests --include-bench --include-fuzz --format json",
+    "artifact": "/tmp/hypercurve-orthogonal-erosion-callgraph/callgraph.json",
+    "discovered_workspace_crates": 22,
+    "nodes": 35255,
+    "edges": 68054,
+    "hypercurve_nodes": 29023,
+    "hypercurve_edges": 55944,
+    "hypersolve_nodes": 6232,
+    "hypersolve_edges": 12100,
+    "cross_library_edges": 10,
+    "change_from_preceding_offset_checkpoint_nodes": 1792,
+    "change_from_preceding_offset_checkpoint_edges": 2466,
+    "confirmed_route": "CurveRegion2::offset -> offset_raw -> offset_exact_general_raw -> exact_axis_aligned_algebraic_source_loops -> exact_axis_aligned_algebraic_offset_loop -> exact_axis_aligned_algebraic_erosion -> regularized_region_raw -> CurveRegionBooleanContext",
+    "duplicate_region_or_offset_engine_added": false
+  },
+  "next_priority": {
+    "correctness": "Add one retained algebraic circular-arc carrier shared by round offsets and fillets, then diagonal selected-field chord parallels. Before declaring orthogonal scheduling complete for all regions, add coupled material/hole event scheduling or prove that the shared arrangement can safely decompose those cases.",
+    "performance_and_memory": "Keep source evidence operation- or geometry-shared, reduce remaining branch-miss-heavy selected-field comparisons, and preserve the direct native exact path. Re-evaluate any broader cache against both retained bytes and allocation reduction.",
+    "size": "Share arc incidence, splitting, and winding with the existing conic/circle authority; avoid a parallel public carrier hierarchy and keep feature-disabled linked sections unchanged."
+  }
+}

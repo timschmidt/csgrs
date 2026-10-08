@@ -1,0 +1,123 @@
+{
+  "source_manifest": "coarser-singleton-sign-20260926-v282-sources.json",
+  "source_directory": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/source-archives/coarser-singleton-sign-20260926-v282",
+  "preceding_test_receipt": "coarser-singleton-sign-20260926-v282-terminal.json",
+  "passed_tests": 525,
+  "inputs": {
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/fillet-selected-sign-export-20260926-v279-sign.jsonl": "0e700b30c5a756f163c2d9677833c6f9a58ae5bff155ea5c61c797bbaa5c73bc",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/fillet-selected-sign-replay-20260926-v280.rs": "18fbb54617ed88ed856f418449d2fa9eb21a176320a87d21cecebf4bddfb6758",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/qualify-coarser-singleton-sign-followup-20260926-v283.py": "a83697a31ef676d350b1a19713d6415ee8b662d1712c2cb2038c94885ca71fbd",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperreal-84ef69ec4e027ac9.rlib": "d6477a17b40bf548988aeb2c5e4be747e09e72e507aaac792a191c0f67d00efc",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlimit-673f583990d9a6c0.rlib": "4cae69cc589d5ff9503bef7a425665a5dc40ada127f8dd5677063f752693f4b4",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/libhypersolve.rlib": "ea9ad09586c336b2dd16a2958ba8f52ce384dc3aac6245dad3b241a41c6c0083"
+  },
+  "checks": [
+    {
+      "label": "hypersolve-library-build",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "build",
+        "--lib",
+        "--release",
+        "--all-features",
+        "--features",
+        "hyperreal/serde",
+        "--message-format=json",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "log": "coarser-singleton-sign-followup-20260926-v283-hypersolve-library-build.log",
+      "elapsed_seconds": 41.618815023917705
+    },
+    {
+      "label": "scalar-build",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustc",
+        "--edition=2024",
+        "-C",
+        "opt-level=3",
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/fillet-selected-sign-replay-20260926-v280.rs",
+        "-o",
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/coarser-singleton-sign-followup-20260926-v283-scalar",
+        "-L",
+        "dependency=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps",
+        "--extern",
+        "hyperreal=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperreal-84ef69ec4e027ac9.rlib",
+        "--extern",
+        "hyperlimit=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlimit-673f583990d9a6c0.rlib",
+        "--extern",
+        "hypersolve=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/libhypersolve.rlib"
+      ],
+      "returncode": 0,
+      "log": "coarser-singleton-sign-followup-20260926-v283-scalar-build.log",
+      "elapsed_seconds": 0.3141353860264644
+    },
+    {
+      "label": "scalar-replay",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/coarser-singleton-sign-followup-20260926-v283-scalar",
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/fillet-selected-sign-export-20260926-v279-sign.jsonl",
+        "native"
+      ],
+      "returncode": 0,
+      "log": "coarser-singleton-sign-followup-20260926-v283-scalar-replay.log",
+      "elapsed_seconds": 0.21395560295786709
+    },
+    {
+      "label": "format",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustfmt",
+        "--edition",
+        "2024",
+        "--config",
+        "skip_children=true",
+        "--check",
+        "src/root_sign.rs"
+      ],
+      "returncode": 0,
+      "log": "coarser-singleton-sign-followup-20260926-v283-format.log",
+      "elapsed_seconds": 0.01562846906017512
+    },
+    {
+      "label": "clippy-all-features",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "clippy",
+        "--all-targets",
+        "--all-features",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "returncode": 0,
+      "log": "coarser-singleton-sign-followup-20260926-v283-clippy-all-features.log",
+      "elapsed_seconds": 6.172701061004773
+    },
+    {
+      "label": "clippy-no-default",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "clippy",
+        "--all-targets",
+        "--no-default-features",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "returncode": 0,
+      "log": "coarser-singleton-sign-followup-20260926-v283-clippy-no-default.log",
+      "elapsed_seconds": 5.87209600803908
+    }
+  ],
+  "all_processes_reaped": true,
+  "scalar_binary": {
+    "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/coarser-singleton-sign-followup-20260926-v283-scalar",
+    "sha256": "397d4a957ae02495ad259148d6bf236c0668c8b9a7c19885e82c555f47d100f7"
+  },
+  "qualification_complete": true
+}

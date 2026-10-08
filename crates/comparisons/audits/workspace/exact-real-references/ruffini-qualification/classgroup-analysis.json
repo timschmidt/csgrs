@@ -1,0 +1,12 @@
+{
+  "probesPerMode": 146,
+  "passPerMode": 80,
+  "wrongPerMode": 66,
+  "validDiscriminantControls": 64,
+  "invalidDiscriminantsAccepted": 64,
+  "cacheSensitiveEquality": true,
+  "equalHashFailure": true,
+  "coefficientGroupControlsPass": true,
+  "originalTests": "direct compilation fails on obsolete package imports; no unchanged JUnit run claimed",
+  "newProductionChanges": 0
+}

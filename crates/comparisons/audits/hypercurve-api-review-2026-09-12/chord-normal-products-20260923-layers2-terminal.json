@@ -1,0 +1,20 @@
+{
+  "hyperlimit": {
+    "returncode": 0,
+    "elapsed_seconds": 1.555577759980224,
+    "binary_sha256": "1745f889a9cb4d38072c633b2add2e4434ca4100e8ec30954199efd43104f7c4",
+    "hyperreal_package_ids": [
+      "path+file:///tmp/hyper-chord-normal-products-layers-2026-09-23/hyperreal#0.13.1"
+    ]
+  },
+  "hypersolve": {
+    "returncode": 0,
+    "elapsed_seconds": 30.296877334010787,
+    "binary_sha256": "1de91d2b47ac73dda30c95aeb79b30f9005b782ee674564dfa929f029998ca07",
+    "hyperreal_package_ids": [
+      "path+file:///tmp/hyper-chord-normal-products-layers-2026-09-23/hyperreal#0.13.1"
+    ]
+  },
+  "all_sources_unchanged": true,
+  "all_processes_reaped": true
+}

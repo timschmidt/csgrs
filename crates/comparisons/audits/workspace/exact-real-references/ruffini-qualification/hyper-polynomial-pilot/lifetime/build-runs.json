@@ -1,0 +1,90 @@
+[
+  {
+    "name": "release",
+    "command": "cargo",
+    "args": [
+      "build",
+      "--offline",
+      "--release",
+      "--manifest-path",
+      "/home/tim/Documents/GitHub/workspace/exact-real-references/ruffini-qualification/hyper-polynomial-pilot/lifetime/Cargo.toml",
+      "--target-dir",
+      "/home/tim/Documents/GitHub/workspace/.audit-targets/ireal-derivative-18555"
+    ],
+    "cap": 240000,
+    "started": "2026-09-07T00:35:36.031Z",
+    "finished": "2026-09-07T00:35:44.118Z",
+    "status": 0,
+    "error": null,
+    "signal": null,
+    "file": "build-release.log",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderrSha256": "5d48c2d7c270b3ca3794cdbb6ead6a82ab2773c8b67fc526712ec494a6dcea8a",
+    "source": [
+      [
+        "main.rs",
+        "5b76e437c07433c15dbde8575aa1fa03ac84d9f587d8120c5d5742f922f957de"
+      ],
+      [
+        "Cargo.toml",
+        "3000cee38c839964ec2b8ef853f9e53b887651a4c7f116e932b3db5124910e8c"
+      ],
+      [
+        "../main.rs",
+        "1f581e68efeaf5f99afa25f61b9467c0b364de010ad56dab999b5a7a816523d7"
+      ],
+      [
+        "../baseline.rs",
+        "a70fe73900071228accf81b1ac2d9a91b23b76e52423e6b0243e1ab0b61735b3"
+      ]
+    ],
+    "binary": "/home/tim/Documents/GitHub/workspace/exact-real-references/ruffini-qualification/hyper-polynomial-pilot/lifetime/binaries/release",
+    "binarySha256": "4cb806cc6afbf77793d239716c54f89d65565e9ffe47a8bfb5421ad3dd53f2ea",
+    "lockSha256": "3a0a957762abf301f3372a7f1267b9ad910d7ae2030f8733cd24969b4d324e62"
+  },
+  {
+    "name": "memory",
+    "command": "cargo",
+    "args": [
+      "build",
+      "--offline",
+      "--release",
+      "--manifest-path",
+      "/home/tim/Documents/GitHub/workspace/exact-real-references/ruffini-qualification/hyper-polynomial-pilot/lifetime/Cargo.toml",
+      "--target-dir",
+      "/home/tim/Documents/GitHub/workspace/.audit-targets/ireal-derivative-18555",
+      "--features",
+      "live-allocations"
+    ],
+    "cap": 240000,
+    "started": "2026-09-07T00:35:44.126Z",
+    "finished": "2026-09-07T00:35:44.653Z",
+    "status": 0,
+    "error": null,
+    "signal": null,
+    "file": "build-memory.log",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderrSha256": "5ae90f6298dc73f629a40cbf9e3f6b7a216c4a3b4ca3376fa8c42e64b11e0557",
+    "source": [
+      [
+        "main.rs",
+        "5b76e437c07433c15dbde8575aa1fa03ac84d9f587d8120c5d5742f922f957de"
+      ],
+      [
+        "Cargo.toml",
+        "3000cee38c839964ec2b8ef853f9e53b887651a4c7f116e932b3db5124910e8c"
+      ],
+      [
+        "../main.rs",
+        "1f581e68efeaf5f99afa25f61b9467c0b364de010ad56dab999b5a7a816523d7"
+      ],
+      [
+        "../baseline.rs",
+        "a70fe73900071228accf81b1ac2d9a91b23b76e52423e6b0243e1ab0b61735b3"
+      ]
+    ],
+    "binary": "/home/tim/Documents/GitHub/workspace/exact-real-references/ruffini-qualification/hyper-polynomial-pilot/lifetime/binaries/memory",
+    "binarySha256": "0b9b0e728293b58f71cae6d11f5c599f83f5bd4e061af6a16b1ec18f51bb0396",
+    "lockSha256": "3a0a957762abf301f3372a7f1267b9ad910d7ae2030f8733cd24969b4d324e62"
+  }
+]

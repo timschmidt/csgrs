@@ -1,0 +1,16 @@
+[
+  {
+    "binary": "stationary-ph-offset-conic-evaluation",
+    "binary_sha256": "fcd4c3f5baace808ce0eebc29206a324067710baafca4c2b6cacbea3edae5fed",
+    "returncode": 0,
+    "elapsed_seconds": 25.348186073999386,
+    "log": "stationary-ph-offset-conic-evaluation.log"
+  },
+  {
+    "binary": "stationary-ph-offset-conic-evaluation-approximate",
+    "binary_sha256": "fc76fb1136498d863460cd08d060ee36ca35a63455d5de2d3a5608e2cd4d340c",
+    "returncode": 0,
+    "elapsed_seconds": 24.046271211998828,
+    "log": "stationary-ph-offset-conic-evaluation-approximate.log"
+  }
+]

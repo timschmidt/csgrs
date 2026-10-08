@@ -1,0 +1,7 @@
+{
+  "commit": "330edacf73d34ef7524e2dd904d5ef3016821b83",
+  "source_sha256": {
+    "src/bezier_offset.rs": "e6efe4df40d280ddfd1830d2a3aa7b3079b41ae9d1cba9d638af349e90406ad8",
+    "tests/hypercurve_analytic_parallel_region.rs": "6236f9ba367733ff4f2377df790c9102cd3c57715aa344c3db14d448c98ddb9b"
+  }
+}

@@ -1,0 +1,14 @@
+==2720448== Memcheck, a memory error detector
+==2720448== Copyright (C) 2002-2026, and GNU GPL'd, by Julian Seward et al.
+==2720448== Using Valgrind-3.27.1 and LibVEX; rerun with -h for copyright info
+==2720448== Command: /tmp/calcium-derivative-costs.FA5c2M/lll-controls
+==2720448== 
+==2720448== 
+==2720448== HEAP SUMMARY:
+==2720448==     in use at exit: 0 bytes in 0 blocks
+==2720448==   total heap usage: 179,867 allocs, 179,867 frees, 42,930,504 bytes allocated
+==2720448== 
+==2720448== All heap blocks were freed -- no leaks are possible
+==2720448== 
+==2720448== For lists of detected and suppressed errors, rerun with: -s
+==2720448== ERROR SUMMARY: 0 errors from 0 contexts (suppressed: 0 from 0)

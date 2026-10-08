@@ -1,0 +1,19 @@
+{
+  "tag": "matrix-methods-memcheck",
+  "started": "2026-09-09T01:43:15.591Z",
+  "finished": "2026-09-09T01:43:31.029Z",
+  "elapsedSeconds": 15.435992680000002,
+  "cwd": "/home/tim/Documents/GitHub/workspace",
+  "command": "valgrind",
+  "args": [
+    "--vgdb=no",
+    "--tool=memcheck",
+    "--error-exitcode=97",
+    "--leak-check=full",
+    "--show-leak-kinds=all",
+    "--errors-for-leak-kinds=definite,indirect,possible",
+    "/tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/debug/calcium-matrix-methods-probe"
+  ],
+  "code": 0,
+  "signal": null
+}

@@ -1,0 +1,73 @@
+name: cdar
+version: 0.1.0.0
+synopsis: Exact real arithmetic using Centred Dyadic Approximations.
+description: cdar provides Exact real arithmetic using Centred Dyadic Approximations.
+license: BSD3
+license-file: LICENSE
+author: Jens Blanck
+maintainer: jens.blanck@gmail.com
+category: Data
+build-type: Simple
+extra-source-files: README.md
+
+ghc-options: -Wall -fno-warn-type-defaults -O2
+
+dependencies:
+  - base
+  - containers
+  - deepseq
+  - integer-gmp
+
+library:
+  source-dirs: src/
+  exposed-modules:
+    - Data.CDAR
+    - Data.CDAR.Classes
+    - Data.CDAR.Extended
+    - Data.CDAR.Approx
+    - Data.CDAR.Dyadic
+    - Data.CDAR.IntegerLog
+
+tests:
+  test:
+    main: Test.hs
+    source-dirs: test/
+    dependencies:
+      - QuickCheck
+      - smallcheck
+      - tasty-hunit
+      - tasty-quickcheck
+      - tasty-smallcheck
+      - tasty
+      - cdar
+
+benchmarks:
+  bench:
+    main: bench.hs
+    dependencies:
+      - cdar
+      - criterion
+      - parallel
+    source-dirs:       bench/
+    ghc-options: -O2 -rtsopts
+
+#source-dirs: examples
+
+executables:
+  lll:
+    main: examples/Lll.hs
+    dependencies:
+      - cdar
+      - mtl
+      - parsec
+#    ghc-options: -Wunused-top-bind -Wunused-imports
+  logistic:
+    main: examples/Logistic.hs
+    dependencies: cdar
+    ghc-options: -Wunused-top-binds
+  examples:
+    main: Main.hs
+    dependencies: cdar
+    source-dirs: examples
+    other-modules: ExamplesRump
+    

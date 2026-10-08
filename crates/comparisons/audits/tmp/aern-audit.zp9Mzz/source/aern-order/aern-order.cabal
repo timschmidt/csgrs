@@ -1,0 +1,103 @@
+Name:           aern-order
+Version:        0.5.0
+Cabal-Version:  >= 1.8
+Build-Type:     Simple
+License:        BSD3
+License-File:   LICENCE
+Author:         Michal Konecny
+Copyright:      (c) 2012 Michal Konecny, Jan Duracz
+Maintainer:     mikkonecny@gmail.com
+Homepage:       http://code.google.com/p/aern/
+Stability:      experimental
+Category:       Data, Math
+Synopsis:       numeric and refinement order on approximations of exact entities
+Tested-with:    GHC==7.6.3
+Description:
+ Type-classes abstracting various kinds of approximations for exact entities:
+ .   
+    * those that are /near/ to the exact value due to limited granularity 
+      (eg floating point numbers with fixed granularity (aka precision) 
+       approximating real numbers or bounded-degree polynomials with floating point coefficients
+       approximating continuous functions)
+ .   
+    * those that somehow /enclose/ the exact entity, usually using a pair of /endpoints/ 
+ .
+ Type classes are provided to capture:
+ .   
+    * the partial, sometimes semi-decided, natural ordering (<=) used in relation to /nearness/
+ .   
+    * the partial, sometimes semi-decided, refinement ordering (&#8849;) used in relation to /enclosure/
+ .   
+ /This package does not compile with ghc 7.0.* due to a/ 
+ /compiler bug that has been fixed for the 7.2.1 release./
+
+source-repository head
+  type:     mercurial
+  location: http://code.google.com/p/aern/aern-order
+
+source-repository this
+  type:     mercurial
+  location: http://code.google.com/p/aern/aern-order
+  tag:      release-0.5.0
+
+
+Library
+  hs-source-dirs: src
+  Build-Depends:
+        base >= 4.4,
+        containers >= 0.3,
+        QuickCheck >= 2.7,
+        criterion >= 0.5,
+        deepseq >= 1.1,
+        random >= 1.0,
+        test-framework >= 0.3.3, 
+        test-framework-quickcheck2 >= 0.2
+    
+  exposed-modules:
+                  Numeric.AERN.NumericOrder,
+                  Numeric.AERN.NumericOrder.Operators,
+                  Numeric.AERN.RefinementOrder,
+                  Numeric.AERN.RefinementOrder.Operators,
+                  Numeric.AERN.Basics.Arbitrary,
+                  Numeric.AERN.Basics.Bench,
+                  Numeric.AERN.Basics.Consistency,
+                  Numeric.AERN.Basics.Effort,
+                  Numeric.AERN.Basics.SizeLimits,
+                  Numeric.AERN.Basics.Exception,
+                  Numeric.AERN.Basics.Laws.Operation,
+                  Numeric.AERN.Basics.Laws.OperationRelation,
+                  Numeric.AERN.Basics.Laws.PartialRelation,
+                  Numeric.AERN.Basics.Laws.Relation,
+                  Numeric.AERN.Basics.Laws.RoundedOperation,
+                  Numeric.AERN.Basics.Laws.Utilities,
+                  Numeric.AERN.Basics.PartialOrdering,
+                  Numeric.AERN.Basics.ShowInternals,
+                  Numeric.AERN.Misc.Bool,
+                  Numeric.AERN.Misc.Debug,
+                  Numeric.AERN.Misc.List,
+                  Numeric.AERN.Misc.Maybe,
+                  Numeric.AERN.Misc.QuickCheck
+  Other-modules:
+                Numeric.AERN.NumericOrder.Arbitrary,
+                Numeric.AERN.NumericOrder.Arbitrary.Linear,
+                Numeric.AERN.NumericOrder.Extrema,
+                Numeric.AERN.NumericOrder.PartialComparison,
+                Numeric.AERN.NumericOrder.RefinementRoundedLattice,
+                Numeric.AERN.NumericOrder.RoundedLattice,
+                Numeric.AERN.RefinementOrder.Arbitrary,
+                Numeric.AERN.RefinementOrder.Extrema,
+                Numeric.AERN.RefinementOrder.IntervalLike,
+                Numeric.AERN.RefinementOrder.PartialComparison,
+                Numeric.AERN.RefinementOrder.RoundedBasis,
+                Numeric.AERN.RefinementOrder.RoundedLattice
+
+--Executable toolAERN-bench-csv-to-gnuplot
+--  hs-source-dirs: tools
+--  main-is: BenchCsvToGnuplot.hs
+--  build-depends:
+--        base >= 4.4,
+--        directory >= 1.0,
+--        containers >= 0.3
+				
+
+  

@@ -1,0 +1,66 @@
+[
+  {
+    "mode": "jit",
+    "test": "arithmetic",
+    "status": 0,
+    "error": null,
+    "signal": null,
+    "sha256": "24b9738cbf9798f72625a9e6919b8745720603eb6c82d519979fad0ecd09212d"
+  },
+  {
+    "mode": "jit",
+    "test": "boundaries",
+    "status": 0,
+    "error": null,
+    "signal": null,
+    "sha256": "eceb08ecc0b311013845a11407cdcbcdb7be87683fc81bc9a82bdbe687a37bda"
+  },
+  {
+    "mode": "jit",
+    "test": "transforms",
+    "status": 0,
+    "error": null,
+    "signal": null,
+    "sha256": "1867c450392c78567dbec8d4029c62b992ebb4684c1b7a7d0b51a6f6218ee63f"
+  },
+  {
+    "mode": "jit",
+    "test": "junit-integers",
+    "status": 0,
+    "error": null,
+    "signal": null,
+    "sha256": "67d9490cdb25877121530b7f844e87ec196273d8cdf262bd95ae20eebffe6e39"
+  },
+  {
+    "mode": "interpreter",
+    "test": "arithmetic",
+    "status": 0,
+    "error": null,
+    "signal": null,
+    "sha256": "24b9738cbf9798f72625a9e6919b8745720603eb6c82d519979fad0ecd09212d"
+  },
+  {
+    "mode": "interpreter",
+    "test": "boundaries",
+    "status": 0,
+    "error": null,
+    "signal": null,
+    "sha256": "eceb08ecc0b311013845a11407cdcbcdb7be87683fc81bc9a82bdbe687a37bda"
+  },
+  {
+    "mode": "interpreter",
+    "test": "transforms",
+    "status": 0,
+    "error": null,
+    "signal": null,
+    "sha256": "1867c450392c78567dbec8d4029c62b992ebb4684c1b7a7d0b51a6f6218ee63f"
+  },
+  {
+    "mode": "interpreter",
+    "test": "junit-integers",
+    "status": 0,
+    "error": null,
+    "signal": null,
+    "sha256": "5a757f42ad6964cd5e3e11bad7299a3193a51c579174ba42e4caf0e2ae0d2596"
+  }
+]

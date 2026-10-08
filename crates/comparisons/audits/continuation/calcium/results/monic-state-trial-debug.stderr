@@ -1,0 +1,8 @@
+     Locking 32 packages to latest Rust 1.97.0 compatible versions
+   Compiling hyperreal v0.13.1 (/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/polynomial-monic-qualified-trial/hyperreal)
+   Compiling hyperlattice v0.6.1 (/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/polynomial-monic-qualified-trial/hyperlattice)
+   Compiling hyperlimit v0.4.1 (/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/polynomial-monic-qualified-trial/hyperlimit)
+   Compiling hypersolve v0.3.1 (/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/polynomial-monic-qualified-trial/hypersolve)
+   Compiling calcium-monic-state-trial v0.1.0 (/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/monic-state-trial)
+    Finished `dev` profile [unoptimized] target(s) in 8.54s
+     Running `/tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/debug/calcium-monic-state-trial`

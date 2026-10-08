@@ -1,0 +1,41 @@
+{
+  "source_manifest": "wide-tower-small-shift-baseline-20260927-v373-sources.json",
+  "source_directory": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/source-archives/wide-tower-small-shift-baseline-20260927-v373",
+  "cases": [
+    {
+      "binary": "wide-tower-small-shift-baseline-20260927-v373-hyperreal",
+      "name": "computable::node::quadratic_tower_tests::exact_tower_replay_retains_wide_cancellation_proofs",
+      "returncode": 101,
+      "log": "wide-tower-small-shift-baseline-20260927-v373-case-000.log",
+      "elapsed_seconds": 0.003561296034604311
+    }
+  ],
+  "builds": [
+    {
+      "crate": "hyperreal",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "test",
+        "--lib",
+        "--release",
+        "--all-features",
+        "--no-run",
+        "--message-format=json",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "log": "wide-tower-small-shift-baseline-20260927-v373-hyperreal-build.log",
+      "elapsed_seconds": 30.61109073809348,
+      "binary": {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/wide-tower-small-shift-baseline-20260927-v373-hyperreal",
+        "sha256": "c0a715b85f4f820beaa4a9c08e16c617a3bddfdcf4ad3fd12d44b6a6878bd16c"
+      }
+    }
+  ],
+  "all_processes_reaped": true,
+  "checks": [],
+  "qualification_scope": "Counterexample: a one-bit binary shift of an already represented wide field coefficient",
+  "failure": "case failure",
+  "qualification_complete": false
+}

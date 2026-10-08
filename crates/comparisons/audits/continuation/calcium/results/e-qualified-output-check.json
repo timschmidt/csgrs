@@ -1,0 +1,14 @@
+{
+  "tag": "e-qualified-output-check",
+  "started": "2026-09-10T01:53:30.614Z",
+  "finished": "2026-09-10T01:53:38.496Z",
+  "elapsedSeconds": 7.879158904,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "node",
+  "args": [
+    "check-e-qualified.mjs",
+    "--e-qualified-summary"
+  ],
+  "code": 0,
+  "signal": null
+}

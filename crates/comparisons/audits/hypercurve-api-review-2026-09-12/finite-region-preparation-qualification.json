@@ -1,0 +1,130 @@
+{
+  "status": "committed; qualified against the documented baseline",
+  "goal_status": "active",
+  "previous_commit": "6cd217e5840cfd68c76e3dc6d8fff10f77440353",
+  "commit": "84956dabadf9afcef4704f5b2dee880a282f1939",
+  "targets": 49,
+  "passed": 2270,
+  "passed_by_repo": {
+    "hypercurve": 2038,
+    "hyperbrep": 232
+  },
+  "known_failed": [
+    "approximate_512_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions",
+    "non_ph_bezier_pair_projective_fillet_retains_algebraic_extensions",
+    "nonconvex_algebraic_chord_expansion_is_exact_and_local_collapse_is_explicit",
+    "strict_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions",
+    "unified_mixed_line_arc_erosion_splits_after_a_curved_neck_collapse"
+  ],
+  "new_failures": [],
+  "ignored": 9,
+  "expensive_previously_unqualified_exclusions": 8,
+  "timeouts": 0,
+  "builds_and_checks": {
+    "-check": 0,
+    "-test-build": 0,
+    "-hyperbrep-check": 0,
+    "-hyperbrep-test-build": 0
+  },
+  "formatting_and_whitespace": "passed on final frozen sources",
+  "formatted_files": {
+    "hypercurve": [
+      "src/curve_region_boolean.rs",
+      "src/curve_region_trim.rs",
+      "src/curve_support_intersection.rs"
+    ],
+    "hyperbrep": []
+  },
+  "additional_caller_checks": [
+    {
+      "target": "fuzz",
+      "command": [
+        "cargo",
+        "check",
+        "--manifest-path",
+        "fuzz/Cargo.toml",
+        "--all-targets",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 3.2191913239948917,
+      "log": "finite-region-preparation-fuzz-check.log"
+    },
+    {
+      "target": "ui",
+      "command": [
+        "cargo",
+        "check",
+        "--manifest-path",
+        "examples/hypercurve_ui/Cargo.toml",
+        "--all-targets",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 3.3691712449945044,
+      "log": "finite-region-preparation-ui-check.log"
+    },
+    {
+      "target": "hyperbrep-fuzz",
+      "command": [
+        "cargo",
+        "check",
+        "--manifest-path",
+        "fuzz/Cargo.toml",
+        "--all-targets",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 3.669655529985903,
+      "log": "finite-region-preparation-hyperbrep-fuzz-check.log"
+    }
+  ],
+  "source_verification": "finite-region-preparation-source-verification.json",
+  "focused_regression_checks": "finite-region-preparation-focused.json",
+  "normal_library": "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/libhypercurve-2c7ff6f3fbe07653.rlib",
+  "normal_library_sha256": "cfe74e6bb84e6907ba989a26023d587fb8d2fd4912961045b76c518bd98b1f39",
+  "archived_library": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-region-preparation-libraries/libhypercurve-2c7ff6f3fbe07653.rlib",
+  "independent_probes_and_matrices": [
+    "finite-region-preparation-public-replay.json",
+    "finite-region-preparation-affine-parallel-replay.json",
+    "finite-region-preparation-exterior-completed.json",
+    "finite-region-preparation-tangent-matrix.json",
+    "finite-region-preparation-finite-circle-probe.json",
+    "finite-region-preparation-family-matrix.json",
+    "finite-region-preparation-completed.json",
+    "finite-region-preparation-unit-replay.json",
+    "finite-region-preparation-retained-chord-matrix.json",
+    "finite-region-preparation-finite-matrix.json",
+    "finite-region-preparation-cubic-replay.json",
+    "finite-region-preparation-baseline-recheck.json",
+    "finite-region-preparation-replay-matrix-run.json",
+    "finite-region-preparation-analytic-probe.json",
+    "finite-region-preparation-endpoint-probe.json",
+    "finite-region-preparation-completed-probe.json",
+    "finite-region-preparation-probe-final.json",
+    "finite-region-preparation-circle-matrix.json",
+    "finite-region-preparation-region-carrier-matrix.json",
+    "finite-region-preparation-general-trim-matrix.json",
+    "finite-region-preparation-constant-image-trim-matrix.json",
+    "finite-region-preparation-region-public.json",
+    "finite-region-preparation-region-explicit.json",
+    "finite-region-preparation-bounds-public.json",
+    "finite-region-preparation-winding-public.json",
+    "finite-region-preparation-trim-public.json"
+  ],
+  "discovery_probes": [
+    "finite-region-preparation-baseline.json"
+  ],
+  "failed_qualification_attempts": [
+    "finite-region-preparation-attempt1-regression/archive.json",
+    "finite-region-preparation-attempt2-inverse/archive.json",
+    "finite-region-preparation-attempt3-check.log"
+  ],
+  "evidence_audit": "finite-region-preparation-worklog.md",
+  "performance_claim": null,
+  "remaining": "Finite injectivity and self-intersection cache ownership, control-hull adjacency premises and analytic point incidence; normalized public region construction; independent circle inverse replay and finite analytic pairs; five existing promotion failures; eight unqualified expensive tests; original algebraic and computational architecture goal.",
+  "post_commit_verification": "finite-region-preparation-post-commit.json"
+}

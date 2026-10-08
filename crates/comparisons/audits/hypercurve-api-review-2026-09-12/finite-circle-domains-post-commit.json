@@ -1,0 +1,19 @@
+{
+  "commit": "3eabc047e4e826385aa6ab7720cdc966dc06f1a1",
+  "qualification": "finite-circle-domains-qualification.json",
+  "repositories": {
+    "hypercurve": {
+      "commit": "3eabc047e4e826385aa6ab7720cdc966dc06f1a1",
+      "status": ""
+    },
+    "hyperbrep": {
+      "commit": "878fcb441b281ab1b44051ca4420b28092c3c2ed",
+      "status": ""
+    }
+  },
+  "working_sources_verified": 396,
+  "isolated_sources_verified": 1005,
+  "workspace_clean_claim": false,
+  "other_session_hyperreal_changes": "untouched",
+  "goal_status": "active"
+}

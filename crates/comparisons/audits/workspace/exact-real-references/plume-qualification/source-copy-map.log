@@ -1,0 +1,3 @@
+performance {"files":36,"lines":4365,"identical":36,"different_or_new":[]}
+cgi {"files":57,"lines":8110,"identical":31,"different_or_new":["cgi/CGI.hs","cgi/CGISystem.hs","cgi/Counter.hs","cgi/Demo.hs","cgi/EnvPassed.hs","cgi/HTML.hs","cgi/HTMLWizard.hs","cgi/Hello.hs","cgi/Makefile","cgi/Mime.hs","cgi/Parsing.hs","cgi/Pretty.hs","cgi/PrettyHTML.hs","cgi/Request.hs","cgi/Response.hs","cgi/Test.hs","cgi/Test2.hs","cgi/URL.hs","cgi/UrlEncoded.hs","cgi/WebSite.hs","cgi/demo.cgi","cgi/demo.hs","cgi/hello.hs","cgi/hellodave.hs","cgi/trial.cgi","cgi/world.pl"]}
+Byte identity links prior qualification evidence; it does not itself grant line-read coverage.

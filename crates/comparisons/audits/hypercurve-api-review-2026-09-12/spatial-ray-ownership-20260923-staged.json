@@ -1,0 +1,6 @@
+{
+  "paths": [
+    "src/bezier_region.rs"
+  ],
+  "region_sha256": "891ebcc00a325c8a464f6b1060e257636e4f06d1ce49c9aa4246c581ee48978c"
+}

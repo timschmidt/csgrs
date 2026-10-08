@@ -1,0 +1,9 @@
+Close empty-set operations and normalize recovered regions
+
+Finite-profile recovery previously published raw overlapping contours, exposing false internal boundary seams. Route reconstructed contours through canonical region admission and return its CurveOutcome certainty. Reconstruction remains an explicitly lossy import boundary; its published region is the exact regularized reconstructed set.
+
+Allow empty unordered input to follow the existing arrangement path while retaining canonical empty metadata. Preserve the empty-set offset identity after corner-option validation, avoiding unnecessary distance-sign decisions. This fixes inward offsets of empty Boolean and erosion results.
+
+Two pinned baseline probes reproduced four empty-arrangement rejections, six empty inward-offset rejections and incorrect seams in both policies. Five new regressions cover these cases, signed and symbolic distances, both operand orders for all Booleans, nested recovery islands, canceled holes and offset reentry. The other geometric algorithms are unchanged.
+
+Validation: 75 release regressions across three binaries and seven feature/lint, formatting, two-fuzz-target, documentation and downstream checks pass. All callers use the current API directly.

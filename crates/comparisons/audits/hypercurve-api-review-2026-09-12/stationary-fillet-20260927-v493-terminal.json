@@ -1,0 +1,112 @@
+{
+  "source_manifest": "stationary-fillet-20260927-v493-sources.json",
+  "source_directory": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/source-archives/stationary-fillet-20260927-v493",
+  "fixture_sha256": "beabea74ec8c08779719f78982f95035fedfeb6759c318bd34345faaabfffee5",
+  "checks": [
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "build",
+        "--lib",
+        "--release",
+        "--all-features",
+        "--locked",
+        "--offline",
+        "--message-format=json"
+      ],
+      "returncode": 0,
+      "log": "stationary-fillet-20260927-v493-library-build.log",
+      "elapsed_seconds": 77.4701652219519
+    },
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustc",
+        "--edition=2024",
+        "--test",
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/source-archives/stationary-fillet-20260927-v493/stationary-corner-contract.rs",
+        "-C",
+        "opt-level=3",
+        "-L",
+        "dependency=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps",
+        "--extern",
+        "hypercurve=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/libhypercurve.rlib",
+        "-o",
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/stationary-fillet-20260927-v493-tests"
+      ],
+      "returncode": 0,
+      "log": "stationary-fillet-20260927-v493-probe-build.log",
+      "elapsed_seconds": 0.5645838230848312
+    }
+  ],
+  "cases": [
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/stationary-fillet-20260927-v493-tests",
+        "--exact",
+        "retained_regular_source_range_strict",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "stationary-fillet-20260927-v493-retained_regular_source_range_strict.log",
+      "elapsed_seconds": 0.0035622958093881607,
+      "name": "retained_regular_source_range_strict",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/stationary-fillet-20260927-v493-tests",
+        "--exact",
+        "retained_regular_source_range_approximate",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "stationary-fillet-20260927-v493-retained_regular_source_range_approximate.log",
+      "elapsed_seconds": 0.0035552270710468292,
+      "name": "retained_regular_source_range_approximate",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/stationary-fillet-20260927-v493-tests",
+        "--exact",
+        "retained_nonzero_parallel_range_strict",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "stationary-fillet-20260927-v493-retained_nonzero_parallel_range_strict.log",
+      "elapsed_seconds": 0.16393093299120665,
+      "name": "retained_nonzero_parallel_range_strict",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/stationary-fillet-20260927-v493-tests",
+        "--exact",
+        "retained_nonzero_parallel_range_approximate",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "stationary-fillet-20260927-v493-retained_nonzero_parallel_range_approximate.log",
+      "elapsed_seconds": 0.21397393895313144,
+      "name": "retained_nonzero_parallel_range_approximate",
+      "passed": true
+    }
+  ],
+  "expected_cases": [
+    "retained_regular_source_range_strict",
+    "retained_regular_source_range_approximate",
+    "retained_nonzero_parallel_range_strict",
+    "retained_nonzero_parallel_range_approximate"
+  ],
+  "all_processes_reaped": true,
+  "probe_complete": true,
+  "library": {
+    "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/libhypercurve.rlib",
+    "sha256": "2ca2c22efaa653d9d6ecf11648c667ecccca908819ad8272f0e8cfda2069d5ec"
+  },
+  "binary_sha256": "33cdec10270a50ee0955917a5b7b4896c3a21cf4f1ae3007edf7a2b6daeb931a"
+}

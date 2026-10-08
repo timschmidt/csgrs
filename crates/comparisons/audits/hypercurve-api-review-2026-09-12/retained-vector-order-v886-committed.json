@@ -1,0 +1,20 @@
+{
+  "repos": {
+    "hypercurve": {
+      "commit": "c19a037b19ad12537fa93d5567cfeb2f10a11457",
+      "parent": "7cdde2aff667aaf1fb19e0472f3efddd9592396f",
+      "paths": {
+        "benches/bezier_tangent_order.rs": "bd5252bdc12346c4ad3707a3f5ab081429b969028f93ddea0edc9a520e4c7665",
+        "fuzz/fuzz_targets/bezier_tangent_order.rs": "c3d8fe474ec1dc1f620e3494068ea3a2e6b9f967e43b3a43e4da70b22fa26814",
+        "src/bezier_algebraic_image.rs": "57b35ee2861fc9d76080f98c8199686eec70f60ff449fa719b1bf7f93d3bd124",
+        "src/bezier_arrangement.rs": "d66550a4364dff9f5cf7bf74d823eebcfca7e1a98bf050a1c9903a300eed6e53",
+        "src/bezier_tangent_order.rs": "63bfa68a05601228661a901a880cc24702b36d2d0a7159f10b2696660486975e",
+        "tests/hypercurve_bezier_arrangement.rs": "878f97202b74b0638e7b16049a64bb62df0058d26dec3a7d617b4aa9a4876a0d",
+        "tests/hypercurve_bezier_tangent_order.rs": "eb299459ff937b90d44be7689110858acc731e451508c852633a7ad79a29cd96"
+      }
+    }
+  },
+  "qualification": "retained-vector-order-v886-terminal.json",
+  "verified_source_files": 2048,
+  "clean_repositories": 30
+}

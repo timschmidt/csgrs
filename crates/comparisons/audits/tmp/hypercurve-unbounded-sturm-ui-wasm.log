@@ -1,0 +1,7 @@
+2026-09-05T02:33:03.063444Z  INFO 🚀 Starting trunk 0.21.14
+2026-09-05T02:33:03.063715Z  INFO 📦 starting build
+   Compiling hypercurve v0.3.1 (/home/tim/Documents/GitHub/workspace/hypercurve)
+   Compiling hypercurve_ui v0.2.0 (/home/tim/Documents/GitHub/workspace/hypercurve/examples/hypercurve_ui)
+    Finished `release` profile [optimized] target(s) in 57.86s
+2026-09-05T02:34:16.022315Z  INFO applying new distribution
+2026-09-05T02:34:16.023379Z  INFO ✅ success

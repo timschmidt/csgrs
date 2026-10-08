@@ -1,0 +1,14 @@
+{
+  "tag": "mag-series-output-check",
+  "started": "2026-09-10T00:05:00.821Z",
+  "finished": "2026-09-10T00:05:01.016Z",
+  "elapsedSeconds": 0.193068898,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "node",
+  "args": [
+    "check-mag-series.mjs",
+    "--mag-series-summary"
+  ],
+  "code": 0,
+  "signal": null
+}

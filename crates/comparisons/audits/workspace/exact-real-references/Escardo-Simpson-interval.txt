@@ -1,0 +1,1642 @@
+A Universal Characterisation of the Closed Euclidean Interval
+             Martı́n H. Escardó                             Alex K. Simpson
+         School of Computer Science                     LFCS, Division of Informatics
+          University of Birmingham                        University of Edinburgh
+        <M.Escardo@cs.bham.ac.uk>                      <Alex.Simpson@dcs.ed.ac.uk>
+                                   Text of February 11, 2001
+
+                                               Abstract
+         We propose a notion of interval object in a category with finite products, providing a
+     universal property for closed and bounded real line segments. We test the notion in categories
+     of interest. In the category of sets, any closed and bounded interval of real numbers is an
+     interval object. In the category of topological spaces, the interval objects are closed and
+     bounded intervals with the Euclidean topology. We also prove that an interval object exists
+     in any elementary topos with natural numbers object. The universal property of an interval
+     object provides a mechanism for defining functions on the interval. We use this to define basic
+     arithmetic operations, and to verify equations between them. It also allows us to develop an
+     analogue of the primitive recursive functions, yielding a natural class of computable functions
+     on the interval.
+
+
+Contents
+1 Introduction                                                                                         1
+
+2 Abstract convex bodies and interval objects                                                          3
+
+3 Convex bodies and interval objects in Set                                                            5
+
+4 Basic categorical properties                                                                         10
+
+5 Parameterized interval objects                                                                       11
+
+6 Primitive interval functions                                                                         13
+
+7 Interval objects in Top                                                                              15
+
+8 Interval objects in an elementary topos                                                              16
+
+9 Concluding remarks                                                                                   22
+
+A Convex bodies in the presence of an nno                                                              23
+
+B Convex sets in Euclidean space                                                                       24
+
+C Pataraia’s fixed-point theorem                                                                       25
+
+
+
+1    Introduction
+In set theory, one can implement the real numbers in many ways. For example, one can use
+Dedekind sections or equivalence classes of Cauchy sequences of rational numbers. But what is it
+that one is implementing? Assuming classical logic, either implementation produces a complete
+Archimedian field ; moreover, any two such fields are isomorphic [29, 32]. In fact, for the purposes
+of classical analysis, one never uses a particular mathematical implementation of the reals. One
+
+                                                   1
+relies on the specification of the real-number system as a complete Archimedian field and works
+axiomatically. The only purpose of particular implementations is to be reassured that there is at
+least one such field.
+     Unfortunately, when one tries to carry out such a programme in other foundational settings,
+difficulties arise. One obstacle is that the categoricity of this axiomatization relies on the principle
+of excluded-middle, which is not always available, particularly in settings that are relevant to the
+theory of computation. Further, one may also criticise the axiomatization on the grounds that,
+although it is aiming to characterise the real line, which is fundamentally a geometric structure,
+it makes essential use of abstract concepts (such as suprema of bounded sets of points) whose
+geometric meaning is unclear. In addition, even the field axioms arguably involve operations (such
+as multiplication and reciprocation) which one might rather see as derived from more primitive
+geometric constructions. Moreover, this axiomatization of the reals does not give rise to any direct
+mechanism for systematically building functions on the line.
+     It is our purpose to develop an axiomatization which avoids the problems identified above.
+Although we do not know how to do this directly for the entire real line, we shall present such an
+axiomatization for the closely related notion of a closed and bounded line segment, out of which the
+real line can of course be constructed. Our axiomatization is directly motivated by aiming to fulfil
+the following requirements: (i) it has direct computational content, (ii) it has a geometrical flavour,
+(iii) it applies to a variety of foundational settings, (iv) it makes as few ontological commitments
+as possible, and (v) it gives what one would expect in specific examples.
+     Regarding (iii) and (iv), we only assume a category with finite products.
+     Regarding (ii), we take a midpoint operation as the basic structure of line segments, with four
+axioms which correspond to intuitive geometric properties. We define an abstract convex body as
+a midpoint algebra in which the midpoint operation can be infinitely iterated, in a precise sense
+discussed in the technical development that follows. Then a closed and bounded line segment,
+or interval object for short, is defined to be a free abstract convex body over two generators,
+its endpoints. The free property amounts to the fact that any two points of a convex body are
+connected by a line segment.
+     Regarding (i), the free property gives a direct mechanism for defining computable functions.
+In particular, one can define multiplication and prove its basic properties. More generally, we
+develop an analogue of the primitive recursive functions for the line segment.
+     Regarding (v), we have: (1) In the category of sets, [−1, 1] is an interval object. (2) In the
+category of topological spaces, [−1, 1] with the Euclidean topology is an interval object. (3) In
+any elementary topos with natural numbers object, an interval object is given by the Cauchy
+completion of the interval of Cauchy reals within the Dedekind reals. For details see Section 8. In
+many cases this coincides with the Cauchy or Dedekind intervals; but, in general, we seem to be
+identifying an intriguing new (intuitionistic) notion of real number.
+     In summary, this paper provides a foundational axiomatization of the line segment, by means of
+a geometrically motivated universal property that supports the definition of computable functions
+on the interval. Computationally, one can view the definition as presenting the interval as an
+abstract data type, interpretable within many computational settings. Moreover, as will be seen,
+the definition involves a judicious combination of inductive and coinductive properties, making
+use of techniques from the coalgebra school of computer science.
+
+Related work Higgs [13] defines magnitude algebras and proves that the interval [0, ∞] endowed
+with
+P the function      h : [0, ∞] → [0, ∞] defined by h(x) = x/2 and the summation operation
+   : [0, ∞]ω → [0, ∞] is the magnitude algebra freely generated by 1. His axiomatization is purely
+equational and is based on binary expansions of numbers. It appears that, in the category of
+topological spaces, the free magnitude algebra over two generators is the interval [0, ∞] with the
+topology of lower semicontinuity [28] rather than the Euclidean topology. In fact, the summation
+operation is continuous with respect to the former but not the latter. This observation shows that,
+in general, the Dedekind or Cauchy [0, ∞] intervals in an elementaryPtopos are not magnitude
+algebras (let alone free ones), as these objects do not support Higgs’     operation (for example,
+
+
+                                                   2
+in Johnstone’s “topological topos” [16]).
+    In contrast, Pavlović and Pratt [27] consider coalgebraic definitions of the reals. However, they
+do not make connections with the computational and geometrical requirements discussed above.
+    Building on that, Peter Freyd [10] considers a more geometrical coalgebraic approach. In fact,
+he also places emphasis on midpoint algebras, although the midpoint operation is derived rather
+than primitive. His approach also appears to have some computational content, but this has yet
+to be elaborated.
+    Escardó and Streicher [9] consider an axiomatization of the domain of subintervals of the line
+segment in the category of continuous Scott domains, also using algebraic and coalgebraic meth-
+ods. Although their axiomatization has strong computational content, it applies to a particular
+category. Moreover, it does not refer to the line segment directly.
+    Connections with the work of Brattka [4] remain to be investigated.
+
+
+2     Abstract convex bodies and interval objects
+We assume a category C with finite products.
+
+Definition 2.1 (Binary algebra) A binary algebra is a pair (A, m) where A × A
+                                                                                m
+                                                                                 ✲ A is
+                                                ′   ′
+any morphism. A homomorphism from (A, m) to (A , m ) is a morphism A
+                                                                         f
+                                                                          ✲ A such that
+                                                                              ′
+
+f (m(x, y)) = m′ (f (x), f (y)).
+
+In this definition, we follow the general style we shall adopt throughout the paper. Much of
+the development will involve doing algebra in categories with finite products. Our style is to
+write morphisms as functions, and state equations using variables. Mathematically, the variables
+represent generalised elements. Thus, for example, the homomorphism equation: for all generalised
+elements x, y : Z ✲ A (where Z is any object), f ◦ m ◦ hx, yi = m′ ◦ hf ◦ x, f ◦ yi. In this case,
+the condition simplifies to the (unquantified) equation f ◦ m = m ◦ (f × f ).
+
+Definition 2.2 (Midpoint algebra) A midpoint algebra is a binary algebra (A, m) satisfying:
+    1. m(x, x) = x                                                                      (idempotency)
+    2. m(x, y) = m(y, x)                                                              (commutativity)
+    3. m(m(x, y), m(z, w)) = m(m(x, z), m(y, w))                                        (transposition)
+A midpoint algebra is said to be cancellative if it satisfies:
+    4. m(x, z) = m(y, z) implies x = y                                                   (cancellation)
+
+We write MidAlg (C) for the category of midpoints algebras and homomorphisms between them.
+    We remark that midpoint algebras have previously been studied under the name medial means;
+see [20], and also [1, 11, 19].
+
+Example 2.3 The set Rn is a cancellative midpoint algebra under the binary midpoint function
+⊕ : Rn × Rn → Rn defined by:
+
+                                         x⊕y    =       (x + y)/2
+
+This yields a whole range of cancellative midpoint algebras given by subsets A ⊆ Rn closed under
+⊕. We call such midpoint algebras standard midpoint subalgebras of Rn . Examples are: the set of
+dyadic rational points; the set of rational points; the set of algebraic points; any convex set.
+
+   The intuition behind the following definition is captured by Proposition 3.1 below. For the
+moment, we remark that it roughly says that, for any sequence of points x0 , x1 , x2 , . . ., there is a
+unique point m(x0 , m(x1 , m(x2 , . . .))) which arises by “infinite iteration” of the operation m over
+the sequence.
+
+                                                    3
+Definition 2.4 (Right-iterable algebra) A right-iterable algebra is a binary algebra (A, m)
+satisfying the right-iteration axiom: for every map X ✲ A × X, there exists a unique X ✲ A
+                                                      c                                u
+
+such that the diagram below commutes.
+                                                id × u     ✲ A×A
+                                 A×X
+                                  ✻
+                                   c                              m
+                                                               ❄
+                                   X                         ✲ A
+                                                     u
+In other words, (A, m) is a right-iterable algebra if it is final as an (A×(−))-algebra with respect to
+coalgebra-to-algebra homomorphisms from (A × (−))-coalgebras. There is an evident dual notion
+of left-iterable algebra, defined in terms of ((−) × A) algebras and coalgebras. However, we shall
+be almost exclusively concerned with commutative algebras, for which the two notions coincide,
+hence we shall normally refer simply to iterable algebras and the iteration axiom. Examples of the
+dual notion, that of a coalgebra being initial with respect to coalgebra-to-algebra homomorphisms
+to arbitrary algebras, arise in the work of Taylor [33] and Eppendahl [7].
+
+Definition 2.5 (Abstract convex body) An (abstract) convex body is a cancellative iterable
+midpoint algebra.
+
+We write Conv (C) for the full subcategory of MidAlg(C) whose objects are convex bodies.
+   Although, as above, we shall usually omit the word “abstract” when referring to convex bodies,
+we shall take care to include the word whenever its omission might lead to confusion. For example,
+when we discuss subsets of Rn , it will be important to distinguish our abstract convex bodies from
+the established “convex bodies” (i.e. convex sets with nonempty interior) in the literature on
+convex sets.
+
+Example 2.6 Continuing from Example 2.3, any bounded convex subset of Rn , considered as a
+standard midpoint subalgebra of Rn , is an abstract convex body. Indeed, given functions h : X →
+A and t : X → X (where X is any set), then the unique function u : X → A, determined from
+the coalgebra hh, ti : A → A × X by the iteration axiom, is:
+                                             X
+                                 u(x) =          2−(i+1) h(ti (x))                            (1)
+                                               i≥0
+
+An important point here is that the boundedness of A is crucial for u to be well-defined. In fact,
+in Section 3, we prove that a standard midpoint subalgebra of Rn is an abstract convex body if
+and only if it is a bounded convex subset of Rn ; and we also prove that, given a bounded convex
+subset B of Rm , a function f : A → B is a homomorphism of abstract convex bodies (i.e. a
+homomorphism w.r.t. ⊕) if and only if it is affine.
+
+Example 2.7 Let A be any bounded convex subset of Rn , as above, endowed with the Euclidean
+topology. Then ⊕ also exhibits A as an abstract convex body in Top. Indeed, given any continuous
+hh, ti : X → A × X (where X is any space), the function defined in (1) is again the u : X → A
+required by the iteration axiom. The interesting fact here is that u is continuous. This example
+will be expanded upon in Section 7.
+
+   A bipointed convex body is a structure (A, m, a, b) where (A, m) is a convex body and a, b :
+1    ✲ A are global points. Homomorphisms between bipointed convex bodies are required to
+preserve the points as well as the binary algebra structure; i.e. A
+                                                                         f
+                                                                          ✲ A′ is a homomorphism
+from (A, m, a, b) to (A , m , a , b ) iff it is a homomorphism from (A, m) to (A′ , m′ ) and a′ = f ◦ a
+                       ′   ′ ′ ′
+
+and b′ = f ◦ b. We write BiConv (C) for the category whose objects are bipointed convex bodies
+and whose morphisms are homomorphisms between them.
+
+                                                     4
+Definition 2.8 (Interval object) An interval object in C is an initial object in BiConv (C).
+
+Example 2.9 In Set any closed proper interval [a, b] ⊆ R (where a < b) gives an interval object
+([a, b], ⊕, a, b). Of course the choice of a and b makes no difference. For future convenience, we take
+the interval I = [−1, 1] as our standard closed interval and (I, ⊕, −1, 1) as our standard interval
+object. That (I, ⊕, −1, 1) really is an interval object in Set will be proved in Section 3.
+
+Example 2.10 In Top, (I, ⊕, −1, 1) is again an interval object when I is equipped with the
+Euclidean topology. This will be proved in Section 7.
+
+
+3      Convex bodies and interval objects in Set
+In this section we study convex bodies in Set, and we show that the interval object in Set is
+indeed (I, ⊕, −1, 1), as claimed above.
+    Perhaps, the least familiar aspect of the definition of convex body is the notion of iterable
+algebra. We begin by showing that, in Set, iterable algebras are exactly algebras supporting
+an additional operation of countably-infinite arity that satisfies certain characterising properties
+relating it to the binary operation. In general, this reformulation provides the most straightforward
+method of showing that an algebra is iterable.
+Proposition 3.1 Let (A, m) be a binary algebra in Set.
+    1. (A, m) is right-iterable if and only if there exists a function M : Aω → A satisfying:
+        (a) M (x0 , x1 , x2 , . . .) = m(x0 , M (x1 , x2 , x3 , . . .))
+        (b) If y0 = m(x0 , y1 ), y1 = m(x1 , y2 ), y2 = m(x2 , y3 ), . . . then y0 = M (x0 , x1 , x2 , . . .).
+       Moreover if (A, m) is right-iterable then there is a unique M satisfying (a).
+    2. If (A, m) and (A′ , m′ ) are right-iterable algebras then any homomorphism f : A → A′ is also a
+       homomorphism with respect to the associated infinitary M and M ′ ; i.e. for all x0 , x1 , x2 , . . .,
+       f (M (x0 , x1 , x2 , . . .)) = M ′ (f (x0 ), f (x1 ), f (x2 ), . . .).
+Below, we shall often use Mi (xi ) as convenient notation for M (x0 , x1 , x2 , . . .).
+Proof For statement 1, first suppose that (A, m) is right iterable. Consider the “head” and “tail”
+functions h : Aω → A and t : Aω → Aω . Together these give a coalgebra hh, ti : Aω → A × Aω
+(indeed this is the final (A × (−))-coalgebra). Then property (a) expresses that M : Aω → A is
+a coalgebra-to-algebra homomorphism from hh, ti to m. Thus, by the right-iteration axiom, there
+is indeed a unique M satisfying (a).
+    To show that this unique M satisfies (b), let (xi ) and (yi ) be sequences satisfying yi =
+m(xi , yi+1 ). Consider the coalgebra i 7→ hxi , i+1i : N → A×N . Then the functions i 7→ yi : N → A
+and i 7→ M (xi , xi+1 , . . .) : N → A are both homomorphisms from this coalgebra to the algebra
+m : A × A → A, hence equal. Thus, in particular, y0 = M (x0 , x1 , . . .) as required.
+    Conversely, suppose that there exists M : Aω → A satisfying (a) and (b). Given a coalgebra
+hh, ti : X → A × X, we must show that there is a unique function u : X → A such that
+u(x) = m(h(x), u(t(x)). Such a function is defined by:
+
+                                 u(x) = M (h(x), h(t(x)), h(t(t(x)), . . .)
+
+i.e. u(x) = Mi (h(ti (x)). This satisfies u(x) = m(h(x), u(t(x)) by property (a) of M . For unique-
+ness, suppose there exists u′ : X → A such that u′ (x) = m(h(x), u′ (t(x)). Then u′ (t(x)) =
+m(h(t(x)), u′ (t(t(x)))), . . . , i.e. u′ (ti (x)) = m(h(ti (x)), u′ (ti+1 (x)). So, by property (b), u′ (x) =
+Mi (h(ti (x))) = u(x), as required.
+    For statement 2, suppose that f : A → A′ is a homomorphism. Then:
+
+                  f (Mi (xi )) =       f (m(x0 , Mi≥1 (xi )))             (by property (a))
+                               =       m′ (f (x0 ), f (Mi≥1 (xi )))       (as f is a homomorphism)
+
+                                                              5
+Similarly:
+                              f (Mi≥1 (xi ))    =      m′ (f (x1 ), f (Mi≥2 (xi )))
+                              f (Mi≥2 (xi ))    =      m′ (f (x2 ), f (Mi≥3 (xi )))
+                              etc.
+So, by property (b) for M ′ , we have f (Mi (xi )) = Mi′ (f (xi )), as required. 
+With an appropriate reformulation, this proposition generalises from Set to any category with
+finite products and a parameterized natural numbers objects. See Appendix A for details.
+    Proposition 3.1 applies to arbitrary binary algebras. However, our main interest is in mid-
+point algebras. For these, it is useful to identify additional equational properties satisfied by the
+associated infinitary operations.
+Proposition 3.2 For any iterable midpoint algebra (A, m) in Set, with associated infinitary M :
+Aω → A:
+  1. x = M (x, x, x, . . .)
+  2. Mi (Mj (xij )) = Mj (Mi (xji ))
+  3. Mi (m(xi , yi )) = m(Mi (xi ), Mi (yi ))
+We omit the routine proofs.
+    Having obtained a reasonable understanding of iterability, we now return to Examples 2.6 and
+2.9, and verify the claims made there. Recall that a subset A of Rn is convex if and only if it
+is closed under convex combinations, i.e., for every x1 , . . . , xk ∈ A and λ1 , . . . , λk ∈ [0, 1] with
+Pk
+   i=1 λi = 1,
+
+                                               k
+                                               X
+                                                     λi xi   ∈ A.
+                                               i=1
+
+Proposition B.4 of Appendix B shows that any bounded convex subset A is also closed under
+countable convex combinations,
+                      P∞        i.e., for every sequence (xi ) of points in A and sequence (λi ) of
+weights in [0, 1] with i=0 λi = 1,
+                                               ∞
+                                               X
+                                                     λi xi   ∈ A.
+                                               i=0
+
+Proposition 3.3 Suppose A is a standard midpoint subalgebra of Rn , then A is an abstract convex
+body if and only if it is a bounded convex subset of Rn ,
+Proof Suppose (A, ⊕) is an abstract convex body. Let M : Aω → A be the associated infinitary
+operation. For any two points x, y ∈ A and weights λ, µ ∈ [0, 1] with λ + µ = 1, let 0.d0 d1 d2 . . .
+be a binary representation of λ. For i ≥ 0, let zi be x if di = 1 and y if di = 0. Then, by
+Proposition 3.1.1, λx + µy = M (z0 , z1 , z2 , , . . .) ∈ A. So A is a convex set.
+    Suppose, for contradiction, that A is unbounded. By Proposition B.1 of Appendix B, A
+contains a ray {x0 +λ(x0 −x1 ) | λ ∈ [0, ∞)}, where x0 and x1 are two distinct points. Write xλ for
+the point x0 +λ(x1 −x0 ) ∈ A (this is consistent with the notation for x0 and x1 ). Then x1 = x0 ⊕x2 ,
+x2 = x0 ⊕ x4 , x4 = x0 ⊕ x8 , etc. So, by Proposition 3.1.1b, x1 = M (x0 , x0 , x0 , . . .) = x0 , a
+contradiction. Thus A is bounded.
+    We have shown that every abstract convex body is a bounded convex subset. For the converse,
+suppose A is a bounded convex subset. By Proposition B.4 of Appendix B, A is L           closed under
+countable convex combinations. Thus, in particular, it is closed under the operation        : Aω → A
+defined by:
+                                    M                    X
+                                        ((xi )) =            2−(i+1) xi .                         (2)
+                                       i                     i≥0
+
+
+
+                                                         6
+                                        L
+It is straightforward to establish that   satsfies (a) and (b) of Proposition 3.1.1. Thus A is indeed
+an abstract convex body. 
+     Suppose A ⊆ Rn and A′ ⊆ Rm are (not necessarily bounded) convex subsets. Recall that a
+function f : A → A′ is said to be affine if it preserves (finite) convex combinations, i.e., for every
+convex combination,
+
+                                        Xk                k
+                                                          X
+                                      f(   λi xi )    =         λi f (xi ).
+                                         i=1              i=1
+
+Proposition 3.4 Suppose A ⊆ Rn and A′ ⊆ Rm are bounded convex subsets. Then an arbitrary
+function f : A → A′ is affine if and only if it is a homomorphism with respect to ⊕.
+
+Proof It is trivial that every affine function is a homomorphism with respect to ⊕. Conversely,
+suppose that f is a homomorphism. We prove that f preserves countable convex combinations,
+hence finite ones.                                    P∞
+   Let (λi ) be a sequence of elements of [0, 1] with i=0 λi = 1. Then (λi )-weighted countable
+convex combinations determine a function σ : Aω → A:
+                                                          ∞
+                                                          X
+                                           σ((xi ))   =         λi xi .
+                                                          i=0
+
+However, by expressing each weight λi as a sum of dyadic rationals (e.g. using its binary expan-
+sion), one can show that σ((xi )) can be expressed as
+                                              M
+                                 σ((xi )) =       σi′ (x0 , . . . , xki )                    (3)
+                                                      i
+
+where each σi′ is a ki -ary convex combination with dyadic weights. Then each σi′ can be expressed
+entirely in terms of ⊕. As f isL   a homomorphism, it preserves ⊕, and hence each σi′ . Also, by
+Proposition 3.1.2, it preserves      , hence it preserves σ. Thus f preserves arbitrary countable
+convex combinations. Thus f is indeed affine. 
+The reduction of an arbitrary countable normalised weighted sum to (3) in the proof above, can
+be used to show that every abstract convex body in Set supports a formal notion of countable
+convex combination. It would be interesting to demonstrate that these combinations satisfy the
+expected equational properties. However, we shall not pursue this direction further in this paper.
+    Proposition 3.4 states a result in pure geometry. Although we are sure this result must appear
+somewhere in the literature, we do not know a reference. An example due to Peter Freyd [10],
+which uses the Axiom of Choice, can be used to show that the boundedness assumption is essential
+for Proposition 3.4 to hold.
+    The remaining goal of this section is to prove that (I, ⊕, −1, 1) is an interval object in Set.
+In order to do this, we need to further analyse the cancellation requirement in the definition of
+convex body. First, we give a simple example showing that not every iterable midpoint algebra is
+cancellative.
+Example 3.5 Consider the midpoint algebra (A, m) in Set defined by:
+
+                                         A     = {(x, y) ∈ I × I | x = 1 or y = 1}
+                                                 
+                                                    (1, y ⊕ y ′ ) if x = x′ = 1
+                      m((x, y), (x′ , y ′ ))   =
+                                                    (x ⊕ x′ , 1) otherwise
+
+The iteration axiom is easily verified by defining M and checking properties 1a and 1b of Propo-
+sition 3.1. The failure of cancellation is shown by m((1, x), (z, 1)) = m((1, y), (z, 1)) whenever
+z 6= 1.
+
+
+
+
+                                                      7
+    Our motivation for requiring cancellation to hold for convex bodies is that it is equivalent to
+an important approximation property. To formulate this, we introduce notation for some useful
+derived operations. For a midpoint algebra (A, m), we write mn for the (n + 1)-ary operation
+defined by: m0 (x) = x; and mn (x0 , . . . , xn ) = m(x0 , mn−1 (x1 , . . . , xn )) when n ≥ 1. Thus m1 is
+just m itself.
+
+Proposition 3.6 For an iterable midpoint algebra (A, m) in Set, the following are equivalent.
+   1. (A, m) is cancellative.
+   2. The associated M : Aω → A satisfies the following “approximation” property.
+      If, for all n ≥ 0, there exist zn , wn ∈ A such that
+
+                                   mn (x0 , . . . , xn−1 , zn ) =        mn (y0 , . . . , yn−1 , wn )
+
+      then M (x0 , x1 , x2 , . . .) = M (y0 , y1 , y2 , . . .).
+
+Proof To prove 2 implies 1, assume M : Aω → A satisfies approximation. To show that (A, m)
+is cancellative, assume m(x, z) = m(y, z). We prove by induction that, for all n ≥ 0,
+                                              n times                       n times
+                                           z }| {                         z }| {
+                                       mn (x, . . . , x, z) =         mn (y, . . . , y, z)                       (4)
+
+The n = 0 and n = 1 cases are immediate. For n ≥ 2, assume the equality holds for lower n.
+Write w = mn−2 (x, . . . , x, z). By the induction hypothesis, w = mn−2 (y, . . . , y, z) and m(x, w) =
+mn−1 (x, . . . , x, z) = mn−1 (y, . . . , y, z) = m(y, w). So (using the idempotency and commutativity
+axioms of Definition 2.2 without mention):
+
+            mn (x, . . . , x, z) =       m(x, m(x, mn−2 (x, . . . , x, z)))
+                                 =       m(x, m(x, w))
+                                 =       m(m(x, x), m(x, w))
+                                 =       m(m(x, x), m(y, w))                          (induction hypothesis)
+                                 =       m(m(x, y), m(x, w))                          (transposition)
+                                 =       m(m(x, y), m(y, w))                          (induction hypothesis)
+                                 =       m(m(y, y), m(x, w))                          (transposition)
+                                 =       m(m(y, y), m(y, w))                          (induction hypothesis)
+                                 =       m(y, m(y, w))
+                                 =       m(y, m(y, mn−2 (y, . . . , y, z)))
+                                 =       mn (y, . . . , y, z).
+
+Thus (4) holds. Hence, by approximation, M (x, x, x, . . .) = M (y, y, y, . . .), i.e. x = y. This proves
+cancellation.
+    For the converse implication, assume (A, m) is cancellative. We first observe that the fol-
+lowing “one-sided approximation” property holds: if, for all n ≥ 0, there exists wn such that
+x = mn (y0 , . . . , yn−1 , wn ) then x = M (y0 , y1 , y2 , . . .). Indeed, if the premise is satisfied then, by
+cancellation, w0 = m(y1 , w1 ), w1 = m(y2 , w2 ), etc. Hence x = M (y0 , y1 , y2 , . . .), by Proposi-
+tion 3.1.1b.
+    Next, we prove the following equality. For all (xi ), (yi ) and n ≥ 0:
+
+         Mi (m(xi , yi )) =
+                                                                                                                 (5)
+            m(mn+1 (x0 , . . . , xn , yn ), M (y0 , . . . , yn−1 , m(xn+1 , yn+1 ), m(xn+2 , yn+2 ), . . .)).
+
+The proof is by induction on n. When n = 0, we have:
+
+          r.h.s. = m(m(x0 , y0 ), M (m(x1 , y1 ), m(x2 , y2 ), . . .))
+                 = M (m(x0 , y0 ), m(x1 , y1 ), m(x2 , y2 ), . . .)                   (by Proposition 3.1.1a).
+
+
+                                                                  8
+For n > 0, we have:
+
+ r.h.s. =       m(m(x0 , mn (x1 , . . . , xn , yn )), m(y0 , M (y1 , . . . , yn−1 , m(xn+1 , yn+1 ), m(xn+2 , yn+2 ), . . .)))
+        =       m(m(x0 , y0 ), m(mn (x1 , . . . , xn , yn )), M (y1 , . . . , yn−1 , m(xn+1 , yn+1 ), m(xn+2 , yn+2 ), . . .))
+        =       m(m(x0 , y0 ), M (m(x1 , y1 ), m(x2 , y2 ), . . .))                  (by induction hypothesis)
+        =       M (m(x0 , y0 ), m(x1 , y1 ), m(x2 , y2 ), . . .)
+
+    Finally, to prove approximation, suppose that, for all n ≥ 0, there exist zn , wn such that:
+
+                                mn (x0 , . . . , xn−1 , zn ) =       mn (y0 , . . . , yn−1 , wn ).                             (6)
+
+We show below that
+
+         m(M (x0 , x1 , x2 , . . .), M (z0 , z1 , z2 , . . .))   = m(M (y0 , y1 , y2 , . . .), M (z0 , z1 , z2 , . . .)),      (7)
+
+from which the desired equation, M (x0 , x1 , x2 , . . .) = M (y0 , y1 , y2 , . . .), follows by cancellation.
+   To verify (7), we have:
+
+ l.h.s. =      Mi (m(x0 , z0 ), m(x1 , z1 ), m(x2 , z2 ), . . .) (by Proposition 3.2.3)
+        =      m(mn+1 (x0 , . . . , xn , zn ), M (z0 , . . . , zn−1 , m(xn+1 , zn+1 ), m(xn+2 , zn+2 ), . . .)) (by (5))
+        =      m(mn+1 (y0 , . . . , yn , wn ), M (z0 , . . . , zn−1 , m(xn+1 , zn+1 ), m(xn+2 , zn+2 ), . . .)) (by (6))
+        =      M (m(y0 , z0 ), . . . , m(yn−1 , zn−1 ), m(yn , wn ), m(xn+1 , zn+1 ), m(xn+2 , zn+2 ), . . .) (by (5))
+        =      mn (m(y0 , z0 ), . . . , m(yn−1 , zn−1 ), wn′ ),
+
+where wn′ = M (m(yn , wn ), m(xn+1 , zn+1 ), m(xn+2 , zn+2 ), . . .). But the above is true for any n ≥ 0.
+Hence, by one-sided approximation, we can continue
+
+               l.h.s.    = Mi (m(y0 , z0 ), m(y1 , z1 ), m(y2 , z2 ), . . .)
+                         = m(M (y0 , y1 , y2 , . . .), Mi (z0 , z1 , z2 , . . .))    (by Proposition 3.2.3)
+
+as required. 
+
+Theorem 1 (I, ⊕, −1, 1) is an interval object in Set.
+
+Proof Let (A, m, a, b) be an arbitrary convex body in Set. We must show that there is a unique
+homomorphism of bipointed convex bodies from (I, ⊕, −1, 1) to (A, m, a, b).
+   Write Q d for the set of dyadic rationals, and I(Q d ) for Q d ∩ I. We show that there is a unique
+homomorphism fd : I(Q d ) → A such that f (−1) = a and f (1) = b. In fact, this holds because
+(I(Q d ), ⊕, −1, 1) is the initial bipointed midpoint algebra. We omit the straightforward argument
+that establishes this fact.
+   We define the unique homomorphism f : I → A by defining, for q0 , q1 , . . . ∈ I(Q d ):
+                                          M
+                                        f(   (qi )) = Mi (fd (qi )).
+                                                    i
+                                                                                          L
+Clearly, for every x ∈ I, there exist q0 , q1 , . . . ∈ I(Q d ) such that                    i (qi ) = x (indeed,L  one can
+restrict
+L ′       to    q i ∈ {−1,    1}).    Thus, to   show     f is  a well-defined   function, we
+                                                                                            L    must    show
+                                                                                                          L ′ that   i (qi ) =
+                                                      ′
+    (q
+   i i )  implies     M   i (f d (qi )) = M i (f d (qi  )). Accordingly,    suppose   that      i (qi ) =    (q
+                                                                                                            i i ) = x.  Then
+| ⊕n (q0 , . . . , qn−1 , 0) − x| ≤ 2−n and | ⊕n (q0′ , . . . , qn−1 ′
+                                                                         , 0) − x| ≤ 2−n , for any n ≥ 0. Thus, defining
+dn = ⊕n (q0 , . . . , qn−1 , 0) − ⊕n (q0′ , . . . , qn−1  ′
+                                                              , 0), we have |dn | ≤ 2−(n−1) . So 2−(n−1) dn ∈ I(Q d ),
+and:
+
+                     ⊕n (q0 , . . . , qn−1 , −2−(n−1) dn ) =           ⊕n (q0′ , . . . , qn−1
+                                                                                          ′
+                                                                                              , 2−(n−1) dn ),
+
+where all values are in I(Q d ). As fd is a homomorphism from Q d to A,
+
+     mn (fd (q0 ), . . . , fd (qn−1 ), fd (−2−(n−1) dn ))        =     mn (fd (q0′ ), . . . , fd (qn−1
+                                                                                                   ′
+                                                                                                       ), fd (2−(n−1) dn )),
+
+                                                                 9
+and this holds for any n. Thus, by the approximation property of A (Proposition 3.6), Mi (fd (qi )) =
+Mi (fd (qi′ )) as required.
+    Next, we show that f is a (bipointed) homomorphism. Trivially f (−1) = fd (−1)           L = a and
+f (1)L
+     = fd (1) = b. For the preservation of the midpoint operation, take any x =               i (qi ) and
+y = i (qi′ ) in I (with each qi , qi′ ∈ I(Q d )). Then indeed
+                              L              L                                               
+             f (x ⊕ y) = f ((L i qi ) ⊕ ( i qi′ ))                                           
+                                                                                             
+                                                                                             
+                         = f ( i (qi ⊕ qi′ ))                                                
+                                                                                             
+                                                                                             
+                                           ′                                                 
+                         = Mi (fd (qi ⊕ qi ))                 (definition of f )             
+                                                                                             
+                                                  ′
+                         = Mi (m(fd (qi ), fd (qi )))         (homomorphism property of fd )           (8)
+                                                        ′                                    
+                         = m(MiL  (fd (qi )), MLi (fd (qi ))) (Proposition 3.2.3)
+                                                                                             
+                                                                                             
+                                                                                             
+                                                                                             
+                         = m(f ( i (qi )), f ( i (qi′ ))) (definition of f )                 
+                                                                                             
+                                                                                             
+                                                                                             
+                         = m(f (x), f (y)).
+
+    It remains to show that f is the unique homomorphism. Suppose then that g : I → A is any
+bipointed homomorphism. Then the restriction of g to I(Q d ) is also a bipointed homomorphism,
+so g(q) = fd (q) for any q ∈ I(Q d ) Thus, for q0 , q1 , . . . ∈ I(Q d ),
+           L                          L                                                       
+         g( i≥n (qi )) = g(qn ⊕ ( i≥n+1 (qi )))                                               
+                                        L
+                        = m(g(qn ), g( i≥n+1 (qi )))             (homomorphism property of g)   (9)
+                                          L                                                   
+                        = m(fd (qn ), g( i≥n+1 (qi ))),
+
+and this holds for every n ≥ 0. So:
+                        L
+                      g( i≥0 (qi )) =       Mi (fd (qi ))    (Proposition 3.1.1b)
+                                               L                                                     (10)
+                                    =       f ( i≥0 (qi ))   (definition of f )
+
+Thus indeed g = f . 
+
+
+4     Basic categorical properties
+Having thoroughly examined convex bodies and the interval object in the category of sets, for the
+next two sections we turn our attention to general properties of convex bodies and interval objects
+arising from their categorical definitions. This general investigation will be useful in Sections 7
+and 8, in which we shall study examples in categories other than Set.
+    One benefit of having simple abstract definitions of convex body and interval object is that it
+is easy to prove that these notions are preserved by various categorical constructions and functors.
+In this section, we state basic results of this nature. The proofs, which are all routine diagram
+chases, are omitted.
+    As in Section 2, let C be a category with finite products.
+
+Proposition 4.1 The forgetful functors Conv (C) → C and BiConv (C) → C create limits.
+
+In particular, if (A, m) and (A′ , m′ ) are convex bodies then so is
+                                                 ∼
+              (A × A′ , (A × A′ ) × (A × A′ )    ✲
+                                                 =
+                                                     (A × A) × (A′ × A′ )      ✲ A × A′ )
+                                                                            m×m′
+
+
+
+(and an analogous statement holds for bipointed convex bodies). One simple consequence of this
+result is that, for any interval object (I, ⊕, a, b), the n-dimensional cube I n has an induced convex
+body structure.
+   As well as being closed under limits, convex bodies are also closed under internal powers.
+                                                                          ∼
+                                                                          =✲               mB
+Proposition 4.2 If (A, m) is a convex body then (AB , AB × AB                  (A × A)B      ✲ AB ) is a
+convex body, for any exponentiable object B.
+
+
+                                                   10
+Again, the analogous result holds for bipointed convex bodies.
+    It is also straightforward to establish conditions under which (bipointed) convex bodies are
+preserved by functors. Suppose D is a category with finite products, and F : C → D preserves
+finite products. Then there is a functor F : MidAlg (C) → MidAlg (D) whose action on objects is:
+                                                              ∼
+                                                              =✲
+                     F (A, m) =       (F A, F A × F A              F (A × A)   ✲ F A)
+                                                                               Fm
+
+
+and whose action on morphisms is inherited from F .
+
+Proposition 4.3 If F has a left adjoint then:
+    1. F cuts down to a functor F : Conv (C) → Conv (D). Similarly, by extending the action of F
+       to bipointed objects, one obtains a functor F : BiConv (C) → BiConv (D).
+    2. If F also has a right adjoint G then G : Conv (D) → Conv (C) is right adjoint to F :
+       Conv (C) → Conv (D), and G : BiConv (D) → BiConv (C) is right adjoint to F : BiConv (C) →
+       BiConv (D). Thus, in particular, F : C → D preserves interval objects.
+
+It follows from 1 above that if C is a full reflective subcategory of D and if D has an interval object
+(I, ⊕, −1, 1) where I is an object of C then (I, ⊕, −1, 1) is also an interval object in C.
+    A special case of statement 2 is that interval objects are preserved by the inverse image functors
+of essential geometric morphisms between elementary toposes. Thus if f : E → E ′ is an essential
+geometric morphism and E ′ has an interval object then its image      under f ∗ gives an interval object
+                                                                C op
+in E. In particular, by Theorem 1, every presheaf topos Set          hasopan interval object obtained as
+∆(I) — recall that the constant presheaf functor, ∆ : Set → SetC , is the inverse image functor
+of an essential geometric morphism [24]. More generally, in Section 8, we shall show that any
+elementary topos with natural numbers object has an interval object.
+
+
+5     Parameterized interval objects
+In this section we give some preliminary results on the power of the notion of interval object with
+respect to defining functions on the interval and to proving equalities between definable functions.
+    It is well known that Lawvere’s elegant definition of a natural numbers object, which works
+very well in cartesian-closed categories, is not powerful enough in categories with weaker struc-
+ture. Instead, a modified “parameterized” definition is needed [21, 5]. In a category with finite
+products, the notion of parameterized natural numbers object supports the definition of functions
+by primitive recursion. Moreover, in a cartesian-closed category, any ordinary (Lawvere) natural
+numbers objects is automatically parameterized.
+    Much the same situation arises for interval objects. In this section we derive some basic
+arithmetic operations for interval objects. To do this in an arbitrary category with finite products,
+we need a stronger “parameterized” notion of interval object. For cartesian-closed categories the
+straightforward notion of interval object will automatically be parameterized.
+
+Definition 5.1 (Parameterized interval object) A bipointed convex body (I, ⊕, −1, 1) is a
+parameterized interval object if, for any convex body (A, m) and morphisms X
+                                                                             f
+                                                                               ✲ A and
+X     ✲ A in C, there exists a unique morphism X × I ([f,g])
+      g
+                                                         ✲ A satisfying:
+
+                          m(([f, g])(x, y), ([f, g])(x, z))   = ([f, g])(x, y ⊕ z)
+                                           ([f, g])(x, −1)    = f (x)
+                                             ([f, g])(x, 1)   = g(x)
+
+i.e. there is a unique “right-homomorphism” (of bipointed convex bodies) from X × I to A.
+
+By instantiating X to 1 it is easily seen that any parameterized interval object is indeed an interval
+object. The converse holds when C is cartesian closed:
+
+                                                      11
+Proposition 5.2 If C is cartesian closed then any interval object is parameterized.
+The proof is routine.
+   Henceforth in this section, let C be a category with finite products and parameterized interval
+object (I, ⊕, −1, 1). The basic arithmetic operations on I can be defined by:
+
+                                          1
+                                              0
+                                               ✲ I    = (−1) ⊕ (1)
+                                          I
+                                              −
+                                               ✲ I    = ([1, −1])
+                                    I ×I
+                                              ×
+                                               ✲ I    = ([−, idI ])
+
+Importantly, the universal property of I (stated in Definition 5.1) suffices to establish the basic
+equations between the above operations.
+Proposition 5.3 − − x = x,
+  x × y = y × x,
+  x × (y × z) = (x × y) × z,
+  −0 = 0,
+  x ⊕ −x = 0,
+  −(x ⊕ y) = (−x) ⊕ (−y),
+  x × (y ⊕ z) = (x × y) ⊕ (x × z),
+  x × 0 = 0,
+  x × −y = −(x × y).
+Proof To show −−x = x, one easily establishes that −− : I ✲ I is a homomorphism mapping
+1 to 1 and −1 to −1, and hence the identity.
+    Of the other equations, we just show the commutativity of multiplication, which is the most
+interesting. We have defined multiplication as the unique map (x, y) 7→ x × y from I × I to I
+satisfying
+
+                                     x × −1 =        −x
+                                      x×1 =          x
+                               x × (y ⊕ y ′′ ) =
+                                      ′
+                                                     (x × y ′ ) ⊕ (x × y ′′ ).
+
+Thus, for commutativity, it suffices to show that the same equations are satisfied when the argu-
+ments are swapped, i.e. that
+
+                                      −1 × y      = −y
+                                       1×y        = y
+                                 ′   ′′
+                               (x ⊕ x ) × y       = (x′ × y) ⊕ (x′′ × y).
+
+    For the first equation, −1 × y = −y, we have that −1 × −1 = − − 1 and −1 × 1 = −1 and
+−1 × (y ′ ⊕ y ′′ ) = (−1 × y) ⊕ (−1 × y), all by the definition of multiplication. Thus the map
+y 7→ −1 × y : I ✲ I is a homomorphism satisfying the defining properties of − : I ✲ I. Thus
+indeed −1 × y = −y.
+    The second equation 1 × y = y is established similarly.
+    To show the third equation (which says that multiplication is a left-homomorphism), we show
+that the maps (x′ , x′′ , y) 7→ (x′ ⊕ x′′ ) × y and (x′ , x′′ , y) 7→ (x′ × y) ⊕ (x′′ × y) from I × I × I
+to I are both right-homomorphisms agreeing on −1 and 1, and thus equal by the parameterized
+initiality of I. The map (x′ , x′′ , y) 7→ (x′ ⊕ x′′ ) × y is trivially a right-homomorphism, because
+multiplication is. For (x′ , x′′ , y) 7→ (x′ × y) ⊕ (x′′ × y), we have:
+
+  (x′ × (y ′ ⊕ y ′′ )) ⊕ (x′′ × (y ′ ⊕ y ′′ ))
+  = ((x′ × y ′ ) ⊕ (x′ × y ′′ )) ⊕ ((x′′ × y ′ ) ⊕ (x′′ × y ′′ )) (because × is a right-homomorphism)
+  = ((x′ × y ′ ) ⊕ (x′′ × y ′ )) ⊕ ((x′ × y ′′ ) ⊕ (x′′ × y ′′ )) (by transposition).
+
+                                                     12
+For agreement on −1, we have:
+                    (x′ × −1) ⊕ (x′′ × −1) =            −x′ ⊕ −x′′       (definition of ×)
+                                           =            −(x′ ⊕ x′′ )     (definition of −)
+                                           =            (x′ ⊕ x′′ ) × −1 (definition of ×)
+
+And agreement on 1 is similar. 
+
+
+6     Primitive interval functions
+As mentioned above, any parameterized natural numbers objects support definition by primi-
+tive recursion. By analogy, it is natural to investigate what kind of definitional mechanisms are
+supported by parameterized interval objects.
+    In fact, a parameterized interval object supports two complementary styles of definition. Not
+only does the universal property of parameterized initiality give one useful mechanism for defining
+functions (used above to define negation and multiplication), but also the couniversal property of
+the iteration axiom offers yet another means of definition. Parameterized interval objects support
+any combination of these two styles. We investigate the power of such combinations for the purpose
+of defining functions on I in Set.
+
+Definition 6.1 (Primitive interval functions) The primitive interval functions on I are the
+functions in the smallest family {Fn ⊆ In → I}n≥0 satisfying:
+(i) −1, 1 ∈ F0 .
+(ii) If f ∈ Fm and g1 , . . . , gm ∈ Fn then f ◦ hg1 , . . . , gm i ∈ Fn .
+(iii) If f, g ∈ Fn then the function h defined below is in Fn+1 :
+                                                     1               1
+                                    h(x, y) =          (1 − y)f (x) + (1 + y)g(x)
+                                                     2               2
+
+(iv) If f1 , . . . , fn , g ∈ Fn then the unique function h satisfying the equation below is in Fn :
+                                                    1       1
+                                     h(x)    =        g(x) + h(f1 (x), . . . , fn (x))
+                                                    2       2
+
+Here (iii) corresponds to the parameterized initiality of I with respect to In as the object of pa-
+rameters, and (iv) corresponds to the iteration axiom, as induced by the coalgebra hg, f1 , . . . , fn i :
+In → I × In. Note that property (ii) means that tuples of primitive interval functions between
+finite powers of I form a category. This category has finite products because the projections are
+definable, using (iii).
+    The function defined by (iv) is given explicitly by
+                                        X
+                             h(x) =         2−(i+1) g(hf1 , . . . , fn ii (x)).
+                                              i≥0
+
+A natural generalisation is to replace (g ◦ hf1 , . . . , fn ii ) with an arbitrary sequence of (already
+defined) n-ary functions.
+Definition 6.2 (Countably-primitive interval functions) The countably-primitive interval func-
+tions on I are the functions in the smallest family {Fn ⊆ In → I}n≥0 satisfying (i)–(iii) of
+Definition 6.1 and also
+(iv)′ Given f0 , f1 , . . . ∈ Fn , the function h defined below is in Fn :
+                                                        X
+                                             h(x) =         2−(i+1) fi (x)
+                                                           i≥0
+
+
+
+                                                         13
+   Clearly every primitive interval function is a countably-primitive interval function. The con-
+verse does not hold as, there are obviously continuum many countably-primitive interval functions,
+but only countably many primitive interval functions. Indeed, easily, every element of I gives a
+countably primitive interval function of arity 0 (i.e. a constant). Although this cannot hold for
+the primitive interval functions, we do at least have the following.
+
+Proposition 6.3 Every rational in I gives a primitive interval constant.
+                                                                                        P
+Proof Let q ∈ I be rational. Then q has an eventually cyclic binary expansion q = i≥0 2−(i+1) di
+with each di ∈ {−1, 1}. Here, eventually cyclic means there exist n ≥ 0, m ≥ 1 such that
+dn+i = dn+jm+i , for all 0 ≤ i < m and j ≥ 0. Let f0 , . . . , fn+m−1 , g be the following (n + m)-ary
+primitive interval functions (all projections):
+                                                   
+                                                     xi+1 if i < n + m − 1
+                       fi (x0 , . . . , xn+m−1 ) =
+                                                     xn       if i = n + m − 1
+                          g(x0 , . . . , xn+m−1 ) =    x0
+
+Then, defining the (n + m)-ary primitive interval function h(x) as in (iv), one obtains that q =
+h(d0 , . . . , dn+m−1 ), which is indeed a primitive interval constant. 
+    As earlier, we have ⊕, −, × as primitive interval functions. Thus every n-variable ⊕-polynomial
+(i.e. polynomial where ⊕ replaces the usual +) with rational coefficients is an n-ary primitive
+interval function.
+    We are not sure how much further definability can be pushed with the primitive interval
+functions, as we now show that even the countably-primitive interval functions are very limited.
+Proposition 6.4 Suppose that f is an n-ary countably-primitive interval function and that x0 , . . . , xn−1 , y0 , . . . , yn−1
+I are such that: f (x0 , . . . , xn−1 ) ∈ {−1, 1}, and if xi ∈ {−1, 1} then yi = xi . Then f (x0 , . . . , xn−1 ) =
+f (y0 , . . . , yn−1 ).
+Proof A straightforward induction over the defining properties of the countably-primitive inter-
+val functions. 
+Thus if f is a unary countably-primitive interval function and f (x) ∈ {−1, 1} for some x in the
+interior (−1, 1) then f is a constant function. Clearly then, the following “truncated double”
+function is not a countably-primitive interval function.
+                                         
+                                          1     if 1/2 ≤ x
+                             d(x) =         2x if −1/2 ≤ x ≤ 1/2
+                                         
+                                            −1 if x ≤ −1/2
+Accordingly, define the d-primitive interval functions to be the smallest class of functions contain-
+ing d and closed under (i)–(iv). Define the countably-d-primitive interval functions analogously.
+The reason for selecting d amongst the non-countably-primitive interval functions is:
+Proposition 6.5 The n-ary countably-d-primitive interval functions are exactly the continuous
+functions In → I.
+Proof To show that all countably-d-primitive interval functions are continuous is a straight-
+forward induction over the conditions defining the functions. (The result will also follow from
+Theorem 2, in Section 7.)
+   For the converse, we first show that, for any n-variable polynomial, p(x0 , . . . , xn−1 ) over R,
+the restriction to In of the truncation:
+                                          
+                                           1                     if p(x0 , . . . , xn−1 ) ≥ 1
+               I(p)(x0 , . . . , xn−1 ) =   p(x0 , . . . , xn−1 ) if p(x0 , . . . , xn−1 ) ∈ I
+                                          
+                                            −1                    if p(x0 , . . . , xn−1 ) ≤ −1
+                                                          Pk                   mi(n−1)
+is an n-ary countably-d-primitive function. We have p(x) = i=0 ai xm
+                                                                   0
+                                                                     i0
+                                                                        . . . xn−1     . Let λ be the
+                   Pk                m
+maximum value of i=0 |ai x0 . . . xn−1 | over x ∈ I . We define (1/λ)p(x0 , . . . , xn−1 ) (which
+                             mi0       i(n−1)          n
+
+
+
+                                                       14
+is a function In → I) as a countably-d-primitive function. First, by the definition of λ, for each
+                               mi(n−1)
+monomial, (ai /λ)xm0
+                     i0
+                        . . . xn−1     is a function In → I. Thus |ai /λ| ≤ 1, and hence a countably-
+                                                    mi(n−1)
+d-primitive constant, thus (ai /λ)xm    0
+                                          i0
+                                             . . . xn−1     is countably-d-primitive. Moreover, truncated
+addition is d-primitive by I(x + y) = d(x ⊕ y). Hence,
+                                                        k
+                                                        X                         m
+                        (1/λ)p(x0 , . . . , xn−1 ) =           (ai /λ)xm
+                                                                       0
+                                                                         i0         i(n−1)
+                                                                            . . . xn−1
+                                                         i=0
+                                                              P ′                     mi(n−1)
+is countably-d-primitive, as the value of each finite subsum ki=0 (ai /λ)x0mi0 . . . xn−1     , for k ′ ≤ k,
+is in I. Finally, to define I(p)(x), find l ∈ N such that 2l ≥ λ. Then
+
+                       I(p)(x0 , . . . , xn−1 ) =   dl ((λ/2l )(1/λ)p(x0 , . . . , xn−1 )),
+
+which is countably d-primitive.
+    Now let f : In → I be any continuous function. By the Stone-Weierstrass approximation
+theorem [30], it is possible to find a sequence (pi ) of n-variable polynomials over R such that, for
+all x ∈ In, |f (x) − pi (x)| ≤ 2−(i+2) . Then also |f (x) − I(pi )(x)| ≤ 2−(i+2) , hence |I(pi+1 )(x) −
+I(pi )(x)| ≤ 2−(i+1) . Define g0 (x) = I(p0 )(x) and gi+1 (x) = 2i+1 (I(pi+1 )(x)−I(pi )(x)). As argued
+above, each I(pi+1 ) isP countably-d-primitive, hence, using addition (for subtraction) and d, so is
+each gi . Thus f (x) = i≥0 2−(i+1) gi (x) is also countably-d-primitive, as required. 
+Thus including d as a basic function enormously increases definability. It is our hope that this
+increase in definability also means that the d-primitive interval functions form a useful class,
+somewhat analogous to the primitive recursive functions on N . Although we have yet to undertake
+any systematic investigation of this class, we do have one important result. Recall the standard
+notion of an n-ary computable function on I [34].
+Proposition 6.6 Every n-ary d-primitive interval function is an n-ary computable function on
+I.
+It is possible to prove this result by showing directly that the computable functions on I are closed
+under the definitional mechanisms of the d-primitive interval functions. We give another proof at
+the end of Section 8.
+
+
+7     Interval objects in Top
+In this section we return to the claims made earlier in Examples 2.7 and 2.10, investigating convex
+bodies and interval objects in the category Top of topological spaces. Proposition 3.1 generalises
+to Top with the requirement that M : Aω → A be continuous with respect to the product topology.
+(This generalisation follows directly from Proposition A.2 in Appendix A.)
+
+Proposition 7.1 For any bounded convex subset A ⊆ Rn endowed with the Euclidean topology,
+(A, ⊕) is an abstract convex body in Top.
+                 L                                                                  L
+Proof Define         : Aω → A as in (2) in the proof of Proposition 3.3. If              : Aω → A is
+                                                  ω
+continuous (w.r.t. the product topology on A ) then it satisfies (a) and (b)L    of Proposition 3.1.1
+in Top, because it does in Set. Hence (A, ⊕) is an abstract convex body if          is continuous.
+    As A is bounded, let r > 0 be such that,
+                                         L   for  all x ∈ A, |x| < r. To show continuity,  consider any
+open ǫ-ball, Bǫ (z) ∩ A, centred at z = i (xi ) where (xi ) ∈ Aω . Take any n such that 2−n < ǫ/r.
+                                                      ω
+Then, for all (yiL
+                 ) in the neighbourhood {(y  i ) ∈ A | yj ∈ Bǫ/2 (xj ) ∩ A, for all 0 ≤ j ≤ n} of (xi )
+                                                is indeed continuous. 
+     ω
+                                           L
+in A , we have i yi ∈ Bǫ (z) ∩ A. Thus
+In certain cases, e.g. when n = 1 or when A is a Euclidean-open subset of Rn , one can show that
+the Euclidean topology on A is the finest such that (A, ⊕) is an abstract convex body. However,
+this is not the case for an arbitrary A.
+    Certain other basic information about convex bodies in Top can be inferred using Proposi-
+tion 4.3. The forgetful functor U : Top → Set has both a left adjoint ∆ (giving the discrete
+
+                                                       15
+toplogy) and a right adjoint ∇ (giving the indiscrete topology). Thus, both U and ∇ preserve
+convex bodies. As U does, we see that, by Proposition 3.3, under any topology whatsoever, for
+a standard midpoint subalgebra A of Rn to be an abstract convex body in Top, A must be a
+bounded convex set. Also, for any bounded convex set, (A, ⊕) with the indiscrete topology is a
+convex body in Top.
+                  L (N.b. it is not, in general, an abstract convex body when given the discrete
+topology, as then    is not continuous.)
+    Also, by Proposition 3.3, if an interval object exists in Top then U preserves it. In fact, we
+have already claimed in Example 2.10 that (I, ⊕, −1, 1) is an interval object in Top when given
+the Euclidean topology. In fact, as Top is not cartesian closed, it is appropriate to show that this
+is a parameterized interval object.
+
+Theorem 2 (I, ⊕, −1, 1) with the Euclidean topology is a parameterized interval object in Top.
+
+Proof Let (A, m) be any convex body in Top and f, g : X → A be continuous functions from a
+space X. We must show that there is a unique right-homomorphim h : X × I → A in Top. By
+Theorem 1 and Proposition 5.2, thre is a unique such right-homomorphism h in Set. It suffices
+to show that this function h is continuous.
+    For each z ∈ X, write dz : I(Q d ) → A, for the unique bipointed homomorphism from I(Q d ) to
+A, as in the proof of Theorem 1. Then, by the proof of Theorem 1, we have
+                                        M
+                                   h(z,    (qi )) = Mi (dz (qi )).
+                                           i
+
+To see that this is continuous, consider the function h′ : X × {−1, 1}ω → Aω defined by
+
+                                     h′ (z, (qi )i ) =   (dz (qi ))i .
+
+It is easily verified that this is continuous
+                                           Lwith respect  to the product topologies
+                                                                                 L onω its domain and
+codomain. Also, consider the function         : {−1, 1}ω → I, the restriction of   : I → I. This is a
+topological quotient, as it is a surjective continuous function between compact Hausdorff spaces.
+Moreover, by the L   condition for quotients to be preserved under product from [6], for any space X,
+the function id ×       : X × {−1, 1}ω → X × I, is also a quotient.
+     Now, we have the following commuting diagram in Set (where M is the infinitary operation
+associated with (A, m)).
+                                                       h′ ✲ ω
+                                         X × {−1, 1}ω         A
+
+                                           L
+                                    id ×                           M
+                                             ❄           h ✲ ❄
+                                           X ×I              A
+                                                                                               L
+We already know that all maps other than h are continuous. But then h is too because id ×        is
+a quotient. 
+    By Proposition 4.3.1, (I, ⊕, −1, 1) with the Euclidean topology is a parameterized interval
+object in any full reflective subcategory of Top that contains the closed Euclidean interval. Thus,
+for example, it is a parameterized interval object in the category KHaus of compact Hausdorff
+spaces.
+
+
+8    Interval objects in an elementary topos
+Let E be an elementary topos with nno N. It is a well-known fact that different constructions of
+the real numbers, which are equivalent to each other using classical logic, give different notions of
+real number when interpreted within the intuitionistic internal logic of a topos. Among the many
+alternatives, two are considered as being the most natural, the Dedekind reals and the Cauchy (or
+
+
+                                                  16
+Cantor) reals. Both are defined using the object of rationals Q and its associated ordering. We
+give brief reviews of the definitions. For more details see [15].
+    One way of defining the Dedekind reals in E is as an object of pairs of sets of rationals, where:
+each pair, (L, U ), consists of two disjoint inhabited sets; L is a down-closed set, each element of
+which has a strictly greater element in L; U is an upper-closed set, each element of which has a
+strictly lower element in U ; and the pair satisfies the locatedness property that x < y in Q implies
+either x ∈ L or y ∈ U . We write RD for the object of Dedekind reals, and use standard notation
+for the usual arithmetic operations on it. We also identify Q explicitly as a subobject of RD (via
+the embedding q 7→ ({r | r < q}, {s | s > q})).
+    One direct way of defining the Cauchy reals is as a quotient of the object of all Cauchy sequences
+of rationals (where the notion of Cauchy sequence must be phrased in an appropriate constructive
+way — see below). For our purposes, it is more convenient to adopt an alternative equivalent
+definition, identifying the Cauchy reals as particular Dedekind reals. First, we recall the “correct”
+intuitionistic definition of a Cauchy sequence of Dedekind reals, which requires an explicit modulus
+of convergence. A sequence α(−) ∈ RD N is Cauchy if:
+
+                             ∃m ∈ NQ . ∀ǫ ∈ Q. ∀i, j ≥ m(ǫ), |αi − αj | ≤ ǫ
+
+We say that x ∈ RD is the limit of the Cauchy sequence α if
+
+                             ∃m ∈ NQ . ∀ǫ ∈ Q. ∀i, j ≥ m(ǫ), |αi − x| ≤ ǫ
+
+(Actually, here it is not necessary to require the modulus function to exist, as the modulus of α
+can always be used.) The Cauchy reals are defined explicitly by:
+
+            RC     =   {x ∈ RD | ∃α ∈ QN s.t. α is a Cauchy sequence and x = lim α}
+
+    The reason for defining Cauchy sequences of Dedekind reals (rather than rationals) as basic,
+and for considering rationals and Cauchy reals as special Dedekind reals, is that it is now easy to
+consider the question of whether the various objects are Cauchy complete. We say a subobject
+X ⊆ RD is Cauchy complete if every Cauchy sequence in X N has a (necessarily unique) limit.
+It is not hard to show that RD is Cauchy complete. Obviously Q is not Cauchy complete. RC
+partially rectifies the non-completeness of Q by adding all limits of Cauchy sequences of rationals.
+Given the following choice principle1
+
+  (∀n ∈ N. ∃m ≤ n. φ(n, m)) implies (∃f ∈ NN . ∀n ∈ N. f (n) ≤ n and φ(n, f (n))),              (ACN≥N )
+
+which is classically provable, it holds that RC itself Cauchy complete. However, it seems that, in
+general, RC is not Cauchy complete, as, given a Cauchy sequence α ∈ RC N , there is no avail-
+able mechanism for selecting representative rational sequences from which the required limiting
+sequence of rationals can be extracted.
+   The possible failure of Cauchy completeness for RC makes it natural to introduce another
+object of reals, namely the “Cauchy completion” of Q (within RD ). This object, which we call
+the object of Euclidean reals, is defined by:
+                              \
+                    RE =         {X ⊆ RD | Q ⊆ X and X is Cauchy complete}
+
+Clearly RE is Cauchy complete. In contrast to the Cauchy reals, we do not know a direct method
+of constructing the Euclidean reals without first going via the Dedekind reals.
+    So far, we have identified three objects of reals
+
+                                         RC     ⊆ RE       ⊆    RD
+
+In the case that E satisfies ACN≥N , both inclusions are equalities. The Grothendieck topos Sh(R)
+(sheaves over Euclidean space R) is a simple example in which the second inclusion is strict. To
+  1 This principle of bounded N-choice appears weaker than arbitrary N-N-choice (in which the inequalities are
+
+omitted). However, we do not know a topos in which the former holds but not the latter.
+
+
+                                                     17
+our embarrassment, we do not know an example topos in which the first inclusion is strict. (Thus
+we do not know if the envisaged failure of the Cauchy completeness of RC is actually possible —
+although we are sure that it must be.)
+    Each notion of real number object determines a corresponding notion of interval object; for
+example:
+                        ID = {x ∈ RD | −1 ≤ x ≤ 1}
+                        IE = {x ∈ RE | −1 ≤ x ≤ 1} = RE ∩ ID
+Our motivation for introducing the Euclidean reals is that it is the Euclidean interval that gives
+an interval object in E. The remainder of this section is devoted to the proof of this fact. Note,
+however, that it is not obvious that IE is closed under ⊕ in ID . Thus it is not immediately clear
+that IE is even a midpoint algebra. In fact, we shall have to prove that IE is closed under a
+number of important operations on ID , including ⊕. We next consider the various operations we
+require.
+   Observe that there is a unique function I : RD → ID satisfying:
+                                           
+                                            1     if 1 ≤ x
+                                I(x) =         x   if −1 ≤ x ≤ 1
+                                           
+                                               −1 if x ≤ −1
+Indeed such a function is defined explicitly by I(x) = min(1, max (x, −1)). Its uniqueness is a
+routine consequence of RD being ¬¬-separated.
+Definition 8.1 A subobject X of ID is said to be a symmetric sub(midpoint-)algebra of ID if it
+is closed under ⊕ : ID × ID → ID and − : ID → ID .
+Proposition 8.2 For any symmetric subalgebra X ⊆ ID , the following are equivalent.
+  1. For all x ∈ X, I(2x) ∈ X.
+  2. For all x, y ∈ X, I(x + y) ∈ X.
+  3. For all x, y ∈ X, I(x − y) ∈ X.
+Definition 8.3 We say that a symmetric subalgebra X of ID is magnifiable if any of the equivalent
+conditions of Proposition 8.2 hold.
+Theorem 3
+  1. IE is a magnifiable symmetric subalgebra of ID .
+  2. (IE , ⊕, −1, 1) is an interval object in E.
+For the proof, we shall need an analysis of convex bodies in E, identical to that carried out in
+Section 3. For this, it suffices to observe that Propositions 3.1, 3.2 and 3.6 all hold (internally)
+in E. Indeed, the proofs we have given go through, almost as written, in the internal logic of E.
+(It is only necessary to be slightly careful with the ellipses, and note that the zn and wn in the
+statement of Proposition 3.6 must be given as internal sequences.)
+    Crucial to the proof of Theorem 3 is an alternative description of the Euclidean interval, which
+is better adapted to establishing the universal property of an interval object. To motivate its
+definition, we first observe that
+                             L (IDN, ⊕) is a convex body. This follows from Proposition 3.1 (in E)
+on account of the function      : ID → ID defined by:
+                                     L           P       −(i+1)
+                                       i xi  =     i≥0 2        xi
+The alternative
+              L description of the interval object is as the smallest subalgebra of (ID , ⊕) that is
+closed under      and contains 1 and −1. Explicitly, define
+                        \                                               L
+                I =       {X ⊆ ID | −1, 1 ∈ X and for all x(−) ∈ X N ,    i xi ∈ X}
+                              L                                                L
+Then I is itself closed under , hence also under binary ⊕, because x ⊕ y = (x, y, y, y, . . .).
+    Theorem 3 is an immediate consequence of the proposition below.
+
+                                                   18
+Proposition 8.4
+  1. I is a magnifiable symmetric subalgebra of ID .
+  2. (I, ⊕, −1, 1) is an interval object in E.
+  3. I = IE .
+We now embark on the proof of the above proposition. The whole proof is structured around its
+crucial use of Pataraia’s fixed-point theorem [26].
+Theorem (Pataraia’s fixed-point theorem) Internally in E, every monotonic endofunction
+on a dcpo with least element has a least fixed point.
+See Appendix C for a precise statement and proof of this result.
+   Let (A, m, a, b) be a bipointed convex body in E. Consider the internal family F(A,m,a,b)
+(henceforth just F ) of all subobjects X of I satisfying:
+   1. −1, 1 ∈ X;
+   2. X is a magnifiable symmetric subalgebra of ID ;
+   3. there is a unique homomorphism, fX , from (X, ⊕, −1, 1) to (A, m, a, b); and
+   4. X ⊆ IE .
+
+Lemma 8.5 Internally in E, (F , ⊆) is a dcpo with least element.
+
+Proof Let Qd be the subobject of Q of dyadic rationals. We write I(Qd ) for Qd ∩ ID . Then
+I(Qd ) is the least element of F . It satisfies condition 3 in the definition of F because it is the free
+midpoint algebra on two generators.                                 S
+    Suppose D is a directed subset of F . We show that X = D is in F . Trivially, −1, 1 ∈ X
+and X ⊆ IE . Also, X is easily shown to be a symmetric subalgebra of ID (it is closed under ⊕
+because D is directed). It remains to show that there is a unique bipointed homomorphism from
+(X, ⊕, −1, 1) to (A, m, a, b).
+    Define fX : X → A by mapping x ∈ X to fY (x) where Y is any element of D containing x.
+This is uniquely determined because, if x ∈ Y ∈ D and x ∈ Y ′ ∈ D, then, as D is directed, there
+exists Z ∈ D with Y ⊆ Z ⊇ Y ′ . But then fZ : Z → A restricts to homomorphisms from Y to A
+and from Y ′ to A. But fY and fY ′ are the unique such, so fY (x) = fZ (x) = fY ′ (x).
+    Similarly, fX is unique, because given any homomorphism g : X → A and x ∈ X, we have
+x ∈ Y for some Y ∈ D. Then g restricts to a homomorphism from Y to A, and fY is the unique
+such, so indeed g(x) = fY (x) = fX (x). 
+Define Φ : P(I) → P(I) by:
+                                                     L                 N
+                                  Φ(X) =         {   i xi | x(−) ∈ X       }
+
+Lemma 8.6 Internally in E, Φ restricts to a monotonic inflationary function on (F , ⊆).
+
+Proof Trivially Φ is a monotonic and inflationary endofunction on (P(I), ⊆) so we just have to
+show that Φ restricts to a function on F . Suppose then that X ∈ F.LWe show that Φ(X) L ∈ F.
+    Trivially, 1, −1 ∈ Φ(X). For closure underL     ⊕, suppose  x  =     i xi and y =    i yi (here
+x, y ∈ Φ(X) and xi , yi ∈ X). L Then x ⊕ y = i (xi ⊕ yi ), so indeed x ⊕ y ∈ Φ(X) because each
+xi ⊕ yi ∈ X. Similarly, −x = i −xi , so Φ(X) is a symmetric subalgebra of ID .
+    The (long) proof that Φ(X) is magnifiable is left for Lemma 8.7 below.
+    That Φ(X) ⊆ IE is obvious as every element
+                                            L of Φ(X) is easily obtained as the limit of a Cauchy
+sequence in X (because approximations to       form a Cauchy sequence).
+    It remains to show that there is a unique homomorphism fΦ(X) : Φ(X) → A. The argument
+is similar to that in the proof of Theorem 1. Consider the relation
+                                          L
+            {(v, a) | ∃x(−) ∈ X N s.t. v = i (xi ) and a = Mi (fX (xi ))} ⊆ Φ(X) × A.
+
+                                                     19
+We
+L show L that this relation is functional. It is trivially total. For single-valuedness,
+                                                                                     L        L we need that
+    x
+   i i =     y
+           i i    implies     M  (f
+                                i X (x i ))   =   M    (f
+                                                      i X i(y )). Suppose then that     x
+                                                                                       i i =    i yi = v. So,
+for any n ≥ 1, |v − ⊕n (x1 , . . . , xn , 0)| ≤ 2−n and |v − ⊕n (y1 , . . . , yn , 0)| ≤ 2−n . Then, defining
+dn = ⊕n (x1 , . . . , xn , 0) − ⊕n (y1 , . . . , yn , 0), we have that |dn | ≤ 2−(n−1) . Therefore, dn ∈ X,
+because X is magnifiable and hence closed under (truncated) subtraction. Also, 2n−1 .dn ∈ X and
+−2n−1 .dn ∈ X, again because X is magnifiable. By the definition of dn ,
+
+                        ⊕n (x1 , . . . , xn , −2n−1 .dn )   = ⊕n (y1 , . . . , yn , 2n−1 .dn ),
+
+and this value is in X. So, as fX : X → A is a homomorphism,
+
+       mn (fX (x1 ), . . . , fX (xn ), fX (−2n−1 .dn ))     = mn (fX (y1 ), . . . , fX (yn ), fX (2n−1 .dn )),
+
+and this holds for any n. Hence, by the approximation property for A (from the generalisation of
+Proposition 3.6 to E), Mi (fX (xi )) = Mi (fX (yi )). Thus the relation is indeed functional. Define
+fΦ(X) : Φ(X) → A to be the associated function.                          L               L
+    To show that fΦ(X) is a homomorphism, suppose we have u =               i xi and v =    i yi with
+u, v ∈ Φ(X) and xi , yi ∈ X. Then, similar to (8) in the proof of Theorem 1:
+
+              fΦ(X) (u ⊕ v) =         Mi (fX (xi ⊕ yi ))
+                            =         Mi (m(fX (xi ), fX (yi )))      (as fX is a homomorphism)
+                            =         m(fΦ(X) (u), fΦ(X) (v))
+
+as required.
+    For uniqueness, suppose g : Φ(X) → A is another homomorphism.  L Then g restricts to a
+homomorphism from X to A, so g(x) = fX (x) for x ∈ X. Suppose u = i xi with u ∈ Φ(X) and
+xi ∈ X. Then, as in (9) and (10) from the proof of Theorem 1, g(u) = fΦ(X) (u). Thus indeed
+g = fΦ(X) . 
+
+Lemma 8.7 Internally in E, if X is a magnifiable symmetric subalgebra of ID then so is Φ(X).
+
+Proof Suppose X is a magnifiable symmetric subalgebra of ID . We first establish:
+
+                     for all u ∈ Φ(X) and y ∈ X, it holds that I(u + 2y) ∈ Φ(X)                                  (11)
+
+For this define ψ : X N × X → X N to be the unique function satisfying:
+
+               ψ((xi )i≥0 , y) =       I(x0 + 4y) :: ψ((xi )i≥1 , I((x0 + 4y) ⊕ −I(x0 + 4y))
+
+where the double colon concatenates a value onto the head of a sequence. To verify that this
+is a well-defined function, first observe that, for x0 , y ∈ X we have I(x0 + 4y) ∈ X, because
+I(x0 + 4y) = I(8 × (x0 /4 ⊕ y)), which is in X by magnifiability (n.b. x0 /4 = ⊕2 (0, 0, x0 )).
+Therefore also I((x0 + 4y) ⊕ −I(x0 + 4y)) ∈ X, because we have I((x0 + 4y) ⊕ −I(x0 + 4y)) =
+I(8 × (x0 /4 ⊕ y) ⊕ I(x0 + 4y)/8), which is again in X by magnifiability.
+                                                                  L                 L
+    To prove (11), it suffices to verify that, for xi , y ∈ X, I(( i≥0 xi ) + 2y) =   ψ((xi )i≥0 , y).
+Below we show that the equation
+
+                I((x ⊕ z) + 2y) =          I(x + 4y) ⊕ I(z + 2I((x + 4y) ⊕ −I(x + 4y))),                         (12)
+
+holds for all x, y, z ∈ ID . By this equation, we have:
+                L
+            I(( i≥0 xi ) + 2y)
+                              L
+                 = I((x0 ⊕ i≥1 xi ) + 2y)
+                                       L
+                 = I(x0 + 4y) ⊕ I(( i≥1 xi ) + 2I((x0 + 4y) ⊕ −I(x0 + 4y)))
+                                                 L
+                 = ψ0 ((xi )i≥0 , y) ⊕ I((x1 ⊕ i≥2 xi ) + 2I((x0 + 4y) ⊕ −I(x0 + 4y)))
+                 = ψ0 ((xi )i≥0 , y) ⊕ (ψ1 ((xi )i≥0 , y) ⊕ I( . . . ))
+                 = ψ0 ((xi )i≥0 , y) ⊕ (ψ1 ((xi )i≥0 , y) ⊕ (ψ2 ((xi )i≥0 , y) ⊕ I( . . . )))
+                 = ...
+
+                                                            20
+                                    L                L
+Thus, by approximation, indeed I(( i≥0 xi ) + 2y) =      ψ((xi )i≥0 , y).
+    To verify (12), we use the ¬¬-separatedness of ID , which allows us to check the equation by
+splitting into cases: (i) 3 ≤ x + 4y (≤ 5), (ii) 1 ≤ x + 4y ≤ 3, (iii) −1 ≤ x + 4y ≤ 1, (iv)
+−3 ≤ x + 4y ≤ −1, (v) (−5 ≤) x + 4y ≤ −3. The verification is routine. We check case (ii).
+Referring to (12) we have:
+                 r.h.s. =     1 ⊕ I(z + 2I((x + 4y) ⊕ −1))         (because 1 ≤ x + 4y)
+                        =     1 ⊕ I(z + 2((x + 4y) ⊕ −1))          (because x + 4y ≤ 3)
+                        =     1 ⊕ I(x + z + 4y − 1)
+                        =     1 ⊕ I(2((x ⊕ z) + 2y) − 1)
+There are now two subcases. If (x⊕ z)+ 2y ≥ 1 then 1 ⊕ I(2((x⊕ z)+ 2y)− 1) = 1 = I((x⊕ z)+ 2y)
+as required. If instead 0 ≤ (x⊕z)+2y ≤ 1 then 1⊕I(2((x⊕z)+2y)−1) = 1⊕(2((x⊕z)+2y)−1) =
+(x ⊕ z) + 2y = I((x ⊕ z) + 2y). Together with the other cases, this completes the verification of
+(12) and hence (11).                                                                     L
+    Finally, we show that Φ(X) is indeed magnifiable. Suppose that u ∈ Φ(X). Then u = i≥0 xi
+where xi ∈ X. We must show that I(2u) ∈ Φ(X).
+    Below we verify that the equation
+                I(x + (y ⊕ z)) =        I(2x + y) ⊕ I(z + 2I((2x + y) ⊕ −I(2x + y)))                (13)
+holds for all x, y, z ∈ ID . By this equation, we have:
+                              L
+            I(2u) = I(2 i≥0 xi )
+                                        L
+                      = I(x0 + (x1 ⊕ i≥2 xi ))
+                                             L
+                      = I(2x0 + x1 ) ⊕ I(( i≥2 xi ) + 2I((2x0 + x1 ) ⊕ −I(2x0 + x1 ))).
+
+Using the magnifiability of X, it is straightforward
+                                               L     to show that I(2x0 + x1 ) ∈ X and then that
+I((2x0 + x1 ) ⊕ −I(2x0 + x1 )) ∈ X. Hence I(( i≥2 xi ) + 2I((2x0 + x1 ) ⊕ −I(2x0 + x1 ))) ∈ Φ(X),
+by (11). Thus indeed I(2u) ∈ Φ(X).
+   It remains to verify (13). This is done by splitting into three cases: (i) 1 ≤ 2x + y (≤ 3); (ii)
+−1 ≤ 2x + y ≤ 1; (iii) (−3 ≤) 2x + y ≤ −1. Again, the verification is routine. This time we check
+case (i). Referring to (13) we have:
+          r.h.s. = 1 ⊕ I(z + 2I((2x + y) ⊕ −1))             (because 1 ≤ 2x + y)
+                 = 1 ⊕ I(2x + y + z − 1)                    (because 0 ≤ (2x + y) ⊕ −1 ≤ 1)
+                 = 1 ⊕ I(2(x + (y ⊕ z)) − 1)
+There are now two subcases. When x+(y ⊕z) ≥ 1 then 1⊕I(2(x+(y ⊕z))−1) = 1 = I(x+(y ⊕z)).
+If instead 0 ≤ x + (y ⊕ z) ≤ 1 then 1 ⊕ I(2(x + (y ⊕ z)) − 1) = 1 ⊕ (2(x + (y ⊕ z)) − 1) = x + (y ⊕ z) =
+I(x + (y ⊕ z)). 
+Proof of Proposition 8.4 By Pataraia’s theorem Φ : F → F has a fixed point X ∈ F. Then
+X ⊆ I, by the definition ofL  F , Also X = Φ(X). Therefore X is a subobject of ID that contains
+1, −1 and is closed under      . But I was defined as the smallest such subset of ID . Therefore
+I ⊆ X. Thus I = X and hence I ∈ F. That I is magnifiable, is now immediate from the definition
+of F .
+    Also by the definition of F , there is a unique homomorphism from (I, ⊕, −1, 1) to (A, m, a, b).
+Also, to any other bipointed convex body (A′ , m′ , a′ , b′ ), the unique homomorphism from (I, ⊕, −1, 1)
+is provided by applying the above argument to F(A′ ,m′ ,a′ ,b′ ) . Thus (I, ⊕, −1, 1) is indeed an interval
+object.
+    It remains to show that I = IE . First, we show that I is Cauchy complete. Suppose α(−) ∈ IN
+is a Cauchy sequence. Without loss of generality we can assume that
+                                    for all i, |αi+1 − αi | ≤ 2−(i+1) .
+Then
+                                         L
+                            lim α   =     (α0 , 2(α0 − α1 ), 4(α1 − α2 ), . . .).
+
+                                                    21
+                                                                                               n
+But, by magnifiability,
+                     L I is closed under (truncated) subtraction and multiplication by any 2 . It
+is also closed under . Thus indeed lim α ∈ I.
+     To show that I = IE , the ⊆ inclusion is immediate because I ∈ F. For the converse, define
+RI = {2nL   x ∈ RD | x ∈ I and n ∈ N}. As every rational in ID can be defined by a “binary”
+sequence i xi where each xi is −1 or 1, it follows that RI contains all rationals. Also it follows
+from the Cauchy completeness of I that RI is Cauchy complete (because, for any Cauchy sequence
+in RI , we can obtain every element of the sequence as 2n xi for a fixed n, yielding an associated
+Cauchy sequence (xi ) in I). Therefore RE ⊆ RI . Thus, for any y ∈ IE , there exists x ∈ I such
+that y = 2n x for some n. But then y ∈ I because I is magnifiable. 
+We have proved Proposition 8.4. Theorem 3 follows immediately.
+     We conclude this section with an application of the work in this section, the promised proof
+of Proposition 6.6. Consider the relative realizability topos RT (Pω, Pωre ), as defined in [2]. As
+RT (Pω, Pωre ) satisfies N-N-choice (hence ACN≥N ), we write I for IC = IE = ID . By the
+definition of this topos, the morphisms from In to I are exactly the n-ary computable functions
+on I, see [3]. However, because I is an interval object, the computable functions on I are closed
+under the definitional mechanisms of the primitive interval functions. Moreover, the truncated
+double function, d, is a morphism from I to I (for two different reasons: on the one hand, because
+it is computable; on the other, because I is magnifiable). Thus the computable functions contain
+the d-primitive interval functions. This completes the proof of Proposition 6.6.
+
+
+9    Concluding remarks
+We have provided a foundational axiomatization of the line segment, by means of a geometrically
+motivated universal property that supports the definition of computable functions on the interval.
+Moreover, we have investigated this axiomatization in a number of settings.
+    Many other settings remain to be investigated. In the category of setoids in intuitionistic type
+theory [14, 25], it can be shown that any of the usual constructions of a closed real interval gives
+an interval object. In the category of locales over any topos, we conjecture that the standard
+localic interval [17] is an interval object.
+    The fact that the computable functions on the reals are continuous is often cited in the lit-
+erature. In connection with that, we observe that our axiomatization of line segments exhibits
+the Euclidean topology of the line as intrinsic rather than imposed structure, because it is this
+topology that gives rise to an interval object.
+    By definition, an interval object is a free convex body over two generators. Freely generated
+convex bodies over different generating objects coincide with other familiar mathematical struc-
+tures. Interesting examples can be shown to occur in the category of topological spaces: (1) The
+interval [−1, 1] with the topology of lower semicontinuity [28] (which is the same as the Scott
+topology of the usual order) is the free convex body over Sierpinski space, (2) the set of subinter-
+vals of [−1, 1] under the Scott topology, with the pointwise midpoint structure, is the free convex
+body over the flat domain {true, false}⊥ of booleans under the Scott topology. (3) The free convex
+body over a finite discrete space of cardinality n is an n-simplex. In particular, the free convex
+body over three and four generators are the triangle and the tetrahedron. All the above examples
+are applications of the left adjoint to the forgetful functor from topological convex bodies to Top,
+which exists by Freyd’s Adjoint Functor Theorem [23]. We do not have an explicit description of
+this adjoint.
+    There are intriging connections between midpoint algebras and the probabilistic algebras that
+arise in the study of probabilistic powerdomains—see the axiomatizations discussed by Heck-
+mann [12]. It is plausible that the free convex body over a sufficiently nice domain may be
+nothing but the probabilistic powerdomain of normalized valuations [18].
+    Finally, observe that our axiomatization, unlike that of Higgs [13], is not purely equational.
+We wonder if it is possible to obtain an equational (i.e. algebraic) characterisation of the interval,
+applicable to a similar range of examples as ours.
+
+
+
+                                                 22
+A     Convex bodies in the presence of an nno
+In this appendix we generalise Proposition 3.1, the equivalence of right-iterability with the exis-
+tence of a (necessarily unique) well-behaved infinitary operation, to the setting of a category C
+with finite products and a parameterized natural numbers object (N, 0, s).
+Definition A.1 (N-ary operation) An N-ary operation on an object A is given by a family of
+functions MZ : C(Z × N, A) → C(Z, A), natural in Z (i.e. for any Z ′ × N ✲ A and Z ✲ Z ′ ,
+                                                                         f         g
+
+MZ (f ◦ (g × idN )) = MZ ′ (f ) ◦ g : Z ✲ A).
+In the special case that N is exponentiable, N-ary operations on A are in one-to-one correspondence
+with morphisms AN ✲ A. The above definition is the appropriate generalisation to the general
+                        M
+
+case of a non-exponentiable N.
+    We shall incorporate N-ary operations, M : C(Z × N, A) → C(Z, A), into our algebraic style of
+notation by treating them as binding operators. To ease readability, we shall consider morphisms
+Z×N        ✲ A as representing internal N-indexed families of generalised points Z        ✲ A. For
+example, we often use the notation Z × N ✲ A for such a morphism, and then write Z ✲ A
+                                             x(−)                                             xi
+
+for the morphism given as the composite x(−) ◦ hidZ , ii, where Z ✲ N is a generalised point of
+                                                                     i
+
+
+N. Given a morphism, Z × N         ✲ A, we write Mi (xi ) for the morphism Z M(x(−)✲) A, where,
+                                 x(−)
+
+syntactically, Mi binds the variable i of type N. It is precisely the naturality of the MZ operations
+in Z that licenses the use of such syntax, allowing equational reasoning using α-conversion and
+capture-avoiding substitution.
+
+Proposition A.2 Let (A, m) be a binary algebra in C.
+  1. (A, m) is a right-iterable algebra if and only if there exists an N-ary operation M : C(X ×
+     N, A) satisfying:
+
+      (a) For any Z × N       ✲ A, Mi (xi ) = m(x0 , Mi (xs(i) )); or equivalently:
+                            x(−)
+
+
+
+                                   hx(−) ◦ hidX , 0i, MX (x(−) ◦ (idX × s)i
+                               X                                         ✲ A×A
+                                                ❅
+                                                 ❅
+                                                    ❅                          m
+                                           MX (x(−) ) ❅
+                                                       ❘
+                                                       ❅                      ❄
+                                                                             A
+
+      (b) For any Z × N         ✲ A and for any Z × N y(−)
+                             x(−)
+                                                                ✲ A if y(−) = m(x(−) , ys(−) ) then
+          y0 = Mi (xi ); or equivalently, if the following diagram commutes
+
+                                             hx(−) , y(−) ◦ (idX × s)i
+                                     X ×N                           ✲ A×A
+                                                   ❅
+                                                     ❅
+                                                      ❅                  m
+                                                   y(−) ❅
+                                                         ❘
+                                                         ❅               ❄
+                                                                        A
+           then y(−) ◦ hidX , 0i = MX (x(−) ).
+     Moreover if (A, m) is right-iterable then there is a unique M satisfying (a).
+  2. If (A, m) and (A′ , m′ ) are right-iterable algebras then any homomorphism f : A → A′ is also
+     a homomorphism with respect to the associated N-ary M and M ′ ; i.e. for any Z ×N ✲ A,
+                                                                                          x(−)
+
+     f (Mi (xi )) = Mi′ (f (xi )).
+
+                                                 23
+Proof The proof is essentially an internalization of the proof of Proposition 3.1 in C, but with
+suitable modifications for the proof to go through at the level of generality of this section.
+    For 1, as N is not assumed to be exponentiable, there is no analogue of the (final) coalgebra
+Aω → A × Aω used in the proof of Proposition 3.1. Instead, to show the existence and properties
+of MZ , use the coalgebra hx, id × si : Z × N     ✲ A × (Z × N). The full argument, which is
+somewhat tedious, is omitted.
+    For 2, suppose that f is a homomorphism with respect to m and m′ . One uses the definable
+addition morphism + : N × N ✲ N, to define Mj (x(−)+j ) : Z × N ✲ A (explicitly, this is
+obtained by applying MZ×N to the composite Z × N × N             ✲ Z × N x(−)
+                                                             id × +
+                                                                              ✲ A). Then:
+
+          f (Mj (x(−)+j ))      = f (m(x(−) , Mj (x(−)+s(j) )))                 (property (a))
+                                = m′ (f (x(−) ), f (Mj (x(−)+s(j) )))           (f a homomorphism)
+                                = m′ (f (x(−) ), f (Mj (xs(−)+j) )))            (provable property of +)
+
+So, by property (b) for M ′ , we have f (Mj (x0+j )) = Mi′ (f (xi )), i.e. f (Mi (xi )) = Mi′ (f (xi )) as
+required. 
+We also have an analogue of Proposition 3.2.
+Proposition A.3 If (A, m) is an iterable midpoint algebra, then the associated N-ary operation
+M satisfies:
+
+    1. For “constant” sequences Z × N              ✲ Z
+                                                  π1
+                                                                ✲ A, Mi (x) = x.
+                                                                x
+
+
+
+    2. For “doubly-indexed” sequences Z × N × N                         ✲ A, Mi (Mj (xij )) = Mj (Mi (xij )).
+                                                                    x(−)(−)
+
+
+    3. For x(−) , y(−) : Z × N         ✲ A, Mi (m(xi , yi )) = m(Mi (xi ), Mi (yi )).
+
+The straightforward proof is omitted.
+   It is also possible to formulate the approximation property of Proposition 3.6.2 at the level of
+generality of this section. However, not only is the formulation somewhat involved, but also the
+proof that approximation is equivalent to cancellation appears not to go through at this level of
+generality. In order to reinstate the equivalence between cancellation and approximation, it seems
+that one needs to assume that C is a locally cartesian closed category. Because of its potential
+application to characterising interval objects in Martin-Löf type theory, it would be interesting to
+elaborate further on this situation.
+
+
+B      Convex sets in Euclidean space
+In this appendix, we prove a couple of straightforward results about convex subsets of Rn , which
+we use in the proof of Proposition 3.3. We follow standard terminology from the literature on
+convex sets (see, for example, [22]).
+    Let A be any subset of Rn , and let L ⊆ Rn be the smallest flat (i.e. affine subspace) containing
+A. The relative interior, relint A, is defined to be the interior of A in the relative (Euclidean)
+topology on L. If A is a nonempty convex set then relint A is nonempty. The Minkowski distance
+function2 p : L → R, with respect to x0 ∈ relint A, is defined by:
+
+                           p(x)    =     inf{λ | λ > 0 and x0 + λ−1 (x − x0 ) ∈ A}.
+
+It is easy to show that the Minkowski function is convex (i.e. for λ, µ ∈ [0, 1] with λ + µ = 1,
+p(λx + µy) ≤ λp(x) + µp(y)) and (hence) continuous on L. Clearly p(x0 ) = 0. A ray with vertex
+x0 is a subset of Rn of the form {x0 + λ(x1 − x0 ) | λ ∈ [0, ∞)} where x1 is distinct from x0 . If A
+contains no ray with vertex x0 then p(x) > 0 for every x 6= x0 in L.
+
+Proposition B.1 If A is an unbounded convex subset of Rn then A contains a ray.
+  2 This definition is a mild generalisation of that in [22].
+
+
+
+
+                                                          24
+Proof Let A be a nonempty convex subset of Rn with x0 ∈ relint A. Let m be the dimension of
+the smallest flat L containing A, and let Sm be the m-sphere of unit radius centered at x0 in L.
+Sm is compact and p : Sm → R is continuous, so, at some z ∈ Sm , p(z) takes a smallest value λ.
+If A contains no ray then λ > 0 and |x − x0 | ≤ λ−1 for all x ∈ A. Thus A is bounded. 
+    For any subset A ⊆ Rn , we write conv A for the convex hull of A, i.e. for the smallest convex
+set containing A.
+                                           Pk
+Lemma B.2 For any λ1 , . . . , λk > 0 with i=1 λi = 1,
+                               k
+                               X
+                                     λi xi     ∈    relint (conv {x1 , . . . , xk }).
+                               i=1
+
+Lemma B.3 Suppose 0 ≤ λ < 1 and A is a convex set with x0 ∈ relint A. Define
+
+                              rλ (A, x0 ) =          {x0 + λ(x − x0 ) | x ∈ A}
+
+Then rλ (A, x0 ) ⊆ A (where rλ (A, x0 ) is the topological closure of rλ (A, x0 )).
+Proof Let L be the smallest flat containing A, and let p be the Minkowski distance function
+as defined above. Then rλ (A, x0 ) = {x ∈ L | p(x) ≤ λ}, because, on the one hand, the latter is
+closed by the continuity of p, and, on the other, it is clear that every point in it lies in the cloure
+of rλ (A, x0 ). As λ < 1, it is trivial that {x ∈ L | p(x) ≤ λ} ⊆ A. 
+Proposition B.4 If A is a bounded convex subset of Rn then A is closed under countable convex
+combinations.
+                                                                                                 P∞
+Proof Let (xi ) be a sequence
+                            P∞      of points in A and (λi ) a sequence of weights in [0, 1] with i=0 = 1.
+As A is bounded, z = i=0 λi xi is defined as an element of Rn . We must show that z ∈ A.
+   Without loss of generality, assume each λi > 0. Let m be the dimension of (the smallest flat
+containing) B = conv {xi | i ≥ 0} ⊆ A. Then {xi | i ≥ 0} contains m + 1 affinely independent
+points (i.e. m + 1 points whose convex hull has dimension m). Without loss of generality, suppose
+these are x0 , . . . , xm . For i ≥ m define:
+
+                               σi    =       λ0 + λ1 + . . . + λi
+                               yi    =       σi −1 (λ0 x0 + λ1 x1 + . . . + λi xi ).
+
+Clearly (yi )i≥m is a Cauchy sequence with limit z. Also we have yi ∈ r(1−σm ) (B, ym ) (as de-
+fined in Lemma B.3). Thus z ∈ r(1−σm ) (B, ym ). Moreover, ym ∈ relint (conv {x0 , . . . , xm }),
+by Lemma B.2. Hence ym ∈ relint B, because conv {x0 , . . . , xm } ⊆ B has dimension m. Thus
+r(1−σm ) (B, ym ) ⊆ B, by Lemma B.3. So indeed z ∈ B ⊆ A. 
+
+
+C     Pataraia’s fixed-point theorem
+In this appendix we give a precise statement of Pataraia’s Fixed-point Theorem, which was used
+crucially in Section 8. The results are due to D. Pataraia [26].
+    For this appendix, let E be any elementary topos. (It does not need to have an nno.) Let
+(X, ≤) be a poset in E (i.e. ≤ is a subobject of X × X satisfying the usual axioms for a non-strict
+partial order, expressed in the internal logic of E). Internally in E, we say that a suobject D ⊆ X
+(i.e. an element D ∈ PX) is directed if it is inhabited (i.e. there exists some x ∈ D) and, for
+any x, y ∈ D there exists z ∈ D with x ≤ z ≥ y. (Because we are working intuitionistically, the
+condition of being inhabited is stronger than the condition of being nonempty.) We say that X is
+a directed-complete partial order (dcpo) if, internally in E, every directed subobject D ⊆ X has a
+least upper bound (lub) in X. We say that an endofunction f on a poset X is inflationary if it is
+both monotonic (i.e. x ≤ y implies f (x) ≤ f (y)) and increasing (i.e. x ≤ f (x)).
+Proposition C.1 If X is an inhabited dcpo then, internally in E, every inflationary function on
+X has a fixed point.
+
+                                                         25
+Proof Let I be the object of inflationary endofunctions on X ordered pointwise. It is easily
+checked that I is a dcpo: lubs can be constructed pointwise because the image of a directed set
+(of functions) under a monotonic function (application to an argument) is directed, and the lub
+so constructed is indeed inflationary. Moreover, I is itself directed: the identity is in I; and, given
+f, g ∈ I, it holds that f ≤ f ◦ g ≥ g. Therefore I considered as a subobject of itself has a lub, i.e.
+I has a maximum element, t. Then, for any f ∈ I we have that f ◦ t = t. Thus, given any element
+x ∈ X, it holds that t(x) is a common fixed point for all inflationary functions on X. 
+Theorem (Pataraia’s fixed-point theorem) If X is a dcpo with least element then, internally
+in E, every monotonic endofunction on X has a least fixed point.
+Proof Let f be a monotonic endofunction on X. Let X ′ be intersection of all subdcpos (in the
+evident sense) of X that contain the least element, ⊥, and are closed under f . Then X ′ is itself
+an f -closed subdcpo of X containing ⊥. Also, f is an inflationary endofunction on X ′ , because
+{x ∈ X | x ≤ f (x)} is another such subdcpo. Therefore, by the proposition, f has a fixed point
+a ∈ X ′ . We show this is the least prefixed point of f . This holds because, for any prefixed point
+f (y) ≤ y, the subobject {x ∈ X | x ≤ y} is an f -closed subdcpo containing ⊥, hence a is in this
+set, i.e. a ≤ y. 
+Our application in this paper is one of three applications that we have, between us, discovered of
+this result; the others being to the construction of initial algebras of endofunctors [31, Theorem 5],
+and to a localic version of the Hofmann-Mislove Theorem [8]. In fact, note that the application in
+this paper follows directly from Proposition C.1 alone.
+
+
+References
+ [1] J. Aczél. On mean values. Bull. Americ. Math. Soc., 54:392–400, 1948.
+ [2] S. Awodey, L. Birkedal, and D.S. Scott. Local Realizability Toposes and a Modal Logic for
+     Computability. Submitted, 2000.
+ [3] A. Bauer. The Realizability Approach to Computable Analysis and Topology. PhD thesis,
+     CMU, 2000.
+ [4] V. Brattka. Recursive characterization of computable real-valued functions and relations.
+     Theoretical Computer Science, 162(1):45–77, 1996.
+ [5] R.L. Crole. Categories for Types. Cambridge University Press, Cambridge, 1993.
+ [6] B.J. Day and G.M. Kelly. On topological quotient maps preserved by pullbacks or products.
+     Proc. Cambridge Philos. Soc., 67:553–558, 1970.
+ [7] A. Eppendahl. Coalgebra-to-algebra morphisms. In CTCS ’99: Conference on Category The-
+     ory and Computer Science (Edinburgh), pages Paper No. 29006, 8 pp. (electronic). Elsevier,
+     Amsterdam, 1999.
+ [8] M.H. Escardó. An intuitionistic version of Johnstone’s localic proof of the Hofmann-Mislove
+     Theorem. Submitted, 2000.
+ [9] M.H. Escardó and Th. Streicher. Induction and recursion on the partial real line with appli-
+     cations to Real PCF. Theoret. Comput. Sci., 210(1):121–157, 1999.
+[10] P.   Freyd.       Public  communications   to    the    categories                mailing     list.
+     http://www.mta.ca/ cat-dist/categories.html, 1999–2000.
+[11] L. Fuchs. On mean systems. Acta Math. Acad. Sci. Hungar., 1:303–320, 1950.
+[12] R. Heckmann. Probabilistic domains. In Trees in algebra and programming—CAAP ’94
+     (Edinburgh, 1994), pages 142–156. Springer, Berlin, 1994. LNCS 787.
+
+
+                                                  26
+[13] D. Higgs. A universal characterization of [0, ∞]. Nederl. Akad. Wetensch. Indag. Math.,
+     40(4):448–455, 1978.
+[14] M. Hofmann. Extensional constructs in intensional type theory. Springer-Verlag London Ltd.,
+     London, 1997.
+[15] P.T. Johnstone. Topos Theory. Academic Press, London, 1977.
+[16] P.T. Johnstone. On a topological topos. Proceedings of the London Mathematical Society,
+     38:237–271, 1979.
+[17] P.T. Johnstone. Stone Spaces. Cambridge University Press, Cambridge, 1982.
+[18] C. Jones.      Probabilistic Non-determinism.              PhD thesis,      Laboratory for
+     Foundations of Computer Science, University              of Edinburgh,      January 1990.
+     http://www.dcs.ed.ac.uk/lfcsreps/.
+[19] S. Kermit. Medial topological groupoids. Aequationes Math, 1:217–234, 1968.
+[20] S. Kermit. Cancellative medial means are arithmetic. Duke Math J., 37:439–445, 1970.
+[21] J. Lambek and P.J. Scott. Introduction to Higher Order Categorical Logic. Cambridge Uni-
+     versity Press, Cambridge, 1986.
+[22] S.R. Lay. Convex Sets and their Applications. John Wiley and Sons, 1982.
+[23] S. Mac Lane. Categories for the Working Mathematician. Springer-Verlag, 1971.
+[24] S. Mac Lane and I. Moerdijk. Sheaves in geometry and logic. Springer-Verlag, New York,
+     1994. A first introduction to topos theory.
+[25] I. Moerdijk and E. Palmgren. Wellfounded trees in categories. Ann. Pure Appl. Logic, 104(1-
+     3):189–218, 2000.
+[26] D. Pataraia. A constructive proof of the fixed-point theorem for dcpo’s. Unpublished
+     manuscript presented at the 65th Peripatetic Seminar on Sheaves and Logic, in Aarhus,
+     Denmark, November 1997.
+[27] D. Pavlović and V. Pratt. On coalgebra of real numbers. In CMCS’99 Coalgebraic Methods in
+     Computer Science (Amsterdam, 1999), page 15 pp. (electronic). Elsevier, Amsterdam, 1999.
+[28] H.L. Royden. Real Analysis. Collier Macmillan Publishing, third edition, 1988.
+[29] W. Rudin. Principles of Mathematical Analysis. McGraw-Hill, New York, 3rd edition, 1976.
+[30] G.F. Simmons. Introduction to Topology and Modern Analysis. McGraw-Hill, New York,
+     1963.
+
+[31] A.K. Simpson. Elementary axioms for categories of classes (extended abstract). In Proceedings
+     of 14th Annual Symposium on Logic in Computer Science, pages 77–85, 1999.
+[32] R. Stoll. Set Theory and Logic. W.H. Freeman and Company, San Francisco, 1966.
+[33] P. Taylor. Practical foundations of mathematics. Cambridge University Press, Cambridge,
+     1999.
+[34] K. Weihrauch. Computable analysis. Springer, September 2000.
+
+
+
+
+                                               27
+

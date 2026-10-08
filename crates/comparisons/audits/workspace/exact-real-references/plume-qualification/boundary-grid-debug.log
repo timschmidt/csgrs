@@ -1,0 +1,14 @@
+FAIL dy-normal-cap (2,1) Right False
+FAIL dy-normal-cap (3,1) Right False
+FAIL dy-normal-cap (3,2) Right False
+FAIL dy-normal-cap (4,1) Right False
+operation checks failures exceptions
+bounded-extra 1620 0 0
+bounded-normal 1620 0 0
+clipped-add-one 270 0 0
+clipped-sub-one 270 0 0
+dy-normal-cap 32 17 0
+dy-normal-value 32 0 0
+prefix-clipped-extension 810 0 0
+prefix-valid-identity 474 0 0
+TOTAL (5128,17,0)

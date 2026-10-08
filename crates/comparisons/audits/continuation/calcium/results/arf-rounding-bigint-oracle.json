@@ -1,0 +1,14 @@
+{
+  "tag": "arf-rounding-bigint-oracle",
+  "started": "2026-09-09T20:26:06.947Z",
+  "finished": "2026-09-09T20:26:16.922Z",
+  "elapsedSeconds": 9.973216904,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "node",
+  "args": [
+    "arf-rounding-bigint-oracle.mjs",
+    "--arf-rounding-bigint-summary"
+  ],
+  "code": 0,
+  "signal": null
+}

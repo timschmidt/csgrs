@@ -1,0 +1,46 @@
+{
+  "sources": [
+    [
+      "/home/tim/Documents/GitHub/workspace/exact-real-references/Ruffini/common/src/test/java/AlgorithmsTests.java",
+      "42de6fe230e576252230f21b79acb056f6aa402fc104c72ca844ace1f84899cd"
+    ],
+    [
+      "/home/tim/Documents/GitHub/workspace/exact-real-references/ruffini-qualification/RuffiniShared.java",
+      "087602bda7f9e794234e0ce9c77d7b1a386e627e700576455093526140411640"
+    ],
+    [
+      "/home/tim/Documents/GitHub/workspace/exact-real-references/Ruffini/integers/src/main/java/dk/jonaslindstrom/ruffini/integers/structures/BigIntegers.java",
+      "153fac39e0acc263747fb836e1fdc6682803efbe6ffbfe1e2ad9acde53402db9"
+    ],
+    [
+      "/home/tim/Documents/GitHub/workspace/exact-real-references/Ruffini/integers/src/main/java/dk/jonaslindstrom/ruffini/integers/structures/BigIntegersModuloN.java",
+      "d9cc43757da2f5294c70b4818597f72adfa5eaac1b3d8f8267585089d8349a93"
+    ],
+    [
+      "/home/tim/Documents/GitHub/workspace/exact-real-references/Ruffini/integers/src/main/java/dk/jonaslindstrom/ruffini/integers/structures/BigRationals.java",
+      "2ccce86ea4186c665f6cb859ef1c49c001f499798e5ab7f09e7a8114a551afd1"
+    ]
+  ],
+  "classes": [
+    [
+      "AlgorithmsTests.class",
+      "ba96a0b261681330a15838cfa35aaa55be6df0481364f46d0093dabc31ff5995"
+    ],
+    [
+      "RuffiniShared.class",
+      "8325d4eaa61c560314feaf1c6db6e35665ea0c80e42bad9d33d0593bed5777d5"
+    ],
+    [
+      "dk/jonaslindstrom/ruffini/integers/structures/BigIntegers.class",
+      "2e370f9f4eb8122f6ad17151e8c59cacb6c8f3cd45d33e4f654307e114e4756f"
+    ],
+    [
+      "dk/jonaslindstrom/ruffini/integers/structures/BigIntegersModuloN.class",
+      "c7f95723c6d0e9af9c55ef0bcc983645e2a87a6fddc4d3f8d9d9cfbbd0daa468"
+    ],
+    [
+      "dk/jonaslindstrom/ruffini/integers/structures/BigRationals.class",
+      "a53a6ae490dc6a2ff7d59139eccde857664e04d03a23e9ef557f3171f657abc9"
+    ]
+  ]
+}

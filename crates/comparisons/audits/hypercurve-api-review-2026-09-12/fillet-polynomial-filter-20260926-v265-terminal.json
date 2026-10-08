@@ -1,0 +1,8 @@
+{
+  "build_returncode": 101,
+  "case_run": false,
+  "all_sources_unchanged": true,
+  "all_processes_reaped": true,
+  "outer_session": 59787,
+  "failure": "Probe attempted private Rational enclosure method; no production edit"
+}

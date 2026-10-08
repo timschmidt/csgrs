@@ -1,0 +1,24 @@
+{
+  "tag": "erf-trial-all-features-debug",
+  "started": "2026-09-08T10:56:01.809Z",
+  "finished": "2026-09-08T10:56:16.697Z",
+  "elapsedSeconds": 14.885048949,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison",
+  "command": "env",
+  "args": [
+    "TMPDIR=/home/tim/Documents/GitHub/workspace/calcium-build-tmp.gVX5v4",
+    "CARGO_INCREMENTAL=0",
+    "CARGO_PROFILE_DEV_DEBUG=0",
+    "cargo",
+    "test",
+    "--offline",
+    "--manifest-path",
+    "audits/continuation/calcium/erf-trial-hyperreal/Cargo.toml",
+    "--lib",
+    "--all-features",
+    "--target-dir",
+    "/home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype"
+  ],
+  "code": 0,
+  "signal": null
+}

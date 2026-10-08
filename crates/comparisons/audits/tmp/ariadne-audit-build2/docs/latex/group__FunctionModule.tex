@@ -1,0 +1,211 @@
+\doxysubsubsection{Function Module }
+\hypertarget{group__FunctionModule}{}\label{group__FunctionModule}\index{Function Module@{Function Module}}
+
+
+\doxysubsubsubsection{Description}
+Functions on Euclidean space, including the \doxylink{classAriadne_1_1Function}{Function\texorpdfstring{$<$}{<}P,SIG\texorpdfstring{$>$}{>}} generic template class. 
+
+{\itshape For the mathematical theory of computable functional analysis, see the \doxysectlink{functional_analysis_page}{Functional Analysis}{0} Page.}
+
+In this module are the classes used to represent concrete functions in Euclidean space. These functions can be used as the building blocks for geometric objects and dynamic systems.
+
+The main \doxylink{classAriadne_1_1Function}{Function\texorpdfstring{$<$}{<}P,SIG\texorpdfstring{$>$}{>}} class represents continuous functions. Since any continuous function $\R^n\to\R$ can be approximated arbitarily accurately be a polynomial function on a bounded domain, functions can compute polynomial approximations by application to a \doxylink{classAriadne_1_1TaylorModel}{Taylor\+Model}.\hypertarget{group__FunctionModule_function_information_section}{}\doxysubsubsubsubsubsection{\texorpdfstring{Function information tag.}{Function information tag.}}\label{group__FunctionModule_function_information_section}
+The information tag (computational paradigm) {\ttfamily P} describes whether the function is exact, effective, validated or approximate. (See the Information\+Module for more information.) Type aliases are provided, so \doxylink{group__FunctionModule_ga1ce9d5a1cfb352fbd1daf2f696740357}{Effective\+Function\texorpdfstring{$<$}{<}SIG\texorpdfstring{$>$}{>}} is an alias for \doxylink{classAriadne_1_1Function}{Function}\texorpdfstring{$<$}{<}\doxylink{structAriadne_1_1EffectiveTag}{Effective\+Tag},SIG\texorpdfstring{$>$}{>}.
+
+An effective function can be evaluated arbitrarily accurately given arbitrarily accurate approximations to the input. Hence if $f$ is a \doxylink{group__FunctionModule_ga1ce9d5a1cfb352fbd1daf2f696740357}{Effective\+Function}, then it can be automatically converted to a \doxylink{group__FunctionModule_gad8dd512fc373fa20822aefa98e73ab5a}{Validated\+Function}.\hypertarget{group__FunctionModule_function_signature_section}{}\doxysubsubsubsubsection{\texorpdfstring{Function signatures}{Function signatures}}\label{group__FunctionModule_function_signature_section}
+The signature {\ttfamily SIG} takes the form {\ttfamily RES(\+ARGS...)} where {\ttfamily RES} describes the output and {\ttfamily ARGS...} the input. Hence a signature {\ttfamily Real(\+Real)} indicates a function $\R\to\R$, whereas {\ttfamily \doxylink{group__LinearAlgebraSubModule_ga00e69bf76ffebd1f3ba573f4662134bc}{Real\+Vector(\+Real\+Vector,\+Real)}} would indicate a function $\R^n\times\R\to\R^m$. \begin{DoxyRemark}{Remarks}
+Currently, only \doxylink{classAriadne_1_1Real}{Real} and \doxylink{group__LinearAlgebraSubModule_ga00e69bf76ffebd1f3ba573f4662134bc}{Real\+Vector} are supported types for use in {\ttfamily RES} and {\ttfamily ARGS}, with \doxylink{group__LinearAlgebraSubModule_ga7a29a46d50b613534f91019281b45309}{Real\+Scalar} a synonym for \doxylink{classAriadne_1_1Real}{Real}. 
+\end{DoxyRemark}
+\doxysubsubsubsubsection*{Topics}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\hyperlink{group__SymbolicFunctionSubModule}{Symbolic functions}}
+\begin{DoxyCompactList}\small\item\em Functions defined by symbolic formulae, such as \doxylink{classAriadne_1_1Formula}{Formula\texorpdfstring{$<$}{<}I,Y\texorpdfstring{$>$}{>}} and \doxylink{classAriadne_1_1Procedure}{Procedure\texorpdfstring{$<$}{<}Y\texorpdfstring{$>$}{>}}. \end{DoxyCompactList}\item 
+\mbox{\hyperlink{group__AlgebraicFunctionSubModule}{Algebraic functions}}
+\begin{DoxyCompactList}\small\item\em Algebraic function classes such as \doxylink{classAriadne_1_1Affine}{Affine\texorpdfstring{$<$}{<}X\texorpdfstring{$>$}{>}} and \doxylink{classAriadne_1_1Polynomial}{Polynomial\texorpdfstring{$<$}{<}I,X\texorpdfstring{$>$}{>}}. \end{DoxyCompactList}\item 
+\mbox{\hyperlink{group__FunctionModelSubModule}{Function models}}
+\begin{DoxyCompactList}\small\item\em Concrete \doxylink{classAriadne_1_1FunctionModel}{Function\+Model\texorpdfstring{$<$}{<}P,SIG,PR,PRE\texorpdfstring{$>$}{>}} classes on bounded domains such as \doxylink{group__FunctionModelSubModule_gae1628e0ab768b5e00d157d1b30e08bd1}{Scalar\+Multivariate\+Taylor\+Function\+Model\texorpdfstring{$<$}{<}P,FLT\texorpdfstring{$>$}{>}}, which is a \doxylink{classAriadne_1_1ScaledFunctionPatch}{Scaled\+Function\+Patch} \texorpdfstring{$<$}{<}\doxylink{classAriadne_1_1TaylorModel}{Taylor\+Model\texorpdfstring{$<$}{<}P,FLT\texorpdfstring{$>$}{>}}\texorpdfstring{$>$}{>}. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsubsubsection*{Classes}
+\begin{DoxyCompactItemize}
+\item 
+class \mbox{\hyperlink{classAriadne_1_1Affine}{Affine$<$ X $>$}}
+\begin{DoxyCompactList}\small\item\em An affine function $f:\R^n\rightarrow\R$ given by $f(x)=\sum_{i=0}^{n-1} a_i x_i + b$. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1RealDomain}{Real\+Domain}}
+\begin{DoxyCompactList}\small\item\em \textbackslash{} . \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1EuclideanDomain}{Euclidean\+Domain}}
+\begin{DoxyCompactList}\small\item\em \textbackslash{} . \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1UnitInterval}{Unit\+Interval}}
+\begin{DoxyCompactList}\small\item\em \textbackslash{} \$\mbox{[}-\/1\+:+1\mbox{]}\$. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1UnitBox}{Unit\+Box}}
+\begin{DoxyCompactList}\small\item\em \textbackslash{} \$\mbox{[}-\/1\+:+1\mbox{]}\texorpdfstring{$^\wedge$}{\string^}\$. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1Formula}{Formula$<$ Y $>$}}
+\begin{DoxyCompactList}\small\item\em A formula defining a real function. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1FunctionInterface}{Function\+Interface$<$ P, SIG $>$}}
+\begin{DoxyCompactList}\small\item\em An interface for generic functions. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1Function}{Function$<$ P, SIG $>$}}
+\begin{DoxyCompactList}\small\item\em A generic continuous function. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1FunctionInterface_3_01ApproximateTag_00_01SIG_01_4}{Function\+Interface$<$ Approximate\+Tag, SIG $>$}}
+\begin{DoxyCompactList}\small\item\em Interface for functions $\R^n\rightarrow\R^m$ which can only be evaluated approximately. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1FunctionInterface_3_01ValidatedTag_00_01SIG_01_4}{Function\+Interface$<$ Validated\+Tag, SIG $>$}}
+\begin{DoxyCompactList}\small\item\em Interface for functions $\R^n\rightarrow\R$ which can be evaluated with guaranteed bounds on the error. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1FunctionInterface_3_01EffectiveTag_00_01SIG_01_4}{Function\+Interface$<$ Effective\+Tag, SIG $>$}}
+\begin{DoxyCompactList}\small\item\em Interface for scalar functions $\R^n\rightarrow\R$ which can be evaluated exactly. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1FunctionModel}{Function\+Model$<$ P, SIG, PR, PRE $>$}}
+\begin{DoxyCompactList}\small\item\em Generic class representing approximations to functions on bounded domains. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1FunctionPatch}{Function\+Patch$<$ P, SIG $>$}}
+\begin{DoxyCompactList}\small\item\em Generic functions on bounded domains. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1Polynomial}{Polynomial$<$ I, X $>$}}
+\begin{DoxyCompactList}\small\item\em A polynomial with coefficients of some type {\itshape X}. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1Procedure}{Procedure$<$ Y $>$}}
+\begin{DoxyCompactList}\small\item\em An algorithmic procedure for computing a function. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1FlowFunctionModel}{Flow\+Function\+Model}}
+\begin{DoxyCompactList}\small\item\em A class representing the flow $\phi(x,t)$ of a differential equation $\frac{dx}{dt}=f(x)$. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsubsubsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+{\footnotesize template$<$class X, class A$>$ }\\Arithmetic\+Type$<$ X, A $>$ \mbox{\hyperlink{group__FunctionModule_ga6b00e14df62abb4eabac2b986744fdf9}{horner\+\_\+evaluate}} (const \mbox{\hyperlink{classAriadne_1_1Expansion}{Expansion}}$<$ Multi\+Index, X $>$ \&e, const \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ A $>$ \&y)
+\begin{DoxyCompactList}\small\item\em Evaluate a power series on an algebra using Horner\textquotesingle{}s rule. \end{DoxyCompactList}\item 
+\Hypertarget{group__FunctionModule_ga1eec8a8e9da3a81c74d4b284e5e08786}\label{group__FunctionModule_ga1eec8a8e9da3a81c74d4b284e5e08786} 
+{\footnotesize template$<$class X, class A$>$ }\\Arithmetic\+Type$<$ X, A $>$ {\bfseries horner\+\_\+evaluate} (const \mbox{\hyperlink{classAriadne_1_1Expansion}{Expansion}}$<$ \mbox{\hyperlink{namespaceAriadne_a80311bc831cfc870fd65158180330a77}{Degree\+Type}}, X $>$ \&e, const A \&y)
+\begin{DoxyCompactList}\small\item\em Evaluate a power series on an algebra using Horner\textquotesingle{}s rule. \end{DoxyCompactList}\item 
+\Hypertarget{group__FunctionModule_ga1f18ec0dfc269d6effcda006cb1c0f1e}\label{group__FunctionModule_ga1f18ec0dfc269d6effcda006cb1c0f1e} 
+{\footnotesize template$<$class X, class A$>$ }\\Arithmetic\+Type$<$ X, A $>$ {\bfseries power\+\_\+evaluate} (const \mbox{\hyperlink{classAriadne_1_1Expansion}{Expansion}}$<$ Multi\+Index, X $>$ \&e, const \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ A $>$ \&y)
+\begin{DoxyCompactList}\small\item\em Evaluate a power series on an algebra using termwise expansion (slow). \end{DoxyCompactList}\item 
+\Hypertarget{group__FunctionModule_ga133c5a8a3174fa92e741e1a6ace1e6f3}\label{group__FunctionModule_ga133c5a8a3174fa92e741e1a6ace1e6f3} 
+{\footnotesize template$<$class X$>$ }\\\mbox{\hyperlink{classAriadne_1_1Formula}{Formula}}$<$ X $>$ {\bfseries formula} (const \mbox{\hyperlink{classAriadne_1_1Expansion}{Expansion}}$<$ Multi\+Index, X $>$ \&e)
+\begin{DoxyCompactList}\small\item\em Convert a power-\/series expansion into a formula using a version of Horner\textquotesingle{}s rule. See J. M. Pena and T. Sauer, "{}\+On the multivariate Horner scheme"{}, SIAM J. Numer. Anal. 37(4) 1186-\/1197, 2000. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsubsubsection*{Type definitions}
+\begin{DoxyCompactItemize}
+\item 
+using \mbox{\hyperlink{group__FunctionModule_ga5f13c1d70d7770b9aa4ff0dc2d515ffe}{Interval\+Domain\+Type}} = \mbox{\hyperlink{classAriadne_1_1Interval}{Interval}}$<$\mbox{\hyperlink{namespaceAriadne_af915b9f1459c9691328efa71c6f39c6e}{Float\+DP}}$>$
+\begin{DoxyCompactList}\small\item\em The type used as a bounded domain for a univariate function. \end{DoxyCompactList}\item 
+using \mbox{\hyperlink{group__FunctionModule_gaf5c0b733c80abb59b1c3d1eb58c20099}{Box\+Domain\+Type}} = \mbox{\hyperlink{classAriadne_1_1Box}{Box}}$<$\mbox{\hyperlink{classAriadne_1_1Interval}{Interval}}$<$\mbox{\hyperlink{namespaceAriadne_af915b9f1459c9691328efa71c6f39c6e}{Float\+DP}}$>$$>$
+\begin{DoxyCompactList}\small\item\em The type used as a bounded domain for a multivariate function. \end{DoxyCompactList}\item 
+\Hypertarget{group__FunctionModule_ga7b38f183a458f335ba2f31e0bcdbadc9}\label{group__FunctionModule_ga7b38f183a458f335ba2f31e0bcdbadc9} 
+typedef \mbox{\hyperlink{classAriadne_1_1Interval}{Interval}}$<$ Float\+DPUpper\+Bound $>$ {\bfseries Upper\+Interval\+Type}
+\begin{DoxyCompactList}\small\item\em The type used for the bounding interval of validated one-\/dimensional sets. \end{DoxyCompactList}\item 
+\Hypertarget{group__FunctionModule_ga52b42d6c2f267c5ad994d248feec0752}\label{group__FunctionModule_ga52b42d6c2f267c5ad994d248feec0752} 
+typedef Float\+DPUpper\+Box {\bfseries Box\+Validated\+Range\+Type}
+\begin{DoxyCompactList}\small\item\em The type used for an over-\/approximation to the range of a validated vector function. \end{DoxyCompactList}\item 
+\Hypertarget{group__FunctionModule_ga88ba74fe777b687b0bc0580dedf6226b}\label{group__FunctionModule_ga88ba74fe777b687b0bc0580dedf6226b} 
+typedef Float\+DPApproximate\+Box {\bfseries Box\+Approximate\+Range\+Type}
+\begin{DoxyCompactList}\small\item\em The type used for an approximation to the range of an approximate vector function. \end{DoxyCompactList}\item 
+\Hypertarget{group__FunctionModule_ga5637ef3c92e4737b48f17613999a129f}\label{group__FunctionModule_ga5637ef3c92e4737b48f17613999a129f} 
+typedef Float\+DPUpper\+Box {\bfseries Bounding\+Box\+Type}
+\begin{DoxyCompactList}\small\item\em The type used for the bounding box of validated sets in Euclidean space. \end{DoxyCompactList}\item 
+\Hypertarget{group__FunctionModule_gafdd31b4d01081cd09aad2ce11117f867}\label{group__FunctionModule_gafdd31b4d01081cd09aad2ce11117f867} 
+typedef Float\+DPExact\+Box {\bfseries Exact\+Box\+Type}
+\begin{DoxyCompactList}\small\item\em The type used for testing properties of sets in Euclidean space. \end{DoxyCompactList}\item 
+\Hypertarget{group__FunctionModule_gadb510bd9aa076e5ae44245b498901ca6}\label{group__FunctionModule_gadb510bd9aa076e5ae44245b498901ca6} 
+typedef Float\+DPUpper\+Box {\bfseries Upper\+Box\+Type}
+\begin{DoxyCompactList}\small\item\em The type used for the bounding box of validated sets in Euclidean space. \end{DoxyCompactList}\item 
+\Hypertarget{group__FunctionModule_ga9a6737a249dc42b68c810c1e2ea90a2e}\label{group__FunctionModule_ga9a6737a249dc42b68c810c1e2ea90a2e} 
+typedef Float\+DPLower\+Box {\bfseries Lower\+Box\+Type}
+\begin{DoxyCompactList}\small\item\em The type used for testing boundedness of sets in Euclidean space. \end{DoxyCompactList}\item 
+\Hypertarget{group__FunctionModule_gac26293ef26d158369e62afb319a71474}\label{group__FunctionModule_gac26293ef26d158369e62afb319a71474} 
+typedef Float\+DPApproximate\+Box {\bfseries Approximate\+Box\+Type}
+\begin{DoxyCompactList}\small\item\em The type used for the bounding box of approximate sets in Euclidean space. \end{DoxyCompactList}\item 
+\Hypertarget{group__FunctionModule_ga47abd65103dbe05c5bbbc16f5cf3bec2}\label{group__FunctionModule_ga47abd65103dbe05c5bbbc16f5cf3bec2} 
+typedef Float\+DPUpper\+Interval {\bfseries Interval\+Validated\+Range\+Type}
+\begin{DoxyCompactList}\small\item\em The type used for an over-\/approximation to the range of a validated scalar function. \end{DoxyCompactList}\item 
+\Hypertarget{group__FunctionModule_ga724bbe12a97b90ee4833ced44d1897ac}\label{group__FunctionModule_ga724bbe12a97b90ee4833ced44d1897ac} 
+typedef Float\+DPApproximate\+Interval {\bfseries Interval\+Approximate\+Range\+Type}
+\begin{DoxyCompactList}\small\item\em The type used for an approximation to the range of an approximate scalar function. \end{DoxyCompactList}\item 
+\Hypertarget{group__FunctionModule_gab4f81d909c87bd33486c446890723bb1}\label{group__FunctionModule_gab4f81d909c87bd33486c446890723bb1} 
+typedef Float\+DPExact\+Interval {\bfseries Exact\+Interval\+Type}
+\begin{DoxyCompactList}\small\item\em The type used for testing characteristics of one-\/dimensional sets. \end{DoxyCompactList}\item 
+\Hypertarget{group__FunctionModule_gaa98f540fb61799f0297aa101fba99adf}\label{group__FunctionModule_gaa98f540fb61799f0297aa101fba99adf} 
+typedef Float\+DPLower\+Interval {\bfseries Lower\+Interval\+Type}
+\begin{DoxyCompactList}\small\item\em The type used for testing boundedness of validated one-\/dimensional sets. \end{DoxyCompactList}\item 
+\Hypertarget{group__FunctionModule_gaeed2fa6bad70be5b93a70d09f590e531}\label{group__FunctionModule_gaeed2fa6bad70be5b93a70d09f590e531} 
+typedef Float\+DPApproximate\+Interval {\bfseries Approximate\+Interval\+Type}
+\begin{DoxyCompactList}\small\item\em The type used for the bounding interval of approximate one-\/dimensional sets. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsubsubsection*{Type shorthands for function classes}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{group__FunctionModule_ga97dec0be54bdb27609f9925b055e35dc}\label{group__FunctionModule_ga97dec0be54bdb27609f9925b055e35dc} 
+{\footnotesize template$<$class P, class... ARGS$>$ }\\using {\bfseries Scalar\+Function} = \mbox{\hyperlink{classAriadne_1_1Function}{Function}}$<$P,\mbox{\hyperlink{group__LinearAlgebraSubModule_ga7a29a46d50b613534f91019281b45309}{Real\+Scalar}}(ARGS...)$>$
+\item 
+\Hypertarget{group__FunctionModule_gae5d2f69ea172c6a2dfa7d2f12f700737}\label{group__FunctionModule_gae5d2f69ea172c6a2dfa7d2f12f700737} 
+{\footnotesize template$<$class P, class... ARGS$>$ }\\using {\bfseries Vector\+Function} = \mbox{\hyperlink{classAriadne_1_1Function}{Function}}$<$P,\mbox{\hyperlink{group__LinearAlgebraSubModule_ga00e69bf76ffebd1f3ba573f4662134bc}{Real\+Vector}}(ARGS...)$>$
+\item 
+\Hypertarget{group__FunctionModule_ga3bbe20670930c30536708ab9187f5364}\label{group__FunctionModule_ga3bbe20670930c30536708ab9187f5364} 
+{\footnotesize template$<$class P, class RES$>$ }\\using {\bfseries Univariate\+Function} = \mbox{\hyperlink{classAriadne_1_1Function}{Function}}$<$P,RES(\mbox{\hyperlink{group__LinearAlgebraSubModule_ga7a29a46d50b613534f91019281b45309}{Real\+Scalar}})$>$
+\item 
+\Hypertarget{group__FunctionModule_ga43b5e41ca0d186cb4ea9808c84b8d3e5}\label{group__FunctionModule_ga43b5e41ca0d186cb4ea9808c84b8d3e5} 
+{\footnotesize template$<$class P, class RES$>$ }\\using {\bfseries Multivariate\+Function} = \mbox{\hyperlink{classAriadne_1_1Function}{Function}}$<$P,RES(\mbox{\hyperlink{group__LinearAlgebraSubModule_ga00e69bf76ffebd1f3ba573f4662134bc}{Real\+Vector}})$>$
+\item 
+\Hypertarget{group__FunctionModule_ga4a215a0a287e522d9422c606425448ec}\label{group__FunctionModule_ga4a215a0a287e522d9422c606425448ec} 
+{\footnotesize template$<$class P$>$ }\\using {\bfseries Scalar\+Univariate\+Function} = \mbox{\hyperlink{classAriadne_1_1Function}{Function}}$<$P,\mbox{\hyperlink{group__LinearAlgebraSubModule_ga7a29a46d50b613534f91019281b45309}{Real\+Scalar}}(\mbox{\hyperlink{group__LinearAlgebraSubModule_ga7a29a46d50b613534f91019281b45309}{Real\+Scalar}})$>$
+\item 
+\Hypertarget{group__FunctionModule_ga80b7b96539d5ad6d733df84d41bd259d}\label{group__FunctionModule_ga80b7b96539d5ad6d733df84d41bd259d} 
+{\footnotesize template$<$class P$>$ }\\using {\bfseries Vector\+Univariate\+Function} = \mbox{\hyperlink{classAriadne_1_1Function}{Function}}$<$P,\mbox{\hyperlink{group__LinearAlgebraSubModule_ga00e69bf76ffebd1f3ba573f4662134bc}{Real\+Vector}}(\mbox{\hyperlink{group__LinearAlgebraSubModule_ga7a29a46d50b613534f91019281b45309}{Real\+Scalar}})$>$
+\item 
+\Hypertarget{group__FunctionModule_gaec600ea23399c725519b926e6b012451}\label{group__FunctionModule_gaec600ea23399c725519b926e6b012451} 
+{\footnotesize template$<$class P$>$ }\\using {\bfseries Scalar\+Multivariate\+Function} = \mbox{\hyperlink{classAriadne_1_1Function}{Function}}$<$P,\mbox{\hyperlink{group__LinearAlgebraSubModule_ga7a29a46d50b613534f91019281b45309}{Real\+Scalar}}(\mbox{\hyperlink{group__LinearAlgebraSubModule_ga00e69bf76ffebd1f3ba573f4662134bc}{Real\+Vector}})$>$
+\item 
+\Hypertarget{group__FunctionModule_ga1abdce965f7ad2f9aa70af013de6b045}\label{group__FunctionModule_ga1abdce965f7ad2f9aa70af013de6b045} 
+{\footnotesize template$<$class P$>$ }\\using {\bfseries Vector\+Multivariate\+Function} = \mbox{\hyperlink{classAriadne_1_1Function}{Function}}$<$P,\mbox{\hyperlink{group__LinearAlgebraSubModule_ga00e69bf76ffebd1f3ba573f4662134bc}{Real\+Vector}}(\mbox{\hyperlink{group__LinearAlgebraSubModule_ga00e69bf76ffebd1f3ba573f4662134bc}{Real\+Vector}})$>$
+\item 
+\Hypertarget{group__FunctionModule_gaf69981e36747009b2c54c10edcb2b710}\label{group__FunctionModule_gaf69981e36747009b2c54c10edcb2b710} 
+{\footnotesize template$<$class SIG$>$ }\\using {\bfseries Approximate\+Function} = \mbox{\hyperlink{classAriadne_1_1Function}{Function}}$<$\mbox{\hyperlink{structAriadne_1_1ApproximateTag}{Approximate\+Tag}},SIG$>$
+\item 
+\Hypertarget{group__FunctionModule_gad8dd512fc373fa20822aefa98e73ab5a}\label{group__FunctionModule_gad8dd512fc373fa20822aefa98e73ab5a} 
+{\footnotesize template$<$class SIG$>$ }\\using {\bfseries Validated\+Function} = \mbox{\hyperlink{classAriadne_1_1Function}{Function}}$<$\mbox{\hyperlink{structAriadne_1_1ValidatedTag}{Validated\+Tag}},SIG$>$
+\item 
+\Hypertarget{group__FunctionModule_ga1ce9d5a1cfb352fbd1daf2f696740357}\label{group__FunctionModule_ga1ce9d5a1cfb352fbd1daf2f696740357} 
+{\footnotesize template$<$class SIG$>$ }\\using {\bfseries Effective\+Function} = \mbox{\hyperlink{classAriadne_1_1Function}{Function}}$<$\mbox{\hyperlink{structAriadne_1_1EffectiveTag}{Effective\+Tag}},SIG$>$
+\end{DoxyCompactItemize}
+
+
+\label{doc-typedef-members}
+\Hypertarget{group__FunctionModule_doc-typedef-members}
+\doxysubsubsubsection{Typedef Documentation}
+\Hypertarget{group__FunctionModule_ga5f13c1d70d7770b9aa4ff0dc2d515ffe}\index{Function Module@{Function Module}!IntervalDomainType@{IntervalDomainType}}
+\index{IntervalDomainType@{IntervalDomainType}!Function Module@{Function Module}}
+\doxyparagraph{\texorpdfstring{IntervalDomainType}{IntervalDomainType}}
+{\footnotesize\ttfamily \label{group__FunctionModule_ga5f13c1d70d7770b9aa4ff0dc2d515ffe} 
+typedef \mbox{\hyperlink{classAriadne_1_1Interval}{Interval}}$<$ \mbox{\hyperlink{namespaceAriadne_af915b9f1459c9691328efa71c6f39c6e}{Float\+DP}} $>$ \mbox{\hyperlink{group__FunctionModule_ga5f13c1d70d7770b9aa4ff0dc2d515ffe}{Interval\+Domain\+Type}} = \mbox{\hyperlink{classAriadne_1_1Interval}{Interval}}$<$\mbox{\hyperlink{namespaceAriadne_af915b9f1459c9691328efa71c6f39c6e}{Float\+DP}}$>$}
+
+
+
+The type used as a bounded domain for a univariate function. 
+
+The type used for the domain of a univariate function. \Hypertarget{group__FunctionModule_gaf5c0b733c80abb59b1c3d1eb58c20099}\index{Function Module@{Function Module}!BoxDomainType@{BoxDomainType}}
+\index{BoxDomainType@{BoxDomainType}!Function Module@{Function Module}}
+\doxyparagraph{\texorpdfstring{BoxDomainType}{BoxDomainType}}
+{\footnotesize\ttfamily \label{group__FunctionModule_gaf5c0b733c80abb59b1c3d1eb58c20099} 
+typedef \mbox{\hyperlink{classAriadne_1_1Box}{Box}}$<$ \mbox{\hyperlink{classAriadne_1_1Interval}{Interval}}$<$ \mbox{\hyperlink{namespaceAriadne_af915b9f1459c9691328efa71c6f39c6e}{Float\+DP}} $>$ $>$ \mbox{\hyperlink{group__FunctionModule_gaf5c0b733c80abb59b1c3d1eb58c20099}{Box\+Domain\+Type}} = \mbox{\hyperlink{classAriadne_1_1Box}{Box}}$<$\mbox{\hyperlink{classAriadne_1_1Interval}{Interval}}$<$\mbox{\hyperlink{namespaceAriadne_af915b9f1459c9691328efa71c6f39c6e}{Float\+DP}}$>$$>$}
+
+
+
+The type used as a bounded domain for a multivariate function. 
+
+The type used for the domain of a multivariate function. \begin{Desc}
+\item[Examples]\par
+\mbox{\hyperlink{tutorials_2rigorous_numerics_2rigorous_numerics_tutorial_8cpp-example}{tutorials/rigorous\+\_\+numerics/rigorous\+\_\+numerics\+\_\+tutorial.\+cpp}}.\end{Desc}
+
+
+\label{doc-func-members}
+\Hypertarget{group__FunctionModule_doc-func-members}
+\doxysubsubsubsection{Function Documentation}
+\Hypertarget{group__FunctionModule_ga6b00e14df62abb4eabac2b986744fdf9}\index{Function Module@{Function Module}!horner\_evaluate@{horner\_evaluate}}
+\index{horner\_evaluate@{horner\_evaluate}!Function Module@{Function Module}}
+\doxyparagraph{\texorpdfstring{horner\_evaluate()}{horner\_evaluate()}}
+{\footnotesize\ttfamily \label{group__FunctionModule_ga6b00e14df62abb4eabac2b986744fdf9} 
+template$<$class X, class A$>$ \\
+Arithmetic\+Type$<$ X, A $>$ horner\+\_\+evaluate (\begin{DoxyParamCaption}\item[{const \mbox{\hyperlink{classAriadne_1_1Expansion}{Expansion}}$<$ Multi\+Index, X $>$ \&}]{e}{, }\item[{const \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ A $>$ \&}]{x}{}\end{DoxyParamCaption})}
+
+
+
+Evaluate a power series on an algebra using Horner\textquotesingle{}s rule. 
+
+For a polynomial in $n$ variables, Horner\textquotesingle{}s rule is a recursive formula \[ p(x) = \bigl( \bigl(  x^{d_k-d_{k-1}} q_k(\hat{x})x^{d_0} + \cdots + q_1(\hat{x}) \bigr) x^{d_1-d_0} + q_0(\hat{x}) \bigr) x^{d_0} \] where $\hat{x}=(x_1,\ldots,x_{n-1})$ and $q_i$ is the polynomial of terms in $x_n^{d_i}$. To evaluate a polynomial using Horner\textquotesingle{}s rule without using recursive function calls, we maintain registers $r_k$ containing the current evaluation of a polynomial in $(x_1,\ldots,x_k)$.
+
+We list the terms in reverse lexicographic order, defined as $\alpha \prec \beta$ if $\alpha_j>\beta_j$, where $j=\max\{i\mid \alpha_i\neq\beta_i\}$. For a given term $c_\alpha x^\alpha$, let $k=\max\{j\mid \alpha_j\neq\beta_j\}$, where $\beta$ is the next multi-\/index. We update register $r_k$ by \[r\textnormal{\textquotesingle}_k=(((c_\alpha + r_1) x^{\alpha_1} + r_2 )x^{\alpha_2}+\cdots r_k)x^{\alpha_k-\beta_k}.\] The result is obtained by updating a fictional register $r_{n+1}$ at the last step. See J. M. Pena and T. Sauer, "{}\+On the multivariate Horner scheme"{}, SIAM J. Numer. Anal. 37(4) 1186-\/1197, 2000. 
+
+Referenced by \mbox{\hyperlink{group__FunctionModule_ga133c5a8a3174fa92e741e1a6ace1e6f3}{formula()}}, and \mbox{\hyperlink{classAriadne_1_1ScaledFunctionPatch_a234fc1e31af87554ffa79dac8b4bea0c}{Scaled\+Function\+Patch$<$ M $>$\+::polynomial()}}.
+
+\input{group__SymbolicFunctionSubModule}
+\input{group__AlgebraicFunctionSubModule}
+\input{group__FunctionModelSubModule}

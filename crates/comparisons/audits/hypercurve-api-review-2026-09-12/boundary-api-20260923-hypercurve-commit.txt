@@ -1,0 +1,8 @@
+Expose shared exact curves on region boundaries.
+
+Replace public split-fragment accessors with a borrowed Curve2 slice that
+retains domains, endpoint evidence, and caches across repeated access,
+clones, and boundary-path export. Migrate integration and benchmark
+callers to curve families, native definitions, domains, and point queries.
+Remove the unused rational-point adapter and use the live circular
+conversion in its remaining test fixture.

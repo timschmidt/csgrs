@@ -1,0 +1,111 @@
+aern-poly> build (lib) with ghc-9.6.7
+Preprocessing library for aern-poly-0.5.0..
+Building library for aern-poly-0.5.0..
+[ 9 of 21] Compiling Numeric.AERN.Poly.IntPoly.Integration
+[20 of 21] Compiling Numeric.AERN.Poly.IntPoly
+
+/tmp/aern-audit.zp9Mzz/source/aern-poly/src/Numeric/AERN/Poly/IntPoly.hs:121:5: warning: [GHC-06201] [-Wmissing-methods]
+    • No explicit implementation for
+        ‘ArithInOut.rrEffortPartialJoin’ and ‘ArithInOut.rrEffortImprecision’
+    • In the instance declaration for
+        ‘ArithInOut.RoundedReal (IntPoly var (Interval e))’
+    |
+121 |     (
+    |     ^...
+
+/tmp/aern-audit.zp9Mzz/source/aern-poly/src/Numeric/AERN/Poly/IntPoly.hs:167:5: warning: [GHC-06201] [-Wmissing-methods]
+    • No explicit implementation for
+        ‘abs’ and ‘signum’
+    • In the instance declaration for ‘Num (IntPoly var cf)’
+    |
+167 |     (ArithInOut.RoundedReal cf, Num cf,
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^...
+
+/tmp/aern-audit.zp9Mzz/source/aern-poly/src/Numeric/AERN/Poly/IntPoly.hs:188:5: warning: [GHC-06201] [-Wmissing-methods]
+    • No explicit implementation for
+        ‘fromRational’
+    • In the instance declaration for ‘Fractional (IntPoly var cf)’
+    |
+188 |     (ArithInOut.RoundedReal cf, Num cf,
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^...
+
+/tmp/aern-audit.zp9Mzz/source/aern-poly/src/Numeric/AERN/Poly/IntPoly.hs:195:9: warning: [GHC-58520] [-Wtype-equality-requires-operators]
+    The use of ‘~’ without TypeOperators
+    will become an error in a future GHC release.
+    Suggested fix: Perhaps you intended to use TypeOperators
+    |
+195 |      cf ~ Interval e,
+    |         ^
+[21 of 21] Compiling Numeric.AERN.Poly.IntPoly.Interval
+
+/tmp/aern-audit.zp9Mzz/source/aern-poly/src/Numeric/AERN/Poly/IntPoly/Interval.hs:46:1: warning: [-Wunused-imports]
+    The import of ‘Numeric.AERN.RealArithmetic.Interval.MixedFieldOps’ is redundant
+      except perhaps to import instances from ‘Numeric.AERN.RealArithmetic.Interval.MixedFieldOps’
+    To import instances alone, use: import Numeric.AERN.RealArithmetic.Interval.MixedFieldOps()
+   |
+46 | import Numeric.AERN.RealArithmetic.Interval.MixedFieldOps (intervalMixedAddInEff, intervalMixedAddOutEff)
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-poly/src/Numeric/AERN/Poly/IntPoly/Interval.hs:94:11: warning: [GHC-58520] [-Wtype-equality-requires-operators]
+    The use of ‘~’ without TypeOperators
+    will become an error in a future GHC release.
+    Suggested fix: Perhaps you intended to use TypeOperators
+   |
+94 |      poly ~ IntPoly var cf, cf ~ Interval e,
+   |           ^
+
+/tmp/aern-audit.zp9Mzz/source/aern-poly/src/Numeric/AERN/Poly/IntPoly/Interval.hs:94:32: warning: [GHC-58520] [-Wtype-equality-requires-operators]
+    The use of ‘~’ without TypeOperators
+    will become an error in a future GHC release.
+    Suggested fix: Perhaps you intended to use TypeOperators
+   |
+94 |      poly ~ IntPoly var cf, cf ~ Interval e,
+   |                                ^
+
+/tmp/aern-audit.zp9Mzz/source/aern-poly/src/Numeric/AERN/Poly/IntPoly/Interval.hs:107:13: warning: [GHC-63397] [-Wname-shadowing]
+    This binding for ‘<*>’ shadows the existing binding
+      imported from ‘Prelude’ at src/Numeric/AERN/Poly/IntPoly/Interval.hs:22:8-41
+      (and originally defined in ‘GHC.Base’)
+    |
+107 |         let (<*>) = ArithInOut.multOutEff (ArithInOut.ringEffortMult samplePI effPI) in
+    |             ^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-poly/src/Numeric/AERN/Poly/IntPoly/Interval.hs:130:17: warning: [GHC-63397] [-Wname-shadowing]
+    This binding for ‘<*>’ shadows the existing binding
+      imported from ‘Prelude’ at src/Numeric/AERN/Poly/IntPoly/Interval.hs:22:8-41
+      (and originally defined in ‘GHC.Base’)
+    |
+130 |             let (<*>) = ArithInOut.multOutEff (ArithInOut.ringEffortMult samplePI effPI) in
+    |                 ^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-poly/src/Numeric/AERN/Poly/IntPoly/Interval.hs:147:1: warning: [GHC-38417] [-Wmissing-signatures]
+    Top-level binding with no type signature:
+      ipolyeff_intrealeff :: p1 -> p2 -> IntervalRealEffort e
+    |
+147 | ipolyeff_intrealeff sampleIP effIP =
+    | ^^^^^^^^^^^^^^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-poly/src/Numeric/AERN/Poly/IntPoly/Interval.hs:147:21: warning: [-Wunused-matches]
+    Defined but not used: ‘sampleIP’
+    |
+147 | ipolyeff_intrealeff sampleIP effIP =
+    |                     ^^^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-poly/src/Numeric/AERN/Poly/IntPoly/Interval.hs:147:30: warning: [-Wunused-matches]
+    Defined but not used: ‘effIP’
+    |
+147 | ipolyeff_intrealeff sampleIP effIP =
+    |                              ^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-poly/src/Numeric/AERN/Poly/IntPoly/Interval.hs:148:5: warning: [GHC-20125] [-Wmissing-fields]
+    • Fields of ‘IntervalRealEffort’ not initialised:
+        intrealeff_eRoundedReal :: ArithUpDn.RoundedRealEffortIndicator e0
+    • In the expression: IntervalRealEffort {}
+      In an equation for ‘ipolyeff_intrealeff’:
+          ipolyeff_intrealeff sampleIP effIP = IntervalRealEffort {}
+    |
+148 |     IntervalRealEffort
+    |     ^^^^^^^^^^^^^^^^^^...
+aern-poly> copy/register
+Installing library in /tmp/aern-audit.zp9Mzz/.stack-work/install/x86_64-linux-tinfo6/679cc64c76e222dbde5fd44af4907e261fb8c246ed2bc968e58bc5dabf57e98b/9.6.7/lib/x86_64-linux-ghc-9.6.7/aern-poly-0.5.0-Du22eFVChpfCtxQ5KMeP6H
+Registering library for aern-poly-0.5.0..

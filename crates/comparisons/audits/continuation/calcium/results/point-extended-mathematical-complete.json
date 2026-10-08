@@ -1,0 +1,13 @@
+{
+  "tag": "point-extended-mathematical-complete",
+  "started": "2026-09-10T21:23:32.309Z",
+  "finished": "2026-09-10T21:23:32.789Z",
+  "elapsedSeconds": 0.478234248,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "node",
+  "args": [
+    "check-point-extended.mjs"
+  ],
+  "code": 0,
+  "signal": null
+}

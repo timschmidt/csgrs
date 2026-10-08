@@ -1,0 +1,19 @@
+{
+  "repos": {
+    "hypercurve": {
+      "commit": "e3b97452c514d346bf7844e0e7451ee849774d0c",
+      "parent": "c6046fa2f26132e909edfc07e119fa2ff069d1e2",
+      "paths": {
+        "src/bezier_offset.rs": "8bde0d6c18790142efb74ee255e7d10264794345a5c646f6720cc9db3d5ee812",
+        "src/bezier_region.rs": "cc3cd8cbdf7132debde8e682450cddaced52534f3b7c62e5bb6c712fe6c0aef8",
+        "src/curve.rs": "b28ac0ae1c3a8e1be0ae9a55faf51b86b134c7e26107c5b5431bd1eb1fe598f9",
+        "src/curve_fillet.rs": "e5a0c3a67a5c63acf0557e0be84a5f0cbd404c6908b5aef6c4da9ba97b859864",
+        "src/curve_region_boolean.rs": "e812f9bcaa0be1513b573b6eb4f5e9e8b3eae00df49a2e6c803332b28286ea78",
+        "src/rational_bezier_general.rs": "1f001a4eff752023e1c8b568a2f4e38f9ddde379940c387270d5b58942cf882a"
+      }
+    }
+  },
+  "qualification": "contact-blockers-v792-terminal.json",
+  "verified_source_files": 2048,
+  "clean_repositories": 30
+}

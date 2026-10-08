@@ -1,0 +1,11 @@
+{
+  "u_bounds": [
+    "49/100",
+    "1/2"
+  ],
+  "alpha_lower": "49/50",
+  "small_lobe_closing_x_lower": "7203/5500000",
+  "large_lobe_closing_x_upper": "50/549",
+  "chamfer_y_at_12_over_25_lower": "609/1100",
+  "all_fraction_inequalities_verified": true
+}

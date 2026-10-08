@@ -1,0 +1,6 @@
+event-tree constant only: Just (fromList [(HybSysMode "constant",[<1.0>])])
+event-tree exponential only: Nothing
+event-tree both: Nothing
+split-near-events constant only: Just (fromList [(HybSysMode "constant",[<1.0>])])
+split-near-events exponential only: Nothing
+split-near-events both: Just (fromList [(HybSysMode "constant",[<1.0>])])

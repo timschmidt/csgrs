@@ -1,0 +1,20 @@
+{
+  "qualification": "fillet-retained-domains-20260927-v495-terminal.json",
+  "source_manifest": "fillet-retained-domains-20260927-v495-sources.json",
+  "outer_session_reaped": 74084,
+  "validated_files": 2047,
+  "selected_geometry_tests": 353,
+  "checks": 6,
+  "repos": {
+    "hypercurve": {
+      "parent": "2ff2b956a521e6e3baf778255a0abd92d18b4d00",
+      "paths": {
+        "src/bezier_offset.rs": "08b2e412c69e688aa46ef5fbcd86f60e181ada6e2e98ebd0edadd1a6c13c2887",
+        "src/curve.rs": "6aa0c9311f114e45042858d23f93901186e484bda6eefa4d30051315ac19cb4d",
+        "tests/hypercurve_stationary_fillets.rs": "edf3507a5e2681597523ca3d1e95a91228fa9952062089afd08a10e601c95d59"
+      }
+    }
+  },
+  "scope": "selected regression suite; overall implementation goal remains active",
+  "performance_changes": []
+}

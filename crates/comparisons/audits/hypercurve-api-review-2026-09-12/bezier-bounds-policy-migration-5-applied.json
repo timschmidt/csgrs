@@ -1,0 +1,82 @@
+[
+  {
+    "file": "hypercurve/src/bezier_offset.rs",
+    "before_sha256": "72c42b948ab89af0e5ef6313b6b29f422718923aa6c749b3d21d50f65b0672cc",
+    "after_sha256": "7f3a0d531a30d5ba7b631415f031d1e9a760e01d6486c8c22ce10d3118008f3f",
+    "deletions": [
+      {
+        "byte_start": 997173,
+        "byte_end": 997179,
+        "old": "policy"
+      },
+      {
+        "byte_start": 5096182,
+        "byte_end": 5096188,
+        "old": "policy"
+      },
+      {
+        "byte_start": 5570830,
+        "byte_end": 5570836,
+        "old": "policy"
+      },
+      {
+        "byte_start": 5570879,
+        "byte_end": 5570885,
+        "old": "policy"
+      }
+    ]
+  },
+  {
+    "file": "hypercurve/src/bezier_region.rs",
+    "before_sha256": "600fed5bbcebf2ec5a48645fc20534f5287389c68a60d1308fb6be6cd7633291",
+    "after_sha256": "25182f01ec343c3ad65167e98da8e6f2e4f62cbeac2e12683bf0766da96ca729",
+    "deletions": [
+      {
+        "byte_start": 739800,
+        "byte_end": 739806,
+        "old": "policy"
+      }
+    ]
+  },
+  {
+    "file": "hypercurve/src/bezier_retained_measure.rs",
+    "before_sha256": "e5c627d29314d702d9b2a180e8af7d788cc422ec382840c08b039bd012f6b5ee",
+    "after_sha256": "3f3da92fd4fcfe8dd6a54ae047763528e5643f2172c6ba7e95459fd700aec22b",
+    "deletions": [
+      {
+        "byte_start": 11765,
+        "byte_end": 11771,
+        "old": "policy"
+      }
+    ]
+  },
+  {
+    "file": "hypercurve/src/bezier_split.rs",
+    "before_sha256": "20720072066c91e8f574da3e359bd31f5fb863c3c6caca6110343a97e8f04d7e",
+    "after_sha256": "89a228abc01035e55ee42ba30b6801194e92a80714dea9183a4e490e2717f680",
+    "deletions": [
+      {
+        "byte_start": 60928,
+        "byte_end": 60934,
+        "old": "policy"
+      }
+    ]
+  },
+  {
+    "file": "hypercurve/src/curve_support.rs",
+    "before_sha256": "90ffdc443338f38464f42a90f9d68f39900dfcf9b4860890d873a7b188bd6ba8",
+    "after_sha256": "efd1ae296241cdcba2e05cc20d4432eef2f77537654d7928d599ec564b91f25a",
+    "deletions": [
+      {
+        "byte_start": 12462,
+        "byte_end": 12468,
+        "old": "policy"
+      },
+      {
+        "byte_start": 13388,
+        "byte_end": 13394,
+        "old": "policy"
+      }
+    ]
+  }
+]

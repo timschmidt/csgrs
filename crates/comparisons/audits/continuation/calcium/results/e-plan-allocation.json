@@ -1,0 +1,14 @@
+{
+  "tag": "e-plan-allocation",
+  "started": "2026-09-10T00:40:43.215Z",
+  "finished": "2026-09-10T00:40:51.149Z",
+  "elapsedSeconds": 7.931806154999999,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "node",
+  "args": [
+    "run-e-plan-costs.mjs",
+    "allocation"
+  ],
+  "code": 0,
+  "signal": null
+}

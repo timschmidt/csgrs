@@ -1,0 +1,23 @@
+{
+  "baseline_qualification": "common-point-incidence-broad-20260928-v593-terminal.json",
+  "source_manifest": "common-point-incidence-broad-20260928-v593-sources.json",
+  "production_source_manifest": "parameter-construction-20260928-v605-sources.json",
+  "binary": {
+    "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/common-point-incidence-broad-20260928-v593-hypercurve_analytic_parallel_region-tests",
+    "sha256": "9996154f9954e0fa19c96ab431c943eb77ea7c75d24d655f7ddacdc18e74fa8e"
+  },
+  "command": [
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/common-point-incidence-broad-20260928-v593-hypercurve_analytic_parallel_region-tests",
+    "--exact",
+    "radical_parallel_cusp_offsets_exactly_under_both_policies",
+    "--nocapture",
+    "--test-threads=1"
+  ],
+  "cwd": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/source-archives/common-point-incidence-broad-20260928-v593/hypercurve",
+  "all_processes_reaped": true,
+  "pid": 37,
+  "returncode": 101,
+  "elapsed_seconds": 63.795327787986025,
+  "log": "radical-cusp-baseline-20260928-v612.log",
+  "passed": false
+}

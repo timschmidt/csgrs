@@ -1,0 +1,7 @@
+exp/10: 5 pass, 0 fail, 0 indeterminate
+exp/30: 5 pass, 0 fail, 0 indeterminate
+exp/80: 5 pass, 0 fail, 0 indeterminate
+sqrt/10: 5 pass, 0 fail, 0 indeterminate
+sqrt/30: 5 pass, 0 fail, 0 indeterminate
+sqrt/80: 5 pass, 0 fail, 0 indeterminate
+TOTAL: 30 pass, 0 fail, 0 indeterminate

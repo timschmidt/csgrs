@@ -1,0 +1,20 @@
+{
+  "qualification": "retained-point-exterior-20260928-v720-terminal.json",
+  "source_manifest": "retained-point-exterior-20260928-v720-sources.json",
+  "outer_session_reaped": 13217,
+  "validated_files": 2048,
+  "tests": 15,
+  "new_oracle_checks": 360,
+  "checks": 6,
+  "repos": {
+    "hypercurve": {
+      "parent": "6465d5445e25a48b4a8a631d4e639bb3702b6eed",
+      "paths": {
+        "src/bezier_region.rs": "275be799ac346fd2f58950e7effb5360840c12935042bdcf97edfdcb45d2963f",
+        "src/curve_region_boolean.rs": "c1c6ca84b679bee82cb6fca215fdfdfc98c970d701ba63a5138320d03a822f95"
+      }
+    }
+  },
+  "scope": "Use exact equality with a certified exterior candidate as an Outside witness; preserve all other probe behavior",
+  "unresolved": "Public point-classification API consolidation remains unimplemented; full implementation goal remains active."
+}

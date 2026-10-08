@@ -1,0 +1,12 @@
+{
+  "base": {
+    "hypercurve/src/bezier_region.rs": "1e3615825e353fd71c3ff271da824186d7c40db8ba6852ade1f4c7afbffa1046",
+    "hypercurve/src/curve_region_boolean.rs": "3ba4da80aad62fbf1ebe6a0810dd469f1c550d7ecde9f4b82dd4e5b50edf54a6"
+  },
+  "promoted": {
+    "hypercurve/src/bezier_region.rs": "275be799ac346fd2f58950e7effb5360840c12935042bdcf97edfdcb45d2963f",
+    "hypercurve/src/curve_region_boolean.rs": "c1c6ca84b679bee82cb6fca215fdfdfc98c970d701ba63a5138320d03a822f95"
+  },
+  "candidate": "retained-point-exterior-production-candidate-v719",
+  "baseline_repositories": "composition-evidence-20260928-v711-repositories-after.json"
+}

@@ -1,0 +1,39 @@
+{
+  "baseline": "unordered-arrangement-api-v752-sources.json",
+  "rlib": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypercurve-85a9105cd1c82df7.rlib",
+  "rlib_sha256": "7f604ada94199b84c92e688a2a9c24f2cd83bc076f0144d6494a6173605fac13",
+  "source_sha256": "4ca1c9846d493c9ca71ec47792f975c7ddf591dbc9050b1326b82bf41e3a5332",
+  "processes": [
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustc",
+        "--edition=2024",
+        "--crate-name",
+        "empty_native_boundary_probe",
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/empty-native-boundary-probe-v754.rs",
+        "--extern",
+        "hypercurve=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypercurve-85a9105cd1c82df7.rlib",
+        "-L",
+        "dependency=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps",
+        "-C",
+        "opt-level=3",
+        "-o",
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/empty-native-boundary-probe-v754-binary"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.16404598392546177,
+      "log": "empty-native-boundary-probe-v754-compile.log"
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/empty-native-boundary-probe-v754-binary"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.0015308861620724201,
+      "log": "empty-native-boundary-probe-v754-run.log"
+    }
+  ],
+  "all_processes_reaped": true,
+  "binary_sha256": "5950b21331519ea0b02f799c2fff242eb31ead216108802148735c8cb0873997",
+  "reproduced_empty_input_rejection": true
+}

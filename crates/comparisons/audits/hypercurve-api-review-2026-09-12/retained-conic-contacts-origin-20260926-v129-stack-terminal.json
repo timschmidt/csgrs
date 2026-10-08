@@ -1,0 +1,54 @@
+{
+  "binary": {
+    "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-conic-contacts-origin-20260926-v129-hypercurve",
+    "sha256": "f91859634641c22686343a9d998ea1585daefcc1b8fe7a33a73d8b711cf9ed60"
+  },
+  "source_manifest": "retained-conic-contacts-origin-20260926-v129-sources.json",
+  "diagnostic_only": true,
+  "cases": [
+    {
+      "name": "retained_rational_arc_and_analytic_parallel_fillet_extends_exactly",
+      "log": "retained-conic-contacts-origin-20260926-v129-stack-0.log",
+      "command": [
+        "/usr/bin/gdb",
+        "-nx",
+        "-nh",
+        "--batch",
+        "-ex",
+        "set pagination off",
+        "-ex",
+        "set confirm off",
+        "-ex",
+        "set debuginfod enabled off",
+        "-ex",
+        "set print frame-arguments none",
+        "-ex",
+        "set print entry-values no",
+        "-ex",
+        "break '<hypercurve::error::ExactCurveError>::blocked'",
+        "-ex",
+        "run",
+        "-ex",
+        "thread apply all bt 12",
+        "-ex",
+        "thread apply all bt -45",
+        "-ex",
+        "kill",
+        "-ex",
+        "quit",
+        "--args",
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-conic-contacts-origin-20260926-v129-hypercurve",
+        "--exact",
+        "retained_rational_arc_and_analytic_parallel_fillet_extends_exactly",
+        "--test-threads=1",
+        "--nocapture"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.6647147770272568,
+      "interrupted": false,
+      "sample_obtained": false,
+      "debugger_reaped": true
+    }
+  ],
+  "all_processes_reaped": false
+}

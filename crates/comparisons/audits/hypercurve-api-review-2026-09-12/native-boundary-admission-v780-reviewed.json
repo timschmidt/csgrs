@@ -1,0 +1,29 @@
+{
+  "qualification": "native-boundary-admission-v780-terminal.json",
+  "source_manifest": "native-boundary-admission-v780-sources.json",
+  "outer_session_reaped": 20086,
+  "validated_files": 2048,
+  "tests": 46,
+  "checks": 8,
+  "repos": {
+    "csgrs": {
+      "parent": "87245cca303b105b4c8044e6a1e9663af3292472",
+      "paths": {
+        "src/io/gerber.rs": "51c518b9b41ef4485af59e408710893e8bf74d5652dc14ba044edce85d649127",
+        "tests/geometry_context.rs": "f2582336765a32d8636723f68238faaa579c34d283c5086bbb3ad257b9d43f0b"
+      }
+    },
+    "hypercurve": {
+      "parent": "f5c1fda0cf25f12873cf83386446af18ea9c3b01",
+      "paths": {
+        "README.md": "dd39dccbf081a0e6460f02d777c472e44a07439d24f0811b95c90214393bac69",
+        "benches/editing.rs": "9a77316fff581dc16ec411c42c292e03d378d5b01a4cfa31a663458abbd3ed74",
+        "src/bezier_region.rs": "42d661260908fc914b2304f8f6f8431eaf2fb246aab55199933c4a7ec0e25397",
+        "src/native_region_tests.rs": "8c3037b0228c442ff4cfc140729f5d9708e4b60d15c0505f2f2a9e8112ca8a4f",
+        "tests/hypercurve_curve_region_promotion.rs": "ea236b39213b3b59af6ebe3767ec2f8097d5f30cc98b97d0d5fd3f57065fe4af"
+      }
+    }
+  },
+  "scope": "Admit native compound boundaries through the shared arrangement with explicit global fill, remove the separate nesting prepass and classification wrapper, and migrate callers directly",
+  "unresolved": "The full exact-geometry implementation goal remains active; this cleanup does not claim full spatial BREP closure or a measured speedup."
+}

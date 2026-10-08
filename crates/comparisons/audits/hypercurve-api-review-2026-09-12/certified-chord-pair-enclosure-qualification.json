@@ -1,0 +1,139 @@
+{
+  "status": "implemented, qualified and committed; original goal active",
+  "base_commits": {
+    "hypercurve": "8006617e8605eacf20969b5c11fb19df1590a8f8",
+    "hypersolve": "3ac2e7510936a11c7bf2eac5dfbe3f9f851afe55",
+    "hyperreal": "a2da8e2b5de9a1a4653d3662f2f05cb6533fd7ef",
+    "hyperbrep": "8a84ee7db02fd2720ac89a1a6a227ee4ec2a8171"
+  },
+  "implementation": [
+    "Chord-pair conservative bounds suppress approximate terminals while preserving the original retained policy identity.",
+    "The existing requested-refinement rational envelope is shared by four endpoint reads before support determinant interval arithmetic. Cardinal support bounds reuse the same acquisition.",
+    "Unavailable optional conversion retains the original exact enclosure under strict predicates. No new cache, field, carrier, wrapper or fixed precision ceiling; production code decreases by 16 lines."
+  ],
+  "regression": {
+    "test": "stationary_ph_inward_offsets_preserve_sets_through_boundary_paths",
+    "source": "hypercurve/tests/hypercurve_bezier_fit_offset.rs",
+    "baseline_log": "stationary-ph-inward-public-regression-baseline.log",
+    "baseline_exit_code": 101,
+    "baseline_finding": "Both STRICT traversals pass, including path readmission and independent point classifications. APPROXIMATE_512 forward second offset consumes approximation.",
+    "runtime_diagnosis": "stationary-ph-inward-approximation-stack.log: a hash-guarded hardware watchpoint catches the first consumed approximation in RealInterval::multiply inside a chord-pair bound requested as certified_outer_bounds.",
+    "final_focused_log": "stationary-ph-inward-public-regression.log",
+    "focused_passed": 5,
+    "coverage": "Distances -1/20 then -1/40, both contexts and both traversals, one nonempty boundary, exact path export/readmission, 48 independent point classifications across original and restored results. All outcomes Certified. Shared outward/cancellation regression rerun after fixture extraction.",
+    "oracle": "The source contains [-1,0] x [0,1/2] and is contained in [-1,2/15] x [0,1/2]. Erosion monotonicity and disk radii summing to 3/40 establish three interior probes, two exterior probes and the shared left boundary."
+  },
+  "focused_scope": "Three retained-point/refinement unit tests plus the two public PH composition tests pass. Existing 2^-600 exact order and refinement coverage is retained.",
+  "tests": {
+    "hypercurve": {
+      "passed": 1462,
+      "ignored": 6,
+      "targets": 13,
+      "fresh": true,
+      "log": "certified-chord-pair-enclosure-hypercurve-tests.log",
+      "exit_code": 0
+    },
+    "hyperbrep": {
+      "passed": 232,
+      "ignored": 0,
+      "targets": 1,
+      "fresh": true,
+      "log": "certified-chord-pair-enclosure-hyperbrep-tests.log",
+      "exit_code": 0
+    }
+  },
+  "freshly_run_total": 1694,
+  "unchanged_dependency_qualification": {
+    "hypersolve": {
+      "passed": 492,
+      "fresh": false,
+      "qualification": "shared-integer-gcd-qualification.json"
+    },
+    "hyperreal": {
+      "passed": 12,
+      "scope": "existing GCD tests",
+      "fresh": false,
+      "qualification": "shared-integer-gcd-qualification.json"
+    }
+  },
+  "checks": {
+    "hypercurve": {
+      "command": "cargo check --all-features --all-targets",
+      "log": "certified-chord-pair-enclosure-hypercurve-check.log",
+      "exit_code": 0
+    },
+    "hyperbrep": {
+      "command": "cargo check --all-features --all-targets",
+      "log": "certified-chord-pair-enclosure-hyperbrep-check.log",
+      "exit_code": 0
+    }
+  },
+  "source_sha256": {
+    "hypercurve/src/bezier_offset.rs": "9505d6738bec563b3b7926a85d13f69e59d82ad142b73e623b9cbf682acc60c5",
+    "hypercurve/tests/hypercurve_bezier_fit_offset.rs": "5c26773a7129630ddd2e79219fac7e5521430bccf98e8fc3e000c8e8a81d0df6"
+  },
+  "source_checks": "Changed-file rustfmt --check, git diff --check and source hashes pass.",
+  "held_out_retries": [
+    {
+      "log": "certified-chord-pair-enclosure-heldout-1.log",
+      "timeout_seconds": 60,
+      "exit_code": 124
+    },
+    {
+      "log": "certified-chord-pair-enclosure-heldout-2.log",
+      "timeout_seconds": 60,
+      "exit_code": 124
+    },
+    {
+      "log": "certified-chord-pair-enclosure-heldout-3.log",
+      "timeout_seconds": 60,
+      "exit_code": 124
+    },
+    {
+      "log": "certified-chord-pair-enclosure-heldout-4.log",
+      "timeout_seconds": 60,
+      "exit_code": 124
+    }
+  ],
+  "held_out_scope": "All four remain unqualified. Sequential retries overlapped qualification; no timing comparison or completion claim.",
+  "next": "interval-arithmetic-policy-followup.json",
+  "broader_goal": "Original review remains active, including the four held-out cases, normalized public topology, location API unification, full curve-family and operation-composition closure.",
+  "goal_status": "active",
+  "commits": {
+    "hypercurve": "2025587c91b4af5a1eeccae97a7412ef114a0dd1",
+    "hypersolve": "3ac2e7510936a11c7bf2eac5dfbe3f9f851afe55",
+    "hyperreal": "a2da8e2b5de9a1a4653d3662f2f05cb6533fd7ef",
+    "hyperbrep": "8a84ee7db02fd2720ac89a1a6a227ee4ec2a8171"
+  },
+  "diagnostics": {
+    "probes": [
+      {
+        "policy": "STRICT",
+        "binary": "stationary-ph-offset-certified-chord-pair-enclosure",
+        "binary_sha256": "dce536829b61ffeeb451eb21db90ca1308d578800b06e68e74caf001fa074e89",
+        "log": "stationary-ph-offset-certified-chord-pair-enclosure.log",
+        "exit_code": 0,
+        "first_offset_seconds": 3.739415705,
+        "second_offset_seconds": 21.058930111,
+        "total_seconds": 24.798793366,
+        "result": "Both offsets Certified; second result has one boundary loop."
+      },
+      {
+        "policy": "APPROXIMATE_512",
+        "binary": "stationary-ph-offset-certified-chord-pair-enclosure-approximate",
+        "binary_sha256": "5b8f6fcd0f10196c6768edc0180d0e8691b2d49bcda556826e77b56e041d9b86",
+        "log": "stationary-ph-offset-certified-chord-pair-enclosure-approximate.log",
+        "exit_code": 0,
+        "first_offset_seconds": 3.866455224,
+        "second_offset_seconds": 20.307812953,
+        "total_seconds": 24.174683148,
+        "result": "Both offsets Certified; second result has one boundary loop."
+      }
+    ],
+    "library_sha256": "cc4727257447ceb406b60209e4fc2455c300285b01aa6257299356880056f578",
+    "timing_scope": "Sequential unloaded probes started after all tests, checks, held-out retries and profiling processes ended. Both use the same inspector workload as earlier phases. No paired benchmark speedup claim.",
+    "baseline": "mixed-point-axis-order-qualification.json; public approximate baseline and consumption watchpoint described above."
+  },
+  "clean_repository_count": 30,
+  "workspace_state": "certified-chord-pair-enclosure-workspace-after-commit.json"
+}

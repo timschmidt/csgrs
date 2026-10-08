@@ -1,0 +1,209 @@
+{
+  "status": "passed within the recorded broad qualification scope",
+  "goal_status": "active",
+  "previous_commit": "8228394f174be2ae607694682defb167f030f540",
+  "commit": "72d831c46241929d0621969c372262c78a4cd88f",
+  "targets": 49,
+  "passed": 2296,
+  "passed_by_repo": {
+    "hypercurve": 2064,
+    "hyperbrep": 232
+  },
+  "known_failed": [
+    "approximate_512_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions",
+    "non_ph_bezier_pair_projective_fillet_retains_algebraic_extensions",
+    "nonconvex_algebraic_chord_expansion_is_exact_and_local_collapse_is_explicit",
+    "strict_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions",
+    "unified_mixed_line_arc_erosion_splits_after_a_curved_neck_collapse"
+  ],
+  "new_failures": [],
+  "ignored": 9,
+  "expensive_previously_unqualified_exclusions": 8,
+  "timeouts_in_broad_run": 0,
+  "builds": [
+    {
+      "repository": "hypercurve",
+      "kind": "check",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "check",
+        "--all-targets",
+        "--no-default-features",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 6.574588442017557,
+      "log": "finite-circle-projection-check.log"
+    },
+    {
+      "repository": "hypercurve",
+      "kind": "test-build",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "test",
+        "--release",
+        "--all-features",
+        "--locked",
+        "--offline",
+        "--lib",
+        "--tests",
+        "--no-run",
+        "--message-format=json"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 236.7645778770093,
+      "log": "finite-circle-projection-test-build.log"
+    },
+    {
+      "repository": "hyperbrep",
+      "kind": "check",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "check",
+        "--all-targets",
+        "--no-default-features",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 4.324473385990132,
+      "log": "finite-circle-projection-hyperbrep-check.log"
+    },
+    {
+      "repository": "hyperbrep",
+      "kind": "test-build",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "test",
+        "--release",
+        "--all-features",
+        "--locked",
+        "--offline",
+        "--lib",
+        "--tests",
+        "--no-run",
+        "--message-format=json"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 124.07898162299534,
+      "log": "finite-circle-projection-hyperbrep-test-build.log"
+    }
+  ],
+  "focused_checks": 8,
+  "public_matrices_and_probes": [
+    "finite-circle-projection-admission-region-entry.json",
+    "finite-circle-projection-affine-parallel-replay.json",
+    "finite-circle-projection-affine-public.json",
+    "finite-circle-projection-analytic-probe.json",
+    "finite-circle-projection-baseline-recheck.json",
+    "finite-circle-projection-bounds-public.json",
+    "finite-circle-projection-circle-matrix.json",
+    "finite-circle-projection-completed-probe.json",
+    "finite-circle-projection-completed.json",
+    "finite-circle-projection-constant-image-trim-matrix.json",
+    "finite-circle-projection-constructor-public.json",
+    "finite-circle-projection-cubic-replay.json",
+    "finite-circle-projection-endpoint-probe.json",
+    "finite-circle-projection-exterior-completed.json",
+    "finite-circle-projection-family-matrix.json",
+    "finite-circle-projection-finite-circle-probe.json",
+    "finite-circle-projection-finite-matrix.json",
+    "finite-circle-projection-general-trim-matrix.json",
+    "finite-circle-projection-native-poles-public.json",
+    "finite-circle-projection-previous-pairs.json",
+    "finite-circle-projection-probe-final.json",
+    "finite-circle-projection-public-replay.json",
+    "finite-circle-projection-region-carrier-matrix.json",
+    "finite-circle-projection-region-entry.json",
+    "finite-circle-projection-region-explicit.json",
+    "finite-circle-projection-region-public.json",
+    "finite-circle-projection-replay-matrix-run.json",
+    "finite-circle-projection-retained-chord-matrix.json",
+    "finite-circle-projection-retrace-public.json",
+    "finite-circle-projection-self-public.json",
+    "finite-circle-projection-tangent-matrix.json",
+    "finite-circle-projection-trim-public.json",
+    "finite-circle-projection-unit-replay.json",
+    "finite-circle-projection-winding-public.json"
+  ],
+  "remaining_public_circle_guard_check": "finite-circle-analytic-domains-projection-check.json",
+  "private_factored_polynomial_domain_cases": 72,
+  "private_selected_endpoint_projection_cases": 12,
+  "parent_regressions": {
+    "build": {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "test",
+        "--release",
+        "--all-features",
+        "--locked",
+        "--offline",
+        "--lib",
+        "--no-run",
+        "--message-format=json"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.11404462298378348,
+      "settings": {
+        "CARGO_BUILD_JOBS": "2",
+        "RUSTC": "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustc",
+        "RUSTDOC": "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustdoc",
+        "CARGO_TARGET_DIR": "/tmp/hypercurve-pruning-qualification/hyperbrep/target",
+        "CCACHE_DIR": "/tmp/hypercurve-pruning-qualification/ccache",
+        "CCACHE_TEMPDIR": "/tmp/hypercurve-pruning-qualification/ccache-tmp"
+      }
+    },
+    "tests": [
+      {
+        "command": [
+          "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve-0440a6b4a14592ee",
+          "--exact",
+          "bezier_offset::conversion_tests::selected_axis_projection_owns_finite_ranges_and_incident_roots",
+          "--nocapture",
+          "--test-threads=1"
+        ],
+        "returncode": 101,
+        "elapsed_seconds": 0.0035238989803474396,
+        "log": "finite-circle-projection-parent-selected_axis_projection_owns_finite_ranges_and_incident_roots.log",
+        "binary_sha256": "54f4191f2150c28d2d11be4f89f3756a224f1a9c9e818006d4057f33e22da798"
+      },
+      {
+        "command": [
+          "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve-0440a6b4a14592ee",
+          "--exact",
+          "bezier_offset::conversion_tests::selected_projection_replays_selected_boundaries_under_the_original_policy",
+          "--nocapture",
+          "--test-threads=1"
+        ],
+        "returncode": 101,
+        "elapsed_seconds": 0.007548122986918315,
+        "log": "finite-circle-projection-parent-selected_projection_replays_selected_boundaries_under_the_original_policy.log",
+        "binary_sha256": "54f4191f2150c28d2d11be4f89f3756a224f1a9c9e818006d4057f33e22da798"
+      }
+    ],
+    "source_count": 1005,
+    "source_hashes_verified": true
+  },
+  "public_scope": "All 34 previous public probes requalified; the outer selected-circle/analytic domain guard remains for the next migration.",
+  "attempts": [
+    "finite-circle-projection-parent-zero-filter-attempt1/",
+    "finite-circle-projection-compile-attempt1/"
+  ],
+  "source_files_verified": {
+    "working": 396,
+    "isolated": 1005
+  },
+  "dependency_commits": "finite-parallel-pruning-isolated-sources.json",
+  "isolated_dependency_sources": true,
+  "workspace_clean_claim": false,
+  "other_session_owns": "Hyperreal verified/ and verification/ changes; left untouched",
+  "normal_library": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypercurve-42c2716056451e86.rlib",
+  "normal_library_sha256": "6c28d291cd5328445f25eacc8c02c951baf90fd360386492128e9e4ae5795757",
+  "archived_library": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-circle-projection-libraries/libhypercurve-42c2716056451e86.rlib",
+  "libtest_sha256": "358b2e855b707f281aa5e3c96ba8b064a48533085c94c1d77709e99b8bfa2cff",
+  "toolchain": "finite-parallel-pruning-toolchain.json",
+  "baseline": "finite-circle-projection-parent-results.json",
+  "evidence_audit": "finite-circle-projection-worklog.md",
+  "remaining": "Geometric circle/parallel optional-range interfaces and domain guard, remaining native-only bounds and shortcut premises, selected-point finite incidence, one-sided source-cusp frames, normalized public-region construction, independent inverse replay, known failures/exclusions and broader algebraic/computational consolidation."
+}

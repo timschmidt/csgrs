@@ -1,0 +1,14 @@
+{
+  "selected": [
+    [
+      "hypercurve_path_closure",
+      "homogeneous_boundary_closes_through_boolean_corners_and_offset"
+    ]
+  ],
+  "binaries": {
+    "hypercurve_path_closure": {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/direct-endpoints-20260924-parent-path-hypercurve_path_closure",
+      "sha256": "1fbcc9a78f881b5a3d4e58900ffe2a6e71690803605adcbd2d4ad9d35e120026"
+    }
+  }
+}

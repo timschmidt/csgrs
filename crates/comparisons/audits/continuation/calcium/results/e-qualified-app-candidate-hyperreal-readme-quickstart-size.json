@@ -1,0 +1,14 @@
+{
+  "tag": "e-qualified-app-candidate-hyperreal-readme-quickstart-size",
+  "started": "2026-09-10T01:40:06.709Z",
+  "finished": "2026-09-10T01:40:06.722Z",
+  "elapsedSeconds": 0.011128748,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "size",
+  "args": [
+    "/tmp/calcium-e-qualified-apps.AHiwfn/candidate-hyperreal-readme_quickstart",
+    "/tmp/calcium-e-qualified-apps.AHiwfn/candidate-hyperreal-readme_quickstart.stripped"
+  ],
+  "code": 0,
+  "signal": null
+}

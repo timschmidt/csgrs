@@ -1,0 +1,8 @@
+{
+  "parent": "c46890e2694b50d8ed5dc0baddd43023e757dc3e",
+  "baseline_manifest": "retained-coordinate-identity-20260924-v1-sources.json",
+  "diagnostic_only": true,
+  "all_original_tests_unchanged": true,
+  "diagnostic": "bounded carrier labels and polynomial degrees",
+  "physical_snapshot": "/tmp/hypercurve-retained-coordinate-identity-v2-20260924"
+}

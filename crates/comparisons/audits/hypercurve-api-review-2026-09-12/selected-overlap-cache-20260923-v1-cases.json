@@ -1,0 +1,74 @@
+[
+  {
+    "name": "bezier_offset::conversion_tests::mapped_circle_inverse_cache_retains_policy_without_strong_source_ownership",
+    "returncode": 0,
+    "passed": true,
+    "limit_seconds": 60,
+    "elapsed_seconds": 0.1475237850099802,
+    "log": "selected-overlap-cache-20260923-v1-case-0.log"
+  },
+  {
+    "name": "bezier_offset::conversion_tests::nonrepresented_center_nonrational_chamfer_inverts_with_retained_authority",
+    "returncode": 101,
+    "passed": false,
+    "limit_seconds": 60,
+    "elapsed_seconds": 0.14697687304578722,
+    "log": "selected-overlap-cache-20260923-v1-case-1.log"
+  },
+  {
+    "name": "bezier_offset::conversion_tests::mapped_circle_rational_cache_preserves_consumed_policy",
+    "returncode": 0,
+    "passed": true,
+    "limit_seconds": 60,
+    "elapsed_seconds": 0.14964321989100426,
+    "log": "selected-overlap-cache-20260923-v1-case-2.log"
+  },
+  {
+    "name": "bezier_offset::conversion_tests::mapped_circle_diameter_cache_preserves_consumed_policy",
+    "returncode": 0,
+    "passed": true,
+    "limit_seconds": 60,
+    "elapsed_seconds": 0.1439645600039512,
+    "log": "selected-overlap-cache-20260923-v1-case-3.log"
+  },
+  {
+    "name": "bezier_offset::conversion_tests::mapped_parallel_bracket_cache_does_not_launder_a_terminal",
+    "returncode": 0,
+    "passed": true,
+    "limit_seconds": 60,
+    "elapsed_seconds": 0.1596198050538078,
+    "log": "selected-overlap-cache-20260923-v1-case-4.log"
+  },
+  {
+    "name": "bezier_offset::conversion_tests::selected_fiber_circle_overlap_does_not_prove_source_parameter_identity",
+    "returncode": 0,
+    "passed": true,
+    "limit_seconds": 60,
+    "elapsed_seconds": 0.14315697399433702,
+    "log": "selected-overlap-cache-20260923-v1-case-5.log"
+  },
+  {
+    "name": "bezier_offset::conversion_tests::selected_fiber_overlap_inverts_transported_mapped_cusp_cut",
+    "returncode": 0,
+    "passed": true,
+    "limit_seconds": 120,
+    "elapsed_seconds": 0.19737897394225,
+    "log": "selected-overlap-cache-20260923-v1-case-6.log"
+  },
+  {
+    "name": "bezier_offset::conversion_tests::selected_fiber_transverse_mapped_cut_inverts_by_point",
+    "returncode": 101,
+    "passed": false,
+    "limit_seconds": 180,
+    "elapsed_seconds": 0.25357322697527707,
+    "log": "selected-overlap-cache-20260923-v1-case-7.log"
+  },
+  {
+    "name": "bezier_offset::conversion_tests::selected_parallel_normal_circle_intersects_genuinely_analytic_parallel_in_one_fiber",
+    "returncode": "timeout",
+    "passed": false,
+    "limit_seconds": 360,
+    "elapsed_seconds": 360.16123285202775,
+    "log": "selected-overlap-cache-20260923-v1-case-8.log"
+  }
+]

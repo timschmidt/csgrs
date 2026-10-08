@@ -1,0 +1,100 @@
+[
+  {
+    "algorithm": "baseline",
+    "mode": "probe",
+    "command": "gdb",
+    "args": [
+      "--nx",
+      "--nh",
+      "-q",
+      "-batch",
+      "-x",
+      "/home/tim/Documents/GitHub/workspace/exact-real-references/ruffini-qualification/square-root-pilot/public/baseline-probe.gdb",
+      "/home/tim/Documents/GitHub/workspace/.audit-square-root.C42NO5BC/public-binaries/debug-baseline"
+    ],
+    "started": "2026-09-07T02:52:00.944Z",
+    "finished": "2026-09-07T02:52:01.200Z",
+    "status": 0,
+    "error": null,
+    "signal": null,
+    "file": "probe-baseline.log",
+    "sha256": "125ea448e85355731829f539f06b9a903cfd723edc37e46a161613a63cfe7980",
+    "stderrSha256": "f3cdad863515ad43bc8a099bf86d5baffa655b294d63dde82b8c2a58c916ab02",
+    "binary": "/home/tim/Documents/GitHub/workspace/.audit-square-root.C42NO5BC/public-binaries/debug-baseline",
+    "binarySha256": "21c25b0e12c4e7060892ff9ed7c38eae3490a103f37de12ac5cf300b26615414",
+    "binaryFileBytes": 47117088,
+    "runnerSha256": "ac4549b83eda1a54a9792b703bdc6a17de78b491866e829168557dfda6967358",
+    "scriptSha256": "e534c85b1bfc51310c11586cf9662f353837e5a95405a53860d2d94533ff7932"
+  },
+  {
+    "algorithm": "baseline",
+    "mode": "size",
+    "command": "size",
+    "args": [
+      "-A",
+      "-d",
+      "/home/tim/Documents/GitHub/workspace/.audit-square-root.C42NO5BC/public-binaries/release-baseline"
+    ],
+    "started": "2026-09-07T02:52:01.265Z",
+    "finished": "2026-09-07T02:52:01.268Z",
+    "status": 0,
+    "error": null,
+    "signal": null,
+    "file": "size-baseline.log",
+    "sha256": "1050c92d5017eafe6f9d08648016a407249986006ec71c43a015dbd378bc4d16",
+    "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "binary": "/home/tim/Documents/GitHub/workspace/.audit-square-root.C42NO5BC/public-binaries/release-baseline",
+    "binarySha256": "74b9eb062f105fa6d1b97d53394afbef2d524f2ed892a7fbd1e855dfdd9a1475",
+    "binaryFileBytes": 2826536,
+    "runnerSha256": "ac4549b83eda1a54a9792b703bdc6a17de78b491866e829168557dfda6967358"
+  },
+  {
+    "algorithm": "diagonal",
+    "mode": "probe",
+    "command": "gdb",
+    "args": [
+      "--nx",
+      "--nh",
+      "-q",
+      "-batch",
+      "-x",
+      "/home/tim/Documents/GitHub/workspace/exact-real-references/ruffini-qualification/square-root-pilot/public/diagonal-probe.gdb",
+      "/home/tim/Documents/GitHub/workspace/.audit-square-root.C42NO5BC/public-binaries/debug-diagonal"
+    ],
+    "started": "2026-09-07T02:52:01.330Z",
+    "finished": "2026-09-07T02:52:01.562Z",
+    "status": 0,
+    "error": null,
+    "signal": null,
+    "file": "probe-diagonal.log",
+    "sha256": "6c9c340554b52d76b6bf48704c2ef407132e53e3a77d1583c39beb33a7e72a10",
+    "stderrSha256": "66deb473d9cf1b9df612c0d50cec89f2d71fde166ac4c0625da4cd2a8405900c",
+    "binary": "/home/tim/Documents/GitHub/workspace/.audit-square-root.C42NO5BC/public-binaries/debug-diagonal",
+    "binarySha256": "5d6481b6550bf859d22d13e50a56d711872950f94fbed25f66dcc069e33a3300",
+    "binaryFileBytes": 48125152,
+    "runnerSha256": "ac4549b83eda1a54a9792b703bdc6a17de78b491866e829168557dfda6967358",
+    "scriptSha256": "d1fe8e3245cb90cb917281753fed33df3e820fa053cf12500848158968ffe052"
+  },
+  {
+    "algorithm": "diagonal",
+    "mode": "size",
+    "command": "size",
+    "args": [
+      "-A",
+      "-d",
+      "/home/tim/Documents/GitHub/workspace/.audit-square-root.C42NO5BC/public-binaries/release-diagonal"
+    ],
+    "started": "2026-09-07T02:52:01.629Z",
+    "finished": "2026-09-07T02:52:01.632Z",
+    "status": 0,
+    "error": null,
+    "signal": null,
+    "file": "size-diagonal.log",
+    "sha256": "5d0921e7d24ba504df4bb2634cd6a2237b70d37b10021c9fd77b38f3cbca5c38",
+    "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "binary": "/home/tim/Documents/GitHub/workspace/.audit-square-root.C42NO5BC/public-binaries/release-diagonal",
+    "binarySha256": "b34844958eee982daf84bf4ccac64bd85af14a0a11d5cb34066ec0554d69170d",
+    "binaryFileBytes": 2830856,
+    "runnerSha256": "ac4549b83eda1a54a9792b703bdc6a17de78b491866e829168557dfda6967358"
+  }
+]

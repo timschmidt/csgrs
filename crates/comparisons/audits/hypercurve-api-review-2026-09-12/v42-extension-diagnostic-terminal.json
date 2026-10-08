@@ -1,0 +1,71 @@
+{
+  "cases": [
+    {
+      "name": "bezier_region::tests::one_fragment_selected_projective_extensions_keep_the_local_fiber",
+      "returncode": 0,
+      "elapsed_seconds": 0.007616247981786728,
+      "limit_seconds": 75,
+      "log": "v42-extension-diagnostic-one_fragment_selected_projective_extensions_keep_the_local_fiber.log"
+    },
+    {
+      "name": "bezier_region::tests::one_fragment_selected_native_extensions_keep_the_local_fiber",
+      "returncode": 0,
+      "elapsed_seconds": 0.007616576971486211,
+      "limit_seconds": 75,
+      "log": "v42-extension-diagnostic-one_fragment_selected_native_extensions_keep_the_local_fiber.log"
+    },
+    {
+      "name": "bezier_region::tests::retained_polynomial_chamfer_extends_exact_and_algebraic_incident_roots",
+      "returncode": 0,
+      "elapsed_seconds": 2.6673980900086462,
+      "limit_seconds": 75,
+      "log": "v42-extension-diagnostic-retained_polynomial_chamfer_extends_exact_and_algebraic_incident_roots.log"
+    },
+    {
+      "name": "bezier_region::tests::retained_rational_chamfer_extends_exact_and_algebraic_pre_pole_roots",
+      "returncode": 0,
+      "elapsed_seconds": 6.623227845993824,
+      "limit_seconds": 75,
+      "log": "v42-extension-diagnostic-retained_rational_chamfer_extends_exact_and_algebraic_pre_pole_roots.log"
+    },
+    {
+      "name": "bezier_region::tests::one_fragment_materialized_loop_extends_algebraic_chamfer_cuts_once",
+      "returncode": 101,
+      "elapsed_seconds": 0.26426802994683385,
+      "limit_seconds": 75,
+      "log": "v42-extension-diagnostic-one_fragment_materialized_loop_extends_algebraic_chamfer_cuts_once.log"
+    },
+    {
+      "name": "bezier_region::tests::one_fragment_selected_loop_extends_chamfer_cuts_on_its_analytic_carrier",
+      "returncode": 101,
+      "elapsed_seconds": 0.5145556590287015,
+      "limit_seconds": 75,
+      "log": "v42-extension-diagnostic-one_fragment_selected_loop_extends_chamfer_cuts_on_its_analytic_carrier.log"
+    },
+    {
+      "name": "bezier_region::tests::one_fragment_selected_loop_one_sided_chamfers_do_not_duplicate_the_source",
+      "returncode": 0,
+      "elapsed_seconds": 0.8652680179802701,
+      "limit_seconds": 75,
+      "log": "v42-extension-diagnostic-one_fragment_selected_loop_one_sided_chamfers_do_not_duplicate_the_source.log"
+    },
+    {
+      "name": "bezier_region::tests::selected_parallel_companion_fillets_without_range_promotion",
+      "returncode": 0,
+      "elapsed_seconds": 0.3643465240020305,
+      "limit_seconds": 75,
+      "log": "v42-extension-diagnostic-selected_parallel_companion_fillets_without_range_promotion.log"
+    },
+    {
+      "name": "bezier_region::tests::one_fragment_retained_ph_loop_extends_fillet_on_one_analytic_carrier",
+      "returncode": 101,
+      "elapsed_seconds": 0.06391528504900634,
+      "limit_seconds": 75,
+      "log": "v42-extension-diagnostic-one_fragment_retained_ph_loop_extends_fillet_on_one_analytic_carrier.log"
+    }
+  ],
+  "all_owned_processes_reaped": true,
+  "all_sources_unchanged": true,
+  "binary_sha256": "41f54f6c06850ba3fd7752cda6aa8376899ba3349ab41c3ac65d32af39b0b824",
+  "qualification": false
+}

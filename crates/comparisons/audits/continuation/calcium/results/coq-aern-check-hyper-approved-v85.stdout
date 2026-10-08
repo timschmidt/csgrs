@@ -1,0 +1,1 @@
+{"status":"verified","rows":48,"enclosures":96,"knownUnequal":24,"knownEqual":8,"unknown":16,"nonwinningBorrowedSelections":16,"matchingBytes":143914,"corruptionControls":12,"selectionModel":{"kind":"independent rational overlap model, not Coq or Haskell execution","pairs":38025,"admissibleBranches":39970}}

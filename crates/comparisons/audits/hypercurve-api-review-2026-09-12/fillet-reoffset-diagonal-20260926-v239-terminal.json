@@ -1,0 +1,46 @@
+{
+  "source_manifest": "fillet-reoffset-diagonal-20260926-v239-sources.json",
+  "source_directory": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/source-archives/fillet-reoffset-diagonal-20260926-v239",
+  "workspace_guard": "fillet-reoffset-diagonal-20260926-v239-sources.json",
+  "parent_commit": "8b18d3f90252200a6216834e788a8c65ee720581",
+  "cases": [
+    {
+      "name": "strict_trim_only_analytic_parallel_support_corners_retain_algebraic_fillet_centers",
+      "returncode": 0,
+      "log": "fillet-reoffset-diagonal-20260926-v239-strict_trim_only_analytic_parallel_support_corners_retain_algebraic_fillet_centers.log",
+      "elapsed_seconds": 0.21401251398492604
+    },
+    {
+      "name": "strict_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions",
+      "returncode": 101,
+      "log": "fillet-reoffset-diagonal-20260926-v239-strict_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions.log",
+      "elapsed_seconds": 55.18448457401246
+    },
+    {
+      "name": "approximate_512_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions",
+      "returncode": 101,
+      "log": "fillet-reoffset-diagonal-20260926-v239-approximate_512_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions.log",
+      "elapsed_seconds": 55.433935943990946
+    }
+  ],
+  "all_processes_reaped": true,
+  "command": [
+    "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+    "test",
+    "--test",
+    "hypercurve_curve_region_promotion",
+    "--release",
+    "--all-features",
+    "--no-run",
+    "--message-format=json",
+    "--locked",
+    "--offline"
+  ],
+  "build_returncode": 0,
+  "build_elapsed_seconds": 82.47430453100242,
+  "binary": {
+    "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/fillet-reoffset-diagonal-20260926-v239-hypercurve_curve_region_promotion",
+    "sha256": "69bab2cd07e5c9b865242857f77bc46a03a4c44f35cfcce925d626180a112130"
+  },
+  "all_sources_unchanged": true
+}

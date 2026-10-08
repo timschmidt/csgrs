@@ -1,0 +1,56 @@
+{
+  "normal_production_build": false,
+  "source_manifest": "stationary-family-composition-20260927-v541-sources.json",
+  "source_directory": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/source-archives/stationary-family-composition-20260927-v541",
+  "builds": [
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "test",
+        "--lib",
+        "--release",
+        "--all-features",
+        "--locked",
+        "--offline",
+        "--no-run",
+        "--message-format=json"
+      ],
+      "returncode": 0,
+      "log": "stationary-family-composition-20260927-v541-build.log",
+      "elapsed_seconds": 133.1477044171188,
+      "binaries": {
+        "hypercurve": {
+          "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/stationary-family-composition-20260927-v541-hypercurve-tests",
+          "sha256": "d97322d343b5f03e43c6ac7bf2370cd1722b533ad4670b7da7a5cbc314a97fc9"
+        }
+      }
+    }
+  ],
+  "cases": [
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/stationary-family-composition-20260927-v541-hypercurve-tests",
+        "--exact",
+        "curve::curve_fillet::stationary_family_composition_regression::normalized_region_selects_and_reuses_a_stationary_fillet_family",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 101,
+      "log": "stationary-family-composition-20260927-v541-case.log",
+      "elapsed_seconds": 5.620835228124633,
+      "target": "hypercurve",
+      "name": "curve::curve_fillet::stationary_family_composition_regression::normalized_region_selects_and_reuses_a_stationary_fillet_family",
+      "passed": false
+    }
+  ],
+  "checks": [],
+  "expected_cases": {
+    "hypercurve": [
+      "curve::curve_fillet::stationary_family_composition_regression::normalized_region_selects_and_reuses_a_stationary_fillet_family"
+    ]
+  },
+  "all_processes_reaped": true,
+  "probe_complete": true,
+  "qualification_complete": false,
+  "failure": "focused regression failure"
+}

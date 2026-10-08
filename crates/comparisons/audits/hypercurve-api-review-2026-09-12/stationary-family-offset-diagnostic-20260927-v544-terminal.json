@@ -1,0 +1,56 @@
+{
+  "normal_production_build": false,
+  "source_manifest": "stationary-family-offset-diagnostic-20260927-v544-sources.json",
+  "source_directory": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/source-archives/stationary-family-offset-diagnostic-20260927-v544",
+  "builds": [
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "test",
+        "--lib",
+        "--release",
+        "--all-features",
+        "--locked",
+        "--offline",
+        "--no-run",
+        "--message-format=json"
+      ],
+      "returncode": 0,
+      "log": "stationary-family-offset-diagnostic-20260927-v544-build.log",
+      "elapsed_seconds": 131.64538215403445,
+      "binaries": {
+        "hypercurve": {
+          "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/stationary-family-offset-diagnostic-20260927-v544-hypercurve-tests",
+          "sha256": "0e57fe4fcb54eeac5c3fc8c6da1e234c94ee6cb7177bc8e2a124df71fb0b0cb0"
+        }
+      }
+    }
+  ],
+  "cases": [
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/stationary-family-offset-diagnostic-20260927-v544-hypercurve-tests",
+        "--exact",
+        "curve::curve_fillet::stationary_family_composition_regression::normalized_region_selects_and_reuses_a_stationary_fillet_family",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 101,
+      "log": "stationary-family-offset-diagnostic-20260927-v544-case.log",
+      "elapsed_seconds": 5.620769491884857,
+      "target": "hypercurve",
+      "name": "curve::curve_fillet::stationary_family_composition_regression::normalized_region_selects_and_reuses_a_stationary_fillet_family",
+      "passed": false
+    }
+  ],
+  "checks": [],
+  "expected_cases": {
+    "hypercurve": [
+      "curve::curve_fillet::stationary_family_composition_regression::normalized_region_selects_and_reuses_a_stationary_fillet_family"
+    ]
+  },
+  "all_processes_reaped": true,
+  "probe_complete": true,
+  "qualification_complete": false,
+  "failure": "focused regression failure"
+}

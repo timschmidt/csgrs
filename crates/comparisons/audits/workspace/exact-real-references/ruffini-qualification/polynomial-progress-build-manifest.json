@@ -1,0 +1,21 @@
+{
+  "sourceSha256": "17043a7cab2a0d49cdded94fb0740fd72b1362ebb03d987007196c3e78fdb3fa",
+  "classes": [
+    [
+      "PolynomialProgress.class",
+      "5e76ab6b8a4d6376b4592789b5fa7ff8e272f889d17016695dcddf00ab84b19c"
+    ],
+    [
+      "PolynomialProgress$Budget.class",
+      "1f889d85e631548db4b2b126605e7f720725133294acc812ba86720a1d7a2ec4"
+    ],
+    [
+      "PolynomialProgress$Univariate.class",
+      "af65881ff5840d5d5f87a4c3c69b2ccca1a9d88efe3a32c2564ea498f701f39a"
+    ],
+    [
+      "PolynomialProgress$Multivariate.class",
+      "700d76368d961671f52e015a76fac3aa13ffbf57d6f484fef3ad6985de8359f3"
+    ]
+  ]
+}

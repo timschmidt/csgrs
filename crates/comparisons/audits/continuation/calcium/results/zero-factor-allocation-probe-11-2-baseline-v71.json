@@ -1,0 +1,18 @@
+{
+  "tag": "zero-factor-allocation-probe-11-2-baseline-v71",
+  "started": "2026-09-11T19:37:33.600Z",
+  "finished": "2026-09-11T19:37:33.621Z",
+  "elapsedSeconds": 0.018883503000000003,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "taskset",
+  "args": [
+    "-c",
+    "2",
+    "/tmp/calcium-zero-cost.cEHSth/baseline-allocation",
+    "allocation",
+    "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/zero-factor-cost-input-v71.json",
+    "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/zero-factor-allocation-probe-11-2-plan-v71.json"
+  ],
+  "code": 0,
+  "signal": null
+}

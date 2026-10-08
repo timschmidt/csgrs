@@ -1,0 +1,29 @@
+{
+  "source_manifest": "collapsed-parallel-fillet-20260926-v311-sources.json",
+  "source_directory": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/source-archives/collapsed-parallel-fillet-20260926-v311",
+  "cases": [],
+  "builds": [],
+  "all_processes_reaped": true,
+  "checks": [
+    {
+      "label": "clippy-all-features",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "clippy",
+        "--all-targets",
+        "--all-features",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "returncode": 101,
+      "log": "collapsed-parallel-fillet-20260926-v311-clippy-all-features.log",
+      "elapsed_seconds": 18.19257800199557
+    }
+  ],
+  "qualification_scope": "Fixed-center analytic-parallel contact replay, complete preimages, original normal sheets and exact constraint narrowing",
+  "failure": "clippy-all-features failed",
+  "qualification_complete": false
+}

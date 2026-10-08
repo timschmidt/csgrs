@@ -1,0 +1,11 @@
+{
+  "tag": "monic-app-run-arrangement",
+  "started": "2026-09-09T01:15:14.449Z",
+  "finished": "2026-09-09T01:15:14.461Z",
+  "elapsedSeconds": 0.010039811999999997,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "/tmp/calcium-monic-state.rk70Kr/app-monic-arrangement.stripped",
+  "args": [],
+  "code": 0,
+  "signal": null
+}

@@ -1,0 +1,23 @@
+{
+  "outer_session": 76130,
+  "outer_exit_code": 1,
+  "passed_cases": 359,
+  "failed_cases": [
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/parameter-construction-20260928-v597-hypercurve-tests",
+        "--exact",
+        "rational_bezier_general::tests::conic_rational_image_separation_refines_past_the_old_limit",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 124,
+      "log": "parameter-construction-20260928-v598-conic_rational_image_separation_refines_past_the_old_limit.log",
+      "elapsed_seconds": 240.0011720440816,
+      "target": "hypercurve",
+      "name": "rational_bezier_general::tests::conic_rational_image_separation_refines_past_the_old_limit",
+      "passed": false
+    }
+  ],
+  "checks": 0
+}

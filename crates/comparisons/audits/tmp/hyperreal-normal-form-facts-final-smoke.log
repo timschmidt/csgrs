@@ -1,0 +1,12 @@
+   Compiling hyperreal v0.13.1 (/home/tim/Documents/GitHub/workspace/hyperreal)
+    Finished `release` profile [optimized] target(s) in 17.05s
+     Running unittests src/lib.rs (target/release/deps/hyperreal-1cc0b97c8fd55e9c)
+
+running 3 tests
+normal-form diagnostic: zero before proof=None
+test computable::node::tests::rational_normal_form_retains_only_successful_sign_proofs ... ok
+test real::tests::tests::exact_normal_form_cancels_shared_opaque_affine_atoms ... ok
+test computable::node::tests::pi_laurent_normal_form_declines_wide_opaque_expression_dags ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 706 filtered out; finished in 0.00s
+

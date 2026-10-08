@@ -1,0 +1,5 @@
+Remove redundant native constructor and unused query preparation
+
+Delete the borrowed native-boundary constructor forwarder and update its controlled test callers. Preserve the authoritative constructor and distinct nesting oracles. Prepare a native batch query index only when at least one input has stored coordinates, retaining index reuse for native and mixed batches.
+
+Validation: 44 release regressions across three binaries and seven feature/lint, formatting, fuzz, documentation and downstream checks. No measured speedup claim.

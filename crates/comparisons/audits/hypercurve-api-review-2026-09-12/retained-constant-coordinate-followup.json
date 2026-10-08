@@ -1,0 +1,17 @@
+{
+  "status": "implemented, qualified and committed",
+  "source": "hypercurve/src/bezier_algebraic_image.rs: RationalBezierAlgebraicPointImage2::exact_coordinate",
+  "evidence": "owned-axis-coordinate-baseline.log passes because the original selected-coordinate circle/chord fixture does not publish a constant coordinate. The stronger fixture with Exact support endpoints does reproduce the axis substitution. The first fixture has retained coordinate polynomials y=[1], weight=[1] at an algebraic parameter.",
+  "current_schedule": "The method first requires represented_exact_point for the retained parameter, then falls back to a resolved coordinate-image exact_point_witness. It does not first recognize a parameter-independent retained coordinate.",
+  "next_regression": "Retain P(alpha)=(alpha,C) with alpha a certified nonrational root and C an arbitrary exact Real, including pi or sqrt(2). Request only y and require Some(C) without publishing x or the parameter. Include numerator C*W and denominator W only if the denominator is certified nonzero at the retained parameter; undefined poles and unresolved denominator signs must decline. Preserve retained policy and root validity obligations.",
+  "direction": "Improve the existing one-coordinate conversion, reusing polynomial sign/ratio evidence where appropriate. Keep arbitrary exact Real payloads and avoid an independent whole-point or scalar-root reconstruction. Do not infer rational payload from a constant coordinate.",
+  "commit": "6c6fdad97a46d5f6efcd653c631b058b6db29ae9",
+  "qualification": "retained-constant-coordinate-qualification.json",
+  "implementation": [
+    "Extracted the existing exact coefficientwise rational-map proportionality proof from linear projection; retained coordinate conversion now shares it before attempting scalar-parameter reconstruction.",
+    "The selected denominator must be certified nonzero under STRICT before the optional scalar coordinate is published. Proportional coordinates do not cancel a pole; unresolved coefficients do not use approximate equality.",
+    "Whole-point conversion uses the same coordinate fallback while preserving its existing single denominator evaluation when the parameter is already represented. Lazy curve sources need not resolve both Cartesian images for one constant coordinate.",
+    "No additional carrier, cache or compatibility API was introduced. Arbitrary exact Real constants, including pi and sqrt(2), retain their scalar representation."
+  ],
+  "remaining": "General nonconstant coordinate projection and arbitrary selected-root replay remain part of the original goal."
+}

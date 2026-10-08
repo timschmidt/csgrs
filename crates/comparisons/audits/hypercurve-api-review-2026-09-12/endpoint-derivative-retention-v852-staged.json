@@ -1,0 +1,13 @@
+{
+  "repos": {
+    "hypercurve": {
+      "parent": "d81a9f7d1aae65360c94bce2d89e03bad691807a",
+      "paths": {
+        "src/bezier_arrangement.rs": "e99f1985af0a111e23f317f2641b09234f5d0ef03e1a3b3d63210b2449c236c5",
+        "src/bezier_split_endpoint.rs": "4e8b8286a25cf33321706ee616e92d7aa1ebabd3d9845c7f2c2c6338914594cd"
+      }
+    }
+  },
+  "qualification": "endpoint-derivative-retention-v852-terminal.json",
+  "verified_source_files": 2048
+}

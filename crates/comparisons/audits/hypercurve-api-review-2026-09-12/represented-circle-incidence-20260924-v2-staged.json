@@ -1,0 +1,7 @@
+{
+  "parent": "1cf070a5d1ec2ebf2796177da784a2d5a0494ee2",
+  "files": {
+    "src/bezier_offset.rs": "0f580b13bc7e95a6202d50b84ac000feac72672c4860d84a05662a691c947838"
+  },
+  "all_index_bytes_match_qualification": true
+}

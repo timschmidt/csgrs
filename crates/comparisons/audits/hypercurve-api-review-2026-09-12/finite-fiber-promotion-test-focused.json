@@ -1,0 +1,342 @@
+[
+  {
+    "target": "lib",
+    "filter": "independently_encoded_nonrepresented_analytic_circle_publishes_overlap",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve-6e6572a45c5b177b",
+      "independently_encoded_nonrepresented_analytic_circle_publishes_overlap",
+      "--test-threads=2",
+      "--color",
+      "never",
+      "--nocapture"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.21392389200627804,
+    "log": "finite-fiber-promotion-test-independently_encoded_nonrepresented_analytic_circle_publishes_overlap.log",
+    "binary": "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve-6e6572a45c5b177b",
+    "sha256": "a229b5b1acfeaa50df59e0c1dba25ffaf5ebd5178584ec83a383546eb8b4749c"
+  },
+  {
+    "target": "lib",
+    "filter": "nonrepresented_center_transverse_chamfer_inverts_by_correlated_point",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve-6e6572a45c5b177b",
+      "nonrepresented_center_transverse_chamfer_inverts_by_correlated_point",
+      "--test-threads=2",
+      "--color",
+      "never",
+      "--nocapture"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.06362577399704605,
+    "log": "finite-fiber-promotion-test-nonrepresented_center_transverse_chamfer_inverts_by_correlated_point.log",
+    "binary": "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve-6e6572a45c5b177b",
+    "sha256": "a229b5b1acfeaa50df59e0c1dba25ffaf5ebd5178584ec83a383546eb8b4749c"
+  },
+  {
+    "target": "lib",
+    "filter": "selected_scalar_promotion_uses_its_finite_isolator",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve-6e6572a45c5b177b",
+      "selected_scalar_promotion_uses_its_finite_isolator",
+      "--test-threads=2",
+      "--color",
+      "never",
+      "--nocapture"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.007504795998102054,
+    "log": "finite-fiber-promotion-test-selected_scalar_promotion_uses_its_finite_isolator.log",
+    "binary": "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve-6e6572a45c5b177b",
+    "sha256": "a229b5b1acfeaa50df59e0c1dba25ffaf5ebd5178584ec83a383546eb8b4749c"
+  },
+  {
+    "target": "lib",
+    "filter": "selected_norm_isolation_preserves_exterior_exact_and_algebraic_roots",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve-6e6572a45c5b177b",
+      "selected_norm_isolation_preserves_exterior_exact_and_algebraic_roots",
+      "--test-threads=2",
+      "--color",
+      "never",
+      "--nocapture"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.00760155898751691,
+    "log": "finite-fiber-promotion-test-selected_norm_isolation_preserves_exterior_exact_and_algebraic_roots.log",
+    "binary": "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve-6e6572a45c5b177b",
+    "sha256": "a229b5b1acfeaa50df59e0c1dba25ffaf5ebd5178584ec83a383546eb8b4749c"
+  },
+  {
+    "target": "lib",
+    "filter": "degenerate_fiber_projection_cannot_discard_an_exterior_selected_root",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve-6e6572a45c5b177b",
+      "degenerate_fiber_projection_cannot_discard_an_exterior_selected_root",
+      "--test-threads=2",
+      "--color",
+      "never",
+      "--nocapture"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.0033940679859369993,
+    "log": "finite-fiber-promotion-test-degenerate_fiber_projection_cannot_discard_an_exterior_selected_root.log",
+    "binary": "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve-6e6572a45c5b177b",
+    "sha256": "a229b5b1acfeaa50df59e0c1dba25ffaf5ebd5178584ec83a383546eb8b4749c"
+  },
+  {
+    "target": "lib",
+    "filter": "finite_fiber_roots_keep_selected_boundary_ownership",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve-6e6572a45c5b177b",
+      "finite_fiber_roots_keep_selected_boundary_ownership",
+      "--test-threads=2",
+      "--color",
+      "never",
+      "--nocapture"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.01553256600163877,
+    "log": "finite-fiber-promotion-test-finite_fiber_roots_keep_selected_boundary_ownership.log",
+    "binary": "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve-6e6572a45c5b177b",
+    "sha256": "a229b5b1acfeaa50df59e0c1dba25ffaf5ebd5178584ec83a383546eb8b4749c"
+  },
+  {
+    "target": "lib",
+    "filter": "bounded_general_resultant_isolates_only_the_requested_selected_fiber_range",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve-6e6572a45c5b177b",
+      "bounded_general_resultant_isolates_only_the_requested_selected_fiber_range",
+      "--test-threads=2",
+      "--color",
+      "never",
+      "--nocapture"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.0034668220032472163,
+    "log": "finite-fiber-promotion-test-bounded_general_resultant_isolates_only_the_requested_selected_fiber_range.log",
+    "binary": "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve-6e6572a45c5b177b",
+    "sha256": "a229b5b1acfeaa50df59e0c1dba25ffaf5ebd5178584ec83a383546eb8b4749c"
+  },
+  {
+    "target": "lib",
+    "filter": "selected_fiber_scalar_is_compact_exact_and_ordered_without_a_norm",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve-6e6572a45c5b177b",
+      "selected_fiber_scalar_is_compact_exact_and_ordered_without_a_norm",
+      "--test-threads=2",
+      "--color",
+      "never",
+      "--nocapture"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.007445139985065907,
+    "log": "finite-fiber-promotion-test-selected_fiber_scalar_is_compact_exact_and_ordered_without_a_norm.log",
+    "binary": "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve-6e6572a45c5b177b",
+    "sha256": "a229b5b1acfeaa50df59e0c1dba25ffaf5ebd5178584ec83a383546eb8b4749c"
+  },
+  {
+    "target": "lib",
+    "filter": "selected_fiber_import_and_refinement_retain_the_known_scalar_representation",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve-6e6572a45c5b177b",
+      "selected_fiber_import_and_refinement_retain_the_known_scalar_representation",
+      "--test-threads=2",
+      "--color",
+      "never",
+      "--nocapture"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.00343234499450773,
+    "log": "finite-fiber-promotion-test-selected_fiber_import_and_refinement_retain_the_known_scalar_representation.log",
+    "binary": "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve-6e6572a45c5b177b",
+    "sha256": "a229b5b1acfeaa50df59e0c1dba25ffaf5ebd5178584ec83a383546eb8b4749c"
+  },
+  {
+    "target": "lib",
+    "filter": "selected_fiber_equality_requires_selected_root_containment",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve-6e6572a45c5b177b",
+      "selected_fiber_equality_requires_selected_root_containment",
+      "--test-threads=2",
+      "--color",
+      "never",
+      "--nocapture"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.003389868012163788,
+    "log": "finite-fiber-promotion-test-selected_fiber_equality_requires_selected_root_containment.log",
+    "binary": "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve-6e6572a45c5b177b",
+    "sha256": "a229b5b1acfeaa50df59e0c1dba25ffaf5ebd5178584ec83a383546eb8b4749c"
+  },
+  {
+    "target": "lib",
+    "filter": "selected_fiber_diagonal_identity_preserves_distinct_root_ownership",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve-6e6572a45c5b177b",
+      "selected_fiber_diagonal_identity_preserves_distinct_root_ownership",
+      "--test-threads=2",
+      "--color",
+      "never",
+      "--nocapture"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.0034108769905287772,
+    "log": "finite-fiber-promotion-test-selected_fiber_diagonal_identity_preserves_distinct_root_ownership.log",
+    "binary": "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve-6e6572a45c5b177b",
+    "sha256": "a229b5b1acfeaa50df59e0c1dba25ffaf5ebd5178584ec83a383546eb8b4749c"
+  },
+  {
+    "target": "lib",
+    "filter": "selected_fiber_norm_isolation_refines_past_the_old_limit",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve-6e6572a45c5b177b",
+      "selected_fiber_norm_isolation_refines_past_the_old_limit",
+      "--test-threads=2",
+      "--color",
+      "never",
+      "--nocapture"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.01552161801373586,
+    "log": "finite-fiber-promotion-test-selected_fiber_norm_isolation_refines_past_the_old_limit.log",
+    "binary": "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve-6e6572a45c5b177b",
+    "sha256": "a229b5b1acfeaa50df59e0c1dba25ffaf5ebd5178584ec83a383546eb8b4749c"
+  },
+  {
+    "target": "lib",
+    "filter": "selected_fiber_interval_supports_exact_and_nonexact_exterior_roots",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve-6e6572a45c5b177b",
+      "selected_fiber_interval_supports_exact_and_nonexact_exterior_roots",
+      "--test-threads=2",
+      "--color",
+      "never",
+      "--nocapture"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.0033846580190584064,
+    "log": "finite-fiber-promotion-test-selected_fiber_interval_supports_exact_and_nonexact_exterior_roots.log",
+    "binary": "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve-6e6572a45c5b177b",
+    "sha256": "a229b5b1acfeaa50df59e0c1dba25ffaf5ebd5178584ec83a383546eb8b4749c"
+  },
+  {
+    "target": "lib",
+    "filter": "fixed_distance_retains_selected_candidates_in_both_range_orientations",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve-6e6572a45c5b177b",
+      "fixed_distance_retains_selected_candidates_in_both_range_orientations",
+      "--test-threads=2",
+      "--color",
+      "never",
+      "--nocapture"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.007399394002277404,
+    "log": "finite-fiber-promotion-test-fixed_distance_retains_selected_candidates_in_both_range_orientations.log",
+    "binary": "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve-6e6572a45c5b177b",
+    "sha256": "a229b5b1acfeaa50df59e0c1dba25ffaf5ebd5178584ec83a383546eb8b4749c"
+  },
+  {
+    "target": "lib",
+    "filter": "algebraic_center_fixed_distance_projects_complete_high_degree_fiber",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve-6e6572a45c5b177b",
+      "algebraic_center_fixed_distance_projects_complete_high_degree_fiber",
+      "--test-threads=2",
+      "--color",
+      "never",
+      "--nocapture"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 1.5156565469806083,
+    "log": "finite-fiber-promotion-test-algebraic_center_fixed_distance_projects_complete_high_degree_fiber.log",
+    "binary": "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve-6e6572a45c5b177b",
+    "sha256": "a229b5b1acfeaa50df59e0c1dba25ffaf5ebd5178584ec83a383546eb8b4749c"
+  },
+  {
+    "target": "lib",
+    "filter": "selected_fiber_positive_dimensional_projection_reports_authored_continuum",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve-6e6572a45c5b177b",
+      "selected_fiber_positive_dimensional_projection_reports_authored_continuum",
+      "--test-threads=2",
+      "--color",
+      "never",
+      "--nocapture"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.0034183550160378218,
+    "log": "finite-fiber-promotion-test-selected_fiber_positive_dimensional_projection_reports_authored_continuum.log",
+    "binary": "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve-6e6572a45c5b177b",
+    "sha256": "a229b5b1acfeaa50df59e0c1dba25ffaf5ebd5178584ec83a383546eb8b4749c"
+  },
+  {
+    "target": "lib",
+    "filter": "selected_parallel_normal_positive_dimensional_projection_rejects_conjugate_components",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve-6e6572a45c5b177b",
+      "selected_parallel_normal_positive_dimensional_projection_rejects_conjugate_components",
+      "--test-threads=2",
+      "--color",
+      "never",
+      "--nocapture"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.007455568993464112,
+    "log": "finite-fiber-promotion-test-selected_parallel_normal_positive_dimensional_projection_rejects_conjugate_components.log",
+    "binary": "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve-6e6572a45c5b177b",
+    "sha256": "a229b5b1acfeaa50df59e0c1dba25ffaf5ebd5178584ec83a383546eb8b4749c"
+  },
+  {
+    "target": "lib",
+    "filter": "selected_fiber_affine_chart_round_trip_avoids_global_projection",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve-6e6572a45c5b177b",
+      "selected_fiber_affine_chart_round_trip_avoids_global_projection",
+      "--test-threads=2",
+      "--color",
+      "never",
+      "--nocapture"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.015538935986114666,
+    "log": "finite-fiber-promotion-test-selected_fiber_affine_chart_round_trip_avoids_global_projection.log",
+    "binary": "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve-6e6572a45c5b177b",
+    "sha256": "a229b5b1acfeaa50df59e0c1dba25ffaf5ebd5178584ec83a383546eb8b4749c"
+  },
+  {
+    "target": "lib",
+    "filter": "selected_fiber_projective_chart_round_trip_avoids_global_projection",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve-6e6572a45c5b177b",
+      "selected_fiber_projective_chart_round_trip_avoids_global_projection",
+      "--test-threads=2",
+      "--color",
+      "never",
+      "--nocapture"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.007473028003005311,
+    "log": "finite-fiber-promotion-test-selected_fiber_projective_chart_round_trip_avoids_global_projection.log",
+    "binary": "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve-6e6572a45c5b177b",
+    "sha256": "a229b5b1acfeaa50df59e0c1dba25ffaf5ebd5178584ec83a383546eb8b4749c"
+  },
+  {
+    "target": "lib",
+    "filter": "finite_parallel_pair_components_obey_exact_domain_boundaries",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve-6e6572a45c5b177b",
+      "finite_parallel_pair_components_obey_exact_domain_boundaries",
+      "--test-threads=2",
+      "--color",
+      "never",
+      "--nocapture"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 2.0664809189911466,
+    "log": "finite-fiber-promotion-test-finite_parallel_pair_components_obey_exact_domain_boundaries.log",
+    "binary": "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve-6e6572a45c5b177b",
+    "sha256": "a229b5b1acfeaa50df59e0c1dba25ffaf5ebd5178584ec83a383546eb8b4749c"
+  }
+]

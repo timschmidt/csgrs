@@ -1,0 +1,19 @@
+{
+  "name": "hyperreal-fmt",
+  "command": "cargo",
+  "args": [
+    "fmt",
+    "--manifest-path",
+    "/home/tim/Documents/GitHub/workspace/hyperreal/Cargo.toml",
+    "--all",
+    "--",
+    "--check"
+  ],
+  "begin": "2026-09-07T06:14:35.204Z",
+  "end": "2026-09-07T06:14:35.636Z",
+  "status": 0,
+  "signal": null,
+  "error": null,
+  "stdout": "",
+  "stderr": ""
+}

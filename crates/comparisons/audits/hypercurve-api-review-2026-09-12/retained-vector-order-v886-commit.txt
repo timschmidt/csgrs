@@ -1,0 +1,20 @@
+Retain exact source tangents through arrangement ordering
+
+Make tangent-image retention infallible and expose represented coordinates
+as one optional borrowed pair. Store the existing exact derivative image
+instead of discarding unprojected source expressions. Migrate all callers,
+benchmark and fuzz code directly; remove unconditional coordinate getters.
+
+Use the existing common-selected-parameter authority for cross/dot/norm
+signs and exact constant-vector combinations. Retain bilinear inputs for
+sign replay and preserve selected domains under source reversal. Share
+vector payloads and retain supplied higher derivative images on demand.
+Represented-coordinate arithmetic and native ordering remain unchanged.
+Document the remaining scalar-normalization limitation explicitly.
+
+Validation: 342 selected release tests across 12 pinned binaries and seven
+build/lint/docs/fuzz/downstream checks. Source-sign replay, distinct roots,
+negative homogeneous weights, exact pi constants and eight reversal/order
+traversals are covered. The original two-policy probe now traverses after
+only its optional coordinate-view observation is migrated to the new API.
+The full architecture/composition closure goal remains active.

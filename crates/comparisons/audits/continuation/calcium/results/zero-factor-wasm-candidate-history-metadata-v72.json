@@ -1,0 +1,22 @@
+{
+  "tag": "zero-factor-wasm-candidate-history-metadata-v72",
+  "started": "2026-09-11T20:06:34.364Z",
+  "finished": "2026-09-11T20:06:34.418Z",
+  "elapsedSeconds": 0.051528493999999994,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/zero-factor-wasm-candidate-history-v72",
+  "command": "env",
+  "args": [
+    "CARGO_TARGET_DIR=/tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse",
+    "CARGO_INCREMENTAL=0",
+    "CARGO_PROFILE_DEV_DEBUG=0",
+    "CARGO_BUILD_JOBS=2",
+    "cargo",
+    "metadata",
+    "--offline",
+    "--locked",
+    "--format-version",
+    "1"
+  ],
+  "code": 0,
+  "signal": null
+}

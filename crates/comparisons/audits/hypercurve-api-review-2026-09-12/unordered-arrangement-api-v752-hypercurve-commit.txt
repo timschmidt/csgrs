@@ -1,0 +1,5 @@
+Consolidate unordered arrangement on one slice API
+
+Make arrange_unordered_segments borrow its source segments and remove the separate borrowed entry point. Both methods already called the same slice-based arrangement kernel. Update examples, benchmarks and tests directly, remove forwarding-only test duplication, and keep allocation outside timed loops.
+
+Validation: 32 release regressions across two binaries preserve native mixed-family, crossing, overlap, nesting and policy behavior. Both all-target feature/lint configurations, formatting, region-Boolean fuzz, documentation and downstream checks pass. No geometry algorithm or timing claim changes.

@@ -1,0 +1,6 @@
+     Locking 11 packages to latest Rust 1.97.0 compatible versions
+   Compiling hyperreal v0.13.1 (/home/tim/Documents/GitHub/workspace/exact-real-references/ruffini-qualification/hyper-polynomial-pilot/snapshot/hyperreal)
+   Compiling hyperlattice v0.6.1 (/home/tim/Documents/GitHub/workspace/exact-real-references/ruffini-qualification/hyper-polynomial-pilot/snapshot/hyperlattice)
+   Compiling hyperlimit v0.4.1 (/home/tim/Documents/GitHub/workspace/exact-real-references/ruffini-qualification/hyper-polynomial-pilot/snapshot/hyperlimit)
+   Compiling ruffini_hyper_polynomial_lifetime v0.0.0 (/home/tim/Documents/GitHub/workspace/exact-real-references/ruffini-qualification/hyper-polynomial-pilot/lifetime)
+    Finished `release` profile [optimized] target(s) in 8.07s

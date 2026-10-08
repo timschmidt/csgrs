@@ -1,0 +1,11 @@
+[package]
+name = "aern-hyper-finite-probe"
+version = "0.0.0"
+edition = "2024"
+
+[dependencies]
+hyperreal = { path = "/home/tim/Documents/GitHub/workspace/hyperreal" }
+num = "0.4.3"
+
+[workspace]
+exclude = ["hyperreal-baseline", "hyperreal-candidate", "bench-baseline", "bench-candidate"]

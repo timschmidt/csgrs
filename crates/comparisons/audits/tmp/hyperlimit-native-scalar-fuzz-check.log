@@ -1,0 +1,5 @@
+    Checking hyperreal v0.13.1 (/home/tim/Documents/GitHub/workspace/hyperreal)
+    Checking hyperlattice v0.6.1 (/home/tim/Documents/GitHub/workspace/hyperlattice)
+    Checking hyperlimit v0.4.1 (/home/tim/Documents/GitHub/workspace/hyperlimit)
+    Checking hyperlimit-fuzz v0.1.0 (/home/tim/Documents/GitHub/workspace/hyperlimit/fuzz)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 2.41s

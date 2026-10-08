@@ -1,0 +1,410 @@
+[ 8 of 10] Compiling Numeric.AERN.IVP.Solver.Events.SplitNearEvents ( /tmp/aern-audit.zp9Mzz/source/aern-ivp/src/Numeric/AERN/IVP/Solver/Events/SplitNearEvents.hs, /tmp/aern-audit.zp9Mzz/source/aern-ivp/src/Numeric/AERN/IVP/Solver/Events/SplitNearEvents.o )
+[ 9 of 10] Compiling Main             ( /tmp/aern-audit.zp9Mzz/IVPHybridProbe.hs, /tmp/aern-audit.zp9Mzz/IVPHybridProbe.o )
+
+/tmp/aern-audit.zp9Mzz/IVPHybridProbe.hs:50:1: error: [GHC-05617]
+    • Could not deduce ‘Q.PartialCompareEffortIndicator f0
+                        ~ IntPolyEffort (Interval Double)’
+      from the context: (R.AddEffortIndicator f
+                         ~ IntPolyEffort (Interval Double),
+                         PartialEvaluationEffortIndicator f
+                         ~ IntPolyEffort (Interval Double),
+                         R.MixedAddEffortIndicator f (Interval Double)
+                         ~ IntPolyEffort (Interval Double),
+                         EvaluationEffortIndicator f ~ IntPolyEffort (Interval Double),
+                         IntegrationEffortIndicator f ~ IntPolyEffort (Interval Double),
+                         Numeric.AERN.RmToRn.Domain.Domain f ~ Interval Double,
+                         SizeLimits f ~ IntPolySizeLimits D,
+                         R.MultEffortIndicator f ~ IntPolyEffort (Interval Double),
+                         Q.PartialCompareEffortIndicator f
+                         ~ IntPolyEffort (Interval Double),
+                         CompositionEffortIndicator f ~ IntPolyEffort (Interval Double),
+                         Numeric.AERN.RmToRn.Domain.Var f ~ [Char], CanAddVariables f,
+                         CanRenameVariables f, CanEvaluate f, CanCompose f,
+                         CanPartiallyEvaluate f, HasConstFns f, Q.PartialComparison f,
+                         Q.IntervalLike f,
+                         Numeric.AERN.Basics.Consistency.HasAntiConsistency f,
+                         N.RefinementRoundedLattice f, RoundedIntegration f,
+                         R.RoundedSubtr f, R.RoundedMultiply f,
+                         R.RoundedMixedAdd f (Interval Double),
+                         R.RoundedMixedMultiply f Int, Show f,
+                         Numeric.AERN.RmToRn.Domain.HasVarValue
+                           (Numeric.AERN.RmToRn.Domain.VarBox f f) [Char] f,
+                         Numeric.AERN.RmToRn.Domain.HasVarValue
+                           (Numeric.AERN.RmToRn.Domain.VarBox f (Interval Double))
+                           [Char]
+                           (Interval Double))
+        bound by the inferred type for ‘noSplit’:
+                   forall {f}.
+                   (R.AddEffortIndicator f ~ IntPolyEffort (Interval Double),
+                    PartialEvaluationEffortIndicator f
+                    ~ IntPolyEffort (Interval Double),
+                    R.MixedAddEffortIndicator f (Interval Double)
+                    ~ IntPolyEffort (Interval Double),
+                    EvaluationEffortIndicator f ~ IntPolyEffort (Interval Double),
+                    IntegrationEffortIndicator f ~ IntPolyEffort (Interval Double),
+                    Numeric.AERN.RmToRn.Domain.Domain f ~ Interval Double,
+                    SizeLimits f ~ IntPolySizeLimits D,
+                    R.MultEffortIndicator f ~ IntPolyEffort (Interval Double),
+                    Q.PartialCompareEffortIndicator f
+                    ~ IntPolyEffort (Interval Double),
+                    CompositionEffortIndicator f ~ IntPolyEffort (Interval Double),
+                    Numeric.AERN.RmToRn.Domain.Var f ~ [Char], CanAddVariables f,
+                    CanRenameVariables f, CanEvaluate f, CanCompose f,
+                    CanPartiallyEvaluate f, HasConstFns f, Q.PartialComparison f,
+                    Q.IntervalLike f,
+                    Numeric.AERN.Basics.Consistency.HasAntiConsistency f,
+                    N.RefinementRoundedLattice f, RoundedIntegration f,
+                    R.RoundedSubtr f, R.RoundedMultiply f,
+                    R.RoundedMixedAdd f (Interval Double),
+                    R.RoundedMixedMultiply f Int, Show f,
+                    Numeric.AERN.RmToRn.Domain.HasVarValue
+                      (Numeric.AERN.RmToRn.Domain.VarBox f f) [Char] f,
+                    Numeric.AERN.RmToRn.Domain.HasVarValue
+                      (Numeric.AERN.RmToRn.Domain.VarBox f (Interval Double))
+                      [Char]
+                      (Interval Double)) =>
+                   [HybSysMode]
+                   -> Maybe
+                        (HybridSystemUncertainState (Numeric.AERN.RmToRn.Domain.Domain f))
+        at /tmp/aern-audit.zp9Mzz/IVPHybridProbe.hs:(50,1)-(52,61)
+        The type variable ‘f0’ is ambiguous
+    • In the ambiguity check for the inferred type for ‘noSplit’
+      To defer the ambiguity check to use sites, enable AllowAmbiguousTypes
+      When checking the inferred type
+        noSplit :: forall {f}.
+                   (R.AddEffortIndicator f ~ IntPolyEffort (Interval Double),
+                    PartialEvaluationEffortIndicator f
+                    ~ IntPolyEffort (Interval Double),
+                    R.MixedAddEffortIndicator f (Interval Double)
+                    ~ IntPolyEffort (Interval Double),
+                    EvaluationEffortIndicator f ~ IntPolyEffort (Interval Double),
+                    IntegrationEffortIndicator f ~ IntPolyEffort (Interval Double),
+                    Numeric.AERN.RmToRn.Domain.Domain f ~ Interval Double,
+                    SizeLimits f ~ IntPolySizeLimits D,
+                    R.MultEffortIndicator f ~ IntPolyEffort (Interval Double),
+                    Q.PartialCompareEffortIndicator f
+                    ~ IntPolyEffort (Interval Double),
+                    CompositionEffortIndicator f ~ IntPolyEffort (Interval Double),
+                    Numeric.AERN.RmToRn.Domain.Var f ~ [Char], CanAddVariables f,
+                    CanRenameVariables f, CanEvaluate f, CanCompose f,
+                    CanPartiallyEvaluate f, HasConstFns f, Q.PartialComparison f,
+                    Q.IntervalLike f,
+                    Numeric.AERN.Basics.Consistency.HasAntiConsistency f,
+                    N.RefinementRoundedLattice f, RoundedIntegration f,
+                    R.RoundedSubtr f, R.RoundedMultiply f,
+                    R.RoundedMixedAdd f (Interval Double),
+                    R.RoundedMixedMultiply f Int, Show f,
+                    Numeric.AERN.RmToRn.Domain.HasVarValue
+                      (Numeric.AERN.RmToRn.Domain.VarBox f f) [Char] f,
+                    Numeric.AERN.RmToRn.Domain.HasVarValue
+                      (Numeric.AERN.RmToRn.Domain.VarBox f (Interval Double))
+                      [Char]
+                      (Interval Double)) =>
+                   [HybSysMode]
+                   -> Maybe
+                        (HybridSystemUncertainState (Numeric.AERN.RmToRn.Domain.Domain f))
+   |
+50 | noSplit modes = fst $ solveHybridIVP_UsingPicardAndEventTree
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^...
+
+/tmp/aern-audit.zp9Mzz/IVPHybridProbe.hs:53:1: error: [GHC-05617]
+    • Could not deduce ‘R.MixedDivEffortIndicator f0 Int
+                        ~ IntPolyEffort (Interval Double)’
+      from the context: (N.MinmaxInOutEffortIndicator f
+                         ~ IntPolyEffort (Interval Double),
+                         CompositionEffortIndicator f ~ IntPolyEffort (Interval Double),
+                         EvaluationEffortIndicator f ~ IntPolyEffort (Interval Double),
+                         R.MultEffortIndicator f ~ IntPolyEffort (Interval Double),
+                         Numeric.AERN.RmToRn.Domain.Domain f ~ Interval Double,
+                         PartialEvaluationEffortIndicator f
+                         ~ IntPolyEffort (Interval Double),
+                         IntegrationEffortIndicator f ~ IntPolyEffort (Interval Double),
+                         R.AddEffortIndicator f ~ IntPolyEffort (Interval Double),
+                         R.MixedMultEffortIndicator f (Interval Double)
+                         ~ IntPolyEffort (Interval Double),
+                         SizeLimits f ~ IntPolySizeLimits D,
+                         R.AbsEffortIndicator f ~ IntPolyEffort (Interval Double),
+                         Q.PartialCompareEffortIndicator f
+                         ~ IntPolyEffort (Interval Double),
+                         R.MixedAddEffortIndicator f (Interval Double)
+                         ~ IntPolyEffort (Interval Double),
+                         SizeLimitsChangeEffort f ~ IntPolyEffort (Interval Double),
+                         R.MixedDivEffortIndicator f Int ~ IntPolyEffort (Interval Double),
+                         FakeDerivativeEffortIndicator f ~ IntPolyEffort (Interval Double),
+                         Numeric.AERN.RmToRn.Domain.Var f ~ [Char], CanAddVariables f,
+                         CanRenameVariables f,
+                         Numeric.AERN.RmToRn.Domain.CanAdjustDomains f, CanEvaluate f,
+                         CanCompose f, CanChangeSizeLimits f, CanPartiallyEvaluate f,
+                         HasConstFns f, Q.IntervalLike f,
+                         Numeric.AERN.Basics.Consistency.HasAntiConsistency f,
+                         N.RefinementRoundedLattice f, Q.PartialComparison f,
+                         RoundedIntegration f, RoundedFakeDerivative f, R.RoundedSubtr f,
+                         R.RoundedMultiply f, R.RoundedMixedDivide f Int,
+                         R.RoundedMixedAdd f (Interval Double), R.RoundedAbs f,
+                         R.RoundedMixedMultiply f (Interval Double),
+                         R.RoundedMixedMultiply f Int, Show f,
+                         Numeric.AERN.RmToRn.Domain.HasVarValue
+                           (Numeric.AERN.RmToRn.Domain.VarBox f f) [Char] f,
+                         Numeric.AERN.RmToRn.Domain.HasVarValue
+                           (Numeric.AERN.RmToRn.Domain.VarBox f (Interval Double))
+                           [Char]
+                           (Interval Double))
+        bound by the inferred type for ‘split’:
+                   forall {f}.
+                   (N.MinmaxInOutEffortIndicator f ~ IntPolyEffort (Interval Double),
+                    CompositionEffortIndicator f ~ IntPolyEffort (Interval Double),
+                    EvaluationEffortIndicator f ~ IntPolyEffort (Interval Double),
+                    R.MultEffortIndicator f ~ IntPolyEffort (Interval Double),
+                    Numeric.AERN.RmToRn.Domain.Domain f ~ Interval Double,
+                    PartialEvaluationEffortIndicator f
+                    ~ IntPolyEffort (Interval Double),
+                    IntegrationEffortIndicator f ~ IntPolyEffort (Interval Double),
+                    R.AddEffortIndicator f ~ IntPolyEffort (Interval Double),
+                    R.MixedMultEffortIndicator f (Interval Double)
+                    ~ IntPolyEffort (Interval Double),
+                    SizeLimits f ~ IntPolySizeLimits D,
+                    R.AbsEffortIndicator f ~ IntPolyEffort (Interval Double),
+                    Q.PartialCompareEffortIndicator f
+                    ~ IntPolyEffort (Interval Double),
+                    R.MixedAddEffortIndicator f (Interval Double)
+                    ~ IntPolyEffort (Interval Double),
+                    SizeLimitsChangeEffort f ~ IntPolyEffort (Interval Double),
+                    R.MixedDivEffortIndicator f Int ~ IntPolyEffort (Interval Double),
+                    FakeDerivativeEffortIndicator f ~ IntPolyEffort (Interval Double),
+                    Numeric.AERN.RmToRn.Domain.Var f ~ [Char], CanAddVariables f,
+                    CanRenameVariables f,
+                    Numeric.AERN.RmToRn.Domain.CanAdjustDomains f, CanEvaluate f,
+                    CanCompose f, CanChangeSizeLimits f, CanPartiallyEvaluate f,
+                    HasConstFns f, Q.IntervalLike f,
+                    Numeric.AERN.Basics.Consistency.HasAntiConsistency f,
+                    N.RefinementRoundedLattice f, Q.PartialComparison f,
+                    RoundedIntegration f, RoundedFakeDerivative f, R.RoundedSubtr f,
+                    R.RoundedMultiply f, R.RoundedMixedDivide f Int,
+                    R.RoundedMixedAdd f (Interval Double), R.RoundedAbs f,
+                    R.RoundedMixedMultiply f (Interval Double),
+                    R.RoundedMixedMultiply f Int, Show f,
+                    Numeric.AERN.RmToRn.Domain.HasVarValue
+                      (Numeric.AERN.RmToRn.Domain.VarBox f f) [Char] f,
+                    Numeric.AERN.RmToRn.Domain.HasVarValue
+                      (Numeric.AERN.RmToRn.Domain.VarBox f (Interval Double))
+                      [Char]
+                      (Interval Double)) =>
+                   [HybSysMode]
+                   -> Maybe
+                        (HybridSystemUncertainState (Numeric.AERN.RmToRn.Domain.Domain f))
+        at /tmp/aern-audit.zp9Mzz/IVPHybridProbe.hs:(53,1)-(58,71)
+        The type variable ‘f0’ is ambiguous
+    • In the ambiguity check for the inferred type for ‘split’
+      To defer the ambiguity check to use sites, enable AllowAmbiguousTypes
+      When checking the inferred type
+        split :: forall {f}.
+                 (N.MinmaxInOutEffortIndicator f ~ IntPolyEffort (Interval Double),
+                  CompositionEffortIndicator f ~ IntPolyEffort (Interval Double),
+                  EvaluationEffortIndicator f ~ IntPolyEffort (Interval Double),
+                  R.MultEffortIndicator f ~ IntPolyEffort (Interval Double),
+                  Numeric.AERN.RmToRn.Domain.Domain f ~ Interval Double,
+                  PartialEvaluationEffortIndicator f
+                  ~ IntPolyEffort (Interval Double),
+                  IntegrationEffortIndicator f ~ IntPolyEffort (Interval Double),
+                  R.AddEffortIndicator f ~ IntPolyEffort (Interval Double),
+                  R.MixedMultEffortIndicator f (Interval Double)
+                  ~ IntPolyEffort (Interval Double),
+                  SizeLimits f ~ IntPolySizeLimits D,
+                  R.AbsEffortIndicator f ~ IntPolyEffort (Interval Double),
+                  Q.PartialCompareEffortIndicator f
+                  ~ IntPolyEffort (Interval Double),
+                  R.MixedAddEffortIndicator f (Interval Double)
+                  ~ IntPolyEffort (Interval Double),
+                  SizeLimitsChangeEffort f ~ IntPolyEffort (Interval Double),
+                  R.MixedDivEffortIndicator f Int ~ IntPolyEffort (Interval Double),
+                  FakeDerivativeEffortIndicator f ~ IntPolyEffort (Interval Double),
+                  Numeric.AERN.RmToRn.Domain.Var f ~ [Char], CanAddVariables f,
+                  CanRenameVariables f,
+                  Numeric.AERN.RmToRn.Domain.CanAdjustDomains f, CanEvaluate f,
+                  CanCompose f, CanChangeSizeLimits f, CanPartiallyEvaluate f,
+                  HasConstFns f, Q.IntervalLike f,
+                  Numeric.AERN.Basics.Consistency.HasAntiConsistency f,
+                  N.RefinementRoundedLattice f, Q.PartialComparison f,
+                  RoundedIntegration f, RoundedFakeDerivative f, R.RoundedSubtr f,
+                  R.RoundedMultiply f, R.RoundedMixedDivide f Int,
+                  R.RoundedMixedAdd f (Interval Double), R.RoundedAbs f,
+                  R.RoundedMixedMultiply f (Interval Double),
+                  R.RoundedMixedMultiply f Int, Show f,
+                  Numeric.AERN.RmToRn.Domain.HasVarValue
+                    (Numeric.AERN.RmToRn.Domain.VarBox f f) [Char] f,
+                  Numeric.AERN.RmToRn.Domain.HasVarValue
+                    (Numeric.AERN.RmToRn.Domain.VarBox f (Interval Double))
+                    [Char]
+                    (Interval Double)) =>
+                 [HybSysMode]
+                 -> Maybe
+                      (HybridSystemUncertainState (Numeric.AERN.RmToRn.Domain.Domain f))
+   |
+53 | split modes = fst $ solveHybridIVP_UsingPicardAndEventTree_SplitNearEvents
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^...
+
+/tmp/aern-audit.zp9Mzz/IVPHybridProbe.hs:67:37: error: [GHC-39999]
+    • Ambiguous type variable ‘a0’ arising from a use of ‘show’
+      prevents the constraint ‘(Show a0)’ from being solved.
+      Probable fix: use a type annotation to specify what ‘a0’ should be.
+      Potentially matching instances:
+        instance (Numeric.AERN.Basics.ShowInternals.ShowInternals e,
+                  N.PartialComparison e) =>
+                 Show (Interval e)
+          -- Defined in ‘Numeric.AERN.Basics.Interval.Basics’
+        instance Show t => Show (N.LEPair t)
+          -- Defined in ‘aern-order-0.5.0:Numeric.AERN.NumericOrder.Arbitrary’
+        ...plus 47 others
+        ...plus 76 instances involving out-of-scope types
+        (use -fprint-potential-instances to see them all)
+    • In the second argument of ‘probe’, namely
+        ‘(show (noSplit [good]))’
+      In a stmt of a 'do' block:
+        probe "event-tree constant only" (show (noSplit [good]))
+      In the expression:
+        do hSetBuffering stdout LineBuffering
+           probe "event-tree constant only" (show (noSplit [good]))
+           probe "event-tree exponential only" (show (noSplit [bad]))
+           probe "event-tree both" (show (noSplit [good, bad]))
+           ....
+   |
+67 |   probe "event-tree constant only" (show (noSplit [good]))
+   |                                     ^^^^
+
+/tmp/aern-audit.zp9Mzz/IVPHybridProbe.hs:68:40: error: [GHC-39999]
+    • Ambiguous type variable ‘a1’ arising from a use of ‘show’
+      prevents the constraint ‘(Show a1)’ from being solved.
+      Probable fix: use a type annotation to specify what ‘a1’ should be.
+      Potentially matching instances:
+        instance (Numeric.AERN.Basics.ShowInternals.ShowInternals e,
+                  N.PartialComparison e) =>
+                 Show (Interval e)
+          -- Defined in ‘Numeric.AERN.Basics.Interval.Basics’
+        instance Show t => Show (N.LEPair t)
+          -- Defined in ‘aern-order-0.5.0:Numeric.AERN.NumericOrder.Arbitrary’
+        ...plus 47 others
+        ...plus 76 instances involving out-of-scope types
+        (use -fprint-potential-instances to see them all)
+    • In the second argument of ‘probe’, namely
+        ‘(show (noSplit [bad]))’
+      In a stmt of a 'do' block:
+        probe "event-tree exponential only" (show (noSplit [bad]))
+      In the expression:
+        do hSetBuffering stdout LineBuffering
+           probe "event-tree constant only" (show (noSplit [good]))
+           probe "event-tree exponential only" (show (noSplit [bad]))
+           probe "event-tree both" (show (noSplit [good, bad]))
+           ....
+   |
+68 |   probe "event-tree exponential only" (show (noSplit [bad]))
+   |                                        ^^^^
+
+/tmp/aern-audit.zp9Mzz/IVPHybridProbe.hs:69:28: error: [GHC-39999]
+    • Ambiguous type variable ‘a2’ arising from a use of ‘show’
+      prevents the constraint ‘(Show a2)’ from being solved.
+      Probable fix: use a type annotation to specify what ‘a2’ should be.
+      Potentially matching instances:
+        instance (Numeric.AERN.Basics.ShowInternals.ShowInternals e,
+                  N.PartialComparison e) =>
+                 Show (Interval e)
+          -- Defined in ‘Numeric.AERN.Basics.Interval.Basics’
+        instance Show t => Show (N.LEPair t)
+          -- Defined in ‘aern-order-0.5.0:Numeric.AERN.NumericOrder.Arbitrary’
+        ...plus 47 others
+        ...plus 76 instances involving out-of-scope types
+        (use -fprint-potential-instances to see them all)
+    • In the second argument of ‘probe’, namely
+        ‘(show (noSplit [good, bad]))’
+      In a stmt of a 'do' block:
+        probe "event-tree both" (show (noSplit [good, bad]))
+      In the expression:
+        do hSetBuffering stdout LineBuffering
+           probe "event-tree constant only" (show (noSplit [good]))
+           probe "event-tree exponential only" (show (noSplit [bad]))
+           probe "event-tree both" (show (noSplit [good, bad]))
+           ....
+   |
+69 |   probe "event-tree both" (show (noSplit [good,bad]))
+   |                            ^^^^
+
+/tmp/aern-audit.zp9Mzz/IVPHybridProbe.hs:70:44: error: [GHC-39999]
+    • Ambiguous type variable ‘a3’ arising from a use of ‘show’
+      prevents the constraint ‘(Show a3)’ from being solved.
+      Probable fix: use a type annotation to specify what ‘a3’ should be.
+      Potentially matching instances:
+        instance (Numeric.AERN.Basics.ShowInternals.ShowInternals e,
+                  N.PartialComparison e) =>
+                 Show (Interval e)
+          -- Defined in ‘Numeric.AERN.Basics.Interval.Basics’
+        instance Show t => Show (N.LEPair t)
+          -- Defined in ‘aern-order-0.5.0:Numeric.AERN.NumericOrder.Arbitrary’
+        ...plus 47 others
+        ...plus 76 instances involving out-of-scope types
+        (use -fprint-potential-instances to see them all)
+    • In the second argument of ‘probe’, namely ‘(show (split [good]))’
+      In a stmt of a 'do' block:
+        probe "split-near-events constant only" (show (split [good]))
+      In the expression:
+        do hSetBuffering stdout LineBuffering
+           probe "event-tree constant only" (show (noSplit [good]))
+           probe "event-tree exponential only" (show (noSplit [bad]))
+           probe "event-tree both" (show (noSplit [good, bad]))
+           ....
+   |
+70 |   probe "split-near-events constant only" (show (split [good]))
+   |                                            ^^^^
+
+/tmp/aern-audit.zp9Mzz/IVPHybridProbe.hs:71:47: error: [GHC-39999]
+    • Ambiguous type variable ‘a4’ arising from a use of ‘show’
+      prevents the constraint ‘(Show a4)’ from being solved.
+      Probable fix: use a type annotation to specify what ‘a4’ should be.
+      Potentially matching instances:
+        instance (Numeric.AERN.Basics.ShowInternals.ShowInternals e,
+                  N.PartialComparison e) =>
+                 Show (Interval e)
+          -- Defined in ‘Numeric.AERN.Basics.Interval.Basics’
+        instance Show t => Show (N.LEPair t)
+          -- Defined in ‘aern-order-0.5.0:Numeric.AERN.NumericOrder.Arbitrary’
+        ...plus 47 others
+        ...plus 76 instances involving out-of-scope types
+        (use -fprint-potential-instances to see them all)
+    • In the second argument of ‘probe’, namely ‘(show (split [bad]))’
+      In a stmt of a 'do' block:
+        probe "split-near-events exponential only" (show (split [bad]))
+      In the expression:
+        do hSetBuffering stdout LineBuffering
+           probe "event-tree constant only" (show (noSplit [good]))
+           probe "event-tree exponential only" (show (noSplit [bad]))
+           probe "event-tree both" (show (noSplit [good, bad]))
+           ....
+   |
+71 |   probe "split-near-events exponential only" (show (split [bad]))
+   |                                               ^^^^
+
+/tmp/aern-audit.zp9Mzz/IVPHybridProbe.hs:72:35: error: [GHC-39999]
+    • Ambiguous type variable ‘a5’ arising from a use of ‘show’
+      prevents the constraint ‘(Show a5)’ from being solved.
+      Probable fix: use a type annotation to specify what ‘a5’ should be.
+      Potentially matching instances:
+        instance (Numeric.AERN.Basics.ShowInternals.ShowInternals e,
+                  N.PartialComparison e) =>
+                 Show (Interval e)
+          -- Defined in ‘Numeric.AERN.Basics.Interval.Basics’
+        instance Show t => Show (N.LEPair t)
+          -- Defined in ‘aern-order-0.5.0:Numeric.AERN.NumericOrder.Arbitrary’
+        ...plus 47 others
+        ...plus 76 instances involving out-of-scope types
+        (use -fprint-potential-instances to see them all)
+    • In the second argument of ‘probe’, namely
+        ‘(show (split [good, bad]))’
+      In a stmt of a 'do' block:
+        probe "split-near-events both" (show (split [good, bad]))
+      In the expression:
+        do hSetBuffering stdout LineBuffering
+           probe "event-tree constant only" (show (noSplit [good]))
+           probe "event-tree exponential only" (show (noSplit [bad]))
+           probe "event-tree both" (show (noSplit [good, bad]))
+           ....
+   |
+72 |   probe "split-near-events both" (show (split [good,bad]))
+   |                                   ^^^^

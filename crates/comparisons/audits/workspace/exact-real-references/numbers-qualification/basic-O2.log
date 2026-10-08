@@ -1,0 +1,59 @@
+TOTAL add checks=19208 failures=0
+TOTAL sub checks=19208 failures=0
+TOTAL mul checks=19208 failures=0
+TOTAL min checks=19208 failures=0
+TOTAL max checks=19208 failures=0
+TOTAL division checks=18816 failures=0
+TOTAL unary checks=392 failures=0
+TOTAL sqrt checks=2056 failures=0
+FAIL public-decisions ((-1) % 348449143727040986586495598010130648530944,"eq")
+FAIL public-decisions ((-1) % 348449143727040986586495598010130648530944,"lt")
+FAIL public-decisions ((-1) % 348449143727040986586495598010130648530944,"sign")
+FAIL public-decisions ((-1) % 1393796574908163946345982392040522594123776,"eq")
+FAIL public-decisions ((-1) % 1393796574908163946345982392040522594123776,"lt")
+FAIL public-decisions ((-1) % 1393796574908163946345982392040522594123776,"sign")
+FAIL public-decisions (1 % 1393796574908163946345982392040522594123776,"eq")
+FAIL public-decisions (1 % 1393796574908163946345982392040522594123776,"gt")
+FAIL public-decisions (1 % 1393796574908163946345982392040522594123776,"sign")
+FAIL public-decisions ((-1) % 1461501637330902918203684832716283019655932542976,"eq")
+FAIL public-decisions ((-1) % 1461501637330902918203684832716283019655932542976,"lt")
+FAIL public-decisions ((-1) % 1461501637330902918203684832716283019655932542976,"sign")
+TOTAL public-decisions checks=64 failures=21
+FAIL properFraction-integer ((-63) % 8,-8,"0.125")
+FAIL properFraction-integer ((-31) % 4,-8,"0.25")
+FAIL properFraction-integer ((-61) % 8,-8,"0.375")
+FAIL properFraction-integer ((-55) % 8,-7,"0.125")
+FAIL properFraction-integer ((-27) % 4,-7,"0.25")
+FAIL properFraction-integer ((-53) % 8,-7,"0.375")
+FAIL properFraction-integer ((-47) % 8,-6,"0.125")
+FAIL properFraction-integer ((-23) % 4,-6,"0.25")
+FAIL properFraction-integer ((-45) % 8,-6,"0.375")
+FAIL properFraction-integer ((-39) % 8,-5,"0.125")
+FAIL properFraction-integer ((-19) % 4,-5,"0.25")
+FAIL properFraction-integer ((-37) % 8,-5,"0.375")
+TOTAL properFraction-integer checks=129 failures=56
+TOTAL public-bridge checks=20 failures=0
+TOTAL polynomial-derivatives checks=297 failures=0
+FAIL atan-derivatives ((-2) % 1,443075998594971957634602353426781525)
+FAIL atan-derivatives ((-1) % 2,-1772303994379887830538409413707126101)
+FAIL atan-derivatives (0 % 1,-1329227995784915872903807060280344576)
+FAIL atan-derivatives (1 % 2,-1772303994379887830538409413707126101)
+FAIL atan-derivatives (2 % 1,443075998594971957634602353426781525)
+TOTAL atan-derivatives checks=5 failures=5
+FAIL approximate-zero-pruning 0
+TOTAL approximate-zero-pruning checks=1 failures=1
+FAIL BigFloat-scaled-zero -8
+FAIL BigFloat-scaled-zero -7
+FAIL BigFloat-scaled-zero -6
+FAIL BigFloat-scaled-zero -5
+FAIL BigFloat-scaled-zero -4
+FAIL BigFloat-scaled-zero -3
+FAIL BigFloat-scaled-zero -2
+FAIL BigFloat-scaled-zero -1
+FAIL BigFloat-scaled-zero 1
+FAIL BigFloat-scaled-zero 2
+FAIL BigFloat-scaled-zero 3
+FAIL BigFloat-scaled-zero 4
+TOTAL BigFloat-scaled-zero checks=17 failures=16
+OBS symbolic zero-substitution x/x=1 % 1
+OBS interval self Eq=False self Ne=False

@@ -1,0 +1,9 @@
+
+
+## 2026-09-23 — selected-circle fillet callers inspect the normalized set
+
+Committed Hypercurve `53259e487bb3988937f4699d4c5af916efc5c961`. The selected-circle/chord fillet regression now visits all normalized boundaries, checks surviving radii and exact circle/chord endpoint-only incidence, and requires the unchanged upper-disk interior point (sqrt(1/2),1/2) inside and (4,4) outside, with certified classifications. At least one candidate retains the requested fillet radius; individual regularized candidates may consume a fillet. Candidate completeness comparisons remain unchanged.
+
+A bounded diagnostic found the previous failure on a two-loop result: loop zero has only a source-circle span; loop one contains the fillet. A different candidate contains only source-circle spans after regularization. Hard-coded carrier counts on loop zero did not describe the exact set. The migrated test passes every policy, traversal and corner mode in 146.94 seconds on unchanged production. This exceeds the broad sweep's per-case 75-second limit, so no full-sweep performance claim is made.
+
+The same focused executable exposes an actual selected-fiber inverse identity gap: the newly strengthened exact round-trip comparison returns Uncertain(Ordering) after 115.79s. Another offset test reaches a later algorithm-specific dispatch assertion after 45.69s. Those offset changes remain unqualified and uncommitted. The first build used the wrong membership result enum in the new test; it ran zero tests and is recorded separately before the corrected build. Source/executable/staged/HEAD bindings are in `selected-circle-boundary-callers-20260923-{qualification,staged,post-commit}` and `contact-callers-20260923-focused2`. All owned processes were reaped before commit. The full goal remains active.

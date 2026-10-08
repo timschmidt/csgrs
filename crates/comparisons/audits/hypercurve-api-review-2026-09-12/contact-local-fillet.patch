@@ -1,0 +1,810 @@
+--- a/src/bezier_offset.rs
++++ b/src/bezier_offset.rs
+@@ -16290,7 +16290,9 @@
+         {
+             return Ok(Classification::Uncertain(reason));
+         }
+-        match center_support.parallel_derivative_scale_sign(&center_parameter, policy)? {
++        match center_support
++            .parallel_derivative_scale_sign(&center_parameter.clone().into(), policy)?
++        {
+             Classification::Decided(RealSign::Positive | RealSign::Negative) => {}
+             Classification::Decided(RealSign::Zero) => {
+                 return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
+@@ -17300,7 +17302,7 @@
+                 "a regular fillet contact retained a zero tangent relation".into(),
+             ));
+         }
+-        match other.parallel_derivative_scale_sign(&other_parameter, policy)? {
++        match other.parallel_derivative_scale_sign(&other_parameter.clone().into(), policy)? {
+             Classification::Decided(RealSign::Positive | RealSign::Negative) => {}
+             Classification::Decided(RealSign::Zero) => {
+                 return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
+@@ -20860,16 +20862,17 @@
+             }
+             None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
+         };
+-        let derivative_scale =
+-            match other.parallel_derivative_scale_sign(&contact.parallel_parameter, policy)? {
+-                Classification::Decided(sign @ (RealSign::Negative | RealSign::Positive)) => sign,
+-                Classification::Decided(RealSign::Zero) => {
+-                    return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
+-                }
+-                Classification::Uncertain(reason) => {
+-                    return Ok(Classification::Uncertain(reason));
+-                }
+-            };
++        let derivative_scale = match other
++            .parallel_derivative_scale_sign(&contact.parallel_parameter.clone().into(), policy)?
++        {
++            Classification::Decided(sign @ (RealSign::Negative | RealSign::Positive)) => sign,
++            Classification::Decided(RealSign::Zero) => {
++                return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
++            }
++            Classification::Uncertain(reason) => {
++                return Ok(Classification::Uncertain(reason));
++            }
++        };
+         let center_side_sign =
+             product_sign(endpoint_factor, product_sign(radial_sign, derivative_scale));
+         let center_side = match center_side_sign {
+@@ -21313,13 +21316,15 @@
+                     return Ok(Classification::Uncertain(reason));
+                 }
+             };
+-            let derivative_scale =
+-                match other.parallel_derivative_scale_sign_selected_fiber(&candidate, policy)? {
+-                    Classification::Decided(sign) => sign,
+-                    Classification::Uncertain(reason) => {
+-                        return Ok(Classification::Uncertain(reason));
+-                    }
+-                };
++            let derivative_scale = match other.parallel_derivative_scale_sign(
++                &CurveParameter2::from_selected_fiber(candidate.clone()),
++                policy,
++            )? {
++                Classification::Decided(sign) => sign,
++                Classification::Uncertain(reason) => {
++                    return Ok(Classification::Uncertain(reason));
++                }
++            };
+             let tangent_cross_sign = product_sign(tangent_cross_source, derivative_scale);
+             retained.push((candidate, location, tangent_cross_sign));
+         }
+@@ -77837,7 +77842,7 @@
+             let derivative_scale = match if let Some(sign) = derivative_scale_sign {
+                 Classification::Decided(sign)
+             } else {
+-                parallel.parallel_derivative_scale_sign(&candidate, policy)?
++                parallel.parallel_derivative_scale_sign(&candidate.clone().into(), policy)?
+             } {
+                 Classification::Decided(sign @ (RealSign::Negative | RealSign::Positive)) => sign,
+                 Classification::Decided(RealSign::Zero) => {
+@@ -87697,13 +87702,14 @@
+             Classification::Decided(sign) => sign,
+             Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+         };
+-        let scale = match parallel.parallel_derivative_scale_sign(parameter, policy)? {
+-            Classification::Decided(sign @ (RealSign::Positive | RealSign::Negative)) => sign,
+-            Classification::Decided(RealSign::Zero) => {
+-                return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
+-            }
+-            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+-        };
++        let scale =
++            match parallel.parallel_derivative_scale_sign(&parameter.clone().into(), policy)? {
++                Classification::Decided(sign @ (RealSign::Positive | RealSign::Negative)) => sign,
++                Classification::Decided(RealSign::Zero) => {
++                    return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
++                }
++                Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
++            };
+         Ok(Classification::Decided(product_sign(source_sign, scale)))
+     }
+ 
+@@ -100850,11 +100856,10 @@
+             if stored_cross == RealSign::Zero {
+                 return Ok(Classification::Decided(Some(RealSign::Zero)));
+             }
+-            let mapped_scale = match map
+-                .data
+-                .parallel
+-                .parallel_derivative_scale_sign(&contact.parallel_parameter, policy)?
+-            {
++            let mapped_scale = match map.data.parallel.parallel_derivative_scale_sign(
++                &contact.parallel_parameter.clone().into(),
++                policy,
++            )? {
+                 Classification::Decided(sign @ (RealSign::Positive | RealSign::Negative)) => sign,
+                 Classification::Decided(RealSign::Zero) => {
+                     return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
+@@ -100899,7 +100904,7 @@
+                 let mapped_scale = match map
+                     .data
+                     .parallel
+-                    .parallel_derivative_scale_sign(parameter, policy)?
++                    .parallel_derivative_scale_sign(&parameter.clone().into(), policy)?
+                 {
+                     Classification::Decided(sign @ (RealSign::Positive | RealSign::Negative)) => {
+                         sign
+@@ -109944,8 +109949,9 @@
+     policy: &CurveContext,
+ ) -> CurveResult<BezierParallelIntersectionContact2> {
+     let tangent_relation = match (
+-        parallel.parallel_derivative_scale_sign(&contact.parallel_parameter, policy)?,
+-        parallel.parallel_derivative_scale_sign(&contact.other_parameter, policy)?,
++        parallel
++            .parallel_derivative_scale_sign(&contact.parallel_parameter.clone().into(), policy)?,
++        parallel.parallel_derivative_scale_sign(&contact.other_parameter.clone().into(), policy)?,
+         parallel.source_tangent_pair_cross_and_dot_signs(
+             &contact.parallel_parameter,
+             parallel,
+@@ -111235,7 +111241,7 @@
+             Some(RealSign::Zero) => {
+                 return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
+             }
+-            None => match self.parallel_derivative_scale_sign(parameter, policy)? {
++            None => match self.parallel_derivative_scale_sign(&parameter.clone().into(), policy)? {
+                 Classification::Decided(sign @ (RealSign::Positive | RealSign::Negative)) => sign,
+                 Classification::Decided(RealSign::Zero) => {
+                     return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
+@@ -117056,7 +117062,7 @@
+                 if let Some(signs) = regular_branch_scale_signs {
+                     Ok(Classification::Decided(signs[index]))
+                 } else {
+-                    parallel.parallel_derivative_scale_sign(parameter, policy)
++                    parallel.parallel_derivative_scale_sign(&parameter.clone().into(), policy)
+                 }
+             };
+         let (
+@@ -117515,9 +117521,12 @@
+         )
+     }
+ 
++    /// Returns the parallel/source derivative orientation at this exact
++    /// contact, reusing its scalar, selected-fiber, or projective authority.
++    /// A fillet support can cross cusps between contacts on one source range.
+     pub(crate) fn parallel_derivative_scale_sign(
+         &self,
+-        parameter: &BezierParameter2,
++        parameter: &CurveParameter2,
+         policy: &CurveContext,
+     ) -> CurveResult<Classification<RealSign>> {
+         if self
+@@ -117528,7 +117537,10 @@
+         {
+             return Ok(Classification::Decided(RealSign::Positive));
+         }
+-        if let Some(parameter) = parameter.scalar() {
++        if let Some(parameter) = parameter
++            .as_bezier_parameter()
++            .and_then(BezierParameter2::scalar)
++        {
+             return self.parallel_derivative_scale_sign_at_exact(parameter, policy);
+         }
+         self.parallel_derivative_scale_sign_from_polynomials(parameter, policy)
+@@ -117634,7 +117646,7 @@
+         parameter: &BezierParameter2,
+         policy: &CurveContext,
+     ) -> CurveResult<Classification<crate::classify::LineSide>> {
+-        match self.parallel_derivative_scale_sign(parameter, policy)? {
++        match self.parallel_derivative_scale_sign(&parameter.clone().into(), policy)? {
+             Classification::Decided(RealSign::Positive | RealSign::Negative) => {}
+             Classification::Decided(RealSign::Zero) => {
+                 return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
+@@ -117664,9 +117676,9 @@
+         )
+     }
+ 
+-    fn parallel_derivative_scale_sign_selected_fiber(
++    fn parallel_derivative_scale_sign_from_polynomials(
+         &self,
+-        parameter: &BezierAlgebraicSelectedFiberParameter2,
++        parameter: &CurveParameter2,
+         policy: &CurveContext,
+     ) -> CurveResult<Classification<RealSign>> {
+         if real_sign(self.distance(), policy) == Some(RealSign::Zero) {
+@@ -117677,10 +117689,7 @@
+         let speed_squared = parallel_speed_squared_polynomial(differential);
+         let signed_curvature =
+             parallel_signed_curvature_polynomial(differential, source.weight, self.distance());
+-        let sign = |polynomial: &[Real]| {
+-            parameter.predicate_sign(&bivariate_outer_product(&[Real::one()], polynomial), policy)
+-        };
+-        match sign(&speed_squared)? {
++        match parameter.polynomial_sign(&speed_squared, policy)? {
+             Classification::Decided(RealSign::Positive) => {}
+             Classification::Decided(RealSign::Zero) => {
+                 return Ok(Classification::Decided(RealSign::Zero));
+@@ -117694,60 +117703,7 @@
+                 return Ok(Classification::Uncertain(reason));
+             }
+         }
+-        match sign(&signed_curvature)? {
+-            Classification::Decided(RealSign::Positive | RealSign::Zero) => {
+-                Ok(Classification::Decided(RealSign::Positive))
+-            }
+-            Classification::Decided(RealSign::Negative) => {
+-                let squared_difference = polynomial_subtract(
+-                    &polynomial_multiply(&signed_curvature, &signed_curvature),
+-                    &polynomial_power(&speed_squared, 3),
+-                );
+-                Ok(match sign(&squared_difference)? {
+-                    Classification::Decided(RealSign::Positive) => {
+-                        Classification::Decided(RealSign::Negative)
+-                    }
+-                    Classification::Decided(RealSign::Negative) => {
+-                        Classification::Decided(RealSign::Positive)
+-                    }
+-                    Classification::Decided(RealSign::Zero) => {
+-                        Classification::Decided(RealSign::Zero)
+-                    }
+-                    Classification::Uncertain(reason) => Classification::Uncertain(reason),
+-                })
+-            }
+-            Classification::Uncertain(reason) => Ok(Classification::Uncertain(reason)),
+-        }
+-    }
+-
+-    fn parallel_derivative_scale_sign_from_polynomials(
+-        &self,
+-        parameter: &BezierParameter2,
+-        policy: &CurveContext,
+-    ) -> CurveResult<Classification<RealSign>> {
+-        if real_sign(self.distance(), policy) == Some(RealSign::Zero) {
+-            return Ok(Classification::Decided(RealSign::Positive));
+-        }
+-        let source = self.source_power_basis()?;
+-        let differential = self.differential()?;
+-        let speed_squared = parallel_speed_squared_polynomial(differential);
+-        let signed_curvature =
+-            parallel_signed_curvature_polynomial(differential, source.weight, self.distance());
+-        match signed_coefficients_at_parameter(&speed_squared, parameter, policy)? {
+-            Classification::Decided(RealSign::Positive) => {}
+-            Classification::Decided(RealSign::Zero) => {
+-                return Ok(Classification::Decided(RealSign::Zero));
+-            }
+-            Classification::Decided(RealSign::Negative) => {
+-                return Err(CurveError::Topology(
+-                    "parallel source speed squared was certified negative".into(),
+-                ));
+-            }
+-            Classification::Uncertain(reason) => {
+-                return Ok(Classification::Uncertain(reason));
+-            }
+-        }
+-        match signed_coefficients_at_parameter(&signed_curvature, parameter, policy)? {
++        match parameter.polynomial_sign(&signed_curvature, policy)? {
+             Classification::Decided(RealSign::Positive | RealSign::Zero) => {
+                 Ok(Classification::Decided(RealSign::Positive))
+             }
+@@ -117757,8 +117713,7 @@
+                     &polynomial_power(&speed_squared, 3),
+                 );
+                 Ok(
+-                    match signed_coefficients_at_parameter(&squared_difference, parameter, policy)?
+-                    {
++                    match parameter.polynomial_sign(&squared_difference, policy)? {
+                         Classification::Decided(RealSign::Positive) => {
+                             Classification::Decided(RealSign::Negative)
+                         }
+@@ -118016,7 +117971,7 @@
+             return Ok(None);
+         }
+         Ok(
+-            match self.parallel_derivative_scale_sign(parameter, policy)? {
++            match self.parallel_derivative_scale_sign(&parameter.clone().into(), policy)? {
+                 Classification::Decided(scale @ (RealSign::Positive | RealSign::Negative)) => {
+                     Some(product_sign(source, scale))
+                 }
+@@ -166467,7 +166422,8 @@
+                         assert_eq!(
+                             parallel.parallel_derivative_scale_sign_at_exact(&parameter, &policy),
+                             parallel.parallel_derivative_scale_sign_from_polynomials(
+-                                &retained, &policy,
++                                &retained.clone().into(),
++                                &policy,
+                             ),
+                             "source={source:?}, distance={distance:?}, parameter={parameter:?}, policy={policy:?}",
+                         );
+@@ -182841,7 +182797,7 @@
+                 assert_eq!(
+                     decided(
+                         parallel
+-                            .parallel_derivative_scale_sign(&selected, &policy)
++                            .parallel_derivative_scale_sign(&selected.clone().into(), &policy)
+                             .unwrap()
+                     ),
+                     if distance == 0 {
+--- a/src/curve.rs
++++ b/src/curve.rs
+@@ -4824,53 +4824,38 @@
+         }
+     }
+ 
+-    fn support_reverses_source(
++    fn support_reverses_source_at(
+         &self,
+         support: &BezierParallel2,
++        parameter: &CurveParameter2,
+         family: CurveFamily2,
+         policy: &CurveContext,
+     ) -> ExactCurveResult<bool> {
+-        match self {
+-            Self::Retained(source) => {
+-                retained_fillet_parallel_support_reverses_source(source, support, family, policy)
+-            }
+-            Self::Selected(source) => {
+-                let source_parallel = source.parallel_carrier();
+-                let source_scale = selected_fiber_parallel_derivative_scale_sign(
+-                    &source_parallel,
+-                    source,
+-                    family,
+-                    policy,
+-                )?;
+-                let support_scale =
+-                    selected_fiber_parallel_derivative_scale_sign(support, source, family, policy)?;
+-                Ok((source_scale != support_scale) != source.is_reversed())
+-            }
+-            Self::Direct(_) => {
+-                let range = BezierParameterRange2::new_validated(
+-                    BezierParameter2::Exact(Real::zero()),
+-                    BezierParameter2::Exact(Real::one()),
+-                );
+-                match support
+-                    .regular_fragment_derivative_scale_sign(&range, policy)
+-                    .map_err(|cause| {
+-                        ExactCurveError::invalid(CurveOperation2::Fillet, family, cause)
+-                    })? {
+-                    Classification::Decided(RealSign::Positive) => Ok(false),
+-                    Classification::Decided(RealSign::Negative) => Ok(true),
+-                    Classification::Decided(RealSign::Zero) => Err(ExactCurveError::blocked(
+-                        CurveOperation2::Fillet,
+-                        family,
+-                        crate::UncertaintyReason::Boundary,
+-                    )),
+-                    Classification::Uncertain(reason) => Err(ExactCurveError::blocked(
+-                        CurveOperation2::Fillet,
+-                        family,
+-                        reason,
+-                    )),
+-                }
+-            }
+-        }
++        let derivative_scale = |parallel: &BezierParallel2| match parallel
++            .parallel_derivative_scale_sign(parameter, policy)
++            .map_err(|cause| ExactCurveError::invalid(CurveOperation2::Fillet, family, cause))?
++        {
++            Classification::Decided(sign @ (RealSign::Positive | RealSign::Negative)) => Ok(sign),
++            Classification::Decided(RealSign::Zero) => Err(ExactCurveError::blocked(
++                CurveOperation2::Fillet,
++                family,
++                crate::UncertaintyReason::Boundary,
++            )),
++            Classification::Uncertain(reason) => Err(ExactCurveError::blocked(
++                CurveOperation2::Fillet,
++                family,
++                reason,
++            )),
++        };
++        let (source_scale, reversed) = match self {
++            Self::Direct(_) => (RealSign::Positive, false),
++            Self::Retained(source) => (derivative_scale(source.parallel())?, source.is_reversed()),
++            Self::Selected(source) => (
++                derivative_scale(&source.parallel_carrier())?,
++                source.is_reversed(),
++            ),
++        };
++        Ok((source_scale != derivative_scale(support)?) != reversed)
+     }
+ 
+     fn parallel_distance(&self) -> Real {
+@@ -5229,7 +5214,7 @@
+                 })
+             }
+             Self::SelectedFiber { source, parallel } => {
+-                let source_scale = selected_fiber_parallel_derivative_scale_sign(
++                let source_scale = selected_fiber_regular_fragment_derivative_scale_sign(
+                     parallel, source, family, policy,
+                 )?;
+                 let traversal_agrees_with_source =
+@@ -6327,35 +6312,7 @@
+     Ok(false)
+ }
+ 
+-fn retained_fillet_parallel_support_reverses_source(
+-    source: &crate::BezierParallelFragment2,
+-    support: &BezierParallel2,
+-    family: CurveFamily2,
+-    policy: &CurveContext,
+-) -> ExactCurveResult<bool> {
+-    let derivative_scale = |parallel: &BezierParallel2| match parallel
+-        .regular_fragment_derivative_scale_sign(source.range(), policy)
+-        .map_err(|cause| ExactCurveError::invalid(CurveOperation2::Fillet, family, cause))?
+-    {
+-        Classification::Decided(sign @ (RealSign::Positive | RealSign::Negative)) => Ok(sign),
+-        Classification::Decided(RealSign::Zero) => Err(ExactCurveError::blocked(
+-            CurveOperation2::Fillet,
+-            family,
+-            crate::UncertaintyReason::Boundary,
+-        )),
+-        Classification::Uncertain(reason) => Err(ExactCurveError::blocked(
+-            CurveOperation2::Fillet,
+-            family,
+-            reason,
+-        )),
+-    };
+-    Ok(
+-        (derivative_scale(source.parallel())? != derivative_scale(support)?)
+-            != source.is_reversed(),
+-    )
+-}
+-
+-fn selected_fiber_parallel_derivative_scale_sign(
++fn selected_fiber_regular_fragment_derivative_scale_sign(
+     parallel: &BezierParallel2,
+     source: &crate::bezier_split::BezierSelectedFiberFragment2,
+     family: CurveFamily2,
+@@ -6380,7 +6337,7 @@
+         }
+     };
+     match parallel
+-        .parallel_derivative_scale_sign(&parameter, policy)
++        .parallel_derivative_scale_sign(&parameter.clone().into(), policy)
+         .map_err(|cause| ExactCurveError::invalid(CurveOperation2::Fillet, family, cause))?
+     {
+         Classification::Decided(sign @ (RealSign::Positive | RealSign::Negative)) => Ok(sign),
+@@ -6446,7 +6403,6 @@
+     mut dot: RealSign,
+     complementary: bool,
+     cusp_support_reverses_source: bool,
+-    analytic_support_reverses_source: bool,
+     cusp_is_previous: bool,
+     domains: [FilletContactDomain2; 2],
+     incident_domain: Option<&crate::bezier_offset::BezierParallelIncidentDomain2>,
+@@ -6492,6 +6448,12 @@
+         cross = reverse_fillet_sign(cross);
+         dot = reverse_fillet_sign(dot);
+     }
++    let analytic_support_reverses_source = parallel_source.support_reverses_source_at(
++        analytic_support,
++        &analytic_parameter,
++        analytic_family,
++        policy,
++    )?;
+     if analytic_support_reverses_source {
+         cross = reverse_fillet_sign(cross);
+         dot = reverse_fillet_sign(dot);
+@@ -6945,12 +6907,6 @@
+             if intersections.contacts().is_empty() {
+                 return Ok(centers);
+             }
+-            let previous_support_reverses_source =
+-                previous_source.support_reverses_source(previous, previous_family, policy)?;
+-            let next_support_reverses_source =
+-                next_source.support_reverses_source(next, next_family, policy)?;
+-            let reverse_tangent_relation =
+-                previous_support_reverses_source != next_support_reverses_source;
+             for contact in intersections.contacts() {
+                 let point = analytic_parallel_point_evidence(
+                     previous,
+@@ -6980,6 +6936,17 @@
+                 )? {
+                     continue;
+                 }
++                let reverse_tangent_relation = previous_source.support_reverses_source_at(
++                    previous,
++                    previous_parameter,
++                    previous_family,
++                    policy,
++                )? != next_source.support_reverses_source_at(
++                    next,
++                    next_parameter,
++                    next_family,
++                    policy,
++                )?;
+                 let orient = |sign| {
+                     if reverse_tangent_relation {
+                         reverse_fillet_sign(sign)
+@@ -7211,8 +7178,12 @@
+                             ));
+                         }
+                     };
+-                    let support_reverses_source =
+-                        source.support_reverses_source(support, parallel_family, policy)?;
++                    let support_reverses_source = source.support_reverses_source_at(
++                        support,
++                        &parameter.clone().into(),
++                        parallel_family,
++                        policy,
++                    )?;
+                     if support_reverses_source {
+                         cross = reverse_fillet_sign(cross);
+                         dot = reverse_fillet_sign(dot);
+@@ -7284,11 +7255,6 @@
+                 cusp_source,
+                 cusp_support,
+                 cusp_family,
+-                policy,
+-            )?;
+-            let analytic_support_reverses_source = parallel_source.support_reverses_source(
+-                analytic_support,
+-                analytic_family,
+                 policy,
+             )?;
+             let incident_domain = if mode == CurveCornerMode2::TrimOrExtend {
+@@ -7386,7 +7352,6 @@
+                                 dot,
+                                 complementary,
+                                 cusp_support_reverses_source,
+-                                analytic_support_reverses_source,
+                                 cusp_is_previous,
+                                 domains,
+                                 incident_domain.as_ref(),
+@@ -7426,7 +7391,6 @@
+                                 contact.tangent_dot_sign(),
+                                 complementary,
+                                 cusp_support_reverses_source,
+-                                analytic_support_reverses_source,
+                                 cusp_is_previous,
+                                 domains,
+                                 incident_domain.as_ref(),
+@@ -7537,6 +7501,9 @@
+                                 cross = reverse_fillet_sign(cross);
+                                 dot = reverse_fillet_sign(dot);
+                             }
++                            let analytic_support_reverses_source = parallel_source.support_reverses_source_at(
++                                analytic_support, &contact.parallel_parameter.clone().into(), analytic_family, policy,
++                            )?;
+                             if analytic_support_reverses_source {
+                                 cross = reverse_fillet_sign(cross);
+                                 dot = reverse_fillet_sign(dot);
+@@ -9370,11 +9337,6 @@
+                     ));
+                 }
+             };
+-            let analytic_support_reverses_source = parallel_source.support_reverses_source(
+-                analytic_support,
+-                analytic_family,
+-                policy,
+-            )?;
+             for contact in intersections {
+                 if !parallel_source.parameter_is_admissible(
+                     &contact.parallel_parameter().clone().into(),
+@@ -9388,6 +9350,12 @@
+                 }
+                 let mut cross = contact.tangent_cross_sign();
+                 let mut dot = contact.tangent_dot_sign();
++                let analytic_support_reverses_source = parallel_source.support_reverses_source_at(
++                    analytic_support,
++                    &contact.parallel_parameter().clone().into(),
++                    analytic_family,
++                    policy,
++                )?;
+                 if analytic_support_reverses_source {
+                     cross = reverse_fillet_sign(cross);
+                     dot = reverse_fillet_sign(dot);
+@@ -12578,6 +12546,149 @@
+     use super::*;
+ 
+     #[test]
++    fn fillet_center_contacts_keep_source_orientation_across_support_cusps() {
++        let p = Point2::from_values;
++        let half = (Real::one() / Real::from(2)).unwrap();
++        let quarter = (Real::one() / Real::from(4)).unwrap();
++        let curve = QuadraticBezier2::new(p(4, 0), p(3, 4), p(2, 0));
++        let authored = Curve2::from(curve.clone());
++        let line = LineSeg2::try_new(p(0, 0), p(4, 0)).unwrap();
++        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
++            let prepared = PreparedFilletCarrier2::new(
++                ExactCornerCarrier2::Line(&line),
++                CurveFamily2::Line,
++                &policy,
++            )
++            .unwrap();
++            let previous = prepared.offset(&half, CurveFamily2::Line, &policy).unwrap();
++            let parallel = curve.parallel_left(Real::zero()).unwrap();
++            let Classification::Decided(retained) = crate::BezierParallelFragment2::try_new(
++                parallel.clone(),
++                BezierParameterRange2::new_validated(
++                    BezierParameter2::Exact(Real::zero()),
++                    BezierParameter2::Exact(Real::one()),
++                ),
++                &policy,
++            )
++            .unwrap() else {
++                panic!("the zero-distance cap is regular");
++            };
++            let selected = crate::bezier_split::BezierSelectedFiberFragment2::new(
++                crate::bezier_split::BezierSelectedFiberSource2::AnalyticParallel(parallel.clone()),
++                CurveParameterRange2::unit(),
++                p(4, 0).into(),
++                p(2, 0).into(),
++            );
++            let reversed_retained = retained.reversed();
++            let reversed_selected = selected.reversed();
++            for (source, reversed) in [
++                (
++                    FilletParallelSource2::Direct(ExactCornerBezier2::Direct(&authored)),
++                    false,
++                ),
++                (FilletParallelSource2::Retained(&retained), false),
++                (FilletParallelSource2::Selected(&selected), false),
++                (FilletParallelSource2::Retained(&reversed_retained), true),
++                (FilletParallelSource2::Selected(&reversed_selected), true),
++            ] {
++                let next = FilletOffsetCarrier2::Parallel {
++                    source,
++                    support: parallel.with_distance(half.clone()),
++                };
++                let centers = fillet_offset_centers(
++                    &previous,
++                    &next,
++                    [FilletContactDomain2::AuthoredCurve(CurveCornerMode2::TrimOnly); 2],
++                    CurveFamily2::Line,
++                    CurveFamily2::QuadraticBezier,
++                    &policy,
++                )
++                .unwrap();
++                assert_eq!(centers.iter().count(), 2);
++                for center in centers.iter() {
++                    let parameter = center.next_parameter.as_ref().unwrap();
++                    let Classification::Decided(side) = parameter
++                        .polynomial_sign(&[-half.clone(), Real::one()], &policy)
++                        .unwrap()
++                    else {
++                        panic!("each contact lies on one side of the cap");
++                    };
++                    let boundary = if side == RealSign::Negative {
++                        quarter.clone()
++                    } else {
++                        Real::one() - &quarter
++                    };
++                    assert_eq!(
++                        parameter
++                            .polynomial_sign(&[-boundary, Real::one()], &policy)
++                            .unwrap(),
++                        Classification::Decided(side)
++                    );
++                    // P'=(-2,8-16t): its dot with the positive x-axis is
++                    // negative, and P' x (1,0) has the sign of t-1/2.
++                    // At these outer contacts the offset scale is positive;
++                    // at the unrelated midpoint it is negative (radius 1/4).
++                    let evidence = center.retained_anchor_evidence.as_ref().unwrap();
++                    assert_eq!(
++                        evidence.dot,
++                        Some(if reversed {
++                            RealSign::Positive
++                        } else {
++                            RealSign::Negative
++                        })
++                    );
++                    assert_eq!(
++                        evidence.cross,
++                        Some(if reversed {
++                            reverse_fillet_sign(side)
++                        } else {
++                            side
++                        })
++                    );
++                    assert_eq!(
++                        evidence.source_direction,
++                        Some(if reversed {
++                            RealSign::Negative
++                        } else {
++                            RealSign::Positive
++                        })
++                    );
++                }
++            }
++        }
++    }
++    #[test]
++    fn parallel_derivative_orientation_replays_unprojectable_selected_fibers() {
++        let p = Point2::from_values;
++        let half = (Real::one() / Real::from(2)).unwrap();
++        let parallel = QuadraticBezier2::new(p(4, 0), p(3, 4), p(2, 0))
++            .parallel_left(half.clone())
++            .unwrap();
++        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
++            // u^135 = 1/(2*scale^9). The first root lies in (0.99,1),
++            // the second in (0.49,0.5), on opposite sides of a support cusp.
++            for (scale, expected) in [(1, RealSign::Positive), (32_768, RealSign::Negative)] {
++                let selected = crate::bezier_offset::degree_nine_selected_fiber_parameter_for_test(
++                    half.clone(),
++                    scale,
++                    &policy,
++                );
++                assert!(matches!(
++                    selected.promoted_bezier_parameter(&policy).unwrap(),
++                    Classification::Uncertain(_)
++                ));
++                let parameter = CurveParameter2::from_selected_fiber(selected);
++                assert_eq!(
++                    parallel
++                        .parallel_derivative_scale_sign(&parameter, &policy)
++                        .unwrap(),
++                    Classification::Decided(expected)
++                );
++            }
++        }
++    }
++
++    #[test]
+     fn fillet_domains_control_each_circular_contact_independently() {
+         let line =
+             LineSeg2::try_new(Point2::from_values(-3, 0), Point2::from_values(0, 0)).unwrap();
+--- a/src/bezier_region.rs
++++ b/src/bezier_region.rs
+@@ -6043,7 +6043,7 @@
+             return Ok(Classification::Uncertain(reason));
+         }
+     };
+-    parallel.parallel_derivative_scale_sign(&BezierParameter2::Exact(parameter), policy)
++    parallel.parallel_derivative_scale_sign(&parameter.into(), policy)
+ }
+ 
+ fn exact_offset_span_from_retained_parallel_fragment(
+@@ -9212,14 +9212,15 @@
+             Err(_) => return Classification::Uncertain(UncertaintyReason::Unsupported),
+         }
+     };
+-    let parallel_scale = match parallel.parallel_derivative_scale_sign(parameter, policy) {
+-        Ok(Classification::Decided(sign @ (RealSign::Positive | RealSign::Negative))) => sign,
+-        Ok(Classification::Decided(RealSign::Zero)) => {
+-            return Classification::Uncertain(UncertaintyReason::Boundary);
+-        }
+-        Ok(Classification::Uncertain(reason)) => return Classification::Uncertain(reason),
+-        Err(_) => return Classification::Uncertain(UncertaintyReason::Unsupported),
+-    };
++    let parallel_scale =
++        match parallel.parallel_derivative_scale_sign(&parameter.clone().into(), policy) {
++            Ok(Classification::Decided(sign @ (RealSign::Positive | RealSign::Negative))) => sign,
++            Ok(Classification::Decided(RealSign::Zero)) => {
++                return Classification::Uncertain(UncertaintyReason::Boundary);
++            }
++            Ok(Classification::Uncertain(reason)) => return Classification::Uncertain(reason),
++            Err(_) => return Classification::Uncertain(UncertaintyReason::Unsupported),
++        };
+     Classification::Decided(exact_sign_product(
+         relation,
+         exact_sign_product(source_direction, parallel_scale),
+@@ -9258,16 +9259,17 @@
+         }
+         Err(_) => return Classification::Uncertain(UncertaintyReason::Unsupported),
+     };
+-    let parallel_scale = match parallel.parallel_derivative_scale_sign(parameter, policy) {
+-        Ok(Classification::Decided(sign @ (RealSign::Positive | RealSign::Negative))) => sign,
+-        Ok(Classification::Decided(RealSign::Zero)) => {
+-            return Classification::Uncertain(UncertaintyReason::Boundary);
+-        }
+-        Ok(Classification::Uncertain(reason)) => {
+-            return Classification::Uncertain(reason);
+-        }
+-        Err(_) => return Classification::Uncertain(UncertaintyReason::Unsupported),
+-    };
++    let parallel_scale =
++        match parallel.parallel_derivative_scale_sign(&parameter.clone().into(), policy) {
++            Ok(Classification::Decided(sign @ (RealSign::Positive | RealSign::Negative))) => sign,
++            Ok(Classification::Decided(RealSign::Zero)) => {
++                return Classification::Uncertain(UncertaintyReason::Boundary);
++            }
++            Ok(Classification::Uncertain(reason)) => {
++                return Classification::Uncertain(reason);
++            }
++            Err(_) => return Classification::Uncertain(UncertaintyReason::Unsupported),
++        };
+     let factor = exact_sign_product(source_direction, parallel_scale);
+     Classification::Decided((
+         exact_sign_reverse(exact_sign_product(vector_cross_parallel, factor)),
+--- a/src/curve_corner_chain.rs
++++ b/src/curve_corner_chain.rs
+@@ -2010,7 +2010,7 @@
+             || terminal_circle.uses_selected_chord_normal_frame()
+         {
+             let derivative_scale = match other_parallel
+-                .parallel_derivative_scale_sign(&other_parameter, policy)
++                .parallel_derivative_scale_sign(&other_parameter.clone().into(), policy)
+                 .map_err(|cause| curve_region_edit_error(CurveOperation2::Fillet, cause))?
+             {
+                 Classification::Decided(sign @ (RealSign::Positive | RealSign::Negative)) => sign,

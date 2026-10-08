@@ -1,0 +1,53 @@
+\doxysubsection{source/numeric/arithmetic.hpp File Reference}
+\hypertarget{arithmetic_8hpp}{}\label{arithmetic_8hpp}\index{source/numeric/arithmetic.hpp@{source/numeric/arithmetic.hpp}}
+
+
+\doxysubsubsection{Description}
+Arithmetic declarations. 
+
+{\ttfamily \#include "{}utility/metaprogramming.\+hpp"{}}\newline
+{\ttfamily \#include "{}foundations/logical.\+decl.\+hpp"{}}\newline
+{\ttfamily \#include "{}number.\+decl.\+hpp"{}}\newline
+{\ttfamily \#include "{}sign.\+hpp"{}}\newline
+{\ttfamily \#include "{}foundations/logical.\+hpp"{}}\newline
+\doxysubsubsubsection*{Classes}
+\begin{DoxyCompactItemize}
+\item 
+struct \mbox{\hyperlink{structAriadne_1_1DeclareInplaceMixedDirectedGroupOperators}{Declare\+Inplace\+Mixed\+Directed\+Group\+Operators$<$ X, Y, NY, R $>$}}
+\begin{DoxyCompactList}\small\item\em Declare operators corresponding to {\itshape X} being a mutable field. \end{DoxyCompactList}\item 
+struct \mbox{\hyperlink{structAriadne_1_1DeclareInplaceMixedDirectedSemifieldOperators}{Declare\+Inplace\+Mixed\+Directed\+Semifield\+Operators$<$ X, Y, QY, R $>$}}
+\begin{DoxyCompactList}\small\item\em Declare operators corresponding to {\itshape X} being a mutable semifield. \end{DoxyCompactList}\item 
+struct \mbox{\hyperlink{structAriadne_1_1DeclareInplaceMixedFieldOperators}{Declare\+Inplace\+Mixed\+Field\+Operators$<$ X, Y, R $>$}}
+\begin{DoxyCompactList}\small\item\em Declare operators corresponding to {\itshape X} being a mutable field. \end{DoxyCompactList}\item 
+struct \mbox{\hyperlink{structAriadne_1_1DeclareDirectedGroupOperations}{Declare\+Directed\+Group\+Operations$<$ X, NX, R, NR $>$}}
+\begin{DoxyCompactList}\small\item\em Declare operators corresponding to {\itshape X} being a (mathematical) ring. \end{DoxyCompactList}\item 
+struct \mbox{\hyperlink{structAriadne_1_1DeclareGroupOperations}{Declare\+Group\+Operations$<$ X, R $>$}}
+\begin{DoxyCompactList}\small\item\em Declare operators corresponding to {\itshape X} being a (mathematical) group. \end{DoxyCompactList}\item 
+struct \mbox{\hyperlink{structAriadne_1_1DeclareRingOperations}{Declare\+Ring\+Operations$<$ X, R, PR $>$}}
+\begin{DoxyCompactList}\small\item\em Declare operators corresponding to {\itshape X} being a (mathematical) ring. \end{DoxyCompactList}\item 
+struct \mbox{\hyperlink{structAriadne_1_1DeclareFieldOperations}{Declare\+Field\+Operations$<$ X, R $>$}}
+\begin{DoxyCompactList}\small\item\em Declare operators corresponding to {\itshape X} being a (mathematical) field. Includes all operations supported in \doxylink{structAriadne_1_1DeclareRingOperations}{Declare\+Ring\+Operations$<$\+X$>$}, and those listed below. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1DeclareMonotoneOperations}{Declare\+Monotone\+Operations$<$ X, R $>$}}
+\begin{DoxyCompactList}\small\item\em Declare elementary algebraic and transcendental operations. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1DeclareTranscendentalOperations}{Declare\+Transcendental\+Operations$<$ X, R $>$}}
+\begin{DoxyCompactList}\small\item\em Declare elementary algebraic and transcendental operations. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1DeclareAnalyticFieldOperations}{Declare\+Analytic\+Field\+Operations$<$ X, R $>$}}
+\begin{DoxyCompactList}\small\item\em Declare elementary arithmetic, algebraic and transcendental operations. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1DeclareLatticeOperations}{Declare\+Lattice\+Operations$<$ X, PX $>$}}
+\begin{DoxyCompactList}\small\item\em Declare operators corresponding to {\itshape X} being an ordered mutable field. \end{DoxyCompactList}\item 
+struct \mbox{\hyperlink{structAriadne_1_1DeclareComparisonOperations}{Declare\+Comparison\+Operations$<$ X, LT, EQ $>$}}
+\begin{DoxyCompactList}\small\item\em Declare comparison operations. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsubsection*{Namespaces}
+\begin{DoxyCompactItemize}
+\item 
+namespace \mbox{\hyperlink{namespaceAriadne}{Ariadne}}
+\begin{DoxyCompactList}\small\item\em Top-\/level Ariadne namespace. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsubsection*{Typedefs}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{namespaceAriadne_aae901a69a841b1a085a0dfe218e38fe9}\label{namespaceAriadne_aae901a69a841b1a085a0dfe218e38fe9} 
+using {\bfseries Nat} = uint
+\begin{DoxyCompactList}\small\item\em Internal name for builtin unsigned integers. \end{DoxyCompactList}\item 
+\Hypertarget{namespaceAriadne_a008e7f6ae8f621fbb1d876061812b9b2}\label{namespaceAriadne_a008e7f6ae8f621fbb1d876061812b9b2} 
+using {\bfseries Int} = int
+\begin{DoxyCompactList}\small\item\em Internal name for builtin integers. \end{DoxyCompactList}\end{DoxyCompactItemize}

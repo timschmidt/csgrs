@@ -1,0 +1,15 @@
+{
+  "repos": {
+    "hypercurve": {
+      "commit": "a03c08bbd9e8ba119fe213be0e86e35e36f717b2",
+      "parent": "374dcfb8bd888ce00adcfe64de9a9925b8148576",
+      "paths": {
+        "src/bezier_offset.rs": "04c040dc40ab03a5ada15d8114f3149c92a47f3abe94d2196a7134f03af71e0b",
+        "tests/hypercurve_stationary_fillets.rs": "8745cd4bbc50db909dada1199ff1ccdf14973599267e75b83e9f7eafd6592193"
+      }
+    }
+  },
+  "qualification": "regular-pair-components-20260927-v526-terminal.json",
+  "verified_source_files": 2047,
+  "clean_repositories": 30
+}

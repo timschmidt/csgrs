@@ -1,0 +1,61 @@
+     Locking 9 packages to latest Rust 1.97.0 compatible versions
+   Compiling hyperreal v0.13.1 (/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/root-exp-proof-trial-hyperreal)
+error[E0368]: binary assignment operation `+=` cannot be applied to type `rational::arithmetic::Rational`
+   --> /home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/root-exp-proof-trial-hyperreal/src/computable/node/exp_relation.rs:45:17
+    |
+ 45 |                 self.terms[index].1 += coefficient;
+    |                 -------------------^^^^^^^^^^^^^^^
+    |                 |
+    |                 cannot use `+=` on type `rational::arithmetic::Rational`
+    |
+note: an implementation of `std::ops::AddAssign` might be missing for `rational::arithmetic::Rational`
+   --> /home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/root-exp-proof-trial-hyperreal/src/rational/arithmetic/representation.rs:42:1
+    |
+ 42 | pub struct Rational(Arc<RationalData>);
+    | ^^^^^^^^^^^^^^^^^^^ must implement `std::ops::AddAssign`
+note: the trait `std::ops::AddAssign` must be implemented
+   --> /home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/core/src/ops/arith.rs:768:1
+    |
+768 | pub const trait AddAssign<Rhs = Self> {
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error[E0368]: binary assignment operation `+=` cannot be applied to type `rational::arithmetic::Rational`
+   --> /home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/root-exp-proof-trial-hyperreal/src/computable/node/exp_relation.rs:65:13
+    |
+ 65 |             self.constant += q * coefficient;
+    |             -------------^^^^^^^^^^^^^^^^^^^
+    |             |
+    |             cannot use `+=` on type `rational::arithmetic::Rational`
+    |
+note: an implementation of `std::ops::AddAssign` might be missing for `rational::arithmetic::Rational`
+   --> /home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/root-exp-proof-trial-hyperreal/src/rational/arithmetic/representation.rs:42:1
+    |
+ 42 | pub struct Rational(Arc<RationalData>);
+    | ^^^^^^^^^^^^^^^^^^^ must implement `std::ops::AddAssign`
+note: the trait `std::ops::AddAssign` must be implemented
+   --> /home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/core/src/ops/arith.rs:768:1
+    |
+768 | pub const trait AddAssign<Rhs = Self> {
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error[E0368]: binary assignment operation `+=` cannot be applied to type `rational::arithmetic::Rational`
+   --> /home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/root-exp-proof-trial-hyperreal/src/computable/node/exp_relation.rs:96:17
+    |
+ 96 |                 self.constant += coefficient;
+    |                 -------------^^^^^^^^^^^^^^^
+    |                 |
+    |                 cannot use `+=` on type `rational::arithmetic::Rational`
+    |
+note: an implementation of `std::ops::AddAssign` might be missing for `rational::arithmetic::Rational`
+   --> /home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/root-exp-proof-trial-hyperreal/src/rational/arithmetic/representation.rs:42:1
+    |
+ 42 | pub struct Rational(Arc<RationalData>);
+    | ^^^^^^^^^^^^^^^^^^^ must implement `std::ops::AddAssign`
+note: the trait `std::ops::AddAssign` must be implemented
+   --> /home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/core/src/ops/arith.rs:768:1
+    |
+768 | pub const trait AddAssign<Rhs = Self> {
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+For more information about this error, try `rustc --explain E0368`.
+error: could not compile `hyperreal` (lib) due to 3 previous errors

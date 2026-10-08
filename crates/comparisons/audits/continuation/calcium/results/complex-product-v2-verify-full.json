@@ -1,0 +1,14 @@
+{
+  "tag": "complex-product-v2-verify-full",
+  "started": "2026-09-09T22:16:24.890Z",
+  "finished": "2026-09-09T22:17:02.172Z",
+  "elapsedSeconds": 37.279090144,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "node",
+  "args": [
+    "verify-complex-product-v2.mjs",
+    "--derivative-live"
+  ],
+  "code": 0,
+  "signal": null
+}

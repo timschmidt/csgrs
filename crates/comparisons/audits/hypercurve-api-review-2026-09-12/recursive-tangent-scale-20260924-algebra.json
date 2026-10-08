@@ -1,0 +1,50 @@
+{
+  "native_parameter": "0",
+  "source_point": [
+    "1/5",
+    "17/20"
+  ],
+  "source_tangent": [
+    "3",
+    "4"
+  ],
+  "speed": "5",
+  "distance": "1/4",
+  "normal": [
+    "-4/5",
+    "3/5"
+  ],
+  "contact": [
+    "0",
+    "1"
+  ],
+  "counterclockwise_cross": "-4",
+  "counterclockwise_dot": "-3",
+  "intended_combination": "0",
+  "incorrect_unscaled_combination": "48",
+  "local_parameter": "positive root of t^2-2 in (1,2)",
+  "local_source_bernstein_controls": [
+    [
+      "-29/5",
+      "-63/20"
+    ],
+    [
+      "-29/5",
+      "-63/20"
+    ],
+    [
+      "-53/10",
+      "-63/20"
+    ],
+    [
+      "-43/10",
+      "-63/20"
+    ],
+    [
+      "-14/5",
+      "-43/20"
+    ]
+  ],
+  "local_derivative_factor": "2*t > 0",
+  "production_executed": false
+}

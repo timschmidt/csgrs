@@ -1,0 +1,1243 @@
+[
+  {
+    "file": "hypercurve/tests/hypercurve_curve_region_stroke.rs",
+    "byte_start": 819,
+    "before": "&point",
+    "after": "&point.clone().into()"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_curve_region_boolean.rs",
+    "byte_start": 83534,
+    "before": "&wide_only_sample",
+    "after": "&wide_only_sample.clone().into()"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_curve_region_boolean.rs",
+    "byte_start": 83280,
+    "before": "&narrow_sample",
+    "after": "&narrow_sample.clone().into()"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_curve_region_boolean.rs",
+    "byte_start": 83023,
+    "before": "&wide_only_sample",
+    "after": "&wide_only_sample.clone().into()"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_curve_region_boolean.rs",
+    "byte_start": 82761,
+    "before": "&narrow_sample",
+    "after": "&narrow_sample.clone().into()"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_curve_region_boolean.rs",
+    "byte_start": 82481,
+    "before": "sample",
+    "after": "&sample.clone().into()"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_curve_region_boolean.rs",
+    "byte_start": 67100,
+    "before": "&point",
+    "after": "&point.clone().into()"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_curve_region_boolean.rs",
+    "byte_start": 66805,
+    "before": "&point",
+    "after": "&point.clone().into()"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_curve_region_boolean.rs",
+    "byte_start": 53364,
+    "before": "&sample",
+    "after": "&sample.clone().into()"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_curve_region_boolean.rs",
+    "byte_start": 51462,
+    "before": "&sample",
+    "after": "&sample.clone().into()"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_curve_region_boolean.rs",
+    "byte_start": 51283,
+    "before": "&sample",
+    "after": "&sample.clone().into()"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_curve_region_boolean.rs",
+    "byte_start": 46484,
+    "before": "&sample",
+    "after": "&sample.clone().into()"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_curve_region_boolean.rs",
+    "byte_start": 46321,
+    "before": "&sample",
+    "after": "&sample.clone().into()"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_curve_region_boolean.rs",
+    "byte_start": 44523,
+    "before": "&sample",
+    "after": "&sample.clone().into()"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_curve_region_boolean.rs",
+    "byte_start": 44360,
+    "before": "&sample",
+    "after": "&sample.clone().into()"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_curve_region_boolean.rs",
+    "byte_start": 37364,
+    "before": "&sample",
+    "after": "&sample.clone().into()"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_curve_region_boolean.rs",
+    "byte_start": 28811,
+    "before": "&point",
+    "after": "&point.clone().into()"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_curve_region_boolean.rs",
+    "byte_start": 10074,
+    "before": "&sample",
+    "after": "&sample.clone().into()"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_curve_region_boolean.rs",
+    "byte_start": 6526,
+    "before": "&Point2::new(ratio(n, 8), ratio(1, 2))",
+    "after": "&Point2::new(ratio(n, 8), ratio(1, 2)).into()"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_pr59_shape_regressions.rs",
+    "byte_start": 1580,
+    "before": "&p(x, y)",
+    "after": "&p(x, y).into()"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_curve.rs",
+    "byte_start": 14709,
+    "before": "&p(1, 1)",
+    "after": "&p(1, 1).into()"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_curve.rs",
+    "byte_start": 14387,
+    "before": "&p(1, 1)",
+    "after": "&p(1, 1).into()"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_curve.rs",
+    "byte_start": 14001,
+    "before": "&p(1, 1)",
+    "after": "&p(1, 1).into()"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_curve.rs",
+    "byte_start": 12609,
+    "before": "&p(1, 1)",
+    "after": "&p(1, 1).into()"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_curve.rs",
+    "byte_start": 12388,
+    "before": "&p(1, 1)",
+    "after": "&p(1, 1).into()"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_curve.rs",
+    "byte_start": 11522,
+    "before": "&p(0, 0)",
+    "after": "&p(0, 0).into()"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_curve.rs",
+    "byte_start": 11307,
+    "before": "&p(8, -4)",
+    "after": "&p(8, -4).into()"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_curve.rs",
+    "byte_start": 11093,
+    "before": "&p(8, -1)",
+    "after": "&p(8, -1).into()"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_curve_region_promotion.rs",
+    "byte_start": 320197,
+    "before": "&point",
+    "after": "&point.clone().into()"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_curve_region_promotion.rs",
+    "byte_start": 316099,
+    "before": "&point",
+    "after": "&point.clone().into()"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_curve_region_promotion.rs",
+    "byte_start": 315197,
+    "before": "point",
+    "after": "&point.clone().into()"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_curve_region_promotion.rs",
+    "byte_start": 311253,
+    "before": "&query",
+    "after": "&query.clone().into()"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_curve_region_promotion.rs",
+    "byte_start": 308080,
+    "before": "&p(5, 5)",
+    "after": "&p(5, 5).into()"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_curve_region_promotion.rs",
+    "byte_start": 307262,
+    "before": "&p(5, 5)",
+    "after": "&p(5, 5).into()"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_curve_region_promotion.rs",
+    "byte_start": 307053,
+    "before": "&p(3, 5)",
+    "after": "&p(3, 5).into()"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_curve_region_promotion.rs",
+    "byte_start": 306899,
+    "before": "&p(0, 5)",
+    "after": "&p(0, 5).into()"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_curve_region_promotion.rs",
+    "byte_start": 304954,
+    "before": "&p(1, -1)",
+    "after": "&p(1, -1).into()"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_curve_region_promotion.rs",
+    "byte_start": 302727,
+    "before": "&p(2, 5)",
+    "after": "&p(2, 5).into()"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_curve_region_promotion.rs",
+    "byte_start": 298734,
+    "before": "&p(2, 2)",
+    "after": "&p(2, 2).into()"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_curve_region_promotion.rs",
+    "byte_start": 297774,
+    "before": "&p(0, 2)",
+    "after": "&p(0, 2).into()"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_curve_region_promotion.rs",
+    "byte_start": 297367,
+    "before": "&p(0, 2)",
+    "after": "&p(0, 2).into()"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_curve_region_promotion.rs",
+    "byte_start": 296276,
+    "before": "&p(5, 5)",
+    "after": "&p(5, 5).into()"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_curve_region_promotion.rs",
+    "byte_start": 295231,
+    "before": "&p(10, 5)",
+    "after": "&p(10, 5).into()"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_curve_region_promotion.rs",
+    "byte_start": 293174,
+    "before": "&p(15, 8)",
+    "after": "&p(15, 8).into()"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_curve_region_promotion.rs",
+    "byte_start": 293018,
+    "before": "&p(15, 4)",
+    "after": "&p(15, 4).into()"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_curve_region_promotion.rs",
+    "byte_start": 291858,
+    "before": "&p(15, 11)",
+    "after": "&p(15, 11).into()"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_curve_region_promotion.rs",
+    "byte_start": 290731,
+    "before": "&p(5, 5)",
+    "after": "&p(5, 5).into()"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_curve_region_promotion.rs",
+    "byte_start": 290582,
+    "before": "&point",
+    "after": "&point.clone().into()"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_curve_region_promotion.rs",
+    "byte_start": 289530,
+    "before": "&point",
+    "after": "&point.clone().into()"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_curve_region_promotion.rs",
+    "byte_start": 288087,
+    "before": "&p(0, 2)",
+    "after": "&p(0, 2).into()"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_curve_region_promotion.rs",
+    "byte_start": 286815,
+    "before": "&p(3, 2)",
+    "after": "&p(3, 2).into()"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_curve_region_promotion.rs",
+    "byte_start": 284126,
+    "before": "&p(-8, -8)",
+    "after": "&p(-8, -8).into()"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_curve_region_promotion.rs",
+    "byte_start": 283940,
+    "before": "&p(2, 1)",
+    "after": "&p(2, 1).into()"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_curve_region_promotion.rs",
+    "byte_start": 282901,
+    "before": "&point",
+    "after": "&point.clone().into()"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_curve_region_promotion.rs",
+    "byte_start": 281566,
+    "before": "&p(0, 2)",
+    "after": "&p(0, 2).into()"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_curve_region_promotion.rs",
+    "byte_start": 281396,
+    "before": "&p(2, 1)",
+    "after": "&p(2, 1).into()"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_curve_region_promotion.rs",
+    "byte_start": 281226,
+    "before": "&p(2, 3)",
+    "after": "&p(2, 3).into()"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_curve_region_promotion.rs",
+    "byte_start": 279816,
+    "before": "&point",
+    "after": "&point.clone().into()"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_curve_region_promotion.rs",
+    "byte_start": 278016,
+    "before": "&point",
+    "after": "&point.clone().into()"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_curve_region_promotion.rs",
+    "byte_start": 276214,
+    "before": "&point",
+    "after": "&point.clone().into()"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_curve_region_promotion.rs",
+    "byte_start": 274455,
+    "before": "&point",
+    "after": "&point.clone().into()"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_curve_region_promotion.rs",
+    "byte_start": 272774,
+    "before": "&point",
+    "after": "&point.clone().into()"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_curve_region_promotion.rs",
+    "byte_start": 270777,
+    "before": "&point",
+    "after": "&point.clone().into()"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_curve_region_promotion.rs",
+    "byte_start": 269369,
+    "before": "&p(10, 10)",
+    "after": "&p(10, 10).into()"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_curve_region_promotion.rs",
+    "byte_start": 266340,
+    "before": "&p(2, 2)",
+    "after": "&p(2, 2).into()"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_curve_region_promotion.rs",
+    "byte_start": 264430,
+    "before": "&p(14, 2)",
+    "after": "&p(14, 2).into()"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_curve_region_promotion.rs",
+    "byte_start": 264238,
+    "before": "&point",
+    "after": "&point.clone().into()"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_curve_region_promotion.rs",
+    "byte_start": 263233,
+    "before": "&p(14, 2)",
+    "after": "&p(14, 2).into()"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_curve_region_promotion.rs",
+    "byte_start": 263041,
+    "before": "&point",
+    "after": "&point.clone().into()"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_curve_region_promotion.rs",
+    "byte_start": 261897,
+    "before": "&p(6, 2)",
+    "after": "&p(6, 2).into()"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_curve_region_promotion.rs",
+    "byte_start": 261570,
+    "before": "&point",
+    "after": "&point.clone().into()"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_curve_region_promotion.rs",
+    "byte_start": 258321,
+    "before": "&p(6, 2)",
+    "after": "&p(6, 2).into()"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_curve_region_promotion.rs",
+    "byte_start": 258155,
+    "before": "&point",
+    "after": "&point.clone().into()"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_curve_region_promotion.rs",
+    "byte_start": 257399,
+    "before": "&p(5, 1)",
+    "after": "&p(5, 1).into()"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_curve_region_promotion.rs",
+    "byte_start": 256830,
+    "before": "&p(5, 5)",
+    "after": "&p(5, 5).into()"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_curve_region_promotion.rs",
+    "byte_start": 256674,
+    "before": "&p(1, 1)",
+    "after": "&p(1, 1).into()"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_curve_region_promotion.rs",
+    "byte_start": 256135,
+    "before": "&p(14, 5)",
+    "after": "&p(14, 5).into()"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_curve_region_promotion.rs",
+    "byte_start": 255979,
+    "before": "&p(-2, -2)",
+    "after": "&p(-2, -2).into()"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_curve_region_promotion.rs",
+    "byte_start": 255825,
+    "before": "&p(5, 8)",
+    "after": "&p(5, 8).into()"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_curve_region_promotion.rs",
+    "byte_start": 255118,
+    "before": "&p(8, 6)",
+    "after": "&p(8, 6).into()"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_curve_region_promotion.rs",
+    "byte_start": 252272,
+    "before": "&p(7, 2)",
+    "after": "&p(7, 2).into()"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_curve_region_promotion.rs",
+    "byte_start": 251195,
+    "before": "&point",
+    "after": "&point.clone().into()"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_curve_region_promotion.rs",
+    "byte_start": 249568,
+    "before": "&p(7, 2)",
+    "after": "&p(7, 2).into()"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_curve_region_promotion.rs",
+    "byte_start": 249397,
+    "before": "&p(2, 2)",
+    "after": "&p(2, 2).into()"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_curve_region_promotion.rs",
+    "byte_start": 248676,
+    "before": "&point",
+    "after": "&point.clone().into()"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_curve_region_promotion.rs",
+    "byte_start": 245607,
+    "before": "&point",
+    "after": "&point.clone().into()"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_curve_region_promotion.rs",
+    "byte_start": 242033,
+    "before": "&point",
+    "after": "&point.clone().into()"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_curve_region_promotion.rs",
+    "byte_start": 238190,
+    "before": "&point",
+    "after": "&point.clone().into()"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_curve_region_promotion.rs",
+    "byte_start": 236169,
+    "before": "&point",
+    "after": "&point.clone().into()"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_curve_region_promotion.rs",
+    "byte_start": 231911,
+    "before": "&point",
+    "after": "&point.clone().into()"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_curve_region_promotion.rs",
+    "byte_start": 230851,
+    "before": "&Point2::new(q(13, 25), q(3, 4))",
+    "after": "&Point2::new(q(13, 25), q(3, 4)).into()"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_curve_region_promotion.rs",
+    "byte_start": 230556,
+    "before": "&Point2::new(q(3, 5), q(3, 4))",
+    "after": "&Point2::new(q(3, 5), q(3, 4)).into()"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_curve_region_promotion.rs",
+    "byte_start": 227105,
+    "before": "&Point2::new(q(2, 5), q(4, 5))",
+    "after": "&Point2::new(q(2, 5), q(4, 5)).into()"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_curve_region_promotion.rs",
+    "byte_start": 226809,
+    "before": "&Point2::new(q(47, 100), q(3, 4))",
+    "after": "&Point2::new(q(47, 100), q(3, 4)).into()"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_curve_region_promotion.rs",
+    "byte_start": 225982,
+    "before": "&Point2::new(Real::from(6), Real::from(-1) - &distance)",
+    "after": "&Point2::new(Real::from(6), Real::from(-1) - &distance).into()"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_curve_region_promotion.rs",
+    "byte_start": 224266,
+    "before": "&point",
+    "after": "&point.clone().into()"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_curve_region_promotion.rs",
+    "byte_start": 214659,
+    "before": "&point",
+    "after": "&point.clone().into()"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_curve_region_promotion.rs",
+    "byte_start": 207321,
+    "before": "&Point2::new(q(17, 2), q(17, 2))",
+    "after": "&Point2::new(q(17, 2), q(17, 2)).into()"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_curve_region_promotion.rs",
+    "byte_start": 206988,
+    "before": "&point",
+    "after": "&point.clone().into()"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_curve_region_promotion.rs",
+    "byte_start": 205422,
+    "before": "&p(10, 10)",
+    "after": "&p(10, 10).into()"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_curve_region_promotion.rs",
+    "byte_start": 195928,
+    "before": "&p(0, 0)",
+    "after": "&p(0, 0).into()"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_curve_region_promotion.rs",
+    "byte_start": 195755,
+    "before": "&p(0, 1)",
+    "after": "&p(0, 1).into()"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_curve_region_promotion.rs",
+    "byte_start": 192997,
+    "before": "&p(10, 10)",
+    "after": "&p(10, 10).into()"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_curve_region_promotion.rs",
+    "byte_start": 190496,
+    "before": "&p(10, 10)",
+    "after": "&p(10, 10).into()"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_curve_region_promotion.rs",
+    "byte_start": 185385,
+    "before": "&Point2::new(q(1, 2), q(1, 2))",
+    "after": "&Point2::new(q(1, 2), q(1, 2)).into()"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_curve_region_promotion.rs",
+    "byte_start": 180955,
+    "before": "&p(2, 1)",
+    "after": "&p(2, 1).into()"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_curve_region_promotion.rs",
+    "byte_start": 180765,
+    "before": "&p(-3, 1)",
+    "after": "&p(-3, 1).into()"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_curve_region_promotion.rs",
+    "byte_start": 173991,
+    "before": "&inside",
+    "after": "&inside.clone().into()"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_curve_region_promotion.rs",
+    "byte_start": 167484,
+    "before": "&p(-1, -1)",
+    "after": "&p(-1, -1).into()"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_curve_region_promotion.rs",
+    "byte_start": 166891,
+    "before": "&p(-1, -1)",
+    "after": "&p(-1, -1).into()"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_curve_region_promotion.rs",
+    "byte_start": 163085,
+    "before": "&p(2, 0)",
+    "after": "&p(2, 0).into()"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_curve_region_promotion.rs",
+    "byte_start": 162827,
+    "before": "&Point2::new(-Real::one(), q(1, 2))",
+    "after": "&Point2::new(-Real::one(), q(1, 2)).into()"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_curve_region_promotion.rs",
+    "byte_start": 158388,
+    "before": "&p(1, 1)",
+    "after": "&p(1, 1).into()"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_curve_region_promotion.rs",
+    "byte_start": 158198,
+    "before": "&p(-2, 1)",
+    "after": "&p(-2, 1).into()"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_curve_region_promotion.rs",
+    "byte_start": 153320,
+    "before": "&Point2::new(Real::from(-1), Real::from(-1))",
+    "after": "&Point2::new(Real::from(-1), Real::from(-1)).into()"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_curve_region_promotion.rs",
+    "byte_start": 153042,
+    "before": "&Point2::new(Real::from(2), Real::from(2))",
+    "after": "&Point2::new(Real::from(2), Real::from(2)).into()"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_curve_region_promotion.rs",
+    "byte_start": 150315,
+    "before": "&Point2::new(Real::from(2), Real::from(2))",
+    "after": "&Point2::new(Real::from(2), Real::from(2)).into()"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_curve_region_promotion.rs",
+    "byte_start": 147257,
+    "before": "&Point2::new(q(1, 2), q(1, 2))",
+    "after": "&Point2::new(q(1, 2), q(1, 2)).into()"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_curve_region_promotion.rs",
+    "byte_start": 143425,
+    "before": "&point",
+    "after": "&point.clone().into()"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_curve_region_promotion.rs",
+    "byte_start": 137551,
+    "before": "&Point2::new(q(1, 2), q(1, 2))",
+    "after": "&Point2::new(q(1, 2), q(1, 2)).into()"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_curve_region_promotion.rs",
+    "byte_start": 118614,
+    "before": "&Point2::new(q(1, 2), q(1, 2))",
+    "after": "&Point2::new(q(1, 2), q(1, 2)).into()"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_curve_region_promotion.rs",
+    "byte_start": 115213,
+    "before": "&transformed_boundary",
+    "after": "&transformed_boundary.clone().into()"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_curve_region_promotion.rs",
+    "byte_start": 114256,
+    "before": "&transformed_boundary",
+    "after": "&transformed_boundary.clone().into()"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_curve_region_promotion.rs",
+    "byte_start": 113421,
+    "before": "&point",
+    "after": "&point.clone().into()"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_curve_region_promotion.rs",
+    "byte_start": 103649,
+    "before": "&point",
+    "after": "&point.clone().into()"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_curve_region_promotion.rs",
+    "byte_start": 102796,
+    "before": "&Point2::new(q(1, 4), Real::zero())",
+    "after": "&Point2::new(q(1, 4), Real::zero()).into()"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_curve_region_promotion.rs",
+    "byte_start": 98966,
+    "before": "&Point2::new(Real::zero(), -q(1, 20))",
+    "after": "&Point2::new(Real::zero(), -q(1, 20)).into()"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_curve_region_promotion.rs",
+    "byte_start": 97244,
+    "before": "&Point2::new(q(1, 4), -q(4, 25))",
+    "after": "&Point2::new(q(1, 4), -q(4, 25)).into()"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_curve_region_promotion.rs",
+    "byte_start": 96506,
+    "before": "&Point2::new(Real::zero(), -q(3, 20))",
+    "after": "&Point2::new(Real::zero(), -q(3, 20)).into()"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_curve_region_promotion.rs",
+    "byte_start": 95392,
+    "before": "&point",
+    "after": "&point.clone().into()"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_curve_region_promotion.rs",
+    "byte_start": 92617,
+    "before": "&Point2::new(-q(9, 100), -q(9, 100))",
+    "after": "&Point2::new(-q(9, 100), -q(9, 100)).into()"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_curve_region_promotion.rs",
+    "byte_start": 91663,
+    "before": "&Point2::new(q(1, 2), q(1, 2))",
+    "after": "&Point2::new(q(1, 2), q(1, 2)).into()"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_curve_region_promotion.rs",
+    "byte_start": 91366,
+    "before": "&Point2::new(q(1, 20), q(1, 2))",
+    "after": "&Point2::new(q(1, 20), q(1, 2)).into()"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_curve_region_promotion.rs",
+    "byte_start": 90834,
+    "before": "&Point2::new(-q(3, 20), q(1, 2))",
+    "after": "&Point2::new(-q(3, 20), q(1, 2)).into()"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_curve_region_promotion.rs",
+    "byte_start": 90282,
+    "before": "&Point2::new(Real::zero(), -distance.clone())",
+    "after": "&Point2::new(Real::zero(), -distance.clone()).into()"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_curve_region_promotion.rs",
+    "byte_start": 90014,
+    "before": "&Point2::new(-q(1, 5), q(1, 2))",
+    "after": "&Point2::new(-q(1, 5), q(1, 2)).into()"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_curve_region_promotion.rs",
+    "byte_start": 89746,
+    "before": "&Point2::new(-q(1, 20), q(1, 2))",
+    "after": "&Point2::new(-q(1, 20), q(1, 2)).into()"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_curve_region_promotion.rs",
+    "byte_start": 81519,
+    "before": "&p(-2, 1)",
+    "after": "&p(-2, 1).into()"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_curve_region_promotion.rs",
+    "byte_start": 74633,
+    "before": "&p(0, 0)",
+    "after": "&p(0, 0).into()"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_curve_region_promotion.rs",
+    "byte_start": 74447,
+    "before": "&p(-2, 1)",
+    "after": "&p(-2, 1).into()"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_curve_region_promotion.rs",
+    "byte_start": 58369,
+    "before": "&Point2::new(q(-1, 1), q(1, 2))",
+    "after": "&Point2::new(q(-1, 1), q(1, 2)).into()"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_curve_region_promotion.rs",
+    "byte_start": 46039,
+    "before": "point",
+    "after": "&point.clone().into()"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_curve_region_promotion.rs",
+    "byte_start": 42800,
+    "before": "&p(4, 1)",
+    "after": "&p(4, 1).into()"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_curve_region_promotion.rs",
+    "byte_start": 39130,
+    "before": "&p(-1, -1)",
+    "after": "&p(-1, -1).into()"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_curve_region_promotion.rs",
+    "byte_start": 38973,
+    "before": "&p(-1, -1)",
+    "after": "&p(-1, -1).into()"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_curve_region_promotion.rs",
+    "byte_start": 37441,
+    "before": "&p(0, 5)",
+    "after": "&p(0, 5).into()"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_curve_region_promotion.rs",
+    "byte_start": 37194,
+    "before": "&p(0, 0)",
+    "after": "&p(0, 0).into()"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_curve_region_promotion.rs",
+    "byte_start": 32377,
+    "before": "&p(0, 5)",
+    "after": "&p(0, 5).into()"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_curve_region_promotion.rs",
+    "byte_start": 32183,
+    "before": "&p(0, 0)",
+    "after": "&p(0, 0).into()"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_curve_region_promotion.rs",
+    "byte_start": 31093,
+    "before": "&point",
+    "after": "&point.clone().into()"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_curve_region_promotion.rs",
+    "byte_start": 25422,
+    "before": "&Point2::new(q(5, 2), q(-5, 2))",
+    "after": "&Point2::new(q(5, 2), q(-5, 2)).into()"
+  },
+  {
+    "file": "hypercurve/examples/arrangement.rs",
+    "byte_start": 1223,
+    "before": "&p(2, 2)",
+    "after": "&p(2, 2).into()"
+  },
+  {
+    "file": "hypercurve/tests/exact_structural_facts.rs",
+    "byte_start": 4524,
+    "before": "&p(1, 1)",
+    "after": "&p(1, 1).into()"
+  },
+  {
+    "file": "hypercurve/examples/basic.rs",
+    "byte_start": 966,
+    "before": "&p(1, 1)",
+    "after": "&p(1, 1).into()"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_bbox.rs",
+    "byte_start": 5671,
+    "before": "&point",
+    "after": "&point.clone().into()"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_svg.rs",
+    "byte_start": 21014,
+    "before": "&point(2, 2)",
+    "after": "&point(2, 2).into()"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_geo_regressions.rs",
+    "byte_start": 4807,
+    "before": "&p(x, y)",
+    "after": "&p(x, y).into()"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_geo_regressions.rs",
+    "byte_start": 1823,
+    "before": "&point",
+    "after": "&point.clone().into()"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_analytic_parallel_region.rs",
+    "byte_start": 50806,
+    "before": "&query",
+    "after": "&query.clone().into()"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_analytic_parallel_region.rs",
+    "byte_start": 44681,
+    "before": "&sample",
+    "after": "&sample.clone().into()"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_analytic_parallel_region.rs",
+    "byte_start": 39143,
+    "before": "&sample",
+    "after": "&sample.clone().into()"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_analytic_parallel_region.rs",
+    "byte_start": 38337,
+    "before": "&sample",
+    "after": "&sample.clone().into()"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_analytic_parallel_region.rs",
+    "byte_start": 29992,
+    "before": "&point",
+    "after": "&point.clone().into()"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_analytic_parallel_region.rs",
+    "byte_start": 28874,
+    "before": "&point",
+    "after": "&point.clone().into()"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_analytic_parallel_region.rs",
+    "byte_start": 26106,
+    "before": "&point",
+    "after": "&point.clone().into()"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_analytic_parallel_region.rs",
+    "byte_start": 4680,
+    "before": "&point(2, 2)",
+    "after": "&point(2, 2).into()"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_bezier_region.rs",
+    "byte_start": 55509,
+    "before": "&p(2, 4)",
+    "after": "&p(2, 4).into()"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_bezier_region.rs",
+    "byte_start": 55188,
+    "before": "&p(2, 4)",
+    "after": "&p(2, 4).into()"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_bezier_region.rs",
+    "byte_start": 53340,
+    "before": "&point",
+    "after": "&point.clone().into()"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_bezier_region.rs",
+    "byte_start": 52106,
+    "before": "&point",
+    "after": "&point.clone().into()"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_bezier_region.rs",
+    "byte_start": 48688,
+    "before": "&point",
+    "after": "&point.clone().into()"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_bezier_region.rs",
+    "byte_start": 46498,
+    "before": "&point",
+    "after": "&point.clone().into()"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_bezier_region.rs",
+    "byte_start": 32154,
+    "before": "&p(0, 0)",
+    "after": "&p(0, 0).into()"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_bezier_region.rs",
+    "byte_start": 31958,
+    "before": "&p(0, 1)",
+    "after": "&p(0, 1).into()"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_bezier_region.rs",
+    "byte_start": 31762,
+    "before": "&p(2, 0)",
+    "after": "&p(2, 0).into()"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_bezier_region.rs",
+    "byte_start": 31566,
+    "before": "&p(0, 2)",
+    "after": "&p(0, 2).into()"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_bezier_region.rs",
+    "byte_start": 31371,
+    "before": "&p(0, 0)",
+    "after": "&p(0, 0).into()"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_bezier_region.rs",
+    "byte_start": 30106,
+    "before": "&p(3, 3)",
+    "after": "&p(3, 3).into()"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_bezier_region.rs",
+    "byte_start": 29883,
+    "before": "&p(7, 3)",
+    "after": "&p(7, 3).into()"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_bezier_region.rs",
+    "byte_start": 29656,
+    "before": "&p(2, 3)",
+    "after": "&p(2, 3).into()"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_bezier_region.rs",
+    "byte_start": 29430,
+    "before": "&p(3, 3)",
+    "after": "&p(3, 3).into()"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_bezier_region.rs",
+    "byte_start": 29205,
+    "before": "&p(1, 1)",
+    "after": "&p(1, 1).into()"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_bezier_region.rs",
+    "byte_start": 22260,
+    "before": "&point",
+    "after": "&point.clone().into()"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_bezier_region.rs",
+    "byte_start": 19573,
+    "before": "&point",
+    "after": "&point.clone().into()"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_bezier_region.rs",
+    "byte_start": 14636,
+    "before": "&point",
+    "after": "&point.clone().into()"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_exact_closure.rs",
+    "byte_start": 12502,
+    "before": "sample",
+    "after": "&sample.clone().into()"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_exact_closure.rs",
+    "byte_start": 9775,
+    "before": "&sample",
+    "after": "&sample.clone().into()"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_exact_closure.rs",
+    "byte_start": 8572,
+    "before": "&source_witness",
+    "after": "&source_witness.clone().into()"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_exact_closure.rs",
+    "byte_start": 6652,
+    "before": "&point(2, 1)",
+    "after": "&point(2, 1).into()"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_exact_closure.rs",
+    "byte_start": 2963,
+    "before": "&sample",
+    "after": "&sample.clone().into()"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_pcb_boolean_regressions.rs",
+    "byte_start": 3699,
+    "before": "&point",
+    "after": "&point.clone().into()"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_bezier_fit_offset.rs",
+    "byte_start": 149061,
+    "before": "&point",
+    "after": "&point.clone().into()"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_bezier_fit_offset.rs",
+    "byte_start": 144774,
+    "before": "&point",
+    "after": "&point.clone().into()"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_path_closure.rs",
+    "byte_start": 29939,
+    "before": "&point",
+    "after": "&point.clone().into()"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_path_closure.rs",
+    "byte_start": 22824,
+    "before": "&point",
+    "after": "&point.clone().into()"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_path_closure.rs",
+    "byte_start": 21334,
+    "before": "point",
+    "after": "&point.clone().into()"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_path_closure.rs",
+    "byte_start": 12216,
+    "before": "&query",
+    "after": "&query.clone().into()"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_curve_intersection.rs",
+    "byte_start": 137407,
+    "before": "&point",
+    "after": "&point.clone().into()"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_curve_intersection.rs",
+    "byte_start": 136458,
+    "before": "&p(0, 0)",
+    "after": "&p(0, 0).into()"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_curve_intersection.rs",
+    "byte_start": 136155,
+    "before": "&p(0, 3)",
+    "after": "&p(0, 3).into()"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_curve_intersection.rs",
+    "byte_start": 135861,
+    "before": "&p(0, 1)",
+    "after": "&p(0, 1).into()"
+  },
+  {
+    "file": "hypercurve/benches/dispatch_trace.rs",
+    "before": "first.classify_point(&p(1, 1), &policy)",
+    "after": "first.classify_point(&p(1, 1).into(), &policy)"
+  },
+  {
+    "file": "hypercurve/benches/containment.rs",
+    "before": "let point = p(5_000, 5_000);",
+    "after": "let point = hypercurve::CurvePoint2::from(p(5_000, 5_000));"
+  },
+  {
+    "file": "hypercurve/benches/containment.rs",
+    "before": "let point = p(612, 2);",
+    "after": "let point = hypercurve::CurvePoint2::from(p(612, 2));"
+  },
+  {
+    "file": "hypercurve/benches/containment.rs",
+    "before": "            if index % 2 == 0 {\n                p(5_000, 5_000)\n            } else {\n                p(612, 2)\n            }",
+    "after": "            hypercurve::CurvePoint2::from(if index % 2 == 0 {\n                p(5_000, 5_000)\n            } else {\n                p(612, 2)\n            })"
+  },
+  {
+    "file": "hypercurve/benches/arc.rs",
+    "before": "let query = Point2::new(r(1), q(1, 2));",
+    "after": "let query = hypercurve::CurvePoint2::from(Point2::new(r(1), q(1, 2)));"
+  },
+  {
+    "file": "hypercurve/benches/bezier_region.rs",
+    "before": "let classified_point = p(2, 0);",
+    "after": "let classified_point = hypercurve::CurvePoint2::from(p(2, 0));"
+  },
+  {
+    "file": "hypercurve/benches/bezier_region.rs",
+    "before": "let algebraic_region_query = p(2, 0);",
+    "after": "let algebraic_region_query = hypercurve::CurvePoint2::from(p(2, 0));"
+  }
+]

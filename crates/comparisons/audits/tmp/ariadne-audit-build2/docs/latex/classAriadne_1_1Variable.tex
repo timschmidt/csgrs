@@ -1,0 +1,84 @@
+\doxysubsection{Variable\texorpdfstring{$<$}{<} T \texorpdfstring{$>$}{>} Class Template Reference}
+\hypertarget{classAriadne_1_1Variable}{}\label{classAriadne_1_1Variable}\index{Variable$<$ T $>$@{Variable$<$ T $>$}}
+
+
+{\ttfamily \#include $<$variable.\+hpp$>$}
+
+
+
+\doxysubsubsection{Description}
+\subsubsection*{template$<$class T$>$\newline
+class Ariadne\+::\+Variable$<$ T $>$}
+A named variable of type {\itshape T}. Ariadne supports variables of type \doxylink{classAriadne_1_1Boolean}{Boolean}, \doxylink{classAriadne_1_1Kleenean}{Kleenean}, \doxylink{classAriadne_1_1String}{String}, \doxylink{classAriadne_1_1Integer}{Integer} and \doxylink{classAriadne_1_1Real}{Real}. 
+
+\begin{DoxySeeAlso}{See also}
+\doxylink{classAriadne_1_1Constant}{Constant}, \doxylink{classAriadne_1_1Expression}{Expression}, \doxylink{classAriadne_1_1Assignment}{Assignment}, \doxylink{classAriadne_1_1Space}{Space} 
+
+\doxylink{classAriadne_1_1Variables}{Variables}, \doxylink{classAriadne_1_1TimeVariable}{Time\+Variable}, 
+
+\doxylink{classAriadne_1_1LetVariable}{Let\+Variable}, \doxylink{classAriadne_1_1PrimedVariable}{Primed\+Variable}, \doxylink{classAriadne_1_1DottedVariable}{Dotted\+Variable} 
+\end{DoxySeeAlso}
+Inheritance diagram for Variable\texorpdfstring{$<$}{<} T \texorpdfstring{$>$}{>}\+:\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[height=2.000000cm]{classAriadne_1_1Variable}
+\end{center}
+\end{figure}
+\doxysubsubsubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1Variable_ae978afa4f07b12b541f29326e958b3a0}\label{classAriadne_1_1Variable_ae978afa4f07b12b541f29326e958b3a0} 
+{\bfseries Variable} (const \mbox{\hyperlink{classAriadne_1_1Identifier}{Identifier}} \&\mbox{\hyperlink{classAriadne_1_1UntypedVariable_ab7f8fc1aca31a93631707c6a43975bf4}{name}})
+\begin{DoxyCompactList}\small\item\em Construct a variable with name {\itshape name}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Variable_a5eec711c506b3bccc7258ec37b444e17}\label{classAriadne_1_1Variable_a5eec711c506b3bccc7258ec37b444e17} 
+{\footnotesize template$<$class XL, class XU$>$ }\\\mbox{\hyperlink{classAriadne_1_1VariableInterval}{Variable\+Interval}}$<$ XU $>$ {\bfseries in} (const XL \&l, const XU \&u)
+\begin{DoxyCompactList}\small\item\em An interval range for a real variable. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxyparagraph*{Public Member Functions inherited from \mbox{\hyperlink{classAriadne_1_1UntypedVariable}{Untyped\+Variable}}}
+\begin{DoxyCompactItemize}
+\item 
+const \mbox{\hyperlink{classAriadne_1_1Identifier}{Identifier}} \& {\bfseries name} () const
+\begin{DoxyCompactList}\small\item\em The name of the variable. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsubsection*{Friends}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1Variable_a4bc0b777e071bd5dd7e3300da1f9f42d}\label{classAriadne_1_1Variable_a4bc0b777e071bd5dd7e3300da1f9f42d} 
+\mbox{\hyperlink{classAriadne_1_1LetVariable}{Let\+Variable}}$<$ T $>$ {\bfseries let} (const \mbox{\hyperlink{classAriadne_1_1Variable}{Variable}}$<$ T $>$ \&v)
+\begin{DoxyCompactList}\small\item\em Allows {\itshape v} to be used as the left-\/hand-\/side of an assignment {\ttfamily let(v)=e} defines the assignment $v:=e$. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Variable_a2bad645cac9598fcd91cb4ebad947922}\label{classAriadne_1_1Variable_a2bad645cac9598fcd91cb4ebad947922} 
+\mbox{\hyperlink{classAriadne_1_1PrimedVariable}{Primed\+Variable}}$<$ T $>$ {\bfseries prime} (const \mbox{\hyperlink{classAriadne_1_1Variable}{Variable}}$<$ T $>$ \&)
+\begin{DoxyCompactList}\small\item\em Allows {\itshape v} to be used as the left-\/hand-\/side of an update rule in a discrete-\/time or hybrid system. {\ttfamily prime(v)=e} defines the update rule $v\textnormal{\textquotesingle}:=e$, where $v\textnormal{\textquotesingle}$ is the value of $v$ after the jump. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Variable_adf04e369e5fc35776063548246d3522e}\label{classAriadne_1_1Variable_adf04e369e5fc35776063548246d3522e} 
+\mbox{\hyperlink{classAriadne_1_1PrimedVariable}{Primed\+Variable}}$<$ T $>$ {\bfseries next} (const \mbox{\hyperlink{classAriadne_1_1Variable}{Variable}}$<$ T $>$ \&var)
+\begin{DoxyCompactList}\small\item\em Synonym for \doxylink{classAriadne_1_1Variable_a2bad645cac9598fcd91cb4ebad947922}{prime()}. {\ttfamily next(v)=e} defines the update rule $v\textnormal{\textquotesingle}:=e$, where $v\textnormal{\textquotesingle}$ is the value of $v$ after the jump. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Variable_ad69299082091504f19ec710e225b27e8}\label{classAriadne_1_1Variable_ad69299082091504f19ec710e225b27e8} 
+\mbox{\hyperlink{classAriadne_1_1DottedVariable}{Dotted\+Variable}}$<$ \mbox{\hyperlink{classAriadne_1_1Real}{Real}} $>$ {\bfseries dot} (const \mbox{\hyperlink{classAriadne_1_1Variable}{Variable}}$<$ \mbox{\hyperlink{classAriadne_1_1Real}{Real}} $>$ \&var)
+\begin{DoxyCompactList}\small\item\em Allows {\itshape v} to be used as the left-\/hand-\/side of a differential equation. {\ttfamily dot(v)=e} specifies the differential equation $\frac{d}{dt}v=e$. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsubsection*{Related Types and Functions}
+(Note that these are not member symbols.) \begin{Indent}\textbf{ Type synonyms}\par
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1Variable_a6a1f2cef18d14cf7a53dd2189a7f48ec}\label{classAriadne_1_1Variable_a6a1f2cef18d14cf7a53dd2189a7f48ec} 
+using {\bfseries Boolean\+Variable} = \mbox{\hyperlink{classAriadne_1_1Variable}{Variable}}$<$\mbox{\hyperlink{classAriadne_1_1Boolean}{Boolean}}$>$
+\item 
+\Hypertarget{classAriadne_1_1Variable_a9c75c38639b4e1533b42b04055b87709}\label{classAriadne_1_1Variable_a9c75c38639b4e1533b42b04055b87709} 
+using {\bfseries Kleenean\+Variable} = \mbox{\hyperlink{classAriadne_1_1Variable}{Variable}}$<$\mbox{\hyperlink{classAriadne_1_1Kleenean}{Kleenean}}$>$
+\item 
+\Hypertarget{classAriadne_1_1Variable_a14277af620b80ab1c99457ef8e9e5ee1}\label{classAriadne_1_1Variable_a14277af620b80ab1c99457ef8e9e5ee1} 
+using {\bfseries String\+Variable} = \mbox{\hyperlink{classAriadne_1_1Variable}{Variable}}$<$\mbox{\hyperlink{classAriadne_1_1String}{String}}$>$
+\item 
+\Hypertarget{classAriadne_1_1Variable_a8d21a55fbde0fc84fc564fe63b2c0bcd}\label{classAriadne_1_1Variable_a8d21a55fbde0fc84fc564fe63b2c0bcd} 
+using {\bfseries Integer\+Variable} = \mbox{\hyperlink{classAriadne_1_1Variable}{Variable}}$<$\mbox{\hyperlink{classAriadne_1_1Integer}{Integer}}$>$
+\item 
+\Hypertarget{classAriadne_1_1Variable_a7eb892e0957358afed0dd5b341d51b46}\label{classAriadne_1_1Variable_a7eb892e0957358afed0dd5b341d51b46} 
+using {\bfseries Real\+Variable} = \mbox{\hyperlink{classAriadne_1_1Variable}{Variable}}$<$\mbox{\hyperlink{classAriadne_1_1Real}{Real}}$>$
+\end{DoxyCompactItemize}
+\end{Indent}
+
+
+The documentation for this class was generated from the following files\+:\begin{DoxyCompactItemize}
+\item 
+source/function/function.\+cpp\item 
+source/symbolic/\mbox{\hyperlink{expression_8decl_8hpp}{expression.\+decl.\+hpp}}\item 
+source/symbolic/\mbox{\hyperlink{variable_8hpp}{variable.\+hpp}}\item 
+source/symbolic/\mbox{\hyperlink{assignment_8hpp}{assignment.\+hpp}}\item 
+source/symbolic/\mbox{\hyperlink{expression__set_8hpp}{expression\+\_\+set.\+hpp}}\end{DoxyCompactItemize}

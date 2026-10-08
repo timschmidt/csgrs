@@ -1,0 +1,30 @@
+{
+  "tag": "polynomial-state-compile",
+  "started": "2026-09-08T13:40:45.240Z",
+  "finished": "2026-09-08T13:40:45.383Z",
+  "elapsedSeconds": 0.14038290799999997,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison",
+  "command": "gcc",
+  "args": [
+    "-O2",
+    "-g0",
+    "-Wall",
+    "-Wextra",
+    "-Werror",
+    "-isystem",
+    "../exact-real-references/flint/src",
+    "audits/continuation/calcium/flint-polynomial-state-probe.c",
+    "-L",
+    "../exact-real-references/flint",
+    "-Wl,-rpath,/home/tim/Documents/GitHub/workspace/exact-real-references/flint",
+    "-lflint",
+    "-lmpfr",
+    "-lgmp",
+    "-lm",
+    "-lpthread",
+    "-o",
+    "/home/tim/Documents/GitHub/workspace/.audit-builds/calcium-polynomial-state-probe"
+  ],
+  "code": 0,
+  "signal": null
+}

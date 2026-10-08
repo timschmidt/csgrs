@@ -1,0 +1,14 @@
+{
+  "tag": "mpoly-rational-upstream-native",
+  "started": "2026-09-10T03:40:46.554Z",
+  "finished": "2026-09-10T03:40:46.806Z",
+  "elapsedSeconds": 0.25033632299999997,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison",
+  "command": "env",
+  "args": [
+    "FLINT_TEST_MULTIPLIER=1",
+    "/tmp/calcium-mpoly-rational.Hmk8Is/upstream"
+  ],
+  "code": 0,
+  "signal": null
+}

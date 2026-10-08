@@ -1,0 +1,14 @@
+Reuse exact tangent and endpoint evidence in circle contacts
+
+Prove shared points on a selected circle from certified parallel tangents
+and strict half-circle membership before refining angular parameters.
+Canonicalize endpoint contacts before clipping, and retain an affine
+source parameter in the endpoint's existing field for exact point replay.
+
+Share affine projection with chord parameters and let analytic parameter
+fields decide mixed comparisons with displaced chord points. Add public
+intersection, point replay, and topology regression coverage.
+
+Validation: 2,240 passing tests across Hypercurve and Hyperbrep, five
+unchanged baseline failures, no new failures or timeouts. Eighteen public
+probes/matrices and the fuzz/UI caller checks passed.

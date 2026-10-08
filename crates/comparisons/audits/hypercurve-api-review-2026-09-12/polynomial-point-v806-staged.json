@@ -1,0 +1,25 @@
+{
+  "repos": {
+    "hypercurve": {
+      "parent": "69b8de1644de4dd423af5e73f5d44d3685512756",
+      "paths": {
+        "benches/bezier_algebraic_parameter.rs": "3c74cffc50a151bd7ed2c0ad774e46074e9774d0bcb6ccd02b65b8a0ab1b6316",
+        "fuzz/fuzz_targets/bezier_algebraic_image.rs": "388f160f8c8b901f41ff5afcef9121f4dac3416b9347b4a91b20a6801f92fb59",
+        "src/bezier_algebraic_image.rs": "54038fed275528ce95f43d6107b6e042af040a70067b1b1c6113952a9ad469c3",
+        "src/bezier_arrangement.rs": "c71bdedab5ac82cc7e3ab7a9e1736198f7dd28ba1872fb29c774fb31b644b00c",
+        "src/bezier_region.rs": "e3e545bb490f2499b573042d2604aa399ad5fa44418afab208fd27afa61511e7",
+        "src/bezier_retained_measure.rs": "3eb02ad59f15b673b43b29cfcb829cd974374f2650cc5c48563ac603a07fb199",
+        "src/bezier_split.rs": "a5c2d225d56fe8f4a4dfcb53919b574dd7de1307eb269297b8d581dc02689000",
+        "src/bezier_split_endpoint.rs": "ce56348f8b212aa26e269e1afdd2676c65b3b8a788d62791248dddbfa7f1d0ed",
+        "src/lib.rs": "43030339581b5e3b12f9c0ea1a1314fd8dce0c818358f11c00b31793b2d73715",
+        "tests/hypercurve_bezier_algebraic_image.rs": "3bb97d3de4a6cd052ccdb97abf838a81d0028449b74b7e2428ef01bc1af25edf",
+        "tests/hypercurve_bezier_algebraic_parameter.rs": "45ede0a46a860d0a97d2d5a1da8157f9b3d992998549f6bf098cafaa7c8ee581",
+        "tests/hypercurve_bezier_arrangement.rs": "f6e87c15a5680418d5546a9507a532b12f8a81a14503402c5a3ec87a8e8e09cd",
+        "tests/hypercurve_bezier_region.rs": "91595641d45d7a53c576918a22ea9c0e5f7dfeda7277ebcc3fb945e45e7270e6",
+        "tests/hypercurve_bezier_split_materialization.rs": "d5ee396094600d9980daee566bf925b4fce8d45ec7a4a6ea7c19651a174c181c"
+      }
+    }
+  },
+  "qualification": "polynomial-point-v806-terminal.json",
+  "verified_source_files": 2048
+}

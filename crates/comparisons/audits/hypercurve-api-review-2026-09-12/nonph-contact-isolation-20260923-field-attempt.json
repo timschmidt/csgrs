@@ -1,0 +1,6 @@
+{
+  "command": "timeout 45 python3 analyze-contact-field-20260923.py",
+  "returncode": 124,
+  "phase": "degree-8 gcd over degree-34 field",
+  "all_processes_reaped": true
+}

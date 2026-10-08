@@ -1,0 +1,131 @@
+{
+  "status": "captured exact queries independently replayed; shared GCD production reduction implemented, qualified and committed",
+  "commits": {
+    "hypercurve": "6a69c9c71d96ac13a77c32aa7bf0281718ec7514",
+    "hypersolve": "ed9a599c75b6add0ed80722b868972f64c8629ca",
+    "hyperbrep": "8a84ee7db02fd2720ac89a1a6a227ee4ec2a8171"
+  },
+  "trace_source": "stationary-ph-scalar-query-trace.rs",
+  "trace_binary_sha256": "a90de4c68578f740f43cfcde1474a214800c8f76856da6b18e7bded8d8448b87",
+  "trace_log": "stationary-ph-scalar-query-trace.log",
+  "trace_exit_code": 124,
+  "method": "A standalone linker wrapper around the existing Hypersolve scalar sign entry records exact rational payloads during the second offset. Production sources remain unchanged. Captures occur when maximum input width increases above 1024 bits.",
+  "captures": [
+    {
+      "id": 10,
+      "defining_coefficients": 13,
+      "predicate_coefficients": 11,
+      "max_input_bits": 1730,
+      "dump": "stationary-ph-scalar-query-10.txt",
+      "sha256": "40e1177e937c553cae2225fa8413d37273355e3a6d13cc5cec732c725ea5f8eb",
+      "result": "Less"
+    },
+    {
+      "id": 13,
+      "defining_coefficients": 13,
+      "predicate_coefficients": 12,
+      "max_input_bits": 1771,
+      "dump": "stationary-ph-scalar-query-13.txt",
+      "sha256": "86fcecfb259ce1d635122c6836f1b5d3e25129471022f62b80f3da5eacb1f4e1",
+      "result": "Greater"
+    },
+    {
+      "id": 19,
+      "defining_coefficients": 13,
+      "predicate_coefficients": 12,
+      "max_input_bits": 2097,
+      "dump": "stationary-ph-scalar-query-19.txt",
+      "sha256": "2e8ea932c15f5557b185449c2102219c50c3e8ced1c0996cc13a27ed650cdf56",
+      "result": "Greater"
+    },
+    {
+      "id": 21,
+      "defining_coefficients": 13,
+      "predicate_coefficients": 11,
+      "max_input_bits": 4161,
+      "dump": "stationary-ph-scalar-query-21.txt",
+      "sha256": "2c64bdfdaa7eddd0aabff7c0fa01afefac9c3efb85b9dae6846617465dbefa25",
+      "result": "Greater"
+    },
+    {
+      "id": 24,
+      "defining_coefficients": 13,
+      "predicate_coefficients": 12,
+      "max_input_bits": 4184,
+      "dump": "stationary-ph-scalar-query-24.txt",
+      "sha256": "6a054b7809b9b7eaac1f58dc9326b5510512bfd932d36f65fba7406901cd4f2e",
+      "result": "Less"
+    },
+    {
+      "id": 31,
+      "defining_coefficients": 13,
+      "predicate_coefficients": 11,
+      "max_input_bits": 5059,
+      "dump": "stationary-ph-scalar-query-31.txt",
+      "sha256": "0cb9ff2c416b49a2156ef34e84e6fdddbeee84a0503987bb41ef5d535906eae9",
+      "result": "Less"
+    },
+    {
+      "id": 33,
+      "defining_coefficients": 13,
+      "predicate_coefficients": 11,
+      "max_input_bits": 10037,
+      "dump": "stationary-ph-scalar-query-33.txt",
+      "sha256": "262db1d47dc548f12c5ff3021e36940f7989f5bc8ef9e952c0e3e8f2d861d0de",
+      "result": "Greater"
+    },
+    {
+      "id": 43,
+      "defining_coefficients": 13,
+      "predicate_coefficients": 12,
+      "max_input_bits": 12207,
+      "dump": "stationary-ph-scalar-query-43.txt",
+      "sha256": "659709f50a7b69fa6e142ade41ce113452f7a6cdc7040ae31de3e7a13823f76d",
+      "result": "Less"
+    }
+  ],
+  "defining_coefficients": [
+    "1/5",
+    "0",
+    "41/100",
+    "0",
+    "-1/4",
+    "0",
+    "-9/10",
+    "0",
+    "-1/5",
+    "0",
+    "1/2",
+    "0",
+    "1/4"
+  ],
+  "factorization": "(5*t^6+5*t^4-5*t^2-4)*(5*t^6+5*t^4-4*t^2-5)/100",
+  "selected_interval": [
+    "497/512",
+    "997/1024"
+  ],
+  "gcd_check": "Exact Sympy polynomial GCD is degree zero for all eight captured predicates; no shared defining factor was found.",
+  "power_substitution_probe": {
+    "source": "selected-power-query-replay.rs",
+    "binary_sha256": "8cc27711bbb13645e01689a30f9070c55b3ab9a884f02beacef4760447503bbe",
+    "log": "selected-power-query-replay-baseline.log",
+    "exit_code": 0,
+    "finding": "All eight original signs reproduce. Six pure even/odd queries retain those signs under positive squaring, using the injective chart and inherited singleton proof. Even cases improve modestly in this one-run diagnostic; odd cases do not improve. Mixed cases retain original replay. No production path was added."
+  },
+  "profile": "stationary-ph-normalized-field-witness-stack.log",
+  "next_action": "Continue conservative-chord-bound-union-followup.json; keep exact captured scalar probes as performance evidence, not complete application timing.",
+  "scope": "The instrumented trace overlapped qualification. Slow-return log entries account for about 6.83 seconds; it does not record every internal cost and cannot attribute the full timeout.",
+  "shared_integer_gcd_stage": {
+    "commits": {
+      "hyperreal": "a2da8e2b5de9a1a4653d3662f2f05cb6533fd7ef",
+      "hypersolve": "3ac2e7510936a11c7bf2eac5dfbe3f9f851afe55",
+      "hypercurve": "6a69c9c71d96ac13a77c32aa7bf0281718ec7514",
+      "hyperbrep": "8a84ee7db02fd2720ac89a1a6a227ee4ec2a8171"
+    },
+    "qualification": "shared-integer-gcd-qualification.json",
+    "change": "All six integer GCD consumers share Hyperreal; duplicated Euclidean loop removed.",
+    "comparison": "shared-integer-gcd-query-comparison.json",
+    "runtime": "First inward Certified in 3.935060758s; total60s timeout exit124; second result absent.",
+    "next": "conservative-chord-bound-union-followup.json"
+  }
+}

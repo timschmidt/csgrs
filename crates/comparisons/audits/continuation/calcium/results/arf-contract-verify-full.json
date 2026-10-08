@@ -1,0 +1,14 @@
+{
+  "tag": "arf-contract-verify-full",
+  "started": "2026-09-10T02:53:09.099Z",
+  "finished": "2026-09-10T02:54:02.872Z",
+  "elapsedSeconds": 53.770675916,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "node",
+  "args": [
+    "verify-arf-contracts.mjs",
+    "--e-plan-live"
+  ],
+  "code": 0,
+  "signal": null
+}

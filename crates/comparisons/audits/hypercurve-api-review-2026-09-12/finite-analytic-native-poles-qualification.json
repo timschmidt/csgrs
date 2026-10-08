@@ -1,0 +1,158 @@
+{
+  "status": "passed within the recorded broad qualification scope",
+  "goal_status": "active",
+  "previous_commit": "b518e5ff82ce2e6dd80c426aac0cb53236047d05",
+  "commit": "8228394f174be2ae607694682defb167f030f540",
+  "targets": 49,
+  "passed": 2294,
+  "passed_by_repo": {
+    "hypercurve": 2062,
+    "hyperbrep": 232
+  },
+  "known_failed": [
+    "approximate_512_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions",
+    "non_ph_bezier_pair_projective_fillet_retains_algebraic_extensions",
+    "nonconvex_algebraic_chord_expansion_is_exact_and_local_collapse_is_explicit",
+    "strict_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions",
+    "unified_mixed_line_arc_erosion_splits_after_a_curved_neck_collapse"
+  ],
+  "new_failures": [],
+  "ignored": 9,
+  "expensive_previously_unqualified_exclusions": 8,
+  "timeouts_in_broad_run": 0,
+  "builds": [
+    {
+      "repository": "hypercurve",
+      "kind": "check",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "check",
+        "--all-targets",
+        "--no-default-features",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 5.071925357013242,
+      "log": "finite-analytic-native-poles-check.log"
+    },
+    {
+      "repository": "hypercurve",
+      "kind": "test-build",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "test",
+        "--release",
+        "--all-features",
+        "--locked",
+        "--offline",
+        "--lib",
+        "--tests",
+        "--no-run",
+        "--message-format=json"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 222.84643833801965,
+      "log": "finite-analytic-native-poles-test-build.log"
+    },
+    {
+      "repository": "hyperbrep",
+      "kind": "check",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "check",
+        "--all-targets",
+        "--no-default-features",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 3.419217465008842,
+      "log": "finite-analytic-native-poles-hyperbrep-check.log"
+    },
+    {
+      "repository": "hyperbrep",
+      "kind": "test-build",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "test",
+        "--release",
+        "--all-features",
+        "--locked",
+        "--offline",
+        "--lib",
+        "--tests",
+        "--no-run",
+        "--message-format=json"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 113.13773131600465,
+      "log": "finite-analytic-native-poles-hyperbrep-test-build.log"
+    }
+  ],
+  "focused_checks": 6,
+  "public_matrices_and_probes": [
+    "finite-analytic-native-poles-admission-region-entry.json",
+    "finite-analytic-native-poles-affine-parallel-replay.json",
+    "finite-analytic-native-poles-affine-public.json",
+    "finite-analytic-native-poles-analytic-probe.json",
+    "finite-analytic-native-poles-baseline-recheck.json",
+    "finite-analytic-native-poles-bounds-public.json",
+    "finite-analytic-native-poles-circle-matrix.json",
+    "finite-analytic-native-poles-completed-probe.json",
+    "finite-analytic-native-poles-completed.json",
+    "finite-analytic-native-poles-constant-image-trim-matrix.json",
+    "finite-analytic-native-poles-constructor-public.json",
+    "finite-analytic-native-poles-cubic-replay.json",
+    "finite-analytic-native-poles-endpoint-probe.json",
+    "finite-analytic-native-poles-exterior-completed.json",
+    "finite-analytic-native-poles-family-matrix.json",
+    "finite-analytic-native-poles-finite-circle-probe.json",
+    "finite-analytic-native-poles-finite-matrix.json",
+    "finite-analytic-native-poles-general-trim-matrix.json",
+    "finite-analytic-native-poles-previous-pairs.json",
+    "finite-analytic-native-poles-probe-final.json",
+    "finite-analytic-native-poles-public-replay.json",
+    "finite-analytic-native-poles-public.json",
+    "finite-analytic-native-poles-region-carrier-matrix.json",
+    "finite-analytic-native-poles-region-entry.json",
+    "finite-analytic-native-poles-region-explicit.json",
+    "finite-analytic-native-poles-region-public.json",
+    "finite-analytic-native-poles-replay-matrix-run.json",
+    "finite-analytic-native-poles-retained-chord-matrix.json",
+    "finite-analytic-native-poles-retrace-public.json",
+    "finite-analytic-native-poles-self-public.json",
+    "finite-analytic-native-poles-tangent-matrix.json",
+    "finite-analytic-native-poles-trim-public.json",
+    "finite-analytic-native-poles-unit-replay.json",
+    "finite-analytic-native-poles-winding-public.json"
+  ],
+  "public_pair_checks": 128,
+  "public_pair_baseline": {
+    "passed": 96,
+    "displaced_unused_native_pole_incomplete": 32
+  },
+  "public_region_boolean_reentry_checks": 20,
+  "region_scope": "The previous 20-check normalized Boolean/path-reentry regression passes unchanged; this stage claims the new native-pole pair repair.",
+  "attempts": [
+    "finite-analytic-native-poles-compile-attempt1/",
+    "finite-analytic-native-poles-attempt1/"
+  ],
+  "optional_transverse_evidence_audit": "finite-analytic-native-poles-transverse-evidence.json",
+  "source_files_verified": {
+    "working": 396,
+    "isolated": 1005
+  },
+  "dependency_commits": "finite-parallel-pruning-isolated-sources.json",
+  "isolated_dependency_sources": true,
+  "workspace_clean_claim": false,
+  "other_session_owns": "Hyperreal verified/ and verification/ changes; left untouched",
+  "normal_library": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypercurve-49e17f22910a7047.rlib",
+  "normal_library_sha256": "80e20958e5d3b5d992cd8a64349c236522867b1c89147c36fd889e417c5c85ba",
+  "archived_library": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-analytic-native-poles-libraries/libhypercurve-49e17f22910a7047.rlib",
+  "libtest_sha256": "5d9907e5903b14ac2c3fc3116582ecaa60f2520e46a58c1d670ea316533f3c1e",
+  "toolchain": "finite-parallel-pruning-toolchain.json",
+  "baseline": "finite-analytic-native-poles-baseline.json",
+  "evidence_audit": "finite-analytic-native-poles-worklog.md",
+  "remaining": "Finite circle/parallel domain guard, selected-point finite incidence, one-sided source-cusp frames, normalized public-region construction, independent inverse replay, known failures/exclusions and broader algebraic/computational consolidation."
+}

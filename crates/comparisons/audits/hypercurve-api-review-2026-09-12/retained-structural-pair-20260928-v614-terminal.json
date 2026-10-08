@@ -1,0 +1,315 @@
+{
+  "normal_production_build": false,
+  "source_manifest": "retained-structural-pair-20260928-v614-sources.json",
+  "source_directory": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/source-archives/retained-structural-pair-20260928-v614",
+  "builds": [
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "test",
+        "--lib",
+        "--test",
+        "hypercurve_analytic_parallel_region",
+        "--release",
+        "--all-features",
+        "--locked",
+        "--offline",
+        "--no-run",
+        "--message-format=json"
+      ],
+      "returncode": 0,
+      "log": "retained-structural-pair-20260928-v614-build.log",
+      "elapsed_seconds": 188.53424435993657,
+      "binaries": {
+        "hypercurve_analytic_parallel_region": {
+          "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-structural-pair-20260928-v614-hypercurve_analytic_parallel_region-tests",
+          "sha256": "2deff72eb6e85ad2dc443140eb58d9f75952b81fbd32ca43f8c69d99984f2970"
+        },
+        "hypercurve": {
+          "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-structural-pair-20260928-v614-hypercurve-tests",
+          "sha256": "bea70fbb792482948e7279d8e26a69c1d60ffb48a711da0f661328b9c66fdb55"
+        }
+      }
+    }
+  ],
+  "cases": [
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-structural-pair-20260928-v614-hypercurve_analytic_parallel_region-tests",
+        "--exact",
+        "radical_parallel_cusp_spans_connect_under_both_policies",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "retained-structural-pair-20260928-v614-radical_parallel_cusp_spans_connect_under_both_policies.log",
+      "elapsed_seconds": 0.01565252710133791,
+      "target": "hypercurve_analytic_parallel_region",
+      "name": "radical_parallel_cusp_spans_connect_under_both_policies",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-structural-pair-20260928-v614-hypercurve_analytic_parallel_region-tests",
+        "--exact",
+        "radical_parallel_cusp_offsets_exactly_under_both_policies",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 101,
+      "log": "retained-structural-pair-20260928-v614-radical_parallel_cusp_offsets_exactly_under_both_policies.log",
+      "elapsed_seconds": 0.015671454835683107,
+      "target": "hypercurve_analytic_parallel_region",
+      "name": "radical_parallel_cusp_offsets_exactly_under_both_policies",
+      "passed": false
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-structural-pair-20260928-v614-hypercurve_analytic_parallel_region-tests",
+        "--exact",
+        "cusp_split_analytic_self_crossing_normalizes_at_admission",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "retained-structural-pair-20260928-v614-cusp_split_analytic_self_crossing_normalizes_at_admission.log",
+      "elapsed_seconds": 0.6144916978664696,
+      "target": "hypercurve_analytic_parallel_region",
+      "name": "cusp_split_analytic_self_crossing_normalizes_at_admission",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-structural-pair-20260928-v614-hypercurve-tests",
+        "--exact",
+        "bezier_offset::conversion_tests::selected_structural_parallel_overlap_replays_off_diagonal_contacts",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "retained-structural-pair-20260928-v614-selected_structural_parallel_overlap_replays_off_diagonal_contacts.log",
+      "elapsed_seconds": 0.6646281010471284,
+      "target": "hypercurve",
+      "name": "bezier_offset::conversion_tests::selected_structural_parallel_overlap_replays_off_diagonal_contacts",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-structural-pair-20260928-v614-hypercurve-tests",
+        "--exact",
+        "bezier_offset::regular_parallel_contact_tests::mixed_regular_pairs_keep_both_exterior_parameter_domains",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "retained-structural-pair-20260928-v614-mixed_regular_pairs_keep_both_exterior_parameter_domains.log",
+      "elapsed_seconds": 0.03181223897263408,
+      "target": "hypercurve",
+      "name": "bezier_offset::regular_parallel_contact_tests::mixed_regular_pairs_keep_both_exterior_parameter_domains",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-structural-pair-20260928-v614-hypercurve-tests",
+        "--exact",
+        "bezier_offset::regular_parallel_contact_tests::native_rational_pair_evidence_clips_both_retained_domains",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "retained-structural-pair-20260928-v614-native_rational_pair_evidence_clips_both_retained_domains.log",
+      "elapsed_seconds": 0.007595350034534931,
+      "target": "hypercurve",
+      "name": "bezier_offset::regular_parallel_contact_tests::native_rational_pair_evidence_clips_both_retained_domains",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-structural-pair-20260928-v614-hypercurve-tests",
+        "--exact",
+        "bezier_offset::regular_parallel_contact_tests::retained_native_overlap_correspondences_clip_as_exact_curve_results",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "retained-structural-pair-20260928-v614-retained_native_overlap_correspondences_clip_as_exact_curve_results.log",
+      "elapsed_seconds": 0.007570030866190791,
+      "target": "hypercurve",
+      "name": "bezier_offset::regular_parallel_contact_tests::retained_native_overlap_correspondences_clip_as_exact_curve_results",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-structural-pair-20260928-v614-hypercurve-tests",
+        "--exact",
+        "bezier_offset::regular_parallel_contact_tests::regular_source_cells_preserve_reversed_and_algebraic_range_boundaries",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "retained-structural-pair-20260928-v614-regular_source_cells_preserve_reversed_and_algebraic_range_boundaries.log",
+      "elapsed_seconds": 0.015568373026326299,
+      "target": "hypercurve",
+      "name": "bezier_offset::regular_parallel_contact_tests::regular_source_cells_preserve_reversed_and_algebraic_range_boundaries",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-structural-pair-20260928-v614-hypercurve-tests",
+        "--exact",
+        "bezier_offset::regular_parallel_contact_tests::rational_pair_endpoint_tangents_preserve_both_operand_roles",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "retained-structural-pair-20260928-v614-rational_pair_endpoint_tangents_preserve_both_operand_roles.log",
+      "elapsed_seconds": 0.0035156889352947474,
+      "target": "hypercurve",
+      "name": "bezier_offset::regular_parallel_contact_tests::rational_pair_endpoint_tangents_preserve_both_operand_roles",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-structural-pair-20260928-v614-hypercurve-tests",
+        "--exact",
+        "bezier_offset::regular_parallel_contact_tests::regular_source_frames_reject_poles_in_every_parameter_authority",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "retained-structural-pair-20260928-v614-regular_source_frames_reject_poles_in_every_parameter_authority.log",
+      "elapsed_seconds": 0.0035679559223353863,
+      "target": "hypercurve",
+      "name": "bezier_offset::regular_parallel_contact_tests::regular_source_frames_reject_poles_in_every_parameter_authority",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-structural-pair-20260928-v614-hypercurve-tests",
+        "--exact",
+        "bezier_offset::regular_parallel_contact_tests::regular_source_frames_accept_every_retained_parameter_authority",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "retained-structural-pair-20260928-v614-regular_source_frames_accept_every_retained_parameter_authority.log",
+      "elapsed_seconds": 0.007574411109089851,
+      "target": "hypercurve",
+      "name": "bezier_offset::regular_parallel_contact_tests::regular_source_frames_accept_every_retained_parameter_authority",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-structural-pair-20260928-v614-hypercurve-tests",
+        "--exact",
+        "bezier_offset::conversion_tests::parameter_domains_retain_finite_residuals_without_unowned_components",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "retained-structural-pair-20260928-v614-parameter_domains_retain_finite_residuals_without_unowned_components.log",
+      "elapsed_seconds": 2.2665610949043185,
+      "target": "hypercurve",
+      "name": "bezier_offset::conversion_tests::parameter_domains_retain_finite_residuals_without_unowned_components",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-structural-pair-20260928-v614-hypercurve-tests",
+        "--exact",
+        "bezier_offset::conversion_tests::parameter_domains_retain_chart_events_and_closed_finite_boundaries",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "retained-structural-pair-20260928-v614-parameter_domains_retain_chart_events_and_closed_finite_boundaries.log",
+      "elapsed_seconds": 0.01570120290853083,
+      "target": "hypercurve",
+      "name": "bezier_offset::conversion_tests::parameter_domains_retain_chart_events_and_closed_finite_boundaries",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-structural-pair-20260928-v614-hypercurve-tests",
+        "--exact",
+        "bezier_offset::conversion_tests::original_parallel_normal_constraints_clip_finite_and_incident_components",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "retained-structural-pair-20260928-v614-original_parallel_normal_constraints_clip_finite_and_incident_components.log",
+      "elapsed_seconds": 0.0317217749543488,
+      "target": "hypercurve",
+      "name": "bezier_offset::conversion_tests::original_parallel_normal_constraints_clip_finite_and_incident_components",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-structural-pair-20260928-v614-hypercurve-tests",
+        "--exact",
+        "bezier_offset::regular_parallel_contact_tests::stationary_component_queries_keep_one_sided_endpoints_and_exact_constraints",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "retained-structural-pair-20260928-v614-stationary_component_queries_keep_one_sided_endpoints_and_exact_constraints.log",
+      "elapsed_seconds": 1.9163450580090284,
+      "target": "hypercurve",
+      "name": "bezier_offset::regular_parallel_contact_tests::stationary_component_queries_keep_one_sided_endpoints_and_exact_constraints",
+      "passed": true
+    }
+  ],
+  "checks": [],
+  "expected_cases": {
+    "hypercurve_analytic_parallel_region": [
+      "radical_parallel_cusp_spans_connect_under_both_policies",
+      "radical_parallel_cusp_offsets_exactly_under_both_policies",
+      "cusp_split_analytic_self_crossing_normalizes_at_admission"
+    ],
+    "hypercurve": [
+      "bezier_offset::conversion_tests::selected_structural_parallel_overlap_replays_off_diagonal_contacts",
+      "bezier_offset::regular_parallel_contact_tests::mixed_regular_pairs_keep_both_exterior_parameter_domains",
+      "bezier_offset::regular_parallel_contact_tests::native_rational_pair_evidence_clips_both_retained_domains",
+      "bezier_offset::regular_parallel_contact_tests::retained_native_overlap_correspondences_clip_as_exact_curve_results",
+      "bezier_offset::regular_parallel_contact_tests::regular_source_cells_preserve_reversed_and_algebraic_range_boundaries",
+      "bezier_offset::regular_parallel_contact_tests::rational_pair_endpoint_tangents_preserve_both_operand_roles",
+      "bezier_offset::regular_parallel_contact_tests::regular_source_frames_reject_poles_in_every_parameter_authority",
+      "bezier_offset::regular_parallel_contact_tests::regular_source_frames_accept_every_retained_parameter_authority",
+      "bezier_offset::conversion_tests::parameter_domains_retain_finite_residuals_without_unowned_components",
+      "bezier_offset::conversion_tests::parameter_domains_retain_chart_events_and_closed_finite_boundaries",
+      "bezier_offset::conversion_tests::original_parallel_normal_constraints_clip_finite_and_incident_components",
+      "bezier_offset::regular_parallel_contact_tests::stationary_component_queries_keep_one_sided_endpoints_and_exact_constraints"
+    ]
+  },
+  "all_processes_reaped": true,
+  "probe_complete": true,
+  "qualification_complete": false,
+  "performance": [
+    {
+      "name": "radical_parallel_cusp_offsets_exactly_under_both_policies",
+      "before": 62.99474022979848,
+      "after": 0.015671454835683107
+    },
+    {
+      "name": "cusp_split_analytic_self_crossing_normalizes_at_admission",
+      "before": 1.915964093990624,
+      "after": 0.6144916978664696
+    },
+    {
+      "name": "bezier_offset::conversion_tests::selected_structural_parallel_overlap_replays_off_diagonal_contacts",
+      "before": 0.6645913568791002,
+      "after": 0.6646281010471284
+    },
+    {
+      "name": "bezier_offset::conversion_tests::parameter_domains_retain_finite_residuals_without_unowned_components",
+      "before": 2.2666187761351466,
+      "after": 2.2665610949043185
+    },
+    {
+      "name": "bezier_offset::regular_parallel_contact_tests::stationary_component_queries_keep_one_sided_endpoints_and_exact_constraints",
+      "before": 1.9161467540543526,
+      "after": 1.9163450580090284
+    }
+  ],
+  "failure": "focused regression failure"
+}

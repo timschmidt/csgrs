@@ -1,0 +1,105 @@
+{
+  "source_manifest": "point-similarity-composition-20260927-v409-sources.json",
+  "source_directory": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/source-archives/point-similarity-composition-20260927-v409",
+  "cases": [
+    {
+      "binary": "point-similarity-composition-20260927-v409-hypercurve",
+      "name": "bezier_offset::conversion_tests::repeated_point_similarities_keep_one_original_selected_field",
+      "returncode": 0,
+      "log": "point-similarity-composition-20260927-v409-case-000.log",
+      "elapsed_seconds": 0.0035537949297577143
+    },
+    {
+      "binary": "point-similarity-composition-20260927-v409-hypercurve",
+      "name": "bezier_offset::conversion_tests::point_similarity_composition_preserves_retained_policy_barriers",
+      "returncode": 0,
+      "log": "point-similarity-composition-20260927-v409-case-001.log",
+      "elapsed_seconds": 0.0035133780911564827
+    },
+    {
+      "binary": "point-similarity-composition-20260927-v409-hypercurve",
+      "name": "bezier_offset::conversion_tests::represented_circle_incidence_replays_retained_similarity_points",
+      "returncode": 0,
+      "log": "point-similarity-composition-20260927-v409-case-002.log",
+      "elapsed_seconds": 0.003458022139966488
+    },
+    {
+      "binary": "point-similarity-composition-20260927-v409-hypercurve",
+      "name": "bezier_offset::conversion_tests::algebraic_cusp_semicircle_similarities_transform_the_shared_frame_exactly",
+      "returncode": 0,
+      "log": "point-similarity-composition-20260927-v409-case-003.log",
+      "elapsed_seconds": 0.003457041922956705
+    },
+    {
+      "binary": "point-similarity-composition-20260927-v409-hypercurve",
+      "name": "bezier_offset::conversion_tests::similarity_transported_mapped_cusp_cut_inverts_on_analytic_overlap",
+      "returncode": 0,
+      "log": "point-similarity-composition-20260927-v409-case-004.log",
+      "elapsed_seconds": 0.015657491981983185
+    },
+    {
+      "binary": "point-similarity-composition-20260927-v409-hypercurve",
+      "name": "bezier_offset::conversion_tests::similarity_transported_transverse_mapped_cut_inverts_by_point",
+      "returncode": 0,
+      "log": "point-similarity-composition-20260927-v409-case-005.log",
+      "elapsed_seconds": 0.015589547110721469
+    },
+    {
+      "binary": "point-similarity-composition-20260927-v409-hypercurve",
+      "name": "bezier_offset::conversion_tests::recursive_projective_kernel_imports_similarity_of_algebraic_endpoints",
+      "returncode": 0,
+      "log": "point-similarity-composition-20260927-v409-case-006.log",
+      "elapsed_seconds": 0.007625696016475558
+    },
+    {
+      "binary": "point-similarity-composition-20260927-v409-hypercurve",
+      "name": "bezier_offset::conversion_tests::exact_parallel_similarity_transports_points_derivatives_and_structure",
+      "returncode": 0,
+      "log": "point-similarity-composition-20260927-v409-case-007.log",
+      "elapsed_seconds": 0.003503429004922509
+    }
+  ],
+  "builds": [
+    {
+      "crate": "hypercurve",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "test",
+        "--lib",
+        "--release",
+        "--all-features",
+        "--no-run",
+        "--message-format=json",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "log": "point-similarity-composition-20260927-v409-hypercurve-build.log",
+      "elapsed_seconds": 132.70943986903876,
+      "binary": {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/point-similarity-composition-20260927-v409-hypercurve",
+        "sha256": "c27c165108f683fa02cbbae9e12be2ea9c696dec1cdc7d5618f6102a28e4a993"
+      }
+    }
+  ],
+  "all_processes_reaped": true,
+  "checks": [],
+  "qualification_scope": "Compose compatible point similarities while retaining original selected fields and policy barriers",
+  "expected_cases": {
+    "hypercurve": [
+      "bezier_offset::conversion_tests::repeated_point_similarities_keep_one_original_selected_field",
+      "bezier_offset::conversion_tests::point_similarity_composition_preserves_retained_policy_barriers",
+      "bezier_offset::conversion_tests::represented_circle_incidence_replays_retained_similarity_points",
+      "bezier_offset::conversion_tests::algebraic_cusp_semicircle_similarities_transform_the_shared_frame_exactly",
+      "bezier_offset::conversion_tests::similarity_transported_mapped_cusp_cut_inverts_on_analytic_overlap",
+      "bezier_offset::conversion_tests::similarity_transported_transverse_mapped_cut_inverts_by_point",
+      "bezier_offset::conversion_tests::recursive_projective_kernel_imports_similarity_of_algebraic_endpoints",
+      "bezier_offset::conversion_tests::exact_parallel_similarity_transports_points_derivatives_and_structure"
+    ]
+  },
+  "known_unresolved": [
+    "strict_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions",
+    "approximate_512_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions"
+  ],
+  "qualification_complete": true
+}

@@ -1,0 +1,6 @@
+{
+  "checkpoint": 53,
+  "source": "point-image-guard-unstrengthened.rs",
+  "sha256": "783ed802a97b0bb2c243aeb67dc5103c619d590feafcae3631c18031811a6fe8",
+  "classification": "Both ordering controls withhold witnesses in the original candidate. No approximate-extrema witness defect was reproduced. The next guard closes a source-level proof obligation: an exact witness must use certified image construction, not merely certify equality of approximately selected extrema."
+}

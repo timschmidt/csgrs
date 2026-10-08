@@ -1,0 +1,19 @@
+{
+  "parent": "deeed31d92f07cc6d7ffc8b93bc89061630c094d",
+  "file": "tests/hypercurve_curve_region_promotion.rs",
+  "sha256": "1e365844e9c2651408c8d707b2c933b118507c40e64d6e735901f12a4f38895f",
+  "excluded_region_sha256": "1bc26463270fbe520873708bc6909db19a7af36356367f8bbc366b92696ed720",
+  "cases": [
+    {
+      "name": "non_ph_bezier_pair_projective_fillet_retains_algebraic_extensions",
+      "returncode": 0,
+      "passed": true,
+      "limit_seconds": 400,
+      "elapsed_seconds": 263.11874512198847,
+      "log": "fillet-composition-callers-20260923-final2-case-0.log"
+    }
+  ],
+  "binary_sha256": "0cf5cfa381104e4de9c0a365bbee7406f573e090fc156f55f2437f36bf336de8",
+  "all_sources_unchanged": true,
+  "all_processes_reaped": true
+}

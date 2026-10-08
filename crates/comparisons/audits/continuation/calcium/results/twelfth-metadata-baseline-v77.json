@@ -1,0 +1,18 @@
+{
+  "tag": "twelfth-metadata-baseline-v77",
+  "started": "2026-09-11T23:04:40.212Z",
+  "finished": "2026-09-11T23:04:40.308Z",
+  "elapsedSeconds": 0.09391744199999999,
+  "cwd": "/home/tim/Documents/GitHub/workspace/hyperreal",
+  "command": "cargo",
+  "args": [
+    "metadata",
+    "--locked",
+    "--offline",
+    "--all-features",
+    "--format-version",
+    "1"
+  ],
+  "code": 0,
+  "signal": null
+}

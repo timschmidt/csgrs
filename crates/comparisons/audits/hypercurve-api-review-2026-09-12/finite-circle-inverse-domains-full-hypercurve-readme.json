@@ -1,0 +1,27 @@
+{
+  "repo": "hypercurve",
+  "target": "readme",
+  "binary": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/readme-4496ba779dd0798a",
+  "command": [
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/readme-4496ba779dd0798a",
+    "--test-threads=4",
+    "--color",
+    "never"
+  ],
+  "sha256": "bc530660bf7c0ad79ba398270dd9c473e3cb78de7510cbfd8d22224a310a0127",
+  "returncode": 0,
+  "timed_out": false,
+  "elapsed_seconds": 0.0034420939919073135,
+  "log": "finite-circle-inverse-domains-full-hypercurve-readme.log",
+  "passed": [
+    "readme_quickstart_matches_the_runnable_example",
+    "readme_release_metadata_matches_the_manifest"
+  ],
+  "failed": [],
+  "ignored": [],
+  "summaries": [
+    "test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s"
+  ],
+  "new_failures": [],
+  "known_failures": []
+}

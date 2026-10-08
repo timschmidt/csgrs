@@ -1,0 +1,59 @@
+{
+  "date": "2026-09-14",
+  "status": "qualified_increment_goal_active",
+  "commits": {"hypercurve": "d01cf1d", "affine_spline_evidence": "6eba7cf", "hyperbrep": "d82bc14"},
+  "tests": {
+    "hypercurve_library": {"passed": 966, "failed": 0, "ignored": 6, "filtered_out": 4},
+    "hypercurve_integrations": {
+      "hypercurve_arc_bezier": 12,
+      "hypercurve_bspline": 28,
+      "hypercurve_curve": 48,
+      "hypercurve_curve_intersection": 29,
+      "hypercurve_nurbs": 38,
+      "hypercurve_path_closure": 8,
+      "hypercurve_polynomial_spline": 18,
+      "hypercurve_rational_bezier": 48
+    },
+    "hyperbrep_path_tests": {"passed": 19, "failed": 0},
+    "total_passed": 1214,
+    "new_regressions_included_in_library": 4
+  },
+  "original_library_exclusions": [
+    "selected_parallel_normal_circle_intersects_genuinely_analytic_parallel_in_one_fiber",
+    "independent_oblique_chord_pair_fillets_extend_on_infinite_supports",
+    "selected_circle_and_analytic_parallel_extend_on_full_supports",
+    "pair_native_boolean_algebraic_chord_corner_publishes_a_third_generation_fillet"
+  ],
+  "checks": {
+    "hypercurve_all_targets_all_features": "passed",
+    "hyperbrep_all_targets_all_features": "passed",
+    "hypercurve_ui_offline_all_targets": "passed",
+    "hypercurve_docs_broken_links_denied": "passed",
+    "changed_rust_files_formatting": "passed",
+    "staged_whitespace": "passed"
+  },
+  "final_source_logs": [
+    "source-domain-fillets-qualification-final.log",
+    "source-domain-fillets-hyperbrep-paths.log",
+    "source-domain-fillets-all-targets.log",
+    "source-domain-fillets-hyperbrep-check.log",
+    "source-domain-fillets-ui-check.log",
+    "source-domain-fillets-docs.log"
+  ],
+  "nonfinal_logs_not_counted_as_qualification": {
+    "source-domain-fillets-before.log": "Original selected major-arc loss: one contact instead of three.",
+    "source-domain-fillets-focused.log": "Intermediate focused run before generic native line-pair support was admitted.",
+    "source-domain-fillets-qualification.log": "Stopped after finding ordinary chord/line parameter regression.",
+    "source-domain-fillets-final.log": "Library passed; integration found closed NURBS triangle Predicate blocker.",
+    "source-domain-fillets-final-qualified.log": "Stopped to replace the general negative probe with the final bounded line-image certificate."
+  },
+  "scope": "Full finite source-chart scheduling for TrimOnly path fillets, exact surviving-side seam ownership, source-location transport and shared publication.",
+  "remaining_scope": [
+    "Audit unmarked affine quadratic/selected-circle generic pair contact loss",
+    "Full authored-domain TrimOrExtend coverage and complete circle extension sweeps",
+    "General analytic-pair completeness beyond the exercised finite cases",
+    "Representation, region-normalization, policy-continuation and algebra-layer obligations in implementation.md"
+  ],
+  "performance_claim": "Reused per-chart admission, exact line-image negative filtering, shared selected evidence, and early crossed-chart rejection. No matched benchmark claim.",
+  "pushed": false
+}

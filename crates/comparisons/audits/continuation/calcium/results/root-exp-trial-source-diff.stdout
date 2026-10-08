@@ -1,0 +1,36 @@
+diff --git a/audits/continuation/calcium/baseline-hyperreal/src/computable/node/roots_inverse_hyperbolic.rs b/audits/continuation/calcium/root-exp-trial-hyperreal/src/computable/node/roots_inverse_hyperbolic.rs
+index c03e525..c085fd9 100644
+--- a/audits/continuation/calcium/baseline-hyperreal/src/computable/node/roots_inverse_hyperbolic.rs
++++ b/audits/continuation/calcium/root-exp-trial-hyperreal/src/computable/node/roots_inverse_hyperbolic.rs
+@@ -30,6 +30,31 @@ impl Computable {
+ 
+     /// Square root of this number.
+     pub fn sqrt(self) -> Computable {
++        if let Approximation::PrescaledExp(exponent) = &self.internal.approximation {
++            // For every finite real exponent, exp(exponent / 2) is the
++            // positive square root. No approximate sign decision is needed.
++            return exponent.clone().shift_right(1).exp();
++        }
++        if let Approximation::Offset(value, shift) = &self.internal.approximation
++            && let Approximation::PrescaledExp(reduced) = &value.internal.approximation
++        {
++            // Range reduction represents exp(x) as exp(x-k*ln(2))*2^k.
++            // Recover x structurally when the original reduction is visible;
++            // the general reconstruction is exact even for arbitrary offsets.
++            let correction = Self::ln2().multiply(Self::rational(Rational::new(i64::from(*shift))).negate());
++            let restored = if let Approximation::Add(left, right) = &reduced.internal.approximation {
++                if Self::internal_structural_eq(right, &correction) {
++                    left.clone()
++                } else if Self::internal_structural_eq(left, &correction) {
++                    right.clone()
++                } else {
++                    reduced.clone().add(correction.negate())
++                }
++            } else {
++                reduced.clone().add(correction.negate())
++            };
++            return restored.shift_right(1).exp();
++        }
+         if let Approximation::Square(child) = &self.internal.approximation {
+             // sqrt(x^2) can collapse to abs(x) when the sign is structurally known.
+             match child.exact_sign() {

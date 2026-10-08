@@ -1,0 +1,77 @@
+{
+  "status": "implemented, qualified, committed; original goal active",
+  "commits": {
+    "hypercurve": "9b9060cfca5cce47f114e654a5c82afda4c7f6f6",
+    "hypersolve": "c0742ace4a762d701df6241bdfa919c313e6cec4",
+    "hyperbrep": "8a84ee7db02fd2720ac89a1a6a227ee4ec2a8171"
+  },
+  "preceding_hypercurve_commit": "f41175c15322201e7642e63115bad4a579b048ff",
+  "implementation": [
+    "The existing Polynomial authority variant retains two independently lazy exact endpoint signs beside its shared polynomial. The signs belong to the immutable parameter bracket and require no new allocation.",
+    "Refinement computes each missing endpoint sign once, reuses known signs on deeper requests and stores the resulting bracket proof. Exact midpoint collapse stores two zero signs.",
+    "Ordering reuses the lower orientation and existing endpoint proof when querying an endpoint. Exact field embedding and identity-only copies preserve certified signs. A changed projective polynomial chart starts with fresh signs, except for a certified point bracket.",
+    "Geometric crossings seed their existing signs directly; Bernstein intervals establish their original-polynomial endpoint signs only on demand. All private variant callers were migrated directly."
+  ],
+  "baseline": "polynomial-endpoint-evidence-baseline.log: the instrumented preceding implementation fails the new computational invariant because deeper requests re-evaluate both endpoints.",
+  "focused": "polynomial-endpoint-evidence-focused.log: six tests pass before the final embedding and construction-count assertions were added; those final assertions pass in broad qualification.",
+  "regressions": [
+    "Cubic refinement retains exact widths, root identity and no-op Arc identity while deeper requests sign only new midpoints.",
+    "Both endpoint comparisons reuse existing proof across clones without polynomial evaluation.",
+    "Embedding the selected cubic into a larger coefficient field retains its endpoint proof for a new polynomial query.",
+    "Reciprocal mapping resets signs: its transformed polynomial decreases through the selected root, and further refinement preserves the correct bracket.",
+    "Positive and negative linear gauges preserve exact midpoint collapse, whether supplied by construction or discovered during refinement, in both contexts."
+  ],
+  "tests": {
+    "hypercurve": {
+      "passed": 1454,
+      "targets": 13,
+      "ignored": 6,
+      "log": "polynomial-endpoint-evidence-hypercurve-tests.log",
+      "exit_code": 0,
+      "fresh": true
+    },
+    "hyperbrep": {
+      "passed": 232,
+      "targets": 1,
+      "ignored": 0,
+      "log": "polynomial-endpoint-evidence-hyperbrep-tests.log",
+      "exit_code": 0,
+      "fresh": true
+    },
+    "hypersolve": {
+      "passed": 489,
+      "targets": 1,
+      "ignored": 0,
+      "log": "deflated-root-authority-hypersolve-tests.log",
+      "exit_code": 0,
+      "fresh": false,
+      "unchanged_commit": "c0742ace4a762d701df6241bdfa919c313e6cec4"
+    }
+  },
+  "freshly_run_total": 1686,
+  "qualified_total_including_unchanged_hypersolve": 2175,
+  "established_expensive_hypercurve_exclusions": 4,
+  "checks": [
+    "polynomial-endpoint-evidence-hypercurve-check.log: exit 0",
+    "polynomial-endpoint-evidence-hyperbrep-check.log: exit 0",
+    "changed-file rustfmt --check and git diff --check: exit 0"
+  ],
+  "source_sha256": {
+    "hypercurve/src/bezier_offset.rs": "82f2ecd13620d4bbe0ff666b45cbc47ac7777b073bc8aabcaeee5bf10e51d0ea"
+  },
+  "diagnostics": {
+    "binary": "stationary-ph-offset-endpoint-evidence",
+    "binary_sha256": "bfb3e344a690165e9db0e2085594385693ee1d8ae0f3c46c68305a7b6733a252",
+    "log": "stationary-ph-offset-endpoint-evidence.log",
+    "timeout_seconds": 60,
+    "exit_code": 124,
+    "first_offset": "Certified with degree-five analytic source, 3.790023679 seconds.",
+    "second_offset": "No result before total timeout; no inward composition repair or application speedup claimed.",
+    "stack": "stationary-ph-endpoint-evidence-stack.log",
+    "finding": "Expensive integer pseudo-remainder content remains under coefficient signing during local polynomial refinement. The optimized stack does not reliably distinguish an inlined lazy endpoint query from a new midpoint query.",
+    "timing_scope": "Final timeout probe ran after qualification finished. Earlier profiling overlapped qualification; the 99.86-second library duration is not a controlled benchmark."
+  },
+  "clean_repository_count": 30,
+  "workspace_state": "polynomial-endpoint-evidence-workspace-after-commit.json",
+  "goal_status": "active"
+}

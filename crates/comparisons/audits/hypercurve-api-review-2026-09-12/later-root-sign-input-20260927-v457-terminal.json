@@ -1,0 +1,124 @@
+{
+  "diagnostic_only": true,
+  "source_manifest": "later-root-sign-input-20260927-v457-sources.json",
+  "source_directory": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/source-archives/later-root-sign-input-20260927-v457",
+  "cases": [
+    {
+      "binary": "later-root-sign-input-20260927-v457-hypercurve_curve_region_promotion",
+      "name": "strict_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions",
+      "returncode": 124,
+      "log": "later-root-sign-input-20260927-v457-case-000.log",
+      "elapsed_seconds": 240.03376948204823
+    }
+  ],
+  "builds": [
+    {
+      "crate": "hypercurve",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "test",
+        "--test",
+        "hypercurve_curve_region_promotion",
+        "--release",
+        "--all-features",
+        "--no-run",
+        "--message-format=json",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "log": "later-root-sign-input-20260927-v457-hypercurve_curve_region_promotion-build.log",
+      "elapsed_seconds": 110.76818065601401,
+      "binary": {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/later-root-sign-input-20260927-v457-hypercurve_curve_region_promotion",
+        "sha256": "b5d088f70255bfa31b7113c54dac05092ce2e366f959bd953a279a2b124d8fc7"
+      }
+    }
+  ],
+  "trial": {
+    "hypersolve/src/root_sign.rs": "462fa222420238c77a8ac46bf705276fb8b1a83bf0c58bf7faae235bd4740f9e",
+    "hyperreal/src/real/arithmetic/quadratic_tower_sign.rs": "11d3038fb7fb6d6e2a6d729ce455c323f8a4f39abf0b396e19d2bbd02c533f2b"
+  },
+  "all_processes_reaped": true,
+  "checks": [],
+  "qualification_scope": "Diagnostic capture of later selected-root inputs and bounded remainder widths; timed stop is not a test pass",
+  "expected_cases": {
+    "hypercurve_curve_region_promotion": [
+      "strict_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions"
+    ]
+  },
+  "known_unresolved": [
+    "strict_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions",
+    "approximate_512_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions"
+  ],
+  "captures": [
+    {
+      "file": "query-008.json",
+      "sha256": "cae1f2a3bc739c4aa4727e4ac71f6064b0776075711c2305a0fe63392b0edf23",
+      "unsupported": 0,
+      "max_chars": 796
+    },
+    {
+      "file": "query-009.json",
+      "sha256": "b86b96c587ea34a526140c5668898b8702eaf0931925c777201291ddb5c41f68",
+      "unsupported": 0,
+      "max_chars": 796
+    },
+    {
+      "file": "query-010.json",
+      "sha256": "1465469220cf7281acc15f74c7984ecedf342e4ec2f5ecd1903a03a79086f37d",
+      "unsupported": 0,
+      "max_chars": 1594
+    },
+    {
+      "file": "query-011.json",
+      "sha256": "51a221c0260b9e4f4408837d33a456d5a5b85d5a61c3f29f0e9be22079b2f452",
+      "unsupported": 0,
+      "max_chars": 794
+    },
+    {
+      "file": "query-012.json",
+      "sha256": "9505520e8a6e5011e6e6568d82a9798f99cd8f0eda849c2e0094dcd51dd920e8",
+      "unsupported": 0,
+      "max_chars": 792
+    },
+    {
+      "file": "query-013.json",
+      "sha256": "27e48fd5709e8f4a28533dc6e11c4a35a526a12c16a93267ce865e455d753883",
+      "unsupported": 0,
+      "max_chars": 1588
+    },
+    {
+      "file": "query-014.json",
+      "sha256": "f0b28a86bf364780f426b72289a89bbd29285f0c3190780cbb9d60679985d964",
+      "unsupported": 0,
+      "max_chars": 1575
+    },
+    {
+      "file": "query-015.json",
+      "sha256": "8fc409edc2ccd41810077e943b5d648fae2d6be798d4e292905128344fdb01d4",
+      "unsupported": 0,
+      "max_chars": 1576
+    },
+    {
+      "file": "query-016.json",
+      "sha256": "26fe3a85bc0a25486d3d6b61e8693be7895b4e0bddf8eb68b14d9f3a30510bdc",
+      "unsupported": 0,
+      "max_chars": 798
+    },
+    {
+      "file": "query-017.json",
+      "sha256": "b7a476fb47d4d366ca58c93859d86bf2688ba657d855db37b5d154af3d026221",
+      "unsupported": 0,
+      "max_chars": 798
+    },
+    {
+      "file": "query-018.json",
+      "sha256": "96d5d5370e9d5dd245ef6da0eb932cd923b11924faeab02ee71843009fb4b1f9",
+      "unsupported": 0,
+      "max_chars": 1597
+    }
+  ],
+  "capture_complete": true,
+  "qualification_complete": false
+}

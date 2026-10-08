@@ -1,0 +1,11 @@
+Make parameter domains explicit and preserve retained curve closure
+
+Construct BezierParameter2 through its Exact and Algebraic variants. Remove the wrappers that hid a unit-domain restriction or merely forwarded to the enum, migrate every production/test/benchmark/fuzz caller directly, and retain explicit admission at operation boundaries.
+
+Select rational images only after excluding competing roots by certified disjointness within a complete domain. Reuse learned scalar views, refine competing deflated isolators, and replay exact unit-endpoint images. This repairs both endless refinement after learning a scalar and premature selection of a warmed conjugate.
+
+Reuse certified structural source correspondences on retained closed unit subranges while projecting every off-diagonal residual onto the actual domains. Preserve exterior and opposite-normal guards, and share retained-contact merging. Together with primitive Hypersolve root evidence, this restores construction and offset composition at radical cusps.
+
+Check split-boundary denominators independently of the parameter representation after shared scalar evidence is learned. Remove the ineffective promotion-reversal callback from all five split callers. Keep positive/negative control-weight proofs within their unit domain, so high-degree identity splits avoid power-basis expansion while exterior poles remain excluded.
+
+Validation: 630 release geometry/API regressions and 201 algebraic regressions across 13 pinned binaries, plus 9 static/downstream checks. Includes both policies, full reoffsets, finite/exterior ownership, importer forms, exact image endpoints, close conjugates, and retained off-diagonal contacts. All callers and four affected fuzz targets compile; no compatibility shims added.

@@ -1,0 +1,13 @@
+{
+  "tag": "zero-factor-wide-run-v70",
+  "started": "2026-09-11T19:07:35.631Z",
+  "finished": "2026-09-11T19:07:36.912Z",
+  "elapsedSeconds": 1.2787740900000002,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "/tmp/calcium-zero-factor.1YCn5a/wide",
+  "args": [
+    "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/power-wide-input-v69.json"
+  ],
+  "code": 0,
+  "signal": null
+}

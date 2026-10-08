@@ -1,0 +1,77 @@
+[
+  {
+    "test": "approximate_512_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions",
+    "current": "thread 'approximate_512_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions' (3635) panicked at tests/hypercurve_curve_region_promotion.rs:4726:9:\nassertion `left == right` failed\n  left: 3\n right: 2",
+    "baseline": "thread 'approximate_512_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions' (108) panicked at tests/hypercurve_curve_region_promotion.rs:4726:9:\nassertion `left == right` failed\n  left: 3\n right: 2"
+  },
+  {
+    "test": "arc_parabola_fillet_recovers_exact_complement_contacts",
+    "current": "thread 'arc_parabola_fillet_recovers_exact_complement_contacts' (3636) panicked at tests/hypercurve_curve_region_promotion.rs:4270:18:\nthe irrational complement-arc contact must remain exact",
+    "baseline": "thread 'arc_parabola_fillet_recovers_exact_complement_contacts' (109) panicked at tests/hypercurve_curve_region_promotion.rs:4270:18:\nthe irrational complement-arc contact must remain exact"
+  },
+  {
+    "test": "axis_aligned_algebraic_chords_reenter_exact_region_offsets",
+    "current": "thread 'axis_aligned_algebraic_chords_reenter_exact_region_offsets' (3645) panicked at tests/hypercurve_curve_region_promotion.rs:2216:13:\nassertion `left == right` failed: every adjacent round/chord tangent must remain structurally certified: TraceSnapshot { dispatch: [DispatchCount { layer: \"computable\", operation: \"add\", path: \"rational-offset-fold\", count: 3 }, DispatchCount { layer: \"computable\", operation: \"constructor\", path: \"rational-integer-canonicalized\", count: 2222 }, DispatchCount { layer: \"computable\", operation: \"constructor\", p",
+    "baseline": "thread 'axis_aligned_algebraic_chords_reenter_exact_region_offsets' (110) panicked at tests/hypercurve_curve_region_promotion.rs:2216:13:\nassertion `left == right` failed: every adjacent round/chord tangent must remain structurally certified: TraceSnapshot { dispatch: [DispatchCount { layer: \"computable\", operation: \"add\", path: \"rational-offset-fold\", count: 3 }, DispatchCount { layer: \"computable\", operation: \"constructor\", path: \"rational-integer-canonicalized\", count: 2222 }, DispatchCount { layer: \"computable\", operation: \"constructor\", pa"
+  },
+  {
+    "test": "line_parabola_fillet_extends_the_regular_incident_cell_exactly",
+    "current": "thread 'line_parabola_fillet_extends_the_regular_incident_cell_exactly' (3654) panicked at tests/hypercurve_curve_region_promotion.rs:4081:18:\nthe irrational exterior parabola cut must remain exact",
+    "baseline": "thread 'line_parabola_fillet_extends_the_regular_incident_cell_exactly' (111) panicked at tests/hypercurve_curve_region_promotion.rs:4081:18:\nthe irrational exterior parabola cut must remain exact\nnote: run with `RUST_BACKTRACE=1` environment variable to display a backtrace"
+  },
+  {
+    "test": "nonconvex_algebraic_chord_expansion_is_exact_and_local_collapse_is_explicit",
+    "current": "thread 'nonconvex_algebraic_chord_expansion_is_exact_and_local_collapse_is_explicit' (3660) panicked at tests/hypercurve_curve_region_promotion.rs:5663:13:\nstrictly separated recursive projective coordinates must avoid exact cross-product expansion: [DispatchCount { layer: \"hypercurve\", operation: \"algebraic-chord-collinear-range\", path: \"exact-tangent-orientation\", count: 14 }, DispatchCount { layer: \"hypercurve\", operation: \"algebraic-chord-pair\", path: \"adjacent-certified-tangent-complete\", count: 28 }, DispatchCount { layer: \"hypercurve\", o",
+    "baseline": "thread 'nonconvex_algebraic_chord_expansion_is_exact_and_local_collapse_is_explicit' (113) panicked at tests/hypercurve_curve_region_promotion.rs:5663:13:\nstrictly separated recursive projective coordinates must avoid exact cross-product expansion: [DispatchCount { layer: \"hypercurve\", operation: \"algebraic-chord-collinear-range\", path: \"exact-tangent-orientation\", count: 14 }, DispatchCount { layer: \"hypercurve\", operation: \"algebraic-chord-pair\", path: \"adjacent-certified-tangent-complete\", count: 28 }, DispatchCount { layer: \"hypercurve\", op"
+  },
+  {
+    "test": "non_ph_bezier_pair_projective_fillet_retains_algebraic_extensions",
+    "current": "thread 'non_ph_bezier_pair_projective_fillet_retains_algebraic_extensions' (3659) panicked at tests/hypercurve_curve_region_promotion.rs:5073:18:\nboth projective algebraic cuts and the selected circle must be retained",
+    "baseline": "thread 'non_ph_bezier_pair_projective_fillet_retains_algebraic_extensions' (112) panicked at tests/hypercurve_curve_region_promotion.rs:5073:18:\nboth projective algebraic cuts and the selected circle must be retained"
+  },
+  {
+    "test": "retained_circular_regions_chamfer_over_the_full_support",
+    "current": "thread 'retained_circular_regions_chamfer_over_the_full_support' (3668) panicked at tests/hypercurve_curve_region_promotion.rs:1341:21:\nassertion failed: candidate.boundary_loops()[0].fragments().iter().all(|fragment|\n        match fragment {\n            BezierSplitFragment2::Materialized { curve, .. } => {",
+    "baseline": "thread 'retained_circular_regions_chamfer_over_the_full_support' (114) panicked at tests/hypercurve_curve_region_promotion.rs:1341:21:\nassertion failed: candidate.boundary_loops()[0].fragments().iter().all(|fragment|\n        match fragment {\n            BezierSplitFragment2::Materialized { curve, .. } => {"
+  },
+  {
+    "test": "strict_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions",
+    "current": "thread 'strict_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions' (3682) panicked at tests/hypercurve_curve_region_promotion.rs:4726:9:\nassertion `left == right` failed\n  left: 3\n right: 2",
+    "baseline": "thread 'strict_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions' (115) panicked at tests/hypercurve_curve_region_promotion.rs:4726:9:\nassertion `left == right` failed\n  left: 3\n right: 2"
+  },
+  {
+    "test": "unified_region_chamfer_joins_two_algebraic_bezier_cuts",
+    "current": "thread 'unified_region_chamfer_joins_two_algebraic_bezier_cuts' (3694) panicked at tests/hypercurve_curve_region_promotion.rs:1720:13:\nassertion `left == right` failed\n  left: 0\n right: 2",
+    "baseline": "thread 'unified_region_chamfer_joins_two_algebraic_bezier_cuts' (117) panicked at tests/hypercurve_curve_region_promotion.rs:1720:13:\nassertion `left == right` failed\n  left: 0\n right: 2"
+  },
+  {
+    "test": "unified_mixed_line_arc_erosion_splits_after_a_curved_neck_collapse",
+    "current": "thread 'unified_mixed_line_arc_erosion_splits_after_a_curved_neck_collapse' (3689) panicked at tests/hypercurve_curve_region_promotion.rs:6965:9:\nassertion `left == right` failed\n  left: Approximate512Consumed\n right: Certified",
+    "baseline": "thread 'unified_mixed_line_arc_erosion_splits_after_a_curved_neck_collapse' (116) panicked at tests/hypercurve_curve_region_promotion.rs:6965:9:\nassertion `left == right` failed\n  left: Approximate512Consumed\n right: Certified"
+  },
+  {
+    "test": "unified_region_chamfer_retains_algebraic_bezier_cut",
+    "current": "thread 'unified_region_chamfer_retains_algebraic_bezier_cut' (3696) panicked at tests/hypercurve_curve_region_promotion.rs:1479:9:\nassertion failed: matches!(fragments[2], BezierSplitFragment2::AlgebraicEndpointImages { .. })",
+    "baseline": "thread 'unified_region_chamfer_retains_algebraic_bezier_cut' (118) panicked at tests/hypercurve_curve_region_promotion.rs:1479:9:\nassertion failed: matches!(fragments[2], BezierSplitFragment2::AlgebraicEndpointImages { .. })"
+  },
+  {
+    "test": "unified_region_corners_use_rational_circular_carriers",
+    "current": "thread 'unified_region_corners_use_rational_circular_carriers' (3704) panicked at tests/hypercurve_curve_region_promotion.rs:1241:13:\nassertion failed: chamfer_paths[0].curves().iter().any(|curve|\n        curve.family() == CurveFamily2::RationalQuadraticBezier)",
+    "baseline": "thread 'unified_region_corners_use_rational_circular_carriers' (119) panicked at tests/hypercurve_curve_region_promotion.rs:1241:13:\nassertion failed: chamfer_paths[0].curves().iter().any(|curve|\n        curve.family() == CurveFamily2::RationalQuadraticBezier)"
+  },
+  {
+    "test": "unified_region_native_chamfer_uses_arc_sweep_evidence",
+    "current": "thread 'unified_region_native_chamfer_uses_arc_sweep_evidence' (3710) panicked at tests/hypercurve_curve_region_promotion.rs:334:46:\nexpected decided result, got Unsupported",
+    "baseline": "thread 'unified_region_native_chamfer_uses_arc_sweep_evidence' (120) panicked at tests/hypercurve_curve_region_promotion.rs:334:46:\nexpected decided result, got Unsupported"
+  },
+  {
+    "test": "unified_region_native_fillet_retains_certified_arc_contacts",
+    "current": "thread 'unified_region_native_fillet_retains_certified_arc_contacts' (3711) panicked at tests/hypercurve_curve_region_promotion.rs:334:46:\nexpected decided result, got Unsupported",
+    "baseline": "thread 'unified_region_native_fillet_retains_certified_arc_contacts' (121) panicked at tests/hypercurve_curve_region_promotion.rs:334:46:\nexpected decided result, got Unsupported"
+  },
+  {
+    "test": "unified_region_non_miter_erosions_split_after_neck_collapse",
+    "current": "thread 'unified_region_non_miter_erosions_split_after_neck_collapse' (3712) panicked at tests/hypercurve_curve_region_promotion.rs:6509:17:\nassertion `left == right` failed\n  left: Certified\n right: Approximate512Consumed",
+    "baseline": "thread 'unified_region_non_miter_erosions_split_after_neck_collapse' (122) panicked at tests/hypercurve_curve_region_promotion.rs:6509:17:\nassertion `left == right` failed\n  left: Certified\n right: Approximate512Consumed"
+  }
+]

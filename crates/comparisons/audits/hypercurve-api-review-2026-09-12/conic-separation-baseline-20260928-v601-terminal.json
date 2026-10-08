@@ -1,0 +1,23 @@
+{
+  "baseline_qualification": "common-point-incidence-broad-20260928-v593-terminal.json",
+  "source_manifest": "common-point-incidence-broad-20260928-v593-sources.json",
+  "production_source_manifest": "parameter-construction-20260928-v598-sources.json",
+  "binary": {
+    "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/common-point-incidence-broad-20260928-v593-hypercurve-tests",
+    "sha256": "fa470688a93f40522b2641269ea7afeb41457861816841cd41865721132f9a27"
+  },
+  "command": [
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/common-point-incidence-broad-20260928-v593-hypercurve-tests",
+    "--exact",
+    "rational_bezier_general::tests::conic_rational_image_separation_refines_past_the_old_limit",
+    "--nocapture",
+    "--test-threads=1"
+  ],
+  "cwd": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/source-archives/common-point-incidence-broad-20260928-v593/hypercurve",
+  "all_processes_reaped": true,
+  "pid": 38,
+  "returncode": 124,
+  "elapsed_seconds": 60.00115384487435,
+  "log": "conic-separation-baseline-20260928-v601.log",
+  "passed": false
+}

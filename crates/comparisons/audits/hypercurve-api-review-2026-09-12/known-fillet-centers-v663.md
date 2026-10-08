@@ -1,0 +1,5 @@
+# Early exact fillet constraints
+
+Based on clean HC 4cdcf512. Generalizes the existing collapsed-center kernel to explicit center plus optional selected parameter evidence. A supplied Parallel contact yields every admitted source preimage and retains its parameter through reconstruction; no geometric center deduplication discards distinct cuts. Both original normal selection and incident-domain barriers precede point evaluation. Native coincident support paths retain their specialized certificates. Stationary source ranges keep the existing owned regular-cell solver; the optional bounded regularity proof does not exclude them. Offset cusps on regular sources use the already qualified surviving-side derivative proof. Adds independent nonlinear cubic cusp fixture from V658 with bounded case labels.
+
+Two production files pending. V663 focused qualification runs the new nonlinear fixture first, all existing curve_fillet module guards, all V657 related library guards, and all stationary fillet integration cases. Production, archive, mirror and active driver inputs freeze until exact outer reaping. No compatibility wrapper.

@@ -1,0 +1,55 @@
+/***************************************************************************
+ *            rigorous_numerics_demonstration.dox
+ *
+ *  Copyright  2009-21  Pieter Collins
+ *
+ ****************************************************************************/
+
+/*
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; either version 2 of the License, or
+ *  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Library General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program; if not, write to the Free Software
+ *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+ */
+
+/*!
+
+\file rigorous_numerics_tutorial.dox
+\brief Tutorial on %Ariadne's features for rigorous numerics and computable analysis.
+
+\page rigorous_numerics_tutorial_page Tutorial on Rigorous Numerics and Computable Analysis
+
+In this tutorial, we show how to use %Ariadne to perform rigorous computations on numbers, sets and functions,
+based on theoretical principles from computable analysis.
+
+\section tutorial_numeric Numerical computation
+
+\snippet tutorials/rigorous_numerics/rigorous_numerics_tutorial.cpp numeric_demonstration
+
+\section tutorial_algebraic Linear algebra
+
+\snippet tutorials/rigorous_numerics/rigorous_numerics_tutorial.cpp linear_algebra_demonstration
+
+\section tutorial_function Functions
+
+\snippet tutorials/rigorous_numerics/rigorous_numerics_tutorial.cpp function_demonstration
+
+\section tutorial_geometry Geometry
+
+\snippet tutorials/rigorous_numerics/rigorous_numerics_tutorial.cpp geometry_demonstration
+
+\section tutorial_expression Expressions
+
+\snippet tutorials/rigorous_numerics/rigorous_numerics_tutorial.cpp expression_demonstration
+
+
+*/

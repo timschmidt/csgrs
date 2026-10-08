@@ -1,0 +1,46 @@
+[
+  {
+    "repo": "calcium",
+    "path": "qqbar/get_quadratic.c",
+    "ranges": [
+      [
+        1,
+        226
+      ]
+    ],
+    "note": "Checkpoint82: Full rational fast path; degree precondition; discriminant; Gaussian-rational shortcut; power-of-two, full and smooth factorization policies; complex sign, pure-real sign and two-root enclosure separation; positive denominator/content reduction and cleanup. Comments contain discriminant-sign/square-root notation slips; actual arithmetic and selected-root identity qualified independently."
+  },
+  {
+    "repo": "calcium",
+    "path": "qqbar/test/t-get_quadratic.c",
+    "ranges": [
+      [
+        1,
+        100
+      ]
+    ],
+    "note": "Checkpoint82: Full randomized degree-1/2 extraction across three factorization policies, reconstruction, denominator/content and residual-square normalization checks. Source read, not newly executed."
+  },
+  {
+    "repo": "flint",
+    "path": "src/qqbar/get_quadratic.c",
+    "ranges": [
+      [
+        1,
+        226
+      ]
+    ],
+    "note": "Checkpoint82: Full rational fast path; degree precondition; discriminant; Gaussian-rational shortcut; power-of-two, full and smooth factorization policies; complex sign, pure-real sign and two-root enclosure separation; positive denominator/content reduction and cleanup. Comments contain discriminant-sign/square-root notation slips; actual arithmetic and selected-root identity qualified independently."
+  },
+  {
+    "repo": "flint",
+    "path": "src/qqbar/test/t-get_quadratic.c",
+    "ranges": [
+      [
+        1,
+        92
+      ]
+    ],
+    "note": "Checkpoint82: Full randomized degree-1/2 extraction across three factorization policies, reconstruction, denominator/content and residual-square normalization checks. Source read, not newly executed."
+  }
+]

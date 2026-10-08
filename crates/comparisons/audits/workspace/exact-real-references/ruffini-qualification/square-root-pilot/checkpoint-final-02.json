@@ -1,0 +1,474 @@
+{
+  "status": "PROGRESS; full ecosystem goal ACTIVE/OPEN",
+  "finished": "2026-09-07T03:08:12.096Z",
+  "validatorSha256": "684e9ff71e2c0763a8164fc45c4e0a83edd3c1515aaebff7e57b8cd1bbe70401",
+  "stages": [
+    {
+      "script": "analyze.mjs",
+      "sourceSha256": "935b66effb5573f5a0aab7c49132343cf8a60fa0bdb8ad1e1392bd44c48a94ff",
+      "started": "2026-09-07T03:08:10.809Z",
+      "finished": "2026-09-07T03:08:11.125Z",
+      "status": 0,
+      "signal": null,
+      "error": null,
+      "file": "/home/tim/Documents/GitHub/workspace/exact-real-references/ruffini-qualification/square-root-pilot/checkpoint-final-02-0.log",
+      "outputSha256": "fd66b73b9f062c49263f4681098b08a579e0aac33ad452854e20186d8bb7a31a",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "script": "public/analyze.mjs",
+      "sourceSha256": "5fe14b1f6dc93eeb964f0af61d59bb44364943f21d0a06569905fe8ffa352097",
+      "started": "2026-09-07T03:08:11.125Z",
+      "finished": "2026-09-07T03:08:11.961Z",
+      "status": 0,
+      "signal": null,
+      "error": null,
+      "file": "/home/tim/Documents/GitHub/workspace/exact-real-references/ruffini-qualification/square-root-pilot/checkpoint-final-02-1.log",
+      "outputSha256": "56e403fda87880c9e5da34ee9e6897797280ccca27d81b0fbf3c0af0b5982a84",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "script": "../check-round-constants-02-04.mjs",
+      "sourceSha256": "6414c38c1ff11e95f03f8eef02fff4b003f290489e2c3826be17b9f7f87ef556",
+      "started": "2026-09-07T03:08:11.961Z",
+      "finished": "2026-09-07T03:08:12.063Z",
+      "status": 0,
+      "signal": null,
+      "error": null,
+      "file": "/home/tim/Documents/GitHub/workspace/exact-real-references/ruffini-qualification/square-root-pilot/checkpoint-final-02-2.log",
+      "outputSha256": "2113c3e34989a911f84fad9e0e7188332a227257ae2fa979e24a5b5561185cfe",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  ],
+  "currentDrift": [],
+  "snapshotFiles": 397,
+  "sourceCoverage": {
+    "files": 245,
+    "physicalLines": 26234,
+    "readFiles": 234,
+    "readLines": 17192,
+    "unreadFiles": [
+      "abstractions.svg",
+      "demos/src/main/java/demo/poseidon/poseidon_constants/constants06",
+      "demos/src/main/java/demo/poseidon/poseidon_constants/constants07",
+      "demos/src/main/java/demo/poseidon/poseidon_constants/constants08",
+      "demos/src/main/java/demo/poseidon/poseidon_constants/constants09",
+      "demos/src/main/java/demo/poseidon/poseidon_constants/constants10",
+      "demos/src/main/java/demo/poseidon/poseidon_constants/constants11",
+      "demos/src/main/java/demo/poseidon/poseidon_constants/constants12",
+      "demos/src/main/java/demo/poseidon/poseidon_constants/constants13",
+      "demos/src/main/java/demo/poseidon/poseidon_constants/constants14",
+      "demos/src/main/java/demo/poseidon/poseidon_constants/constants15"
+    ]
+  },
+  "isolated": {
+    "processes": 48,
+    "checksPerMode": 1956,
+    "verifiedMeasuredCalls": 67353600
+  },
+  "public": {
+    "processes": 108,
+    "checksPerModePerAlgorithm": 81,
+    "verifiedMeasuredCalls": 3876864,
+    "families": [
+      {
+        "family": "1-8-terminal-fresh",
+        "seedGroups": 3,
+        "ratios": {
+          "control": {
+            "cpuMedian": 1.0055792826486671,
+            "cpuRange": [
+              0.986874841894111,
+              1.0117800954049365
+            ],
+            "wallMedian": 1.0055577174335422,
+            "wallRange": [
+              0.9864229142797155,
+              1.0119382722137904
+            ]
+          },
+          "diagonal": {
+            "cpuMedian": 1.0049540893397566,
+            "cpuRange": [
+              0.9874775049195693,
+              1.005832879678871
+            ],
+            "wallMedian": 1.004779151366678,
+            "wallRange": [
+              0.9873455255383785,
+              1.0056774373312531
+            ]
+          }
+        },
+        "controlWithinTenPercent": true
+      },
+      {
+        "family": "1-8-terminal-reused",
+        "seedGroups": 3,
+        "ratios": {
+          "control": {
+            "cpuMedian": 1.003830874275734,
+            "cpuRange": [
+              0.9747911689187925,
+              1.0111828044980822
+            ],
+            "wallMedian": 1.0039875699396608,
+            "wallRange": [
+              0.9745006362049086,
+              1.0118843933013548
+            ]
+          },
+          "diagonal": {
+            "cpuMedian": 0.9824239276321596,
+            "cpuRange": [
+              0.9759852503211892,
+              0.9889946092012051
+            ],
+            "wallMedian": 0.9823885307168522,
+            "wallRange": [
+              0.9762417958384174,
+              0.9888063277926029
+            ]
+          }
+        },
+        "controlWithinTenPercent": true
+      },
+      {
+        "family": "2-8-terminal-fresh",
+        "seedGroups": 3,
+        "ratios": {
+          "control": {
+            "cpuMedian": 1.0058369667975038,
+            "cpuRange": [
+              0.9945894550296316,
+              1.0118792588248882
+            ],
+            "wallMedian": 1.0057674473098,
+            "wallRange": [
+              0.9947030307932271,
+              1.012205193663789
+            ]
+          },
+          "diagonal": {
+            "cpuMedian": 0.9870622059432758,
+            "cpuRange": [
+              0.9674992662112236,
+              1.0001597064989
+            ],
+            "wallMedian": 0.9869298096538307,
+            "wallRange": [
+              0.9676039120700206,
+              1.0002001647028147
+            ]
+          }
+        },
+        "controlWithinTenPercent": true
+      },
+      {
+        "family": "2-8-terminal-reused",
+        "seedGroups": 3,
+        "ratios": {
+          "control": {
+            "cpuMedian": 0.9926532933419151,
+            "cpuRange": [
+              0.9760214759011816,
+              0.9935989003295751
+            ],
+            "wallMedian": 0.9924181597061423,
+            "wallRange": [
+              0.9760546781455429,
+              0.9933591920108629
+            ]
+          },
+          "diagonal": {
+            "cpuMedian": 0.9864214114420051,
+            "cpuRange": [
+              0.9527172440842238,
+              1.0424802175948282
+            ],
+            "wallMedian": 0.9863224471405759,
+            "wallRange": [
+              0.9526302236050568,
+              1.0421910589340382
+            ]
+          }
+        },
+        "controlWithinTenPercent": true
+      },
+      {
+        "family": "4-8-terminal-fresh",
+        "seedGroups": 3,
+        "ratios": {
+          "control": {
+            "cpuMedian": 0.9946009690834783,
+            "cpuRange": [
+              0.9461417813423049,
+              1.003115131944363
+            ],
+            "wallMedian": 0.9945221817226303,
+            "wallRange": [
+              0.9460991819464138,
+              1.003051274957947
+            ]
+          },
+          "diagonal": {
+            "cpuMedian": 1.013955849692021,
+            "cpuRange": [
+              1.0075321689719572,
+              1.032613208984281
+            ],
+            "wallMedian": 1.013912591545387,
+            "wallRange": [
+              1.006984818810806,
+              1.0326767570622783
+            ]
+          }
+        },
+        "controlWithinTenPercent": true
+      },
+      {
+        "family": "4-8-terminal-reused",
+        "seedGroups": 3,
+        "ratios": {
+          "control": {
+            "cpuMedian": 1.011281253872933,
+            "cpuRange": [
+              0.9769517242343703,
+              1.0338378458721582
+            ],
+            "wallMedian": 1.0113815838271318,
+            "wallRange": [
+              0.9767447014258165,
+              1.0339006112192177
+            ]
+          },
+          "diagonal": {
+            "cpuMedian": 1.01004205997847,
+            "cpuRange": [
+              0.99899671507131,
+              1.0175003817076147
+            ],
+            "wallMedian": 1.009696144505182,
+            "wallRange": [
+              0.9990847785102919,
+              1.0173777303032492
+            ]
+          }
+        },
+        "controlWithinTenPercent": true
+      },
+      {
+        "family": "8-32-terminal-fresh",
+        "seedGroups": 3,
+        "ratios": {
+          "control": {
+            "cpuMedian": 1.0137831897779066,
+            "cpuRange": [
+              0.9947451693099645,
+              1.0298436603444392
+            ],
+            "wallMedian": 1.0138555410676442,
+            "wallRange": [
+              0.994567376394044,
+              1.0321697712744808
+            ]
+          },
+          "diagonal": {
+            "cpuMedian": 1.0075866956117416,
+            "cpuRange": [
+              0.9941085457356768,
+              1.0953965427004444
+            ],
+            "wallMedian": 1.0080203390024756,
+            "wallRange": [
+              0.994036729598557,
+              1.0952682059877343
+            ]
+          }
+        },
+        "controlWithinTenPercent": true
+      },
+      {
+        "family": "8-32-terminal-reused",
+        "seedGroups": 3,
+        "ratios": {
+          "control": {
+            "cpuMedian": 1.0037899440532478,
+            "cpuRange": [
+              0.9966765789138283,
+              1.0061866835049016
+            ],
+            "wallMedian": 1.0037347236067589,
+            "wallRange": [
+              0.9968934183334499,
+              1.0060604213173996
+            ]
+          },
+          "diagonal": {
+            "cpuMedian": 0.9961759393998111,
+            "cpuRange": [
+              0.986049019198855,
+              1.0113644471501737
+            ],
+            "wallMedian": 0.9960265765160248,
+            "wallRange": [
+              0.986016129199743,
+              1.0111691858587333
+            ]
+          }
+        },
+        "controlWithinTenPercent": true
+      },
+      {
+        "family": "1-8-sampled-fresh",
+        "seedGroups": 3,
+        "ratios": {
+          "control": {
+            "cpuMedian": 1.006959712431313,
+            "cpuRange": [
+              1.00693246830821,
+              1.0126087422379584
+            ],
+            "wallMedian": 1.0069200087567933,
+            "wallRange": [
+              1.006378908327209,
+              1.0127439877664621
+            ]
+          },
+          "diagonal": {
+            "cpuMedian": 1.0027418336985787,
+            "cpuRange": [
+              0.994683548036904,
+              1.0047815246439726
+            ],
+            "wallMedian": 1.0029519689705648,
+            "wallRange": [
+              0.9939524954377,
+              1.0049727889642583
+            ]
+          }
+        },
+        "controlWithinTenPercent": true
+      },
+      {
+        "family": "1-8-sampled-reused",
+        "seedGroups": 3,
+        "ratios": {
+          "control": {
+            "cpuMedian": 0.9971192507790528,
+            "cpuRange": [
+              0.9965010415114707,
+              0.9980004860264371
+            ],
+            "wallMedian": 0.9967010012601816,
+            "wallRange": [
+              0.9947202006420875,
+              0.9980887970026007
+            ]
+          },
+          "diagonal": {
+            "cpuMedian": 0.9844601534182073,
+            "cpuRange": [
+              0.9795377111942568,
+              1.0006303252291324
+            ],
+            "wallMedian": 0.9847724248989695,
+            "wallRange": [
+              0.9765269694261378,
+              1.0008315466202111
+            ]
+          }
+        },
+        "controlWithinTenPercent": true
+      },
+      {
+        "family": "4-32-sampled-fresh",
+        "seedGroups": 3,
+        "ratios": {
+          "control": {
+            "cpuMedian": 1.0123108047752614,
+            "cpuRange": [
+              0.9948192273844344,
+              1.0444563437657945
+            ],
+            "wallMedian": 1.0121552538382217,
+            "wallRange": [
+              0.9946082424691584,
+              1.044535964481744
+            ]
+          },
+          "diagonal": {
+            "cpuMedian": 1.015196096875488,
+            "cpuRange": [
+              0.9914790923847842,
+              1.0383630387834473
+            ],
+            "wallMedian": 1.0150509929949216,
+            "wallRange": [
+              0.9914707719712186,
+              1.038756110454902
+            ]
+          }
+        },
+        "controlWithinTenPercent": true
+      },
+      {
+        "family": "4-32-sampled-reused",
+        "seedGroups": 3,
+        "ratios": {
+          "control": {
+            "cpuMedian": 1.0107467948624929,
+            "cpuRange": [
+              0.9946134234094757,
+              1.0180169476572527
+            ],
+            "wallMedian": 1.0105760664581283,
+            "wallRange": [
+              0.9944336339205835,
+              1.0181685615554243
+            ]
+          },
+          "diagonal": {
+            "cpuMedian": 1.0230948229779215,
+            "cpuRange": [
+              0.9970885817956745,
+              1.025776528411735
+            ],
+            "wallMedian": 1.0229082851877986,
+            "wallRange": [
+              0.9971505764413944,
+              1.0260943401769727
+            ]
+          }
+        },
+        "controlWithinTenPercent": true
+      }
+    ]
+  },
+  "memory": {
+    "cases": 96,
+    "profiles": 288,
+    "allMeasuredOwnersReleased": true,
+    "identicalCodeControlsMatch": true,
+    "fields": [
+      "calls",
+      "bytes",
+      "peakExtraLive",
+      "beforeOutputDropDelta",
+      "afterOutputDropDelta",
+      "afterAllOwnersDropDelta"
+    ],
+    "nonincreasingCalls": false,
+    "nonincreasingBytes": true,
+    "nonincreasingPeak": false
+  },
+  "newProductionChanges": 0,
+  "decision": "No production transfer retained at this checkpoint: exploratory public caller results do not establish a worthwhile end-to-end improvement. Helper gains and memory tradeoffs remain preserved for profile-driven follow-up.",
+  "limitations": [
+    "shared host, pinned CPU not exclusive",
+    "separate binaries/processes; code-layout and time-order effects remain",
+    "six measured batches per process after warmup/calibration",
+    "seed-dependent order cycles use two of three cyclic orders, not full counterbalancing",
+    "CPU and wall ranges are descriptive across three seed groups, not confidence bounds"
+  ]
+}

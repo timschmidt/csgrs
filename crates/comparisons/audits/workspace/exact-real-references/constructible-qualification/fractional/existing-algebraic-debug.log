@@ -1,0 +1,12 @@
+   Compiling hyperreal v0.13.1 (/home/tim/Documents/GitHub/workspace/.audit-fractional-separation.qYmpNk)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 6.29s
+     Running unittests src/lib.rs (.audit-targets/ireal-derivative-18555/debug/deps/hyperreal-a346315a45113d5d)
+
+running 4 tests
+test real::tests::tests::distinct_opaque_irrationals_do_not_share_an_algebraic_basis ... ok
+test computable::node::tests::algebraic_separation_bounds_certify_archived_radical_identities ... ok
+test computable::node::tests::algebraic_generator_dependencies_and_perturbations_are_exact ... ok
+test computable::node::tests::algebraic_separation_resource_caps_fail_closed ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 665 filtered out; finished in 0.06s
+

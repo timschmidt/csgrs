@@ -1,0 +1,162 @@
+[
+  {
+    "repo": "calcium",
+    "path": "ca_mat/mul.c"
+  },
+  {
+    "repo": "flint",
+    "path": "src/ca_mat/mul.c"
+  },
+  {
+    "repo": "calcium",
+    "path": "ca_mat/ca_poly_evaluate.c"
+  },
+  {
+    "repo": "flint",
+    "path": "src/ca_mat/ca_poly_evaluate.c"
+  },
+  {
+    "repo": "calcium",
+    "path": "ca_mat/mul_classical.c"
+  },
+  {
+    "repo": "flint",
+    "path": "src/ca_mat/mul_classical.c"
+  },
+  {
+    "repo": "calcium",
+    "path": "ca_mat/addmul_ca.c"
+  },
+  {
+    "repo": "flint",
+    "path": "src/ca_mat/addmul_ca.c"
+  },
+  {
+    "repo": "calcium",
+    "path": "ca_mat/submul_ca.c"
+  },
+  {
+    "repo": "flint",
+    "path": "src/ca_mat/submul_ca.c"
+  },
+  {
+    "repo": "calcium",
+    "path": "ca_mat/pow_ui_binexp.c"
+  },
+  {
+    "repo": "flint",
+    "path": "src/ca_mat/pow_ui_binexp.c"
+  },
+  {
+    "repo": "calcium",
+    "path": "ca_mat/trace.c"
+  },
+  {
+    "repo": "flint",
+    "path": "src/ca_mat/trace.c"
+  },
+  {
+    "repo": "calcium",
+    "path": "ca_mat/test/t-ca_poly_evaluate.c"
+  },
+  {
+    "repo": "flint",
+    "path": "src/ca_mat/test/t-ca_poly_evaluate.c"
+  },
+  {
+    "repo": "calcium",
+    "path": "ca_mat/test/t-mul.c"
+  },
+  {
+    "repo": "flint",
+    "path": "src/ca_mat/test/t-mul.c"
+  },
+  {
+    "repo": "calcium",
+    "path": "ca_mat/test/t-mul_same_nf.c"
+  },
+  {
+    "repo": "flint",
+    "path": "src/ca_mat/test/t-mul_same_nf.c"
+  },
+  {
+    "repo": "calcium",
+    "path": "ca_mat/add_ca.c"
+  },
+  {
+    "repo": "flint",
+    "path": "src/ca_mat/add_ca.c"
+  },
+  {
+    "repo": "calcium",
+    "path": "ca_mat/sub_ca.c"
+  },
+  {
+    "repo": "flint",
+    "path": "src/ca_mat/sub_ca.c"
+  },
+  {
+    "repo": "calcium",
+    "path": "ca_mat/set_ca.c"
+  },
+  {
+    "repo": "flint",
+    "path": "src/ca_mat/set_ca.c"
+  },
+  {
+    "repo": "calcium",
+    "path": "ca_mat/check_equal.c"
+  },
+  {
+    "repo": "flint",
+    "path": "src/ca_mat/check_equal.c"
+  },
+  {
+    "repo": "calcium",
+    "path": "ca_mat/check_is_zero.c"
+  },
+  {
+    "repo": "flint",
+    "path": "src/ca_mat/check_is_zero.c"
+  },
+  {
+    "repo": "calcium",
+    "path": "ca_mat/check_is_one.c"
+  },
+  {
+    "repo": "flint",
+    "path": "src/ca_mat/check_is_one.c"
+  },
+  {
+    "repo": "calcium",
+    "path": "ca_mat/transpose.c"
+  },
+  {
+    "repo": "flint",
+    "path": "src/ca_mat/transpose.c"
+  },
+  {
+    "repo": "calcium",
+    "path": "ca_mat/zero.c"
+  },
+  {
+    "repo": "flint",
+    "path": "src/ca_mat/zero.c"
+  },
+  {
+    "repo": "calcium",
+    "path": "ca_mat/one.c"
+  },
+  {
+    "repo": "flint",
+    "path": "src/ca_mat/one.c"
+  },
+  {
+    "repo": "calcium",
+    "path": "ca_mat/ones.c"
+  },
+  {
+    "repo": "flint",
+    "path": "src/ca_mat/ones.c"
+  }
+]

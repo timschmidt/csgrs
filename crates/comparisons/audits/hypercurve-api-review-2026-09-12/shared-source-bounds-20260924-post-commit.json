@@ -1,0 +1,10 @@
+{
+  "head": "04b524382cdf80457c06f02c2bd2d0fa222d21b8",
+  "paths": {
+    "src/bezier_offset.rs": "d92282acea7582a54828b3d7eac96e84f492f5d2cf5a5cf25e3a87aa226912d1"
+  },
+  "all_repositories_clean": true,
+  "repository_count": 30,
+  "all_owned_processes_reaped": true,
+  "pushed": false
+}

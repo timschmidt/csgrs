@@ -1,0 +1,13 @@
+{
+  "tag": "twelfth-regression-evidence-confirmed-v79",
+  "started": "2026-09-12T00:55:16.228Z",
+  "finished": "2026-09-12T00:55:16.986Z",
+  "elapsedSeconds": 0.755785121,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "node",
+  "args": [
+    "check-twelfth-revision-tests-v79.mjs"
+  ],
+  "code": 0,
+  "signal": null
+}

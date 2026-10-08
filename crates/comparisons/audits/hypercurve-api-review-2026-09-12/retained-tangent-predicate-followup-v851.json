@@ -1,0 +1,18 @@
+{
+  "baseline": "endpoint-derivative-retention-v848-sources.json",
+  "finding": "The endpoint API can preserve exact retained derivatives while the arrangement coordinate adapter remains explicitly partial. First-order point/tangent projection is still required on unkeyed paths; tangent cross/order predicates still use represented coordinate roots. A missing higher derivative on a tied branch ultimately produces Boundary uncertainty, not a certified same-curve result.",
+  "evidence": [
+    "retained_endpoint_side_data retains derivative_source before optional higher coordinate extraction.",
+    "choose_retained_tangent_successor returns Uncertain(Boundary) when angular and higher-order comparisons remain SameDirection.",
+    "BezierAlgebraicParameter2 retains an immutable defining polynomial/isolator; refined clones have shared proof caches but do not mutate the original isolator.",
+    "Endpoint-owned retained derivatives do not create parameter-cache cycles; parameter-owned derivative caches remain Transformed-only."
+  ],
+  "next_requirement": "Extend exact vector predicates over retained selected-source expressions, reusing shared polynomial/source evidence before independent coordinate elimination. A source-level restriction alone is not proof of a public region counterexample.",
+  "runtime_region_counterexample": false,
+  "source_sha256": {
+    "hypercurve/src/bezier_arrangement.rs": "727d3fde2e3382daf33268b0a468e7cafd7c0996ac0e71ed7f883c626c611c46",
+    "hypercurve/src/bezier_split_endpoint.rs": "4e8b8286a25cf33321706ee616e92d7aa1ebabd3d9845c7f2c2c6338914594cd",
+    "hypercurve/src/bezier_tangent_order.rs": "b1dc7c56833ab626e37d757de05de6097fa9d7620a20886e708a4ff1d91d59a3",
+    "hypercurve/src/bezier_parameter.rs": "68b0f73d8bbac78b9b4f3c134c7345151d38f42668ff80e2099e68cfd1c8171a"
+  }
+}

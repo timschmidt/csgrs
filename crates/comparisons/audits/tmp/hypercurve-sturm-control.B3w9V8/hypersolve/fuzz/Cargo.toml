@@ -1,0 +1,483 @@
+[package]
+name = "hypersolve-fuzz"
+version = "0.0.0"
+publish = false
+edition = "2024"
+
+[package.metadata]
+cargo-fuzz = true
+
+[dependencies]
+libfuzzer-sys = "0.4"
+hyperlimit = { path = "../../hyperlimit", default-features = false }
+hyperreal = { path = "../../hyperreal", default-features = false }
+hypersolve = { path = "..", default-features = false }
+
+[[bin]]
+name = "sketch_projected_distance"
+path = "fuzz_targets/sketch_projected_distance.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "sketch_projected_distance_range"
+path = "fuzz_targets/sketch_projected_distance_range.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "sketch_projected_equal_point_point_distances"
+path = "fuzz_targets/sketch_projected_equal_point_point_distances.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "sketch_projected_point_line_distance"
+path = "fuzz_targets/sketch_projected_point_line_distance.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "sketch_projected_point_on_circle"
+path = "fuzz_targets/sketch_projected_point_on_circle.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "sketch_projected_line_circle_tangent"
+path = "fuzz_targets/sketch_projected_line_circle_tangent.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "sketch_projected_point_on_arc"
+path = "fuzz_targets/sketch_projected_point_on_arc.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "sketch_point_on_arc"
+path = "fuzz_targets/sketch_point_on_arc.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "sketch_point_line_incidence"
+path = "fuzz_targets/sketch_point_line_incidence.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "sketch_projected_point_line_distance_range"
+path = "fuzz_targets/sketch_projected_point_line_distance_range.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "sketch_projected_equal_length"
+path = "fuzz_targets/sketch_projected_equal_length.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "sketch_projected_line_length_range"
+path = "fuzz_targets/sketch_projected_line_length_range.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "sketch_projected_length_ratio"
+path = "fuzz_targets/sketch_projected_length_ratio.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "sketch_projected_point_distance_ratio"
+path = "fuzz_targets/sketch_projected_point_distance_ratio.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "sketch_projected_length_difference"
+path = "fuzz_targets/sketch_projected_length_difference.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "sketch_projected_length_point_line_distance"
+path = "fuzz_targets/sketch_projected_length_point_line_distance.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "sketch_projected_equal_point_line_distances"
+path = "fuzz_targets/sketch_projected_equal_point_line_distances.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "sketch_failed_constraints"
+path = "fuzz_targets/sketch_failed_constraints.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "failed_constraint_minimal_removals"
+path = "fuzz_targets/failed_constraint_minimal_removals.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "sketch_workplane_symmetry"
+path = "fuzz_targets/sketch_workplane_symmetry.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "sketch_arc_line_tangent"
+path = "fuzz_targets/sketch_arc_line_tangent.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "sketch_projected_arc_line_tangent"
+path = "fuzz_targets/sketch_projected_arc_line_tangent.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "sketch_projected_arc_cubic_curve_tangent"
+path = "fuzz_targets/sketch_projected_arc_cubic_curve_tangent.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "sketch_projected_arc_cubic_curve_second_order_contact"
+path = "fuzz_targets/sketch_projected_arc_cubic_curve_second_order_contact.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "sketch_arc_arc_tangent"
+path = "fuzz_targets/sketch_arc_arc_tangent.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "sketch_circle_circle_tangent"
+path = "fuzz_targets/sketch_circle_circle_tangent.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "sketch_concentric"
+path = "fuzz_targets/sketch_concentric.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "sketch_projected_point_concentric"
+path = "fuzz_targets/sketch_projected_point_concentric.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "sketch_projected_line_radius_equality"
+path = "fuzz_targets/sketch_projected_line_radius_equality.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "sketch_projected_point_radius_equality"
+path = "fuzz_targets/sketch_projected_point_radius_equality.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "sketch_projected_point_line_radius_equality"
+path = "fuzz_targets/sketch_projected_point_line_radius_equality.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "sketch_projected_equal_point_distance_point_line_distance"
+path = "fuzz_targets/sketch_projected_equal_point_distance_point_line_distance.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "sketch_projected_point_distance_difference"
+path = "fuzz_targets/sketch_projected_point_distance_difference.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "sketch_projected_line_symmetry"
+path = "fuzz_targets/sketch_projected_line_symmetry.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "sketch_arc_cubic_tangent"
+path = "fuzz_targets/sketch_arc_cubic_tangent.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "sketch_arc_cubic_second_order"
+path = "fuzz_targets/sketch_arc_cubic_second_order.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "sketch_oriented_angle"
+path = "fuzz_targets/sketch_oriented_angle.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "sketch_projected_oriented_angle"
+path = "fuzz_targets/sketch_projected_oriented_angle.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "sketch_projected_line_orientation"
+path = "fuzz_targets/sketch_projected_line_orientation.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "sketch_line_arc_length"
+path = "fuzz_targets/sketch_line_arc_length.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "sketch_line_arc_sweep_length"
+path = "fuzz_targets/sketch_line_arc_sweep_length.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "sketch_projected_line_arc_sweep_length"
+path = "fuzz_targets/sketch_projected_line_arc_sweep_length.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "sketch_point_on_cubic"
+path = "fuzz_targets/sketch_point_on_cubic.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "sketch_projected_point_on_cubic"
+path = "fuzz_targets/sketch_projected_point_on_cubic.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "sketch_projected_point_on_cubic_curve"
+path = "fuzz_targets/sketch_projected_point_on_cubic_curve.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "sketch_cubic_line_tangent"
+path = "fuzz_targets/sketch_cubic_line_tangent.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "sketch_projected_cubic_line_tangent"
+path = "fuzz_targets/sketch_projected_cubic_line_tangent.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "sketch_projected_cubic_curve_line_tangent"
+path = "fuzz_targets/sketch_projected_cubic_curve_line_tangent.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "sketch_projected_cubic_curve_cubic_curve_tangent"
+path = "fuzz_targets/sketch_projected_cubic_curve_cubic_curve_tangent.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "sketch_projected_cubic_curve_cubic_curve_c2"
+path = "fuzz_targets/sketch_projected_cubic_curve_cubic_curve_c2.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "sketch_projected_cubic_curve_cubic_curve_g2"
+path = "fuzz_targets/sketch_projected_cubic_curve_cubic_curve_g2.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "sketch_cubic_cubic_tangent"
+path = "fuzz_targets/sketch_cubic_cubic_tangent.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "sketch_cubic_cubic_g2"
+path = "fuzz_targets/sketch_cubic_cubic_g2.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "sketch_cubic_cubic_c2"
+path = "fuzz_targets/sketch_cubic_cubic_c2.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "algebraic_mobius"
+path = "fuzz_targets/algebraic_mobius.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "algebraic_polynomial_image"
+path = "fuzz_targets/algebraic_polynomial_image.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "algebraic_rational_image"
+path = "fuzz_targets/algebraic_rational_image.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "algebraic_binary"
+path = "fuzz_targets/algebraic_binary.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "algebraic_difference_comparison"
+path = "fuzz_targets/algebraic_difference_comparison.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "sparse_pattern_preserving_bareiss"
+path = "fuzz_targets/sparse_pattern_preserving_bareiss.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "hyperreal_representations"
+path = "fuzz_targets/hyperreal_representations.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "dense_bareiss_multi_rhs"
+path = "fuzz_targets/dense_bareiss_multi_rhs.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "active_set_quadratic_regeneration"
+path = "fuzz_targets/active_set_quadratic_regeneration.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "modified_newton_bounded_quadratic_seed"
+path = "fuzz_targets/modified_newton_bounded_quadratic_seed.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "modified_newton_bounded_substitution_seed"
+path = "fuzz_targets/modified_newton_bounded_substitution_seed.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "curve_resultant"
+path = "fuzz_targets/curve_resultant.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "curve_substitution"
+path = "fuzz_targets/curve_substitution.rs"
+test = false
+doc = false
+bench = false

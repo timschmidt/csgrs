@@ -1,0 +1,123 @@
+\doxysubsection{Solver\+Interface Class Reference}
+\hypertarget{classAriadne_1_1SolverInterface}{}\label{classAriadne_1_1SolverInterface}\index{SolverInterface@{SolverInterface}}
+
+
+{\ttfamily \#include $<$solver\+\_\+interface.\+hpp$>$}
+
+
+
+\doxysubsubsection{Description}
+Interface for solving (nonlinear) equations. 
+
+\doxylink{structAriadne_1_1Two}{Two} main kinds of problem are considered. The problem of finding roots of a function $ f $, which are solutions to the equation $f(x)=0$, is addressed by the \doxylink{classAriadne_1_1SolverInterface_a92a518351d9fdf6515a69508825caff2}{solve()} method, The problem of finding a function $ h $ such that $ f(x,h(x))=0 $ is addressed by the \doxylink{classAriadne_1_1SolverInterface_ab6a863c0fa99c7dd6410708e1be464f9}{implicit()} method.
+
+Additionally two parameters are defined which are applicable to any implementation. The \doxylink{classAriadne_1_1SolverInterface_acc567896bfc4044b855b87ffa69b3d28}{maximum\+\_\+error()} provides an upper bound on the size of a box containing a solution point, uniforma bounds for an implicit function. The \doxylink{classAriadne_1_1SolverInterface_a11e3046b9e45bd1f2a87dde7069f8036}{maximum\+\_\+number\+\_\+of\+\_\+steps()} provides a timeout mechanism. Inheritance diagram for Solver\+Interface\+:\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[height=4.000000cm]{classAriadne_1_1SolverInterface}
+\end{center}
+\end{figure}
+\doxysubsubsubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1SolverInterface_a6e8dbe2e0376ea1072889f124347c7df}\label{classAriadne_1_1SolverInterface_a6e8dbe2e0376ea1072889f124347c7df} 
+virtual {\bfseries \texorpdfstring{$\sim$}{\string~}\+Solver\+Interface} ()=default
+\begin{DoxyCompactList}\small\item\em Virtual destructor. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1SolverInterface_a943ebbace9966de0a676d643478f895e}\label{classAriadne_1_1SolverInterface_a943ebbace9966de0a676d643478f895e} 
+virtual \mbox{\hyperlink{classAriadne_1_1SolverInterface}{Solver\+Interface}} \texorpdfstring{$\ast$}{*} {\bfseries clone} () const =0
+\begin{DoxyCompactList}\small\item\em Make a dynamically-\/allocated copy. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1SolverInterface_ad58ecdedb4fbd7d565d8d965f3c13241}\label{classAriadne_1_1SolverInterface_ad58ecdedb4fbd7d565d8d965f3c13241} 
+virtual \mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} {\bfseries \+\_\+write} (\mbox{\hyperlink{namespaceAriadne_acbb98ddc4385af4599070e65a1a47ec1}{Output\+Stream}} \&os) const =0
+\begin{DoxyCompactList}\small\item\em Write to an output stream. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1SolverInterface_acc567896bfc4044b855b87ffa69b3d28}\label{classAriadne_1_1SolverInterface_acc567896bfc4044b855b87ffa69b3d28} 
+virtual \mbox{\hyperlink{classAriadne_1_1ExactDouble}{Exact\+Double}} {\bfseries maximum\+\_\+error} () const =0
+\begin{DoxyCompactList}\small\item\em The maximum permissible error of the solution. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1SolverInterface_ad81e29540eb1868c0bb256b86c7dfdff}\label{classAriadne_1_1SolverInterface_ad81e29540eb1868c0bb256b86c7dfdff} 
+virtual \mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} {\bfseries set\+\_\+maximum\+\_\+error} (\mbox{\hyperlink{classAriadne_1_1ApproximateDouble}{Approximate\+Double}} max\+\_\+error)=0
+\begin{DoxyCompactList}\small\item\em \doxylink{classAriadne_1_1Set}{Set} the maximum error. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1SolverInterface_a11e3046b9e45bd1f2a87dde7069f8036}\label{classAriadne_1_1SolverInterface_a11e3046b9e45bd1f2a87dde7069f8036} 
+virtual \mbox{\hyperlink{namespaceAriadne_aae901a69a841b1a085a0dfe218e38fe9}{Nat}} {\bfseries maximum\+\_\+number\+\_\+of\+\_\+steps} () const =0
+\begin{DoxyCompactList}\small\item\em The maximum number of steps allowed before the method must quit. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1SolverInterface_a7be66734e31564baf2a4028e49003313}\label{classAriadne_1_1SolverInterface_a7be66734e31564baf2a4028e49003313} 
+virtual \mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} {\bfseries set\+\_\+maximum\+\_\+number\+\_\+of\+\_\+steps} (\mbox{\hyperlink{namespaceAriadne_aae901a69a841b1a085a0dfe218e38fe9}{Nat}} max\+\_\+steps)=0
+\begin{DoxyCompactList}\small\item\em \doxylink{classAriadne_1_1Set}{Set} the maximum number of steps. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1SolverInterface_a438f5e4bed735514cdb91f71c58fb9a1}\label{classAriadne_1_1SolverInterface_a438f5e4bed735514cdb91f71c58fb9a1} 
+virtual \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ \mbox{\hyperlink{classAriadne_1_1Bounds}{Validated\+Numeric\+Type}} $>$ {\bfseries zero} (const Validated\+Vector\+Multivariate\+Function \&f, const \mbox{\hyperlink{group__FunctionModule_gafdd31b4d01081cd09aad2ce11117f867}{Exact\+Box\+Type}} \&bx) const =0
+\begin{DoxyCompactList}\small\item\em Solve $f(x)=0$, starting in the box {\itshape bx}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1SolverInterface_ac5e3e5c662bfcdaea7e9421f0b3a23f2}\label{classAriadne_1_1SolverInterface_ac5e3e5c662bfcdaea7e9421f0b3a23f2} 
+virtual \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ \mbox{\hyperlink{classAriadne_1_1Bounds}{Validated\+Numeric\+Type}} $>$ {\bfseries fixed\+\_\+point} (const Validated\+Vector\+Multivariate\+Function \&f, const \mbox{\hyperlink{group__FunctionModule_gafdd31b4d01081cd09aad2ce11117f867}{Exact\+Box\+Type}} \&bx) const =0
+\begin{DoxyCompactList}\small\item\em Solve $f(x)=x$, starting in the box {\itshape bx}. \end{DoxyCompactList}\item 
+virtual \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ \mbox{\hyperlink{classAriadne_1_1Bounds}{Validated\+Numeric\+Type}} $>$ \mbox{\hyperlink{classAriadne_1_1SolverInterface_a92a518351d9fdf6515a69508825caff2}{solve}} (const Validated\+Vector\+Multivariate\+Function \&f, const \mbox{\hyperlink{group__FunctionModule_gafdd31b4d01081cd09aad2ce11117f867}{Exact\+Box\+Type}} \&bx) const =0
+\begin{DoxyCompactList}\small\item\em Solve $f(x)=0$, starting in the box {\itshape bx}. Throws a \doxylink{classAriadne_1_1SolverException}{Solver\+Exception} if a unique solution is not found. \end{DoxyCompactList}\item 
+virtual \mbox{\hyperlink{classAriadne_1_1FunctionPatch}{Validated\+Vector\+Multivariate\+Function\+Patch}} \mbox{\hyperlink{classAriadne_1_1SolverInterface_ab6a863c0fa99c7dd6410708e1be464f9}{implicit}} (const Validated\+Vector\+Multivariate\+Function \&f, const \mbox{\hyperlink{group__FunctionModule_gafdd31b4d01081cd09aad2ce11117f867}{Exact\+Box\+Type}} \&A, const \mbox{\hyperlink{group__FunctionModule_gafdd31b4d01081cd09aad2ce11117f867}{Exact\+Box\+Type}} \&X) const =0
+\begin{DoxyCompactList}\small\item\em Solve $f(a,x)=0$ for $a$ in $A$, looking for a solution with $x$ in $X$. The result is a function $h$ with domain $A$ such that $f(a,h(a))=0$ for all $a\in A$. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1SolverInterface_ad205599ad424585928b1af3be3dd7996}\label{classAriadne_1_1SolverInterface_ad205599ad424585928b1af3be3dd7996} 
+virtual \mbox{\hyperlink{classAriadne_1_1FunctionPatch}{Validated\+Scalar\+Multivariate\+Function\+Patch}} {\bfseries implicit} (const Validated\+Scalar\+Multivariate\+Function \&f, const \mbox{\hyperlink{group__FunctionModule_gafdd31b4d01081cd09aad2ce11117f867}{Exact\+Box\+Type}} \&A, const \mbox{\hyperlink{group__FunctionModule_gab4f81d909c87bd33486c446890723bb1}{Exact\+Interval\+Type}} \&X) const =0
+\begin{DoxyCompactList}\small\item\em Solve $f(a,x)=0$ for a in {\itshape A}, looking for a solution with x in {\itshape X}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1SolverInterface_a0482416f712a41247819cf7bf89bbeee}\label{classAriadne_1_1SolverInterface_a0482416f712a41247819cf7bf89bbeee} 
+virtual \mbox{\hyperlink{classAriadne_1_1FunctionPatch}{Validated\+Vector\+Multivariate\+Function\+Patch}} {\bfseries continuation} (const Validated\+Vector\+Multivariate\+Function \&f, const \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ \mbox{\hyperlink{classAriadne_1_1Approximation}{Approximate\+Numeric\+Type}} $>$ \&a, const \mbox{\hyperlink{group__FunctionModule_gafdd31b4d01081cd09aad2ce11117f867}{Exact\+Box\+Type}} \&X, const \mbox{\hyperlink{group__FunctionModule_gafdd31b4d01081cd09aad2ce11117f867}{Exact\+Box\+Type}} \&A) const =0
+\begin{DoxyCompactList}\small\item\em Solve $f(a,x)=0$ for x in {\itshape X}, and continue to a function $h$ solving $f(a,h(a))=0$ over $A$. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1SolverInterface_ad4b9d5462b0b992b3ec63810f984b623}\label{classAriadne_1_1SolverInterface_ad4b9d5462b0b992b3ec63810f984b623} 
+virtual \mbox{\hyperlink{classAriadne_1_1Set}{Set}}$<$ \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ \mbox{\hyperlink{classAriadne_1_1Bounds}{Validated\+Numeric\+Type}} $>$ $>$ {\bfseries solve\+\_\+all} (const Validated\+Vector\+Multivariate\+Function \&f, const \mbox{\hyperlink{group__FunctionModule_gafdd31b4d01081cd09aad2ce11117f867}{Exact\+Box\+Type}} \&bx) const =0
+\begin{DoxyCompactList}\small\item\em Solve $f(x)=0$, starting in the box {\itshape bx}. Returns a set of bounds for which it can be {\itshape proved} that a solution exists in within the bounds. This means that some solutions may be omitted if they are not sufficiently robust. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\label{doc-func-members}
+\Hypertarget{classAriadne_1_1SolverInterface_doc-func-members}
+\doxysubsubsection{Member Function Documentation}
+\Hypertarget{classAriadne_1_1SolverInterface_a92a518351d9fdf6515a69508825caff2}\index{SolverInterface@{SolverInterface}!solve@{solve}}
+\index{solve@{solve}!SolverInterface@{SolverInterface}}
+\doxyparagraph{\texorpdfstring{solve()}{solve()}}
+{\footnotesize\ttfamily \label{classAriadne_1_1SolverInterface_a92a518351d9fdf6515a69508825caff2} 
+virtual \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ \mbox{\hyperlink{classAriadne_1_1Bounds}{Validated\+Numeric\+Type}} $>$ solve (\begin{DoxyParamCaption}\item[{const Validated\+Vector\+Multivariate\+Function \&}]{f}{, }\item[{const \mbox{\hyperlink{group__FunctionModule_gafdd31b4d01081cd09aad2ce11117f867}{Exact\+Box\+Type}} \&}]{bx}{}\end{DoxyParamCaption}) const\hspace{0.3cm}{\ttfamily [pure virtual]}}
+
+
+
+Solve $f(x)=0$, starting in the box {\itshape bx}. Throws a \doxylink{classAriadne_1_1SolverException}{Solver\+Exception} if a unique solution is not found. 
+
+
+\begin{DoxyParams}{Parameters}
+{\em f} & A function $\R^n\to\R^n$ for which the root $p$ is to be found. \\
+\hline
+{\em bx} & A coordinate-\/aligned box $B$ in $\R^n$ for which the root is to be found.\\
+\hline
+\end{DoxyParams}
+A root $p$ of $f$ is {\itshape transverse} if the Jacobian derivative matrix $Df(p)$ is nonsingular. The solution method should converge to a transverse root $p$ if the box $B$ contains $p$ in its interior, and is sufficiently small.
+
+The choice of box in which to search is to be determined by the user. If the box is too big, then the solution typically fails. The semantics of the method requires that there be a uniqure root in the box, and many algorithms also require the Jacobian derivative matrix $Df(x)$ to be nonsingular over the entire box. The Jacobian derivative is nonsingular over a sufficiently small neighbourhood of a transverse root. However, choosing too small a box may also cause the algorithm to fail if the root is too close to the boundary.
+
+The \doxylink{classAriadne_1_1SolverInterface_ad4b9d5462b0b992b3ec63810f984b623}{solve\+\_\+all()} method is an algorithm which attempts to find all roots. 
+
+Implemented in \mbox{\hyperlink{classAriadne_1_1SolverBase_a947e359cf0f84c00082b71d1a8813de9}{Solver\+Base}}.
+
+\Hypertarget{classAriadne_1_1SolverInterface_ab6a863c0fa99c7dd6410708e1be464f9}\index{SolverInterface@{SolverInterface}!implicit@{implicit}}
+\index{implicit@{implicit}!SolverInterface@{SolverInterface}}
+\doxyparagraph{\texorpdfstring{implicit()}{implicit()}}
+{\footnotesize\ttfamily \label{classAriadne_1_1SolverInterface_ab6a863c0fa99c7dd6410708e1be464f9} 
+virtual \mbox{\hyperlink{classAriadne_1_1FunctionPatch}{Validated\+Vector\+Multivariate\+Function\+Patch}} implicit (\begin{DoxyParamCaption}\item[{const Validated\+Vector\+Multivariate\+Function \&}]{f}{, }\item[{const \mbox{\hyperlink{group__FunctionModule_gafdd31b4d01081cd09aad2ce11117f867}{Exact\+Box\+Type}} \&}]{A}{, }\item[{const \mbox{\hyperlink{group__FunctionModule_gafdd31b4d01081cd09aad2ce11117f867}{Exact\+Box\+Type}} \&}]{X}{}\end{DoxyParamCaption}) const\hspace{0.3cm}{\ttfamily [pure virtual]}}
+
+
+
+Solve $f(a,x)=0$ for $a$ in $A$, looking for a solution with $x$ in $X$. The result is a function $h$ with domain $A$ such that $f(a,h(a))=0$ for all $a\in A$. 
+
+
+\begin{DoxyParams}{Parameters}
+{\em f} & A function $\R^{m+n}\to\R^n$. \\
+\hline
+{\em A} & A subset of $\R^m$ giving the required domain of the solution function $h$. \\
+\hline
+{\em X} & A subset of $\R^n$ giving a codomain of $h$ i.\+e. $h$ satisfies $h(a)\in X$ for all $a\in A$. \\
+\hline
+\end{DoxyParams}
+\begin{DoxyWarning}{Warning}
+If the domain {\itshape A} is too large, there may not be a continuous solution over it. If the codomain {\itshape X} is too small, then there may not be a solution within it, but if it is too large, there may not be a unique solution, and some solvers may have problems with the first few steps of the solution.
+\end{DoxyWarning}
+A {\itshape strong solution} to the problem exists if for every $a\in A$, there is a unique solution $x\in X$ to the equation $f(a,x)=0$, and this solution varies continuously in $a$. A {\itshape weak solution} is a function $h$ with domain $A$ such that $f(a,h(a))=0$ for all $a\in A$, if $f(a,x)=0$ for $x\in X$ then $h(a)=x$, and there exists $(a,x)\in A\times X$ such that $f(a,x)=0$. If $D_2f(a,x)$ is nonsingular for all $(a,x)\in A\times X$, then any solution is guaranteed to be unique. May throw a \doxylink{classAriadne_1_1NoSolutionException}{No\+Solution\+Exception}, but {\itshape only} if there are no solutions to $f(a,x)=0$ in $A\times X$. If there is a continuous branch of solutions $x=h(a)$ such that $h(a)\in X$ for some parameter values, but $h(a)\not\in X$ for others, then $h$ is a valid result for the function. 
+
+Implemented in \mbox{\hyperlink{classAriadne_1_1IntervalNewtonSolver_a1d61616453e31a9be7a85756e6356b9e}{Interval\+Newton\+Solver}}, and \mbox{\hyperlink{classAriadne_1_1SolverBase_a1d61616453e31a9be7a85756e6356b9e}{Solver\+Base}}.
+
+
+
+The documentation for this class was generated from the following file\+:\begin{DoxyCompactItemize}
+\item 
+source/solvers/\mbox{\hyperlink{solver__interface_8hpp}{solver\+\_\+interface.\+hpp}}\end{DoxyCompactItemize}

@@ -1,0 +1,4 @@
+     Locking 16 packages to latest Rust 1.97.0 compatible versions
+   Compiling hyperreal v0.13.1 (/home/tim/Documents/GitHub/workspace/.audit-fractional-separation.qYmpNk)
+   Compiling constructible-fractional-qualification v0.0.0 (/home/tim/Documents/GitHub/workspace/exact-real-references/constructible-qualification/fractional)
+    Finished `release` profile [optimized] target(s) in 7.85s

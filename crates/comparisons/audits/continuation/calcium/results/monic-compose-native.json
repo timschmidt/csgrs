@@ -1,0 +1,11 @@
+{
+  "tag": "monic-compose-native",
+  "started": "2026-09-09T00:43:04.768Z",
+  "finished": "2026-09-09T00:43:04.956Z",
+  "elapsedSeconds": 0.18588018199999998,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison",
+  "command": "/tmp/calcium-monic-costs.U6fpvm/flint-polynomial-compose-probe",
+  "args": [],
+  "code": 0,
+  "signal": null
+}

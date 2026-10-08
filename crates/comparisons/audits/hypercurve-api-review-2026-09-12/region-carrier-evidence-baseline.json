@@ -1,0 +1,7 @@
+{
+  "returncode": 0,
+  "elapsed_seconds": 0.0034562029904918745,
+  "normal_library_sha256": "e80d0987784651a294ea1a2841d0994832f5bc559bc15a2107d433bb44e33618",
+  "source": "region-carrier-evidence-baseline.rs",
+  "log": "region-carrier-evidence-baseline.log"
+}

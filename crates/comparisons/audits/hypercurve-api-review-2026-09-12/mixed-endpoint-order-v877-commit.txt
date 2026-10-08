@@ -1,0 +1,17 @@
+Unify native and algebraic endpoint derivative ordering
+
+Use the existing exact represented comparison for mixed native/selected
+endpoint jets. Promote exact native coordinates, borrow stored algebraic
+roots, and remove the carrier-only derivative filter. Keep the native fast
+path and request third derivatives only after proved curvature equality.
+The shared angular adapter also avoids cloning represented coefficient
+vectors. No public compatibility surface is introduced.
+
+An unchanged 48-request public probe repairs every prior mixed-endpoint
+blocker across both policies, three curve families, two derivative orders,
+both selected branches and reversed candidate positions. The independent
+graph-jet test now covers all four carrier pairs with signed exact pi
+curvature, source-speed changes, and tangential acceleration.
+
+Validation: 340 selected release tests, 12 pinned executables, seven
+build/lint/docs/fuzz/downstream checks. The full closure goal remains active.

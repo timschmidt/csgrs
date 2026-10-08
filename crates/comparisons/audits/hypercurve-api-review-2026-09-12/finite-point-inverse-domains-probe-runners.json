@@ -1,0 +1,32 @@
+[
+  {
+    "kind": "matrices",
+    "command": [
+      "python3",
+      "run-finite-point-inverse-domains-matrices.py"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 119.44904682401102,
+    "log": "finite-point-inverse-domains-matrices-runner.log"
+  },
+  {
+    "kind": "public",
+    "command": [
+      "python3",
+      "run-finite-point-inverse-domains-public.py"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 1.2928399459924549,
+    "log": "finite-point-inverse-domains-public-runner.log"
+  },
+  {
+    "kind": "fixed-distance-public",
+    "command": [
+      "python3",
+      "run-finite-point-inverse-domains-fixed-distance-public.py"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 30.27047506198869,
+    "log": "finite-point-inverse-domains-fixed-distance-public-runner.log"
+  }
+]

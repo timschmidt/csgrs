@@ -1,0 +1,44 @@
+{
+  "repo": "hypercurve",
+  "target": "hypercurve_curve_region_stroke",
+  "binary": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve_curve_region_stroke-9eab7b3a0eea79b5",
+  "command": [
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve_curve_region_stroke-9eab7b3a0eea79b5",
+    "--test-threads=4",
+    "--color",
+    "never"
+  ],
+  "sha256": "a6008988050b38a6c9099fc47d66e41ea62f029ed7316c689b294dc265eb2f41",
+  "returncode": 0,
+  "timed_out": false,
+  "elapsed_seconds": 1.6157922000274993,
+  "log": "finite-projective-parameter-full-hypercurve-hypercurve_curve_region_stroke.log",
+  "passed": [
+    "exact_path_stroke_corner_styles_share_the_region_offset_solver",
+    "exact_path_stroke_cap_styles_have_their_defined_extent",
+    "exact_path_stroke_is_invariant_to_a_collinear_partition",
+    "exact_path_stroke_regularizes_a_parallel_reversal_corner",
+    "exact_path_stroke_handles_an_arc_parallel_radius_collapse",
+    "curved_endpoint_caps_use_the_exact_one_sided_tangent",
+    "closed_path_stroke_is_cyclic_and_does_not_apply_caps",
+    "path_stroke_obeys_the_approximate_512_connectivity_terminal",
+    "path_stroke_requires_a_policy_positive_half_width",
+    "path_stroke_obeys_the_approximate_512_closure_terminal",
+    "rational_nurbs_path_stroke_retains_exact_parallels_under_both_policies",
+    "square_cap_uses_the_first_nonzero_endpoint_derivative",
+    "self_crossing_source_is_regularized_instead_of_rejected",
+    "nonlinear_path_stroke_retains_exact_parallels_under_both_policies",
+    "nonlinear_source_cusp_endpoint_uses_its_exact_one_sided_frame"
+  ],
+  "failed": [],
+  "ignored": [
+    "exact_path_stroke_preserves_an_even_multiplicity_stationary_source",
+    "exact_path_stroke_splits_a_nonuniform_rational_source_cusp",
+    "exact_path_stroke_splits_an_interior_source_cusp"
+  ],
+  "summaries": [
+    "test result: ok. 15 passed; 0 failed; 3 ignored; 0 measured; 0 filtered out; finished in 1.57s"
+  ],
+  "new_failures": [],
+  "known_failures": []
+}

@@ -1,0 +1,8 @@
+BigFloat Properties:
+  bigfloat/double agree (equality): [OK, passed 10000 tests]
+  bigfloat/double agree (ordering): [OK, passed 10000 tests]
+
+         Properties  Total 
+ Passed  2           2     
+ Failed  0           0     
+ Total   2           2     

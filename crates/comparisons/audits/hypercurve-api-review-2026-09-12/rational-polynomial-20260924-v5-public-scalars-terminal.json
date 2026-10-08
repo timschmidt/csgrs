@@ -1,0 +1,206 @@
+{
+  "crates": [
+    {
+      "crate": "hyperreal",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "test",
+        "--tests",
+        "--release",
+        "--all-features",
+        "--no-run",
+        "--message-format=json",
+        "--locked",
+        "--offline"
+      ],
+      "targets": [
+        {
+          "name": "readme",
+          "returncode": 0,
+          "elapsed_seconds": 0.0036110429791733623,
+          "binary_sha256": "9090cfc6a4185acfde7bfca30754381ba7ee1f7b89a0ae599ce40e9a204640b6",
+          "log": "rational-polynomial-20260924-v5-public-scalars-hyperreal-readme.log"
+        },
+        {
+          "name": "adversarial_semantics",
+          "returncode": 0,
+          "elapsed_seconds": 0.003765671979635954,
+          "binary_sha256": "0de889859e3804c9e30376658f6b54cbef12f6d95e86ca77289a706189711485",
+          "log": "rational-polynomial-20260924-v5-public-scalars-hyperreal-adversarial_semantics.log"
+        },
+        {
+          "name": "numeric_roundtrip_formats",
+          "returncode": 0,
+          "elapsed_seconds": 0.01572196395136416,
+          "binary_sha256": "97c6d6dd8aa0276c5bf90b91f637d03e01f4d3c1e9219b6fb06ac661989d660c",
+          "log": "rational-polynomial-20260924-v5-public-scalars-hyperreal-numeric_roundtrip_formats.log"
+        },
+        {
+          "name": "public_numeric_semantics",
+          "returncode": 0,
+          "elapsed_seconds": 0.007618457893840969,
+          "binary_sha256": "e4cd675e68c6f259663eae29cc43e965953d11c32556c465234f8c8cbba1bd8e",
+          "log": "rational-polynomial-20260924-v5-public-scalars-hyperreal-public_numeric_semantics.log"
+        },
+        {
+          "name": "gmp_api_coverage",
+          "returncode": 101,
+          "elapsed_seconds": 0.01573169301263988,
+          "binary_sha256": "ff950edbbeb00cc4e36dab1f546d52cadf46f938e583bbdf296a5b7c5707dc9e",
+          "log": "rational-polynomial-20260924-v5-public-scalars-hyperreal-gmp_api_coverage.log"
+        },
+        {
+          "name": "readme_metadata",
+          "returncode": 0,
+          "elapsed_seconds": 0.0014916980871930718,
+          "binary_sha256": "5030945497224064ee7b6ba7fe732cafe7ed1b9d53b7f64aa0317fc81a37749d",
+          "log": "rational-polynomial-20260924-v5-public-scalars-hyperreal-readme_metadata.log"
+        },
+        {
+          "name": "exact_quadratic_normal_form",
+          "returncode": 0,
+          "elapsed_seconds": 0.003582464996725321,
+          "binary_sha256": "8d82257e3bbd7d192f27b9d4a93196a90e60bf935411c2c738105c10417357ea",
+          "log": "rational-polynomial-20260924-v5-public-scalars-hyperreal-exact_quadratic_normal_form.log"
+        },
+        {
+          "name": "cli",
+          "returncode": 0,
+          "elapsed_seconds": 0.003583934041671455,
+          "binary_sha256": "9ad4f525de8c02323730a9d7ba1c94d33e0dc8d38e1e16151120fd1875ad989c",
+          "log": "rational-polynomial-20260924-v5-public-scalars-hyperreal-cli.log"
+        },
+        {
+          "name": "numerical_cross_reference",
+          "returncode": 0,
+          "elapsed_seconds": 0.16396744002122432,
+          "binary_sha256": "9d30f11328e829b67b46b2b8cf712004291c0af66cc7f63ed3f1fc47990e9904",
+          "log": "rational-polynomial-20260924-v5-public-scalars-hyperreal-numerical_cross_reference.log"
+        },
+        {
+          "name": "multiquadratic_normal_form",
+          "returncode": 0,
+          "elapsed_seconds": 0.0035884049721062183,
+          "binary_sha256": "039dffe77c9755770b5eee4927a249d4e654a1e1e4b11f63871f15bdc85a563c",
+          "log": "rational-polynomial-20260924-v5-public-scalars-hyperreal-multiquadratic_normal_form.log"
+        },
+        {
+          "name": "adversarial_props",
+          "returncode": 0,
+          "elapsed_seconds": 0.007598498952575028,
+          "binary_sha256": "a01d6c662427a93317b12bc455559bbd5524f4ba2787adb1272ab70fbef2a763",
+          "log": "rational-polynomial-20260924-v5-public-scalars-hyperreal-adversarial_props.log"
+        },
+        {
+          "name": "real_representations",
+          "returncode": 0,
+          "elapsed_seconds": 0.031931472942233086,
+          "binary_sha256": "63618a6ba0cd649e195536a58ea4e30a5f2f640bb78292b4d1bde42bc018361d",
+          "log": "rational-polynomial-20260924-v5-public-scalars-hyperreal-real_representations.log"
+        },
+        {
+          "name": "rational_oracle",
+          "returncode": 0,
+          "elapsed_seconds": 0.03180144203361124,
+          "binary_sha256": "a01482083d7e5a0bd9aa6f527ce9397b2a270d4ee0c2a46dede47429dcc38512",
+          "log": "rational-polynomial-20260924-v5-public-scalars-hyperreal-rational_oracle.log"
+        },
+        {
+          "name": "precision_limits",
+          "returncode": 0,
+          "elapsed_seconds": 0.007634236942976713,
+          "binary_sha256": "46e6f120d2394050a9e90511c5d4a84d3104693b6888c1960b10cb33098d2ce2",
+          "log": "rational-polynomial-20260924-v5-public-scalars-hyperreal-precision_limits.log"
+        },
+        {
+          "name": "adversarial_regressions",
+          "returncode": 0,
+          "elapsed_seconds": 0.0035364479990676045,
+          "binary_sha256": "b4820022377628dd8687376c62d30862ff531aa73a4a02112e1a86f0d9a05f65",
+          "log": "rational-polynomial-20260924-v5-public-scalars-hyperreal-adversarial_regressions.log"
+        }
+      ]
+    },
+    {
+      "crate": "hypersolve",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "test",
+        "--tests",
+        "--release",
+        "--all-features",
+        "--no-run",
+        "--message-format=json",
+        "--locked",
+        "--offline"
+      ],
+      "targets": [
+        {
+          "name": "tensor_remainder_scale",
+          "returncode": 0,
+          "elapsed_seconds": 0.0035665149334818125,
+          "binary_sha256": "5288278650cfa691a24c3cb19eabb3ea6d7109c6d9b53aff224611af964579c5",
+          "log": "rational-polynomial-20260924-v5-public-scalars-hypersolve-tensor_remainder_scale.log"
+        },
+        {
+          "name": "exactcore_root_families",
+          "returncode": 0,
+          "elapsed_seconds": 0.015753120998851955,
+          "binary_sha256": "51e07c9574c9b0983a6e49c9be0652ee433f080d0b8084ff1684b039cb4e3477",
+          "log": "rational-polynomial-20260924-v5-public-scalars-hypersolve-exactcore_root_families.log"
+        },
+        {
+          "name": "real_representations",
+          "returncode": 0,
+          "elapsed_seconds": 0.015702704899013042,
+          "binary_sha256": "4793bda14f9c11873b946a0f15bd21f2c6164218ac98f0d581bf1409278782c0",
+          "log": "rational-polynomial-20260924-v5-public-scalars-hypersolve-real_representations.log"
+        },
+        {
+          "name": "quadratic_extraction",
+          "returncode": 0,
+          "elapsed_seconds": 0.031741086044348776,
+          "binary_sha256": "70ca4561daa46f70dacd5676a5db42f1b0820c5c4fe976eaacc04b5aeeb0790c",
+          "log": "rational-polynomial-20260924-v5-public-scalars-hypersolve-quadratic_extraction.log"
+        },
+        {
+          "name": "readme",
+          "returncode": 0,
+          "elapsed_seconds": 0.0015043269377201796,
+          "binary_sha256": "40372441a2e47d5b83f7290a54550ef54012c981d34e66dd0b255e213aa2eb7b",
+          "log": "rational-polynomial-20260924-v5-public-scalars-hypersolve-readme.log"
+        },
+        {
+          "name": "smoke",
+          "returncode": 0,
+          "elapsed_seconds": 0.03178544400725514,
+          "binary_sha256": "6bf43bc9557ccc36d919b91c79a8a877fdd526760782c8e6d3bf1f4f283575b0",
+          "log": "rational-polynomial-20260924-v5-public-scalars-hypersolve-smoke.log"
+        },
+        {
+          "name": "square_free_growth",
+          "returncode": 0,
+          "elapsed_seconds": 0.06382489902898669,
+          "binary_sha256": "2a23486e40a5f923e5ef5ab2161995334a02f62b652882cbe347be7782064b44",
+          "log": "rational-polynomial-20260924-v5-public-scalars-hypersolve-square_free_growth.log"
+        },
+        {
+          "name": "exact_value_root",
+          "returncode": 0,
+          "elapsed_seconds": 0.00356216705404222,
+          "binary_sha256": "792786fa28c075b75fbeb68228dfc2baf9296ba01cb4bd8ee1d6f721dc7856cd",
+          "log": "rational-polynomial-20260924-v5-public-scalars-hypersolve-exact_value_root.log"
+        },
+        {
+          "name": "residual_props",
+          "returncode": 0,
+          "elapsed_seconds": 2.266781590995379,
+          "binary_sha256": "4514f99aab6f0af4d2fbceb644ea725471fd85499c80cadfc18b4a183e7ab0f4",
+          "log": "rational-polynomial-20260924-v5-public-scalars-hypersolve-residual_props.log"
+        }
+      ]
+    }
+  ],
+  "all_processes_reaped": true,
+  "all_sources_unchanged": true
+}

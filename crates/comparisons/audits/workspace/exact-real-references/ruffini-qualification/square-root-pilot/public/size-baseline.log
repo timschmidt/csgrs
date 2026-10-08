@@ -1,0 +1,38 @@
+/home/tim/Documents/GitHub/workspace/.audit-square-root.C42NO5BC/public-binaries/release-baseline  :
+section                    size      addr
+.interp                      28       736
+.note.ABI-tag                32       764
+.note.gnu.build-id           36       796
+.dynsym                    1776       832
+.gnu.version                148      2608
+.gnu.version_r              352      2756
+.gnu.hash                    28      3112
+.dynstr                    1146      3140
+.rela.dyn                 40104      4288
+.rela.plt                    48     44392
+.gcc_except_table        415544     44440
+.rodata                   80520    459984
+.eh_frame_hdr             15820    540504
+.eh_frame                113528    556328
+.text                   1367991    673952
+.init                        27   2041944
+.fini                        13   2041972
+.plt                         48   2042000
+.tdata                       32   2046144
+.tbss                       632   2046176
+.data.rel.ro              24560   2046176
+.fini_array                   8   2070736
+.init_array                  16   2070744
+.dynamic                    480   2070760
+.got                       4280   2071240
+.got.plt                     40   2075520
+.relro_padding             1112   2075560
+.tm_clone_table               0   2079656
+.data                    197200   2079656
+.bss                        208   2276856
+.comment                    231         0
+.annobin.notes              247         0
+.gnu.build.attributes       324         0
+Total                   2266559
+
+

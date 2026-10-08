@@ -1,0 +1,304 @@
+{
+  "parents": {
+    "hypercurve": "f06e89f37c52befbdab6a6f664165fffab6888f9",
+    "hypersolve": "60a4e609d382c681ee98a1de6b4bdb7673487d37",
+    "hyperreal": "0cb5f29aee065c73e234e0ebb0a9e106398515bb"
+  },
+  "source_manifest": "local-chord-complete-replay-20260924-v119-sources.json",
+  "source_directory": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/source-archives/hypercurve-local-chord-complete-replay-v119-20260924",
+  "build_source_directory": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/build-workspace-20260925",
+  "checks": [
+    {
+      "repo": "hypersolve",
+      "label": "hypersolve-fmt",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustfmt",
+        "--edition",
+        "2024",
+        "--check",
+        "src/curve_resultant.rs"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.11391707696020603,
+      "log": "bivariate-affine-20260925-v119-hypersolve-fmt.log"
+    },
+    {
+      "repo": "hypersolve",
+      "label": "hypersolve-clippy-0",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "clippy",
+        "--all-targets",
+        "--all-features",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 7.175348773947917,
+      "log": "bivariate-affine-20260925-v119-hypersolve-clippy-0.log"
+    },
+    {
+      "repo": "hypersolve",
+      "label": "hypersolve-clippy-1",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "clippy",
+        "--all-targets",
+        "--no-default-features",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 6.6745494259521365,
+      "log": "bivariate-affine-20260925-v119-hypersolve-clippy-1.log"
+    },
+    {
+      "repo": "hypercurve",
+      "label": "hypercurve-fmt",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustfmt",
+        "--edition",
+        "2024",
+        "--check",
+        "src/bezier_offset.rs"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 2.167280216002837,
+      "log": "bivariate-affine-20260925-v119-hypercurve-fmt.log"
+    },
+    {
+      "repo": "hypercurve",
+      "label": "hypercurve-clippy-0",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "clippy",
+        "--all-targets",
+        "--all-features",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 24.75773079204373,
+      "log": "bivariate-affine-20260925-v119-hypercurve-clippy-0.log"
+    },
+    {
+      "repo": "hypercurve",
+      "label": "hypercurve-clippy-1",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "clippy",
+        "--all-targets",
+        "--no-default-features",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 22.70024740602821,
+      "log": "bivariate-affine-20260925-v119-hypercurve-clippy-1.log"
+    },
+    {
+      "repo": "hyperbrep",
+      "label": "hyperbrep-check",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "check",
+        "--all-targets",
+        "--all-features",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 17.4407896110788,
+      "log": "bivariate-affine-20260925-v119-hyperbrep-check.log"
+    }
+  ],
+  "cases": [
+    {
+      "repo": "hypersolve",
+      "label": "hypersolve-full",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/bivariate-affine-20260925-v119-hypersolve",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 3.8194681940367445,
+      "log": "bivariate-affine-20260925-v119-hypersolve-full.log"
+    },
+    {
+      "repo": "hypercurve",
+      "label": "case-00",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/bivariate-affine-20260925-v119-hypercurve",
+        "--exact",
+        "bezier_region::tests::one_fragment_nonzero_parallel_loop_extends_chamfer_cuts_on_one_finite_envelope",
+        "--test-threads=1",
+        "--nocapture",
+        "--color",
+        "never"
+      ],
+      "returncode": "timeout",
+      "elapsed_seconds": 75.006524514989,
+      "log": "bivariate-affine-20260925-v119-case-00.log",
+      "name": "bezier_region::tests::one_fragment_nonzero_parallel_loop_extends_chamfer_cuts_on_one_finite_envelope"
+    },
+    {
+      "repo": "hypercurve",
+      "label": "case-01",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/bivariate-affine-20260925-v119-hypercurve",
+        "--exact",
+        "bezier_offset::conversion_tests::algebraic_selected_fiber_incident_chart_preserves_affine_authority",
+        "--test-threads=1",
+        "--nocapture",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.0036191720282658935,
+      "log": "bivariate-affine-20260925-v119-case-01.log",
+      "name": "bezier_offset::conversion_tests::algebraic_selected_fiber_incident_chart_preserves_affine_authority"
+    },
+    {
+      "repo": "hypercurve",
+      "label": "case-02",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/bivariate-affine-20260925-v119-hypercurve",
+        "--exact",
+        "bezier_offset::conversion_tests::bivariate_bernstein_sign_excludes_only_strict_unit_square_misses",
+        "--test-threads=1",
+        "--nocapture",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.003509609028697014,
+      "log": "bivariate-affine-20260925-v119-case-02.log",
+      "name": "bezier_offset::conversion_tests::bivariate_bernstein_sign_excludes_only_strict_unit_square_misses"
+    },
+    {
+      "repo": "hypercurve",
+      "label": "case-03",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/bivariate-affine-20260925-v119-hypercurve",
+        "--exact",
+        "bezier_offset::conversion_tests::bivariate_parameter_box_sign_keeps_boundary_zeros_and_bernstein_fallback",
+        "--test-threads=1",
+        "--nocapture",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.003514808020554483,
+      "log": "bivariate-affine-20260925-v119-case-03.log",
+      "name": "bezier_offset::conversion_tests::bivariate_parameter_box_sign_keeps_boundary_zeros_and_bernstein_fallback"
+    },
+    {
+      "repo": "hypercurve",
+      "label": "case-04",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/bivariate-affine-20260925-v119-hypercurve",
+        "--exact",
+        "bezier_offset::conversion_tests::poincare_miranda_preconditions_rotated_transverse_system_exactly",
+        "--test-threads=1",
+        "--nocapture",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.0035086990101262927,
+      "log": "bivariate-affine-20260925-v119-case-04.log",
+      "name": "bezier_offset::conversion_tests::poincare_miranda_preconditions_rotated_transverse_system_exactly"
+    },
+    {
+      "repo": "hypercurve",
+      "label": "case-05",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/bivariate-affine-20260925-v119-hypercurve",
+        "--exact",
+        "bezier_offset::conversion_tests::selected_fiber_affine_chart_round_trip_avoids_global_projection",
+        "--test-threads=1",
+        "--nocapture",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.01562874694354832,
+      "log": "bivariate-affine-20260925-v119-case-05.log",
+      "name": "bezier_offset::conversion_tests::selected_fiber_affine_chart_round_trip_avoids_global_projection"
+    },
+    {
+      "repo": "hypercurve",
+      "label": "case-06",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/bivariate-affine-20260925-v119-hypercurve",
+        "--exact",
+        "bezier_offset::conversion_tests::selected_fiber_comparison_reuses_high_degree_affine_root_identity",
+        "--test-threads=1",
+        "--nocapture",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.0035313479602336884,
+      "log": "bivariate-affine-20260925-v119-case-06.log",
+      "name": "bezier_offset::conversion_tests::selected_fiber_comparison_reuses_high_degree_affine_root_identity"
+    },
+    {
+      "repo": "hypercurve",
+      "label": "case-07",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/bivariate-affine-20260925-v119-hypercurve",
+        "--exact",
+        "bezier_offset::conversion_tests::selected_parallel_normal_circle_intersects_genuinely_analytic_parallel_in_one_fiber",
+        "--test-threads=1",
+        "--nocapture",
+        "--color",
+        "never"
+      ],
+      "returncode": "timeout",
+      "elapsed_seconds": 75.05503196199425,
+      "log": "bivariate-affine-20260925-v119-case-07.log",
+      "name": "bezier_offset::conversion_tests::selected_parallel_normal_circle_intersects_genuinely_analytic_parallel_in_one_fiber"
+    }
+  ],
+  "binaries": {
+    "hypersolve": {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/bivariate-affine-20260925-v119-hypersolve",
+      "sha256": "b08348766ddd4ea9b09a032212b9a404aa1dfb6bce149b1a6fc42b2aa63004b6"
+    },
+    "hypercurve": {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/bivariate-affine-20260925-v119-hypercurve",
+      "sha256": "13ec1fec45a7ded67336356e2d6b54867e4cd9db033da002d933568047bc430a"
+    }
+  },
+  "all_processes_reaped": true,
+  "diagnostic_only": true,
+  "hypersolve_build_returncode": 0,
+  "hypersolve_passed": 516,
+  "hypercurve_build_returncode": 0,
+  "selection": [
+    "bezier_region::tests::one_fragment_nonzero_parallel_loop_extends_chamfer_cuts_on_one_finite_envelope",
+    "bezier_offset::conversion_tests::algebraic_selected_fiber_incident_chart_preserves_affine_authority",
+    "bezier_offset::conversion_tests::bivariate_bernstein_sign_excludes_only_strict_unit_square_misses",
+    "bezier_offset::conversion_tests::bivariate_parameter_box_sign_keeps_boundary_zeros_and_bernstein_fallback",
+    "bezier_offset::conversion_tests::poincare_miranda_preconditions_rotated_transverse_system_exactly",
+    "bezier_offset::conversion_tests::selected_fiber_affine_chart_round_trip_avoids_global_projection",
+    "bezier_offset::conversion_tests::selected_fiber_comparison_reuses_high_degree_affine_root_identity",
+    "bezier_offset::conversion_tests::selected_parallel_normal_circle_intersects_genuinely_analytic_parallel_in_one_fiber"
+  ],
+  "all_sources_unchanged": true
+}

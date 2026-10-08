@@ -1,0 +1,22 @@
+\doxysubsection{Scalar\+User\+Function\texorpdfstring{$<$}{<} F \texorpdfstring{$>$}{>} Class Template Reference}
+\hypertarget{classAriadne_1_1ScalarUserFunction}{}\label{classAriadne_1_1ScalarUserFunction}\index{ScalarUserFunction$<$ F $>$@{ScalarUserFunction$<$ F $>$}}
+
+
+{\ttfamily \#include $<$user\+\_\+function.\+hpp$>$}
+
+
+
+\doxysubsubsection{Description}
+\subsubsection*{template$<$class F$>$\newline
+class Ariadne\+::\+Scalar\+User\+Function$<$ F $>$}
+A wrapper for converting templated C++ functions to Ariadne functions. 
+
+Given a C++ class F with a (static) template method {\ttfamily template$<$class R, class A, class P$>$ compute(\+R\& r, const A\& a, const P\& p);} the type {\ttfamily \doxylink{classAriadne_1_1ScalarUserFunction}{Scalar\+User\+Function$<$\+F$>$}} is an \doxylink{namespaceAriadne}{Ariadne} function defined by $r=f(a)$. The constructor for \doxylink{classAriadne_1_1ScalarUserFunction}{Scalar\+User\+Function$<$\+F$>$} takes a \doxylink{classAriadne_1_1Vector}{Vector$<$\+Approximate\+Numeric\+Type$>$} or \doxylink{classAriadne_1_1Vector}{Vector$<$\+Validated\+Numeric\+Type$>$} argument which is used for {\itshape p}.
+
+The class F must also define meta-\/data {\ttfamily argument\+\_\+size(), parameter\+\_\+size() and smoothness()}. These are most easily defined by inheriting from the {\ttfamily \doxylink{structAriadne_1_1ScalarMultivariateFunctionData}{Scalar\+Multivariate\+Function\+Data}\texorpdfstring{$<$}{<}AS,PS,SM=SMOOTH\texorpdfstring{$>$}{>}} class.
+
+The constant {\itshape SMOOTH} is used for an arbitrarily-\/differentiable function. 
+
+The documentation for this class was generated from the following file\+:\begin{DoxyCompactItemize}
+\item 
+source/function/\mbox{\hyperlink{user__function_8hpp}{user\+\_\+function.\+hpp}}\end{DoxyCompactItemize}

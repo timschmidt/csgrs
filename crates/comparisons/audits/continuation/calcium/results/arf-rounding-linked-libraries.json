@@ -1,0 +1,13 @@
+{
+  "tag": "arf-rounding-linked-libraries",
+  "started": "2026-09-09T20:12:32.825Z",
+  "finished": "2026-09-09T20:12:32.852Z",
+  "elapsedSeconds": 0.024674998000000004,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison",
+  "command": "ldd",
+  "args": [
+    "/tmp/calcium-arf-rounding.9JsRt1/arf-rounding-controls"
+  ],
+  "code": 0,
+  "signal": null
+}

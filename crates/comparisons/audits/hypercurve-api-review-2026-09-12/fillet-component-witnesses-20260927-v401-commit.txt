@@ -1,0 +1,23 @@
+Keep constrained fillet components exact through Boolean reuse
+
+A nonlinear straight NURBS span could produce blocked center/contact
+constraints, reversal-dependent results, or repeated extension candidates.
+Retain the selected pair's exact oriented tangent relation for circle
+reconstruction and deduplicate parameter pairs shared by incident charts.
+Distinct source preimages remain distinct solutions.
+
+A scalar center parameter also lost coincident-circle overlaps by treating
+an identically zero projected incidence as degenerate. Reuse the existing
+represented exact-frame contact/overlap authority, which resolves the
+positive source-speed branch without assuming that a zero norm is an overlap.
+
+Exercise both policies, directions, trim modes and all constraint forms,
+including exact endpoints, connectivity and Boolean equality with an
+independent semicircle. No public compatibility interface is introduced.
+
+Validation: 238 selected release tests across seven binaries; Clippy in both
+feature modes, formatting, editing fuzz compilation, denied-warning docs,
+and Hyperbrep compilation. Identical-source test receipts are reused only
+with matching frozen binary hashes and one executed test per filter.
+The two previously recorded extended-fillet re-offset performance failures
+remain unresolved and outside this qualification scope.

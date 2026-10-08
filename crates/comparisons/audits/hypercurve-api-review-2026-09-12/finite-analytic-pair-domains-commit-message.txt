@@ -1,0 +1,12 @@
+Use retained ranges for analytic pair and point incidence
+
+Share finite-domain projection and component replay across ordinary analytic
+pairs and corner queries. Retain overlap correspondences, constant-image
+fibers and rational contact parameters in their original source charts.
+
+Require explicit ranges for parallel point incidence and membership, migrate
+callers, and remove unit-only root discovery and redundant region clipping.
+
+Validation with pinned dependencies: 2,293 tests passed across Hypercurve and
+HyperBREP; five existing failures, nine ignored and eight prior expensive
+exclusions remain. Eight focused tests and 33 public probes/matrices pass.

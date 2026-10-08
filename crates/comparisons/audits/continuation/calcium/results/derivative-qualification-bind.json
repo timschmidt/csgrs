@@ -1,0 +1,13 @@
+{
+  "tag": "derivative-qualification-bind",
+  "started": "2026-09-09T15:54:20.324Z",
+  "finished": "2026-09-09T15:54:21.121Z",
+  "elapsedSeconds": 0.7950622009999999,
+  "cwd": "/home/tim/Documents/GitHub/workspace",
+  "command": "node",
+  "args": [
+    "exactcore-hyper-comparison/audits/continuation/calcium/bind-derivative-qualification.mjs"
+  ],
+  "code": 0,
+  "signal": null
+}

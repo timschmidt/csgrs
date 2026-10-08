@@ -1,0 +1,239 @@
+{
+  "status": "all exact coefficient assertions pass",
+  "timing_scope": "Three interleaved baseline/current process pairs after all qualification and held-out retry processes ended. Each process evaluates both positive and negative modulus gauges; medians pool those six exact reductions per input size. Setup is excluded.",
+  "runs": [
+    {
+      "iteration": 0,
+      "variant": "baseline",
+      "samples": [
+        {
+          "steps": 2000,
+          "seconds": 0.000400362,
+          "exact": true
+        },
+        {
+          "steps": 2000,
+          "seconds": 0.000368045,
+          "exact": true
+        },
+        {
+          "steps": 8000,
+          "seconds": 0.002289133,
+          "exact": true
+        },
+        {
+          "steps": 8000,
+          "seconds": 0.002385866,
+          "exact": true
+        },
+        {
+          "steps": 32000,
+          "seconds": 0.018420836000000003,
+          "exact": true
+        },
+        {
+          "steps": 32000,
+          "seconds": 0.018578926,
+          "exact": true
+        }
+      ]
+    },
+    {
+      "iteration": 0,
+      "variant": "current",
+      "samples": [
+        {
+          "steps": 2000,
+          "seconds": 8.5534e-05,
+          "exact": true
+        },
+        {
+          "steps": 2000,
+          "seconds": 7.1595e-05,
+          "exact": true
+        },
+        {
+          "steps": 8000,
+          "seconds": 0.000271642,
+          "exact": true
+        },
+        {
+          "steps": 8000,
+          "seconds": 0.00022551499999999997,
+          "exact": true
+        },
+        {
+          "steps": 32000,
+          "seconds": 0.001194138,
+          "exact": true
+        },
+        {
+          "steps": 32000,
+          "seconds": 0.001142882,
+          "exact": true
+        }
+      ]
+    },
+    {
+      "iteration": 1,
+      "variant": "current",
+      "samples": [
+        {
+          "steps": 2000,
+          "seconds": 7.9084e-05,
+          "exact": true
+        },
+        {
+          "steps": 2000,
+          "seconds": 7.1456e-05,
+          "exact": true
+        },
+        {
+          "steps": 8000,
+          "seconds": 0.000279611,
+          "exact": true
+        },
+        {
+          "steps": 8000,
+          "seconds": 0.000225895,
+          "exact": true
+        },
+        {
+          "steps": 32000,
+          "seconds": 0.001187829,
+          "exact": true
+        },
+        {
+          "steps": 32000,
+          "seconds": 0.0011413120000000002,
+          "exact": true
+        }
+      ]
+    },
+    {
+      "iteration": 1,
+      "variant": "baseline",
+      "samples": [
+        {
+          "steps": 2000,
+          "seconds": 0.00039089299999999996,
+          "exact": true
+        },
+        {
+          "steps": 2000,
+          "seconds": 0.000365095,
+          "exact": true
+        },
+        {
+          "steps": 8000,
+          "seconds": 0.002222667,
+          "exact": true
+        },
+        {
+          "steps": 8000,
+          "seconds": 0.001918038,
+          "exact": true
+        },
+        {
+          "steps": 32000,
+          "seconds": 0.018638802,
+          "exact": true
+        },
+        {
+          "steps": 32000,
+          "seconds": 0.020526673,
+          "exact": true
+        }
+      ]
+    },
+    {
+      "iteration": 2,
+      "variant": "baseline",
+      "samples": [
+        {
+          "steps": 2000,
+          "seconds": 0.00038032399999999997,
+          "exact": true
+        },
+        {
+          "steps": 2000,
+          "seconds": 0.00036801499999999997,
+          "exact": true
+        },
+        {
+          "steps": 8000,
+          "seconds": 0.002072208,
+          "exact": true
+        },
+        {
+          "steps": 8000,
+          "seconds": 0.001904799,
+          "exact": true
+        },
+        {
+          "steps": 32000,
+          "seconds": 0.019023166,
+          "exact": true
+        },
+        {
+          "steps": 32000,
+          "seconds": 0.018722936000000003,
+          "exact": true
+        }
+      ]
+    },
+    {
+      "iteration": 2,
+      "variant": "current",
+      "samples": [
+        {
+          "steps": 2000,
+          "seconds": 8.3444e-05,
+          "exact": true
+        },
+        {
+          "steps": 2000,
+          "seconds": 7.1535e-05,
+          "exact": true
+        },
+        {
+          "steps": 8000,
+          "seconds": 0.00028319099999999997,
+          "exact": true
+        },
+        {
+          "steps": 8000,
+          "seconds": 0.000224085,
+          "exact": true
+        },
+        {
+          "steps": 32000,
+          "seconds": 0.0011918789999999999,
+          "exact": true
+        },
+        {
+          "steps": 32000,
+          "seconds": 0.00116226,
+          "exact": true
+        }
+      ]
+    }
+  ],
+  "median_seconds": {
+    "2000": {
+      "baseline": 0.0003741845,
+      "current": 7.53395e-05,
+      "baseline_over_current": 4.966644323362911
+    },
+    "8000": {
+      "baseline": 0.0021474375,
+      "current": 0.00024876849999999997,
+      "baseline_over_current": 8.632272574702988
+    },
+    "32000": {
+      "baseline": 0.018680869000000003,
+      "current": 0.0011750445,
+      "baseline_over_current": 15.898009820053625
+    }
+  }
+}

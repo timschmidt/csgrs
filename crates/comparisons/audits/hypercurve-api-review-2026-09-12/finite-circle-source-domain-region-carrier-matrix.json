@@ -1,0 +1,32 @@
+{
+  "returncode": 0,
+  "elapsed_seconds": 1.5161678190052044,
+  "normal_library_sha256": "2664818a3d8832ddbf1351350562e105a7fd486401f71db0f2cd3661e4180048",
+  "log": "finite-circle-source-domain-region-carrier-matrix.log",
+  "source": "region-overlap-correspondence-carrier-matrix.rs",
+  "command": [
+    "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustc",
+    "--edition=2024",
+    "-O",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/region-overlap-correspondence-carrier-matrix.rs",
+    "--extern",
+    "hypercurve=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypercurve-3abe3d9bfe83911d.rlib",
+    "-L",
+    "dependency=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps",
+    "-o",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-circle-source-domain-region-carrier-matrix"
+  ],
+  "run_command": [
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-circle-source-domain-region-carrier-matrix"
+  ],
+  "source_sha256": "3bc4fd97784def531a2af6738f468db7138b973ea68acd5ae7a630d5da47ab3e",
+  "executable_sha256": "7044e1f73153d651fb47839aa99e983af7de67b09853d869ef1a3f2a235c8683",
+  "counts": {
+    "boundary_replays": 2016,
+    "analytic_replays": 432,
+    "queries": 448,
+    "endpoint_replays": 2208,
+    "repeated_path_trims": 1008,
+    "certainty": "Certified"
+  }
+}

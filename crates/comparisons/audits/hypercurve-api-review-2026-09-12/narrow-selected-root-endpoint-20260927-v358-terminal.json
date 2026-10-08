@@ -1,0 +1,42 @@
+{
+  "source_manifest": "cached-tower-approximation-20260927-v357-sources.json",
+  "source_sha256": "4fe76b8c1353a5ff835a4a4543659067ed6b9fa4eac3d894593658a7352ec24b",
+  "libraries": {
+    "hyperreal": {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperreal-dff9c97d38a41830.rlib",
+      "sha256": "c5d9d21ab21d08684682c44b7a055cfe866fd2bcef7fd68026f8a74306a5c897"
+    },
+    "hypersolve": {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypersolve-dab45c0236e67f19.rlib",
+      "sha256": "88a5c32ccf472947e5ce77c7328bbd0bc407276fff302b335038623e88c2440f"
+    }
+  },
+  "all_processes_reaped": true,
+  "compile": {
+    "command": [
+      "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustc",
+      "--edition=2024",
+      "-O",
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/narrow-selected-root-endpoint-20260927-v358.rs",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/narrow-selected-root-endpoint-20260927-v358",
+      "-L",
+      "dependency=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps",
+      "--extern",
+      "hyperreal=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperreal-dff9c97d38a41830.rlib",
+      "--extern",
+      "hypersolve=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypersolve-dab45c0236e67f19.rlib"
+    ],
+    "returncode": 0
+  },
+  "binary": {
+    "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/narrow-selected-root-endpoint-20260927-v358",
+    "sha256": "d5f8d44eb7d7efd2eeac2ad9a1b8ac01684ce1ab470371b875306fd57ac3ad19"
+  },
+  "run": {
+    "returncode": 0,
+    "output": "kind=pi precision=-64 sign=Some(Greater)\nkind=pi precision=-600 sign=None\nkind=pi precision=-1200 sign=None\nkind=exp precision=-64 sign=Some(Greater)\nkind=exp precision=-600 sign=None\nkind=exp precision=-1200 sign=None\n",
+    "stderr": "",
+    "elapsed_seconds": 0.001995493075810373
+  }
+}

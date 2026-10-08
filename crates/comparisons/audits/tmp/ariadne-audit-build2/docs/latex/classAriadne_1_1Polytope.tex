@@ -1,0 +1,112 @@
+\doxysubsection{Polytope Class Reference}
+\hypertarget{classAriadne_1_1Polytope}{}\label{classAriadne_1_1Polytope}\index{Polytope@{Polytope}}
+
+
+{\ttfamily \#include $<$polytope.\+hpp$>$}
+
+
+
+\doxysubsubsection{Description}
+A polytope in Euclidean space, defined by a list of extreme points. Inheritance diagram for Polytope\+:\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[height=5.000000cm]{classAriadne_1_1Polytope}
+\end{center}
+\end{figure}
+\doxysubsubsubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1Polytope_a15c95bab9bf6f66fb171cf33752f8fac}\label{classAriadne_1_1Polytope_a15c95bab9bf6f66fb171cf33752f8fac} 
+{\bfseries Polytope} ()
+\begin{DoxyCompactList}\small\item\em Default constructor constructs an empty polytope in zero dimensions. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Polytope_aeb4a95407333277c84be371db7e61b09}\label{classAriadne_1_1Polytope_aeb4a95407333277c84be371db7e61b09} 
+{\bfseries Polytope} (Dimension\+Type d)
+\begin{DoxyCompactList}\small\item\em Construct an empty polytope in {\itshape d} dimensions. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Polytope_a1c5241f571bf27dfe81999c429eb5943}\label{classAriadne_1_1Polytope_a1c5241f571bf27dfe81999c429eb5943} 
+{\bfseries Polytope} (const std\+::vector$<$ Exact\+Point $>$ \&v)
+\begin{DoxyCompactList}\small\item\em Construct polytope with vertices in {\itshape v}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Polytope_a3250d168ec5a26247e2c8f0845d62751}\label{classAriadne_1_1Polytope_a3250d168ec5a26247e2c8f0845d62751} 
+\mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} {\bfseries new\+\_\+vertex} (const Exact\+Point \&v)
+\begin{DoxyCompactList}\small\item\em Add a new vertex {\itshape v} to the current vertices. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Polytope_aaf7e747d3e5b6946c86bce494b60581a}\label{classAriadne_1_1Polytope_aaf7e747d3e5b6946c86bce494b60581a} 
+Size\+Type {\bfseries number\+\_\+of\+\_\+vertices} () const
+\begin{DoxyCompactList}\small\item\em The number of points defining the polytope. Note that an interior point is counted by this method. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Polytope_a11bafde26458ad9b3ca83b3a6cd36434}\label{classAriadne_1_1Polytope_a11bafde26458ad9b3ca83b3a6cd36434} 
+const Exact\+Point \& {\bfseries vertex} (Size\+Type i) const
+\begin{DoxyCompactList}\small\item\em The {\itshape i\textsuperscript{th}} vertex. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Polytope_afc05ce6f9e2cd6c882ecccf5e629a769}\label{classAriadne_1_1Polytope_afc05ce6f9e2cd6c882ecccf5e629a769} 
+Const\+Iterator {\bfseries vertices\+\_\+begin} () const
+\begin{DoxyCompactList}\small\item\em A constant \doxylink{classAriadne_1_1Expansion}{Iterator} pointing to the first vertex. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Polytope_a86929e3cb20efb3d50c7682f95717326}\label{classAriadne_1_1Polytope_a86929e3cb20efb3d50c7682f95717326} 
+Const\+Iterator {\bfseries vertices\+\_\+end} () const
+\begin{DoxyCompactList}\small\item\em A constant \doxylink{classAriadne_1_1Expansion}{Iterator} pointing to the past-\/the-\/end vertex. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Polytope_aceb1d5d4e1ac7c1e6041ac4ed3c229b2}\label{classAriadne_1_1Polytope_aceb1d5d4e1ac7c1e6041ac4ed3c229b2} 
+\mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} {\bfseries reduce} ()
+\begin{DoxyCompactList}\small\item\em Reduce the description of the polytope by removing all non-\/extreme points from the list of vertices. (Not currently implemented) \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Polytope_aebf7a36dc4606f0558a9e4fd2ad03e71}\label{classAriadne_1_1Polytope_aebf7a36dc4606f0558a9e4fd2ad03e71} 
+virtual \mbox{\hyperlink{classAriadne_1_1Polytope}{Polytope}} \texorpdfstring{$\ast$}{*} {\bfseries clone} () const
+\begin{DoxyCompactList}\small\item\em Construct a dynamically-\/allocated copy. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Polytope_a7a6749704458216c0671f901a427a2db}\label{classAriadne_1_1Polytope_a7a6749704458216c0671f901a427a2db} 
+virtual Dimension\+Type {\bfseries dimension} () const
+\begin{DoxyCompactList}\small\item\em The dimension of the set. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Polytope_adbad5014393d59a2d0e0dfd342e66b07}\label{classAriadne_1_1Polytope_adbad5014393d59a2d0e0dfd342e66b07} 
+virtual \mbox{\hyperlink{group__FunctionModule_gadb510bd9aa076e5ae44245b498901ca6}{Upper\+Box\+Type}} {\bfseries bounding\+\_\+box} () const
+\begin{DoxyCompactList}\small\item\em Returns a bounding box for the set. If the set is empty, then the first component of the result should be empty. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Polytope_a86ed7114183bd4347210832b1a41532b}\label{classAriadne_1_1Polytope_a86ed7114183bd4347210832b1a41532b} 
+virtual \mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} {\bfseries draw} (\mbox{\hyperlink{classAriadne_1_1CanvasInterface}{Canvas\+Interface}} \&c, const Projection2d \&p) const
+\begin{DoxyCompactList}\small\item\em brief Draw the object on the canvas {\itshape c} using line segments and fill/stroke commands. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Polytope_aec3050510f58e6f3fece416706247410}\label{classAriadne_1_1Polytope_aec3050510f58e6f3fece416706247410} 
+virtual \mbox{\hyperlink{namespaceAriadne_acbb98ddc4385af4599070e65a1a47ec1}{Output\+Stream}} \& {\bfseries \+\_\+write} (\mbox{\hyperlink{namespaceAriadne_acbb98ddc4385af4599070e65a1a47ec1}{Output\+Stream}} \&os) const
+\begin{DoxyCompactList}\small\item\em Write to an output stream. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxyparagraph*{Public Member Functions inherited from \mbox{\hyperlink{classAriadne_1_1OvertSetInterface}{Overt\+Set\+Interface$<$ P, T $>$}}}
+\begin{DoxyCompactItemize}
+\item 
+virtual Lower\+Kleenean\+Type$<$ P $>$ {\bfseries overlaps} (const \mbox{\hyperlink{classAriadne_1_1SetInterfaceBase_a621a6488ff988ea56df9398b55b4241f}{Basic\+Set\+Type}} \&bx) const =0
+\begin{DoxyCompactList}\small\item\em Tests if the set overlaps {\itshape bx}. Sets {\itshape A} and {\itshape B} {\itshape overlap} if the interiors of {\itshape A} and {\itshape B} intersect. Sets $A$ and $B$ {\itshape overlap} if $A^\circ \cap B^\circ \neq \emptyset$. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxyparagraph*{Public Member Functions inherited from \mbox{\hyperlink{classAriadne_1_1SetInterfaceBase}{Set\+Interface\+Base$<$ T $>$}}}
+\begin{DoxyCompactItemize}
+\item 
+virtual {\bfseries \texorpdfstring{$\sim$}{\string~}\+Set\+Interface\+Base} ()=default
+\begin{DoxyCompactList}\small\item\em Virtual destructor. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxyparagraph*{Public Member Functions inherited from \mbox{\hyperlink{classAriadne_1_1BoundedSetInterface}{Bounded\+Set\+Interface$<$ P, T $>$}}}
+\begin{DoxyCompactItemize}
+\item 
+virtual Lower\+Kleenean\+Type$<$ P $>$ {\bfseries inside} (const \mbox{\hyperlink{classAriadne_1_1SetInterfaceBase_a621a6488ff988ea56df9398b55b4241f}{Basic\+Set\+Type}} \&bx) const =0
+\begin{DoxyCompactList}\small\item\em Tests if the set is a inside of {\itshape bx}. A set {\itshape A} is {\itshape inside} {\itshape B} if the closure of {\itshape A} is a subset of the interior of {\itshape B}. A set $A$ is {\itshape inside} $B$ if $\,\overline{\!A} \subset B^\circ$. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxyparagraph*{Public Member Functions inherited from \mbox{\hyperlink{classAriadne_1_1ClosedSetInterface}{Closed\+Set\+Interface$<$ P, T $>$}}}
+\begin{DoxyCompactItemize}
+\item 
+virtual Lower\+Kleenean\+Type$<$ P $>$ {\bfseries separated} (const \mbox{\hyperlink{classAriadne_1_1SetInterfaceBase_a621a6488ff988ea56df9398b55b4241f}{Basic\+Set\+Type}} \&bx) const =0
+\begin{DoxyCompactList}\small\item\em Tests if the set is separated from {\itshape bx}. A set {\itshape A} is {\itshape separated} from {\itshape B} if the closures of {\itshape A} and {\itshape B} are disjoint. A set $A$ is {\itshape separated} from $B$ if $\,\overline{\!A} \cap \overline{B} = \emptyset$. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxyparagraph*{Public Member Functions inherited from \mbox{\hyperlink{classAriadne_1_1Drawable2dInterface}{Drawable2d\+Interface}}}
+\begin{DoxyCompactItemize}
+\item 
+virtual {\bfseries \texorpdfstring{$\sim$}{\string~}\+Drawable2d\+Interface} ()=default
+\begin{DoxyCompactList}\small\item\em brief Virtual destructor. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsubsection*{Friends}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1Polytope_a7de56676af3c676ad2e039a2ae46ee1f}\label{classAriadne_1_1Polytope_a7de56676af3c676ad2e039a2ae46ee1f} 
+\mbox{\hyperlink{classAriadne_1_1Polytope}{Polytope}} {\bfseries convex\+\_\+hull} (const \mbox{\hyperlink{classAriadne_1_1Polytope}{Polytope}} \&p1, const \mbox{\hyperlink{classAriadne_1_1Polytope}{Polytope}} \&p2)
+\begin{DoxyCompactList}\small\item\em The convex hull of two polytopes. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Polytope_abd7c025a2beff3aa367aa2234225399d}\label{classAriadne_1_1Polytope_abd7c025a2beff3aa367aa2234225399d} 
+Exact\+Point {\bfseries baricentre} (const \mbox{\hyperlink{classAriadne_1_1Polytope}{Polytope}} \&p)
+\begin{DoxyCompactList}\small\item\em The baricentre of a polytope. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsubsection*{Additional Inherited Members}
+\doxyparagraph*{Public Types inherited from \mbox{\hyperlink{classAriadne_1_1SetInterfaceBase}{Set\+Interface\+Base$<$ T $>$}}}
+\begin{DoxyCompactItemize}
+\item 
+typedef T {\bfseries Element\+Type}
+\begin{DoxyCompactList}\small\item\em The type of element of the set. \end{DoxyCompactList}\item 
+typedef Set\+Traits$<$ T $>$\+::\+Dimension\+Type {\bfseries Dimension\+Type}
+\begin{DoxyCompactList}\small\item\em The type representing the dimension of the set. \end{DoxyCompactList}\item 
+typedef Set\+Traits$<$ T $>$\+::\+Basic\+Set\+Type {\bfseries Basic\+Set\+Type}
+\begin{DoxyCompactList}\small\item\em The type of basic set in the space. \end{DoxyCompactList}\item 
+typedef Set\+Traits$<$ T $>$\+::\+Bounding\+Set\+Type {\bfseries Bounding\+Set\+Type}
+\begin{DoxyCompactList}\small\item\em The type of basic set in the space. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+The documentation for this class was generated from the following files\+:\begin{DoxyCompactItemize}
+\item 
+source/geometry/\mbox{\hyperlink{polytope_8hpp}{polytope.\+hpp}}\item 
+source/geometry/polytope.\+cpp\end{DoxyCompactItemize}

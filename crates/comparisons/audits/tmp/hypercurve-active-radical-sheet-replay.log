@@ -1,0 +1,7 @@
+
+running 2 tests
+test bezier_offset::conversion_tests::chord_normal_dense_sheet_replay_keeps_even_roots_and_zero_components ... ok
+test bezier_offset::conversion_tests::chord_normal_dense_sheet_replay_rejects_conjugate_roots ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 889 filtered out; finished in 0.00s
+

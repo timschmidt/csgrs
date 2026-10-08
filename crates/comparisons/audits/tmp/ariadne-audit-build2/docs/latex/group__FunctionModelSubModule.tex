@@ -1,0 +1,84 @@
+\doxysubsubsubsection{Function models }
+\hypertarget{group__FunctionModelSubModule}{}\label{group__FunctionModelSubModule}\index{Function models@{Function models}}
+
+
+\doxysubsubsubsubsection{Description}
+Concrete \doxylink{classAriadne_1_1FunctionModel}{Function\+Model\texorpdfstring{$<$}{<}P,SIG,PR,PRE\texorpdfstring{$>$}{>}} classes on bounded domains such as \doxylink{group__FunctionModelSubModule_gae1628e0ab768b5e00d157d1b30e08bd1}{Scalar\+Multivariate\+Taylor\+Function\+Model\texorpdfstring{$<$}{<}P,FLT\texorpdfstring{$>$}{>}}, which is a \doxylink{classAriadne_1_1ScaledFunctionPatch}{Scaled\+Function\+Patch} \texorpdfstring{$<$}{<}\doxylink{classAriadne_1_1TaylorModel}{Taylor\+Model\texorpdfstring{$<$}{<}P,FLT\texorpdfstring{$>$}{>}}\texorpdfstring{$>$}{>}. 
+
+\doxysubsubsubsubsubsection*{Classes}
+\begin{DoxyCompactItemize}
+\item 
+class \mbox{\hyperlink{classAriadne_1_1FunctionModel}{Function\+Model$<$ P, SIG, PR, PRE $>$}}
+\begin{DoxyCompactList}\small\item\em Generic class representing approximations to functions on bounded domains. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1ScaledFunctionPatch}{Scaled\+Function\+Patch$<$ M $>$}}
+\begin{DoxyCompactList}\small\item\em A a type of function model in which a the restriction of a scalar function $f:\R^n\rightarrow\R$ on a domain $D$ is approximated by the composition of a scaling function $s^{-1}:D\fto\I^n=[-1\!:\!+1]^n$ with a scaled function model, such as a polynomial $p$ on $\I^n$ with uniform error $e$. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1VectorScaledFunctionPatch}{Vector\+Scaled\+Function\+Patch$<$ M $>$}}
+\begin{DoxyCompactList}\small\item\em A a type of function model in which a the restriction of a vector function $f:\R^n\rightarrow\R^m$ on a domain $D$ is approximated by the composition of a scaling function $s^{-1}:D\fto\I^n=[-1\!:\!+1]^n$ with a vector function $p$ (such as a polynomial) on $\I^n$ with uniform errors $e$. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1TaylorModel}{Taylor\+Model$<$ P, F $>$}}
+\begin{DoxyCompactList}\small\item\em A class representing polynomial approximation to a function, scaled to the unit box, with a uniform error bound. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsubsubsubsection*{Template shorthands and type synonyms for Taylor function models}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{group__FunctionModelSubModule_gae1628e0ab768b5e00d157d1b30e08bd1}\label{group__FunctionModelSubModule_gae1628e0ab768b5e00d157d1b30e08bd1} 
+{\footnotesize template$<$class P, class F$>$ }\\using {\bfseries Scalar\+Multivariate\+Taylor\+Function\+Model} = \mbox{\hyperlink{classAriadne_1_1ScaledFunctionPatch}{Scalar\+Scaled\+Function\+Patch}}$<$\mbox{\hyperlink{classAriadne_1_1TaylorModel}{Taylor\+Model}}$<$P,F$>$$>$
+\item 
+\Hypertarget{group__FunctionModelSubModule_gad6930a6c6de398eaef74e98367a4480c}\label{group__FunctionModelSubModule_gad6930a6c6de398eaef74e98367a4480c} 
+{\footnotesize template$<$class P, class F$>$ }\\using {\bfseries Vector\+Multivariate\+Taylor\+Function\+Model} = \mbox{\hyperlink{classAriadne_1_1VectorScaledFunctionPatch}{Vector\+Scaled\+Function\+Patch}}$<$\mbox{\hyperlink{classAriadne_1_1TaylorModel}{Taylor\+Model}}$<$P,F$>$$>$
+\item 
+\Hypertarget{group__FunctionModelSubModule_gac0047955359d36e7c0370e32598d89c0}\label{group__FunctionModelSubModule_gac0047955359d36e7c0370e32598d89c0} 
+{\footnotesize template$<$class F$>$ }\\using {\bfseries Validated\+Scalar\+Multivariate\+Taylor\+Function\+Model} = \mbox{\hyperlink{classAriadne_1_1ScaledFunctionPatch}{Scalar\+Scaled\+Function\+Patch}}$<$\mbox{\hyperlink{classAriadne_1_1TaylorModel}{Validated\+Taylor\+Model}}$<$F$>$$>$
+\item 
+\Hypertarget{group__FunctionModelSubModule_gaa1c0d231059f5bf542b599360e78735b}\label{group__FunctionModelSubModule_gaa1c0d231059f5bf542b599360e78735b} 
+{\footnotesize template$<$class F$>$ }\\using {\bfseries Validated\+Vector\+Multivariate\+Taylor\+Function\+Model} = \mbox{\hyperlink{classAriadne_1_1VectorScaledFunctionPatch}{Vector\+Scaled\+Function\+Patch}}$<$\mbox{\hyperlink{classAriadne_1_1TaylorModel}{Validated\+Taylor\+Model}}$<$F$>$$>$
+\item 
+\Hypertarget{group__FunctionModelSubModule_ga4c69b45be96bafc9114c6234412fce7d}\label{group__FunctionModelSubModule_ga4c69b45be96bafc9114c6234412fce7d} 
+{\footnotesize template$<$class F$>$ }\\using {\bfseries Approximate\+Scalar\+Multivariate\+Taylor\+Function\+Model} = \mbox{\hyperlink{classAriadne_1_1ScaledFunctionPatch}{Scalar\+Scaled\+Function\+Patch}}$<$\mbox{\hyperlink{classAriadne_1_1TaylorModel}{Approximate\+Taylor\+Model}}$<$F$>$$>$
+\item 
+\Hypertarget{group__FunctionModelSubModule_gac35bc71b939c9691ef282a488471a2ac}\label{group__FunctionModelSubModule_gac35bc71b939c9691ef282a488471a2ac} 
+{\footnotesize template$<$class F$>$ }\\using {\bfseries Approximate\+Vector\+Multivariate\+Taylor\+Function\+Model} = \mbox{\hyperlink{classAriadne_1_1VectorScaledFunctionPatch}{Vector\+Scaled\+Function\+Patch}}$<$\mbox{\hyperlink{classAriadne_1_1TaylorModel}{Approximate\+Taylor\+Model}}$<$F$>$$>$
+\item 
+\Hypertarget{group__FunctionModelSubModule_ga05c1c7011f989b1ec0ba7f5d4e81580f}\label{group__FunctionModelSubModule_ga05c1c7011f989b1ec0ba7f5d4e81580f} 
+using {\bfseries Validated\+Scalar\+Multivariate\+Taylor\+Function\+Model\+DP} = \mbox{\hyperlink{classAriadne_1_1ScaledFunctionPatch}{Scalar\+Scaled\+Function\+Patch}}$<$\mbox{\hyperlink{classAriadne_1_1TaylorModel}{Validated\+Taylor\+Model\+DP}}$>$
+\item 
+\Hypertarget{group__FunctionModelSubModule_ga2c22c0befb7ccf11c80015eee7e7a78b}\label{group__FunctionModelSubModule_ga2c22c0befb7ccf11c80015eee7e7a78b} 
+using {\bfseries Validated\+Vector\+Multivariate\+Taylor\+Function\+Model\+DP} = \mbox{\hyperlink{classAriadne_1_1VectorScaledFunctionPatch}{Vector\+Scaled\+Function\+Patch}}$<$\mbox{\hyperlink{classAriadne_1_1TaylorModel}{Validated\+Taylor\+Model\+DP}}$>$
+\item 
+\Hypertarget{group__FunctionModelSubModule_ga591d63a25f42318cf31c4d314d53bde5}\label{group__FunctionModelSubModule_ga591d63a25f42318cf31c4d314d53bde5} 
+using {\bfseries Approximate\+Scalar\+Multivariate\+Taylor\+Function\+Model\+DP} = \mbox{\hyperlink{classAriadne_1_1ScaledFunctionPatch}{Scalar\+Scaled\+Function\+Patch}}$<$\mbox{\hyperlink{classAriadne_1_1TaylorModel}{Approximate\+Taylor\+Model\+DP}}$>$
+\item 
+\Hypertarget{group__FunctionModelSubModule_ga423090ee6f9cb0b05d0ae083ae6da86c}\label{group__FunctionModelSubModule_ga423090ee6f9cb0b05d0ae083ae6da86c} 
+using {\bfseries Approximate\+Vector\+Multivariate\+Taylor\+Function\+Model\+DP} = \mbox{\hyperlink{classAriadne_1_1VectorScaledFunctionPatch}{Vector\+Scaled\+Function\+Patch}}$<$\mbox{\hyperlink{classAriadne_1_1TaylorModel}{Approximate\+Taylor\+Model\+DP}}$>$
+\item 
+\Hypertarget{group__FunctionModelSubModule_ga4540ff873d6452f5888c68b07526f10f}\label{group__FunctionModelSubModule_ga4540ff873d6452f5888c68b07526f10f} 
+using {\bfseries Validated\+Scalar\+Multivariate\+Taylor\+Function\+Model\+MP} = \mbox{\hyperlink{classAriadne_1_1ScaledFunctionPatch}{Scalar\+Scaled\+Function\+Patch}}$<$\mbox{\hyperlink{classAriadne_1_1TaylorModel}{Validated\+Taylor\+Model\+MP}}$>$
+\item 
+\Hypertarget{group__FunctionModelSubModule_ga27740fa04fb8f60fc6d996dcf8aad7eb}\label{group__FunctionModelSubModule_ga27740fa04fb8f60fc6d996dcf8aad7eb} 
+using {\bfseries Validated\+Vector\+Multivariate\+Taylor\+Function\+Model\+MP} = \mbox{\hyperlink{classAriadne_1_1VectorScaledFunctionPatch}{Vector\+Scaled\+Function\+Patch}}$<$\mbox{\hyperlink{classAriadne_1_1TaylorModel}{Validated\+Taylor\+Model\+MP}}$>$
+\item 
+\Hypertarget{group__FunctionModelSubModule_gaa244b9d66e402b0db986588b2659a8ac}\label{group__FunctionModelSubModule_gaa244b9d66e402b0db986588b2659a8ac} 
+using {\bfseries Approximate\+Scalar\+Multivariate\+Taylor\+Function\+Model\+MP} = \mbox{\hyperlink{classAriadne_1_1ScaledFunctionPatch}{Scalar\+Scaled\+Function\+Patch}}$<$\mbox{\hyperlink{classAriadne_1_1TaylorModel}{Approximate\+Taylor\+Model\+MP}}$>$
+\item 
+\Hypertarget{group__FunctionModelSubModule_ga54663507f910d7a4f1d6dfc7a322238c}\label{group__FunctionModelSubModule_ga54663507f910d7a4f1d6dfc7a322238c} 
+using {\bfseries Approximate\+Vector\+Multivariate\+Taylor\+Function\+Model\+MP} = \mbox{\hyperlink{classAriadne_1_1VectorScaledFunctionPatch}{Vector\+Scaled\+Function\+Patch}}$<$\mbox{\hyperlink{classAriadne_1_1TaylorModel}{Approximate\+Taylor\+Model\+MP}}$>$
+\item 
+\Hypertarget{group__FunctionModelSubModule_ga95c9634cef365436cb44e351b9bcacb6}\label{group__FunctionModelSubModule_ga95c9634cef365436cb44e351b9bcacb6} 
+{\footnotesize template$<$class P, class F$>$ }\\using {\bfseries Scalar\+Multivariate\+Bounds\+Taylor\+Function\+Model} = \mbox{\hyperlink{classAriadne_1_1ScaledFunctionPatch}{Scalar\+Scaled\+Function\+Patch}}$<$\mbox{\hyperlink{classAriadne_1_1TaylorModel}{Taylor\+Model}}$<$P,\mbox{\hyperlink{classAriadne_1_1Bounds}{Bounds}}$<$F$>$$>$$>$
+\item 
+\Hypertarget{group__FunctionModelSubModule_ga6467e15004839d2ecb4a0f72bde2029a}\label{group__FunctionModelSubModule_ga6467e15004839d2ecb4a0f72bde2029a} 
+{\footnotesize template$<$class P, class F$>$ }\\using {\bfseries Vector\+Multivariate\+Bounds\+Taylor\+Function\+Model} = \mbox{\hyperlink{classAriadne_1_1VectorScaledFunctionPatch}{Vector\+Scaled\+Function\+Patch}}$<$\mbox{\hyperlink{classAriadne_1_1TaylorModel}{Taylor\+Model}}$<$P,\mbox{\hyperlink{classAriadne_1_1Bounds}{Bounds}}$<$F$>$$>$$>$
+\item 
+\Hypertarget{group__FunctionModelSubModule_gaf7624c64c747518b435a8075d96baf8e}\label{group__FunctionModelSubModule_gaf7624c64c747518b435a8075d96baf8e} 
+{\footnotesize template$<$class F$>$ }\\using {\bfseries Validated\+Scalar\+Multivariate\+Bounds\+Taylor\+Function\+Model} = \mbox{\hyperlink{classAriadne_1_1ScaledFunctionPatch}{Scalar\+Scaled\+Function\+Patch}}$<$Validated\+Bounds\+Taylor\+Model$<$F$>$$>$
+\item 
+\Hypertarget{group__FunctionModelSubModule_gae880bd486621adab3921a1fb849b3037}\label{group__FunctionModelSubModule_gae880bd486621adab3921a1fb849b3037} 
+{\footnotesize template$<$class F$>$ }\\using {\bfseries Validated\+Vector\+Multivariate\+Bounds\+Taylor\+Function\+Model} = \mbox{\hyperlink{classAriadne_1_1VectorScaledFunctionPatch}{Vector\+Scaled\+Function\+Patch}}$<$Validated\+Bounds\+Taylor\+Model$<$F$>$$>$
+\item 
+\Hypertarget{group__FunctionModelSubModule_ga738493e005997b5dd214e4e36bcb32d4}\label{group__FunctionModelSubModule_ga738493e005997b5dd214e4e36bcb32d4} 
+using {\bfseries Validated\+Scalar\+Multivariate\+Bounds\+Taylor\+Function\+Model\+DP} = \mbox{\hyperlink{classAriadne_1_1ScaledFunctionPatch}{Scalar\+Scaled\+Function\+Patch}}$<$Validated\+Bounds\+Taylor\+Model\+DP$>$
+\item 
+\Hypertarget{group__FunctionModelSubModule_gaa82d2df86cf13a9e1c9b929850afc87d}\label{group__FunctionModelSubModule_gaa82d2df86cf13a9e1c9b929850afc87d} 
+using {\bfseries Validated\+Vector\+Multivariate\+Bounds\+Taylor\+Function\+Model\+DP} = \mbox{\hyperlink{classAriadne_1_1VectorScaledFunctionPatch}{Vector\+Scaled\+Function\+Patch}}$<$Validated\+Bounds\+Taylor\+Model\+DP$>$
+\item 
+\Hypertarget{group__FunctionModelSubModule_gaf2c163518c3616cb081d84b809f1a9f1}\label{group__FunctionModelSubModule_gaf2c163518c3616cb081d84b809f1a9f1} 
+using {\bfseries Validated\+Scalar\+Multivariate\+Bounds\+Taylor\+Function\+Model\+MP} = \mbox{\hyperlink{classAriadne_1_1ScaledFunctionPatch}{Scalar\+Scaled\+Function\+Patch}}$<$Validated\+Bounds\+Taylor\+Model\+MP$>$
+\end{DoxyCompactItemize}

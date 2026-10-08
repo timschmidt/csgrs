@@ -1,0 +1,28 @@
+{
+  "tag": "root-exp-sign-clippy",
+  "started": "2026-09-08T13:39:23.568Z",
+  "finished": "2026-09-08T13:39:29.620Z",
+  "elapsedSeconds": 6.050342121,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison",
+  "command": "env",
+  "args": [
+    "TMPDIR=/home/tim/Documents/GitHub/workspace/calcium-build-tmp.gVX5v4",
+    "CARGO_INCREMENTAL=0",
+    "CARGO_PROFILE_DEV_DEBUG=0",
+    "cargo",
+    "clippy",
+    "--lib",
+    "--tests",
+    "--all-features",
+    "--offline",
+    "--manifest-path",
+    "audits/continuation/calcium/root-exp-sign-trial-hyperreal/Cargo.toml",
+    "--target-dir",
+    "/home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype",
+    "--",
+    "-D",
+    "warnings"
+  ],
+  "code": 0,
+  "signal": null
+}

@@ -1,0 +1,6 @@
+
+running 1 test
+test bezier_offset::conversion_tests::recursive_projective_bounds_reuse_positive_denominator_certificate ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 893 filtered out; finished in 0.01s
+

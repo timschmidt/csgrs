@@ -1,0 +1,9 @@
+DEVELOPMENT VERSION
+
+xrc-1.1 Keith Briggs 2003 Apr 01
+
+This is a C library for exact real arithmetic.
+
+Run `make' to compile everything and run some tests.
+
+See xr.1 for documentation (or its .ps, .pdf, .html versions). 

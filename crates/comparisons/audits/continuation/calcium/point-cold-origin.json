@@ -1,0 +1,7 @@
+{
+  "root": "/tmp/calcium-point-cold.3RcRIa",
+  "recorded": "2026-09-10T23:06:16.069Z",
+  "predecessor": "point-demand-manifest.json",
+  "predecessorSha256": "5e4bb6798a735ea104e9d8dc311f30096371e2e093c92c05e57a5ee8dc5c45d0",
+  "sourceBindingSha256": "d5472beb99abd3f0526d978f4e27fb0446a1ac425dfd52fe3265bdccca4ba80f"
+}

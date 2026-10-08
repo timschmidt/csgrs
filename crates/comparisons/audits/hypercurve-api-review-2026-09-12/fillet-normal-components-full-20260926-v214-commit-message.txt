@@ -1,0 +1,10 @@
+Select shared fillet centers on original normal sheets
+
+Retain diagonal center components when the original parallel offsets differ.
+Use the shared derivative-sign rule to clip components through their finite
+and incident charts, preserving operand order and identity-offset semantics.
+Build the sign polynomials lazily and keep identity queries on their fast paths.
+
+Validated with 552 release regressions across eight targets, rustfmt, both
+all-target Clippy configurations, and Hyperbrep's all-target/all-feature check.
+Continuous-family publication remains a separate follow-up.

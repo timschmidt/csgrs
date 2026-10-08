@@ -1,0 +1,13 @@
+{
+  "tag": "mag-transcendental-linked-libraries",
+  "started": "2026-09-09T23:42:17.874Z",
+  "finished": "2026-09-09T23:42:17.901Z",
+  "elapsedSeconds": 0.023386173,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison",
+  "command": "ldd",
+  "args": [
+    "/tmp/calcium-mag-transcendental.p8Wy83/mag-transcendental-controls"
+  ],
+  "code": 0,
+  "signal": null
+}

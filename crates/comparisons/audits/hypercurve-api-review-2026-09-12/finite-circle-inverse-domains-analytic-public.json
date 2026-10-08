@@ -1,0 +1,30 @@
+{
+  "returncode": 0,
+  "elapsed_seconds": 1.2653168849938083,
+  "normal_library_sha256": "4ae0b00c4bf9f0a4ee9000958e1f829e194b27d588a0b848d0c353038c6ecff5",
+  "log": "finite-circle-inverse-domains-analytic-public.log",
+  "source": "finite-circle-analytic-domains-public.rs",
+  "command": [
+    "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustc",
+    "--edition=2024",
+    "-O",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-circle-analytic-domains-public.rs",
+    "--extern",
+    "hypercurve=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypercurve-96f69e9a655f1fb5.rlib",
+    "-L",
+    "dependency=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps",
+    "-o",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-circle-inverse-domains-analytic-public"
+  ],
+  "run_command": [
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-circle-inverse-domains-analytic-public"
+  ],
+  "source_sha256": "75fcf3ab4d48751e51eacf4ed8a48e86010983600c2245bbb74b2bc34112f384",
+  "executable_sha256": "1d4cda716f8409909f1315d09cb4c0fc2cb935d3ea9ba65e807339ae66443546",
+  "counts": {
+    "cases": 32,
+    "contacts": 32,
+    "point_replays": 64,
+    "failures": 0
+  }
+}

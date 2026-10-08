@@ -1,0 +1,21 @@
+{
+  "command": "cargo",
+  "args": [
+    "test",
+    "--offline",
+    "--locked",
+    "--manifest-path",
+    "source/hyperreal/Cargo.toml",
+    "--lib",
+    "cache_rescale_",
+    "--",
+    "--test-threads=1"
+  ],
+  "begin": "2026-09-07T05:22:20.072Z",
+  "end": "2026-09-07T05:22:20.206Z",
+  "status": 101,
+  "signal": null,
+  "error": null,
+  "stdout": "",
+  "stderr": "error: cannot create the lock file /home/tim/Documents/GitHub/workspace/exact-real-references/ruffini-qualification/cache-public-pilot/Cargo.lock because --locked was passed to prevent this\nhelp: to generate the lock file without accessing the network, remove the --locked flag and use --offline instead.\n"
+}

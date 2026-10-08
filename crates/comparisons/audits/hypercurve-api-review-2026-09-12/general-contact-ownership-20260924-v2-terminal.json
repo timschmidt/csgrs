@@ -1,0 +1,118 @@
+{
+  "checks": [
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "clippy",
+        "--all-targets",
+        "--all-features",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "returncode": 0,
+      "log": "general-contact-ownership-20260924-v2-check-0.log"
+    },
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "clippy",
+        "--all-targets",
+        "--no-default-features",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "returncode": 0,
+      "log": "general-contact-ownership-20260924-v2-check-1.log"
+    }
+  ],
+  "command": [
+    "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+    "test",
+    "--lib",
+    "--release",
+    "--all-features",
+    "--no-run",
+    "--message-format=json",
+    "--locked",
+    "--offline",
+    "--test",
+    "hypercurve_path_closure",
+    "--test",
+    "hypercurve_curve_region_boolean",
+    "--test",
+    "hypercurve_bezier_arrangement",
+    "--test",
+    "hypercurve_curve_region_boolean_fuzz",
+    "--test",
+    "hypercurve_pcb_boolean_regressions"
+  ],
+  "binaries": {
+    "hypercurve_pcb_boolean_regressions": {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/general-contact-ownership-20260924-v2-hypercurve_pcb_boolean_regressions",
+      "sha256": "06712bb8d9605865dc67f7663c21a7b7a9303e1fa15532df083cb9a7f55536d6"
+    },
+    "hypercurve_path_closure": {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/general-contact-ownership-20260924-v2-hypercurve_path_closure",
+      "sha256": "b32bef8d7f4f0b390b183e81676cd836e5a4723bf06004b07962557ca0ac7f7c"
+    },
+    "hypercurve_curve_region_boolean_fuzz": {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/general-contact-ownership-20260924-v2-hypercurve_curve_region_boolean_fuzz",
+      "sha256": "e048ba3cae433cf8979533e25871e3d7471f402d9e45f48f24c9eb0a5c87f55a"
+    },
+    "hypercurve_curve_region_boolean": {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/general-contact-ownership-20260924-v2-hypercurve_curve_region_boolean",
+      "sha256": "dfbc1fea6c8e3abeb603d8f6579ba8c2d4a0897cb710a2d66353f6f3796b1c34"
+    },
+    "hypercurve_bezier_arrangement": {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/general-contact-ownership-20260924-v2-hypercurve_bezier_arrangement",
+      "sha256": "c45be80543c588ccc66c2cd4ba74a7266ea55b8448a179e07051653fe2ef417f"
+    },
+    "hypercurve": {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/general-contact-ownership-20260924-v2-hypercurve",
+      "sha256": "940d9adbaf4828e71089064e975f710ed29a424d46000719a3a06103fa184de1"
+    }
+  },
+  "attempted": 300,
+  "passed": 295,
+  "ignored": 2,
+  "nonpasses": [
+    {
+      "target": "hypercurve",
+      "name": "bezier_region::curve_corner_chain::tests::extended_fillet_region_classifies_both_sides_of_its_companion",
+      "returncode": "timeout",
+      "passed": false,
+      "ignored": false,
+      "elapsed_seconds": 75.00324231595732,
+      "limit_seconds": 75,
+      "log": "general-contact-ownership-20260924-v2-case-0201.log"
+    },
+    {
+      "target": "hypercurve",
+      "name": "bezier_region::tests::nonlinear_selected_corner_chamfers_through_retained_fixed_distance_image",
+      "returncode": "timeout",
+      "passed": false,
+      "ignored": false,
+      "elapsed_seconds": 75.94077753007878,
+      "limit_seconds": 75,
+      "log": "general-contact-ownership-20260924-v2-case-0214.log"
+    },
+    {
+      "target": "hypercurve",
+      "name": "bezier_region::tests::pair_native_boolean_algebraic_chord_corner_publishes_a_third_generation_fillet",
+      "returncode": "timeout",
+      "passed": false,
+      "ignored": false,
+      "elapsed_seconds": 75.00283414300065,
+      "limit_seconds": 75,
+      "log": "general-contact-ownership-20260924-v2-case-0220.log"
+    }
+  ],
+  "all_sources_unchanged": true,
+  "all_processes_reaped": true
+}

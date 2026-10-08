@@ -1,0 +1,21 @@
+   Compiling hyperreal v0.13.1 (/home/tim/Documents/GitHub/workspace/hyperreal)
+    Finished `release` profile [optimized] target(s) in 11.80s
+     Running unittests src/lib.rs (target/release/deps/hyperreal-1cc0b97c8fd55e9c)
+
+running 1 test
+
+thread 'computable::node::tests::rational_normal_form_retains_only_successful_sign_proofs' (116) panicked at src/computable/node/tests.rs:2812:21:
+assertion `left == right` failed
+  left: None
+ right: Some(Zero)
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+test computable::node::tests::rational_normal_form_retains_only_successful_sign_proofs ... FAILED
+
+failures:
+
+failures:
+    computable::node::tests::rational_normal_form_retains_only_successful_sign_proofs
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 708 filtered out; finished in 0.00s
+
+error: test failed, to rerun pass `--lib`

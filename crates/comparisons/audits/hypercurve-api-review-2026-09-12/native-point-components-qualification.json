@@ -1,0 +1,86 @@
+{
+  "status": "committed and qualified against the documented regression baseline",
+  "goal_status": "active",
+  "previous_commit": "6b05bf1fcebfe49442e47c5aff55facca5ba4f38",
+  "commit": "ddf739955d5586ac5257888433d35c8e09614538",
+  "targets": 49,
+  "passed": 2222,
+  "passed_by_repo": {
+    "hypercurve": 1990,
+    "hyperbrep": 232
+  },
+  "known_failed": [
+    "approximate_512_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions",
+    "non_ph_bezier_pair_projective_fillet_retains_algebraic_extensions",
+    "nonconvex_algebraic_chord_expansion_is_exact_and_local_collapse_is_explicit",
+    "strict_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions",
+    "unified_mixed_line_arc_erosion_splits_after_a_curved_neck_collapse"
+  ],
+  "new_failures": [],
+  "ignored": 9,
+  "expensive_previously_unqualified_exclusions": 8,
+  "timeouts": 0,
+  "builds_and_checks": {
+    "-check": 0,
+    "-test-build": 0,
+    "-hyperbrep-check": 0,
+    "-hyperbrep-test-build": 0
+  },
+  "formatting_and_whitespace": "passed on final frozen qualification sources",
+  "formatted_files": {
+    "hypercurve": [
+      "src/curve_intersection.rs",
+      "src/curve_support_intersection.rs"
+    ],
+    "hyperbrep": []
+  },
+  "additional_caller_checks": [
+    {
+      "target": "fuzz",
+      "command": [
+        "cargo",
+        "check",
+        "--manifest-path",
+        "fuzz/Cargo.toml",
+        "--all-targets",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 3.1689098859933438,
+      "log": "native-point-components-fuzz-check.log"
+    },
+    {
+      "target": "ui",
+      "command": [
+        "cargo",
+        "check",
+        "--manifest-path",
+        "examples/hypercurve_ui/Cargo.toml",
+        "--all-targets",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 3.3191514520003693,
+      "log": "native-point-components-ui-check.log"
+    }
+  ],
+  "source_verification": "native-point-components-source-verification.json",
+  "normal_library_sha256": "0546f89b7cd883affba68150e6bab6683dd4d4d6efb69d670ed8d75a38bb20dd",
+  "independent_probes_and_matrices": [
+    "native-point-components-analytic-probe.json",
+    "native-point-components-endpoint-probe.json",
+    "native-point-components-completed-probe.json",
+    "native-point-components-probe-final.json",
+    "native-point-components-circle-matrix.json",
+    "native-point-components-region-carrier-matrix.json",
+    "native-point-components-general-trim-matrix.json",
+    "native-point-components-constant-image-trim-matrix.json"
+  ],
+  "regression_baseline": "analytic-common-dispatch-qualification.json",
+  "affected_regression_results": "native-point-components-full-hypercurve-lib.json",
+  "evidence_audit": "native-point-components-evidence-audit.md",
+  "performance_claim": null,
+  "remaining": "Public region overlap correspondence publication; complete finite exterior and retraced domains; normalized public region construction; five promotion failures; eight unqualified expensive tests; broader algebraic consolidation and original architecture goal."
+}

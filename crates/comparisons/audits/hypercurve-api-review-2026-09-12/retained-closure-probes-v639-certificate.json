@@ -1,0 +1,33 @@
+{
+  "chart": [
+    "0",
+    "1/2",
+    "1/2"
+  ],
+  "chart_endpoints": [
+    "0",
+    "1"
+  ],
+  "chart_derivative": "1/2 + t >= 1/2 on [0,1]",
+  "source_x_derivative": "3 + 6u(1-u) >= 3 on [0,1]",
+  "composed_x": [
+    "0",
+    "3/2",
+    "9/4",
+    "5/4",
+    "0",
+    "-3/4",
+    "-1/4"
+  ],
+  "composed_y": [
+    "0",
+    "6",
+    "-3",
+    "-15",
+    "0",
+    "9",
+    "3"
+  ],
+  "bernstein_coefficients_match_exact_composition": true,
+  "consequence": "The selected left normal and offset trace are preserved; the reference two ordered off-diagonal contacts remain two under the bijective chart."
+}

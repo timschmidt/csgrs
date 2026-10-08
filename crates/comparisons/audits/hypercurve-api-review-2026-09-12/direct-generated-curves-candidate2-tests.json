@@ -1,0 +1,28 @@
+[
+  {
+    "target": "hypercurve_path_closure",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/direct-generated-curves-candidate2-libraries/hypercurve_path_closure-34c4b0240fb4e48a",
+      "--test-threads=2",
+      "--color",
+      "never"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 32.66228248900734,
+    "sha256": "a257b0a47ff4261e9689e1cfb1e90fd5913ed56a2da03603e2bad9b137264808",
+    "log": "direct-generated-curves-candidate2-hypercurve_path_closure-test.log"
+  },
+  {
+    "target": "hypercurve_curve_intersection",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/direct-generated-curves-candidate2-libraries/hypercurve_curve_intersection-38c349bc201247b4",
+      "--test-threads=2",
+      "--color",
+      "never"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 17.0409235029947,
+    "sha256": "2deb059d91ec9f7568de5fc5231a1fe5beebb3ce45f073abc48ddf0f4695d864",
+    "log": "direct-generated-curves-candidate2-hypercurve_curve_intersection-test.log"
+  }
+]

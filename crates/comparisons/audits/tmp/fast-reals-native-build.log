@@ -1,0 +1,32 @@
+Cabal file warning in /home/tim/Documents/GitHub/workspace/exact-real-references/haskell-mpfr/haskell-mpfr.cabal@13:28: Packages with 'cabal-version: 1.12' or later should specify a specific version of the Cabal spec of the form 'cabal-version: x.y'. Use 'cabal-version: 1.22'.
+
+Error: [S-4804]
+       Stack failed to construct a build plan.
+       
+       While constructing the build plan, Stack encountered the following errors. The 'Stack
+       configuration' refers to the set of package versions specified by the snapshot (after any
+       dropped packages, or pruned GHC boot packages; if a boot package is replaced, Stack prunes
+       all other such packages that depend on it) and any extra-deps:
+       
+       In the dependencies for haskell-fast-reals-0.1.0.0:
+         * base must match >=4.7 && <4.8, but base-4.18.3.0 is in the Stack configuration (latest
+           matching version is 4.7.0.2).
+       The above is/are needed since haskell-fast-reals is a build target.
+       
+       In the dependencies for haskell-mpfr-0.1:
+         * integer-gmp must match >=0.2 && <0.6, but integer-gmp-1.1 is in the Stack configuration
+           (latest matching version is 0.5.1.0).
+       The above is/are needed since haskell-mpfr is a build target.
+       
+       Some different approaches to resolving some or all of this:
+       
+         * To ignore all version constraints and build anyway, pass --allow-newer, or, in
+           /tmp/aern2-stack.ryVCFK/config.yaml (global configuration) or
+           /tmp/fast-reals-audit.bwgyTf/stack.yaml (project-level configuration), set allow-newer:
+           true.
+         
+         * To ignore certain version constraints and build anyway, also add these package names
+           under allow-newer-deps: haskell-fast-reals and haskell-mpfr.
+         
+         * Build requires unattainable version of the base package. Since base is a part of GHC, you
+           most likely need to use a different GHC version with the matching base.

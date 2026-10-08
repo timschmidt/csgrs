@@ -1,0 +1,22 @@
+{
+  "tag": "zero-factor-consumer-fmt-v74",
+  "started": "2026-09-11T21:45:04.970Z",
+  "finished": "2026-09-11T21:45:08.798Z",
+  "elapsedSeconds": 3.8248230089999997,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "env",
+  "args": [
+    "CARGO_TARGET_DIR=/tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse",
+    "CARGO_INCREMENTAL=0",
+    "CARGO_PROFILE_DEV_DEBUG=0",
+    "CARGO_BUILD_JOBS=2",
+    "cargo",
+    "fmt",
+    "--manifest-path",
+    "zero-factor-consumer-v74/hypercurve/Cargo.toml",
+    "--",
+    "--check"
+  ],
+  "code": 0,
+  "signal": null
+}

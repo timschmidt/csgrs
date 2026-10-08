@@ -1,0 +1,12 @@
+    Blocking waiting for file lock on build directory
+    Checking hyperlattice v0.6.1 (/home/tim/Documents/GitHub/workspace/hyperlattice)
+warning: unused variable: `signal`
+    --> tests/matrix.rs:1397:9
+     |
+1397 |     let signal = abort_signal();
+     |         ^^^^^^ help: if this is intentional, prefix it with an underscore: `_signal`
+     |
+     = note: `#[warn(unused_variables)]` (part of `#[warn(unused)]`) on by default
+
+warning: `hyperlattice` (test "matrix") generated 1 warning (run `cargo fix --test "matrix" -p hyperlattice` to apply 1 suggestion)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 2.36s

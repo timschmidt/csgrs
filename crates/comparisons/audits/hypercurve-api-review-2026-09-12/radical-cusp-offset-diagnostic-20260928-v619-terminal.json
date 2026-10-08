@@ -1,0 +1,64 @@
+{
+  "normal_production_build": false,
+  "source_manifest": "radical-cusp-offset-diagnostic-20260928-v619-sources.json",
+  "source_directory": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/source-archives/radical-cusp-offset-diagnostic-20260928-v619",
+  "builds": [
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "test",
+        "--test",
+        "hypercurve_analytic_parallel_region",
+        "--release",
+        "--all-features",
+        "--locked",
+        "--offline",
+        "--no-run",
+        "--message-format=json"
+      ],
+      "returncode": 0,
+      "log": "radical-cusp-offset-diagnostic-20260928-v619-build.log",
+      "elapsed_seconds": 2.0665678980294615,
+      "binaries": {
+        "hypercurve_analytic_parallel_region": {
+          "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/radical-cusp-offset-diagnostic-20260928-v619-hypercurve_analytic_parallel_region-tests",
+          "sha256": "ec15fc504b397401755f3ceab016ad264a610e52a16ffb8297e7ad03d7e25426"
+        }
+      }
+    }
+  ],
+  "cases": [
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/radical-cusp-offset-diagnostic-20260928-v619-hypercurve_analytic_parallel_region-tests",
+        "--exact",
+        "radical_parallel_cusp_offsets_exactly_under_both_policies",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 101,
+      "log": "radical-cusp-offset-diagnostic-20260928-v619-radical_parallel_cusp_offsets_exactly_under_both_policies.log",
+      "elapsed_seconds": 0.01565918605774641,
+      "target": "hypercurve_analytic_parallel_region",
+      "name": "radical_parallel_cusp_offsets_exactly_under_both_policies",
+      "passed": false
+    }
+  ],
+  "checks": [],
+  "expected_cases": {
+    "hypercurve_analytic_parallel_region": [
+      "radical_parallel_cusp_offsets_exactly_under_both_policies"
+    ]
+  },
+  "all_processes_reaped": true,
+  "probe_complete": true,
+  "qualification_complete": false,
+  "performance": [
+    {
+      "name": "radical_parallel_cusp_offsets_exactly_under_both_policies",
+      "before": 62.99474022979848,
+      "after": 0.01565918605774641
+    }
+  ],
+  "failure": "focused regression failure"
+}

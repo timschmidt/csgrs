@@ -1,0 +1,50 @@
+   Compiling hyperreal v0.13.1 (/home/tim/Documents/GitHub/workspace/hyperreal)
+   Compiling hyperlattice v0.6.1 (/home/tim/Documents/GitHub/workspace/hyperlattice)
+   Compiling hyperlimit v0.4.1 (/home/tim/Documents/GitHub/workspace/hyperlimit)
+   Compiling hypersolve v0.3.1 (/home/tim/Documents/GitHub/workspace/hypersolve)
+   Compiling hypercurve v0.3.1 (/home/tim/Documents/GitHub/workspace/hypercurve)
+   Compiling hypercurve_ui v0.2.0 (/home/tim/Documents/GitHub/workspace/hypercurve/examples/hypercurve_ui)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 17.50s
+     Running unittests src/main.rs (examples/hypercurve_ui/target/debug/deps/hypercurve_ui-9436b569ce1ea8d8)
+
+running 37 tests
+test geometry::tests::clipped_offsets_handle_convex_line_line_corners_across_angles ... ok
+test geometry::tests::clipped_offsets_handle_reflex_line_line_corners_across_angles ... ok
+test geometry::tests::contour_slices_include_adjacent_line_arc_crossings_beyond_shared_endpoint ... ok
+test geometry::tests::non_finite_ui_values_are_reported_before_exact_lifting ... ok
+test geometry::tests::shape_offset_clips_between_nearby_loops ... ok
+test geometry::tests::contour_slices_handle_dense_multipolygon_style_linework ... ok
+test geometry::tests::clipped_offsets_handle_line_arc_corners ... ok
+test geometry::tests::contour_slices_include_nonadjacent_line_arc_self_intersections ... ok
+test corner_scenes::tests::only_the_intended_arc_joins_are_smooth ... ok
+test geometry::tests::display_offset_clips_default_article_shape ... ok
+test geometry::tests::contour_slices_keep_display_fragments_for_self_arc_events ... ok
+test geometry::tests::clipped_offsets_handle_arc_arc_corners ... ok
+test geometry::tests::contour_slices_keep_display_fragments_for_small_arc_triangle ... ok
+test geometry::tests::contour_slices_keep_display_fragments_for_many_line_arc_events ... ok
+test scenes::tests::multi_defaults_are_sorted_into_material_and_hole_bins ... ok
+test share::tests::invalid_base64_state_is_rejected ... ok
+test share::tests::share_url_replaces_existing_state_and_keeps_hash ... ok
+test share::tests::state_round_trips_through_url_safe_encoding ... ok
+test scenes::tests::multi_offset_default_scene_produces_first_visible_offset ... ok
+test scenes::tests::polyline_offset_default_scene_produces_visible_offsets ... ok
+test torture_scene::tests::generator_builds_two_requested_sparse_layers ... ok
+test corner_scenes::tests::corner_region_has_an_irregular_outer_loop_and_four_unique_holes ... ok
+test corner_scenes::tests::every_non_smooth_corner_is_edited_at_both_slider_extremes ... ok
+test torture_scene::tests::one_fuzzed_pair_resolves_every_boolean ... ok
+test scenes::tests::default_state_matches_requested_share_url_layout ... ok
+test torture_scene::tests::boolean_batches_append_to_the_exact_result_buffer ... ok
+test scenes::tests::demo_state_rejects_non_finite_offsets ... ok
+test scenes::tests::demo_state_rejects_incomplete_boolean_inputs ... ok
+test scenes::tests::demo_state_round_trips_through_share_encoding ... ok
+test scenes::tests::polyline_boolean_defaults_resolve_all_boolean_modes ... ok
+test scenes::tests::multi_boolean_defaults_resolve_all_boolean_modes ... ok
+test corner_scenes::tests::both_corner_tabs_materialize_every_boundary_at_both_slider_extremes ... ok
+test geometry::tests::clipped_offset_fuzzes_line_line_line_arc_and_arc_arc_corners ... ok
+test torture_scene::tests::default_torture_scene_materializes_thousands_of_regions ... ok
+test geometry::tests::contour_slices_fuzz_dense_intersection_sets ... ok
+test geometry::tests::contour_slices_fuzz_arc_heavy_display_state ... ok
+test scenes::tests::shared_polyline_boolean_state_resolves_all_boolean_modes ... ok
+
+test result: ok. 37 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 35.56s
+

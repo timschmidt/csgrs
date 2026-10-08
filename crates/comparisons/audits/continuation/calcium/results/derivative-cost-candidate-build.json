@@ -1,0 +1,21 @@
+{
+  "tag": "derivative-cost-candidate-build",
+  "started": "2026-09-09T04:03:03.933Z",
+  "finished": "2026-09-09T04:04:37.631Z",
+  "elapsedSeconds": 93.695766538,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/derivative-cost-candidate",
+  "command": "env",
+  "args": [
+    "CARGO_INCREMENTAL=0",
+    "CARGO_PROFILE_DEV_DEBUG=0",
+    "CARGO_BUILD_JOBS=2",
+    "CARGO_TARGET_DIR=/tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse",
+    "cargo",
+    "build",
+    "--offline",
+    "--release",
+    "--bins"
+  ],
+  "code": 0,
+  "signal": null
+}

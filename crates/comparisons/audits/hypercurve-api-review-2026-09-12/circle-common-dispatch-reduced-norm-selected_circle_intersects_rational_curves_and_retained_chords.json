@@ -1,0 +1,6 @@
+{
+  "name": "curve_intersection::curve_support_intersection::circle_dispatch_tests::selected_circle_intersects_rational_curves_and_retained_chords",
+  "returncode": 0,
+  "elapsed_seconds": 0.5643562099867268,
+  "log": "circle-common-dispatch-reduced-norm-selected_circle_intersects_rational_curves_and_retained_chords.log"
+}

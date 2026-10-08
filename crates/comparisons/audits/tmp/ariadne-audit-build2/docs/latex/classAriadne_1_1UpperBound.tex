@@ -1,0 +1,273 @@
+\doxysubsection{Upper\+Bound\texorpdfstring{$<$}{<} X \texorpdfstring{$>$}{>} Class Template Reference}
+\hypertarget{classAriadne_1_1UpperBound}{}\label{classAriadne_1_1UpperBound}\index{UpperBound$<$ X $>$@{UpperBound$<$ X $>$}}
+
+
+{\ttfamily \#include $<$float\+\_\+upper\+\_\+bound.\+hpp$>$}
+
+
+
+\doxysubsubsection{Description}
+\subsubsection*{template$<$class X$>$\newline
+class Ariadne\+::\+Upper\+Bound$<$ X $>$}
+Floating-\/point upper bounds for real numbers. 
+
+\begin{DoxySeeAlso}{See also}
+\doxylink{classAriadne_1_1UpperReal}{Upper\+Real}, \doxylink{namespaceAriadne_af915b9f1459c9691328efa71c6f39c6e}{Float\+DP}, \doxylink{namespaceAriadne_a07966b67e613cc8779412beecb60651d}{Float\+MP}, \doxylink{classAriadne_1_1Bounds}{Bounds}, \doxylink{classAriadne_1_1LowerBound}{Lower\+Bound}. 
+\end{DoxySeeAlso}
+\doxysubsubsubsection*{Public Types}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1UpperBound_a2976631bb8beb77ecbba16c01a7eb94f}\label{classAriadne_1_1UpperBound_a2976631bb8beb77ecbba16c01a7eb94f} 
+typedef Upper\+Tag {\bfseries Paradigm}
+\item 
+\Hypertarget{classAriadne_1_1UpperBound_a0e0c2c7d684edc25ac53c6920cbfd932}\label{classAriadne_1_1UpperBound_a0e0c2c7d684edc25ac53c6920cbfd932} 
+typedef \mbox{\hyperlink{classAriadne_1_1UpperBound}{Upper\+Bound}}$<$ F $>$ {\bfseries Numeric\+Type}
+\item 
+\Hypertarget{classAriadne_1_1UpperBound_a7f9b14c19a78a1190af79206f23c4680}\label{classAriadne_1_1UpperBound_a7f9b14c19a78a1190af79206f23c4680} 
+typedef \mbox{\hyperlink{classAriadne_1_1UpperNumber}{Validated\+Upper\+Number}} {\bfseries Generic\+Type}
+\item 
+\Hypertarget{classAriadne_1_1UpperBound_a9f44c412812f88eb23a7be7e44de50f2}\label{classAriadne_1_1UpperBound_a9f44c412812f88eb23a7be7e44de50f2} 
+typedef F {\bfseries Raw\+Type}
+\item 
+\Hypertarget{classAriadne_1_1UpperBound_ada08cc26488a5693eb7e60f9dda08200}\label{classAriadne_1_1UpperBound_ada08cc26488a5693eb7e60f9dda08200} 
+typedef PR {\bfseries Precision\+Type}
+\item 
+\Hypertarget{classAriadne_1_1UpperBound_a2f339bdd2edca4df6e4edf6ad3057f29}\label{classAriadne_1_1UpperBound_a2f339bdd2edca4df6e4edf6ad3057f29} 
+typedef PR {\bfseries Characteristics\+Type}
+\end{DoxyCompactItemize}
+\doxysubsubsubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1UpperBound_a37ae8402e2eafa9a0c5eabad917b8780}\label{classAriadne_1_1UpperBound_a37ae8402e2eafa9a0c5eabad917b8780} 
+{\bfseries Upper\+Bound} (\mbox{\hyperlink{classAriadne_1_1UpperBound_ada08cc26488a5693eb7e60f9dda08200}{Precision\+Type}} pr)
+\begin{DoxyCompactList}\small\item\em A upper bound of zero with precision {\itshape pr}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1UpperBound_a38fb15d7176f1d0e405e3179a084aa88}\label{classAriadne_1_1UpperBound_a38fb15d7176f1d0e405e3179a084aa88} 
+{\bfseries Upper\+Bound} (\mbox{\hyperlink{classAriadne_1_1UpperBound_a9f44c412812f88eb23a7be7e44de50f2}{Raw\+Type}} const \&u)
+\begin{DoxyCompactList}\small\item\em A upper bound with value {\itshape u}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1UpperBound_ab5271ed374dd89acdebea16d77df7a8b}\label{classAriadne_1_1UpperBound_ab5271ed374dd89acdebea16d77df7a8b} 
+{\bfseries Upper\+Bound} (const \mbox{\hyperlink{classAriadne_1_1UpperNumber}{Validated\+Upper\+Number}} \&y, PR pr)
+\begin{DoxyCompactList}\small\item\em A upper bound of type {\ttfamily F} from a generic upper bound {\itshape y}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1UpperBound_ab57f53c5d0ed535a20c561d279b6952e}\label{classAriadne_1_1UpperBound_ab57f53c5d0ed535a20c561d279b6952e} 
+{\bfseries Upper\+Bound} (\mbox{\hyperlink{classAriadne_1_1Bounds}{Bounds}}$<$ F $>$ const \&x)
+\begin{DoxyCompactList}\small\item\em Convert from upper {\itshape and} lower bounds on a number. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1UpperBound_ab6fc39a1614293640724d765b2064e05}\label{classAriadne_1_1UpperBound_ab6fc39a1614293640724d765b2064e05} 
+\mbox{\hyperlink{classAriadne_1_1UpperBound}{Upper\+Bound}}$<$ F $>$ \& {\bfseries operator=} (const \mbox{\hyperlink{classAriadne_1_1UpperNumber}{Validated\+Upper\+Number}} \&y)
+\begin{DoxyCompactList}\small\item\em Assign from the upper bound {\itshape y}, keeping the same properties. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1UpperBound_a95cdb97b5f24ef6f90d71726ad75ee0e}\label{classAriadne_1_1UpperBound_a95cdb97b5f24ef6f90d71726ad75ee0e} 
+\mbox{\hyperlink{classAriadne_1_1UpperBound}{Upper\+Bound}}$<$ F $>$ {\bfseries create} (const \mbox{\hyperlink{classAriadne_1_1UpperNumber}{Validated\+Upper\+Number}} \&y) const
+\begin{DoxyCompactList}\small\item\em Create a upper bound from the generic upper bound {\itshape y} with the same properties as {\itshape this}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1UpperBound_a1c2e0117d262b2871948de4105ff1ad0}\label{classAriadne_1_1UpperBound_a1c2e0117d262b2871948de4105ff1ad0} 
+\mbox{\hyperlink{classAriadne_1_1LowerBound}{Lower\+Bound}}$<$ F $>$ {\bfseries create} (const \mbox{\hyperlink{classAriadne_1_1LowerNumber}{Validated\+Lower\+Number}} \&y) const
+\begin{DoxyCompactList}\small\item\em Create a lower bound from the generic lower bound {\itshape y} with the same properties as {\itshape this}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1UpperBound_a287cf4f64cbc8c3a57cac6b903b32ccf}\label{classAriadne_1_1UpperBound_a287cf4f64cbc8c3a57cac6b903b32ccf} 
+{\bfseries operator Validated\+Upper\+Number} () const
+\begin{DoxyCompactList}\small\item\em Downcast to a generic upper bound. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1UpperBound_ad6bf2be97424a4ac1b4d9f6ca1cc2324}\label{classAriadne_1_1UpperBound_ad6bf2be97424a4ac1b4d9f6ca1cc2324} 
+\mbox{\hyperlink{classAriadne_1_1UpperBound_ada08cc26488a5693eb7e60f9dda08200}{Precision\+Type}} {\bfseries precision} () const
+\begin{DoxyCompactList}\small\item\em The precision of the floating-\/point type used. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1UpperBound_a5d56faca91b250e16f0d60db804ded74}\label{classAriadne_1_1UpperBound_a5d56faca91b250e16f0d60db804ded74} 
+\mbox{\hyperlink{classAriadne_1_1UpperBound_a2f339bdd2edca4df6e4edf6ad3057f29}{Characteristics\+Type}} {\bfseries characteristics} () const
+\begin{DoxyCompactList}\small\item\em The compuational characteristics needed to create the upper bound; equivalent to the precision. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1UpperBound_a34e693c4b7bca149d60f0aa2f5ec278f}\label{classAriadne_1_1UpperBound_a34e693c4b7bca149d60f0aa2f5ec278f} 
+\mbox{\hyperlink{classAriadne_1_1UpperBound_a7f9b14c19a78a1190af79206f23c4680}{Generic\+Type}} {\bfseries generic} () const
+\begin{DoxyCompactList}\small\item\em Downcast to a generic upper bound. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1UpperBound_a6eefd851f11b68b3d05c4cd611c7b19a}\label{classAriadne_1_1UpperBound_a6eefd851f11b68b3d05c4cd611c7b19a} 
+\mbox{\hyperlink{classAriadne_1_1UpperBound_a9f44c412812f88eb23a7be7e44de50f2}{Raw\+Type}} const \& {\bfseries raw} () const
+\begin{DoxyCompactList}\small\item\em The raw data used to represent the upper bound. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1UpperBound_abe52c91c0c0e2acd9ee49bb6fc8b3369}\label{classAriadne_1_1UpperBound_abe52c91c0c0e2acd9ee49bb6fc8b3369} 
+\mbox{\hyperlink{classAriadne_1_1UpperBound_a9f44c412812f88eb23a7be7e44de50f2}{Raw\+Type}} \& {\bfseries raw} ()
+\begin{DoxyCompactList}\small\item\em A mutable reference to the raw data used to represent the upper bound. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1UpperBound_a4c0fda7346d15cc92f1aa5b2d3769e88}\label{classAriadne_1_1UpperBound_a4c0fda7346d15cc92f1aa5b2d3769e88} 
+double {\bfseries get\+\_\+d} () const
+\begin{DoxyCompactList}\small\item\em Over-\/approximate by a builtin double-\/precision value. DEPRECATED. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsubsection*{Friends}
+\begin{Indent}\textbf{ Arithmetic operators}\par
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1UpperBound_abdbc5b95e0a13e7c32097be4452139af}\label{classAriadne_1_1UpperBound_abdbc5b95e0a13e7c32097be4452139af} 
+\mbox{\hyperlink{classAriadne_1_1UpperBound}{Upper\+Bound}}$<$ F $>$ {\bfseries operator+} (\mbox{\hyperlink{classAriadne_1_1UpperBound}{Upper\+Bound}}$<$ F $>$ const \&x)
+\item 
+\Hypertarget{classAriadne_1_1UpperBound_a2504cd387e374ca6c7f15f9ddeac1ce2}\label{classAriadne_1_1UpperBound_a2504cd387e374ca6c7f15f9ddeac1ce2} 
+\mbox{\hyperlink{classAriadne_1_1UpperBound}{Upper\+Bound}}$<$ F $>$ {\bfseries operator-\/} (\mbox{\hyperlink{classAriadne_1_1LowerBound}{Lower\+Bound}}$<$ F $>$ const \&x)
+\item 
+\Hypertarget{classAriadne_1_1UpperBound_a3d2656d55ec1569401894dd6af9ddb66}\label{classAriadne_1_1UpperBound_a3d2656d55ec1569401894dd6af9ddb66} 
+\mbox{\hyperlink{classAriadne_1_1LowerBound}{Lower\+Bound}}$<$ F $>$ {\bfseries operator-\/} (\mbox{\hyperlink{classAriadne_1_1UpperBound}{Upper\+Bound}}$<$ F $>$ const \&x)
+\item 
+\Hypertarget{classAriadne_1_1UpperBound_a3870f880c03f11d39c74f48143fe0600}\label{classAriadne_1_1UpperBound_a3870f880c03f11d39c74f48143fe0600} 
+\mbox{\hyperlink{classAriadne_1_1UpperBound}{Upper\+Bound}}$<$ F $>$ {\bfseries operator+} (\mbox{\hyperlink{classAriadne_1_1UpperBound}{Upper\+Bound}}$<$ F $>$ const \&x1, \mbox{\hyperlink{classAriadne_1_1UpperBound}{Upper\+Bound}}$<$ F $>$ const \&x2)
+\item 
+\Hypertarget{classAriadne_1_1UpperBound_a3ad3799bd80fd1407d37e8f24a9a5fa5}\label{classAriadne_1_1UpperBound_a3ad3799bd80fd1407d37e8f24a9a5fa5} 
+\mbox{\hyperlink{classAriadne_1_1UpperBound}{Upper\+Bound}}$<$ F $>$ {\bfseries operator-\/} (\mbox{\hyperlink{classAriadne_1_1UpperBound}{Upper\+Bound}}$<$ F $>$ const \&x1, \mbox{\hyperlink{classAriadne_1_1LowerBound}{Lower\+Bound}}$<$ F $>$ const \&x2)
+\item 
+\Hypertarget{classAriadne_1_1UpperBound_a54ee1311883280d0e55b356e4b02d482}\label{classAriadne_1_1UpperBound_a54ee1311883280d0e55b356e4b02d482} 
+\mbox{\hyperlink{classAriadne_1_1LowerBound}{Lower\+Bound}}$<$ F $>$ {\bfseries operator-\/} (\mbox{\hyperlink{classAriadne_1_1LowerBound}{Lower\+Bound}}$<$ F $>$ const \&x1, \mbox{\hyperlink{classAriadne_1_1UpperBound}{Upper\+Bound}}$<$ F $>$ const \&x2)
+\item 
+\Hypertarget{classAriadne_1_1UpperBound_a1b3a20136cbda1e27c4f71a7a07f0980}\label{classAriadne_1_1UpperBound_a1b3a20136cbda1e27c4f71a7a07f0980} 
+\mbox{\hyperlink{classAriadne_1_1UpperBound}{Upper\+Bound}}$<$ F $>$ \& {\bfseries operator+=} (\mbox{\hyperlink{classAriadne_1_1UpperBound}{Upper\+Bound}}$<$ F $>$ \&x1, \mbox{\hyperlink{classAriadne_1_1UpperBound}{Upper\+Bound}}$<$ F $>$ const \&x2)
+\item 
+\Hypertarget{classAriadne_1_1UpperBound_af3d20ce9395be6e3727839ee26b57b85}\label{classAriadne_1_1UpperBound_af3d20ce9395be6e3727839ee26b57b85} 
+\mbox{\hyperlink{classAriadne_1_1UpperBound}{Upper\+Bound}}$<$ F $>$ \& {\bfseries operator-\/=} (\mbox{\hyperlink{classAriadne_1_1UpperBound}{Upper\+Bound}}$<$ F $>$ \&x1, \mbox{\hyperlink{classAriadne_1_1LowerBound}{Lower\+Bound}}$<$ F $>$ const \&x2)
+\item 
+\Hypertarget{classAriadne_1_1UpperBound_a46f96771391df407a094dcf4977142d2}\label{classAriadne_1_1UpperBound_a46f96771391df407a094dcf4977142d2} 
+\mbox{\hyperlink{classAriadne_1_1LowerBound}{Lower\+Bound}}$<$ F $>$ \& {\bfseries operator-\/=} (\mbox{\hyperlink{classAriadne_1_1LowerBound}{Lower\+Bound}}$<$ F $>$ \&x1, \mbox{\hyperlink{classAriadne_1_1UpperBound}{Upper\+Bound}}$<$ F $>$ const \&x2)
+\item 
+\Hypertarget{classAriadne_1_1UpperBound_aab9a8f891da543995ba3a1a2ce51b7c0}\label{classAriadne_1_1UpperBound_aab9a8f891da543995ba3a1a2ce51b7c0} 
+\mbox{\hyperlink{classAriadne_1_1Positive}{Positive}}$<$ \mbox{\hyperlink{classAriadne_1_1UpperBound}{Upper\+Bound}}$<$ F $>$ $>$ {\bfseries operator\texorpdfstring{$\ast$}{*}} (\mbox{\hyperlink{classAriadne_1_1Positive}{Positive}}$<$ \mbox{\hyperlink{classAriadne_1_1UpperBound}{Upper\+Bound}}$<$ F $>$ $>$ const \&x1, \mbox{\hyperlink{classAriadne_1_1Positive}{Positive}}$<$ \mbox{\hyperlink{classAriadne_1_1UpperBound}{Upper\+Bound}}$<$ F $>$ $>$ const \&x2)
+\item 
+\Hypertarget{classAriadne_1_1UpperBound_a07270ffef79d0ef5f7b2e7e8445d7992}\label{classAriadne_1_1UpperBound_a07270ffef79d0ef5f7b2e7e8445d7992} 
+\mbox{\hyperlink{classAriadne_1_1Positive}{Positive}}$<$ \mbox{\hyperlink{classAriadne_1_1UpperBound}{Upper\+Bound}}$<$ F $>$ $>$ {\bfseries operator/} (\mbox{\hyperlink{classAriadne_1_1Positive}{Positive}}$<$ \mbox{\hyperlink{classAriadne_1_1UpperBound}{Upper\+Bound}}$<$ F $>$ $>$ const \&x1, \mbox{\hyperlink{classAriadne_1_1Positive}{Positive}}$<$ \mbox{\hyperlink{classAriadne_1_1LowerBound}{Lower\+Bound}}$<$ F $>$ $>$ const \&x2)
+\item 
+\Hypertarget{classAriadne_1_1UpperBound_a35fa7e39860c1657ed781d0ea2204008}\label{classAriadne_1_1UpperBound_a35fa7e39860c1657ed781d0ea2204008} 
+\mbox{\hyperlink{classAriadne_1_1Positive}{Positive}}$<$ \mbox{\hyperlink{classAriadne_1_1LowerBound}{Lower\+Bound}}$<$ F $>$ $>$ {\bfseries operator/} (\mbox{\hyperlink{classAriadne_1_1Positive}{Positive}}$<$ \mbox{\hyperlink{classAriadne_1_1LowerBound}{Lower\+Bound}}$<$ F $>$ $>$ const \&x1, \mbox{\hyperlink{classAriadne_1_1Positive}{Positive}}$<$ \mbox{\hyperlink{classAriadne_1_1UpperBound}{Upper\+Bound}}$<$ F $>$ $>$ const \&x2)
+\item 
+\Hypertarget{classAriadne_1_1UpperBound_ab203d656593b90eefbfc8939a21ea247}\label{classAriadne_1_1UpperBound_ab203d656593b90eefbfc8939a21ea247} 
+\mbox{\hyperlink{classAriadne_1_1Positive}{Positive}}$<$ \mbox{\hyperlink{classAriadne_1_1UpperBound}{Upper\+Bound}}$<$ F $>$ $>$ \& {\bfseries operator+=} (\mbox{\hyperlink{classAriadne_1_1Positive}{Positive}}$<$ \mbox{\hyperlink{classAriadne_1_1UpperBound}{Upper\+Bound}}$<$ F $>$ $>$ \&x1, \mbox{\hyperlink{classAriadne_1_1Positive}{Positive}}$<$ \mbox{\hyperlink{classAriadne_1_1UpperBound}{Upper\+Bound}}$<$ F $>$ $>$ const \&x2)
+\item 
+\Hypertarget{classAriadne_1_1UpperBound_a0f12c0e8600f082ffdfa9d4f8a41e6aa}\label{classAriadne_1_1UpperBound_a0f12c0e8600f082ffdfa9d4f8a41e6aa} 
+\mbox{\hyperlink{classAriadne_1_1Positive}{Positive}}$<$ \mbox{\hyperlink{classAriadne_1_1UpperBound}{Upper\+Bound}}$<$ F $>$ $>$ \& {\bfseries operator\texorpdfstring{$\ast$}{*}=} (\mbox{\hyperlink{classAriadne_1_1Positive}{Positive}}$<$ \mbox{\hyperlink{classAriadne_1_1UpperBound}{Upper\+Bound}}$<$ F $>$ $>$ \&x1, \mbox{\hyperlink{classAriadne_1_1Positive}{Positive}}$<$ \mbox{\hyperlink{classAriadne_1_1UpperBound}{Upper\+Bound}}$<$ F $>$ $>$ const \&x2)
+\item 
+\Hypertarget{classAriadne_1_1UpperBound_a2dc40ff13b6c289dc627da776221f609}\label{classAriadne_1_1UpperBound_a2dc40ff13b6c289dc627da776221f609} 
+\mbox{\hyperlink{classAriadne_1_1Positive}{Positive}}$<$ \mbox{\hyperlink{classAriadne_1_1UpperBound}{Upper\+Bound}}$<$ F $>$ $>$ \& {\bfseries operator/=} (\mbox{\hyperlink{classAriadne_1_1Positive}{Positive}}$<$ \mbox{\hyperlink{classAriadne_1_1UpperBound}{Upper\+Bound}}$<$ F $>$ $>$ \&x1, \mbox{\hyperlink{classAriadne_1_1Positive}{Positive}}$<$ \mbox{\hyperlink{classAriadne_1_1LowerBound}{Lower\+Bound}}$<$ F $>$ $>$ const \&x2)
+\item 
+\Hypertarget{classAriadne_1_1UpperBound_a5225df7be0facee42221bad4e87b8100}\label{classAriadne_1_1UpperBound_a5225df7be0facee42221bad4e87b8100} 
+\mbox{\hyperlink{classAriadne_1_1Positive}{Positive}}$<$ \mbox{\hyperlink{classAriadne_1_1LowerBound}{Lower\+Bound}}$<$ F $>$ $>$ \& {\bfseries operator/=} (\mbox{\hyperlink{classAriadne_1_1Positive}{Positive}}$<$ \mbox{\hyperlink{classAriadne_1_1LowerBound}{Lower\+Bound}}$<$ F $>$ $>$ \&x1, \mbox{\hyperlink{classAriadne_1_1Positive}{Positive}}$<$ \mbox{\hyperlink{classAriadne_1_1UpperBound}{Upper\+Bound}}$<$ F $>$ $>$ const \&x2)
+\end{DoxyCompactItemize}
+\end{Indent}
+\begin{Indent}\textbf{ Comparison operators}\par
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1UpperBound_a877bb4f25db76d4c9b1436a734997909}\label{classAriadne_1_1UpperBound_a877bb4f25db76d4c9b1436a734997909} 
+\mbox{\hyperlink{classAriadne_1_1ValidatedLowerKleenean}{Validated\+Lower\+Kleenean}} {\bfseries operator$<$=} (\mbox{\hyperlink{classAriadne_1_1UpperBound}{Upper\+Bound}}$<$ F $>$ const \&x1, \mbox{\hyperlink{classAriadne_1_1LowerBound}{Lower\+Bound}}$<$ F $>$ const \&x2)
+\item 
+\Hypertarget{classAriadne_1_1UpperBound_a429cfef3f48c374157465a0eec07b3ba}\label{classAriadne_1_1UpperBound_a429cfef3f48c374157465a0eec07b3ba} 
+\mbox{\hyperlink{classAriadne_1_1ValidatedUpperKleenean}{Validated\+Upper\+Kleenean}} {\bfseries operator$>$=} (\mbox{\hyperlink{classAriadne_1_1UpperBound}{Upper\+Bound}}$<$ F $>$ const \&x1, \mbox{\hyperlink{classAriadne_1_1LowerBound}{Lower\+Bound}}$<$ F $>$ const \&x2)
+\item 
+\Hypertarget{classAriadne_1_1UpperBound_a00191ff68c1f79052ee208c8cc77b234}\label{classAriadne_1_1UpperBound_a00191ff68c1f79052ee208c8cc77b234} 
+\mbox{\hyperlink{classAriadne_1_1ValidatedLowerKleenean}{Validated\+Lower\+Kleenean}} {\bfseries operator$<$} (\mbox{\hyperlink{classAriadne_1_1UpperBound}{Upper\+Bound}}$<$ F $>$ const \&x1, \mbox{\hyperlink{classAriadne_1_1LowerBound}{Lower\+Bound}}$<$ F $>$ const \&x2)
+\item 
+\Hypertarget{classAriadne_1_1UpperBound_af66b16351db54365b25874f69b38b968}\label{classAriadne_1_1UpperBound_af66b16351db54365b25874f69b38b968} 
+\mbox{\hyperlink{classAriadne_1_1ValidatedUpperKleenean}{Validated\+Upper\+Kleenean}} {\bfseries operator$>$} (\mbox{\hyperlink{classAriadne_1_1UpperBound}{Upper\+Bound}}$<$ F $>$ const \&x1, \mbox{\hyperlink{classAriadne_1_1LowerBound}{Lower\+Bound}}$<$ F $>$ const \&x2)
+\item 
+\Hypertarget{classAriadne_1_1UpperBound_a975c7751d0f8052c0d1876ee5daf32c8}\label{classAriadne_1_1UpperBound_a975c7751d0f8052c0d1876ee5daf32c8} 
+\mbox{\hyperlink{classAriadne_1_1ValidatedUpperKleenean}{Validated\+Upper\+Kleenean}} {\bfseries operator$<$=} (\mbox{\hyperlink{classAriadne_1_1LowerBound}{Lower\+Bound}}$<$ F $>$ const \&x1, \mbox{\hyperlink{classAriadne_1_1UpperBound}{Upper\+Bound}}$<$ F $>$ const \&x2)
+\item 
+\Hypertarget{classAriadne_1_1UpperBound_ab35a55fd52d636fc06cd079d059cf8ce}\label{classAriadne_1_1UpperBound_ab35a55fd52d636fc06cd079d059cf8ce} 
+\mbox{\hyperlink{classAriadne_1_1ValidatedLowerKleenean}{Validated\+Lower\+Kleenean}} {\bfseries operator$>$=} (\mbox{\hyperlink{classAriadne_1_1LowerBound}{Lower\+Bound}}$<$ F $>$ const \&x1, \mbox{\hyperlink{classAriadne_1_1UpperBound}{Upper\+Bound}}$<$ F $>$ const \&x2)
+\item 
+\Hypertarget{classAriadne_1_1UpperBound_a0dfc50f11056da0b72ababa23e8c0a26}\label{classAriadne_1_1UpperBound_a0dfc50f11056da0b72ababa23e8c0a26} 
+\mbox{\hyperlink{classAriadne_1_1ValidatedUpperKleenean}{Validated\+Upper\+Kleenean}} {\bfseries operator$<$} (\mbox{\hyperlink{classAriadne_1_1LowerBound}{Lower\+Bound}}$<$ F $>$ const \&x1, \mbox{\hyperlink{classAriadne_1_1UpperBound}{Upper\+Bound}}$<$ F $>$ const \&x2)
+\item 
+\Hypertarget{classAriadne_1_1UpperBound_a53f7097cd4b7e6f5d74ee40f73512c24}\label{classAriadne_1_1UpperBound_a53f7097cd4b7e6f5d74ee40f73512c24} 
+\mbox{\hyperlink{classAriadne_1_1ValidatedLowerKleenean}{Validated\+Lower\+Kleenean}} {\bfseries operator$>$} (\mbox{\hyperlink{classAriadne_1_1LowerBound}{Lower\+Bound}}$<$ F $>$ const \&x1, \mbox{\hyperlink{classAriadne_1_1UpperBound}{Upper\+Bound}}$<$ F $>$ const \&x2)
+\end{DoxyCompactItemize}
+\end{Indent}
+\begin{Indent}\textbf{ Monotone arithmetic operations}\par
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1UpperBound_a99c11f7964b4e9dea4e4874ba7628b37}\label{classAriadne_1_1UpperBound_a99c11f7964b4e9dea4e4874ba7628b37} 
+\mbox{\hyperlink{classAriadne_1_1UpperBound}{Upper\+Bound}}$<$ F $>$ {\bfseries nul} (\mbox{\hyperlink{classAriadne_1_1UpperBound}{Upper\+Bound}}$<$ F $>$ const \&x)
+\item 
+\Hypertarget{classAriadne_1_1UpperBound_a84f33fe25c13cc42ce3e2a718dd5d13d}\label{classAriadne_1_1UpperBound_a84f33fe25c13cc42ce3e2a718dd5d13d} 
+\mbox{\hyperlink{classAriadne_1_1UpperBound}{Upper\+Bound}}$<$ F $>$ {\bfseries pos} (\mbox{\hyperlink{classAriadne_1_1UpperBound}{Upper\+Bound}}$<$ F $>$ const \&x)
+\item 
+\Hypertarget{classAriadne_1_1UpperBound_a39c7c56ffcccc26e6e72a2714e73e533}\label{classAriadne_1_1UpperBound_a39c7c56ffcccc26e6e72a2714e73e533} 
+\mbox{\hyperlink{classAriadne_1_1LowerBound}{Lower\+Bound}}$<$ F $>$ {\bfseries neg} (\mbox{\hyperlink{classAriadne_1_1UpperBound}{Upper\+Bound}}$<$ F $>$ const \&x)
+\item 
+\Hypertarget{classAriadne_1_1UpperBound_ad46b54092dc5273c231fb0af830a9dae}\label{classAriadne_1_1UpperBound_ad46b54092dc5273c231fb0af830a9dae} 
+\mbox{\hyperlink{classAriadne_1_1UpperBound}{Upper\+Bound}}$<$ F $>$ {\bfseries hlf} (\mbox{\hyperlink{classAriadne_1_1UpperBound}{Upper\+Bound}}$<$ F $>$ const \&x)
+\item 
+\Hypertarget{classAriadne_1_1UpperBound_a2844742016a158ceffd124da9bfd8072}\label{classAriadne_1_1UpperBound_a2844742016a158ceffd124da9bfd8072} 
+\mbox{\hyperlink{classAriadne_1_1UpperBound}{Upper\+Bound}}$<$ F $>$ {\bfseries add} (\mbox{\hyperlink{classAriadne_1_1UpperBound}{Upper\+Bound}}$<$ F $>$ const \&x1, \mbox{\hyperlink{classAriadne_1_1UpperBound}{Upper\+Bound}}$<$ F $>$ const \&x2)
+\item 
+\Hypertarget{classAriadne_1_1UpperBound_ad1a755c2219d77eeaec29db0f9ba31a5}\label{classAriadne_1_1UpperBound_ad1a755c2219d77eeaec29db0f9ba31a5} 
+\mbox{\hyperlink{classAriadne_1_1UpperBound}{Upper\+Bound}}$<$ F $>$ {\bfseries sub} (\mbox{\hyperlink{classAriadne_1_1UpperBound}{Upper\+Bound}}$<$ F $>$ const \&x1, \mbox{\hyperlink{classAriadne_1_1LowerBound}{Lower\+Bound}}$<$ F $>$ const \&x2)
+\end{DoxyCompactItemize}
+\end{Indent}
+\begin{Indent}\textbf{ Monotone algebraic and transcendental operations}\par
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1UpperBound_a4e2bbe5eda261654d0a31dc8dbdc40d7}\label{classAriadne_1_1UpperBound_a4e2bbe5eda261654d0a31dc8dbdc40d7} 
+\mbox{\hyperlink{classAriadne_1_1Positive}{Positive}}$<$ \mbox{\hyperlink{classAriadne_1_1UpperBound}{Upper\+Bound}}$<$ F $>$ $>$ {\bfseries sqrt} (\mbox{\hyperlink{classAriadne_1_1Positive}{Positive}}$<$ \mbox{\hyperlink{classAriadne_1_1UpperBound}{Upper\+Bound}}$<$ F $>$ $>$ const \&x)
+\item 
+\Hypertarget{classAriadne_1_1UpperBound_a39caf3c31b682524efa1d0d8699a569a}\label{classAriadne_1_1UpperBound_a39caf3c31b682524efa1d0d8699a569a} 
+\mbox{\hyperlink{classAriadne_1_1Positive}{Positive}}$<$ \mbox{\hyperlink{classAriadne_1_1UpperBound}{Upper\+Bound}}$<$ F $>$ $>$ {\bfseries exp} (\mbox{\hyperlink{classAriadne_1_1UpperBound}{Upper\+Bound}}$<$ F $>$ const \&x)
+\item 
+\Hypertarget{classAriadne_1_1UpperBound_af36389eec2fc7f25c2c2ae29239175d0}\label{classAriadne_1_1UpperBound_af36389eec2fc7f25c2c2ae29239175d0} 
+\mbox{\hyperlink{classAriadne_1_1UpperBound}{Upper\+Bound}}$<$ F $>$ {\bfseries log} (\mbox{\hyperlink{classAriadne_1_1Positive}{Positive}}$<$ \mbox{\hyperlink{classAriadne_1_1UpperBound}{Upper\+Bound}}$<$ F $>$ $>$ const \&x)
+\item 
+\Hypertarget{classAriadne_1_1UpperBound_a085c4eeaa4de9511a664db37d9f0018e}\label{classAriadne_1_1UpperBound_a085c4eeaa4de9511a664db37d9f0018e} 
+\mbox{\hyperlink{classAriadne_1_1UpperBound}{Upper\+Bound}}$<$ F $>$ {\bfseries atan} (\mbox{\hyperlink{classAriadne_1_1UpperBound}{Upper\+Bound}}$<$ F $>$ const \&x)
+\item 
+\Hypertarget{classAriadne_1_1UpperBound_a85de579a314725617f2e5b2547c8a5cd}\label{classAriadne_1_1UpperBound_a85de579a314725617f2e5b2547c8a5cd} 
+\mbox{\hyperlink{classAriadne_1_1Positive}{Positive}}$<$ \mbox{\hyperlink{classAriadne_1_1UpperBound}{Upper\+Bound}}$<$ F $>$ $>$ {\bfseries atan} (\mbox{\hyperlink{classAriadne_1_1Positive}{Positive}}$<$ \mbox{\hyperlink{classAriadne_1_1UpperBound}{Upper\+Bound}}$<$ F $>$ $>$ const \&x)
+\end{DoxyCompactItemize}
+\end{Indent}
+\begin{Indent}\textbf{ Lattice operations}\par
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1UpperBound_a97c1b0ea52f2aa75bc326651088a84a2}\label{classAriadne_1_1UpperBound_a97c1b0ea52f2aa75bc326651088a84a2} 
+\mbox{\hyperlink{classAriadne_1_1UpperBound}{Upper\+Bound}}$<$ F $>$ {\bfseries max} (\mbox{\hyperlink{classAriadne_1_1UpperBound}{Upper\+Bound}}$<$ F $>$ const \&x1, \mbox{\hyperlink{classAriadne_1_1UpperBound}{Upper\+Bound}}$<$ F $>$ const \&x2)
+\item 
+\Hypertarget{classAriadne_1_1UpperBound_a380310219cc4f5b74933de8650981a42}\label{classAriadne_1_1UpperBound_a380310219cc4f5b74933de8650981a42} 
+\mbox{\hyperlink{classAriadne_1_1UpperBound}{Upper\+Bound}}$<$ F $>$ {\bfseries min} (\mbox{\hyperlink{classAriadne_1_1UpperBound}{Upper\+Bound}}$<$ F $>$ const \&x1, \mbox{\hyperlink{classAriadne_1_1UpperBound}{Upper\+Bound}}$<$ F $>$ const \&x2)
+\item 
+\Hypertarget{classAriadne_1_1UpperBound_a3fb3353afc339e4e89724dc167ad7577}\label{classAriadne_1_1UpperBound_a3fb3353afc339e4e89724dc167ad7577} 
+\mbox{\hyperlink{classAriadne_1_1Approximation}{Approximation}}$<$ F $>$ {\bfseries abs} (\mbox{\hyperlink{classAriadne_1_1UpperBound}{Upper\+Bound}}$<$ F $>$ const \&x)
+\end{DoxyCompactItemize}
+\end{Indent}
+\begin{Indent}\textbf{ Comparison operations}\par
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1UpperBound_a71329509206a5b4f86bfac842bf8ec50}\label{classAriadne_1_1UpperBound_a71329509206a5b4f86bfac842bf8ec50} 
+\mbox{\hyperlink{classAriadne_1_1ValidatedNegatedSierpinskian}{Validated\+Negated\+Sierpinskian}} {\bfseries eq} (\mbox{\hyperlink{classAriadne_1_1UpperBound}{Upper\+Bound}}$<$ F $>$ const \&x1, \mbox{\hyperlink{classAriadne_1_1LowerBound}{Lower\+Bound}}$<$ F $>$ const \&x2)
+\item 
+\Hypertarget{classAriadne_1_1UpperBound_ab7fd4b4be020de318dbf9e40c6d5d300}\label{classAriadne_1_1UpperBound_ab7fd4b4be020de318dbf9e40c6d5d300} 
+\mbox{\hyperlink{classAriadne_1_1ValidatedLowerKleenean}{Validated\+Lower\+Kleenean}} {\bfseries lt} (\mbox{\hyperlink{classAriadne_1_1UpperBound}{Upper\+Bound}}$<$ F $>$ const \&x1, \mbox{\hyperlink{classAriadne_1_1LowerBound}{Lower\+Bound}}$<$ F $>$ const \&x2)
+\end{DoxyCompactItemize}
+\end{Indent}
+\begin{Indent}\textbf{ Rounding operations}\par
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1UpperBound_ac8e86783718d1bdb2f51a5a1f6b34030}\label{classAriadne_1_1UpperBound_ac8e86783718d1bdb2f51a5a1f6b34030} 
+\mbox{\hyperlink{classAriadne_1_1Integer}{Integer}} {\bfseries cast\+\_\+integer} (\mbox{\hyperlink{classAriadne_1_1UpperBound}{Upper\+Bound}}$<$ F $>$ const \&x)
+\end{DoxyCompactItemize}
+\end{Indent}
+\begin{Indent}\textbf{ Special value tests}\par
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1UpperBound_a2a535a14af9577471c879d4d1cb93b73}\label{classAriadne_1_1UpperBound_a2a535a14af9577471c879d4d1cb93b73} 
+\mbox{\hyperlink{namespaceAriadne_a76a8b016e5ad61faf9062cc387df5016}{Bool}} {\bfseries is\+\_\+nan} (\mbox{\hyperlink{classAriadne_1_1UpperBound}{Upper\+Bound}}$<$ F $>$ const \&x)
+\end{DoxyCompactItemize}
+\end{Indent}
+\begin{Indent}\textbf{ Validated information tests and operations}\par
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1UpperBound_a8bd28812110fa3e9ac54525ece719e3b}\label{classAriadne_1_1UpperBound_a8bd28812110fa3e9ac54525ece719e3b} 
+\mbox{\hyperlink{namespaceAriadne_a76a8b016e5ad61faf9062cc387df5016}{Bool}} {\bfseries same} (\mbox{\hyperlink{classAriadne_1_1UpperBound}{Upper\+Bound}}$<$ F $>$ const \&x1, \mbox{\hyperlink{classAriadne_1_1UpperBound}{Upper\+Bound}}$<$ F $>$ const \&x2)
+\item 
+\Hypertarget{classAriadne_1_1UpperBound_a6f39a627968502be698890cf286672a1}\label{classAriadne_1_1UpperBound_a6f39a627968502be698890cf286672a1} 
+\mbox{\hyperlink{namespaceAriadne_a76a8b016e5ad61faf9062cc387df5016}{Bool}} {\bfseries refines} (\mbox{\hyperlink{classAriadne_1_1UpperBound}{Upper\+Bound}}$<$ F $>$ const \&x1, \mbox{\hyperlink{classAriadne_1_1UpperBound}{Upper\+Bound}}$<$ F $>$ const \&x2)
+\item 
+\Hypertarget{classAriadne_1_1UpperBound_a90323f67e831aa12c91b1eaf9eee4283}\label{classAriadne_1_1UpperBound_a90323f67e831aa12c91b1eaf9eee4283} 
+\mbox{\hyperlink{classAriadne_1_1UpperBound}{Upper\+Bound}}$<$ F $>$ {\bfseries refinement} (\mbox{\hyperlink{classAriadne_1_1UpperBound}{Upper\+Bound}}$<$ F $>$ const \&x1, \mbox{\hyperlink{classAriadne_1_1UpperBound}{Upper\+Bound}}$<$ F $>$ const \&x2)
+\end{DoxyCompactItemize}
+\end{Indent}
+\begin{Indent}\textbf{ Input/output operations}\par
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1UpperBound_a47c9eda0d906442f0f8e55cd0251398d}\label{classAriadne_1_1UpperBound_a47c9eda0d906442f0f8e55cd0251398d} 
+\mbox{\hyperlink{namespaceAriadne_acbb98ddc4385af4599070e65a1a47ec1}{Output\+Stream}} \& {\bfseries operator$<$$<$} (\mbox{\hyperlink{namespaceAriadne_acbb98ddc4385af4599070e65a1a47ec1}{Output\+Stream}} \&os, \mbox{\hyperlink{classAriadne_1_1UpperBound}{Upper\+Bound}}$<$ F $>$ const \&x)
+\begin{DoxyCompactList}\small\item\em Write to an output stream. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1UpperBound_a60e89fe6cc87dc67b599d62930988527}\label{classAriadne_1_1UpperBound_a60e89fe6cc87dc67b599d62930988527} 
+\mbox{\hyperlink{namespaceAriadne_a3c42889d7ee562011f1dc63874e51d0e}{Input\+Stream}} \& {\bfseries operator$>$$>$} (\mbox{\hyperlink{namespaceAriadne_a3c42889d7ee562011f1dc63874e51d0e}{Input\+Stream}} \&is, \mbox{\hyperlink{classAriadne_1_1UpperBound}{Upper\+Bound}}$<$ F $>$ \&x)
+\begin{DoxyCompactList}\small\item\em Read from an input stream. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\end{Indent}
+
+
+The documentation for this class was generated from the following files\+:\begin{DoxyCompactItemize}
+\item 
+source/numeric/\mbox{\hyperlink{float_8decl_8hpp}{float.\+decl.\+hpp}}\item 
+source/numeric/\mbox{\hyperlink{float__upper__bound_8hpp}{float\+\_\+upper\+\_\+bound.\+hpp}}\item 
+source/numeric/floatdp.\+cpp\item 
+source/numeric/\mbox{\hyperlink{floatmp_8cpp}{floatmp.\+cpp}}\item 
+source/numeric/float\+\_\+upper\+\_\+bound.\+tpl.\+hpp\end{DoxyCompactItemize}

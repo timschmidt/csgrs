@@ -1,0 +1,68 @@
+\doxysubsection{Interpolated\+Curve Class Reference}
+\hypertarget{classAriadne_1_1InterpolatedCurve}{}\label{classAriadne_1_1InterpolatedCurve}\index{InterpolatedCurve@{InterpolatedCurve}}
+
+
+{\ttfamily \#include $<$curve.\+hpp$>$}
+
+
+
+\doxysubsubsection{Description}
+A linearly interpolated curve in Euclidean space. Inheritance diagram for Interpolated\+Curve\+:\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[height=3.000000cm]{classAriadne_1_1InterpolatedCurve}
+\end{center}
+\end{figure}
+\doxysubsubsubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1InterpolatedCurve_a39273447c8827f088a203d143f29fba7}\label{classAriadne_1_1InterpolatedCurve_a39273447c8827f088a203d143f29fba7} 
+{\bfseries Interpolated\+Curve} ()
+\begin{DoxyCompactList}\small\item\em Create an empty curve. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1InterpolatedCurve_a6d474613b4731a26384802892a1e1820}\label{classAriadne_1_1InterpolatedCurve_a6d474613b4731a26384802892a1e1820} 
+{\bfseries Interpolated\+Curve} (const \mbox{\hyperlink{classAriadne_1_1Point}{Point\+Type}} \&pt)
+\begin{DoxyCompactList}\small\item\em Create a curve with a single point {\itshape pt} at parameter value 0. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1InterpolatedCurve_a6e47ce81e547b94874d3f19c47409df8}\label{classAriadne_1_1InterpolatedCurve_a6e47ce81e547b94874d3f19c47409df8} 
+{\bfseries Interpolated\+Curve} (Parameter\+Type s, const \mbox{\hyperlink{classAriadne_1_1Point}{Point\+Type}} \&pt)
+\begin{DoxyCompactList}\small\item\em Create a curve with a single point {\itshape pt} at parameter value {\itshape s}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1InterpolatedCurve_a79767565c93bc8391bbd30c9044f2eec}\label{classAriadne_1_1InterpolatedCurve_a79767565c93bc8391bbd30c9044f2eec} 
+{\bfseries Interpolated\+Curve} (const \mbox{\hyperlink{classAriadne_1_1Point}{Point\+Type}} \&pt0, const \mbox{\hyperlink{classAriadne_1_1Point}{Point\+Type}} \&pt1)
+\begin{DoxyCompactList}\small\item\em Create a segment from {\itshape pt0} at parameter value 0 to {\itshape pt1} at parameter value 1. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1InterpolatedCurve_a10acf5e389bd22d398b5ed74eb2a2277}\label{classAriadne_1_1InterpolatedCurve_a10acf5e389bd22d398b5ed74eb2a2277} 
+\mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} {\bfseries insert} (const \mbox{\hyperlink{classAriadne_1_1Dyadic}{Generic\+Parameter\+Type}} \&s, const \mbox{\hyperlink{classAriadne_1_1Point}{Point\+Type}} \&pt)
+\begin{DoxyCompactList}\small\item\em Insert a point with parameter value {\itshape s} and spacial value {\itshape pt}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1InterpolatedCurve_a0472c48c2838a924eac36b19cbe017d0}\label{classAriadne_1_1InterpolatedCurve_a0472c48c2838a924eac36b19cbe017d0} 
+Size\+Type {\bfseries size} () const
+\begin{DoxyCompactList}\small\item\em The number of segments in the curve. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1InterpolatedCurve_a3c1a15a3831a647991a6a2c5bbe1e029}\label{classAriadne_1_1InterpolatedCurve_a3c1a15a3831a647991a6a2c5bbe1e029} 
+Dimension\+Type {\bfseries dimension} () const
+\begin{DoxyCompactList}\small\item\em The dimension of the Euclidean space the line segment lies in. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1InterpolatedCurve_ad5fee900c7aee90671038c79225bf8ec}\label{classAriadne_1_1InterpolatedCurve_ad5fee900c7aee90671038c79225bf8ec} 
+Const\+Iterator {\bfseries begin} () const
+\begin{DoxyCompactList}\small\item\em An \doxylink{classAriadne_1_1Expansion}{Iterator} to the first point in the curve. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1InterpolatedCurve_a69b6e2a03c835ca5d658a1f16acbaa9c}\label{classAriadne_1_1InterpolatedCurve_a69b6e2a03c835ca5d658a1f16acbaa9c} 
+Const\+Iterator {\bfseries end} () const
+\begin{DoxyCompactList}\small\item\em An \doxylink{classAriadne_1_1Expansion}{Iterator} to the end point in the curve, NOT the one-\/past-\/the-\/end! \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1InterpolatedCurve_a0102ff88c7d645820b367716023876ce}\label{classAriadne_1_1InterpolatedCurve_a0102ff88c7d645820b367716023876ce} 
+virtual \mbox{\hyperlink{classAriadne_1_1InterpolatedCurve}{Interpolated\+Curve}} \texorpdfstring{$\ast$}{*} {\bfseries clone} () const
+\begin{DoxyCompactList}\small\item\em A dynamically-\/allocated copy. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1InterpolatedCurve_a86ed7114183bd4347210832b1a41532b}\label{classAriadne_1_1InterpolatedCurve_a86ed7114183bd4347210832b1a41532b} 
+virtual \mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} {\bfseries draw} (\mbox{\hyperlink{classAriadne_1_1CanvasInterface}{Canvas\+Interface}} \&c, const Projection2d \&p) const
+\begin{DoxyCompactList}\small\item\em Draw on a two-\/dimensional canvas. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1InterpolatedCurve_ab67536daaa7bd9a9c1879ffda8362343}\label{classAriadne_1_1InterpolatedCurve_ab67536daaa7bd9a9c1879ffda8362343} 
+virtual \mbox{\hyperlink{group__FunctionModule_gadb510bd9aa076e5ae44245b498901ca6}{Upper\+Box\+Type}} {\bfseries bounding\+\_\+box} () const
+\begin{DoxyCompactList}\small\item\em A bounding box for the curve. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1InterpolatedCurve_aec3050510f58e6f3fece416706247410}\label{classAriadne_1_1InterpolatedCurve_aec3050510f58e6f3fece416706247410} 
+virtual \mbox{\hyperlink{namespaceAriadne_acbb98ddc4385af4599070e65a1a47ec1}{Output\+Stream}} \& {\bfseries \+\_\+write} (\mbox{\hyperlink{namespaceAriadne_acbb98ddc4385af4599070e65a1a47ec1}{Output\+Stream}} \&os) const
+\begin{DoxyCompactList}\small\item\em Write to an output stream. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxyparagraph*{Public Member Functions inherited from \mbox{\hyperlink{classAriadne_1_1Drawable2dInterface}{Drawable2d\+Interface}}}
+\begin{DoxyCompactItemize}
+\item 
+virtual {\bfseries \texorpdfstring{$\sim$}{\string~}\+Drawable2d\+Interface} ()=default
+\begin{DoxyCompactList}\small\item\em brief Virtual destructor. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+The documentation for this class was generated from the following files\+:\begin{DoxyCompactItemize}
+\item 
+source/geometry/\mbox{\hyperlink{curve_8hpp}{curve.\+hpp}}\item 
+source/geometry/curve.\+cpp\end{DoxyCompactItemize}

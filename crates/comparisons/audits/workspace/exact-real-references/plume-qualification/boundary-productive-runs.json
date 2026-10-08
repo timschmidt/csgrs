@@ -1,0 +1,477 @@
+[
+  {
+    "args": [
+      "productive",
+      "sb-max",
+      "0",
+      "+RTS",
+      "-M256m",
+      "-RTS"
+    ],
+    "timeout": 750,
+    "status": 0,
+    "signal": null,
+    "stdout": "(0,[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0])\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "productive",
+      "sb-max",
+      "1",
+      "+RTS",
+      "-M256m",
+      "-RTS"
+    ],
+    "timeout": 750,
+    "status": 0,
+    "signal": null,
+    "stdout": "(-1,[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0])\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "productive",
+      "sb-max",
+      "2",
+      "+RTS",
+      "-M256m",
+      "-RTS"
+    ],
+    "timeout": 750,
+    "status": 0,
+    "signal": null,
+    "stdout": "(-2,[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0])\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "productive",
+      "sb-max",
+      "8",
+      "+RTS",
+      "-M256m",
+      "-RTS"
+    ],
+    "timeout": 750,
+    "status": 0,
+    "signal": null,
+    "stdout": "(-8,[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0])\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "productive",
+      "sb-extra",
+      "0",
+      "+RTS",
+      "-M256m",
+      "-RTS"
+    ],
+    "timeout": 750,
+    "status": 0,
+    "signal": null,
+    "stdout": "(0,[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0])\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "productive",
+      "sb-extra",
+      "1",
+      "+RTS",
+      "-M256m",
+      "-RTS"
+    ],
+    "timeout": 750,
+    "status": 0,
+    "signal": null,
+    "stdout": "(-1,[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0])\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "productive",
+      "sb-extra",
+      "2",
+      "+RTS",
+      "-M256m",
+      "-RTS"
+    ],
+    "timeout": 750,
+    "status": 0,
+    "signal": null,
+    "stdout": "(-2,[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0])\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "productive",
+      "sb-extra",
+      "8",
+      "+RTS",
+      "-M256m",
+      "-RTS"
+    ],
+    "timeout": 750,
+    "status": 0,
+    "signal": null,
+    "stdout": "(-8,[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0])\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "productive",
+      "dy-max",
+      "0",
+      "+RTS",
+      "-M256m",
+      "-RTS"
+    ],
+    "timeout": 750,
+    "status": 0,
+    "signal": null,
+    "stdout": "(0,[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0])\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "productive",
+      "dy-max",
+      "1",
+      "+RTS",
+      "-M256m",
+      "-RTS"
+    ],
+    "timeout": 750,
+    "status": null,
+    "signal": "SIGKILL",
+    "error": "ETIMEDOUT",
+    "stdout": "",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "productive",
+      "dy-max",
+      "2",
+      "+RTS",
+      "-M256m",
+      "-RTS"
+    ],
+    "timeout": 750,
+    "status": null,
+    "signal": "SIGKILL",
+    "error": "ETIMEDOUT",
+    "stdout": "",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "productive",
+      "dy-max",
+      "8",
+      "+RTS",
+      "-M256m",
+      "-RTS"
+    ],
+    "timeout": 750,
+    "status": null,
+    "signal": "SIGKILL",
+    "error": "ETIMEDOUT",
+    "stdout": "",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "productive",
+      "sb-unbounded",
+      "0",
+      "+RTS",
+      "-M256m",
+      "-RTS"
+    ],
+    "timeout": 750,
+    "status": null,
+    "signal": "SIGKILL",
+    "error": "ETIMEDOUT",
+    "stdout": "",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "productive",
+      "no-neg",
+      "-4",
+      "+RTS",
+      "-M256m",
+      "-RTS"
+    ],
+    "timeout": 750,
+    "status": null,
+    "signal": "SIGKILL",
+    "error": "ETIMEDOUT",
+    "stdout": "",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "productive",
+      "no-neg",
+      "-1",
+      "+RTS",
+      "-M256m",
+      "-RTS"
+    ],
+    "timeout": 750,
+    "status": null,
+    "signal": "SIGKILL",
+    "error": "ETIMEDOUT",
+    "stdout": "",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "productive",
+      "no-neg",
+      "0",
+      "+RTS",
+      "-M256m",
+      "-RTS"
+    ],
+    "timeout": 750,
+    "status": 0,
+    "signal": null,
+    "stdout": "(0,[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0])\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "productive",
+      "no-neg",
+      "1",
+      "+RTS",
+      "-M256m",
+      "-RTS"
+    ],
+    "timeout": 750,
+    "status": 0,
+    "signal": null,
+    "stdout": "(0,[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0])\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "productive",
+      "no-neg",
+      "500",
+      "+RTS",
+      "-M256m",
+      "-RTS"
+    ],
+    "timeout": 750,
+    "status": 0,
+    "signal": null,
+    "stdout": "(0,[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0])\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "productive",
+      "no-neg-extra",
+      "-4",
+      "+RTS",
+      "-M256m",
+      "-RTS"
+    ],
+    "timeout": 750,
+    "status": null,
+    "signal": "SIGKILL",
+    "error": "ETIMEDOUT",
+    "stdout": "",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "productive",
+      "no-neg-extra",
+      "-1",
+      "+RTS",
+      "-M256m",
+      "-RTS"
+    ],
+    "timeout": 750,
+    "status": null,
+    "signal": "SIGKILL",
+    "error": "ETIMEDOUT",
+    "stdout": "",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "productive",
+      "no-neg-extra",
+      "0",
+      "+RTS",
+      "-M256m",
+      "-RTS"
+    ],
+    "timeout": 750,
+    "status": 0,
+    "signal": null,
+    "stdout": "(0,[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0])\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "productive",
+      "no-neg-extra",
+      "1",
+      "+RTS",
+      "-M256m",
+      "-RTS"
+    ],
+    "timeout": 750,
+    "status": 0,
+    "signal": null,
+    "stdout": "(0,[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0])\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "productive",
+      "no-neg-extra",
+      "500",
+      "+RTS",
+      "-M256m",
+      "-RTS"
+    ],
+    "timeout": 750,
+    "status": 0,
+    "signal": null,
+    "stdout": "(0,[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0])\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "productive",
+      "mul-zero",
+      "498",
+      "+RTS",
+      "-M256m",
+      "-RTS"
+    ],
+    "timeout": 750,
+    "status": 0,
+    "signal": null,
+    "stdout": "(498,[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0])\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "productive",
+      "mul-zero",
+      "499",
+      "+RTS",
+      "-M256m",
+      "-RTS"
+    ],
+    "timeout": 750,
+    "status": 0,
+    "signal": null,
+    "stdout": "(499,[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0])\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "productive",
+      "mul-zero",
+      "500",
+      "+RTS",
+      "-M256m",
+      "-RTS"
+    ],
+    "timeout": 750,
+    "status": null,
+    "signal": "SIGKILL",
+    "error": "ETIMEDOUT",
+    "stdout": "",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "productive",
+      "mul-zero",
+      "501",
+      "+RTS",
+      "-M256m",
+      "-RTS"
+    ],
+    "timeout": 750,
+    "status": null,
+    "signal": "SIGKILL",
+    "error": "ETIMEDOUT",
+    "stdout": "",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "productive",
+      "mul-nonzero",
+      "498",
+      "+RTS",
+      "-M256m",
+      "-RTS"
+    ],
+    "timeout": 750,
+    "status": 0,
+    "signal": null,
+    "stdout": "(498,[0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0])\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "productive",
+      "mul-nonzero",
+      "499",
+      "+RTS",
+      "-M256m",
+      "-RTS"
+    ],
+    "timeout": 750,
+    "status": 0,
+    "signal": null,
+    "stdout": "(499,[0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0])\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "productive",
+      "mul-nonzero",
+      "500",
+      "+RTS",
+      "-M256m",
+      "-RTS"
+    ],
+    "timeout": 750,
+    "status": 0,
+    "signal": null,
+    "stdout": "(499,[1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0])\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "productive",
+      "mul-nonzero",
+      "501",
+      "+RTS",
+      "-M256m",
+      "-RTS"
+    ],
+    "timeout": 750,
+    "status": 0,
+    "signal": null,
+    "stdout": "(500,[1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0])\n",
+    "stderr": ""
+  }
+]

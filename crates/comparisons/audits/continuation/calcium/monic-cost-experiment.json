@@ -1,0 +1,605 @@
+{
+  "schema": 1,
+  "recorded": "2026-09-09T00:53:42.570Z",
+  "files": {
+    "bind-monic-costs.mjs": "d745d7deedfebc104474e95700a6cb0f6188d27b860b5c072e12bfea91c39ef9",
+    "verify-monic-costs.mjs": "8fde82f275ca8a49cb5860d325d574f47223f3dd9e7b79d700d717e8eb62145f",
+    "capture.mjs": "aaf6df6bbd73025a8541617ce83731ae5ea3fd2272bd98c15e3c4c12b713ce23",
+    "run-monic-costs.mjs": "6ea1693b961c9319c7588fbd27fe79cc664a68565ebf0bc20892d79de56b877b",
+    "run-monic-churn.mjs": "aebbfb403d23e8ea229c5868ead555f53f50d65c3a09e5650707326ad16e1811",
+    "monic-cost-corpus.rs": "1114442fad8f7d46ce1300488dabce287bf4d275297a2f08677516a3faecc53b",
+    "monic-cpu.rs": "0e589be713c28ed8d04afcff4edb3600cb44d97087f96eee56fc511de6bc2ee1",
+    "monic-allocation.rs": "94911a317f41c2b2de5f26039e9701eb72fda221a55314089a8e7b2e0d92e686",
+    "flint-polynomial-compose-probe.c": "f68357e8f2b7257ea0e86dfc0621013ccbf154021c5afe85971f2d0e72d7b190",
+    "flint-polynomial-series-probe.c": "e99c3cff9a5ee672641d7065be2c8f0422539e75bd20ab32ea348e087caa11ca",
+    "monic-fractionfree-probe.rs": "bc424b273638eb92decdebb3f676b8ba5a0c7e5565d4e9231f19cbdd91946eb7",
+    "monic-cost-read-selection.json": "3bac7b3302415daf57cad5b8245bdf3ec9bc727125c0025072ac3de2cf093e0b",
+    "polynomial-closure-experiment.json": "06a78c92abc623ea3c5a7f587e6b4d4391f1735cd02913657e270caab4d44d4c",
+    "monic-cost-binaries.json": "43740588df06ca6d6d25af508b697179597ffec1d8f00f122f783cf21225e4c5",
+    "monic-cost-cpu-summary.json": "eff681bc2a00d5fae15fec4910378775d7f31857daf0ac2b22d76432c5c5cd34",
+    "monic-cost-allocation-summary.json": "7e875de8c71bbfffd41e766ab270c2a65f770c8b20ef6051df5f623ff054009f",
+    "monic-cost-churn-summary.json": "7006b774964a1e775c129699346f231b04cf4d88998bd1007a8a11a435772c8a",
+    "results/monic-cost-cpu.jsonl": "15fa9540630a3ef647a28298272991b00cd370fa8b2235e226200d1e277a059e",
+    "results/monic-cost-allocation.jsonl": "55b653243b96d6f3bb6262cbdf23fca76e2f5794ac51980cb403a44bae931aed",
+    "results/monic-cost-churn.jsonl": "fad39c90041797fe87f566d55277013441490fbd324563feafff20e41482ec69",
+    "monic-cost-baseline/Cargo.toml": "6b35d9befe225caed3aa4dda96c6ce735b948394c26ece0de92a9b942b1d5e04",
+    "monic-cost-baseline/Cargo.lock": "806c82b8173814ed7932f7090f1255f77f5134c7318d9f5b1a85394dd96c7058",
+    "monic-cost-trial/Cargo.toml": "5aa0442083ae1618ae7ecfd18f3ea2329c37d362a67397dd476001d3a7a6b9fa",
+    "monic-cost-trial/Cargo.lock": "ba2699446f2ccb9c387c2a852965c24f54feffab152a25e010e7cf180ce018cb",
+    "monic-fractionfree-probe/Cargo.toml": "3ae7b6c71928cbbcf4349222f7c422765e44a889b87c1e4748e3e2fb6222cde1",
+    "monic-fractionfree-probe/Cargo.lock": "005aaef852fad66cceef26600ca2ba7b7b20d9d360134e590a4b8dfa13b54d8a",
+    "results/monic-cost-baseline-build.json": "deff363447bd4600fe6ee17fc1064e8a8de1cf049bbb040082af2322718638c1",
+    "results/monic-cost-baseline-build.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/monic-cost-baseline-build.stderr": "ef261d78d4533807c740f1d9ae4553634f0b6580e7bcba60f1a06fcaccd83de3",
+    "results/monic-cost-trial-build.json": "07573f17e524c267ab8bcadaf0572829e66f64fb36612241fb34045a06f93762",
+    "results/monic-cost-trial-build.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/monic-cost-trial-build.stderr": "625ae63c03ae99d85507dbf24c1f091a8cf5e4c769023d3534f76f56f78b1f82",
+    "results/monic-cost-cpu-run.json": "92202fc664fb46172a4deba20c66e3fa500c3c6aac0d93b11445df96f547c5bf",
+    "results/monic-cost-cpu-run.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/monic-cost-cpu-run.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/monic-cost-allocation-run.json": "b305cd908242dca65778dcd8061a4b1e021cc761f5869fd1c03fb7b50e343344",
+    "results/monic-cost-allocation-run.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/monic-cost-allocation-run.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/monic-cost-churn-run.json": "fc8b87fa5c5ea696eb284e4adb870762c7a5faa9790d8b02398708616224bc04",
+    "results/monic-cost-churn-run.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/monic-cost-churn-run.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/monic-compose-compile.json": "9c8eb04b1fd780478e2d05789be4a090194f19d4a61a11fc4b93cb86e8002322",
+    "results/monic-compose-compile.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/monic-compose-compile.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/monic-compose-native.json": "2c7a173e2279a69edf4d94c8ff081a210d92368b433bc7ec9baa0e2b8991dfc9",
+    "results/monic-compose-native.stdout": "11eafcbf618a5c33b707d4e215b8534e1de95f3b0147602fa208e737ac165a92",
+    "results/monic-compose-native.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/monic-compose-memcheck.json": "b5d454caa9d1a9440cdc79c38b4434e38b47e471f79d26be8559699759f5fa73",
+    "results/monic-compose-memcheck.stdout": "11eafcbf618a5c33b707d4e215b8534e1de95f3b0147602fa208e737ac165a92",
+    "results/monic-compose-memcheck.stderr": "e97f04be9e744e21015519fab60587f184d2ae2f5c22047491890b570f51775b",
+    "results/monic-fractionfree-debug.json": "7d83f644285a62b656c93c1f6c33bc593b1fca386372904a8c5714afac580550",
+    "results/monic-fractionfree-debug.stdout": "cd70d5c2efdb97e58aebea1e82e666ec582be2f0d72d7035e51637c3990c86fd",
+    "results/monic-fractionfree-debug.stderr": "1686048e5c8bf3e41c5418f36b028246af7a8611ce2a7cbd6b4a99615f709430",
+    "results/monic-fractionfree-release.json": "06f8c3222528dc0bba7db19c0f014d7de39512e844f7fdb5266f68dfc88bf449",
+    "results/monic-fractionfree-release.stdout": "cd70d5c2efdb97e58aebea1e82e666ec582be2f0d72d7035e51637c3990c86fd",
+    "results/monic-fractionfree-release.stderr": "aa0fdd29240d86f386caacfc2adc6f37b3fd46b5b5e133afb52bfe96a408f3d7",
+    "results/monic-fractionfree-memcheck.json": "466428f7cdb5bbaff3e4756f656adb03ed1840a2c671ea494ecbfe5a722ad83d",
+    "results/monic-fractionfree-memcheck.stdout": "cd70d5c2efdb97e58aebea1e82e666ec582be2f0d72d7035e51637c3990c86fd",
+    "results/monic-fractionfree-memcheck.stderr": "f84fa443ebc96b536e79124db47fc246603c56635929437340b1c8ef38a6f1f1",
+    "results/monic-candidate-clippy.json": "de0533f5f5cebe19624198d11f94635152305e721793cd1242e13a6452d5d386",
+    "results/monic-candidate-clippy.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/monic-candidate-clippy.stderr": "4ce3262fbdf97289eb8e4a2f9b66c3a3fb6e3287ba1f492d73d0965005572472",
+    "results/monic-candidate-wasm.json": "75ece35d249f1d6684c7689d2ebf3ba74d00a1bc548e85d5fa43a4e5577e28ae",
+    "results/monic-candidate-wasm.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/monic-candidate-wasm.stderr": "b7c56251ef219f58d6be277531a8f5c79e7043d570f37d5d70bed8e67a442f16"
+  },
+  "binaries": {
+    "/tmp/calcium-monic-costs.U6fpvm/baseline-cpu": "e4df35d116d5dce06300854882a45476bee10ae80550686284295f51e67799d4",
+    "/tmp/calcium-monic-costs.U6fpvm/baseline-allocation": "19bb5e6ff2adb44e8d8c2dcd6d8237e8e95657a5f403bf99e52caef5f022e751",
+    "/tmp/calcium-monic-costs.U6fpvm/trial-cpu": "cd93c7472d3e433d91c15c2590d4f88933d32893d3d9e4ff5ba32185fbffe30c",
+    "/tmp/calcium-monic-costs.U6fpvm/trial-allocation": "bdb8a6aa989b3aef19f76b06c21d9c9d547695a47a20f6f315b31b4a4cc2fba3",
+    "/tmp/calcium-monic-costs.U6fpvm/fractionfree-debug": "296f39b6996daf7b92b0020e034881fa4368321f277e5e409055a5867ba6c2cb",
+    "/tmp/calcium-monic-costs.U6fpvm/fractionfree-release": "be4ac41619904e6e706120f593a613241de21822ee9331c62b74d3b2731dfae8",
+    "/tmp/calcium-monic-costs.U6fpvm/flint-polynomial-compose-probe": "519bdba28621654e70e4322753f2f1360d1d4c5bb2e6cf912e297db117433c4a"
+  },
+  "gates": [
+    "monic-cost-baseline-build",
+    "monic-cost-trial-build",
+    "monic-cost-cpu-run",
+    "monic-cost-allocation-run",
+    "monic-cost-churn-run",
+    "monic-compose-compile",
+    "monic-compose-native",
+    "monic-compose-memcheck",
+    "monic-fractionfree-debug",
+    "monic-fractionfree-release",
+    "monic-fractionfree-memcheck",
+    "monic-candidate-clippy",
+    "monic-candidate-wasm"
+  ],
+  "reads": [
+    {
+      "repo": "calcium",
+      "path": "ca_poly/compose.c",
+      "ranges": [
+        [
+          1,
+          134
+        ]
+      ],
+      "note": "Independent complete archived read: Archive dispatches short outer polynomials to parity-buffered Horner and longer ones to divide-and-conquer; its sparse affine/binomial shortcut is disabled. Current delegates through the borrowed generic-ring context, whose selected callees are independently read here. Public zero/constant cases and both whole-input aliases normalize safely; output sizing assumes valid representable lengths."
+    },
+    {
+      "repo": "flint",
+      "path": "src/ca_poly/compose.c",
+      "ranges": [
+        [
+          1,
+          64
+        ]
+      ],
+      "note": "Independent complete current read: Archive dispatches short outer polynomials to parity-buffered Horner and longer ones to divide-and-conquer; its sparse affine/binomial shortcut is disabled. Current delegates through the borrowed generic-ring context, whose selected callees are independently read here. Public zero/constant cases and both whole-input aliases normalize safely; output sizing assumes valid representable lengths."
+    },
+    {
+      "repo": "calcium",
+      "path": "ca_poly/get_fexpr.c",
+      "ranges": [
+        [
+          1,
+          95
+        ]
+      ],
+      "note": "Independent complete archived read: Collects shared extensions across all coefficients, assigns common variable names, exports a Polynomial(List(...)) with Where definitions, and clears owned expression storage. Depends on scalar extension export contracts; sharing does not independently repair the previously recorded Arg roundtrip loss."
+    },
+    {
+      "repo": "flint",
+      "path": "src/ca_poly/get_fexpr.c",
+      "ranges": [
+        [
+          1,
+          82
+        ]
+      ],
+      "note": "Independent complete current read: Collects shared extensions across all coefficients, assigns common variable names, exports a Polynomial(List(...)) with Where definitions, and clears owned expression storage. Depends on scalar extension export contracts; sharing does not independently repair the previously recorded Arg roundtrip loss."
+    },
+    {
+      "repo": "calcium",
+      "path": "ca_poly/inlines.c",
+      "ranges": [
+        [
+          1,
+          14
+        ]
+      ],
+      "note": "Independent complete archived read: Inline-emission translation unit only, defining CA_POLY_INLINES_C before the previously read header. No new numeric algorithm."
+    },
+    {
+      "repo": "flint",
+      "path": "src/ca_poly/inlines.c",
+      "ranges": [
+        [
+          1,
+          13
+        ]
+      ],
+      "note": "Independent complete current read: Inline-emission translation unit only, defining CA_POLY_INLINES_C before the previously read header. No new numeric algorithm."
+    },
+    {
+      "repo": "calcium",
+      "path": "ca_poly/print.c",
+      "ranges": [
+        [
+          1,
+          49
+        ]
+      ],
+      "note": "Independent complete archived read: Prints stored length and coefficients or a comma-delimited approximate list through scalar printers. Does not establish independently rounded text or a polynomial parsing roundtrip."
+    },
+    {
+      "repo": "flint",
+      "path": "src/ca_poly/print.c",
+      "ranges": [
+        [
+          1,
+          49
+        ]
+      ],
+      "note": "Independent complete current read: Prints stored length and coefficients or a comma-delimited approximate list through scalar printers. Does not establish independently rounded text or a polynomial parsing roundtrip."
+    },
+    {
+      "repo": "calcium",
+      "path": "ca_poly/randtest.c",
+      "ranges": [
+        [
+          1,
+          40
+        ]
+      ],
+      "note": "Independent complete archived read: Fills requested coefficient storage with generic or rational scalar random values then removes proven trailing zeros. Reuses scalar generators; random source does not imply coverage of every field, alias or special-state path."
+    },
+    {
+      "repo": "flint",
+      "path": "src/ca_poly/randtest.c",
+      "ranges": [
+        [
+          1,
+          40
+        ]
+      ],
+      "note": "Independent complete current read: Fills requested coefficient storage with generic or rational scalar random values then removes proven trailing zeros. Reuses scalar generators; random source does not imply coverage of every field, alias or special-state path."
+    },
+    {
+      "repo": "calcium",
+      "path": "ca_poly/reverse.c",
+      "ranges": [
+        [
+          1,
+          58
+        ]
+      ],
+      "note": "Independent complete archived read: Reverses the first min(n,length) coefficients within requested length n, padding low positions with zeros. Whole-owner in-place reversal swaps initialized scalar slots before zeroing padding; final normalization removes only proved top zeros. Truncating reversal is not universally an involution."
+    },
+    {
+      "repo": "flint",
+      "path": "src/ca_poly/reverse.c",
+      "ranges": [
+        [
+          1,
+          58
+        ]
+      ],
+      "note": "Independent complete current read: Reverses the first min(n,length) coefficients within requested length n, padding low positions with zeros. Whole-owner in-place reversal swaps initialized scalar slots before zeroing padding; final normalization removes only proved top zeros. Truncating reversal is not universally an involution."
+    },
+    {
+      "repo": "calcium",
+      "path": "ca_poly/set.c",
+      "ranges": [
+        [
+          1,
+          20
+        ]
+      ],
+      "note": "Independent complete archived read: Fits destination, copies scalar values and publishes source length; no extra normalization or degree proof. Self assignment relies on the vector copy's alias behavior."
+    },
+    {
+      "repo": "flint",
+      "path": "src/ca_poly/set.c",
+      "ranges": [
+        [
+          1,
+          20
+        ]
+      ],
+      "note": "Independent complete current read: Fits destination, copies scalar values and publishes source length; no extra normalization or degree proof. Self assignment relies on the vector copy's alias behavior."
+    },
+    {
+      "repo": "calcium",
+      "path": "ca_poly/set_ca.c",
+      "ranges": [
+        [
+          1,
+          27
+        ]
+      ],
+      "note": "Independent complete archived read: Only a proved zero becomes an empty polynomial; Unknown is retained as a constant. Copies the scalar before reducing stored length. No uncertain-as-zero shortcut."
+    },
+    {
+      "repo": "flint",
+      "path": "src/ca_poly/set_ca.c",
+      "ranges": [
+        [
+          1,
+          27
+        ]
+      ],
+      "note": "Independent complete current read: Only a proved zero becomes an empty polynomial; Unknown is retained as a constant. Copies the scalar before reducing stored length. No uncertain-as-zero shortcut."
+    },
+    {
+      "repo": "calcium",
+      "path": "ca_poly/set_fmpq_poly.c",
+      "ranges": [
+        [
+          1,
+          33
+        ]
+      ],
+      "note": "Independent complete archived read: Imports numerator coefficients directly when common denominator is one; otherwise divides each by the source denominator. Preserves canonical source length. Hyper already has stronger shared-positive-scale carriers for internal sign-only polynomial work."
+    },
+    {
+      "repo": "flint",
+      "path": "src/ca_poly/set_fmpq_poly.c",
+      "ranges": [
+        [
+          1,
+          33
+        ]
+      ],
+      "note": "Independent complete current read: Imports numerator coefficients directly when common denominator is one; otherwise divides each by the source denominator. Preserves canonical source length. Hyper already has stronger shared-positive-scale carriers for internal sign-only polynomial work."
+    },
+    {
+      "repo": "calcium",
+      "path": "ca_poly/set_fmpz_poly.c",
+      "ranges": [
+        [
+          1,
+          22
+        ]
+      ],
+      "note": "Independent complete archived read: Imports owned exact integer coefficients and canonical source length. No numeric approximation or novel scheduling."
+    },
+    {
+      "repo": "flint",
+      "path": "src/ca_poly/set_fmpz_poly.c",
+      "ranges": [
+        [
+          1,
+          22
+        ]
+      ],
+      "note": "Independent complete current read: Imports owned exact integer coefficients and canonical source length. No numeric approximation or novel scheduling."
+    },
+    {
+      "repo": "calcium",
+      "path": "ca_poly/set_si.c",
+      "ranges": [
+        [
+          1,
+          27
+        ]
+      ],
+      "note": "Independent complete archived read: Literal zero gives the zero polynomial; other signed machine integers become one owned exact coefficient. No new representation or proof mechanism."
+    },
+    {
+      "repo": "flint",
+      "path": "src/ca_poly/set_si.c",
+      "ranges": [
+        [
+          1,
+          27
+        ]
+      ],
+      "note": "Independent complete current read: Literal zero gives the zero polynomial; other signed machine integers become one owned exact coefficient. No new representation or proof mechanism."
+    },
+    {
+      "repo": "calcium",
+      "path": "ca_poly/shift_left.c",
+      "ranges": [
+        [
+          1,
+          53
+        ]
+      ],
+      "note": "Independent complete archived read: Multiplies by x^n using reverse-order copies or in-place scalar swaps, then zeroes low slots. Zero/identity shifts have owner shortcuts. Size arithmetic and nonnegative n are caller preconditions, not executed boundary claims."
+    },
+    {
+      "repo": "flint",
+      "path": "src/ca_poly/shift_left.c",
+      "ranges": [
+        [
+          1,
+          53
+        ]
+      ],
+      "note": "Independent complete current read: Multiplies by x^n using reverse-order copies or in-place scalar swaps, then zeroes low slots. Zero/identity shifts have owner shortcuts. Size arithmetic and nonnegative n are caller preconditions, not executed boundary claims."
+    },
+    {
+      "repo": "calcium",
+      "path": "ca_poly/shift_right.c",
+      "ranges": [
+        [
+          1,
+          51
+        ]
+      ],
+      "note": "Independent complete archived read: Drops n low coefficients by forward copies or in-place swaps; zero/identity cases and length shrinking preserve owner semantics. Not division by a proved nonzero scalar and not a degree certificate."
+    },
+    {
+      "repo": "flint",
+      "path": "src/ca_poly/shift_right.c",
+      "ranges": [
+        [
+          1,
+          51
+        ]
+      ],
+      "note": "Independent complete current read: Drops n low coefficients by forward copies or in-place swaps; zero/identity cases and length shrinking preserve owner semantics. Not division by a proved nonzero scalar and not a degree certificate."
+    },
+    {
+      "repo": "calcium",
+      "path": "ca_poly/transfer.c",
+      "ranges": [
+        [
+          1,
+          35
+        ]
+      ],
+      "note": "Independent complete archived read: Same-context transfer is a value copy. Cross-context transfer applies scalar transfer coefficient-wise then normalizes, inheriting scalar expression roundtrip limits. No cross-context alias permission or serialization-fidelity claim inferred."
+    },
+    {
+      "repo": "flint",
+      "path": "src/ca_poly/transfer.c",
+      "ranges": [
+        [
+          1,
+          35
+        ]
+      ],
+      "note": "Independent complete current read: Same-context transfer is a value copy. Cross-context transfer applies scalar transfer coefficient-wise then normalizes, inheriting scalar expression roundtrip limits. No cross-context alias permission or serialization-fidelity claim inferred."
+    },
+    {
+      "repo": "calcium",
+      "path": "ca_poly/vec_append.c",
+      "ranges": [
+        [
+          1,
+          20
+        ]
+      ],
+      "note": "Independent complete archived read: Grows polynomial-vector storage then copies an independently owned polynomial into the new slot. Source pointers into potentially relocating destination storage require separate ownership guarantees; no such alias is exercised or assumed."
+    },
+    {
+      "repo": "flint",
+      "path": "src/ca_poly/vec_append.c",
+      "ranges": [
+        [
+          1,
+          20
+        ]
+      ],
+      "note": "Independent complete current read: Grows polynomial-vector storage then copies an independently owned polynomial into the new slot. Source pointers into potentially relocating destination storage require separate ownership guarantees; no such alias is exercised or assumed."
+    },
+    {
+      "repo": "calcium",
+      "path": "ca_poly/vec_clear.c",
+      "ranges": [
+        [
+          1,
+          30
+        ]
+      ],
+      "note": "Independent complete archived read: Clears every initialized capacity slot, not merely live length, then releases the buffer. Capacity-wide teardown is necessary because zeroed polynomials may retain coefficient allocation."
+    },
+    {
+      "repo": "flint",
+      "path": "src/ca_poly/vec_clear.c",
+      "ranges": [
+        [
+          1,
+          30
+        ]
+      ],
+      "note": "Independent complete current read: Clears every initialized capacity slot, not merely live length, then releases the buffer. Capacity-wide teardown is necessary because zeroed polynomials may retain coefficient allocation."
+    },
+    {
+      "repo": "calcium",
+      "path": "ca_poly/vec_init.c",
+      "ranges": [
+        [
+          1,
+          41
+        ]
+      ],
+      "note": "Independent complete archived read: Initializes all allocated polynomial slots; zero length uses null storage. Exact length/capacity initialization, not numerical content generation."
+    },
+    {
+      "repo": "flint",
+      "path": "src/ca_poly/vec_init.c",
+      "ranges": [
+        [
+          1,
+          41
+        ]
+      ],
+      "note": "Independent complete current read: Initializes all allocated polynomial slots; zero length uses null storage. Exact length/capacity initialization, not numerical content generation."
+    },
+    {
+      "repo": "calcium",
+      "path": "ca_poly/vec_set_length.c",
+      "ranges": [
+        [
+          1,
+          52
+        ]
+      ],
+      "note": "Independent complete archived read: Capacity doubles geometrically; every added slot is initialized. Shrinking and regrowing zero affected polynomial values while retaining each polynomial's reusable capacity; outer-vector clear later visits full capacity. Useful owned-workspace pattern already present in Hyper Vec-based kernels."
+    },
+    {
+      "repo": "flint",
+      "path": "src/ca_poly/vec_set_length.c",
+      "ranges": [
+        [
+          1,
+          52
+        ]
+      ],
+      "note": "Independent complete current read: Capacity doubles geometrically; every added slot is initialized. Shrinking and regrowing zero affected polynomial values while retaining each polynomial's reusable capacity; outer-vector clear later visits full capacity. Useful owned-workspace pattern already present in Hyper Vec-based kernels."
+    },
+    {
+      "repo": "calcium",
+      "path": "ca_poly/compose_horner.c",
+      "ranges": [
+        [
+          1,
+          111
+        ]
+      ],
+      "note": "Complete read: Fuses the initial leading linear combination, alternates one full-size scratch vector with output, and chooses parity so the final value lands in output without an extra copy. Zero/constant/linear and whole-owner alias paths are explicit. Hyper's affine conversion already updates an owned vector in reverse order; no generic composition port selected."
+    },
+    {
+      "repo": "calcium",
+      "path": "ca_poly/compose_divconquer.c",
+      "ranges": [
+        [
+          1,
+          182
+        ]
+      ],
+      "note": "Complete read: Builds paired coefficient blocks, repeatedly squares the inner polynomial, and merges blocks bottom-up in preplanned scalar storage plus two power buffers. Skips only coefficients proved zero. All initialized workspace slots are cleared; geometric sizes assume valid bounded input lengths. Native archived execution is not claimed."
+    },
+    {
+      "repo": "calcium",
+      "path": "ca_poly/atan_series.c",
+      "ranges": [
+        [
+          1,
+          87
+        ]
+      ],
+      "note": "Complete archived-only read: Computes the constant atan separately and integrates f'/(1+f^2), capturing source-dependent data before output mutation. Special constants propagate conservative sentinels. Post-swap special-result early return bypasses temporary teardown; source-only lifecycle observation, not an executed defect or a Hyper finite-real algorithm transfer."
+    },
+    {
+      "repo": "flint",
+      "path": "src/gr_poly/compose.c",
+      "ranges": [
+        [
+          1,
+          186
+        ]
+      ],
+      "note": "Complete supporting read: Current generic dispatcher adds proved-sparse a*x^n+c composition via Taylor shift, coefficient powers and inflation. Exact finite/precision contexts use a squaring-oriented power schedule; others use sequential powers. Non-sparse outer length<=7 uses Horner, larger uses divide-and-conquer. All arithmetic statuses accumulate. Wrapper source shrink is shared implementation, not demonstrated total binary reduction."
+    },
+    {
+      "repo": "flint",
+      "path": "src/gr_poly/compose_horner.c",
+      "ranges": [
+        [
+          1,
+          122
+        ]
+      ],
+      "note": "Complete supporting read: Generic counterpart of fused first steps and parity-selected double buffering, now with context-dispatched scalar multiplication and accumulated error status. Whole-owner aliases use temporary polynomials. No arbitrary raw overlap contract inferred."
+    },
+    {
+      "repo": "flint",
+      "path": "src/gr_poly/compose_divconquer.c",
+      "ranges": [
+        [
+          1,
+          192
+        ]
+      ],
+      "note": "Complete supporting read: Bottom-up paired blocks and squared inner powers in one initialized vector, with separate pointer/length metadata and aggregated arithmetic status. Exact zero tests prune only proved zeros; reused workspace prevents separate allocation at each recursion level. Same sizing assumptions as the archived algorithm."
+    },
+    {
+      "repo": "flint",
+      "path": "src/gr_poly/pow_series_ui_binexp.c",
+      "ranges": [
+        [
+          1,
+          163
+        ]
+      ],
+      "note": "Complete supporting read: Binary exponentiation, not binomial expansion (corrects the earlier wrapper note's wording). Strips only proved low zeros, shifts output by the exponent, clamps truncation, and alternates parity-chosen scratch/output buffers. Exact 0/1/2 and constant shortcuts; generic operations accumulate statuses. Existing dense series controls exercised the public Calcium wrapper, not every generic context."
+    },
+    {
+      "repo": "flint",
+      "path": "src/gr_poly/taylor_shift.c",
+      "ranges": [
+        [
+          1,
+          41
+        ]
+      ],
+      "note": "Complete supporting read: Generic strategy chooses Horner through length20, divide-and-conquer above; owner wrapper copies as needed and normalizes even after inability because generic backends may have changed or exactified leading data. Not permission to discard Unknown in Hyper's canonical exact coefficients."
+    },
+    {
+      "repo": "flint",
+      "path": "src/gr_poly/taylor_shift_horner.c",
+      "ranges": [
+        [
+          1,
+          72
+        ]
+      ],
+      "note": "Complete supporting read: In-place triangular shift uses addition/subtraction for shifts +1/-1, does nothing for proved zero and otherwise calls addmul. Hoists generic method lookup out of inner loops. Does not allocate binomial coefficients or force approximate comparisons."
+    },
+    {
+      "repo": "flint",
+      "path": "src/gr_poly/taylor_shift_divconquer.c",
+      "ranges": [
+        [
+          1,
+          66
+        ]
+      ],
+      "note": "Complete supporting read: Handles constant/zero-shift/linear cases then composes with [c,1] using the independently read generic divide-and-conquer kernel. Comment records a faster integer-specific algorithm elsewhere, not newly audited here."
+    }
+  ],
+  "status": "Monic costs and polynomial source checkpoint; no production transfer; full ecosystem incomplete.",
+  "limits": "Monic candidate remains the immutable checkpoint17 source. No new lifecycle/serde/concurrent or downstream/application-size qualification and no focused in-crate regression tests. CPU intervals are per-group host/corpus estimates, not multiplicity-adjusted or universal bounds. Allocation/peak counts are requested Rust bytes, not native heap, RSS or allocator overhead. Native scalar recurrences share the donor scalar backend; no archived execution or branch instrumentation."
+}

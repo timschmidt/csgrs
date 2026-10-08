@@ -1,0 +1,70 @@
+{
+  "input_sha256": "93f8cd5bca8627c62f971af74f7ce01c9a6c6b8ecd84b251e830975b1cc85a63",
+  "retained_interval_disjoint": true,
+  "relations": [
+    {
+      "name": "same",
+      "both_vanish_modulo_defining": false,
+      "remainder_degrees": [
+        5,
+        5
+      ],
+      "seconds": 0.08938171714544296
+    },
+    {
+      "name": "opposite",
+      "both_vanish_modulo_defining": false,
+      "remainder_degrees": [
+        5,
+        5
+      ],
+      "seconds": 0.09225066006183624
+    },
+    {
+      "name": "reflected_at_one",
+      "both_vanish_modulo_defining": false,
+      "remainder_degrees": [
+        5,
+        5
+      ],
+      "seconds": 0.08921358897350729
+    },
+    {
+      "name": "reciprocal",
+      "both_vanish_modulo_defining": false,
+      "remainder_degrees": [
+        5,
+        5
+      ],
+      "seconds": 0.09839285886846483
+    },
+    {
+      "name": "complement",
+      "both_vanish_modulo_defining": false,
+      "remainder_degrees": [
+        5,
+        5
+      ],
+      "seconds": 0.09235038398765028
+    },
+    {
+      "name": "shifted_down",
+      "both_vanish_modulo_defining": false,
+      "remainder_degrees": [
+        5,
+        5
+      ],
+      "seconds": 0.09157628705725074
+    },
+    {
+      "name": "shifted_up",
+      "both_vanish_modulo_defining": false,
+      "remainder_degrees": [
+        5,
+        5
+      ],
+      "seconds": 0.0908863740041852
+    }
+  ],
+  "complete": true
+}

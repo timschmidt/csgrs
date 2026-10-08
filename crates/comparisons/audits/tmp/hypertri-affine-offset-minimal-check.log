@@ -1,0 +1,9 @@
+    Checking num-bigint v0.4.6
+    Checking num-complex v0.4.6
+    Checking num-rational v0.4.2
+    Checking num v0.4.3
+    Checking hyperreal v0.13.1 (/home/tim/Documents/GitHub/workspace/hyperreal)
+    Checking hyperlattice v0.6.1 (/home/tim/Documents/GitHub/workspace/hyperlattice)
+    Checking hyperlimit v0.4.1 (/home/tim/Documents/GitHub/workspace/hyperlimit)
+    Checking hypertri v0.4.1 (/home/tim/Documents/GitHub/workspace/hypertri)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 4.00s

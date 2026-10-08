@@ -1,0 +1,25 @@
+\doxysubsection{source/solvers/integrator\+\_\+interface.hpp File Reference}
+\hypertarget{integrator__interface_8hpp}{}\label{integrator__interface_8hpp}\index{source/solvers/integrator\_interface.hpp@{source/solvers/integrator\_interface.hpp}}
+
+
+\doxysubsubsection{Description}
+Interface for solver classes for differential equations. 
+
+{\ttfamily \#include $<$string$>$}\newline
+{\ttfamily \#include $<$iosfwd$>$}\newline
+{\ttfamily \#include $<$memory$>$}\newline
+{\ttfamily \#include "{}utility/declarations.\+hpp"{}}\newline
+\doxysubsubsubsection*{Classes}
+\begin{DoxyCompactItemize}
+\item 
+struct \mbox{\hyperlink{structAriadne_1_1IncompleteFlowException}{Incomplete\+Flow\+Exception}}
+\begin{DoxyCompactList}\small\item\em A solution to the differential equation could not be computed over the requested time interval. \end{DoxyCompactList}\item 
+struct \mbox{\hyperlink{structAriadne_1_1FlowTimeStepException}{Flow\+Time\+Step\+Exception}}
+\begin{DoxyCompactList}\small\item\em A solution to a differential equation could not be computed within the requested tolerances. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1IntegratorInterface}{Integrator\+Interface}}
+\begin{DoxyCompactList}\small\item\em Interface for integrating differential equations of the form $\dt{x}=f(x)$. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsubsection*{Namespaces}
+\begin{DoxyCompactItemize}
+\item 
+namespace \mbox{\hyperlink{namespaceAriadne}{Ariadne}}
+\begin{DoxyCompactList}\small\item\em Top-\/level Ariadne namespace. \end{DoxyCompactList}\end{DoxyCompactItemize}

@@ -1,0 +1,397 @@
+[
+  [
+    "hypercurve/benches/bezier_algebraic_parameter.rs",
+    114,
+    "let close_rational = decided(BezierParameter2::exact(q(353_553, 500_000), &policy)?);"
+  ],
+  [
+    "hypercurve/benches/bezier_algebraic_parameter.rs",
+    130,
+    "BezierParameter2::algebraic(decided(BezierAlgebraicParameter2::try_isolate("
+  ],
+  [
+    "hypercurve/benches/bezier_arrangement.rs",
+    71,
+    "let split = [decided(BezierParameter2::exact(q(1, 2), &policy)?)];"
+  ],
+  [
+    "hypercurve/benches/bezier_arrangement.rs",
+    317,
+    "BezierParameter2::algebraic(decided(BezierAlgebraicParameter2::try_isolate("
+  ],
+  [
+    "hypercurve/benches/bezier_region.rs",
+    143,
+    "Ok(BezierParameter2::algebraic(decided("
+  ],
+  [
+    "hypercurve/benches/bezier_region.rs",
+    392,
+    "let half = decided(BezierParameter2::exact(q(1, 2), &policy)?);"
+  ],
+  [
+    "hypercurve/benches/bezier_split_materialization.rs",
+    33,
+    "decided(BezierParameter2::exact(q(1, 4), &policy)?),"
+  ],
+  [
+    "hypercurve/benches/bezier_split_materialization.rs",
+    34,
+    "decided(BezierParameter2::exact(q(1, 2), &policy)?),"
+  ],
+  [
+    "hypercurve/benches/bezier_split_materialization.rs",
+    35,
+    "decided(BezierParameter2::exact(q(3, 4), &policy)?),"
+  ],
+  [
+    "hypercurve/benches/bezier_split_materialization.rs",
+    87,
+    "BezierParameter2::algebraic(decided(BezierAlgebraicParameter2::try_isolate("
+  ],
+  [
+    "hypercurve/benches/bezier_split_materialization.rs",
+    93,
+    "decided(BezierParameter2::exact(q(1, 4), &policy)?),"
+  ],
+  [
+    "hypercurve/benches/bezier_split_materialization.rs",
+    95,
+    "decided(BezierParameter2::exact(q(3, 4), &policy)?),"
+  ],
+  [
+    "hypercurve/benches/bezier_split_materialization.rs",
+    116,
+    "let algebraic = BezierParameter2::algebraic(decided(BezierAlgebraicParameter2::try_isolate("
+  ],
+  [
+    "hypercurve/benches/bezier_split_materialization.rs",
+    122,
+    "decided(BezierParameter2::exact(q(1, 4), &policy)?),"
+  ],
+  [
+    "hypercurve/benches/bezier_split_materialization.rs",
+    124,
+    "decided(BezierParameter2::exact(q(3, 4), &policy)?),"
+  ],
+  [
+    "hypercurve/benches/curve_region_boolean_batch.rs",
+    108,
+    "decided(BezierParameter2::exact(Real::from(value), policy).unwrap())"
+  ],
+  [
+    "hypercurve/benches/offset.rs",
+    829,
+    "let algebraic = BezierParameter2::algebraic(parameter);"
+  ],
+  [
+    "hypercurve/fuzz/fuzz_targets/bezier_arrangement.rs",
+    65,
+    "BezierParameter2::exact(unit_from_byte(chunk[6]), &policy)"
+  ],
+  [
+    "hypercurve/fuzz/fuzz_targets/bezier_region.rs",
+    48,
+    "Some(BezierParameter2::algebraic(parameter))"
+  ],
+  [
+    "hypercurve/fuzz/fuzz_targets/bezier_region.rs",
+    71,
+    "Some(BezierParameter2::algebraic(parameter))"
+  ],
+  [
+    "hypercurve/fuzz/fuzz_targets/bezier_region.rs",
+    107,
+    "BezierParameter2::exact(unit_from_byte(chunk[6]), &policy)"
+  ],
+  [
+    "hypercurve/fuzz/fuzz_targets/bezier_split_materialization.rs",
+    36,
+    "BezierParameter2::exact(unit_from_byte(data[6]), &policy)"
+  ],
+  [
+    "hypercurve/fuzz/fuzz_targets/bezier_split_materialization.rs",
+    54,
+    "parameters.push(BezierParameter2::algebraic(algebraic));"
+  ],
+  [
+    "hypercurve/fuzz/fuzz_targets/bezier_split_materialization.rs",
+    71,
+    "parameters.push(BezierParameter2::algebraic(algebraic));"
+  ],
+  [
+    "hypercurve/src/bezier_offset.rs",
+    116861,
+    "match BezierParameter2::exact(line_parameter, policy) {"
+  ],
+  [
+    "hypercurve/src/bezier_region.rs",
+    18358,
+    "BezierParameter2::algebraic(parameter).into(),"
+  ],
+  [
+    "hypercurve/src/bezier_region.rs",
+    22194,
+    "BezierParameter2::algebraic(parameter)"
+  ],
+  [
+    "hypercurve/src/bezier_region.rs",
+    22220,
+    "BezierParameter2::algebraic(parameter)"
+  ],
+  [
+    "hypercurve/src/bezier_region.rs",
+    32570,
+    ".split_at_parameters(&[BezierParameter2::algebraic(parameter)], &policy)"
+  ],
+  [
+    "hypercurve/src/curve_region_trim.rs",
+    1809,
+    "crate::BezierParameter2::algebraic(sqrt_half_parameter(&policy)).into(),"
+  ],
+  [
+    "hypercurve/src/curve_subdivision.rs",
+    3232,
+    "BezierParameter2::algebraic(parameter).into(),"
+  ],
+  [
+    "hypercurve/src/curve_subdivision.rs",
+    3372,
+    "CurveParameter2::from(BezierParameter2::algebraic(parameter))"
+  ],
+  [
+    "hypercurve/src/curve_support_intersection.rs",
+    2398,
+    "BezierParameter2::algebraic(parameter).into(),"
+  ],
+  [
+    "hypercurve/src/curve_support_intersection.rs",
+    2634,
+    "BezierParameter2::algebraic(exact("
+  ],
+  [
+    "hypercurve/src/curve_support_intersection.rs",
+    2759,
+    "let selected = BezierParameter2::algebraic(exact("
+  ],
+  [
+    "hypercurve/src/curve_support_intersection.rs",
+    3321,
+    "BezierParameter2::algebraic(parameter).into(),"
+  ],
+  [
+    "hypercurve/src/rational_bezier_general.rs",
+    8325,
+    "return match BezierParameter2::exact(value, &strict) {"
+  ],
+  [
+    "hypercurve/src/rational_bezier_general.rs",
+    8783,
+    "match BezierParameter2::exact(value, policy) {"
+  ],
+  [
+    "hypercurve/tests/hypercurve_analytic_parallel_region.rs",
+    19,
+    "match BezierParameter2::exact(Real::from(value), policy).unwrap() {"
+  ],
+  [
+    "hypercurve/tests/hypercurve_bezier_algebraic_parameter.rs",
+    326,
+    "BezierParameter2::algebraic(clone)"
+  ],
+  [
+    "hypercurve/tests/hypercurve_bezier_algebraic_parameter.rs",
+    346,
+    "BezierParameter2::algebraic(parameter)"
+  ],
+  [
+    "hypercurve/tests/hypercurve_bezier_algebraic_parameter.rs",
+    366,
+    "BezierParameter2::algebraic(parameter)"
+  ],
+  [
+    "hypercurve/tests/hypercurve_bezier_algebraic_parameter.rs",
+    375,
+    "let start = BezierParameter2::algebraic(isolate("
+  ],
+  [
+    "hypercurve/tests/hypercurve_bezier_algebraic_parameter.rs",
+    405,
+    "let start = BezierParameter2::algebraic(isolate("
+  ],
+  [
+    "hypercurve/tests/hypercurve_bezier_algebraic_parameter.rs",
+    459,
+    "BezierParameter2::algebraic(parameter)"
+  ],
+  [
+    "hypercurve/tests/hypercurve_bezier_algebraic_parameter.rs",
+    507,
+    "let left = BezierParameter2::exact(q(1, 4), &policy())"
+  ],
+  [
+    "hypercurve/tests/hypercurve_bezier_algebraic_parameter.rs",
+    518,
+    "let algebraic = BezierParameter2::algebraic(isolate(polynomial, interval(q(2, 5), q(3, 5))));"
+  ],
+  [
+    "hypercurve/tests/hypercurve_bezier_algebraic_parameter.rs",
+    525,
+    "let overlapping = BezierParameter2::exact(q(1, 2), &policy())"
+  ],
+  [
+    "hypercurve/tests/hypercurve_bezier_algebraic_parameter.rs",
+    543,
+    "let left = BezierParameter2::algebraic(isolate(defining.clone(), interval(q(1, 4), q(1, 2))));"
+  ],
+  [
+    "hypercurve/tests/hypercurve_bezier_algebraic_parameter.rs",
+    544,
+    "let right = BezierParameter2::algebraic(isolate(defining, interval(q(1, 2), q(3, 4))));"
+  ],
+  [
+    "hypercurve/tests/hypercurve_bezier_algebraic_parameter.rs",
+    558,
+    "let quadratic = BezierParameter2::algebraic(isolate("
+  ],
+  [
+    "hypercurve/tests/hypercurve_bezier_algebraic_parameter.rs",
+    562,
+    "let cubic = BezierParameter2::algebraic(isolate("
+  ],
+  [
+    "hypercurve/tests/hypercurve_bezier_algebraic_parameter.rs",
+    579,
+    "let irrational = BezierParameter2::algebraic(isolate("
+  ],
+  [
+    "hypercurve/tests/hypercurve_bezier_algebraic_parameter.rs",
+    583,
+    "let close_rational = BezierParameter2::exact(q(353_553, 500_000), &policy())"
+  ],
+  [
+    "hypercurve/tests/hypercurve_bezier_algebraic_parameter.rs",
+    611,
+    "BezierParameter2::algebraic(isolate(simple.clone(), interval(q(2, 3), q(3, 4))));"
+  ],
+  [
+    "hypercurve/tests/hypercurve_bezier_algebraic_parameter.rs",
+    621,
+    "BezierParameter2::algebraic(isolate(double.clone(), interval(q(2, 3), q(3, 4))));"
+  ],
+  [
+    "hypercurve/tests/hypercurve_bezier_arrangement.rs",
+    109,
+    "let algebraic = BezierParameter2::algebraic(parameter.clone());"
+  ],
+  [
+    "hypercurve/tests/hypercurve_bezier_arrangement.rs",
+    262,
+    "decided(BezierParameter2::exact(value, &policy()).unwrap())"
+  ],
+  [
+    "hypercurve/tests/hypercurve_bezier_arrangement.rs",
+    270,
+    "BezierParameter2::algebraic(decided("
+  ],
+  [
+    "hypercurve/tests/hypercurve_bezier_arrangement.rs",
+    651,
+    "let algebraic = BezierParameter2::algebraic(parameter.clone());"
+  ],
+  [
+    "hypercurve/tests/hypercurve_bezier_arrangement.rs",
+    699,
+    "let algebraic = BezierParameter2::algebraic(parameter.clone());"
+  ],
+  [
+    "hypercurve/tests/hypercurve_bezier_arrangement.rs",
+    746,
+    "let algebraic = BezierParameter2::algebraic(parameter.clone());"
+  ],
+  [
+    "hypercurve/tests/hypercurve_bezier_arrangement.rs",
+    789,
+    "let algebraic = BezierParameter2::algebraic(parameter.clone());"
+  ],
+  [
+    "hypercurve/tests/hypercurve_bezier_arrangement.rs",
+    832,
+    "let algebraic = BezierParameter2::algebraic(parameter.clone());"
+  ],
+  [
+    "hypercurve/tests/hypercurve_bezier_arrangement.rs",
+    878,
+    "let algebraic = BezierParameter2::algebraic(parameter.clone());"
+  ],
+  [
+    "hypercurve/tests/hypercurve_bezier_region.rs",
+    85,
+    "decided(BezierParameter2::exact(value, &policy()).unwrap())"
+  ],
+  [
+    "hypercurve/tests/hypercurve_bezier_region.rs",
+    132,
+    "BezierParameter2::algebraic(algebraic_midpoint_parameter()).into(),"
+  ],
+  [
+    "hypercurve/tests/hypercurve_bezier_region.rs",
+    737,
+    "let parameter = BezierParameter2::algebraic(algebraic_midpoint_parameter());"
+  ],
+  [
+    "hypercurve/tests/hypercurve_bezier_region.rs",
+    853,
+    "let parameter = BezierParameter2::algebraic(algebraic_sqrt_half_parameter()).into();"
+  ],
+  [
+    "hypercurve/tests/hypercurve_bezier_region.rs",
+    1047,
+    "&[BezierParameter2::algebraic(algebraic_sqrt_half_parameter())],"
+  ],
+  [
+    "hypercurve/tests/hypercurve_bezier_region.rs",
+    1092,
+    "&[BezierParameter2::algebraic(algebraic_sqrt_half_parameter())],"
+  ],
+  [
+    "hypercurve/tests/hypercurve_bezier_region.rs",
+    1122,
+    "&[BezierParameter2::algebraic("
+  ],
+  [
+    "hypercurve/tests/hypercurve_bezier_region.rs",
+    1150,
+    "let parameter = BezierParameter2::algebraic(algebraic_midpoint_parameter());"
+  ],
+  [
+    "hypercurve/tests/hypercurve_bezier_region.rs",
+    1166,
+    "let parameter = BezierParameter2::algebraic(algebraic_midpoint_parameter());"
+  ],
+  [
+    "hypercurve/tests/hypercurve_bezier_region.rs",
+    1303,
+    "&[BezierParameter2::algebraic(algebraic_sqrt_half_parameter())],"
+  ],
+  [
+    "hypercurve/tests/hypercurve_bezier_split_materialization.rs",
+    38,
+    "match BezierParameter2::exact(value, &policy()).unwrap() {"
+  ],
+  [
+    "hypercurve/tests/hypercurve_bezier_split_materialization.rs",
+    60,
+    "Classification::Decided(parameter) => BezierParameter2::algebraic(parameter),"
+  ],
+  [
+    "hypercurve/tests/hypercurve_bezier_split_materialization.rs",
+    86,
+    "Classification::Decided(parameter) => BezierParameter2::algebraic(parameter),"
+  ],
+  [
+    "hypercurve/tests/hypercurve_bezier_split_materialization.rs",
+    110,
+    "Classification::Decided(parameter) => BezierParameter2::algebraic(parameter),"
+  ]
+]

@@ -1,0 +1,4783 @@
+iRRAMx  201126 AC++librarythateXtendsiRRAM  
+---  
+  
+  * [include](dir_d44c64559bbebec7f509842c48db8b23.html)
+  * [iRRAMx](dir_8030abfc18cf720e87330bfc9ab9d4ea.html)
+  * [compact](dir_68c7f6bc3018d4a705bc11611200b603.html)
+
+compact.hpp
+
+[Go to the documentation of this file.](compact_2compact_8hpp.html)
+
+1 #pragma once
+
+2 // iRRAM extension for compact subsets in euclidean
+
+3 // author: Jiman Hwang(molehair a.t kaist.ac.kr)
+
+4
+
+5 #include <iRRAM/lib.h>
+
+6 #include "[euclidean.hpp](euclidean_8hpp.html)"
+
+7 #include "[plot.hpp](plot_8hpp.html)"
+
+8
+
+9
+
+10 using namespace [iRRAM](namespacei_r_r_a_m.html);
+
+11
+
+12
+
+[ 13](compact_2compact_8hpp.html#a13c6dd253b49628498368d49b3d95e53) #define
+PLOT_COLOR_R 0x00
+
+[ 14](compact_2compact_8hpp.html#ac866855a94eb64e34eca38ef211f1daf) #define
+PLOT_COLOR_G 0x00
+
+[ 15](compact_2compact_8hpp.html#abcccca873457f4a11f41fd8152dd65f0) #define
+PLOT_COLOR_B 0x00
+
+16
+
+[ 17](namespacei_r_r_a_m.html) namespace [iRRAM](namespacei_r_r_a_m.html) {
+
+18
+
+22 // R^N
+
+23 template <int N>
+
+[ 24](classi_r_r_a_m_1_1_compact.html) class
+[Compact](classi_r_r_a_m_1_1_compact.html) {
+
+25 public:
+
+26 // characteristic function
+
+[ 27](classi_r_r_a_m_1_1_compact.html#a6132ea36c94f6c2d42d18dbb16d7d62f)
+std::function< bool
+([Point<N>](namespacei_r_r_a_m.html#a1d2e14e811b03f40a0e28611c957bd64) , int)
+> [cfun](classi_r_r_a_m_1_1_compact.html#a6132ea36c94f6c2d42d18dbb16d7d62f);
+
+28
+
+29
+
+[ 32](classi_r_r_a_m_1_1_compact.html#a1fef001fd4bad41409333702dd8dee4e)
+[Compact](classi_r_r_a_m_1_1_compact.html#a1fef001fd4bad41409333702dd8dee4e)()
+{ this->cfun =
+[=]([Point<N>](namespacei_r_r_a_m.html#a1d2e14e811b03f40a0e28611c957bd64),
+int) -> bool { return false; }; }
+
+33
+
+34
+
+[ 39](classi_r_r_a_m_1_1_compact.html#a784333b1a719e0bd351ad26055f5429f)
+[Compact](classi_r_r_a_m_1_1_compact.html#a784333b1a719e0bd351ad26055f5429f)(std::function<bool([Point<N>](namespacei_r_r_a_m.html#a1d2e14e811b03f40a0e28611c957bd64),
+int)>
+[cfun](classi_r_r_a_m_1_1_compact.html#a6132ea36c94f6c2d42d18dbb16d7d62f)) {
+this->cfun =
+[cfun](classi_r_r_a_m_1_1_compact.html#a6132ea36c94f6c2d42d18dbb16d7d62f); }
+
+40
+
+41
+
+[ 49](classi_r_r_a_m_1_1_compact.html#a731ea57e9b4a000afedc864d221413ab)
+virtual bool
+[member](classi_r_r_a_m_1_1_compact.html#a731ea57e9b4a000afedc864d221413ab)([Point<N>](namespacei_r_r_a_m.html#a1d2e14e811b03f40a0e28611c957bd64)
+point, int p) { return
+this->[cfun](classi_r_r_a_m_1_1_compact.html#a6132ea36c94f6c2d42d18dbb16d7d62f)(point,
+p); }
+
+50
+
+51
+
+[ 63](classi_r_r_a_m_1_1_compact.html#aea91a770ff414bbdd648c30cb4966eff) void
+[plot2D](classi_r_r_a_m_1_1_compact.html#aea91a770ff414bbdd648c30cb4966eff)(const
+char *filename, int width, REAL x1, REAL y1, REAL x2, REAL y2) {
+
+64 // only plane
+
+65 if(N != 2) return;
+
+66
+
+67 // some values..
+
+68 REAL pixelSize = (x2-x1)/REAL(width); // single pixel size as a rect
+
+69 int height = ceil(((y2-y1)/pixelSize).as_double()); // image height
+
+70
+
+71 // precision
+
+72 // Define p such that a ball centered at the center of pixel cover the
+pixel
+
+73 // That is, pixelSize/2*sqrt(2) < 2^-p (radius of ball)
+
+74 // The drawn path will not be broken.
+
+75 int p = floor((REAL(0.5) - log(pixelSize)/ln2()).as_double()); // precision
+
+76
+
+77 // plot each pixel to palette
+
+78 // start at the bottom row, from left to right.. row += 1 .. repeat
+
+79 // variable point stores the coordinate of the center of the current pixel
+
+80 [Point<N>](namespacei_r_r_a_m.html#a1d2e14e811b03f40a0e28611c957bd64) point
+= {REAL(0), y1 - pixelSize/2}; // init with coordinate outside image
+
+81 [Palette](class_palette.html) pal(width, height);
+
+82 for(int i=height-1 ; i>=0 ; i--) {
+
+83 point[0] = x1 + pixelSize/2; // x; the left most pixel
+
+84 point[1] += pixelSize; // y; +1 row
+
+85
+
+86 for(int j=0 ; j<width ; j++) {
+
+87
+if([member](classi_r_r_a_m_1_1_compact.html#a731ea57e9b4a000afedc864d221413ab)(point,
+p)) {
+
+88 pal.[setColor](class_palette.html#a5cfb12ca7db80a103acc025cba98503a)(j, i,
+[PLOT_COLOR_R](compact_2compact_8hpp.html#a13c6dd253b49628498368d49b3d95e53),
+[PLOT_COLOR_G](compact_2compact_8hpp.html#ac866855a94eb64e34eca38ef211f1daf),
+[PLOT_COLOR_B](compact_2compact_8hpp.html#abcccca873457f4a11f41fd8152dd65f0));
+
+89 }
+
+90 point[0] += pixelSize;
+
+91 }
+
+92
+
+93 cout << (height-i) << " / " << height << " row done\n";
+
+94 }
+
+95
+
+96 // to image
+
+97
+[writeImage](compact_2plot_8hpp.html#a003c140552a34f7df065a19fbabdbe90)(filename,
+pal);
+
+98 }
+
+99
+
+100 };
+
+111 template <int N>
+
+[ 112](group__compact.html#gaa52b922efdaed7274059e3738598a31b)
+[Compact<N>](classi_r_r_a_m_1_1_compact.html)
+[conjunction](group__compact.html#gaa52b922efdaed7274059e3738598a31b)([Compact<N>](classi_r_r_a_m_1_1_compact.html)
+&com1, [Compact<N>](classi_r_r_a_m_1_1_compact.html) &com2) {
+
+113 auto cfun = [&]
+([Point<N>](namespacei_r_r_a_m.html#a1d2e14e811b03f40a0e28611c957bd64) pt, int
+p) -> bool {
+
+114 return
+com1.[member](classi_r_r_a_m_1_1_compact.html#a731ea57e9b4a000afedc864d221413ab)(pt,
+p) &&
+com2.[member](classi_r_r_a_m_1_1_compact.html#a731ea57e9b4a000afedc864d221413ab)(pt,
+p);
+
+115 };
+
+116 return [Compact<N>](classi_r_r_a_m_1_1_compact.html)(cfun);
+
+117 }
+
+118
+
+121 template <int N>
+
+[ 122](group__compact.html#ga0984e9c3e41f26b4e2caa3d5c60b40fe)
+[Compact<N>](classi_r_r_a_m_1_1_compact.html)
+[disjunction](group__compact.html#ga0984e9c3e41f26b4e2caa3d5c60b40fe)([Compact<N>](classi_r_r_a_m_1_1_compact.html)
+&com1, [Compact<N>](classi_r_r_a_m_1_1_compact.html) &com2) {
+
+123 auto cfun = [&]
+([Point<N>](namespacei_r_r_a_m.html#a1d2e14e811b03f40a0e28611c957bd64) pt, int
+p) -> bool {
+
+124 return
+com1.[member](classi_r_r_a_m_1_1_compact.html#a731ea57e9b4a000afedc864d221413ab)(pt,
+p) ||
+com2.[member](classi_r_r_a_m_1_1_compact.html#a731ea57e9b4a000afedc864d221413ab)(pt,
+p);
+
+125 };
+
+126 return [Compact<N>](classi_r_r_a_m_1_1_compact.html)(cfun);
+
+127 }
+
+128
+
+130 }
+
+[writeImage](compact_2plot_8hpp.html#a003c140552a34f7df065a19fbabdbe90)
+
+void writeImage(const char *filename, Palette &pal)
+
+**Definition:** [plot.hpp:37](compact_2plot_8hpp_source.html#l00037)
+
+[iRRAM::Compact::cfun](classi_r_r_a_m_1_1_compact.html#a6132ea36c94f6c2d42d18dbb16d7d62f)
+
+std::function< bool(Point< N >, int) > cfun
+
+**Definition:** [compact.hpp:27](compact_2compact_8hpp_source.html#l00027)
+
+[iRRAM::Compact::Compact](classi_r_r_a_m_1_1_compact.html#a1fef001fd4bad41409333702dd8dee4e)
+
+Compact()
+
+init with the emptyset
+
+**Definition:** [compact.hpp:32](compact_2compact_8hpp_source.html#l00032)
+
+[iRRAM::Compact::member](classi_r_r_a_m_1_1_compact.html#a731ea57e9b4a000afedc864d221413ab)
+
+virtual bool member(Point< N > point, int p)
+
+membership test for point with precision 2⁻ᴾ
+
+**Definition:** [compact.hpp:49](compact_2compact_8hpp_source.html#l00049)
+
+[plot.hpp](plot_8hpp.html)
+
+[PLOT_COLOR_R](compact_2compact_8hpp.html#a13c6dd253b49628498368d49b3d95e53)
+
+#define PLOT_COLOR_R
+
+**Definition:** [compact.hpp:13](compact_2compact_8hpp_source.html#l00013)
+
+[PLOT_COLOR_B](compact_2compact_8hpp.html#abcccca873457f4a11f41fd8152dd65f0)
+
+#define PLOT_COLOR_B
+
+**Definition:** [compact.hpp:15](compact_2compact_8hpp_source.html#l00015)
+
+[iRRAM](namespacei_r_r_a_m.html)
+
+**Definition:** [compact.hpp:17](compact_2compact_8hpp_source.html#l00017)
+
+[Palette](class_palette.html)
+
+**Definition:** [plot.hpp:7](compact_2plot_8hpp_source.html#l00007)
+
+[iRRAM::disjunction](group__compact.html#ga0984e9c3e41f26b4e2caa3d5c60b40fe)
+
+Compact< N > disjunction(Compact< N > &com1, Compact< N > &com2)
+
+**Definition:** [compact.hpp:122](compact_2compact_8hpp_source.html#l00122)
+
+[iRRAM::Compact::plot2D](classi_r_r_a_m_1_1_compact.html#aea91a770ff414bbdd648c30cb4966eff)
+
+void plot2D(const char *filename, int width, REAL x1, REAL y1, REAL x2, REAL
+y2)
+
+**Definition:** [compact.hpp:63](compact_2compact_8hpp_source.html#l00063)
+
+[Palette::setColor](class_palette.html#a5cfb12ca7db80a103acc025cba98503a)
+
+void setColor(int x, int y, png_byte r, png_byte g, png_byte b)
+
+**Definition:** [plot.hpp:30](compact_2plot_8hpp_source.html#l00030)
+
+[euclidean.hpp](euclidean_8hpp.html)
+
+[iRRAM::Compact](classi_r_r_a_m_1_1_compact.html)
+
+**Definition:** [compact.hpp:24](compact_2compact_8hpp_source.html#l00024)
+
+[iRRAM::Compact::Compact](classi_r_r_a_m_1_1_compact.html#a784333b1a719e0bd351ad26055f5429f)
+
+Compact(std::function< bool(Point< N >, int)> cfun)
+
+init with characteristic func
+
+**Definition:** [compact.hpp:39](compact_2compact_8hpp_source.html#l00039)
+
+[PLOT_COLOR_G](compact_2compact_8hpp.html#ac866855a94eb64e34eca38ef211f1daf)
+
+#define PLOT_COLOR_G
+
+**Definition:** [compact.hpp:14](compact_2compact_8hpp_source.html#l00014)
+
+[iRRAM::Point](namespacei_r_r_a_m.html#a1d2e14e811b03f40a0e28611c957bd64)
+
+IR< N > Point
+
+**Definition:** [euclidean.hpp:31](euclidean_8hpp_source.html#l00031)
+
+[iRRAM::conjunction](group__compact.html#gaa52b922efdaed7274059e3738598a31b)
+
+Compact< N > conjunction(Compact< N > &com1, Compact< N > &com2)
+
+**Definition:** [compact.hpp:112](compact_2compact_8hpp_source.html#l00112)
+
+* * *
+
+Generated by [![doxygen](doxygen.svg)](http://www.doxygen.org/index.html)
+1.8.20
+
+iRRAMx  201126 AC++librarythateXtendsiRRAM  
+---  
+  
+  * [include](dir_d44c64559bbebec7f509842c48db8b23.html)
+  * [iRRAMx](dir_8030abfc18cf720e87330bfc9ab9d4ea.html)
+  * [compact](dir_68c7f6bc3018d4a705bc11611200b603.html)
+
+plot.hpp
+
+[Go to the documentation of this file.](compact_2plot_8hpp.html)
+
+1 #pragma once
+
+2
+
+3
+
+5 #include <png.h>
+
+6
+
+[ 7](class_palette.html) class [Palette](class_palette.html) {
+
+8 public:
+
+[ 9](class_palette.html#aab66be915a75a9684bf1696037f2a5d3) int
+[width](class_palette.html#aab66be915a75a9684bf1696037f2a5d3);
+
+[ 10](class_palette.html#a37dedba0f05d07625233aee0b672fc40) int
+[height](class_palette.html#a37dedba0f05d07625233aee0b672fc40);
+
+[ 11](class_palette.html#a937537ec065b526439af6a7063f96448) png_bytepp
+[data](class_palette.html#a937537ec065b526439af6a7063f96448);
+
+12
+
+[ 13](class_palette.html#ad9c41dd1a8c575315ab2f25a3fddd45e)
+[Palette](class_palette.html#ad9c41dd1a8c575315ab2f25a3fddd45e)(int
+[width](class_palette.html#aab66be915a75a9684bf1696037f2a5d3), int
+[height](class_palette.html#a37dedba0f05d07625233aee0b672fc40)) {
+
+14 this->width =
+[width](class_palette.html#aab66be915a75a9684bf1696037f2a5d3);
+
+15 this->height =
+[height](class_palette.html#a37dedba0f05d07625233aee0b672fc40);
+
+16 this->data = new png_bytep
+[[height](class_palette.html#a37dedba0f05d07625233aee0b672fc40)];
+
+17 for(int
+i=0;i<[height](class_palette.html#a37dedba0f05d07625233aee0b672fc40);i++) {
+
+18 this->data[i] = new png_byte
+[3*[width](class_palette.html#aab66be915a75a9684bf1696037f2a5d3)];
+
+19 for(int
+j=0;j<[width](class_palette.html#aab66be915a75a9684bf1696037f2a5d3)*3;j++) {
+
+20 this->data[i][j] = 0xFF; // init with white color
+
+21 }
+
+22 }
+
+23 }
+
+[ 24](class_palette.html#a393b22e84156e4f62694589e02e5597d)
+[~Palette](class_palette.html#a393b22e84156e4f62694589e02e5597d)() {
+
+25 for(int
+i=0;i<[height](class_palette.html#a37dedba0f05d07625233aee0b672fc40);i++)
+delete this->data[i];
+
+26 delete this->[data](class_palette.html#a937537ec065b526439af6a7063f96448);
+
+27 }
+
+28
+
+29 // x,y starts with 0
+
+[ 30](class_palette.html#a5cfb12ca7db80a103acc025cba98503a) void
+[setColor](class_palette.html#a5cfb12ca7db80a103acc025cba98503a)(int x, int y,
+png_byte r, png_byte g, png_byte b) {
+
+31 this->data[y][3*x] = r;
+
+32 this->data[y][3*x+1] = g;
+
+33 this->data[y][3*x+2] = b;
+
+34 }
+
+35 };
+
+36
+
+[ 37](compact_2plot_8hpp.html#a003c140552a34f7df065a19fbabdbe90) void
+[writeImage](compact_2plot_8hpp.html#a003c140552a34f7df065a19fbabdbe90)(const
+char *filename, [Palette](class_palette.html) &pal) {
+
+38 FILE *fp = NULL;
+
+39 png_structp png_ptr = NULL;
+
+40 png_infop info_ptr = NULL;
+
+41 png_bytep row = NULL;
+
+42
+
+43 // Open file for writing (binary mode)
+
+44 fp = fopen(filename, "wb");
+
+45 if (fp == NULL) {
+
+46 fprintf(stderr, "Could not open file %s for writing\n", filename);
+
+47 }
+
+48
+
+49 // Initialize write structure
+
+50 png_ptr = png_create_write_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
+
+51 if (png_ptr == NULL) {
+
+52 fprintf(stderr, "Could not allocate write struct\n");
+
+53 }
+
+54
+
+55 // Initialize info structure
+
+56 info_ptr = png_create_info_struct(png_ptr);
+
+57 if (info_ptr == NULL) {
+
+58 fprintf(stderr, "Could not allocate info struct\n");
+
+59 }
+
+60
+
+61 // Setup Exception handling
+
+62 if (setjmp(png_jmpbuf(png_ptr))) {
+
+63 fprintf(stderr, "Error during png creation\n");
+
+64 }
+
+65
+
+66 png_init_io(png_ptr, fp);
+
+67
+
+68 // Write header (8 bit colour depth)
+
+69 png_set_IHDR(png_ptr, info_ptr,
+pal.[width](class_palette.html#aab66be915a75a9684bf1696037f2a5d3),
+pal.[height](class_palette.html#a37dedba0f05d07625233aee0b672fc40),
+
+70 8, PNG_COLOR_TYPE_RGB, PNG_INTERLACE_NONE,
+
+71 PNG_COMPRESSION_TYPE_BASE, PNG_FILTER_TYPE_BASE);
+
+72
+
+73 // Set title
+
+74 // if (title != NULL) {
+
+75 // png_text title_text;
+
+76 // title_text.compression = PNG_TEXT_COMPRESSION_NONE;
+
+77 // title_text.key = "Title";
+
+78 // title_text.text = title;
+
+79 // png_set_text(png_ptr, info_ptr, &title_text, 1);
+
+80 // }
+
+81
+
+82 png_write_info(png_ptr, info_ptr);
+
+83
+
+84 // Allocate memory for one row (3 bytes per pixel - RGB)
+
+85 row = (png_bytep) malloc(3 *
+pal.[width](class_palette.html#aab66be915a75a9684bf1696037f2a5d3) *
+sizeof(png_byte));
+
+86
+
+87 // Write image data
+
+88 png_write_image(png_ptr,
+pal.[data](class_palette.html#a937537ec065b526439af6a7063f96448));
+
+89 // int x, y;
+
+90 // for (y=0 ; y<pal.height ; y++) {
+
+91 // for (x=0 ; x<pal.width ; x++) {
+
+92 // setRGB(&(row[x*3]), pal.data[y][x]);
+
+93 // }
+
+94 // png_write_row(png_ptr, row);
+
+95 // }
+
+96
+
+97 // End write
+
+98 png_write_end(png_ptr, NULL);
+
+99
+
+100
+
+101 if (fp != NULL) fclose(fp);
+
+102 if (info_ptr != NULL) png_free_data(png_ptr, info_ptr, PNG_FREE_ALL, -1);
+
+103 if (png_ptr != NULL) png_destroy_write_struct(&png_ptr, (png_infopp)NULL);
+
+104 if (row != NULL) free(row);
+
+105
+
+106 }
+
+[writeImage](compact_2plot_8hpp.html#a003c140552a34f7df065a19fbabdbe90)
+
+void writeImage(const char *filename, Palette &pal)
+
+**Definition:** [plot.hpp:37](compact_2plot_8hpp_source.html#l00037)
+
+[Palette::Palette](class_palette.html#ad9c41dd1a8c575315ab2f25a3fddd45e)
+
+Palette(int width, int height)
+
+**Definition:** [plot.hpp:13](compact_2plot_8hpp_source.html#l00013)
+
+[Palette::data](class_palette.html#a937537ec065b526439af6a7063f96448)
+
+png_bytepp data
+
+**Definition:** [plot.hpp:11](compact_2plot_8hpp_source.html#l00011)
+
+[Palette](class_palette.html)
+
+**Definition:** [plot.hpp:7](compact_2plot_8hpp_source.html#l00007)
+
+[Palette::height](class_palette.html#a37dedba0f05d07625233aee0b672fc40)
+
+int height
+
+**Definition:** [plot.hpp:10](compact_2plot_8hpp_source.html#l00010)
+
+[Palette::~Palette](class_palette.html#a393b22e84156e4f62694589e02e5597d)
+
+~Palette()
+
+**Definition:** [plot.hpp:24](compact_2plot_8hpp_source.html#l00024)
+
+[Palette::setColor](class_palette.html#a5cfb12ca7db80a103acc025cba98503a)
+
+void setColor(int x, int y, png_byte r, png_byte g, png_byte b)
+
+**Definition:** [plot.hpp:30](compact_2plot_8hpp_source.html#l00030)
+
+[Palette::width](class_palette.html#aab66be915a75a9684bf1696037f2a5d3)
+
+int width
+
+**Definition:** [plot.hpp:9](compact_2plot_8hpp_source.html#l00009)
+
+* * *
+
+Generated by [![doxygen](doxygen.svg)](http://www.doxygen.org/index.html)
+1.8.20
+
+iRRAMx  201126 AC++librarythateXtendsiRRAM  
+---  
+  
+  * [include](dir_d44c64559bbebec7f509842c48db8b23.html)
+  * [iRRAMx](dir_8030abfc18cf720e87330bfc9ab9d4ea.html)
+
+compact.hpp
+
+[Go to the documentation of this file.](compact_8hpp.html)
+
+1 #pragma once
+
+2 #include "[fix.hpp](fix_8hpp.html)"
+
+3 // iRRAM extension for compact subsets in euclidean
+
+4 // author: Jiman Hwang(molehair a.t kaist.ac.kr)
+
+5
+
+6 #include "[compact/compact.hpp](compact_2compact_8hpp.html)"
+
+7 #include "[compact/euclidean.hpp](euclidean_8hpp.html)"
+
+8 #include "[compact/path.hpp](path_8hpp.html)"
+
+9 #include "[compact/surface.hpp](surface_8hpp.html)"
+
+10
+
+11
+
+12
+
+[surface.hpp](surface_8hpp.html)
+
+[compact.hpp](compact_2compact_8hpp.html)
+
+[fix.hpp](fix_8hpp.html)
+
+[euclidean.hpp](euclidean_8hpp.html)
+
+[path.hpp](path_8hpp.html)
+
+* * *
+
+Generated by [![doxygen](doxygen.svg)](http://www.doxygen.org/index.html)
+1.8.20
+
+iRRAMx  201126 AC++librarythateXtendsiRRAM  
+---  
+  
+  * [include](dir_d44c64559bbebec7f509842c48db8b23.html)
+  * [iRRAMx](dir_8030abfc18cf720e87330bfc9ab9d4ea.html)
+  * [polynomial](dir_247b532eaff843e8deea3777dbf22595.html)
+
+complexplane.hpp
+
+[Go to the documentation of this file.](complexplane_8hpp.html)
+
+1 /*
+
+2 the header file defines subsets of complex planes:
+
+3 \- CLOSEDBOX : closed square box represented by center : COMPLEX and width :
+RATIONAL
+
+4 \- R_CLOSEDBOX : closed square box with represented by center : R_COMPLEX
+and width : R_COMPLEX
+
+5 \- OPENDISC : open disc represented by center : COMPLEX and radius : COMPLEX
+
+6 \- R_OPENDISC : open disc represented by center : R_COMPLEX and radius :
+R_COMPLEX
+
+7 \- COMPONENT : A set of equal-sized adjacent R_CLOSEDBOX represented by a
+vector of R_CLOSEDBOX
+
+8 */
+
+9
+
+10 #pragma once
+
+11
+
+12 #include "iRRAM/lib.h"
+
+13 #include "iRRAM/core.h"
+
+14 #include "[rcomplex.hpp](rcomplex_8hpp.html)"
+
+15
+
+16 #include <utility>
+
+17 using namespace [iRRAM](namespacei_r_r_a_m.html);
+
+18 namespace [iRRAM](namespacei_r_r_a_m.html){
+
+19
+
+20 /*
+
+21 CONSTRUCTORS:
+
+22 \- CLOSEDBOX(): constructs a closed square box with its width 1 centered at
+the origin
+
+23 \- CLOSEDBOX(c, w): constructs a closed square box with its width w
+centered at c
+
+24 MEMBERS:
+
+25 \- center: represents center of the square box
+
+26 \- width: represents width of the square box
+
+27 \- depth: depth of the square box in a subdivision tree
+
+28 \- id: represents path of the square box in a subdivision tree
+
+29 FUNCTIONS:
+
+30 \- subdivide( i= 1,2,3,4 ) : subdivide the square box w.r.t. i; clock-wise
+
+31 */
+
+[ 32](classi_r_r_a_m_1_1_c_l_o_s_e_d_b_o_x.html) class
+[CLOSEDBOX](classi_r_r_a_m_1_1_c_l_o_s_e_d_b_o_x.html)
+
+33 {
+
+34 public:
+
+[
+35](classi_r_r_a_m_1_1_c_l_o_s_e_d_b_o_x.html#a0a1cf16a8679c95ae7298a6382d9fd15)
+COMPLEX
+[center](classi_r_r_a_m_1_1_c_l_o_s_e_d_b_o_x.html#a0a1cf16a8679c95ae7298a6382d9fd15);
+
+[
+36](classi_r_r_a_m_1_1_c_l_o_s_e_d_b_o_x.html#ae8fe74c32da01659cb950b7138ca53f5)
+REAL
+[width](classi_r_r_a_m_1_1_c_l_o_s_e_d_b_o_x.html#ae8fe74c32da01659cb950b7138ca53f5);
+
+37
+
+38
+
+[
+39](classi_r_r_a_m_1_1_c_l_o_s_e_d_b_o_x.html#a5a9302256e1a26f54ba1a2152963298a)
+int
+[depth](classi_r_r_a_m_1_1_c_l_o_s_e_d_b_o_x.html#a5a9302256e1a26f54ba1a2152963298a);
+
+[
+40](classi_r_r_a_m_1_1_c_l_o_s_e_d_b_o_x.html#a09921bb57b0e70044c13684c4a549743)
+std::string
+[id](classi_r_r_a_m_1_1_c_l_o_s_e_d_b_o_x.html#a09921bb57b0e70044c13684c4a549743);
+
+41
+
+[
+42](classi_r_r_a_m_1_1_c_l_o_s_e_d_b_o_x.html#ad3e6b53cfd4125d78f33398dca81b377)
+[CLOSEDBOX](classi_r_r_a_m_1_1_c_l_o_s_e_d_b_o_x.html#ad3e6b53cfd4125d78f33398dca81b377)();
+
+[
+43](classi_r_r_a_m_1_1_c_l_o_s_e_d_b_o_x.html#a82671dfb8a8bea2d18b878b9b6f3c95a)
+[CLOSEDBOX](classi_r_r_a_m_1_1_c_l_o_s_e_d_b_o_x.html#a82671dfb8a8bea2d18b878b9b6f3c95a)(COMPLEX,
+REAL);
+
+[
+44](classi_r_r_a_m_1_1_c_l_o_s_e_d_b_o_x.html#a3c8a09f3eccb9399c783c2fb7d320c58)
+[~CLOSEDBOX](classi_r_r_a_m_1_1_c_l_o_s_e_d_b_o_x.html#a3c8a09f3eccb9399c783c2fb7d320c58)();
+
+45
+
+[
+46](classi_r_r_a_m_1_1_c_l_o_s_e_d_b_o_x.html#a2a65dc5dee11d25780127a7c08a02d50)
+[CLOSEDBOX](classi_r_r_a_m_1_1_c_l_o_s_e_d_b_o_x.html)
+[subdivide](classi_r_r_a_m_1_1_c_l_o_s_e_d_b_o_x.html#a2a65dc5dee11d25780127a7c08a02d50)(int
+) const;
+
+47
+
+48 };
+
+49
+
+50 // similar to CLOSEDBOX
+
+[ 51](classi_r_r_a_m_1_1_r___c_l_o_s_e_d_b_o_x.html) class
+[R_CLOSEDBOX](classi_r_r_a_m_1_1_r___c_l_o_s_e_d_b_o_x.html)
+
+52 {
+
+53 public:
+
+[
+54](classi_r_r_a_m_1_1_r___c_l_o_s_e_d_b_o_x.html#a2f50590f427d4ef165536cf756558ee7)
+[R_COMPLEX](classi_r_r_a_m_1_1_r___c_o_m_p_l_e_x.html)
+[center](classi_r_r_a_m_1_1_r___c_l_o_s_e_d_b_o_x.html#a2f50590f427d4ef165536cf756558ee7);
+
+[
+55](classi_r_r_a_m_1_1_r___c_l_o_s_e_d_b_o_x.html#a35f1742ad2468ceaa69418802772325f)
+RATIONAL
+[width](classi_r_r_a_m_1_1_r___c_l_o_s_e_d_b_o_x.html#a35f1742ad2468ceaa69418802772325f);
+
+56
+
+57
+
+[
+58](classi_r_r_a_m_1_1_r___c_l_o_s_e_d_b_o_x.html#a5880c045ae0418fa33124a432f46e023)
+int
+[depth](classi_r_r_a_m_1_1_r___c_l_o_s_e_d_b_o_x.html#a5880c045ae0418fa33124a432f46e023);
+
+[
+59](classi_r_r_a_m_1_1_r___c_l_o_s_e_d_b_o_x.html#abceb6601fe637cc872e9a6cbe873f2ab)
+std::string
+[id](classi_r_r_a_m_1_1_r___c_l_o_s_e_d_b_o_x.html#abceb6601fe637cc872e9a6cbe873f2ab);
+
+60
+
+[
+61](classi_r_r_a_m_1_1_r___c_l_o_s_e_d_b_o_x.html#acfd62e3c8e43901f6d7457d86f05be0e)
+[R_CLOSEDBOX](classi_r_r_a_m_1_1_r___c_l_o_s_e_d_b_o_x.html#acfd62e3c8e43901f6d7457d86f05be0e)();
+
+[
+62](classi_r_r_a_m_1_1_r___c_l_o_s_e_d_b_o_x.html#a4d65a94ddc6d501be9578f7adfca7a64)
+[R_CLOSEDBOX](classi_r_r_a_m_1_1_r___c_l_o_s_e_d_b_o_x.html#a4d65a94ddc6d501be9578f7adfca7a64)([R_COMPLEX](classi_r_r_a_m_1_1_r___c_o_m_p_l_e_x.html),
+RATIONAL);
+
+[
+63](classi_r_r_a_m_1_1_r___c_l_o_s_e_d_b_o_x.html#a953b3bc5c5f80bbd9587cea7b6b412f3)
+[~R_CLOSEDBOX](classi_r_r_a_m_1_1_r___c_l_o_s_e_d_b_o_x.html#a953b3bc5c5f80bbd9587cea7b6b412f3)();
+
+64
+
+[
+65](classi_r_r_a_m_1_1_r___c_l_o_s_e_d_b_o_x.html#a2ddce995899e180a285a6d4d537016b6)
+[R_CLOSEDBOX](classi_r_r_a_m_1_1_r___c_l_o_s_e_d_b_o_x.html)
+[subdivide](classi_r_r_a_m_1_1_r___c_l_o_s_e_d_b_o_x.html#a2ddce995899e180a285a6d4d537016b6)(int
+)const;
+
+66 };
+
+67
+
+68 /*
+
+69 CONSTRUCTORS:
+
+70 \- OPENDISC(): constructs a disc with its width 1/2 centered at the origin
+
+71 \- OPENDISC(c, r): constructs a disc with its width r centered at c
+
+72 \- OPENDISC(C : CLOSEDBOX): constructs a disc which its inner radius
+properly contains C
+
+73
+
+74 MEMBERS:
+
+75 \- center: represents center of the disc
+
+76 \- radius: represents width of the disc
+
+77
+
+78 FUNCTIONS:
+
+79 \- multiply( r ) : return a disc whose radius is multiplied by r
+
+80 */
+
+[ 81](classi_r_r_a_m_1_1_o_p_e_n_d_i_s_c.html) class
+[OPENDISC](classi_r_r_a_m_1_1_o_p_e_n_d_i_s_c.html)
+
+82 {
+
+83 public:
+
+[
+84](classi_r_r_a_m_1_1_o_p_e_n_d_i_s_c.html#a401c5c9f41d2a9b786f083348d3842ef)
+COMPLEX
+[center](classi_r_r_a_m_1_1_o_p_e_n_d_i_s_c.html#a401c5c9f41d2a9b786f083348d3842ef);
+
+[
+85](classi_r_r_a_m_1_1_o_p_e_n_d_i_s_c.html#a297f876bad69fc19bb20e14199888380)
+REAL
+[radius](classi_r_r_a_m_1_1_o_p_e_n_d_i_s_c.html#a297f876bad69fc19bb20e14199888380);
+
+86
+
+87
+
+[
+88](classi_r_r_a_m_1_1_o_p_e_n_d_i_s_c.html#a0e8035628577ea3ddb6a6e5ce9350f9d)
+[OPENDISC](classi_r_r_a_m_1_1_o_p_e_n_d_i_s_c.html#a0e8035628577ea3ddb6a6e5ce9350f9d)();
+
+[
+89](classi_r_r_a_m_1_1_o_p_e_n_d_i_s_c.html#aade4361884d410740faf55c82c879039)
+[OPENDISC](classi_r_r_a_m_1_1_o_p_e_n_d_i_s_c.html#aade4361884d410740faf55c82c879039)(COMPLEX,
+REAL);
+
+[
+90](classi_r_r_a_m_1_1_o_p_e_n_d_i_s_c.html#a58bc69645b634a320fb55f64da1c2075)
+[OPENDISC](classi_r_r_a_m_1_1_o_p_e_n_d_i_s_c.html#a58bc69645b634a320fb55f64da1c2075)([CLOSEDBOX](classi_r_r_a_m_1_1_c_l_o_s_e_d_b_o_x.html));
+
+[
+91](classi_r_r_a_m_1_1_o_p_e_n_d_i_s_c.html#a804358eb6686ad3784ad9e159af67a5e)
+[~OPENDISC](classi_r_r_a_m_1_1_o_p_e_n_d_i_s_c.html#a804358eb6686ad3784ad9e159af67a5e)();
+
+92
+
+[
+93](classi_r_r_a_m_1_1_o_p_e_n_d_i_s_c.html#a0ab3b9626bf3980033b619f1df4dead0)
+[OPENDISC](classi_r_r_a_m_1_1_o_p_e_n_d_i_s_c.html)
+[multiply](classi_r_r_a_m_1_1_o_p_e_n_d_i_s_c.html#a0ab3b9626bf3980033b619f1df4dead0)(REAL)
+const;
+
+94 };
+
+95
+
+96
+
+97 // similar to OPENDISC
+
+[ 98](classi_r_r_a_m_1_1_r___o_p_e_n_d_i_s_c.html) class
+[R_OPENDISC](classi_r_r_a_m_1_1_r___o_p_e_n_d_i_s_c.html)
+
+99 {
+
+100 public:
+
+[
+101](classi_r_r_a_m_1_1_r___o_p_e_n_d_i_s_c.html#abccd662603e0da206d6656b2b4177ec5)
+[R_COMPLEX](classi_r_r_a_m_1_1_r___c_o_m_p_l_e_x.html)
+[center](classi_r_r_a_m_1_1_r___o_p_e_n_d_i_s_c.html#abccd662603e0da206d6656b2b4177ec5);
+
+[
+102](classi_r_r_a_m_1_1_r___o_p_e_n_d_i_s_c.html#ac90636737a8c8bebd4910b428ae6bdc8)
+RATIONAL
+[radius](classi_r_r_a_m_1_1_r___o_p_e_n_d_i_s_c.html#ac90636737a8c8bebd4910b428ae6bdc8);
+
+103
+
+[
+104](classi_r_r_a_m_1_1_r___o_p_e_n_d_i_s_c.html#a21ae5fb64b4e3a5dfef8140cc0eeb276)
+[R_OPENDISC](classi_r_r_a_m_1_1_r___o_p_e_n_d_i_s_c.html#a21ae5fb64b4e3a5dfef8140cc0eeb276)();
+
+[
+105](classi_r_r_a_m_1_1_r___o_p_e_n_d_i_s_c.html#a33e3288165246e782109c54eb1b7df0e)
+[R_OPENDISC](classi_r_r_a_m_1_1_r___o_p_e_n_d_i_s_c.html#a33e3288165246e782109c54eb1b7df0e)([R_COMPLEX](classi_r_r_a_m_1_1_r___c_o_m_p_l_e_x.html),
+RATIONAL);
+
+[
+106](classi_r_r_a_m_1_1_r___o_p_e_n_d_i_s_c.html#a7d62a979235e82881920a698c33beaba)
+[R_OPENDISC](classi_r_r_a_m_1_1_r___o_p_e_n_d_i_s_c.html#a7d62a979235e82881920a698c33beaba)([R_CLOSEDBOX](classi_r_r_a_m_1_1_r___c_l_o_s_e_d_b_o_x.html));
+
+[
+107](classi_r_r_a_m_1_1_r___o_p_e_n_d_i_s_c.html#aa0e967fae5891c2075dae389c986d51e)
+[~R_OPENDISC](classi_r_r_a_m_1_1_r___o_p_e_n_d_i_s_c.html#aa0e967fae5891c2075dae389c986d51e)();
+
+108
+
+[
+109](classi_r_r_a_m_1_1_r___o_p_e_n_d_i_s_c.html#a9c0a41779e969709c4df41bae7a6a6d8)
+[R_OPENDISC](classi_r_r_a_m_1_1_r___o_p_e_n_d_i_s_c.html)
+[multiply](classi_r_r_a_m_1_1_r___o_p_e_n_d_i_s_c.html#a9c0a41779e969709c4df41bae7a6a6d8)(RATIONAL)
+const;
+
+110
+
+111 };
+
+112
+
+113
+
+114
+
+115
+
+116 /*
+
+117 CONSTRUCTORS:
+
+118 \- COMPONENT(): constructs an empty COMPONENT
+
+119 \- COMPONENT(B : R_CLOSEDBOX): constructs a COMPONENT with a single
+element B
+
+120
+
+121 MEMBERS:
+
+122 \- box_list : list of (rational) closed boxes in the component C
+
+123 \- upper_most: max Im(z) : z \in \union C[i]
+
+124 \- right_most: max Re(z) : z \in \union C[i]
+
+125 \- left_most: min Re(z) : z \in \union C[i]
+
+126 \- below_most: min Im(z) : z \in \union C[i]
+
+127 \- right_most_box argmax_B Re(z) | z \in B \and B \in C
+
+128
+
+129 \- Nc: Newton step factor (it gets squared in every successful newton
+step. hence it needs to be INTEGER not int)
+
+130 \- kc: number of roots that the component contains
+
+131 \- depth: depth of the component in the compoenent tree
+
+132
+
+133 FUNCTIONS:
+
+134 \- add(B): add a (rational) closed box into the component
+
+135 \- size(): number of boxes in the component
+
+136 \- Wc(): width of the smallest square box that contains the component
+
+137 \- wc(): width of a box that the component contains
+
+138 \- Mc(): center of the smallest square box that contains the component
+
+139 \- Rc(): radius of the disc whose inner radius properly contains the
+smallest square box that contains the component
+
+140 \- is_empty(): return whether the component if empty
+
+141 \- split(): subdivide every boxes in the component
+
+142 \- [i]: return ith box in the component
+
+143 */
+
+144
+
+[ 145](classi_r_r_a_m_1_1_c_o_m_p_o_n_e_n_t.html) class
+[COMPONENT](classi_r_r_a_m_1_1_c_o_m_p_o_n_e_n_t.html)
+
+146 {
+
+147 public:
+
+[
+148](classi_r_r_a_m_1_1_c_o_m_p_o_n_e_n_t.html#a6f92711402fe1f96e3d1dd3c0683cfb0)
+std::vector<R_CLOSEDBOX>
+[box_list](classi_r_r_a_m_1_1_c_o_m_p_o_n_e_n_t.html#a6f92711402fe1f96e3d1dd3c0683cfb0);
+
+149
+
+[
+150](classi_r_r_a_m_1_1_c_o_m_p_o_n_e_n_t.html#a701ade46e7c3c05d0dad7e6bd505cad5)
+RATIONAL
+[upper_most](classi_r_r_a_m_1_1_c_o_m_p_o_n_e_n_t.html#a701ade46e7c3c05d0dad7e6bd505cad5);
+
+[
+151](classi_r_r_a_m_1_1_c_o_m_p_o_n_e_n_t.html#a9374cd76216101b73470727a21402fab)
+RATIONAL
+[right_most](classi_r_r_a_m_1_1_c_o_m_p_o_n_e_n_t.html#a9374cd76216101b73470727a21402fab);
+
+[
+152](classi_r_r_a_m_1_1_c_o_m_p_o_n_e_n_t.html#ae9f91c540e0ee0deec04dd27402bbcfc)
+RATIONAL
+[left_most](classi_r_r_a_m_1_1_c_o_m_p_o_n_e_n_t.html#ae9f91c540e0ee0deec04dd27402bbcfc);
+
+[
+153](classi_r_r_a_m_1_1_c_o_m_p_o_n_e_n_t.html#a60519f32433e5f3d68e81f0bb1c793c0)
+RATIONAL
+[below_most](classi_r_r_a_m_1_1_c_o_m_p_o_n_e_n_t.html#a60519f32433e5f3d68e81f0bb1c793c0);
+
+[
+154](classi_r_r_a_m_1_1_c_o_m_p_o_n_e_n_t.html#a175f38996af96889b0b9f118db44dc5a)
+[R_CLOSEDBOX](classi_r_r_a_m_1_1_r___c_l_o_s_e_d_b_o_x.html)
+[right_most_box](classi_r_r_a_m_1_1_c_o_m_p_o_n_e_n_t.html#a175f38996af96889b0b9f118db44dc5a);
+
+155
+
+[
+156](classi_r_r_a_m_1_1_c_o_m_p_o_n_e_n_t.html#a8e563ed607a14cf7b634445f4458d427)
+INTEGER
+[Nc](classi_r_r_a_m_1_1_c_o_m_p_o_n_e_n_t.html#a8e563ed607a14cf7b634445f4458d427);
+
+[
+157](classi_r_r_a_m_1_1_c_o_m_p_o_n_e_n_t.html#ab67bd69437f2aa0b37ab2e9c6510214c)
+int
+[kc](classi_r_r_a_m_1_1_c_o_m_p_o_n_e_n_t.html#ab67bd69437f2aa0b37ab2e9c6510214c);
+
+[
+158](classi_r_r_a_m_1_1_c_o_m_p_o_n_e_n_t.html#ac38aa4e428a5a2f3ab88d7b18128b07c)
+int
+[depth](classi_r_r_a_m_1_1_c_o_m_p_o_n_e_n_t.html#ac38aa4e428a5a2f3ab88d7b18128b07c);
+
+159
+
+[
+160](classi_r_r_a_m_1_1_c_o_m_p_o_n_e_n_t.html#a55bc27c99d99cc1591b6556b084df6d8)
+[COMPONENT](classi_r_r_a_m_1_1_c_o_m_p_o_n_e_n_t.html#a55bc27c99d99cc1591b6556b084df6d8)();
+
+[
+161](classi_r_r_a_m_1_1_c_o_m_p_o_n_e_n_t.html#a854f6f720c506651cd091892495d5b0a)
+[COMPONENT](classi_r_r_a_m_1_1_c_o_m_p_o_n_e_n_t.html#a854f6f720c506651cd091892495d5b0a)([R_CLOSEDBOX](classi_r_r_a_m_1_1_r___c_l_o_s_e_d_b_o_x.html)
+);
+
+[
+162](classi_r_r_a_m_1_1_c_o_m_p_o_n_e_n_t.html#a58031e8efc09149b3e76ff949754ebe1)
+[~COMPONENT](classi_r_r_a_m_1_1_c_o_m_p_o_n_e_n_t.html#a58031e8efc09149b3e76ff949754ebe1)();
+
+163
+
+[
+164](classi_r_r_a_m_1_1_c_o_m_p_o_n_e_n_t.html#a466610a3c1ce6acfbd75f3aa33d55458)
+void
+[add](classi_r_r_a_m_1_1_c_o_m_p_o_n_e_n_t.html#a466610a3c1ce6acfbd75f3aa33d55458)([R_CLOSEDBOX](classi_r_r_a_m_1_1_r___c_l_o_s_e_d_b_o_x.html)
+);
+
+165
+
+[
+166](classi_r_r_a_m_1_1_c_o_m_p_o_n_e_n_t.html#a2c97001309a6275e853aa2b580d8b381)
+int
+[size](classi_r_r_a_m_1_1_c_o_m_p_o_n_e_n_t.html#a2c97001309a6275e853aa2b580d8b381)()
+const;
+
+[
+167](classi_r_r_a_m_1_1_c_o_m_p_o_n_e_n_t.html#a2d712056c69e1ffac1dc5c18ea525d45)
+RATIONAL
+[Wc](classi_r_r_a_m_1_1_c_o_m_p_o_n_e_n_t.html#a2d712056c69e1ffac1dc5c18ea525d45)()
+const;
+
+[
+168](classi_r_r_a_m_1_1_c_o_m_p_o_n_e_n_t.html#abf6b6fe7ab6052aacc94b0387a5d41c1)
+RATIONAL
+[wc](classi_r_r_a_m_1_1_c_o_m_p_o_n_e_n_t.html#abf6b6fe7ab6052aacc94b0387a5d41c1)()
+const;
+
+[
+169](classi_r_r_a_m_1_1_c_o_m_p_o_n_e_n_t.html#a82890d50f49f4e1eda0d73d4b77be38b)
+[R_COMPLEX](classi_r_r_a_m_1_1_r___c_o_m_p_l_e_x.html)
+[Mc](classi_r_r_a_m_1_1_c_o_m_p_o_n_e_n_t.html#a82890d50f49f4e1eda0d73d4b77be38b)()
+const;
+
+[
+170](classi_r_r_a_m_1_1_c_o_m_p_o_n_e_n_t.html#a0850f26cfcefbd93b7ede3fac8d178b3)
+RATIONAL
+[Rc](classi_r_r_a_m_1_1_c_o_m_p_o_n_e_n_t.html#a0850f26cfcefbd93b7ede3fac8d178b3)()
+const;
+
+[
+171](classi_r_r_a_m_1_1_c_o_m_p_o_n_e_n_t.html#a5897b60a8f6cf41651a2670cf281f30c)
+bool
+[is_empty](classi_r_r_a_m_1_1_c_o_m_p_o_n_e_n_t.html#a5897b60a8f6cf41651a2670cf281f30c)()
+const;
+
+[
+172](classi_r_r_a_m_1_1_c_o_m_p_o_n_e_n_t.html#a6914de7784ca36a03cf7f1ed676e8a7c)
+[COMPONENT](classi_r_r_a_m_1_1_c_o_m_p_o_n_e_n_t.html)
+[split](classi_r_r_a_m_1_1_c_o_m_p_o_n_e_n_t.html#a6914de7784ca36a03cf7f1ed676e8a7c)()
+const;
+
+[
+173](classi_r_r_a_m_1_1_c_o_m_p_o_n_e_n_t.html#a5f8a5293d7bafbe85fa0357280dbaefe)
+[R_CLOSEDBOX](classi_r_r_a_m_1_1_r___c_l_o_s_e_d_b_o_x.html) [operator
+[]](classi_r_r_a_m_1_1_c_o_m_p_o_n_e_n_t.html#a5f8a5293d7bafbe85fa0357280dbaefe)(int
+) const;
+
+174
+
+175 };
+
+176
+
+[ 177](namespacei_r_r_a_m.html#a3bcc365bf0cf67e3a42c352f11a6bad5) LAZY_BOOLEAN
+[constains](namespacei_r_r_a_m.html#a3bcc365bf0cf67e3a42c352f11a6bad5)
+([OPENDISC](classi_r_r_a_m_1_1_o_p_e_n_d_i_s_c.html),
+[R_CLOSEDBOX](classi_r_r_a_m_1_1_r___c_l_o_s_e_d_b_o_x.html));
+
+[ 178](namespacei_r_r_a_m.html#a53978c041ce67a87a48b25f5e83c7fcb) LAZY_BOOLEAN
+[is_in](namespacei_r_r_a_m.html#a53978c041ce67a87a48b25f5e83c7fcb)
+([COMPONENT](classi_r_r_a_m_1_1_c_o_m_p_o_n_e_n_t.html), COMPLEX);
+
+[ 179](namespacei_r_r_a_m.html#aa246246e9553f92c558947b66f7ab908) bool
+[intersect](namespacei_r_r_a_m.html#aa246246e9553f92c558947b66f7ab908)([R_OPENDISC](classi_r_r_a_m_1_1_r___o_p_e_n_d_i_s_c.html)
+, [R_OPENDISC](classi_r_r_a_m_1_1_r___o_p_e_n_d_i_s_c.html) );
+
+[ 180](namespacei_r_r_a_m.html#a129a41a2502d3fa00331736f3c1d2eaa) bool
+[comp_disc_intersect](namespacei_r_r_a_m.html#a129a41a2502d3fa00331736f3c1d2eaa)([COMPONENT](classi_r_r_a_m_1_1_c_o_m_p_o_n_e_n_t.html),
+[R_OPENDISC](classi_r_r_a_m_1_1_r___o_p_e_n_d_i_s_c.html) );
+
+[ 181](namespacei_r_r_a_m.html#ab722fc63f792983f942d0eee3f4280ec) bool
+[adj](namespacei_r_r_a_m.html#ab722fc63f792983f942d0eee3f4280ec)([COMPONENT](classi_r_r_a_m_1_1_c_o_m_p_o_n_e_n_t.html)
+, [R_CLOSEDBOX](classi_r_r_a_m_1_1_r___c_l_o_s_e_d_b_o_x.html) );
+
+[ 182](namespacei_r_r_a_m.html#a66e1595757d91f69f7c153c724f7f3c7) bool
+[adj](namespacei_r_r_a_m.html#ab722fc63f792983f942d0eee3f4280ec)([COMPONENT](classi_r_r_a_m_1_1_c_o_m_p_o_n_e_n_t.html)
+, [COMPONENT](classi_r_r_a_m_1_1_c_o_m_p_o_n_e_n_t.html) );
+
+[ 183](namespacei_r_r_a_m.html#af066f552806fc5f0690f33b8c9df3d01) void
+[print](namespacei_r_r_a_m.html#af066f552806fc5f0690f33b8c9df3d01)([COMPONENT](classi_r_r_a_m_1_1_c_o_m_p_o_n_e_n_t.html));
+
+[ 184](namespacei_r_r_a_m.html#ae0256eafcd183d86c37f2f96e32430f8) void
+[printr](namespacei_r_r_a_m.html#ae0256eafcd183d86c37f2f96e32430f8)([COMPONENT](classi_r_r_a_m_1_1_c_o_m_p_o_n_e_n_t.html));
+
+185
+
+186 }
+
+[iRRAM::COMPONENT::kc](classi_r_r_a_m_1_1_c_o_m_p_o_n_e_n_t.html#ab67bd69437f2aa0b37ab2e9c6510214c)
+
+int kc
+
+**Definition:** [complexplane.hpp:157](complexplane_8hpp_source.html#l00157)
+
+[iRRAM::CLOSEDBOX::width](classi_r_r_a_m_1_1_c_l_o_s_e_d_b_o_x.html#ae8fe74c32da01659cb950b7138ca53f5)
+
+REAL width
+
+**Definition:** [complexplane.hpp:36](complexplane_8hpp_source.html#l00036)
+
+[iRRAM::CLOSEDBOX::center](classi_r_r_a_m_1_1_c_l_o_s_e_d_b_o_x.html#a0a1cf16a8679c95ae7298a6382d9fd15)
+
+COMPLEX center
+
+**Definition:** [complexplane.hpp:35](complexplane_8hpp_source.html#l00035)
+
+[iRRAM::intersect](namespacei_r_r_a_m.html#aa246246e9553f92c558947b66f7ab908)
+
+bool intersect(R_OPENDISC, R_OPENDISC)
+
+[iRRAM::CLOSEDBOX](classi_r_r_a_m_1_1_c_l_o_s_e_d_b_o_x.html)
+
+**Definition:** [complexplane.hpp:33](complexplane_8hpp_source.html#l00032)
+
+[iRRAM::R_CLOSEDBOX::center](classi_r_r_a_m_1_1_r___c_l_o_s_e_d_b_o_x.html#a2f50590f427d4ef165536cf756558ee7)
+
+R_COMPLEX center
+
+**Definition:** [complexplane.hpp:54](complexplane_8hpp_source.html#l00054)
+
+[iRRAM::R_CLOSEDBOX::depth](classi_r_r_a_m_1_1_r___c_l_o_s_e_d_b_o_x.html#a5880c045ae0418fa33124a432f46e023)
+
+int depth
+
+**Definition:** [complexplane.hpp:58](complexplane_8hpp_source.html#l00058)
+
+[iRRAM::COMPONENT::wc](classi_r_r_a_m_1_1_c_o_m_p_o_n_e_n_t.html#abf6b6fe7ab6052aacc94b0387a5d41c1)
+
+RATIONAL wc() const
+
+[iRRAM::OPENDISC](classi_r_r_a_m_1_1_o_p_e_n_d_i_s_c.html)
+
+**Definition:** [complexplane.hpp:82](complexplane_8hpp_source.html#l00081)
+
+[iRRAM::R_CLOSEDBOX::subdivide](classi_r_r_a_m_1_1_r___c_l_o_s_e_d_b_o_x.html#a2ddce995899e180a285a6d4d537016b6)
+
+R_CLOSEDBOX subdivide(int) const
+
+[iRRAM::OPENDISC::center](classi_r_r_a_m_1_1_o_p_e_n_d_i_s_c.html#a401c5c9f41d2a9b786f083348d3842ef)
+
+COMPLEX center
+
+**Definition:** [complexplane.hpp:84](complexplane_8hpp_source.html#l00084)
+
+[iRRAM::COMPONENT::operator[]](classi_r_r_a_m_1_1_c_o_m_p_o_n_e_n_t.html#a5f8a5293d7bafbe85fa0357280dbaefe)
+
+R_CLOSEDBOX operator[](int) const
+
+[iRRAM::COMPONENT::Rc](classi_r_r_a_m_1_1_c_o_m_p_o_n_e_n_t.html#a0850f26cfcefbd93b7ede3fac8d178b3)
+
+RATIONAL Rc() const
+
+[iRRAM::COMPONENT::add](classi_r_r_a_m_1_1_c_o_m_p_o_n_e_n_t.html#a466610a3c1ce6acfbd75f3aa33d55458)
+
+void add(R_CLOSEDBOX)
+
+[iRRAM::R_CLOSEDBOX::id](classi_r_r_a_m_1_1_r___c_l_o_s_e_d_b_o_x.html#abceb6601fe637cc872e9a6cbe873f2ab)
+
+std::string id
+
+**Definition:** [complexplane.hpp:59](complexplane_8hpp_source.html#l00059)
+
+[iRRAM::COMPONENT::~COMPONENT](classi_r_r_a_m_1_1_c_o_m_p_o_n_e_n_t.html#a58031e8efc09149b3e76ff949754ebe1)
+
+~COMPONENT()
+
+[iRRAM::COMPONENT::split](classi_r_r_a_m_1_1_c_o_m_p_o_n_e_n_t.html#a6914de7784ca36a03cf7f1ed676e8a7c)
+
+COMPONENT split() const
+
+[iRRAM::CLOSEDBOX::id](classi_r_r_a_m_1_1_c_l_o_s_e_d_b_o_x.html#a09921bb57b0e70044c13684c4a549743)
+
+std::string id
+
+**Definition:** [complexplane.hpp:40](complexplane_8hpp_source.html#l00040)
+
+[rcomplex.hpp](rcomplex_8hpp.html)
+
+[iRRAM::CLOSEDBOX::subdivide](classi_r_r_a_m_1_1_c_l_o_s_e_d_b_o_x.html#a2a65dc5dee11d25780127a7c08a02d50)
+
+CLOSEDBOX subdivide(int) const
+
+[iRRAM::COMPONENT::COMPONENT](classi_r_r_a_m_1_1_c_o_m_p_o_n_e_n_t.html#a55bc27c99d99cc1591b6556b084df6d8)
+
+COMPONENT()
+
+[iRRAM::CLOSEDBOX::CLOSEDBOX](classi_r_r_a_m_1_1_c_l_o_s_e_d_b_o_x.html#ad3e6b53cfd4125d78f33398dca81b377)
+
+CLOSEDBOX()
+
+[iRRAM::constains](namespacei_r_r_a_m.html#a3bcc365bf0cf67e3a42c352f11a6bad5)
+
+LAZY_BOOLEAN constains(OPENDISC, R_CLOSEDBOX)
+
+[iRRAM::comp_disc_intersect](namespacei_r_r_a_m.html#a129a41a2502d3fa00331736f3c1d2eaa)
+
+bool comp_disc_intersect(COMPONENT, R_OPENDISC)
+
+[iRRAM::COMPONENT::Mc](classi_r_r_a_m_1_1_c_o_m_p_o_n_e_n_t.html#a82890d50f49f4e1eda0d73d4b77be38b)
+
+R_COMPLEX Mc() const
+
+[iRRAM::COMPONENT::COMPONENT](classi_r_r_a_m_1_1_c_o_m_p_o_n_e_n_t.html#a854f6f720c506651cd091892495d5b0a)
+
+COMPONENT(R_CLOSEDBOX)
+
+[iRRAM::R_OPENDISC::R_OPENDISC](classi_r_r_a_m_1_1_r___o_p_e_n_d_i_s_c.html#a21ae5fb64b4e3a5dfef8140cc0eeb276)
+
+R_OPENDISC()
+
+[iRRAM::R_CLOSEDBOX::R_CLOSEDBOX](classi_r_r_a_m_1_1_r___c_l_o_s_e_d_b_o_x.html#a4d65a94ddc6d501be9578f7adfca7a64)
+
+R_CLOSEDBOX(R_COMPLEX, RATIONAL)
+
+[iRRAM::COMPONENT::right_most](classi_r_r_a_m_1_1_c_o_m_p_o_n_e_n_t.html#a9374cd76216101b73470727a21402fab)
+
+RATIONAL right_most
+
+**Definition:** [complexplane.hpp:151](complexplane_8hpp_source.html#l00151)
+
+[iRRAM::CLOSEDBOX::CLOSEDBOX](classi_r_r_a_m_1_1_c_l_o_s_e_d_b_o_x.html#a82671dfb8a8bea2d18b878b9b6f3c95a)
+
+CLOSEDBOX(COMPLEX, REAL)
+
+[iRRAM::COMPONENT::size](classi_r_r_a_m_1_1_c_o_m_p_o_n_e_n_t.html#a2c97001309a6275e853aa2b580d8b381)
+
+int size() const
+
+[iRRAM::R_OPENDISC::R_OPENDISC](classi_r_r_a_m_1_1_r___o_p_e_n_d_i_s_c.html#a33e3288165246e782109c54eb1b7df0e)
+
+R_OPENDISC(R_COMPLEX, RATIONAL)
+
+[iRRAM::R_OPENDISC::~R_OPENDISC](classi_r_r_a_m_1_1_r___o_p_e_n_d_i_s_c.html#aa0e967fae5891c2075dae389c986d51e)
+
+~R_OPENDISC()
+
+[iRRAM::OPENDISC::radius](classi_r_r_a_m_1_1_o_p_e_n_d_i_s_c.html#a297f876bad69fc19bb20e14199888380)
+
+REAL radius
+
+**Definition:** [complexplane.hpp:85](complexplane_8hpp_source.html#l00085)
+
+[iRRAM::COMPONENT::left_most](classi_r_r_a_m_1_1_c_o_m_p_o_n_e_n_t.html#ae9f91c540e0ee0deec04dd27402bbcfc)
+
+RATIONAL left_most
+
+**Definition:** [complexplane.hpp:152](complexplane_8hpp_source.html#l00152)
+
+[iRRAM](namespacei_r_r_a_m.html)
+
+**Definition:** [compact.hpp:17](compact_2compact_8hpp_source.html#l00017)
+
+[iRRAM::R_CLOSEDBOX::~R_CLOSEDBOX](classi_r_r_a_m_1_1_r___c_l_o_s_e_d_b_o_x.html#a953b3bc5c5f80bbd9587cea7b6b412f3)
+
+~R_CLOSEDBOX()
+
+[iRRAM::COMPONENT](classi_r_r_a_m_1_1_c_o_m_p_o_n_e_n_t.html)
+
+**Definition:** [complexplane.hpp:146](complexplane_8hpp_source.html#l00145)
+
+[iRRAM::R_COMPLEX](classi_r_r_a_m_1_1_r___c_o_m_p_l_e_x.html)
+
+**Definition:** [rcomplex.hpp:13](rcomplex_8hpp_source.html#l00012)
+
+[iRRAM::R_CLOSEDBOX](classi_r_r_a_m_1_1_r___c_l_o_s_e_d_b_o_x.html)
+
+**Definition:** [complexplane.hpp:52](complexplane_8hpp_source.html#l00051)
+
+[iRRAM::R_OPENDISC](classi_r_r_a_m_1_1_r___o_p_e_n_d_i_s_c.html)
+
+**Definition:** [complexplane.hpp:99](complexplane_8hpp_source.html#l00098)
+
+[iRRAM::is_in](namespacei_r_r_a_m.html#a53978c041ce67a87a48b25f5e83c7fcb)
+
+LAZY_BOOLEAN is_in(COMPONENT, COMPLEX)
+
+[iRRAM::adj](namespacei_r_r_a_m.html#ab722fc63f792983f942d0eee3f4280ec)
+
+bool adj(COMPONENT, R_CLOSEDBOX)
+
+[iRRAM::R_OPENDISC::multiply](classi_r_r_a_m_1_1_r___o_p_e_n_d_i_s_c.html#a9c0a41779e969709c4df41bae7a6a6d8)
+
+R_OPENDISC multiply(RATIONAL) const
+
+[iRRAM::R_CLOSEDBOX::R_CLOSEDBOX](classi_r_r_a_m_1_1_r___c_l_o_s_e_d_b_o_x.html#acfd62e3c8e43901f6d7457d86f05be0e)
+
+R_CLOSEDBOX()
+
+[iRRAM::COMPONENT::box_list](classi_r_r_a_m_1_1_c_o_m_p_o_n_e_n_t.html#a6f92711402fe1f96e3d1dd3c0683cfb0)
+
+std::vector< R_CLOSEDBOX > box_list
+
+**Definition:** [complexplane.hpp:148](complexplane_8hpp_source.html#l00148)
+
+[iRRAM::CLOSEDBOX::depth](classi_r_r_a_m_1_1_c_l_o_s_e_d_b_o_x.html#a5a9302256e1a26f54ba1a2152963298a)
+
+int depth
+
+**Definition:** [complexplane.hpp:39](complexplane_8hpp_source.html#l00039)
+
+[iRRAM::OPENDISC::OPENDISC](classi_r_r_a_m_1_1_o_p_e_n_d_i_s_c.html#a0e8035628577ea3ddb6a6e5ce9350f9d)
+
+OPENDISC()
+
+[iRRAM::COMPONENT::below_most](classi_r_r_a_m_1_1_c_o_m_p_o_n_e_n_t.html#a60519f32433e5f3d68e81f0bb1c793c0)
+
+RATIONAL below_most
+
+**Definition:** [complexplane.hpp:153](complexplane_8hpp_source.html#l00153)
+
+[iRRAM::COMPONENT::depth](classi_r_r_a_m_1_1_c_o_m_p_o_n_e_n_t.html#ac38aa4e428a5a2f3ab88d7b18128b07c)
+
+int depth
+
+**Definition:** [complexplane.hpp:158](complexplane_8hpp_source.html#l00158)
+
+[iRRAM::printr](namespacei_r_r_a_m.html#ae0256eafcd183d86c37f2f96e32430f8)
+
+void printr(COMPONENT)
+
+[iRRAM::CLOSEDBOX::~CLOSEDBOX](classi_r_r_a_m_1_1_c_l_o_s_e_d_b_o_x.html#a3c8a09f3eccb9399c783c2fb7d320c58)
+
+~CLOSEDBOX()
+
+[iRRAM::R_OPENDISC::center](classi_r_r_a_m_1_1_r___o_p_e_n_d_i_s_c.html#abccd662603e0da206d6656b2b4177ec5)
+
+R_COMPLEX center
+
+**Definition:** [complexplane.hpp:101](complexplane_8hpp_source.html#l00101)
+
+[iRRAM::OPENDISC::OPENDISC](classi_r_r_a_m_1_1_o_p_e_n_d_i_s_c.html#a58bc69645b634a320fb55f64da1c2075)
+
+OPENDISC(CLOSEDBOX)
+
+[iRRAM::COMPONENT::Nc](classi_r_r_a_m_1_1_c_o_m_p_o_n_e_n_t.html#a8e563ed607a14cf7b634445f4458d427)
+
+INTEGER Nc
+
+**Definition:** [complexplane.hpp:156](complexplane_8hpp_source.html#l00156)
+
+[iRRAM::OPENDISC::~OPENDISC](classi_r_r_a_m_1_1_o_p_e_n_d_i_s_c.html#a804358eb6686ad3784ad9e159af67a5e)
+
+~OPENDISC()
+
+[iRRAM::OPENDISC::multiply](classi_r_r_a_m_1_1_o_p_e_n_d_i_s_c.html#a0ab3b9626bf3980033b619f1df4dead0)
+
+OPENDISC multiply(REAL) const
+
+[iRRAM::R_OPENDISC::R_OPENDISC](classi_r_r_a_m_1_1_r___o_p_e_n_d_i_s_c.html#a7d62a979235e82881920a698c33beaba)
+
+R_OPENDISC(R_CLOSEDBOX)
+
+[iRRAM::COMPONENT::Wc](classi_r_r_a_m_1_1_c_o_m_p_o_n_e_n_t.html#a2d712056c69e1ffac1dc5c18ea525d45)
+
+RATIONAL Wc() const
+
+[iRRAM::R_CLOSEDBOX::width](classi_r_r_a_m_1_1_r___c_l_o_s_e_d_b_o_x.html#a35f1742ad2468ceaa69418802772325f)
+
+RATIONAL width
+
+**Definition:** [complexplane.hpp:55](complexplane_8hpp_source.html#l00055)
+
+[iRRAM::COMPONENT::right_most_box](classi_r_r_a_m_1_1_c_o_m_p_o_n_e_n_t.html#a175f38996af96889b0b9f118db44dc5a)
+
+R_CLOSEDBOX right_most_box
+
+**Definition:** [complexplane.hpp:154](complexplane_8hpp_source.html#l00154)
+
+[iRRAM::COMPONENT::upper_most](classi_r_r_a_m_1_1_c_o_m_p_o_n_e_n_t.html#a701ade46e7c3c05d0dad7e6bd505cad5)
+
+RATIONAL upper_most
+
+**Definition:** [complexplane.hpp:150](complexplane_8hpp_source.html#l00150)
+
+[iRRAM::OPENDISC::OPENDISC](classi_r_r_a_m_1_1_o_p_e_n_d_i_s_c.html#aade4361884d410740faf55c82c879039)
+
+OPENDISC(COMPLEX, REAL)
+
+[iRRAM::COMPONENT::is_empty](classi_r_r_a_m_1_1_c_o_m_p_o_n_e_n_t.html#a5897b60a8f6cf41651a2670cf281f30c)
+
+bool is_empty() const
+
+[iRRAM::print](namespacei_r_r_a_m.html#af066f552806fc5f0690f33b8c9df3d01)
+
+void print(COMPONENT)
+
+[iRRAM::R_OPENDISC::radius](classi_r_r_a_m_1_1_r___o_p_e_n_d_i_s_c.html#ac90636737a8c8bebd4910b428ae6bdc8)
+
+RATIONAL radius
+
+**Definition:** [complexplane.hpp:102](complexplane_8hpp_source.html#l00102)
+
+* * *
+
+Generated by [![doxygen](doxygen.svg)](http://www.doxygen.org/index.html)
+1.8.20
+
+iRRAMx  201126 AC++librarythateXtendsiRRAM  
+---  
+  
+  * [include](dir_d44c64559bbebec7f509842c48db8b23.html)
+  * [iRRAMx](dir_8030abfc18cf720e87330bfc9ab9d4ea.html)
+  * [compact](dir_68c7f6bc3018d4a705bc11611200b603.html)
+
+euclidean.hpp
+
+[Go to the documentation of this file.](euclidean_8hpp.html)
+
+1 #pragma once
+
+2 // iRRAM extension for compact subsets in euclidean
+
+3 // author: Jiman Hwang(molehair a.t kaist.ac.kr)
+
+4
+
+5 #include <iRRAM/lib.h>
+
+6 #include "[plot.hpp](plot_8hpp.html)"
+
+7
+
+8
+
+9 using namespace [iRRAM](namespacei_r_r_a_m.html);
+
+10
+
+11
+
+12
+
+13
+
+14
+
+15 namespace [iRRAM](namespacei_r_r_a_m.html) {
+
+16
+
+[ 17](euclidean_8hpp.html#ac328e551bde3d39b6d7b8cc9e048d941) #define ZERO
+RATIONAL(INTEGER(0),INTEGER(1))
+
+[ 18](euclidean_8hpp.html#a206b6f5362e56b51ca957635350b70b6) #define ONE
+RATIONAL(INTEGER(1),INTEGER(1))
+
+19
+
+20
+
+21 // Euclidean space using alias declaration
+
+22 template <int N>
+
+[ 23](namespacei_r_r_a_m.html#ae1dbfe13855084838ffb13cc787d5427) using
+[IR](namespacei_r_r_a_m.html#ae1dbfe13855084838ffb13cc787d5427) =
+std::array<REAL, N>;
+
+24
+
+25 // Hypercube as a (mental) subset
+
+26 template <int N>
+
+[ 27](namespacei_r_r_a_m.html#a47a131eda86521c2be784e9c7f712a7a) using
+[HyperCube](namespacei_r_r_a_m.html#a47a131eda86521c2be784e9c7f712a7a) =
+[IR<N>](namespacei_r_r_a_m.html#ae1dbfe13855084838ffb13cc787d5427);
+
+28
+
+29 // just alias
+
+30 template <int N>
+
+[ 31](namespacei_r_r_a_m.html#a1d2e14e811b03f40a0e28611c957bd64) using
+[Point](namespacei_r_r_a_m.html#a1d2e14e811b03f40a0e28611c957bd64) =
+[IR<N>](namespacei_r_r_a_m.html#ae1dbfe13855084838ffb13cc787d5427);
+
+32
+
+33 // Dyadic point
+
+34 template <int N>
+
+[ 35](namespacei_r_r_a_m.html#ac2003c9ee70c2f751c4e82f994b8286d) using
+[DyadicPoint](namespacei_r_r_a_m.html#ac2003c9ee70c2f751c4e82f994b8286d) =
+std::array<DYADIC, N>;
+
+36
+
+37
+
+38
+
+39 // return 2^n
+
+[ 40](namespacei_r_r_a_m.html#a5811649b09be686cc0a6db277e2a6d85) RATIONAL
+[Exp](namespacei_r_r_a_m.html#a5811649b09be686cc0a6db277e2a6d85)(int n)
+
+41 {
+
+42 if (n > 0)
+
+43 return (INTEGER(1) << n);
+
+44 else if (n == 0)
+
+45 return 1;
+
+46 else
+
+47 return (RATIONAL(INTEGER(1), INTEGER(1) << -n));
+
+48 }
+
+49
+
+50 template <int N>
+
+[ 51](namespacei_r_r_a_m.html#a86cfae2492a19198ed1b8e27729f210b)
+[IR<N>](namespacei_r_r_a_m.html#ae1dbfe13855084838ffb13cc787d5427)
+[IR_origin](namespacei_r_r_a_m.html#a86cfae2492a19198ed1b8e27729f210b)()
+
+52 {
+
+53 std::array<REAL, N> res;
+
+54 for (int i = 0; i < N; i++)
+
+55 res = REAL(0);
+
+56 return res;
+
+57 }
+
+58
+
+59 // metric
+
+60 template <int N>
+
+[ 61](namespacei_r_r_a_m.html#acfcc886ee25be089e79c9afc7f2b3961) REAL
+[IR_d](namespacei_r_r_a_m.html#acfcc886ee25be089e79c9afc7f2b3961)([IR<N>](namespacei_r_r_a_m.html#ae1dbfe13855084838ffb13cc787d5427)
+x, [IR<N>](namespacei_r_r_a_m.html#ae1dbfe13855084838ffb13cc787d5427) y)
+
+62 {
+
+63 REAL sum = 0;
+
+64 REAL a, b;
+
+65 for (int i = 0; i < N; i++)
+
+66 {
+
+67 a = x[i];
+
+68 b = y[i];
+
+69 sum += (a - b) * (a - b);
+
+70 }
+
+71 return sqrt(sum);
+
+72 }
+
+73
+
+74 // Copied from iRRAM/src/stack.cc and modified a little.
+
+75 // The original file is buggy in the case when the function is a constant
+function. (it never stops!)
+
+76 // this should be reported sometime.
+
+[ 77](namespacei_r_r_a_m.html#a84a945e008ba7ede5c2235e27058777d) int
+[module](namespacei_r_r_a_m.html#a84a945e008ba7ede5c2235e27058777d)(std::function<REAL(REAL)>
+f, const REAL &x, int p)
+
+78 {
+
+79 // Semantics: If m=module(f,x,p), then
+
+80 // |x-z| <=2^m implies |f(x)-f(z)| <= 2^p
+
+81
+
+82 // If we are able to approximate f(x) by a DYADIC number d with an error of
+<=2^{p-1},
+
+83 // then for any z in the argument interval of x, f(z) must differ by at
+most
+
+84 // 2^{p-1} from d, hence |f(x)-f(z)|<=2^p
+
+85
+
+86 int result;
+
+87 if (get_cached(result))
+
+88 return result;
+
+89
+
+90 DYADIC d;
+
+91 REAL x_copy = x;
+
+92
+
+93 sizetype argerror, testerror;
+
+94
+
+95 x_copy.geterror(argerror);
+
+96 sizetype_set(testerror, 1, argerror.exponent);
+
+97 x_copy.adderror(testerror);
+
+98 {
+
+99 single_valued code;
+
+100 d = approx(f(x_copy), p - 1);
+
+101 }
+
+102 // At this line, we are sure that x_copy (and so also x) is precise enough
+to allow
+
+103 // the computation of f(x), even with a slightly increased error of the
+argument.
+
+104
+
+105 // We now try to find the smallest p_arg such that the evaluation of f(x+-
+2^p_arg)
+
+106 // is possible up to an error of at most 2^{p-1}
+
+107
+
+108 // ITERATION_STACK SAVED_STACK;
+
+109
+
+110 // To do this, we start with p_arg=p.
+
+111 // If this is successfull, we increase the value of p_arg until the first
+failure
+
+112 // It it is not, then we decrease until the first success...
+
+113 int direction = 0, p_arg = p;
+
+114 bool try_it = true;
+
+115
+
+116 while (try_it)
+
+117 {
+
+118
+
+119 sizetype_set(testerror, 1, p_arg);
+
+120 x_copy.seterror(argerror);
+
+121 x_copy.adderror(testerror);
+
+122 bool fail = false;
+
+123 if (iRRAM_unlikely(state->debug > 0))
+
+124 {
+
+125 sizetype x_error;
+
+126 x_copy.geterror(x_error);
+
+127 iRRAM_DEBUG2(1, "Testing module: 1*2^%d + %d*2^%d\n", p_arg,
+argerror.mantissa, argerror.exponent);
+
+128 iRRAM_DEBUG2(1, "argument error: %d*2^%d\n", x_error.mantissa,
+x_error.exponent);
+
+129 }
+
+130 try
+
+131 {
+
+132 single_valued code;
+
+133 REAL z = f(x_copy);
+
+134 if (iRRAM_unlikely(state->debug > 0))
+
+135 {
+
+136 sizetype z_error;
+
+137 z.geterror(z_error);
+
+138 iRRAM_DEBUG2(1, "Module yields result %d*2^%d\n", z_error.mantissa,
+z_error.exponent);
+
+139 }
+
+140 d = approx(z, p - 1);
+
+141 }
+
+142 catch (Iteration it)
+
+143 {
+
+144 fail = true;
+
+145 }
+
+146 switch (direction)
+
+147 {
+
+148 case 0:;
+
+149 if (fail)
+
+150 direction = -1;
+
+151 else
+
+152 direction = 1;
+
+153 p_arg += direction;
+
+154 break;
+
+155 case 1:;
+
+156 if (fail || p_arg > 0)
+
+157 {
+
+158 try_it = false;
+
+159 p_arg -= direction;
+
+160 }
+
+161 else
+
+162 {
+
+163 p_arg += direction;
+
+164 };
+
+165 break;
+
+166 case -1:;
+
+167 if (fail)
+
+168 {
+
+169 p_arg += direction;
+
+170 }
+
+171 else
+
+172 {
+
+173 try_it = false;
+
+174 };
+
+175 break;
+
+176 }
+
+177 }
+
+178 iRRAM_DEBUG2(1, "Modules resulting in p_arg=%d\n", p_arg);
+
+179
+
+180 sizetype_set(testerror, 1, p_arg);
+
+181 sizetype_inc(argerror, testerror);
+
+182
+
+183 while (argerror.mantissa > 1)
+
+184 {
+
+185 argerror.mantissa = argerror.mantissa >> 1;
+
+186 argerror.exponent += 1;
+
+187 }
+
+188
+
+189 result = argerror.exponent;
+
+190 put_cached(result);
+
+191 return result;
+
+192 }
+
+193
+
+194
+
+195
+
+196
+
+197 // Return: the minimum q such that
+
+198 // for any hypercube H of size 2^-q with corners aligned by 2^-q in
+hypercube H',
+
+199 // f(H) is subset of a hypercube of size 2^-p
+
+200 // f: R^M -> R^N
+
+201 // H' is given with the center c and side length 2^-s
+
+202 template<int M, int N>
+
+[ 203](namespacei_r_r_a_m.html#aeadf1ea271178a5303daf4dc98568434) int
+[module2_](namespacei_r_r_a_m.html#aeadf1ea271178a5303daf4dc98568434)(std::function<[Point<N>](namespacei_r_r_a_m.html#a1d2e14e811b03f40a0e28611c957bd64)([Point<M>](namespacei_r_r_a_m.html#a1d2e14e811b03f40a0e28611c957bd64))>
+f, int p, const
+[HyperCube<M>](namespacei_r_r_a_m.html#a47a131eda86521c2be784e9c7f712a7a) &c,
+int s) {
+
+204 sizetype err;
+
+205
+
+206 // create H
+
+207 [HyperCube<M>](namespacei_r_r_a_m.html#a47a131eda86521c2be784e9c7f712a7a)
+box = c;
+
+208 for(REAL &u : box) {
+
+209 sizetype_set(err, 1, -s-1);
+
+210 u.seterror(err);
+
+211 }
+
+212
+
+213 // check if f(H') is subset of a hypercube
+
+214 DYADIC d;
+
+215 bool success = true;
+
+216 try {
+
+217 single_valued code;
+
+218
+
+219 [HyperCube<N>](namespacei_r_r_a_m.html#a47a131eda86521c2be784e9c7f712a7a)
+fBox = f(box);
+
+220 for(REAL &v : fBox) d = approx(v, -p-1);
+
+221 } catch (Iteration it) { success = false; }
+
+222
+
+223 // return current one if success
+
+224 if(success) return s;
+
+225
+
+226 // bisection on failure, total 2^M sub-hypercubes
+
+227 int result = s+1;
+
+228 [HyperCube<M>](namespacei_r_r_a_m.html#a47a131eda86521c2be784e9c7f712a7a)
+offset, newCenter;
+
+229 REAL halfLen =
+[Exp](namespacei_r_r_a_m.html#a5811649b09be686cc0a6db277e2a6d85)(-s-1);
+
+230 offset.fill(0);
+
+231 for(int k=0 ; k<(1<<M) ; k++) {
+
+232 // configure offset
+
+233 // If the j'th bit of k is 0, we choose the left half section on j'th
+dimension
+
+234 // Otherwise, the right half section.
+
+235 for(int j=0 ; j<M ; j++) {
+
+236 int sign = ((k & (1<<j))<<1)-1; // -1 on left section, 1 otherwise
+
+237 offset[j] = REAL(INTEGER(sign)) * halfLen;
+
+238 }
+
+239
+
+240 // configure point
+
+241 for(int j=0 ; j<M ; j++) newCenter[j] = c[j] + offset[j];
+
+242
+
+243 // find the required precision
+
+244 result = max(result, module2_<M,N>(f, p, newCenter, s+1));
+
+245 }
+
+246
+
+247 return result;
+
+248 }
+
+249
+
+250 // Return: the minimum q such that
+
+251 // for any hypercube H of size 2^-q with corners aligned by 2^-q in
+[0,1]^M,
+
+252 // f(H) is subset of a hypercube of size 2^-p
+
+253 // f: R^M -> R^N
+
+254 template<int M, int N>
+
+[ 255](namespacei_r_r_a_m.html#a9db57e001c742f8e84bc5731fabe8f92) int
+[module2](namespacei_r_r_a_m.html#a9db57e001c742f8e84bc5731fabe8f92)(std::function<[Point<N>](namespacei_r_r_a_m.html#a1d2e14e811b03f40a0e28611c957bd64)([Point<M>](namespacei_r_r_a_m.html#a1d2e14e811b03f40a0e28611c957bd64))>
+f, int p) {
+
+256 [HyperCube<M>](namespacei_r_r_a_m.html#a47a131eda86521c2be784e9c7f712a7a)
+c;
+
+257 c.fill(REAL(1) / REAL(2));
+
+258 return module2_<M,N>(f,p,c,0);
+
+259 }
+
+260
+
+261
+
+262
+
+263 }
+
+[iRRAM::IR](namespacei_r_r_a_m.html#ae1dbfe13855084838ffb13cc787d5427)
+
+std::array< REAL, N > IR
+
+**Definition:** [euclidean.hpp:23](euclidean_8hpp_source.html#l00023)
+
+[iRRAM::IR_d](namespacei_r_r_a_m.html#acfcc886ee25be089e79c9afc7f2b3961)
+
+REAL IR_d(IR< N > x, IR< N > y)
+
+**Definition:** [euclidean.hpp:61](euclidean_8hpp_source.html#l00061)
+
+[iRRAM::DyadicPoint](namespacei_r_r_a_m.html#ac2003c9ee70c2f751c4e82f994b8286d)
+
+std::array< DYADIC, N > DyadicPoint
+
+**Definition:** [euclidean.hpp:35](euclidean_8hpp_source.html#l00035)
+
+[plot.hpp](plot_8hpp.html)
+
+[iRRAM](namespacei_r_r_a_m.html)
+
+**Definition:** [compact.hpp:17](compact_2compact_8hpp_source.html#l00017)
+
+[iRRAM::IR_origin](namespacei_r_r_a_m.html#a86cfae2492a19198ed1b8e27729f210b)
+
+IR< N > IR_origin()
+
+**Definition:** [euclidean.hpp:51](euclidean_8hpp_source.html#l00051)
+
+[iRRAM::module2_](namespacei_r_r_a_m.html#aeadf1ea271178a5303daf4dc98568434)
+
+int module2_(std::function< Point< N >(Point< M >)> f, int p, const HyperCube<
+M > &c, int s)
+
+**Definition:** [euclidean.hpp:203](euclidean_8hpp_source.html#l00203)
+
+[iRRAM::Exp](namespacei_r_r_a_m.html#a5811649b09be686cc0a6db277e2a6d85)
+
+RATIONAL Exp(int n)
+
+**Definition:** [euclidean.hpp:40](euclidean_8hpp_source.html#l00040)
+
+[iRRAM::HyperCube](namespacei_r_r_a_m.html#a47a131eda86521c2be784e9c7f712a7a)
+
+IR< N > HyperCube
+
+**Definition:** [euclidean.hpp:27](euclidean_8hpp_source.html#l00027)
+
+[iRRAM::module](namespacei_r_r_a_m.html#a84a945e008ba7ede5c2235e27058777d)
+
+int module(std::function< REAL(REAL)> f, const REAL &x, int p)
+
+**Definition:** [euclidean.hpp:77](euclidean_8hpp_source.html#l00077)
+
+[iRRAM::module2](namespacei_r_r_a_m.html#a9db57e001c742f8e84bc5731fabe8f92)
+
+int module2(std::function< Point< N >(Point< M >)> f, int p)
+
+**Definition:** [euclidean.hpp:255](euclidean_8hpp_source.html#l00255)
+
+[iRRAM::Point](namespacei_r_r_a_m.html#a1d2e14e811b03f40a0e28611c957bd64)
+
+IR< N > Point
+
+**Definition:** [euclidean.hpp:31](euclidean_8hpp_source.html#l00031)
+
+* * *
+
+Generated by [![doxygen](doxygen.svg)](http://www.doxygen.org/index.html)
+1.8.20
+
+iRRAMx  201126 AC++librarythateXtendsiRRAM  
+---  
+  
+  * [include](dir_d44c64559bbebec7f509842c48db8b23.html)
+  * [iRRAMx](dir_8030abfc18cf720e87330bfc9ab9d4ea.html)
+
+fix.hpp
+
+[Go to the documentation of this file.](fix_8hpp.html)
+
+1 #pragma once
+
+2 #include "iRRAM/lib.h"
+
+3 #include "iRRAM/core.h"
+
+4 using namespace [iRRAM](namespacei_r_r_a_m.html);
+
+5
+
+6
+
+7 template <typename R, typename C, typename... Args>
+
+8 [[deprecated("Use limti_mv_() instead.")]]
+
+9 std::enable_if_t<internal::is_cacheable<C>::value, R>
+
+[ 10](fix_8hpp.html#a8494718ec335251496579f0a113dc23d)
+[limit_mv](fix_8hpp.html#a8494718ec335251496579f0a113dc23d)(R (*seq)(int
+[prec](namespacei_r_r_a_m.html#a5c83e979927fd7e101e6869dc4178215), C &choice,
+const Args &... args),
+
+11 C choice, const Args &... x);
+
+12
+
+13 template <typename R, typename C, typename... Args>
+
+14 std::enable_if_t<internal::is_cacheable<C>::value, R>
+
+[ 15](fix_8hpp.html#ad98d9e6c8d5f9c0e822317b84572323d)
+[limit_mv_](fix_8hpp.html#ad98d9e6c8d5f9c0e822317b84572323d)(R (*seq)(int
+[prec](namespacei_r_r_a_m.html#a5c83e979927fd7e101e6869dc4178215), C &choice,
+const Args &... args),
+
+16 C choice, const Args &... x);
+
+17
+
+18
+
+19 // [[deprecated]]
+
+20 // template <typename R, typename C, typename... Args>
+
+21 // std::enable_if_t<internal::is_cacheable<C>::value, R>
+
+22 // limit_mv(R (*seq)(int prec, C &choice, const Args &... args),
+
+23 // C choice, const Args &... x);
+
+[iRRAM::prec](namespacei_r_r_a_m.html#a5c83e979927fd7e101e6869dc4178215)
+
+REAL prec(int p)
+
+[limit_mv](fix_8hpp.html#a8494718ec335251496579f0a113dc23d)
+
+std::enable_if_t< internal::is_cacheable< C >::value, R > limit_mv(R(*seq)(int
+prec, C &choice, const Args &... args), C choice, const Args &... x)
+
+[iRRAM](namespacei_r_r_a_m.html)
+
+**Definition:** [compact.hpp:17](compact_2compact_8hpp_source.html#l00017)
+
+[limit_mv_](fix_8hpp.html#ad98d9e6c8d5f9c0e822317b84572323d)
+
+std::enable_if_t< internal::is_cacheable< C >::value, R >
+limit_mv_(R(*seq)(int prec, C &choice, const Args &... args), C choice, const
+Args &... x)
+
+* * *
+
+Generated by [![doxygen](doxygen.svg)](http://www.doxygen.org/index.html)
+1.8.20
+
+iRRAMx  201126 AC++librarythateXtendsiRRAM  
+---  
+  
+  * [include](dir_d44c64559bbebec7f509842c48db8b23.html)
+  * [iRRAMx](dir_8030abfc18cf720e87330bfc9ab9d4ea.html)
+
+linear.hpp
+
+[Go to the documentation of this file.](linear_8hpp.html)
+
+1 #pragma once
+
+2 #include "[fix.hpp](fix_8hpp.html)"
+
+3 // iRRAM extension for linear algebra.
+
+4
+
+5
+
+6 #include <iRRAM/lib.h>
+
+7 #include <vector>
+
+8
+
+9 #include "[utility.hpp](utility_8hpp.html)"
+
+10
+
+11 using namespace [iRRAM](namespacei_r_r_a_m.html);
+
+12 namespace [iRRAM](namespacei_r_r_a_m.html){
+
+13
+
+[ 14](namespacei_r_r_a_m.html#a4cf8a71ea7f445cf06cf5dfb40eadb25) typedef
+REALMATRIX
+[REALVECTOR](namespacei_r_r_a_m.html#a4cf8a71ea7f445cf06cf5dfb40eadb25);
+
+15
+
+16 // utilities
+
+[ 17](namespacei_r_r_a_m.html#a52012173287ae3e2128191bc38b163c0) std::string
+[to_string_double](namespacei_r_r_a_m.html#a52012173287ae3e2128191bc38b163c0)
+(REALMATRIX M);
+
+18
+
+[ 58](group__linalg_sub1.html#gacba09385ea76bfc80997315ff9159d04) REALMATRIX
+[rswap](group__linalg_sub1.html#gacba09385ea76bfc80997315ff9159d04)(REALMATRIX
+A, int i, int j);
+
+59
+
+[ 66](group__linalg_sub1.html#ga0ad6285fedf895d4a3cb3ce58981708b) REALMATRIX
+[cswap](group__linalg_sub1.html#ga0ad6285fedf895d4a3cb3ce58981708b)(REALMATRIX
+A, int i, int j);
+
+67
+
+[ 73](group__linalg_sub1.html#ga46802d91d7bf777b895e9e37b8d74711)
+[REALVECTOR](namespacei_r_r_a_m.html#a4cf8a71ea7f445cf06cf5dfb40eadb25)
+[cvec](group__linalg_sub1.html#ga46802d91d7bf777b895e9e37b8d74711)(REALMATRIX
+A, int i);
+
+74
+
+[ 81](group__linalg_sub1.html#ga672d164b92d0b50012b3fa8ffabd795b)
+[REALVECTOR](namespacei_r_r_a_m.html#a4cf8a71ea7f445cf06cf5dfb40eadb25)
+[cvec](group__linalg_sub1.html#ga46802d91d7bf777b895e9e37b8d74711)(REALMATRIX
+A, int i, int j);
+
+82
+
+[ 86](group__linalg_sub1.html#ga954ad7cb99a59a99154d921019306269) REALMATRIX
+[transpose](group__linalg_sub1.html#ga954ad7cb99a59a99154d921019306269)(REALMATRIX
+M);
+
+87
+
+[ 96](group__linalg_sub1.html#ga32a838310ea69c390b6920e086a4dff6) REALMATRIX
+[block_matrix](group__linalg_sub1.html#ga32a838310ea69c390b6920e086a4dff6)(REALMATRIX
+A, REALMATRIX B, REALMATRIX C, REALMATRIX D);
+
+97
+
+[ 102](group__linalg_sub1.html#ga162b816de0ccf17144e49bb59ee948a9) REALMATRIX
+[block_diag_matrix](group__linalg_sub1.html#ga162b816de0ccf17144e49bb59ee948a9)(REALMATRIX
+A, REALMATRIX B); // [A 0 ; 0 B]
+
+103
+
+[ 118](group__linalg_sub1.html#ga26564ea2ceb8854343bd62fac352f2ff) REALMATRIX
+[givens](group__linalg_sub1.html#ga26564ea2ceb8854343bd62fac352f2ff) (unsigned
+int n, unsigned int i, unsigned int j, REAL c, REAL s);
+
+119
+
+[ 126](group__linalg_sub1.html#ga35516da2c41b33edeeb9c331888a2cba) REALMATRIX
+[rconcat](group__linalg_sub1.html#ga35516da2c41b33edeeb9c331888a2cba)(REALMATRIX
+A, REALMATRIX B); //[A B]
+
+127
+
+[ 134](group__linalg_sub1.html#ga393b5fffcbf823c1ccfef40e74d726c5) REALMATRIX
+[cconcat](group__linalg_sub1.html#ga393b5fffcbf823c1ccfef40e74d726c5)(REALMATRIX
+A, REALMATRIX B); //[A ; B]
+
+135
+
+[ 140](group__linalg_sub1.html#ga8531602852dbd5dac736c01e4e9e062a) REALMATRIX
+[basis_vec](group__linalg_sub1.html#ga8531602852dbd5dac736c01e4e9e062a)(int i,
+int n);
+
+141
+
+[ 149](group__linalg_sub1.html#gace532763bb9377f4f4f26245995ecd19) REALMATRIX
+[submatrix](group__linalg_sub1.html#gace532763bb9377f4f4f26245995ecd19)(REALMATRIX
+M, int r, int c);
+
+150
+
+151
+
+[ 168](group__linalg_sub2.html#ga3ab155728a0f2eb90417058a87bddeb4) REAL
+[inner](group__linalg_sub2.html#ga3ab155728a0f2eb90417058a87bddeb4)([REALVECTOR](namespacei_r_r_a_m.html#a4cf8a71ea7f445cf06cf5dfb40eadb25)
+v, [REALVECTOR](namespacei_r_r_a_m.html#a4cf8a71ea7f445cf06cf5dfb40eadb25) w);
+
+169
+
+[ 176](group__linalg_sub2.html#ga4b56d0e5cb2d6cbe9048c346331d75cd) REAL
+[trace](group__linalg_sub2.html#ga4b56d0e5cb2d6cbe9048c346331d75cd)(REALMATRIX
+M);
+
+177
+
+[ 184](group__linalg_sub2.html#ga7f095eb3377e42a256859350a37a61d5) REAL
+[det](group__linalg_sub2.html#ga7f095eb3377e42a256859350a37a61d5)(REALMATRIX
+M); // defined via limit on det_approx. it is a total function.
+
+185
+
+[ 190](group__linalg_sub2.html#ga8e640ae471fd09a6c2287a4e826c2122) REAL
+[Enorm](group__linalg_sub2.html#ga8e640ae471fd09a6c2287a4e826c2122)(REALMATRIX
+M);
+
+191
+
+[ 196](group__linalg_sub2.html#ga5216602d930623789e0e003b19b8626f) REAL
+[Fnorm](group__linalg_sub2.html#ga5216602d930623789e0e003b19b8626f)(REALMATRIX
+M);
+
+[ 197](group__linalg_sub2.html#ga02efa00e7415178c01fab6fb9ce59a63)
+[REALVECTOR](namespacei_r_r_a_m.html#a4cf8a71ea7f445cf06cf5dfb40eadb25)
+[projection](group__linalg_sub2.html#ga02efa00e7415178c01fab6fb9ce59a63)([REALVECTOR](namespacei_r_r_a_m.html#a4cf8a71ea7f445cf06cf5dfb40eadb25)
+u, [REALVECTOR](namespacei_r_r_a_m.html#a4cf8a71ea7f445cf06cf5dfb40eadb25) v);
+
+[ 198](group__linalg_sub2.html#ga9f59429db7eae5a5c432187243873e8e) REALMATRIX
+[block_decompose](group__linalg_sub2.html#ga9f59429db7eae5a5c432187243873e8e)(REALMATRIX
+A, unsigned int i, unsigned int j);
+
+[ 199](group__linalg_sub2.html#ga77cc3a3235847716b7c3ceae3b00b42b) void
+[block_decompose](group__linalg_sub2.html#ga9f59429db7eae5a5c432187243873e8e)(REALMATRIX
+A, unsigned int i, unsigned int j, REALMATRIX* L);
+
+200
+
+[ 208](group__linalg_sub2.html#ga6da87474b53ae0a772d4b40c0dea2192) REALMATRIX
+[normalize](group__linalg_sub2.html#ga6da87474b53ae0a772d4b40c0dea2192)([REALVECTOR](namespacei_r_r_a_m.html#a4cf8a71ea7f445cf06cf5dfb40eadb25)
+u);
+
+209
+
+[ 217](group__linalg_sub2.html#ga33e05f230f7895350d4822a33758881c) REALMATRIX
+[householder](group__linalg_sub2.html#ga33e05f230f7895350d4822a33758881c)([REALVECTOR](namespacei_r_r_a_m.html#a4cf8a71ea7f445cf06cf5dfb40eadb25)
+u);
+
+218
+
+[ 236](group__linalg_sub3.html#ga58bd90448196f2af4581ef60b5d0a9c4) REALMATRIX
+[strassen](group__linalg_sub3.html#ga58bd90448196f2af4581ef60b5d0a9c4)
+(REALMATRIX A, REALMATRIX B); // strassen fast multiplication
+
+237
+
+[ 247](group__linalg_sub3.html#ga592749b2089d7fdb64710f36221993b8) REALMATRIX
+[linear_sys](group__linalg_sub3.html#ga592749b2089d7fdb64710f36221993b8)(REALMATRIX
+M, [REALVECTOR](namespacei_r_r_a_m.html#a4cf8a71ea7f445cf06cf5dfb40eadb25) b);
+// when M is regular
+
+248
+
+[ 257](group__linalg_sub3.html#ga5662e99f463dfea71db885127e4d9319) REALMATRIX
+[inv](group__linalg_sub3.html#ga5662e99f463dfea71db885127e4d9319)(REALMATRIX
+M);
+
+258
+
+[ 266](group__linalg_sub3.html#ga78f86fd7cfc1c801d22305fb4454f9e8) REALMATRIX
+[kernel](group__linalg_sub3.html#ga78f86fd7cfc1c801d22305fb4454f9e8)
+(REALMATRIX M, int k); // orthogonal kernel basis where the second arg. is the
+dimension
+
+267
+
+[ 276](group__linalg_sub3.html#ga574c7b877ab8eae50a3165f87a4f40b0)
+std::pair<REALMATRIX, REALMATRIX>
+[QR](group__linalg_sub3.html#ga574c7b877ab8eae50a3165f87a4f40b0)(REALMATRIX
+M); // QR decomposition
+
+277
+
+[ 286](group__linalg_sub3.html#ga3098117bfd74974f22f813d53cd98094)
+std::pair<REALMATRIX, REALMATRIX>
+[QR_H](group__linalg_sub3.html#ga3098117bfd74974f22f813d53cd98094)(REALMATRIX);
+// QR decomposition for Hessenberg matrix
+
+287
+
+[ 299](group__linalg_sub3.html#gaed823f3b90533de4cd76b6b3b2eb4708) REALMATRIX
+[hessenberg_reduction](group__linalg_sub3.html#gaed823f3b90533de4cd76b6b3b2eb4708)(REALMATRIX
+M, int p); // reduces to Hessenberg with eig perturbation 2^p
+
+300
+
+[ 316](group__linalg_sub4.html#ga4270ee6673995483658a5503210d6e7c)
+[REALVECTOR](namespacei_r_r_a_m.html#a4cf8a71ea7f445cf06cf5dfb40eadb25)
+[symm_eig](group__linalg_sub4.html#ga4270ee6673995483658a5503210d6e7c)
+(REALMATRIX M); // eigenvalues of symmetric matrix
+
+317
+
+[ 326](group__linalg_sub4.html#gacae5524d1592df57b9b3c789109c1621) REALMATRIX
+[eigen_vec](group__linalg_sub4.html#gacae5524d1592df57b9b3c789109c1621)(REALMATRIX
+M, REAL e, int num); //
+
+327
+
+330 }
+
+[iRRAM::householder](group__linalg_sub2.html#ga33e05f230f7895350d4822a33758881c)
+
+REALMATRIX householder(REALVECTOR u)
+
+create Householder reflector from u
+
+[iRRAM::Fnorm](group__linalg_sub2.html#ga5216602d930623789e0e003b19b8626f)
+
+REAL Fnorm(REALMATRIX M)
+
+compute the Frobenius norm of a matrix
+
+[iRRAM::Enorm](group__linalg_sub2.html#ga8e640ae471fd09a6c2287a4e826c2122)
+
+REAL Enorm(REALMATRIX M)
+
+compute the Euclidean norm of a matrix
+
+[iRRAM::basis_vec](group__linalg_sub1.html#ga8531602852dbd5dac736c01e4e9e062a)
+
+REALMATRIX basis_vec(int i, int n)
+
+create a basis vector
+
+[iRRAM::symm_eig](group__linalg_sub4.html#ga4270ee6673995483658a5503210d6e7c)
+
+REALVECTOR symm_eig(REALMATRIX M)
+
+compute the eigenvalues of a symmetric matrix
+
+[iRRAM::det](group__linalg_sub2.html#ga7f095eb3377e42a256859350a37a61d5)
+
+REAL det(REALMATRIX M)
+
+compute the determinant of a square matrix
+
+[iRRAM::eigen_vec](group__linalg_sub4.html#gacae5524d1592df57b9b3c789109c1621)
+
+REALMATRIX eigen_vec(REALMATRIX M, REAL e, int num)
+
+compute the egenvectors of a symmetric matrix associated with an eigenvalue
+
+[iRRAM::givens](group__linalg_sub1.html#ga26564ea2ceb8854343bd62fac352f2ff)
+
+REALMATRIX givens(unsigned int n, unsigned int i, unsigned int j, REAL c, REAL
+s)
+
+create Given's rotation
+
+[iRRAM::transpose](group__linalg_sub1.html#ga954ad7cb99a59a99154d921019306269)
+
+REALMATRIX transpose(REALMATRIX M)
+
+transpose of a matrix
+
+[iRRAM::strassen](group__linalg_sub3.html#ga58bd90448196f2af4581ef60b5d0a9c4)
+
+REALMATRIX strassen(REALMATRIX A, REALMATRIX B)
+
+multiply two square matrices using Strassen algorithm
+
+[iRRAM::cvec](group__linalg_sub1.html#ga46802d91d7bf777b895e9e37b8d74711)
+
+REALVECTOR cvec(REALMATRIX A, int i)
+
+from an input matrix, get a column
+
+[iRRAM::cconcat](group__linalg_sub1.html#ga393b5fffcbf823c1ccfef40e74d726c5)
+
+REALMATRIX cconcat(REALMATRIX A, REALMATRIX B)
+
+concatnate the columns of two matrices
+
+[iRRAM::normalize](group__linalg_sub2.html#ga6da87474b53ae0a772d4b40c0dea2192)
+
+REALMATRIX normalize(REALVECTOR u)
+
+normalize a column vector w.r.t. Euclidean norm
+
+[iRRAM::rconcat](group__linalg_sub1.html#ga35516da2c41b33edeeb9c331888a2cba)
+
+REALMATRIX rconcat(REALMATRIX A, REALMATRIX B)
+
+concatnate the rows of two matrices
+
+[iRRAM](namespacei_r_r_a_m.html)
+
+**Definition:** [compact.hpp:17](compact_2compact_8hpp_source.html#l00017)
+
+[iRRAM::inv](group__linalg_sub3.html#ga5662e99f463dfea71db885127e4d9319)
+
+REALMATRIX inv(REALMATRIX M)
+
+compute the inverse of a square regular matrix
+
+[iRRAM::linear_sys](group__linalg_sub3.html#ga592749b2089d7fdb64710f36221993b8)
+
+REALMATRIX linear_sys(REALMATRIX M, REALVECTOR b)
+
+Solve a linear system.
+
+[iRRAM::trace](group__linalg_sub2.html#ga4b56d0e5cb2d6cbe9048c346331d75cd)
+
+REAL trace(REALMATRIX M)
+
+compute the trace of a square matrix
+
+[fix.hpp](fix_8hpp.html)
+
+[iRRAM::block_diag_matrix](group__linalg_sub1.html#ga162b816de0ccf17144e49bb59ee948a9)
+
+REALMATRIX block_diag_matrix(REALMATRIX A, REALMATRIX B)
+
+create a matrix from given submatrices
+
+[iRRAM::inner](group__linalg_sub2.html#ga3ab155728a0f2eb90417058a87bddeb4)
+
+REAL inner(REALVECTOR v, REALVECTOR w)
+
+compute the inner product of two column vectors
+
+[iRRAM::QR_H](group__linalg_sub3.html#ga3098117bfd74974f22f813d53cd98094)
+
+std::pair< REALMATRIX, REALMATRIX > QR_H(REALMATRIX)
+
+QR Factorization on a square Hassenberg matrix.
+
+[iRRAM::projection](group__linalg_sub2.html#ga02efa00e7415178c01fab6fb9ce59a63)
+
+REALVECTOR projection(REALVECTOR u, REALVECTOR v)
+
+[iRRAM::to_string_double](namespacei_r_r_a_m.html#a52012173287ae3e2128191bc38b163c0)
+
+std::string to_string_double(REALMATRIX M)
+
+[iRRAM::QR](group__linalg_sub3.html#ga574c7b877ab8eae50a3165f87a4f40b0)
+
+std::pair< REALMATRIX, REALMATRIX > QR(REALMATRIX M)
+
+QR Factorization on a square matrix.
+
+[iRRAM::submatrix](group__linalg_sub1.html#gace532763bb9377f4f4f26245995ecd19)
+
+REALMATRIX submatrix(REALMATRIX M, int r, int c)
+
+extract a submatrix below an index
+
+[iRRAM::block_matrix](group__linalg_sub1.html#ga32a838310ea69c390b6920e086a4dff6)
+
+REALMATRIX block_matrix(REALMATRIX A, REALMATRIX B, REALMATRIX C, REALMATRIX
+D)
+
+create a matrix from given submatrices
+
+[iRRAM::rswap](group__linalg_sub1.html#gacba09385ea76bfc80997315ff9159d04)
+
+REALMATRIX rswap(REALMATRIX A, int i, int j)
+
+elementary op. for swaping rows
+
+[iRRAM::block_decompose](group__linalg_sub2.html#ga9f59429db7eae5a5c432187243873e8e)
+
+REALMATRIX block_decompose(REALMATRIX A, unsigned int i, unsigned int j)
+
+[utility.hpp](utility_8hpp.html)
+
+[iRRAM::kernel](group__linalg_sub3.html#ga78f86fd7cfc1c801d22305fb4454f9e8)
+
+REALMATRIX kernel(REALMATRIX M, int k)
+
+compute the basis of the kernel
+
+[iRRAM::hessenberg_reduction](group__linalg_sub3.html#gaed823f3b90533de4cd76b6b3b2eb4708)
+
+REALMATRIX hessenberg_reduction(REALMATRIX M, int p)
+
+approximately reduce a square matrix to Hessenberg matrix
+
+[iRRAM::REALVECTOR](namespacei_r_r_a_m.html#a4cf8a71ea7f445cf06cf5dfb40eadb25)
+
+REALMATRIX REALVECTOR
+
+**Definition:** [linear.hpp:14](linear_8hpp_source.html#l00014)
+
+[iRRAM::cswap](group__linalg_sub1.html#ga0ad6285fedf895d4a3cb3ce58981708b)
+
+REALMATRIX cswap(REALMATRIX A, int i, int j)
+
+elementary op. for swaping columns
+
+* * *
+
+Generated by [![doxygen](doxygen.svg)](http://www.doxygen.org/index.html)
+1.8.20
+
+iRRAMx  201126 AC++librarythateXtendsiRRAM  
+---  
+  
+  * [include](dir_d44c64559bbebec7f509842c48db8b23.html)
+  * [iRRAMx](dir_8030abfc18cf720e87330bfc9ab9d4ea.html)
+  * [compact](dir_68c7f6bc3018d4a705bc11611200b603.html)
+
+path.hpp
+
+[Go to the documentation of this file.](path_8hpp.html)
+
+1 #pragma once
+
+2
+
+3 #include <array>
+
+4
+
+5 #include "iRRAM/lib.h"
+
+6 #include "iRRAM/core.h"
+
+7 #include "iRRAM.h"
+
+8 #include "[compact.hpp](compact_8hpp.html)"
+
+9 #include "[euclidean.hpp](euclidean_8hpp.html)"
+
+10 #include "[plot.hpp](plot_8hpp.html)"
+
+11
+
+12 using namespace [iRRAM](namespacei_r_r_a_m.html);
+
+13
+
+18 // [0,1] -> R^N
+
+19 template <int N>
+
+[ 20](class_path.html) class [Path](class_path.html) : public
+[Compact](classi_r_r_a_m_1_1_compact.html)<N> {
+
+21 public:
+
+22 // original function
+
+[ 23](class_path.html#aec0f4e75514efd5c9bf799861c79a870)
+std::function<Point<N>(REAL)>
+[f](class_path.html#aec0f4e75514efd5c9bf799861c79a870);
+
+24
+
+[ 29](class_path.html#a628f6902dce76d169113d6c27eef820f)
+[Path](class_path.html#a628f6902dce76d169113d6c27eef820f)(std::function<[Point<N>](namespacei_r_r_a_m.html#a1d2e14e811b03f40a0e28611c957bd64)(REAL)>
+f) { this->f = f; }
+
+30
+
+31 // whenever |x-z| < 2^-pArg, |f(x)-f(z)| < 2^-p for all x,z
+
+32 // will be increased when higher precision is requested
+
+[ 33](class_path.html#a97964ef636248b71b22b3f2cf0131a2b) int p=INT_MIN,
+pArg=INT_MIN;
+
+34
+
+[ 39](class_path.html#a8aeb27bb7109f53ab94df1691d7fc988) void
+[increasePrecision](class_path.html#a8aeb27bb7109f53ab94df1691d7fc988)(int p)
+{
+
+40 // ignore lower or equal precision
+
+41 if(this->p >= p) return;
+
+42
+
+43 // find the pArg
+
+44 // must |f(u)-f(z)| < (2^-p)/sqrt(2) to include the box with a ball
+
+45 // hence find find pArg such that whenever |x-z| < 2^-pArg, |f(x)-f(z)| <
+2^(-p-1) for all x,z
+
+46 // This makes the distance between two consecutive centers of balls
+2^(-p-1)*sqrt(2) at most.
+
+47
+std::function<Point<N>([Point<1>](namespacei_r_r_a_m.html#a1d2e14e811b03f40a0e28611c957bd64))>
+ff = [&]([Point<1>](namespacei_r_r_a_m.html#a1d2e14e811b03f40a0e28611c957bd64)
+x) -> [Point<N>](namespacei_r_r_a_m.html#a1d2e14e811b03f40a0e28611c957bd64) {
+
+48 return this->f(x[0]);
+
+49 };
+
+50 this->pArg = module2<1,N>(ff, p+1);
+
+51
+
+52 // update the current precision
+
+53 this->p = p;
+
+54
+
+55 // update the current characteristic function
+
+56 this->cfun =
+[&]([Point<N>](namespacei_r_r_a_m.html#a1d2e14e811b03f40a0e28611c957bd64) pt,
+int p) -> bool{
+
+57 single_valued code;
+
+58
+
+59 // check the membership with previously found p and pArg
+
+60 // centers of balls: f(step/2 + i*step, step/2 + j*step)
+
+61 // radius of a ball: 2^-p
+
+62 // maximum distance between two consecutive balls(centers):
+2^(-p-1)*sqrt(2) (check increasePrecision())
+
+63 // When checking inclusiveness, we run (d < radius) and (d > radius/2) in
+parallel for decidability.
+
+64 // For any point on the path, there exists a ball that contains the point.
+
+65 RATIONAL step =
+[Exp](namespacei_r_r_a_m.html#a5811649b09be686cc0a6db277e2a6d85)(-pArg); //
+2^-pArg
+
+66 RATIONAL radius =
+[Exp](namespacei_r_r_a_m.html#a5811649b09be686cc0a6db277e2a6d85)(-p); // 2^-p,
+the radius of a ball
+
+67 RATIONAL radiusHalf = radius/INTEGER(2); // 2^(-p-1)
+
+68 REAL d;
+
+69 RATIONAL u,v;
+
+70 for(u=step/2 ;
+u<=[ONE](euclidean_8hpp.html#a206b6f5362e56b51ca957635350b70b6) ; u+=step) {
+
+71 d = IR_d<N>(pt, this->f(u));
+
+72 if(choose(d < radius, d > radiusHalf) == 1) return true;
+
+73 }
+
+74 return false;
+
+75 };
+
+76 }
+
+77
+
+[ 85](class_path.html#ab26e60eb20d0325538fac96644418299) bool
+[member](class_path.html#ab26e60eb20d0325538fac96644418299)
+([Point<N>](namespacei_r_r_a_m.html#a1d2e14e811b03f40a0e28611c957bd64) point,
+int p) {
+
+86 // cout << "member in path p = " << p << "\n";
+
+87
+
+88 // check if previously found pArg is viable
+
+89 // if not, increase the precision
+
+90 if(this->p < p) this->increasePrecision(p);
+
+91
+
+92 return this->cfun(point, p);
+
+93 }
+
+94 };
+
+95
+
+[Path::f](class_path.html#aec0f4e75514efd5c9bf799861c79a870)
+
+std::function< Point< N >REAL)> f
+
+**Definition:** [path.hpp:23](path_8hpp_source.html#l00023)
+
+[plot.hpp](plot_8hpp.html)
+
+[compact.hpp](compact_8hpp.html)
+
+[ONE](euclidean_8hpp.html#a206b6f5362e56b51ca957635350b70b6)
+
+#define ONE
+
+**Definition:** [euclidean.hpp:18](euclidean_8hpp_source.html#l00018)
+
+[iRRAM](namespacei_r_r_a_m.html)
+
+**Definition:** [compact.hpp:17](compact_2compact_8hpp_source.html#l00017)
+
+[Path::member](class_path.html#ab26e60eb20d0325538fac96644418299)
+
+bool member(Point< N > point, int p)
+
+**Definition:** [path.hpp:85](path_8hpp_source.html#l00085)
+
+[Path::increasePrecision](class_path.html#a8aeb27bb7109f53ab94df1691d7fc988)
+
+void increasePrecision(int p)
+
+**Definition:** [path.hpp:39](path_8hpp_source.html#l00039)
+
+[iRRAM::Exp](namespacei_r_r_a_m.html#a5811649b09be686cc0a6db277e2a6d85)
+
+RATIONAL Exp(int n)
+
+**Definition:** [euclidean.hpp:40](euclidean_8hpp_source.html#l00040)
+
+[Path](class_path.html)
+
+**Definition:** [path.hpp:20](path_8hpp_source.html#l00020)
+
+[euclidean.hpp](euclidean_8hpp.html)
+
+[iRRAM::Compact](classi_r_r_a_m_1_1_compact.html)
+
+**Definition:** [compact.hpp:24](compact_2compact_8hpp_source.html#l00024)
+
+[Path::Path](class_path.html#a628f6902dce76d169113d6c27eef820f)
+
+Path(std::function< Point< N >(REAL)> f)
+
+**Definition:** [path.hpp:29](path_8hpp_source.html#l00029)
+
+[iRRAM::Point](namespacei_r_r_a_m.html#a1d2e14e811b03f40a0e28611c957bd64)
+
+IR< N > Point
+
+**Definition:** [euclidean.hpp:31](euclidean_8hpp_source.html#l00031)
+
+* * *
+
+Generated by [![doxygen](doxygen.svg)](http://www.doxygen.org/index.html)
+1.8.20
+
+iRRAMx  201126 AC++librarythateXtendsiRRAM  
+---  
+  
+  * [include](dir_d44c64559bbebec7f509842c48db8b23.html)
+  * [iRRAMx](dir_8030abfc18cf720e87330bfc9ab9d4ea.html)
+
+plot.hpp
+
+[Go to the documentation of this file.](plot_8hpp.html)
+
+1 #pragma once
+
+2 #include "[fix.hpp](fix_8hpp.html)"
+
+[fix.hpp](fix_8hpp.html)
+
+* * *
+
+Generated by [![doxygen](doxygen.svg)](http://www.doxygen.org/index.html)
+1.8.20
+
+iRRAMx  201126 AC++librarythateXtendsiRRAM  
+---  
+  
+  * [include](dir_d44c64559bbebec7f509842c48db8b23.html)
+  * [iRRAMx](dir_8030abfc18cf720e87330bfc9ab9d4ea.html)
+  * [polynomial](dir_247b532eaff843e8deea3777dbf22595.html)
+
+polynomial.hpp
+
+[Go to the documentation of this file.](polynomial_2polynomial_8hpp.html)
+
+* * *
+
+Generated by [![doxygen](doxygen.svg)](http://www.doxygen.org/index.html)
+1.8.20
+
+iRRAMx  201126 AC++librarythateXtendsiRRAM  
+---  
+  
+  * [include](dir_d44c64559bbebec7f509842c48db8b23.html)
+  * [iRRAMx](dir_8030abfc18cf720e87330bfc9ab9d4ea.html)
+
+polynomial.hpp
+
+[Go to the documentation of this file.](polynomial_8hpp.html)
+
+1 #pragma once
+
+2 #include "[fix.hpp](fix_8hpp.html)"
+
+3
+
+4 #include "iRRAM/lib.h"
+
+5 #include "iRRAM/core.h"
+
+6 #include <utility>
+
+7 using namespace [iRRAM](namespacei_r_r_a_m.html);
+
+8 namespace [iRRAM](namespacei_r_r_a_m.html){
+
+9
+
+18
+
+[ 24](classi_r_r_a_m_1_1_p_o_l_y_n_o_m_i_a_l.html) class
+[POLYNOMIAL](classi_r_r_a_m_1_1_p_o_l_y_n_o_m_i_a_l.html)
+
+25 {
+
+26 public:
+
+28
+
+[
+32](classi_r_r_a_m_1_1_p_o_l_y_n_o_m_i_a_l.html#a1ec2fd15c6253289cf9b9ed0046f36b0)
+std::vector<COMPLEX>
+[coef](classi_r_r_a_m_1_1_p_o_l_y_n_o_m_i_a_l.html#a1ec2fd15c6253289cf9b9ed0046f36b0);
+
+[
+33](classi_r_r_a_m_1_1_p_o_l_y_n_o_m_i_a_l.html#a8c72c311ee84590e7116d0dbc69be2b4)
+int
+[degree](classi_r_r_a_m_1_1_p_o_l_y_n_o_m_i_a_l.html#a8c72c311ee84590e7116d0dbc69be2b4);
+
+34
+
+36
+
+[
+41](classi_r_r_a_m_1_1_p_o_l_y_n_o_m_i_a_l.html#a9a0b01cf9a99ecbd43be09a32e828460)
+[POLYNOMIAL](classi_r_r_a_m_1_1_p_o_l_y_n_o_m_i_a_l.html#a9a0b01cf9a99ecbd43be09a32e828460)(int
+d, COMPLEX * c);
+
+42
+
+44
+
+[
+49](classi_r_r_a_m_1_1_p_o_l_y_n_o_m_i_a_l.html#aef13e0d8799cf7d5e2462d81146028a5)
+[POLYNOMIAL](classi_r_r_a_m_1_1_p_o_l_y_n_o_m_i_a_l.html#aef13e0d8799cf7d5e2462d81146028a5)(int
+d, std::vector<COMPLEX> c);
+
+50
+
+52
+
+[
+55](classi_r_r_a_m_1_1_p_o_l_y_n_o_m_i_a_l.html#ab22bcc997d9b6a4e21abf4098c54855f)
+[POLYNOMIAL](classi_r_r_a_m_1_1_p_o_l_y_n_o_m_i_a_l.html#ab22bcc997d9b6a4e21abf4098c54855f)(COMPLEX
+c);
+
+[
+56](classi_r_r_a_m_1_1_p_o_l_y_n_o_m_i_a_l.html#abdd57e595043eaa0aa0281144a1c1dcb)
+[POLYNOMIAL](classi_r_r_a_m_1_1_p_o_l_y_n_o_m_i_a_l.html#abdd57e595043eaa0aa0281144a1c1dcb)();
+
+[
+57](classi_r_r_a_m_1_1_p_o_l_y_n_o_m_i_a_l.html#ab64409c388dfdb2bc31be30535b8a332)
+[~POLYNOMIAL](classi_r_r_a_m_1_1_p_o_l_y_n_o_m_i_a_l.html#ab64409c388dfdb2bc31be30535b8a332)();
+
+[
+58](classi_r_r_a_m_1_1_p_o_l_y_n_o_m_i_a_l.html#a5ad2bfe0136b27ad6bc45822f4ada4bf)
+COMPLEX [operator ()
+](classi_r_r_a_m_1_1_p_o_l_y_n_o_m_i_a_l.html#a5ad2bfe0136b27ad6bc45822f4ada4bf)(const
+COMPLEX&);
+
+59 };
+
+60
+
+[ 61](group__poly.html#ga405362a3efe8b88bdb814c0c2dc7a4b8)
+[POLYNOMIAL](classi_r_r_a_m_1_1_p_o_l_y_n_o_m_i_a_l.html) [operator +
+](group__poly.html#ga405362a3efe8b88bdb814c0c2dc7a4b8)(const
+[POLYNOMIAL](classi_r_r_a_m_1_1_p_o_l_y_n_o_m_i_a_l.html)&, const
+[POLYNOMIAL](classi_r_r_a_m_1_1_p_o_l_y_n_o_m_i_a_l.html)&);
+
+[ 62](group__poly.html#gab26db9f4804667aed0f3d3647a8d590d)
+[POLYNOMIAL](classi_r_r_a_m_1_1_p_o_l_y_n_o_m_i_a_l.html) [operator -
+](group__poly.html#gab26db9f4804667aed0f3d3647a8d590d)(const
+[POLYNOMIAL](classi_r_r_a_m_1_1_p_o_l_y_n_o_m_i_a_l.html)&, const
+[POLYNOMIAL](classi_r_r_a_m_1_1_p_o_l_y_n_o_m_i_a_l.html)&);
+
+[ 63](group__poly.html#gaa59b33369769b05eaaa159daac3d3a73)
+[POLYNOMIAL](classi_r_r_a_m_1_1_p_o_l_y_n_o_m_i_a_l.html) [operator *
+](group__poly.html#gaa59b33369769b05eaaa159daac3d3a73)(const
+[POLYNOMIAL](classi_r_r_a_m_1_1_p_o_l_y_n_o_m_i_a_l.html)&, const
+[POLYNOMIAL](classi_r_r_a_m_1_1_p_o_l_y_n_o_m_i_a_l.html)&);
+
+64
+
+[
+65](structi_r_r_a_m_1_1internal_1_1is__continuous_3_01_p_o_l_y_n_o_m_i_a_l_01_4.html)
+namespace internal{template <> struct
+is_continuous<[POLYNOMIAL](classi_r_r_a_m_1_1_p_o_l_y_n_o_m_i_a_l.html)> :
+public std::true_type{};}
+
+66 // void geterror(const POLYNOMIAL &);
+
+[ 67](group__poly.html#gab8b0f54bf6182ab5b8994ec5813dc7ec) int
+[geterror_exp](group__poly.html#gab8b0f54bf6182ab5b8994ec5813dc7ec)(const
+[POLYNOMIAL](classi_r_r_a_m_1_1_p_o_l_y_n_o_m_i_a_l.html) & );
+
+68
+
+69 // Q = deriv(P,k) := Q^{(k)}
+
+70
+
+[ 78](group__poly.html#ga59c9501d7d0aadc6f1dee81a7cb922d2)
+[POLYNOMIAL](classi_r_r_a_m_1_1_p_o_l_y_n_o_m_i_a_l.html)
+[deriv](group__poly.html#ga59c9501d7d0aadc6f1dee81a7cb922d2)([POLYNOMIAL](classi_r_r_a_m_1_1_p_o_l_y_n_o_m_i_a_l.html)
+p, int k);
+
+79 // y = evaluate(P, x) := P(x)
+
+80
+
+[ 87](group__poly.html#gab9e41ac401eb6e83289965b128e09625) COMPLEX
+[evaluate](group__poly.html#gab9e41ac401eb6e83289965b128e09625)([POLYNOMIAL](classi_r_r_a_m_1_1_p_o_l_y_n_o_m_i_a_l.html)
+p, COMPLEX x);
+
+88 // Taylor coefficients: a_k = CoefAt(P, k, z) := P^{(k)}(z)/k!
+
+89
+
+[ 96](group__poly.html#gac3fa1b23d9db0ec4d415a136045429c0) COMPLEX
+[CoefAt](group__poly.html#gac3fa1b23d9db0ec4d415a136045429c0)([POLYNOMIAL](classi_r_r_a_m_1_1_p_o_l_y_n_o_m_i_a_l.html)
+p, int k, COMPLEX z);
+
+97 // Translation and dilation by g(x) = f(ax + b)
+
+98 // a : REAL, b : COMPLEX
+
+[ 99](group__poly.html#ga6bacdb9188cf0193e21f1ce2f55bc6ed)
+[POLYNOMIAL](classi_r_r_a_m_1_1_p_o_l_y_n_o_m_i_a_l.html)
+[translation](group__poly.html#ga6bacdb9188cf0193e21f1ce2f55bc6ed)([POLYNOMIAL](classi_r_r_a_m_1_1_p_o_l_y_n_o_m_i_a_l.html)
+, REAL , COMPLEX );
+
+100
+
+101
+
+102
+
+103 // Find root
+
+[ 110](group__poly.html#gab417ce9a5503241a95ef6f0a0eb8d5ab)
+std::vector<COMPLEX >
+[roots](group__poly.html#gab417ce9a5503241a95ef6f0a0eb8d5ab)([POLYNOMIAL](classi_r_r_a_m_1_1_p_o_l_y_n_o_m_i_a_l.html)
+p);
+
+111
+
+114 }
+
+[iRRAM::POLYNOMIAL::POLYNOMIAL](classi_r_r_a_m_1_1_p_o_l_y_n_o_m_i_a_l.html#aef13e0d8799cf7d5e2462d81146028a5)
+
+POLYNOMIAL(int d, std::vector< COMPLEX > c)
+
+construction with a vector of coefficients
+
+[iRRAM::operator+](group__poly.html#ga405362a3efe8b88bdb814c0c2dc7a4b8)
+
+POLYNOMIAL operator+(const POLYNOMIAL &, const POLYNOMIAL &)
+
+[iRRAM::roots](group__poly.html#gab417ce9a5503241a95ef6f0a0eb8d5ab)
+
+std::vector< COMPLEX > roots(POLYNOMIAL p)
+
+find every roots of a polynomial
+
+[iRRAM::POLYNOMIAL::POLYNOMIAL](classi_r_r_a_m_1_1_p_o_l_y_n_o_m_i_a_l.html#a9a0b01cf9a99ecbd43be09a32e828460)
+
+POLYNOMIAL(int d, COMPLEX *c)
+
+construction with an array of coefficients
+
+[iRRAM::POLYNOMIAL::POLYNOMIAL](classi_r_r_a_m_1_1_p_o_l_y_n_o_m_i_a_l.html#abdd57e595043eaa0aa0281144a1c1dcb)
+
+POLYNOMIAL()
+
+[iRRAM::POLYNOMIAL::coef](classi_r_r_a_m_1_1_p_o_l_y_n_o_m_i_a_l.html#a1ec2fd15c6253289cf9b9ed0046f36b0)
+
+std::vector< COMPLEX > coef
+
+coefficients
+
+**Definition:** [polynomial.hpp:32](polynomial_8hpp_source.html#l00032)
+
+[iRRAM::operator*](group__poly.html#gaa59b33369769b05eaaa159daac3d3a73)
+
+POLYNOMIAL operator*(const POLYNOMIAL &, const POLYNOMIAL &)
+
+[iRRAM::geterror_exp](group__poly.html#gab8b0f54bf6182ab5b8994ec5813dc7ec)
+
+int geterror_exp(const POLYNOMIAL &)
+
+[iRRAM::evaluate](group__poly.html#gab9e41ac401eb6e83289965b128e09625)
+
+COMPLEX evaluate(POLYNOMIAL p, COMPLEX x)
+
+evaluate a polynomial at a point
+
+[iRRAM::POLYNOMIAL::~POLYNOMIAL](classi_r_r_a_m_1_1_p_o_l_y_n_o_m_i_a_l.html#ab64409c388dfdb2bc31be30535b8a332)
+
+~POLYNOMIAL()
+
+[iRRAM::translation](group__poly.html#ga6bacdb9188cf0193e21f1ce2f55bc6ed)
+
+POLYNOMIAL translation(POLYNOMIAL, REAL, COMPLEX)
+
+[iRRAM](namespacei_r_r_a_m.html)
+
+**Definition:** [compact.hpp:17](compact_2compact_8hpp_source.html#l00017)
+
+[iRRAM::POLYNOMIAL](classi_r_r_a_m_1_1_p_o_l_y_n_o_m_i_a_l.html)
+
+A class for complex polynomials.
+
+**Definition:** [polynomial.hpp:25](polynomial_8hpp_source.html#l00024)
+
+[fix.hpp](fix_8hpp.html)
+
+[iRRAM::deriv](group__poly.html#ga59c9501d7d0aadc6f1dee81a7cb922d2)
+
+POLYNOMIAL deriv(POLYNOMIAL p, int k)
+
+differentiate a polynomial
+
+[iRRAM::CoefAt](group__poly.html#gac3fa1b23d9db0ec4d415a136045429c0)
+
+COMPLEX CoefAt(POLYNOMIAL p, int k, COMPLEX z)
+
+compute Taylor coefficient
+
+[iRRAM::POLYNOMIAL::operator()](classi_r_r_a_m_1_1_p_o_l_y_n_o_m_i_a_l.html#a5ad2bfe0136b27ad6bc45822f4ada4bf)
+
+COMPLEX operator()(const COMPLEX &)
+
+[iRRAM::operator-](group__poly.html#gab26db9f4804667aed0f3d3647a8d590d)
+
+POLYNOMIAL operator-(const POLYNOMIAL &, const POLYNOMIAL &)
+
+[iRRAM::POLYNOMIAL::POLYNOMIAL](classi_r_r_a_m_1_1_p_o_l_y_n_o_m_i_a_l.html#ab22bcc997d9b6a4e21abf4098c54855f)
+
+POLYNOMIAL(COMPLEX c)
+
+construction of a constant polynomial
+
+[iRRAM::POLYNOMIAL::degree](classi_r_r_a_m_1_1_p_o_l_y_n_o_m_i_a_l.html#a8c72c311ee84590e7116d0dbc69be2b4)
+
+int degree
+
+**Definition:** [polynomial.hpp:33](polynomial_8hpp_source.html#l00033)
+
+* * *
+
+Generated by [![doxygen](doxygen.svg)](http://www.doxygen.org/index.html)
+1.8.20
+
+iRRAMx  201126 AC++librarythateXtendsiRRAM  
+---  
+  
+  * [include](dir_d44c64559bbebec7f509842c48db8b23.html)
+  * [iRRAMx](dir_8030abfc18cf720e87330bfc9ab9d4ea.html)
+  * [polynomial](dir_247b532eaff843e8deea3777dbf22595.html)
+
+polynomialroot.hpp
+
+[Go to the documentation of this file.](polynomialroot_8hpp.html)
+
+1 /*
+
+2 the header file defines programs for approximating roots of a complex
+polynomial
+
+3 */
+
+4 #pragma once
+
+5
+
+6 #include "iRRAM/lib.h"
+
+7 #include "iRRAM/core.h"
+
+8 #include "[iRRAMx/polynomial.hpp](polynomial_8hpp.html)"
+
+9 #include "[rcomplex.hpp](rcomplex_8hpp.html)"
+
+10
+
+11 #include <utility>
+
+12 using namespace [iRRAM](namespacei_r_r_a_m.html);
+
+13 namespace [iRRAM](namespacei_r_r_a_m.html){
+
+14
+
+[ 15](namespacei_r_r_a_m_1_1internal.html) namespace internal{template <>
+struct is_continuous<std::vector< std::pair<REAL, int> > > : public
+std::true_type{};}
+
+16
+
+17
+
+[
+18](structi_r_r_a_m_1_1internal_1_1is__continuous_3_01std_1_1vector_3_01_c_o_m_p_l_e_x_01_4_01_4.html)
+namespace internal{template <> struct is_continuous<std::vector< COMPLEX > > :
+public std::true_type{};}
+
+19
+
+[ 20](namespacei_r_r_a_m.html#ab76de5cf8a7bfb152b6be497391e0eef) inline
+sizetype
+[geterror](namespacei_r_r_a_m.html#ab76de5cf8a7bfb152b6be497391e0eef)( const
+std::vector<COMPLEX > & l){
+
+21 sizetype error, lerror;
+
+22 l[0].geterror(error);
+
+23 for (unsigned int i=0; i< l.size(); i++)
+
+24 {
+
+25 lerror =
+[geterror](namespacei_r_r_a_m.html#ab76de5cf8a7bfb152b6be497391e0eef)(l[i]);
+
+26 sizetype_max(error,error,lerror);
+
+27 }
+
+28 return error;
+
+29 }
+
+30
+
+31
+
+[ 32](namespacei_r_r_a_m.html#a4aa7e5a0eedc12b4fa5e9c29483918fc) inline void
+[seterror](namespacei_r_r_a_m.html#a4aa7e5a0eedc12b4fa5e9c29483918fc)(std::vector<COMPLEX
+> & l, sizetype & error)
+
+33 {
+
+34 for (unsigned int i=0; i< l.size(); i++)
+
+35
+l[i].[seterror](namespacei_r_r_a_m.html#a4aa7e5a0eedc12b4fa5e9c29483918fc)(error);
+
+36 }
+
+37
+
+[ 38](namespacei_r_r_a_m.html#a23ad7113f09398c779549d87a3e9ef6f) inline void
+[adderror](namespacei_r_r_a_m.html#a23ad7113f09398c779549d87a3e9ef6f)(std::vector<COMPLEX
+> & l, sizetype & error)
+
+39 {
+
+40 for (unsigned int i=0; i< l.size(); i++)
+
+41
+l[i].[adderror](namespacei_r_r_a_m.html#a23ad7113f09398c779549d87a3e9ef6f)(error);
+
+42 }
+
+43
+
+44
+
+[ 45](namespacei_r_r_a_m.html#ae8fcd6c5bd7b89bdf96ac7012b1a1e63) inline
+sizetype
+[geterror](namespacei_r_r_a_m.html#ab76de5cf8a7bfb152b6be497391e0eef)( const
+std::vector<std::pair<REAL, int> > & l){ sizetype error, lerror;
+
+46 l[0].first.geterror(error);
+
+47 for (unsigned int i=0; i< l.size(); i++)
+
+48 {
+
+49 lerror =
+[geterror](namespacei_r_r_a_m.html#ab76de5cf8a7bfb152b6be497391e0eef)(l[i].first);
+
+50 sizetype_max(error,error,lerror);
+
+51 }
+
+52 return error;
+
+53 }
+
+54
+
+55
+
+[ 56](namespacei_r_r_a_m.html#a0cc51ded7cfa5a1b810e828b6f921b36) inline void
+[seterror](namespacei_r_r_a_m.html#a4aa7e5a0eedc12b4fa5e9c29483918fc)(std::vector<std::pair<REAL,
+int> > & l, sizetype & error)
+
+57 {
+
+58 for (unsigned int i=0; i< l.size(); i++)
+
+59 l[i].first.seterror(error);
+
+60 }
+
+61
+
+62
+
+[ 63](classi_r_r_a_m_1_1cvec__wrap.html) class
+[cvec_wrap](classi_r_r_a_m_1_1cvec__wrap.html){
+
+64 public:
+
+[ 65](classi_r_r_a_m_1_1cvec__wrap.html#a3e26f3b5df237a5d760fa583d369b491)
+std::vector<COMPLEX>
+[data](classi_r_r_a_m_1_1cvec__wrap.html#a3e26f3b5df237a5d760fa583d369b491);
+
+[ 66](classi_r_r_a_m_1_1cvec__wrap.html#adbdebe49f356b13ecd6160b201bf4550)
+[cvec_wrap](classi_r_r_a_m_1_1cvec__wrap.html#adbdebe49f356b13ecd6160b201bf4550)(std::vector<COMPLEX>
+v){
+[data](classi_r_r_a_m_1_1cvec__wrap.html#a3e26f3b5df237a5d760fa583d369b491) =
+v; }
+
+[ 67](classi_r_r_a_m_1_1cvec__wrap.html#a6828c6fe5972553b29676c4a3dd86e5f)
+[cvec_wrap](classi_r_r_a_m_1_1cvec__wrap.html#a6828c6fe5972553b29676c4a3dd86e5f)(){
+}
+
+68
+
+69
+
+[ 70](classi_r_r_a_m_1_1cvec__wrap.html#a0d3e1767dd5f4ec500a2d7a4737f22c3)
+void
+[adderror](classi_r_r_a_m_1_1cvec__wrap.html#a0d3e1767dd5f4ec500a2d7a4737f22c3)
+(sizetype error);
+
+[ 71](classi_r_r_a_m_1_1cvec__wrap.html#ad43a687ac8008d99f42d5a751ad47dc8)
+void
+[seterror](classi_r_r_a_m_1_1cvec__wrap.html#ad43a687ac8008d99f42d5a751ad47dc8)
+(sizetype error);
+
+[ 72](classi_r_r_a_m_1_1cvec__wrap.html#a94e55976f42a5db6160cee23aad065fd)
+void
+[geterror](classi_r_r_a_m_1_1cvec__wrap.html#a94e55976f42a5db6160cee23aad065fd)
+(sizetype& error) const;
+
+73
+
+74
+
+75
+
+76
+
+77 };
+
+78
+
+79
+
+80 //
+
+81 // std::vector<R_COMPLEX >
+
+82 // root_approximation_naive(int , POLYNOMIAL );
+
+83 //
+
+84 // std::vector<R_COMPLEX >
+
+85 // root_approximation_newton(int , POLYNOMIAL );
+
+86 }
+
+[polynomial.hpp](polynomial_8hpp.html)
+
+[iRRAM::cvec_wrap](classi_r_r_a_m_1_1cvec__wrap.html)
+
+**Definition:**
+[polynomialroot.hpp:63](polynomialroot_8hpp_source.html#l00063)
+
+[rcomplex.hpp](rcomplex_8hpp.html)
+
+[iRRAM::geterror](namespacei_r_r_a_m.html#ab76de5cf8a7bfb152b6be497391e0eef)
+
+sizetype geterror(const std::vector< COMPLEX > &l)
+
+**Definition:**
+[polynomialroot.hpp:20](polynomialroot_8hpp_source.html#l00020)
+
+[iRRAM](namespacei_r_r_a_m.html)
+
+**Definition:** [compact.hpp:17](compact_2compact_8hpp_source.html#l00017)
+
+[iRRAM::seterror](namespacei_r_r_a_m.html#a4aa7e5a0eedc12b4fa5e9c29483918fc)
+
+void seterror(std::vector< COMPLEX > &l, sizetype &error)
+
+**Definition:**
+[polynomialroot.hpp:32](polynomialroot_8hpp_source.html#l00032)
+
+[iRRAM::cvec_wrap::adderror](classi_r_r_a_m_1_1cvec__wrap.html#a0d3e1767dd5f4ec500a2d7a4737f22c3)
+
+void adderror(sizetype error)
+
+[iRRAM::cvec_wrap::cvec_wrap](classi_r_r_a_m_1_1cvec__wrap.html#a6828c6fe5972553b29676c4a3dd86e5f)
+
+cvec_wrap()
+
+**Definition:**
+[polynomialroot.hpp:67](polynomialroot_8hpp_source.html#l00067)
+
+[iRRAM::adderror](namespacei_r_r_a_m.html#a23ad7113f09398c779549d87a3e9ef6f)
+
+void adderror(std::vector< COMPLEX > &l, sizetype &error)
+
+**Definition:**
+[polynomialroot.hpp:38](polynomialroot_8hpp_source.html#l00038)
+
+[iRRAM::cvec_wrap::cvec_wrap](classi_r_r_a_m_1_1cvec__wrap.html#adbdebe49f356b13ecd6160b201bf4550)
+
+cvec_wrap(std::vector< COMPLEX > v)
+
+**Definition:**
+[polynomialroot.hpp:66](polynomialroot_8hpp_source.html#l00066)
+
+[iRRAM::cvec_wrap::seterror](classi_r_r_a_m_1_1cvec__wrap.html#ad43a687ac8008d99f42d5a751ad47dc8)
+
+void seterror(sizetype error)
+
+[iRRAM::cvec_wrap::data](classi_r_r_a_m_1_1cvec__wrap.html#a3e26f3b5df237a5d760fa583d369b491)
+
+std::vector< COMPLEX > data
+
+**Definition:**
+[polynomialroot.hpp:65](polynomialroot_8hpp_source.html#l00065)
+
+[iRRAM::cvec_wrap::geterror](classi_r_r_a_m_1_1cvec__wrap.html#a94e55976f42a5db6160cee23aad065fd)
+
+void geterror(sizetype &error) const
+
+* * *
+
+Generated by [![doxygen](doxygen.svg)](http://www.doxygen.org/index.html)
+1.8.20
+
+iRRAMx  201126 AC++librarythateXtendsiRRAM  
+---  
+  
+  * [include](dir_d44c64559bbebec7f509842c48db8b23.html)
+  * [iRRAMx](dir_8030abfc18cf720e87330bfc9ab9d4ea.html)
+  * [random](dir_b302b318f159342b1fce94d8f9cc9b4c.html)
+
+random-complex.hpp
+
+[Go to the documentation of this file.](random-complex_8hpp.html)
+
+1 #pragma once
+
+2
+
+3 #include <iRRAM/lib.h>
+
+4 #include "[iRRAMx/random/random-core.hpp](random-core_8hpp.html)"
+
+5 #include "[iRRAMx/random/random-real.hpp](random-real_8hpp.html)"
+
+6
+
+7 using namespace [iRRAM](namespacei_r_r_a_m.html);
+
+8 namespace [iRRAM](namespacei_r_r_a_m.html){
+
+9
+
+17
+
+[ 21](group__randcomp.html#ga91709220ebec08d12451787bbae8577c) COMPLEX
+[uniform_complex](group__randcomp.html#ga91709220ebec08d12451787bbae8577c)();
+
+22
+
+24
+
+[ 27](group__randcomp.html#ga4749181efdf18d306d02d40647f2af64) COMPLEX
+[uniform_complex](group__randcomp.html#ga91709220ebec08d12451787bbae8577c)(COMPLEX,
+REAL);
+
+28
+
+30
+
+[ 33](group__randcomp.html#ga222a73a8e7f3657857ad28557fe9343c) COMPLEX
+[gaussian_complex](group__randcomp.html#ga222a73a8e7f3657857ad28557fe9343c)();
+
+34
+
+36 }
+
+[random-real.hpp](random-real_8hpp.html)
+
+[iRRAM::uniform_complex](group__randcomp.html#ga91709220ebec08d12451787bbae8577c)
+
+COMPLEX uniform_complex()
+
+Uniform complex number sampler.
+
+[iRRAM::gaussian_complex](group__randcomp.html#ga222a73a8e7f3657857ad28557fe9343c)
+
+COMPLEX gaussian_complex()
+
+Gaussian complex number sampler.
+
+[iRRAM](namespacei_r_r_a_m.html)
+
+**Definition:** [compact.hpp:17](compact_2compact_8hpp_source.html#l00017)
+
+[random-core.hpp](random-core_8hpp.html)
+
+* * *
+
+Generated by [![doxygen](doxygen.svg)](http://www.doxygen.org/index.html)
+1.8.20
+
+iRRAMx  201126 AC++librarythateXtendsiRRAM  
+---  
+  
+  * [include](dir_d44c64559bbebec7f509842c48db8b23.html)
+  * [iRRAMx](dir_8030abfc18cf720e87330bfc9ab9d4ea.html)
+  * [random](dir_b302b318f159342b1fce94d8f9cc9b4c.html)
+
+random-core.hpp
+
+[Go to the documentation of this file.](random-core_8hpp.html)
+
+1 #pragma once
+
+2
+
+3 #include <iRRAM/lib.h>
+
+4 #include "[iRRAMx/random/random-core.hpp](random-core_8hpp.html)"
+
+5 #include "[iRRAMx/random/random-real.hpp](random-real_8hpp.html)"
+
+6
+
+7 using namespace [iRRAM](namespacei_r_r_a_m.html);
+
+8 namespace [iRRAM](namespacei_r_r_a_m.html){
+
+9
+
+10
+
+11
+
+12
+
+[ 13](classi_r_r_a_m_1_1_r_e_a_l_r_a_n_d.html) class
+[REALRAND](classi_r_r_a_m_1_1_r_e_a_l_r_a_n_d.html)
+
+14 {
+
+15 private:
+
+16 int bitlength;
+
+17 std::string bits;
+
+18 REAL randreal;
+
+19
+
+20 public:
+
+[
+21](classi_r_r_a_m_1_1_r_e_a_l_r_a_n_d.html#a57e660b65c3e8f29de8333fbe034facf)
+[REALRAND](classi_r_r_a_m_1_1_r_e_a_l_r_a_n_d.html#a57e660b65c3e8f29de8333fbe034facf)();
+
+[
+22](classi_r_r_a_m_1_1_r_e_a_l_r_a_n_d.html#aa72863e36cd95877dc08f2cbf2bbf439)
+[~REALRAND](classi_r_r_a_m_1_1_r_e_a_l_r_a_n_d.html#aa72863e36cd95877dc08f2cbf2bbf439)();
+
+[
+23](classi_r_r_a_m_1_1_r_e_a_l_r_a_n_d.html#ae1ad7e933dea324551384dfa51a88761)
+REAL
+[asREAL](classi_r_r_a_m_1_1_r_e_a_l_r_a_n_d.html#ae1ad7e933dea324551384dfa51a88761)();
+
+24 };
+
+25 }
+
+[random-real.hpp](random-real_8hpp.html)
+
+[iRRAM::REALRAND::~REALRAND](classi_r_r_a_m_1_1_r_e_a_l_r_a_n_d.html#aa72863e36cd95877dc08f2cbf2bbf439)
+
+~REALRAND()
+
+[iRRAM::REALRAND::REALRAND](classi_r_r_a_m_1_1_r_e_a_l_r_a_n_d.html#a57e660b65c3e8f29de8333fbe034facf)
+
+REALRAND()
+
+[iRRAM::REALRAND::asREAL](classi_r_r_a_m_1_1_r_e_a_l_r_a_n_d.html#ae1ad7e933dea324551384dfa51a88761)
+
+REAL asREAL()
+
+[iRRAM](namespacei_r_r_a_m.html)
+
+**Definition:** [compact.hpp:17](compact_2compact_8hpp_source.html#l00017)
+
+[iRRAM::REALRAND](classi_r_r_a_m_1_1_r_e_a_l_r_a_n_d.html)
+
+**Definition:** [random-core.hpp:14](random-core_8hpp_source.html#l00013)
+
+[random-core.hpp](random-core_8hpp.html)
+
+* * *
+
+Generated by [![doxygen](doxygen.svg)](http://www.doxygen.org/index.html)
+1.8.20
+
+iRRAMx  201126 AC++librarythateXtendsiRRAM  
+---  
+  
+  * [include](dir_d44c64559bbebec7f509842c48db8b23.html)
+  * [iRRAMx](dir_8030abfc18cf720e87330bfc9ab9d4ea.html)
+  * [random](dir_b302b318f159342b1fce94d8f9cc9b4c.html)
+
+random-matrix.hpp
+
+[Go to the documentation of this file.](random-matrix_8hpp.html)
+
+1 #pragma once
+
+2
+
+3 #include <iRRAM/lib.h>
+
+4 #include "[iRRAMx/random/random-core.hpp](random-core_8hpp.html)"
+
+5 #include "[iRRAMx/random/random-real.hpp](random-real_8hpp.html)"
+
+6
+
+7 using namespace [iRRAM](namespacei_r_r_a_m.html);
+
+8 namespace [iRRAM](namespacei_r_r_a_m.html){
+
+9
+
+16
+
+[ 20](group__randmat.html#gadde191b2192c843fb36b97d51227f660) REALMATRIX
+[gaussian_symmetric_matrix](group__randmat.html#gadde191b2192c843fb36b97d51227f660)(unsigned
+int n);
+
+21
+
+23
+
+[ 26](group__randmat.html#ga218b7f22dfa0e2a136f7a963b75c1bcb) REALMATRIX
+[gaussian_asymmetric_matrix](group__randmat.html#ga218b7f22dfa0e2a136f7a963b75c1bcb)(unsigned
+int n);
+
+27
+
+29
+
+[ 32](group__randmat.html#gafeadcd42c712bb41b1c38438c220460b) REALMATRIX
+[gaussian_matrix](group__randmat.html#gafeadcd42c712bb41b1c38438c220460b)(unsigned
+int n);
+
+33
+
+35
+
+[ 39](group__randmat.html#gaebdcd1aebc68a330bf84de13509e0a3f) REALMATRIX
+[haar_orthogonal_matrix](group__randmat.html#gaebdcd1aebc68a330bf84de13509e0a3f)(unsigned
+int n);
+
+40
+
+42 }
+
+[random-real.hpp](random-real_8hpp.html)
+
+[iRRAM::gaussian_asymmetric_matrix](group__randmat.html#ga218b7f22dfa0e2a136f7a963b75c1bcb)
+
+REALMATRIX gaussian_asymmetric_matrix(unsigned int n)
+
+Gaussian assymmetric matrix sampler.
+
+[iRRAM](namespacei_r_r_a_m.html)
+
+**Definition:** [compact.hpp:17](compact_2compact_8hpp_source.html#l00017)
+
+[iRRAM::gaussian_matrix](group__randmat.html#gafeadcd42c712bb41b1c38438c220460b)
+
+REALMATRIX gaussian_matrix(unsigned int n)
+
+Gaussian regular Matrix sampler.
+
+[iRRAM::gaussian_symmetric_matrix](group__randmat.html#gadde191b2192c843fb36b97d51227f660)
+
+REALMATRIX gaussian_symmetric_matrix(unsigned int n)
+
+Gaussian symmetric matrix sampler.
+
+[iRRAM::haar_orthogonal_matrix](group__randmat.html#gaebdcd1aebc68a330bf84de13509e0a3f)
+
+REALMATRIX haar_orthogonal_matrix(unsigned int n)
+
+Gaussian regular Matrix sampler.
+
+[random-core.hpp](random-core_8hpp.html)
+
+* * *
+
+Generated by [![doxygen](doxygen.svg)](http://www.doxygen.org/index.html)
+1.8.20
+
+iRRAMx  201126 AC++librarythateXtendsiRRAM  
+---  
+  
+  * [include](dir_d44c64559bbebec7f509842c48db8b23.html)
+  * [iRRAMx](dir_8030abfc18cf720e87330bfc9ab9d4ea.html)
+  * [random](dir_b302b318f159342b1fce94d8f9cc9b4c.html)
+
+random-real.hpp
+
+[Go to the documentation of this file.](random-real_8hpp.html)
+
+1 #pragma once
+
+2
+
+3 #include <iRRAM/lib.h>
+
+4 #include "[iRRAMx/random/random-core.hpp](random-core_8hpp.html)"
+
+5
+
+6 using namespace [iRRAM](namespacei_r_r_a_m.html);
+
+7 namespace [iRRAM](namespacei_r_r_a_m.html){
+
+8
+
+15
+
+[ 19](group__randreal.html#ga3c5e4c0754febef47407211b8054a271) REAL
+[uniform_real](group__randreal.html#ga3c5e4c0754febef47407211b8054a271)();
+
+21
+
+[ 24](group__randreal.html#ga3c2398879f5d7d8cb92f1d176a1ade3a) REAL
+[uniform_real](group__randreal.html#ga3c5e4c0754febef47407211b8054a271)(REAL
+a, REAL b);
+
+26
+
+[ 29](group__randreal.html#ga65d0cd2a4874b9c8fdbd4e66f31d2463) REAL
+[gaussian_real](group__randreal.html#ga65d0cd2a4874b9c8fdbd4e66f31d2463)();
+
+30
+
+32
+
+[ 35](group__randreal.html#ga81d810fe9ee6cc8fcc7026a5a16dbaaf) REAL
+[gaussian_real](group__randreal.html#ga65d0cd2a4874b9c8fdbd4e66f31d2463)(REAL
+exp, REAL std);
+
+36
+
+37
+
+[ 38](group__randreal.html#gaf25e11ac1f5fa0f01d04a832f6d2abb1) REAL
+[linear_real](group__randreal.html#gaf25e11ac1f5fa0f01d04a832f6d2abb1)();
+
+39
+
+41 }
+
+[iRRAM::uniform_real](group__randreal.html#ga3c5e4c0754febef47407211b8054a271)
+
+REAL uniform_real()
+
+Uniform real sampler.
+
+[iRRAM](namespacei_r_r_a_m.html)
+
+**Definition:** [compact.hpp:17](compact_2compact_8hpp_source.html#l00017)
+
+[iRRAM::linear_real](group__randreal.html#gaf25e11ac1f5fa0f01d04a832f6d2abb1)
+
+REAL linear_real()
+
+[random-core.hpp](random-core_8hpp.html)
+
+[iRRAM::gaussian_real](group__randreal.html#ga65d0cd2a4874b9c8fdbd4e66f31d2463)
+
+REAL gaussian_real()
+
+Gaussian real sampler.
+
+* * *
+
+Generated by [![doxygen](doxygen.svg)](http://www.doxygen.org/index.html)
+1.8.20
+
+iRRAMx  201126 AC++librarythateXtendsiRRAM  
+---  
+  
+  * [include](dir_d44c64559bbebec7f509842c48db8b23.html)
+  * [iRRAMx](dir_8030abfc18cf720e87330bfc9ab9d4ea.html)
+
+random.hpp
+
+[Go to the documentation of this file.](random_8hpp.html)
+
+1 #pragma once
+
+2
+
+9 #include "[fix.hpp](fix_8hpp.html)"
+
+10
+
+11 #include "[random/random-real.hpp](random-real_8hpp.html)"
+
+12 #include "[random/random-complex.hpp](random-complex_8hpp.html)"
+
+13 #include "[random/random-matrix.hpp](random-matrix_8hpp.html)"
+
+14 #include "[wiener.hpp](wiener_8hpp.html)"
+
+[random-real.hpp](random-real_8hpp.html)
+
+[random-complex.hpp](random-complex_8hpp.html)
+
+[wiener.hpp](wiener_8hpp.html)
+
+[random-matrix.hpp](random-matrix_8hpp.html)
+
+[fix.hpp](fix_8hpp.html)
+
+* * *
+
+Generated by [![doxygen](doxygen.svg)](http://www.doxygen.org/index.html)
+1.8.20
+
+iRRAMx  201126 AC++librarythateXtendsiRRAM  
+---  
+  
+  * [include](dir_d44c64559bbebec7f509842c48db8b23.html)
+  * [iRRAMx](dir_8030abfc18cf720e87330bfc9ab9d4ea.html)
+  * [polynomial](dir_247b532eaff843e8deea3777dbf22595.html)
+
+rcomplex.hpp
+
+[Go to the documentation of this file.](rcomplex_8hpp.html)
+
+1 /*
+
+2 the header file defines a countable subset of complex number which is a pair
+of rationals
+
+3 */
+
+4 #pragma once
+
+5
+
+6 #include "iRRAM/lib.h"
+
+7 #include "iRRAM/core.h"
+
+8 #include <utility>
+
+9 using namespace [iRRAM](namespacei_r_r_a_m.html);
+
+10 namespace [iRRAM](namespacei_r_r_a_m.html){
+
+11
+
+[ 12](classi_r_r_a_m_1_1_r___c_o_m_p_l_e_x.html) class
+[R_COMPLEX](classi_r_r_a_m_1_1_r___c_o_m_p_l_e_x.html)
+
+13 {
+
+14 private:
+
+15 RATIONAL re;
+
+16 RATIONAL im;
+
+17 public:
+
+[
+18](classi_r_r_a_m_1_1_r___c_o_m_p_l_e_x.html#a12f16f7fccc8a050c4521c5fa859c9cb)
+[R_COMPLEX](classi_r_r_a_m_1_1_r___c_o_m_p_l_e_x.html#a12f16f7fccc8a050c4521c5fa859c9cb)();
+
+[
+19](classi_r_r_a_m_1_1_r___c_o_m_p_l_e_x.html#a245f05ad7040995e4cb706fb4ff35695)
+[R_COMPLEX](classi_r_r_a_m_1_1_r___c_o_m_p_l_e_x.html#a245f05ad7040995e4cb706fb4ff35695)(RATIONAL,
+RATIONAL);
+
+[
+20](classi_r_r_a_m_1_1_r___c_o_m_p_l_e_x.html#a104579affc95f4d5afdfec48aff3b125)
+[R_COMPLEX](classi_r_r_a_m_1_1_r___c_o_m_p_l_e_x.html#a104579affc95f4d5afdfec48aff3b125)(RATIONAL);
+
+[
+21](classi_r_r_a_m_1_1_r___c_o_m_p_l_e_x.html#a9cfd3fbe8c7d73a0eb6921171e31f8a4)
+[~R_COMPLEX](classi_r_r_a_m_1_1_r___c_o_m_p_l_e_x.html#a9cfd3fbe8c7d73a0eb6921171e31f8a4)();
+
+[
+22](classi_r_r_a_m_1_1_r___c_o_m_p_l_e_x.html#a98b58dc1e6341ba3a2dfb3964bd0746b)
+RATIONAL
+[real](classi_r_r_a_m_1_1_r___c_o_m_p_l_e_x.html#a98b58dc1e6341ba3a2dfb3964bd0746b)()
+const;
+
+[
+23](classi_r_r_a_m_1_1_r___c_o_m_p_l_e_x.html#acaad38e7e80a5e18f6e68a323c2db140)
+RATIONAL
+[imag](classi_r_r_a_m_1_1_r___c_o_m_p_l_e_x.html#acaad38e7e80a5e18f6e68a323c2db140)()
+const;
+
+24
+
+[
+25](classi_r_r_a_m_1_1_r___c_o_m_p_l_e_x.html#a53c968999fcc9a496508ec8aad5fb089)
+friend [R_COMPLEX](classi_r_r_a_m_1_1_r___c_o_m_p_l_e_x.html) [operator
++](classi_r_r_a_m_1_1_r___c_o_m_p_l_e_x.html#a53c968999fcc9a496508ec8aad5fb089)(const
+[R_COMPLEX](classi_r_r_a_m_1_1_r___c_o_m_p_l_e_x.html)& lhs, const
+[R_COMPLEX](classi_r_r_a_m_1_1_r___c_o_m_p_l_e_x.html)& rhs)
+
+26 {
+
+27 return
+[R_COMPLEX](classi_r_r_a_m_1_1_r___c_o_m_p_l_e_x.html#a12f16f7fccc8a050c4521c5fa859c9cb)(lhs.[real](classi_r_r_a_m_1_1_r___c_o_m_p_l_e_x.html#a98b58dc1e6341ba3a2dfb3964bd0746b)()+rhs.[real](classi_r_r_a_m_1_1_r___c_o_m_p_l_e_x.html#a98b58dc1e6341ba3a2dfb3964bd0746b)(),
+lhs.[imag](classi_r_r_a_m_1_1_r___c_o_m_p_l_e_x.html#acaad38e7e80a5e18f6e68a323c2db140)()+rhs.[imag](classi_r_r_a_m_1_1_r___c_o_m_p_l_e_x.html#acaad38e7e80a5e18f6e68a323c2db140)());
+
+28 }
+
+[
+29](classi_r_r_a_m_1_1_r___c_o_m_p_l_e_x.html#a326ea83a7cdb4ab166df4cf10fa00532)
+friend [R_COMPLEX](classi_r_r_a_m_1_1_r___c_o_m_p_l_e_x.html) [operator
+-](classi_r_r_a_m_1_1_r___c_o_m_p_l_e_x.html#a326ea83a7cdb4ab166df4cf10fa00532)(const
+[R_COMPLEX](classi_r_r_a_m_1_1_r___c_o_m_p_l_e_x.html)& lhs, const
+[R_COMPLEX](classi_r_r_a_m_1_1_r___c_o_m_p_l_e_x.html)& rhs)
+
+30 {
+
+31 return
+[R_COMPLEX](classi_r_r_a_m_1_1_r___c_o_m_p_l_e_x.html#a12f16f7fccc8a050c4521c5fa859c9cb)(lhs.[real](classi_r_r_a_m_1_1_r___c_o_m_p_l_e_x.html#a98b58dc1e6341ba3a2dfb3964bd0746b)()-rhs.[real](classi_r_r_a_m_1_1_r___c_o_m_p_l_e_x.html#a98b58dc1e6341ba3a2dfb3964bd0746b)(),
+lhs.[imag](classi_r_r_a_m_1_1_r___c_o_m_p_l_e_x.html#acaad38e7e80a5e18f6e68a323c2db140)()-rhs.[imag](classi_r_r_a_m_1_1_r___c_o_m_p_l_e_x.html#acaad38e7e80a5e18f6e68a323c2db140)());
+
+32 }
+
+33 };
+
+[ 34](namespacei_r_r_a_m.html#ac82641ded3b2131e8543a345168ced14) REAL
+[abs](namespacei_r_r_a_m.html#ac82641ded3b2131e8543a345168ced14)([R_COMPLEX](classi_r_r_a_m_1_1_r___c_o_m_p_l_e_x.html)
+);
+
+[ 35](namespacei_r_r_a_m.html#a3068d6121730a52892087c8efb7abdc0) void
+[print](namespacei_r_r_a_m.html#af066f552806fc5f0690f33b8c9df3d01)([R_COMPLEX](classi_r_r_a_m_1_1_r___c_o_m_p_l_e_x.html));
+
+36
+
+37 }
+
+[iRRAM::abs](namespacei_r_r_a_m.html#ac82641ded3b2131e8543a345168ced14)
+
+REAL abs(R_COMPLEX)
+
+[iRRAM::R_COMPLEX::R_COMPLEX](classi_r_r_a_m_1_1_r___c_o_m_p_l_e_x.html#a12f16f7fccc8a050c4521c5fa859c9cb)
+
+R_COMPLEX()
+
+[iRRAM::R_COMPLEX::real](classi_r_r_a_m_1_1_r___c_o_m_p_l_e_x.html#a98b58dc1e6341ba3a2dfb3964bd0746b)
+
+RATIONAL real() const
+
+[iRRAM::R_COMPLEX::imag](classi_r_r_a_m_1_1_r___c_o_m_p_l_e_x.html#acaad38e7e80a5e18f6e68a323c2db140)
+
+RATIONAL imag() const
+
+[iRRAM::R_COMPLEX::operator+](classi_r_r_a_m_1_1_r___c_o_m_p_l_e_x.html#a53c968999fcc9a496508ec8aad5fb089)
+
+friend R_COMPLEX operator+(const R_COMPLEX &lhs, const R_COMPLEX &rhs)
+
+**Definition:** [rcomplex.hpp:25](rcomplex_8hpp_source.html#l00025)
+
+[iRRAM](namespacei_r_r_a_m.html)
+
+**Definition:** [compact.hpp:17](compact_2compact_8hpp_source.html#l00017)
+
+[iRRAM::R_COMPLEX](classi_r_r_a_m_1_1_r___c_o_m_p_l_e_x.html)
+
+**Definition:** [rcomplex.hpp:13](rcomplex_8hpp_source.html#l00012)
+
+[iRRAM::R_COMPLEX::R_COMPLEX](classi_r_r_a_m_1_1_r___c_o_m_p_l_e_x.html#a104579affc95f4d5afdfec48aff3b125)
+
+R_COMPLEX(RATIONAL)
+
+[iRRAM::R_COMPLEX::operator-](classi_r_r_a_m_1_1_r___c_o_m_p_l_e_x.html#a326ea83a7cdb4ab166df4cf10fa00532)
+
+friend R_COMPLEX operator-(const R_COMPLEX &lhs, const R_COMPLEX &rhs)
+
+**Definition:** [rcomplex.hpp:29](rcomplex_8hpp_source.html#l00029)
+
+[iRRAM::R_COMPLEX::~R_COMPLEX](classi_r_r_a_m_1_1_r___c_o_m_p_l_e_x.html#a9cfd3fbe8c7d73a0eb6921171e31f8a4)
+
+~R_COMPLEX()
+
+[iRRAM::R_COMPLEX::R_COMPLEX](classi_r_r_a_m_1_1_r___c_o_m_p_l_e_x.html#a245f05ad7040995e4cb706fb4ff35695)
+
+R_COMPLEX(RATIONAL, RATIONAL)
+
+[iRRAM::print](namespacei_r_r_a_m.html#af066f552806fc5f0690f33b8c9df3d01)
+
+void print(COMPONENT)
+
+* * *
+
+Generated by [![doxygen](doxygen.svg)](http://www.doxygen.org/index.html)
+1.8.20
+
+iRRAMx  201126 AC++librarythateXtendsiRRAM  
+---  
+  
+  * [include](dir_d44c64559bbebec7f509842c48db8b23.html)
+  * [iRRAMx](dir_8030abfc18cf720e87330bfc9ab9d4ea.html)
+  * [compact](dir_68c7f6bc3018d4a705bc11611200b603.html)
+
+surface.hpp
+
+[Go to the documentation of this file.](surface_8hpp.html)
+
+1 #pragma once
+
+2
+
+3 #include <array>
+
+4
+
+5 #include "iRRAM/lib.h"
+
+6 #include "iRRAM/core.h"
+
+7 #include "iRRAM.h"
+
+8
+
+9 using namespace [iRRAM](namespacei_r_r_a_m.html);
+
+10
+
+11 #include "[compact.hpp](compact_8hpp.html)"
+
+12 #include "[euclidean.hpp](euclidean_8hpp.html)"
+
+13 #include "[plot.hpp](plot_8hpp.html)"
+
+14
+
+15
+
+16
+
+21 // [0,1]^2 -> R^N
+
+22 template <int N>
+
+[ 23](class_surface.html) class [Surface](class_surface.html) : public
+[Compact](classi_r_r_a_m_1_1_compact.html)<N> {
+
+24 public:
+
+25 // original function
+
+[ 26](class_surface.html#a7e94d542ef16c06e5ccd1a4ef9af000a)
+std::function<Point<N>(REAL,REAL)>
+[f](class_surface.html#a7e94d542ef16c06e5ccd1a4ef9af000a);
+
+27
+
+28
+
+[ 33](class_surface.html#a5c5fef9482fa9747665c54a376809c62)
+[Surface](class_surface.html#a5c5fef9482fa9747665c54a376809c62)(std::function<[Point<N>](namespacei_r_r_a_m.html#a1d2e14e811b03f40a0e28611c957bd64)(REAL,REAL)>
+f) { this->f = f; }
+
+34
+
+35 // whenever |x-z| < 2^-pArg, |f(x)-f(z)| < 2^-p for all x,z
+
+36 // will be increased when higher precision is requested
+
+[ 37](class_surface.html#a644fe990c81bb1008c9ddf3f563daafc) int p=INT_MIN,
+pArg=INT_MIN;
+
+38
+
+[ 43](class_surface.html#a458f8de9b7e744a438683817290b310c) void
+[increasePrecision](class_surface.html#a458f8de9b7e744a438683817290b310c)(int
+p) {
+
+44 // ignore lower or equal precision
+
+45 if(this->p >= p) return;
+
+46
+
+47 // Find the pArg
+
+48 // must |f(u)-f(z)| < (2^-p)/sqrt(2) to include the box with a ball
+
+49 // hence find find pArg such that whenever |x-z| < 2^-pArg, |f(x)-f(z)| <
+2^(-p-1) for all x,z
+
+50 // This makes the distance between two consecutive centers of balls
+2^(-p-1)*sqrt(2) at most.
+
+51
+std::function<Point<N>([Point<2>](namespacei_r_r_a_m.html#a1d2e14e811b03f40a0e28611c957bd64))>
+ff = [=]([Point<2>](namespacei_r_r_a_m.html#a1d2e14e811b03f40a0e28611c957bd64)
+x) -> [Point<N>](namespacei_r_r_a_m.html#a1d2e14e811b03f40a0e28611c957bd64) {
+
+52 return this->f(x[0], x[1]);
+
+53 };
+
+54 this->pArg = module2<2,N>(ff, p+1);
+
+55
+
+56 // update the current precision
+
+57 this->p = p;
+
+58
+
+59 // update the current characteristic function
+
+60 this->cfun =
+[&]([Point<N>](namespacei_r_r_a_m.html#a1d2e14e811b03f40a0e28611c957bd64) pt,
+int p) {
+
+61 single_valued code;
+
+62
+
+63 // check the membership with previously found p and pArg
+
+64 // centers of balls: f(step/2 + i*step, step/2 + j*step)
+
+65 // radius of a ball: 2^-p
+
+66 // maximum distance between two consecutive balls(centers):
+2^(-p-1)*sqrt(2) (check increasePrecision())
+
+67 // When checking inclusiveness, we run (d < radius) and (d > radius/2) in
+parallel for decidability.
+
+68 // For any point on the path, there exists a ball that contains the point.
+
+69 RATIONAL step =
+[Exp](namespacei_r_r_a_m.html#a5811649b09be686cc0a6db277e2a6d85)(-pArg); //
+2^-pArg
+
+70 RATIONAL radius =
+[Exp](namespacei_r_r_a_m.html#a5811649b09be686cc0a6db277e2a6d85)(-p); // 2^-p,
+the radius of a ball
+
+71 RATIONAL radiusHalf = radius/INTEGER(2); // 2^(-p-1)
+
+72 REAL d;
+
+73 RATIONAL u,v;
+
+74 for(u=step/2 ;
+u<=[ONE](euclidean_8hpp.html#a206b6f5362e56b51ca957635350b70b6) ; u+=step) {
+
+75 for(v=step/2 ;
+v<=[ONE](euclidean_8hpp.html#a206b6f5362e56b51ca957635350b70b6) ; v+=step) {
+
+76 d = IR_d<N>(pt, this->f(u, v));
+
+77 if(choose(d < radius, d > radiusHalf) == 1) return true;
+
+78 }
+
+79 }
+
+80 return false;
+
+81 };
+
+82 }
+
+83
+
+[ 91](class_surface.html#ad0a407801ed9f161c0d6ff283f6c775b) bool
+[member](class_surface.html#ad0a407801ed9f161c0d6ff283f6c775b)([Point<N>](namespacei_r_r_a_m.html#a1d2e14e811b03f40a0e28611c957bd64)
+point, int p) {
+
+92 // check if previously found pArg is viable
+
+93 // if not, increase the precision
+
+94 if(this->p < p) this->increasePrecision(p);
+
+95
+
+96 return this->cfun(point, p);
+
+97 }
+
+98 };
+
+99
+
+100
+
+[Surface::Surface](class_surface.html#a5c5fef9482fa9747665c54a376809c62)
+
+Surface(std::function< Point< N >(REAL, REAL)> f)
+
+**Definition:** [surface.hpp:33](surface_8hpp_source.html#l00033)
+
+[Surface::increasePrecision](class_surface.html#a458f8de9b7e744a438683817290b310c)
+
+void increasePrecision(int p)
+
+**Definition:** [surface.hpp:43](surface_8hpp_source.html#l00043)
+
+[plot.hpp](plot_8hpp.html)
+
+[compact.hpp](compact_8hpp.html)
+
+[Surface](class_surface.html)
+
+**Definition:** [surface.hpp:23](surface_8hpp_source.html#l00023)
+
+[ONE](euclidean_8hpp.html#a206b6f5362e56b51ca957635350b70b6)
+
+#define ONE
+
+**Definition:** [euclidean.hpp:18](euclidean_8hpp_source.html#l00018)
+
+[iRRAM](namespacei_r_r_a_m.html)
+
+**Definition:** [compact.hpp:17](compact_2compact_8hpp_source.html#l00017)
+
+[iRRAM::Exp](namespacei_r_r_a_m.html#a5811649b09be686cc0a6db277e2a6d85)
+
+RATIONAL Exp(int n)
+
+**Definition:** [euclidean.hpp:40](euclidean_8hpp_source.html#l00040)
+
+[Surface::f](class_surface.html#a7e94d542ef16c06e5ccd1a4ef9af000a)
+
+std::function< Point< N >REAL, REAL)> f
+
+**Definition:** [surface.hpp:26](surface_8hpp_source.html#l00026)
+
+[euclidean.hpp](euclidean_8hpp.html)
+
+[iRRAM::Compact](classi_r_r_a_m_1_1_compact.html)
+
+**Definition:** [compact.hpp:24](compact_2compact_8hpp_source.html#l00024)
+
+[Surface::member](class_surface.html#ad0a407801ed9f161c0d6ff283f6c775b)
+
+bool member(Point< N > point, int p)
+
+**Definition:** [surface.hpp:91](surface_8hpp_source.html#l00091)
+
+[iRRAM::Point](namespacei_r_r_a_m.html#a1d2e14e811b03f40a0e28611c957bd64)
+
+IR< N > Point
+
+**Definition:** [euclidean.hpp:31](euclidean_8hpp_source.html#l00031)
+
+* * *
+
+Generated by [![doxygen](doxygen.svg)](http://www.doxygen.org/index.html)
+1.8.20
+
+iRRAMx  201126 AC++librarythateXtendsiRRAM  
+---  
+  
+  * [include](dir_d44c64559bbebec7f509842c48db8b23.html)
+  * [iRRAMx](dir_8030abfc18cf720e87330bfc9ab9d4ea.html)
+  * [polynomial](dir_247b532eaff843e8deea3777dbf22595.html)
+
+utilities.hpp
+
+[Go to the documentation of this file.](utilities_8hpp.html)
+
+1 /*
+
+2 the header file define some basic utilities (funcitons) which is no included
+in a native iRRAM dist.
+
+3 */
+
+4 #pragma once
+
+5
+
+6 #include "iRRAM/lib.h"
+
+7 #include "iRRAM/core.h"
+
+8 // #include "intervals.h"
+
+9 #include "[iRRAMx/polynomial.hpp](polynomial_8hpp.html)"
+
+10
+
+11 #include <utility>
+
+12 using namespace [iRRAM](namespacei_r_r_a_m.html);
+
+13 namespace [iRRAM](namespacei_r_r_a_m.html){
+
+14
+
+[ 15](namespacei_r_r_a_m.html#a961cb554bd125499d44def84de917cc3) INTEGER
+[factorial](namespacei_r_r_a_m.html#a961cb554bd125499d44def84de917cc3)(int );
+
+[ 16](namespacei_r_r_a_m.html#ac06763ab41c836293ca51ad133420220) COMPLEX
+[power](namespacei_r_r_a_m.html#ac06763ab41c836293ca51ad133420220)(COMPLEX,
+int);
+
+[ 17](namespacei_r_r_a_m.html#aac03fae05e03fe4d733ca03e918d6842) void
+[print](namespacei_r_r_a_m.html#af066f552806fc5f0690f33b8c9df3d01)(COMPLEX );
+
+[ 18](namespacei_r_r_a_m.html#a479f79be1f795f244c394e515f396964) DYADIC
+[minimum](namespacei_r_r_a_m.html#a479f79be1f795f244c394e515f396964)(DYADIC ,
+DYADIC );
+
+[ 19](namespacei_r_r_a_m.html#ac308164649afcbe3cae67e06857ad228) DYADIC
+[maximum](namespacei_r_r_a_m.html#ac308164649afcbe3cae67e06857ad228)(DYADIC ,
+DYADIC );
+
+[ 20](namespacei_r_r_a_m.html#aeb7370c942714066867fb2353216f4a5) RATIONAL
+[minimum](namespacei_r_r_a_m.html#a479f79be1f795f244c394e515f396964)(RATIONAL
+, RATIONAL );
+
+[ 21](namespacei_r_r_a_m.html#a53d746ff5cebf1fb3c639c7902e4b9f3) RATIONAL
+[maximum](namespacei_r_r_a_m.html#ac308164649afcbe3cae67e06857ad228)(RATIONAL
+, RATIONAL );
+
+22 // RATIONAL abs(RATIONAL);
+
+23 // void print(OPENINTERVAL);
+
+24 // void print(RATIONALINTERVAL);
+
+25 // void print(INTERVALCOMPONENT);
+
+26 // void print(RATIONALCOMPONENT);
+
+[ 27](namespacei_r_r_a_m.html#a593d0c3cfc1de58876f568304839d170) void
+[print](namespacei_r_r_a_m.html#af066f552806fc5f0690f33b8c9df3d01)([POLYNOMIAL](classi_r_r_a_m_1_1_p_o_l_y_n_o_m_i_a_l.html)
+);
+
+28 }
+
+[iRRAM::minimum](namespacei_r_r_a_m.html#a479f79be1f795f244c394e515f396964)
+
+DYADIC minimum(DYADIC, DYADIC)
+
+[polynomial.hpp](polynomial_8hpp.html)
+
+[iRRAM::factorial](namespacei_r_r_a_m.html#a961cb554bd125499d44def84de917cc3)
+
+INTEGER factorial(int)
+
+[iRRAM::power](namespacei_r_r_a_m.html#ac06763ab41c836293ca51ad133420220)
+
+COMPLEX power(COMPLEX, int)
+
+[iRRAM](namespacei_r_r_a_m.html)
+
+**Definition:** [compact.hpp:17](compact_2compact_8hpp_source.html#l00017)
+
+[iRRAM::POLYNOMIAL](classi_r_r_a_m_1_1_p_o_l_y_n_o_m_i_a_l.html)
+
+A class for complex polynomials.
+
+**Definition:** [polynomial.hpp:25](polynomial_8hpp_source.html#l00024)
+
+[iRRAM::maximum](namespacei_r_r_a_m.html#ac308164649afcbe3cae67e06857ad228)
+
+DYADIC maximum(DYADIC, DYADIC)
+
+[iRRAM::print](namespacei_r_r_a_m.html#af066f552806fc5f0690f33b8c9df3d01)
+
+void print(COMPONENT)
+
+* * *
+
+Generated by [![doxygen](doxygen.svg)](http://www.doxygen.org/index.html)
+1.8.20
+
+iRRAMx  201126 AC++librarythateXtendsiRRAM  
+---  
+  
+  * [include](dir_d44c64559bbebec7f509842c48db8b23.html)
+  * [iRRAMx](dir_8030abfc18cf720e87330bfc9ab9d4ea.html)
+
+utility.hpp
+
+[Go to the documentation of this file.](utility_8hpp.html)
+
+1 #pragma once
+
+2 #include "[iRRAMx/fix.hpp](fix_8hpp.html)"
+
+3
+
+4 #include <iRRAM/lib.h>
+
+5
+
+6 using namespace [iRRAM](namespacei_r_r_a_m.html);
+
+7 namespace [iRRAM](namespacei_r_r_a_m.html){
+
+8
+
+[ 9](namespacei_r_r_a_m.html#a5c83e979927fd7e101e6869dc4178215) REAL
+[prec](namespacei_r_r_a_m.html#a5c83e979927fd7e101e6869dc4178215)(int p); // p
+=> 2^p
+
+[ 10](namespacei_r_r_a_m.html#af6f40c573d9a2ffe633ea5cab44d830c) std::string
+[to_string](namespacei_r_r_a_m.html#af6f40c573d9a2ffe633ea5cab44d830c)(REAL,
+unsigned int);
+
+[ 11](namespacei_r_r_a_m.html#a78be8a65490e32aec2010eba16794e1f) std::string
+[to_string](namespacei_r_r_a_m.html#af6f40c573d9a2ffe633ea5cab44d830c)(COMPLEX,
+unsigned int);
+
+12
+
+13
+
+14
+
+15 }
+
+[iRRAM::to_string](namespacei_r_r_a_m.html#af6f40c573d9a2ffe633ea5cab44d830c)
+
+std::string to_string(REAL, unsigned int)
+
+[iRRAM::prec](namespacei_r_r_a_m.html#a5c83e979927fd7e101e6869dc4178215)
+
+REAL prec(int p)
+
+[iRRAM](namespacei_r_r_a_m.html)
+
+**Definition:** [compact.hpp:17](compact_2compact_8hpp_source.html#l00017)
+
+[fix.hpp](fix_8hpp.html)
+
+* * *
+
+Generated by [![doxygen](doxygen.svg)](http://www.doxygen.org/index.html)
+1.8.20
+
+iRRAMx  201126 AC++librarythateXtendsiRRAM  
+---  
+  
+  * [include](dir_d44c64559bbebec7f509842c48db8b23.html)
+  * [iRRAMx](dir_8030abfc18cf720e87330bfc9ab9d4ea.html)
+
+wiener.hpp
+
+[Go to the documentation of this file.](wiener_8hpp.html)
+
+1 #pragma once
+
+2 #include "[random.hpp](random_8hpp.html)"
+
+3 #include "[utility.hpp](utility_8hpp.html)"
+
+4 #include<functional>
+
+5 #include<map>
+
+6 using namespace [iRRAM](namespacei_r_r_a_m.html);
+
+7
+
+8 namespace [iRRAM](namespacei_r_r_a_m.html){
+
+9
+
+16
+
+[ 21](classi_r_r_a_m_1_1_w_i_e_n_e_r.html) class
+[WIENER](classi_r_r_a_m_1_1_w_i_e_n_e_r.html)
+
+22 {
+
+23 private:
+
+24 std::map< std::pair<INTEGER,INTEGER>, REAL > X;
+
+25 REAL X_0;
+
+26 int curPrec,probPrec;
+
+27 int modulus(int ,int );
+
+28 REAL getX(int ,int );
+
+29 public:
+
+31
+
+[ 37](classi_r_r_a_m_1_1_w_i_e_n_e_r.html#a2610d587f346c3d881efa1203ff31eb7)
+[WIENER](classi_r_r_a_m_1_1_w_i_e_n_e_r.html#a2610d587f346c3d881efa1203ff31eb7)();
+
+38
+
+40
+
+[ 46](classi_r_r_a_m_1_1_w_i_e_n_e_r.html#a34a3ca4d3667c243b0d7698b0dacb3c5)
+[WIENER](classi_r_r_a_m_1_1_w_i_e_n_e_r.html#a34a3ca4d3667c243b0d7698b0dacb3c5)(int
+p);
+
+47
+
+49
+
+[ 53](classi_r_r_a_m_1_1_w_i_e_n_e_r.html#ac1cb1b4a9ea68db1b74e64832dd2f78a)
+void
+[setPrec](classi_r_r_a_m_1_1_w_i_e_n_e_r.html#ac1cb1b4a9ea68db1b74e64832dd2f78a)(int
+p1,int p2);
+
+55
+
+[ 58](classi_r_r_a_m_1_1_w_i_e_n_e_r.html#ac88e73cf096dde2faea75a96618d230d)
+REAL
+[compute](classi_r_r_a_m_1_1_w_i_e_n_e_r.html#ac88e73cf096dde2faea75a96618d230d)(REAL
+t);
+
+59
+
+61
+
+[ 64](classi_r_r_a_m_1_1_w_i_e_n_e_r.html#aecf7c2be3640d5780922f0a4198c7c68)
+REAL [operator()
+](classi_r_r_a_m_1_1_w_i_e_n_e_r.html#aecf7c2be3640d5780922f0a4198c7c68)(REAL
+t);
+
+65 };
+
+66
+
+69 }
+
+[iRRAM::WIENER::setPrec](classi_r_r_a_m_1_1_w_i_e_n_e_r.html#ac1cb1b4a9ea68db1b74e64832dd2f78a)
+
+void setPrec(int p1, int p2)
+
+Manually set the probability bound and desired precision.
+
+[iRRAM::WIENER::WIENER](classi_r_r_a_m_1_1_w_i_e_n_e_r.html#a34a3ca4d3667c243b0d7698b0dacb3c5)
+
+WIENER(int p)
+
+Generate the sample path in probability.
+
+[random.hpp](random_8hpp.html)
+
+[iRRAM::WIENER](classi_r_r_a_m_1_1_w_i_e_n_e_r.html)
+
+A class for random function.
+
+**Definition:** [wiener.hpp:22](wiener_8hpp_source.html#l00021)
+
+[iRRAM::WIENER::operator()](classi_r_r_a_m_1_1_w_i_e_n_e_r.html#aecf7c2be3640d5780922f0a4198c7c68)
+
+REAL operator()(REAL t)
+
+operator overloading for compute()
+
+[iRRAM](namespacei_r_r_a_m.html)
+
+**Definition:** [compact.hpp:17](compact_2compact_8hpp_source.html#l00017)
+
+[iRRAM::WIENER::WIENER](classi_r_r_a_m_1_1_w_i_e_n_e_r.html#a2610d587f346c3d881efa1203ff31eb7)
+
+WIENER()
+
+Generate the sample path in probability.
+
+[iRRAM::WIENER::compute](classi_r_r_a_m_1_1_w_i_e_n_e_r.html#ac88e73cf096dde2faea75a96618d230d)
+
+REAL compute(REAL t)
+
+Compute the generated sample path on t.
+
+[utility.hpp](utility_8hpp.html)
+
+* * *
+
+Generated by [![doxygen](doxygen.svg)](http://www.doxygen.org/index.html)
+1.8.20
+

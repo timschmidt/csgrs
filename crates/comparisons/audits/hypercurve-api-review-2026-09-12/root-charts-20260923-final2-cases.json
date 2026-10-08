@@ -1,0 +1,1253 @@
+[
+  {
+    "label": "candidate",
+    "name": "bezier_offset::conversion_tests::algebraic_center_fixed_distance_covers_adjacent_and_incident_ray",
+    "returncode": 0,
+    "elapsed_seconds": 0.005102330003865063,
+    "passed": true,
+    "ignored": false,
+    "log": "root-charts-20260923-final2-candidate-0000.log"
+  },
+  {
+    "label": "candidate",
+    "name": "bezier_offset::conversion_tests::algebraic_selected_fiber_incident_chart_preserves_affine_authority",
+    "returncode": 0,
+    "elapsed_seconds": 0.005269318004138768,
+    "passed": true,
+    "ignored": false,
+    "log": "root-charts-20260923-final2-candidate-0001.log"
+  },
+  {
+    "label": "candidate",
+    "name": "bezier_offset::conversion_tests::bounded_general_resultant_isolates_only_the_requested_selected_fiber_range",
+    "returncode": 0,
+    "elapsed_seconds": 0.003655489068478346,
+    "passed": true,
+    "ignored": false,
+    "log": "root-charts-20260923-final2-candidate-0002.log"
+  },
+  {
+    "label": "candidate",
+    "name": "bezier_offset::conversion_tests::incident_selected_fiber_projection_honors_the_requested_resultant_schedule",
+    "returncode": 0,
+    "elapsed_seconds": 0.0036748680286109447,
+    "passed": true,
+    "ignored": false,
+    "log": "root-charts-20260923-final2-candidate-0003.log"
+  },
+  {
+    "label": "candidate",
+    "name": "bezier_offset::conversion_tests::incident_source_circle_stops_at_the_first_projective_pole",
+    "returncode": 0,
+    "elapsed_seconds": 0.0037170150317251682,
+    "passed": true,
+    "ignored": false,
+    "log": "root-charts-20260923-final2-candidate-0004.log"
+  },
+  {
+    "label": "candidate",
+    "name": "bezier_offset::conversion_tests::multi_affine_box_sign_matches_generic_bernstein_conversion",
+    "returncode": 0,
+    "elapsed_seconds": 0.003672927967272699,
+    "passed": true,
+    "ignored": false,
+    "log": "root-charts-20260923-final2-candidate-0005.log"
+  },
+  {
+    "label": "candidate",
+    "name": "bezier_offset::conversion_tests::nonaffine_distinct_field_chord_zero_is_exact_in_strict",
+    "returncode": 0,
+    "elapsed_seconds": 0.007877359981648624,
+    "passed": true,
+    "ignored": false,
+    "log": "root-charts-20260923-final2-candidate-0006.log"
+  },
+  {
+    "label": "candidate",
+    "name": "bezier_offset::conversion_tests::nonlinear_parameter_component_maps_a_degree_135_selected_scalar_locally",
+    "returncode": 0,
+    "elapsed_seconds": 0.11402625706978142,
+    "passed": true,
+    "ignored": false,
+    "log": "root-charts-20260923-final2-candidate-0007.log"
+  },
+  {
+    "label": "candidate",
+    "name": "bezier_offset::conversion_tests::nonlinear_parameter_component_maps_recursive_projective_scalars_locally",
+    "returncode": 0,
+    "elapsed_seconds": 0.007687092991545796,
+    "passed": true,
+    "ignored": false,
+    "log": "root-charts-20260923-final2-candidate-0008.log"
+  },
+  {
+    "label": "candidate",
+    "name": "bezier_offset::conversion_tests::pair_radial_circle_extends_over_the_regular_analytic_incident_ray",
+    "returncode": 0,
+    "elapsed_seconds": 0.06385015009436756,
+    "passed": true,
+    "ignored": false,
+    "log": "root-charts-20260923-final2-candidate-0009.log"
+  },
+  {
+    "label": "candidate",
+    "name": "bezier_offset::conversion_tests::projective_quadratic_conic_inverse_survives_elevation_and_reversal",
+    "returncode": 0,
+    "elapsed_seconds": 0.614683530991897,
+    "passed": true,
+    "ignored": false,
+    "log": "root-charts-20260923-final2-candidate-0010.log"
+  },
+  {
+    "label": "candidate",
+    "name": "bezier_offset::conversion_tests::quadratic_affine_root_signs_cover_exact_branch_configurations",
+    "returncode": 0,
+    "elapsed_seconds": 0.003749342984519899,
+    "passed": true,
+    "ignored": false,
+    "log": "root-charts-20260923-final2-candidate-0011.log"
+  },
+  {
+    "label": "candidate",
+    "name": "bezier_offset::conversion_tests::quadratic_axis_factorization_replays_dense_multi_affine_products",
+    "returncode": 0,
+    "elapsed_seconds": 0.00764834601432085,
+    "passed": true,
+    "ignored": false,
+    "log": "root-charts-20260923-final2-candidate-0012.log"
+  },
+  {
+    "label": "candidate",
+    "name": "bezier_offset::conversion_tests::rational_multi_affine_axis_factorization_reaches_the_balanced_resource_boundary",
+    "returncode": 0,
+    "elapsed_seconds": 0.26423773204442114,
+    "passed": true,
+    "ignored": false,
+    "log": "root-charts-20260923-final2-candidate-0013.log"
+  },
+  {
+    "label": "candidate",
+    "name": "bezier_offset::conversion_tests::rational_multi_affine_axis_factorization_recovers_one_cubic_factor",
+    "returncode": 0,
+    "elapsed_seconds": 0.00372135394718498,
+    "passed": true,
+    "ignored": false,
+    "log": "root-charts-20260923-final2-candidate-0014.log"
+  },
+  {
+    "label": "candidate",
+    "name": "bezier_offset::conversion_tests::rational_multi_affine_axis_factorization_recovers_one_octic_factor",
+    "returncode": 0,
+    "elapsed_seconds": 0.007636236026883125,
+    "passed": true,
+    "ignored": false,
+    "log": "root-charts-20260923-final2-candidate-0015.log"
+  },
+  {
+    "label": "candidate",
+    "name": "bezier_offset::conversion_tests::rational_multi_affine_axis_factorization_recovers_one_quartic_factor",
+    "returncode": 0,
+    "elapsed_seconds": 0.003616501926444471,
+    "passed": true,
+    "ignored": false,
+    "log": "root-charts-20260923-final2-candidate-0016.log"
+  },
+  {
+    "label": "candidate",
+    "name": "bezier_offset::conversion_tests::rational_multi_affine_axis_factorization_recovers_one_quintic_factor",
+    "returncode": 0,
+    "elapsed_seconds": 0.007771207019686699,
+    "passed": true,
+    "ignored": false,
+    "log": "root-charts-20260923-final2-candidate-0017.log"
+  },
+  {
+    "label": "candidate",
+    "name": "bezier_offset::conversion_tests::rational_multi_affine_axis_factorization_recovers_one_septic_factor",
+    "returncode": 0,
+    "elapsed_seconds": 0.0076862029964104295,
+    "passed": true,
+    "ignored": false,
+    "log": "root-charts-20260923-final2-candidate-0018.log"
+  },
+  {
+    "label": "candidate",
+    "name": "bezier_offset::conversion_tests::rational_multi_affine_axis_factorization_recovers_one_sextic_factor",
+    "returncode": 0,
+    "elapsed_seconds": 0.007687253062613308,
+    "passed": true,
+    "ignored": false,
+    "log": "root-charts-20260923-final2-candidate-0019.log"
+  },
+  {
+    "label": "candidate",
+    "name": "bezier_offset::conversion_tests::rational_multi_affine_axis_factorization_rejects_an_unfactored_bounded_nonic",
+    "returncode": 0,
+    "elapsed_seconds": 0.003715944942086935,
+    "passed": true,
+    "ignored": false,
+    "log": "root-charts-20260923-final2-candidate-0020.log"
+  },
+  {
+    "label": "candidate",
+    "name": "bezier_offset::conversion_tests::rational_multi_affine_axis_factorization_rejects_an_unfactored_cubic",
+    "returncode": 0,
+    "elapsed_seconds": 0.003528718021698296,
+    "passed": true,
+    "ignored": false,
+    "log": "root-charts-20260923-final2-candidate-0021.log"
+  },
+  {
+    "label": "candidate",
+    "name": "bezier_offset::conversion_tests::rational_multi_affine_axis_factorization_rejects_an_unfactored_octic",
+    "returncode": 0,
+    "elapsed_seconds": 0.003561826073564589,
+    "passed": true,
+    "ignored": false,
+    "log": "root-charts-20260923-final2-candidate-0022.log"
+  },
+  {
+    "label": "candidate",
+    "name": "bezier_offset::conversion_tests::rational_multi_affine_axis_factorization_rejects_an_unfactored_quartic",
+    "returncode": 0,
+    "elapsed_seconds": 0.0035843539517372847,
+    "passed": true,
+    "ignored": false,
+    "log": "root-charts-20260923-final2-candidate-0023.log"
+  },
+  {
+    "label": "candidate",
+    "name": "bezier_offset::conversion_tests::rational_multi_affine_axis_factorization_rejects_an_unfactored_quintic",
+    "returncode": 0,
+    "elapsed_seconds": 0.003568794927559793,
+    "passed": true,
+    "ignored": false,
+    "log": "root-charts-20260923-final2-candidate-0024.log"
+  },
+  {
+    "label": "candidate",
+    "name": "bezier_offset::conversion_tests::rational_multi_affine_axis_factorization_rejects_an_unfactored_septic",
+    "returncode": 0,
+    "elapsed_seconds": 0.0035718149738386273,
+    "passed": true,
+    "ignored": false,
+    "log": "root-charts-20260923-final2-candidate-0025.log"
+  },
+  {
+    "label": "candidate",
+    "name": "bezier_offset::conversion_tests::rational_multi_affine_axis_factorization_rejects_an_unfactored_sextic",
+    "returncode": 0,
+    "elapsed_seconds": 0.0035356180742383003,
+    "passed": true,
+    "ignored": false,
+    "log": "root-charts-20260923-final2-candidate-0026.log"
+  },
+  {
+    "label": "candidate",
+    "name": "bezier_offset::conversion_tests::rational_multi_affine_axis_factorization_replays_bounded_nonic_multiplicity",
+    "returncode": 0,
+    "elapsed_seconds": 0.36420143488794565,
+    "passed": true,
+    "ignored": false,
+    "log": "root-charts-20260923-final2-candidate-0027.log"
+  },
+  {
+    "label": "candidate",
+    "name": "bezier_offset::conversion_tests::rational_multi_affine_axis_factorization_replays_eight_distinct_factors",
+    "returncode": 0,
+    "elapsed_seconds": 0.1141775370342657,
+    "passed": true,
+    "ignored": false,
+    "log": "root-charts-20260923-final2-candidate-0028.log"
+  },
+  {
+    "label": "candidate",
+    "name": "bezier_offset::conversion_tests::rational_multi_affine_axis_factorization_replays_five_distinct_factors",
+    "returncode": 0,
+    "elapsed_seconds": 0.03192567895166576,
+    "passed": true,
+    "ignored": false,
+    "log": "root-charts-20260923-final2-candidate-0029.log"
+  },
+  {
+    "label": "candidate",
+    "name": "bezier_offset::conversion_tests::rational_multi_affine_axis_factorization_replays_four_distinct_factors",
+    "returncode": 0,
+    "elapsed_seconds": 0.015867121051996946,
+    "passed": true,
+    "ignored": false,
+    "log": "root-charts-20260923-final2-candidate-0030.log"
+  },
+  {
+    "label": "candidate",
+    "name": "bezier_offset::conversion_tests::rational_multi_affine_axis_factorization_replays_nine_distinct_factors",
+    "returncode": 0,
+    "elapsed_seconds": 0.11395413207355887,
+    "passed": true,
+    "ignored": false,
+    "log": "root-charts-20260923-final2-candidate-0031.log"
+  },
+  {
+    "label": "candidate",
+    "name": "bezier_offset::conversion_tests::rational_multi_affine_axis_factorization_replays_octic_multiplicity",
+    "returncode": 0,
+    "elapsed_seconds": 0.8152114340336993,
+    "passed": true,
+    "ignored": false,
+    "log": "root-charts-20260923-final2-candidate-0032.log"
+  },
+  {
+    "label": "candidate",
+    "name": "bezier_offset::conversion_tests::rational_multi_affine_axis_factorization_replays_quartic_multiplicity",
+    "returncode": 0,
+    "elapsed_seconds": 0.11416119802743196,
+    "passed": true,
+    "ignored": false,
+    "log": "root-charts-20260923-final2-candidate-0033.log"
+  },
+  {
+    "label": "candidate",
+    "name": "bezier_offset::conversion_tests::rational_multi_affine_axis_factorization_replays_quintic_multiplicity",
+    "returncode": 0,
+    "elapsed_seconds": 0.06396864203270525,
+    "passed": true,
+    "ignored": false,
+    "log": "root-charts-20260923-final2-candidate-0034.log"
+  },
+  {
+    "label": "candidate",
+    "name": "bezier_offset::conversion_tests::rational_multi_affine_axis_factorization_replays_septic_multiplicity",
+    "returncode": 0,
+    "elapsed_seconds": 0.4144501780392602,
+    "passed": true,
+    "ignored": false,
+    "log": "root-charts-20260923-final2-candidate-0035.log"
+  },
+  {
+    "label": "candidate",
+    "name": "bezier_offset::conversion_tests::rational_multi_affine_axis_factorization_replays_seven_distinct_factors",
+    "returncode": 0,
+    "elapsed_seconds": 0.06401023897342384,
+    "passed": true,
+    "ignored": false,
+    "log": "root-charts-20260923-final2-candidate-0036.log"
+  },
+  {
+    "label": "candidate",
+    "name": "bezier_offset::conversion_tests::rational_multi_affine_axis_factorization_replays_sextic_multiplicity",
+    "returncode": 0,
+    "elapsed_seconds": 0.26426631095819175,
+    "passed": true,
+    "ignored": false,
+    "log": "root-charts-20260923-final2-candidate-0037.log"
+  },
+  {
+    "label": "candidate",
+    "name": "bezier_offset::conversion_tests::rational_multi_affine_axis_factorization_replays_six_distinct_factors",
+    "returncode": 0,
+    "elapsed_seconds": 0.06424731202423573,
+    "passed": true,
+    "ignored": false,
+    "log": "root-charts-20260923-final2-candidate-0038.log"
+  },
+  {
+    "label": "candidate",
+    "name": "bezier_offset::conversion_tests::rational_multi_affine_axis_factorization_replays_three_distinct_factors",
+    "returncode": 0,
+    "elapsed_seconds": 0.0076940919971093535,
+    "passed": true,
+    "ignored": false,
+    "log": "root-charts-20260923-final2-candidate-0039.log"
+  },
+  {
+    "label": "candidate",
+    "name": "bezier_offset::conversion_tests::recursive_projective_bounds_enclose_scaled_nested_radicals",
+    "returncode": 0,
+    "elapsed_seconds": 0.007779215928167105,
+    "passed": true,
+    "ignored": false,
+    "log": "root-charts-20260923-final2-candidate-0040.log"
+  },
+  {
+    "label": "candidate",
+    "name": "bezier_offset::conversion_tests::recursive_projective_bounds_keep_unwitnessed_source_fallback",
+    "returncode": 0,
+    "elapsed_seconds": 0.003593814093619585,
+    "passed": true,
+    "ignored": false,
+    "log": "root-charts-20260923-final2-candidate-0041.log"
+  },
+  {
+    "label": "candidate",
+    "name": "bezier_offset::conversion_tests::recursive_projective_bounds_reuse_positive_denominator_certificate",
+    "returncode": 0,
+    "elapsed_seconds": 0.01566268503665924,
+    "passed": true,
+    "ignored": false,
+    "log": "root-charts-20260923-final2-candidate-0042.log"
+  },
+  {
+    "label": "candidate",
+    "name": "bezier_offset::conversion_tests::recursive_projective_center_projects_complete_nonlinear_fixed_distance",
+    "returncode": 0,
+    "elapsed_seconds": 0.21416699700057507,
+    "passed": true,
+    "ignored": false,
+    "log": "root-charts-20260923-final2-candidate-0043.log"
+  },
+  {
+    "label": "candidate",
+    "name": "bezier_offset::conversion_tests::recursive_projective_chord_handles_finite_contact_multiplicities",
+    "returncode": 0,
+    "elapsed_seconds": 0.11416209791786969,
+    "passed": true,
+    "ignored": false,
+    "log": "root-charts-20260923-final2-candidate-0044.log"
+  },
+  {
+    "label": "candidate",
+    "name": "bezier_offset::conversion_tests::recursive_projective_chord_partitions_collinear_rational_images",
+    "returncode": 0,
+    "elapsed_seconds": 0.3147888339590281,
+    "passed": true,
+    "ignored": false,
+    "log": "root-charts-20260923-final2-candidate-0045.log"
+  },
+  {
+    "label": "candidate",
+    "name": "bezier_offset::conversion_tests::recursive_projective_chord_rejects_constant_conjugate_norm_component",
+    "returncode": 0,
+    "elapsed_seconds": 0.007876780000515282,
+    "passed": true,
+    "ignored": false,
+    "log": "root-charts-20260923-final2-candidate-0046.log"
+  },
+  {
+    "label": "candidate",
+    "name": "bezier_offset::conversion_tests::recursive_projective_chord_replays_identically_zero_norm_sheet",
+    "returncode": 0,
+    "elapsed_seconds": 0.003613752080127597,
+    "passed": true,
+    "ignored": false,
+    "log": "root-charts-20260923-final2-candidate-0047.log"
+  },
+  {
+    "label": "candidate",
+    "name": "bezier_offset::conversion_tests::recursive_projective_chord_replays_nonzero_analytic_parallel",
+    "returncode": 0,
+    "elapsed_seconds": 0.007655804976820946,
+    "passed": true,
+    "ignored": false,
+    "log": "root-charts-20260923-final2-candidate-0048.log"
+  },
+  {
+    "label": "candidate",
+    "name": "bezier_offset::conversion_tests::recursive_projective_chord_retains_positive_degree_selected_conjugate_fiber",
+    "returncode": 0,
+    "elapsed_seconds": 0.0639581719879061,
+    "passed": true,
+    "ignored": false,
+    "log": "root-charts-20260923-final2-candidate-0049.log"
+  },
+  {
+    "label": "candidate",
+    "name": "bezier_offset::conversion_tests::recursive_projective_content_normalization_preserves_selected_fields",
+    "returncode": 0,
+    "elapsed_seconds": 0.007870130008086562,
+    "passed": true,
+    "ignored": false,
+    "log": "root-charts-20260923-final2-candidate-0050.log"
+  },
+  {
+    "label": "candidate",
+    "name": "bezier_offset::conversion_tests::recursive_projective_kernel_imports_similarity_of_algebraic_endpoints",
+    "returncode": 0,
+    "elapsed_seconds": 0.007720381021499634,
+    "passed": true,
+    "ignored": false,
+    "log": "root-charts-20260923-final2-candidate-0051.log"
+  },
+  {
+    "label": "candidate",
+    "name": "bezier_offset::conversion_tests::recursive_projective_oblique_chord_handles_even_contact_multiplicity",
+    "returncode": 0,
+    "elapsed_seconds": 0.16413355991244316,
+    "passed": true,
+    "ignored": false,
+    "log": "root-charts-20260923-final2-candidate-0052.log"
+  },
+  {
+    "label": "candidate",
+    "name": "bezier_offset::conversion_tests::retained_chord_derived_queries_match_exact_affine_oracles_and_requested_policy",
+    "returncode": 0,
+    "elapsed_seconds": 0.3142482009716332,
+    "passed": true,
+    "ignored": false,
+    "log": "root-charts-20260923-final2-candidate-0053.log"
+  },
+  {
+    "label": "candidate",
+    "name": "bezier_offset::conversion_tests::retained_chord_fallback_affine_queries_match_certified_bounds",
+    "returncode": 0,
+    "elapsed_seconds": 1.065376901999116,
+    "passed": true,
+    "ignored": false,
+    "log": "root-charts-20260923-final2-candidate-0054.log"
+  },
+  {
+    "label": "candidate",
+    "name": "bezier_offset::conversion_tests::selected_affine_tangent_source_retains_incident_endpoint_and_contacts_locally",
+    "returncode": 0,
+    "elapsed_seconds": 0.015948515967465937,
+    "passed": true,
+    "ignored": false,
+    "log": "root-charts-20260923-final2-candidate-0055.log"
+  },
+  {
+    "label": "candidate",
+    "name": "bezier_offset::conversion_tests::selected_fiber_affine_chart_round_trip_avoids_global_projection",
+    "returncode": 0,
+    "elapsed_seconds": 0.015671524917706847,
+    "passed": true,
+    "ignored": false,
+    "log": "root-charts-20260923-final2-candidate-0056.log"
+  },
+  {
+    "label": "candidate",
+    "name": "bezier_offset::conversion_tests::selected_fiber_analytic_circle_overlaps_complete_region_booleans",
+    "returncode": 0,
+    "elapsed_seconds": 0.06383502099197358,
+    "passed": true,
+    "ignored": false,
+    "log": "root-charts-20260923-final2-candidate-0057.log"
+  },
+  {
+    "label": "candidate",
+    "name": "bezier_offset::conversion_tests::selected_fiber_analytic_transverse_cut_inverts_by_point",
+    "returncode": 0,
+    "elapsed_seconds": 0.11394272302277386,
+    "passed": true,
+    "ignored": false,
+    "log": "root-charts-20260923-final2-candidate-0058.log"
+  },
+  {
+    "label": "candidate",
+    "name": "bezier_offset::conversion_tests::selected_fiber_angle_query_observes_its_requested_policy",
+    "returncode": 0,
+    "elapsed_seconds": 0.0076869630720466375,
+    "passed": true,
+    "ignored": false,
+    "log": "root-charts-20260923-final2-candidate-0059.log"
+  },
+  {
+    "label": "candidate",
+    "name": "bezier_offset::conversion_tests::selected_fiber_center_replays_nonlinear_two_normal_fixed_distance",
+    "returncode": 0,
+    "elapsed_seconds": 0.03172044409438968,
+    "passed": true,
+    "ignored": false,
+    "log": "root-charts-20260923-final2-candidate-0060.log"
+  },
+  {
+    "label": "candidate",
+    "name": "bezier_offset::conversion_tests::selected_fiber_center_retains_nonlinear_fixed_distance_incident_cut",
+    "returncode": 0,
+    "elapsed_seconds": 0.007637136033736169,
+    "passed": true,
+    "ignored": false,
+    "log": "root-charts-20260923-final2-candidate-0061.log"
+  },
+  {
+    "label": "candidate",
+    "name": "bezier_offset::conversion_tests::selected_fiber_chart_uncertainty_preserves_exact_coefficient_replay",
+    "returncode": 0,
+    "elapsed_seconds": 0.003555156057700515,
+    "passed": true,
+    "ignored": false,
+    "log": "root-charts-20260923-final2-candidate-0062.log"
+  },
+  {
+    "label": "candidate",
+    "name": "bezier_offset::conversion_tests::selected_fiber_circle_overlap_does_not_prove_source_parameter_identity",
+    "returncode": 0,
+    "elapsed_seconds": 0.00756704097148031,
+    "passed": true,
+    "ignored": false,
+    "log": "root-charts-20260923-final2-candidate-0063.log"
+  },
+  {
+    "label": "candidate",
+    "name": "bezier_offset::conversion_tests::selected_fiber_circle_overlap_preserves_an_isolated_parameter_visit",
+    "returncode": 0,
+    "elapsed_seconds": 40.620587024022825,
+    "passed": true,
+    "ignored": false,
+    "log": "root-charts-20260923-final2-candidate-0064.log"
+  },
+  {
+    "label": "candidate",
+    "name": "bezier_offset::conversion_tests::selected_fiber_comparison_accepts_a_newly_represented_root",
+    "returncode": 0,
+    "elapsed_seconds": 0.0038279870059341192,
+    "passed": true,
+    "ignored": false,
+    "log": "root-charts-20260923-final2-candidate-0065.log"
+  },
+  {
+    "label": "candidate",
+    "name": "bezier_offset::conversion_tests::selected_fiber_comparison_replays_composed_projective_charts_with_signed_denominators",
+    "returncode": 0,
+    "elapsed_seconds": 0.0035552160115912557,
+    "passed": true,
+    "ignored": false,
+    "log": "root-charts-20260923-final2-candidate-0066.log"
+  },
+  {
+    "label": "candidate",
+    "name": "bezier_offset::conversion_tests::selected_fiber_comparison_reuses_high_degree_affine_root_identity",
+    "returncode": 0,
+    "elapsed_seconds": 0.003570234985090792,
+    "passed": true,
+    "ignored": false,
+    "log": "root-charts-20260923-final2-candidate-0067.log"
+  },
+  {
+    "label": "candidate",
+    "name": "bezier_offset::conversion_tests::selected_fiber_deflation_excludes_foreign_critical_roots",
+    "returncode": 0,
+    "elapsed_seconds": 0.0035156789235770702,
+    "passed": true,
+    "ignored": false,
+    "log": "root-charts-20260923-final2-candidate-0068.log"
+  },
+  {
+    "label": "candidate",
+    "name": "bezier_offset::conversion_tests::selected_fiber_diagonal_identity_preserves_distinct_root_ownership",
+    "returncode": 0,
+    "elapsed_seconds": 0.003535947995260358,
+    "passed": true,
+    "ignored": false,
+    "log": "root-charts-20260923-final2-candidate-0069.log"
+  },
+  {
+    "label": "candidate",
+    "name": "bezier_offset::conversion_tests::selected_fiber_distinct_field_equality_uses_only_the_512_bit_terminal",
+    "returncode": 0,
+    "elapsed_seconds": 0.5644579360960051,
+    "passed": true,
+    "ignored": false,
+    "log": "root-charts-20260923-final2-candidate-0070.log"
+  },
+  {
+    "label": "candidate",
+    "name": "bezier_offset::conversion_tests::selected_fiber_distinct_fields_order_before_bounded_global_projection",
+    "returncode": 0,
+    "elapsed_seconds": 0.0037234040210023522,
+    "passed": true,
+    "ignored": false,
+    "log": "root-charts-20260923-final2-candidate-0071.log"
+  },
+  {
+    "label": "candidate",
+    "name": "bezier_offset::conversion_tests::selected_fiber_equality_requires_selected_root_containment",
+    "returncode": 0,
+    "elapsed_seconds": 0.003642749972641468,
+    "passed": true,
+    "ignored": false,
+    "log": "root-charts-20260923-final2-candidate-0072.log"
+  },
+  {
+    "label": "candidate",
+    "name": "bezier_offset::conversion_tests::selected_fiber_fixed_distance_descends_from_conjugate_circle_component",
+    "returncode": 0,
+    "elapsed_seconds": 0.06383127090521157,
+    "passed": true,
+    "ignored": false,
+    "log": "root-charts-20260923-final2-candidate-0073.log"
+  },
+  {
+    "label": "candidate",
+    "name": "bezier_offset::conversion_tests::selected_fiber_genuinely_analytic_contacts_complete_region_booleans",
+    "returncode": 0,
+    "elapsed_seconds": 0.0035790239926427603,
+    "passed": false,
+    "ignored": true,
+    "log": "root-charts-20260923-final2-candidate-0074.log"
+  },
+  {
+    "label": "candidate",
+    "name": "bezier_offset::conversion_tests::selected_fiber_import_and_refinement_retain_the_known_scalar_representation",
+    "returncode": 0,
+    "elapsed_seconds": 0.0035538560478016734,
+    "passed": true,
+    "ignored": false,
+    "log": "root-charts-20260923-final2-candidate-0075.log"
+  },
+  {
+    "label": "candidate",
+    "name": "bezier_offset::conversion_tests::selected_fiber_interval_supports_exact_and_nonexact_exterior_roots",
+    "returncode": 0,
+    "elapsed_seconds": 0.003557635936886072,
+    "passed": true,
+    "ignored": false,
+    "log": "root-charts-20260923-final2-candidate-0076.log"
+  },
+  {
+    "label": "candidate",
+    "name": "bezier_offset::conversion_tests::selected_fiber_mapped_cut_inverts_on_analytic_overlap",
+    "returncode": 0,
+    "elapsed_seconds": 0.11406174500007182,
+    "passed": true,
+    "ignored": false,
+    "log": "root-charts-20260923-final2-candidate-0077.log"
+  },
+  {
+    "label": "candidate",
+    "name": "bezier_offset::conversion_tests::selected_fiber_norm_isolation_refines_past_the_old_limit",
+    "returncode": 0,
+    "elapsed_seconds": 0.03176574094686657,
+    "passed": true,
+    "ignored": false,
+    "log": "root-charts-20260923-final2-candidate-0078.log"
+  },
+  {
+    "label": "candidate",
+    "name": "bezier_offset::conversion_tests::selected_fiber_offset_coalesces_boolean_only_cuts_through_one_parallel_kernel",
+    "returncode": 0,
+    "elapsed_seconds": 0.007621107040904462,
+    "passed": true,
+    "ignored": false,
+    "log": "root-charts-20260923-final2-candidate-0079.log"
+  },
+  {
+    "label": "candidate",
+    "name": "bezier_offset::conversion_tests::selected_fiber_overlap_inverts_transported_mapped_cusp_cut",
+    "returncode": 0,
+    "elapsed_seconds": 0.06378475402016193,
+    "passed": true,
+    "ignored": false,
+    "log": "root-charts-20260923-final2-candidate-0080.log"
+  },
+  {
+    "label": "candidate",
+    "name": "bezier_offset::conversion_tests::selected_fiber_pair_correlation_deflates_repeated_fibers",
+    "returncode": 0,
+    "elapsed_seconds": 0.015729070990346372,
+    "passed": true,
+    "ignored": false,
+    "log": "root-charts-20260923-final2-candidate-0081.log"
+  },
+  {
+    "label": "candidate",
+    "name": "bezier_offset::conversion_tests::selected_fiber_pair_subresultant_rejects_foreign_image_conjugate",
+    "returncode": 0,
+    "elapsed_seconds": 0.007622827077284455,
+    "passed": true,
+    "ignored": false,
+    "log": "root-charts-20260923-final2-candidate-0082.log"
+  },
+  {
+    "label": "candidate",
+    "name": "bezier_offset::conversion_tests::selected_fiber_pair_tangent_correlation_stays_in_degree_130_local_field",
+    "returncode": 0,
+    "elapsed_seconds": 0.11386049794964492,
+    "passed": true,
+    "ignored": false,
+    "log": "root-charts-20260923-final2-candidate-0083.log"
+  },
+  {
+    "label": "candidate",
+    "name": "bezier_offset::conversion_tests::selected_fiber_positive_dimensional_projection_reports_authored_continuum",
+    "returncode": 0,
+    "elapsed_seconds": 0.0035374669823795557,
+    "passed": true,
+    "ignored": false,
+    "log": "root-charts-20260923-final2-candidate-0084.log"
+  },
+  {
+    "label": "candidate",
+    "name": "bezier_offset::conversion_tests::selected_fiber_predicate_handles_a_retained_root_becoming_exact_after_64_steps",
+    "returncode": 0,
+    "elapsed_seconds": 0.0075968189630657434,
+    "passed": true,
+    "ignored": false,
+    "log": "root-charts-20260923-final2-candidate-0085.log"
+  },
+  {
+    "label": "candidate",
+    "name": "bezier_offset::conversion_tests::selected_fiber_predicate_sign_refines_past_the_policy_terminal_under_strict",
+    "returncode": 0,
+    "elapsed_seconds": 0.1639804410515353,
+    "passed": true,
+    "ignored": false,
+    "log": "root-charts-20260923-final2-candidate-0086.log"
+  },
+  {
+    "label": "candidate",
+    "name": "bezier_offset::conversion_tests::selected_fiber_projective_chart_round_trip_avoids_global_projection",
+    "returncode": 0,
+    "elapsed_seconds": 0.007733309990726411,
+    "passed": true,
+    "ignored": false,
+    "log": "root-charts-20260923-final2-candidate-0087.log"
+  },
+  {
+    "label": "candidate",
+    "name": "bezier_offset::conversion_tests::selected_fiber_rational_circle_overlaps_complete_region_booleans",
+    "returncode": 0,
+    "elapsed_seconds": 0.06376663502305746,
+    "passed": true,
+    "ignored": false,
+    "log": "root-charts-20260923-final2-candidate-0088.log"
+  },
+  {
+    "label": "candidate",
+    "name": "bezier_offset::conversion_tests::selected_fiber_rational_component_publishes_its_isolated_endpoint",
+    "returncode": 0,
+    "elapsed_seconds": 0.015696892980486155,
+    "passed": true,
+    "ignored": false,
+    "log": "root-charts-20260923-final2-candidate-0089.log"
+  },
+  {
+    "label": "candidate",
+    "name": "bezier_offset::conversion_tests::selected_fiber_rational_component_rejects_the_conjugate_circle",
+    "returncode": 0,
+    "elapsed_seconds": 0.06379743304569274,
+    "passed": true,
+    "ignored": false,
+    "log": "root-charts-20260923-final2-candidate-0090.log"
+  },
+  {
+    "label": "candidate",
+    "name": "bezier_offset::conversion_tests::selected_fiber_rational_overlap_keeps_exact_center",
+    "returncode": 0,
+    "elapsed_seconds": 0.015724672004580498,
+    "passed": true,
+    "ignored": false,
+    "log": "root-charts-20260923-final2-candidate-0091.log"
+  },
+  {
+    "label": "candidate",
+    "name": "bezier_offset::conversion_tests::selected_fiber_rational_overlap_replays_certified_policy",
+    "returncode": 0,
+    "elapsed_seconds": 0.015658085932955146,
+    "passed": true,
+    "ignored": false,
+    "log": "root-charts-20260923-final2-candidate-0092.log"
+  },
+  {
+    "label": "candidate",
+    "name": "bezier_offset::conversion_tests::selected_fiber_root_isolation_rejoins_uncapped_depth",
+    "returncode": 0,
+    "elapsed_seconds": 0.0035005899844691157,
+    "passed": true,
+    "ignored": false,
+    "log": "root-charts-20260923-final2-candidate-0093.log"
+  },
+  {
+    "label": "candidate",
+    "name": "bezier_offset::conversion_tests::selected_fiber_scalar_is_compact_exact_and_ordered_without_a_norm",
+    "returncode": 0,
+    "elapsed_seconds": 0.00761464808601886,
+    "passed": true,
+    "ignored": false,
+    "log": "root-charts-20260923-final2-candidate-0094.log"
+  },
+  {
+    "label": "candidate",
+    "name": "bezier_offset::conversion_tests::selected_fiber_tangent_correspondence_retains_local_image",
+    "returncode": 0,
+    "elapsed_seconds": 0.03172368393279612,
+    "passed": true,
+    "ignored": false,
+    "log": "root-charts-20260923-final2-candidate-0095.log"
+  },
+  {
+    "label": "candidate",
+    "name": "bezier_offset::conversion_tests::selected_fiber_transverse_mapped_cut_inverts_by_point",
+    "returncode": 101,
+    "elapsed_seconds": 0.00762466702144593,
+    "passed": false,
+    "ignored": false,
+    "log": "root-charts-20260923-final2-candidate-0096.log"
+  },
+  {
+    "label": "candidate",
+    "name": "bezier_offset::conversion_tests::selected_scalar_promotion_uses_its_finite_isolator",
+    "returncode": 0,
+    "elapsed_seconds": 0.007617366965860128,
+    "passed": true,
+    "ignored": false,
+    "log": "root-charts-20260923-final2-candidate-0097.log"
+  },
+  {
+    "label": "candidate",
+    "name": "bezier_offset::conversion_tests::trivariate_affine_axis_substitution_preserves_all_axis_orders",
+    "returncode": 0,
+    "elapsed_seconds": 0.0035387269454076886,
+    "passed": true,
+    "ignored": false,
+    "log": "root-charts-20260923-final2-candidate-0098.log"
+  },
+  {
+    "label": "candidate",
+    "name": "bezier_offset::conversion_tests::zero_parallel_domains_exclude_projective_poles",
+    "returncode": 0,
+    "elapsed_seconds": 0.003541467012837529,
+    "passed": true,
+    "ignored": false,
+    "log": "root-charts-20260923-final2-candidate-0099.log"
+  },
+  {
+    "label": "candidate",
+    "name": "bezier_parameter::conversion_tests::algebraic_sign_filter_has_no_fixed_refinement_cap",
+    "returncode": 0,
+    "elapsed_seconds": 0.0036084919702261686,
+    "passed": true,
+    "ignored": false,
+    "log": "root-charts-20260923-final2-candidate-0100.log"
+  },
+  {
+    "label": "candidate",
+    "name": "bezier_parameter::conversion_tests::algebraic_sign_filter_preserves_selected_root_and_boundary_ownership",
+    "returncode": 0,
+    "elapsed_seconds": 0.0035833549918606877,
+    "passed": true,
+    "ignored": false,
+    "log": "root-charts-20260923-final2-candidate-0101.log"
+  },
+  {
+    "label": "candidate",
+    "name": "bezier_parameter::conversion_tests::algebraic_sign_queries_reuse_the_singleton_for_tiny_separations",
+    "returncode": 0,
+    "elapsed_seconds": 0.003570134984329343,
+    "passed": true,
+    "ignored": false,
+    "log": "root-charts-20260923-final2-candidate-0102.log"
+  },
+  {
+    "label": "candidate",
+    "name": "bezier_parameter::conversion_tests::algebraic_unit_complement_preserves_the_exact_singleton_root",
+    "returncode": 0,
+    "elapsed_seconds": 0.0035523860715329647,
+    "passed": true,
+    "ignored": false,
+    "log": "root-charts-20260923-final2-candidate-0103.log"
+  },
+  {
+    "label": "candidate",
+    "name": "bezier_parameter::conversion_tests::arbitrary_degree_nonrational_bernstein_isolates_every_simple_root",
+    "returncode": 0,
+    "elapsed_seconds": 0.007615366950631142,
+    "passed": true,
+    "ignored": false,
+    "log": "root-charts-20260923-final2-candidate-0104.log"
+  },
+  {
+    "label": "candidate",
+    "name": "bezier_parameter::conversion_tests::authoritative_sturm_sequence_has_no_historical_degree_cap",
+    "returncode": 0,
+    "elapsed_seconds": 0.007738209911622107,
+    "passed": true,
+    "ignored": false,
+    "log": "root-charts-20260923-final2-candidate-0105.log"
+  },
+  {
+    "label": "candidate",
+    "name": "bezier_parameter::conversion_tests::bernstein_simple_root_certificates_avoid_multiplicity_sturm_rebuilds",
+    "returncode": 0,
+    "elapsed_seconds": 0.0036922559374943376,
+    "passed": true,
+    "ignored": false,
+    "log": "root-charts-20260923-final2-candidate-0106.log"
+  },
+  {
+    "label": "candidate",
+    "name": "bezier_parameter::conversion_tests::bernstein_to_power_remains_exact_beyond_u64_binomials",
+    "returncode": 0,
+    "elapsed_seconds": 0.0035833040019497275,
+    "passed": true,
+    "ignored": false,
+    "log": "root-charts-20260923-final2-candidate-0107.log"
+  },
+  {
+    "label": "candidate",
+    "name": "bezier_parameter::conversion_tests::carried_sturm_variations_match_partition_root_counts",
+    "returncode": 0,
+    "elapsed_seconds": 0.0035555160138756037,
+    "passed": true,
+    "ignored": false,
+    "log": "root-charts-20260923-final2-candidate-0108.log"
+  },
+  {
+    "label": "candidate",
+    "name": "bezier_parameter::conversion_tests::collapsed_exact_real_representation_imports_as_an_exact_parameter",
+    "returncode": 0,
+    "elapsed_seconds": 0.003554236958734691,
+    "passed": true,
+    "ignored": false,
+    "log": "root-charts-20260923-final2-candidate-0109.log"
+  },
+  {
+    "label": "candidate",
+    "name": "bezier_parameter::conversion_tests::composed_projective_charts_share_one_root_without_growing_history_or_scale",
+    "returncode": 0,
+    "elapsed_seconds": 0.003536507021635771,
+    "passed": true,
+    "ignored": false,
+    "log": "root-charts-20260923-final2-candidate-0110.log"
+  },
+  {
+    "label": "candidate",
+    "name": "bezier_parameter::conversion_tests::finite_interval_isolation_has_no_fixed_dyadic_depth_limit",
+    "returncode": 0,
+    "elapsed_seconds": 0.0317507820436731,
+    "passed": true,
+    "ignored": false,
+    "log": "root-charts-20260923-final2-candidate-0111.log"
+  },
+  {
+    "label": "candidate",
+    "name": "bezier_parameter::conversion_tests::incident_ray_isolation_orders_exact_roots_away_from_the_anchor",
+    "returncode": 0,
+    "elapsed_seconds": 0.0036106930347159505,
+    "passed": true,
+    "ignored": false,
+    "log": "root-charts-20260923-final2-candidate-0112.log"
+  },
+  {
+    "label": "candidate",
+    "name": "bezier_parameter::conversion_tests::incident_ray_isolation_retains_irrational_exterior_root_authority",
+    "returncode": 0,
+    "elapsed_seconds": 0.0035580359399318695,
+    "passed": true,
+    "ignored": false,
+    "log": "root-charts-20260923-final2-candidate-0113.log"
+  },
+  {
+    "label": "candidate",
+    "name": "bezier_parameter::conversion_tests::interval_root_isolation_uses_original_polynomial_and_closed_boundaries",
+    "returncode": 0,
+    "elapsed_seconds": 0.0035324080381542444,
+    "passed": true,
+    "ignored": false,
+    "log": "root-charts-20260923-final2-candidate-0114.log"
+  },
+  {
+    "label": "candidate",
+    "name": "bezier_parameter::conversion_tests::modular_sieve_rejects_only_rootless_rational_reductions",
+    "returncode": 0,
+    "elapsed_seconds": 0.003562255995348096,
+    "passed": true,
+    "ignored": false,
+    "log": "root-charts-20260923-final2-candidate-0115.log"
+  },
+  {
+    "label": "candidate",
+    "name": "bezier_parameter::conversion_tests::modular_sieve_retains_polynomials_with_known_rational_roots",
+    "returncode": 0,
+    "elapsed_seconds": 0.003548795939423144,
+    "passed": true,
+    "ignored": false,
+    "log": "root-charts-20260923-final2-candidate-0116.log"
+  },
+  {
+    "label": "candidate",
+    "name": "bezier_parameter::conversion_tests::native_small_modulus_matches_bigint_floor_remainder",
+    "returncode": 0,
+    "elapsed_seconds": 0.003514779033139348,
+    "passed": true,
+    "ignored": false,
+    "log": "root-charts-20260923-final2-candidate-0117.log"
+  },
+  {
+    "label": "candidate",
+    "name": "bezier_parameter::conversion_tests::nested_nonrational_quadratic_root_materializes_exactly",
+    "returncode": 0,
+    "elapsed_seconds": 0.0035880838986486197,
+    "passed": true,
+    "ignored": false,
+    "log": "root-charts-20260923-final2-candidate-0118.log"
+  },
+  {
+    "label": "candidate",
+    "name": "bezier_parameter::conversion_tests::nonrational_low_degree_roots_materialize_without_sturm_work",
+    "returncode": 0,
+    "elapsed_seconds": 0.0035539560485631227,
+    "passed": true,
+    "ignored": false,
+    "log": "root-charts-20260923-final2-candidate-0119.log"
+  },
+  {
+    "label": "candidate",
+    "name": "bezier_parameter::conversion_tests::nonrational_power_evaluation_uses_exact_endpoint_identities",
+    "returncode": 0,
+    "elapsed_seconds": 0.003518547979183495,
+    "passed": true,
+    "ignored": false,
+    "log": "root-charts-20260923-final2-candidate-0120.log"
+  },
+  {
+    "label": "candidate",
+    "name": "bezier_parameter::conversion_tests::polynomial_sign_queries_do_not_require_a_known_degree",
+    "returncode": 0,
+    "elapsed_seconds": 0.00353471701964736,
+    "passed": true,
+    "ignored": false,
+    "log": "root-charts-20260923-final2-candidate-0121.log"
+  },
+  {
+    "label": "candidate",
+    "name": "bezier_parameter::conversion_tests::polynomial_signs_use_the_retained_interval_before_algebraic_replay",
+    "returncode": 0,
+    "elapsed_seconds": 0.0035426870454102755,
+    "passed": true,
+    "ignored": false,
+    "log": "root-charts-20260923-final2-candidate-0122.log"
+  },
+  {
+    "label": "candidate",
+    "name": "bezier_parameter::conversion_tests::progressive_refinement_matches_one_pass_proof_budget",
+    "returncode": 0,
+    "elapsed_seconds": 0.003543687053024769,
+    "passed": true,
+    "ignored": false,
+    "log": "root-charts-20260923-final2-candidate-0123.log"
+  },
+  {
+    "label": "candidate",
+    "name": "bezier_parameter::conversion_tests::projective_images_preserve_exterior_singletons_across_unused_poles",
+    "returncode": 0,
+    "elapsed_seconds": 0.0076516150729730725,
+    "passed": true,
+    "ignored": false,
+    "log": "root-charts-20260923-final2-candidate-0124.log"
+  },
+  {
+    "label": "candidate",
+    "name": "bezier_parameter::conversion_tests::rational_basis_subdivision_matches_the_shared_bernstein_kernel",
+    "returncode": 0,
+    "elapsed_seconds": 0.003555176081135869,
+    "passed": true,
+    "ignored": false,
+    "log": "root-charts-20260923-final2-candidate-0125.log"
+  },
+  {
+    "label": "candidate",
+    "name": "bezier_parameter::conversion_tests::rational_reconstruction_reuses_sturm_ownership_across_both_children",
+    "returncode": 0,
+    "elapsed_seconds": 0.0035441169748082757,
+    "passed": true,
+    "ignored": false,
+    "log": "root-charts-20260923-final2-candidate-0126.log"
+  },
+  {
+    "label": "candidate",
+    "name": "bezier_parameter::conversion_tests::refinement_to_an_exact_root_precedes_touching_interval_order",
+    "returncode": 0,
+    "elapsed_seconds": 0.0035271780798211694,
+    "passed": true,
+    "ignored": false,
+    "log": "root-charts-20260923-final2-candidate-0127.log"
+  },
+  {
+    "label": "candidate",
+    "name": "bezier_parameter::conversion_tests::retained_refinement_matches_square_free_reference_and_shares_sturm_work",
+    "returncode": 0,
+    "elapsed_seconds": 0.003544596955180168,
+    "passed": true,
+    "ignored": false,
+    "log": "root-charts-20260923-final2-candidate-0128.log"
+  },
+  {
+    "label": "candidate",
+    "name": "bezier_parameter::conversion_tests::retained_sturm_certificate_classifies_mixed_root_multiplicity",
+    "returncode": 0,
+    "elapsed_seconds": 0.0035640960559248924,
+    "passed": true,
+    "ignored": false,
+    "log": "root-charts-20260923-final2-candidate-0129.log"
+  },
+  {
+    "label": "candidate",
+    "name": "bezier_parameter::conversion_tests::simple_root_certificate_accepts_an_endpoint_deflated_algebraic_carrier",
+    "returncode": 0,
+    "elapsed_seconds": 0.003580873948521912,
+    "passed": true,
+    "ignored": false,
+    "log": "root-charts-20260923-final2-candidate-0130.log"
+  },
+  {
+    "label": "candidate",
+    "name": "bezier_parameter::conversion_tests::simple_root_certificate_distinguishes_algebraic_multiplicity",
+    "returncode": 0,
+    "elapsed_seconds": 0.003555535920895636,
+    "passed": true,
+    "ignored": false,
+    "log": "root-charts-20260923-final2-candidate-0131.log"
+  },
+  {
+    "label": "candidate",
+    "name": "bezier_parameter::conversion_tests::simple_root_certificate_distinguishes_exact_multiplicity",
+    "returncode": 0,
+    "elapsed_seconds": 0.003553746035322547,
+    "passed": true,
+    "ignored": false,
+    "log": "root-charts-20260923-final2-candidate-0132.log"
+  },
+  {
+    "label": "candidate",
+    "name": "bezier_parameter::conversion_tests::square_free_bernstein_preserves_wide_signed_scale_certificates",
+    "returncode": 0,
+    "elapsed_seconds": 0.007623316952958703,
+    "passed": true,
+    "ignored": false,
+    "log": "root-charts-20260923-final2-candidate-0133.log"
+  },
+  {
+    "label": "candidate",
+    "name": "bezier_parameter::conversion_tests::square_free_bernstein_scaled_endpoint_and_midpoint_roots_keep_fallback",
+    "returncode": 0,
+    "elapsed_seconds": 0.0035430369898676872,
+    "passed": true,
+    "ignored": false,
+    "log": "root-charts-20260923-final2-candidate-0134.log"
+  },
+  {
+    "label": "candidate",
+    "name": "bezier_parameter::conversion_tests::square_free_degree_128_bernstein_isolates_every_unit_root",
+    "returncode": 0,
+    "elapsed_seconds": 0.015695173991844058,
+    "passed": true,
+    "ignored": false,
+    "log": "root-charts-20260923-final2-candidate-0135.log"
+  },
+  {
+    "label": "candidate",
+    "name": "bezier_parameter::conversion_tests::strict_gap_preserves_irrational_and_repeated_root_ownership",
+    "returncode": 0,
+    "elapsed_seconds": 0.007701611961238086,
+    "passed": true,
+    "ignored": false,
+    "log": "root-charts-20260923-final2-candidate-0136.log"
+  },
+  {
+    "label": "candidate",
+    "name": "bezier_parameter::conversion_tests::strict_gap_refines_both_overlapping_algebraic_parameters",
+    "returncode": 0,
+    "elapsed_seconds": 0.003618241986259818,
+    "passed": true,
+    "ignored": false,
+    "log": "root-charts-20260923-final2-candidate-0137.log"
+  },
+  {
+    "label": "candidate",
+    "name": "bezier_region::tests::selected_corner_candidates_reenter_normalization_with_retained_contacts",
+    "returncode": 0,
+    "elapsed_seconds": 3.568555223988369,
+    "passed": true,
+    "ignored": false,
+    "log": "root-charts-20260923-final2-candidate-0138.log"
+  }
+]

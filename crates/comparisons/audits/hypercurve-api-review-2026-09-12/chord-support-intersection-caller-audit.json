@@ -1,0 +1,169 @@
+{
+  "terms": [
+    "CurveIntersectionParameter2",
+    "exact_curve_parameter",
+    "algebraic_chord_exact_linear_pair_result"
+  ],
+  "repositories": [
+    {
+      "repository": "ExactCalculator",
+      "status": [],
+      "obsolete_api_matches": []
+    },
+    {
+      "repository": "NURBS_BREP_kernel",
+      "status": [],
+      "obsolete_api_matches": []
+    },
+    {
+      "repository": "alumina-firmware",
+      "status": [],
+      "obsolete_api_matches": []
+    },
+    {
+      "repository": "alumina-interface",
+      "status": [],
+      "obsolete_api_matches": []
+    },
+    {
+      "repository": "citizen-builder",
+      "status": [],
+      "obsolete_api_matches": []
+    },
+    {
+      "repository": "crcalc",
+      "status": [],
+      "obsolete_api_matches": []
+    },
+    {
+      "repository": "csgrs",
+      "status": [],
+      "obsolete_api_matches": []
+    },
+    {
+      "repository": "csgrs-ffi",
+      "status": [],
+      "obsolete_api_matches": []
+    },
+    {
+      "repository": "exactcore-hyper-comparison",
+      "status": [],
+      "obsolete_api_matches": [],
+      "excluded_historical_tree": "exactcore-hyper-comparison/audits/**",
+      "historical_matches_excluded": 936
+    },
+    {
+      "repository": "hyperbrep",
+      "status": [],
+      "obsolete_api_matches": []
+    },
+    {
+      "repository": "hypercircuit",
+      "status": [],
+      "obsolete_api_matches": []
+    },
+    {
+      "repository": "hypercurve",
+      "status": [
+        " M README.md",
+        " M src/bezier_offset.rs",
+        " M src/curve_evaluation.rs",
+        " M src/curve_intersection.rs",
+        " M src/curve_region_boolean.rs",
+        " M src/curve_support_intersection.rs",
+        " M tests/hypercurve_curve_intersection.rs"
+      ],
+      "obsolete_api_matches": []
+    },
+    {
+      "repository": "hyperdrc",
+      "status": [],
+      "obsolete_api_matches": []
+    },
+    {
+      "repository": "hyperevolution",
+      "status": [],
+      "obsolete_api_matches": []
+    },
+    {
+      "repository": "hypergraphics",
+      "status": [],
+      "obsolete_api_matches": []
+    },
+    {
+      "repository": "hyperlattice",
+      "status": [],
+      "obsolete_api_matches": []
+    },
+    {
+      "repository": "hyperlimit",
+      "status": [],
+      "obsolete_api_matches": []
+    },
+    {
+      "repository": "hypermesh",
+      "status": [],
+      "obsolete_api_matches": []
+    },
+    {
+      "repository": "hyperpack",
+      "status": [],
+      "obsolete_api_matches": []
+    },
+    {
+      "repository": "hyperparts",
+      "status": [],
+      "obsolete_api_matches": []
+    },
+    {
+      "repository": "hyperpath",
+      "status": [],
+      "obsolete_api_matches": []
+    },
+    {
+      "repository": "hyperphysics",
+      "status": [],
+      "obsolete_api_matches": []
+    },
+    {
+      "repository": "hyperreal",
+      "status": [],
+      "obsolete_api_matches": []
+    },
+    {
+      "repository": "hypersdf",
+      "status": [],
+      "obsolete_api_matches": []
+    },
+    {
+      "repository": "hypersolve",
+      "status": [],
+      "obsolete_api_matches": []
+    },
+    {
+      "repository": "hypertri",
+      "status": [],
+      "obsolete_api_matches": []
+    },
+    {
+      "repository": "hypervoxel",
+      "status": [],
+      "obsolete_api_matches": []
+    },
+    {
+      "repository": "openscad-rs",
+      "status": [],
+      "obsolete_api_matches": []
+    },
+    {
+      "repository": "synaps-cad",
+      "status": [],
+      "obsolete_api_matches": []
+    },
+    {
+      "repository": "videos",
+      "status": [],
+      "obsolete_api_matches": []
+    }
+  ]
+}

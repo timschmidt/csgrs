@@ -1,0 +1,14 @@
+{
+  "tag": "e-qualified-app-candidate-hypercurve-basic-size",
+  "started": "2026-09-10T01:41:39.128Z",
+  "finished": "2026-09-10T01:41:39.142Z",
+  "elapsedSeconds": 0.011422257000000002,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "size",
+  "args": [
+    "/tmp/calcium-e-qualified-apps.AHiwfn/candidate-hypercurve-basic",
+    "/tmp/calcium-e-qualified-apps.AHiwfn/candidate-hypercurve-basic.stripped"
+  ],
+  "code": 0,
+  "signal": null
+}

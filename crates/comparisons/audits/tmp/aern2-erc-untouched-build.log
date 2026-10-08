@@ -1,0 +1,55 @@
+aern2-mp-0.2.16.2: unregistering (local file changes:
+.stack-work/dist/x86_64-linux-tinfo6/ghc-9.6.7/build/autogen/Paths_aern2_mp.hs)
+aern2-mp > build (lib) with ghc-9.6.7
+aern2-mp > Preprocessing library for aern2-mp-0.2.16.2..
+aern2-mp > Building library for aern2-mp-0.2.16.2..
+aern2-mp > copy/register
+aern2-mp > Installing library in /tmp/aern2-audit/.stack-work/install/x86_64-linux-tinfo6/4122b5c8c592956169e971c124eced625c29b1ec1980783592c829525e25a35a/9.6.7/lib/x86_64-linux-ghc-9.6.7/aern2-mp-0.2.16.2-L9cPC97WbwHJ4MCKfOtnJU
+aern2-mp > Registering library for aern2-mp-0.2.16.2..
+aern2-erc> build (lib) with ghc-9.6.7
+Preprocessing library for aern2-erc-0.2.9.0..
+Building library for aern2-erc-0.2.9.0..
+[ 1 of 10] Compiling ERC.Monad
+
+/home/tim/Documents/GitHub/workspace/exact-real-references/aern2/aern2-erc/src/ERC/Monad.hs:19:19: error: [GHC-88464]
+    Variable not in scope:
+      lift :: StateT (b3, b2) m4 b3 -> ERC s Precision
+   |
+19 | getPrecisionERC = lift $ fst <$> get
+   |                   ^^^^
+
+/home/tim/Documents/GitHub/workspace/exact-real-references/aern2/aern2-erc/src/ERC/Monad.hs:23:3: error: [GHC-88464]
+    Variable not in scope:
+      lift :: StateT (Precision, b1) m3 () -> ERC s ()
+   |
+23 |   lift $ do 
+   |   ^^^^
+
+/home/tim/Documents/GitHub/workspace/exact-real-references/aern2/aern2-erc/src/ERC/Monad.hs:28:17: error: [GHC-88464]
+    Variable not in scope: lift :: StateT (a2, b0) m2 b0 -> ERC s Bool
+   |
+28 | getIsValidERC = lift $ snd <$> get
+   |                 ^^^^
+
+/home/tim/Documents/GitHub/workspace/exact-real-references/aern2/aern2-erc/src/ERC/Monad.hs:32:3: error: [GHC-88464]
+    Variable not in scope: lift :: StateT (a1, Bool) m1 () -> ERC s ()
+   |
+32 |   lift $ do 
+   |   ^^^^
+
+/home/tim/Documents/GitHub/workspace/exact-real-references/aern2/aern2-erc/src/ERC/Monad.hs:38:3: error: [GHC-88464]
+    Variable not in scope: lift :: StateT (a0, Bool) m0 () -> ERC s ()
+   |
+38 |   lift $ do 
+   |   ^^^^
+Completed 2 action(s).
+
+Error: [S-7282]
+       Stack failed to execute the build plan.
+       
+       While executing the build plan, Stack encountered the error:
+       
+       [S-7011]
+       While building package aern2-erc-0.2.9.0 (scroll up to its section to see the error) using:
+       /tmp/aern2-stack.ryVCFK/setup-exe-cache/x86_64-linux-tinfo6/Cabal-simple_O_vy6YIf_3.10.3.0_ghc-9.6.7 --verbose=1 --builddir=.stack-work/dist/x86_64-linux-tinfo6/ghc-9.6.7 build lib:aern2-erc --ghc-options ""
+       Process exited with code: ExitFailure 1 

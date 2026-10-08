@@ -1,0 +1,18 @@
+{
+  "command": [
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/selected-cusp-arrangement-20260926-v157-hypercurve",
+    "--exact",
+    "curve_region_boolean::certified_successor_tests::selected_parallel_arrangement_splits_interior_cusps",
+    "--test-threads=1",
+    "--nocapture"
+  ],
+  "returncode": 101,
+  "elapsed_seconds": 6.698297030059621,
+  "source_manifest": "selected-cusp-arrangement-20260926-v157-sources.json",
+  "binary": {
+    "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/selected-cusp-arrangement-20260926-v157-hypercurve",
+    "sha256": "352801d7fd15eac04a879c7bb62e7df0c3701eef587b35b6ee44f295f7941560"
+  },
+  "all_processes_reaped": true,
+  "all_sources_unchanged": true
+}

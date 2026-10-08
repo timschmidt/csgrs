@@ -1,0 +1,23 @@
+{
+  "tag": "point-cold-baseline-native-build",
+  "started": "2026-09-10T23:06:16.348Z",
+  "finished": "2026-09-10T23:06:17.393Z",
+  "elapsedSeconds": 1.042732283,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/point-cold-baseline",
+  "command": "env",
+  "args": [
+    "CARGO_TARGET_DIR=/tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse",
+    "CARGO_INCREMENTAL=0",
+    "CARGO_PROFILE_DEV_DEBUG=0",
+    "CARGO_BUILD_JOBS=2",
+    "cargo",
+    "build",
+    "--locked",
+    "--offline",
+    "--release",
+    "--bin",
+    "point-cold-baseline"
+  ],
+  "code": 0,
+  "signal": null
+}

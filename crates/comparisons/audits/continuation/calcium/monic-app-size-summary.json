@@ -1,0 +1,60 @@
+{
+  "recorded": "2026-09-09T01:15:14.491Z",
+  "artifacts": [
+    {
+      "example": "basic",
+      "baseline": [
+        {
+          "path": "/tmp/calcium-polynomial-facts.ZX8NqH/app-facts-basic",
+          "bytes": 13489960,
+          "sha256": "3b83c7708ef0b0c8b8ab87ffb1c78c883973cd3f52d6c7c02b6a4f453fc6b762"
+        },
+        {
+          "path": "/tmp/calcium-polynomial-facts.ZX8NqH/app-facts-basic.stripped",
+          "bytes": 11010952,
+          "sha256": "aa2b3f3b0a4c50e0075256469848314c575f0cbe0813d7097369314055fcb87a"
+        }
+      ],
+      "monic": [
+        {
+          "path": "/tmp/calcium-monic-state.rk70Kr/app-monic-basic",
+          "bytes": 13494864,
+          "sha256": "f8663052bdc67f5415a6f896d6f8c61ae4a5d9b1f65ed849e437929241bceb79"
+        },
+        {
+          "path": "/tmp/calcium-monic-state.rk70Kr/app-monic-basic.stripped",
+          "bytes": 11013896,
+          "sha256": "72eb855e1244135fc3c1bc4fbee8e86efe483b9f7303c448a7fab96e07229040"
+        }
+      ]
+    },
+    {
+      "example": "arrangement",
+      "baseline": [
+        {
+          "path": "/tmp/calcium-polynomial-facts.ZX8NqH/app-facts-arrangement",
+          "bytes": 14176696,
+          "sha256": "3d589961bdd921d26a5834cb51ef9a3a13ef495167f007893fa2046baa057305"
+        },
+        {
+          "path": "/tmp/calcium-polynomial-facts.ZX8NqH/app-facts-arrangement.stripped",
+          "bytes": 11585288,
+          "sha256": "f8956e1db249d16a5313e9a9d33ae432722dda449aef5435e0587e1db54f172a"
+        }
+      ],
+      "monic": [
+        {
+          "path": "/tmp/calcium-monic-state.rk70Kr/app-monic-arrangement",
+          "bytes": 14181640,
+          "sha256": "794ee35acf56076b35207aff0632a9becd1f1f6d4da6f7c7be597c853f62f5da"
+        },
+        {
+          "path": "/tmp/calcium-monic-state.rk70Kr/app-monic-arrangement.stripped",
+          "bytes": 11588232,
+          "sha256": "49766d5abffa7d0849832d83f4f104ff5fb7a9c811276187d51036a272e86326"
+        }
+      ]
+    }
+  ],
+  "limits": "Frozen Hypercurve basic/arrangement examples, default-feature standard release profile and separately stripped copies. Baseline is retained checkpoint16 fact-first Hypersolve and qualified scalar. Not complete Alumina, all-feature/LTO/size-optimized binaries or timing benchmarks."
+}

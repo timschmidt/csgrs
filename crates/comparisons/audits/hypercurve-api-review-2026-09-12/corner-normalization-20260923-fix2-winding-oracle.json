@@ -1,0 +1,15 @@
+{
+  "command": [
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/corner-normalization-20260923-fix2-libtest",
+    "--exact",
+    "curve_region_boolean::certified_successor_tests::curved_face_windings_preserve_crossings_tangencies_overlaps_and_nested_holes",
+    "--test-threads=1",
+    "--nocapture",
+    "--color",
+    "never"
+  ],
+  "returncode": 0,
+  "elapsed_seconds": 0.5644015440484509,
+  "binary_sha256": "1347457c904ed1de5fcf82c919709ed976e465024c23ba04b85528a635dee8fe",
+  "log": "corner-normalization-20260923-fix2-winding-oracle.log"
+}

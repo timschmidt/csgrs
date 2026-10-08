@@ -1,0 +1,199 @@
+{
+  "passed": 1192,
+  "ignored": 6,
+  "failed": [
+    {
+      "name": "bezier_offset::conversion_tests::independently_encoded_nonrepresented_analytic_circle_publishes_overlap",
+      "returncode": 101,
+      "passed": false,
+      "ignored": false,
+      "elapsed_seconds": 0.11427017895039171,
+      "limit_seconds": 75,
+      "log": "circle-map-direction-20260923-final1-case-0216.log"
+    },
+    {
+      "name": "bezier_offset::conversion_tests::nonrepresented_center_nonrational_chamfer_inverts_with_retained_authority",
+      "returncode": 101,
+      "passed": false,
+      "ignored": false,
+      "elapsed_seconds": 0.1647105870069936,
+      "limit_seconds": 75,
+      "log": "circle-map-direction-20260923-final1-case-0258.log"
+    },
+    {
+      "name": "bezier_offset::conversion_tests::selected_fiber_transverse_mapped_cut_inverts_by_point",
+      "returncode": 101,
+      "passed": false,
+      "ignored": false,
+      "elapsed_seconds": 0.008433541981503367,
+      "limit_seconds": 75,
+      "log": "circle-map-direction-20260923-final1-case-0531.log"
+    },
+    {
+      "name": "bezier_region::tests::algebraic_endpoint_images_reenter_shared_corner_carriers",
+      "returncode": 101,
+      "passed": false,
+      "ignored": false,
+      "elapsed_seconds": 0.06423717190045863,
+      "limit_seconds": 75,
+      "log": "circle-map-direction-20260923-final1-case-0625.log"
+    },
+    {
+      "name": "bezier_offset::conversion_tests::selected_parallel_normal_circle_intersects_genuinely_analytic_parallel_in_one_fiber",
+      "returncode": "timeout",
+      "passed": false,
+      "ignored": false,
+      "elapsed_seconds": 75.01177799189463,
+      "limit_seconds": 75,
+      "log": "circle-map-direction-20260923-final1-case-0535.log"
+    },
+    {
+      "name": "bezier_region::tests::independent_oblique_chord_pair_fillets_extend_on_infinite_supports",
+      "returncode": 101,
+      "passed": false,
+      "ignored": false,
+      "elapsed_seconds": 0.21516906504984945,
+      "limit_seconds": 75,
+      "log": "circle-map-direction-20260923-final1-case-0662.log"
+    },
+    {
+      "name": "bezier_region::tests::nonrepresented_chord_and_retained_rational_arc_share_the_fillet_kernel",
+      "returncode": 101,
+      "passed": false,
+      "ignored": false,
+      "elapsed_seconds": 0.16575100598856807,
+      "limit_seconds": 75,
+      "log": "circle-map-direction-20260923-final1-case-0680.log"
+    },
+    {
+      "name": "bezier_region::tests::nonlinear_selected_corner_chamfers_through_retained_fixed_distance_image",
+      "returncode": "timeout",
+      "passed": false,
+      "ignored": false,
+      "elapsed_seconds": 75.9527101040585,
+      "limit_seconds": 75,
+      "log": "circle-map-direction-20260923-final1-case-0678.log"
+    },
+    {
+      "name": "bezier_region::tests::one_fragment_materialized_loop_chamfers_to_one_middle_interval",
+      "returncode": "timeout",
+      "passed": false,
+      "ignored": false,
+      "elapsed_seconds": 75.03603419789579,
+      "limit_seconds": 75,
+      "log": "circle-map-direction-20260923-final1-case-0685.log"
+    },
+    {
+      "name": "bezier_region::tests::one_fragment_materialized_loop_extends_algebraic_chamfer_cuts_once",
+      "returncode": "timeout",
+      "passed": false,
+      "ignored": false,
+      "elapsed_seconds": 75.03627340204548,
+      "limit_seconds": 75,
+      "log": "circle-map-direction-20260923-final1-case-0686.log"
+    },
+    {
+      "name": "bezier_region::tests::one_fragment_ph_loop_projective_corners_retain_one_extended_interval",
+      "returncode": 101,
+      "passed": false,
+      "ignored": false,
+      "elapsed_seconds": 0.06533527700230479,
+      "limit_seconds": 75,
+      "log": "circle-map-direction-20260923-final1-case-0689.log"
+    },
+    {
+      "name": "bezier_region::tests::one_fragment_nonzero_parallel_loop_extends_chamfer_cuts_on_one_finite_envelope",
+      "returncode": "timeout",
+      "passed": false,
+      "ignored": false,
+      "elapsed_seconds": 75.02464977896307,
+      "limit_seconds": 75,
+      "log": "circle-map-direction-20260923-final1-case-0687.log"
+    },
+    {
+      "name": "bezier_region::tests::one_fragment_selected_loop_chamfers_from_one_interval",
+      "returncode": "timeout",
+      "passed": false,
+      "ignored": false,
+      "elapsed_seconds": 75.04066849907394,
+      "limit_seconds": 75,
+      "log": "circle-map-direction-20260923-final1-case-0691.log"
+    },
+    {
+      "name": "bezier_region::tests::one_fragment_selected_loop_extends_chamfer_cuts_on_its_analytic_carrier",
+      "returncode": "timeout",
+      "passed": false,
+      "ignored": false,
+      "elapsed_seconds": 75.03805507905781,
+      "limit_seconds": 75,
+      "log": "circle-map-direction-20260923-final1-case-0692.log"
+    },
+    {
+      "name": "bezier_region::tests::pair_native_boolean_algebraic_chord_corner_publishes_a_third_generation_fillet",
+      "returncode": "timeout",
+      "passed": false,
+      "ignored": false,
+      "elapsed_seconds": 75.00337731896434,
+      "limit_seconds": 75,
+      "log": "circle-map-direction-20260923-final1-case-0697.log"
+    },
+    {
+      "name": "bezier_region::tests::retained_algebraic_straights_trim_or_extend_chamfer_and_fillet",
+      "returncode": 101,
+      "passed": false,
+      "ignored": false,
+      "elapsed_seconds": 0.00921070808544755,
+      "limit_seconds": 75,
+      "log": "circle-map-direction-20260923-final1-case-0721.log"
+    },
+    {
+      "name": "bezier_region::tests::retained_analytic_multifragment_corner_extends_chamfer_and_fillet",
+      "returncode": 101,
+      "passed": false,
+      "ignored": false,
+      "elapsed_seconds": 0.009432113030925393,
+      "limit_seconds": 75,
+      "log": "circle-map-direction-20260923-final1-case-0722.log"
+    },
+    {
+      "name": "bezier_region::tests::selected_circle_and_analytic_parallel_extend_on_full_supports",
+      "returncode": "timeout",
+      "passed": false,
+      "ignored": false,
+      "elapsed_seconds": 75.00642759003676,
+      "limit_seconds": 75,
+      "log": "circle-map-direction-20260923-final1-case-0737.log"
+    }
+  ],
+  "new_failures": [],
+  "changed_existing_nonpasses": [],
+  "improved": [],
+  "checks": [
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "check",
+        "--all-targets",
+        "--all-features",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0
+    },
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "check",
+        "--all-targets",
+        "--no-default-features",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0
+    }
+  ],
+  "binary_sha256": "97756af7df908515bf2620c17453a45c33e68bac8490e2ec706c5c051a29715f",
+  "parent_binary_sha256": "78e4fbbb4abf317b177160b116e3a4711b5bf727e5ce2527875ddbdf287cab69",
+  "all_sources_unchanged": true,
+  "all_processes_reaped": true
+}

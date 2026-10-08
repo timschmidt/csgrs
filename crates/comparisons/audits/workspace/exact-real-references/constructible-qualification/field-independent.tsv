@@ -1,0 +1,17 @@
+group	label	order	lhs	rhs
+independent	surd-2-3--1--1	EQ	s + q 5 1 * q 2 1 s q 6 1	n + * q -1 1 s q 2 1 * q -1 1 s q 3 1
+independent	surd-2-3--1-1	EQ	s + q 5 1 * q -2 1 s q 6 1	+ * q -1 1 s q 2 1 * q 1 1 s q 3 1
+independent	surd-2-3-1--1	EQ	s + q 5 1 * q -2 1 s q 6 1	n + * q 1 1 s q 2 1 * q -1 1 s q 3 1
+independent	surd-2-3-1-1	EQ	s + q 5 1 * q 2 1 s q 6 1	+ * q 1 1 s q 2 1 * q 1 1 s q 3 1
+independent	surd-2-5--1--1	EQ	s + q 7 1 * q 2 1 s q 10 1	n + * q -1 1 s q 2 1 * q -1 1 s q 5 1
+independent	surd-2-5--1-1	EQ	s + q 7 1 * q -2 1 s q 10 1	+ * q -1 1 s q 2 1 * q 1 1 s q 5 1
+independent	surd-2-5-1--1	EQ	s + q 7 1 * q -2 1 s q 10 1	n + * q 1 1 s q 2 1 * q -1 1 s q 5 1
+independent	surd-2-5-1-1	EQ	s + q 7 1 * q 2 1 s q 10 1	+ * q 1 1 s q 2 1 * q 1 1 s q 5 1
+independent	surd-3-7--1--1	EQ	s + q 10 1 * q 2 1 s q 21 1	n + * q -1 1 s q 3 1 * q -1 1 s q 7 1
+independent	surd-3-7--1-1	EQ	s + q 10 1 * q -2 1 s q 21 1	+ * q -1 1 s q 3 1 * q 1 1 s q 7 1
+independent	surd-3-7-1--1	EQ	s + q 10 1 * q -2 1 s q 21 1	n + * q 1 1 s q 3 1 * q -1 1 s q 7 1
+independent	surd-3-7-1-1	EQ	s + q 10 1 * q 2 1 s q 21 1	+ * q 1 1 s q 3 1 * q 1 1 s q 7 1
+independent	surd-5-7--1--1	EQ	s + q 12 1 * q 2 1 s q 35 1	n + * q -1 1 s q 5 1 * q -1 1 s q 7 1
+independent	surd-5-7--1-1	EQ	s + q 12 1 * q -2 1 s q 35 1	+ * q -1 1 s q 5 1 * q 1 1 s q 7 1
+independent	surd-5-7-1--1	EQ	s + q 12 1 * q -2 1 s q 35 1	n + * q 1 1 s q 5 1 * q -1 1 s q 7 1
+independent	surd-5-7-1-1	EQ	s + q 12 1 * q 2 1 s q 35 1	+ * q 1 1 s q 5 1 * q 1 1 s q 7 1

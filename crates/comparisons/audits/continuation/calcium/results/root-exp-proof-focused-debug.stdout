@@ -1,0 +1,11 @@
+
+running 6 tests
+test computable::node::exp_relation_tests::serialized_graph_recovers_proof_without_serialized_facts ... ok
+test computable::node::exp_relation_tests::products_and_inverse_roots_require_positive_exponential_leaves ... ok
+test computable::node::exp_relation_tests::structural_limits_fail_closed ... ok
+test computable::node::exp_relation_tests::proof_preserves_hot_operand_and_root_caches ... ok
+test computable::node::exp_relation_tests::cached_failure_does_not_prevent_later_separation ... ok
+test computable::node::exp_relation_tests::independent_rational_log_coefficients_and_unequal_controls ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 764 filtered out; finished in 0.19s
+

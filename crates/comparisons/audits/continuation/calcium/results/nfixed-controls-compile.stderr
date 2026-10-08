@@ -1,0 +1,8 @@
+audits/continuation/calcium/flint-nfixed-controls.c: In function ‘matrix_case’:
+audits/continuation/calcium/flint-nfixed-controls.c:99:5: error: this ‘for’ clause does not guard... [-Werror=misleading-indentation]
+   99 |     for(slong i=0;i<m*n;i++)mpz_clear(ai[i]);for(slong i=0;i<n*p;i++)mpz_clear(bi[i]);
+      |     ^~~
+audits/continuation/calcium/flint-nfixed-controls.c:99:46: note: ...this statement, but the latter is misleadingly indented as if it were guarded by the ‘for’
+   99 |     for(slong i=0;i<m*n;i++)mpz_clear(ai[i]);for(slong i=0;i<n*p;i++)mpz_clear(bi[i]);
+      |                                              ^~~
+cc1: all warnings being treated as errors

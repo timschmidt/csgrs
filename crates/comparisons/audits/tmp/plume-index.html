@@ -1,0 +1,618 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<!--Converted with LaTeX2HTML 97.1 (release) (July 13th, 1997)
+ by Nikos Drakos (nikos@cbl.leeds.ac.uk), CBLU, University of Leeds
+* revised and updated by:  Marcus Hennecke, Ross Moore, Herb Swan
+* with significant contributions from:
+  Jens Lippman, Marek Rouchal, Martin Wilck and others -->
+<HTML>
+<HEAD>
+<TITLE>A Calculator for Exact Real Number Computation 4th year project Departments of Computer Science and Artificial Intelligence University of Edinburgh</TITLE>
+<META NAME="description" CONTENT="A Calculator for Exact Real Number Computation 4th year project Departments of Computer Science and Artificial Intelligence University of Edinburgh">
+<META NAME="keywords" CONTENT="report">
+<META NAME="resource-type" CONTENT="document">
+<META NAME="distribution" CONTENT="global">
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=iso_8859_1">
+<LINK REL="STYLESHEET" HREF="report.css">
+<LINK REL="next" HREF="node1.html">
+</HEAD>
+<BODY >
+<!--Navigation Panel-->
+<A NAME="tex2html10"
+ HREF="node1.html">
+<IMG WIDTH="37" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="next" SRC="next_motif.gif"></A> 
+<IMG WIDTH="26" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="up" SRC="up_motif_gr.gif"> 
+<IMG WIDTH="63" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="previous" SRC="previous_motif_gr.gif"> 
+<A NAME="tex2html9"
+ HREF="node2.html">
+<IMG WIDTH="65" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="contents" SRC="contents_motif.gif"></A>  
+<BR>
+<B> Next:</B> <A NAME="tex2html11"
+ HREF="node1.html">Acknowledgements</A>
+<BR>
+<BR>
+<!--End of Navigation Panel-->
+<P><H1 ALIGN=CENTER>A Calculator for Exact Real Number Computation <BR>
+4th year project <BR>
+Departments of Computer Science and Artificial Intelligence <BR>
+University of Edinburgh</H1>
+<P ALIGN=CENTER><STRONG>Dave Plume
+<BR>
+<EM>Supervisors: Mart&#237;n Escard&#243; and Alex Simpson</EM></STRONG></P>
+<BR><P ALIGN=CENTER><I>Date:</I> 1998</P>
+<P ALIGN=LEFT></P>
+<P><H3 CLASS="ABSTRACT">Abstract:</H3>
+<P CLASS="ABSTRACT">The most usual approach to real arithmetic on
+    computers consists of using floating point approximations.
+    Unfortunately, floating point arithmetic can sometimes produce
+    wildly erroneous results. One alternative approach is to use <EM>
+      exact real arithmetic</EM>. Exact real arithmetic allows exact real
+    number computation to be performed without the roundoff errors
+    characteristic of other methods. We observe that conventional
+    representations such as binary are inadequate for this purpose,
+    and consider two alternative representations of reals. Algorithms
+    for the basic arithmetic operations, transcendental functions,
+    integration, and function minimum and maximum are implemented.
+    These include new algorithms for direct multiplication of signed
+    binary streams, division, and the evaluation of limits of Cauchy
+    sequences. A theoretical and experimental analysis of some of
+    these algorithms is performed which shows that algorithms for the
+    same operation using different representations behave differently.
+    It also shows that even relatively simple expressions can require
+    many digits of input to compute even a single digit of output and
+    that one of the representations can exhibit a form of expression
+    swell which destroys performance. The experimental work shows the
+    performance of the implemented system to be poor on complex
+    expressions, and we discuss why this might be so. </P>
+<P>
+<P>
+<BR><HR>
+<!--Table of Child-Links-->
+<A NAME="CHILD_LINKS">&#160;</A>
+<UL>
+<LI><A NAME="tex2html12"
+ HREF="node1.html#SECTION00010000000000000000">
+Acknowledgements</A>
+<LI><A NAME="tex2html13"
+ HREF="node2.html#SECTION00100000000000000000">
+Contents</A>
+<LI><A NAME="tex2html14"
+ HREF="node3.html#SECTION00200000000000000000">
+Introduction</A>
+<UL>
+<LI><A NAME="tex2html15"
+ HREF="node4.html#SECTION00210000000000000000">
+Work Performed</A>
+<LI><A NAME="tex2html16"
+ HREF="node5.html#SECTION00220000000000000000">
+Related Work</A>
+<LI><A NAME="tex2html17"
+ HREF="node6.html#SECTION00230000000000000000">
+Organisation</A>
+</UL>
+<LI><A NAME="tex2html18"
+ HREF="node7.html#SECTION00300000000000000000">
+Real Number Computation</A>
+<UL>
+<LI><A NAME="tex2html19"
+ HREF="node8.html#SECTION00310000000000000000">
+Approaches to Real Arithmetic</A>
+<UL>
+<LI><A NAME="tex2html20"
+ HREF="node9.html#SECTION00311000000000000000">
+Floating Point Arithmetic</A>
+<LI><A NAME="tex2html21"
+ HREF="node10.html#SECTION00312000000000000000">
+Floating Point arithmetic with error analysis</A>
+<LI><A NAME="tex2html22"
+ HREF="node11.html#SECTION00313000000000000000">
+Interval Arithmetic</A>
+<LI><A NAME="tex2html23"
+ HREF="node12.html#SECTION00314000000000000000">
+Stochastic Rounding</A>
+<LI><A NAME="tex2html24"
+ HREF="node13.html#SECTION00315000000000000000">
+Symbolic Approaches</A>
+<LI><A NAME="tex2html25"
+ HREF="node14.html#SECTION00316000000000000000">
+Exact Real Arithmetic</A>
+</UL>
+<LI><A NAME="tex2html26"
+ HREF="node15.html#SECTION00320000000000000000">
+Approaches to Exact Real Arithmetic</A>
+<UL>
+<LI><A NAME="tex2html27"
+ HREF="node16.html#SECTION00321000000000000000">
+Representation Problems</A>
+<LI><A NAME="tex2html28"
+ HREF="node17.html#SECTION00322000000000000000">
+Two Suitable Digit Representations</A>
+<LI><A NAME="tex2html29"
+ HREF="node18.html#SECTION00323000000000000000">
+Other Possible Representations</A>
+<UL>
+<LI><A NAME="tex2html30"
+ HREF="node19.html#SECTION00323100000000000000">
+Continued Fractions</A>
+<LI><A NAME="tex2html31"
+ HREF="node20.html#SECTION00323200000000000000">
+B-adic Number Stream</A>
+<LI><A NAME="tex2html32"
+ HREF="node21.html#SECTION00323300000000000000">
+Linear Fractional Transformations</A>
+</UL>
+</UL>
+</UL>
+<LI><A NAME="tex2html33"
+ HREF="node22.html#SECTION00400000000000000000">
+Representations</A>
+<UL>
+<LI><A NAME="tex2html34"
+ HREF="node23.html#SECTION00410000000000000000">
+Terminology and Notation</A>
+<LI><A NAME="tex2html35"
+ HREF="node24.html#SECTION00420000000000000000">
+Streams</A>
+<LI><A NAME="tex2html36"
+ HREF="node25.html#SECTION00430000000000000000">
+Representing Reals as Streams</A>
+<UL>
+<LI><A NAME="tex2html37"
+ HREF="node26.html#SECTION00431000000000000000">
+Signed Binary Digit Streams</A>
+<LI><A NAME="tex2html38"
+ HREF="node27.html#SECTION00432000000000000000">
+Dyadic Rational Streams</A>
+</UL>
+<LI><A NAME="tex2html39"
+ HREF="node28.html#SECTION00440000000000000000">
+(Mantissa, Exponent) Representation</A>
+<LI><A NAME="tex2html40"
+ HREF="node29.html#SECTION00450000000000000000">
+Nested interval Representation</A>
+<LI><A NAME="tex2html41"
+ HREF="node30.html#SECTION00460000000000000000">
+Algorithm Design</A>
+<UL>
+<LI><A NAME="tex2html42"
+ HREF="node31.html#SECTION00461000000000000000">
+Considerations</A>
+<LI><A NAME="tex2html43"
+ HREF="node32.html#SECTION00462000000000000000">
+Useful Properties</A>
+<UL>
+<LI><A NAME="tex2html44"
+ HREF="node33.html#SECTION00462100000000000000">
+Range Analysis</A>
+<LI><A NAME="tex2html45"
+ HREF="node34.html#SECTION00462200000000000000">
+Relationship between `cons' and average</A>
+<LI><A NAME="tex2html46"
+ HREF="node35.html#SECTION00462300000000000000">
+Properties of average</A>
+</UL>
+</UL>
+<LI><A NAME="tex2html47"
+ HREF="node36.html#SECTION00470000000000000000">
+Conversion between Stream Representations</A>
+<LI><A NAME="tex2html48"
+ HREF="node37.html#SECTION00480000000000000000">
+Conversion to and from decimal</A>
+<UL>
+<LI><A NAME="tex2html49"
+ HREF="node38.html#SECTION00481000000000000000">
+Decimal to Signed Binary</A>
+<UL>
+<LI><A NAME="tex2html50"
+ HREF="node39.html#SECTION00481100000000000000">
+Decimal integers to signed binary</A>
+<LI><A NAME="tex2html51"
+ HREF="node40.html#SECTION00481200000000000000">
+Decimal fractions to signed binary</A>
+</UL>
+<LI><A NAME="tex2html52"
+ HREF="node41.html#SECTION00482000000000000000">
+Signed Binary to Decimal</A>
+<UL>
+<LI><A NAME="tex2html53"
+ HREF="node42.html#SECTION00482100000000000000">
+Signed binary integers to decimal</A>
+<LI><A NAME="tex2html54"
+ HREF="node43.html#SECTION00482200000000000000">
+Signed binary fractions to signed decimal fractions</A>
+<LI><A NAME="tex2html55"
+ HREF="node44.html#SECTION00482300000000000000">
+Signed decimal fractions to decimal</A>
+</UL>
+</UL>
+</UL>
+<LI><A NAME="tex2html56"
+ HREF="node45.html#SECTION00500000000000000000">
+Basic Operations</A>
+<UL>
+<LI><A NAME="tex2html57"
+ HREF="node46.html#SECTION00510000000000000000">
+Auxiliary operations</A>
+<UL>
+<LI><A NAME="tex2html58"
+ HREF="node47.html#SECTION00511000000000000000">
+Negation</A>
+<LI><A NAME="tex2html59"
+ HREF="node48.html#SECTION00512000000000000000">
+Multiplication of a stream by a digit</A>
+<LI><A NAME="tex2html60"
+ HREF="node49.html#SECTION00513000000000000000">
+Addition or subtraction of one from stream</A>
+<LI><A NAME="tex2html61"
+ HREF="node50.html#SECTION00514000000000000000">
+The `p' function</A>
+</UL>
+<LI><A NAME="tex2html62"
+ HREF="node51.html#SECTION00520000000000000000">
+Dyadic Stream Operations</A>
+<UL>
+<LI><A NAME="tex2html63"
+ HREF="node52.html#SECTION00521000000000000000">
+Average</A>
+<LI><A NAME="tex2html64"
+ HREF="node53.html#SECTION00522000000000000000">
+Multiplication</A>
+</UL>
+<LI><A NAME="tex2html65"
+ HREF="node54.html#SECTION00530000000000000000">
+Signed Binary Stream Operations</A>
+<UL>
+<LI><A NAME="tex2html66"
+ HREF="node55.html#SECTION00531000000000000000">
+Average</A>
+<LI><A NAME="tex2html67"
+ HREF="node56.html#SECTION00532000000000000000">
+Multiplication</A>
+<LI><A NAME="tex2html68"
+ HREF="node57.html#SECTION00533000000000000000">
+Division by an integer</A>
+</UL>
+<LI><A NAME="tex2html69"
+ HREF="node58.html#SECTION00540000000000000000">
+(Mantissa, Exponent) Operations</A>
+<UL>
+<LI><A NAME="tex2html70"
+ HREF="node59.html#SECTION00541000000000000000">
+Addition and Subtraction</A>
+<LI><A NAME="tex2html71"
+ HREF="node60.html#SECTION00542000000000000000">
+Multiplication</A>
+<LI><A NAME="tex2html72"
+ HREF="node61.html#SECTION00543000000000000000">
+`Normalisation'</A>
+<UL>
+<LI><A NAME="tex2html73"
+ HREF="node62.html#SECTION00543100000000000000">
+Signed binary (mantissa, exponent) `normalisation'</A>
+<LI><A NAME="tex2html74"
+ HREF="node63.html#SECTION00543200000000000000">
+Dyadic (mantissa, exponent) `normalisation'</A>
+</UL>
+<LI><A NAME="tex2html75"
+ HREF="node64.html#SECTION00544000000000000000">
+Division</A>
+<UL>
+<LI><A NAME="tex2html76"
+ HREF="node65.html#SECTION00544010000000000000">
+Modification of mantissas</A>
+<LI><A NAME="tex2html77"
+ HREF="node66.html#SECTION00544020000000000000">
+Output zero case:</A>
+<LI><A NAME="tex2html78"
+ HREF="node67.html#SECTION00544030000000000000">
+Output positive digits</A>
+<LI><A NAME="tex2html79"
+ HREF="node68.html#SECTION00544040000000000000">
+Output negative digits</A>
+<LI><A NAME="tex2html80"
+ HREF="node69.html#SECTION00544100000000000000">
+Extending division to the whole real line</A>
+</UL>
+</UL>
+</UL>
+<LI><A NAME="tex2html81"
+ HREF="node70.html#SECTION00600000000000000000">
+High-Level Operations</A>
+<UL>
+<LI><A NAME="tex2html82"
+ HREF="node71.html#SECTION00610000000000000000">
+Computing Limits</A>
+<LI><A NAME="tex2html83"
+ HREF="node72.html#SECTION00620000000000000000">
+Limits within [-1,1]</A>
+<UL>
+<LI><A NAME="tex2html84"
+ HREF="node73.html#SECTION00620100000000000000">
+Determining output digits</A>
+<LI><A NAME="tex2html85"
+ HREF="node74.html#SECTION00620200000000000000">
+Input digits required</A>
+<LI><A NAME="tex2html86"
+ HREF="node75.html#SECTION00620300000000000000">
+A recursive definition</A>
+<LI><A NAME="tex2html87"
+ HREF="node76.html#SECTION00620400000000000000">
+Recursive calls to compute the limits</A>
+</UL>
+<LI><A NAME="tex2html88"
+ HREF="node77.html#SECTION00630000000000000000">
+Limits within <IMG WIDTH="74" HEIGHT="33" ALIGN="MIDDLE" BORDER="0"
+ SRC="img187.gif"
+ ALT="$[-\infty, \infty]$"></A>
+<LI><A NAME="tex2html89"
+ HREF="node78.html#SECTION00640000000000000000">
+Transcendental Functions</A>
+<UL>
+<LI><A NAME="tex2html90"
+ HREF="node79.html#SECTION00641000000000000000">
+Trigonometric Functions</A>
+<UL>
+<LI><A NAME="tex2html91"
+ HREF="node80.html#SECTION00641100000000000000">
+Sine</A>
+<LI><A NAME="tex2html92"
+ HREF="node81.html#SECTION00641200000000000000">
+Cosine</A>
+<LI><A NAME="tex2html93"
+ HREF="node82.html#SECTION00641300000000000000">
+Arctan</A>
+<LI><A NAME="tex2html94"
+ HREF="node83.html#SECTION00641400000000000000">
+Pi</A>
+</UL>
+<LI><A NAME="tex2html95"
+ HREF="node84.html#SECTION00642000000000000000">
+Logarithmic Functions</A>
+<UL>
+<LI><A NAME="tex2html96"
+ HREF="node85.html#SECTION00642100000000000000">
+Exponential Function</A>
+<LI><A NAME="tex2html97"
+ HREF="node86.html#SECTION00642200000000000000">
+Natural Logarithm Function</A>
+<LI><A NAME="tex2html98"
+ HREF="node87.html#SECTION00642300000000000000">
+Exponentiation: <I>x</I><SUP><I>y</I></SUP></A>
+</UL>
+</UL>
+<LI><A NAME="tex2html99"
+ HREF="node88.html#SECTION00650000000000000000">
+Functional Operations</A>
+</UL>
+<LI><A NAME="tex2html100"
+ HREF="node89.html#SECTION00700000000000000000">
+Design and Implementation</A>
+<UL>
+<LI><A NAME="tex2html101"
+ HREF="node90.html#SECTION00710000000000000000">
+Design</A>
+<UL>
+<LI><A NAME="tex2html102"
+ HREF="node91.html#SECTION00711000000000000000">
+Modular Structure</A>
+<LI><A NAME="tex2html103"
+ HREF="node92.html#SECTION00712000000000000000">
+User Interface</A>
+</UL>
+<LI><A NAME="tex2html104"
+ HREF="node93.html#SECTION00720000000000000000">
+Implementation</A>
+<UL>
+<LI><A NAME="tex2html105"
+ HREF="node94.html#SECTION00721000000000000000">
+Language</A>
+<UL>
+<LI><A NAME="tex2html106"
+ HREF="node95.html#SECTION00721010000000000000">
+Haskell: </A>
+</UL>
+<LI><A NAME="tex2html107"
+ HREF="node96.html#SECTION00722000000000000000">
+User Interface</A>
+<LI><A NAME="tex2html108"
+ HREF="node97.html#SECTION00723000000000000000">
+Implementation Tools</A>
+<LI><A NAME="tex2html109"
+ HREF="node98.html#SECTION00724000000000000000">
+Implementation History</A>
+<LI><A NAME="tex2html110"
+ HREF="node99.html#SECTION00725000000000000000">
+General Issues</A>
+<UL>
+<LI><A NAME="tex2html111"
+ HREF="node100.html#SECTION00725010000000000000">
+Use of fixed and arbitrary length integers</A>
+<LI><A NAME="tex2html112"
+ HREF="node101.html#SECTION00725020000000000000">
+Dyadic digit representation</A>
+</UL>
+</UL>
+<LI><A NAME="tex2html113"
+ HREF="node102.html#SECTION00730000000000000000">
+Coding an algorithm in Haskell</A>
+<UL>
+<LI><A NAME="tex2html114"
+ HREF="node103.html#SECTION00731000000000000000">
+Signed Binary Division by an Integer</A>
+<LI><A NAME="tex2html115"
+ HREF="node104.html#SECTION00732000000000000000">
+Signed Binary Average</A>
+</UL>
+</UL>
+<LI><A NAME="tex2html116"
+ HREF="node105.html#SECTION00800000000000000000">
+Analysis</A>
+<UL>
+<LI><A NAME="tex2html117"
+ HREF="node106.html#SECTION00810000000000000000">
+Theoretical Analysis</A>
+<UL>
+<LI><A NAME="tex2html118"
+ HREF="node107.html#SECTION00811000000000000000">
+Conversions between Representations</A>
+<LI><A NAME="tex2html119"
+ HREF="node108.html#SECTION00812000000000000000">
+Average</A>
+<UL>
+<LI><A NAME="tex2html120"
+ HREF="node109.html#SECTION00812100000000000000">
+Dyadic Stream Average</A>
+<LI><A NAME="tex2html121"
+ HREF="node110.html#SECTION00812200000000000000">
+Signed Binary Stream Average</A>
+</UL>
+<LI><A NAME="tex2html122"
+ HREF="node111.html#SECTION00813000000000000000">
+Multiplication</A>
+<UL>
+<LI><A NAME="tex2html123"
+ HREF="node112.html#SECTION00813100000000000000">
+Dyadic Stream Multiplication</A>
+<LI><A NAME="tex2html124"
+ HREF="node113.html#SECTION00813200000000000000">
+Signed Binary Stream Multiplication</A>
+</UL>
+<LI><A NAME="tex2html125"
+ HREF="node114.html#SECTION00814000000000000000">
+Division</A>
+<LI><A NAME="tex2html126"
+ HREF="node115.html#SECTION00815000000000000000">
+Logistic Map</A>
+<UL>
+<LI><A NAME="tex2html127"
+ HREF="node116.html#SECTION00815100000000000000">
+Dyadic Arithmetic</A>
+<LI><A NAME="tex2html128"
+ HREF="node117.html#SECTION00815200000000000000">
+Signed Binary Arithmetic</A>
+</UL>
+<LI><A NAME="tex2html129"
+ HREF="node118.html#SECTION00816000000000000000">
+Sequences of operations</A>
+<LI><A NAME="tex2html130"
+ HREF="node119.html#SECTION00817000000000000000">
+Summary of Theoretical Analysis</A>
+</UL>
+<LI><A NAME="tex2html131"
+ HREF="node120.html#SECTION00820000000000000000">
+Experimental Analysis</A>
+<UL>
+<LI><A NAME="tex2html132"
+ HREF="node121.html#SECTION00821000000000000000">
+Strategies</A>
+<UL>
+<LI><A NAME="tex2html133"
+ HREF="node122.html#SECTION00821100000000000000">
+Lookahead</A>
+<LI><A NAME="tex2html134"
+ HREF="node123.html#SECTION00821200000000000000">
+Profiling</A>
+<LI><A NAME="tex2html135"
+ HREF="node124.html#SECTION00821300000000000000">
+Timing</A>
+</UL>
+<LI><A NAME="tex2html136"
+ HREF="node125.html#SECTION00822000000000000000">
+Lookahead Results</A>
+<UL>
+<LI><A NAME="tex2html137"
+ HREF="node126.html#SECTION00822100000000000000">
+Signed Binary Multiplication</A>
+<LI><A NAME="tex2html138"
+ HREF="node127.html#SECTION00822200000000000000">
+Division</A>
+</UL>
+<LI><A NAME="tex2html139"
+ HREF="node128.html#SECTION00823000000000000000">
+Dyadic digit swell</A>
+<LI><A NAME="tex2html140"
+ HREF="node129.html#SECTION00824000000000000000">
+Profiling Results</A>
+<LI><A NAME="tex2html141"
+ HREF="node130.html#SECTION00825000000000000000">
+Timing Results</A>
+<LI><A NAME="tex2html142"
+ HREF="node131.html#SECTION00826000000000000000">
+Summary of Experimental Analysis</A>
+</UL>
+</UL>
+<LI><A NAME="tex2html143"
+ HREF="node132.html#SECTION00900000000000000000">
+Conclusion</A>
+<UL>
+<LI><A NAME="tex2html144"
+ HREF="node133.html#SECTION00910000000000000000">
+Summary of Analysis</A>
+<LI><A NAME="tex2html145"
+ HREF="node134.html#SECTION00920000000000000000">
+Evaluation of Implementation</A>
+<LI><A NAME="tex2html146"
+ HREF="node135.html#SECTION00930000000000000000">
+Possible Extensions and Future Work</A>
+</UL>
+<LI><A NAME="tex2html147"
+ HREF="node136.html#SECTION001000000000000000000">
+Dyadic Digit Operations</A>
+<UL>
+<LI><A NAME="tex2html148"
+ HREF="node137.html#SECTION001010000000000000000">
+Lowest Terms</A>
+<LI><A NAME="tex2html149"
+ HREF="node138.html#SECTION001020000000000000000">
+Average</A>
+<LI><A NAME="tex2html150"
+ HREF="node139.html#SECTION001030000000000000000">
+Multiplication</A>
+<LI><A NAME="tex2html151"
+ HREF="node140.html#SECTION001040000000000000000">
+Shift operators</A>
+<LI><A NAME="tex2html152"
+ HREF="node141.html#SECTION001050000000000000000">
+Relational Tests</A>
+</UL>
+<LI><A NAME="tex2html153"
+ HREF="node142.html#SECTION001100000000000000000">
+Algorithms</A>
+<UL>
+<LI><A NAME="tex2html154"
+ HREF="node143.html#SECTION001110000000000000000">
+Division</A>
+<LI><A NAME="tex2html155"
+ HREF="node144.html#SECTION001120000000000000000">
+Limits</A>
+</UL>
+<LI><A NAME="tex2html156"
+ HREF="node145.html#SECTION001200000000000000000">
+Expression Language</A>
+<LI><A NAME="tex2html157"
+ HREF="node146.html#SECTION001300000000000000000">
+References</A>
+<LI><A NAME="tex2html158"
+ HREF="node147.html#SECTION001400000000000000000">
+About this document ... </A>
+</UL>
+<!--End of Table of Child-Links-->
+<HR>
+<!--Navigation Panel-->
+<A NAME="tex2html10"
+ HREF="node1.html">
+<IMG WIDTH="37" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="next" SRC="next_motif.gif"></A> 
+<IMG WIDTH="26" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="up" SRC="up_motif_gr.gif"> 
+<IMG WIDTH="63" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="previous" SRC="previous_motif_gr.gif"> 
+<A NAME="tex2html9"
+ HREF="node2.html">
+<IMG WIDTH="65" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="contents" SRC="contents_motif.gif"></A>  
+<BR>
+<B> Next:</B> <A NAME="tex2html11"
+ HREF="node1.html">Acknowledgements</A>
+<!--End of Navigation Panel-->
+<ADDRESS>
+<I>Martin Escardo</I>
+<BR><I>5/11/2000</I>
+</ADDRESS>
+</BODY>
+</HTML>

@@ -1,0 +1,112 @@
+{
+  "status": "committed; qualified against the documented baseline",
+  "goal_status": "active",
+  "previous_commit": "047aa3540c27e0ba1ef8f020de8154a6f92ed5ac",
+  "commit": "daffa15592b64f693c778b01222c04bc2c9c0981",
+  "targets": 49,
+  "passed": 2236,
+  "passed_by_repo": {
+    "hypercurve": 2004,
+    "hyperbrep": 232
+  },
+  "known_failed": [
+    "approximate_512_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions",
+    "non_ph_bezier_pair_projective_fillet_retains_algebraic_extensions",
+    "nonconvex_algebraic_chord_expansion_is_exact_and_local_collapse_is_explicit",
+    "strict_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions",
+    "unified_mixed_line_arc_erosion_splits_after_a_curved_neck_collapse"
+  ],
+  "new_failures": [],
+  "ignored": 9,
+  "expensive_previously_unqualified_exclusions": 8,
+  "timeouts": 0,
+  "builds_and_checks": {
+    "-check": 0,
+    "-test-build": 0,
+    "-hyperbrep-check": 0,
+    "-hyperbrep-test-build": 0
+  },
+  "formatting_and_whitespace": "passed on final frozen qualification sources",
+  "formatted_files": {
+    "hypercurve": [
+      "src/bezier_offset.rs",
+      "src/bezier_region.rs",
+      "src/curve_intersection.rs",
+      "src/curve_region_boolean.rs",
+      "src/curve_support_intersection.rs",
+      "src/rational_bezier_general.rs"
+    ],
+    "hyperbrep": []
+  },
+  "additional_caller_checks": [
+    {
+      "target": "fuzz",
+      "command": [
+        "cargo",
+        "check",
+        "--manifest-path",
+        "fuzz/Cargo.toml",
+        "--all-targets",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 11.931402211994282,
+      "log": "finite-rational-pairs-fuzz-check.log"
+    },
+    {
+      "target": "ui",
+      "command": [
+        "cargo",
+        "check",
+        "--manifest-path",
+        "examples/hypercurve_ui/Cargo.toml",
+        "--all-targets",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 12.733237872002064,
+      "log": "finite-rational-pairs-ui-check.log"
+    },
+    {
+      "target": "hyperbrep-fuzz",
+      "command": [
+        "cargo",
+        "check",
+        "--manifest-path",
+        "fuzz/Cargo.toml",
+        "--all-targets",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 15.13762184100051,
+      "log": "finite-rational-pairs-hyperbrep-fuzz-check.log"
+    }
+  ],
+  "source_verification": "finite-rational-pairs-source-verification.json",
+  "focused_regression_checks": "finite-rational-pairs-final-focused.json",
+  "initial_targeted_regression_preserved": "finite-rational-pairs-attempt1-focused.json",
+  "normal_library_sha256": "4f31e2ad099d11b75a71df9f3c58671aa71af68816db9260c69ae286f65e7add",
+  "independent_probes_and_matrices": [
+    "finite-rational-pairs-retained-chord-matrix.json",
+    "finite-rational-pairs-finite-matrix.json",
+    "finite-rational-pairs-cubic-replay.json",
+    "finite-rational-pairs-baseline-recheck.json",
+    "finite-rational-pairs-replay-matrix-run.json",
+    "finite-rational-pairs-analytic-probe.json",
+    "finite-rational-pairs-endpoint-probe.json",
+    "finite-rational-pairs-completed-probe.json",
+    "finite-rational-pairs-probe-final.json",
+    "finite-rational-pairs-circle-matrix.json",
+    "finite-rational-pairs-region-carrier-matrix.json",
+    "finite-rational-pairs-general-trim-matrix.json",
+    "finite-rational-pairs-constant-image-trim-matrix.json"
+  ],
+  "regression_baseline": "native-point-components-qualification.json",
+  "affected_regression_results": "finite-rational-pairs-full-hypercurve-lib.json",
+  "evidence_audit": "finite-rational-pairs-evidence-audit.md",
+  "performance_claim": null,
+  "remaining": "Finite circle/rational, circle/parallel, parallel/rational and parallel/parallel discovery; normalized public region construction; five promotion failures; eight unqualified expensive tests; broader algebraic consolidation, computational measurements, and original architecture goal."
+}

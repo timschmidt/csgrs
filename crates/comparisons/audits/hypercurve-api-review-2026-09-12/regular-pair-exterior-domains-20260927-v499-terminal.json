@@ -1,0 +1,65 @@
+{
+  "diagnostic_only": true,
+  "source_manifest": "regular-pair-exterior-domains-20260927-v499-sources.json",
+  "source_directory": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/source-archives/regular-pair-exterior-domains-20260927-v499",
+  "workspace_guard": "stationary-contact-signs-20260927-v498-sources.json",
+  "fixture_sha256": "a577f1fc600bc7ea6489faa19445a6946a8f7342143a1c228e157293340e4594",
+  "builds": [
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "test",
+        "--lib",
+        "--release",
+        "--all-features",
+        "--locked",
+        "--offline",
+        "--no-run",
+        "--message-format=json"
+      ],
+      "returncode": 0,
+      "log": "regular-pair-exterior-domains-20260927-v499-build.log",
+      "elapsed_seconds": 128.89184114406817,
+      "binary": {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/regular-pair-exterior-domains-20260927-v499-tests",
+        "sha256": "94812340e95b50e210eb459f07d8dc6f76095d9f5343f59b73817d619b9e4074"
+      }
+    }
+  ],
+  "cases": [
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/regular-pair-exterior-domains-20260927-v499-tests",
+        "--exact",
+        "bezier_offset::regular_pair_exterior_domain_probe::exterior_regular_pair_keeps_contacts_outside_ancestral_bounds",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 101,
+      "log": "regular-pair-exterior-domains-20260927-v499-exterior_regular_pair_keeps_contacts_outside_ancestral_bounds.log",
+      "elapsed_seconds": 0.003558316035196185,
+      "name": "bezier_offset::regular_pair_exterior_domain_probe::exterior_regular_pair_keeps_contacts_outside_ancestral_bounds",
+      "passed": false
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/regular-pair-exterior-domains-20260927-v499-tests",
+        "--exact",
+        "bezier_offset::regular_pair_exterior_domain_probe::general_regular_pair_replays_unequal_contact_scale_changes",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "regular-pair-exterior-domains-20260927-v499-general_regular_pair_replays_unequal_contact_scale_changes.log",
+      "elapsed_seconds": 1.0150102069601417,
+      "name": "bezier_offset::regular_pair_exterior_domain_probe::general_regular_pair_replays_unequal_contact_scale_changes",
+      "passed": true
+    }
+  ],
+  "expected_cases": [
+    "bezier_offset::regular_pair_exterior_domain_probe::exterior_regular_pair_keeps_contacts_outside_ancestral_bounds",
+    "bezier_offset::regular_pair_exterior_domain_probe::general_regular_pair_replays_unequal_contact_scale_changes"
+  ],
+  "all_processes_reaped": true,
+  "probe_complete": true
+}

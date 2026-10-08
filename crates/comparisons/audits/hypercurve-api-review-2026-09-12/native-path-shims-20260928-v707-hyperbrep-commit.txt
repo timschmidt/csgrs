@@ -1,0 +1,7 @@
+Use general exact paths for parameter-space region trimming
+
+Construct CurvePath2 directly for clipped face parameter lines, preserving source locations and the existing general clipping kernel. Remove the sole production CurveString2 dependency and its now-removed forwarding call.
+
+Clean the existing Clippy findings exposed by the full downstream check: express tail errors directly, copy typed triangle chunks without per-index reconstruction, and use an array for a fixed test fixture. Geometry and error semantics are unchanged.
+
+Validation: 80 release tests across three pinned binaries, including the full native-path integration inventory, 30 general path/region trim cases and 12 downstream trim, builder, tessellation and homogeneous-control cases. Six format, lint, fuzz and documentation checks pass.

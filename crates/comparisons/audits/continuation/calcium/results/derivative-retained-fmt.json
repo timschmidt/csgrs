@@ -1,0 +1,16 @@
+{
+  "tag": "derivative-retained-fmt",
+  "started": "2026-09-09T15:51:09.125Z",
+  "finished": "2026-09-09T15:51:14.722Z",
+  "elapsedSeconds": 5.594670971,
+  "cwd": "/home/tim/Documents/GitHub/workspace/hypercurve",
+  "command": "cargo",
+  "args": [
+    "fmt",
+    "--all",
+    "--",
+    "--check"
+  ],
+  "code": 0,
+  "signal": null
+}

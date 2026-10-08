@@ -1,0 +1,22 @@
+vector initial Bernstein: 924/924
+map initial Bernstein: 924/924
+declared positive vector multiplier: 804/924
+declared positive map multiplier: 804/924
+vector exact sign variation: 924/924
+map exact sign variation: 924/924
+vector subdivision+extrapolation: 1848/1848
+map subdivision+extrapolation: 1848/1848
+nonzero-radius vector certain variations on included shifts: 2767/2772
+nonzero-radius map certain variations on included shifts: 2767/2772
+cover 0 interior (3,True,True,True,False,True)
+cover 1 interior (4,True,True,True,True,True)
+cover 2 interior (2,True,True,True,True,True)
+cover 3 interior (3,True,True,True,True,True)
+cover 4 interior (1,True,True,True,True,True)
+cover 5 endpoint (1,False,True,True,True,False)
+cover 6 endpoint (1,True,True,True,True,True)
+cover 7 endpoint (2,True,True,True,True,True)
+cover 8 endpoint (1,False,True,True,True,False)
+cover 9 endpoint (1,True,True,True,True,True)
+cover 10 endpoint (1,False,True,True,True,False)
+cover 11 no real roots (0,True,True,True,True,True)

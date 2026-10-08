@@ -1,0 +1,58 @@
+{
+  "status": "implemented, qualified, committed; original goal active",
+  "commit": "43f7d38c14e4e8fbf302ff01dee1f2be439996a2",
+  "preceding_hypercurve_commit": "827b4164f62b633e173873890b6f734f50664015",
+  "shared_hypersolve_commit": "9211d62fe0b2322e60110da19afb95fdbda3704b",
+  "implementation": "Analytic point axis comparisons retain source polynomial and frame evidence. Cheap correlated point comparisons precede a constant-support-coordinate query, with complete point comparison retained as fallback. Axis and circle predicates share the positive-speed radical-sum sign kernel. Polynomial dispatch borrows coefficients and replaces duplicate tangent dispatch. Zero-frame stationary points require no unit tangent; source poles remain excluded.",
+  "regressions": [
+    "P(t)=(t^3,t), t^3=1/2, translated by (pi,e): exact axis equality and +/-2^-600 separations certify in bounded passes, including negative and nonrational homogeneous gauges, without publishing global Cartesian coordinates.",
+    "Positive frame sheet, negative homogeneous weight, normal and tangent displacement signs, conjugate rejection, and exact circle residuals.",
+    "Zero-displacement stationary source points remain valid; nonzero displacement without a frame and common-factor source poles remain unresolved boundary cases."
+  ],
+  "baseline": "analytic-axis-local-replay-baseline.log: new coordinate equality test returns Uncertain(Ordering) before implementation.",
+  "tests": {
+    "hypercurve": {
+      "passed": 1444,
+      "ignored": 6,
+      "targets": 13,
+      "log": "analytic-axis-local-replay-hypercurve-tests.log"
+    },
+    "hyperbrep": {
+      "passed": 232,
+      "ignored": 0,
+      "targets": 1,
+      "log": "analytic-axis-local-replay-hyperbrep-tests.log"
+    },
+    "hypersolve": {
+      "passed": 487,
+      "ignored": 0,
+      "targets": 1,
+      "log": "local-polynomial-remainder-hypersolve-lib.log"
+    }
+  },
+  "unique_total": 2163,
+  "established_expensive_hypercurve_exclusions": 4,
+  "checks": [
+    "analytic-axis-local-replay-hypercurve-check.log",
+    "analytic-axis-local-replay-hyperbrep-check.log",
+    "unchanged Hypersolve head qualified in local-polynomial-remainder-hypersolve-check.log",
+    "changed-file rustfmt --check and git diff --check"
+  ],
+  "source_sha256": {
+    "hypercurve/src/bezier_offset.rs": "52c54a6ced8c726ea7d2377d398b58a3dd7163d08921980508ce74ee1b589cbb"
+  },
+  "diagnostics": {
+    "binary": "stationary-ph-offset-inspect-local-axis",
+    "binary_sha256": "f03902313e351ba9d4c42d5dc24c3edbf2921a31bf63dc31788b65815d033f6d",
+    "log": "stationary-ph-offset-inspect-local-axis.log",
+    "timeout_seconds": 60,
+    "exit_code": 124,
+    "first_offset": "Certified, degree-five source retained, about 3.93 seconds",
+    "second_offset": "No result before total timeout; no closure repair or application speedup claimed.",
+    "stack": "stationary-ph-local-axis-stack.log",
+    "finding": "The final-code sample still reaches axis_oriented_side -> algebraic_chord_point_coordinate_order_by_refinement -> represented_coordinates -> compute_recursive_projective_point -> local polynomial root global promotion. The new scalar route is either unavailable or unresolved at this comparison; the stack alone does not distinguish those reasons."
+  },
+  "clean_repository_count": 30,
+  "workspace_state": "analytic-axis-local-replay-workspace-after-commit.json",
+  "goal_status": "active"
+}

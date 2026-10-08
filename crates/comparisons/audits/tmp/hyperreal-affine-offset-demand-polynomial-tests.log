@@ -1,0 +1,8 @@
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.05s
+     Running unittests src/lib.rs (target/debug/deps/hyperreal-99435bbe0ce6f1f3)
+
+running 1 test
+test real::arithmetic::tests::polynomial_evaluation_retains_reconstructed_quadratic_midpoints ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 723 filtered out; finished in 0.03s
+

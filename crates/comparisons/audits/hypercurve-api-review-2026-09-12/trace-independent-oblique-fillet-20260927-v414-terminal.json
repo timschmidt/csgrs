@@ -1,0 +1,55 @@
+{
+  "source_manifest": "trace-independent-oblique-fillet-20260927-v414-sources.json",
+  "source_directory": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/source-archives/trace-independent-oblique-fillet-20260927-v414",
+  "cases": [
+    {
+      "binary": "trace-independent-oblique-fillet-20260927-v414-hypercurve",
+      "name": "bezier_offset::conversion_tests::independent_oblique_chords_support_constrained_fillet_families",
+      "returncode": 101,
+      "log": "trace-independent-oblique-fillet-20260927-v414-case-000.log",
+      "elapsed_seconds": 176.89731833478436
+    }
+  ],
+  "builds": [
+    {
+      "crate": "hypercurve",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "test",
+        "--lib",
+        "--release",
+        "--all-features",
+        "--no-run",
+        "--message-format=json",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "log": "trace-independent-oblique-fillet-20260927-v414-hypercurve-build.log",
+      "elapsed_seconds": 131.85129026905634,
+      "binary": {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/trace-independent-oblique-fillet-20260927-v414-hypercurve",
+        "sha256": "85907a0ee0c95c7367d67696ca5a37960b3eaece73cb1d942ee399c663356fe7"
+      }
+    }
+  ],
+  "trial": {
+    "hypercurve/src/error.rs": "5be51eaf83039d74ea77cba5ffa5cd9af04dcb09dc7b54b9a42f62c2d32f76a3",
+    "hypercurve/src/curve_fillet.rs": "2561a750660f504b74b155539654d854cef4de2b67899ae11671ebe3234720e0",
+    "hypercurve/src/bezier_offset.rs": "b6391bea57b2447f1eeab91b5d70afa6e5affffc656d595d4f359e1eb83d942f"
+  },
+  "all_processes_reaped": true,
+  "checks": [],
+  "qualification_scope": "Independent selected endpoint fields must preserve continuous fillet constraint behavior",
+  "expected_cases": {
+    "hypercurve": [
+      "bezier_offset::conversion_tests::independent_oblique_chords_support_constrained_fillet_families"
+    ]
+  },
+  "known_unresolved": [
+    "strict_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions",
+    "approximate_512_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions"
+  ],
+  "failure": "case failure or missing exact test",
+  "qualification_complete": false
+}

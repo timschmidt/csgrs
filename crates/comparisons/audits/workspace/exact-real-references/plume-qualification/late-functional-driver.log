@@ -1,0 +1,17 @@
+1/16	functional quadratic-min 0	prefix
+2/16	functional quadratic-min 4	prefix
+3/16	functional quadratic-min 6	prefix
+4/16	functional quadratic-min 8	prefix
+5/16	functional quadratic-max 0	prefix
+6/16	functional quadratic-max 4	prefix
+7/16	functional quadratic-max 6	prefix
+8/16	functional quadratic-max 8	ETIMEDOUT
+9/16	functional square-integral 0	prefix
+10/16	functional square-integral 4	ETIMEDOUT
+11/16	functional square-integral 6	ETIMEDOUT
+12/16	functional square-integral 8	ETIMEDOUT
+13/16	functional reciprocal-max 0	prefix
+14/16	functional reciprocal-max 4	prefix
+15/16	functional reciprocal-max 6	prefix
+16/16	functional reciprocal-max 8	prefix
+Requests 16; finite results 12; numerical qualification is separate.

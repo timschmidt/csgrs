@@ -1,0 +1,63 @@
+{
+  "cases": [
+    {
+      "name": "bezier_region::tests::algebraic_native_ray_vertices_use_spatial_endpoint_ownership",
+      "returncode": 0,
+      "passed": true,
+      "limit_seconds": 75,
+      "elapsed_seconds": 0.14099562203045934,
+      "log": "algebraic-query-ray-ownership-20260923-focused1-case-0.log"
+    },
+    {
+      "name": "bezier_region::tests::algebraic_retained_ray_vertices_use_spatial_endpoint_ownership",
+      "returncode": 0,
+      "passed": true,
+      "limit_seconds": 75,
+      "elapsed_seconds": 0.1471913370769471,
+      "log": "algebraic-query-ray-ownership-20260923-focused1-case-1.log"
+    },
+    {
+      "name": "bezier_region::tests::algebraic_ray_retains_selected_endpoint_ownership",
+      "returncode": 0,
+      "passed": true,
+      "limit_seconds": 75,
+      "elapsed_seconds": 0.15034700999967754,
+      "log": "algebraic-query-ray-ownership-20260923-focused1-case-2.log"
+    },
+    {
+      "name": "bezier_region::tests::algebraic_retained_range_ray_winding_handles_crossing_multiplicity",
+      "returncode": 0,
+      "passed": true,
+      "limit_seconds": 75,
+      "elapsed_seconds": 0.14089690800756216,
+      "log": "algebraic-query-ray-ownership-20260923-focused1-case-3.log"
+    },
+    {
+      "name": "bezier_region::tests::algebraic_side_ray_skips_retained_rational_contacts_across_loops",
+      "returncode": 0,
+      "passed": true,
+      "limit_seconds": 75,
+      "elapsed_seconds": 0.13857027899939567,
+      "log": "algebraic-query-ray-ownership-20260923-focused1-case-4.log"
+    },
+    {
+      "name": "bezier_region::tests::algebraic_query_winding_mixes_genuine_parallel_and_native_fragments",
+      "returncode": 0,
+      "passed": true,
+      "limit_seconds": 75,
+      "elapsed_seconds": 0.15162718202918768,
+      "log": "algebraic-query-ray-ownership-20260923-focused1-case-5.log"
+    },
+    {
+      "name": "bezier_region::tests::selected_parallel_ray_vertices_use_spatial_endpoint_ownership",
+      "returncode": 0,
+      "passed": true,
+      "limit_seconds": 75,
+      "elapsed_seconds": 0.13432248996105045,
+      "log": "algebraic-query-ray-ownership-20260923-focused1-case-6.log"
+    }
+  ],
+  "binary_sha256": "0a7192ff7097e491fe81bce8b3c55a88065d1abc782196d38cf673804507d48f",
+  "all_sources_unchanged": true,
+  "all_processes_reaped": true
+}

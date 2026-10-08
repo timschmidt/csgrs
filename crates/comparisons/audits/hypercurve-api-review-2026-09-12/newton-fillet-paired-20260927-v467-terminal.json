@@ -1,0 +1,130 @@
+{
+  "inputs": {
+    "before": {
+      "source_manifest": "normalized-root-replay-20260927-v454-sources.json",
+      "source_directory": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/source-archives/normalized-root-replay-20260927-v454",
+      "binary": {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/normalized-root-replay-20260927-v454-hypercurve",
+        "sha256": "2b1d755001e015a9add0511eb77eea3200df047c92c42c30fc87bce29a78bda5"
+      }
+    },
+    "after": {
+      "source_manifest": "certified-root-newton-20260927-v462-sources.json",
+      "source_directory": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/source-archives/certified-root-newton-20260927-v462",
+      "binary": {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/certified-root-newton-20260927-v462-hypercurve",
+        "sha256": "998c0a72ae9f2f80847c17d75bce008e9ff648e1fccb17a956e37b2103ba4c22"
+      }
+    }
+  },
+  "cases": [
+    {
+      "label": "before",
+      "name": "curve::curve_fillet::tests::joined_path_selects_and_replays_a_continuous_fillet_family",
+      "repetition": 0,
+      "returncode": 0,
+      "elapsed_seconds": 3.01764297997579,
+      "log": "newton-fillet-paired-20260927-v467-case-000.log"
+    },
+    {
+      "label": "after",
+      "name": "curve::curve_fillet::tests::joined_path_selects_and_replays_a_continuous_fillet_family",
+      "repetition": 0,
+      "returncode": 0,
+      "elapsed_seconds": 4.16891192109324,
+      "log": "newton-fillet-paired-20260927-v467-case-001.log"
+    },
+    {
+      "label": "before",
+      "name": "curve::curve_fillet::tests::nonlinear_linear_fillet_components_retain_unique_contacts_and_tangents",
+      "repetition": 0,
+      "returncode": 0,
+      "elapsed_seconds": 3.9686672599054873,
+      "log": "newton-fillet-paired-20260927-v467-case-002.log"
+    },
+    {
+      "label": "after",
+      "name": "curve::curve_fillet::tests::nonlinear_linear_fillet_components_retain_unique_contacts_and_tangents",
+      "repetition": 0,
+      "returncode": 0,
+      "elapsed_seconds": 4.469374086940661,
+      "log": "newton-fillet-paired-20260927-v467-case-003.log"
+    },
+    {
+      "label": "after",
+      "name": "curve::curve_fillet::tests::joined_path_selects_and_replays_a_continuous_fillet_family",
+      "repetition": 1,
+      "returncode": 0,
+      "elapsed_seconds": 4.219050832092762,
+      "log": "newton-fillet-paired-20260927-v467-case-004.log"
+    },
+    {
+      "label": "before",
+      "name": "curve::curve_fillet::tests::joined_path_selects_and_replays_a_continuous_fillet_family",
+      "repetition": 1,
+      "returncode": 0,
+      "elapsed_seconds": 3.0175894829444587,
+      "log": "newton-fillet-paired-20260927-v467-case-005.log"
+    },
+    {
+      "label": "after",
+      "name": "curve::curve_fillet::tests::nonlinear_linear_fillet_components_retain_unique_contacts_and_tangents",
+      "repetition": 1,
+      "returncode": 0,
+      "elapsed_seconds": 4.469486298970878,
+      "log": "newton-fillet-paired-20260927-v467-case-006.log"
+    },
+    {
+      "label": "before",
+      "name": "curve::curve_fillet::tests::nonlinear_linear_fillet_components_retain_unique_contacts_and_tangents",
+      "repetition": 1,
+      "returncode": 0,
+      "elapsed_seconds": 4.019004415953532,
+      "log": "newton-fillet-paired-20260927-v467-case-007.log"
+    },
+    {
+      "label": "before",
+      "name": "curve::curve_fillet::tests::joined_path_selects_and_replays_a_continuous_fillet_family",
+      "repetition": 2,
+      "returncode": 0,
+      "elapsed_seconds": 3.0677357830572873,
+      "log": "newton-fillet-paired-20260927-v467-case-008.log"
+    },
+    {
+      "label": "after",
+      "name": "curve::curve_fillet::tests::joined_path_selects_and_replays_a_continuous_fillet_family",
+      "repetition": 2,
+      "returncode": 0,
+      "elapsed_seconds": 4.219160413835198,
+      "log": "newton-fillet-paired-20260927-v467-case-009.log"
+    },
+    {
+      "label": "before",
+      "name": "curve::curve_fillet::tests::nonlinear_linear_fillet_components_retain_unique_contacts_and_tangents",
+      "repetition": 2,
+      "returncode": 0,
+      "elapsed_seconds": 3.968711616937071,
+      "log": "newton-fillet-paired-20260927-v467-case-010.log"
+    },
+    {
+      "label": "after",
+      "name": "curve::curve_fillet::tests::nonlinear_linear_fillet_components_retain_unique_contacts_and_tangents",
+      "repetition": 2,
+      "returncode": 0,
+      "elapsed_seconds": 4.519663277082145,
+      "log": "newton-fillet-paired-20260927-v467-case-011.log"
+    }
+  ],
+  "all_processes_reaped": true,
+  "complete": true,
+  "medians": {
+    "curve::curve_fillet::tests::joined_path_selects_and_replays_a_continuous_fillet_family": {
+      "before": 3.01764297997579,
+      "after": 4.219050832092762
+    },
+    "curve::curve_fillet::tests::nonlinear_linear_fillet_components_retain_unique_contacts_and_tangents": {
+      "before": 3.968711616937071,
+      "after": 4.469486298970878
+    }
+  }
+}

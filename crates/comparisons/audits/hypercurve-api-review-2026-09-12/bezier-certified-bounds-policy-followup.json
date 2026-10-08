@@ -1,0 +1,25 @@
+{
+  "status": "reproduced on the immutable box migration; next exactness repair",
+  "goal_status": "active",
+  "probe": {
+    "source": "bezier-extrema-bound-policy-probe.rs",
+    "binary": "bezier-extrema-bound-policy-probe",
+    "binary_sha256": "94f1b683b06644d70f077a54a9eaca8d40ed9ffd9d26757260a83c6ccc169c79"
+  },
+  "library_sha256": "0e71ba65c8849dd3971d071508a6d1e3311c5c00c1c69c2168cfc90fac0057d3",
+  "log": "bezier-extrema-bound-policy-probe.log",
+  "exit_code": 0,
+  "fixture": "Q(t)=(t,(t-delta)^2), delta=1-cos(2^-301), represented by exact quadratic Bernstein controls. The supported source includes the exact interior minimum (delta,0).",
+  "finding": "APPROXIMATE_512 certified_bounds returns min_y>0 and rejects the exact minimum. STRICT declines unresolved Ordering instead of inventing an enclosure.",
+  "source_audit": [
+    "bezier_topology::certified_bounds derives samples from policy-dependent monotone spans and skips parameters classified as unit endpoints.",
+    "monotone_spans_from_parameters merges roots through policy-dependent push_unique_sorted. is_unit_endpoint also permits terminal approximate equality.",
+    "RationalQuadraticBezier2::certified_bounds and RationalBezier2::certified_bounds_classified still accept geometry policy for extrema or denominator/common-sign proofs."
+  ],
+  "candidate": "Remove policy from primitive certified bound construction and migrate callers directly. Extrema, root ordering and homogeneous weight certificates used to build enclosures require certified decisions. Preserve optional uncertainty, arbitrary exact Real payloads, finite-denominator obligations, retained-field identity where it is actually owned and increasing refinement.",
+  "constraints": [
+    "Do not globally remove policy from topology monotonicity or root APIs merely because bounds call them; specialize the proof boundary at the owning construction API.",
+    "Preserve existing cheap control hulls and homogeneous subdivision before cold exact reconstruction.",
+    "Add regression coverage for genuine interior extrema near both endpoints, both traversal directions, both contexts and relevant polynomial/rational curve families."
+  ]
+}

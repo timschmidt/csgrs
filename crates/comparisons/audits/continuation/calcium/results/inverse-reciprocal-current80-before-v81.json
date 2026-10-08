@@ -1,0 +1,13 @@
+{
+  "tag": "inverse-reciprocal-current80-before-v81",
+  "started": "2026-09-12T02:08:46.755Z",
+  "finished": "2026-09-12T02:09:02.571Z",
+  "elapsedSeconds": 15.813749672,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "node",
+  "args": [
+    "verify-qqbar-inverse-v80.mjs"
+  ],
+  "code": 0,
+  "signal": null
+}

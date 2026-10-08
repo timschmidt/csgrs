@@ -1,0 +1,27 @@
+\doxysubsubsubsection{Information }
+\hypertarget{group__InformationSubModule}{}\label{group__InformationSubModule}\index{Information@{Information}}
+Tag classes describing the information provided by a type, notably \doxylink{structAriadne_1_1ExactTag}{Exact\+Tag}, as \doxylink{structAriadne_1_1EffectiveTag}{Effective\+Tag}, \doxylink{structAriadne_1_1ValidatedTag}{Validated\+Tag} and \doxylink{structAriadne_1_1ApproximateTag}{Approximate\+Tag}. 
+
+{\itshape For the mathematical theory of computable analysis and kinds of information, see the \doxysectlink{computable_analysis_page}{Foundations of Computable Analysis}{0} Page.}
+
+\label{group__InformationSubModule_information_section}%
+\Hypertarget{group__InformationSubModule_information_section}%
+ In order to indicate the kind of guarantees on the approximation provided by a concrete object, every type in Ariadne has an associated {\itshape \doxylink{namespaceAriadne_a8db63fe3c811b0cb1e1ee876b1b0e340}{Paradigm}} tag, denoted by the tempate parameter {\ttfamily P}. The \doxylink{structAriadne_1_1ExactTag}{Exact\+Tag} indicates that the object represents a value exactly, and with decidable equality. The \doxylink{structAriadne_1_1EffectiveTag}{Effective\+Tag} indicates that an object allows approximations to be computed to arbitrary, known accuracy. The \doxylink{structAriadne_1_1ValidatedTag}{Validated\+Tag} indicates that the objects provides an approximation with guarantees on the error, such as lower-\/ and upper-\/bounds, or an error bound. The \doxylink{structAriadne_1_1ApproximateTag}{Approximate\+Tag} indicates that the object is an approximation with no guarantees on the accuracy.
+
+Whenever the paradigm tag {\ttfamily P} occurs as a template parameter, a type alias is given in which the type is prefixed by the tag name. For example, \doxylink{classAriadne_1_1Number}{Number\texorpdfstring{$<$}{<}Validated\+Tag\texorpdfstring{$>$}{>}} has alias \doxylink{classAriadne_1_1Number_a820ba577a94ed1682c33d544f6430ae1}{Validated\+Number}, and \doxylink{classAriadne_1_1Function}{Function\texorpdfstring{$<$}{<}Effective\+Tag,SIG\texorpdfstring{$>$}{>}} has alias \doxylink{group__FunctionModule_ga1ce9d5a1cfb352fbd1daf2f696740357}{Effective\+Function\texorpdfstring{$<$}{<}SIG\texorpdfstring{$>$}{>}}.
+
+\begin{DoxyRemark}{Remarks}
+In a future version of Ariadne, it may be the case that information tags are replaced by template prefixes, so \doxylink{classAriadne_1_1Number}{Number\texorpdfstring{$<$}{<}Validated\+Tag\texorpdfstring{$>$}{>}} becomes {\ttfamily \doxylink{classAriadne_1_1Concepts_1_1Validated}{Validated$<$\+Number$>$}}.
+\end{DoxyRemark}
+\hypertarget{group__InformationSubModule_builtin_type_tag_section}{}\doxysubsubsubsubsubsection{\texorpdfstring{Builtin type tag}{Builtin type tag}}\label{group__InformationSubModule_builtin_type_tag_section}
+Ariadne also needs to handle built-\/in C++ types, notably {\ttfamily \doxylink{namespaceAriadne_a76a8b016e5ad61faf9062cc387df5016}{Bool}}, {\ttfamily \doxylink{namespaceAriadne_a008e7f6ae8f621fbb1d876061812b9b2}{Int}} and {\ttfamily double} (floating-\/point) classes. Since C++ internally allows unsafe and inexact conversions e.\+g 
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\mbox{\hyperlink{namespaceAriadne_a008e7f6ae8f621fbb1d876061812b9b2}{Int}}\ n=1.5;\ \textcolor{comment}{//\ n\ is\ set\ to\ 1!\ }}
+
+\end{DoxyCode}
+ and 
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\textcolor{keywordtype}{double}\ x=1.3;\ \textcolor{comment}{//\ x\ not\ exactly\ equal\ to\ 1.3!\ }}
+
+\end{DoxyCode}
+ care must be taken when using these objects. The \doxylink{structAriadne_1_1BuiltinTag}{Builtin\+Tag} tag is used to describe these objects. Builtin\+Tag objects should be immediately converted to Ariadne objects in user code. 

@@ -1,0 +1,9 @@
+{
+  "diagnostic_only": true,
+  "checks": [],
+  "binaries": {},
+  "cases": [],
+  "all_processes_reaped": true,
+  "build_returncode": 101,
+  "all_sources_unchanged": true
+}

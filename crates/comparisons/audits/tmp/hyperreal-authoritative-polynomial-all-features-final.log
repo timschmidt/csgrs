@@ -1,0 +1,4140 @@
+   Compiling hyperreal v0.13.1 (/home/tim/Documents/GitHub/workspace/hyperreal)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 4.68s
+     Running unittests src/lib.rs (target/debug/deps/hyperreal-99435bbe0ce6f1f3)
+
+running 708 tests
+test computable::approximation::chudnovsky_pi_tests::high_precision_pi_honors_a_preexisting_abort ... ok
+test computable::format::tests::actual_zero ... ok
+test computable::format::tests::almost ... ok
+test computable::format::tests::disp_big ... ok
+test computable::format::tests::disp_one ... ok
+test computable::format::tests::digits_round_zero_true ... ok
+test computable::format::tests::disp_too_small ... ok
+test computable::format::tests::disp_tiny ... ok
+test computable::format::tests::digits_round_exp_false ... ok
+test computable::format::tests::disp_small ... ok
+test computable::format::tests::disp_almost_one_exp ... ok
+test computable::format::tests::disp_almost_one ... ok
+test computable::format::tests::disp_one_third ... ok
+test computable::format::tests::exp_huge_neg ... ok
+test computable::format::tests::disp_two_thirds ... ok
+test computable::format::tests::exp_smol ... ok
+test computable::format::tests::exp_pi ... ok
+test computable::format::tests::disp_sixty_pi ... ok
+test computable::format::tests::exp_bigger ... ok
+test computable::node::tests::add_ignores_tiny_term_at_target_precision ... ok
+test computable::node::tests::add ... ok
+test computable::format::tests::exp_two_thirds ... ok
+test computable::node::tests::add_with_dominant_term_has_structural_bound ... ok
+test computable::node::tests::add_cancels_a_commuted_exact_pair_without_general_reordering ... ok
+test computable::format::tests::pinch ... ok
+test computable::node::tests::add_cancels_structurally_shared_term_across_nested_sum ... ok
+test computable::node::inverse_trig_presence_survives_bound_cache_updates ... ok
+test computable::node::tests::add_does_not_ignore_tiny_opposite_sign_term ... ok
+test computable::node::tests::approximation_cache_does_not_weaken_exact_structural_bound ... ok
+test computable::node::tests::binary64_filter_constant_enclosures_cover_mpfr_values ... ok
+test computable::node::tests::certified_compare_cascade_matches_separated_full_evaluation_corpus ... ok
+test computable::node::tests::add_folds_rational_terms_across_nested_sum ... ok
+test computable::node::tests::approximation_bounds_preserve_the_unit_error_boundary ... ok
+test computable::node::tests::clones_share_immutable_expression_nodes ... ok
+test computable::node::tests::compare ... ok
+test computable::node::tests::compare_absolute_orders_mixed_exact_leaf_kinds_by_signed_value ... ok
+test computable::node::tests::compare_absolute_orders_zero_and_signed_irrationals_by_value ... ok
+test computable::node::tests::compare_absolute_uses_exact_msd_gap_shortcut ... ok
+test computable::node::tests::algebraic_separation_bounds_certify_archived_radical_identities ... ok
+test computable::node::tests::compare_absolute_uses_exact_shortcuts ... ok
+test computable::node::tests::compare_to_accepts_clone_shared_composite_expression ... ok
+test computable::node::tests::compare_to_orders_structurally_shared_signed_perturbations ... ok
+test computable::node::tests::asinh_uses_series_only_below_the_half_boundary ... ok
+test computable::node::tests::bigger ... ok
+test computable::node::tests::aborted_approximation_is_not_shared_through_cache ... ok
+test computable::node::tests::compare_to_uses_exact_sign_and_rational_shortcuts ... ok
+test computable::node::tests::computable_is_send_and_sync ... ok
+test computable::node::tests::compare_to_retains_exact_perturbation_sign_below_refinement_floor ... ok
+test computable::node::tests::cos_one ... ok
+test computable::node::tests::cloned_expression_can_be_refined_concurrently ... ok
+test computable::node::tests::cos_zero ... ok
+test computable::node::tests::compare_to_uses_exact_msd_gap_shortcut ... ok
+test computable::node::tests::double_negate_collapses_at_construction ... ok
+test computable::node::tests::e_constant_cache_is_shared ... ok
+test computable::node::tests::endpoint_inverse_trig_computable_kernels_approximate_expected_values ... ok
+test computable::node::tests::deep_multiply_chain_by_one_preserves_irrational ... ok
+test computable::node::tests::exact_endpoint_replays_do_not_gain_nonzero_certificates ... ok
+test computable::node::tests::exact_huge_rational_trig_uses_correct_quadrant ... ok
+test computable::node::tests::deep_multiply_chain_of_ones_stays_exact ... ok
+test computable::node::tests::exact_large_rational_trig_uses_correct_quadrant ... ok
+test computable::node::tests::exact_sign_orders_nonzero_quadratic_surds ... ok
+test computable::format::tests::disp_threes ... ok
+test computable::node::tests::erf_known_values ... ok
+test computable::node::tests::exact_transcendental_identities ... ok
+test computable::node::tests::exp_and_ln_round_trip ... ok
+test computable::node::tests::exact_sign_reduces_quadratic_surd_field_identities ... ok
+test computable::node::tests::exp_negative_is_inverse ... ok
+test computable::node::tests::exp_near_prescaled_limit_round_trip ... ok
+test computable::node::tests::exp_one_uses_dedicated_e_constant ... ok
+test computable::node::tests::exp_large_argument_reduces_by_ln2 ... ok
+test computable::node::tests::expm1_preserves_small_argument_and_sign ... ok
+test computable::node::tests::huge_trig_arguments_reduce_correctly ... ok
+test computable::node::tests::integer_exp_uses_binary_power_only_through_the_retained_limit ... ok
+test computable::node::tests::integer_pi_atan_replay_survives_nested_half_pi_cancellation ... ok
+test computable::node::tests::independently_expanded_quadratic_products_cancel_exactly ... ok
+test computable::node::tests::inverse_of_exact_fraction_has_structural_bound ... ok
+test computable::node::tests::inverse_hyperbolic_computable_kernels_approximate_expected_values ... ok
+test computable::node::tests::inverse_atan_linear_sign_includes_the_argument_sign ... ok
+test computable::node::tests::inverse_of_negative_nonzero_value_normalizes_sign ... ok
+test computable::node::tests::inverse_of_scaled_irrational_uses_structural_msd ... ok
+test computable::node::tests::inverse_of_shifted_nonzero_value_collapses_to_shifted_inverse ... ok
+test computable::node::tests::inverse_of_inverse_of_nonzero_value_collapses_at_construction ... ok
+test computable::node::tests::inverse_of_square_of_nonzero_value_collapses_at_construction ... ok
+test computable::node::tests::iter_msd ... ok
+test computable::node::tests::ln ... ok
+test computable::node::tests::inverse_trig_computable_kernels_approximate_expected_values ... ok
+test computable::node::tests::ln_constant_cache_is_shared ... ok
+test computable::node::tests::ln_exact_binary_scaled_rational ... ok
+test computable::node::tests::ln_large_power_of_two ... ok
+test computable::node::tests::layout_sizes ... ok
+test computable::node::tests::ln_smooth_rational_reuses_shared_prime_logs ... ok
+test computable::node::tests::ln_tiny_power_of_two ... ok
+test computable::node::tests::ln_sqrt_pi ... ok
+test computable::node::tests::ln_near_prescaled_limit_round_trip ... ok
+test computable::node::tests::msd ... ok
+test computable::node::tests::msd_refines_ambiguous_unit_approximations_at_binary_boundaries ... ok
+test computable::node::tests::multiply ... ok
+test computable::node::tests::multiply_by_negative_one_collapses_to_negate ... ok
+test computable::node::tests::multiply_by_negative_power_of_two_fraction_collapses_to_shift_and_negate ... ok
+test computable::node::tests::multiply_by_power_of_two_fraction_collapses_to_shift ... ok
+test computable::node::tests::multiply_combines_exact_scales ... ok
+test computable::node::tests::multiply_opposite ... ok
+test computable::node::tests::negate ... ok
+test computable::node::tests::deep_structural_bound_chain ... ok
+test computable::node::tests::nested_offsets_collapse_at_construction ... ok
+test computable::node::tests::normalized_half_pi_complement_retains_its_atan_argument ... ok
+test computable::node::tests::normal_tail_nodes_have_structural_signs ... ok
+test computable::node::tests::opposite_sign_quadratic_surd_is_certified_nonzero ... ok
+test computable::node::tests::normal_density_and_cdf_known_values ... ok
+test computable::node::tests::deep_add_chain_approximates_without_recursive_walk ... ok
+test computable::node::tests::pi_cache_is_shared ... ok
+test computable::node::tests::pi_laurent_arithmetic_canonicalizes_nested_parameter_replay ... ok
+test computable::node::tests::prec ... ok
+test computable::node::tests::pi_cache_reuses_warmed_tau_cache ... ok
+test computable::node::tests::prec_atan_239 ... ok
+test computable::node::tests::owned_rational_trig_helpers_match_generic_paths ... ok
+test computable::node::tests::quadratic_surd_atan_anchors_survive_computable_composition ... ok
+test computable::node::tests::prec_atan_5 ... ok
+test computable::node::tests::normal_quantile_inverts_cdf ... ok
+test computable::node::tests::rational ... ok
+test computable::node::tests::prec_pi ... ok
+test computable::node::tests::scale_up ... ok
+test computable::node::tests::rational_zero_and_one_use_dedicated_nodes ... ok
+test computable::node::tests::rational_msd_exact_for_small_fraction ... ok
+test computable::node::tests::demand_sized_sqrt_seeds_match_directed_mpfr ... ok
+test computable::node::tests::scaled_ln1 ... ok
+test computable::node::tests::scaled_ln1_4 ... ok
+test computable::node::tests::shared_pi_reciprocals_cancel_across_a_product ... ok
+test computable::node::tests::sign_normalization_exposes_scaled_product_cancellation ... ok
+test computable::node::tests::shifted ... ok
+test computable::node::tests::sign_until_respects_precision_floor ... ok
+test computable::node::tests::sign_until_uses_structural_bounds_without_refinement ... ok
+test computable::node::tests::shared_constant_cache_reuses_work_across_threads ... ok
+test computable::node::tests::sin_large_arguments ... ok
+test computable::node::tests::sin_medium_arguments ... ok
+test computable::node::tests::sin_near_half_pi ... ok
+test computable::node::tests::sin_near_pi_multiples ... ok
+test computable::node::tests::sin_negative_arguments ... ok
+test computable::node::tests::sin_matches_shifted_cos_identity ... ok
+test computable::node::tests::sqrt_of_exactly_scaled_square_collapses_at_construction ... ok
+test computable::node::tests::sin_small_arguments ... ok
+test computable::node::tests::sqrt_of_exact_rational_square_is_exact ... ok
+test computable::node::tests::sqrt_square_round_trip ... ok
+test computable::node::tests::sqrt_of_scaled_square_tracks_structural_msd ... ok
+test computable::node::tests::sqrt_of_square_of_negative_value_returns_absolute_value ... ok
+test computable::node::tests::sin_cos_direct_medium_exact_rationals_match_reduced_forms ... ok
+test computable::node::tests::sqrt_squarefree_two_three_reuses_shared_constants ... ok
+test computable::node::tests::square_of_power_of_two_scaled_value_collapses_to_shifted_square ... ok
+test computable::node::tests::square_of_negative_fraction_has_structural_bound ... ok
+test computable::node::tests::square_of_sqrt_of_positive_value_collapses_at_construction ... ok
+test computable::node::tests::square_of_negative_value_collapses_to_square_of_positive_value ... ok
+test computable::node::tests::square_of_scaled_irrational_reuses_exact_scale ... ok
+test computable::node::tests::structural_bound_walk_reuses_shared_dag_subtrees ... ok
+test computable::node::tests::structural_facts_for_constant_rational_offset_certificates ... ok
+test computable::node::tests::structural_facts_for_exact_rationals ... ok
+test computable::node::tests::structural_facts_for_shared_constant ... ok
+test computable::node::tests::tan_small_and_medium_arguments ... ok
+test computable::node::tests::tan_near_half_pi ... ok
+test computable::node::tests::tiny_non_rational_asin_uses_prescaled_series ... ok
+test computable::node::tests::tau_cache_is_shared ... ok
+test computable::node::tests::structural_equality_visits_shared_dag_pairs_once ... ok
+test computable::node::tests::try_compare_to_handles_identical_symbolic_values ... ok
+test computable::node::tests::tiny_non_rational_atanh_uses_prescaled_series ... ok
+test computable::node::tests::tau_cache_reuses_warmed_pi_cache ... ok
+test computable::node::tests::unsigned_magnitude_facts_do_not_determine_signed_order ... ok
+test computable::node::tests::zero_status_uses_structural_facts_without_refinement ... ok
+test computable::node::tests::warmed_zero_sum_product_stays_zero ... ok
+test dispatch_trace::tests::dispatch_snapshot_merges_equal_labels_from_distinct_static_storage ... ok
+test dispatch_trace::tests::correlation_summary_groups_exact_geometry_ladder_events ... ok
+test dispatch_trace::tests::dispatch_trace_records_only_inside_scope ... ok
+test dispatch_trace::tests::known_dyadic_quotient_trace_distinguishes_word_and_wide_results ... ok
+test dispatch_trace::tests::rational_trace_records_reductions_and_gcds ... ok
+test dispatch_trace::tests::unified_trace_snapshot_groups_cross_stack_counts ... ok
+test rational::arithmetic::tests::add_and_subtract_one_helpers_match_generic_arithmetic ... ok
+test rational::arithmetic::tests::affine_plane3_dyadic_stack_matches_expanded_determinants_and_falls_back ... ok
+test computable::node::tests::pi_laurent_normal_form_declines_wide_opaque_expression_dags ... ok
+test dispatch_trace::tests::sign_refinement_trace_records_attempt_and_decision_precision_buckets ... ok
+test rational::arithmetic::tests::average_pair_bounds_final_reduction_by_shared_denominator_content ... ok
+test rational::arithmetic::tests::backend_multiplication_classifier_matches_locked_num_bigint_thresholds ... ok
+test dispatch_trace::tests::concurrent_recording_scopes_keep_independent_snapshots ... ok
+test rational::arithmetic::tests::backend_radix_classifier_matches_locked_num_bigint_threshold ... ok
+test rational::arithmetic::tests::block_wise_barrett_batch_reuses_one_reciprocal ... ok
+test rational::arithmetic::tests::block_wise_barrett_candidate_path_is_traced ... ok
+test rational::arithmetic::tests::borrowed_linear_operations_retain_only_after_reuse_evidence ... ok
+test rational::arithmetic::tests::average_pair_matches_expanded_exact_arithmetic ... ok
+test rational::arithmetic::tests::backend_division_classifier_matches_locked_num_bigint_thresholds ... ok
+test computable::format::tests::disp_ninth ... ok
+test rational::arithmetic::tests::clear_common_denominator_preserves_one_positive_shared_scale ... ok
+test rational::arithmetic::tests::clear_common_denominator_slice_preserves_empty_input ... ok
+test rational::arithmetic::tests::clones_share_storage_without_sharing_arithmetic_results ... ok
+test computable::format::tests::disp_pi ... ok
+test rational::arithmetic::tests::compact_once_box_publishes_one_value_and_drops_every_candidate ... ok
+test rational::arithmetic::tests::checked_exact_integer_scaled_difference_matches_small_integers ... ok
+test rational::arithmetic::tests::compare ... ok
+test rational::arithmetic::tests::decimal ... ok
+test rational::arithmetic::tests::checked_exact_integer_quotient_requires_divisible_integers ... ok
+test rational::arithmetic::tests::direct_shifted_stack_products_match_biguint_boundaries ... ok
+test rational::arithmetic::tests::decimals ... ok
+test rational::arithmetic::tests::direct_shifted_wide_narrow_product_matches_biguint ... ok
+test rational::arithmetic::tests::display ... ok
+test rational::arithmetic::tests::divide_by_zero ... ok
+test rational::arithmetic::tests::divide_conquer_decimal_parser_matches_backend_reference ... ok
+test computable::node::tests::signed_rational_asin_deferred_node_matches_acos_complement ... ok
+test rational::arithmetic::tests::dot_products_handle_equal_non_dyadic_denominators ... ok
+test rational::arithmetic::tests::divide_conquer_radix_input_path_is_traced ... ok
+test rational::arithmetic::tests::binary_word_gcd_matches_euclidean_reference ... ok
+test rational::arithmetic::tests::dyadic_comparison_handles_unequal_denominators_without_cross_products ... ok
+test rational::arithmetic::tests::dot_products_preserve_dyadic_exactness ... ok
+test rational::arithmetic::tests::dyadic_comparison_trace_reports_borrowed_digit_path ... ok
+test rational::arithmetic::tests::dyadic_difference_numerator_query_is_reduced_and_unsigned ... ok
+test rational::arithmetic::tests::dyadic_dot_stack_accumulator_handles_wide_products_alignment_and_borrow ... ok
+test rational::arithmetic::tests::dyadic_dot_stack_accumulator_preserves_arbitrary_precision_fallback ... ok
+test rational::arithmetic::tests::dyadic_denominator_shift_is_retained ... ok
+test rational::arithmetic::tests::dyadic_dot_word_accumulator_handles_wide_denominators_and_falls_back ... ok
+test rational::arithmetic::tests::dyadic_add_sub_stay_reduced ... ok
+test rational::arithmetic::tests::dynamic_signed_product_sum_ordering_matches_materialized_result ... ok
+test rational::arithmetic::tests::dot_products_match_pairwise_arithmetic ... ok
+test rational::arithmetic::tests::equality_cross_multiplies_unequal_denominators ... ok
+test rational::arithmetic::tests::exact_dyadic_f64_view_rejects_unrepresentable_values ... ok
+test rational::arithmetic::tests::exact_fractional_remainder_traces_backend_division ... ok
+test rational::arithmetic::tests::exact_msd_handles_large_shift_boundaries_without_rounding ... ok
+test rational::arithmetic::tests::exact_word_dyadic_view_is_bit_exact_across_the_fast_path ... ok
+test rational::arithmetic::tests::exact_reduction_traces_single_limb_and_small_and_large_knuth_division ... ok
+test rational::arithmetic::tests::f64_enclosure_contains_wide_non_dyadic_rationals ... ok
+test rational::arithmetic::tests::finite_float_imports_reuse_small_canonical_storage ... ok
+test rational::arithmetic::tests::f64_enclosure_contains_varied_exact_rational_corpus ... ok
+test computable::node::tests::algebraic_generator_dependencies_and_perturbations_are_exact ... ok
+test rational::arithmetic::tests::fract ... ok
+test rational::arithmetic::tests::fused_unplanned_signs_preserve_zero_single_and_mixed_product_ordering ... ok
+test rational::arithmetic::tests::general_perfect_power_detection_matches_integer_definition ... ok
+test rational::arithmetic::tests::general_perfect_power_paths_are_traced ... ok
+test computable::node::tests::algebraic_separation_resource_caps_fail_closed ... ok
+test rational::arithmetic::tests::half_plus_one_times_two ... ok
+test rational::arithmetic::tests::identity_constructors_share_canonical_storage ... ok
+test computable::node::tests::certified_small_angle_quotients_match_mpfr ... ok
+test rational::arithmetic::tests::integer_add_sub_preserves_reduced_fraction_denominator ... ok
+test rational::arithmetic::tests::inverse_first_cache_still_retains_two_linear_results ... ok
+test rational::arithmetic::tests::large_power_of_two_square_extraction_splits_the_exponent ... ok
+test rational::arithmetic::tests::direct_binary64_words_match_canonical_rational_words ... ok
+test rational::arithmetic::tests::large_square_factor_schedule_preserves_canonical_residuals ... ok
+test rational::arithmetic::tests::lazy_internal_fraction_is_canonical_at_observable_boundaries ... ok
+test rational::arithmetic::tests::lazy_internal_fraction_serializes_canonically ... ok
+test rational::arithmetic::tests::leading_bit_interval_comparison_matches_large_cross_products ... ok
+test rational::arithmetic::tests::lazy_internal_canonicalization_is_shared_across_threads ... ok
+test rational::arithmetic::tests::leading_significand_cross_products_certify_exact_order ... ok
+test rational::arithmetic::tests::lossy_dyadic_view_handles_wide_geometry_coefficients ... ok
+test rational::arithmetic::tests::lossy_view_preserves_every_retained_dyadic_fact_path ... ok
+test rational::arithmetic::tests::magnitude_at_least_power_of_two_handles_threshold_boundaries ... ok
+test rational::arithmetic::tests::mean3_refs_matches_expanded_exact_arithmetic ... ok
+test rational::arithmetic::tests::mean_refs_matches_expanded_exact_arithmetic ... ok
+test rational::arithmetic::tests::lehmer_magnitude_gcd_path_is_traced ... ok
+test rational::arithmetic::tests::negation_first_cache_still_retains_inverse_and_two_linear_results ... ok
+test rational::arithmetic::tests::checked_exact_integer_cross_difference_quotient_matches_small_integers ... ok
+test rational::arithmetic::tests::normal_dyadic_view_matches_gmp_rounding ... ok
+test rational::arithmetic::tests::numerator_magnitude_gcd_ignores_signs_and_denominators ... ok
+test rational::arithmetic::tests::observed_linear_operations_retain_exact_results_without_competing_for_one_slot ... ok
+test rational::arithmetic::tests::observed_operand_retains_two_distinct_linear_results ... ok
+test rational::arithmetic::tests::observed_right_operand_can_retain_a_directed_difference ... ok
+test rational::arithmetic::tests::one_plus_two ... ok
+test rational::arithmetic::tests::operations_work_on_refs ... ok
+test rational::arithmetic::tests::operations_work_on_refs_on_rhs ... ok
+test rational::arithmetic::tests::paired_complex_product_matches_independent_exact_arithmetic ... ok
+test rational::arithmetic::tests::paired_complex_quotient_matches_independent_exact_arithmetic ... ok
+test rational::arithmetic::tests::parse ... ok
+test rational::arithmetic::tests::parse_fraction_rejects_zero_denominator_and_reduces ... ok
+test rational::arithmetic::tests::parse_fractions ... ok
+test rational::arithmetic::tests::compact_dyadic_parameter_comparison_matches_biguint_cross_products ... ok
+test rational::arithmetic::tests::perfect_nth_root_detects_exact_rational_roots ... ok
+test rational::arithmetic::tests::power ... ok
+test rational::arithmetic::tests::power_of_two_shift_detects_only_power_of_two_ratios ... ok
+test computable::node::tests::bounded_integer_exp_matches_ln2_reduction ... ok
+test rational::arithmetic::tests::primitive_bigint_ratio_matches_rational_components ... ok
+test rational::arithmetic::tests::primitive_integer_ratio_clears_denominators_and_content ... ok
+test rational::arithmetic::tests::primitive_small_integer_constructors_share_canonical_storage ... ok
+test rational::arithmetic::tests::products_retain_exact_results_in_both_operand_orders ... ok
+test rational::arithmetic::tests::product_retention_occupies_only_one_primary_slot ... ok
+test rational::arithmetic::tests::rational_data_layout_stays_bounded ... ok
+test rational::arithmetic::tests::exact_msd_matches_f64_floor_for_small_rationals ... ok
+test rational::arithmetic::tests::radix_conversion_paths_are_traced_at_backend_crossover ... ok
+test rational::arithmetic::tests::rational_operation_gcd_dispatch_handles_mixed_width_and_zero_operands ... ok
+test rational::arithmetic::tests::rational_operation_gcd_trace_reports_selected_algorithm ... ok
+test rational::arithmetic::tests::reduced_dyadic_shift_probe_preserves_every_representation_path ... ok
+test rational::arithmetic::tests::reduced_word_construction_preserves_narrow_and_wide_parts ... ok
+test rational::arithmetic::tests::repeated_negation_reuses_exact_storage_without_a_cycle ... ok
+test rational::arithmetic::tests::repeated_small_power_reuses_the_retained_product_chain ... ok
+test rational::arithmetic::tests::perfect_square_residue_filter_never_rejects_a_square ... ok
+test rational::arithmetic::tests::retained_dyadic_fact_and_backend_algorithm_paths_are_traced ... ok
+test rational::arithmetic::tests::repeated_square_reduction_reuses_exact_factors_without_a_cycle ... ok
+test rational::arithmetic::tests::block_wise_barrett_matches_backend_div_rem ... ok
+test rational::arithmetic::tests::rust_native_toom4_candidate_path_is_traced ... ok
+test rational::arithmetic::tests::iterator_products_balance_exact_factors_and_preserve_semantics ... ok
+test rational::arithmetic::tests::rust_native_ntt_candidate_path_is_traced ... ok
+test rational::arithmetic::tests::rust_native_toom6_candidate_path_is_traced ... ok
+test rational::arithmetic::tests::native_word_product_sums_match_stack_accumulation ... ok
+test rational::arithmetic::tests::exact_dyadic_f64_view_round_trips_finite_binary64_values ... ok
+test rational::arithmetic::tests::rust_native_toom8_candidate_path_is_traced ... ok
+test rational::arithmetic::tests::rust_native_toom6_selected_path_is_traced_at_crossover ... ok
+test rational::arithmetic::tests::recursive_half_gcd_preserves_matrix_and_stop_invariants ... ok
+test rational::arithmetic::tests::same ... ok
+test rational::arithmetic::tests::same_denominator_reports_reduced_common_scale ... ok
+test computable::node::tests::direct_nth_root_approximations_match_mpfr ... ok
+test rational::arithmetic::tests::scientific_notation_parses_as_an_exact_rational ... ok
+test rational::arithmetic::tests::secondary_product_retention_handles_two_occupied_primary_slots ... ok
+test rational::arithmetic::tests::self_dot_admits_after_observation_and_reuses_result ... ok
+test rational::arithmetic::tests::serde_rejects_invalid_or_uncanonical_rational_state ... ok
+test rational::arithmetic::tests::shared_inverse_is_retained_with_weak_reverse_link ... ok
+test rational::arithmetic::tests::scientific_notation_validates_grammar_and_bounds_expansion ... ok
+test rational::arithmetic::tests::shared_owned_negation_reuses_retained_storage ... ok
+test rational::arithmetic::tests::sign_queries_are_strict ... ok
+test rational::arithmetic::tests::signed_product_sum_cross_cancels_before_word_overflow ... ok
+test rational::arithmetic::tests::signed_product_sum_dyadic_word_accumulator_materializes_a_wide_denominator ... ok
+test rational::arithmetic::tests::signed_product_sum_falls_back_when_dyadic_alignment_exceeds_a_word ... ok
+test rational::arithmetic::tests::signed_product_sum_handles_equal_non_dyadic_denominators ... ok
+test rational::arithmetic::tests::signed_product_sum_matches_pairwise_arithmetic ... ok
+test rational::arithmetic::tests::signed_product_sum_ordering_four_products_preserves_wide_dyadic_fallbacks ... ok
+test rational::arithmetic::tests::signed_product_sum_ordering_matches_materialized_result_and_overflow_fallback ... ok
+test rational::arithmetic::tests::signed_product_sum_ordering_six_products_preserves_all_fallbacks ... ok
+test rational::arithmetic::tests::signed_product_sum_ordering_traces_four_product_dyadic_stack_path ... ok
+test rational::arithmetic::tests::signed_product_sum_preserves_dyadic_exactness ... ok
+test rational::arithmetic::tests::signed_product_sum_shared_denominator_consumes_common_scale ... ok
+test rational::arithmetic::tests::signed_product_sum_word_overflow_falls_back_to_biguint ... ok
+test rational::arithmetic::tests::signs ... ok
+test rational::arithmetic::tests::small_dyadic_products_share_canonical_storage ... ok
+test rational::arithmetic::tests::rust_native_toom8_selected_path_is_traced_at_crossover ... ok
+test rational::arithmetic::tests::recursive_half_gcd_path_is_traced ... ok
+test rational::arithmetic::tests::sqrt_trouble ... ok
+test rational::arithmetic::tests::square_reduced ... ok
+test rational::arithmetic::tests::small_general_products_share_canonical_storage ... ok
+test rational::arithmetic::tests::square_reduction_rationalizes_the_residual_denominator ... ok
+test rational::arithmetic::tests::square_reduction_first_cache_retains_both_unary_and_linear_pairs ... ok
+test rational::arithmetic::tests::three_divided_by_six ... ok
+test rational::arithmetic::tests::trunc ... ok
+test rational::arithmetic::tests::two_minus_one ... ok
+test rational::arithmetic::tests::two_times_three ... ok
+test rational::arithmetic::tests::unique_owned_negation_discards_results_for_the_old_sign ... ok
+test rational::arithmetic::tests::unsigned_lehmer_matrix_application_matches_signed_magnitudes ... ok
+test rational::arithmetic::tests::wide_dyadic_add_sub_uses_shift_only_reduction ... ok
+test rational::arithmetic::tests::wide_dyadic_add_sub_matches_fraction_construction ... ok
+test rational::arithmetic::tests::wide_dyadic_comparison_reuses_retained_denominator_shifts ... ok
+test rational::arithmetic::tests::wide_dyadic_multiplication_cross_cancels_before_products ... ok
+test rational::arithmetic::tests::wide_dyadic_word_numerator_product_matches_biguint_reference ... ok
+test rational::arithmetic::tests::wide_magnitude_gcd_handles_balanced_and_wide_word_operands ... ok
+test rational::arithmetic::tests::word_comparison_falls_back_exactly_when_cross_products_overflow ... ok
+test rational::arithmetic::tests::word_reduction_trace_classifies_odd_denominator_shapes ... ok
+test rational::arithmetic::tests::word_sized_add_sub_matches_arbitrary_precision_fallback ... ok
+test rational::arithmetic::tests::word_multiplication_cross_cancellation_stays_reduced ... ok
+test rational::arithmetic::tests::word_sized_mul_div_matches_arbitrary_precision_fallback ... ok
+test rational::arithmetic::tests::unplanned_four_and_six_term_dyadic_word_totals_match_two_pass_alignment ... ok
+test rational::arithmetic::tests::word_sized_square_extraction_preserves_exact_product ... ok
+test rational::convert::tests::dyadic_arithmetic_stays_reduced ... ok
+test rational::convert::tests::float_import_retains_the_reduced_dyadic_fact ... ok
+test rational::convert::tests::f64_import_retains_exact_view_for_normal_subnormal_and_integer_values ... ok
+test rational::convert::tests::half_from_float ... ok
+test rational::convert::tests::huge ... ok
+test rational::convert::tests::negative ... ok
+test rational::convert::tests::nines ... ok
+test rational::convert::tests::not_int ... ok
+test rational::convert::tests::reduced_binary_fraction_f64 ... ok
+test rational::convert::tests::repr_f32 ... ok
+test rational::convert::tests::reduced_subnormal_f64 ... ok
+test rational::convert::tests::repr_f64 ... ok
+test rational::convert::tests::zero ... ok
+test rational::convert::tests::signed_integers ... ok
+test rational::convert::tests::unsigned_integers ... ok
+test real::arithmetic::tests::affine_det2_exact_word_filter_handles_unrelated_denominators ... ok
+test real::arithmetic::tests::abs_and_angle_conversions_preserve_exact_real_structure ... ok
+test real::arithmetic::tests::affine_det2_filter_matches_one_shot_filter ... ok
+test real::arithmetic::tests::affine_det2_pair_filter_matches_one_shot_directions ... ok
+test real::arithmetic::tests::affine_det3_filter_matches_one_shot_filter ... ok
+test real::arithmetic::tests::aggregate_helpers_keep_values_in_real_space ... ok
+test real::arithmetic::tests::average_pair_preserves_exact_and_symbolic_fast_paths ... ok
+test real::arithmetic::tests::certified_affine_det2_sign_bounds_subnormal_products_absolutely ... ok
+test rational::arithmetic::tests::shifted_biguint_comparison_matches_materialized_shifts ... ok
+test real::arithmetic::tests::certified_affine_det2_sign_only_returns_exact_signs ... ok
+test rational::arithmetic::tests::rust_native_toom4_selected_path_is_traced_at_crossover ... ok
+test real::arithmetic::tests::certified_affine_det3_sign_only_returns_exact_signs ... ok
+test rational::arithmetic::tests::lehmer_magnitude_gcd_matches_backend_reference ... ok
+test rational::arithmetic::tests::rust_native_toom8_matches_backend_products ... ok
+test real::arithmetic::tests::certified_incircle2_sign_only_returns_exact_signs ... ok
+test rational::arithmetic::tests::normalized_significand_intervals_match_biguint_reference ... ok
+test real::arithmetic::tests::certified_insphere3_sign_only_returns_exact_signs ... ok
+test real::arithmetic::tests::certified_integer_helpers_make_discontinuous_decisions ... ok
+test real::arithmetic::tests::certified_linear_form3_filter_only_returns_exact_signs ... ok
+test rational::arithmetic::tests::rust_native_ntt_matches_backend_products ... ok
+test computable::node::tests::binary64_filter_respects_floor_and_matches_fine_certified_signs ... ok
+test real::arithmetic::tests::hypot_helpers_preserve_exact_lengths ... ok
+test real::arithmetic::tests::incircle2_filter_matches_one_shot_filter ... ok
+test real::arithmetic::tests::insphere3_filter_matches_one_shot_filter ... ok
+test real::arithmetic::tests::layout_sizes ... ok
+test real::arithmetic::tests::dominant_affine_cross_axis_word_path_is_exact ... ok
+test real::arithmetic::tests::linear_form3_filter_only_returns_exact_signs ... ok
+test real::arithmetic::tests::long_homogeneous_sums_collapse_to_the_exact_rational ... ok
+test real::arithmetic::tests::long_homogeneous_symbolic_sums_preserve_one_scaled_basis ... ok
+test real::arithmetic::tests::certified_affine_det3_sign_matches_exact_randomized_determinants ... ok
+test real::arithmetic::tests::long_polynomial_evaluation_matches_exact_even_odd_decomposition ... ok
+test real::arithmetic::tests::operations_work_on_refs ... ok
+test real::arithmetic::tests::polynomial_evaluation_keeps_horner_for_ill_conditioned_nonroots ... ok
+test rational::arithmetic::tests::half_gcd_candidate_matches_lehmer_baseline ... ok
+test real::arithmetic::tests::polynomial_evaluation_preserves_endpoint_and_zero_leading_forms ... ok
+test real::arithmetic::tests::polynomial_evaluation_preserves_factored_root_cancellation ... ok
+test real::arithmetic::tests::long_symbolic_sums_enclose_an_independent_dyadic_reference ... ok
+test real::arithmetic::tests::polynomial_helpers_preserve_evaluation_forms ... ok
+test real::arithmetic::tests::product_sum_helpers_preserve_exact_geometry_kernels ... ok
+test real::arithmetic::tests::rational_line2_filter_preserves_exact_signs ... ok
+test real::arithmetic::tests::rational_linear_form4_filter_exposes_positive_scale_normalization ... ok
+test real::arithmetic::tests::rational_linear_form4_filter_preserves_exact_signs ... ok
+test real::arithmetic::tests::rational_linear_form4_filter_rejects_unsafe_f64_ranges ... ok
+test real::arithmetic::tests::polynomial_evaluation_retains_nested_quadratic_root_certificates ... ok
+test real::arithmetic::tests::rational_linear_form4_relative_conversion_normalizes_minimum_normal ... ok
+test real::arithmetic::tests::rational_linear_form4_normalization_handles_every_normal_exponent ... ok
+test real::arithmetic::tests::rational_linear_form4_segment_intersection_enclosure_declines_every_unsafe_boundary ... ok
+test real::arithmetic::tests::rational_storage_class_is_a_conservative_exact_cost_fact ... ok
+test real::arithmetic::tests::same_basis_assignments_match_borrowed_arithmetic ... ok
+test real::arithmetic::tests::structural_negation_query_certifies_shared_exact_bases ... ok
+test real::convert::tests::abort_invalidates_primitive_approx_cache ... ok
+test real::convert::tests::aborted_lossy_conversion_is_not_cached ... ok
+test real::convert::tests::almost_two ... ok
+test real::convert::tests::arbitrary_roundtrip ... ok
+test real::convert::tests::big_roundtrip ... ok
+test real::convert::tests::bit_conversion ... ok
+test real::convert::tests::borrowed_f64_lossy_finite_values ... ok
+test real::convert::tests::borrowed_f64_lossy_keeps_positive_translation_over_negative_symbolic_tail ... ok
+test real::convert::tests::borrowed_f64_lossy_tracks_negative_finite_values ... ok
+test real::convert::tests::borrowed_f64_lossy_underflow_and_overflow ... ok
+test real::convert::tests::borrowed_f64_preserves_values_with_large_denominators ... ok
+test real::convert::tests::borrowed_lossy_float_exports_are_repeatable ... ok
+test real::convert::tests::cached_f32_matches_uncached_for_rationals ... ok
+test real::convert::tests::cached_f64_is_not_reused_after_negation ... ok
+test real::convert::tests::cached_f64_matches_uncached_for_rationals ... ok
+test real::arithmetic::tests::affine_det2_exact_word_filter_matches_randomized_rationals ... ok
+test real::convert::tests::certified_primitive_view_rejects_non_dyadic_rationals ... ok
+test real::convert::tests::exact_f64_import_seeds_and_reuses_the_certified_primitive_view ... ok
+test real::convert::tests::exact_real_abort_signal_survives_materialization_clone_and_fold ... ok
+test real::convert::tests::cached_f64_proposal_matches_uncached_f32_export ... ok
+test real::convert::tests::f64_neighborhood_only_reuses_unambiguous_f32_rounding ... ok
+test real::convert::tests::fold_nine ... ok
+test real::convert::tests::half_from_float ... ok
+test real::convert::tests::half_to_float ... ok
+test real::convert::tests::infinity ... ok
+test real::convert::tests::max_u64_f32 ... ok
+test real::convert::tests::max_u64_f64 ... ok
+test real::convert::tests::nans ... ok
+test real::convert::tests::negative_half ... ok
+test real::convert::tests::pi ... ok
+test real::convert::tests::primitive_approx_cache_fills_and_upgrades ... ok
+test real::convert::tests::primitive_approx_cache_is_safe_under_concurrent_mixed_reads ... ok
+test real::convert::tests::primitive_approx_cache_keeps_f32_overflow_state ... ok
+test real::convert::tests::primitive_approx_cache_keeps_overflow_state ... ok
+test real::convert::tests::rational ... ok
+test real::convert::tests::repr_f32 ... ok
+test real::convert::tests::f32_then_f64_cache_upgrade_matches_uncached ... ok
+test real::convert::tests::repr_f64 ... ok
+test real::convert::tests::small_roundtrip ... ok
+test real::convert::tests::subnormal_roundtrip ... ok
+test real::convert::tests::too_small ... ok
+test real::convert::tests::zero ... ok
+test real::convert::tests::zero_roundtrip ... ok
+test real::tests::tests::active_dot2_refs_matches_dot2_refs_when_all_lanes_active ... ok
+test real::tests::tests::active_dot3_retains_symbolic_by_rational_linear_combination ... ok
+test real::tests::tests::adding_one_works ... ok
+test real::tests::tests::adversarial_inverse_hyperbolic_endpoint_cases ... ok
+test real::tests::tests::adversarial_inverse_trig_endpoint_and_symmetry_cases ... ok
+test real::tests::tests::asinh_large_negative_and_float_do_not_panic ... ok
+test real::tests::tests::asinh_large_positive_does_not_panic ... ok
+test real::tests::tests::atan2_generic_quadrants_match_f64 ... ok
+test real::tests::tests::adversarial_trig_tiny_huge_and_near_pole_cases ... ok
+test real::tests::tests::atan2_is_consistent_under_uniform_positive_scaling ... ok
+test real::tests::tests::atan2_negative_x_axis_is_pi ... ok
+test real::tests::tests::atan2_negative_y_axis_is_minus_half_pi ... ok
+test real::tests::tests::atan2_origin_returns_zero ... ok
+test real::tests::tests::atan2_positive_y_axis_is_half_pi ... ok
+test real::tests::tests::atan2_positive_x_axis_is_zero ... ok
+test real::tests::tests::atan2_quadrant_four_uses_negative_atan ... ok
+test real::tests::tests::atan2_quadrant_one_uses_atan_special_form ... ok
+test real::tests::tests::atan2_quadrant_two_uses_atan_plus_pi ... ok
+test real::tests::tests::atan2_quadrant_three_uses_atan_minus_pi ... ok
+test real::tests::tests::atan2_shared_cancellation_resolves_positive_y_below_refinement_floor ... ok
+test real::tests::tests::atan2_sqrt_three_anchor_matches_pi_third ... ok
+test real::tests::tests::base_two_and_ten_exponentials_match_binary64_for_irrational_exponents ... ok
+test real::tests::tests::base_two_and_ten_exponentials_preserve_exact_rational_powers ... ok
+test real::tests::tests::base_two_and_ten_logarithm_round_trips_are_exact ... ok
+test real::tests::tests::borrowed_exact_rational_preserves_lazy_storage_until_numeric_observation ... ok
+test real::tests::tests::certified_cmp_until_reports_structural_exact_and_refined_ordering ... ok
+test real::tests::tests::certified_cmp_until_uses_operand_sign_and_magnitude_facts ... ok
+test real::tests::tests::certified_dyadic_interval_is_exact_for_rationals_and_bounds_symbolic_values ... ok
+test real::tests::tests::certified_eq_until_proves_semantic_equality_through_difference ... ok
+test real::tests::tests::certified_eq_until_reports_structural_and_exact_rational_results ... ok
+test real::tests::tests::certified_eq_until_structurally_separates_nearby_rational_and_irrational_values ... ok
+test real::tests::tests::certified_equality_separates_irrational_from_nearby_rational ... ok
+test real::tests::tests::certified_sign_refines_mixed_pi_atan_terms ... ok
+test real::tests::tests::certified_sign_until_reports_proof_source_without_lossy_approximation ... ok
+test real::tests::tests::computable_atan2_axes ... ok
+test real::tests::tests::computable_atan2_quadrants_match_f64 ... ok
+test real::tests::tests::computable_atan2_shared_cancellation_resolves_negative_y ... ok
+test real::tests::tests::computable_atan2_shared_cancellation_resolves_positive_y ... ok
+test real::tests::tests::const_offsets_certify_simple_pi_and_e_gaps ... ok
+test real::tests::tests::cos_easy ... ok
+test real::tests::tests::cos_pi_rational_multiples_shift_through_sin ... ok
+test real::tests::tests::cosh_is_even_symmetry ... ok
+test real::tests::tests::cosh_of_integer_ln_is_exact_rational ... ok
+test real::tests::tests::cosh_of_irrational_argument_matches_f64 ... ok
+test real::tests::tests::cosh_of_zero_is_exact_one ... ok
+test real::tests::tests::cosh_rational_matches_f64 ... ok
+test real::tests::tests::cosh_squared_minus_sinh_squared_is_one ... ok
+test real::tests::tests::cotangent_preserves_exact_turns_poles_and_inverse_trig_images ... ok
+test real::tests::tests::curves ... ok
+test real::tests::tests::cycloidal_root_angles_compare_in_geometric_order ... ok
+test real::tests::tests::dense_self_dot_reuses_exact_result_after_observation ... ok
+test real::tests::tests::distinct_opaque_irrationals_do_not_share_an_algebraic_basis ... ok
+test real::tests::tests::division_checks_the_denominator_before_identity_rewrites ... ok
+test real::tests::tests::dot2_refs_all_zero_returns_zero ... ok
+test real::tests::tests::dot2_refs_handles_symbolic_lanes ... ok
+test real::tests::tests::dot2_refs_matches_pairwise_rational_arithmetic ... ok
+test real::tests::tests::dot2_refs_zero_lane_shortcut ... ok
+test real::tests::tests::dot_products_handle_mixed_symbolic_structural_terms ... ok
+test real::tests::tests::dot_products_match_generic_real_arithmetic ... ok
+test real::tests::tests::exact_dyadic_interpolated_point3_matches_expanded_arithmetic ... ok
+test real::tests::tests::exact_dyadic_parameterized_point_matches_expanded_arithmetic ... ok
+test real::tests::tests::exact_dyadic_parameterized_point_reduces_wide_affine_numerators_exactly ... ok
+test real::arithmetic::tests::linear_form3_filter_matches_exact_randomized_values ... ok
+test real::tests::tests::exact_normal_form_cancels_shared_opaque_affine_atoms ... ok
+test real::tests::tests::exact_rational_is_owned_and_public ... ok
+test real::tests::tests::exact_rational_matrix3_inverse_uses_shared_exact_aggregate ... ok
+test real::tests::tests::exact_rational_matrix4_inverse_uses_shared_exact_aggregate ... ok
+test real::tests::tests::exact_rational_normalize_cancels_common_denominator ... ok
+test real::tests::tests::exact_rational_reuse_evidence_distinguishes_isolated_and_shared_storage ... ok
+test real::tests::tests::exact_rational_signed_product_sum_matches_generic_arithmetic ... ok
+test real::tests::tests::exact_rational_signed_product_sum_rejects_symbolic_terms ... ok
+test real::tests::tests::exact_set_facts_report_dyadic_and_shared_denominator_routes ... ok
+test real::tests::tests::exp_pi ... ok
+test real::tests::tests::forward_hyperbolics_stay_stable_for_tiny_and_large_rationals ... ok
+test real::tests::tests::fused_dyadic_line_intersection_canonicalizes_coordinates_only_on_observation ... ok
+test real::tests::tests::fused_dyadic_line_intersection_defers_wide_inputs ... ok
+test rational::arithmetic::tests::rust_native_toom6_matches_backend_products ... ok
+test real::arithmetic::tests::exact_rational_det3_word_sign_matches_randomized_rationals ... ok
+test real::tests::tests::exact_dyadic_quotient_matches_general_division_across_scales ... ok
+test real::tests::tests::fused_wide_dyadic_line_intersection_retains_large_determinants ... ok
+test real::tests::tests::generic_power_uses_exact_retained_base_logarithm_certificates ... ok
+test real::tests::tests::homogeneous_quadratic_interpolation_division_preserves_nonzero_numerator ... ok
+test real::tests::tests::immediate_sign_never_walks_or_refines_an_opaque_expression ... ok
+test real::tests::tests::integer_logs ... ok
+test real::tests::tests::integer_pi_shifted_atan_trig_replays_exactly ... ok
+test real::tests::tests::fused_dyadic_line_intersection_matches_expanded_exact_arithmetic ... ok
+test real::tests::tests::inverse_hyperbolic_values ... ok
+test real::tests::tests::inverse_trig_compositions_retain_exact_structural_images ... ok
+test real::tests::tests::inverse_trig_domain_boundaries ... ok
+test real::tests::tests::inverse_trig_exact_principal_branches ... ok
+test real::tests::tests::inverse_trig_exact_values ... ok
+test real::tests::tests::inverse_trig_general_values ... ok
+test real::tests::tests::fused_exact_rational_line_intersection_matches_expanded_exact_arithmetic ... ok
+test real::tests::tests::large_rational_powers_use_the_exact_lazy_fallback ... ok
+test real::tests::tests::large_signed_rational_powers_match_mpfr ... ok
+test real::tests::tests::fused_wide_dyadic_line_intersection_matches_expanded_exact_arithmetic ... ok
+test real::tests::tests::ln_division ... ok
+test real::tests::tests::ln_large_positive_does_not_panic ... ok
+test real::tests::tests::ln_large_computable_positive_does_not_panic ... ok
+test real::tests::tests::ln_scaled_exp_reduces_to_log_scale_plus_exponent ... ok
+test real::tests::tests::ln_zero ... ok
+test real::tests::tests::log2_ln_quotient_folds_to_log2_class ... ok
+test real::tests::tests::log2_ln_quotient_preserves_exact_scaled_logs ... ok
+test real::tests::tests::log2_ln_quotient_ignores_warmed_numerator_cache ... ok
+test real::tests::tests::log2_matches_ln_div_ln2 ... ok
+test real::tests::tests::log2_of_fractional_non_power_rational_matches_f64 ... ok
+test real::tests::tests::log2_of_inverse_power_of_two_is_negative_integer ... ok
+test real::tests::tests::log2_of_negative_errors ... ok
+test real::tests::tests::log2_of_irrational_argument_matches_f64 ... ok
+test real::tests::tests::log2_of_one_half_is_negative_one ... ok
+test real::tests::tests::log2_of_one_is_zero ... ok
+test real::tests::tests::log2_of_powers_of_two_is_exact_integer ... ok
+test real::tests::tests::log2_of_sqrt_two_is_half ... ok
+test real::tests::tests::log2_of_rational_matches_f64 ... ok
+test real::tests::tests::log2_of_zero_errors ... ok
+test real::tests::tests::nested_half_pi_reduction_preserves_rational_atan_trig ... ok
+test real::tests::tests::non_tabulated_cos_pi_reuses_direct_sin_pi_certificates ... ok
+test real::tests::tests::inverse_hyperbolic_domain_boundaries ... ok
+test real::tests::tests::normal_exact_cases ... ok
+test real::arithmetic::tests::certified_affine_det2_sign_matches_exact_randomized_determinants ... ok
+test real::tests::tests::normal_domain_errors ... ok
+test real::tests::tests::balanced_gamma_and_beta_products_match_sequential_closed_forms ... ok
+test real::tests::tests::nth_roots_and_rational_powers_preserve_exact_cases ... ok
+test real::tests::tests::one_constructor_matches_integer_conversion ... ok
+test real::tests::tests::one_over_e ... ok
+test real::tests::tests::opposite_sign_sum_does_not_certify_sign_from_inexact_msd ... ok
+test real::tests::tests::oversized_rational_sqrt_retains_exact_computable_without_recursive_reconstruction ... ok
+test real::tests::tests::parse ... ok
+test real::tests::tests::parse_fraction ... ok
+test real::tests::tests::parse_large ... ok
+test real::tests::tests::parse_scientific_notation_exactly ... ok
+test real::tests::tests::partial_ord_uses_certified_real_comparison ... ok
+test real::tests::tests::perfect_square ... ok
+test real::tests::tests::pi_exp_products_remain_symbolically_combinable ... ok
+test real::tests::tests::pow_fract ... ok
+test real::tests::tests::pow_of_sine ... ok
+test real::tests::tests::pow_pi ... ok
+test real::tests::tests::powi ... ok
+test real::tests::tests::powi_i64_matches_arbitrary_precision_exponents ... ok
+test real::tests::tests::powi_negative_one_reuses_symbolic_inverse ... ok
+test real::tests::tests::powi_negative_unknown_sign_matches_inverse ... ok
+test real::tests::tests::public_pi_scaled_trig_uses_exact_rational_turns ... ok
+test real::tests::tests::parse_extreme_scientific_notation_as_a_lazy_exact_real ... ok
+test real::tests::tests::quadratic_surd_weight_discriminant_retains_its_positive_sign ... ok
+test real::tests::tests::rational ... ok
+test real::tests::tests::rational_atan2_axes_and_origin ... ok
+test real::tests::tests::normal_round_trips_and_symmetry ... ok
+test real::tests::tests::rational_base_power_logarithm_round_trips_are_exact ... ok
+test real::tests::tests::normal_known_values ... ok
+test real::tests::tests::rational_linear_form4_filter_normalizes_representable_spans_and_bounds_underflow ... ok
+test real::tests::tests::rational_offsets_retain_strict_sin_pi_endpoint_signs ... ok
+test real::tests::tests::real_detailed_facts_report_cheap_rational_and_symbolic_structure ... ok
+test real::tests::tests::real_domain_accessors_expose_structural_certificates_without_refinement ... ok
+test real::tests::tests::real_refine_sign_until_handles_refined_and_unresolved_cases ... ok
+test real::tests::tests::real_structural_facts_for_rational_and_constants ... ok
+test real::tests::tests::retained_classes_conservatively_certify_irrationality ... ok
+test real::tests::tests::rational_linear_form4_filter_never_disagrees_at_low_normal_scales ... ok
+test real::tests::tests::root_divide ... ok
+test real::tests::tests::rational_linear_form4_filter_never_disagrees_across_wide_exponent_spans ... ok
+test real::tests::tests::retained_roots_and_rational_powers_have_exact_log_exp_round_trips ... ok
+test real::tests::tests::scaled_irrational_magnitude_does_not_claim_an_exact_product_binade ... ok
+test real::tests::tests::signed_product_sum_certifies_complementary_sin_pi_squares ... ok
+test real::tests::tests::signed_product_sum_certifies_orthonormal_trig_zero_polynomial ... ok
+test real::tests::tests::signed_product_sum_preserves_mixed_symbolic_products ... ok
+test real::tests::tests::sin_easy ... ok
+test real::tests::tests::sin_pi_rational_multiples ... ok
+test real::tests::tests::scaled_acos_trig_composition_remains_bounded ... ok
+test real::tests::tests::sin_pi_rational_multiples_fold_to_same_curve ... ok
+test real::tests::tests::rational_linear_form4_filter_never_disagrees_with_exact_sum ... ok
+test real::tests::tests::sinh_of_irrational_argument_matches_f64 ... ok
+test real::tests::tests::sinh_of_integer_ln_is_exact_rational ... ok
+test real::tests::tests::sinh_is_odd_symmetry ... ok
+test real::tests::tests::sinh_of_zero_is_exact_zero ... ok
+test real::tests::tests::sqrt_3045512 ... ok
+test real::tests::tests::sqrt_exact ... ok
+test real::tests::tests::sqrt_rational_denominator_uses_the_canonical_quadratic_surd ... ok
+test real::tests::tests::sinh_rational_matches_f64 ... ok
+test real::tests::tests::sqrt_recovers_quadratic_surds_with_perfect_square_norms ... ok
+test real::tests::tests::sqrt_scaled_squarefree_reuses_symbolic_residual ... ok
+test real::tests::tests::square_sqrt ... ok
+test real::tests::tests::small_angle_helpers_remove_zero_singularities ... ok
+test real::tests::tests::symbolic_constant_multiplication_and_division_reduce ... ok
+test real::tests::tests::symbolic_facts_report_dependency_families_and_degree ... ok
+test real::tests::tests::tan_irrational_argument ... ok
+test real::tests::tests::tanh_is_odd_symmetry ... ok
+test real::tests::tests::tanh_matches_sinh_over_cosh ... ok
+test real::tests::tests::tanh_of_integer_ln_is_exact_rational ... ok
+test real::tests::tests::tanh_of_irrational_argument_matches_f64 ... ok
+test real::tests::tests::tanh_of_zero_is_exact_zero ... ok
+test real::tests::tests::tanh_rational_matches_f64 ... ok
+test real::tests::tests::trig_integer_pi_offsets_reduce_to_residual ... ok
+test real::tests::tests::row_scaled_dyadic_matrix4_inverse_matches_general_exact_kernel ... ok
+test real::tests::tests::trig_retains_atan_after_pi_reciprocal_cancellation ... ok
+test real::tests::tests::unlike_sqrts ... ok
+test real::tests::tests::zero ... ok
+test real::tests::tests::zero_one_or_minus_one_reports_signed_unit_identity ... ok
+test real::tests::tests::zero_pi ... ok
+test real::tests::tests::zero_status_uses_structural_facts_without_refinement ... ok
+test serde::tests::cbor_rational_pair_normalizes_negative_denominator ... ok
+test serde::tests::cbor_rational_pair_rejects_zero_denominator ... ok
+test serde::tests::cbor_value_try_into ... ok
+test serde::tests::computable_json_serde ... ok
+test real::arithmetic::tests::certified_incircle2_sign_matches_exact_randomized_determinants ... ok
+test serde::tests::rational_json_serde ... ok
+test serde::tests::real_cbor_serde ... ok
+test serde::tests::real_json_serde ... ok
+test serde::tests::test_round_trip_functions ... ok
+test simple::tests::div_pi_e_4 ... ok
+test simple::tests::division_zero ... ok
+test serde::tests::inverse_function_results_round_trip_serde ... ok
+test simple::tests::exact_symbol_subexpressions ... ok
+test simple::tests::e_minus_one ... ok
+test simple::tests::exp2_and_exp10_parse_and_preserve_exact_results ... ok
+test simple::tests::fractions ... ok
+test simple::tests::inverse_function_domain_errors_propagate ... ok
+test simple::tests::ln_e ... ok
+test simple::tests::log10_parses_as_base10 ... ok
+test simple::tests::log2_parser_rejects_bad_domain_and_arity ... ok
+test simple::tests::log2_parses_as_base2 ... ok
+test simple::tests::missing_close ... ok
+test simple::tests::nested_exact_subexpressions ... ok
+test simple::tests::inverse_function_nested_valid_values_evaluate ... ok
+test simple::tests::normal_function_wrong_arity_errors ... ok
+test real::tests::tests::iterator_products_balance_exact_prefixes_and_preserve_mixed_order ... ok
+test simple::tests::parse_named_operators ... ok
+test simple::tests::parse_rejects_trailing_input ... ok
+test simple::tests::parser_rejects_removed_short_operator_names ... ok
+test simple::tests::pi ... ok
+test simple::tests::pi_e_4 ... ok
+test simple::tests::precision ... ok
+test simple::tests::scientific_literals_delegate_to_exact_rational_parsing ... ok
+test real::tests::tests::sqrt_sum_and_difference_identity_is_certified_for_rational_pairs ... ok
+test simple::tests::simple_arithmetic ... ok
+test simple::tests::sqrt_pi ... ok
+test simple::tests::sqrts ... ok
+test simple::tests::two ... ok
+test simple::tests::tan ... ok
+test real::tests::tests::stable_substrate_functions ... ok
+test simple::tests::normal_functions_exact_cases_and_domains ... ok
+test simple::tests::normal_functions_evaluate ... ok
+test real::arithmetic::tests::certified_enclosure_line_filter_matches_exact_randomized_rationals ... ok
+test real::tests::tests::unresolved_opaque_sign_is_not_treated_as_exact_zero ... ok
+test real::arithmetic::tests::certified_insphere3_sign_matches_exact_randomized_determinants ... ok
+test rational::arithmetic::tests::rust_native_toom4_matches_backend_products ... ok
+test real::arithmetic::tests::affine_det3_exact_word_filter_matches_randomized_rationals ... ok
+test real::arithmetic::tests::rational_linear_form4_segment_intersection_enclosure_contains_exact_coordinates ... ok
+test rational::arithmetic::tests::fixed_512_gcd_matches_biguint_reference ... ok
+test computable::approximation::chudnovsky_pi_tests::chudnovsky_pi_matches_mpfr_from_one_bit_through_many_digits ... ok
+test computable::node::tests::many_digits_exact_integer_trig_uses_one_high_precision_pi_pass ... ok
+test real::tests::tests::normal_against_mpmath_references ... ok
+test real::arithmetic::tests::polynomial_evaluation_matches_independent_rational_horner ... ok
+
+test result: ok. 708 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 10.85s
+
+     Running unittests src/main.rs (target/debug/deps/hyperreal-51e453662a7bb7c5)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/adversarial_props.rs (target/debug/deps/adversarial_props-61eb2c6ab955766f)
+
+running 7 tests
+test nonzero_rational_division_and_inverse_are_exact ... ok
+test rational_ring_identities_preserve_exact_real_facts ... ok
+test rational_serde_roundtrip_preserves_generated_exact_values ... ok
+test square_root_of_exact_square_preserves_principal_sign ... ok
+test cache_warming_does_not_change_refinement_answers ... ok
+test float_import_exactness_has_stable_zero_sign_and_roundtrip ... ok
+test signed_product_sum_matches_expanded_3x3_determinant ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.08s
+
+     Running tests/adversarial_regressions.rs (target/debug/deps/adversarial_regressions-15a087f6640d5be3)
+
+running 10 tests
+test rump_polynomial_retains_exact_large_integer_cancellation ... ok
+test cancellation_chains_collapse_to_exact_zero_without_forcing_approximation ... ok
+test compare_and_equality_do_not_conflate_nearby_cancellation_values ... ok
+test exact_trig_special_forms_and_neighbors_are_distinguished ... ok
+test inverse_inverse_and_division_identities_preserve_exact_rationals ... ok
+test inverse_trig_domain_edges_are_exact_and_outside_edges_fail ... ok
+test scheinerman_radical_sums_receive_the_correct_certified_order ... ok
+test serde_rejects_forged_direct_nth_root_degrees ... ok
+test serde_roundtrip_preserves_structural_facts_and_special_forms ... ok
+test archived_nested_radical_identities_receive_exact_zero_certificates ... ok
+
+test result: ok. 10 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s
+
+     Running tests/adversarial_semantics.rs (target/debug/deps/adversarial_semantics-1e440352f3c0a4a9)
+
+running 5 tests
+test equivalent_structural_forms_keep_same_public_semantics ... ok
+test float_import_preserves_dyadic_exactness_and_zero_facts ... ok
+test refinement_order_is_cache_coherent_for_cancellation_adversaries ... ok
+test domain_boundaries_do_not_poison_later_valid_queries ... ok
+test scalar_fact_queries_are_stable_across_repeated_and_warmed_access ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/cli.rs (target/debug/deps/cli-bd2da6dd4a777467)
+
+running 2 tests
+test public_problem_display_and_error_contract_is_available_to_cli_callers ... ok
+test calculator_covers_answer_forms_names_and_recoverable_errors ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/gmp_api_coverage.rs (target/debug/deps/gmp_api_coverage-37303bcadfc0f551)
+
+running 1 test
+test every_public_numeric_api_is_benchmarked_or_explicitly_classified ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.05s
+
+     Running tests/numeric_roundtrip_formats.rs (target/debug/deps/numeric_roundtrip_formats-d679a31941f64b6a)
+
+running 10 tests
+test cbor_value_numeric_forms_roundtrip_losslessly ... ok
+test unsupported_numeric_text_forms_fail_instead_of_rounding ... ok
+test non_finite_float_imports_are_rejected_losslessly ... ok
+test integer_primitives_roundtrip_losslessly_through_real ... ok
+test supported_numeric_text_forms_parse_losslessly ... ok
+test generated_fraction_text_roundtrips_as_exact_rational ... ok
+test generated_decimal_text_roundtrips_as_exact_rational ... ok
+test finite_f64_values_roundtrip_through_exact_dyadic_real ... ok
+test finite_f32_values_roundtrip_through_exact_dyadic_real ... ok
+test generated_scientific_text_matches_exact_decimal_scaling ... ok
+
+test result: ok. 10 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.22s
+
+     Running tests/numerical_cross_reference.rs (target/debug/deps/numerical_cross_reference-397104ebd02e8ac0)
+
+running 16 tests
+test core2_zimmermann_exp_inputs_match_mpfr_at_256_bits ... ok
+test direct_computable_atan_quarter_matches_reference ... ok
+test core_compare_nested_radical_identity_is_certified_exactly ... ok
+test cotangent_refines_near_zero_and_preserves_odd_symmetry ... ok
+test core_heron_needle_triangles_match_exact_kahan_rearrangement_and_mpfr ... ok
+test magnitude_detection_refines_ambiguous_unit_approximations ... ok
+test tangent_matches_reference_across_certified_two_half_pi_interval ... ok
+test tangent_preserves_odd_symmetry_across_medium_reduction ... ok
+test tangent_refines_for_a_finite_rational_extremely_close_to_a_pole ... ok
+test real_atan_is_stable_after_sibling_inverse_trig_calls ... ok
+test atan2_matches_f64_in_every_quadrant_and_under_scaling ... ok
+test stable_small_argument_functions_match_cancellation_free_references ... ok
+test inverse_trig_and_hyperbolic_functions_match_principal_branches ... ok
+test elementary_functions_match_f64_on_moderate_rational_grid ... ok
+test rational_pi_turns_match_all_f64_quadrants_and_periods ... ok
+test rational_radian_trig_matches_f64_over_multiple_periods ... ok
+
+test result: ok. 16 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.68s
+
+     Running tests/public_numeric_semantics.rs (target/debug/deps/public_numeric_semantics-446a890ba3ba9f7e)
+
+running 9 tests
+test angle_and_aggregate_helpers_preserve_exact_results ... ok
+test exact_product_sum_entry_points_agree ... ok
+test certified_integer_operations_cover_signs_and_half_ties ... ok
+test public_aliases_and_structural_accessors_are_consistent ... ok
+test certified_integer_operations_handle_irrational_values ... ok
+test public_linear_algebra_helpers_match_expanded_arithmetic ... ok
+test hypot_helpers_match_exact_pythagorean_values ... ok
+test euclidean_remainder_is_nonnegative_and_reconstructs_input ... ok
+test near_integer_is_a_total_adjacent_integer_choice ... ok
+
+test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.06s
+
+     Running tests/rational_oracle.rs (target/debug/deps/rational_oracle-5e492b4e2e90fc28)
+
+running 5 tests
+test alternate_decimal_format_honors_zero_precision ... ok
+test truncating_proper_fractions_returns_canonical_zero ... ok
+test remaining_public_rational_helpers_cover_boundaries ... ok
+test integer_powers_match_big_rational ... ok
+test construction_and_arithmetic_match_big_rational ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.50s
+
+     Running tests/readme.rs (target/debug/deps/readme-9a1c81c52469d042)
+
+running 2 tests
+test readme_quickstart_matches_the_runnable_example ... ok
+test readme_release_metadata_matches_the_manifest ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/readme_metadata.rs (target/debug/deps/readme_metadata-49f38d9a3be14bc2)
+
+running 2 tests
+test readme_version_matches_crate_version ... ok
+test gmp_binding_remains_a_development_only_dependency ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/real_representations.rs (target/debug/deps/real_representations-3fe7a966562466bb)
+
+running 6 tests
+test exact_rational_storage_and_primitive_status_matrix_is_exhaustive ... ok
+test ownership_float_assignment_and_iterator_forms_match_borrowed_arithmetic ... ok
+test cache_scale_and_abort_state_space_preserves_certificates ... ok
+test every_private_class_survives_json_and_cbor_without_cache_state ... ok
+test every_computable_node_and_shared_constant_variant_round_trips_and_evaluates ... ok
+test every_public_kind_and_private_optimized_certificate_crosses_scalar_dispatch ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.31s
+
+     Running benches/adversarial_library.rs (target/debug/deps/adversarial_library-b882243e4bc086b9)
+     Running benches/adversarial_transcendentals.rs (target/debug/deps/adversarial_transcendentals-1d107a38b853f152)
+Testing trig_adversarial_approx/sin_tiny_rational_p96
+Success
+Testing trig_adversarial_approx/cos_tiny_rational_p96
+Success
+Testing trig_adversarial_approx/tan_tiny_rational_p96
+Success
+Testing trig_adversarial_approx/sin_medium_rational_p96
+Success
+Testing trig_adversarial_approx/cos_medium_rational_p96
+Success
+Testing trig_adversarial_approx/tan_medium_rational_p96
+Success
+Testing trig_adversarial_approx/sin_f64_exact_p96
+Success
+Testing trig_adversarial_approx/cos_f64_exact_p96
+Success
+Testing trig_adversarial_approx/sin_1e6_p96
+Success
+Testing trig_adversarial_approx/cos_1e6_p96
+Success
+Testing trig_adversarial_approx/tan_1e6_p96
+Success
+Testing trig_adversarial_approx/sin_1e30_p96
+Success
+Testing trig_adversarial_approx/cos_1e30_p96
+Success
+Testing trig_adversarial_approx/tan_1e30_p96
+Success
+Testing trig_adversarial_approx/sin_huge_pi_plus_offset_p96
+Success
+Testing trig_adversarial_approx/cos_huge_pi_plus_offset_p96
+Success
+Testing trig_adversarial_approx/tan_huge_pi_plus_offset_p96
+Success
+Testing trig_adversarial_approx/tan_near_half_pi_p96
+Success
+Testing trig_adversarial_approx/tan_promoted_generated_604_125_p96
+Success
+
+Testing inverse_trig_adversarial_approx/asin_zero_p96
+Success
+Testing inverse_trig_adversarial_approx/acos_zero_p96
+Success
+Testing inverse_trig_adversarial_approx/atan_zero_p96
+Success
+Testing inverse_trig_adversarial_approx/asin_tiny_positive_p96
+Success
+Testing inverse_trig_adversarial_approx/acos_tiny_positive_p96
+Success
+Testing inverse_trig_adversarial_approx/atan_tiny_positive_p96
+Success
+Testing inverse_trig_adversarial_approx/asin_mid_positive_p96
+Success
+Testing inverse_trig_adversarial_approx/acos_mid_positive_p96
+Success
+Testing inverse_trig_adversarial_approx/atan_mid_positive_p96
+Success
+Testing inverse_trig_adversarial_approx/atan_two_thirds_anchor_sweep_p96
+Success
+Testing inverse_trig_adversarial_approx/atan_two_thirds_anchor_sweep_p32
+Success
+Testing inverse_trig_adversarial_approx/atan_two_thirds_anchor_sweep_p256
+Success
+Testing inverse_trig_adversarial_approx/atan_two_thirds_anchor_upper_edge_p96
+Success
+Testing inverse_trig_adversarial_approx/asin_near_one_p96
+Success
+Testing inverse_trig_adversarial_approx/acos_near_one_p96
+Success
+Testing inverse_trig_adversarial_approx/asin_near_minus_one_p96
+Success
+Testing inverse_trig_adversarial_approx/acos_near_minus_one_p96
+Success
+Testing inverse_trig_adversarial_approx/atan_large_p96
+Success
+Testing inverse_trig_adversarial_approx/atan_promoted_generated_783_412_p96
+Success
+Testing inverse_trig_adversarial_approx/ln_square_plus_one_promoted_generated_677_222_p96
+Success
+Testing inverse_trig_adversarial_approx/atan_huge_p96
+Success
+
+Testing trig_fuzz_adversarial_approx/sin_sweep_768_p96
+Success
+Testing trig_fuzz_adversarial_approx/cos_sweep_768_p96
+Success
+Testing trig_fuzz_adversarial_approx/tan_sweep_768_p96
+Success
+Testing trig_fuzz_adversarial_approx/sin_promoted_slow_candidates_p96
+Success
+Testing trig_fuzz_adversarial_approx/cos_promoted_slow_candidates_p96
+Success
+Testing trig_fuzz_adversarial_approx/tan_promoted_slow_candidates_p96
+Success
+
+Testing promoted_library_slow_offenders_approx/tan_generated_12081_neg_1_262_383_p96
+Success
+Testing promoted_library_slow_offenders_approx/tan_generated_17496_3_190_219_p96
+Success
+Testing promoted_library_slow_offenders_approx/tan_generated_12216_neg_1_268_517_p96
+Success
+Testing promoted_library_slow_offenders_approx/tan_generated_12111_neg_1_76_151_p96
+Success
+Testing promoted_library_slow_offenders_approx/tan_generated_1071_neg_3_177_200_p96
+Success
+Testing promoted_library_slow_offenders_approx/tan_generated_1296_neg_3_71_91_p96
+Success
+Testing promoted_library_slow_offenders_approx/tan_generated_11391_3_29_36_p96
+Success
+Testing promoted_library_slow_offenders_approx/tan_generated_3756_neg_1_123_214_p96
+Success
+Testing promoted_library_slow_offenders_approx/tan_generated_12186_neg_1_189_299_p96
+Success
+Testing promoted_library_slow_offenders_approx/tan_generated_1011_2_58_181_p96
+Success
+Testing promoted_library_slow_offenders_approx/tan_generated_321_1_214_231_p96
+Success
+Testing promoted_library_slow_offenders_approx/tan_generated_5916_neg_1_337_578_p96
+Success
+Testing promoted_library_slow_offenders_approx/tan_generated_2016_1_101_141_p96
+Success
+Testing promoted_library_slow_offenders_approx/tan_generated_13836_neg_3_73_131_p96
+Success
+Testing promoted_library_slow_offenders_approx/tan_generated_13911_neg_2_134_427_p96
+Success
+Testing promoted_library_slow_offenders_approx/tan_generated_8976_1_71_73_p96
+Success
+Testing promoted_library_slow_offenders_approx/tan_generated_11691_1_431_439_p96
+Success
+Testing promoted_library_slow_offenders_approx/tan_generated_4401_2_5_13_p96
+Success
+Testing promoted_library_slow_offenders_approx/tan_generated_15081_1_205_259_p96
+Success
+Testing promoted_library_slow_offenders_approx/tan_generated_5676_neg_1_215_229_p96
+Success
+Testing promoted_library_slow_offenders_approx/tan_generated_6426_1_15_22_p96
+Success
+Testing promoted_library_slow_offenders_approx/tan_generated_14136_neg_1_79_106_p96
+Success
+Testing promoted_library_slow_offenders_approx/tan_generated_18246_neg_1_187_188_p96
+Success
+Testing promoted_library_slow_offenders_approx/tan_generated_18276_neg_1_77_107_p96
+Success
+Testing promoted_library_slow_offenders_approx/tan_generated_486_1_53_71_p96
+Success
+Testing promoted_library_slow_offenders_approx/tan_generated_6906_neg_87_128_p96
+Success
+Testing promoted_library_slow_offenders_approx/tan_generated_11841_neg_5_2_17_p96
+Success
+Testing promoted_library_slow_offenders_approx/tan_generated_13446_neg_5_15_187_p96
+Success
+Testing promoted_library_slow_offenders_approx/tan_generated_16806_5_3_22_p96
+Success
+Testing promoted_library_slow_offenders_approx/tan_generated_11421_neg_4_55_57_p96
+Success
+Testing promoted_library_slow_offenders_approx/tan_generated_18666_5_15_17_p96
+Success
+Testing promoted_library_slow_offenders_approx/tan_generated_12561_4_19_21_p96
+Success
+Testing promoted_library_slow_offenders_approx/tan_generated_9231_neg_7_5_6_p96
+Success
+Testing promoted_library_slow_offenders_approx/tan_generated_9396_neg_4_128_155_p96
+Success
+Testing promoted_library_slow_offenders_approx/tan_generated_3321_neg_4_17_107_p96
+Success
+Testing promoted_library_slow_offenders_approx/tan_generated_15891_neg_5_23_33_p96
+Success
+Testing promoted_library_slow_offenders_approx/tan_generated_14946_4_104_125_p96
+Success
+Testing promoted_library_slow_offenders_approx/ln_generated_1297_neg_1_83_188_p96
+Success
+Testing promoted_library_slow_offenders_approx/ln_generated_6682_neg_9_8_35_p96
+Success
+Testing promoted_library_slow_offenders_approx/ln_generated_17587_neg_6_68_73_p96
+Success
+Testing promoted_library_slow_offenders_approx/ln_generated_15472_neg_3_13_50_p96
+Success
+Testing promoted_library_slow_offenders_approx/ln_generated_17392_neg_7_41_101_p96
+Success
+Testing promoted_library_slow_offenders_approx/ln_generated_15082_1_181_356_p96
+Success
+Testing promoted_library_slow_offenders_approx/ln_generated_9862_neg_1_221_492_p96
+Success
+Testing promoted_library_slow_offenders_approx/tan_generated_17331_4_66_83_p96
+Success
+Testing promoted_library_slow_offenders_approx/ln_generated_18352_neg_1_133_500_p96
+Success
+Testing promoted_library_slow_offenders_approx/ln_generated_2632_neg_10_37_73_p96
+Success
+Testing promoted_library_slow_offenders_approx/ln_generated_16642_3_13_22_p96
+Success
+Testing promoted_library_slow_offenders_approx/tan_generated_14421_5_25_47_p96
+Success
+Testing promoted_library_slow_offenders_approx/ln_generated_16447_1_9_20_p96
+Success
+Testing promoted_library_slow_offenders_approx/ln_generated_6877_neg_9_34_77_p96
+Success
+Testing promoted_library_slow_offenders_approx/ln_generated_322_1_95_164_p96
+Success
+Testing promoted_library_slow_offenders_approx/ln_generated_9457_neg_3_23_90_p96
+Success
+Testing promoted_library_slow_offenders_approx/ln_generated_7072_neg_9_44_49_p96
+Success
+Testing promoted_library_slow_offenders_approx/ln_generated_6592_1_109_348_p96
+Success
+Testing promoted_library_slow_offenders_approx/tan_generated_9591_neg_3_125_127_p96
+Success
+Testing promoted_library_slow_offenders_approx/ln_generated_14947_3_11_222_p96
+Success
+Testing promoted_library_slow_offenders_approx/ln_generated_11497_1_137_564_p96
+Success
+Testing promoted_library_slow_offenders_approx/ln_generated_17752_neg_3_11_18_p96
+Success
+Testing promoted_library_slow_offenders_approx/ln_generated_14377_neg_1_189_764_p96
+Success
+Testing promoted_library_slow_offenders_approx/ln_generated_17197_neg_7_29_43_p96
+Success
+Testing promoted_library_slow_offenders_approx/ln_generated_8152_3_11_62_p96
+Success
+Testing promoted_library_slow_offenders_approx/ln_generated_14977_6_22_141_p96
+Success
+Testing promoted_library_slow_offenders_approx/ln_generated_16402_1_11_52_p96
+Success
+Testing promoted_library_slow_offenders_approx/ln_generated_7567_neg_1_31_52_p96
+Success
+Testing promoted_library_slow_offenders_approx/tan_generated_13866_neg_5_1_2_p96
+Success
+Testing promoted_library_slow_offenders_approx/ln_generated_1687_1_27_44_p96
+Success
+Testing promoted_library_slow_offenders_approx/ln_generated_10702_2_201_218_p96
+Success
+Testing promoted_library_slow_offenders_approx/ln_generated_7642_neg_1_25_36_p96
+Success
+Testing promoted_library_slow_offenders_approx/ln_generated_1837_neg_1_107_724_p96
+Success
+Testing promoted_library_slow_offenders_approx/ln_generated_11122_neg_8_13_27_p96
+Success
+Testing promoted_library_slow_offenders_approx/ln_generated_10927_neg_8_57_109_p96
+Success
+Testing promoted_library_slow_offenders_approx/ln_generated_1372_neg_1_309_484_p96
+Success
+Testing promoted_library_slow_offenders_approx/ln_generated_7912_1_93_772_p96
+Success
+Testing promoted_library_slow_offenders_approx/ln_generated_10732_6_6_137_p96
+Success
+Testing promoted_library_slow_offenders_approx/ln_generated_7447_1_53_76_p96
+Success
+Testing promoted_library_slow_offenders_approx/ln_generated_13537_neg_7_17_41_p96
+Success
+Testing promoted_library_slow_offenders_approx/ln_generated_3007_1_65_556_p96
+Success
+Testing promoted_library_slow_offenders_approx/atan_generated_849_neg_1_391_600_p96
+Success
+Testing promoted_library_slow_offenders_approx/ln_generated_6487_5_123_133_p96
+Success
+Testing promoted_library_slow_offenders_approx/atan_generated_2964_neg_1_146_373_p96
+Success
+Testing promoted_library_slow_offenders_approx/ln_generated_16597_neg_1_15_188_p96
+Success
+Testing promoted_library_slow_offenders_approx/ln_generated_11317_neg_8_21_53_p96
+Success
+Testing promoted_library_slow_offenders_approx/atan_generated_15369_neg_1_74_93_p96
+Success
+Testing promoted_library_slow_offenders_approx/ln_generated_5812_neg_1_51_460_p96
+Success
+Testing promoted_library_slow_offenders_approx/atan_generated_11034_1_367_518_p96
+Success
+Testing promoted_library_slow_offenders_approx/atan_generated_15474_neg_1_13_19_p96
+Success
+Testing promoted_library_slow_offenders_approx/atan_generated_15279_1_403_522_p96
+Success
+Testing promoted_library_slow_offenders_approx/cos_generated_15110_7_5_27_p96
+Success
+Testing promoted_library_slow_offenders_approx/atan_generated_10869_1_123_155_p96
+Success
+Testing promoted_library_slow_offenders_approx/ln_generated_6457_2_169_214_p96
+Success
+Testing promoted_library_slow_offenders_approx/cos_generated_9365_7_14_139_p96
+Success
+Testing promoted_library_slow_offenders_approx/atan_generated_5124_neg_1_237_523_p96
+Success
+Testing promoted_library_slow_offenders_approx/cos_generated_16610_7_4_19_p96
+Success
+Testing promoted_library_slow_offenders_approx/cos_generated_9950_neg_5_1_5_p96
+Success
+Testing promoted_library_slow_offenders_approx/ln_generated_10327_neg_1_19_732_p96
+Success
+Testing promoted_library_slow_offenders_approx/ln_generated_13837_neg_1_55_76_p96
+Success
+Testing promoted_library_slow_offenders_approx/ln_generated_2242_5_103_129_p96
+Success
+Testing promoted_library_slow_offenders_approx/atan_generated_5094_neg_1_347_604_p96
+Success
+Testing promoted_library_slow_offenders_approx/atan_generated_15504_neg_1_228_413_p96
+Success
+
+Testing inverse_hyperbolic_adversarial_approx/asinh_tiny_positive_p128
+Success
+Testing inverse_hyperbolic_adversarial_approx/asinh_mid_positive_p128
+Success
+Testing inverse_hyperbolic_adversarial_approx/asinh_large_positive_p128
+Success
+Testing inverse_hyperbolic_adversarial_approx/asinh_large_negative_p128
+Success
+Testing inverse_hyperbolic_adversarial_approx/acosh_one_plus_tiny_p128
+Success
+Testing inverse_hyperbolic_adversarial_approx/acosh_sqrt_two_p128
+Success
+Testing inverse_hyperbolic_adversarial_approx/acosh_two_p128
+Success
+Testing inverse_hyperbolic_adversarial_approx/acosh_large_positive_p128
+Success
+Testing inverse_hyperbolic_adversarial_approx/atanh_tiny_positive_p128
+Success
+Testing inverse_hyperbolic_adversarial_approx/atanh_mid_positive_p128
+Success
+Testing inverse_hyperbolic_adversarial_approx/atanh_near_one_p128
+Success
+Testing inverse_hyperbolic_adversarial_approx/atanh_near_minus_one_p128
+Success
+
+Testing real_shortcut_adversarial/sin_exact_pi_over_six
+Success
+Testing real_shortcut_adversarial/cos_exact_pi_over_three
+Success
+Testing real_shortcut_adversarial/tan_exact_pi_over_four
+Success
+Testing real_shortcut_adversarial/asin_exact_half
+Success
+Testing real_shortcut_adversarial/acos_exact_half
+Success
+Testing real_shortcut_adversarial/atan_exact_one
+Success
+Testing real_shortcut_adversarial/asin_domain_error
+Success
+Testing real_shortcut_adversarial/acos_domain_error
+Success
+Testing real_shortcut_adversarial/atanh_endpoint_infinity
+Success
+Testing real_shortcut_adversarial/atanh_domain_error
+Success
+Testing real_shortcut_adversarial/acosh_domain_error
+Success
+
+     Running benches/borrowed_ops.rs (target/debug/deps/borrowed_ops-3266d7a96ef83294)
+Testing rational_ops/add_owned
+Success
+Testing rational_ops/add_refs
+Success
+Testing rational_ops/sub_owned
+Success
+Testing rational_ops/sub_refs
+Success
+Testing rational_ops/mul_owned
+Success
+Testing rational_ops/mul_refs
+Success
+Testing rational_ops/div_owned
+Success
+Testing rational_ops/div_refs
+Success
+
+Testing real_ops/add_owned
+Success
+Testing real_ops/add_refs
+Success
+Testing real_ops/sub_owned
+Success
+Testing real_ops/sub_refs
+Success
+Testing real_ops/mul_owned
+Success
+Testing real_ops/mul_refs
+Success
+Testing real_ops/div_owned
+Success
+Testing real_ops/div_refs
+Success
+
+Testing real_irrational_ops/add_owned
+Success
+Testing real_irrational_ops/add_refs
+Success
+Testing real_irrational_ops/sub_owned
+Success
+Testing real_irrational_ops/sub_refs
+Success
+Testing real_irrational_ops/mul_owned
+Success
+Testing real_irrational_ops/mul_refs
+Success
+Testing real_irrational_ops/div_owned
+Success
+Testing real_irrational_ops/div_refs
+Success
+
+     Running benches/dispatch_trace.rs (target/debug/deps/dispatch_trace-0f8aa04eb411579e)
+dispatch trace filters: <all rows>
+trace start: real/constants
+trace done:  real/constants (8 paths)
+trace start: real/arithmetic/exact
+trace done:  real/arithmetic/exact (13 paths)
+trace start: real/pow/small_integer_exponent
+trace done:  real/pow/small_integer_exponent (7 paths)
+trace start: real/powi_i64/exact_17
+trace done:  real/powi_i64/exact_17 (6 paths)
+trace start: real/pow/symbolic_negative_one
+trace done:  real/pow/symbolic_negative_one (14 paths)
+trace start: real/div/div_const_product_sqrt
+trace done:  real/div/div_const_product_sqrt (15 paths)
+trace start: real/div/const_product_sqrt_over_e
+trace done:  real/div/const_product_sqrt_over_e (13 paths)
+trace start: real/div/sqrt_two_over_sqrt_three
+trace done:  real/div/sqrt_two_over_sqrt_three (9 paths)
+trace start: real/div/div_const_products
+trace done:  real/div/div_const_products (10 paths)
+trace start: real/div/rational_over_symbolic
+trace done:  real/div/rational_over_symbolic (14 paths)
+trace start: real/inverse/inverse_generic
+trace done:  real/inverse/inverse_generic (11 paths)
+trace start: real/trig/general
+trace done:  real/trig/general (13 paths)
+trace start: real/trig/large
+trace done:  real/trig/large (7 paths)
+trace start: real/trig/large-exact-rational
+trace done:  real/trig/large-exact-rational (13 paths)
+trace start: real/inverse_trig
+trace done:  real/inverse_trig (20 paths)
+trace start: real/inverse_trig/exact
+trace done:  real/inverse_trig/exact (16 paths)
+trace start: real/inverse_trig/mid-domain
+trace done:  real/inverse_trig/mid-domain (24 paths)
+trace start: real/hyperbolic_log_exp
+trace done:  real/hyperbolic_log_exp (14 paths)
+trace start: real/forward_hyperbolic/small
+trace done:  real/forward_hyperbolic/small (20 paths)
+trace start: real/forward_hyperbolic/large
+trace done:  real/forward_hyperbolic/large (24 paths)
+trace start: real/log/scaled_e
+trace done:  real/log/scaled_e (14 paths)
+trace start: real/inverse_hyperbolic/exact_rational
+trace done:  real/inverse_hyperbolic/exact_rational (18 paths)
+trace start: real/inverse_hyperbolic/sqrt
+trace done:  real/inverse_hyperbolic/sqrt (12 paths)
+trace start: real/sqrt_scaled_rational
+trace done:  real/sqrt_scaled_rational (7 paths)
+trace start: real/sqrt_oversized_rational_fallback
+trace done:  real/sqrt_oversized_rational_fallback (8 paths)
+trace start: real/sqrt_scaled_exp
+trace done:  real/sqrt_scaled_exp (14 paths)
+trace start: real/root_n/direct_degree5
+trace done:  real/root_n/direct_degree5 (6 paths)
+trace start: real/root_n/direct_degree9
+trace done:  real/root_n/direct_degree9 (6 paths)
+trace start: real/root_n/fallback_degree10
+trace done:  real/root_n/fallback_degree10 (14 paths)
+trace start: real/pow_rational/direct_degree5
+trace done:  real/pow_rational/direct_degree5 (11 paths)
+trace start: real/structural_queries
+trace done:  real/structural_queries (14 paths)
+trace start: real/stable_scalar_substrate
+trace done:  real/stable_scalar_substrate (62 paths)
+trace start: real/geometry_polynomial_substrate
+trace done:  real/geometry_polynomial_substrate (97 paths)
+trace start: real/normal_scientific_substrate
+trace done:  real/normal_scientific_substrate (112 paths)
+trace start: real/dot_product/dot3_dense_symbolic
+trace done:  real/dot_product/dot3_dense_symbolic (16 paths)
+trace start: real/dot_product/active_dot3_dense_symbolic
+trace done:  real/dot_product/active_dot3_dense_symbolic (16 paths)
+trace start: real/dot_product/dot3_mixed_structural
+trace done:  real/dot_product/dot3_mixed_structural (16 paths)
+trace start: real/dot_product/dot3_all_zero
+trace done:  real/dot_product/dot3_all_zero (8 paths)
+trace start: real/dot_product/dot4_dense_symbolic
+trace done:  real/dot_product/dot4_dense_symbolic (23 paths)
+trace start: real/dot_product/active_dot4_dense_symbolic
+trace done:  real/dot_product/active_dot4_dense_symbolic (20 paths)
+trace start: real/dot_product/dot4_mixed_structural
+trace done:  real/dot_product/dot4_mixed_structural (17 paths)
+trace start: computable/sign_until/deep_scaled_product_floor_2000
+trace done:  computable/sign_until/deep_scaled_product_floor_2000 (11 paths)
+trace start: computable/sign_until/perturbed_scaled_product_floor_2000
+trace done:  computable/sign_until/perturbed_scaled_product_floor_2000 (17 paths)
+trace start: computable/sign_until/pi_minus_one_floor_2000
+trace done:  computable/sign_until/pi_minus_one_floor_2000 (10 paths)
+trace start: computable/sign_until/pi_minus_one_floor_128
+trace done:  computable/sign_until/pi_minus_one_floor_128 (10 paths)
+trace start: computable/sign_until/deep_scaled_product_floor_128
+trace done:  computable/sign_until/deep_scaled_product_floor_128 (11 paths)
+trace start: computable/sign_until/mixed_pi_e_floor_0
+trace done:  computable/sign_until/mixed_pi_e_floor_0 (7 paths)
+trace start: computable/sign_until/near_pi_floor_64
+trace done:  computable/sign_until/near_pi_floor_64 (10 paths)
+trace start: computable/sign_until/near_pi_floor_0_inconclusive
+trace done:  computable/sign_until/near_pi_floor_0_inconclusive (13 paths)
+trace start: computable/sign_until/unsupported_sin_floor_64
+trace done:  computable/sign_until/unsupported_sin_floor_64 (11 paths)
+trace start: real/sign_until/eighth_root_near_dyadic_floor_64
+trace done:  real/sign_until/eighth_root_near_dyadic_floor_64 (15 paths)
+trace start: real/sign_until/ramanujan_one_zero_floor_2048
+trace done:  real/sign_until/ramanujan_one_zero_floor_2048 (31 paths)
+trace start: real/sign_until/ramanujan_two_zero_floor_2048
+trace done:  real/sign_until/ramanujan_two_zero_floor_2048 (35 paths)
+trace start: real/sign_until/many_digits_c10_zero_floor_2048
+trace done:  real/sign_until/many_digits_c10_zero_floor_2048 (26 paths)
+trace start: computable/sign_until/deep_scaled_product_cached
+trace done:  computable/sign_until/deep_scaled_product_cached (1 paths)
+trace start: computable/sign_until/deep_half_product_cached
+trace done:  computable/sign_until/deep_half_product_cached (1 paths)
+trace start: computable/sign_until/pi_minus_one_cached
+trace done:  computable/sign_until/pi_minus_one_cached (1 paths)
+trace start: computable/sign_until/exp_unknown_sign_arg_floor_2000
+trace done:  computable/sign_until/exp_unknown_sign_arg_floor_2000 (7 paths)
+trace start: computable/sign_until/exp_unknown_sign_arg_cached
+trace done:  computable/sign_until/exp_unknown_sign_arg_cached (1 paths)
+trace start: computable/compare/opposite_sign
+trace done:  computable/compare/opposite_sign (3 paths)
+trace start: computable/compare/exact_msd_gap
+trace done:  computable/compare/exact_msd_gap (4 paths)
+trace start: computable/compare/exact_rational
+trace done:  computable/compare/exact_rational (3 paths)
+trace start: computable/compare_absolute/exact_rational
+trace done:  computable/compare_absolute/exact_rational (3 paths)
+trace start: computable/compare_absolute/exact_rational_same_numerator
+trace done:  computable/compare_absolute/exact_rational_same_numerator (6 paths)
+trace start: computable/compare_absolute/exact_msd_gap
+trace done:  computable/compare_absolute/exact_msd_gap (4 paths)
+trace start: computable/compare_absolute/dominant_add
+trace done:  computable/compare_absolute/dominant_add (11 paths)
+trace start: computable/constants
+trace done:  computable/constants (5 paths)
+trace start: computable/trig
+trace done:  computable/trig (8 paths)
+trace start: computable/trig/large
+trace done:  computable/trig/large (10 paths)
+trace start: computable/trig/large-exact-rational
+trace done:  computable/trig/large-exact-rational (15 paths)
+trace start: computable/inverse_trig
+trace done:  computable/inverse_trig (11 paths)
+trace start: computable/inverse_trig/mid-domain
+trace done:  computable/inverse_trig/mid-domain (25 paths)
+trace start: computable/basic_transcendentals
+trace done:  computable/basic_transcendentals (13 paths)
+trace start: computable/exp_large_rational
+trace done:  computable/exp_large_rational (5 paths)
+trace start: computable/exp_cached_probe
+trace done:  computable/exp_cached_probe (3 paths)
+trace start: computable/ln_smooth_rational
+trace done:  computable/ln_smooth_rational (13 paths)
+trace start: computable/sqrt_squarefree_rational
+trace done:  computable/sqrt_squarefree_rational (4 paths)
+trace start: computable/ln_nonsmooth_rational
+trace done:  computable/ln_nonsmooth_rational (6 paths)
+trace start: computable/ln_square_plus_one_promoted_generated_677_222
+trace done:  computable/ln_square_plus_one_promoted_generated_677_222 (11 paths)
+trace start: computable/promoted_library_slow/ln_generated_10732_pos_6_6_137
+trace done:  computable/promoted_library_slow/ln_generated_10732_pos_6_6_137 (13 paths)
+trace start: computable/promoted_library_slow/ln_generated_14947_pos_3_11_222
+trace done:  computable/promoted_library_slow/ln_generated_14947_pos_3_11_222 (13 paths)
+trace start: computable/promoted_library_slow/ln_generated_11497_pos_1_137_564
+trace done:  computable/promoted_library_slow/ln_generated_11497_pos_1_137_564 (11 paths)
+trace start: computable/promoted_library_slow/ln_generated_9862_neg_1_221_492
+trace done:  computable/promoted_library_slow/ln_generated_9862_neg_1_221_492 (13 paths)
+trace start: computable/promoted_library_slow/ln_generated_9457_neg_3_23_90
+trace done:  computable/promoted_library_slow/ln_generated_9457_neg_3_23_90 (13 paths)
+trace start: computable/promoted_library_slow/ln_generated_15472_neg_3_13_50
+trace done:  computable/promoted_library_slow/ln_generated_15472_neg_3_13_50 (13 paths)
+trace start: computable/promoted_library_slow/ln_generated_18352_neg_1_133_500
+trace done:  computable/promoted_library_slow/ln_generated_18352_neg_1_133_500 (13 paths)
+trace start: computable/promoted_library_slow/ln_generated_11317_neg_8_21_53
+trace done:  computable/promoted_library_slow/ln_generated_11317_neg_8_21_53 (13 paths)
+trace start: computable/promoted_library_slow/ln_generated_7447_pos_1_53_76
+trace done:  computable/promoted_library_slow/ln_generated_7447_pos_1_53_76 (11 paths)
+trace start: computable/promoted_library_slow/ln_generated_7642_neg_1_25_36
+trace done:  computable/promoted_library_slow/ln_generated_7642_neg_1_25_36 (14 paths)
+trace start: computable/promoted_library_slow/ln_generated_14377_neg_1_189_764
+trace done:  computable/promoted_library_slow/ln_generated_14377_neg_1_189_764 (13 paths)
+trace start: computable/promoted_library_slow/ln_generated_16417_pos_41_241
+trace done:  computable/promoted_library_slow/ln_generated_16417_pos_41_241 (8 paths)
+trace start: computable/promoted_library_slow/ln_generated_17797_pos_1_328_503
+trace done:  computable/promoted_library_slow/ln_generated_17797_pos_1_328_503 (11 paths)
+trace start: computable/promoted_library_slow/atan_generated_10704_pos_1_371_412
+trace done:  computable/promoted_library_slow/atan_generated_10704_pos_1_371_412 (13 paths)
+trace start: computable/promoted_library_slow/atan_generated_11034_pos_1_367_518
+trace done:  computable/promoted_library_slow/atan_generated_11034_pos_1_367_518 (13 paths)
+trace start: computable/promoted_library_slow/tan_generated_17496_pos_3_190_219
+trace done:  computable/promoted_library_slow/tan_generated_17496_pos_3_190_219 (14 paths)
+trace start: computable/promoted_library_slow/tan_generated_13446_neg_5_15_187
+trace done:  computable/promoted_library_slow/tan_generated_13446_neg_5_15_187 (13 paths)
+trace start: computable/promoted_library_slow/tan_generated_9591_neg_3_125_127
+trace done:  computable/promoted_library_slow/tan_generated_9591_neg_3_125_127 (14 paths)
+trace start: computable/promoted_library_slow/tan_generated_16806_pos_5_3_22
+trace done:  computable/promoted_library_slow/tan_generated_16806_pos_5_3_22 (13 paths)
+trace start: computable/promoted_library_slow/tan_generated_11841_neg_5_2_17
+trace done:  computable/promoted_library_slow/tan_generated_11841_neg_5_2_17 (13 paths)
+trace start: computable/promoted_library_slow/tan_generated_14421_pos_5_25_47
+trace done:  computable/promoted_library_slow/tan_generated_14421_pos_5_25_47 (15 paths)
+trace start: computable/promoted_library_slow/tan_generated_13866_neg_5_1_2
+trace done:  computable/promoted_library_slow/tan_generated_13866_neg_5_1_2 (14 paths)
+trace start: computable/promoted_library_slow/tan_generated_15891_neg_5_23_33
+trace done:  computable/promoted_library_slow/tan_generated_15891_neg_5_23_33 (15 paths)
+trace start: computable/promoted_library_slow/tan_generated_18666_pos_5_15_17
+trace done:  computable/promoted_library_slow/tan_generated_18666_pos_5_15_17 (14 paths)
+trace start: computable/promoted_library_slow/tan_generated_9231_neg_7_5_6
+trace done:  computable/promoted_library_slow/tan_generated_9231_neg_7_5_6 (13 paths)
+trace start: computable/promoted_library_slow/cos_generated_9365_pos_7_14_139
+trace done:  computable/promoted_library_slow/cos_generated_9365_pos_7_14_139 (12 paths)
+trace start: computable/promoted_library_slow/cos_generated_16610_pos_7_4_19
+trace done:  computable/promoted_library_slow/cos_generated_16610_pos_7_4_19 (12 paths)
+trace start: computable/promoted_library_slow/sin_generated_10834_pos_4_34_61
+trace done:  computable/promoted_library_slow/sin_generated_10834_pos_4_34_61 (12 paths)
+trace start: computable/promoted_library_slow/sin_generated_11359_pos_4_66_139
+trace done:  computable/promoted_library_slow/sin_generated_11359_pos_4_66_139 (12 paths)
+trace start: computable/trig_adversarial/sin_tiny
+trace done:  computable/trig_adversarial/sin_tiny (2 paths)
+trace start: computable/trig_adversarial/cos_tiny
+trace done:  computable/trig_adversarial/cos_tiny (2 paths)
+trace start: computable/trig_adversarial/tan_tiny
+trace done:  computable/trig_adversarial/tan_tiny (1 paths)
+trace start: computable/trig_adversarial/sin_medium
+trace done:  computable/trig_adversarial/sin_medium (5 paths)
+trace start: computable/trig_adversarial/cos_medium
+trace done:  computable/trig_adversarial/cos_medium (6 paths)
+trace start: computable/trig_adversarial/tan_medium
+trace done:  computable/trig_adversarial/tan_medium (6 paths)
+trace start: computable/trig_adversarial/sin_f64_exact
+trace done:  computable/trig_adversarial/sin_f64_exact (5 paths)
+trace start: computable/trig_adversarial/cos_f64_exact
+trace done:  computable/trig_adversarial/cos_f64_exact (5 paths)
+trace start: computable/trig_adversarial/sin_1e6
+trace done:  computable/trig_adversarial/sin_1e6 (6 paths)
+trace start: computable/trig_adversarial/cos_1e6
+trace done:  computable/trig_adversarial/cos_1e6 (6 paths)
+trace start: computable/trig_adversarial/tan_1e6
+trace done:  computable/trig_adversarial/tan_1e6 (7 paths)
+trace start: computable/trig_adversarial/sin_1e30
+trace done:  computable/trig_adversarial/sin_1e30 (6 paths)
+trace start: computable/trig_adversarial/cos_1e30
+trace done:  computable/trig_adversarial/cos_1e30 (6 paths)
+trace start: computable/trig_adversarial/tan_1e30
+trace done:  computable/trig_adversarial/tan_1e30 (7 paths)
+trace start: computable/trig_adversarial/sin_huge_pi_plus_offset
+trace done:  computable/trig_adversarial/sin_huge_pi_plus_offset (8 paths)
+trace start: computable/trig_adversarial/cos_huge_pi_plus_offset
+trace done:  computable/trig_adversarial/cos_huge_pi_plus_offset (8 paths)
+trace start: computable/trig_adversarial/tan_huge_pi_plus_offset
+trace done:  computable/trig_adversarial/tan_huge_pi_plus_offset (8 paths)
+trace start: computable/trig_adversarial/tan_near_half_pi
+trace done:  computable/trig_adversarial/tan_near_half_pi (1 paths)
+trace start: computable/trig_adversarial/tan_promoted_generated_604_125
+trace done:  computable/trig_adversarial/tan_promoted_generated_604_125 (8 paths)
+trace start: computable/inverse_trig_adversarial/asin_zero
+trace done:  computable/inverse_trig_adversarial/asin_zero (2 paths)
+trace start: computable/inverse_trig_adversarial/acos_zero
+trace done:  computable/inverse_trig_adversarial/acos_zero (3 paths)
+trace start: computable/inverse_trig_adversarial/atan_zero
+trace done:  computable/inverse_trig_adversarial/atan_zero (3 paths)
+trace start: computable/inverse_trig_adversarial/asin_tiny
+trace done:  computable/inverse_trig_adversarial/asin_tiny (2 paths)
+trace start: computable/inverse_trig_adversarial/acos_tiny
+trace done:  computable/inverse_trig_adversarial/acos_tiny (9 paths)
+trace start: computable/inverse_trig_adversarial/atan_tiny
+trace done:  computable/inverse_trig_adversarial/atan_tiny (4 paths)
+trace start: computable/inverse_trig_adversarial/asin_mid
+trace done:  computable/inverse_trig_adversarial/asin_mid (10 paths)
+trace start: computable/inverse_trig_adversarial/acos_mid
+trace done:  computable/inverse_trig_adversarial/acos_mid (8 paths)
+trace start: computable/inverse_trig_adversarial/atan_mid
+trace done:  computable/inverse_trig_adversarial/atan_mid (11 paths)
+trace start: computable/inverse_trig_adversarial/asin_near_one
+trace done:  computable/inverse_trig_adversarial/asin_near_one (10 paths)
+trace start: computable/inverse_trig_adversarial/acos_near_one
+trace done:  computable/inverse_trig_adversarial/acos_near_one (7 paths)
+trace start: computable/inverse_trig_adversarial/asin_near_minus_one
+trace done:  computable/inverse_trig_adversarial/asin_near_minus_one (10 paths)
+trace start: computable/inverse_trig_adversarial/acos_near_minus_one
+trace done:  computable/inverse_trig_adversarial/acos_near_minus_one (10 paths)
+trace start: computable/inverse_trig_adversarial/atan_large
+trace done:  computable/inverse_trig_adversarial/atan_large (8 paths)
+trace start: computable/inverse_trig_adversarial/atan_generated_783_412
+trace done:  computable/inverse_trig_adversarial/atan_generated_783_412 (10 paths)
+trace start: computable/inverse_trig_adversarial/atan_generated_minus_32_19
+trace done:  computable/inverse_trig_adversarial/atan_generated_minus_32_19 (10 paths)
+trace start: computable/inverse_trig_adversarial/atan_huge
+trace done:  computable/inverse_trig_adversarial/atan_huge (8 paths)
+trace start: computable/inverse_hyperbolic_adversarial/asinh_tiny
+trace done:  computable/inverse_hyperbolic_adversarial/asinh_tiny (2 paths)
+trace start: computable/inverse_hyperbolic_adversarial/asinh_mid
+trace done:  computable/inverse_hyperbolic_adversarial/asinh_mid (6 paths)
+trace start: computable/inverse_hyperbolic_adversarial/asinh_large
+trace done:  computable/inverse_hyperbolic_adversarial/asinh_large (9 paths)
+trace start: computable/inverse_hyperbolic_adversarial/asinh_large_negative
+trace done:  computable/inverse_hyperbolic_adversarial/asinh_large_negative (10 paths)
+trace start: computable/inverse_hyperbolic_adversarial/acosh_one_plus_tiny
+trace done:  computable/inverse_hyperbolic_adversarial/acosh_one_plus_tiny (15 paths)
+trace start: computable/inverse_hyperbolic_adversarial/acosh_sqrt_two
+trace done:  computable/inverse_hyperbolic_adversarial/acosh_sqrt_two (13 paths)
+trace start: computable/inverse_hyperbolic_adversarial/acosh_two
+trace done:  computable/inverse_hyperbolic_adversarial/acosh_two (15 paths)
+trace start: computable/inverse_hyperbolic_adversarial/acosh_large
+trace done:  computable/inverse_hyperbolic_adversarial/acosh_large (8 paths)
+trace start: computable/inverse_hyperbolic_adversarial/atanh_tiny
+trace done:  computable/inverse_hyperbolic_adversarial/atanh_tiny (2 paths)
+trace start: computable/inverse_hyperbolic_adversarial/atanh_mid
+trace done:  computable/inverse_hyperbolic_adversarial/atanh_mid (4 paths)
+trace start: computable/inverse_hyperbolic_adversarial/atanh_near_one
+trace done:  computable/inverse_hyperbolic_adversarial/atanh_near_one (8 paths)
+trace start: computable/inverse_hyperbolic_adversarial/atanh_near_minus_one
+trace done:  computable/inverse_hyperbolic_adversarial/atanh_near_minus_one (9 paths)
+updated dispatch_trace.md from 156 trace rows
+     Running benches/float_convert.rs (target/debug/deps/float_convert-e1968e6de9f66eeb)
+Testing float_convert/f32_normal
+Success
+Testing float_convert/f64_normal
+Success
+Testing float_convert/f64_binary_fraction
+Success
+Testing float_convert/f64_subnormal
+Success
+Testing float_convert/real_f32_normal
+Success
+Testing float_convert/real_f64_normal
+Success
+Testing float_convert/real_f64_binary_fraction
+Success
+Testing float_convert/real_f64_subnormal
+Success
+
+     Running benches/gmp_api.rs (target/debug/deps/gmp_api-46caba8a47b129b2)
+Testing gmp_rational_api/hyperreal/zero
+Success
+Testing gmp_rational_api/gmp/zero
+Success
+Testing gmp_rational_api/hyperreal/one
+Success
+Testing gmp_rational_api/gmp/one
+Success
+Testing gmp_rational_api/hyperreal/from_integer
+Success
+Testing gmp_rational_api/gmp/from_integer
+Success
+Testing gmp_rational_api/hyperreal/from_fraction
+Success
+Testing gmp_rational_api/gmp/from_fraction
+Success
+Testing gmp_rational_api/hyperreal/add
+Success
+Testing gmp_rational_api/gmp/add
+Success
+Testing gmp_rational_api/hyperreal/sub
+Success
+Testing gmp_rational_api/gmp/sub
+Success
+Testing gmp_rational_api/hyperreal/mul
+Success
+Testing gmp_rational_api/gmp/mul
+Success
+Testing gmp_rational_api/hyperreal/div
+Success
+Testing gmp_rational_api/gmp/div
+Success
+Testing gmp_rational_api/hyperreal/neg
+Success
+Testing gmp_rational_api/gmp/neg
+Success
+Testing gmp_rational_api/hyperreal/inverse
+Success
+Testing gmp_rational_api/gmp/inverse
+Success
+Testing gmp_rational_api/hyperreal/powi_17
+Success
+Testing gmp_rational_api/gmp/powi_17
+Success
+Testing gmp_rational_api/hyperreal/trunc
+Success
+Testing gmp_rational_api/gmp/trunc
+Success
+Testing gmp_rational_api/hyperreal/fract
+Success
+Testing gmp_rational_api/gmp/fract
+Success
+Testing gmp_rational_api/hyperreal/is_integer
+Success
+Testing gmp_rational_api/gmp/is_integer
+Success
+Testing gmp_rational_api/hyperreal/is_zero
+Success
+Testing gmp_rational_api/gmp/is_zero
+Success
+Testing gmp_rational_api/hyperreal/is_one
+Success
+Testing gmp_rational_api/gmp/is_one
+Success
+Testing gmp_rational_api/hyperreal/is_negative
+Success
+Testing gmp_rational_api/gmp/is_negative
+Success
+Testing gmp_rational_api/hyperreal/is_positive
+Success
+Testing gmp_rational_api/gmp/is_positive
+Success
+Testing gmp_rational_api/hyperreal/sign
+Success
+Testing gmp_rational_api/gmp/sign
+Success
+Testing gmp_rational_api/hyperreal/numerator
+Success
+Testing gmp_rational_api/gmp/numerator
+Success
+Testing gmp_rational_api/hyperreal/denominator
+Success
+Testing gmp_rational_api/gmp/denominator
+Success
+Testing gmp_rational_api/hyperreal/is_dyadic
+Success
+Testing gmp_rational_api/gmp/is_dyadic
+Success
+Testing gmp_rational_api/hyperreal/to_f64
+Success
+Testing gmp_rational_api/gmp/to_f64
+Success
+Testing gmp_rational_api/hyperreal/to_f64_enclosure
+Success
+Testing gmp_rational_api/gmp/to_f64_enclosure
+Success
+Testing gmp_rational_api/hyperreal/to_integer
+Success
+Testing gmp_rational_api/gmp/to_integer
+Success
+Testing gmp_rational_api/hyperreal/ordering
+Success
+Testing gmp_rational_api/gmp/ordering
+Success
+Testing gmp_rational_api/hyperreal/ordering_wide_dyadic
+Success
+Testing gmp_rational_api/gmp/ordering_wide_dyadic
+Success
+Testing gmp_rational_api/hyperreal/average_pair
+Success
+Testing gmp_rational_api/gmp/average_pair
+Success
+Testing gmp_rational_api/hyperreal/dot2
+Success
+Testing gmp_rational_api/gmp/dot2
+Success
+Testing gmp_rational_api/hyperreal/complex_product
+Success
+Testing gmp_rational_api/gmp/complex_product
+Success
+Testing gmp_rational_api/hyperreal/complex_quotient
+Success
+Testing gmp_rational_api/gmp/complex_quotient
+Success
+Testing gmp_rational_api/hyperreal/from_bigint
+Success
+Testing gmp_rational_api/gmp/from_bigint
+Success
+Testing gmp_rational_api/hyperreal/from_bigint_fraction
+Success
+Testing gmp_rational_api/gmp/from_bigint_fraction
+Success
+Testing gmp_rational_api/hyperreal/is_perfect_power
+Success
+Testing gmp_rational_api/gmp/is_perfect_power
+Success
+Testing gmp_rational_api/hyperreal/perfect_nth_root
+Success
+Testing gmp_rational_api/gmp/perfect_nth_root
+Success
+Testing gmp_rational_api/hyperreal/extract_square_reduced
+Success
+Testing gmp_rational_api/gmp/extract_square_reduced
+Success
+Testing gmp_rational_api/hyperreal/extract_square_will_succeed
+Success
+Testing gmp_rational_api/gmp/extract_square_will_succeed
+Success
+Testing gmp_rational_api/hyperreal/same_denominator
+Success
+Testing gmp_rational_api/gmp/same_denominator
+Success
+Testing gmp_rational_api/hyperreal/shifted_big_integer
+Success
+Testing gmp_rational_api/gmp/shifted_big_integer
+Success
+Testing gmp_rational_api/hyperreal/signed_product_sum
+Success
+Testing gmp_rational_api/gmp/signed_product_sum
+Success
+Testing gmp_rational_api/hyperreal/signed_product_sum_shared_denominator
+Success
+Testing gmp_rational_api/gmp/signed_product_sum_shared_denominator
+Success
+Testing gmp_rational_api/hyperreal/signed_product_sum_ordering
+Success
+Testing gmp_rational_api/gmp/signed_product_sum_ordering
+Success
+Testing gmp_rational_api/hyperreal/mean_refs
+Success
+Testing gmp_rational_api/gmp/mean_refs
+Success
+Testing gmp_rational_api/hyperreal/mean3_refs
+Success
+Testing gmp_rational_api/gmp/mean3_refs
+Success
+
+Testing gmp_real_arithmetic_api/hyperreal/add
+Success
+Testing gmp_real_arithmetic_api/gmp_mpfr128/add
+Success
+Testing gmp_real_arithmetic_api/hyperreal/sub
+Success
+Testing gmp_real_arithmetic_api/gmp_mpfr128/sub
+Success
+Testing gmp_real_arithmetic_api/hyperreal/mul
+Success
+Testing gmp_real_arithmetic_api/gmp_mpfr128/mul
+Success
+Testing gmp_real_arithmetic_api/hyperreal/div
+Success
+Testing gmp_real_arithmetic_api/gmp_mpfr128/div
+Success
+Testing gmp_real_arithmetic_api/hyperreal/pow
+Success
+Testing gmp_real_arithmetic_api/gmp_mpfr128/pow
+Success
+Testing gmp_real_arithmetic_api/hyperreal/rem_euclid
+Success
+Testing gmp_real_arithmetic_api/gmp_mpfr128/rem_euclid
+Success
+Testing gmp_real_arithmetic_api/hyperreal/neg
+Success
+Testing gmp_real_arithmetic_api/gmp_mpfr128/neg
+Success
+Testing gmp_real_arithmetic_api/hyperreal/abs
+Success
+Testing gmp_real_arithmetic_api/gmp_mpfr128/abs
+Success
+Testing gmp_real_arithmetic_api/hyperreal/inverse
+Success
+Testing gmp_real_arithmetic_api/gmp_mpfr128/inverse
+Success
+Testing gmp_real_arithmetic_api/hyperreal/powi_17
+Success
+Testing gmp_real_arithmetic_api/gmp_mpfr128/powi_17
+Success
+Testing gmp_real_arithmetic_api/hyperreal/floor
+Success
+Testing gmp_real_arithmetic_api/gmp_mpfr128/floor
+Success
+Testing gmp_real_arithmetic_api/hyperreal/ceil
+Success
+Testing gmp_real_arithmetic_api/gmp_mpfr128/ceil
+Success
+Testing gmp_real_arithmetic_api/hyperreal/trunc
+Success
+Testing gmp_real_arithmetic_api/gmp_mpfr128/trunc
+Success
+Testing gmp_real_arithmetic_api/hyperreal/round
+Success
+Testing gmp_real_arithmetic_api/gmp_mpfr128/round
+Success
+Testing gmp_real_arithmetic_api/hyperreal/fract
+Success
+Testing gmp_real_arithmetic_api/gmp_mpfr128/fract
+Success
+Testing gmp_real_arithmetic_api/hyperreal/to_radians
+Success
+Testing gmp_real_arithmetic_api/gmp_mpfr128/to_radians
+Success
+Testing gmp_real_arithmetic_api/hyperreal/to_degrees
+Success
+Testing gmp_real_arithmetic_api/gmp_mpfr128/to_degrees
+Success
+
+Testing gmp_real_elementary_api/hyperreal/sqrt
+Success
+Testing gmp_real_elementary_api/gmp_mpfr128/sqrt
+Success
+Testing gmp_real_elementary_api/hyperreal/cbrt
+Success
+Testing gmp_real_elementary_api/gmp_mpfr128/cbrt
+Success
+Testing gmp_real_elementary_api/hyperreal/root_n_5
+Success
+Testing gmp_real_elementary_api/gmp_mpfr128/root_n_5
+Success
+Testing gmp_real_elementary_api/hyperreal/exp
+Success
+Testing gmp_real_elementary_api/gmp_mpfr128/exp
+Success
+Testing gmp_real_elementary_api/hyperreal/exp2
+Success
+Testing gmp_real_elementary_api/gmp_mpfr128/exp2
+Success
+Testing gmp_real_elementary_api/hyperreal/exp10
+Success
+Testing gmp_real_elementary_api/gmp_mpfr128/exp10
+Success
+Testing gmp_real_elementary_api/hyperreal/ln
+Success
+Testing gmp_real_elementary_api/gmp_mpfr128/ln
+Success
+Testing gmp_real_elementary_api/hyperreal/log2
+Success
+Testing gmp_real_elementary_api/gmp_mpfr128/log2
+Success
+Testing gmp_real_elementary_api/hyperreal/log10
+Success
+Testing gmp_real_elementary_api/gmp_mpfr128/log10
+Success
+Testing gmp_real_elementary_api/hyperreal/ln_1p
+Success
+Testing gmp_real_elementary_api/gmp_mpfr128/ln_1p
+Success
+Testing gmp_real_elementary_api/hyperreal/ln_1m
+Success
+Testing gmp_real_elementary_api/gmp_mpfr128/ln_1m
+Success
+Testing gmp_real_elementary_api/hyperreal/log1p
+Success
+Testing gmp_real_elementary_api/gmp_mpfr128/log1p
+Success
+Testing gmp_real_elementary_api/hyperreal/log1m
+Success
+Testing gmp_real_elementary_api/gmp_mpfr128/log1m
+Success
+Testing gmp_real_elementary_api/hyperreal/expm1
+Success
+Testing gmp_real_elementary_api/gmp_mpfr128/expm1
+Success
+Testing gmp_real_elementary_api/hyperreal/sin
+Success
+Testing gmp_real_elementary_api/gmp_mpfr128/sin
+Success
+Testing gmp_real_elementary_api/hyperreal/cos
+Success
+Testing gmp_real_elementary_api/gmp_mpfr128/cos
+Success
+Testing gmp_real_elementary_api/hyperreal/tan
+Success
+Testing gmp_real_elementary_api/gmp_mpfr128/tan
+Success
+Testing gmp_real_elementary_api/hyperreal/cot
+Success
+Testing gmp_real_elementary_api/gmp_mpfr128/cot
+Success
+Testing gmp_real_elementary_api/hyperreal/asin
+Success
+Testing gmp_real_elementary_api/gmp_mpfr128/asin
+Success
+Testing gmp_real_elementary_api/hyperreal/acos
+Success
+Testing gmp_real_elementary_api/gmp_mpfr128/acos
+Success
+Testing gmp_real_elementary_api/hyperreal/atan
+Success
+Testing gmp_real_elementary_api/gmp_mpfr128/atan
+Success
+Testing gmp_real_elementary_api/hyperreal/sinh
+Success
+Testing gmp_real_elementary_api/gmp_mpfr128/sinh
+Success
+Testing gmp_real_elementary_api/hyperreal/cosh
+Success
+Testing gmp_real_elementary_api/gmp_mpfr128/cosh
+Success
+Testing gmp_real_elementary_api/hyperreal/tanh
+Success
+Testing gmp_real_elementary_api/gmp_mpfr128/tanh
+Success
+Testing gmp_real_elementary_api/hyperreal/asinh
+Success
+Testing gmp_real_elementary_api/gmp_mpfr128/asinh
+Success
+Testing gmp_real_elementary_api/hyperreal/acosh
+Success
+Testing gmp_real_elementary_api/gmp_mpfr128/acosh
+Success
+Testing gmp_real_elementary_api/hyperreal/atanh
+Success
+Testing gmp_real_elementary_api/gmp_mpfr128/atanh
+Success
+Testing gmp_real_elementary_api/hyperreal/sin_pi
+Success
+Testing gmp_real_elementary_api/gmp_mpfr128/sin_pi
+Success
+Testing gmp_real_elementary_api/hyperreal/cos_pi
+Success
+Testing gmp_real_elementary_api/gmp_mpfr128/cos_pi
+Success
+Testing gmp_real_elementary_api/hyperreal/tan_pi
+Success
+Testing gmp_real_elementary_api/gmp_mpfr128/tan_pi
+Success
+Testing gmp_real_elementary_api/hyperreal/cot_pi
+Success
+Testing gmp_real_elementary_api/gmp_mpfr128/cot_pi
+Success
+Testing gmp_real_elementary_api/hyperreal/sinc
+Success
+Testing gmp_real_elementary_api/gmp_mpfr128/sinc
+Success
+Testing gmp_real_elementary_api/hyperreal/sinc_pi
+Success
+Testing gmp_real_elementary_api/gmp_mpfr128/sinc_pi
+Success
+Testing gmp_real_elementary_api/hyperreal/cosc
+Success
+Testing gmp_real_elementary_api/gmp_mpfr128/cosc
+Success
+Testing gmp_real_elementary_api/hyperreal/erf
+Success
+Testing gmp_real_elementary_api/gmp_mpfr128/erf
+Success
+Testing gmp_real_elementary_api/hyperreal/erfc
+Success
+Testing gmp_real_elementary_api/gmp_mpfr128/erfc
+Success
+Testing gmp_real_elementary_api/hyperreal/erfinv
+Success
+Testing gmp_real_elementary_api/gmp_mpfr128/erfinv
+Success
+Testing gmp_real_elementary_api/hyperreal/erfcinv
+Success
+Testing gmp_real_elementary_api/gmp_mpfr128/erfcinv
+Success
+Testing gmp_real_elementary_api/hyperreal/gamma
+Success
+Testing gmp_real_elementary_api/gmp_mpfr128/gamma
+Success
+Testing gmp_real_elementary_api/hyperreal/lgamma
+Success
+Testing gmp_real_elementary_api/gmp_mpfr128/lgamma
+Success
+Testing gmp_real_elementary_api/hyperreal/atan2
+Success
+Testing gmp_real_elementary_api/gmp_mpfr128/atan2
+Success
+Testing gmp_real_elementary_api/hyperreal/logaddexp
+Success
+Testing gmp_real_elementary_api/gmp_mpfr128/logaddexp
+Success
+Testing gmp_real_elementary_api/hyperreal/logsubexp
+Success
+Testing gmp_real_elementary_api/gmp_mpfr128/logsubexp
+Success
+Testing gmp_real_elementary_api/hyperreal/hypot2
+Success
+Testing gmp_real_elementary_api/gmp_mpfr128/hypot2
+Success
+Testing gmp_real_elementary_api/hyperreal/hypot3
+Success
+Testing gmp_real_elementary_api/gmp_mpfr128/hypot3
+Success
+Testing gmp_real_elementary_api/hyperreal/hypot_minus
+Success
+Testing gmp_real_elementary_api/gmp_mpfr128/hypot_minus
+Success
+Testing gmp_real_elementary_api/hyperreal/beta
+Success
+Testing gmp_real_elementary_api/gmp_mpfr128/beta
+Success
+Testing gmp_real_elementary_api/hyperreal/ln_beta
+Success
+Testing gmp_real_elementary_api/gmp_mpfr128/ln_beta
+Success
+Testing gmp_real_elementary_api/hyperreal/lbeta
+Success
+Testing gmp_real_elementary_api/gmp_mpfr128/lbeta
+Success
+Testing gmp_real_elementary_api/hyperreal/pow_rational_5_over_3
+Success
+Testing gmp_real_elementary_api/gmp_mpfr128/pow_rational_5_over_3
+Success
+
+Testing gmp_real_derived_api/hyperreal/sqrt1pm1
+Success
+Testing gmp_real_derived_api/gmp_mpfr128/sqrt1pm1
+Success
+Testing gmp_real_derived_api/hyperreal/sqrt1m1
+Success
+Testing gmp_real_derived_api/gmp_mpfr128/sqrt1m1
+Success
+Testing gmp_real_derived_api/hyperreal/softplus
+Success
+Testing gmp_real_derived_api/gmp_mpfr128/softplus
+Success
+Testing gmp_real_derived_api/hyperreal/sigmoid
+Success
+Testing gmp_real_derived_api/gmp_mpfr128/sigmoid
+Success
+Testing gmp_real_derived_api/hyperreal/logit
+Success
+Testing gmp_real_derived_api/gmp_mpfr128/logit
+Success
+Testing gmp_real_derived_api/hyperreal/erfcx
+Success
+Testing gmp_real_derived_api/gmp_mpfr128/erfcx
+Success
+Testing gmp_real_derived_api/hyperreal/dnorm
+Success
+Testing gmp_real_derived_api/gmp_mpfr128/dnorm
+Success
+Testing gmp_real_derived_api/hyperreal/pnorm
+Success
+Testing gmp_real_derived_api/gmp_mpfr128/pnorm
+Success
+Testing gmp_real_derived_api/hyperreal/pnorm_upper
+Success
+Testing gmp_real_derived_api/gmp_mpfr128/pnorm_upper
+Success
+Testing gmp_real_derived_api/hyperreal/normal_sf
+Success
+Testing gmp_real_derived_api/gmp_mpfr128/normal_sf
+Success
+Testing gmp_real_derived_api/hyperreal/log_pnorm
+Success
+Testing gmp_real_derived_api/gmp_mpfr128/log_pnorm
+Success
+Testing gmp_real_derived_api/hyperreal/log_normal_sf
+Success
+Testing gmp_real_derived_api/gmp_mpfr128/log_normal_sf
+Success
+Testing gmp_real_derived_api/hyperreal/log_dnorm
+Success
+Testing gmp_real_derived_api/gmp_mpfr128/log_dnorm
+Success
+Testing gmp_real_derived_api/hyperreal/normal_interval
+Success
+Testing gmp_real_derived_api/gmp_mpfr128/normal_interval
+Success
+Testing gmp_real_derived_api/hyperreal/pnorm_diff
+Success
+Testing gmp_real_derived_api/gmp_mpfr128/pnorm_diff
+Success
+Testing gmp_real_derived_api/hyperreal/normal_pdf
+Success
+Testing gmp_real_derived_api/gmp_mpfr128/normal_pdf
+Success
+Testing gmp_real_derived_api/hyperreal/normal_cdf
+Success
+Testing gmp_real_derived_api/gmp_mpfr128/normal_cdf
+Success
+Testing gmp_real_derived_api/hyperreal/normal_survival
+Success
+Testing gmp_real_derived_api/gmp_mpfr128/normal_survival
+Success
+Testing gmp_real_derived_api/hyperreal/normal_mills
+Success
+Testing gmp_real_derived_api/gmp_mpfr128/normal_mills
+Success
+Testing gmp_real_derived_api/hyperreal/normal_hazard
+Success
+Testing gmp_real_derived_api/gmp_mpfr128/normal_hazard
+Success
+Testing gmp_real_derived_api/hyperreal/normal_log_hazard
+Success
+Testing gmp_real_derived_api/gmp_mpfr128/normal_log_hazard
+Success
+Testing gmp_real_derived_api/hyperreal/normal_inverse_mills
+Success
+Testing gmp_real_derived_api/gmp_mpfr128/normal_inverse_mills
+Success
+Testing gmp_real_derived_api/hyperreal/qnorm
+Success
+Testing gmp_real_derived_api/gmp_mpfr128/qnorm
+Success
+Testing gmp_real_derived_api/hyperreal/qnorm_upper
+Success
+Testing gmp_real_derived_api/gmp_mpfr128/qnorm_upper
+Success
+Testing gmp_real_derived_api/hyperreal/normal_quantile
+Success
+Testing gmp_real_derived_api/gmp_mpfr128/normal_quantile
+Success
+Testing gmp_real_derived_api/hyperreal/regularized_gamma_p
+Success
+Testing gmp_real_derived_api/gmp_mpfr128/regularized_gamma_p
+Success
+Testing gmp_real_derived_api/hyperreal/regularized_gamma_q
+Success
+Testing gmp_real_derived_api/gmp_mpfr128/regularized_gamma_q
+Success
+Testing gmp_real_derived_api/hyperreal/chi_square_cdf_k5
+Success
+Testing gmp_real_derived_api/gmp_mpfr128/chi_square_cdf_k5
+Success
+Testing gmp_real_derived_api/hyperreal/chi_square_sf_k5
+Success
+Testing gmp_real_derived_api/gmp_mpfr128/chi_square_sf_k5
+Success
+Testing gmp_real_derived_api/hyperreal/regularized_beta_integer
+Success
+Testing gmp_real_derived_api/gmp_mpfr128/regularized_beta_integer
+Success
+Testing gmp_real_derived_api/hyperreal/regularized_beta_q_integer
+Success
+Testing gmp_real_derived_api/gmp_mpfr128/regularized_beta_q_integer
+Success
+Testing gmp_real_derived_api/hyperreal/hermite_probabilists_n6
+Success
+Testing gmp_real_derived_api/gmp_mpfr128/hermite_probabilists_n6
+Success
+Testing gmp_real_derived_api/hyperreal/dnorm_derivative_n6
+Success
+Testing gmp_real_derived_api/gmp_mpfr128/dnorm_derivative_n6
+Success
+Testing gmp_real_derived_api/hyperreal/gaussian_derivative_n6
+Success
+Testing gmp_real_derived_api/gmp_mpfr128/gaussian_derivative_n6
+Success
+Testing gmp_real_derived_api/hyperreal/standard_normal_moment_n8
+Success
+Testing gmp_real_derived_api/gmp_mpfr128/standard_normal_moment_n8
+Success
+Testing gmp_real_derived_api/hyperreal/normal_interval_moment_n4
+Success
+Testing gmp_real_derived_api/gmp_mpfr128/normal_interval_moment_n4
+Success
+Testing gmp_real_derived_api/hyperreal/truncated_normal_mean
+Success
+Testing gmp_real_derived_api/gmp_mpfr128/truncated_normal_mean
+Success
+Testing gmp_real_derived_api/hyperreal/truncated_normal_variance
+Success
+Testing gmp_real_derived_api/gmp_mpfr128/truncated_normal_variance
+Success
+
+Testing gmp_real_linear_algebra_api/hyperreal/mul_add
+Success
+Testing gmp_real_linear_algebra_api/gmp_mpfr128/mul_add
+Success
+Testing gmp_real_linear_algebra_api/hyperreal/diff_of_products
+Success
+Testing gmp_real_linear_algebra_api/gmp_mpfr128/diff_of_products
+Success
+Testing gmp_real_linear_algebra_api/hyperreal/sum_products
+Success
+Testing gmp_real_linear_algebra_api/gmp_mpfr128/sum_products
+Success
+Testing gmp_real_linear_algebra_api/hyperreal/dot2_refs
+Success
+Testing gmp_real_linear_algebra_api/gmp_mpfr128/dot2_refs
+Success
+Testing gmp_real_linear_algebra_api/hyperreal/active_dot2_refs
+Success
+Testing gmp_real_linear_algebra_api/gmp_mpfr128/active_dot2_refs
+Success
+Testing gmp_real_linear_algebra_api/hyperreal/dot3_refs
+Success
+Testing gmp_real_linear_algebra_api/gmp_mpfr128/dot3_refs
+Success
+Testing gmp_real_linear_algebra_api/hyperreal/active_dot3_refs
+Success
+Testing gmp_real_linear_algebra_api/gmp_mpfr128/active_dot3_refs
+Success
+Testing gmp_real_linear_algebra_api/hyperreal/dot4_refs
+Success
+Testing gmp_real_linear_algebra_api/gmp_mpfr128/dot4_refs
+Success
+Testing gmp_real_linear_algebra_api/hyperreal/active_dot4_refs
+Success
+Testing gmp_real_linear_algebra_api/gmp_mpfr128/active_dot4_refs
+Success
+Testing gmp_real_linear_algebra_api/hyperreal/linear_combination3_refs
+Success
+Testing gmp_real_linear_algebra_api/gmp_mpfr128/linear_combination3_refs
+Success
+Testing gmp_real_linear_algebra_api/hyperreal/active_linear_combination3_refs
+Success
+Testing gmp_real_linear_algebra_api/gmp_mpfr128/active_linear_combination3_refs
+Success
+Testing gmp_real_linear_algebra_api/hyperreal/linear_combination4_refs
+Success
+Testing gmp_real_linear_algebra_api/gmp_mpfr128/linear_combination4_refs
+Success
+Testing gmp_real_linear_algebra_api/hyperreal/active_linear_combination4_refs
+Success
+Testing gmp_real_linear_algebra_api/gmp_mpfr128/active_linear_combination4_refs
+Success
+Testing gmp_real_linear_algebra_api/hyperreal/affine_combination3_refs
+Success
+Testing gmp_real_linear_algebra_api/gmp_mpfr128/affine_combination3_refs
+Success
+Testing gmp_real_linear_algebra_api/hyperreal/affine_combination4_refs
+Success
+Testing gmp_real_linear_algebra_api/gmp_mpfr128/affine_combination4_refs
+Success
+Testing gmp_real_linear_algebra_api/hyperreal/signed_product_sum
+Success
+Testing gmp_real_linear_algebra_api/gmp_mpfr128/signed_product_sum
+Success
+Testing gmp_real_linear_algebra_api/hyperreal/active_signed_product_sum
+Success
+Testing gmp_real_linear_algebra_api/gmp_mpfr128/active_signed_product_sum
+Success
+Testing gmp_real_linear_algebra_api/hyperreal/eval_poly
+Success
+Testing gmp_real_linear_algebra_api/gmp_mpfr128/eval_poly
+Success
+Testing gmp_real_linear_algebra_api/hyperreal/eval_rational_poly
+Success
+Testing gmp_real_linear_algebra_api/gmp_mpfr128/eval_rational_poly
+Success
+
+Testing gmp_real_collection_and_conversion_api/hyperreal/zero
+Success
+Testing gmp_real_collection_and_conversion_api/gmp_mpfr128/zero
+Success
+Testing gmp_real_collection_and_conversion_api/hyperreal/one
+Success
+Testing gmp_real_collection_and_conversion_api/gmp_mpfr128/one
+Success
+Testing gmp_real_collection_and_conversion_api/hyperreal/new_rational
+Success
+Testing gmp_real_collection_and_conversion_api/gmp_mpfr128/new_rational
+Success
+Testing gmp_real_collection_and_conversion_api/hyperreal/integer_bigint
+Success
+Testing gmp_real_collection_and_conversion_api/gmp_mpfr128/integer_bigint
+Success
+Testing gmp_real_collection_and_conversion_api/hyperreal/pi
+Success
+Testing gmp_real_collection_and_conversion_api/gmp_mpfr128/pi
+Success
+Testing gmp_real_collection_and_conversion_api/hyperreal/e
+Success
+Testing gmp_real_collection_and_conversion_api/gmp_mpfr128/e
+Success
+Testing gmp_real_collection_and_conversion_api/hyperreal/tau
+Success
+Testing gmp_real_collection_and_conversion_api/gmp_mpfr128/tau
+Success
+Testing gmp_real_collection_and_conversion_api/hyperreal/sum_owned
+Success
+Testing gmp_real_collection_and_conversion_api/gmp_mpfr128/sum_owned
+Success
+Testing gmp_real_collection_and_conversion_api/hyperreal/sum_refs
+Success
+Testing gmp_real_collection_and_conversion_api/gmp_mpfr128/sum_refs
+Success
+Testing gmp_real_collection_and_conversion_api/hyperreal/mean
+Success
+Testing gmp_real_collection_and_conversion_api/gmp_mpfr128/mean
+Success
+Testing gmp_real_collection_and_conversion_api/hyperreal/sample_stddev
+Success
+Testing gmp_real_collection_and_conversion_api/gmp_mpfr128/sample_stddev
+Success
+Testing gmp_real_collection_and_conversion_api/hyperreal/affine
+Success
+Testing gmp_real_collection_and_conversion_api/gmp_mpfr128/affine
+Success
+Testing gmp_real_collection_and_conversion_api/hyperreal/exact_rational_quotient_known_dyadic
+Success
+Testing gmp_real_collection_and_conversion_api/gmp_mpfr128/exact_rational_quotient_known_dyadic
+Success
+Testing gmp_real_collection_and_conversion_api/hyperreal/exact_rational_parameterized_point2_known_dyadic
+Success
+Testing gmp_real_collection_and_conversion_api/gmp_mpfr128/exact_rational_parameterized_point2_known_dyadic
+Success
+Testing gmp_real_collection_and_conversion_api/hyperreal/exact_rational_interpolate_point3_known_dyadic
+Success
+Testing gmp_real_collection_and_conversion_api/gmp_mpfr128/exact_rational_interpolate_point3_known_dyadic
+Success
+Testing gmp_real_collection_and_conversion_api/hyperreal/exact_rational_line_intersection2_known_dyadic
+Success
+Testing gmp_real_collection_and_conversion_api/gmp_mpfr128/exact_rational_line_intersection2_known_dyadic
+Success
+Testing gmp_real_collection_and_conversion_api/hyperreal/exact_rational_line_intersection2_point_known_exact
+Success
+Testing gmp_real_collection_and_conversion_api/gmp_mpfr128/exact_rational_line_intersection2_point_known_exa...
+Success
+Testing gmp_real_collection_and_conversion_api/hyperreal/to_f64_lossy
+Success
+Testing gmp_real_collection_and_conversion_api/gmp_mpfr128/to_f64_lossy
+Success
+Testing gmp_real_collection_and_conversion_api/hyperreal/to_f32_lossy
+Success
+Testing gmp_real_collection_and_conversion_api/gmp_mpfr128/to_f32_lossy
+Success
+Testing gmp_real_collection_and_conversion_api/hyperreal/inverse_ref
+Success
+Testing gmp_real_collection_and_conversion_api/gmp_mpfr128/inverse_ref
+Success
+Testing gmp_real_collection_and_conversion_api/hyperreal/is_integer
+Success
+Testing gmp_real_collection_and_conversion_api/gmp_mpfr128/is_integer
+Success
+Testing gmp_real_collection_and_conversion_api/hyperreal/is_finite
+Success
+Testing gmp_real_collection_and_conversion_api/gmp_mpfr128/is_finite
+Success
+Testing gmp_real_collection_and_conversion_api/hyperreal/to_f64_exact_dyadic
+Success
+Testing gmp_real_collection_and_conversion_api/gmp_mpfr128/to_f64_exact_dyadic
+Success
+Testing gmp_real_collection_and_conversion_api/hyperreal/min
+Success
+Testing gmp_real_collection_and_conversion_api/gmp_mpfr128/min
+Success
+Testing gmp_real_collection_and_conversion_api/hyperreal/max
+Success
+Testing gmp_real_collection_and_conversion_api/gmp_mpfr128/max
+Success
+
+Testing gmp_computable_api_p128/hyperreal/sqrt
+Success
+Testing gmp_computable_api_p128/gmp_mpfr128/sqrt
+Success
+Testing gmp_computable_api_p128/hyperreal/inverse
+Success
+Testing gmp_computable_api_p128/gmp_mpfr128/inverse
+Success
+Testing gmp_computable_api_p128/hyperreal/exp
+Success
+Testing gmp_computable_api_p128/gmp_mpfr128/exp
+Success
+Testing gmp_computable_api_p128/hyperreal/expm1
+Success
+Testing gmp_computable_api_p128/gmp_mpfr128/expm1
+Success
+Testing gmp_computable_api_p128/hyperreal/ln
+Success
+Testing gmp_computable_api_p128/gmp_mpfr128/ln
+Success
+Testing gmp_computable_api_p128/hyperreal/sin
+Success
+Testing gmp_computable_api_p128/gmp_mpfr128/sin
+Success
+Testing gmp_computable_api_p128/hyperreal/cos
+Success
+Testing gmp_computable_api_p128/gmp_mpfr128/cos
+Success
+Testing gmp_computable_api_p128/hyperreal/tan
+Success
+Testing gmp_computable_api_p128/gmp_mpfr128/tan
+Success
+Testing gmp_computable_api_p128/hyperreal/asin
+Success
+Testing gmp_computable_api_p128/gmp_mpfr128/asin
+Success
+Testing gmp_computable_api_p128/hyperreal/acos
+Success
+Testing gmp_computable_api_p128/gmp_mpfr128/acos
+Success
+Testing gmp_computable_api_p128/hyperreal/atan
+Success
+Testing gmp_computable_api_p128/gmp_mpfr128/atan
+Success
+Testing gmp_computable_api_p128/hyperreal/asinh
+Success
+Testing gmp_computable_api_p128/gmp_mpfr128/asinh
+Success
+Testing gmp_computable_api_p128/hyperreal/acosh
+Success
+Testing gmp_computable_api_p128/gmp_mpfr128/acosh
+Success
+Testing gmp_computable_api_p128/hyperreal/atanh
+Success
+Testing gmp_computable_api_p128/gmp_mpfr128/atanh
+Success
+Testing gmp_computable_api_p128/hyperreal/erf
+Success
+Testing gmp_computable_api_p128/gmp_mpfr128/erf
+Success
+Testing gmp_computable_api_p128/hyperreal/erfc
+Success
+Testing gmp_computable_api_p128/gmp_mpfr128/erfc
+Success
+Testing gmp_computable_api_p128/hyperreal/erfcx
+Success
+Testing gmp_computable_api_p128/gmp_mpfr128/erfcx
+Success
+Testing gmp_computable_api_p128/hyperreal/pnorm
+Success
+Testing gmp_computable_api_p128/gmp_mpfr128/pnorm
+Success
+Testing gmp_computable_api_p128/hyperreal/dnorm
+Success
+Testing gmp_computable_api_p128/gmp_mpfr128/dnorm
+Success
+Testing gmp_computable_api_p128/hyperreal/normal_sf
+Success
+Testing gmp_computable_api_p128/gmp_mpfr128/normal_sf
+Success
+Testing gmp_computable_api_p128/hyperreal/log_pnorm
+Success
+Testing gmp_computable_api_p128/gmp_mpfr128/log_pnorm
+Success
+Testing gmp_computable_api_p128/hyperreal/log_normal_sf
+Success
+Testing gmp_computable_api_p128/gmp_mpfr128/log_normal_sf
+Success
+Testing gmp_computable_api_p128/hyperreal/log_dnorm
+Success
+Testing gmp_computable_api_p128/gmp_mpfr128/log_dnorm
+Success
+Testing gmp_computable_api_p128/hyperreal/negate
+Success
+Testing gmp_computable_api_p128/gmp_mpfr128/negate
+Success
+Testing gmp_computable_api_p128/hyperreal/square
+Success
+Testing gmp_computable_api_p128/gmp_mpfr128/square
+Success
+Testing gmp_computable_api_p128/hyperreal/multiply
+Success
+Testing gmp_computable_api_p128/gmp_mpfr128/multiply
+Success
+Testing gmp_computable_api_p128/hyperreal/add
+Success
+Testing gmp_computable_api_p128/gmp_mpfr128/add
+Success
+Testing gmp_computable_api_p128/hyperreal/atan2
+Success
+Testing gmp_computable_api_p128/gmp_mpfr128/atan2
+Success
+Testing gmp_computable_api_p128/hyperreal/normal_interval
+Success
+Testing gmp_computable_api_p128/gmp_mpfr128/normal_interval
+Success
+Testing gmp_computable_api_p128/hyperreal/normal_quantile
+Success
+Testing gmp_computable_api_p128/gmp_mpfr128/normal_quantile
+Success
+Testing gmp_computable_api_p128/hyperreal/try_compare_to
+Success
+Testing gmp_computable_api_p128/gmp_mpfr128/try_compare_to
+Success
+Testing gmp_computable_api_p128/hyperreal/compare_absolute
+Success
+Testing gmp_computable_api_p128/gmp_mpfr128/compare_absolute
+Success
+Testing gmp_computable_api_p128/hyperreal/sign_until_floor_2000
+Success
+Testing gmp_computable_api_p128/gmp_mpfr128/sign_until_floor_2000
+Success
+Testing gmp_computable_api_p128/hyperreal/sign_until
+Success
+Testing gmp_computable_api_p128/gmp_mpfr128/sign_until
+Success
+Testing gmp_computable_api_p128/hyperreal/zero_status
+Success
+Testing gmp_computable_api_p128/gmp_mpfr128/zero_status
+Success
+Testing gmp_computable_api_p128/hyperreal/pi
+Success
+Testing gmp_computable_api_p128/gmp_mpfr128/pi
+Success
+Testing gmp_computable_api_p128/hyperreal/e
+Success
+Testing gmp_computable_api_p128/gmp_mpfr128/e
+Success
+Testing gmp_computable_api_p128/hyperreal/tau
+Success
+Testing gmp_computable_api_p128/gmp_mpfr128/tau
+Success
+
+Testing gmp_magnitude_algorithms/num_bigint_mul/4096
+Success
+Testing gmp_magnitude_algorithms/gmp_mul/4096
+Success
+Testing gmp_magnitude_algorithms/gmp_roundtrip_mul/4096
+Success
+Testing gmp_magnitude_algorithms/num_bigint_div/4096
+Success
+Testing gmp_magnitude_algorithms/gmp_div/4096
+Success
+Testing gmp_magnitude_algorithms/gmp_roundtrip_div/4096
+Success
+Testing gmp_magnitude_algorithms/num_bigint_mul/16384
+Success
+Testing gmp_magnitude_algorithms/gmp_mul/16384
+Success
+Testing gmp_magnitude_algorithms/gmp_roundtrip_mul/16384
+Success
+Testing gmp_magnitude_algorithms/num_bigint_div/16384
+Success
+Testing gmp_magnitude_algorithms/gmp_div/16384
+Success
+Testing gmp_magnitude_algorithms/gmp_roundtrip_div/16384
+Success
+Testing gmp_magnitude_algorithms/num_bigint_mul/65536
+Success
+Testing gmp_magnitude_algorithms/gmp_mul/65536
+Success
+Testing gmp_magnitude_algorithms/gmp_roundtrip_mul/65536
+Success
+Testing gmp_magnitude_algorithms/num_bigint_div/65536
+Success
+Testing gmp_magnitude_algorithms/gmp_div/65536
+Success
+Testing gmp_magnitude_algorithms/gmp_roundtrip_div/65536
+Success
+
+     Running benches/library_perf.rs (target/debug/deps/library_perf-49094a16141be2ab)
+Testing real_format/pi_lower_exp_32
+Success
+Testing real_format/pi_display_alt_32
+Success
+Testing real_format/sqrt_two_display_alt_32
+Success
+
+Testing real_constants/pi
+Success
+Testing real_constants/e
+Success
+
+Testing simple/parse_nested
+Success
+Testing simple/eval_nested
+Success
+Testing simple/eval_constants
+Success
+Testing simple/eval_exact
+Success
+Testing simple/eval_nested_exact
+Success
+
+Testing real_powi/exact_17
+Success
+Testing real_powi/exact_17_i64
+Success
+Testing real_powi/irrational_17
+Success
+Testing real_powi/large_exact_lazy_20000
+Success
+Testing real_powi/pi_negative_one
+Success
+
+Testing rational_powi/exact_17
+Success
+Testing rational_powi/oversized_20000_exhausted
+Success
+
+Testing iterator_products/rational_wallis_sequential_1000
+Success
+Testing iterator_products/rational_wallis_owned_1000
+Success
+Testing iterator_products/rational_wallis_borrowed_1000
+Success
+Testing iterator_products/real_wallis_owned_1000
+Success
+
+Testing real_exact_trig/sin_pi_6
+Success
+Testing real_exact_trig/cos_pi_3
+Success
+Testing real_exact_trig/tan_pi_5
+Success
+
+Testing real_general_trig/tan_sqrt_2
+Success
+Testing real_general_trig/tan_pi_sqrt_2_over_5
+Success
+
+Testing real_exact_inverse_trig/asin_1_2
+Success
+Testing real_exact_inverse_trig/asin_minus_1_2
+Success
+Testing real_exact_inverse_trig/asin_sqrt_2_over_2
+Success
+Testing real_exact_inverse_trig/asin_sin_pi_5
+Success
+Testing real_exact_inverse_trig/acos_1
+Success
+Testing real_exact_inverse_trig/acos_minus_1
+Success
+Testing real_exact_inverse_trig/acos_1_2
+Success
+Testing real_exact_inverse_trig/atan_1
+Success
+Testing real_exact_inverse_trig/atan_sqrt_3_over_3
+Success
+Testing real_exact_inverse_trig/atan_tan_pi_5
+Success
+
+Testing real_general_inverse_trig/asin_7_10
+Success
+Testing real_general_inverse_trig/asin_near_one
+Success
+Testing real_general_inverse_trig/asin_near_minus_one
+Success
+Testing real_general_inverse_trig/asin_sqrt_2_over_3
+Success
+Testing real_general_inverse_trig/acos_7_10
+Success
+Testing real_general_inverse_trig/acos_sqrt_2_over_3
+Success
+Testing real_general_inverse_trig/asin_11_10_error
+Success
+Testing real_general_inverse_trig/acos_11_10_error
+Success
+Testing real_general_inverse_trig/atan_8
+Success
+Testing real_general_inverse_trig/atan_sqrt_2
+Success
+
+Testing real_inverse_hyperbolic/asinh_0
+Success
+Testing real_inverse_hyperbolic/asinh_1_2
+Success
+Testing real_inverse_hyperbolic/asinh_sqrt_2
+Success
+Testing real_inverse_hyperbolic/asinh_minus_1_2
+Success
+Testing real_inverse_hyperbolic/asinh_1_000_000
+Success
+Testing real_inverse_hyperbolic/acosh_1
+Success
+Testing real_inverse_hyperbolic/acosh_2
+Success
+Testing real_inverse_hyperbolic/acosh_sqrt_2
+Success
+Testing real_inverse_hyperbolic/acosh_1_000_000
+Success
+Testing real_inverse_hyperbolic/atanh_0
+Success
+Testing real_inverse_hyperbolic/atanh_1_2
+Success
+Testing real_inverse_hyperbolic/atanh_minus_1_2
+Success
+Testing real_inverse_hyperbolic/atanh_sqrt_half
+Success
+Testing real_inverse_hyperbolic/atanh_9_10
+Success
+Testing real_inverse_hyperbolic/atanh_1_error
+Success
+
+Testing simple_inverse_functions/asin_1_2
+Success
+Testing simple_inverse_functions/acos_1_2
+Success
+Testing simple_inverse_functions/atan_1
+Success
+Testing simple_inverse_functions/asin_general
+Success
+Testing simple_inverse_functions/acos_general
+Success
+Testing simple_inverse_functions/atan_general
+Success
+Testing simple_inverse_functions/asinh_1_2
+Success
+Testing simple_inverse_functions/asinh_sqrt_2
+Success
+Testing simple_inverse_functions/acosh_2
+Success
+Testing simple_inverse_functions/acosh_sqrt_2
+Success
+Testing simple_inverse_functions/atanh_1_2
+Success
+Testing simple_inverse_functions/atanh_minus_1_2
+Success
+
+Testing simple_inverse_error_functions/asin_11_10
+Success
+Testing simple_inverse_error_functions/acos_sqrt_2
+Success
+Testing simple_inverse_error_functions/acosh_0
+Success
+Testing simple_inverse_error_functions/acosh_minus_2
+Success
+Testing simple_inverse_error_functions/atanh_1
+Success
+Testing simple_inverse_error_functions/atanh_sqrt_2
+Success
+
+Testing real_exact_ln/ln_1024
+Success
+Testing real_exact_ln/ln_1_8
+Success
+Testing real_exact_ln/ln_1000
+Success
+
+Testing real_exact_exp_log10/exp_ln_1000
+Success
+Testing real_exact_exp_log10/exp_ln_1_8
+Success
+Testing real_exact_exp_log10/log10_1000
+Success
+Testing real_exact_exp_log10/log10_1_1000
+Success
+Testing real_exact_exp_log10/pow2_log2_3
+Success
+Testing real_exact_exp_log10/pow10_log10_2
+Success
+Testing real_exact_exp_log10/log2_exp2_1_7
+Success
+Testing real_exact_exp_log10/log10_exp10_6411_4096
+Success
+
+Testing real_stable_scalar_substrate/ln_1p_tiny
+Success
+Testing real_stable_scalar_substrate/ln_1m_tiny
+Success
+Testing real_stable_scalar_substrate/expm1_tiny
+Success
+Testing real_stable_scalar_substrate/softplus_large_positive
+Success
+Testing real_stable_scalar_substrate/softplus_large_negative
+Success
+Testing real_stable_scalar_substrate/logaddexp_dominant
+Success
+Testing real_stable_scalar_substrate/logsubexp_near
+Success
+Testing real_stable_scalar_substrate/sigmoid_large_positive
+Success
+Testing real_stable_scalar_substrate/logit_near_one
+Success
+Testing real_stable_scalar_substrate/sqrt1pm1_tiny
+Success
+Testing real_stable_scalar_substrate/sqrt1m1_tiny
+Success
+Testing real_stable_scalar_substrate/sqrt_quadratic_surd_perfect_norm
+Success
+Testing real_stable_scalar_substrate/certified_compare_nested_radical_identity
+Success
+Testing real_stable_scalar_substrate/cbrt_negative_perfect
+Success
+Testing real_stable_scalar_substrate/root_n_perfect_fourth
+Success
+Testing real_stable_scalar_substrate/pow_rational_negative_odd_denominator
+Success
+Testing real_stable_scalar_substrate/floor_certified_rational
+Success
+Testing real_stable_scalar_substrate/near_integer_rational
+Success
+Testing real_stable_scalar_substrate/near_integer_sqrt2
+Success
+Testing real_stable_scalar_substrate/floor_certified_sqrt2
+Success
+Testing real_stable_scalar_substrate/rem_euclid_certified_rational
+Success
+
+Testing real_geometry_polynomial_substrate/sin_pi_one_sixth
+Success
+Testing real_geometry_polynomial_substrate/cos_pi_one_fourth
+Success
+Testing real_geometry_polynomial_substrate/cos_pi_one_seventh
+Success
+Testing real_geometry_polynomial_substrate/tan_pi_one_third
+Success
+Testing real_geometry_polynomial_substrate/sinc_zero
+Success
+Testing real_geometry_polynomial_substrate/sinc_tiny
+Success
+Testing real_geometry_polynomial_substrate/sinc_pi_half
+Success
+Testing real_geometry_polynomial_substrate/cosc_tiny
+Success
+Testing real_geometry_polynomial_substrate/sinc_opaque_zero
+Success
+Testing real_geometry_polynomial_substrate/sinc_pi_opaque_zero
+Success
+Testing real_geometry_polynomial_substrate/cosc_opaque_zero
+Success
+Testing real_geometry_polynomial_substrate/atan2_axis
+Success
+Testing real_geometry_polynomial_substrate/atan2_quadrant
+Success
+Testing real_geometry_polynomial_substrate/hypot2_3_4
+Success
+Testing real_geometry_polynomial_substrate/hypot3_2_3_6
+Success
+Testing real_geometry_polynomial_substrate/hypot_minus_tiny
+Success
+Testing real_geometry_polynomial_substrate/mul_add_zero_product
+Success
+Testing real_geometry_polynomial_substrate/sum_products_dense
+Success
+Testing real_geometry_polynomial_substrate/diff_of_products_near_cancel
+Success
+Testing real_geometry_polynomial_substrate/eval_poly_horner
+Success
+Testing real_geometry_polynomial_substrate/eval_rational_poly
+Success
+
+Testing real_normal_scientific_substrate/erfc_zero
+Success
+Testing real_normal_scientific_substrate/erfcx_tail
+Success
+Testing real_normal_scientific_substrate/normal_sf_tail
+Success
+Testing real_normal_scientific_substrate/pnorm_upper_tail
+Success
+Testing real_normal_scientific_substrate/log_pnorm_tail
+Success
+Testing real_normal_scientific_substrate/log_pnorm_zero
+Success
+Testing real_normal_scientific_substrate/log_normal_sf_tail
+Success
+Testing real_normal_scientific_substrate/log_normal_sf_zero
+Success
+Testing real_normal_scientific_substrate/log_dnorm_large
+Success
+Testing real_normal_scientific_substrate/normal_interval_narrow
+Success
+Testing real_normal_scientific_substrate/erfinv_mid
+Success
+Testing real_normal_scientific_substrate/erfcinv_tail
+Success
+Testing real_normal_scientific_substrate/qnorm_upper_tail
+Success
+Testing real_normal_scientific_substrate/normal_pdf_parametric
+Success
+Testing real_normal_scientific_substrate/normal_survival_parametric
+Success
+Testing real_normal_scientific_substrate/normal_mills_tail
+Success
+Testing real_normal_scientific_substrate/normal_mills_zero
+Success
+Testing real_normal_scientific_substrate/normal_hazard_tail
+Success
+Testing real_normal_scientific_substrate/normal_hazard_zero
+Success
+Testing real_normal_scientific_substrate/normal_inverse_mills_zero
+Success
+Testing real_normal_scientific_substrate/hermite_8
+Success
+Testing real_normal_scientific_substrate/dnorm_derivative_4
+Success
+Testing real_normal_scientific_substrate/standard_normal_moment_12
+Success
+Testing real_normal_scientific_substrate/normal_interval_moment_3
+Success
+Testing real_normal_scientific_substrate/truncated_normal_mean
+Success
+Testing real_normal_scientific_substrate/gamma_integer
+Success
+Testing real_normal_scientific_substrate/gamma_half_integer
+Success
+Testing real_normal_scientific_substrate/lgamma_half_integer
+Success
+Testing real_normal_scientific_substrate/beta_integer
+Success
+Testing real_normal_scientific_substrate/ln_beta_half_integer
+Success
+Testing real_normal_scientific_substrate/regularized_beta_mid
+Success
+Testing real_normal_scientific_substrate/regularized_beta_uniform
+Success
+Testing real_normal_scientific_substrate/regularized_beta_left_unity
+Success
+Testing real_normal_scientific_substrate/regularized_beta_q_mid
+Success
+Testing real_normal_scientific_substrate/regularized_beta_q_uniform
+Success
+Testing real_normal_scientific_substrate/regularized_beta_q_left_unity
+Success
+Testing real_normal_scientific_substrate/regularized_gamma_p_half
+Success
+Testing real_normal_scientific_substrate/regularized_gamma_q_integer
+Success
+Testing real_normal_scientific_substrate/chi_square_sf
+Success
+
+Testing simple_new_function_surface/stable_log_exp_bundle
+Success
+Testing simple_new_function_surface/geometry_bundle
+Success
+Testing simple_new_function_surface/normal_bundle
+Success
+Testing simple_new_function_surface/scientific_bundle
+Success
+Testing simple_new_function_surface/error_bundle
+Success
+
+     Running benches/numerical_micro.rs (target/debug/deps/numerical_micro-7c4e23249caebb31)
+Testing computable_cache/ratio_approx_cold_p128
+Success
+Testing computable_cache/ratio_approx_cached_p128
+Success
+Testing computable_cache/pi_approx_cold_p128
+Success
+Testing computable_cache/pi_approx_cached_p128
+Success
+Testing computable_cache/pi_plus_tiny_cold_p128
+Success
+Testing computable_cache/pi_minus_tiny_cold_p128
+Success
+
+Testing computable_bounds/deep_scaled_product_sign_until_p2000
+Success
+Testing computable_bounds/scaled_square_sign_until_p2000
+Success
+Testing computable_bounds/sqrt_scaled_square_sign_until_p2000
+Success
+Testing computable_bounds/deep_structural_bound_sign_until_p2000
+Success
+Testing computable_bounds/deep_structural_bound_sign_until_cached
+Success
+Testing computable_bounds/deep_structural_bound_facts_cached
+Success
+Testing computable_bounds/perturbed_scaled_product_sign_until_p2000
+Success
+Testing computable_bounds/perturbed_scaled_product_sign_until_p128
+Success
+Testing computable_bounds/pi_minus_tiny_sign_until_p2000
+Success
+Testing computable_bounds/pi_minus_tiny_sign_until_cached
+Success
+Testing computable_bounds/exp_unknown_sign_arg_sign_until_p2000
+Success
+Testing computable_bounds/exp_unknown_sign_arg_sign_until_cached
+Success
+Testing computable_bounds/mixed_pi_e_sign_until_p0_cold
+Success
+Testing computable_bounds/near_pi_sign_until_p64_cold
+Success
+Testing computable_bounds/near_pi_sign_until_p0_inconclusive_cold
+Success
+Testing computable_bounds/unsupported_sin_difference_sign_until_p0_cold
+Success
+Testing computable_bounds/unsupported_sin_difference_sign_until_p64_cold
+Success
+
+Testing computable_algebraic_roots/root5_construct
+Success
+Testing computable_algebraic_roots/root5_interval_p128_cold
+Success
+Testing computable_algebraic_roots/root5_interval_p2048_cold
+Success
+Testing computable_algebraic_roots/root9_interval_p128_cold
+Success
+Testing computable_algebraic_roots/root9_interval_p2048_cold
+Success
+Testing computable_algebraic_roots/root10_interval_p128_fallback_cold
+Success
+Testing computable_algebraic_roots/eighth_root_near_dyadic_sign_p64_cold
+Success
+Testing computable_algebraic_roots/ramanujan_one_zero_sign_p2048_cold
+Success
+Testing computable_algebraic_roots/ramanujan_two_zero_sign_p2048_cold
+Success
+Testing computable_algebraic_roots/many_digits_c10_zero_sign_p2048_cold
+Success
+
+Testing computable_compare/compare_to_opposite_sign
+Success
+Testing computable_compare/compare_to_exact_msd_gap
+Success
+Testing computable_compare/compare_to_clone_shared_composite
+Success
+Testing computable_compare/compare_absolute_exact_rational
+Success
+Testing computable_compare/compare_absolute_exact_rational_same_numerator
+Success
+Testing computable_compare/compare_absolute_mixed_exact_leaf_kinds
+Success
+Testing computable_compare/compare_absolute_dominant_add
+Success
+Testing computable_compare/compare_absolute_exact_msd_gap
+Success
+
+Testing computable_transcendentals/e_constant_cold_p128
+Success
+Testing computable_transcendentals/e_constant_cached_p128
+Success
+Testing computable_transcendentals/exp_cold_p128
+Success
+Testing computable_transcendentals/exp_cached_p128
+Success
+Testing computable_transcendentals/exp_large_cold_p128
+Success
+Testing computable_transcendentals/exp_negative_integer_cold_p128
+Success
+Testing computable_transcendentals/exp_integer_limit_cold_p128
+Success
+Testing computable_transcendentals/exp_integer_above_limit_cold_p128
+Success
+Testing computable_transcendentals/exp_half_cold_p128
+Success
+Testing computable_transcendentals/exp_near_limit_cold_p128
+Success
+Testing computable_transcendentals/exp_near_limit_cached_p128
+Success
+Testing computable_transcendentals/exp_zero_cold_p128
+Success
+Testing computable_transcendentals/ln_cold_p128
+Success
+Testing computable_transcendentals/ln_cached_p128
+Success
+Testing computable_transcendentals/ln_smooth_rational_cold_p128
+Success
+Testing computable_transcendentals/ln_nonsmooth_rational_cold_p128
+Success
+Testing computable_transcendentals/ln_large_cold_p128
+Success
+Testing computable_transcendentals/ln_large_cached_p128
+Success
+Testing computable_transcendentals/ln_tiny_cold_p128
+Success
+Testing computable_transcendentals/ln_near_limit_cold_p128
+Success
+Testing computable_transcendentals/ln_near_limit_cached_p128
+Success
+Testing computable_transcendentals/ln_one_cold_p128
+Success
+Testing computable_transcendentals/sqrt_cold_p128
+Success
+Testing computable_transcendentals/sqrt_squarefree_scaled_cold_p128
+Success
+Testing computable_transcendentals/sqrt_cached_p128
+Success
+Testing computable_transcendentals/sqrt_single_scaled_square_cold_p128
+Success
+Testing computable_transcendentals/sin_cold_p96
+Success
+Testing computable_transcendentals/sin_cached_p96
+Success
+Testing computable_transcendentals/cos_cold_p96
+Success
+Testing computable_transcendentals/sin_f64_cold_p96
+Success
+Testing computable_transcendentals/cos_f64_cold_p96
+Success
+Testing computable_transcendentals/sin_1e6_cold_p96
+Success
+Testing computable_transcendentals/cos_1e6_cold_p96
+Success
+Testing computable_transcendentals/sin_1e30_cold_p96
+Success
+Testing computable_transcendentals/cos_1e30_cold_p96
+Success
+Testing computable_transcendentals/cos_cached_p96
+Success
+Testing computable_transcendentals/tan_cold_p96
+Success
+Testing computable_transcendentals/tan_cached_p96
+Success
+Testing computable_transcendentals/sin_zero_cold_p96
+Success
+Testing computable_transcendentals/cos_zero_cold_p96
+Success
+Testing computable_transcendentals/tan_zero_cold_p96
+Success
+Testing computable_transcendentals/tan_near_half_pi_cold_p96
+Success
+Testing computable_transcendentals/tan_near_half_pi_cached_p96
+Success
+Testing computable_transcendentals/sin_huge_cold_p96
+Success
+Testing computable_transcendentals/cos_huge_cold_p96
+Success
+Testing computable_transcendentals/tan_huge_cold_p96
+Success
+Testing computable_transcendentals/asin_cold_p96
+Success
+Testing computable_transcendentals/asin_cached_p96
+Success
+Testing computable_transcendentals/acos_cold_p96
+Success
+Testing computable_transcendentals/acos_cached_p96
+Success
+Testing computable_transcendentals/asin_tiny_cold_p96
+Success
+Testing computable_transcendentals/acos_tiny_cold_p96
+Success
+Testing computable_transcendentals/asin_near_one_cold_p96
+Success
+Testing computable_transcendentals/acos_near_one_cold_p96
+Success
+Testing computable_transcendentals/atan_cold_p96
+Success
+Testing computable_transcendentals/atan_cached_p96
+Success
+Testing computable_transcendentals/atan_large_cold_p96
+Success
+Testing computable_transcendentals/asin_zero_cold_p96
+Success
+Testing computable_transcendentals/atan_zero_cold_p96
+Success
+Testing computable_transcendentals/asinh_cold_p128
+Success
+Testing computable_transcendentals/asinh_three_quarters_cold_p128
+Success
+Testing computable_transcendentals/asinh_cached_p128
+Success
+Testing computable_transcendentals/acosh_cold_p128
+Success
+Testing computable_transcendentals/acosh_cached_p128
+Success
+Testing computable_transcendentals/atanh_cold_p128
+Success
+Testing computable_transcendentals/atanh_cached_p128
+Success
+Testing computable_transcendentals/atanh_tiny_cold_p128
+Success
+Testing computable_transcendentals/atanh_near_one_cold_p128
+Success
+Testing computable_transcendentals/asinh_zero_cold_p128
+Success
+Testing computable_transcendentals/atanh_zero_cold_p128
+Success
+Testing computable_transcendentals/deep_add_chain_cold_p128
+Success
+Testing computable_transcendentals/deep_multiply_chain_cold_p128
+Success
+Testing computable_transcendentals/deep_multiply_identity_chain_cold_p128
+Success
+Testing computable_transcendentals/deep_scaled_product_chain_cold_p128
+Success
+Testing computable_transcendentals/perturbed_scaled_product_chain_cold_p128
+Success
+Testing computable_transcendentals/scaled_square_chain_cold_p128
+Success
+Testing computable_transcendentals/asymmetric_product_bad_order_cold_p128
+Success
+Testing computable_transcendentals/sqrt_scaled_square_chain_cold_p128
+Success
+Testing computable_transcendentals/warmed_zero_product_cold_p128
+Success
+Testing computable_transcendentals/inverse_scaled_product_chain_cold_p128
+Success
+Testing computable_transcendentals/deep_inverse_pair_chain_cold_p128
+Success
+Testing computable_transcendentals/deep_negated_square_chain_cold_p128
+Success
+Testing computable_transcendentals/deep_negative_one_product_chain_cold_p128
+Success
+Testing computable_transcendentals/deep_half_product_chain_cold_p128
+Success
+Testing computable_transcendentals/deep_half_square_chain_cold_p128
+Success
+Testing computable_transcendentals/deep_sqrt_square_chain_cold_p128
+Success
+Testing computable_transcendentals/inverse_half_product_chain_cold_p128
+Success
+
+     Running benches/real_representations.rs (target/debug/deps/real_representations-6ac552f16da3d2d9)
+Testing real_representation_construction_export/hyperreal_exact/one
+Success
+Testing real_representation_construction_export/mpfr192/one
+Success
+Testing real_representation_construction_export/hyperreal_exact/pi
+Success
+Testing real_representation_construction_export/mpfr192/pi
+Success
+Testing real_representation_construction_export/hyperreal_exact/pi_pow
+Success
+Testing real_representation_construction_export/mpfr192/pi_pow
+Success
+Testing real_representation_construction_export/hyperreal_exact/pi_inv
+Success
+Testing real_representation_construction_export/mpfr192/pi_inv
+Success
+Testing real_representation_construction_export/hyperreal_exact/pi_exp
+Success
+Testing real_representation_construction_export/mpfr192/pi_exp
+Success
+Testing real_representation_construction_export/hyperreal_exact/pi_inv_exp
+Success
+Testing real_representation_construction_export/mpfr192/pi_inv_exp
+Success
+Testing real_representation_construction_export/hyperreal_exact/pi_sqrt
+Success
+Testing real_representation_construction_export/mpfr192/pi_sqrt
+Success
+Testing real_representation_construction_export/hyperreal_exact/const_product
+Success
+Testing real_representation_construction_export/mpfr192/const_product
+Success
+Testing real_representation_construction_export/hyperreal_exact/const_offset
+Success
+Testing real_representation_construction_export/mpfr192/const_offset
+Success
+Testing real_representation_construction_export/hyperreal_exact/const_product_sqrt
+Success
+Testing real_representation_construction_export/mpfr192/const_product_sqrt
+Success
+Testing real_representation_construction_export/hyperreal_exact/sqrt
+Success
+Testing real_representation_construction_export/mpfr192/sqrt
+Success
+Testing real_representation_construction_export/hyperreal_exact/exp
+Success
+Testing real_representation_construction_export/mpfr192/exp
+Success
+Testing real_representation_construction_export/hyperreal_exact/ln
+Success
+Testing real_representation_construction_export/mpfr192/ln
+Success
+Testing real_representation_construction_export/hyperreal_exact/ln_affine
+Success
+Testing real_representation_construction_export/mpfr192/ln_affine
+Success
+Testing real_representation_construction_export/hyperreal_exact/ln_product
+Success
+Testing real_representation_construction_export/mpfr192/ln_product
+Success
+Testing real_representation_construction_export/hyperreal_exact/log10
+Success
+Testing real_representation_construction_export/mpfr192/log10
+Success
+Testing real_representation_construction_export/hyperreal_exact/log2
+Success
+Testing real_representation_construction_export/mpfr192/log2
+Success
+Testing real_representation_construction_export/hyperreal_exact/sin_pi
+Success
+Testing real_representation_construction_export/mpfr192/sin_pi
+Success
+Testing real_representation_construction_export/hyperreal_exact/tan_pi
+Success
+Testing real_representation_construction_export/mpfr192/tan_pi
+Success
+Testing real_representation_construction_export/hyperreal_exact/irrational
+Success
+Testing real_representation_construction_export/mpfr192/irrational
+Success
+
+Testing real_representation_prepared/hyperreal_clone/one
+Success
+Testing real_representation_prepared/mpfr192_clone/one
+Success
+Testing real_representation_prepared/hyperreal_cached_f64/one
+Success
+Testing real_representation_prepared/mpfr192_f64/one
+Success
+Testing real_representation_prepared/hyperreal_certified_192/one
+Success
+Testing real_representation_prepared/hyperreal_clone/pi
+Success
+Testing real_representation_prepared/mpfr192_clone/pi
+Success
+Testing real_representation_prepared/hyperreal_cached_f64/pi
+Success
+Testing real_representation_prepared/mpfr192_f64/pi
+Success
+Testing real_representation_prepared/hyperreal_certified_192/pi
+Success
+Testing real_representation_prepared/hyperreal_clone/pi_pow
+Success
+Testing real_representation_prepared/mpfr192_clone/pi_pow
+Success
+Testing real_representation_prepared/hyperreal_cached_f64/pi_pow
+Success
+Testing real_representation_prepared/mpfr192_f64/pi_pow
+Success
+Testing real_representation_prepared/hyperreal_certified_192/pi_pow
+Success
+Testing real_representation_prepared/hyperreal_clone/pi_inv
+Success
+Testing real_representation_prepared/mpfr192_clone/pi_inv
+Success
+Testing real_representation_prepared/hyperreal_cached_f64/pi_inv
+Success
+Testing real_representation_prepared/mpfr192_f64/pi_inv
+Success
+Testing real_representation_prepared/hyperreal_certified_192/pi_inv
+Success
+Testing real_representation_prepared/hyperreal_clone/pi_exp
+Success
+Testing real_representation_prepared/mpfr192_clone/pi_exp
+Success
+Testing real_representation_prepared/hyperreal_cached_f64/pi_exp
+Success
+Testing real_representation_prepared/mpfr192_f64/pi_exp
+Success
+Testing real_representation_prepared/hyperreal_certified_192/pi_exp
+Success
+Testing real_representation_prepared/hyperreal_clone/pi_inv_exp
+Success
+Testing real_representation_prepared/mpfr192_clone/pi_inv_exp
+Success
+Testing real_representation_prepared/hyperreal_cached_f64/pi_inv_exp
+Success
+Testing real_representation_prepared/mpfr192_f64/pi_inv_exp
+Success
+Testing real_representation_prepared/hyperreal_certified_192/pi_inv_exp
+Success
+Testing real_representation_prepared/hyperreal_clone/pi_sqrt
+Success
+Testing real_representation_prepared/mpfr192_clone/pi_sqrt
+Success
+Testing real_representation_prepared/hyperreal_cached_f64/pi_sqrt
+Success
+Testing real_representation_prepared/mpfr192_f64/pi_sqrt
+Success
+Testing real_representation_prepared/hyperreal_certified_192/pi_sqrt
+Success
+Testing real_representation_prepared/hyperreal_clone/const_product
+Success
+Testing real_representation_prepared/mpfr192_clone/const_product
+Success
+Testing real_representation_prepared/hyperreal_cached_f64/const_product
+Success
+Testing real_representation_prepared/mpfr192_f64/const_product
+Success
+Testing real_representation_prepared/hyperreal_certified_192/const_product
+Success
+Testing real_representation_prepared/hyperreal_clone/const_offset
+Success
+Testing real_representation_prepared/mpfr192_clone/const_offset
+Success
+Testing real_representation_prepared/hyperreal_cached_f64/const_offset
+Success
+Testing real_representation_prepared/mpfr192_f64/const_offset
+Success
+Testing real_representation_prepared/hyperreal_certified_192/const_offset
+Success
+Testing real_representation_prepared/hyperreal_clone/const_product_sqrt
+Success
+Testing real_representation_prepared/mpfr192_clone/const_product_sqrt
+Success
+Testing real_representation_prepared/hyperreal_cached_f64/const_product_sqrt
+Success
+Testing real_representation_prepared/mpfr192_f64/const_product_sqrt
+Success
+Testing real_representation_prepared/hyperreal_certified_192/const_product_sqrt
+Success
+Testing real_representation_prepared/hyperreal_clone/sqrt
+Success
+Testing real_representation_prepared/mpfr192_clone/sqrt
+Success
+Testing real_representation_prepared/hyperreal_cached_f64/sqrt
+Success
+Testing real_representation_prepared/mpfr192_f64/sqrt
+Success
+Testing real_representation_prepared/hyperreal_certified_192/sqrt
+Success
+Testing real_representation_prepared/hyperreal_clone/exp
+Success
+Testing real_representation_prepared/mpfr192_clone/exp
+Success
+Testing real_representation_prepared/hyperreal_cached_f64/exp
+Success
+Testing real_representation_prepared/mpfr192_f64/exp
+Success
+Testing real_representation_prepared/hyperreal_certified_192/exp
+Success
+Testing real_representation_prepared/hyperreal_clone/ln
+Success
+Testing real_representation_prepared/mpfr192_clone/ln
+Success
+Testing real_representation_prepared/hyperreal_cached_f64/ln
+Success
+Testing real_representation_prepared/mpfr192_f64/ln
+Success
+Testing real_representation_prepared/hyperreal_certified_192/ln
+Success
+Testing real_representation_prepared/hyperreal_clone/ln_affine
+Success
+Testing real_representation_prepared/mpfr192_clone/ln_affine
+Success
+Testing real_representation_prepared/hyperreal_cached_f64/ln_affine
+Success
+Testing real_representation_prepared/mpfr192_f64/ln_affine
+Success
+Testing real_representation_prepared/hyperreal_certified_192/ln_affine
+Success
+Testing real_representation_prepared/hyperreal_clone/ln_product
+Success
+Testing real_representation_prepared/mpfr192_clone/ln_product
+Success
+Testing real_representation_prepared/hyperreal_cached_f64/ln_product
+Success
+Testing real_representation_prepared/mpfr192_f64/ln_product
+Success
+Testing real_representation_prepared/hyperreal_certified_192/ln_product
+Success
+Testing real_representation_prepared/hyperreal_clone/log10
+Success
+Testing real_representation_prepared/mpfr192_clone/log10
+Success
+Testing real_representation_prepared/hyperreal_cached_f64/log10
+Success
+Testing real_representation_prepared/mpfr192_f64/log10
+Success
+Testing real_representation_prepared/hyperreal_certified_192/log10
+Success
+Testing real_representation_prepared/hyperreal_clone/log2
+Success
+Testing real_representation_prepared/mpfr192_clone/log2
+Success
+Testing real_representation_prepared/hyperreal_cached_f64/log2
+Success
+Testing real_representation_prepared/mpfr192_f64/log2
+Success
+Testing real_representation_prepared/hyperreal_certified_192/log2
+Success
+Testing real_representation_prepared/hyperreal_clone/sin_pi
+Success
+Testing real_representation_prepared/mpfr192_clone/sin_pi
+Success
+Testing real_representation_prepared/hyperreal_cached_f64/sin_pi
+Success
+Testing real_representation_prepared/mpfr192_f64/sin_pi
+Success
+Testing real_representation_prepared/hyperreal_certified_192/sin_pi
+Success
+Testing real_representation_prepared/hyperreal_clone/tan_pi
+Success
+Testing real_representation_prepared/mpfr192_clone/tan_pi
+Success
+Testing real_representation_prepared/hyperreal_cached_f64/tan_pi
+Success
+Testing real_representation_prepared/mpfr192_f64/tan_pi
+Success
+Testing real_representation_prepared/hyperreal_certified_192/tan_pi
+Success
+Testing real_representation_prepared/hyperreal_clone/irrational
+Success
+Testing real_representation_prepared/mpfr192_clone/irrational
+Success
+Testing real_representation_prepared/hyperreal_cached_f64/irrational
+Success
+Testing real_representation_prepared/mpfr192_f64/irrational
+Success
+Testing real_representation_prepared/hyperreal_certified_192/irrational
+Success
+
+     Running benches/scalar_micro.rs (target/debug/deps/scalar_micro-26a77a35ed17bccb)
+Testing construction_speed/rational_one
+Success
+Testing construction_speed/rational_new_one
+Success
+Testing construction_speed/rational_from_u8_four
+Success
+Testing construction_speed/rational_from_i8_minus_four
+Success
+Testing construction_speed/computable_one
+Success
+Testing construction_speed/real_new_rational_one
+Success
+Testing construction_speed/real_one
+Success
+Testing construction_speed/real_from_i32_one
+Success
+Testing construction_speed/real_from_u8_four
+Success
+Testing construction_speed/real_from_i8_minus_four
+Success
+
+Testing raw_cache_hit_cost/zero
+Success
+Testing raw_cache_hit_cost/one
+Success
+Testing raw_cache_hit_cost/two
+Success
+Testing raw_cache_hit_cost/e
+Success
+Testing raw_cache_hit_cost/pi
+Success
+Testing raw_cache_hit_cost/tau
+Success
+
+Testing structural_query_speed/zero_zero_status
+Success
+Testing structural_query_speed/zero_sign_query
+Success
+Testing structural_query_speed/zero_msd_query
+Success
+Testing structural_query_speed/zero_structural_facts
+Success
+Testing structural_query_speed/zero_detailed_facts
+Success
+Testing structural_query_speed/zero_to_f64_lossy
+Success
+Testing structural_query_speed/one_zero_status
+Success
+Testing structural_query_speed/one_sign_query
+Success
+Testing structural_query_speed/one_msd_query
+Success
+Testing structural_query_speed/one_structural_facts
+Success
+Testing structural_query_speed/one_detailed_facts
+Success
+Testing structural_query_speed/one_to_f64_lossy
+Success
+Testing structural_query_speed/negative_zero_status
+Success
+Testing structural_query_speed/negative_sign_query
+Success
+Testing structural_query_speed/negative_msd_query
+Success
+Testing structural_query_speed/negative_structural_facts
+Success
+Testing structural_query_speed/negative_detailed_facts
+Success
+Testing structural_query_speed/negative_to_f64_lossy
+Success
+Testing structural_query_speed/tiny_exact_zero_status
+Success
+Testing structural_query_speed/tiny_exact_sign_query
+Success
+Testing structural_query_speed/tiny_exact_msd_query
+Success
+Testing structural_query_speed/tiny_exact_structural_facts
+Success
+Testing structural_query_speed/tiny_exact_detailed_facts
+Success
+Testing structural_query_speed/tiny_exact_to_f64_lossy
+Success
+Testing structural_query_speed/pi_zero_status
+Success
+Testing structural_query_speed/pi_sign_query
+Success
+Testing structural_query_speed/pi_msd_query
+Success
+Testing structural_query_speed/pi_structural_facts
+Success
+Testing structural_query_speed/pi_detailed_facts
+Success
+Testing structural_query_speed/pi_to_f64_lossy
+Success
+Testing structural_query_speed/e_zero_status
+Success
+Testing structural_query_speed/e_sign_query
+Success
+Testing structural_query_speed/e_msd_query
+Success
+Testing structural_query_speed/e_structural_facts
+Success
+Testing structural_query_speed/e_detailed_facts
+Success
+Testing structural_query_speed/e_to_f64_lossy
+Success
+Testing structural_query_speed/tau_zero_status
+Success
+Testing structural_query_speed/tau_sign_query
+Success
+Testing structural_query_speed/tau_msd_query
+Success
+Testing structural_query_speed/tau_structural_facts
+Success
+Testing structural_query_speed/tau_detailed_facts
+Success
+Testing structural_query_speed/tau_to_f64_lossy
+Success
+Testing structural_query_speed/sqrt_two_zero_status
+Success
+Testing structural_query_speed/sqrt_two_sign_query
+Success
+Testing structural_query_speed/sqrt_two_msd_query
+Success
+Testing structural_query_speed/sqrt_two_structural_facts
+Success
+Testing structural_query_speed/sqrt_two_detailed_facts
+Success
+Testing structural_query_speed/sqrt_two_to_f64_lossy
+Success
+Testing structural_query_speed/pi_minus_three_zero_status
+Success
+Testing structural_query_speed/pi_minus_three_sign_query
+Success
+Testing structural_query_speed/pi_minus_three_msd_query
+Success
+Testing structural_query_speed/pi_minus_three_structural_facts
+Success
+Testing structural_query_speed/pi_minus_three_detailed_facts
+Success
+Testing structural_query_speed/pi_minus_three_to_f64_lossy
+Success
+Testing structural_query_speed/dense_expr_zero_status
+Success
+Testing structural_query_speed/dense_expr_sign_query
+Success
+Testing structural_query_speed/dense_expr_msd_query
+Success
+Testing structural_query_speed/dense_expr_structural_facts
+Success
+Testing structural_query_speed/dense_expr_detailed_facts
+Success
+Testing structural_query_speed/dense_expr_to_f64_lossy
+Success
+Testing structural_query_speed/structural_negation_match
+Success
+Testing structural_query_speed/structural_negation_miss
+Success
+
+Testing pure_scalar_algorithm_speed/rational_add
+Success
+Testing pure_scalar_algorithm_speed/rational_sub
+Success
+Testing pure_scalar_algorithm_speed/rational_add_wide_dyadic_cold
+Success
+Testing pure_scalar_algorithm_speed/rational_sub_wide_dyadic_cold
+Success
+Testing pure_scalar_algorithm_speed/rational_add_shared_cold
+Success
+Testing pure_scalar_algorithm_speed/rational_sub_shared_cold
+Success
+Testing pure_scalar_algorithm_speed/rational_scaled_difference_composed_cold
+Success
+Testing pure_scalar_algorithm_speed/rational_scaled_difference_fused_cold
+Success
+Testing pure_scalar_algorithm_speed/rational_cross_difference_unit_divisor_composed_cold
+Success
+Testing pure_scalar_algorithm_speed/rational_cross_difference_unit_divisor_fused_cold
+Success
+Testing pure_scalar_algorithm_speed/rational_mul
+Success
+Testing pure_scalar_algorithm_speed/rational_mul_retained_general
+Success
+Testing pure_scalar_algorithm_speed/rational_mul_wide_dyadic_cold
+Success
+Testing pure_scalar_algorithm_speed/rational_mul_dyadic_general_cross_cancel
+Success
+Testing pure_scalar_algorithm_speed/rational_div
+Success
+Testing pure_scalar_algorithm_speed/rational_inverse_owned_cold
+Success
+Testing pure_scalar_algorithm_speed/rational_inverse_retained
+Success
+Testing pure_scalar_algorithm_speed/rational_neg_owned_cold
+Success
+Testing pure_scalar_algorithm_speed/rational_neg_retained
+Success
+Testing pure_scalar_algorithm_speed/real_exact_powi_i64_owned_cold
+Success
+Testing pure_scalar_algorithm_speed/real_exact_powi_i64_retained
+Success
+Testing pure_scalar_algorithm_speed/real_exact_add
+Success
+Testing pure_scalar_algorithm_speed/real_exact_average_pair
+Success
+Testing pure_scalar_algorithm_speed/real_exact_average_pair_expanded
+Success
+Testing pure_scalar_algorithm_speed/real_exact_sub
+Success
+Testing pure_scalar_algorithm_speed/real_exact_mul
+Success
+Testing pure_scalar_algorithm_speed/real_exact_mul_retained
+Success
+Testing pure_scalar_algorithm_speed/real_exact_div
+Success
+Testing pure_scalar_algorithm_speed/real_exact_sqrt_owned_cold
+Success
+Testing pure_scalar_algorithm_speed/real_exact_sqrt_reduce
+Success
+Testing pure_scalar_algorithm_speed/real_exact_dyadic_sqrt_reduce
+Success
+Testing pure_scalar_algorithm_speed/real_exact_general_sqrt_reduce
+Success
+Testing pure_scalar_algorithm_speed/real_exact_dyadic_radical_scale
+Success
+Testing pure_scalar_algorithm_speed/real_exact_ln_reduce
+Success
+Testing pure_scalar_algorithm_speed/real_pow_small_integer_exponent
+Success
+
+Testing rational_algorithm_dispatch_speed/dyadic_fact_cold
+Success
+Testing rational_algorithm_dispatch_speed/dyadic_fact_retained
+Success
+Testing rational_algorithm_dispatch_speed/compare_leading_significand_retained_1024_bits
+Success
+Testing rational_algorithm_dispatch_speed/compare_dyadic_shifted_retained_1024_bits
+Success
+Testing rational_algorithm_dispatch_speed/mul_backend_basecase_cold
+Success
+Testing rational_algorithm_dispatch_speed/mul_backend_half_karatsuba_cold
+Success
+Testing rational_algorithm_dispatch_speed/mul_backend_karatsuba_cold
+Success
+Testing rational_algorithm_dispatch_speed/mul_backend_toom3_cold
+Success
+Testing rational_algorithm_dispatch_speed/mul_toom4_candidate_4096_bits
+Success
+Testing rational_algorithm_dispatch_speed/mul_backend_reference_4096_bits
+Success
+Testing rational_algorithm_dispatch_speed/mul_toom4_candidate_16384_bits
+Success
+Testing rational_algorithm_dispatch_speed/mul_backend_reference_16384_bits
+Success
+Testing rational_algorithm_dispatch_speed/mul_toom4_candidate_65536_bits
+Success
+Testing rational_algorithm_dispatch_speed/mul_backend_reference_65536_bits
+Success
+Testing rational_algorithm_dispatch_speed/mul_toom4_candidate_262144_bits
+Success
+Testing rational_algorithm_dispatch_speed/mul_backend_reference_262144_bits
+Success
+Testing rational_algorithm_dispatch_speed/mul_toom4_candidate_524288_bits
+Success
+Testing rational_algorithm_dispatch_speed/mul_backend_reference_524288_bits
+Success
+Testing rational_algorithm_dispatch_speed/mul_toom4_candidate_1048576_bits
+Success
+Testing rational_algorithm_dispatch_speed/mul_backend_reference_1048576_bits
+Success
+Testing rational_algorithm_dispatch_speed/mul_selected_1048576_bits
+Success
+Testing rational_algorithm_dispatch_speed/mul_toom4_candidate_2097152_bits
+Success
+Testing rational_algorithm_dispatch_speed/mul_backend_reference_2097152_bits
+Success
+Testing rational_algorithm_dispatch_speed/mul_selected_2097152_bits
+Success
+Testing rational_algorithm_dispatch_speed/mul_toom6_candidate_131072_bits
+Success
+Testing rational_algorithm_dispatch_speed/mul_backend_reference_131072_bits
+Success
+Testing rational_algorithm_dispatch_speed/mul_toom6_candidate_262144_bits
+Success
+Testing rational_algorithm_dispatch_speed/mul_toom6_candidate_524288_bits
+Success
+Testing rational_algorithm_dispatch_speed/mul_selected_524288_bits
+Success
+Testing rational_algorithm_dispatch_speed/mul_toom6_candidate_1048576_bits
+Success
+Testing rational_algorithm_dispatch_speed/mul_toom6_candidate_2097152_bits
+Success
+Testing rational_algorithm_dispatch_speed/mul_selected_toom4_unbalanced_1258291_by_1048576
+Success
+Testing rational_algorithm_dispatch_speed/mul_backend_unbalanced_1258291_by_1048576
+Success
+Testing rational_algorithm_dispatch_speed/mul_toom8_candidate_65536_bits
+Success
+Testing rational_algorithm_dispatch_speed/mul_toom8_candidate_131072_bits
+Success
+Testing rational_algorithm_dispatch_speed/mul_toom8_candidate_262144_bits
+Success
+Testing rational_algorithm_dispatch_speed/mul_selected_262144_bits
+Success
+Testing rational_algorithm_dispatch_speed/mul_toom8_candidate_524288_bits
+Success
+Testing rational_algorithm_dispatch_speed/mul_toom8_candidate_1048576_bits
+Success
+Testing rational_algorithm_dispatch_speed/mul_toom8_candidate_2097152_bits
+Success
+Testing rational_algorithm_dispatch_speed/mul_toom8_candidate_4194304_bits
+Success
+Testing rational_algorithm_dispatch_speed/mul_selected_4194304_bits
+Success
+Testing rational_algorithm_dispatch_speed/mul_selected_toom6_unbalanced_599186_by_524288
+Success
+Testing rational_algorithm_dispatch_speed/mul_backend_unbalanced_599186_by_524288
+Success
+Testing rational_algorithm_dispatch_speed/mul_ntt_candidate_262144_bits
+Success
+Testing rational_algorithm_dispatch_speed/mul_ntt_candidate_1048576_bits
+Success
+Testing rational_algorithm_dispatch_speed/mul_ntt_candidate_4194304_bits
+Success
+Testing rational_algorithm_dispatch_speed/reduce_backend_single_limb_cold
+Success
+Testing rational_algorithm_dispatch_speed/reduce_backend_knuth_cold
+Success
+Testing rational_algorithm_dispatch_speed/reduce_backend_large_knuth_cold
+Success
+Testing rational_algorithm_dispatch_speed/reduce_fixed_512_coprime_cold
+Success
+Testing rational_algorithm_dispatch_speed/exact_remainder_large_knuth
+Success
+Testing rational_algorithm_dispatch_speed/division_trivial_small_quotient
+Success
+Testing rational_algorithm_dispatch_speed/gcd_selected_128_bits
+Success
+Testing rational_algorithm_dispatch_speed/gcd_euclidean_128_bits
+Success
+Testing rational_algorithm_dispatch_speed/gcd_selected_192_bits
+Success
+Testing rational_algorithm_dispatch_speed/gcd_euclidean_192_bits
+Success
+Testing rational_algorithm_dispatch_speed/gcd_selected_512_bits
+Success
+Testing rational_algorithm_dispatch_speed/gcd_euclidean_512_bits
+Success
+Testing rational_algorithm_dispatch_speed/gcd_selected_1024_bits
+Success
+Testing rational_algorithm_dispatch_speed/gcd_euclidean_1024_bits
+Success
+Testing rational_algorithm_dispatch_speed/gcd_selected_4096_bits
+Success
+Testing rational_algorithm_dispatch_speed/gcd_euclidean_4096_bits
+Success
+Testing rational_algorithm_dispatch_speed/gcd_selected_unbalanced_to_lehmer_192_bits
+Success
+Testing rational_algorithm_dispatch_speed/gcd_euclidean_unbalanced_to_lehmer_192_bits
+Success
+Testing rational_algorithm_dispatch_speed/gcd_selected_unbalanced_to_lehmer_256_bits
+Success
+Testing rational_algorithm_dispatch_speed/gcd_euclidean_unbalanced_to_lehmer_256_bits
+Success
+Testing rational_algorithm_dispatch_speed/gcd_selected_unbalanced_to_lehmer_512_bits
+Success
+Testing rational_algorithm_dispatch_speed/gcd_euclidean_unbalanced_to_lehmer_512_bits
+Success
+Testing rational_algorithm_dispatch_speed/gcd_selected_unbalanced_to_lehmer_1024_bits
+Success
+Testing rational_algorithm_dispatch_speed/gcd_euclidean_unbalanced_to_lehmer_1024_bits
+Success
+Testing rational_algorithm_dispatch_speed/gcd_selected_unbalanced_to_lehmer_4096_bits
+Success
+Testing rational_algorithm_dispatch_speed/gcd_euclidean_unbalanced_to_lehmer_4096_bits
+Success
+Testing rational_algorithm_dispatch_speed/half_gcd_candidate_8192_bits
+Success
+Testing rational_algorithm_dispatch_speed/half_gcd_lehmer_8192_bits
+Success
+Testing rational_algorithm_dispatch_speed/half_gcd_candidate_16384_bits
+Success
+Testing rational_algorithm_dispatch_speed/half_gcd_lehmer_16384_bits
+Success
+Testing rational_algorithm_dispatch_speed/half_gcd_candidate_65536_bits
+Success
+Testing rational_algorithm_dispatch_speed/half_gcd_lehmer_65536_bits
+Success
+Testing rational_algorithm_dispatch_speed/half_gcd_candidate_262144_bits
+Success
+Testing rational_algorithm_dispatch_speed/half_gcd_lehmer_262144_bits
+Success
+Testing rational_algorithm_dispatch_speed/half_gcd_candidate_1048576_bits
+Success
+Testing rational_algorithm_dispatch_speed/half_gcd_lehmer_1048576_bits
+Success
+Testing rational_algorithm_dispatch_speed/barrett_one_shot_8192_by_1024
+Success
+Testing rational_algorithm_dispatch_speed/backend_one_shot_8192_by_1024
+Success
+Testing rational_algorithm_dispatch_speed/barrett_batch16_8192_by_1024
+Success
+Testing rational_algorithm_dispatch_speed/backend_batch16_8192_by_1024
+Success
+Testing rational_algorithm_dispatch_speed/barrett_batch16_65536_by_4096
+Success
+Testing rational_algorithm_dispatch_speed/backend_batch16_65536_by_4096
+Success
+Testing rational_algorithm_dispatch_speed/perfect_power_factor_reject
+Success
+Testing rational_algorithm_dispatch_speed/perfect_power_general_seventh
+Success
+Testing rational_algorithm_dispatch_speed/perfect_power_fixed_seventh
+Success
+Testing rational_algorithm_dispatch_speed/perfect_power_unfactored_reject
+Success
+Testing rational_algorithm_dispatch_speed/radix_format_small_integer
+Success
+Testing rational_algorithm_dispatch_speed/radix_format_large_integer
+Success
+Testing rational_algorithm_dispatch_speed/radix_parse_short_decimal
+Success
+Testing rational_algorithm_dispatch_speed/radix_parse_short_scientific
+Success
+Testing rational_algorithm_dispatch_speed/radix_parse_wide_scientific
+Success
+Testing rational_algorithm_dispatch_speed/radix_parse_wide_scientific_expanded
+Success
+Testing rational_algorithm_dispatch_speed/radix_parse_large_integer
+Success
+Testing rational_algorithm_dispatch_speed/radix_parse_divide_conquer_10240_digits
+Success
+Testing rational_algorithm_dispatch_speed/radix_parse_backend_chunked_10240_digits
+Success
+Testing rational_algorithm_dispatch_speed/radix_parse_divide_conquer_20480_digits
+Success
+Testing rational_algorithm_dispatch_speed/radix_parse_backend_chunked_20480_digits
+Success
+Testing rational_algorithm_dispatch_speed/radix_format_fraction_decimal
+Success
+
+Testing borrowed_op_overhead/rational_clone_pair
+Success
+Testing borrowed_op_overhead/rational_add_refs
+Success
+Testing borrowed_op_overhead/rational_add_owned
+Success
+Testing borrowed_op_overhead/real_clone_pair
+Success
+Testing borrowed_op_overhead/real_unscaled_add_refs
+Success
+Testing borrowed_op_overhead/real_unscaled_add_owned
+Success
+Testing borrowed_op_overhead/real_add_refs
+Success
+Testing borrowed_op_overhead/real_add_owned
+Success
+Testing borrowed_op_overhead/real_dot2_refs_dense_symbolic
+Success
+Testing borrowed_op_overhead/real_active_dot2_refs_dense_symbolic
+Success
+Testing borrowed_op_overhead/real_dot2_refs_mixed_structural
+Success
+Testing borrowed_op_overhead/real_dot3_refs_dense_symbolic
+Success
+Testing borrowed_op_overhead/real_active_dot3_refs_dense_symbolic
+Success
+Testing borrowed_op_overhead/real_dot3_refs_mixed_structural
+Success
+Testing borrowed_op_overhead/real_dot4_refs_dense_symbolic
+Success
+Testing borrowed_op_overhead/real_active_dot4_refs_dense_symbolic
+Success
+Testing borrowed_op_overhead/real_dot4_refs_mixed_structural
+Success
+
+Testing dense_algebra/rational_dot_64
+Success
+Testing dense_algebra/rational_matmul_8
+Success
+Testing dense_algebra/real_dot_36
+Success
+Testing dense_algebra/real_matmul_6
+Success
+Testing dense_algebra/real_sum_refs_64_symbolic
+Success
+Testing dense_algebra/real_sum_refs_64_symbolic_to_f64
+Success
+Testing dense_algebra/real_sum_refs_1024_symbolic_sequential
+Success
+Testing dense_algebra/real_sum_refs_1024_symbolic
+Success
+Testing dense_algebra/real_sum_refs_1024_symbolic_to_f64_sequential
+Success
+Testing dense_algebra/real_sum_refs_1024_symbolic_to_f64
+Success
+Testing dense_algebra/real_sum_refs_1024_rational_sequential
+Success
+Testing dense_algebra/real_sum_refs_1024_rational
+Success
+Testing dense_algebra/real_sum_owned_1024_symbolic_former_clone_path
+Success
+Testing dense_algebra/real_sum_owned_1024_symbolic
+Success
+
+Testing exact_transcendental_special_forms/sin_pi_7
+Success
+Testing exact_transcendental_special_forms/cos_pi_7
+Success
+Testing exact_transcendental_special_forms/tan_pi_7
+Success
+Testing exact_transcendental_special_forms/asin_sin_6pi_7
+Success
+Testing exact_transcendental_special_forms/acos_cos_9pi_7
+Success
+Testing exact_transcendental_special_forms/atan_tan_6pi_7
+Success
+Testing exact_transcendental_special_forms/asinh_large
+Success
+Testing exact_transcendental_special_forms/atanh_sqrt_half
+Success
+Testing exact_transcendental_special_forms/atanh_sqrt_two_error
+Success
+Testing exact_transcendental_special_forms/sinh_ln_two
+Success
+Testing exact_transcendental_special_forms/cosh_ln_two
+Success
+Testing exact_transcendental_special_forms/tanh_ln_two
+Success
+Testing exact_transcendental_special_forms/sinh_rational_one
+Success
+Testing exact_transcendental_special_forms/cosh_rational_one
+Success
+Testing exact_transcendental_special_forms/tanh_rational_one
+Success
+Testing exact_transcendental_special_forms/atan2_origin
+Success
+Testing exact_transcendental_special_forms/atan2_axis_positive_y
+Success
+Testing exact_transcendental_special_forms/atan2_axis_negative_x
+Success
+Testing exact_transcendental_special_forms/atan2_quadrant_one_unit_diagonal
+Success
+Testing exact_transcendental_special_forms/atan2_quadrant_two_pi_correction
+Success
+Testing exact_transcendental_special_forms/atan2_quadrant_three_negative_pi
+Success
+Testing exact_transcendental_special_forms/log2_power_of_two
+Success
+Testing exact_transcendental_special_forms/log2_rational_three
+Success
+Testing exact_transcendental_special_forms/log2_ln_quotient_fold
+Success
+
+Testing real_cotangent/atan_two_direct_construct
+Success
+Testing real_cotangent/atan_two_quotient_construct
+Success
+Testing real_cotangent/atan_two_inverse_tan_construct
+Success
+Testing real_cotangent/tiny_direct_cold_p256
+Success
+Testing real_cotangent/tiny_quotient_cold_p256
+Success
+Testing real_cotangent/tiny_inverse_tan_cold_p256
+Success
+
+Testing symbolic_reductions/sqrt_pi_square
+Success
+Testing symbolic_reductions/sqrt_pi_e_square
+Success
+Testing symbolic_reductions/sqrt_scaled_exp_squarefree
+Success
+Testing symbolic_reductions/ln_scaled_e
+Success
+Testing symbolic_reductions/sub_pi_three
+Success
+Testing symbolic_reductions/pi_minus_three_facts
+Success
+Testing symbolic_reductions/div_exp_exp
+Success
+Testing symbolic_reductions/div_pi_square_e
+Success
+Testing symbolic_reductions/div_const_products
+Success
+Testing symbolic_reductions/inverse_pi
+Success
+Testing symbolic_reductions/div_one_pi
+Success
+Testing symbolic_reductions/div_rational_exp
+Success
+Testing symbolic_reductions/div_e_pi
+Success
+Testing symbolic_reductions/mul_pi_inverse_pi
+Success
+Testing symbolic_reductions/mul_pi_e_sqrt_two
+Success
+Testing symbolic_reductions/mul_const_product_sqrt_sqrt
+Success
+Testing symbolic_reductions/div_const_product_sqrt_e
+Success
+Testing symbolic_reductions/inverse_const_product_sqrt
+Success
+Testing symbolic_reductions/inverse_sqrt_two
+Success
+Testing symbolic_reductions/div_sqrt_two_sqrt_three
+Success
+
+Testing exact_product_sums/signed_product_sum_lcm_6x2
+Success
+Testing exact_product_sums/signed_product_sum_common_scale_6x2
+Success
+Testing exact_product_sums/signed_product_sum_sparse_single_6x2
+Success
+Testing exact_product_sums/real_signed_product_sum_rational_det3
+Success
+Testing exact_product_sums/real_signed_product_sum_mixed_symbolic_det3
+Success
+Testing exact_product_sums/exact_rational_sparse_homogeneous_plane_intersection3
+Success
+
+     Running unittests examples/allocation_profile.rs (target/debug/examples/allocation_profile-470a5bfa3efc7de4)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests examples/computable_graphs.rs (target/debug/examples/computable_graphs-96f56432ad100c40)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests examples/computable_refinement_steps.rs (target/debug/examples/computable_refinement_steps-13054022c4050a28)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests examples/readme_quickstart.rs (target/debug/examples/readme_quickstart-25406f05a2130fd0)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests examples/write_benchmarks_md.rs (target/debug/examples/write_benchmarks_md-28380f1ee0ffd2ff)
+
+running 2 tests
+test benchmark_report::tests::replacement_is_idempotent ... ok
+test benchmark_report::tests::manifest_catalog_matches_registered_targets ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+

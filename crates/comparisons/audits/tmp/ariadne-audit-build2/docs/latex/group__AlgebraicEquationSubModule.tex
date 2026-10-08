@@ -1,0 +1,20 @@
+\doxysubsubsubsection{Algebraic equation solvers }
+\hypertarget{group__AlgebraicEquationSubModule}{}\label{group__AlgebraicEquationSubModule}\index{Algebraic equation solvers@{Algebraic equation solvers}}
+
+
+\doxysubsubsubsubsection{Description}
+Classes and functions for solving nonlinear algebraic equations. 
+
+For the mathematical theory of algebraic equations, including implicit function problems, see the \doxysectlink{algebraic_equations_page}{Algebraic Equations}{0} Page.
+
+A {\itshape Solver} class provides functionality for solving algebraic equations, as defined in the Solver\+Interface. Two basic kinds of problem are considered. The first is computing roots of a function $f:\R^n\to\R^n$, which are generically isolated points. The second kind of problem is solving parametrised equations, so for a function $ f:\R^m\times\R^n\to\R^n $, we find a function $ h:\R^m\to\R^n $ such that $ f(x,h(x))=0 $ for all $ x $ in some domain $ D $.
+
+Concrete solvers include \doxylink{classAriadne_1_1IntervalNewtonSolver}{Interval\+Newton\+Solver} and \doxylink{classAriadne_1_1KrawczykSolver}{Krawczyk\+Solver}. \doxysubsubsubsubsubsection*{Classes}
+\begin{DoxyCompactItemize}
+\item 
+class \mbox{\hyperlink{classAriadne_1_1IntervalNewtonSolver}{Interval\+Newton\+Solver}}
+\begin{DoxyCompactList}\small\item\em \doxylink{group__FunctionModule_gab4f81d909c87bd33486c446890723bb1}{Exact\+Interval\+Type} Newton solver. Uses the contractor $[x\textnormal{\textquotesingle}]=x_0-Df^{-1}([x])f(x_0)$. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1KrawczykSolver}{Krawczyk\+Solver}}
+\begin{DoxyCompactList}\small\item\em Krawczyk solver. Uses the contractor $[x\textnormal{\textquotesingle}]=x_0-Mf(x_0)+(I-MDf([x])([x]-x_0)$ where $M$ is typically $Df^{-1}(x_0)$. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1SolverInterface}{Solver\+Interface}}
+\begin{DoxyCompactList}\small\item\em Interface for solving (nonlinear) equations. \end{DoxyCompactList}\end{DoxyCompactItemize}

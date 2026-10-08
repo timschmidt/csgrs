@@ -1,0 +1,306 @@
+\doxysubsection{Hybrid\+Enclosure Class Reference}
+\hypertarget{classAriadne_1_1HybridEnclosure}{}\label{classAriadne_1_1HybridEnclosure}\index{HybridEnclosure@{HybridEnclosure}}
+
+
+{\ttfamily \#include $<$hybrid\+\_\+enclosure.\+hpp$>$}
+
+
+
+\doxysubsubsection{Description}
+A class representing an enclosure for a hybrid evolution. Handles progress, activation and guard constraints internally. The set is represented as the image of a box $D$ under a function model $\xi(s)=\hat{f}(s)$, under the constraints $\hat{c}(s) \leq 0$ and $\hat{e}(s)=0$. Also keeps track of the current time $\tau(s)=\hat{t}(s)$. 
+
+In other words, \[ S=\{ \hat{f}(s);\  \hat{t}(s) \mid s\in D \mid \hat{c}(s) \leq 0 \ \wedge \hat{e}(s)=0 \} . \] In the following documentation, we sometimes write $\xi(s)$ for $\hat{f}(s)$ and $\tau(s)$ for $\hat{t}(s)$. yielding \[ S=\{ \xi(s);\  \tau(s) \mid s\in D \mid \rho(s) \in C \} . \]
+
+{\bfseries{Rationale\+:}}\texorpdfstring{$<$}{<}\begin{DoxyParagraph}{\texorpdfstring{$>$}{>}}
+{\bfseries{Parameterisation of the time specifier}} When computing a flow step, the evolution time can be given either as a function $\varepsilon(x)$ of the state, or as an absolute final time $\omega(s)$ of the parameters. The rationale for this difference is that we often use the $\varepsilon$ form when computing the flow up to a crossing with a guard, in which case the time depends purely on the state, and it may be possible to simplify the constraints by expressing them in terms of the current states (in an implementation in which intermediate states are considered explicitly). The rationale for using a parameterised form with independent variable $s$ is that this is needed to distinguished different states based on crossings with the guard sets. The rationale for using a final time $\omega(s)$ as a final time is that this allows us to remove errors in the elapsed time $\tau(s)$.
+\end{DoxyParagraph}
+A possible extension would be to allow $\omega(s)$ to depend on intermediate variables $x_i$ at previous stages. The reason for not doing this is that it would enforce a policy for tracking intermediate states, which we do not want to insist on during an implementation.
+
+{\bfseries{Replacing events}} If $g_e$ is increasing along trajectories it is safe to remove a constraint $g_e(x_{i-1})\leq0$ and replace it with the constraint $g_e(x_i)\leq 0$. Inheritance diagram for Hybrid\+Enclosure\+:\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[height=2.000000cm]{classAriadne_1_1HybridEnclosure}
+\end{center}
+\end{figure}
+\doxysubsubsubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1HybridEnclosure_a571fbb9a556862ec4fae8f6bb082ccdd}\label{classAriadne_1_1HybridEnclosure_a571fbb9a556862ec4fae8f6bb082ccdd} 
+{\bfseries Hybrid\+Enclosure} ()
+\begin{DoxyCompactList}\small\item\em An empty enclosure. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1HybridEnclosure_a9d427404fdf7af5af1e599fe47db5777}\label{classAriadne_1_1HybridEnclosure_a9d427404fdf7af5af1e599fe47db5777} 
+{\bfseries Hybrid\+Enclosure} (Enclosure\+Configuration const \&config)
+\begin{DoxyCompactList}\small\item\em An empty enclosure. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1HybridEnclosure_ad091b30606fc80d4e4456c581dacab29}\label{classAriadne_1_1HybridEnclosure_ad091b30606fc80d4e4456c581dacab29} 
+{\bfseries Hybrid\+Enclosure} (const Hybrid\+Box\+Set \&hbx, const \mbox{\hyperlink{classAriadne_1_1Space}{Real\+Space}} \&spc, const Enclosure\+Configuration \&config)
+\begin{DoxyCompactList}\small\item\em An enclosure corresponding to a hybrid box {\itshape hbx} with variables canonically ordered by {\itshape spc}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1HybridEnclosure_a27628b5faf3a0bc25afef3eb954fced9}\label{classAriadne_1_1HybridEnclosure_a27628b5faf3a0bc25afef3eb954fced9} 
+{\bfseries Hybrid\+Enclosure} (const \mbox{\hyperlink{classAriadne_1_1HybridBoundedConstraintSet}{Hybrid\+Bounded\+Constraint\+Set}} \&set, const \mbox{\hyperlink{classAriadne_1_1Space}{Real\+Space}} \&space, const Enclosure\+Configuration \&config)
+\begin{DoxyCompactList}\small\item\em An enclosure corresponding to the hybrid set {\itshape set} using {\itshape space} to order the continuous variables. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1HybridEnclosure_aa527282a083101f2863a4666bbf7248b}\label{classAriadne_1_1HybridEnclosure_aa527282a083101f2863a4666bbf7248b} 
+{\bfseries Hybrid\+Enclosure} (const \mbox{\hyperlink{classAriadne_1_1DiscreteLocation}{Discrete\+Location}} \&q, const \mbox{\hyperlink{classAriadne_1_1Space}{Real\+Space}} \&spc, const Real\+Box \&bx, const Enclosure\+Configuration \&config)
+\begin{DoxyCompactList}\small\item\em An enclosure corresponding to a Euclidean box {\itshape bx} in location {\itshape q} with variables ordered by {\itshape spc}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1HybridEnclosure_a55816ac129e840a884fc3912b59a7bf9}\label{classAriadne_1_1HybridEnclosure_a55816ac129e840a884fc3912b59a7bf9} 
+{\bfseries Hybrid\+Enclosure} (const \mbox{\hyperlink{classAriadne_1_1HybridBox}{Hybrid\+Real\+Box}} \&hbx, const Enclosure\+Configuration \&config)
+\begin{DoxyCompactList}\small\item\em An enclosure corresponding to a hybrid box {\itshape hbx}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1HybridEnclosure_aeee7b24a07c1ac3047ea0e68e8d2edf9}\label{classAriadne_1_1HybridEnclosure_aeee7b24a07c1ac3047ea0e68e8d2edf9} 
+{\bfseries Hybrid\+Enclosure} (const \mbox{\hyperlink{classAriadne_1_1HybridBox}{Hybrid\+Exact\+Box\+Type}} \&hbx, const Enclosure\+Configuration \&config)
+\begin{DoxyCompactList}\small\item\em An enclosure corresponding to a hybrid box {\itshape hbx}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1HybridEnclosure_a97247d70034cb3c3c166f1e14fd570e7}\label{classAriadne_1_1HybridEnclosure_a97247d70034cb3c3c166f1e14fd570e7} 
+{\bfseries Hybrid\+Enclosure} (const \mbox{\hyperlink{classAriadne_1_1HybridBox}{Hybrid\+Exact\+Box\+Type}} \&hbx, \mbox{\hyperlink{classAriadne_1_1List}{List}}$<$ \mbox{\hyperlink{classAriadne_1_1Assignment}{Real\+Assignment}} $>$ aux, const Enclosure\+Configuration \&config)
+\begin{DoxyCompactList}\small\item\em An enclosure corresponding to a hybrid box {\itshape hbx}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1HybridEnclosure_a8161664384cf3c23f529fed25b5acc86}\label{classAriadne_1_1HybridEnclosure_a8161664384cf3c23f529fed25b5acc86} 
+{\bfseries Hybrid\+Enclosure} (const \mbox{\hyperlink{classAriadne_1_1DiscreteLocation}{Discrete\+Location}} \&q, const \mbox{\hyperlink{classAriadne_1_1Space}{Real\+Space}} \&spc, const \mbox{\hyperlink{classAriadne_1_1Enclosure}{Enclosure}} \&es)
+\begin{DoxyCompactList}\small\item\em An enclosure constructed from a location {\itshape q}, and a (timed, labelled) enclosure {\itshape es}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1HybridEnclosure_a738f32c9e12f6b83c1af1b1f2674296b}\label{classAriadne_1_1HybridEnclosure_a738f32c9e12f6b83c1af1b1f2674296b} 
+{\bfseries Hybrid\+Enclosure} (const \mbox{\hyperlink{classAriadne_1_1DiscreteLocation}{Discrete\+Location}} \&q, const Labelled\+Enclosure \&es)
+\begin{DoxyCompactList}\small\item\em An enclosure constructed from a location {\itshape q}, and a (timed, labelled) enclosure {\itshape es}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1HybridEnclosure_a0a25e9204096e234a5e35d89cc211da0}\label{classAriadne_1_1HybridEnclosure_a0a25e9204096e234a5e35d89cc211da0} 
+{\bfseries \texorpdfstring{$\sim$}{\string~}\+Hybrid\+Enclosure} ()
+\begin{DoxyCompactList}\small\item\em Destructor. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1HybridEnclosure_a82c3293aa275c7b8b957d3929e746ef8}\label{classAriadne_1_1HybridEnclosure_a82c3293aa275c7b8b957d3929e746ef8} 
+\mbox{\hyperlink{classAriadne_1_1HybridEnclosure}{Hybrid\+Enclosure}} \texorpdfstring{$\ast$}{*} {\bfseries clone} () const
+\begin{DoxyCompactList}\small\item\em Create a dynamically-\/allocated copy. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1HybridEnclosure_a1baf865debf406a2e3bd12bdb5c0e7bd}\label{classAriadne_1_1HybridEnclosure_a1baf865debf406a2e3bd12bdb5c0e7bd} 
+const Enclosure\+Configuration \& {\bfseries configuration} () const
+\begin{DoxyCompactList}\small\item\em The algorithms used to compute with the set. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1HybridEnclosure_abde80e9f0d89bb12d4a6c3df1504c26f}\label{classAriadne_1_1HybridEnclosure_abde80e9f0d89bb12d4a6c3df1504c26f} 
+const \mbox{\hyperlink{classAriadne_1_1DiscreteLocation}{Discrete\+Location}} \& {\bfseries location} () const
+\begin{DoxyCompactList}\small\item\em The current location. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1HybridEnclosure_a0a100c080c8372e1c9f42b2fae405ea1}\label{classAriadne_1_1HybridEnclosure_a0a100c080c8372e1c9f42b2fae405ea1} 
+const \mbox{\hyperlink{classAriadne_1_1Space}{Real\+Space}} {\bfseries state\+\_\+space} () const
+\begin{DoxyCompactList}\small\item\em The Euclidean state space of the location. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1HybridEnclosure_adb7f8b0194758c451bd82e24b89ab0f8}\label{classAriadne_1_1HybridEnclosure_adb7f8b0194758c451bd82e24b89ab0f8} 
+const \mbox{\hyperlink{classAriadne_1_1Space}{Real\+Space}} {\bfseries auxiliary\+\_\+space} () const
+\begin{DoxyCompactList}\small\item\em The Euclidean state space of the location. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1HybridEnclosure_a34202f24e123c9f1fd8ba825b7653b7f}\label{classAriadne_1_1HybridEnclosure_a34202f24e123c9f1fd8ba825b7653b7f} 
+const \mbox{\hyperlink{classAriadne_1_1Space}{Real\+Space}} {\bfseries state\+\_\+auxiliary\+\_\+space} () const
+\begin{DoxyCompactList}\small\item\em The Euclidean state space of the location including state and auxiliary functions. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1HybridEnclosure_a569a4ea5daffe7e1b540fc0ae97ee516}\label{classAriadne_1_1HybridEnclosure_a569a4ea5daffe7e1b540fc0ae97ee516} 
+const \mbox{\hyperlink{classAriadne_1_1Space}{Real\+Space}} {\bfseries state\+\_\+time\+\_\+auxiliary\+\_\+space} () const
+\begin{DoxyCompactList}\small\item\em The Euclidean space of the location, including state, time and auxiliary functions. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1HybridEnclosure_acac2a3317921cfc45212cc0a615cb922}\label{classAriadne_1_1HybridEnclosure_acac2a3317921cfc45212cc0a615cb922} 
+const \mbox{\hyperlink{classAriadne_1_1Variable}{Real\+Variable}} {\bfseries time\+\_\+variable} () const
+\begin{DoxyCompactList}\small\item\em The global evolution time variable. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1HybridEnclosure_a80159d6f3383bbaafe7ee144c992d121}\label{classAriadne_1_1HybridEnclosure_a80159d6f3383bbaafe7ee144c992d121} 
+const \mbox{\hyperlink{classAriadne_1_1List}{List}}$<$ \mbox{\hyperlink{classAriadne_1_1DiscreteEvent}{Discrete\+Event}} $>$ \& {\bfseries previous\+\_\+events} () const
+\begin{DoxyCompactList}\small\item\em The list of previous events. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1HybridEnclosure_a08b1a3c03c0b92b2acfed61a49f2e726}\label{classAriadne_1_1HybridEnclosure_a08b1a3c03c0b92b2acfed61a49f2e726} 
+\mbox{\hyperlink{namespaceAriadne_acd8b5f68421eb22a84277ef7c9c0ee2a}{Size\+Type}} {\bfseries number\+\_\+of\+\_\+parameters} () const
+\begin{DoxyCompactList}\small\item\em The number of independent parameters. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1HybridEnclosure_a4ee2c18be0864ad8e866ccc167b2a63a}\label{classAriadne_1_1HybridEnclosure_a4ee2c18be0864ad8e866ccc167b2a63a} 
+\mbox{\hyperlink{namespaceAriadne_acd8b5f68421eb22a84277ef7c9c0ee2a}{Size\+Type}} {\bfseries number\+\_\+of\+\_\+constraints} () const
+\begin{DoxyCompactList}\small\item\em The number of constraints. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1HybridEnclosure_a6e1b119e9c87e8c2fc381d88640fbe91}\label{classAriadne_1_1HybridEnclosure_a6e1b119e9c87e8c2fc381d88640fbe91} 
+const \mbox{\hyperlink{group__FunctionModule_gafdd31b4d01081cd09aad2ce11117f867}{Exact\+Box\+Type}} {\bfseries parameter\+\_\+domain} () const
+\begin{DoxyCompactList}\small\item\em The continuous state set. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1HybridEnclosure_a5e8644dabf697036d7329f9eb6509693}\label{classAriadne_1_1HybridEnclosure_a5e8644dabf697036d7329f9eb6509693} 
+const \mbox{\hyperlink{classAriadne_1_1FunctionPatch}{Validated\+Vector\+Multivariate\+Function\+Patch}} \& {\bfseries state\+\_\+function} () const
+\begin{DoxyCompactList}\small\item\em The function related to the state space. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1HybridEnclosure_aba8ac3b9e445e7e74f925eef60a0d462}\label{classAriadne_1_1HybridEnclosure_aba8ac3b9e445e7e74f925eef60a0d462} 
+const \mbox{\hyperlink{classAriadne_1_1FunctionPatch}{Validated\+Scalar\+Multivariate\+Function\+Patch}} \& {\bfseries time\+\_\+function} () const
+\begin{DoxyCompactList}\small\item\em The function related to time. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1HybridEnclosure_a0ad81a09988b7308efadd0dab499cc1c}\label{classAriadne_1_1HybridEnclosure_a0ad81a09988b7308efadd0dab499cc1c} 
+const \mbox{\hyperlink{classAriadne_1_1FunctionPatch}{Validated\+Scalar\+Multivariate\+Function\+Patch}} \& {\bfseries dwell\+\_\+time\+\_\+function} () const
+\begin{DoxyCompactList}\small\item\em The function giving the time since the last event. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1HybridEnclosure_abb4979a78f9a277628521dd3b30ed4b3}\label{classAriadne_1_1HybridEnclosure_abb4979a78f9a277628521dd3b30ed4b3} 
+const \mbox{\hyperlink{classAriadne_1_1FunctionPatch}{Validated\+Vector\+Multivariate\+Function\+Patch}} {\bfseries auxiliary\+\_\+function} () const
+\begin{DoxyCompactList}\small\item\em The function related to the auxiliary space. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1HybridEnclosure_adaf1b371ca772bce3024e9176531f774}\label{classAriadne_1_1HybridEnclosure_adaf1b371ca772bce3024e9176531f774} 
+const \mbox{\hyperlink{classAriadne_1_1FunctionPatch}{Validated\+Vector\+Multivariate\+Function\+Patch}} {\bfseries state\+\_\+auxiliary\+\_\+function} () const
+\begin{DoxyCompactList}\small\item\em The function returning the values of the state and auxiliary variables as a function of the parameter domain. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1HybridEnclosure_a6a2dd7672aada7ca3f6a291448f6251f}\label{classAriadne_1_1HybridEnclosure_a6a2dd7672aada7ca3f6a291448f6251f} 
+const \mbox{\hyperlink{classAriadne_1_1FunctionPatch}{Validated\+Vector\+Multivariate\+Function\+Patch}} {\bfseries state\+\_\+time\+\_\+auxiliary\+\_\+function} () const
+\begin{DoxyCompactList}\small\item\em The function returning the values of the state, time and auxiliary variables. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1HybridEnclosure_ad2c7d6eaa5d7f72468b9478f7b272991}\label{classAriadne_1_1HybridEnclosure_ad2c7d6eaa5d7f72468b9478f7b272991} 
+const \mbox{\hyperlink{classAriadne_1_1FunctionPatch}{Validated\+Scalar\+Multivariate\+Function\+Patch}} {\bfseries function} (\mbox{\hyperlink{classAriadne_1_1Variable}{Real\+Variable}} var) const
+\begin{DoxyCompactList}\small\item\em The function related to the variable {\itshape var}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1HybridEnclosure_abbe405d04bb8bfc3090fce806f005eca}\label{classAriadne_1_1HybridEnclosure_abbe405d04bb8bfc3090fce806f005eca} 
+\mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} {\bfseries set\+\_\+time\+\_\+function} (const \mbox{\hyperlink{classAriadne_1_1FunctionPatch}{Validated\+Scalar\+Multivariate\+Function\+Patch}} \&omega)
+\begin{DoxyCompactList}\small\item\em \doxylink{classAriadne_1_1Set}{Set} the evolution time function to {\itshape omega}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1HybridEnclosure_a6f9415ff5080eb386149d2793e3c3638}\label{classAriadne_1_1HybridEnclosure_a6f9415ff5080eb386149d2793e3c3638} 
+\mbox{\hyperlink{group__FunctionModule_gadb510bd9aa076e5ae44245b498901ca6}{Upper\+Box\+Type}} {\bfseries state\+\_\+bounding\+\_\+box} () const
+\begin{DoxyCompactList}\small\item\em A bounding box for the space. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1HybridEnclosure_abf2655cc48223f05d9b4bbe8c06a3bde}\label{classAriadne_1_1HybridEnclosure_abf2655cc48223f05d9b4bbe8c06a3bde} 
+\mbox{\hyperlink{group__FunctionModule_ga7b38f183a458f335ba2f31e0bcdbadc9}{Upper\+Interval\+Type}} {\bfseries time\+\_\+range} () const
+\begin{DoxyCompactList}\small\item\em The range of times since the starting time that the set represents. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1HybridEnclosure_ab5b5a64836cc9687afc08a5b211acd3c}\label{classAriadne_1_1HybridEnclosure_ab5b5a64836cc9687afc08a5b211acd3c} 
+\mbox{\hyperlink{group__FunctionModule_ga7b38f183a458f335ba2f31e0bcdbadc9}{Upper\+Interval\+Type}} {\bfseries dwell\+\_\+time\+\_\+range} () const
+\begin{DoxyCompactList}\small\item\em The range of times since the last event. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1HybridEnclosure_a3a42751fe4784d42665ccaa99e916dc3}\label{classAriadne_1_1HybridEnclosure_a3a42751fe4784d42665ccaa99e916dc3} 
+\mbox{\hyperlink{classAriadne_1_1HybridBasicSet}{Hybrid\+Basic\+Set}}$<$ \mbox{\hyperlink{classAriadne_1_1Enclosure}{Enclosure}} $>$ {\bfseries state\+\_\+set} () const
+\begin{DoxyCompactList}\small\item\em The continuous state set. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1HybridEnclosure_a7cadce8bbe8fb1fbdf1e0adb5e80de2e}\label{classAriadne_1_1HybridEnclosure_a7cadce8bbe8fb1fbdf1e0adb5e80de2e} 
+\mbox{\hyperlink{classAriadne_1_1HybridBasicSet}{Hybrid\+Basic\+Set}}$<$ \mbox{\hyperlink{classAriadne_1_1Enclosure}{Enclosure}} $>$ {\bfseries state\+\_\+time\+\_\+set} () const
+\begin{DoxyCompactList}\small\item\em The continuous state set including time. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1HybridEnclosure_ad7135623755cb89f8a6b55576e9bc856}\label{classAriadne_1_1HybridEnclosure_ad7135623755cb89f8a6b55576e9bc856} 
+\mbox{\hyperlink{classAriadne_1_1HybridBasicSet}{Hybrid\+Basic\+Set}}$<$ \mbox{\hyperlink{classAriadne_1_1Enclosure}{Enclosure}} $>$ {\bfseries state\+\_\+auxiliary\+\_\+set} () const
+\begin{DoxyCompactList}\small\item\em The continuous state set including auxiliary variables. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1HybridEnclosure_a00f8836e3b09f99a27a3d9cc66fecd9a}\label{classAriadne_1_1HybridEnclosure_a00f8836e3b09f99a27a3d9cc66fecd9a} 
+const \mbox{\hyperlink{classAriadne_1_1Enclosure}{Continuous\+State\+Set\+Type}} \& {\bfseries continuous\+\_\+set} () const
+\begin{DoxyCompactList}\small\item\em The continuous enclosure. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1HybridEnclosure_a2ae4d3ddf25cda3c6de498773eca477c}\label{classAriadne_1_1HybridEnclosure_a2ae4d3ddf25cda3c6de498773eca477c} 
+\mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} {\bfseries clear\+\_\+time} ()
+\begin{DoxyCompactList}\small\item\em \doxylink{classAriadne_1_1Set}{Set} the time function to zero. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1HybridEnclosure_a5bd4e7c0ae09d793b0efe9f26208f562}\label{classAriadne_1_1HybridEnclosure_a5bd4e7c0ae09d793b0efe9f26208f562} 
+\mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} {\bfseries clear\+\_\+events} ()
+\begin{DoxyCompactList}\small\item\em Clears the list of previous events. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1HybridEnclosure_af4a5bc56d68ad4df1cc40d963e55d009}\label{classAriadne_1_1HybridEnclosure_af4a5bc56d68ad4df1cc40d963e55d009} 
+\mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} {\bfseries apply\+\_\+reset} (\mbox{\hyperlink{classAriadne_1_1DiscreteEvent}{Discrete\+Event}} e, \mbox{\hyperlink{classAriadne_1_1DiscreteLocation}{Discrete\+Location}} q, \mbox{\hyperlink{classAriadne_1_1Space}{Real\+Space}} s, const Validated\+Vector\+Multivariate\+Function \&r, \mbox{\hyperlink{classAriadne_1_1Space}{Real\+Space}} v, const Effective\+Vector\+Multivariate\+Function \&a)
+\begin{DoxyCompactList}\small\item\em Apply the reset map {\itshape r} corresponding to event {\itshape e} with target location {\itshape q}. Corresponds to replacing $\xi$ by $r\circ \xi$. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1HybridEnclosure_af486444f93d59902ef32fd5460cb8e49}\label{classAriadne_1_1HybridEnclosure_af486444f93d59902ef32fd5460cb8e49} 
+\mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} {\bfseries apply\+\_\+fixed\+\_\+evolve\+\_\+step} (const \mbox{\hyperlink{classAriadne_1_1FunctionPatch}{Validated\+Vector\+Multivariate\+Function\+Patch}} \&phi, const \mbox{\hyperlink{group__DifferentialEquationSubModule_ga6f1c6f216a042c31906593cafeb126fa}{Step\+Size\+Type}} \&eps)
+\begin{DoxyCompactList}\small\item\em Apply the evolve step $\xi\textnormal{\textquotesingle}(s) = \phi(\xi(s),\epsilon)$ and $\tau\textnormal{\textquotesingle}(s)=\tau(s)+\epsilon$. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1HybridEnclosure_adb82305c8098b72ed76ee1e6f1a5c6f3}\label{classAriadne_1_1HybridEnclosure_adb82305c8098b72ed76ee1e6f1a5c6f3} 
+\mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} {\bfseries apply\+\_\+space\+\_\+evolve\+\_\+step} (const \mbox{\hyperlink{classAriadne_1_1FunctionPatch}{Validated\+Vector\+Multivariate\+Function\+Patch}} \&phi, const \mbox{\hyperlink{classAriadne_1_1FunctionPatch}{Validated\+Scalar\+Multivariate\+Function\+Patch}} \&eps)
+\begin{DoxyCompactList}\small\item\em Apply the evolve step $\xi\textnormal{\textquotesingle}(s) = \phi(\xi(s),\epsilon(\xi(s)))$ and $\tau\textnormal{\textquotesingle}(s)=\tau(s)+\epsilon(\xi(s))$. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1HybridEnclosure_a4f46c66f2060394e74d8403a2899f11c}\label{classAriadne_1_1HybridEnclosure_a4f46c66f2060394e74d8403a2899f11c} 
+\mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} {\bfseries apply\+\_\+spacetime\+\_\+evolve\+\_\+step} (const \mbox{\hyperlink{classAriadne_1_1FunctionPatch}{Validated\+Vector\+Multivariate\+Function\+Patch}} \&phi, const \mbox{\hyperlink{classAriadne_1_1FunctionPatch}{Validated\+Scalar\+Multivariate\+Function\+Patch}} \&eps)
+\begin{DoxyCompactList}\small\item\em Apply the evolve step $\xi\textnormal{\textquotesingle}(s) = \phi(\xi(s),\epsilon(\xi(s),\tau(s)))$ and $\tau\textnormal{\textquotesingle}(s)=\tau(s)+\epsilon(\xi(s),\tau(s))$. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1HybridEnclosure_a8a78abb494c76ed2a4560dd1ea4ea0f5}\label{classAriadne_1_1HybridEnclosure_a8a78abb494c76ed2a4560dd1ea4ea0f5} 
+\mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} {\bfseries apply\+\_\+spacetime\+\_\+reach\+\_\+step} (const \mbox{\hyperlink{classAriadne_1_1FunctionPatch}{Validated\+Vector\+Multivariate\+Function\+Patch}} \&phi, const \mbox{\hyperlink{classAriadne_1_1FunctionPatch}{Validated\+Scalar\+Multivariate\+Function\+Patch}} \&eps)
+\begin{DoxyCompactList}\small\item\em Apply the reach step $\xi\textnormal{\textquotesingle}(s) = \phi(\xi(s),t-\tau(s))$ and $\tau\textnormal{\textquotesingle}(s)=\tau(s)+t$ for $0<=t<=\epsilon(\xi(s),\tau(s))$. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1HybridEnclosure_ab60ea1b459232c4ebb8bd0ce4481a169}\label{classAriadne_1_1HybridEnclosure_ab60ea1b459232c4ebb8bd0ce4481a169} 
+\mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} {\bfseries apply\+\_\+parameter\+\_\+evolve\+\_\+step} (const \mbox{\hyperlink{classAriadne_1_1FunctionPatch}{Validated\+Vector\+Multivariate\+Function\+Patch}} \&phi, const \mbox{\hyperlink{classAriadne_1_1FunctionPatch}{Validated\+Scalar\+Multivariate\+Function\+Patch}} \&eps)
+\begin{DoxyCompactList}\small\item\em Compute the evolve step $\xi\textnormal{\textquotesingle}(s) = \phi(\xi(s),\epsilon(s))$ and $\tau\textnormal{\textquotesingle}(s)=\tau(s)+\epsilon(s)$. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1HybridEnclosure_ad29b5125ff913b560158f44415d2a2f0}\label{classAriadne_1_1HybridEnclosure_ad29b5125ff913b560158f44415d2a2f0} 
+\mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} {\bfseries apply\+\_\+finishing\+\_\+parameter\+\_\+evolve\+\_\+step} (const \mbox{\hyperlink{classAriadne_1_1FunctionPatch}{Validated\+Vector\+Multivariate\+Function\+Patch}} \&phi, const \mbox{\hyperlink{classAriadne_1_1FunctionPatch}{Validated\+Scalar\+Multivariate\+Function\+Patch}} \&omega)
+\begin{DoxyCompactList}\small\item\em Compute the evolve step $\xi\textnormal{\textquotesingle}(s) = \phi(\xi(s),\omega(s)-\tau(s))$ and $\tau\textnormal{\textquotesingle}(s)=\omega(s)$. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1HybridEnclosure_a90e1f68d4f92a70354cf6772fb1464ea}\label{classAriadne_1_1HybridEnclosure_a90e1f68d4f92a70354cf6772fb1464ea} 
+\mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} {\bfseries apply\+\_\+parameter\+\_\+reach\+\_\+step} (const \mbox{\hyperlink{classAriadne_1_1FunctionPatch}{Validated\+Vector\+Multivariate\+Function\+Patch}} \&phi, const \mbox{\hyperlink{classAriadne_1_1FunctionPatch}{Validated\+Scalar\+Multivariate\+Function\+Patch}} \&eps)
+\begin{DoxyCompactList}\small\item\em Compute the reach step $\xi\textnormal{\textquotesingle}(s,t) = \phi(\xi(s),t)$ and $\tau\textnormal{\textquotesingle}(s,t)=\tau(s)+t$ for $t \in [0,h]$ and $t \leq \epsilon(s)$, assuming $\epsilon(s) \leq h$ throughout. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1HybridEnclosure_ac177d07c88f62e71fd7464b69ed0eed3}\label{classAriadne_1_1HybridEnclosure_ac177d07c88f62e71fd7464b69ed0eed3} 
+\mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} {\bfseries apply\+\_\+full\+\_\+reach\+\_\+step} (const \mbox{\hyperlink{classAriadne_1_1FunctionPatch}{Validated\+Vector\+Multivariate\+Function\+Patch}} \&phi)
+\begin{DoxyCompactList}\small\item\em Compute the reach step $\xi\textnormal{\textquotesingle}(s,t) = \phi(\xi(s),t)$ and $\tau\textnormal{\textquotesingle}(s,t)=\tau(s)+t$ for $t \in [0,h]$. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1HybridEnclosure_a98c88d0bd0d224accc801eba094d65a5}\label{classAriadne_1_1HybridEnclosure_a98c88d0bd0d224accc801eba094d65a5} 
+\mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} {\bfseries set\+\_\+time} (\mbox{\hyperlink{classAriadne_1_1Real}{Real}} tmax)
+\begin{DoxyCompactList}\small\item\em \doxylink{classAriadne_1_1Set}{Set} the time of evolution to {\itshape $t_{\max}$}. Corresponds to introducting the constraint $\tau(s) = t_{\max}$. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1HybridEnclosure_ad66365e43fbc6494ce5ce2dffb7fbd5d}\label{classAriadne_1_1HybridEnclosure_ad66365e43fbc6494ce5ce2dffb7fbd5d} 
+\mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} {\bfseries set\+\_\+time} (Validated\+Scalar\+Multivariate\+Function omega)
+\begin{DoxyCompactList}\small\item\em \doxylink{classAriadne_1_1Set}{Set} the time of evolution to {\itshape omega}. Corresponds to introducting the constraint $\tau(s) = \omega(s)$. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1HybridEnclosure_ae4d8c798d9829252d0d4256d9d263439}\label{classAriadne_1_1HybridEnclosure_ae4d8c798d9829252d0d4256d9d263439} 
+\mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} {\bfseries bound\+\_\+time} (Validated\+Scalar\+Multivariate\+Function omega)
+\begin{DoxyCompactList}\small\item\em Introduces the constraint $\tau(s)\leq \omega(s)$. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1HybridEnclosure_afcccb08022a0ec21d9da16e51880a4d0}\label{classAriadne_1_1HybridEnclosure_afcccb08022a0ec21d9da16e51880a4d0} 
+\mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} {\bfseries bound\+\_\+time} (\mbox{\hyperlink{classAriadne_1_1Real}{Real}} tmax)
+\begin{DoxyCompactList}\small\item\em Introduces the constraint $\tau(s)\leq t_{\max}$. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1HybridEnclosure_af25cbf150f99798659e41e61071e109c}\label{classAriadne_1_1HybridEnclosure_af25cbf150f99798659e41e61071e109c} 
+\mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} {\bfseries set\+\_\+auxiliary} (\mbox{\hyperlink{classAriadne_1_1List}{List}}$<$ \mbox{\hyperlink{classAriadne_1_1Variable}{Real\+Variable}} $>$ vars, Effective\+Vector\+Multivariate\+Function aux)
+\begin{DoxyCompactList}\small\item\em Sets the auxiliary variables and functions. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1HybridEnclosure_aa95af4cd8ff65c1c16dd68a46ef9f627}\label{classAriadne_1_1HybridEnclosure_aa95af4cd8ff65c1c16dd68a46ef9f627} 
+\mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} {\bfseries new\+\_\+state\+\_\+constraint} (\mbox{\hyperlink{classAriadne_1_1DiscreteEvent}{Discrete\+Event}} e, \mbox{\hyperlink{classAriadne_1_1Constraint}{Validated\+Constraint}} c)
+\begin{DoxyCompactList}\small\item\em Introduces a new state constraint $C$ on $x$. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1HybridEnclosure_aee9e50343fd85af81a551999ccc3e063}\label{classAriadne_1_1HybridEnclosure_aee9e50343fd85af81a551999ccc3e063} 
+\mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} {\bfseries new\+\_\+state\+\_\+time\+\_\+constraint} (\mbox{\hyperlink{classAriadne_1_1DiscreteEvent}{Discrete\+Event}} e, \mbox{\hyperlink{classAriadne_1_1Constraint}{Validated\+Constraint}} c)
+\begin{DoxyCompactList}\small\item\em Introduces a new state constraint $C$ on $(x,t)$. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1HybridEnclosure_a6af27c267e97303f174c17e1b17d50dd}\label{classAriadne_1_1HybridEnclosure_a6af27c267e97303f174c17e1b17d50dd} 
+\mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} {\bfseries new\+\_\+parameter\+\_\+constraint} (\mbox{\hyperlink{classAriadne_1_1DiscreteEvent}{Discrete\+Event}} e, \mbox{\hyperlink{classAriadne_1_1Constraint}{Validated\+Constraint}} c)
+\begin{DoxyCompactList}\small\item\em Introduces a new constraint $C$ on $s$. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1HybridEnclosure_a722a8517b1be84a4a370e7a86046831e}\label{classAriadne_1_1HybridEnclosure_a722a8517b1be84a4a370e7a86046831e} 
+\mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} {\bfseries new\+\_\+state\+\_\+time\+\_\+bound} (\mbox{\hyperlink{classAriadne_1_1DiscreteEvent}{Discrete\+Event}} e, Validated\+Scalar\+Multivariate\+Function gamma)
+\begin{DoxyCompactList}\small\item\em Introduces the new constraint $t\leq\gamma(x)$. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1HybridEnclosure_a07590b9ffe23b1d3232fc0551c8f2636}\label{classAriadne_1_1HybridEnclosure_a07590b9ffe23b1d3232fc0551c8f2636} 
+\mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} {\bfseries new\+\_\+invariant} (\mbox{\hyperlink{classAriadne_1_1DiscreteEvent}{Discrete\+Event}} e, Validated\+Scalar\+Multivariate\+Function c)
+\begin{DoxyCompactList}\small\item\em Introduces the new invariant (progress predicate) $c(x)\leq0$. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1HybridEnclosure_a9d94ce33972ffaea02176e1256ba2e8a}\label{classAriadne_1_1HybridEnclosure_a9d94ce33972ffaea02176e1256ba2e8a} 
+\mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} {\bfseries new\+\_\+activation} (\mbox{\hyperlink{classAriadne_1_1DiscreteEvent}{Discrete\+Event}} e, Validated\+Scalar\+Multivariate\+Function g)
+\begin{DoxyCompactList}\small\item\em Introduces the new activation condition $g(x)\geq0$ for the event {\itshape e}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1HybridEnclosure_ab34686aa489dae0cdb6f07dda97d172c}\label{classAriadne_1_1HybridEnclosure_ab34686aa489dae0cdb6f07dda97d172c} 
+\mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} {\bfseries new\+\_\+guard} (\mbox{\hyperlink{classAriadne_1_1DiscreteEvent}{Discrete\+Event}} e, Validated\+Scalar\+Multivariate\+Function g)
+\begin{DoxyCompactList}\small\item\em Introduces the new guard condition $g(x)=0$ for the event {\itshape e}. More precisely, the continuous dynamics is restricted to $c(x)\leq0$, and the event happens when $c(x)\geq0$. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1HybridEnclosure_ab4bc768b871f0b79b44d44b912e45b29}\label{classAriadne_1_1HybridEnclosure_ab4bc768b871f0b79b44d44b912e45b29} 
+\mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} {\bfseries new\+\_\+guard} (\mbox{\hyperlink{classAriadne_1_1DiscreteEvent}{Discrete\+Event}} e, Validated\+Scalar\+Multivariate\+Function g, Validated\+Scalar\+Multivariate\+Function ct)
+\begin{DoxyCompactList}\small\item\em Introduces the new guard condition $g(x)=0$ for the event {\itshape e}, with computed crossing time $\tau(s)$. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1HybridEnclosure_a3c1a15a3831a647991a6a2c5bbe1e029}\label{classAriadne_1_1HybridEnclosure_a3c1a15a3831a647991a6a2c5bbe1e029} 
+\mbox{\hyperlink{namespaceAriadne_a4b06015a4986ef014fb6643680cb04d2}{Dimension\+Type}} {\bfseries dimension} () const
+\begin{DoxyCompactList}\small\item\em The dimension of the set. Returns the state-\/space dimension. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1HybridEnclosure_abd0ff58221c9b05384d0ff4a6afe5ffb}\label{classAriadne_1_1HybridEnclosure_abd0ff58221c9b05384d0ff4a6afe5ffb} 
+\mbox{\hyperlink{namespaceAriadne_a4b06015a4986ef014fb6643680cb04d2}{Dimension\+Type}} {\bfseries state\+\_\+dimension} () const
+\begin{DoxyCompactList}\small\item\em The dimension of the state space of the set. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1HybridEnclosure_a105852630cf0748babb83881e3ce3a01}\label{classAriadne_1_1HybridEnclosure_a105852630cf0748babb83881e3ce3a01} 
+\mbox{\hyperlink{classAriadne_1_1ValidatedLowerKleenean}{Validated\+Lower\+Kleenean}} {\bfseries is\+\_\+empty} () const
+\begin{DoxyCompactList}\small\item\em Tests whether the set is empty. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1HybridEnclosure_a58536dd6fadc1a343897bc58a4eed56d}\label{classAriadne_1_1HybridEnclosure_a58536dd6fadc1a343897bc58a4eed56d} 
+\mbox{\hyperlink{classAriadne_1_1ValidatedKleenean}{Validated\+Kleenean}} {\bfseries satisfies} (\mbox{\hyperlink{classAriadne_1_1Constraint}{Effective\+Constraint}} c) const
+\begin{DoxyCompactList}\small\item\em Tests whether the set satisfies the constraint {\itshape c}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1HybridEnclosure_a92e300f6cd1b5339585d5be606ffdf7d}\label{classAriadne_1_1HybridEnclosure_a92e300f6cd1b5339585d5be606ffdf7d} 
+\mbox{\hyperlink{classAriadne_1_1List}{List}}$<$ Enclosure\+Variable\+Kind $>$ const \& {\bfseries variable\+\_\+kinds} () const
+\begin{DoxyCompactList}\small\item\em A list of the kind of quantity each parameter represents. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1HybridEnclosure_acd14d1ba9741a194faf8a46156921ee6}\label{classAriadne_1_1HybridEnclosure_acd14d1ba9741a194faf8a46156921ee6} 
+\mbox{\hyperlink{classAriadne_1_1HybridBox}{Hybrid\+Upper\+Box\+Type}} {\bfseries bounding\+\_\+box} () const
+\begin{DoxyCompactList}\small\item\em Returns a bounding box for the set. Computed by a simple interval evaluation of $f(D)$. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1HybridEnclosure_aee2721f09c90a8fb24c29776cc7ae97a}\label{classAriadne_1_1HybridEnclosure_aee2721f09c90a8fb24c29776cc7ae97a} 
+\mbox{\hyperlink{group__FunctionModule_ga7b38f183a458f335ba2f31e0bcdbadc9}{Upper\+Interval\+Type}} {\bfseries range\+\_\+of} (Effective\+Scalar\+Multivariate\+Function const \&g) const
+\begin{DoxyCompactList}\small\item\em Returns an over-\/approximation to the range of {\itshape g} over the set. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1HybridEnclosure_a5761d5ca0532e1de16b7db6498be8a37}\label{classAriadne_1_1HybridEnclosure_a5761d5ca0532e1de16b7db6498be8a37} 
+\mbox{\hyperlink{classAriadne_1_1ValidatedLowerKleenean}{Validated\+Lower\+Kleenean}} {\bfseries separated} (const \mbox{\hyperlink{classAriadne_1_1HybridBox}{Hybrid\+Exact\+Box}} \&hbx) const
+\begin{DoxyCompactList}\small\item\em Tests whether the set is disjoint from the box {\itshape hbx}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1HybridEnclosure_ade5b98c72b301cbb674b0f7f57f9ca5c}\label{classAriadne_1_1HybridEnclosure_ade5b98c72b301cbb674b0f7f57f9ca5c} 
+\mbox{\hyperlink{classAriadne_1_1ValidatedLowerKleenean}{Validated\+Lower\+Kleenean}} {\bfseries inside} (const \mbox{\hyperlink{classAriadne_1_1HybridBox}{Hybrid\+Exact\+Box}} \&hbx) const
+\begin{DoxyCompactList}\small\item\em Tests whether the set is a subset of the interior of the box {\itshape hbx}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1HybridEnclosure_a20a6b647a04831cd8cf4c2364e2210a8}\label{classAriadne_1_1HybridEnclosure_a20a6b647a04831cd8cf4c2364e2210a8} 
+\mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} {\bfseries restrict} (const \mbox{\hyperlink{group__FunctionModule_gafdd31b4d01081cd09aad2ce11117f867}{Exact\+Box\+Type}} \&subdomain)
+\begin{DoxyCompactList}\small\item\em Restricts to a subdomain of the {\itshape parameter} domain. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1HybridEnclosure_ace43fe61aad773e5cb8261cd0f0b4e54}\label{classAriadne_1_1HybridEnclosure_ace43fe61aad773e5cb8261cd0f0b4e54} 
+\mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} {\bfseries adjoin\+\_\+outer\+\_\+approximation\+\_\+to} (\mbox{\hyperlink{classAriadne_1_1HybridStorage}{Hybrid\+Storage}} \&paving, \mbox{\hyperlink{namespaceAriadne_aae901a69a841b1a085a0dfe218e38fe9}{Nat}} fineness) const
+\begin{DoxyCompactList}\small\item\em Adjoins an outer approximation of the set to the grid-\/based set {\itshape paving}, with accuracy given by {\itshape fineness} subdivisions in each component. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1HybridEnclosure_aacebbc775b76f4e1f00fdd3737624bfe}\label{classAriadne_1_1HybridEnclosure_aacebbc775b76f4e1f00fdd3737624bfe} 
+\mbox{\hyperlink{namespaceAriadne_abbe0884d033ed6289d1f654576d7bb07}{Pair}}$<$ \mbox{\hyperlink{classAriadne_1_1HybridEnclosure}{Hybrid\+Enclosure}}, \mbox{\hyperlink{classAriadne_1_1HybridEnclosure}{Hybrid\+Enclosure}} $>$ {\bfseries split} (\mbox{\hyperlink{namespaceAriadne_acd8b5f68421eb22a84277ef7c9c0ee2a}{Size\+Type}} dim) const
+\begin{DoxyCompactList}\small\item\em Splits into two smaller subsets along parameter direction {\itshape dim}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1HybridEnclosure_a45b327435af229e03ab47c04232509be}\label{classAriadne_1_1HybridEnclosure_a45b327435af229e03ab47c04232509be} 
+\mbox{\hyperlink{classAriadne_1_1List}{List}}$<$ \mbox{\hyperlink{classAriadne_1_1HybridEnclosure}{Hybrid\+Enclosure}} $>$ {\bfseries split} () const
+\begin{DoxyCompactList}\small\item\em Splits into smaller subsets. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1HybridEnclosure_aceb1d5d4e1ac7c1e6041ac4ed3c229b2}\label{classAriadne_1_1HybridEnclosure_aceb1d5d4e1ac7c1e6041ac4ed3c229b2} 
+\mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} {\bfseries reduce} ()
+\begin{DoxyCompactList}\small\item\em Reduce the size of the domain by constraint propagation, if possible. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1HybridEnclosure_a69ab738397cc41776eb760b9b01587db}\label{classAriadne_1_1HybridEnclosure_a69ab738397cc41776eb760b9b01587db} 
+\mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} {\bfseries recondition} ()
+\begin{DoxyCompactList}\small\item\em Simplifies the representation. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1HybridEnclosure_a9a873ea71e6a838c410be7e51027546b}\label{classAriadne_1_1HybridEnclosure_a9a873ea71e6a838c410be7e51027546b} 
+\mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} {\bfseries uniform\+\_\+error\+\_\+recondition} ()
+\begin{DoxyCompactList}\small\item\em Simplifies the representation by changing all uniform errors into independent variables. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1HybridEnclosure_a99344c2f19357fad440be8e1ae328645}\label{classAriadne_1_1HybridEnclosure_a99344c2f19357fad440be8e1ae328645} 
+\mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} {\bfseries kuhn\+\_\+recondition} ()
+\begin{DoxyCompactList}\small\item\em Simplifies the representation by choosing most significant independent variables to keep, and merging the rest into a single error for each component. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1HybridEnclosure_a349addc55182cab16072dfbd68d4739f}\label{classAriadne_1_1HybridEnclosure_a349addc55182cab16072dfbd68d4739f} 
+virtual \mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} {\bfseries draw} (\mbox{\hyperlink{classAriadne_1_1CanvasInterface}{Canvas\+Interface}} \&, const \mbox{\hyperlink{classAriadne_1_1Set}{Set}}$<$ \mbox{\hyperlink{classAriadne_1_1DiscreteLocation}{Discrete\+Location}} $>$ \&, const Variables2d \&) const
+\begin{DoxyCompactList}\small\item\em Draws onto a canvas. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1HybridEnclosure_a484d2410199c1f84ab5699482fda93ec}\label{classAriadne_1_1HybridEnclosure_a484d2410199c1f84ab5699482fda93ec} 
+\mbox{\hyperlink{namespaceAriadne_acbb98ddc4385af4599070e65a1a47ec1}{Output\+Stream}} \& {\bfseries \+\_\+write} (\mbox{\hyperlink{namespaceAriadne_acbb98ddc4385af4599070e65a1a47ec1}{Output\+Stream}} \&) const
+\begin{DoxyCompactList}\small\item\em Write to an output stream. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1HybridEnclosure_a0df4fcfdaaf5b2303a5d74d35a91c158}\label{classAriadne_1_1HybridEnclosure_a0df4fcfdaaf5b2303a5d74d35a91c158} 
+\mbox{\hyperlink{namespaceAriadne_acbb98ddc4385af4599070e65a1a47ec1}{Output\+Stream}} \& {\bfseries print} (\mbox{\hyperlink{namespaceAriadne_acbb98ddc4385af4599070e65a1a47ec1}{Output\+Stream}} \&) const
+\begin{DoxyCompactList}\small\item\em Write an abbreviated representation to an output stream. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1HybridEnclosure_a455ab019be7f89e5df4dff773825a9fb}\label{classAriadne_1_1HybridEnclosure_a455ab019be7f89e5df4dff773825a9fb} 
+\mbox{\hyperlink{namespaceAriadne_acbb98ddc4385af4599070e65a1a47ec1}{Output\+Stream}} \& {\bfseries repr} (\mbox{\hyperlink{namespaceAriadne_acbb98ddc4385af4599070e65a1a47ec1}{Output\+Stream}} \&) const
+\begin{DoxyCompactList}\small\item\em Write a full representation to an output stream which can be used in a constructor. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxyparagraph*{Public Member Functions inherited from \mbox{\hyperlink{classAriadne_1_1HybridDrawableInterface}{Hybrid\+Drawable\+Interface}}}
+\begin{DoxyCompactItemize}
+\item 
+virtual {\bfseries \texorpdfstring{$\sim$}{\string~}\+Hybrid\+Drawable\+Interface} ()=default
+\begin{DoxyCompactList}\small\item\em brief Virtual destructor. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsubsection*{Friends}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1HybridEnclosure_a735ee1832b8df96961f2c207988b048a}\label{classAriadne_1_1HybridEnclosure_a735ee1832b8df96961f2c207988b048a} 
+\mbox{\hyperlink{classAriadne_1_1HybridBasicSet}{Hybrid\+Basic\+Set}}$<$ \mbox{\hyperlink{classAriadne_1_1Enclosure}{Enclosure}} $>$ {\bfseries project} (\mbox{\hyperlink{classAriadne_1_1HybridEnclosure}{Hybrid\+Enclosure}} const \&encl, \mbox{\hyperlink{classAriadne_1_1Space}{Real\+Space}} const \&spc)
+\begin{DoxyCompactList}\small\item\em The continuous state set. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsubsection*{Related Types and Functions}
+(Note that these are not member symbols.) \begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1HybridEnclosure_a20575cf4de80076ff90916262ca26e01}\label{classAriadne_1_1HybridEnclosure_a20575cf4de80076ff90916262ca26e01} 
+using {\bfseries Hybrid\+Orbit} = \mbox{\hyperlink{classAriadne_1_1Orbit}{Orbit}}$<$\mbox{\hyperlink{classAriadne_1_1HybridEnclosure}{Hybrid\+Enclosure}}$>$
+\end{DoxyCompactItemize}
+\doxysubsubsubsection*{Additional Inherited Members}
+\doxyparagraph*{Public Types inherited from \mbox{\hyperlink{classAriadne_1_1HybridDrawableInterface}{Hybrid\+Drawable\+Interface}}}
+\begin{DoxyCompactItemize}
+\item 
+typedef Variables2d {\bfseries Projection\+Type}
+\begin{DoxyCompactList}\small\item\em brief The type of data needed to project to a 2d image. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+The documentation for this class was generated from the following files\+:\begin{DoxyCompactItemize}
+\item 
+source/hybrid/\mbox{\hyperlink{hybrid__enclosure_8hpp}{hybrid\+\_\+enclosure.\+hpp}}\item 
+source/hybrid/\mbox{\hyperlink{hybrid__evolver_8hpp}{hybrid\+\_\+evolver.\+hpp}}\item 
+source/hybrid/hybrid\+\_\+enclosure.\+cpp\end{DoxyCompactItemize}

@@ -1,0 +1,15 @@
+node:internal/modules/run_main:123
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: hyperlattice/src/kernels.rs
+    at file:///home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/verify-arf-rounding.mjs:29:108 {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: false,
+  expected: true,
+  operator: '==',
+  diff: 'simple'
+}
+
+Node.js v22.22.2

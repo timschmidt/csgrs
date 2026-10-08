@@ -1,0 +1,38 @@
+\doxysubsection{First\+Order\+PDE Struct Reference}
+\hypertarget{structAriadne_1_1FirstOrderPDE}{}\label{structAriadne_1_1FirstOrderPDE}\index{FirstOrderPDE@{FirstOrderPDE}}
+
+
+{\ttfamily \#include $<$first\+\_\+order\+\_\+pde.\+hpp$>$}
+
+
+
+\doxysubsubsection{Description}
+The first-\/order partial differential equation $ A u_{,t} + \sum_{j=1}^{n} B_j u_{,x_j} = f(u). $. \doxysubsubsubsection*{Public Attributes}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{structAriadne_1_1FirstOrderPDE_ae44ebf570e78c1b39138be7dee03390d}\label{structAriadne_1_1FirstOrderPDE_ae44ebf570e78c1b39138be7dee03390d} 
+\mbox{\hyperlink{classAriadne_1_1Matrix}{Matrix}}$<$ \mbox{\hyperlink{classAriadne_1_1Real}{Real}} $>$ {\bfseries A}
+\item 
+\Hypertarget{structAriadne_1_1FirstOrderPDE_aee27bcb1afabcafd99a4fa4e4699322e}\label{structAriadne_1_1FirstOrderPDE_aee27bcb1afabcafd99a4fa4e4699322e} 
+\mbox{\hyperlink{classAriadne_1_1Array}{Array}}$<$ \mbox{\hyperlink{classAriadne_1_1Matrix}{Matrix}}$<$ \mbox{\hyperlink{classAriadne_1_1Real}{Real}} $>$ $>$ {\bfseries Bs}
+\item 
+\Hypertarget{structAriadne_1_1FirstOrderPDE_a6c32edf4bb48351e7a7c436c223fccd5}\label{structAriadne_1_1FirstOrderPDE_a6c32edf4bb48351e7a7c436c223fccd5} 
+\mbox{\hyperlink{classAriadne_1_1Array}{Array}}$<$ \mbox{\hyperlink{classAriadne_1_1DiagonalMatrix}{Diagonal\+Matrix}}$<$ \mbox{\hyperlink{classAriadne_1_1Real}{Real}} $>$ $>$ const  \& {\bfseries Ds}
+\item 
+\Hypertarget{structAriadne_1_1FirstOrderPDE_a3ab715335440588c9ffd8723ceae8250}\label{structAriadne_1_1FirstOrderPDE_a3ab715335440588c9ffd8723ceae8250} 
+\mbox{\hyperlink{classAriadne_1_1Array}{Array}}$<$ \mbox{\hyperlink{classAriadne_1_1Matrix}{Matrix}}$<$ \mbox{\hyperlink{classAriadne_1_1Real}{Real}} $>$ $>$ const  \& {\bfseries Ts}
+\item 
+\Hypertarget{structAriadne_1_1FirstOrderPDE_ae2113805cfa281fb91ea1a0455b86993}\label{structAriadne_1_1FirstOrderPDE_ae2113805cfa281fb91ea1a0455b86993} 
+Effective\+Vector\+Multivariate\+Function const  \& {\bfseries f}
+\end{DoxyCompactItemize}
+\doxysubsubsubsection*{Related Types and Functions}
+(Note that these are not member symbols.) \begin{DoxyCompactItemize}
+\item 
+\Hypertarget{structAriadne_1_1FirstOrderPDE_ade73d095003d5a0d9405b68b9c405c23}\label{structAriadne_1_1FirstOrderPDE_ade73d095003d5a0d9405b68b9c405c23} 
+{\footnotesize template$<$class PR$>$ }\\\mbox{\hyperlink{structAriadne_1_1FirstOrderPDESolution}{First\+Order\+PDESolution}}$<$ PR $>$ {\bfseries first\+\_\+order\+\_\+pde} (\mbox{\hyperlink{structAriadne_1_1FirstOrderPDE}{First\+Order\+PDE}} const \&pde, Effective\+Vector\+Multivariate\+Function const \&phi0, PR pr)
+\begin{DoxyCompactList}\small\item\em Solve the first-\/order partial differential equation $ A u_{,t} + \sum_{j=1}^{n} B_j u_{,x_j} = f(u); \  u(0,x) = \phi_0(x); \  u:\R^n \to \R^m . $. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+The documentation for this struct was generated from the following file\+:\begin{DoxyCompactItemize}
+\item 
+source/dynamics/\mbox{\hyperlink{first__order__pde_8hpp}{first\+\_\+order\+\_\+pde.\+hpp}}\end{DoxyCompactItemize}

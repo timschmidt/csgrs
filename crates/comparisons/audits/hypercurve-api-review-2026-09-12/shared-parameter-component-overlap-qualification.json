@@ -1,0 +1,85 @@
+{
+  "status": "qualified against the documented baseline and committed",
+  "goal_status": "active",
+  "previous_commit": "ef2114738d48439e9ce3f1ac787c974309b9d6e5",
+  "commit": "8b3573224c5b13fcf2a953e0f8cdae5c70d322a0",
+  "targets": 49,
+  "passed": 2210,
+  "passed_by_repo": {
+    "hypercurve": 1978,
+    "hyperbrep": 232
+  },
+  "known_failed": [
+    "approximate_512_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions",
+    "non_ph_bezier_pair_projective_fillet_retains_algebraic_extensions",
+    "nonconvex_algebraic_chord_expansion_is_exact_and_local_collapse_is_explicit",
+    "strict_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions",
+    "unified_mixed_line_arc_erosion_splits_after_a_curved_neck_collapse"
+  ],
+  "new_failures": [],
+  "ignored": 9,
+  "expensive_previously_unqualified_exclusions": 8,
+  "timeouts": 0,
+  "builds_and_checks": {
+    "-check": 0,
+    "-test-build": 0,
+    "-hyperbrep-check": 0,
+    "-hyperbrep-test-build": 0
+  },
+  "formatting_and_whitespace": "passed on final frozen qualification sources",
+  "formatted_files": {
+    "hypercurve": [
+      "src/curve_intersection.rs",
+      "src/curve_region_boolean.rs"
+    ],
+    "hyperbrep": []
+  },
+  "additional_caller_checks": [
+    {
+      "target": "fuzz",
+      "command": [
+        "cargo",
+        "check",
+        "--manifest-path",
+        "fuzz/Cargo.toml",
+        "--all-targets",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 3.8197551320045022,
+      "log": "shared-parameter-component-overlap-fuzz-check.log"
+    },
+    {
+      "target": "ui",
+      "command": [
+        "cargo",
+        "check",
+        "--manifest-path",
+        "examples/hypercurve_ui/Cargo.toml",
+        "--all-targets",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 4.020264494000003,
+      "log": "shared-parameter-component-overlap-ui-check.log"
+    }
+  ],
+  "source_verification": "shared-parameter-component-overlap-source-verification.json",
+  "normal_library_sha256": "d30bc1c78a473adc5480b8cb0ff1c0cc20d813d9061281132a4c8019872fa30a",
+  "independent_probes_and_matrices": [
+    "shared-parameter-component-overlap-probe-final.json",
+    "shared-parameter-component-overlap-circle-matrix.json",
+    "shared-parameter-component-overlap-region-carrier-matrix.json",
+    "shared-parameter-component-overlap-general-trim-matrix.json",
+    "shared-parameter-component-overlap-constant-image-trim-matrix.json"
+  ],
+  "regression_baseline": "analytic-point-field-replay-qualification.json",
+  "affected_regression_results": "shared-parameter-component-overlap-full-hypercurve-lib.json",
+  "evidence_audit": "shared-parameter-component-overlap-evidence-audit.md",
+  "performance_claim": null,
+  "remaining": "Common analytic intersection dispatch and public region overlap correspondence publication; parallel/rational, parallel/chord and parallel/parallel common dispatch; finite exterior and retraced domains; normalized public region construction; five promotion failures; eight unqualified expensive tests; broader original architecture goal.",
+  "postcommit_repositories": "shared-parameter-component-overlap-postcommit-repositories.json",
+  "next_work": "analytic-common-dispatch-followup.json"
+}

@@ -1,0 +1,26 @@
+{
+  "returncode": 0,
+  "elapsed_seconds": 1.015279453000403,
+  "normal_library_sha256": "0f5b28637814fb423462fabccda416f4be464138d2d6ef53a1d2513f48a0584c",
+  "log": "finite-circle-affine-cubic-replay.log",
+  "source": "finite-domain-chord-cubic-replay.rs",
+  "command": [
+    "rustc",
+    "--edition=2024",
+    "-O",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-domain-chord-cubic-replay.rs",
+    "--extern",
+    "hypercurve=/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/libhypercurve-2c7ff6f3fbe07653.rlib",
+    "-L",
+    "dependency=/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps",
+    "-o",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-circle-affine-cubic-replay"
+  ],
+  "source_sha256": "883ea6bc0007433637ee9f49c1c4e5ace7731f236e56789a82fec053fde7d508",
+  "executable_sha256": "bb90f0968bda819f2629761e2d906120be91f670a9fa42f25bf04824d517a96a",
+  "counts": {
+    "queries": 44,
+    "point_replays": 16,
+    "splits": 4
+  }
+}

@@ -1,0 +1,22 @@
+{
+  "tag": "qqbar-root-limit-sanitized-61-v84",
+  "started": "2026-09-12T04:36:42.709Z",
+  "finished": "2026-09-12T04:36:42.781Z",
+  "elapsedSeconds": 0.069704654,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "timeout",
+  "args": [
+    "20s",
+    "prlimit",
+    "--core=0",
+    "--as=1073741824",
+    "--cpu=10",
+    "--",
+    "/tmp/calcium-qqbar-remainder-v84.1aubRO/sanitized",
+    "limit",
+    "61",
+    "0"
+  ],
+  "code": null,
+  "signal": "SIGILL"
+}

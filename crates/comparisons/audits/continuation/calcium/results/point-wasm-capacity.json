@@ -1,0 +1,15 @@
+{
+  "tag": "point-wasm-capacity",
+  "started": "2026-09-10T23:57:48.058Z",
+  "finished": "2026-09-10T23:57:48.072Z",
+  "elapsedSeconds": 0.011754755000000002,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "df",
+  "args": [
+    "-B1",
+    "/tmp",
+    "."
+  ],
+  "code": 0,
+  "signal": null
+}

@@ -1,0 +1,5 @@
+    Blocking waiting for file lock on build directory
+    Checking hyperreal v0.13.1 (/home/tim/Documents/GitHub/workspace/hyperreal)
+ Documenting hyperlattice v0.6.1 (/home/tim/Documents/GitHub/workspace/hyperlattice)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 5.99s
+   Generated /home/tim/Documents/GitHub/workspace/hyperlattice/target/doc/hyperlattice/index.html

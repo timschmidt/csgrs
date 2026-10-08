@@ -1,0 +1,7 @@
+Keep nesting evidence with its authoritative boundary
+
+Remove the public native-only nesting report, fabrication API, and duplicated provenance, depth, sample and fragment-count outputs. Callers query region roles, owned-hole profiles, boundary areas and source provenance directly. Raw native nesting still uses the same area, sign, intersection and containment predicates; its private result carries only roles and signed areas. Validate source identity on the existing owning boundary and remove report-only cloning and redundant shape validation.
+
+This also admits empty native boundary input naturally. A standalone probe against the committed parent reproduced the old topology error under both policies; the new regression requires certified empty construction and Outside membership. No compatibility export remains.
+
+Validation: 73 release regressions across two binaries, including nonlinear nesting, exact areas, source identity, raw crossing rejection and generated-point reentry. Seven all-target feature/lint, format, two-fuzz-target, documentation and downstream checks pass. No measured speedup claim.

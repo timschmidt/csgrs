@@ -1,0 +1,13 @@
+{
+  "tag": "prototype-statistics-historical-rank",
+  "started": "2026-09-11T01:46:41.048Z",
+  "finished": "2026-09-11T01:46:49.369Z",
+  "elapsedSeconds": 8.318718681999998,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "node",
+  "args": [
+    "verify-rank-costs.mjs"
+  ],
+  "code": 0,
+  "signal": null
+}

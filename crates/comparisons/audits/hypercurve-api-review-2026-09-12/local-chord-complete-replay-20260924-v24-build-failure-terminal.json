@@ -1,0 +1,7 @@
+{
+  "all_sources_unchanged": true,
+  "all_processes_reaped": true,
+  "outer_handle": 59829,
+  "error": "E0382 in new dyadic test: Real::sqrt consumes squared; clone needed",
+  "runtime_tests_started": false
+}

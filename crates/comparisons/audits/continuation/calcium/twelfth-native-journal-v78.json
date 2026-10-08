@@ -1,0 +1,605 @@
+{
+  "checkpoint": 78,
+  "runs": [
+    {
+      "phase": "pilot",
+      "round": 0,
+      "variant": "baseline",
+      "mode": "cpu",
+      "tag": "twelfth-native-pilot-0-baseline-v78",
+      "plan": "twelfth-native-pilot-0-baseline-v78-plan.json",
+      "planSha256": "c47f1e2490a744265ec4a0944679a4ba4e3cd1a55ab6f3a41c72b13e376474c3",
+      "groups": 576
+    },
+    {
+      "phase": "pilot",
+      "round": 0,
+      "variant": "candidate",
+      "mode": "cpu",
+      "tag": "twelfth-native-pilot-0-candidate-v78",
+      "plan": "twelfth-native-pilot-0-candidate-v78-plan.json",
+      "planSha256": "c47f1e2490a744265ec4a0944679a4ba4e3cd1a55ab6f3a41c72b13e376474c3",
+      "groups": 576
+    },
+    {
+      "phase": "pilot",
+      "round": 1,
+      "variant": "candidate",
+      "mode": "cpu",
+      "tag": "twelfth-native-pilot-1-candidate-v78",
+      "plan": "twelfth-native-pilot-1-candidate-v78-plan.json",
+      "planSha256": "d729ada7c7dc7d1d99acd3080813509945f2011010095a53967a4f6b3656554e",
+      "groups": 576
+    },
+    {
+      "phase": "pilot",
+      "round": 1,
+      "variant": "baseline",
+      "mode": "cpu",
+      "tag": "twelfth-native-pilot-1-baseline-v78",
+      "plan": "twelfth-native-pilot-1-baseline-v78-plan.json",
+      "planSha256": "d729ada7c7dc7d1d99acd3080813509945f2011010095a53967a4f6b3656554e",
+      "groups": 576
+    },
+    {
+      "phase": "cpu",
+      "round": 0,
+      "variant": "baseline",
+      "mode": "cpu",
+      "tag": "twelfth-native-cpu-0-baseline-v78",
+      "plan": "twelfth-native-cpu-0-baseline-v78-plan.json",
+      "planSha256": "1aa08e5a2d68802ad2cccbed75941b1e4f51ba6c79c31f9d04554d6fd93d54f2",
+      "groups": 576
+    },
+    {
+      "phase": "cpu",
+      "round": 0,
+      "variant": "candidate",
+      "mode": "cpu",
+      "tag": "twelfth-native-cpu-0-candidate-v78",
+      "plan": "twelfth-native-cpu-0-candidate-v78-plan.json",
+      "planSha256": "1aa08e5a2d68802ad2cccbed75941b1e4f51ba6c79c31f9d04554d6fd93d54f2",
+      "groups": 576
+    },
+    {
+      "phase": "cpu",
+      "round": 1,
+      "variant": "candidate",
+      "mode": "cpu",
+      "tag": "twelfth-native-cpu-1-candidate-v78",
+      "plan": "twelfth-native-cpu-1-candidate-v78-plan.json",
+      "planSha256": "5afdcd34d323d275b61d8e7831461753afbf9bc8fdfa5c35df4772838212d7e4",
+      "groups": 576
+    },
+    {
+      "phase": "cpu",
+      "round": 1,
+      "variant": "baseline",
+      "mode": "cpu",
+      "tag": "twelfth-native-cpu-1-baseline-v78",
+      "plan": "twelfth-native-cpu-1-baseline-v78-plan.json",
+      "planSha256": "5afdcd34d323d275b61d8e7831461753afbf9bc8fdfa5c35df4772838212d7e4",
+      "groups": 576
+    },
+    {
+      "phase": "cpu",
+      "round": 2,
+      "variant": "candidate",
+      "mode": "cpu",
+      "tag": "twelfth-native-cpu-2-candidate-v78",
+      "plan": "twelfth-native-cpu-2-candidate-v78-plan.json",
+      "planSha256": "03d3d74c4a6289bc2f83009a6f64d47833b87185a9125c34f2f0a099059efd6a",
+      "groups": 576
+    },
+    {
+      "phase": "cpu",
+      "round": 2,
+      "variant": "baseline",
+      "mode": "cpu",
+      "tag": "twelfth-native-cpu-2-baseline-v78",
+      "plan": "twelfth-native-cpu-2-baseline-v78-plan.json",
+      "planSha256": "03d3d74c4a6289bc2f83009a6f64d47833b87185a9125c34f2f0a099059efd6a",
+      "groups": 576
+    },
+    {
+      "phase": "cpu",
+      "round": 3,
+      "variant": "baseline",
+      "mode": "cpu",
+      "tag": "twelfth-native-cpu-3-baseline-v78",
+      "plan": "twelfth-native-cpu-3-baseline-v78-plan.json",
+      "planSha256": "90da8b5dcec47b84fb7b50b879f92aec2a481ef98e9423653b78c0de4f51245d",
+      "groups": 576
+    },
+    {
+      "phase": "cpu",
+      "round": 3,
+      "variant": "candidate",
+      "mode": "cpu",
+      "tag": "twelfth-native-cpu-3-candidate-v78",
+      "plan": "twelfth-native-cpu-3-candidate-v78-plan.json",
+      "planSha256": "90da8b5dcec47b84fb7b50b879f92aec2a481ef98e9423653b78c0de4f51245d",
+      "groups": 576
+    },
+    {
+      "phase": "cpu",
+      "round": 4,
+      "variant": "baseline",
+      "mode": "cpu",
+      "tag": "twelfth-native-cpu-4-baseline-v78",
+      "plan": "twelfth-native-cpu-4-baseline-v78-plan.json",
+      "planSha256": "f20ce924ed138b317e2c4c70c7de745b17750e12ecac64f30acd83304a9f5454",
+      "groups": 576
+    },
+    {
+      "phase": "cpu",
+      "round": 4,
+      "variant": "candidate",
+      "mode": "cpu",
+      "tag": "twelfth-native-cpu-4-candidate-v78",
+      "plan": "twelfth-native-cpu-4-candidate-v78-plan.json",
+      "planSha256": "f20ce924ed138b317e2c4c70c7de745b17750e12ecac64f30acd83304a9f5454",
+      "groups": 576
+    },
+    {
+      "phase": "cpu",
+      "round": 5,
+      "variant": "baseline",
+      "mode": "cpu",
+      "tag": "twelfth-native-cpu-5-baseline-v78",
+      "plan": "twelfth-native-cpu-5-baseline-v78-plan.json",
+      "planSha256": "229dc8ed6f706b14059dbfb2ede6b46e08e46b36579e6c471ed2041281566961",
+      "groups": 576
+    },
+    {
+      "phase": "cpu",
+      "round": 5,
+      "variant": "candidate",
+      "mode": "cpu",
+      "tag": "twelfth-native-cpu-5-candidate-v78",
+      "plan": "twelfth-native-cpu-5-candidate-v78-plan.json",
+      "planSha256": "229dc8ed6f706b14059dbfb2ede6b46e08e46b36579e6c471ed2041281566961",
+      "groups": 576
+    },
+    {
+      "phase": "cpu",
+      "round": 6,
+      "variant": "candidate",
+      "mode": "cpu",
+      "tag": "twelfth-native-cpu-6-candidate-v78",
+      "plan": "twelfth-native-cpu-6-candidate-v78-plan.json",
+      "planSha256": "04bf17bfc9d8b4ca07d59ecfde642e4113008a372e229293d031458737bd9d15",
+      "groups": 576
+    },
+    {
+      "phase": "cpu",
+      "round": 6,
+      "variant": "baseline",
+      "mode": "cpu",
+      "tag": "twelfth-native-cpu-6-baseline-v78",
+      "plan": "twelfth-native-cpu-6-baseline-v78-plan.json",
+      "planSha256": "04bf17bfc9d8b4ca07d59ecfde642e4113008a372e229293d031458737bd9d15",
+      "groups": 576
+    },
+    {
+      "phase": "cpu",
+      "round": 7,
+      "variant": "candidate",
+      "mode": "cpu",
+      "tag": "twelfth-native-cpu-7-candidate-v78",
+      "plan": "twelfth-native-cpu-7-candidate-v78-plan.json",
+      "planSha256": "8b9cd1167c97a6cca604e6a39eeb1537a2df47e1bc5aa281390cf30d66c39b50",
+      "groups": 576
+    },
+    {
+      "phase": "cpu",
+      "round": 7,
+      "variant": "baseline",
+      "mode": "cpu",
+      "tag": "twelfth-native-cpu-7-baseline-v78",
+      "plan": "twelfth-native-cpu-7-baseline-v78-plan.json",
+      "planSha256": "8b9cd1167c97a6cca604e6a39eeb1537a2df47e1bc5aa281390cf30d66c39b50",
+      "groups": 576
+    },
+    {
+      "phase": "cpu",
+      "round": 8,
+      "variant": "baseline",
+      "mode": "cpu",
+      "tag": "twelfth-native-cpu-8-baseline-v78",
+      "plan": "twelfth-native-cpu-8-baseline-v78-plan.json",
+      "planSha256": "f834b0d2a6a17006bd0bdf01d7e7c444b66fe5d8f8a2ab16b1b32fc9e72a456c",
+      "groups": 576
+    },
+    {
+      "phase": "cpu",
+      "round": 8,
+      "variant": "candidate",
+      "mode": "cpu",
+      "tag": "twelfth-native-cpu-8-candidate-v78",
+      "plan": "twelfth-native-cpu-8-candidate-v78-plan.json",
+      "planSha256": "f834b0d2a6a17006bd0bdf01d7e7c444b66fe5d8f8a2ab16b1b32fc9e72a456c",
+      "groups": 576
+    },
+    {
+      "phase": "cpu",
+      "round": 9,
+      "variant": "candidate",
+      "mode": "cpu",
+      "tag": "twelfth-native-cpu-9-candidate-v78",
+      "plan": "twelfth-native-cpu-9-candidate-v78-plan.json",
+      "planSha256": "d4a99a55ed7620c4cc8c46706542775b5ae82cdb75479f459026835799342077",
+      "groups": 576
+    },
+    {
+      "phase": "cpu",
+      "round": 9,
+      "variant": "baseline",
+      "mode": "cpu",
+      "tag": "twelfth-native-cpu-9-baseline-v78",
+      "plan": "twelfth-native-cpu-9-baseline-v78-plan.json",
+      "planSha256": "d4a99a55ed7620c4cc8c46706542775b5ae82cdb75479f459026835799342077",
+      "groups": 576
+    },
+    {
+      "phase": "cpu",
+      "round": 10,
+      "variant": "candidate",
+      "mode": "cpu",
+      "tag": "twelfth-native-cpu-10-candidate-v78",
+      "plan": "twelfth-native-cpu-10-candidate-v78-plan.json",
+      "planSha256": "5f83473284f908fd6e477a05ae461535da84411d80ae3d00c8fa3753b67e4960",
+      "groups": 576
+    },
+    {
+      "phase": "cpu",
+      "round": 10,
+      "variant": "baseline",
+      "mode": "cpu",
+      "tag": "twelfth-native-cpu-10-baseline-v78",
+      "plan": "twelfth-native-cpu-10-baseline-v78-plan.json",
+      "planSha256": "5f83473284f908fd6e477a05ae461535da84411d80ae3d00c8fa3753b67e4960",
+      "groups": 576
+    },
+    {
+      "phase": "cpu",
+      "round": 11,
+      "variant": "candidate",
+      "mode": "cpu",
+      "tag": "twelfth-native-cpu-11-candidate-v78",
+      "plan": "twelfth-native-cpu-11-candidate-v78-plan.json",
+      "planSha256": "7fcaf83936b4d577dfdf9abf06468f005a6dce34dd91bfb6f03b939812fcacd1",
+      "groups": 576
+    },
+    {
+      "phase": "cpu",
+      "round": 11,
+      "variant": "baseline",
+      "mode": "cpu",
+      "tag": "twelfth-native-cpu-11-baseline-v78",
+      "plan": "twelfth-native-cpu-11-baseline-v78-plan.json",
+      "planSha256": "7fcaf83936b4d577dfdf9abf06468f005a6dce34dd91bfb6f03b939812fcacd1",
+      "groups": 576
+    },
+    {
+      "phase": "cpu",
+      "round": 12,
+      "variant": "baseline",
+      "mode": "cpu",
+      "tag": "twelfth-native-cpu-12-baseline-v78",
+      "plan": "twelfth-native-cpu-12-baseline-v78-plan.json",
+      "planSha256": "4711a2bddaf5d96e2bbdf4030520258333a2de8c457bc95825ab8d42d07ecbfa",
+      "groups": 576
+    },
+    {
+      "phase": "cpu",
+      "round": 12,
+      "variant": "candidate",
+      "mode": "cpu",
+      "tag": "twelfth-native-cpu-12-candidate-v78",
+      "plan": "twelfth-native-cpu-12-candidate-v78-plan.json",
+      "planSha256": "4711a2bddaf5d96e2bbdf4030520258333a2de8c457bc95825ab8d42d07ecbfa",
+      "groups": 576
+    },
+    {
+      "phase": "cpu",
+      "round": 13,
+      "variant": "candidate",
+      "mode": "cpu",
+      "tag": "twelfth-native-cpu-13-candidate-v78",
+      "plan": "twelfth-native-cpu-13-candidate-v78-plan.json",
+      "planSha256": "c49e74d4d0b8f20a868c4a7ac11e43b32ed8fce6653d3e81baaf4e38b6572e11",
+      "groups": 576
+    },
+    {
+      "phase": "cpu",
+      "round": 13,
+      "variant": "baseline",
+      "mode": "cpu",
+      "tag": "twelfth-native-cpu-13-baseline-v78",
+      "plan": "twelfth-native-cpu-13-baseline-v78-plan.json",
+      "planSha256": "c49e74d4d0b8f20a868c4a7ac11e43b32ed8fce6653d3e81baaf4e38b6572e11",
+      "groups": 576
+    },
+    {
+      "phase": "cpu",
+      "round": 14,
+      "variant": "candidate",
+      "mode": "cpu",
+      "tag": "twelfth-native-cpu-14-candidate-v78",
+      "plan": "twelfth-native-cpu-14-candidate-v78-plan.json",
+      "planSha256": "1de9c935f7c5c9cf3f3e29e6e6b298e104a01b3ab399e646e81d50c148bd37ee",
+      "groups": 576
+    },
+    {
+      "phase": "cpu",
+      "round": 14,
+      "variant": "baseline",
+      "mode": "cpu",
+      "tag": "twelfth-native-cpu-14-baseline-v78",
+      "plan": "twelfth-native-cpu-14-baseline-v78-plan.json",
+      "planSha256": "1de9c935f7c5c9cf3f3e29e6e6b298e104a01b3ab399e646e81d50c148bd37ee",
+      "groups": 576
+    },
+    {
+      "phase": "cpu",
+      "round": 15,
+      "variant": "baseline",
+      "mode": "cpu",
+      "tag": "twelfth-native-cpu-15-baseline-v78",
+      "plan": "twelfth-native-cpu-15-baseline-v78-plan.json",
+      "planSha256": "55d52f37bd560ef799db82086f212fd029bd3053d7aa669b5836b8c534ea85bb",
+      "groups": 576
+    },
+    {
+      "phase": "cpu",
+      "round": 15,
+      "variant": "candidate",
+      "mode": "cpu",
+      "tag": "twelfth-native-cpu-15-candidate-v78",
+      "plan": "twelfth-native-cpu-15-candidate-v78-plan.json",
+      "planSha256": "55d52f37bd560ef799db82086f212fd029bd3053d7aa669b5836b8c534ea85bb",
+      "groups": 576
+    },
+    {
+      "phase": "cpu",
+      "round": 16,
+      "variant": "baseline",
+      "mode": "cpu",
+      "tag": "twelfth-native-cpu-16-baseline-v78",
+      "plan": "twelfth-native-cpu-16-baseline-v78-plan.json",
+      "planSha256": "552fb4491c44a4d22d7f8e51529f254e50019db0d55484f908f50accd1cb80ba",
+      "groups": 576
+    },
+    {
+      "phase": "cpu",
+      "round": 16,
+      "variant": "candidate",
+      "mode": "cpu",
+      "tag": "twelfth-native-cpu-16-candidate-v78",
+      "plan": "twelfth-native-cpu-16-candidate-v78-plan.json",
+      "planSha256": "552fb4491c44a4d22d7f8e51529f254e50019db0d55484f908f50accd1cb80ba",
+      "groups": 576
+    },
+    {
+      "phase": "cpu",
+      "round": 17,
+      "variant": "baseline",
+      "mode": "cpu",
+      "tag": "twelfth-native-cpu-17-baseline-v78",
+      "plan": "twelfth-native-cpu-17-baseline-v78-plan.json",
+      "planSha256": "779b638ebd08bc5ae61c0bed3ba8ebe8a1ea57fa010f1b43cffd565ac99a6e6c",
+      "groups": 576
+    },
+    {
+      "phase": "cpu",
+      "round": 17,
+      "variant": "candidate",
+      "mode": "cpu",
+      "tag": "twelfth-native-cpu-17-candidate-v78",
+      "plan": "twelfth-native-cpu-17-candidate-v78-plan.json",
+      "planSha256": "779b638ebd08bc5ae61c0bed3ba8ebe8a1ea57fa010f1b43cffd565ac99a6e6c",
+      "groups": 576
+    },
+    {
+      "phase": "cpu",
+      "round": 18,
+      "variant": "candidate",
+      "mode": "cpu",
+      "tag": "twelfth-native-cpu-18-candidate-v78",
+      "plan": "twelfth-native-cpu-18-candidate-v78-plan.json",
+      "planSha256": "bdf1c942dbb156797d5151521e17ee5c43315d8b03a475ede4312ed2f6abdfd9",
+      "groups": 576
+    },
+    {
+      "phase": "cpu",
+      "round": 18,
+      "variant": "baseline",
+      "mode": "cpu",
+      "tag": "twelfth-native-cpu-18-baseline-v78",
+      "plan": "twelfth-native-cpu-18-baseline-v78-plan.json",
+      "planSha256": "bdf1c942dbb156797d5151521e17ee5c43315d8b03a475ede4312ed2f6abdfd9",
+      "groups": 576
+    },
+    {
+      "phase": "cpu",
+      "round": 19,
+      "variant": "baseline",
+      "mode": "cpu",
+      "tag": "twelfth-native-cpu-19-baseline-v78",
+      "plan": "twelfth-native-cpu-19-baseline-v78-plan.json",
+      "planSha256": "627371f3dff52be2be76e5c6a681c07301c4c2e51034b112e55eb72d5230b89f",
+      "groups": 576
+    },
+    {
+      "phase": "cpu",
+      "round": 19,
+      "variant": "candidate",
+      "mode": "cpu",
+      "tag": "twelfth-native-cpu-19-candidate-v78",
+      "plan": "twelfth-native-cpu-19-candidate-v78-plan.json",
+      "planSha256": "627371f3dff52be2be76e5c6a681c07301c4c2e51034b112e55eb72d5230b89f",
+      "groups": 576
+    },
+    {
+      "phase": "cpu",
+      "round": 20,
+      "variant": "candidate",
+      "mode": "cpu",
+      "tag": "twelfth-native-cpu-20-candidate-v78",
+      "plan": "twelfth-native-cpu-20-candidate-v78-plan.json",
+      "planSha256": "2ead1e62c34f3e4a5812360708e1ecdb72582580e4b9fb42676e554e9e31d504",
+      "groups": 576
+    },
+    {
+      "phase": "cpu",
+      "round": 20,
+      "variant": "baseline",
+      "mode": "cpu",
+      "tag": "twelfth-native-cpu-20-baseline-v78",
+      "plan": "twelfth-native-cpu-20-baseline-v78-plan.json",
+      "planSha256": "2ead1e62c34f3e4a5812360708e1ecdb72582580e4b9fb42676e554e9e31d504",
+      "groups": 576
+    },
+    {
+      "phase": "cpu",
+      "round": 21,
+      "variant": "baseline",
+      "mode": "cpu",
+      "tag": "twelfth-native-cpu-21-baseline-v78",
+      "plan": "twelfth-native-cpu-21-baseline-v78-plan.json",
+      "planSha256": "baa90345143760ae3c3e009ca13e0e67015e102ba9d89c47e29934e32a1689ce",
+      "groups": 576
+    },
+    {
+      "phase": "cpu",
+      "round": 21,
+      "variant": "candidate",
+      "mode": "cpu",
+      "tag": "twelfth-native-cpu-21-candidate-v78",
+      "plan": "twelfth-native-cpu-21-candidate-v78-plan.json",
+      "planSha256": "baa90345143760ae3c3e009ca13e0e67015e102ba9d89c47e29934e32a1689ce",
+      "groups": 576
+    },
+    {
+      "phase": "cpu",
+      "round": 22,
+      "variant": "candidate",
+      "mode": "cpu",
+      "tag": "twelfth-native-cpu-22-candidate-v78",
+      "plan": "twelfth-native-cpu-22-candidate-v78-plan.json",
+      "planSha256": "9a1f300e102acae0b1cd76e1481460e005afa47cb7f304753bbb981beafec16b",
+      "groups": 576
+    },
+    {
+      "phase": "cpu",
+      "round": 22,
+      "variant": "baseline",
+      "mode": "cpu",
+      "tag": "twelfth-native-cpu-22-baseline-v78",
+      "plan": "twelfth-native-cpu-22-baseline-v78-plan.json",
+      "planSha256": "9a1f300e102acae0b1cd76e1481460e005afa47cb7f304753bbb981beafec16b",
+      "groups": 576
+    },
+    {
+      "phase": "cpu",
+      "round": 23,
+      "variant": "baseline",
+      "mode": "cpu",
+      "tag": "twelfth-native-cpu-23-baseline-v78",
+      "plan": "twelfth-native-cpu-23-baseline-v78-plan.json",
+      "planSha256": "a19b8055fe3c47dffcbadf16e792e523aa2cf17626c787821c38495ec07728f8",
+      "groups": 576
+    },
+    {
+      "phase": "cpu",
+      "round": 23,
+      "variant": "candidate",
+      "mode": "cpu",
+      "tag": "twelfth-native-cpu-23-candidate-v78",
+      "plan": "twelfth-native-cpu-23-candidate-v78-plan.json",
+      "planSha256": "a19b8055fe3c47dffcbadf16e792e523aa2cf17626c787821c38495ec07728f8",
+      "groups": 576
+    },
+    {
+      "phase": "allocation",
+      "round": 0,
+      "variant": "candidate",
+      "mode": "allocation",
+      "tag": "twelfth-native-allocation-0-candidate-v78",
+      "plan": "twelfth-native-allocation-0-candidate-v78-plan.json",
+      "planSha256": "4f6a00afef6494799c0e3a39ad0d3021fddcd14061dcad91da40ebfe194ce89c",
+      "groups": 1152
+    },
+    {
+      "phase": "allocation",
+      "round": 0,
+      "variant": "baseline",
+      "mode": "allocation",
+      "tag": "twelfth-native-allocation-0-baseline-v78",
+      "plan": "twelfth-native-allocation-0-baseline-v78-plan.json",
+      "planSha256": "4f6a00afef6494799c0e3a39ad0d3021fddcd14061dcad91da40ebfe194ce89c",
+      "groups": 1152
+    },
+    {
+      "phase": "allocation",
+      "round": 1,
+      "variant": "candidate",
+      "mode": "allocation",
+      "tag": "twelfth-native-allocation-1-candidate-v78",
+      "plan": "twelfth-native-allocation-1-candidate-v78-plan.json",
+      "planSha256": "4cdf8f15c364bcba9e34f961d29db230206c258c586b159c265e59829a8fc34f",
+      "groups": 1152
+    },
+    {
+      "phase": "allocation",
+      "round": 1,
+      "variant": "baseline",
+      "mode": "allocation",
+      "tag": "twelfth-native-allocation-1-baseline-v78",
+      "plan": "twelfth-native-allocation-1-baseline-v78-plan.json",
+      "planSha256": "4cdf8f15c364bcba9e34f961d29db230206c258c586b159c265e59829a8fc34f",
+      "groups": 1152
+    },
+    {
+      "phase": "allocation",
+      "round": 2,
+      "variant": "baseline",
+      "mode": "allocation",
+      "tag": "twelfth-native-allocation-2-baseline-v78",
+      "plan": "twelfth-native-allocation-2-baseline-v78-plan.json",
+      "planSha256": "b159a6176b0e83f1fb80328c48e2024ea23366528abdbc1f65d1b61e4770b146",
+      "groups": 1152
+    },
+    {
+      "phase": "allocation",
+      "round": 2,
+      "variant": "candidate",
+      "mode": "allocation",
+      "tag": "twelfth-native-allocation-2-candidate-v78",
+      "plan": "twelfth-native-allocation-2-candidate-v78-plan.json",
+      "planSha256": "b159a6176b0e83f1fb80328c48e2024ea23366528abdbc1f65d1b61e4770b146",
+      "groups": 1152
+    },
+    {
+      "phase": "allocation",
+      "round": 3,
+      "variant": "baseline",
+      "mode": "allocation",
+      "tag": "twelfth-native-allocation-3-baseline-v78",
+      "plan": "twelfth-native-allocation-3-baseline-v78-plan.json",
+      "planSha256": "411aae608d9b854890862d6fc2b0ed28d67286404cac2b1abb5a4f60d57fa0aa",
+      "groups": 1152
+    },
+    {
+      "phase": "allocation",
+      "round": 3,
+      "variant": "candidate",
+      "mode": "allocation",
+      "tag": "twelfth-native-allocation-3-candidate-v78",
+      "plan": "twelfth-native-allocation-3-candidate-v78-plan.json",
+      "planSha256": "411aae608d9b854890862d6fc2b0ed28d67286404cac2b1abb5a4f60d57fa0aa",
+      "groups": 1152
+    }
+  ]
+}

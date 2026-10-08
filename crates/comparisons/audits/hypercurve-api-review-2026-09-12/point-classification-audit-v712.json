@@ -1,0 +1,19 @@
+{
+  "public_split": [
+    "CurveRegion2::classify_point(&Point2)",
+    "CurveRegion2::classify_points(&[Point2])",
+    "CurveRegion2::classify_algebraic_point(&RationalBezierAlgebraicPointImage2)",
+    "CurvePath2::classify_point(&Point2)"
+  ],
+  "algebraic_call_sites": [
+    {
+      "path": "hypercurve/src/bezier_region.rs",
+      "count": 2
+    },
+    {
+      "path": "hypercurve/src/curve_region_boolean.rs",
+      "count": 1
+    }
+  ],
+  "current_sources": 2048
+}

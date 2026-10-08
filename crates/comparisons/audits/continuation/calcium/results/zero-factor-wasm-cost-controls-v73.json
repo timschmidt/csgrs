@@ -1,0 +1,13 @@
+{
+  "tag": "zero-factor-wasm-cost-controls-v73",
+  "started": "2026-09-11T21:21:45.112Z",
+  "finished": "2026-09-11T21:21:45.436Z",
+  "elapsedSeconds": 0.321444321,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "node",
+  "args": [
+    "check-zero-factor-wasm-cost-controls-v73.mjs"
+  ],
+  "code": 0,
+  "signal": null
+}

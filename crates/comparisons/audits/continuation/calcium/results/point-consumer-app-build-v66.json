@@ -1,0 +1,25 @@
+{
+  "tag": "point-consumer-app-build-v66",
+  "started": "2026-09-11T03:14:53.756Z",
+  "finished": "2026-09-11T03:16:10.671Z",
+  "elapsedSeconds": 76.912029281,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/point-demand-consumer-v66/hypercurve",
+  "command": "env",
+  "args": [
+    "CARGO_TARGET_DIR=/tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse",
+    "CARGO_INCREMENTAL=0",
+    "CARGO_PROFILE_DEV_DEBUG=0",
+    "CARGO_BUILD_JOBS=2",
+    "cargo",
+    "build",
+    "--locked",
+    "--offline",
+    "--release",
+    "--example",
+    "basic",
+    "--example",
+    "arrangement"
+  ],
+  "code": 0,
+  "signal": null
+}

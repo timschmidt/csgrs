@@ -1,0 +1,24 @@
+   Compiling hyperreal v0.13.1 (/home/tim/Documents/GitHub/workspace/hyperreal)
+   Compiling hyperlattice v0.6.1 (/home/tim/Documents/GitHub/workspace/hyperlattice)
+   Compiling hyperlimit v0.4.1 (/home/tim/Documents/GitHub/workspace/hyperlimit)
+   Compiling hypersolve v0.3.1 (/home/tim/Documents/GitHub/workspace/hypersolve)
+   Compiling hypertri v0.4.1 (/home/tim/Documents/GitHub/workspace/hypertri)
+   Compiling hypercurve v0.3.1 (/home/tim/Documents/GitHub/workspace/hypercurve)
+    Finished `release` profile [optimized] target(s) in 1m 19s
+     Running unittests src/lib.rs (target/release/deps/hypercurve-6e6572a45c5b177b)
+
+running 6 tests
+correlated_circle_partition_offset mode=mapped complete=true iterations=64 elapsed_ns=4472204 ns_per_iter=69878.188 checksum=0
+test bezier_offset::conversion_tests::benchmark_correlated_circle_partition_offset_driver ... ok
+nested_chord_mapped_cap mode=mapped_exact_offset complete=true iterations=32 elapsed_ns=137900248 ns_per_iter=4309382.750 checksum=0
+test bezier_offset::conversion_tests::benchmark_nested_chord_mapped_cap_offset_driver ... ok
+nonendpoint_rational_mapped_cap mode=exact_offset complete=true iterations=32 elapsed_ns=100361768 ns_per_iter=3136305.250 checksum=0
+test bezier_offset::conversion_tests::benchmark_nonendpoint_rational_mapped_cap_offset_driver ... ok
+pair_mapped_lens_offset mode=exact_offset complete=true iterations=32 elapsed_ns=645425208 ns_per_iter=20169537.750 checksum=0
+test bezier_offset::conversion_tests::benchmark_pair_mapped_lens_offset_driver ... ok
+independent_oblique_chord_cap mode=prebuilt_reoffset complete=true iterations=8 elapsed_ns=499213839 ns_per_iter=62401729.875 checksum=0
+test bezier_offset::conversion_tests::benchmark_independent_oblique_chord_cap_offset_driver ... ok
+test bezier_offset::conversion_tests::selected_fiber_genuinely_analytic_contacts_complete_region_booleans ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 889 filtered out; finished in 51.35s
+

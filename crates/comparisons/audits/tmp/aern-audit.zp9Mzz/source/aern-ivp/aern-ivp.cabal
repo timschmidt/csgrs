@@ -1,0 +1,138 @@
+Name:           aern-ivp
+Version:        0.5.0
+Cabal-Version:  >= 1.8
+Build-Type:     Simple
+License:        BSD3
+License-File:   LICENCE
+Author:         Michal Konecny (Aston University)
+Copyright:      (c) 2012 Michal Konecny
+Maintainer:     mikkonecny@gmail.com
+Homepage:       http://code.google.com/p/aern/
+Stability:      experimental
+Category:       Data, Math
+Synopsis:       support for solving ODE IVPs using the interval polynomial Picard operator
+Tested-with:    GHC==7.6.3
+Description:    Support for solving ODE IVPs using the interval polynomial Picard operator.
+    .
+    Includes several example solvers.
+
+Library
+  hs-source-dirs:   src
+  ghc-options:      -Wall
+  Build-Depends:    
+        base >= 4.4,
+        containers >= 0.3,
+        random >= 1.0,
+        gtk >= 0.12.0,
+        cairo >= 0.12.0,
+        stm >= 2.1.2.1,
+        filepath >= 1.1.0.4,
+        directory >= 1.0.1.1,
+        mtl >= 2.1,
+        aern-order == 0.5.*,
+        aern-real == 0.5.*,
+        aern-realfn == 0.5.*,
+        aern-realfn-plot-gtk == 0.5.*
+  exposed-modules:  
+        Numeric.AERN.IVP.Examples.Hybrid.Simple,
+        Numeric.AERN.IVP.Examples.ODE.Simple,
+        Numeric.AERN.IVP.Plot.UsingFnView,
+        Numeric.AERN.IVP.Solver.Bisection,
+        Numeric.AERN.IVP.Solver.Events.Bisection,
+        Numeric.AERN.IVP.Solver.Events.EventTree,
+        Numeric.AERN.IVP.Solver.Events.Locate,
+        Numeric.AERN.IVP.Solver.Events.PWL,
+        Numeric.AERN.IVP.Solver.Events.SplitNearEvents,
+        Numeric.AERN.IVP.Solver.Picard.UncertainValue,
+        Numeric.AERN.IVP.Solver.ShrinkWrap,
+        Numeric.AERN.IVP.Specification.Hybrid,
+        Numeric.AERN.IVP.Specification.ODE
+
+executable simple-ode-polyint
+  build-depends:   
+        base >= 4.4,
+        containers >= 0.3,
+        random >= 1.0,
+        directory >= 1.0,
+        gtk >= 0.12.0,
+        cairo >= 0.12.0,
+        stm >= 2.1.2.1,
+        aern-order == 0.5.*,
+        aern-real == 0.5.*,
+        aern-interval == 0.5.*,
+        aern-double == 0.5.*,
+        aern-realfn == 0.5.*,
+        aern-realfn-plot-gtk == 0.5.*,
+        aern-poly == 0.5.*,
+        aern-poly-plot-gtk == 0.5.*,
+        aern-ivp == 0.5.*
+  ghc-options:     -Wall -rtsopts
+  hs-source-dirs:  demos
+  main-is:         simple-ode-polyint.hs
+
+executable simple-ode
+  build-depends:   
+        base >= 4.4,
+        containers >= 0.3,
+        random >= 1.0,
+        directory >= 1.0,
+        gtk >= 0.12.0,
+        cairo >= 0.12.0,
+        stm >= 2.1.2.1,
+        aern-order == 0.5.*,
+        aern-real == 0.5.*,
+        aern-interval == 0.5.*,
+        aern-double == 0.5.*,
+        aern-realfn == 0.5.*,
+        aern-realfn-plot-gtk == 0.5.*,
+        aern-poly == 0.5.*,
+        aern-poly-plot-gtk == 0.5.*,
+        aern-ivp == 0.5.*
+  ghc-options:     -Wall -rtsopts
+  hs-source-dirs:  demos
+  main-is:         simple-ode.hs
+
+--executable simple-events-locate-polyint
+--  build-depends:   
+--        base >= 4.4,
+--        containers >= 0.3,
+--        random >= 1.0,
+--        directory >= 1.0,
+--        gtk >= 0.12.0,
+--        cairo >= 0.12.0,
+--        stm >= 2.1.2.1,
+--        aern-order == 0.5.*,
+--        aern-real == 0.5.*,
+--        aern-interval == 0.5.*,
+--        aern-double == 0.5.*,
+--        aern-realfn == 0.5.*,
+--        aern-realfn-plot-gtk == 0.5.*,
+--        aern-poly == 0.5.*,
+--        aern-poly-plot-gtk == 0.5.*,
+--        aern-ivp == 0.5.*
+--  ghc-options:     -Wall -rtsopts
+--  hs-source-dirs:  demos
+--  main-is:         simple-events-locate-polyint.hs
+
+executable simple-events
+  build-depends:   
+        base >= 4.4,
+        containers >= 0.3,
+        random >= 1.0,
+        directory >= 1.0,
+        gtk >= 0.12.0,
+        cairo >= 0.12.0,
+        stm >= 2.1.2.1,
+        aern-order == 0.5.*,
+        aern-real == 0.5.*,
+        aern-double == 0.5.*,
+        aern-realfn == 0.5.*,
+        aern-realfn-plot-gtk == 0.5.*,
+        aern-poly == 0.5.*,
+        aern-poly-plot-gtk == 0.5.*,
+        aern-ivp == 0.5.*
+  ghc-options:     -Wall -rtsopts
+  hs-source-dirs:  demos
+  main-is:         simple-events.hs
+
+

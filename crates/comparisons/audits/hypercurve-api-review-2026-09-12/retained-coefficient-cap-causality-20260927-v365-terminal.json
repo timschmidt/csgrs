@@ -1,0 +1,35 @@
+{
+  "source_manifest": "retained-coefficient-cap-causality-20260927-v365-sources.json",
+  "source_directory": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/source-archives/retained-coefficient-cap-causality-20260927-v365",
+  "workspace_guard": "initial-endpoint-root-replay-20260927-v362-sources.json",
+  "parent_commit": "1bd0348bb7b848e85f9085932a30033675f59e2f",
+  "hypersolve_commit": "4ba7f2508b8e38f60e66543af688a885cfaa6a8e",
+  "cases": [
+    {
+      "name": "strict_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions",
+      "returncode": 124,
+      "log": "retained-coefficient-cap-causality-20260927-v365-strict_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions.log",
+      "elapsed_seconds": 240.03330808889586
+    }
+  ],
+  "all_processes_reaped": true,
+  "command": [
+    "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+    "test",
+    "--test",
+    "hypercurve_curve_region_promotion",
+    "--release",
+    "--all-features",
+    "--no-run",
+    "--message-format=json",
+    "--locked",
+    "--offline"
+  ],
+  "build_returncode": 0,
+  "build_elapsed_seconds": 115.99722777691204,
+  "binary": {
+    "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-coefficient-cap-causality-20260927-v365-hypercurve_curve_region_promotion",
+    "sha256": "fe2bbfe3c4edf238725ee01fdc0e68e291ffa0d79249eb6084aea5a6cd0b0da0"
+  },
+  "all_sources_unchanged": true
+}

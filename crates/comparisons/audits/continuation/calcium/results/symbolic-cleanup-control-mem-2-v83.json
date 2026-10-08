@@ -1,0 +1,23 @@
+{
+  "tag": "symbolic-cleanup-control-mem-2-v83",
+  "started": "2026-09-12T03:44:13.536Z",
+  "finished": "2026-09-12T03:44:14.190Z",
+  "elapsedSeconds": 0.652234749,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "timeout",
+  "args": [
+    "120s",
+    "valgrind",
+    "--tool=memcheck",
+    "--leak-check=full",
+    "--show-leak-kinds=all",
+    "--errors-for-leak-kinds=definite,indirect,possible",
+    "--error-exitcode=97",
+    "/tmp/calcium-symbolic-boundary-v83.JuGH8X/cleanup-control",
+    "powers",
+    "2",
+    "256"
+  ],
+  "code": 0,
+  "signal": null
+}

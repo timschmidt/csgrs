@@ -1,0 +1,8 @@
+{
+  "outer_session": 89299,
+  "outer_exit_code": 1,
+  "formatter_session": 75336,
+  "formatter_exit_code": 0,
+  "failure": "caller regression failed: bezier_offset::conversion_tests::represented_scalar_images_and_quotients_refine_past_the_old_limit",
+  "passed_cases": 211
+}

@@ -1,0 +1,5 @@
+/home/tim/Documents/GitHub/workspace/exact-real-references/flint/src/qqbar/roots_poly_squarefree.c: In function ‘qqbar_roots_squarefree_sanitized_v84’:
+/home/tim/Documents/GitHub/workspace/exact-real-references/flint/src/qqbar/roots_poly_squarefree.c:118:27: error: comparison of integer expressions of different signedness: ‘ulong’ {aka ‘long unsigned int’} and ‘slong’ {aka ‘long int’} [-Werror=sign-compare]
+  118 |         if (hi != 0 || lo > deg_limit)
+      |                           ^
+cc1: all warnings being treated as errors

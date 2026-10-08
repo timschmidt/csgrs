@@ -1,0 +1,17 @@
+{
+  "build_command": [
+    "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+    "test",
+    "--release",
+    "--no-default-features",
+    "--features",
+    "attributed,curve,offset,obj-io,gltf-io,vrml-io,gerber-io,truetype-text",
+    "--locked",
+    "--offline",
+    "--lib",
+    "--no-run",
+    "--message-format=json"
+  ],
+  "build_returncode": 101,
+  "build_elapsed_seconds": 145.58640825899784
+}

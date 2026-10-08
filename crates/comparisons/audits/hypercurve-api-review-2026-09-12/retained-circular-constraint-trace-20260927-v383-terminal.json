@@ -1,0 +1,41 @@
+{
+  "source_manifest": "retained-circular-constraint-trace-20260927-v383-sources.json",
+  "source_directory": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/source-archives/retained-circular-constraint-trace-20260927-v383",
+  "cases": [
+    {
+      "binary": "retained-circular-constraint-trace-20260927-v383-hypercurve",
+      "name": "curve::curve_fillet::tests::coincident_circular_fillet_constraints_complete_the_authored_chart_solutions",
+      "returncode": 101,
+      "log": "retained-circular-constraint-trace-20260927-v383-case-000.log",
+      "elapsed_seconds": 0.16395307797938585
+    }
+  ],
+  "builds": [
+    {
+      "crate": "hypercurve",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "test",
+        "--lib",
+        "--release",
+        "--all-features",
+        "--no-run",
+        "--message-format=json",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "log": "retained-circular-constraint-trace-20260927-v383-hypercurve-build.log",
+      "elapsed_seconds": 135.22826136508957,
+      "binary": {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-circular-constraint-trace-20260927-v383-hypercurve",
+        "sha256": "28dddd80cdbf80181b8e7fb5632498a5765f1bf40de9fa057aca81a8a26777ce"
+      }
+    }
+  ],
+  "all_processes_reaped": true,
+  "checks": [],
+  "qualification_scope": "Coincident native circular fillet families retain exact constraints and authored domains",
+  "failure": "case failure",
+  "qualification_complete": false
+}

@@ -1,0 +1,33 @@
+aern-poly> configure (lib)
+Configuring aern-poly-0.5.0...
+Warning: 'ghc-options: -rtsopts' has no effect for libraries. It should only
+be used for executables.
+aern-poly> build (lib) with ghc-9.6.7
+Preprocessing library for aern-poly-0.5.0..
+Building library for aern-poly-0.5.0..
+[ 1 of 21] Compiling Numeric.AERN.Poly.IntPoly.Config
+[ 2 of 21] Compiling Numeric.AERN.Poly.IntPoly.IntPoly
+
+/tmp/aern-audit.zp9Mzz/source/aern-poly/src/Numeric/AERN/Poly/IntPoly/IntPoly.hs:114:9: error: [GHC-64725]
+    • Data.IntMap.fold' is gone. Use Data.IntMap.foldr or Prelude.foldr.
+    • In the first argument of ‘($)’, namely ‘IntMap.fold (++) []’
+      In the expression:
+        IntMap.fold (++) [] $ IntMap.mapWithKey applyAux powers
+      In an equation for ‘aux’:
+          aux prevDegrees (IntPolyV _var powers)
+            = IntMap.fold (++) [] $ IntMap.mapWithKey applyAux powers
+            where
+                applyAux degree = aux (degree : prevDegrees)
+    |
+114 |         IntMap.fold (++) [] $ IntMap.mapWithKey applyAux powers
+    |         ^^^^^^^^^^^
+
+Error: [S-7282]
+       Stack failed to execute the build plan.
+       
+       While executing the build plan, Stack encountered the error:
+       
+       [S-7011]
+       While building package aern-poly-0.5.0 (scroll up to its section to see the error) using:
+       /tmp/aern2-stack.ryVCFK/setup-exe-cache/x86_64-linux-tinfo6/Cabal-simple_O_vy6YIf_3.10.3.0_ghc-9.6.7 --verbose=1 --builddir=.stack-work/dist/x86_64-linux-tinfo6/ghc-9.6.7 build lib:aern-poly --ghc-options ""
+       Process exited with code: ExitFailure 1 

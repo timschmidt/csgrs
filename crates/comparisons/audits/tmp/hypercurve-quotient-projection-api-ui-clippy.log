@@ -1,0 +1,7 @@
+    Checking hyperreal v0.13.1 (/home/tim/Documents/GitHub/workspace/hyperreal)
+    Checking hyperlattice v0.6.1 (/home/tim/Documents/GitHub/workspace/hyperlattice)
+    Checking hyperlimit v0.4.1 (/home/tim/Documents/GitHub/workspace/hyperlimit)
+    Checking hypersolve v0.3.1 (/home/tim/Documents/GitHub/workspace/hypersolve)
+    Checking hypercurve v0.3.1 (/home/tim/Documents/GitHub/workspace/hypercurve)
+    Checking hypercurve_ui v0.2.0 (/home/tim/Documents/GitHub/workspace/hypercurve/examples/hypercurve_ui)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 6.47s

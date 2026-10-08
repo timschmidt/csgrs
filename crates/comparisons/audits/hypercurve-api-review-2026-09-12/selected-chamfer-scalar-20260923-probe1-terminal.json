@@ -1,0 +1,15 @@
+{
+  "cases": [
+    {
+      "name": "bezier_offset::conversion_tests::selected_fiber_transverse_mapped_cut_inverts_by_point",
+      "returncode": 101,
+      "passed": false,
+      "limit_seconds": 90,
+      "elapsed_seconds": 0.2545596909476444,
+      "log": "selected-chamfer-scalar-20260923-probe1-case-0.log"
+    }
+  ],
+  "binary_sha256": "3eafafc86b4a7782e4427985cea8a3207142f7951da0e166e630afbed278f2fc",
+  "all_sources_unchanged": true,
+  "all_processes_reaped": true
+}

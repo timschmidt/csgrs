@@ -1,0 +1,30 @@
+{
+  "returncode": 0,
+  "elapsed_seconds": 24.358053469011793,
+  "normal_library_sha256": "8eb7cd1fbaa241bf01e599e07ca251959c800c77c62a8091232bad9d52006638",
+  "log": "finite-circle-domains-region-explicit.log",
+  "source": "selected-fillet-region-normalization-explicit.rs",
+  "command": [
+    "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustc",
+    "--edition=2024",
+    "-O",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/selected-fillet-region-normalization-explicit.rs",
+    "--extern",
+    "hypercurve=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypercurve-ee303709bdb4cb6a.rlib",
+    "-L",
+    "dependency=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps",
+    "-o",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-circle-domains-region-explicit"
+  ],
+  "source_sha256": "20cd460a2d6a7f7b956dcf028a384aa3f29b8f302fb40440a059d4a0ba885dc3",
+  "executable_sha256": "a42d853b6b877ef18ce6d6c3942d2fb67a67fa764ecd7f3b1539d841593bdc6e",
+  "counts": {
+    "queries": 48,
+    "point_replays": 96,
+    "topologies": 48,
+    "splits": 96,
+    "child_queries": 192,
+    "region_queries": 12,
+    "boolean_reentries": 12
+  }
+}

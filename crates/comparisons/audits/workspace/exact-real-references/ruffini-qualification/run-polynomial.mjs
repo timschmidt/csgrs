@@ -1,0 +1,31 @@
+import {readFileSync,writeFileSync,readdirSync,mkdirSync,existsSync} from 'node:fs';
+import {spawnSync} from 'node:child_process';
+import {resolve} from 'node:path';
+import {createHash} from 'node:crypto';
+const root=import.meta.dirname,repo=resolve(root,'../Ruffini'),build=resolve(root,'../../.audit-ruffini-build.LmZgYM');
+if(existsSync(root+'/polynomial-runs.json'))throw Error('refusing to overwrite native run evidence; use a versioned experiment');
+const hash=p=>createHash('sha256').update(readFileSync(p)).digest('hex');
+const output=build+'/polynomial';mkdirSync(output,{recursive:true});
+const sources=[root+'/PolynomialContracts.java',repo+'/integers/src/main/java/dk/jonaslindstrom/ruffini/integers/IntegerPolynomial.java'];
+for(const module of ['polynomials','parser','permutations','finite-fields'])for(const p of readdirSync(repo+'/'+module+'/src',{recursive:true}).filter(p=>p.endsWith('.java')).sort())sources.push(repo+'/'+module+'/src/'+p);
+const cp=output+':'+build+'/matrix:'+build+'/classes:'+build+'/deps/*';
+const before=sources.map(p=>[p,hash(p)]);
+const compiled=spawnSync('javac',['--release','16','-encoding','UTF-8','-cp',cp,'-d',output,...sources],{encoding:'utf8',timeout:60000,maxBuffer:8*1024*1024});
+const buildLog=root+'/polynomial-build.log';if(existsSync(buildLog))writeFileSync(root+'/polynomial-build-attempt-'+Date.now()+'.log',readFileSync(buildLog));
+writeFileSync(buildLog,(compiled.stdout??'')+(compiled.stderr??'')+'\n'+JSON.stringify({status:compiled.status,error:compiled.error?.message??null})+'\n');
+if(compiled.error||compiled.status!==0)throw Error('polynomial compilation failed; see build log');
+const classes=readdirSync(output,{recursive:true}).filter(p=>p.endsWith('.class')).sort().map(p=>[p,hash(output+'/'+p)]);
+writeFileSync(root+'/polynomial-build-manifest.json',JSON.stringify({sourceCount:sources.length,sources:before,classes},null,2)+'\n');
+const results=[];
+const cases=['arithmetic','boundaries','parser','permutations','fields','bigfields','gaussian','quadratic','trailing-division','multivariate-division'];
+for(const mode of ['jit','interpreter'])for(const test of [...cases,'junit-polynomials','junit-parser','junit-permutations','junit-fields']) {
+ const junit={'junit-polynomials':'PolynomialTests','junit-parser':'dk.jonaslindstrom.arithmeticparser.TestParser','junit-permutations':'PermutationTests','junit-fields':'AlgorithmTests'};
+ const main=junit[test]?['org.junit.runner.JUnitCore',junit[test]]:['PolynomialContracts',test];
+ const args=['-ea','-Xmx512m','-Xss1m','-Djava.util.concurrent.ForkJoinPool.common.parallelism=1',...(mode==='interpreter'?['-Xint']:[]),'-cp',cp,...main];
+ const capMs=['gaussian','quadratic','trailing-division','multivariate-division'].includes(test)?2000:120000;
+ const started=new Date().toISOString();const r=spawnSync('java',args,{encoding:'utf8',timeout:capMs,killSignal:'SIGKILL',maxBuffer:8*1024*1024});
+ const file=mode+'-polynomial-'+test+'.log';writeFileSync(root+'/'+file,r.stdout??'');writeFileSync(root+'/'+file+'.stderr',r.stderr??'');
+ const result={mode,test,args,capMs,started,finished:new Date().toISOString(),status:r.status,error:r.error?.code??null,signal:r.signal,file,sha256:hash(root+'/'+file),stderrSha256:hash(root+'/'+file+'.stderr')};
+ results.push(result);writeFileSync(root+'/polynomial-runs.json',JSON.stringify(results,null,2)+'\n');console.log(JSON.stringify({mode,test,status:r.status,error:r.error?.code??null,signal:r.signal,summary:(r.stdout??'').split('\n').find(s=>s.startsWith('SUMMARY\t'))??null}));
+}
+for(const[p,h]of before)if(hash(p)!==h)throw Error('source changed during native run: '+p);

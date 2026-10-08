@@ -1,0 +1,287 @@
+{
+  "diagnostic_only": true,
+  "source_manifest": "stationary-fillet-20260927-v489-sources.json",
+  "source_directory": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/source-archives/stationary-fillet-20260927-v489",
+  "fixtures": {
+    "stationary-fillet-line-chart-v488.rs": "3a3ec7fa02af9af5a32740bc71a80195fde3bdc80f112eae2c9293693a1b6f89",
+    "stationary-fillet-retained-range-v490.rs": "beabea74ec8c08779719f78982f95035fedfeb6759c318bd34345faaabfffee5",
+    "stationary-fillet-radius-only-v491.rs": "eb8ad9a42aaccf957a88d2f8cb85834180e8d7175c6df5bb04addea02d99f681"
+  },
+  "library": {
+    "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypercurve-85a9105cd1c82df7.rlib",
+    "sha256": "926508994a59604385a3daa83750d917c0a99108504d84a82d8c5c50262b0025",
+    "source_manifest": "stationary-fillet-20260927-v489-sources.json",
+    "build_log": "stationary-fillet-20260927-v489-hypercurve_curve_region_boolean-build.log"
+  },
+  "expected_cases": [
+    [
+      "line_chart",
+      "stationary-fillet-line-chart-v488.rs",
+      [
+        "regular_parabola_strict",
+        "stationary_reparameterization_strict",
+        "interior_stationary_contact_strict"
+      ]
+    ],
+    [
+      "retained_range",
+      "stationary-fillet-retained-range-v490.rs",
+      [
+        "retained_regular_source_range_strict",
+        "retained_nonzero_parallel_range_strict"
+      ]
+    ],
+    [
+      "radius_only",
+      "stationary-fillet-radius-only-v491.rs",
+      [
+        "regular_parabola_strict",
+        "stationary_reparameterization_strict",
+        "one_sided_cusp_strict",
+        "regular_parabola_approximate",
+        "stationary_reparameterization_approximate",
+        "one_sided_cusp_approximate"
+      ]
+    ]
+  ],
+  "builds": [
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustc",
+        "--edition=2024",
+        "--test",
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/stationary-fillet-line-chart-v488.rs",
+        "-C",
+        "opt-level=3",
+        "-L",
+        "dependency=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps",
+        "--extern",
+        "hypercurve=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypercurve-85a9105cd1c82df7.rlib",
+        "-o",
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/stationary-carrier-domains-20260927-v492-line_chart-tests"
+      ],
+      "returncode": 0,
+      "log": "stationary-carrier-domains-20260927-v492-line_chart-build.log",
+      "elapsed_seconds": 0.4644158349838108,
+      "binary": {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/stationary-carrier-domains-20260927-v492-line_chart-tests",
+        "sha256": "fd916c1f3f5352a81e1d11547cfd30768791395ac66f3596a5f11a5cf6b897c6"
+      }
+    },
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustc",
+        "--edition=2024",
+        "--test",
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/stationary-fillet-retained-range-v490.rs",
+        "-C",
+        "opt-level=3",
+        "-L",
+        "dependency=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps",
+        "--extern",
+        "hypercurve=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypercurve-85a9105cd1c82df7.rlib",
+        "-o",
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/stationary-carrier-domains-20260927-v492-retained_range-tests"
+      ],
+      "returncode": 0,
+      "log": "stationary-carrier-domains-20260927-v492-retained_range-build.log",
+      "elapsed_seconds": 0.5644487119279802,
+      "binary": {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/stationary-carrier-domains-20260927-v492-retained_range-tests",
+        "sha256": "e7bb916e94a3cf1bff800086b05549d21648b17019b17444eb6c080e1c8ed06e"
+      }
+    },
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustc",
+        "--edition=2024",
+        "--test",
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/stationary-fillet-radius-only-v491.rs",
+        "-C",
+        "opt-level=3",
+        "-L",
+        "dependency=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps",
+        "--extern",
+        "hypercurve=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypercurve-85a9105cd1c82df7.rlib",
+        "-o",
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/stationary-carrier-domains-20260927-v492-radius_only-tests"
+      ],
+      "returncode": 0,
+      "log": "stationary-carrier-domains-20260927-v492-radius_only-build.log",
+      "elapsed_seconds": 0.46431797184050083,
+      "binary": {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/stationary-carrier-domains-20260927-v492-radius_only-tests",
+        "sha256": "66cf79d619884617cd89abdd2d2310dba3e43c27bf22d703a6b0053d7e036724"
+      }
+    }
+  ],
+  "cases": [
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/stationary-carrier-domains-20260927-v492-line_chart-tests",
+        "--exact",
+        "regular_parabola_strict",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "stationary-carrier-domains-20260927-v492-line_chart-regular_parabola_strict.log",
+      "elapsed_seconds": 0.0035949330776929855,
+      "group": "line_chart",
+      "name": "regular_parabola_strict",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/stationary-carrier-domains-20260927-v492-line_chart-tests",
+        "--exact",
+        "stationary_reparameterization_strict",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 101,
+      "log": "stationary-carrier-domains-20260927-v492-line_chart-stationary_reparameterization_strict.log",
+      "elapsed_seconds": 0.003559746081009507,
+      "group": "line_chart",
+      "name": "stationary_reparameterization_strict",
+      "passed": false
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/stationary-carrier-domains-20260927-v492-line_chart-tests",
+        "--exact",
+        "interior_stationary_contact_strict",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 101,
+      "log": "stationary-carrier-domains-20260927-v492-line_chart-interior_stationary_contact_strict.log",
+      "elapsed_seconds": 0.0035268180072307587,
+      "group": "line_chart",
+      "name": "interior_stationary_contact_strict",
+      "passed": false
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/stationary-carrier-domains-20260927-v492-retained_range-tests",
+        "--exact",
+        "retained_regular_source_range_strict",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 101,
+      "log": "stationary-carrier-domains-20260927-v492-retained_range-retained_regular_source_range_strict.log",
+      "elapsed_seconds": 0.0035296580754220486,
+      "group": "retained_range",
+      "name": "retained_regular_source_range_strict",
+      "passed": false
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/stationary-carrier-domains-20260927-v492-retained_range-tests",
+        "--exact",
+        "retained_nonzero_parallel_range_strict",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 101,
+      "log": "stationary-carrier-domains-20260927-v492-retained_range-retained_nonzero_parallel_range_strict.log",
+      "elapsed_seconds": 0.0034670920576900244,
+      "group": "retained_range",
+      "name": "retained_nonzero_parallel_range_strict",
+      "passed": false
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/stationary-carrier-domains-20260927-v492-radius_only-tests",
+        "--exact",
+        "regular_parabola_strict",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "stationary-carrier-domains-20260927-v492-radius_only-regular_parabola_strict.log",
+      "elapsed_seconds": 0.0035871940199285746,
+      "group": "radius_only",
+      "name": "regular_parabola_strict",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/stationary-carrier-domains-20260927-v492-radius_only-tests",
+        "--exact",
+        "stationary_reparameterization_strict",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "stationary-carrier-domains-20260927-v492-radius_only-stationary_reparameterization_strict.log",
+      "elapsed_seconds": 0.007579619996249676,
+      "group": "radius_only",
+      "name": "stationary_reparameterization_strict",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/stationary-carrier-domains-20260927-v492-radius_only-tests",
+        "--exact",
+        "one_sided_cusp_strict",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "stationary-carrier-domains-20260927-v492-radius_only-one_sided_cusp_strict.log",
+      "elapsed_seconds": 0.003502149833366275,
+      "group": "radius_only",
+      "name": "one_sided_cusp_strict",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/stationary-carrier-domains-20260927-v492-radius_only-tests",
+        "--exact",
+        "regular_parabola_approximate",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "stationary-carrier-domains-20260927-v492-radius_only-regular_parabola_approximate.log",
+      "elapsed_seconds": 0.0034869001246988773,
+      "group": "radius_only",
+      "name": "regular_parabola_approximate",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/stationary-carrier-domains-20260927-v492-radius_only-tests",
+        "--exact",
+        "stationary_reparameterization_approximate",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "stationary-carrier-domains-20260927-v492-radius_only-stationary_reparameterization_approximate.log",
+      "elapsed_seconds": 0.0075751300901174545,
+      "group": "radius_only",
+      "name": "stationary_reparameterization_approximate",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/stationary-carrier-domains-20260927-v492-radius_only-tests",
+        "--exact",
+        "one_sided_cusp_approximate",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "stationary-carrier-domains-20260927-v492-radius_only-one_sided_cusp_approximate.log",
+      "elapsed_seconds": 0.003508199006319046,
+      "group": "radius_only",
+      "name": "one_sided_cusp_approximate",
+      "passed": true
+    }
+  ],
+  "all_processes_reaped": true,
+  "probe_complete": true
+}

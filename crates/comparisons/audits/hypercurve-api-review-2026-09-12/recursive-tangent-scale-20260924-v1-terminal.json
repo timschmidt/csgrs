@@ -1,0 +1,37 @@
+{
+  "checks": [
+    {
+      "label": "fmt",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustfmt",
+        "--edition",
+        "2024",
+        "--check",
+        "src/bezier_offset.rs"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 2.4389275209978223,
+      "log": "recursive-tangent-scale-20260924-v1-fmt.log"
+    }
+  ],
+  "cases": [
+    {
+      "label": "recursive_circle_queries_preserve_tangent_scale_and_local_roots",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/recursive-tangent-scale-20260924-v1-libtest",
+        "--exact",
+        "bezier_offset::conversion_tests::recursive_circle_queries_preserve_tangent_scale_and_local_roots",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 101,
+      "elapsed_seconds": 0.2835647410247475,
+      "log": "recursive-tangent-scale-20260924-v1-recursive_circle_queries_preserve_tangent_scale_and_local_roots.log"
+    }
+  ],
+  "all_processes_reaped": true,
+  "binary_sha256": "57d71f4da6ac6b37247fb4c182ec614daf101ea39c2069742d7687dbd17285b8",
+  "all_sources_unchanged": true
+}

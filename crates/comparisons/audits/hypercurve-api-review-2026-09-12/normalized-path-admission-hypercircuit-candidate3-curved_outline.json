@@ -1,0 +1,16 @@
+{
+  "target": "curved_outline",
+  "command": [
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/normalized-path-admission-hypercircuit-candidate3-binaries/curved_outline-afcf0d993c2bf3da",
+    "--test-threads=2",
+    "--color",
+    "never"
+  ],
+  "binary_sha256": "901fdd74da9fcd68a0587d716e9a6c9e4881d60fed02e8c80b0ef134ec87e72f",
+  "returncode": 0,
+  "elapsed_seconds": 0.0026418790221214294,
+  "log": "normalized-path-admission-hypercircuit-candidate3-curved_outline.log",
+  "passed": [],
+  "failed": [],
+  "ignored": []
+}

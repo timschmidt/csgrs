@@ -1,0 +1,11 @@
+{
+  "tag": "polynomial-state-native",
+  "started": "2026-09-08T13:40:46.166Z",
+  "finished": "2026-09-08T13:40:46.179Z",
+  "elapsedSeconds": 0.010946510000000003,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison",
+  "command": "/home/tim/Documents/GitHub/workspace/.audit-builds/calcium-polynomial-state-probe",
+  "args": [],
+  "code": 1,
+  "signal": null
+}

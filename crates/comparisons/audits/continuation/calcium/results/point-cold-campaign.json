@@ -1,0 +1,13 @@
+{
+  "tag": "point-cold-campaign",
+  "started": "2026-09-10T23:10:40.575Z",
+  "finished": "2026-09-10T23:11:18.240Z",
+  "elapsedSeconds": 37.663600686,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "node",
+  "args": [
+    "run-point-cold-campaign.mjs"
+  ],
+  "code": 0,
+  "signal": null
+}

@@ -1,0 +1,12 @@
+{
+  "command": [
+    "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+    "check",
+    "--all-targets",
+    "--all-features",
+    "--locked",
+    "--offline"
+  ],
+  "returncode": 0,
+  "elapsed_seconds": 23.060055001988076
+}

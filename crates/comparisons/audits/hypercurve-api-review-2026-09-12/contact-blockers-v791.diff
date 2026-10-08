@@ -1,0 +1,932 @@
+--- hypercurve/src/rational_bezier_general.rs
++++ hypercurve/src/rational_bezier_general.rs
+@@ -3708,20 +3708,14 @@
+                     let point = match parameter {
+                         BezierParameter2::Exact(_) => {
+                             match exact_contact_point_evidence(other, parameter, policy)? {
+-                                Some(point) => point,
+-                                None => {
+-                                    let Some(point) = exact_contact_point_evidence(
+-                                        self,
+-                                        &conic_parameter,
+-                                        policy,
+-                                    )?
+-                                    else {
+-                                        return Ok(Some(Classification::Uncertain(
+-                                            UncertaintyReason::Predicate,
+-                                        )));
+-                                    };
+-                                    point
++                                Classification::Decided(point) => point,
++                                Classification::Uncertain(UncertaintyReason::Boundary) => {
++                                    return Ok(Some(Classification::Uncertain(UncertaintyReason::Boundary)));
+                                 }
++                                Classification::Uncertain(_) => match exact_contact_point_evidence(self, &conic_parameter, policy)? {
++                                    Classification::Decided(point) => point,
++                                    Classification::Uncertain(reason) => return Ok(Some(Classification::Uncertain(reason))),
++                                },
+                             }
+                         }
+                         BezierParameter2::Algebraic(parameter) => CurvePoint2::from(
+@@ -4088,11 +4082,12 @@
+                     continue;
+                 };
+                 let point = match exact_contact_point_evidence(other, &mapped, policy)? {
+-                    Some(point) => Some(point),
+-                    None => exact_contact_point_evidence(self, &parameter, policy)?,
+-                };
+-                let Some(point) = point else {
+-                    return Ok(None);
++                    Classification::Decided(point) => point,
++                    Classification::Uncertain(UncertaintyReason::Boundary) => return Ok(None),
++                    Classification::Uncertain(_) => match exact_contact_point_evidence(self, &parameter, policy)? {
++                        Classification::Decided(point) => point,
++                        Classification::Uncertain(_) => return Ok(None),
++                    },
+                 };
+                 replayed.push(RationalBezierIntersectionContact2 {
+                     first_parameter: parameter,
+@@ -5028,8 +5023,12 @@
+                         &first_parameters[first_index],
+                         policy,
+                     )? {
+-                        Some(point) => Some(point),
+-                        None => match certified_pair_point_evidence.as_deref_mut() {
++                        Classification::Decided(point) => Some(point),
++                        Classification::Uncertain(UncertaintyReason::Boundary) => {
++                            incomplete = true;
++                            continue;
++                        }
++                        Classification::Uncertain(_) => match certified_pair_point_evidence.as_deref_mut() {
+                             Some(fallback) => fallback(&first_parameters[first_index])?,
+                             None => None,
+                         },
+@@ -5203,7 +5202,7 @@
+                     }
+                 }
+             };
+-            let Some(point) = exact_contact_point_evidence(other, &mapped, policy)? else {
++            let Classification::Decided(point) = exact_contact_point_evidence(other, &mapped, policy)? else {
+                 return Ok(None);
+             };
+             contacts.push(RationalBezierIntersectionContact2 {
+@@ -8622,25 +8621,20 @@
+     Some(())
+ }
+ 
++/// Retains the exact affine contact point or its construction blocker.
++/// An undefined point must not be confused with absent contact evidence.
+ pub(crate) fn exact_contact_point_evidence(
+     curve: &RationalBezier2,
+     parameter: &BezierParameter2,
+     policy: &CurveContext,
+-) -> CurveResult<Option<CurvePoint2>> {
++) -> CurveResult<Classification<CurvePoint2>> {
+     match parameter {
+-        BezierParameter2::Exact(parameter) => {
+-            Ok(match curve.point_at_affine_classified(parameter, policy) {
+-                Classification::Decided(point) => Some(CurvePoint2::from(point)),
+-                Classification::Uncertain(_) => None,
+-            })
+-        }
+-        BezierParameter2::Algebraic(parameter) => {
+-            let image = curve.point_at_algebraic_parameter(parameter, policy)?;
+-            Ok(match image {
+-                Classification::Decided(image) => Some(CurvePoint2::from(image)),
+-                Classification::Uncertain(_) => None,
+-            })
+-        }
++        BezierParameter2::Exact(parameter) => Ok(curve
++            .point_at_affine_classified(parameter, policy)
++            .map(CurvePoint2::from)),
++        BezierParameter2::Algebraic(parameter) => Ok(curve
++            .point_at_algebraic_parameter(parameter, policy)?
++            .map(CurvePoint2::from)),
+     }
+ }
+ 
+@@ -9921,6 +9915,33 @@
+ 
+ #[cfg(test)]
+ mod tests {
++    #[test]
++    fn rational_contact_evidence_preserves_affine_domain_blockers() {
++        use crate::tests::decided;
++        let q = |n: i32, d: i32| (Real::from(n) / Real::from(d)).unwrap();
++        let curve = RationalBezier2::try_new(
++            vec![Point2::from_values(0, 0), Point2::from_values(1, 1), Point2::from_values(2, 0)],
++            vec![Real::one(), -Real::one(), Real::one()],
++        ).unwrap();
++        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
++            for value in [q(1, 4), q(1, 2), q(3, 4)] {
++                let polynomial = decided(BezierParameterPolynomial::try_new_power_basis(vec![-value.clone(), Real::one()], &policy).unwrap());
++                let interval = decided(BezierParameterInterval::try_new(Real::zero(), Real::one(), &policy).unwrap());
++                let isolated = decided(BezierAlgebraicParameter2::try_isolate(polynomial, interval, &policy).unwrap());
++                for parameter in [BezierParameter2::Exact(value.clone()), BezierParameter2::Algebraic(isolated)] {
++                    let result = exact_contact_point_evidence(&curve, &parameter, &policy).unwrap();
++                    if value == q(1, 2) {
++                        assert!(matches!(result, Classification::Uncertain(UncertaintyReason::Boundary)));
++                    } else {
++                        let expected = Point2::new(if value == q(1, 4) { Real::from(-1) } else { Real::from(3) }, q(-3, 2));
++                        let point = decided(result);
++                        assert!(matches!(point.coincides_with(&CurvePoint2::from(expected), &policy).value, Classification::Decided(true)));
++                    }
++                }
++            }
++        }
++    }
++
+     use super::*;
+     use crate::bezier_parameter::BezierParameterRay2;
+ 
+@@ -10840,13 +10861,12 @@
+         );
+         assert_eq!(retained_image.retained_parameter(), Some(&parameter));
+ 
+-        let evidence = exact_contact_point_evidence(
++        let evidence = crate::tests::decided(exact_contact_point_evidence(
+             &curve,
+             &BezierParameter2::Algebraic(parameter.clone()),
+             &policy,
+         )
+-        .unwrap()
+-        .expect("the exact parametric source must survive a bounded image failure");
++        .unwrap());
+         let CurvePoint2(CurvePointData2::Algebraic(retained)) = evidence else {
+             panic!("the high-degree contact must remain algebraic");
+         };
+
+--- hypercurve/src/bezier_offset.rs
++++ hypercurve/src/bezier_offset.rs
+@@ -37877,8 +37877,9 @@
+                 }
+             };
+             let point = match exact_contact_point_evidence(other, &candidate, policy)? {
+-                Some(point) => point,
+-                None => match &candidate {
++                Classification::Decided(point) => point,
++                Classification::Uncertain(UncertaintyReason::Boundary) => return Ok(Classification::Uncertain(UncertaintyReason::Boundary)),
++                Classification::Uncertain(_) => match &candidate {
+                     BezierParameter2::Algebraic(parameter) => CurvePoint2::from(
+                         RationalBezierAlgebraicPointImage2::from_parametric_source(
+                             other.clone(),
+@@ -40640,8 +40641,9 @@
+             }
+         {
+             let point = match exact_contact_point_evidence(other, &cusp_parameter, policy)? {
+-                Some(point) => point,
+-                None => {
++                Classification::Decided(point) => point,
++                Classification::Uncertain(UncertaintyReason::Boundary) => return Ok(Classification::Uncertain(UncertaintyReason::Boundary)),
++                Classification::Uncertain(_) => {
+                     CurvePoint2::from(RationalBezierAlgebraicPointImage2::from_parametric_source(
+                         other.clone(),
+                         self.cusp_parameter().clone(),
+@@ -40723,8 +40725,9 @@
+                 }
+             };
+             let point = match exact_contact_point_evidence(other, &candidate, policy)? {
+-                Some(point) => point,
+-                None => match &candidate {
++                Classification::Decided(point) => point,
++                Classification::Uncertain(UncertaintyReason::Boundary) => return Ok(Classification::Uncertain(UncertaintyReason::Boundary)),
++                Classification::Uncertain(_) => match &candidate {
+                     BezierParameter2::Algebraic(parameter) => CurvePoint2::from(
+                         RationalBezierAlgebraicPointImage2::from_parametric_source(
+                             other.clone(),
+@@ -41063,8 +41066,9 @@
+                 continue;
+             }
+             let point = match exact_contact_point_evidence(other, &boundary.parameter, policy)? {
+-                Some(point) => point,
+-                None => match &boundary.parameter {
++                Classification::Decided(point) => point,
++                Classification::Uncertain(UncertaintyReason::Boundary) => return Ok(Classification::Uncertain(UncertaintyReason::Boundary)),
++                Classification::Uncertain(_) => match &boundary.parameter {
+                     BezierParameter2::Algebraic(parameter) => CurvePoint2::from(
+                         RationalBezierAlgebraicPointImage2::from_parametric_source(
+                             other.clone(),
+@@ -44374,9 +44378,10 @@
+         };
+         let mut points = Vec::with_capacity(parameters.len());
+         for parameter in parameters {
+-            if let Some(point) = exact_contact_point_evidence(target, &parameter, policy)? {
+-                points.push(point);
+-                continue;
++            match exact_contact_point_evidence(target, &parameter, policy)? {
++                Classification::Decided(point) => { points.push(point); continue; }
++                Classification::Uncertain(UncertaintyReason::Boundary) => return Ok(Classification::Uncertain(UncertaintyReason::Boundary)),
++                Classification::Uncertain(_) => {}
+             }
+             match parameter {
+                 BezierParameter2::Algebraic(parameter) => points.push(CurvePoint2::from(
+@@ -51773,8 +51778,10 @@
+             && parallel.distance().zero_status() == ZeroKnowledge::Zero
+         {
+             let source = parallel.source().to_rational_bezier()?;
+-            if let Some(point) = exact_contact_point_evidence(&source, parameter, policy)? {
+-                return Ok(Classification::Decided(Some(point)));
++            match exact_contact_point_evidence(&source, parameter, policy)? {
++                Classification::Decided(point) => return Ok(Classification::Decided(Some(point))),
++                Classification::Uncertain(UncertaintyReason::Boundary) => return Ok(Classification::Uncertain(UncertaintyReason::Boundary)),
++                Classification::Uncertain(_) => {}
+             }
+         }
+         if semicircle.data.frame.rational().is_none()
+@@ -83496,18 +83503,18 @@
+     parameter: &BezierParameter2,
+     policy: &CurveContext,
+ ) -> CurveResult<Classification<CurvePoint2>> {
+-    if let Some(point) = exact_contact_point_evidence(source, parameter, policy)? {
+-        return Ok(Classification::Decided(point));
+-    }
+-    match parameter {
+-        BezierParameter2::Algebraic(parameter) => Ok(Classification::Decided(CurvePoint2::from(
+-            RationalBezierAlgebraicPointImage2::from_parametric_source(
+-                source.clone(),
+-                parameter.clone(),
+-                policy,
+-            ),
+-        ))),
+-        BezierParameter2::Exact(_) => Ok(Classification::Uncertain(UncertaintyReason::Boundary)),
++    match exact_contact_point_evidence(source, parameter, policy)? {
++        Classification::Decided(point) => Ok(Classification::Decided(point)),
++        Classification::Uncertain(UncertaintyReason::Boundary) => Ok(Classification::Uncertain(UncertaintyReason::Boundary)),
++        Classification::Uncertain(reason) => match parameter {
++            BezierParameter2::Algebraic(parameter) => Ok(Classification::Decided(CurvePoint2::from(
++                // These contact callers own a finite source-domain proof.
++                // Coordinate projection may be unavailable, but a certified
++                // zero denominator above must never be replaced by this source.
++                RationalBezierAlgebraicPointImage2::from_parametric_source(source.clone(), parameter.clone(), policy),
++            ))),
++            BezierParameter2::Exact(_) => Ok(Classification::Uncertain(reason)),
++        },
+     }
+ }
+ 
+@@ -96507,10 +96514,12 @@
+             .all(|value| real_sign(value, &CurveContext::STRICT) == Some(RealSign::Zero))
+         {
+             let source = self.data.parallel.source().to_rational_bezier()?;
+-            if let Some(point) = crate::rational_bezier_general::exact_contact_point_evidence(
++            match crate::rational_bezier_general::exact_contact_point_evidence(
+                 &source, parameter, policy,
+             )? {
+-                return Ok(Classification::Decided(Some(point)));
++                Classification::Decided(point) => return Ok(Classification::Decided(Some(point))),
++                Classification::Uncertain(UncertaintyReason::Boundary) => return Ok(Classification::Uncertain(UncertaintyReason::Boundary)),
++                Classification::Uncertain(_) => {}
+             }
+         }
+         Ok(self
+@@ -119316,7 +119325,7 @@
+             tangent_field.as_deref(),
+             regular_parallel_range,
+             |parameter| {
+-                Ok(Some(CurvePoint2::from(BezierAnalyticParallelPoint2::new(
++                Ok(Classification::Decided(CurvePoint2::from(BezierAnalyticParallelPoint2::new(
+                     zero.clone(),
+                     parameter.clone(),
+                     policy,
+@@ -121572,7 +121581,7 @@
+                 }
+                 continue;
+             };
+-            let Some(point) =
++            let Classification::Decided(point) =
+                 exact_contact_point_evidence(&rational_conic, &canonical_parameter, policy)?
+             else {
+                 return Ok(no_fast_path());
+@@ -121827,7 +121836,7 @@
+         off_diagonal: bool,
+         tangent_field: Option<&BezierAnalyticParallelTangentField2>,
+         retained_parallel_range: Option<&CurveParameterRange2>,
+-        mut point_evidence: impl FnMut(&BezierParameter2) -> CurveResult<Option<CurvePoint2>>,
++        mut point_evidence: impl FnMut(&BezierParameter2) -> CurveResult<Classification<CurvePoint2>>,
+         policy: &CurveContext,
+     ) -> CurveResult<Classification<BezierParallelIntersectionSet2>> {
+         let BezierParallelIntersectionCandidateSystem2 {
+@@ -122109,7 +122118,7 @@
+                     continue;
+                 }
+             }
+-            let Some(point) = point_evidence(&pair.other_parameter)? else {
++            let Classification::Decided(point) = point_evidence(&pair.other_parameter)? else {
+                 incomplete = true;
+                 continue;
+             };
+@@ -135880,6 +135889,21 @@
+ 
+ #[cfg(test)]
+ mod conversion_tests {
++    #[test]
++    fn contact_fallback_never_replaces_a_certified_pole() {
++        use crate::tests::decided;
++        let curve = RationalBezier2::try_new(
++            vec![Point2::from_values(0, 0), Point2::from_values(1, 1), Point2::from_values(2, 0)],
++            vec![Real::one(), -Real::one(), Real::one()],
++        ).unwrap();
++        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
++            let polynomial = decided(BezierParameterPolynomial::try_new_power_basis(vec![Real::from(-1), Real::from(2)], &policy).unwrap());
++            let interval = decided(BezierParameterInterval::try_new(Real::zero(), Real::one(), &policy).unwrap());
++            let parameter = decided(BezierAlgebraicParameter2::try_isolate(polynomial, interval, &policy).unwrap());
++            assert!(matches!(rational_point_evidence_at_parameter(&curve, &BezierParameter2::Algebraic(parameter), &policy), Ok(Classification::Uncertain(UncertaintyReason::Boundary))));
++        }
++    }
++
+     use crate::BezierAlgebraicImageStatus;
+     #[test]
+     fn independent_oblique_chords_support_constrained_fillet_families() {
+@@ -172666,9 +172690,8 @@
+             )
+             .unwrap();
+             let endpoint = |parameter: &BezierParameter2| {
+-                exact_contact_point_evidence(&diagonal, parameter, &policy)
+-                    .unwrap()
+-                    .expect("the diagonal selected point must retain exact evidence")
++                crate::tests::decided(exact_contact_point_evidence(&diagonal, parameter, &policy)
++                    .unwrap())
+             };
+             let chord =
+                 match BezierAlgebraicChord2::try_new(endpoint(start), endpoint(end), &policy)
+@@ -172723,9 +172746,8 @@
+             )
+             .unwrap();
+             let endpoint = |parameter: &BezierParameter2| {
+-                exact_contact_point_evidence(&diagonal, parameter, &policy)
+-                    .unwrap()
+-                    .expect("the diagonal selected point must retain exact evidence")
++                crate::tests::decided(exact_contact_point_evidence(&diagonal, parameter, &policy)
++                    .unwrap())
+             };
+             let chord =
+                 match BezierAlgebraicChord2::try_new(endpoint(start), endpoint(end), &policy)
+
+--- hypercurve/src/bezier_region.rs
++++ hypercurve/src/bezier_region.rs
+@@ -1458,7 +1458,7 @@
+             return crate::rational_bezier_general::exact_contact_point_evidence(
+                 &source, parameter, policy,
+             )
+-            .map(Classification::Decided);
++            .map(|point| point.map(Some));
+         }
+         BezierSplitFragment2::AnalyticParallel(fragment) => {
+             let parameter = if start_endpoint != fragment.is_reversed() {
+@@ -3851,21 +3851,6 @@
+     }
+ }
+ 
+-fn exact_rational_endpoint_evidence(
+-    curve: &RationalBezier2,
+-    parameter: &BezierParameter2,
+-    policy: &CurveContext,
+-) -> CurveResult<Classification<CurvePoint2>> {
+-    Ok(
+-        match crate::rational_bezier_general::exact_contact_point_evidence(
+-            curve, parameter, policy,
+-        )? {
+-            Some(point) => Classification::Decided(point),
+-            None => Classification::Uncertain(UncertaintyReason::Unsupported),
+-        },
+-    )
+-}
+-
+ fn exact_circular_algebraic_endpoint_tangent(
+     curve: &RationalBezier2,
+     parameter: &BezierParameter2,
+@@ -3934,7 +3919,7 @@
+     let source_rational = RationalBezier2::try_from_subcurve(&source_subcurve)?;
+     let (traversal_start, traversal_end) = if reversed { (end, start) } else { (start, end) };
+     let source_end =
+-        match exact_rational_endpoint_evidence(&source_rational, traversal_end, policy)? {
++        match crate::rational_bezier_general::exact_contact_point_evidence(&source_rational, traversal_end, policy)? {
+             Classification::Decided(point) => point,
+             Classification::Uncertain(reason) => {
+                 return Ok(Classification::Uncertain(reason));
+@@ -4020,14 +4005,14 @@
+     };
+     let offset_rational = RationalBezier2::try_from_subcurve(&offset_subcurve)?;
+     let offset_start =
+-        match exact_rational_endpoint_evidence(&offset_rational, traversal_start, policy)? {
++        match crate::rational_bezier_general::exact_contact_point_evidence(&offset_rational, traversal_start, policy)? {
+             Classification::Decided(point) => point,
+             Classification::Uncertain(reason) => {
+                 return Ok(Classification::Uncertain(reason));
+             }
+         };
+     let offset_end =
+-        match exact_rational_endpoint_evidence(&offset_rational, traversal_end, policy)? {
++        match crate::rational_bezier_general::exact_contact_point_evidence(&offset_rational, traversal_end, policy)? {
+             Classification::Decided(point) => point,
+             Classification::Uncertain(reason) => {
+                 return Ok(Classification::Uncertain(reason));
+@@ -4295,7 +4280,7 @@
+             })
+             .collect();
+         let source_end =
+-            match exact_rational_endpoint_evidence(&source_rational, source_range.end(), policy)? {
++            match crate::rational_bezier_general::exact_contact_point_evidence(&source_rational, source_range.end(), policy)? {
+                 Classification::Decided(point) => point,
+                 Classification::Uncertain(reason) => {
+                     return Ok(Classification::Uncertain(reason));
+@@ -19944,11 +19929,10 @@
+         let source =
+             RationalBezier2::try_new(vec![p(0, 0), p(1, 0)], vec![Real::one(), Real::one()])
+                 .expect("the algebraic endpoint source is finite");
+-        let lower_left = crate::rational_bezier_general::exact_contact_point_evidence(
++        let lower_left = crate::tests::decided(crate::rational_bezier_general::exact_contact_point_evidence(
+             &source, &parameter, policy,
+         )
+-        .expect("the algebraic endpoint has exact evidence")
+-        .expect("the algebraic endpoint remains representable by retained evidence");
++        .expect("the algebraic endpoint has exact evidence"));
+         let upper_left = match crate::BezierAlgebraicChord2::translated_endpoint(
+             &lower_left,
+             &Real::zero(),
+@@ -22224,13 +22208,12 @@
+         let selected_point = |start: Point2, end: Point2, denominator| {
+             let source = RationalBezier2::try_new(vec![start, end], vec![Real::one(), Real::one()])
+                 .expect("the selected chord endpoint source is finite");
+-            crate::rational_bezier_general::exact_contact_point_evidence(
++            crate::tests::decided(crate::rational_bezier_general::exact_contact_point_evidence(
+                 &source,
+                 &positive_inverse_sqrt_parameter(denominator, policy),
+                 policy,
+             )
+-            .expect("the selected chord endpoint has exact evidence")
+-            .expect("the selected chord endpoint remains representable")
++            .expect("the selected chord endpoint has exact evidence"))
+         };
+         let chord = |start, end| match crate::BezierAlgebraicChord2::try_new(start, end, policy)
+             .expect("the retained center support is valid")
+@@ -28000,9 +27983,8 @@
+         };
+         let point_evidence = |source: &BezierSubcurve2, parameter: &BezierParameter2| {
+             let source = RationalBezier2::try_from_subcurve(source).unwrap();
+-            crate::rational_bezier_general::exact_contact_point_evidence(&source, parameter, policy)
+-                .unwrap()
+-                .expect("the algebraic line endpoint must retain point evidence")
++            crate::tests::decided(crate::rational_bezier_general::exact_contact_point_evidence(&source, parameter, policy)
++                .unwrap())
+         };
+         let chord = match crate::BezierAlgebraicChord2::try_new(
+             point_evidence(&x_source, &x_parameter),
+@@ -28224,9 +28206,8 @@
+         ));
+         let rational = RationalBezier2::try_from_subcurve(&source).unwrap();
+         let corner =
+-            crate::rational_bezier_general::exact_contact_point_evidence(&rational, &alpha, policy)
+-                .unwrap()
+-                .expect("the nonlinear algebraic endpoint retains point evidence");
++            crate::tests::decided(crate::rational_bezier_general::exact_contact_point_evidence(&rational, &alpha, policy)
++                .unwrap());
+         let chord = match crate::BezierAlgebraicChord2::try_new(
+             CurvePoint2::from(p(0, 0)),
+             corner.clone(),
+@@ -28672,13 +28653,12 @@
+             let lower_parameter = positive_inverse_sqrt_parameter(3, &policy);
+             let upper_parameter = positive_inverse_sqrt_parameter(2, &policy);
+             let algebraic_point = |parameter: &BezierParameter2| {
+-                crate::rational_bezier_general::exact_contact_point_evidence(
++                crate::tests::decided(crate::rational_bezier_general::exact_contact_point_evidence(
+                     &y_rational,
+                     parameter,
+                     &policy,
+                 )
+-                .unwrap()
+-                .expect("the independent y-axis root retains point evidence")
++                .unwrap())
+             };
+             let vertices = [
+                 algebraic_point(&lower_parameter),
+@@ -29139,13 +29119,12 @@
+             vec![Real::one(); 3],
+         )
+         .unwrap();
+-        let selected_point = crate::rational_bezier_general::exact_contact_point_evidence(
++        let selected_point = crate::tests::decided(crate::rational_bezier_general::exact_contact_point_evidence(
+             &source,
+             &selected_parameter,
+             policy,
+         )
+-        .unwrap()
+-        .expect("the selected quadratic point retains exact evidence");
++        .unwrap());
+         let corner = CurvePoint2::from(p(0, 0));
+         let chord = match crate::BezierAlgebraicChord2::try_new(
+             corner.clone(),
+@@ -29210,13 +29189,12 @@
+         let selected_parameter = positive_inverse_sqrt_parameter(2, policy);
+         let diagonal =
+             RationalBezier2::try_new(vec![p(0, 0), p(1, 1)], vec![Real::one(); 2]).unwrap();
+-        let corner = crate::rational_bezier_general::exact_contact_point_evidence(
++        let corner = crate::tests::decided(crate::rational_bezier_general::exact_contact_point_evidence(
+             &diagonal,
+             &selected_parameter,
+             policy,
+         )
+-        .unwrap()
+-        .expect("the selected corner retains exact evidence");
++        .unwrap());
+         let translated =
+             |point: &CurvePoint2, x, y| match crate::BezierAlgebraicChord2::translated_endpoint(
+                 point,
+@@ -29293,13 +29271,12 @@
+     ) -> CurveRegion2 {
+         let selected = |start: Point2, end: Point2, radicand| {
+             let source = RationalBezier2::try_new(vec![start, end], vec![Real::one(); 2]).unwrap();
+-            crate::rational_bezier_general::exact_contact_point_evidence(
++            crate::tests::decided(crate::rational_bezier_general::exact_contact_point_evidence(
+                 &source,
+                 &positive_inverse_sqrt_parameter(radicand, policy),
+                 policy,
+             )
+-            .unwrap()
+-            .expect("the independent chord endpoint retains exact evidence")
++            .unwrap())
+         };
+         let previous_start = selected(p(0, 0), p(0, 1), 3);
+         let corner = selected(p(0, 0), p(1, 0), 2);
+@@ -29357,13 +29334,12 @@
+         let selected_parameter = positive_inverse_sqrt_parameter(2, policy);
+         let diagonal =
+             RationalBezier2::try_new(vec![p(0, 0), p(1, 1)], vec![Real::one(); 2]).unwrap();
+-        let corner = crate::rational_bezier_general::exact_contact_point_evidence(
++        let corner = crate::tests::decided(crate::rational_bezier_general::exact_contact_point_evidence(
+             &diagonal,
+             &selected_parameter,
+             policy,
+         )
+-        .unwrap()
+-        .expect("the selected chord/arc corner retains exact evidence");
++        .unwrap());
+         let translated =
+             |point: &CurvePoint2, x, y| match crate::BezierAlgebraicChord2::translated_endpoint(
+                 point,
+@@ -29484,13 +29460,12 @@
+         let center_source =
+             RationalBezier2::try_new(vec![p(0, 0), p(1, 0)], vec![Real::one(); 2]).unwrap();
+         let center_parameter = positive_inverse_sqrt_parameter(2, policy);
+-        let center = crate::rational_bezier_general::exact_contact_point_evidence(
++        let center = crate::tests::decided(crate::rational_bezier_general::exact_contact_point_evidence(
+             &center_source,
+             &center_parameter,
+             policy,
+         )
+-        .unwrap()
+-        .expect("the selected circle center retains exact evidence");
++        .unwrap());
+         let circle = match crate::bezier_offset::BezierAlgebraicCuspSemicircle2::from_retained_axis_aligned_center(
+             &center,
+             (1, 0),
+@@ -29520,13 +29495,12 @@
+             RationalBezier2::try_new(vec![p(0, 0), p(1, -1), p(2, -3)], vec![Real::one(); 3])
+                 .unwrap();
+         let independent_parameter = positive_inverse_sqrt_parameter(3, policy);
+-        let independent = crate::rational_bezier_general::exact_contact_point_evidence(
++        let independent = crate::tests::decided(crate::rational_bezier_general::exact_contact_point_evidence(
+             &independent_source,
+             &independent_parameter,
+             policy,
+         )
+-        .unwrap()
+-        .expect("the independent chord endpoint retains exact evidence");
++        .unwrap());
+         let source_chord =
+             match crate::BezierAlgebraicChord2::try_new(independent.clone(), start.clone(), policy)
+                 .unwrap()
+@@ -29978,11 +29952,10 @@
+                             vec![Real::one(); 2],
+                         )
+                         .unwrap();
+-                        crate::rational_bezier_general::exact_contact_point_evidence(
++                        crate::tests::decided(crate::rational_bezier_general::exact_contact_point_evidence(
+                             &source, &parameter, &policy,
+                         )
+-                        .unwrap()
+-                        .expect("the algebraic chord endpoint retains exact evidence")
++                        .unwrap())
+                     };
+                     let target_root = 1.0 / f64::from(target_radicand).sqrt();
+                     let quarter_grid = (center_y - target_root) * 4.0;
+@@ -30589,13 +30562,12 @@
+             let center_source =
+                 RationalBezier2::try_new(vec![p(0, 0), p(1, 0)], vec![Real::one(); 2]).unwrap();
+             let center_parameter = positive_inverse_sqrt_parameter(2, &policy);
+-            let center = crate::rational_bezier_general::exact_contact_point_evidence(
++            let center = crate::tests::decided(crate::rational_bezier_general::exact_contact_point_evidence(
+                 &center_source,
+                 &center_parameter,
+                 &policy,
+             )
+-            .unwrap()
+-            .expect("the selected reconstruction center retains exact evidence");
++            .unwrap());
+             let Classification::Decided(Some(circle)) =
+                 crate::bezier_offset::BezierAlgebraicCuspSemicircle2::from_retained_axis_aligned_center(
+                     &center,
+
+--- hypercurve/src/curve_region_boolean.rs
++++ hypercurve/src/curve_region_boolean.rs
+@@ -3618,18 +3618,11 @@
+         let mut overlaps = Vec::with_capacity(intersections.overlaps().len());
+         for overlap in intersections.overlaps() {
+             let chord_endpoint = |parameter: &BezierParameter2| {
+-                let point =
+-                    exact_contact_point_evidence(&rational_line, parameter, &self.data.policy)
+-                        .map_err(|cause| self.invalid(chord_index, cause))?
+-                        .ok_or_else(|| {
+-                            self.invalid(
+-                                chord_index,
+-                                CurveError::Topology(
+-                                    "a parallel/line overlap endpoint lost its exact point image"
+-                                        .into(),
+-                                ),
+-                            )
+-                        })?;
++                let point = match exact_contact_point_evidence(&rational_line, parameter, &self.data.policy)
++                    .map_err(|cause| self.invalid(chord_index, cause))? {
++                    Classification::Decided(point) => point,
++                    Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
++                };
+                 chord_parameter(point)
+             };
+             let chord_start = match chord_endpoint(overlap.second_range().start())? {
+@@ -12790,11 +12783,12 @@
+     };
+     match source {
+         BezierSelectedFiberSource2::Rational(curve) => {
+-            exact_contact_point_evidence(curve, &parameter, policy)?.ok_or_else(|| {
+-                CurveError::Topology(
+-                    "a selected-fiber rational boundary could not retain its exact point".into(),
+-                )
+-            })
++            match exact_contact_point_evidence(curve, &parameter, policy)? {
++                Classification::Decided(point) => Ok(point),
++                Classification::Uncertain(reason) => Err(CurveError::Topology(format!(
++                    "a selected-fiber rational boundary could not retain its exact point: {reason:?}"
++                ))),
++            }
+         }
+         BezierSelectedFiberSource2::AnalyticParallel(parallel) => {
+             if let Some(parameter) = parameter.scalar() {
+@@ -17908,9 +17902,8 @@
+             );
+             let source_fragment = materialization.fragments()[0].clone();
+             let selected_point =
+-                exact_contact_point_evidence(&source_rational, &source_parameter, &policy)
+-                    .expect("exact selected point construction")
+-                    .expect("selected point evidence");
++                crate::tests::decided(exact_contact_point_evidence(&source_rational, &source_parameter, &policy)
++                    .expect("exact selected point construction"));
+             let chord = decided(
+                 crate::BezierAlgebraicChord2::try_new(
+                     selected_point,
+@@ -18063,9 +18056,8 @@
+             .fragments()[0]
+                 .clone();
+             let selected_point =
+-                exact_contact_point_evidence(&source_rational, &source_parameter, &policy)
+-                    .expect("exact selected point construction")
+-                    .expect("selected point evidence");
++                crate::tests::decided(exact_contact_point_evidence(&source_rational, &source_parameter, &policy)
++                    .expect("exact selected point construction"));
+             let chord = decided(
+                 crate::BezierAlgebraicChord2::try_new(
+                     selected_point,
+@@ -18178,12 +18170,10 @@
+                 RationalBezier2::try_from_subcurve(&x_axis).expect("valid rational x axis");
+             let y_rational =
+                 RationalBezier2::try_from_subcurve(&y_axis).expect("valid rational y axis");
+-            let start = exact_contact_point_evidence(&x_rational, &first_parameter, &policy)
+-                .expect("exact first endpoint")
+-                .expect("first endpoint evidence");
+-            let end = exact_contact_point_evidence(&y_rational, &second_parameter, &policy)
+-                .expect("exact second endpoint")
+-                .expect("second endpoint evidence");
++            let start = crate::tests::decided(exact_contact_point_evidence(&x_rational, &first_parameter, &policy)
++                .expect("exact first endpoint"));
++            let end = crate::tests::decided(exact_contact_point_evidence(&y_rational, &second_parameter, &policy)
++                .expect("exact second endpoint"));
+             let chord = decided(
+                 crate::BezierAlgebraicChord2::try_new(start, end, &policy)
+                     .expect("valid independent-field chord"),
+@@ -18346,13 +18336,11 @@
+                 RationalBezier2::try_from_subcurve(&half_source).expect("valid half source");
+             let third_rational =
+                 RationalBezier2::try_from_subcurve(&third_source).expect("valid third source");
+-            let half_point = exact_contact_point_evidence(&half_rational, &half_parameter, &policy)
+-                .expect("exact half endpoint")
+-                .expect("half endpoint evidence");
++            let half_point = crate::tests::decided(exact_contact_point_evidence(&half_rational, &half_parameter, &policy)
++                .expect("exact half endpoint"));
+             let third_point =
+-                exact_contact_point_evidence(&third_rational, &third_parameter, &policy)
+-                    .expect("exact third endpoint")
+-                    .expect("third endpoint evidence");
++                crate::tests::decided(exact_contact_point_evidence(&third_rational, &third_parameter, &policy)
++                    .expect("exact third endpoint"));
+             let chord = decided(
+                 crate::BezierAlgebraicChord2::try_new(
+                     half_point.clone(),
+@@ -18558,13 +18546,11 @@
+             let horizontal = rational_line(0, 1);
+             let first_parameter = BezierParameter2::Algebraic(sqrt_half_parameter(&policy));
+             let second_parameter = BezierParameter2::Algebraic(sqrt_third_parameter(&policy));
+-            let first_point = exact_contact_point_evidence(&horizontal, &first_parameter, &policy)
+-                .expect("exact first endpoint")
+-                .expect("first endpoint evidence");
++            let first_point = crate::tests::decided(exact_contact_point_evidence(&horizontal, &first_parameter, &policy)
++                .expect("exact first endpoint"));
+             let second_point =
+-                exact_contact_point_evidence(&horizontal, &second_parameter, &policy)
+-                    .expect("exact second endpoint")
+-                    .expect("second endpoint evidence");
++                crate::tests::decided(exact_contact_point_evidence(&horizontal, &second_parameter, &policy)
++                    .expect("exact second endpoint"));
+             let first = decided(
+                 crate::BezierAlgebraicChord2::try_new(first_point, second_point, &policy)
+                     .expect("valid independent-field chord"),
+@@ -19691,11 +19677,10 @@
+             )
+             .expect("valid diagonal parameter source");
+             let selected_point = |parameter: &BezierParameter2| {
+-                crate::rational_bezier_general::exact_contact_point_evidence(
++                crate::tests::decided(crate::rational_bezier_general::exact_contact_point_evidence(
+                     &diagonal, parameter, &policy,
+                 )
+-                .expect("exact independent endpoint")
+-                .expect("retained independent endpoint evidence")
++                .expect("exact independent endpoint"))
+             };
+             let selected_start = selected_parameter(
+                 (Real::one() / Real::from(8_i8)).expect("nonzero denominator"),
+@@ -19797,9 +19782,8 @@
+                 let source =
+                     RationalBezier2::try_new(vec![start, end], vec![Real::one(), Real::one()])
+                         .expect("valid selected line source");
+-                exact_contact_point_evidence(&source, &selected, &policy)
+-                    .expect("exact selected line point")
+-                    .expect("selected line point evidence")
++                crate::tests::decided(exact_contact_point_evidence(&source, &selected, &policy)
++                    .expect("exact selected line point"))
+             };
+             let retracing_chord = decided(
+                 crate::BezierAlgebraicChord2::try_new(
+@@ -20285,20 +20269,18 @@
+                 ))
+             };
+             let horizontal = rational_line(0, 1);
+-            let first_start = exact_contact_point_evidence(
++            let first_start = crate::tests::decided(exact_contact_point_evidence(
+                 &horizontal,
+                 &BezierParameter2::Algebraic(sqrt_half_parameter(&policy)),
+                 &policy,
+             )
+-            .expect("exact first start")
+-            .expect("first start evidence");
+-            let first_end = exact_contact_point_evidence(
++            .expect("exact first start"));
++            let first_end = crate::tests::decided(exact_contact_point_evidence(
+                 &horizontal,
+                 &BezierParameter2::Algebraic(sqrt_third_parameter(&policy)),
+                 &policy,
+             )
+-            .expect("exact first end")
+-            .expect("first end evidence");
++            .expect("exact first end"));
+             let vertical = RationalBezier2::try_new(
+                 vec![
+                     Point2::new(fraction(5, 8), Real::from(-1_i8)),
+@@ -20310,13 +20292,11 @@
+             let second_start_parameter = sqrt_parameter(2, 5);
+             let second_end_parameter = sqrt_parameter(1, 5);
+             let second_start =
+-                exact_contact_point_evidence(&vertical, &second_start_parameter, &policy)
+-                    .expect("exact second start")
+-                    .expect("second start evidence");
++                crate::tests::decided(exact_contact_point_evidence(&vertical, &second_start_parameter, &policy)
++                    .expect("exact second start"));
+             let second_end =
+-                exact_contact_point_evidence(&vertical, &second_end_parameter, &policy)
+-                    .expect("exact second end")
+-                    .expect("second end evidence");
++                crate::tests::decided(exact_contact_point_evidence(&vertical, &second_end_parameter, &policy)
++                    .expect("exact second end"));
+             let first = decided(
+                 crate::BezierAlgebraicChord2::try_new(
+                     first_start.clone(),
+@@ -20588,13 +20568,11 @@
+             let second_parameter = BezierParameter2::Algebraic(sqrt_third_parameter(&policy));
+             let horizontal = rational_line(0, 1);
+             let first_endpoint =
+-                exact_contact_point_evidence(&horizontal, &first_parameter, &policy)
+-                    .expect("exact first endpoint")
+-                    .expect("first endpoint evidence");
++                crate::tests::decided(exact_contact_point_evidence(&horizontal, &first_parameter, &policy)
++                    .expect("exact first endpoint"));
+             let second_endpoint =
+-                exact_contact_point_evidence(&horizontal, &second_parameter, &policy)
+-                    .expect("exact second endpoint")
+-                    .expect("second endpoint evidence");
++                crate::tests::decided(exact_contact_point_evidence(&horizontal, &second_parameter, &policy)
++                    .expect("exact second endpoint"));
+             let bottom = CurvePoint2::from(Point2::from_values(0, -1));
+             let chord = decided(
+                 crate::BezierAlgebraicChord2::try_new(
+@@ -21023,13 +21001,12 @@
+                 Point2::new(q(-1, 2), Real::zero()),
+                 Point2::from_values(0, 0),
+             ));
+-            let cut_point = exact_contact_point_evidence(
++            let cut_point = crate::tests::decided(exact_contact_point_evidence(
+                 &RationalBezier2::try_from_subcurve(&source).unwrap(),
+                 &cut,
+                 &policy,
+             )
+-            .unwrap()
+-            .expect("the selected polynomial endpoint is exactly representable");
++            .unwrap());
+             let extended = CurveSupport2::Bezier(source)
+                 .restrict_certified(
+                     CurveParameterRange2::new_validated(
+@@ -21426,9 +21403,8 @@
+             let source_rational =
+                 RationalBezier2::try_from_subcurve(&source_curve).expect("valid parabola");
+             let shared_endpoint =
+-                exact_contact_point_evidence(&source_rational, &source_parameter, &policy)
+-                    .expect("exact shared endpoint")
+-                    .expect("shared endpoint evidence");
++                crate::tests::decided(exact_contact_point_evidence(&source_rational, &source_parameter, &policy)
++                    .expect("exact shared endpoint"));
+             let y_axis = BezierSubcurve2::Quadratic(QuadraticBezier2::from_line_segment(
+                 LineSeg2::try_new(Point2::from_values(0, 0), Point2::from_values(0, 1))
+                     .expect("valid y axis"),
+@@ -21436,9 +21412,8 @@
+             let y_rational =
+                 RationalBezier2::try_from_subcurve(&y_axis).expect("valid rational y axis");
+             let independent_endpoint =
+-                exact_contact_point_evidence(&y_rational, &independent_parameter, &policy)
+-                    .expect("exact independent endpoint")
+-                    .expect("independent endpoint evidence");
++                crate::tests::decided(exact_contact_point_evidence(&y_rational, &independent_parameter, &policy)
++                    .expect("exact independent endpoint"));
+             let chord = decided(
+                 crate::BezierAlgebraicChord2::try_new(
+                     shared_endpoint,
+
+--- hypercurve/src/curve.rs
++++ hypercurve/src/curve.rs
+@@ -11039,14 +11039,16 @@
+         };
+     }
+     let rational_source = bezier_parallel_rational_source(parallel, operation, family)?;
+-    if let Some(point) = crate::rational_bezier_general::exact_contact_point_evidence(
++    match crate::rational_bezier_general::exact_contact_point_evidence(
+         &rational_source,
+         parameter,
+         policy,
+     )
+     .map_err(|cause| ExactCurveError::invalid(operation, family, cause))?
+     {
+-        return Ok(point);
++        Classification::Decided(point) => return Ok(point),
++        Classification::Uncertain(UncertaintyReason::Boundary) => return Err(ExactCurveError::blocked(operation, family, UncertaintyReason::Boundary)),
++        Classification::Uncertain(_) => {}
+     }
+     {
+         // A selected fiber can have non-rational coefficients even though the
+@@ -13752,13 +13754,12 @@
+                 vec![Real::one(); 2],
+             )
+             .unwrap();
+-            let corner = crate::rational_bezier_general::exact_contact_point_evidence(
++            let corner = crate::tests::decided(crate::rational_bezier_general::exact_contact_point_evidence(
+                 &diagonal,
+                 &selected_parameter,
+                 &policy,
+             )
+-            .unwrap()
+-            .expect("the selected corner retains exact evidence");
++            .unwrap());
+             let translated = |point: &CurvePoint2, x, y| {
+                 match crate::BezierAlgebraicChord2::translated_endpoint(
+                     point,
+
+--- hypercurve/src/curve_fillet.rs
++++ hypercurve/src/curve_fillet.rs
+@@ -3794,11 +3794,10 @@
+                     vec![Real::one(); 2],
+                 )
+                 .unwrap();
+-                crate::rational_bezier_general::exact_contact_point_evidence(
++                crate::tests::decided(crate::rational_bezier_general::exact_contact_point_evidence(
+                     &source, &roots[0], &policy,
+                 )
+-                .unwrap()
+-                .unwrap()
++                .unwrap())
+             };
+             let Classification::Decided(previous) = crate::BezierAlgebraicChord2::try_new(
+                 selected(Point2::from_values(0, 1), 3),

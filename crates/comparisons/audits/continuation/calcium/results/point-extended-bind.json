@@ -1,0 +1,13 @@
+{
+  "tag": "point-extended-bind",
+  "started": "2026-09-10T21:29:43.785Z",
+  "finished": "2026-09-10T21:29:44.801Z",
+  "elapsedSeconds": 1.0141084249999999,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "node",
+  "args": [
+    "record-point-extended.mjs"
+  ],
+  "code": 0,
+  "signal": null
+}

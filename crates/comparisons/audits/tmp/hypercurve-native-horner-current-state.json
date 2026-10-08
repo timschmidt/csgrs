@@ -1,0 +1,1628 @@
+{
+  "status": "Corrected native Rational Horner candidate fully qualified; extended five-pair benchmark passes and improves all six cold/cached rows; broad 42-invocation comparison running",
+  "commits": {
+    "hyperreal": "5de9a5f6950be06726c2f9d5714222bfd007b7eb",
+    "hypersolve": "d9726e1265f3ab9a55121f612e2a35003d410089",
+    "hypercurve": "not yet committed"
+  },
+  "only_active_owned_session": {
+    "session_id": 50700,
+    "script": "/tmp/hypercurve-native-horner-matched.sh",
+    "start": "2026-09-05 22:23:43 UTC"
+  },
+  "source_rows": [
+    {
+      "file": "hyperreal/src/real/arithmetic/linear_algebra.rs",
+      "before_sha256": "a63a592796f236f331923d312e5e43b29a4d9f6df3c6ec2243cea874f6db1eb9",
+      "candidate_sha256": "86ec7550aa1bd3badd4cc4ca7c70b1fb3695e1567a15a623097d793697320474",
+      "total_lines": {
+        "before": 3019,
+        "after": 3015,
+        "delta": -4
+      },
+      "production_lines": {
+        "before": 3019,
+        "after": 3015,
+        "delta": -4
+      }
+    },
+    {
+      "file": "hyperreal/src/real/arithmetic/tests.rs",
+      "before_sha256": "70c68b19b91852155431e6d99294a0e01e676d863a4a3f37c74335d308bb9ddd",
+      "candidate_sha256": "456bc575a2234aa7d7332489939b156bfdbcd9ce4664caf229406c4affeb884a",
+      "total_lines": {
+        "before": 2536,
+        "after": 2549,
+        "delta": 13
+      },
+      "production_lines": {
+        "before": 0,
+        "after": 0,
+        "delta": 0
+      }
+    },
+    {
+      "file": "hypersolve/src/algebraic_fiber.rs",
+      "before_sha256": "6e6bab431bbd7e25b04389aac03d5fdb366e0017fdf9517f625b00cb6acb4c85",
+      "candidate_sha256": "f4c567e821e175ff61d35ae1e2bc3357a0bab597458717cdc88596239615b96c",
+      "total_lines": {
+        "before": 6007,
+        "after": 6025,
+        "delta": 18
+      },
+      "production_lines": {
+        "before": 3797,
+        "after": 3785,
+        "delta": -12
+      }
+    },
+    {
+      "file": "hypersolve/src/algebraic_rational_image.rs",
+      "before_sha256": "52ef0f9249cdfee38ec53157a298baa12bca019c686afcc97bfe57cc80324603",
+      "candidate_sha256": "b3979d43bcfd730228612cc10a613c2048e2e07291ccbb706f73bb052daa67ae",
+      "total_lines": {
+        "before": 2944,
+        "after": 2940,
+        "delta": -4
+      },
+      "production_lines": {
+        "before": 1790,
+        "after": 1786,
+        "delta": -4
+      }
+    },
+    {
+      "file": "hypersolve/src/root_isolation.rs",
+      "before_sha256": "25ef14f3f50bdbf713dd5c353a53da75f11aba90da5601d5574f4806c5476cbf",
+      "candidate_sha256": "22c816c2830bcf91e95f87bcb1f0529155355ed0c2f526b2494e0b1dd640453a",
+      "total_lines": {
+        "before": 5134,
+        "after": 5128,
+        "delta": -6
+      },
+      "production_lines": {
+        "before": 3369,
+        "after": 3363,
+        "delta": -6
+      }
+    },
+    {
+      "file": "hypercurve/src/bezier_algebraic_image.rs",
+      "before_sha256": "ab19c69e1179b1a350382be0d12b3d55e9226cbc654e86b299abde6be187f337",
+      "candidate_sha256": "d9508e4503131c3a5613b902e7d724a63e68b42a60d3aa2566325e45949faa34",
+      "total_lines": {
+        "before": 2565,
+        "after": 2602,
+        "delta": 37
+      },
+      "production_lines": {
+        "before": 2478,
+        "after": 2469,
+        "delta": -9
+      }
+    },
+    {
+      "file": "hypercurve/src/bezier_moment.rs",
+      "before_sha256": "0743ffa1e942656257c4fca4b2855e2d49107c8be6674b2fe6805c6f5c35af62",
+      "candidate_sha256": "de5383a1294d00f76b4ef412eb23cbd2ae1044a482ce249fb6b465b1fb031b30",
+      "total_lines": {
+        "before": 3350,
+        "after": 3338,
+        "delta": -12
+      },
+      "production_lines": {
+        "before": 2595,
+        "after": 2583,
+        "delta": -12
+      }
+    },
+    {
+      "file": "hypercurve/src/rational_bezier_general.rs",
+      "before_sha256": "5364d4b2ae54a622030cd0d4e8821cf5c489e3a951ce9ff283a75a79a58014ce",
+      "candidate_sha256": "7eff254897dd6c7cede0fd5bfd74c397380704ba66c7287b515a58c8999841c8",
+      "total_lines": {
+        "before": 11667,
+        "after": 11654,
+        "delta": -13
+      },
+      "production_lines": {
+        "before": 9893,
+        "after": 9884,
+        "delta": -9
+      }
+    }
+  ],
+  "qualification": {
+    "hyperreal-default": {
+      "path": "/tmp/hyperreal-native-horner-default.log",
+      "targets": 18,
+      "passed": 695,
+      "failed": 0,
+      "ignored": 0,
+      "failures": [],
+      "longest_targets": [
+        {
+          "passed": 635,
+          "seconds": 5.04
+        },
+        {
+          "passed": 16,
+          "seconds": 2.02
+        },
+        {
+          "passed": 5,
+          "seconds": 0.75
+        },
+        {
+          "passed": 4,
+          "seconds": 0.36
+        },
+        {
+          "passed": 6,
+          "seconds": 0.09
+        },
+        {
+          "passed": 9,
+          "seconds": 0.08
+        }
+      ],
+      "tail": [
+        "test benchmark_report::tests::manifest_catalog_matches_registered_targets ... ok",
+        "",
+        "test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s"
+      ]
+    },
+    "hyperreal-all-targets": {
+      "path": "/tmp/hyperreal-native-horner-all-targets.log",
+      "targets": 19,
+      "passed": 794,
+      "failed": 0,
+      "ignored": 0,
+      "failures": [],
+      "longest_targets": [
+        {
+          "passed": 717,
+          "seconds": 4.56
+        },
+        {
+          "passed": 16,
+          "seconds": 0.82
+        },
+        {
+          "passed": 5,
+          "seconds": 0.29
+        },
+        {
+          "passed": 6,
+          "seconds": 0.18
+        },
+        {
+          "passed": 10,
+          "seconds": 0.06
+        },
+        {
+          "passed": 7,
+          "seconds": 0.03
+        }
+      ],
+      "tail": [
+        "test benchmark_report::tests::manifest_catalog_matches_registered_targets ... ok",
+        "",
+        "test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s"
+      ]
+    },
+    "hyperreal-release": {
+      "path": "/tmp/hyperreal-native-horner-release.log",
+      "targets": 14,
+      "passed": 792,
+      "failed": 0,
+      "ignored": 0,
+      "failures": [],
+      "longest_targets": [
+        {
+          "passed": 717,
+          "seconds": 0.56
+        },
+        {
+          "passed": 16,
+          "seconds": 0.09
+        },
+        {
+          "passed": 5,
+          "seconds": 0.02
+        },
+        {
+          "passed": 6,
+          "seconds": 0.02
+        },
+        {
+          "passed": 1,
+          "seconds": 0.01
+        },
+        {
+          "passed": 9,
+          "seconds": 0.01
+        }
+      ],
+      "tail": [
+        "test every_public_kind_and_private_optimized_certificate_crosses_scalar_dispatch ... ok",
+        "",
+        "test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s"
+      ]
+    },
+    "hypersolve-minimal": {
+      "path": "/tmp/hypersolve-native-horner-minimal.log",
+      "targets": 8,
+      "passed": 793,
+      "failed": 0,
+      "ignored": 0,
+      "failures": [],
+      "longest_targets": [
+        {
+          "passed": 429,
+          "seconds": 4.96
+        },
+        {
+          "passed": 131,
+          "seconds": 4.92
+        },
+        {
+          "passed": 7,
+          "seconds": 0.69
+        },
+        {
+          "passed": 9,
+          "seconds": 0.35
+        },
+        {
+          "passed": 4,
+          "seconds": 0.1
+        },
+        {
+          "passed": 211,
+          "seconds": 0.05
+        }
+      ],
+      "tail": [
+        "running 0 tests",
+        "",
+        "test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s"
+      ]
+    },
+    "hypersolve-all-targets": {
+      "path": "/tmp/hypersolve-native-horner-all-targets.log",
+      "targets": 10,
+      "passed": 796,
+      "failed": 0,
+      "ignored": 0,
+      "failures": [],
+      "longest_targets": [
+        {
+          "passed": 131,
+          "seconds": 5.3
+        },
+        {
+          "passed": 430,
+          "seconds": 3.9
+        },
+        {
+          "passed": 7,
+          "seconds": 0.41
+        },
+        {
+          "passed": 9,
+          "seconds": 0.15
+        },
+        {
+          "passed": 4,
+          "seconds": 0.1
+        },
+        {
+          "passed": 211,
+          "seconds": 0.05
+        }
+      ],
+      "tail": [
+        "test benchmark_report::tests::manifest_catalog_matches_registered_targets ... ok",
+        "",
+        "test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s"
+      ]
+    },
+    "hypersolve-release": {
+      "path": "/tmp/hypersolve-native-horner-release.log",
+      "targets": 8,
+      "passed": 794,
+      "failed": 0,
+      "ignored": 0,
+      "failures": [],
+      "longest_targets": [
+        {
+          "passed": 131,
+          "seconds": 1.4
+        },
+        {
+          "passed": 430,
+          "seconds": 0.27
+        },
+        {
+          "passed": 9,
+          "seconds": 0.02
+        },
+        {
+          "passed": 7,
+          "seconds": 0.02
+        },
+        {
+          "passed": 211,
+          "seconds": 0.02
+        },
+        {
+          "passed": 4,
+          "seconds": 0.01
+        }
+      ],
+      "tail": [
+        "running 0 tests",
+        "",
+        "test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s"
+      ]
+    },
+    "hypercurve-all-features": {
+      "path": "/tmp/hypercurve-native-horner-all-features.log",
+      "targets": 45,
+      "passed": 1732,
+      "failed": 0,
+      "ignored": 9,
+      "failures": [],
+      "longest_targets": [
+        {
+          "passed": 890,
+          "seconds": 186.65
+        },
+        {
+          "passed": 47,
+          "seconds": 50.67
+        },
+        {
+          "passed": 100,
+          "seconds": 43.78
+        },
+        {
+          "passed": 101,
+          "seconds": 8.67
+        },
+        {
+          "passed": 14,
+          "seconds": 7.63
+        },
+        {
+          "passed": 11,
+          "seconds": 3.74
+        }
+      ],
+      "tail": [
+        "running 0 tests",
+        "",
+        "test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s"
+      ]
+    },
+    "hypercurve-minimal": {
+      "path": "/tmp/hypercurve-native-horner-minimal.log",
+      "targets": 45,
+      "passed": 1703,
+      "failed": 0,
+      "ignored": 4,
+      "failures": [],
+      "longest_targets": [
+        {
+          "passed": 886,
+          "seconds": 166.4
+        },
+        {
+          "passed": 47,
+          "seconds": 47.42
+        },
+        {
+          "passed": 100,
+          "seconds": 40.68
+        },
+        {
+          "passed": 101,
+          "seconds": 7.7
+        },
+        {
+          "passed": 14,
+          "seconds": 7.45
+        },
+        {
+          "passed": 11,
+          "seconds": 3.73
+        }
+      ],
+      "tail": [
+        "running 0 tests",
+        "",
+        "test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s"
+      ]
+    },
+    "hypercurve-ignored-units": {
+      "path": "/tmp/hypercurve-native-horner-ignored-units.log",
+      "targets": 1,
+      "passed": 6,
+      "failed": 0,
+      "ignored": 0,
+      "failures": [],
+      "longest_targets": [
+        {
+          "passed": 6,
+          "seconds": 53.09
+        }
+      ],
+      "tail": [
+        "test bezier_offset::conversion_tests::selected_fiber_genuinely_analytic_contacts_complete_region_booleans ... ok",
+        "",
+        "test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 890 filtered out; finished in 53.09s"
+      ]
+    },
+    "hypercurve-ignored-stroke": {
+      "path": "/tmp/hypercurve-native-horner-ignored-stroke.log",
+      "targets": 1,
+      "passed": 3,
+      "failed": 0,
+      "ignored": 0,
+      "failures": [],
+      "longest_targets": [
+        {
+          "passed": 3,
+          "seconds": 55.96
+        }
+      ],
+      "tail": [
+        "test exact_path_stroke_splits_an_interior_source_cusp ... ok",
+        "",
+        "test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 15 filtered out; finished in 55.96s"
+      ]
+    },
+    "hypercurve-ui-tests": {
+      "path": "/tmp/hypercurve-native-horner-ui-tests.log",
+      "targets": 1,
+      "passed": 37,
+      "failed": 0,
+      "ignored": 0,
+      "failures": [],
+      "longest_targets": [
+        {
+          "passed": 37,
+          "seconds": 36.27
+        }
+      ],
+      "tail": [
+        "test scenes::tests::shared_polyline_boolean_state_resolves_all_boolean_modes ... ok",
+        "",
+        "test result: ok. 37 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 36.27s"
+      ]
+    }
+  },
+  "extended": {
+    "rational4": {
+      "baseline": [
+        {
+          "log": "/tmp/hypercurve-native-horner-extended-rational4-baseline-1.log",
+          "repetition": 1,
+          "exit_status": 0,
+          "wall_seconds": 0.39,
+          "user_seconds": 0.38,
+          "system_seconds": 0,
+          "maximum_rss_kib": 4352,
+          "rows": [
+            {
+              "name": "rational_bezier_large_cold_evaluation_4_controls",
+              "iterations": 100000,
+              "nanoseconds_per_iteration": 2960.17898,
+              "checksum": 0
+            },
+            {
+              "name": "rational_bezier_large_cached_evaluation_4_controls",
+              "iterations": 100000,
+              "nanoseconds_per_iteration": 954.04542,
+              "checksum": 0
+            }
+          ]
+        },
+        {
+          "log": "/tmp/hypercurve-native-horner-extended-rational4-baseline-2.log",
+          "repetition": 2,
+          "exit_status": 0,
+          "wall_seconds": 0.42,
+          "user_seconds": 0.41,
+          "system_seconds": 0,
+          "maximum_rss_kib": 4580,
+          "rows": [
+            {
+              "name": "rational_bezier_large_cold_evaluation_4_controls",
+              "iterations": 100000,
+              "nanoseconds_per_iteration": 3366.53576,
+              "checksum": 0
+            },
+            {
+              "name": "rational_bezier_large_cached_evaluation_4_controls",
+              "iterations": 100000,
+              "nanoseconds_per_iteration": 887.90284,
+              "checksum": 0
+            }
+          ]
+        },
+        {
+          "log": "/tmp/hypercurve-native-horner-extended-rational4-baseline-3.log",
+          "repetition": 3,
+          "exit_status": 0,
+          "wall_seconds": 0.38,
+          "user_seconds": 0.38,
+          "system_seconds": 0,
+          "maximum_rss_kib": 4596,
+          "rows": [
+            {
+              "name": "rational_bezier_large_cold_evaluation_4_controls",
+              "iterations": 100000,
+              "nanoseconds_per_iteration": 2942.65017,
+              "checksum": 0
+            },
+            {
+              "name": "rational_bezier_large_cached_evaluation_4_controls",
+              "iterations": 100000,
+              "nanoseconds_per_iteration": 910.19362,
+              "checksum": 0
+            }
+          ]
+        },
+        {
+          "log": "/tmp/hypercurve-native-horner-extended-rational4-baseline-4.log",
+          "repetition": 4,
+          "exit_status": 0,
+          "wall_seconds": 0.39,
+          "user_seconds": 0.38,
+          "system_seconds": 0,
+          "maximum_rss_kib": 4424,
+          "rows": [
+            {
+              "name": "rational_bezier_large_cold_evaluation_4_controls",
+              "iterations": 100000,
+              "nanoseconds_per_iteration": 2943.51831,
+              "checksum": 0
+            },
+            {
+              "name": "rational_bezier_large_cached_evaluation_4_controls",
+              "iterations": 100000,
+              "nanoseconds_per_iteration": 948.90667,
+              "checksum": 0
+            }
+          ]
+        },
+        {
+          "log": "/tmp/hypercurve-native-horner-extended-rational4-baseline-5.log",
+          "repetition": 5,
+          "exit_status": 0,
+          "wall_seconds": 0.39,
+          "user_seconds": 0.39,
+          "system_seconds": 0,
+          "maximum_rss_kib": 4560,
+          "rows": [
+            {
+              "name": "rational_bezier_large_cold_evaluation_4_controls",
+              "iterations": 100000,
+              "nanoseconds_per_iteration": 2997.74652,
+              "checksum": 0
+            },
+            {
+              "name": "rational_bezier_large_cached_evaluation_4_controls",
+              "iterations": 100000,
+              "nanoseconds_per_iteration": 955.08305,
+              "checksum": 0
+            }
+          ]
+        }
+      ],
+      "candidate": [
+        {
+          "log": "/tmp/hypercurve-native-horner-extended-rational4-candidate-1.log",
+          "repetition": 1,
+          "exit_status": 0,
+          "wall_seconds": 0.34,
+          "user_seconds": 0.34,
+          "system_seconds": 0,
+          "maximum_rss_kib": 4476,
+          "rows": [
+            {
+              "name": "rational_bezier_large_cold_evaluation_4_controls",
+              "iterations": 100000,
+              "nanoseconds_per_iteration": 2751.48201,
+              "checksum": 0
+            },
+            {
+              "name": "rational_bezier_large_cached_evaluation_4_controls",
+              "iterations": 100000,
+              "nanoseconds_per_iteration": 675.29144,
+              "checksum": 0
+            }
+          ]
+        },
+        {
+          "log": "/tmp/hypercurve-native-horner-extended-rational4-candidate-2.log",
+          "repetition": 2,
+          "exit_status": 0,
+          "wall_seconds": 0.34,
+          "user_seconds": 0.34,
+          "system_seconds": 0,
+          "maximum_rss_kib": 4712,
+          "rows": [
+            {
+              "name": "rational_bezier_large_cold_evaluation_4_controls",
+              "iterations": 100000,
+              "nanoseconds_per_iteration": 2770.723,
+              "checksum": 0
+            },
+            {
+              "name": "rational_bezier_large_cached_evaluation_4_controls",
+              "iterations": 100000,
+              "nanoseconds_per_iteration": 647.27385,
+              "checksum": 0
+            }
+          ]
+        },
+        {
+          "log": "/tmp/hypercurve-native-horner-extended-rational4-candidate-3.log",
+          "repetition": 3,
+          "exit_status": 0,
+          "wall_seconds": 0.42,
+          "user_seconds": 0.41,
+          "system_seconds": 0,
+          "maximum_rss_kib": 4524,
+          "rows": [
+            {
+              "name": "rational_bezier_large_cold_evaluation_4_controls",
+              "iterations": 100000,
+              "nanoseconds_per_iteration": 3350.54275,
+              "checksum": 0
+            },
+            {
+              "name": "rational_bezier_large_cached_evaluation_4_controls",
+              "iterations": 100000,
+              "nanoseconds_per_iteration": 836.77443,
+              "checksum": 0
+            }
+          ]
+        },
+        {
+          "log": "/tmp/hypercurve-native-horner-extended-rational4-candidate-4.log",
+          "repetition": 4,
+          "exit_status": 0,
+          "wall_seconds": 0.34,
+          "user_seconds": 0.34,
+          "system_seconds": 0,
+          "maximum_rss_kib": 4480,
+          "rows": [
+            {
+              "name": "rational_bezier_large_cold_evaluation_4_controls",
+              "iterations": 100000,
+              "nanoseconds_per_iteration": 2744.3664,
+              "checksum": 0
+            },
+            {
+              "name": "rational_bezier_large_cached_evaluation_4_controls",
+              "iterations": 100000,
+              "nanoseconds_per_iteration": 684.89698,
+              "checksum": 0
+            }
+          ]
+        },
+        {
+          "log": "/tmp/hypercurve-native-horner-extended-rational4-candidate-5.log",
+          "repetition": 5,
+          "exit_status": 0,
+          "wall_seconds": 0.34,
+          "user_seconds": 0.34,
+          "system_seconds": 0,
+          "maximum_rss_kib": 4860,
+          "rows": [
+            {
+              "name": "rational_bezier_large_cold_evaluation_4_controls",
+              "iterations": 100000,
+              "nanoseconds_per_iteration": 2766.10252,
+              "checksum": 0
+            },
+            {
+              "name": "rational_bezier_large_cached_evaluation_4_controls",
+              "iterations": 100000,
+              "nanoseconds_per_iteration": 656.7051100000001,
+              "checksum": 0
+            }
+          ]
+        }
+      ],
+      "median": {
+        "wall_seconds": {
+          "baseline": 0.39,
+          "candidate": 0.34,
+          "change_percent": -12.82051282051282
+        },
+        "user_seconds": {
+          "baseline": 0.38,
+          "candidate": 0.34,
+          "change_percent": -10.526315789473683
+        },
+        "system_seconds": {
+          "baseline": 0,
+          "candidate": 0,
+          "change_percent": null
+        },
+        "maximum_rss_kib": {
+          "baseline": 4560,
+          "candidate": 4524,
+          "change_percent": -0.7894736842105288
+        }
+      },
+      "median_rows": [
+        {
+          "name": "rational_bezier_large_cold_evaluation_4_controls",
+          "iterations": 100000,
+          "checksum": 0,
+          "baseline_nanoseconds": 2960.17898,
+          "candidate_nanoseconds": 2766.10252,
+          "change_percent": -6.556240731092555
+        },
+        {
+          "name": "rational_bezier_large_cached_evaluation_4_controls",
+          "iterations": 100000,
+          "checksum": 0,
+          "baseline_nanoseconds": 948.90667,
+          "candidate_nanoseconds": 675.29144,
+          "change_percent": -28.83478835700459
+        }
+      ]
+    },
+    "rational16": {
+      "baseline": [
+        {
+          "log": "/tmp/hypercurve-native-horner-extended-rational16-baseline-1.log",
+          "repetition": 1,
+          "exit_status": 0,
+          "wall_seconds": 0.34,
+          "user_seconds": 0.33,
+          "system_seconds": 0,
+          "maximum_rss_kib": 4688,
+          "rows": [
+            {
+              "name": "rational_bezier_large_cold_evaluation_16_controls",
+              "iterations": 10000,
+              "nanoseconds_per_iteration": 31354.2113,
+              "checksum": 0
+            },
+            {
+              "name": "rational_bezier_large_cached_evaluation_16_controls",
+              "iterations": 10000,
+              "nanoseconds_per_iteration": 2893.8426,
+              "checksum": 0
+            }
+          ]
+        },
+        {
+          "log": "/tmp/hypercurve-native-horner-extended-rational16-baseline-2.log",
+          "repetition": 2,
+          "exit_status": 0,
+          "wall_seconds": 0.35,
+          "user_seconds": 0.34,
+          "system_seconds": 0,
+          "maximum_rss_kib": 4768,
+          "rows": [
+            {
+              "name": "rational_bezier_large_cold_evaluation_16_controls",
+              "iterations": 10000,
+              "nanoseconds_per_iteration": 32262.4363,
+              "checksum": 0
+            },
+            {
+              "name": "rational_bezier_large_cached_evaluation_16_controls",
+              "iterations": 10000,
+              "nanoseconds_per_iteration": 2666.2512,
+              "checksum": 0
+            }
+          ]
+        },
+        {
+          "log": "/tmp/hypercurve-native-horner-extended-rational16-baseline-3.log",
+          "repetition": 3,
+          "exit_status": 0,
+          "wall_seconds": 0.33,
+          "user_seconds": 0.32,
+          "system_seconds": 0,
+          "maximum_rss_kib": 4716,
+          "rows": [
+            {
+              "name": "rational_bezier_large_cold_evaluation_16_controls",
+              "iterations": 10000,
+              "nanoseconds_per_iteration": 30132.1036,
+              "checksum": 0
+            },
+            {
+              "name": "rational_bezier_large_cached_evaluation_16_controls",
+              "iterations": 10000,
+              "nanoseconds_per_iteration": 2631.6245,
+              "checksum": 0
+            }
+          ]
+        },
+        {
+          "log": "/tmp/hypercurve-native-horner-extended-rational16-baseline-4.log",
+          "repetition": 4,
+          "exit_status": 0,
+          "wall_seconds": 0.33,
+          "user_seconds": 0.33,
+          "system_seconds": 0,
+          "maximum_rss_kib": 4648,
+          "rows": [
+            {
+              "name": "rational_bezier_large_cold_evaluation_16_controls",
+              "iterations": 10000,
+              "nanoseconds_per_iteration": 30813.2481,
+              "checksum": 0
+            },
+            {
+              "name": "rational_bezier_large_cached_evaluation_16_controls",
+              "iterations": 10000,
+              "nanoseconds_per_iteration": 2658.4677,
+              "checksum": 0
+            }
+          ]
+        },
+        {
+          "log": "/tmp/hypercurve-native-horner-extended-rational16-baseline-5.log",
+          "repetition": 5,
+          "exit_status": 0,
+          "wall_seconds": 0.35,
+          "user_seconds": 0.34,
+          "system_seconds": 0,
+          "maximum_rss_kib": 4948,
+          "rows": [
+            {
+              "name": "rational_bezier_large_cold_evaluation_16_controls",
+              "iterations": 10000,
+              "nanoseconds_per_iteration": 32102.2622,
+              "checksum": 0
+            },
+            {
+              "name": "rational_bezier_large_cached_evaluation_16_controls",
+              "iterations": 10000,
+              "nanoseconds_per_iteration": 2757.6139,
+              "checksum": 0
+            }
+          ]
+        }
+      ],
+      "candidate": [
+        {
+          "log": "/tmp/hypercurve-native-horner-extended-rational16-candidate-1.log",
+          "repetition": 1,
+          "exit_status": 0,
+          "wall_seconds": 0.32,
+          "user_seconds": 0.32,
+          "system_seconds": 0,
+          "maximum_rss_kib": 4880,
+          "rows": [
+            {
+              "name": "rational_bezier_large_cold_evaluation_16_controls",
+              "iterations": 10000,
+              "nanoseconds_per_iteration": 30792.0536,
+              "checksum": 0
+            },
+            {
+              "name": "rational_bezier_large_cached_evaluation_16_controls",
+              "iterations": 10000,
+              "nanoseconds_per_iteration": 1613.295,
+              "checksum": 0
+            }
+          ]
+        },
+        {
+          "log": "/tmp/hypercurve-native-horner-extended-rational16-candidate-2.log",
+          "repetition": 2,
+          "exit_status": 0,
+          "wall_seconds": 0.31,
+          "user_seconds": 0.3,
+          "system_seconds": 0,
+          "maximum_rss_kib": 4708,
+          "rows": [
+            {
+              "name": "rational_bezier_large_cold_evaluation_16_controls",
+              "iterations": 10000,
+              "nanoseconds_per_iteration": 29379.7809,
+              "checksum": 0
+            },
+            {
+              "name": "rational_bezier_large_cached_evaluation_16_controls",
+              "iterations": 10000,
+              "nanoseconds_per_iteration": 1604.3406000000002,
+              "checksum": 0
+            }
+          ]
+        },
+        {
+          "log": "/tmp/hypercurve-native-horner-extended-rational16-candidate-3.log",
+          "repetition": 3,
+          "exit_status": 0,
+          "wall_seconds": 0.32,
+          "user_seconds": 0.31,
+          "system_seconds": 0,
+          "maximum_rss_kib": 4876,
+          "rows": [
+            {
+              "name": "rational_bezier_large_cold_evaluation_16_controls",
+              "iterations": 10000,
+              "nanoseconds_per_iteration": 30156.022,
+              "checksum": 0
+            },
+            {
+              "name": "rational_bezier_large_cached_evaluation_16_controls",
+              "iterations": 10000,
+              "nanoseconds_per_iteration": 1572.6467,
+              "checksum": 0
+            }
+          ]
+        },
+        {
+          "log": "/tmp/hypercurve-native-horner-extended-rational16-candidate-4.log",
+          "repetition": 4,
+          "exit_status": 0,
+          "wall_seconds": 0.3,
+          "user_seconds": 0.3,
+          "system_seconds": 0,
+          "maximum_rss_kib": 4868,
+          "rows": [
+            {
+              "name": "rational_bezier_large_cold_evaluation_16_controls",
+              "iterations": 10000,
+              "nanoseconds_per_iteration": 28960.8865,
+              "checksum": 0
+            },
+            {
+              "name": "rational_bezier_large_cached_evaluation_16_controls",
+              "iterations": 10000,
+              "nanoseconds_per_iteration": 1659.0639,
+              "checksum": 0
+            }
+          ]
+        },
+        {
+          "log": "/tmp/hypercurve-native-horner-extended-rational16-candidate-5.log",
+          "repetition": 5,
+          "exit_status": 0,
+          "wall_seconds": 0.3,
+          "user_seconds": 0.3,
+          "system_seconds": 0,
+          "maximum_rss_kib": 4860,
+          "rows": [
+            {
+              "name": "rational_bezier_large_cold_evaluation_16_controls",
+              "iterations": 10000,
+              "nanoseconds_per_iteration": 29120.0896,
+              "checksum": 0
+            },
+            {
+              "name": "rational_bezier_large_cached_evaluation_16_controls",
+              "iterations": 10000,
+              "nanoseconds_per_iteration": 1560.3825,
+              "checksum": 0
+            }
+          ]
+        }
+      ],
+      "median": {
+        "wall_seconds": {
+          "baseline": 0.34,
+          "candidate": 0.31,
+          "change_percent": -8.823529411764708
+        },
+        "user_seconds": {
+          "baseline": 0.33,
+          "candidate": 0.3,
+          "change_percent": -9.090909090909093
+        },
+        "system_seconds": {
+          "baseline": 0,
+          "candidate": 0,
+          "change_percent": null
+        },
+        "maximum_rss_kib": {
+          "baseline": 4716,
+          "candidate": 4868,
+          "change_percent": 3.2230703986429132
+        }
+      },
+      "median_rows": [
+        {
+          "name": "rational_bezier_large_cold_evaluation_16_controls",
+          "iterations": 10000,
+          "checksum": 0,
+          "baseline_nanoseconds": 31354.2113,
+          "candidate_nanoseconds": 29379.7809,
+          "change_percent": -6.297177693638867
+        },
+        {
+          "name": "rational_bezier_large_cached_evaluation_16_controls",
+          "iterations": 10000,
+          "checksum": 0,
+          "baseline_nanoseconds": 2666.2512,
+          "candidate_nanoseconds": 1604.3406000000002,
+          "change_percent": -39.82785267944745
+        }
+      ]
+    },
+    "rational64": {
+      "baseline": [
+        {
+          "log": "/tmp/hypercurve-native-horner-extended-rational64-baseline-1.log",
+          "repetition": 1,
+          "exit_status": 0,
+          "wall_seconds": 5.39,
+          "user_seconds": 5.34,
+          "system_seconds": 0.01,
+          "maximum_rss_kib": 11216,
+          "rows": [
+            {
+              "name": "rational_bezier_large_cold_evaluation_64_controls",
+              "iterations": 10000,
+              "nanoseconds_per_iteration": 530169.6107,
+              "checksum": 0
+            },
+            {
+              "name": "rational_bezier_large_cached_evaluation_64_controls",
+              "iterations": 10000,
+              "nanoseconds_per_iteration": 8675.2133,
+              "checksum": 0
+            }
+          ]
+        },
+        {
+          "log": "/tmp/hypercurve-native-horner-extended-rational64-baseline-2.log",
+          "repetition": 2,
+          "exit_status": 0,
+          "wall_seconds": 5.19,
+          "user_seconds": 5.16,
+          "system_seconds": 0,
+          "maximum_rss_kib": 11300,
+          "rows": [
+            {
+              "name": "rational_bezier_large_cold_evaluation_64_controls",
+              "iterations": 10000,
+              "nanoseconds_per_iteration": 510554.3087,
+              "checksum": 0
+            },
+            {
+              "name": "rational_bezier_large_cached_evaluation_64_controls",
+              "iterations": 10000,
+              "nanoseconds_per_iteration": 8769.6918,
+              "checksum": 0
+            }
+          ]
+        },
+        {
+          "log": "/tmp/hypercurve-native-horner-extended-rational64-baseline-3.log",
+          "repetition": 3,
+          "exit_status": 0,
+          "wall_seconds": 5.47,
+          "user_seconds": 5.43,
+          "system_seconds": 0,
+          "maximum_rss_kib": 11360,
+          "rows": [
+            {
+              "name": "rational_bezier_large_cold_evaluation_64_controls",
+              "iterations": 10000,
+              "nanoseconds_per_iteration": 537324.5146,
+              "checksum": 0
+            },
+            {
+              "name": "rational_bezier_large_cached_evaluation_64_controls",
+              "iterations": 10000,
+              "nanoseconds_per_iteration": 10185.3942,
+              "checksum": 0
+            }
+          ]
+        },
+        {
+          "log": "/tmp/hypercurve-native-horner-extended-rational64-baseline-4.log",
+          "repetition": 4,
+          "exit_status": 0,
+          "wall_seconds": 5.29,
+          "user_seconds": 5.25,
+          "system_seconds": 0,
+          "maximum_rss_kib": 11420,
+          "rows": [
+            {
+              "name": "rational_bezier_large_cold_evaluation_64_controls",
+              "iterations": 10000,
+              "nanoseconds_per_iteration": 519946.7521,
+              "checksum": 0
+            },
+            {
+              "name": "rational_bezier_large_cached_evaluation_64_controls",
+              "iterations": 10000,
+              "nanoseconds_per_iteration": 8794.935,
+              "checksum": 0
+            }
+          ]
+        },
+        {
+          "log": "/tmp/hypercurve-native-horner-extended-rational64-baseline-5.log",
+          "repetition": 5,
+          "exit_status": 0,
+          "wall_seconds": 5.36,
+          "user_seconds": 5.31,
+          "system_seconds": 0,
+          "maximum_rss_kib": 11064,
+          "rows": [
+            {
+              "name": "rational_bezier_large_cold_evaluation_64_controls",
+              "iterations": 10000,
+              "nanoseconds_per_iteration": 526975.8375,
+              "checksum": 0
+            },
+            {
+              "name": "rational_bezier_large_cached_evaluation_64_controls",
+              "iterations": 10000,
+              "nanoseconds_per_iteration": 8967.8163,
+              "checksum": 0
+            }
+          ]
+        }
+      ],
+      "candidate": [
+        {
+          "log": "/tmp/hypercurve-native-horner-extended-rational64-candidate-1.log",
+          "repetition": 1,
+          "exit_status": 0,
+          "wall_seconds": 5.23,
+          "user_seconds": 5.19,
+          "system_seconds": 0,
+          "maximum_rss_kib": 11476,
+          "rows": [
+            {
+              "name": "rational_bezier_large_cold_evaluation_64_controls",
+              "iterations": 10000,
+              "nanoseconds_per_iteration": 518313.8684,
+              "checksum": 0
+            },
+            {
+              "name": "rational_bezier_large_cached_evaluation_64_controls",
+              "iterations": 10000,
+              "nanoseconds_per_iteration": 4765.056,
+              "checksum": 0
+            }
+          ]
+        },
+        {
+          "log": "/tmp/hypercurve-native-horner-extended-rational64-candidate-2.log",
+          "repetition": 2,
+          "exit_status": 0,
+          "wall_seconds": 5.28,
+          "user_seconds": 5.24,
+          "system_seconds": 0,
+          "maximum_rss_kib": 11336,
+          "rows": [
+            {
+              "name": "rational_bezier_large_cold_evaluation_64_controls",
+              "iterations": 10000,
+              "nanoseconds_per_iteration": 522614.736,
+              "checksum": 0
+            },
+            {
+              "name": "rational_bezier_large_cached_evaluation_64_controls",
+              "iterations": 10000,
+              "nanoseconds_per_iteration": 5375.6913,
+              "checksum": 0
+            }
+          ]
+        },
+        {
+          "log": "/tmp/hypercurve-native-horner-extended-rational64-candidate-3.log",
+          "repetition": 3,
+          "exit_status": 0,
+          "wall_seconds": 5.32,
+          "user_seconds": 5.28,
+          "system_seconds": 0,
+          "maximum_rss_kib": 11444,
+          "rows": [
+            {
+              "name": "rational_bezier_large_cold_evaluation_64_controls",
+              "iterations": 10000,
+              "nanoseconds_per_iteration": 527472.6567,
+              "checksum": 0
+            },
+            {
+              "name": "rational_bezier_large_cached_evaluation_64_controls",
+              "iterations": 10000,
+              "nanoseconds_per_iteration": 4825.7148,
+              "checksum": 0
+            }
+          ]
+        },
+        {
+          "log": "/tmp/hypercurve-native-horner-extended-rational64-candidate-4.log",
+          "repetition": 4,
+          "exit_status": 0,
+          "wall_seconds": 5.26,
+          "user_seconds": 5.22,
+          "system_seconds": 0.01,
+          "maximum_rss_kib": 11348,
+          "rows": [
+            {
+              "name": "rational_bezier_large_cold_evaluation_64_controls",
+              "iterations": 10000,
+              "nanoseconds_per_iteration": 521262.9033,
+              "checksum": 0
+            },
+            {
+              "name": "rational_bezier_large_cached_evaluation_64_controls",
+              "iterations": 10000,
+              "nanoseconds_per_iteration": 4810.2988,
+              "checksum": 0
+            }
+          ]
+        },
+        {
+          "log": "/tmp/hypercurve-native-horner-extended-rational64-candidate-5.log",
+          "repetition": 5,
+          "exit_status": 0,
+          "wall_seconds": 5.26,
+          "user_seconds": 5.21,
+          "system_seconds": 0.01,
+          "maximum_rss_kib": 11284,
+          "rows": [
+            {
+              "name": "rational_bezier_large_cold_evaluation_64_controls",
+              "iterations": 10000,
+              "nanoseconds_per_iteration": 521308.9931,
+              "checksum": 0
+            },
+            {
+              "name": "rational_bezier_large_cached_evaluation_64_controls",
+              "iterations": 10000,
+              "nanoseconds_per_iteration": 4567.8925,
+              "checksum": 0
+            }
+          ]
+        }
+      ],
+      "median": {
+        "wall_seconds": {
+          "baseline": 5.36,
+          "candidate": 5.26,
+          "change_percent": -1.8656716417910557
+        },
+        "user_seconds": {
+          "baseline": 5.31,
+          "candidate": 5.22,
+          "change_percent": -1.6949152542372836
+        },
+        "system_seconds": {
+          "baseline": 0,
+          "candidate": 0,
+          "change_percent": null
+        },
+        "maximum_rss_kib": {
+          "baseline": 11300,
+          "candidate": 11348,
+          "change_percent": 0.4247787610619502
+        }
+      },
+      "median_rows": [
+        {
+          "name": "rational_bezier_large_cold_evaluation_64_controls",
+          "iterations": 10000,
+          "checksum": 0,
+          "baseline_nanoseconds": 526975.8375,
+          "candidate_nanoseconds": 521308.9931,
+          "change_percent": -1.0753518466584344
+        },
+        {
+          "name": "rational_bezier_large_cached_evaluation_64_controls",
+          "iterations": 10000,
+          "checksum": 0,
+          "baseline_nanoseconds": 8794.935,
+          "candidate_nanoseconds": 4810.2988,
+          "change_percent": -45.306033529525806
+        }
+      ]
+    }
+  },
+  "allocation_profile_notes": {
+    "rows": [
+      {
+        "representation": "One",
+        "iterations": 4,
+        "allocations": 34,
+        "deallocations": 32,
+        "reallocations": 0,
+        "allocated_bytes": 2672,
+        "deallocated_bytes": 2560,
+        "peak_live_delta_bytes": 752,
+        "retained_bytes": 112
+      },
+      {
+        "representation": "Pi",
+        "iterations": 4,
+        "allocations": 49,
+        "deallocations": 44,
+        "reallocations": 0,
+        "allocated_bytes": 2744,
+        "deallocated_bytes": 2272,
+        "peak_live_delta_bytes": 880,
+        "retained_bytes": 472
+      },
+      {
+        "representation": "PiPow",
+        "iterations": 4,
+        "allocations": 88,
+        "deallocations": 88,
+        "reallocations": 0,
+        "allocated_bytes": 4704,
+        "deallocated_bytes": 4704,
+        "peak_live_delta_bytes": 656,
+        "retained_bytes": 0
+      },
+      {
+        "representation": "PiInv",
+        "iterations": 4,
+        "allocations": 48,
+        "deallocations": 48,
+        "reallocations": 0,
+        "allocated_bytes": 2528,
+        "deallocated_bytes": 2528,
+        "peak_live_delta_bytes": 408,
+        "retained_bytes": 0
+      },
+      {
+        "representation": "PiExp",
+        "iterations": 4,
+        "allocations": 79,
+        "deallocations": 76,
+        "reallocations": 0,
+        "allocated_bytes": 4184,
+        "deallocated_bytes": 4064,
+        "peak_live_delta_bytes": 776,
+        "retained_bytes": 120
+      },
+      {
+        "representation": "PiInvExp",
+        "iterations": 4,
+        "allocations": 76,
+        "deallocations": 76,
+        "reallocations": 0,
+        "allocated_bytes": 4032,
+        "deallocated_bytes": 4032,
+        "peak_live_delta_bytes": 648,
+        "retained_bytes": 0
+      },
+      {
+        "representation": "PiSqrt",
+        "iterations": 4,
+        "allocations": 250,
+        "deallocations": 238,
+        "reallocations": 8,
+        "allocated_bytes": 11272,
+        "deallocated_bytes": 10384,
+        "peak_live_delta_bytes": 1704,
+        "retained_bytes": 888
+      },
+      {
+        "representation": "ConstProduct",
+        "iterations": 4,
+        "allocations": 176,
+        "deallocations": 176,
+        "reallocations": 0,
+        "allocated_bytes": 8832,
+        "deallocated_bytes": 8832,
+        "peak_live_delta_bytes": 1096,
+        "retained_bytes": 0
+      },
+      {
+        "representation": "ConstOffset",
+        "iterations": 4,
+        "allocations": 52,
+        "deallocations": 52,
+        "reallocations": 0,
+        "allocated_bytes": 2400,
+        "deallocated_bytes": 2400,
+        "peak_live_delta_bytes": 360,
+        "retained_bytes": 0
+      },
+      {
+        "representation": "ConstProductSqrt",
+        "iterations": 4,
+        "allocations": 284,
+        "deallocations": 284,
+        "reallocations": 0,
+        "allocated_bytes": 13728,
+        "deallocated_bytes": 13728,
+        "peak_live_delta_bytes": 1448,
+        "retained_bytes": 0
+      },
+      {
+        "representation": "Sqrt",
+        "iterations": 4,
+        "allocations": 136,
+        "deallocations": 136,
+        "reallocations": 8,
+        "allocated_bytes": 4640,
+        "deallocated_bytes": 4640,
+        "peak_live_delta_bytes": 568,
+        "retained_bytes": 0
+      },
+      {
+        "representation": "Exp",
+        "iterations": 4,
+        "allocations": 116,
+        "deallocations": 112,
+        "reallocations": 0,
+        "allocated_bytes": 5352,
+        "deallocated_bytes": 5056,
+        "peak_live_delta_bytes": 880,
+        "retained_bytes": 296
+      },
+      {
+        "representation": "Ln",
+        "iterations": 4,
+        "allocations": 48,
+        "deallocations": 48,
+        "reallocations": 0,
+        "allocated_bytes": 2368,
+        "deallocated_bytes": 2368,
+        "peak_live_delta_bytes": 408,
+        "retained_bytes": 0
+      },
+      {
+        "representation": "LnAffine",
+        "iterations": 4,
+        "allocations": 144,
+        "deallocations": 144,
+        "reallocations": 0,
+        "allocated_bytes": 6656,
+        "deallocated_bytes": 6656,
+        "peak_live_delta_bytes": 728,
+        "retained_bytes": 0
+      },
+      {
+        "representation": "LnProduct",
+        "iterations": 4,
+        "allocations": 92,
+        "deallocations": 92,
+        "reallocations": 0,
+        "allocated_bytes": 4288,
+        "deallocated_bytes": 4288,
+        "peak_live_delta_bytes": 664,
+        "retained_bytes": 0
+      },
+      {
+        "representation": "Log10",
+        "iterations": 4,
+        "allocations": 120,
+        "deallocations": 120,
+        "reallocations": 4,
+        "allocated_bytes": 5344,
+        "deallocated_bytes": 5344,
+        "peak_live_delta_bytes": 800,
+        "retained_bytes": 0
+      },
+      {
+        "representation": "Log2",
+        "iterations": 4,
+        "allocations": 120,
+        "deallocations": 120,
+        "reallocations": 4,
+        "allocated_bytes": 5472,
+        "deallocated_bytes": 5472,
+        "peak_live_delta_bytes": 808,
+        "retained_bytes": 0
+      },
+      {
+        "representation": "SinPi",
+        "iterations": 4,
+        "allocations": 312,
+        "deallocations": 312,
+        "reallocations": 0,
+        "allocated_bytes": 12096,
+        "deallocated_bytes": 12096,
+        "peak_live_delta_bytes": 1000,
+        "retained_bytes": 0
+      },
+      {
+        "representation": "TanPi",
+        "iterations": 4,
+        "allocations": 820,
+        "deallocations": 820,
+        "reallocations": 16,
+        "allocated_bytes": 27040,
+        "deallocated_bytes": 27040,
+        "peak_live_delta_bytes": 1000,
+        "retained_bytes": 0
+      },
+      {
+        "representation": "Irrational",
+        "iterations": 4,
+        "allocations": 232,
+        "deallocations": 232,
+        "reallocations": 0,
+        "allocated_bytes": 8128,
+        "deallocated_bytes": 8128,
+        "peak_live_delta_bytes": 480,
+        "retained_bytes": 0
+      }
+    ],
+    "retained": [
+      {
+        "representation": "One",
+        "iterations": 4,
+        "allocations": 34,
+        "deallocations": 32,
+        "reallocations": 0,
+        "allocated_bytes": 2672,
+        "deallocated_bytes": 2560,
+        "peak_live_delta_bytes": 752,
+        "retained_bytes": 112
+      },
+      {
+        "representation": "Pi",
+        "iterations": 4,
+        "allocations": 49,
+        "deallocations": 44,
+        "reallocations": 0,
+        "allocated_bytes": 2744,
+        "deallocated_bytes": 2272,
+        "peak_live_delta_bytes": 880,
+        "retained_bytes": 472
+      },
+      {
+        "representation": "PiExp",
+        "iterations": 4,
+        "allocations": 79,
+        "deallocations": 76,
+        "reallocations": 0,
+        "allocated_bytes": 4184,
+        "deallocated_bytes": 4064,
+        "peak_live_delta_bytes": 776,
+        "retained_bytes": 120
+      },
+      {
+        "representation": "PiSqrt",
+        "iterations": 4,
+        "allocations": 250,
+        "deallocations": 238,
+        "reallocations": 8,
+        "allocated_bytes": 11272,
+        "deallocated_bytes": 10384,
+        "peak_live_delta_bytes": 1704,
+        "retained_bytes": 888
+      },
+      {
+        "representation": "Exp",
+        "iterations": 4,
+        "allocations": 116,
+        "deallocations": 112,
+        "reallocations": 0,
+        "allocated_bytes": 5352,
+        "deallocated_bytes": 5056,
+        "peak_live_delta_bytes": 880,
+        "retained_bytes": 296
+      }
+    ]
+  },
+  "remaining": [
+    "Finish and parse broad benchmark using /tmp/hypercurve-native-horner-analyze.mjs.",
+    "Review results, commit Hypercurve source changes to main, record complete durable checkpoint and update non-git audit progress.",
+    "Do not mark goal complete; pre-existing radical-midpoint completeness limitation remains, and broader release competitiveness is unproven."
+  ],
+  "initial_rejection_evidence": "/tmp/hypercurve-native-horner-progress.json",
+  "initial_naive_artifacts": "/tmp/hypercurve-native-eval-frozen-candidate-{test,region,rational}",
+  "corrected_artifacts": "/tmp/hypercurve-native-horner-frozen-candidate-{test,region,rational}",
+  "allocation_scope": "Corrected 16-control fixture exactly matches baseline 6192 allocations and 272.53K peak heap. Small coupled-fiber fixture allocations increase 11668 to 11963 (+2.5%), peak 243.57K to 243.72K. Hyperreal four-iteration profile has bounded reported retained bytes for five classes (not an all-zero/leak-free claim); Hypersolve profile last-column rows are zero.",
+  "production_delta": -56,
+  "total_rust_delta": 29
+}

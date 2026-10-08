@@ -1,0 +1,34 @@
+{
+  "source_manifest": "retained-native-circle-contact-20260927-v331-sources.json",
+  "qualification": "retained-native-circle-contact-20260927-v331-terminal.json",
+  "outer_session_reaped": 80153,
+  "validated_files": 2046,
+  "passed_tests": 197,
+  "static_checks": 6,
+  "repos": {
+    "hypercurve": {
+      "parent": "00650940024212c8909bb34f30fc0384121062ef",
+      "paths": {
+        "src/curve.rs": "7a6186f8a661e2231920e7ced1682cd508e46934bb0c03ace3446106fe351a36",
+        "src/curve_corner_chain.rs": "1f182d2f906938c03dc22ef3aad27eab945f1de26de5e6450a938035bb510371",
+        "src/curve_corner_domain.rs": "de075397a08c3cddb57e4b089d2d8ef1849867ea2763cf5dd0b1a456145d0c46",
+        "src/curve_corner_reconstruction.rs": "688fc9e74de4d210ae57f616c140dde672469931104bd2bce5f0ac1aba60f4b5",
+        "src/curve_fillet.rs": "838b3479fb1952ed5e393a5e4eeb8a90b7c03acf3ffd8b2a394786fdf0ac305f",
+        "src/rational_bezier_general.rs": "3f930b2da321c7ed8a1928263a7152a85188816f89f039a50dbcb09566ec1c8a",
+        "src/segment.rs": "2461e513dba84b28c6134f9a9376644bbfd5385dca640b71ed079ef17f6c4a2e"
+      }
+    }
+  },
+  "known_unresolved_not_requalified": [
+    "bezier_region::tests::one_fragment_nonzero_parallel_loop_extends_chamfer_cuts_on_one_finite_envelope",
+    "strict_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions",
+    "approximate_512_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions"
+  ],
+  "known_unresolved_evidence": {
+    "bezier_region::tests::one_fragment_nonzero_parallel_loop_extends_chamfer_cuts_on_one_finite_envelope": [
+      "retained-native-circle-contact-20260927-v327-terminal.json",
+      "retained-native-circle-contact-20260927-v328-terminal.json"
+    ]
+  },
+  "remaining_constraint_work": "General collapsed selected-circle contacts, native coincident circular supports, and mixed retained chord/parallel coincidence"
+}

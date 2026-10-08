@@ -1,0 +1,13 @@
+{
+  "tag": "point-wasm-verify",
+  "started": "2026-09-11T00:02:47.135Z",
+  "finished": "2026-09-11T00:04:12.443Z",
+  "elapsedSeconds": 85.30576730800001,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "node",
+  "args": [
+    "verify-point-wasm.mjs"
+  ],
+  "code": 0,
+  "signal": null
+}

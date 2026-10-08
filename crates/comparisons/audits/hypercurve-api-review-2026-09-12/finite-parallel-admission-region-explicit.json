@@ -1,0 +1,30 @@
+{
+  "returncode": 0,
+  "elapsed_seconds": 25.001970704994164,
+  "normal_library_sha256": "9ae1c520060940471e48c12e6100d86ee6ea9225a56e2ddd2281e5dd246c03f9",
+  "log": "finite-parallel-admission-region-explicit.log",
+  "source": "selected-fillet-region-normalization-explicit.rs",
+  "command": [
+    "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustc",
+    "--edition=2024",
+    "-O",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/selected-fillet-region-normalization-explicit.rs",
+    "--extern",
+    "hypercurve=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypercurve-cdcdcc6da422cc2c.rlib",
+    "-L",
+    "dependency=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps",
+    "-o",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-parallel-admission-region-explicit"
+  ],
+  "source_sha256": "20cd460a2d6a7f7b956dcf028a384aa3f29b8f302fb40440a059d4a0ba885dc3",
+  "executable_sha256": "39a9f4a3f8e20bfc3ae281bbd2dcd27262f18251838e7953579ae6ecb70d105f",
+  "counts": {
+    "queries": 48,
+    "point_replays": 96,
+    "topologies": 48,
+    "splits": 96,
+    "child_queries": 192,
+    "region_queries": 12,
+    "boolean_reentries": 12
+  }
+}

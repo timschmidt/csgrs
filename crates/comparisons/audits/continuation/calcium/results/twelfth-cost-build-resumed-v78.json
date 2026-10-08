@@ -1,0 +1,13 @@
+{
+  "tag": "twelfth-cost-build-resumed-v78",
+  "started": "2026-09-11T23:48:04.200Z",
+  "finished": "2026-09-11T23:48:10.423Z",
+  "elapsedSeconds": 6.219944851999999,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "node",
+  "args": [
+    "resume-twelfth-cost-v78.mjs"
+  ],
+  "code": 1,
+  "signal": null
+}

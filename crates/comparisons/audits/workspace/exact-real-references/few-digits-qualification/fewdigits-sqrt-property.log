@@ -1,0 +1,25 @@
+
+Data/Multinomial.hs:1:17: warning: [-Wdeprecated-flags]
+    -fglasgow-exts is deprecated: Use individual extensions instead
+  |
+1 | {-# OPTIONS_GHC -fglasgow-exts #-}
+  |                 ^^^^^^^^^^^^^^
+
+Data/Interval.hs:1:17: warning: [-Wdeprecated-flags]
+    -fglasgow-exts is deprecated: Use individual extensions instead
+  |
+1 | {-# OPTIONS_GHC -fglasgow-exts #-}
+  |                 ^^^^^^^^^^^^^^
+
+Data/Real/CReal.hs:1:17: warning: [-Wdeprecated-flags]
+    -fglasgow-exts is deprecated: Use individual extensions instead
+  |
+1 | {-# OPTIONS_GHC -fglasgow-exts #-}
+  |                 ^^^^^^^^^^^^^^
+
+Data/Real/Complete.hs:1:17: warning: [-Wdeprecated-flags]
+    -fglasgow-exts is deprecated: Use individual extensions instead
+  |
+1 | {-# OPTIONS_GHC -fglasgow-exts #-}
+  |                 ^^^^^^^^^^^^^^
+<interactive>: stack overflow

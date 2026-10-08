@@ -1,0 +1,23 @@
+{
+  "tag": "power-sums-candidate-cost-build",
+  "started": "2026-09-10T18:34:13.368Z",
+  "finished": "2026-09-10T18:34:45.449Z",
+  "elapsedSeconds": 32.078726264000004,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison",
+  "command": "env",
+  "args": [
+    "CARGO_TARGET_DIR=/tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse",
+    "CARGO_INCREMENTAL=0",
+    "CARGO_PROFILE_DEV_DEBUG=0",
+    "CARGO_BUILD_JOBS=2",
+    "cargo",
+    "build",
+    "--offline",
+    "--release",
+    "--manifest-path",
+    "audits/continuation/calcium/power-sums-cost-candidate/Cargo.toml",
+    "--bins"
+  ],
+  "code": 0,
+  "signal": null
+}

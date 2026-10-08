@@ -1,0 +1,24 @@
+{
+  "tag": "root-exp-proof-final-full-debug",
+  "started": "2026-09-08T12:59:45.722Z",
+  "finished": "2026-09-08T12:59:51.670Z",
+  "elapsedSeconds": 5.945679527999999,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison",
+  "command": "env",
+  "args": [
+    "TMPDIR=/home/tim/Documents/GitHub/workspace/calcium-build-tmp.gVX5v4",
+    "CARGO_INCREMENTAL=0",
+    "CARGO_PROFILE_DEV_DEBUG=0",
+    "cargo",
+    "test",
+    "--lib",
+    "--all-features",
+    "--offline",
+    "--manifest-path",
+    "audits/continuation/calcium/root-exp-proof-trial-hyperreal/Cargo.toml",
+    "--target-dir",
+    "/home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype"
+  ],
+  "code": 0,
+  "signal": null
+}

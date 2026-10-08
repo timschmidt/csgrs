@@ -1,0 +1,154 @@
+\doxysubsection{Lower\+Real Class Reference}
+\hypertarget{classAriadne_1_1LowerReal}{}\label{classAriadne_1_1LowerReal}\index{LowerReal@{LowerReal}}
+
+
+{\ttfamily \#include $<$lower\+\_\+real.\+hpp$>$}
+
+
+
+\doxysubsubsection{Description}
+\doxylink{classAriadne_1_1Concepts_1_1Lower}{Lower} real number type $\R_<$. 
+
+An effectively computable {\itshape lower real} is a real number for which it is possible to compute arbitrarily accurate (dyadic) rational lower bounds; equivalently, a bounded increasing sequence of (dyadic) rationals converging to the number. However, the convergence rate is not known, and there may be arbitrarily large upward jumps in the sequence.
+
+Multiplication and division are unsupported, since given $x \geq \underline{x}$ and $y\geq\underline{y}$, we cannot deduce $x \times y\geq\underline{x}\times\underline{y}$ if the bounds are negative. However, multiplication and reciprocation of positive lower reals {\itshape is} supported.
+
+Positive lower real numbers are a natural type for representing the measure of an open set, or the separation between two points in a metric space. \begin{DoxySeeAlso}{See also}
+\doxylink{classAriadne_1_1Real}{Real}, \doxylink{classAriadne_1_1UpperReal}{Upper\+Real}, \doxylink{classAriadne_1_1NaiveReal}{Naive\+Real} 
+\end{DoxySeeAlso}
+Inheritance diagram for Lower\+Real\+:\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[height=2.000000cm]{classAriadne_1_1LowerReal}
+\end{center}
+\end{figure}
+\doxysubsubsubsection*{Friends}
+\begin{Indent}\textbf{ Lattice operations}\par
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1LowerReal_a2d576a7d0dee5831f4d45d4f5611116d}\label{classAriadne_1_1LowerReal_a2d576a7d0dee5831f4d45d4f5611116d} 
+\mbox{\hyperlink{classAriadne_1_1PositiveNaiveReal}{Positive\+Naive\+Real}} {\bfseries abs} (\mbox{\hyperlink{classAriadne_1_1LowerReal}{Lower\+Real}} const \&r)=delete
+\begin{DoxyCompactList}\small\item\em {\itshape No} absolute value operator! \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1LowerReal_a79235d0e2ab72f3e78e1f275a11290fe}\label{classAriadne_1_1LowerReal_a79235d0e2ab72f3e78e1f275a11290fe} 
+\mbox{\hyperlink{classAriadne_1_1LowerReal}{Lower\+Real}} {\bfseries min} (\mbox{\hyperlink{classAriadne_1_1LowerReal}{Lower\+Real}} const \&r1, \mbox{\hyperlink{classAriadne_1_1LowerReal}{Lower\+Real}} const \&r2)
+\begin{DoxyCompactList}\small\item\em The mimimum of {\itshape r1} and {\itshape r2}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1LowerReal_a69d58f2aa0db86ad29b8444e1d9a6563}\label{classAriadne_1_1LowerReal_a69d58f2aa0db86ad29b8444e1d9a6563} 
+\mbox{\hyperlink{classAriadne_1_1LowerReal}{Lower\+Real}} {\bfseries max} (\mbox{\hyperlink{classAriadne_1_1LowerReal}{Lower\+Real}} const \&r1, \mbox{\hyperlink{classAriadne_1_1LowerReal}{Lower\+Real}} const \&r2)
+\begin{DoxyCompactList}\small\item\em The maximum of {\itshape r1} and {\itshape r2}. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\end{Indent}
+\begin{Indent}\textbf{ Named arithmetical functions}\par
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1LowerReal_a1d5abf65f96ff13409a27f952972900b}\label{classAriadne_1_1LowerReal_a1d5abf65f96ff13409a27f952972900b} 
+\mbox{\hyperlink{classAriadne_1_1LowerReal}{Lower\+Real}} {\bfseries pos} (\mbox{\hyperlink{classAriadne_1_1LowerReal}{Lower\+Real}} const \&r)
+\begin{DoxyCompactList}\small\item\em Identity {\itshape +r}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1LowerReal_a548f8e8992f72173d5e8bbc70aefdb32}\label{classAriadne_1_1LowerReal_a548f8e8992f72173d5e8bbc70aefdb32} 
+\mbox{\hyperlink{classAriadne_1_1UpperReal}{Upper\+Real}} {\bfseries neg} (\mbox{\hyperlink{classAriadne_1_1LowerReal}{Lower\+Real}} const \&r)
+\begin{DoxyCompactList}\small\item\em Negative {\itshape -\/r}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1LowerReal_a53a5cd706276ab9751c794e99bb6ace5}\label{classAriadne_1_1LowerReal_a53a5cd706276ab9751c794e99bb6ace5} 
+\mbox{\hyperlink{classAriadne_1_1LowerReal}{Lower\+Real}} {\bfseries neg} (\mbox{\hyperlink{classAriadne_1_1UpperReal}{Upper\+Real}} const \&r)
+\begin{DoxyCompactList}\small\item\em Negative {\itshape -\/r}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1LowerReal_a6d7d7a6c102510b228e205db741213e4}\label{classAriadne_1_1LowerReal_a6d7d7a6c102510b228e205db741213e4} 
+\mbox{\hyperlink{classAriadne_1_1LowerReal}{Lower\+Real}} {\bfseries hlf} (\mbox{\hyperlink{classAriadne_1_1LowerReal}{Lower\+Real}} const \&r)
+\begin{DoxyCompactList}\small\item\em Half {\itshape r÷2}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1LowerReal_a7567e00e651ab9da0eb717b131dbef7e}\label{classAriadne_1_1LowerReal_a7567e00e651ab9da0eb717b131dbef7e} 
+\mbox{\hyperlink{classAriadne_1_1LowerReal}{Lower\+Real}} {\bfseries add} (\mbox{\hyperlink{classAriadne_1_1LowerReal}{Lower\+Real}} const \&r1, \mbox{\hyperlink{classAriadne_1_1LowerReal}{Lower\+Real}} const \&r2)
+\begin{DoxyCompactList}\small\item\em Sum {\itshape r1+r2}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1LowerReal_ae5c097264377be0881f9f17742120de1}\label{classAriadne_1_1LowerReal_ae5c097264377be0881f9f17742120de1} 
+\mbox{\hyperlink{classAriadne_1_1LowerReal}{Lower\+Real}} {\bfseries sub} (\mbox{\hyperlink{classAriadne_1_1LowerReal}{Lower\+Real}} const \&r1, \mbox{\hyperlink{classAriadne_1_1UpperReal}{Upper\+Real}} const \&r2)
+\begin{DoxyCompactList}\small\item\em Difference {\itshape r1-\/r2}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1LowerReal_a7d9341a1680aa48c735843cc5c1d254a}\label{classAriadne_1_1LowerReal_a7d9341a1680aa48c735843cc5c1d254a} 
+\mbox{\hyperlink{classAriadne_1_1UpperReal}{Upper\+Real}} {\bfseries sub} (\mbox{\hyperlink{classAriadne_1_1UpperReal}{Upper\+Real}} const \&r1, \mbox{\hyperlink{classAriadne_1_1LowerReal}{Lower\+Real}} const \&r2)
+\begin{DoxyCompactList}\small\item\em Difference {\itshape r1-\/r2}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1LowerReal_addcde73deba4bd255f2f35c7057a0af6}\label{classAriadne_1_1LowerReal_addcde73deba4bd255f2f35c7057a0af6} 
+\mbox{\hyperlink{classAriadne_1_1NaiveReal}{Naive\+Real}} {\bfseries mul} (\mbox{\hyperlink{classAriadne_1_1LowerReal}{Lower\+Real}} const \&r1, \mbox{\hyperlink{classAriadne_1_1LowerReal}{Lower\+Real}} const \&r2)=delete
+\begin{DoxyCompactList}\small\item\em {\itshape No} multiplication operator, since non-\/monotone! \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1LowerReal_acd87399efb9046aa4d556323642e8b8d}\label{classAriadne_1_1LowerReal_acd87399efb9046aa4d556323642e8b8d} 
+\mbox{\hyperlink{classAriadne_1_1NaiveReal}{Naive\+Real}} {\bfseries div} (\mbox{\hyperlink{classAriadne_1_1LowerReal}{Lower\+Real}} const \&r1, \mbox{\hyperlink{classAriadne_1_1UpperReal}{Upper\+Real}} const \&r2)=delete
+\begin{DoxyCompactList}\small\item\em {\itshape No} division operator, since non-\/monotone! \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1LowerReal_af9f81b0196f91f61e28dac2d096bf764}\label{classAriadne_1_1LowerReal_af9f81b0196f91f61e28dac2d096bf764} 
+\mbox{\hyperlink{classAriadne_1_1NaiveReal}{Naive\+Real}} {\bfseries rec} (\mbox{\hyperlink{classAriadne_1_1LowerReal}{Lower\+Real}} const \&r)=delete
+\begin{DoxyCompactList}\small\item\em {\itshape No} reciprocal operation, since non-\/monotone! \end{DoxyCompactList}\end{DoxyCompactItemize}
+\end{Indent}
+\begin{Indent}\textbf{ Named arithmetical functions on positive numbers}\par
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1LowerReal_ab041d5271d9e8e39a8716019e0b52db8}\label{classAriadne_1_1LowerReal_ab041d5271d9e8e39a8716019e0b52db8} 
+\mbox{\hyperlink{classAriadne_1_1LowerReal}{Lower\+Real}} {\bfseries mul} (\mbox{\hyperlink{classAriadne_1_1LowerReal}{Lower\+Real}} const \&r1, \mbox{\hyperlink{classAriadne_1_1PositiveReal}{Positive\+Real}} const \&r2)
+\begin{DoxyCompactList}\small\item\em Multiplication {\itshape r1×r2} preserves monotonicity. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1LowerReal_a4b6b8ae9e33554d1dc389e2f192280ed}\label{classAriadne_1_1LowerReal_a4b6b8ae9e33554d1dc389e2f192280ed} 
+\mbox{\hyperlink{classAriadne_1_1LowerReal}{Lower\+Real}} {\bfseries mul} (\mbox{\hyperlink{classAriadne_1_1PositiveReal}{Positive\+Real}} const \&r1, \mbox{\hyperlink{classAriadne_1_1LowerReal}{Lower\+Real}} const \&r2)
+\begin{DoxyCompactList}\small\item\em Multiplication {\itshape r1×r2} preserves monotonicity. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1LowerReal_a78bedfd80a0379407e3bfce157887953}\label{classAriadne_1_1LowerReal_a78bedfd80a0379407e3bfce157887953} 
+\mbox{\hyperlink{classAriadne_1_1LowerReal}{Lower\+Real}} {\bfseries div} (\mbox{\hyperlink{classAriadne_1_1LowerReal}{Lower\+Real}} const \&r1, \mbox{\hyperlink{classAriadne_1_1PositiveReal}{Positive\+Real}} const \&r2)
+\begin{DoxyCompactList}\small\item\em Division {\itshape r1÷r2} preserves monotonicity. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1LowerReal_a1e9f1a7a68a3fd6de31200d5463ccd8a}\label{classAriadne_1_1LowerReal_a1e9f1a7a68a3fd6de31200d5463ccd8a} 
+\mbox{\hyperlink{classAriadne_1_1LowerReal}{Lower\+Real}} {\bfseries div} (\mbox{\hyperlink{classAriadne_1_1PositiveReal}{Positive\+Real}} const \&r1, \mbox{\hyperlink{classAriadne_1_1UpperReal}{Upper\+Real}} const \&r2)
+\begin{DoxyCompactList}\small\item\em Division {\itshape r1÷r2} preserves monotonicity. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1LowerReal_a4e5c7b8b1c32cdbb46ca0d0cc66368a5}\label{classAriadne_1_1LowerReal_a4e5c7b8b1c32cdbb46ca0d0cc66368a5} 
+\mbox{\hyperlink{classAriadne_1_1UpperReal}{Upper\+Real}} {\bfseries div} (\mbox{\hyperlink{classAriadne_1_1PositiveReal}{Positive\+Real}} const \&r1, \mbox{\hyperlink{classAriadne_1_1LowerReal}{Lower\+Real}} const \&r2)
+\begin{DoxyCompactList}\small\item\em Division {\itshape r1÷r2} preserves monotonicity. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1LowerReal_a1336b87bfed30cb507d1b8906b352910}\label{classAriadne_1_1LowerReal_a1336b87bfed30cb507d1b8906b352910} 
+\mbox{\hyperlink{classAriadne_1_1PositiveLowerReal}{Positive\+Lower\+Real}} {\bfseries add} (\mbox{\hyperlink{classAriadne_1_1PositiveLowerReal}{Positive\+Lower\+Real}} const \&r1, \mbox{\hyperlink{classAriadne_1_1PositiveLowerReal}{Positive\+Lower\+Real}} const \&r2)
+\begin{DoxyCompactList}\small\item\em Addition {\itshape r1+r2} preserves positivity. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1LowerReal_a3c7c49fc8f5ab6be3f01cb97fe101e1c}\label{classAriadne_1_1LowerReal_a3c7c49fc8f5ab6be3f01cb97fe101e1c} 
+\mbox{\hyperlink{classAriadne_1_1PositiveLowerReal}{Positive\+Lower\+Real}} {\bfseries mul} (\mbox{\hyperlink{classAriadne_1_1PositiveLowerReal}{Positive\+Lower\+Real}} const \&r1, \mbox{\hyperlink{classAriadne_1_1PositiveLowerReal}{Positive\+Lower\+Real}} const \&r2)
+\begin{DoxyCompactList}\small\item\em Multiplication {\itshape r1×r2} preserves positivity. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1LowerReal_a0f7c99916f5eb5780f71c3e1621e72c7}\label{classAriadne_1_1LowerReal_a0f7c99916f5eb5780f71c3e1621e72c7} 
+\mbox{\hyperlink{classAriadne_1_1PositiveLowerReal}{Positive\+Lower\+Real}} {\bfseries div} (\mbox{\hyperlink{classAriadne_1_1PositiveLowerReal}{Positive\+Lower\+Real}} const \&r1, \mbox{\hyperlink{classAriadne_1_1PositiveUpperReal}{Positive\+Upper\+Real}} const \&r2)
+\begin{DoxyCompactList}\small\item\em Division {\itshape r1÷r2} preserves positivity. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1LowerReal_a762dfc61a0625f89e6ce802fe87b0230}\label{classAriadne_1_1LowerReal_a762dfc61a0625f89e6ce802fe87b0230} 
+\mbox{\hyperlink{classAriadne_1_1PositiveUpperReal}{Positive\+Upper\+Real}} {\bfseries div} (\mbox{\hyperlink{classAriadne_1_1PositiveUpperReal}{Positive\+Upper\+Real}} const \&r1, \mbox{\hyperlink{classAriadne_1_1PositiveLowerReal}{Positive\+Lower\+Real}} const \&r2)
+\begin{DoxyCompactList}\small\item\em Division {\itshape r1÷r2} preserves positivity. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1LowerReal_a726f772767e58b3ea19b60df0facb116}\label{classAriadne_1_1LowerReal_a726f772767e58b3ea19b60df0facb116} 
+\mbox{\hyperlink{classAriadne_1_1PositiveLowerReal}{Positive\+Lower\+Real}} {\bfseries rec} (\mbox{\hyperlink{classAriadne_1_1PositiveUpperReal}{Positive\+Upper\+Real}} const \&r)
+\begin{DoxyCompactList}\small\item\em Reciprocal {\itshape 1/r} preserves positivity. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1LowerReal_a1a535c949bfef88701e362fd229f89ec}\label{classAriadne_1_1LowerReal_a1a535c949bfef88701e362fd229f89ec} 
+\mbox{\hyperlink{classAriadne_1_1PositiveUpperReal}{Positive\+Upper\+Real}} {\bfseries rec} (\mbox{\hyperlink{classAriadne_1_1PositiveLowerReal}{Positive\+Lower\+Real}} const \&r)
+\begin{DoxyCompactList}\small\item\em Reciprocal {\itshape 1/r} preserves positivity. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\end{Indent}
+\begin{Indent}\textbf{ Algebraic and transcendental functions}\par
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1LowerReal_a9619ee3c1504d50e12d75bf2672109dc}\label{classAriadne_1_1LowerReal_a9619ee3c1504d50e12d75bf2672109dc} 
+\mbox{\hyperlink{classAriadne_1_1PositiveLowerReal}{Positive\+Lower\+Real}} {\bfseries sqrt} (\mbox{\hyperlink{classAriadne_1_1PositiveLowerReal}{Positive\+Lower\+Real}} const \&r)
+\begin{DoxyCompactList}\small\item\em The square root of {\itshape r}, √{\itshape r}. Requires {\itshape r} ≥ 0. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1LowerReal_ae811b6fdec42e877155c5b774153176b}\label{classAriadne_1_1LowerReal_ae811b6fdec42e877155c5b774153176b} 
+\mbox{\hyperlink{classAriadne_1_1PositiveLowerReal}{Positive\+Lower\+Real}} {\bfseries exp} (\mbox{\hyperlink{classAriadne_1_1LowerReal}{Lower\+Real}} const \&r)
+\begin{DoxyCompactList}\small\item\em The natural exponent of {\itshape r}, {\itshape e\textsuperscript{r}}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1LowerReal_ae1d2452051f5133b853216e999904810}\label{classAriadne_1_1LowerReal_ae1d2452051f5133b853216e999904810} 
+\mbox{\hyperlink{classAriadne_1_1LowerReal}{Lower\+Real}} {\bfseries log} (\mbox{\hyperlink{classAriadne_1_1PositiveLowerReal}{Positive\+Lower\+Real}} const \&r)
+\begin{DoxyCompactList}\small\item\em The natural logarithm of {\itshape r}. Requires {\itshape r} ≥ 0. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1LowerReal_a039fcc5e96e491e8dc36217177914399}\label{classAriadne_1_1LowerReal_a039fcc5e96e491e8dc36217177914399} 
+\mbox{\hyperlink{classAriadne_1_1LowerReal}{Lower\+Real}} {\bfseries atan} (\mbox{\hyperlink{classAriadne_1_1LowerReal}{Lower\+Real}} const \&r)
+\begin{DoxyCompactList}\small\item\em The arc-\/tangent of {\itshape r}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1LowerReal_ad3b05243fff8e52f98d78363ba598d66}\label{classAriadne_1_1LowerReal_ad3b05243fff8e52f98d78363ba598d66} 
+\mbox{\hyperlink{classAriadne_1_1PositiveLowerReal}{Positive\+Lower\+Real}} {\bfseries atan} (\mbox{\hyperlink{classAriadne_1_1PositiveLowerReal}{Positive\+Lower\+Real}} const \&r)
+\begin{DoxyCompactList}\small\item\em Arc-\/tangent preserves positivity. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1LowerReal_a1a34de274046df063c76115d9d1b2f1f}\label{classAriadne_1_1LowerReal_a1a34de274046df063c76115d9d1b2f1f} 
+\mbox{\hyperlink{classAriadne_1_1NaiveReal}{Naive\+Real}} {\bfseries sin} (\mbox{\hyperlink{classAriadne_1_1LowerReal}{Lower\+Real}} const \&r)
+\begin{DoxyCompactList}\small\item\em No sine operation, since non-\/monotone! \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1LowerReal_a17e7f773a718533a3e6b2c887bee1a26}\label{classAriadne_1_1LowerReal_a17e7f773a718533a3e6b2c887bee1a26} 
+\mbox{\hyperlink{classAriadne_1_1NaiveReal}{Naive\+Real}} {\bfseries cos} (\mbox{\hyperlink{classAriadne_1_1LowerReal}{Lower\+Real}} const \&r)
+\begin{DoxyCompactList}\small\item\em No cosine operation, since non-\/monotone! \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1LowerReal_ad5a952e637a61f6ee13fcd3b3425d28b}\label{classAriadne_1_1LowerReal_ad5a952e637a61f6ee13fcd3b3425d28b} 
+\mbox{\hyperlink{classAriadne_1_1NaiveReal}{Naive\+Real}} {\bfseries tan} (\mbox{\hyperlink{classAriadne_1_1LowerReal}{Lower\+Real}} const \&r)
+\begin{DoxyCompactList}\small\item\em No tangent operation, since non-\/monotone! \end{DoxyCompactList}\end{DoxyCompactItemize}
+\end{Indent}
+\begin{Indent}\textbf{ Limit operations.}\par
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1LowerReal_a19fcbc5d79c359f93d9eb1f7f090a323}\label{classAriadne_1_1LowerReal_a19fcbc5d79c359f93d9eb1f7f090a323} 
+\mbox{\hyperlink{classAriadne_1_1LowerReal}{Lower\+Real}} {\bfseries limit} (\mbox{\hyperlink{classAriadne_1_1IncreasingSequence}{Increasing\+Sequence}}$<$ \mbox{\hyperlink{classAriadne_1_1Dyadic}{Dyadic}} $>$ const \&qlbs)
+\begin{DoxyCompactList}\small\item\em Create a real number from an increasing sequence of dyadic lower bounds. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\end{Indent}
+\begin{Indent}\textbf{ Input/output operations}\par
+\end{Indent}
+\begin{Indent}\textbf{ Mixed operations}\par
+\end{Indent}
+
+
+The documentation for this class was generated from the following files\+:\begin{DoxyCompactItemize}
+\item 
+source/numeric/\mbox{\hyperlink{lower__real_8hpp}{lower\+\_\+real.\+hpp}}\item 
+source/numeric/\mbox{\hyperlink{real_8cpp}{real.\+cpp}}\end{DoxyCompactItemize}

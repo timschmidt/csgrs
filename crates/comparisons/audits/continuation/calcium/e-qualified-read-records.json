@@ -1,0 +1,200 @@
+[
+  {
+    "repo": "flint",
+    "path": "src/arf/abs_bound_lt_2exp_si.c",
+    "ranges": [
+      [
+        1,
+        41
+      ]
+    ],
+    "note": "Checkpoint43 complete source read during e-planner qualification. Remaining ARF top-level implementation: exact finite comparisons/rounding, exponent decomposition, sticky quotient correction, MPFR-backed root rescaling, adapter state or test support. Source credit only; no new independent numerical campaign for these routines, no wrapper state/failure or invalid-input reproduction, no additional transfer selected."
+  },
+  {
+    "repo": "flint",
+    "path": "src/arf/call_mpfr_func.c",
+    "ranges": [
+      [
+        1,
+        82
+      ]
+    ],
+    "note": "Checkpoint43 complete source read during e-planner qualification. Remaining ARF top-level implementation: exact finite comparisons/rounding, exponent decomposition, sticky quotient correction, MPFR-backed root rescaling, adapter state or test support. Source credit only; no new independent numerical campaign for these routines, no wrapper state/failure or invalid-input reproduction, no additional transfer selected."
+  },
+  {
+    "repo": "flint",
+    "path": "src/arf/ceil.c",
+    "ranges": [
+      [
+        1,
+        43
+      ]
+    ],
+    "note": "Checkpoint43 complete source read during e-planner qualification. Remaining ARF top-level implementation: exact finite comparisons/rounding, exponent decomposition, sticky quotient correction, MPFR-backed root rescaling, adapter state or test support. Source credit only; no new independent numerical campaign for these routines, no wrapper state/failure or invalid-input reproduction, no additional transfer selected."
+  },
+  {
+    "repo": "flint",
+    "path": "src/arf/cmp.c",
+    "ranges": [
+      [
+        1,
+        218
+      ]
+    ],
+    "note": "Checkpoint43 complete source read during e-planner qualification. Remaining ARF top-level implementation: exact finite comparisons/rounding, exponent decomposition, sticky quotient correction, MPFR-backed root rescaling, adapter state or test support. Source credit only; no new independent numerical campaign for these routines, no wrapper state/failure or invalid-input reproduction, no additional transfer selected."
+  },
+  {
+    "repo": "flint",
+    "path": "src/arf/debug.c",
+    "ranges": [
+      [
+        1,
+        31
+      ]
+    ],
+    "note": "Checkpoint43 complete source read during e-planner qualification. Remaining ARF top-level implementation: exact finite comparisons/rounding, exponent decomposition, sticky quotient correction, MPFR-backed root rescaling, adapter state or test support. Source credit only; no new independent numerical campaign for these routines, no wrapper state/failure or invalid-input reproduction, no additional transfer selected."
+  },
+  {
+    "repo": "flint",
+    "path": "src/arf/div.c",
+    "ranges": [
+      [
+        1,
+        131
+      ]
+    ],
+    "note": "Checkpoint43 complete source read during e-planner qualification. Remaining ARF top-level implementation: exact finite comparisons/rounding, exponent decomposition, sticky quotient correction, MPFR-backed root rescaling, adapter state or test support. Source credit only; no new independent numerical campaign for these routines, no wrapper state/failure or invalid-input reproduction, no additional transfer selected."
+  },
+  {
+    "repo": "flint",
+    "path": "src/arf/equal.c",
+    "ranges": [
+      [
+        1,
+        66
+      ]
+    ],
+    "note": "Checkpoint43 complete source read during e-planner qualification. Remaining ARF top-level implementation: exact finite comparisons/rounding, exponent decomposition, sticky quotient correction, MPFR-backed root rescaling, adapter state or test support. Source credit only; no new independent numerical campaign for these routines, no wrapper state/failure or invalid-input reproduction, no additional transfer selected."
+  },
+  {
+    "repo": "flint",
+    "path": "src/arf/floor.c",
+    "ranges": [
+      [
+        1,
+        43
+      ]
+    ],
+    "note": "Checkpoint43 complete source read during e-planner qualification. Remaining ARF top-level implementation: exact finite comparisons/rounding, exponent decomposition, sticky quotient correction, MPFR-backed root rescaling, adapter state or test support. Source credit only; no new independent numerical campaign for these routines, no wrapper state/failure or invalid-input reproduction, no additional transfer selected."
+  },
+  {
+    "repo": "flint",
+    "path": "src/arf/frexp.c",
+    "ranges": [
+      [
+        1,
+        22
+      ]
+    ],
+    "note": "Checkpoint43 complete source read during e-planner qualification. Remaining ARF top-level implementation: exact finite comparisons/rounding, exponent decomposition, sticky quotient correction, MPFR-backed root rescaling, adapter state or test support. Source credit only; no new independent numerical campaign for these routines, no wrapper state/failure or invalid-input reproduction, no additional transfer selected."
+  },
+  {
+    "repo": "flint",
+    "path": "src/arf/inlines.c",
+    "ranges": [
+      [
+        1,
+        13
+      ]
+    ],
+    "note": "Checkpoint43 complete source read during e-planner qualification. Remaining ARF top-level implementation: exact finite comparisons/rounding, exponent decomposition, sticky quotient correction, MPFR-backed root rescaling, adapter state or test support. Source credit only; no new independent numerical campaign for these routines, no wrapper state/failure or invalid-input reproduction, no additional transfer selected."
+  },
+  {
+    "repo": "flint",
+    "path": "src/arf/is_int.c",
+    "ranges": [
+      [
+        1,
+        32
+      ]
+    ],
+    "note": "Checkpoint43 complete source read during e-planner qualification. Remaining ARF top-level implementation: exact finite comparisons/rounding, exponent decomposition, sticky quotient correction, MPFR-backed root rescaling, adapter state or test support. Source credit only; no new independent numerical campaign for these routines, no wrapper state/failure or invalid-input reproduction, no additional transfer selected."
+  },
+  {
+    "repo": "flint",
+    "path": "src/arf/is_int_2exp_si.c",
+    "ranges": [
+      [
+        1,
+        29
+      ]
+    ],
+    "note": "Checkpoint43 complete source read during e-planner qualification. Remaining ARF top-level implementation: exact finite comparisons/rounding, exponent decomposition, sticky quotient correction, MPFR-backed root rescaling, adapter state or test support. Source credit only; no new independent numerical campaign for these routines, no wrapper state/failure or invalid-input reproduction, no additional transfer selected."
+  },
+  {
+    "repo": "flint",
+    "path": "src/arf/nint.c",
+    "ranges": [
+      [
+        1,
+        53
+      ]
+    ],
+    "note": "Checkpoint43 complete source read during e-planner qualification. Remaining ARF top-level implementation: exact finite comparisons/rounding, exponent decomposition, sticky quotient correction, MPFR-backed root rescaling, adapter state or test support. Source credit only; no new independent numerical campaign for these routines, no wrapper state/failure or invalid-input reproduction, no additional transfer selected."
+  },
+  {
+    "repo": "flint",
+    "path": "src/arf/randtest.c",
+    "ranges": [
+      [
+        1,
+        57
+      ]
+    ],
+    "note": "Checkpoint43 complete source read during e-planner qualification. Remaining ARF top-level implementation: exact finite comparisons/rounding, exponent decomposition, sticky quotient correction, MPFR-backed root rescaling, adapter state or test support. Source credit only; no new independent numerical campaign for these routines, no wrapper state/failure or invalid-input reproduction, no additional transfer selected."
+  },
+  {
+    "repo": "flint",
+    "path": "src/arf/root.c",
+    "ranges": [
+      [
+        1,
+        92
+      ]
+    ],
+    "note": "Checkpoint43 complete source read during e-planner qualification. Remaining ARF top-level implementation: exact finite comparisons/rounding, exponent decomposition, sticky quotient correction, MPFR-backed root rescaling, adapter state or test support. Source credit only; no new independent numerical campaign for these routines, no wrapper state/failure or invalid-input reproduction, no additional transfer selected."
+  },
+  {
+    "repo": "flint",
+    "path": "src/arf/rsqrt.c",
+    "ranges": [
+      [
+        1,
+        87
+      ]
+    ],
+    "note": "Checkpoint43 complete source read during e-planner qualification. Remaining ARF top-level implementation: exact finite comparisons/rounding, exponent decomposition, sticky quotient correction, MPFR-backed root rescaling, adapter state or test support. Source credit only; no new independent numerical campaign for these routines, no wrapper state/failure or invalid-input reproduction, no additional transfer selected."
+  },
+  {
+    "repo": "flint",
+    "path": "src/arf/sqrt.c",
+    "ranges": [
+      [
+        1,
+        101
+      ]
+    ],
+    "note": "Checkpoint43 complete source read during e-planner qualification. Remaining ARF top-level implementation: exact finite comparisons/rounding, exponent decomposition, sticky quotient correction, MPFR-backed root rescaling, adapter state or test support. Source credit only; no new independent numerical campaign for these routines, no wrapper state/failure or invalid-input reproduction, no additional transfer selected."
+  },
+  {
+    "repo": "flint",
+    "path": "src/arf/urandom.c",
+    "ranges": [
+      [
+        1,
+        35
+      ]
+    ],
+    "note": "Checkpoint43 complete source read during e-planner qualification. Remaining ARF top-level implementation: exact finite comparisons/rounding, exponent decomposition, sticky quotient correction, MPFR-backed root rescaling, adapter state or test support. Source credit only; no new independent numerical campaign for these routines, no wrapper state/failure or invalid-input reproduction, no additional transfer selected."
+  }
+]

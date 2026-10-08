@@ -1,0 +1,240 @@
+\doxysubsection{Point\texorpdfstring{$<$}{<} X \texorpdfstring{$>$}{>} Class Template Reference}
+\hypertarget{classAriadne_1_1Point}{}\label{classAriadne_1_1Point}\index{Point$<$ X $>$@{Point$<$ X $>$}}
+
+
+{\ttfamily \#include $<$point.\+hpp$>$}
+
+
+
+\doxysubsubsection{Description}
+\subsubsection*{template$<$class X$>$\newline
+class Ariadne\+::\+Point$<$ X $>$}
+A point in Euclidean space. Inheritance diagram for Point\texorpdfstring{$<$}{<} X \texorpdfstring{$>$}{>}\+:\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[height=2.000000cm]{classAriadne_1_1Point}
+\end{center}
+\end{figure}
+\doxysubsubsubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1Point_ae08c5f0c5b4c75a3e0f33dada5f2fcba}\label{classAriadne_1_1Point_ae08c5f0c5b4c75a3e0f33dada5f2fcba} 
+{\bfseries Point} ()
+\begin{DoxyCompactList}\small\item\em A point in zero dimensions. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Point_a69ba48a47e154fc033ca2760e91ff763}\label{classAriadne_1_1Point_a69ba48a47e154fc033ca2760e91ff763} 
+{\footnotesize template$<$class... PRS$>$ \newline
+requires Constructible$<$X,\mbox{\hyperlink{namespaceAriadne_aae901a69a841b1a085a0dfe218e38fe9}{Nat}},PRS...$>$}\\{\bfseries Point} (\mbox{\hyperlink{namespaceAriadne_acd8b5f68421eb22a84277ef7c9c0ee2a}{Size\+Type}} n, PRS... prs)
+\begin{DoxyCompactList}\small\item\em The origin in {\itshape n} dimensions. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Point_ac48e413209f2c886b05b398051bf5cc2}\label{classAriadne_1_1Point_ac48e413209f2c886b05b398051bf5cc2} 
+{\footnotesize template$<$class T$>$ \newline
+requires Convertible$<$T,X$>$}\\{\bfseries Point} (\mbox{\hyperlink{namespaceAriadne_acd8b5f68421eb22a84277ef7c9c0ee2a}{Size\+Type}} n, const T \&t)
+\begin{DoxyCompactList}\small\item\em Construct from an initializer list of floating-\/point values. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Point_a2c4afb43c6919633aac6ddf9a8a7e579}\label{classAriadne_1_1Point_a2c4afb43c6919633aac6ddf9a8a7e579} 
+{\bfseries Point} (\mbox{\hyperlink{namespaceAriadne_a8d51a34ecd8621e992f2470124281c93}{Initializer\+List}}$<$ X $>$ lst)
+\begin{DoxyCompactList}\small\item\em Construct from an initializer list of floating-\/point values. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Point_afc01c77ccd9658aadc33c91a87da20c1}\label{classAriadne_1_1Point_afc01c77ccd9658aadc33c91a87da20c1} 
+{\footnotesize template$<$class G$>$ \newline
+requires Invocable\+Returning$<$X,G,\mbox{\hyperlink{namespaceAriadne_acd8b5f68421eb22a84277ef7c9c0ee2a}{Size\+Type}}$>$}\\{\bfseries Point} (\mbox{\hyperlink{namespaceAriadne_acd8b5f68421eb22a84277ef7c9c0ee2a}{Size\+Type}} n, G const \&g)
+\begin{DoxyCompactList}\small\item\em Construct from a size and an element generator. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Point_a2e4b3912ad79aea44a110dfd01468d9c}\label{classAriadne_1_1Point_a2e4b3912ad79aea44a110dfd01468d9c} 
+{\footnotesize template$<$class G, class... PRS$>$ \newline
+requires Invocable\+Returning$<$X,G,\mbox{\hyperlink{namespaceAriadne_acd8b5f68421eb22a84277ef7c9c0ee2a}{Size\+Type}}$>$ and Constructible$<$X,PRS...$>$}\\{\bfseries Point} (\mbox{\hyperlink{namespaceAriadne_acd8b5f68421eb22a84277ef7c9c0ee2a}{Size\+Type}} n, G const \&g, PRS... prs)
+\begin{DoxyCompactList}\small\item\em Construct from a size, an element generator, and characteristics of the default element. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Point_ab8b8453fa7bb2887ff66e751be2dda26}\label{classAriadne_1_1Point_ab8b8453fa7bb2887ff66e751be2dda26} 
+{\footnotesize template$<$class... PRS$>$ \newline
+requires Constructible$<$X,\mbox{\hyperlink{classAriadne_1_1ExactDouble}{Exact\+Double}},PRS...$>$}\\{\bfseries Point} (\mbox{\hyperlink{namespaceAriadne_a8d51a34ecd8621e992f2470124281c93}{Initializer\+List}}$<$ \mbox{\hyperlink{classAriadne_1_1ExactDouble}{Exact\+Double}} $>$ lst, PRS... prs)
+\begin{DoxyCompactList}\small\item\em Construct from an initializer list of floating-\/point values. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Point_a60560abf776b899cd90ab344e695b64b}\label{classAriadne_1_1Point_a60560abf776b899cd90ab344e695b64b} 
+virtual \mbox{\hyperlink{classAriadne_1_1Point}{Point}}$<$ X $>$ \texorpdfstring{$\ast$}{*} {\bfseries clone} () const
+\begin{DoxyCompactList}\small\item\em A dynamically-\/allocated copy. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Point_a3c1a15a3831a647991a6a2c5bbe1e029}\label{classAriadne_1_1Point_a3c1a15a3831a647991a6a2c5bbe1e029} 
+\mbox{\hyperlink{namespaceAriadne_a4b06015a4986ef014fb6643680cb04d2}{Dimension\+Type}} {\bfseries dimension} () const
+\begin{DoxyCompactList}\small\item\em The dimension of the point. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Point_ae147d0b4da1d68f303a3d99c8564217a}\label{classAriadne_1_1Point_ae147d0b4da1d68f303a3d99c8564217a} 
+const \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ Real\+Type $>$ \& {\bfseries vector} () const
+\begin{DoxyCompactList}\small\item\em An explicit cast to a float vector. Useful to prevent ambiguous function overloads. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Point_a573f98e60fb7380dfc250b0df2b04817}\label{classAriadne_1_1Point_a573f98e60fb7380dfc250b0df2b04817} 
+virtual \mbox{\hyperlink{namespaceAriadne_acbb98ddc4385af4599070e65a1a47ec1}{Output\+Stream}} \& {\bfseries \+\_\+write} (\mbox{\hyperlink{namespaceAriadne_acbb98ddc4385af4599070e65a1a47ec1}{Output\+Stream}} \&os) const
+\begin{DoxyCompactList}\small\item\em Write to an output stream. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Point_a86ed7114183bd4347210832b1a41532b}\label{classAriadne_1_1Point_a86ed7114183bd4347210832b1a41532b} 
+virtual \mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} {\bfseries draw} (\mbox{\hyperlink{classAriadne_1_1CanvasInterface}{Canvas\+Interface}} \&c, const Projection2d \&p) const
+\begin{DoxyCompactList}\small\item\em brief Draw the object on the canvas {\itshape c} using line segments and fill/stroke commands. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxyparagraph*{Public Member Functions inherited from \mbox{\hyperlink{classAriadne_1_1Vector}{Vector$<$ X $>$}}}
+\begin{DoxyCompactItemize}
+\item 
+{\footnotesize template$<$class X1, class X2$>$ }\\friend {\bfseries Vector} (const \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ X1 $>$ \&v1, const \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ X $>$ \&v2)
+\begin{DoxyCompactList}\small\item\em Vector subtraction. \end{DoxyCompactList}\item 
+{\footnotesize template$<$class X1, class X2$>$ }\\friend {\bfseries Vector} (const X1 \&s, const \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ X2 $>$ \&v)
+\begin{DoxyCompactList}\small\item\em Scalar multiplication. \end{DoxyCompactList}\item 
+{\footnotesize template$<$class X1, class X2$>$ }\\friend {\bfseries Vector} (const \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ X1 $>$ \&v, const X2 \&s)
+\begin{DoxyCompactList}\small\item\em Scalar multiplication. \end{DoxyCompactList}\item 
+{\footnotesize template$<$class X1, class X2$>$ }\\friend {\bfseries Vector} (const \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ X1 $>$ \&v, const X2 \&s)
+\begin{DoxyCompactList}\small\item\em Scalar division. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\begin{DoxyCompactItemize}
+\item 
+{\bfseries Vector} ()
+\begin{DoxyCompactList}\small\item\em Default constructor constructs a vector with no elements. \end{DoxyCompactList}\item 
+{\bfseries Vector} (\mbox{\hyperlink{namespaceAriadne_acd8b5f68421eb22a84277ef7c9c0ee2a}{Size\+Type}} n, const X \&t)
+\begin{DoxyCompactList}\small\item\em Construct a vector of size {\itshape n}, with elements initialised to {\itshape t}. \end{DoxyCompactList}\item 
+{\footnotesize template$<$class... PRS$>$ \newline
+requires Constructible$<$X,PRS...$>$}\\{\bfseries Vector} (\mbox{\hyperlink{namespaceAriadne_acd8b5f68421eb22a84277ef7c9c0ee2a}{Size\+Type}} n, PRS... prs)
+\begin{DoxyCompactList}\small\item\em Construct a vector from parameters of {\itshape X}. \end{DoxyCompactList}\item 
+{\bfseries Vector} (const \mbox{\hyperlink{classAriadne_1_1Array}{Array}}$<$ X $>$ \&ary)
+\begin{DoxyCompactList}\small\item\em Construct from an array of the same type. \end{DoxyCompactList}\item 
+{\bfseries Vector} (const Uniform\+Array$<$ X $>$ \&ary)
+\begin{DoxyCompactList}\small\item\em Construct from an array of the same type. \end{DoxyCompactList}\item 
+{\bfseries Vector} (const \mbox{\hyperlink{classAriadne_1_1List}{List}}$<$ X $>$ \&lst)
+\begin{DoxyCompactList}\small\item\em Construct from a list of the same type. \end{DoxyCompactList}\item 
+{\bfseries Vector} (\mbox{\hyperlink{namespaceAriadne_a8d51a34ecd8621e992f2470124281c93}{Initializer\+List}}$<$ X $>$ lst)
+\begin{DoxyCompactList}\small\item\em Convert from an initializer list of the same type. \end{DoxyCompactList}\item 
+{\footnotesize template$<$class... PRS$>$ \newline
+requires Constructible$<$X,\mbox{\hyperlink{classAriadne_1_1Real}{Real}},PRS...$>$}\\{\bfseries Vector} (\mbox{\hyperlink{namespaceAriadne_a8d51a34ecd8621e992f2470124281c93}{Initializer\+List}}$<$ \mbox{\hyperlink{classAriadne_1_1Real}{Real}} $>$ const \&lst, PRS... prs)
+\begin{DoxyCompactList}\small\item\em Construct from an initializer list of generic type and a precision parameter. \end{DoxyCompactList}\item 
+{\footnotesize template$<$class Y, class... PRS$>$ \newline
+requires Constructible$<$X,Y,PRS...$>$}\\{\bfseries Vector} (\mbox{\hyperlink{classAriadne_1_1Array}{Array}}$<$ Y $>$ const \&ary, PRS... prs)
+\begin{DoxyCompactList}\small\item\em Construct from an array of generic type and a precision parameter. \end{DoxyCompactList}\item 
+{\footnotesize template$<$class Y, class... PRS$>$ \newline
+requires Constructible$<$X,Y,PRS...$>$}\\{\bfseries Vector} (\mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ Y $>$ const \&v, PRS... prs)
+\begin{DoxyCompactList}\small\item\em Construct from an vector of generic type and a precision parameter. \end{DoxyCompactList}\item 
+{\footnotesize template$<$class G$>$ \newline
+requires Invocable\+Returning$<$X,G,\mbox{\hyperlink{namespaceAriadne_acd8b5f68421eb22a84277ef7c9c0ee2a}{Size\+Type}}$>$}\\{\bfseries Vector} (\mbox{\hyperlink{namespaceAriadne_acd8b5f68421eb22a84277ef7c9c0ee2a}{Size\+Type}} n, G const \&g)
+\begin{DoxyCompactList}\small\item\em Generate from a function (object) {\itshape g} of type {\itshape G} mapping an index to a value and precision parameters. \end{DoxyCompactList}\item 
+{\footnotesize template$<$class G, class... PRS$>$ \newline
+requires Invocable\+Returning$<$X,G,\mbox{\hyperlink{namespaceAriadne_acd8b5f68421eb22a84277ef7c9c0ee2a}{Size\+Type}}$>$ and Constructible$<$X,PRS...$>$}\\{\bfseries Vector} (\mbox{\hyperlink{namespaceAriadne_acd8b5f68421eb22a84277ef7c9c0ee2a}{Size\+Type}} n, G const \&g, PRS... prs)
+\begin{DoxyCompactList}\small\item\em Generate from a function (object) {\itshape g} of type {\itshape G} mapping an index to a value and precision parameters. \end{DoxyCompactList}\item 
+{\footnotesize template$<$class G, class... PRS$>$ \newline
+requires Invocable\+Returning$<$X,G,\mbox{\hyperlink{namespaceAriadne_acd8b5f68421eb22a84277ef7c9c0ee2a}{Size\+Type}}$>$ and Constructible$<$X,PRS...$>$}\\{\bfseries Vector} (\mbox{\hyperlink{namespaceAriadne_acd8b5f68421eb22a84277ef7c9c0ee2a}{Size\+Type}} n, G const \&g, \mbox{\hyperlink{namespaceAriadne_a9ba6bbf66028bc5b9a5bcee1c9f7a2ca}{Tuple}}$<$ PRS... $>$ prs)
+\begin{DoxyCompactList}\small\item\em Construct from an array of generic type and a tuple of precision parameters. \end{DoxyCompactList}\item 
+{\footnotesize template$<$class VE$>$ \newline
+requires Convertible$<$typename VE\+::\+Scalar\+Type,X$>$}\\{\bfseries Vector} (Vector\+Expression$<$ VE $>$ const \&ve)
+\begin{DoxyCompactList}\small\item\em Convert from an Vector\+Expression of a different type. \end{DoxyCompactList}\item 
+{\footnotesize template$<$class VE$>$ \newline
+requires Explicitly\+Convertible$<$typename VE\+::\+Scalar\+Type,X$>$}\\{\bfseries Vector} (Vector\+Expression$<$ VE $>$ const \&ve)
+\begin{DoxyCompactList}\small\item\em Construct from an Vector\+Expression of a different type. \end{DoxyCompactList}\item 
+{\bfseries Vector} (const \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ X $>$ \&v)=default
+\begin{DoxyCompactList}\small\item\em {\bfseries{}}\texorpdfstring{$\ast$}{*}rief Copy constructor. \end{DoxyCompactList}\item 
+{\bfseries Vector} (\mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ X $>$ \&\&v)=default
+\begin{DoxyCompactList}\small\item\em Move constructor. \end{DoxyCompactList}\item 
+\mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ X $>$ \& {\bfseries operator=} (const \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ X $>$ \&v)=default
+\begin{DoxyCompactList}\small\item\em Copy assignment. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} {\bfseries resize} (\mbox{\hyperlink{namespaceAriadne_acd8b5f68421eb22a84277ef7c9c0ee2a}{Size\+Type}} n)
+\begin{DoxyCompactList}\small\item\em Resize to hold {\itshape n} elements. The previous values need not be preserved, and the new values need not be initialised. \end{DoxyCompactList}\item 
+\mbox{\hyperlink{namespaceAriadne_acd8b5f68421eb22a84277ef7c9c0ee2a}{Size\+Type}} {\bfseries size} () const
+\begin{DoxyCompactList}\small\item\em The number of elements of the vector. \end{DoxyCompactList}\item 
+Element\+Reference$<$ X $>$ {\bfseries at} (\mbox{\hyperlink{namespaceAriadne_acd8b5f68421eb22a84277ef7c9c0ee2a}{Size\+Type}} i)
+\begin{DoxyCompactList}\small\item\em A reference to the value stored in the {\itshape i\textsuperscript{th}} element. \end{DoxyCompactList}\item 
+const X \& {\bfseries at} (\mbox{\hyperlink{namespaceAriadne_acd8b5f68421eb22a84277ef7c9c0ee2a}{Size\+Type}} i) const
+\begin{DoxyCompactList}\small\item\em A constant reference to the value stored in the {\itshape i\textsuperscript{th}} element. \end{DoxyCompactList}\item 
+const X \& {\bfseries get} (\mbox{\hyperlink{namespaceAriadne_acd8b5f68421eb22a84277ef7c9c0ee2a}{Size\+Type}} i) const
+\begin{DoxyCompactList}\small\item\em Get the value stored in the {\itshape i\textsuperscript{th}} element. \end{DoxyCompactList}\item 
+\mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} {\bfseries set} (\mbox{\hyperlink{namespaceAriadne_acd8b5f68421eb22a84277ef7c9c0ee2a}{Size\+Type}} i, const X \&x)
+\begin{DoxyCompactList}\small\item\em \doxylink{classAriadne_1_1Set}{Set} the value stored in the {\itshape i\textsuperscript{th}} element to {\itshape x}. \end{DoxyCompactList}\item 
+Element\+Reference$<$ X $>$ \& {\bfseries operator\mbox{[}$\,$\mbox{]}} (\mbox{\hyperlink{namespaceAriadne_acd8b5f68421eb22a84277ef7c9c0ee2a}{Size\+Type}} i)
+\begin{DoxyCompactList}\small\item\em Subscripting operator. Unchecked access. \end{DoxyCompactList}\item 
+const X \& {\bfseries operator\mbox{[}$\,$\mbox{]}} (\mbox{\hyperlink{namespaceAriadne_acd8b5f68421eb22a84277ef7c9c0ee2a}{Size\+Type}} i) const
+\begin{DoxyCompactList}\small\item\em \doxylink{classAriadne_1_1Constant}{Constant} subscripting operator. \end{DoxyCompactList}\item 
+\mbox{\hyperlink{classAriadne_1_1VectorRange}{Vector\+Range}}$<$ \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ X $>$ $>$ {\bfseries operator\mbox{[}$\,$\mbox{]}} (\mbox{\hyperlink{classAriadne_1_1Range}{Range}} rng)
+\begin{DoxyCompactList}\small\item\em \doxylink{classAriadne_1_1Range}{Range} subscripting operator. \end{DoxyCompactList}\item 
+\mbox{\hyperlink{classAriadne_1_1VectorRange}{Vector\+Range}}$<$ const \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ X $>$ $>$ {\bfseries operator\mbox{[}$\,$\mbox{]}} (\mbox{\hyperlink{classAriadne_1_1Range}{Range}} rng) const
+\begin{DoxyCompactList}\small\item\em \doxylink{classAriadne_1_1Constant}{Constant} range subscripting operator. \end{DoxyCompactList}\item 
+Ariadne\+::\+Characteristics\+Type$<$ X $>$ {\bfseries element\+\_\+characteristics} () const
+\begin{DoxyCompactList}\small\item\em The class parameters of the ring containing the \doxylink{classAriadne_1_1Vector}{Vector}\textquotesingle{}s elements. \end{DoxyCompactList}\item 
+const X {\bfseries zero\+\_\+element} () const
+\begin{DoxyCompactList}\small\item\em The zero of the ring containing the \doxylink{classAriadne_1_1Vector}{Vector}\textquotesingle{}s elements. This may be dependent on class parameters. \end{DoxyCompactList}\item 
+Uniform\+Array$<$ X $>$ const \& {\bfseries array} () const
+\begin{DoxyCompactList}\small\item\em The raw data array. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxyparagraph*{Public Member Functions inherited from \mbox{\hyperlink{classAriadne_1_1Drawable2dInterface}{Drawable2d\+Interface}}}
+\begin{DoxyCompactItemize}
+\item 
+virtual {\bfseries \texorpdfstring{$\sim$}{\string~}\+Drawable2d\+Interface} ()=default
+\begin{DoxyCompactList}\small\item\em brief Virtual destructor. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsubsection*{Static Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1Point_a81d94958cdb0e5dc0fc5a91bb9aafa00}\label{classAriadne_1_1Point_a81d94958cdb0e5dc0fc5a91bb9aafa00} 
+{\footnotesize template$<$class... PRS$>$ \newline
+requires Constructible$<$X,\mbox{\hyperlink{namespaceAriadne_a008e7f6ae8f621fbb1d876061812b9b2}{Int}},PRS...$>$}\\static \mbox{\hyperlink{classAriadne_1_1Point}{Point}} {\bfseries origin} (\mbox{\hyperlink{namespaceAriadne_acd8b5f68421eb22a84277ef7c9c0ee2a}{Size\+Type}} n, PRS... prs)
+\begin{DoxyCompactList}\small\item\em The origin in {\itshape n} dimensions. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxyparagraph*{Static Public Member Functions inherited from \mbox{\hyperlink{classAriadne_1_1Vector}{Vector$<$ X $>$}}}
+\begin{DoxyCompactItemize}
+\item 
+{\footnotesize template$<$class... PRS$>$ \newline
+requires Constructible$<$X,\mbox{\hyperlink{namespaceAriadne_aae901a69a841b1a085a0dfe218e38fe9}{Nat}},PRS...$>$}\\static \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ X $>$ {\bfseries zero} (\mbox{\hyperlink{namespaceAriadne_acd8b5f68421eb22a84277ef7c9c0ee2a}{Size\+Type}} n, PRS... prs)
+\begin{DoxyCompactList}\small\item\em The zero vector of size {\itshape n}. \end{DoxyCompactList}\item 
+{\footnotesize template$<$class... PRS$>$ \newline
+requires Constructible$<$X,\mbox{\hyperlink{namespaceAriadne_aae901a69a841b1a085a0dfe218e38fe9}{Nat}},PRS...$>$}\\static \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ X $>$ {\bfseries one} (\mbox{\hyperlink{namespaceAriadne_acd8b5f68421eb22a84277ef7c9c0ee2a}{Size\+Type}} n, PRS... prs)
+\begin{DoxyCompactList}\small\item\em The vector of size {\itshape n} with all entries equal to one. \end{DoxyCompactList}\item 
+{\footnotesize template$<$class... PRS$>$ \newline
+requires Constructible$<$X,\mbox{\hyperlink{namespaceAriadne_aae901a69a841b1a085a0dfe218e38fe9}{Nat}},PRS...$>$}\\static \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ X $>$ {\bfseries unit} (\mbox{\hyperlink{namespaceAriadne_acd8b5f68421eb22a84277ef7c9c0ee2a}{Size\+Type}} n, \mbox{\hyperlink{namespaceAriadne_acd8b5f68421eb22a84277ef7c9c0ee2a}{Size\+Type}} i, PRS... prs)
+\begin{DoxyCompactList}\small\item\em The unit vector $e_i$ with value one in the {\itshape i\textsuperscript{th}} entry, and zero otherwise. \end{DoxyCompactList}\item 
+{\footnotesize template$<$class... PRS$>$ \newline
+requires Constructible$<$X,\mbox{\hyperlink{namespaceAriadne_aae901a69a841b1a085a0dfe218e38fe9}{Nat}},PRS...$>$}\\static \mbox{\hyperlink{classAriadne_1_1Array}{Array}}$<$ \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ X $>$ $>$ {\bfseries basis} (\mbox{\hyperlink{namespaceAriadne_acd8b5f68421eb22a84277ef7c9c0ee2a}{Size\+Type}} n, PRS... prs)
+\begin{DoxyCompactList}\small\item\em The unit vector $e_i$ with value one in the {\itshape i\textsuperscript{th}} entry, and zero otherwise. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsubsection*{Related Types and Functions}
+(Note that these are not member symbols.) \begin{Indent}\textbf{ Type synonyms}\par
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1Point_ac58f2ce4720c1162a1f5dcea5724133c}\label{classAriadne_1_1Point_ac58f2ce4720c1162a1f5dcea5724133c} 
+using {\bfseries Dyadic\+Point} = \mbox{\hyperlink{classAriadne_1_1Point}{Point}}$<$\mbox{\hyperlink{classAriadne_1_1Dyadic}{Dyadic}}$>$
+\item 
+\Hypertarget{classAriadne_1_1Point_a6c000340fe658ec54aca6e3ef02f56ef}\label{classAriadne_1_1Point_a6c000340fe658ec54aca6e3ef02f56ef} 
+using {\bfseries Rational\+Point} = \mbox{\hyperlink{classAriadne_1_1Point}{Point}}$<$\mbox{\hyperlink{classAriadne_1_1Rational}{Rational}}$>$
+\item 
+\Hypertarget{classAriadne_1_1Point_a62e4dc32c1be174185e46cddb1a1e5c1}\label{classAriadne_1_1Point_a62e4dc32c1be174185e46cddb1a1e5c1} 
+using {\bfseries Real\+Point} = \mbox{\hyperlink{classAriadne_1_1Point}{Point}}$<$\mbox{\hyperlink{classAriadne_1_1Real}{Real}}$>$
+\end{DoxyCompactItemize}
+\end{Indent}
+\doxyparagraph*{Related Types and Functions inherited from \mbox{\hyperlink{classAriadne_1_1Vector}{Vector$<$ X $>$}}}
+\begin{DoxyCompactItemize}
+\item 
+using {\bfseries Dyadic\+Vector} = \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$\mbox{\hyperlink{classAriadne_1_1Dyadic}{Dyadic}}$>$
+\item 
+using {\bfseries Rational\+Vector} = \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$\mbox{\hyperlink{classAriadne_1_1Rational}{Rational}}$>$
+\item 
+using {\bfseries Real\+Vector} = \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$\mbox{\hyperlink{classAriadne_1_1Real}{Real}}$>$
+\item 
+using {\bfseries Float\+DPVector} = \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$\mbox{\hyperlink{namespaceAriadne_af915b9f1459c9691328efa71c6f39c6e}{Float\+DP}}$>$
+\item 
+using {\bfseries Raw\+Float\+DPVector} = \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$Raw\+Float\+DP$>$
+\item 
+using {\bfseries Float\+DPApproximation\+Vector} = \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$Float\+DPApproximation$>$
+\item 
+using {\bfseries Float\+DPBounds\+Vector} = \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$Float\+DPBounds$>$
+\item 
+using {\bfseries Float\+DPBall\+Vector} = \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$Float\+DPBall$>$
+\item 
+using {\bfseries Float\+DPVector} = \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$\mbox{\hyperlink{namespaceAriadne_af915b9f1459c9691328efa71c6f39c6e}{Float\+DP}}$>$
+\item 
+using {\bfseries Float\+MPVector} = \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$\mbox{\hyperlink{namespaceAriadne_a07966b67e613cc8779412beecb60651d}{Float\+MP}}$>$
+\item 
+using {\bfseries Raw\+Float\+MPVector} = \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$Raw\+Float\+MP$>$
+\item 
+using {\bfseries Float\+MPApproximation\+Vector} = \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$Float\+MPApproximation$>$
+\item 
+using {\bfseries Float\+MPBounds\+Vector} = \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$\mbox{\hyperlink{classAriadne_1_1Bounds}{Float\+MPBounds}}$>$
+\item 
+using {\bfseries Float\+MPBall\+Vector} = \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$Float\+MPBall$>$
+\item 
+using {\bfseries Float\+MPVector} = \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$\mbox{\hyperlink{namespaceAriadne_a07966b67e613cc8779412beecb60651d}{Float\+MP}}$>$
+\item 
+using {\bfseries Float\+MPDPBall\+Vector} = \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$Float\+MPDPBall$>$
+\item 
+{\footnotesize template$<$class F$>$ }\\using {\bfseries Approximation\+Vector} = \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$\mbox{\hyperlink{classAriadne_1_1Approximation}{Approximation}}$<$F$>$$>$
+\end{DoxyCompactItemize}
+\doxysubsubsubsection*{Additional Inherited Members}
+\doxyparagraph*{Public Types inherited from \mbox{\hyperlink{classAriadne_1_1Vector}{Vector$<$ X $>$}}}
+\begin{DoxyCompactItemize}
+\item 
+typedef \mbox{\hyperlink{namespaceAriadne_acd8b5f68421eb22a84277ef7c9c0ee2a}{Size\+Type}} {\bfseries Index\+Type}
+\begin{DoxyCompactList}\small\item\em The type used to index the elements. \end{DoxyCompactList}\item 
+typedef X {\bfseries Scalar\+Type}
+\begin{DoxyCompactList}\small\item\em The type of the scalar element. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+The documentation for this class was generated from the following files\+:\begin{DoxyCompactItemize}
+\item 
+source/dynamics/\mbox{\hyperlink{orbit_8hpp}{orbit.\+hpp}}\item 
+source/geometry/\mbox{\hyperlink{point_8hpp}{point.\+hpp}}\item 
+source/geometry/point.\+tpl.\+hpp\end{DoxyCompactItemize}

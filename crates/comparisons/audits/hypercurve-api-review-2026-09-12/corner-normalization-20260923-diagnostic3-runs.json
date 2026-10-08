@@ -1,0 +1,50 @@
+[
+  {
+    "name": "bezier_region::tests::general_nonrepresented_chord_and_retained_rational_arc_complete_the_fillet_kernel",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/corner-normalization-20260923-diagnostic3-libtest",
+      "--exact",
+      "bezier_region::tests::general_nonrepresented_chord_and_retained_rational_arc_complete_the_fillet_kernel",
+      "--test-threads=1",
+      "--nocapture",
+      "--color",
+      "never"
+    ],
+    "returncode": 101,
+    "elapsed_seconds": 2.5674540830077603,
+    "log": "corner-normalization-20260923-diagnostic3-general_nonrepresented_chord_and_retained_rational_arc_complete_the_fillet_kernel.log",
+    "binary_sha256": "b6427155edc37417d7ea0423c92a508012ef2de11fc21aa3923feddb7d04a947"
+  },
+  {
+    "name": "bezier_region::tests::independent_oblique_chord_pair_fillet_crosses_a_rational_line_exactly",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/corner-normalization-20260923-diagnostic3-libtest",
+      "--exact",
+      "bezier_region::tests::independent_oblique_chord_pair_fillet_crosses_a_rational_line_exactly",
+      "--test-threads=1",
+      "--nocapture",
+      "--color",
+      "never"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 1.6160304440418258,
+    "log": "corner-normalization-20260923-diagnostic3-independent_oblique_chord_pair_fillet_crosses_a_rational_line_exactly.log",
+    "binary_sha256": "b6427155edc37417d7ea0423c92a508012ef2de11fc21aa3923feddb7d04a947"
+  },
+  {
+    "name": "bezier_region::tests::independent_oblique_chord_pair_fillet_crosses_algebraic_chords_exactly",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/corner-normalization-20260923-diagnostic3-libtest",
+      "--exact",
+      "bezier_region::tests::independent_oblique_chord_pair_fillet_crosses_algebraic_chords_exactly",
+      "--test-threads=1",
+      "--nocapture",
+      "--color",
+      "never"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 3.5185583860147744,
+    "log": "corner-normalization-20260923-diagnostic3-independent_oblique_chord_pair_fillet_crosses_algebraic_chords_exactly.log",
+    "binary_sha256": "b6427155edc37417d7ea0423c92a508012ef2de11fc21aa3923feddb7d04a947"
+  }
+]

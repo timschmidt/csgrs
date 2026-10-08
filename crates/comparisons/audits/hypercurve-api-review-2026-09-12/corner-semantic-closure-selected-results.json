@@ -1,0 +1,26 @@
+[
+  {
+    "test": "retained_circular_regions_chamfer_over_the_full_support",
+    "returncode": 0,
+    "seconds": 0.4642995129979681,
+    "log": "corner-semantic-closure-selected-retained_circular_regions_chamfer_over_the_full_support.log"
+  },
+  {
+    "test": "unified_region_corners_preserve_circular_geometry_across_representations",
+    "returncode": 0,
+    "seconds": 0.06376386900228681,
+    "log": "corner-semantic-closure-selected-unified_region_corners_preserve_circular_geometry_across_representations.log"
+  },
+  {
+    "test": "unified_region_native_chamfer_uses_arc_sweep_evidence",
+    "returncode": 0,
+    "seconds": 0.03163399199547712,
+    "log": "corner-semantic-closure-selected-unified_region_native_chamfer_uses_arc_sweep_evidence.log"
+  },
+  {
+    "test": "unified_region_native_fillet_retains_certified_arc_contacts",
+    "returncode": 0,
+    "seconds": 0.03162973200232955,
+    "log": "corner-semantic-closure-selected-unified_region_native_fillet_retains_certified_arc_contacts.log"
+  }
+]

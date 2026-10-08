@@ -1,0 +1,12 @@
+path	read_ranges	status
+Combinatorics.hs	1-11	read
+Data/Interval.hs	1-66	read
+Data/Multinomial.hs	1-186	read
+Data/Real/Base.hs	1-66	read
+Data/Real/CReal.hs	1-429	read
+Data/Real/Complete.hs	1-47	read
+Data/Real/Gauge.hs	1-3	read
+Data/Real/ICReal.hs	1-207	read
+FewDigits.cabal	1-11	read
+License.txt	1-9	read
+Setup.hs	1-2	read

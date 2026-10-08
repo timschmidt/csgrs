@@ -1,0 +1,126 @@
+{
+  "source_manifest": "retained-fiber-refinement-20260926-v248-sources.json",
+  "source_directory": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/source-archives/retained-fiber-refinement-20260926-v248",
+  "cases": [],
+  "builds": [
+    {
+      "crate": "hypersolve",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "test",
+        "--lib",
+        "--release",
+        "--all-features",
+        "--no-run",
+        "--message-format=json",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "log": "retained-fiber-refinement-20260926-v248-hypersolve-build.log",
+      "elapsed_seconds": 33.8581852579955,
+      "binary": {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-fiber-refinement-20260926-v248-hypersolve",
+        "sha256": "98ceba7f3abb933f098b0d4f8a44778f7e312cc3750e1395a1a9576831692a71"
+      }
+    }
+  ],
+  "all_processes_reaped": true,
+  "checks": [
+    {
+      "label": "hypersolve-all-tests",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-fiber-refinement-20260926-v248-hypersolve",
+        "--test-threads=2"
+      ],
+      "returncode": 0,
+      "log": "retained-fiber-refinement-20260926-v248-hypersolve-all-tests.log",
+      "elapsed_seconds": 2.2665670179994777,
+      "passed": 522
+    },
+    {
+      "label": "scalar-build",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "build",
+        "--release",
+        "--locked",
+        "--offline",
+        "--message-format=json"
+      ],
+      "returncode": 0,
+      "log": "retained-fiber-refinement-20260926-v248-scalar-build.log",
+      "elapsed_seconds": 37.412824907922186
+    },
+    {
+      "label": "scalar-replay",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-fiber-refinement-20260926-v248-scalar",
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/fillet-reoffset-compact-20260926-v243-fiber.jsonl"
+      ],
+      "returncode": 0,
+      "log": "retained-fiber-refinement-20260926-v248-scalar-replay.log",
+      "elapsed_seconds": 10.476903064060025
+    },
+    {
+      "label": "format",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustfmt",
+        "--edition",
+        "2024",
+        "--config",
+        "skip_children=true",
+        "--check",
+        "src/algebraic_fiber.rs"
+      ],
+      "returncode": 0,
+      "log": "retained-fiber-refinement-20260926-v248-format.log",
+      "elapsed_seconds": 0.06386744196061045
+    },
+    {
+      "label": "clippy-all-features",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "clippy",
+        "--all-targets",
+        "--all-features",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "returncode": 0,
+      "log": "retained-fiber-refinement-20260926-v248-clippy-all-features.log",
+      "elapsed_seconds": 9.37655210797675
+    },
+    {
+      "label": "clippy-no-default",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "clippy",
+        "--all-targets",
+        "--no-default-features",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "returncode": 0,
+      "log": "retained-fiber-refinement-20260926-v248-clippy-no-default.log",
+      "elapsed_seconds": 8.375255385995843
+    }
+  ],
+  "qualification_scope": "Hypersolve full release library suite, scalar fixture, formatting and all-target Clippy; full Hypercurve region closure remains unresolved",
+  "expected_test_count": 522,
+  "scalar_binary": {
+    "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-fiber-refinement-20260926-v248-scalar",
+    "sha256": "24c4e3bdd67b71702830984eaca20acfb2bf693219f735e23d0031c28df19782"
+  },
+  "fixture": {
+    "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/fillet-reoffset-compact-20260926-v243-fiber.jsonl",
+    "sha256": "f5b4f684b499a3c3b525fbf2029e413a5a0d27a6b8fa12e95c2becac081e50bc"
+  },
+  "qualification_complete": true
+}

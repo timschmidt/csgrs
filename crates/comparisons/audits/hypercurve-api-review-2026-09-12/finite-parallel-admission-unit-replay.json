@@ -1,0 +1,25 @@
+{
+  "returncode": 0,
+  "elapsed_seconds": 0.007539783982792869,
+  "normal_library_sha256": "9ae1c520060940471e48c12e6100d86ee6ea9225a56e2ddd2281e5dd246c03f9",
+  "log": "finite-parallel-admission-unit-replay.log",
+  "source": "native-rational-publication-unit-replay.rs",
+  "command": [
+    "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustc",
+    "--edition=2024",
+    "-O",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/native-rational-publication-unit-replay.rs",
+    "--extern",
+    "hypercurve=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypercurve-cdcdcc6da422cc2c.rlib",
+    "-L",
+    "dependency=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps",
+    "-o",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-parallel-admission-unit-replay"
+  ],
+  "source_sha256": "2dd9c8f13fdcf587936d6e5885c9015cb75c093dfb1e27b0a6519d7405adba21",
+  "executable_sha256": "4d923ec5c2b4ea488a57187f92d950e568ee8db57a2512e26c26e94b9dfc9af0",
+  "counts": {
+    "complete_queries": 4,
+    "retraced_selected_domain_queries": 2
+  }
+}

@@ -1,0 +1,18 @@
+{
+  "tag": "point-image-guard-memcheck",
+  "started": "2026-09-10T19:49:09.935Z",
+  "finished": "2026-09-10T19:49:26.127Z",
+  "elapsedSeconds": 16.190148015,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "valgrind",
+  "args": [
+    "--leak-check=full",
+    "--show-leak-kinds=all",
+    "--errors-for-leak-kinds=definite,indirect,possible",
+    "--error-exitcode=99",
+    "/tmp/calcium-point-image.4f6mja/guard-cpu",
+    "check"
+  ],
+  "code": 0,
+  "signal": null
+}

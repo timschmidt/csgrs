@@ -1,0 +1,508 @@
+[
+  {
+    "reason": "compiler-message",
+    "package_id": "path+file:///home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/build-workspace-20260925/hypercurve#0.3.1",
+    "manifest_path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/build-workspace-20260925/hypercurve/Cargo.toml",
+    "target": {
+      "kind": [
+        "lib"
+      ],
+      "crate_types": [
+        "lib"
+      ],
+      "name": "hypercurve",
+      "src_path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/build-workspace-20260925/hypercurve/src/lib.rs",
+      "edition": "2024",
+      "doc": true,
+      "doctest": true,
+      "test": true
+    },
+    "message": {
+      "rendered": "warning: method `classify_points` is never used\n  --> src/region.rs:74:12\n   |\n32 | impl LineArcRegion2 {\n   | ------------------- method in this implementation\n...\n74 |     pub fn classify_points(\n   |            ^^^^^^^^^^^^^^^\n   |\n   = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default\n\n",
+      "$message_type": "diagnostic",
+      "children": [
+        {
+          "children": [],
+          "code": null,
+          "level": "note",
+          "message": "`#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default",
+          "rendered": null,
+          "spans": []
+        }
+      ],
+      "level": "warning",
+      "message": "method `classify_points` is never used",
+      "spans": [
+        {
+          "byte_end": 1170,
+          "byte_start": 1151,
+          "column_end": 20,
+          "column_start": 1,
+          "expansion": null,
+          "file_name": "src/region.rs",
+          "is_primary": false,
+          "label": "method in this implementation",
+          "line_end": 32,
+          "line_start": 32,
+          "suggested_replacement": null,
+          "suggestion_applicability": null,
+          "text": [
+            {
+              "highlight_end": 20,
+              "highlight_start": 1,
+              "text": "impl LineArcRegion2 {"
+            }
+          ]
+        },
+        {
+          "byte_end": 2390,
+          "byte_start": 2375,
+          "column_end": 27,
+          "column_start": 12,
+          "expansion": null,
+          "file_name": "src/region.rs",
+          "is_primary": true,
+          "label": null,
+          "line_end": 74,
+          "line_start": 74,
+          "suggested_replacement": null,
+          "suggestion_applicability": null,
+          "text": [
+            {
+              "highlight_end": 27,
+              "highlight_start": 12,
+              "text": "    pub fn classify_points("
+            }
+          ]
+        }
+      ],
+      "code": {
+        "code": "dead_code",
+        "explanation": null
+      }
+    }
+  },
+  {
+    "reason": "compiler-message",
+    "package_id": "path+file:///home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/build-workspace-20260925/hypercurve#0.3.1",
+    "manifest_path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/build-workspace-20260925/hypercurve/Cargo.toml",
+    "target": {
+      "kind": [
+        "lib"
+      ],
+      "crate_types": [
+        "lib"
+      ],
+      "name": "hypercurve",
+      "src_path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/build-workspace-20260925/hypercurve/src/lib.rs",
+      "edition": "2024",
+      "doc": true,
+      "doctest": true,
+      "test": true
+    },
+    "message": {
+      "rendered": "warning: method `classify_points` is never used\n   --> src/region.rs:153:12\n    |\n100 | impl<'a> RegionView2<'a> {\n    | ------------------------ method in this implementation\n...\n153 |     pub fn classify_points(\n    |            ^^^^^^^^^^^^^^^\n\n",
+      "$message_type": "diagnostic",
+      "children": [],
+      "level": "warning",
+      "message": "method `classify_points` is never used",
+      "spans": [
+        {
+          "byte_end": 3212,
+          "byte_start": 3188,
+          "column_end": 25,
+          "column_start": 1,
+          "expansion": null,
+          "file_name": "src/region.rs",
+          "is_primary": false,
+          "label": "method in this implementation",
+          "line_end": 100,
+          "line_start": 100,
+          "suggested_replacement": null,
+          "suggestion_applicability": null,
+          "text": [
+            {
+              "highlight_end": 25,
+              "highlight_start": 1,
+              "text": "impl<'a> RegionView2<'a> {"
+            }
+          ]
+        },
+        {
+          "byte_end": 5141,
+          "byte_start": 5126,
+          "column_end": 27,
+          "column_start": 12,
+          "expansion": null,
+          "file_name": "src/region.rs",
+          "is_primary": true,
+          "label": null,
+          "line_end": 153,
+          "line_start": 153,
+          "suggested_replacement": null,
+          "suggestion_applicability": null,
+          "text": [
+            {
+              "highlight_end": 27,
+              "highlight_start": 12,
+              "text": "    pub fn classify_points("
+            }
+          ]
+        }
+      ],
+      "code": {
+        "code": "dead_code",
+        "explanation": null
+      }
+    }
+  },
+  {
+    "reason": "compiler-message",
+    "package_id": "path+file:///home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/build-workspace-20260925/hypercurve#0.3.1",
+    "manifest_path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/build-workspace-20260925/hypercurve/Cargo.toml",
+    "target": {
+      "kind": [
+        "bench"
+      ],
+      "crate_types": [
+        "bin"
+      ],
+      "name": "curve_path",
+      "src_path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/build-workspace-20260925/hypercurve/benches/curve_path.rs",
+      "edition": "2024",
+      "doc": false,
+      "doctest": false,
+      "test": false
+    },
+    "message": {
+      "rendered": "error[E0308]: mismatched types\n   --> benches/curve_path.rs:155:39\n    |\n155 |             .classify_point(black_box(&query), &policy)\n    |                             --------- ^^^^^^ expected `&CurvePoint2`, found `&Point2`\n    |                             |\n    |                             arguments to this function are incorrect\n    |\n    = note: expected reference `&CurvePoint2`\n               found reference `&Point2`\nhelp: the return type of this call is `&Point2` due to the type of the argument passed\n   --> benches/curve_path.rs:155:29\n    |\n155 |             .classify_point(black_box(&query), &policy)\n    |                             ^^^^^^^^^^------^\n    |                                       |\n    |                                       this argument influences the return type of `black_box`\nnote: function defined here\n   --> /home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/core/src/hint.rs:490:14\n    |\n490 | pub const fn black_box<T>(dummy: T) -> T {\n    |              ^^^^^^^^^\n\n",
+      "$message_type": "diagnostic",
+      "children": [
+        {
+          "children": [],
+          "code": null,
+          "level": "note",
+          "message": "expected reference `&CurvePoint2`\n   found reference `&Point2`",
+          "rendered": null,
+          "spans": []
+        },
+        {
+          "children": [],
+          "code": null,
+          "level": "help",
+          "message": "the return type of this call is `&Point2` due to the type of the argument passed",
+          "rendered": null,
+          "spans": [
+            {
+              "byte_end": 5297,
+              "byte_start": 5291,
+              "column_end": 45,
+              "column_start": 39,
+              "expansion": null,
+              "file_name": "benches/curve_path.rs",
+              "is_primary": false,
+              "label": "this argument influences the return type of `black_box`",
+              "line_end": 155,
+              "line_start": 155,
+              "suggested_replacement": null,
+              "suggestion_applicability": null,
+              "text": [
+                {
+                  "highlight_end": 45,
+                  "highlight_start": 39,
+                  "text": "            .classify_point(black_box(&query), &policy)"
+                }
+              ]
+            },
+            {
+              "byte_end": 5298,
+              "byte_start": 5281,
+              "column_end": 46,
+              "column_start": 29,
+              "expansion": null,
+              "file_name": "benches/curve_path.rs",
+              "is_primary": true,
+              "label": null,
+              "line_end": 155,
+              "line_start": 155,
+              "suggested_replacement": null,
+              "suggestion_applicability": null,
+              "text": [
+                {
+                  "highlight_end": 46,
+                  "highlight_start": 29,
+                  "text": "            .classify_point(black_box(&query), &policy)"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "children": [],
+          "code": null,
+          "level": "note",
+          "message": "function defined here",
+          "rendered": null,
+          "spans": [
+            {
+              "byte_end": 19726,
+              "byte_start": 19717,
+              "column_end": 23,
+              "column_start": 14,
+              "expansion": null,
+              "file_name": "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/core/src/hint.rs",
+              "is_primary": true,
+              "label": null,
+              "line_end": 490,
+              "line_start": 490,
+              "suggested_replacement": null,
+              "suggestion_applicability": null,
+              "text": [
+                {
+                  "highlight_end": 23,
+                  "highlight_start": 14,
+                  "text": "pub const fn black_box<T>(dummy: T) -> T {"
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "level": "error",
+      "message": "mismatched types",
+      "spans": [
+        {
+          "byte_end": 5297,
+          "byte_start": 5291,
+          "column_end": 45,
+          "column_start": 39,
+          "expansion": null,
+          "file_name": "benches/curve_path.rs",
+          "is_primary": true,
+          "label": "expected `&CurvePoint2`, found `&Point2`",
+          "line_end": 155,
+          "line_start": 155,
+          "suggested_replacement": null,
+          "suggestion_applicability": null,
+          "text": [
+            {
+              "highlight_end": 45,
+              "highlight_start": 39,
+              "text": "            .classify_point(black_box(&query), &policy)"
+            }
+          ]
+        },
+        {
+          "byte_end": 5290,
+          "byte_start": 5281,
+          "column_end": 38,
+          "column_start": 29,
+          "expansion": null,
+          "file_name": "benches/curve_path.rs",
+          "is_primary": false,
+          "label": "arguments to this function are incorrect",
+          "line_end": 155,
+          "line_start": 155,
+          "suggested_replacement": null,
+          "suggestion_applicability": null,
+          "text": [
+            {
+              "highlight_end": 38,
+              "highlight_start": 29,
+              "text": "            .classify_point(black_box(&query), &policy)"
+            }
+          ]
+        }
+      ],
+      "code": {
+        "code": "E0308",
+        "explanation": "Expected type did not match the received type.\n\nErroneous code examples:\n\n```compile_fail,E0308\nfn plus_one(x: i32) -> i32 {\n    x + 1\n}\n\nplus_one(\"Not a number\");\n//       ^^^^^^^^^^^^^^ expected `i32`, found `&str`\n\nif \"Not a bool\" {\n// ^^^^^^^^^^^^ expected `bool`, found `&str`\n}\n\nlet x: f32 = \"Not a float\";\n//     ---   ^^^^^^^^^^^^^ expected `f32`, found `&str`\n//     |\n//     expected due to this\n```\n\nThis error occurs when an expression was used in a place where the compiler\nexpected an expression of a different type. It can occur in several cases, the\nmost common being when calling a function and passing an argument which has a\ndifferent type than the matching type in the function declaration.\n"
+      }
+    }
+  },
+  {
+    "reason": "compiler-message",
+    "package_id": "path+file:///home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/build-workspace-20260925/hypercurve#0.3.1",
+    "manifest_path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/build-workspace-20260925/hypercurve/Cargo.toml",
+    "target": {
+      "kind": [
+        "bench"
+      ],
+      "crate_types": [
+        "bin"
+      ],
+      "name": "curve_path",
+      "src_path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/build-workspace-20260925/hypercurve/benches/curve_path.rs",
+      "edition": "2024",
+      "doc": false,
+      "doctest": false,
+      "test": false
+    },
+    "message": {
+      "rendered": "For more information about this error, try `rustc --explain E0308`.\n",
+      "$message_type": "diagnostic",
+      "children": [],
+      "level": "failure-note",
+      "message": "For more information about this error, try `rustc --explain E0308`.",
+      "spans": [],
+      "code": null
+    }
+  },
+  {
+    "reason": "compiler-message",
+    "package_id": "path+file:///home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/build-workspace-20260925/hypercurve#0.3.1",
+    "manifest_path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/build-workspace-20260925/hypercurve/Cargo.toml",
+    "target": {
+      "kind": [
+        "lib"
+      ],
+      "crate_types": [
+        "lib"
+      ],
+      "name": "hypercurve",
+      "src_path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/build-workspace-20260925/hypercurve/src/lib.rs",
+      "edition": "2024",
+      "doc": true,
+      "doctest": true,
+      "test": true
+    },
+    "message": {
+      "rendered": "warning: method `classify_points` is never used\n  --> src/region.rs:74:12\n   |\n32 | impl LineArcRegion2 {\n   | ------------------- method in this implementation\n...\n74 |     pub fn classify_points(\n   |            ^^^^^^^^^^^^^^^\n   |\n   = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default\n\n",
+      "$message_type": "diagnostic",
+      "children": [
+        {
+          "children": [],
+          "code": null,
+          "level": "note",
+          "message": "`#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default",
+          "rendered": null,
+          "spans": []
+        }
+      ],
+      "level": "warning",
+      "message": "method `classify_points` is never used",
+      "spans": [
+        {
+          "byte_end": 1170,
+          "byte_start": 1151,
+          "column_end": 20,
+          "column_start": 1,
+          "expansion": null,
+          "file_name": "src/region.rs",
+          "is_primary": false,
+          "label": "method in this implementation",
+          "line_end": 32,
+          "line_start": 32,
+          "suggested_replacement": null,
+          "suggestion_applicability": null,
+          "text": [
+            {
+              "highlight_end": 20,
+              "highlight_start": 1,
+              "text": "impl LineArcRegion2 {"
+            }
+          ]
+        },
+        {
+          "byte_end": 2390,
+          "byte_start": 2375,
+          "column_end": 27,
+          "column_start": 12,
+          "expansion": null,
+          "file_name": "src/region.rs",
+          "is_primary": true,
+          "label": null,
+          "line_end": 74,
+          "line_start": 74,
+          "suggested_replacement": null,
+          "suggestion_applicability": null,
+          "text": [
+            {
+              "highlight_end": 27,
+              "highlight_start": 12,
+              "text": "    pub fn classify_points("
+            }
+          ]
+        }
+      ],
+      "code": {
+        "code": "dead_code",
+        "explanation": null
+      }
+    }
+  },
+  {
+    "reason": "compiler-message",
+    "package_id": "path+file:///home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/build-workspace-20260925/hypercurve#0.3.1",
+    "manifest_path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/build-workspace-20260925/hypercurve/Cargo.toml",
+    "target": {
+      "kind": [
+        "lib"
+      ],
+      "crate_types": [
+        "lib"
+      ],
+      "name": "hypercurve",
+      "src_path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/build-workspace-20260925/hypercurve/src/lib.rs",
+      "edition": "2024",
+      "doc": true,
+      "doctest": true,
+      "test": true
+    },
+    "message": {
+      "rendered": "warning: method `classify_points` is never used\n   --> src/region.rs:153:12\n    |\n100 | impl<'a> RegionView2<'a> {\n    | ------------------------ method in this implementation\n...\n153 |     pub fn classify_points(\n    |            ^^^^^^^^^^^^^^^\n\n",
+      "$message_type": "diagnostic",
+      "children": [],
+      "level": "warning",
+      "message": "method `classify_points` is never used",
+      "spans": [
+        {
+          "byte_end": 3212,
+          "byte_start": 3188,
+          "column_end": 25,
+          "column_start": 1,
+          "expansion": null,
+          "file_name": "src/region.rs",
+          "is_primary": false,
+          "label": "method in this implementation",
+          "line_end": 100,
+          "line_start": 100,
+          "suggested_replacement": null,
+          "suggestion_applicability": null,
+          "text": [
+            {
+              "highlight_end": 25,
+              "highlight_start": 1,
+              "text": "impl<'a> RegionView2<'a> {"
+            }
+          ]
+        },
+        {
+          "byte_end": 5141,
+          "byte_start": 5126,
+          "column_end": 27,
+          "column_start": 12,
+          "expansion": null,
+          "file_name": "src/region.rs",
+          "is_primary": true,
+          "label": null,
+          "line_end": 153,
+          "line_start": 153,
+          "suggested_replacement": null,
+          "suggestion_applicability": null,
+          "text": [
+            {
+              "highlight_end": 27,
+              "highlight_start": 12,
+              "text": "    pub fn classify_points("
+            }
+          ]
+        }
+      ],
+      "code": {
+        "code": "dead_code",
+        "explanation": null
+      }
+    }
+  }
+]

@@ -1,0 +1,366 @@
+[
+  {
+    "args": [
+      "literal",
+      "",
+      "+RTS",
+      "-M256m",
+      "-RTS"
+    ],
+    "timeout": 750,
+    "status": 0,
+    "signal": null,
+    "stdout": "(1,[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0])\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "literal",
+      "+",
+      "+RTS",
+      "-M256m",
+      "-RTS"
+    ],
+    "timeout": 750,
+    "status": 0,
+    "signal": null,
+    "stdout": "(1,[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0])\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "literal",
+      "-",
+      "+RTS",
+      "-M256m",
+      "-RTS"
+    ],
+    "timeout": 750,
+    "status": 0,
+    "signal": null,
+    "stdout": "(1,[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0])\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "literal",
+      ".",
+      "+RTS",
+      "-M256m",
+      "-RTS"
+    ],
+    "timeout": 750,
+    "status": 1,
+    "signal": null,
+    "stdout": "",
+    "stderr": "boundary-probe: Prelude.undefined\nCallStack (from HasCallStack):\n  undefined, called at /home/tim/Documents/GitHub/workspace/.audit-plume.SZHOs8/compat/SBinDec.hs:146:34 in main:SBinDec\n"
+  },
+  {
+    "args": [
+      "literal",
+      "+.",
+      "+RTS",
+      "-M256m",
+      "-RTS"
+    ],
+    "timeout": 750,
+    "status": 1,
+    "signal": null,
+    "stdout": "",
+    "stderr": "boundary-probe: Prelude.undefined\nCallStack (from HasCallStack):\n  undefined, called at /home/tim/Documents/GitHub/workspace/.audit-plume.SZHOs8/compat/SBinDec.hs:146:34 in main:SBinDec\n"
+  },
+  {
+    "args": [
+      "literal",
+      "-.",
+      "+RTS",
+      "-M256m",
+      "-RTS"
+    ],
+    "timeout": 750,
+    "status": 1,
+    "signal": null,
+    "stdout": "",
+    "stderr": "boundary-probe: Prelude.undefined\nCallStack (from HasCallStack):\n  undefined, called at /home/tim/Documents/GitHub/workspace/.audit-plume.SZHOs8/compat/SBinDec.hs:146:34 in main:SBinDec\n"
+  },
+  {
+    "args": [
+      "literal",
+      "0.",
+      "+RTS",
+      "-M256m",
+      "-RTS"
+    ],
+    "timeout": 750,
+    "status": 1,
+    "signal": null,
+    "stdout": "",
+    "stderr": "boundary-probe: Prelude.undefined\nCallStack (from HasCallStack):\n  undefined, called at /home/tim/Documents/GitHub/workspace/.audit-plume.SZHOs8/compat/SBinDec.hs:146:34 in main:SBinDec\n"
+  },
+  {
+    "args": [
+      "literal",
+      "1.",
+      "+RTS",
+      "-M256m",
+      "-RTS"
+    ],
+    "timeout": 750,
+    "status": 1,
+    "signal": null,
+    "stdout": "",
+    "stderr": "boundary-probe: Prelude.undefined\nCallStack (from HasCallStack):\n  undefined, called at /home/tim/Documents/GitHub/workspace/.audit-plume.SZHOs8/compat/SBinDec.hs:146:34 in main:SBinDec\n"
+  },
+  {
+    "args": [
+      "literal",
+      "-1.",
+      "+RTS",
+      "-M256m",
+      "-RTS"
+    ],
+    "timeout": 750,
+    "status": 1,
+    "signal": null,
+    "stdout": "",
+    "stderr": "boundary-probe: Prelude.undefined\nCallStack (from HasCallStack):\n  undefined, called at /home/tim/Documents/GitHub/workspace/.audit-plume.SZHOs8/compat/SBinDec.hs:146:34 in main:SBinDec\n"
+  },
+  {
+    "args": [
+      "literal",
+      ".0",
+      "+RTS",
+      "-M256m",
+      "-RTS"
+    ],
+    "timeout": 750,
+    "status": 0,
+    "signal": null,
+    "stdout": "(1,[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0])\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "literal",
+      "+.5",
+      "+RTS",
+      "-M256m",
+      "-RTS"
+    ],
+    "timeout": 750,
+    "status": 0,
+    "signal": null,
+    "stdout": "(1,[0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0])\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "literal",
+      "-.5",
+      "+RTS",
+      "-M256m",
+      "-RTS"
+    ],
+    "timeout": 750,
+    "status": 0,
+    "signal": null,
+    "stdout": "(1,[0,-1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0])\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "literal",
+      "0",
+      "+RTS",
+      "-M256m",
+      "-RTS"
+    ],
+    "timeout": 750,
+    "status": 0,
+    "signal": null,
+    "stdout": "(1,[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0])\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "literal",
+      "-0",
+      "+RTS",
+      "-M256m",
+      "-RTS"
+    ],
+    "timeout": 750,
+    "status": 0,
+    "signal": null,
+    "stdout": "(1,[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0])\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "literal",
+      "+01.250",
+      "+RTS",
+      "-M256m",
+      "-RTS"
+    ],
+    "timeout": 750,
+    "status": 0,
+    "signal": null,
+    "stdout": "(2,[0,1,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0])\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "literal",
+      "00.000",
+      "+RTS",
+      "-M256m",
+      "-RTS"
+    ],
+    "timeout": 750,
+    "status": 0,
+    "signal": null,
+    "stdout": "(1,[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0])\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "literal",
+      "1e2",
+      "+RTS",
+      "-M256m",
+      "-RTS"
+    ],
+    "timeout": 750,
+    "status": 1,
+    "signal": null,
+    "stdout": "",
+    "stderr": "boundary-probe: /home/tim/Documents/GitHub/workspace/.audit-plume.SZHOs8/compat/SBinDec.hs:(96,1)-(105,31): Non-exhaustive patterns in function sbDecDigs\n\n"
+  },
+  {
+    "args": [
+      "literal",
+      "1..2",
+      "+RTS",
+      "-M256m",
+      "-RTS"
+    ],
+    "timeout": 750,
+    "status": 1,
+    "signal": null,
+    "stdout": "",
+    "stderr": "boundary-probe: /home/tim/Documents/GitHub/workspace/.audit-plume.SZHOs8/compat/SBinDec.hs:(96,1)-(105,31): Non-exhaustive patterns in function sbDecDigs\n\n"
+  },
+  {
+    "args": [
+      "literal",
+      "++1",
+      "+RTS",
+      "-M256m",
+      "-RTS"
+    ],
+    "timeout": 750,
+    "status": 1,
+    "signal": null,
+    "stdout": "",
+    "stderr": "boundary-probe: /home/tim/Documents/GitHub/workspace/.audit-plume.SZHOs8/compat/SBinDec.hs:(96,1)-(105,31): Non-exhaustive patterns in function sbDecDigs\n\n"
+  },
+  {
+    "args": [
+      "literal",
+      "--1",
+      "+RTS",
+      "-M256m",
+      "-RTS"
+    ],
+    "timeout": 750,
+    "status": 1,
+    "signal": null,
+    "stdout": "",
+    "stderr": "boundary-probe: /home/tim/Documents/GitHub/workspace/.audit-plume.SZHOs8/compat/SBinDec.hs:(96,1)-(105,31): Non-exhaustive patterns in function sbDecDigs\n\n"
+  },
+  {
+    "args": [
+      "literal",
+      " 1",
+      "+RTS",
+      "-M256m",
+      "-RTS"
+    ],
+    "timeout": 750,
+    "status": 1,
+    "signal": null,
+    "stdout": "",
+    "stderr": "boundary-probe: /home/tim/Documents/GitHub/workspace/.audit-plume.SZHOs8/compat/SBinDec.hs:(96,1)-(105,31): Non-exhaustive patterns in function sbDecDigs\n\n"
+  },
+  {
+    "args": [
+      "literal",
+      "1 ",
+      "+RTS",
+      "-M256m",
+      "-RTS"
+    ],
+    "timeout": 750,
+    "status": 1,
+    "signal": null,
+    "stdout": "",
+    "stderr": "boundary-probe: /home/tim/Documents/GitHub/workspace/.audit-plume.SZHOs8/compat/SBinDec.hs:(96,1)-(105,31): Non-exhaustive patterns in function sbDecDigs\n\n"
+  },
+  {
+    "args": [
+      "literal",
+      "NaN",
+      "+RTS",
+      "-M256m",
+      "-RTS"
+    ],
+    "timeout": 750,
+    "status": 1,
+    "signal": null,
+    "stdout": "",
+    "stderr": "boundary-probe: /home/tim/Documents/GitHub/workspace/.audit-plume.SZHOs8/compat/SBinDec.hs:(96,1)-(105,31): Non-exhaustive patterns in function sbDecDigs\n\n"
+  },
+  {
+    "args": [
+      "literal",
+      "Infinity",
+      "+RTS",
+      "-M256m",
+      "-RTS"
+    ],
+    "timeout": 750,
+    "status": 1,
+    "signal": null,
+    "stdout": "",
+    "stderr": "boundary-probe: /home/tim/Documents/GitHub/workspace/.audit-plume.SZHOs8/compat/SBinDec.hs:(96,1)-(105,31): Non-exhaustive patterns in function sbDecDigs\n\n"
+  },
+  {
+    "args": [
+      "literal",
+      "١",
+      "+RTS",
+      "-M256m",
+      "-RTS"
+    ],
+    "timeout": 750,
+    "status": 1,
+    "signal": null,
+    "stdout": "",
+    "stderr": "boundary-probe: /home/tim/Documents/GitHub/workspace/.audit-plume.SZHOs8/compat/SBinDec.hs:(96,1)-(105,31): Non-exhaustive patterns in function sbDecDigs\n\n"
+  },
+  {
+    "args": [
+      "literal",
+      "0.5",
+      "+RTS",
+      "-M256m",
+      "-RTS"
+    ],
+    "timeout": 750,
+    "status": 0,
+    "signal": null,
+    "stdout": "(1,[0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0])\n",
+    "stderr": ""
+  }
+]

@@ -1,0 +1,13 @@
+{
+  "tag": "point-demand-cost-check",
+  "started": "2026-09-10T22:46:05.591Z",
+  "finished": "2026-09-10T22:46:23.662Z",
+  "elapsedSeconds": 18.068491194,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "node",
+  "args": [
+    "check-point-demand-costs.mjs"
+  ],
+  "code": 0,
+  "signal": null
+}

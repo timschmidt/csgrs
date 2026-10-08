@@ -1,0 +1,22 @@
+{
+  "tag": "hyper-domain-release",
+  "started": "2026-09-09T03:05:27.665Z",
+  "finished": "2026-09-09T03:05:28.808Z",
+  "elapsedSeconds": 1.141149708,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/hyper-domain-probe",
+  "command": "env",
+  "args": [
+    "CARGO_TARGET_DIR=/tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse",
+    "CARGO_INCREMENTAL=0",
+    "CARGO_PROFILE_DEV_DEBUG=0",
+    "CARGO_BUILD_JOBS=2",
+    "cargo",
+    "run",
+    "--offline",
+    "--locked",
+    "--quiet",
+    "--release"
+  ],
+  "code": 0,
+  "signal": null
+}

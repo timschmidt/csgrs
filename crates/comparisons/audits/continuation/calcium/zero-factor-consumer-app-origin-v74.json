@@ -1,0 +1,7 @@
+{
+  "checkpoint": 74,
+  "root": "/tmp/calcium-zero-consumer.LrNEZu",
+  "recorded": "2026-09-11T21:46:39.946Z",
+  "sourceBindingSha256": "940f44180edb35410b967d07f839f7e39afcdc8018631a250d527192642215a0",
+  "baselineAppsSha256": "98700d21ba7dc390c19b28952db4b48dc570cbe0fdd93c067e601d93c2bc1c61"
+}

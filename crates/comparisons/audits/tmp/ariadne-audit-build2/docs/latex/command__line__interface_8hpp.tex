@@ -1,0 +1,35 @@
+\doxysubsection{source/io/command\+\_\+line\+\_\+interface.hpp File Reference}
+\hypertarget{command__line__interface_8hpp}{}\label{command__line__interface_8hpp}\index{source/io/command\_line\_interface.hpp@{source/io/command\_line\_interface.hpp}}
+
+
+\doxysubsubsection{Description}
+Support for interacting with the command line. 
+
+{\ttfamily \#include $<$functional$>$}\newline
+{\ttfamily \#include $<$queue$>$}\newline
+{\ttfamily \#include "{}utility/macros.\+hpp"{}}\newline
+{\ttfamily \#include "{}utility/handle.\+hpp"{}}\newline
+{\ttfamily \#include "{}utility/container.\+hpp"{}}\newline
+{\ttfamily \#include "{}utility/string.\+hpp"{}}\newline
+\doxysubsubsubsection*{Classes}
+\begin{DoxyCompactItemize}
+\item 
+class \mbox{\hyperlink{classAriadne_1_1MissingArgumentValueException}{Missing\+Argument\+Value\+Exception}}
+\begin{DoxyCompactList}\small\item\em Exception for when no value is available, but it should be supplied. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1InvalidArgumentValueException}{Invalid\+Argument\+Value\+Exception}}
+\begin{DoxyCompactList}\small\item\em Exception for when a parser recognises the value argument as invalid. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1ArgumentStream}{Argument\+Stream}}
+\begin{DoxyCompactList}\small\item\em Stream of arguments to be consumed by parsers. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1ArgumentPack}{Argument\+Pack}}
+\begin{DoxyCompactList}\small\item\em A pack for an argument with its {\itshape id} and the {\itshape processor} to process the input. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1ArgumentParserInterface}{Argument\+Parser\+Interface}}
+\begin{DoxyCompactList}\small\item\em Interface for a parser for a given CLI argument. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1ArgumentParser}{Argument\+Parser}}
+\begin{DoxyCompactList}\small\item\em An argument parser. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1CommandLineInterface}{Command\+Line\+Interface}}
+\begin{DoxyCompactList}\small\item\em A static class for acquisition of CLI arguments. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsubsection*{Namespaces}
+\begin{DoxyCompactItemize}
+\item 
+namespace \mbox{\hyperlink{namespaceAriadne}{Ariadne}}
+\begin{DoxyCompactList}\small\item\em Top-\/level Ariadne namespace. \end{DoxyCompactList}\end{DoxyCompactItemize}

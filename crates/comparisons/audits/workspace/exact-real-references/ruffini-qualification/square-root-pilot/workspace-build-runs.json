@@ -1,0 +1,97 @@
+[
+  {
+    "name": "debug",
+    "command": "cargo",
+    "args": [
+      "build",
+      "--offline",
+      "--manifest-path",
+      "/home/tim/Documents/GitHub/workspace/exact-real-references/ruffini-qualification/square-root-pilot/Cargo.toml",
+      "--target-dir",
+      "/home/tim/Documents/GitHub/workspace/.audit-square-root.C42NO5BC/target"
+    ],
+    "capMs": 240000,
+    "started": "2026-09-07T02:33:14.064Z",
+    "finished": "2026-09-07T02:33:19.513Z",
+    "status": 0,
+    "signal": null,
+    "error": null,
+    "file": "workspace-build-debug.log",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderrSha256": "40bca329bcfa24ffbbf4990d765e1c41fd73d21c74b76f8a858b57e91643f055",
+    "sources": [
+      [
+        "main.rs",
+        "d6b3b28c73bdc1c16452a98f55d827e7695d5344db679dcabff09dd8015a6f6f"
+      ],
+      [
+        "diagonal.rs",
+        "fe7e844196357e900969c6a919d5aafca192839f6f42a34814845e8f5fbf5fd8"
+      ],
+      [
+        "baseline.rs",
+        "f09fb430259ecd9ca39a7821e738ea9c881cbe0e6f65cf410d62f6a5f9c5b2f4"
+      ],
+      [
+        "shared.rs",
+        "5ea43f1efafd86c8977314e75045e072fb9c5fe54711a8b34eb474cf663f9971"
+      ],
+      [
+        "Cargo.toml",
+        "62876e919a9fa353b6c6738ff1603147d6446f7191b86a51fe2d2593bbb16c5d"
+      ]
+    ],
+    "runnerSha256": "b9c79579240b8397f54e9797e4a7d4f1302d0272a76260dae408c47859f3dd30",
+    "lockSha256": "fb633e7c76c151af86d2240f378e28e7392830d29677e555af5ea43eddadbee0",
+    "binary": "/home/tim/Documents/GitHub/workspace/.audit-square-root.C42NO5BC/binaries/debug",
+    "binarySha256": "102414c590f54241f1de84187ae72b175f79eefb281817872581273ca6fcf93d"
+  },
+  {
+    "name": "release",
+    "command": "cargo",
+    "args": [
+      "build",
+      "--offline",
+      "--manifest-path",
+      "/home/tim/Documents/GitHub/workspace/exact-real-references/ruffini-qualification/square-root-pilot/Cargo.toml",
+      "--target-dir",
+      "/home/tim/Documents/GitHub/workspace/.audit-square-root.C42NO5BC/target",
+      "--release"
+    ],
+    "capMs": 240000,
+    "started": "2026-09-07T02:33:19.730Z",
+    "finished": "2026-09-07T02:33:30.115Z",
+    "status": 0,
+    "signal": null,
+    "error": null,
+    "file": "workspace-build-release.log",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderrSha256": "1660a3d6ecc4346f976af93ccffc24ae276fbb68a37273a60f2ffca5a6f30a40",
+    "sources": [
+      [
+        "main.rs",
+        "d6b3b28c73bdc1c16452a98f55d827e7695d5344db679dcabff09dd8015a6f6f"
+      ],
+      [
+        "diagonal.rs",
+        "fe7e844196357e900969c6a919d5aafca192839f6f42a34814845e8f5fbf5fd8"
+      ],
+      [
+        "baseline.rs",
+        "f09fb430259ecd9ca39a7821e738ea9c881cbe0e6f65cf410d62f6a5f9c5b2f4"
+      ],
+      [
+        "shared.rs",
+        "5ea43f1efafd86c8977314e75045e072fb9c5fe54711a8b34eb474cf663f9971"
+      ],
+      [
+        "Cargo.toml",
+        "62876e919a9fa353b6c6738ff1603147d6446f7191b86a51fe2d2593bbb16c5d"
+      ]
+    ],
+    "runnerSha256": "b9c79579240b8397f54e9797e4a7d4f1302d0272a76260dae408c47859f3dd30",
+    "lockSha256": "fb633e7c76c151af86d2240f378e28e7392830d29677e555af5ea43eddadbee0",
+    "binary": "/home/tim/Documents/GitHub/workspace/.audit-square-root.C42NO5BC/binaries/release",
+    "binarySha256": "7cec1bfb9582228648742fc77c3b4f00d821146e20990fe9134ebcd15e944c70"
+  }
+]

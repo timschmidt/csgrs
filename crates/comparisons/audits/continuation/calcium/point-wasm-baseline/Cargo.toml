@@ -1,0 +1,15 @@
+[package]
+name = "calcium-point-wasm-baseline"
+version = "0.0.0"
+edition = "2024"
+[workspace]
+[dependencies]
+hyperreal = { path = "../e-plan-qualified-candidate/hyperreal", features = ["serde"] }
+hyperlimit = { path = "../e-plan-qualified-candidate/hyperlimit" }
+hypersolve = { path = "../e-plan-qualified-candidate/hypersolve" }
+serde_json = "1.0"
+
+[lib]
+name = "point_wasm_baseline"
+path = "../point-wasm-platform.rs"
+crate-type = ["cdylib"]

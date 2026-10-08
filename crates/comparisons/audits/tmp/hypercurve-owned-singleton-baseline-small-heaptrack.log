@@ -1,0 +1,18 @@
+heaptrack output will be written to "/tmp/hypercurve-owned-singleton-baseline-small.heap.zst"
+starting application, this might take some time...
+NOTE: heaptrack detected DEBUGINFOD_URLS but will disable it to prevent 
+unintended network delays during recording
+If you really want to use DEBUGINFOD, export HEAPTRACK_ENABLE_DEBUGINFOD=1
+
+running 1 test
+test bezier_offset::conversion_tests::specialized_common_fiber_counts_even_multiplicity_in_a_coupled_system ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 884 filtered out; finished in 0.05s
+
+heaptrack stats:
+	allocations:          	11671
+	leaked allocations:   	1233
+	temporary allocations:	346
+Heaptrack finished! Now run the following to investigate the data:
+
+  heaptrack --analyze "/tmp/hypercurve-owned-singleton-baseline-small.heap.zst"

@@ -1,0 +1,13 @@
+{
+  "commit": "1f29f69df38496b7941d3b1a897dcf609f78418d",
+  "parent": "1bd0348bb7b848e85f9085932a30033675f59e2f",
+  "paths": {
+    "src/bezier_offset.rs": "2d66689367346c5ab798db3fd3f7ddd55516a944b214cffa8abaed60f0e7c79c",
+    "src/curve.rs": "ae732e93c6371be6a264446b0be0292367b45056d0eb4716a94b780085bfe6d2",
+    "src/curve_corner_chain.rs": "973c87d8fa1030bfa7d7c3d48830bcbdbb1e9e054a54a9840d41619eccdbc585",
+    "src/curve_fillet.rs": "a260b64835ec68ea00e67f32dd55e465ed13c024faab2d1cffc64cad9842de23"
+  },
+  "qualification": "coincident-circular-constraints-20260927-v390-terminal.json",
+  "verified_source_files": 2046,
+  "clean_repositories": 30
+}

@@ -1,0 +1,25 @@
+{
+  "tag": "nfloat-hyper-dyadic-release",
+  "started": "2026-09-09T16:17:41.771Z",
+  "finished": "2026-09-09T16:18:01.562Z",
+  "elapsedSeconds": 19.789172266999998,
+  "cwd": "/home/tim/Documents/GitHub/workspace/hyperreal",
+  "command": "env",
+  "args": [
+    "CARGO_TARGET_DIR=/tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse",
+    "CARGO_INCREMENTAL=0",
+    "CARGO_PROFILE_DEV_DEBUG=0",
+    "CARGO_BUILD_JOBS=2",
+    "cargo",
+    "test",
+    "--offline",
+    "--locked",
+    "--release",
+    "--lib",
+    "dyadic_dot_",
+    "--",
+    "--test-threads=1"
+  ],
+  "code": 0,
+  "signal": null
+}

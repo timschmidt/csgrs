@@ -1,0 +1,2 @@
+{"case":23,"checksum":1002,"elapsed_ns":3289984,"end_live":0,"expected":{"message":null,"operation":"Divide","root":{"constraint":3,"count":1,"exact":null,"intervalIndex":0,"lower":"67/50","polynomial":["2/1","0/1","-1/1"],"symbol":3,"upper":"39/25","validation":"Valid","validationMessage":null},"status":"Transformed"},"final_matches":true,"iterations":334,"lifecycle":"retained","live_delta":0,"mode":"cpu","peak_delta":0,"policy":0,"requested_bytes":0,"requests":0,"start_live":0,"wall_after":"1","wall_before":"1789155063807699438"}
+{"terminal":true,"groups":1,"mode":"cpu"}

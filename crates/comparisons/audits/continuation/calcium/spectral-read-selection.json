@@ -1,0 +1,688 @@
+[
+  {
+    "repo": "calcium",
+    "path": "ca_mat/jordan_blocks.c",
+    "newRanges": [
+      [
+        1,
+        153
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "src/ca_mat/jordan_blocks.c",
+    "newRanges": [
+      [
+        1,
+        32
+      ]
+    ]
+  },
+  {
+    "repo": "calcium",
+    "path": "ca_mat/jordan_form.c",
+    "newRanges": [
+      [
+        1,
+        51
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "src/ca_mat/jordan_form.c",
+    "newRanges": [
+      [
+        1,
+        23
+      ]
+    ]
+  },
+  {
+    "repo": "calcium",
+    "path": "ca_mat/jordan_transformation.c",
+    "newRanges": [
+      [
+        1,
+        330
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "src/ca_mat/jordan_transformation.c",
+    "newRanges": [
+      [
+        1,
+        24
+      ]
+    ]
+  },
+  {
+    "repo": "calcium",
+    "path": "ca_mat/exp.c",
+    "newRanges": [
+      [
+        1,
+        95
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "src/ca_mat/exp.c",
+    "newRanges": [
+      [
+        1,
+        27
+      ]
+    ]
+  },
+  {
+    "repo": "calcium",
+    "path": "ca_mat/log.c",
+    "newRanges": [
+      [
+        1,
+        128
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "src/ca_mat/log.c",
+    "newRanges": [
+      [
+        1,
+        28
+      ]
+    ]
+  },
+  {
+    "repo": "calcium",
+    "path": "ca_mat/test/t-jordan_blocks.c",
+    "newRanges": [
+      [
+        1,
+        244
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "src/ca_mat/test/t-jordan_blocks.c",
+    "newRanges": [
+      [
+        1,
+        236
+      ]
+    ]
+  },
+  {
+    "repo": "calcium",
+    "path": "ca_mat/test/t-jordan_form.c",
+    "newRanges": [
+      [
+        1,
+        196
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "src/ca_mat/test/t-jordan_form.c",
+    "newRanges": [
+      [
+        1,
+        188
+      ]
+    ]
+  },
+  {
+    "repo": "calcium",
+    "path": "ca_mat/test/t-exp.c",
+    "newRanges": [
+      [
+        1,
+        136
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "src/ca_mat/test/t-exp.c",
+    "newRanges": [
+      [
+        1,
+        128
+      ]
+    ]
+  },
+  {
+    "repo": "calcium",
+    "path": "ca_mat/dft.c",
+    "newRanges": [
+      [
+        1,
+        80
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "src/ca_mat/dft.c",
+    "newRanges": [
+      [
+        1,
+        81
+      ]
+    ]
+  },
+  {
+    "repo": "calcium",
+    "path": "ca_mat/test/t-dft.c",
+    "newRanges": [
+      [
+        1,
+        77
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "src/ca_mat/test/t-dft.c",
+    "newRanges": [
+      [
+        1,
+        68
+      ]
+    ]
+  },
+  {
+    "repo": "calcium",
+    "path": "ca_mat/hilbert.c",
+    "newRanges": [
+      [
+        1,
+        32
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "src/ca_mat/hilbert.c",
+    "newRanges": [
+      [
+        1,
+        22
+      ]
+    ]
+  },
+  {
+    "repo": "calcium",
+    "path": "ca_mat/pascal.c",
+    "newRanges": [
+      [
+        1,
+        75
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "src/ca_mat/pascal.c",
+    "newRanges": [
+      [
+        1,
+        22
+      ]
+    ]
+  },
+  {
+    "repo": "calcium",
+    "path": "ca_mat/stirling.c",
+    "newRanges": [
+      [
+        1,
+        116
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "src/ca_mat/stirling.c",
+    "newRanges": [
+      [
+        1,
+        22
+      ]
+    ]
+  },
+  {
+    "repo": "calcium",
+    "path": "ca_mat/add.c",
+    "newRanges": [
+      [
+        1,
+        25
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "src/ca_mat/add.c",
+    "newRanges": [
+      [
+        1,
+        25
+      ]
+    ]
+  },
+  {
+    "repo": "calcium",
+    "path": "ca_mat/sub.c",
+    "newRanges": [
+      [
+        1,
+        25
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "src/ca_mat/sub.c",
+    "newRanges": [
+      [
+        1,
+        25
+      ]
+    ]
+  },
+  {
+    "repo": "calcium",
+    "path": "ca_mat/neg.c",
+    "newRanges": [
+      [
+        1,
+        23
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "src/ca_mat/neg.c",
+    "newRanges": [
+      [
+        1,
+        23
+      ]
+    ]
+  },
+  {
+    "repo": "calcium",
+    "path": "ca_mat/conj.c",
+    "newRanges": [
+      [
+        1,
+        29
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "src/ca_mat/conj.c",
+    "newRanges": [
+      [
+        1,
+        28
+      ]
+    ]
+  },
+  {
+    "repo": "calcium",
+    "path": "ca_mat/conj_transpose.c",
+    "newRanges": [
+      [
+        1,
+        19
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "src/ca_mat/conj_transpose.c",
+    "newRanges": [
+      [
+        1,
+        19
+      ]
+    ]
+  },
+  {
+    "repo": "calcium",
+    "path": "ca_mat/set.c",
+    "newRanges": [
+      [
+        1,
+        26
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "src/ca_mat/set.c",
+    "newRanges": [
+      [
+        1,
+        26
+      ]
+    ]
+  },
+  {
+    "repo": "calcium",
+    "path": "ca_mat/set_fmpq_mat.c",
+    "newRanges": [
+      [
+        1,
+        26
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "src/ca_mat/set_fmpq_mat.c",
+    "newRanges": [
+      [
+        1,
+        27
+      ]
+    ]
+  },
+  {
+    "repo": "calcium",
+    "path": "ca_mat/set_fmpz_mat.c",
+    "newRanges": [
+      [
+        1,
+        26
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "src/ca_mat/set_fmpz_mat.c",
+    "newRanges": [
+      [
+        1,
+        27
+      ]
+    ]
+  },
+  {
+    "repo": "calcium",
+    "path": "ca_mat/transfer.c",
+    "newRanges": [
+      [
+        1,
+        29
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "src/ca_mat/transfer.c",
+    "newRanges": [
+      [
+        1,
+        29
+      ]
+    ]
+  },
+  {
+    "repo": "calcium",
+    "path": "ca_mat/randops.c",
+    "newRanges": [
+      [
+        1,
+        49
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "src/ca_mat/randops.c",
+    "newRanges": [
+      [
+        1,
+        49
+      ]
+    ]
+  },
+  {
+    "repo": "calcium",
+    "path": "ca_mat/randtest.c",
+    "newRanges": [
+      [
+        1,
+        42
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "src/ca_mat/randtest.c",
+    "newRanges": [
+      [
+        1,
+        42
+      ]
+    ]
+  },
+  {
+    "repo": "calcium",
+    "path": "ca_mat/inlines.c",
+    "newRanges": [
+      [
+        1,
+        14
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "src/ca_mat/inlines.c",
+    "newRanges": [
+      [
+        1,
+        13
+      ]
+    ]
+  },
+  {
+    "repo": "calcium",
+    "path": "ca_mat/get_fexpr.c",
+    "newRanges": [
+      [
+        1,
+        97
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "src/ca_mat/get_fexpr.c",
+    "newRanges": [
+      [
+        1,
+        84
+      ]
+    ]
+  },
+  {
+    "repo": "calcium",
+    "path": "ca_mat/print.c",
+    "newRanges": [
+      [
+        1,
+        67
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "src/ca_mat/print.c",
+    "newRanges": [
+      [
+        1,
+        67
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "src/gr_mat/jordan_blocks.c",
+    "newRanges": [
+      [
+        1,
+        165
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "src/gr_mat/jordan_form.c",
+    "newRanges": [
+      [
+        1,
+        52
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "src/gr_mat/jordan_transformation.c",
+    "newRanges": [
+      [
+        1,
+        356
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "src/gr_mat/exp.c",
+    "newRanges": [
+      [
+        1,
+        47
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "src/gr_mat/log.c",
+    "newRanges": [
+      [
+        1,
+        57
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "src/gr_mat/func_jordan.c",
+    "newRanges": [
+      [
+        1,
+        153
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "src/gr_mat/hilbert.c",
+    "newRanges": [
+      [
+        1,
+        37
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "src/gr_mat/pascal.c",
+    "newRanges": [
+      [
+        1,
+        85
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "src/gr_mat/stirling.c",
+    "newRanges": [
+      [
+        1,
+        147
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "doc/source/gr_mat.rst",
+    "newRanges": [
+      [
+        952,
+        1008
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "src/gr_generic/generic.c",
+    "newRanges": [
+      [
+        3153,
+        3169
+      ]
+    ],
+    "previous": {
+      "repo": "flint",
+      "path": "src/gr_generic/generic.c",
+      "ranges": [
+        [
+          1,
+          43
+        ],
+        [
+          1980,
+          2275
+        ],
+        [
+          2390,
+          2582
+        ],
+        [
+          2776,
+          2790
+        ],
+        [
+          3034,
+          3152
+        ],
+        [
+          3170,
+          3233
+        ]
+      ],
+      "note": "Only recorded ranges read: generic context cleanup is no-op, default method table and bounded table initialization. Resolves qqbar cleanup-skip question as no leak in this pinned implementation, not whole generic-ring qualification. Additional recorded ranges: vector/scalar binary-op macros, addmul/submul single temporary and status aggregation, contiguous/reversed/strided generic dot implementations and vector method registrations. Strided optimized-dot path gathers shallow headers only when a specialized contiguous dot exists; CA has none and falls through to a scalar loop. Output cannot alias later input elements. Range beginning 1980 is inside normalization, not full-function coverage."
+    }
+  },
+  {
+    "repo": "flint",
+    "path": "src/fmpz_lll/is_reduced_d.c",
+    "newRanges": [[765, 821]]
+  }
+]

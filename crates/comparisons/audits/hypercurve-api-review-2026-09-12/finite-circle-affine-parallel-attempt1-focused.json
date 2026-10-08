@@ -1,0 +1,104 @@
+[
+  {
+    "target": "lib",
+    "filter": "selected_circle_affine_parallel_domains_preserve_source_parameters",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve-6e6572a45c5b177b",
+      "selected_circle_affine_parallel_domains_preserve_source_parameters",
+      "--test-threads=2",
+      "--color",
+      "never",
+      "--nocapture"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.11372310199658386,
+    "log": "finite-circle-affine-parallel-attempt1-selected_circle_affine_parallel_domains_preserve_source_parameters.log",
+    "binary": "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve-6e6572a45c5b177b",
+    "sha256": "271354e0c5f538fa8d7670d13da64a34488f48f2cc63486c75c5e252b358532c"
+  },
+  {
+    "target": "lib",
+    "filter": "selected_circle_affine_domains_keep_exterior_and_algebraic_parameters",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve-6e6572a45c5b177b",
+      "selected_circle_affine_domains_keep_exterior_and_algebraic_parameters",
+      "--test-threads=2",
+      "--color",
+      "never",
+      "--nocapture"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.16389711599913426,
+    "log": "finite-circle-affine-parallel-attempt1-selected_circle_affine_domains_keep_exterior_and_algebraic_parameters.log",
+    "binary": "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve-6e6572a45c5b177b",
+    "sha256": "271354e0c5f538fa8d7670d13da64a34488f48f2cc63486c75c5e252b358532c"
+  },
+  {
+    "target": "lib",
+    "filter": "selected_circle_affine_clipping_replays_exact_boundary_identity",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve-6e6572a45c5b177b",
+      "selected_circle_affine_clipping_replays_exact_boundary_identity",
+      "--test-threads=2",
+      "--color",
+      "never",
+      "--nocapture"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 1.0149180480075302,
+    "log": "finite-circle-affine-parallel-attempt1-selected_circle_affine_clipping_replays_exact_boundary_identity.log",
+    "binary": "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve-6e6572a45c5b177b",
+    "sha256": "271354e0c5f538fa8d7670d13da64a34488f48f2cc63486c75c5e252b358532c"
+  },
+  {
+    "target": "lib",
+    "filter": "selected_fillet_tangency_replays_an_exterior_affine_source_chart",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve-6e6572a45c5b177b",
+      "selected_fillet_tangency_replays_an_exterior_affine_source_chart",
+      "--test-threads=2",
+      "--color",
+      "never",
+      "--nocapture"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.61442791299487,
+    "log": "finite-circle-affine-parallel-attempt1-selected_fillet_tangency_replays_an_exterior_affine_source_chart.log",
+    "binary": "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve-6e6572a45c5b177b",
+    "sha256": "271354e0c5f538fa8d7670d13da64a34488f48f2cc63486c75c5e252b358532c"
+  },
+  {
+    "target": "hypercurve_curve_intersection",
+    "filter": "selected_circle_tangency_reuses_retained_normal_evidence",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve_curve_intersection-e3a50a789eb6a53e",
+      "selected_circle_tangency_reuses_retained_normal_evidence",
+      "--test-threads=2",
+      "--color",
+      "never",
+      "--nocapture"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.26398718199925497,
+    "log": "finite-circle-affine-parallel-attempt1-selected_circle_tangency_reuses_retained_normal_evidence.log",
+    "binary": "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve_curve_intersection-e3a50a789eb6a53e",
+    "sha256": "b7ade55b6a8cabda616d1b253444402ab98f04bc7443ae208c0b9dda7e2eea79"
+  },
+  {
+    "target": "lib",
+    "filter": "curve_intersection::curve_support_intersection::circle_dispatch_tests",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve-6e6572a45c5b177b",
+      "curve_intersection::curve_support_intersection::circle_dispatch_tests",
+      "--test-threads=2",
+      "--color",
+      "never",
+      "--nocapture"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 18.137860210990766,
+    "log": "finite-circle-affine-parallel-attempt1-circle_dispatch_tests.log",
+    "binary": "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve-6e6572a45c5b177b",
+    "sha256": "271354e0c5f538fa8d7670d13da64a34488f48f2cc63486c75c5e252b358532c"
+  }
+]

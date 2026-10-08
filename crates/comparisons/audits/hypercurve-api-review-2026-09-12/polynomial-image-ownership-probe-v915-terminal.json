@@ -1,0 +1,44 @@
+{
+  "baseline": "affine-field-v910-sources.json",
+  "source_sha256": "24ce0eba61fa4978c91286f61f1cf1b8f22f7f60bb8184b88608b78003b71145",
+  "processes": [
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustc",
+        "--edition=2024",
+        "--crate-name",
+        "polynomial_image_ownership_probe",
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/polynomial-image-ownership-probe-v915.rs",
+        "--extern",
+        "hyperreal=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperreal-dff9c97d38a41830.rlib",
+        "--extern",
+        "hypersolve=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypersolve-dab45c0236e67f19.rlib",
+        "-L",
+        "dependency=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps",
+        "-C",
+        "opt-level=3",
+        "-o",
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/polynomial-image-ownership-probe-v915-binary"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.41434510285034776,
+      "log": "polynomial-image-ownership-probe-v915-compile.log"
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/polynomial-image-ownership-probe-v915-binary"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.0014951878692954779,
+      "log": "polynomial-image-ownership-probe-v915-cases.log"
+    }
+  ],
+  "all_processes_reaped": true,
+  "rlibs": {
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperreal-dff9c97d38a41830.rlib": "56fb2078969b2f3bc96e91071dfe71819628635181836527b0fea48d29ee79c3",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypersolve-dab45c0236e67f19.rlib": "da7ddfb2f0f04ad0b406e18e57656a77a0e2928b0dedb44ccf13eb324445723f"
+  },
+  "binary_sha256": "5165d86429b4db79526e195652cc47dbd2f2a0e0ed9dd510893f66e5110ecc42",
+  "output": "premise selected_source_is_one=true cached_witness=false exact_image_is_zero=true\ncase=0 transform=Transformed\ncase=0 comparison=Compared ordering=Some(Greater)\ncase=1 transform=Transformed\ncase=1 comparison=Compared ordering=Some(Greater)\ncomplete cases=2 wrong=2 blocked=0\n",
+  "probe_complete": true
+}

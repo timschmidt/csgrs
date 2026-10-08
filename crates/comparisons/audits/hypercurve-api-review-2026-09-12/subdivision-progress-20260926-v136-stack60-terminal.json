@@ -1,0 +1,53 @@
+{
+  "binary": {
+    "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/subdivision-progress-20260926-v136-hypercurve",
+    "sha256": "567f93870af4eeacae67022d93e6bab4e2d07599476fbc718dcd0354feeb2be7"
+  },
+  "source_manifest": "subdivision-progress-20260926-v136-sources.json",
+  "diagnostic_only": true,
+  "cases": [
+    {
+      "name": "bezier_region::tests::one_fragment_nonzero_parallel_loop_extends_chamfer_cuts_on_one_finite_envelope",
+      "log": "subdivision-progress-20260926-v136-stack60-0.log",
+      "command": [
+        "/usr/bin/gdb",
+        "-nx",
+        "-nh",
+        "--batch",
+        "-ex",
+        "set pagination off",
+        "-ex",
+        "set confirm off",
+        "-ex",
+        "set debuginfod enabled off",
+        "-ex",
+        "set print frame-arguments none",
+        "-ex",
+        "set print entry-values no",
+        "-ex",
+        "run",
+        "-ex",
+        "thread apply all bt 12",
+        "-ex",
+        "thread apply all bt -45",
+        "-ex",
+        "kill",
+        "-ex",
+        "quit",
+        "--args",
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/subdivision-progress-20260926-v136-hypercurve",
+        "--exact",
+        "bezier_region::tests::one_fragment_nonzero_parallel_loop_extends_chamfer_cuts_on_one_finite_envelope",
+        "--test-threads=1",
+        "--nocapture"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 60.06463273591362,
+      "interrupted": true,
+      "sample_obtained": true,
+      "debugger_reaped": true
+    }
+  ],
+  "all_processes_reaped": true,
+  "all_sources_unchanged": true
+}

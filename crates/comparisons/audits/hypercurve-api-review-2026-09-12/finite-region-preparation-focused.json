@@ -1,0 +1,86 @@
+[
+  {
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve-6e6572a45c5b177b",
+      "--exact",
+      "curve_intersection::curve_support_intersection::circle_dispatch_tests::retained_quadratic_circle_pairs_clip_components_and_endpoint_contacts",
+      "--test-threads=1",
+      "--nocapture"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.015645456995116547,
+    "binary": "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve-6e6572a45c5b177b",
+    "sha256": "aec41ef68b463abc61b596815ec270333c047c68c435bd30f094212eafb61cb8",
+    "log": "finite-region-preparation-focused-retained_quadratic_circle_pairs_clip_components_and_endpoint_contacts.log"
+  },
+  {
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve-6e6572a45c5b177b",
+      "--exact",
+      "bezier_region::tests::selected_circle_and_retained_rational_arc_chamfer_extend_exactly",
+      "--test-threads=1",
+      "--nocapture"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 1.4157869159826078,
+    "binary": "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve-6e6572a45c5b177b",
+    "sha256": "aec41ef68b463abc61b596815ec270333c047c68c435bd30f094212eafb61cb8",
+    "log": "finite-region-preparation-focused-selected_circle_and_retained_rational_arc_chamfer_extend_exactly.log"
+  },
+  {
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve-6e6572a45c5b177b",
+      "--exact",
+      "curve_region_trim::tests::finite_bezier_carrier_preparation_preserves_trim_and_replay",
+      "--test-threads=1",
+      "--nocapture"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.16399487998569384,
+    "binary": "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve-6e6572a45c5b177b",
+    "sha256": "aec41ef68b463abc61b596815ec270333c047c68c435bd30f094212eafb61cb8",
+    "log": "finite-region-preparation-focused-finite_bezier_carrier_preparation_preserves_trim_and_replay.log"
+  },
+  {
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve-6e6572a45c5b177b",
+      "--exact",
+      "curve_region_trim::tests::generated_circle_trim_preserves_selected_frame_and_reversal",
+      "--test-threads=1",
+      "--nocapture"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.11388464400079101,
+    "binary": "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve-6e6572a45c5b177b",
+    "sha256": "aec41ef68b463abc61b596815ec270333c047c68c435bd30f094212eafb61cb8",
+    "log": "finite-region-preparation-focused-generated_circle_trim_preserves_selected_frame_and_reversal.log"
+  },
+  {
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve-6e6572a45c5b177b",
+      "--exact",
+      "curve_region_trim::tests::generated_chord_trim_preserves_holes_and_exact_endpoint_replay",
+      "--test-threads=1",
+      "--nocapture"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.5144650299916975,
+    "binary": "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve-6e6572a45c5b177b",
+    "sha256": "aec41ef68b463abc61b596815ec270333c047c68c435bd30f094212eafb61cb8",
+    "log": "finite-region-preparation-focused-generated_chord_trim_preserves_holes_and_exact_endpoint_replay.log"
+  },
+  {
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve_curve_region_boolean-0a97901ca6765134",
+      "--exact",
+      "selected_fillet_region_intersection_closes_through_exterior_cap_booleans",
+      "--test-threads=1",
+      "--nocapture"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 4.319979567982955,
+    "binary": "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve_curve_region_boolean-0a97901ca6765134",
+    "sha256": "5877a25d87ee3829b57af2c1a82fbb811cc2c7a211d78cb51c4fb24e286801f6",
+    "log": "finite-region-preparation-focused-selected_fillet_region_intersection_closes_through_exterior_cap_booleans.log"
+  }
+]

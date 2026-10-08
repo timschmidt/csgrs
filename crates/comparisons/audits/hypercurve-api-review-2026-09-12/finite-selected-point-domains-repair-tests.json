@@ -1,0 +1,54 @@
+[
+  {
+    "command": [
+      "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve-bd62b509c70a3efd",
+      "--exact",
+      "bezier_offset::conversion_tests::correlated_point_membership_replays_exterior_rational_domains",
+      "--test-threads=1",
+      "--nocapture"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 9.876247745996807,
+    "sha256": "e021fec41062219e2f89e6b25281c56f90068618889798b27bb527e684fa8e57",
+    "log": "finite-selected-point-domains-repair-correlated_point_membership_replays_exterior_rational_domains.log"
+  },
+  {
+    "command": [
+      "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve-bd62b509c70a3efd",
+      "--exact",
+      "bezier_offset::conversion_tests::recursive_projective_chord_replays_nonzero_analytic_parallel",
+      "--test-threads=1",
+      "--nocapture"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.007553314004326239,
+    "sha256": "e021fec41062219e2f89e6b25281c56f90068618889798b27bb527e684fa8e57",
+    "log": "finite-selected-point-domains-repair-recursive_projective_chord_replays_nonzero_analytic_parallel.log"
+  },
+  {
+    "command": [
+      "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve-bd62b509c70a3efd",
+      "--exact",
+      "bezier_offset::conversion_tests::retained_point_membership_preserves_domains_and_regular_barriers",
+      "--test-threads=1",
+      "--nocapture"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.01550026098266244,
+    "sha256": "e021fec41062219e2f89e6b25281c56f90068618889798b27bb527e684fa8e57",
+    "log": "finite-selected-point-domains-repair-retained_point_membership_preserves_domains_and_regular_barriers.log"
+  },
+  {
+    "command": [
+      "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve-bd62b509c70a3efd",
+      "--exact",
+      "bezier_offset::conversion_tests::zero_distance_retained_point_membership_keeps_stationary_sources",
+      "--test-threads=1",
+      "--nocapture"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.007456760009517893,
+    "sha256": "e021fec41062219e2f89e6b25281c56f90068618889798b27bb527e684fa8e57",
+    "log": "finite-selected-point-domains-repair-zero_distance_retained_point_membership_keeps_stationary_sources.log"
+  }
+]

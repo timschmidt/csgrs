@@ -1,0 +1,211 @@
+Benchmarking scalar_ops/hyperreal/powi
+Benchmarking scalar_ops/hyperreal/powi: Warming up for 100.00 ms
+Benchmarking scalar_ops/hyperreal/powi: Collecting 40 samples in estimated 500.03 ms (8.7M iterations)
+Benchmarking scalar_ops/hyperreal/powi: Analyzing
+scalar_ops/hyperreal/powi
+                        time:   [57.470 ns 57.726 ns 58.137 ns]
+                        change: [+11.959% +12.423% +12.860%] (p = 0.00 < 0.05)
+                        Performance has regressed.
+Found 2 outliers among 40 measurements (5.00%)
+  1 (2.50%) low mild
+  1 (2.50%) high severe
+Benchmarking scalar_ops/hyperreal/exp
+Benchmarking scalar_ops/hyperreal/exp: Warming up for 100.00 ms
+Benchmarking scalar_ops/hyperreal/exp: Collecting 40 samples in estimated 500.02 ms (5.2M iterations)
+Benchmarking scalar_ops/hyperreal/exp: Analyzing
+scalar_ops/hyperreal/exp
+                        time:   [96.461 ns 96.763 ns 97.076 ns]
+                        change: [−7.7162% −3.8732% −0.6254%] (p = 0.04 < 0.05)
+                        Change within noise threshold.
+Found 3 outliers among 40 measurements (7.50%)
+  1 (2.50%) high mild
+  2 (5.00%) high severe
+Benchmarking scalar_ops/hyperreal/ln
+Benchmarking scalar_ops/hyperreal/ln: Warming up for 100.00 ms
+Benchmarking scalar_ops/hyperreal/ln: Collecting 40 samples in estimated 500.58 ms (390k iterations)
+Benchmarking scalar_ops/hyperreal/ln: Analyzing
+scalar_ops/hyperreal/ln time:   [1.2700 µs 1.2732 µs 1.2770 µs]
+                        change: [+2.6051% +3.2654% +3.7934%] (p = 0.00 < 0.05)
+                        Performance has regressed.
+Found 2 outliers among 40 measurements (5.00%)
+  2 (5.00%) high mild
+Benchmarking scalar_ops/hyperreal/log10
+Benchmarking scalar_ops/hyperreal/log10: Warming up for 100.00 ms
+Benchmarking scalar_ops/hyperreal/log10: Collecting 40 samples in estimated 500.17 ms (329k iterations)
+Benchmarking scalar_ops/hyperreal/log10: Analyzing
+scalar_ops/hyperreal/log10
+                        time:   [1.4988 µs 1.5019 µs 1.5060 µs]
+                        change: [+3.3459% +3.8235% +4.3226%] (p = 0.00 < 0.05)
+                        Performance has regressed.
+Found 2 outliers among 40 measurements (5.00%)
+  2 (5.00%) high severe
+Benchmarking scalar_ops/hyperreal/log10_abort
+Benchmarking scalar_ops/hyperreal/log10_abort: Warming up for 100.00 ms
+Benchmarking scalar_ops/hyperreal/log10_abort: Collecting 40 samples in estimated 501.14 ms (324k iterations)
+Benchmarking scalar_ops/hyperreal/log10_abort: Analyzing
+scalar_ops/hyperreal/log10_abort
+                        time:   [1.5249 µs 1.5297 µs 1.5354 µs]
+                        change: [+3.3376% +3.6223% +3.8968%] (p = 0.00 < 0.05)
+                        Performance has regressed.
+Found 6 outliers among 40 measurements (15.00%)
+  2 (5.00%) low mild
+  2 (5.00%) high mild
+  2 (5.00%) high severe
+Benchmarking scalar_ops/hyperreal/asin
+Benchmarking scalar_ops/hyperreal/asin: Warming up for 100.00 ms
+Benchmarking scalar_ops/hyperreal/asin: Collecting 40 samples in estimated 500.07 ms (2.9M iterations)
+Benchmarking scalar_ops/hyperreal/asin: Analyzing
+scalar_ops/hyperreal/asin
+                        time:   [168.90 ns 169.56 ns 170.37 ns]
+                        change: [+44.494% +48.180% +52.307%] (p = 0.00 < 0.05)
+                        Performance has regressed.
+Found 4 outliers among 40 measurements (10.00%)
+  3 (7.50%) high mild
+  1 (2.50%) high severe
+Benchmarking scalar_ops/hyperreal/asin_abort
+Benchmarking scalar_ops/hyperreal/asin_abort: Warming up for 100.00 ms
+Benchmarking scalar_ops/hyperreal/asin_abort: Collecting 40 samples in estimated 500.14 ms (2.4M iterations)
+Benchmarking scalar_ops/hyperreal/asin_abort: Analyzing
+scalar_ops/hyperreal/asin_abort
+                        time:   [188.72 ns 189.47 ns 190.27 ns]
+                        change: [+33.718% +34.197% +34.772%] (p = 0.00 < 0.05)
+                        Performance has regressed.
+Found 2 outliers among 40 measurements (5.00%)
+  1 (2.50%) high mild
+  1 (2.50%) high severe
+Benchmarking scalar_ops/hyperreal/acos
+Benchmarking scalar_ops/hyperreal/acos: Warming up for 100.00 ms
+Benchmarking scalar_ops/hyperreal/acos: Collecting 40 samples in estimated 500.14 ms (1.4M iterations)
+Benchmarking scalar_ops/hyperreal/acos: Analyzing
+scalar_ops/hyperreal/acos
+                        time:   [350.30 ns 351.03 ns 351.75 ns]
+                        change: [+15.094% +16.842% +18.255%] (p = 0.00 < 0.05)
+                        Performance has regressed.
+Found 2 outliers among 40 measurements (5.00%)
+  2 (5.00%) high mild
+Benchmarking scalar_ops/hyperreal/acos_abort
+Benchmarking scalar_ops/hyperreal/acos_abort: Warming up for 100.00 ms
+Benchmarking scalar_ops/hyperreal/acos_abort: Collecting 40 samples in estimated 500.25 ms (1.3M iterations)
+Benchmarking scalar_ops/hyperreal/acos_abort: Analyzing
+scalar_ops/hyperreal/acos_abort
+                        time:   [382.59 ns 383.64 ns 385.09 ns]
+                        change: [+18.459% +19.326% +20.191%] (p = 0.00 < 0.05)
+                        Performance has regressed.
+Found 4 outliers among 40 measurements (10.00%)
+  2 (5.00%) high mild
+  2 (5.00%) high severe
+Benchmarking scalar_ops/hyperreal/zero_status
+Benchmarking scalar_ops/hyperreal/zero_status: Warming up for 100.00 ms
+Benchmarking scalar_ops/hyperreal/zero_status: Collecting 40 samples in estimated 500.00 ms (408M iterations)
+Benchmarking scalar_ops/hyperreal/zero_status: Analyzing
+scalar_ops/hyperreal/zero_status
+                        time:   [1.1804 ns 1.2249 ns 1.2742 ns]
+                        change: [+6.6252% +11.214% +15.783%] (p = 0.00 < 0.05)
+                        Performance has regressed.
+Found 1 outliers among 40 measurements (2.50%)
+  1 (2.50%) high mild
+Benchmarking scalar_ops/hyperreal-rational/powi
+Benchmarking scalar_ops/hyperreal-rational/powi: Warming up for 100.00 ms
+Benchmarking scalar_ops/hyperreal-rational/powi: Collecting 40 samples in estimated 500.04 ms (8.3M iterations)
+Benchmarking scalar_ops/hyperreal-rational/powi: Analyzing
+scalar_ops/hyperreal-rational/powi
+                        time:   [60.256 ns 61.404 ns 62.791 ns]
+                        change: [+10.677% +11.464% +12.686%] (p = 0.00 < 0.05)
+                        Performance has regressed.
+Found 9 outliers among 40 measurements (22.50%)
+  3 (7.50%) low mild
+  1 (2.50%) high mild
+  5 (12.50%) high severe
+Benchmarking scalar_ops/hyperreal-rational/exp
+Benchmarking scalar_ops/hyperreal-rational/exp: Warming up for 100.00 ms
+Benchmarking scalar_ops/hyperreal-rational/exp: Collecting 40 samples in estimated 500.01 ms (5.0M iterations)
+Benchmarking scalar_ops/hyperreal-rational/exp: Analyzing
+scalar_ops/hyperreal-rational/exp
+                        time:   [99.613 ns 100.48 ns 101.84 ns]
+                        change: [+0.8054% +2.7578% +5.0653%] (p = 0.01 < 0.05)
+                        Change within noise threshold.
+Found 5 outliers among 40 measurements (12.50%)
+  3 (7.50%) high mild
+  2 (5.00%) high severe
+Benchmarking scalar_ops/hyperreal-rational/ln
+Benchmarking scalar_ops/hyperreal-rational/ln: Warming up for 100.00 ms
+Benchmarking scalar_ops/hyperreal-rational/ln: Collecting 40 samples in estimated 500.26 ms (1.1M iterations)
+Benchmarking scalar_ops/hyperreal-rational/ln: Analyzing
+scalar_ops/hyperreal-rational/ln
+                        time:   [459.38 ns 460.04 ns 460.96 ns]
+                        change: [+13.679% +13.924% +14.153%] (p = 0.00 < 0.05)
+                        Performance has regressed.
+Found 3 outliers among 40 measurements (7.50%)
+  3 (7.50%) high mild
+Benchmarking scalar_ops/hyperreal-rational/log10
+Benchmarking scalar_ops/hyperreal-rational/log10: Warming up for 100.00 ms
+Benchmarking scalar_ops/hyperreal-rational/log10: Collecting 40 samples in estimated 500.41 ms (758k iterations)
+Benchmarking scalar_ops/hyperreal-rational/log10: Analyzing
+scalar_ops/hyperreal-rational/log10
+                        time:   [654.03 ns 655.90 ns 657.94 ns]
+                        change: [+10.562% +11.119% +11.599%] (p = 0.00 < 0.05)
+                        Performance has regressed.
+Benchmarking scalar_ops/hyperreal-rational/log10_abort
+Benchmarking scalar_ops/hyperreal-rational/log10_abort: Warming up for 100.00 ms
+Benchmarking scalar_ops/hyperreal-rational/log10_abort: Collecting 40 samples in estimated 500.05 ms (729k iterations)
+Benchmarking scalar_ops/hyperreal-rational/log10_abort: Analyzing
+scalar_ops/hyperreal-rational/log10_abort
+                        time:   [677.99 ns 679.71 ns 681.51 ns]
+                        change: [+8.2400% +9.5908% +10.713%] (p = 0.00 < 0.05)
+                        Performance has regressed.
+Found 7 outliers among 40 measurements (17.50%)
+  3 (7.50%) low mild
+  1 (2.50%) high mild
+  3 (7.50%) high severe
+Benchmarking scalar_ops/hyperreal-rational/asin
+Benchmarking scalar_ops/hyperreal-rational/asin: Warming up for 100.00 ms
+Benchmarking scalar_ops/hyperreal-rational/asin: Collecting 40 samples in estimated 500.13 ms (3.0M iterations)
+Benchmarking scalar_ops/hyperreal-rational/asin: Analyzing
+scalar_ops/hyperreal-rational/asin
+                        time:   [169.56 ns 169.86 ns 170.21 ns]
+                        change: [+49.424% +49.905% +50.365%] (p = 0.00 < 0.05)
+                        Performance has regressed.
+Found 2 outliers among 40 measurements (5.00%)
+  2 (5.00%) high mild
+Benchmarking scalar_ops/hyperreal-rational/asin_abort
+Benchmarking scalar_ops/hyperreal-rational/asin_abort: Warming up for 100.00 ms
+Benchmarking scalar_ops/hyperreal-rational/asin_abort: Collecting 40 samples in estimated 500.11 ms (2.6M iterations)
+Benchmarking scalar_ops/hyperreal-rational/asin_abort: Analyzing
+scalar_ops/hyperreal-rational/asin_abort
+                        time:   [190.84 ns 192.48 ns 195.09 ns]
+                        change: [+34.670% +36.835% +39.323%] (p = 0.00 < 0.05)
+                        Performance has regressed.
+Found 3 outliers among 40 measurements (7.50%)
+  3 (7.50%) high severe
+Benchmarking scalar_ops/hyperreal-rational/acos
+Benchmarking scalar_ops/hyperreal-rational/acos: Warming up for 100.00 ms
+Benchmarking scalar_ops/hyperreal-rational/acos: Collecting 40 samples in estimated 500.03 ms (1.4M iterations)
+Benchmarking scalar_ops/hyperreal-rational/acos: Analyzing
+scalar_ops/hyperreal-rational/acos
+                        time:   [369.39 ns 379.87 ns 389.79 ns]
+                        change: [+19.900% +22.023% +24.109%] (p = 0.00 < 0.05)
+                        Performance has regressed.
+Found 8 outliers among 40 measurements (20.00%)
+  4 (10.00%) high mild
+  4 (10.00%) high severe
+Benchmarking scalar_ops/hyperreal-rational/acos_abort
+Benchmarking scalar_ops/hyperreal-rational/acos_abort: Warming up for 100.00 ms
+Benchmarking scalar_ops/hyperreal-rational/acos_abort: Collecting 40 samples in estimated 500.31 ms (1.2M iterations)
+Benchmarking scalar_ops/hyperreal-rational/acos_abort: Analyzing
+scalar_ops/hyperreal-rational/acos_abort
+                        time:   [414.39 ns 426.54 ns 439.05 ns]
+                        change: [+26.329% +30.660% +34.934%] (p = 0.00 < 0.05)
+                        Performance has regressed.
+Found 1 outliers among 40 measurements (2.50%)
+  1 (2.50%) high mild
+Benchmarking scalar_ops/hyperreal-rational/zero_status
+Benchmarking scalar_ops/hyperreal-rational/zero_status: Warming up for 100.00 ms
+Benchmarking scalar_ops/hyperreal-rational/zero_status: Collecting 40 samples in estimated 500.00 ms (430M iterations)
+Benchmarking scalar_ops/hyperreal-rational/zero_status: Analyzing
+scalar_ops/hyperreal-rational/zero_status
+                        time:   [1.2090 ns 1.2336 ns 1.2610 ns]
+                        change: [+7.2530% +12.271% +17.571%] (p = 0.00 < 0.05)
+                        Performance has regressed.
+Found 3 outliers among 40 measurements (7.50%)
+  3 (7.50%) high mild
+

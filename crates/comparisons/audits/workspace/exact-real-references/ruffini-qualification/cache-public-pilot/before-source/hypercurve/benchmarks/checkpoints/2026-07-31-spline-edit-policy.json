@@ -1,0 +1,342 @@
+{
+  "schema": 1,
+  "captured_on": "2026-07-31",
+  "checkpoint": "spline-edit-policy",
+  "source_revision": "82152f89f21a93f3f4ed14ca3a2f4c4ca57e2956",
+  "parent_revision": "7394c26a803f4958ac599cd611adbbdc29473111",
+  "implementation_revisions": [
+    "4bedcd1a7c3f29364fe43758a065cceca5610a7e",
+    "e7af3d5c16335d1f55ab88f028a87a4bbe867981",
+    "82152f89f21a93f3f4ed14ca3a2f4c4ca57e2956"
+  ],
+  "frozen_baseline_revision": "dfc4ec5f9546560765bd33d4a88292581869adb8",
+  "baseline": "../baselines/2026-07-31/baseline.json",
+  "semantic_evidence": {
+    "policy_explicit_nurbs_edits": [
+      "NurbsCurve2::{insert_knot,insert_knots,remove_knot,degree_elevation,elevated_to_degree,reversed,transform_similarity}"
+    ],
+    "policy_explicit_polynomial_spline_edits": [
+      "PolynomialSplineCurve2::{insert_knot,reversed,transform_similarity}"
+    ],
+    "policy_explicit_top_level_edits": [
+      "Curve2::{reversed,transform_similarity}",
+      "CurveView2::{reversed,transform_similarity}",
+      "CurvePath2::{reversed,transform_similarity}",
+      "CurvePathView2::{reversed,transform_similarity}"
+    ],
+    "policy_explicit_retained_evidence_constructors": [
+      "RetainedBSplineSpanFacts2::new",
+      "RetainedBSplineSpanFactEvidence2::new",
+      "RationalBSplineNativeTopologyEvidence2::new",
+      "RationalBezierSpanTopologyEvidence2::new"
+    ],
+    "public_edit_return_contract": "ExactCurveResult<CurveOutcome<T>>",
+    "public_evidence_return_contract": "CurveResult<Classification<T>>",
+    "complete_public_operation_observes_terminal_consumption_once": true,
+    "internal_composition_uses_raw_policy_kernels": true,
+    "interior_knot_ordering_and_multiplicity_uncertainty_is_propagated": true,
+    "knot_removal_reconstruction_replay_uses_active_policy": true,
+    "degree_elevation_decomposition_and_reconstruction_use_active_policy": true,
+    "polynomial_editing_propagates_policy_through_unit_weight_nurbs": true,
+    "terminal_expression": "(pi + e) - (e + pi)",
+    "symbolically_adjacent_knots": [
+      "1/2",
+      "1/2 + terminal_expression"
+    ],
+    "strict_terminal_result": "typed edit-family Ordering blocker",
+    "approximate_512_terminal_result": "exact edited carrier with Approximate512Consumed",
+    "symbolic_knots_controls_weights_and_lineage_are_retained_without_replacement": true,
+    "strict_first_then_approximate_replay_is_tested": true,
+    "approximate_first_then_strict_blocker_isolation_is_tested": true,
+    "approximate_result_replay_reobserves_terminal_consumption": true,
+    "preview_context_bypasses_retained_topology_state": true,
+    "compatibility_overload_deref_or_implicit_value_shim_added": false,
+    "hypermesh_modified": false
+  },
+  "retained_cache_evidence": {
+    "cache_type": "BoundedPolicyResultCache<K,T>",
+    "cache_count_on_nurbs_carrier": 4,
+    "bounded_entries_per_cache": 8,
+    "evaluation_runs_outside_mutex": true,
+    "strict_probe_precedes_approximate_512_evaluation": true,
+    "strict_blocker_is_retained_beside_approximate_result": true,
+    "certified_success_and_invalid_input_answer_both_policies": true,
+    "owned_key_is_borrowed_for_lookup_and_only_cloned_by_a_miss_evaluator": true,
+    "cache_entry_replays_by_reference": true,
+    "common_cache_entry_no_larger_than_ExactCurveResult_usize": true,
+    "hot_path_optimization_revision": "82152f89f21a93f3f4ed14ca3a2f4c4ca57e2956"
+  },
+  "hypersolve_boundary": {
+    "spline_exact_edits_require_no_solver_change": true,
+    "interpolation_solver": "Hypersolve Bareiss exact dense solve with exact residual replay",
+    "supportable_approximate_512_undecided_pivot_continuation_covered": false,
+    "remaining_requirement": "implement a caller-authorized Bareiss pivot proposal and exact certification bridge without moving Hyperlimit geometry policy into Hypersolve"
+  },
+  "layout_and_memory_evidence": {
+    "NurbsCurve2_bytes": 8,
+    "NurbsData2_bytes": 512,
+    "PolynomialSplineCurve2_bytes": 8,
+    "PolynomialSplineData2_bytes": 288,
+    "CurveContext_bytes": 1,
+    "CurveCertainty_bytes": 1,
+    "touched_carrier_layout_change": "none",
+    "new_carrier_cache_or_buffer": false,
+    "pathological_parent_peak_rss_kib_median": 46028,
+    "pathological_candidate_peak_rss_kib_median": 46108,
+    "pathological_peak_rss_median_delta_kib": 80,
+    "pathological_peak_rss_median_delta_percent": 0.17380724776223655
+  },
+  "matched_bspline_benchmarks": {
+    "command": "one warm-up process per artifact followed by eleven alternating-order parent/candidate executions of matched default-feature release bspline artifacts pinned to CPU 9",
+    "benchmark_harness": "benches/bspline.rs",
+    "parent_revision": "7394c26a803f4958ac599cd611adbbdc29473111",
+    "candidate_revision": "82152f89f21a93f3f4ed14ca3a2f4c4ca57e2956",
+    "nurbs_cold_batch_knot_refinement": {
+      "iterations_per_process": 2000,
+      "parent_median_ns": 4948.771,
+      "candidate_median_ns": 5022.696,
+      "median_change_percent": 1.4938052296216586,
+      "paired_geomean_change_percent": 1.5795680354972808,
+      "parent_range_ns": [4727.231, 5404.28],
+      "candidate_range_ns": [4880.2905, 5481.2495]
+    },
+    "nurbs_cold_sequential_knot_refinement": {
+      "iterations_per_process": 2000,
+      "parent_median_ns": 7786.757,
+      "candidate_median_ns": 7604.149,
+      "median_change_percent": -2.3451097806185484,
+      "paired_geomean_change_percent": -0.8987522408743343,
+      "parent_range_ns": [7400.768, 8190.809],
+      "candidate_range_ns": [7459.689, 8342.064]
+    },
+    "nurbs_retained_batch_knot_refinement": {
+      "iterations_per_process": 20000,
+      "parent_median_ns": 30.17695,
+      "candidate_median_ns": 34.75865,
+      "median_change_percent": 15.182780234583015,
+      "paired_geomean_change_percent": 19.17237539286385,
+      "parent_range_ns": [28.717, 30.5839],
+      "candidate_range_ns": [33.8477, 42.92905]
+    },
+    "nurbs_exact_knot_removal_proof": {
+      "iterations_per_process": 2000,
+      "parent_median_ns": 6538.967,
+      "candidate_median_ns": 6701.816,
+      "median_change_percent": 2.4904392391030594,
+      "paired_geomean_change_percent": 3.2827459341630005,
+      "parent_range_ns": [6358.3595, 6849.921],
+      "candidate_range_ns": [6521.978, 7187.533]
+    },
+    "nurbs_retained_knot_removal_proof": {
+      "iterations_per_process": 20000,
+      "parent_median_ns": 31.20585,
+      "candidate_median_ns": 21.8085,
+      "median_change_percent": -30.114065151245683,
+      "paired_geomean_change_percent": -28.95105405847308,
+      "parent_range_ns": [30.6244, 32.1673],
+      "candidate_range_ns": [21.30905, 24.9748]
+    },
+    "nurbs_exact_span_degree_elevation": {
+      "iterations_per_process": 1000,
+      "parent_median_ns": 36884.263,
+      "candidate_median_ns": 36356.34,
+      "median_change_percent": -1.4312960516521755,
+      "paired_geomean_change_percent": -1.385425067246293,
+      "parent_range_ns": [35932.229, 39502.724],
+      "candidate_range_ns": [35896.881, 38595.416]
+    },
+    "nurbs_retained_span_degree_elevation": {
+      "iterations_per_process": 20000,
+      "parent_median_ns": 13.25105,
+      "candidate_median_ns": 17.5603,
+      "median_change_percent": 32.520064447723016,
+      "paired_geomean_change_percent": 34.37408989334845,
+      "parent_range_ns": [13.1236, 13.4406],
+      "candidate_range_ns": [16.91235, 19.71515]
+    },
+    "nurbs_exact_continuity_preserving_degree_elevation": {
+      "iterations_per_process": 1000,
+      "parent_median_ns": 77481.143,
+      "candidate_median_ns": 77435.656,
+      "median_change_percent": -0.0587071876314349,
+      "paired_geomean_change_percent": -0.31359670004516005,
+      "parent_range_ns": [75373.877, 79968.083],
+      "candidate_range_ns": [74716.852, 80806.205]
+    },
+    "nurbs_retained_continuity_preserving_degree_elevation": {
+      "iterations_per_process": 20000,
+      "parent_median_ns": 7.70745,
+      "candidate_median_ns": 8.9619,
+      "median_change_percent": 16.275811065916756,
+      "paired_geomean_change_percent": 15.652754056290274,
+      "parent_range_ns": [7.69545, 7.91945],
+      "candidate_range_ns": [8.4794, 9.80085]
+    },
+    "interpretation": "Cold exact edits remain within -2.35% to +2.49% at the median. Policy-isolated retained success costs 1.25-4.58 ns on three paths, while retained knot removal improves 30.11% because its exact interior validation is now part of the retained proof rather than repeated before every lookup."
+  },
+  "competitive_benchmarks": {
+    "command": "eleven fixed-iteration release processes per group pinned to CPU 9 with HYPERCURVE_COMPARE_ITERS=200000",
+    "benchmark_harness": "benches/comparative.rs",
+    "contract_warning": "The implementations are not exactness-equivalent: Hypercurve replays clone-shared exact policy evidence; Curvo clones and recomputes an f64/tolerance carrier.",
+    "retained_batch_refinement": {
+      "hypercurve_exact_retained_median_ns": 154.0,
+      "curvo_f64_recomputed_median_ns": 113.5,
+      "hypercurve_over_curvo_ratio": 1.3568281938325992,
+      "hypercurve_range_ns": [148.7, 164.3],
+      "curvo_range_ns": [112.2, 127.9]
+    },
+    "retained_degree_elevation": {
+      "hypercurve_exact_retained_median_ns": 18.0,
+      "curvo_f64_recomputed_median_ns": 1215.8,
+      "hypercurve_over_curvo_ratio": 0.014805066622799803,
+      "hypercurve_range_ns": [16.3, 50.6],
+      "curvo_range_ns": [1205.0, 1235.1]
+    },
+    "interpretation": "The small refinement is 1.36x slower because exact Real key construction and policy replay dominate. Clone-shared exact degree-elevation replay is 67.54x faster than Curvo's finite recomputation."
+  },
+  "pathological_region_control": {
+    "command": "one warm-up pair followed by eight alternating-order matched 100 MiB default-feature release processes pinned to CPU 9",
+    "invariants": {
+      "cells": 67,
+      "completed_pairs": 67,
+      "candidate_pairs": 603,
+      "fragments": 3248,
+      "point_classifications": 134,
+      "decided": 268,
+      "blocked": 0,
+      "checksum": 6
+    },
+    "build_ms": {
+      "parent_median": 75.783102,
+      "candidate_median": 75.039903,
+      "median_change_percent": -0.9806922392804673,
+      "paired_geomean_change_percent": -1.861117322948036,
+      "parent_range": [73.905661, 79.798377],
+      "candidate_range": [72.271643, 78.1427]
+    },
+    "boolean_ms": {
+      "parent_median": 472.9822725,
+      "candidate_median": 470.8628635,
+      "median_change_percent": -0.4480948067667856,
+      "paired_geomean_change_percent": -0.4884376607933283,
+      "parent_range": [468.58539, 483.245824],
+      "candidate_range": [466.196034, 477.642639]
+    },
+    "flattened_control_ms": {
+      "parent_median": 16.493749,
+      "candidate_median": 16.5413355,
+      "median_change_percent": 0.2885123327631689,
+      "paired_geomean_change_percent": 0.19920745600496836,
+      "parent_range": [16.086746, 16.936088],
+      "candidate_range": [16.066928, 16.980116]
+    },
+    "peak_rss_kib": {
+      "parent_median": 46028,
+      "candidate_median": 46108,
+      "median_change_percent": 0.17380724776223655,
+      "paired_geomean_change_percent": 0.09456591251533197,
+      "parent_range": [45984, 46256],
+      "candidate_range": [46028, 46196]
+    },
+    "interpretation": "Topology and checksum are identical; exact Boolean time improves 0.49% by paired geometric mean and process peak RSS is neutral within 80 KiB."
+  },
+  "release_artifact_size": {
+    "measurement": "matched default-feature release bspline and pathological_regions executables measured with GNU size and strip",
+    "bspline": {
+      "parent": {
+        "file_bytes": 4141904,
+        "stripped_file_bytes": 3199544,
+        "text_bytes": 2951010,
+        "data_bytes": 244648,
+        "bss_bytes": 4050,
+        "total_loaded_bytes": 3199708
+      },
+      "candidate": {
+        "file_bytes": 4143048,
+        "stripped_file_bytes": 3206936,
+        "text_bytes": 2958586,
+        "data_bytes": 244456,
+        "bss_bytes": 4850,
+        "total_loaded_bytes": 3207892
+      },
+      "delta": {
+        "file_bytes": 1144,
+        "stripped_file_bytes": 7392,
+        "text_bytes": 7576,
+        "total_loaded_bytes": 8184,
+        "total_loaded_percent": 0.25577333931721125
+      }
+    },
+    "pathological": {
+      "parent": {
+        "file_bytes": 6954720,
+        "stripped_file_bytes": 5524632,
+        "text_bytes": 5255677,
+        "data_bytes": 265080,
+        "bss_bytes": 2392,
+        "total_loaded_bytes": 5523149
+      },
+      "candidate": {
+        "file_bytes": 6953992,
+        "stripped_file_bytes": 5524392,
+        "text_bytes": 5255661,
+        "data_bytes": 264856,
+        "bss_bytes": 2632,
+        "total_loaded_bytes": 5523149
+      },
+      "delta": {
+        "file_bytes": -728,
+        "stripped_file_bytes": -240,
+        "text_bytes": -16,
+        "total_loaded_bytes": 0
+      }
+    },
+    "frozen_baseline_total_loadable_bytes": 5531293,
+    "pathological_delta_from_frozen_baseline_total_loadable_bytes": -8144,
+    "pathological_delta_from_frozen_baseline_total_loadable_percent": -0.1472350135854339,
+    "frozen_baseline_stripped_bytes": 5532504,
+    "pathological_delta_from_frozen_baseline_stripped_bytes": -8112,
+    "pathological_delta_from_frozen_baseline_stripped_percent": -0.14662438563081137,
+    "interpretation": "The representative pathological artifact is byte-neutral when loaded, 240 stripped bytes smaller than its parent, and remains below the frozen consolidation baseline."
+  },
+  "caller_audit": {
+    "hypercurve_source_tests_benches_fuzz_and_ui_example": "all migrated and warning-clean",
+    "external_caller_cutover_deferred_until_phase_1_public_policy_surface_stabilizes": true,
+    "known_accumulated_external_breakage": "csgrs still calls the pre-policy PolynomialSplineCurve2::try_new surface",
+    "compatibility_shim_added": false,
+    "hypermesh_modified": false
+  },
+  "remaining_policy_audit": {
+    "public_spline_construction_interpolation_evaluation_decomposition_subdivision_and_exact_edit_strict_wrappers_remain": false,
+    "approximate_512_hypersolve_pivot_continuation_remains": true,
+    "next_action": "implement and audit the caller-authorized Hypersolve terminal-pivot proposal and exact-certification boundary"
+  },
+  "static_callgraph": {
+    "command": "/home/tim/Documents/GitHub/workspace/tools/hyper-callgraph/target/release/hyper-callgraph --root /home/tim/Documents/GitHub/workspace --out-dir /tmp/hypercurve-spline-edit-policy-callgraph-final --crate-name hypercurve --include-examples --include-tests --include-bench --include-fuzz --format json",
+    "nodes": 22742,
+    "edges": 39129,
+    "artifact": "/tmp/hypercurve-spline-edit-policy-callgraph-final/callgraph.json",
+    "single_bounded_policy_cache_resolver_present": true,
+    "nurbs_public_edit_entry_nodes": 7,
+    "polynomial_spline_public_edit_entry_nodes": 3
+  },
+  "verification": {
+    "cargo_test_all_features_after_hot_path_optimization": "pass",
+    "unit_tests_after_hot_path_optimization": "262/262 pass",
+    "hypercurve_nurbs_after_hot_path_optimization": "38/38 pass",
+    "hypercurve_bspline_after_hot_path_optimization": "28/28 pass",
+    "hypercurve_polynomial_spline_after_hot_path_optimization": "18/18 pass",
+    "all_integration_tests_after_hot_path_optimization": "pass except two explicitly ignored release-scale PCB performance corpora",
+    "generated_curve_region_boolean_tests": 7,
+    "pathological_operations": "268/268 decided with no blockers",
+    "cargo_clippy_all_features_all_targets_deny_warnings": "pass",
+    "cargo_clippy_no_default_features_all_targets_deny_warnings": "pass",
+    "cargo_check_no_default_features_all_targets": "pass",
+    "cargo_check_fuzz_all_targets": "pass",
+    "cargo_doc_all_features_deny_warnings": "pass",
+    "hypercurve_ui_cargo_check_all_targets": "pass",
+    "hypercurve_ui_cargo_clippy_all_targets_deny_warnings": "pass",
+    "cargo_fmt_check": "pass",
+    "git_diff_check": "pass"
+  }
+}

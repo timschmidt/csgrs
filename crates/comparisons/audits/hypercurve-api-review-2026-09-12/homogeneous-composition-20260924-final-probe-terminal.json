@@ -1,0 +1,22 @@
+{
+  "command": [
+    "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustc",
+    "--edition=2024",
+    "-O",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/homogeneous-composition-20260924-probe1.rs",
+    "-L",
+    "dependency=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps",
+    "--extern",
+    "hypercurve=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypercurve-aba61d18fd1fc3f0.rlib",
+    "-o",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/homogeneous-composition-20260924-final-probe"
+  ],
+  "returncode": 0,
+  "elapsed_seconds": 0.4492721649585292,
+  "limit_seconds": 150,
+  "source_sha256": "883fc8f5e7c3c249d4e030f291c54a31c4f111330e3526b862c72ff0803f9472",
+  "binary_sha256": "b22b9e7f0caa66573b4c31202abc7086cda3f8bc4fff2d82ffd0a8d2ce58016c",
+  "library_sha256": "e562105e6a50a34f37b57b608cf05157301c5768672e6ed211d2117e675eeea2",
+  "all_sources_unchanged": true,
+  "all_processes_reaped": true
+}

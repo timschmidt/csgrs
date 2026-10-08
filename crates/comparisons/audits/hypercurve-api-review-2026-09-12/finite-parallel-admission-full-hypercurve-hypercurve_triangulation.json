@@ -1,0 +1,31 @@
+{
+  "repo": "hypercurve",
+  "target": "hypercurve_triangulation",
+  "binary": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve_triangulation-a37a93a15a53e424",
+  "command": [
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve_triangulation-a37a93a15a53e424",
+    "--test-threads=4",
+    "--color",
+    "never"
+  ],
+  "sha256": "2541c06a0908d7314ccd770747888730f8220188a68ad98d35c41fdcca28454c",
+  "returncode": 0,
+  "timed_out": false,
+  "elapsed_seconds": 0.003467322007054463,
+  "log": "finite-parallel-admission-full-hypercurve-hypercurve_triangulation.log",
+  "passed": [
+    "triangulate_finite_rings_ignores_all_duplicate_rings",
+    "triangulate_finite_rings_normalizes_adjacent_duplicate_vertices",
+    "triangulate_finite_rings_rejects_nonadjacent_repeated_vertices",
+    "triangulate_finite_rings_normalizes_repeated_closing_vertex",
+    "triangulate_finite_rings_rejects_nonfinite_before_normalization",
+    "finite_region_profile_triangulates_material_with_owned_hole"
+  ],
+  "failed": [],
+  "ignored": [],
+  "summaries": [
+    "test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s"
+  ],
+  "new_failures": [],
+  "known_failures": []
+}

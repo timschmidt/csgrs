@@ -1,0 +1,13 @@
+{
+  "stage": "integration build",
+  "returncode": 101,
+  "driver_exit_code": 1,
+  "reason": "Disk quota exceeded while creating the Hypercurve rlib",
+  "diagnostic_files": [
+    "independent-field-corners-20260924-v5-full-build.jsonl",
+    "independent-field-corners-20260924-v5-full-build.log"
+  ],
+  "all_sources_unchanged": true,
+  "all_owned_processes_reaped": true,
+  "no_integration_tests_started": true
+}

@@ -1,0 +1,12 @@
+{
+  "command": [
+    "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve_curve_intersection-e3a50a789eb6a53e",
+    "selected_circle_tangency_reuses_independent_affine_line_charts",
+    "--exact",
+    "--nocapture",
+    "--test-threads=1"
+  ],
+  "returncode": 124,
+  "elapsed_seconds": 20.001905288008857,
+  "binary_sha256": "9108a18000748b18727e6b9b85e89fd144822b6f8f86c33e22cbdd1aa4f74475"
+}

@@ -1,0 +1,167 @@
+/***************************************************************************
+ *            algebraic_equations.dox
+ *
+ *  Copyright  2009  Pieter Collins
+ *
+ ****************************************************************************/
+
+/*
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; either version 2 of the License, or
+ *  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Library General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program; if not, write to the Free Software
+ *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+ */
+
+
+/*!
+
+\file computing_pi.dox
+\brief Documentation computing_pi code.
+
+*/
+
+namespace Ariadne {
+
+/*!
+
+\page python_computing_pi_page Computing Pi
+
+On this page, we illustrate the use of %Ariadne's \ref NumericModule "Numeric" module by computing \f$\pi\f$.
+The full code for this example can be found in the file
+\link python/tutorials/computing_pi.py computing_pi.py\endlink,
+
+There are many formulae for pi. We will use the identity tan(pi/6)=1/sqrt(3), yielding pi=6*atan(1/sqrt(3))
+\code >>> r = 6*atan(rec(sqrt(3))) \endcode
+Displaying r shows that it is represented by a symbolic formula, and has type the %Ariadne class Real
+\code
+>>> print("r:",r,type(r))
+r: mul(6,atan(rec(sqrt(3)))) <class 'pyariadne.Real'>
+\endcode
+
+To compute \f$\pi\f$, we first need to give the accuracy of the approximation we want.
+Let's assume we want 20 binary digits of accuracy, so the <em>absolute</em> error should be less than \f$2^{-20}\f$.
+\code
+>>> acc = Accuracy(1/two**20)
+\endcode
+Note that %Ariadne does not allow us to use
+\code
+>>> acc = Accuracy(1/2**20) # Wrong!
+\endcode
+which yields an error
+\code
+TypeError: __init__(): incompatible constructor arguments. The following argument types are supported:
+    1. pyariadne.Accuracy(arg0: Ariadne::Dyadic)
+\endcode
+since the <c> 1/2**20 </c> is evaluated as a Python <c>float</c>, which is subject to rounding errors and may be inaccurate.
+(In this case there happens to be no rounding error, but since Python yields a result of type <c>float</c>, the constructor is still disabled.)
+
+We can then compute <c>r</c> to the given accuracy:
+\code
+>>> v = r.compute(acc)
+>>> print("v":",v,type(v))
+v: [3.14159265358979222781954376841895282268524169921875:3.141592653589794448265593018732033669948577880859375] <class 'pyariadne.ValidatedReal'>
+\endcode
+The type of the result <c>v</c> is ValidatedReal, which means that <c>v</c> provides a guaranteed set of possible values for the true value of <c>r</c>.
+In this case, the set is given as an interval of values.
+Comparing significant digits, the result is \f$3.14159265358979[22278...\!:\!44482...]\f$, so has 15 correct decimal places, which is more than requested.
+The bounds of the interval are given as their exact values.
+Internally, they may be represented by dyadic numbers.
+
+If we want to work efficiently with \f$\pi\f$, it is better to convert to a concrete representation using floating-point numbers.
+%Ariadne supports standard double-precision numbers.
+Double-precision bounds for <c>r</c> can be extracted from <c>v</c> as a class \ref FloatDP::FloatDPBounds "FloatDPBounds" by
+\code
+>>> pr = double_precision
+>>> x = v.get(pr)
+>>> print("x":",x,type(x))
+x: 3.14159265358979[222:445] <class 'pyariadne.FloatDPBounds'>
+\endcode
+We can then work using <c>x</c> to give bounds for calculations about \f$\pi\f$.
+For example, we can compute \f$\sin(\pi/6)\f$ by
+\code
+>>> print("sin(x/6):",sin(x/6),type(sin(x/6)))
+sin(x/6): 0.[499999999999999611:500000000000000556] <class 'pyariadne.FloatDPBounds'>
+>>> print("sin(x/4):",sin(x/4),type(sin(x/4)))
+sin(x/4): 0.707106781186547[128:906]
+\endcode
+However, since <c>x</c> stores only limited-accuracy bounds for \f$\pi\f$, the accuracy of further computations using <c>x</c> is also limited.
+
+To work using more accuracy, we can use a higher accuracy. Suppose we want to work compute to 120 binary places of accuracy, which is roughly 40 decimal places.
+\code
+>>> acc = Accuracy(1/two**120) # Wrong!
+>>> v = r.compute(acc)
+>>> print("v":",v,type(v))
+v: [3.141592653589793238462643383279502884171776471280999285698823952014915457789560348004186118853198195211007259786128997802734375:3.1415926535897932384626433832795028842305511888221136610972607788760277416804936258427904949286357805249281227588653564453125] <class 'pyariadne.ValidatedReal'>
+\endcode
+So we find \f$v=3.141592653589793238462643383279502884[17177\cdots \!:\! 23055...] \subset 3.141592653589793238462643383279502884[17\!:\!24] \f$.
+We could again extract double-precision bounds
+\code
+>>> x = v.get(double_precision)
+x: 3.141592653589793[115:561]
+\endcode
+but this loses the accuracy of the computation, since double-precision only allows \f$53\f$ significant binary places, roughly \f$16\f$ significant decimal places.
+
+To keep the high accuracy, we can instead extract bounds in a multiple-precision floating-point type, yielding a \ref FloatMP::FloatMPBounds "FloatMPBounds" object.
+If we want 128 significant binary places, we use
+\code
+>>> pr = precision(128)
+>>> pr = multiple_precision(128)
+>>> pr = MultiplePrecision(128)
+>>> x = v.get(pr)
+>>> print("x":",x,type(x))
+x: 3.141592653589793238462643383279502884[1:3] <class 'pyariadne.FloatMPBounds'>
+\endcode
+To see the internal structure of <c>x</c>, we can use Python's representation:
+\code
+>>> print("repr(x)":",repr(x))
+repr(x): FloatMPBounds(3.1415926535897932384626433832795028842,3.1415926535897932384626433832795028842)
+\endcode
+To see the precision of <c>x</c>, we can use
+\code
+>>> print("x.precision():",x.precision())
+MultiplePrecision(128)
+\endcode
+Again we can work with <c>x</c> as an approximation to \f$\pi\f$.
+\code
+>>> print("sin(x/6):",sin(x/6),type(sin(x/6)))
+sin(x/6): 0.[499999999999999611:500000000000000556] <class 'pyariadne.FloatDPBounds'>
+>>> print("sin(x/4):",sin(x/4),type(sin(x/4)))
+sin(x/4): 0.707106781186547524400844362104849039[27:30]
+\endcode
+
+Note that we could instead compute \f$\pi\f$ directly using a given precision from the formula used, since %Ariadne evaluates all expressions using a "concrete" \ref Positive::FloatBounds "FloatBounds" class using this concrete class.
+\code
+>>> three=FloatMPBounds(3,precision(128))
+>>> x=6*atan(1/sqrt(three))
+>>> print("x:",x,type(x))
+x: 3.141592653589793238462643383279502884[1:3] <class 'pyariadne.FloatMPBounds'>
+\endcode
+
+Note that %Ariadne has a builtin constant <c>pi</c>, which should be used in real code!!
+\code
+>>> print("pi:",pi,type(pi))
+pi: mul(4,atan(1)) <class 'pyariadne.Real'>
+>>> acc=Accuracy(1/two**20)
+>>> print("pi.compute(acc):",pi.compute(acc))
+pi.compute(acc): [3.141592653589793115997963468544185161590576171875:3.141592653589793560087173318606801331043243408203125]
+\endcode
+
+*/
+
+} // namespace Ariadne
+
+/*!
+
+\example python/tutorials/computing_pi.py An example illustrating the use of %Ariadne to compute \f$\pi\f$ to different precisions.
+
+*/
+

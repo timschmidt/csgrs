@@ -1,0 +1,201 @@
+\doxysubsubsection{Hybrid evolution }
+\hypertarget{group__HybridDynamicsSubModule}{}\label{group__HybridDynamicsSubModule}\index{Hybrid evolution@{Hybrid evolution}}
+
+
+\doxysubsubsubsection{Description}
+Classes and functions for analysing hybrid dynamic systems. 
+
+\doxysubsubsubsubsection*{Classes}
+\begin{DoxyCompactItemize}
+\item 
+class \mbox{\hyperlink{classAriadne_1_1HybridEvolverBase}{Hybrid\+Evolver\+Base}}
+\begin{DoxyCompactList}\small\item\em Base routines for hybrid evolution. Includes routines for extracting system information in a mode, applying initial events, computing crossing times, computing the evolution time, and applying a time step. \end{DoxyCompactList}\item 
+struct \mbox{\hyperlink{structAriadne_1_1TransitionData}{Transition\+Data}}
+\begin{DoxyCompactList}\small\item\em A data type used to store information about a transition of a hybrid system. \end{DoxyCompactList}\item 
+struct \mbox{\hyperlink{structAriadne_1_1CrossingData}{Crossing\+Data}}
+\begin{DoxyCompactList}\small\item\em A data type used to store information about the way flow lines cross a guard $g(x)=0$. \end{DoxyCompactList}\item 
+struct \mbox{\hyperlink{structAriadne_1_1TimingData}{Timing\+Data}}
+\begin{DoxyCompactList}\small\item\em A data type used to store information about the kind of time step taken during hybrid evolution. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1GeneralHybridEvolver}{General\+Hybrid\+Evolver}}
+\begin{DoxyCompactList}\small\item\em A class for computing the evolution of a general hybrid system as efficiently as possible. In particular, crossing times are computed explicitly, and the number of additional constraints is minimised. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1HybridEvolverInterface}{Hybrid\+Evolver\+Interface}}
+\begin{DoxyCompactList}\small\item\em Interface for hybrid evolvers using \doxylink{classAriadne_1_1HybridEnclosure}{Hybrid\+Enclosure} as the enclosure type. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1HybridEvolverFactoryInterface}{Hybrid\+Evolver\+Factory\+Interface}}
+\begin{DoxyCompactList}\small\item\em Factory for hybrid evolver interface classes. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1HybridReachabilityAnalyser}{Hybrid\+Reachability\+Analyser}}
+\begin{DoxyCompactList}\small\item\em A class for performing reachability analysis on a hybrid system. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1HybridReachabilityAnalyserInterface}{Hybrid\+Reachability\+Analyser\+Interface}}
+\begin{DoxyCompactList}\small\item\em A class for performing reachability analysis on a hybrid system. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1HybridTime}{Hybrid\+Time}}
+\begin{DoxyCompactList}\small\item\em A value in a hybrid time domain, being a pair comprising a real {\itshape continuous\+\_\+time} and an integer {\itshape discrete\+\_\+time}. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsubsubsection*{Enumerations}
+\begin{DoxyCompactItemize}
+\item 
+enum class \mbox{\hyperlink{group__HybridDynamicsSubModule_ga4179a1dd2049e4cb6ee977ee268d8470}{Crossing\+Kind}} \+: std\+::uint8\+\_\+t \{ \newline
+\mbox{\hyperlink{group__HybridDynamicsSubModule_gga4179a1dd2049e4cb6ee977ee268d8470a6084ee8bb30ae219127db8b7aece408a}{DEGENERATE}}
+, \mbox{\hyperlink{group__HybridDynamicsSubModule_gga4179a1dd2049e4cb6ee977ee268d8470a50546bf973283065b6ccf09faf7a580a}{NEGATIVE}}
+, \mbox{\hyperlink{group__HybridDynamicsSubModule_gga4179a1dd2049e4cb6ee977ee268d8470aab6c31432785221bae58327ef5f6ea58}{POSITIVE}}
+, \mbox{\hyperlink{group__HybridDynamicsSubModule_gga4179a1dd2049e4cb6ee977ee268d8470a0f9e8e3552c7f87e044893e7620b476d}{MONOTONE}}
+, \newline
+\mbox{\hyperlink{group__HybridDynamicsSubModule_gga4179a1dd2049e4cb6ee977ee268d8470af0e494a5b9821b6ae99ecc9cc4413e42}{INCREASING}}
+, \mbox{\hyperlink{group__HybridDynamicsSubModule_gga4179a1dd2049e4cb6ee977ee268d8470aeb1a1f88661e1da8ddf15d8c9818daad}{DECREASING}}
+, \mbox{\hyperlink{group__HybridDynamicsSubModule_gga4179a1dd2049e4cb6ee977ee268d8470afd60c95517f30f940fb63c6dcfd10181}{CONCAVE}}
+, \mbox{\hyperlink{group__HybridDynamicsSubModule_gga4179a1dd2049e4cb6ee977ee268d8470a87f945db7c7f9bb3f6b4931ae074a2ca}{CONVEX}}
+, \newline
+\mbox{\hyperlink{group__HybridDynamicsSubModule_gga4179a1dd2049e4cb6ee977ee268d8470aad3af5e9770232d2363f9875000c16ec}{TRANSVERSE}}
+, \mbox{\hyperlink{group__HybridDynamicsSubModule_gga4179a1dd2049e4cb6ee977ee268d8470aabc4b89db06cd86d6bf2704a06ec92d4}{GRAZING}}
+ \}
+\begin{DoxyCompactList}\small\item\em The way trajectories of the flow $\phi(x_0,t)$ of $\frac{dx}{dt}=f(x)$ cross the guard set $g(x)=0$. The rate of change of the guard function changes along flow lines is given by $d g(x(t))/dt = L_{f}g(x(t))$ where the Lie derivative $L_{f}g$ is defined by $L_{f}g(x) = (\nabla g\cdot f)(x)$. \end{DoxyCompactList}\item 
+enum class \mbox{\hyperlink{group__HybridDynamicsSubModule_ga79c7231766d05a92d72e027f2a7e9e46}{Step\+Kind}} \+: std\+::uint8\+\_\+t \{ \newline
+\mbox{\hyperlink{group__HybridDynamicsSubModule_gga79c7231766d05a92d72e027f2a7e9e46a56c1707c709ac0c044a926f60cc6f3ec}{CONSTANT\+\_\+\+EVOLUTION\+\_\+\+TIME}}
+, \mbox{\hyperlink{group__HybridDynamicsSubModule_gga79c7231766d05a92d72e027f2a7e9e46a5adf289f0fe7f1801f53f316d7fbe04f}{SPACE\+\_\+\+DEPENDENT\+\_\+\+EVOLUTION\+\_\+\+TIME}}
+, \mbox{\hyperlink{group__HybridDynamicsSubModule_gga79c7231766d05a92d72e027f2a7e9e46a31e31bf3e1720f5854ebd63e689dc243}{TIME\+\_\+\+DEPENDENT\+\_\+\+EVOLUTION\+\_\+\+TIME}}
+, \mbox{\hyperlink{group__HybridDynamicsSubModule_gga79c7231766d05a92d72e027f2a7e9e46a62c64e571d01851aa966babdab2b2418}{SPACETIME\+\_\+\+DEPENDENT\+\_\+\+EVOLUTION\+\_\+\+TIME}}
+, \newline
+\mbox{\hyperlink{group__HybridDynamicsSubModule_gga79c7231766d05a92d72e027f2a7e9e46a3b70d13b6e7e24d62e1678ddce114a4a}{PARAMETER\+\_\+\+DEPENDENT\+\_\+\+EVOLUTION\+\_\+\+TIME}}
+, \mbox{\hyperlink{group__HybridDynamicsSubModule_gga79c7231766d05a92d72e027f2a7e9e46aa91d18a1713aa8dad91c5a9d996a3358}{PARAMETER\+\_\+\+DEPENDENT\+\_\+\+FINISHING\+\_\+\+TIME}}
+, \mbox{\hyperlink{group__HybridDynamicsSubModule_gga79c7231766d05a92d72e027f2a7e9e46ad965ec4b14c3909e86d99ac6e15b5114}{SPACETIME\+\_\+\+DEPENDENT\+\_\+\+FINISHING\+\_\+\+TIME}}
+, \mbox{\hyperlink{group__HybridDynamicsSubModule_gga79c7231766d05a92d72e027f2a7e9e46ad075f5666ea37977e1f323f57560968a}{CONSTANT\+\_\+\+FINISHING\+\_\+\+TIME}}
+ \}
+\begin{DoxyCompactList}\small\item\em The kind of step taken in the evolution. Determines how the evolution time is specified. \end{DoxyCompactList}\item 
+enum class \mbox{\hyperlink{group__HybridDynamicsSubModule_gaab38dcc1842690eb2fb23b9ef2930954}{Finishing\+Kind}} \+: std\+::uint8\+\_\+t \{ \mbox{\hyperlink{group__HybridDynamicsSubModule_ggaab38dcc1842690eb2fb23b9ef2930954a3141a879c1130120e8287ec5c420c1a9}{BEFORE\+\_\+\+FINAL\+\_\+\+TIME}}
+, \mbox{\hyperlink{group__HybridDynamicsSubModule_ggaab38dcc1842690eb2fb23b9ef2930954af1e826c3c262937b0a2a8469be37e912}{AT\+\_\+\+FINAL\+\_\+\+TIME}}
+, \mbox{\hyperlink{group__HybridDynamicsSubModule_ggaab38dcc1842690eb2fb23b9ef2930954a8089fa4c7fd0faf6d6a7ceb2f2df7e76}{AFTER\+\_\+\+FINAL\+\_\+\+TIME}}
+, \mbox{\hyperlink{group__HybridDynamicsSubModule_ggaab38dcc1842690eb2fb23b9ef2930954a7fd663deae4100e4162f0f9fd7b2b879}{STRADDLE\+\_\+\+FINAL\+\_\+\+TIME}}
+ \}
+\begin{DoxyCompactList}\small\item\em The way in which the step interacts with the final evolution time. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\label{doc-enum-members}
+\Hypertarget{group__HybridDynamicsSubModule_doc-enum-members}
+\doxysubsubsubsection{Enumeration Type Documentation}
+\Hypertarget{group__HybridDynamicsSubModule_ga4179a1dd2049e4cb6ee977ee268d8470}\index{Hybrid evolution@{Hybrid evolution}!CrossingKind@{CrossingKind}}
+\index{CrossingKind@{CrossingKind}!Hybrid evolution@{Hybrid evolution}}
+\doxyparagraph{\texorpdfstring{CrossingKind}{CrossingKind}}
+{\footnotesize\ttfamily \label{group__HybridDynamicsSubModule_ga4179a1dd2049e4cb6ee977ee268d8470} 
+enum class \mbox{\hyperlink{group__HybridDynamicsSubModule_ga4179a1dd2049e4cb6ee977ee268d8470}{Crossing\+Kind}} \+: std\+::uint8\+\_\+t\hspace{0.3cm}{\ttfamily [strong]}}
+
+
+
+The way trajectories of the flow $\phi(x_0,t)$ of $\frac{dx}{dt}=f(x)$ cross the guard set $g(x)=0$. The rate of change of the guard function changes along flow lines is given by $d g(x(t))/dt = L_{f}g(x(t))$ where the Lie derivative $L_{f}g$ is defined by $L_{f}g(x) = (\nabla g\cdot f)(x)$. 
+
+Defaults to DEGENERATE whenever the crossing kind has not been resolved; this need not necessarily mean that the crossing is degenerate, but may also imply that the crossing information is too expensive or sensitive to compute. \begin{DoxyEnumFields}[2]{Enumerator}
+\raisebox{\heightof{T}}[0pt][0pt]{\index{DEGENERATE@{DEGENERATE}!Hybrid evolution@{Hybrid evolution}}\index{Hybrid evolution@{Hybrid evolution}!DEGENERATE@{DEGENERATE}}}\Hypertarget{group__HybridDynamicsSubModule_gga4179a1dd2049e4cb6ee977ee268d8470a6084ee8bb30ae219127db8b7aece408a}\label{group__HybridDynamicsSubModule_gga4179a1dd2049e4cb6ee977ee268d8470a6084ee8bb30ae219127db8b7aece408a} 
+DEGENERATE&The crossing may be degenerate to second order. \\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{NEGATIVE@{NEGATIVE}!Hybrid evolution@{Hybrid evolution}}\index{Hybrid evolution@{Hybrid evolution}!NEGATIVE@{NEGATIVE}}}\Hypertarget{group__HybridDynamicsSubModule_gga4179a1dd2049e4cb6ee977ee268d8470a50546bf973283065b6ccf09faf7a580a}\label{group__HybridDynamicsSubModule_gga4179a1dd2049e4cb6ee977ee268d8470a50546bf973283065b6ccf09faf7a580a} 
+NEGATIVE&The guard function is negative on the flow domain. No event occurs. \\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{POSITIVE@{POSITIVE}!Hybrid evolution@{Hybrid evolution}}\index{Hybrid evolution@{Hybrid evolution}!POSITIVE@{POSITIVE}}}\Hypertarget{group__HybridDynamicsSubModule_gga4179a1dd2049e4cb6ee977ee268d8470aab6c31432785221bae58327ef5f6ea58}\label{group__HybridDynamicsSubModule_gga4179a1dd2049e4cb6ee977ee268d8470aab6c31432785221bae58327ef5f6ea58} 
+POSITIVE&The guard function is negative on the domain. The event occurs immediately (if urgent) or at all times (if permissive). \\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{MONOTONE@{MONOTONE}!Hybrid evolution@{Hybrid evolution}}\index{Hybrid evolution@{Hybrid evolution}!MONOTONE@{MONOTONE}}}\Hypertarget{group__HybridDynamicsSubModule_gga4179a1dd2049e4cb6ee977ee268d8470a0f9e8e3552c7f87e044893e7620b476d}\label{group__HybridDynamicsSubModule_gga4179a1dd2049e4cb6ee977ee268d8470a0f9e8e3552c7f87e044893e7620b476d} 
+MONOTONE&The guard function is strictly increasing or decreasing along flow lines at a crossing point. i.\+e. $\frac{d}{dt}g(\phi(x_0,t))>0$ whenever $g(\phi(x_0,t))=0$. Implied by $L_{f}g \geq 0$. \\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{INCREASING@{INCREASING}!Hybrid evolution@{Hybrid evolution}}\index{Hybrid evolution@{Hybrid evolution}!INCREASING@{INCREASING}}}\Hypertarget{group__HybridDynamicsSubModule_gga4179a1dd2049e4cb6ee977ee268d8470af0e494a5b9821b6ae99ecc9cc4413e42}\label{group__HybridDynamicsSubModule_gga4179a1dd2049e4cb6ee977ee268d8470af0e494a5b9821b6ae99ecc9cc4413e42} 
+INCREASING&The guard function is strictly increasing along flow lines at a crossing point. i.\+e. $\frac{d}{dt}g(\phi(x_0,t))>0$ whenever $g(\phi(x_0,t))=0$. Implied by $L_{f}g \geq 0$. \\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{DECREASING@{DECREASING}!Hybrid evolution@{Hybrid evolution}}\index{Hybrid evolution@{Hybrid evolution}!DECREASING@{DECREASING}}}\Hypertarget{group__HybridDynamicsSubModule_gga4179a1dd2049e4cb6ee977ee268d8470aeb1a1f88661e1da8ddf15d8c9818daad}\label{group__HybridDynamicsSubModule_gga4179a1dd2049e4cb6ee977ee268d8470aeb1a1f88661e1da8ddf15d8c9818daad} 
+DECREASING&The guard function is strictly decreasing along flow lines. \\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{CONCAVE@{CONCAVE}!Hybrid evolution@{Hybrid evolution}}\index{Hybrid evolution@{Hybrid evolution}!CONCAVE@{CONCAVE}}}\Hypertarget{group__HybridDynamicsSubModule_gga4179a1dd2049e4cb6ee977ee268d8470afd60c95517f30f940fb63c6dcfd10181}\label{group__HybridDynamicsSubModule_gga4179a1dd2049e4cb6ee977ee268d8470afd60c95517f30f940fb63c6dcfd10181} 
+CONCAVE&The guard function is positive over at most an interval. Implied by concavity along flow lines, which is equivalent to $L_{f}^{2} g < 0$ within the reached set. \\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{CONVEX@{CONVEX}!Hybrid evolution@{Hybrid evolution}}\index{Hybrid evolution@{Hybrid evolution}!CONVEX@{CONVEX}}}\Hypertarget{group__HybridDynamicsSubModule_gga4179a1dd2049e4cb6ee977ee268d8470a87f945db7c7f9bb3f6b4931ae074a2ca}\label{group__HybridDynamicsSubModule_gga4179a1dd2049e4cb6ee977ee268d8470a87f945db7c7f9bb3f6b4931ae074a2ca} 
+CONVEX&The guard function is negative over at most an interval. Implied by convexity along flow lines. Implied by convexity along flow lines, which is equivalent to $L_{f}^{2} g > 0$ within the reached set. \\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{TRANSVERSE@{TRANSVERSE}!Hybrid evolution@{Hybrid evolution}}\index{Hybrid evolution@{Hybrid evolution}!TRANSVERSE@{TRANSVERSE}}}\Hypertarget{group__HybridDynamicsSubModule_gga4179a1dd2049e4cb6ee977ee268d8470aad3af5e9770232d2363f9875000c16ec}\label{group__HybridDynamicsSubModule_gga4179a1dd2049e4cb6ee977ee268d8470aad3af5e9770232d2363f9875000c16ec} 
+TRANSVERSE&The guard function is strictly increasing along flow lines, and the crossing time can be computed as a smooth function of the initial state. Given an initial point $x_0$, the crossing time is $\gamma(x_0)$. \\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{GRAZING@{GRAZING}!Hybrid evolution@{Hybrid evolution}}\index{Hybrid evolution@{Hybrid evolution}!GRAZING@{GRAZING}}}\Hypertarget{group__HybridDynamicsSubModule_gga4179a1dd2049e4cb6ee977ee268d8470aabc4b89db06cd86d6bf2704a06ec92d4}\label{group__HybridDynamicsSubModule_gga4179a1dd2049e4cb6ee977ee268d8470aabc4b89db06cd86d6bf2704a06ec92d4} 
+GRAZING&The time at which the guard function reaches a maximum along flow lines is a smooth function $\mu(x_0)$ of the initial state $x_0$. Implies by concavity along flow lines, which is equivalent to $L_{f}^{2} g < 0$ within the reached set. \\
+\hline
+
+\end{DoxyEnumFields}
+\Hypertarget{group__HybridDynamicsSubModule_ga79c7231766d05a92d72e027f2a7e9e46}\index{Hybrid evolution@{Hybrid evolution}!StepKind@{StepKind}}
+\index{StepKind@{StepKind}!Hybrid evolution@{Hybrid evolution}}
+\doxyparagraph{\texorpdfstring{StepKind}{StepKind}}
+{\footnotesize\ttfamily \label{group__HybridDynamicsSubModule_ga79c7231766d05a92d72e027f2a7e9e46} 
+enum class \mbox{\hyperlink{group__HybridDynamicsSubModule_ga79c7231766d05a92d72e027f2a7e9e46}{Step\+Kind}} \+: std\+::uint8\+\_\+t\hspace{0.3cm}{\ttfamily [strong]}}
+
+
+
+The kind of step taken in the evolution. Determines how the evolution time is specified. 
+
+Assumes that the starting set and time is given as a subset of $\{ \xi(s); \tau(s) \mid s\in D\}$ where $s\in D$ is a parameter, $x=\xi(s)$ is the state corresponding to parameter $s$, and $t=\tau(s)$ is the time the point has so far been evolved for. Assumes that the flow is given by a function $x\textnormal{\textquotesingle}=\phi(x,t)$, typically only defined over a bounded set of space and time. \begin{DoxySeeAlso}{See also}
+\doxylink{structAriadne_1_1TimingData}{Timing\+Data} 
+\end{DoxySeeAlso}
+\begin{DoxyEnumFields}[2]{Enumerator}
+\raisebox{\heightof{T}}[0pt][0pt]{\index{CONSTANT\_EVOLUTION\_TIME@{CONSTANT\_EVOLUTION\_TIME}!Hybrid evolution@{Hybrid evolution}}\index{Hybrid evolution@{Hybrid evolution}!CONSTANT\_EVOLUTION\_TIME@{CONSTANT\_EVOLUTION\_TIME}}}\Hypertarget{group__HybridDynamicsSubModule_gga79c7231766d05a92d72e027f2a7e9e46a56c1707c709ac0c044a926f60cc6f3ec}\label{group__HybridDynamicsSubModule_gga79c7231766d05a92d72e027f2a7e9e46a56c1707c709ac0c044a926f60cc6f3ec} 
+CONSTANT\+\_\+\+EVOLUTION\+\_\+\+TIME&The step is taken for a fixed time $h$. The actual step length depends only on the starting state. After the step, we have $\xi\textnormal{\textquotesingle}(s) = \phi(\xi(s),h)$ and $\tau\textnormal{\textquotesingle}(s)=\tau(s)+h$. \\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{SPACE\_DEPENDENT\_EVOLUTION\_TIME@{SPACE\_DEPENDENT\_EVOLUTION\_TIME}!Hybrid evolution@{Hybrid evolution}}\index{Hybrid evolution@{Hybrid evolution}!SPACE\_DEPENDENT\_EVOLUTION\_TIME@{SPACE\_DEPENDENT\_EVOLUTION\_TIME}}}\Hypertarget{group__HybridDynamicsSubModule_gga79c7231766d05a92d72e027f2a7e9e46a5adf289f0fe7f1801f53f316d7fbe04f}\label{group__HybridDynamicsSubModule_gga79c7231766d05a92d72e027f2a7e9e46a5adf289f0fe7f1801f53f316d7fbe04f} 
+SPACE\+\_\+\+DEPENDENT\+\_\+\+EVOLUTION\+\_\+\+TIME&The step is taken for a time $\varepsilon(x)$ depending only on the starting state. After the step, we have $\xi\textnormal{\textquotesingle}(s) = \phi(\xi(s),\varepsilon(\xi(s)))$ and $\tau\textnormal{\textquotesingle}(s)=\tau(s)+\varepsilon(\xi(s))$. \\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{TIME\_DEPENDENT\_EVOLUTION\_TIME@{TIME\_DEPENDENT\_EVOLUTION\_TIME}!Hybrid evolution@{Hybrid evolution}}\index{Hybrid evolution@{Hybrid evolution}!TIME\_DEPENDENT\_EVOLUTION\_TIME@{TIME\_DEPENDENT\_EVOLUTION\_TIME}}}\Hypertarget{group__HybridDynamicsSubModule_gga79c7231766d05a92d72e027f2a7e9e46a31e31bf3e1720f5854ebd63e689dc243}\label{group__HybridDynamicsSubModule_gga79c7231766d05a92d72e027f2a7e9e46a31e31bf3e1720f5854ebd63e689dc243} 
+TIME\+\_\+\+DEPENDENT\+\_\+\+EVOLUTION\+\_\+\+TIME&The step is taken for a time $\varepsilon(t)$ depending only on the starting time. After the step, we have $\xi\textnormal{\textquotesingle}(s) = \phi(\xi(s),\varepsilon(\tau(s)))$ and $\tau\textnormal{\textquotesingle}(s)=\tau(s)+\varepsilon(\tau(s))$. \\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{SPACETIME\_DEPENDENT\_EVOLUTION\_TIME@{SPACETIME\_DEPENDENT\_EVOLUTION\_TIME}!Hybrid evolution@{Hybrid evolution}}\index{Hybrid evolution@{Hybrid evolution}!SPACETIME\_DEPENDENT\_EVOLUTION\_TIME@{SPACETIME\_DEPENDENT\_EVOLUTION\_TIME}}}\Hypertarget{group__HybridDynamicsSubModule_gga79c7231766d05a92d72e027f2a7e9e46a62c64e571d01851aa966babdab2b2418}\label{group__HybridDynamicsSubModule_gga79c7231766d05a92d72e027f2a7e9e46a62c64e571d01851aa966babdab2b2418} 
+SPACETIME\+\_\+\+DEPENDENT\+\_\+\+EVOLUTION\+\_\+\+TIME&The step is taken for a time $\varepsilon(x,t)$ depending only on the current state (space and time). After the step, we have $\xi\textnormal{\textquotesingle}(s) = \phi(\xi(s),\varepsilon(\xi(s),\tau(s)))$ and $\tau\textnormal{\textquotesingle}(s)=\tau(s)+\varepsilon(\xi(s),\tau(s))$. \\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{PARAMETER\_DEPENDENT\_EVOLUTION\_TIME@{PARAMETER\_DEPENDENT\_EVOLUTION\_TIME}!Hybrid evolution@{Hybrid evolution}}\index{Hybrid evolution@{Hybrid evolution}!PARAMETER\_DEPENDENT\_EVOLUTION\_TIME@{PARAMETER\_DEPENDENT\_EVOLUTION\_TIME}}}\Hypertarget{group__HybridDynamicsSubModule_gga79c7231766d05a92d72e027f2a7e9e46a3b70d13b6e7e24d62e1678ddce114a4a}\label{group__HybridDynamicsSubModule_gga79c7231766d05a92d72e027f2a7e9e46a3b70d13b6e7e24d62e1678ddce114a4a} 
+PARAMETER\+\_\+\+DEPENDENT\+\_\+\+EVOLUTION\+\_\+\+TIME&The step is taken for a time $\delta(s)$ depending on the parameterisation of the set. After the step, we have $\xi\textnormal{\textquotesingle}(s) = \phi(\xi(s),\delta(s))$ and $\tau\textnormal{\textquotesingle}(s)=\tau(s)+\delta(s)$. \\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{PARAMETER\_DEPENDENT\_FINISHING\_TIME@{PARAMETER\_DEPENDENT\_FINISHING\_TIME}!Hybrid evolution@{Hybrid evolution}}\index{Hybrid evolution@{Hybrid evolution}!PARAMETER\_DEPENDENT\_FINISHING\_TIME@{PARAMETER\_DEPENDENT\_FINISHING\_TIME}}}\Hypertarget{group__HybridDynamicsSubModule_gga79c7231766d05a92d72e027f2a7e9e46aa91d18a1713aa8dad91c5a9d996a3358}\label{group__HybridDynamicsSubModule_gga79c7231766d05a92d72e027f2a7e9e46aa91d18a1713aa8dad91c5a9d996a3358} 
+PARAMETER\+\_\+\+DEPENDENT\+\_\+\+FINISHING\+\_\+\+TIME&The step is taken up to a time $\omega(s)$ depending on the parameterisation of the starting set. After the step, we have $\xi\textnormal{\textquotesingle}(s) = \phi(\xi(s),\omega(s)-\tau(s))$ and $\tau\textnormal{\textquotesingle}(s)=\omega(s)$. \\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{SPACETIME\_DEPENDENT\_FINISHING\_TIME@{SPACETIME\_DEPENDENT\_FINISHING\_TIME}!Hybrid evolution@{Hybrid evolution}}\index{Hybrid evolution@{Hybrid evolution}!SPACETIME\_DEPENDENT\_FINISHING\_TIME@{SPACETIME\_DEPENDENT\_FINISHING\_TIME}}}\Hypertarget{group__HybridDynamicsSubModule_gga79c7231766d05a92d72e027f2a7e9e46ad965ec4b14c3909e86d99ac6e15b5114}\label{group__HybridDynamicsSubModule_gga79c7231766d05a92d72e027f2a7e9e46ad965ec4b14c3909e86d99ac6e15b5114} 
+SPACETIME\+\_\+\+DEPENDENT\+\_\+\+FINISHING\+\_\+\+TIME&The step is taken up to a time $\omega(x,t)$ depending only on the current state (space and time). After the step, we have $\xi\textnormal{\textquotesingle}(s) = \phi(\xi(s),\omega(\xi(s),\tau(s)-\tau(s)))$ and $\tau\textnormal{\textquotesingle}(s)=\omega(\xi(s),\tau(s))$. \\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{CONSTANT\_FINISHING\_TIME@{CONSTANT\_FINISHING\_TIME}!Hybrid evolution@{Hybrid evolution}}\index{Hybrid evolution@{Hybrid evolution}!CONSTANT\_FINISHING\_TIME@{CONSTANT\_FINISHING\_TIME}}}\Hypertarget{group__HybridDynamicsSubModule_gga79c7231766d05a92d72e027f2a7e9e46ad075f5666ea37977e1f323f57560968a}\label{group__HybridDynamicsSubModule_gga79c7231766d05a92d72e027f2a7e9e46ad075f5666ea37977e1f323f57560968a} 
+CONSTANT\+\_\+\+FINISHING\+\_\+\+TIME&The step is taken up to the specified evolution time $t_{\max}$. The actual step length depends on the parameterisation. After the step, we have $\xi\textnormal{\textquotesingle}(s) = \phi(\xi(s),t_{\max}-\tau(s))$ and $\tau\textnormal{\textquotesingle}(s)=t_{\max}$. \\
+\hline
+
+\end{DoxyEnumFields}
+\Hypertarget{group__HybridDynamicsSubModule_gaab38dcc1842690eb2fb23b9ef2930954}\index{Hybrid evolution@{Hybrid evolution}!FinishingKind@{FinishingKind}}
+\index{FinishingKind@{FinishingKind}!Hybrid evolution@{Hybrid evolution}}
+\doxyparagraph{\texorpdfstring{FinishingKind}{FinishingKind}}
+{\footnotesize\ttfamily \label{group__HybridDynamicsSubModule_gaab38dcc1842690eb2fb23b9ef2930954} 
+enum class \mbox{\hyperlink{group__HybridDynamicsSubModule_gaab38dcc1842690eb2fb23b9ef2930954}{Finishing\+Kind}} \+: std\+::uint8\+\_\+t\hspace{0.3cm}{\ttfamily [strong]}}
+
+
+
+The way in which the step interacts with the final evolution time. 
+
+Used to control whether final time constraints need to be added, whether further evolution is possible, and whether and how sets should be put in the list of final sets. Needed since the final time may be an arbitrary real number, at it may not be possible to determine whether a given enclosure is exactly at the final time or not \begin{DoxySeeAlso}{See also}
+\doxylink{structAriadne_1_1TimingData}{Timing\+Data} 
+\end{DoxySeeAlso}
+\begin{DoxyEnumFields}[2]{Enumerator}
+\raisebox{\heightof{T}}[0pt][0pt]{\index{BEFORE\_FINAL\_TIME@{BEFORE\_FINAL\_TIME}!Hybrid evolution@{Hybrid evolution}}\index{Hybrid evolution@{Hybrid evolution}!BEFORE\_FINAL\_TIME@{BEFORE\_FINAL\_TIME}}}\Hypertarget{group__HybridDynamicsSubModule_ggaab38dcc1842690eb2fb23b9ef2930954a3141a879c1130120e8287ec5c420c1a9}\label{group__HybridDynamicsSubModule_ggaab38dcc1842690eb2fb23b9ef2930954a3141a879c1130120e8287ec5c420c1a9} 
+BEFORE\+\_\+\+FINAL\+\_\+\+TIME&At the end of the step, the final time has definitely not been reached by any point. \\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{AT\_FINAL\_TIME@{AT\_FINAL\_TIME}!Hybrid evolution@{Hybrid evolution}}\index{Hybrid evolution@{Hybrid evolution}!AT\_FINAL\_TIME@{AT\_FINAL\_TIME}}}\Hypertarget{group__HybridDynamicsSubModule_ggaab38dcc1842690eb2fb23b9ef2930954af1e826c3c262937b0a2a8469be37e912}\label{group__HybridDynamicsSubModule_ggaab38dcc1842690eb2fb23b9ef2930954af1e826c3c262937b0a2a8469be37e912} 
+AT\+\_\+\+FINAL\+\_\+\+TIME&At the end of the step, the final time is reached exactly. No more evolution is possible. \\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{AFTER\_FINAL\_TIME@{AFTER\_FINAL\_TIME}!Hybrid evolution@{Hybrid evolution}}\index{Hybrid evolution@{Hybrid evolution}!AFTER\_FINAL\_TIME@{AFTER\_FINAL\_TIME}}}\Hypertarget{group__HybridDynamicsSubModule_ggaab38dcc1842690eb2fb23b9ef2930954a8089fa4c7fd0faf6d6a7ceb2f2df7e76}\label{group__HybridDynamicsSubModule_ggaab38dcc1842690eb2fb23b9ef2930954a8089fa4c7fd0faf6d6a7ceb2f2df7e76} 
+AFTER\+\_\+\+FINAL\+\_\+\+TIME&At the end of the step, the final time has definitely been passed by every point. No more evolution is possible. \\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{STRADDLE\_FINAL\_TIME@{STRADDLE\_FINAL\_TIME}!Hybrid evolution@{Hybrid evolution}}\index{Hybrid evolution@{Hybrid evolution}!STRADDLE\_FINAL\_TIME@{STRADDLE\_FINAL\_TIME}}}\Hypertarget{group__HybridDynamicsSubModule_ggaab38dcc1842690eb2fb23b9ef2930954a7fd663deae4100e4162f0f9fd7b2b879}\label{group__HybridDynamicsSubModule_ggaab38dcc1842690eb2fb23b9ef2930954a7fd663deae4100e4162f0f9fd7b2b879} 
+STRADDLE\+\_\+\+FINAL\+\_\+\+TIME&At the end of the step, some points may have passed the final time, and some may not reached it. Usable as a default value. \\
+\hline
+
+\end{DoxyEnumFields}

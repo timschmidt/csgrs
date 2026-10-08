@@ -1,0 +1,7 @@
+{
+  "first_review_exit_code": 1,
+  "synchronous": true,
+  "failure": "Rustfmt split the guarded boolean expression across lines.",
+  "correction": "Normalize whitespace before checking the exact boolean gate.",
+  "production_source_changed": false
+}

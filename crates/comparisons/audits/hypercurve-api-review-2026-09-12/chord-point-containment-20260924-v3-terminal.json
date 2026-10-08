@@ -1,0 +1,211 @@
+{
+  "checks": [
+    {
+      "label": "fmt",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustfmt",
+        "--edition",
+        "2024",
+        "--check",
+        "src/bezier_offset.rs",
+        "src/bezier_region.rs",
+        "src/curve.rs",
+        "src/curve_evaluation.rs",
+        "src/curve_region_boolean.rs",
+        "src/curve_support_intersection.rs"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 3.232623241026886,
+      "log": "chord-point-containment-20260924-v3-fmt.log"
+    },
+    {
+      "label": "clippy-1",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "clippy",
+        "--all-targets",
+        "--all-features",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 25.520869655068964,
+      "log": "chord-point-containment-20260924-v3-clippy-1.log"
+    },
+    {
+      "label": "clippy-2",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "clippy",
+        "--all-targets",
+        "--no-default-features",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 24.62763125996571,
+      "log": "chord-point-containment-20260924-v3-clippy-2.log"
+    }
+  ],
+  "cases": [
+    {
+      "label": "algebraic_chord_retains_independent_endpoint_fields_under_both_policies",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/chord-point-containment-20260924-v3-libtest",
+        "--exact",
+        "bezier_offset::conversion_tests::algebraic_chord_retains_independent_endpoint_fields_under_both_policies",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.2815384219866246,
+      "log": "chord-point-containment-20260924-v3-algebraic_chord_retains_independent_endpoint_fields_under_both_policies.log"
+    },
+    {
+      "label": "independent_field_corner_edits_preserve_normalized_sets",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/chord-point-containment-20260924-v3-libtest",
+        "--exact",
+        "bezier_region::tests::independent_field_corner_edits_preserve_normalized_sets",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.8309612859738991,
+      "log": "chord-point-containment-20260924-v3-independent_field_corner_edits_preserve_normalized_sets.log"
+    },
+    {
+      "label": "retained_analytic_corners_preserve_normalized_sets",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/chord-point-containment-20260924-v3-libtest",
+        "--exact",
+        "bezier_region::tests::retained_analytic_corners_preserve_normalized_sets",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 10.042165773920715,
+      "log": "chord-point-containment-20260924-v3-retained_analytic_corners_preserve_normalized_sets.log"
+    },
+    {
+      "label": "retained_chord_incidence_replays_independently_allocated_coefficient_fields",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/chord-point-containment-20260924-v3-libtest",
+        "--exact",
+        "bezier_offset::conversion_tests::retained_chord_incidence_replays_independently_allocated_coefficient_fields",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.2925353179452941,
+      "log": "chord-point-containment-20260924-v3-retained_chord_incidence_replays_independently_allocated_coefficient_fields.log"
+    },
+    {
+      "label": "independent_field_algebraic_chord_intersects_rational_curve_under_both_policies",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/chord-point-containment-20260924-v3-libtest",
+        "--exact",
+        "bezier_offset::conversion_tests::independent_field_algebraic_chord_intersects_rational_curve_under_both_policies",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.305188890080899,
+      "log": "chord-point-containment-20260924-v3-independent_field_algebraic_chord_intersects_rational_curve_under_both_policies.log"
+    },
+    {
+      "label": "retained_chord_coordinate_and_linear_queries_observe_requested_policy",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/chord-point-containment-20260924-v3-libtest",
+        "--exact",
+        "bezier_offset::conversion_tests::retained_chord_coordinate_and_linear_queries_observe_requested_policy",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.41052435303572565,
+      "log": "chord-point-containment-20260924-v3-retained_chord_coordinate_and_linear_queries_observe_requested_policy.log"
+    },
+    {
+      "label": "boundary_side_rays_skip_retained_cusp_contacts_across_loops",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/chord-point-containment-20260924-v3-libtest",
+        "--exact",
+        "bezier_region::tests::boundary_side_rays_skip_retained_cusp_contacts_across_loops",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.27627176395617425,
+      "log": "chord-point-containment-20260924-v3-boundary_side_rays_skip_retained_cusp_contacts_across_loops.log"
+    },
+    {
+      "label": "provenance_support_represents_a_chord_between_correlated_cuts",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/chord-point-containment-20260924-v3-libtest",
+        "--exact",
+        "bezier_offset::conversion_tests::provenance_support_represents_a_chord_between_correlated_cuts",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.26307260000612587,
+      "log": "chord-point-containment-20260924-v3-provenance_support_represents_a_chord_between_correlated_cuts.log"
+    },
+    {
+      "label": "algebraic_chord_source_incidence_deflates_only_the_retained_contact",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/chord-point-containment-20260924-v3-libtest",
+        "--exact",
+        "bezier_offset::conversion_tests::algebraic_chord_source_incidence_deflates_only_the_retained_contact",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.2717935509281233,
+      "log": "chord-point-containment-20260924-v3-algebraic_chord_source_incidence_deflates_only_the_retained_contact.log"
+    },
+    {
+      "label": "closed_ph_corner_edits_preserve_both_normalized_source_lobes",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/chord-point-containment-20260924-v3-libtest",
+        "--exact",
+        "bezier_region::tests::closed_ph_corner_edits_preserve_both_normalized_source_lobes",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.38701619603671134,
+      "log": "chord-point-containment-20260924-v3-closed_ph_corner_edits_preserve_both_normalized_source_lobes.log"
+    }
+  ],
+  "all_processes_reaped": true,
+  "binary_sha256": "f33d059a83ea291015f02a6b2b2da55526626423c28fb34ffaa4dc92a753c1a3",
+  "all_sources_unchanged": true
+}

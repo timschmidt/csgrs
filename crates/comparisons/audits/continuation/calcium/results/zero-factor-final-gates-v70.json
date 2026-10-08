@@ -1,0 +1,13 @@
+{
+  "tag": "zero-factor-final-gates-v70",
+  "started": "2026-09-11T19:05:12.648Z",
+  "finished": "2026-09-11T19:07:41.047Z",
+  "elapsedSeconds": 148.396972783,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "node",
+  "args": [
+    "run-zero-factor-final-v70.mjs"
+  ],
+  "code": 0,
+  "signal": null
+}

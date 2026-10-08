@@ -1,0 +1,8 @@
+{
+  "rlib": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/debug/deps/libhyperreal-0a54a513767aef0d.rlib",
+  "sha256": "7286b0746869ef2e8e58cf24912a8ed4a4e2cfd2e9266366db1c919a490f5473",
+  "source_sha256": "f04f140df31bff843ccef5522d65829fd4e598f8a7e4c0b12ae7d68aba043694",
+  "binary_sha256": "bef7d0f98e6264d30d149e6d9898cc62ffb8a5941c33d35ac2fc9f87b0ac275c",
+  "returncode": 0,
+  "all_processes_reaped": true
+}

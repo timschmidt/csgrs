@@ -1,0 +1,54 @@
+{
+  "builds": [
+    {
+      "variant": "parent",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "build",
+        "--release",
+        "--all-features",
+        "--example",
+        "boundary_nonph_reentry_probe_20260923",
+        "--message-format=json",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.9095573839731514
+    },
+    {
+      "variant": "candidate",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "build",
+        "--release",
+        "--all-features",
+        "--example",
+        "boundary_nonph_reentry_probe_20260923",
+        "--message-format=json",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.9113245930057019
+    }
+  ],
+  "runs": [
+    {
+      "variant": "parent",
+      "returncode": "timeout",
+      "elapsed_seconds": 75.00344616500661,
+      "binary_sha256": "21db14f0c3a612b6cf251424293b0952b3fb14fa01b9feb28f799256d00d823e",
+      "log": "boundary-api-20260923-nonph-parent.log"
+    },
+    {
+      "variant": "candidate",
+      "returncode": "timeout",
+      "elapsed_seconds": 75.00331179401837,
+      "binary_sha256": "147c9e56ab557937209f1a998d18a3213efed65ffc84a73e31408647b9ca0572",
+      "log": "boundary-api-20260923-nonph-candidate.log"
+    }
+  ],
+  "probe_sha256": "9fea1c787c27fe8c2216b77c6bc983475acef074cd080438396962195af36e25",
+  "all_production_and_working_sources_unchanged": true
+}

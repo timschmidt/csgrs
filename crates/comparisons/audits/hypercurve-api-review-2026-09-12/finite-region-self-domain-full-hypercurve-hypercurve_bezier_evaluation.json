@@ -1,0 +1,27 @@
+{
+  "repo": "hypercurve",
+  "target": "hypercurve_bezier_evaluation",
+  "binary": "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve_bezier_evaluation-c8ef8f59902357c7",
+  "command": [
+    "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve_bezier_evaluation-c8ef8f59902357c7",
+    "--test-threads=4",
+    "--color",
+    "never"
+  ],
+  "sha256": "138bc13f2e3fcde7dcc7dd643f8a4cce32ac7363435fb40bf56b528b7fc9d79c",
+  "returncode": 0,
+  "timed_out": false,
+  "elapsed_seconds": 0.003416995983570814,
+  "log": "finite-region-self-domain-full-hypercurve-hypercurve_bezier_evaluation.log",
+  "passed": [
+    "optimized_polynomial_evaluation_matches_de_casteljau_exactly",
+    "certified_exact_scalar_segmentation_covers_rational_bezier_and_nurbs"
+  ],
+  "failed": [],
+  "ignored": [],
+  "summaries": [
+    "test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s"
+  ],
+  "new_failures": [],
+  "known_failures": []
+}

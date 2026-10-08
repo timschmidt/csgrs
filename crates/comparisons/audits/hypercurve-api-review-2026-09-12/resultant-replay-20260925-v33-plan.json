@@ -1,0 +1,9 @@
+{
+  "parent": "53fe47500063790089bf886ffdfc8fd69e1e02dd",
+  "files": [
+    "src/curve_resultant.rs",
+    "src/lib.rs"
+  ],
+  "source_manifest": "local-chord-complete-replay-20260924-v33-sources.json",
+  "hypercurve_uncommitted": true
+}

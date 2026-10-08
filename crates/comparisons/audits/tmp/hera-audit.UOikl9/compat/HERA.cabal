@@ -1,0 +1,29 @@
+Name:                   HERA
+Version:                0.2
+Cabal-Version:          >= 1.2
+License:                BSD3
+License-file:           LICENSE
+Stability:              experimental
+Category:               Math
+Tested-With:            GHC==6.8.2 GHC==6.8.3
+Build-Depends:          base
+Exposed-modules:        Data.Number.DyadicInterval
+                        Data.Number.Dyadic
+                        Data.Number.Ball
+                        Data.Number.Real
+                        Data.Order
+			Data.Number.MPFR
+                        
+Other-modules:		Data.Number.FFIhelper
+
+
+build-type:             Simple
+build-tools:            hsc2hs
+GHC-options:            -Wall -O2 -fvia-C -optc-O2
+include-dirs:           C
+includes:               hsmpfr.h mpfr.h
+install-includes:       hsmpfr.h
+c-sources:              C/hsmpfr.c
+
+extra-lib-dirs:
+extra-libraries:        mpfr

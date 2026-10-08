@@ -1,0 +1,71 @@
+{
+  "checks": [
+    {
+      "label": "fmt",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustfmt",
+        "--edition",
+        "2024",
+        "--check",
+        "src/bezier_region.rs"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.7309496449306607,
+      "log": "independent-field-corners-20260924-v1-fmt.log"
+    },
+    {
+      "label": "clippy-1",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "clippy",
+        "--all-targets",
+        "--all-features",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 26.186321371002123,
+      "log": "independent-field-corners-20260924-v1-clippy-1.log"
+    },
+    {
+      "label": "clippy-2",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "clippy",
+        "--all-targets",
+        "--no-default-features",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 25.671444586012512,
+      "log": "independent-field-corners-20260924-v1-clippy-2.log"
+    }
+  ],
+  "cases": [
+    {
+      "label": "independent_field_corner_edits_preserve_normalized_sets",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/independent-field-corners-20260924-v1-libtest",
+        "--exact",
+        "bezier_region::tests::independent_field_corner_edits_preserve_normalized_sets",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 101,
+      "elapsed_seconds": 0.5906486879102886,
+      "log": "independent-field-corners-20260924-v1-independent_field_corner_edits_preserve_normalized_sets.log"
+    }
+  ],
+  "all_processes_reaped": true,
+  "binary_sha256": "237a87451e044263b6364fa9506772e7867a5ab4f21f9e02fb0ec615d185afaf",
+  "all_sources_unchanged": true
+}

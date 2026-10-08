@@ -1,0 +1,27 @@
+{
+  "repo": "hypercurve",
+  "target": "hypercurve_offset",
+  "binary": "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve_offset-ad0f8503275088eb",
+  "command": [
+    "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve_offset-ad0f8503275088eb",
+    "--test-threads=4",
+    "--color",
+    "never"
+  ],
+  "sha256": "41e5d935e8651355af39d57515c91c0aeae77b8986402506929948f50d4f17ea",
+  "returncode": 0,
+  "timed_out": false,
+  "elapsed_seconds": 0.0033970870135817677,
+  "log": "finite-rational-pairs-full-hypercurve-hypercurve_offset.log",
+  "passed": [
+    "primitive_arc_reports_radius_collapse_boundary",
+    "native_line_and_arc_parallel_primitives_are_exact"
+  ],
+  "failed": [],
+  "ignored": [],
+  "summaries": [
+    "test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s"
+  ],
+  "new_failures": [],
+  "known_failures": []
+}

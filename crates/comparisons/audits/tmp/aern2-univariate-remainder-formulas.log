@@ -1,0 +1,2 @@
+Power.evalLip identity on [-1,1]: bounds=((-1) % 2,1 % 2), contains both exact endpoint values=False
+UnaryBallDFun smooth midpoint formula: bounds=((-3) % 8,5 % 8), upper below independent integral lower bound 1=True

@@ -1,0 +1,4 @@
+{"suite":"facts","case":0,"before":"Some(Positive)","after":"Some(Positive)","serialized_bytes":51}
+{"suite":"facts","case":1,"before":"Some(Positive)","after":"Some(Positive)","serialized_bytes":126}
+{"suite":"facts","case":2,"before":"Some(Positive)","after":"Some(Positive)","serialized_bytes":96}
+{"suite":"facts","case":3,"before":"Some(Positive)","after":"Some(Positive)","serialized_bytes":76}

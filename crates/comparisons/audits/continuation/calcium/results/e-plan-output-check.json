@@ -1,0 +1,14 @@
+{
+  "tag": "e-plan-output-check",
+  "started": "2026-09-10T00:42:49.530Z",
+  "finished": "2026-09-10T00:42:57.451Z",
+  "elapsedSeconds": 7.919417734,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "node",
+  "args": [
+    "check-e-plan.mjs",
+    "--e-plan-summary"
+  ],
+  "code": 0,
+  "signal": null
+}

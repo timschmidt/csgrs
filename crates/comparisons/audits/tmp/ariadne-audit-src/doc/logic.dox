@@ -1,0 +1,181 @@
+/***************************************************************************
+ *            logic.dox
+ *
+ *  Copyright  2004-7  Pieter Collins
+ *
+ ****************************************************************************/
+
+/*
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; either version 2 of the License, or
+ *  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Library General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program; if not, write to the Free Software
+ *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+ */
+
+
+
+/*! \file logic.dox
+ *  \brief Documentation on logical framework
+ */
+
+namespace Ariadne {
+
+/*!
+
+\page logic_page %Logical Foundations
+
+This page describes the logical foundations of computable analysis.
+For details on how this is implemented in %Ariadne, see the \ref LogicSubModule documentation.
+
+The foundations of computability theory underpinning this material is described on the \ref computable_analysis_page page.
+For information about computability theory for real numbers, see the \ref real_numbers_page page.
+
+
+\section undecidablelogic Undecidable Logic
+
+In standard logic, a proposition may either be \a true or \a false.
+The result is represented by an element of the \e %Boolean type \f$\B\f$.
+For comparisons between integer or rational numbers, this is sufficient; given \f$q_1,q_2\in\Q\f$,
+represented as fractions, we can decide (i.e. compute) whether \f$q_1\leq q_2\f$ or not.
+
+From the viewpoint of computation, however, %Boolean logic is insufficient.
+
+A classical example is the <em>halting problem</em>:
+is it possible to write a computer program which can inspect another program,
+and determine whether that program eventually terminates, or runs forever?
+It turns out that writing such a program is impossible!
+While some programs clearly terminate, and others clearly run forever,
+there are some whose behaviour is so complex that it is impossible to tell.
+This means that any (correct) program we write which aims to determine whether another program halts,
+will answer \a true or \a false for some inputs, but there must be other inputs
+for which our program either terminates with answer \a dont_know,
+or runs forever without producing a definite answer.
+To represent the output of such a program,
+we introduce a third logical value \a indeterminate (this terminology was used by the Boost::Tribool library)
+representing either "don't know" or "can't know".
+
+Another example is comparing two real numbers: given \f$r_1,r_2\in\R\f$, is \f$r_1\leq r_2\f$?
+If all the information about \f$r_1,r_2\f$ we have access to are the streams of digits from the decimal expansions,
+then the comparison is not always possible.
+Suppose we find \f$r_1=3.141592\cdots\f$ and \f$r_2=3.141592\cdots\f$.
+Then we cannot tell, at this stage of the computation, which of \f$r_1\f$ and \f$r_2\f$ is larger, or even whether they are equal.
+On computing more digits, we could find \f$r_1=3.141592653\,589\cdots\f$ and \f$r_2=3.141592653\,921\cdots\f$, in which case \f$r_1<r_2\f$.
+But we could instead find \f$r_2=3.141592653\,589\cdots\f$, so would still be unable to tell.
+On computing yet more digits we might find \f$r_1=3.141592653589793\,238\cdots\f$ and \f$r_2=3.141592653589793\,160\f$ in which case we can tell \f$r_1>r_2\f$, but we might also find \f$r_2=3.141592653589793\,238\cdots\f$, and still not know the answer.
+Of course, if \f$r_1\neq r_2\f$, by computing enough digits, we will \e eventually be able to decide which of \f$r_1<r_2\f$ or \f$r_2>r_1\f$ is true, but if \f$r_1=r_2\f$, then no matter how many digits we compute, we will still never know which if \f$r_1 \lesseqgtr r_2\f$ holds.
+In this case again the computation would run forever, and we would consider the value \a indeterminate.
+
+The resulting logic is <em>%Kleenean</em> logic \f$\K=\{T,F,I\}\f$, with three values \a true \f$\top,\mathsc{T}\f$, \a false \f$\bot,\mathsc{F}\f$ and \a indeterminate \f$\uparrow,\mathsc{I}\f$.
+The %Kleenean type represents the result of <em>quasidecidable</em> predicates.
+
+A subtype of the %Kleeneans is given by the <em>%Sierpinskian</em> type \f$\S=\{\tru,\indt\}\f$ with open sets \f$\{\},\{\tru\},\{\tru,\indt\}\f$. The %Sierpinsian type represents the result of <em>verifiable</em> predicates.
+The negation of a Sierpinskian has values \f$\{\fls,\indt\}\f$.
+
+<i>Remark on notation:</i> The symbol '\f$\bot\f$' or "bottom" denotes the lowest value in a lattice structure. For %Boolean logic, this has a natural interpretation as \a false, but for three-valued logics, it can also be interpreted as "no information" i.e. \a indeterminate. The symbol '\f$\uparrow\f$' or "diverges" denotes a non-terminating computation, which is an error. For decidable logic, this is an error, but for quasidecidable logic, even though a computation may be infinite, \a indeterminate should be a valid logical value. Further, when computing a binary logical operator, an infinite computation can be terminated if the other value allows the operator to be short-circuited. For these reasons, '\f$\bot\f$' and '\f$\uparrow\f$' are not unambiguously clear notations for \a false and \a indeterminate. '\f$?\f$' could instead be used for \a indeterminate.
+
+
+
+\section logical_types Logical types
+
+\subsection booleans The Booleans
+
+The basic logical type used in (classical) mathematics and programming is the %Boolean type \f$\mathbb{B}=\{T,F\}\f$.
+This type is suitable as the result of a decidable logical predicate.
+In continuous mathematics, most predicates are not decidable, since non-robust instances cannot be resolved.
+An example is the positivity check \f$x \geq 0\f$ for real numbers \f$x\in\mathbb{R}\f$; if \f$x\f$ is exactly equal to \f$0\f$, then
+(see the \ref real_numbers_page for more details).
+
+\subsection kleeneans The Kleeneans
+
+The Kleeneans take values \f$\K=\{\tru,\fls,\indt\}\f$. As a topological space, \f$\K\f$ has basic open sets \f$\{\tru\},\{\fls\}\f$, which generate the full topology of open sets \f$\{\},\{\tru\},\{\fls\},\{\tru,\fls\},\{\tru,\indt,\fls\}\f$.
+This means that for a predicate \f$\phi:\X\to\K\f$, both \f$\mathrm{sat}(\phi):=\{x\in\X\mid \phi(x)=\tru\}\f$ and \f$\{x\in\X\mid \phi(x)=\fls\}\f$ are open sets.
+This makes sense, since to verify \f$\phi(x)\f$ for \f$x\f$ given by increasingly accurate approximations means that \f$x\f$ must lie in the interior of \f$\mathrm{sat}(\phi)\f$.
+The set \f$\{x\in\X\mid \phi(x)=\indt\}\f$ is closed, and we can think of it as the <em>logical boundary</em> of\f$\mathrm{sat}(\phi)\f$.
+This may be different from the geometric boundary e.g. if \f$f(x)=\max(\min(x+1,0),x-1)\f$ and \f$\phi(x) \equiv \, f(x) \gtrsim 0\f$, then \f$\mathrm{sat}(\phi)=]1\!:\!\infty)\f$ with boundary \f$\{1\}\f$, but the logical boundary is \f$\{x\mid f(x)=0\}=[-1\!:\!+1]\f$.
+
+The %Kleenean data type can be represented in terms of the alphabet \f$\mathtt{T},\mathtt{F},\mathtt{I}\f$ by taking \f$\mathtt{I}^\omega \mapsto I\f$, \f$\mathtt{I}^*\mathtt{T}^\omega \mapsto T\f$ and \f$\mathtt{I}^*\mathtt{F}^\omega \mapsto F\f$.
+Alternatively, using binary, we can take  \f$\mathtt{0}^\omega \mapsto I\f$, \f$\mathtt{0}^*\mathtt{11}^\omega \mapsto T\f$, and \f$\mathtt{0}^*\mathtt{10}^\omega \mapsto F\f$.
+
+At any finite stage of a calculation computing a %Kleenean value, we may <em>know</em> that the answer is \a true or \a false. Otherwise, the answer is \a indeterminate, which should now be interpreted as <em>unknown</em>, rather than <em>unknowable</em>.
+We define the <em>validated %Kleenean</em> type to have three values, \f$\widehat{\K}=\{\tru,\unkn,\fls\}\f$ or \f$\{\top,?,\bot\}\f$.
+The validated %Kleeneans can be interpreted as intervals of %Booleans, with \f$\unkn=[\fls\!:\!\tru]\f$.
+They can also be interpreted as balls around %Boolean values.
+Here we have a distinction between descriptions \f$\fls\pm1\f$ and \f$\tru\pm1\f$, which can be interpreted as indicating a "guess" as to whether the result is "likely" or "unlikely".
+
+A representation of \f$\K\f$ by sequences of validated %Kleeneans is given by \f$\unkn^*\fls^\omega\mapsto\fls\f$, \f$\unkn^*\tru^\omega\mapsto\tru\f$ and \f$\unkn^\omega\mapsto\indt\f$.
+This is a partial function \f$\widehat{\K}^\omega \pfto \K\f$; we can extend this to a total function by allowing junk after the first occurrence of \f$\tru\f$ or \f$\fls\f$.
+A representation by binary digits can be given by \f$0^*10^\omega\mapsto\fls\f$, \f$0^*11^\omega\mapsto\tru\f$ and \f$0^\omega\mapsto\indt\f$. Here, the occurrence of the first '\f$1\f$' indicates that the result is known, and the digit immediately following indicates the answer.
+Again, we may weaken the representation to a total function by allowing \f$0^*10\cdots\mapsto\fls\f$, \f$0^*11\cdots\mapsto\tru\f$.
+
+
+\subsection sierpinskians The Sierpinskians
+
+The Sierpinskians take values \f$ \S=\{\tru,\indt\}\f$. As a topological space, \f$\S\f$ has basic open set \f$\{\tru\}\f$, which generates the full topology of open sets \f$\{\},\{\tru\},\{\tru,\indt\}\f$.
+
+The %Sierpinsian data type can be represented in terms of the alphabet \f$\mathtt{T},\mathtt{I}\f$ by taking \f$\mathtt{I}^\omega \mapsto I\f$, and \f$\mathtt{I}^*\tru^\omega \mapsto T\f$.
+Alternatively, using binary, we can take  \f$\mathtt{0}^\omega \mapsto I\f$, \f$\mathtt{0}^*\mathtt{1}^\omega \mapsto T\f$.
+A complete representation is obtained if we allow \f$\mathtt{0}^*\mathtt{1} \{\mathtt{0},\mathtt{1}\}^\omega \mapsto T\f$.
+
+It turns out that there are two possible interpretations of the %Sierpinskian type.
+To see this, note that the %Sierpinskians are a subtype of the %Kleeneans, so have a natural inclusion \f$\mathbb{S}\hookrightarrow\mathbb{K}\f$.
+However, since the indeterminate value \f$I\f$ denotes an unknown (or unknowable) value, there is also a natural projection \f$\mathbb{K}\to\mathbb{S}\f$ given by \f$T \mapsto T\f$ and \f$F,I \, \mapsto I\f$.
+The composition is \emph{not} the identity on \f$\mathbb{K}\f$, so loses information.
+The inclusion of \f$\mathbb{S}\f$ in \f$\mathbb{K}\f$ loses the information that the value is not \f$F\f$, whereas the projection of \f$\mathbb{K}\f$ onto \f$\mathbb{S}\f$ loses the information that the value is \f$F\f$.
+The "weak" interpretation of %Sierpinskian is the result of a predicate for which we have not tested for falseness, only truth.
+This is useful when only a definitely true value is relevant, or when only partial information about the object is available.
+The "strong" interpretation of %Sierpinskian is the result of a predicate which \em cannot be \em robustly false, such as the apartness (inequality) predicate on continous types.
+In %Ariadne, the "weak" Sierpinskians are called upper-Kleeneans, and are not equivalent to Sierpinskians, even though they take the same values.
+
+There is also a computable mapping of \f$K\f$ to \f$\{\tru,\indt\}\f$ given by \f$\tru\mapsto\tru\f$ and \f$\indt,\fls\mapsto\indt\f$.
+However, composing these maps does not give the identity on \f$\K\f$, since \f$\fls\mapsto\indt\f$ i.e. the fact that a proposition is definitely \a false is "forgotten".
+For this reason we distinguish the %Sierpinskians from the <em>lower-%Kleeneans</em> \f$\K_<\f$, which has the same values \f$\K_<=\{\tru,\indt\}\f$ and topology, but for which the mapping \f$\K_<\to\K\f$ taking \f$\fls\mapsto\indt\f$ is treated as a conversion.
+Intuitively, the distiction between \f$\S\f$ and \f$\K_<\f$ is that a predicate returning value in \f$\S\f$ can never be verifiably false (such as the apartness predicate \f$\neq\f$), while a value in \f$\K_<\f$ indicates that information regarding falseness has been discarded.
+One may also think of \f$\S\f$ as "positive" %Kleeneans \f$\K^+\f$.
+
+
+
+
+\section logical_operations Logical Operations
+
+The standard logical operators \f$\neg,\wedge,\vee,\rightarrow,\leftrightarrow\f$ are all defined on \f$\K\f$.
+They can be extracted from their %Boolean counterparts by considering a set-valued interpretation with \f$\mathsc{I}=\{\mathsc{T},\mathsc{F}\}\f$. Explicitly, the operators are given by
+\f[ \begin{array}[t]{|c|c|}\hline p&\!\neg{p}\!\\\hline \fls&\tru\\\indt&\indt\\\tru&\fls\\\hline \end{array} \qquad
+    \begin{array}[t]{|c|ccc|}\hline \!p \wedge q\!&\fls&\indt&\tru\\\hline \fls&\fls&\fls&\fls\\\indt&\fls&\indt&\indt\\\tru&\fls&\indt&\tru\\\hline\end{array} \quad
+    \begin{array}[t]{|c|ccc|}\hline \!p \vee q\!&\fls&\indt&\tru\\\hline \fls&\fls&\indt&\tru\\\indt&\indt&\indt&\tru\\\tru&\tru&\tru&\tru\\\hline\end{array} \quad
+    \begin{array}[t]{|c|ccc|}\hline \!p \rightarrow q\!&\fls&\indt&\tru\\\hline \fls&\tru&\tru&\tru\\\indt&\indt&\indt&\tru\\\tru&\fls&\indt&\tru\\\hline\end{array} \quad
+    \begin{array}[t]{|c|ccc|}\hline \!p \leftrightarrow q\!&\fls&\indt&\tru\\\hline \fls&\tru&\indt&\fls\\\indt&\indt&\indt&\indt\\\tru&\fls&\indt&\tru\\\hline\end{array} \quad
+\f]
+
+
+
+\section comparison_operators Comparison operators
+
+In classical mathematics, orderings are typically determined by the less-then-or-equal predicate \f$\leq\f$, and may be \em partial, satisfying axioms of
+- Reflexivity: \f$x \leq x\f$
+- Antisymmetry: \f$x \leq y \wedge y \leq x \Rightarrow x=y \f$
+- Transitivity: \f$x \leq y \wedge y \leq z \Rightarrow x \leq z\f$
+
+or \em total, additionally satisfying
+- Totality: \f$ x\leq y \vee y \leq x \f$.
+
+In computable mathematics, we additionally distinguish \em decidable, \em quasidecidable and \em semideciable orderings, returning %Boolean, %Kleenean or (weak) %Sierpinskian values, respectively.
+
+In a decidable total order, the standard operators \f$=,\neq,\leq,\geq,<,>\f$ (in C++, denoted respectively by \c ==, \c !=, \c <=, \c >=, \c <, \c >) take %Boolean values, and satisfy the standard relations, namely
+\f[ \begin{aligned} x=y &\iff x\leq y \wedge y \leq x, \\ x\neq y &\iff \neg (x=y),\\ x\geq y &\iff y\leq x, \\ x<y &\iff x\leq y \wedge x\neq y \iff x \leq y \wedge \neg(x\geq y),\\ x>y &\iff y<x . \end{aligned}\f]
+Further, in a field, we can define \f$x\leq y\f$ in terms of the positivity predicate \f$(y-x) \geq 0\f$
+
+In a decidable partial order, we can similarly define \f$x\geq y\iff y\leq x\f$ and \f$x=y \iff x\leq y \wedge y\leq x\f$.
+We shall postpone the discussion of the meaning of \f$x<y\f$.
+
+*/
+
+} // namespace Ariadne

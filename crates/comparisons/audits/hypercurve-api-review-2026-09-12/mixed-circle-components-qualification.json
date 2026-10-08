@@ -1,0 +1,124 @@
+{
+  "status": "committed; qualified against the documented baseline",
+  "goal_status": "active",
+  "previous_commit": "ba836e13a98ec5e61087072d6eaf19432170d517",
+  "commit": "e99dfbd6902caf5b1bee89617d36ceeca4165082",
+  "targets": 49,
+  "reused_identical_executables": 21,
+  "execution_plan": "mixed-circle-components-final-execution-plan.json",
+  "passed": 2252,
+  "passed_by_repo": {
+    "hypercurve": 2020,
+    "hyperbrep": 232
+  },
+  "known_failed": [
+    "approximate_512_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions",
+    "non_ph_bezier_pair_projective_fillet_retains_algebraic_extensions",
+    "nonconvex_algebraic_chord_expansion_is_exact_and_local_collapse_is_explicit",
+    "strict_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions",
+    "unified_mixed_line_arc_erosion_splits_after_a_curved_neck_collapse"
+  ],
+  "new_failures": [],
+  "ignored": 9,
+  "expensive_previously_unqualified_exclusions": 8,
+  "timeouts": 0,
+  "builds_and_checks": {
+    "-check": 0,
+    "-test-build": 0,
+    "-hyperbrep-check": 0,
+    "-hyperbrep-test-build": 0
+  },
+  "formatting_and_whitespace": "passed on final frozen qualification sources",
+  "formatted_files": {
+    "hypercurve": [
+      "src/bezier_offset.rs",
+      "src/bezier_region.rs",
+      "src/curve.rs",
+      "src/curve_corner_chain.rs",
+      "src/curve_region_boolean.rs",
+      "src/curve_support_intersection.rs"
+    ],
+    "hyperbrep": []
+  },
+  "additional_caller_checks": [
+    {
+      "target": "fuzz",
+      "command": [
+        "cargo",
+        "check",
+        "--manifest-path",
+        "fuzz/Cargo.toml",
+        "--all-targets",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 3.2201623549917713,
+      "log": "mixed-circle-components-fuzz-check.log"
+    },
+    {
+      "target": "ui",
+      "command": [
+        "cargo",
+        "check",
+        "--manifest-path",
+        "examples/hypercurve_ui/Cargo.toml",
+        "--all-targets",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 3.3694225320068654,
+      "log": "mixed-circle-components-ui-check.log"
+    },
+    {
+      "target": "hyperbrep-fuzz",
+      "command": [
+        "cargo",
+        "check",
+        "--manifest-path",
+        "fuzz/Cargo.toml",
+        "--all-targets",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 3.56991717100027,
+      "log": "mixed-circle-components-hyperbrep-fuzz-check.log"
+    }
+  ],
+  "source_verification": "mixed-circle-components-source-verification.json",
+  "focused_regression_checks": "mixed-circle-components-final-focused.json",
+  "discovery_probe": "mixed-circle-components-baseline.json",
+  "normal_library_sha256": "afb7e837f49d41ad1dce4d9ab147b8080a87df90720cd11eb5dd2be9f57fdfd7",
+  "independent_probes_and_matrices": [
+    "mixed-circle-components-public-replay.json",
+    "mixed-circle-components-affine-parallel-replay.json",
+    "mixed-circle-components-exterior-completed.json",
+    "mixed-circle-components-tangent-matrix.json",
+    "mixed-circle-components-finite-circle-probe.json",
+    "mixed-circle-components-family-matrix.json",
+    "mixed-circle-components-completed.json",
+    "mixed-circle-components-unit-replay.json",
+    "mixed-circle-components-retained-chord-matrix.json",
+    "mixed-circle-components-finite-matrix.json",
+    "mixed-circle-components-cubic-replay.json",
+    "mixed-circle-components-baseline-recheck.json",
+    "mixed-circle-components-replay-matrix-run.json",
+    "mixed-circle-components-analytic-probe.json",
+    "mixed-circle-components-endpoint-probe.json",
+    "mixed-circle-components-completed-probe.json",
+    "mixed-circle-components-probe-final.json",
+    "mixed-circle-components-circle-matrix.json",
+    "mixed-circle-components-region-carrier-matrix.json",
+    "mixed-circle-components-general-trim-matrix.json",
+    "mixed-circle-components-constant-image-trim-matrix.json"
+  ],
+  "regression_baseline": "finite-fiber-promotion-qualification.json",
+  "affected_regression_results": "mixed-circle-components-full-hypercurve-lib.json",
+  "evidence_audit": "mixed-circle-components-evidence-audit.md",
+  "performance_claim": null,
+  "remaining": "Nonlinear finite circle/rational, circle/parallel, parallel/rational and parallel/parallel discovery; normalized public region construction; five promotion failures; eight unqualified expensive tests; broader algebraic consolidation, computational measurements, and original architecture goal.",
+  "all_repositories_clean_after_commit": true,
+  "post_commit_source_verification": "mixed-circle-components-source-verification-post-commit.json"
+}

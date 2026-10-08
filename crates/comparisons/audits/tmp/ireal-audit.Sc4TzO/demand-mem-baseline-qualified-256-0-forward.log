@@ -1,0 +1,22 @@
+==18== Memcheck, a memory error detector
+==18== Copyright (C) 2002-2026, and GNU GPL'd, by Julian Seward et al.
+==18== Using Valgrind-3.27.1 and LibVEX; rerun with -h for copyright info
+==18== Command: /tmp/ireal-audit.Sc4TzO/hyper-sum-scaled-baseline-qualified 256 0 forward once 128
+==18== Parent PID: 17
+==18== 
+==18== 
+==18== HEAP SUMMARY:
+==18==     in use at exit: 1,760 bytes in 12 blocks
+==18==   total heap usage: 5,755,144 allocs, 5,755,132 frees, 324,212,233 bytes allocated
+==18== 
+==18== LEAK SUMMARY:
+==18==    definitely lost: 0 bytes in 0 blocks
+==18==    indirectly lost: 0 bytes in 0 blocks
+==18==      possibly lost: 0 bytes in 0 blocks
+==18==    still reachable: 1,760 bytes in 12 blocks
+==18==         suppressed: 0 bytes in 0 blocks
+==18== Reachable blocks (those to which a pointer was found) are not shown.
+==18== To see them, rerun with: --leak-check=full --show-leak-kinds=all
+==18== 
+==18== For lists of detected and suppressed errors, rerun with: -s
+==18== ERROR SUMMARY: 0 errors from 0 contexts (suppressed: 0 from 0)

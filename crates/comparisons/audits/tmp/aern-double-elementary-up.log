@@ -1,0 +1,4 @@
+exp initial=Upward cases=50 passed=50
+sqrt initial=Upward cases=33 passed=33
+sin initial=Upward cases=64 passed=64
+cos initial=Upward cases=64 passed=64

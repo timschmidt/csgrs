@@ -1,0 +1,44 @@
+[
+  {
+    "target": "hypercurve_analytic_parallel_region",
+    "filter": "analytic_parallel_circle_tangency_retains_zero_cross_evidence",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve_analytic_parallel_region-68a34b9751e86ddf",
+      "analytic_parallel_circle_tangency_retains_zero_cross_evidence",
+      "--exact",
+      "--test-threads=1"
+    ],
+    "sha256": "2ab43f9b2a43caf59c3bbd6bc705c535e84ebb0ed81e73018b8d9533af331007",
+    "returncode": 0,
+    "seconds": 0.026106450000952464,
+    "log": "analytic-circle-inverse-test-build-analytic_parallel_circle_tangency_retains_zero_cross_evidence.log"
+  },
+  {
+    "target": "hypercurve_analytic_parallel_region",
+    "filter": "analytic_parallel_intersects_independently_parameterized_circles_exactly",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve_analytic_parallel_region-68a34b9751e86ddf",
+      "analytic_parallel_intersects_independently_parameterized_circles_exactly",
+      "--exact",
+      "--test-threads=1"
+    ],
+    "sha256": "2ab43f9b2a43caf59c3bbd6bc705c535e84ebb0ed81e73018b8d9533af331007",
+    "returncode": 0,
+    "seconds": 0.08032162400195375,
+    "log": "analytic-circle-inverse-test-build-analytic_parallel_intersects_independently_parameterized_circles_exactly.log"
+  },
+  {
+    "target": "hypercurve",
+    "filter": "bezier_offset::conversion_tests::parallel_circle_intersections_retain_exceptional_inverse_fibers",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve-6e6572a45c5b177b",
+      "bezier_offset::conversion_tests::parallel_circle_intersections_retain_exceptional_inverse_fibers",
+      "--exact",
+      "--test-threads=1"
+    ],
+    "sha256": "e4b369a58b6794dc85b782fbda090ed6516d18dd4493246b11b9cc7ed6a2e74b",
+    "returncode": 0,
+    "seconds": 0.062269301000924315,
+    "log": "analytic-circle-inverse-test-build-parallel_circle_intersections_retain_exceptional_inverse_fibers.log"
+  }
+]

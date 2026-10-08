@@ -1,0 +1,14 @@
+{
+  "tag": "point-image-cost-allocation",
+  "started": "2026-09-10T19:54:57.809Z",
+  "finished": "2026-09-10T19:55:01.586Z",
+  "elapsedSeconds": 3.774009646,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "node",
+  "args": [
+    "run-point-image-costs.mjs",
+    "allocation"
+  ],
+  "code": 0,
+  "signal": null
+}

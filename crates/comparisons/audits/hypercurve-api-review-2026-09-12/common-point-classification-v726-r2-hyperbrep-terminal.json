@@ -1,0 +1,27 @@
+{
+  "source_manifest": "common-point-classification-v726-r2-hyperbrep-sources.json",
+  "production_manifest": "retained-point-exterior-20260928-v720-sources.json",
+  "source_directory": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/source-archives/common-point-classification-v726-r2-hyperbrep",
+  "candidate": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/common-point-classification-candidate-v722",
+  "crate": "hyperbrep",
+  "all_processes_reaped": true,
+  "compile_passed": true,
+  "check": {
+    "command": [
+      "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+      "check",
+      "--all-targets",
+      "--keep-going",
+      "--all-features",
+      "--locked",
+      "--offline",
+      "--message-format=json"
+    ],
+    "log": "common-point-classification-v726-r2-hyperbrep-check.log",
+    "returncode": 0,
+    "elapsed_seconds": 3.9192943039815873
+  },
+  "errors": 0,
+  "warnings": 0,
+  "diagnostics": "common-point-classification-v726-r2-hyperbrep-diagnostics.json"
+}

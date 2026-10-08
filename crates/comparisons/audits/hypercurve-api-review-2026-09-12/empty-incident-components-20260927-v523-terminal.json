@@ -1,0 +1,415 @@
+{
+  "normal_production_build": true,
+  "source_manifest": "empty-incident-components-20260927-v523-sources.json",
+  "source_directory": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/source-archives/empty-incident-components-20260927-v523",
+  "builds": [
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "test",
+        "--lib",
+        "--release",
+        "--all-features",
+        "--locked",
+        "--offline",
+        "--no-run",
+        "--message-format=json"
+      ],
+      "returncode": 0,
+      "log": "empty-incident-components-20260927-v523-build.log",
+      "elapsed_seconds": 130.04224521503784,
+      "binary": {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/empty-incident-components-20260927-v523-tests",
+        "sha256": "d044e063cac6f15b4847a133f67cacc96ab957d4d0ee7afbc1bc36b73b589cec"
+      }
+    }
+  ],
+  "cases": [
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/empty-incident-components-20260927-v523-tests",
+        "--exact",
+        "bezier_offset::parameter_component::tests::contact_constraints_distinguish_free_axes_from_empty_components",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "empty-incident-components-20260927-v523-contact_constraints_distinguish_free_axes_from_empty_components.log",
+      "elapsed_seconds": 0.0035776938311755657,
+      "name": "bezier_offset::parameter_component::tests::contact_constraints_distinguish_free_axes_from_empty_components",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/empty-incident-components-20260927-v523-tests",
+        "--exact",
+        "bezier_offset::parameter_component::tests::incident_charts_keep_poles_and_finite_ownership_excluded",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "empty-incident-components-20260927-v523-incident_charts_keep_poles_and_finite_ownership_excluded.log",
+      "elapsed_seconds": 0.0035474570468068123,
+      "name": "bezier_offset::parameter_component::tests::incident_charts_keep_poles_and_finite_ownership_excluded",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/empty-incident-components-20260927-v523-tests",
+        "--exact",
+        "bezier_offset::parameter_component::tests::one_contact_replays_correspondence_through_both_source_charts",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "empty-incident-components-20260927-v523-one_contact_replays_correspondence_through_both_source_charts.log",
+      "elapsed_seconds": 0.003528757020831108,
+      "name": "bezier_offset::parameter_component::tests::one_contact_replays_correspondence_through_both_source_charts",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/empty-incident-components-20260927-v523-tests",
+        "--exact",
+        "bezier_offset::parameter_component::tests::product_components_keep_fixed_axes_and_operand_roles",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "empty-incident-components-20260927-v523-product_components_keep_fixed_axes_and_operand_roles.log",
+      "elapsed_seconds": 0.0035284780897200108,
+      "name": "bezier_offset::parameter_component::tests::product_components_keep_fixed_axes_and_operand_roles",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/empty-incident-components-20260927-v523-tests",
+        "--exact",
+        "curve::curve_fillet::tests::joined_path_selects_and_replays_a_continuous_fillet_family",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "empty-incident-components-20260927-v523-joined_path_selects_and_replays_a_continuous_fillet_family.log",
+      "elapsed_seconds": 3.0176043037790805,
+      "name": "curve::curve_fillet::tests::joined_path_selects_and_replays_a_continuous_fillet_family",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/empty-incident-components-20260927-v523-tests",
+        "--exact",
+        "curve::curve_fillet::tests::nonlinear_linear_fillet_components_retain_unique_contacts_and_tangents",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "empty-incident-components-20260927-v523-nonlinear_linear_fillet_components_retain_unique_contacts_and_tangents.log",
+      "elapsed_seconds": 4.018934405874461,
+      "name": "curve::curve_fillet::tests::nonlinear_linear_fillet_components_retain_unique_contacts_and_tangents",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/empty-incident-components-20260927-v523-tests",
+        "--exact",
+        "bezier_region::tests::pair_native_boolean_analytic_corner_publishes_a_third_generation_fillet",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "empty-incident-components-20260927-v523-pair_native_boolean_analytic_corner_publishes_a_third_generation_fillet.log",
+      "elapsed_seconds": 0.41431894106790423,
+      "name": "bezier_region::tests::pair_native_boolean_analytic_corner_publishes_a_third_generation_fillet",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/empty-incident-components-20260927-v523-tests",
+        "--exact",
+        "bezier_offset::conversion_tests::finite_domain_admits_one_sided_source_cusp_contacts",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "empty-incident-components-20260927-v523-finite_domain_admits_one_sided_source_cusp_contacts.log",
+      "elapsed_seconds": 0.21395302889868617,
+      "name": "bezier_offset::conversion_tests::finite_domain_admits_one_sided_source_cusp_contacts",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/empty-incident-components-20260927-v523-tests",
+        "--exact",
+        "bezier_offset::conversion_tests::original_parallel_normal_constraints_clip_finite_and_incident_components",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "empty-incident-components-20260927-v523-original_parallel_normal_constraints_clip_finite_and_incident_components.log",
+      "elapsed_seconds": 0.031785749131813645,
+      "name": "bezier_offset::conversion_tests::original_parallel_normal_constraints_clip_finite_and_incident_components",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/empty-incident-components-20260927-v523-tests",
+        "--exact",
+        "bezier_offset::conversion_tests::parallel_projection_keeps_independent_finite_and_extension_domains",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "empty-incident-components-20260927-v523-parallel_projection_keeps_independent_finite_and_extension_domains.log",
+      "elapsed_seconds": 0.007531394017860293,
+      "name": "bezier_offset::conversion_tests::parallel_projection_keeps_independent_finite_and_extension_domains",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/empty-incident-components-20260927-v523-tests",
+        "--exact",
+        "bezier_offset::conversion_tests::parallel_projection_owns_overlapping_domain_roots_once",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "empty-incident-components-20260927-v523-parallel_projection_owns_overlapping_domain_roots_once.log",
+      "elapsed_seconds": 0.007561120903119445,
+      "name": "bezier_offset::conversion_tests::parallel_projection_owns_overlapping_domain_roots_once",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/empty-incident-components-20260927-v523-tests",
+        "--exact",
+        "bezier_offset::conversion_tests::parameter_domains_limit_component_charts",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "empty-incident-components-20260927-v523-parameter_domains_limit_component_charts.log",
+      "elapsed_seconds": 0.007572229951620102,
+      "name": "bezier_offset::conversion_tests::parameter_domains_limit_component_charts",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/empty-incident-components-20260927-v523-tests",
+        "--exact",
+        "bezier_offset::conversion_tests::parameter_domains_retain_isolated_constraints",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "empty-incident-components-20260927-v523-parameter_domains_retain_isolated_constraints.log",
+      "elapsed_seconds": 0.007596408948302269,
+      "name": "bezier_offset::conversion_tests::parameter_domains_retain_isolated_constraints",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/empty-incident-components-20260927-v523-tests",
+        "--exact",
+        "bezier_offset::conversion_tests::parameter_domains_retain_finite_residuals_without_unowned_components",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "empty-incident-components-20260927-v523-parameter_domains_retain_finite_residuals_without_unowned_components.log",
+      "elapsed_seconds": 2.3169154210481793,
+      "name": "bezier_offset::conversion_tests::parameter_domains_retain_finite_residuals_without_unowned_components",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/empty-incident-components-20260927-v523-tests",
+        "--exact",
+        "bezier_offset::conversion_tests::parameter_domains_retain_chart_events_and_closed_finite_boundaries",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "empty-incident-components-20260927-v523-parameter_domains_retain_chart_events_and_closed_finite_boundaries.log",
+      "elapsed_seconds": 0.015732170082628727,
+      "name": "bezier_offset::conversion_tests::parameter_domains_retain_chart_events_and_closed_finite_boundaries",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/empty-incident-components-20260927-v523-tests",
+        "--exact",
+        "bezier_offset::conversion_tests::incident_component_charts_clip_exact_regular_barriers",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "empty-incident-components-20260927-v523-incident_component_charts_clip_exact_regular_barriers.log",
+      "elapsed_seconds": 0.007673552958294749,
+      "name": "bezier_offset::conversion_tests::incident_component_charts_clip_exact_regular_barriers",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/empty-incident-components-20260927-v523-tests",
+        "--exact",
+        "bezier_offset::conversion_tests::incident_component_charts_transport_an_isolated_selected_event",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "empty-incident-components-20260927-v523-incident_component_charts_transport_an_isolated_selected_event.log",
+      "elapsed_seconds": 0.007577870041131973,
+      "name": "bezier_offset::conversion_tests::incident_component_charts_transport_an_isolated_selected_event",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/empty-incident-components-20260927-v523-tests",
+        "--exact",
+        "bezier_offset::empty_incident_component_tests::empty_incident_charts_preserve_finite_components_and_constraints",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "empty-incident-components-20260927-v523-empty_incident_charts_preserve_finite_components_and_constraints.log",
+      "elapsed_seconds": 0.015648206928744912,
+      "name": "bezier_offset::empty_incident_component_tests::empty_incident_charts_preserve_finite_components_and_constraints",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/empty-incident-components-20260927-v523-tests",
+        "--exact",
+        "bezier_offset::empty_incident_component_tests::empty_incident_chart_compares_an_algebraic_barrier_exactly",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "empty-incident-components-20260927-v523-empty_incident_chart_compares_an_algebraic_barrier_exactly.log",
+      "elapsed_seconds": 0.007577399956062436,
+      "name": "bezier_offset::empty_incident_component_tests::empty_incident_chart_compares_an_algebraic_barrier_exactly",
+      "passed": true
+    }
+  ],
+  "checks": [
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "clippy",
+        "--all-targets",
+        "--all-features",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "returncode": 0,
+      "log": "empty-incident-components-20260927-v523-hypercurve-clippy-all-features.log",
+      "elapsed_seconds": 20.693419334944338,
+      "label": "hypercurve-clippy-all-features"
+    },
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "clippy",
+        "--all-targets",
+        "--no-default-features",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "returncode": 0,
+      "log": "empty-incident-components-20260927-v523-hypercurve-clippy-no-default.log",
+      "elapsed_seconds": 19.842170844087377,
+      "label": "hypercurve-clippy-no-default"
+    },
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustfmt",
+        "--edition",
+        "2024",
+        "--config",
+        "skip_children=true",
+        "--check",
+        "src/bezier_offset.rs",
+        "src/bezier_parameter.rs"
+      ],
+      "returncode": 0,
+      "log": "empty-incident-components-20260927-v523-hypercurve-format.log",
+      "elapsed_seconds": 2.2165981959551573,
+      "label": "hypercurve-format"
+    },
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "check",
+        "--manifest-path",
+        "fuzz/Cargo.toml",
+        "--bin",
+        "curve_string_editing",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "log": "empty-incident-components-20260927-v523-fuzz-check.log",
+      "elapsed_seconds": 10.978928236057982,
+      "label": "fuzz-check"
+    },
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "doc",
+        "--no-deps",
+        "--all-features",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "log": "empty-incident-components-20260927-v523-hypercurve-documentation.log",
+      "elapsed_seconds": 9.476287122117355,
+      "label": "hypercurve-documentation"
+    },
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "check",
+        "--all-targets",
+        "--all-features",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "log": "empty-incident-components-20260927-v523-hyperbrep-check.log",
+      "elapsed_seconds": 14.633406210923567,
+      "label": "hyperbrep-check"
+    }
+  ],
+  "expected_cases": [
+    "bezier_offset::parameter_component::tests::contact_constraints_distinguish_free_axes_from_empty_components",
+    "bezier_offset::parameter_component::tests::incident_charts_keep_poles_and_finite_ownership_excluded",
+    "bezier_offset::parameter_component::tests::one_contact_replays_correspondence_through_both_source_charts",
+    "bezier_offset::parameter_component::tests::product_components_keep_fixed_axes_and_operand_roles",
+    "curve::curve_fillet::tests::joined_path_selects_and_replays_a_continuous_fillet_family",
+    "curve::curve_fillet::tests::nonlinear_linear_fillet_components_retain_unique_contacts_and_tangents",
+    "bezier_region::tests::pair_native_boolean_analytic_corner_publishes_a_third_generation_fillet",
+    "bezier_offset::conversion_tests::finite_domain_admits_one_sided_source_cusp_contacts",
+    "bezier_offset::conversion_tests::original_parallel_normal_constraints_clip_finite_and_incident_components",
+    "bezier_offset::conversion_tests::parallel_projection_keeps_independent_finite_and_extension_domains",
+    "bezier_offset::conversion_tests::parallel_projection_owns_overlapping_domain_roots_once",
+    "bezier_offset::conversion_tests::parameter_domains_limit_component_charts",
+    "bezier_offset::conversion_tests::parameter_domains_retain_isolated_constraints",
+    "bezier_offset::conversion_tests::parameter_domains_retain_finite_residuals_without_unowned_components",
+    "bezier_offset::conversion_tests::parameter_domains_retain_chart_events_and_closed_finite_boundaries",
+    "bezier_offset::conversion_tests::incident_component_charts_clip_exact_regular_barriers",
+    "bezier_offset::conversion_tests::incident_component_charts_transport_an_isolated_selected_event",
+    "bezier_offset::empty_incident_component_tests::empty_incident_charts_preserve_finite_components_and_constraints",
+    "bezier_offset::empty_incident_component_tests::empty_incident_chart_compares_an_algebraic_barrier_exactly"
+  ],
+  "all_processes_reaped": true,
+  "probe_complete": true,
+  "qualification_complete": true
+}

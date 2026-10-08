@@ -1,0 +1,72 @@
+\doxysubsection{Hybrid\+Evolver\+Interface Class Reference}
+\hypertarget{classAriadne_1_1HybridEvolverInterface}{}\label{classAriadne_1_1HybridEvolverInterface}\index{HybridEvolverInterface@{HybridEvolverInterface}}
+
+
+{\ttfamily \#include $<$hybrid\+\_\+evolver\+\_\+interface.\+hpp$>$}
+
+
+
+\doxysubsubsection{Description}
+Interface for hybrid evolvers using \doxylink{classAriadne_1_1HybridEnclosure}{Hybrid\+Enclosure} as the enclosure type. 
+
+The class is loggable in order to allow verbosity tuning at the analyser layer. Inheritance diagram for Hybrid\+Evolver\+Interface\+:\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[height=4.000000cm]{classAriadne_1_1HybridEvolverInterface}
+\end{center}
+\end{figure}
+\doxysubsubsubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1HybridEvolverInterface_a74d9ccf41bcd8d16e9d6c2eba81b2259}\label{classAriadne_1_1HybridEvolverInterface_a74d9ccf41bcd8d16e9d6c2eba81b2259} 
+virtual \mbox{\hyperlink{classAriadne_1_1HybridEvolverInterface}{Hybrid\+Evolver\+Interface}} \texorpdfstring{$\ast$}{*} {\bfseries clone} () const =0
+\begin{DoxyCompactList}\small\item\em Make a dynamically-\/allocated copy. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\begin{Indent}\textbf{ Main evolution functions.}\par
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1HybridEvolverInterface_a8a4e6a84c14632c4d6a682daab9ced3f}\label{classAriadne_1_1HybridEvolverInterface_a8a4e6a84c14632c4d6a682daab9ced3f} 
+virtual \mbox{\hyperlink{classAriadne_1_1Orbit}{Orbit}}$<$ \mbox{\hyperlink{classAriadne_1_1EvolverInterface_a3eee62b15617b80a9cd7a2f4ba905cff}{Enclosure\+Type}} $>$ {\bfseries orbit} (const \mbox{\hyperlink{classAriadne_1_1EvolverInterface_a3eee62b15617b80a9cd7a2f4ba905cff}{Enclosure\+Type}} \&initial\+\_\+enclosure, const \mbox{\hyperlink{classAriadne_1_1EvolverInterface_afaf8d55b202cc690926f7f660b302e96}{Termination\+Type}} \&termination, \mbox{\hyperlink{group__DynamicsModule_gafd43cf1b14dd42f7ac8ca23dcc3837b3}{Semantics}} semantics) const =0
+\begin{DoxyCompactList}\small\item\em Compute an approximation to the orbit set using the given semantics, starting from an initial enclosure. Useful for continuing a partially-\/computed orbit. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1HybridEvolverInterface_a82808f73ed8d9b65d0fb4df8934f812a}\label{classAriadne_1_1HybridEvolverInterface_a82808f73ed8d9b65d0fb4df8934f812a} 
+virtual \mbox{\hyperlink{classAriadne_1_1Orbit}{Orbit}}$<$ \mbox{\hyperlink{classAriadne_1_1EvolverInterface_a3eee62b15617b80a9cd7a2f4ba905cff}{Enclosure\+Type}} $>$ {\bfseries orbit} (const \mbox{\hyperlink{classAriadne_1_1HybridBox}{Hybrid\+Exact\+Box\+Type}} \&initial\+\_\+box, const \mbox{\hyperlink{classAriadne_1_1EvolverInterface_afaf8d55b202cc690926f7f660b302e96}{Termination\+Type}} \&termination, \mbox{\hyperlink{group__DynamicsModule_gafd43cf1b14dd42f7ac8ca23dcc3837b3}{Semantics}} semantics) const =0
+\begin{DoxyCompactList}\small\item\em Compute an approximation to the orbit set using the given semantics, starting from a box. Useful for computing the evolution starting from a cell of a grid. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1HybridEvolverInterface_a9723dcc5f34d3d60006093166adcd22c}\label{classAriadne_1_1HybridEvolverInterface_a9723dcc5f34d3d60006093166adcd22c} 
+virtual \mbox{\hyperlink{classAriadne_1_1Orbit}{Orbit}}$<$ \mbox{\hyperlink{classAriadne_1_1EvolverInterface_a3eee62b15617b80a9cd7a2f4ba905cff}{Enclosure\+Type}} $>$ {\bfseries orbit} (const \mbox{\hyperlink{classAriadne_1_1HybridBoundedConstraintSet}{Hybrid\+Bounded\+Constraint\+Set}} \&initial\+\_\+set, const \mbox{\hyperlink{classAriadne_1_1EvolverInterface_afaf8d55b202cc690926f7f660b302e96}{Termination\+Type}} \&termination, \mbox{\hyperlink{group__DynamicsModule_gafd43cf1b14dd42f7ac8ca23dcc3837b3}{Semantics}} semantics) const =0
+\begin{DoxyCompactList}\small\item\em Compute an approximation to the orbit set using the given semantics, starting from a set described by bounds and constraints. Useful for computing the evolution starting from user-\/provided set. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\end{Indent}
+\begin{Indent}\textbf{ Auxiliary set conversion functionality}\par
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1HybridEvolverInterface_af97b3349f6c9caa4f00c5e3a2fc7381b}\label{classAriadne_1_1HybridEvolverInterface_af97b3349f6c9caa4f00c5e3a2fc7381b} 
+virtual \mbox{\hyperlink{classAriadne_1_1EvolverInterface_a3eee62b15617b80a9cd7a2f4ba905cff}{Enclosure\+Type}} {\bfseries enclosure} (const \mbox{\hyperlink{classAriadne_1_1HybridBox}{Hybrid\+Exact\+Box\+Type}} \&initial\+\_\+box) const =0
+\begin{DoxyCompactList}\small\item\em \doxylink{classAriadne_1_1Set}{Set} construct an enclosure from a box, such as one obtained from a grid. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1HybridEvolverInterface_a0074e9bbb706bfe635ee80946a27252a}\label{classAriadne_1_1HybridEvolverInterface_a0074e9bbb706bfe635ee80946a27252a} 
+virtual \mbox{\hyperlink{classAriadne_1_1EvolverInterface_a3eee62b15617b80a9cd7a2f4ba905cff}{Enclosure\+Type}} {\bfseries enclosure} (const \mbox{\hyperlink{classAriadne_1_1HybridBoundedConstraintSet}{Hybrid\+Bounded\+Constraint\+Set}} \&initial\+\_\+set) const =0
+\begin{DoxyCompactList}\small\item\em \doxylink{classAriadne_1_1Set}{Set} construct an enclosure from a user-\/provided set. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\end{Indent}
+\doxyparagraph*{Public Member Functions inherited from \mbox{\hyperlink{classAriadne_1_1EvolverInterface}{Evolver\+Interface$<$ Hybrid\+Automaton\+Interface, Hybrid\+Enclosure, Hybrid\+Termination\+Criterion $>$}}}
+\begin{DoxyCompactItemize}
+\item 
+virtual {\bfseries \texorpdfstring{$\sim$}{\string~}\+Evolver\+Interface} ()=default
+\begin{DoxyCompactList}\small\item\em Virtual destructor. \end{DoxyCompactList}\item 
+virtual const \mbox{\hyperlink{classAriadne_1_1EvolverInterface_a95af9278082cc58957aa0fb8ef7d3ebb}{System\+Type}} \& {\bfseries system} () const=0
+\begin{DoxyCompactList}\small\item\em Gets the system associated with the evolver. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsubsection*{Additional Inherited Members}
+\doxyparagraph*{Public Types inherited from \mbox{\hyperlink{classAriadne_1_1EvolverInterface}{Evolver\+Interface$<$ Hybrid\+Automaton\+Interface, Hybrid\+Enclosure, Hybrid\+Termination\+Criterion $>$}}}
+\begin{DoxyCompactItemize}
+\item 
+typedef \mbox{\hyperlink{classAriadne_1_1HybridAutomatonInterface}{Hybrid\+Automaton\+Interface}} {\bfseries System\+Type}
+\begin{DoxyCompactList}\small\item\em The type of system the evolver can compute the behaviour of. \end{DoxyCompactList}\item 
+typedef \mbox{\hyperlink{classAriadne_1_1HybridAutomatonInterface_a6758468f0d6935d3ea5db460673c9b71}{System\+Type\+::\+Time\+Type}} {\bfseries Time\+Type}
+\begin{DoxyCompactList}\small\item\em The type used to represent the evolution time of the system. \end{DoxyCompactList}\item 
+typedef Hybrid\+Termination\+Criterion {\bfseries Termination\+Type}
+\begin{DoxyCompactList}\small\item\em The type used to represent conditions under which system evolution may be terminated. \end{DoxyCompactList}\item 
+typedef \mbox{\hyperlink{classAriadne_1_1HybridEnclosure}{Hybrid\+Enclosure}} {\bfseries Enclosure\+Type}
+\begin{DoxyCompactList}\small\item\em The type of set used to enclose the flow tubes. \end{DoxyCompactList}\item 
+typedef \mbox{\hyperlink{classAriadne_1_1ListSet}{List\+Set}}$<$ \mbox{\hyperlink{classAriadne_1_1EvolverInterface_a3eee62b15617b80a9cd7a2f4ba905cff}{Enclosure\+Type}} $>$ {\bfseries Enclosure\+List\+Type}
+\begin{DoxyCompactList}\small\item\em The type of a list of enclosure sets. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+The documentation for this class was generated from the following file\+:\begin{DoxyCompactItemize}
+\item 
+source/hybrid/\mbox{\hyperlink{hybrid__evolver__interface_8hpp}{hybrid\+\_\+evolver\+\_\+interface.\+hpp}}\end{DoxyCompactItemize}

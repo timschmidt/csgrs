@@ -1,0 +1,13 @@
+{
+  "tag": "complex-symbolic-current82-before-v83",
+  "started": "2026-09-12T03:27:29.929Z",
+  "finished": "2026-09-12T03:27:48.532Z",
+  "elapsedSeconds": 18.600557638999998,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "node",
+  "args": [
+    "verify-quadratic-extraction-v82.mjs"
+  ],
+  "code": 0,
+  "signal": null
+}

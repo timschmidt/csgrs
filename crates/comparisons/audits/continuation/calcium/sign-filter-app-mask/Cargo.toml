@@ -1,0 +1,22 @@
+[package]
+name = "audit-sign-filter-mask"
+version = "0.0.0"
+edition = "2024"
+publish = false
+[workspace]
+[dependencies]
+hyperlimit = { path = "../sign-filter-mask/hyperlimit" }
+hyperreal = { path = "../sign-filter-mask/hyperreal" }
+serde_json = "1"
+[features]
+trace = ["hyperlimit/dispatch-trace", "hyperreal/dispatch-trace"]
+[[bin]]
+name = "audit-sign-filter-mask-cpu"
+path = "../sign-filter-cpu.rs"
+[[bin]]
+name = "audit-sign-filter-mask-allocation"
+path = "../sign-filter-allocation.rs"
+[[bin]]
+name = "audit-sign-filter-mask-trace"
+path = "../sign-filter-probe/src/main.rs"
+required-features = ["trace"]

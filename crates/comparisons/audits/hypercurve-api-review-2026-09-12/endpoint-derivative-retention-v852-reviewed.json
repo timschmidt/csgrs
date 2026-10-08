@@ -1,0 +1,19 @@
+{
+  "qualification": "endpoint-derivative-retention-v852-terminal.json",
+  "source_manifest": "endpoint-derivative-retention-v852-sources.json",
+  "outer_session_reaped": 38674,
+  "validated_files": 2048,
+  "tests": 327,
+  "checks": 7,
+  "repos": {
+    "hypercurve": {
+      "parent": "d81a9f7d1aae65360c94bce2d89e03bad691807a",
+      "paths": {
+        "src/bezier_arrangement.rs": "e99f1985af0a111e23f317f2641b09234f5d0ef03e1a3b3d63210b2449c236c5",
+        "src/bezier_split_endpoint.rs": "4e8b8286a25cf33321706ee616e92d7aa1ebabd3d9845c7f2c2c6338914594cd"
+      }
+    }
+  },
+  "scope": "Preserve all exact rational endpoint higher derivatives instead of dropping retained expressions. Make optional coordinate extraction nonblocking during endpoint setup; source-based derivative demand, all actual ordering predicates, original pole checks and success-only caches are unchanged. Verify independent analytic signs and a stationary endpoint requiring an unprojected second derivative.",
+  "unresolved": "The full exact-geometry implementation goal remains active; this migration does not establish universal composition closure or a measured speedup."
+}

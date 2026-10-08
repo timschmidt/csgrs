@@ -1,0 +1,13 @@
+{
+  "tag": "qqbar-inverse-prepare-v80",
+  "started": "2026-09-12T01:31:32.376Z",
+  "finished": "2026-09-12T01:31:33.242Z",
+  "elapsedSeconds": 0.8634171159999999,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "node",
+  "args": [
+    "prepare-qqbar-inverse-v80.mjs"
+  ],
+  "code": 0,
+  "signal": null
+}

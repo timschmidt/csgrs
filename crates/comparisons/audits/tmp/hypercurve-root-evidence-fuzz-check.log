@@ -1,0 +1,4 @@
+    Checking hypersolve v0.3.1 (/home/tim/Documents/GitHub/workspace/hypersolve)
+    Checking hypercurve v0.3.1 (/home/tim/Documents/GitHub/workspace/hypercurve)
+    Checking hypercurve-fuzz v0.0.0 (/home/tim/Documents/GitHub/workspace/hypercurve/fuzz)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 15.34s

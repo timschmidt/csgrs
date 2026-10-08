@@ -1,0 +1,15 @@
+path	read_ranges	status
+C/hsmpfr.c	1-131	read
+C/hsmpfr.h	1-73	read
+Data/Number/Ball.hs	1-354	read
+Data/Number/Dyadic.hs	1-9	read
+Data/Number/DyadicInterval.hs	1-181	read
+Data/Number/FFIhelper.hsc	1-725	read
+Data/Number/MPFR.hs	1-877	read
+Data/Number/Real.hs	1-266	read
+Data/Order.hs	1-10	read
+HERA.cabal	1-29	read
+LICENSE	1-30	read
+README	1-8	read
+Setup.hs	1-6	read
+demo/Demo.hs	1-150	read

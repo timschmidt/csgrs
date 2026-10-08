@@ -1,0 +1,36 @@
+   Compiling hyperreal v0.13.1 (/home/tim/Documents/GitHub/workspace/hyperreal)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1.87s
+     Running unittests src/lib.rs (.audit-targets/ireal-derivative-18555/debug/deps/hyperreal-a346315a45113d5d)
+
+running 4 tests
+
+thread 'computable::node::tests::atanh_series_domain_rejects_estimated_magnitudes' (307) panicked at src/computable/node/tests.rs:159:17:
+assertion failed: !matches!(result.internal.approximation, Approximation::PrescaledAsin(_) |
+        Approximation::PrescaledAtanh(_))
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+thread 'computable::node::tests::asin_series_domain_rejects_estimated_magnitudes' (305) panicked at src/computable/node/tests.rs:159:17:
+assertion failed: !matches!(result.internal.approximation, Approximation::PrescaledAsin(_) |
+        Approximation::PrescaledAtanh(_))
+test computable::node::tests::asin_series_domain_rejects_estimated_magnitudes ... FAILED
+test computable::node::tests::atanh_series_domain_rejects_estimated_magnitudes ... FAILED
+
+thread 'computable::node::tests::asin_series_domain_rechecks_prescaled_nodes' (304) panicked at src/computable/node/tests.rs:165:17:
+asin=true, raw=true, negative=false, precision=-32
+test computable::node::tests::asin_series_domain_rechecks_prescaled_nodes ... FAILED
+
+thread 'computable::node::tests::atanh_series_domain_rechecks_prescaled_nodes' (306) panicked at src/computable/node/tests.rs:165:17:
+asin=false, raw=true, negative=false, precision=-32
+test computable::node::tests::atanh_series_domain_rechecks_prescaled_nodes ... FAILED
+
+failures:
+
+failures:
+    computable::node::tests::asin_series_domain_rechecks_prescaled_nodes
+    computable::node::tests::asin_series_domain_rejects_estimated_magnitudes
+    computable::node::tests::atanh_series_domain_rechecks_prescaled_nodes
+    computable::node::tests::atanh_series_domain_rejects_estimated_magnitudes
+
+test result: FAILED. 0 passed; 4 failed; 0 ignored; 0 measured; 651 filtered out; finished in 0.00s
+
+error: test failed, to rerun pass `--lib`

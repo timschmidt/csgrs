@@ -1,0 +1,24 @@
+{
+  "tag": "point-wasm-baseline-build",
+  "started": "2026-09-10T23:31:29.562Z",
+  "finished": "2026-09-10T23:31:30.372Z",
+  "elapsedSeconds": 0.8071494260000001,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/point-wasm-baseline",
+  "command": "env",
+  "args": [
+    "CARGO_TARGET_DIR=/tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse",
+    "CARGO_INCREMENTAL=0",
+    "CARGO_PROFILE_DEV_DEBUG=0",
+    "CARGO_BUILD_JOBS=2",
+    "cargo",
+    "build",
+    "--locked",
+    "--offline",
+    "--release",
+    "--target",
+    "wasm32-unknown-unknown",
+    "--lib"
+  ],
+  "code": 0,
+  "signal": null
+}

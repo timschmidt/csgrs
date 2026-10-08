@@ -1,0 +1,56 @@
+\doxysubsection{Integrator\+Interface Class Reference}
+\hypertarget{classAriadne_1_1IntegratorInterface}{}\label{classAriadne_1_1IntegratorInterface}\index{IntegratorInterface@{IntegratorInterface}}
+
+
+{\ttfamily \#include $<$integrator\+\_\+interface.\+hpp$>$}
+
+
+
+\doxysubsubsection{Description}
+Interface for integrating differential equations of the form $\dt{x}=f(x)$. \doxysubsubsubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1IntegratorInterface_a0d79f47daa02478087e598d678b3dda0}\label{classAriadne_1_1IntegratorInterface_a0d79f47daa02478087e598d678b3dda0} 
+virtual {\bfseries \texorpdfstring{$\sim$}{\string~}\+Integrator\+Interface} ()=default
+\begin{DoxyCompactList}\small\item\em Virtual destructor. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1IntegratorInterface_ab982d0618198bb31095f3132eb0eed85}\label{classAriadne_1_1IntegratorInterface_ab982d0618198bb31095f3132eb0eed85} 
+virtual \mbox{\hyperlink{classAriadne_1_1IntegratorInterface}{Integrator\+Interface}} \texorpdfstring{$\ast$}{*} {\bfseries clone} () const =0
+\begin{DoxyCompactList}\small\item\em Make a dynamically-\/allocated copy. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1IntegratorInterface_ad58ecdedb4fbd7d565d8d965f3c13241}\label{classAriadne_1_1IntegratorInterface_ad58ecdedb4fbd7d565d8d965f3c13241} 
+virtual \mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} {\bfseries \+\_\+write} (\mbox{\hyperlink{namespaceAriadne_acbb98ddc4385af4599070e65a1a47ec1}{Output\+Stream}} \&os) const =0
+\begin{DoxyCompactList}\small\item\em Write to an output stream. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1IntegratorInterface_a3814815632a2834937049b9c1a9559ca}\label{classAriadne_1_1IntegratorInterface_a3814815632a2834937049b9c1a9559ca} 
+virtual \mbox{\hyperlink{classAriadne_1_1FlowStepModelType}{Flow\+Step\+Model\+Type}} {\bfseries flow\+\_\+step} (const Validated\+Vector\+Multivariate\+Function \&vector\+\_\+field, const \mbox{\hyperlink{group__FunctionModule_gafdd31b4d01081cd09aad2ce11117f867}{Exact\+Box\+Type}} \&state\+\_\+domain) const =0
+\begin{DoxyCompactList}\small\item\em Compute a validated version $\hat{\phi}$ of the flow $\phi(x,t)$ satisfying $\dt{\phi}(x,t)=f(\phi(x,t))$ for $x\in D$, using a time-\/step appropriate for the system. ~\newline
+ Returns\+: A validated version $\hat{\phi}$ of the flow over a short step represented as a single function over a box. ~\newline
+ Arguments\+: $f$ is the {\itshape vector\+\_\+field}, $D$ is the {\itshape state\+\_\+domain}, and $h_\mathrm{sug}$ is the {\itshape suggested\+\_\+time\+\_\+step}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1IntegratorInterface_ae1e2c5705f01e5aef57761c9f943b7fd}\label{classAriadne_1_1IntegratorInterface_ae1e2c5705f01e5aef57761c9f943b7fd} 
+virtual \mbox{\hyperlink{classAriadne_1_1FlowStepModelType}{Flow\+Step\+Model\+Type}} {\bfseries flow\+\_\+step} (const Validated\+Vector\+Multivariate\+Function \&vector\+\_\+field, const \mbox{\hyperlink{group__FunctionModule_gafdd31b4d01081cd09aad2ce11117f867}{Exact\+Box\+Type}} \&state\+\_\+domain, const \mbox{\hyperlink{classAriadne_1_1Suggestion}{Suggestion}}$<$ \mbox{\hyperlink{group__DifferentialEquationSubModule_ga6f1c6f216a042c31906593cafeb126fa}{Step\+Size\+Type}} $>$ \&suggested\+\_\+time\+\_\+step) const =0
+\begin{DoxyCompactList}\small\item\em Compute a validated version $\hat{\phi}$ of the flow $\phi(x,t)$ satisfying $\dt{\phi}(x,t)=f(\phi(x,t))$ for $x\in D$ and $t\in[0,h]$ where $h$ may differ (typically be smaller) than the suggested value $h_\mathrm{sug}$. Returns\+: A validated version $\hat{\phi}$ of the flow over a short step represented as a single function over a box. ~\newline
+ Arguments\+: $f$ is the {\itshape vector\+\_\+field}, $D$ is the {\itshape state\+\_\+domain}, and $h_\mathrm{sug}$ is the {\itshape suggested\+\_\+time\+\_\+step}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1IntegratorInterface_a29206218da7627d329408253494f0af3}\label{classAriadne_1_1IntegratorInterface_a29206218da7627d329408253494f0af3} 
+virtual \mbox{\hyperlink{classAriadne_1_1FlowStepModelType}{Flow\+Step\+Model\+Type}} {\bfseries flow\+\_\+step} (const Validated\+Vector\+Multivariate\+Function \&vector\+\_\+field, const \mbox{\hyperlink{group__FunctionModule_gafdd31b4d01081cd09aad2ce11117f867}{Exact\+Box\+Type}} \&state\+\_\+domain, const \mbox{\hyperlink{group__DifferentialEquationSubModule_ga6f1c6f216a042c31906593cafeb126fa}{Step\+Size\+Type}} \&time\+\_\+step) const =0
+\begin{DoxyCompactList}\small\item\em Compute a validated version $\hat{\phi}$ of the flow $\phi(x,t)$ satisfying $\dt{\phi}(x,t)=f(\phi(x,t))$ for $x\in D$ and $t\in[0,h]$. Throws\+: {\ttfamily \doxylink{structAriadne_1_1IncompleteFlowException}{Incomplete\+Flow\+Exception}} if the flow cannot be computed over the requested time interval, and a {\ttfamily \doxylink{structAriadne_1_1FlowTimeStepException}{Flow\+Time\+Step\+Exception}} if the flow cannot be computed over the requested time interval. ~\newline
+ Returns\+: A validated version $\hat{\phi}$ of the flow up to the requested time, represented as a single function over a box. ~\newline
+ Arguments\+: $f$ is the {\itshape vector\+\_\+field}, $D$ is the {\itshape state\+\_\+domain}, and $h$ is the {\itshape time\+\_\+step}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1IntegratorInterface_abe214d12431de9f99ef1d215364cb26e}\label{classAriadne_1_1IntegratorInterface_abe214d12431de9f99ef1d215364cb26e} 
+virtual \mbox{\hyperlink{classAriadne_1_1FlowStepModelType}{Flow\+Step\+Model\+Type}} {\bfseries flow\+\_\+step} (const Validated\+Vector\+Multivariate\+Function \&vector\+\_\+field, const \mbox{\hyperlink{group__FunctionModule_gafdd31b4d01081cd09aad2ce11117f867}{Exact\+Box\+Type}} \&state\+\_\+domain, const \mbox{\hyperlink{group__DifferentialEquationSubModule_ga6f1c6f216a042c31906593cafeb126fa}{Step\+Size\+Type}} \&time\+\_\+step, const \mbox{\hyperlink{group__FunctionModule_gadb510bd9aa076e5ae44245b498901ca6}{Upper\+Box\+Type}} \&state\+\_\+bounding\+\_\+box) const =0
+\begin{DoxyCompactList}\small\item\em Solve $\dt{\phi}(x,t)=f(\phi(x,t))$ for $x\in D$ and $t\in[0,h]$, assuming that the flow remains in $B$. If the flow does not remain in $B$, then $\hat{\phi}(x,t)$ may not be a bound for $\phi(x,t)$ if $\exists \tau\in[0,t],\ \phi(x,\tau)\not\in B$. If $(h,B)$ have been computed using the flow\+\_\+bounds() method, then the flow is guarenteed to be correct for all $x\in D$ and $t\in[0,h]$. ~\newline
+ Returns\+: A validated version $\hat{\phi}$ of the flow over a short step represented as a single function over a box. ~\newline
+ Arguments\+: $f$ is the {\itshape vector\+\_\+field}, $D$ is the {\itshape state\+\_\+domain}, $h$ is the {\itshape time\+\_\+step}, and $B$ is the {\itshape state\+\_\+bounding\+\_\+box}. ~\newline
+ Throws\+: A \doxylink{structAriadne_1_1FlowTimeStepException}{Flow\+Time\+Step\+Exception} if the flow cannot be computed sufficiently accurately for the given time step. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1IntegratorInterface_ab99d7879a21e2cefa3aa5e728eb8101b}\label{classAriadne_1_1IntegratorInterface_ab99d7879a21e2cefa3aa5e728eb8101b} 
+virtual \mbox{\hyperlink{classAriadne_1_1FlowStepModelType}{Flow\+Step\+Model\+Type}} {\bfseries flow\+\_\+step} (const Validated\+Vector\+Multivariate\+Function \&differential\+\_\+equation, const \mbox{\hyperlink{group__FunctionModule_gafdd31b4d01081cd09aad2ce11117f867}{Exact\+Box\+Type}} \&state\+\_\+domain, const \mbox{\hyperlink{classAriadne_1_1Interval}{Interval}}$<$ \mbox{\hyperlink{group__DifferentialEquationSubModule_ga6f1c6f216a042c31906593cafeb126fa}{Step\+Size\+Type}} $>$ \&time\+\_\+domain, const \mbox{\hyperlink{group__FunctionModule_gafdd31b4d01081cd09aad2ce11117f867}{Exact\+Box\+Type}} \&parameter\+\_\+domain, const \mbox{\hyperlink{group__FunctionModule_gadb510bd9aa076e5ae44245b498901ca6}{Upper\+Box\+Type}} \&bounding\+\_\+box) const =0
+\begin{DoxyCompactList}\small\item\em Compute the flow of $\dt{x}=f(x,t,a)$ starting in $D$ over time interval $T$ over parameter domain $A$, assuming the flow remains in $B$. ~\newline
+ Arguments\+: $f$ is the {\itshape differential\+\_\+equation}, $D$ is the {\itshape state\+\_\+domain}, $T$ is the {\itshape time\+\_\+domain}, $A$ is the {\itshape parameter\+\_\+domain} and $B$ is the {\itshape maximum\+\_\+time\+\_\+step}. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsubsection*{Friends}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1IntegratorInterface_a5ad2a61a409e88aece385222d59ef696}\label{classAriadne_1_1IntegratorInterface_a5ad2a61a409e88aece385222d59ef696} 
+\mbox{\hyperlink{namespaceAriadne_acbb98ddc4385af4599070e65a1a47ec1}{Output\+Stream}} \& {\bfseries operator$<$$<$} (\mbox{\hyperlink{namespaceAriadne_acbb98ddc4385af4599070e65a1a47ec1}{Output\+Stream}} \&os, const \mbox{\hyperlink{classAriadne_1_1IntegratorInterface}{Integrator\+Interface}} \&integrator)
+\begin{DoxyCompactList}\small\item\em Write to an output stream. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+The documentation for this class was generated from the following file\+:\begin{DoxyCompactItemize}
+\item 
+source/solvers/\mbox{\hyperlink{integrator__interface_8hpp}{integrator\+\_\+interface.\+hpp}}\end{DoxyCompactItemize}

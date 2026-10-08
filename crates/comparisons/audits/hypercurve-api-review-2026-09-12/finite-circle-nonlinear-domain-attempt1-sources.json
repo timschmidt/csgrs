@@ -1,0 +1,11 @@
+{
+  "src/arc_bezier.rs": "e455084c2d7dd25cf2278425537a4a8da3eaf29de464b1bbcdd7b683ce713162",
+  "src/bezier_flatten.rs": "4c9186580a281abd9bfafbe75b161cc243f5f9d168df19c28b69c245ea9ee737",
+  "src/bezier_moment.rs": "529cb4c4e09c28eb35949001923cc8f652c68351a660cebdfdacdf2814eabd70",
+  "src/bezier_offset.rs": "7541cbaf0806b0fc0c341b6dda319030eeaefd107517ffee85aab3fa41ea2150",
+  "src/bezier_region.rs": "45a0b0c8774c7c4694005b98c4750e86661dd1ef8aac4a537bd5f330c662f4f8",
+  "src/curve.rs": "716208278b55b5a67e7c1821fddc5387b2bbf369e50ca6029941a6846899096f",
+  "src/curve_region_boolean.rs": "a53eafcd3e4acbf777fdee381423c126ee0458e6218a08f1df61534a4aeaec2d",
+  "src/curve_support_intersection.rs": "34e2e0771684ab72c4020619551a366a189c54fd43827278d508b17f2153882d",
+  "src/rational_bezier_general.rs": "2a42cd3d786d9598125a21377c63f8c12d2658cca7b9cc9ee483acfa46e8b6b9"
+}

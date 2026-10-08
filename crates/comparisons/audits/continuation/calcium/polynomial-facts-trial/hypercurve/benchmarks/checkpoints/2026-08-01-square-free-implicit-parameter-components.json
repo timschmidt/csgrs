@@ -1,0 +1,177 @@
+{
+  "schema": 1,
+  "captured_on": "2026-08-01",
+  "checkpoint": "square-free-implicit-parameter-components",
+  "source_revision": "e770eab4190a21099fac472c496400352663e761",
+  "previous_checkpoint_revision": "6891539390aac38669545901dae4b4ac68eb88ae",
+  "hypersolve_revision": "aa085f9ef0dee13384856febb3b57efa99bb2a51",
+  "scope": {
+    "operation": "exact removal of algebraic multiplicity from implicit Bezier parameter components before geometric topology replay",
+    "completed_families": [
+      "repeated smooth irreducible implicit components",
+      "repeated singular implicit components, including cusps",
+      "mixed factor multiplicities such as F^2 G^3",
+      "both retained-parameter orientations",
+      "coexisting isolated residual contacts",
+      "STRICT and APPROXIMATE_512 through one proof graph"
+    ],
+    "compatibility_shims_added": false,
+    "hypermesh_modified": false,
+    "hypersolve_modified": false
+  },
+  "mathematical_contract": {
+    "authority": "the existing Hypercurve implicit graph/cell certifier remains the sole topology authority and Hypersolve parameter_component_bivariate_polynomial_system remains the sole exact common-factor/division authority",
+    "characteristic_zero_identity": "for a primitive characteristic-zero component H, every repeated geometric factor divides both H and the derivative with respect to the lifted parameter",
+    "retry_boundary": "ordinary square-free certification runs first and returns immediately on success; Hypersolve factor extraction is invoked only after that topology path declines or is uncertain",
+    "exact_reduction": "each accepted Hypersolve Rational or Implicit report supplies H divided exactly by one or more derivative-shared factors as its first residual equation",
+    "termination": "every retry must strictly lower the stored bidegree sum; no iteration cap, approximate degree decision, or heuristic negative participates",
+    "unit_invariance": "Hypersolve may normalize the reduced support by any exact nonzero rational unit; topology depends only on its zero set",
+    "multiplicity_semantics": "factor multiplicity is algebraic evidence, not duplicate geometry; each square-free support branch is transported once",
+    "residual_semantics": "the authored equations reduced by the original common component remain untouched, so isolated residual pairs coexist with the deduplicated overlap topology",
+    "singular_semantics": "after multiplicity removal, cusps, nodes, acnodes, folds, and domain events reuse the same exact singular-cell decomposition rather than a repeated-component special case",
+    "strict": "STRICT uses exact Hypersolve component construction, exact division, exact bidegree descent, and the existing exact topology replay",
+    "approximate_512": "APPROXIMATE_512 uses the identical factor and topology construction; only inherited Hyperreal equality terminals may stop at 512 bits and no approximate factor, parameter, or branch is synthesized",
+    "failure_semantics": "a factor not exactly extractable by Hypersolve leaves the original explicit Boundary/uncertainty result in force"
+  },
+  "new_path_evidence": {
+    "historical_outcome": "the pre-normalization certifier returns UncertaintyReason::Boundary for the repeated cusp under both policies; this is asserted before the retry in the committed fixture",
+    "current_outcome": "the same fixture completes with exactly two cusp half-branches, while a repeated smooth component emits one overlap and preserves its isolated residual pair",
+    "mixed_multiplicity_outcome": "F^2 G^3 reduces to a support exactly proportional to F G in either retained-parameter orientation",
+    "optimized_test_pair": "the two repeated-component topology fixtures, including the asserted pre-normalization boundary, complete together in 0.03 seconds in the all-feature release test profile",
+    "timing_interpretation": "no speed ratio is reported against the parent's early unsupported exit; completion with exact topology is the relevant correctness result"
+  },
+  "existing_lane_guards": [
+    {
+      "lane": "bezier_parallel_implicit_quadratic_component",
+      "historical_candidate_median_milliseconds": 2.668160,
+      "historical_contact_median_milliseconds": 2.666275,
+      "current_candidate_median_milliseconds": 2.668460,
+      "current_contact_median_milliseconds": 2.655630,
+      "candidate_change_percent": 0.011244,
+      "contact_change_percent": -0.399246,
+      "interpretation": "the ordinary square-free global-graph path is flat"
+    },
+    {
+      "lane": "bezier_parallel_two_turning_implicit_graphs",
+      "historical_candidate_median_milliseconds": 82.396854,
+      "historical_contact_median_milliseconds": 81.441657,
+      "current_candidate_median_milliseconds": 82.515800,
+      "current_contact_median_milliseconds": 81.317502,
+      "candidate_change_percent": 0.144357,
+      "contact_change_percent": -0.152447,
+      "interpretation": "the ordinary multi-graph path is flat"
+    },
+    {
+      "lane": "bezier_parallel_closed_implicit_oval",
+      "historical_candidate_median_milliseconds": 74.341537,
+      "historical_contact_median_milliseconds": 74.372938,
+      "current_candidate_median_milliseconds": 74.277485,
+      "current_contact_median_milliseconds": 74.804727,
+      "candidate_change_percent": -0.086159,
+      "contact_change_percent": 0.580573,
+      "interpretation": "the ordinary closed-component path remains within run noise"
+    },
+    {
+      "lane": "bezier_parallel_implicit_cusp",
+      "historical_candidate_median_milliseconds": 369.026528,
+      "historical_contact_median_milliseconds": 369.775368,
+      "current_candidate_median_milliseconds": 369.193787,
+      "current_contact_median_milliseconds": 367.154839,
+      "candidate_change_percent": 0.045324,
+      "contact_change_percent": -0.708681,
+      "interpretation": "the ordinary square-free singular path is flat to slightly faster"
+    },
+    {
+      "lane": "bezier_parallel_boundary_parameter_fiber",
+      "historical_candidate_median_microseconds": 26.128,
+      "historical_contact_median_microseconds": 33.663,
+      "current_candidate_median_microseconds": 25.783,
+      "current_contact_median_microseconds": 33.223,
+      "candidate_change_percent": -1.320423,
+      "contact_change_percent": -1.307073,
+      "interpretation": "the axis-wide point-image path improves slightly"
+    }
+  ],
+  "benchmark_method": {
+    "processes_per_revision": 5,
+    "cpu": 11,
+    "profile": "all-feature release",
+    "source_identity": "the offset benchmark source is byte-identical at revisions 6891539 and e770eab",
+    "machine": "AMD Ryzen 7 5800X3D, Linux 7.0.4-100.fc43.x86_64, rustc 1.97.0, cargo 1.97.0"
+  },
+  "memory": {
+    "method": "three interleaved fresh pinned processes per revision under /usr/bin/time, running the complete Bezier-intersection benchmark group",
+    "historical_max_rss_kib": [
+      12828,
+      12760,
+      12800
+    ],
+    "current_max_rss_kib": [
+      12800,
+      12724,
+      12716
+    ],
+    "historical_median_max_rss_kib": 12800,
+    "current_median_max_rss_kib": 12724,
+    "change_kib": -76,
+    "change_percent": -0.593750,
+    "interpretation": "the common square-free paths allocate no normalization state and whole-process peak RSS is flat to slightly lower"
+  },
+  "competitive_context": {
+    "direct_peer_lane": "none",
+    "reason": "the pinned finite competitors do not expose exact bivariate common-component multiplicity, complete singular parameter topology, or STRICT/APPROXIMATE_512 semantics",
+    "policy": "an early floating-point or unsupported result is not treated as a throughput substitute for exact completed topology"
+  },
+  "release_size": {
+    "binary": "target/release/deps/offset-ea116fee283cd918",
+    "matched_historical_file_bytes": 7595952,
+    "current_file_bytes": 7554328,
+    "matched_historical_text_bytes": 5794911,
+    "current_text_bytes": 5756527,
+    "matched_historical_loadable_bytes": 6061247,
+    "current_loadable_bytes": 6022855,
+    "matched_historical_total_memory_bytes": 6063871,
+    "current_total_memory_bytes": 6027007,
+    "file_change_bytes": -41624,
+    "text_change_bytes": -38384,
+    "loadable_change_bytes": -38392,
+    "total_memory_change_bytes": -36864,
+    "file_change_percent": -0.547976,
+    "text_change_percent": -0.662374,
+    "loadable_change_percent": -0.633401,
+    "total_memory_change_percent": -0.607928,
+    "interpretation": "cold outlining the formerly unsupported retry lets the optimized matched benchmark shrink despite adding exact repeated-component support"
+  },
+  "static_callgraph": {
+    "tool": "tools/hyper-callgraph",
+    "scope": "hypercurve and hypersolve with examples, tests, benchmarks, and fuzz targets",
+    "nodes": 30079,
+    "edges": 54191,
+    "change_from_previous_checkpoint": {
+      "nodes": 15,
+      "edges": 39
+    },
+    "artifact": "/tmp/hypercurve-square-free-implicit-stack-callgraph/callgraph.json",
+    "interpretation": "the new surface is one cold multiplicity reducer and one retry wrapper around the existing topology authority; the remaining graph growth is test coverage"
+  },
+  "verification": {
+    "all_features_library_tests": 318,
+    "no_default_features_library_tests": 282,
+    "all_features_public_fit_offset_tests": 91,
+    "no_default_features_public_fit_offset_tests": 81,
+    "full_all_features": "passed",
+    "full_no_default_features": "passed",
+    "quality": [
+      "cargo clippy --all-features --all-targets -- -D warnings",
+      "cargo clippy --no-default-features --all-targets -- -D warnings",
+      "cargo fmt --all -- --check",
+      "git diff --check"
+    ]
+  },
+  "remaining": [
+    "supported non-rational coefficient towers",
+    "selected-branch components on which the branch predicate vanishes identically",
+    "remaining exact parallel carrier surfaces and authoritative CurveRegion2 offset regularization",
+    "solver-driven CurveRegion2 fillet and chamfer"
+  ]
+}

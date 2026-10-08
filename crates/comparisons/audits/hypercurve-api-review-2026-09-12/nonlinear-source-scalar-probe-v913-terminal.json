@@ -1,0 +1,40 @@
+{
+  "baseline": "affine-field-v910-sources.json",
+  "rlib": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypercurve-85a9105cd1c82df7.rlib",
+  "rlib_sha256": "5bdc05a873ec172d1ea46b33a4c2de5ff1e8ff56dc3a77e35c577227f70958cf",
+  "source_sha256": "882db771eb08c37b40e11492f706da40cedfa077c9d620b57e9443364e3fb148",
+  "processes": [
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustc",
+        "--edition=2024",
+        "--crate-name",
+        "nonlinear_source_scalar_probe",
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/nonlinear-source-scalar-probe-v907.rs",
+        "--extern",
+        "hypercurve=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypercurve-85a9105cd1c82df7.rlib",
+        "-L",
+        "dependency=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps",
+        "-C",
+        "opt-level=3",
+        "-o",
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/nonlinear-source-scalar-probe-v913-binary"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.614619828062132,
+      "log": "nonlinear-source-scalar-probe-v913-compile.log"
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/nonlinear-source-scalar-probe-v913-binary"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.0076401259284466505,
+      "log": "nonlinear-source-scalar-probe-v913-cases.log"
+    }
+  ],
+  "all_processes_reaped": true,
+  "binary_sha256": "9e84673c735171f3409fe0fb15ad149145edeb612a8c34915b3948caf012cc24",
+  "output": "policy=0 second=false point_represented=true retained_tangent=true vector_represented=false\npolicy=0 second=true point_represented=true retained_tangent=true vector_represented=false\npolicy=0 blocked=RealSign\npolicy=1 second=false point_represented=true retained_tangent=true vector_represented=false\npolicy=1 second=true point_represented=true retained_tangent=true vector_represented=false\npolicy=1 blocked=RealSign\ncomplete requests=2 blocked=2\n",
+  "probe_complete": true
+}

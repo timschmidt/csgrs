@@ -1,0 +1,18 @@
+{
+  "tag": "reuse-consumer-probe-memcheck",
+  "started": "2026-09-08T22:01:38.657Z",
+  "finished": "2026-09-08T22:01:39.634Z",
+  "elapsedSeconds": 0.974556367,
+  "cwd": "/home/tim/Documents/GitHub/workspace",
+  "command": "valgrind",
+  "args": [
+    "--tool=memcheck",
+    "--error-exitcode=99",
+    "--leak-check=full",
+    "--show-leak-kinds=all",
+    "--errors-for-leak-kinds=definite,indirect,possible",
+    "/tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/release/calcium-sign-consumer-probe-reuse"
+  ],
+  "code": 0,
+  "signal": null
+}

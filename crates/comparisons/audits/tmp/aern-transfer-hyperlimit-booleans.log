@@ -1,0 +1,9 @@
+   Compiling hyperlimit v0.4.1 (/home/tim/Documents/GitHub/workspace/hyperlimit)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1.05s
+     Running unittests src/lib.rs (target/debug/deps/hyperlimit-3f2fc9b23678d720)
+
+running 1 test
+test predicate::tests::boolean_outcome_combinators_preserve_certainty_and_short_circuit_unknowns ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 241 filtered out; finished in 0.00s
+

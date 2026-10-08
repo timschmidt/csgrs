@@ -1,0 +1,56 @@
+{
+  "diagnostic_only": true,
+  "source_manifest": "root-sign-input-20260927-v442-sources.json",
+  "source_directory": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/source-archives/root-sign-input-20260927-v442",
+  "cases": [
+    {
+      "binary": "root-sign-input-20260927-v442-hypercurve_curve_region_promotion",
+      "name": "strict_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions",
+      "returncode": 101,
+      "log": "root-sign-input-20260927-v442-case-000.log",
+      "elapsed_seconds": 38.36376274982467
+    }
+  ],
+  "builds": [
+    {
+      "crate": "hypercurve",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "test",
+        "--test",
+        "hypercurve_curve_region_promotion",
+        "--release",
+        "--all-features",
+        "--no-run",
+        "--message-format=json",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "log": "root-sign-input-20260927-v442-hypercurve_curve_region_promotion-build.log",
+      "elapsed_seconds": 110.61583203799091,
+      "binary": {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/root-sign-input-20260927-v442-hypercurve_curve_region_promotion",
+        "sha256": "73745bcaa34e3ad819b6a0103bf8876906f4ca756bd32dd030e0e9b1da911d97"
+      }
+    }
+  ],
+  "trial": {
+    "hypersolve/src/root_sign.rs": "20cbb06bc5e5187ab47b0a7b1311e7be6e9b6bed19f031f64c1c1ac1678d5b3d",
+    "hyperreal/src/real/arithmetic/quadratic_tower_sign.rs": "11d3038fb7fb6d6e2a6d729ce455c323f8a4f39abf0b396e19d2bbd02c533f2b"
+  },
+  "all_processes_reaped": true,
+  "checks": [],
+  "qualification_scope": "Diagnostic capture of exact selected-root inputs; intentional test stop, not a test pass",
+  "expected_cases": {
+    "hypercurve_curve_region_promotion": [
+      "strict_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions"
+    ]
+  },
+  "known_unresolved": [
+    "strict_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions",
+    "approximate_512_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions"
+  ],
+  "capture_complete": true,
+  "qualification_complete": false
+}

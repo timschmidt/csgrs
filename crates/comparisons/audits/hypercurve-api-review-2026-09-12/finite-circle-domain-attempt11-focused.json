@@ -1,0 +1,30 @@
+[
+  {
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve-6e6572a45c5b177b",
+      "--exact",
+      "bezier_region::tests::selected_circle_and_retained_rational_arc_fillet_exactly",
+      "--test-threads=1",
+      "--nocapture"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 1.2153812420147005,
+    "binary": "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve-6e6572a45c5b177b",
+    "sha256": "b27177a91836e6daffbad974398ee370207b609bbe5628a0726b438fb50a69c3",
+    "log": "finite-circle-domain-attempt11-selected_circle_and_retained_rational_arc_fillet_exactly.log"
+  },
+  {
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve-6e6572a45c5b177b",
+      "--exact",
+      "bezier_region::tests::selected_circle_and_retained_rational_arc_extend_on_full_supports",
+      "--test-threads=1",
+      "--nocapture"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.8148857300111558,
+    "binary": "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve-6e6572a45c5b177b",
+    "sha256": "b27177a91836e6daffbad974398ee370207b609bbe5628a0726b438fb50a69c3",
+    "log": "finite-circle-domain-attempt11-selected_circle_and_retained_rational_arc_extend_on_full_supports.log"
+  }
+]

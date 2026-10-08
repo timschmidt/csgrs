@@ -1,0 +1,29 @@
+bezier_evaluation_quadratic: 500000 iterations in 364.966771ms (729ns/iter)
+bezier_evaluation_cubic: 500000 iterations in 858.38553ms (1.716µs/iter)
+bezier_polynomial_evaluation_rational_32: 20000 iterations in 277.905595ms (13.895µs/iter), certified=20000
+bezier_polynomial_evaluation_symbolic_32: 2000 iterations in 127.794905ms (63.897µs/iter), certified=2000
+bezier_polynomial_evaluation_nested_quadratic: 10000 iterations in 88.377536ms (8.837µs/iter), certified=10000
+bezier_polynomial_evaluation_balanced_128: 2000 iterations in 184.876616ms (92.438µs/iter), certified=2000
+	Command being timed: "taskset -c 7 /tmp/hypercurve-authoritative-polynomial-candidate-benchmark"
+	User time (seconds): 1.45
+	System time (seconds): 0.00
+	Percent of CPU this job got: 76%
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:01.90
+	Average shared text size (kbytes): 0
+	Average unshared data size (kbytes): 0
+	Average stack size (kbytes): 0
+	Average total size (kbytes): 0
+	Maximum resident set size (kbytes): 3924
+	Average resident set size (kbytes): 0
+	Major (requiring I/O) page faults: 0
+	Minor (reclaiming a frame) page faults: 269
+	Voluntary context switches: 1
+	Involuntary context switches: 1181
+	Swaps: 0
+	File system inputs: 0
+	File system outputs: 0
+	Socket messages sent: 0
+	Socket messages received: 0
+	Signals delivered: 0
+	Page size (bytes): 4096
+	Exit status: 0

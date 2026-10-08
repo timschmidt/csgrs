@@ -1,0 +1,193 @@
+\doxysubsection{Vector\+Scaled\+Function\+Patch\texorpdfstring{$<$}{<} M \texorpdfstring{$>$}{>} Class Template Reference}
+\hypertarget{classAriadne_1_1VectorScaledFunctionPatch}{}\label{classAriadne_1_1VectorScaledFunctionPatch}\index{VectorScaledFunctionPatch$<$ M $>$@{VectorScaledFunctionPatch$<$ M $>$}}
+
+
+{\ttfamily \#include $<$scaled\+\_\+function\+\_\+patch.\+hpp$>$}
+
+
+
+\doxysubsubsection{Description}
+\subsubsection*{template$<$class M$>$\newline
+class Ariadne\+::\+Vector\+Scaled\+Function\+Patch$<$ M $>$}
+A a type of function model in which a the restriction of a vector function $f:\R^n\rightarrow\R^m$ on a domain $D$ is approximated by the composition of a scaling function $s^{-1}:D\fto\I^n=[-1\!:\!+1]^n$ with a vector function $p$ (such as a polynomial) on $\I^n$ with uniform errors $e$. 
+
+
+\begin{DoxyTemplParams}{Template Parameters}
+{\em M} & The class used for the component function models over the box $[-1\!:\!+1]^n$.\\
+\hline
+\end{DoxyTemplParams}
+\begin{DoxySeeAlso}{See also}
+\doxylink{classAriadne_1_1TaylorModel}{Taylor\+Model}, \doxylink{classAriadne_1_1ScaledFunctionPatch}{Scaled\+Function\+Patch}, \doxylink{group__FunctionModelSubModule_ga2c22c0befb7ccf11c80015eee7e7a78b}{Validated\+Vector\+Multivariate\+Taylor\+Function\+Model\+DP} 
+\end{DoxySeeAlso}
+\doxysubsubsubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1VectorScaledFunctionPatch_a8b368bc7da5aace42bc5bccaa06ed672}\label{classAriadne_1_1VectorScaledFunctionPatch_a8b368bc7da5aace42bc5bccaa06ed672} 
+{\bfseries Vector\+Scaled\+Function\+Patch} (Size\+Type \mbox{\hyperlink{classAriadne_1_1VectorScaledFunctionPatch_ae9f301afca7aa542eea9123a93d26bf5}{result\+\_\+size}}, const \mbox{\hyperlink{group__FunctionModule_gaf5c0b733c80abb59b1c3d1eb58c20099}{Box\+Domain\+Type}} \&\mbox{\hyperlink{classAriadne_1_1VectorScaledFunctionPatch_a846d4f6909f5c41c551d2ded48db30f0}{domain}}, Properties\+Type \mbox{\hyperlink{classAriadne_1_1VectorScaledFunctionPatch_acd0e7cda837b591e4328805c57d5fabf}{properties}})
+\begin{DoxyCompactList}\small\item\em Construct from a result size and a domain. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1VectorScaledFunctionPatch_afa1f7f1d2829b9310c316d9969e852e9}\label{classAriadne_1_1VectorScaledFunctionPatch_afa1f7f1d2829b9310c316d9969e852e9} 
+{\bfseries Vector\+Scaled\+Function\+Patch} (Size\+Type \mbox{\hyperlink{classAriadne_1_1VectorScaledFunctionPatch_ae9f301afca7aa542eea9123a93d26bf5}{result\+\_\+size}}, const \mbox{\hyperlink{classAriadne_1_1ScaledFunctionPatch}{Scaled\+Function\+Patch}}$<$ M $>$ \&scalar\+\_\+function)
+\begin{DoxyCompactList}\small\item\em Construct a vector function all of whose components are the same. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1VectorScaledFunctionPatch_a97cdf4646c7b67c43a8f32e09e7724b1}\label{classAriadne_1_1VectorScaledFunctionPatch_a97cdf4646c7b67c43a8f32e09e7724b1} 
+{\bfseries Vector\+Scaled\+Function\+Patch} (const \mbox{\hyperlink{group__FunctionModule_gaf5c0b733c80abb59b1c3d1eb58c20099}{Box\+Domain\+Type}} \&\mbox{\hyperlink{classAriadne_1_1VectorScaledFunctionPatch_a846d4f6909f5c41c551d2ded48db30f0}{domain}}, const \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ \mbox{\hyperlink{classAriadne_1_1Expansion}{Expansion}}$<$ Multi\+Index, Coefficient\+Type $>$ $>$ \&expansion, Properties\+Type \mbox{\hyperlink{classAriadne_1_1VectorScaledFunctionPatch_acd0e7cda837b591e4328805c57d5fabf}{properties}})
+\begin{DoxyCompactList}\small\item\em Construct from a domain and the expansion. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1VectorScaledFunctionPatch_a200d2184a4f1343e204fadfe52c43756}\label{classAriadne_1_1VectorScaledFunctionPatch_a200d2184a4f1343e204fadfe52c43756} 
+{\bfseries Vector\+Scaled\+Function\+Patch} (const \mbox{\hyperlink{group__FunctionModule_gaf5c0b733c80abb59b1c3d1eb58c20099}{Box\+Domain\+Type}} \&\mbox{\hyperlink{classAriadne_1_1VectorScaledFunctionPatch_a846d4f6909f5c41c551d2ded48db30f0}{domain}}, const \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ \mbox{\hyperlink{classAriadne_1_1Expansion}{Expansion}}$<$ Multi\+Index, Coefficient\+Type $>$ $>$ \&expansion, const \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ Error\+Type $>$ \&\mbox{\hyperlink{classAriadne_1_1VectorScaledFunctionPatch_a1a4c97b73f773fb3ee7d11bee3cd2ce1}{error}}, Properties\+Type \mbox{\hyperlink{classAriadne_1_1VectorScaledFunctionPatch_acd0e7cda837b591e4328805c57d5fabf}{properties}})
+\begin{DoxyCompactList}\small\item\em Construct from a domain, and expansion and errors. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1VectorScaledFunctionPatch_a2384ea7074816f4709c255ed9f37695d}\label{classAriadne_1_1VectorScaledFunctionPatch_a2384ea7074816f4709c255ed9f37695d} 
+{\bfseries Vector\+Scaled\+Function\+Patch} (const \mbox{\hyperlink{group__FunctionModule_gaf5c0b733c80abb59b1c3d1eb58c20099}{Box\+Domain\+Type}} \&\mbox{\hyperlink{classAriadne_1_1VectorScaledFunctionPatch_a846d4f6909f5c41c551d2ded48db30f0}{domain}}, const \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ \mbox{\hyperlink{classAriadne_1_1Expansion}{Expansion}}$<$ Multi\+Index, \mbox{\hyperlink{group__NumericModule_ga1673e0494a9b80845c3a4912c4cb8dd8}{Raw\+Float}}$<$ PR $>$ $>$ $>$ \&expansion, const \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ \mbox{\hyperlink{group__NumericModule_ga1673e0494a9b80845c3a4912c4cb8dd8}{Raw\+Float}}$<$ PR $>$ $>$ \&\mbox{\hyperlink{classAriadne_1_1VectorScaledFunctionPatch_a1a4c97b73f773fb3ee7d11bee3cd2ce1}{error}}, Properties\+Type \mbox{\hyperlink{classAriadne_1_1VectorScaledFunctionPatch_acd0e7cda837b591e4328805c57d5fabf}{properties}})
+\begin{DoxyCompactList}\small\item\em Construct from a domain, and expansion and errors. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1VectorScaledFunctionPatch_ac34c29131bdc0b920b5353f4e7cdd91e}\label{classAriadne_1_1VectorScaledFunctionPatch_ac34c29131bdc0b920b5353f4e7cdd91e} 
+{\bfseries Vector\+Scaled\+Function\+Patch} (const \mbox{\hyperlink{group__FunctionModule_gaf5c0b733c80abb59b1c3d1eb58c20099}{Box\+Domain\+Type}} \&\mbox{\hyperlink{classAriadne_1_1VectorScaledFunctionPatch_a846d4f6909f5c41c551d2ded48db30f0}{domain}}, const \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ \mbox{\hyperlink{classAriadne_1_1Expansion}{Expansion}}$<$ Multi\+Index, \mbox{\hyperlink{classAriadne_1_1ExactDouble}{Exact\+Double}} $>$ $>$ \&expansion, Properties\+Type \mbox{\hyperlink{classAriadne_1_1VectorScaledFunctionPatch_acd0e7cda837b591e4328805c57d5fabf}{properties}})
+\begin{DoxyCompactList}\small\item\em Construct from a domain, and expansion and errors. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1VectorScaledFunctionPatch_a57f6a001c29f4da52dd23af07dd8ae48}\label{classAriadne_1_1VectorScaledFunctionPatch_a57f6a001c29f4da52dd23af07dd8ae48} 
+{\bfseries Vector\+Scaled\+Function\+Patch} (const \mbox{\hyperlink{group__FunctionModule_gaf5c0b733c80abb59b1c3d1eb58c20099}{Box\+Domain\+Type}} \&\mbox{\hyperlink{classAriadne_1_1VectorScaledFunctionPatch_a846d4f6909f5c41c551d2ded48db30f0}{domain}}, const \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ Model\+Type $>$ \&variables)
+\begin{DoxyCompactList}\small\item\em Construct from a domain and the models. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1VectorScaledFunctionPatch_a411c3fb68c2e7f8530402d443a01bacd}\label{classAriadne_1_1VectorScaledFunctionPatch_a411c3fb68c2e7f8530402d443a01bacd} 
+{\bfseries Vector\+Scaled\+Function\+Patch} (const \mbox{\hyperlink{group__FunctionModule_gaf5c0b733c80abb59b1c3d1eb58c20099}{Box\+Domain\+Type}} \&\mbox{\hyperlink{classAriadne_1_1VectorScaledFunctionPatch_a846d4f6909f5c41c551d2ded48db30f0}{domain}}, const Vector\+Function\+Type$<$ M $>$ \&\mbox{\hyperlink{classAriadne_1_1VectorScaledFunctionPatch_a54e63ce4a83a29adb4e2f5969f8fd707}{function}}, const Properties\+Type \&\mbox{\hyperlink{classAriadne_1_1VectorScaledFunctionPatch_acd0e7cda837b591e4328805c57d5fabf}{properties}})
+\begin{DoxyCompactList}\small\item\em Construct from a {\itshape domain}, a {\itshape function}, and {\itshape properties} determining the accuracy. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1VectorScaledFunctionPatch_a6b09fe9120c06bee198b6f2d5540363e}\label{classAriadne_1_1VectorScaledFunctionPatch_a6b09fe9120c06bee198b6f2d5540363e} 
+{\bfseries Vector\+Scaled\+Function\+Patch} (const \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ \mbox{\hyperlink{classAriadne_1_1ScaledFunctionPatch}{Scaled\+Function\+Patch}}$<$ M $>$ $>$ \&components)
+\begin{DoxyCompactList}\small\item\em Construct from a vector of scalar Taylor functions. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1VectorScaledFunctionPatch_a5108615a2c0d1eb88b93e7b8835692a7}\label{classAriadne_1_1VectorScaledFunctionPatch_a5108615a2c0d1eb88b93e7b8835692a7} 
+{\bfseries Vector\+Scaled\+Function\+Patch} (const \mbox{\hyperlink{classAriadne_1_1List}{List}}$<$ \mbox{\hyperlink{classAriadne_1_1ScaledFunctionPatch}{Scaled\+Function\+Patch}}$<$ M $>$ $>$ \&components)
+\begin{DoxyCompactList}\small\item\em Construct from a list of scalar Taylor functions. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1VectorScaledFunctionPatch_a73a027153cca04bdbcce4374d5cb1c8b}\label{classAriadne_1_1VectorScaledFunctionPatch_a73a027153cca04bdbcce4374d5cb1c8b} 
+{\bfseries Vector\+Scaled\+Function\+Patch} (\mbox{\hyperlink{namespaceAriadne_a8d51a34ecd8621e992f2470124281c93}{Initializer\+List}}$<$ \mbox{\hyperlink{classAriadne_1_1ScaledFunctionPatch}{Scaled\+Function\+Patch}}$<$ M $>$ $>$ components)
+\begin{DoxyCompactList}\small\item\em Construct from an initializer list of scalar Taylor functions. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1VectorScaledFunctionPatch_a1f8b99b35fda6bd6793801fade9d8c59}\label{classAriadne_1_1VectorScaledFunctionPatch_a1f8b99b35fda6bd6793801fade9d8c59} 
+{\footnotesize template$<$class E$>$ }\\{\bfseries Vector\+Scaled\+Function\+Patch} (const Vector\+Expression$<$ E $>$ \&ve)
+\begin{DoxyCompactList}\small\item\em Construct from a vector expression. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1VectorScaledFunctionPatch_acd0e7cda837b591e4328805c57d5fabf}\label{classAriadne_1_1VectorScaledFunctionPatch_acd0e7cda837b591e4328805c57d5fabf} 
+Properties\+Type {\bfseries properties} () const
+\begin{DoxyCompactList}\small\item\em The properties used to control approximation of the function model. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1VectorScaledFunctionPatch_a0d39025a0d47872ebc405575c2aa58d3}\label{classAriadne_1_1VectorScaledFunctionPatch_a0d39025a0d47872ebc405575c2aa58d3} 
+Precision\+Type {\bfseries precision} () const
+\begin{DoxyCompactList}\small\item\em The precision of the numbers used. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1VectorScaledFunctionPatch_ac6fc57d9ef1d4f38ad4b6cf8b219b2d6}\label{classAriadne_1_1VectorScaledFunctionPatch_ac6fc57d9ef1d4f38ad4b6cf8b219b2d6} 
+\mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} {\bfseries set\+\_\+properties} (Properties\+Type prp)
+\begin{DoxyCompactList}\small\item\em \doxylink{classAriadne_1_1Set}{Set} the properties used to control approximation of the function model. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1VectorScaledFunctionPatch_a846d4f6909f5c41c551d2ded48db30f0}\label{classAriadne_1_1VectorScaledFunctionPatch_a846d4f6909f5c41c551d2ded48db30f0} 
+const \mbox{\hyperlink{group__FunctionModule_gaf5c0b733c80abb59b1c3d1eb58c20099}{Box\+Domain\+Type}} {\bfseries domain} () const
+\begin{DoxyCompactList}\small\item\em The data used to define the domain of the Taylor model. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1VectorScaledFunctionPatch_abaff519861df69012ccb5722a1ce25b6}\label{classAriadne_1_1VectorScaledFunctionPatch_abaff519861df69012ccb5722a1ce25b6} 
+const \mbox{\hyperlink{group__FunctionModule_gaf5c0b733c80abb59b1c3d1eb58c20099}{Box\+Domain\+Type}} {\bfseries codomain} () const
+\begin{DoxyCompactList}\small\item\em A rough bound for the range of the function. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1VectorScaledFunctionPatch_a06964d37f7942c83eafcf0ec21f3b8cd}\label{classAriadne_1_1VectorScaledFunctionPatch_a06964d37f7942c83eafcf0ec21f3b8cd} 
+const \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ Coefficient\+Type $>$ {\bfseries centre} () const
+\begin{DoxyCompactList}\small\item\em The centre of the Taylor model. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1VectorScaledFunctionPatch_a3e1b5bb2bcf214c143cb23d4875d89b7}\label{classAriadne_1_1VectorScaledFunctionPatch_a3e1b5bb2bcf214c143cb23d4875d89b7} 
+const \mbox{\hyperlink{classAriadne_1_1Box}{Range\+Type}} {\bfseries range} () const
+\begin{DoxyCompactList}\small\item\em The range of the Taylor model. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1VectorScaledFunctionPatch_ae2735def97066735ea3d79710919c758}\label{classAriadne_1_1VectorScaledFunctionPatch_ae2735def97066735ea3d79710919c758} 
+const \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ Model\+Type $>$ \& {\bfseries models} () const
+\begin{DoxyCompactList}\small\item\em The data used to define the Taylor models. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1VectorScaledFunctionPatch_a5523983db765812d6f68f3bdcc566b44}\label{classAriadne_1_1VectorScaledFunctionPatch_a5523983db765812d6f68f3bdcc566b44} 
+const \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ \mbox{\hyperlink{classAriadne_1_1Expansion}{Expansion}}$<$ Multi\+Index, Coefficient\+Type $>$ $>$ {\bfseries expansions} () const
+\begin{DoxyCompactList}\small\item\em The data used to define the centre of the Taylor models. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1VectorScaledFunctionPatch_a26a2f71ec126b70d941a709a24e36f9a}\label{classAriadne_1_1VectorScaledFunctionPatch_a26a2f71ec126b70d941a709a24e36f9a} 
+const Model\+Type \& {\bfseries model} (Size\+Type i) const
+\begin{DoxyCompactList}\small\item\em The {\itshape i\textsuperscript{th}} Taylor model used to define the function. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1VectorScaledFunctionPatch_a49730f0b7a49b83260d0ccc847bfdf52}\label{classAriadne_1_1VectorScaledFunctionPatch_a49730f0b7a49b83260d0ccc847bfdf52} 
+Model\+Type \& {\bfseries model} (Size\+Type i)
+\begin{DoxyCompactList}\small\item\em The {\itshape i\textsuperscript{th}} Taylor model used to define the function. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1VectorScaledFunctionPatch_ac553426d3e8c493742606dbe03855b08}\label{classAriadne_1_1VectorScaledFunctionPatch_ac553426d3e8c493742606dbe03855b08} 
+Size\+Type {\bfseries argument\+\_\+size} () const
+\begin{DoxyCompactList}\small\item\em The size of the argument. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1VectorScaledFunctionPatch_ae9f301afca7aa542eea9123a93d26bf5}\label{classAriadne_1_1VectorScaledFunctionPatch_ae9f301afca7aa542eea9123a93d26bf5} 
+Size\+Type {\bfseries result\+\_\+size} () const
+\begin{DoxyCompactList}\small\item\em The size of the result. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1VectorScaledFunctionPatch_a0472c48c2838a924eac36b19cbe017d0}\label{classAriadne_1_1VectorScaledFunctionPatch_a0472c48c2838a924eac36b19cbe017d0} 
+Size\+Type {\bfseries size} () const
+\begin{DoxyCompactList}\small\item\em The number of scalar function components. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1VectorScaledFunctionPatch_a4de1b7239d69ed22ab30c013f0c3cfe4}\label{classAriadne_1_1VectorScaledFunctionPatch_a4de1b7239d69ed22ab30c013f0c3cfe4} 
+\mbox{\hyperlink{classAriadne_1_1ScaledFunctionPatch}{Scaled\+Function\+Patch}}$<$ M $>$ {\bfseries zero\+\_\+element} () const
+\begin{DoxyCompactList}\small\item\em A null function compatible with the elements. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1VectorScaledFunctionPatch_a83298ed04a158bec99cdd93a5c1147e1}\label{classAriadne_1_1VectorScaledFunctionPatch_a83298ed04a158bec99cdd93a5c1147e1} 
+\mbox{\hyperlink{classAriadne_1_1ScaledFunctionPatch}{Scaled\+Function\+Patch}}$<$ M $>$ {\bfseries get} (Size\+Type i) const
+\begin{DoxyCompactList}\small\item\em Get the {\itshape ith} Taylor variable. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1VectorScaledFunctionPatch_a283f109f5af400efc5967c0580b39a9d}\label{classAriadne_1_1VectorScaledFunctionPatch_a283f109f5af400efc5967c0580b39a9d} 
+\mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} {\bfseries set} (Size\+Type i, const \mbox{\hyperlink{classAriadne_1_1ScaledFunctionPatch}{Scaled\+Function\+Patch}}$<$ M $>$ \&te)
+\begin{DoxyCompactList}\small\item\em \doxylink{classAriadne_1_1Set}{Set} the {\itshape ith} Taylor variable. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1VectorScaledFunctionPatch_a2df09ca344d6ec16225a16185aea2057}\label{classAriadne_1_1VectorScaledFunctionPatch_a2df09ca344d6ec16225a16185aea2057} 
+\mbox{\hyperlink{classAriadne_1_1ScaledFunctionPatch}{Scaled\+Function\+Patch}}$<$ M $>$ const {\bfseries operator\mbox{[}$\,$\mbox{]}} (Size\+Type i) const
+\begin{DoxyCompactList}\small\item\em The {\itshape ith} Taylor variable. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1VectorScaledFunctionPatch_a46697e68d75a6e79fbed85491d121f8a}\label{classAriadne_1_1VectorScaledFunctionPatch_a46697e68d75a6e79fbed85491d121f8a} 
+Vector\+Scaled\+Function\+Patch\+Element\+Reference$<$ M $>$ {\bfseries operator\mbox{[}$\,$\mbox{]}} (Size\+Type i)
+\begin{DoxyCompactList}\small\item\em The {\itshape ith} Taylor variable. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1VectorScaledFunctionPatch_a75e47c7d09624b5511c1208c02d2013e}\label{classAriadne_1_1VectorScaledFunctionPatch_a75e47c7d09624b5511c1208c02d2013e} 
+\mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ Arithmetic\+Type$<$ Coefficient\+Type, \mbox{\hyperlink{classAriadne_1_1Bounds}{Validated\+Numeric\+Type}} $>$ $>$ {\bfseries operator()} (const \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ \mbox{\hyperlink{classAriadne_1_1Bounds}{Validated\+Numeric\+Type}} $>$ \&x) const
+\begin{DoxyCompactList}\small\item\em Evaluate the Taylor model at the point {\itshape x}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1VectorScaledFunctionPatch_a48e792098c6f94752b226a57debb3d51}\label{classAriadne_1_1VectorScaledFunctionPatch_a48e792098c6f94752b226a57debb3d51} 
+\mbox{\hyperlink{classAriadne_1_1Matrix}{Matrix}}$<$ Numeric\+Type $>$ {\bfseries jacobian} (const \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ Numeric\+Type $>$ \&x) const
+\begin{DoxyCompactList}\small\item\em Compute an approximation to Jacobian derivative of the Taylor model sat the point {\itshape x}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1VectorScaledFunctionPatch_a5a25574fa4121ca780eefec98b0bc21e}\label{classAriadne_1_1VectorScaledFunctionPatch_a5a25574fa4121ca780eefec98b0bc21e} 
+\mbox{\hyperlink{classAriadne_1_1VectorScaledFunctionPatch}{Vector\+Scaled\+Function\+Patch}}$<$ M $>$ \& {\bfseries simplify} ()
+\begin{DoxyCompactList}\small\item\em Simplify the representation. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1VectorScaledFunctionPatch_a4c293f10eab0c6d4f01e64a015e9a282}\label{classAriadne_1_1VectorScaledFunctionPatch_a4c293f10eab0c6d4f01e64a015e9a282} 
+\mbox{\hyperlink{classAriadne_1_1VectorScaledFunctionPatch}{Vector\+Scaled\+Function\+Patch}}$<$ M $>$ \& {\bfseries simplify} (const Properties\+Type \&\mbox{\hyperlink{classAriadne_1_1VectorScaledFunctionPatch_acd0e7cda837b591e4328805c57d5fabf}{properties}})
+\begin{DoxyCompactList}\small\item\em Simplify the representation as specified by {\itshape properties}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1VectorScaledFunctionPatch_aea80ed5bdbb056c3a16a70c9d248f80f}\label{classAriadne_1_1VectorScaledFunctionPatch_aea80ed5bdbb056c3a16a70c9d248f80f} 
+\mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} {\bfseries clobber} ()
+\begin{DoxyCompactList}\small\item\em \doxylink{classAriadne_1_1Set}{Set} the error to zero. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1VectorScaledFunctionPatch_ac47944f45ec6164d1319a03222be313f}\label{classAriadne_1_1VectorScaledFunctionPatch_ac47944f45ec6164d1319a03222be313f} 
+\mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ \mbox{\hyperlink{classAriadne_1_1Polynomial}{Multivariate\+Polynomial}}$<$ Numeric\+Type $>$ $>$ {\bfseries polynomials} () const
+\begin{DoxyCompactList}\small\item\em Convert to an interval polynomial. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1VectorScaledFunctionPatch_aebea51857152948690106c903275931a}\label{classAriadne_1_1VectorScaledFunctionPatch_aebea51857152948690106c903275931a} 
+\mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ Value\+Type $>$ const {\bfseries values} () const
+\begin{DoxyCompactList}\small\item\em The constant term in the expansions. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1VectorScaledFunctionPatch_abbd784e9c53f552b05e969cb8bb1f2d3}\label{classAriadne_1_1VectorScaledFunctionPatch_abbd784e9c53f552b05e969cb8bb1f2d3} 
+\mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ Error\+Type $>$ const {\bfseries errors} () const
+\begin{DoxyCompactList}\small\item\em The vector of roundoff/truncation errors of each component. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1VectorScaledFunctionPatch_a1a4c97b73f773fb3ee7d11bee3cd2ce1}\label{classAriadne_1_1VectorScaledFunctionPatch_a1a4c97b73f773fb3ee7d11bee3cd2ce1} 
+Error\+Type const {\bfseries error} () const
+\begin{DoxyCompactList}\small\item\em The maximum roundoff/truncation error of the components. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1VectorScaledFunctionPatch_a54e63ce4a83a29adb4e2f5969f8fd707}\label{classAriadne_1_1VectorScaledFunctionPatch_a54e63ce4a83a29adb4e2f5969f8fd707} 
+Vector\+Function\+Type$<$ M $>$ {\bfseries function} () const
+\begin{DoxyCompactList}\small\item\em A multivalued function equal to the model on the domain. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1VectorScaledFunctionPatch_a5591fbc86b31ba2759439e26e16c8320}\label{classAriadne_1_1VectorScaledFunctionPatch_a5591fbc86b31ba2759439e26e16c8320} 
+Vector\+Function\+Type$<$ M $>$ {\bfseries generic} () const
+\begin{DoxyCompactList}\small\item\em Cast to a generic function. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1VectorScaledFunctionPatch_ae4d2d49d870aed73b7de0a8137c94d0d}\label{classAriadne_1_1VectorScaledFunctionPatch_ae4d2d49d870aed73b7de0a8137c94d0d} 
+\mbox{\hyperlink{classAriadne_1_1VectorScaledFunctionPatch}{Vector\+Scaled\+Function\+Patch}}$<$ M $>$ \& {\bfseries truncate} (const \mbox{\hyperlink{classAriadne_1_1MultiIndexBound}{Multi\+Index\+Bound}} \&bd)
+\begin{DoxyCompactList}\small\item\em Truncate terms higher than {\itshape bd}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1VectorScaledFunctionPatch_abc71e51d278cf691534205704994da95}\label{classAriadne_1_1VectorScaledFunctionPatch_abc71e51d278cf691534205704994da95} 
+\mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} {\bfseries restrict} (const \mbox{\hyperlink{group__FunctionModule_gaf5c0b733c80abb59b1c3d1eb58c20099}{Box\+Domain\+Type}} \&d)
+\begin{DoxyCompactList}\small\item\em Restrict to a subdomain. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1VectorScaledFunctionPatch_a9bcb7487ea6d0f39218ba78473990f38}\label{classAriadne_1_1VectorScaledFunctionPatch_a9bcb7487ea6d0f39218ba78473990f38} 
+\mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} {\bfseries adjoin} (const \mbox{\hyperlink{classAriadne_1_1ScaledFunctionPatch}{Scaled\+Function\+Patch}}$<$ M $>$ \&sf)
+\begin{DoxyCompactList}\small\item\em Adjoin a scalar function. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1VectorScaledFunctionPatch_ace946f81e5cf1e91f3a5d844643465ff}\label{classAriadne_1_1VectorScaledFunctionPatch_ace946f81e5cf1e91f3a5d844643465ff} 
+\mbox{\hyperlink{namespaceAriadne_acbb98ddc4385af4599070e65a1a47ec1}{Output\+Stream}} \& {\bfseries repr} (\mbox{\hyperlink{namespaceAriadne_acbb98ddc4385af4599070e65a1a47ec1}{Output\+Stream}} \&os) const
+\begin{DoxyCompactList}\small\item\em Write a full representation to an output stream. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsubsection*{Static Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1VectorScaledFunctionPatch_afc836490cb19f98cab075f4877954cb0}\label{classAriadne_1_1VectorScaledFunctionPatch_afc836490cb19f98cab075f4877954cb0} 
+static \mbox{\hyperlink{classAriadne_1_1VectorScaledFunctionPatch}{Vector\+Scaled\+Function\+Patch}}$<$ M $>$ {\bfseries constant} (const \mbox{\hyperlink{group__FunctionModule_gaf5c0b733c80abb59b1c3d1eb58c20099}{Box\+Domain\+Type}} \&d, const \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ Numeric\+Type $>$ \&r, Properties\+Type prp)
+\begin{DoxyCompactList}\small\item\em The constant Taylor model with range {\itshape r} and argument domain {\itshape d}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1VectorScaledFunctionPatch_abf10af88d1330e976f01c0c9a20b59f0}\label{classAriadne_1_1VectorScaledFunctionPatch_abf10af88d1330e976f01c0c9a20b59f0} 
+static \mbox{\hyperlink{classAriadne_1_1VectorScaledFunctionPatch}{Vector\+Scaled\+Function\+Patch}}$<$ M $>$ {\bfseries identity} (const \mbox{\hyperlink{group__FunctionModule_gaf5c0b733c80abb59b1c3d1eb58c20099}{Box\+Domain\+Type}} \&d, Properties\+Type prp)
+\begin{DoxyCompactList}\small\item\em The identity Taylor model on domain {\itshape d}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1VectorScaledFunctionPatch_aa4fd26be050bb12c0273148f5a78a1ca}\label{classAriadne_1_1VectorScaledFunctionPatch_aa4fd26be050bb12c0273148f5a78a1ca} 
+static \mbox{\hyperlink{classAriadne_1_1VectorScaledFunctionPatch}{Vector\+Scaled\+Function\+Patch}}$<$ M $>$ {\bfseries projection} (const \mbox{\hyperlink{group__FunctionModule_gaf5c0b733c80abb59b1c3d1eb58c20099}{Box\+Domain\+Type}} \&d, \mbox{\hyperlink{classAriadne_1_1Range}{Range}} js, Properties\+Type prp)
+\begin{DoxyCompactList}\small\item\em Return the vector of variables in the range with values {\itshape x} over domain {\itshape d}. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsubsection*{Friends}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1VectorScaledFunctionPatch_a108cb52888315a3d803684418d23d348}\label{classAriadne_1_1VectorScaledFunctionPatch_a108cb52888315a3d803684418d23d348} 
+\mbox{\hyperlink{namespaceAriadne_acbb98ddc4385af4599070e65a1a47ec1}{Output\+Stream}} \& {\bfseries operator$<$$<$} (\mbox{\hyperlink{namespaceAriadne_acbb98ddc4385af4599070e65a1a47ec1}{Output\+Stream}} \&os, const \mbox{\hyperlink{classAriadne_1_1VectorScaledFunctionPatch}{Vector\+Scaled\+Function\+Patch}}$<$ M $>$ \&p)
+\begin{DoxyCompactList}\small\item\em Write to an output stream. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1VectorScaledFunctionPatch_a84e97ad550b0b32cadfbc6b1de745da3}\label{classAriadne_1_1VectorScaledFunctionPatch_a84e97ad550b0b32cadfbc6b1de745da3} 
+\mbox{\hyperlink{classAriadne_1_1VectorScaledFunctionPatch}{Vector\+Scaled\+Function\+Patch}}$<$ M $>$ {\bfseries join} (const \mbox{\hyperlink{classAriadne_1_1VectorScaledFunctionPatch}{Vector\+Scaled\+Function\+Patch}}$<$ M $>$ \&f1, const \mbox{\hyperlink{classAriadne_1_1ScaledFunctionPatch}{Scaled\+Function\+Patch}}$<$ M $>$ \&f2)
+\begin{DoxyCompactList}\small\item\em Compute the function $(f \oplus g)(x)=(f(x),g(x))$. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1VectorScaledFunctionPatch_ae80158c76cdc10c9b05c0d0e61326ec2}\label{classAriadne_1_1VectorScaledFunctionPatch_ae80158c76cdc10c9b05c0d0e61326ec2} 
+\mbox{\hyperlink{classAriadne_1_1VectorScaledFunctionPatch}{Vector\+Scaled\+Function\+Patch}}$<$ M $>$ {\bfseries combine} (const \mbox{\hyperlink{classAriadne_1_1ScaledFunctionPatch}{Scaled\+Function\+Patch}}$<$ M $>$ \&f1, const \mbox{\hyperlink{classAriadne_1_1ScaledFunctionPatch}{Scaled\+Function\+Patch}}$<$ M $>$ \&f2)
+\begin{DoxyCompactList}\small\item\em Compute the function $(f\otimes g)(x,y)=(f(x),g(y))$. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+The documentation for this class was generated from the following files\+:\begin{DoxyCompactItemize}
+\item 
+source/function/\mbox{\hyperlink{function__model_8hpp}{function\+\_\+model.\+hpp}}\item 
+source/function/\mbox{\hyperlink{scaled__function__patch_8hpp}{scaled\+\_\+function\+\_\+patch.\+hpp}}\item 
+source/function/scaled\+\_\+function\+\_\+patch.\+tpl.\+hpp\end{DoxyCompactItemize}

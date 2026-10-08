@@ -1,0 +1,31 @@
+{
+  "repo": "hypercurve",
+  "target": "hypercurve_exact_closure",
+  "binary": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve_exact_closure-e75133e8b580ed31",
+  "command": [
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve_exact_closure-e75133e8b580ed31",
+    "--test-threads=4",
+    "--color",
+    "never"
+  ],
+  "sha256": "14b5d4347156708b13d11b014974e1ba0b3be383a2e3bd6c52c46c5202ed489a",
+  "returncode": 0,
+  "timed_out": false,
+  "elapsed_seconds": 26.69788035901729,
+  "log": "finite-circle-inverse-domains-full-hypercurve-hypercurve_exact_closure.log",
+  "passed": [
+    "identical_and_empty_booleans_regularize_authored_winding",
+    "authored_rational_cap_offset_does_not_require_a_signed_area_representation",
+    "zero_offset_regularizes_overlapping_authored_material",
+    "normalized_rational_cap_round_offset_retains_exact_unit_directions",
+    "authored_rational_boolean_operands_do_not_require_signed_area",
+    "curved_offset_regularizes_interior_folds_despite_convex_endpoint_turns"
+  ],
+  "failed": [],
+  "ignored": [],
+  "summaries": [
+    "test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 26.67s"
+  ],
+  "new_failures": [],
+  "known_failures": []
+}

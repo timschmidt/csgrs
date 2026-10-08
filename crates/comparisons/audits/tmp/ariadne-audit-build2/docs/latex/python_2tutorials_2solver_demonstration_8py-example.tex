@@ -1,0 +1,79 @@
+\doxysubsection{python/tutorials/solver\+\_\+demonstration.\+py}
+\hypertarget{python_2tutorials_2solver_demonstration_8py-example}{}\label{python_2tutorials_2solver_demonstration_8py-example}A demonstration of the functionality of the Solver module.
+
+
+\begin{DoxyCodeInclude}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{\#!/usr/bin/python3}}
+\DoxyCodeLine{00002\ }
+\DoxyCodeLine{00003\ }
+\DoxyCodeLine{00008\ }
+\DoxyCodeLine{00009\ \textcolor{comment}{\#\ This\ file\ is\ part\ of\ Ariadne.}}
+\DoxyCodeLine{00010\ }
+\DoxyCodeLine{00011\ \textcolor{comment}{\#\ Ariadne\ is\ free\ software:\ you\ can\ redistribute\ it\ and/or\ modify}}
+\DoxyCodeLine{00012\ \textcolor{comment}{\#\ it\ under\ the\ terms\ of\ the\ GNU\ General\ Public\ License\ as\ published\ by}}
+\DoxyCodeLine{00013\ \textcolor{comment}{\#\ the\ Free\ Software\ Foundation,\ either\ version\ 3\ of\ the\ License,\ or}}
+\DoxyCodeLine{00014\ \textcolor{comment}{\#\ (at\ your\ option)\ any\ later\ version.}}
+\DoxyCodeLine{00015\ }
+\DoxyCodeLine{00016\ \textcolor{comment}{\#\ Ariadne\ is\ distributed\ in\ the\ hope\ that\ it\ will\ be\ useful,}}
+\DoxyCodeLine{00017\ \textcolor{comment}{\#\ but\ WITHOUT\ ANY\ WARRANTY;\ without\ even\ the\ implied\ warranty\ of}}
+\DoxyCodeLine{00018\ \textcolor{comment}{\#\ MERCHANTABILITY\ or\ FITNESS\ FOR\ A\ PARTICULAR\ PURPOSE.\ \ See\ the}}
+\DoxyCodeLine{00019\ \textcolor{comment}{\#\ GNU\ General\ Public\ License\ for\ more\ details.}}
+\DoxyCodeLine{00020\ }
+\DoxyCodeLine{00021\ \textcolor{comment}{\#\ You\ should\ have\ received\ a\ copy\ of\ the\ GNU\ General\ Public\ License}}
+\DoxyCodeLine{00022\ \textcolor{comment}{\#\ along\ with\ Ariadne.\ If\ not,\ see\ <https://www.gnu.org/licenses/>.}}
+\DoxyCodeLine{00023\ }
+\DoxyCodeLine{00024\ \textcolor{comment}{\#\ Import\ all\ classes\ in\ the\ ariadne\ module}}
+\DoxyCodeLine{00025\ \textcolor{keyword}{from}\ pyariadne\ \textcolor{keyword}{import}\ *}
+\DoxyCodeLine{00026\ }
+\DoxyCodeLine{00027\ }
+\DoxyCodeLine{00028\ \textcolor{keyword}{def\ }algebraic\_solver\_demonstration():}
+\DoxyCodeLine{00029\ \ \ \ \ \textcolor{comment}{\#!\ [Algebraic\ Solver\ demonstration]}}
+\DoxyCodeLine{00030\ }
+\DoxyCodeLine{00031\ \ \ \ \ \textcolor{comment}{\#\ Compute\ the\ solution\ h\ to\ the\ vector\ equation\ f(x,h(x))=0}}
+\DoxyCodeLine{00032\ \ \ \ \ slv=IntervalNewtonSolver(1e-\/8,6)}
+\DoxyCodeLine{00033\ \ \ \ \ dom=BoxDomainType([\{-\/1:+1\},\{-\/1:+1\},\{-\/1:+1\}])}
+\DoxyCodeLine{00034\ \ \ \ \ x=EffectiveScalarMultivariateFunction.coordinate(3,0)}
+\DoxyCodeLine{00035\ \ \ \ \ y0=EffectiveScalarMultivariateFunction.coordinate(3,1)}
+\DoxyCodeLine{00036\ \ \ \ \ y1=EffectiveScalarMultivariateFunction.coordinate(3,2)}
+\DoxyCodeLine{00037\ \ \ \ \ f=join(x+4*y0+y1,y0+y1)}
+\DoxyCodeLine{00038\ \ \ \ \ print(\textcolor{stringliteral}{"{}f:"{}},f)}
+\DoxyCodeLine{00039\ \ \ \ \ hf=slv.implicit(f,BoxDomainType([\{-\/1:+1\}]),BoxDomainType([\{-\/1:+1\},\{-\/1:+1\}]))}
+\DoxyCodeLine{00040\ \ \ \ \ print(\textcolor{stringliteral}{"{}implicit(f):"{}},hf)}
+\DoxyCodeLine{00041\ }
+\DoxyCodeLine{00042\ \ \ \ \ \textcolor{comment}{\#\ Compute\ the\ solution\ h\ to\ the\ scalar\ equation\ g(x,h(x))=0}}
+\DoxyCodeLine{00043\ \ \ \ \ \textcolor{comment}{\#\ with\ f(x,y)=4+x-\/y\string^2,\ so\ y=sqrt(4+x)}}
+\DoxyCodeLine{00044\ \ \ \ \ dom=BoxDomainType([\{-\/1:+1\},\{-\/1:+1\}])}
+\DoxyCodeLine{00045\ \ \ \ \ x=EffectiveScalarMultivariateFunction.coordinate(2,0)}
+\DoxyCodeLine{00046\ \ \ \ \ y=EffectiveScalarMultivariateFunction.coordinate(2,1)}
+\DoxyCodeLine{00047\ \ \ \ \ g=x-\/4*y+y*y}
+\DoxyCodeLine{00048\ \ \ \ \ print(\textcolor{stringliteral}{"{}g:"{}},g)}
+\DoxyCodeLine{00049\ \ \ \ \ hg=slv.implicit(g,\ BoxDomainType([\{-\/1:+1\}]),IntervalDomainType(\{-\/1:+1\}))}
+\DoxyCodeLine{00050\ \ \ \ \ print(\textcolor{stringliteral}{"{}implicit(g):"{}},hg)}
+\DoxyCodeLine{00051\ \ \ \ \ \textcolor{comment}{\#!\ [Algebraic\ Solver\ demonstration]}}
+\DoxyCodeLine{00052\ }
+\DoxyCodeLine{00053\ }
+\DoxyCodeLine{00054\ \textcolor{keyword}{def\ }differential\_solver\_demonstration():}
+\DoxyCodeLine{00055\ \ \ \ \ \textcolor{comment}{\#!\ [Differential\ Solver\ demonstration]}}
+\DoxyCodeLine{00056\ }
+\DoxyCodeLine{00057\ \ \ \ \ \textcolor{comment}{\#\ Compute\ the\ flow\ of\ the\ Taylor\ function\ f\ starting\ in\ the\ domain\ dom\ for\ time\ interval\ [-\/h,+h]}}
+\DoxyCodeLine{00058\ \ \ \ \ integrator=GradedTaylorSeriesIntegrator(1e-\/8)}
+\DoxyCodeLine{00059\ }
+\DoxyCodeLine{00060\ \ \ \ \ dom=BoxDomainType([\{-\/1:+1\}])}
+\DoxyCodeLine{00061\ \ \ \ \ bbx=BoxDomainType([\{-\/4:+4\}])}
+\DoxyCodeLine{00062\ \ \ \ \ h=1/two}
+\DoxyCodeLine{00063\ \ \ \ \ f=ValidatedVectorMultivariateFunction.identity(1)}
+\DoxyCodeLine{00064\ }
+\DoxyCodeLine{00065\ \ \ \ \ print(f,dom,h)}
+\DoxyCodeLine{00066\ \ \ \ \ phi=integrator.flow(f,dom,h)}
+\DoxyCodeLine{00067\ \ \ \ \ print(\textcolor{stringliteral}{"{}phi:"{}},phi,type(phi))}
+\DoxyCodeLine{00068\ }
+\DoxyCodeLine{00069\ \ \ \ \ \textcolor{comment}{\#!\ [Differential\ Solver\ demonstration]}}
+\DoxyCodeLine{00070\ }
+\DoxyCodeLine{00071\ }
+\DoxyCodeLine{00072\ \textcolor{keywordflow}{if}\ \_\_name\_\_==\textcolor{stringliteral}{'\_\_main\_\_'}:}
+\DoxyCodeLine{00073\ \ \ \ \ algebraic\_solver\_demonstration()}
+\DoxyCodeLine{00074\ \ \ \ \ print()}
+\DoxyCodeLine{00075\ \ \ \ \ differential\_solver\_demonstration()}
+
+\end{DoxyCodeInclude}
+ 

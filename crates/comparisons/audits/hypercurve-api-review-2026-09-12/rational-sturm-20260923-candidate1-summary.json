@@ -1,0 +1,37 @@
+{
+  "tests": 499,
+  "failures": [
+    {
+      "name": "algebraic_fiber::tests::normalized_sturm_rows_preserve_variations_and_repeated_roots",
+      "returncode": 101,
+      "elapsed_seconds": 0.0034941709600389004
+    }
+  ],
+  "checks": [
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "check",
+        "--all-targets",
+        "--all-features",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0
+    },
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "check",
+        "--all-targets",
+        "--no-default-features",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0
+    }
+  ],
+  "binary_sha256": "ca0bd90d4dacc35a21b9d619dad010b58169a08af66db2eead6cd2bb7bd5ba9b",
+  "sources_unchanged": true,
+  "all_processes_reaped": true
+}

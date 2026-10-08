@@ -1,0 +1,56 @@
+\doxysubsection{Curve Class Reference}
+\hypertarget{classAriadne_1_1Curve}{}\label{classAriadne_1_1Curve}\index{Curve@{Curve}}
+
+
+{\ttfamily \#include $<$curve.\+hpp$>$}
+
+
+
+\doxysubsubsection{Description}
+A curve in Euclidean space. Inheritance diagram for Curve\+:\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[height=2.000000cm]{classAriadne_1_1Curve}
+\end{center}
+\end{figure}
+\doxysubsubsubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1Curve_ab1e55053353624b2312d987b327764e3}\label{classAriadne_1_1Curve_ab1e55053353624b2312d987b327764e3} 
+virtual {\bfseries \texorpdfstring{$\sim$}{\string~}\+Curve} ()=default
+\begin{DoxyCompactList}\small\item\em Destructor. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Curve_addccfd7e3786c803dfee6ba5b6baa838}\label{classAriadne_1_1Curve_addccfd7e3786c803dfee6ba5b6baa838} 
+{\bfseries Curve} (const Effective\+Vector\+Univariate\+Function \&f)
+\begin{DoxyCompactList}\small\item\em Constructor. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Curve_ae36f0e87d3316b4bb1eadbcd048e660a}\label{classAriadne_1_1Curve_ae36f0e87d3316b4bb1eadbcd048e660a} 
+{\bfseries Curve} (const \mbox{\hyperlink{classAriadne_1_1Curve}{Curve}} \&c)
+\begin{DoxyCompactList}\small\item\em Copy constructor. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Curve_a8777dd22af4b4413c8c0eb5ab2246ad2}\label{classAriadne_1_1Curve_a8777dd22af4b4413c8c0eb5ab2246ad2} 
+virtual \mbox{\hyperlink{classAriadne_1_1Curve}{Curve}} \texorpdfstring{$\ast$}{*} {\bfseries clone} () const
+\begin{DoxyCompactList}\small\item\em Return a new dynamically-\/allocated copy of the constraint. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Curve_a3c1a15a3831a647991a6a2c5bbe1e029}\label{classAriadne_1_1Curve_a3c1a15a3831a647991a6a2c5bbe1e029} 
+virtual Dimension\+Type {\bfseries dimension} () const
+\begin{DoxyCompactList}\small\item\em The dimension of the set. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Curve_a7a2f9e82f46e7dda67e11bde0029da31}\label{classAriadne_1_1Curve_a7a2f9e82f46e7dda67e11bde0029da31} 
+virtual \mbox{\hyperlink{namespaceAriadne_a80311bc831cfc870fd65158180330a77}{Degree\+Type}} {\bfseries smoothness} () const
+\begin{DoxyCompactList}\small\item\em The smoothness of the curve. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Curve_a2e07774f5a2a9b4b783aa52af9eee4da}\label{classAriadne_1_1Curve_a2e07774f5a2a9b4b783aa52af9eee4da} 
+virtual \mbox{\hyperlink{classAriadne_1_1Point}{Point\+Type}} {\bfseries value} (const Parameter\+Type \&s) const
+\begin{DoxyCompactList}\small\item\em The value at a point. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Curve_a06ba7d8f89b406c0165422cc97db9069}\label{classAriadne_1_1Curve_a06ba7d8f89b406c0165422cc97db9069} 
+virtual \mbox{\hyperlink{classAriadne_1_1Vector}{Tangent\+Vector\+Type}} {\bfseries tangent} (const Parameter\+Type \&s) const
+\begin{DoxyCompactList}\small\item\em The tangent at a point. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Curve_aec3050510f58e6f3fece416706247410}\label{classAriadne_1_1Curve_aec3050510f58e6f3fece416706247410} 
+virtual \mbox{\hyperlink{namespaceAriadne_acbb98ddc4385af4599070e65a1a47ec1}{Output\+Stream}} \& {\bfseries \+\_\+write} (\mbox{\hyperlink{namespaceAriadne_acbb98ddc4385af4599070e65a1a47ec1}{Output\+Stream}} \&os) const
+\begin{DoxyCompactList}\small\item\em Write to an output stream. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxyparagraph*{Public Member Functions inherited from \mbox{\hyperlink{classAriadne_1_1CurveInterface}{Curve\+Interface}}}
+\begin{DoxyCompactItemize}
+\item 
+virtual {\bfseries \texorpdfstring{$\sim$}{\string~}\+Curve\+Interface} ()=default
+\begin{DoxyCompactList}\small\item\em Destructor. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+The documentation for this class was generated from the following files\+:\begin{DoxyCompactItemize}
+\item 
+source/geometry/\mbox{\hyperlink{curve_8hpp}{curve.\+hpp}}\item 
+source/geometry/curve.\+cpp\end{DoxyCompactItemize}

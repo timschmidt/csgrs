@@ -1,0 +1,109 @@
+/home/tim/Documents/GitHub/workspace/exact-real-references/Ruffini/class-group/test/java/QuadraticFormTests.java:2: error: package dk.jonaslindstrom.ruffini.finitefields.quadraticform does not exist
+import dk.jonaslindstrom.ruffini.finitefields.quadraticform.ClassGroup;
+                                                           ^
+/home/tim/Documents/GitHub/workspace/exact-real-references/Ruffini/class-group/test/java/QuadraticFormTests.java:3: error: package dk.jonaslindstrom.ruffini.finitefields.quadraticform does not exist
+import dk.jonaslindstrom.ruffini.finitefields.quadraticform.QuadraticForm;
+                                                           ^
+/home/tim/Documents/GitHub/workspace/exact-real-references/Ruffini/class-group/test/java/QuadraticFormTests.java:15: error: cannot find symbol
+        QuadraticForm<BigInteger, BigIntegers> P = new QuadraticForm<>(
+        ^
+  symbol:   class QuadraticForm
+  location: class QuadraticFormTests
+/home/tim/Documents/GitHub/workspace/exact-real-references/Ruffini/class-group/test/java/QuadraticFormTests.java:15: error: cannot find symbol
+        QuadraticForm<BigInteger, BigIntegers> P = new QuadraticForm<>(
+                                                       ^
+  symbol:   class QuadraticForm
+  location: class QuadraticFormTests
+/home/tim/Documents/GitHub/workspace/exact-real-references/Ruffini/class-group/test/java/QuadraticFormTests.java:21: error: cannot find symbol
+        QuadraticForm<BigInteger, BigIntegers> Q = P.reduce();
+        ^
+  symbol:   class QuadraticForm
+  location: class QuadraticFormTests
+/home/tim/Documents/GitHub/workspace/exact-real-references/Ruffini/class-group/test/java/QuadraticFormTests.java:31: error: cannot find symbol
+        QuadraticForm<BigInteger, BigIntegers> P = new QuadraticForm<>(
+        ^
+  symbol:   class QuadraticForm
+  location: class QuadraticFormTests
+/home/tim/Documents/GitHub/workspace/exact-real-references/Ruffini/class-group/test/java/QuadraticFormTests.java:31: error: cannot find symbol
+        QuadraticForm<BigInteger, BigIntegers> P = new QuadraticForm<>(
+                                                       ^
+  symbol:   class QuadraticForm
+  location: class QuadraticFormTests
+/home/tim/Documents/GitHub/workspace/exact-real-references/Ruffini/class-group/test/java/QuadraticFormTests.java:36: error: cannot find symbol
+        QuadraticForm<BigInteger, BigIntegers> Q = new QuadraticForm<>(
+        ^
+  symbol:   class QuadraticForm
+  location: class QuadraticFormTests
+/home/tim/Documents/GitHub/workspace/exact-real-references/Ruffini/class-group/test/java/QuadraticFormTests.java:36: error: cannot find symbol
+        QuadraticForm<BigInteger, BigIntegers> Q = new QuadraticForm<>(
+                                                       ^
+  symbol:   class QuadraticForm
+  location: class QuadraticFormTests
+/home/tim/Documents/GitHub/workspace/exact-real-references/Ruffini/class-group/test/java/QuadraticFormTests.java:42: error: cannot find symbol
+        QuadraticForm<BigInteger, BigIntegers> PQ = P.compose(Q);
+        ^
+  symbol:   class QuadraticForm
+  location: class QuadraticFormTests
+/home/tim/Documents/GitHub/workspace/exact-real-references/Ruffini/class-group/test/java/QuadraticFormTests.java:50: error: cannot find symbol
+        ClassGroup group = new ClassGroup(BigInteger.valueOf(-23));
+        ^
+  symbol:   class ClassGroup
+  location: class QuadraticFormTests
+/home/tim/Documents/GitHub/workspace/exact-real-references/Ruffini/class-group/test/java/QuadraticFormTests.java:50: error: cannot find symbol
+        ClassGroup group = new ClassGroup(BigInteger.valueOf(-23));
+                               ^
+  symbol:   class ClassGroup
+  location: class QuadraticFormTests
+/home/tim/Documents/GitHub/workspace/exact-real-references/Ruffini/class-group/test/java/QuadraticFormTests.java:52: error: cannot find symbol
+        QuadraticForm<BigInteger, BigIntegers> P = new QuadraticForm<>(
+        ^
+  symbol:   class QuadraticForm
+  location: class QuadraticFormTests
+/home/tim/Documents/GitHub/workspace/exact-real-references/Ruffini/class-group/test/java/QuadraticFormTests.java:52: error: cannot find symbol
+        QuadraticForm<BigInteger, BigIntegers> P = new QuadraticForm<>(
+                                                       ^
+  symbol:   class QuadraticForm
+  location: class QuadraticFormTests
+/home/tim/Documents/GitHub/workspace/exact-real-references/Ruffini/class-group/test/java/QuadraticFormTests.java:71: error: cannot find symbol
+        ClassGroup group = new ClassGroup(d);
+        ^
+  symbol:   class ClassGroup
+  location: class QuadraticFormTests
+/home/tim/Documents/GitHub/workspace/exact-real-references/Ruffini/class-group/test/java/QuadraticFormTests.java:71: error: cannot find symbol
+        ClassGroup group = new ClassGroup(d);
+                               ^
+  symbol:   class ClassGroup
+  location: class QuadraticFormTests
+/home/tim/Documents/GitHub/workspace/exact-real-references/Ruffini/class-group/test/java/QuadraticFormTests.java:73: error: cannot find symbol
+        QuadraticForm<BigInteger, BigIntegers> P = new QuadraticForm<>(
+        ^
+  symbol:   class QuadraticForm
+  location: class QuadraticFormTests
+/home/tim/Documents/GitHub/workspace/exact-real-references/Ruffini/class-group/test/java/QuadraticFormTests.java:73: error: cannot find symbol
+        QuadraticForm<BigInteger, BigIntegers> P = new QuadraticForm<>(
+                                                       ^
+  symbol:   class QuadraticForm
+  location: class QuadraticFormTests
+/home/tim/Documents/GitHub/workspace/exact-real-references/Ruffini/class-group/test/java/QuadraticFormTests.java:82: error: cannot find symbol
+        Power<QuadraticForm<BigInteger, BigIntegers>> power = new Power<>(group);
+              ^
+  symbol:   class QuadraticForm
+  location: class QuadraticFormTests
+/home/tim/Documents/GitHub/workspace/exact-real-references/Ruffini/class-group/test/java/QuadraticFormTests.java:93: error: cannot find symbol
+        ClassGroup group = new ClassGroup(d);
+        ^
+  symbol:   class ClassGroup
+  location: class QuadraticFormTests
+/home/tim/Documents/GitHub/workspace/exact-real-references/Ruffini/class-group/test/java/QuadraticFormTests.java:93: error: cannot find symbol
+        ClassGroup group = new ClassGroup(d);
+                               ^
+  symbol:   class ClassGroup
+  location: class QuadraticFormTests
+/home/tim/Documents/GitHub/workspace/exact-real-references/Ruffini/class-group/test/java/QuadraticFormTests.java:98: error: cannot find symbol
+            QuadraticForm<BigInteger, BigIntegers> x = group.sample(random);
+            ^
+  symbol:   class QuadraticForm
+  location: class QuadraticFormTests
+22 errors
+
+{"status":1,"error":null}

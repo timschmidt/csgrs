@@ -1,0 +1,5 @@
+Cover stationary pair fillets through quadratic line charts
+
+Keep the repaired public TrimOrExtend cases as permanent regressions. An affine quadratic line and a stationary polynomial or cusp chart must produce the independently specified exact tangent circle in either path orientation. Reuse the same contact checks as native-line fillets.
+
+Validation: all 30 stationary-fillet release tests, including region/offset compositions and both policies; Clippy with all and no default features; formatting. TrimOnly and interior-cusp parallel-pair closure remain separate open work.

@@ -1,0 +1,77 @@
+{
+  "BOUNDARY_PROBE:9534": {
+    "file": "src/curve_region_boolean.rs",
+    "line": 9534,
+    "statement": "                        last_reason = reason;"
+  },
+  "BOUNDARY_PROBE:9543": {
+    "file": "src/curve_region_boolean.rs",
+    "line": 9543,
+    "statement": "                    last_reason = blocker.reason();"
+  },
+  "BOUNDARY_PROBE:9549": {
+    "file": "src/curve_region_boolean.rs",
+    "line": 9549,
+    "statement": "                last_reason = UncertaintyReason::Boundary;"
+  },
+  "BOUNDARY_PROBE:9553": {
+    "file": "src/curve_region_boolean.rs",
+    "line": 9553,
+    "statement": "                last_reason = blocker\n                    .uncertainty_reason()\n                    .unwrap_or(UncertaintyReason::Unsupported);"
+  },
+  "BOUNDARY_PROBE:9580": {
+    "file": "src/curve_region_boolean.rs",
+    "line": 9580,
+    "statement": "                        last_reason = reason;"
+  },
+  "BOUNDARY_PROBE:9597": {
+    "file": "src/curve_region_boolean.rs",
+    "line": 9597,
+    "statement": "                    last_reason = UncertaintyReason::Predicate;"
+  },
+  "BOUNDARY_PROBE:9638": {
+    "file": "src/curve_region_boolean.rs",
+    "line": 9638,
+    "statement": "                            last_reason = reason;"
+  },
+  "BOUNDARY_PROBE:9667": {
+    "file": "src/curve_region_boolean.rs",
+    "line": 9667,
+    "statement": "                            last_reason = reason;"
+  },
+  "BOUNDARY_PROBE:9689": {
+    "file": "src/curve_region_boolean.rs",
+    "line": 9689,
+    "statement": "                        last_reason = reason;"
+  },
+  "BOUNDARY_PROBE:9701": {
+    "file": "src/curve_region_boolean.rs",
+    "line": 9701,
+    "statement": "                            last_reason = UncertaintyReason::Boundary;"
+  },
+  "BOUNDARY_PROBE:9706": {
+    "file": "src/curve_region_boolean.rs",
+    "line": 9706,
+    "statement": "                        last_reason = UncertaintyReason::Predicate;"
+  },
+  "BOUNDARY_PROBE:9730": {
+    "file": "src/curve_region_boolean.rs",
+    "line": 9730,
+    "statement": "                            last_reason = reason;"
+  },
+  "BOUNDARY_PROBE:9737": {
+    "file": "src/curve_region_boolean.rs",
+    "line": 9737,
+    "statement": "                            last_reason = reason;"
+  },
+  "BOUNDARY_PROBE:9766": {
+    "file": "src/curve_region_boolean.rs",
+    "line": 9766,
+    "statement": "                            last_reason = UncertaintyReason::Boundary;"
+  },
+  "BOUNDARY_PROBE:9852": {
+    "file": "src/curve_region_boolean.rs",
+    "line": 9852,
+    "statement": "                last_reason = UncertaintyReason::Boundary;"
+  }
+}

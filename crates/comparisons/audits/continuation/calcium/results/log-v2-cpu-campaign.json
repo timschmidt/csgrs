@@ -1,0 +1,15 @@
+{
+  "tag": "log-v2-cpu-campaign",
+  "started": "2026-09-08T09:25:20.995Z",
+  "finished": "2026-09-08T09:25:29.915Z",
+  "elapsedSeconds": 8.918100093000001,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison",
+  "command": "node",
+  "args": [
+    "audits/continuation/calcium/run-log-bench.mjs",
+    "cpu",
+    "v2"
+  ],
+  "code": 0,
+  "signal": null
+}

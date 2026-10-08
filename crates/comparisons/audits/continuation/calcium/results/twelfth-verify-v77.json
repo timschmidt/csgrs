@@ -1,0 +1,13 @@
+{
+  "tag": "twelfth-verify-v77",
+  "started": "2026-09-11T23:34:28.433Z",
+  "finished": "2026-09-11T23:34:29.411Z",
+  "elapsedSeconds": 0.975596932,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "node",
+  "args": [
+    "verify-twelfth-relation-v77.mjs"
+  ],
+  "code": 0,
+  "signal": null
+}

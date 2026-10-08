@@ -1,0 +1,22 @@
+var searchData=
+[
+  ['calculus_5fbase_2ehpp_0',['calculus_base.hpp',['../calculus__base_8hpp.html',1,'']]],
+  ['casts_2ehpp_1',['casts.hpp',['../casts_8hpp.html',1,'']]],
+  ['chebyshev_5fpolynomial_2ehpp_2',['chebyshev_polynomial.hpp',['../chebyshev__polynomial_8hpp.html',1,'']]],
+  ['clonable_2ehpp_3',['clonable.hpp',['../clonable_8hpp.html',1,'']]],
+  ['coding_5fguidelines_2edox_4',['coding_guidelines.dox',['../coding__guidelines_8dox.html',1,'']]],
+  ['colour_2ehpp_5',['colour.hpp',['../colour_8hpp.html',1,'']]],
+  ['command_5fline_5finterface_2ehpp_6',['command_line_interface.hpp',['../command__line__interface_8hpp.html',1,'']]],
+  ['complex_2ehpp_7',['complex.hpp',['../complex_8hpp.html',1,'']]],
+  ['computability_2edox_8',['computability.dox',['../computability_8dox.html',1,'']]],
+  ['computing_5fpi_2edox_9',['computing_pi.dox',['../computing__pi_8dox.html',1,'']]],
+  ['concepts_2ehpp_10',['concepts.hpp',['../concepts_8hpp.html',1,'']]],
+  ['configuration_5finterface_2ehpp_11',['configuration_interface.hpp',['../configuration__interface_8hpp.html',1,'']]],
+  ['constant_2ehpp_12',['constant.hpp',['../constant_8hpp.html',1,'']]],
+  ['constraint_2ehpp_13',['constraint.hpp',['../constraint_8hpp.html',1,'']]],
+  ['constraint_5fsatisfaction_2edox_14',['constraint_satisfaction.dox',['../constraint__satisfaction_8dox.html',1,'']]],
+  ['constraint_5fsolver_2ehpp_15',['constraint_solver.hpp',['../constraint__solver_8hpp.html',1,'']]],
+  ['container_2ehpp_16',['container.hpp',['../container_8hpp.html',1,'']]],
+  ['covector_2ehpp_17',['covector.hpp',['../covector_8hpp.html',1,'']]],
+  ['curve_2ehpp_18',['curve.hpp',['../curve_8hpp.html',1,'']]]
+];

@@ -1,0 +1,32 @@
+{
+  "repo": "hypercurve",
+  "target": "lib",
+  "binary": "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve-6e6572a45c5b177b",
+  "filter": "finite_chord",
+  "command": [
+    "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve-6e6572a45c5b177b",
+    "--test-threads=4",
+    "--color",
+    "never",
+    "finite_chord"
+  ],
+  "sha256": "e4356ce48166d4f18e51f787f3bea60cf0a09b263ad34c264cd04fc20ff4c449",
+  "returncode": 0,
+  "timed_out": false,
+  "elapsed_seconds": 0.015634379000402987,
+  "log": "finite-rational-pairs-focused-finite_chord.log",
+  "passed": [
+    "bezier_offset::conversion_tests::retained_parallel_preserves_reversed_finite_chord_domains",
+    "curve_intersection::curve_support_intersection::analytic_dispatch_tests::finite_chord_rational_point_fibers_and_poles_use_the_active_domain",
+    "curve_intersection::curve_support_intersection::analytic_dispatch_tests::finite_chord_rational_retracing_keeps_all_overlap_branches",
+    "curve_intersection::curve_support_intersection::analytic_dispatch_tests::finite_chord_analytic_parallel_replays_exterior_contacts",
+    "curve_intersection::curve_support_intersection::analytic_dispatch_tests::finite_chord_rational_contacts_replay_all_roots_and_stationary_points"
+  ],
+  "failed": [],
+  "ignored": [],
+  "summaries": [
+    "test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 1123 filtered out; finished in 0.01s"
+  ],
+  "new_failures": [],
+  "known_failures": []
+}

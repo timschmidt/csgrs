@@ -1,0 +1,170 @@
+{
+  "parent": "7af48343b93c7f2110e60d26a94c316aad996795",
+  "files": {
+    "src/bezier_offset.rs": "bad80c50b39f43afbac74ffad80485d6e25c7b2ad82ac72ca7bf0eaa0727c9cc",
+    "src/bezier_region.rs": "6f8d8eb78e4f21b58130c213d1ef1f4ae4095f30aafa50190bcf60a5ea398d83",
+    "src/curve_point.rs": "6e0d7a77a3bd779b99bb0049ebaf676e41ad46695e6ac96237976a899998e57b"
+  },
+  "main_and_snapshot_files_verified": 2044,
+  "library_inventory": 1227,
+  "library_unique_passes": 1207,
+  "library_ignored": 6,
+  "existing_library_nonpasses_not_repeated": [
+    {
+      "name": "bezier_offset::conversion_tests::selected_parallel_normal_circle_intersects_genuinely_analytic_parallel_in_one_fiber",
+      "returncode": "timeout",
+      "passed": false,
+      "ignored": false,
+      "elapsed_seconds": 75.04644685506355,
+      "limit_seconds": 75,
+      "log": "direct-endpoints-20260924-v2-regression-case-0537.log"
+    },
+    {
+      "name": "bezier_region::tests::algebraic_endpoint_images_reenter_shared_corner_carriers",
+      "returncode": 101,
+      "passed": false,
+      "ignored": false,
+      "elapsed_seconds": 0.0649944799952209,
+      "limit_seconds": 75,
+      "log": "direct-endpoints-20260924-v2-regression-case-0628.log"
+    },
+    {
+      "name": "bezier_region::curve_corner_chain::tests::extended_fillet_region_classifies_both_sides_of_its_companion",
+      "returncode": "timeout",
+      "passed": false,
+      "ignored": false,
+      "elapsed_seconds": 75.0045032040216,
+      "limit_seconds": 75,
+      "log": "direct-endpoints-20260924-v2-regression-case-0624.log"
+    },
+    {
+      "name": "bezier_region::tests::nonlinear_algebraic_endpoint_fillet_uses_complete_incident_domain",
+      "returncode": "timeout",
+      "passed": false,
+      "ignored": false,
+      "elapsed_seconds": 75.00270654796623,
+      "limit_seconds": 75,
+      "log": "direct-endpoints-20260924-v2-regression-case-0681.log"
+    },
+    {
+      "name": "bezier_region::tests::nonlinear_selected_corner_chamfers_through_retained_fixed_distance_image",
+      "returncode": "timeout",
+      "passed": false,
+      "ignored": false,
+      "elapsed_seconds": 75.92998349200934,
+      "limit_seconds": 75,
+      "log": "direct-endpoints-20260924-v2-regression-case-0684.log"
+    },
+    {
+      "name": "bezier_region::tests::one_fragment_materialized_loop_chamfers_to_one_middle_interval",
+      "returncode": "timeout",
+      "passed": false,
+      "ignored": false,
+      "elapsed_seconds": 75.03668447502423,
+      "limit_seconds": 75,
+      "log": "direct-endpoints-20260924-v2-regression-case-0691.log"
+    },
+    {
+      "name": "bezier_region::tests::one_fragment_materialized_loop_extends_algebraic_chamfer_cuts_once",
+      "returncode": "timeout",
+      "passed": false,
+      "ignored": false,
+      "elapsed_seconds": 75.04098371102009,
+      "limit_seconds": 75,
+      "log": "direct-endpoints-20260924-v2-regression-case-0692.log"
+    },
+    {
+      "name": "bezier_region::tests::one_fragment_ph_loop_projective_corners_retain_one_extended_interval",
+      "returncode": 101,
+      "passed": false,
+      "ignored": false,
+      "elapsed_seconds": 0.06510975200217217,
+      "limit_seconds": 75,
+      "log": "direct-endpoints-20260924-v2-regression-case-0695.log"
+    },
+    {
+      "name": "bezier_region::tests::one_fragment_nonzero_parallel_loop_extends_chamfer_cuts_on_one_finite_envelope",
+      "returncode": "timeout",
+      "passed": false,
+      "ignored": false,
+      "elapsed_seconds": 75.02356805605814,
+      "limit_seconds": 75,
+      "log": "direct-endpoints-20260924-v2-regression-case-0693.log"
+    },
+    {
+      "name": "bezier_region::tests::one_fragment_selected_loop_chamfers_from_one_interval",
+      "returncode": "timeout",
+      "passed": false,
+      "ignored": false,
+      "elapsed_seconds": 75.03678004001267,
+      "limit_seconds": 75,
+      "log": "direct-endpoints-20260924-v2-regression-case-0697.log"
+    },
+    {
+      "name": "bezier_region::tests::one_fragment_selected_loop_extends_chamfer_cuts_on_its_analytic_carrier",
+      "returncode": "timeout",
+      "passed": false,
+      "ignored": false,
+      "elapsed_seconds": 75.03800493502058,
+      "limit_seconds": 75,
+      "log": "direct-endpoints-20260924-v2-regression-case-0698.log"
+    },
+    {
+      "name": "bezier_region::tests::pair_native_boolean_algebraic_chord_corner_publishes_a_third_generation_fillet",
+      "returncode": "timeout",
+      "passed": false,
+      "ignored": false,
+      "elapsed_seconds": 75.00333646300714,
+      "limit_seconds": 75,
+      "log": "direct-endpoints-20260924-v2-regression-case-0703.log"
+    },
+    {
+      "name": "bezier_region::tests::retained_analytic_multifragment_corner_extends_chamfer_and_fillet",
+      "returncode": 101,
+      "passed": false,
+      "ignored": false,
+      "elapsed_seconds": 0.009311722009442747,
+      "limit_seconds": 75,
+      "log": "direct-endpoints-20260924-v2-regression-case-0727.log"
+    },
+    {
+      "name": "bezier_region::tests::selected_parallel_companion_fillets_without_range_promotion",
+      "returncode": "timeout",
+      "passed": false,
+      "ignored": false,
+      "elapsed_seconds": 75.0029629310593,
+      "limit_seconds": 75,
+      "log": "direct-endpoints-20260924-v2-regression-case-0758.log"
+    }
+  ],
+  "public_integrations_passed": 19,
+  "existing_public_integration_nonpasses_not_repeated": [
+    {
+      "target": "hypercurve_path_closure",
+      "name": "homogeneous_boundary_closes_through_boolean_corners_and_offset",
+      "evidence": "direct-endpoints-20260924-parent-path-terminal.json"
+    }
+  ],
+  "binary_sha256": "9c76c9ab554dcaeddf13218d81c5a4f89590a4b7b92673e2651e5d0ae8f7dce2",
+  "integration_binaries": {
+    "hypercurve_curve_point": {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/direct-endpoints-20260924-v3-integrations-hypercurve_curve_point",
+      "sha256": "3c7cd3bf18984fa9cc7b25728b1c91cff9a3f76b33083e07e5132335af23e945"
+    },
+    "hypercurve_analytic_parallel_region": {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/direct-endpoints-20260924-v3-integrations-hypercurve_analytic_parallel_region",
+      "sha256": "2cdcf3464a149a6851fc9babc95c87e472ac84662483c14ce566f8ea851141be"
+    },
+    "hypercurve_path_closure": {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/direct-endpoints-20260924-v3-integrations-hypercurve_path_closure",
+      "sha256": "b0167604f5463f0ea685c33937979774571b235c9ea4f43cd48236a11aa0f168"
+    },
+    "hypercurve_curve_region_promotion": {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/direct-endpoints-20260924-v3-integrations-hypercurve_curve_region_promotion",
+      "sha256": "f1c69c7c2fe30a45ed2b98aec123ccd0607d928025449566576d71345a70a9e0"
+    }
+  },
+  "admission_counterexample": "direct-endpoints-20260924-admission-control-terminal.json",
+  "all_owned_processes_reaped": true,
+  "full_goal_complete": false
+}

@@ -1,0 +1,23 @@
+{
+  "tag": "root-exp-opaque-sign-build-cpu",
+  "started": "2026-09-08T20:31:20.113Z",
+  "finished": "2026-09-08T20:31:20.474Z",
+  "elapsedSeconds": 0.358598172,
+  "cwd": "/home/tim/Documents/GitHub/workspace",
+  "command": "env",
+  "args": [
+    "TMPDIR=/home/tim/Documents/GitHub/workspace/calcium-build-tmp.gVX5v4",
+    "CARGO_INCREMENTAL=0",
+    "CARGO_PROFILE_DEV_DEBUG=0",
+    "cargo",
+    "build",
+    "--release",
+    "--offline",
+    "--manifest-path",
+    "exactcore-hyper-comparison/audits/continuation/calcium/root-exp-opaque-sign-bench/Cargo.toml",
+    "--target-dir",
+    ".audit-builds/calcium-prototype"
+  ],
+  "code": 0,
+  "signal": null
+}

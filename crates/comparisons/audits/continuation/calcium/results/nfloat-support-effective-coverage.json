@@ -1,0 +1,14 @@
+{
+  "tag": "nfloat-support-effective-coverage",
+  "started": "2026-09-09T16:21:48.531Z",
+  "finished": "2026-09-09T16:21:48.681Z",
+  "elapsedSeconds": 0.147793689,
+  "cwd": "/home/tim/Documents/GitHub/workspace",
+  "command": "node",
+  "args": [
+    "exactcore-hyper-comparison/audits/continuation/calcium/effective-coverage.mjs",
+    "--effective-summary"
+  ],
+  "code": 0,
+  "signal": null
+}

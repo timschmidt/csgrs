@@ -1,0 +1,21 @@
+{
+  "returncode": 101,
+  "elapsed_seconds": 3.3681299749878235,
+  "command": [
+    "rustc",
+    "--edition=2024",
+    "-O",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-circle-rational-domains-public.rs",
+    "--extern",
+    "hypercurve=/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/libhypercurve-2c7ff6f3fbe07653.rlib",
+    "-L",
+    "dependency=/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps",
+    "-o",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-circle-nonlinear-domain-attempt6-public-matrix"
+  ],
+  "source": "finite-circle-nonlinear-domain-attempt6-public-matrix.rs",
+  "source_sha256": "c9ddfb41cb7a077523ca9b35bdbed81886b9fe5b3957e3973ae881dd65a67bef",
+  "executable_sha256": "a1c0a2269404f1063ac680a1b803b458abc95c1c43a4b417ae2da84a21843f87",
+  "normal_library_sha256": "4068593c0c73a063bcc92c13803cda33a009167767657ce3efd802ed0140b168",
+  "log": "finite-circle-nonlinear-domain-attempt6-public-matrix.log"
+}

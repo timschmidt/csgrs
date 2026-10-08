@@ -1,0 +1,15 @@
+==72== Memcheck, a memory error detector
+==72== Copyright (C) 2002-2026, and GNU GPL'd, by Julian Seward et al.
+==72== Using Valgrind-3.27.1 and LibVEX; rerun with -h for copyright info
+==72== Command: .audit-targets/ireal-derivative-18555/release/numbers_atan_grid
+==72== 
+PASS atan public controls: trig-offset-history=5544, estimated-sum-history=336, half-boundary-history=576, total=6456
+==72== 
+==72== HEAP SUMMARY:
+==72==     in use at exit: 26,608 bytes in 205 blocks
+==72==   total heap usage: 1,289,770 allocs, 1,289,565 frees, 102,903,210 bytes allocated
+==72== 
+==72== For a detailed leak analysis, rerun with: --leak-check=full
+==72== 
+==72== For lists of detected and suppressed errors, rerun with: -s
+==72== ERROR SUMMARY: 0 errors from 0 contexts (suppressed: 0 from 0)

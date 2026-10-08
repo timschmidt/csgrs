@@ -1,0 +1,34 @@
+{
+  "passed": true,
+  "dist": "/tmp/hypercurve-pages-local-ownership.6KQQbz",
+  "profile": "/tmp/hypercurve-browser-profile.ZEzuwV",
+  "state": {
+    "ready": true,
+    "title": "hypercurve UI",
+    "pathname": "/hypercurve/",
+    "baseURI": "http://127.0.0.1:45823/hypercurve/",
+    "width": 1100,
+    "height": 617
+  },
+  "requests": [
+    {
+      "pathname": "/hypercurve/",
+      "status": 200,
+      "bytes": 1691
+    },
+    {
+      "pathname": "/hypercurve/hypercurve_ui.js",
+      "status": 200,
+      "bytes": 72209
+    },
+    {
+      "pathname": "/hypercurve/hypercurve_ui_bg.wasm",
+      "status": 200,
+      "bytes": 12430851
+    }
+  ],
+  "exceptions": [],
+  "failures": [],
+  "consoleErrors": [],
+  "screenshot": "/tmp/hypercurve-owned-singleton-pages-startup.png"
+}

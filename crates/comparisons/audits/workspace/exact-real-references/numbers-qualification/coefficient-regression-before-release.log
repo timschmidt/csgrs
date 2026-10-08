@@ -1,0 +1,43 @@
+   Compiling hyperreal v0.13.1 (/home/tim/Documents/GitHub/workspace/hyperreal)
+    Finished `release` profile [optimized] target(s) in 11.82s
+     Running unittests src/lib.rs (.audit-targets/ireal-derivative-18555/release/deps/hyperreal-f3a6d4fcdbc4d626)
+
+running 4 tests
+test computable::node::tests::asinh_rational_series_wide_coefficients ... FAILED
+test computable::node::tests::asinh_computable_series_wide_coefficients ... FAILED
+test computable::node::tests::asin_rational_series_wide_coefficients ... FAILED
+test computable::node::tests::asin_computable_series_wide_coefficients ... FAILED
+
+failures:
+
+---- computable::node::tests::asinh_rational_series_wide_coefficients stdout ----
+
+thread 'computable::node::tests::asinh_rational_series_wide_coefficients' (84) panicked at src/computable/node/tests.rs:45:13:
+asin=false, generic=false, sign=-1 at 192000 bits
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+---- computable::node::tests::asinh_computable_series_wide_coefficients stdout ----
+
+thread 'computable::node::tests::asinh_computable_series_wide_coefficients' (83) panicked at src/computable/node/tests.rs:45:13:
+asin=false, generic=true, sign=-1 at 192000 bits
+
+---- computable::node::tests::asin_rational_series_wide_coefficients stdout ----
+
+thread 'computable::node::tests::asin_rational_series_wide_coefficients' (82) panicked at src/computable/node/tests.rs:45:13:
+asin=true, generic=false, sign=-1 at 192000 bits
+
+---- computable::node::tests::asin_computable_series_wide_coefficients stdout ----
+
+thread 'computable::node::tests::asin_computable_series_wide_coefficients' (81) panicked at src/computable/node/tests.rs:45:13:
+asin=true, generic=true, sign=-1 at 192000 bits
+
+
+failures:
+    computable::node::tests::asin_computable_series_wide_coefficients
+    computable::node::tests::asin_rational_series_wide_coefficients
+    computable::node::tests::asinh_computable_series_wide_coefficients
+    computable::node::tests::asinh_rational_series_wide_coefficients
+
+test result: FAILED. 0 passed; 4 failed; 0 ignored; 0 measured; 664 filtered out; finished in 0.49s
+
+error: test failed, to rerun pass `--lib`

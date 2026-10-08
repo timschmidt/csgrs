@@ -1,0 +1,8 @@
+{
+  "diagnostic_only": true,
+  "build_started": false,
+  "returncode": 1,
+  "reason": "EDQUOT copying into /tmp",
+  "partial_snapshot": "/tmp/hypercurve-head-fillets-20260925-v52",
+  "retry_snapshot": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/source-archives/hypercurve-head-fillets-20260925-v52"
+}

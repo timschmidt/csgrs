@@ -1,0 +1,87 @@
+{
+  "normal_production_build": false,
+  "source_manifest": "radical-polynomial-evaluation-20260928-v629-sources.json",
+  "source_directory": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/source-archives/radical-polynomial-evaluation-20260928-v629",
+  "builds": [
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "test",
+        "--lib",
+        "--release",
+        "--all-features",
+        "--locked",
+        "--offline",
+        "--no-run",
+        "--message-format=json"
+      ],
+      "returncode": 0,
+      "log": "radical-polynomial-evaluation-20260928-v629-build.log",
+      "elapsed_seconds": 30.155926269013435,
+      "binaries": {
+        "hyperreal": {
+          "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/radical-polynomial-evaluation-20260928-v629-hyperreal-tests",
+          "sha256": "ba94ace2eded693b23ee7c2718a5f57841a493e3a16a19e5b3a749cd4f704f81"
+        }
+      }
+    }
+  ],
+  "cases": [
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/radical-polynomial-evaluation-20260928-v629-hyperreal-tests",
+        "--exact",
+        "real::arithmetic::radical_polynomial_evaluation_probe::cold_integral_cusp_polynomial",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "radical-polynomial-evaluation-20260928-v629-cold_integral_cusp_polynomial.log",
+      "elapsed_seconds": 0.0035082087852060795,
+      "target": "hyperreal",
+      "name": "real::arithmetic::radical_polynomial_evaluation_probe::cold_integral_cusp_polynomial",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/radical-polynomial-evaluation-20260928-v629-hyperreal-tests",
+        "--exact",
+        "real::arithmetic::radical_polynomial_evaluation_probe::cold_actual_resultant_cusp_polynomial",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 101,
+      "log": "radical-polynomial-evaluation-20260928-v629-cold_actual_resultant_cusp_polynomial.log",
+      "elapsed_seconds": 0.0035093300975859165,
+      "target": "hyperreal",
+      "name": "real::arithmetic::radical_polynomial_evaluation_probe::cold_actual_resultant_cusp_polynomial",
+      "passed": false
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/radical-polynomial-evaluation-20260928-v629-hyperreal-tests",
+        "--exact",
+        "real::arithmetic::radical_polynomial_evaluation_probe::cold_quadratic_formula_cusp_polynomial",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 101,
+      "log": "radical-polynomial-evaluation-20260928-v629-cold_quadratic_formula_cusp_polynomial.log",
+      "elapsed_seconds": 0.0035195578821003437,
+      "target": "hyperreal",
+      "name": "real::arithmetic::radical_polynomial_evaluation_probe::cold_quadratic_formula_cusp_polynomial",
+      "passed": false
+    }
+  ],
+  "checks": [],
+  "expected_cases": {
+    "hyperreal": [
+      "real::arithmetic::radical_polynomial_evaluation_probe::cold_integral_cusp_polynomial",
+      "real::arithmetic::radical_polynomial_evaluation_probe::cold_actual_resultant_cusp_polynomial",
+      "real::arithmetic::radical_polynomial_evaluation_probe::cold_quadratic_formula_cusp_polynomial"
+    ]
+  },
+  "all_processes_reaped": true,
+  "probe_complete": true,
+  "qualification_complete": false
+}

@@ -1,0 +1,251 @@
+{
+  "cases": [
+    {
+      "input": "query-008.json",
+      "sha256": "cae1f2a3bc739c4aa4727e4ac71f6064b0776075711c2305a0fe63392b0edf23",
+      "expected_sign": 1,
+      "steps": [
+        {
+          "precision": 512,
+          "width_bits": 524,
+          "sign": null
+        },
+        {
+          "precision": 1024,
+          "width_bits": 1024,
+          "sign": 1
+        }
+      ],
+      "sign": 1,
+      "complete": true,
+      "elapsed_seconds": 0.015727070858702064
+    },
+    {
+      "input": "query-009.json",
+      "sha256": "b86b96c587ea34a526140c5668898b8702eaf0931925c777201291ddb5c41f68",
+      "expected_sign": -1,
+      "steps": [
+        {
+          "precision": 512,
+          "width_bits": 524,
+          "sign": null
+        },
+        {
+          "precision": 1024,
+          "width_bits": 1024,
+          "sign": -1
+        }
+      ],
+      "sign": -1,
+      "complete": true,
+      "elapsed_seconds": 0.015339318197220564
+    },
+    {
+      "input": "query-010.json",
+      "sha256": "1465469220cf7281acc15f74c7984ecedf342e4ec2f5ecd1903a03a79086f37d",
+      "expected_sign": 1,
+      "steps": [
+        {
+          "precision": 512,
+          "width_bits": 524,
+          "sign": null
+        },
+        {
+          "precision": 1024,
+          "width_bits": 1024,
+          "sign": null
+        },
+        {
+          "precision": 2048,
+          "width_bits": 2048,
+          "sign": 1
+        }
+      ],
+      "sign": 1,
+      "complete": true,
+      "elapsed_seconds": 0.048354243161156774
+    },
+    {
+      "input": "query-011.json",
+      "sha256": "51a221c0260b9e4f4408837d33a456d5a5b85d5a61c3f29f0e9be22079b2f452",
+      "expected_sign": 1,
+      "steps": [
+        {
+          "precision": 512,
+          "width_bits": 524,
+          "sign": null
+        },
+        {
+          "precision": 1024,
+          "width_bits": 1024,
+          "sign": 1
+        }
+      ],
+      "sign": 1,
+      "complete": true,
+      "elapsed_seconds": 0.016080366913229227
+    },
+    {
+      "input": "query-012.json",
+      "sha256": "9505520e8a6e5011e6e6568d82a9798f99cd8f0eda849c2e0094dcd51dd920e8",
+      "expected_sign": -1,
+      "steps": [
+        {
+          "precision": 512,
+          "width_bits": 524,
+          "sign": null
+        },
+        {
+          "precision": 1024,
+          "width_bits": 1024,
+          "sign": -1
+        }
+      ],
+      "sign": -1,
+      "complete": true,
+      "elapsed_seconds": 0.01584752183407545
+    },
+    {
+      "input": "query-013.json",
+      "sha256": "27e48fd5709e8f4a28533dc6e11c4a35a526a12c16a93267ce865e455d753883",
+      "expected_sign": -1,
+      "steps": [
+        {
+          "precision": 512,
+          "width_bits": 524,
+          "sign": null
+        },
+        {
+          "precision": 1024,
+          "width_bits": 1024,
+          "sign": null
+        },
+        {
+          "precision": 2048,
+          "width_bits": 2048,
+          "sign": -1
+        }
+      ],
+      "sign": -1,
+      "complete": true,
+      "elapsed_seconds": 0.04701419500634074
+    },
+    {
+      "input": "query-014.json",
+      "sha256": "f0b28a86bf364780f426b72289a89bbd29285f0c3190780cbb9d60679985d964",
+      "expected_sign": -1,
+      "steps": [
+        {
+          "precision": 512,
+          "width_bits": 524,
+          "sign": null
+        },
+        {
+          "precision": 1024,
+          "width_bits": 1024,
+          "sign": null
+        },
+        {
+          "precision": 2048,
+          "width_bits": 2048,
+          "sign": -1
+        }
+      ],
+      "sign": -1,
+      "complete": true,
+      "elapsed_seconds": 0.04689265298657119
+    },
+    {
+      "input": "query-015.json",
+      "sha256": "8fc409edc2ccd41810077e943b5d648fae2d6be798d4e292905128344fdb01d4",
+      "expected_sign": 1,
+      "steps": [
+        {
+          "precision": 512,
+          "width_bits": 524,
+          "sign": null
+        },
+        {
+          "precision": 1024,
+          "width_bits": 1024,
+          "sign": null
+        },
+        {
+          "precision": 2048,
+          "width_bits": 2048,
+          "sign": 1
+        }
+      ],
+      "sign": 1,
+      "complete": true,
+      "elapsed_seconds": 0.04740108805708587
+    },
+    {
+      "input": "query-016.json",
+      "sha256": "26fe3a85bc0a25486d3d6b61e8693be7895b4e0bddf8eb68b14d9f3a30510bdc",
+      "expected_sign": 1,
+      "steps": [
+        {
+          "precision": 512,
+          "width_bits": 524,
+          "sign": null
+        },
+        {
+          "precision": 1024,
+          "width_bits": 1015,
+          "sign": 1
+        }
+      ],
+      "sign": 1,
+      "complete": true,
+      "elapsed_seconds": 0.015505756018683314
+    },
+    {
+      "input": "query-017.json",
+      "sha256": "b7a476fb47d4d366ca58c93859d86bf2688ba657d855db37b5d154af3d026221",
+      "expected_sign": -1,
+      "steps": [
+        {
+          "precision": 512,
+          "width_bits": 524,
+          "sign": null
+        },
+        {
+          "precision": 1024,
+          "width_bits": 1015,
+          "sign": -1
+        }
+      ],
+      "sign": -1,
+      "complete": true,
+      "elapsed_seconds": 0.015498897060751915
+    },
+    {
+      "input": "query-018.json",
+      "sha256": "96d5d5370e9d5dd245ef6da0eb932cd923b11924faeab02ee71843009fb4b1f9",
+      "expected_sign": 1,
+      "steps": [
+        {
+          "precision": 512,
+          "width_bits": 524,
+          "sign": null
+        },
+        {
+          "precision": 1024,
+          "width_bits": 1015,
+          "sign": null
+        },
+        {
+          "precision": 2048,
+          "width_bits": 2039,
+          "sign": 1
+        }
+      ],
+      "sign": 1,
+      "complete": true,
+      "elapsed_seconds": 0.047313853865489364
+    }
+  ],
+  "complete": true,
+  "method": "Exact rational interval Newton on owned roots, outward dyadic rounding, independently certified quartic coefficient enclosures"
+}

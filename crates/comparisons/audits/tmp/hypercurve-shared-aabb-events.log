@@ -1,0 +1,18 @@
+   Compiling hyperreal v0.13.1 (/home/tim/Documents/GitHub/workspace/hyperreal)
+   Compiling hyperlattice v0.6.1 (/home/tim/Documents/GitHub/workspace/hyperlattice)
+   Compiling hyperlimit v0.4.1 (/home/tim/Documents/GitHub/workspace/hyperlimit)
+   Compiling hypersolve v0.3.1 (/home/tim/Documents/GitHub/workspace/hypersolve)
+   Compiling hypercurve v0.3.1 (/home/tim/Documents/GitHub/workspace/hypercurve)
+    Finished `release` profile [optimized] target(s) in 1m 24s
+     Running unittests src/lib.rs (target/release/deps/hypercurve-7b7bae739dc512f2)
+
+running 6 tests
+test events::tests::preview_min_x_sort_recovers_from_rounded_ties ... ok
+test events::tests::exact_dyadic_line_sweep_matches_exact_box_sweep ... ok
+test events::tests::dense_ranked_candidates_match_flat_decided_aabb_filter ... ok
+test events::tests::unresolved_connectivity_is_not_relabelled_as_a_non_match ... ok
+test events::tests::indexed_sweep_candidates_match_flat_decided_aabb_filter ... ok
+test events::tests::retained_line_candidates_match_unreserved_dense_sweep ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 862 filtered out; finished in 0.00s
+

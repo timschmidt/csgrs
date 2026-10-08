@@ -1,0 +1,38 @@
+{
+  "checks": [
+    {
+      "label": "fmt",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustfmt",
+        "--edition",
+        "2024",
+        "--check",
+        "src/bezier_offset.rs",
+        "src/bezier_parameter.rs"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 2.4366650610463694,
+      "log": "local-chord-complete-replay-20260924-v10-fmt.log"
+    }
+  ],
+  "cases": [
+    {
+      "label": "closed_parallel_secants_retain_endpoints_and_both_seam_parameters",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/local-chord-complete-replay-20260924-v10-libtest",
+        "--exact",
+        "bezier_offset::conversion_tests::closed_parallel_secants_retain_endpoints_and_both_seam_parameters",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 101,
+      "elapsed_seconds": 0.26993996906094253,
+      "log": "local-chord-complete-replay-20260924-v10-closed_parallel_secants_retain_endpoints_and_both_seam_parameters.log"
+    }
+  ],
+  "all_processes_reaped": true,
+  "binary_sha256": "c7ffd7f64bbcbda16e36229a8081b6bfd7d1522d69b710f9ec836ceea4814a78",
+  "all_sources_unchanged": true
+}

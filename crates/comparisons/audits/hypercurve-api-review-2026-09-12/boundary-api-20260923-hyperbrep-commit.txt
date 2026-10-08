@@ -1,0 +1,5 @@
+Share planar curve conversion for region and path profiles.
+
+Consume general exact boundary curves and remove the duplicate
+split-fragment conversion and unused reversal branch. Paths and regions
+now use one persistence conversion with the same supported curve forms.

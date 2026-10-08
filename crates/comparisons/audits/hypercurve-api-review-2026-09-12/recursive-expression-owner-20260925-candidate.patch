@@ -1,0 +1,995 @@
+--- v38
+
++++ candidate
+
+@@ -6331,6 +6331,11 @@
+
+ struct BezierRecursiveQuadraticParallelExpression2 {
+     rational: Vec<BezierRecursiveQuadraticValue2>,
+     radical: Vec<BezierRecursiveQuadraticValue2>,
++    /// The radicand belongs to the expression. Related predicates share it,
++    /// so a caller cannot replay the expression with another speed sheet.
++    speed_squared: Arc<[BezierRecursiveQuadraticValue2]>,
++    /// Successful exact arithmetic only; no policy-dependent sign is cached.
++    squared_magnitude: Arc<OnceLock<Vec<BezierRecursiveQuadraticValue2>>>,
+ }
+ 
+ /// Arbitrary-depth selected-radial circle/analytic-parallel authority.
+@@ -6358,7 +6363,6 @@
+
+     radius_squared_denominator: BezierRecursiveQuadraticParallelExpression2,
+     tangent_cross_source: Vec<BezierRecursiveQuadraticValue2>,
+     tangent_dot_source: BezierRecursiveQuadraticParallelExpression2,
+-    speed_squared: Vec<BezierRecursiveQuadraticValue2>,
+     weight: Vec<BezierRecursiveQuadraticValue2>,
+ }
+ 
+@@ -6415,7 +6419,6 @@
+
+     /// their selected coefficient field and leave this cache empty.
+     projection: OnceLock<DenseTensorPolynomial>,
+     incidence: BezierRecursiveQuadraticParallelExpression2,
+-    speed_squared: Vec<BezierRecursiveQuadraticValue2>,
+     source_weight: Vec<BezierRecursiveQuadraticValue2>,
+     tangent_cross: Vec<BezierRecursiveQuadraticValue2>,
+     tangent_dot: Vec<BezierRecursiveQuadraticValue2>,
+@@ -6444,7 +6447,6 @@
+
+     base: Arc<BezierRecursiveQuadraticBaseFieldData2>,
+     projection: DenseTensorPolynomial,
+     incidence: BezierRecursiveQuadraticParallelExpression2,
+-    speed_squared: Vec<BezierRecursiveQuadraticValue2>,
+     source_weight: Vec<BezierRecursiveQuadraticValue2>,
+     unit_target_speed: bool,
+ }
+@@ -38637,7 +38639,6 @@
+
+             radius_squared_denominator,
+             tangent_cross_source,
+             tangent_dot_source,
+-            speed_squared,
+             weight,
+         )) = (|| {
+             let real =
+@@ -38668,10 +38669,15 @@
+
+             let weight = real(source_weight)?;
+             let tangent_x = real(&differential.tangent_x)?;
+             let tangent_y = real(&differential.tangent_y)?;
+-            let speed_squared = add(
+-                &multiply(&tangent_x, &tangent_x)?,
+-                &multiply(&tangent_y, &tangent_y)?,
+-            )?;
++            let speed_squared: Arc<[_]> = if unit_target_speed {
++                real(&[Real::one()])?
++            } else {
++                add(
++                    &multiply(&tangent_x, &tangent_x)?,
++                    &multiply(&tangent_y, &tangent_y)?,
++                )?
++            }
++            .into();
+             let normal_x = scale(&tangent_y, &(-other.distance()))?;
+             let normal_y = scale(&tangent_x, other.distance())?;
+             // With C=(Cx/D,Cy/D), R=D(X,Y)-W(Cx,Cy), and
+@@ -38718,14 +38724,16 @@
+
+                 &multiply(&weight_denominator, &radial_dot_normal)?,
+                 &Real::from(2_i8),
+             )?;
++            let circle = BezierRecursiveQuadraticParallelExpression2::new(
++                circle_rational,
++                circle_radical,
++                speed_squared.clone(),
++            );
+             let (base, projection) = if project_incidence {
+                 let projected_coefficients = if unit_target_speed {
+-                    add(&circle_rational, &circle_radical)?
++                    add(&circle.rational, &circle.radical)?
+                 } else {
+-                    subtract(
+-                        &multiply(&circle_rational, &circle_rational)?,
+-                        &multiply(&multiply(&circle_radical, &circle_radical)?, &speed_squared)?,
+-                    )?
++                    circle.squared_magnitude_difference()?.to_vec()
+                 };
+                 let (base, projection) =
+                     recursive_quadratic_polynomial_projection(projected_coefficients)?;
+@@ -38757,29 +38765,32 @@
+
+             let selected_scale =
+                 self.radial_distance() * &frame.normal_denominator * self.turn_sign();
+             let diameter_scale = self.radial_distance() * &frame.normal_denominator;
+-            let selected_half_plane = BezierRecursiveQuadraticParallelExpression2 {
+-                rational: scale(
++            let selected_half_plane = BezierRecursiveQuadraticParallelExpression2::new(
++                scale(
+                     &multiply(&weight_squared_denominator, &cross_anchor_normal)?,
+                     &selected_scale,
+                 )?,
+-                radical: scale(&multiply(&weight, &cross_anchor_radial)?, &selected_scale)?,
+-            };
+-            let diameter = BezierRecursiveQuadraticParallelExpression2 {
+-                rational: scale(
++                scale(&multiply(&weight, &cross_anchor_radial)?, &selected_scale)?,
++                speed_squared.clone(),
++            );
++            let diameter = BezierRecursiveQuadraticParallelExpression2::new(
++                scale(
+                     &multiply(&weight_squared_denominator, &dot_anchor_normal)?,
+                     &diameter_scale,
+                 )?,
+-                radical: scale(&multiply(&weight, &dot_anchor_radial)?, &diameter_scale)?,
+-            };
++                scale(&multiply(&weight, &dot_anchor_radial)?, &diameter_scale)?,
++                speed_squared.clone(),
++            );
+             let radius_squared_scale =
+                 &radius_squared * &frame.normal_denominator * &frame.normal_denominator;
+-            let radius_squared_denominator = BezierRecursiveQuadraticParallelExpression2 {
+-                rational: real(&[Real::zero()])?,
+-                radical: scale(
++            let radius_squared_denominator = BezierRecursiveQuadraticParallelExpression2::new(
++                real(&[Real::zero()])?,
++                scale(
+                     &scale_value(&weight_squared_denominator, &anchor_denominator)?,
+                     &radius_squared_scale,
+                 )?,
+-            };
++                speed_squared.clone(),
++            );
+ 
+             let radial_dot_tangent = add(
+                 &multiply(&radial_x, &tangent_x)?,
+@@ -38797,33 +38808,26 @@
+
+                 &multiply(&normal_x, &tangent_y)?,
+                 &multiply(&normal_y, &tangent_x)?,
+             )?;
+-            let tangent_dot_source = BezierRecursiveQuadraticParallelExpression2 {
+-                rational: scale(
++            let tangent_dot_source = BezierRecursiveQuadraticParallelExpression2::new(
++                scale(
+                     &multiply(&weight_squared_denominator, &cross_normal_tangent)?,
+                     &self.turn_sign(),
+                 )?,
+-                radical: scale(
++                scale(
+                     &multiply(&weight, &cross_radial_tangent)?,
+                     &self.turn_sign(),
+                 )?,
+-            };
++                speed_squared.clone(),
++            );
+             Some((
+                 base,
+                 projection,
+-                BezierRecursiveQuadraticParallelExpression2 {
+-                    rational: circle_rational,
+-                    radical: circle_radical,
+-                },
++                circle,
+                 selected_half_plane,
+                 diameter,
+                 radius_squared_denominator,
+                 tangent_cross_source,
+                 tangent_dot_source,
+-                if unit_target_speed {
+-                    real(&[Real::one()])?
+-                } else {
+-                    speed_squared
+-                },
+                 weight,
+             ))
+         })()
+@@ -38853,7 +38857,6 @@
+
+                 radius_squared_denominator,
+                 tangent_cross_source,
+                 tangent_dot_source,
+-                speed_squared,
+                 weight,
+             },
+         )))
+@@ -61777,17 +61780,32 @@
+
+ }
+ 
+ impl BezierRecursiveQuadraticParallelExpression2 {
+-    fn squared_magnitude_difference(
+-        &self,
+-        speed_squared: &[BezierRecursiveQuadraticValue2],
+-    ) -> Option<Vec<BezierRecursiveQuadraticValue2>> {
+-        let rational_squared =
+-            recursive_quadratic_polynomial_multiply(&self.rational, &self.rational)?;
+-        let radical_squared =
+-            recursive_quadratic_polynomial_multiply(&self.radical, &self.radical)?;
+-        let radical_speed =
+-            recursive_quadratic_polynomial_multiply(&radical_squared, speed_squared)?;
+-        recursive_quadratic_polynomial_combine(&rational_squared, &radical_speed, true)
++    fn new(
++        rational: Vec<BezierRecursiveQuadraticValue2>,
++        radical: Vec<BezierRecursiveQuadraticValue2>,
++        speed_squared: Arc<[BezierRecursiveQuadraticValue2]>,
++    ) -> Self {
++        Self {
++            rational,
++            radical,
++            speed_squared,
++            squared_magnitude: Arc::new(OnceLock::new()),
++        }
++    }
++
++    fn squared_magnitude_difference(&self) -> Option<&[BezierRecursiveQuadraticValue2]> {
++        if self.squared_magnitude.get().is_none() {
++            let rational_squared =
++                recursive_quadratic_polynomial_multiply(&self.rational, &self.rational)?;
++            let radical_squared =
++                recursive_quadratic_polynomial_multiply(&self.radical, &self.radical)?;
++            let radical_speed =
++                recursive_quadratic_polynomial_multiply(&radical_squared, &self.speed_squared)?;
++            let magnitude =
++                recursive_quadratic_polynomial_combine(&rational_squared, &radical_speed, true)?;
++            let _ = self.squared_magnitude.set(magnitude);
++        }
++        self.squared_magnitude.get().map(Vec::as_slice)
+     }
+ 
+     /// Signs A+B*sqrt(S) through the retained parameter's polynomial
+@@ -61795,13 +61813,12 @@
+
+     /// authored sheet; a squared magnitude alone cannot certify cancellation.
+     fn sign_with_positive_speed(
+         &self,
+-        speed_squared: &[BezierRecursiveQuadraticValue2],
+         policy: &CurveContext,
+         mut polynomial_sign: impl FnMut(
+             &[BezierRecursiveQuadraticValue2],
+         ) -> CurveResult<Classification<RealSign>>,
+     ) -> CurveResult<Classification<RealSign>> {
+-        match policy.strict_predicate_pass(|| polynomial_sign(speed_squared))? {
++        match policy.strict_predicate_pass(|| polynomial_sign(&self.speed_squared))? {
+             Classification::Decided(RealSign::Positive) => {}
+             Classification::Decided(RealSign::Zero) => {
+                 return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
+@@ -61823,10 +61840,10 @@
+
+         {
+             return Ok(Classification::Decided(sign));
+         }
+-        let Some(magnitude) = self.squared_magnitude_difference(speed_squared) else {
++        let Some(magnitude) = self.squared_magnitude_difference() else {
+             return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+         };
+-        let magnitude_sign = polynomial_sign(&magnitude)?;
++        let magnitude_sign = polynomial_sign(magnitude)?;
+         Ok(positive_root_sum_sign_from_components(
+             rational_sign,
+             radical_sign,
+@@ -61979,7 +61996,7 @@
+
+             &self.field,
+             &self.base,
+             &self.source_weight,
+-            &self.speed_squared,
++            &self.incidence.speed_squared,
+             self.unit_target_speed,
+             target_parameter,
+             policy,
+@@ -62004,7 +62021,6 @@
+
+     fn expression_transverse_root(&self, target_parameter: &BezierParameter2) -> Option<bool> {
+         recursive_quadratic_parallel_expression_transverse_root(
+             &self.incidence,
+-            &self.speed_squared,
+             self.unit_target_speed,
+             target_parameter,
+         )
+@@ -62120,7 +62136,8 @@
+
+             return Some(self.incidence.rational.clone());
+         }
+         self.incidence
+-            .squared_magnitude_difference(&self.speed_squared)
++            .squared_magnitude_difference()
++            .map(<[_]>::to_vec)
+     }
+ 
+     /// Cache only successful global elimination. Finite local isolation and
+@@ -62185,18 +62202,18 @@
+
+         sample: &Real,
+         policy: &CurveContext,
+     ) -> CurveResult<Classification<Option<bool>>> {
+-        let Some(norm) = self
+-            .incidence
+-            .squared_magnitude_difference(&self.speed_squared)
+-        else {
++        let Some(norm) = self.incidence.squared_magnitude_difference() else {
+             return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+         };
+-        match recursive_quadratic_polynomial_is_identically_zero(&norm, policy)? {
++        match recursive_quadratic_polynomial_is_identically_zero(norm, policy)? {
+             Classification::Decided(true) => {}
+             Classification::Decided(false) => return Ok(Classification::Decided(None)),
+             Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+         }
+-        for (polynomial, positive) in [(&self.source_weight, false), (&self.speed_squared, true)] {
++        for (polynomial, positive) in [
++            (&self.source_weight[..], false),
++            (&self.incidence.speed_squared[..], true),
++        ] {
+             match self.polynomial_sign_at_real(polynomial, sample, policy)? {
+                 Classification::Decided(RealSign::Positive) => {}
+                 Classification::Decided(RealSign::Negative) if !positive => {}
+@@ -62266,9 +62283,9 @@
+
+             &self.field,
+             &self.base,
+             &self.source_weight,
+-            &self.speed_squared,
+-            self.speed_squared.len() == 1
+-                && self.speed_squared[0]
++            &self.incidence.speed_squared,
++            self.incidence.speed_squared.len() == 1
++                && self.incidence.speed_squared[0]
+                     .exact_real_value_with_retained_witnesses()
+                     .is_some_and(|speed| speed == Real::one()),
+             target_parameter,
+@@ -62432,7 +62449,7 @@
+
+         };
+         Ok(self
+             .incidence
+-            .sign_with_positive_speed(&self.speed_squared, policy, sign)?
++            .sign_with_positive_speed(policy, sign)?
+             .map(|incidence_sign| product_sign(incidence_sign, weight_sign)))
+     }
+ 
+@@ -62515,7 +62532,7 @@
+
+         Some(BezierRecursiveProjectiveChordParallelIntervalSystem2 {
+             incidence_rational: intervals(&self.incidence.rational)?,
+             incidence_radical: intervals(&self.incidence.radical)?,
+-            speed_squared: intervals(&self.speed_squared)?,
++            speed_squared: intervals(&self.incidence.speed_squared)?,
+             precision: coefficient_precision,
+         })
+     }
+@@ -62543,7 +62560,7 @@
+
+         )?;
+         let speed = self
+             .polynomial_interval_on_real_interval(
+-                &self.speed_squared,
++                &self.incidence.speed_squared,
+                 parameter,
+                 refinement_steps,
+                 coefficient_precision,
+@@ -62619,7 +62636,7 @@
+
+             return rational.sign(policy);
+         }
+         let speed_squared = self
+-            .polynomial_value_at_real(&self.speed_squared, target_parameter)
++            .polynomial_value_at_real(&self.incidence.speed_squared, target_parameter)
+             .ok_or_else(|| {
+                 CurveError::Topology(
+                     "a recursive chord/parallel exact speed exceeded its field budget".into(),
+@@ -62778,7 +62795,6 @@
+
+ 
+ fn recursive_quadratic_parallel_expression_interval(
+     expression: &BezierRecursiveQuadraticParallelExpression2,
+-    speed_squared: &[BezierRecursiveQuadraticValue2],
+     unit_target_speed: bool,
+     target: &RealInterval,
+     source_steps: usize,
+@@ -62803,7 +62819,7 @@
+
+         }
+     } else {
+         recursive_quadratic_polynomial_interval(
+-            speed_squared,
++            &expression.speed_squared,
+             target,
+             source_steps,
+             coefficient_precision,
+@@ -62821,7 +62837,6 @@
+
+ /// conjugate candidate without constructing its field.
+ fn recursive_quadratic_parallel_expression_transverse_root(
+     expression: &BezierRecursiveQuadraticParallelExpression2,
+-    speed_squared: &[BezierRecursiveQuadraticValue2],
+     unit_target_speed: bool,
+     target_parameter: &BezierParameter2,
+ ) -> Option<bool> {
+@@ -62840,7 +62855,6 @@
+
+         let expression_interval = |target| {
+             recursive_quadratic_parallel_expression_interval(
+                 expression,
+-                speed_squared,
+                 unit_target_speed,
+                 target,
+                 source_steps,
+@@ -62883,7 +62897,7 @@
+
+         if self.unit_target_speed {
+             recursive_quadratic_polynomial_combine(&expression.rational, &expression.radical, false)
+         } else {
+-            expression.squared_magnitude_difference(&self.speed_squared)
++            expression.squared_magnitude_difference().map(<[_]>::to_vec)
+         }
+     }
+ 
+@@ -62918,16 +62932,17 @@
+
+             let radius = recursive_quadratic_polynomial_scale_real(radius, radial_coefficient)?;
+             recursive_quadratic_polynomial_combine(&diameter, &radius, true)
+         };
+-        Some(BezierRecursiveQuadraticParallelExpression2 {
+-            rational: combine(
++        Some(BezierRecursiveQuadraticParallelExpression2::new(
++            combine(
+                 &self.diameter.rational,
+                 &self.radius_squared_denominator.rational,
+             )?,
+-            radical: combine(
++            combine(
+                 &self.diameter.radical,
+                 &self.radius_squared_denominator.radical,
+             )?,
+-        })
++            self.circle.speed_squared.clone(),
++        ))
+     }
+ 
+     fn diameter_parameter_projection(
+@@ -62947,7 +62962,6 @@
+
+     ) -> Option<bool> {
+         recursive_quadratic_parallel_expression_transverse_root(
+             expression,
+-            &self.speed_squared,
+             self.unit_target_speed,
+             target_parameter,
+         )
+@@ -62963,7 +62977,6 @@
+
+             |target, source_steps, coefficient_precision| {
+                 recursive_quadratic_parallel_expression_interval(
+                     expression,
+-                    &self.speed_squared,
+                     self.unit_target_speed,
+                     target,
+                     source_steps,
+@@ -63026,7 +63039,7 @@
+
+             &self.field,
+             &self.base,
+             &self.weight,
+-            &self.speed_squared,
++            &self.circle.speed_squared,
+             self.unit_target_speed,
+             target_parameter,
+             policy,
+@@ -63139,7 +63152,7 @@
+
+         if let Some(parameter) = target_parameter.as_bezier_parameter() {
+             return self.expression_sign_at_parameter(expression, parameter, policy);
+         }
+-        expression.sign_with_positive_speed(&self.speed_squared, policy, |polynomial| {
++        expression.sign_with_positive_speed(policy, |polynomial| {
+             self.polynomial_sign_at_region_parameter(polynomial, target_parameter, policy)
+         })
+     }
+@@ -63331,12 +63344,12 @@
+
+     ) -> Option<BezierRecursiveQuadraticParallelExpression2> {
+         // The stored dot expression includes one positive target-speed
+         // factor. Apply that same factor to cross before combining them.
+-        Some(BezierRecursiveQuadraticParallelExpression2 {
+-            rational: recursive_quadratic_polynomial_scale_real(
++        Some(BezierRecursiveQuadraticParallelExpression2::new(
++            recursive_quadratic_polynomial_scale_real(
+                 &self.tangent_dot_source.rational,
+                 dot_scale,
+             )?,
+-            radical: recursive_quadratic_polynomial_combine(
++            recursive_quadratic_polynomial_combine(
+                 &recursive_quadratic_polynomial_scale_real(
+                     &self.tangent_cross_source,
+                     cross_scale,
+@@ -63347,7 +63360,8 @@
+
+                 )?,
+                 false,
+             )?,
+-        })
++            self.circle.speed_squared.clone(),
++        ))
+     }
+ 
+     fn tangent_cross_dot_source_sign(
+@@ -78036,7 +78050,6 @@
+
+                             source_steps.saturating_add(64).min(i32::MAX as usize) as i32;
+                         *sign = recursive_quadratic_parallel_expression_interval(
+                             difference,
+-                            &clipping_system.speed_squared,
+                             false,
+                             &target,
+                             source_steps,
+@@ -78228,132 +78241,139 @@
+
+         // point predicates replay weight and speed at their retained parameter.
+         let unit = [Real::one()];
+         let weight_coefficients = source.weight.unwrap_or(&unit);
+-        let Some((
+-            incidence,
+-            speed_squared,
+-            source_weight,
+-            tangent_cross,
+-            tangent_dot,
+-            coordinate_differences,
+-        )) = (|| {
+-            let real =
+-                |coefficients: &[Real]| recursive_quadratic_real_polynomial(&field, coefficients);
+-            let add = |first: &[BezierRecursiveQuadraticValue2],
+-                       second: &[BezierRecursiveQuadraticValue2]| {
+-                recursive_quadratic_polynomial_combine(first, second, false)
+-            };
+-            let subtract = |first: &[BezierRecursiveQuadraticValue2],
+-                            second: &[BezierRecursiveQuadraticValue2]| {
+-                recursive_quadratic_polynomial_combine(first, second, true)
+-            };
+-            let multiply = |first: &[BezierRecursiveQuadraticValue2],
+-                            second: &[BezierRecursiveQuadraticValue2]| {
+-                recursive_quadratic_polynomial_multiply(first, second)
+-            };
+-            let scale = |polynomial: &[BezierRecursiveQuadraticValue2],
+-                         value: &BezierRecursiveQuadraticValue2| {
+-                recursive_quadratic_polynomial_scale(polynomial, value)
+-            };
+-            let source_x = real(source.x_numerator)?;
+-            let source_y = real(source.y_numerator)?;
+-            let source_weight = real(weight_coefficients)?;
+-            let tangent_x = real(tangent_x_coefficients)?;
+-            let tangent_y = real(tangent_y_coefficients)?;
+-            let (direction_x, direction_y, _) =
+-                direction_end.difference_numerators(&direction_start)?;
+-            let point_delta_x = subtract(
+-                &scale(&source_x, &start.denominator)?,
+-                &scale(&source_weight, &start.x)?,
+-            )?;
+-            let point_delta_y = subtract(
+-                &scale(&source_y, &start.denominator)?,
+-                &scale(&source_weight, &start.y)?,
+-            )?;
+-            let source_incidence = subtract(
+-                &scale(&point_delta_y, &direction_x)?,
+-                &scale(&point_delta_x, &direction_y)?,
+-            )?;
+-            let tangent_dot = add(
+-                &scale(&tangent_x, &direction_x)?,
+-                &scale(&tangent_y, &direction_y)?,
+-            )?;
+-            let normal_incidence = recursive_quadratic_polynomial_scale_real(
+-                &scale(&multiply(&tangent_dot, &source_weight)?, &start.denominator)?,
+-                parallel.distance(),
+-            )?;
+-            let zero_distance = parallel.distance().zero_status() == ZeroKnowledge::Zero;
+-            let speed_squared = if zero_distance {
+-                real(&[Real::one()])?
+-            } else {
+-                add(
+-                    &multiply(&tangent_x, &tangent_x)?,
+-                    &multiply(&tangent_y, &tangent_y)?,
+-                )?
+-            };
+-            let tangent_cross = subtract(
+-                &scale(&tangent_y, &direction_x)?,
+-                &scale(&tangent_x, &direction_y)?,
+-            )?;
+-            let (source_coordinate, start_coordinate, end_coordinate, normal_coordinate) =
+-                match self.data.parameter_axis.axis {
+-                    Axis2::X => (
+-                        &source_x,
+-                        &start.x,
+-                        &end.x,
+-                        recursive_quadratic_polynomial_scale_real(&tangent_y, &Real::from(-1_i8))?,
+-                    ),
+-                    Axis2::Y => (&source_y, &start.y, &end.y, tangent_x.clone()),
++        let Some((incidence, source_weight, tangent_cross, tangent_dot, coordinate_differences)) =
++            (|| {
++                let real = |coefficients: &[Real]| {
++                    recursive_quadratic_real_polynomial(&field, coefficients)
+                 };
+-            let coordinate_difference =
+-                |endpoint_coordinate: &BezierRecursiveQuadraticValue2,
+-                 endpoint_denominator: &BezierRecursiveQuadraticValue2| {
+-                    let radical = subtract(
+-                        &scale(source_coordinate, endpoint_denominator)?,
+-                        &scale(&source_weight, endpoint_coordinate)?,
+-                    )?;
+-                    let rational = recursive_quadratic_polynomial_scale_real(
+-                        &scale(
+-                            &multiply(&normal_coordinate, &source_weight)?,
+-                            endpoint_denominator,
+-                        )?,
+-                        parallel.distance(),
+-                    )?;
+-                    Some(if zero_distance {
+-                        BezierRecursiveQuadraticParallelExpression2 {
+-                            rational: radical,
+-                            radical: real(&[Real::zero()])?,
+-                        }
++                let add = |first: &[BezierRecursiveQuadraticValue2],
++                           second: &[BezierRecursiveQuadraticValue2]| {
++                    recursive_quadratic_polynomial_combine(first, second, false)
++                };
++                let subtract =
++                    |first: &[BezierRecursiveQuadraticValue2],
++                     second: &[BezierRecursiveQuadraticValue2]| {
++                        recursive_quadratic_polynomial_combine(first, second, true)
++                    };
++                let multiply =
++                    |first: &[BezierRecursiveQuadraticValue2],
++                     second: &[BezierRecursiveQuadraticValue2]| {
++                        recursive_quadratic_polynomial_multiply(first, second)
++                    };
++                let scale = |polynomial: &[BezierRecursiveQuadraticValue2],
++                             value: &BezierRecursiveQuadraticValue2| {
++                    recursive_quadratic_polynomial_scale(polynomial, value)
++                };
++                let source_x = real(source.x_numerator)?;
++                let source_y = real(source.y_numerator)?;
++                let source_weight = real(weight_coefficients)?;
++                let tangent_x = real(tangent_x_coefficients)?;
++                let tangent_y = real(tangent_y_coefficients)?;
++                let (direction_x, direction_y, _) =
++                    direction_end.difference_numerators(&direction_start)?;
++                let point_delta_x = subtract(
++                    &scale(&source_x, &start.denominator)?,
++                    &scale(&source_weight, &start.x)?,
++                )?;
++                let point_delta_y = subtract(
++                    &scale(&source_y, &start.denominator)?,
++                    &scale(&source_weight, &start.y)?,
++                )?;
++                let source_incidence = subtract(
++                    &scale(&point_delta_y, &direction_x)?,
++                    &scale(&point_delta_x, &direction_y)?,
++                )?;
++                let tangent_dot = add(
++                    &scale(&tangent_x, &direction_x)?,
++                    &scale(&tangent_y, &direction_y)?,
++                )?;
++                let normal_incidence = recursive_quadratic_polynomial_scale_real(
++                    &scale(&multiply(&tangent_dot, &source_weight)?, &start.denominator)?,
++                    parallel.distance(),
++                )?;
++                let zero_distance = parallel.distance().zero_status() == ZeroKnowledge::Zero;
++                let speed_squared: Arc<[_]> = if zero_distance {
++                    real(&[Real::one()])?
++                } else {
++                    add(
++                        &multiply(&tangent_x, &tangent_x)?,
++                        &multiply(&tangent_y, &tangent_y)?,
++                    )?
++                }
++                .into();
++                let tangent_cross = subtract(
++                    &scale(&tangent_y, &direction_x)?,
++                    &scale(&tangent_x, &direction_y)?,
++                )?;
++                let (source_coordinate, start_coordinate, end_coordinate, normal_coordinate) =
++                    match self.data.parameter_axis.axis {
++                        Axis2::X => (
++                            &source_x,
++                            &start.x,
++                            &end.x,
++                            recursive_quadratic_polynomial_scale_real(
++                                &tangent_y,
++                                &Real::from(-1_i8),
++                            )?,
++                        ),
++                        Axis2::Y => (&source_y, &start.y, &end.y, tangent_x.clone()),
++                    };
++                let coordinate_difference =
++                    |endpoint_coordinate: &BezierRecursiveQuadraticValue2,
++                     endpoint_denominator: &BezierRecursiveQuadraticValue2| {
++                        let radical = subtract(
++                            &scale(source_coordinate, endpoint_denominator)?,
++                            &scale(&source_weight, endpoint_coordinate)?,
++                        )?;
++                        let rational = recursive_quadratic_polynomial_scale_real(
++                            &scale(
++                                &multiply(&normal_coordinate, &source_weight)?,
++                                endpoint_denominator,
++                            )?,
++                            parallel.distance(),
++                        )?;
++                        Some(if zero_distance {
++                            BezierRecursiveQuadraticParallelExpression2::new(
++                                radical,
++                                real(&[Real::zero()])?,
++                                speed_squared.clone(),
++                            )
++                        } else {
++                            BezierRecursiveQuadraticParallelExpression2::new(
++                                rational,
++                                radical,
++                                speed_squared.clone(),
++                            )
++                        })
++                    };
++                let coordinate_differences = build_coordinate_differences
++                    .then(|| {
++                        Some([
++                            coordinate_difference(start_coordinate, &start.denominator)?,
++                            coordinate_difference(end_coordinate, &end.denominator)?,
++                        ])
++                    })
++                    .flatten();
++                Some((
++                    if zero_distance {
++                        BezierRecursiveQuadraticParallelExpression2::new(
++                            source_incidence,
++                            real(&[Real::zero()])?,
++                            speed_squared.clone(),
++                        )
+                     } else {
+-                        BezierRecursiveQuadraticParallelExpression2 { rational, radical }
+-                    })
+-                };
+-            let coordinate_differences = build_coordinate_differences
+-                .then(|| {
+-                    Some([
+-                        coordinate_difference(start_coordinate, &start.denominator)?,
+-                        coordinate_difference(end_coordinate, &end.denominator)?,
+-                    ])
+-                })
+-                .flatten();
+-            Some((
+-                if zero_distance {
+-                    BezierRecursiveQuadraticParallelExpression2 {
+-                        rational: source_incidence,
+-                        radical: real(&[Real::zero()])?,
+-                    }
+-                } else {
+-                    BezierRecursiveQuadraticParallelExpression2 {
+-                        rational: normal_incidence,
+-                        radical: source_incidence,
+-                    }
+-                },
+-                speed_squared,
+-                source_weight,
+-                tangent_cross,
+-                tangent_dot,
+-                coordinate_differences,
+-            ))
+-        })()
++                        BezierRecursiveQuadraticParallelExpression2::new(
++                            normal_incidence,
++                            source_incidence,
++                            speed_squared.clone(),
++                        )
++                    },
++                    source_weight,
++                    tangent_cross,
++                    tangent_dot,
++                    coordinate_differences,
++                ))
++            })()
+         else {
+             return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+         };
+@@ -78362,7 +78382,6 @@
+
+             field,
+             projection: OnceLock::new(),
+             incidence,
+-            speed_squared,
+             source_weight,
+             tangent_cross,
+             tangent_dot,
+@@ -78642,11 +78661,7 @@
+
+                 if let Some(evaluation) = &evaluation {
+                     system.expression_sign(expression, evaluation, policy)
+                 } else {
+-                    expression.sign_with_positive_speed(
+-                        &system.speed_squared,
+-                        policy,
+-                        polynomial_sign,
+-                    )
++                    expression.sign_with_positive_speed(policy, polynomial_sign)
+                 }
+             };
+             // This is the terminal authored-sheet predicate, not persistent
+@@ -114450,8 +114465,11 @@
+
+                     field,
+                     base,
+                     projection,
+-                    incidence: BezierRecursiveQuadraticParallelExpression2 { rational, radical },
+-                    speed_squared,
++                    incidence: BezierRecursiveQuadraticParallelExpression2::new(
++                        rational,
++                        radical,
++                        speed_squared.into(),
++                    ),
+                     source_weight,
+                     unit_target_speed: true,
+                 },
+@@ -114544,6 +114562,18 @@
+
+         })() else {
+             return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+         };
++        let source = self.source_power_basis()?;
++        let unit = [Real::one()];
++        let source_weight = source.weight.unwrap_or(&unit);
++        let candidate_speed_squared = parallel_speed_squared_polynomial(self.differential()?);
++        let Some((source_weight, candidate_speed_squared)) = (|| {
++            Some((
++                recursive_quadratic_real_polynomial(&field, source_weight)?,
++                recursive_quadratic_real_polynomial(&field, &candidate_speed_squared)?,
++            ))
++        })() else {
++            return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
++        };
+         let Some(incidence) = (|| {
+             let rational = recursive_quadratic_polynomial_combine(
+                 &recursive_quadratic_polynomial_scale(&center_term, &center_speed)?,
+@@ -114555,37 +114585,19 @@
+
+                 &candidate,
+                 false,
+             )?;
+-            Some(BezierRecursiveQuadraticParallelExpression2 { rational, radical })
+-        })() else {
+-            return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+-        };
+-        let source = self.source_power_basis()?;
+-        let unit = [Real::one()];
+-        let source_weight = source.weight.unwrap_or(&unit);
+-        let candidate_speed_squared = parallel_speed_squared_polynomial(self.differential()?);
+-        let Some((source_weight, candidate_speed_squared)) = (|| {
+-            Some((
+-                recursive_quadratic_real_polynomial(&field, source_weight)?,
+-                recursive_quadratic_real_polynomial(&field, &candidate_speed_squared)?,
++            Some(BezierRecursiveQuadraticParallelExpression2::new(
++                rational,
++                radical,
++                candidate_speed_squared.into(),
+             ))
+         })() else {
+             return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+         };
+-        let Some(projected_coefficients) = (|| {
+-            let rational_squared =
+-                recursive_quadratic_polynomial_multiply(&incidence.rational, &incidence.rational)?;
+-            let radical_squared =
+-                recursive_quadratic_polynomial_multiply(&incidence.radical, &incidence.radical)?;
+-            let radical_speed = recursive_quadratic_polynomial_multiply(
+-                &radical_squared,
+-                &candidate_speed_squared,
+-            )?;
+-            recursive_quadratic_polynomial_combine(&rational_squared, &radical_speed, true)
+-        })() else {
++        let Some(projected_coefficients) = incidence.squared_magnitude_difference() else {
+             return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+         };
+         let Some((base, projection)) =
+-            recursive_quadratic_polynomial_projection(projected_coefficients)
++            recursive_quadratic_polynomial_projection(projected_coefficients.to_vec())
+         else {
+             return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+         };
+@@ -114599,7 +114611,6 @@
+
+                 base,
+                 projection,
+                 incidence,
+-                speed_squared: candidate_speed_squared,
+                 source_weight,
+                 unit_target_speed: false,
+             },
+@@ -157920,15 +157931,12 @@
+
+                     // -4t^6+4t^4+4t^2-3. It has four simple real roots:
+                     // two with t^2 in (1/2,3/4), two with t^2 in (1,2).
+                     // Only the first pair cancels on the positive speed sheet.
+-                    let norm = system
+-                        .incidence
+-                        .squared_magnitude_difference(&system.speed_squared)
+-                        .unwrap();
++                    let norm = system.incidence.squared_magnitude_difference().unwrap();
+                     let candidates = policy
+                         .bounded_exact_predicate_pass(|| {
+                             recursive_quadratic_polynomial_local_parameters(
+                                 &system.field,
+-                                &norm,
++                                norm,
+                                 [&Real::zero(), &Real::one()],
+                                 &policy,
+                             )
+@@ -158076,10 +158084,13 @@
+
+                         (tiny.clone(), RealSign::Positive),
+                         (-tiny.clone(), RealSign::Negative),
+                     ] {
+-                        let expression = BezierRecursiveQuadraticParallelExpression2 {
+-                            rational: polynomial(&[shift, Real::zero(), Real::from(orientation)]),
+-                            radical: polynomial(&[Real::from(-orientation)]),
+-                        };
++                        let expression = BezierRecursiveQuadraticParallelExpression2::new(
++                            polynomial(&[shift, Real::zero(), Real::from(orientation)]),
++                            polynomial(&[Real::from(-orientation)]),
++                            system.circle.speed_squared.clone(),
++                        );
++                        let retained_expression = expression.clone();
++                        assert!(expression.squared_magnitude.get().is_none());
+                         let result = crate::policy::resolve_certified_value(&policy, |attempt| {
+                             attempt.bounded_exact_predicate_pass(|| {
+                                 system
+@@ -158093,15 +158104,21 @@
+
+                         });
+                         assert_eq!(result.value, Classification::Decided(expected));
+                         assert_eq!(result.certainty, CurveCertainty::Certified);
++                        // Enumeration and repeated selected-sheet replay share
++                        // the exact norm even when the expression was cloned
++                        // before its first demand. The signs above are the
++                        // independent t² = sqrt(1+t²) oracle, including ±2^-600.
++                        assert!(expression.squared_magnitude.get().is_some());
++                        assert!(std::ptr::eq(
++                            expression.squared_magnitude_difference().unwrap(),
++                            retained_expression.squared_magnitude_difference().unwrap(),
++                        ));
+                     }
+-                    let same_sheet = BezierRecursiveQuadraticParallelExpression2 {
+-                        rational: polynomial(&[
+-                            Real::zero(),
+-                            Real::zero(),
+-                            Real::from(orientation),
+-                        ]),
+-                        radical: polynomial(&[Real::from(orientation)]),
+-                    };
++                    let same_sheet = BezierRecursiveQuadraticParallelExpression2::new(
++                        polynomial(&[Real::zero(), Real::zero(), Real::from(orientation)]),
++                        polynomial(&[Real::from(orientation)]),
++                        system.circle.speed_squared.clone(),
++                    );
+                     let result = crate::policy::resolve_certified_value(&policy, |attempt| {
+                         attempt.bounded_exact_predicate_pass(|| {
+                             system
+@@ -158122,6 +158139,7 @@
+
+                         }),
+                     );
+                     assert_eq!(result.certainty, CurveCertainty::Certified);
++                    assert!(same_sheet.squared_magnitude.get().is_none());
+                 }
+                 assert!(system.incidence_univariate.get().is_none());
+             }
+@@ -158216,10 +158234,11 @@
+
+                 };
+                 assert!(parameter.as_recursive_projective().is_some());
+                 let zero = vec![system.field.constant(Real::zero()).unwrap()];
+-                let expression = BezierRecursiveQuadraticParallelExpression2 {
+-                    rational: zero.clone(),
+-                    radical: zero,
+-                };
++                let expression = BezierRecursiveQuadraticParallelExpression2::new(
++                    zero.clone(),
++                    zero,
++                    system.circle.speed_squared.clone(),
++                );
+                 let result = crate::policy::resolve_certified_value(&policy, |attempt| {
+                     attempt.bounded_exact_predicate_pass(|| {
+                         system

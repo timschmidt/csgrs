@@ -1,0 +1,48 @@
+{
+  "turn_status": "progress",
+  "full_goal_status": "active",
+  "commit": "65919fb5c608de1f3e7d5503810016fd4c04481c",
+  "latest_baseline": "endpoint-derivative-retention-v852",
+  "verified_source_files": 2048,
+  "clean_repositories": 30,
+  "release_cases": 327,
+  "pinned_test_binaries": 12,
+  "checks": 7,
+  "repaired_missing_derivative_images": 8,
+  "high_order_tangent_probe": {
+    "degrees": [
+      2,
+      4,
+      8
+    ],
+    "policies": 2,
+    "admissions": 12,
+    "boolean_operations_and_recompositions": 30,
+    "exact_membership_oracles": 126,
+    "observed_failure": false
+  },
+  "active_drivers": [],
+  "outstanding_production_edits": [],
+  "next_unused_version": 858,
+  "receipts": {
+    "endpoint-derivative-retention-v852-committed.json": "285c8b3466971c0ad0e1b0a830b17b2545da3f822fc0f3f899b63783dfc41e12",
+    "endpoint-derivative-retention-v852-reviewed.json": "47f55579b450c0f6d39e0bbf87e2fc710f8137f9beb00e2e49fea04b1e54f87d",
+    "endpoint-derivative-retention-v852-reaped.json": "0ae23bfc08fb62eee009efb08035473f3d77f9bfafd85096abf59e0fe0812eaa",
+    "endpoint-derivative-retention-v852-review-reaped.json": "9764fafc69468b5e9e137102bae6b1cb022139f31f6e802663d4118518b18b2a",
+    "endpoint-derivative-retention-replay-v853-terminal.json": "1a4249857e68393f690542bacfcb2ed7822ee968bdf92f93e4184c2e24c08216",
+    "endpoint-derivative-retention-replay-v853-reaped.json": "9213bc73705a7c87d82ab7f333c73b4a0e08f9d847faa6906f43ab584bd0fadf",
+    "high-order-tangency-probe-v856-terminal.json": "951013470150ef4fc777e967978589c00a1148b434c84e53320c32cd20c53620",
+    "high-order-tangency-probe-v856-reaped.json": "7d578a12c1d1a9e0a72236d2b52567b1d72b94bbdfc4243a87803e1f16816585",
+    "shared-source-tangent-cross-audit-v854.json": "4aec4039a0f67177095815f5162c41a23c625e8e153bf48594490d0c63b24142"
+  },
+  "limits": [
+    "General retained-expression tangent ordering and universal curve-operation closure remain unproven.",
+    "No measured performance improvement is claimed for this evidence-retention change.",
+    "The tangent-cap probe passes and does not justify replacing the ordering machinery on a presumed third-order limit."
+  ],
+  "next_work": [
+    "Shared-selected-parameter tangent determinants, with root identity and denominator-sign guards (V854).",
+    "Four duplicate private deferred endpoint constructors (V850).",
+    "Earlier degree-six monotone-reparameterization overlap computational issue."
+  ]
+}

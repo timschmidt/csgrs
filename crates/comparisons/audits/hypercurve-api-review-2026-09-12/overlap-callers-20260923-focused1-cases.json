@@ -1,0 +1,18 @@
+[
+  {
+    "name": "bezier_offset::conversion_tests::independently_encoded_nonrepresented_analytic_circle_publishes_overlap",
+    "returncode": 0,
+    "passed": true,
+    "limit_seconds": 180,
+    "elapsed_seconds": 1.2558142018970102,
+    "log": "overlap-callers-20260923-focused1-case-0.log"
+  },
+  {
+    "name": "bezier_offset::conversion_tests::nonrepresented_center_nonrational_chamfer_inverts_with_retained_authority",
+    "returncode": 0,
+    "passed": true,
+    "limit_seconds": 180,
+    "elapsed_seconds": 0.45628726994618773,
+    "log": "overlap-callers-20260923-focused1-case-1.log"
+  }
+]

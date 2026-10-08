@@ -1,0 +1,18 @@
+{
+  "tag": "monic-state-trial-memcheck",
+  "started": "2026-09-09T01:09:42.912Z",
+  "finished": "2026-09-09T01:10:18.012Z",
+  "elapsedSeconds": 35.097625249,
+  "cwd": "/home/tim/Documents/GitHub/workspace",
+  "command": "valgrind",
+  "args": [
+    "--tool=memcheck",
+    "--error-exitcode=97",
+    "--leak-check=full",
+    "--show-leak-kinds=all",
+    "--errors-for-leak-kinds=definite,indirect,possible",
+    "/tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/debug/calcium-monic-state-trial"
+  ],
+  "code": 97,
+  "signal": null
+}

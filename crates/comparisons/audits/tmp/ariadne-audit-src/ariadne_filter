@@ -1,0 +1,78 @@
+SED_COMMAND="
+s/\bAriadne:://g
+s/ >/>/g
+
+s/\bvoid\b/Void/g
+s/\bbool\b/Bool/g
+s/\btribool\b/Tribool/g
+
+s/\blong long int\b/LLInt/g
+s/\bunsigned long int\b/LNat/g
+s/\blong int\b/LInt/g
+s/\bunsigned int\b/Nat/g
+s/\bint\b/Int/g
+
+s/__gmp_expr<__gmpf_value, __gmpf_value>/GMPFloat/g
+s/__gmp_expr<__gmpq_value, __gmpq_value>/GMPRational/g
+s/__gmp_expr<__gmpz_value, __gmpz_value>/GMPInteger/g
+
+s/std::vector/vector/g
+s/std::pair/pair/g
+
+s/boost::numeric:://g
+s/boost::logic:://g
+s/boost::python:://g
+
+s/\,\ basic_row_major<unsigned int\, int>//g
+s/\,\ unbounded_array<Dyadic\,\ std::allocator<Dyadic\ >\ >//g
+s/\,\ unbounded_array<Rational\,\ std::allocator<Rational\ >\ >//g
+s/\,\ unbounded_array<Interval<Dyadic\ >\,\ std::allocator<Interval<Dyadic\ >\ >\ >//g
+s/\,\ unbounded_array<Interval<Rational\ >\,\ std::allocator<Interval<Rational\ >\ >\ >//g
+s/basic_ostream<char, std::char_traits<char>>/ostream/g
+s/, std::allocator<.*[a-z]>//g
+
+s/__gmp_expr<__mpq_struct \[1\], __mpq_struct \[1\]>/Rational/g
+
+s/std::basic_string<char, std::char_traits<char>>/String/g
+s/std::basic_string<char, std::char_traits<char>, std::allocator<char>>/String/g
+s/std::basic_string<_CharT, _Traits, _Alloc>/String/g
+s/std::basic_ostream<char>/OutputStream/g
+s/\[with _CharT = char, _Traits = std::char_traits<char>, _Alloc = std::allocator<char>\]//g
+s/_CharT/Char/g
+
+s/std::basic_string<char>/String/g
+
+s/Variable<String>/StringVariable/g
+s/Variable<Integer>/IntegerVariable/g
+s/Variable<Real>/RealVariable/g
+
+s/Number<\(\w*\)Tag>/\1Number/g
+s/Float<\(\w\w*\), Precision\(..\)>/\1Float\2/g
+s/ValidatedMetricTag/MetricTag/g
+s/ValidatedBoundedTag/BoundedTag/g
+s/ValidatedLowerTag/LowerTag/g
+s/ValidatedUpperTag/UpperTag/g
+
+s/Float\(\w\w*\)<Precision\(\w\w\)>/Float\2\1/g
+s/Float<DoublePrecision>/FloatDP/g
+s/Float<MultiplePrecision>/FloatMP/g
+#s/FloatValue<Precision64>/Float64Value/g
+
+
+s/VariablesBox<Interval<Float\(\w\w\)Value>>/ExactFloat\1VariablesBox/g
+s/VariablesBox<Interval<\(\w\w*\)>>/\1VariablesBox/g
+s/Interval<Float64Value>/ExactFloat64Interval/g
+s/Interval<Float64Value>/IntervalDomain/g
+s/\bBox<IntervalDomain>/BoxDomain/g
+s/Box<\(\w*\)Interval>/\1Box/g
+
+s/\/usr\/lib\/gcc\/.*\/include\/c++\/.\..\..\///g
+s/\.\.\/include\///g
+"
+
+#s/\/usr\/lib\/gcc\/i386\-redhat\-linux\/4\.\1\.\1\/\.\.\/\.\.\/\.\.\/\.\.\/include\/c\+\+\/4\.1\.1\//c\+\+\//g
+# | cat > ariadne_filter.sed.tmp
+#echo $SED_COMMAND
+
+#sed -f ariadne_filter.sed.tmp $1
+sed -e "$SED_COMMAND" $1

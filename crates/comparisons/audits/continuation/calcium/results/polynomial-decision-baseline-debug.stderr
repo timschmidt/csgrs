@@ -1,0 +1,8 @@
+     Locking 12 packages to latest Rust 1.97.0 compatible versions
+   Compiling hyperreal v0.13.1 (/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/reuse-consumers/hyperreal)
+   Compiling hyperlattice v0.6.1 (/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/reuse-consumers/hyperlattice)
+   Compiling hyperlimit v0.4.1 (/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/reuse-consumers/hyperlimit)
+   Compiling hypersolve v0.3.1 (/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/reuse-consumers/hypersolve)
+   Compiling calcium-polynomial-decision-baseline v0.1.0 (/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/polynomial-decision-baseline)
+    Finished `dev` profile [unoptimized] target(s) in 7.87s
+     Running `/tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/debug/calcium-polynomial-decision-baseline`

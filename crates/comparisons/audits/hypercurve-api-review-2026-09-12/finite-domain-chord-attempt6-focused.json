@@ -1,0 +1,34 @@
+[
+  {
+    "filter": "finite_chord_",
+    "returncode": 0,
+    "seconds": 0.03161755499604624,
+    "log": "finite-domain-chord-attempt6-finite_chord_.log",
+    "binary": "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve-6e6572a45c5b177b",
+    "sha256": "5b620b63d39e85341aa70f5fc1e186f99eea2b068a0837061a74ee794b7bd201"
+  },
+  {
+    "filter": "regularization_orders_retained_circle_branches_at_shared_vertices",
+    "returncode": 0,
+    "seconds": 0.21383622399298474,
+    "log": "finite-domain-chord-attempt6-regularization_orders_retained_circle_branches_at_shared_vertices.log",
+    "binary": "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve-6e6572a45c5b177b",
+    "sha256": "5b620b63d39e85341aa70f5fc1e186f99eea2b068a0837061a74ee794b7bd201"
+  },
+  {
+    "filter": "selected_circle_and_retained_rational_arc_chamfer_extend_exactly",
+    "returncode": 0,
+    "seconds": 1.3153036820003763,
+    "log": "finite-domain-chord-attempt6-selected_circle_and_retained_rational_arc_chamfer_extend_exactly.log",
+    "binary": "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve-6e6572a45c5b177b",
+    "sha256": "5b620b63d39e85341aa70f5fc1e186f99eea2b068a0837061a74ee794b7bd201"
+  },
+  {
+    "filter": "generated_chord_overlaps_retain_independent_and_selected_boundaries",
+    "returncode": 0,
+    "seconds": 9.276073421002366,
+    "log": "finite-domain-chord-attempt6-generated_chord_overlaps_retain_independent_and_selected_boundaries.log",
+    "binary": "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve_curve_intersection-e3a50a789eb6a53e",
+    "sha256": "dca8acdb29c726d836c6b3f8f7507345f51cdc812abacb9cd5d6d627f667948f"
+  }
+]

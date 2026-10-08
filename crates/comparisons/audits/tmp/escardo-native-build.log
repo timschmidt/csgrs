@@ -1,0 +1,8 @@
+
+/home/tim/Documents/GitHub/workspace/exact-real-references/ExactRealNumberComputationInHaskell/fun2011.hs:2:17: warning: [-Wunrecognised-warning-flags]
+    unrecognised warning flag: -Wno-x-partial
+  |
+2 | {-# OPTIONS_GHC -Wno-x-partial #-}
+  |                 ^^^^^^^^^^^^^^
+[1 of 2] Compiling Main             ( /home/tim/Documents/GitHub/workspace/exact-real-references/ExactRealNumberComputationInHaskell/fun2011.hs, native-build/Main.o )
+[2 of 2] Linking escardo-native

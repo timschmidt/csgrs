@@ -1,0 +1,9 @@
+{
+  "commit": "ba836e13a98ec5e61087072d6eaf19432170d517",
+  "source_sha256": "6b07e28bac9e905db50f95dee01aac788b6db09928f9041013471d3f194053dd",
+  "build_returncode": 0,
+  "build_seconds": 114.08177676200285,
+  "binary_sha256": "deb1c61e2f69e53cc39562fd44767beea5d2ce75f9fee6b131f0f0be9ca5fe82",
+  "returncode": 101,
+  "seconds": 0.007516515994211659
+}

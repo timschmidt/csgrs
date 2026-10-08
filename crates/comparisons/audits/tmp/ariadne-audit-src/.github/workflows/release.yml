@@ -1,0 +1,117 @@
+name: Release
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+
+env:
+  BUILD_TYPE: Release
+
+jobs:
+  build:
+
+    name: ${{ matrix.config.name }}
+    runs-on: ${{ matrix.config.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        config:
+          - {
+            name: "macOS 13 AppleClang 14 [Release]",
+            os: macos-13,
+            cxx-cmd: "clang++",
+            pyld: "DY"
+          }
+          - {
+            name: "Ubuntu 24.04 Clang 16 [Release]",
+            os: ubuntu-24.04,
+            cxx-pkg: "clang-16",
+            cxx-cmd: "clang++-16"
+          }
+          - {
+            name: "Ubuntu 24.04 GCC 12 [Release]",
+            os: ubuntu-24.04,
+            cxx-pkg: "g++-12",
+            cxx-cmd: "g++-12"
+          }
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Get macOS Concurrency
+      if: runner.os == 'macOS'
+      run: |
+        echo NPROC="sysctl -n hw.ncpu" >> $GITHUB_ENV
+        echo "Running on $(sysctl -n hw.ncpu) threads ..."
+
+    - name: Get Linux Concurrency
+      if: runner.os == 'Linux'
+      run: |
+        echo NPROC="nproc" >> $GITHUB_ENV
+        echo "Running on $(nproc) threads ..."
+
+    - name: Set Up macOS Dependencies
+      if: runner.os == 'macOS'
+      run: |
+        brew install ninja gcc@12 mpfr cairo gnuplot pkg-config
+
+    - name: Set Up Linux Dependencies
+      if: runner.os == 'Linux'
+      run: |
+        sudo apt install -y cmake ninja-build pkg-config ${{matrix.config.cxx-pkg}} libcairo2-dev gnuplot libmpfr-dev python3-pip python3-dev
+        sudo pip3 install pytest
+
+    - name: Create Build Environment
+      run: cmake -E make_directory ${{runner.workspace}}/build
+
+    - name: Configure CMake
+      working-directory: ${{runner.workspace}}/build
+      run: cmake $GITHUB_WORKSPACE -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DCMAKE_CXX_COMPILER=${{matrix.config.cxx-cmd}} -G "Ninja" -DWARNINGS_AS_ERRORS=ON
+
+    - name: Build Library and Bindings
+      working-directory: ${{runner.workspace}}/build
+      run: cmake --build . --parallel $($NPROC)
+
+    - name: Build Examples and Demonstrations
+      working-directory: ${{runner.workspace}}/build
+      run: cmake --build . --parallel $($NPROC) --target examples demonstrations
+
+    - name: Prepare Environment for Tutorials
+      working-directory: ${{runner.workspace}}/build
+      run: |
+        sudo cmake --build . --target install
+        cp -Rf $GITHUB_WORKSPACE/tutorials ${{runner.workspace}}/tutorials
+        mkdir ${{runner.workspace}}/tutorials/python
+        cp -Rf $GITHUB_WORKSPACE/python/tutorials/* ${{runner.workspace}}/tutorials/python
+
+    - name: Check C++ Rigorous Numerics Tutorial
+      working-directory: ${{runner.workspace}}/tutorials/rigorous_numerics
+      run: |
+        export ${{matrix.config.pyld}}LD_LIBRARY_PATH=/usr/local/lib
+        cmake . -DCMAKE_CXX_COMPILER=${{matrix.config.cxx-cmd}} -G "Ninja"
+        cmake --build . --parallel $($NPROC)
+        ./rigorous_numerics_tutorial
+
+    - name: Check C++ Hybrid Evolution Tutorial
+      working-directory: ${{runner.workspace}}/tutorials/hybrid_evolution
+      run: |
+        export ${{matrix.config.pyld}}LD_LIBRARY_PATH=/usr/local/lib
+        cmake . -DCMAKE_CXX_COMPILER=${{matrix.config.cxx-cmd}} -G "Ninja"
+        cmake --build . --parallel $($NPROC)
+        ./hybrid_evolution_tutorial
+
+    - name: Check Python Rigorous Numerics Tutorial
+      working-directory: ${{runner.workspace}}/tutorials/python
+      run: |
+        export ${{matrix.config.pyld}}LD_LIBRARY_PATH=/usr/local/lib
+        export PYTHONPATH=/usr/local/lib/python3.13/site-packages/:/usr/local/opt/python@3.13/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/
+        python3 rigorous_numerics_tutorial.py
+
+    - name: Check Python Hybrid Evolution Tutorial
+      working-directory: ${{runner.workspace}}/tutorials/python
+      run: |
+        export ${{matrix.config.pyld}}LD_LIBRARY_PATH=/usr/local/lib
+        export PYTHONPATH=/usr/local/lib/python3.13/site-packages/:/usr/local/opt/python@3.13/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/
+        python3 hybrid_evolution_tutorial.py

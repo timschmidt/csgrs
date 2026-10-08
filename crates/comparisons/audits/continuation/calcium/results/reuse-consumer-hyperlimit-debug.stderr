@@ -1,0 +1,22 @@
+   Compiling hyperreal v0.13.1 (/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/reuse-consumers/hyperreal)
+   Compiling geometry-predicates v0.3.0
+   Compiling apfp v0.1.1
+   Compiling hyperlattice v0.6.1 (/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/reuse-consumers/hyperlattice)
+   Compiling hyperlimit v0.4.1 (/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/reuse-consumers/hyperlimit)
+    Finished `test` profile [unoptimized] target(s) in 19.81s
+     Running unittests src/lib.rs (/tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/debug/deps/hyperlimit-272b9f95db8beec6)
+     Running tests/adversarial_degeneracies.rs (/tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/debug/deps/adversarial_degeneracies-c046ff3a3b9522ae)
+     Running tests/adversarial_predicates.rs (/tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/debug/deps/adversarial_predicates-85aea7b5a591c1c6)
+     Running tests/adversarial_props.rs (/tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/debug/deps/adversarial_props-3dec53cd93cfd6fa)
+     Running tests/batch.rs (/tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/debug/deps/batch-9790e97628a6a6b8)
+     Running tests/classification_contracts.rs (/tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/debug/deps/classification_contracts-9748638d0af07db3)
+     Running tests/composite_policy.rs (/tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/debug/deps/composite_policy-098a714ed0eaaf8d)
+     Running tests/exactcore_xinwei.rs (/tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/debug/deps/exactcore_xinwei-71c2f151e22bc9d3)
+     Running tests/halfspace_feasibility.rs (/tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/debug/deps/halfspace_feasibility-11a8f6d8e9c622d8)
+     Running tests/nd_predicates.rs (/tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/debug/deps/nd_predicates-aa71f723c1dfc56e)
+     Running tests/promoted_mesh_helpers.rs (/tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/debug/deps/promoted_mesh_helpers-4d79aafdaec3272f)
+     Running tests/readme.rs (/tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/debug/deps/readme-611af57f29f2f75b)
+     Running tests/real_representations.rs (/tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/debug/deps/real_representations-d2ed4de853e5e766)
+     Running tests/retained_report_contracts.rs (/tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/debug/deps/retained_report_contracts-90ee8c1ab9a63a44)
+     Running tests/robust_parity.rs (/tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/debug/deps/robust_parity-7f600dff0f8410ca)
+     Running tests/support_dop.rs (/tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/debug/deps/support_dop-c7771655d1fd83ab)

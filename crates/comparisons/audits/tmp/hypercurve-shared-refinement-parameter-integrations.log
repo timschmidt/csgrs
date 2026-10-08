@@ -1,0 +1,50 @@
+   Compiling hypercurve v0.3.1 (/home/tim/Documents/GitHub/workspace/hypercurve)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 23.17s
+     Running tests/hypercurve_bezier_algebraic_image.rs (target/debug/deps/hypercurve_bezier_algebraic_image-f84854f0f0fad3a7)
+
+running 9 tests
+test cubic_point_and_tangent_images_use_power_basis_resultants ... ok
+test nonmonotone_coordinate_image_is_certified_without_sampling ... ok
+test quadratic_point_and_tangent_images_retain_algebraic_coordinate_evidence ... ok
+test rational_image_cache_keeps_curve_family_certificate_shapes_distinct ... ok
+test linear_coordinate_images_match_exact_midpoint_values ... ok
+test rational_point_image_transforms_exact_real_linear_root ... ok
+test rational_quadratic_denominator_boundary_is_reported ... ok
+test rational_quadratic_point_and_tangent_images_retain_quotient_evidence ... ok
+test rational_line_image_matches_exact_midpoint_values ... ok
+
+test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.06s
+
+     Running tests/hypercurve_bezier_algebraic_parameter.rs (target/debug/deps/hypercurve_bezier_algebraic_parameter-68dfd4d5c4f9ee38)
+
+running 27 tests
+test algebraic_parameter_is_a_clone_shared_handle ... ok
+test algebraic_parameter_recovers_represented_linear_root ... ok
+test algebraic_root_sign_change_tracks_multiplicity_parity ... ok
+test bernstein_conversion_preserves_high_degree_constant_identity ... ok
+test endpoint_root_is_rejected_for_algebraic_isolators ... ok
+test endpoint_touching_singleton_isolators_have_strict_order ... ok
+test cubic_distance_stationary_quintic_isolates_all_five_candidates ... ok
+test exact_and_algebraic_parameters_compare_only_when_certified ... ok
+test equivalent_irrational_roots_compare_equal_across_polynomials_and_isolators ... ok
+test invalid_parameter_intervals_are_rejected ... ok
+test irrational_nonlinear_parameter_remains_algebraic ... ok
+test irrational_root_isolation_skips_rational_reconstruction_refinement ... ok
+test linear_midpoint_root_is_a_valid_algebraic_parameter ... ok
+test multi_root_bracket_is_rejected_as_not_an_isolator ... ok
+test nonlinear_algebraic_parameter_reconstructs_exact_rational_root ... ok
+test nonrational_linear_parameter_uses_exact_point_api ... ok
+test nonrational_quartic_uses_exact_bernstein_root_certificates ... ok
+test oriented_parameter_range_retains_irrational_boundary ... ok
+test overlapping_distinct_parameters_compare_by_certified_refinement ... ok
+test parameter_range_promotes_represented_rational_boundary ... ok
+test parameter_range_rejects_equal_and_accepts_affine_extension_boundaries ... ok
+test quadratic_singleton_isolator_is_validated_by_sturm_count ... ok
+test quintic_root_isolation_trace_reuses_sturm_certificates ... ok
+test repeated_nonrational_quartic_falls_back_to_complete_sturm_isolation ... ok
+test represented_root_sign_change_tracks_high_multiplicity_parity ... ok
+test unit_root_isolation_orders_represented_and_algebraic_roots ... ok
+test linear_integer_polynomials_count_at_most_one_root ... ok
+
+test result: ok. 27 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+

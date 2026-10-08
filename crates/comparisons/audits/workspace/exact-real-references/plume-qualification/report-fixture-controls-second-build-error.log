@@ -1,0 +1,17 @@
+   Compiling plume-qualification v0.0.0 (/home/tim/Documents/GitHub/workspace/exact-real-references/plume-qualification)
+error[E0282]: type annotations needed
+  --> report_fixture_controls.rs:80:13
+   |
+80 |         let p=(Q::from(&a*&b)+Q::from(&x*&y))/2;
+   |             ^
+81 |         let correct_cross=(Q::from(&b*&x)+Q::from(&a*&y))/2;
+82 |         assert_eq!((p.clone()+correct_cross)/2,want); identities+=1;
+   |                     - type must be known at this point
+   |
+help: consider giving `p` an explicit type
+   |
+80 |         let p: /* Type */=(Q::from(&a*&b)+Q::from(&x*&y))/2;
+   |              ++++++++++++
+
+For more information about this error, try `rustc --explain E0282`.
+error: could not compile `plume-qualification` (bin "report_fixture_controls") due to 1 previous error

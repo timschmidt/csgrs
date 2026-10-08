@@ -1,0 +1,36 @@
+{
+  "compile_command": [
+    "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustc",
+    "--edition=2024",
+    "-O",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/fiber-unit-pivots-identity-probe.rs",
+    "-L",
+    "dependency=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps",
+    "-o",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/fiber-unit-pivots-identity-parent",
+    "--extern",
+    "hypersolve=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypersolve-3b4fa3fbe9883707.rlib",
+    "--extern",
+    "hyperreal=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperreal-cb99a1f925d9457d.rlib",
+    "--extern",
+    "hyperlimit=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlimit-bba408637f4c7c0d.rlib"
+  ],
+  "returncode": 0,
+  "elapsed_seconds": 0.031766783009516075,
+  "source_sha256": "2feb0741d7973e8450a32841fe83a5ef13fd25420017505da4f1c538bcbf2061",
+  "binary_sha256": "2c9e98e294cae894e945ca34c6de16e112fde8289acecc974fec1c14e3f879f1",
+  "libraries": {
+    "hypersolve": {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypersolve-3b4fa3fbe9883707.rlib",
+      "sha256": "e04d297f1fbb5691d31f24675db34428ea4133b60063e7a36dd370c3f9d6c17f"
+    },
+    "hyperreal": {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperreal-cb99a1f925d9457d.rlib",
+      "sha256": "856c7c226315f6af32ac02645301f2efcd0155184783132783c3dfe44956dcb5"
+    },
+    "hyperlimit": {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlimit-bba408637f4c7c0d.rlib",
+      "sha256": "60ffe1df71bf6bb6ce18883143bc3a1d013d010b339e597514aa8f62c88f0422"
+    }
+  }
+}

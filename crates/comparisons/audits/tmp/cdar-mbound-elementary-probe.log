@@ -1,0 +1,123 @@
+cap containment+budget 13965 cases, failures=0
+boundErrorTerm 13965 cases, containment failures=0
+boundErrorTermMB 13965 cases, containment failures=0
+limitSize -8 13965 cases, containment failures=0
+limitSize 8 13965 cases, containment failures=0
+mb=2 add 3969 cases, failures=0
+mb=2 mul 3969 cases, failures=0
+mb=3 add 3969 cases, failures=0
+mb=3 mul 3969 cases, failures=0
+mb=5 add 3969 cases, failures=0
+mb=5 mul 3969 cases, failures=0
+mb=8 add 3969 cases, failures=0
+mb=8 mul 3969 cases, failures=0
+mb=10 add 3969 cases, failures=0
+mb=10 mul 3969 cases, failures=0
+Approx exp p=32 [("PASS",68)]
+Approx log p=32 [("PASS",16),("FAIL",14)]
+("FAIL","Approx 32 2 1 (-3) => Approx 64 (-1714) 514 (-10)")
+("FAIL","Approx 32 2 1 0 => Approx 64 710 513 (-10)")
+("FAIL","Approx 32 3 1 (-3) => Approx 64 (-2250) 685 (-11)")
+("FAIL","Approx 32 3 1 0 => Approx 64 2250 684 (-11)")
+Approx sin p=32 [("PASS",68)]
+Approx cos p=32 [("PASS",68)]
+Approx sqrt p=32 [("PASS",33),("BOTTOM",1)]
+("BOTTOM","Approx 32 1 1 (-3) => Bottom")
+Approx rsqrt p=32 [("PASS",30)]
+Approx atan p=32 [("PASS",44),("TIMEOUT",18),("EXCEPTION Prelude.!!: negative index\nCallStack (from HasCallStack):\n  error, called at libraries/base/GHC/List.hs:1369:12 in base:GHC.List\n  negIndex, called at libraries/base/GHC/List.hs:1373:17 in base:GHC.List\n  !!, called at src/Data/CDAR/Approx.hs:1375:54 in cdar-mBound-0.1.0.4-76CGSBBscU19Uf7aGCDL6A:Data.CDAR.Approx",4),("EXCEPTION src/Data/CDAR/Approx.hs:1371:7-50: Non-exhaustive patterns in Finite r\n",2)]
+("TIMEOUT","Approx 32 (-8) 1 (-3)")
+("TIMEOUT","Approx 32 (-8) 1 0")
+("TIMEOUT","Approx 32 (-7) 1 (-3)")
+("TIMEOUT","Approx 32 (-7) 1 0")
+Approx exp p=100 [("PASS",68)]
+Approx log p=100 [("PASS",16),("FAIL",14)]
+("FAIL","Approx 100 2 1 (-3) => Approx 112 (-1714) 514 (-10)")
+("FAIL","Approx 100 2 1 0 => Approx 111 710 513 (-10)")
+("FAIL","Approx 100 3 1 (-3) => Approx 111 (-2250) 685 (-11)")
+("FAIL","Approx 100 3 1 0 => Approx 111 2250 684 (-11)")
+Approx sin p=100 [("PASS",68)]
+Approx cos p=100 [("PASS",68)]
+Approx sqrt p=100 [("PASS",33),("BOTTOM",1)]
+("BOTTOM","Approx 100 1 1 (-3) => Bottom")
+Approx rsqrt p=100 [("PASS",30)]
+Approx atan p=100 [("PASS",44),("TIMEOUT",18),("EXCEPTION Prelude.!!: negative index\nCallStack (from HasCallStack):\n  error, called at libraries/base/GHC/List.hs:1369:12 in base:GHC.List\n  negIndex, called at libraries/base/GHC/List.hs:1373:17 in base:GHC.List\n  !!, called at src/Data/CDAR/Approx.hs:1375:54 in cdar-mBound-0.1.0.4-76CGSBBscU19Uf7aGCDL6A:Data.CDAR.Approx",4),("EXCEPTION src/Data/CDAR/Approx.hs:1371:7-50: Non-exhaustive patterns in Finite r\n",2)]
+("TIMEOUT","Approx 100 (-8) 1 (-3)")
+("TIMEOUT","Approx 100 (-8) 1 0")
+("TIMEOUT","Approx 100 (-7) 1 (-3)")
+("TIMEOUT","Approx 100 (-7) 1 0")
+CR exp p=20 [("PASS",36)]
+CR log p=20 [("PASS",18)]
+CR sin p=20 [("PASS",36)]
+CR cos p=20 [("PASS",36)]
+CR sqrt p=20 [("PASS",19)]
+CR atan p=20 [("PASS",36)]
+CR asin p=20 [("TIMEOUT",2),("PASS",14),("EXCEPTION src/Data/CDAR/Approx.hs:1371:7-50: Non-exhaustive patterns in Finite r\n",1)]
+("TIMEOUT","(-1) % 1")
+("EXCEPTION src/Data/CDAR/Approx.hs:1371:7-50: Non-exhaustive patterns in Finite r\n","0 % 1")
+("TIMEOUT","1 % 1")
+CR acos p=20 [("TIMEOUT",2),("PASS",14),("EXCEPTION src/Data/CDAR/Approx.hs:1371:7-50: Non-exhaustive patterns in Finite r\n",1)]
+("TIMEOUT","(-1) % 1")
+("EXCEPTION src/Data/CDAR/Approx.hs:1371:7-50: Non-exhaustive patterns in Finite r\n","0 % 1")
+("TIMEOUT","1 % 1")
+CR exp p=100 [("PASS",36)]
+CR log p=100 [("PASS",18)]
+CR sin p=100 [("PASS",36)]
+CR cos p=100 [("PASS",36)]
+CR sqrt p=100 [("PASS",19)]
+CR atan p=100 [("PASS",36)]
+CR asin p=100 [("TIMEOUT",2),("PASS",14),("EXCEPTION src/Data/CDAR/Approx.hs:1371:7-50: Non-exhaustive patterns in Finite r\n",1)]
+("TIMEOUT","(-1) % 1")
+("EXCEPTION src/Data/CDAR/Approx.hs:1371:7-50: Non-exhaustive patterns in Finite r\n","0 % 1")
+("TIMEOUT","1 % 1")
+CR acos p=100 [("TIMEOUT",2),("PASS",14),("EXCEPTION src/Data/CDAR/Approx.hs:1371:7-50: Non-exhaustive patterns in Finite r\n",1)]
+("TIMEOUT","(-1) % 1")
+("EXCEPTION src/Data/CDAR/Approx.hs:1371:7-50: Non-exhaustive patterns in Finite r\n","0 % 1")
+("TIMEOUT","1 % 1")
+CR exp p=300 [("PASS",36)]
+CR log p=300 [("PASS",18)]
+CR sin p=300 [("PASS",36)]
+CR cos p=300 [("PASS",36)]
+CR sqrt p=300 [("PASS",19)]
+CR atan p=300 [("PASS",36)]
+CR asin p=300 [("TIMEOUT",2),("PASS",14),("EXCEPTION src/Data/CDAR/Approx.hs:1371:7-50: Non-exhaustive patterns in Finite r\n",1)]
+("TIMEOUT","(-1) % 1")
+("EXCEPTION src/Data/CDAR/Approx.hs:1371:7-50: Non-exhaustive patterns in Finite r\n","0 % 1")
+("TIMEOUT","1 % 1")
+CR acos p=300 [("TIMEOUT",2),("PASS",14),("EXCEPTION src/Data/CDAR/Approx.hs:1371:7-50: Non-exhaustive patterns in Finite r\n",1)]
+("TIMEOUT","(-1) % 1")
+("EXCEPTION src/Data/CDAR/Approx.hs:1371:7-50: Non-exhaustive patterns in Finite r\n","0 % 1")
+("TIMEOUT","1 % 1")
+sqrtCR [("PASS",4)]
+atanCR [("FAIL",6),("PASS",1)]
+("FAIL","(-2) % 1 => Approx 81 (-2415050360737705686166766) 20 (-77)")
+("FAIL","(-1) % 1 => Approx 80 (-1206896684556403852388977) 12 (-77)")
+("FAIL","(-1) % 2 => Approx 80 (-1207811781335568667193836) 14 (-78)")
+("FAIL","1 % 2 => Approx 80 1207811781335568667193838 14 (-78)")
+expCR [("PASS",7)]
+sinCR [("PASS",7)]
+cosCR [("PASS",7)]
+pi [("PASS",3)]
+piMachinCR [("EXCEPTION heap overflow",3)]
+("EXCEPTION heap overflow","20")
+("EXCEPTION heap overflow","100")
+("EXCEPTION heap overflow","300")
+piBorweinCR [("TIMEOUT",2),("EXCEPTION heap overflow",1)]
+("TIMEOUT","20")
+("TIMEOUT","100")
+("EXCEPTION heap overflow","300")
+piCRMachin [("FAIL",3)]
+("FAIL","20 => Approx 80 961892535164960172162355 23 (-75)")
+("FAIL","100 => Approx 120 1057612027084808679572440453175442367 23 (-115)")
+("FAIL","300 => Approx 405 65746879521966497531010514380064473551498082320113690374136240239114495541117452921197967840783733832460338294000838125797 47 (-400)")
+fromDouble infinity Right (Approx 64 4503599627370496 1 972)
+fromDoubleAsExactValue infinity Right (Approx 64 4503599627370496 0 972)
+fromDouble negative infinity Right (Approx 64 (-4503599627370496) 1 972)
+fromDoubleAsExactValue negative infinity Right (Approx 64 (-4503599627370496) 0 972)
+fromDouble NaN Right (Approx 64 (-6755399441055744) 1 972)
+fromDoubleAsExactValue NaN Right (Approx 64 (-6755399441055744) 0 972)
+fromDouble zero Right (Approx 64 0 1 0)
+fromDoubleAsExactValue zero Right (Approx 64 0 0 0)
+fromDouble negative zero Right (Approx 64 0 1 0)
+fromDoubleAsExactValue negative zero Right (Approx 64 0 0 0)
+fromDouble largest finite Right (Approx 64 9007199254740991 1 971)
+fromDoubleAsExactValue largest finite Right (Approx 64 9007199254740991 0 971)

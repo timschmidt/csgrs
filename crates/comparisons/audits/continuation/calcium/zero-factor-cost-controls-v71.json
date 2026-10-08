@@ -1,0 +1,84 @@
+{
+  "checkpoint": 71,
+  "status": "pass",
+  "valid": 1,
+  "rejected": 9,
+  "group": {
+    "case": 23,
+    "policy": 0,
+    "lifecycle": "retained",
+    "iterations": 334
+  },
+  "results": [
+    {
+      "name": "valid",
+      "path": "zero-factor-cost-control-valid-v71.jsonl",
+      "sha256": "7a5058716964167ddd16cbee4060f536ea2f5d8469d3c0521541a075aefcb41b",
+      "accepted": true,
+      "error": null
+    },
+    {
+      "name": "coefficient-sign",
+      "path": "zero-factor-cost-control-coefficient-sign-v71.jsonl",
+      "sha256": "528cbd2f66d4b05af217480d5e1cf1c5803bed4325d4e78930e2ab5f381a7449",
+      "accepted": false,
+      "error": "Expected values to be strictly deep-equal:\n+ actual - expected\n... Skipped lines\n\n  {\n    message: null,\n    operation: 'Divide',\n    root: {\n      constraint: 3,\n...\n      polynomial: [\n+       '-2/1',\n-       '2/1',\n        '0/1',\n        '-1/1'\n      ],\n      symbol: 3,\n      upper: '39/25',\n"
+    },
+    {
+      "name": "endpoint",
+      "path": "zero-factor-cost-control-endpoint-v71.jsonl",
+      "sha256": "9037922efb0af424468e2f818a5d9167ab1d4249d80a81390c8a842705cc15a2",
+      "accepted": false,
+      "error": "Expected values to be strictly deep-equal:\n+ actual - expected\n... Skipped lines\n\n  {\n    message: null,\n    operation: 'Divide',\n    root: {\n      constraint: 3,\n...\n      intervalIndex: 0,\n+     lower: '0/1',\n-     lower: '67/50',\n      polynomial: [\n        '2/1',\n        '0/1',\n        '-1/1'\n      ],\n"
+    },
+    {
+      "name": "checksum",
+      "path": "zero-factor-cost-control-checksum-v71.jsonl",
+      "sha256": "b23fcdb527e069c4a871c75a8bc272ed712f66f36598b900943dfad7ed71aee2",
+      "accepted": false,
+      "error": "Expected values to be strictly equal:\n\n1003 !== 1002\n"
+    },
+    {
+      "name": "iterations",
+      "path": "zero-factor-cost-control-iterations-v71.jsonl",
+      "sha256": "91866a1890e47a4ac6420f7ba6becf9caaa8a17af2726ae829536a2d3bc3fc12",
+      "accepted": false,
+      "error": "Expected values to be strictly equal:\n\n335 !== 334\n"
+    },
+    {
+      "name": "elapsed-zero",
+      "path": "zero-factor-cost-control-elapsed-zero-v71.jsonl",
+      "sha256": "a73e3c22e71b52b6c1fd42fb75068a8a680affbf2e3800354fab45122c5fd14b",
+      "accepted": false,
+      "error": "The expression evaluated to a falsy value:\n\n  assert(Number.isSafeInteger(r.elapsed_ns)&&r.elapsed_ns>0)\n"
+    },
+    {
+      "name": "instrumented-cpu",
+      "path": "zero-factor-cost-control-instrumented-cpu-v71.jsonl",
+      "sha256": "d5828c14cbde157c3eac57baa71476d8933941b6cfd5f60e65f52a84b02f3ceb",
+      "accepted": false,
+      "error": "Expected values to be strictly equal:\n\n1 !== 0\n"
+    },
+    {
+      "name": "backward-clock",
+      "path": "zero-factor-cost-control-backward-clock-v71.jsonl",
+      "sha256": "b8bb37516ccd5d77244a8bca2d5f34c5c8fd71ad192f8d1d894735f9da2df8f0",
+      "accepted": false,
+      "error": "The expression evaluated to a falsy value:\n\n  assert(begin>=previousEnd&&end>=begin)\n"
+    },
+    {
+      "name": "final-mismatch",
+      "path": "zero-factor-cost-control-final-mismatch-v71.jsonl",
+      "sha256": "27ba23ac9e96522a82d60978584252c2028bc733e5cffac199857180d0749793",
+      "accepted": false,
+      "error": "Expected values to be strictly equal:\n\nfalse !== true\n"
+    },
+    {
+      "name": "wrong-policy",
+      "path": "zero-factor-cost-control-wrong-policy-v71.jsonl",
+      "sha256": "bf39b2aeb8e3ed95e91fd5c51d50f51df34ef968b6856ad364dcd69669b68d59",
+      "accepted": false,
+      "error": "Expected values to be strictly equal:\n\n1 !== 0\n"
+    }
+  ]
+}

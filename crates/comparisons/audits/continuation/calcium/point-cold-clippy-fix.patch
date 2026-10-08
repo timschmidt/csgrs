@@ -1,0 +1,21 @@
+--- point-cold-common.rs (initial build)
++++ point-cold-common.rs (qualified build)
+@@
+-        if inputs.is_none() || lifecycle == 1 {
++        if lifecycle == 1 {
+             // Fresh inputs do not coexist with the prior iteration's graphs.
+             drop(inputs.take());
+-            inputs = Some(prepare());
+-        } else if lifecycle == 2 {
+-            let (a, b, _) = inputs.as_mut().unwrap();
+-            history(a, 3);
+-            history(b, 3);
++        }
++        if let Some((a, b, _)) = inputs.as_mut() {
++            if lifecycle == 2 {
++                history(a, 3);
++                history(b, 3);
++            }
++        } else {
++            inputs = Some(prepare());
+         }

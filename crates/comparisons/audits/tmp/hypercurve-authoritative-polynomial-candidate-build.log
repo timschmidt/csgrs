@@ -1,0 +1,7 @@
+   Compiling hyperreal v0.13.1 (/tmp/hypercurve-sturm-control.B3w9V8/hyperreal)
+   Compiling hyperlattice v0.6.1 (/tmp/hypercurve-sturm-control.B3w9V8/hyperlattice)
+   Compiling hyperlimit v0.4.1 (/tmp/hypercurve-sturm-control.B3w9V8/hyperlimit)
+   Compiling hypertri v0.4.1 (/tmp/hypercurve-sturm-control.B3w9V8/hypertri)
+   Compiling hypersolve v0.3.1 (/tmp/hypercurve-sturm-control.B3w9V8/hypersolve)
+   Compiling hypercurve v0.3.1 (/tmp/hypercurve-sturm-control.B3w9V8/hypercurve)
+    Finished `bench` profile [optimized] target(s) in 1m 26s

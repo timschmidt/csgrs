@@ -1,0 +1,4 @@
+numeric mixed mult/div efforts: (13,13)
+refinement mixed mult/div efforts: (29,47)
+upward mixed division 1/2: Finite (0 % 1); exact: Finite (1 % 2)
+generic directed-bound counterexample and default-effort dispatch reproduced

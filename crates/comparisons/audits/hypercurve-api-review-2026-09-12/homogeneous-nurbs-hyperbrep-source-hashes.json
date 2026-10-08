@@ -1,0 +1,11 @@
+{
+  "repo": "/home/tim/Documents/GitHub/workspace/hyperbrep",
+  "base": "bfcc970b4886e7dc394462191008ac7198f7c3e1",
+  "files": {
+    "src/builder.rs": "d439903231161ccc61aecfcdef6f96377c7f5a38abef555263254c3b6ef19144",
+    "src/geometry.rs": "3447ab619d1b3f35e820dca0742e6517929b34d30150a49090b2d36b15762b30",
+    "src/model.rs": "a7c65e8dd0cc1a697ed1a7185b34a5a88f2d98ee81aa82a9c2859785e73d461b",
+    "src/persistence.rs": "015e358b5d4fb4b375295c13eedf51c54ec2704cbe3e093ebaae9e80b80e936a"
+  },
+  "commit": "8a84ee7db02fd2720ac89a1a6a227ee4ec2a8171"
+}

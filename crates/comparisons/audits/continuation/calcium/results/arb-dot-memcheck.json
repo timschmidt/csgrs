@@ -1,0 +1,19 @@
+{
+  "tag": "arb-dot-memcheck",
+  "started": "2026-09-09T22:38:21.137Z",
+  "finished": "2026-09-09T22:41:02.317Z",
+  "elapsedSeconds": 161.177361034,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison",
+  "command": "valgrind",
+  "args": [
+    "--vgdb=no",
+    "--tool=memcheck",
+    "--error-exitcode=97",
+    "--leak-check=full",
+    "--show-leak-kinds=all",
+    "--errors-for-leak-kinds=definite,indirect,possible",
+    "/tmp/calcium-arb-dot.zsWvwv/arb-dot-controls"
+  ],
+  "code": 0,
+  "signal": null
+}

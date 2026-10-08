@@ -1,0 +1,90 @@
+In file included from ../exact-real-references/flint/src/fmpz_types.h:15,
+                 from ../exact-real-references/flint/src/fmpz.h:21,
+                 from ../exact-real-references/flint/src/fmpz_mpoly_q.h:21,
+                 from ../exact-real-references/flint/src/ca.h:21,
+                 from audits/continuation/calcium/flint-proof-probe.c:5:
+../exact-real-references/flint/src/flint.h: In function ‘flint_rand_clear’:
+../exact-real-references/flint/src/flint.h:301:62: warning: unused parameter ‘state’ [-Wunused-parameter]
+  301 | FLINT_INLINE void flint_rand_clear(flint_rand_t FLINT_UNUSED(state)) { }
+      |                                                              ^
+../exact-real-references/flint/src/flint.h:116:27: note: in definition of macro ‘FLINT_UNUSED’
+  116 | #  define FLINT_UNUSED(x) x
+      |                           ^
+../exact-real-references/flint/src/fmpz_mpoly.h: In function ‘fmpz_mpoly_term_coeff_ref’:
+../exact-real-references/flint/src/fmpz_mpoly.h:32:89: warning: unused parameter ‘ctx’ [-Wunused-parameter]
+   32 |                                                     const fmpz_mpoly_ctx_t FLINT_UNUSED(ctx))
+      |                                                                                         ^
+../exact-real-references/flint/src/flint.h:116:27: note: in definition of macro ‘FLINT_UNUSED’
+  116 | #  define FLINT_UNUSED(x) x
+      |                           ^
+../exact-real-references/flint/src/fmpz_mpoly.h: In function ‘fmpz_mpoly_swap’:
+../exact-real-references/flint/src/fmpz_mpoly.h:168:90: warning: unused parameter ‘ctx’ [-Wunused-parameter]
+  168 | void fmpz_mpoly_swap(fmpz_mpoly_t A, fmpz_mpoly_t B, const fmpz_mpoly_ctx_t FLINT_UNUSED(ctx))
+      |                                                                                          ^
+../exact-real-references/flint/src/flint.h:116:27: note: in definition of macro ‘FLINT_UNUSED’
+  116 | #  define FLINT_UNUSED(x) x
+      |                           ^
+../exact-real-references/flint/src/fmpz_mpoly.h: In function ‘fmpz_mpoly_is_zero’:
+../exact-real-references/flint/src/fmpz_mpoly.h:214:82: warning: unused parameter ‘ctx’ [-Wunused-parameter]
+  214 | int fmpz_mpoly_is_zero(const fmpz_mpoly_t A, const fmpz_mpoly_ctx_t FLINT_UNUSED(ctx))
+      |                                                                                  ^
+../exact-real-references/flint/src/flint.h:116:27: note: in definition of macro ‘FLINT_UNUSED’
+  116 | #  define FLINT_UNUSED(x) x
+      |                           ^
+../exact-real-references/flint/src/fmpz_mpoly.h: In function ‘fmpz_mpoly_length’:
+../exact-real-references/flint/src/fmpz_mpoly.h:290:83: warning: unused parameter ‘ctx’ [-Wunused-parameter]
+  290 | slong fmpz_mpoly_length(const fmpz_mpoly_t A, const fmpz_mpoly_ctx_t FLINT_UNUSED(ctx))
+      |                                                                                   ^
+../exact-real-references/flint/src/flint.h:116:27: note: in definition of macro ‘FLINT_UNUSED’
+  116 | #  define FLINT_UNUSED(x) x
+      |                           ^
+../exact-real-references/flint/src/fmpz_mpoly.h: In function ‘fmpz_mpoly_univar_zero’:
+../exact-real-references/flint/src/fmpz_mpoly.h:631:88: warning: unused parameter ‘ctx’ [-Wunused-parameter]
+  631 | void fmpz_mpoly_univar_zero(fmpz_mpoly_univar_t A, const fmpz_mpoly_ctx_t FLINT_UNUSED(ctx))
+      |                                                                                        ^
+../exact-real-references/flint/src/flint.h:116:27: note: in definition of macro ‘FLINT_UNUSED’
+  116 | #  define FLINT_UNUSED(x) x
+      |                           ^
+../exact-real-references/flint/src/fmpz_mpoly.h: In function ‘fmpz_mpoly_univar_swap’:
+../exact-real-references/flint/src/fmpz_mpoly.h:650:89: warning: unused parameter ‘ctx’ [-Wunused-parameter]
+  650 |                                                     const fmpz_mpoly_ctx_t FLINT_UNUSED(ctx))
+      |                                                                                         ^
+../exact-real-references/flint/src/flint.h:116:27: note: in definition of macro ‘FLINT_UNUSED’
+  116 | #  define FLINT_UNUSED(x) x
+      |                           ^
+../exact-real-references/flint/src/fmpz_mpoly.h: In function ‘fmpz_mpoly_univar_length’:
+../exact-real-references/flint/src/fmpz_mpoly.h:659:89: warning: unused parameter ‘ctx’ [-Wunused-parameter]
+  659 |                                                     const fmpz_mpoly_ctx_t FLINT_UNUSED(ctx))
+      |                                                                                         ^
+../exact-real-references/flint/src/flint.h:116:27: note: in definition of macro ‘FLINT_UNUSED’
+  116 | #  define FLINT_UNUSED(x) x
+      |                           ^
+In file included from ../exact-real-references/flint/src/ca.h:22:
+../exact-real-references/flint/src/fexpr.h: In function ‘fexpr_is_builtin_symbol’:
+../exact-real-references/flint/src/fexpr.h:314:116: warning: comparison of integer expressions of different signedness: ‘ulong’ {aka ‘long unsigned int’} and ‘slong’ {aka ‘long int’} [-Wsign-compare]
+  314 |     return (FEXPR_TYPE(head) == FEXPR_TYPE_SMALL_SYMBOL) && (((head >> 8) & 0xff) == 0) && (FEXPR_BUILTIN_ID(head) == i);
+      |                                                                                                                    ^~
+../exact-real-references/flint/src/ca.h: In function ‘ca_is_special’:
+../exact-real-references/flint/src/ca.h:255:65: warning: unused parameter ‘ctx’ [-Wunused-parameter]
+  255 | CA_INLINE int ca_is_special(const ca_t x, ca_ctx_t FLINT_UNUSED(ctx))
+      |                                                                 ^
+../exact-real-references/flint/src/flint.h:116:27: note: in definition of macro ‘FLINT_UNUSED’
+  116 | #  define FLINT_UNUSED(x) x
+      |                           ^
+../exact-real-references/flint/src/ca.h: In function ‘ca_is_unknown’:
+../exact-real-references/flint/src/ca.h:260:65: warning: unused parameter ‘ctx’ [-Wunused-parameter]
+  260 | CA_INLINE int ca_is_unknown(const ca_t x, ca_ctx_t FLINT_UNUSED(ctx))
+      |                                                                 ^
+../exact-real-references/flint/src/flint.h:116:27: note: in definition of macro ‘FLINT_UNUSED’
+  116 | #  define FLINT_UNUSED(x) x
+      |                           ^
+../exact-real-references/flint/src/ca.h: In function ‘ca_is_nf_elem’:
+../exact-real-references/flint/src/ca.h:285:52: warning: unused parameter ‘ctx’ [-Wunused-parameter]
+  285 | CA_INLINE int ca_is_nf_elem(const ca_t x, ca_ctx_t ctx)
+      |                                           ~~~~~~~~~^~~
+../exact-real-references/flint/src/ca.h: In function ‘ca_is_generic_elem’:
+../exact-real-references/flint/src/ca.h:290:57: warning: unused parameter ‘ctx’ [-Wunused-parameter]
+  290 | CA_INLINE int ca_is_generic_elem(const ca_t x, ca_ctx_t ctx)
+      |                                                ~~~~~~~~~^~~
+/usr/bin/ld: cannot find -lflint: No such file or directory
+collect2: error: ld returned 1 exit status

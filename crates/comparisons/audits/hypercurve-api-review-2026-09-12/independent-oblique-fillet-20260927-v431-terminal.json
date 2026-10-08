@@ -1,0 +1,217 @@
+{
+  "source_manifest": "independent-oblique-fillet-20260927-v431-sources.json",
+  "source_directory": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/source-archives/independent-oblique-fillet-20260927-v431",
+  "cases": [
+    {
+      "binary": "independent-oblique-fillet-20260927-v431-hypercurve",
+      "name": "bezier_region::tests::nonlinear_selected_corner_chamfers_through_retained_fixed_distance_image",
+      "returncode": 0,
+      "log": "independent-oblique-fillet-20260927-v431-case-000.log",
+      "elapsed_seconds": 4.770100797060877
+    },
+    {
+      "binary": "independent-oblique-fillet-20260927-v431-hypercurve",
+      "name": "bezier_offset::conversion_tests::retained_incident_domains_admit_exterior_affine_endpoints",
+      "returncode": 0,
+      "log": "independent-oblique-fillet-20260927-v431-case-001.log",
+      "elapsed_seconds": 0.007788805058225989
+    },
+    {
+      "binary": "independent-oblique-fillet-20260927-v431-hypercurve",
+      "name": "bezier_offset::conversion_tests::independent_oblique_offset_coordinates_replay_exact_equalities_and_separation",
+      "returncode": 0,
+      "log": "independent-oblique-fillet-20260927-v431-case-002.log",
+      "elapsed_seconds": 0.21402908605523407
+    },
+    {
+      "binary": "independent-oblique-fillet-20260927-v431-hypercurve",
+      "name": "bezier_offset::conversion_tests::independent_chord_linear_forms_replay_exact_coefficient_relations",
+      "returncode": 0,
+      "log": "independent-oblique-fillet-20260927-v431-case-003.log",
+      "elapsed_seconds": 0.4142656191252172
+    },
+    {
+      "binary": "independent-oblique-fillet-20260927-v431-hypercurve",
+      "name": "bezier_offset::conversion_tests::independent_oblique_chords_support_constrained_fillet_families",
+      "returncode": 0,
+      "log": "independent-oblique-fillet-20260927-v431-case-004.log",
+      "elapsed_seconds": 22.292352012125775
+    },
+    {
+      "binary": "independent-oblique-fillet-20260927-v431-hypercurve",
+      "name": "curve::curve_fillet::tests::nonlinear_linear_fillet_components_retain_unique_contacts_and_tangents",
+      "returncode": 0,
+      "log": "independent-oblique-fillet-20260927-v431-case-005.log",
+      "elapsed_seconds": 3.9188204009551555
+    },
+    {
+      "binary": "independent-oblique-fillet-20260927-v431-hypercurve",
+      "name": "curve::curve_fillet::tests::coincident_retained_line_fillet_keeps_independent_endpoint_fields",
+      "returncode": 0,
+      "log": "independent-oblique-fillet-20260927-v431-case-006.log",
+      "elapsed_seconds": 0.11388280615210533
+    },
+    {
+      "binary": "independent-oblique-fillet-20260927-v431-hypercurve",
+      "name": "bezier_offset::conversion_tests::recursive_projective_chord_replays_identically_zero_norm_sheet",
+      "returncode": 0,
+      "log": "independent-oblique-fillet-20260927-v431-case-007.log",
+      "elapsed_seconds": 0.003537316806614399
+    },
+    {
+      "binary": "independent-oblique-fillet-20260927-v431-hypercurve",
+      "name": "bezier_offset::conversion_tests::regular_rational_parallel_components_select_exterior_speed_sheets",
+      "returncode": 0,
+      "log": "independent-oblique-fillet-20260927-v431-case-008.log",
+      "elapsed_seconds": 0.0034976601600646973
+    },
+    {
+      "binary": "independent-oblique-fillet-20260927-v431-hypercurve",
+      "name": "bezier_offset::conversion_tests::domain_component_normal_constraints_follow_swapped_operands",
+      "returncode": 0,
+      "log": "independent-oblique-fillet-20260927-v431-case-009.log",
+      "elapsed_seconds": 0.015632885973900557
+    },
+    {
+      "binary": "independent-oblique-fillet-20260927-v431-hypercurve",
+      "name": "bezier_offset::conversion_tests::original_parallel_normal_constraints_clip_finite_and_incident_components",
+      "returncode": 0,
+      "log": "independent-oblique-fillet-20260927-v431-case-010.log",
+      "elapsed_seconds": 0.03171034203842282
+    },
+    {
+      "binary": "independent-oblique-fillet-20260927-v431-hypercurve",
+      "name": "bezier_offset::conversion_tests::finite_parallel_pair_components_obey_exact_domain_boundaries",
+      "returncode": 0,
+      "log": "independent-oblique-fillet-20260927-v431-case-011.log",
+      "elapsed_seconds": 0.364124994026497
+    },
+    {
+      "binary": "independent-oblique-fillet-20260927-v431-hypercurve",
+      "name": "bezier_offset::conversion_tests::mixed_zero_parallel_pairs_replay_both_exterior_domain_roles",
+      "returncode": 0,
+      "log": "independent-oblique-fillet-20260927-v431-case-012.log",
+      "elapsed_seconds": 0.11391698406077921
+    },
+    {
+      "binary": "independent-oblique-fillet-20260927-v431-hypercurve",
+      "name": "bezier_offset::conversion_tests::ordered_ph_parallel_domains_retain_same_sheet_exterior_contacts",
+      "returncode": 0,
+      "log": "independent-oblique-fillet-20260927-v431-case-013.log",
+      "elapsed_seconds": 0.11385399918071926
+    },
+    {
+      "binary": "independent-oblique-fillet-20260927-v431-hypercurve",
+      "name": "bezier_offset::conversion_tests::ordered_ph_parallel_domains_reject_a_cached_opposite_normal_contact",
+      "returncode": 0,
+      "log": "independent-oblique-fillet-20260927-v431-case-014.log",
+      "elapsed_seconds": 0.031734189949929714
+    },
+    {
+      "binary": "independent-oblique-fillet-20260927-v431-hypercurve",
+      "name": "bezier_offset::conversion_tests::ordered_ph_parallel_domains_do_not_reuse_the_wrong_speed_sheet",
+      "returncode": 0,
+      "log": "independent-oblique-fillet-20260927-v431-case-015.log",
+      "elapsed_seconds": 0.11384765920229256
+    },
+    {
+      "binary": "independent-oblique-fillet-20260927-v431-hypercurve",
+      "name": "bezier_offset::conversion_tests::nonzero_parallel_domains_exclude_undefined_normals_and_poles",
+      "returncode": 0,
+      "log": "independent-oblique-fillet-20260927-v431-case-016.log",
+      "elapsed_seconds": 0.03173069981858134
+    },
+    {
+      "binary": "independent-oblique-fillet-20260927-v431-hypercurve",
+      "name": "bezier_offset::conversion_tests::nonzero_parallel_domains_partition_poles_on_components",
+      "returncode": 0,
+      "log": "independent-oblique-fillet-20260927-v431-case-017.log",
+      "elapsed_seconds": 0.007561940001323819
+    },
+    {
+      "binary": "independent-oblique-fillet-20260927-v431-hypercurve",
+      "name": "bezier_offset::conversion_tests::finite_component_charts_accept_nonrational_exact_scalar_bounds",
+      "returncode": 0,
+      "log": "independent-oblique-fillet-20260927-v431-case-018.log",
+      "elapsed_seconds": 0.015638386132195592
+    },
+    {
+      "binary": "independent-oblique-fillet-20260927-v431-hypercurve",
+      "name": "bezier_offset::conversion_tests::non_source_parallel_overlap_replays_the_radical_component",
+      "returncode": 0,
+      "log": "independent-oblique-fillet-20260927-v431-case-019.log",
+      "elapsed_seconds": 0.0035060199443250895
+    },
+    {
+      "binary": "independent-oblique-fillet-20260927-v431-hypercurve",
+      "name": "bezier_offset::conversion_tests::split_chord_linear_tangents_reuse_the_oriented_support",
+      "returncode": 0,
+      "log": "independent-oblique-fillet-20260927-v431-case-020.log",
+      "elapsed_seconds": 0.0035059188958257437
+    },
+    {
+      "binary": "independent-oblique-fillet-20260927-v431-hypercurve",
+      "name": "bezier_offset::conversion_tests::nested_procedural_chord_reversals_match_exact_side_and_winding",
+      "returncode": 0,
+      "log": "independent-oblique-fillet-20260927-v431-case-021.log",
+      "elapsed_seconds": 0.0075642799492925406
+    }
+  ],
+  "builds": [
+    {
+      "crate": "hypercurve",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "test",
+        "--lib",
+        "--release",
+        "--all-features",
+        "--no-run",
+        "--message-format=json",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "log": "independent-oblique-fillet-20260927-v431-hypercurve-build.log",
+      "elapsed_seconds": 131.54683378711343,
+      "binary": {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/independent-oblique-fillet-20260927-v431-hypercurve",
+        "sha256": "82917aeed33cb9522f38b672f53439b25f6b74dc336fd5da225e08dff8b3a9b9"
+      }
+    }
+  ],
+  "all_processes_reaped": true,
+  "checks": [],
+  "qualification_scope": "Independent selected endpoint fields must preserve continuous fillet constraint behavior",
+  "expected_cases": {
+    "hypercurve": [
+      "bezier_region::tests::nonlinear_selected_corner_chamfers_through_retained_fixed_distance_image",
+      "bezier_offset::conversion_tests::retained_incident_domains_admit_exterior_affine_endpoints",
+      "bezier_offset::conversion_tests::independent_oblique_offset_coordinates_replay_exact_equalities_and_separation",
+      "bezier_offset::conversion_tests::independent_chord_linear_forms_replay_exact_coefficient_relations",
+      "bezier_offset::conversion_tests::independent_oblique_chords_support_constrained_fillet_families",
+      "curve::curve_fillet::tests::nonlinear_linear_fillet_components_retain_unique_contacts_and_tangents",
+      "curve::curve_fillet::tests::coincident_retained_line_fillet_keeps_independent_endpoint_fields",
+      "bezier_offset::conversion_tests::recursive_projective_chord_replays_identically_zero_norm_sheet",
+      "bezier_offset::conversion_tests::regular_rational_parallel_components_select_exterior_speed_sheets",
+      "bezier_offset::conversion_tests::domain_component_normal_constraints_follow_swapped_operands",
+      "bezier_offset::conversion_tests::original_parallel_normal_constraints_clip_finite_and_incident_components",
+      "bezier_offset::conversion_tests::finite_parallel_pair_components_obey_exact_domain_boundaries",
+      "bezier_offset::conversion_tests::mixed_zero_parallel_pairs_replay_both_exterior_domain_roles",
+      "bezier_offset::conversion_tests::ordered_ph_parallel_domains_retain_same_sheet_exterior_contacts",
+      "bezier_offset::conversion_tests::ordered_ph_parallel_domains_reject_a_cached_opposite_normal_contact",
+      "bezier_offset::conversion_tests::ordered_ph_parallel_domains_do_not_reuse_the_wrong_speed_sheet",
+      "bezier_offset::conversion_tests::nonzero_parallel_domains_exclude_undefined_normals_and_poles",
+      "bezier_offset::conversion_tests::nonzero_parallel_domains_partition_poles_on_components",
+      "bezier_offset::conversion_tests::finite_component_charts_accept_nonrational_exact_scalar_bounds",
+      "bezier_offset::conversion_tests::non_source_parallel_overlap_replays_the_radical_component",
+      "bezier_offset::conversion_tests::split_chord_linear_tangents_reuse_the_oriented_support",
+      "bezier_offset::conversion_tests::nested_procedural_chord_reversals_match_exact_side_and_winding"
+    ]
+  },
+  "known_unresolved": [
+    "strict_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions",
+    "approximate_512_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions"
+  ],
+  "qualification_complete": true
+}

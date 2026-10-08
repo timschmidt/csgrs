@@ -1,0 +1,13 @@
+# Next audit: finite analytic self topology
+
+Static follow-up only; current Bezier self-domain qualification is frozen. Do not edit production/test/probe sources during that run.
+
+The support injectivity interface now requires an active range, but the analytic `ParallelSelfIntersectionCache` still keys only by BezierParallel2 and calls native `self_intersections(policy)`. A candidate baseline is the same P(t)=(t²−1,t³−t) on [-2,2], carried as an exact zero-distance parallel and closed by a chord, compared against the Bezier representation. Reuse the public owned-side check; loop counts alone are not evidence of an error. Extend to nonzero and PH/non-PH branches once the zero carrier is understood.
+
+Existing `ordered_self_intersections_in_domain` is a corner existence query with retained finite domains and optional incident extensions. Do not treat its positive-dimensional flag as complete component enumeration. `ParameterComponentQuery2::RetainFinite` already exists for the zero-distance rational kernel; the general analytic projection also needs complete component evidence and correct normal-sheet replay. Consider consolidating unit self and ordered-domain self authorities, with one exact domain/component-query contract, and remove superseded callers rather than introducing forwarding methods. Preserve the symmetric unit self projection when it is measurably useful.
+
+Remaining native source-axis shortcuts: parallel_pair_is_coordinate_disjoint, adjacent_parallel_pair_is_endpoint_only, and shared-source point-distinctness use regular_fragment_has_certified_injective_axis_on/axis without an active-range premise. The latter compares parameters on two carriers, so separate per-carrier injectivity does not prove injectivity across their union. Bound or certify the relevant union interval. Rational control-hull one-sided adjacency similarly needs its active domain.
+
+Only current production calls to old analytic self APIs: region Boolean cache -> self_intersections; corner solver in curve.rs -> ordered_self_intersections_in_domain. The other known calls are internal tests. Reuse existing exact construction/branch regularity tests, including cusp-sheet and positive-dimensional correspondence cases.
+
+Further circle audit: circular injectivity requires a nonconstant genuine quadratic chart as well as a circle equation. The current stage excludes arbitrary-degree nonlinear retracing through exact quadratic reduction. The current Bezier stage now also checks distinct endpoints and a public collapsed-subcurve regression. Continue auditing the other native circle-image shortcuts for the same nonconstant and injective chart premises. Higher-degree circular inverse/materialized_arc shortcuts remain independent unfinished work.

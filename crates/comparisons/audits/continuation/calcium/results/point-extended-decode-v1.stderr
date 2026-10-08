@@ -1,0 +1,26 @@
+{"variant":"baseline","case":40,"policy":0,"history":0,"side":"left","field":"lower","decodedBeforeFailure":4236}
+node:internal/modules/run_main:123
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: The expression evaluated to a falsy value:
+
+  assert(['Pi','E'].includes(value))
+
+    at node (file:///home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/point-extended-field-v1.mjs:88:19)
+    at node (file:///home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/point-extended-field-v1.mjs:91:26)
+    at node (file:///home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/point-extended-field-v1.mjs:91:41)
+    at node (file:///home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/point-extended-field-v1.mjs:94:89)
+    at node (file:///home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/point-extended-field-v1.mjs:90:21)
+    at node (file:///home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/point-extended-field-v1.mjs:90:21)
+    at Module.realValue (file:///home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/point-extended-field-v1.mjs:105:91)
+    at file:///home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/probe-point-extended-field.mjs:8:10 {
+  generatedMessage: true,
+  code: 'ERR_ASSERTION',
+  actual: false,
+  expected: true,
+  operator: '==',
+  diff: 'simple'
+}
+
+Node.js v22.22.2

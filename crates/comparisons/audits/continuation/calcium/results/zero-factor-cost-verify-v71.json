@@ -1,0 +1,13 @@
+{
+  "tag": "zero-factor-cost-verify-v71",
+  "started": "2026-09-11T19:53:37.409Z",
+  "finished": "2026-09-11T19:54:15.448Z",
+  "elapsedSeconds": 38.036857801,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "node",
+  "args": [
+    "verify-zero-factor-cost-v71.mjs"
+  ],
+  "code": 0,
+  "signal": null
+}

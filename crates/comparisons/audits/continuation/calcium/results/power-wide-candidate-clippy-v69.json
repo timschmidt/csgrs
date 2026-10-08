@@ -1,0 +1,24 @@
+{
+  "tag": "power-wide-candidate-clippy-v69",
+  "started": "2026-09-11T17:11:25.394Z",
+  "finished": "2026-09-11T17:11:25.584Z",
+  "elapsedSeconds": 0.18827363100000002,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/power-wide-candidate-app-v69",
+  "command": "env",
+  "args": [
+    "CARGO_TARGET_DIR=/tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse",
+    "CARGO_INCREMENTAL=0",
+    "CARGO_PROFILE_DEV_DEBUG=0",
+    "CARGO_BUILD_JOBS=2",
+    "cargo",
+    "clippy",
+    "--offline",
+    "--locked",
+    "--all-targets",
+    "--",
+    "-D",
+    "warnings"
+  ],
+  "code": 0,
+  "signal": null
+}

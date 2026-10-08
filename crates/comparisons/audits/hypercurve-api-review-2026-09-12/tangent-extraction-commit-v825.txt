@@ -1,0 +1,14 @@
+Return optional represented tangents without extraction reports
+
+BezierAlgebraicTangentVector2::from_image now returns the existing represented
+vector directly when both coordinate roots are materialized. An exact retained
+source expression remains on the input image and does not trigger projection.
+
+Remove the redundant public extraction status/report types and diagnostic
+allocation. Update arrangement, benchmark, fuzz, test and export callers
+directly. Preserve all arithmetic ordering predicates and root evidence.
+
+Validation: 323 release cases across 12 executables, including all nine tangent
+ordering cases, and seven lint/format/fuzz/documentation/downstream checks.
+A tracked Rust/Markdown scan across 30 repositories found no remaining active
+callers of the deleted types; dated audit inventories remain unchanged.

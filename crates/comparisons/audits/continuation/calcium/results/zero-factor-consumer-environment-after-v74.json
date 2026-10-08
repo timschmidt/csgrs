@@ -1,0 +1,13 @@
+{
+  "tag": "zero-factor-consumer-environment-after-v74",
+  "started": "2026-09-11T21:47:57.348Z",
+  "finished": "2026-09-11T21:47:57.496Z",
+  "elapsedSeconds": 0.14606295,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "node",
+  "args": [
+    "point-qualified-environment.mjs"
+  ],
+  "code": 0,
+  "signal": null
+}

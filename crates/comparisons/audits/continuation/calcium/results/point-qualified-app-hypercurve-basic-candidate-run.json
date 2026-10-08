@@ -1,0 +1,11 @@
+{
+  "tag": "point-qualified-app-hypercurve-basic-candidate-run",
+  "started": "2026-09-10T20:41:38.825Z",
+  "finished": "2026-09-10T20:41:38.838Z",
+  "elapsedSeconds": 0.011414788999999998,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "/tmp/calcium-point-qualified-apps.QIBZlE/candidate-hypercurve-basic.stripped",
+  "args": [],
+  "code": 0,
+  "signal": null
+}

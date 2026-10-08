@@ -1,0 +1,2840 @@
+aern-real> configure (lib)
+Configuring aern-real-0.5.0...
+aern-real> build (lib) with ghc-9.6.7
+Preprocessing library for aern-real-0.5.0..
+Building library for aern-real-0.5.0..
+[ 1 of 25] Compiling BinaryOpsSimplified
+[ 2 of 25] Compiling Numeric.AERN.Misc.IntegerArithmetic
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/Misc/IntegerArithmetic.hs:16:1: warning: [GHC-38417] [-Wmissing-signatures]
+    Top-level binding with no type signature:
+      intLogDown :: (Show n1, Num n1, Integral b, Ord n1) =>
+                    n1 -> n1 -> b
+   |
+16 | intLogDown b n = fst $ intLog b n 
+   | ^^^^^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/Misc/IntegerArithmetic.hs:17:1: warning: [GHC-38417] [-Wmissing-signatures]
+    Top-level binding with no type signature:
+      intLogUp :: (Show n1, Num n1, Integral b, Ord n1) => n1 -> n1 -> b
+   |
+17 | intLogUp b n = snd $ intLog b n 
+   | ^^^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/Misc/IntegerArithmetic.hs:41:13: warning: [GHC-63397] [-Wname-shadowing]
+    This binding for ‘lgDn’ shadows the existing binding
+      bound at src/Numeric/AERN/Misc/IntegerArithmetic.hs:32:7
+   |
+41 |     bisect (lgDn, pwDn) (lgUp, pwUp)
+   |             ^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/Misc/IntegerArithmetic.hs:41:19: warning: [GHC-63397] [-Wname-shadowing]
+    This binding for ‘pwDn’ shadows the existing binding
+      bound at src/Numeric/AERN/Misc/IntegerArithmetic.hs:32:13
+   |
+41 |     bisect (lgDn, pwDn) (lgUp, pwUp)
+   |                   ^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/Misc/IntegerArithmetic.hs:41:26: warning: [GHC-63397] [-Wname-shadowing]
+    This binding for ‘lgUp’ shadows the existing binding
+      bound at src/Numeric/AERN/Misc/IntegerArithmetic.hs:32:21
+   |
+41 |     bisect (lgDn, pwDn) (lgUp, pwUp)
+   |                          ^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/Misc/IntegerArithmetic.hs:41:32: warning: [GHC-63397] [-Wname-shadowing]
+    This binding for ‘pwUp’ shadows the existing binding
+      bound at src/Numeric/AERN/Misc/IntegerArithmetic.hs:32:27
+   |
+41 |     bisect (lgDn, pwDn) (lgUp, pwUp)
+   |                                ^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/Misc/IntegerArithmetic.hs:57:1: warning: [GHC-62161] [-Wincomplete-patterns]
+    Pattern match(es) are non-exhaustive
+    In an equation for ‘binomial’:
+        Patterns of type ‘n’, ‘n’ not matched: _ _
+   |
+57 | binomial n p | p >= 0 =
+   | ^^^^^^^^^^^^^^^^^^^^^^^...
+[ 3 of 25] Compiling Numeric.AERN.RealArithmetic.ExactOps
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/ExactOps.hs:18:1: warning: [-Wunused-imports]
+    The import of ‘Control.Monad.ST’ is redundant
+      except perhaps to import instances from ‘Control.Monad.ST’
+    To import instances alone, use: import Control.Monad.ST()
+   |
+18 | import Control.Monad.ST
+   | ^^^^^^^^^^^^^^^^^^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/ExactOps.hs:19:1: warning: [-Wunused-imports]
+    The import of ‘Data.STRef’ is redundant
+      except perhaps to import instances from ‘Data.STRef’
+    To import instances alone, use: import Data.STRef()
+   |
+19 | import Data.STRef
+   | ^^^^^^^^^^^^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/ExactOps.hs:31:1: warning: [GHC-38417] [-Wmissing-signatures]
+    Top-level binding with no type signature:
+      pNonnegNonposEff :: (NumOrd.PartialComparison t, HasZero t) =>
+                          NumOrd.PartialCompareEffortIndicator t
+                          -> t -> (Maybe Bool, Maybe Bool)
+   |
+31 | pNonnegNonposEff effort a =
+   | ^^^^^^^^^^^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/ExactOps.hs:37:1: warning: [GHC-38417] [-Wmissing-signatures]
+    Top-level binding with no type signature:
+      pPosNonnegNegNonposEff :: (NumOrd.PartialComparison t,
+                                 HasZero t) =>
+                                NumOrd.PartialCompareEffortIndicator t
+                                -> t -> (Maybe Bool, Maybe Bool, Maybe Bool, Maybe Bool)
+   |
+37 | pPosNonnegNegNonposEff effort a =
+   | ^^^^^^^^^^^^^^^^^^^^^^
+[ 4 of 25] Compiling Numeric.AERN.RealArithmetic.Auxiliary
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/Auxiliary.hs:18:1: warning: [-Wunused-imports]
+    The import of ‘Numeric.AERN.RealArithmetic.ExactOps’ is redundant
+      except perhaps to import instances from ‘Numeric.AERN.RealArithmetic.ExactOps’
+    To import instances alone, use: import Numeric.AERN.RealArithmetic.ExactOps()
+   |
+18 | import Numeric.AERN.RealArithmetic.ExactOps
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/Auxiliary.hs:22:1: warning: [-Wunused-imports]
+    The import of ‘Control.Monad.ST’ is redundant
+      except perhaps to import instances from ‘Control.Monad.ST’
+    To import instances alone, use: import Control.Monad.ST()
+   |
+22 | import Control.Monad.ST
+   | ^^^^^^^^^^^^^^^^^^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/Auxiliary.hs:31:15: warning: [GHC-63397] [-Wname-shadowing]
+    This binding for ‘one’ shadows the existing binding
+      imported from ‘Numeric.AERN.RealArithmetic.ExactOps’ at src/Numeric/AERN/RealArithmetic/Auxiliary.hs:18:1-43
+      (and originally defined
+         at src/Numeric/AERN/RealArithmetic/ExactOps.hs:47:5-17)
+   |
+31 | powerFromMult one mult x n
+   |               ^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/Auxiliary.hs:35:7: warning: [GHC-63397] [-Wname-shadowing]
+    This binding for ‘n’ shadows the existing binding
+      bound at src/Numeric/AERN/RealArithmetic/Auxiliary.hs:31:26
+   |
+35 |     p n
+   |       ^
+[ 5 of 25] Compiling Numeric.AERN.RealArithmetic.NumericOrderRounding.Conversion
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/NumericOrderRounding/Conversion.hs:23:1: warning: [-Wunused-imports]
+    The import of ‘Numeric.AERN.RealArithmetic.ExactOps’ is redundant
+      except perhaps to import instances from ‘Numeric.AERN.RealArithmetic.ExactOps’
+    To import instances alone, use: import Numeric.AERN.RealArithmetic.ExactOps()
+   |
+23 | import Numeric.AERN.RealArithmetic.ExactOps
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/NumericOrderRounding/Conversion.hs:26:1: warning: [-Wunused-imports]
+    The import of ‘Numeric.AERN.Basics.PartialOrdering’ is redundant
+      except perhaps to import instances from ‘Numeric.AERN.Basics.PartialOrdering’
+    To import instances alone, use: import Numeric.AERN.Basics.PartialOrdering()
+   |
+26 | import Numeric.AERN.Basics.PartialOrdering
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/NumericOrderRounding/Conversion.hs:32:1: warning: [-Wunused-imports]
+    The import of ‘Data.Ratio’ is redundant
+      except perhaps to import instances from ‘Data.Ratio’
+    To import instances alone, use: import Data.Ratio()
+   |
+32 | import Data.Ratio
+   | ^^^^^^^^^^^^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/NumericOrderRounding/Conversion.hs:33:1: warning: [-Wunused-imports]
+    The import of ‘Data.Maybe’ is redundant
+      except perhaps to import instances from ‘Data.Maybe’
+    To import instances alone, use: import Data.Maybe()
+   |
+33 | import Data.Maybe
+   | ^^^^^^^^^^^^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/NumericOrderRounding/Conversion.hs:35:1: warning: [-Wunused-imports]
+    The import of ‘Test.QuickCheck’ is redundant
+      except perhaps to import instances from ‘Test.QuickCheck’
+    To import instances alone, use: import Test.QuickCheck()
+   |
+35 | import Test.QuickCheck
+   | ^^^^^^^^^^^^^^^^^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/NumericOrderRounding/Conversion.hs:36:35: warning: [-Wunused-imports]
+    The import of ‘Test’ from module ‘Test.Framework’ is redundant
+   |
+36 | import Test.Framework (testGroup, Test)
+   |                                   ^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/NumericOrderRounding/Conversion.hs:64:21: warning: [-Wunused-matches]
+    Defined but not used: ‘sample1’
+   |
+64 | propConvertMonotone sample1 sample2 (effortConvert, effortComp2) (NumOrd.LEPair (a1, a2)) =
+   |                     ^^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/NumericOrderRounding/Conversion.hs:72:5: warning: [GHC-62161] [-Wincomplete-uni-patterns]
+    Pattern match(es) are non-exhaustive
+    In a pattern binding:
+        Patterns of type ‘Maybe t2’ not matched: Nothing
+   |
+72 |     Just a1Dn = ma1Dn
+   |     ^^^^^^^^^^^^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/NumericOrderRounding/Conversion.hs:73:5: warning: [GHC-62161] [-Wincomplete-uni-patterns]
+    Pattern match(es) are non-exhaustive
+    In a pattern binding:
+        Patterns of type ‘Maybe t2’ not matched: Nothing
+   |
+73 |     Just a2Up = ma2Up
+   |     ^^^^^^^^^^^^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/NumericOrderRounding/Conversion.hs:91:5: warning: [GHC-62161] [-Wincomplete-uni-patterns]
+    Pattern match(es) are non-exhaustive
+    In a pattern binding:
+        Patterns of type ‘Maybe t1’ not matched: Nothing
+   |
+91 |     Just aDn = maDn 
+   |     ^^^^^^^^^^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/NumericOrderRounding/Conversion.hs:93:5: warning: [GHC-62161] [-Wincomplete-uni-patterns]
+    Pattern match(es) are non-exhaustive
+    In a pattern binding:
+        Patterns of type ‘Maybe t2’ not matched: Nothing
+   |
+93 |     Just aDn2 = maDn2 
+   |     ^^^^^^^^^^^^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/NumericOrderRounding/Conversion.hs:95:5: warning: [GHC-62161] [-Wincomplete-uni-patterns]
+    Pattern match(es) are non-exhaustive
+    In a pattern binding:
+        Patterns of type ‘Maybe t1’ not matched: Nothing
+   |
+95 |     Just aUp = maUp 
+   |     ^^^^^^^^^^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/NumericOrderRounding/Conversion.hs:97:5: warning: [GHC-62161] [-Wincomplete-uni-patterns]
+    Pattern match(es) are non-exhaustive
+    In a pattern binding:
+        Patterns of type ‘Maybe t2’ not matched: Nothing
+   |
+97 |     Just aUp2 = maUp2
+   |     ^^^^^^^^^^^^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/NumericOrderRounding/Conversion.hs:100:1: warning: [GHC-38417] [-Wmissing-signatures]
+    Top-level binding with no type signature:
+      testsConvert :: (NumOrd.ArbitraryOrderedTuple t1, Show t1,
+                       Arbitrary t1, Convertible t1 t2, Convertible t2 t1,
+                       NumOrd.PartialComparison t2, NumOrd.PartialComparison t1) =>
+                      ([Char], t1, [Char], t2) -> Test
+    |
+100 | testsConvert (name1, sample1, name2, sample2) =
+    | ^^^^^^^^^^^^
+[ 6 of 25] Compiling Numeric.AERN.RealArithmetic.NumericOrderRounding.SpecialConst
+[ 7 of 25] Compiling Numeric.AERN.RealArithmetic.RefinementOrderRounding.Conversion
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/RefinementOrderRounding/Conversion.hs:23:1: warning: [-Wunused-imports]
+    The import of ‘Numeric.AERN.RealArithmetic.ExactOps’ is redundant
+      except perhaps to import instances from ‘Numeric.AERN.RealArithmetic.ExactOps’
+    To import instances alone, use: import Numeric.AERN.RealArithmetic.ExactOps()
+   |
+23 | import Numeric.AERN.RealArithmetic.ExactOps
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/RefinementOrderRounding/Conversion.hs:26:1: warning: [-Wunused-imports]
+    The import of ‘Numeric.AERN.Basics.PartialOrdering’ is redundant
+      except perhaps to import instances from ‘Numeric.AERN.Basics.PartialOrdering’
+    To import instances alone, use: import Numeric.AERN.Basics.PartialOrdering()
+   |
+26 | import Numeric.AERN.Basics.PartialOrdering
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/RefinementOrderRounding/Conversion.hs:27:1: warning: [-Wunused-imports]
+    The qualified import of ‘Numeric.AERN.RefinementOrder’ is redundant
+      except perhaps to import instances from ‘Numeric.AERN.RefinementOrder’
+    To import instances alone, use: import Numeric.AERN.RefinementOrder()
+   |
+27 | import qualified Numeric.AERN.RefinementOrder as RefOrd
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/RefinementOrderRounding/Conversion.hs:35:1: warning: [-Wunused-imports]
+    The import of ‘Data.Ratio’ is redundant
+      except perhaps to import instances from ‘Data.Ratio’
+    To import instances alone, use: import Data.Ratio()
+   |
+35 | import Data.Ratio
+   | ^^^^^^^^^^^^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/RefinementOrderRounding/Conversion.hs:36:1: warning: [-Wunused-imports]
+    The import of ‘Data.Maybe’ is redundant
+      except perhaps to import instances from ‘Data.Maybe’
+    To import instances alone, use: import Data.Maybe()
+   |
+36 | import Data.Maybe
+   | ^^^^^^^^^^^^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/RefinementOrderRounding/Conversion.hs:38:1: warning: [-Wunused-imports]
+    The import of ‘Test.QuickCheck’ is redundant
+      except perhaps to import instances from ‘Test.QuickCheck’
+    To import instances alone, use: import Test.QuickCheck()
+   |
+38 | import Test.QuickCheck
+   | ^^^^^^^^^^^^^^^^^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/RefinementOrderRounding/Conversion.hs:39:35: warning: [-Wunused-imports]
+    The import of ‘Test’ from module ‘Test.Framework’ is redundant
+   |
+39 | import Test.Framework (testGroup, Test)
+   |                                   ^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/RefinementOrderRounding/Conversion.hs:75:31: warning: [-Wunused-matches]
+    Defined but not used: ‘sample1’
+   |
+75 | propConvertMonotoneFromNumOrd sample1 sample2 (effortFrom, effortComp) (NumOrd.LEPair (a, b)) = 
+   |                               ^^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/RefinementOrderRounding/Conversion.hs:104:5: warning: [GHC-62161] [-Wincomplete-uni-patterns]
+    Pattern match(es) are non-exhaustive
+    In a pattern binding:
+        Patterns of type ‘Maybe t2’ not matched: Nothing
+    |
+104 |     Just aDn = maDn 
+    |     ^^^^^^^^^^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/RefinementOrderRounding/Conversion.hs:107:5: warning: [GHC-62161] [-Wincomplete-uni-patterns]
+    Pattern match(es) are non-exhaustive
+    In a pattern binding:
+        Patterns of type ‘Maybe t2’ not matched: Nothing
+    |
+107 |     Just aUp = maUp 
+    |     ^^^^^^^^^^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/RefinementOrderRounding/Conversion.hs:116:1: warning: [GHC-38417] [-Wmissing-signatures]
+    Top-level binding with no type signature:
+      testsConvertNumOrd :: (NumOrd.ArbitraryOrderedTuple t2,
+                             Convertible t2 t1, NumOrd.PartialComparison t1, Arbitrary t1,
+                             Show t2, Show t1, UpDnConversion.Convertible t1 t2) =>
+                            ([Char], t2, [Char], t1) -> Test
+    |
+116 | testsConvertNumOrd (name1, sample1, name2, sample2) =
+    | ^^^^^^^^^^^^^^^^^^
+[ 8 of 25] Compiling Numeric.AERN.RealArithmetic.RefinementOrderRounding.FieldOps[boot]
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/RefinementOrderRounding/FieldOps.hs-boot:57:1: warning: [-Wunused-imports]
+    The import of ‘Numeric.AERN.RealArithmetic.RefinementOrderRounding.Conversion’ is redundant
+      except perhaps to import instances from ‘Numeric.AERN.RealArithmetic.RefinementOrderRounding.Conversion’
+    To import instances alone, use: import Numeric.AERN.RealArithmetic.RefinementOrderRounding.Conversion()
+   |
+57 | import Numeric.AERN.RealArithmetic.RefinementOrderRounding.Conversion
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/RefinementOrderRounding/FieldOps.hs-boot:60:1: warning: [-Wunused-imports]
+    The qualified import of ‘Numeric.AERN.NumericOrder’ is redundant
+      except perhaps to import instances from ‘Numeric.AERN.NumericOrder’
+    To import instances alone, use: import Numeric.AERN.NumericOrder()
+   |
+60 | import qualified Numeric.AERN.NumericOrder as NumOrd
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[ 9 of 25] Compiling Numeric.AERN.RealArithmetic.Measures
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/Measures.hs:89:22: warning: [GHC-63397] [-Wname-shadowing]
+    This binding for ‘sample’ shadows the existing binding
+      imported from ‘Test.QuickCheck’ at src/Numeric/AERN/RealArithmetic/Measures.hs:26:1-22
+      (and originally defined in ‘Test.QuickCheck.Gen’)
+   |
+89 | testsDistance (name, sample) =
+   |                      ^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/Measures.hs:121:1: warning: [GHC-38417] [-Wmissing-signatures]
+    Top-level binding with no type signature:
+      testsImprecision :: (Arbitrary (ImprecisionEffortIndicator t),
+                           RefOrd.ArbitraryOrderedTuple t, Show t,
+                           Show (ImprecisionEffortIndicator t), HasImprecision t,
+                           NumOrd.PartialComparison (Imprecision t)) =>
+                          ([Char], t) -> Test
+    |
+121 | testsImprecision (name, sample) =
+    | ^^^^^^^^^^^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/Measures.hs:121:25: warning: [GHC-63397] [-Wname-shadowing]
+    This binding for ‘sample’ shadows the existing binding
+      imported from ‘Test.QuickCheck’ at src/Numeric/AERN/RealArithmetic/Measures.hs:26:1-22
+      (and originally defined in ‘Test.QuickCheck.Gen’)
+    |
+121 | testsImprecision (name, sample) =
+    |                         ^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/Measures.hs:136:5: warning: [GHC-62161] [-Wincomplete-patterns]
+    Pattern match(es) are non-exhaustive
+    In an equation for ‘imprecisionDefaultEffort’:
+        Patterns of type ‘[t]’ not matched: []
+    |
+136 |     imprecisionDefaultEffort (h : _) =
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^...
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/Measures.hs:140:5: warning: [GHC-62161] [-Wincomplete-patterns]
+    Pattern match(es) are non-exhaustive
+    In an equation for ‘imprecisionOfEff’:
+        Patterns of type ‘ImprecisionEffortIndicator [t]’,
+                         ‘[t]’ not matched:
+            (_, _) []
+    |
+140 |     imprecisionOfEff (effImpr, effMax) list@(_:_) =
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^...
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/Measures.hs:156:19: warning: [GHC-63397] [-Wname-shadowing]
+    This binding for ‘sample’ shadows the existing binding
+      imported from ‘Test.QuickCheck’ at src/Numeric/AERN/RealArithmetic/Measures.hs:26:1-22
+      (and originally defined in ‘Test.QuickCheck.Gen’)
+    |
+156 |             (Just sample) -> 
+    |                   ^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/Measures.hs:260:41: warning: [-Wunused-matches]
+    Defined but not used: ‘nextImprecision’
+    |
+260 |                 (Just nextResult@(_, _, nextImprecision)) -> 
+    |                                         ^^^^^^^^^^^^^^^
+[10 of 25] Compiling Numeric.AERN.RealArithmetic.Laws
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/Laws.hs:20:1: warning: [-Wunused-imports]
+    The import of ‘Numeric.AERN.RealArithmetic.Measures’ is redundant
+      except perhaps to import instances from ‘Numeric.AERN.RealArithmetic.Measures’
+    To import instances alone, use: import Numeric.AERN.RealArithmetic.Measures()
+   |
+20 | import Numeric.AERN.RealArithmetic.Measures
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/Laws.hs:28:1: warning: [-Wunused-imports]
+    The import of ‘Numeric.AERN.Misc.List’ is redundant
+      except perhaps to import instances from ‘Numeric.AERN.Misc.List’
+    To import instances alone, use: import Numeric.AERN.Misc.List()
+   |
+28 | import Numeric.AERN.Misc.List
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/Laws.hs:30:1: warning: [-Wunused-imports]
+    The import of ‘Data.Maybe’ is redundant
+      except perhaps to import instances from ‘Data.Maybe’
+    To import instances alone, use: import Data.Maybe()
+   |
+30 | import Data.Maybe
+   | ^^^^^^^^^^^^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/Laws.hs:33:1: warning: [-Wunused-imports]
+    The import of ‘Numeric.AERN.RealArithmetic.NumericOrderRounding.Conversion’ is redundant
+      except perhaps to import instances from ‘Numeric.AERN.RealArithmetic.NumericOrderRounding.Conversion’
+    To import instances alone, use: import Numeric.AERN.RealArithmetic.NumericOrderRounding.Conversion()
+   |
+33 | import Numeric.AERN.RealArithmetic.NumericOrderRounding.Conversion
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/Laws.hs:35:1: warning: [-Wunused-imports]
+    The qualified import of ‘Numeric.AERN.NumericOrder’ is redundant
+      except perhaps to import instances from ‘Numeric.AERN.NumericOrder’
+    To import instances alone, use: import Numeric.AERN.NumericOrder()
+   |
+35 | import qualified Numeric.AERN.NumericOrder as NumOrd
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/Laws.hs:39:1: warning: [-Wunused-imports]
+    The import of ‘Control.Exception’ is redundant
+      except perhaps to import instances from ‘Control.Exception’
+    To import instances alone, use: import Control.Exception()
+   |
+39 | import Control.Exception
+   | ^^^^^^^^^^^^^^^^^^^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/Laws.hs:106:9: warning: [GHC-63397] [-Wname-shadowing]
+    This binding for ‘*’ shadows the existing binding
+      imported from ‘Prelude’ at src/Numeric/AERN/RealArithmetic/Laws.hs:18:8-39
+      (and originally defined in ‘GHC.Num’)
+    |
+106 |         (*) = opEff effort
+    |         ^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/Laws.hs:118:64: warning: [-Wunused-matches]
+    Defined but not used: ‘e’
+    |
+118 |     equalRoundingUpDnBin1Var1 "roundedReflexiveCollapse" (\_ _ e -> unit) expr2
+    |                                                                ^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/Laws.hs:123:9: warning: [GHC-63397] [-Wname-shadowing]
+    This binding for ‘*’ shadows the existing binding
+      imported from ‘Prelude’ at src/Numeric/AERN/RealArithmetic/Laws.hs:18:8-39
+      (and originally defined in ‘GHC.Num’)
+    |
+123 |         (*) = opEff effort
+    |         ^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/Laws.hs:139:9: warning: [GHC-63397] [-Wname-shadowing]
+    This binding for ‘*’ shadows the existing binding
+      imported from ‘Prelude’ at src/Numeric/AERN/RealArithmetic/Laws.hs:18:8-39
+      (and originally defined in ‘GHC.Num’)
+    |
+139 |         (*) = opEff effort
+    |         ^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/Laws.hs:143:9: warning: [GHC-63397] [-Wname-shadowing]
+    This binding for ‘*’ shadows the existing binding
+      imported from ‘Prelude’ at src/Numeric/AERN/RealArithmetic/Laws.hs:18:8-39
+      (and originally defined in ‘GHC.Num’)
+    |
+143 |         (*) = opEff effort
+    |         ^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/Laws.hs:159:9: warning: [GHC-63397] [-Wname-shadowing]
+    This binding for ‘*’ shadows the existing binding
+      imported from ‘Prelude’ at src/Numeric/AERN/RealArithmetic/Laws.hs:18:8-39
+      (and originally defined in ‘GHC.Num’)
+    |
+159 |         (*) = opEff effort
+    |         ^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/Laws.hs:163:9: warning: [GHC-63397] [-Wname-shadowing]
+    This binding for ‘*’ shadows the existing binding
+      imported from ‘Prelude’ at src/Numeric/AERN/RealArithmetic/Laws.hs:18:8-39
+      (and originally defined in ‘GHC.Num’)
+    |
+163 |         (*) = opEff effort
+    |         ^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/Laws.hs:202:44: warning: [GHC-63397] [-Wname-shadowing]
+    This binding for ‘e1’ shadows the existing binding
+      bound at src/Numeric/AERN/RealArithmetic/Laws.hs:182:9
+    |
+202 |     expr1 op1Eff op2Eff (effort1, effort2) e1 e2 e3 = 
+    |                                            ^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/Laws.hs:202:47: warning: [GHC-63397] [-Wname-shadowing]
+    This binding for ‘e2’ shadows the existing binding
+      bound at src/Numeric/AERN/RealArithmetic/Laws.hs:182:12
+    |
+202 |     expr1 op1Eff op2Eff (effort1, effort2) e1 e2 e3 = 
+    |                                               ^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/Laws.hs:202:50: warning: [GHC-63397] [-Wname-shadowing]
+    This binding for ‘e3’ shadows the existing binding
+      bound at src/Numeric/AERN/RealArithmetic/Laws.hs:182:15
+    |
+202 |     expr1 op1Eff op2Eff (effort1, effort2) e1 e2 e3 = 
+    |                                                  ^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/Laws.hs:205:9: warning: [GHC-63397] [-Wname-shadowing]
+    This binding for ‘*’ shadows the existing binding
+      imported from ‘Prelude’ at src/Numeric/AERN/RealArithmetic/Laws.hs:18:8-39
+      (and originally defined in ‘GHC.Num’)
+    |
+205 |         (*) = op1Eff effort1
+    |         ^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/Laws.hs:206:9: warning: [GHC-63397] [-Wname-shadowing]
+    This binding for ‘+’ shadows the existing binding
+      imported from ‘Prelude’ at src/Numeric/AERN/RealArithmetic/Laws.hs:18:8-39
+      (and originally defined in ‘GHC.Num’)
+    |
+206 |         (+) = op2Eff effort2
+    |         ^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/Laws.hs:207:44: warning: [GHC-63397] [-Wname-shadowing]
+    This binding for ‘e1’ shadows the existing binding
+      bound at src/Numeric/AERN/RealArithmetic/Laws.hs:182:9
+    |
+207 |     expr2 op1Eff op2Eff (effort1, effort2) e1 e2 e3 = 
+    |                                            ^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/Laws.hs:207:47: warning: [GHC-63397] [-Wname-shadowing]
+    This binding for ‘e2’ shadows the existing binding
+      bound at src/Numeric/AERN/RealArithmetic/Laws.hs:182:12
+    |
+207 |     expr2 op1Eff op2Eff (effort1, effort2) e1 e2 e3 = 
+    |                                               ^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/Laws.hs:207:50: warning: [GHC-63397] [-Wname-shadowing]
+    This binding for ‘e3’ shadows the existing binding
+      bound at src/Numeric/AERN/RealArithmetic/Laws.hs:182:15
+    |
+207 |     expr2 op1Eff op2Eff (effort1, effort2) e1 e2 e3 = 
+    |                                                  ^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/Laws.hs:210:9: warning: [GHC-63397] [-Wname-shadowing]
+    This binding for ‘*’ shadows the existing binding
+      imported from ‘Prelude’ at src/Numeric/AERN/RealArithmetic/Laws.hs:18:8-39
+      (and originally defined in ‘GHC.Num’)
+    |
+210 |         (*) = op1Eff effort1
+    |         ^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/Laws.hs:211:9: warning: [GHC-63397] [-Wname-shadowing]
+    This binding for ‘+’ shadows the existing binding
+      imported from ‘Prelude’ at src/Numeric/AERN/RealArithmetic/Laws.hs:18:8-39
+      (and originally defined in ‘GHC.Num’)
+    |
+211 |         (+) = op2Eff effort2
+    |         ^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/Laws.hs:427:1: warning: [GHC-62161] [-Wincomplete-patterns]
+    Pattern match(es) are non-exhaustive
+    In an equation for ‘thinEqualConsLeqRoundingUpDnImprovement’:
+        Patterns of type ‘String’, ‘[t]’, ‘eiOp -> t’, ‘eiOp -> t’,
+                         ‘eiOp -> t’, ‘eiOp -> t’, ‘PRelEff eiRel t’,
+                         ‘ConsistencyEffortIndicator t’, ‘(eiRel, eiOp)’ not matched:
+            _ _ _ _ _ _ _ _ (_, _)
+    |
+427 | thinEqualConsLeqRoundingUpDnImprovement
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^...
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/Laws.hs:457:21: warning: [GHC-63397] [-Wname-shadowing]
+    This binding for ‘expr1Dn’ shadows the existing binding
+      bound at src/Numeric/AERN/RealArithmetic/Laws.hs:430:17
+    |
+457 |     leqRoundingUpDn expr1Dn expr2Up =
+    |                     ^^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/Laws.hs:457:29: warning: [GHC-63397] [-Wname-shadowing]
+    This binding for ‘expr2Up’ shadows the existing binding
+      bound at src/Numeric/AERN/RealArithmetic/Laws.hs:430:25
+    |
+457 |     leqRoundingUpDn expr1Dn expr2Up =
+    |                             ^^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/Laws.hs:486:18: warning: [-Wunused-matches]
+    Defined but not used: ‘e’
+    |
+486 |             Left e -> True
+    |                  ^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/Laws.hs:519:9: warning: [GHC-63397] [-Wname-shadowing]
+    This binding for ‘check’ shadows the existing binding
+      bound at src/Numeric/AERN/RealArithmetic/Laws.hs:497:5
+    |
+519 |         check = detectIllegalValues contextDescription
+    |         ^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/Laws.hs:520:9: warning: [GHC-63397] [-Wname-shadowing]
+    This binding for ‘<=’ shadows the existing binding
+      imported from ‘Prelude’ at src/Numeric/AERN/RealArithmetic/Laws.hs:18:8-39
+      (and originally defined in ‘ghc-prim-0.10.0:GHC.Classes’)
+    |
+520 |         (<=) = assumeTotal2 (<=?)
+    |         ^^^^
+[11 of 25] Compiling Numeric.AERN.RealArithmetic.NumericOrderRounding.FieldOps
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/NumericOrderRounding/FieldOps.hs:25:1: warning: [-Wunused-imports]
+    The import of ‘Numeric.AERN.RealArithmetic.NumericOrderRounding.Conversion’ is redundant
+      except perhaps to import instances from ‘Numeric.AERN.RealArithmetic.NumericOrderRounding.Conversion’
+    To import instances alone, use: import Numeric.AERN.RealArithmetic.NumericOrderRounding.Conversion()
+   |
+25 | import Numeric.AERN.RealArithmetic.NumericOrderRounding.Conversion
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/NumericOrderRounding/FieldOps.hs:30:1: warning: [-Wunused-imports]
+    The import of ‘Numeric.AERN.RealArithmetic.Measures’ is redundant
+      except perhaps to import instances from ‘Numeric.AERN.RealArithmetic.Measures’
+    To import instances alone, use: import Numeric.AERN.RealArithmetic.Measures()
+   |
+30 | import Numeric.AERN.RealArithmetic.Measures
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/NumericOrderRounding/FieldOps.hs:33:1: warning: [-Wunused-imports]
+    The import of ‘Test.QuickCheck’ is redundant
+      except perhaps to import instances from ‘Test.QuickCheck’
+    To import instances alone, use: import Test.QuickCheck()
+   |
+33 | import Test.QuickCheck
+   | ^^^^^^^^^^^^^^^^^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/NumericOrderRounding/FieldOps.hs:34:35: warning: [-Wunused-imports]
+    The import of ‘Test’ from module ‘Test.Framework’ is redundant
+   |
+34 | import Test.Framework (testGroup, Test)
+   |                                   ^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/NumericOrderRounding/FieldOps.hs:37:1: warning: [-Wunused-imports]
+    The import of ‘Data.Maybe’ is redundant
+      except perhaps to import instances from ‘Data.Maybe’
+    To import instances alone, use: import Data.Maybe()
+   |
+37 | import Data.Maybe
+   | ^^^^^^^^^^^^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/NumericOrderRounding/FieldOps.hs:77:17: warning: [GHC-63397] [-Wname-shadowing]
+    This binding for ‘sample’ shadows the existing binding
+      imported from ‘Test.QuickCheck’ at src/Numeric/AERN/RealArithmetic/NumericOrderRounding/FieldOps.hs:33:1-22
+      (and originally defined in ‘Test.QuickCheck.Gen’)
+   |
+77 | propUpDnAddZero sample effort (NumOrd.UniformlyOrderedSingleton e) =
+   |                 ^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/NumericOrderRounding/FieldOps.hs:104:1: warning: [GHC-38417] [-Wmissing-signatures]
+    Top-level binding with no type signature:
+      testsUpDnAdd :: (NumOrd.ArbitraryOrderedTuple t, Show t,
+                       NumOrd.PartialComparison t, RoundedAdd t, HasZero t,
+                       HasLegalValues t) =>
+                      ([Char], t) -> Test
+    |
+104 | testsUpDnAdd (name, sample) =
+    | ^^^^^^^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/NumericOrderRounding/FieldOps.hs:104:21: warning: [GHC-63397] [-Wname-shadowing]
+    This binding for ‘sample’ shadows the existing binding
+      imported from ‘Test.QuickCheck’ at src/Numeric/AERN/RealArithmetic/NumericOrderRounding/FieldOps.hs:33:1-22
+      (and originally defined in ‘Test.QuickCheck.Gen’)
+    |
+104 | testsUpDnAdd (name, sample) =
+    |                     ^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/NumericOrderRounding/FieldOps.hs:142:19: warning: [GHC-63397] [-Wname-shadowing]
+    This binding for ‘sample’ shadows the existing binding
+      imported from ‘Test.QuickCheck’ at src/Numeric/AERN/RealArithmetic/NumericOrderRounding/FieldOps.hs:33:1-22
+      (and originally defined in ‘Test.QuickCheck.Gen’)
+    |
+142 | propUpDnSubtrElim sample effort (NumOrd.UniformlyOrderedSingleton e) =
+    |                   ^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/NumericOrderRounding/FieldOps.hs:160:13: warning: [GHC-63397] [-Wname-shadowing]
+    This binding for ‘-^’ shadows the existing binding
+      defined at src/Numeric/AERN/RealArithmetic/NumericOrderRounding/FieldOps.hs:124:1
+    |
+160 |         let (-^) = subtrUpEff eff in e1 -^ (neg e2)
+    |             ^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/NumericOrderRounding/FieldOps.hs:162:13: warning: [GHC-63397] [-Wname-shadowing]
+    This binding for ‘-.’ shadows the existing binding
+      defined at src/Numeric/AERN/RealArithmetic/NumericOrderRounding/FieldOps.hs:130:1
+    |
+162 |         let (-.) = subtrDnEff eff in e1 -. (neg e2)
+    |             ^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/NumericOrderRounding/FieldOps.hs:164:13: warning: [GHC-63397] [-Wname-shadowing]
+    This binding for ‘+^’ shadows the existing binding
+      defined at src/Numeric/AERN/RealArithmetic/NumericOrderRounding/FieldOps.hs:60:1
+    |
+164 |         let (+^) = addUpEff eff in e1 +^ e2
+    |             ^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/NumericOrderRounding/FieldOps.hs:166:13: warning: [GHC-63397] [-Wname-shadowing]
+    This binding for ‘+.’ shadows the existing binding
+      defined at src/Numeric/AERN/RealArithmetic/NumericOrderRounding/FieldOps.hs:66:1
+    |
+166 |         let (+.) = addDnEff eff in e1 +. e2
+    |             ^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/NumericOrderRounding/FieldOps.hs:169:1: warning: [GHC-38417] [-Wmissing-signatures]
+    Top-level binding with no type signature:
+      testsUpDnSubtr :: (NumOrd.ArbitraryOrderedTuple t, Show t,
+                         NumOrd.PartialComparison t, RoundedSubtr t, HasZero t,
+                         HasLegalValues t) =>
+                        ([Char], t) -> Test
+    |
+169 | testsUpDnSubtr (name, sample) =
+    | ^^^^^^^^^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/NumericOrderRounding/FieldOps.hs:169:23: warning: [GHC-63397] [-Wname-shadowing]
+    This binding for ‘sample’ shadows the existing binding
+      imported from ‘Test.QuickCheck’ at src/Numeric/AERN/RealArithmetic/NumericOrderRounding/FieldOps.hs:33:1-22
+      (and originally defined in ‘Test.QuickCheck.Gen’)
+    |
+169 | testsUpDnSubtr (name, sample) =
+    |                       ^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/NumericOrderRounding/FieldOps.hs:209:5: warning: [GHC-63397] [-Wname-shadowing]
+    This binding for ‘max’ shadows the existing binding
+      imported from ‘Prelude’ at src/Numeric/AERN/RealArithmetic/NumericOrderRounding/FieldOps.hs:20:1-34
+      (and originally defined in ‘ghc-prim-0.10.0:GHC.Classes’)
+    |
+209 |     max = NumOrd.maxUpEff effortMinmax
+    |     ^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/NumericOrderRounding/FieldOps.hs:224:5: warning: [GHC-63397] [-Wname-shadowing]
+    This binding for ‘max’ shadows the existing binding
+      imported from ‘Prelude’ at src/Numeric/AERN/RealArithmetic/NumericOrderRounding/FieldOps.hs:20:1-34
+      (and originally defined in ‘ghc-prim-0.10.0:GHC.Classes’)
+    |
+224 |     max = NumOrd.maxDnEff effortMinmax
+    |     ^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/NumericOrderRounding/FieldOps.hs:250:1: warning: [GHC-38417] [-Wmissing-signatures]
+    Top-level binding with no type signature:
+      testsUpDnAbs :: (NumOrd.ArbitraryOrderedTuple t, Show t,
+                       NumOrd.PartialComparison t, RoundedAbs t, HasZero t, Neg t,
+                       HasLegalValues t) =>
+                      ([Char], t) -> Test
+    |
+250 | testsUpDnAbs (name, sample) =
+    | ^^^^^^^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/NumericOrderRounding/FieldOps.hs:250:21: warning: [GHC-63397] [-Wname-shadowing]
+    This binding for ‘sample’ shadows the existing binding
+      imported from ‘Test.QuickCheck’ at src/Numeric/AERN/RealArithmetic/NumericOrderRounding/FieldOps.hs:33:1-22
+      (and originally defined in ‘Test.QuickCheck.Gen’)
+    |
+250 | testsUpDnAbs (name, sample) =
+    |                     ^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/NumericOrderRounding/FieldOps.hs:293:17: warning: [GHC-63397] [-Wname-shadowing]
+    This binding for ‘sample’ shadows the existing binding
+      imported from ‘Test.QuickCheck’ at src/Numeric/AERN/RealArithmetic/NumericOrderRounding/FieldOps.hs:33:1-22
+      (and originally defined in ‘Test.QuickCheck.Gen’)
+    |
+293 | propUpDnMultOne sample effort (NumOrd.UniformlyOrderedSingleton e) =
+    |                 ^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/NumericOrderRounding/FieldOps.hs:324:13: warning: [GHC-63397] [-Wname-shadowing]
+    This binding for ‘*^’ shadows the existing binding
+      defined at src/Numeric/AERN/RealArithmetic/NumericOrderRounding/FieldOps.hs:275:1
+    |
+324 |         let (*^) = multUpEff effMult; (*.) = multDnEff effMult in
+    |             ^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/NumericOrderRounding/FieldOps.hs:324:39: warning: [GHC-63397] [-Wname-shadowing]
+    This binding for ‘*.’ shadows the existing binding
+      defined at src/Numeric/AERN/RealArithmetic/NumericOrderRounding/FieldOps.hs:281:1
+    |
+324 |         let (*^) = multUpEff effMult; (*.) = multDnEff effMult in
+    |                                       ^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/NumericOrderRounding/FieldOps.hs:329:13: warning: [GHC-63397] [-Wname-shadowing]
+    This binding for ‘*^’ shadows the existing binding
+      defined at src/Numeric/AERN/RealArithmetic/NumericOrderRounding/FieldOps.hs:275:1
+    |
+329 |         let (*^) = multUpEff effMult; (*.) = multDnEff effMult in
+    |             ^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/NumericOrderRounding/FieldOps.hs:329:39: warning: [GHC-63397] [-Wname-shadowing]
+    This binding for ‘*.’ shadows the existing binding
+      defined at src/Numeric/AERN/RealArithmetic/NumericOrderRounding/FieldOps.hs:281:1
+    |
+329 |         let (*^) = multUpEff effMult; (*.) = multDnEff effMult in
+    |                                       ^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/NumericOrderRounding/FieldOps.hs:334:13: warning: [GHC-63397] [-Wname-shadowing]
+    This binding for ‘*^’ shadows the existing binding
+      defined at src/Numeric/AERN/RealArithmetic/NumericOrderRounding/FieldOps.hs:275:1
+    |
+334 |         let (*^) = multUpEff effMult; (*.) = multDnEff effMult in
+    |             ^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/NumericOrderRounding/FieldOps.hs:334:39: warning: [GHC-63397] [-Wname-shadowing]
+    This binding for ‘*.’ shadows the existing binding
+      defined at src/Numeric/AERN/RealArithmetic/NumericOrderRounding/FieldOps.hs:281:1
+    |
+334 |         let (*^) = multUpEff effMult; (*.) = multDnEff effMult in
+    |                                       ^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/NumericOrderRounding/FieldOps.hs:339:13: warning: [GHC-63397] [-Wname-shadowing]
+    This binding for ‘*^’ shadows the existing binding
+      defined at src/Numeric/AERN/RealArithmetic/NumericOrderRounding/FieldOps.hs:275:1
+    |
+339 |         let (*^) = multUpEff effMult; (*.) = multDnEff effMult in
+    |             ^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/NumericOrderRounding/FieldOps.hs:339:39: warning: [GHC-63397] [-Wname-shadowing]
+    This binding for ‘*.’ shadows the existing binding
+      defined at src/Numeric/AERN/RealArithmetic/NumericOrderRounding/FieldOps.hs:281:1
+    |
+339 |         let (*^) = multUpEff effMult; (*.) = multDnEff effMult in
+    |                                       ^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/NumericOrderRounding/FieldOps.hs:360:13: warning: [GHC-63397] [-Wname-shadowing]
+    This binding for ‘*^’ shadows the existing binding
+      defined at src/Numeric/AERN/RealArithmetic/NumericOrderRounding/FieldOps.hs:275:1
+    |
+360 |         let (*^) = multUpEff effMult in
+    |             ^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/NumericOrderRounding/FieldOps.hs:361:13: warning: [GHC-63397] [-Wname-shadowing]
+    This binding for ‘+^’ shadows the existing binding
+      defined at src/Numeric/AERN/RealArithmetic/NumericOrderRounding/FieldOps.hs:60:1
+    |
+361 |         let (+^) = addUpEff effAdd; (+.) = addDnEff effAdd in
+    |             ^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/NumericOrderRounding/FieldOps.hs:361:37: warning: [GHC-63397] [-Wname-shadowing]
+    This binding for ‘+.’ shadows the existing binding
+      defined at src/Numeric/AERN/RealArithmetic/NumericOrderRounding/FieldOps.hs:66:1
+    |
+361 |         let (+^) = addUpEff effAdd; (+.) = addDnEff effAdd in
+    |                                     ^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/NumericOrderRounding/FieldOps.hs:366:13: warning: [GHC-63397] [-Wname-shadowing]
+    This binding for ‘*.’ shadows the existing binding
+      defined at src/Numeric/AERN/RealArithmetic/NumericOrderRounding/FieldOps.hs:281:1
+    |
+366 |         let (*.) = multDnEff effMult in
+    |             ^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/NumericOrderRounding/FieldOps.hs:367:13: warning: [GHC-63397] [-Wname-shadowing]
+    This binding for ‘+^’ shadows the existing binding
+      defined at src/Numeric/AERN/RealArithmetic/NumericOrderRounding/FieldOps.hs:60:1
+    |
+367 |         let (+^) = addUpEff effAdd; (+.) = addDnEff effAdd in
+    |             ^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/NumericOrderRounding/FieldOps.hs:367:37: warning: [GHC-63397] [-Wname-shadowing]
+    This binding for ‘+.’ shadows the existing binding
+      defined at src/Numeric/AERN/RealArithmetic/NumericOrderRounding/FieldOps.hs:66:1
+    |
+367 |         let (+^) = addUpEff effAdd; (+.) = addDnEff effAdd in
+    |                                     ^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/NumericOrderRounding/FieldOps.hs:372:13: warning: [GHC-63397] [-Wname-shadowing]
+    This binding for ‘*^’ shadows the existing binding
+      defined at src/Numeric/AERN/RealArithmetic/NumericOrderRounding/FieldOps.hs:275:1
+    |
+372 |         let (*^) = multUpEff effMult in
+    |             ^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/NumericOrderRounding/FieldOps.hs:373:13: warning: [GHC-63397] [-Wname-shadowing]
+    This binding for ‘+^’ shadows the existing binding
+      defined at src/Numeric/AERN/RealArithmetic/NumericOrderRounding/FieldOps.hs:60:1
+    |
+373 |         let (+^) = addUpEff effAdd in
+    |             ^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/NumericOrderRounding/FieldOps.hs:376:13: warning: [GHC-63397] [-Wname-shadowing]
+    This binding for ‘*.’ shadows the existing binding
+      defined at src/Numeric/AERN/RealArithmetic/NumericOrderRounding/FieldOps.hs:281:1
+    |
+376 |         let (*.) = multDnEff effMult in
+    |             ^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/NumericOrderRounding/FieldOps.hs:377:13: warning: [GHC-63397] [-Wname-shadowing]
+    This binding for ‘+.’ shadows the existing binding
+      defined at src/Numeric/AERN/RealArithmetic/NumericOrderRounding/FieldOps.hs:66:1
+    |
+377 |         let (+.) = addDnEff effAdd in
+    |             ^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/NumericOrderRounding/FieldOps.hs:381:1: warning: [GHC-38417] [-Wmissing-signatures]
+    Top-level binding with no type signature:
+      testsUpDnMult :: (NumOrd.ArbitraryOrderedTuple t,
+                        NumOrd.PartialComparison t, RoundedMultiply t, HasOne t,
+                        HasLegalValues t, HasZero t, NumOrd.RoundedLattice t, Show t,
+                        RoundedAdd t) =>
+                       ([Char], t) -> Test
+    |
+381 | testsUpDnMult (name, sample) =
+    | ^^^^^^^^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/NumericOrderRounding/FieldOps.hs:381:22: warning: [GHC-63397] [-Wname-shadowing]
+    This binding for ‘sample’ shadows the existing binding
+      imported from ‘Test.QuickCheck’ at src/Numeric/AERN/RealArithmetic/NumericOrderRounding/FieldOps.hs:33:1-22
+      (and originally defined in ‘Test.QuickCheck.Gen’)
+    |
+381 | testsUpDnMult (name, sample) =
+    |                      ^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/NumericOrderRounding/FieldOps.hs:422:1: warning: [GHC-38417] [-Wmissing-signatures]
+    Top-level binding with no type signature:
+      powerNonnegToNonnegIntDefaultEffortFromMult :: RoundedMultiplyEffort
+                                                       t =>
+                                                     t -> MultEffortIndicator t
+    |
+422 | powerNonnegToNonnegIntDefaultEffortFromMult a =
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/NumericOrderRounding/FieldOps.hs:479:1: warning: [GHC-38417] [-Wmissing-signatures]
+    Top-level binding with no type signature:
+      powerToNonnegIntDefaultEffortFromMult :: (RoundedMultiplyEffort t,
+                                                NumOrd.PartialComparison t,
+                                                NumOrd.RoundedLatticeEffort t) =>
+                                               t
+                                               -> (MultEffortIndicator t,
+                                                   NumOrd.PartialCompareEffortIndicator t,
+                                                   NumOrd.MinmaxEffortIndicator t)
+    |
+479 | powerToNonnegIntDefaultEffortFromMult a =
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/NumericOrderRounding/FieldOps.hs:556:25: warning: [-Wunused-matches]
+    Defined but not used: ‘effComp’
+    |
+556 |     expr1Up (effPower, (effComp, effMult, effMinmax)) =
+    |                         ^^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/NumericOrderRounding/FieldOps.hs:556:34: warning: [-Wunused-matches]
+    Defined but not used: ‘effMult’
+    |
+556 |     expr1Up (effPower, (effComp, effMult, effMinmax)) =
+    |                                  ^^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/NumericOrderRounding/FieldOps.hs:556:43: warning: [-Wunused-matches]
+    Defined but not used: ‘effMinmax’
+    |
+556 |     expr1Up (effPower, (effComp, effMult, effMinmax)) =
+    |                                           ^^^^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/NumericOrderRounding/FieldOps.hs:557:13: warning: [GHC-63397] [-Wname-shadowing]
+    This binding for ‘^^’ shadows the existing binding
+      imported from ‘Prelude’ at src/Numeric/AERN/RealArithmetic/NumericOrderRounding/FieldOps.hs:20:1-34
+      (and originally defined in ‘GHC.Real’)
+    |
+557 |         let (^^) = powerToNonnegIntUpEff effPower in
+    |             ^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/NumericOrderRounding/FieldOps.hs:559:25: warning: [-Wunused-matches]
+    Defined but not used: ‘effComp’
+    |
+559 |     expr1Dn (effPower, (effComp, effMult, effMinmax)) =
+    |                         ^^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/NumericOrderRounding/FieldOps.hs:559:34: warning: [-Wunused-matches]
+    Defined but not used: ‘effMult’
+    |
+559 |     expr1Dn (effPower, (effComp, effMult, effMinmax)) =
+    |                                  ^^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/NumericOrderRounding/FieldOps.hs:559:43: warning: [-Wunused-matches]
+    Defined but not used: ‘effMinmax’
+    |
+559 |     expr1Dn (effPower, (effComp, effMult, effMinmax)) =
+    |                                           ^^^^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/NumericOrderRounding/FieldOps.hs:568:9: warning: [GHC-63397] [-Wname-shadowing]
+    This binding for ‘max’ shadows the existing binding
+      imported from ‘Prelude’ at src/Numeric/AERN/RealArithmetic/NumericOrderRounding/FieldOps.hs:20:1-34
+      (and originally defined in ‘ghc-prim-0.10.0:GHC.Classes’)
+    |
+568 |         max = NumOrd.maxUpEff effMinmax
+    |         ^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/NumericOrderRounding/FieldOps.hs:569:9: warning: [GHC-63397] [-Wname-shadowing]
+    This binding for ‘^^’ shadows the existing binding
+      imported from ‘Prelude’ at src/Numeric/AERN/RealArithmetic/NumericOrderRounding/FieldOps.hs:20:1-34
+      (and originally defined in ‘GHC.Real’)
+    |
+569 |         (^^) = powerToNonnegIntUpEff effPower
+    |         ^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/NumericOrderRounding/FieldOps.hs:571:9: warning: [GHC-63397] [-Wname-shadowing]
+    This binding for ‘*^’ shadows the existing binding
+      defined at src/Numeric/AERN/RealArithmetic/NumericOrderRounding/FieldOps.hs:275:1
+    |
+571 |         (*^) = multUpEff effMult
+    |         ^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/NumericOrderRounding/FieldOps.hs:572:9: warning: [GHC-63397] [-Wname-shadowing]
+    This binding for ‘*.’ shadows the existing binding
+      defined at src/Numeric/AERN/RealArithmetic/NumericOrderRounding/FieldOps.hs:281:1
+    |
+572 |         (*.) = multDnEff effMult
+    |         ^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/NumericOrderRounding/FieldOps.hs:584:9: warning: [GHC-63397] [-Wname-shadowing]
+    This binding for ‘min’ shadows the existing binding
+      imported from ‘Prelude’ at src/Numeric/AERN/RealArithmetic/NumericOrderRounding/FieldOps.hs:20:1-34
+      (and originally defined in ‘ghc-prim-0.10.0:GHC.Classes’)
+    |
+584 |         min = NumOrd.minDnEff effMinmax
+    |         ^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/NumericOrderRounding/FieldOps.hs:585:9: warning: [GHC-63397] [-Wname-shadowing]
+    This binding for ‘^^’ shadows the existing binding
+      imported from ‘Prelude’ at src/Numeric/AERN/RealArithmetic/NumericOrderRounding/FieldOps.hs:20:1-34
+      (and originally defined in ‘GHC.Real’)
+    |
+585 |         (^^) = powerToNonnegIntUpEff effPower
+    |         ^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/NumericOrderRounding/FieldOps.hs:587:9: warning: [GHC-63397] [-Wname-shadowing]
+    This binding for ‘*^’ shadows the existing binding
+      defined at src/Numeric/AERN/RealArithmetic/NumericOrderRounding/FieldOps.hs:275:1
+    |
+587 |         (*^) = multUpEff effMult
+    |         ^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/NumericOrderRounding/FieldOps.hs:588:9: warning: [GHC-63397] [-Wname-shadowing]
+    This binding for ‘*.’ shadows the existing binding
+      defined at src/Numeric/AERN/RealArithmetic/NumericOrderRounding/FieldOps.hs:281:1
+    |
+588 |         (*.) = multDnEff effMult
+    |         ^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/NumericOrderRounding/FieldOps.hs:595:1: warning: [GHC-38417] [-Wmissing-signatures]
+    Top-level binding with no type signature:
+      testsUpDnIntPower :: (NumOrd.ArbitraryOrderedTuple t, Show t,
+                            NumOrd.PartialComparison t, NumOrd.RoundedLattice t,
+                            RoundedPowerToNonnegInt t, RoundedMultiply t, HasOne t, HasZero t,
+                            Neg t, HasLegalValues t) =>
+                           ([Char], t) -> Test
+    |
+595 | testsUpDnIntPower (name, sample) =
+    | ^^^^^^^^^^^^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/NumericOrderRounding/FieldOps.hs:595:26: warning: [GHC-63397] [-Wname-shadowing]
+    This binding for ‘sample’ shadows the existing binding
+      imported from ‘Test.QuickCheck’ at src/Numeric/AERN/RealArithmetic/NumericOrderRounding/FieldOps.hs:33:1-22
+      (and originally defined in ‘Test.QuickCheck.Gen’)
+    |
+595 | testsUpDnIntPower (name, sample) =
+    |                          ^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/NumericOrderRounding/FieldOps.hs:647:17: warning: [GHC-63397] [-Wname-shadowing]
+    This binding for ‘sample’ shadows the existing binding
+      imported from ‘Test.QuickCheck’ at src/Numeric/AERN/RealArithmetic/NumericOrderRounding/FieldOps.hs:33:1-22
+      (and originally defined in ‘Test.QuickCheck.Gen’)
+    |
+647 | propUpDnDivElim sample efforts2@(effComp, _) (NumOrd.UniformlyOrderedSingleton a) =
+    |                 ^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/NumericOrderRounding/FieldOps.hs:647:34: warning: [-Wunused-matches]
+    Defined but not used: ‘effComp’
+    |
+647 | propUpDnDivElim sample efforts2@(effComp, _) (NumOrd.UniformlyOrderedSingleton a) =
+    |                                  ^^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/NumericOrderRounding/FieldOps.hs:665:22: warning: [GHC-63397] [-Wname-shadowing]
+    This binding for ‘sample’ shadows the existing binding
+      imported from ‘Test.QuickCheck’ at src/Numeric/AERN/RealArithmetic/NumericOrderRounding/FieldOps.hs:33:1-22
+      (and originally defined in ‘Test.QuickCheck.Gen’)
+    |
+665 | propUpDnDivRecipMult sample initEffort@(effComp,_) (NumOrd.UniformlyOrderedPair (e1, e2)) =
+    |                      ^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/NumericOrderRounding/FieldOps.hs:665:41: warning: [-Wunused-matches]
+    Defined but not used: ‘effComp’
+    |
+665 | propUpDnDivRecipMult sample initEffort@(effComp,_) (NumOrd.UniformlyOrderedPair (e1, e2)) =
+    |                                         ^^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/NumericOrderRounding/FieldOps.hs:671:13: warning: [GHC-63397] [-Wname-shadowing]
+    This binding for ‘*^’ shadows the existing binding
+      defined at src/Numeric/AERN/RealArithmetic/NumericOrderRounding/FieldOps.hs:275:1
+    |
+671 |         let (*^) = multUpEff effMult in
+    |             ^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/NumericOrderRounding/FieldOps.hs:672:13: warning: [GHC-63397] [-Wname-shadowing]
+    This binding for ‘/^’ shadows the existing binding
+      defined at src/Numeric/AERN/RealArithmetic/NumericOrderRounding/FieldOps.hs:624:1
+    |
+672 |         let (/^) = divUpEff effDiv; (/.) = divDnEff effDiv in
+    |             ^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/NumericOrderRounding/FieldOps.hs:672:37: warning: [GHC-63397] [-Wname-shadowing]
+    This binding for ‘/.’ shadows the existing binding
+      defined at src/Numeric/AERN/RealArithmetic/NumericOrderRounding/FieldOps.hs:630:1
+    |
+672 |         let (/^) = divUpEff effDiv; (/.) = divDnEff effDiv in
+    |                                     ^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/NumericOrderRounding/FieldOps.hs:677:13: warning: [GHC-63397] [-Wname-shadowing]
+    This binding for ‘*.’ shadows the existing binding
+      defined at src/Numeric/AERN/RealArithmetic/NumericOrderRounding/FieldOps.hs:281:1
+    |
+677 |         let (*.) = multDnEff effMult in
+    |             ^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/NumericOrderRounding/FieldOps.hs:678:13: warning: [GHC-63397] [-Wname-shadowing]
+    This binding for ‘/^’ shadows the existing binding
+      defined at src/Numeric/AERN/RealArithmetic/NumericOrderRounding/FieldOps.hs:624:1
+    |
+678 |         let (/^) = divUpEff effDiv; (/.) = divDnEff effDiv in
+    |             ^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/NumericOrderRounding/FieldOps.hs:678:37: warning: [GHC-63397] [-Wname-shadowing]
+    This binding for ‘/.’ shadows the existing binding
+      defined at src/Numeric/AERN/RealArithmetic/NumericOrderRounding/FieldOps.hs:630:1
+    |
+678 |         let (/^) = divUpEff effDiv; (/.) = divDnEff effDiv in
+    |                                     ^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/NumericOrderRounding/FieldOps.hs:682:14: warning: [-Wunused-matches]
+    Defined but not used: ‘effMult’
+    |
+682 |     expr2Up (effMult, effDiv, _) =
+    |              ^^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/NumericOrderRounding/FieldOps.hs:683:13: warning: [GHC-63397] [-Wname-shadowing]
+    This binding for ‘/^’ shadows the existing binding
+      defined at src/Numeric/AERN/RealArithmetic/NumericOrderRounding/FieldOps.hs:624:1
+    |
+683 |         let (/^) = divUpEff effDiv in
+    |             ^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/NumericOrderRounding/FieldOps.hs:685:14: warning: [-Wunused-matches]
+    Defined but not used: ‘effMult’
+    |
+685 |     expr2Dn (effMult, effDiv, _) =
+    |              ^^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/NumericOrderRounding/FieldOps.hs:686:13: warning: [GHC-63397] [-Wname-shadowing]
+    This binding for ‘/.’ shadows the existing binding
+      defined at src/Numeric/AERN/RealArithmetic/NumericOrderRounding/FieldOps.hs:630:1
+    |
+686 |         let (/.) = divDnEff effDiv in
+    |             ^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/NumericOrderRounding/FieldOps.hs:689:1: warning: [GHC-38417] [-Wmissing-signatures]
+    Top-level binding with no type signature:
+      testsUpDnDiv :: (NumOrd.ArbitraryOrderedTuple t,
+                       NumOrd.PartialComparison t, RoundedDivide t, HasZero t,
+                       HasLegalValues t, Show t, NumOrd.RoundedLattice t,
+                       RoundedMultiply t) =>
+                      ([Char], t) -> Test
+    |
+689 | testsUpDnDiv (name, sample) =
+    | ^^^^^^^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/NumericOrderRounding/FieldOps.hs:689:21: warning: [GHC-63397] [-Wname-shadowing]
+    This binding for ‘sample’ shadows the existing binding
+      imported from ‘Test.QuickCheck’ at src/Numeric/AERN/RealArithmetic/NumericOrderRounding/FieldOps.hs:33:1-22
+      (and originally defined in ‘Test.QuickCheck.Gen’)
+    |
+689 | testsUpDnDiv (name, sample) =
+    |                     ^^^^^^
+[12 of 25] Compiling Numeric.AERN.RealArithmetic.NumericOrderRounding.MixedFieldOps
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/NumericOrderRounding/MixedFieldOps.hs:28:1: warning: [-Wunused-imports]
+    The import of ‘Numeric.AERN.RealArithmetic.Measures’ is redundant
+      except perhaps to import instances from ‘Numeric.AERN.RealArithmetic.Measures’
+    To import instances alone, use: import Numeric.AERN.RealArithmetic.Measures()
+   |
+28 | import Numeric.AERN.RealArithmetic.Measures
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/NumericOrderRounding/MixedFieldOps.hs:34:1: warning: [-Wunused-imports]
+    The import of ‘Test.QuickCheck’ is redundant
+      except perhaps to import instances from ‘Test.QuickCheck’
+    To import instances alone, use: import Test.QuickCheck()
+   |
+34 | import Test.QuickCheck
+   | ^^^^^^^^^^^^^^^^^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/NumericOrderRounding/MixedFieldOps.hs:35:35: warning: [-Wunused-imports]
+    The import of ‘Test’ from module ‘Test.Framework’ is redundant
+   |
+35 | import Test.Framework (testGroup, Test)
+   |                                   ^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/NumericOrderRounding/MixedFieldOps.hs:93:1: warning: [GHC-38417] [-Wmissing-signatures]
+    Top-level binding with no type signature:
+      mixedAddDefaultEffortByConversion :: (RoundedAddEffort t2,
+                                            Convertible t1 t2) =>
+                                           t2
+                                           -> t1
+                                           -> (AddEffortIndicator t2, ConvertEffortIndicator t1 t2)
+   |
+93 | mixedAddDefaultEffortByConversion d n = 
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/NumericOrderRounding/MixedFieldOps.hs:105:19: warning: [GHC-63397] [-Wname-shadowing]
+    This binding for ‘nUp’ shadows the existing binding
+      bound at src/Numeric/AERN/RealArithmetic/NumericOrderRounding/MixedFieldOps.hs:103:5
+    |
+105 |             (Just nUp) -> nUp
+    |                   ^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/NumericOrderRounding/MixedFieldOps.hs:108:5: warning: [GHC-63397] [-Wname-shadowing]
+    This binding for ‘sample’ shadows the existing binding
+      imported from ‘Test.QuickCheck’ at src/Numeric/AERN/RealArithmetic/NumericOrderRounding/MixedFieldOps.hs:34:1-22
+      (and originally defined in ‘Test.QuickCheck.Gen’)
+    |
+108 |     sample = d
+    |     ^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/NumericOrderRounding/MixedFieldOps.hs:119:19: warning: [GHC-63397] [-Wname-shadowing]
+    This binding for ‘nDn’ shadows the existing binding
+      bound at src/Numeric/AERN/RealArithmetic/NumericOrderRounding/MixedFieldOps.hs:117:5
+    |
+119 |             (Just nDn) -> nDn
+    |                   ^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/NumericOrderRounding/MixedFieldOps.hs:122:5: warning: [GHC-63397] [-Wname-shadowing]
+    This binding for ‘sample’ shadows the existing binding
+      imported from ‘Test.QuickCheck’ at src/Numeric/AERN/RealArithmetic/NumericOrderRounding/MixedFieldOps.hs:34:1-22
+      (and originally defined in ‘Test.QuickCheck.Gen’)
+    |
+122 |     sample = d
+    |     ^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/NumericOrderRounding/MixedFieldOps.hs:139:27: warning: [GHC-63397] [-Wname-shadowing]
+    This binding for ‘sample’ shadows the existing binding
+      imported from ‘Test.QuickCheck’ at src/Numeric/AERN/RealArithmetic/NumericOrderRounding/MixedFieldOps.hs:34:1-22
+      (and originally defined in ‘Test.QuickCheck.Gen’)
+    |
+139 | propMixedAddEqualsConvert sample sampleN initEffort 
+    |                           ^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/NumericOrderRounding/MixedFieldOps.hs:139:34: warning: [-Wunused-matches]
+    Defined but not used: ‘sampleN’
+    |
+139 | propMixedAddEqualsConvert sample sampleN initEffort 
+    |                                  ^^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/NumericOrderRounding/MixedFieldOps.hs:146:13: warning: [GHC-63397] [-Wname-shadowing]
+    This binding for ‘+^|’ shadows the existing binding
+      defined at src/Numeric/AERN/RealArithmetic/NumericOrderRounding/MixedFieldOps.hs:60:1
+    |
+146 |         let (+^|) = mixedAddUpEff effMAdd in d +^| n
+    |             ^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/NumericOrderRounding/MixedFieldOps.hs:148:13: warning: [GHC-63397] [-Wname-shadowing]
+    This binding for ‘+.|’ shadows the existing binding
+      defined at src/Numeric/AERN/RealArithmetic/NumericOrderRounding/MixedFieldOps.hs:68:1
+    |
+148 |         let (+.|) = mixedAddDnEff effMAdd in d +.| n
+    |             ^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/NumericOrderRounding/MixedFieldOps.hs:150:13: warning: [GHC-63397] [-Wname-shadowing]
+    This binding for ‘+^’ shadows the existing binding
+      imported from ‘Numeric.AERN.RealArithmetic.NumericOrderRounding.FieldOps’ at src/Numeric/AERN/RealArithmetic/NumericOrderRounding/MixedFieldOps.hs:21:1-64
+      (and originally defined
+         at src/Numeric/AERN/RealArithmetic/NumericOrderRounding/FieldOps.hs:60:1-4)
+    |
+150 |         let (+^) = addUpEff effAdd in d +^ nUp
+    |             ^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/NumericOrderRounding/MixedFieldOps.hs:152:9: warning: [GHC-62161] [-Wincomplete-uni-patterns]
+    Pattern match(es) are non-exhaustive
+    In a pattern binding:
+        Patterns of type ‘Maybe t’ not matched: Nothing
+    |
+152 |         Just nUp = convertUpEff effConv sample n
+    |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/NumericOrderRounding/MixedFieldOps.hs:154:13: warning: [GHC-63397] [-Wname-shadowing]
+    This binding for ‘+.’ shadows the existing binding
+      imported from ‘Numeric.AERN.RealArithmetic.NumericOrderRounding.FieldOps’ at src/Numeric/AERN/RealArithmetic/NumericOrderRounding/MixedFieldOps.hs:21:1-64
+      (and originally defined
+         at src/Numeric/AERN/RealArithmetic/NumericOrderRounding/FieldOps.hs:66:1-4)
+    |
+154 |         let (+.) = addDnEff effAdd in d +. nDn
+    |             ^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/NumericOrderRounding/MixedFieldOps.hs:156:9: warning: [GHC-62161] [-Wincomplete-uni-patterns]
+    Pattern match(es) are non-exhaustive
+    In a pattern binding:
+        Patterns of type ‘Maybe t’ not matched: Nothing
+    |
+156 |         Just nDn = convertDnEff effConv sample n
+    |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/NumericOrderRounding/MixedFieldOps.hs:210:1: warning: [GHC-38417] [-Wmissing-signatures]
+    Top-level binding with no type signature:
+      mixedMultDefaultEffortByConversion :: (RoundedAddEffort t,
+                                             Convertible t1 t, NumOrd.RoundedLatticeEffort t) =>
+                                            t
+                                            -> t1
+                                            -> (AddEffortIndicator t, ConvertEffortIndicator t1 t,
+                                                NumOrd.MinmaxEffortIndicator t)
+    |
+210 | mixedMultDefaultEffortByConversion d n = 
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/NumericOrderRounding/MixedFieldOps.hs:228:19: warning: [GHC-63397] [-Wname-shadowing]
+    This binding for ‘nUp’ shadows the existing binding
+      bound at src/Numeric/AERN/RealArithmetic/NumericOrderRounding/MixedFieldOps.hs:226:6
+    |
+228 |             (Just nUp, Just nDn) -> (nUp, nDn)
+    |                   ^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/NumericOrderRounding/MixedFieldOps.hs:228:29: warning: [GHC-63397] [-Wname-shadowing]
+    This binding for ‘nDn’ shadows the existing binding
+      bound at src/Numeric/AERN/RealArithmetic/NumericOrderRounding/MixedFieldOps.hs:226:11
+    |
+228 |             (Just nUp, Just nDn) -> (nUp, nDn)
+    |                             ^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/NumericOrderRounding/MixedFieldOps.hs:231:5: warning: [GHC-63397] [-Wname-shadowing]
+    This binding for ‘sample’ shadows the existing binding
+      imported from ‘Test.QuickCheck’ at src/Numeric/AERN/RealArithmetic/NumericOrderRounding/MixedFieldOps.hs:34:1-22
+      (and originally defined in ‘Test.QuickCheck.Gen’)
+    |
+231 |     sample = d
+    |     ^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/NumericOrderRounding/MixedFieldOps.hs:246:19: warning: [GHC-63397] [-Wname-shadowing]
+    This binding for ‘nUp’ shadows the existing binding
+      bound at src/Numeric/AERN/RealArithmetic/NumericOrderRounding/MixedFieldOps.hs:244:6
+    |
+246 |             (Just nUp, Just nDn) -> (nUp, nDn)
+    |                   ^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/NumericOrderRounding/MixedFieldOps.hs:246:29: warning: [GHC-63397] [-Wname-shadowing]
+    This binding for ‘nDn’ shadows the existing binding
+      bound at src/Numeric/AERN/RealArithmetic/NumericOrderRounding/MixedFieldOps.hs:244:11
+    |
+246 |             (Just nUp, Just nDn) -> (nUp, nDn)
+    |                             ^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/NumericOrderRounding/MixedFieldOps.hs:249:5: warning: [GHC-63397] [-Wname-shadowing]
+    This binding for ‘sample’ shadows the existing binding
+      imported from ‘Test.QuickCheck’ at src/Numeric/AERN/RealArithmetic/NumericOrderRounding/MixedFieldOps.hs:34:1-22
+      (and originally defined in ‘Test.QuickCheck.Gen’)
+    |
+249 |     sample = d
+    |     ^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/NumericOrderRounding/MixedFieldOps.hs:268:28: warning: [GHC-63397] [-Wname-shadowing]
+    This binding for ‘sample’ shadows the existing binding
+      imported from ‘Test.QuickCheck’ at src/Numeric/AERN/RealArithmetic/NumericOrderRounding/MixedFieldOps.hs:34:1-22
+      (and originally defined in ‘Test.QuickCheck.Gen’)
+    |
+268 | propMixedMultEqualsConvert sample _sampleN initEffort 
+    |                            ^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/NumericOrderRounding/MixedFieldOps.hs:275:13: warning: [GHC-63397] [-Wname-shadowing]
+    This binding for ‘*^|’ shadows the existing binding
+      defined at src/Numeric/AERN/RealArithmetic/NumericOrderRounding/MixedFieldOps.hs:175:1
+    |
+275 |         let (*^|) = mixedMultUpEff effMMult in d *^| n
+    |             ^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/NumericOrderRounding/MixedFieldOps.hs:277:13: warning: [GHC-63397] [-Wname-shadowing]
+    This binding for ‘*.|’ shadows the existing binding
+      defined at src/Numeric/AERN/RealArithmetic/NumericOrderRounding/MixedFieldOps.hs:183:1
+    |
+277 |         let (*.|) = mixedMultDnEff effMMult in d *.| n
+    |             ^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/NumericOrderRounding/MixedFieldOps.hs:279:13: warning: [GHC-63397] [-Wname-shadowing]
+    This binding for ‘*^’ shadows the existing binding
+      imported from ‘Numeric.AERN.RealArithmetic.NumericOrderRounding.FieldOps’ at src/Numeric/AERN/RealArithmetic/NumericOrderRounding/MixedFieldOps.hs:21:1-64
+      (and originally defined
+         at src/Numeric/AERN/RealArithmetic/NumericOrderRounding/FieldOps.hs:275:1-4)
+    |
+279 |         let (*^) = multUpEff effMult in
+    |             ^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/NumericOrderRounding/MixedFieldOps.hs:284:13: warning: [GHC-63397] [-Wname-shadowing]
+    This binding for ‘*.’ shadows the existing binding
+      imported from ‘Numeric.AERN.RealArithmetic.NumericOrderRounding.FieldOps’ at src/Numeric/AERN/RealArithmetic/NumericOrderRounding/MixedFieldOps.hs:21:1-64
+      (and originally defined
+         at src/Numeric/AERN/RealArithmetic/NumericOrderRounding/FieldOps.hs:281:1-4)
+    |
+284 |         let (*.) = multDnEff effMult in
+    |             ^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/NumericOrderRounding/MixedFieldOps.hs:337:1: warning: [GHC-38417] [-Wmissing-signatures]
+    Top-level binding with no type signature:
+      mixedDivDefaultEffortByConversion :: (RoundedAddEffort t,
+                                            Convertible t1 t, NumOrd.RoundedLatticeEffort t,
+                                            NumOrd.PartialComparison t) =>
+                                           t
+                                           -> t1
+                                           -> (AddEffortIndicator t, ConvertEffortIndicator t1 t,
+                                               (NumOrd.MinmaxEffortIndicator t,
+                                                NumOrd.PartialCompareEffortIndicator t))
+    |
+337 | mixedDivDefaultEffortByConversion d n = 
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/NumericOrderRounding/MixedFieldOps.hs:368:19: warning: [GHC-63397] [-Wname-shadowing]
+    This binding for ‘nUp’ shadows the existing binding
+      bound at src/Numeric/AERN/RealArithmetic/NumericOrderRounding/MixedFieldOps.hs:366:6
+    |
+368 |             (Just nUp, Just nDn) -> (nUp, nDn)
+    |                   ^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/NumericOrderRounding/MixedFieldOps.hs:368:29: warning: [GHC-63397] [-Wname-shadowing]
+    This binding for ‘nDn’ shadows the existing binding
+      bound at src/Numeric/AERN/RealArithmetic/NumericOrderRounding/MixedFieldOps.hs:366:11
+    |
+368 |             (Just nUp, Just nDn) -> (nUp, nDn)
+    |                             ^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/NumericOrderRounding/MixedFieldOps.hs:371:5: warning: [GHC-63397] [-Wname-shadowing]
+    This binding for ‘sample’ shadows the existing binding
+      imported from ‘Test.QuickCheck’ at src/Numeric/AERN/RealArithmetic/NumericOrderRounding/MixedFieldOps.hs:34:1-22
+      (and originally defined in ‘Test.QuickCheck.Gen’)
+    |
+371 |     sample = d
+    |     ^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/NumericOrderRounding/MixedFieldOps.hs:398:19: warning: [GHC-63397] [-Wname-shadowing]
+    This binding for ‘nUp’ shadows the existing binding
+      bound at src/Numeric/AERN/RealArithmetic/NumericOrderRounding/MixedFieldOps.hs:396:6
+    |
+398 |             (Just nUp, Just nDn) -> (nUp, nDn)
+    |                   ^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/NumericOrderRounding/MixedFieldOps.hs:398:29: warning: [GHC-63397] [-Wname-shadowing]
+    This binding for ‘nDn’ shadows the existing binding
+      bound at src/Numeric/AERN/RealArithmetic/NumericOrderRounding/MixedFieldOps.hs:396:11
+    |
+398 |             (Just nUp, Just nDn) -> (nUp, nDn)
+    |                             ^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/NumericOrderRounding/MixedFieldOps.hs:401:5: warning: [GHC-63397] [-Wname-shadowing]
+    This binding for ‘sample’ shadows the existing binding
+      imported from ‘Test.QuickCheck’ at src/Numeric/AERN/RealArithmetic/NumericOrderRounding/MixedFieldOps.hs:34:1-22
+      (and originally defined in ‘Test.QuickCheck.Gen’)
+    |
+401 |     sample = d
+    |     ^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/NumericOrderRounding/MixedFieldOps.hs:420:27: warning: [GHC-63397] [-Wname-shadowing]
+    This binding for ‘sample’ shadows the existing binding
+      imported from ‘Test.QuickCheck’ at src/Numeric/AERN/RealArithmetic/NumericOrderRounding/MixedFieldOps.hs:34:1-22
+      (and originally defined in ‘Test.QuickCheck.Gen’)
+    |
+420 | propMixedDivEqualsConvert sample _sampleN initEffort@(effComp,(_,(_,effConv,_))) 
+    |                           ^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/NumericOrderRounding/MixedFieldOps.hs:420:55: warning: [-Wunused-matches]
+    Defined but not used: ‘effComp’
+    |
+420 | propMixedDivEqualsConvert sample _sampleN initEffort@(effComp,(_,(_,effConv,_))) 
+    |                                                       ^^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/NumericOrderRounding/MixedFieldOps.hs:420:69: warning: [-Wunused-matches]
+    Defined but not used: ‘effConv’
+    |
+420 | propMixedDivEqualsConvert sample _sampleN initEffort@(effComp,(_,(_,effConv,_))) 
+    |                                                                     ^^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/NumericOrderRounding/MixedFieldOps.hs:428:13: warning: [GHC-63397] [-Wname-shadowing]
+    This binding for ‘/^|’ shadows the existing binding
+      defined at src/Numeric/AERN/RealArithmetic/NumericOrderRounding/MixedFieldOps.hs:305:1
+    |
+428 |         let (/^|) = mixedDivUpEff effMDiv in d /^| n
+    |             ^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/NumericOrderRounding/MixedFieldOps.hs:430:13: warning: [GHC-63397] [-Wname-shadowing]
+    This binding for ‘/.|’ shadows the existing binding
+      defined at src/Numeric/AERN/RealArithmetic/NumericOrderRounding/MixedFieldOps.hs:311:1
+    |
+430 |         let (/.|) = mixedDivDnEff effMDiv in d /.| n
+    |             ^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/NumericOrderRounding/MixedFieldOps.hs:431:24: warning: [GHC-63397] [-Wname-shadowing]
+    This binding for ‘effConv’ shadows the existing binding
+      bound at src/Numeric/AERN/RealArithmetic/NumericOrderRounding/MixedFieldOps.hs:420:69
+    |
+431 |     expr2Up (_,(effDiv,effConv,effMinmax)) =
+    |                        ^^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/NumericOrderRounding/MixedFieldOps.hs:432:13: warning: [GHC-63397] [-Wname-shadowing]
+    This binding for ‘/^’ shadows the existing binding
+      imported from ‘Numeric.AERN.RealArithmetic.NumericOrderRounding.FieldOps’ at src/Numeric/AERN/RealArithmetic/NumericOrderRounding/MixedFieldOps.hs:21:1-64
+      (and originally defined
+         at src/Numeric/AERN/RealArithmetic/NumericOrderRounding/FieldOps.hs:624:1-4)
+    |
+432 |         let (/^) = divUpEff effDiv in
+    |             ^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/NumericOrderRounding/MixedFieldOps.hs:436:24: warning: [GHC-63397] [-Wname-shadowing]
+    This binding for ‘effConv’ shadows the existing binding
+      bound at src/Numeric/AERN/RealArithmetic/NumericOrderRounding/MixedFieldOps.hs:420:69
+    |
+436 |     expr2Dn (_,(effDiv,effConv,effMinmax)) =
+    |                        ^^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/NumericOrderRounding/MixedFieldOps.hs:437:13: warning: [GHC-63397] [-Wname-shadowing]
+    This binding for ‘/.’ shadows the existing binding
+      imported from ‘Numeric.AERN.RealArithmetic.NumericOrderRounding.FieldOps’ at src/Numeric/AERN/RealArithmetic/NumericOrderRounding/MixedFieldOps.hs:21:1-64
+      (and originally defined
+         at src/Numeric/AERN/RealArithmetic/NumericOrderRounding/FieldOps.hs:630:1-4)
+    |
+437 |         let (/.) = divDnEff effDiv in
+    |             ^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/NumericOrderRounding/MixedFieldOps.hs:442:1: warning: [GHC-38417] [-Wmissing-signatures]
+    Top-level binding with no type signature:
+      testsUpDnMixedFieldOps :: (NumOrd.ArbitraryOrderedTuple t,
+                                 NumOrd.PartialComparison t, Convertible tn t, RoundedMixedAdd t tn,
+                                 RoundedAdd t, HasLegalValues t, NumOrd.RoundedLattice t,
+                                 RoundedMixedMultiply t tn, RoundedMultiply t, Arbitrary tn, Show t,
+                                 Show tn, RoundedMixedDivide t tn, RoundedDivide t, HasZero t) =>
+                                ([Char], t) -> ([Char], tn) -> Test
+    |
+442 | testsUpDnMixedFieldOps (name, sample) (nameN, sampleN) =
+    | ^^^^^^^^^^^^^^^^^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/NumericOrderRounding/MixedFieldOps.hs:442:31: warning: [GHC-63397] [-Wname-shadowing]
+    This binding for ‘sample’ shadows the existing binding
+      imported from ‘Test.QuickCheck’ at src/Numeric/AERN/RealArithmetic/NumericOrderRounding/MixedFieldOps.hs:34:1-22
+      (and originally defined in ‘Test.QuickCheck.Gen’)
+    |
+442 | testsUpDnMixedFieldOps (name, sample) (nameN, sampleN) =
+    |                               ^^^^^^
+[13 of 25] Compiling Numeric.AERN.RealArithmetic.NumericOrderRounding.Elementary
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/NumericOrderRounding/Elementary.hs:30:1: warning: [-Wunused-imports]
+    The import of ‘Numeric.AERN.Misc.Debug’ is redundant
+      except perhaps to import instances from ‘Numeric.AERN.Misc.Debug’
+    To import instances alone, use: import Numeric.AERN.Misc.Debug()
+   |
+30 | import Numeric.AERN.Misc.Debug
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/NumericOrderRounding/Elementary.hs:32:1: warning: [-Wunused-imports]
+    The import of ‘Test.QuickCheck’ is redundant
+      except perhaps to import instances from ‘Test.QuickCheck’
+    To import instances alone, use: import Test.QuickCheck()
+   |
+32 | import Test.QuickCheck
+   | ^^^^^^^^^^^^^^^^^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/NumericOrderRounding/Elementary.hs:33:35: warning: [-Wunused-imports]
+    The import of ‘Test’ from module ‘Test.Framework’ is redundant
+   |
+33 | import Test.Framework (testGroup, Test)
+   |                                   ^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/NumericOrderRounding/Elementary.hs:67:19: warning: [GHC-63397] [-Wname-shadowing]
+    This binding for ‘sample’ shadows the existing binding
+      imported from ‘Test.QuickCheck’ at src/Numeric/AERN/RealArithmetic/NumericOrderRounding/Elementary.hs:32:1-22
+      (and originally defined in ‘Test.QuickCheck.Gen’)
+   |
+67 | propExpOfNegRecip sample initEffort (NumOrd.UniformlyOrderedSingleton e1) =
+   |                   ^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/NumericOrderRounding/Elementary.hs:72:14: warning: [-Wunused-matches]
+    Defined but not used: ‘effExp’
+   |
+72 |     expr1Up (effExp, effMult) = one sample
+   |              ^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/NumericOrderRounding/Elementary.hs:72:22: warning: [-Wunused-matches]
+    Defined but not used: ‘effMult’
+   |
+72 |     expr1Up (effExp, effMult) = one sample
+   |                      ^^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/NumericOrderRounding/Elementary.hs:73:14: warning: [-Wunused-matches]
+    Defined but not used: ‘effExp’
+   |
+73 |     expr1Dn (effExp, effMult) = one sample
+   |              ^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/NumericOrderRounding/Elementary.hs:73:22: warning: [-Wunused-matches]
+    Defined but not used: ‘effMult’
+   |
+73 |     expr1Dn (effExp, effMult) = one sample
+   |                      ^^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/NumericOrderRounding/Elementary.hs:75:13: warning: [GHC-63397] [-Wname-shadowing]
+    This binding for ‘*^’ shadows the existing binding
+      imported from ‘Numeric.AERN.RealArithmetic.NumericOrderRounding.FieldOps’ at src/Numeric/AERN/RealArithmetic/NumericOrderRounding/Elementary.hs:21:1-64
+      (and originally defined
+         at src/Numeric/AERN/RealArithmetic/NumericOrderRounding/FieldOps.hs:275:1-4)
+   |
+75 |         let (*^) = multUpEff effMult in
+   |             ^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/NumericOrderRounding/Elementary.hs:89:13: warning: [GHC-63397] [-Wname-shadowing]
+    This binding for ‘*.’ shadows the existing binding
+      imported from ‘Numeric.AERN.RealArithmetic.NumericOrderRounding.FieldOps’ at src/Numeric/AERN/RealArithmetic/NumericOrderRounding/Elementary.hs:21:1-64
+      (and originally defined
+         at src/Numeric/AERN/RealArithmetic/NumericOrderRounding/FieldOps.hs:281:1-4)
+   |
+89 |         let (*.) = multDnEff effMult in
+   |             ^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/NumericOrderRounding/Elementary.hs:121:22: warning: [-Wunused-matches]
+    Defined but not used: ‘effMult’
+    |
+121 |     expr1Up (effExp, effMult, effAdd) =
+    |                      ^^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/NumericOrderRounding/Elementary.hs:122:13: warning: [GHC-63397] [-Wname-shadowing]
+    This binding for ‘+^’ shadows the existing binding
+      imported from ‘Numeric.AERN.RealArithmetic.NumericOrderRounding.FieldOps’ at src/Numeric/AERN/RealArithmetic/NumericOrderRounding/Elementary.hs:21:1-64
+      (and originally defined
+         at src/Numeric/AERN/RealArithmetic/NumericOrderRounding/FieldOps.hs:60:1-4)
+    |
+122 |         let (+^) = addUpEff effAdd in
+    |             ^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/NumericOrderRounding/Elementary.hs:124:22: warning: [-Wunused-matches]
+    Defined but not used: ‘effMult’
+    |
+124 |     expr1Dn (effExp, effMult, effAdd) =
+    |                      ^^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/NumericOrderRounding/Elementary.hs:125:13: warning: [GHC-63397] [-Wname-shadowing]
+    This binding for ‘+.’ shadows the existing binding
+      imported from ‘Numeric.AERN.RealArithmetic.NumericOrderRounding.FieldOps’ at src/Numeric/AERN/RealArithmetic/NumericOrderRounding/Elementary.hs:21:1-64
+      (and originally defined
+         at src/Numeric/AERN/RealArithmetic/NumericOrderRounding/FieldOps.hs:66:1-4)
+    |
+125 |         let (+.) = addDnEff effAdd in
+    |             ^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/NumericOrderRounding/Elementary.hs:127:31: warning: [-Wunused-matches]
+    Defined but not used: ‘effAdd’
+    |
+127 |     expr2Up (effExp, effMult, effAdd) =
+    |                               ^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/NumericOrderRounding/Elementary.hs:128:13: warning: [GHC-63397] [-Wname-shadowing]
+    This binding for ‘*^’ shadows the existing binding
+      imported from ‘Numeric.AERN.RealArithmetic.NumericOrderRounding.FieldOps’ at src/Numeric/AERN/RealArithmetic/NumericOrderRounding/Elementary.hs:21:1-64
+      (and originally defined
+         at src/Numeric/AERN/RealArithmetic/NumericOrderRounding/FieldOps.hs:275:1-4)
+    |
+128 |         let (*^) = multUpEff effMult in
+    |             ^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/NumericOrderRounding/Elementary.hs:130:31: warning: [-Wunused-matches]
+    Defined but not used: ‘effAdd’
+    |
+130 |     expr2Dn (effExp, effMult, effAdd) =
+    |                               ^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/NumericOrderRounding/Elementary.hs:131:13: warning: [GHC-63397] [-Wname-shadowing]
+    This binding for ‘*.’ shadows the existing binding
+      imported from ‘Numeric.AERN.RealArithmetic.NumericOrderRounding.FieldOps’ at src/Numeric/AERN/RealArithmetic/NumericOrderRounding/Elementary.hs:21:1-64
+      (and originally defined
+         at src/Numeric/AERN/RealArithmetic/NumericOrderRounding/FieldOps.hs:281:1-4)
+    |
+131 |         let (*.) = multDnEff effMult in
+    |             ^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/NumericOrderRounding/Elementary.hs:134:1: warning: [GHC-38417] [-Wmissing-signatures]
+    Top-level binding with no type signature:
+      testsUpDnExp :: (NumOrd.ArbitraryOrderedTuple t,
+                       NumOrd.PartialComparison t, NumOrd.RoundedLattice t,
+                       RoundedExponentiation t, RoundedMultiply t, Neg t, HasOne t,
+                       HasLegalValues t, ShowInternals t, RoundedAdd t, Show t) =>
+                      ([Char], t) -> Test
+    |
+134 | testsUpDnExp (name, sample) =
+    | ^^^^^^^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/NumericOrderRounding/Elementary.hs:134:21: warning: [GHC-63397] [-Wname-shadowing]
+    This binding for ‘sample’ shadows the existing binding
+      imported from ‘Test.QuickCheck’ at src/Numeric/AERN/RealArithmetic/NumericOrderRounding/Elementary.hs:32:1-22
+      (and originally defined in ‘Test.QuickCheck.Gen’)
+    |
+134 | testsUpDnExp (name, sample) =
+    |                     ^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/NumericOrderRounding/Elementary.hs:171:16: warning: [GHC-63397] [-Wname-shadowing]
+    This binding for ‘sample’ shadows the existing binding
+      imported from ‘Test.QuickCheck’ at src/Numeric/AERN/RealArithmetic/NumericOrderRounding/Elementary.hs:32:1-22
+      (and originally defined in ‘Test.QuickCheck.Gen’)
+    |
+171 | propSqrtSquare sample initEffort (NumOrd.UniformlyOrderedSingleton e1) =
+    |                ^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/NumericOrderRounding/Elementary.hs:176:14: warning: [-Wunused-matches]
+    Defined but not used: ‘e’
+    |
+176 |         Left e -> True -- was unlucky with the params
+    |              ^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/NumericOrderRounding/Elementary.hs:179:32: warning: [-Wunused-matches]
+    Defined but not used: ‘effCompare’
+    |
+179 |     expr1Up (effSqrt, effMult, effCompare) =
+    |                                ^^^^^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/NumericOrderRounding/Elementary.hs:182:9: warning: [GHC-63397] [-Wname-shadowing]
+    This binding for ‘*^’ shadows the existing binding
+      imported from ‘Numeric.AERN.RealArithmetic.NumericOrderRounding.FieldOps’ at src/Numeric/AERN/RealArithmetic/NumericOrderRounding/Elementary.hs:21:1-64
+      (and originally defined
+         at src/Numeric/AERN/RealArithmetic/NumericOrderRounding/FieldOps.hs:275:1-4)
+    |
+182 |         (*^) = multUpEff effMult
+    |         ^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/NumericOrderRounding/Elementary.hs:191:9: warning: [GHC-63397] [-Wname-shadowing]
+    This binding for ‘*.’ shadows the existing binding
+      imported from ‘Numeric.AERN.RealArithmetic.NumericOrderRounding.FieldOps’ at src/Numeric/AERN/RealArithmetic/NumericOrderRounding/Elementary.hs:21:1-64
+      (and originally defined
+         at src/Numeric/AERN/RealArithmetic/NumericOrderRounding/FieldOps.hs:281:1-4)
+    |
+191 |         (*.) = multDnEff effMult
+    |         ^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/NumericOrderRounding/Elementary.hs:196:1: warning: [GHC-38417] [-Wmissing-signatures]
+    Top-level binding with no type signature:
+      testsUpDnSqrt :: (NumOrd.ArbitraryOrderedTuple t, Show t,
+                        NumOrd.PartialComparison t, RoundedSquareRoot t, RoundedMultiply t,
+                        HasZero t, HasLegalValues t, ShowInternals t) =>
+                       ([Char], t) -> Test
+    |
+196 | testsUpDnSqrt (name, sample) =
+    | ^^^^^^^^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/NumericOrderRounding/Elementary.hs:196:22: warning: [GHC-63397] [-Wname-shadowing]
+    This binding for ‘sample’ shadows the existing binding
+      imported from ‘Test.QuickCheck’ at src/Numeric/AERN/RealArithmetic/NumericOrderRounding/Elementary.hs:32:1-22
+      (and originally defined in ‘Test.QuickCheck.Gen’)
+    |
+196 | testsUpDnSqrt (name, sample) =
+    |                      ^^^^^^
+[14 of 25] Compiling Numeric.AERN.RealArithmetic.NumericOrderRounding
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/NumericOrderRounding.hs:39:1: warning: [-Wunused-imports]
+    The import of ‘Numeric.AERN.NumericOrder’ is redundant
+      except perhaps to import instances from ‘Numeric.AERN.NumericOrder’
+    To import instances alone, use: import Numeric.AERN.NumericOrder()
+   |
+39 | import Numeric.AERN.NumericOrder
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[15 of 25] Compiling Numeric.AERN.RealArithmetic.RefinementOrderRounding.FieldOps
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/RefinementOrderRounding/FieldOps.hs:26:1: warning: [-Wunused-imports]
+    The qualified import of ‘Numeric.AERN.RealArithmetic.NumericOrderRounding’ is redundant
+      except perhaps to import instances from ‘Numeric.AERN.RealArithmetic.NumericOrderRounding’
+    To import instances alone, use: import Numeric.AERN.RealArithmetic.NumericOrderRounding()
+   |
+26 | import qualified Numeric.AERN.RealArithmetic.NumericOrderRounding as ArithUpDn
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/RefinementOrderRounding/FieldOps.hs:27:1: warning: [-Wunused-imports]
+    The import of ‘Numeric.AERN.RealArithmetic.RefinementOrderRounding.Conversion’ is redundant
+      except perhaps to import instances from ‘Numeric.AERN.RealArithmetic.RefinementOrderRounding.Conversion’
+    To import instances alone, use: import Numeric.AERN.RealArithmetic.RefinementOrderRounding.Conversion()
+   |
+27 | import Numeric.AERN.RealArithmetic.RefinementOrderRounding.Conversion
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/RefinementOrderRounding/FieldOps.hs:34:1: warning: [-Wunused-imports]
+    The import of ‘Numeric.AERN.RealArithmetic.Measures’ is redundant
+      except perhaps to import instances from ‘Numeric.AERN.RealArithmetic.Measures’
+    To import instances alone, use: import Numeric.AERN.RealArithmetic.Measures()
+   |
+34 | import Numeric.AERN.RealArithmetic.Measures
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/RefinementOrderRounding/FieldOps.hs:38:1: warning: [-Wunused-imports]
+    The import of ‘Test.QuickCheck’ is redundant
+      except perhaps to import instances from ‘Test.QuickCheck’
+    To import instances alone, use: import Test.QuickCheck()
+   |
+38 | import Test.QuickCheck
+   | ^^^^^^^^^^^^^^^^^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/RefinementOrderRounding/FieldOps.hs:39:35: warning: [-Wunused-imports]
+    The import of ‘Test’ from module ‘Test.Framework’ is redundant
+   |
+39 | import Test.Framework (testGroup, Test)
+   |                                   ^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/RefinementOrderRounding/FieldOps.hs:42:1: warning: [-Wunused-imports]
+    The import of ‘Data.Maybe’ is redundant
+      except perhaps to import instances from ‘Data.Maybe’
+    To import instances alone, use: import Data.Maybe()
+   |
+42 | import Data.Maybe
+   | ^^^^^^^^^^^^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/RefinementOrderRounding/FieldOps.hs:88:18: warning: [GHC-63397] [-Wname-shadowing]
+    This binding for ‘sample’ shadows the existing binding
+      imported from ‘Test.QuickCheck’ at src/Numeric/AERN/RealArithmetic/RefinementOrderRounding/FieldOps.hs:38:1-22
+      (and originally defined in ‘Test.QuickCheck.Gen’)
+   |
+88 | propInOutAddZero sample (RefOrd.UniformlyOrderedSingleton e) effort =
+   |                  ^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/RefinementOrderRounding/FieldOps.hs:128:1: warning: [GHC-38417] [-Wmissing-signatures]
+    Top-level binding with no type signature:
+      testsInOutAdd :: (RefOrd.ArbitraryOrderedTuple t, Show t,
+                        RefOrd.PartialComparison t, RoundedAdd t, HasZero t,
+                        HasLegalValues t) =>
+                       ([Char], t) -> Numeric.AERN.Basics.Arbitrary.Area t -> Test
+    |
+128 | testsInOutAdd (name, sample) area =
+    | ^^^^^^^^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/RefinementOrderRounding/FieldOps.hs:128:22: warning: [GHC-63397] [-Wname-shadowing]
+    This binding for ‘sample’ shadows the existing binding
+      imported from ‘Test.QuickCheck’ at src/Numeric/AERN/RealArithmetic/RefinementOrderRounding/FieldOps.hs:38:1-22
+      (and originally defined in ‘Test.QuickCheck.Gen’)
+    |
+128 | testsInOutAdd (name, sample) area =
+    |                      ^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/RefinementOrderRounding/FieldOps.hs:173:20: warning: [GHC-63397] [-Wname-shadowing]
+    This binding for ‘sample’ shadows the existing binding
+      imported from ‘Test.QuickCheck’ at src/Numeric/AERN/RealArithmetic/RefinementOrderRounding/FieldOps.hs:38:1-22
+      (and originally defined in ‘Test.QuickCheck.Gen’)
+    |
+173 | propInOutSubtrElim sample (RefOrd.UniformlyOrderedSingleton e) effort =
+    |                    ^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/RefinementOrderRounding/FieldOps.hs:191:13: warning: [GHC-63397] [-Wname-shadowing]
+    This binding for ‘>-<’ shadows the existing binding
+      defined at src/Numeric/AERN/RealArithmetic/RefinementOrderRounding/FieldOps.hs:153:1
+    |
+191 |         let (>-<) = subtrInEff eff in e1 >-< (neg e2)
+    |             ^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/RefinementOrderRounding/FieldOps.hs:193:13: warning: [GHC-63397] [-Wname-shadowing]
+    This binding for ‘<->’ shadows the existing binding
+      defined at src/Numeric/AERN/RealArithmetic/RefinementOrderRounding/FieldOps.hs:161:1
+    |
+193 |         let (<->) = subtrOutEff eff in e1 <-> (neg e2)
+    |             ^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/RefinementOrderRounding/FieldOps.hs:195:13: warning: [GHC-63397] [-Wname-shadowing]
+    This binding for ‘>+<’ shadows the existing binding
+      defined at src/Numeric/AERN/RealArithmetic/RefinementOrderRounding/FieldOps.hs:67:1
+    |
+195 |         let (>+<) = addInEff eff in e1 >+< e2
+    |             ^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/RefinementOrderRounding/FieldOps.hs:197:13: warning: [GHC-63397] [-Wname-shadowing]
+    This binding for ‘<+>’ shadows the existing binding
+      defined at src/Numeric/AERN/RealArithmetic/RefinementOrderRounding/FieldOps.hs:75:1
+    |
+197 |         let (<+>) = addOutEff eff in e1 <+> e2
+    |             ^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/RefinementOrderRounding/FieldOps.hs:212:1: warning: [GHC-38417] [-Wmissing-signatures]
+    Top-level binding with no type signature:
+      testsInOutSubtr :: (RefOrd.ArbitraryOrderedTuple t, Show t,
+                          RefOrd.PartialComparison t, RoundedSubtr t, HasLegalValues t) =>
+                         ([Char], t) -> Numeric.AERN.Basics.Arbitrary.Area t -> Test
+    |
+212 | testsInOutSubtr (name, sample) area =
+    | ^^^^^^^^^^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/RefinementOrderRounding/FieldOps.hs:212:24: warning: [GHC-63397] [-Wname-shadowing]
+    This binding for ‘sample’ shadows the existing binding
+      imported from ‘Test.QuickCheck’ at src/Numeric/AERN/RealArithmetic/RefinementOrderRounding/FieldOps.hs:38:1-22
+      (and originally defined in ‘Test.QuickCheck.Gen’)
+    |
+212 | testsInOutSubtr (name, sample) area =
+    |                        ^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/RefinementOrderRounding/FieldOps.hs:259:5: warning: [GHC-63397] [-Wname-shadowing]
+    This binding for ‘max’ shadows the existing binding
+      imported from ‘Prelude’ at src/Numeric/AERN/RealArithmetic/RefinementOrderRounding/FieldOps.hs:21:1-34
+      (and originally defined in ‘ghc-prim-0.10.0:GHC.Classes’)
+    |
+259 |     max = NumOrd.maxOutEff effortMinmax
+    |     ^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/RefinementOrderRounding/FieldOps.hs:277:5: warning: [GHC-63397] [-Wname-shadowing]
+    This binding for ‘max’ shadows the existing binding
+      imported from ‘Prelude’ at src/Numeric/AERN/RealArithmetic/RefinementOrderRounding/FieldOps.hs:21:1-34
+      (and originally defined in ‘ghc-prim-0.10.0:GHC.Classes’)
+    |
+277 |     max = NumOrd.maxInEff effortMinmax
+    |     ^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/RefinementOrderRounding/FieldOps.hs:316:1: warning: [GHC-38417] [-Wmissing-signatures]
+    Top-level binding with no type signature:
+      testsInOutAbs :: (RefOrd.ArbitraryOrderedTuple t, Show t,
+                        RefOrd.PartialComparison t, RoundedAbs t, HasZero t, Neg t,
+                        HasLegalValues t) =>
+                       ([Char], t) -> Numeric.AERN.Basics.Arbitrary.Area t -> Test
+    |
+316 | testsInOutAbs (name, sample) area =
+    | ^^^^^^^^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/RefinementOrderRounding/FieldOps.hs:316:22: warning: [GHC-63397] [-Wname-shadowing]
+    This binding for ‘sample’ shadows the existing binding
+      imported from ‘Test.QuickCheck’ at src/Numeric/AERN/RealArithmetic/RefinementOrderRounding/FieldOps.hs:38:1-22
+      (and originally defined in ‘Test.QuickCheck.Gen’)
+    |
+316 | testsInOutAbs (name, sample) area =
+    |                      ^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/RefinementOrderRounding/FieldOps.hs:378:18: warning: [GHC-63397] [-Wname-shadowing]
+    This binding for ‘sample’ shadows the existing binding
+      imported from ‘Test.QuickCheck’ at src/Numeric/AERN/RealArithmetic/RefinementOrderRounding/FieldOps.hs:38:1-22
+      (and originally defined in ‘Test.QuickCheck.Gen’)
+    |
+378 | propInOutMultOne sample (RefOrd.UniformlyOrderedSingleton e) effort =
+    |                  ^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/RefinementOrderRounding/FieldOps.hs:424:1: warning: [GHC-38417] [-Wmissing-signatures]
+    Top-level binding with no type signature:
+      testsInOutMult :: (RefOrd.ArbitraryOrderedTuple t,
+                         RefOrd.PartialComparison t, RoundedMultiply t, HasOne t,
+                         HasLegalValues t, HasZero t, Show t, RoundedAdd t,
+                         HasAntiConsistency t) =>
+                        ([Char], t) -> Numeric.AERN.Basics.Arbitrary.Area t -> Test
+    |
+424 | testsInOutMult (name, sample) area =
+    | ^^^^^^^^^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/RefinementOrderRounding/FieldOps.hs:424:23: warning: [GHC-63397] [-Wname-shadowing]
+    This binding for ‘sample’ shadows the existing binding
+      imported from ‘Test.QuickCheck’ at src/Numeric/AERN/RealArithmetic/RefinementOrderRounding/FieldOps.hs:38:1-22
+      (and originally defined in ‘Test.QuickCheck.Gen’)
+    |
+424 | testsInOutMult (name, sample) area =
+    |                       ^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/RefinementOrderRounding/FieldOps.hs:481:1: warning: [GHC-38417] [-Wmissing-signatures]
+    Top-level binding with no type signature:
+      powerToNonnegIntDefaultEffortFromMult :: RoundedMultiplyEffort t =>
+                                               t -> MultEffortIndicator t
+    |
+481 | powerToNonnegIntDefaultEffortFromMult a =
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/RefinementOrderRounding/FieldOps.hs:541:13: warning: [GHC-63397] [-Wname-shadowing]
+    This binding for ‘>^<’ shadows the existing binding
+      defined at src/Numeric/AERN/RealArithmetic/RefinementOrderRounding/FieldOps.hs:465:1
+    |
+541 |         let (>^<) = powerToNonnegIntInEff effPower in
+    |             ^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/RefinementOrderRounding/FieldOps.hs:542:13: warning: [GHC-63397] [-Wname-shadowing]
+    This binding for ‘>*<’ shadows the existing binding
+      defined at src/Numeric/AERN/RealArithmetic/RefinementOrderRounding/FieldOps.hs:345:1
+    |
+542 |         let (>*<) = multInEff effMult in
+    |             ^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/RefinementOrderRounding/FieldOps.hs:545:13: warning: [GHC-63397] [-Wname-shadowing]
+    This binding for ‘<^>’ shadows the existing binding
+      defined at src/Numeric/AERN/RealArithmetic/RefinementOrderRounding/FieldOps.hs:473:1
+    |
+545 |         let (<^>) = powerToNonnegIntOutEff effPower in
+    |             ^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/RefinementOrderRounding/FieldOps.hs:546:13: warning: [GHC-63397] [-Wname-shadowing]
+    This binding for ‘<*>’ shadows the existing bindings
+      imported from ‘Prelude’ at src/Numeric/AERN/RealArithmetic/RefinementOrderRounding/FieldOps.hs:21:1-34
+      (and originally defined in ‘GHC.Base’)
+      defined at src/Numeric/AERN/RealArithmetic/RefinementOrderRounding/FieldOps.hs:353:1
+    |
+546 |         let (<*>) = multOutEff effMult in
+    |             ^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/RefinementOrderRounding/FieldOps.hs:548:24: warning: [-Wunused-matches]
+    Defined but not used: ‘effMult’
+    |
+548 |     expr2Up (effPower, effMult) =
+    |                        ^^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/RefinementOrderRounding/FieldOps.hs:549:13: warning: [GHC-63397] [-Wname-shadowing]
+    This binding for ‘>^<’ shadows the existing binding
+      defined at src/Numeric/AERN/RealArithmetic/RefinementOrderRounding/FieldOps.hs:465:1
+    |
+549 |         let (>^<) = powerToNonnegIntInEff effPower in
+    |             ^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/RefinementOrderRounding/FieldOps.hs:551:24: warning: [-Wunused-matches]
+    Defined but not used: ‘effMult’
+    |
+551 |     expr2Dn (effPower, effMult) =
+    |                        ^^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/RefinementOrderRounding/FieldOps.hs:552:13: warning: [GHC-63397] [-Wname-shadowing]
+    This binding for ‘<^>’ shadows the existing binding
+      defined at src/Numeric/AERN/RealArithmetic/RefinementOrderRounding/FieldOps.hs:473:1
+    |
+552 |         let (<^>) = powerToNonnegIntOutEff effPower in
+    |             ^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/RefinementOrderRounding/FieldOps.hs:555:1: warning: [GHC-38417] [-Wmissing-signatures]
+    Top-level binding with no type signature:
+      testsInOutIntPower :: (RefOrd.ArbitraryOrderedTuple t, Show t,
+                             RefOrd.PartialComparison t, RoundedPowerToNonnegInt t,
+                             RoundedMultiply t, HasOne t, HasAntiConsistency t,
+                             HasLegalValues t) =>
+                            ([Char], t) -> Numeric.AERN.Basics.Arbitrary.Area t -> Test
+    |
+555 | testsInOutIntPower (name, sample) area =
+    | ^^^^^^^^^^^^^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/RefinementOrderRounding/FieldOps.hs:555:27: warning: [GHC-63397] [-Wname-shadowing]
+    This binding for ‘sample’ shadows the existing binding
+      imported from ‘Test.QuickCheck’ at src/Numeric/AERN/RealArithmetic/RefinementOrderRounding/FieldOps.hs:38:1-22
+      (and originally defined in ‘Test.QuickCheck.Gen’)
+    |
+555 | testsInOutIntPower (name, sample) area =
+    |                           ^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/RefinementOrderRounding/FieldOps.hs:646:18: warning: [GHC-63397] [-Wname-shadowing]
+    This binding for ‘sample’ shadows the existing binding
+      imported from ‘Test.QuickCheck’ at src/Numeric/AERN/RealArithmetic/RefinementOrderRounding/FieldOps.hs:38:1-22
+      (and originally defined in ‘Test.QuickCheck.Gen’)
+    |
+646 | propInOutDivElim sample (RefOrd.UniformlyOrderedSingleton a) efforts2@(effComp, _) =
+    |                  ^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/RefinementOrderRounding/FieldOps.hs:646:72: warning: [-Wunused-matches]
+    Defined but not used: ‘effComp’
+    |
+646 | propInOutDivElim sample (RefOrd.UniformlyOrderedSingleton a) efforts2@(effComp, _) =
+    |                                                                        ^^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/RefinementOrderRounding/FieldOps.hs:664:76: warning: [-Wunused-matches]
+    Defined but not used: ‘effComp’
+    |
+664 | propInOutDivRecipMult _ (RefOrd.UniformlyOrderedPair (e1, e2)) initEffort@(effComp,_) =
+    |                                                                            ^^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/RefinementOrderRounding/FieldOps.hs:671:44: warning: [GHC-63397] [-Wname-shadowing]
+    This binding for ‘e1’ shadows the existing binding
+      bound at src/Numeric/AERN/RealArithmetic/RefinementOrderRounding/FieldOps.hs:664:55
+    |
+671 |     expr1 op1Eff op2Eff (effort1, effort2) e1 e2 = 
+    |                                            ^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/RefinementOrderRounding/FieldOps.hs:671:47: warning: [GHC-63397] [-Wname-shadowing]
+    This binding for ‘e2’ shadows the existing binding
+      bound at src/Numeric/AERN/RealArithmetic/RefinementOrderRounding/FieldOps.hs:664:59
+    |
+671 |     expr1 op1Eff op2Eff (effort1, effort2) e1 e2 = 
+    |                                               ^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/RefinementOrderRounding/FieldOps.hs:674:9: warning: [GHC-63397] [-Wname-shadowing]
+    This binding for ‘*’ shadows the existing binding
+      imported from ‘Prelude’ at src/Numeric/AERN/RealArithmetic/RefinementOrderRounding/FieldOps.hs:21:1-34
+      (and originally defined in ‘GHC.Num’)
+    |
+674 |         (*) = op1Eff effort1
+    |         ^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/RefinementOrderRounding/FieldOps.hs:675:9: warning: [GHC-63397] [-Wname-shadowing]
+    This binding for ‘/’ shadows the existing binding
+      imported from ‘Prelude’ at src/Numeric/AERN/RealArithmetic/RefinementOrderRounding/FieldOps.hs:21:1-34
+      (and originally defined in ‘GHC.Real’)
+    |
+675 |         (/) = op2Eff effort2
+    |         ^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/RefinementOrderRounding/FieldOps.hs:676:11: warning: [-Wunused-matches]
+    Defined but not used: ‘op1Eff’
+    |
+676 |     expr2 op1Eff op2Eff (effort1, effort2) e1 e2 = 
+    |           ^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/RefinementOrderRounding/FieldOps.hs:676:26: warning: [-Wunused-matches]
+    Defined but not used: ‘effort1’
+    |
+676 |     expr2 op1Eff op2Eff (effort1, effort2) e1 e2 = 
+    |                          ^^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/RefinementOrderRounding/FieldOps.hs:676:44: warning: [GHC-63397] [-Wname-shadowing]
+    This binding for ‘e1’ shadows the existing binding
+      bound at src/Numeric/AERN/RealArithmetic/RefinementOrderRounding/FieldOps.hs:664:55
+    |
+676 |     expr2 op1Eff op2Eff (effort1, effort2) e1 e2 = 
+    |                                            ^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/RefinementOrderRounding/FieldOps.hs:676:47: warning: [GHC-63397] [-Wname-shadowing]
+    This binding for ‘e2’ shadows the existing binding
+      bound at src/Numeric/AERN/RealArithmetic/RefinementOrderRounding/FieldOps.hs:664:59
+    |
+676 |     expr2 op1Eff op2Eff (effort1, effort2) e1 e2 = 
+    |                                               ^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/RefinementOrderRounding/FieldOps.hs:679:9: warning: [GHC-63397] [-Wname-shadowing]
+    This binding for ‘/’ shadows the existing binding
+      imported from ‘Prelude’ at src/Numeric/AERN/RealArithmetic/RefinementOrderRounding/FieldOps.hs:21:1-34
+      (and originally defined in ‘GHC.Real’)
+    |
+679 |         (/) = op2Eff effort2
+    |         ^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/RefinementOrderRounding/FieldOps.hs:681:1: warning: [GHC-38417] [-Wmissing-signatures]
+    Top-level binding with no type signature:
+      testsInOutDiv :: (RefOrd.ArbitraryOrderedTuple t, Show t,
+                        RefOrd.PartialComparison t, RoundedMultiply t, RoundedDivide t,
+                        HasZero t, HasLegalValues t) =>
+                       ([Char], t) -> Numeric.AERN.Basics.Arbitrary.Area t -> Test
+    |
+681 | testsInOutDiv (name, sample) area =
+    | ^^^^^^^^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/RefinementOrderRounding/FieldOps.hs:681:22: warning: [GHC-63397] [-Wname-shadowing]
+    This binding for ‘sample’ shadows the existing binding
+      imported from ‘Test.QuickCheck’ at src/Numeric/AERN/RealArithmetic/RefinementOrderRounding/FieldOps.hs:38:1-22
+      (and originally defined in ‘Test.QuickCheck.Gen’)
+    |
+681 | testsInOutDiv (name, sample) area =
+    |                      ^^^^^^
+[16 of 25] Compiling Numeric.AERN.RealArithmetic.NumericOrderRounding.Operators
+[17 of 25] Compiling Numeric.AERN.RealArithmetic.NumericOrderRounding.ElementaryFromFieldOps.Sqrt
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/NumericOrderRounding/ElementaryFromFieldOps/Sqrt.hs:37:1: warning: [-Wunused-imports]
+    The import of ‘Control.Applicative’ is redundant
+      except perhaps to import instances from ‘Control.Applicative’
+    To import instances alone, use: import Control.Applicative()
+   |
+37 | import Control.Applicative
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^
+[18 of 25] Compiling Numeric.AERN.RealArithmetic.Bench
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/Bench.hs:50:1: warning: [GHC-38417] [-Wmissing-signatures]
+    Top-level binding with no type signature:
+      mkCommentAreaImprecision :: (ArithUpDn.ConvertEffortIndicator
+                                     a1 Double
+                                   ~ ArithUpDn.ConvertEffortIndicator (t -> t) Double,
+                                   ImprecisionEffortIndicator (t -> t)
+                                   ~ ImprecisionEffortIndicator a1,
+                                   HasThinRepresentative (t -> t), HasImprecision a1,
+                                   HasImprecision (t -> t), ArithUpDn.Convertible a1 Double,
+                                   ArithUpDn.Convertible (t -> t) Double,
+                                   ArithUpDn.Convertible (Imprecision a1) Double,
+                                   aern-order-0.5.0:Numeric.AERN.NumericOrder.PartialComparison.PartialComparison
+                                     (t -> t),
+                                   HasZero t, Show a2, Show a1, Show (t -> t),
+                                   Show (Imprecision a1)) =>
+                                  (a2 -> (t -> t) -> a1) -> a2 -> (t -> t) -> [Char]
+   |
+50 | mkCommentAreaImprecision op effort a =
+   | ^^^^^^^^^^^^^^^^^^^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/Bench.hs:73:5: warning: [GHC-62161] [-Wincomplete-uni-patterns]
+    Pattern match(es) are non-exhaustive
+    In a pattern binding:
+        Patterns of type ‘Maybe Double’ not matched: Nothing
+   |
+73 |     Just aD =
+   |     ^^^^^^^^^...
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/Bench.hs:78:5: warning: [GHC-62161] [-Wincomplete-uni-patterns]
+    Pattern match(es) are non-exhaustive
+    In a pattern binding:
+        Patterns of type ‘Maybe Double’ not matched: Nothing
+   |
+78 |     Just resultD =
+   |     ^^^^^^^^^^^^^^...
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/Bench.hs:84:5: warning: [GHC-62161] [-Wincomplete-uni-patterns]
+    Pattern match(es) are non-exhaustive
+    In a pattern binding:
+        Patterns of type ‘Maybe Double’ not matched: Nothing
+   |
+84 |     Just imprecisionD =
+   |     ^^^^^^^^^^^^^^^^^^^...
+[19 of 25] Compiling Numeric.AERN.RealArithmetic.RefinementOrderRounding.MixedFieldOps
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/RefinementOrderRounding/MixedFieldOps.hs:28:1: warning: [-Wunused-imports]
+    The import of ‘Numeric.AERN.RealArithmetic.Measures’ is redundant
+      except perhaps to import instances from ‘Numeric.AERN.RealArithmetic.Measures’
+    To import instances alone, use: import Numeric.AERN.RealArithmetic.Measures()
+   |
+28 | import Numeric.AERN.RealArithmetic.Measures
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/RefinementOrderRounding/MixedFieldOps.hs:29:1: warning: [-Wunused-imports]
+    The qualified import of ‘Numeric.AERN.NumericOrder’ is redundant
+      except perhaps to import instances from ‘Numeric.AERN.NumericOrder’
+    To import instances alone, use: import Numeric.AERN.NumericOrder()
+   |
+29 | import qualified Numeric.AERN.NumericOrder as NumOrd
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/RefinementOrderRounding/MixedFieldOps.hs:32:1: warning: [-Wunused-imports]
+    The import of ‘Test.QuickCheck’ is redundant
+      except perhaps to import instances from ‘Test.QuickCheck’
+    To import instances alone, use: import Test.QuickCheck()
+   |
+32 | import Test.QuickCheck
+   | ^^^^^^^^^^^^^^^^^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/RefinementOrderRounding/MixedFieldOps.hs:33:35: warning: [-Wunused-imports]
+    The import of ‘Test’ from module ‘Test.Framework’ is redundant
+   |
+33 | import Test.Framework (testGroup, Test)
+   |                                   ^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/RefinementOrderRounding/MixedFieldOps.hs:103:1: warning: [GHC-38417] [-Wmissing-signatures]
+    Top-level binding with no type signature:
+      mixedAddDefaultEffortByConversion :: (RoundedAddEffort t2,
+                                            Convertible t1 t2) =>
+                                           t2
+                                           -> t1
+                                           -> (AddEffortIndicator t2, ConvertEffortIndicator t1 t2)
+    |
+103 | mixedAddDefaultEffortByConversion d n = 
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/RefinementOrderRounding/MixedFieldOps.hs:113:5: warning: [GHC-63397] [-Wname-shadowing]
+    This binding for ‘sample’ shadows the existing binding
+      imported from ‘Test.QuickCheck’ at src/Numeric/AERN/RealArithmetic/RefinementOrderRounding/MixedFieldOps.hs:32:1-22
+      (and originally defined in ‘Test.QuickCheck.Gen’)
+    |
+113 |     sample = d
+    |     ^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/RefinementOrderRounding/MixedFieldOps.hs:122:5: warning: [GHC-63397] [-Wname-shadowing]
+    This binding for ‘sample’ shadows the existing binding
+      imported from ‘Test.QuickCheck’ at src/Numeric/AERN/RealArithmetic/RefinementOrderRounding/MixedFieldOps.hs:32:1-22
+      (and originally defined in ‘Test.QuickCheck.Gen’)
+    |
+122 |     sample = d
+    |     ^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/RefinementOrderRounding/MixedFieldOps.hs:137:27: warning: [GHC-63397] [-Wname-shadowing]
+    This binding for ‘sample’ shadows the existing binding
+      imported from ‘Test.QuickCheck’ at src/Numeric/AERN/RealArithmetic/RefinementOrderRounding/MixedFieldOps.hs:32:1-22
+      (and originally defined in ‘Test.QuickCheck.Gen’)
+    |
+137 | propMixedAddEqualsConvert sample _sampleN 
+    |                           ^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/RefinementOrderRounding/MixedFieldOps.hs:147:13: warning: [GHC-63397] [-Wname-shadowing]
+    This binding for ‘>+<|’ shadows the existing binding
+      defined at src/Numeric/AERN/RealArithmetic/RefinementOrderRounding/MixedFieldOps.hs:75:1
+    |
+147 |         let (>+<|) = mixedAddInEff effMAdd in d >+<| n
+    |             ^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/RefinementOrderRounding/MixedFieldOps.hs:149:13: warning: [GHC-63397] [-Wname-shadowing]
+    This binding for ‘<+>|’ shadows the existing binding
+      defined at src/Numeric/AERN/RealArithmetic/RefinementOrderRounding/MixedFieldOps.hs:87:1
+    |
+149 |         let (<+>|) = mixedAddOutEff effMAdd in d <+>| n
+    |             ^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/RefinementOrderRounding/MixedFieldOps.hs:151:13: warning: [GHC-63397] [-Wname-shadowing]
+    This binding for ‘>+<’ shadows the existing binding
+      imported from ‘Numeric.AERN.RealArithmetic.RefinementOrderRounding.FieldOps’ at src/Numeric/AERN/RealArithmetic/RefinementOrderRounding/MixedFieldOps.hs:21:1-67
+      (and originally defined
+         at src/Numeric/AERN/RealArithmetic/RefinementOrderRounding/FieldOps.hs:67:1-5)
+    |
+151 |         let (>+<) = addInEff effAdd in  d >+< (convertInEff effConv sample n)
+    |             ^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/RefinementOrderRounding/MixedFieldOps.hs:153:13: warning: [GHC-63397] [-Wname-shadowing]
+    This binding for ‘<+>’ shadows the existing binding
+      imported from ‘Numeric.AERN.RealArithmetic.RefinementOrderRounding.FieldOps’ at src/Numeric/AERN/RealArithmetic/RefinementOrderRounding/MixedFieldOps.hs:21:1-67
+      (and originally defined
+         at src/Numeric/AERN/RealArithmetic/RefinementOrderRounding/FieldOps.hs:75:1-5)
+    |
+153 |         let (<+>) = addOutEff effAdd in  d <+> (convertOutEff effConv sample n)
+    |             ^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/RefinementOrderRounding/MixedFieldOps.hs:207:1: warning: [GHC-38417] [-Wmissing-signatures]
+    Top-level binding with no type signature:
+      mixedMultDefaultEffortByConversion :: (RoundedMultiplyEffort t2,
+                                             Convertible t1 t2) =>
+                                            t2
+                                            -> t1
+                                            -> (MultEffortIndicator t2,
+                                                ConvertEffortIndicator t1 t2)
+    |
+207 | mixedMultDefaultEffortByConversion d n = 
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/RefinementOrderRounding/MixedFieldOps.hs:217:5: warning: [GHC-63397] [-Wname-shadowing]
+    This binding for ‘sample’ shadows the existing binding
+      imported from ‘Test.QuickCheck’ at src/Numeric/AERN/RealArithmetic/RefinementOrderRounding/MixedFieldOps.hs:32:1-22
+      (and originally defined in ‘Test.QuickCheck.Gen’)
+    |
+217 |     sample = d
+    |     ^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/RefinementOrderRounding/MixedFieldOps.hs:226:5: warning: [GHC-63397] [-Wname-shadowing]
+    This binding for ‘sample’ shadows the existing binding
+      imported from ‘Test.QuickCheck’ at src/Numeric/AERN/RealArithmetic/RefinementOrderRounding/MixedFieldOps.hs:32:1-22
+      (and originally defined in ‘Test.QuickCheck.Gen’)
+    |
+226 |     sample = d
+    |     ^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/RefinementOrderRounding/MixedFieldOps.hs:241:28: warning: [GHC-63397] [-Wname-shadowing]
+    This binding for ‘sample’ shadows the existing binding
+      imported from ‘Test.QuickCheck’ at src/Numeric/AERN/RealArithmetic/RefinementOrderRounding/MixedFieldOps.hs:32:1-22
+      (and originally defined in ‘Test.QuickCheck.Gen’)
+    |
+241 | propMixedMultEqualsConvert sample _sampleN 
+    |                            ^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/RefinementOrderRounding/MixedFieldOps.hs:251:13: warning: [GHC-63397] [-Wname-shadowing]
+    This binding for ‘>*<|’ shadows the existing binding
+      defined at src/Numeric/AERN/RealArithmetic/RefinementOrderRounding/MixedFieldOps.hs:179:1
+    |
+251 |         let (>*<|) = mixedMultInEff effMMult in d >*<| n
+    |             ^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/RefinementOrderRounding/MixedFieldOps.hs:253:13: warning: [GHC-63397] [-Wname-shadowing]
+    This binding for ‘<*>|’ shadows the existing binding
+      defined at src/Numeric/AERN/RealArithmetic/RefinementOrderRounding/MixedFieldOps.hs:191:1
+    |
+253 |         let (<*>|) = mixedMultOutEff effMMult in d <*>| n
+    |             ^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/RefinementOrderRounding/MixedFieldOps.hs:255:13: warning: [GHC-63397] [-Wname-shadowing]
+    This binding for ‘>*<’ shadows the existing binding
+      imported from ‘Numeric.AERN.RealArithmetic.RefinementOrderRounding.FieldOps’ at src/Numeric/AERN/RealArithmetic/RefinementOrderRounding/MixedFieldOps.hs:21:1-67
+      (and originally defined
+         at src/Numeric/AERN/RealArithmetic/RefinementOrderRounding/FieldOps.hs:345:1-5)
+    |
+255 |         let (>*<) = multInEff effMult in d >*< (convertInEff effConv sample n)
+    |             ^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/RefinementOrderRounding/MixedFieldOps.hs:257:13: warning: [GHC-63397] [-Wname-shadowing]
+    This binding for ‘<*>’ shadows the existing bindings
+      imported from ‘Prelude’ at src/Numeric/AERN/RealArithmetic/RefinementOrderRounding/MixedFieldOps.hs:19:8-72
+      (and originally defined in ‘GHC.Base’)
+      imported from ‘Numeric.AERN.RealArithmetic.RefinementOrderRounding.FieldOps’ at src/Numeric/AERN/RealArithmetic/RefinementOrderRounding/MixedFieldOps.hs:21:1-67
+      (and originally defined
+         at src/Numeric/AERN/RealArithmetic/RefinementOrderRounding/FieldOps.hs:353:1-5)
+    |
+257 |         let (<*>) = multOutEff effMult in d <*> (convertOutEff effConv sample n)
+    |             ^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/RefinementOrderRounding/MixedFieldOps.hs:301:1: warning: [GHC-38417] [-Wmissing-signatures]
+    Top-level binding with no type signature:
+      mixedDivDefaultEffortByConversion :: (RoundedDivideEffort t2,
+                                            Convertible t1 t2) =>
+                                           t2
+                                           -> t1
+                                           -> (DivEffortIndicator t2, ConvertEffortIndicator t1 t2)
+    |
+301 | mixedDivDefaultEffortByConversion d n = 
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/RefinementOrderRounding/MixedFieldOps.hs:311:5: warning: [GHC-63397] [-Wname-shadowing]
+    This binding for ‘sample’ shadows the existing binding
+      imported from ‘Test.QuickCheck’ at src/Numeric/AERN/RealArithmetic/RefinementOrderRounding/MixedFieldOps.hs:32:1-22
+      (and originally defined in ‘Test.QuickCheck.Gen’)
+    |
+311 |     sample = d
+    |     ^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/RefinementOrderRounding/MixedFieldOps.hs:320:5: warning: [GHC-63397] [-Wname-shadowing]
+    This binding for ‘sample’ shadows the existing binding
+      imported from ‘Test.QuickCheck’ at src/Numeric/AERN/RealArithmetic/RefinementOrderRounding/MixedFieldOps.hs:32:1-22
+      (and originally defined in ‘Test.QuickCheck.Gen’)
+    |
+320 |     sample = d
+    |     ^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/RefinementOrderRounding/MixedFieldOps.hs:335:27: warning: [GHC-63397] [-Wname-shadowing]
+    This binding for ‘sample’ shadows the existing binding
+      imported from ‘Test.QuickCheck’ at src/Numeric/AERN/RealArithmetic/RefinementOrderRounding/MixedFieldOps.hs:32:1-22
+      (and originally defined in ‘Test.QuickCheck.Gen’)
+    |
+335 | propMixedDivEqualsConvert sample _sampleN 
+    |                           ^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/RefinementOrderRounding/MixedFieldOps.hs:337:21: warning: [-Wunused-matches]
+    Defined but not used: ‘effComp’
+    |
+337 |         initEffort@(effComp,(_,_,effConv)) 
+    |                     ^^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/RefinementOrderRounding/MixedFieldOps.hs:337:34: warning: [-Wunused-matches]
+    Defined but not used: ‘effConv’
+    |
+337 |         initEffort@(effComp,(_,_,effConv)) 
+    |                                  ^^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/RefinementOrderRounding/MixedFieldOps.hs:345:13: warning: [GHC-63397] [-Wname-shadowing]
+    This binding for ‘>/<|’ shadows the existing binding
+      defined at src/Numeric/AERN/RealArithmetic/RefinementOrderRounding/MixedFieldOps.hs:277:1
+    |
+345 |         let (>/<|) = mixedDivInEff effMDiv in d >/<| n
+    |             ^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/RefinementOrderRounding/MixedFieldOps.hs:347:13: warning: [GHC-63397] [-Wname-shadowing]
+    This binding for ‘</>|’ shadows the existing binding
+      defined at src/Numeric/AERN/RealArithmetic/RefinementOrderRounding/MixedFieldOps.hs:285:1
+    |
+347 |         let (</>|) = mixedDivOutEff effMDiv in d </>| n
+    |             ^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/RefinementOrderRounding/MixedFieldOps.hs:348:23: warning: [GHC-63397] [-Wname-shadowing]
+    This binding for ‘effConv’ shadows the existing binding
+      bound at src/Numeric/AERN/RealArithmetic/RefinementOrderRounding/MixedFieldOps.hs:337:34
+    |
+348 |     expr2In (_,effDiv,effConv) =
+    |                       ^^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/RefinementOrderRounding/MixedFieldOps.hs:349:13: warning: [GHC-63397] [-Wname-shadowing]
+    This binding for ‘>/<’ shadows the existing binding
+      imported from ‘Numeric.AERN.RealArithmetic.RefinementOrderRounding.FieldOps’ at src/Numeric/AERN/RealArithmetic/RefinementOrderRounding/MixedFieldOps.hs:21:1-67
+      (and originally defined
+         at src/Numeric/AERN/RealArithmetic/RefinementOrderRounding/FieldOps.hs:589:1-5)
+    |
+349 |         let (>/<) = divInEff effDiv in d >/< (convertInEff effConv sample n)
+    |             ^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/RefinementOrderRounding/MixedFieldOps.hs:350:24: warning: [GHC-63397] [-Wname-shadowing]
+    This binding for ‘effConv’ shadows the existing binding
+      bound at src/Numeric/AERN/RealArithmetic/RefinementOrderRounding/MixedFieldOps.hs:337:34
+    |
+350 |     expr2Out (_,effDiv,effConv) =
+    |                        ^^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/RefinementOrderRounding/MixedFieldOps.hs:351:13: warning: [GHC-63397] [-Wname-shadowing]
+    This binding for ‘</>’ shadows the existing binding
+      imported from ‘Numeric.AERN.RealArithmetic.RefinementOrderRounding.FieldOps’ at src/Numeric/AERN/RealArithmetic/RefinementOrderRounding/MixedFieldOps.hs:21:1-67
+      (and originally defined
+         at src/Numeric/AERN/RealArithmetic/RefinementOrderRounding/FieldOps.hs:597:1-5)
+    |
+351 |         let (</>) = divOutEff effDiv in d </> (convertOutEff effConv sample n)
+    |             ^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/RefinementOrderRounding/MixedFieldOps.hs:354:1: warning: [GHC-38417] [-Wmissing-signatures]
+    Top-level binding with no type signature:
+      testsInOutMixedFieldOps :: (RefOrd.ArbitraryOrderedTuple t,
+                                  RefOrd.PartialComparison t, Convertible tn t,
+                                  RoundedMixedAdd t tn, RoundedAdd t, HasLegalValues t,
+                                  RoundedMixedMultiply t tn, RoundedMultiply t, Arbitrary tn,
+                                  Show t, Show tn, RoundedMixedDivide t tn, RoundedDivide t,
+                                  HasZero t) =>
+                                 ([Char], t)
+                                 -> ([Char], tn) -> Numeric.AERN.Basics.Arbitrary.Area t -> Test
+    |
+354 | testsInOutMixedFieldOps (name, sample) (nameN, sampleN) area =
+    | ^^^^^^^^^^^^^^^^^^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/RefinementOrderRounding/MixedFieldOps.hs:354:32: warning: [GHC-63397] [-Wname-shadowing]
+    This binding for ‘sample’ shadows the existing binding
+      imported from ‘Test.QuickCheck’ at src/Numeric/AERN/RealArithmetic/RefinementOrderRounding/MixedFieldOps.hs:32:1-22
+      (and originally defined in ‘Test.QuickCheck.Gen’)
+    |
+354 | testsInOutMixedFieldOps (name, sample) (nameN, sampleN) area =
+    |                                ^^^^^^
+[20 of 25] Compiling Numeric.AERN.RealArithmetic.RefinementOrderRounding.Elementary
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/RefinementOrderRounding/Elementary.hs:30:1: warning: [-Wunused-imports]
+    The import of ‘Numeric.AERN.Basics.ShowInternals’ is redundant
+      except perhaps to import instances from ‘Numeric.AERN.Basics.ShowInternals’
+    To import instances alone, use: import Numeric.AERN.Basics.ShowInternals()
+   |
+30 | import Numeric.AERN.Basics.ShowInternals
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/RefinementOrderRounding/Elementary.hs:32:1: warning: [-Wunused-imports]
+    The import of ‘Numeric.AERN.Basics.Consistency’ is redundant
+      except perhaps to import instances from ‘Numeric.AERN.Basics.Consistency’
+    To import instances alone, use: import Numeric.AERN.Basics.Consistency()
+   |
+32 | import Numeric.AERN.Basics.Consistency
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/RefinementOrderRounding/Elementary.hs:35:1: warning: [-Wunused-imports]
+    The import of ‘Numeric.AERN.RealArithmetic.Measures’ is redundant
+      except perhaps to import instances from ‘Numeric.AERN.RealArithmetic.Measures’
+    To import instances alone, use: import Numeric.AERN.RealArithmetic.Measures()
+   |
+35 | import Numeric.AERN.RealArithmetic.Measures
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/RefinementOrderRounding/Elementary.hs:39:1: warning: [-Wunused-imports]
+    The import of ‘Numeric.AERN.Misc.Debug’ is redundant
+      except perhaps to import instances from ‘Numeric.AERN.Misc.Debug’
+    To import instances alone, use: import Numeric.AERN.Misc.Debug()
+   |
+39 | import Numeric.AERN.Misc.Debug
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/RefinementOrderRounding/Elementary.hs:41:1: warning: [-Wunused-imports]
+    The import of ‘Test.QuickCheck’ is redundant
+      except perhaps to import instances from ‘Test.QuickCheck’
+    To import instances alone, use: import Test.QuickCheck()
+   |
+41 | import Test.QuickCheck
+   | ^^^^^^^^^^^^^^^^^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/RefinementOrderRounding/Elementary.hs:42:35: warning: [-Wunused-imports]
+    The import of ‘Test’ from module ‘Test.Framework’ is redundant
+   |
+42 | import Test.Framework (testGroup, Test)
+   |                                   ^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/RefinementOrderRounding/Elementary.hs:80:19: warning: [GHC-63397] [-Wname-shadowing]
+    This binding for ‘sample’ shadows the existing binding
+      imported from ‘Test.QuickCheck’ at src/Numeric/AERN/RealArithmetic/RefinementOrderRounding/Elementary.hs:41:1-22
+      (and originally defined in ‘Test.QuickCheck.Gen’)
+   |
+80 | propExpOfNegRecip sample effortConsistency initEffort 
+   |                   ^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/RefinementOrderRounding/Elementary.hs:96:13: warning: [GHC-63397] [-Wname-shadowing]
+    This binding for ‘>*<’ shadows the existing binding
+      imported from ‘Numeric.AERN.RealArithmetic.RefinementOrderRounding.FieldOps’ at src/Numeric/AERN/RealArithmetic/RefinementOrderRounding/Elementary.hs:21:1-67
+      (and originally defined
+         at src/Numeric/AERN/RealArithmetic/RefinementOrderRounding/FieldOps.hs:345:1-5)
+   |
+96 |         let (>*<) = multInEff effMult in
+   |             ^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/RefinementOrderRounding/Elementary.hs:99:13: warning: [GHC-63397] [-Wname-shadowing]
+    This binding for ‘<*>’ shadows the existing bindings
+      imported from ‘Prelude’ at src/Numeric/AERN/RealArithmetic/RefinementOrderRounding/Elementary.hs:18:8-69
+      (and originally defined in ‘GHC.Base’)
+      imported from ‘Numeric.AERN.RealArithmetic.RefinementOrderRounding.FieldOps’ at src/Numeric/AERN/RealArithmetic/RefinementOrderRounding/Elementary.hs:21:1-67
+      (and originally defined
+         at src/Numeric/AERN/RealArithmetic/RefinementOrderRounding/FieldOps.hs:353:1-5)
+   |
+99 |         let (<*>) = multOutEff effMult in
+   |             ^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/RefinementOrderRounding/Elementary.hs:101:14: warning: [-Wunused-matches]
+    Defined but not used: ‘effExp’
+    |
+101 |     expr2In (effExp, effMult) = one sample
+    |              ^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/RefinementOrderRounding/Elementary.hs:101:22: warning: [-Wunused-matches]
+    Defined but not used: ‘effMult’
+    |
+101 |     expr2In (effExp, effMult) = one sample
+    |                      ^^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/RefinementOrderRounding/Elementary.hs:102:15: warning: [-Wunused-matches]
+    Defined but not used: ‘effExp’
+    |
+102 |     expr2Out (effExp, effMult) = one sample
+    |               ^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/RefinementOrderRounding/Elementary.hs:102:23: warning: [-Wunused-matches]
+    Defined but not used: ‘effMult’
+    |
+102 |     expr2Out (effExp, effMult) = one sample
+    |                       ^^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/RefinementOrderRounding/Elementary.hs:120:22: warning: [-Wunused-matches]
+    Defined but not used: ‘effMult’
+    |
+120 |     expr1In (effExp, effMult, effAdd) =
+    |                      ^^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/RefinementOrderRounding/Elementary.hs:123:23: warning: [-Wunused-matches]
+    Defined but not used: ‘effMult’
+    |
+123 |     expr1Out (effExp, effMult, effAdd) =
+    |                       ^^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/RefinementOrderRounding/Elementary.hs:126:31: warning: [-Wunused-matches]
+    Defined but not used: ‘effAdd’
+    |
+126 |     expr2In (effExp, effMult, effAdd) =
+    |                               ^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/RefinementOrderRounding/Elementary.hs:129:32: warning: [-Wunused-matches]
+    Defined but not used: ‘effAdd’
+    |
+129 |     expr2Out (effExp, effMult, effAdd) =
+    |                                ^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/RefinementOrderRounding/Elementary.hs:133:1: warning: [GHC-38417] [-Wmissing-signatures]
+    Top-level binding with no type signature:
+      testsInOutExp :: (RefOrd.ArbitraryOrderedTuple t,
+                        RefOrd.PartialComparison t, RoundedExponentiation t,
+                        RoundedMultiply t, Neg t, HasOne t, HasAntiConsistency t,
+                        HasLegalValues t, Show t, RoundedAdd t) =>
+                       ([Char], t) -> Test
+    |
+133 | testsInOutExp (name, sample) =
+    | ^^^^^^^^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/RefinementOrderRounding/Elementary.hs:133:22: warning: [GHC-63397] [-Wname-shadowing]
+    This binding for ‘sample’ shadows the existing binding
+      imported from ‘Test.QuickCheck’ at src/Numeric/AERN/RealArithmetic/RefinementOrderRounding/Elementary.hs:41:1-22
+      (and originally defined in ‘Test.QuickCheck.Gen’)
+    |
+133 | testsInOutExp (name, sample) =
+    |                      ^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/RefinementOrderRounding/Elementary.hs:141:1: warning: [GHC-38417] [-Wmissing-signatures]
+    Top-level binding with no type signature:
+      benchInOutExp :: (RefOrd.ArbitraryOrderedTuple t,
+                        deepseq-1.4.8.1:Control.DeepSeq.NFData t, HasDistance t,
+                        UpDnConversion.Convertible (Distance t) Double,
+                        RoundedExponentiation t, Show (Distance t)) =>
+                       ([Char], t) -> [(String, Area t)] -> Benchmark
+    |
+141 | benchInOutExp (name, sample) areas =
+    | ^^^^^^^^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/RefinementOrderRounding/Elementary.hs:141:22: warning: [GHC-63397] [-Wname-shadowing]
+    This binding for ‘sample’ shadows the existing binding
+      imported from ‘Test.QuickCheck’ at src/Numeric/AERN/RealArithmetic/RefinementOrderRounding/Elementary.hs:41:1-22
+      (and originally defined in ‘Test.QuickCheck.Gen’)
+    |
+141 | benchInOutExp (name, sample) areas =
+    |                      ^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/RefinementOrderRounding/Elementary.hs:146:1: warning: [GHC-38417] [-Wmissing-signatures]
+    Top-level binding with no type signature:
+      benchExpAreasReal :: [(String,
+                             (NumOrd.AreaLinear Double, AreaConsistencyConstraint))]
+    |
+146 | benchExpAreasReal =
+    | ^^^^^^^^^^^^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/RefinementOrderRounding/Elementary.hs:148:36: warning: [GHC-18042] [-Wtype-defaults]
+    • Defaulting the type variable ‘t0’ to type ‘Double’ in the following constraints
+        (Num t0)
+          arising from a use of syntactic negation
+          at src/Numeric/AERN/RealArithmetic/RefinementOrderRounding/Elementary.hs:148:36-39
+        (Fractional t0)
+          arising from a use of ‘/’
+          at src/Numeric/AERN/RealArithmetic/RefinementOrderRounding/Elementary.hs:148:38
+    • In the first argument of ‘areaWithBounds’, namely ‘(- 1 / 2)’
+      In the expression: areaWithBounds (- 1 / 2) (1 / 2)
+      In the expression: ("near 0", areaWithBounds (- 1 / 2) (1 / 2))
+    |
+148 |         ("near 0", areaWithBounds (-1/2) (1/2))
+    |                                    ^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/RefinementOrderRounding/Elementary.hs:198:28: warning: [-Wunused-matches]
+    Defined but not used: ‘effortToDbl’
+    |
+198 | propSqrtSquare _ fromArea (effortToDbl, effortAddDbl) initEffort e1InArea =
+    |                            ^^^^^^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/RefinementOrderRounding/Elementary.hs:198:41: warning: [-Wunused-matches]
+    Defined but not used: ‘effortAddDbl’
+    |
+198 | propSqrtSquare _ fromArea (effortToDbl, effortAddDbl) initEffort e1InArea =
+    |                                         ^^^^^^^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/RefinementOrderRounding/Elementary.hs:212:32: warning: [-Wunused-matches]
+    Defined but not used: ‘effCompare’
+    |
+212 |     expr1In (effSqrt, effMult, effCompare) =
+    |                                ^^^^^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/RefinementOrderRounding/Elementary.hs:215:9: warning: [GHC-63397] [-Wname-shadowing]
+    This binding for ‘>*<’ shadows the existing binding
+      imported from ‘Numeric.AERN.RealArithmetic.RefinementOrderRounding.FieldOps’ at src/Numeric/AERN/RealArithmetic/RefinementOrderRounding/Elementary.hs:21:1-67
+      (and originally defined
+         at src/Numeric/AERN/RealArithmetic/RefinementOrderRounding/FieldOps.hs:345:1-5)
+    |
+215 |         (>*<) = multInEff effMult
+    |         ^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/RefinementOrderRounding/Elementary.hs:217:33: warning: [-Wunused-matches]
+    Defined but not used: ‘effCompare’
+    |
+217 |     expr1Out (effSqrt, effMult, effCompare) =
+    |                                 ^^^^^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/RefinementOrderRounding/Elementary.hs:220:9: warning: [GHC-63397] [-Wname-shadowing]
+    This binding for ‘<*>’ shadows the existing bindings
+      imported from ‘Prelude’ at src/Numeric/AERN/RealArithmetic/RefinementOrderRounding/Elementary.hs:18:8-69
+      (and originally defined in ‘GHC.Base’)
+      imported from ‘Numeric.AERN.RealArithmetic.RefinementOrderRounding.FieldOps’ at src/Numeric/AERN/RealArithmetic/RefinementOrderRounding/Elementary.hs:21:1-67
+      (and originally defined
+         at src/Numeric/AERN/RealArithmetic/RefinementOrderRounding/FieldOps.hs:353:1-5)
+    |
+220 |         (<*>) = multOutEff effMult
+    |         ^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/RefinementOrderRounding/Elementary.hs:225:1: warning: [GHC-38417] [-Wmissing-signatures]
+    Top-level binding with no type signature:
+      testsInOutSqrt :: (Arbitrary tInArea, RefOrd.PartialComparison t,
+                         RoundedSquareRoot t, RoundedMultiply t, HasZero t,
+                         UpDnConversion.Convertible t Double, RoundedMixedAdd t Double,
+                         Show tInArea, Show t, HasLegalValues t) =>
+                        ([Char], t) -> (tInArea -> t) -> Test
+    |
+225 | testsInOutSqrt (name, sample) fromArea =
+    | ^^^^^^^^^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/RefinementOrderRounding/Elementary.hs:225:23: warning: [GHC-63397] [-Wname-shadowing]
+    This binding for ‘sample’ shadows the existing binding
+      imported from ‘Test.QuickCheck’ at src/Numeric/AERN/RealArithmetic/RefinementOrderRounding/Elementary.hs:41:1-22
+      (and originally defined in ‘Test.QuickCheck.Gen’)
+    |
+225 | testsInOutSqrt (name, sample) fromArea =
+    |                       ^^^^^^
+[21 of 25] Compiling Numeric.AERN.RealArithmetic.RefinementOrderRounding.SpecialConst
+[22 of 25] Compiling Numeric.AERN.RealArithmetic.RefinementOrderRounding
+[23 of 25] Compiling Numeric.AERN.RealArithmetic.RefinementOrderRounding.Operators
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/RefinementOrderRounding/Operators.hs:18:12: error:
+    Ambiguous occurrence ‘<*>’
+    It could refer to
+       either ‘Prelude.<*>’,
+              imported from ‘Prelude’ at src/Numeric/AERN/RealArithmetic/RefinementOrderRounding/Operators.hs:15:8-68
+              (and originally defined in ‘GHC.Base’)
+           or ‘Numeric.AERN.RealArithmetic.RefinementOrderRounding.<*>’,
+              imported from ‘Numeric.AERN.RealArithmetic.RefinementOrderRounding’ at src/Numeric/AERN/RealArithmetic/RefinementOrderRounding/Operators.hs:27:1-58
+              (and originally defined in ‘Numeric.AERN.RealArithmetic.RefinementOrderRounding.FieldOps’
+                 at src/Numeric/AERN/RealArithmetic/RefinementOrderRounding/FieldOps.hs:353:1-5)
+   |
+18 |     (>*<), (<*>), (>/<), (</>),
+   |            ^^^^^
+[25 of 25] Compiling Numeric.AERN.RealArithmetic.RefinementOrderRounding.ElementaryFromFieldOps.Exponentiation
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/RefinementOrderRounding/ElementaryFromFieldOps/Exponentiation.hs:32:1: warning: [-Wunused-imports]
+    The qualified import of ‘Numeric.AERN.NumericOrder’ is redundant
+      except perhaps to import instances from ‘Numeric.AERN.NumericOrder’
+    To import instances alone, use: import Numeric.AERN.NumericOrder()
+   |
+32 | import qualified 
+   | ^^^^^^^^^^^^^^^^^...
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/RefinementOrderRounding/ElementaryFromFieldOps/Exponentiation.hs:41:1: warning: [-Wunused-imports]
+    The import of ‘Control.Monad.ST’ is redundant
+      except perhaps to import instances from ‘Control.Monad.ST’
+    To import instances alone, use: import Control.Monad.ST()
+   |
+41 | import Control.Monad.ST (ST)
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/RefinementOrderRounding/ElementaryFromFieldOps/Exponentiation.hs:43:1: warning: [-Wunused-imports]
+    The import of ‘Control.Applicative’ is redundant
+      except perhaps to import instances from ‘Control.Applicative’
+    To import instances alone, use: import Control.Applicative()
+   |
+43 | import Control.Applicative
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/RefinementOrderRounding/ElementaryFromFieldOps/Exponentiation.hs:135:18: warning: [GHC-63397] [-Wname-shadowing]
+    This binding for ‘xUp’ shadows the existing binding
+      bound at src/Numeric/AERN/RealArithmetic/RefinementOrderRounding/ElementaryFromFieldOps/Exponentiation.hs:133:6
+    |
+135 |             Just xUp -> (xUp, False)
+    |                  ^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/RefinementOrderRounding/ElementaryFromFieldOps/Exponentiation.hs:139:18: warning: [GHC-63397] [-Wname-shadowing]
+    This binding for ‘xDn’ shadows the existing binding
+      bound at src/Numeric/AERN/RealArithmetic/RefinementOrderRounding/ElementaryFromFieldOps/Exponentiation.hs:137:6
+    |
+139 |             Just xDn -> (xDn, False)
+    |                  ^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/RefinementOrderRounding/ElementaryFromFieldOps/Exponentiation.hs:146:21: warning: [GHC-63397] [-Wname-shadowing]
+    This binding for ‘degr’ shadows the existing binding
+      bound at src/Numeric/AERN/RealArithmetic/RefinementOrderRounding/ElementaryFromFieldOps/Exponentiation.hs:204:5
+    |
+146 |     expOutViaTaylor degr x = -- assuming x inside [-1,1]
+    |                     ^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/RefinementOrderRounding/ElementaryFromFieldOps/Exponentiation.hs:146:26: warning: [GHC-63397] [-Wname-shadowing]
+    This binding for ‘x’ shadows the existing binding
+      bound at src/Numeric/AERN/RealArithmetic/RefinementOrderRounding/ElementaryFromFieldOps/Exponentiation.hs:108:19
+    |
+146 |     expOutViaTaylor degr x = -- assuming x inside [-1,1]
+    |                          ^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/RefinementOrderRounding/ElementaryFromFieldOps/Exponentiation.hs:159:13: warning: [GHC-62161] [-Wincomplete-patterns]
+    Pattern match(es) are non-exhaustive
+    In an equation for ‘teResult’:
+        Guards do not cover entire pattern space
+    |
+159 |             teResult 
+    |             ^^^^^^^^^...
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/RefinementOrderRounding/ElementaryFromFieldOps/Exponentiation.hs:182:5: warning: [GHC-63397] [-Wname-shadowing]
+    This binding for ‘<*>’ shadows the existing binding
+      imported from ‘Control.Applicative’ at src/Numeric/AERN/RealArithmetic/RefinementOrderRounding/ElementaryFromFieldOps/Exponentiation.hs:43:1-26
+      (and originally defined in ‘GHC.Base’)
+    |
+182 |     (<*>) = ArithInOut.multOutEff multInOutEffort
+    |     ^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/RefinementOrderRounding/ElementaryFromFieldOps/Exponentiation.hs:187:5: warning: [-Wunused-local-binds]
+    Defined but not used: ‘addInOutEffort’
+    |
+187 |     addInOutEffort = ArithInOut.fldEffortAdd x effortField
+    |     ^^^^^^^^^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/RefinementOrderRounding/ElementaryFromFieldOps/Exponentiation.hs:192:5: warning: [-Wunused-local-binds]
+    Defined but not used: ‘mixedMultInOutEffort’
+    |
+192 |     mixedMultInOutEffort = ArithInOut.mxfldEffortMult x xUp effortMixedField
+    |     ^^^^^^^^^^^^^^^^^^^^
+
+Error: [S-7282]
+       Stack failed to execute the build plan.
+       
+       While executing the build plan, Stack encountered the error:
+       
+       [S-7011]
+       While building package aern-real-0.5.0 (scroll up to its section to see the error) using:
+       /tmp/aern2-stack.ryVCFK/setup-exe-cache/x86_64-linux-tinfo6/Cabal-simple_O_vy6YIf_3.10.3.0_ghc-9.6.7 --verbose=1 --builddir=.stack-work/dist/x86_64-linux-tinfo6/ghc-9.6.7 build lib:aern-real --ghc-options ""
+       Process exited with code: ExitFailure 1 

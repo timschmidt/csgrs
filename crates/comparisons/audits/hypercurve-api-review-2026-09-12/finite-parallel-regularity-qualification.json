@@ -1,0 +1,130 @@
+{
+  "status": "qualified and committed against the documented baseline",
+  "goal_status": "active",
+  "previous_commit": "7b15b7826c4fc72603fd42d223c642bbad5d397e",
+  "commit": "2c16c30bb1aba38f08456bed462b5ea058bc5c71",
+  "targets": 49,
+  "passed": 2280,
+  "passed_by_repo": {
+    "hypercurve": 2048,
+    "hyperbrep": 232
+  },
+  "known_failed": [
+    "approximate_512_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions",
+    "non_ph_bezier_pair_projective_fillet_retains_algebraic_extensions",
+    "nonconvex_algebraic_chord_expansion_is_exact_and_local_collapse_is_explicit",
+    "strict_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions",
+    "unified_mixed_line_arc_erosion_splits_after_a_curved_neck_collapse"
+  ],
+  "new_failures": [],
+  "ignored": 9,
+  "expensive_previously_unqualified_exclusions": 8,
+  "timeouts": 0,
+  "builds_and_checks": {
+    "-check": 0,
+    "-test-build": 0,
+    "-hyperbrep-check": 0,
+    "-hyperbrep-test-build": 0
+  },
+  "formatting_and_whitespace": "passed on final frozen sources",
+  "formatted_files": {
+    "hypercurve": [
+      "benches/offset.rs",
+      "src/bezier_offset.rs",
+      "src/bezier_region.rs",
+      "src/bezier_split.rs",
+      "src/curve_region_boolean.rs",
+      "tests/hypercurve_analytic_parallel_region.rs",
+      "tests/hypercurve_bezier_fit_offset.rs"
+    ],
+    "hyperbrep": []
+  },
+  "additional_caller_checks": [
+    {
+      "target": "fuzz",
+      "command": [
+        "cargo",
+        "check",
+        "--manifest-path",
+        "fuzz/Cargo.toml",
+        "--all-targets",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 5.07170342898462,
+      "log": "finite-parallel-regularity-fuzz-check.log"
+    },
+    {
+      "target": "ui",
+      "command": [
+        "cargo",
+        "check",
+        "--manifest-path",
+        "examples/hypercurve_ui/Cargo.toml",
+        "--all-targets",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 5.573328212980414,
+      "log": "finite-parallel-regularity-ui-check.log"
+    },
+    {
+      "target": "hyperbrep-fuzz",
+      "command": [
+        "cargo",
+        "check",
+        "--manifest-path",
+        "fuzz/Cargo.toml",
+        "--all-targets",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 5.772919932991499,
+      "log": "finite-parallel-regularity-hyperbrep-fuzz-check.log"
+    }
+  ],
+  "source_verification": "finite-parallel-regularity-source-verification.json",
+  "focused_regression_checks": "finite-parallel-regularity-focused.json",
+  "normal_library": "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/libhypercurve-2c7ff6f3fbe07653.rlib",
+  "normal_library_sha256": "3f204f6dcef0133f415650348226026d9a964d24eae3cd2fbd33cc53b4667deb",
+  "archived_library": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-parallel-regularity-libraries/libhypercurve-2c7ff6f3fbe07653.rlib",
+  "independent_probes_and_matrices": [
+    "finite-parallel-regularity-public-replay.json",
+    "finite-parallel-regularity-affine-parallel-replay.json",
+    "finite-parallel-regularity-exterior-completed.json",
+    "finite-parallel-regularity-tangent-matrix.json",
+    "finite-parallel-regularity-finite-circle-probe.json",
+    "finite-parallel-regularity-family-matrix.json",
+    "finite-parallel-regularity-completed.json",
+    "finite-parallel-regularity-unit-replay.json",
+    "finite-parallel-regularity-retained-chord-matrix.json",
+    "finite-parallel-regularity-finite-matrix.json",
+    "finite-parallel-regularity-cubic-replay.json",
+    "finite-parallel-regularity-baseline-recheck.json",
+    "finite-parallel-regularity-replay-matrix-run.json",
+    "finite-parallel-regularity-analytic-probe.json",
+    "finite-parallel-regularity-endpoint-probe.json",
+    "finite-parallel-regularity-completed-probe.json",
+    "finite-parallel-regularity-probe-final.json",
+    "finite-parallel-regularity-circle-matrix.json",
+    "finite-parallel-regularity-region-carrier-matrix.json",
+    "finite-parallel-regularity-general-trim-matrix.json",
+    "finite-parallel-regularity-constant-image-trim-matrix.json",
+    "finite-parallel-regularity-region-public.json",
+    "finite-parallel-regularity-region-explicit.json",
+    "finite-parallel-regularity-bounds-public.json",
+    "finite-parallel-regularity-winding-public.json",
+    "finite-parallel-regularity-trim-public.json",
+    "finite-parallel-regularity-self-public.json",
+    "finite-parallel-regularity-retrace-public.json"
+  ],
+  "discovery_probes": [],
+  "prequalification_candidate": null,
+  "compile_only_attempts": [],
+  "evidence_audit": "finite-parallel-regularity-worklog.md",
+  "performance_claim": null,
+  "remaining": "Analytic fragment and boundary-loop finite admission (earlier public baseline remains open), affine analytic derivative and monotonicity premises; analytic finite pair discovery and incidence; normalized public region construction; independent inverse replay; five existing promotion failures; eight unqualified expensive tests; original algebraic and computational architecture goal."
+}

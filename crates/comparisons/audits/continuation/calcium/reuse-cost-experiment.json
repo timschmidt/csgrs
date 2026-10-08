@@ -1,0 +1,479 @@
+{
+  "schema": 1,
+  "recorded": "2026-09-08T22:33:06.388Z",
+  "status": "V3 cost/portability/example-size qualification complete; retention decision must also preserve all earlier correctness gates and live user changes.",
+  "sourceHashes": {
+    "reuse-qualification-experiment.json": "3e8ac77bf87249f97c490bb18ab2fae271b6091a07c8a28525cda2f9a2637876",
+    "reuse-costs-config.json": "2314245730abecb03dbd81e1e73ec2666813896983a02b0aede32c4bca2b514a",
+    "root-exp-bench.rs": "101000c5fa81e555d6f96544a52f812a66d11132b55fea944d287da4c01fd0aa",
+    "reuse-first-touch-bench.rs": "573a4bd3cc15ce0f45815a80811ffacc274ca4b829cac5f3737e21a853de9ea9",
+    "run-reuse-cost-bench.mjs": "2a9bef0d3277b915e79a15e1432a312c1f450d19c260e60a6b628582ec9b5df5",
+    "run-reuse-cost-campaign.mjs": "bc7e4b086b367a6717900cd05976dacf49619f17dd0de91a67ba7eadbd684bda",
+    "measure-reuse-app-size.mjs": "e075c99d8ee41482d45c7c442d96017c2fb8c039dcbf089bcb3c3e0280a82c26",
+    "flint-vector-state-probe.c": "181204527bef9e4881374a1cc1b309aca11537d182e550effacfec218967893a",
+    "bind-reuse-cost-experiment.mjs": "0800176a3c112ebdd52b60629a792ab595db054050d5d0c8b31d77067050f684",
+    "verify-reuse-cost-checkpoint.mjs": "b56e9bdc7883f74e8d6b1b0df5752cdf3629daea940ee18184b23b3c45946a70",
+    "reuse-numeric-baseline/Cargo.toml": "f3d4f12e8dd3820cb2d03d81d27c0bf1f016541ef0e62d92e4c9e13dc42fab84",
+    "reuse-numeric-baseline/Cargo.lock": "9cf50a87be119f72ceb86f135661996afe15b5bb83228c24378580113ad9e846",
+    "reuse-numeric-sign/Cargo.toml": "69ea96be2ee1a1218e60931787df9817f02e7679251ac644a7079be744f17023",
+    "reuse-numeric-sign/Cargo.lock": "292d7854d46bf44ba3da48fc7ab0f71b3ca452c9e2c6c4e50d2de27806e12624",
+    "reuse-numeric-reuse/Cargo.toml": "5089b134688800d87d53b5862a521801d49955cd8a537a8e8a027af18e6c6f68",
+    "reuse-numeric-reuse/Cargo.lock": "05fc833f97b252bd0d9ba80d97142c878004a8157da6dbe1a00c02d4a00ef9cf",
+    "reuse-first-touch-baseline/Cargo.toml": "afdcf7865d7082eddcbac57375504e2a577d1b964841cd31ffb4aedbdedb4d5f",
+    "reuse-first-touch-baseline/Cargo.lock": "5c99cc7e3212af78c4d178e5b359938a955ace1f6677ef83bdfde2c69ea00804",
+    "reuse-first-touch-sign/Cargo.toml": "a800acc8ca173ed8dee00e99f1f8928731bb15028eb7ee9b1a37d2fd5c0eb4d4",
+    "reuse-first-touch-sign/Cargo.lock": "1ea22a011bdab46577484d72f391a11f3645572e98e49073897e98bed7f1c652",
+    "reuse-first-touch-reuse/Cargo.toml": "df6b87d1319796d50b645d036898bac4afeb880840ff23da7b556c6004583928",
+    "reuse-first-touch-reuse/Cargo.lock": "50a6ab3c9c0afd464f67940cfbfa85e2b2bb4245f018276238a4918b5974b294"
+  },
+  "evidenceHashes": {
+    "results/vector-state-compile.json": "4d72f4c42bc926c305f3f921774300f2843f19f327b8dc8a0672a2ce07209831",
+    "results/vector-state-compile.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/vector-state-compile.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/vector-state-native.json": "5999a67a8f6d6e9658bc463470024009b9c9e19419648093805f9d4826236c13",
+    "results/vector-state-native.stdout": "4398ee8fdd93b6cb133f79001589ac26177337f735f0790b523237c51af6c04f",
+    "results/vector-state-native.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/vector-state-memcheck.json": "173fdc199d9fade9dd7772ed27604799f20ac43b85be1a07aed844c93d0c1a4e",
+    "results/vector-state-memcheck.stdout": "4398ee8fdd93b6cb133f79001589ac26177337f735f0790b523237c51af6c04f",
+    "results/vector-state-memcheck.stderr": "5d74763c9415e950ed508ab231267833f1c2c1a8a23fe401d196532cb6c44a54",
+    "results/reuse-wasm-all-features.json": "4c399ffc744bb1980b51c6541fb29e1504f32d79c15baf1e4932bfdff05a32b0",
+    "results/reuse-wasm-all-features.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/reuse-wasm-all-features.stderr": "11d709536a895dd4625b25fa4402998a832adf6e7daaf6cc54a4541fd30e5e26",
+    "results/run-reuse-cost-numeric-cpu.json": "85195d346c0d8acd6888b0e98f75f62bb9e80127333b5ae59bcd34e4f39b5cef",
+    "results/run-reuse-cost-numeric-cpu.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/run-reuse-cost-numeric-cpu.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/reuse-cost-build-numeric-cpu-baseline.json": "7608cd486105e329d884705acc039195d4c7843796bf4a5dc83f6828dbbb68cf",
+    "results/reuse-cost-build-numeric-cpu-baseline.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/reuse-cost-build-numeric-cpu-baseline.stderr": "a220d82b5ff876e6be18d126023cbf505e883ee951adf780a94abb277d0473c8",
+    "results/reuse-cost-build-numeric-cpu-sign.json": "9ea6707a9fb3af1465753bca7a8dd4e3d6a06208f69054747681b1f7cddecef5",
+    "results/reuse-cost-build-numeric-cpu-sign.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/reuse-cost-build-numeric-cpu-sign.stderr": "176f645528beb17010e5c5f3f0dc1ea0b90169450fbaefba4f549de0090638ad",
+    "results/reuse-cost-build-numeric-cpu-reuse.json": "07d9548b14ba881b4dc7e6e76a12b3c5b50c95757d609a87892867bce985c89d",
+    "results/reuse-cost-build-numeric-cpu-reuse.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/reuse-cost-build-numeric-cpu-reuse.stderr": "c57ccd2df4dc6f8338d602a0d972e9eaf14edc032ca7f4e7f7573b1060310b3c",
+    "results/run-reuse-cost-numeric-alloc.json": "406747e85a02f5f4c60082bd2534c72bb98943b6663e37d6a5c9e095b55b4a28",
+    "results/run-reuse-cost-numeric-alloc.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/run-reuse-cost-numeric-alloc.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/reuse-cost-build-numeric-alloc-baseline.json": "e00a0d67e53d63129c92e2c1cce9fb9b11cd819d70b6296b524a5a41fc0aadce",
+    "results/reuse-cost-build-numeric-alloc-baseline.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/reuse-cost-build-numeric-alloc-baseline.stderr": "27223839bee8a4515b0a09851d3c3f215a1d2317aa47abcb6a422374fbc2db6f",
+    "results/reuse-cost-build-numeric-alloc-sign.json": "ebac3ffa00a587528a7d7203025373ac4bd56bc44ec6bb4973e759de293e9d94",
+    "results/reuse-cost-build-numeric-alloc-sign.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/reuse-cost-build-numeric-alloc-sign.stderr": "d40d8f444854cd1eb573c44254e96922c312cb51ff7a4fb0701d86badf7de437",
+    "results/reuse-cost-build-numeric-alloc-reuse.json": "ab59b73910071a30ac78069d3e8a1555ad188292926251e639c6200c428d74fc",
+    "results/reuse-cost-build-numeric-alloc-reuse.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/reuse-cost-build-numeric-alloc-reuse.stderr": "f36966786044a0c0fff8692729b091e6fbb2b0b1d7e489c24083c25cb7f54897",
+    "results/run-reuse-cost-first-touch-cpu.json": "a9ad5c49dde249f4a4e6e5ca13233b5f74e2c81160418129b8b3b3d5000940ef",
+    "results/run-reuse-cost-first-touch-cpu.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/run-reuse-cost-first-touch-cpu.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/reuse-cost-build-first-touch-cpu-baseline.json": "ae369d2a84eb1d8ae100b193b239bccca2d239ffe5a81f530273cb293e6fe8b7",
+    "results/reuse-cost-build-first-touch-cpu-baseline.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/reuse-cost-build-first-touch-cpu-baseline.stderr": "688deb0beb5ddd5c13214216171baf315fa27765692c3793f920643b2444bc81",
+    "results/reuse-cost-build-first-touch-cpu-sign.json": "648a77bba41357c01ade0b82ef172ae4dbb49ed02f46f6776024f8816484a0f3",
+    "results/reuse-cost-build-first-touch-cpu-sign.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/reuse-cost-build-first-touch-cpu-sign.stderr": "3125cae9be78c4a9a0578b9efd340006ec6229b03ee50dbf7b4d2866c86eea65",
+    "results/reuse-cost-build-first-touch-cpu-reuse.json": "8774ba66394f28fd6e19f42007faef59f11ca4cb01e537376bfdceb5b027748d",
+    "results/reuse-cost-build-first-touch-cpu-reuse.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/reuse-cost-build-first-touch-cpu-reuse.stderr": "cba378518ec74ca73bb72eec8d8789d969ce025e572581938f6fc28e806fee7b",
+    "results/run-reuse-cost-first-touch-alloc.json": "1bd7fe2bad073f856bbf3635e35f596ae82fa356b43ac2f650625582d8fb30a6",
+    "results/run-reuse-cost-first-touch-alloc.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/run-reuse-cost-first-touch-alloc.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/reuse-cost-build-first-touch-alloc-baseline.json": "38cd29be3dd180e57677fbeb04d24ea97e7f80f29a570703b04b5780bf11a9fd",
+    "results/reuse-cost-build-first-touch-alloc-baseline.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/reuse-cost-build-first-touch-alloc-baseline.stderr": "5dcee7e5916693e38cc632967d468b6b33618d21e4ce393e1cf50f01e355d564",
+    "results/reuse-cost-build-first-touch-alloc-sign.json": "f8f0d9198cb4629a0a7e7a18a8b787b7c5d33b0184b7cedfcc5379245fce00c0",
+    "results/reuse-cost-build-first-touch-alloc-sign.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/reuse-cost-build-first-touch-alloc-sign.stderr": "66d0b0fc66905c43f5e57f7436008279374c0a15765a3ad5dc86415f2f1f3cee",
+    "results/reuse-cost-build-first-touch-alloc-reuse.json": "dc25afc43197d84eb9489ad3961b4afba902d172524ec0a58943cf0b0409f621",
+    "results/reuse-cost-build-first-touch-alloc-reuse.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/reuse-cost-build-first-touch-alloc-reuse.stderr": "7d6d2213960d5f887ddd8162c8208e5715948e1f56e2b073ac5ab85ca171119e",
+    "results/reuse-app-build-baseline.json": "37d98fbc102aab1144ae851af5a8cf88c7c602fea9618a7f8d3b04307ce52324",
+    "results/reuse-app-build-baseline.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/reuse-app-build-baseline.stderr": "fca1ea390a34056e15de2efece27d4afa027a2af13d5bdf770f0ee0266f8d927",
+    "results/reuse-app-strip-baseline-basic.json": "f47d540ca3e4798e30bb10bcf92cf7e5e0b61f512a2044f190c660b793e500d9",
+    "results/reuse-app-strip-baseline-basic.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/reuse-app-strip-baseline-basic.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/reuse-app-size-baseline-basic.json": "5cf037b0f2f905c134d981c9261ffcc40c2723eec4c76776b915f796a853adeb",
+    "results/reuse-app-size-baseline-basic.stdout": "d709090d9ea2e1438b256c569b5aaa0b6a293fae875dbe5751854086549c7a1f",
+    "results/reuse-app-size-baseline-basic.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/reuse-app-run-baseline-basic.json": "5619b0d05103e1ab469db62add04300cbc1f604b73f6b98bbeb0349325d9daa9",
+    "results/reuse-app-run-baseline-basic.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/reuse-app-run-baseline-basic.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/reuse-app-strip-baseline-arrangement.json": "9b4d55b3233b6a562ea2a03052e7a92dff8baee14ba4cc86da73cbca695ce9bc",
+    "results/reuse-app-strip-baseline-arrangement.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/reuse-app-strip-baseline-arrangement.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/reuse-app-size-baseline-arrangement.json": "8845f7bf5b9041a9893a8b1a524c21b25ee56f99d6762d487ecfbf275780754d",
+    "results/reuse-app-size-baseline-arrangement.stdout": "8441b92a25627736497c0dbdcbffd047de1a1af8a12f9e70fa5c1f2fa578ce7e",
+    "results/reuse-app-size-baseline-arrangement.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/reuse-app-run-baseline-arrangement.json": "8d80da254bd68e2a6cc939dd06ee7f7ba2e2d7141858792d0503a32698404d3b",
+    "results/reuse-app-run-baseline-arrangement.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/reuse-app-run-baseline-arrangement.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/reuse-app-build-sign.json": "e68380c9956f420205b8bc8c9e355db5a0352ee4fea4a61e385e681e34ff5628",
+    "results/reuse-app-build-sign.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/reuse-app-build-sign.stderr": "391d72a135f03030b2ad52fda76412b95d7fadf9c0f9d079018bcfa5e3796d13",
+    "results/reuse-app-strip-sign-basic.json": "36347474365c6e53b299a74ca4107d0e85477094c48ce42af29506cdcd74246a",
+    "results/reuse-app-strip-sign-basic.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/reuse-app-strip-sign-basic.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/reuse-app-size-sign-basic.json": "9ff81d55675ef359edbbf1086c5f742115fbf31b30cc6d1737e9919153661826",
+    "results/reuse-app-size-sign-basic.stdout": "5aec4a6290a0fae384f80cfab45d1fe1884d9b4b12526938d6a81ece3c9b03c1",
+    "results/reuse-app-size-sign-basic.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/reuse-app-run-sign-basic.json": "e7378b382464ab7ac2daed4d167cecaf6ad2f33d5d5d5c39443685462c02b164",
+    "results/reuse-app-run-sign-basic.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/reuse-app-run-sign-basic.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/reuse-app-strip-sign-arrangement.json": "b68faffe2d206344b67b54a302f6541c1d2f8b12fdcc212922daa5318311e721",
+    "results/reuse-app-strip-sign-arrangement.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/reuse-app-strip-sign-arrangement.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/reuse-app-size-sign-arrangement.json": "243779d0a9d80d361ef5f310351823c4e89992264e8d74f2b1998f74a47d4ad9",
+    "results/reuse-app-size-sign-arrangement.stdout": "308ea46075d588a2ea101e79b8a673a34b5c11b37028520d663e6ffba1632fea",
+    "results/reuse-app-size-sign-arrangement.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/reuse-app-run-sign-arrangement.json": "c41250f0c79855ca08986420631fb6f93e9f02610bb021d2d284aae8d790aca9",
+    "results/reuse-app-run-sign-arrangement.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/reuse-app-run-sign-arrangement.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/reuse-app-build-reuse.json": "48eeb0a6cc992565a4c6b24a0e79be3a905adf808bdb86582a9116ff7b444de7",
+    "results/reuse-app-build-reuse.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/reuse-app-build-reuse.stderr": "c4b011ca7c5944058f60ce02b1ec399122de745f9b377186eaa9819c056b1a8e",
+    "results/reuse-app-strip-reuse-basic.json": "3703265819e8c58dbaa44227e5cd1b47a630a689252dc93b3d01bff452bd298a",
+    "results/reuse-app-strip-reuse-basic.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/reuse-app-strip-reuse-basic.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/reuse-app-size-reuse-basic.json": "696148a67cf916f208e26bc923bf56d876f82e5b715826f7d7c8f525149dd0ac",
+    "results/reuse-app-size-reuse-basic.stdout": "e285397cf203fc0ae9400ba64125220adbbb252b53f1077c0a0c7983a384c696",
+    "results/reuse-app-size-reuse-basic.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/reuse-app-run-reuse-basic.json": "f8e8486aaf936619a5bd25e1b3ab5988c6c9eae4d82436a840ec9b618bc23645",
+    "results/reuse-app-run-reuse-basic.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/reuse-app-run-reuse-basic.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/reuse-app-strip-reuse-arrangement.json": "492c6e9e97ed5b6b83efd3e603c08e725e62db5c64315b6404b1d193bff4d5cf",
+    "results/reuse-app-strip-reuse-arrangement.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/reuse-app-strip-reuse-arrangement.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/reuse-app-size-reuse-arrangement.json": "51b0cf443e1c54c7c9b07e30a76b4b237cabc41858dbad8b9ab3cd325e1fc887",
+    "results/reuse-app-size-reuse-arrangement.stdout": "f5521b8025420d73bd8bcb2e28229badf1d782b6790ab02759849082dcf867b9",
+    "results/reuse-app-size-reuse-arrangement.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/reuse-app-run-reuse-arrangement.json": "755967dde3f5cee7ae6d11bbda30d283fa55329fd112eeeddaf9aa2c7f5d51c5",
+    "results/reuse-app-run-reuse-arrangement.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/reuse-app-run-reuse-arrangement.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/reuse-cost-numeric-cpu.jsonl": "dedef12fa1968ee2618e8e1fa0d56250632c457bac92e2f4945c2638546e9b6d",
+    "reuse-cost-numeric-cpu-summary.json": "06ba8df08b522390754b75de6df991193359d9699a074a93710e5bc74f78d969",
+    "results/reuse-cost-numeric-alloc.jsonl": "b8b0027c6cc772a95a908d855e44370cbf427bfc6da72334591fe681190d5f01",
+    "reuse-cost-numeric-alloc-summary.json": "996bbf9306f31020164f21f7bfd33cf69f8efb06e2582b18bb19d62faca39f69",
+    "results/reuse-cost-first-touch-cpu.jsonl": "6607aacf35de51b6ae1bda86f05a3c2881d6b605b61c96235e381c306256b904",
+    "reuse-cost-first-touch-cpu-summary.json": "f0b3e09cf1dd1745db55983717c9110d6a8874948264f4f87468659b834910b9",
+    "results/reuse-cost-first-touch-alloc.jsonl": "298bc01d60e8da434ab8876fb6f983db2ea12a43b3b8054ff145413c67feafec",
+    "reuse-cost-first-touch-alloc-summary.json": "71b652f256b5f57b6b3b80d778cd6f9590702b8e18fa215c03476d30cd8afd4e",
+    "reuse-app-size-summary.json": "c284a6707555c6b3694d301571fd5d3494aa93b432d524bfcd9bb29c82ac33aa"
+  },
+  "expectedCaptureCodes": {
+    "vector-state-compile": 0,
+    "vector-state-native": 1,
+    "vector-state-memcheck": 1,
+    "reuse-wasm-all-features": 0,
+    "run-reuse-cost-numeric-cpu": 0,
+    "reuse-cost-build-numeric-cpu-baseline": 0,
+    "reuse-cost-build-numeric-cpu-sign": 0,
+    "reuse-cost-build-numeric-cpu-reuse": 0,
+    "run-reuse-cost-numeric-alloc": 0,
+    "reuse-cost-build-numeric-alloc-baseline": 0,
+    "reuse-cost-build-numeric-alloc-sign": 0,
+    "reuse-cost-build-numeric-alloc-reuse": 0,
+    "run-reuse-cost-first-touch-cpu": 0,
+    "reuse-cost-build-first-touch-cpu-baseline": 0,
+    "reuse-cost-build-first-touch-cpu-sign": 0,
+    "reuse-cost-build-first-touch-cpu-reuse": 0,
+    "run-reuse-cost-first-touch-alloc": 0,
+    "reuse-cost-build-first-touch-alloc-baseline": 0,
+    "reuse-cost-build-first-touch-alloc-sign": 0,
+    "reuse-cost-build-first-touch-alloc-reuse": 0,
+    "reuse-app-build-baseline": 0,
+    "reuse-app-strip-baseline-basic": 0,
+    "reuse-app-size-baseline-basic": 0,
+    "reuse-app-run-baseline-basic": 0,
+    "reuse-app-strip-baseline-arrangement": 0,
+    "reuse-app-size-baseline-arrangement": 0,
+    "reuse-app-run-baseline-arrangement": 0,
+    "reuse-app-build-sign": 0,
+    "reuse-app-strip-sign-basic": 0,
+    "reuse-app-size-sign-basic": 0,
+    "reuse-app-run-sign-basic": 0,
+    "reuse-app-strip-sign-arrangement": 0,
+    "reuse-app-size-sign-arrangement": 0,
+    "reuse-app-run-sign-arrangement": 0,
+    "reuse-app-build-reuse": 0,
+    "reuse-app-strip-reuse-basic": 0,
+    "reuse-app-size-reuse-basic": 0,
+    "reuse-app-run-reuse-basic": 0,
+    "reuse-app-strip-reuse-arrangement": 0,
+    "reuse-app-size-reuse-arrangement": 0,
+    "reuse-app-run-reuse-arrangement": 0
+  },
+  "coverage": {
+    "calcium": {
+      "complete": 190,
+      "partial": 1,
+      "lines": 20778
+    },
+    "flint": {
+      "complete": 180,
+      "partial": 6,
+      "lines": 22215
+    }
+  },
+  "vectorCoverage": [
+    {
+      "repo": "calcium",
+      "path": "ca_vec/add.c",
+      "ranges": [
+        [
+          1,
+          21
+        ]
+      ],
+      "note": "Complete archived read: Elementwise ca_add; no vector-level fused product reduction or shared-scale carrier."
+    },
+    {
+      "repo": "calcium",
+      "path": "ca_vec/check_is_zero.c",
+      "ranges": [
+        [
+          1,
+          37
+        ]
+      ],
+      "note": "Complete archived read: Scans all unresolved coordinates until known nonzero dominates; otherwise Unknown beats all-zero True. All27 three-coordinate truth combinations pass native current probe. Hyperlattice already uses the same nonzero-dominates-unknown rule for norm certificates."
+    },
+    {
+      "repo": "calcium",
+      "path": "ca_vec/clear.c",
+      "ranges": [
+        [
+          1,
+          30
+        ]
+      ],
+      "note": "Complete archived read: Clears allocated capacity, not merely visible length, then frees storage; values must be cleared before their context. Does not reset the owner for a second clear."
+    },
+    {
+      "repo": "calcium",
+      "path": "ca_vec/init.c",
+      "ranges": [
+        [
+          1,
+          41
+        ]
+      ],
+      "note": "Complete archived read: Length-zero owner uses NULL; positive length allocates contiguous ca_struct storage and initializes every coordinate to canonical zero."
+    },
+    {
+      "repo": "calcium",
+      "path": "ca_vec/inlines.c",
+      "ranges": [
+        [
+          1,
+          14
+        ]
+      ],
+      "note": "Complete archived read: Emits ca_vec.h inline definitions only; header independently read."
+    },
+    {
+      "repo": "calcium",
+      "path": "ca_vec/neg.c",
+      "ranges": [
+        [
+          1,
+          31
+        ]
+      ],
+      "note": "Complete archived read: Public ca_vec_neg incorrectly skips work when res==src; raw elementwise negation does not. Current native105-case probe:24 wrong nonzero public in-place results,81 passing controls, clean Memcheck. Same archived mechanism source-read, not executed. Docs give no per-function alias caveat, but no universal overlapping-subrange contract inferred."
+    },
+    {
+      "repo": "calcium",
+      "path": "ca_vec/print.c",
+      "ranges": [
+        [
+          1,
+          49
+        ]
+      ],
+      "note": "Complete archived read: Linear vector printing forwards each coordinate to scalar display paths. printn temporarily mutates context flags in its already-read scalar helper; output is display, not exact serialization."
+    },
+    {
+      "repo": "calcium",
+      "path": "ca_vec/scalar_addmul_ca.c",
+      "ranges": [
+        [
+          1,
+          30
+        ]
+      ],
+      "note": "Complete archived read: Allocates one initialized scalar temporary per nonempty call, reuses it for lane product/add, then clears. Not a fused aggregate across lanes; mutating a scalar alias inside destination is not assumed supported."
+    },
+    {
+      "repo": "calcium",
+      "path": "ca_vec/scalar_div_ca.c",
+      "ranges": [
+        [
+          1,
+          29
+        ]
+      ],
+      "note": "Complete archived read: Forms reciprocal once outside the lane loop and multiplies each lane; no inverse on empty input. Hoisting requires valid scalar/domain and alias contracts; Hyper's checked normalization already separates zero/unknown checks."
+    },
+    {
+      "repo": "calcium",
+      "path": "ca_vec/scalar_mul_ca.c",
+      "ranges": [
+        [
+          1,
+          21
+        ]
+      ],
+      "note": "Complete archived read: Elementwise scalar multiplication; no per-vector canonicalization or aggregate normalization."
+    },
+    {
+      "repo": "calcium",
+      "path": "ca_vec/scalar_submul_ca.c",
+      "ranges": [
+        [
+          1,
+          30
+        ]
+      ],
+      "note": "Complete archived read: Reuses one scalar product temporary across lane subtracts, clearing after loop. No global product-sum simplification."
+    },
+    {
+      "repo": "calcium",
+      "path": "ca_vec/set.c",
+      "ranges": [
+        [
+          1,
+          31
+        ]
+      ],
+      "note": "Complete archived read: Public identity assignment skips copying safely; raw form loops ca_set. The same identity shortcut was incorrectly copied into public negation."
+    },
+    {
+      "repo": "calcium",
+      "path": "ca_vec/set_length.c",
+      "ranges": [
+        [
+          1,
+          52
+        ]
+      ],
+      "note": "Complete archived read: Capacity grows by max(requested,2*alloc), initializes spare ca_struct slots, and retains capacity on shrink. Truncation zeroes removed values, releasing payloads; re-expansion restores zero rather than stale entries. Unlike Rust Vec spare capacity is initialized scalar storage."
+    },
+    {
+      "repo": "calcium",
+      "path": "ca_vec/sub.c",
+      "ranges": [
+        [
+          1,
+          21
+        ]
+      ],
+      "note": "Complete archived read: Elementwise subtraction; no additional shared expression or exact aggregate mechanism."
+    },
+    {
+      "repo": "calcium",
+      "path": "ca_vec/swap.c",
+      "ranges": [
+        [
+          1,
+          21
+        ]
+      ],
+      "note": "Complete archived read: Raw vector exchange swaps each scalar owner; header owner swap is constant-size. Context compatibility remains caller responsibility."
+    },
+    {
+      "repo": "calcium",
+      "path": "ca_vec/zero.c",
+      "ranges": [
+        [
+          1,
+          28
+        ]
+      ],
+      "note": "Complete archived read: Resizes through set_length, then zeros active entries; newly initialized slots may be reset again. Fixed-size Hyper arrays and canonical scalar zeros do not need a direct port of this owner loop."
+    },
+    {
+      "repo": "calcium",
+      "path": "ca_vec.h",
+      "ranges": [
+        [
+          1,
+          212
+        ]
+      ],
+      "note": "Complete independent vector header read: owner wrappers versus raw preallocated pointers; header append grows before copying f, so an interior source pointer requires explicit lifetime/alias analysis and is not claimed safe. Common-denominator extraction first checks structural integer lanes, otherwise computes denominator LCM and exact rescaling. Hyper already retains common-scale facts and dispatches fused known-exact product sums without exposing scalar storage. No direct Hyper improvement established."
+    },
+    {
+      "repo": "flint",
+      "path": "src/ca_vec.h",
+      "ranges": [
+        [
+          1,
+          192
+        ]
+      ],
+      "note": "Complete independent vector header read: owner wrappers versus raw preallocated pointers; header append grows before copying f, so an interior source pointer requires explicit lifetime/alias analysis and is not claimed safe. Common-denominator extraction first checks structural integer lanes, otherwise computes denominator LCM and exact rescaling. Hyper already retains common-scale facts and dispatches fused known-exact product sums without exposing scalar storage. No direct Hyper improvement established."
+    },
+    {
+      "repo": "flint",
+      "path": "src/ca_vec/ca_vec.c",
+      "ranges": [
+        [
+          1,
+          304
+        ]
+      ],
+      "note": "Complete independent current vector implementation read: consolidates elementwise arithmetic, context-owned scalar lifetime, doubling capacity, canonical zero extension/truncation, one reciprocal per nonempty scalar division, reusable product temporaries, and nonzero-dominates-Unknown zero predicate. Public ca_vec_neg res==src branch incorrectly performs no work:24 failures/105 native cases, separate/raw in-place controls pass; all27 zero-truth controls pass; Memcheck zero errors/all freed. No claim of safety for arbitrary overlapping subranges or interior pointers across growth. Hyper's fixed arrays, retained facts and fused exact aggregate paths already address the useful architectural ideas."
+    },
+    {
+      "repo": "flint",
+      "path": "src/ca_vec/inlines.c",
+      "ranges": [
+        [
+          1,
+          13
+        ]
+      ],
+      "note": "Complete independent inline-emission wrapper read; ca_vec.h independently read."
+    },
+    {
+      "repo": "calcium",
+      "path": "doc/source/ca_vec.rst",
+      "ranges": [
+        [
+          1,
+          194
+        ]
+      ],
+      "note": "Complete independent vector documentation read: exact user-assigned length (not polynomial normalization), underscore preallocated arrays versus automatic owner management, zero extension/truncation, negation/append and common-denominator conversions. Public negation has no stated alias exception; no universal arbitrary-overlap guarantee inferred. Archived raw-swap const signature and printn parameter name differ from current corrected docs. Useful allocation and exact aggregate ideas compared against Hyperlattice's existing fixed/owned shared-scale carriers; no direct new production change."
+    },
+    {
+      "repo": "flint",
+      "path": "doc/source/ca_vec.rst",
+      "ranges": [
+        [
+          1,
+          194
+        ]
+      ],
+      "note": "Complete independent vector documentation read: exact user-assigned length (not polynomial normalization), underscore preallocated arrays versus automatic owner management, zero extension/truncation, negation/append and common-denominator conversions. Public negation has no stated alias exception; no universal arbitrary-overlap guarantee inferred. Archived raw-swap const signature and printn parameter name differ from current corrected docs. Useful allocation and exact aggregate ideas compared against Hyperlattice's existing fixed/owned shared-scale carriers; no direct new production change."
+    }
+  ],
+  "vectorProbe": {
+    "negationCases": 105,
+    "wrongPublicInPlace": 24,
+    "zeroTruthCases": 27,
+    "zeroTruthFailures": 0
+  },
+  "observations": {
+    "numeric": {
+      "cpu": 5184,
+      "alloc": 1296
+    },
+    "firstTouch": {
+      "cpu": 1728,
+      "alloc": 432
+    }
+  },
+  "limits": "CPU snapshots and raw rows are preserved separately from instrumented allocations; all campaign console captures are empty, so coverage comes from exact raw rows/summaries. First-use workers have fresh TLS but warm numeric operands/constants and OS thread cache; not whole-program cold start or concurrent throughput. Numerical kernels are unchanged in source; measured small latency differences are not universal improvements. Representative Hypercurve examples are not all production applications or size-optimized builds. WASM compile-only, not browser/runtime performance. Vector in-place negation failure demonstrated only for current FLINT; archived mechanism source-read. No donor patch or external report."
+}

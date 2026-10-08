@@ -1,0 +1,32 @@
+bezier_parameter_bernstein_32_to_power: 20000 iterations in 631.319964ms (31.565µs/iter), degree_checksum=640000
+bezier_algebraic_parameter_sturm: 20000 iterations in 163.701902ms (8.185µs/iter), total=40000
+bezier_algebraic_parameter_refined_ordering: 10000 iterations in 436.925806ms (43.692µs/iter), ordered=10000
+bezier_algebraic_parameter_refined_even_root_ordering: 10000 iterations in 970.550501ms (97.055µs/iter), ordered=10000
+bezier_parameter_quintic_unit_isolation: 2000 iterations in 108.170494ms (54.085µs/iter), isolated=10000, sturm_builds=1, interval_counts=19, bisections=9, rational_refinements=0, max_depth=5
+bezier_parameter_boundary_root_isolation: 2000 iterations in 127.577019ms (63.788µs/iter), isolated=2000, interval_counts=263, bisections=130, max_depth=130
+bezier_algebraic_parameter_exact_rational_reconstruction: 500000 iterations in 17.455228ms (34ns/iter), reconstructed=500000
+bezier_algebraic_point_tangent_image: 20000 iterations in 56.409169ms (2.82µs/iter), transformed=40000
+rational_bezier_algebraic_point_tangent_image: 20000 iterations in 1.166651ms (58ns/iter), transformed=40000
+	Command being timed: "taskset -c 7 /tmp/hypercurve-authoritative-polynomial-baseline-parameter-benchmark"
+	User time (seconds): 2.19
+	System time (seconds): 0.01
+	Percent of CPU this job got: 87%
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:02.51
+	Average shared text size (kbytes): 0
+	Average unshared data size (kbytes): 0
+	Average stack size (kbytes): 0
+	Average total size (kbytes): 0
+	Maximum resident set size (kbytes): 4624
+	Average resident set size (kbytes): 0
+	Major (requiring I/O) page faults: 0
+	Minor (reclaiming a frame) page faults: 329
+	Voluntary context switches: 1
+	Involuntary context switches: 1711
+	Swaps: 0
+	File system inputs: 0
+	File system outputs: 0
+	Socket messages sent: 0
+	Socket messages received: 0
+	Signals delivered: 0
+	Page size (bytes): 4096
+	Exit status: 0

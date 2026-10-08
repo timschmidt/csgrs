@@ -1,0 +1,33 @@
+==36== Memcheck, a memory error detector
+==36== Copyright (C) 2002-2026, and GNU GPL'd, by Julian Seward et al.
+==36== Using Valgrind-3.27.1 and LibVEX; rerun with -h for copyright info
+==36== Command: target/release/deps/quadratic_extraction-e33fb21efdc4e406 --test-threads=1
+==36== 
+
+running 7 tests
+test bounded_cancellation_exhaustion_is_unknown_not_zero ... ok
+test cancellation_does_not_erase_unbound_symbols_or_domain_obligations ... ok
+test distinct_high_degrees_and_monomials_cannot_cancel ... ok
+test genuine_higher_degree_cancellation_preserves_the_quadratic ... ok
+test multivariate_extraction_matches_independent_rational_coefficients ... ok
+test scalar_zero_filter_preserves_named_and_opaque_coefficient_families ... ok
+test univariate_extraction_matches_independent_rational_coefficients ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 3.06s
+
+==36== 
+==36== HEAP SUMMARY:
+==36==     in use at exit: 39,728 bytes in 581 blocks
+==36==   total heap usage: 839,351 allocs, 838,770 frees, 122,084,715 bytes allocated
+==36== 
+==36== LEAK SUMMARY:
+==36==    definitely lost: 0 bytes in 0 blocks
+==36==    indirectly lost: 0 bytes in 0 blocks
+==36==      possibly lost: 48 bytes in 1 blocks
+==36==    still reachable: 39,680 bytes in 580 blocks
+==36==         suppressed: 0 bytes in 0 blocks
+==36== Reachable blocks (those to which a pointer was found) are not shown.
+==36== To see them, rerun with: --leak-check=full --show-leak-kinds=all
+==36== 
+==36== For lists of detected and suppressed errors, rerun with: -s
+==36== ERROR SUMMARY: 0 errors from 0 contexts (suppressed: 0 from 0)

@@ -1,0 +1,22 @@
+{
+  "tag": "log-v2-public-release",
+  "started": "2026-09-08T09:39:11.806Z",
+  "finished": "2026-09-08T09:39:19.151Z",
+  "elapsedSeconds": 7.342424557999999,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison",
+  "command": "env",
+  "args": [
+    "TMPDIR=/home/tim/Documents/GitHub/workspace/calcium-build-tmp.gVX5v4",
+    "CARGO_INCREMENTAL=0",
+    "cargo",
+    "run",
+    "--offline",
+    "--release",
+    "--manifest-path",
+    "audits/continuation/calcium/trial-probe/Cargo.toml",
+    "--target-dir",
+    "/home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype"
+  ],
+  "code": 0,
+  "signal": null
+}

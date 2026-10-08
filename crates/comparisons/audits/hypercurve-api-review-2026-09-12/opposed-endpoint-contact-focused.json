@@ -1,0 +1,12 @@
+{
+  "command": [
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/opposed-endpoint-contact-focused-libtest",
+    "shared_line_endpoints_do_not_require_a_zero_determinant",
+    "--test-threads=1",
+    "--color",
+    "never"
+  ],
+  "returncode": 0,
+  "elapsed_seconds": 0.003174442012095824,
+  "binary_sha256": "a35c1f84ddb22df49f00b0e32bb1cf83e80005fe3f9e7197a939ab258892beef"
+}

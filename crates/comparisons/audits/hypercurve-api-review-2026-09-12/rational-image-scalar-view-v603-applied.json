@@ -1,0 +1,6 @@
+{
+  "path": "/home/tim/Documents/GitHub/workspace/hypercurve/src/rational_bezier_general.rs",
+  "before": "26cbbd748ea97a4e9b72933fb79cd4a09965382a8738c68108b1515b1991853f",
+  "after_unformatted": "c4605c3975fbeebb8140ac9c7b7ef1c33c69c737ce1bb2f917d913973d62f540",
+  "diagnostic": "conic-separation-stack-20260928-v602-backtrace.txt"
+}

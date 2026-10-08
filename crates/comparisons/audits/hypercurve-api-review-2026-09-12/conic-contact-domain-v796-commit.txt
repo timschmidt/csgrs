@@ -1,0 +1,16 @@
+Exclude projective poles from affine conic intersection contacts
+
+Implicit substitution can have roots at infinity when rational Bezier
+weights have mixed signs. Reject zero source denominators before contact
+transport and point publication. Reuse common-sign Bernstein weights on
+the unit domain, and replay mixed weights strictly in the original source.
+
+A public counterexample with weights [1,-2,1] previously published poles
+as transverse contacts. The regression checks complete finite contact
+counts and exact coordinates, rational and irrational poles, and both
+policies. Rational double-pole cases now return complete empty contact sets.
+
+Validation: 169 release cases/eight pinned binaries; seven build, Clippy,
+format, fuzz, documentation and downstream checks. The unchanged public
+12-case probe retains 24 finite controls, with zero pole contacts and no
+incomplete results (previously eight pole contacts and four incomplete sets).

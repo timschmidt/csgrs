@@ -1,0 +1,26 @@
+[
+  {
+    "name": "bezier_region::curve_corner_chain::tests::extended_fillet_circle_endpoints_obey_the_exact_radius_bound",
+    "returncode": 0,
+    "passed": true,
+    "limit_seconds": 75,
+    "elapsed_seconds": 22.73586985003203,
+    "log": "fillet-companion-chart-20260923-focused3-candidate-case-0.log"
+  },
+  {
+    "name": "bezier_region::curve_corner_chain::tests::extended_fillet_region_classifies_both_sides_of_its_companion",
+    "returncode": 0,
+    "passed": true,
+    "limit_seconds": 75,
+    "elapsed_seconds": 21.68761063797865,
+    "log": "fillet-companion-chart-20260923-focused3-candidate-case-1.log"
+  },
+  {
+    "name": "bezier_region::tests::selected_circle_and_promoted_line_extend_through_the_chord_support_cell",
+    "returncode": 0,
+    "passed": true,
+    "limit_seconds": 75,
+    "elapsed_seconds": 0.20372817700263113,
+    "log": "fillet-companion-chart-20260923-focused3-candidate-case-2.log"
+  }
+]

@@ -1,0 +1,8 @@
+     Locking 1 package to latest Rust 1.97.0 compatible version
+ Downgrading num-bigint v0.4.8 -> v0.4.6 (available: v0.4.8)
+   Compiling num-bigint v0.4.6
+   Compiling num-rational v0.4.2
+   Compiling num v0.4.3
+   Compiling hyperreal v0.13.1 (/tmp/aern-hyper-exp.PdU63J/hyperreal-baseline)
+   Compiling aern-exp-bench v0.0.0 (/tmp/aern-hyper-exp.PdU63J/bench-baseline)
+    Finished `release` profile [optimized] target(s) in 10.51s

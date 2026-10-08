@@ -1,0 +1,26 @@
+{
+  "returncode": 0,
+  "elapsed_seconds": 0.031644275004509836,
+  "normal_library_sha256": "476ce4085af4463f86d6182e476e0fa13af9266727aaefa54be4b0293d704b2a",
+  "log": "selected-point-frame-replay-native-poles-public.log",
+  "source": "finite-analytic-native-poles-public.rs",
+  "command": [
+    "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustc",
+    "--edition=2024",
+    "-O",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-analytic-native-poles-public.rs",
+    "--extern",
+    "hypercurve=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypercurve-930b1fe968ca3c94.rlib",
+    "-L",
+    "dependency=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps",
+    "-o",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/selected-point-frame-replay-native-poles-public"
+  ],
+  "source_sha256": "ec10467bfcc46c94a0722084d1fbd30bb13be43bd643af4f9c7405a407a9f655",
+  "executable_sha256": "f3bdc75ed6264a743b6feb02304c536d2a4e9e33868b6a787d914e019b0d3658",
+  "counts": {
+    "cases": 128,
+    "contacts": 128,
+    "failures": 0
+  }
+}

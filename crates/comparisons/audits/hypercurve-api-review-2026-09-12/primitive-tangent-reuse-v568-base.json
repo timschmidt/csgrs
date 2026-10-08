@@ -1,0 +1,5 @@
+{
+  "path": "hypercurve/src/bezier_offset.rs",
+  "sha256": "d89fd5372110757754f7a5808958ea8dc7cab45b890d81117b4a0c559f5dfa25",
+  "prerequisite": "retained-point-query-broad-20260928-v567-committed.json"
+}

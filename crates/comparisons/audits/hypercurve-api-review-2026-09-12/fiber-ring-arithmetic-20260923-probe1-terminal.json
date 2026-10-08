@@ -1,0 +1,15 @@
+{
+  "cases": [
+    {
+      "name": "bezier_offset::conversion_tests::selected_fiber_transverse_mapped_cut_inverts_by_point",
+      "returncode": "timeout",
+      "passed": false,
+      "limit_seconds": 120,
+      "elapsed_seconds": 120.14093771099579,
+      "log": "fiber-ring-arithmetic-20260923-probe1-case-0.log"
+    }
+  ],
+  "binary_sha256": "7da88928586644c96b303c23cf453c8c1bfeb4440571f61b998558e3ea6a8589",
+  "all_sources_unchanged": true,
+  "all_processes_reaped": true
+}

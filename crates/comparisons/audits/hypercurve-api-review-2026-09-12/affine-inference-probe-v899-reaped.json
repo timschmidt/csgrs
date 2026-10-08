@@ -1,0 +1,8 @@
+{
+  "outer_handle": 12403,
+  "outer_exit_code": null,
+  "handle_query": "Unknown process id 12403",
+  "terminal_reports_all_child_processes_reaped": true,
+  "terminal_failure": "compile failed: dependency search directory omitted release/deps",
+  "note": "The prior tool output was lost at compaction. No outer exit code is inferred from the terminal artifact."
+}

@@ -1,0 +1,10 @@
+{
+  "path": "hypercurve/tests/hypercurve_curve_region_promotion.rs",
+  "before_sha256": "b326022a76db177c7489909c5d653916c709551f7f8f2a2d17d12e24e0908b74",
+  "after_sha256": "d113483352ced6621bf286c37d0238866bac7365f654ee831f0b76fd46bec317",
+  "baseline": "unit-domain-core-20260928-v649-terminal.json",
+  "baseline_replay": "point-dispatch-baseline-v739-terminal.json",
+  "old": "                    \"recursive-projective-axis-order\",\n                    \"interval-separated\",\n                ) > 0,\n                \"strictly separated recursive projective coordinates must avoid exact cross-product expansion: {contract_kernel_trace:?}\",",
+  "new": "                    \"recursive-projective-axis-order\",\n                    \"interval-separated\",\n                ) > 0\n                    || contract_trace.path_count(\n                        \"hypercurve\",\n                        \"algebraic-chord-point-axis-order\",\n                        \"interval-separated\",\n                    ) > 0,\n                \"retained coordinates must use certified bounds before recursive expansion: {contract_kernel_trace:?}\",",
+  "scope": "Single performance-dispatch assertion only; all production code and geometric oracles unchanged."
+}

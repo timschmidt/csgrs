@@ -1,0 +1,46 @@
+\doxysubsection{Naive\+Kleenean Class Reference}
+\hypertarget{classAriadne_1_1NaiveKleenean}{}\label{classAriadne_1_1NaiveKleenean}\index{NaiveKleenean@{NaiveKleenean}}
+
+
+{\ttfamily \#include $<$logical.\+hpp$>$}
+
+
+
+\doxysubsubsection{Description}
+A logical class representing the result of a undecidable predicate over a continuous (uncountable) data type. 
+
+A canonical example is (strict) positivity of a real number given only a convergent sequence, since without error bounds we can never know whether a given approximation is sufficiently close to deduce any properties of the number. \doxysubsubsubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1NaiveKleenean_a158208b58f989b2b6745395eab627a19}\label{classAriadne_1_1NaiveKleenean_a158208b58f989b2b6745395eab627a19} 
+{\bfseries Naive\+Kleenean} (\mbox{\hyperlink{classAriadne_1_1Kleenean}{Kleenean}} k)
+\begin{DoxyCompactList}\small\item\em Convert from a Kleenean predicate. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1NaiveKleenean_a0a6112c41d18527ba49e2f6f9dfcf1a8}\label{classAriadne_1_1NaiveKleenean_a0a6112c41d18527ba49e2f6f9dfcf1a8} 
+{\bfseries Naive\+Kleenean} (\mbox{\hyperlink{classAriadne_1_1LowerKleenean}{Lower\+Kleenean}} lk)
+\begin{DoxyCompactList}\small\item\em Convert from a Lower\+Kleenean predicate. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1NaiveKleenean_a09244753c1df0ea67c53c25f15d9a6a8}\label{classAriadne_1_1NaiveKleenean_a09244753c1df0ea67c53c25f15d9a6a8} 
+{\bfseries Naive\+Kleenean} (\mbox{\hyperlink{classAriadne_1_1UpperKleenean}{Upper\+Kleenean}} uk)
+\begin{DoxyCompactList}\small\item\em Convert from an Upper\+Kleenean predicate. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1NaiveKleenean_afe091781b71e99d6b8de4e44d3c394ef}\label{classAriadne_1_1NaiveKleenean_afe091781b71e99d6b8de4e44d3c394ef} 
+\mbox{\hyperlink{classAriadne_1_1ApproximateKleenean}{Approximate\+Kleenean}} {\bfseries check} (\mbox{\hyperlink{classAriadne_1_1Effort}{Effort}} e) const
+\begin{DoxyCompactList}\small\item\em Check the value using effort {\itshape e}. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsubsection*{Friends}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1NaiveKleenean_aba89bb38d438190911cad214d52a03a4}\label{classAriadne_1_1NaiveKleenean_aba89bb38d438190911cad214d52a03a4} 
+\mbox{\hyperlink{classAriadne_1_1ApproximateKleenean}{Approximate\+Kleenean}} {\bfseries check} (\mbox{\hyperlink{classAriadne_1_1NaiveKleenean}{Naive\+Kleenean}} const \&ak, \mbox{\hyperlink{classAriadne_1_1Effort}{Effort}} e)
+\begin{DoxyCompactList}\small\item\em Check the value of {\itshape ak} using effort {\itshape e}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1NaiveKleenean_a76678efb39e66a0fb8ae3a34b4922a0d}\label{classAriadne_1_1NaiveKleenean_a76678efb39e66a0fb8ae3a34b4922a0d} 
+\mbox{\hyperlink{classAriadne_1_1NaiveKleenean}{Naive\+Kleenean}} {\bfseries operator!} (\mbox{\hyperlink{classAriadne_1_1NaiveKleenean}{Naive\+Kleenean}} const \&l)
+\begin{DoxyCompactList}\small\item\em Logical negation. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1NaiveKleenean_ab452fecb75d0d9fe91dfb1239f2ca0c5}\label{classAriadne_1_1NaiveKleenean_ab452fecb75d0d9fe91dfb1239f2ca0c5} 
+\mbox{\hyperlink{classAriadne_1_1NaiveKleenean}{Naive\+Kleenean}} {\bfseries operator\&\&} (\mbox{\hyperlink{classAriadne_1_1NaiveKleenean}{Naive\+Kleenean}} const \&l1, \mbox{\hyperlink{classAriadne_1_1NaiveKleenean}{Naive\+Kleenean}} const \&l2)
+\begin{DoxyCompactList}\small\item\em Logical conjunction. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1NaiveKleenean_a76142552377a68262efcfa3aad4d83eb}\label{classAriadne_1_1NaiveKleenean_a76142552377a68262efcfa3aad4d83eb} 
+\mbox{\hyperlink{classAriadne_1_1NaiveKleenean}{Naive\+Kleenean}} {\bfseries operator\texorpdfstring{$\vert$}{|}\texorpdfstring{$\vert$}{|}} (\mbox{\hyperlink{classAriadne_1_1NaiveKleenean}{Naive\+Kleenean}} const \&l1, \mbox{\hyperlink{classAriadne_1_1NaiveKleenean}{Naive\+Kleenean}} const \&l2)
+\begin{DoxyCompactList}\small\item\em Logical disjunction. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+The documentation for this class was generated from the following file\+:\begin{DoxyCompactItemize}
+\item 
+source/foundations/\mbox{\hyperlink{logical_8hpp}{logical.\+hpp}}\end{DoxyCompactItemize}

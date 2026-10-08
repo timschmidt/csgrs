@@ -1,0 +1,16 @@
+[
+  {
+    "kind": "hypercurve-check",
+    "repo": "hypercurve",
+    "command": [
+      "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+      "check",
+      "--all-targets",
+      "--no-default-features",
+      "--locked",
+      "--offline"
+    ],
+    "returncode": 101,
+    "elapsed_seconds": 16.64132588400389
+  }
+]

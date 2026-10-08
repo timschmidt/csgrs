@@ -1,0 +1,54 @@
+{
+  "status": "qualified and committed",
+  "source": "P(t)=((t-2)^2,0)",
+  "distance": "1/4",
+  "retained_range": [
+    "3",
+    "4"
+  ],
+  "unit_speed_polynomial": "4-2t",
+  "witness_parameter": "3",
+  "cached_unit_rational_point": [
+    "1",
+    "-1/4"
+  ],
+  "intended_exact_parallel_point": [
+    "1",
+    "1/4"
+  ],
+  "required_followup": [
+    "General PH materialization beyond authored-unit pole, primitive-speed and positive Bernstein weight restrictions; projective homogeneous controls at infinity.",
+    "Constant/collapsed supports and fully zero two-dimensional parameter systems.",
+    "Shared homogeneous conic frames, normalized CurveRegion2 closure, selected-fiber/root-refinement reuse and composed runtime/allocation/history growth."
+  ],
+  "goal_status": "active",
+  "observed_commit": "4acbe01a0102b34f68bc99859207a74e8b47a18e",
+  "reusable_authority": "CertifiedPythagoreanHodographOffset2::speed_sign_on_domain now owns unit root exclusion, finite sign/root replay and incident barrier checks.",
+  "before": {
+    "log": "regular-rational-domain-before.log",
+    "result": "At t=3 on [3,4], the published rational point differs from the intended parallel by a strictly positive squared distance."
+  },
+  "focused_after": {
+    "log": "regular-rational-components-final.log",
+    "passed": 2,
+    "seconds": 0.01
+  },
+  "additional_reproduction": {
+    "log": "regular-rational-range-migration.log",
+    "result": "The native exterior collinear range passes, but a selected stationary endpoint was rejected with Ordering because zero-offset point bounds required a unit tangent."
+  },
+  "implemented": [
+    "Share batched PH domain-speed selection between ordered self contacts and regular component publication, materializing the opposite branch only when required.",
+    "Keep regular component ranges and collinear partition boundaries in CurveParameterRange2/CurveParameter2; remove the narrowing boundary adapter.",
+    "Evaluate affine contact points and collinear samples in their actual chart, certify weights on the retained finite range, and avoid a normal for zero-displacement bounds.",
+    "Replace the selected-axis unit-only domain variant with the shared general finite range, preserving unit square-free and cached projection specializations.",
+    "Update Boolean dispatch to pass retained ranges directly and admit unit-only rational shortcuts only after coverage is proved."
+  ],
+  "qualification": "regular-rational-qualification.json",
+  "boolean_after": {
+    "log": "regular-rational-boolean-domains-final.log",
+    "passed": 1,
+    "seconds": 0.01
+  },
+  "commit": "aa9b2ba2f407ef33597d48e954bf47e390cbd2a0"
+}

@@ -1,0 +1,15 @@
+{
+  "owned_profile": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/debug",
+  "exclusive_cargo_profile_lock": true,
+  "all_owned_processes_reaped": true,
+  "removed_generated_entries": [
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/debug/.cargo-artifact-lock",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/debug/build",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/debug/incremental",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/debug/examples",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/debug/.fingerprint",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/debug/deps",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/debug/.cargo-build-lock"
+  ],
+  "source_snapshots_and_archived_executables_preserved": true
+}

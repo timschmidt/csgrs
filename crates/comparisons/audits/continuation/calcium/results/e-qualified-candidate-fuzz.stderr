@@ -1,0 +1,28 @@
+   Compiling quote v1.0.46
+    Checking num-traits v0.2.19
+   Compiling syn v2.0.119
+   Compiling zerocopy v0.8.54
+    Checking num-integer v0.1.46
+   Compiling jobserver v0.1.35
+   Compiling shlex v2.0.1
+   Compiling cc v1.2.67
+   Compiling serde_json v1.0.150
+    Checking zmij v1.0.23
+   Compiling libfuzzer-sys v0.4.13
+    Checking num-iter v0.1.46
+    Checking memchr v2.8.3
+   Compiling serde_derive v1.0.228
+    Checking serde v1.0.228
+   Compiling zerocopy-derive v0.8.54
+    Checking num-bigint v0.4.8
+    Checking num-rational v0.4.2
+    Checking num-complex v0.4.6
+   Compiling derive_arbitrary v1.4.2
+    Checking arbitrary v1.4.2
+    Checking num v0.4.3
+    Checking half v2.7.1
+    Checking ciborium-ll v0.2.2
+    Checking ciborium v0.2.2
+    Checking hyperreal v0.13.1 (/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/e-plan-qualified-candidate/hyperreal)
+    Checking hyperreal-fuzz v0.1.0 (/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/e-plan-qualified-candidate/hyperreal/fuzz)
+    Finished `dev` profile [unoptimized] target(s) in 9.43s

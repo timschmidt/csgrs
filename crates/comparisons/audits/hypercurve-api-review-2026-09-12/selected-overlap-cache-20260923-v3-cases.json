@@ -1,0 +1,10 @@
+[
+  {
+    "name": "bezier_offset::conversion_tests::selected_fiber_mapped_cut_inverts_on_analytic_overlap",
+    "returncode": 0,
+    "passed": true,
+    "limit_seconds": 120,
+    "elapsed_seconds": 0.25244013499468565,
+    "log": "selected-overlap-cache-20260923-v3-case-0.log"
+  }
+]

@@ -1,0 +1,34 @@
+[
+  {
+    "name": "bezier_offset::conversion_tests::selected_fiber_transverse_mapped_cut_inverts_by_point",
+    "returncode": 101,
+    "passed": false,
+    "limit_seconds": 180,
+    "elapsed_seconds": 0.2483242000453174,
+    "log": "biquadratic-basis-20260923-v2-hypercurve-case-0.log"
+  },
+  {
+    "name": "bezier_offset::conversion_tests::selected_fiber_analytic_transverse_cut_inverts_by_point",
+    "returncode": 0,
+    "passed": true,
+    "limit_seconds": 120,
+    "elapsed_seconds": 0.25528753304388374,
+    "log": "biquadratic-basis-20260923-v2-hypercurve-case-1.log"
+  },
+  {
+    "name": "bezier_offset::conversion_tests::selected_fiber_mapped_cut_inverts_on_analytic_overlap",
+    "returncode": 0,
+    "passed": true,
+    "limit_seconds": 120,
+    "elapsed_seconds": 0.25741432700306177,
+    "log": "biquadratic-basis-20260923-v2-hypercurve-case-2.log"
+  },
+  {
+    "name": "bezier_region::tests::nonrepresented_chord_and_retained_rational_arc_share_the_fillet_kernel",
+    "returncode": 0,
+    "passed": true,
+    "limit_seconds": 180,
+    "elapsed_seconds": 0.6527464200044051,
+    "log": "biquadratic-basis-20260923-v2-hypercurve-case-3.log"
+  }
+]

@@ -1,0 +1,1442 @@
+{
+  "source_before_sha256": "ab1314c4973bad261b191f4587bcba7220ff6e291ed750f2b1511083c088a26d",
+  "edited_calls": 239,
+  "validation": "E0061 targets defined in the interval impl; extra argument is CurveContext; every replacement is empty and deletes only an audited policy expression and its comma. Deduplicated lib/test spans and checked nonoverlap.",
+  "edits": [
+    {
+      "start": 258371,
+      "end": 258394,
+      "removed": ", &CurveContext::STRICT",
+      "line": 6068
+    },
+    {
+      "start": 258950,
+      "end": 258973,
+      "removed": ", &CurveContext::STRICT",
+      "line": 6082
+    },
+    {
+      "start": 293238,
+      "end": 293273,
+      "removed": ",\n            &CurveContext::STRICT",
+      "line": 6912
+    },
+    {
+      "start": 307019,
+      "end": 307042,
+      "removed": ", &CurveContext::STRICT",
+      "line": 7243
+    },
+    {
+      "start": 312978,
+      "end": 313001,
+      "removed": ", &CurveContext::STRICT",
+      "line": 7389
+    },
+    {
+      "start": 356200,
+      "end": 356223,
+      "removed": ", &CurveContext::STRICT",
+      "line": 8451
+    },
+    {
+      "start": 361835,
+      "end": 361858,
+      "removed": ", &CurveContext::STRICT",
+      "line": 8604
+    },
+    {
+      "start": 363888,
+      "end": 363911,
+      "removed": ", &CurveContext::STRICT",
+      "line": 8662
+    },
+    {
+      "start": 368290,
+      "end": 368313,
+      "removed": ", &CurveContext::STRICT",
+      "line": 8759
+    },
+    {
+      "start": 369516,
+      "end": 369539,
+      "removed": ", &CurveContext::STRICT",
+      "line": 8792
+    },
+    {
+      "start": 380836,
+      "end": 380859,
+      "removed": ", &CurveContext::STRICT",
+      "line": 9084
+    },
+    {
+      "start": 401652,
+      "end": 401691,
+      "removed": ",\n                &CurveContext::STRICT",
+      "line": 9613
+    },
+    {
+      "start": 477499,
+      "end": 477507,
+      "removed": ", strict",
+      "line": 11481
+    },
+    {
+      "start": 477810,
+      "end": 477818,
+      "removed": ", strict",
+      "line": 11490
+    },
+    {
+      "start": 477837,
+      "end": 477845,
+      "removed": ", strict",
+      "line": 11490
+    },
+    {
+      "start": 478978,
+      "end": 478986,
+      "removed": ", strict",
+      "line": 11526
+    },
+    {
+      "start": 479626,
+      "end": 479634,
+      "removed": ", strict",
+      "line": 11542
+    },
+    {
+      "start": 479671,
+      "end": 479679,
+      "removed": ", strict",
+      "line": 11543
+    },
+    {
+      "start": 480874,
+      "end": 480880,
+      "removed": "strict",
+      "line": 11572
+    },
+    {
+      "start": 480925,
+      "end": 480931,
+      "removed": "strict",
+      "line": 11573
+    },
+    {
+      "start": 481029,
+      "end": 481035,
+      "removed": "strict",
+      "line": 11574
+    },
+    {
+      "start": 481328,
+      "end": 481336,
+      "removed": ", strict",
+      "line": 11582
+    },
+    {
+      "start": 481483,
+      "end": 481491,
+      "removed": ", strict",
+      "line": 11585
+    },
+    {
+      "start": 482129,
+      "end": 482137,
+      "removed": ", strict",
+      "line": 11602
+    },
+    {
+      "start": 482179,
+      "end": 482187,
+      "removed": ", strict",
+      "line": 11603
+    },
+    {
+      "start": 482242,
+      "end": 482250,
+      "removed": ", strict",
+      "line": 11605
+    },
+    {
+      "start": 482316,
+      "end": 482324,
+      "removed": ", strict",
+      "line": 11606
+    },
+    {
+      "start": 482380,
+      "end": 482388,
+      "removed": ", strict",
+      "line": 11608
+    },
+    {
+      "start": 482454,
+      "end": 482462,
+      "removed": ", strict",
+      "line": 11609
+    },
+    {
+      "start": 788740,
+      "end": 788761,
+      "removed": "&CurveContext::STRICT",
+      "line": 18681
+    },
+    {
+      "start": 788830,
+      "end": 788851,
+      "removed": "&CurveContext::STRICT",
+      "line": 18683
+    },
+    {
+      "start": 1237457,
+      "end": 1237478,
+      "removed": "&CurveContext::STRICT",
+      "line": 28491
+    },
+    {
+      "start": 1237778,
+      "end": 1237801,
+      "removed": ", &CurveContext::STRICT",
+      "line": 28495
+    },
+    {
+      "start": 1247906,
+      "end": 1247961,
+      "removed": ",\n                                &CurveContext::STRICT",
+      "line": 28683
+    },
+    {
+      "start": 1287253,
+      "end": 1287276,
+      "removed": ", &CurveContext::STRICT",
+      "line": 29519
+    },
+    {
+      "start": 1287341,
+      "end": 1287364,
+      "removed": ", &CurveContext::STRICT",
+      "line": 29520
+    },
+    {
+      "start": 1287473,
+      "end": 1287496,
+      "removed": ", &CurveContext::STRICT",
+      "line": 29522
+    },
+    {
+      "start": 1287564,
+      "end": 1287587,
+      "removed": ", &CurveContext::STRICT",
+      "line": 29523
+    },
+    {
+      "start": 1287687,
+      "end": 1287710,
+      "removed": ", &CurveContext::STRICT",
+      "line": 29525
+    },
+    {
+      "start": 1287772,
+      "end": 1287795,
+      "removed": ", &CurveContext::STRICT",
+      "line": 29526
+    },
+    {
+      "start": 1288382,
+      "end": 1288405,
+      "removed": ", &CurveContext::STRICT",
+      "line": 29537
+    },
+    {
+      "start": 1288564,
+      "end": 1288587,
+      "removed": ", &CurveContext::STRICT",
+      "line": 29540
+    },
+    {
+      "start": 1290182,
+      "end": 1290205,
+      "removed": ", &CurveContext::STRICT",
+      "line": 29572
+    },
+    {
+      "start": 1290414,
+      "end": 1290469,
+      "removed": ",\n                                &CurveContext::STRICT",
+      "line": 29576
+    },
+    {
+      "start": 2050388,
+      "end": 2050411,
+      "removed": ", &CurveContext::STRICT",
+      "line": 46532
+    },
+    {
+      "start": 2060009,
+      "end": 2060044,
+      "removed": ",\n                &self.data.policy",
+      "line": 46767
+    },
+    {
+      "start": 2060189,
+      "end": 2060206,
+      "removed": "&self.data.policy",
+      "line": 46772
+    },
+    {
+      "start": 2060536,
+      "end": 2060555,
+      "removed": ", &self.data.policy",
+      "line": 46778
+    },
+    {
+      "start": 2060754,
+      "end": 2060771,
+      "removed": "&self.data.policy",
+      "line": 46782
+    },
+    {
+      "start": 2061839,
+      "end": 2061858,
+      "removed": ", &self.data.policy",
+      "line": 46807
+    },
+    {
+      "start": 2061992,
+      "end": 2062011,
+      "removed": ", &self.data.policy",
+      "line": 46810
+    },
+    {
+      "start": 2063856,
+      "end": 2063891,
+      "removed": ",\n                &self.data.policy",
+      "line": 46857
+    },
+    {
+      "start": 2064052,
+      "end": 2064069,
+      "removed": "&self.data.policy",
+      "line": 46862
+    },
+    {
+      "start": 2064952,
+      "end": 2064971,
+      "removed": ", &self.data.policy",
+      "line": 46884
+    },
+    {
+      "start": 2065202,
+      "end": 2065219,
+      "removed": "&self.data.policy",
+      "line": 46888
+    },
+    {
+      "start": 2065753,
+      "end": 2065772,
+      "removed": ", &self.data.policy",
+      "line": 46898
+    },
+    {
+      "start": 2065906,
+      "end": 2065925,
+      "removed": ", &self.data.policy",
+      "line": 46901
+    },
+    {
+      "start": 2067385,
+      "end": 2067420,
+      "removed": ",\n                &self.data.policy",
+      "line": 46936
+    },
+    {
+      "start": 2067571,
+      "end": 2067588,
+      "removed": "&self.data.policy",
+      "line": 46941
+    },
+    {
+      "start": 2068096,
+      "end": 2068115,
+      "removed": ", &self.data.policy",
+      "line": 46951
+    },
+    {
+      "start": 2068678,
+      "end": 2068697,
+      "removed": ", &self.data.policy",
+      "line": 46967
+    },
+    {
+      "start": 2070450,
+      "end": 2070485,
+      "removed": ",\n                &self.data.policy",
+      "line": 47008
+    },
+    {
+      "start": 2070636,
+      "end": 2070653,
+      "removed": "&self.data.policy",
+      "line": 47013
+    },
+    {
+      "start": 2071174,
+      "end": 2071193,
+      "removed": ", &self.data.policy",
+      "line": 47023
+    },
+    {
+      "start": 2071756,
+      "end": 2071775,
+      "removed": ", &self.data.policy",
+      "line": 47039
+    },
+    {
+      "start": 2149492,
+      "end": 2149531,
+      "removed": ",\n                &CurveContext::STRICT",
+      "line": 48897
+    },
+    {
+      "start": 2152277,
+      "end": 2152300,
+      "removed": ", &CurveContext::STRICT",
+      "line": 48960
+    },
+    {
+      "start": 2152353,
+      "end": 2152376,
+      "removed": ", &CurveContext::STRICT",
+      "line": 48961
+    },
+    {
+      "start": 2456902,
+      "end": 2456949,
+      "removed": "&CurveContext::STRICT,\n                        ",
+      "line": 56214
+    },
+    {
+      "start": 2457053,
+      "end": 2457076,
+      "removed": ", &CurveContext::STRICT",
+      "line": 56217
+    },
+    {
+      "start": 2460500,
+      "end": 2460547,
+      "removed": "&CurveContext::STRICT,\n                        ",
+      "line": 56299
+    },
+    {
+      "start": 2460651,
+      "end": 2460674,
+      "removed": ", &CurveContext::STRICT",
+      "line": 56302
+    },
+    {
+      "start": 2467913,
+      "end": 2467960,
+      "removed": "&CurveContext::STRICT,\n                        ",
+      "line": 56462
+    },
+    {
+      "start": 2468236,
+      "end": 2468259,
+      "removed": ", &CurveContext::STRICT",
+      "line": 56470
+    },
+    {
+      "start": 2504940,
+      "end": 2504975,
+      "removed": ",\n            &CurveContext::STRICT",
+      "line": 57288
+    },
+    {
+      "start": 2630049,
+      "end": 2630096,
+      "removed": ",\n                        &CurveContext::STRICT",
+      "line": 60202
+    },
+    {
+      "start": 2637011,
+      "end": 2637034,
+      "removed": ", &CurveContext::STRICT",
+      "line": 60374
+    },
+    {
+      "start": 2637070,
+      "end": 2637093,
+      "removed": ", &CurveContext::STRICT",
+      "line": 60375
+    },
+    {
+      "start": 2660594,
+      "end": 2660602,
+      "removed": ", strict",
+      "line": 60946
+    },
+    {
+      "start": 2677862,
+      "end": 2677885,
+      "removed": ", &CurveContext::STRICT",
+      "line": 61351
+    },
+    {
+      "start": 2678406,
+      "end": 2678429,
+      "removed": "&CurveContext::STRICT, ",
+      "line": 61362
+    },
+    {
+      "start": 2678504,
+      "end": 2678527,
+      "removed": ", &CurveContext::STRICT",
+      "line": 61363
+    },
+    {
+      "start": 2693812,
+      "end": 2693835,
+      "removed": ", &CurveContext::STRICT",
+      "line": 61726
+    },
+    {
+      "start": 2697117,
+      "end": 2697156,
+      "removed": "&CurveContext::STRICT,\n                ",
+      "line": 61808
+    },
+    {
+      "start": 2697261,
+      "end": 2697284,
+      "removed": ", &CurveContext::STRICT",
+      "line": 61812
+    },
+    {
+      "start": 2705319,
+      "end": 2705342,
+      "removed": ", &CurveContext::STRICT",
+      "line": 62005
+    },
+    {
+      "start": 2707700,
+      "end": 2707735,
+      "removed": "&CurveContext::STRICT,\n            ",
+      "line": 62075
+    },
+    {
+      "start": 2707828,
+      "end": 2707851,
+      "removed": ", &CurveContext::STRICT",
+      "line": 62079
+    },
+    {
+      "start": 2824573,
+      "end": 2824596,
+      "removed": ", &CurveContext::STRICT",
+      "line": 64837
+    },
+    {
+      "start": 2824706,
+      "end": 2824729,
+      "removed": ", &CurveContext::STRICT",
+      "line": 64840
+    },
+    {
+      "start": 3008097,
+      "end": 3008105,
+      "removed": "strict, ",
+      "line": 69528
+    },
+    {
+      "start": 3008233,
+      "end": 3008241,
+      "removed": "strict, ",
+      "line": 69530
+    },
+    {
+      "start": 3008324,
+      "end": 3008332,
+      "removed": ", strict",
+      "line": 69531
+    },
+    {
+      "start": 3008462,
+      "end": 3008470,
+      "removed": ", strict",
+      "line": 69533
+    },
+    {
+      "start": 3008554,
+      "end": 3008562,
+      "removed": ", strict",
+      "line": 69534
+    },
+    {
+      "start": 3008641,
+      "end": 3008649,
+      "removed": ", strict",
+      "line": 69535
+    },
+    {
+      "start": 3009896,
+      "end": 3009904,
+      "removed": "strict, ",
+      "line": 69569
+    },
+    {
+      "start": 3009997,
+      "end": 3010005,
+      "removed": ", strict",
+      "line": 69570
+    },
+    {
+      "start": 3169685,
+      "end": 3169693,
+      "removed": ", strict",
+      "line": 73307
+    },
+    {
+      "start": 3169780,
+      "end": 3169788,
+      "removed": ", strict",
+      "line": 73309
+    },
+    {
+      "start": 3170120,
+      "end": 3170126,
+      "removed": "strict",
+      "line": 73317
+    },
+    {
+      "start": 3170185,
+      "end": 3170191,
+      "removed": "strict",
+      "line": 73318
+    },
+    {
+      "start": 3170289,
+      "end": 3170295,
+      "removed": "strict",
+      "line": 73319
+    },
+    {
+      "start": 3170380,
+      "end": 3170388,
+      "removed": ", strict",
+      "line": 73320
+    },
+    {
+      "start": 3189133,
+      "end": 3189156,
+      "removed": ", &CurveContext::STRICT",
+      "line": 73721
+    },
+    {
+      "start": 3189329,
+      "end": 3189352,
+      "removed": ", &CurveContext::STRICT",
+      "line": 73724
+    },
+    {
+      "start": 3190438,
+      "end": 3190461,
+      "removed": ", &CurveContext::STRICT",
+      "line": 73743
+    },
+    {
+      "start": 3190571,
+      "end": 3190594,
+      "removed": ", &CurveContext::STRICT",
+      "line": 73746
+    },
+    {
+      "start": 3310642,
+      "end": 3310689,
+      "removed": ",\n                        &CurveContext::STRICT",
+      "line": 76411
+    },
+    {
+      "start": 3310907,
+      "end": 3310954,
+      "removed": ",\n                        &CurveContext::STRICT",
+      "line": 76416
+    },
+    {
+      "start": 3315563,
+      "end": 3315571,
+      "removed": ", strict",
+      "line": 76520
+    },
+    {
+      "start": 3315668,
+      "end": 3315676,
+      "removed": ", strict",
+      "line": 76522
+    },
+    {
+      "start": 3318286,
+      "end": 3318294,
+      "removed": ", strict",
+      "line": 76576
+    },
+    {
+      "start": 3318460,
+      "end": 3318468,
+      "removed": ", strict",
+      "line": 76579
+    },
+    {
+      "start": 3320069,
+      "end": 3320077,
+      "removed": ", strict",
+      "line": 76608
+    },
+    {
+      "start": 3320192,
+      "end": 3320200,
+      "removed": ", strict",
+      "line": 76610
+    },
+    {
+      "start": 3320487,
+      "end": 3320495,
+      "removed": ", strict",
+      "line": 76616
+    },
+    {
+      "start": 3320573,
+      "end": 3320581,
+      "removed": ", strict",
+      "line": 76617
+    },
+    {
+      "start": 3320690,
+      "end": 3320698,
+      "removed": ", strict",
+      "line": 76619
+    },
+    {
+      "start": 3320765,
+      "end": 3320771,
+      "removed": "strict",
+      "line": 76620
+    },
+    {
+      "start": 3320773,
+      "end": 3320781,
+      "removed": ", strict",
+      "line": 76620
+    },
+    {
+      "start": 3321076,
+      "end": 3321116,
+      "removed": ",\n                                strict",
+      "line": 76625
+    },
+    {
+      "start": 3676844,
+      "end": 3676868,
+      "removed": ",\n                policy",
+      "line": 84566
+    },
+    {
+      "start": 3676974,
+      "end": 3676982,
+      "removed": ", policy",
+      "line": 84569
+    },
+    {
+      "start": 3677074,
+      "end": 3677082,
+      "removed": ", policy",
+      "line": 84570
+    },
+    {
+      "start": 3677251,
+      "end": 3677259,
+      "removed": ", policy",
+      "line": 84573
+    },
+    {
+      "start": 3677303,
+      "end": 3677311,
+      "removed": ", policy",
+      "line": 84574
+    },
+    {
+      "start": 3685551,
+      "end": 3685572,
+      "removed": "&CurveContext::STRICT",
+      "line": 84768
+    },
+    {
+      "start": 3685674,
+      "end": 3685695,
+      "removed": "&CurveContext::STRICT",
+      "line": 84771
+    },
+    {
+      "start": 3687889,
+      "end": 3687920,
+      "removed": ",\n        &CurveContext::STRICT",
+      "line": 84830
+    },
+    {
+      "start": 3688089,
+      "end": 3688120,
+      "removed": ",\n        &CurveContext::STRICT",
+      "line": 84835
+    },
+    {
+      "start": 3688660,
+      "end": 3688683,
+      "removed": ", &CurveContext::STRICT",
+      "line": 84848
+    },
+    {
+      "start": 3688837,
+      "end": 3688860,
+      "removed": ", &CurveContext::STRICT",
+      "line": 84851
+    },
+    {
+      "start": 3717048,
+      "end": 3717079,
+      "removed": ",\n        &CurveContext::STRICT",
+      "line": 85542
+    },
+    {
+      "start": 3717257,
+      "end": 3717288,
+      "removed": ",\n        &CurveContext::STRICT",
+      "line": 85547
+    },
+    {
+      "start": 3717448,
+      "end": 3717471,
+      "removed": ", &CurveContext::STRICT",
+      "line": 85552
+    },
+    {
+      "start": 3717632,
+      "end": 3717655,
+      "removed": ", &CurveContext::STRICT",
+      "line": 85555
+    },
+    {
+      "start": 3718267,
+      "end": 3718290,
+      "removed": ", &CurveContext::STRICT",
+      "line": 85568
+    },
+    {
+      "start": 3718397,
+      "end": 3718420,
+      "removed": ", &CurveContext::STRICT",
+      "line": 85571
+    },
+    {
+      "start": 3723925,
+      "end": 3723956,
+      "removed": ",\n        &CurveContext::STRICT",
+      "line": 85704
+    },
+    {
+      "start": 3724134,
+      "end": 3724165,
+      "removed": ",\n        &CurveContext::STRICT",
+      "line": 85709
+    },
+    {
+      "start": 3725032,
+      "end": 3725055,
+      "removed": ", &CurveContext::STRICT",
+      "line": 85727
+    },
+    {
+      "start": 3725162,
+      "end": 3725185,
+      "removed": ", &CurveContext::STRICT",
+      "line": 85730
+    },
+    {
+      "start": 3771074,
+      "end": 3771082,
+      "removed": ", strict",
+      "line": 86803
+    },
+    {
+      "start": 3771166,
+      "end": 3771174,
+      "removed": ", strict",
+      "line": 86805
+    },
+    {
+      "start": 3771299,
+      "end": 3771307,
+      "removed": ", strict",
+      "line": 86808
+    },
+    {
+      "start": 3771391,
+      "end": 3771399,
+      "removed": ", strict",
+      "line": 86810
+    },
+    {
+      "start": 3771756,
+      "end": 3771784,
+      "removed": ",\n                    strict",
+      "line": 86818
+    },
+    {
+      "start": 3787396,
+      "end": 3787404,
+      "removed": ", strict",
+      "line": 87170
+    },
+    {
+      "start": 3787493,
+      "end": 3787501,
+      "removed": ", strict",
+      "line": 87172
+    },
+    {
+      "start": 3800343,
+      "end": 3800366,
+      "removed": ", &CurveContext::STRICT",
+      "line": 87473
+    },
+    {
+      "start": 3800478,
+      "end": 3800501,
+      "removed": ", &CurveContext::STRICT",
+      "line": 87476
+    },
+    {
+      "start": 3809329,
+      "end": 3809352,
+      "removed": ", &CurveContext::STRICT",
+      "line": 87683
+    },
+    {
+      "start": 3809461,
+      "end": 3809484,
+      "removed": ", &CurveContext::STRICT",
+      "line": 87686
+    },
+    {
+      "start": 3809666,
+      "end": 3809689,
+      "removed": ", &CurveContext::STRICT",
+      "line": 87691
+    },
+    {
+      "start": 3818536,
+      "end": 3818544,
+      "removed": ", strict",
+      "line": 87891
+    },
+    {
+      "start": 3818627,
+      "end": 3818635,
+      "removed": ", strict",
+      "line": 87893
+    },
+    {
+      "start": 3864162,
+      "end": 3864170,
+      "removed": ", strict",
+      "line": 88809
+    },
+    {
+      "start": 3864253,
+      "end": 3864261,
+      "removed": ", strict",
+      "line": 88811
+    },
+    {
+      "start": 3936003,
+      "end": 3936011,
+      "removed": ", strict",
+      "line": 90448
+    },
+    {
+      "start": 3940648,
+      "end": 3940676,
+      "removed": ",\n                    strict",
+      "line": 90541
+    },
+    {
+      "start": 3940844,
+      "end": 3940872,
+      "removed": ",\n                    strict",
+      "line": 90546
+    },
+    {
+      "start": 3942889,
+      "end": 3942897,
+      "removed": ", strict",
+      "line": 90593
+    },
+    {
+      "start": 3942987,
+      "end": 3942995,
+      "removed": ", strict",
+      "line": 90595
+    },
+    {
+      "start": 3943249,
+      "end": 3943255,
+      "removed": "strict",
+      "line": 90603
+    },
+    {
+      "start": 3943306,
+      "end": 3943312,
+      "removed": "strict",
+      "line": 90604
+    },
+    {
+      "start": 3943402,
+      "end": 3943408,
+      "removed": "strict",
+      "line": 90605
+    },
+    {
+      "start": 3943531,
+      "end": 3943537,
+      "removed": "strict",
+      "line": 90610
+    },
+    {
+      "start": 3943580,
+      "end": 3943586,
+      "removed": "strict",
+      "line": 90611
+    },
+    {
+      "start": 3943676,
+      "end": 3943682,
+      "removed": "strict",
+      "line": 90612
+    },
+    {
+      "start": 3943810,
+      "end": 3943818,
+      "removed": ", strict",
+      "line": 90616
+    },
+    {
+      "start": 3943901,
+      "end": 3943909,
+      "removed": ", strict",
+      "line": 90618
+    },
+    {
+      "start": 3944086,
+      "end": 3944094,
+      "removed": ", strict",
+      "line": 90623
+    },
+    {
+      "start": 3944177,
+      "end": 3944185,
+      "removed": ", strict",
+      "line": 90625
+    },
+    {
+      "start": 3945920,
+      "end": 3945928,
+      "removed": ", strict",
+      "line": 90661
+    },
+    {
+      "start": 3946029,
+      "end": 3946037,
+      "removed": ", strict",
+      "line": 90663
+    },
+    {
+      "start": 3946294,
+      "end": 3946302,
+      "removed": ", strict",
+      "line": 90670
+    },
+    {
+      "start": 3987629,
+      "end": 3987635,
+      "removed": "strict",
+      "line": 91561
+    },
+    {
+      "start": 3987678,
+      "end": 3987684,
+      "removed": "strict",
+      "line": 91562
+    },
+    {
+      "start": 3987782,
+      "end": 3987788,
+      "removed": "strict",
+      "line": 91563
+    },
+    {
+      "start": 3988551,
+      "end": 3988559,
+      "removed": ", strict",
+      "line": 91580
+    },
+    {
+      "start": 3988706,
+      "end": 3988714,
+      "removed": ", strict",
+      "line": 91583
+    },
+    {
+      "start": 3989059,
+      "end": 3989067,
+      "removed": ", strict",
+      "line": 91591
+    },
+    {
+      "start": 3989107,
+      "end": 3989115,
+      "removed": ", strict",
+      "line": 91592
+    },
+    {
+      "start": 3998396,
+      "end": 3998404,
+      "removed": ", strict",
+      "line": 91789
+    },
+    {
+      "start": 3998462,
+      "end": 3998470,
+      "removed": ", strict",
+      "line": 91790
+    },
+    {
+      "start": 4015465,
+      "end": 4015493,
+      "removed": ",\n                    strict",
+      "line": 92170
+    },
+    {
+      "start": 4016933,
+      "end": 4016939,
+      "removed": "strict",
+      "line": 92201
+    },
+    {
+      "start": 4017037,
+      "end": 4017043,
+      "removed": "strict",
+      "line": 92202
+    },
+    {
+      "start": 4017227,
+      "end": 4017233,
+      "removed": "strict",
+      "line": 92206
+    },
+    {
+      "start": 4017379,
+      "end": 4017385,
+      "removed": "strict",
+      "line": 92209
+    },
+    {
+      "start": 4017479,
+      "end": 4017485,
+      "removed": "strict",
+      "line": 92210
+    },
+    {
+      "start": 4017675,
+      "end": 4017681,
+      "removed": "strict",
+      "line": 92214
+    },
+    {
+      "start": 4018405,
+      "end": 4018413,
+      "removed": ", strict",
+      "line": 92230
+    },
+    {
+      "start": 4018771,
+      "end": 4018779,
+      "removed": ", strict",
+      "line": 92238
+    },
+    {
+      "start": 4019156,
+      "end": 4019164,
+      "removed": ", strict",
+      "line": 92246
+    },
+    {
+      "start": 4019541,
+      "end": 4019549,
+      "removed": ", strict",
+      "line": 92254
+    },
+    {
+      "start": 4019838,
+      "end": 4019846,
+      "removed": ", strict",
+      "line": 92259
+    },
+    {
+      "start": 4020008,
+      "end": 4020016,
+      "removed": ", strict",
+      "line": 92262
+    },
+    {
+      "start": 4020195,
+      "end": 4020203,
+      "removed": ", strict",
+      "line": 92266
+    },
+    {
+      "start": 4020363,
+      "end": 4020371,
+      "removed": ", strict",
+      "line": 92270
+    },
+    {
+      "start": 4020538,
+      "end": 4020546,
+      "removed": ", strict",
+      "line": 92274
+    },
+    {
+      "start": 4020699,
+      "end": 4020707,
+      "removed": ", strict",
+      "line": 92278
+    },
+    {
+      "start": 4020876,
+      "end": 4020884,
+      "removed": ", strict",
+      "line": 92282
+    },
+    {
+      "start": 4021308,
+      "end": 4021314,
+      "removed": "strict",
+      "line": 92290
+    },
+    {
+      "start": 4021493,
+      "end": 4021501,
+      "removed": ", strict",
+      "line": 92293
+    },
+    {
+      "start": 4021696,
+      "end": 4021704,
+      "removed": ", strict",
+      "line": 92297
+    },
+    {
+      "start": 4022106,
+      "end": 4022114,
+      "removed": ", strict",
+      "line": 92306
+    },
+    {
+      "start": 4022576,
+      "end": 4022584,
+      "removed": ", strict",
+      "line": 92316
+    },
+    {
+      "start": 4022902,
+      "end": 4022910,
+      "removed": ", strict",
+      "line": 92322
+    },
+    {
+      "start": 4023061,
+      "end": 4023069,
+      "removed": ", strict",
+      "line": 92325
+    },
+    {
+      "start": 4023242,
+      "end": 4023250,
+      "removed": ", strict",
+      "line": 92328
+    },
+    {
+      "start": 4023602,
+      "end": 4023610,
+      "removed": ", strict",
+      "line": 92334
+    },
+    {
+      "start": 4023774,
+      "end": 4023782,
+      "removed": ", strict",
+      "line": 92338
+    },
+    {
+      "start": 4026150,
+      "end": 4026174,
+      "removed": ",\n                strict",
+      "line": 92392
+    },
+    {
+      "start": 4026395,
+      "end": 4026419,
+      "removed": ",\n                strict",
+      "line": 92399
+    },
+    {
+      "start": 4026932,
+      "end": 4026940,
+      "removed": ", strict",
+      "line": 92410
+    },
+    {
+      "start": 4027025,
+      "end": 4027033,
+      "removed": ", strict",
+      "line": 92412
+    },
+    {
+      "start": 4231493,
+      "end": 4231516,
+      "removed": ", &CurveContext::STRICT",
+      "line": 96975
+    },
+    {
+      "start": 4231644,
+      "end": 4231667,
+      "removed": ", &CurveContext::STRICT",
+      "line": 96978
+    },
+    {
+      "start": 4232631,
+      "end": 4232654,
+      "removed": ", &CurveContext::STRICT",
+      "line": 97005
+    },
+    {
+      "start": 4232766,
+      "end": 4232789,
+      "removed": ", &CurveContext::STRICT",
+      "line": 97008
+    },
+    {
+      "start": 4232978,
+      "end": 4233001,
+      "removed": ", &CurveContext::STRICT",
+      "line": 97013
+    },
+    {
+      "start": 4263119,
+      "end": 4263142,
+      "removed": ", &CurveContext::STRICT",
+      "line": 97672
+    },
+    {
+      "start": 4263250,
+      "end": 4263273,
+      "removed": ", &CurveContext::STRICT",
+      "line": 97675
+    },
+    {
+      "start": 4269691,
+      "end": 4269699,
+      "removed": ", policy",
+      "line": 97818
+    },
+    {
+      "start": 4269758,
+      "end": 4269766,
+      "removed": ", policy",
+      "line": 97819
+    },
+    {
+      "start": 4270307,
+      "end": 4270315,
+      "removed": ", policy",
+      "line": 97836
+    },
+    {
+      "start": 4270387,
+      "end": 4270395,
+      "removed": ", policy",
+      "line": 97837
+    },
+    {
+      "start": 4270468,
+      "end": 4270476,
+      "removed": ", policy",
+      "line": 97838
+    },
+    {
+      "start": 4421087,
+      "end": 4421095,
+      "removed": ", strict",
+      "line": 101177
+    },
+    {
+      "start": 4421153,
+      "end": 4421161,
+      "removed": ", strict",
+      "line": 101178
+    },
+    {
+      "start": 5845153,
+      "end": 5845189,
+      "removed": ",\n                            policy",
+      "line": 134813
+    },
+    {
+      "start": 5845263,
+      "end": 5845269,
+      "removed": "policy",
+      "line": 134816
+    },
+    {
+      "start": 5845513,
+      "end": 5845519,
+      "removed": "policy",
+      "line": 134821
+    },
+    {
+      "start": 5845658,
+      "end": 5845694,
+      "removed": ",\n                            policy",
+      "line": 134823
+    },
+    {
+      "start": 5846161,
+      "end": 5846197,
+      "removed": ",\n                            policy",
+      "line": 134834
+    },
+    {
+      "start": 7234091,
+      "end": 7234114,
+      "removed": ", &CurveContext::STRICT",
+      "line": 166109
+    },
+    {
+      "start": 7236336,
+      "end": 7236359,
+      "removed": ", &CurveContext::STRICT",
+      "line": 166160
+    }
+  ],
+  "source_after_sha256": "062c009fd5ea801c076db3980c23f31d12b7fec6cfb752ad3f78e21fb9bae9a7"
+}

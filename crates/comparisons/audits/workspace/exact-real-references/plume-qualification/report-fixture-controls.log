@@ -1,0 +1,6 @@
+   Compiling plume-qualification v0.0.0 (/home/tim/Documents/GitHub/workspace/exact-real-references/plume-qualification)
+    Finished `release` profile [optimized] target(s) in 0.56s
+     Running `.audit-targets/ireal-derivative-18555/release/report_fixture_controls`
+PASS cancellation: Real exact=200, Computable precision/history=1200, donor 30-place fixture=1; exact=-54767/66192
+PASS archived maximum prefix: critical point inside positive interval; exact squared-endpoint enclosure
+PASS exact report identity controls=6561, carry controls=189; rejected printed dyadic cross-term failures=6016, inequality failures=88

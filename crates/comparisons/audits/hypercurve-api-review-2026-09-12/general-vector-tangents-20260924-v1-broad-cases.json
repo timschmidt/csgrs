@@ -1,0 +1,120 @@
+[
+  {
+    "target": "hypercurve",
+    "name": "bezier_offset::conversion_tests::vector_tangent_predicates_replay_general_parameter_authorities",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.2944442849839106,
+    "limit_seconds": 75,
+    "log": "general-vector-tangents-20260924-v1-vector_tangent_predicates_replay_general_parameter_authorities.log",
+    "reused_from": "general-vector-tangents-20260924-v1-terminal.json"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_offset::conversion_tests::regularized_vector_tangent_owns_selected_stationary_endpoints",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.26683141896501184,
+    "limit_seconds": 75,
+    "log": "general-vector-tangents-20260924-v1-regularized_vector_tangent_owns_selected_stationary_endpoints.log",
+    "reused_from": "general-vector-tangents-20260924-v1-terminal.json"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_offset::conversion_tests::selected_fiber_points_reuse_projective_roots_without_global_promotion",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.32713576196692884,
+    "limit_seconds": 75,
+    "log": "general-vector-tangents-20260924-v1-selected_fiber_points_reuse_projective_roots_without_global_promotion.log",
+    "reused_from": "general-vector-tangents-20260924-v1-terminal.json"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_region::tests::closed_ph_corner_edits_preserve_both_normalized_source_lobes",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.3734722340013832,
+    "limit_seconds": 75,
+    "log": "general-vector-tangents-20260924-v1-closed_ph_corner_edits_preserve_both_normalized_source_lobes.log",
+    "reused_from": "general-vector-tangents-20260924-v1-terminal.json"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_offset::conversion_tests::ordered_ph_parallel_domains_retain_same_sheet_exterior_contacts",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.5771996710682288,
+    "limit_seconds": 75,
+    "log": "general-vector-tangents-20260924-v1-ordered_ph_parallel_domains_retain_same_sheet_exterior_contacts.log",
+    "reused_from": "general-vector-tangents-20260924-v1-terminal.json"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_offset::conversion_tests::ordered_ph_parallel_domains_reject_a_cached_opposite_normal_contact",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.4213987370021641,
+    "limit_seconds": 75,
+    "log": "general-vector-tangents-20260924-v1-ordered_ph_parallel_domains_reject_a_cached_opposite_normal_contact.log",
+    "reused_from": "general-vector-tangents-20260924-v1-terminal.json"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_region::tests::selected_parallel_companion_fillets_without_range_promotion",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.6331758319865912,
+    "limit_seconds": 75,
+    "log": "general-vector-tangents-20260924-v1-selected_parallel_companion_fillets_without_range_promotion.log",
+    "reused_from": "general-vector-tangents-20260924-v1-terminal.json"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_region::tests::nonlinear_selected_corner_chamfers_through_retained_fixed_distance_image",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 5.259460470988415,
+    "limit_seconds": 75,
+    "log": "general-vector-tangents-20260924-v1-nonlinear_selected_corner_chamfers_through_retained_fixed_distance_image.log",
+    "reused_from": "general-vector-tangents-20260924-v1-terminal.json"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_region::curve_corner_chain::tests::extended_fillet_region_classifies_both_sides_of_its_companion",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 40.1269077770412,
+    "limit_seconds": 75,
+    "log": "general-vector-tangents-20260924-v1-broad-case-0561.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_region::tests::nonrepresented_chord_and_selected_circle_complete_the_fillet_kernel",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 162.8020071920473,
+    "limit_seconds": 180,
+    "log": "general-vector-tangents-20260924-v1-broad-case-0599.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_region::tests::recursive_selected_radial_projective_chamfer_reenters_corner_kernel",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 66.34304188704118,
+    "limit_seconds": 75,
+    "log": "general-vector-tangents-20260924-v1-broad-case-0624.log"
+  }
+]

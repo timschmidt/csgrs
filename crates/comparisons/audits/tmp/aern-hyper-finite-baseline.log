@@ -1,0 +1,19 @@
+     Locking 9 packages to latest Rust 1.97.0 compatible versions
+   Compiling autocfg v1.5.1
+   Compiling num-traits v0.2.19
+   Compiling num-integer v0.1.47
+   Compiling num-complex v0.4.6
+   Compiling num-bigint v0.4.8
+   Compiling num-iter v0.1.46
+   Compiling num-rational v0.4.2
+   Compiling num v0.4.3
+   Compiling hyperreal v0.13.1 (/home/tim/Documents/GitHub/workspace/hyperreal)
+   Compiling aern-hyper-finite-probe v0.0.0 (/tmp/aern-hyper-finite.cYctjI)
+    Finished `release` profile [optimized] target(s) in 8.51s
+     Running `/tmp/aern-hyper-finite.cYctjI/target/release/aern-hyper-finite-probe`
+MAX exact: Some([1.7976931348623157e308, 1.7976931348623157e308]); finite=true; exact-enclosure=true
+MAX minus one: Some([1.7976931348623155e308, inf]); finite=false; exact-enclosure=false
+MAX plus one: Some([1.7976931348623155e308, inf]); finite=false; exact-enclosure=false
+negative MAX plus one: Some([-inf, -1.7976931348623155e308]); finite=false; exact-enclosure=false
+negative MAX minus one: Some([-inf, -1.7976931348623155e308]); finite=false; exact-enclosure=false
+three-quarter subnormal: None; finite=true; exact-enclosure=true

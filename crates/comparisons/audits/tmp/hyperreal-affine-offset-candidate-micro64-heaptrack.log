@@ -1,0 +1,16 @@
+heaptrack output will be written to "/tmp/hyperreal-affine-offset-candidate-micro64.heap.zst"
+starting application, this might take some time...
+NOTE: heaptrack detected DEBUGINFOD_URLS but will disable it to prevent 
+unintended network delays during recording
+If you really want to use DEBUGINFOD, export HEAPTRACK_ENABLE_DEBUGINFOD=1
+nested_midpoint_conversion,64,816478.78125,17845286073347009856
+opaque_midpoint_conversion,64,4222.359375,18067127942198279040
+unrelated_symbols,64,3061.515625,422248456540688448
+unrelated_affine_bases,64,2897.921875,110739787092800
+heaptrack stats:
+	allocations:          	5468
+	leaked allocations:   	59
+	temporary allocations:	984
+Heaptrack finished! Now run the following to investigate the data:
+
+  heaptrack --analyze "/tmp/hyperreal-affine-offset-candidate-micro64.heap.zst"

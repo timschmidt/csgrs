@@ -1,0 +1,184 @@
+[
+  {
+    "target": "editing",
+    "name": "curve_region_source_related_algebraic_chord_regularization_reuse",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/normalized-region-benches-candidate1-libraries/editing-42be0d96f43548f0"
+    ],
+    "environment": {
+      "HYPERCURVE_EDIT_BENCH": "represented-bezier-corner",
+      "HYPERCURVE_EDIT_ITERATIONS": "1",
+      "HYPERCURVE_EDIT_CORNER_LANE": "curve_region_source_related_algebraic_chord_regularization_reuse"
+    },
+    "returncode": 0,
+    "elapsed_seconds": 0.003442903980612755,
+    "sha256": "d7e75353b85fbd7e12a7dbef3342c9428454705865d85eb2a8526598f6cd4da6",
+    "log": "normalized-region-benches-completed1-curve_region_source_related_algebraic_chord_regularization_reuse.log",
+    "expected_output": "curve_region_source_related_algebraic_chord_regularization_reuse:",
+    "workload_executed": true
+  },
+  {
+    "target": "editing",
+    "name": "curve_region_independent_field_algebraic_chord_boolean",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/normalized-region-benches-candidate1-libraries/editing-42be0d96f43548f0"
+    ],
+    "environment": {
+      "HYPERCURVE_EDIT_BENCH": "represented-bezier-corner",
+      "HYPERCURVE_EDIT_ITERATIONS": "1",
+      "HYPERCURVE_EDIT_CORNER_LANE": "curve_region_independent_field_algebraic_chord_boolean"
+    },
+    "returncode": 0,
+    "elapsed_seconds": 0.01608447902253829,
+    "sha256": "d7e75353b85fbd7e12a7dbef3342c9428454705865d85eb2a8526598f6cd4da6",
+    "log": "normalized-region-benches-completed1-curve_region_independent_field_algebraic_chord_boolean.log",
+    "expected_output": "curve_region_independent_field_algebraic_chord_boolean:",
+    "workload_executed": true
+  },
+  {
+    "target": "editing",
+    "name": "curve_path_noninjective_collinear_algebraic_chord_intersection",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/normalized-region-benches-candidate1-libraries/editing-42be0d96f43548f0"
+    ],
+    "environment": {
+      "HYPERCURVE_EDIT_BENCH": "represented-bezier-corner",
+      "HYPERCURVE_EDIT_ITERATIONS": "1",
+      "HYPERCURVE_EDIT_CORNER_LANE": "curve_path_noninjective_collinear_algebraic_chord_intersection"
+    },
+    "returncode": 0,
+    "elapsed_seconds": 0.007800695981131867,
+    "sha256": "d7e75353b85fbd7e12a7dbef3342c9428454705865d85eb2a8526598f6cd4da6",
+    "log": "normalized-region-benches-completed1-curve_path_noninjective_collinear_algebraic_chord_intersection.log",
+    "expected_output": "curve_path_noninjective_collinear_algebraic_chord_intersection:",
+    "workload_executed": true
+  },
+  {
+    "target": "editing",
+    "name": "curve_region_strict_interior_algebraic_chord_boolean",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/normalized-region-benches-candidate1-libraries/editing-42be0d96f43548f0"
+    ],
+    "environment": {
+      "HYPERCURVE_EDIT_BENCH": "represented-bezier-corner",
+      "HYPERCURVE_EDIT_ITERATIONS": "1",
+      "HYPERCURVE_EDIT_CORNER_LANE": "curve_region_strict_interior_algebraic_chord_boolean"
+    },
+    "returncode": 0,
+    "elapsed_seconds": 0.03189902601297945,
+    "sha256": "d7e75353b85fbd7e12a7dbef3342c9428454705865d85eb2a8526598f6cd4da6",
+    "log": "normalized-region-benches-completed1-curve_region_strict_interior_algebraic_chord_boolean.log",
+    "expected_output": "curve_region_strict_interior_algebraic_chord_boolean:",
+    "workload_executed": true
+  },
+  {
+    "target": "editing",
+    "name": "curve_region_axis_algebraic_miter_offset",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/normalized-region-benches-candidate1-libraries/editing-42be0d96f43548f0"
+    ],
+    "environment": {
+      "HYPERCURVE_EDIT_BENCH": "represented-bezier-corner",
+      "HYPERCURVE_EDIT_ITERATIONS": "1",
+      "HYPERCURVE_EDIT_CORNER_LANE": "curve_region_axis_algebraic_miter_offset"
+    },
+    "returncode": 0,
+    "elapsed_seconds": 0.003648749989224598,
+    "sha256": "d7e75353b85fbd7e12a7dbef3342c9428454705865d85eb2a8526598f6cd4da6",
+    "log": "normalized-region-benches-completed1-curve_region_axis_algebraic_miter_offset.log",
+    "expected_output": "curve_region_axis_algebraic_miter_offset:",
+    "workload_executed": true
+  },
+  {
+    "target": "editing",
+    "name": "curve_region_axis_algebraic_round_offset",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/normalized-region-benches-candidate1-libraries/editing-42be0d96f43548f0"
+    ],
+    "environment": {
+      "HYPERCURVE_EDIT_BENCH": "represented-bezier-corner",
+      "HYPERCURVE_EDIT_ITERATIONS": "1",
+      "HYPERCURVE_EDIT_CORNER_LANE": "curve_region_axis_algebraic_round_offset"
+    },
+    "returncode": 0,
+    "elapsed_seconds": 0.003715265018399805,
+    "sha256": "d7e75353b85fbd7e12a7dbef3342c9428454705865d85eb2a8526598f6cd4da6",
+    "log": "normalized-region-benches-completed1-curve_region_axis_algebraic_round_offset.log",
+    "expected_output": "curve_region_axis_algebraic_round_offset:",
+    "workload_executed": true
+  },
+  {
+    "target": "editing",
+    "name": "curve_region_axis_algebraic_repeated_miter_offset",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/normalized-region-benches-candidate1-libraries/editing-42be0d96f43548f0"
+    ],
+    "environment": {
+      "HYPERCURVE_EDIT_BENCH": "represented-bezier-corner",
+      "HYPERCURVE_EDIT_ITERATIONS": "1",
+      "HYPERCURVE_EDIT_CORNER_LANE": "curve_region_axis_algebraic_repeated_miter_offset"
+    },
+    "returncode": 0,
+    "elapsed_seconds": 0.01590072098770179,
+    "sha256": "d7e75353b85fbd7e12a7dbef3342c9428454705865d85eb2a8526598f6cd4da6",
+    "log": "normalized-region-benches-completed1-curve_region_axis_algebraic_repeated_miter_offset.log",
+    "expected_output": "curve_region_axis_algebraic_repeated_miter_offset:",
+    "workload_executed": true
+  },
+  {
+    "target": "editing",
+    "name": "curve_region_axis_algebraic_neck_split",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/normalized-region-benches-candidate1-libraries/editing-42be0d96f43548f0"
+    ],
+    "environment": {
+      "HYPERCURVE_EDIT_BENCH": "represented-bezier-corner",
+      "HYPERCURVE_EDIT_ITERATIONS": "1",
+      "HYPERCURVE_EDIT_CORNER_LANE": "curve_region_axis_algebraic_neck_split"
+    },
+    "returncode": 0,
+    "elapsed_seconds": 0.9655702539894264,
+    "sha256": "d7e75353b85fbd7e12a7dbef3342c9428454705865d85eb2a8526598f6cd4da6",
+    "log": "normalized-region-benches-completed1-curve_region_axis_algebraic_neck_split.log",
+    "expected_output": "curve_region_axis_algebraic_neck_split:",
+    "workload_executed": true
+  },
+  {
+    "target": "comparative",
+    "name": "algebraic-round-rectangle-hypercurve_exact_round",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/normalized-region-benches-candidate1-libraries/comparative-be0f791dcbab83b5"
+    ],
+    "environment": {
+      "HYPERCURVE_COMPARE_SAMPLES": "1",
+      "HYPERCURVE_COMPARE_ITERS": "1",
+      "HYPERCURVE_COMPARE_GROUP": "algebraic_round_offset/rectangle",
+      "HYPERCURVE_COMPARE_IMPL": "hypercurve_exact_round"
+    },
+    "returncode": 0,
+    "elapsed_seconds": 0.0077842570026405156,
+    "sha256": "9eae65aaee985adbcc14f7b6f85904702fa0fc26c5db826c738ed46f41eb41ef",
+    "log": "normalized-region-benches-completed1-algebraic-round-rectangle-hypercurve_exact_round.log",
+    "expected_output": "hypercurve_exact_round ",
+    "workload_executed": true
+  },
+  {
+    "target": "comparative",
+    "name": "algebraic-round-rectangle-hypercurve_exact_miter",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/normalized-region-benches-candidate1-libraries/comparative-be0f791dcbab83b5"
+    ],
+    "environment": {
+      "HYPERCURVE_COMPARE_SAMPLES": "1",
+      "HYPERCURVE_COMPARE_ITERS": "1",
+      "HYPERCURVE_COMPARE_GROUP": "algebraic_round_offset/rectangle",
+      "HYPERCURVE_COMPARE_IMPL": "hypercurve_exact_miter"
+    },
+    "returncode": 0,
+    "elapsed_seconds": 0.007945416000438854,
+    "sha256": "9eae65aaee985adbcc14f7b6f85904702fa0fc26c5db826c738ed46f41eb41ef",
+    "log": "normalized-region-benches-completed1-algebraic-round-rectangle-hypercurve_exact_miter.log",
+    "expected_output": "hypercurve_exact_miter ",
+    "workload_executed": true
+  }
+]

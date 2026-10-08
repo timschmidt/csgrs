@@ -1,0 +1,180 @@
+{
+  "status": "qualified",
+  "base_commit": "d236fb6",
+  "change": "Retain exterior finite circular intervals and exact homogeneous quadratic conic frames without requiring finite Cartesian controls.",
+  "source_sha256": {
+    "src/arc_bezier.rs": "574c5f946e9210e08703773620a256c2759c0a3d4fe261ef8f3a7616b8ed1494",
+    "src/bezier_moment.rs": "5e1b070bf26fe9ddd6e515e861563c2a22e30afab2b46fa2fdd331a53aa13154",
+    "src/bezier_offset.rs": "399fc69216224f6e74bb305ca5ee9eee1b921554edee1b5877e56b324f4a4db4",
+    "src/bezier_region.rs": "74811fa3d49952b4facf1458d09fe78b9844f81e7b9536d8bfbbb31c97a78415",
+    "src/curve.rs": "8fe549246040a15c1edcba4f6526bfecd68ca7d08b8167f5b1fd70c996547d66",
+    "src/curve_region_boolean.rs": "99d7b97627d06d6945ca4ddffbf21020247c5302097b47153b509554954a9cb4",
+    "src/curve_subdivision.rs": "5ceba2f76b62e2132610e5632b49e1ceecc76be90cbe20eba8b0d93d0a700a1d",
+    "src/rational_bezier.rs": "9143c2c1191e7b3f0055afcc104458243f1cb1f2fe43148513bc607acb8fb3bc",
+    "src/rational_bezier_general.rs": "e19c0510e84bcd1c843ca3f9ea640f8c73b4e11627ae2b1315f62fa92ae5ef36"
+  },
+  "regressions": {
+    "exterior_quarter_before": {
+      "log": "exterior-circular-domain-before.log",
+      "result": "A fully represented exterior circular interval returned NoTangentCircle."
+    },
+    "exterior_semicircle_before": {
+      "log": "exterior-circular-half-domain.log",
+      "result": "Finite parent recharting still lost semicircle support because its middle quadratic control is infinite."
+    },
+    "exterior_domains": {
+      "log": "exterior-circular-domain-final.log",
+      "passed": 1,
+      "seconds": 1.89
+    },
+    "conic_inverse": {
+      "log": "exterior-circular-conic-inverse.log",
+      "passed": 2,
+      "seconds": 6.08
+    },
+    "terminal_policy": {
+      "log": "exterior-circular-terminal-policy.log",
+      "passed": 1,
+      "seconds": 0.01
+    },
+    "intermediate_runs": {
+      "exterior-circular-domain-after.log": "Quarter-circle contact assertions passed after parent recharting.",
+      "exterior-circular-homogeneous-domain.log": "Quarter-circle and semicircle assertions passed after homogeneous-frame migration.",
+      "exterior-circular-domain-release-first.log": "997 library and 228 integration tests passed; an over-strict circle recognition change blocked the explicitly approximate terminal. The policy change was reverted and the entire qualification was repeated."
+    },
+    "coverage": [
+      "Finite circular intervals above and below the original unit domain",
+      "Quarter-circle and semicircle parent charts",
+      "Ordinary and non-globalizable selected bounds",
+      "Direct rational curves and zero/nonzero circular analytic offsets, including negative radius",
+      "Finite trims, full-circle continuation, reversals, both policies, exact contacts and adjacency",
+      "Projective half-ellipse inverse after degree elevation and reversal",
+      "Selected fifth-degree parameters, irrational translation, positive and negative transcendental homogeneous gauges",
+      "Strict structural degree reduction and recorded approximate terminal behavior"
+    ],
+    "performance_limit": "No controlled runtime or allocation benchmark. Existing source lineage is reused; first-use selected-parameter promotion and repeated structural-frame discovery remain separate computational-closure work."
+  },
+  "checks": {
+    "hypercurve_all_targets": {
+      "status": "passed",
+      "log": "exterior-circular-hypercurve-check.log"
+    },
+    "hyperbrep_all_targets": {
+      "status": "passed",
+      "log": "exterior-circular-hyperbrep-check.log"
+    },
+    "offline_ui": {
+      "status": "passed",
+      "log": "exterior-circular-ui-check.log"
+    },
+    "documentation_broken_links_denied": {
+      "status": "passed",
+      "log": "exterior-circular-doc.log"
+    },
+    "formatting": {
+      "status": "passed",
+      "log": "exterior-circular-format.log"
+    }
+  },
+  "release_suite": {
+    "status": "passed",
+    "log": "exterior-circular-domain-release.log",
+    "results": {
+      "library": {
+        "passed": 997,
+        "failed": 0,
+        "ignored": 6,
+        "measured": 0,
+        "filtered_out": 4,
+        "seconds": 99.9
+      },
+      "arc_bezier": {
+        "passed": 12,
+        "failed": 0,
+        "ignored": 0,
+        "measured": 0,
+        "filtered_out": 0,
+        "seconds": 0.0
+      },
+      "bspline": {
+        "passed": 28,
+        "failed": 0,
+        "ignored": 0,
+        "measured": 0,
+        "filtered_out": 0,
+        "seconds": 0.0
+      },
+      "curve": {
+        "passed": 48,
+        "failed": 0,
+        "ignored": 0,
+        "measured": 0,
+        "filtered_out": 0,
+        "seconds": 51.09
+      },
+      "curve_intersection": {
+        "passed": 29,
+        "failed": 0,
+        "ignored": 0,
+        "measured": 0,
+        "filtered_out": 0,
+        "seconds": 0.02
+      },
+      "nurbs": {
+        "passed": 38,
+        "failed": 0,
+        "ignored": 0,
+        "measured": 0,
+        "filtered_out": 0,
+        "seconds": 0.0
+      },
+      "path_closure": {
+        "passed": 8,
+        "failed": 0,
+        "ignored": 0,
+        "measured": 0,
+        "filtered_out": 0,
+        "seconds": 0.38
+      },
+      "polynomial_spline": {
+        "passed": 18,
+        "failed": 0,
+        "ignored": 0,
+        "measured": 0,
+        "filtered_out": 0,
+        "seconds": 0.0
+      },
+      "rational_bezier": {
+        "passed": 48,
+        "failed": 0,
+        "ignored": 0,
+        "measured": 0,
+        "filtered_out": 0,
+        "seconds": 0.02
+      }
+    }
+  },
+  "hyperbrep_path": {
+    "status": "passed",
+    "log": "exterior-circular-hyperbrep-path.log",
+    "passed": 19
+  },
+  "existing_expensive_exclusions": [
+    "selected_parallel_normal_circle_intersects_genuinely_analytic_parallel_in_one_fiber",
+    "independent_oblique_chord_pair_fillets_extend_on_infinite_supports",
+    "selected_circle_and_analytic_parallel_extend_on_full_supports",
+    "pair_native_boolean_algebraic_chord_corner_publishes_a_third_generation_fillet"
+  ],
+  "new_exclusions": [],
+  "remaining": [
+    "Use actual finite domains for no-ray parallel-pair fillets, including ordered self-contacts and positive-dimensional components.",
+    "Share strictly discovered homogeneous conic frames without repeated reduction.",
+    "Exterior representative and bounds queries; normalized region closure and general composed workloads.",
+    "Reuse selected fibers on first point import and share Hypersolve root/refinement evidence."
+  ],
+  "goal_status": "active",
+  "pushed": false,
+  "unique_tests_passed": 1245,
+  "commit": "dc5481f",
+  "worktree_clean_after_commit": true
+}

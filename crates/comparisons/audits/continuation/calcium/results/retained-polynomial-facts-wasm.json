@@ -1,0 +1,24 @@
+{
+  "tag": "retained-polynomial-facts-wasm",
+  "started": "2026-09-08T23:46:01.118Z",
+  "finished": "2026-09-08T23:46:14.784Z",
+  "elapsedSeconds": 13.663600358,
+  "cwd": "/home/tim/Documents/GitHub/workspace/hypersolve",
+  "command": "env",
+  "args": [
+    "CARGO_TARGET_DIR=/tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse",
+    "CARGO_INCREMENTAL=0",
+    "CARGO_PROFILE_DEV_DEBUG=0",
+    "CARGO_BUILD_JOBS=2",
+    "cargo",
+    "check",
+    "--offline",
+    "--locked",
+    "--all-features",
+    "--lib",
+    "--target",
+    "wasm32-unknown-unknown"
+  ],
+  "code": 0,
+  "signal": null
+}

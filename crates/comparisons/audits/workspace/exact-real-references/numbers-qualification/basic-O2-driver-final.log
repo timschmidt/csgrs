@@ -1,0 +1,5 @@
+{"index":1,"args":["grid"],"status":0,"bytes":277}
+{"index":2,"args":["decisions"],"status":0,"bytes":1720}
+{"index":3,"args":["derivatives"],"status":0,"bytes":524}
+{"index":4,"args":["boundary"],"status":0,"bytes":475}
+Complete basic/O2: 4 requests; finite 4. Numeric qualification is separate.

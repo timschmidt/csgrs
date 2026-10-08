@@ -1,0 +1,69 @@
+[ 1 of 15] Compiling Data.Complex.Generic.Class ( exact-real-references/constructible-qualification/complex-generic-0.1.1.1/Data/Complex/Generic/Class.hs, /home/tim/Documents/GitHub/workspace/.audit-constructible-build.l4UDoe/ghc9_0/ghc_14.o, /home/tim/Documents/GitHub/workspace/.audit-constructible-build.l4UDoe/ghc9_0/ghc_14.dyn_o )
+ccache: error: Read-only file system
+
+<no location info>: error:
+    `gcc' failed in phase `Assembler'. (Exit code: 1)
+[ 5 of 15] Compiling Math.NumberTheory.Primes.Small ( exact-real-references/constructible-qualification/integer-roots-1.0.4.0/Math/NumberTheory/Primes/Small.hs, /home/tim/Documents/GitHub/workspace/.audit-constructible-build.l4UDoe/ghc9_0/ghc_20.o, /home/tim/Documents/GitHub/workspace/.audit-constructible-build.l4UDoe/ghc9_0/ghc_20.dyn_o )
+ccache: error: Read-only file system
+
+<no location info>: error:
+    `gcc' failed in phase `Assembler'. (Exit code: 1)
+[ 6 of 15] Compiling Math.NumberTheory.Roots.Squares.Internal ( exact-real-references/constructible-qualification/integer-roots-1.0.4.0/Math/NumberTheory/Roots/Squares/Internal.hs, /home/tim/Documents/GitHub/workspace/.audit-constructible-build.l4UDoe/ghc9_0/ghc_32.o, /home/tim/Documents/GitHub/workspace/.audit-constructible-build.l4UDoe/ghc9_0/ghc_32.dyn_o )
+
+exact-real-references/constructible-qualification/integer-roots-1.0.4.0/Math/NumberTheory/Roots/Squares/Internal.hs:61:10: warning: [GHC-68441] [-Wdeprecations]
+    In the use of data constructor ‘S#’
+    (imported from GHC.Integer.GMP.Internals):
+    Deprecated: "Use IS constructor instead"
+   |
+61 | appSqrt (IS i#) = IS (double2Int# (sqrtDouble# (int2Double# i#)))
+   |          ^^
+
+exact-real-references/constructible-qualification/integer-roots-1.0.4.0/Math/NumberTheory/Roots/Squares/Internal.hs:61:19: warning: [GHC-68441] [-Wdeprecations]
+    In the use of data constructor ‘S#’
+    (imported from GHC.Integer.GMP.Internals):
+    Deprecated: "Use IS constructor instead"
+   |
+61 | appSqrt (IS i#) = IS (double2Int# (sqrtDouble# (int2Double# i#)))
+   |                   ^^
+
+exact-real-references/constructible-qualification/integer-roots-1.0.4.0/Math/NumberTheory/Roots/Squares/Internal.hs:62:12: warning: [GHC-68441] [-Wdeprecations]
+    In the use of data constructor ‘Jp#’
+    (imported from GHC.Integer.GMP.Internals):
+    Deprecated: "Use IP constructor instead"
+   |
+62 | appSqrt n@(IP bn#)
+   |            ^^^
+
+exact-real-references/constructible-qualification/integer-roots-1.0.4.0/Math/NumberTheory/Roots/Squares/Internal.hs:63:16: warning: [GHC-68441] [-Wdeprecations]
+    In the use of ‘sizeofBigNat#’
+    (imported from GHC.Integer.GMP.Internals):
+    Deprecated: "Use bigNatSize# instead"
+   |
+63 |     | isTrue# (bigNatSize# bn# <# thresh#) =
+   |                ^^^^^^^^^^^^^
+ccache: error: Read-only file system
+
+<no location info>: error:
+    `gcc' failed in phase `Assembler'. (Exit code: 1)
+[ 7 of 15] Compiling Math.NumberTheory.Utils.BitMask ( exact-real-references/constructible-qualification/integer-roots-1.0.4.0/Math/NumberTheory/Utils/BitMask.hs, /home/tim/Documents/GitHub/workspace/.audit-constructible-build.l4UDoe/ghc9_0/ghc_34.o, /home/tim/Documents/GitHub/workspace/.audit-constructible-build.l4UDoe/ghc9_0/ghc_34.dyn_o )
+ccache: error: Read-only file system
+
+<no location info>: error:
+    `gcc' failed in phase `Assembler'. (Exit code: 1)
+[11 of 15] Compiling Math.NumberTheory.Utils.FromIntegral ( exact-real-references/constructible-qualification/integer-roots-1.0.4.0/Math/NumberTheory/Utils/FromIntegral.hs, /home/tim/Documents/GitHub/workspace/.audit-constructible-build.l4UDoe/ghc9_0/ghc_36.o, /home/tim/Documents/GitHub/workspace/.audit-constructible-build.l4UDoe/ghc9_0/ghc_36.dyn_o )
+ccache: error: Read-only file system
+
+<no location info>: error:
+    `gcc' failed in phase `Assembler'. (Exit code: 1)
+[14 of 15] Compiling Numeric.Search.Integer ( exact-real-references/constructible-qualification/binary-search-0.0/Numeric/Search/Integer.hs, /home/tim/Documents/GitHub/workspace/.audit-constructible-build.l4UDoe/ghc9_0/ghc_38.o, /home/tim/Documents/GitHub/workspace/.audit-constructible-build.l4UDoe/ghc9_0/ghc_38.dyn_o )
+
+exact-real-references/constructible-qualification/binary-search-0.0/Numeric/Search/Integer.hs:17:1: warning: [GHC-94817] [-Wtabs]
+    Tab character found here, and in 26 further locations.
+    Suggested fix: Please use spaces instead.
+   |
+17 |         -- * One-dimensional searches
+   | ^^^^^^^^
+ccache: error: Read-only file system
+
+<no location info>: error:
+    `gcc' failed in phase `Assembler'. (Exit code: 1)

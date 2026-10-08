@@ -1,0 +1,13 @@
+{
+  "tag": "qqbar-inverse-corpus-linkage-v80",
+  "started": "2026-09-12T01:36:17.314Z",
+  "finished": "2026-09-12T01:36:17.339Z",
+  "elapsedSeconds": 0.023183881,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "ldd",
+  "args": [
+    "/tmp/calcium-qqbar-inverse-v80.uoobbg/controls"
+  ],
+  "code": 0,
+  "signal": null
+}

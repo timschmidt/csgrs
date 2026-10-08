@@ -1,0 +1,115 @@
+All test running disabled by --no-run-tests flag. To mute this message in future, set
+notify-if-no-run-tests: false in Stack's configuration.
+All benchmark running disabled by --no-run-benchmarks flag. To mute this message in future, set
+notify-if-no-run-benchmarks: false in Stack's configuration.
+call-stack      > using precompiled package
+tasty           > using precompiled package
+tasty-hunit     > using precompiled package
+tasty-quickcheck> using precompiled package
+
+Error: [S-7282]
+       Stack failed to execute the build plan.
+       
+       While executing the build plan, Stack encountered the following errors:
+       
+       HttpExceptionRequest Request {
+         host                 = "hackage.haskell.org"
+         port                 = 443
+         secure               = True
+         requestHeaders       = [("User-Agent","Haskell pantry package")]
+         path                 = "/package/syb-0.7.2.4.tar.gz"
+         queryString          = ""
+         method               = "GET"
+         proxy                = Nothing
+         rawBody              = False
+         redirectCount        = 10
+         responseTimeout      = ResponseTimeoutDefault
+         requestVersion       = HTTP/1.1
+         proxySecureMode      = ProxySecureWithConnect
+       }
+        (ConnectionFailure Network.Socket.getAddrInfo (called with preferred socket type/protocol: AddrInfo {addrFlags = [AI_ADDRCONFIG], addrFamily = AF_UNSPEC, addrSocketType = Stream, addrProtocol = 0, addrAddress = 0.0.0.0:0, addrCanonName = Nothing}, host name: "hackage.haskell.org", service name: "443"): does not exist (Temporary failure in name resolution))
+       
+       HttpExceptionRequest Request {
+         host                 = "hackage.haskell.org"
+         port                 = 443
+         secure               = True
+         requestHeaders       = [("User-Agent","Haskell pantry package")]
+         path                 = "/package/happy-1.20.1.1.tar.gz"
+         queryString          = ""
+         method               = "GET"
+         proxy                = Nothing
+         rawBody              = False
+         redirectCount        = 10
+         responseTimeout      = ResponseTimeoutDefault
+         requestVersion       = HTTP/1.1
+         proxySecureMode      = ProxySecureWithConnect
+       }
+        (ConnectionFailure Network.Socket.getAddrInfo (called with preferred socket type/protocol: AddrInfo {addrFlags = [AI_ADDRCONFIG], addrFamily = AF_UNSPEC, addrSocketType = Stream, addrProtocol = 0, addrAddress = 0.0.0.0:0, addrCanonName = Nothing}, host name: "hackage.haskell.org", service name: "443"): does not exist (Temporary failure in name resolution))
+       
+       HttpExceptionRequest Request {
+         host                 = "hackage.haskell.org"
+         port                 = 443
+         secure               = True
+         requestHeaders       = [("User-Agent","Haskell pantry package")]
+         path                 = "/package/groups-0.5.3.tar.gz"
+         queryString          = ""
+         method               = "GET"
+         proxy                = Nothing
+         rawBody              = False
+         redirectCount        = 10
+         responseTimeout      = ResponseTimeoutDefault
+         requestVersion       = HTTP/1.1
+         proxySecureMode      = ProxySecureWithConnect
+       }
+        (ConnectionFailure Network.Socket.getAddrInfo (called with preferred socket type/protocol: AddrInfo {addrFlags = [AI_ADDRCONFIG], addrFamily = AF_UNSPEC, addrSocketType = Stream, addrProtocol = 0, addrAddress = 0.0.0.0:0, addrCanonName = Nothing}, host name: "hackage.haskell.org", service name: "443"): does not exist (Temporary failure in name resolution))
+       
+       HttpExceptionRequest Request {
+         host                 = "hackage.haskell.org"
+         port                 = 443
+         secure               = True
+         requestHeaders       = [("User-Agent","Haskell pantry package")]
+         path                 = "/package/ghc-paths-0.1.0.12.tar.gz"
+         queryString          = ""
+         method               = "GET"
+         proxy                = Nothing
+         rawBody              = False
+         redirectCount        = 10
+         responseTimeout      = ResponseTimeoutDefault
+         requestVersion       = HTTP/1.1
+         proxySecureMode      = ProxySecureWithConnect
+       }
+        (ConnectionFailure Network.Socket.getAddrInfo (called with preferred socket type/protocol: AddrInfo {addrFlags = [AI_ADDRCONFIG], addrFamily = AF_UNSPEC, addrSocketType = Stream, addrProtocol = 0, addrAddress = 0.0.0.0:0, addrCanonName = Nothing}, host name: "hackage.haskell.org", service name: "443"): does not exist (Temporary failure in name resolution))
+       
+       HttpExceptionRequest Request {
+         host                 = "hackage.haskell.org"
+         port                 = 443
+         secure               = True
+         requestHeaders       = [("User-Agent","Haskell pantry package")]
+         path                 = "/package/checkers-0.6.0.tar.gz"
+         queryString          = ""
+         method               = "GET"
+         proxy                = Nothing
+         rawBody              = False
+         redirectCount        = 10
+         responseTimeout      = ResponseTimeoutDefault
+         requestVersion       = HTTP/1.1
+         proxySecureMode      = ProxySecureWithConnect
+       }
+        (ConnectionFailure Network.Socket.getAddrInfo (called with preferred socket type/protocol: AddrInfo {addrFlags = [AI_ADDRCONFIG], addrFamily = AF_UNSPEC, addrSocketType = Stream, addrProtocol = 0, addrAddress = 0.0.0.0:0, addrCanonName = Nothing}, host name: "hackage.haskell.org", service name: "443"): does not exist (Temporary failure in name resolution))
+       
+       HttpExceptionRequest Request {
+         host                 = "hackage.haskell.org"
+         port                 = 443
+         secure               = True
+         requestHeaders       = [("User-Agent","Haskell pantry package")]
+         path                 = "/package/cabal-doctest-1.0.11.tar.gz"
+         queryString          = ""
+         method               = "GET"
+         proxy                = Nothing
+         rawBody              = False
+         redirectCount        = 10
+         responseTimeout      = ResponseTimeoutDefault
+         requestVersion       = HTTP/1.1
+         proxySecureMode      = ProxySecureWithConnect
+       }
+        (ConnectionFailure Network.Socket.getAddrInfo (called with preferred socket type/protocol: AddrInfo {addrFlags = [AI_ADDRCONFIG], addrFamily = AF_UNSPEC, addrSocketType = Stream, addrProtocol = 0, addrAddress = 0.0.0.0:0, addrCanonName = Nothing}, host name: "hackage.haskell.org", service name: "443"): does not exist (Temporary failure in name resolution))

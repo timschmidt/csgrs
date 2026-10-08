@@ -1,0 +1,22 @@
+\doxysubsection{Flt64 Class Reference}
+\hypertarget{classAriadne_1_1Flt64}{}\label{classAriadne_1_1Flt64}\index{Flt64@{Flt64}}
+
+
+{\ttfamily \#include $<$flt64.\+hpp$>$}
+
+
+
+\doxysubsubsection{Description}
+Wrapper class for double-\/precision floating-\/point numbers. 
+
+The main purpose of this class is as a base implementation for the {\itshape safe} floating-\/point number types Float\+DPApproximation, Float\+DPLower\+Bound, Float\+DPUpper\+Bound,Float\+DPBounds, Float\+DPBall, Float\+DPError and \doxylink{namespaceAriadne_af915b9f1459c9691328efa71c6f39c6e}{Float\+DP}. These classes
+
+Default arithmetic operations are approximate, and comparisons are exact, so this class is {\itshape unsafe}. Rounded operations on {\bfseries{\doxylink{namespaceAriadne_af915b9f1459c9691328efa71c6f39c6e}{Float\+DP}}} classes are provided using the {\ttfamily \+\_\+down} and {\ttfamily \+\_\+up} suffixes. Approximate\+Tag arithmetic without control of the rounding mode can be specified by the {\ttfamily \+\_\+approx} rounding suffix, or {\ttfamily \+\_\+near} if round-\/to-\/nearest is available. Exact\+Tag arithmetic can be specified explicitly using the {\ttfamily \+\_\+exact} rounding suffix.
+
+Since the raw {\bfseries{\doxylink{namespaceAriadne_af915b9f1459c9691328efa71c6f39c6e}{Float\+DP}}} classes represent unsafe values, they cannot be converted to other numbers. The exception is conversion to {\bfseries{Float\+DPApproximation}} classes, since these represent approximate values with no control of the error. Since the raw {\bfseries{\doxylink{namespaceAriadne_af915b9f1459c9691328efa71c6f39c6e}{Float\+DP}}} classes are used as the implementation of the safe {\ttfamily \doxylink{namespaceAriadne_af915b9f1459c9691328efa71c6f39c6e}{Float\+DP}} classes, they are valid arguments to constructors, but these constructors are all declared {\ttfamily explicit}. \doxylink{namespaceAriadne_a0e36a4c4b857737f71444bff61a9edb6}{Comparison} of raw {\bfseries{Float\+DP}} data and other numbers is performed as if the Float\+DP object were an {\bfseries{Float\+DPApproximation}}.
+
+When testing, it is often useful to perform comparisons with {\ttfamily Flt64} or {\ttfamily double} values. Although care must be taken, since compiler rounding may change the truth of certain comparisons. comparisons with {\ttfamily double} are performed as if the value were {\ttfamily \doxylink{namespaceAriadne_af915b9f1459c9691328efa71c6f39c6e}{Float\+DP}}. 
+
+The documentation for this class was generated from the following file\+:\begin{DoxyCompactItemize}
+\item 
+source/numeric/\mbox{\hyperlink{flt64_8hpp}{flt64.\+hpp}}\end{DoxyCompactItemize}

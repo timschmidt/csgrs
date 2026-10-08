@@ -1,0 +1,272 @@
+[
+  {
+    "variant": "candidate",
+    "name": "algebraic_endpoint_analytic_parallel_chamfers_replay_selected_distance",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/normalized-analytic-region-candidate3-libraries/candidate-build",
+      "--exact",
+      "algebraic_endpoint_analytic_parallel_chamfers_replay_selected_distance",
+      "--test-threads=1",
+      "--nocapture",
+      "--color",
+      "never"
+    ],
+    "returncode": 0,
+    "passed": true,
+    "elapsed_seconds": 6.021600880980259,
+    "sha256": "ffed2653c18ac281dfc68939af895bd58b0a4b89f2fb64946d869f2a3c451dbb",
+    "log": "normalized-analytic-region-candidate3-candidate-algebraic_endpoint_analytic_parallel_chamfers_replay_selected_distance.log"
+  },
+  {
+    "variant": "candidate",
+    "name": "analytic_parallel_chamfers_retain_normalized_cut_points",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/normalized-analytic-region-candidate3-libraries/candidate-build",
+      "--exact",
+      "analytic_parallel_chamfers_retain_normalized_cut_points",
+      "--test-threads=1",
+      "--nocapture",
+      "--color",
+      "never"
+    ],
+    "returncode": 0,
+    "passed": true,
+    "elapsed_seconds": 0.015675036993343383,
+    "sha256": "ffed2653c18ac281dfc68939af895bd58b0a4b89f2fb64946d869f2a3c451dbb",
+    "log": "normalized-analytic-region-candidate3-candidate-analytic_parallel_chamfers_retain_normalized_cut_points.log"
+  },
+  {
+    "variant": "candidate",
+    "name": "analytic_parallel_circle_fast_path_excludes_other_support_contacts",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/normalized-analytic-region-candidate3-libraries/candidate-build",
+      "--exact",
+      "analytic_parallel_circle_fast_path_excludes_other_support_contacts",
+      "--test-threads=1",
+      "--nocapture",
+      "--color",
+      "never"
+    ],
+    "returncode": 0,
+    "passed": true,
+    "elapsed_seconds": 0.0034827219787985086,
+    "sha256": "ffed2653c18ac281dfc68939af895bd58b0a4b89f2fb64946d869f2a3c451dbb",
+    "log": "normalized-analytic-region-candidate3-candidate-analytic_parallel_circle_fast_path_excludes_other_support_contacts.log"
+  },
+  {
+    "variant": "candidate",
+    "name": "analytic_parallel_circle_tangency_retains_zero_cross_evidence",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/normalized-analytic-region-candidate3-libraries/candidate-build",
+      "--exact",
+      "analytic_parallel_circle_tangency_retains_zero_cross_evidence",
+      "--test-threads=1",
+      "--nocapture",
+      "--color",
+      "never"
+    ],
+    "returncode": 0,
+    "passed": true,
+    "elapsed_seconds": 0.007522875006543472,
+    "sha256": "ffed2653c18ac281dfc68939af895bd58b0a4b89f2fb64946d869f2a3c451dbb",
+    "log": "normalized-analytic-region-candidate3-candidate-analytic_parallel_circle_tangency_retains_zero_cross_evidence.log"
+  },
+  {
+    "variant": "candidate",
+    "name": "analytic_parallel_fragments_retain_exact_region_evidence_under_both_policies",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/normalized-analytic-region-candidate3-libraries/candidate-build",
+      "--exact",
+      "analytic_parallel_fragments_retain_exact_region_evidence_under_both_policies",
+      "--test-threads=1",
+      "--nocapture",
+      "--color",
+      "never"
+    ],
+    "returncode": 0,
+    "passed": true,
+    "elapsed_seconds": 0.03168410999933258,
+    "sha256": "ffed2653c18ac281dfc68939af895bd58b0a4b89f2fb64946d869f2a3c451dbb",
+    "log": "normalized-analytic-region-candidate3-candidate-analytic_parallel_fragments_retain_exact_region_evidence_under_both_policies.log"
+  },
+  {
+    "variant": "candidate",
+    "name": "analytic_parallel_intersects_independently_parameterized_circles_exactly",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/normalized-analytic-region-candidate3-libraries/candidate-build",
+      "--exact",
+      "analytic_parallel_intersects_independently_parameterized_circles_exactly",
+      "--test-threads=1",
+      "--nocapture",
+      "--color",
+      "never"
+    ],
+    "returncode": 0,
+    "passed": true,
+    "elapsed_seconds": 0.03173146702465601,
+    "sha256": "ffed2653c18ac281dfc68939af895bd58b0a4b89f2fb64946d869f2a3c451dbb",
+    "log": "normalized-analytic-region-candidate3-candidate-analytic_parallel_intersects_independently_parameterized_circles_exactly.log"
+  },
+  {
+    "variant": "candidate",
+    "name": "curve_trim_intersects_analytic_parallel_region_boundaries",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/normalized-analytic-region-candidate3-libraries/candidate-build",
+      "--exact",
+      "curve_trim_intersects_analytic_parallel_region_boundaries",
+      "--test-threads=1",
+      "--nocapture",
+      "--color",
+      "never"
+    ],
+    "returncode": 0,
+    "passed": true,
+    "elapsed_seconds": 0.0034910009999293834,
+    "sha256": "ffed2653c18ac281dfc68939af895bd58b0a4b89f2fb64946d869f2a3c451dbb",
+    "log": "normalized-analytic-region-candidate3-candidate-curve_trim_intersects_analytic_parallel_region_boundaries.log"
+  },
+  {
+    "variant": "candidate",
+    "name": "curve_trim_retains_an_analytic_parallel_boundary_overlap",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/normalized-analytic-region-candidate3-libraries/candidate-build",
+      "--exact",
+      "curve_trim_retains_an_analytic_parallel_boundary_overlap",
+      "--test-threads=1",
+      "--nocapture",
+      "--color",
+      "never"
+    ],
+    "returncode": 0,
+    "passed": true,
+    "elapsed_seconds": 0.0034509329998400062,
+    "sha256": "ffed2653c18ac281dfc68939af895bd58b0a4b89f2fb64946d869f2a3c451dbb",
+    "log": "normalized-analytic-region-candidate3-candidate-curve_trim_retains_an_analytic_parallel_boundary_overlap.log"
+  },
+  {
+    "variant": "candidate",
+    "name": "cusp_split_analytic_self_crossing_normalizes_at_admission",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/normalized-analytic-region-candidate3-libraries/candidate-build",
+      "--exact",
+      "cusp_split_analytic_self_crossing_normalizes_at_admission",
+      "--test-threads=1",
+      "--nocapture",
+      "--color",
+      "never"
+    ],
+    "returncode": 0,
+    "passed": true,
+    "elapsed_seconds": 33.806544432998635,
+    "sha256": "ffed2653c18ac281dfc68939af895bd58b0a4b89f2fb64946d869f2a3c451dbb",
+    "log": "normalized-analytic-region-candidate3-candidate-cusp_split_analytic_self_crossing_normalizes_at_admission.log"
+  },
+  {
+    "variant": "candidate",
+    "name": "general_boundary_paths_preserve_analytic_carriers_and_boolean_reentry",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/normalized-analytic-region-candidate3-libraries/candidate-build",
+      "--exact",
+      "general_boundary_paths_preserve_analytic_carriers_and_boolean_reentry",
+      "--test-threads=1",
+      "--nocapture",
+      "--color",
+      "never"
+    ],
+    "returncode": 0,
+    "passed": true,
+    "elapsed_seconds": 0.031897695997031406,
+    "sha256": "ffed2653c18ac281dfc68939af895bd58b0a4b89f2fb64946d869f2a3c451dbb",
+    "log": "normalized-analytic-region-candidate3-candidate-general_boundary_paths_preserve_analytic_carriers_and_boolean_reentry.log"
+  },
+  {
+    "variant": "candidate",
+    "name": "radical_parallel_cusp_offsets_exactly_under_both_policies",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/normalized-analytic-region-candidate3-libraries/candidate-build",
+      "--exact",
+      "radical_parallel_cusp_offsets_exactly_under_both_policies",
+      "--test-threads=1",
+      "--nocapture",
+      "--color",
+      "never"
+    ],
+    "returncode": "timeout",
+    "passed": false,
+    "elapsed_seconds": 300.00142645600135,
+    "sha256": "ffed2653c18ac281dfc68939af895bd58b0a4b89f2fb64946d869f2a3c451dbb",
+    "log": "normalized-analytic-region-candidate3-candidate-radical_parallel_cusp_offsets_exactly_under_both_policies.log"
+  },
+  {
+    "variant": "candidate",
+    "name": "radical_parallel_cusp_spans_connect_under_both_policies",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/normalized-analytic-region-candidate3-libraries/candidate-build",
+      "--exact",
+      "radical_parallel_cusp_spans_connect_under_both_policies",
+      "--test-threads=1",
+      "--nocapture",
+      "--color",
+      "never"
+    ],
+    "returncode": 0,
+    "passed": true,
+    "elapsed_seconds": 0.015791639016242698,
+    "sha256": "ffed2653c18ac281dfc68939af895bd58b0a4b89f2fb64946d869f2a3c451dbb",
+    "log": "normalized-analytic-region-candidate3-candidate-radical_parallel_cusp_spans_connect_under_both_policies.log"
+  },
+  {
+    "variant": "candidate",
+    "name": "retained_arc_fillet_preserves_past_center_tangent_orientation",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/normalized-analytic-region-candidate3-libraries/candidate-build",
+      "--exact",
+      "retained_arc_fillet_preserves_past_center_tangent_orientation",
+      "--test-threads=1",
+      "--nocapture",
+      "--color",
+      "never"
+    ],
+    "returncode": 0,
+    "passed": true,
+    "elapsed_seconds": 0.06377070298185572,
+    "sha256": "ffed2653c18ac281dfc68939af895bd58b0a4b89f2fb64946d869f2a3c451dbb",
+    "log": "normalized-analytic-region-candidate3-candidate-retained_arc_fillet_preserves_past_center_tangent_orientation.log"
+  },
+  {
+    "variant": "candidate",
+    "name": "retained_rational_arc_and_analytic_parallel_fillet_exactly",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/normalized-analytic-region-candidate3-libraries/candidate-build",
+      "--exact",
+      "retained_rational_arc_and_analytic_parallel_fillet_exactly",
+      "--test-threads=1",
+      "--nocapture",
+      "--color",
+      "never"
+    ],
+    "returncode": "timeout",
+    "passed": false,
+    "elapsed_seconds": 300.0101106899965,
+    "sha256": "ffed2653c18ac281dfc68939af895bd58b0a4b89f2fb64946d869f2a3c451dbb",
+    "log": "normalized-analytic-region-candidate3-candidate-retained_rational_arc_and_analytic_parallel_fillet_exactly.log"
+  },
+  {
+    "variant": "candidate",
+    "name": "retained_rational_arc_and_analytic_parallel_fillet_extends_exactly",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/normalized-analytic-region-candidate3-libraries/candidate-build",
+      "--exact",
+      "retained_rational_arc_and_analytic_parallel_fillet_extends_exactly",
+      "--test-threads=1",
+      "--nocapture",
+      "--color",
+      "never"
+    ],
+    "returncode": 0,
+    "passed": true,
+    "elapsed_seconds": 0.4146455879963469,
+    "sha256": "ffed2653c18ac281dfc68939af895bd58b0a4b89f2fb64946d869f2a3c451dbb",
+    "log": "normalized-analytic-region-candidate3-candidate-retained_rational_arc_and_analytic_parallel_fillet_extends_exactly.log"
+  }
+]

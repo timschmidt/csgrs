@@ -1,0 +1,14 @@
+[package]
+name = "creal-hyper-cache-audit"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+hyperreal = { path = "../hyperreal-before" }
+rug = { version = "1.30.0", default-features = false, features = ["float", "integer", "rational", "std"] }
+num = { version = "0.4.3", features = ["num-bigint"] }
+
+[profile.release]
+debug = 0
+incremental = false
+codegen-units = 16

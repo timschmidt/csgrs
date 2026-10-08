@@ -1,0 +1,84 @@
+constructed 1
+constructed 2
+constructed 3
+constructed 4
+constructed 5
+constructed 6
+constructed 7
+constructed 8
+constructed 9
+constructed 10
+constructed 11
+constructed 12
+constructed 13
+constructed 14
+constructed 15
+constructed 16
+constructed 17
+constructed 18
+constructed 19
+constructed 20
+constructed 21
+constructed 22
+constructed 23
+constructed 24
+constructed 25
+constructed 26
+constructed 27
+constructed 28
+constructed 29
+constructed 30
+constructed 31
+constructed 32
+constructed 33
+constructed 34
+constructed 35
+constructed 36
+constructed 37
+constructed 38
+constructed 39
+constructed 40
+constructed 41
+constructed 42
+constructed 43
+constructed 44
+constructed 45
+constructed 46
+constructed 47
+constructed 48
+constructed 49
+constructed 50
+constructed 51
+constructed 52
+constructed 53
+constructed 54
+constructed 55
+constructed 56
+constructed 57
+constructed 58
+constructed 59
+constructed 60
+PASS Hyper logistic k=60, four precision/history queries
+	Command being timed: "timeout 10s prlimit --as=536870912 .audit-targets/ireal-derivative-18555/release/late_oracle hyper 1 10 60 32"
+	User time (seconds): 0.00
+	System time (seconds): 0.00
+	Percent of CPU this job got: 87%
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:00.00
+	Average shared text size (kbytes): 0
+	Average unshared data size (kbytes): 0
+	Average stack size (kbytes): 0
+	Average total size (kbytes): 0
+	Maximum resident set size (kbytes): 3948
+	Average resident set size (kbytes): 0
+	Major (requiring I/O) page faults: 0
+	Minor (reclaiming a frame) page faults: 360
+	Voluntary context switches: 3
+	Involuntary context switches: 1
+	Swaps: 0
+	File system inputs: 0
+	File system outputs: 8
+	Socket messages sent: 0
+	Socket messages received: 0
+	Signals delivered: 0
+	Page size (bytes): 4096
+	Exit status: 0

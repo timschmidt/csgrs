@@ -1,0 +1,11 @@
+{
+  "tag": "qqbar-arithmetic-native",
+  "started": "2026-09-10T18:01:37.596Z",
+  "finished": "2026-09-10T18:01:37.896Z",
+  "elapsedSeconds": 0.297588931,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison",
+  "command": "/tmp/calcium-qqbar-arithmetic.oUgkCO/controls",
+  "args": [],
+  "code": 0,
+  "signal": null
+}

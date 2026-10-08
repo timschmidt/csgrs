@@ -1,0 +1,196 @@
+{
+  "attempted": 1220,
+  "passed": 1199,
+  "ignored": 6,
+  "failed": [
+    {
+      "name": "bezier_offset::conversion_tests::selected_parallel_normal_circle_intersects_genuinely_analytic_parallel_in_one_fiber",
+      "returncode": "timeout",
+      "passed": false,
+      "ignored": false,
+      "elapsed_seconds": 75.04660840902943,
+      "limit_seconds": 75,
+      "log": "tower-reuse-20260924-v6-regression-case-0534.log"
+    },
+    {
+      "name": "bezier_region::tests::algebraic_endpoint_images_reenter_shared_corner_carriers",
+      "returncode": 101,
+      "passed": false,
+      "ignored": false,
+      "elapsed_seconds": 0.06477817392442375,
+      "limit_seconds": 75,
+      "log": "tower-reuse-20260924-v6-regression-case-0623.log"
+    },
+    {
+      "name": "bezier_region::curve_corner_chain::tests::extended_fillet_region_classifies_both_sides_of_its_companion",
+      "returncode": "timeout",
+      "passed": false,
+      "ignored": false,
+      "elapsed_seconds": 75.00488994107582,
+      "limit_seconds": 75,
+      "log": "tower-reuse-20260924-v6-regression-case-0619.log"
+    },
+    {
+      "name": "bezier_region::tests::nonlinear_algebraic_endpoint_fillet_uses_complete_incident_domain",
+      "returncode": "timeout",
+      "passed": false,
+      "ignored": false,
+      "elapsed_seconds": 75.00305231800303,
+      "limit_seconds": 75,
+      "log": "tower-reuse-20260924-v6-regression-case-0677.log"
+    },
+    {
+      "name": "bezier_region::tests::nonlinear_selected_corner_chamfers_through_retained_fixed_distance_image",
+      "returncode": "timeout",
+      "passed": false,
+      "ignored": false,
+      "elapsed_seconds": 75.90022398193832,
+      "limit_seconds": 75,
+      "log": "tower-reuse-20260924-v6-regression-case-0680.log"
+    },
+    {
+      "name": "bezier_region::tests::one_fragment_materialized_loop_chamfers_to_one_middle_interval",
+      "returncode": "timeout",
+      "passed": false,
+      "ignored": false,
+      "elapsed_seconds": 75.03882251295727,
+      "limit_seconds": 75,
+      "log": "tower-reuse-20260924-v6-regression-case-0687.log"
+    },
+    {
+      "name": "bezier_region::tests::one_fragment_materialized_loop_extends_algebraic_chamfer_cuts_once",
+      "returncode": "timeout",
+      "passed": false,
+      "ignored": false,
+      "elapsed_seconds": 75.03370593301952,
+      "limit_seconds": 75,
+      "log": "tower-reuse-20260924-v6-regression-case-0688.log"
+    },
+    {
+      "name": "bezier_region::tests::one_fragment_ph_loop_projective_corners_retain_one_extended_interval",
+      "returncode": 101,
+      "passed": false,
+      "ignored": false,
+      "elapsed_seconds": 0.06518051703460515,
+      "limit_seconds": 75,
+      "log": "tower-reuse-20260924-v6-regression-case-0691.log"
+    },
+    {
+      "name": "bezier_region::tests::one_fragment_nonzero_parallel_loop_extends_chamfer_cuts_on_one_finite_envelope",
+      "returncode": "timeout",
+      "passed": false,
+      "ignored": false,
+      "elapsed_seconds": 75.0224571749568,
+      "limit_seconds": 75,
+      "log": "tower-reuse-20260924-v6-regression-case-0689.log"
+    },
+    {
+      "name": "bezier_region::tests::one_fragment_selected_loop_chamfers_from_one_interval",
+      "returncode": "timeout",
+      "passed": false,
+      "ignored": false,
+      "elapsed_seconds": 75.0317217009142,
+      "limit_seconds": 75,
+      "log": "tower-reuse-20260924-v6-regression-case-0693.log"
+    },
+    {
+      "name": "bezier_region::tests::one_fragment_selected_loop_extends_chamfer_cuts_on_its_analytic_carrier",
+      "returncode": "timeout",
+      "passed": false,
+      "ignored": false,
+      "elapsed_seconds": 75.03747770492919,
+      "limit_seconds": 75,
+      "log": "tower-reuse-20260924-v6-regression-case-0694.log"
+    },
+    {
+      "name": "bezier_region::tests::pair_native_boolean_algebraic_chord_corner_publishes_a_third_generation_fillet",
+      "returncode": "timeout",
+      "passed": false,
+      "ignored": false,
+      "elapsed_seconds": 75.0029092769837,
+      "limit_seconds": 75,
+      "log": "tower-reuse-20260924-v6-regression-case-0699.log"
+    },
+    {
+      "name": "bezier_region::tests::retained_algebraic_straights_trim_or_extend_chamfer_and_fillet",
+      "returncode": 101,
+      "passed": false,
+      "ignored": false,
+      "elapsed_seconds": 0.009132322971709073,
+      "limit_seconds": 75,
+      "log": "tower-reuse-20260924-v6-regression-case-0723.log"
+    },
+    {
+      "name": "bezier_region::tests::retained_analytic_multifragment_corner_extends_chamfer_and_fillet",
+      "returncode": 101,
+      "passed": false,
+      "ignored": false,
+      "elapsed_seconds": 0.008942726999521255,
+      "limit_seconds": 75,
+      "log": "tower-reuse-20260924-v6-regression-case-0724.log"
+    },
+    {
+      "name": "bezier_region::tests::selected_parallel_companion_fillets_without_range_promotion",
+      "returncode": "timeout",
+      "passed": false,
+      "ignored": false,
+      "elapsed_seconds": 75.00472098297905,
+      "limit_seconds": 75,
+      "log": "tower-reuse-20260924-v6-regression-case-0757.log"
+    }
+  ],
+  "focused_cases": [
+    {
+      "name": "bezier_offset::conversion_tests::selected_fiber_transverse_mapped_cut_inverts_by_point",
+      "returncode": 0,
+      "passed": true,
+      "limit_seconds": 180,
+      "elapsed_seconds": 4.8635178620461375,
+      "log": "tower-reuse-20260924-v6-hypercurve-case-0.log"
+    },
+    {
+      "name": "bezier_offset::conversion_tests::similarity_transported_mapped_cusp_cut_inverts_on_analytic_overlap",
+      "returncode": 0,
+      "passed": true,
+      "limit_seconds": 120,
+      "elapsed_seconds": 0.17701364296954125,
+      "log": "tower-reuse-20260924-v6-hypercurve-case-1.log"
+    },
+    {
+      "name": "bezier_offset::conversion_tests::similarity_transported_transverse_mapped_cut_inverts_by_point",
+      "returncode": 0,
+      "passed": true,
+      "limit_seconds": 120,
+      "elapsed_seconds": 0.15368390397634357,
+      "log": "tower-reuse-20260924-v6-hypercurve-case-2.log"
+    },
+    {
+      "name": "bezier_offset::conversion_tests::recursive_projective_kernel_imports_similarity_of_algebraic_endpoints",
+      "returncode": 0,
+      "passed": true,
+      "limit_seconds": 120,
+      "elapsed_seconds": 0.14551659405697137,
+      "log": "tower-reuse-20260924-v6-hypercurve-case-3.log"
+    },
+    {
+      "name": "bezier_offset::conversion_tests::mapped_compact_point_inverse_preserves_analytic_normal_sheet",
+      "returncode": 0,
+      "passed": true,
+      "limit_seconds": 120,
+      "elapsed_seconds": 0.4022970530204475,
+      "log": "tower-reuse-20260924-v6-hypercurve-case-4.log"
+    },
+    {
+      "name": "bezier_algebraic_image::policy_tests::arithmetic_adapter_replays_close_nonrational_bounds_strictly",
+      "returncode": 0,
+      "passed": true,
+      "limit_seconds": 120,
+      "elapsed_seconds": 0.14498743996955454,
+      "log": "tower-reuse-20260924-v6-hypercurve-case-5.log"
+    }
+  ],
+  "not_repeated_existing_nonpasses": [],
+  "binary_sha256": "63a46cad2d8cb256fc22f6976818898caa0d38a1e1f8f1a2ff609f19009570a6",
+  "all_sources_unchanged": true,
+  "all_processes_reaped": true
+}

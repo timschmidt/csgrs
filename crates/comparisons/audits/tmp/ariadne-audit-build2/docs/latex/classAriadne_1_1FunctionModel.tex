@@ -1,0 +1,155 @@
+\doxysubsection{Function\+Model\texorpdfstring{$<$}{<} P, SIG, PR, PRE \texorpdfstring{$>$}{>} Class Template Reference}
+\hypertarget{classAriadne_1_1FunctionModel}{}\label{classAriadne_1_1FunctionModel}\index{FunctionModel$<$ P, SIG, PR, PRE $>$@{FunctionModel$<$ P, SIG, PR, PRE $>$}}
+
+
+\doxysubsubsection{Description}
+\subsubsection*{template$<$class P, class SIG, class PR = Void, class PRE = PR$>$\newline
+class Ariadne\+::\+Function\+Model$<$ P, SIG, PR, PRE $>$}
+Generic class representing approximations to functions on bounded domains. 
+
+
+\begin{DoxyTemplParams}{Template Parameters}
+{\em P} & The information paradigm tag, which can be either \doxylink{structAriadne_1_1ValidatedTag}{Validated\+Tag}, indicating that the approximation has a known (uniform) error bound, or \doxylink{structAriadne_1_1ApproximateTag}{Approximate\+Tag}, indicating that no error bound is available. See the \doxylink{group__InformationSubModule}{Information} for more details. \\
+\hline
+{\em SIG} & The signature, which has the standard C++ form RES(\+ARG), so signature Real(\+Real\+Vector) indicates a function $f:\R^n\to\R$. See \doxysectlink{group__FunctionModule_function_signature_section}{Function signatures}{2} for more details. \\
+\hline
+{\em PR} & The precision used for numerical values within the approximation. \\
+\hline
+{\em PRE} & The precision used for error bounds provided for the approximation. \\
+\hline
+\end{DoxyTemplParams}
+\hypertarget{classAriadne_1_1FunctionModel_function_model_template_parameter_note}{}\doxysubsubsubsubsubsection{\texorpdfstring{Note\+:}{Note\+:}}\label{classAriadne_1_1FunctionModel_function_model_template_parameter_note}
+It is planned to change the precision paramters {\ttfamily PR} and {\ttfamily PRE} to the actual number types used. \doxysubsubsubsection*{Related Types and Functions}
+(Note that these are not member symbols.) \begin{Indent}\textbf{ Type shorthands}\par
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1FunctionModel_a101383e3759ea6d1de2f005900dc3f0e}\label{classAriadne_1_1FunctionModel_a101383e3759ea6d1de2f005900dc3f0e} 
+{\footnotesize template$<$class P, class ARG, class PR = Void, class PRE = PR$>$ }\\using {\bfseries Scalar\+Function\+Model} = \mbox{\hyperlink{classAriadne_1_1FunctionModel}{Function\+Model}}$<$P,\mbox{\hyperlink{group__LinearAlgebraSubModule_ga7a29a46d50b613534f91019281b45309}{Real\+Scalar}}(ARG),PR,PRE$>$
+\item 
+\Hypertarget{classAriadne_1_1FunctionModel_ac6eb77c1c19d3dbcd6fd5a2e111741b1}\label{classAriadne_1_1FunctionModel_ac6eb77c1c19d3dbcd6fd5a2e111741b1} 
+{\footnotesize template$<$class P, class ARG, class PR = Void, class PRE = PR$>$ }\\using {\bfseries Vector\+Function\+Model} = \mbox{\hyperlink{classAriadne_1_1FunctionModel}{Function\+Model}}$<$P,\mbox{\hyperlink{group__LinearAlgebraSubModule_ga00e69bf76ffebd1f3ba573f4662134bc}{Real\+Vector}}(ARG),PR,PRE$>$
+\item 
+\Hypertarget{classAriadne_1_1FunctionModel_a41307443e9089f6b2b62d92abd5c1a72}\label{classAriadne_1_1FunctionModel_a41307443e9089f6b2b62d92abd5c1a72} 
+{\footnotesize template$<$class P, class RES, class PR = Void, class PRE = PR$>$ }\\using {\bfseries Univariate\+Function\+Model} = \mbox{\hyperlink{classAriadne_1_1FunctionModel}{Function\+Model}}$<$P,RES(\mbox{\hyperlink{group__LinearAlgebraSubModule_ga7a29a46d50b613534f91019281b45309}{Real\+Scalar}}),PR,PRE$>$
+\item 
+\Hypertarget{classAriadne_1_1FunctionModel_a8277c37f8ad804bbb20fc79da162cd36}\label{classAriadne_1_1FunctionModel_a8277c37f8ad804bbb20fc79da162cd36} 
+{\footnotesize template$<$class P, class RES, class PR = Void, class PRE = PR$>$ }\\using {\bfseries Multivariate\+Function\+Model} = \mbox{\hyperlink{classAriadne_1_1FunctionModel}{Function\+Model}}$<$P,RES(\mbox{\hyperlink{group__LinearAlgebraSubModule_ga00e69bf76ffebd1f3ba573f4662134bc}{Real\+Vector}}),PR,PRE$>$
+\item 
+\Hypertarget{classAriadne_1_1FunctionModel_a109c38a5e04824008116d118f3ff65f2}\label{classAriadne_1_1FunctionModel_a109c38a5e04824008116d118f3ff65f2} 
+{\footnotesize template$<$class P, class PR = Void, class PRE = PR$>$ }\\using {\bfseries Scalar\+Univariate\+Function\+Model} = \mbox{\hyperlink{classAriadne_1_1FunctionModel}{Function\+Model}}$<$P,\mbox{\hyperlink{group__LinearAlgebraSubModule_ga7a29a46d50b613534f91019281b45309}{Real\+Scalar}}(\mbox{\hyperlink{group__LinearAlgebraSubModule_ga7a29a46d50b613534f91019281b45309}{Real\+Scalar}}),PR,PRE$>$
+\item 
+\Hypertarget{classAriadne_1_1FunctionModel_a09fbfb0fb3014ac5b5799805fb5bd869}\label{classAriadne_1_1FunctionModel_a09fbfb0fb3014ac5b5799805fb5bd869} 
+{\footnotesize template$<$class P, class PR = Void, class PRE = PR$>$ }\\using {\bfseries Vector\+Univariate\+Function\+Model} = \mbox{\hyperlink{classAriadne_1_1FunctionModel}{Function\+Model}}$<$P,\mbox{\hyperlink{group__LinearAlgebraSubModule_ga00e69bf76ffebd1f3ba573f4662134bc}{Real\+Vector}}(\mbox{\hyperlink{group__LinearAlgebraSubModule_ga7a29a46d50b613534f91019281b45309}{Real\+Scalar}}),PR,PRE$>$
+\item 
+\Hypertarget{classAriadne_1_1FunctionModel_acad9fb6bea9f2e5cb2dd4baef7e37839}\label{classAriadne_1_1FunctionModel_acad9fb6bea9f2e5cb2dd4baef7e37839} 
+{\footnotesize template$<$class P, class PR = Void, class PRE = PR$>$ }\\using {\bfseries Scalar\+Multivariate\+Function\+Model} = \mbox{\hyperlink{classAriadne_1_1FunctionModel}{Function\+Model}}$<$P,\mbox{\hyperlink{group__LinearAlgebraSubModule_ga7a29a46d50b613534f91019281b45309}{Real\+Scalar}}(\mbox{\hyperlink{group__LinearAlgebraSubModule_ga00e69bf76ffebd1f3ba573f4662134bc}{Real\+Vector}}),PR,PRE$>$
+\item 
+\Hypertarget{classAriadne_1_1FunctionModel_acde4ce2146399a3642854cc697abcd82}\label{classAriadne_1_1FunctionModel_acde4ce2146399a3642854cc697abcd82} 
+{\footnotesize template$<$class P, class PR = Void, class PRE = PR$>$ }\\using {\bfseries Vector\+Multivariate\+Function\+Model} = \mbox{\hyperlink{classAriadne_1_1FunctionModel}{Function\+Model}}$<$P,\mbox{\hyperlink{group__LinearAlgebraSubModule_ga00e69bf76ffebd1f3ba573f4662134bc}{Real\+Vector}}(\mbox{\hyperlink{group__LinearAlgebraSubModule_ga00e69bf76ffebd1f3ba573f4662134bc}{Real\+Vector}}),PR,PRE$>$
+\item 
+\Hypertarget{classAriadne_1_1FunctionModel_accd7ca684f4efd18d28f8669d91251b7}\label{classAriadne_1_1FunctionModel_accd7ca684f4efd18d28f8669d91251b7} 
+{\footnotesize template$<$class PR = Void, class PRE = PR$>$ }\\using {\bfseries Validated\+Scalar\+Univariate\+Function\+Model} = \mbox{\hyperlink{classAriadne_1_1FunctionModel_a109c38a5e04824008116d118f3ff65f2}{Scalar\+Univariate\+Function\+Model}}$<$\mbox{\hyperlink{structAriadne_1_1ValidatedTag}{Validated\+Tag}},PR,PRE$>$
+\item 
+\Hypertarget{classAriadne_1_1FunctionModel_a40f573551bb76c88a0ccdfaf4ae52386}\label{classAriadne_1_1FunctionModel_a40f573551bb76c88a0ccdfaf4ae52386} 
+{\footnotesize template$<$class PR = Void, class PRE = PR$>$ }\\using {\bfseries Validated\+Vector\+Univariate\+Function\+Model} = \mbox{\hyperlink{classAriadne_1_1FunctionModel_a09fbfb0fb3014ac5b5799805fb5bd869}{Vector\+Univariate\+Function\+Model}}$<$\mbox{\hyperlink{structAriadne_1_1ValidatedTag}{Validated\+Tag}},PR,PRE$>$
+\item 
+\Hypertarget{classAriadne_1_1FunctionModel_aed191cd1cbb47d0d6393062549c83003}\label{classAriadne_1_1FunctionModel_aed191cd1cbb47d0d6393062549c83003} 
+{\footnotesize template$<$class PR = Void, class PRE = PR$>$ }\\using {\bfseries Validated\+Scalar\+Multivariate\+Function\+Model} = \mbox{\hyperlink{classAriadne_1_1FunctionModel_acad9fb6bea9f2e5cb2dd4baef7e37839}{Scalar\+Multivariate\+Function\+Model}}$<$\mbox{\hyperlink{structAriadne_1_1ValidatedTag}{Validated\+Tag}},PR,PRE$>$
+\item 
+\Hypertarget{classAriadne_1_1FunctionModel_a5a1ea5266fe3a52733ff0be2880d025e}\label{classAriadne_1_1FunctionModel_a5a1ea5266fe3a52733ff0be2880d025e} 
+{\footnotesize template$<$class PR = Void, class PRE = PR$>$ }\\using {\bfseries Validated\+Vector\+Multivariate\+Function\+Model} = \mbox{\hyperlink{classAriadne_1_1FunctionModel_acde4ce2146399a3642854cc697abcd82}{Vector\+Multivariate\+Function\+Model}}$<$\mbox{\hyperlink{structAriadne_1_1ValidatedTag}{Validated\+Tag}},PR,PRE$>$
+\item 
+\Hypertarget{classAriadne_1_1FunctionModel_a906f95698cff4a43716f43b4de239210}\label{classAriadne_1_1FunctionModel_a906f95698cff4a43716f43b4de239210} 
+{\footnotesize template$<$class PR = Void, class PRE = PR$>$ }\\using {\bfseries Approximate\+Scalar\+Univariate\+Function\+Model} = \mbox{\hyperlink{classAriadne_1_1FunctionModel_a109c38a5e04824008116d118f3ff65f2}{Scalar\+Univariate\+Function\+Model}}$<$\mbox{\hyperlink{structAriadne_1_1ApproximateTag}{Approximate\+Tag}},PR,PRE$>$
+\item 
+\Hypertarget{classAriadne_1_1FunctionModel_a1b5f1424a87be849771fa7f687fdea3d}\label{classAriadne_1_1FunctionModel_a1b5f1424a87be849771fa7f687fdea3d} 
+{\footnotesize template$<$class PR = Void, class PRE = PR$>$ }\\using {\bfseries Approximate\+Vector\+Univariate\+Function\+Model} = \mbox{\hyperlink{classAriadne_1_1FunctionModel_a09fbfb0fb3014ac5b5799805fb5bd869}{Vector\+Univariate\+Function\+Model}}$<$\mbox{\hyperlink{structAriadne_1_1ApproximateTag}{Approximate\+Tag}},PR,PRE$>$
+\item 
+\Hypertarget{classAriadne_1_1FunctionModel_aca9ed6968d3cced160c9c3ff2bf6d4fd}\label{classAriadne_1_1FunctionModel_aca9ed6968d3cced160c9c3ff2bf6d4fd} 
+{\footnotesize template$<$class PR = Void, class PRE = PR$>$ }\\using {\bfseries Approximate\+Scalar\+Multivariate\+Function\+Model} = \mbox{\hyperlink{classAriadne_1_1FunctionModel_acad9fb6bea9f2e5cb2dd4baef7e37839}{Scalar\+Multivariate\+Function\+Model}}$<$\mbox{\hyperlink{structAriadne_1_1ApproximateTag}{Approximate\+Tag}},PR,PRE$>$
+\item 
+\Hypertarget{classAriadne_1_1FunctionModel_a842fe81e4f76d63ff6882e84a8db97aa}\label{classAriadne_1_1FunctionModel_a842fe81e4f76d63ff6882e84a8db97aa} 
+{\footnotesize template$<$class PR = Void, class PRE = PR$>$ }\\using {\bfseries Approximate\+Vector\+Multivariate\+Function\+Model} = \mbox{\hyperlink{classAriadne_1_1FunctionModel_acde4ce2146399a3642854cc697abcd82}{Vector\+Multivariate\+Function\+Model}}$<$\mbox{\hyperlink{structAriadne_1_1ApproximateTag}{Approximate\+Tag}},PR,PRE$>$
+\item 
+\Hypertarget{classAriadne_1_1FunctionModel_aa8a01603eb38c27f6b298f77089414d1}\label{classAriadne_1_1FunctionModel_aa8a01603eb38c27f6b298f77089414d1} 
+{\footnotesize template$<$class P$>$ }\\using {\bfseries Scalar\+Univariate\+Function\+Model\+DP} = \mbox{\hyperlink{classAriadne_1_1FunctionModel_a109c38a5e04824008116d118f3ff65f2}{Scalar\+Univariate\+Function\+Model}}$<$P,\mbox{\hyperlink{classAriadne_1_1DoublePrecision}{Double\+Precision}}$>$
+\item 
+\Hypertarget{classAriadne_1_1FunctionModel_a387c7bbb5a59126baea6334ada7efa59}\label{classAriadne_1_1FunctionModel_a387c7bbb5a59126baea6334ada7efa59} 
+{\footnotesize template$<$class P$>$ }\\using {\bfseries Vector\+Univariate\+Function\+Model\+DP} = \mbox{\hyperlink{classAriadne_1_1FunctionModel_a09fbfb0fb3014ac5b5799805fb5bd869}{Vector\+Univariate\+Function\+Model}}$<$P,\mbox{\hyperlink{classAriadne_1_1DoublePrecision}{Double\+Precision}}$>$
+\item 
+\Hypertarget{classAriadne_1_1FunctionModel_ad85d4d7740ea35a563129dd09ca5a42d}\label{classAriadne_1_1FunctionModel_ad85d4d7740ea35a563129dd09ca5a42d} 
+{\footnotesize template$<$class P$>$ }\\using {\bfseries Scalar\+Multivariate\+Function\+Model\+DP} = \mbox{\hyperlink{classAriadne_1_1FunctionModel_acad9fb6bea9f2e5cb2dd4baef7e37839}{Scalar\+Multivariate\+Function\+Model}}$<$P,\mbox{\hyperlink{classAriadne_1_1DoublePrecision}{Double\+Precision}}$>$
+\item 
+\Hypertarget{classAriadne_1_1FunctionModel_a26b1bbe2183e9d5c9f29d1accc10c992}\label{classAriadne_1_1FunctionModel_a26b1bbe2183e9d5c9f29d1accc10c992} 
+{\footnotesize template$<$class P$>$ }\\using {\bfseries Vector\+Multivariate\+Function\+Model\+DP} = \mbox{\hyperlink{classAriadne_1_1FunctionModel_acde4ce2146399a3642854cc697abcd82}{Vector\+Multivariate\+Function\+Model}}$<$P,\mbox{\hyperlink{classAriadne_1_1DoublePrecision}{Double\+Precision}}$>$
+\item 
+\Hypertarget{classAriadne_1_1FunctionModel_a0b95f3b67b8afcaa13e7639ff076d7e3}\label{classAriadne_1_1FunctionModel_a0b95f3b67b8afcaa13e7639ff076d7e3} 
+{\footnotesize template$<$class P$>$ }\\using {\bfseries Scalar\+Univariate\+Function\+Model\+MP} = \mbox{\hyperlink{classAriadne_1_1FunctionModel_a109c38a5e04824008116d118f3ff65f2}{Scalar\+Univariate\+Function\+Model}}$<$P,\mbox{\hyperlink{classAriadne_1_1MultiplePrecision}{Multiple\+Precision}}$>$
+\item 
+\Hypertarget{classAriadne_1_1FunctionModel_a24a4ddb75d2165382c1baa5b3e98924f}\label{classAriadne_1_1FunctionModel_a24a4ddb75d2165382c1baa5b3e98924f} 
+{\footnotesize template$<$class P$>$ }\\using {\bfseries Vector\+Univariate\+Function\+Model\+MP} = \mbox{\hyperlink{classAriadne_1_1FunctionModel_a09fbfb0fb3014ac5b5799805fb5bd869}{Vector\+Univariate\+Function\+Model}}$<$P,\mbox{\hyperlink{classAriadne_1_1MultiplePrecision}{Multiple\+Precision}}$>$
+\item 
+\Hypertarget{classAriadne_1_1FunctionModel_a32ee376b7ea3be32a54545a2f45d576b}\label{classAriadne_1_1FunctionModel_a32ee376b7ea3be32a54545a2f45d576b} 
+{\footnotesize template$<$class P$>$ }\\using {\bfseries Scalar\+Multivariate\+Function\+Model\+MP} = \mbox{\hyperlink{classAriadne_1_1FunctionModel_acad9fb6bea9f2e5cb2dd4baef7e37839}{Scalar\+Multivariate\+Function\+Model}}$<$P,\mbox{\hyperlink{classAriadne_1_1MultiplePrecision}{Multiple\+Precision}}$>$
+\item 
+\Hypertarget{classAriadne_1_1FunctionModel_af25738ace3fdabe6938742169f0f99b2}\label{classAriadne_1_1FunctionModel_af25738ace3fdabe6938742169f0f99b2} 
+{\footnotesize template$<$class P$>$ }\\using {\bfseries Vector\+Multivariate\+Function\+Model\+MP} = \mbox{\hyperlink{classAriadne_1_1FunctionModel_acde4ce2146399a3642854cc697abcd82}{Vector\+Multivariate\+Function\+Model}}$<$P,\mbox{\hyperlink{classAriadne_1_1MultiplePrecision}{Multiple\+Precision}}$>$
+\end{DoxyCompactItemize}
+\end{Indent}
+\begin{Indent}\textbf{ Type synonyms}\par
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1FunctionModel_a261fcece1b892b2b6eca8a9ebd802d10}\label{classAriadne_1_1FunctionModel_a261fcece1b892b2b6eca8a9ebd802d10} 
+using {\bfseries Validated\+Scalar\+Univariate\+Function\+Model\+DP} = \mbox{\hyperlink{classAriadne_1_1FunctionModel_a109c38a5e04824008116d118f3ff65f2}{Scalar\+Univariate\+Function\+Model}}$<$\mbox{\hyperlink{structAriadne_1_1ValidatedTag}{Validated\+Tag}},\mbox{\hyperlink{classAriadne_1_1DoublePrecision}{Double\+Precision}}$>$
+\item 
+\Hypertarget{classAriadne_1_1FunctionModel_aba76cbca7c8c4a970cf3ac4e3590bc84}\label{classAriadne_1_1FunctionModel_aba76cbca7c8c4a970cf3ac4e3590bc84} 
+using {\bfseries Validated\+Vector\+Univariate\+Function\+Model\+DP} = \mbox{\hyperlink{classAriadne_1_1FunctionModel_a09fbfb0fb3014ac5b5799805fb5bd869}{Vector\+Univariate\+Function\+Model}}$<$\mbox{\hyperlink{structAriadne_1_1ValidatedTag}{Validated\+Tag}},\mbox{\hyperlink{classAriadne_1_1DoublePrecision}{Double\+Precision}}$>$
+\item 
+\Hypertarget{classAriadne_1_1FunctionModel_a0a86d8ee9760a290d27f0fa733d530c2}\label{classAriadne_1_1FunctionModel_a0a86d8ee9760a290d27f0fa733d530c2} 
+using {\bfseries Validated\+Scalar\+Multivariate\+Function\+Model\+DP} = \mbox{\hyperlink{classAriadne_1_1FunctionModel_acad9fb6bea9f2e5cb2dd4baef7e37839}{Scalar\+Multivariate\+Function\+Model}}$<$\mbox{\hyperlink{structAriadne_1_1ValidatedTag}{Validated\+Tag}},\mbox{\hyperlink{classAriadne_1_1DoublePrecision}{Double\+Precision}}$>$
+\item 
+\Hypertarget{classAriadne_1_1FunctionModel_a7d763f9558dae397607a718406615406}\label{classAriadne_1_1FunctionModel_a7d763f9558dae397607a718406615406} 
+using {\bfseries Validated\+Vector\+Multivariate\+Function\+Model\+DP} = \mbox{\hyperlink{classAriadne_1_1FunctionModel_acde4ce2146399a3642854cc697abcd82}{Vector\+Multivariate\+Function\+Model}}$<$\mbox{\hyperlink{structAriadne_1_1ValidatedTag}{Validated\+Tag}},\mbox{\hyperlink{classAriadne_1_1DoublePrecision}{Double\+Precision}}$>$
+\item 
+\Hypertarget{classAriadne_1_1FunctionModel_ae3b19e485baf674a8e3dd9d95c96074b}\label{classAriadne_1_1FunctionModel_ae3b19e485baf674a8e3dd9d95c96074b} 
+using {\bfseries Approximate\+Scalar\+Univariate\+Function\+Model\+DP} = \mbox{\hyperlink{classAriadne_1_1FunctionModel_a109c38a5e04824008116d118f3ff65f2}{Scalar\+Univariate\+Function\+Model}}$<$\mbox{\hyperlink{structAriadne_1_1ApproximateTag}{Approximate\+Tag}},\mbox{\hyperlink{classAriadne_1_1DoublePrecision}{Double\+Precision}}$>$
+\item 
+\Hypertarget{classAriadne_1_1FunctionModel_a5f61c4752d05bf3dcc81a865b2879b00}\label{classAriadne_1_1FunctionModel_a5f61c4752d05bf3dcc81a865b2879b00} 
+using {\bfseries Approximate\+Vector\+Univariate\+Function\+Model\+DP} = \mbox{\hyperlink{classAriadne_1_1FunctionModel_a09fbfb0fb3014ac5b5799805fb5bd869}{Vector\+Univariate\+Function\+Model}}$<$\mbox{\hyperlink{structAriadne_1_1ApproximateTag}{Approximate\+Tag}},\mbox{\hyperlink{classAriadne_1_1DoublePrecision}{Double\+Precision}}$>$
+\item 
+\Hypertarget{classAriadne_1_1FunctionModel_aeb831cc81f2770fd59717ba909662112}\label{classAriadne_1_1FunctionModel_aeb831cc81f2770fd59717ba909662112} 
+using {\bfseries Approximate\+Scalar\+Multivariate\+Function\+Model\+DP} = \mbox{\hyperlink{classAriadne_1_1FunctionModel_acad9fb6bea9f2e5cb2dd4baef7e37839}{Scalar\+Multivariate\+Function\+Model}}$<$\mbox{\hyperlink{structAriadne_1_1ApproximateTag}{Approximate\+Tag}},\mbox{\hyperlink{classAriadne_1_1DoublePrecision}{Double\+Precision}}$>$
+\item 
+\Hypertarget{classAriadne_1_1FunctionModel_a1ca1946063e44df392389c3f13487918}\label{classAriadne_1_1FunctionModel_a1ca1946063e44df392389c3f13487918} 
+using {\bfseries Approximate\+Vector\+Multivariate\+Function\+Model\+DP} = \mbox{\hyperlink{classAriadne_1_1FunctionModel_acde4ce2146399a3642854cc697abcd82}{Vector\+Multivariate\+Function\+Model}}$<$\mbox{\hyperlink{structAriadne_1_1ApproximateTag}{Approximate\+Tag}},\mbox{\hyperlink{classAriadne_1_1DoublePrecision}{Double\+Precision}}$>$
+\item 
+\Hypertarget{classAriadne_1_1FunctionModel_a10dba26b982f208405e25cbad616f7cf}\label{classAriadne_1_1FunctionModel_a10dba26b982f208405e25cbad616f7cf} 
+using {\bfseries Validated\+Scalar\+Univariate\+Function\+Model\+MP} = \mbox{\hyperlink{classAriadne_1_1FunctionModel_a109c38a5e04824008116d118f3ff65f2}{Scalar\+Univariate\+Function\+Model}}$<$\mbox{\hyperlink{structAriadne_1_1ValidatedTag}{Validated\+Tag}},\mbox{\hyperlink{classAriadne_1_1MultiplePrecision}{Multiple\+Precision}}$>$
+\item 
+\Hypertarget{classAriadne_1_1FunctionModel_a3db327addae168bc89ca8b9e5fe6c32c}\label{classAriadne_1_1FunctionModel_a3db327addae168bc89ca8b9e5fe6c32c} 
+using {\bfseries Validated\+Vector\+Univariate\+Function\+Model\+MP} = \mbox{\hyperlink{classAriadne_1_1FunctionModel_a09fbfb0fb3014ac5b5799805fb5bd869}{Vector\+Univariate\+Function\+Model}}$<$\mbox{\hyperlink{structAriadne_1_1ValidatedTag}{Validated\+Tag}},\mbox{\hyperlink{classAriadne_1_1MultiplePrecision}{Multiple\+Precision}}$>$
+\item 
+\Hypertarget{classAriadne_1_1FunctionModel_a3a2fe99054004fd50491b6a3a766358c}\label{classAriadne_1_1FunctionModel_a3a2fe99054004fd50491b6a3a766358c} 
+using {\bfseries Validated\+Scalar\+Multivariate\+Function\+Model\+MP} = \mbox{\hyperlink{classAriadne_1_1FunctionModel_acad9fb6bea9f2e5cb2dd4baef7e37839}{Scalar\+Multivariate\+Function\+Model}}$<$\mbox{\hyperlink{structAriadne_1_1ValidatedTag}{Validated\+Tag}},\mbox{\hyperlink{classAriadne_1_1MultiplePrecision}{Multiple\+Precision}}$>$
+\item 
+\Hypertarget{classAriadne_1_1FunctionModel_a726e5042915b5dc9635c94890c6d4400}\label{classAriadne_1_1FunctionModel_a726e5042915b5dc9635c94890c6d4400} 
+using {\bfseries Validated\+Vector\+Multivariate\+Function\+Model\+MP} = \mbox{\hyperlink{classAriadne_1_1FunctionModel_acde4ce2146399a3642854cc697abcd82}{Vector\+Multivariate\+Function\+Model}}$<$\mbox{\hyperlink{structAriadne_1_1ValidatedTag}{Validated\+Tag}},\mbox{\hyperlink{classAriadne_1_1MultiplePrecision}{Multiple\+Precision}}$>$
+\item 
+\Hypertarget{classAriadne_1_1FunctionModel_a3e40e5d5771fb6f502a93804cc24ebc7}\label{classAriadne_1_1FunctionModel_a3e40e5d5771fb6f502a93804cc24ebc7} 
+using {\bfseries Approximate\+Scalar\+Univariate\+Function\+Model\+MP} = \mbox{\hyperlink{classAriadne_1_1FunctionModel_a109c38a5e04824008116d118f3ff65f2}{Scalar\+Univariate\+Function\+Model}}$<$\mbox{\hyperlink{structAriadne_1_1ApproximateTag}{Approximate\+Tag}},\mbox{\hyperlink{classAriadne_1_1MultiplePrecision}{Multiple\+Precision}}$>$
+\item 
+\Hypertarget{classAriadne_1_1FunctionModel_aae33ae39446ef1afd28e5732bd99893f}\label{classAriadne_1_1FunctionModel_aae33ae39446ef1afd28e5732bd99893f} 
+using {\bfseries Approximate\+Vector\+Univariate\+Function\+Model\+MP} = \mbox{\hyperlink{classAriadne_1_1FunctionModel_a09fbfb0fb3014ac5b5799805fb5bd869}{Vector\+Univariate\+Function\+Model}}$<$\mbox{\hyperlink{structAriadne_1_1ApproximateTag}{Approximate\+Tag}},\mbox{\hyperlink{classAriadne_1_1MultiplePrecision}{Multiple\+Precision}}$>$
+\item 
+\Hypertarget{classAriadne_1_1FunctionModel_ac1d172f4634e17e8c1a0afefe203d173}\label{classAriadne_1_1FunctionModel_ac1d172f4634e17e8c1a0afefe203d173} 
+using {\bfseries Approximate\+Scalar\+Multivariate\+Function\+Model\+MP} = \mbox{\hyperlink{classAriadne_1_1FunctionModel_acad9fb6bea9f2e5cb2dd4baef7e37839}{Scalar\+Multivariate\+Function\+Model}}$<$\mbox{\hyperlink{structAriadne_1_1ApproximateTag}{Approximate\+Tag}},\mbox{\hyperlink{classAriadne_1_1MultiplePrecision}{Multiple\+Precision}}$>$
+\item 
+\Hypertarget{classAriadne_1_1FunctionModel_abdc7e677cfd043a72b4cda4f3c27f5b9}\label{classAriadne_1_1FunctionModel_abdc7e677cfd043a72b4cda4f3c27f5b9} 
+using {\bfseries Approximate\+Vector\+Multivariate\+Function\+Model\+MP} = \mbox{\hyperlink{classAriadne_1_1FunctionModel_acde4ce2146399a3642854cc697abcd82}{Vector\+Multivariate\+Function\+Model}}$<$\mbox{\hyperlink{structAriadne_1_1ApproximateTag}{Approximate\+Tag}},\mbox{\hyperlink{classAriadne_1_1MultiplePrecision}{Multiple\+Precision}}$>$
+\end{DoxyCompactItemize}
+\end{Indent}
+
+
+The documentation for this class was generated from the following file\+:\begin{DoxyCompactItemize}
+\item 
+source/function/\mbox{\hyperlink{function_8decl_8hpp}{function.\+decl.\+hpp}}\end{DoxyCompactItemize}

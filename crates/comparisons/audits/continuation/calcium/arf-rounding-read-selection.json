@@ -1,0 +1,242 @@
+[
+  {
+    "repo": "flint",
+    "path": "src/mpn_extras/x86_64/broadwell/mulhigh_hard.asm",
+    "newRanges": [
+      [
+        1,
+        911
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "src/mpn_extras/x86_64/broadwell/sqrhigh_hard.asm",
+    "newRanges": [
+      [
+        1,
+        565
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "src/mpn_extras/x86_64/broadwell/mulhigh_normalised_hard.asm",
+    "newRanges": [
+      [
+        1,
+        1033
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "src/mpn_extras/x86_64/broadwell/sqrhigh_normalised_hard.asm",
+    "newRanges": [
+      [
+        1,
+        671
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "src/mpn_extras/arm64/mulhigh_basecase.asm",
+    "newRanges": [
+      [
+        1,
+        419
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "src/mpn_extras/arm64/mulhigh_hard.asm",
+    "newRanges": [
+      [
+        1,
+        793
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "src/mpn_extras/arm64/sqrhigh_hard.asm",
+    "newRanges": [
+      [
+        1,
+        528
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "src/arf/set_round.c",
+    "newRanges": [
+      [
+        1,
+        429
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "src/arf/neg_round.c",
+    "newRanges": [
+      [
+        1,
+        43
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "src/arf/mul_special.c",
+    "newRanges": [
+      [
+        1,
+        37
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "src/arf/complex_mul.c",
+    "newRanges": [
+      [
+        1,
+        325
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "src/arf/addmul.c",
+    "newRanges": [
+      [
+        1,
+        150
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "src/arf/submul.c",
+    "newRanges": [
+      [
+        1,
+        152
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "src/arf/test/t-mul.c",
+    "newRanges": [
+      [
+        1,
+        147
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "src/arf/test/t-mul_via_mpfr.c",
+    "newRanges": [
+      [
+        1,
+        148
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "src/arf/test/t-set_round.c",
+    "newRanges": [
+      [
+        1,
+        128
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "src/arf/test/t-set_round_mpz.c",
+    "newRanges": [
+      [
+        1,
+        101
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "src/arf/test/t-neg_round.c",
+    "newRanges": [
+      [
+        1,
+        128
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "src/arf/test/t-set_round_ui.c",
+    "newRanges": [
+      [
+        1,
+        75
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "src/arf/test/t-set_round_uiui.c",
+    "newRanges": [
+      [
+        1,
+        81
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "doc/source/arf.rst",
+    "newRanges": [
+      [
+        1,
+        115
+      ],
+      [
+        181,
+        250
+      ],
+      [
+        550,
+        640
+      ],
+      [
+        710,
+        783
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "src/arf.h",
+    "newRanges": [
+      [
+        1,
+        189
+      ],
+      [
+        405,
+        530
+      ],
+      [
+        610,
+        650
+      ]
+    ]
+  }
+]

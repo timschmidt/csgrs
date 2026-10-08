@@ -1,0 +1,2332 @@
+[
+  {
+    "target": "hypercurve",
+    "name": "bezier_offset::conversion_tests::chord_parallel_monotonicity_covers_the_retained_parameter_range",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.015662456979043782,
+    "limit_seconds": 75,
+    "log": "extended-monotonicity-20260924-v2-case-0123.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_offset::conversion_tests::chord_parallel_monotonicity_rejects_opposed_endpoint_signs",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.003715776023454964,
+    "limit_seconds": 75,
+    "log": "extended-monotonicity-20260924-v2-case-0124.log"
+  },
+  {
+    "target": "hypercurve_pcb_boolean_regressions",
+    "name": "easyduino_scale_process_image_containment_corpus",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 6.683245697058737,
+    "limit_seconds": 180,
+    "log": "extended-monotonicity-20260924-v2-case-0000.log"
+  },
+  {
+    "target": "hypercurve_pcb_boolean_regressions",
+    "name": "pcb_process_image_containment_regression_decides_exactly",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.16419815295375884,
+    "limit_seconds": 180,
+    "log": "extended-monotonicity-20260924-v2-case-0002.log"
+  },
+  {
+    "target": "hypercurve_pcb_boolean_regressions",
+    "name": "pcb_process_image_hole_ownership_culls_sparse_materials",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 10.830831071012653,
+    "limit_seconds": 180,
+    "log": "extended-monotonicity-20260924-v2-case-0003.log"
+  },
+  {
+    "target": "hypercurve_bezier_arrangement",
+    "name": "algebraic_split_boundary_blocks_graph_traversal",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.003875944996252656,
+    "limit_seconds": 180,
+    "log": "extended-monotonicity-20260924-v2-case-0004.log"
+  },
+  {
+    "target": "hypercurve_bezier_arrangement",
+    "name": "arrangement_graph_accepts_adjacent_reused_source_fragment_ranges",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.003625501994974911,
+    "limit_seconds": 180,
+    "log": "extended-monotonicity-20260924-v2-case-0005.log"
+  },
+  {
+    "target": "hypercurve_bezier_arrangement",
+    "name": "arrangement_graph_rejects_duplicate_source_fragment_evidence",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.0035837540635839105,
+    "limit_seconds": 180,
+    "log": "extended-monotonicity-20260924-v2-case-0006.log"
+  },
+  {
+    "target": "hypercurve_bezier_arrangement",
+    "name": "arrangement_graph_rejects_forged_algebraic_endpoint_image_evidence",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.0036341010127216578,
+    "limit_seconds": 180,
+    "log": "extended-monotonicity-20260924-v2-case-0007.log"
+  },
+  {
+    "target": "hypercurve_bezier_arrangement",
+    "name": "arrangement_graph_rejects_invalid_unique_source_fragment_ranges",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.0036329709691926837,
+    "limit_seconds": 180,
+    "log": "extended-monotonicity-20260924-v2-case-0008.log"
+  },
+  {
+    "target": "hypercurve_bezier_arrangement",
+    "name": "arrangement_graph_rejects_overlapping_reused_source_fragment_ranges",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.0036613589618355036,
+    "limit_seconds": 180,
+    "log": "extended-monotonicity-20260924-v2-case-0009.log"
+  },
+  {
+    "target": "hypercurve_bezier_arrangement",
+    "name": "branch_vertex_is_explicit_uncertainty_not_arbitrary_successor",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.0036778979701921344,
+    "limit_seconds": 180,
+    "log": "extended-monotonicity-20260924-v2-case-0010.log"
+  },
+  {
+    "target": "hypercurve_bezier_arrangement",
+    "name": "certified_overlap_evidence_replays_across_graph_clones",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.003715075086802244,
+    "limit_seconds": 180,
+    "log": "extended-monotonicity-20260924-v2-case-0011.log"
+  },
+  {
+    "target": "hypercurve_bezier_arrangement",
+    "name": "contact_parameters_follow_their_carrier_domains",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.003675268031656742,
+    "limit_seconds": 180,
+    "log": "extended-monotonicity-20260924-v2-case-0012.log"
+  },
+  {
+    "target": "hypercurve_bezier_arrangement",
+    "name": "empty_overlap_refinement_preserves_exact_unit_fragment",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.0036391509929671884,
+    "limit_seconds": 180,
+    "log": "extended-monotonicity-20260924-v2-case-0013.log"
+  },
+  {
+    "target": "hypercurve_bezier_arrangement",
+    "name": "exact_endpoint_buckets_retain_symbolic_matches",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.00365551991853863,
+    "limit_seconds": 180,
+    "log": "extended-monotonicity-20260924-v2-case-0014.log"
+  },
+  {
+    "target": "hypercurve_bezier_arrangement",
+    "name": "exact_split_fragments_traverse_as_one_closed_bezier_chain",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.003639050992205739,
+    "limit_seconds": 180,
+    "log": "extended-monotonicity-20260924-v2-case-0015.log"
+  },
+  {
+    "target": "hypercurve_bezier_arrangement",
+    "name": "monotone_span_rejects_reversed_parameter_evidence",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.00365709001198411,
+    "limit_seconds": 180,
+    "log": "extended-monotonicity-20260924-v2-case-0016.log"
+  },
+  {
+    "target": "hypercurve_bezier_arrangement",
+    "name": "open_quadratic_chain_stays_one_nonclosed_chain",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.0036290609277784824,
+    "limit_seconds": 180,
+    "log": "extended-monotonicity-20260924-v2-case-0017.log"
+  },
+  {
+    "target": "hypercurve_bezier_arrangement",
+    "name": "retained_arrangement_traversal_constructors_validate_fragment_ownership",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.0036330909933894873,
+    "limit_seconds": 180,
+    "log": "extended-monotonicity-20260924-v2-case-0018.log"
+  },
+  {
+    "target": "hypercurve_bezier_arrangement",
+    "name": "retained_linear_overlap_refinement_evidence_reversed_span_orientation",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.0036608990048989654,
+    "limit_seconds": 180,
+    "log": "extended-monotonicity-20260924-v2-case-0019.log"
+  },
+  {
+    "target": "hypercurve_bezier_arrangement",
+    "name": "retained_linear_overlap_split_graph_rejects_forged_orientation",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.0037488340167328715,
+    "limit_seconds": 180,
+    "log": "extended-monotonicity-20260924-v2-case-0020.log"
+  },
+  {
+    "target": "hypercurve_bezier_arrangement",
+    "name": "retained_linear_overlap_split_graph_rejects_forged_resolved_provenance",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.003728574956767261,
+    "limit_seconds": 180,
+    "log": "extended-monotonicity-20260924-v2-case-0021.log"
+  },
+  {
+    "target": "hypercurve_bezier_arrangement",
+    "name": "retained_linear_overlap_split_graph_rejects_forged_split_evidence_geometry",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.0036890580086037517,
+    "limit_seconds": 180,
+    "log": "extended-monotonicity-20260924-v2-case-0022.log"
+  },
+  {
+    "target": "hypercurve_bezier_arrangement",
+    "name": "retained_linear_overlap_split_graph_rejects_missing_refined_provenance",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.0037000360898673534,
+    "limit_seconds": 180,
+    "log": "extended-monotonicity-20260924-v2-case-0023.log"
+  },
+  {
+    "target": "hypercurve_bezier_arrangement",
+    "name": "retained_linear_overlap_split_graph_rejects_missing_split_evidence_evidence",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.0037307749735191464,
+    "limit_seconds": 180,
+    "log": "extended-monotonicity-20260924-v2-case-0024.log"
+  },
+  {
+    "target": "hypercurve_bezier_arrangement",
+    "name": "retained_linear_overlap_traversal_cancels_reversed_internal_span_in_loop",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.0036779189249500632,
+    "limit_seconds": 180,
+    "log": "extended-monotonicity-20260924-v2-case-0025.log"
+  },
+  {
+    "target": "hypercurve_bezier_arrangement",
+    "name": "retained_linear_overlap_traversal_rejects_incomplete_refined_partition",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.003680278081446886,
+    "limit_seconds": 180,
+    "log": "extended-monotonicity-20260924-v2-case-0026.log"
+  },
+  {
+    "target": "hypercurve_bezier_arrangement",
+    "name": "retained_linear_overlap_traversal_rejects_indices_outside_refinement",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.003680017893202603,
+    "limit_seconds": 180,
+    "log": "extended-monotonicity-20260924-v2-case-0027.log"
+  },
+  {
+    "target": "hypercurve_bezier_arrangement",
+    "name": "retained_linear_overlap_traversal_splits_and_consumes_duplicate_span_in_loop",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.0037235149648040533,
+    "limit_seconds": 180,
+    "log": "extended-monotonicity-20260924-v2-case-0028.log"
+  },
+  {
+    "target": "hypercurve_bezier_arrangement",
+    "name": "retained_overlap_evidence_constructor_rejects_unsorted_or_duplicate_pairs",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.0016658559907227755,
+    "limit_seconds": 180,
+    "log": "extended-monotonicity-20260924-v2-case-0029.log"
+  },
+  {
+    "target": "hypercurve_bezier_arrangement",
+    "name": "retained_overlap_evidence_does_not_call_same_curve_image_a_line_split",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.003767851972952485,
+    "limit_seconds": 180,
+    "log": "extended-monotonicity-20260924-v2-case-0030.log"
+  },
+  {
+    "target": "hypercurve_bezier_arrangement",
+    "name": "retained_overlap_evidence_extracts_partial_line_image_split_ranges",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.00362586195115,
+    "limit_seconds": 180,
+    "log": "extended-monotonicity-20260924-v2-case-0031.log"
+  },
+  {
+    "target": "hypercurve_bezier_arrangement",
+    "name": "retained_overlap_evidence_finds_identical_materialized_fragments",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.0037793810479342937,
+    "limit_seconds": 180,
+    "log": "extended-monotonicity-20260924-v2-case-0032.log"
+  },
+  {
+    "target": "hypercurve_bezier_arrangement",
+    "name": "retained_overlap_evidence_finds_reversed_degree_elevated_same_image",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.0036898269318044186,
+    "limit_seconds": 180,
+    "log": "extended-monotonicity-20260924-v2-case-0033.log"
+  },
+  {
+    "target": "hypercurve_bezier_arrangement",
+    "name": "retained_overlap_evidence_preserves_strict_rational_overlap_ranges",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.003682037931866944,
+    "limit_seconds": 180,
+    "log": "extended-monotonicity-20260924-v2-case-0034.log"
+  },
+  {
+    "target": "hypercurve_bezier_arrangement",
+    "name": "retained_overlap_evidence_recognizes_projectively_reversed_rational_fragments",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.003662448958493769,
+    "limit_seconds": 180,
+    "log": "extended-monotonicity-20260924-v2-case-0035.log"
+  },
+  {
+    "target": "hypercurve_bezier_arrangement",
+    "name": "retained_overlap_evidence_rejects_nonlinear_line_image_bezier_ranges",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.0036667789099738,
+    "limit_seconds": 180,
+    "log": "extended-monotonicity-20260924-v2-case-0036.log"
+  },
+  {
+    "target": "hypercurve_bezier_arrangement",
+    "name": "retained_overlap_evidence_separates_endpoint_touch_from_overlap",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.003736724960617721,
+    "limit_seconds": 180,
+    "log": "extended-monotonicity-20260924-v2-case-0037.log"
+  },
+  {
+    "target": "hypercurve_bezier_arrangement",
+    "name": "retained_overlap_pair_constructor_rejects_non_overlap_line_evidence",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.0038739549927413464,
+    "limit_seconds": 180,
+    "log": "extended-monotonicity-20260924-v2-case-0038.log"
+  },
+  {
+    "target": "hypercurve_bezier_arrangement",
+    "name": "retained_overlap_pair_constructor_rejects_unordered_indices",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.003830928006209433,
+    "limit_seconds": 180,
+    "log": "extended-monotonicity-20260924-v2-case-0039.log"
+  },
+  {
+    "target": "hypercurve_bezier_arrangement",
+    "name": "retained_overlap_refined_fragment_constructor_validates_local_range",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.0037283540004864335,
+    "limit_seconds": 180,
+    "log": "extended-monotonicity-20260924-v2-case-0040.log"
+  },
+  {
+    "target": "hypercurve_bezier_arrangement",
+    "name": "retained_overlap_split_constructors_reject_unordered_indices",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.0038079489022493362,
+    "limit_seconds": 180,
+    "log": "extended-monotonicity-20260924-v2-case-0041.log"
+  },
+  {
+    "target": "hypercurve_bezier_arrangement",
+    "name": "retained_overlap_split_constructors_validate_range_evidence",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.003632100997492671,
+    "limit_seconds": 180,
+    "log": "extended-monotonicity-20260924-v2-case-0042.log"
+  },
+  {
+    "target": "hypercurve_bezier_arrangement",
+    "name": "retained_overlap_traversal_deduplicates_oriented_duplicate_loop_edges",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.00365297996904701,
+    "limit_seconds": 180,
+    "log": "extended-monotonicity-20260924-v2-case-0043.log"
+  },
+  {
+    "target": "hypercurve_bezier_arrangement",
+    "name": "retained_overlap_traversal_rejects_reversed_duplicate_as_ownership_boundary",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.003677577944472432,
+    "limit_seconds": 180,
+    "log": "extended-monotonicity-20260924-v2-case-0044.log"
+  },
+  {
+    "target": "hypercurve_bezier_arrangement",
+    "name": "retained_rational_overlap_promotes_represented_incidence_root",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.0036489099729806185,
+    "limit_seconds": 180,
+    "log": "extended-monotonicity-20260924-v2-case-0045.log"
+  },
+  {
+    "target": "hypercurve_bezier_arrangement",
+    "name": "retained_rational_overlap_refinement_cancels_reversed_span",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.0038062999956309795,
+    "limit_seconds": 180,
+    "log": "extended-monotonicity-20260924-v2-case-0046.log"
+  },
+  {
+    "target": "hypercurve_bezier_arrangement",
+    "name": "retained_resolved_overlap_constructor_rejects_unordered_indices",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.0036541300360113382,
+    "limit_seconds": 180,
+    "log": "extended-monotonicity-20260924-v2-case-0047.log"
+  },
+  {
+    "target": "hypercurve_bezier_arrangement",
+    "name": "retained_tangent_order_rejects_equal_algebraic_successors",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.003667148994281888,
+    "limit_seconds": 180,
+    "log": "extended-monotonicity-20260924-v2-case-0048.log"
+  },
+  {
+    "target": "hypercurve_bezier_arrangement",
+    "name": "retained_tangent_order_transforms_reversed_algebraic_endpoints_and_tangents",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.0036849380703642964,
+    "limit_seconds": 180,
+    "log": "extended-monotonicity-20260924-v2-case-0049.log"
+  },
+  {
+    "target": "hypercurve_bezier_arrangement",
+    "name": "retained_tangent_order_traverses_algebraic_branch_vertex",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.0037266149884089828,
+    "limit_seconds": 180,
+    "log": "extended-monotonicity-20260924-v2-case-0050.log"
+  },
+  {
+    "target": "hypercurve_bezier_arrangement",
+    "name": "retained_tangent_order_uses_algebraic_second_order_for_equal_successors",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.0037894900888204575,
+    "limit_seconds": 180,
+    "log": "extended-monotonicity-20260924-v2-case-0051.log"
+  },
+  {
+    "target": "hypercurve_bezier_arrangement",
+    "name": "retained_tangent_order_uses_algebraic_third_order_for_cubic_same_tangent_inflections",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.003822988015599549,
+    "limit_seconds": 180,
+    "log": "extended-monotonicity-20260924-v2-case-0052.log"
+  },
+  {
+    "target": "hypercurve_bezier_arrangement",
+    "name": "retained_tangent_order_uses_rational_algebraic_second_order_for_equal_successors",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.003699057037010789,
+    "limit_seconds": 180,
+    "log": "extended-monotonicity-20260924-v2-case-0053.log"
+  },
+  {
+    "target": "hypercurve_bezier_arrangement",
+    "name": "tangent_ordered_traversal_rejects_equal_rational_second_order_successors",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.0037394940154626966,
+    "limit_seconds": 180,
+    "log": "extended-monotonicity-20260924-v2-case-0054.log"
+  },
+  {
+    "target": "hypercurve_bezier_arrangement",
+    "name": "tangent_ordered_traversal_rejects_equal_second_order_outgoing_tangents",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.0038017600309103727,
+    "limit_seconds": 180,
+    "log": "extended-monotonicity-20260924-v2-case-0055.log"
+  },
+  {
+    "target": "hypercurve_bezier_arrangement",
+    "name": "tangent_ordered_traversal_rejects_equal_third_order_cubic_successors",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.0038190289633348584,
+    "limit_seconds": 180,
+    "log": "extended-monotonicity-20260924-v2-case-0056.log"
+  },
+  {
+    "target": "hypercurve_bezier_arrangement",
+    "name": "tangent_ordered_traversal_resolves_simple_branch_vertex",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.003785611013881862,
+    "limit_seconds": 180,
+    "log": "extended-monotonicity-20260924-v2-case-0057.log"
+  },
+  {
+    "target": "hypercurve_bezier_arrangement",
+    "name": "tangent_ordered_traversal_uses_rational_second_order_for_equal_outgoing_tangents",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.003754422999918461,
+    "limit_seconds": 180,
+    "log": "extended-monotonicity-20260924-v2-case-0058.log"
+  },
+  {
+    "target": "hypercurve_bezier_arrangement",
+    "name": "tangent_ordered_traversal_uses_second_order_for_equal_outgoing_tangents",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.00382278801407665,
+    "limit_seconds": 180,
+    "log": "extended-monotonicity-20260924-v2-case-0059.log"
+  },
+  {
+    "target": "hypercurve_bezier_arrangement",
+    "name": "tangent_ordered_traversal_uses_third_order_for_cubic_same_tangent_inflections",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.003693526959978044,
+    "limit_seconds": 180,
+    "log": "extended-monotonicity-20260924-v2-case-0060.log"
+  },
+  {
+    "target": "hypercurve_path_closure",
+    "name": "boundary_admission_rejects_disconnected_spline_spans",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.0037192649906501174,
+    "limit_seconds": 180,
+    "log": "extended-monotonicity-20260924-v2-case-0061.log"
+  },
+  {
+    "target": "hypercurve_path_closure",
+    "name": "finite_fixed_distance_domains::finite_chamfers_preserve_equivalent_source_charts",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.03197963105048984,
+    "limit_seconds": 180,
+    "log": "extended-monotonicity-20260924-v2-case-0062.log"
+  },
+  {
+    "target": "hypercurve_path_closure",
+    "name": "finite_fixed_distance_domains::repeated_finite_chamfers_preserve_selected_cuts",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 29.959545083111152,
+    "limit_seconds": 180,
+    "log": "extended-monotonicity-20260924-v2-case-0063.log"
+  },
+  {
+    "target": "hypercurve_path_closure",
+    "name": "finite_selected_point_domains::collapsed_circle_fillet_preserves_finite_parallel_domains",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.06427676195744425,
+    "limit_seconds": 180,
+    "log": "extended-monotonicity-20260924-v2-case-0064.log"
+  },
+  {
+    "target": "hypercurve_path_closure",
+    "name": "homogeneous_boundary_closes_through_boolean_corners_and_offset",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.4647251790156588,
+    "limit_seconds": 180,
+    "log": "extended-monotonicity-20260924-v2-case-0065.log"
+  },
+  {
+    "target": "hypercurve_path_closure",
+    "name": "selected_chamfers_preserve_all_major_arc_contacts",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.007961954921483994,
+    "limit_seconds": 180,
+    "log": "extended-monotonicity-20260924-v2-case-0066.log"
+  },
+  {
+    "target": "hypercurve_path_closure",
+    "name": "selected_major_arc_fillets_keep_the_complete_authored_sweep",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.4149081070208922,
+    "limit_seconds": 180,
+    "log": "extended-monotonicity-20260924-v2-case-0067.log"
+  },
+  {
+    "target": "hypercurve_path_closure",
+    "name": "selected_open_chamfers_reenter_the_public_path_api",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.007950695930048823,
+    "limit_seconds": 180,
+    "log": "extended-monotonicity-20260924-v2-case-0068.log"
+  },
+  {
+    "target": "hypercurve_path_closure",
+    "name": "selected_open_fillets_accept_a_subsequent_chamfer",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.007824735017493367,
+    "limit_seconds": 180,
+    "log": "extended-monotonicity-20260924-v2-case-0069.log"
+  },
+  {
+    "target": "hypercurve_path_closure",
+    "name": "selected_path_chamfers_close_through_all_region_booleans",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.015976327005773783,
+    "limit_seconds": 180,
+    "log": "extended-monotonicity-20260924-v2-case-0070.log"
+  },
+  {
+    "target": "hypercurve_path_closure",
+    "name": "selected_spline_chamfers_keep_every_untrimmed_span",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.004036154015921056,
+    "limit_seconds": 180,
+    "log": "extended-monotonicity-20260924-v2-case-0071.log"
+  },
+  {
+    "target": "hypercurve_path_closure",
+    "name": "selected_spline_fillets_preserve_knot_charts_and_other_spans",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.007982052979059517,
+    "limit_seconds": 180,
+    "log": "extended-monotonicity-20260924-v2-case-0072.log"
+  },
+  {
+    "target": "hypercurve_curve_region_boolean",
+    "name": "affine_line_batch_preserves_material_and_hole_roles",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.003756132908165455,
+    "limit_seconds": 180,
+    "log": "extended-monotonicity-20260924-v2-case-0073.log"
+  },
+  {
+    "target": "hypercurve_curve_region_boolean",
+    "name": "affine_line_batch_reuses_the_authoritative_arrangement_topology",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.003774691023863852,
+    "limit_seconds": 180,
+    "log": "extended-monotonicity-20260924-v2-case-0074.log"
+  },
+  {
+    "target": "hypercurve_curve_region_boolean",
+    "name": "algebraic_curved_region_output_can_feed_another_boolean",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.0037585219833999872,
+    "limit_seconds": 180,
+    "log": "extended-monotonicity-20260924-v2-case-0075.log"
+  },
+  {
+    "target": "hypercurve_curve_region_boolean",
+    "name": "approximate_offset_reports_a_consumed_terminal_for_symbolic_zero_distance",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.0037366339238360524,
+    "limit_seconds": 180,
+    "log": "extended-monotonicity-20260924-v2-case-0076.log"
+  },
+  {
+    "target": "hypercurve_curve_region_boolean",
+    "name": "approximate_policy_reports_a_consumed_terminal_instead_of_relabeling_it_exact",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.015913711045868695,
+    "limit_seconds": 180,
+    "log": "extended-monotonicity-20260924-v2-case-0077.log"
+  },
+  {
+    "target": "hypercurve_curve_region_boolean",
+    "name": "boolean_batch_short_circuits_empty_and_identical_operands",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.003775492077693343,
+    "limit_seconds": 180,
+    "log": "extended-monotonicity-20260924-v2-case-0078.log"
+  },
+  {
+    "target": "hypercurve_curve_region_boolean",
+    "name": "circular_boolean_outputs_publish_native_boundaries_under_both_policies",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.03195621294435114,
+    "limit_seconds": 180,
+    "log": "extended-monotonicity-20260924-v2-case-0079.log"
+  },
+  {
+    "target": "hypercurve_curve_region_boolean",
+    "name": "circular_conic_batch_obeys_the_approximate_512_terminal",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.03200235101394355,
+    "limit_seconds": 180,
+    "log": "extended-monotonicity-20260924-v2-case-0080.log"
+  },
+  {
+    "target": "hypercurve_curve_region_boolean",
+    "name": "circular_conic_batch_reuses_one_authoritative_topology",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 1.916819410980679,
+    "limit_seconds": 180,
+    "log": "extended-monotonicity-20260924-v2-case-0081.log"
+  },
+  {
+    "target": "hypercurve_curve_region_boolean",
+    "name": "conic_general_batch_obeys_the_approximate_512_terminal",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.03226595208980143,
+    "limit_seconds": 180,
+    "log": "extended-monotonicity-20260924-v2-case-0082.log"
+  },
+  {
+    "target": "hypercurve_curve_region_boolean",
+    "name": "curve_path_construction_obeys_the_approximate_512_terminal",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.0038383780047297478,
+    "limit_seconds": 180,
+    "log": "extended-monotonicity-20260924-v2-case-0083.log"
+  },
+  {
+    "target": "hypercurve_curve_region_boolean",
+    "name": "curved_region_boolean_output_can_feed_another_boolean",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.003844396909698844,
+    "limit_seconds": 180,
+    "log": "extended-monotonicity-20260924-v2-case-0084.log"
+  },
+  {
+    "target": "hypercurve_curve_region_boolean",
+    "name": "curved_region_boolean_respects_nested_hole_roles",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.0038186690071597695,
+    "limit_seconds": 180,
+    "log": "extended-monotonicity-20260924-v2-case-0085.log"
+  },
+  {
+    "target": "hypercurve_curve_region_boolean",
+    "name": "elevated_circular_boolean_outputs_publish_native_boundaries",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.031994680990464985,
+    "limit_seconds": 180,
+    "log": "extended-monotonicity-20260924-v2-case-0086.log"
+  },
+  {
+    "target": "hypercurve_curve_region_boolean",
+    "name": "empty_output_does_not_certify_an_approximate_normalization",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.0038359379395842552,
+    "limit_seconds": 180,
+    "log": "extended-monotonicity-20260924-v2-case-0087.log"
+  },
+  {
+    "target": "hypercurve_curve_region_boolean",
+    "name": "finite_bezier_charts_preserve_bounds_boundary_and_winding",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.03202344896271825,
+    "limit_seconds": 180,
+    "log": "extended-monotonicity-20260924-v2-case-0088.log"
+  },
+  {
+    "target": "hypercurve_curve_region_boolean",
+    "name": "general_curve_batch_obeys_the_approximate_512_terminal",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.007942036027088761,
+    "limit_seconds": 180,
+    "log": "extended-monotonicity-20260924-v2-case-0089.log"
+  },
+  {
+    "target": "hypercurve_curve_region_boolean",
+    "name": "independent_nonlinear_line_parameters_compact_to_reusable_regions",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.007835863973014057,
+    "limit_seconds": 180,
+    "log": "extended-monotonicity-20260924-v2-case-0090.log"
+  },
+  {
+    "target": "hypercurve_curve_region_boolean",
+    "name": "line_general_batch_obeys_the_approximate_512_terminal",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.0037950100377202034,
+    "limit_seconds": 180,
+    "log": "extended-monotonicity-20260924-v2-case-0091.log"
+  },
+  {
+    "target": "hypercurve_curve_region_boolean",
+    "name": "mixed_line_circular_conic_batch_obeys_the_approximate_512_terminal",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.03193684492725879,
+    "limit_seconds": 180,
+    "log": "extended-monotonicity-20260924-v2-case-0092.log"
+  },
+  {
+    "target": "hypercurve_curve_region_boolean",
+    "name": "mixed_line_circular_conic_batch_reuses_one_authoritative_topology",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.11420024500694126,
+    "limit_seconds": 180,
+    "log": "extended-monotonicity-20260924-v2-case-0093.log"
+  },
+  {
+    "target": "hypercurve_curve_region_boolean",
+    "name": "mixed_line_circular_conic_degeneracy_matrix_matches_native_results",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 2.4683086019940674,
+    "limit_seconds": 180,
+    "log": "extended-monotonicity-20260924-v2-case-0094.log"
+  },
+  {
+    "target": "hypercurve_curve_region_boolean",
+    "name": "native_chart_poles_do_not_block_finite_region_queries",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.008032129961065948,
+    "limit_seconds": 180,
+    "log": "extended-monotonicity-20260924-v2-case-0095.log"
+  },
+  {
+    "target": "hypercurve_curve_region_boolean",
+    "name": "noncircular_conic_boolean_output_is_not_mislabeled_as_native_arc",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.003849936998449266,
+    "limit_seconds": 180,
+    "log": "extended-monotonicity-20260924-v2-case-0096.log"
+  },
+  {
+    "target": "hypercurve_curve_region_boolean",
+    "name": "point_query_reports_when_approximate_policy_decides_a_symbolic_boundary",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.007960775052197278,
+    "limit_seconds": 180,
+    "log": "extended-monotonicity-20260924-v2-case-0097.log"
+  },
+  {
+    "target": "hypercurve_curve_region_boolean",
+    "name": "region_intersection_carriers_replay_prepared_charts_and_outlive_inputs",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.007917177979834378,
+    "limit_seconds": 180,
+    "log": "extended-monotonicity-20260924-v2-case-0098.log"
+  },
+  {
+    "target": "hypercurve_curve_region_boolean",
+    "name": "region_intersection_removes_authored_internal_and_canceled_boundaries",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.00790874904487282,
+    "limit_seconds": 180,
+    "log": "extended-monotonicity-20260924-v2-case-0099.log"
+  },
+  {
+    "target": "hypercurve_curve_region_boolean",
+    "name": "regularized_affine_contacts_discard_lower_dimensional_intersections",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.0038193489890545607,
+    "limit_seconds": 180,
+    "log": "extended-monotonicity-20260924-v2-case-0100.log"
+  },
+  {
+    "target": "hypercurve_curve_region_boolean",
+    "name": "regularized_conic_tangencies_preserve_regions_but_not_point_intersections",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.015957647934556007,
+    "limit_seconds": 180,
+    "log": "extended-monotonicity-20260924-v2-case-0101.log"
+  },
+  {
+    "target": "hypercurve_curve_region_boolean",
+    "name": "regularized_partial_shared_edges_resolve_exact_side_ownership",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.0037886810023337603,
+    "limit_seconds": 180,
+    "log": "extended-monotonicity-20260924-v2-case-0102.log"
+  },
+  {
+    "target": "hypercurve_curve_region_boolean",
+    "name": "regularized_topology_does_not_upgrade_terminal_connectivity",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.007850353023968637,
+    "limit_seconds": 180,
+    "log": "extended-monotonicity-20260924-v2-case-0103.log"
+  },
+  {
+    "target": "hypercurve_curve_region_boolean",
+    "name": "regularized_topology_retains_only_the_policy_actually_consumed",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.003918432048521936,
+    "limit_seconds": 180,
+    "log": "extended-monotonicity-20260924-v2-case-0104.log"
+  },
+  {
+    "target": "hypercurve_curve_region_boolean",
+    "name": "retained_regions_clip_degree_equivalent_shared_images_to_carrier_ranges",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.032143600983545184,
+    "limit_seconds": 180,
+    "log": "extended-monotonicity-20260924-v2-case-0105.log"
+  },
+  {
+    "target": "hypercurve_curve_region_boolean",
+    "name": "retained_regions_clip_mobius_reparameterized_conics_to_carrier_ranges",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.06417837901972234,
+    "limit_seconds": 180,
+    "log": "extended-monotonicity-20260924-v2-case-0106.log"
+  },
+  {
+    "target": "hypercurve_curve_region_boolean",
+    "name": "retained_regions_clip_non_axis_monotone_mobius_cubic_components",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.06438332493416965,
+    "limit_seconds": 180,
+    "log": "extended-monotonicity-20260924-v2-case-0107.log"
+  },
+  {
+    "target": "hypercurve_curve_region_boolean",
+    "name": "retained_regions_clip_shared_source_components_to_carrier_ranges",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.016153494943864644,
+    "limit_seconds": 180,
+    "log": "extended-monotonicity-20260924-v2-case-0108.log"
+  },
+  {
+    "target": "hypercurve_curve_region_boolean",
+    "name": "selected_fillet_region_intersection_closes_through_exterior_cap_booleans",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 3.8694955779938027,
+    "limit_seconds": 180,
+    "log": "extended-monotonicity-20260924-v2-case-0109.log"
+  },
+  {
+    "target": "hypercurve_curve_region_boolean_fuzz",
+    "name": "algebraic_polyline_contacts_preserve_exact_contact_distinction",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.9655361280310899,
+    "limit_seconds": 180,
+    "log": "extended-monotonicity-20260924-v2-case-0110.log"
+  },
+  {
+    "target": "hypercurve_curve_region_boolean_fuzz",
+    "name": "conic_endpoint_root_isolation_completes",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.016126676928251982,
+    "limit_seconds": 180,
+    "log": "extended-monotonicity-20260924-v2-case-0111.log"
+  },
+  {
+    "target": "hypercurve_curve_region_boolean_fuzz",
+    "name": "deterministic_coincident_curve_family_images_complete",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.06416160904336721,
+    "limit_seconds": 180,
+    "log": "extended-monotonicity-20260924-v2-case-0112.log"
+  },
+  {
+    "target": "hypercurve_curve_region_boolean_fuzz",
+    "name": "deterministic_endpoint_curve_family_pair_matrix_completes",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.2144671439891681,
+    "limit_seconds": 180,
+    "log": "extended-monotonicity-20260924-v2-case-0113.log"
+  },
+  {
+    "target": "hypercurve_curve_region_boolean_fuzz",
+    "name": "deterministic_tangent_curve_family_pair_matrix_completes",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.21451842109672725,
+    "limit_seconds": 180,
+    "log": "extended-monotonicity-20260924-v2-case-0114.log"
+  },
+  {
+    "target": "hypercurve_curve_region_boolean_fuzz",
+    "name": "deterministic_transverse_curve_family_pair_matrix_completes",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 2.0172982250805944,
+    "limit_seconds": 180,
+    "log": "extended-monotonicity-20260924-v2-case-0115.log"
+  },
+  {
+    "target": "hypercurve_curve_region_boolean_fuzz",
+    "name": "explicit_loop_topology_supports_reversed_nonuniform_rational_regions",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.00805837893858552,
+    "limit_seconds": 180,
+    "log": "extended-monotonicity-20260924-v2-case-0116.log"
+  },
+  {
+    "target": "hypercurve_curve_region_boolean_fuzz",
+    "name": "generated_exact_curve_region_booleans_complete_and_match_immediate_results",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 1.0155522449640557,
+    "limit_seconds": 180,
+    "log": "extended-monotonicity-20260924-v2-case-0117.log"
+  },
+  {
+    "target": "hypercurve_curve_region_boolean_fuzz",
+    "name": "retired_candidate_interval_pruning_completes",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.1145565309561789,
+    "limit_seconds": 180,
+    "log": "extended-monotonicity-20260924-v2-case-0118.log"
+  },
+  {
+    "target": "hypercurve_curve_region_boolean_fuzz",
+    "name": "retired_exact_curve_region_boolean_failures_remain_in_the_corpus",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 1.9676316939294338,
+    "limit_seconds": 180,
+    "log": "extended-monotonicity-20260924-v2-case-0119.log"
+  },
+  {
+    "target": "hypercurve_curve_region_boolean_fuzz",
+    "name": "shared_endpoint_xor_completes",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.016151955001987517,
+    "limit_seconds": 180,
+    "log": "extended-monotonicity-20260924-v2-case-0120.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_offset::chord_overlap_transport_tests::chord_overlap_inverse_uses_its_finite_exterior_source_domain",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.0039083820302039385,
+    "limit_seconds": 75,
+    "log": "extended-monotonicity-20260924-v2-case-0121.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_offset::conversion_tests::analytic_scalar_predicates_distinguish_stationary_points_from_source_poles",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.00392148201353848,
+    "limit_seconds": 75,
+    "log": "extended-monotonicity-20260924-v2-case-0122.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_offset::conversion_tests::correlated_point_membership_replays_exterior_rational_domains",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.03217326803132892,
+    "limit_seconds": 75,
+    "log": "extended-monotonicity-20260924-v2-case-0125.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_offset::conversion_tests::degenerate_fiber_projection_cannot_discard_an_exterior_selected_root",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.004201972973532975,
+    "limit_seconds": 75,
+    "log": "extended-monotonicity-20260924-v2-case-0126.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_offset::conversion_tests::exterior_rational_analytic_points_use_the_selected_denominator_sign",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.0041610050247982144,
+    "limit_seconds": 75,
+    "log": "extended-monotonicity-20260924-v2-case-0127.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_offset::conversion_tests::homogeneous_representation_retains_exterior_ph_branch",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.0040518929017707705,
+    "limit_seconds": 75,
+    "log": "extended-monotonicity-20260924-v2-case-0128.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_offset::conversion_tests::incident_parabola_parallel_line_retains_the_regular_exterior_contact",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.007933816988952458,
+    "limit_seconds": 75,
+    "log": "extended-monotonicity-20260924-v2-case-0129.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_offset::conversion_tests::mixed_zero_parallel_pairs_replay_both_exterior_domain_roles",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.11429633805528283,
+    "limit_seconds": 75,
+    "log": "extended-monotonicity-20260924-v2-case-0130.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_offset::conversion_tests::noninjective_collinear_chord_overlap_partitions_every_monotone_branch",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.016485832049511373,
+    "limit_seconds": 75,
+    "log": "extended-monotonicity-20260924-v2-case-0131.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_offset::conversion_tests::nonzero_parallel_pairs_replay_exterior_weight_signs",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.0644649890018627,
+    "limit_seconds": 75,
+    "log": "extended-monotonicity-20260924-v2-case-0132.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_offset::conversion_tests::ordered_ph_parallel_domains_retain_same_sheet_exterior_contacts",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.3149482780136168,
+    "limit_seconds": 75,
+    "log": "extended-monotonicity-20260924-v2-case-0133.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_offset::conversion_tests::ordered_zero_parallel_domains_retain_exterior_loop_contacts",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.032196286018006504,
+    "limit_seconds": 75,
+    "log": "extended-monotonicity-20260924-v2-case-0134.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_offset::conversion_tests::rational_component_monotonicity_allows_stationary_points_without_sign_reversal",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.004011124954558909,
+    "limit_seconds": 75,
+    "log": "extended-monotonicity-20260924-v2-case-0135.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_offset::conversion_tests::rational_parallel_endpoint_uses_transverse_tangent_before_exterior_germs",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.00800892198458314,
+    "limit_seconds": 75,
+    "log": "extended-monotonicity-20260924-v2-case-0136.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_offset::conversion_tests::regular_implicit_parameter_component_transports_multiple_monotone_graphs",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.008362508029676974,
+    "limit_seconds": 75,
+    "log": "extended-monotonicity-20260924-v2-case-0137.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_offset::conversion_tests::regular_implicit_parameter_components_transport_monotone_graphs",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.008008731994777918,
+    "limit_seconds": 75,
+    "log": "extended-monotonicity-20260924-v2-case-0138.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_offset::conversion_tests::regular_rational_parallel_components_retain_exterior_collinear_bounds",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.016081279958598316,
+    "limit_seconds": 75,
+    "log": "extended-monotonicity-20260924-v2-case-0139.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_offset::conversion_tests::regular_rational_parallel_components_select_exterior_speed_sheets",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.0040532429702579975,
+    "limit_seconds": 75,
+    "log": "extended-monotonicity-20260924-v2-case-0140.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_offset::conversion_tests::selected_circle_bounds_cover_exterior_parallel_centers",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.003929220954887569,
+    "limit_seconds": 75,
+    "log": "extended-monotonicity-20260924-v2-case-0141.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_offset::conversion_tests::selected_fiber_interval_supports_exact_and_nonexact_exterior_roots",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.003890383057296276,
+    "limit_seconds": 75,
+    "log": "extended-monotonicity-20260924-v2-case-0142.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_offset::conversion_tests::selected_norm_isolation_preserves_exterior_exact_and_algebraic_roots",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.00399855594150722,
+    "limit_seconds": 75,
+    "log": "extended-monotonicity-20260924-v2-case-0143.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_offset::conversion_tests::tangent_inverse_retains_exterior_selected_domain_evidence",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.21448934194631875,
+    "limit_seconds": 75,
+    "log": "extended-monotonicity-20260924-v2-case-0144.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_offset::conversion_tests::zero_distance_parallel_pairs_keep_exterior_contacts",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.008080107043497264,
+    "limit_seconds": 75,
+    "log": "extended-monotonicity-20260924-v2-case-0145.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_offset::conversion_tests::zero_distance_retained_point_membership_keeps_stationary_sources",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.00803094101138413,
+    "limit_seconds": 75,
+    "log": "extended-monotonicity-20260924-v2-case-0146.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_parameter::conversion_tests::incident_ray_isolation_retains_irrational_exterior_root_authority",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.004036084050312638,
+    "limit_seconds": 75,
+    "log": "extended-monotonicity-20260924-v2-case-0147.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_parameter::conversion_tests::projective_images_preserve_exterior_singletons_across_unused_poles",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.007966035045683384,
+    "limit_seconds": 75,
+    "log": "extended-monotonicity-20260924-v2-case-0148.log"
+  },
+  {
+    "target": "hypercurve_pcb_boolean_regressions",
+    "name": "easyduino_uno_scale_process_image_with_holes_corpus",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 67.471489707008,
+    "limit_seconds": 180,
+    "log": "extended-monotonicity-20260924-v2-case-0001.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_region::curve_corner_chain::tests::extended_fillet_circle_endpoints_obey_the_exact_radius_bound",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 23.147235373035073,
+    "limit_seconds": 75,
+    "log": "extended-monotonicity-20260924-v2-case-0149.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_region::tests::boundary_tangent_does_not_assign_a_direction_to_a_stationary_endpoint",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.004011954995803535,
+    "limit_seconds": 75,
+    "log": "extended-monotonicity-20260924-v2-case-0151.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_region::tests::even_multiplicity_stationary_source_coalesces_one_offset_span",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.007963815005496144,
+    "limit_seconds": 75,
+    "log": "extended-monotonicity-20260924-v2-case-0152.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_region::curve_corner_chain::tests::extended_fillet_region_classifies_both_sides_of_its_companion",
+    "returncode": "timeout",
+    "passed": false,
+    "ignored": false,
+    "elapsed_seconds": 75.00432485702913,
+    "limit_seconds": 75,
+    "log": "extended-monotonicity-20260924-v2-case-0150.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_region::tests::one_fragment_ph_loop_projective_corners_retain_one_extended_interval",
+    "returncode": 101,
+    "passed": false,
+    "ignored": false,
+    "elapsed_seconds": 0.06435396592132747,
+    "limit_seconds": 75,
+    "log": "extended-monotonicity-20260924-v2-case-0154.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_region::tests::nonlinear_selected_corner_chamfers_through_retained_fixed_distance_image",
+    "returncode": "timeout",
+    "passed": false,
+    "ignored": false,
+    "elapsed_seconds": 75.943715884001,
+    "limit_seconds": 75,
+    "log": "extended-monotonicity-20260924-v2-case-0153.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_region::tests::retained_selected_corner_trim_keeps_distinct_bounded_fields_local",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.00811572396196425,
+    "limit_seconds": 75,
+    "log": "extended-monotonicity-20260924-v2-case-0156.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_region::tests::retained_stationary_endpoint_composition_keeps_source_and_tangent_anchor",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.007975073996931314,
+    "limit_seconds": 75,
+    "log": "extended-monotonicity-20260924-v2-case-0157.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_region::tests::selected_corner_candidates_reenter_normalization_with_retained_contacts",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 1.3663085820153356,
+    "limit_seconds": 75,
+    "log": "extended-monotonicity-20260924-v2-case-0158.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_region::tests::selected_fiber_line_image_fit_rejects_nonmonotone_subrange_excursions",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.004048442002385855,
+    "limit_seconds": 75,
+    "log": "extended-monotonicity-20260924-v2-case-0159.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "curve::curve_evaluation::tests::positive_weights_do_not_authorize_an_exterior_rational_pole",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.003957008942961693,
+    "limit_seconds": 75,
+    "log": "extended-monotonicity-20260924-v2-case-0160.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "curve::curve_subdivision::tests::exterior_circular_intervals_retain_complete_corner_contacts",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.26447953190654516,
+    "limit_seconds": 75,
+    "log": "extended-monotonicity-20260924-v2-case-0161.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "curve::curve_subdivision::tests::finite_parallel_pair_fillets_keep_exterior_source_domains",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.1644922539126128,
+    "limit_seconds": 75,
+    "log": "extended-monotonicity-20260924-v2-case-0162.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "curve::tests::polynomial_exterior_subcurve_can_end_at_parameter_zero",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.004143507103435695,
+    "limit_seconds": 75,
+    "log": "extended-monotonicity-20260924-v2-case-0163.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "curve_intersection::curve_support_intersection::analytic_dispatch_tests::finite_chord_analytic_parallel_replays_exterior_contacts",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.016019853996112943,
+    "limit_seconds": 75,
+    "log": "extended-monotonicity-20260924-v2-case-0164.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "curve_intersection::curve_support_intersection::analytic_dispatch_tests::finite_chord_rational_contacts_replay_all_roots_and_stationary_points",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.016162673942744732,
+    "limit_seconds": 75,
+    "log": "extended-monotonicity-20260924-v2-case-0165.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "curve_intersection::curve_support_intersection::analytic_dispatch_tests::finite_rational_pairs_replay_all_roots_and_stationary_points",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.032164689037017524,
+    "limit_seconds": 75,
+    "log": "extended-monotonicity-20260924-v2-case-0166.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "curve_intersection::curve_support_intersection::analytic_dispatch_tests::stationary_source_touch_replays_the_selected_normal_limits",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 5.522108659031801,
+    "limit_seconds": 75,
+    "log": "extended-monotonicity-20260924-v2-case-0167.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "curve_intersection::curve_support_intersection::circle_dispatch_tests::selected_circle_affine_domains_keep_exterior_and_algebraic_parameters",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.11450685397721827,
+    "limit_seconds": 75,
+    "log": "extended-monotonicity-20260924-v2-case-0168.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "curve_intersection::curve_support_intersection::circle_dispatch_tests::selected_fillet_tangency_replays_an_exterior_affine_source_chart",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 1.8169909419957548,
+    "limit_seconds": 75,
+    "log": "extended-monotonicity-20260924-v2-case-0169.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "curve_region_boolean::certified_successor_tests::adjacent_general_chord_fallback_excludes_the_authored_endpoint",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.01620236097369343,
+    "limit_seconds": 75,
+    "log": "extended-monotonicity-20260924-v2-case-0170.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "curve_region_boolean::certified_successor_tests::affine_region_classifies_a_general_algebraic_cusp_point_in_its_source_field",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.01606940000783652,
+    "limit_seconds": 75,
+    "log": "extended-monotonicity-20260924-v2-case-0171.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "curve_region_boolean::certified_successor_tests::algebraic_chord_analytic_parallel_pair_replays_contacts_and_overlap",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.11438691196963191,
+    "limit_seconds": 75,
+    "log": "extended-monotonicity-20260924-v2-case-0172.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "curve_region_boolean::certified_successor_tests::algebraic_chord_carrier_retains_ordered_interior_splits",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.004093480063602328,
+    "limit_seconds": 75,
+    "log": "extended-monotonicity-20260924-v2-case-0173.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "curve_region_boolean::certified_successor_tests::algebraic_chord_exact_linear_bezier_pair_replays_all_line_relations",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.003981436952017248,
+    "limit_seconds": 75,
+    "log": "extended-monotonicity-20260924-v2-case-0174.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "curve_region_boolean::certified_successor_tests::algebraic_chord_pair_overlap_enters_region_intersection_evidence",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.016153003904037178,
+    "limit_seconds": 75,
+    "log": "extended-monotonicity-20260924-v2-case-0175.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "curve_region_boolean::certified_successor_tests::algebraic_chord_parallel_boolean_keeps_exterior_and_selected_ranges",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.016357009997591376,
+    "limit_seconds": 75,
+    "log": "extended-monotonicity-20260924-v2-case-0176.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "curve_region_boolean::certified_successor_tests::authored_parallel_support_contact_classifies_perpendicular_and_tangent_joins",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.004433177062310278,
+    "limit_seconds": 75,
+    "log": "extended-monotonicity-20260924-v2-case-0177.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "curve_region_boolean::certified_successor_tests::boolean_topology_seeds_a_general_cusp_run_from_an_adjacent_carrier",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.03225034300703555,
+    "limit_seconds": 75,
+    "log": "extended-monotonicity-20260924-v2-case-0178.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "curve_region_boolean::certified_successor_tests::boundary_probe_reuses_endpoint_incidence_and_keeps_residual_contacts",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.016104227979667485,
+    "limit_seconds": 75,
+    "log": "extended-monotonicity-20260924-v2-case-0179.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "curve_region_boolean::certified_successor_tests::certified_branch_order_matches_exact_vector_order",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.004073232063092291,
+    "limit_seconds": 75,
+    "log": "extended-monotonicity-20260924-v2-case-0180.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "curve_region_boolean::certified_successor_tests::classified_crossing_side_recovers_oriented_tangent_cross",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.003929310943931341,
+    "limit_seconds": 75,
+    "log": "extended-monotonicity-20260924-v2-case-0181.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "curve_region_boolean::certified_successor_tests::contact_point_bounds_reject_disjoint_lazy_sources",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.004109609057195485,
+    "limit_seconds": 75,
+    "log": "extended-monotonicity-20260924-v2-case-0182.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "curve_region_boolean::certified_successor_tests::curve_trim_retains_selected_field_algebraic_chord_boundaries",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.032195696025155485,
+    "limit_seconds": 75,
+    "log": "extended-monotonicity-20260924-v2-case-0183.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "curve_region_boolean::certified_successor_tests::curve_trim_retains_selected_field_algebraic_chord_overlaps",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.06427062198054045,
+    "limit_seconds": 75,
+    "log": "extended-monotonicity-20260924-v2-case-0184.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "curve_region_boolean::certified_successor_tests::curved_face_windings_preserve_crossings_tangencies_overlaps_and_nested_holes",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.5150718339718878,
+    "limit_seconds": 75,
+    "log": "extended-monotonicity-20260924-v2-case-0185.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "curve_region_boolean::certified_successor_tests::cusp_chord_pair_retains_an_independent_field_oblique_contact",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.016204690909944475,
+    "limit_seconds": 75,
+    "log": "extended-monotonicity-20260924-v2-case-0186.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "curve_region_boolean::certified_successor_tests::cusp_chord_pair_retains_an_interior_axis_contact",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.004193353932350874,
+    "limit_seconds": 75,
+    "log": "extended-monotonicity-20260924-v2-case-0187.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "curve_region_boolean::certified_successor_tests::cusp_chord_pair_retains_an_interior_exact_oblique_contact",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.008307070937007666,
+    "limit_seconds": 75,
+    "log": "extended-monotonicity-20260924-v2-case-0188.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "curve_region_boolean::certified_successor_tests::cusp_overlap_clipping_maps_partial_carriers_in_both_orientations",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.00813808396924287,
+    "limit_seconds": 75,
+    "log": "extended-monotonicity-20260924-v2-case-0189.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "curve_region_boolean::certified_successor_tests::cusp_separated_parallel_contacts_are_not_declared_distinct",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.0040192450396716595,
+    "limit_seconds": 75,
+    "log": "extended-monotonicity-20260924-v2-case-0190.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "curve_region_boolean::certified_successor_tests::exact_retained_chord_uses_the_canonical_boolean_carrier",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.00403516402002424,
+    "limit_seconds": 75,
+    "log": "extended-monotonicity-20260924-v2-case-0191.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "curve_region_boolean::certified_successor_tests::exact_subfragment_of_algebraic_chord_retains_selected_field_witness",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.004087749985046685,
+    "limit_seconds": 75,
+    "log": "extended-monotonicity-20260924-v2-case-0192.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "curve_region_boolean::certified_successor_tests::exterior_circular_split_preserves_major_arc_and_algebraic_endpoints",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.0039408610900864005,
+    "limit_seconds": 75,
+    "log": "extended-monotonicity-20260924-v2-case-0193.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "curve_region_boolean::certified_successor_tests::finite_parallel_self_contacts_retain_active_domain",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.00798852404113859,
+    "limit_seconds": 75,
+    "log": "extended-monotonicity-20260924-v2-case-0194.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "curve_region_boolean::certified_successor_tests::finite_self_crossing_regions_retain_boundary_ownership_on_reentry",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.032264951965771616,
+    "limit_seconds": 75,
+    "log": "extended-monotonicity-20260924-v2-case-0195.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "curve_region_boolean::certified_successor_tests::identical_injective_source_parameters_compare_without_materialization",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.004322663997299969,
+    "limit_seconds": 75,
+    "log": "extended-monotonicity-20260924-v2-case-0196.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "curve_region_boolean::certified_successor_tests::independent_field_algebraic_chord_uses_general_boolean_pair_engine",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.03221632493659854,
+    "limit_seconds": 75,
+    "log": "extended-monotonicity-20260924-v2-case-0197.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "curve_region_boolean::certified_successor_tests::independent_field_collinear_chord_overlap_enters_all_boolean_topology",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.03233274701051414,
+    "limit_seconds": 75,
+    "log": "extended-monotonicity-20260924-v2-case-0198.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "curve_region_boolean::certified_successor_tests::injective_carrier_topology_vertex_canonicalizes_unorderable_parameter_aliases",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.008385776076465845,
+    "limit_seconds": 75,
+    "log": "extended-monotonicity-20260924-v2-case-0199.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "curve_region_boolean::certified_successor_tests::isolated_circle_endpoint_contacts_retain_transverse_signs",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.008212388027459383,
+    "limit_seconds": 75,
+    "log": "extended-monotonicity-20260924-v2-case-0200.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_region::tests::resource_blocked_selected_corner_chamfers_in_its_affine_fiber",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 32.7105959180044,
+    "limit_seconds": 75,
+    "log": "extended-monotonicity-20260924-v2-case-0155.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "curve_region_boolean::certified_successor_tests::native_region_fast_path_matches_forced_general_arrangement",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.008198248920962214,
+    "limit_seconds": 75,
+    "log": "extended-monotonicity-20260924-v2-case-0202.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "curve_region_boolean::certified_successor_tests::nonadjacent_source_chord_pair_replays_endpoint_and_residual_contacts",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.008036360028199852,
+    "limit_seconds": 75,
+    "log": "extended-monotonicity-20260924-v2-case-0203.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "curve_region_boolean::certified_successor_tests::noninjective_carrier_retains_distinct_branches_at_one_topology_vertex",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.003966629039496183,
+    "limit_seconds": 75,
+    "log": "extended-monotonicity-20260924-v2-case-0204.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "curve_region_boolean::certified_successor_tests::noninjective_collinear_chord_dispatch_retains_contacts_and_overlaps",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.008364308043383062,
+    "limit_seconds": 75,
+    "log": "extended-monotonicity-20260924-v2-case-0205.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "curve_region_boolean::certified_successor_tests::noninjective_preimages_survive_curve_queries_and_cancel_from_regions",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.06422504503279924,
+    "limit_seconds": 75,
+    "log": "extended-monotonicity-20260924-v2-case-0206.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "curve_region_boolean::certified_successor_tests::nontransverse_point_touch_certifies_authored_loop_successors",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.00399682589340955,
+    "limit_seconds": 75,
+    "log": "extended-monotonicity-20260924-v2-case-0207.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "curve_region_boolean::certified_successor_tests::operand_bounds_are_lazy_shared_and_policy_neutral",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.003979776985943317,
+    "limit_seconds": 75,
+    "log": "extended-monotonicity-20260924-v2-case-0208.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "curve_region_boolean::certified_successor_tests::parameter_order_uses_exact_translation_before_approximate_512_terminal",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.004194133915007114,
+    "limit_seconds": 75,
+    "log": "extended-monotonicity-20260924-v2-case-0209.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "curve_region_boolean::certified_successor_tests::polynomial_control_polygon_certifies_only_monotone_injective_axis",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.0039624780183658,
+    "limit_seconds": 75,
+    "log": "extended-monotonicity-20260924-v2-case-0210.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "curve_region_boolean::certified_successor_tests::regularization_removes_symmetric_polynomial_and_rational_retracing",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.004234420019201934,
+    "limit_seconds": 75,
+    "log": "extended-monotonicity-20260924-v2-case-0211.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "curve_region_boolean::certified_successor_tests::retained_aabb_candidates_match_cartesian_pairs_in_authored_order",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.06440813199151307,
+    "limit_seconds": 75,
+    "log": "extended-monotonicity-20260924-v2-case-0212.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "curve_region_boolean::certified_successor_tests::selected_general_overlap_clips_through_exact_projection",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.0041813639691099524,
+    "limit_seconds": 75,
+    "log": "extended-monotonicity-20260924-v2-case-0213.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "curve_region_boolean::certified_successor_tests::selected_parameter_component_overlap_clips_in_both_boolean_orders",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.008094806922599673,
+    "limit_seconds": 75,
+    "log": "extended-monotonicity-20260924-v2-case-0214.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "curve_region_boolean::certified_successor_tests::selected_projective_overlap_clips_without_global_parameter_projection",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.003994276048615575,
+    "limit_seconds": 75,
+    "log": "extended-monotonicity-20260924-v2-case-0215.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "curve_region_boolean::certified_successor_tests::shared_chord_splits_contacts_from_independent_selected_circles_in_order",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.003976818057708442,
+    "limit_seconds": 75,
+    "log": "extended-monotonicity-20260924-v2-case-0216.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "curve_region_boolean::certified_successor_tests::sibling_circle_tangency_preserves_half_chart_and_finite_range_ownership",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.003978737979196012,
+    "limit_seconds": 75,
+    "log": "extended-monotonicity-20260924-v2-case-0217.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "curve_region_boolean::certified_successor_tests::source_related_algebraic_chord_contact_enters_split_topology",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.01617407298181206,
+    "limit_seconds": 75,
+    "log": "extended-monotonicity-20260924-v2-case-0218.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "curve_region_boolean::certified_successor_tests::strict_interior_algebraic_chord_pair_contact_splits_both_carriers",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.7653497969731688,
+    "limit_seconds": 75,
+    "log": "extended-monotonicity-20260924-v2-case-0219.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "curve_region_boolean::certified_successor_tests::transitive_topology_merge_canonicalizes_deferred_injective_aliases",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.008348267991095781,
+    "limit_seconds": 75,
+    "log": "extended-monotonicity-20260924-v2-case-0220.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "curve_region_boolean::certified_successor_tests::transverse_contact_certificates_seed_both_operand_faces",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.003918281989172101,
+    "limit_seconds": 75,
+    "log": "extended-monotonicity-20260924-v2-case-0221.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "curve_region_boolean::certified_successor_tests::monotone_parallel_ranges_remove_only_proven_unary_pairs",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 1.5164402390364558,
+    "limit_seconds": 75,
+    "log": "extended-monotonicity-20260924-v2-case-0201.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "curve_region_boolean::certified_successor_tests::unsupported_parameter_order_obeys_strict_and_approximate_512_policies",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.016182882012799382,
+    "limit_seconds": 75,
+    "log": "extended-monotonicity-20260924-v2-case-0223.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "curve_region_boolean::certified_successor_tests::xor_composition_fallback_removes_coincident_seams",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.008150052977725863,
+    "limit_seconds": 75,
+    "log": "extended-monotonicity-20260924-v2-case-0224.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "curve_region_boolean::regularization_successor_tests::colliding_contact_claims_remain_unselected",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.004071771050803363,
+    "limit_seconds": 75,
+    "log": "extended-monotonicity-20260924-v2-case-0225.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "curve_region_boolean::regularization_successor_tests::face_sector_claim_forces_the_unmaterialized_complement",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.004019134910777211,
+    "limit_seconds": 75,
+    "log": "extended-monotonicity-20260924-v2-case-0226.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "curve_region_boolean::regularized_face_winding_tests::contradiction_preserves_independent_winding_components",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.00409509998280555,
+    "limit_seconds": 75,
+    "log": "extended-monotonicity-20260924-v2-case-0227.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "curve_region_boolean::regularized_face_winding_tests::contradictory_winding_accelerator_is_disabled",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.003975367988459766,
+    "limit_seconds": 75,
+    "log": "extended-monotonicity-20260924-v2-case-0228.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "curve_region_boolean::regularized_face_winding_tests::contradictory_winding_propagation_is_transactional",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.004268717020750046,
+    "limit_seconds": 75,
+    "log": "extended-monotonicity-20260924-v2-case-0229.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "curve_region_boolean::regularized_face_winding_tests::winding_propagation_publishes_only_a_consistent_component",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.003948000026866794,
+    "limit_seconds": 75,
+    "log": "extended-monotonicity-20260924-v2-case-0230.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "curve_support::tests::exterior_bounds_include_interior_extrema_and_parallel_displacement",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.003999675973318517,
+    "limit_seconds": 75,
+    "log": "extended-monotonicity-20260924-v2-case-0231.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "rational_bezier_general::tests::injectivity_scope_retains_the_policy_of_axis_monotonicity",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.004165995051153004,
+    "limit_seconds": 75,
+    "log": "extended-monotonicity-20260924-v2-case-0232.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "curve_region_boolean::certified_successor_tests::unary_cusp_regularization_samples_sides_in_the_selected_field",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.2646007729927078,
+    "limit_seconds": 75,
+    "log": "extended-monotonicity-20260924-v2-case-0222.log"
+  }
+]

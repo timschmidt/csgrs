@@ -1,0 +1,15 @@
+Replace fillet family selectors with exact constraint requests
+
+Accept a radius with optional exact center and incident contact constraints,
+and return the finite corner result shared with chamfer. Require another
+constraint for unresolved continuous families. Migrate callers directly and
+remove public family wrappers and owned reconstruction context.
+
+Preserve authored parameter charts and exact selected-root evidence. Point
+constraints retain distinct visits; parameter constraints distinguish them,
+including repeated circular NURBS spans. Borrow sources while resolving
+private component groups.
+
+Validation: 119 selected release tests; both all-target Clippy feature
+configurations; formatting, fuzz, documentation and Hyperbrep checks. The two
+previous extended-fillet re-offset performance failures remain open.

@@ -1,0 +1,29 @@
+[
+  {
+    "label": "focused",
+    "name": "bezier_parameter::conversion_tests::composed_projective_charts_share_one_root_without_growing_history_or_scale",
+    "returncode": 0,
+    "elapsed_seconds": 0.003625481971539557,
+    "passed": true,
+    "ignored": false,
+    "log": "root-charts-20260923-final1-focused-case-0000.log"
+  },
+  {
+    "label": "focused",
+    "name": "bezier_offset::conversion_tests::selected_fiber_comparison_reuses_high_degree_affine_root_identity",
+    "returncode": 0,
+    "elapsed_seconds": 0.003555835923179984,
+    "passed": true,
+    "ignored": false,
+    "log": "root-charts-20260923-final1-focused-case-0001.log"
+  },
+  {
+    "label": "focused",
+    "name": "bezier_offset::conversion_tests::selected_fiber_comparison_replays_composed_projective_charts_with_signed_denominators",
+    "returncode": 0,
+    "elapsed_seconds": 0.003580194083042443,
+    "passed": true,
+    "ignored": false,
+    "log": "root-charts-20260923-final1-focused-case-0002.log"
+  }
+]

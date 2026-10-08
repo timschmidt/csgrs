@@ -1,0 +1,127 @@
+{
+  "parents": {
+    "hypercurve": "6fc6ed8e7e1eefc5cbc6a064dc4ec87342a5b656",
+    "hypersolve": "41855c3604cbd18605a020d60758c8e5c489b629",
+    "hyperreal": "0cb5f29aee065c73e234e0ebb0a9e106398515bb"
+  },
+  "source_manifest": "selected-cusp-arrangement-20260926-v161-sources.json",
+  "source_directory": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/source-archives/selected-cusp-arrangement-20260926-v161",
+  "build_source_directory": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/build-workspace-20260925",
+  "workspace_guard": "local-chord-complete-replay-20260924-v161-sources.json",
+  "checks": [],
+  "cases": [
+    {
+      "repo": "hypercurve",
+      "label": "case-00",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/selected-cusp-arrangement-20260926-v161-hypercurve",
+        "--exact",
+        "curve_region_boolean::certified_successor_tests::parallel_arc_contacts_use_the_requested_exterior_range",
+        "--test-threads=1",
+        "--nocapture",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.003545486950315535,
+      "log": "selected-cusp-arrangement-20260926-v161-case-00.log",
+      "name": "curve_region_boolean::certified_successor_tests::parallel_arc_contacts_use_the_requested_exterior_range"
+    },
+    {
+      "repo": "hypercurve",
+      "label": "case-01",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/selected-cusp-arrangement-20260926-v161-hypercurve",
+        "--exact",
+        "bezier_offset::conversion_tests::analytic_tangent_unit_direction_cancels_shared_point_fields",
+        "--test-threads=1",
+        "--nocapture",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.007607938023284078,
+      "log": "selected-cusp-arrangement-20260926-v161-case-01.log",
+      "name": "bezier_offset::conversion_tests::analytic_tangent_unit_direction_cancels_shared_point_fields"
+    },
+    {
+      "repo": "hypercurve",
+      "label": "case-02",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/selected-cusp-arrangement-20260926-v161-hypercurve",
+        "--exact",
+        "curve_region_boolean::certified_successor_tests::selected_parallel_arrangement_splits_interior_cusps",
+        "--test-threads=1",
+        "--nocapture",
+        "--color",
+        "never"
+      ],
+      "returncode": 101,
+      "elapsed_seconds": 43.27680941601284,
+      "log": "selected-cusp-arrangement-20260926-v161-case-02.log",
+      "name": "curve_region_boolean::certified_successor_tests::selected_parallel_arrangement_splits_interior_cusps"
+    },
+    {
+      "repo": "hypercurve",
+      "label": "case-03",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/selected-cusp-arrangement-20260926-v161-hypercurve",
+        "--exact",
+        "bezier_region::tests::one_fragment_materialized_loop_extends_algebraic_chamfer_cuts_once",
+        "--test-threads=1",
+        "--nocapture",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 2.567451632930897,
+      "log": "selected-cusp-arrangement-20260926-v161-case-03.log",
+      "name": "bezier_region::tests::one_fragment_materialized_loop_extends_algebraic_chamfer_cuts_once"
+    },
+    {
+      "repo": "hypercurve",
+      "label": "case-04",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/selected-cusp-arrangement-20260926-v161-hypercurve",
+        "--exact",
+        "bezier_region::tests::one_fragment_selected_loop_extends_chamfer_cuts_on_its_analytic_carrier",
+        "--test-threads=1",
+        "--nocapture",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 5.121541020926088,
+      "log": "selected-cusp-arrangement-20260926-v161-case-04.log",
+      "name": "bezier_region::tests::one_fragment_selected_loop_extends_chamfer_cuts_on_its_analytic_carrier"
+    },
+    {
+      "repo": "hypercurve",
+      "label": "case-05",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/selected-cusp-arrangement-20260926-v161-hypercurve",
+        "--exact",
+        "curve_support::tests::parallel_injectivity_requires_regularity_on_the_requested_range",
+        "--test-threads=1",
+        "--nocapture",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.007647025980986655,
+      "log": "selected-cusp-arrangement-20260926-v161-case-05.log",
+      "name": "curve_support::tests::parallel_injectivity_requires_regularity_on_the_requested_range"
+    }
+  ],
+  "binaries": {
+    "hypercurve": {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/selected-cusp-arrangement-20260926-v161-hypercurve",
+      "sha256": "cba0352c14ef7c5b602f951423964a71a8db204b5a3736e48365a7f842034b7a"
+    }
+  },
+  "all_processes_reaped": true,
+  "diagnostic_only": false,
+  "hypercurve_build_returncode": 0,
+  "all_sources_unchanged": true,
+  "qualification_complete": false
+}

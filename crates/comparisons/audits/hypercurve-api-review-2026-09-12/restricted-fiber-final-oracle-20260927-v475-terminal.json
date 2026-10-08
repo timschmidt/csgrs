@@ -1,0 +1,48 @@
+{
+  "source_manifest": "restricted-fiber-final-oracle-20260927-v475-sources.json",
+  "source_directory": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/source-archives/restricted-fiber-final-oracle-20260927-v475",
+  "cases": [
+    {
+      "binary": "restricted-fiber-final-oracle-20260927-v475-hypercurve",
+      "name": "bezier_offset::captured_fiber_interval_query::exact_restricted_fiber_box_excludes_captured_common_root",
+      "returncode": 0,
+      "log": "restricted-fiber-final-oracle-20260927-v475-case-000.log",
+      "elapsed_seconds": 0.03176553989760578
+    }
+  ],
+  "builds": [
+    {
+      "crate": "hypercurve",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "test",
+        "--lib",
+        "--release",
+        "--all-features",
+        "--no-run",
+        "--message-format=json",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "log": "restricted-fiber-final-oracle-20260927-v475-hypercurve-build.log",
+      "elapsed_seconds": 130.9455294921063,
+      "binary": {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/restricted-fiber-final-oracle-20260927-v475-hypercurve",
+        "sha256": "062b77ab6821054a85cafb4d906beec8d708dafc7f4a5d64318e5364b4140d59"
+      }
+    }
+  ],
+  "trial": {
+    "hypercurve/src/bezier_offset.rs": "960b07f0be7ce73b11f53110486412f842ba2a991fadef1db9dc83583a7dc353"
+  },
+  "all_processes_reaped": true,
+  "checks": [],
+  "qualification_scope": "Independent captured fiber-box sign appended to the final qualified production source; production implementation unchanged",
+  "expected_cases": {
+    "hypercurve": [
+      "bezier_offset::captured_fiber_interval_query::exact_restricted_fiber_box_excludes_captured_common_root"
+    ]
+  },
+  "qualification_complete": true
+}

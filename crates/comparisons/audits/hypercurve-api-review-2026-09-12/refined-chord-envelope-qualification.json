@@ -1,0 +1,119 @@
+{
+  "status": "implemented, qualified, committed; original goal active",
+  "commits": {
+    "hypercurve": "025dcd123335ace6426c2ed4903607d2cc33a6ea",
+    "hypersolve": "3ac2e7510936a11c7bf2eac5dfbe3f9f851afe55",
+    "hyperreal": "a2da8e2b5de9a1a4653d3662f2f05cb6533fd7ef",
+    "hyperbrep": "8a84ee7db02fd2720ac89a1a6a227ee4ec2a8171"
+  },
+  "implementation": [
+    "The existing certified rational envelope now accepts requested refinement, retaining the initial 32-bit computable precision and increasing it as required. Unrepresentable precision requests decline the optional conversion.",
+    "All live callers migrate directly, including Boolean carrier ordering, outer-bound aggregation and strict interior-coordinate construction. No fixed-precision compatibility entry remains.",
+    "Local and nonlocal chord bounds share one enclosure-before-union path. This avoids requiring tight scalar order between unrelated endpoint expressions when only conservative geometry is needed.",
+    "Exact rational coordinates remain unchanged. Optional unavailable enclosures retain the existing exact union fallback. Public Aabb2::union still promises the smallest box; no curve, point or selected-root representation changes."
+  ],
+  "regression": {
+    "test": "bezier_offset::conversion_tests::conservative_chord_envelopes_preserve_requested_refinement",
+    "baseline": "refined-chord-envelope-baseline.log",
+    "baseline_exit_code": 101,
+    "finding": "The original local bound remains overlapping for two exact parallel chords separated by 2^-80 after 144 requested refinement steps, because its envelope stays at precision -32.",
+    "coverage": "Square-root and pi coordinates; 2^-80 and 2^-600 gaps; both axes, reversal, local/nonlocal queries and both contexts. Refined boxes separate, carry rational coordinates, stay inside coarser boxes and contain independently requested tighter scalar enclosures.",
+    "focused": "refined-chord-envelope-focused.log: 3 library tests and outward PH composition pass"
+  },
+  "tests": {
+    "hypercurve": {
+      "passed": 1460,
+      "ignored": 6,
+      "targets": 13,
+      "fresh": true,
+      "log": "refined-chord-envelope-hypercurve-tests.log",
+      "exit_code": 0
+    },
+    "hyperbrep": {
+      "passed": 232,
+      "ignored": 0,
+      "targets": 1,
+      "fresh": true,
+      "log": "refined-chord-envelope-hyperbrep-tests.log",
+      "exit_code": 0
+    },
+    "hypersolve": {
+      "passed": 492,
+      "fresh": false,
+      "qualification": "shared-integer-gcd-qualification.json",
+      "reason": "unchanged source and dependencies"
+    },
+    "hyperreal": {
+      "passed": 12,
+      "fresh": false,
+      "scope": "existing GCD tests",
+      "qualification": "shared-integer-gcd-qualification.json",
+      "reason": "unchanged source"
+    }
+  },
+  "freshly_run_total": 1692,
+  "qualified_total_including_unchanged_selected_dependencies": 2196,
+  "checks": {
+    "hypercurve": {
+      "command": "cargo check --all-features --all-targets",
+      "log": "refined-chord-envelope-hypercurve-check.log",
+      "exit_code": 0
+    },
+    "hyperbrep": {
+      "command": "cargo check --all-features --all-targets",
+      "log": "refined-chord-envelope-hyperbrep-check.log",
+      "exit_code": 0
+    }
+  },
+  "source_sha256": {
+    "hypercurve/src/bbox.rs": "6394164ad5bf8e4a342039a706a602052f5ad63d8f37349bac51db86e76224ef",
+    "hypercurve/src/bezier_offset.rs": "0d39b9eb20bcc45b7159573c8a3dfdc276d21cfbb924027bcf3de5a377fc04b9",
+    "hypercurve/src/curve_region_boolean.rs": "5b66f18b9a607c93b5166c323337bd2df4248117edcc9b02d4c67f031728ba08"
+  },
+  "source_checks": "Changed-file rustfmt --check, git diff --check, migrated-call scan and unchanged source hashes pass.",
+  "held_out_retries": [
+    {
+      "test": "selected_parallel_normal_circle_intersects_genuinely_analytic_parallel_in_one_fiber",
+      "log": "refined-chord-envelope-heldout-1.log",
+      "timeout_seconds": 60,
+      "exit_code": 124
+    },
+    {
+      "test": "independent_oblique_chord_pair_fillets_extend_on_infinite_supports",
+      "log": "refined-chord-envelope-heldout-2.log",
+      "timeout_seconds": 60,
+      "exit_code": 124
+    },
+    {
+      "test": "selected_circle_and_analytic_parallel_extend_on_full_supports",
+      "log": "refined-chord-envelope-heldout-3.log",
+      "timeout_seconds": 60,
+      "exit_code": 124
+    },
+    {
+      "test": "pair_native_boolean_algebraic_chord_corner_publishes_a_third_generation_fillet",
+      "log": "refined-chord-envelope-heldout-4.log",
+      "timeout_seconds": 60,
+      "exit_code": 124
+    }
+  ],
+  "held_out_scope": "All four retries remain unqualified. These timeout observations overlapped qualification and are not unloaded timing comparisons.",
+  "diagnostics": {
+    "binary": "stationary-ph-offset-refined-chord-envelope",
+    "binary_sha256": "90af7a6b840a771625ba7041e6200a62b3e085248b33be529c9a99a2f618e811",
+    "preliminary_log": "stationary-ph-offset-refined-chord-envelope-preliminary.log",
+    "preliminary_exit_code": 124,
+    "final_log": "stationary-ph-offset-refined-chord-envelope.log",
+    "timeout_seconds": 60,
+    "exit_code": 124,
+    "first_offset_seconds": 3.755811659,
+    "second_offset": "No result before the total timeout.",
+    "timing_scope": "Final unloaded probe began after all qualification, profiling and held-out processes ended. No application speedup is claimed.",
+    "stack": "stationary-ph-refined-chord-envelope-stack.log",
+    "finding": "The current sample reaches Bareiss/tensor resultants while standalone Cartesian coordinates are reconstructed for a single-axis chord comparison, through a chord-pair point and an analytic endpoint.",
+    "next": "mixed-point-axis-order-followup.json"
+  },
+  "clean_repository_count": 30,
+  "workspace_state": "refined-chord-envelope-workspace-after-commit.json",
+  "goal_status": "active"
+}

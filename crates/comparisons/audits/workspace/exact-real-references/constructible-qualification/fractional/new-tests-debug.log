@@ -1,0 +1,18 @@
+   Compiling hyperreal v0.13.1 (/home/tim/Documents/GitHub/workspace/.audit-fractional-separation.qYmpNk)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1.56s
+     Running unittests src/lib.rs (.audit-targets/ireal-derivative-18555/debug/deps/hyperreal-a346315a45113d5d)
+
+running 4 tests
+test computable::node::fractional_separation_tests::fractional_separation_rejects_zero_and_unproved_inverse_denominators ... ok
+test computable::node::fractional_separation_tests::fractional_separation_inverse_swaps_conjugate_bounds_without_norm_growth ... ok
+fractional separation depth=1 maximum_bound=13
+fractional separation depth=2 maximum_bound=28
+test computable::node::fractional_separation_tests::fractional_separation_roots_with_negative_integral_denominators_match_mpfr ... ok
+fractional separation depth=3 maximum_bound=56
+fractional separation depth=4 maximum_bound=112
+fractional separation depth=5 maximum_bound=224
+fractional separation depth=6 maximum_bound=448
+test computable::node::fractional_separation_tests::fractional_separation_deep_inverse_identities_and_perturbations ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 669 filtered out; finished in 0.19s
+

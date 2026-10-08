@@ -1,0 +1,21 @@
+{
+  "tag": "symbolic-power-0-32-v83",
+  "started": "2026-09-12T03:38:10.272Z",
+  "finished": "2026-09-12T03:38:10.285Z",
+  "elapsedSeconds": 0.011327694000000008,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "timeout",
+  "args": [
+    "60s",
+    "prlimit",
+    "--as=1073741824",
+    "--cpu=30",
+    "--",
+    "/tmp/calcium-symbolic-boundary-v83.JuGH8X/controls",
+    "powers",
+    "0",
+    "32"
+  ],
+  "code": 0,
+  "signal": null
+}

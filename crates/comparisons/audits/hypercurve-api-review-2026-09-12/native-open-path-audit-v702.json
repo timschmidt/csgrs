@@ -1,0 +1,166 @@
+{
+  "identifier": "CurveString2",
+  "uses": [
+    {
+      "path": "csgrs/adversarial.txt",
+      "count": 1
+    },
+    {
+      "path": "csgrs/examples/readme_renders.rs",
+      "count": 3
+    },
+    {
+      "path": "csgrs/readme.md",
+      "count": 6
+    },
+    {
+      "path": "csgrs/src/curve/native.rs",
+      "count": 6
+    },
+    {
+      "path": "csgrs/src/curve/truetype.rs",
+      "count": 1
+    },
+    {
+      "path": "csgrs/src/io/gerber.rs",
+      "count": 4
+    },
+    {
+      "path": "csgrs/src/io/svg.rs",
+      "count": 3
+    },
+    {
+      "path": "csgrs/src/lib.rs",
+      "count": 1
+    },
+    {
+      "path": "csgrs/src/solid.rs",
+      "count": 3
+    },
+    {
+      "path": "hyperbrep/src/boolean.rs",
+      "count": 2
+    },
+    {
+      "path": "hypercurve/PERFORMANCE.md",
+      "count": 1
+    },
+    {
+      "path": "hypercurve/README.md",
+      "count": 4
+    },
+    {
+      "path": "hypercurve/benches/editing.rs",
+      "count": 19
+    },
+    {
+      "path": "hypercurve/benches/intersection.rs",
+      "count": 4
+    },
+    {
+      "path": "hypercurve/benches/intersection_sweep.rs",
+      "count": 9
+    },
+    {
+      "path": "hypercurve/benches/reconstruction.rs",
+      "count": 3
+    },
+    {
+      "path": "hypercurve/benchmarks/checkpoints/2026-08-04-native-arc-chamfer-solver.json",
+      "count": 1
+    },
+    {
+      "path": "hypercurve/benchmarks/checkpoints/2026-08-04-native-arc-fillet-solver.json",
+      "count": 2
+    },
+    {
+      "path": "hypercurve/examples/hypercurve_ui/src/geometry.rs",
+      "count": 3
+    },
+    {
+      "path": "hypercurve/fuzz/fuzz_targets/curve_string_editing.rs",
+      "count": 6
+    },
+    {
+      "path": "hypercurve/fuzz/fuzz_targets/retained_import.rs",
+      "count": 2
+    },
+    {
+      "path": "hypercurve/plan.txt",
+      "count": 1
+    },
+    {
+      "path": "hypercurve/src/bbox.rs",
+      "count": 2
+    },
+    {
+      "path": "hypercurve/src/contour.rs",
+      "count": 10
+    },
+    {
+      "path": "hypercurve/src/curve_string.rs",
+      "count": 38
+    },
+    {
+      "path": "hypercurve/src/facts.rs",
+      "count": 2
+    },
+    {
+      "path": "hypercurve/src/finite_projection.rs",
+      "count": 3
+    },
+    {
+      "path": "hypercurve/src/hershey.rs",
+      "count": 6
+    },
+    {
+      "path": "hypercurve/src/lib.rs",
+      "count": 11
+    },
+    {
+      "path": "hypercurve/src/native_region_tests.rs",
+      "count": 4
+    },
+    {
+      "path": "hypercurve/src/prepared.rs",
+      "count": 2
+    },
+    {
+      "path": "hypercurve/src/reconstruct.rs",
+      "count": 8
+    },
+    {
+      "path": "hypercurve/src/self_intersect.rs",
+      "count": 2
+    },
+    {
+      "path": "hypercurve/src/svg.rs",
+      "count": 9
+    },
+    {
+      "path": "hypercurve/src/transform.rs",
+      "count": 3
+    },
+    {
+      "path": "hypercurve/tests/exact_structural_facts.rs",
+      "count": 3
+    },
+    {
+      "path": "hypercurve/tests/hypercurve_bbox.rs",
+      "count": 4
+    },
+    {
+      "path": "hypercurve/tests/hypercurve_curve_string.rs",
+      "count": 57
+    },
+    {
+      "path": "hypercurve/tests/hypercurve_reconstruct.rs",
+      "count": 6
+    },
+    {
+      "path": "hypercurve/tests/hypercurve_self_contacts.rs",
+      "count": 2
+    }
+  ],
+  "status": "read-only audit; no consolidation candidate"
+}

@@ -1,0 +1,15 @@
+{
+  "tag": "sign-filter-cpu",
+  "started": "2026-09-09T17:32:43.583Z",
+  "finished": "2026-09-09T17:33:05.010Z",
+  "elapsedSeconds": 21.425429892999997,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "node",
+  "args": [
+    "run-sign-filter-costs.mjs",
+    "cpu",
+    "/tmp/calcium-sign-filter.TCGoGs"
+  ],
+  "code": 0,
+  "signal": null
+}

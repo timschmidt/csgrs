@@ -1,0 +1,27 @@
+{
+  "returncode": 0,
+  "elapsed_seconds": 4.971147190022748,
+  "normal_library_sha256": "d680fbce859f7d1e7f470916621fb407de5f877a836cacaf4fe3a7fa514000c0",
+  "log": "finite-analytic-pair-domains-tangent-matrix.log",
+  "source": "selected-circle-tangent-identity-matrix.rs",
+  "command": [
+    "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustc",
+    "--edition=2024",
+    "-O",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/selected-circle-tangent-identity-matrix.rs",
+    "--extern",
+    "hypercurve=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypercurve-a7ee000b69ee5146.rlib",
+    "-L",
+    "dependency=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps",
+    "-o",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-analytic-pair-domains-tangent-matrix"
+  ],
+  "source_sha256": "005a451f7b9e9c4bd551360b7ab627d150c6ad4ed8e0794e17c059c751a6bef5",
+  "executable_sha256": "8d30eb1e07530fb6ce51ebd1a90077b2148e137bd9c9b08b7d42cfaa6eaaa56d",
+  "counts": {
+    "tangent_queries": 120,
+    "opposite_tangent_exclusions": 40,
+    "point_replays": 240,
+    "topologies": 120
+  }
+}

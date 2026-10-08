@@ -1,0 +1,11 @@
+{
+  "tag": "monic-full-power-native",
+  "started": "2026-09-09T01:14:52.928Z",
+  "finished": "2026-09-09T01:14:53.045Z",
+  "elapsedSeconds": 0.11499507899999999,
+  "cwd": "/home/tim/Documents/GitHub/workspace",
+  "command": "/tmp/calcium-monic-state.rk70Kr/flint-full-power",
+  "args": [],
+  "code": 0,
+  "signal": null
+}

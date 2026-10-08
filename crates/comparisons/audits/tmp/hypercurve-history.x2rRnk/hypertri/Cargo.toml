@@ -1,0 +1,86 @@
+[package]
+name = "hypertri"
+version = "0.4.1"
+edition = "2024"
+description = "Hyperreal-backed triangulation algorithms with exact geometric predicates"
+authors = ["Timothy Schmidt <timschmidt@gmail.com>"]
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/timschmidt/hypertri"
+readme = "README.md"
+keywords = ["triangulation", "geometry", "hyperreal", "predicates"]
+categories = ["mathematics", "graphics", "algorithms"]
+
+[features]
+default = []
+all-algorithms = ["earcut", "cdt", "nd"]
+earcut = []
+cdt = []
+nd = []
+runtime-select = []
+f64-interop = []
+serde = ["dep:serde", "hyperreal/serde", "hyperlimit/serde"]
+dispatch-trace = ["hyperreal/dispatch-trace", "hyperlimit/dispatch-trace"]
+
+[dependencies]
+# Cargo uses the path in this workspace and retains the version requirement in
+# the published manifest.
+hyperreal = { version = "0.13.1", path = "../hyperreal" }
+hyperlimit = { version = "0.4.1", path = "../hyperlimit", default-features = false, features = ["std"] }
+serde = { version = "1.0.228", features = ["derive"], optional = true }
+
+[dev-dependencies]
+criterion = { version = "0.5", features = ["html_reports"] }
+# Competitive floating-point Delaunay baseline. Production remains independent
+# of external triangulation engines.
+delaunator = "1.1.0"
+# Dev-only differential oracle for ordinary polygon cases. Production code owns
+# its exact ear-clipping port and must not build or link `earcutr`.
+earcutr = "0.5.0"
+proptest = "1.7.0"
+serde_json = "1.0.149"
+
+[[example]]
+name = "basic"
+required-features = ["earcut"]
+
+[[example]]
+name = "cdt"
+required-features = ["cdt"]
+
+[[example]]
+name = "nd"
+required-features = ["nd"]
+
+[[bench]]
+name = "earcut"
+harness = false
+required-features = ["earcut", "f64-interop"]
+
+[[bench]]
+name = "delaunay"
+harness = false
+required-features = ["cdt", "f64-interop"]
+
+[[bench]]
+name = "exact"
+harness = false
+required-features = ["earcut", "cdt", "nd", "runtime-select"]
+
+[[bench]]
+name = "dispatch_trace"
+harness = false
+required-features = ["all-algorithms", "runtime-select", "dispatch-trace"]
+
+[[bench]]
+name = "representations"
+harness = false
+required-features = ["all-algorithms", "runtime-select"]
+
+[[bench]]
+name = "competitive"
+harness = false
+required-features = ["all-algorithms", "f64-interop"]
+
+[[example]]
+name = "allocation_profile"
+required-features = ["all-algorithms", "runtime-select"]

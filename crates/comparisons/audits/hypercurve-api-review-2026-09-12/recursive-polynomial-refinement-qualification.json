@@ -1,0 +1,39 @@
+{
+  "status": "implemented, qualified, committed; original goal active",
+  "commit": "68e188a73eb442b2c4da60bba9990cd5b447ed87",
+  "preceding_commit": "1f49f12f401c37a7978635d942db5487cc202281",
+  "change": "Satisfied recursive polynomial root refinement requests reuse the certified interval and shared identity, without re-signing endpoints or allocating a replacement authority. Successive sign-query passes carry forward their latest refinement. Global projection replay keeps the original uniqueness isolator as its selection domain.",
+  "api_changes": false,
+  "new_cache_fields": false,
+  "tests": {
+    "hypercurve_library": 1026,
+    "hypercurve_integration": 413,
+    "hyperbrep_library": 232,
+    "unique_total": 1671,
+    "library_ignored": 6,
+    "established_expensive_library_exclusions": 4
+  },
+  "logs": [
+    "recursive-polynomial-refinement-final-release.log",
+    "recursive-polynomial-refinement-final-hyperbrep-release.log",
+    "recursive-polynomial-refinement-final-all-targets.log",
+    "recursive-polynomial-refinement-final-hyperbrep-all-targets.log"
+  ],
+  "regression": "A local ordered-field cubic root retains exact interval narrowing and shared identity under repeated refinement requests, then replays through its reciprocal chart in both contexts.",
+  "baseline": "recursive-polynomial-refinement-parent-test.log demonstrates the former replacement of shared identity on a satisfied request.",
+  "superseded_attempt": "Passing the final query-refined bracket to global promotion caused nonlinear_parameter_component_maps_recursive_projective_scalars_locally to return Uncertain(Boundary). The existing original uniqueness isolator avoids those unnecessary close comparisons. Both regressions pass in recursive-polynomial-refinement-replay-fix-test.log and the full final run.",
+  "formatting": "Changed Rust formatting and git diff --check passed.",
+  "source_sha256": {
+    "src/bezier_offset.rs": "d4720d120e805cc2cc48be5bca99b079a817d9a79f775ebb01f72b12470dee15"
+  },
+  "diagnostics": {
+    "final_stack": "stationary-ph-refinement-final-stack.log",
+    "final_binary": "stationary-ph-offset-inspect-refinement-final",
+    "final_binary_sha256": "528b8d50c1c7b1a7349b6437ddc091d7fe43962dd537c77d4129e202c638e006",
+    "finding": "The second inward offset is still in recursive polynomial refinement during a bounded finite-chord predicate. Dense tensor interval arithmetic reaches large integer GCD/division before the retained scalar-witness path. No second inward result or controlled speedup is claimed.",
+    "earlier_probe": "stationary-ph-offset-inspect-refinement-reuse.log timed out after 60 seconds, on the superseded tighter-global-selection candidate."
+  },
+  "workspace_status": "recursive-polynomial-refinement-workspace-after-commit.json",
+  "clean_repository_count": 30,
+  "goal_status": "active"
+}

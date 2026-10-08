@@ -1,0 +1,20 @@
+[
+  {
+    "package": "binary-search-0.0",
+    "files": 7,
+    "bytes": 13714,
+    "sourceBytesMatchArchive": true
+  },
+  {
+    "package": "complex-generic-0.1.1.1",
+    "files": 7,
+    "bytes": 22038,
+    "sourceBytesMatchArchive": true
+  },
+  {
+    "package": "integer-roots-1.0.4.0",
+    "files": 20,
+    "bytes": 174090,
+    "sourceBytesMatchArchive": true
+  }
+]

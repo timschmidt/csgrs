@@ -1,0 +1,11 @@
+{
+  "tag": "nfloat-complex-filter-probe-native",
+  "started": "2026-09-09T17:11:47.337Z",
+  "finished": "2026-09-09T17:11:47.352Z",
+  "elapsedSeconds": 0.013049936000000002,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison",
+  "command": "/tmp/calcium-complex-controls.8yAaAz/sign-filter-probe",
+  "args": [],
+  "code": 0,
+  "signal": null
+}

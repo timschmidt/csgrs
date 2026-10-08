@@ -1,0 +1,15 @@
+{
+  "commit": "34ae22f1ca9059356b2a6a1fcb3f9263b2c46577",
+  "qualification": "finite-fixed-distance-domains-qualification.json",
+  "qualified_source_hashes_unchanged": true,
+  "working_files_verified": 396,
+  "isolated_files_verified": 1005,
+  "repository_status": {
+    "hypercurve": "",
+    "hyperbrep": ""
+  },
+  "global_workspace_clean_claim": false,
+  "hyperreal_other_session_changes": "untouched; dependencies built from pinned snapshots",
+  "goal_status": "active",
+  "remaining_audit": "finite-selected-point-domains-next.md"
+}

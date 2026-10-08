@@ -1,0 +1,18 @@
+{
+  "tag": "reuse-thread-control-build",
+  "started": "2026-09-08T22:02:58.543Z",
+  "finished": "2026-09-08T22:02:58.745Z",
+  "elapsedSeconds": 0.19974276199999996,
+  "cwd": "/home/tim/Documents/GitHub/workspace",
+  "command": "rustc",
+  "args": [
+    "--edition",
+    "2024",
+    "-O",
+    "exactcore-hyper-comparison/audits/continuation/calcium/scoped-thread-control.rs",
+    "-o",
+    "/tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/release/calcium-scoped-thread-control"
+  ],
+  "code": 0,
+  "signal": null
+}

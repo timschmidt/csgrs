@@ -1,0 +1,40 @@
+{
+  "baseline": "equal-curvature-v871-sources.json",
+  "rlib": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypercurve-85a9105cd1c82df7.rlib",
+  "rlib_sha256": "27ef5f2ddef464a9b7c198beadb7f977eba2ef03263b88756dcd1b9db29a031a",
+  "source_sha256": "c3a18347828d7bd46e184e7853f54efb68bd5e73f26e19d5afbe46a72a5cfc95",
+  "processes": [
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustc",
+        "--edition=2024",
+        "--crate-name",
+        "equal_curvature_probe",
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/equal-curvature-probe-v870.rs",
+        "--extern",
+        "hypercurve=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypercurve-85a9105cd1c82df7.rlib",
+        "-L",
+        "dependency=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps",
+        "-C",
+        "opt-level=3",
+        "-o",
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/equal-curvature-replay-v872-binary"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.4644057140685618,
+      "log": "equal-curvature-replay-v872-compile.log"
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/equal-curvature-replay-v872-binary"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.01571327308192849,
+      "log": "equal-curvature-replay-v872-cases.log"
+    }
+  ],
+  "all_processes_reaped": true,
+  "binary_sha256": "87d2bc8d91644f2b99029cb50975ae192b43f0c6a42acc9ff10f2939f2351ee8",
+  "output": "policy=0 arrangement=native decided=true\npolicy=0 arrangement=retained decided=true\npolicy=0 boolean=Union certified=true\npolicy=0 boolean=Intersection certified=true\npolicy=0 boolean=Difference certified=true\npolicy=0 boolean=Xor certified=true\npolicy=1 arrangement=native decided=true\npolicy=1 arrangement=retained decided=true\npolicy=1 boolean=Union certified=true\npolicy=1 boolean=Intersection certified=true\npolicy=1 boolean=Difference certified=true\npolicy=1 boolean=Xor certified=true\ncomplete arrangement_requests=4 blocked=0 certified_booleans=8\n",
+  "probe_complete": true
+}

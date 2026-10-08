@@ -1,0 +1,195 @@
+diff --git a/src/bezier_offset.rs b/src/bezier_offset.rs
+index 5355408..5076013 100644
+--- a/src/bezier_offset.rs
++++ b/src/bezier_offset.rs
+@@ -166497,6 +166497,190 @@ mod conversion_tests {
+         }
+     }
+ 
++    #[test]
++    fn selected_scalar_promotion_uses_its_finite_isolator() {
++        let half = (Real::one() / Real::from(2_i8)).unwrap();
++        let BezierParameter2::Algebraic(retained) =
++            algebraic_parameter(vec![-half.clone(), Real::zero(), Real::one()])
++        else {
++            panic!("the retained root is irrational");
++        };
++        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
++            // These valid isolators cross a unit boundary. Their selected
++            // roots can lie on either side of the entire unit interval.
++            for (shift, lower, upper) in [(-2, -3, 1), (0, -1, 2), (2, 0, 4)] {
++                let incidence = BivariatePolynomial::new(vec![
++                    vec![Real::from(-shift), Real::one()],
++                    vec![Real::from(-1_i8)],
++                ]);
++                let selected = BezierAlgebraicSelectedFiberAuthority2::new(
++                    incidence,
++                    retained.clone(),
++                    &policy,
++                )
++                .parameter(IsolatedRootInterval {
++                    lower: Real::from(lower),
++                    upper: Real::from(upper),
++                    exact_root: None,
++                    distinct_root_count: 1,
++                });
++                let expected =
++                    BezierParameter2::Exact(half.clone().sqrt().unwrap() + Real::from(shift));
++                let outcome = crate::policy::resolve_certified_value(&policy, |attempt| {
++                    selected.promoted_bezier_parameter(attempt).unwrap()
++                });
++                assert_eq!(outcome.certainty, crate::CurveCertainty::Certified);
++                let Classification::Decided(promoted) = outcome.value else {
++                    panic!("the finite selected root must promote on the bounded schedule");
++                };
++                assert_eq!(
++                    promoted.cmp_by_refinement(&expected, &policy).unwrap(),
++                    Classification::Decided(std::cmp::Ordering::Equal),
++                );
++                assert_eq!(
++                    selected
++                        .promoted_bezier_parameter_complete(&policy)
++                        .unwrap(),
++                    Classification::Decided(promoted),
++                );
++            }
++        }
++    }
++
++    #[test]
++    fn selected_norm_isolation_preserves_exterior_exact_and_algebraic_roots() {
++        let half = (Real::one() / Real::from(2_i8)).unwrap();
++        let BezierParameter2::Algebraic(retained) =
++            algebraic_parameter(vec![-half.clone(), Real::zero(), Real::one()])
++        else {
++            panic!("the retained root is irrational");
++        };
++        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
++            for shift in [-3, 3] {
++                for rational in [true, false] {
++                    let mut rows = vec![vec![Real::from(-shift), Real::one()]];
++                    if !rational {
++                        rows.push(vec![Real::from(-1_i8)]);
++                    }
++                    let incidence = BivariatePolynomial::new(rows);
++                    let coefficients = if rational {
++                        vec![Real::from(-shift), Real::one()]
++                    } else {
++                        vec![
++                            Real::from(shift * shift) - &half,
++                            Real::from(-2 * shift),
++                            Real::one(),
++                        ]
++                    };
++                    let Classification::Decided(norm) =
++                        BezierParameterPolynomial::try_new_power_basis(coefficients, &policy)
++                            .unwrap()
++                    else {
++                        panic!("the norm has exact rational coefficients");
++                    };
++                    for reversed in [false, true] {
++                        let (start, end) = if reversed {
++                            (shift + 1, shift - 1)
++                        } else {
++                            (shift - 1, shift + 1)
++                        };
++                        let range = BezierParameterRange2::new_validated(
++                            BezierParameter2::Exact(Real::from(start)),
++                            BezierParameter2::Exact(Real::from(end)),
++                        );
++                        let outcome = crate::policy::resolve_certified_value(&policy, |attempt| {
++                            algebraic_selected_parameters_from_norm(
++                                &incidence,
++                                &parameter_representation(&retained, attempt),
++                                norm.clone(),
++                                Some(&range),
++                                attempt,
++                            )
++                            .unwrap()
++                        });
++                        assert_eq!(outcome.certainty, crate::CurveCertainty::Certified);
++                        let Classification::Decided(
++                            ResultantParameterProjection::SelectedParameters(parameters),
++                        ) = outcome.value
++                        else {
++                            panic!("one finite selected root must retain its norm");
++                        };
++                        let [parameter] = parameters.as_slice() else {
++                            panic!("foreign conjugates must be excluded");
++                        };
++                        let expected = Real::from(shift)
++                            + if rational {
++                                Real::zero()
++                            } else {
++                                half.clone().sqrt().unwrap()
++                            };
++                        assert_eq!(
++                            parameter
++                                .cmp_by_refinement(&BezierParameter2::Exact(expected), &policy)
++                                .unwrap(),
++                            Classification::Decided(std::cmp::Ordering::Equal),
++                        );
++                    }
++                }
++            }
++        }
++    }
++
++    #[test]
++    fn degenerate_fiber_projection_cannot_discard_an_exterior_selected_root() {
++        let half = (Real::one() / Real::from(2_i8)).unwrap();
++        let Classification::Decided(polynomial) = BezierParameterPolynomial::try_new_power_basis(
++            vec![Real::one(), -half, Real::from(-2_i8), Real::one()],
++            &CurveContext::STRICT,
++        )
++        .unwrap() else {
++            panic!("(s^2-1/2)(s-2) must construct");
++        };
++        let Classification::Decided(interval) =
++            BezierParameterInterval::try_new(Real::zero(), Real::one(), &CurveContext::STRICT)
++                .unwrap()
++        else {
++            panic!("the positive square root is isolated");
++        };
++        let retained = BezierAlgebraicParameter2::from_certified_singleton(polynomial, interval);
++        // The unrelated root s=2 makes the global resultant zero. The
++        // selected fiber is nonzero and contains exactly the target root u=3.
++        let incidence = BivariatePolynomial::new(vec![
++            vec![Real::from(6_i8), Real::from(-2_i8)],
++            vec![Real::from(-3_i8), Real::one()],
++        ]);
++        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
++            for (start, end, has_root) in [(2, 4, true), (4, 2, true), (4, 5, false)] {
++                let range = BezierParameterRange2::new_validated(
++                    BezierParameter2::Exact(Real::from(start)),
++                    BezierParameter2::Exact(Real::from(end)),
++                );
++                let projection = algebraic_selected_fiber_parameters_with_resultant_limit(
++                    &incidence,
++                    &retained,
++                    usize::MAX,
++                    MAX_SELECTED_FIBER_QUOTIENT_DEGREE,
++                    Some(&range),
++                    &policy,
++                )
++                .unwrap();
++                if has_root {
++                    assert!(matches!(
++                        projection,
++                        Classification::Decided(BezierAlgebraicFiberProjection2::Degenerate)
++                    ));
++                } else {
++                    let Classification::Decided(BezierAlgebraicFiberProjection2::Parameters(roots)) =
++                        projection
++                    else {
++                        panic!("the disjoint finite range must be certified empty");
++                    };
++                    assert!(roots.is_empty());
++                }
++            }
++        }
++    }
++
+     #[test]
+     fn bounded_general_resultant_isolates_only_the_requested_selected_fiber_range() {
+         let half = (Real::one() / Real::from(2_i8)).unwrap();

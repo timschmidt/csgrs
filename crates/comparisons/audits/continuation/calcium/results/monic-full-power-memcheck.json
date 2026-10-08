@@ -1,0 +1,19 @@
+{
+  "tag": "monic-full-power-memcheck",
+  "started": "2026-09-09T01:14:53.801Z",
+  "finished": "2026-09-09T01:15:01.471Z",
+  "elapsedSeconds": 7.667575102000001,
+  "cwd": "/home/tim/Documents/GitHub/workspace",
+  "command": "valgrind",
+  "args": [
+    "--vgdb=no",
+    "--tool=memcheck",
+    "--error-exitcode=97",
+    "--leak-check=full",
+    "--show-leak-kinds=all",
+    "--errors-for-leak-kinds=definite,indirect,possible",
+    "/tmp/calcium-monic-state.rk70Kr/flint-full-power"
+  ],
+  "code": 0,
+  "signal": null
+}

@@ -1,0 +1,25 @@
+{
+  "tag": "root-exp-sign-state-release",
+  "started": "2026-09-08T13:37:23.142Z",
+  "finished": "2026-09-08T13:37:28.990Z",
+  "elapsedSeconds": 5.845780942,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison",
+  "command": "env",
+  "args": [
+    "TMPDIR=/home/tim/Documents/GitHub/workspace/calcium-build-tmp.gVX5v4",
+    "CARGO_INCREMENTAL=0",
+    "CARGO_PROFILE_DEV_DEBUG=0",
+    "cargo",
+    "run",
+    "--release",
+    "--offline",
+    "--manifest-path",
+    "audits/continuation/calcium/root-exp-sign-qualification/Cargo.toml",
+    "--target-dir",
+    "/home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype",
+    "--",
+    "state"
+  ],
+  "code": 0,
+  "signal": null
+}

@@ -1,0 +1,376 @@
+{
+  "checks": [
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "clippy",
+        "--all-targets",
+        "--all-features",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "returncode": 0,
+      "log": "rational-polynomial-20260924-v8-dependents-hyperlattice-clippy-0.log"
+    },
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "clippy",
+        "--all-targets",
+        "--no-default-features",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "returncode": 0,
+      "log": "rational-polynomial-20260924-v8-dependents-hyperlattice-clippy-1.log"
+    },
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "clippy",
+        "--all-targets",
+        "--all-features",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "returncode": 0,
+      "log": "rational-polynomial-20260924-v8-dependents-hyperlimit-clippy-0.log"
+    },
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "clippy",
+        "--all-targets",
+        "--no-default-features",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "returncode": 0,
+      "log": "rational-polynomial-20260924-v8-dependents-hyperlimit-clippy-1.log"
+    },
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "clippy",
+        "--all-targets",
+        "--all-features",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "returncode": 0,
+      "log": "rational-polynomial-20260924-v8-dependents-hypersolve-clippy-0.log"
+    },
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "clippy",
+        "--all-targets",
+        "--no-default-features",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "returncode": 0,
+      "log": "rational-polynomial-20260924-v8-dependents-hypersolve-clippy-1.log"
+    },
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "clippy",
+        "--all-targets",
+        "--all-features",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "returncode": 0,
+      "log": "rational-polynomial-20260924-v8-dependents-hypercurve-clippy-0.log"
+    },
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "clippy",
+        "--all-targets",
+        "--no-default-features",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "returncode": 0,
+      "log": "rational-polynomial-20260924-v8-dependents-hypercurve-clippy-1.log"
+    }
+  ],
+  "command": [
+    "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+    "test",
+    "--release",
+    "--all-features",
+    "--no-run",
+    "--message-format=json",
+    "--locked",
+    "--offline",
+    "--test",
+    "hypercurve_path_closure",
+    "--test",
+    "hypercurve_curve_region_boolean",
+    "--test",
+    "hypercurve_bezier_arrangement",
+    "--test",
+    "hypercurve_curve_region_boolean_fuzz",
+    "--test",
+    "hypercurve_pcb_boolean_regressions"
+  ],
+  "binaries": {
+    "hypercurve": {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/rational-polynomial-20260924-v8-dependents-hypercurve-libtest",
+      "sha256": "256d429141a49465daf197d137c2480f847aea268a89efdd307396939ac609af"
+    },
+    "hypercurve_curve_region_boolean_fuzz": {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/rational-polynomial-20260924-v8-full-hypercurve_curve_region_boolean_fuzz",
+      "sha256": "9fbd6b588fa3b75d0da6c67d8b41081237669756c9a032a44b107f88f4e960ef"
+    },
+    "hypercurve_pcb_boolean_regressions": {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/rational-polynomial-20260924-v8-full-hypercurve_pcb_boolean_regressions",
+      "sha256": "a331471f60e8afc10af99f4e26de7a5fcad45afaf2aacf8d586746087008217f"
+    },
+    "hypercurve_path_closure": {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/rational-polynomial-20260924-v8-full-hypercurve_path_closure",
+      "sha256": "2e2718fc8d1cd9c135f13e2c4637ec3aaa425800933465f1d023660ccf774c17"
+    },
+    "hypercurve_curve_region_boolean": {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/rational-polynomial-20260924-v8-full-hypercurve_curve_region_boolean",
+      "sha256": "b3575d4c320a196168b74914349bc789e83a0d68e4b21720ab8f2a326e6b8360"
+    },
+    "hypercurve_bezier_arrangement": {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/rational-polynomial-20260924-v8-full-hypercurve_bezier_arrangement",
+      "sha256": "da1ece5a614ffbfb008e9f10aeb5bc8fff02b1f43a9088b12fa50c715d00c73e"
+    }
+  },
+  "reused_focused_cases": [
+    {
+      "target": "hypercurve",
+      "name": "bezier_offset::conversion_tests::recursive_bounds_refine_each_shared_source_once",
+      "returncode": 0,
+      "passed": true,
+      "ignored": false,
+      "elapsed_seconds": 0.28743360203225166,
+      "limit_seconds": 75,
+      "log": "rational-polynomial-20260924-v8-dependents-hypercurve-case-0.log",
+      "reused_from": "rational-polynomial-20260924-v8-dependents-terminal.json",
+      "scheduling": "isolated"
+    },
+    {
+      "target": "hypercurve",
+      "name": "bezier_region::tests::nonlinear_selected_corner_chamfers_through_retained_fixed_distance_image",
+      "returncode": 0,
+      "passed": true,
+      "ignored": false,
+      "elapsed_seconds": 5.2630961739923805,
+      "limit_seconds": 75,
+      "log": "rational-polynomial-20260924-v8-dependents-hypercurve-case-1.log",
+      "reused_from": "rational-polynomial-20260924-v8-dependents-terminal.json",
+      "scheduling": "isolated"
+    },
+    {
+      "target": "hypercurve",
+      "name": "bezier_region::tests::recursive_selected_radial_projective_chamfer_reenters_corner_kernel",
+      "returncode": 0,
+      "passed": true,
+      "ignored": false,
+      "elapsed_seconds": 61.55048904090654,
+      "limit_seconds": 75,
+      "log": "rational-polynomial-20260924-v8-dependents-hypercurve-case-2.log",
+      "reused_from": "rational-polynomial-20260924-v8-dependents-terminal.json",
+      "scheduling": "isolated"
+    },
+    {
+      "target": "hypercurve",
+      "name": "bezier_region::curve_corner_chain::tests::extended_fillet_region_classifies_both_sides_of_its_companion",
+      "returncode": 0,
+      "passed": true,
+      "ignored": false,
+      "elapsed_seconds": 38.40239606006071,
+      "limit_seconds": 75,
+      "log": "rational-polynomial-20260924-v8-dependents-hypercurve-case-3.log",
+      "reused_from": "rational-polynomial-20260924-v8-dependents-terminal.json",
+      "scheduling": "isolated"
+    },
+    {
+      "target": "hypercurve",
+      "name": "bezier_region::tests::nonrepresented_chord_and_selected_circle_complete_the_fillet_kernel",
+      "returncode": 0,
+      "passed": true,
+      "ignored": false,
+      "elapsed_seconds": 147.5284957480617,
+      "limit_seconds": 180,
+      "log": "rational-polynomial-20260924-v8-dependents-hypercurve-case-4.log",
+      "reused_from": "rational-polynomial-20260924-v8-dependents-terminal.json",
+      "scheduling": "isolated"
+    },
+    {
+      "target": "hypercurve",
+      "name": "bezier_region::tests::selected_parallel_companion_fillets_without_range_promotion",
+      "returncode": 0,
+      "passed": true,
+      "ignored": false,
+      "elapsed_seconds": 0.6355131439631805,
+      "limit_seconds": 75,
+      "log": "rational-polynomial-20260924-v8-dependents-hypercurve-case-5.log",
+      "reused_from": "rational-polynomial-20260924-v8-dependents-terminal.json",
+      "scheduling": "isolated"
+    },
+    {
+      "target": "hypercurve",
+      "name": "bezier_region::tests::pair_native_boolean_algebraic_chord_corner_publishes_a_third_generation_fillet",
+      "returncode": "timeout",
+      "passed": false,
+      "ignored": false,
+      "elapsed_seconds": 75.28579426708166,
+      "limit_seconds": 75,
+      "log": "rational-polynomial-20260924-v8-dependents-hypercurve-case-6.log",
+      "reused_from": "rational-polynomial-20260924-v8-dependents-terminal.json",
+      "scheduling": "isolated"
+    }
+  ],
+  "remaining_workers": 2,
+  "attempted": 1359,
+  "passed": 1342,
+  "ignored": 6,
+  "nonpasses": [
+    {
+      "target": "hypercurve",
+      "name": "bezier_region::tests::pair_native_boolean_algebraic_chord_corner_publishes_a_third_generation_fillet",
+      "returncode": "timeout",
+      "passed": false,
+      "ignored": false,
+      "elapsed_seconds": 75.28579426708166,
+      "limit_seconds": 75,
+      "log": "rational-polynomial-20260924-v8-dependents-hypercurve-case-6.log",
+      "reused_from": "rational-polynomial-20260924-v8-dependents-terminal.json",
+      "scheduling": "isolated"
+    },
+    {
+      "target": "hypercurve",
+      "name": "bezier_region::tests::algebraic_endpoint_images_reenter_shared_corner_carriers",
+      "returncode": 101,
+      "passed": false,
+      "ignored": false,
+      "elapsed_seconds": 0.06530423497315496,
+      "limit_seconds": 75,
+      "log": "rational-polynomial-20260924-v8-full-case-0640.log"
+    },
+    {
+      "target": "hypercurve",
+      "name": "bezier_offset::conversion_tests::selected_parallel_normal_circle_intersects_genuinely_analytic_parallel_in_one_fiber",
+      "returncode": "timeout",
+      "passed": false,
+      "ignored": false,
+      "elapsed_seconds": 75.05002358194906,
+      "limit_seconds": 75,
+      "log": "rational-polynomial-20260924-v8-full-case-0549.log"
+    },
+    {
+      "target": "hypercurve",
+      "name": "bezier_region::tests::nonlinear_algebraic_endpoint_fillet_uses_complete_incident_domain",
+      "returncode": "timeout",
+      "passed": false,
+      "ignored": false,
+      "elapsed_seconds": 75.00345475401264,
+      "limit_seconds": 75,
+      "log": "rational-polynomial-20260924-v8-full-case-0694.log"
+    },
+    {
+      "target": "hypercurve",
+      "name": "bezier_region::tests::one_fragment_materialized_loop_chamfers_to_one_middle_interval",
+      "returncode": "timeout",
+      "passed": false,
+      "ignored": false,
+      "elapsed_seconds": 75.03905584395397,
+      "limit_seconds": 75,
+      "log": "rational-polynomial-20260924-v8-full-case-0704.log"
+    },
+    {
+      "target": "hypercurve",
+      "name": "bezier_region::tests::one_fragment_materialized_loop_extends_algebraic_chamfer_cuts_once",
+      "returncode": "timeout",
+      "passed": false,
+      "ignored": false,
+      "elapsed_seconds": 75.03912294004112,
+      "limit_seconds": 75,
+      "log": "rational-polynomial-20260924-v8-full-case-0705.log"
+    },
+    {
+      "target": "hypercurve",
+      "name": "bezier_region::tests::one_fragment_ph_loop_projective_corners_retain_one_extended_interval",
+      "returncode": 101,
+      "passed": false,
+      "ignored": false,
+      "elapsed_seconds": 0.06545386498328298,
+      "limit_seconds": 75,
+      "log": "rational-polynomial-20260924-v8-full-case-0708.log"
+    },
+    {
+      "target": "hypercurve",
+      "name": "bezier_region::tests::one_fragment_nonzero_parallel_loop_extends_chamfer_cuts_on_one_finite_envelope",
+      "returncode": "timeout",
+      "passed": false,
+      "ignored": false,
+      "elapsed_seconds": 75.02247625996824,
+      "limit_seconds": 75,
+      "log": "rational-polynomial-20260924-v8-full-case-0706.log"
+    },
+    {
+      "target": "hypercurve",
+      "name": "bezier_region::tests::one_fragment_selected_loop_chamfers_from_one_interval",
+      "returncode": "timeout",
+      "passed": false,
+      "ignored": false,
+      "elapsed_seconds": 75.03555882396176,
+      "limit_seconds": 75,
+      "log": "rational-polynomial-20260924-v8-full-case-0710.log"
+    },
+    {
+      "target": "hypercurve",
+      "name": "bezier_region::tests::one_fragment_selected_loop_extends_chamfer_cuts_on_its_analytic_carrier",
+      "returncode": "timeout",
+      "passed": false,
+      "ignored": false,
+      "elapsed_seconds": 75.03483532508835,
+      "limit_seconds": 75,
+      "log": "rational-polynomial-20260924-v8-full-case-0711.log"
+    },
+    {
+      "target": "hypercurve",
+      "name": "bezier_region::tests::retained_analytic_multifragment_corner_extends_chamfer_and_fillet",
+      "returncode": 101,
+      "passed": false,
+      "ignored": false,
+      "elapsed_seconds": 0.009036720963194966,
+      "limit_seconds": 75,
+      "log": "rational-polynomial-20260924-v8-full-case-0741.log"
+    }
+  ],
+  "all_sources_unchanged": true,
+  "all_processes_reaped": true
+}

@@ -1,0 +1,2745 @@
+{
+  "normal_production_build": true,
+  "source_manifest": "affine-field-v903-sources.json",
+  "source_directory": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/source-archives/affine-field-v903",
+  "builds": [
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "test",
+        "--lib",
+        "--release",
+        "--all-features",
+        "--locked",
+        "--offline",
+        "--no-run",
+        "--message-format=json"
+      ],
+      "returncode": 0,
+      "log": "affine-field-v903-hypersolve-build.log",
+      "elapsed_seconds": 34.51006984617561,
+      "binaries": {
+        "hypersolve": {
+          "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/affine-field-v903-hypersolve-tests",
+          "sha256": "5ac8a7afe09733d48d23226808fc15d08d0ee2f33fbbb5598ec9823be0b750d2"
+        }
+      }
+    }
+  ],
+  "cases": [
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/affine-field-v903-hypersolve-tests",
+        "--exact",
+        "algebraic::tests::affine_exact_real_horner_matches_retained_power_sum",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "affine-field-v903-affine_exact_real_horner_matches_retained_power_sum-6a1bf71796.log",
+      "elapsed_seconds": 0.003487601177766919,
+      "target": "hypersolve",
+      "name": "algebraic::tests::affine_exact_real_horner_matches_retained_power_sum",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/affine-field-v903-hypersolve-tests",
+        "--exact",
+        "algebraic::tests::affine_homogeneous_horner_matches_retained_power_sum",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "affine-field-v903-affine_homogeneous_horner_matches_retained_power_sum-1fb905f2a7.log",
+      "elapsed_seconds": 0.00352862779982388,
+      "target": "hypersolve",
+      "name": "algebraic::tests::affine_homogeneous_horner_matches_retained_power_sum",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/affine-field-v903-hypersolve-tests",
+        "--exact",
+        "algebraic::tests::affine_inference_replays_selection_instead_of_only_matching_coefficients",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "affine-field-v903-affine_inference_replays_selection_instead_of_only_matching_coefficients-8ddbbbf598.log",
+      "elapsed_seconds": 0.0034897709265351295,
+      "target": "hypersolve",
+      "name": "algebraic::tests::affine_inference_replays_selection_instead_of_only_matching_coefficients",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/affine-field-v903-hypersolve-tests",
+        "--exact",
+        "algebraic::tests::affine_relations_preserve_exact_real_coefficients_and_selected_orientation",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "affine-field-v903-affine_relations_preserve_exact_real_coefficients_and_selected_orientation-c9eb5f4256.log",
+      "elapsed_seconds": 0.003538738004863262,
+      "target": "hypersolve",
+      "name": "algebraic::tests::affine_relations_preserve_exact_real_coefficients_and_selected_orientation",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/affine-field-v903-hypersolve-tests",
+        "--exact",
+        "algebraic::tests::algebraic_root_affine_relation_certifies_scale_and_offset_beyond_512_bits",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "affine-field-v903-algebraic_root_affine_relation_certifies_scale_and_offset_beyond_512_bits-21652baa7a.log",
+      "elapsed_seconds": 0.0035208279732614756,
+      "target": "hypersolve",
+      "name": "algebraic::tests::algebraic_root_affine_relation_certifies_scale_and_offset_beyond_512_bits",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/affine-field-v903-hypersolve-tests",
+        "--exact",
+        "algebraic::tests::algebraic_root_affine_transform_constructs_represented_values",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "affine-field-v903-algebraic_root_affine_transform_constructs_represented_values-dabfcf4077.log",
+      "elapsed_seconds": 0.0035419680643826723,
+      "target": "hypersolve",
+      "name": "algebraic::tests::algebraic_root_affine_transform_constructs_represented_values",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/affine-field-v903-hypersolve-tests",
+        "--exact",
+        "algebraic::tests::algebraic_root_affine_transform_handles_degree_128_without_machine_binomials",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "affine-field-v903-algebraic_root_affine_transform_handles_degree_128_without_machine_binomials-8737c17224.log",
+      "elapsed_seconds": 0.007556811906397343,
+      "target": "hypersolve",
+      "name": "algebraic::tests::algebraic_root_affine_transform_handles_degree_128_without_machine_binomials",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/affine-field-v903-hypersolve-tests",
+        "--exact",
+        "algebraic::tests::algebraic_root_affine_transform_preserves_exact_real_coefficients",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "affine-field-v903-algebraic_root_affine_transform_preserves_exact_real_coefficients-8122d3f400.log",
+      "elapsed_seconds": 0.0034864009357988834,
+      "target": "hypersolve",
+      "name": "algebraic::tests::algebraic_root_affine_transform_preserves_exact_real_coefficients",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/affine-field-v903-hypersolve-tests",
+        "--exact",
+        "algebraic::tests::algebraic_root_affine_transform_preserves_exact_real_scale_and_offset",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "affine-field-v903-algebraic_root_affine_transform_preserves_exact_real_scale_and_offset-2f2b56798c.log",
+      "elapsed_seconds": 0.0035564261488616467,
+      "target": "hypersolve",
+      "name": "algebraic::tests::algebraic_root_affine_transform_preserves_exact_real_scale_and_offset",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/affine-field-v903-hypersolve-tests",
+        "--exact",
+        "algebraic::tests::algebraic_root_affine_transform_replays_cached_source_validation_strictly",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "affine-field-v903-algebraic_root_affine_transform_replays_cached_source_validation_strictly-1d7e29fcf9.log",
+      "elapsed_seconds": 0.003509888891130686,
+      "target": "hypersolve",
+      "name": "algebraic::tests::algebraic_root_affine_transform_replays_cached_source_validation_strictly",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/affine-field-v903-hypersolve-tests",
+        "--exact",
+        "algebraic::tests::algebraic_root_affine_transform_retains_an_arbitrary_exact_point_witness",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "affine-field-v903-algebraic_root_affine_transform_retains_an_arbitrary_exact_point_witness-f427b84b6c.log",
+      "elapsed_seconds": 0.0035532070323824883,
+      "target": "hypersolve",
+      "name": "algebraic::tests::algebraic_root_affine_transform_retains_an_arbitrary_exact_point_witness",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/affine-field-v903-hypersolve-tests",
+        "--exact",
+        "algebraic::tests::algebraic_root_arithmetic_certifies_zero_dividend_and_touching_nonzero_divisor",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "affine-field-v903-algebraic_root_arithmetic_certifies_zero_dividend_and_touching_nonzero_divisor-47aabaea0b.log",
+      "elapsed_seconds": 0.003573874942958355,
+      "target": "hypersolve",
+      "name": "algebraic::tests::algebraic_root_arithmetic_certifies_zero_dividend_and_touching_nonzero_divisor",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/affine-field-v903-hypersolve-tests",
+        "--exact",
+        "algebraic::tests::algebraic_root_arithmetic_divides_by_policy_certified_exact_point",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "affine-field-v903-algebraic_root_arithmetic_divides_by_policy_certified_exact_point-b961c011c2.log",
+      "elapsed_seconds": 0.003498170990496874,
+      "target": "hypersolve",
+      "name": "algebraic::tests::algebraic_root_arithmetic_divides_by_policy_certified_exact_point",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/affine-field-v903-hypersolve-tests",
+        "--exact",
+        "algebraic::tests::algebraic_root_arithmetic_reduces_same_quadratic_square_to_affine_relation",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "affine-field-v903-algebraic_root_arithmetic_reduces_same_quadratic_square_to_affine_relation-670234f71e.log",
+      "elapsed_seconds": 0.0035164388827979565,
+      "target": "hypersolve",
+      "name": "algebraic::tests::algebraic_root_arithmetic_reduces_same_quadratic_square_to_affine_relation",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/affine-field-v903-hypersolve-tests",
+        "--exact",
+        "algebraic::tests::algebraic_root_arithmetic_rejects_interval_only_and_invalid_inputs",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "affine-field-v903-algebraic_root_arithmetic_rejects_interval_only_and_invalid_inputs-b870e94674.log",
+      "elapsed_seconds": 0.0035271779634058475,
+      "target": "hypersolve",
+      "name": "algebraic::tests::algebraic_root_arithmetic_rejects_interval_only_and_invalid_inputs",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/affine-field-v903-hypersolve-tests",
+        "--exact",
+        "algebraic::tests::algebraic_root_arithmetic_rejects_missing_binary_operand_before_routing",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "affine-field-v903-algebraic_root_arithmetic_rejects_missing_binary_operand_before_routing-7ee7463f7c.log",
+      "elapsed_seconds": 0.003512849099934101,
+      "target": "hypersolve",
+      "name": "algebraic::tests::algebraic_root_arithmetic_rejects_missing_binary_operand_before_routing",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/affine-field-v903-hypersolve-tests",
+        "--exact",
+        "algebraic::tests::algebraic_root_arithmetic_replays_cached_input_validation_strictly",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "affine-field-v903-algebraic_root_arithmetic_replays_cached_input_validation_strictly-b63ba6d2df.log",
+      "elapsed_seconds": 0.0035270280204713345,
+      "target": "hypersolve",
+      "name": "algebraic::tests::algebraic_root_arithmetic_replays_cached_input_validation_strictly",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/affine-field-v903-hypersolve-tests",
+        "--exact",
+        "algebraic::tests::algebraic_root_arithmetic_returns_exact_nonrational_real_witnesses",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "affine-field-v903-algebraic_root_arithmetic_returns_exact_nonrational_real_witnesses-0fe9e2fb61.log",
+      "elapsed_seconds": 0.003506070002913475,
+      "target": "hypersolve",
+      "name": "algebraic::tests::algebraic_root_arithmetic_returns_exact_nonrational_real_witnesses",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/affine-field-v903-hypersolve-tests",
+        "--exact",
+        "algebraic::tests::algebraic_root_arithmetic_supports_exact_real_scalars_and_reports_unsupported_fields",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "affine-field-v903-algebraic_root_arithmetic_supports_exact_real_scalars_and_reports_unsupported_fields-2224a3b170.log",
+      "elapsed_seconds": 0.0035320681054145098,
+      "target": "hypersolve",
+      "name": "algebraic::tests::algebraic_root_arithmetic_supports_exact_real_scalars_and_reports_unsupported_fields",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/affine-field-v903-hypersolve-tests",
+        "--exact",
+        "algebraic::tests::algebraic_root_arithmetic_transforms_interval_only_roots_by_rational_scalars",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "affine-field-v903-algebraic_root_arithmetic_transforms_interval_only_roots_by_rational_scalars-15c775c47b.log",
+      "elapsed_seconds": 0.0034964398946613073,
+      "target": "hypersolve",
+      "name": "algebraic::tests::algebraic_root_arithmetic_transforms_interval_only_roots_by_rational_scalars",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/affine-field-v903-hypersolve-tests",
+        "--exact",
+        "algebraic::tests::algebraic_root_arithmetic_uses_exact_rational_witnesses_only",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "affine-field-v903-algebraic_root_arithmetic_uses_exact_rational_witnesses_only-ab8e39815a.log",
+      "elapsed_seconds": 0.003520958125591278,
+      "target": "hypersolve",
+      "name": "algebraic::tests::algebraic_root_arithmetic_uses_exact_rational_witnesses_only",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/affine-field-v903-hypersolve-tests",
+        "--exact",
+        "algebraic::tests::algebraic_root_arithmetic_uses_the_explicit_policy",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "affine-field-v903-algebraic_root_arithmetic_uses_the_explicit_policy-552488ebaa.log",
+      "elapsed_seconds": 0.0035099999513477087,
+      "target": "hypersolve",
+      "name": "algebraic::tests::algebraic_root_arithmetic_uses_the_explicit_policy",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/affine-field-v903-hypersolve-tests",
+        "--exact",
+        "algebraic::tests::algebraic_root_comparison_and_sign_replay_cached_valid_payloads",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "affine-field-v903-algebraic_root_comparison_and_sign_replay_cached_valid_payloads-1eab84ba66.log",
+      "elapsed_seconds": 0.003542947815731168,
+      "target": "hypersolve",
+      "name": "algebraic::tests::algebraic_root_comparison_and_sign_replay_cached_valid_payloads",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/affine-field-v903-hypersolve-tests",
+        "--exact",
+        "algebraic::tests::algebraic_root_comparison_keeps_overlapping_conjugates_distinct",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "affine-field-v903-algebraic_root_comparison_keeps_overlapping_conjugates_distinct-9eae95d75c.log",
+      "elapsed_seconds": 0.0035025898832827806,
+      "target": "hypersolve",
+      "name": "algebraic::tests::algebraic_root_comparison_keeps_overlapping_conjugates_distinct",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/affine-field-v903-hypersolve-tests",
+        "--exact",
+        "algebraic::tests::algebraic_root_comparison_orders_disjoint_intervals_and_witnesses",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "affine-field-v903-algebraic_root_comparison_orders_disjoint_intervals_and_witnesses-ec32591feb.log",
+      "elapsed_seconds": 0.003485840978100896,
+      "target": "hypersolve",
+      "name": "algebraic::tests::algebraic_root_comparison_orders_disjoint_intervals_and_witnesses",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/affine-field-v903-hypersolve-tests",
+        "--exact",
+        "algebraic::tests::algebraic_root_comparison_recognizes_equal_irrational_singletons",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "affine-field-v903-algebraic_root_comparison_recognizes_equal_irrational_singletons-1d9c40f4c0.log",
+      "elapsed_seconds": 0.003501840168610215,
+      "target": "hypersolve",
+      "name": "algebraic::tests::algebraic_root_comparison_recognizes_equal_irrational_singletons",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/affine-field-v903-hypersolve-tests",
+        "--exact",
+        "algebraic::tests::algebraic_root_comparison_reports_overlap_and_invalid_evidence",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "affine-field-v903-algebraic_root_comparison_reports_overlap_and_invalid_evidence-39b5828a72.log",
+      "elapsed_seconds": 0.0034930899273604155,
+      "target": "hypersolve",
+      "name": "algebraic::tests::algebraic_root_comparison_reports_overlap_and_invalid_evidence",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/affine-field-v903-hypersolve-tests",
+        "--exact",
+        "algebraic::tests::algebraic_root_comparison_respects_owned_interval_endpoints",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "affine-field-v903-algebraic_root_comparison_respects_owned_interval_endpoints-11d459def0.log",
+      "elapsed_seconds": 0.003528547938913107,
+      "target": "hypersolve",
+      "name": "algebraic::tests::algebraic_root_comparison_respects_owned_interval_endpoints",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/affine-field-v903-hypersolve-tests",
+        "--exact",
+        "algebraic::tests::algebraic_root_comparison_reuses_nested_singleton_evidence",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "affine-field-v903-algebraic_root_comparison_reuses_nested_singleton_evidence-a1d15df939.log",
+      "elapsed_seconds": 0.0034779810812324286,
+      "target": "hypersolve",
+      "name": "algebraic::tests::algebraic_root_comparison_reuses_nested_singleton_evidence",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/affine-field-v903-hypersolve-tests",
+        "--exact",
+        "algebraic::tests::algebraic_root_comparison_uses_exact_witness_as_effective_interval",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "affine-field-v903-algebraic_root_comparison_uses_exact_witness_as_effective_interval-24eae07d6a.log",
+      "elapsed_seconds": 0.003469213144853711,
+      "target": "hypersolve",
+      "name": "algebraic::tests::algebraic_root_comparison_uses_exact_witness_as_effective_interval",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/affine-field-v903-hypersolve-tests",
+        "--exact",
+        "algebraic::tests::algebraic_root_difference_certifies_exact_translation_beyond_512_bits",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "affine-field-v903-algebraic_root_difference_certifies_exact_translation_beyond_512_bits-f240985375.log",
+      "elapsed_seconds": 0.003487110836431384,
+      "target": "hypersolve",
+      "name": "algebraic::tests::algebraic_root_difference_certifies_exact_translation_beyond_512_bits",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/affine-field-v903-hypersolve-tests",
+        "--exact",
+        "algebraic::tests::algebraic_root_difference_comparison_certifies_shared_polynomial_root",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "affine-field-v903-algebraic_root_difference_comparison_certifies_shared_polynomial_root-ee6fe439c9.log",
+      "elapsed_seconds": 0.0034804518800228834,
+      "target": "hypersolve",
+      "name": "algebraic::tests::algebraic_root_difference_comparison_certifies_shared_polynomial_root",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/affine-field-v903-hypersolve-tests",
+        "--exact",
+        "algebraic::tests::algebraic_root_difference_comparison_matches_exact_point_to_isolator",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "affine-field-v903-algebraic_root_difference_comparison_matches_exact_point_to_isolator-f05724ed43.log",
+      "elapsed_seconds": 0.0035029100254178047,
+      "target": "hypersolve",
+      "name": "algebraic::tests::algebraic_root_difference_comparison_matches_exact_point_to_isolator",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/affine-field-v903-hypersolve-tests",
+        "--exact",
+        "algebraic::tests::algebraic_root_difference_comparison_orders_constructed_overlap",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "affine-field-v903-algebraic_root_difference_comparison_orders_constructed_overlap-bc36ab1eef.log",
+      "elapsed_seconds": 0.003509088885039091,
+      "target": "hypersolve",
+      "name": "algebraic::tests::algebraic_root_difference_comparison_orders_constructed_overlap",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/affine-field-v903-hypersolve-tests",
+        "--exact",
+        "algebraic::tests::algebraic_root_difference_comparison_returns_direct_orders_without_construction",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "affine-field-v903-algebraic_root_difference_comparison_returns_direct_orders_without_construction-3bf6725d10.log",
+      "elapsed_seconds": 0.003545556915923953,
+      "target": "hypersolve",
+      "name": "algebraic::tests::algebraic_root_difference_comparison_returns_direct_orders_without_construction",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/affine-field-v903-hypersolve-tests",
+        "--exact",
+        "algebraic::tests::algebraic_root_evaluation_distinguishes_exact_real_values_and_replays_input",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "affine-field-v903-algebraic_root_evaluation_distinguishes_exact_real_values_and_replays_input-5844c62ffb.log",
+      "elapsed_seconds": 0.0034908910747617483,
+      "target": "hypersolve",
+      "name": "algebraic::tests::algebraic_root_evaluation_distinguishes_exact_real_values_and_replays_input",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/affine-field-v903-hypersolve-tests",
+        "--exact",
+        "algebraic::tests::algebraic_root_polynomial_evaluation_certifies_witnesses_and_intervals",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "affine-field-v903-algebraic_root_polynomial_evaluation_certifies_witnesses_and_intervals-5e2076b694.log",
+      "elapsed_seconds": 0.003511789022013545,
+      "target": "hypersolve",
+      "name": "algebraic::tests::algebraic_root_polynomial_evaluation_certifies_witnesses_and_intervals",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/affine-field-v903-hypersolve-tests",
+        "--exact",
+        "algebraic::tests::algebraic_root_rational_evaluation_checks_denominator_domain",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "affine-field-v903-algebraic_root_rational_evaluation_checks_denominator_domain-cf3758d8f1.log",
+      "elapsed_seconds": 0.0034696320071816444,
+      "target": "hypersolve",
+      "name": "algebraic::tests::algebraic_root_rational_evaluation_checks_denominator_domain",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/affine-field-v903-hypersolve-tests",
+        "--exact",
+        "algebraic::tests::algebraic_root_refinement_comparison_orders_overlapping_intervals",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "affine-field-v903-algebraic_root_refinement_comparison_orders_overlapping_intervals-153bdf265d.log",
+      "elapsed_seconds": 0.003510748967528343,
+      "target": "hypersolve",
+      "name": "algebraic::tests::algebraic_root_refinement_comparison_orders_overlapping_intervals",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/affine-field-v903-hypersolve-tests",
+        "--exact",
+        "algebraic::tests::algebraic_root_refinement_skips_exact_point_operand",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "affine-field-v903-algebraic_root_refinement_skips_exact_point_operand-545762d058.log",
+      "elapsed_seconds": 0.003517629113048315,
+      "target": "hypersolve",
+      "name": "algebraic::tests::algebraic_root_refinement_skips_exact_point_operand",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/affine-field-v903-hypersolve-tests",
+        "--exact",
+        "algebraic::tests::algebraic_root_refinement_supports_exact_real_coefficient_fields",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "affine-field-v903-algebraic_root_refinement_supports_exact_real_coefficient_fields-07d918713e.log",
+      "elapsed_seconds": 0.0035240380093455315,
+      "target": "hypersolve",
+      "name": "algebraic::tests::algebraic_root_refinement_supports_exact_real_coefficient_fields",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/affine-field-v903-hypersolve-tests",
+        "--exact",
+        "algebraic::tests::decreasing_affine_transform_excludes_a_foreign_source_endpoint_root",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "affine-field-v903-decreasing_affine_transform_excludes_a_foreign_source_endpoint_root-3e3dde0e95.log",
+      "elapsed_seconds": 0.0034585129469633102,
+      "target": "hypersolve",
+      "name": "algebraic::tests::decreasing_affine_transform_excludes_a_foreign_source_endpoint_root",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/affine-field-v903-hypersolve-tests",
+        "--exact",
+        "algebraic::tests::decreasing_affine_transform_retains_an_owned_upper_endpoint_root",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "affine-field-v903-decreasing_affine_transform_retains_an_owned_upper_endpoint_root-7a6ff89311.log",
+      "elapsed_seconds": 0.0034915609285235405,
+      "target": "hypersolve",
+      "name": "algebraic::tests::decreasing_affine_transform_retains_an_owned_upper_endpoint_root",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/affine-field-v903-hypersolve-tests",
+        "--exact",
+        "algebraic::tests::endpoint_root_detection_falls_back_after_inconclusive_modular_images",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "affine-field-v903-endpoint_root_detection_falls_back_after_inconclusive_modular_images-5bc9f9966e.log",
+      "elapsed_seconds": 0.0034855010453611612,
+      "target": "hypersolve",
+      "name": "algebraic::tests::endpoint_root_detection_falls_back_after_inconclusive_modular_images",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/affine-field-v903-hypersolve-tests",
+        "--exact",
+        "algebraic::tests::exact_rational_witnesses_replay_against_polynomial",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "affine-field-v903-exact_rational_witnesses_replay_against_polynomial-e092f21ba8.log",
+      "elapsed_seconds": 0.0034742020070552826,
+      "target": "hypersolve",
+      "name": "algebraic::tests::exact_rational_witnesses_replay_against_polynomial",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/affine-field-v903-hypersolve-tests",
+        "--exact",
+        "algebraic::tests::generated_affine_exact_real_horner_matches_retained_power_sum",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "affine-field-v903-generated_affine_exact_real_horner_matches_retained_power_sum-cd599eec36.log",
+      "elapsed_seconds": 0.007567571941763163,
+      "target": "hypersolve",
+      "name": "algebraic::tests::generated_affine_exact_real_horner_matches_retained_power_sum",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/affine-field-v903-hypersolve-tests",
+        "--exact",
+        "algebraic::tests::generated_endpoint_root_detection_matches_integer_horner",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "affine-field-v903-generated_endpoint_root_detection_matches_integer_horner-751dedd2cc.log",
+      "elapsed_seconds": 0.0035160291008651257,
+      "target": "hypersolve",
+      "name": "algebraic::tests::generated_endpoint_root_detection_matches_integer_horner",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/affine-field-v903-hypersolve-tests",
+        "--exact",
+        "algebraic::tests::generated_exact_real_point_arithmetic_never_claims_rational_witness",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "affine-field-v903-generated_exact_real_point_arithmetic_never_claims_rational_witness-299bcc363f.log",
+      "elapsed_seconds": 0.003485801164060831,
+      "target": "hypersolve",
+      "name": "algebraic::tests::generated_exact_real_point_arithmetic_never_claims_rational_witness",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/affine-field-v903-hypersolve-tests",
+        "--exact",
+        "algebraic::tests::generated_interval_only_addition_by_rational_scalar_matches_affine_transform",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "affine-field-v903-generated_interval_only_addition_by_rational_scalar_matches_affine_transform-d7555c770a.log",
+      "elapsed_seconds": 0.0034904000349342823,
+      "target": "hypersolve",
+      "name": "algebraic::tests::generated_interval_only_addition_by_rational_scalar_matches_affine_transform",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/affine-field-v903-hypersolve-tests",
+        "--exact",
+        "algebraic::tests::generated_interval_only_negation_reflects_polynomial_and_interval",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "affine-field-v903-generated_interval_only_negation_reflects_polynomial_and_interval-1c558f7f66.log",
+      "elapsed_seconds": 0.003472262993454933,
+      "target": "hypersolve",
+      "name": "algebraic::tests::generated_interval_only_negation_reflects_polynomial_and_interval",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/affine-field-v903-hypersolve-tests",
+        "--exact",
+        "algebraic::tests::generated_linear_roots_become_valid_represented_intervals",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "affine-field-v903-generated_linear_roots_become_valid_represented_intervals-9904ee5260.log",
+      "elapsed_seconds": 0.0076149581000208855,
+      "target": "hypersolve",
+      "name": "algebraic::tests::generated_linear_roots_become_valid_represented_intervals",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/affine-field-v903-hypersolve-tests",
+        "--exact",
+        "algebraic::tests::generated_rational_affine_horner_matches_retained_power_sum",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "affine-field-v903-generated_rational_affine_horner_matches_retained_power_sum-b938e44037.log",
+      "elapsed_seconds": 0.0034900009632110596,
+      "target": "hypersolve",
+      "name": "algebraic::tests::generated_rational_affine_horner_matches_retained_power_sum",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/affine-field-v903-hypersolve-tests",
+        "--exact",
+        "algebraic::tests::generated_rational_interval_product_matches_all_endpoint_products",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "affine-field-v903-generated_rational_interval_product_matches_all_endpoint_products-d69d479733.log",
+      "elapsed_seconds": 0.003492519957944751,
+      "target": "hypersolve",
+      "name": "algebraic::tests::generated_rational_interval_product_matches_all_endpoint_products",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/affine-field-v903-hypersolve-tests",
+        "--exact",
+        "algebraic::tests::generated_rational_witness_affine_transform_preserves_exact_root",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "affine-field-v903-generated_rational_witness_affine_transform_preserves_exact_root-f3d2cc0e33.log",
+      "elapsed_seconds": 0.0035541560500860214,
+      "target": "hypersolve",
+      "name": "algebraic::tests::generated_rational_witness_affine_transform_preserves_exact_root",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/affine-field-v903-hypersolve-tests",
+        "--exact",
+        "algebraic::tests::generated_rational_witness_arithmetic_matches_integer_arithmetic",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "affine-field-v903-generated_rational_witness_arithmetic_matches_integer_arithmetic-37a5e41f26.log",
+      "elapsed_seconds": 0.0034834821708500385,
+      "target": "hypersolve",
+      "name": "algebraic::tests::generated_rational_witness_arithmetic_matches_integer_arithmetic",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/affine-field-v903-hypersolve-tests",
+        "--exact",
+        "algebraic::tests::generated_rational_witness_comparisons_match_integer_order",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "affine-field-v903-generated_rational_witness_comparisons_match_integer_order-980082b7c2.log",
+      "elapsed_seconds": 0.0035119198728352785,
+      "target": "hypersolve",
+      "name": "algebraic::tests::generated_rational_witness_comparisons_match_integer_order",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/affine-field-v903-hypersolve-tests",
+        "--exact",
+        "algebraic::tests::generated_rational_witness_polynomial_evaluation_matches_integer_arithmetic",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "affine-field-v903-generated_rational_witness_polynomial_evaluation_matches_integer_arithmetic-eb9930e0b5.log",
+      "elapsed_seconds": 0.003490041010081768,
+      "target": "hypersolve",
+      "name": "algebraic::tests::generated_rational_witness_polynomial_evaluation_matches_integer_arithmetic",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/affine-field-v903-hypersolve-tests",
+        "--exact",
+        "algebraic::tests::generated_rational_witness_rational_evaluation_matches_integer_arithmetic",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "affine-field-v903-generated_rational_witness_rational_evaluation_matches_integer_arithmetic-0c891dd2ff.log",
+      "elapsed_seconds": 0.0035337081644684076,
+      "target": "hypersolve",
+      "name": "algebraic::tests::generated_rational_witness_rational_evaluation_matches_integer_arithmetic",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/affine-field-v903-hypersolve-tests",
+        "--exact",
+        "algebraic::tests::generated_refinement_comparison_preserves_rational_witness_order",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "affine-field-v903-generated_refinement_comparison_preserves_rational_witness_order-5e985a73ea.log",
+      "elapsed_seconds": 0.0035190791822969913,
+      "target": "hypersolve",
+      "name": "algebraic::tests::generated_refinement_comparison_preserves_rational_witness_order",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/affine-field-v903-hypersolve-tests",
+        "--exact",
+        "algebraic::tests::invalid_representations_are_rejected_antagonistically",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "affine-field-v903-invalid_representations_are_rejected_antagonistically-60e034ebfe.log",
+      "elapsed_seconds": 0.003469172166660428,
+      "target": "hypersolve",
+      "name": "algebraic::tests::invalid_representations_are_rejected_antagonistically",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/affine-field-v903-hypersolve-tests",
+        "--exact",
+        "algebraic::tests::represented_root_sign_respects_zero_endpoint_ownership",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "affine-field-v903-represented_root_sign_respects_zero_endpoint_ownership-aa611478c6.log",
+      "elapsed_seconds": 0.0034838910214602947,
+      "target": "hypersolve",
+      "name": "algebraic::tests::represented_root_sign_respects_zero_endpoint_ownership",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/affine-field-v903-hypersolve-tests",
+        "--exact",
+        "algebraic::tests::represented_root_sign_uses_exact_zero_endpoint_evidence",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "affine-field-v903-represented_root_sign_uses_exact_zero_endpoint_evidence-aafcc032b2.log",
+      "elapsed_seconds": 0.0035061989910900593,
+      "target": "hypersolve",
+      "name": "algebraic::tests::represented_root_sign_uses_exact_zero_endpoint_evidence",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/affine-field-v903-hypersolve-tests",
+        "--exact",
+        "algebraic::tests::represented_roots_accept_exact_real_coefficient_fields",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "affine-field-v903-represented_roots_accept_exact_real_coefficient_fields-d72b0c2159.log",
+      "elapsed_seconds": 0.0034870810341089964,
+      "target": "hypersolve",
+      "name": "algebraic::tests::represented_roots_accept_exact_real_coefficient_fields",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/affine-field-v903-hypersolve-tests",
+        "--exact",
+        "algebraic::tests::represented_roots_preserve_polynomial_and_interval_evidence",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "affine-field-v903-represented_roots_preserve_polynomial_and_interval_evidence-1dc2529952.log",
+      "elapsed_seconds": 0.003467522095888853,
+      "target": "hypersolve",
+      "name": "algebraic::tests::represented_roots_preserve_polynomial_and_interval_evidence",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/affine-field-v903-hypersolve-tests",
+        "--exact",
+        "algebraic_fiber::refinement::tests::refiner_replays_point_witnesses_and_rejects_stale_or_ambiguous_ownership",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "affine-field-v903-refiner_replays_point_witnesses_and_rejects_stale_or_ambiguous_ownership-22983014eb.log",
+      "elapsed_seconds": 0.003495490178465843,
+      "target": "hypersolve",
+      "name": "algebraic_fiber::refinement::tests::refiner_replays_point_witnesses_and_rejects_stale_or_ambiguous_ownership",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/affine-field-v903-hypersolve-tests",
+        "--exact",
+        "algebraic_fiber::refinement::tests::repeated_root_refinement_reuses_one_sequence_across_roots_and_requests",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "affine-field-v903-repeated_root_refinement_reuses_one_sequence_across_roots_and_requests-50fea10010.log",
+      "elapsed_seconds": 0.01562418881803751,
+      "target": "hypersolve",
+      "name": "algebraic_fiber::refinement::tests::repeated_root_refinement_reuses_one_sequence_across_roots_and_requests",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/affine-field-v903-hypersolve-tests",
+        "--exact",
+        "algebraic_fiber::refinement::tests::simple_refinement_preserves_exact_base_coefficients_without_sturm",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "affine-field-v903-simple_refinement_preserves_exact_base_coefficients_without_sturm-574e03b959.log",
+      "elapsed_seconds": 0.003456684062257409,
+      "target": "hypersolve",
+      "name": "algebraic_fiber::refinement::tests::simple_refinement_preserves_exact_base_coefficients_without_sturm",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/affine-field-v903-hypersolve-tests",
+        "--exact",
+        "algebraic_fiber::subresultant::tests::fiber_determinants_keep_zero_divisors_without_scalar_units",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "affine-field-v903-fiber_determinants_keep_zero_divisors_without_scalar_units-dd124baf5b.log",
+      "elapsed_seconds": 0.0034915299620479345,
+      "target": "hypersolve",
+      "name": "algebraic_fiber::subresultant::tests::fiber_determinants_keep_zero_divisors_without_scalar_units",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/affine-field-v903-hypersolve-tests",
+        "--exact",
+        "algebraic_fiber::subresultant::tests::fiber_determinants_preserve_all_row_and_column_permutation_signs",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "affine-field-v903-fiber_determinants_preserve_all_row_and_column_permutation_signs-6f735f824d.log",
+      "elapsed_seconds": 0.0034824619069695473,
+      "target": "hypersolve",
+      "name": "algebraic_fiber::subresultant::tests::fiber_determinants_preserve_all_row_and_column_permutation_signs",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/affine-field-v903-hypersolve-tests",
+        "--exact",
+        "algebraic_fiber::subresultant::tests::subresultants_preserve_one_scale_across_all_target_coefficients",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "affine-field-v903-subresultants_preserve_one_scale_across_all_target_coefficients-bad1ee48d8.log",
+      "elapsed_seconds": 0.003486521076411009,
+      "target": "hypersolve",
+      "name": "algebraic_fiber::subresultant::tests::subresultants_preserve_one_scale_across_all_target_coefficients",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/affine-field-v903-hypersolve-tests",
+        "--exact",
+        "algebraic_fiber::subresultant::tests::subresultants_reduce_source_conjugates_without_global_projection",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "affine-field-v903-subresultants_reduce_source_conjugates_without_global_projection-8ea7a3b7e0.log",
+      "elapsed_seconds": 0.003502690000459552,
+      "target": "hypersolve",
+      "name": "algebraic_fiber::subresultant::tests::subresultants_reduce_source_conjugates_without_global_projection",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/affine-field-v903-hypersolve-tests",
+        "--exact",
+        "algebraic_fiber::tests::certified_nonzero_signs_distinguish_small_values_from_selected_zeros",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "affine-field-v903-certified_nonzero_signs_distinguish_small_values_from_selected_zeros-dc61c67d3b.log",
+      "elapsed_seconds": 0.003508439054712653,
+      "target": "hypersolve",
+      "name": "algebraic_fiber::tests::certified_nonzero_signs_distinguish_small_values_from_selected_zeros",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/affine-field-v903-hypersolve-tests",
+        "--exact",
+        "algebraic_fiber::tests::certified_nonzero_signs_share_the_refined_degree_41_endpoint",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "affine-field-v903-certified_nonzero_signs_share_the_refined_degree_41_endpoint-15002e73f9.log",
+      "elapsed_seconds": 0.8646933510899544,
+      "target": "hypersolve",
+      "name": "algebraic_fiber::tests::certified_nonzero_signs_share_the_refined_degree_41_endpoint",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/affine-field-v903-hypersolve-tests",
+        "--exact",
+        "algebraic_fiber::tests::diagonal_fiber_deflation_removes_the_exact_local_multiplicity",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "affine-field-v903-diagonal_fiber_deflation_removes_the_exact_local_multiplicity-84d19a792c.log",
+      "elapsed_seconds": 0.003588804043829441,
+      "target": "hypersolve",
+      "name": "algebraic_fiber::tests::diagonal_fiber_deflation_removes_the_exact_local_multiplicity",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/affine-field-v903-hypersolve-tests",
+        "--exact",
+        "algebraic_fiber::tests::local_constant_signs_keep_the_unresolved_native_fact_fallback",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "affine-field-v903-local_constant_signs_keep_the_unresolved_native_fact_fallback-eff10a1478.log",
+      "elapsed_seconds": 0.0035159089602530003,
+      "target": "hypersolve",
+      "name": "algebraic_fiber::tests::local_constant_signs_keep_the_unresolved_native_fact_fallback",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/affine-field-v903-hypersolve-tests",
+        "--exact",
+        "algebraic_fiber::tests::local_constant_signs_reuse_native_proofs_without_field_cache_entries",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "affine-field-v903-local_constant_signs_reuse_native_proofs_without_field_cache_entries-4debe5c578.log",
+      "elapsed_seconds": 0.0034945111256092787,
+      "target": "hypersolve",
+      "name": "algebraic_fiber::tests::local_constant_signs_reuse_native_proofs_without_field_cache_entries",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/affine-field-v903-hypersolve-tests",
+        "--exact",
+        "algebraic_fiber::tests::local_division_preserves_arbitrary_exact_base_coefficients",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "affine-field-v903-local_division_preserves_arbitrary_exact_base_coefficients-2942ddfda0.log",
+      "elapsed_seconds": 0.0035186689347028732,
+      "target": "hypersolve",
+      "name": "algebraic_fiber::tests::local_division_preserves_arbitrary_exact_base_coefficients",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/affine-field-v903-hypersolve-tests",
+        "--exact",
+        "algebraic_fiber::tests::local_division_preserves_wide_exact_quotients_beyond_modular_reconstruction",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "affine-field-v903-local_division_preserves_wide_exact_quotients_beyond_modular_reconstruction-eec4844e54.log",
+      "elapsed_seconds": 0.16383589315228164,
+      "target": "hypersolve",
+      "name": "algebraic_fiber::tests::local_division_preserves_wide_exact_quotients_beyond_modular_reconstruction",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/affine-field-v903-hypersolve-tests",
+        "--exact",
+        "algebraic_fiber::tests::local_division_removes_only_foreign_factors_and_reuses_older_values",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "affine-field-v903-local_division_removes_only_foreign_factors_and_reuses_older_values-7fdc733d0c.log",
+      "elapsed_seconds": 0.0035950338933616877,
+      "target": "hypersolve",
+      "name": "algebraic_fiber::tests::local_division_removes_only_foreign_factors_and_reuses_older_values",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/affine-field-v903-hypersolve-tests",
+        "--exact",
+        "algebraic_fiber::tests::local_exact_division_preserves_skipped_degrees_and_reduced_coefficients",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "affine-field-v903-local_exact_division_preserves_skipped_degrees_and_reduced_coefficients-eec5aae6fb.log",
+      "elapsed_seconds": 0.0035051500890403986,
+      "target": "hypersolve",
+      "name": "algebraic_fiber::tests::local_exact_division_preserves_skipped_degrees_and_reduced_coefficients",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/affine-field-v903-hypersolve-tests",
+        "--exact",
+        "algebraic_fiber::tests::local_fiber_count_preserves_half_open_selected_root_ownership",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "affine-field-v903-local_fiber_count_preserves_half_open_selected_root_ownership-4f0e3c37d6.log",
+      "elapsed_seconds": 0.003599132876843214,
+      "target": "hypersolve",
+      "name": "algebraic_fiber::tests::local_fiber_count_preserves_half_open_selected_root_ownership",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/affine-field-v903-hypersolve-tests",
+        "--exact",
+        "algebraic_fiber::tests::local_fiber_count_preserves_uncached_singleton_identities",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "affine-field-v903-local_fiber_count_preserves_uncached_singleton_identities-5715ee1aac.log",
+      "elapsed_seconds": 0.0035375580191612244,
+      "target": "hypersolve",
+      "name": "algebraic_fiber::tests::local_fiber_count_preserves_uncached_singleton_identities",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/affine-field-v903-hypersolve-tests",
+        "--exact",
+        "algebraic_fiber::tests::local_fiber_export_moves_ragged_coefficients_in_both_orientations",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "affine-field-v903-local_fiber_export_moves_ragged_coefficients_in_both_orientations-50effa6d4f.log",
+      "elapsed_seconds": 0.00350425997748971,
+      "target": "hypersolve",
+      "name": "algebraic_fiber::tests::local_fiber_export_moves_ragged_coefficients_in_both_orientations",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/affine-field-v903-hypersolve-tests",
+        "--exact",
+        "algebraic_fiber::tests::local_field_gcd_handles_specialized_degree_drops_in_both_orientations",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "affine-field-v903-local_field_gcd_handles_specialized_degree_drops_in_both_orientations-b0a4645d43.log",
+      "elapsed_seconds": 0.0035067598801106215,
+      "target": "hypersolve",
+      "name": "algebraic_fiber::tests::local_field_gcd_handles_specialized_degree_drops_in_both_orientations",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/affine-field-v903-hypersolve-tests",
+        "--exact",
+        "algebraic_fiber::tests::local_field_replays_stale_root_payloads_before_constant_fiber_shortcuts",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "affine-field-v903-local_field_replays_stale_root_payloads_before_constant_fiber_shortcuts-5a6658828c.log",
+      "elapsed_seconds": 0.00352181913331151,
+      "target": "hypersolve",
+      "name": "algebraic_fiber::tests::local_field_replays_stale_root_payloads_before_constant_fiber_shortcuts",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/affine-field-v903-hypersolve-tests",
+        "--exact",
+        "algebraic_fiber::tests::local_field_sturm_batches_candidate_intervals_without_changing_reports",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "affine-field-v903-local_field_sturm_batches_candidate_intervals_without_changing_reports-d568dae3ad.log",
+      "elapsed_seconds": 0.0035549760796129704,
+      "target": "hypersolve",
+      "name": "algebraic_fiber::tests::local_field_sturm_batches_candidate_intervals_without_changing_reports",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/affine-field-v903-hypersolve-tests",
+        "--exact",
+        "algebraic_fiber::tests::local_field_sturm_batches_preserve_endpoint_reports_in_both_orientations",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "affine-field-v903-local_field_sturm_batches_preserve_endpoint_reports_in_both_orientations-add6133883.log",
+      "elapsed_seconds": 0.0034846218768507242,
+      "target": "hypersolve",
+      "name": "algebraic_fiber::tests::local_field_sturm_batches_preserve_endpoint_reports_in_both_orientations",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/affine-field-v903-hypersolve-tests",
+        "--exact",
+        "algebraic_fiber::tests::local_field_sturm_counts_even_multiplicity_in_both_orientations",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "affine-field-v903-local_field_sturm_counts_even_multiplicity_in_both_orientations-266a955fd9.log",
+      "elapsed_seconds": 0.0034575029276311398,
+      "target": "hypersolve",
+      "name": "algebraic_fiber::tests::local_field_sturm_counts_even_multiplicity_in_both_orientations",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/affine-field-v903-hypersolve-tests",
+        "--exact",
+        "algebraic_fiber::tests::local_field_sturm_handles_a_reducible_defining_polynomial",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "affine-field-v903-local_field_sturm_handles_a_reducible_defining_polynomial-fa424cfca1.log",
+      "elapsed_seconds": 0.0036283719819039106,
+      "target": "hypersolve",
+      "name": "algebraic_fiber::tests::local_field_sturm_handles_a_reducible_defining_polynomial",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/affine-field-v903-hypersolve-tests",
+        "--exact",
+        "algebraic_fiber::tests::local_field_sturm_reports_an_identically_zero_specialization",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "affine-field-v903-local_field_sturm_reports_an_identically_zero_specialization-6afdad4ac3.log",
+      "elapsed_seconds": 0.00350195006467402,
+      "target": "hypersolve",
+      "name": "algebraic_fiber::tests::local_field_sturm_reports_an_identically_zero_specialization",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/affine-field-v903-hypersolve-tests",
+        "--exact",
+        "algebraic_fiber::tests::local_field_sturm_reports_rational_endpoint_roots_and_input_boundaries",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "affine-field-v903-local_field_sturm_reports_rational_endpoint_roots_and_input_boundaries-dec6f357a5.log",
+      "elapsed_seconds": 0.003517159027978778,
+      "target": "hypersolve",
+      "name": "algebraic_fiber::tests::local_field_sturm_reports_rational_endpoint_roots_and_input_boundaries",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/affine-field-v903-hypersolve-tests",
+        "--exact",
+        "algebraic_fiber::tests::local_field_zero_test_recognizes_an_uncached_singleton",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "affine-field-v903-local_field_zero_test_recognizes_an_uncached_singleton-6914e516f3.log",
+      "elapsed_seconds": 0.003521048929542303,
+      "target": "hypersolve",
+      "name": "algebraic_fiber::tests::local_field_zero_test_recognizes_an_uncached_singleton",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/affine-field-v903-hypersolve-tests",
+        "--exact",
+        "algebraic_fiber::tests::local_image_convolution_preserves_sparse_zero_slots",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "affine-field-v903-local_image_convolution_preserves_sparse_zero_slots-6d989186da.log",
+      "elapsed_seconds": 0.0035051601007580757,
+      "target": "hypersolve",
+      "name": "algebraic_fiber::tests::local_image_convolution_preserves_sparse_zero_slots",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/affine-field-v903-hypersolve-tests",
+        "--exact",
+        "algebraic_fiber::tests::local_refinement_preserves_exact_point_payloads",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "affine-field-v903-local_refinement_preserves_exact_point_payloads-1344031fa9.log",
+      "elapsed_seconds": 0.0035111999604851007,
+      "target": "hypersolve",
+      "name": "algebraic_fiber::tests::local_refinement_preserves_exact_point_payloads",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/affine-field-v903-hypersolve-tests",
+        "--exact",
+        "algebraic_fiber::tests::local_refinement_preserves_half_open_selected_root_ownership",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "affine-field-v903-local_refinement_preserves_half_open_selected_root_ownership-604b63d559.log",
+      "elapsed_seconds": 0.0034930009860545397,
+      "target": "hypersolve",
+      "name": "algebraic_fiber::tests::local_refinement_preserves_half_open_selected_root_ownership",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/affine-field-v903-hypersolve-tests",
+        "--exact",
+        "algebraic_fiber::tests::local_sign_refinement_retains_nested_quadratic_root_certificates",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "affine-field-v903-local_sign_refinement_retains_nested_quadratic_root_certificates-6391a37418.log",
+      "elapsed_seconds": 0.0034806118346750736,
+      "target": "hypersolve",
+      "name": "algebraic_fiber::tests::local_sign_refinement_retains_nested_quadratic_root_certificates",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/affine-field-v903-hypersolve-tests",
+        "--exact",
+        "algebraic_fiber::tests::local_small_determinant_preserves_row_major_orientation",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "affine-field-v903-local_small_determinant_preserves_row_major_orientation-ff209dfd9f.log",
+      "elapsed_seconds": 0.0035088788717985153,
+      "target": "hypersolve",
+      "name": "algebraic_fiber::tests::local_small_determinant_preserves_row_major_orientation",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/affine-field-v903-hypersolve-tests",
+        "--exact",
+        "algebraic_fiber::tests::owned_field_admission_replays_stale_root_payloads",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "affine-field-v903-owned_field_admission_replays_stale_root_payloads-c47e5b0ece.log",
+      "elapsed_seconds": 0.0035126390866935253,
+      "target": "hypersolve",
+      "name": "algebraic_fiber::tests::owned_field_admission_replays_stale_root_payloads",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/affine-field-v903-hypersolve-tests",
+        "--exact",
+        "algebraic_fiber::tests::owned_field_does_not_invent_an_unproved_parameter_embedding",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "affine-field-v903-owned_field_does_not_invent_an_unproved_parameter_embedding-fe8d258402.log",
+      "elapsed_seconds": 0.0035190389025956392,
+      "target": "hypersolve",
+      "name": "algebraic_fiber::tests::owned_field_does_not_invent_an_unproved_parameter_embedding",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/affine-field-v903-hypersolve-tests",
+        "--exact",
+        "algebraic_fiber::tests::owned_field_finishing_reduces_older_values_after_factor_removal",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "affine-field-v903-owned_field_finishing_reduces_older_values_after_factor_removal-1b3d2c921a.log",
+      "elapsed_seconds": 0.0034965998493134975,
+      "target": "hypersolve",
+      "name": "algebraic_fiber::tests::owned_field_finishing_reduces_older_values_after_factor_removal",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/affine-field-v903-hypersolve-tests",
+        "--exact",
+        "algebraic_fiber::tests::owned_field_transport_accepts_exact_real_affine_coefficients",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "affine-field-v903-owned_field_transport_accepts_exact_real_affine_coefficients-15634d4c04.log",
+      "elapsed_seconds": 0.0035022299271076918,
+      "target": "hypersolve",
+      "name": "algebraic_fiber::tests::owned_field_transport_accepts_exact_real_affine_coefficients",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/affine-field-v903-hypersolve-tests",
+        "--exact",
+        "algebraic_fiber::tests::owned_field_transport_reuses_affine_evidence_and_preserves_poles",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "affine-field-v903-owned_field_transport_reuses_affine_evidence_and_preserves_poles-cc2a90b58e.log",
+      "elapsed_seconds": 0.003484321990981698,
+      "target": "hypersolve",
+      "name": "algebraic_fiber::tests::owned_field_transport_reuses_affine_evidence_and_preserves_poles",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/affine-field-v903-hypersolve-tests",
+        "--exact",
+        "algebraic_fiber::tests::owned_field_values_keep_exact_coefficients_reduced_across_batches",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "affine-field-v903-owned_field_values_keep_exact_coefficients_reduced_across_batches-45b9ea6de2.log",
+      "elapsed_seconds": 0.0035272780805826187,
+      "target": "hypersolve",
+      "name": "algebraic_fiber::tests::owned_field_values_keep_exact_coefficients_reduced_across_batches",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/affine-field-v903-hypersolve-tests",
+        "--exact",
+        "algebraic_fiber::tests::owned_field_values_preserve_identity_and_transport_distinct_conjugates",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "affine-field-v903-owned_field_values_preserve_identity_and_transport_distinct_conjugates-4a80dd7364.log",
+      "elapsed_seconds": 0.003495600074529648,
+      "target": "hypersolve",
+      "name": "algebraic_fiber::tests::owned_field_values_preserve_identity_and_transport_distinct_conjugates",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/affine-field-v903-hypersolve-tests",
+        "--exact",
+        "algebraic_fiber::tests::owned_field_values_reject_poles_and_preserve_local_denominator_domains",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "affine-field-v903-owned_field_values_reject_poles_and_preserve_local_denominator_domains-2483c44400.log",
+      "elapsed_seconds": 0.003508470021188259,
+      "target": "hypersolve",
+      "name": "algebraic_fiber::tests::owned_field_values_reject_poles_and_preserve_local_denominator_domains",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/affine-field-v903-hypersolve-tests",
+        "--exact",
+        "algebraic_fiber::tests::polynomial_fiber_image_preserves_a_degree_135_selected_tower",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "affine-field-v903-polynomial_fiber_image_preserves_a_degree_135_selected_tower-d96d38f6cb.log",
+      "elapsed_seconds": 0.0075862298253923655,
+      "target": "hypersolve",
+      "name": "algebraic_fiber::tests::polynomial_fiber_image_preserves_a_degree_135_selected_tower",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/affine-field-v903-hypersolve-tests",
+        "--exact",
+        "algebraic_fiber::tests::polynomial_fiber_image_projects_a_nonsquare_radical_relation_directly",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "affine-field-v903-polynomial_fiber_image_projects_a_nonsquare_radical_relation_directly-ba85430e7d.log",
+      "elapsed_seconds": 0.003491590963676572,
+      "target": "hypersolve",
+      "name": "algebraic_fiber::tests::polynomial_fiber_image_projects_a_nonsquare_radical_relation_directly",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/affine-field-v903-hypersolve-tests",
+        "--exact",
+        "algebraic_fiber::tests::polynomial_fiber_image_retains_base_parameter_axis",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "affine-field-v903-polynomial_fiber_image_retains_base_parameter_axis-8ae9b754b5.log",
+      "elapsed_seconds": 0.0034860919695347548,
+      "target": "hypersolve",
+      "name": "algebraic_fiber::tests::polynomial_fiber_image_retains_base_parameter_axis",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/affine-field-v903-hypersolve-tests",
+        "--exact",
+        "algebraic_fiber::tests::polynomial_fiber_image_saturates_a_fourfold_multicoefficient_component",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "affine-field-v903-polynomial_fiber_image_saturates_a_fourfold_multicoefficient_component-d777eff64a.log",
+      "elapsed_seconds": 0.031734955962747335,
+      "target": "hypersolve",
+      "name": "algebraic_fiber::tests::polynomial_fiber_image_saturates_a_fourfold_multicoefficient_component",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/affine-field-v903-hypersolve-tests",
+        "--exact",
+        "algebraic_fiber::tests::polynomial_fiber_image_saturates_an_identically_zero_source_conjugate",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "affine-field-v903-polynomial_fiber_image_saturates_an_identically_zero_source_conjugate-1266f345cb.log",
+      "elapsed_seconds": 0.0034823620226234198,
+      "target": "hypersolve",
+      "name": "algebraic_fiber::tests::polynomial_fiber_image_saturates_an_identically_zero_source_conjugate",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/affine-field-v903-hypersolve-tests",
+        "--exact",
+        "algebraic_fiber::tests::polynomial_fiber_image_trims_only_strictly_exact_zero_degree",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "affine-field-v903-polynomial_fiber_image_trims_only_strictly_exact_zero_degree-617c302f08.log",
+      "elapsed_seconds": 0.003456172998994589,
+      "target": "hypersolve",
+      "name": "algebraic_fiber::tests::polynomial_fiber_image_trims_only_strictly_exact_zero_degree",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/affine-field-v903-hypersolve-tests",
+        "--exact",
+        "algebraic_fiber::tests::primitive_local_image_content_accepts_policy_certified_zero_remainders",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "affine-field-v903-primitive_local_image_content_accepts_policy_certified_zero_remainders-ff48f2f4ee.log",
+      "elapsed_seconds": 0.0034884409978985786,
+      "target": "hypersolve",
+      "name": "algebraic_fiber::tests::primitive_local_image_content_accepts_policy_certified_zero_remainders",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/affine-field-v903-hypersolve-tests",
+        "--exact",
+        "algebraic_fiber::tests::primitive_local_image_content_rejects_unsupported_zero_remainders",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "affine-field-v903-primitive_local_image_content_rejects_unsupported_zero_remainders-e0403c8d32.log",
+      "elapsed_seconds": 0.003485791152343154,
+      "target": "hypersolve",
+      "name": "algebraic_fiber::tests::primitive_local_image_content_rejects_unsupported_zero_remainders",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/affine-field-v903-hypersolve-tests",
+        "--exact",
+        "algebraic_fiber::tests::quotient_ring_fiber_projection_obeys_an_explicit_degree_budget",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "affine-field-v903-quotient_ring_fiber_projection_obeys_an_explicit_degree_budget-710f12df2c.log",
+      "elapsed_seconds": 0.003487200941890478,
+      "target": "hypersolve",
+      "name": "algebraic_fiber::tests::quotient_ring_fiber_projection_obeys_an_explicit_degree_budget",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/affine-field-v903-hypersolve-tests",
+        "--exact",
+        "algebraic_fiber::tests::quotient_ring_fiber_projection_retains_the_complete_norm_roots",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "affine-field-v903-quotient_ring_fiber_projection_retains_the_complete_norm_roots-91b05cd031.log",
+      "elapsed_seconds": 0.003491220995783806,
+      "target": "hypersolve",
+      "name": "algebraic_fiber::tests::quotient_ring_fiber_projection_retains_the_complete_norm_roots",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/affine-field-v903-hypersolve-tests",
+        "--exact",
+        "algebraic_fiber::tests::quotient_ring_fiber_projection_shares_local_field_admission_in_both_orientations",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "affine-field-v903-quotient_ring_fiber_projection_shares_local_field_admission_in_both_orientations-06a97cd039.log",
+      "elapsed_seconds": 0.003476921934634447,
+      "target": "hypersolve",
+      "name": "algebraic_fiber::tests::quotient_ring_fiber_projection_shares_local_field_admission_in_both_orientations",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/affine-field-v903-hypersolve-tests",
+        "--exact",
+        "algebraic_fiber::tests::rational_fiber_reduction_preserves_degree_fifteen_correlation",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "affine-field-v903-rational_fiber_reduction_preserves_degree_fifteen_correlation-db43969adc.log",
+      "elapsed_seconds": 0.0034863511100411415,
+      "target": "hypersolve",
+      "name": "algebraic_fiber::tests::rational_fiber_reduction_preserves_degree_fifteen_correlation",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/affine-field-v903-hypersolve-tests",
+        "--exact",
+        "algebraic_fiber::tests::rational_fiber_reduction_preserves_ragged_zero_and_dependent_residuals",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "affine-field-v903-rational_fiber_reduction_preserves_ragged_zero_and_dependent_residuals-9b83369e7d.log",
+      "elapsed_seconds": 0.0034522039350122213,
+      "target": "hypersolve",
+      "name": "algebraic_fiber::tests::rational_fiber_reduction_preserves_ragged_zero_and_dependent_residuals",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/affine-field-v903-hypersolve-tests",
+        "--exact",
+        "algebraic_fiber::tests::rational_sturm_preserves_degree_changes_and_general_exact_coefficients",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "affine-field-v903-rational_sturm_preserves_degree_changes_and_general_exact_coefficients-de6c73957e.log",
+      "elapsed_seconds": 0.003468572162091732,
+      "target": "hypersolve",
+      "name": "algebraic_fiber::tests::rational_sturm_preserves_degree_changes_and_general_exact_coefficients",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/affine-field-v903-hypersolve-tests",
+        "--exact",
+        "algebraic_fiber::tests::rational_sturm_preserves_selected_multiplicity_and_negative_scales",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "affine-field-v903-rational_sturm_preserves_selected_multiplicity_and_negative_scales-07c9c2afb7.log",
+      "elapsed_seconds": 0.003464262932538986,
+      "target": "hypersolve",
+      "name": "algebraic_fiber::tests::rational_sturm_preserves_selected_multiplicity_and_negative_scales",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/affine-field-v903-hypersolve-tests",
+        "--exact",
+        "algebraic_fiber::tests::rational_subresultants_preserve_common_roots_across_degree_gaps",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "affine-field-v903-rational_subresultants_preserve_common_roots_across_degree_gaps-5d403c4e49.log",
+      "elapsed_seconds": 0.003463722998276353,
+      "target": "hypersolve",
+      "name": "algebraic_fiber::tests::rational_subresultants_preserve_common_roots_across_degree_gaps",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/affine-field-v903-hypersolve-tests",
+        "--exact",
+        "algebraic_fiber::tests::rational_subresultants_preserve_selected_degree_changes_and_exact_coefficients",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "affine-field-v903-rational_subresultants_preserve_selected_degree_changes_and_exact_coefficients-fe8b10e439.log",
+      "elapsed_seconds": 0.003531638067215681,
+      "target": "hypersolve",
+      "name": "algebraic_fiber::tests::rational_subresultants_preserve_selected_degree_changes_and_exact_coefficients",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/affine-field-v903-hypersolve-tests",
+        "--exact",
+        "algebraic_fiber::tests::rational_subresultants_replay_degree_41_fillet_contact_in_both_orientations",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "affine-field-v903-rational_subresultants_replay_degree_41_fillet_contact_in_both_orientations-871e25a129.log",
+      "elapsed_seconds": 2.116365544963628,
+      "target": "hypersolve",
+      "name": "algebraic_fiber::tests::rational_subresultants_replay_degree_41_fillet_contact_in_both_orientations",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/affine-field-v903-hypersolve-tests",
+        "--exact",
+        "algebraic_fiber::tests::selected_algebraic_fiber_isolation_falls_back_for_repeated_irrational_root",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "affine-field-v903-selected_algebraic_fiber_isolation_falls_back_for_repeated_irrational_root-58349b48d0.log",
+      "elapsed_seconds": 0.003579115029424429,
+      "target": "hypersolve",
+      "name": "algebraic_fiber::tests::selected_algebraic_fiber_isolation_falls_back_for_repeated_irrational_root",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/affine-field-v903-hypersolve-tests",
+        "--exact",
+        "algebraic_fiber::tests::selected_algebraic_fiber_isolation_uses_division_free_bernstein_path",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "affine-field-v903-selected_algebraic_fiber_isolation_uses_division_free_bernstein_path-c0f0b76d2b.log",
+      "elapsed_seconds": 0.0035002799704670906,
+      "target": "hypersolve",
+      "name": "algebraic_fiber::tests::selected_algebraic_fiber_isolation_uses_division_free_bernstein_path",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/affine-field-v903-hypersolve-tests",
+        "--exact",
+        "algebraic_fiber::tests::selected_fiber_accepts_exact_real_base_coefficients",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "affine-field-v903-selected_fiber_accepts_exact_real_base_coefficients-366f7042d5.log",
+      "elapsed_seconds": 0.003484221175312996,
+      "target": "hypersolve",
+      "name": "algebraic_fiber::tests::selected_fiber_accepts_exact_real_base_coefficients",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/affine-field-v903-hypersolve-tests",
+        "--exact",
+        "algebraic_fiber::tests::selected_fiber_fallback_partitions_at_a_deflated_rational_root",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "affine-field-v903-selected_fiber_fallback_partitions_at_a_deflated_rational_root-229350e49b.log",
+      "elapsed_seconds": 0.0035030790604650974,
+      "target": "hypersolve",
+      "name": "algebraic_fiber::tests::selected_fiber_fallback_partitions_at_a_deflated_rational_root",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/affine-field-v903-hypersolve-tests",
+        "--exact",
+        "algebraic_fiber::tests::selected_fiber_refines_nonrational_coefficients_before_subdividing_clusters",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "affine-field-v903-selected_fiber_refines_nonrational_coefficients_before_subdividing_clusters-71fca3139f.log",
+      "elapsed_seconds": 0.01563711790367961,
+      "target": "hypersolve",
+      "name": "algebraic_fiber::tests::selected_fiber_refines_nonrational_coefficients_before_subdividing_clusters",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/affine-field-v903-hypersolve-tests",
+        "--exact",
+        "algebraic_fiber::tests::selected_fiber_repeated_and_rational_roots_complete",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "affine-field-v903-selected_fiber_repeated_and_rational_roots_complete-831c1d9de9.log",
+      "elapsed_seconds": 0.01565226702950895,
+      "target": "hypersolve",
+      "name": "algebraic_fiber::tests::selected_fiber_repeated_and_rational_roots_complete",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/affine-field-v903-hypersolve-tests",
+        "--exact",
+        "algebraic_fiber::tests::sturm_rows_preserve_variations_and_repeated_roots",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "affine-field-v903-sturm_rows_preserve_variations_and_repeated_roots-8c2ade7016.log",
+      "elapsed_seconds": 0.003526749089360237,
+      "target": "hypersolve",
+      "name": "algebraic_fiber::tests::sturm_rows_preserve_variations_and_repeated_roots",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/affine-field-v903-hypersolve-tests",
+        "--exact",
+        "algebraic_tensor_image::tests::direct_tag_difference_square_matches_tensor_arithmetic",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "affine-field-v903-direct_tag_difference_square_matches_tensor_arithmetic-f4834376de.log",
+      "elapsed_seconds": 0.0035460670478641987,
+      "target": "hypersolve",
+      "name": "algebraic_tensor_image::tests::direct_tag_difference_square_matches_tensor_arithmetic",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/affine-field-v903-hypersolve-tests",
+        "--exact",
+        "algebraic_tensor_image::tests::exact_small_rational_image_candidates_require_exact_replay",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "affine-field-v903-exact_small_rational_image_candidates_require_exact_replay-00b1b2679a.log",
+      "elapsed_seconds": 0.003516528056934476,
+      "target": "hypersolve",
+      "name": "algebraic_tensor_image::tests::exact_small_rational_image_candidates_require_exact_replay",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/affine-field-v903-hypersolve-tests",
+        "--exact",
+        "algebraic_tensor_image::tests::flat_first_parameter_handoff_matches_public_primitive_component",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "affine-field-v903-flat_first_parameter_handoff_matches_public_primitive_component-d3c7a8a124.log",
+      "elapsed_seconds": 0.00351244886405766,
+      "target": "hypersolve",
+      "name": "algebraic_tensor_image::tests::flat_first_parameter_handoff_matches_public_primitive_component",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/affine-field-v903-hypersolve-tests",
+        "--exact",
+        "algebraic_tensor_image::tests::selected_low_degree_witness_accepts_exact_nonrational_coefficients",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "affine-field-v903-selected_low_degree_witness_accepts_exact_nonrational_coefficients-3221803d44.log",
+      "elapsed_seconds": 0.0034837019629776478,
+      "target": "hypersolve",
+      "name": "algebraic_tensor_image::tests::selected_low_degree_witness_accepts_exact_nonrational_coefficients",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/affine-field-v903-hypersolve-tests",
+        "--exact",
+        "algebraic_tensor_image::tests::selected_low_degree_witness_does_not_depend_on_interval_precision",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "affine-field-v903-selected_low_degree_witness_does_not_depend_on_interval_precision-8559e48583.log",
+      "elapsed_seconds": 0.0034946908708661795,
+      "target": "hypersolve",
+      "name": "algebraic_tensor_image::tests::selected_low_degree_witness_does_not_depend_on_interval_precision",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/affine-field-v903-hypersolve-tests",
+        "--exact",
+        "algebraic_tensor_image::tests::selected_quadratic_witness_preserves_repeated_and_endpoint_roots",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "affine-field-v903-selected_quadratic_witness_preserves_repeated_and_endpoint_roots-85d654ceb2.log",
+      "elapsed_seconds": 0.003499350044876337,
+      "target": "hypersolve",
+      "name": "algebraic_tensor_image::tests::selected_quadratic_witness_preserves_repeated_and_endpoint_roots",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/affine-field-v903-hypersolve-tests",
+        "--exact",
+        "algebraic_tensor_image::tests::selected_rational_quadratic_witness_eliminates_its_tensor_axis",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "affine-field-v903-selected_rational_quadratic_witness_eliminates_its_tensor_axis-9d42289475.log",
+      "elapsed_seconds": 0.0034755519591271877,
+      "target": "hypersolve",
+      "name": "algebraic_tensor_image::tests::selected_rational_quadratic_witness_eliminates_its_tensor_axis",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/affine-field-v903-hypersolve-tests",
+        "--exact",
+        "algebraic_tensor_image::tests::selected_root_quadratic_compaction_requires_exact_factor",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "affine-field-v903-selected_root_quadratic_compaction_requires_exact_factor-f62f991646.log",
+      "elapsed_seconds": 0.0034460939932614565,
+      "target": "hypersolve",
+      "name": "algebraic_tensor_image::tests::selected_root_quadratic_compaction_requires_exact_factor",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/affine-field-v903-hypersolve-tests",
+        "--exact",
+        "algebraic_tensor_image::tests::selected_root_rational_compaction_requires_exact_replay",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "affine-field-v903-selected_root_rational_compaction_requires_exact_replay-951dbe4d18.log",
+      "elapsed_seconds": 0.0034938110038638115,
+      "target": "hypersolve",
+      "name": "algebraic_tensor_image::tests::selected_root_rational_compaction_requires_exact_replay",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/affine-field-v903-hypersolve-tests",
+        "--exact",
+        "algebraic_tensor_image::tests::tagged_norm_projects_nonzero_selected_fiber_past_foreign_wide_components",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "affine-field-v903-tagged_norm_projects_nonzero_selected_fiber_past_foreign_wide_components-e29067b10b.log",
+      "elapsed_seconds": 0.003505019936710596,
+      "target": "hypersolve",
+      "name": "algebraic_tensor_image::tests::tagged_norm_projects_nonzero_selected_fiber_past_foreign_wide_components",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/affine-field-v903-hypersolve-tests",
+        "--exact",
+        "algebraic_tensor_image::tests::tagged_norm_reuses_a_square_free_exact_witness_carrier",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "affine-field-v903-tagged_norm_reuses_a_square_free_exact_witness_carrier-9a60cec5e2.log",
+      "elapsed_seconds": 0.003488461021333933,
+      "target": "hypersolve",
+      "name": "algebraic_tensor_image::tests::tagged_norm_reuses_a_square_free_exact_witness_carrier",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/affine-field-v903-hypersolve-tests",
+        "--exact",
+        "algebraic_tensor_image::tests::tensor_image_collapses_certified_affine_selected_source_axes",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "affine-field-v903-tensor_image_collapses_certified_affine_selected_source_axes-22372d58d0.log",
+      "elapsed_seconds": 0.0034952901769429445,
+      "target": "hypersolve",
+      "name": "algebraic_tensor_image::tests::tensor_image_collapses_certified_affine_selected_source_axes",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/affine-field-v903-hypersolve-tests",
+        "--exact",
+        "algebraic_tensor_image::tests::tensor_image_counts_collapsed_axes_before_a_later_elimination_failure",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "affine-field-v903-tensor_image_counts_collapsed_axes_before_a_later_elimination_failure-c29e3169d3.log",
+      "elapsed_seconds": 0.0034938401076942682,
+      "target": "hypersolve",
+      "name": "algebraic_tensor_image::tests::tensor_image_counts_collapsed_axes_before_a_later_elimination_failure",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/affine-field-v903-hypersolve-tests",
+        "--exact",
+        "algebraic_tensor_image::tests::tensor_image_does_not_select_an_extraneous_cardinal_conjugate_image",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "affine-field-v903-tensor_image_does_not_select_an_extraneous_cardinal_conjugate_image-1b8803c62b.log",
+      "elapsed_seconds": 0.0035312981344759464,
+      "target": "hypersolve",
+      "name": "algebraic_tensor_image::tests::tensor_image_does_not_select_an_extraneous_cardinal_conjugate_image",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/affine-field-v903-hypersolve-tests",
+        "--exact",
+        "algebraic_tensor_image::tests::tensor_image_identifies_duplicate_selected_source_axes_exactly",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "affine-field-v903-tensor_image_identifies_duplicate_selected_source_axes_exactly-29310a2a95.log",
+      "elapsed_seconds": 0.003446372924372554,
+      "target": "hypersolve",
+      "name": "algebraic_tensor_image::tests::tensor_image_identifies_duplicate_selected_source_axes_exactly",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/affine-field-v903-hypersolve-tests",
+        "--exact",
+        "algebraic_tensor_image::tests::tensor_image_materializes_a_unique_cardinal_factor_of_a_nonlinear_eliminant",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "affine-field-v903-tensor_image_materializes_a_unique_cardinal_factor_of_a_nonlinear_eliminant-15bf0f63bd.log",
+      "elapsed_seconds": 0.003500209888443351,
+      "target": "hypersolve",
+      "name": "algebraic_tensor_image::tests::tensor_image_materializes_a_unique_cardinal_factor_of_a_nonlinear_eliminant",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/affine-field-v903-hypersolve-tests",
+        "--exact",
+        "algebraic_tensor_image::tests::tensor_image_materializes_an_enclosed_exact_linear_eliminant",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "affine-field-v903-tensor_image_materializes_an_enclosed_exact_linear_eliminant-65e186a45c.log",
+      "elapsed_seconds": 0.0034658019430935383,
+      "target": "hypersolve",
+      "name": "algebraic_tensor_image::tests::tensor_image_materializes_an_enclosed_exact_linear_eliminant",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/affine-field-v903-hypersolve-tests",
+        "--exact",
+        "algebraic_tensor_image::tests::tensor_image_rejects_nonisolating_and_misshaped_evidence",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "affine-field-v903-tensor_image_rejects_nonisolating_and_misshaped_evidence-11fa8f1084.log",
+      "elapsed_seconds": 0.003516559023410082,
+      "target": "hypersolve",
+      "name": "algebraic_tensor_image::tests::tensor_image_rejects_nonisolating_and_misshaped_evidence",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/affine-field-v903-hypersolve-tests",
+        "--exact",
+        "algebraic_tensor_image::tests::tensor_image_represents_four_correlated_selected_roots",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "affine-field-v903-tensor_image_represents_four_correlated_selected_roots-0304641018.log",
+      "elapsed_seconds": 0.0035217779222875834,
+      "target": "hypersolve",
+      "name": "algebraic_tensor_image::tests::tensor_image_represents_four_correlated_selected_roots",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/affine-field-v903-hypersolve-tests",
+        "--exact",
+        "algebraic_tensor_image::tests::tensor_image_retains_carriers_for_a_complete_nonrational_point_tuple",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "affine-field-v903-tensor_image_retains_carriers_for_a_complete_nonrational_point_tuple-987dcbc541.log",
+      "elapsed_seconds": 0.0035153089556843042,
+      "target": "hypersolve",
+      "name": "algebraic_tensor_image::tests::tensor_image_retains_carriers_for_a_complete_nonrational_point_tuple",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/affine-field-v903-hypersolve-tests",
+        "--exact",
+        "algebraic_tensor_image::tests::tensor_image_retains_exact_real_coefficient_fields",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "affine-field-v903-tensor_image_retains_exact_real_coefficient_fields-7544df6c1f.log",
+      "elapsed_seconds": 0.0035456770565360785,
+      "target": "hypersolve",
+      "name": "algebraic_tensor_image::tests::tensor_image_retains_exact_real_coefficient_fields",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/affine-field-v903-hypersolve-tests",
+        "--exact",
+        "algebraic_tensor_image::tests::tensor_image_reuses_square_free_constraint_for_selected_conjugates",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "affine-field-v903-tensor_image_reuses_square_free_constraint_for_selected_conjugates-ccbfee2c13.log",
+      "elapsed_seconds": 0.0035795040894299746,
+      "target": "hypersolve",
+      "name": "algebraic_tensor_image::tests::tensor_image_reuses_square_free_constraint_for_selected_conjugates",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/affine-field-v903-hypersolve-tests",
+        "--exact",
+        "algebraic_tensor_image::tests::tensor_image_substitutes_exact_source_axes_before_elimination",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "affine-field-v903-tensor_image_substitutes_exact_source_axes_before_elimination-2b06518261.log",
+      "elapsed_seconds": 0.0035001998767256737,
+      "target": "hypersolve",
+      "name": "algebraic_tensor_image::tests::tensor_image_substitutes_exact_source_axes_before_elimination",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/affine-field-v903-hypersolve-tests",
+        "--exact",
+        "algebraic_tensor_image::tests::tensor_images_remove_irrelevant_wide_rational_content",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 101,
+      "log": "affine-field-v903-tensor_images_remove_irrelevant_wide_rational_content-a46bdfb891.log",
+      "elapsed_seconds": 0.0035086600109934807,
+      "target": "hypersolve",
+      "name": "algebraic_tensor_image::tests::tensor_images_remove_irrelevant_wide_rational_content",
+      "passed": false
+    }
+  ],
+  "checks": [],
+  "test_listings": {
+    "hypersolve": {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/affine-field-v903-hypersolve-tests",
+        "--list"
+      ],
+      "returncode": 0,
+      "log": "affine-field-v903-hypersolve-list.log",
+      "elapsed_seconds": 0.003555336967110634
+    }
+  },
+  "expected_cases": {
+    "hypercurve": [
+      "rational_bezier_general::tests::implicit_conic_contacts_exclude_projective_poles",
+      "bezier_algebraic_image::policy_tests::arithmetic_adapter_replays_close_nonrational_bounds_strictly",
+      "bezier_algebraic_image::policy_tests::coordinate_images_preserve_native_polynomial_point_values",
+      "bezier_algebraic_image::policy_tests::exact_real_representation_preserves_native_point_payloads",
+      "bezier_algebraic_image::policy_tests::retained_constant_coordinates_do_not_require_scalar_parameter_images",
+      "bezier_offset::conversion_tests::algebraic_chord_retains_independent_endpoint_fields_under_both_policies",
+      "bezier_offset::conversion_tests::algebraic_cusp_semicircle_intersects_independent_field_oblique_chords_exactly",
+      "bezier_offset::conversion_tests::genuine_parallel_algebraic_ray_replays_the_unsquared_branch",
+      "bezier_offset::conversion_tests::independent_field_algebraic_chord_intersects_rational_curve_under_both_policies",
+      "bezier_offset::conversion_tests::represented_circle_incidence_replays_retained_similarity_points",
+      "bezier_offset::conversion_tests::weighted_selected_center_tangent_line_stays_recursive",
+      "bezier_region::tests::algebraic_query_winding_mixes_genuine_parallel_and_native_fragments",
+      "bezier_region::tests::algebraic_retained_range_ray_winding_handles_crossing_multiplicity",
+      "curve::curve_evaluation::tests::repeated_unit_chart_evaluation_reuses_selected_root_images",
+      "curve_region_trim::tests::generated_chord_trim_preserves_holes_and_exact_endpoint_replay",
+      "rational_bezier_general::tests::deferred_parametric_point_reuses_source_polynomials_for_exact_equality",
+      "rational_bezier_general::tests::exact_contact_evidence_reuses_a_retained_high_degree_image",
+      "bezier_split_endpoint::tests::lazy_endpoint_images_preserve_affine_domain_blockers",
+      "bezier_offset::conversion_tests::independent_oblique_chords_support_constrained_fillet_families",
+      "curve::curve_fillet::stationary_continuous_family_regression::continuous_fillets_preserve_stationary_reparameterization",
+      "curve::curve_fillet::tests::continuous_fillet_constraints_accept_arbitrary_exact_real_contacts",
+      "curve::curve_fillet::tests::joined_path_selects_and_replays_a_continuous_fillet_family",
+      "curve::curve_fillet::tests::normalized_region_selects_and_reuses_a_continuous_fillet_family",
+      "rational_bezier_general::tests::rational_contact_evidence_preserves_affine_domain_blockers",
+      "bezier_offset::conversion_tests::contact_fallback_never_replaces_a_certified_pole",
+      "bezier_offset::conversion_tests::algebraic_cusp_circle_rational_system_replays_shared_source_endpoint",
+      "bezier_offset::conversion_tests::algebraic_cusp_semicircle_rational_contacts_distinguish_both_endpoints",
+      "bezier_offset::conversion_tests::algebraic_cusp_semicircle_replays_a_selected_circle_component",
+      "bezier_offset::conversion_tests::algebraic_cusp_semicircle_pair_maps_full_partial_and_endpoint_only_overlap",
+      "bezier_offset::conversion_tests::rational_circle_overlap_preserves_an_isolated_parameter_visit",
+      "bezier_offset::conversion_tests::rank_independent_chord_normal_circle_partitions_rational_overlap",
+      "bezier_offset::conversion_tests::rank_independent_chord_normal_circle_partitions_folded_rational_overlap",
+      "bezier_offset::conversion_tests::selected_parallel_normal_circle_retains_general_rational_contacts_in_one_fiber",
+      "bezier_offset::conversion_tests::selected_parallel_normal_circle_retains_general_rational_overlaps_in_one_fiber",
+      "bezier_offset::conversion_tests::incident_rational_parabola_circle_retains_the_pre_pole_contact",
+      "bezier_offset::conversion_tests::selected_fiber_rational_circle_overlaps_complete_region_booleans",
+      "bezier_offset::conversion_tests::algebraic_cusp_semicircle_reoffsets_pair_mapped_lens",
+      "rational_bezier_general::tests::implicit_conic_contacts_retain_source_parameter_point_image_first",
+      "rational_bezier_general::tests::shared_demo_conic_cubic_contacts_are_complete",
+      "bezier_arrangement::endpoint_adjacency_tests::lazy_polynomial_endpoint_derivatives_match_eager_images",
+      "bezier_split_endpoint::tests::retained_derivatives_replay_nonrational_source_signs",
+      "bezier_split_endpoint::tests::rational_endpoints_retain_nonrational_higher_derivatives",
+      "bezier_arrangement::endpoint_adjacency_tests::optional_unprojected_derivatives_do_not_block_endpoint_setup",
+      "bezier_tangent_order::exact_real_status_tests::retained_tangent_determinants_use_selected_source_signs",
+      "bezier_tangent_order::exact_real_status_tests::tangent_determinants_do_not_merge_distinct_selected_roots",
+      "bezier_tangent_order::exact_real_status_tests::scalar_sign_accepts_an_exact_real_arithmetic_result",
+      "bezier_arrangement::endpoint_adjacency_tests::native_third_order_comparison_is_invariant_under_parameter_speed",
+      "bezier_arrangement::endpoint_adjacency_tests::retained_third_order_fallback_requires_zero_curvature",
+      "bezier_arrangement::endpoint_adjacency_tests::native_same_side_derivative_orders_reverse_under_reflection",
+      "bezier_arrangement::endpoint_adjacency_tests::equal_curvature_graph_jets_ignore_source_acceleration",
+      "bezier_arrangement::endpoint_adjacency_tests::polynomial_derivative_sources_retain_exact_zero",
+      "bezier_tangent_order::exact_real_status_tests::source_tangent_angles_retain_replay_and_reversal",
+      "bezier_tangent_order::exact_real_status_tests::selected_scalar_normalization_removes_speed_and_tangential_acceleration",
+      "bezier_tangent_order::exact_real_status_tests::source_scalar_constants_reject_stale_exact_point_evidence",
+      "bezier_tangent_order::exact_real_status_tests::selected_constant_scalars_do_not_impose_a_foreign_parameter",
+      "bezier_offset::conversion_tests::represented_scalar_images_and_quotients_refine_past_the_old_limit"
+    ],
+    "hypercurve_bezier_algebraic_image": null,
+    "hypercurve_curve_point": null,
+    "hypercurve_bezier_algebraic_parameter": null,
+    "hypercurve_bezier_split_materialization": null,
+    "hypercurve_bezier_tangent_order": null,
+    "hypercurve_bezier_arrangement": null,
+    "hypercurve_curve_region_promotion": [
+      "selected_algebraic_round_join_retains_a_general_minor_cut",
+      "selected_endpoint_chord_pairs_share_the_linear_fillet_kernel",
+      "selected_endpoint_chords_share_linear_arc_fillet_incidence",
+      "selected_endpoint_chords_share_linear_bezier_fillet_incidence"
+    ],
+    "hypercurve_rational_bezier": null,
+    "hypercurve_bspline": null,
+    "hypercurve_nurbs": null,
+    "hypercurve_bezier_region": null,
+    "hypersolve": [
+      "algebraic::tests::affine_exact_real_horner_matches_retained_power_sum",
+      "algebraic::tests::affine_homogeneous_horner_matches_retained_power_sum",
+      "algebraic::tests::affine_inference_replays_selection_instead_of_only_matching_coefficients",
+      "algebraic::tests::affine_relations_preserve_exact_real_coefficients_and_selected_orientation",
+      "algebraic::tests::algebraic_root_affine_relation_certifies_scale_and_offset_beyond_512_bits",
+      "algebraic::tests::algebraic_root_affine_transform_constructs_represented_values",
+      "algebraic::tests::algebraic_root_affine_transform_handles_degree_128_without_machine_binomials",
+      "algebraic::tests::algebraic_root_affine_transform_preserves_exact_real_coefficients",
+      "algebraic::tests::algebraic_root_affine_transform_preserves_exact_real_scale_and_offset",
+      "algebraic::tests::algebraic_root_affine_transform_replays_cached_source_validation_strictly",
+      "algebraic::tests::algebraic_root_affine_transform_retains_an_arbitrary_exact_point_witness",
+      "algebraic::tests::algebraic_root_arithmetic_certifies_zero_dividend_and_touching_nonzero_divisor",
+      "algebraic::tests::algebraic_root_arithmetic_divides_by_policy_certified_exact_point",
+      "algebraic::tests::algebraic_root_arithmetic_reduces_same_quadratic_square_to_affine_relation",
+      "algebraic::tests::algebraic_root_arithmetic_rejects_interval_only_and_invalid_inputs",
+      "algebraic::tests::algebraic_root_arithmetic_rejects_missing_binary_operand_before_routing",
+      "algebraic::tests::algebraic_root_arithmetic_replays_cached_input_validation_strictly",
+      "algebraic::tests::algebraic_root_arithmetic_returns_exact_nonrational_real_witnesses",
+      "algebraic::tests::algebraic_root_arithmetic_supports_exact_real_scalars_and_reports_unsupported_fields",
+      "algebraic::tests::algebraic_root_arithmetic_transforms_interval_only_roots_by_rational_scalars",
+      "algebraic::tests::algebraic_root_arithmetic_uses_exact_rational_witnesses_only",
+      "algebraic::tests::algebraic_root_arithmetic_uses_the_explicit_policy",
+      "algebraic::tests::algebraic_root_comparison_and_sign_replay_cached_valid_payloads",
+      "algebraic::tests::algebraic_root_comparison_keeps_overlapping_conjugates_distinct",
+      "algebraic::tests::algebraic_root_comparison_orders_disjoint_intervals_and_witnesses",
+      "algebraic::tests::algebraic_root_comparison_recognizes_equal_irrational_singletons",
+      "algebraic::tests::algebraic_root_comparison_reports_overlap_and_invalid_evidence",
+      "algebraic::tests::algebraic_root_comparison_respects_owned_interval_endpoints",
+      "algebraic::tests::algebraic_root_comparison_reuses_nested_singleton_evidence",
+      "algebraic::tests::algebraic_root_comparison_uses_exact_witness_as_effective_interval",
+      "algebraic::tests::algebraic_root_difference_certifies_exact_translation_beyond_512_bits",
+      "algebraic::tests::algebraic_root_difference_comparison_certifies_shared_polynomial_root",
+      "algebraic::tests::algebraic_root_difference_comparison_matches_exact_point_to_isolator",
+      "algebraic::tests::algebraic_root_difference_comparison_orders_constructed_overlap",
+      "algebraic::tests::algebraic_root_difference_comparison_returns_direct_orders_without_construction",
+      "algebraic::tests::algebraic_root_evaluation_distinguishes_exact_real_values_and_replays_input",
+      "algebraic::tests::algebraic_root_polynomial_evaluation_certifies_witnesses_and_intervals",
+      "algebraic::tests::algebraic_root_rational_evaluation_checks_denominator_domain",
+      "algebraic::tests::algebraic_root_refinement_comparison_orders_overlapping_intervals",
+      "algebraic::tests::algebraic_root_refinement_skips_exact_point_operand",
+      "algebraic::tests::algebraic_root_refinement_supports_exact_real_coefficient_fields",
+      "algebraic::tests::decreasing_affine_transform_excludes_a_foreign_source_endpoint_root",
+      "algebraic::tests::decreasing_affine_transform_retains_an_owned_upper_endpoint_root",
+      "algebraic::tests::endpoint_root_detection_falls_back_after_inconclusive_modular_images",
+      "algebraic::tests::exact_rational_witnesses_replay_against_polynomial",
+      "algebraic::tests::generated_affine_exact_real_horner_matches_retained_power_sum",
+      "algebraic::tests::generated_endpoint_root_detection_matches_integer_horner",
+      "algebraic::tests::generated_exact_real_point_arithmetic_never_claims_rational_witness",
+      "algebraic::tests::generated_interval_only_addition_by_rational_scalar_matches_affine_transform",
+      "algebraic::tests::generated_interval_only_negation_reflects_polynomial_and_interval",
+      "algebraic::tests::generated_linear_roots_become_valid_represented_intervals",
+      "algebraic::tests::generated_rational_affine_horner_matches_retained_power_sum",
+      "algebraic::tests::generated_rational_interval_product_matches_all_endpoint_products",
+      "algebraic::tests::generated_rational_witness_affine_transform_preserves_exact_root",
+      "algebraic::tests::generated_rational_witness_arithmetic_matches_integer_arithmetic",
+      "algebraic::tests::generated_rational_witness_comparisons_match_integer_order",
+      "algebraic::tests::generated_rational_witness_polynomial_evaluation_matches_integer_arithmetic",
+      "algebraic::tests::generated_rational_witness_rational_evaluation_matches_integer_arithmetic",
+      "algebraic::tests::generated_refinement_comparison_preserves_rational_witness_order",
+      "algebraic::tests::invalid_representations_are_rejected_antagonistically",
+      "algebraic::tests::represented_root_sign_respects_zero_endpoint_ownership",
+      "algebraic::tests::represented_root_sign_uses_exact_zero_endpoint_evidence",
+      "algebraic::tests::represented_roots_accept_exact_real_coefficient_fields",
+      "algebraic::tests::represented_roots_preserve_polynomial_and_interval_evidence",
+      "algebraic_fiber::refinement::tests::refiner_replays_point_witnesses_and_rejects_stale_or_ambiguous_ownership",
+      "algebraic_fiber::refinement::tests::repeated_root_refinement_reuses_one_sequence_across_roots_and_requests",
+      "algebraic_fiber::refinement::tests::simple_refinement_preserves_exact_base_coefficients_without_sturm",
+      "algebraic_fiber::subresultant::tests::fiber_determinants_keep_zero_divisors_without_scalar_units",
+      "algebraic_fiber::subresultant::tests::fiber_determinants_preserve_all_row_and_column_permutation_signs",
+      "algebraic_fiber::subresultant::tests::subresultants_preserve_one_scale_across_all_target_coefficients",
+      "algebraic_fiber::subresultant::tests::subresultants_reduce_source_conjugates_without_global_projection",
+      "algebraic_fiber::tests::certified_nonzero_signs_distinguish_small_values_from_selected_zeros",
+      "algebraic_fiber::tests::certified_nonzero_signs_share_the_refined_degree_41_endpoint",
+      "algebraic_fiber::tests::diagonal_fiber_deflation_removes_the_exact_local_multiplicity",
+      "algebraic_fiber::tests::local_constant_signs_keep_the_unresolved_native_fact_fallback",
+      "algebraic_fiber::tests::local_constant_signs_reuse_native_proofs_without_field_cache_entries",
+      "algebraic_fiber::tests::local_division_preserves_arbitrary_exact_base_coefficients",
+      "algebraic_fiber::tests::local_division_preserves_wide_exact_quotients_beyond_modular_reconstruction",
+      "algebraic_fiber::tests::local_division_removes_only_foreign_factors_and_reuses_older_values",
+      "algebraic_fiber::tests::local_exact_division_preserves_skipped_degrees_and_reduced_coefficients",
+      "algebraic_fiber::tests::local_fiber_count_preserves_half_open_selected_root_ownership",
+      "algebraic_fiber::tests::local_fiber_count_preserves_uncached_singleton_identities",
+      "algebraic_fiber::tests::local_fiber_export_moves_ragged_coefficients_in_both_orientations",
+      "algebraic_fiber::tests::local_field_gcd_handles_specialized_degree_drops_in_both_orientations",
+      "algebraic_fiber::tests::local_field_replays_stale_root_payloads_before_constant_fiber_shortcuts",
+      "algebraic_fiber::tests::local_field_sturm_batches_candidate_intervals_without_changing_reports",
+      "algebraic_fiber::tests::local_field_sturm_batches_preserve_endpoint_reports_in_both_orientations",
+      "algebraic_fiber::tests::local_field_sturm_counts_even_multiplicity_in_both_orientations",
+      "algebraic_fiber::tests::local_field_sturm_handles_a_reducible_defining_polynomial",
+      "algebraic_fiber::tests::local_field_sturm_reports_an_identically_zero_specialization",
+      "algebraic_fiber::tests::local_field_sturm_reports_rational_endpoint_roots_and_input_boundaries",
+      "algebraic_fiber::tests::local_field_zero_test_recognizes_an_uncached_singleton",
+      "algebraic_fiber::tests::local_image_convolution_preserves_sparse_zero_slots",
+      "algebraic_fiber::tests::local_refinement_preserves_exact_point_payloads",
+      "algebraic_fiber::tests::local_refinement_preserves_half_open_selected_root_ownership",
+      "algebraic_fiber::tests::local_sign_refinement_retains_nested_quadratic_root_certificates",
+      "algebraic_fiber::tests::local_small_determinant_preserves_row_major_orientation",
+      "algebraic_fiber::tests::owned_field_admission_replays_stale_root_payloads",
+      "algebraic_fiber::tests::owned_field_does_not_invent_an_unproved_parameter_embedding",
+      "algebraic_fiber::tests::owned_field_finishing_reduces_older_values_after_factor_removal",
+      "algebraic_fiber::tests::owned_field_transport_accepts_exact_real_affine_coefficients",
+      "algebraic_fiber::tests::owned_field_transport_reuses_affine_evidence_and_preserves_poles",
+      "algebraic_fiber::tests::owned_field_values_keep_exact_coefficients_reduced_across_batches",
+      "algebraic_fiber::tests::owned_field_values_preserve_identity_and_transport_distinct_conjugates",
+      "algebraic_fiber::tests::owned_field_values_reject_poles_and_preserve_local_denominator_domains",
+      "algebraic_fiber::tests::polynomial_fiber_image_preserves_a_degree_135_selected_tower",
+      "algebraic_fiber::tests::polynomial_fiber_image_projects_a_nonsquare_radical_relation_directly",
+      "algebraic_fiber::tests::polynomial_fiber_image_retains_base_parameter_axis",
+      "algebraic_fiber::tests::polynomial_fiber_image_saturates_a_fourfold_multicoefficient_component",
+      "algebraic_fiber::tests::polynomial_fiber_image_saturates_an_identically_zero_source_conjugate",
+      "algebraic_fiber::tests::polynomial_fiber_image_trims_only_strictly_exact_zero_degree",
+      "algebraic_fiber::tests::primitive_local_image_content_accepts_policy_certified_zero_remainders",
+      "algebraic_fiber::tests::primitive_local_image_content_rejects_unsupported_zero_remainders",
+      "algebraic_fiber::tests::quotient_ring_fiber_projection_obeys_an_explicit_degree_budget",
+      "algebraic_fiber::tests::quotient_ring_fiber_projection_retains_the_complete_norm_roots",
+      "algebraic_fiber::tests::quotient_ring_fiber_projection_shares_local_field_admission_in_both_orientations",
+      "algebraic_fiber::tests::rational_fiber_reduction_preserves_degree_fifteen_correlation",
+      "algebraic_fiber::tests::rational_fiber_reduction_preserves_ragged_zero_and_dependent_residuals",
+      "algebraic_fiber::tests::rational_sturm_preserves_degree_changes_and_general_exact_coefficients",
+      "algebraic_fiber::tests::rational_sturm_preserves_selected_multiplicity_and_negative_scales",
+      "algebraic_fiber::tests::rational_subresultants_preserve_common_roots_across_degree_gaps",
+      "algebraic_fiber::tests::rational_subresultants_preserve_selected_degree_changes_and_exact_coefficients",
+      "algebraic_fiber::tests::rational_subresultants_replay_degree_41_fillet_contact_in_both_orientations",
+      "algebraic_fiber::tests::selected_algebraic_fiber_isolation_falls_back_for_repeated_irrational_root",
+      "algebraic_fiber::tests::selected_algebraic_fiber_isolation_uses_division_free_bernstein_path",
+      "algebraic_fiber::tests::selected_fiber_accepts_exact_real_base_coefficients",
+      "algebraic_fiber::tests::selected_fiber_fallback_partitions_at_a_deflated_rational_root",
+      "algebraic_fiber::tests::selected_fiber_refines_nonrational_coefficients_before_subdividing_clusters",
+      "algebraic_fiber::tests::selected_fiber_repeated_and_rational_roots_complete",
+      "algebraic_fiber::tests::sturm_rows_preserve_variations_and_repeated_roots",
+      "algebraic_tensor_image::tests::direct_tag_difference_square_matches_tensor_arithmetic",
+      "algebraic_tensor_image::tests::exact_small_rational_image_candidates_require_exact_replay",
+      "algebraic_tensor_image::tests::flat_first_parameter_handoff_matches_public_primitive_component",
+      "algebraic_tensor_image::tests::selected_low_degree_witness_accepts_exact_nonrational_coefficients",
+      "algebraic_tensor_image::tests::selected_low_degree_witness_does_not_depend_on_interval_precision",
+      "algebraic_tensor_image::tests::selected_quadratic_witness_preserves_repeated_and_endpoint_roots",
+      "algebraic_tensor_image::tests::selected_rational_quadratic_witness_eliminates_its_tensor_axis",
+      "algebraic_tensor_image::tests::selected_root_quadratic_compaction_requires_exact_factor",
+      "algebraic_tensor_image::tests::selected_root_rational_compaction_requires_exact_replay",
+      "algebraic_tensor_image::tests::tagged_norm_projects_nonzero_selected_fiber_past_foreign_wide_components",
+      "algebraic_tensor_image::tests::tagged_norm_reuses_a_square_free_exact_witness_carrier",
+      "algebraic_tensor_image::tests::tensor_image_collapses_certified_affine_selected_source_axes",
+      "algebraic_tensor_image::tests::tensor_image_counts_collapsed_axes_before_a_later_elimination_failure",
+      "algebraic_tensor_image::tests::tensor_image_does_not_select_an_extraneous_cardinal_conjugate_image",
+      "algebraic_tensor_image::tests::tensor_image_identifies_duplicate_selected_source_axes_exactly",
+      "algebraic_tensor_image::tests::tensor_image_materializes_a_unique_cardinal_factor_of_a_nonlinear_eliminant",
+      "algebraic_tensor_image::tests::tensor_image_materializes_an_enclosed_exact_linear_eliminant",
+      "algebraic_tensor_image::tests::tensor_image_rejects_nonisolating_and_misshaped_evidence",
+      "algebraic_tensor_image::tests::tensor_image_represents_four_correlated_selected_roots",
+      "algebraic_tensor_image::tests::tensor_image_retains_carriers_for_a_complete_nonrational_point_tuple",
+      "algebraic_tensor_image::tests::tensor_image_retains_exact_real_coefficient_fields",
+      "algebraic_tensor_image::tests::tensor_image_reuses_square_free_constraint_for_selected_conjugates",
+      "algebraic_tensor_image::tests::tensor_image_substitutes_exact_source_axes_before_elimination",
+      "algebraic_tensor_image::tests::tensor_images_remove_irrelevant_wide_rational_content",
+      "algebraic_tensor_image::tests::tensor_images_replay_nonrational_coefficients_after_repeated_arithmetic",
+      "algebraic_tensor_image::tests::translated_quadratic_compaction_preserves_selected_factor_and_ownership"
+    ]
+  },
+  "all_processes_reaped": true,
+  "probe_complete": false,
+  "qualification_complete": false,
+  "failure": "caller regression failed: algebraic_tensor_image::tests::tensor_images_remove_irrelevant_wide_rational_content"
+}

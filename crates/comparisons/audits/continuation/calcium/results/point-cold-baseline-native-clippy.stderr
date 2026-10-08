@@ -1,0 +1,18 @@
+    Checking calcium-point-cold-baseline v0.0.0 (/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/point-cold-baseline)
+error: called `unwrap` on `inputs` after checking its variant with `is_none`
+  --> ../point-cold-common.rs:25:29
+   |
+20 |         if inputs.is_none() || lifecycle == 1 {
+   |            ---------------- the check is happening here
+...
+25 |             let (a, b, _) = inputs.as_mut().unwrap();
+   |                             ^^^^^^^^^^^^^^^^^^^^^^^^
+   |
+   = help: try using `if let` or `match`
+   = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.97.0/index.html#unnecessary_unwrap
+   = note: `-D clippy::unnecessary-unwrap` implied by `-D warnings`
+   = help: to override `-D warnings` add `#[allow(clippy::unnecessary_unwrap)]`
+
+error: could not compile `calcium-point-cold-baseline` (bin "point-cold-baseline" test) due to 1 previous error
+warning: build failed, waiting for other jobs to finish...
+error: could not compile `calcium-point-cold-baseline` (lib test) due to 1 previous error

@@ -1,0 +1,21 @@
+   Compiling hyperreal v0.13.1 (/home/tim/Documents/GitHub/workspace/hyperreal)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 2.43s
+     Running unittests src/lib.rs (target/debug/deps/hyperreal-99435bbe0ce6f1f3)
+
+running 1 test
+
+thread 'computable::node::tests::affine_offsets_preserve_shared_bases_through_exact_scaling' (331) panicked at src/computable/node/tests.rs:1997:25:
+assertion `left == right` failed
+  left: None
+ right: Some(Zero)
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+test computable::node::tests::affine_offsets_preserve_shared_bases_through_exact_scaling ... FAILED
+
+failures:
+
+failures:
+    computable::node::tests::affine_offsets_preserve_shared_bases_through_exact_scaling
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 723 filtered out; finished in 0.00s
+
+error: test failed, to rerun pass `--lib`

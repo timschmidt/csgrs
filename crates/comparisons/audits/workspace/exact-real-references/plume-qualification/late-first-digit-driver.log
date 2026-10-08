@@ -1,0 +1,9 @@
+1/8	first-digit greedy 0	prefix
+2/8	first-digit greedy 1	prefix
+3/8	first-digit greedy 2	prefix
+4/8	first-digit greedy 10	prefix
+5/8	first-digit delayed 0	prefix
+6/8	first-digit delayed 1	prefix
+7/8	first-digit delayed 2	prefix
+8/8	first-digit delayed 10	prefix
+Requests 8; finite results 8; numerical qualification is separate.

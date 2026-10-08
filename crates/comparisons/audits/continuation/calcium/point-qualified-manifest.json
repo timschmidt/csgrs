@@ -1,0 +1,732 @@
+{
+  "schema": 1,
+  "checkpoint": 54,
+  "recorded": "2026-09-10T20:55:42.502Z",
+  "previousManifest": "point-image-manifest.json",
+  "files": {
+    "point-qualified-findings.md": "06549d79ce138402545dba8109255a02da5af6ed979a602f5b0a806261615e4a",
+    "point-qualified-evidence.mjs": "5919f0c8aa45d7cdb4533f270ce3dd3e293e53cb7fe935e47568e44d6ba87632",
+    "record-point-qualified.mjs": "f49637168044815feec8e15ab64bf1a7ccda3434d378fa8ac14ebb1a9d0c00e2",
+    "verify-point-qualified.mjs": "defb9056a11c5e8842190931c6ebb1960bb9a1b1b78c662b50e57c75162ca511",
+    "prepare-point-qualified.mjs": "51c1500b872ea5ad222487d169401bd84313d7cf556128fa9d2ec2b8067a24d4",
+    "point-qualified-origin.json": "36e6ede1b9857e1680add0c4d7697261bca063c422cc316fb539fa1bc26a3c71",
+    "point-qualified-sources.mjs": "418966d05873911d79682a4b4563059b78733cc26955ba4cdd15cdccf0a6ffe9",
+    "point-qualified-capture.mjs": "8b574f18a85c470ef47f9eafc780c462a93e811ebe15695f0950cfef17ada66e",
+    "measure-point-qualified-apps.mjs": "36d80ab96670c2266436582150d59c2a545b8ed069d1418e8c7ff8a9ca54cbe3",
+    "point-qualified-apps-origin.json": "49e97caae450586b368b258a7b242cab9f776fbc2f1b7621715e380ed0db6a6d",
+    "point-qualified-apps-summary.json": "cce7f05a82b76b323bce45439a77f64d4c4bb45221431da1a8196539860860fc",
+    "point-qualified-environment.mjs": "51947315ab10dc3618c03e296e3c64ceed5ead142691ae9553460a016352efbb",
+    "prepare-point-qualified-approx.mjs": "bbca9e306c01f6d7c7965015018c76c7797eb61b26f2efa625c93962fd144e91",
+    "capture.mjs": "aaf6df6bbd73025a8541617ce83731ae5ea3fd2272bd98c15e3c4c12b713ce23",
+    "effective-coverage.mjs": "b884fd5eb462ede70cb9b3c2bed2cfad14d5700301e92e37156c7ec5104b17e0",
+    "point-image-manifest.json": "ef7781e91e62690ad80f7a3b357d678306c4fd9e7091121c4782ba69a26d1eb6",
+    "power-sums-public.rs": "68abb7309ae0a23ffa4e53a48e91002a1e047cff3b4dcc78a71dcc7340e7643e",
+    "check-point-image.mjs": "258e5e9ce0ac30dfaeeeec821ebb98ee3eba027102a676c746b793c8c15ef8e3",
+    "e-qualified-app-size-summary.json": "3c78fe321e0d5ceeacdcb332a289f9898d7269d34bd079e16c2d930aa20a96ba",
+    "point-qualified-platform.rs": "726b5cf46c1521b35782fcfbc5934b1e4cf34e702cda3602c55d1a31724fcd71",
+    "build-point-qualified-platform.mjs": "1deba30c2b706c4e63de9d2a4b17759009c7b804e9d56fc83e561a887c812d92",
+    "run-point-qualified-platform.mjs": "088164bc8c3c9b9b230f11048d61e077c08b011b526927cf77016892f9e77776",
+    "point-qualified-platform-origin.json": "2e48877cdb0933e1c52c6bbc19836fb2969a4353b51ec8fdc384a2895516499d",
+    "point-qualified-platform-binaries.json": "2273963896957361007b5a46014478037ffac6c16886ae6996daa881656ad552",
+    "point-qualified-platform-baseline/Cargo.toml": "66bef949a1b72f6435c825bd774a76a4b2b7ee755f02b395c3b6b01e35dec7e7",
+    "point-qualified-platform-baseline/Cargo.lock": "cc1848d16656eee02cc79fe28d6c454747cde16d1d8c94a5f056ba78d7e0a7d9",
+    "point-qualified-platform-candidate/Cargo.toml": "466faec854f4f9d087e719d97c343d032b9ec3f761e3ef1e9645bc07e0369797",
+    "point-qualified-platform-candidate/Cargo.lock": "ba49dd4aee928f9ef5315f5540f9f553c97b24ee682f3fdcf4b93b4eb99b756f",
+    "point-qualified-approx.rs": "598aef2b96d4d2c9f56bebd865f7cda53c6fb1c3b84216c626fa0b17fc8d5923",
+    "build-point-qualified-approx.mjs": "eb806010aae329cd8580f26c4a2b43e12e6bc08f238e4a132a890de9a433bb88",
+    "run-point-qualified-approx.mjs": "2c93c6ad422be335e0b149b3709428ef39e27d89cc24c7c05ba718bd16837c1a",
+    "point-qualified-approx-origin.json": "e9b61be351b489a52d79de7a1492860051366d925d6edcb4fc95bbf48dc42598",
+    "point-qualified-approx-binaries.json": "58b2b4f64d09df6463d379554312793c3ee3c45c4f820badaca3970c90017075",
+    "point-qualified-approx-baseline/Cargo.toml": "bf3088fe3e1e400d1ac649071dcb57d16f6364014ca8cf285205c167dfdcee19",
+    "point-qualified-approx-baseline/Cargo.lock": "9578ed5a001d8532c8568b1148e6af633bb8e39e44d5bffceced84b7ed84c16a",
+    "point-qualified-approx-candidate/Cargo.toml": "8f43b17642832b2f57143d869f8ba2e3b6610eec66484057c60a4607cd1416d8",
+    "point-qualified-approx-candidate/Cargo.lock": "511e51633a80b3514ccaa1a85ca30302e1bc8decaebf62e4f2dc3309975ce0be",
+    "run-point-qualified-wasm.mjs": "e20d8790238414769fffc7d12adf1bf5283377720818f41e9190dee25f224ba8",
+    "run-point-qualified-approx-wasm.mjs": "f420546a14784ba53a74a571d321b74ea7860b88c81d73d512fc3668ce7d5c9a",
+    "check-point-qualified-public.mjs": "16f589a73abdae5b891c61b75dab87c8e98a4fa06fa5f83d02acce1010fc5054",
+    "check-point-qualified-approx-public.mjs": "4020b76f3b9039741aea8c6bc5a276ab0b33e45c6fc9a4ab05229045c21e9be0",
+    "results/point-image-verify.json": "f63fa9da8c1cfdbb06eaf1d7f941741a6c88319816861c2bec13e6400eae6c92",
+    "results/point-image-verify.stdout": "42e2d5425666ebde27514b5838a3bfef04b05ea5ab4c939bf1264801bcb1284d",
+    "results/point-image-verify.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/point-qualified-consumer-release.json": "cc4898cb399d5eed8ca42d831e7fc7616149e5c4da0933441ba0ac168721c3f2",
+    "results/point-qualified-consumer-release.stdout": "a0526c328b9101b3fa93a16e6a3ccb5526cb25656f96611211fa9603ffd23200",
+    "results/point-qualified-consumer-release.stderr": "001733618e21c3b1a581ba5cd63ad9a3f67680346c13a09857574f8b89bbc2a3",
+    "results/point-qualified-consumer-wasm.json": "34f4c913bcf81060a3c6cfe6b1fd84aae22ae5140770d9a60c6d44280775a4cf",
+    "results/point-qualified-consumer-wasm.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/point-qualified-consumer-wasm.stderr": "b45f84fd265657b6640b459484b3d0743e5a85612ef0af76d4c70656d2d49e26",
+    "results/point-qualified-consumer-clippy.json": "87d7b0f6bc9349960bf248d6ab9a6821b18ba7ba98c573448e757d9cfb1a2620",
+    "results/point-qualified-consumer-clippy.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/point-qualified-consumer-clippy.stderr": "ace0669a49ac3ddf262675db2110f0ca1e383d59894038be7481fb0d5ea9ca05",
+    "results/point-qualified-apps.json": "ce1f35eec3479dc6faae09c4d1ba08eee910df37493adb7cbbd722cafcd4e8e3",
+    "results/point-qualified-apps.stdout": "27a56e1064abe1913106e769450d04e5c37e948258ca8a1e314fc15956193e02",
+    "results/point-qualified-apps.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/point-qualified-environment.json": "9cc0b5a715f5d481abddd31e872684f00092193bf6d0ee468d17a6bc55294c97",
+    "results/point-qualified-environment.stdout": "561ef7fb492a65e56407d4defcd0409ee2de0ed819c231f00f7ef2f4ad9cbddd",
+    "results/point-qualified-environment.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/point-qualified-app-hyperreal-build.json": "796a496185897814cb631bcbd67967a734acec57fbb874840224b7f4c8e28dae",
+    "results/point-qualified-app-hyperreal-build.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/point-qualified-app-hyperreal-build.stderr": "29f1e69656fcd6572efea14425dc2ce21fc05b245cb1bfd653665e9ea234781f",
+    "results/point-qualified-app-hyperreal-readme-quickstart-strip.json": "27cb622bac1ba66758784f8774604e4daad62a49ce8fc8bd425afe61f212d185",
+    "results/point-qualified-app-hyperreal-readme-quickstart-strip.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/point-qualified-app-hyperreal-readme-quickstart-strip.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/point-qualified-app-hyperreal-readme-quickstart-size.json": "2493d0e8cd28863d0f7ddb2f08dbb4ab5003e38bb7c48f5da6c61f56833c0a8d",
+    "results/point-qualified-app-hyperreal-readme-quickstart-size.stdout": "860aff480f4a359b8d33d294f4770632325f9523d6855da7bd96852ca65a5130",
+    "results/point-qualified-app-hyperreal-readme-quickstart-size.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/point-qualified-app-hyperreal-readme-quickstart-baseline-run.json": "b849f1514f427739f405867721f4881e1b28e5bd9a5ea64a0f66e967ec222a91",
+    "results/point-qualified-app-hyperreal-readme-quickstart-baseline-run.stdout": "9b02c3d3600e35c0191507df8eec9bd538068c7db17324262ab613625bf6535b",
+    "results/point-qualified-app-hyperreal-readme-quickstart-baseline-run.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/point-qualified-app-hyperreal-readme-quickstart-candidate-run.json": "063e55a3b315db5977ab4525cd5f5891e43834beb41004f8596774ebcee3bc55",
+    "results/point-qualified-app-hyperreal-readme-quickstart-candidate-run.stdout": "9b02c3d3600e35c0191507df8eec9bd538068c7db17324262ab613625bf6535b",
+    "results/point-qualified-app-hyperreal-readme-quickstart-candidate-run.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/point-qualified-app-hypercurve-build.json": "50162372a6afb14a4d1a8da16a5379eafc160cf3fc890444737d3e0051925284",
+    "results/point-qualified-app-hypercurve-build.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/point-qualified-app-hypercurve-build.stderr": "3d155de88350d651741e223634e5cdd4365d9d0a9946c138d36498d5c93f2a11",
+    "results/point-qualified-app-hypercurve-basic-strip.json": "d39a24b4f46d96c6d69d643dbd03e6656c0cc2daab82d836653bc54133fbe322",
+    "results/point-qualified-app-hypercurve-basic-strip.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/point-qualified-app-hypercurve-basic-strip.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/point-qualified-app-hypercurve-basic-size.json": "f58fd694a953d7fc39758706defaef3c202afb466ea2bac85e58ea589de24029",
+    "results/point-qualified-app-hypercurve-basic-size.stdout": "8c6c8d8b33b3ab81760524c67f049101b1644360efbe6e1f5b73bf8184c6a6ba",
+    "results/point-qualified-app-hypercurve-basic-size.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/point-qualified-app-hypercurve-basic-baseline-run.json": "e3a42df6df40555b89166df1c93a1fadbc73ad69f252f58c4e66e8ef2ec474ea",
+    "results/point-qualified-app-hypercurve-basic-baseline-run.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/point-qualified-app-hypercurve-basic-baseline-run.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/point-qualified-app-hypercurve-basic-candidate-run.json": "2df5314231479dc950ab6aa106b872a25f2c9ec560164c5fd14eea08f3d7ac0a",
+    "results/point-qualified-app-hypercurve-basic-candidate-run.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/point-qualified-app-hypercurve-basic-candidate-run.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/point-qualified-app-hypercurve-arrangement-strip.json": "c8233c776e1c5604f5a53d2455e9b11f177854180497042e07b7604312c6e1ad",
+    "results/point-qualified-app-hypercurve-arrangement-strip.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/point-qualified-app-hypercurve-arrangement-strip.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/point-qualified-app-hypercurve-arrangement-size.json": "da4727737cd9c5171858f200849fc0743aaf028204e52e8f21130cbb4d967eb7",
+    "results/point-qualified-app-hypercurve-arrangement-size.stdout": "c63b614cae8ebd1c9bd7cb0b23e11e612f6006ba0f7399a0887926e5434bb20b",
+    "results/point-qualified-app-hypercurve-arrangement-size.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/point-qualified-app-hypercurve-arrangement-baseline-run.json": "0d7ce13944d6987b3bb12a42742ac79783bd1ab8876fff06601ade67b3373a0a",
+    "results/point-qualified-app-hypercurve-arrangement-baseline-run.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/point-qualified-app-hypercurve-arrangement-baseline-run.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/point-qualified-app-hypercurve-arrangement-candidate-run.json": "fd602a01c905dc974d4837038db1fbfadbf63f6d8679848f183bef10c9c86b8d",
+    "results/point-qualified-app-hypercurve-arrangement-candidate-run.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/point-qualified-app-hypercurve-arrangement-candidate-run.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/point-qualified-platform-build.json": "9e465cce98788c46c370dcce1cbba45d7b8032c3c25bc41679e8fdb676a6bb50",
+    "results/point-qualified-platform-build.stdout": "196ef73e4acad1ddcb193b83baa6c136f4175fa86f8be4b65043ea4066199af4",
+    "results/point-qualified-platform-build.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/point-qualified-platform-run.json": "b5efcfcdf483eb29762b516df050df52314166d3dde827946bcd7f0d06e5882b",
+    "results/point-qualified-platform-run.stdout": "cc76f9b2110620816b75fdbc5b620cfe7f34195e58f311625a6bcf5e4583ccc8",
+    "results/point-qualified-platform-run.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/point-qualified-platform-baseline-lock.json": "e67f01db2b400a10bbb41f78412eb3e106f01dfdc79bf48a28b086cb877dc45a",
+    "results/point-qualified-platform-baseline-lock.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/point-qualified-platform-baseline-lock.stderr": "1ec4de966a66353dbd34c253e841716dad12c3fed830d849e05cb767cd3a00e7",
+    "results/point-qualified-platform-baseline-native-build.json": "d7e10c817315ad25af4f213ab9e0c358ef14560a24edd0d5297bc4fe4a77a62d",
+    "results/point-qualified-platform-baseline-native-build.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/point-qualified-platform-baseline-native-build.stderr": "d669550fe6fe98a05d88f19746843f7c3a93ad1d27b345ac60d455aec0d8e140",
+    "results/point-qualified-platform-baseline-wasm-build.json": "b831d5d83f5e7ff105ec7370e57f2ef0a9f533afbaecf238b2cf815adb0fd292",
+    "results/point-qualified-platform-baseline-wasm-build.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/point-qualified-platform-baseline-wasm-build.stderr": "ee3bc0a06775b0d1c094bb72423c87debc87061c44ef1e3103ccd9754e0afa74",
+    "results/point-qualified-public-baseline-native.json": "275f14f51b6912ad54b031ad66ba82b9a867eff9b58a989effa773e7d110bd69",
+    "results/point-qualified-public-baseline-native.stdout": "4e95f9b526cf96e3b8436524dbb75617a3c2be92678c8598149ab16f9b6c508d",
+    "results/point-qualified-public-baseline-native.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/point-qualified-public-baseline-wasm.json": "b777860843ef30bce7d3faab922f8b4d0330c251c38bdabcbe8ea42e284ca9b1",
+    "results/point-qualified-public-baseline-wasm.stdout": "4e95f9b526cf96e3b8436524dbb75617a3c2be92678c8598149ab16f9b6c508d",
+    "results/point-qualified-public-baseline-wasm.stderr": "5a345080adf1b194ea46354328826e4fc8b428c643da673b8baa086eb0477ced",
+    "results/point-qualified-platform-candidate-lock.json": "1ecdbbdd8db40027ed9f425169abfc3e225e315515d6f7e773f4a73b23689090",
+    "results/point-qualified-platform-candidate-lock.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/point-qualified-platform-candidate-lock.stderr": "1ec4de966a66353dbd34c253e841716dad12c3fed830d849e05cb767cd3a00e7",
+    "results/point-qualified-platform-candidate-native-build.json": "0dfc39d98322f369810b3ceccfe3e8fd1b3dd6f46c271f5992572a95fd8f2e24",
+    "results/point-qualified-platform-candidate-native-build.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/point-qualified-platform-candidate-native-build.stderr": "c4c294fe5c2f63b1279d783c85e901469b9d9ac5fb4c3ba9b57fcb5cc12176ea",
+    "results/point-qualified-platform-candidate-wasm-build.json": "c0c7caeea935c8e664c3e9b175f61b1c09557fd2799b5ec73813f6064c2d5b8b",
+    "results/point-qualified-platform-candidate-wasm-build.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/point-qualified-platform-candidate-wasm-build.stderr": "feebf2785ca70b3dc6f18b2dce0dd9e2c1bf12445aef7746b58ac5c3c6b24a22",
+    "results/point-qualified-public-candidate-native.json": "e63b412ef2f61df438a3c73420be8acd24da94978d4ad0c4567ce33815dfb866",
+    "results/point-qualified-public-candidate-native.stdout": "7b628db1453275c3ad4700523e7bdf36d1384904dd92f1afc78ad651a81ae350",
+    "results/point-qualified-public-candidate-native.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/point-qualified-public-candidate-wasm.json": "01bcaf5b7b0f2c2f65bbb58523b68cd76789e453a080ee12aae2509ca432856f",
+    "results/point-qualified-public-candidate-wasm.stdout": "7b628db1453275c3ad4700523e7bdf36d1384904dd92f1afc78ad651a81ae350",
+    "results/point-qualified-public-candidate-wasm.stderr": "25e599d3c5032107604dba795953af6ef86fab7b41a0c62e29a2acb9bc7d77b0",
+    "results/point-qualified-public-check.json": "43bacb516822349a1605ca5e31c988dabb6f7b57e7c2c3d497794c3758ee1b3b",
+    "results/point-qualified-public-check.stdout": "5a94c4c1cd2b331f327b23f11b0c164d86ce5a79a45d56e85bfdff4ca7e6a1d9",
+    "results/point-qualified-public-check.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/point-qualified-approx-build.json": "7d982deb185fe41b04c1c26f0bc5da75c9e43ac0ed1c095a3706e4d649c0ffaf",
+    "results/point-qualified-approx-build.stdout": "2cbe34a73bd101ce6a7362481ceb93517045992dd5b2177fb43c0a4d59f1b924",
+    "results/point-qualified-approx-build.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/point-qualified-approx-run.json": "0f036f11f181617c262289b44253c7d6a5695214d47180414bcea9d74d68aadb",
+    "results/point-qualified-approx-run.stdout": "97b5d72c542149a418ad64dd2238c32cd104569c4ca3abd5427d48d4227ab625",
+    "results/point-qualified-approx-run.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/point-qualified-approx-baseline-lock.json": "be8d69db9b8393e2b1a10c884501aba267d67e209d23e4fb1de87250bba8e178",
+    "results/point-qualified-approx-baseline-lock.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/point-qualified-approx-baseline-lock.stderr": "1ec4de966a66353dbd34c253e841716dad12c3fed830d849e05cb767cd3a00e7",
+    "results/point-qualified-approx-baseline-native-build.json": "504adaecaa2e10f340da09e9947861f9c669afa01857bfd5af546ba434fdd996",
+    "results/point-qualified-approx-baseline-native-build.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/point-qualified-approx-baseline-native-build.stderr": "bc3955c78e5c84f36eca3d72d8632e8e0be785155ec1246655d10840cb2763b8",
+    "results/point-qualified-approx-baseline-wasm-build.json": "f9df79b28170f28567f4140c71033e65f8704c2742875ae83ddbabef5384721d",
+    "results/point-qualified-approx-baseline-wasm-build.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/point-qualified-approx-baseline-wasm-build.stderr": "23ce1453f71f4425270b5c8e7e3d1fda811c0736b242c1f4007f6a25bc866a95",
+    "results/point-qualified-approx-public-baseline-native.json": "92bf6069d6b46b1bf2839cec0b3ffccf07d6fe88a55d19e4d184eb94642a756e",
+    "results/point-qualified-approx-public-baseline-native.stdout": "4e95f9b526cf96e3b8436524dbb75617a3c2be92678c8598149ab16f9b6c508d",
+    "results/point-qualified-approx-public-baseline-native.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/point-qualified-approx-public-baseline-wasm.json": "32ad0996cf348995088a5e59514d5d53b2cdca056436907bbb167b7ee332e688",
+    "results/point-qualified-approx-public-baseline-wasm.stdout": "4e95f9b526cf96e3b8436524dbb75617a3c2be92678c8598149ab16f9b6c508d",
+    "results/point-qualified-approx-public-baseline-wasm.stderr": "f244de245c52f44e1c348eb9b9ea90b02f370cf32190e17424d527525fe06349",
+    "results/point-qualified-approx-candidate-lock.json": "5632c47f29aa50753662cea163cbb99224c827f7ce90c265d2818346de2900c7",
+    "results/point-qualified-approx-candidate-lock.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/point-qualified-approx-candidate-lock.stderr": "1ec4de966a66353dbd34c253e841716dad12c3fed830d849e05cb767cd3a00e7",
+    "results/point-qualified-approx-candidate-native-build.json": "5c489c37838f5e62d2e6f2e55cdb607116f38cd443891a864b9282cc9cbd2001",
+    "results/point-qualified-approx-candidate-native-build.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/point-qualified-approx-candidate-native-build.stderr": "cff4f283f957d66d2a54eb0cf42ee262707c19a9a71f2bf72ba7e971caeb7f2d",
+    "results/point-qualified-approx-candidate-wasm-build.json": "656b5aa52e1fa6e1569479abca844ef5b0f045a76bd1d156f93e855d3b73f0d3",
+    "results/point-qualified-approx-candidate-wasm-build.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/point-qualified-approx-candidate-wasm-build.stderr": "cc2e4a90e5226d53ed3bb85a1eb0d6828f0869a995ace391ff64399bf4f20f7b",
+    "results/point-qualified-approx-public-candidate-native.json": "b14c644af6a4dc4bb6de683c6b3aa475cde046eb93f419f0169cd937988654d3",
+    "results/point-qualified-approx-public-candidate-native.stdout": "7b628db1453275c3ad4700523e7bdf36d1384904dd92f1afc78ad651a81ae350",
+    "results/point-qualified-approx-public-candidate-native.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/point-qualified-approx-public-candidate-wasm.json": "8b37b865982fc3b6ecbd3e382bc3271301a16455e06064e16020dd48d278e2dc",
+    "results/point-qualified-approx-public-candidate-wasm.stdout": "7b628db1453275c3ad4700523e7bdf36d1384904dd92f1afc78ad651a81ae350",
+    "results/point-qualified-approx-public-candidate-wasm.stderr": "eb89f8e0a90fd921a43fa9012b914914909a55e489500d7e811aa64ccebc86f7",
+    "results/point-qualified-approx-public-check.json": "0fb65ac2c299308a5ca2e9927f00e78dea7344d6f8d4888a942a2b12ba6bf85c",
+    "results/point-qualified-approx-public-check.stdout": "0ca848b49381c8e97bb86283cf40c4c22a26b39b95216cc2f9de190f03bf9c6c",
+    "results/point-qualified-approx-public-check.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "gates": [
+    "point-qualified-consumer-release",
+    "point-qualified-consumer-wasm",
+    "point-qualified-consumer-clippy",
+    "point-qualified-apps",
+    "point-qualified-environment",
+    "point-qualified-app-hyperreal-build",
+    "point-qualified-app-hyperreal-readme-quickstart-strip",
+    "point-qualified-app-hyperreal-readme-quickstart-size",
+    "point-qualified-app-hyperreal-readme-quickstart-baseline-run",
+    "point-qualified-app-hyperreal-readme-quickstart-candidate-run",
+    "point-qualified-app-hypercurve-build",
+    "point-qualified-app-hypercurve-basic-strip",
+    "point-qualified-app-hypercurve-basic-size",
+    "point-qualified-app-hypercurve-basic-baseline-run",
+    "point-qualified-app-hypercurve-basic-candidate-run",
+    "point-qualified-app-hypercurve-arrangement-strip",
+    "point-qualified-app-hypercurve-arrangement-size",
+    "point-qualified-app-hypercurve-arrangement-baseline-run",
+    "point-qualified-app-hypercurve-arrangement-candidate-run",
+    "point-qualified-platform-build",
+    "point-qualified-platform-run",
+    "point-qualified-platform-baseline-lock",
+    "point-qualified-platform-baseline-native-build",
+    "point-qualified-platform-baseline-wasm-build",
+    "point-qualified-public-baseline-native",
+    "point-qualified-public-baseline-wasm",
+    "point-qualified-platform-candidate-lock",
+    "point-qualified-platform-candidate-native-build",
+    "point-qualified-platform-candidate-wasm-build",
+    "point-qualified-public-candidate-native",
+    "point-qualified-public-candidate-wasm",
+    "point-qualified-public-check",
+    "point-qualified-approx-build",
+    "point-qualified-approx-run",
+    "point-qualified-approx-baseline-lock",
+    "point-qualified-approx-baseline-native-build",
+    "point-qualified-approx-baseline-wasm-build",
+    "point-qualified-approx-public-baseline-native",
+    "point-qualified-approx-public-baseline-wasm",
+    "point-qualified-approx-candidate-lock",
+    "point-qualified-approx-candidate-native-build",
+    "point-qualified-approx-candidate-wasm-build",
+    "point-qualified-approx-public-candidate-native",
+    "point-qualified-approx-public-candidate-wasm",
+    "point-qualified-approx-public-check"
+  ],
+  "sourceOriginSha256": "36e6ede1b9857e1680add0c4d7697261bca063c422cc316fb539fa1bc26a3c71",
+  "changed": [
+    "hypersolve/src/algebraic_binary.rs"
+  ],
+  "consumer": {
+    "passed": 1764,
+    "failed": 0,
+    "ignored": 9,
+    "suites": 46,
+    "profile": "release",
+    "features": "all",
+    "wasmFeatures": "default plus triangulation,svg,hershey; build only",
+    "clippy": "all targets/all features; warnings denied"
+  },
+  "mathematical": {
+    "status": "pass",
+    "rowsPerVariantPerPlatform": 6441,
+    "checks": {
+      "native": {
+        "status": "pass",
+        "improved": 825,
+        "unchanged": 5616,
+        "mathematical": {
+          "status": "pass",
+          "recordsPerVariant": 6441,
+          "counts": {
+            "Transformed": 5126,
+            "DenominatorMayContainZero": 241,
+            "Undecided": 40,
+            "NonIsolatingImageInterval": 65,
+            "UnsupportedDegree": 968
+          },
+          "checks": {
+            "paired-full-record": 6441,
+            "source-left-isolation": 6440,
+            "source-right-isolation": 6440,
+            "root-status": 5126,
+            "annihilator-root-set": 5126,
+            "unique-arithmetic-image": 5126,
+            "selected-root-isolation": 5126,
+            "image-subinterval": 5126,
+            "exact-root": 1794,
+            "nonzero-guard": 241,
+            "zero-resultant": 40,
+            "nonisolating-control": 65,
+            "degree-guard": 968
+          },
+          "totalChecks": 48059,
+          "independentResultants": 1178,
+          "failures": [],
+          "limits": "Authored real-root carriers and strict-policy public queries. Independent rational Sturm/closed-interval image certificates; signed multiplicity agreement checked by paired complete records plus the separate exact kernel corpus. Not all states/platforms/features or performance qualification."
+        },
+        "limits": "The unchanged oracle independently certifies each candidate output. Its paired-record check is self-paired here, not baseline equality; the separate full-record comparison above qualifies exactly 825 improvements and no other changes. Original checkpoint-52 failed gate remains preserved."
+      },
+      "wasm": {
+        "status": "pass",
+        "improved": 825,
+        "unchanged": 5616,
+        "mathematical": {
+          "status": "pass",
+          "recordsPerVariant": 6441,
+          "counts": {
+            "Transformed": 5126,
+            "DenominatorMayContainZero": 241,
+            "Undecided": 40,
+            "NonIsolatingImageInterval": 65,
+            "UnsupportedDegree": 968
+          },
+          "checks": {
+            "paired-full-record": 6441,
+            "source-left-isolation": 6440,
+            "source-right-isolation": 6440,
+            "root-status": 5126,
+            "annihilator-root-set": 5126,
+            "unique-arithmetic-image": 5126,
+            "selected-root-isolation": 5126,
+            "image-subinterval": 5126,
+            "exact-root": 1794,
+            "nonzero-guard": 241,
+            "zero-resultant": 40,
+            "nonisolating-control": 65,
+            "degree-guard": 968
+          },
+          "totalChecks": 48059,
+          "independentResultants": 1178,
+          "failures": [],
+          "limits": "Authored real-root carriers and strict-policy public queries. Independent rational Sturm/closed-interval image certificates; signed multiplicity agreement checked by paired complete records plus the separate exact kernel corpus. Not all states/platforms/features or performance qualification."
+        },
+        "limits": "The unchanged oracle independently certifies each candidate output. Its paired-record check is self-paired here, not baseline equality; the separate full-record comparison above qualifies exactly 825 improvements and no other changes. Original checkpoint-52 failed gate remains preserved."
+      }
+    },
+    "limits": "Two executions of the unchanged mathematical oracle. Its candidate self-pair checks are disclosed by checkpoint 53; separate baseline/candidate full-record checks prove exactly 825 gains and 5,616 unchanged records on each platform. Identical outputs are not additional independent mathematical oracles. No platform timings or nonrational endpoint coverage are claimed."
+  },
+  "approximateMathematical": {
+    "status": "pass",
+    "requestedPolicy": "APPROXIMATE_512",
+    "rowsPerVariantPerPlatform": 6441,
+    "checks": {
+      "native": {
+        "status": "pass",
+        "improved": 825,
+        "unchanged": 5616,
+        "counts": {
+          "Transformed": 5126,
+          "DenominatorMayContainZero": 241,
+          "Undecided": 40,
+          "NonIsolatingImageInterval": 65,
+          "UnsupportedDegree": 968
+        },
+        "checks": {
+          "paired-full-record": 6441,
+          "source-left-isolation": 6440,
+          "source-right-isolation": 6440,
+          "root-status": 5126,
+          "annihilator-root-set": 5126,
+          "unique-arithmetic-image": 5126,
+          "selected-root-isolation": 5126,
+          "image-subinterval": 5126,
+          "exact-root": 1794,
+          "nonzero-guard": 241,
+          "zero-resultant": 40,
+          "nonisolating-control": 65,
+          "degree-guard": 968
+        },
+        "totalChecks": 48059,
+        "independentResultants": 1178,
+        "failures": []
+      },
+      "wasm": {
+        "status": "pass",
+        "improved": 825,
+        "unchanged": 5616,
+        "counts": {
+          "Transformed": 5126,
+          "DenominatorMayContainZero": 241,
+          "Undecided": 40,
+          "NonIsolatingImageInterval": 65,
+          "UnsupportedDegree": 968
+        },
+        "checks": {
+          "paired-full-record": 6441,
+          "source-left-isolation": 6440,
+          "source-right-isolation": 6440,
+          "root-status": 5126,
+          "annihilator-root-set": 5126,
+          "unique-arithmetic-image": 5126,
+          "selected-root-isolation": 5126,
+          "image-subinterval": 5126,
+          "exact-root": 1794,
+          "nonzero-guard": 241,
+          "zero-resultant": 40,
+          "nonisolating-control": 65,
+          "degree-guard": 968
+        },
+        "totalChecks": 48059,
+        "independentResultants": 1178,
+        "failures": []
+      }
+    },
+    "limits": "Same authored exact-rational carriers and endpoints as the STRICT corpus, but both public call sites request APPROXIMATE_512. Exact rational comparisons remain available. This exercises the guarded approximate-policy point-image replay on both platforms; it is not unresolved or nonrational endpoint qualification. Candidate self-pair oracle checks are not independent baseline comparisons; separate paired comparisons prove 825 gains and 5,616 unchanged records. Repeated identical outputs are not new independent mathematical oracles or timing observations."
+  },
+  "applicationSizes": [
+    {
+      "crate": "hyperreal",
+      "example": "readme_quickstart",
+      "baseline": [
+        1701968,
+        1415896
+      ],
+      "candidate": [
+        1701080,
+        1415112
+      ],
+      "byteDeltas": [
+        -888,
+        -784
+      ],
+      "baselineSections": [
+        {
+          "text": 1191671,
+          "data": 220296,
+          "bss": 1736,
+          "decimal": 1413703,
+          "path": "/tmp/calcium-e-qualified-apps.AHiwfn/candidate-hyperreal-readme_quickstart"
+        },
+        {
+          "text": 1191671,
+          "data": 220296,
+          "bss": 1736,
+          "decimal": 1413703,
+          "path": "/tmp/calcium-e-qualified-apps.AHiwfn/candidate-hyperreal-readme_quickstart.stripped"
+        }
+      ],
+      "candidateSections": [
+        {
+          "text": 1190883,
+          "data": 220296,
+          "bss": 2520,
+          "decimal": 1413699,
+          "path": "/tmp/calcium-point-qualified-apps.QIBZlE/candidate-hyperreal-readme_quickstart"
+        },
+        {
+          "text": 1190883,
+          "data": 220296,
+          "bss": 2520,
+          "decimal": 1413699,
+          "path": "/tmp/calcium-point-qualified-apps.QIBZlE/candidate-hyperreal-readme_quickstart.stripped"
+        }
+      ],
+      "sameStdout": true
+    },
+    {
+      "crate": "hypercurve",
+      "example": "basic",
+      "baseline": [
+        13494488,
+        11012856
+      ],
+      "candidate": [
+        13495064,
+        11013992
+      ],
+      "byteDeltas": [
+        576,
+        1136
+      ],
+      "baselineSections": [
+        {
+          "text": 10702455,
+          "data": 306488,
+          "bss": 2800,
+          "decimal": 11011743,
+          "path": "/tmp/calcium-e-qualified-apps.AHiwfn/candidate-hypercurve-basic"
+        },
+        {
+          "text": 10702455,
+          "data": 306488,
+          "bss": 2800,
+          "decimal": 11011743,
+          "path": "/tmp/calcium-e-qualified-apps.AHiwfn/candidate-hypercurve-basic.stripped"
+        }
+      ],
+      "candidateSections": [
+        {
+          "text": 10703579,
+          "data": 306488,
+          "bss": 1664,
+          "decimal": 11011731,
+          "path": "/tmp/calcium-point-qualified-apps.QIBZlE/candidate-hypercurve-basic"
+        },
+        {
+          "text": 10703579,
+          "data": 306488,
+          "bss": 1664,
+          "decimal": 11011731,
+          "path": "/tmp/calcium-point-qualified-apps.QIBZlE/candidate-hypercurve-basic.stripped"
+        }
+      ],
+      "sameStdout": true
+    },
+    {
+      "crate": "hypercurve",
+      "example": "arrangement",
+      "baseline": [
+        14181296,
+        11587192
+      ],
+      "candidate": [
+        14181832,
+        11588344
+      ],
+      "byteDeltas": [
+        536,
+        1152
+      ],
+      "baselineSections": [
+        {
+          "text": 11265851,
+          "data": 317416,
+          "bss": 1984,
+          "decimal": 11585251,
+          "path": "/tmp/calcium-e-qualified-apps.AHiwfn/candidate-hypercurve-arrangement"
+        },
+        {
+          "text": 11265851,
+          "data": 317416,
+          "bss": 1984,
+          "decimal": 11585251,
+          "path": "/tmp/calcium-e-qualified-apps.AHiwfn/candidate-hypercurve-arrangement.stripped"
+        }
+      ],
+      "candidateSections": [
+        {
+          "text": 11266991,
+          "data": 317416,
+          "bss": 4928,
+          "decimal": 11589335,
+          "path": "/tmp/calcium-point-qualified-apps.QIBZlE/candidate-hypercurve-arrangement"
+        },
+        {
+          "text": 11266991,
+          "data": 317416,
+          "bss": 4928,
+          "decimal": 11589335,
+          "path": "/tmp/calcium-point-qualified-apps.QIBZlE/candidate-hypercurve-arrangement.stripped"
+        }
+      ],
+      "sameStdout": true
+    }
+  ],
+  "platformSizes": [
+    {
+      "mode": "platform",
+      "platform": "native",
+      "baselineBytes": 2671168,
+      "candidateBytes": 2672320,
+      "byteDelta": 1152
+    },
+    {
+      "mode": "platform",
+      "platform": "wasm",
+      "baselineBytes": 1211477,
+      "candidateBytes": 1212037,
+      "byteDelta": 560
+    },
+    {
+      "mode": "approx",
+      "platform": "native",
+      "baselineBytes": 2670952,
+      "candidateBytes": 2672032,
+      "byteDelta": 1080
+    },
+    {
+      "mode": "approx",
+      "platform": "wasm",
+      "baselineBytes": 1211336,
+      "candidateBytes": 1211883,
+      "byteDelta": 547
+    }
+  ],
+  "platformArtifacts": [
+    {
+      "mode": "platform",
+      "variant": "baseline",
+      "platform": "native",
+      "path": "/tmp/calcium-point-qualified-platform.jUVoNf/baseline",
+      "bytes": 2671168,
+      "sha256": "1504dd43b18c77ed1fb29472841da6b48aef9447462717b7c2f553f033bd483e"
+    },
+    {
+      "mode": "platform",
+      "variant": "baseline",
+      "platform": "wasm",
+      "path": "/tmp/calcium-point-qualified-platform.jUVoNf/baseline.wasm",
+      "bytes": 1211477,
+      "sha256": "86264b6c7446aabccd1f2bd304a2bd90ac595a92c90876ba9e334c58c315caab"
+    },
+    {
+      "mode": "platform",
+      "variant": "candidate",
+      "platform": "native",
+      "path": "/tmp/calcium-point-qualified-platform.jUVoNf/candidate",
+      "bytes": 2672320,
+      "sha256": "53f59b245f282c95c42d7156d31c5537443fbf9004d98de57db826da811431aa"
+    },
+    {
+      "mode": "platform",
+      "variant": "candidate",
+      "platform": "wasm",
+      "path": "/tmp/calcium-point-qualified-platform.jUVoNf/candidate.wasm",
+      "bytes": 1212037,
+      "sha256": "70f1c921365cb73688d1920c8fab3343b9b3798a6a2d29d58d5a39d41c556147"
+    },
+    {
+      "mode": "approx",
+      "variant": "baseline",
+      "platform": "native",
+      "path": "/tmp/calcium-point-qualified-approx.HLxIaq/baseline",
+      "bytes": 2670952,
+      "sha256": "98375d375595f3f149cd4e0b482d87540ef2d540f5e453cf727ba30632e3513e"
+    },
+    {
+      "mode": "approx",
+      "variant": "baseline",
+      "platform": "wasm",
+      "path": "/tmp/calcium-point-qualified-approx.HLxIaq/baseline.wasm",
+      "bytes": 1211336,
+      "sha256": "e6e30fa71118102581134ca754fb76f572a52f1bad1d7fda95997e20129964b2"
+    },
+    {
+      "mode": "approx",
+      "variant": "candidate",
+      "platform": "native",
+      "path": "/tmp/calcium-point-qualified-approx.HLxIaq/candidate",
+      "bytes": 2672032,
+      "sha256": "1e2f36640afdf57b49756f5f2c6c2dc77cf823e94a4e5b1f76eeaa74f749dff7"
+    },
+    {
+      "mode": "approx",
+      "variant": "candidate",
+      "platform": "wasm",
+      "path": "/tmp/calcium-point-qualified-approx.HLxIaq/candidate.wasm",
+      "bytes": 1211883,
+      "sha256": "d7b88d97b9e739c6e2e38a16022bbca76547e666cf57958b9e60984cc5893eab"
+    }
+  ],
+  "dedicatedBytes": 68928629,
+  "environment": {
+    "recorded": "2026-09-10T20:49:16.941Z",
+    "node": "v22.22.2",
+    "v8": "12.4.254.21-node.39",
+    "platform": "linux",
+    "arch": "x64",
+    "kernel": "7.1.8-100.fc43.x86_64",
+    "versions": [
+      {
+        "command": "rustc",
+        "args": [
+          "-vV"
+        ],
+        "stdout": "rustc 1.97.0 (2d8144b78 2026-07-07)\nbinary: rustc\ncommit-hash: 2d8144b7880597b6e6d3dfd63a9a9efae3f533d3\ncommit-date: 2026-07-07\nhost: x86_64-unknown-linux-gnu\nrelease: 1.97.0\nLLVM version: 22.1.6\n"
+      },
+      {
+        "command": "cargo",
+        "args": [
+          "-vV"
+        ],
+        "stdout": "cargo 1.97.0 (c980f4866 2026-06-30)\nrelease: 1.97.0\ncommit-hash: c980f4866141969fab6254a680546a277789d6f0\ncommit-date: 2026-06-30\nhost: x86_64-unknown-linux-gnu\nlibgit2: 1.9.2 (sys:0.20.4 vendored)\nlibcurl: 8.20.0-DEV (sys:0.4.88+curl-8.20.0 vendored ssl:OpenSSL/3.6.2)\nssl: OpenSSL 3.6.2 7 Apr 2026\nos: Fedora 43.0.0 (FortyThree) [64-bit]\n"
+      },
+      {
+        "command": "strip",
+        "args": [
+          "--version"
+        ],
+        "stdout": "GNU strip version 2.45.1-5.fc43\nCopyright (C) 2025 Free Software Foundation, Inc.\nThis program is free software; you may redistribute it under the terms of\nthe GNU General Public License version 3 or (at your option) any later version.\nThis program has absolutely no warranty.\n"
+      },
+      {
+        "command": "size",
+        "args": [
+          "--version"
+        ],
+        "stdout": "GNU size version 2.45.1-5.fc43\nCopyright (C) 2025 Free Software Foundation, Inc.\nThis program is free software; you may redistribute it under the terms of\nthe GNU General Public License version 3 or (at your option) any later version.\nThis program has absolutely no warranty.\n"
+      }
+    ],
+    "volumes": [
+      {
+        "path": "/tmp",
+        "totalBytes": 67488174080,
+        "availableBytes": 16642371584
+      },
+      {
+        "path": "/home/tim/Documents/GitHub/workspace",
+        "totalBytes": 1966167244800,
+        "availableBytes": 123670450176
+      }
+    ],
+    "limits": "Build/runtime identity and a post-build filesystem-capacity snapshot. No timing, allocator, peak-memory, fixed-frequency or idle-machine claim."
+  },
+  "sizeLimits": "Matched source/configuration and hash-preserved executables, including prior baseline application reuse. Not isolated algorithm-only byte changes: paths/linker layout contribute, demonstrated by -784 stripped bytes in unchanged scalar code. No whole-application timings, LTO/size-profile qualification or generalized size gain.",
+  "costLimits": "No new CPU or allocator measurements. Checkpoint 53 native rational/preconditioned-cache costs remain their original observations; execution durations here are not benchmarks. Nonrational/Unknown endpoints, deeper state histories and WASM performance remain pending.",
+  "coverageBefore": [
+    {
+      "repo": "calcium",
+      "reviewed": 552,
+      "complete": 552,
+      "partial": 0,
+      "readLines": 60286
+    },
+    {
+      "repo": "flint",
+      "reviewed": 883,
+      "complete": 863,
+      "partial": 20,
+      "readLines": 123367
+    }
+  ],
+  "coverageAtBinding": [
+    {
+      "repo": "calcium",
+      "reviewed": 552,
+      "complete": 552,
+      "partial": 0,
+      "readLines": 60286
+    },
+    {
+      "repo": "flint",
+      "reviewed": 883,
+      "complete": 863,
+      "partial": 20,
+      "readLines": 123367
+    }
+  ],
+  "newDonorLines": 0,
+  "liveFiles": 956,
+  "qualification": "Final guarded consumer release 1764 pass/9 ignored; Clippy and selected-feature WASM consumer build pass. Full rational public corpus executes on native and WASM under STRICT and APPROXIMATE_512, preserving 825 gains and 5616 unchanged records each. Prior unstrengthened debug-consumer evidence is not relabeled. No new CPU/allocator/Memcheck, guarded full-debug-consumer or full-CI claim.",
+  "production": "No production/donor edit or retained transfer; all 956 live sources and five retained continuation transfers unchanged.",
+  "next": "Nonrational/Unknown endpoint and state-history costs, relevant WASM measurements, then an explicit guarded-repair retention decision. Separate power-sum optimization remains unselected/untimed.",
+  "scope": "No donor coverage added. Whole original reference inventory, supporting kernels, pending transfer experiments and reconciliation remain incomplete."
+}

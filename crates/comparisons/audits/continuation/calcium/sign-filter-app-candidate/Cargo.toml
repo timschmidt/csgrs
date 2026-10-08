@@ -1,0 +1,22 @@
+[package]
+name = "audit-sign-filter-candidate"
+version = "0.0.0"
+edition = "2024"
+publish = false
+[workspace]
+[dependencies]
+hyperlimit = { path = "../sign-filter-candidate/hyperlimit" }
+hyperreal = { path = "../sign-filter-candidate/hyperreal" }
+serde_json = "1"
+[features]
+trace = ["hyperlimit/dispatch-trace", "hyperreal/dispatch-trace"]
+[[bin]]
+name = "audit-sign-filter-candidate-cpu"
+path = "../sign-filter-cpu.rs"
+[[bin]]
+name = "audit-sign-filter-candidate-allocation"
+path = "../sign-filter-allocation.rs"
+[[bin]]
+name = "audit-sign-filter-candidate-trace"
+path = "../sign-filter-probe/src/main.rs"
+required-features = ["trace"]

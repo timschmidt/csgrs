@@ -1,0 +1,30 @@
+\doxysubsection{source/dynamics/first\+\_\+order\+\_\+pde.hpp File Reference}
+\hypertarget{first__order__pde_8hpp}{}\label{first__order__pde_8hpp}\index{source/dynamics/first\_order\_pde.hpp@{source/dynamics/first\_order\_pde.hpp}}
+
+
+\doxysubsubsection{Description}
+Rigorous solutions of first-\/order hyperbolic partial differential equations. 
+
+{\ttfamily \#include "{}numeric/float.\+decl.\+hpp"{}}\newline
+{\ttfamily \#include "{}numeric/real.\+hpp"{}}\newline
+{\ttfamily \#include "{}algebra/tensor.\+hpp"{}}\newline
+{\ttfamily \#include "{}function/function.\+decl.\+hpp"{}}\newline
+{\ttfamily \#include "{}algebra/tensor.\+tpl.\+hpp"{}}\newline
+\doxysubsubsubsection*{Classes}
+\begin{DoxyCompactItemize}
+\item 
+struct \mbox{\hyperlink{structAriadne_1_1FirstOrderPDE}{First\+Order\+PDE}}
+\begin{DoxyCompactList}\small\item\em The first-\/order partial differential equation $ A u_{,t} + \sum_{j=1}^{n} B_j u_{,x_j} = f(u). $. \end{DoxyCompactList}\item 
+struct \mbox{\hyperlink{structAriadne_1_1FirstOrderPDESolution}{First\+Order\+PDESolution$<$ PR $>$}}
+\begin{DoxyCompactList}\small\item\em The solution of a first-\/order partial differential equation. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsubsection*{Namespaces}
+\begin{DoxyCompactItemize}
+\item 
+namespace \mbox{\hyperlink{namespaceAriadne}{Ariadne}}
+\begin{DoxyCompactList}\small\item\em Top-\/level Ariadne namespace. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsubsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{namespaceAriadne_acb75f2d83016c70696f1873a15138adf}\label{namespaceAriadne_acb75f2d83016c70696f1873a15138adf} 
+{\footnotesize template$<$class X$>$ }\\\mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ \mbox{\hyperlink{classAriadne_1_1Bounds}{Bounds}}$<$ X $>$ $>$ {\bfseries multiaffine\+\_\+interpolate} (\mbox{\hyperlink{classAriadne_1_1Tensor}{Tensor}}$<$ 2, \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ \mbox{\hyperlink{classAriadne_1_1Bounds}{Bounds}}$<$ X $>$ $>$ $>$ const  \&us, \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ X $>$ const  \&x)
+\begin{DoxyCompactList}\small\item\em Compute the value of the multiaffine interpolation of the data {\itshape us} at the point {\itshape x}. \end{DoxyCompactList}\end{DoxyCompactItemize}

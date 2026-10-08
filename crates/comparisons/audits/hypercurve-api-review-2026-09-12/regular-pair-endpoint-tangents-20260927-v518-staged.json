@@ -1,0 +1,14 @@
+{
+  "repos": {
+    "hypercurve": {
+      "parent": "24751d38e1c8b0e48a435192c3590c8e9458db4b",
+      "paths": {
+        "src/bezier_offset.rs": "9ba6eb6e585a8c7ffb6b4519ba3800bf483422bbe735daed2109d93f33e36f30",
+        "src/bezier_region.rs": "23d33360f8bf8a8a3dba51440f0371f49846c835b4045ff01305ee40b86d86cf",
+        "src/curve.rs": "da3661b6dd2c5db616b813b4239f27d505057f2521c8ae30e159ba12e3a70315"
+      }
+    }
+  },
+  "qualification": "regular-pair-endpoint-tangents-20260927-v518-terminal.json",
+  "verified_source_files": 2047
+}

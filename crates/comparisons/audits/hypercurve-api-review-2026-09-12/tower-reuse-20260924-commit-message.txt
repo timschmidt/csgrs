@@ -1,0 +1,13 @@
+Replay quadratic towers iteratively and retain exact reductions
+
+Replace recursive budgeted replay and linear memo lookup with iterative DAG
+traversal. Retain bounded exact reductions and proven signs on the existing
+lazy node cache, and query shared Real payloads without temporary scaling.
+Cancel dyadic factors before checking and allocating coefficient sizes.
+
+The transformed selected-chamfer composition now closes under both policies.
+The PH self-contact fillet completes in 3.62s; its parent exceeds 75s.
+Validated 833 Hyperreal, 252 Hyperlimit and 507 Hypersolve tests, plus both
+all-target feature configurations in all four affected layers. All 1,226
+Hypercurve cases were attempted: 1,205 passed, six ignored, and 15 existing
+nonpasses remain. No previously passing case regressed.

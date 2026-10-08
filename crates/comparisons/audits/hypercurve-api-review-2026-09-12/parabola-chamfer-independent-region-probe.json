@@ -1,0 +1,19 @@
+{
+  "base_commit": "a3c843cbfa3ded3acd388dbd81371055fc40a633",
+  "command": [
+    "rustc",
+    "--edition=2024",
+    "-O",
+    "parabola-chamfer-independent-region-probe.rs",
+    "--extern",
+    "hypercurve=/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/libhypercurve-2c7ff6f3fbe07653.rlib",
+    "-L",
+    "dependency=/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps",
+    "-o",
+    "parabola-chamfer-independent-region-probe"
+  ],
+  "library_sha256": "6ff5370c425188136425bbbcd4bc46df85caf8a9dc3caef76cb2b2eb17d52239",
+  "binary_sha256": "3b26b1e675755cb170e300f2d0c8e3808f20a7657d0a60c6e0ca240db6f7ec27",
+  "returncode": 101,
+  "elapsed_seconds": 0.09854299499420449
+}

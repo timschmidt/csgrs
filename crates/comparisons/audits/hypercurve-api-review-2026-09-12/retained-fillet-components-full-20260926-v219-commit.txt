@@ -1,0 +1,10 @@
+Retain exact parameter components through complete domain queries
+
+Keep selected correspondences, fixed/free axes, point-image identity, and
+finite/incident chart ownership alongside residual isolated contacts.
+Share overlap parameter replay and enforce domain membership in the owned
+chart mappings. Select full axis sign cells before exact domain clipping.
+
+Validated with 558 release cases across eight targets, formatting, both
+all-target Clippy configurations, and downstream Hyperbrep checking.
+Public continuous-fillet selection and reconstruction remain follow-up work.

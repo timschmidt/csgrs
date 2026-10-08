@@ -1,0 +1,279 @@
+aern-interval> configure (lib)
+Configuring aern-interval-0.5.0...
+aern-interval> build (lib) with ghc-9.6.7
+Preprocessing library for aern-interval-0.5.0..
+Building library for aern-interval-0.5.0..
+[ 1 of 18] Compiling Numeric.AERN.Basics.Interval.Basics
+
+/tmp/aern-audit.zp9Mzz/source/aern-interval/src/Numeric/AERN/Basics/Interval/Basics.hs:42:1: warning: [-Wunused-imports]
+    The import of ‘Control.Applicative’ is redundant
+      except perhaps to import instances from ‘Control.Applicative’
+    To import instances alone, use: import Control.Applicative()
+   |
+42 | import Control.Applicative
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^
+[ 2 of 18] Compiling Numeric.AERN.Basics.Interval.Arbitrary
+
+/tmp/aern-audit.zp9Mzz/source/aern-interval/src/Numeric/AERN/Basics/Interval/Arbitrary.hs:30:1: warning: [GHC-90177] [-Worphans]
+    Orphan instance: instance (NumOrd.ArbitraryOrderedTuple e,
+                               NumOrd.RoundedLattice e, AreaHasForbiddenValues e,
+                               NumOrd.PartialComparison e) =>
+                              ArbitraryWithArea (Interval e)
+    Suggested fix:
+      Move the instance declaration to the module of the class or of the type, or
+      wrap the type with a newtype and declare the instance on the new type.
+   |
+30 | instance 
+   | ^^^^^^^^^...
+
+/tmp/aern-audit.zp9Mzz/source/aern-interval/src/Numeric/AERN/Basics/Interval/Arbitrary.hs:49:26: warning: [GHC-62161] [-Wincomplete-patterns]
+    Pattern match(es) are non-exhaustive
+    In a case alternative:
+        Patterns of type ‘Maybe ConsistencyStatus’ not matched:
+            Just Inconsistent
+   |
+49 |             let result = case maybeConsistencyStatus of
+   |                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^...
+[ 3 of 18] Compiling Numeric.AERN.Basics.Interval.Consistency
+
+/tmp/aern-audit.zp9Mzz/source/aern-interval/src/Numeric/AERN/Basics/Interval/Consistency.hs:91:7: warning: [GHC-62161] [-Wincomplete-patterns]
+    Pattern match(es) are non-exhaustive
+    In a case alternative:
+        Patterns of type ‘Maybe (Gen (e, e))’ not matched: Nothing
+   |
+91 |       case NumOrd.arbitraryPairRelatedBy LT of
+   |       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^...
+
+/tmp/aern-audit.zp9Mzz/source/aern-interval/src/Numeric/AERN/Basics/Interval/Consistency.hs:107:7: warning: [GHC-62161] [-Wincomplete-patterns]
+    Pattern match(es) are non-exhaustive
+    In a case alternative:
+        Patterns of type ‘Maybe (Gen (e, e))’ not matched: Nothing
+    |
+107 |       case NumOrd.arbitraryPairRelatedBy LT of
+    |       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^...
+[ 4 of 18] Compiling Numeric.AERN.Basics.Interval.NumericOrder
+
+/tmp/aern-audit.zp9Mzz/source/aern-interval/src/Numeric/AERN/Basics/Interval/NumericOrder.hs:152:1: warning: [GHC-38417] [-Wmissing-signatures]
+    Top-level binding with no type signature:
+      arbitraryIntervalTupleInAreaNumericallyRelatedBy :: (NumOrd.ArbitraryOrderedTuple
+                                                             e,
+                                                           NumOrd.PartialComparison e,
+                                                           AreaHasForbiddenValues e, Ord a,
+                                                           Show a) =>
+                                                          Maybe (Area e, AreaConsistencyConstraint)
+                                                          -> [a]
+                                                          -> [((a, a), [PartialOrdering])]
+                                                          -> Maybe (Gen [Interval e])
+    |
+152 | arbitraryIntervalTupleInAreaNumericallyRelatedBy maybeArea indices constraints =
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-interval/src/Numeric/AERN/Basics/Interval/NumericOrder.hs:166:26: warning: [GHC-18042] [-Wtype-defaults]
+    • Defaulting the type variable ‘a0’ to type ‘Integer’ in the following constraints
+        (Ord a0)
+          arising from a use of ‘>’
+          at src/Numeric/AERN/Basics/Interval/NumericOrder.hs:166:26
+        (Num a0)
+          arising from the literal ‘100’
+          at src/Numeric/AERN/Basics/Interval/NumericOrder.hs:158:32-34
+    • In the expression: maxTries > 0
+      In a stmt of a pattern guard for
+                     a case alternative:
+        maxTries > 0
+      In a case alternative:
+          _ | maxTries > 0 -> avoidForbidden gen $ maxTries - 1
+    |
+166 |             _ | maxTries > 0 -> avoidForbidden gen $ maxTries - 1
+    |                          ^
+
+/tmp/aern-audit.zp9Mzz/source/aern-interval/src/Numeric/AERN/Basics/Interval/NumericOrder.hs:186:5: warning: [GHC-62161] [-Wincomplete-patterns]
+    Pattern match(es) are non-exhaustive
+    In an equation for ‘endpointsToIntervals’:
+        Patterns of type ‘[e]’ not matched: [_]
+    |
+186 |     endpointsToIntervals [] = []
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^...
+[ 5 of 18] Compiling Numeric.AERN.Basics.Interval.RefinementOrder
+
+/tmp/aern-audit.zp9Mzz/source/aern-interval/src/Numeric/AERN/Basics/Interval/RefinementOrder.hs:218:13: warning: [GHC-63397] [-Wname-shadowing]
+    This binding for ‘<=?’ shadows the existing binding
+      imported from ‘Numeric.AERN.NumericOrder.Operators’ at src/Numeric/AERN/Basics/Interval/RefinementOrder.hs:31:1-42
+      (and originally defined in ‘aern-order-0.5.0:Numeric.AERN.NumericOrder.PartialComparison’)
+    |
+218 |             (<=?) = NumOrd.pLeqEff effortComp
+    |             ^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-interval/src/Numeric/AERN/Basics/Interval/RefinementOrder.hs:228:13: warning: [GHC-63397] [-Wname-shadowing]
+    This binding for ‘<=?’ shadows the existing binding
+      imported from ‘Numeric.AERN.NumericOrder.Operators’ at src/Numeric/AERN/Basics/Interval/RefinementOrder.hs:31:1-42
+      (and originally defined in ‘aern-order-0.5.0:Numeric.AERN.NumericOrder.PartialComparison’)
+    |
+228 |             (<=?) = NumOrd.pLeqEff effortComp
+    |             ^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-interval/src/Numeric/AERN/Basics/Interval/RefinementOrder.hs:297:5: warning: [GHC-06201] [-Wmissing-methods]
+    • No explicit implementation for
+        ‘RefOrd.areaSetInnerBound’
+    • In the instance declaration for
+        ‘RefOrd.AreaHasBoundsConstraints (Interval e)’
+    |
+297 |     (NumOrd.AreaHasBoundsConstraints e)
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^...
+
+/tmp/aern-audit.zp9Mzz/source/aern-interval/src/Numeric/AERN/Basics/Interval/RefinementOrder.hs:323:1: warning: [GHC-38417] [-Wmissing-signatures]
+    Top-level binding with no type signature:
+      arbitraryIntervalTupleInAreaRefinementRelatedBy :: (NumOrd.ArbitraryOrderedTuple
+                                                            a1,
+                                                          NumOrd.PartialComparison a1,
+                                                          AreaHasForbiddenValues a1, Ord a2,
+                                                          Show a2) =>
+                                                         Maybe (Area a1, AreaConsistencyConstraint)
+                                                         -> [a2]
+                                                         -> [((a2, a2), [PartialOrdering])]
+                                                         -> Maybe (Gen [Interval a1])
+    |
+323 | arbitraryIntervalTupleInAreaRefinementRelatedBy maybeArea indices constraints =
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-interval/src/Numeric/AERN/Basics/Interval/RefinementOrder.hs:337:26: warning: [GHC-18042] [-Wtype-defaults]
+    • Defaulting the type variable ‘a0’ to type ‘Integer’ in the following constraints
+        (Ord a0)
+          arising from a use of ‘>’
+          at src/Numeric/AERN/Basics/Interval/RefinementOrder.hs:337:26
+        (Num a0)
+          arising from the literal ‘100’
+          at src/Numeric/AERN/Basics/Interval/RefinementOrder.hs:329:32-34
+    • In the expression: maxTries > 0
+      In a stmt of a pattern guard for
+                     a case alternative:
+        maxTries > 0
+      In a case alternative:
+          _ | maxTries > 0 -> avoidForbidden gen $ maxTries - 1
+    |
+337 |             _ | maxTries > 0 -> avoidForbidden gen $ maxTries - 1
+    |                          ^
+
+/tmp/aern-audit.zp9Mzz/source/aern-interval/src/Numeric/AERN/Basics/Interval/RefinementOrder.hs:365:5: warning: [GHC-62161] [-Wincomplete-patterns]
+    Pattern match(es) are non-exhaustive
+    In an equation for ‘endpointsToIntervals’:
+        Patterns of type ‘[e]’ not matched: [_]
+    |
+365 |     endpointsToIntervals [] = []
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^...
+[ 6 of 18] Compiling Numeric.AERN.Basics.Interval
+[ 7 of 18] Compiling Numeric.AERN.RealArithmetic.Interval.Conversion
+[ 8 of 18] Compiling Numeric.AERN.RealArithmetic.Interval.Effort
+
+/tmp/aern-audit.zp9Mzz/source/aern-interval/src/Numeric/AERN/RealArithmetic/Interval/Effort.hs:144:5: error: [GHC-76037]
+    Not in scope:
+      type constructor or class ‘ArithUpDn.RoundedMixedFieldEffort’
+    Suggested fixes:
+      • Perhaps use ‘ArithUpDn.RoundedMixedField’ (imported from Numeric.AERN.RealArithmetic.NumericOrderRounding)
+      • Perhaps you want to add ‘RoundedMixedFieldEffort’
+        to the import list in the import of
+        ‘Numeric.AERN.RealArithmetic.NumericOrderRounding’
+        (src/Numeric/AERN/RealArithmetic/Interval/Effort.hs:(31,1)-(34,88)).
+    |
+144 |     ArithUpDn.RoundedMixedFieldEffort e1 e2,
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[ 9 of 18] Compiling Numeric.AERN.RealArithmetic.Interval.ElementaryFromBasis
+[10 of 18] Compiling Numeric.AERN.RealArithmetic.Interval.ExactOps
+
+/tmp/aern-audit.zp9Mzz/source/aern-interval/src/Numeric/AERN/RealArithmetic/Interval/ExactOps.hs:24:1: warning: [GHC-90177] [-Worphans]
+    Orphan instance: instance HasSampleFromContext e =>
+                              HasSampleFromContext (Interval e)
+    Suggested fix:
+      Move the instance declaration to the module of the class or of the type, or
+      wrap the type with a newtype and declare the instance on the new type.
+   |
+24 | instance (HasSampleFromContext e) => HasSampleFromContext (Interval e) where
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^...
+
+/tmp/aern-audit.zp9Mzz/source/aern-interval/src/Numeric/AERN/RealArithmetic/Interval/ExactOps.hs:29:1: warning: [GHC-90177] [-Worphans]
+    Orphan instance: instance (HasZero e,
+                               NumOrd.PartialComparison e) =>
+                              HasZero (Interval e)
+    Suggested fix:
+      Move the instance declaration to the module of the class or of the type, or
+      wrap the type with a newtype and declare the instance on the new type.
+   |
+29 | instance  (HasZero e, NumOrd.PartialComparison e) => HasZero (Interval e) where
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^...
+
+/tmp/aern-audit.zp9Mzz/source/aern-interval/src/Numeric/AERN/RealArithmetic/Interval/ExactOps.hs:34:1: warning: [GHC-90177] [-Worphans]
+    Orphan instance: instance HasOne e => HasOne (Interval e)
+    Suggested fix:
+      Move the instance declaration to the module of the class or of the type, or
+      wrap the type with a newtype and declare the instance on the new type.
+   |
+34 | instance  (HasOne e) => HasOne (Interval e) where
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^...
+
+/tmp/aern-audit.zp9Mzz/source/aern-interval/src/Numeric/AERN/RealArithmetic/Interval/ExactOps.hs:39:1: warning: [GHC-90177] [-Worphans]
+    Orphan instance: instance HasInfinities e =>
+                              HasInfinities (Interval e)
+    Suggested fix:
+      Move the instance declaration to the module of the class or of the type, or
+      wrap the type with a newtype and declare the instance on the new type.
+   |
+39 | instance (HasInfinities e) => HasInfinities (Interval e) where
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^...
+
+/tmp/aern-audit.zp9Mzz/source/aern-interval/src/Numeric/AERN/RealArithmetic/Interval/ExactOps.hs:46:36: warning: [-Wunused-matches]
+    Defined but not used: ‘l’
+   |
+46 |     excludesPlusInfinity (Interval l r) = excludesPlusInfinity r
+   |                                    ^
+
+/tmp/aern-audit.zp9Mzz/source/aern-interval/src/Numeric/AERN/RealArithmetic/Interval/ExactOps.hs:47:39: warning: [-Wunused-matches]
+    Defined but not used: ‘r’
+   |
+47 |     excludesMinusInfinity (Interval l r) = excludesMinusInfinity l
+   |                                       ^
+
+/tmp/aern-audit.zp9Mzz/source/aern-interval/src/Numeric/AERN/RealArithmetic/Interval/ExactOps.hs:49:1: warning: [GHC-90177] [-Worphans]
+    Orphan instance: instance Neg e => Neg (Interval e)
+    Suggested fix:
+      Move the instance declaration to the module of the class or of the type, or
+      wrap the type with a newtype and declare the instance on the new type.
+   |
+49 | instance  (Neg e) => Neg (Interval e) where
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^...
+[14 of 18] Compiling Numeric.AERN.RealArithmetic.Interval.SpecialConst
+
+/tmp/aern-audit.zp9Mzz/source/aern-interval/src/Numeric/AERN/RealArithmetic/Interval/SpecialConst.hs:28:1: warning: [GHC-90177] [-Worphans]
+    Orphan instance: instance ArithUpDn.RoundedSpecialConstEffort e =>
+                              ArithInOut.RoundedSpecialConstEffort (Interval e)
+    Suggested fix:
+      Move the instance declaration to the module of the class or of the type, or
+      wrap the type with a newtype and declare the instance on the new type.
+   |
+28 | instance (ArithUpDn.RoundedSpecialConstEffort e) =>
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^...
+
+/tmp/aern-audit.zp9Mzz/source/aern-interval/src/Numeric/AERN/RealArithmetic/Interval/SpecialConst.hs:33:43: warning: [-Wunused-matches]
+    Defined but not used: ‘r’
+   |
+33 |     specialConstDefaultEffort (Interval l r) = 
+   |                                           ^
+
+/tmp/aern-audit.zp9Mzz/source/aern-interval/src/Numeric/AERN/RealArithmetic/Interval/SpecialConst.hs:36:1: warning: [GHC-90177] [-Worphans]
+    Orphan instance: instance ArithUpDn.RoundedSpecialConst e =>
+                              ArithInOut.RoundedSpecialConst (Interval e)
+    Suggested fix:
+      Move the instance declaration to the module of the class or of the type, or
+      wrap the type with a newtype and declare the instance on the new type.
+   |
+36 | instance (ArithUpDn.RoundedSpecialConst e) => 
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^...
+[17 of 18] Compiling Numeric.AERN.RealArithmetic.Interval.UpDnConversion
+
+Error: [S-7282]
+       Stack failed to execute the build plan.
+       
+       While executing the build plan, Stack encountered the error:
+       
+       [S-7011]
+       While building package aern-interval-0.5.0 (scroll up to its section to see the error) using:
+       /tmp/aern2-stack.ryVCFK/setup-exe-cache/x86_64-linux-tinfo6/Cabal-simple_O_vy6YIf_3.10.3.0_ghc-9.6.7 --verbose=1 --builddir=.stack-work/dist/x86_64-linux-tinfo6/ghc-9.6.7 build lib:aern-interval --ghc-options ""
+       Process exited with code: ExitFailure 1 

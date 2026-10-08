@@ -1,0 +1,45 @@
+   Compiling num-traits v0.2.19
+   Compiling byteorder v1.5.0
+   Compiling either v1.15.0
+   Compiling zerocopy v0.8.48
+   Compiling heapless v0.8.0
+   Compiling rayon v1.12.0
+   Compiling num-integer v0.1.46
+   Compiling num-bigint v0.4.6
+   Compiling num-rational v0.4.2
+   Compiling num-iter v0.1.45
+   Compiling num-complex v0.4.6
+   Compiling num v0.4.3
+   Compiling hyperreal v0.13.1 (/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/sign-consumers/baseline/hyperreal)
+   Compiling hash32 v0.3.1
+   Compiling stable_deref_trait v1.2.1
+   Compiling hyperlattice v0.6.1 (/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/sign-consumers/baseline/hyperlattice)
+   Compiling i_float v1.16.0
+   Compiling once_cell v1.21.4
+   Compiling robust v1.2.0
+   Compiling rand_core v0.10.1
+   Compiling tempfile v3.27.0
+   Compiling spade v2.15.1
+   Compiling i_shape v1.18.0
+   Compiling hyperlimit v0.4.1 (/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/sign-consumers/baseline/hyperlimit)
+   Compiling ppv-lite86 v0.2.21
+   Compiling rstar v0.12.2
+   Compiling i_key_sort v0.10.3
+   Compiling approx v0.5.1
+   Compiling i_tree v0.18.0
+   Compiling rusty-fork v0.3.1
+   Compiling i_overlay v4.5.2
+   Compiling geo-types v0.7.19
+   Compiling hypersolve v0.3.1 (/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/sign-consumers/baseline/hypersolve)
+   Compiling rand_chacha v0.9.0
+   Compiling rand v0.10.2
+   Compiling rand_pcg v0.10.2
+   Compiling earcut v0.4.5
+   Compiling geographiclib-rs v0.2.7
+   Compiling float_next_after v2.0.0
+   Compiling sif-itree v0.4.1
+   Compiling log v0.4.29
+   Compiling geo v0.33.1
+   Compiling proptest v1.11.0
+   Compiling hypercurve v0.3.1 (/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/sign-consumers/baseline/hypercurve)
+    Finished `release` profile [optimized] target(s) in 1m 47s

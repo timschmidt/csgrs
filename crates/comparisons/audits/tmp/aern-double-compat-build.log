@@ -1,0 +1,9 @@
+aern-double> build (lib) with ghc-9.6.7
+Preprocessing library for aern-double-0.5.0..
+Building library for aern-double-0.5.0..
+[10 of 12] Compiling Numeric.AERN.DoubleBasis.RealApprox
+[11 of 12] Compiling Numeric.AERN.DoubleBasis.RealIntervalApprox
+[12 of 12] Compiling Numeric.AERN.DoubleBasis.Interval
+aern-double> copy/register
+Installing library in /tmp/aern-audit.zp9Mzz/.stack-work/install/x86_64-linux-tinfo6/effe9db4e1826f16e57c1f5e1586c2e2ab2e78752f0899579eb1a29e688a5949/9.6.7/lib/x86_64-linux-ghc-9.6.7/aern-double-0.5.0-IgNLtjolgDOADIUcnnPt5V
+Registering library for aern-double-0.5.0..

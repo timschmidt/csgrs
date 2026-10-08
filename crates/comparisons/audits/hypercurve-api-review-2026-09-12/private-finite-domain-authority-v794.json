@@ -1,0 +1,135 @@
+[
+  {
+    "path": "hypercurve/src/bezier_offset.rs",
+    "source_sha256": "5eb38301fb0d1e5d0ae5ea9f61b10547948335eb643f1e4f2c170fcc410b5b2c",
+    "line": 10644,
+    "function": "fn algebraic_point_image(",
+    "context": "            {\n                Classification::Decided(curve) => curve,\n                Classification::Uncertain(_) => None,\n            },\n        };\n        let Some(curve) = curve else {\n            return Ok(None);\n        };\n        Ok(Some(\n            RationalBezierAlgebraicPointImage2::from_parametric_source(\n                curve,\n                parameter.clone(),\n                policy,\n            ),\n        ))\n    }\n\n    fn exact_point(&self, policy: &CurveContext) -> CurveResult<Classification<Option<Point2>>> {\n        let source_policy = self.policy();"
+  },
+  {
+    "path": "hypercurve/src/bezier_offset.rs",
+    "source_sha256": "5eb38301fb0d1e5d0ae5ea9f61b10547948335eb643f1e4f2c170fcc410b5b2c",
+    "line": 10724,
+    "function": "fn represented_coordinates(",
+    "context": "                        BezierParameter2::Exact(parameter) => Ok(curve\n                            .point_at_affine_classified(parameter, policy)\n                            .map(|point| {\n                                [\n                                    AlgebraicRootRepresentation::from_exact_value(point.x()),\n                                    AlgebraicRootRepresentation::from_exact_value(point.y()),\n                                ]\n                            })),\n                        BezierParameter2::Algebraic(parameter) => {\n                            Ok(RationalBezierAlgebraicPointImage2::from_parametric_source(\n                                curve.clone(),\n                                parameter.clone(),\n                                policy,\n                            )\n                            .represented_coordinates(policy)\n                            .map(Classification::Decided)\n                            .unwrap_or(Classification::Uncertain(UncertaintyReason::Unsupported)))\n                        }\n                    }"
+  },
+  {
+    "path": "hypercurve/src/bezier_offset.rs",
+    "source_sha256": "5eb38301fb0d1e5d0ae5ea9f61b10547948335eb643f1e4f2c170fcc410b5b2c",
+    "line": 17245,
+    "function": "pub(crate) fn exact_center(&self, policy: &CurveContext) -> CurveResult<Option<Point2>> {",
+    "context": "                        frame\n                            .center_support\n                            .exact_rational_parallel_component(policy)\n                    })? {\n                        Classification::Decided(Some(curve)) => curve,\n                        Classification::Decided(None) | Classification::Uncertain(_) => {\n                            return Ok(None);\n                        }\n                    };\n                    Ok(RationalBezierAlgebraicPointImage2::from_parametric_source(\n                        curve,\n                        parameter.clone(),\n                        policy,\n                    )\n                    .exact_point(&CurveContext::STRICT))\n                }\n                None => Ok(None),\n            };\n        }"
+  },
+  {
+    "path": "hypercurve/src/bezier_offset.rs",
+    "source_sha256": "5eb38301fb0d1e5d0ae5ea9f61b10547948335eb643f1e4f2c170fcc410b5b2c",
+    "line": 51607,
+    "function": "fn coincident_point_image(",
+    "context": "        ) {\n            return Ok(Classification::Decided(None));\n        }\n        if let Some((map, contact)) = data.coincident_rational_source() {\n            let Some(other_parameter) = contact.other_parameter.as_bezier_parameter() else {\n                return Ok(Classification::Decided(None));\n            };\n            return Ok(match other_parameter {\n                BezierParameter2::Algebraic(parameter) => Classification::Decided(Some(\n                    RationalBezierAlgebraicPointImage2::from_parametric_source(\n                        map.data.curve.clone(),\n                        parameter.clone(),\n                        policy,\n                    ),\n                )),\n                BezierParameter2::Exact(parameter) => map\n                    .data\n                    .curve\n                    .point_at_classified(parameter, policy)"
+  },
+  {
+    "path": "hypercurve/src/bezier_offset.rs",
+    "source_sha256": "5eb38301fb0d1e5d0ae5ea9f61b10547948335eb643f1e4f2c170fcc410b5b2c",
+    "line": 83475,
+    "function": "fn rational_point_evidence_at_parameter(",
+    "context": "        Classification::Uncertain(UncertaintyReason::Boundary) => {\n            Ok(Classification::Uncertain(UncertaintyReason::Boundary))\n        }\n        Classification::Uncertain(reason) => match parameter {\n            BezierParameter2::Algebraic(parameter) => {\n                Ok(Classification::Decided(CurvePoint2::from(\n                    // These contact callers own a finite source-domain proof.\n                    // Coordinate projection may be unavailable, but a certified\n                    // zero denominator above must never be replaced by this source.\n                    RationalBezierAlgebraicPointImage2::from_parametric_source(\n                        source.clone(),\n                        parameter.clone(),\n                        policy,\n                    ),\n                )))\n            }\n            BezierParameter2::Exact(_) => Ok(Classification::Uncertain(reason)),\n        },\n    }"
+  },
+  {
+    "path": "hypercurve/src/bezier_offset.rs",
+    "source_sha256": "5eb38301fb0d1e5d0ae5ea9f61b10547948335eb643f1e4f2c170fcc410b5b2c",
+    "line": 159337,
+    "function": "fn algebraic_cusp_disk_classifies_an_independent_selected_root_directly() {",
+    "context": "                        LineSeg2::try_new(\n                            Point2::from_values(start, 0),\n                            Point2::from_values(end, 0),\n                        )\n                        .unwrap(),\n                    ),\n                ))\n                .unwrap()\n            };\n            let inside = RationalBezierAlgebraicPointImage2::from_parametric_source(\n                query_line(0, 1),\n                query_parameter.clone(),\n                &policy,\n            );\n            assert!(inside.exact_point(&policy).is_none());\n            assert_eq!(\n                region\n                    .classify_algebraic_point_raw(&inside, &policy)\n                    .unwrap(),"
+  },
+  {
+    "path": "hypercurve/src/bezier_offset.rs",
+    "source_sha256": "5eb38301fb0d1e5d0ae5ea9f61b10547948335eb643f1e4f2c170fcc410b5b2c",
+    "line": 159350,
+    "function": "fn algebraic_cusp_disk_classifies_an_independent_selected_root_directly() {",
+    "context": "            );\n            assert!(inside.exact_point(&policy).is_none());\n            assert_eq!(\n                region\n                    .classify_algebraic_point_raw(&inside, &policy)\n                    .unwrap(),\n                Classification::Decided(crate::RegionPointLocation::Inside),\n            );\n\n            let outside = RationalBezierAlgebraicPointImage2::from_parametric_source(\n                query_line(2, 3),\n                query_parameter,\n                &policy,\n            );\n            assert_eq!(\n                region\n                    .classify_algebraic_point_raw(&outside, &policy)\n                    .unwrap(),\n                Classification::Decided(crate::RegionPointLocation::Outside),"
+  },
+  {
+    "path": "hypercurve/src/bezier_offset.rs",
+    "source_sha256": "5eb38301fb0d1e5d0ae5ea9f61b10547948335eb643f1e4f2c170fcc410b5b2c",
+    "line": 159529,
+    "function": "fn distinct_mapped_algebraic_cusp_endpoint_fields_classify_directly() {",
+    "context": "                        LineSeg2::try_new(\n                            Point2::from_values(start, 0),\n                            Point2::from_values(end, 0),\n                        )\n                        .unwrap(),\n                    ),\n                ))\n                .unwrap()\n            };\n            let inside = RationalBezierAlgebraicPointImage2::from_parametric_source(\n                query_line(0, 1),\n                query_parameter.clone(),\n                &policy,\n            );\n            assert_eq!(\n                region\n                    .classify_algebraic_point_raw(&inside, &policy)\n                    .unwrap(),\n                Classification::Decided(crate::RegionPointLocation::Inside),"
+  },
+  {
+    "path": "hypercurve/src/bezier_offset.rs",
+    "source_sha256": "5eb38301fb0d1e5d0ae5ea9f61b10547948335eb643f1e4f2c170fcc410b5b2c",
+    "line": 159540,
+    "function": "fn distinct_mapped_algebraic_cusp_endpoint_fields_classify_directly() {",
+    "context": "                query_parameter.clone(),\n                &policy,\n            );\n            assert_eq!(\n                region\n                    .classify_algebraic_point_raw(&inside, &policy)\n                    .unwrap(),\n                Classification::Decided(crate::RegionPointLocation::Inside),\n            );\n            let outside = RationalBezierAlgebraicPointImage2::from_parametric_source(\n                query_line(2, 3),\n                query_parameter,\n                &policy,\n            );\n            assert_eq!(\n                region\n                    .classify_algebraic_point_raw(&outside, &policy)\n                    .unwrap(),\n                Classification::Decided(crate::RegionPointLocation::Outside),"
+  },
+  {
+    "path": "hypercurve/src/bezier_offset.rs",
+    "source_sha256": "5eb38301fb0d1e5d0ae5ea9f61b10547948335eb643f1e4f2c170fcc410b5b2c",
+    "line": 159556,
+    "function": "fn distinct_mapped_algebraic_cusp_endpoint_fields_classify_directly() {",
+    "context": "                    .classify_algebraic_point_raw(&outside, &policy)\n                    .unwrap(),\n                Classification::Decided(crate::RegionPointLocation::Outside),\n            );\n            let BezierParameter2::Algebraic(boundary_parameter) =\n                algebraic_parameter(vec![-two_fifths.clone(), Real::zero(), Real::one()])\n            else {\n                panic!(\"the middle-cell boundary query must remain algebraic\");\n            };\n            let boundary = RationalBezierAlgebraicPointImage2::from_parametric_source(\n                rational_quarter.clone(),\n                boundary_parameter,\n                &policy,\n            );\n            assert_eq!(\n                region\n                    .classify_algebraic_point_raw(&boundary, &policy)\n                    .unwrap(),\n                Classification::Decided(crate::RegionPointLocation::Boundary),"
+  },
+  {
+    "path": "hypercurve/src/bezier_offset.rs",
+    "source_sha256": "5eb38301fb0d1e5d0ae5ea9f61b10547948335eb643f1e4f2c170fcc410b5b2c",
+    "line": 180031,
+    "function": "fn finite_one_field_point_inverse_preserves_analytic_domain_and_sheet() {",
+    "context": "                        let source = RationalBezier2::try_new(\n                            vec![\n                                Point2::new(Real::zero(), y.clone()),\n                                Point2::new(x_scale.clone(), y.clone()),\n                            ],\n                            vec![Real::from(-1); 2],\n                        )\n                        .unwrap();\n                        let image: CurvePoint2 =\n                            RationalBezierAlgebraicPointImage2::from_parametric_source(\n                                source,\n                                selected_alpha.clone(),\n                                &policy,\n                            )\n                            .into();\n                        let expected = if normal_sign == 1 {\n                            vec![\n                                Real::from(shift)\n                                    + if reversed {"
+  },
+  {
+    "path": "hypercurve/src/bezier_offset.rs",
+    "source_sha256": "5eb38301fb0d1e5d0ae5ea9f61b10547948335eb643f1e4f2c170fcc410b5b2c",
+    "line": 180087,
+    "function": "fn finite_one_field_point_inverse_handles_folds_poles_and_constant_fibers() {",
+    "context": "        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {\n            let line = RationalBezier2::try_new(\n                vec![\n                    Point2::new(Real::from(0), Real::from(0)),\n                    Point2::new(Real::from(1), Real::from(0)),\n                ],\n                vec![Real::one(); 2],\n            )\n            .unwrap();\n            let point: CurvePoint2 = RationalBezierAlgebraicPointImage2::from_parametric_source(\n                line,\n                alpha.clone(),\n                &policy,\n            )\n            .into();\n            for shift in [0, 2, -2] {\n                let h = Real::from(shift);\n                let fold = RationalBezier2::try_new(\n                    vec!["
+  },
+  {
+    "path": "hypercurve/src/bezier_offset.rs",
+    "source_sha256": "5eb38301fb0d1e5d0ae5ea9f61b10547948335eb643f1e4f2c170fcc410b5b2c",
+    "line": 180149,
+    "function": "fn finite_one_field_point_inverse_handles_folds_poles_and_constant_fibers() {",
+    "context": "            for y in [-1, 1] {\n                let query = RationalBezier2::try_new(\n                    vec![\n                        Point2::new(Real::from(0), Real::from(y)),\n                        Point2::new(Real::from(1), Real::from(y)),\n                    ],\n                    vec![Real::from(-1); 2],\n                )\n                .unwrap();\n                let query = RationalBezierAlgebraicPointImage2::from_parametric_source(\n                    query,\n                    alpha.clone(),\n                    &policy,\n                )\n                .into();\n                let expected = if y == -1 {\n                    vec![Real::one() + &root]\n                } else {\n                    Vec::new()"
+  },
+  {
+    "path": "hypercurve/src/bezier_offset.rs",
+    "source_sha256": "5eb38301fb0d1e5d0ae5ea9f61b10547948335eb643f1e4f2c170fcc410b5b2c",
+    "line": 180208,
+    "function": "fn finite_one_field_point_inverse_handles_folds_poles_and_constant_fibers() {",
+    "context": "                    Point2::new(Real::zero(), Real::one()),\n                ],\n                vec![Real::one(), Real::one(), Real::from(2)],\n            )\n            .unwrap();\n            let origin = Point2::new(Real::zero(), Real::zero());\n            let constant_query =\n                RationalBezier2::try_new(vec![origin.clone(); 2], vec![Real::one(); 2]).unwrap();\n            let selected_origin: CurvePoint2 =\n                RationalBezierAlgebraicPointImage2::from_parametric_source(\n                    constant_query,\n                    alpha.clone(),\n                    &policy,\n                )\n                .into();\n            for distance in [1, -1] {\n                let target = quarter.parallel_left(Real::from(distance)).unwrap();\n                for query in [&selected_origin, &origin.clone().into()] {\n                    let outcome = crate::policy::resolve_certified_operation(&policy, |attempt| {"
+  },
+  {
+    "path": "hypercurve/src/bezier_algebraic_image.rs",
+    "source_sha256": "df0fa7888565586faba15f96e180ef6d58330dc05b303149f578e8558f651c13",
+    "line": 366,
+    "function": "fn retained_constant_coordinates_do_not_require_scalar_parameter_images() {",
+    "context": "            // A lazy curve/parameter source must not resolve its other axis.\n            let curve = RationalBezier2::try_new(\n                vec![\n                    Point2::new(Real::zero(), point.y().clone()),\n                    Point2::new(Real::one(), point.y().clone()),\n                ],\n                vec![Real::one(); 2],\n            )\n            .unwrap();\n            let image = RationalBezierAlgebraicPointImage2::from_parametric_source(\n                curve,\n                parameter.clone(),\n                &policy,\n            );\n            assert_eq!(\n                image.exact_coordinate(false, &policy),\n                Some(point.y().clone())\n            );\n            assert!(image.parametric_source().unwrap().resolved.get().is_none());"
+  },
+  {
+    "path": "hypercurve/src/bezier_algebraic_image.rs",
+    "source_sha256": "df0fa7888565586faba15f96e180ef6d58330dc05b303149f578e8558f651c13",
+    "line": 742,
+    "function": "pub(crate) fn from_parametric_source(",
+    "context": "    pub(crate) fn from_parametric_source(\n        curve: RationalBezier2,\n        parameter: BezierAlgebraicParameter2,\n        policy: &CurveContext,\n    ) -> Self {\n        Self {\n            data: Arc::new(RationalBezierAlgebraicPointImageData {\n                parameter: parameter_representation(&parameter, policy),\n                definition: RationalPointDefinition::Parametric(\n                    RetainedRationalPointParametricSource {"
+  },
+  {
+    "path": "hypercurve/src/rational_bezier_general.rs",
+    "source_sha256": "1f001a4eff752023e1c8b568a2f4e38f9ddde379940c387270d5b58942cf882a",
+    "line": 3730,
+    "function": "fn implicit_conic_intersection_contacts(",
+    "context": "                                )? {\n                                    Classification::Decided(point) => point,\n                                    Classification::Uncertain(reason) => {\n                                        return Ok(Some(Classification::Uncertain(reason)));\n                                    }\n                                },\n                            }\n                        }\n                        BezierParameter2::Algebraic(parameter) => CurvePoint2::from(\n                            RationalBezierAlgebraicPointImage2::from_parametric_source(\n                                other.clone(),\n                                parameter.clone(),\n                                policy,\n                            ),\n                        ),\n                    };\n                    contacts.push(RationalBezierIntersectionContact2 {\n                        first_parameter: conic_parameter,\n                        second_parameter: parameter.clone(),"
+  },
+  {
+    "path": "hypercurve/src/rational_bezier_general.rs",
+    "source_sha256": "1f001a4eff752023e1c8b568a2f4e38f9ddde379940c387270d5b58942cf882a",
+    "line": 10860,
+    "function": "fn deferred_parametric_point_reuses_source_polynomials_for_exact_equality() {",
+    "context": "        let curve = RationalBezier2::try_new(\n            vec![\n                Point2::new(Real::from(-1_i8), Real::zero()),\n                Point2::new(Real::zero(), Real::one()),\n                Point2::new(Real::one(), Real::from(2_i8)),\n            ],\n            vec![Real::one(); 3],\n        )\n        .unwrap();\n        let deferred = RationalBezierAlgebraicPointImage2::from_parametric_source(\n            curve.clone(),\n            parameter.clone(),\n            &policy,\n        );\n        let resolved = crate::tests::decided(\n            curve\n                .point_at_algebraic_parameter(&parameter, &policy)\n                .unwrap(),\n        );"
+  },
+  {
+    "path": "hypercurve/src/curve_evaluation.rs",
+    "source_sha256": "a3a69d17af6d297ec5ecb0addfac5ce803300c640f53094155b91b0dd275b35c",
+    "line": 276,
+    "function": "pub(super) fn rational_point(",
+    "context": "        return match parameter {\n            BezierParameter2::Exact(parameter) => {\n                // The caller checked the retained range, which can extend\n                // beyond the source's original unit chart. The denominator\n                // proof above is the remaining affine evaluation condition.\n                decided(source.point_at_affine_classified(parameter, policy), family)\n                    .map(CurvePoint2::from)\n            }\n            BezierParameter2::Algebraic(parameter) => Ok(CurvePoint2::from(\n                crate::RationalBezierAlgebraicPointImage2::from_parametric_source(\n                    source.clone(),\n                    parameter.clone(),\n                    policy,\n                ),\n            )),\n        };\n    }\n    let parallel = source\n        .parallel_left(Real::zero())"
+  }
+]

@@ -1,0 +1,24 @@
+{
+  "tag": "zero-factor-cost-baseline-clippy-v71",
+  "started": "2026-09-11T19:27:24.461Z",
+  "finished": "2026-09-11T19:27:24.775Z",
+  "elapsedSeconds": 0.31216864799999994,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/zero-factor-cost-baseline-app-v71",
+  "command": "env",
+  "args": [
+    "CARGO_TARGET_DIR=/tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse",
+    "CARGO_INCREMENTAL=0",
+    "CARGO_PROFILE_DEV_DEBUG=0",
+    "CARGO_BUILD_JOBS=2",
+    "cargo",
+    "clippy",
+    "--offline",
+    "--locked",
+    "--all-targets",
+    "--",
+    "-D",
+    "warnings"
+  ],
+  "code": 0,
+  "signal": null
+}

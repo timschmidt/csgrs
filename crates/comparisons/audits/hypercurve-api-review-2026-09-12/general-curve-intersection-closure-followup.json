@@ -1,0 +1,184 @@
+{
+  "status": "selected-circle common dispatch and local frame validation committed; public region carrier replay and remaining analytic-parallel pairs remain open",
+  "goal_status": "active",
+  "probe": "parabola-chamfer-independent-pairs-probe.json",
+  "behavior": "Curve2 and CurvePath2 preserve general exact values, selected parameters and reusable pieces through intersections, splitting and region trimming. Common dispatch now covers rational spans, retained chords and selected circles, including circle/analytic-parallel pairs. Region overlap reports pair corresponding endpoints; full-family closure remains unfinished.",
+  "source_findings": [
+    {
+      "file": "hypercurve/src/curve_support_intersection.rs",
+      "finding": "Common preparation retains support, active domain, affine public chart and traversal for native spans, retained fragments and authored restrictions. It dispatches rational/rational, chord/rational, chord/chord, circle/circle, circle/rational, circle/chord and circle/analytic-parallel pairs."
+    },
+    {
+      "file": "hypercurve/src/curve_intersection.rs",
+      "finding": "General CurveLocation2 and CurveParameterRange2 preserve selected parameters. Private overlap transport owns the original rational, chord/rational, chord/chord or circle correspondence, and paired endpoints survive clipping and reversal."
+    },
+    {
+      "file": "hypercurve/src/bezier_offset.rs",
+      "finding": "Shared chord replay retains open-curve endpoint contacts, monotone overlap ownership and tangent identities. Selected source cuts reuse interval proofs without Bezier-root promotion or redundant Cartesian membership."
+    },
+    {
+      "file": "hypercurve/src/curve_evaluation.rs",
+      "finding": "Evaluation consumes endpoint/interior certificates on the identical finite chord; foreign parameter authorities still require incidence validation."
+    },
+    {
+      "file": "hypercurve/src/curve_region_boolean.rs",
+      "finding": "Region code consumes shared chord replay, circle endpoint certificates and circle overlap transport. Reports and topology pair corresponding overlap endpoints through one step. Public region carrier references still do not expose the actual evaluable carrier after internal chart replacement."
+    },
+    {
+      "file": "hypercurve/src/curve_intersection.rs",
+      "finding": "General curve/path topology returns Curve2 pieces and a shared borrowed arrangement; retained source charts and selected parameters no longer require native Bezier split materialization."
+    }
+  ],
+  "implementation_direction": [
+    "Complete common analytic parallel/rational, parallel/chord and parallel/parallel dispatch while preserving root, branch and component evidence.",
+    "Complete finite exterior-domain replay and full parameter relations for partially coincident non-injective and retraced supports.",
+    "Keep open-path endpoint semantics separate from region adjacency and regularized fill decisions.",
+    "Consolidate reusable identity and decision evidence without replacing an existing specialized certificate or adding expression-depth/refinement growth.",
+    "Make region intersection parameters publicly replayable in their actual retained carrier charts, updating callers directly."
+  ],
+  "constraints": [
+    "The current chamfer probe covers the documented fixtures; zero unresolved pairs does not establish full-family closure.",
+    "The original goal remains active; five promotion failures and eight expensive unqualified cases remain outside this chord-dispatch slice.",
+    "No throughput, allocation, expression-depth or memory improvement is claimed without dedicated measurement."
+  ],
+  "location_api_commits": {
+    "hypercurve": "349c4bad9c5e0a1355fce05d7e8d096d4a1e30b5",
+    "hyperbrep": "d7fa29cee735ba430caaef0a0e587687a6660abd"
+  },
+  "current_probe": "circle-common-dispatch-probe-final.json",
+  "location_api_qualification": "general-intersection-location-qualification.json",
+  "retained_rational_support_implementation": {
+    "status": "committed",
+    "commit": "ef0354f60e200c64c52e609ded7dadd63cb24f70",
+    "qualification": "retained-support-intersection-qualification.json",
+    "self_contact_audit": "retained-support-intersection-self-contact-audit.md",
+    "generated_pair_probe": "retained-support-intersection-generated-pairs-probe-final.json",
+    "remaining_generated_pair_blockers": 18,
+    "remaining": [
+      "chord/circle/parallel common pair dispatch",
+      "exterior finite source domains",
+      "partial non-injective and continuously retraced component coverage",
+      "general curve/path topology without native Bezier materializations"
+    ]
+  },
+  "chord_pair_implementation": {
+    "status": "committed",
+    "evidence_audit": "chord-support-intersection-evidence-audit.md",
+    "qualification": "chord-support-intersection-qualification.json",
+    "generated_pair_probe": "chord-support-intersection-generated-pairs-probe-final.json",
+    "remaining_generated_pair_blockers": 0,
+    "independent_region_empty_xors": 8,
+    "pre_evidence_qualification": "chord-support-intersection-pre-evidence-qualification/",
+    "commit": "0facb05f1c0949c475a98be078dcbc389b522cfd"
+  },
+  "probe_history": [
+    {
+      "record": "general-intersection-location-generated-pairs-probe.json",
+      "unresolved_pairs": 44
+    },
+    {
+      "record": "retained-support-intersection-generated-pairs-probe-final.json",
+      "unresolved_pairs": 18
+    },
+    {
+      "record": "chord-support-intersection-generated-pairs-probe-final.json",
+      "unresolved_pairs": 0
+    }
+  ],
+  "general_split_topology_implementation": {
+    "status": "committed",
+    "commit": "753074a2a5c63455ee7e6583ee59f0bb272ecdcd",
+    "qualification": "general-split-topology-qualification.json",
+    "evidence_audit": "general-split-topology-evidence-audit.md",
+    "additional_topology_queries": 256,
+    "additional_piece_reentry_intersections": 96,
+    "remaining": [
+      "general curve/region trimming",
+      "selected-circle/parallel common pair dispatch",
+      "exterior and complete non-injective/retraced domain relations",
+      "direct contact identity propagation into arrangement vertices and computational-closure measurement"
+    ]
+  },
+  "remaining_promotion_failures": 5,
+  "round_offset_evidence_qualification": "round-offset-independent-boundary-qualification.json",
+  "exterior_fillet_closure_implementation": {
+    "status": "committed",
+    "commit": "d6bcac5256ed576ca6a6d378a1d8c710bdadfd52",
+    "qualification": "exterior-fillet-closure-qualification.json",
+    "remaining_line_parabola_blocker": "Resolved by 02b419555b7002ec3ea9c94f0f06ed376cc09443; both policies and traversals certify complete composition.",
+    "probe": "line-parabola-recovered-parameters-probe.json"
+  },
+  "native_line_arc_endpoint_implementation": {
+    "status": "committed",
+    "commit": "02b419555b7002ec3ea9c94f0f06ed376cc09443",
+    "qualification": "native-line-arc-endpoint-qualification.json",
+    "evidence_audit": "native-line-arc-endpoint-evidence-audit.md",
+    "independent_matrix": "native-line-arc-endpoint-matrix-final.json",
+    "uncertified_or_blocked_pairs": 0,
+    "curve_pair_queries": 900
+  },
+  "certified_fillet_erosion_regressions": {
+    "status": "committed",
+    "commit": "db88eb4e1f026bc6d64770f14a09a8a29380d9a8",
+    "qualification": "certified-fillet-erosion-replay-qualification.json",
+    "production_sources_unchanged": true,
+    "promotion_passed": 96,
+    "promotion_failed": 5
+  },
+  "completed_trim_findings": [
+    "curve_region_trim.rs requires native_bezier_fragments_for_operation before dispatch and stores BezierSplitFragment2 in the public trim record.",
+    "CurveRegionBooleanContext::try_new_curve_boundary separately requires native spans; use general support/domain/chart preparation while keeping region-only adjacency outside open-curve intersections.",
+    "Curve2::split_at_parameters already preserves general selected parameters and flat source restrictions; trim still promotes parameters through trim_source_bezier_parameter.",
+    "CurveRegionTrimFragment2 retains promoted span plus span chart and computes a represented range from native fragment parameters. General source provenance should remain usable without scalar promotion.",
+    "Update HyperBREP trimming callers directly when the general API replaces these carriers; preserve one-sided discontinuous spline seam semantics and closed-set overlap inclusion."
+  ],
+  "general_curve_region_trim_implementation": {
+    "status": "committed",
+    "commits": {
+      "hyperbrep": "6d9a1a689ee35e7d60d037851f5748ade2cbb05e",
+      "hypercurve": "678414f0c2e2f18987f5fe682c3fafa4cdd27930"
+    },
+    "qualification": "general-curve-region-trim-qualification.json",
+    "evidence_audit": "general-curve-region-trim-evidence-audit.md",
+    "independent_matrix": "general-trim-matrix.json",
+    "clip_queries": 448,
+    "endpoint_replays": 2208,
+    "repeated_path_trims": 1008,
+    "remaining_degeneracy_followup": "general-trim-degeneracy-followup.json"
+  },
+  "constant_image_trim_implementation": {
+    "status": "committed",
+    "commit": "41c645b169dbcf420cd1800e436fbf5468b4ed81",
+    "qualification": "constant-image-trim-qualification.json",
+    "evidence_audit": "constant-image-trim-evidence-audit.md",
+    "matrix": "constant-image-trim-matrix.json",
+    "empty_clips": 280,
+    "path_clips": 56,
+    "clipped_spline_paths": 32,
+    "repeated_path_trims": 252,
+    "spline_endpoint_replays": 128
+  },
+  "selected_circle_dispatch_implementation": {
+    "status": "committed",
+    "commit": "222e177628edbe07541e54c85a95ddf03b9cab8d",
+    "qualification": "circle-common-dispatch-qualification.json",
+    "evidence_audit": "circle-common-dispatch-evidence-audit.md",
+    "followup": "circle-common-dispatch-followup.json",
+    "matrix": "circle-common-dispatch-matrix.json",
+    "pair_queries": 912,
+    "point_replays": 1536,
+    "topology_queries": 96,
+    "repeated_intersections": 384,
+    "new_internal_tests": 8,
+    "new_public_tests": 2
+  },
+  "selected_circle_local_frame_implementation": {
+    "status": "committed",
+    "commit": "fbac724475efbac90ff0df08fc77e2f8e4693868",
+    "qualification": "selected-circle-local-frame-qualification.json",
+    "evidence_audit": "selected-circle-local-frame-evidence-audit.md",
+    "baseline_regression": "selected-circle-local-frame-baseline.json",
+    "fixed_regression": "selected-circle-local-frame-fixed.json"
+  },
+  "next_active_work": "Expose the actual evaluable carrier/location and source chart in region intersection evidence, while retaining authored provenance. Remove duplicated or stale family metadata and migrate callers directly."
+}

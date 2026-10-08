@@ -1,0 +1,57 @@
+{
+  "status": "implemented, qualified and committed; original goal active",
+  "motivation": "The inward public regression exposed approximation consumed inside interval multiplication used for certified outer bounds. Chord-pair bounds now locally suppress terminals; the private interval arithmetic API itself still accepts the geometry predicate context.",
+  "evidence": "chord-pair-enclosure-followup.json; stationary-ph-inward-approximation-stack.log",
+  "candidate": "Remove CurveContext from purely conservative Real interval arithmetic and migrate callers directly. Exact enclosure decisions must never use a terminal approximate scalar equality.",
+  "context_taking_methods": [
+    "compare_to_zero",
+    "multiply",
+    "square",
+    "divide",
+    "evaluate_power_basis",
+    "evaluate_bivariate_power_basis",
+    "evaluate_trivariate_power_basis",
+    "evaluate_quadrivariate_power_basis",
+    "nonnegative_square_root",
+    "nonnegative_square_root_with_precision",
+    "from_values"
+  ],
+  "source_audit": "This implementation owns only lower/upper Real values. Its context is used for scalar sign/order and passed among arithmetic/evaluation helpers. It does not own a geometry replay policy, root selection or point construction. Geometry callers still need their own contexts.",
+  "constraints": [
+    "Preserve arbitrary exact Real endpoint payloads; rational enclosure conversion remains optional and must keep requested refinement.",
+    "Keep geometry policy validation, selected-root/sheet decisions and explicit work budgets in their owning layers. Do not replace original contexts wholesale in callers.",
+    "Investigate cheap conservative fallback for undecided scalar signs and value ordering. Removing approximate decisions must not accidentally force unbounded reconstruction in optional bounds.",
+    "Update all controlled callers without forwarding aliases. Type checking can identify the correct overloaded interval-method calls; do not globally rewrite unrelated multiply/divide methods.",
+    "Add focused exact-enclosure regressions for near-zero and conditioned supports where useful; retain public inward closure and the existing >512-bit refinement tests.",
+    "Audit other certified bound producers and their cache semantics after the arithmetic migration; the current targeted repair does not prove all producers sound."
+  ],
+  "goal_status": "active",
+  "preceding_commit": "2025587c91b4af5a1eeccae97a7412ef114a0dd1",
+  "preceding_qualification": "certified-chord-pair-enclosure-qualification.json",
+  "baseline": {
+    "test": "real_interval_enclosures_do_not_consume_topology_approximation",
+    "log": "interval-arithmetic-policy-baseline.log",
+    "exit_code": 101,
+    "finding": "Multiplying [-2*epsilon,epsilon] by [-1,1] consumes Approximate512, where epsilon=1-cos(2^-607). An optional enclosure must not consume a topology terminal.",
+    "coverage": "Five operations (multiply, square, square root, value hull, divide), both contexts, independently known contained witnesses whenever an optional enclosure is returned."
+  },
+  "migration": {
+    "kernel_context_parameters_removed": 11,
+    "external_context_arguments_removed": 239,
+    "unused_context_locals_removed": 5,
+    "private_interval_type": "RealInterval",
+    "old_private_name": "BezierAlgebraicChordRealInterval2",
+    "private_name_references_migrated": 300,
+    "square_root_entry": "nonnegative_square_root(Option<i32>)",
+    "removed_square_root_entry": "nonnegative_square_root_with_precision",
+    "production_line_delta": -280,
+    "compiler_audit": "interval-policy-migration-1-applied.json",
+    "all_target_typecheck": "interval-policy-migration-3.jsonl: no compiler messages",
+    "source_snapshot": "interval-arithmetic-policy-source-before-tests.json",
+    "ownership": "Geometry policy validation, selected-root and denominator/sheet decisions, and bounded-pass guards remain in existing callers. Only conservative arithmetic selects strict scalar predicates internally."
+  },
+  "other_interval_types_audited": "Hypersolve has theorem-specific rational interval kernels and an AlgebraicPolynomialValueInterval report carrier. They are not blindly substituted for this general exact-Real arithmetic; their rational reconstruction guards remain intact.",
+  "qualification": "interval-arithmetic-policy-qualification.json",
+  "next": "box-construction-policy-followup.json",
+  "commit": "b4a0d02d5b2237bb6168eb1fe0e5849f3df82f06"
+}

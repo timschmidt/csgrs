@@ -1,0 +1,29 @@
+   Compiling hyperreal v0.13.1 (/tmp/aern-hyper-exp.PdU63J/hyperreal-demand-cached)
+    Finished `bench` profile [optimized] target(s) in 14.91s
+     Running benches/numerical_micro.rs (target/release/deps/numerical_micro-af79510a35c1baa0)
+Benchmarking computable_transcendentals/exp_deferred_constructor
+Benchmarking computable_transcendentals/exp_deferred_constructor: Warming up for 200.00 ms
+Benchmarking computable_transcendentals/exp_deferred_constructor: Collecting 30 samples in estimated 500.01 ms (16M iterations)
+Benchmarking computable_transcendentals/exp_deferred_constructor: Analyzing
+computable_transcendentals/exp_deferred_constructor
+                        time:   [30.032 ns 30.184 ns 30.441 ns]
+Benchmarking computable_transcendentals/exp_coarse_cold_p1
+Benchmarking computable_transcendentals/exp_coarse_cold_p1: Warming up for 200.00 ms
+Benchmarking computable_transcendentals/exp_coarse_cold_p1: Collecting 30 samples in estimated 500.24 ms (241k iterations)
+Benchmarking computable_transcendentals/exp_coarse_cold_p1: Analyzing
+computable_transcendentals/exp_coarse_cold_p1
+                        time:   [1.9958 µs 2.3675 µs 2.7584 µs]
+Found 5 outliers among 30 measurements (16.67%)
+  1 (3.33%) high mild
+  4 (13.33%) high severe
+Benchmarking computable_transcendentals/exp_deferred_negative_cold_p128
+Benchmarking computable_transcendentals/exp_deferred_negative_cold_p128: Warming up for 200.00 ms
+Benchmarking computable_transcendentals/exp_deferred_negative_cold_p128: Collecting 30 samples in estimated 596.23 ms (2790 iterations)
+Benchmarking computable_transcendentals/exp_deferred_negative_cold_p128: Analyzing
+computable_transcendentals/exp_deferred_negative_cold_p128
+                        time:   [94.068 µs 96.274 µs 98.645 µs]
+Found 4 outliers among 30 measurements (13.33%)
+  1 (3.33%) high mild
+  3 (10.00%) high severe
+
+updated /tmp/aern-hyper-exp.PdU63J/hyperreal-demand-cached/benchmarks.md from 3 Criterion rows, 0 comparisons, and 10 benchmark suites

@@ -1,0 +1,27 @@
+{
+  "repo": "hypercurve",
+  "target": "hypercurve_curve_point",
+  "binary": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve_curve_point-c213919810758fce",
+  "command": [
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve_curve_point-c213919810758fce",
+    "--test-threads=4",
+    "--color",
+    "never"
+  ],
+  "sha256": "1f127664617c5432c357c019bdd650a3c5e485935fd34d29aef6637859489b11",
+  "returncode": 0,
+  "timed_out": false,
+  "elapsed_seconds": 0.0034721919801086187,
+  "log": "finite-fixed-distance-domains-full-hypercurve-hypercurve_curve_point.log",
+  "passed": [
+    "coordinate_view_accepts_arbitrary_exact_reals_and_preserves_certainty",
+    "independent_selected_charts_share_the_general_point_queries"
+  ],
+  "failed": [],
+  "ignored": [],
+  "summaries": [
+    "test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s"
+  ],
+  "new_failures": [],
+  "known_failures": []
+}

@@ -1,0 +1,24 @@
+projection traversal: [([0],2.0,2.0),([1],1.0,1.0)]
+control traversal: [([0],2.0,2.0),([1],1.0,1.0)]
+projection lookup zero/one: (True,True)
+projection at 2.0: (2.0,2.0)
+control at 2.0: (2.0,2.0)
+projection at 3.0: (3.0,3.0)
+control at 3.0: (3.0,3.0)
+projection at 4.0: (4.0,4.0)
+control at 4.0: (4.0,4.0)
+adjust control domain [3,4], evaluate at 3: (2.0,2.0)
+derivative x^2 traversal: [([1],2.0,2.0)]
+derivative x^2 at 1: (2.0,2.0)
+derivative x^2 plus 2 at 1: EXCEPTION evalPolyDirect: illegal case:
+ varVals = []
+ terms = V{"x"/^0->C{<2.0>}}
+CallStack (from HasCallStack):
+  error, called at src/Numeric/AERN/Poly/IntPoly/Evaluation.hs:459:9 in aern-poly-0.5.0-Du22eFVChpfCtxQ5KMeP6H:Numeric.AERN.Poly.IntPoly.Evaluation
+degree-five sum reduced to maxsize 2: [([0],1.0,1.0),([1],1.0,1.0),([2],1.0,1.0),([3],1.0,1.0),([4],1.0,1.0),([5],1.0,1.0)]
+zero-variable default maxsize: 0
+zero-variable constant addition: EXCEPTION Prelude.!!: negative index
+CallStack (from HasCallStack):
+  error, called at libraries/base/GHC/List.hs:1369:12 in base:GHC.List
+  negIndex, called at libraries/base/GHC/List.hs:1373:17 in base:GHC.List
+  !!, called at src/Numeric/AERN/Poly/IntPoly/Reduction.hs:255:65 in aern-poly-0.5.0-Du22eFVChpfCtxQ5KMeP6H:Numeric.AERN.Poly.IntPoly.Reduction

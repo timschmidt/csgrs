@@ -1,0 +1,13 @@
+{
+  "tag": "power-wide-gates-v69",
+  "started": "2026-09-11T17:11:20.564Z",
+  "finished": "2026-09-11T17:11:25.768Z",
+  "elapsedSeconds": 5.202371366,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "node",
+  "args": [
+    "run-power-wide-v69.mjs"
+  ],
+  "code": 0,
+  "signal": null
+}

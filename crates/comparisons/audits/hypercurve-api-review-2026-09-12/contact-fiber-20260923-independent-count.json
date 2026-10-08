@@ -1,0 +1,36 @@
+{
+  "source_root_count": 1,
+  "selected_factor_degree": 34,
+  "leading_signs": [
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    -1,
+    1
+  ],
+  "lower_sturm_signs": [
+    1,
+    -1,
+    1,
+    1,
+    -1,
+    -1,
+    1,
+    1
+  ],
+  "upper_sturm_signs": [
+    1,
+    1,
+    -1,
+    -1,
+    1,
+    1,
+    1,
+    -1
+  ],
+  "distinct_root_count": 1,
+  "seconds": 4.134585027932189
+}

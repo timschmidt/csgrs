@@ -1,0 +1,15 @@
+[package]
+name = "calcium-rank-cost-candidate"
+version = "0.1.0"
+edition = "2024"
+publish = false
+[workspace]
+[dependencies]
+hyperreal = { path = "../rank-dominance-trial/hyperreal" }
+hypersolve = { path = "../rank-dominance-trial/hypersolve" }
+[[bin]]
+name = "calcium-rank-candidate-cpu"
+path = "../rank-cost-cpu.rs"
+[[bin]]
+name = "calcium-rank-candidate-allocation"
+path = "../rank-cost-allocation.rs"

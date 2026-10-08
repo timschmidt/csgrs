@@ -1,0 +1,39 @@
+{
+  "baseline": "polynomial-derivative-v817-sources.json",
+  "rlib": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypercurve-85a9105cd1c82df7.rlib",
+  "rlib_sha256": "744c624a4d52b2680905385f22b388c5479aea84af0f8ae9e6071268a01d1550",
+  "source_sha256": "6fd12e1afa6529f2e179cf6a00899c8315f91c8de838d4d5100cb3653e08bd15",
+  "processes": [
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustc",
+        "--edition=2024",
+        "--crate-name",
+        "polynomial_derivative_probe",
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/polynomial-derivative-probe-v809.rs",
+        "--extern",
+        "hypercurve=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypercurve-85a9105cd1c82df7.rlib",
+        "-L",
+        "dependency=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps",
+        "-C",
+        "opt-level=3",
+        "-o",
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/polynomial-derivative-probe-v818-binary"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.4644521630834788,
+      "log": "polynomial-derivative-probe-v818-compile.log"
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/polynomial-derivative-probe-v818-binary"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.003563926089555025,
+      "log": "polynomial-derivative-probe-v818-run.log"
+    }
+  ],
+  "all_processes_reaped": true,
+  "binary_sha256": "d7b2f08c8ae1d97d4caa9c9ca3be11ade2a56a25ec501f7147ddc17b8d29602b",
+  "probe_complete": true
+}

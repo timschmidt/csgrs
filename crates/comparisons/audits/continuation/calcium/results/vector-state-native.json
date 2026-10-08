@@ -1,0 +1,11 @@
+{
+  "tag": "vector-state-native",
+  "started": "2026-09-08T22:22:44.725Z",
+  "finished": "2026-09-08T22:22:44.737Z",
+  "elapsedSeconds": 0.010638441,
+  "cwd": "/home/tim/Documents/GitHub/workspace",
+  "command": "/tmp/calcium-reuse-costs.73SR1w/flint-vector-state-probe",
+  "args": [],
+  "code": 1,
+  "signal": null
+}

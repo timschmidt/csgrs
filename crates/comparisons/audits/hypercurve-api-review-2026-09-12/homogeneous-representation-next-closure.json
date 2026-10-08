@@ -1,0 +1,41 @@
+{
+  "status": "implemented, qualified, and committed",
+  "baseline": "nurbs-homogeneous-recomposition-before.log",
+  "fixture": "degree-two clamped NURBS with points (0,0),(1,1),(2,0), weights [1,-1/2,1], knots [0,0,0,1,1,1]",
+  "denominator": "1-3t+3t^2 > 0 on [0,1]",
+  "observed": {
+    "policies": [
+      "STRICT",
+      "APPROXIMATE_512"
+    ],
+    "degree_elevation_spans": "succeeds at degree three; exact finite bounds certify",
+    "elevated_to_degree": "Blocked DegreeElevation/Nurbs/Unsupported"
+  },
+  "cause": "The exact degree-three homogeneous weights are [1,0,0,1]. NurbsCurve2 recomposition still requires a finite affine control view from every elevated span; RationalBSplineCurve2 remains an affine-points-plus-weights owner.",
+  "next_implementation": "Carry the homogeneous authority through RationalBSplineCurve2, RationalBezierSpan2, extraction/recomposition, knot insertion/removal, and NurbsCurve2. Migrate callers directly rather than restoring an affine getter or adding compatibility interfaces.",
+  "other_scope_still_open": [
+    "Finite raw unit endpoints are still required by RationalBezier2; general charts with poles at those raw endpoints need continued work.",
+    "RationalQuadraticBezier2 retains separate affine control machinery; shared homogeneous conic authority remains an architectural reduction opportunity.",
+    "HyperBREP 3D rational curves and tensor surfaces retain affine-control target requirements; no full 3D homogeneous migration is claimed.",
+    "Constant/collapsed supports, broader recursive region closure, selected-fiber/root refinement reuse, and repeated composed-workload growth remain part of the original active goal."
+  ],
+  "goal_status": "active",
+  "observed_hypercurve_commit": "d52d725650e642f50edea33bd493ace993b74f70",
+  "observed_hyperbrep_commit": "bfcc970b4886e7dc394462191008ac7198f7c3e1",
+  "resolution": {
+    "representation": "Shared HomogeneousControl2 in RationalBSplineCurve2 and RationalBezier2; RationalBezierSpan2 retains the actual evaluator and source knot interval.",
+    "verified_regressions": "NURBS elevation to degree three with weights [1,0,0,1], knot insertion/removal, exact splits, mixed-gauge discontinuities, unclamped infinite controls, reversal, similarity, periodic persistence, and composed region operations.",
+    "removed": "Quadratic-only rational spline carrier/extraction, native-promotion topology reports, control-weight-count domain reports, redundant affine reconstruction/evaluator cache, and forwarding constructor aliases.",
+    "remaining_limits": [
+      "Finite raw unit endpoints are still required by RationalBezier2; general charts with poles at those raw endpoints need continued work.",
+      "RationalQuadraticBezier2 retains separate affine control machinery; shared homogeneous conic authority remains an architectural reduction opportunity.",
+      "HyperBREP 3D rational curves and tensor surfaces retain affine-control target requirements; no full 3D homogeneous migration is claimed.",
+      "Constant/collapsed supports, broader recursive region closure, selected-fiber/root refinement reuse, and repeated composed-workload growth remain part of the original active goal."
+    ],
+    "commits": {
+      "hypercurve": "b1f07b35d8a43ba6d5ce85b11a11ea18582ef51e",
+      "hyperbrep": "8a84ee7db02fd2720ac89a1a6a227ee4ec2a8171"
+    }
+  },
+  "qualification": "homogeneous-nurbs-qualification.json"
+}

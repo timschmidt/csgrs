@@ -1,0 +1,279 @@
+{
+  "diagnostic_only": true,
+  "checks": [
+    {
+      "label": "fmt",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustfmt",
+        "--edition",
+        "2024",
+        "--check",
+        "src/bezier_offset.rs",
+        "src/bezier_parameter.rs",
+        "src/bezier_region.rs",
+        "src/curve.rs",
+        "src/curve_corner_chain.rs",
+        "src/curve_region_boolean.rs",
+        "tests/hypercurve_curve.rs"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 3.7520642339950427,
+      "log": "retained-source-regressions-20260925-v62-fmt.log"
+    },
+    {
+      "label": "clippy-0",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "clippy",
+        "--all-targets",
+        "--all-features",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 29.00715890293941,
+      "log": "retained-source-regressions-20260925-v62-clippy-0.log"
+    },
+    {
+      "label": "clippy-1",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "clippy",
+        "--all-targets",
+        "--no-default-features",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 29.725373281980865,
+      "log": "retained-source-regressions-20260925-v62-clippy-1.log"
+    }
+  ],
+  "binaries": {
+    "hypercurve": {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-source-regressions-20260925-v62-hypercurve",
+      "sha256": "0a83770157ba091a989e5aa10583aee1e11dfc434d83cb43dfce3c08655ec8c2"
+    }
+  },
+  "cases": [
+    {
+      "label": "regularization_orders_all_branches_at_a_pinched_algebraic_corner",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-source-regressions-20260925-v62-hypercurve",
+        "--exact",
+        "curve_region_boolean::certified_successor_tests::regularization_orders_all_branches_at_a_pinched_algebraic_corner",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.543838913901709,
+      "log": "retained-source-regressions-20260925-v62-regularization_orders_all_branches_at_a_pinched_algebraic_corner.log"
+    },
+    {
+      "label": "algebraic_ray_queries_keep_exterior_roots_and_denominator_orientation",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-source-regressions-20260925-v62-hypercurve",
+        "--exact",
+        "bezier_region::tests::algebraic_ray_queries_keep_exterior_roots_and_denominator_orientation",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.2983886640286073,
+      "log": "retained-source-regressions-20260925-v62-algebraic_ray_queries_keep_exterior_roots_and_denominator_orientation.log"
+    },
+    {
+      "label": "retained_polynomial_chamfer_extends_exact_and_algebraic_incident_roots",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-source-regressions-20260925-v62-hypercurve",
+        "--exact",
+        "bezier_region::tests::retained_polynomial_chamfer_extends_exact_and_algebraic_incident_roots",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 2.0551013570511714,
+      "log": "retained-source-regressions-20260925-v62-retained_polynomial_chamfer_extends_exact_and_algebraic_incident_roots.log"
+    },
+    {
+      "label": "retained_rational_chamfer_extends_exact_and_algebraic_pre_pole_roots",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-source-regressions-20260925-v62-hypercurve",
+        "--exact",
+        "bezier_region::tests::retained_rational_chamfer_extends_exact_and_algebraic_pre_pole_roots",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 1.6490194030338898,
+      "log": "retained-source-regressions-20260925-v62-retained_rational_chamfer_extends_exact_and_algebraic_pre_pole_roots.log"
+    },
+    {
+      "label": "nonlinear_algebraic_endpoint_chamfer_uses_complete_incident_ray",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-source-regressions-20260925-v62-hypercurve",
+        "--exact",
+        "bezier_region::tests::nonlinear_algebraic_endpoint_chamfer_uses_complete_incident_ray",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 3.349539418006316,
+      "log": "retained-source-regressions-20260925-v62-nonlinear_algebraic_endpoint_chamfer_uses_complete_incident_ray.log"
+    },
+    {
+      "label": "retained_analytic_corners_preserve_normalized_sets",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-source-regressions-20260925-v62-hypercurve",
+        "--exact",
+        "bezier_region::tests::retained_analytic_corners_preserve_normalized_sets",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 1.8121986410114914,
+      "log": "retained-source-regressions-20260925-v62-retained_analytic_corners_preserve_normalized_sets.log"
+    },
+    {
+      "label": "circular_spline_extensions_preserve_complements_and_closed_endpoint_ownership",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-source-regressions-20260925-v62-hypercurve",
+        "--exact",
+        "curve::curve_subdivision::tests::circular_spline_extensions_preserve_complements_and_closed_endpoint_ownership",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.3026970580685884,
+      "log": "retained-source-regressions-20260925-v62-circular_spline_extensions_preserve_complements_and_closed_endpoint_ownership.log"
+    },
+    {
+      "label": "curved_face_windings_preserve_crossings_tangencies_overlaps_and_nested_holes",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-source-regressions-20260925-v62-hypercurve",
+        "--exact",
+        "curve_region_boolean::certified_successor_tests::curved_face_windings_preserve_crossings_tangencies_overlaps_and_nested_holes",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.8535980390151963,
+      "log": "retained-source-regressions-20260925-v62-curved_face_windings_preserve_crossings_tangencies_overlaps_and_nested_holes.log"
+    },
+    {
+      "label": "retained_and_represented_tangents_share_filled_face_order",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-source-regressions-20260925-v62-hypercurve",
+        "--exact",
+        "bezier_region::tests::retained_and_represented_tangents_share_filled_face_order",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.3069296879693866,
+      "log": "retained-source-regressions-20260925-v62-retained_and_represented_tangents_share_filled_face_order.log"
+    },
+    {
+      "label": "algebraic_ray_retains_selected_endpoint_ownership",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-source-regressions-20260925-v62-hypercurve",
+        "--exact",
+        "bezier_region::tests::algebraic_ray_retains_selected_endpoint_ownership",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.3794601479312405,
+      "log": "retained-source-regressions-20260925-v62-algebraic_ray_retains_selected_endpoint_ownership.log"
+    },
+    {
+      "label": "selected_parallel_ray_vertices_use_spatial_endpoint_ownership",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-source-regressions-20260925-v62-hypercurve",
+        "--exact",
+        "bezier_region::tests::selected_parallel_ray_vertices_use_spatial_endpoint_ownership",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.2853228480089456,
+      "log": "retained-source-regressions-20260925-v62-selected_parallel_ray_vertices_use_spatial_endpoint_ownership.log"
+    },
+    {
+      "label": "independent_field_collinear_chord_overlap_enters_all_boolean_topology",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-source-regressions-20260925-v62-hypercurve",
+        "--exact",
+        "curve_region_boolean::certified_successor_tests::independent_field_collinear_chord_overlap_enters_all_boolean_topology",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 101,
+      "elapsed_seconds": 0.28204469301272184,
+      "log": "retained-source-regressions-20260925-v62-independent_field_collinear_chord_overlap_enters_all_boolean_topology.log"
+    },
+    {
+      "label": "source_related_algebraic_chord_contact_enters_split_topology",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-source-regressions-20260925-v62-hypercurve",
+        "--exact",
+        "curve_region_boolean::certified_successor_tests::source_related_algebraic_chord_contact_enters_split_topology",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 101,
+      "elapsed_seconds": 0.30035329796373844,
+      "log": "retained-source-regressions-20260925-v62-source_related_algebraic_chord_contact_enters_split_topology.log"
+    },
+    {
+      "label": "resource_blocked_selected_corner_chamfers_in_its_affine_fiber",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-source-regressions-20260925-v62-hypercurve",
+        "--exact",
+        "bezier_region::tests::resource_blocked_selected_corner_chamfers_in_its_affine_fiber",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 60.09681738598738,
+      "log": "retained-source-regressions-20260925-v62-resource_blocked_selected_corner_chamfers_in_its_affine_fiber.log"
+    }
+  ],
+  "all_processes_reaped": true,
+  "build_returncode": 0,
+  "all_sources_unchanged": true
+}

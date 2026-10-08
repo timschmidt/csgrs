@@ -1,0 +1,40 @@
+{
+  "candidate": {
+    "returncode": 0,
+    "elapsed_seconds": 29.29267998295836,
+    "binary_sha256": "b93a644e01942d1486d1ca93f6ad53a6c83ec397c76caf55b61d279ea2e3b7bb",
+    "checks": [
+      {
+        "command": [
+          "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+          "check",
+          "--all-targets",
+          "--all-features",
+          "--locked",
+          "--offline"
+        ],
+        "returncode": 0,
+        "log": "rational-witness-axis-20260923-candidate-check-0.log"
+      },
+      {
+        "command": [
+          "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+          "check",
+          "--all-targets",
+          "--no-default-features",
+          "--locked",
+          "--offline"
+        ],
+        "returncode": 0,
+        "log": "rational-witness-axis-20260923-candidate-check-1.log"
+      }
+    ]
+  },
+  "parent": {
+    "returncode": 101,
+    "elapsed_seconds": 0.14416489202994853,
+    "binary_sha256": "2ce29d207d3e34fb02c8a34cbe4c16cb94618ae7065413666e6a5cb67a6e5428"
+  },
+  "all_sources_unchanged": true,
+  "all_processes_reaped": true
+}

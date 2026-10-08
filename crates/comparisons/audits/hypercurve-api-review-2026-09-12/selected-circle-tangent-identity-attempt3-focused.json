@@ -1,0 +1,70 @@
+[
+  {
+    "target": "hypercurve_curve_intersection",
+    "filter": "selected_circle_tangency_reuses_retained_normal_evidence",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve_curve_intersection-e3a50a789eb6a53e",
+      "selected_circle_tangency_reuses_retained_normal_evidence",
+      "--test-threads=2",
+      "--color",
+      "never",
+      "--nocapture"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.5142512430029456,
+    "log": "selected-circle-tangent-identity-attempt3-selected_circle_tangency_reuses_retained_normal_evidence.log",
+    "binary": "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve_curve_intersection-e3a50a789eb6a53e",
+    "sha256": "05f2b51abe5bd2c688774d3be0171967b71518d581fd17acbf1144caea21dd0e"
+  },
+  {
+    "target": "lib",
+    "filter": "selected_fiber_circle_overlap_does_not_prove_source_parameter_identity",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve-6e6572a45c5b177b",
+      "selected_fiber_circle_overlap_does_not_prove_source_parameter_identity",
+      "--test-threads=2",
+      "--color",
+      "never",
+      "--nocapture"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.015577553000184707,
+    "log": "selected-circle-tangent-identity-attempt3-selected_fiber_circle_overlap_does_not_prove_source_parameter_identity.log",
+    "binary": "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve-6e6572a45c5b177b",
+    "sha256": "ae47d12ba02762e03fee7d4802700ebe6fd5bc888b4492fc441eea447e1be3a2"
+  },
+  {
+    "target": "lib",
+    "filter": "selected_fiber_rational_overlap_replays_certified_policy",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve-6e6572a45c5b177b",
+      "selected_fiber_rational_overlap_replays_certified_policy",
+      "--test-threads=2",
+      "--color",
+      "never",
+      "--nocapture"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.41413633899355773,
+    "log": "selected-circle-tangent-identity-attempt3-selected_fiber_rational_overlap_replays_certified_policy.log",
+    "binary": "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve-6e6572a45c5b177b",
+    "sha256": "ae47d12ba02762e03fee7d4802700ebe6fd5bc888b4492fc441eea447e1be3a2"
+  },
+  {
+    "target": "lib",
+    "filter": "curve_intersection::curve_support_intersection::circle_dispatch_tests",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve-6e6572a45c5b177b",
+      "curve_intersection::curve_support_intersection::circle_dispatch_tests",
+      "--test-threads=2",
+      "--color",
+      "never",
+      "--nocapture"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 17.58856156800175,
+    "log": "selected-circle-tangent-identity-attempt3-circle_dispatch_tests.log",
+    "binary": "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve-6e6572a45c5b177b",
+    "sha256": "ae47d12ba02762e03fee7d4802700ebe6fd5bc888b4492fc441eea447e1be3a2"
+  }
+]

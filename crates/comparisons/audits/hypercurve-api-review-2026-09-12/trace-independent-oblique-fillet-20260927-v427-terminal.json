@@ -1,0 +1,57 @@
+{
+  "source_manifest": "trace-independent-oblique-fillet-20260927-v427-sources.json",
+  "source_directory": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/source-archives/trace-independent-oblique-fillet-20260927-v427",
+  "cases": [
+    {
+      "binary": "trace-independent-oblique-fillet-20260927-v427-hypercurve",
+      "name": "bezier_offset::conversion_tests::independent_oblique_chords_support_constrained_fillet_families",
+      "returncode": 101,
+      "log": "trace-independent-oblique-fillet-20260927-v427-case-000.log",
+      "elapsed_seconds": 8.925244320183992
+    }
+  ],
+  "builds": [
+    {
+      "crate": "hypercurve",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "test",
+        "--lib",
+        "--release",
+        "--all-features",
+        "--no-run",
+        "--message-format=json",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "log": "trace-independent-oblique-fillet-20260927-v427-hypercurve-build.log",
+      "elapsed_seconds": 128.19073865399696,
+      "binary": {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/trace-independent-oblique-fillet-20260927-v427-hypercurve",
+        "sha256": "b441653393c4188f85416efcaab6e911e86608429d6d45c67a4e91e5b767f07c"
+      }
+    }
+  ],
+  "trial": {
+    "hypercurve/src/bezier_metric.rs": "2718eea47d3194e6fc5f6507ebcde8243c5d580973c07e6ed4bd94647862878a",
+    "hypercurve/src/bezier_moment.rs": "e3fdfe8e48bfa7a76ba5d6bae1b074d2ef5f7e8334173f304e4e810e86de9923",
+    "hypercurve/src/bezier_offset.rs": "c79ce06c237c1e46dd96ce25791c9cee6b4ff1bf78625fb67bbc17d51d0963e0",
+    "hypercurve/src/bezier_parameter.rs": "3097537cc2b02c828f673e87b33675ff368e5e0d7a7c20fcec46b7423c46712c",
+    "hypercurve/src/bezier_split.rs": "617715b6fb06062ca04d0d88d4eefe12660a0b02551b12dce0427f135c450068"
+  },
+  "all_processes_reaped": true,
+  "checks": [],
+  "qualification_scope": "Independent selected endpoint fields must preserve continuous fillet constraint behavior",
+  "expected_cases": {
+    "hypercurve": [
+      "bezier_offset::conversion_tests::independent_oblique_chords_support_constrained_fillet_families"
+    ]
+  },
+  "known_unresolved": [
+    "strict_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions",
+    "approximate_512_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions"
+  ],
+  "failure": "case failure or missing exact test",
+  "qualification_complete": false
+}

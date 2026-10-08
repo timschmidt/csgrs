@@ -1,0 +1,10 @@
+[1 of 2] Compiling Main             ( /tmp/aern-audit.zp9Mzz/MixedOpsProbe.hs, /tmp/aern-audit.zp9Mzz/MixedOpsProbe.o ) [Missing object file]
+
+/tmp/aern-audit.zp9Mzz/MixedOpsProbe.hs:17:10: warning: [GHC-06201] [-Wmissing-methods]
+    • No explicit implementation for
+        ‘excludesPlusInfinity’ and ‘excludesMinusInfinity’
+    • In the instance declaration for ‘HasInfinities Scalar’
+   |
+17 | instance HasInfinities Scalar where
+   |          ^^^^^^^^^^^^^^^^^^^^
+[2 of 2] Linking /tmp/aern-audit.zp9Mzz/mixed-ops-probe

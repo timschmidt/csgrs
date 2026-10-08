@@ -1,0 +1,38 @@
+{
+  "checks": [
+    {
+      "label": "fmt",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustfmt",
+        "--edition",
+        "2024",
+        "--check",
+        "src/bezier_offset.rs"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 2.3325729180360213,
+      "log": "retained-coordinate-identity-20260924-v2-fmt.log"
+    }
+  ],
+  "cases": [
+    {
+      "label": "one_fragment_materialized_loop_chamfers_to_one_middle_interval",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-coordinate-identity-20260924-v2-libtest",
+        "--exact",
+        "bezier_region::tests::one_fragment_materialized_loop_chamfers_to_one_middle_interval",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": "timeout",
+      "elapsed_seconds": 20.280061456025578,
+      "log": "retained-coordinate-identity-20260924-v2-one_fragment_materialized_loop_chamfers_to_one_middle_interval.log"
+    }
+  ],
+  "all_processes_reaped": true,
+  "diagnostic_only": true,
+  "binary_sha256": "f640d40c5757698b5028251281036345cf0beb6f7eb98a7150c33dde5e1fe62f",
+  "all_sources_unchanged": true
+}

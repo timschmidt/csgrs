@@ -1,0 +1,114 @@
+{
+  "status": "committed; qualified against the documented baseline",
+  "goal_status": "active",
+  "previous_commit": "236ed5a00bf6f22425badbae8d77552e48a457d5",
+  "commit": "b3df58f65925a8f3ec54a2cb8bcacf3a97c37d3a",
+  "targets": 49,
+  "passed": 2243,
+  "passed_by_repo": {
+    "hypercurve": 2011,
+    "hyperbrep": 232
+  },
+  "known_failed": [
+    "approximate_512_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions",
+    "non_ph_bezier_pair_projective_fillet_retains_algebraic_extensions",
+    "nonconvex_algebraic_chord_expansion_is_exact_and_local_collapse_is_explicit",
+    "strict_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions",
+    "unified_mixed_line_arc_erosion_splits_after_a_curved_neck_collapse"
+  ],
+  "new_failures": [],
+  "ignored": 9,
+  "expensive_previously_unqualified_exclusions": 8,
+  "timeouts": 0,
+  "builds_and_checks": {
+    "-check": 0,
+    "-test-build": 0,
+    "-hyperbrep-check": 0,
+    "-hyperbrep-test-build": 0
+  },
+  "formatting_and_whitespace": "passed on final frozen qualification sources",
+  "formatted_files": {
+    "hypercurve": [
+      "src/bezier_offset.rs",
+      "src/curve_support_intersection.rs"
+    ],
+    "hyperbrep": []
+  },
+  "additional_caller_checks": [
+    {
+      "target": "fuzz",
+      "command": [
+        "cargo",
+        "check",
+        "--manifest-path",
+        "fuzz/Cargo.toml",
+        "--all-targets",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 6.825909509003395,
+      "log": "finite-circle-affine-fuzz-check.log"
+    },
+    {
+      "target": "ui",
+      "command": [
+        "cargo",
+        "check",
+        "--manifest-path",
+        "examples/hypercurve_ui/Cargo.toml",
+        "--all-targets",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 6.9254657219862565,
+      "log": "finite-circle-affine-ui-check.log"
+    },
+    {
+      "target": "hyperbrep-fuzz",
+      "command": [
+        "cargo",
+        "check",
+        "--manifest-path",
+        "fuzz/Cargo.toml",
+        "--all-targets",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 7.175803628997528,
+      "log": "finite-circle-affine-hyperbrep-fuzz-check.log"
+    }
+  ],
+  "source_verification": "finite-circle-affine-source-verification.json",
+  "focused_regression_checks": "finite-circle-affine-final-focused.json",
+  "discovery_probe": "finite-circle-affine-baseline.json",
+  "normal_library_sha256": "0f5b28637814fb423462fabccda416f4be464138d2d6ef53a1d2513f48a0584c",
+  "independent_probes_and_matrices": [
+    "finite-circle-affine-exterior-completed.json",
+    "finite-circle-affine-tangent-matrix.json",
+    "finite-circle-affine-finite-circle-probe.json",
+    "finite-circle-affine-family-matrix.json",
+    "finite-circle-affine-completed.json",
+    "finite-circle-affine-unit-replay.json",
+    "finite-circle-affine-retained-chord-matrix.json",
+    "finite-circle-affine-finite-matrix.json",
+    "finite-circle-affine-cubic-replay.json",
+    "finite-circle-affine-baseline-recheck.json",
+    "finite-circle-affine-replay-matrix-run.json",
+    "finite-circle-affine-analytic-probe.json",
+    "finite-circle-affine-endpoint-probe.json",
+    "finite-circle-affine-completed-probe.json",
+    "finite-circle-affine-probe-final.json",
+    "finite-circle-affine-circle-matrix.json",
+    "finite-circle-affine-region-carrier-matrix.json",
+    "finite-circle-affine-general-trim-matrix.json",
+    "finite-circle-affine-constant-image-trim-matrix.json"
+  ],
+  "regression_baseline": "native-point-components-qualification.json",
+  "affected_regression_results": "finite-circle-affine-full-hypercurve-lib.json",
+  "evidence_audit": "finite-circle-affine-evidence-audit.md",
+  "performance_claim": null,
+  "remaining": "Nonlinear finite circle/rational, circle/parallel, parallel/rational and parallel/parallel discovery; normalized public region construction; five promotion failures; eight unqualified expensive tests; broader algebraic consolidation, computational measurements, and original architecture goal."
+}

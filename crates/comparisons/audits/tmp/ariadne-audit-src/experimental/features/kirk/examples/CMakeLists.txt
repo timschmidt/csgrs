@@ -1,0 +1,5 @@
+if(KIRK_FOUND)
+    add_dependencies(examples-external kirk_real_demo)
+    add_executable(kirk_real_demo kirk_real_demo.cpp)
+    target_link_libraries(kirk_real_demo ariadne-external)
+endif()

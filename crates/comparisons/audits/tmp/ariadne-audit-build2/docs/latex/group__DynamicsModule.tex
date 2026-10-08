@@ -1,0 +1,57 @@
+\doxysubsubsection{Dynamics Module }
+\hypertarget{group__DynamicsModule}{}\label{group__DynamicsModule}\index{Dynamics Module@{Dynamics Module}}
+
+
+\doxysubsubsubsection{Description}
+Classes and functions for analysing dynamic systems. 
+
+\doxysubsubsubsubsection*{Classes}
+\begin{DoxyCompactItemize}
+\item 
+class \mbox{\hyperlink{classAriadne_1_1Enclosure}{Enclosure}}
+\begin{DoxyCompactList}\small\item\em An enclosure for part of the reachable or evolved set of a dynamical system. Defined as $x=f(s)$ for $s\in D$ satisfying $g(s)\leq0$ and $h(s)=0$. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1EvolverInterface}{Evolver\+Interface$<$ SYS, ES, TRM $>$}}
+\begin{DoxyCompactList}\small\item\em Interface for evolving a dynamic system. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1ReachabilityAnalyser}{Reachability\+Analyser$<$ SYS $>$}}
+\begin{DoxyCompactList}\small\item\em A class for performing reachability analysis on a hybrid system. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1ReachabilityAnalyserInterface}{Reachability\+Analyser\+Interface$<$ SYS $>$}}
+\begin{DoxyCompactList}\small\item\em Interface for computing (chain) reachable sets of a dynamic system. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1Scalings}{Scalings}}
+\begin{DoxyCompactList}\small\item\em A class which defines the state space grid to use given the continuous state variables {\itshape spc}. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1Storage}{Storage}}
+\begin{DoxyCompactList}\small\item\em A storage for part of the reachable or evolved set of a dynamical system. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsubsubsection*{Enumerations}
+\begin{DoxyCompactItemize}
+\item 
+enum class \mbox{\hyperlink{group__DynamicsModule_gafd43cf1b14dd42f7ac8ca23dcc3837b3}{Semantics}} \+: std\+::uint8\+\_\+t \{ \mbox{\hyperlink{group__DynamicsModule_ggafd43cf1b14dd42f7ac8ca23dcc3837b3aa7c48ba367e019d004bfb0239b85f2b3}{LOWER}}
+, \mbox{\hyperlink{group__DynamicsModule_ggafd43cf1b14dd42f7ac8ca23dcc3837b3a9e43f5291e6fcb2ad99c8e3f91acd179}{UPPER}}
+ \}
+\begin{DoxyCompactList}\small\item\em The semantics used to determine the trajectories of the system. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\label{doc-enum-members}
+\Hypertarget{group__DynamicsModule_doc-enum-members}
+\doxysubsubsubsection{Enumeration Type Documentation}
+\Hypertarget{group__DynamicsModule_gafd43cf1b14dd42f7ac8ca23dcc3837b3}\index{Dynamics Module@{Dynamics Module}!Semantics@{Semantics}}
+\index{Semantics@{Semantics}!Dynamics Module@{Dynamics Module}}
+\doxyparagraph{\texorpdfstring{Semantics}{Semantics}}
+{\footnotesize\ttfamily \label{group__DynamicsModule_gafd43cf1b14dd42f7ac8ca23dcc3837b3} 
+enum class \mbox{\hyperlink{group__DynamicsModule_gafd43cf1b14dd42f7ac8ca23dcc3837b3}{Semantics}} \+: std\+::uint8\+\_\+t\hspace{0.3cm}{\ttfamily [strong]}}
+
+
+
+The semantics used to determine the trajectories of the system. 
+
+\begin{DoxySeeAlso}{See also}
+\doxylink{classAriadne_1_1EvolverInterface}{Evolver\+Interface} 
+\end{DoxySeeAlso}
+\begin{DoxyEnumFields}[2]{Enumerator}
+\raisebox{\heightof{T}}[0pt][0pt]{\index{LOWER@{LOWER}!Dynamics Module@{Dynamics Module}}\index{Dynamics Module@{Dynamics Module}!LOWER@{LOWER}}}\Hypertarget{group__DynamicsModule_ggafd43cf1b14dd42f7ac8ca23dcc3837b3aa7c48ba367e019d004bfb0239b85f2b3}\label{group__DynamicsModule_ggafd43cf1b14dd42f7ac8ca23dcc3837b3aa7c48ba367e019d004bfb0239b85f2b3} 
+LOWER&Under-\/approximation with trajectories terminating at spacial discontinuities. \\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{UPPER@{UPPER}!Dynamics Module@{Dynamics Module}}\index{Dynamics Module@{Dynamics Module}!UPPER@{UPPER}}}\Hypertarget{group__DynamicsModule_ggafd43cf1b14dd42f7ac8ca23dcc3837b3a9e43f5291e6fcb2ad99c8e3f91acd179}\label{group__DynamicsModule_ggafd43cf1b14dd42f7ac8ca23dcc3837b3a9e43f5291e6fcb2ad99c8e3f91acd179} 
+UPPER&Over-\/approximations with all possibilities included as spacial discontinuities. \\
+\hline
+
+\end{DoxyEnumFields}

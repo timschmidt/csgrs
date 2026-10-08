@@ -1,0 +1,1246 @@
+{
+  "started": "2026-09-08T23:02:56.516Z",
+  "finished": "2026-09-08T23:03:15.476Z",
+  "cpu": 6,
+  "binaries": {
+    "baseline": {
+      "path": "/tmp/calcium-polynomial-decision.ItisYX/polynomial-cpu-baseline",
+      "bytes": 2448600,
+      "sha256": "e2ce9cb2402a8dac7af23345ca6a1f236ca5452282a0ad366de7fdd5abc985c7",
+      "size": "text\t   data\t    bss\t    dec\t    hex\tfilename\n1750777\t 220152\t   4504\t1975433\t 1e2489\t/tmp/calcium-polynomial-decision.ItisYX/polynomial-cpu-baseline"
+    },
+    "trial": {
+      "path": "/tmp/calcium-polynomial-decision.ItisYX/polynomial-cpu-trial",
+      "bytes": 2448672,
+      "sha256": "59881ebc3a901850ead3d8a37a44c4f98efd49f11343c5be3046936494e9e81c",
+      "size": "text\t   data\t    bss\t    dec\t    hex\tfilename\n1751085\t 220152\t   4200\t1975437\t 1e248d\t/tmp/calcium-polynomial-decision.ItisYX/polynomial-cpu-trial"
+    }
+  },
+  "summaries": [
+    {
+      "name": "rational-self",
+      "degree": 1,
+      "lifecycle": "fresh",
+      "iterations": 10000,
+      "observations": 48,
+      "pilots": [
+        {
+          "case": "rational-self",
+          "degree": 1,
+          "lifecycle": "fresh",
+          "iterations": 10,
+          "known": 10,
+          "elapsed_ns": 7879
+        },
+        {
+          "case": "rational-self",
+          "degree": 1,
+          "lifecycle": "fresh",
+          "iterations": 10,
+          "known": 10,
+          "elapsed_ns": 8540
+        }
+      ],
+      "measurements": {
+        "baseline": 580.8767,
+        "trial": 599.15345
+      },
+      "pairedMedianRatio": 1.0132980753268095,
+      "pairedMedianBootstrap95": [
+        0.9971435923471179,
+        1.0365704830767868
+      ]
+    },
+    {
+      "name": "rational-self",
+      "degree": 1,
+      "lifecycle": "retained",
+      "iterations": 10000,
+      "observations": 48,
+      "pilots": [
+        {
+          "case": "rational-self",
+          "degree": 1,
+          "lifecycle": "retained",
+          "iterations": 10,
+          "known": 10,
+          "elapsed_ns": 6799
+        },
+        {
+          "case": "rational-self",
+          "degree": 1,
+          "lifecycle": "retained",
+          "iterations": 10,
+          "known": 10,
+          "elapsed_ns": 6559
+        }
+      ],
+      "measurements": {
+        "baseline": 496.32945,
+        "trial": 496.3565
+      },
+      "pairedMedianRatio": 1.0021905005106024,
+      "pairedMedianBootstrap95": [
+        0.9922516644499622,
+        1.0195067263243704
+      ]
+    },
+    {
+      "name": "rational-self",
+      "degree": 8,
+      "lifecycle": "fresh",
+      "iterations": 3069,
+      "observations": 48,
+      "pilots": [
+        {
+          "case": "rational-self",
+          "degree": 8,
+          "lifecycle": "fresh",
+          "iterations": 10,
+          "known": 10,
+          "elapsed_ns": 32588
+        },
+        {
+          "case": "rational-self",
+          "degree": 8,
+          "lifecycle": "fresh",
+          "iterations": 10,
+          "known": 10,
+          "elapsed_ns": 28558
+        }
+      ],
+      "measurements": {
+        "baseline": 1746.4214727924405,
+        "trial": 1728.8615184099053
+      },
+      "pairedMedianRatio": 0.9910330892196229,
+      "pairedMedianBootstrap95": [
+        0.9289068822937406,
+        1.102062220795608
+      ]
+    },
+    {
+      "name": "rational-self",
+      "degree": 8,
+      "lifecycle": "retained",
+      "iterations": 3091,
+      "observations": 48,
+      "pilots": [
+        {
+          "case": "rational-self",
+          "degree": 8,
+          "lifecycle": "retained",
+          "iterations": 10,
+          "known": 10,
+          "elapsed_ns": 18219
+        },
+        {
+          "case": "rational-self",
+          "degree": 8,
+          "lifecycle": "retained",
+          "iterations": 10,
+          "known": 10,
+          "elapsed_ns": 32358
+        }
+      ],
+      "measurements": {
+        "baseline": 1484.4065027499191,
+        "trial": 1495.2324490456162
+      },
+      "pairedMedianRatio": 1.009443965479932,
+      "pairedMedianBootstrap95": [
+        1.001726708785206,
+        1.0200526500180374
+      ]
+    },
+    {
+      "name": "rational-self",
+      "degree": 16,
+      "lifecycle": "fresh",
+      "iterations": 1952,
+      "observations": 48,
+      "pilots": [
+        {
+          "case": "rational-self",
+          "degree": 16,
+          "lifecycle": "fresh",
+          "iterations": 10,
+          "known": 10,
+          "elapsed_ns": 51187
+        },
+        {
+          "case": "rational-self",
+          "degree": 16,
+          "lifecycle": "fresh",
+          "iterations": 10,
+          "known": 10,
+          "elapsed_ns": 51246
+        }
+      ],
+      "measurements": {
+        "baseline": 3046.245901639344,
+        "trial": 3027.107838114754
+      },
+      "pairedMedianRatio": 0.9978510872643138,
+      "pairedMedianBootstrap95": [
+        0.979034843197451,
+        1.0236197186633857
+      ]
+    },
+    {
+      "name": "rational-self",
+      "degree": 16,
+      "lifecycle": "retained",
+      "iterations": 3114,
+      "observations": 48,
+      "pilots": [
+        {
+          "case": "rational-self",
+          "degree": 16,
+          "lifecycle": "retained",
+          "iterations": 10,
+          "known": 10,
+          "elapsed_ns": 32118
+        },
+        {
+          "case": "rational-self",
+          "degree": 16,
+          "lifecycle": "retained",
+          "iterations": 10,
+          "known": 10,
+          "elapsed_ns": 31767
+        }
+      ],
+      "measurements": {
+        "baseline": 2607.446371226718,
+        "trial": 2614.327713551702
+      },
+      "pairedMedianRatio": 0.993913779811654,
+      "pairedMedianBootstrap95": [
+        0.9600894263677844,
+        1.0034565588823643
+      ]
+    },
+    {
+      "name": "radical-self",
+      "degree": 1,
+      "lifecycle": "fresh",
+      "iterations": 2466,
+      "observations": 48,
+      "pilots": [
+        {
+          "case": "radical-self",
+          "degree": 1,
+          "lifecycle": "fresh",
+          "iterations": 10,
+          "known": 10,
+          "elapsed_ns": 40558
+        },
+        {
+          "case": "radical-self",
+          "degree": 1,
+          "lifecycle": "fresh",
+          "iterations": 10,
+          "known": 10,
+          "elapsed_ns": 21838
+        }
+      ],
+      "measurements": {
+        "baseline": 1705.6739659367397,
+        "trial": 1738.7453365774534
+      },
+      "pairedMedianRatio": 1.0120151027509443,
+      "pairedMedianBootstrap95": [
+        0.9523406563647829,
+        1.0212546074181788
+      ]
+    },
+    {
+      "name": "radical-self",
+      "degree": 1,
+      "lifecycle": "retained",
+      "iterations": 6080,
+      "observations": 48,
+      "pilots": [
+        {
+          "case": "radical-self",
+          "degree": 1,
+          "lifecycle": "retained",
+          "iterations": 10,
+          "known": 10,
+          "elapsed_ns": 16449
+        },
+        {
+          "case": "radical-self",
+          "degree": 1,
+          "lifecycle": "retained",
+          "iterations": 10,
+          "known": 10,
+          "elapsed_ns": 16449
+        }
+      ],
+      "measurements": {
+        "baseline": 1324.8236842105262,
+        "trial": 1341.2953947368421
+      },
+      "pairedMedianRatio": 0.996761099879399,
+      "pairedMedianBootstrap95": [
+        0.9801152154308905,
+        1.0232824348778133
+      ]
+    },
+    {
+      "name": "radical-self",
+      "degree": 8,
+      "lifecycle": "fresh",
+      "iterations": 924,
+      "observations": 48,
+      "pilots": [
+        {
+          "case": "radical-self",
+          "degree": 8,
+          "lifecycle": "fresh",
+          "iterations": 10,
+          "known": 10,
+          "elapsed_ns": 95343
+        },
+        {
+          "case": "radical-self",
+          "degree": 8,
+          "lifecycle": "fresh",
+          "iterations": 10,
+          "known": 10,
+          "elapsed_ns": 108333
+        }
+      ],
+      "measurements": {
+        "baseline": 9165.301948051947,
+        "trial": 9114.824134199134
+      },
+      "pairedMedianRatio": 1.0031918266761826,
+      "pairedMedianBootstrap95": [
+        0.9698137338769475,
+        1.010505438637728
+      ]
+    },
+    {
+      "name": "radical-self",
+      "degree": 8,
+      "lifecycle": "retained",
+      "iterations": 1070,
+      "observations": 48,
+      "pilots": [
+        {
+          "case": "radical-self",
+          "degree": 8,
+          "lifecycle": "retained",
+          "iterations": 10,
+          "known": 10,
+          "elapsed_ns": 92134
+        },
+        {
+          "case": "radical-self",
+          "degree": 8,
+          "lifecycle": "retained",
+          "iterations": 10,
+          "known": 10,
+          "elapsed_ns": 93513
+        }
+      ],
+      "measurements": {
+        "baseline": 7516.465887850467,
+        "trial": 7523.292990654205
+      },
+      "pairedMedianRatio": 1.0133744961548423,
+      "pairedMedianBootstrap95": [
+        0.9887141067073785,
+        1.0201293391873563
+      ]
+    },
+    {
+      "name": "radical-self",
+      "degree": 16,
+      "lifecycle": "fresh",
+      "iterations": 432,
+      "observations": 48,
+      "pilots": [
+        {
+          "case": "radical-self",
+          "degree": 16,
+          "lifecycle": "fresh",
+          "iterations": 10,
+          "known": 10,
+          "elapsed_ns": 231734
+        },
+        {
+          "case": "radical-self",
+          "degree": 16,
+          "lifecycle": "fresh",
+          "iterations": 10,
+          "known": 10,
+          "elapsed_ns": 194747
+        }
+      ],
+      "measurements": {
+        "baseline": 17510.1875,
+        "trial": 17671.819444444445
+      },
+      "pairedMedianRatio": 1.0171965891436332,
+      "pairedMedianBootstrap95": [
+        0.9998600179116297,
+        1.0391641917581906
+      ]
+    },
+    {
+      "name": "radical-self",
+      "degree": 16,
+      "lifecycle": "retained",
+      "iterations": 473,
+      "observations": 48,
+      "pilots": [
+        {
+          "case": "radical-self",
+          "degree": 16,
+          "lifecycle": "retained",
+          "iterations": 10,
+          "known": 10,
+          "elapsed_ns": 211835
+        },
+        {
+          "case": "radical-self",
+          "degree": 16,
+          "lifecycle": "retained",
+          "iterations": 10,
+          "known": 10,
+          "elapsed_ns": 209155
+        }
+      ],
+      "measurements": {
+        "baseline": 14521.320295983085,
+        "trial": 14560.820295983087
+      },
+      "pairedMedianRatio": 0.9865794323896082,
+      "pairedMedianBootstrap95": [
+        0.931038390536103,
+        1.0133386840626037
+      ]
+    },
+    {
+      "name": "log-self",
+      "degree": 1,
+      "lifecycle": "fresh",
+      "iterations": 63,
+      "observations": 48,
+      "pilots": [
+        {
+          "case": "log-self",
+          "degree": 1,
+          "lifecycle": "fresh",
+          "iterations": 10,
+          "known": 0,
+          "elapsed_ns": 1534564
+        },
+        {
+          "case": "log-self",
+          "degree": 1,
+          "lifecycle": "fresh",
+          "iterations": 10,
+          "known": 10,
+          "elapsed_ns": 1595371
+        }
+      ],
+      "measurements": {
+        "baseline": 149620.53968253967,
+        "trial": 156201.6666666667
+      },
+      "pairedMedianRatio": 1.0467708137049825,
+      "pairedMedianBootstrap95": [
+        1.0351422028014639,
+        1.0515888528053425
+      ]
+    },
+    {
+      "name": "log-self",
+      "degree": 1,
+      "lifecycle": "retained",
+      "iterations": 1718,
+      "observations": 48,
+      "pilots": [
+        {
+          "case": "log-self",
+          "degree": 1,
+          "lifecycle": "retained",
+          "iterations": 10,
+          "known": 0,
+          "elapsed_ns": 23558
+        },
+        {
+          "case": "log-self",
+          "degree": 1,
+          "lifecycle": "retained",
+          "iterations": 10,
+          "known": 10,
+          "elapsed_ns": 58236
+        }
+      ],
+      "measurements": {
+        "baseline": 1815.8504074505238,
+        "trial": 5553.781140861467
+      },
+      "pairedMedianRatio": 3.0796538659456454,
+      "pairedMedianBootstrap95": [
+        3.0385518157727684,
+        3.1232006408632627
+      ]
+    },
+    {
+      "name": "log-self",
+      "degree": 8,
+      "lifecycle": "fresh",
+      "iterations": 51,
+      "observations": 48,
+      "pilots": [
+        {
+          "case": "log-self",
+          "degree": 8,
+          "lifecycle": "fresh",
+          "iterations": 10,
+          "known": 0,
+          "elapsed_ns": 1549214
+        },
+        {
+          "case": "log-self",
+          "degree": 8,
+          "lifecycle": "fresh",
+          "iterations": 10,
+          "known": 10,
+          "elapsed_ns": 1981624
+        }
+      ],
+      "measurements": {
+        "baseline": 152050.45098039217,
+        "trial": 187807.9117647059
+      },
+      "pairedMedianRatio": 1.2340406884539896,
+      "pairedMedianBootstrap95": [
+        1.2171267156396501,
+        1.236670327974093
+      ]
+    },
+    {
+      "name": "log-self",
+      "degree": 8,
+      "lifecycle": "retained",
+      "iterations": 273,
+      "observations": 48,
+      "pilots": [
+        {
+          "case": "log-self",
+          "degree": 8,
+          "lifecycle": "retained",
+          "iterations": 10,
+          "known": 0,
+          "elapsed_ns": 28898
+        },
+        {
+          "case": "log-self",
+          "degree": 8,
+          "lifecycle": "retained",
+          "iterations": 10,
+          "known": 10,
+          "elapsed_ns": 367505
+        }
+      ],
+      "measurements": {
+        "baseline": 2324.6758241758243,
+        "trial": 35181.17765567766
+      },
+      "pairedMedianRatio": 15.228621479293832,
+      "pairedMedianBootstrap95": [
+        14.49313555857282,
+        15.527151111891538
+      ]
+    },
+    {
+      "name": "log-self",
+      "degree": 16,
+      "lifecycle": "fresh",
+      "iterations": 45,
+      "observations": 48,
+      "pilots": [
+        {
+          "case": "log-self",
+          "degree": 16,
+          "lifecycle": "fresh",
+          "iterations": 10,
+          "known": 0,
+          "elapsed_ns": 1601310
+        },
+        {
+          "case": "log-self",
+          "degree": 16,
+          "lifecycle": "fresh",
+          "iterations": 10,
+          "known": 10,
+          "elapsed_ns": 2256585
+        }
+      ],
+      "measurements": {
+        "baseline": 152712.52222222224,
+        "trial": 238041.24444444446
+      },
+      "pairedMedianRatio": 1.45597966001502,
+      "pairedMedianBootstrap95": [
+        1.4137411616479199,
+        1.6110956877460463
+      ]
+    },
+    {
+      "name": "log-self",
+      "degree": 16,
+      "lifecycle": "retained",
+      "iterations": 151,
+      "observations": 48,
+      "pilots": [
+        {
+          "case": "log-self",
+          "degree": 16,
+          "lifecycle": "retained",
+          "iterations": 10,
+          "known": 0,
+          "elapsed_ns": 30818
+        },
+        {
+          "case": "log-self",
+          "degree": 16,
+          "lifecycle": "retained",
+          "iterations": 10,
+          "known": 10,
+          "elapsed_ns": 664014
+        }
+      ],
+      "measurements": {
+        "baseline": 2918.2119205298013,
+        "trial": 67848.82450331126
+      },
+      "pairedMedianRatio": 23.072422170127155,
+      "pairedMedianBootstrap95": [
+        22.544917816818597,
+        23.329140030756264
+      ]
+    },
+    {
+      "name": "log-plus-one",
+      "degree": 1,
+      "lifecycle": "fresh",
+      "iterations": 61,
+      "observations": 48,
+      "pilots": [
+        {
+          "case": "log-plus-one",
+          "degree": 1,
+          "lifecycle": "fresh",
+          "iterations": 10,
+          "known": 0,
+          "elapsed_ns": 1661706
+        },
+        {
+          "case": "log-plus-one",
+          "degree": 1,
+          "lifecycle": "fresh",
+          "iterations": 10,
+          "known": 10,
+          "elapsed_ns": 1618889
+        }
+      ],
+      "measurements": {
+        "baseline": 150790.97540983604,
+        "trial": 154672.75409836066
+      },
+      "pairedMedianRatio": 1.027308597790559,
+      "pairedMedianBootstrap95": [
+        1.0198759670948268,
+        1.0315805297089788
+      ]
+    },
+    {
+      "name": "log-plus-one",
+      "degree": 1,
+      "lifecycle": "retained",
+      "iterations": 2784,
+      "observations": 48,
+      "pilots": [
+        {
+          "case": "log-plus-one",
+          "degree": 1,
+          "lifecycle": "retained",
+          "iterations": 10,
+          "known": 0,
+          "elapsed_ns": 20208
+        },
+        {
+          "case": "log-plus-one",
+          "degree": 1,
+          "lifecycle": "retained",
+          "iterations": 10,
+          "known": 10,
+          "elapsed_ns": 35928
+        }
+      ],
+      "measurements": {
+        "baseline": 1936.797952586207,
+        "trial": 3545.627693965517
+      },
+      "pairedMedianRatio": 1.8499726806732635,
+      "pairedMedianBootstrap95": [
+        1.8080725836106404,
+        1.859532606953938
+      ]
+    },
+    {
+      "name": "log-plus-one",
+      "degree": 8,
+      "lifecycle": "fresh",
+      "iterations": 59,
+      "observations": 48,
+      "pilots": [
+        {
+          "case": "log-plus-one",
+          "degree": 8,
+          "lifecycle": "fresh",
+          "iterations": 10,
+          "known": 0,
+          "elapsed_ns": 1663516
+        },
+        {
+          "case": "log-plus-one",
+          "degree": 8,
+          "lifecycle": "fresh",
+          "iterations": 10,
+          "known": 10,
+          "elapsed_ns": 1723712
+        }
+      ],
+      "measurements": {
+        "baseline": 152764.86440677967,
+        "trial": 167666.4745762712
+      },
+      "pairedMedianRatio": 1.101898256464739,
+      "pairedMedianBootstrap95": [
+        1.0957560668711035,
+        1.133989679247305
+      ]
+    },
+    {
+      "name": "log-plus-one",
+      "degree": 8,
+      "lifecycle": "retained",
+      "iterations": 558,
+      "observations": 48,
+      "pilots": [
+        {
+          "case": "log-plus-one",
+          "degree": 8,
+          "lifecycle": "retained",
+          "iterations": 10,
+          "known": 0,
+          "elapsed_ns": 31038
+        },
+        {
+          "case": "log-plus-one",
+          "degree": 8,
+          "lifecycle": "retained",
+          "iterations": 10,
+          "known": 10,
+          "elapsed_ns": 179487
+        }
+      ],
+      "measurements": {
+        "baseline": 2524.01164874552,
+        "trial": 14251.33422939068
+      },
+      "pairedMedianRatio": 5.645556294616423,
+      "pairedMedianBootstrap95": [
+        5.543118353529589,
+        5.735995677436252
+      ]
+    },
+    {
+      "name": "log-plus-one",
+      "degree": 16,
+      "lifecycle": "fresh",
+      "iterations": 53,
+      "observations": 48,
+      "pilots": [
+        {
+          "case": "log-plus-one",
+          "degree": 16,
+          "lifecycle": "fresh",
+          "iterations": 10,
+          "known": 0,
+          "elapsed_ns": 1682454
+        },
+        {
+          "case": "log-plus-one",
+          "degree": 16,
+          "lifecycle": "fresh",
+          "iterations": 10,
+          "known": 10,
+          "elapsed_ns": 1891970
+        }
+      ],
+      "measurements": {
+        "baseline": 153786.61320754717,
+        "trial": 182183.6509433962
+      },
+      "pairedMedianRatio": 1.1723962214443864,
+      "pairedMedianBootstrap95": [
+        1.088586387706002,
+        1.188563336142616
+      ]
+    },
+    {
+      "name": "log-plus-one",
+      "degree": 16,
+      "lifecycle": "retained",
+      "iterations": 322,
+      "observations": 48,
+      "pilots": [
+        {
+          "case": "log-plus-one",
+          "degree": 16,
+          "lifecycle": "retained",
+          "iterations": 10,
+          "known": 0,
+          "elapsed_ns": 41067
+        },
+        {
+          "case": "log-plus-one",
+          "degree": 16,
+          "lifecycle": "retained",
+          "iterations": 10,
+          "known": 10,
+          "elapsed_ns": 310748
+        }
+      ],
+      "measurements": {
+        "baseline": 3256.795031055901,
+        "trial": 26813.256211180124
+      },
+      "pairedMedianRatio": 8.538623496147547,
+      "pairedMedianBootstrap95": [
+        8.275961746207173,
+        9.026979209306916
+      ]
+    },
+    {
+      "name": "tiny-self",
+      "degree": 1,
+      "lifecycle": "fresh",
+      "iterations": 48,
+      "observations": 48,
+      "pilots": [
+        {
+          "case": "tiny-self",
+          "degree": 1,
+          "lifecycle": "fresh",
+          "iterations": 10,
+          "known": 0,
+          "elapsed_ns": 2104436
+        },
+        {
+          "case": "tiny-self",
+          "degree": 1,
+          "lifecycle": "fresh",
+          "iterations": 10,
+          "known": 10,
+          "elapsed_ns": 1863982
+        }
+      ],
+      "measurements": {
+        "baseline": 173467.0625,
+        "trial": 179902.77083333334
+      },
+      "pairedMedianRatio": 1.0304382294181047,
+      "pairedMedianBootstrap95": [
+        1.0178762671925485,
+        1.0654302815439423
+      ]
+    },
+    {
+      "name": "tiny-self",
+      "degree": 1,
+      "lifecycle": "retained",
+      "iterations": 2608,
+      "observations": 48,
+      "pilots": [
+        {
+          "case": "tiny-self",
+          "degree": 1,
+          "lifecycle": "retained",
+          "iterations": 10,
+          "known": 0,
+          "elapsed_ns": 23519
+        },
+        {
+          "case": "tiny-self",
+          "degree": 1,
+          "lifecycle": "retained",
+          "iterations": 10,
+          "known": 10,
+          "elapsed_ns": 38348
+        }
+      ],
+      "measurements": {
+        "baseline": 1188.7814417177915,
+        "trial": 3884.9388420245396
+      },
+      "pairedMedianRatio": 3.2704192720900465,
+      "pairedMedianBootstrap95": [
+        3.211209156973691,
+        3.519886096314277
+      ]
+    },
+    {
+      "name": "tiny-self",
+      "degree": 8,
+      "lifecycle": "fresh",
+      "iterations": 50,
+      "observations": 48,
+      "pilots": [
+        {
+          "case": "tiny-self",
+          "degree": 8,
+          "lifecycle": "fresh",
+          "iterations": 10,
+          "known": 0,
+          "elapsed_ns": 1777328
+        },
+        {
+          "case": "tiny-self",
+          "degree": 8,
+          "lifecycle": "fresh",
+          "iterations": 10,
+          "known": 10,
+          "elapsed_ns": 2025251
+        }
+      ],
+      "measurements": {
+        "baseline": 177899.41,
+        "trial": 205138.24
+      },
+      "pairedMedianRatio": 1.1412666757393168,
+      "pairedMedianBootstrap95": [
+        1.1203294787129874,
+        1.2066892307489057
+      ]
+    },
+    {
+      "name": "tiny-self",
+      "degree": 8,
+      "lifecycle": "retained",
+      "iterations": 463,
+      "observations": 48,
+      "pilots": [
+        {
+          "case": "tiny-self",
+          "degree": 8,
+          "lifecycle": "retained",
+          "iterations": 10,
+          "known": 0,
+          "elapsed_ns": 17019
+        },
+        {
+          "case": "tiny-self",
+          "degree": 8,
+          "lifecycle": "retained",
+          "iterations": 10,
+          "known": 10,
+          "elapsed_ns": 216005
+        }
+      ],
+      "measurements": {
+        "baseline": 1679.2149028077754,
+        "trial": 22681.490280777536
+      },
+      "pairedMedianRatio": 13.540964194729087,
+      "pairedMedianBootstrap95": [
+        12.052736299485524,
+        14.186367813434167
+      ]
+    },
+    {
+      "name": "tiny-self",
+      "degree": 16,
+      "lifecycle": "fresh",
+      "iterations": 45,
+      "observations": 48,
+      "pilots": [
+        {
+          "case": "tiny-self",
+          "degree": 16,
+          "lifecycle": "fresh",
+          "iterations": 10,
+          "known": 0,
+          "elapsed_ns": 2120884
+        },
+        {
+          "case": "tiny-self",
+          "degree": 16,
+          "lifecycle": "fresh",
+          "iterations": 10,
+          "known": 10,
+          "elapsed_ns": 2228737
+        }
+      ],
+      "measurements": {
+        "baseline": 177446.73333333334,
+        "trial": 221098.51111111112
+      },
+      "pairedMedianRatio": 1.244175763451683,
+      "pairedMedianBootstrap95": [
+        1.2042343310660037,
+        1.2668898436939922
+      ]
+    },
+    {
+      "name": "tiny-self",
+      "degree": 16,
+      "lifecycle": "retained",
+      "iterations": 238,
+      "observations": 48,
+      "pilots": [
+        {
+          "case": "tiny-self",
+          "degree": 16,
+          "lifecycle": "retained",
+          "iterations": 10,
+          "known": 0,
+          "elapsed_ns": 22538
+        },
+        {
+          "case": "tiny-self",
+          "degree": 16,
+          "lifecycle": "retained",
+          "iterations": 10,
+          "known": 10,
+          "elapsed_ns": 420951
+        }
+      ],
+      "measurements": {
+        "baseline": 2286.88025210084,
+        "trial": 43967.15546218488
+      },
+      "pairedMedianRatio": 19.070161170954776,
+      "pairedMedianBootstrap95": [
+        18.77407682848322,
+        20.127805494551062
+      ]
+    },
+    {
+      "name": "unknown-leading",
+      "degree": 1,
+      "lifecycle": "fresh",
+      "iterations": 53,
+      "observations": 48,
+      "pilots": [
+        {
+          "case": "unknown-leading",
+          "degree": 1,
+          "lifecycle": "fresh",
+          "iterations": 10,
+          "known": 0,
+          "elapsed_ns": 1891291
+        },
+        {
+          "case": "unknown-leading",
+          "degree": 1,
+          "lifecycle": "fresh",
+          "iterations": 10,
+          "known": 0,
+          "elapsed_ns": 1922759
+        }
+      ],
+      "measurements": {
+        "baseline": 174770.56603773584,
+        "trial": 154246.0283018868
+      },
+      "pairedMedianRatio": 0.8994666698929985,
+      "pairedMedianBootstrap95": [
+        0.8604274025503589,
+        0.997900226871739
+      ]
+    },
+    {
+      "name": "unknown-leading",
+      "degree": 1,
+      "lifecycle": "retained",
+      "iterations": 3548,
+      "observations": 48,
+      "pilots": [
+        {
+          "case": "unknown-leading",
+          "degree": 1,
+          "lifecycle": "retained",
+          "iterations": 10,
+          "known": 0,
+          "elapsed_ns": 28188
+        },
+        {
+          "case": "unknown-leading",
+          "degree": 1,
+          "lifecycle": "retained",
+          "iterations": 10,
+          "known": 0,
+          "elapsed_ns": 15559
+        }
+      ],
+      "measurements": {
+        "baseline": 1587.4532130777902,
+        "trial": 1579.7084272829761
+      },
+      "pairedMedianRatio": 0.9941758943700469,
+      "pairedMedianBootstrap95": [
+        0.9626424476169354,
+        1.123670154598967
+      ]
+    },
+    {
+      "name": "unknown-leading",
+      "degree": 8,
+      "lifecycle": "fresh",
+      "iterations": 53,
+      "observations": 48,
+      "pilots": [
+        {
+          "case": "unknown-leading",
+          "degree": 8,
+          "lifecycle": "fresh",
+          "iterations": 10,
+          "known": 0,
+          "elapsed_ns": 1705983
+        },
+        {
+          "case": "unknown-leading",
+          "degree": 8,
+          "lifecycle": "fresh",
+          "iterations": 10,
+          "known": 0,
+          "elapsed_ns": 1900389
+        }
+      ],
+      "measurements": {
+        "baseline": 150524.01886792452,
+        "trial": 152677.83018867925
+      },
+      "pairedMedianRatio": 1.0050688590651635,
+      "pairedMedianBootstrap95": [
+        1.0022141801739726,
+        1.034856931879773
+      ]
+    },
+    {
+      "name": "unknown-leading",
+      "degree": 8,
+      "lifecycle": "retained",
+      "iterations": 4951,
+      "observations": 48,
+      "pilots": [
+        {
+          "case": "unknown-leading",
+          "degree": 8,
+          "lifecycle": "retained",
+          "iterations": 10,
+          "known": 0,
+          "elapsed_ns": 20199
+        },
+        {
+          "case": "unknown-leading",
+          "degree": 8,
+          "lifecycle": "retained",
+          "iterations": 10,
+          "known": 0,
+          "elapsed_ns": 16369
+        }
+      ],
+      "measurements": {
+        "baseline": 1609.8330640274692,
+        "trial": 1592.3379115330235
+      },
+      "pairedMedianRatio": 0.9814079679005444,
+      "pairedMedianBootstrap95": [
+        0.9679536556020891,
+        1.0134396837962418
+      ]
+    },
+    {
+      "name": "unknown-leading",
+      "degree": 16,
+      "lifecycle": "fresh",
+      "iterations": 60,
+      "observations": 48,
+      "pilots": [
+        {
+          "case": "unknown-leading",
+          "degree": 16,
+          "lifecycle": "fresh",
+          "iterations": 10,
+          "known": 0,
+          "elapsed_ns": 1635748
+        },
+        {
+          "case": "unknown-leading",
+          "degree": 16,
+          "lifecycle": "fresh",
+          "iterations": 10,
+          "known": 0,
+          "elapsed_ns": 1687244
+        }
+      ],
+      "measurements": {
+        "baseline": 150983.48333333334,
+        "trial": 153585.55
+      },
+      "pairedMedianRatio": 1.013577338316351,
+      "pairedMedianBootstrap95": [
+        1.00249117359209,
+        1.0228800245987495
+      ]
+    },
+    {
+      "name": "unknown-leading",
+      "degree": 16,
+      "lifecycle": "retained",
+      "iterations": 5732,
+      "observations": 48,
+      "pilots": [
+        {
+          "case": "unknown-leading",
+          "degree": 16,
+          "lifecycle": "retained",
+          "iterations": 10,
+          "known": 0,
+          "elapsed_ns": 17448
+        },
+        {
+          "case": "unknown-leading",
+          "degree": 16,
+          "lifecycle": "retained",
+          "iterations": 10,
+          "known": 0,
+          "elapsed_ns": 17349
+        }
+      ],
+      "measurements": {
+        "baseline": 1575.2557571528264,
+        "trial": 1550.3421144452197
+      },
+      "pairedMedianRatio": 0.9870567688530627,
+      "pairedMedianBootstrap95": [
+        0.9448657088372789,
+        0.9995628756414392
+      ]
+    }
+  ],
+  "limits": "Uninstrumented CPU only. New known results do more work than baseline early Unknown; not equal-work speedups. Retained operands are preconditioned by eight queries; fresh includes construction and result teardown. All lower coefficients share one scalar node. No cold-process, concurrency, allocations, peak memory or application size qualification. Paired bootstrap intervals describe this host/session, not universal bounds."
+}

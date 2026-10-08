@@ -1,0 +1,12 @@
+[
+  {
+    "binary": "stationary-ph-offset-interval-arithmetic-policy",
+    "source": "stationary-ph-offset-inspect.rs",
+    "binary_sha256": "f10e292196ead433c8c0dcd58932050e2209c9c203112872cbcc64bd83a79c8c"
+  },
+  {
+    "binary": "stationary-ph-offset-interval-arithmetic-policy-approximate",
+    "source": "stationary-ph-offset-approximate-inspect.rs",
+    "binary_sha256": "ba3832fc4835ecd3bf9a6db55e4307fe0b44797edeb8a3f7dc1af3bcf322ff39"
+  }
+]

@@ -1,0 +1,14 @@
+{
+  "tag": "point-cold-native-demand",
+  "started": "2026-09-10T23:10:56.097Z",
+  "finished": "2026-09-10T23:11:03.340Z",
+  "elapsedSeconds": 7.240960702,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "node",
+  "args": [
+    "run-point-cold-native.mjs",
+    "demand"
+  ],
+  "code": 0,
+  "signal": null
+}

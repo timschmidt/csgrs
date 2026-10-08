@@ -1,0 +1,256 @@
+{
+  "passed": 1192,
+  "ignored": 6,
+  "failed": [
+    {
+      "name": "bezier_offset::conversion_tests::independently_encoded_nonrepresented_analytic_circle_publishes_overlap",
+      "returncode": 101,
+      "passed": false,
+      "ignored": false,
+      "elapsed_seconds": 0.1143190439324826,
+      "limit_seconds": 75,
+      "log": "parallel-normal-frame-20260923-broad1-case-0216.log"
+    },
+    {
+      "name": "bezier_offset::conversion_tests::nonrepresented_center_nonrational_chamfer_inverts_with_retained_authority",
+      "returncode": 101,
+      "passed": false,
+      "ignored": false,
+      "elapsed_seconds": 0.16442672500852495,
+      "limit_seconds": 75,
+      "log": "parallel-normal-frame-20260923-broad1-case-0258.log"
+    },
+    {
+      "name": "bezier_offset::conversion_tests::selected_fiber_transverse_mapped_cut_inverts_by_point",
+      "returncode": 101,
+      "passed": false,
+      "ignored": false,
+      "elapsed_seconds": 0.008619687985628843,
+      "limit_seconds": 75,
+      "log": "parallel-normal-frame-20260923-broad1-case-0532.log"
+    },
+    {
+      "name": "bezier_offset::conversion_tests::selected_parallel_normal_circle_intersects_genuinely_analytic_parallel_in_one_fiber",
+      "returncode": 101,
+      "passed": false,
+      "ignored": false,
+      "elapsed_seconds": 45.32648925704416,
+      "limit_seconds": 75,
+      "log": "parallel-normal-frame-20260923-broad1-case-0536.log"
+    },
+    {
+      "name": "bezier_region::tests::algebraic_endpoint_images_reenter_shared_corner_carriers",
+      "returncode": 101,
+      "passed": false,
+      "ignored": false,
+      "elapsed_seconds": 0.06480816204566509,
+      "limit_seconds": 75,
+      "log": "parallel-normal-frame-20260923-broad1-case-0627.log"
+    },
+    {
+      "name": "bezier_region::curve_corner_chain::tests::extended_fillet_region_classifies_both_sides_of_its_companion",
+      "returncode": "timeout",
+      "passed": false,
+      "ignored": false,
+      "elapsed_seconds": 75.00491928402334,
+      "limit_seconds": 75,
+      "log": "parallel-normal-frame-20260923-broad1-case-0623.log"
+    },
+    {
+      "name": "bezier_region::tests::nonlinear_algebraic_endpoint_fillet_uses_complete_incident_domain",
+      "returncode": "timeout",
+      "passed": false,
+      "ignored": false,
+      "elapsed_seconds": 75.00255898397882,
+      "limit_seconds": 75,
+      "log": "parallel-normal-frame-20260923-broad1-case-0678.log"
+    },
+    {
+      "name": "bezier_region::tests::nonrepresented_chord_and_retained_rational_arc_share_the_fillet_kernel",
+      "returncode": 101,
+      "passed": false,
+      "ignored": false,
+      "elapsed_seconds": 0.165220411028713,
+      "limit_seconds": 75,
+      "log": "parallel-normal-frame-20260923-broad1-case-0683.log"
+    },
+    {
+      "name": "bezier_region::tests::nonlinear_selected_corner_chamfers_through_retained_fixed_distance_image",
+      "returncode": "timeout",
+      "passed": false,
+      "ignored": false,
+      "elapsed_seconds": 75.89079135400243,
+      "limit_seconds": 75,
+      "log": "parallel-normal-frame-20260923-broad1-case-0681.log"
+    },
+    {
+      "name": "bezier_region::tests::nonrepresented_chord_and_selected_circle_complete_the_fillet_kernel",
+      "returncode": "timeout",
+      "passed": false,
+      "ignored": false,
+      "elapsed_seconds": 75.00290795206092,
+      "limit_seconds": 75,
+      "log": "parallel-normal-frame-20260923-broad1-case-0684.log"
+    },
+    {
+      "name": "bezier_region::tests::one_fragment_materialized_loop_chamfers_to_one_middle_interval",
+      "returncode": "timeout",
+      "passed": false,
+      "ignored": false,
+      "elapsed_seconds": 75.03860358300153,
+      "limit_seconds": 75,
+      "log": "parallel-normal-frame-20260923-broad1-case-0688.log"
+    },
+    {
+      "name": "bezier_region::tests::one_fragment_materialized_loop_extends_algebraic_chamfer_cuts_once",
+      "returncode": "timeout",
+      "passed": false,
+      "ignored": false,
+      "elapsed_seconds": 75.03728451195639,
+      "limit_seconds": 75,
+      "log": "parallel-normal-frame-20260923-broad1-case-0689.log"
+    },
+    {
+      "name": "bezier_region::tests::one_fragment_nonzero_parallel_loop_extends_chamfer_cuts_on_one_finite_envelope",
+      "returncode": "timeout",
+      "passed": false,
+      "ignored": false,
+      "elapsed_seconds": 75.0234254320385,
+      "limit_seconds": 75,
+      "log": "parallel-normal-frame-20260923-broad1-case-0690.log"
+    },
+    {
+      "name": "bezier_region::tests::one_fragment_ph_loop_projective_corners_retain_one_extended_interval",
+      "returncode": 101,
+      "passed": false,
+      "ignored": false,
+      "elapsed_seconds": 0.03307493997272104,
+      "limit_seconds": 75,
+      "log": "parallel-normal-frame-20260923-broad1-case-0692.log"
+    },
+    {
+      "name": "bezier_region::tests::one_fragment_ph_loop_fillets_through_rational_self_contact",
+      "returncode": "timeout",
+      "passed": false,
+      "ignored": false,
+      "elapsed_seconds": 75.00565070903394,
+      "limit_seconds": 75,
+      "log": "parallel-normal-frame-20260923-broad1-case-0691.log"
+    },
+    {
+      "name": "bezier_region::tests::one_fragment_selected_loop_chamfers_from_one_interval",
+      "returncode": "timeout",
+      "passed": false,
+      "ignored": false,
+      "elapsed_seconds": 75.04087162797805,
+      "limit_seconds": 75,
+      "log": "parallel-normal-frame-20260923-broad1-case-0694.log"
+    },
+    {
+      "name": "bezier_region::tests::one_fragment_selected_loop_extends_chamfer_cuts_on_its_analytic_carrier",
+      "returncode": "timeout",
+      "passed": false,
+      "ignored": false,
+      "elapsed_seconds": 75.03933147899806,
+      "limit_seconds": 75,
+      "log": "parallel-normal-frame-20260923-broad1-case-0695.log"
+    },
+    {
+      "name": "bezier_region::tests::pair_native_boolean_algebraic_chord_corner_publishes_a_third_generation_fillet",
+      "returncode": "timeout",
+      "passed": false,
+      "ignored": false,
+      "elapsed_seconds": 75.00374540290795,
+      "limit_seconds": 75,
+      "log": "parallel-normal-frame-20260923-broad1-case-0700.log"
+    },
+    {
+      "name": "bezier_region::tests::retained_algebraic_straights_trim_or_extend_chamfer_and_fillet",
+      "returncode": 101,
+      "passed": false,
+      "ignored": false,
+      "elapsed_seconds": 0.00873386103194207,
+      "limit_seconds": 75,
+      "log": "parallel-normal-frame-20260923-broad1-case-0724.log"
+    },
+    {
+      "name": "bezier_region::tests::retained_analytic_multifragment_corner_extends_chamfer_and_fillet",
+      "returncode": 101,
+      "passed": false,
+      "ignored": false,
+      "elapsed_seconds": 0.008726770989596844,
+      "limit_seconds": 75,
+      "log": "parallel-normal-frame-20260923-broad1-case-0725.log"
+    },
+    {
+      "name": "bezier_region::tests::selected_circle_and_analytic_parallel_extend_on_full_supports",
+      "returncode": 101,
+      "passed": false,
+      "ignored": false,
+      "elapsed_seconds": 1.86728853196837,
+      "limit_seconds": 75,
+      "log": "parallel-normal-frame-20260923-broad1-case-0740.log"
+    },
+    {
+      "name": "bezier_region::tests::selected_parallel_companion_fillets_without_range_promotion",
+      "returncode": "timeout",
+      "passed": false,
+      "ignored": false,
+      "elapsed_seconds": 75.00232273002621,
+      "limit_seconds": 75,
+      "log": "parallel-normal-frame-20260923-broad1-case-0758.log"
+    }
+  ],
+  "new_failures": [],
+  "changed_existing_nonpasses": [
+    {
+      "name": "bezier_offset::conversion_tests::selected_parallel_normal_circle_intersects_genuinely_analytic_parallel_in_one_fiber",
+      "returncode": 101,
+      "passed": false,
+      "ignored": false,
+      "elapsed_seconds": 45.32648925704416,
+      "limit_seconds": 75,
+      "log": "parallel-normal-frame-20260923-broad1-case-0536.log"
+    },
+    {
+      "name": "bezier_region::tests::selected_circle_and_analytic_parallel_extend_on_full_supports",
+      "returncode": 101,
+      "passed": false,
+      "ignored": false,
+      "elapsed_seconds": 1.86728853196837,
+      "limit_seconds": 75,
+      "log": "parallel-normal-frame-20260923-broad1-case-0740.log"
+    }
+  ],
+  "improved": [
+    "bezier_region::tests::selected_circle_and_promoted_line_extend_through_the_chord_support_cell"
+  ],
+  "checks": [
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "check",
+        "--all-targets",
+        "--all-features",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0
+    },
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "check",
+        "--all-targets",
+        "--no-default-features",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0
+    }
+  ],
+  "binary_sha256": "acd3e7ff0b54b946343b3fe7b0229b88814d0536914d38beeea8b17e58ee2f42",
+  "parent_binary_sha256": "df98b5a79c151c3300ef5b4e941ba115b1036f12b100c3d8d37d272ff2de2b4e",
+  "all_sources_unchanged": true,
+  "all_processes_reaped": true
+}

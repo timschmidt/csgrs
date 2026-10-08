@@ -1,0 +1,112 @@
+diff -ru exact-real-references/Plume/versioned/perform/LookInt.hs .audit-plume-perform.LVoj1D/compat/LookInt.hs
+--- exact-real-references/Plume/versioned/perform/LookInt.hs	1998-06-03 05:23:14.000000000 -0400
++++ .audit-plume-perform.LVoj1D/compat/LookInt.hs	2026-09-06 00:57:28.142783804 -0400
+@@ -1,4 +1,4 @@
+-module LookInt (Lookint, lig0, lig1, lig2, ligu,
++module LookInt (Lookint(..), lig0, lig1, lig2, ligu,
+ 	       liglist, lignewl,
+ 	       ligilist', ligilist,
+ 	       ligGlist', ligGlist,
+@@ -141,7 +141,7 @@
+ -- Lookint Generators
+ 
+ lig0 :: Int -> Lookint
+-lig0 = fromInt
++lig0 = fromIntegral
+ 
+ lig1 :: Int -> Lookint -> Lookint
+ lig1 i (Lookint (_,a)) = Lookint (i,a)
+@@ -211,4 +211,3 @@
+ toIntList (Lookint (a,_):x) = (a:toIntList x)
+ 
+ 
+-
+diff -ru exact-real-references/Plume/versioned/perform/SBinDecM.hs .audit-plume-perform.LVoj1D/compat/SBinDecM.hs
+--- exact-real-references/Plume/versioned/perform/SBinDecM.hs	1998-06-03 05:23:15.000000000 -0400
++++ .audit-plume-perform.LVoj1D/compat/SBinDecM.hs	2026-09-06 01:32:30.326835462 -0400
+@@ -1,4 +1,4 @@
+-module SBinDec (
++module SBinDecM (
+ sbfGen, sbfEval, sbfDec, decSbf,
+ sbfDecOut, 
+ 
+@@ -318,7 +318,7 @@
+ --   and decimal result after completion.
+ 
+ sbfDecOut :: SBinFloat -> Int -> String
+-sbfDecOut x@(e,m) n  =  sbfRawOut (e,sbDecs m (n+((fromInteger e) `quot` 4)))
++sbfDecOut x@(e,m) n  =  sbfRawOut (e,map fromIntegral (sbDecs m (n+((fromInteger e) `quot` 4))))
+ 				  (4*n+(fromInteger e)) ++ "\n= " ++ 
+ 		       (sbfDec x n)
+ 
+@@ -340,7 +340,6 @@
+ 
+ 
+ 
+-
+ 
+ 
+ 
+diff -ru exact-real-references/Plume/versioned/perform/Testing.hs .audit-plume-perform.LVoj1D/compat/Testing.hs
+--- exact-real-references/Plume/versioned/perform/Testing.hs	1998-06-03 05:23:16.000000000 -0400
++++ .audit-plume-perform.LVoj1D/compat/Testing.hs	2026-09-06 01:32:30.520838325 -0400
+@@ -1,6 +1,4 @@
+-module Tests (
+-)
+-where
++module Testing where
+ import Utils
+ import LookInt
+ import SBinStreamM
+@@ -16,7 +14,6 @@
+ 
+ 
+ 
+-
+ 
+ 
+ 
+diff -ru exact-real-references/Plume/versioned/perform/TestsM.hs .audit-plume-perform.LVoj1D/compat/TestsM.hs
+--- exact-real-references/Plume/versioned/perform/TestsM.hs	1998-06-03 05:23:16.000000000 -0400
++++ .audit-plume-perform.LVoj1D/compat/TestsM.hs	2026-09-06 01:32:30.423836894 -0400
+@@ -1,4 +1,4 @@
+-module Tests where
++module TestsM where
+ 
+ import SBinStreamM
+ import SBinFloatM
+diff -ru exact-real-references/Plume/versioned/perform/Utils.hs .audit-plume-perform.LVoj1D/compat/Utils.hs
+--- exact-real-references/Plume/versioned/perform/Utils.hs	1998-06-03 05:23:16.000000000 -0400
++++ .audit-plume-perform.LVoj1D/compat/Utils.hs	2026-09-06 00:57:28.241785267 -0400
+@@ -1,7 +1,7 @@
+ module Utils (ctoi, itoc, 
+ Perhaps, pos, unsure, neg, opp,
+ listhead, pow,
+-take_integer, drop_integer,
++take_integer, drop_integer, toInt, fromInt,
+ isSpace', isUpper', isLower', isAlpha', isDigit', isAlphanum'
+ )
+ 	 where
+@@ -64,3 +64,10 @@
+ 
+ drop_integer :: (Integral a) => a -> [b] -> [b]
+ drop_integer n x = drop (toInt n) x
++
++-- Audit-only obsolete Prelude conversions; numerical formulas unchanged.
++toInt :: Integral a => a -> Int
++toInt = fromIntegral
++
++fromInt :: Num a => Int -> a
++fromInt = fromIntegral
+diff -ru exact-real-references/Plume/versioned/perform/test2.fig .audit-plume-perform.LVoj1D/compat/test2.fig
+--- exact-real-references/Plume/versioned/perform/test2.fig	1998-06-03 05:23:21.000000000 -0400
++++ .audit-plume-perform.LVoj1D/compat/test2.fig	2026-09-06 01:32:30.612839682 -0400
+@@ -5,7 +5,7 @@
+ Letter
+ 100.00
+ Single
+--110
++-2
+ 1200 2
+ 2 1 0 1 0 7 0 0 -1 0.000 0 0 -1 0 0 100
+          1 4 

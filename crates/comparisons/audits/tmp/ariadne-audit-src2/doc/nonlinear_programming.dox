@@ -1,0 +1,616 @@
+/***************************************************************************
+ *            nonlinear_programming.dox
+ *
+ *  Copyright  2009  Pieter Collins
+ *
+ ****************************************************************************/
+
+/*
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; either version 2 of the License, or
+ *  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Library General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program; if not, write to the Free Software
+ *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+ */
+
+
+/*!
+
+\file nonlinear_programming.dox
+\brief Documentation on nonlinear programming
+
+
+\page nonlinear_programming_page NonLinear Programming
+
+
+\section nonlinear_optimisation Nonlinear Constrained Optimisation Problems
+
+\subsection standard_nonlinear_optimisation Standard optimisation problem
+
+Consider the nonlinear programming problem
+\f[ \boxed{ \max f(x) \text{ s.t. } g_j(x)\geq 0,\ j=1,\ldots,l; \ h_k(x) = 0,\ k=1,\ldots,m . } \f]
+Applying a penalty function yields the unconstrained maximisation of
+\f[ f(x) + \mu  \sum_{j=1}^{l} \log g_j(x) - \frac{1}{2\nu} \sum_{k=1}^{m} (h_k(x) )^2 . \f]
+Differentiating with respect to \f$x\f$ yields
+\f[ \nabla_{\!i\,} f(x) + \mu  \sum_{j=1}^{l} \frac{\nabla_{\!i\,}g_j(x)}{g_j(x)} - \frac{1}{\nu} \sum_{k=1}^{m} h_k(x)\nabla_{\!i\,}h_k(x) = 0. \f]
+Setting \f$\lambda_j = \mu/g_j(x)\f$ and \f$\kappa_k = - h_k(x)/\nu\f$ yields
+\f[ \nabla_{\!i\,} f(x) +  \sum_{j=1}^{l} \lambda_j \nabla_{\!i\,}g_j(x) + \sum_{k=1}^{m} \kappa_k\,\nabla_{\!i\,}h_k(x) . \f]
+Combining these equations yields
+\f[ \begin{gathered} \nabla f(x) + \sum_{j=1}^{l} \lambda_j \nabla g_j(x) + \sum_{k=1}^{m} \kappa_k \nabla h_k(x) = 0; \\ \lambda_j g_j(x) - \mu = 0; \\ h_k(x) + \nu \kappa_k = 0; \\ \lambda_j \geq 0; \ g_j(x) \geq 0 . \end{gathered} \f]
+Setting \f$\nu=0\f$ these equations yields the <em>central path</em> for the problem, which is a relaxation of the optimality conditions
+\f[ \boxed{ \begin{gathered} \nabla f(x) + \sum_{j=1}^{l} \lambda_j \nabla g_j(x) + \sum_{k=1}^{m} \kappa_k \nabla h_k(x) = 0; \\ \lambda_j g_j(x) = \mu; \\ h_k(x) = 0; \\ \lambda_j \geq 0; \ g_j(x) \geq 0 . \end{gathered} } \f]
+Taking \f$\mu\to0\f$ yields the standard Karush-Kuhn-Tucker conditions for optimality
+\f[ \boxed{ \begin{gathered} \nabla f(x) + \sum_{j=1}^{l} \lambda_j \nabla g_j(x) + \sum_{k=1}^{m} \kappa_k \nabla h_k(x) = 0; \\ \lambda_j g_j(x) = 0; \\ h_k(x) = 0; \\ \lambda_j \geq 0; \ g_j(x) \geq 0 . \end{gathered} } \f]
+
+A Lagrangian for this problem is
+\f[ \boxed{\displaystyle L(x,\lambda,\kappa) = f(x) + \sum_{j=1}^{l} \lambda_j g_j(x) + \sum_{k=1}^{m} \kappa_k h_k(x) . } \f]
+The standard Karush-Kuhn-Tucker conditions for optimality are obtained by setting the partial derivatives of \f$L\f$ to zero, with the inequality constraints \f$\lambda_j,g_j(x)\geq0\f$ allowing for the relaxation \f$\lambda_j=0 \vee g_j(x)=0\f$.
+
+The standard (Fritz) John conditions for optimality are
+\f[ \boxed{ \begin{gathered} \mu \nabla f(x) + \sum_{j=1}^{l} \lambda_j \nabla g_j(x) + \sum_{k=1}^{m} \kappa_k \nabla h_k(x) = 0; \\ \lambda_j g_j(x)=0; \\ h_k(x)=0; \\ \mu + \sum_j \lambda_j + \sum_k \kappa_k^2 = 0; \\ \lambda_j \geq 0; \ g_j(x) \geq 0 . \end{gathered} } \f]
+
+\note Taking \f$f(x) = -cx\f$, \f$g(x)=-x\f$ and \f$h(x)=Ax-b\f$ yields the primal linear programming problem \f$\min cx \mid Ax=b,\ x\geq 0\f$.
+Taking \f$f(y)=yb\f$, \f$g(y) = yA-c\f$ yields the dual linear programming problem \f$\max yb \mid yA\leq c\f$.
+This means that the standard \em primal nonlinear programming problem with only affine inequality constraints more closely resembles the \em dual linear programming problem.
+Despite this, we shall use \c x for the primal variables of the standard primal nonlinear programming problem.
+
+
+
+\subsection nonlinear_inequality_constraints Inequality constrained optimisation problem
+
+Consider the problem
+\f[ \max f(x) \text{ s.t. } g(x) \geq 0 . \f]
+The central path is defined by
+\f[ \boxed{ \begin{gathered}  \nabla f(x) + \lambda \cdot \nabla g(x) = 0; \\ \lambda g(x) = \mu; \\ \lambda \geq 0,\ g(x) \geq 0. \end{gathered} } \f]
+Taking \f$\mu\to 0\f$, we obtain the standard Karush-Kuhn-Tucker conditions.
+\f[ \boxed{ \begin{gathered}  \nabla f(x) + \lambda \cdot \nabla g(x) = 0; \\ \lambda g(x) = 0; \\ \lambda \geq 0,\ g(x) \geq 0. \end{gathered} } \f]
+
+
+\subsection nonlinear_equality_constraints Equality constrained optimisation problem
+
+Consider the problem
+\f[ \max f(x) \text{ s.t. } h(x) = 0 . \f]
+The central path is defined by
+\f[ \boxed{ \begin{gathered}  \nabla f(x) + \kappa \cdot \nabla h(x) = 0; \\ h(x) + \kappa \mu = 0. \end{gathered} } \f]
+The Karush-Kuhn-Tucker optimality conditions are
+\f[ \boxed{ \begin{gathered}  \nabla f(x) + \kappa \cdot \nabla h(x) = 0; \\ h(x) = 0. \end{gathered} } \f]
+
+The problem can be relaxed by adding the penalty function \f$-g(x)^2/2\mu\f$.
+Then the optimality conditions are
+\f[ \nabla f(x) - \frac{g(x)}{\mu} \nabla g(x) = 0\f]
+Taking Lagrange multiplier \f$\lambda = g(x)/\mu\f$, we obtain
+\f[ \boxed{ \begin{gathered} \nabla f(x) -  \lambda \nabla g(x) = 0; \\ g(x) - \lambda \mu = 0 \end{gathered} } \f]
+which relaxes to \f$g(x)=0\f$ as \f$\mu\to0\f$.
+
+\subsection nonlinear_bounded_constraints Bounded constraints
+
+Consider the problem
+\f[ \max f(x) \text{ s.t. } |g(x)| \leq \delta \f]
+We can handle the problem in two ways; either by considering the smooth constraint \f$\delta^2-g(x)^2\geq0\f$ or the two constraints \f$\delta + g(x) \geq 0\f$ and \f$\delta - g(x)\geq 0\f$.
+
+In the former case, we obtain the conditions
+\f[ \begin{gathered} \nabla f(x) + 2 \lambda g(x) \nabla g(x) = 0; \\ \lambda (\delta^2 - g(x)^2) = \mu. \end{gathered} \f]
+Replacing the standard Lagrange multiplier \f$\lambda\f$ with \f$-2\lambda g(x)\f$, we obtain
+\f[ \begin{gathered} \nabla f(x) - \lambda \nabla g(x) = 0; \\ -\lambda (\delta^2 - g(x)^2) / 2g(x) = \mu. \end{gathered} \f]
+Rearranging the second formula gives
+\f[ \boxed{ \begin{gathered} \nabla f(x) - \lambda \nabla g(x) = 0; \\ \bigl(\delta^2-g(x)^2\bigr) \lambda + 2 g(x) \mu = 0 . \end{gathered} } \f]
+Differentiating gives
+\f[ (\delta^2-g(x)^2) {\Delta\lambda} + (2 \mu - 2 g(x) \lambda) \nabla g(x) {\Delta x} = 0\f]
+In order to solve for \f${\Delta x}\f$ in terms of \f${\Delta\lambda}\f$, we require
+\f$ \mu -  g(x) \lambda \neq 0\f$.
+Since the optimal \f$x^*,\lambda^*\f$ satisfy \f$(\delta^2-g(x^*)^2) \lambda^* + 2 g(x^*) \mu = 0\f$, we have \f$\lambda^* g(x^*) \geq 0\f$.
+
+In the former case, we obtain the conditions
+\f[ \begin{gathered} \nabla f(x) - \lambda^+ \nabla g(x) + \lambda^- \nabla g(x) = 0; \\ \lambda^+ (\delta + g(x)) = \mu; \\ \lambda^- (\delta - g(x)) = \mu \end{gathered} \f]
+Set \f$\lambda = \lambda^+ - \lambda^-\f$. Then we have
+\f[ \lambda = \mu \biggl( \frac{1}{\delta+g(x)} - \frac{1}{\delta-g(x)}\biggr) = \frac{-2\mu g(x)}{\delta^2-g(x)^2} . \f]
+Rearranging again gives
+\f[ (\delta^2-g(x)^2) \lambda + 2 g(x) \mu = 0\f]
+Note that \f$\lambda^+ + \lambda^- = 2\delta\mu/(\delta^2-g(x)^2) \geq \bigl|\lambda^+-\lambda^-\bigr| \f$
+
+\subsection nonlinear_state_constraints State constraints
+
+Setting \f$g(x)=x\f$ and taking \f$\underline{x}\leq x\leq\overline{x}\f$, we obtain the state constraints
+\f[ \boxed{ \begin{gathered} \nabla f(x) - \lambda \nabla g(x) = 0; \\ (\overline{x}-x)(x-\underline{x})\lambda + (2x-\underline{x}-\overline{x}) \mu = 0 . \end{gathered} } \f]
+If \f$\overline{x}=-\underline{x}=\delta\f$, this simplifies to
+\f[ (\delta^2-x^2) \lambda + 2 x \mu = 0 . \f]
+Differentiating yields
+\f[ {\Delta\lambda} = -2\mu \frac{\delta^2+x^2}{(\delta^2-x^2)^2} {\Delta x} \f]
+which can be used to eliminate these Lagrange multipliers entirely.
+
+
+
+\section general_nonlinear_optimisation General Optimisation Problem
+
+In %Ariadne, we need to problems with a more general form of the constraints including bounds on the variables and constraints with upper and lower bounds.
+We henceforth consider the generalised problem:
+\f[ \boxed{\min f(x) \text{ s.t. } \underline{w}_j \leq g_j(x)\leq  \overline{w}_j, \ j=1,\ldots,m; \  \underline{x}_i \leq x_i\leq  \overline{x}_i,\ i=1,\ldots,n. } \f]
+We make the constraints on \f$g\f$ into equality constraints by introducing variables \f${w}_i\f$
+\f[ g_j(x) - w_j = 0, \ \underline{w}_j \leq w_j \leq \overline{w}_j,\ j=1,\ldots,m. \f]
+We add a penalty function, and attempt to minimise the function
+\f[ \boxed{ f(x) - \mu \sum_{j=1}^{m} \bigl(\log(w_j-\underline{w}_j) + \log(\overline{w}_j-w_j) \bigr) - \mu \sum_{i=1}^{n} \bigl( \log(x_i-\underline{x}_i) + \log(\overline{x}_i-x_i) \bigr)  + \frac{1}{2\nu} \sum_{j=1}^{m} (g_j(x)-w_j)^2 . } \f]
+Differentiating with respect to \f$w\f$ and \f$x\f$ gives
+\f[ \begin{gathered} \nabla_{\!i\,}f(x) - \mu \Bigl( \frac{1}{x_i-\underline{x}_i} - \frac{1}{\overline{x}_i-x_i} \Bigr) + \frac{1}{\nu} \sum_{j=1}^{m} (g_j(x)-w_j) \nabla_{\!i\,}g_j(x) = 0; \\  - \mu \Bigl(\frac{1}{w_j-\underline{w}_j} - \frac{1}{\overline{w}_j-w_j} \Bigr) - \frac{1}{\nu} (g_j(x)-w_j) = 0.  \end{gathered} \f]
+Setting \f$y_j = -(g_j(x)-w_j)/\nu\f$ gives
+\f[ \begin{gathered}  \mu \Bigl(\frac{1}{w_j-\underline{w}_j} - \frac{1}{\overline{w}_j-w_j} \Bigr) -  y_j = 0; \\ \nabla_{\!i\,}f(x) - \mu \Bigl( \frac{1}{x_i-\underline{x}_i} - \frac{1}{\overline{x}_i-x_i} \Bigr) - \sum_{j=1}^{m} y_j \nabla_{\!i\,}g_j(x) = 0; \\ g_j(x)-w_j + \nu\,y_j = 0.  \end{gathered} \f]
+Setting \f$\nu=0\f$ simplifies to
+\f[ \boxed{ \displaystyle \begin{gathered}  \mu  \Bigl(\frac{1}{w_j-\underline{w}_j} - \frac{1}{\overline{w}_j-w_j} \Bigr) -  y_j = 0; \\ \nabla_{\!i\,}f(x) - \mu \Bigl( \frac{1}{x_i-\underline{x}_i} - \frac{1}{\overline{x}_i-x_i} \Bigr) - \sum_{j=1}^{m} y_j \nabla_{\!i\,}g_j(x) = 0; \\ g_j(x)-w_j = 0.  \end{gathered} } \f]
+Setting \f$z_i=\mu \bigl( 1/(x_i-\underline{x}_i) - 1/(\overline{x}_i-x_i) \bigr)\f$ gives
+\f[ \boxed{ \displaystyle \begin{gathered}   \mu  \Bigl(\frac{1}{w_j-\underline{w}_j} - \frac{1}{\overline{w}_j-w_j} \Bigr) -  y_j = 0; \\ \mu \Bigl( \frac{1}{x_i-\underline{x}_i} - \frac{1}{\overline{x}_i-x_i} \Bigr) - z_i = 0; \\ \nabla_{\!i\,}f(x) - z_i - \sum_{j=1}^{m} y_j \nabla_{\!i\,}g_j(x) = 0; \\ g_j(x)-w_j + \nu\,y_j= 0.  \end{gathered} } \f]
+It is possible to eliminate the dual variables \f$y_j\f$ to obtain the alternative (and less useful) form
+\f[ \begin{gathered}  -\nabla_{\!i\,}f + \mu \biggl( \frac{1}{x_i-\underline{x}_i} - \frac{1}{\overline{x}_i-x_i} \biggr) + \mu \sum_{j=1}^{m} \biggl( \frac{1}{w_j-\underline{w}_j} - \frac{1}{\overline{w}_j-w_j} \biggr) \nabla_{\!i\,} g_j(x) = 0; \quad  g_j(x) - w_j + \nu\,y_j = 0.  \end{gathered} \f]
+
+Note that if \f$\underline{x}_i=0\f$ and \f$\overline{x}_i=\infty\f$, then
+\f[ \mu ( 1/x_i - 1/\infty ) - z_i = 0  \f]
+so
+\f[ x_i\,z_i = \mu . \f]
+
+Note that if \f$ \underline{w}_j = \overline{w}_j \f$, then \f$ w_j = \underline{\overline{w}}_j \f$ and we can set \f$y_j\f$ arbitrarily.
+Hence \f$\mu  \bigl(\frac{1}{w_j-\underline{w}_j} - \frac{1}{\overline{w}_j-w_j} \bigr) -  y_j = 0\f$ is replaced by \f$w_j-\underline{\overline{w}}_j\f$ for this \f$j\f$.
+
+\subsection nonlinear_optimisation_as_linear The linear case
+
+If \f$f(x) = c^Tx\f$, \f$g(x)=Ax-b\f$, \f$\underline{w}=\overline{w}=0\f$, \f$\underline{x}=0\f$ and \f$\overline{x}=\infty\f$, then \f$w=0\f$ and we obtain the conditions
+\f[  x_i\,z_i = \mu; \quad A^Ty + z = c; \quad Ax + \nu\,y = b,\f]
+which are a relaxed version of the standard conditions for linear programming
+
+Conversely, if \f$f(x)=-b^Tx\f$, \f$g(x)=c-A^Tx\f$, \f$\underline{w}=0\f$, \f$\overline{w}=\infty\f$, \f$\underline{x}=-\infty\f$ and \f$\overline{x}=+\infty\f$, then \f$z=0\f$ and
+\f[  w_j\,y_j = 0; \quad Ay = b; \quad A^T x+w = c + \nu\,y = 0 . \f]
+This is a relaxed version of the standard conditions for linear programming with \f$w\f$ instead of \f$z\f$ for the slack variables, and \f$x\f$ and \f$y\f$ interchanged.
+
+\section general_nonlinear_feasibility General feasibility problem
+
+
+
+Consider the generalised feasibility problem:
+\f[ \boxed{ \underline{w}_j \leq g_j(x)\leq  \overline{w}_j, \ j=1,\ldots,m; \  \underline{x}_i \leq x_i\leq  \overline{x}_i;\ i=1,\ldots,n. } \f]
+where \f$-\infty < \underline{x}_i < \overline{x}_i < +\infty\f$.
+
+A similar analysis to the minimisation problem with \f$f(x) = 0\f$ gives the relaxation
+\f[ \begin{gathered}  \mu \Bigl(\frac{1}{w_j-\underline{w}_j} - \frac{1}{\overline{w}_j-w_j} \Bigr) -  y_j = 0; \\  \mu \Bigl( \frac{1}{x_i-\underline{x}_i} - \frac{1}{\overline{x}_i-x_i} \Bigr) + \sum_{j=1}^{m} y_j \nabla_{\!i\,}g_j(x) = 0; \\ g_j(x)-w_j + \nu\,y_j = 0.  \end{gathered} \f]
+Setting \f$z_i=\mu \bigl( 1/(x_i-\underline{x}_i) - 1/(\overline{x}_i-x_i) \bigr)\f$ gives
+\f[ \boxed{ \displaystyle \begin{gathered}   \mu  \Bigl(\frac{1}{w_j-\underline{w}_j} - \frac{1}{\overline{w}_j-w_j} \Bigr) -  y_j = 0; \\ \mu \Bigl( \frac{1}{x_i-\underline{x}_i} - \frac{1}{\overline{x}_i-x_i} \Bigr) - z_i = 0; \\ z_i + \sum_{j=1}^{m} y_j \nabla_{\!i\,}g_j(x) = 0; \\ g_j(x)-w_j + \nu\,y_j= 0.  \end{gathered} } \f]
+
+The <em>Lagrangian</em> function is defined as
+\f[ \boxed{ \displaystyle L(w,x,y) = \sum_{j=1}^{m} \bigl( \log(w_j-\underline{w}_j)+\log(\overline{w}_j-w_j) \bigr) + \sum_{i=1}^{n} \bigl( \log(x_i-\underline{x}_i)+\log(\overline{x}_i-x_i) \bigr) + \sum_{j=1}^{m} y_j(g_j(x)-w_j) } \f]
+The optimality conditions are obtained as a critical point of the Lagrangian.
+Hence the derivative of the optimality conditions is a symmetric matrix, being the Hessian of the Lagrangian, and is the matrix
+\f[ \begin{pmatrix} -D & 0 & -I \\ 0 & -E + Y\cdot H & A^T \\ -I & A & 0 \end{pmatrix} \f]
+where
+\f[ \begin{gathered}D_{jj}=1/(w_j-\underline{w}_j)^2+1/(\overline{w}_j-w_j)^2, \\ E_{ii}=1/(x_i-\underline{x}_i)^2+1/(\overline{x}_i-x_i)^2, \\ Y_{jj}=y_j, \\ A_{ji} = \partial{g_j(x)}/\partial{x}_i, \\ H_{ji_1i_2} = \partial^2g_j(x)/\partial x_{i_1}\partial x_{i_2} . \end{gathered} \f]
+
+To solve the Newton step for
+\f[ \begin{aligned} D \delta w + \delta y &= r_w; \\ (E-Y\cdot H) \delta x -A^T\delta y &= r_x; \\ \delta w - A\delta x &= r_y ;  \end{aligned}\f]
+we find
+\f[ A^TD \, \delta w + (E-Y\cdot H) \delta x = A^T r_w + r_x \f]
+and hence
+\f[ \begin{aligned} (A^TDA + E - Y\cdot H) \delta x &= A^T r_w + r_x - A^T D r_y \\ &= A^T(r_w-Dr_y)+r_x . \end{aligned} \f]
+We therefore can solve the system as
+\f[ \boxed{\begin{aligned} (A^TDA + E - Y\cdot H) \delta x &= A^T(r_w-Dr_y)+r_x \\ \delta w &= A \delta x + r_y \\ \delta y &= r_w - D \!\; \delta w . \end{aligned} } \f]
+
+Since a feasible solution \f$(w^*,x^*)\f$ must satisfy
+\f[ \sum_{j=1}^{m} y_j^* (g_j(x^*)-w_j^*) = 0, \f]
+a test of infeasibility is
+\f[ y^* \cdot (g([x])-[w]) \not\ni 0 .\f]
+This can be most accurately evaluated as
+\f[ \boxed{ \displaystyle (y^* \cdot g)([x])- y^*\cdot [w] \not\ni 0 . } \f]
+For this reason, we prefer a method which keeps the dual variables \f$y_j\f$, but not the variables \f$z_i\f$.
+
+This yields the basis of an <em>infeasible interior point</em> method.
+We keep the constraints on \f$x\f$ and the inequality constraints on \f$w\f$ satisfied, and try to solve the constraints \f$g_j(x)-w_j = 0 \f$.
+The method can be applied with or without explicit use of the dual variables \f$y\f$ and \f$z\f$.
+
+
+\subsection gneral_nonlinear_feasibility_reformulation Reformulation of the nonlinear feasibility problem
+
+We can multiply out the fractional terms to obtain
+\f[ \boxed{\begin{gathered}
+       g_j(x) - w_j = 0. \\
+       z_i - \sum_{j=1}^{m} y_j \nabla_{\!i\,} g_j(x) = 0 \\
+       z_i(x_i-\underline{x}_i)(\overline{x}_i-x_i) - (\underline{x}_i+\overline{x}_i-2x_i) = 0 \\
+       y_i(w_j-\underline{w}_j)(\overline{w}_j-w_j) - (\underline{w}_j+\overline{w}_j-2w_j) = 0 \end{gathered} } \f]
+
+We can separate out the lower and upper terms to obtain
+\f[ \boxed{\begin{gathered}
+       g_j(x) - w_j = 0. \\
+       (\underline{z}_i - \overline{z}_i) - \sum_{j=1}^{m} (\underline{y}_j - \overline{y}_j) \nabla_{\!i\,} g_j(x) = 0 \\
+       \underline{z}_i(x_i-\underline{x}_i) = 0; \quad
+       \overline{z}_i(\overline{x}_i-x_i) = 0 \\
+       \underline{y}_j({w}_i-\underline{w}_i) = 0 ; \quad
+       \overline{y}_j(\overline{w}_j-w_j) = 0 \end{gathered} } \f]
+
+
+
+\remark
+If there are no equality constraints, we can eliminate \f$y\f$ to yield
+\f[ \frac{1}{x_i-\underline{x}_i} - \frac{1}{\overline{x}_i-x_i} - \sum_{j=1}^{m} \Biggl( \frac{1}{w_j-\underline{w}_j} - \frac{1}{\overline{w}_j-w_j} \Biggr) \, \nabla_{\!i\,} g_j(x) = 0; \qquad g_j(x)-w_j = 0 . \f]
+We can further eliminate \f$w\f$ to yield
+\f[ \displaystyle \frac{1}{x_i-\underline{x}_i} - \frac{1}{\overline{x}_i-x_i} - \sum_{j=1}^{m} \Biggl( \frac{1}{g_j(x)-\underline{w}_j} - \frac{1}{\overline{w}_j-g_j(x)} \Biggr) \, \nabla_{\!i\,} g_j(x) = 0  \f]
+If there are equality constraints, which we write \f$h_k(x) = 0\f$, then
+\f[ \frac{1}{x_i-\underline{x}_i} - \frac{1}{\overline{x}_i-x_i} - \sum_{j=1}^{m}  \Biggl( \frac{1}{g_j(x)-\underline{w}_j} - \frac{1}{\overline{w}_j-g_j(x)} \Biggr) \, \nabla_{\!i\,} g_j(x) + \sum_{k=1}^{l} y_k \, h_k(x) = 0 ; \qquad   h_k(x) = 0.  \f]
+However, since our general case includes both inequality and equality constraints, it is more straightforward to use Lagrange multipliers for both kinds of constraint.
+
+
+\subsection nonlinear_inequality_feasibility Inequality constrained feasibility problems
+
+Consider the feasibility problem
+\f[ g_j(x) \leq 0, \ j=1,\ldots,m; \ \ \underline{x}_i \leq x_i\leq  \overline{x}_i,\ i=1,\ldots,n. \f]
+We can re-cast this as an optimisation problem by introducing an extra variable \f$t\f$ and taking
+\f[ \max t \ \text{ s.t. } \ g_i({x})+t\leq 0,\ j=1,\ldots,n;\ \ \underline{x}_i \leq x_i\leq  \overline{x}_i,\ i=1,\ldots,n. \f]
+The Karush-Kuhn-Tucker conditions for optimality with dual variables \f$y\f$ and slack variables \f$w\f$ are
+\f[ \textstyle \sum_{i=1}^{m} y_i \nabla g_i({x}) = 0; \ \sum_{j=1}^{n} x_j =1; \ g_i({x}) + t + {w}_i = 0; \ {w}_iy_i=0;\ {w}_i,y_i\geq 0,\ i=1,\ldots,m \f]
+The problem has no solution if there exists \f$y^*\f$ such that
+\f[ y^*_i \cdot g_i([x]) > 0 . \f]
+
+
+
+
+\section nonlinear_optimisation_newton Solving the Karush conditions by Newton-like methods
+
+We now consider the general nonlinear programming problem
+\f[ \max f(x) \mid \underline{x}_i \leq x_i \leq \overline{x}_i \wedge \underline{w} \leq g_j(x) \leq \overline{w}_j \f]
+We assume a bounded domain with nonempty interior, so \f$-\infty < \underline{x}_i < \overline{x}_i \leq +\infty\f$, but allow for the other constraints to be equality constraints \f$\underline{w}_j=\overline{w}_j\f$ or unbounded \f$\underline{w}_j=-\infty\f$ or \f$\overline{w}_j=+\infty\f$.
+We set \f$w_j=g_j(x)\f$, so we can write \f$\underline{w} \leq w_j \leq \overline{w}_j\f$ and \f$g(x)-w=0\f$.
+However, we treat bounded, unbounded and equality constraints slightly differently.
+
+We can write the relaxed Karush conditions in the following form
+\f[ \begin{gathered} \nabla f(x) - \sum_{j=1}^{m} \lambda_j \nabla g(x) = 0\\ s_j(g_j(x),\lambda_j,\mu) = 0 \end{gathered} \f]
+where \f$s_j(w_j,\lambda_j,\mu)\f$ depends on the bounds \f$\underline{w}_j,\overline{w}_j\f$.
+Setting \f$y_j=g_j(x)\f$, the Jacobian matrix for the Karush conditions is given by
+\f[ \begin{pmatrix} \nabla^2 f + \sum_j \lambda_j \nabla^2 g_j & \nabla g ^T \\ \nabla_w s \nabla g & \nabla_\lambda s \end{pmatrix} \f]
+Writing \f$H=\nabla^2 f + \sum_j \lambda_j \nabla^2 g_j\f$, \f$A=\nabla g\f$, \f$W_{jj} = \partial s_j/\partial \lambda_j\f$, and \f$\Lambda_{jj} = \partial s_j/\partial w_j \f$, we have the system
+\f[ \begin{pmatrix} H & A^T \\ \Lambda A & W \end{pmatrix} \f]
+Premultiplying by \f$\Lambda^{-1}\f$ and setting \f$D=\Lambda^{-1}W\f$ yields the form
+\f[ \begin{pmatrix} H & A^T \\ A & D \end{pmatrix} \f]
+which is symmetric since \f$H\f$ is symmetric and \f$D\f$ is diagonal.
+This system can be solved for \f$\Delta x\f$ by inverting the matrix \f$H-A D^{-1} A^T = H-AW^{-1}\Lambda A\f$.
+In particular, the matrix can be formed as long as \f$\partial s_j/\partial \lambda_j \neq 0\f$ for all \f$j\f$.
+This is indeed the case for all the examples we have considered.
+
+The values of \f$\Lambda_{ii}=\partial s/\partial y\f$ \f$W=\partial s/\partial \lambda\f$ are given below for various constraints:
+ - \f$g(x)=0 : s(y,\lambda,\mu) = y-\lambda \mu; \ \partial s/\partial y = 1; \ \partial s/\partial\lambda = -\mu\f$
+ - \f$g(x)\geq0 : s(y,\lambda,\mu) = \lambda y - \mu; \ \partial s/\partial y = \lambda; \ \partial s/\partial\lambda = y\f$
+ - \f$g(x)\leq0 : s(y,\lambda,\mu) = \lambda y - \mu; \ \partial s/\partial y = \lambda; \ \partial s/\partial\lambda = y\f$
+ - \f$|g(x)|\leq\delta : s(y,\lambda,\mu) = (\delta^2-y^2)\lambda -2y\mu; \ \partial s/\partial y = -2\lambda y-2\mu; \ \partial s/\partial\lambda = (\delta^2-y^2) \f$
+ - \f$ a \leq g(x) \leq b: s(y,\lambda,\mu) = (b-y)(y-a)\lambda -(2y-a-b)\mu; \ \partial s/\partial y = -\lambda (2y-a-b)-2\mu; \ \partial s/\partial\lambda = (b-y)(y-a) \f$
+
+
+\subsection primaldualslack Primal-dual-slack methods
+
+In a primal-dual method, we introduce slack variables \f$s_i\f$ corresponding to each inequality constraint \f$g_i({x})\leq 0\f$ to form an equality constraint \f$g_i({x})+s_i=0\f$.
+However, these slack variables are temporaries, and are recomputed each step.
+
+In a primal-dual-slack method, we instead update the slack variables using a Newton-like step
+\f[ x'=x-\alpha \Delta x; \quad s'=s-\alpha\Delta s \f]
+with
+\f[ \nabla g_i({x}) \Delta x + \Delta s_i = g_i({x})+s_i . \f]
+After the Newton-like step, the equality \f$g_i(x') + s_i'\f$ does not hold, unless \f$g_i\f$ is affine, in which case \f$g_i(x')+s'=0\f$ up to roundoff error.
+We call methods in which the slack is stored and updated by a Newton-like step <em>primal-dual-slack</em> methods, to distinguish them from ordinary primal-dual methods.
+
+In general, enforcing primal feasibility using a primal-dual-slack method may be harder than for an ordinary primal-dual method. We doubt these methods are advantageous in practise.
+
+
+\section nonlinear_optimisation_interval_methods Interval Methods for Nonlinear Programming
+
+See Hansen & Walster (1993).
+
+\subsection nonlinear_optimisation_interval_kkt Interval methods for solving the Karush-Kuhn-Tucker conditions
+
+Consider the standard nonlinear optimisation problem with inequality constraints only
+\f[ \max f(x) \text{ s.t. } g(x)\geq0 \f]
+and look for a solution with \f$x\in X = [\unl{x},\ovl{x}] \f$
+
+The Karush-Kuhn-Tucker optimality conditions are
+\f[ \begin{gathered}
+      \nabla_j f(x) + \sum_{i=1}^{m} y_i \cdot \nabla_j g_i(x) = 0; \\
+      y_i \, g_i(x) = 0; \quad
+      y_i,g_i(x) \geq 0. \end{gathered}
+\f]
+Applying the one-dimensional Taylor theorem with remainder to each component, we obtain
+\f[ F(x+\delta{x},y+\delta{y}) \in F(x,y) + D_xF(X,y)\,\delta{x} + D_yF(X,Y)\,\delta{y} \f]
+and can hence use the Jacobian matrix
+\f[ \begin{pmatrix} \nabla^2f(X)+y\!\cdot\!\nabla^2g(X) & \nabla g(X)^T \\ \nabla g(X) & \mathrm{diag}(g(X)/y) \end{pmatrix} \f]
+Note that the variables \f$y\f$ only enter into the Jacobian in the non-interval form.
+Hence even if the interval \f$Y_i\f$ contining the dual variable \f$y_i\f$ is unbounded, the interval Newton step only requires a suitably-chosen point \f$y_i\in Y_i\f$.
+
+
+
+\subsection nonlinear_optimisation_feasibility_interval_methods Interval methods for solving the John conditions
+
+Introduce variables \f$w,y,z\f$ and use the following form of the John conditions
+\f[ \boxed{\begin{gathered}
+       g(x) - w = 0. \\
+       z_i - \sum_{j=1}^{m} y_j \nabla_i g(x_j) = 0 \\
+       z_i (x_i-\underline{x}_i) (\overline{x}_i-x_i) - \mu (\underline{x}_i+\overline{x}_i-2x_i) = 0 \\
+       y_j (w_j-\underline{w}_j) (\overline{w}_j-w_j) - \mu (\underline{w}_j+\overline{w}_j-2w_j) = 0 \\
+       \sum_{j=1}^{m} y_j^2 + \sum_{i=1}^{n} z_i^2 = \mu^2 \end{gathered} } \f]
+
+
+
+
+\section nonlinear_optimisation_dual_bounds Bounds on the objective function.
+
+Consider the nonlinear programming problem without equality constraints,
+\f[ \max f(x) \text{ s.t. } g_j(x)\leq 0,\ j=1,\ldots,m;\ x\in[x] . \f]
+
+Suppose \f$x_0\f$ is any point in \f$[x]\f$ (not necessarily feasible) and \f$x_0\geq0\f$.
+Then
+\f[ \begin{aligned}
+    f(x) &= f(x_0) + \nabla f([x]) (x-x_0) \\
+         &= f(x_0) + \nabla f(x_0) (x-x_0) + \bigl(\nabla f([x])-\nabla f(x_0)\bigr)(x-x_0) \\
+         &= f(x_0) + \bigl(\nabla f(x_0) - \lambda_0\cdot \nabla g(x_0)\bigr)(x-x_0) + \lambda_0\cdot\nabla g(x_0)(x-x_0) + \bigl(\nabla f([x])-\nabla f(x_0)\bigr)(x-x_0)
+\end{aligned}\f]
+Now
+\f[ g(x) = g(x_0) + \nabla g(x_0) (x-x_0) + \bigl(\nabla g([x])-\nabla g(x_0)\bigr) (x-x_0) \f]
+which upon rearranging yields
+\f[  \nabla g(x_0) (x-x_0) = g(x)-g(x_0) - \bigl(\nabla g([x])-\nabla g(x_0)\bigr) (x-x_0) \f]
+Substituting into the equation for \f$f(x)\f$ yields
+\f[ \begin{aligned}
+    f(x) &= f(x_0) + \lambda_0\cdot\bigl(g(x)-g(x_0)\bigr) + \bigl(\nabla f(x_0) - \lambda_0\cdot\nabla g(x_0)\bigr)(x-x_0)
+              + \bigl(\nabla f([x])-\nabla f(x_0)\bigr)(x-x_0) - \bigl(\nabla g([x])-\nabla g(x_0)\bigr) (x-x_0) \\
+         &= f(x_0) + \lambda_0\cdot\bigl(g(x)-g(x_0)\bigr) + \bigl(\nabla f(x_0) - \lambda_0\cdot\nabla g(x_0)\bigr)(x-x_0)
+              + \bigl( (\nabla f([x])-\lambda_0\cdot\nabla g([x])) - (\nabla f(x_0)-\lambda_0\cdot\nabla g(x_0)) \bigr) (x-x_0)
+\end{aligned}\f]
+Using the fact that \f$\lambda g(x)\leq 0\f$ for <em>any</em> feasible \f$x\f$ and \f$\lambda\f$, we obtain
+\f[ \boxed{ f(x) \leq f(x_0) - \lambda_0\cdot g(x_0) + \bigl(\nabla f(x_0) - \lambda_0\cdot\nabla g(x_0)\bigr)(x-x_0)
+              + \bigl( (\nabla f([x])-\lambda_0\cdot\nabla g([x])) - (\nabla f(x_0)-\lambda_0\cdot\nabla g(x_0)) \bigr) (x-x_0)}
+\f]
+This equation can also be written as
+\f[ \boxed{ f(x) \leq f(x_0) - \lambda_0\cdot g(x_0) + \bigl( \nabla f(x_0)-\lambda_0\cdot\nabla g(x_0) \bigr) (x-x_0) + \bigl( \nabla^2 f([x])-\lambda_0\cdot\nabla^2 g([x]) \bigr) (x-x_0)^2}
+\f]
+A particularly useful form is given below. Note that the function \f$\nabla f-\lambda_0\cdot\nabla g\f$ is <em>first</em> computed and simplified, and only then evaluated over the box \f$[x]\f$. Since we can choose \f$ \nabla f(x_0)-\lambda_0\cdot\nabla g(x_0) \approx 0 \f$, this can be used to obtain good bounds on \f$f(x)\f$.
+\f[ \boxed{ f(x) \leq f(x_0) - \lambda_0\cdot g(x_0) + \bigl( \nabla f-\lambda_0\cdot\nabla g \bigr)[x] (x-x_0)}
+\f]
+
+
+
+\subsection nonlinear_feasibility_alternative Alternative approach
+
+We make the constraints on \f$g\f$ into equality constraints by setting
+\f[ g_j(y) + t + z^u_j = c^u_j; \  -g_j(y) + t + z^l_j = -c^l_j; \ j=1,\ldots,n. \f]
+Taking extended variable \f$\hat{y}=(y,t)\f$, and letting \f$e^T\f$ denote a row vector all of whose elements are \f$1\f$
+ we have matrices
+\f[ \widehat{A} = \left(\begin{matrix} A(y)&-A(y)&I&-I \\ e^T&e^T&e^T&e^T \end{matrix}\right); \qquad
+    \widehat{H} = \left(\begin{matrix} H(x^{cu}-x^{cl},y)&0 \\ 0&0 \end{matrix}\right); \qquad
+    \widehat{D} = \left(\begin{matrix} D(x^{cu},z^{cu})&0&0&0 \\ 0&D(x^{cl},z^{cl})&0&0 \\ 0&0&D(x^{bu},z^{bu})&0 \\ 0&0&0&D(x^{bl},z^{bl}) \end{matrix}\right) .
+\f]
+yielding
+\f[ \widehat{A}\widehat{D}\widehat{A}^T =
+    \left(\begin{matrix} A(D^{cu}+D^{cl})A^T+(D^{bu}+D^{bl})&A(D^{cu}-D^{cl})e+(D^{bu}-D^{bl})e\\e^T(D^{cu}-D^{cl})A^T+e^T(D^{bu}-D^{bl})&e^T(D^{cu}+D^{cl}+D^{bu}+D^{bl})e \end{matrix}\right) . \f]
+Note that considering lower and upper bounds requires no extra matrix multiplications, and recasting the problem as an optimisation problem in \f$m+1\f$ variables involves a single extra matrix multiplication \f$A(D^u-D^l)e^T\f$ and one extra variable in the matrix inversion. In other words, the extra work is minimal.
+
+\remark
+If \f$c^u_j=\infty\f$, then \f$z^u_j=\infty\f$ so \f$x^u_j=0\f$ and \f$D^u_{jj}=0\f$, so the constraint drops out of consideration in the inverse matrix. However, when computing the residuals, we obtain, assuming \f$0<x^{cu}_j,z^{cu}_j<\infty\f$ that \f$rz^{cu}_j=\infty\f$, and this propagates through the computation of the step to give \f$\delta x=\delta y=\delta z=\infty\f$. If we take \f$0<x^{cu}_j\f$ and \f$z^{cu}_j=\infty\f$, then the residual \f$rz^{cu}_j\f$ is \f$\mathrm{nan}\f$ which again propagates through the computation.
+
+When some of the constraints \f$c^u\f$ or \f$c^l\f$ are infinite, then use of floating-point arithmetic will give nan in the corresponding constraints. In principle, we need to consider half-unbounded constraints directly, rather than as box constraints. However, since the result is bounded, we can take the unbounded part of these constraints large enough that they are automatically satisfied.
+
+\subsection proving_nonlinear_feasibility Proving feasibility of equality constraints
+
+Consider the problem of proving that the system of equality constraints \f$h(x)=0\f$ has a solution in a box \f$X\f$, where \f$h:\R^n\rightarrow\R^m\f$ and \f$m\leq n\f$.
+If \f$m=n\f$, then if \f$Dh\f$ is invertible, we can find a solution using an interval Newton method.
+If \f$m<n\f$, we wish to reformulate the problem in \f$m\f$ variables.
+
+Fix \f$x\f$ and let \f$A\f$ be an approximation to \f$Dh(x)\f$. If \f$Dh(x)\f$ has full (row) rank and \f$A\f$ is sufficiently accurate, then \f$AA^T\f$ is invertible; let \f$R\f$ be an approximate inverse. Let \f$S\f$ be a box in \f$\R^m\f$ containing \f$0\f$, and let \f$f(s) = h(x+A^Ts)\f$ for \f$s\in S\f$.
+Note \f$df(0) = Dh(x) A^T \approx AA^T\f$. We can use the interval Newton method to prove that \f$f\f$ has a zero in \f$B\f$. Then \f$h\f$ has a zero in \f$x+A^TS\f$.
+
+If \f$X\f$ is a box in \f$\R^n\f$, then \f$RA(X-x)\f$ is a suitable guess for a box in \f$V\f$.
+
+\section nonlinear_feasibility_algorithm Algorithms for Nonlinear Feasibility Problems
+
+In %Ariadne, we are interested in solving feasibility problems where the constraints gradually tighten. This means that a feasable point can be used as in initial seed for iterating a tighter subproblem, and bound on the feasibly set of \f$y\f$ can be used in a tighter subproblem, and a certificate of infeasibility means that no further subproblems need to be considered.
+
+A possible algorithm for solving feasibility problems is as follows:
+ - Use a non-rigorous iterative nonlinear programming solver (e.g. an interior point solver) to find \f$x_0,y_0\f$ giving a local solution to the related optimality problem.
+ - If \f$y_0\f$ is feasible, repeat for the tighter subproblems, using computed \f$(x_0,y_0)\f$ as a seed for the iterative solver.
+ - If \f$x_0\cdot g([y])>0\f$, the problem is infeasible.
+ - Reduce \f$[y]\f$ using the constraint \f$x_0\cdot g([y])\leq 0\f$ and hull/box reduce, possibly using the expansion \f$x_0\cdot g([y]) = x_0\cdot g(y_0)+\nabla g([y])(y-y_0)\f$.
+ - If \f$[y]\f$ is empty, the problem is infeasible.
+ - Apply the Krawczyk contractor to the Karush-Kuhn-Tucker optimality conditions \f$  x\cdot \nabla g(y) = 0; \ \sum x_i =1; \ g(y) + t + z = 0; \ x_iz_i=0; \ x_i,z_i\geq 0,\ i=1,\ldots,n\f$.
+ - Split domain in two and repeat. The splitting should be done to increase \em linearity of the \f$\nabla g\f$, since linear solvers are very effective. Note that we should repeat from the beginning in case the failure to prove disjointness was due to \f$(x_0,y_0)\f$ being a local maximum.
+
+ - It may be worth contracting \f$[y]\f$ from time to time to improve the iteration speed.
+ - The use of \f$x_0\cdot g([y])\leq 0\f$ rather than \f$g_i([y])\leq 0\f$ to perform the contraction is to focus attention on the possibly violated constraints.
+
+
+
+\section infeasible_interior_point Infeasible Interior Point Methods
+
+Consider the nonlinear programming problem
+\f[ \min f({x}) \ \text{ s.t. } \ \unl{d}\leq {x}\leq\ovl{d}, \quad \unl{c}\leq g({x})\leq\ovl{c} \f]
+where
+\f[ \begin{gathered}
+      -\infty < \unl{d}_j < \ovl{d}_j < +\infty \\
+      -\infty \leq \unl{c}_i < +\infty, \quad -\infty<\ovl{c}_i\leq+\infty, \quad \unl{c}_i\leq \ovl{c}_i.
+   \end{gathered} \f]
+By intersecting \f$C\f$ with \f$g(D)\f$ if necessary, we can assume that \f$C\f$ is also bounded,
+\f[ -\infty < \unl{c}_i \leq \ovl{c}_i < +\infty \f]
+though there may be equality constraints \f$\unl{c}_i=\ovl{c}_i\f$.
+
+Introduce new variables \f$w\f$ satisfying
+\f[ g({x}) -  w = 0 , \f]
+and slack variables \f$\unl{w}\f$, \f$\ovl{w}\f$, \f$\unl{x}\f$, \f$\ovl{x}\f$ satisfying
+\f[ {w}+\unl{w}=\unl{c},\ {w}+\ovl{w}=\ovl{c},\ {x}+\unl{x}=\unl{d},\ {x}+\ovl{x}=\ovl{d},\f]
+and
+\f[ \unl{w},\unl{x}\leq 0,\ \ovl{w},\ovl{x}\geq 0 . \f]
+Add a penalty function to obtain
+\f{multline*} f(x) - \mu \sum_{i=1}^{m}\bigl(\log\!|\unl{w}_i|+\log\!|\ovl{w}_i|\bigr) - \mu \sum_{j=1}^{m}\bigl(\log\!|\unl{x}_j|+\log\!|\ovl{x}_j|\bigr) + \frac{1}{2\nu} \sum_{i=1}^{m}(g_i({x})-{w}_i)^2 \\
+    \shoveright + \frac{1}{2\nu} \sum_{i=1}^{m}\bigl(( {w}_i+\unl{w}_i-\unl{c}_i)^2+( {w}_i+\ovl{w}_i-\ovl{c}_i)^2\bigr) + \frac{1}{2\nu} \sum_{j=1}^{n}\bigl(({x}_j+\unl{x}_j-\unl{d}_j)^2+({x}_j+\ovl{x}_j-\ovl{d}_j)^2\bigr) \f}
+Finding the critical points of the revised function gives
+\f[ \begin{gathered}
+      \nabla_j{f}(x) + \frac{1}{\nu} \sum_{i=1}^{m}(g_i({x})-{w}_i) \nabla_j{g_i}(x) + \frac{1}{\nu}({x}_j+\unl{x}_j-\unl{d}_j)+\frac{1}{\nu}({x}_j+\ovl{x}_j-\ovl{d}_j)= 0; \\
+      -\frac{1}{\nu}(g_i({x})-{w}_i) + \frac{1}{\nu}( {w}_i+\unl{w}_i-\unl{c}_i) + \frac{1}{\nu}( {w}_i+\ovl{w}_i-\ovl{c}_i) = 0; \\
+      -\frac{\mu}{\unl{w}} + \frac{1}{\nu}( {w}_i+\unl{w}_i-\unl{c}_i) = 0; \quad -\frac{\mu}{\ovl{w}} + \frac{1}{\nu}( {w}_i+\ovl{w}_i-\ovl{c}_i) = 0; \\
+       -\frac{\mu}{\unl{x}} + \frac{1}{\nu}({x}_j+\unl{x}_j-\unl{d}_j) = 0; \quad -\frac{\mu}{\ovl{x}} + \frac{1}{\nu}({x}_j+\ovl{x}_j-\ovl{d}_j) = 0; \\
+   \end{gathered} \f]
+Introduce dual variables
+\f[ \begin{gathered} y = (g(x)-w)/\nu; \\ \unl{v}=({w}+\unl{w}-\unl{c})/\nu, \quad \ovl{v}=({w}+\ovl{w}-\ovl{c})/\nu, \\ \unl{z}=({x}+\unl{x}-\unl{d})/\nu, \quad \ovl{z}=({x}+\ovl{x}-\ovl{d})/\nu,  \end{gathered} \f]
+satisfying
+\f[ \unl{v},\unl{z}\leq 0,\ \ovl{v},\ovl{z}\geq 0 . \f]
+On taking \f$\nu\to0\f$, the criticality conditions become
+\f[ \begin{gathered}
+      \nabla_j{f}(x) + \sum_{i=1}^{m} y_i \nabla_j{g_i}(x) + (\unl{z}_j+\ovl{z}_j) = 0; \\
+      g_i({x}) - {w}_i = 0; \quad -y_i + \unl{v}_i + \ovl{v}_i = 0; \\
+       {w}_i+\unl{w}_i-\unl{c}_i = 0; \quad \unl{v}_i\,\unl{w}_i - \mu = 0; \\
+       {w}_i+\ovl{w}_i-\ovl{c}_i = 0; \quad \ovl{v}_i\,\ovl{w}_i - \mu = 0; \\
+      {x}_j+\unl{x}_j-\unl{d}_j = 0; \quad \unl{z}_j\,\unl{x}_j - \mu = 0; \\
+      {x}_j+\ovl{x}_j-\ovl{d}_j = 0; \quad \ovl{z}_j\,\ovl{x}_j - \mu = 0;
+   \end{gathered} \f]
+
+Setting \f$A=\nabla\!g(x)\f$ and \f$H=\nabla^2\!f(x)+\sum_{i=1}^{m} y_i \nabla^2 g_i({x})\f$, we have
+\f{equation*}
+\left( \begin{array}{c|ccc|cccc|cccc}
+    & {w}&{x}&{y} & \unl{w}&\ovl{w}&\unl{x}&\ovl{x} & \unl{v}&\ovl{v}&\unl{z}&\ovl{z} \\ \hline
+  {w} & 0 & 0 & -I  &  0&0&0&0 & I&I&0&0 \\
+  {x} & 0 & H & A^T  &  0&0&0&0 & 0&0&I&I \\
+  {y} & -I & A & 0  &  0&0&0&0 & 0&0&0&0 \\ \hline
+  \unl{w} & 0 & 0 & 0  &  \!\unl{D}\!\!\!&0&0&0 & I\,&0&0&0 \\
+  \ovl{w} & 0 & 0 & 0  &  0&\!\!\!\ovl{D}\!\!\!&0&0 & 0&\,I\,&0&0 \\
+  \unl{x} & 0 & 0 & 0  &  0&0&\!\!\!\unl{E}\!\!\!&0 & 0&0&\,I\,&0 \\
+  \ovl{x} & 0 & 0 & 0  &  0&0&0&\!\!\!\ovl{E}\! & 0&0&0&\,I \\ \hline
+  \unl{v} & I & 0 & 0  &  I&0&0&0 & 0&0&0&0 \\
+  \ovl{v} & I & 0 & 0  &  0&I&0&0 & 0&0&0&0 \\
+  \unl{z} & 0 & I & 0  &  0&0&I&0 & 0&0&0&0 \\
+  \ovl{z} & 0 & I & 0  &  0&0&0&I & 0&0&0&0
+\end{array}\right)
+\left( \begin{array}{c}
+  \\\hline \delta w\\\delta x\\\delta y \\\hline \delta\unl{w}\\\delta\ovl{w}\\\delta\unl{x}\\\delta\ovl{x} \\\hline \delta\unl{v}\\\delta\ovl{v}\\\delta\unl{z}\\\delta\ovl{z}
+\end{array}\right)
+=
+\left( \begin{array}{c}
+  \\\hline \epsilon w\\\epsilon x\\\epsilon y \\\hline \epsilon\unl{w}\\\epsilon\ovl{w}\\\epsilon\unl{x}\\\epsilon\ovl{x} \\\hline \epsilon\unl{v}\\\epsilon\ovl{v}\\\epsilon\unl{z}\\\epsilon\ovl{z}
+\end{array}\right)
+=
+\left( \begin{array}{c}
+  \\\hline -y+\unl{v}+\ovl{v}\\\nabla\!f(x)+\nabla g(x)^Ty+\unl{z}+\ovl{z}\\g(x)-w \\\hline \unl{v}-\mu/\unl{w}\\\ovl{v}-\mu/\ovl{w}\\\unl{z}-\mu/\unl{x}\\\ovl{z}-\mu/\ovl{x}
+  \\\hline {w}+\unl{w}-\unl{c}\\{w}+\ovl{w}-\ovl{c}_i\\{x}+\unl{x}-\unl{d}\\{x}+\ovl{x}-\ovl{d}
+\end{array}\right)
+\f}
+where
+\f[ \unl{D} = \unl{V}/\unl{W}; \quad \ovl{D}=\ovl{V}/\ovl{W}; \qquad \unl{E}=\unl{Z}/\unl{X}; \quad \ovl{E}=\ovl{Z}/\ovl{X} . \f]
+
+We can eliminate all variables except \f$w\f$, \f$x\f$ and \f$y\f$ to obtain
+\f{equation*}
+\left( \begin{array}{c|ccc}
+    & {w}&{x}&{y} \\ \hline \\[-2ex]
+  {w} & D & 0 & -I \\
+  {x} & 0 & H\!+\!E & A^T \\
+  {y} & -I & A & 0
+\end{array}\right)
+\left( \begin{array}{c} \delta\\\hline \delta w\\\delta x\\\delta y \end{array}\right)
+= \left( \begin{array}{c} \rho\\\hline \rho w\\\rho x\\\rho y \end{array}\right)
+\f}
+where
+\f[ D = \unl{D} + \ovl{D} = \unl{V}/\unl{W}+\ovl{V}/\ovl{W}; \qquad E = \unl{E} + \ovl{E} = \unl{Z}/\unl{X}+\ovl{Z}/\ovl{X} ; \f]
+and
+\f[ \begin{aligned}
+      \rho w &= \epsilon w - (\epsilon\unl{w}+\epsilon\ovl{w}) + \unl{D}\,\epsilon\unl{v} + \ovl{D}\,\epsilon\ovl{v} \,; \\
+      \rho x &= \epsilon x - (\epsilon\unl{x}+\epsilon\ovl{x}) + \unl{E}\,\epsilon\unl{z} + \ovl{E}\,\epsilon\ovl{z} \,; \\
+      \rho y &= \epsilon y \,.
+   \end{aligned} \f]
+These equations further simplify to
+\f[ \begin{aligned}
+        S\, &= (H+E+A^TDA) \\[1px]
+        \delta x &= S^{-1} \bigl(\rho x+A^T(\rho w+D\rho y)\bigr) \\[1px]
+        \delta w &= A \delta x - \rho y \\
+        \delta y &= D \delta w - \rho w
+   \end{aligned} \f]
+We can recover the other changes as
+\f[ \begin{gathered}
+      \delta\unl{w} = \epsilon\unl{v} - \delta w; \quad \delta\unl{v} = \epsilon\unl{w} - \unl{D}\,\delta\unl{w}; \\
+      \delta\ovl{w} = \epsilon\ovl{v} - \delta w; \quad \delta\ovl{v} = \epsilon\ovl{w} - \ovl{D}\,\delta\ovl{w}; \\
+      \delta\unl{x} = \epsilon\unl{z} - \delta x; \quad \delta\unl{z} = \epsilon\unl{x} - \unl{E}\,\delta\unl{x}; \\
+      \delta\ovl{x} = \epsilon\ovl{z} - \delta x; \quad \delta\ovl{z} = \epsilon\ovl{x} - \ovl{E}\,\delta\ovl{x}; \\
+    \end{gathered} \f]
+As an alternative, we can use \f$\delta w = D^{-1}(\rho w+\delta y)\f$ to obtain
+\f{equation*}
+\left( \begin{array}{cc}
+  H\!+\!E & A^T  \\
+   A     & D^{-1}
+\end{array}\right)
+\left( \begin{array}{c} \delta x\\\delta y \end{array}\right)
+= \left( \begin{array}{c} \rho x\\\rho y-D^{-1}\rho w \end{array}\right)
+\f}
+Note that the conditions are equivalent to minimising the Lagrangian
+\f{multline*} L({w},{x},{y},\,\unl{w},\ovl{w},\unl{x},\ovl{x},\,\unl{v},\ovl{v},\unl{z},\ovl{z}) = f({x}) + \sum_{i=1}^{m} {y}_i(g_i({x})- {w}_i) \\
+     + \sum_{i=1}^{m} \bigl(  \unl{v}_i( {w}_i+\unl{w}_i-\unl{c}_i)\!-\!\mu\log\!|\unl{w}_i| \;+\; \ovl{v}_i( {w}_i+\ovl{w}_i-\ovl{c}_i)\!-\!\mu\log\!|\ovl{w}_i| \bigr) \\
+     \qquad\qquad + \sum_{j=1}^{n} \bigl(  \unl{z}_j({x}_j+\unl{x}_j-\unl{d}_j)\!-\!\mu\log\!|\unl{x}_j| \;+\; \ovl{z}_j({x}_j+\ovl{x}_j-\ovl{d}_j)\!-\!\mu\log\!|\ovl{x}_j| \bigr) \,. \f}
+
+The variables are updated using a Newton step
+\f[ \mathbf{x}' = \mathbf{x} - \alpha \, \mathbf{\delta x} \f]
+where \f$0<\alpha\leq 1\f$ is such that \f$\unl{w}',\unl{x}',\unl{v}',\unl{z}' < 0\f$ and \f$\ovl{w}',\ovl{x}',\ovl{v}',\ovl{z}'>0\f$.
+To avoid approaching too close to the boundary, we require
+\f[ \unl{w}_i\,\unl{v}_i > \mu \gamma, \quad \ovl{w}_i\,\ovl{v}_i > \mu \gamma, \quad \unl{x}_j\,\unl{z}_j > \mu \gamma, \quad \ovl{x}_j\,\ovl{z}_j > \mu \gamma, \f]
+where \f$\gamma\f$ is a small constant, which we take to be \f$1/1024\f$.
+
+The parameter \f$\mu\f$ is estimmated by
+\f[  \mu = \frac{1}{2(m+n)} \biggl( \sum_{i=1}^{m}\bigl(\unl{v}_i\,\unl{w}_i+\ovl{v}_i\,\ovl{w}_i\bigr) + \sum_{j=1}^{n}\bigl(\unl{z}_j\,\unl{x}_j+\ovl{z}_j\,\ovl{x}_j\bigr) \biggr) . \f]
+For the next step, we multiply \f$\mu\f$ by a constant \f$\sigma\f$, which we take to be \f$1/8\f$.
+
+*/
+
+
+/*
+Newton method results in solving the equation
+\f[ \boxed{\displaystyle
+    \left(\begin{matrix} Z&0&X\\-A&H&0\\0&A^T&I\\ \end{matrix}\right)
+      \left(\begin{matrix} \Delta x \\ \Delta y \\ \Delta z \end{matrix}\right)
+    = \left(\begin{matrix} r_x \\ r_y \\ r_z \end{matrix}\right)
+    = \left(\begin{matrix} x \circ z \\ \nabla f(y) - x\cdot\nabla g(y) \\ g(y)+z \end{matrix}\right)
+ } \f]
+where \f$A=A(y)=\nabla g(y)\f$ and \f$H=H(x,y)=\nabla^2 f(y) - x\cdot \nabla^2 g(y)\f$ and \f$D=D(x,z)=\mathrm{diag}(z)^{-1}\mathrm{diag}(x)\f$, so
+\f[ \boxed{ \displaystyle\
+        A_{ij}(y) = \frac{\partial g_j(y)}{\partial y_i}; \qquad
+        H_{ik}(x,y) = \frac{\partial^2 f(y)}{\partial y_i\partial y_k} - \sum_{j} x_j\,\frac{\partial^2 g_j(y)}{\partial y_i\partial y_k}; \qquad
+        D_{jj}(x,z) = \frac{x_j}{z_j} .
+\ } \f]
+Consider the inverse of the matrix
+\f[
+    \left(\begin{matrix} Z&0&X\\-A&H&0\\0&A^T&I\\ \end{matrix}\right)
+        =
+    \left(\begin{matrix} Z&0&0\\0&I&0\\0&0&I\\ \end{matrix}\right)
+    \left(\begin{matrix} I&0&Z^{-1}X\\-A&H&0\\0&A^T&I\\ \end{matrix}\right)
+
+\f]
+We can factorise the original matrix as
+\f[
+    \left(\begin{matrix} Z&0&X\\-A&H&0\\0&A^T&I\\ \end{matrix}\right)
+        =
+    \left(\begin{matrix} Z&0&0 \\ 0&I&0 \\ 0&0&I \end{matrix}\right)
+    \left(\begin{matrix} I&0&0 \\ -A&I&AZ^{-1}X \\ 0&0&I \end{matrix}\right)
+    \left(\begin{matrix} I&0&0 \\ 0&H-AZ^{-1}XA^T&0 \\ 0&0&I \end{matrix}\right)
+    \left(\begin{matrix} I&0&0 \\ 0&I&0 \\ 0&A^T&I \end{matrix}\right)
+    \left(\begin{matrix} I&0&Z^{-1}X \\ 0&I&0 \\ 0&0&I \end{matrix}\right)
+\f]
+Writing \f$D=Z^{-1}X\f$ and \f$S=H-AZ^{-1}XA^T=H-ADA^T\f$  gives inverse
+\f[
+    \left(\begin{matrix} Z&0&X\\-A&H&0\\0&A^T&I\\ \end{matrix}\right)^{-1}
+        =
+    \left(\begin{matrix} I&0&-D \\ 0&I&0 \\ 0&0&I \end{matrix}\right)
+    \left(\begin{matrix} I&0&0 \\ 0&I&0 \\ 0&-A^T&I \end{matrix}\right)
+    \left(\begin{matrix} I&0&0 \\ 0&S^{-1}&0 \\ 0&0&I \end{matrix}\right)
+    \left(\begin{matrix} I&0&0 \\ A&I&-AD \\ 0&0&I \end{matrix}\right)
+    \left(\begin{matrix} Z^{-1}&0&0 \\ 0&I&0 \\ 0&0&I \end{matrix}\right)
+\f]
+A closed form for the inverse is
+\f[ \left(\begin{matrix}
+        Z^{-1}+Z^{-1}XA^TS^{-1}AZ^{-1} & Z^{-1}XA^TS^{-1} & -Z^{-1}X-Z^{-1}XA^TS^{-1}AZ^{-1}X\\
+        S^{-1}AZ^{-1} & S^{-1} & -S^{-1}AZ^{-1}X \\
+        -A^TS^{-1}AZ^{-1} & -A^TS^{-1} & I+A^TS^{-1}AZ^{-1}X \\
+    \end{matrix}\right) \f]
+
+
+If we have upper and lower bounds on the constraints \f$c^l\leq g(y) \leq c^u\f$, then the matrices \f$A\f$ and \f$D\f$ and \f$H\f$ are replaced by
+\f[  \widehat{A} = \left(\begin{matrix}A(y)&-A(y)\end{matrix}\right);  \quad
+     \widehat{D} = \left(\begin{matrix}D(x^u,z^u)&0\\0&D(x^l,z^l)\end{matrix}\right); \quad
+     \widehat{H} = H(x^u-x^l,y) .
+\f]
+
+*/

@@ -1,0 +1,17 @@
+import {readFileSync,writeFileSync,readdirSync,existsSync} from 'node:fs';
+import {spawnSync} from 'node:child_process';
+import {resolve} from 'node:path';
+import {createHash} from 'node:crypto';
+import assert from 'node:assert/strict';
+const root=import.meta.dirname,build=resolve(root,'../../.audit-ruffini-build.LmZgYM'),out=build+'/finite-boundaries-v1';
+const hash=p=>createHash('sha256').update(readFileSync(p)).digest('hex');
+const manifest=root+'/finite-boundaries-build-manifest.json';assert(!existsSync(manifest));
+const previous=JSON.parse(readFileSync(root+'/finite-boundaries-build01-runs.json','utf8'));assert.equal(previous.length,1);assert.equal(previous[0].error,'EPERM');
+assert.equal(hash(root+'/FiniteBoundaries.java'),previous[0].sourceSha256);assert.equal(hash(root+'/run-finite-boundaries.mjs'),previous[0].runnerSha256);
+const before=readdirSync(out,{recursive:true}).filter(p=>p.endsWith('.class')).sort().map(p=>[p,hash(out+'/'+p)]);
+const started=new Date().toISOString(),r=spawnSync(previous[0].command,previous[0].args,{encoding:'utf8',timeout:60000});
+const file=root+'/finite-boundaries-host-build.log';assert(!existsSync(file));writeFileSync(file,r.stdout??'');writeFileSync(file+'.stderr',r.stderr??'');
+const record={command:previous[0].command,args:previous[0].args,started,finished:new Date().toISOString(),status:r.status,error:r.error?.code??null,signal:r.signal,file,sha256:hash(file),stderrSha256:hash(file+'.stderr'),sourceSha256:hash(root+'/FiniteBoundaries.java'),runnerSha256:hash(import.meta.filename),preexistingUnqualifiedClasses:before};
+writeFileSync(root+'/finite-boundaries-host-build.json',JSON.stringify(record,null,2)+'\n');assert.equal(r.error,undefined);assert.equal(r.status,0,r.stderr);
+const classes=readdirSync(out,{recursive:true}).filter(p=>p.endsWith('.class')).sort().map(p=>[p,hash(out+'/'+p)]);if(before.length)assert.deepEqual(classes,before);
+writeFileSync(manifest,JSON.stringify({source:root+'/FiniteBoundaries.java',sourceSha256:record.sourceSha256,classes,dependencies:previous[0].dependencies,release:16,buildRecord:root+'/finite-boundaries-host-build.json',preexistingClassBytesIdentical:true},null,2)+'\n');console.log(JSON.stringify(record));

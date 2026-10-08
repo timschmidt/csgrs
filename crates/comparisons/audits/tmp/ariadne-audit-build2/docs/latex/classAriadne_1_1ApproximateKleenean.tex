@@ -1,0 +1,25 @@
+\doxysubsection{Approximate\+Kleenean Class Reference}
+\hypertarget{classAriadne_1_1ApproximateKleenean}{}\label{classAriadne_1_1ApproximateKleenean}\index{ApproximateKleenean@{ApproximateKleenean}}
+
+
+{\ttfamily \#include $<$logical.\+hpp$>$}
+
+
+
+\doxysubsubsection{Description}
+A logical class representing a value of an undecidable predicate, either a \doxylink{classAriadne_1_1NaiveKleenean}{Naive\+Kleenean} value \doxylink{classAriadne_1_1NaiveKleenean_afe091781b71e99d6b8de4e44d3c394ef}{check}ed using some \doxylink{classAriadne_1_1Effort}{Effort}, or applied directly to an \doxylink{classAriadne_1_1Concepts_1_1Approximate}{Approximate} object. 
+
+Note that \doxylink{namespaceAriadne_aa44ba4f2d015e8143195445b46782c31}{definitely()} and \doxylink{namespaceAriadne_a67004075d5a8db930365c150c0b8965a}{possibly()} always return {\ttfamily false} and {\ttfamily true}, respectively. \begin{DoxySeeAlso}{See also}
+\doxylink{classAriadne_1_1NaiveKleenean}{Naive\+Kleenean} 
+\end{DoxySeeAlso}
+\doxysubsubsubsection*{Related Types and Functions}
+(Note that these are not member symbols.) \begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1ApproximateKleenean_af8475832f5c7e1244f1ca1bc0f24203d}\label{classAriadne_1_1ApproximateKleenean_af8475832f5c7e1244f1ca1bc0f24203d} 
+{\footnotesize template$<$class L$>$ }\\bool {\bfseries probably} (L const \&l)
+\begin{DoxyCompactList}\small\item\em Returns an \textquotesingle{}educated guess\textquotesingle{} to the value of a finite (non-\/effective) logical type. Returns {\ttfamily true} for logical values of {\ttfamily TRUE} and {\ttfamily LIKELY}, and {\ttfamily false} for {\ttfamily INDETERMINATE}, {\ttfamily UNLIKELY} and {\ttfamily FALSE}. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+The documentation for this class was generated from the following file\+:\begin{DoxyCompactItemize}
+\item 
+source/foundations/\mbox{\hyperlink{logical_8hpp}{logical.\+hpp}}\end{DoxyCompactItemize}

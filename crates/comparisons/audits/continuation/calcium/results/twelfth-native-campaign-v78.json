@@ -1,0 +1,13 @@
+{
+  "tag": "twelfth-native-campaign-v78",
+  "started": "2026-09-11T23:50:09.439Z",
+  "finished": "2026-09-11T23:51:05.460Z",
+  "elapsedSeconds": 56.01872581,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "node",
+  "args": [
+    "run-twelfth-native-v78.mjs"
+  ],
+  "code": 0,
+  "signal": null
+}

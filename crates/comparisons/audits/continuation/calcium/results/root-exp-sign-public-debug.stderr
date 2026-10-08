@@ -1,0 +1,4 @@
+     Locking 9 packages to latest Rust 1.97.0 compatible versions
+   Compiling calcium-root-exp-sign-probe v0.1.0 (/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/root-exp-sign-probe)
+    Finished `dev` profile [unoptimized] target(s) in 0.10s
+     Running `/home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype/debug/calcium-root-exp-sign-probe`

@@ -1,0 +1,12 @@
+{
+  "head": "8de08b874db388e25b2dae69cf93622cded79006",
+  "parent": "04b524382cdf80457c06f02c2bd2d0fa222d21b8",
+  "files": {
+    "src/bezier_region.rs": "efc75b174a49db2523072ba3b5d2cb45ecd03eb23385baf4178fc11ce95de4d1"
+  },
+  "repository_count": 30,
+  "all_repositories_clean": true,
+  "all_owned_processes_reaped": true,
+  "pushed": false,
+  "full_goal_complete": false
+}

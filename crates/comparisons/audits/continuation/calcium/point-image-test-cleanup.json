@@ -1,0 +1,9 @@
+{
+  "checkpoint": 53,
+  "before": "a999de9ad867d707b218ed74bbe66531e74de2543dbc7997c873ad1881b97950",
+  "source": "hypersolve/src/algebraic_binary.rs",
+  "preserved": "point-image-v1-algebraic_binary.rs",
+  "change": "Remove unnecessary u64-to-u64 cast from a new cfg(test) regression only; no algorithm, oracle or captured result changes.",
+  "failedGate": "results/point-image-candidate-clippy.json",
+  "failedGateSha256": "7e85893019f1291212e07a17c42aaceb2670d987d1f999909b3b4c50fbe65dcf"
+}

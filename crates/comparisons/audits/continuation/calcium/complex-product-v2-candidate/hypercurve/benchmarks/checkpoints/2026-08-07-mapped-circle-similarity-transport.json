@@ -1,0 +1,278 @@
+{
+  "schema": "hypercurve.performance-checkpoint.v1",
+  "captured_on": "2026-08-07",
+  "checkpoint": "exact similarity transport and operation-local sharing of correlated selected-circle authorities",
+  "implementation_revision": "a56f20d7a490cc20a5f13812c2864129952b2bf1",
+  "semantic_revision": "2d07aaa8588f5f4608afff5aa7b9a474240ab408",
+  "benchmark_revision": "57b290b5d8c04762aad71f5776a4395518e3f1f5",
+  "semantic_pre_optimization_revision": "566d4468016cc57862d295483868fbbd420d4820",
+  "matched_pre_optimization_instrumented_revision": "02efa8d16707addbcc1f6a999e3e526133cb5f72",
+  "historical_capability_revision": "924fa6e6927714bd4bdf9939c99a12a5beb5d372",
+  "historical_instrumented_revision": "4e459114df246bba8994cd7ee1b567307075aa0d",
+  "preceding_checkpoint": "2026-08-07-correlated-circle-partition-offset.json",
+  "dependency_revisions": {
+    "hyperreal": "f09c147b0352884f8efe88e875c37d8f0f439ba5",
+    "hyperlattice": "a475bb752c1e0fb0cfdb80f4db74a56caa6962c0",
+    "hyperlimit": "b0418bddff50183fa782e5caa6da6974a2b969a1",
+    "hypertri": "86189ff6e87f056a3686d81b57952d799945663a",
+    "hypersolve": "f3cf7467219abdf5c6a27459e330ed158bbc590e",
+    "hyperbrep": "6336697cd124ef6ef8384166b1f90ef2fceb6663",
+    "lower_layer_modified": false,
+    "hypermesh_modified_or_benchmarked": false
+  },
+  "scope": {
+    "completed": [
+      "transported coincident selected-circle pair-overlap parameter maps through every exact affine similarity, including translation, scaled rotation, reflection, and nested similarities",
+      "preserved local parameter correspondence, overlap boundary ownership, endpoint order, mapped order brackets, relative orientation, and reflection-sensitive signed offset direction",
+      "made independently reconstructed transported overlaps recognize the same structural parameter authority without relying only on pointer identity",
+      "kept rational, parallel, pair, and chord maps stale-guarded when their exact image transport is not yet implemented",
+      "transported correlation evidence through public CurveRegion2 transforms so later offset construction retains the exact mapped-cut proof",
+      "shared transformed cusp frames, semicircle carriers, overlap wrappers, and mapped parameters across a complete CurveRegion2 transform",
+      "constructed at most one exact Similarity2 descriptor per affine transform operation and allocated no cache storage for regions that do not use selected-circle evidence",
+      "validated STRICT and APPROXIMATE_512 through semantic, public transform-offset, cyclic/reversed partition, reflection, and unsupported-map regressions"
+    ],
+    "remaining": [
+      "construct exact algebraic endpoint tangents and joins for mapped cuts that remain geometric circle-run boundaries rather than removable internal partitions",
+      "transport non-endpoint rational, parallel, pair, and chord mapped cuts whose point and tangent images do not reduce to coincident-circle endpoints",
+      "extend retained selected-circle evidence into the general fillet and chamfer solver",
+      "reduce native circular-conic reconstruction cost while preserving complete CurveRegion2 regularization semantics",
+      "handle coupled material and hole wavefront events and all remaining global erosion cases"
+    ]
+  },
+  "authority": {
+    "semantic_route": "CurveRegion2::transform_similarity -> transform_similarity_raw -> transform_affine_raw -> transform_retained_region_fragment -> BezierAlgebraicCuspSemicircleFragment2::transform_similarity_cached -> BezierAlgebraicCuspSemicirclePairOverlapParameterMapData2::SimilarityTransport",
+    "downstream_route": "transported CurveRegion2 -> CurveRegion2::offset -> existing offset_exact_general_raw -> existing regularized_region_raw",
+    "cache_scope": "One stack-owned BezierAlgebraicCuspSemicircleSimilarityCache2 spans all loops and retained fragments of one transform operation. Its vectors remain empty until selected-circle evidence is encountered and are discarded when the operation returns.",
+    "cache_keys": "Frame, carrier, and overlap reuse requires exact Arc identity. Mapped-parameter reuse additionally includes the source carrier, preventing stale reuse when a parameter wrapper is observed against a different circle authority.",
+    "structural_fallback": "Independently transformed overlap objects can still share authority when their original overlap authority, transformed carriers, topology, and policy all agree exactly.",
+    "nested_transform_rule": "SimilarityTransport is flattened to the original overlap proof while the carrier images accumulate the composed exact similarities.",
+    "reflection_rule": "A reflection reverses each transported carrier orientation consistently and preserves the overlap's relative orientation while changing the signed offset side as required by CurveRegion2 topology.",
+    "unsupported_map_rule": "Unsupported mapped authorities do not replay stale geometry; they retain the existing guarded failure or complete fallback behavior.",
+    "persistent_state_added_by_optimization": "None",
+    "compatibility_shim_added": false,
+    "duplicate_region_boolean_or_offset_engine_added": false,
+    "approximate_geometry_added": false,
+    "hypersolve_change_required": false
+  },
+  "policy_evidence": {
+    "strict": "Similarity transport consists of exact Real affine arithmetic and exact retained authority. Any later equality or ordering that cannot be certified remains unresolved under STRICT.",
+    "approximate_512": "The transported proof enters the same operation policy graph. Only existing terminal policy comparators may consume a 512-bit equality or ordering interpretation, and the enclosing CurveOutcome records Approximate512Consumed.",
+    "certified_fixtures": "Translation, scaled rotation plus translation, reflection, nested transforms, public transform-then-offset, and cyclic/reversed partitions complete as Certified under both policies when their retained facts are exact.",
+    "unsupported_fixture": "A deliberately unsupported stale mapped parameter continues to decline geometric replay under both policies rather than being mistaken for a transported coincident-circle proof.",
+    "no_policy_upgrade": true
+  },
+  "benchmark_method": {
+    "fixture": "One exact selected circle represented by two semicircles, with the first semicircle partitioned at an independently selected coincident-overlap parameter; the region is transformed by the exact similarity (x,y) -> (5-2y,-3+2x), then measured either during transform or during an exact unit offset.",
+    "controls": "exact_partition has the same fragment count with an exact 1/2 cut; unsplit has no internal upper-semicircle partition; disabled retains fixture construction and loop observation without the measured operation.",
+    "driver": "ignored all-features unit-test driver benchmark_correlated_circle_partition_offset_driver",
+    "wall_method": "Seven fresh-process taskset CPU 11 samples per exact variant; 4096 timed operations, 257 warm-ups, and one preflight.",
+    "matched_comparison": "The current and detached semantic pre-optimization executables have the same driver modes, release settings, dependency revisions, and complete similarity-transport semantics. The detached benchmark-only commit does not alter production behavior from 566d446.",
+    "perf_method": "perf stat user-space instructions, cycles, branches, branch misses, and cache misses over 4096 timed operations, 257 warm-ups, and one preflight, pinned to CPU 11.",
+    "perf_normalization": "Subtract the corresponding disabled process and divide by 4354 operation invocations.",
+    "heap_method": "Heaptrack record-only processes use 512 timed operations, one warm-up, and one preflight. Subtract the corresponding disabled-process recorder counts and divide by 514; heaptrack_print supplies peak heap.",
+    "optimized_heap_artifacts": "/tmp/hypercurve-similarity-current.RZwwnW",
+    "pre_optimization_heap_artifacts": "/tmp/hypercurve-similarity-preopt.fEVmI3",
+    "competitive_caveat": "Cavalier Contours operates on a two-vertex binary64 bulge polyline. It has no exact selected fields, policy outcomes, retained correlation evidence, or certified CurveRegion2 regularization, so its numbers are context rather than equivalent speedups.",
+    "historical_caveat": "The historical transform merely cloned stale map evidence and therefore did less work. Its full-region offset happens to succeed only because coalescing removes the stale internal partition before replay; this does not establish historical mapped-parameter transport correctness."
+  },
+  "matched_wall_performance": {
+    "samples_per_variant": 7,
+    "optimized_transform_mapped_ns_samples": [30115.514, 29771.205, 30629.627, 30756.484, 30248.789, 30916.841, 30985.353],
+    "optimized_transform_exact_partition_ns_samples": [29599.842, 30806.515, 29816.607, 28765.214, 29927.197, 28716.240, 28728.754],
+    "optimized_transform_unsplit_ns_samples": [19409.317, 20095.957, 19801.656, 20427.431, 20097.502, 19849.033, 20378.206],
+    "pre_optimization_transform_mapped_ns_samples": [35965.580, 35535.141, 38937.994, 39101.125, 38585.759, 35902.794, 35523.945],
+    "pre_optimization_transform_unsplit_ns_samples": [21954.499, 21702.846, 21432.697, 22384.997, 22670.199, 22396.080, 21964.921],
+    "optimized_transformed_offset_mapped_ns_samples": [25373.449, 25561.332, 25515.578, 27126.486, 25217.417, 26128.793, 25137.565],
+    "optimized_transformed_offset_exact_partition_ns_samples": [28701.363, 27481.879, 25689.497, 26400.876, 26239.169, 25673.026, 26322.466],
+    "optimized_transformed_offset_unsplit_ns_samples": [24716.077, 26953.934, 26241.195, 24423.053, 27602.930, 24896.932, 25512.500],
+    "pre_optimization_transformed_offset_mapped_ns_samples": [90336.996, 88444.999, 88104.488, 90537.395, 87911.647, 89687.998, 89274.769],
+    "pre_optimization_transformed_offset_unsplit_ns_samples": [85922.572, 89089.774, 89304.843, 89293.286, 86075.362, 90390.784, 87829.936],
+    "medians_ns": {
+      "optimized_transform_mapped": 30629.627,
+      "optimized_transform_exact_partition": 29599.842,
+      "optimized_transform_unsplit": 20095.957,
+      "pre_optimization_transform_mapped": 35965.580,
+      "pre_optimization_transform_unsplit": 21964.921,
+      "optimized_transformed_offset_mapped": 25515.578,
+      "optimized_transformed_offset_exact_partition": 26322.466,
+      "optimized_transformed_offset_unsplit": 25512.500,
+      "pre_optimization_transformed_offset_mapped": 89274.769,
+      "pre_optimization_transformed_offset_unsplit": 89089.774
+    },
+    "transform_mapped_speedup": 1.174209,
+    "transform_mapped_time_reduction_percent": 14.836277,
+    "transformed_offset_mapped_speedup": 3.498834,
+    "transformed_offset_mapped_time_reduction_percent": 71.419049,
+    "optimized_transform_mapped_over_exact_partition_percent": 3.479022,
+    "optimized_transformed_offset_mapped_over_unsplit_percent": 0.012065,
+    "interpretation": "The retained mapped-authority cost is only 3.48% over an equal-fragment exact partition during transform, and its downstream offset is statistically indistinguishable from the unsplit exact-circle control."
+  },
+  "historical_and_competitive_context": {
+    "historical_stale_transform_median_ns": 25003.880,
+    "historical_transformed_offset_median_ns": 90362.212,
+    "current_complete_transform_over_historical_stale_percent": 22.499496,
+    "current_offset_time_reduction_over_historical_percent": 71.763000,
+    "cavalier_transform_median_ns": 19.866,
+    "cavalier_transformed_offset_median_ns": 420.302,
+    "cavalier_transform_offset_median_ns": 407.800,
+    "exact_transform_over_cavalier_transform_ratio": 1541.811487,
+    "exact_offset_over_cavalier_transformed_offset_ratio": 60.707724,
+    "interpretation": "Historical stale-clone latency is not a valid semantic target, and Cavalier is a useful floating-point throughput sentinel rather than an exactness-equivalent competitor."
+  },
+  "deterministic_perf": {
+    "fixed_timed_iterations": 4096,
+    "warmups": 257,
+    "preflight_calls": 1,
+    "normalized_operation_invocations": 4354,
+    "optimized_raw": {
+      "transform_mapped": [1245877205, 549002724, 242731007, 1198349, 1318448],
+      "transform_exact_partition": [1206922054, 575142551, 235958935, 1174443, 1587912],
+      "transform_unsplit": [830914581, 379124114, 161693208, 843510, 600607],
+      "transform_disabled": [4388848, 3147828, 904241, 32308, 52975],
+      "transformed_offset_mapped": [983357689, 473951738, 192502208, 881696, 3639960],
+      "transformed_offset_exact_partition": [976824261, 483409254, 191586806, 952158, 5893326],
+      "transformed_offset_unsplit": [971921788, 471167061, 190189244, 1018618, 4680395],
+      "transformed_offset_disabled": [4668079, 3311683, 963185, 35014, 59015]
+    },
+    "pre_optimization_raw": {
+      "transform_mapped": [1543545971, 680231937, 304439602, 1419656, 1052043],
+      "transform_exact_partition": [1408546601, 601684963, 277595879, 1150034, 761559],
+      "transform_unsplit": [923349498, 409962727, 180640406, 685532, 570763],
+      "transform_disabled": [4388910, 3147169, 904279, 32161, 53188],
+      "transformed_offset_mapped": [3321333349, 1660916899, 685894246, 7071605, 28022408],
+      "transformed_offset_exact_partition": [3280466468, 1649054798, 677537302, 7177723, 27682890],
+      "transformed_offset_unsplit": [3257027835, 1623540565, 671932620, 6971444, 27401376],
+      "transformed_offset_disabled": [4738804, 3247598, 977752, 34582, 56652]
+    },
+    "raw_array_order": ["instructions", "cycles", "branches", "branch_misses", "cache_misses"],
+    "optimized_normalized_per_operation": {
+      "transform_mapped": [285137.427, 125368.603, 55541.288, 267.809, 290.646],
+      "transform_exact_partition": [276190.447, 131372.238, 53985.920, 262.319, 352.535],
+      "transform_unsplit": [189831.358, 86351.926, 36929.023, 186.312, 125.777],
+      "transformed_offset_mapped": [224779.424, 108093.720, 43991.507, 194.461, 822.449],
+      "transformed_offset_exact_partition": [223278.866, 110265.864, 43781.263, 210.644, 1339.989],
+      "transformed_offset_unsplit": [222152.896, 107454.152, 43460.280, 225.908, 1061.410]
+    },
+    "pre_optimization_reduction_percent": {
+      "transform_mapped": [19.340, 19.382, 20.330, 15.961, -26.692],
+      "transform_exact_partition": [14.359, 4.435, 15.048, -2.170, -116.685],
+      "transform_unsplit": [10.059, 7.581, 10.542, -24.156, -5.807],
+      "transformed_offset_mapped": [70.491, 71.608, 72.035, 87.968, 87.195],
+      "transformed_offset_exact_partition": [70.322, 70.829, 71.825, 87.160, 78.881],
+      "transformed_offset_unsplit": [70.259, 71.125, 71.797, 85.821, 83.100]
+    },
+    "interpretation": "Instruction and branch reductions confirm algorithmic sharing. Miss counters for the short transform-only process are noisy and can invert; the transformed-offset path shows large reductions across every counter."
+  },
+  "allocation_evidence": {
+    "fixed_timed_iterations": 512,
+    "warmups": 1,
+    "preflight_calls": 1,
+    "normalized_operation_invocations": 514,
+    "optimized_raw": {
+      "transform_mapped": [124619, 10413, 184.56],
+      "transform_exact_partition": [116171, 10374, 158.90],
+      "transform_unsplit": [81640, 6772, 158.90],
+      "transform_disabled": [2723, 136, 158.90],
+      "transformed_offset_mapped": [113064, 7349, 184.58],
+      "transformed_offset_exact_partition": [111294, 7309, 158.90],
+      "transformed_offset_unsplit": [110622, 7298, 158.90],
+      "transformed_offset_disabled": [3037, 154, 184.29]
+    },
+    "pre_optimization_raw": {
+      "transform_mapped": [146207, 10413, 188.19],
+      "transform_unsplit": [87808, 6772, 158.90],
+      "transform_disabled": [2723, 136, 158.90],
+      "transformed_offset_mapped": [488172, 14545, 244.84],
+      "transformed_offset_unsplit": [478521, 14494, 204.76],
+      "transformed_offset_disabled": [3080, 154, 188.10]
+    },
+    "raw_array_order": ["allocation_calls", "temporary_allocations", "peak_heap_kib"],
+    "optimized_normalized_per_operation": {
+      "transform_mapped": [237.151751, 19.994163],
+      "transform_exact_partition": [220.715953, 19.918288],
+      "transform_unsplit": [153.535019, 12.910506],
+      "transformed_offset_mapped": [214.060311, 13.998054],
+      "transformed_offset_exact_partition": [210.616732, 13.920233],
+      "transformed_offset_unsplit": [209.309339, 13.898833]
+    },
+    "pre_optimization_reduction_percent": {
+      "transform_mapped_allocation_calls": 15.0456,
+      "transform_mapped_temporary_allocations": 0.0,
+      "transform_unsplit_allocation_calls": 7.2492,
+      "transformed_offset_mapped_allocation_calls": 77.3183,
+      "transformed_offset_mapped_temporary_allocations": 50.0035,
+      "transformed_offset_unsplit_allocation_calls": 77.3715,
+      "transformed_offset_unsplit_temporary_allocations": 50.1813
+    },
+    "peak_interpretation": "Mapped transform peak increment over its disabled fixture falls from 29.29 KiB to 25.66 KiB. Mapped transformed-offset peak increment falls from 56.74 KiB to 0.29 KiB.",
+    "memory_interpretation": "The operation-local vectors trade a few small cache entries for eliminating independently reconstructed exact polynomial authorities and all their downstream comparison state. No cache survives the operation or enlarges the public CurveRegion2 layout."
+  },
+  "linked_size": {
+    "artifact": "matched comparative release executable",
+    "all_features": {
+      "pre_optimization_file_bytes": 12933408,
+      "optimized_file_bytes": 12937552,
+      "file_delta_bytes": 4144,
+      "pre_optimization_text_bytes": 9873875,
+      "optimized_text_bytes": 9877795,
+      "text_delta_bytes": 3920,
+      "pre_optimization_data_bytes": 309040,
+      "optimized_data_bytes": 309184,
+      "data_delta_bytes": 144,
+      "pre_optimization_bss_bytes": 1920,
+      "optimized_bss_bytes": 1952,
+      "bss_delta_bytes": 32,
+      "pre_optimization_allocated_total_bytes": 10184835,
+      "optimized_allocated_total_bytes": 10188931,
+      "allocated_total_delta_bytes": 4096
+    },
+    "no_default_features_with_comparative_dependencies": {
+      "pre_optimization_file_bytes": 11401904,
+      "optimized_file_bytes": 11402040,
+      "file_delta_bytes": 136,
+      "pre_optimization_text_bytes": 8585478,
+      "optimized_text_bytes": 8586194,
+      "text_delta_bytes": 716,
+      "pre_optimization_data_bytes": 300544,
+      "optimized_data_bytes": 300512,
+      "data_delta_bytes": -32,
+      "pre_optimization_bss_bytes": 4312,
+      "optimized_bss_bytes": 3624,
+      "bss_delta_bytes": -688,
+      "pre_optimization_allocated_total_bytes": 8890334,
+      "optimized_allocated_total_bytes": 8890330,
+      "allocated_total_delta_bytes": -4,
+      "interpretation": "Predicates-disabled total allocated sections are four bytes smaller despite a 716-byte text increase because data and BSS shrink."
+    }
+  },
+  "static_callgraph": {
+    "optimized_revision": "a56f20d7a490cc20a5f13812c2864129952b2bf1",
+    "pre_optimization_revision": "566d4468016cc57862d295483868fbbd420d4820",
+    "optimized_artifact": "target/callgraph-hypercurve-similarity-a56f20d-all/callgraph.json",
+    "pre_optimization_artifact": "target/callgraph-hypercurve-similarity-566d446-all/callgraph.json",
+    "optimized": {"libraries_discovered": 1, "nodes": 29480, "edges": 56227},
+    "pre_optimization": {"libraries_discovered": 1, "nodes": 29461, "edges": 56178},
+    "delta": {"nodes": 19, "edges": 49},
+    "authority_edge": "CurveRegion2::transform_affine_raw -> transform_retained_region_fragment -> BezierAlgebraicCuspSemicircleFragment2::transform_similarity_cached -> operation-local similarity cache",
+    "duplicate_public_engine_found": false,
+    "caveat": "The utility is a syntax-level navigation and source-complexity graph, not runtime reachability or linked-size evidence."
+  },
+  "verification": {
+    "cargo_test_all_features_lib": "482 passed, 1 ignored",
+    "cargo_test_all_features_public_suites": "160 passed: analytic parallel 4, curve intersection 29, curve region Boolean 29, curve region promotion 64, offset 34",
+    "cargo_test_no_default_features_lib": "324 passed",
+    "cargo_clippy_all_features_all_targets_deny_warnings": "pass",
+    "cargo_clippy_no_default_features_all_targets_deny_warnings": "pass",
+    "cargo_fmt_check": "pass",
+    "git_diff_check": "pass",
+    "policy_and_semantic_regressions": "pass under STRICT and APPROXIMATE_512",
+    "aggregate_suite_note": "No full multi-hour curve_region_boolean_fuzz matrix claim is made at this checkpoint.",
+    "known_external_warning": "Hypertri ExactKernel::sub and ExactKernel::cmp remain pre-existing dead code. No lower layer or Hypermesh was modified by this checkpoint."
+  },
+  "next_priority": {
+    "correctness": "Support mapped cuts that are real geometric boundaries by deriving exact endpoint points, limiting tangents, and joins from retained authorities, then generalize transport beyond coincident-circle endpoints.",
+    "performance_and_memory": "Keep one general join authority with curve-pair fast paths, retain operation-local sharing, and profile exact tangent construction before adding persistent representation.",
+    "fallback": "Leave unsupported maps, strict-inconclusive decisions, true corners, holes, multiple loops, collapse, and uncertain global topology on the existing authoritative CurveRegion2 path.",
+    "size": "The all-feature semantic cache costs 3,920 text bytes in the representative executable; predicates-disabled total allocated sections shrink by four bytes."
+  }
+}

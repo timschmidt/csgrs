@@ -1,0 +1,11 @@
+{
+  "commit": "46f278dacb5b8556b4196a09e22d1721b20695cb",
+  "parent": "1f29f69df38496b7941d3b1a897dcf609f78418d",
+  "paths": {
+    "src/bezier_offset.rs": "37fb30352b9e63efd29e5bbe05878f86e9f612f2dad2a257d5e80aadf06f1ba9",
+    "src/curve_fillet.rs": "665fcc2c3b23f6419a27a22fa4ea2f45dfd27bd0e9d7fae47f6e73ce71670fba"
+  },
+  "qualification": "fillet-component-witnesses-20260927-v401-terminal.json",
+  "verified_source_files": 2046,
+  "clean_repositories": 30
+}

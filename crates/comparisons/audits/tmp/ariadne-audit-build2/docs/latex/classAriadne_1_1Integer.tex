@@ -1,0 +1,250 @@
+\doxysubsection{Integer Class Reference}
+\hypertarget{classAriadne_1_1Integer}{}\label{classAriadne_1_1Integer}\index{Integer@{Integer}}
+
+
+{\ttfamily \#include $<$integer.\+hpp$>$}
+
+
+
+\doxysubsubsection{Description}
+Arbitrarily-\/sized integers. 
+
+\begin{DoxySeeAlso}{See also}
+\doxylink{classAriadne_1_1Natural}{Natural}, \doxylink{classAriadne_1_1Dyadic}{Dyadic}, \doxylink{classAriadne_1_1Decimal}{Decimal}, \doxylink{classAriadne_1_1Rational}{Rational}, \doxylink{classAriadne_1_1Real}{Real} 
+\end{DoxySeeAlso}
+Inheritance diagram for Integer\+:\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[height=2.000000cm]{classAriadne_1_1Integer}
+\end{center}
+\end{figure}
+\doxysubsubsubsection*{Public Types}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1Integer_a1ae052113ee88c7a54eae305bdbe384b}\label{classAriadne_1_1Integer_a1ae052113ee88c7a54eae305bdbe384b} 
+typedef \mbox{\hyperlink{structAriadne_1_1ExactTag}{Exact\+Tag}} {\bfseries Paradigm}
+\end{DoxyCompactItemize}
+\doxysubsubsubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1Integer_af92cb3febe9fc2e61ed31959bb274dd1}\label{classAriadne_1_1Integer_af92cb3febe9fc2e61ed31959bb274dd1} 
+{\bfseries \texorpdfstring{$\sim$}{\string~}\+Integer} ()
+\begin{DoxyCompactList}\small\item\em Destructor. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Integer_aace201ffedad7eea312458b65fcfe0b7}\label{classAriadne_1_1Integer_aace201ffedad7eea312458b65fcfe0b7} 
+{\bfseries Integer} ()
+\begin{DoxyCompactList}\small\item\em Default constructor yielding {\ttfamily 0}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Integer_a33d6ed68abe343f19f559aa8a4e53b21}\label{classAriadne_1_1Integer_a33d6ed68abe343f19f559aa8a4e53b21} 
+{\footnotesize template$<$Builtin\+Unsigned\+Integral M$>$ }\\{\bfseries Integer} (M m)
+\begin{DoxyCompactList}\small\item\em Convert from a builtin unsigned (positive) integral type. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Integer_ae13cb63c1c4eb8ee3b373ef5966ac446}\label{classAriadne_1_1Integer_ae13cb63c1c4eb8ee3b373ef5966ac446} 
+{\footnotesize template$<$Builtin\+Signed\+Integral N$>$ }\\{\bfseries Integer} (N n)
+\begin{DoxyCompactList}\small\item\em Convert from a builtin signed (positive or negative) integral type. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Integer_adc7ac460d4a4c2990101f82b687600bd}\label{classAriadne_1_1Integer_adc7ac460d4a4c2990101f82b687600bd} 
+{\bfseries Integer} (const mpz\+\_\+t)
+\begin{DoxyCompactList}\small\item\em Construct from a raw GMP integer. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Integer_a36f56cc3bf369a046119cb344cfa00a8}\label{classAriadne_1_1Integer_a36f56cc3bf369a046119cb344cfa00a8} 
+{\bfseries Integer} (\mbox{\hyperlink{classAriadne_1_1String}{String}} const \&)
+\begin{DoxyCompactList}\small\item\em Construct from a string literal. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Integer_afb961f744637d81880191f709ba53c67}\label{classAriadne_1_1Integer_afb961f744637d81880191f709ba53c67} 
+{\bfseries Integer} (const \mbox{\hyperlink{classAriadne_1_1Integer}{Integer}} \&)
+\begin{DoxyCompactList}\small\item\em Copy constructor. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Integer_a7f9ffb33fd44556ed055bcddc93f1679}\label{classAriadne_1_1Integer_a7f9ffb33fd44556ed055bcddc93f1679} 
+{\bfseries Integer} (\mbox{\hyperlink{classAriadne_1_1Integer}{Integer}} \&\&)
+\begin{DoxyCompactList}\small\item\em Move constructor. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Integer_a65c220d96b9a454666b0d970b7ac8475}\label{classAriadne_1_1Integer_a65c220d96b9a454666b0d970b7ac8475} 
+\mbox{\hyperlink{classAriadne_1_1Integer}{Integer}} \& {\bfseries operator=} (const \mbox{\hyperlink{classAriadne_1_1Integer}{Integer}} \&)
+\begin{DoxyCompactList}\small\item\em Assignment \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Integer_ad1e52231c36cf5f5a62097d59a58fb60}\label{classAriadne_1_1Integer_ad1e52231c36cf5f5a62097d59a58fb60} 
+\mbox{\hyperlink{classAriadne_1_1Integer}{Integer}} \& {\bfseries operator=} (\mbox{\hyperlink{classAriadne_1_1Integer}{Integer}} \&\&)
+\begin{DoxyCompactList}\small\item\em Move assignment. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Integer_a199a243df73e92a4c48c97f35ab6ae7b}\label{classAriadne_1_1Integer_a199a243df73e92a4c48c97f35ab6ae7b} 
+{\bfseries operator Exact\+Number} () const
+\begin{DoxyCompactList}\small\item\em Convert to a generic exact number. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Integer_abe52483f91da873e8369c9775465ae67}\label{classAriadne_1_1Integer_abe52483f91da873e8369c9775465ae67} 
+\mbox{\hyperlink{classAriadne_1_1String}{String}} {\bfseries literal} () const
+\begin{DoxyCompactList}\small\item\em A string literal. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Integer_a2e34b1a25164b692bb326ab5fc3618a7}\label{classAriadne_1_1Integer_a2e34b1a25164b692bb326ab5fc3618a7} 
+{\footnotesize template$<$Builtin\+Integral N$>$ }\\N {\bfseries get} () const
+\begin{DoxyCompactList}\small\item\em Convert to a builtin integral value of type {\itshape N}. Throws a {\ttfamily std\+::runtime\+\_\+error} if the value does not fit in type {\itshape N}. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsubsection*{Friends}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1Integer_a6aa54185461b668d63859807be9ad2b1}\label{classAriadne_1_1Integer_a6aa54185461b668d63859807be9ad2b1} 
+\mbox{\hyperlink{classAriadne_1_1Integer}{Integer}} {\bfseries operator"{}"{}\+\_\+z} (unsigned long long int n)
+\begin{DoxyCompactList}\small\item\em An integer literal. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\begin{Indent}\textbf{ Arithmetic operators}\par
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1Integer_aa5d7f4e33a27cfd264efc79e4a303295}\label{classAriadne_1_1Integer_aa5d7f4e33a27cfd264efc79e4a303295} 
+\mbox{\hyperlink{classAriadne_1_1Integer}{Integer}} \& {\bfseries operator++} (\mbox{\hyperlink{classAriadne_1_1Integer}{Integer}} \&z)
+\item 
+\Hypertarget{classAriadne_1_1Integer_ac37ceb005a0fddfe3c5873282c4f8ff3}\label{classAriadne_1_1Integer_ac37ceb005a0fddfe3c5873282c4f8ff3} 
+\mbox{\hyperlink{classAriadne_1_1Integer}{Integer}} \& {\bfseries operator-\/-\/} (\mbox{\hyperlink{classAriadne_1_1Integer}{Integer}} \&z)
+\item 
+\Hypertarget{classAriadne_1_1Integer_a115b53ae842e1137f41b04a94de00d27}\label{classAriadne_1_1Integer_a115b53ae842e1137f41b04a94de00d27} 
+\mbox{\hyperlink{classAriadne_1_1Integer}{Integer}} {\bfseries operator+} (\mbox{\hyperlink{classAriadne_1_1Integer}{Integer}} const \&z)
+\item 
+\Hypertarget{classAriadne_1_1Integer_a8ac3f4221c88d6bac80cd51c2cb3e4af}\label{classAriadne_1_1Integer_a8ac3f4221c88d6bac80cd51c2cb3e4af} 
+\mbox{\hyperlink{classAriadne_1_1Integer}{Integer}} {\bfseries operator-\/} (\mbox{\hyperlink{classAriadne_1_1Integer}{Integer}} const \&z)
+\item 
+\Hypertarget{classAriadne_1_1Integer_ad21cd968644e27cffd3c4b000caa3b52}\label{classAriadne_1_1Integer_ad21cd968644e27cffd3c4b000caa3b52} 
+\mbox{\hyperlink{classAriadne_1_1Integer}{Integer}} {\bfseries operator+} (\mbox{\hyperlink{classAriadne_1_1Integer}{Integer}} const \&z1, \mbox{\hyperlink{classAriadne_1_1Integer}{Integer}} const \&z2)
+\item 
+\Hypertarget{classAriadne_1_1Integer_a69622656c7a1184a880d43a8ae5ff4d7}\label{classAriadne_1_1Integer_a69622656c7a1184a880d43a8ae5ff4d7} 
+\mbox{\hyperlink{classAriadne_1_1Integer}{Integer}} {\bfseries operator-\/} (\mbox{\hyperlink{classAriadne_1_1Integer}{Integer}} const \&z1, \mbox{\hyperlink{classAriadne_1_1Integer}{Integer}} const \&z2)
+\item 
+\Hypertarget{classAriadne_1_1Integer_ad893e062b6b0ea88198a1e2480eeeb19}\label{classAriadne_1_1Integer_ad893e062b6b0ea88198a1e2480eeeb19} 
+\mbox{\hyperlink{classAriadne_1_1Integer}{Integer}} {\bfseries operator\texorpdfstring{$\ast$}{*}} (\mbox{\hyperlink{classAriadne_1_1Integer}{Integer}} const \&z1, \mbox{\hyperlink{classAriadne_1_1Integer}{Integer}} const \&z2)
+\item 
+\Hypertarget{classAriadne_1_1Integer_a4f91d6eb72216e943ea7ddee9b5924c9}\label{classAriadne_1_1Integer_a4f91d6eb72216e943ea7ddee9b5924c9} 
+\mbox{\hyperlink{classAriadne_1_1Rational}{Rational}} {\bfseries operator/} (\mbox{\hyperlink{classAriadne_1_1Integer}{Integer}} const \&z1, \mbox{\hyperlink{classAriadne_1_1Integer}{Integer}} const \&z2)
+\item 
+\Hypertarget{classAriadne_1_1Integer_aad57126253b372b17d4cb9d45bbdfd57}\label{classAriadne_1_1Integer_aad57126253b372b17d4cb9d45bbdfd57} 
+\mbox{\hyperlink{classAriadne_1_1Integer}{Integer}} {\bfseries operator\%} (\mbox{\hyperlink{classAriadne_1_1Integer}{Integer}} const \&z1, \mbox{\hyperlink{classAriadne_1_1Integer}{Integer}} const \&z2)
+\item 
+\Hypertarget{classAriadne_1_1Integer_ab2aeb328cbd4fdcf2331573e3fdd0904}\label{classAriadne_1_1Integer_ab2aeb328cbd4fdcf2331573e3fdd0904} 
+\mbox{\hyperlink{classAriadne_1_1Integer}{Integer}} \& {\bfseries operator+=} (\mbox{\hyperlink{classAriadne_1_1Integer}{Integer}} \&z1, \mbox{\hyperlink{classAriadne_1_1Integer}{Integer}} const \&z2)
+\item 
+\Hypertarget{classAriadne_1_1Integer_a4f6291bae5488d98169136f96acb77b4}\label{classAriadne_1_1Integer_a4f6291bae5488d98169136f96acb77b4} 
+\mbox{\hyperlink{classAriadne_1_1Integer}{Integer}} \& {\bfseries operator-\/=} (\mbox{\hyperlink{classAriadne_1_1Integer}{Integer}} \&z1, \mbox{\hyperlink{classAriadne_1_1Integer}{Integer}} const \&z2)
+\item 
+\Hypertarget{classAriadne_1_1Integer_a83cd65f8674782ac293aec63b2a9cc4f}\label{classAriadne_1_1Integer_a83cd65f8674782ac293aec63b2a9cc4f} 
+\mbox{\hyperlink{classAriadne_1_1Integer}{Integer}} \& {\bfseries operator\texorpdfstring{$\ast$}{*}=} (\mbox{\hyperlink{classAriadne_1_1Integer}{Integer}} \&z1, \mbox{\hyperlink{classAriadne_1_1Integer}{Integer}} const \&z2)
+\end{DoxyCompactItemize}
+\end{Indent}
+\begin{Indent}\textbf{ Comparison operators}\par
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1Integer_ad88fd56affa29d96c9d6d60e99360f59}\label{classAriadne_1_1Integer_ad88fd56affa29d96c9d6d60e99360f59} 
+\mbox{\hyperlink{classAriadne_1_1Boolean}{Boolean}} {\bfseries operator==} (\mbox{\hyperlink{classAriadne_1_1Integer}{Integer}} const \&z1, \mbox{\hyperlink{classAriadne_1_1Integer}{Integer}} const \&z2)
+\item 
+\Hypertarget{classAriadne_1_1Integer_a4d7b7d233ee7640f0750a9c836833267}\label{classAriadne_1_1Integer_a4d7b7d233ee7640f0750a9c836833267} 
+\mbox{\hyperlink{classAriadne_1_1Boolean}{Boolean}} {\bfseries operator!=} (\mbox{\hyperlink{classAriadne_1_1Integer}{Integer}} const \&z1, \mbox{\hyperlink{classAriadne_1_1Integer}{Integer}} const \&z2)
+\item 
+\Hypertarget{classAriadne_1_1Integer_ad2413b3e0919d08762b42b8ec823654f}\label{classAriadne_1_1Integer_ad2413b3e0919d08762b42b8ec823654f} 
+\mbox{\hyperlink{classAriadne_1_1Boolean}{Boolean}} {\bfseries operator$<$=} (\mbox{\hyperlink{classAriadne_1_1Integer}{Integer}} const \&z1, \mbox{\hyperlink{classAriadne_1_1Integer}{Integer}} const \&z2)
+\item 
+\Hypertarget{classAriadne_1_1Integer_af21f25793e57356cd17d3fa04711491d}\label{classAriadne_1_1Integer_af21f25793e57356cd17d3fa04711491d} 
+\mbox{\hyperlink{classAriadne_1_1Boolean}{Boolean}} {\bfseries operator$>$=} (\mbox{\hyperlink{classAriadne_1_1Integer}{Integer}} const \&z1, \mbox{\hyperlink{classAriadne_1_1Integer}{Integer}} const \&z2)
+\item 
+\Hypertarget{classAriadne_1_1Integer_a40b2faee0bec718594fb9fc95da71e59}\label{classAriadne_1_1Integer_a40b2faee0bec718594fb9fc95da71e59} 
+\mbox{\hyperlink{classAriadne_1_1Boolean}{Boolean}} {\bfseries operator$<$} (\mbox{\hyperlink{classAriadne_1_1Integer}{Integer}} const \&z1, \mbox{\hyperlink{classAriadne_1_1Integer}{Integer}} const \&z2)
+\item 
+\Hypertarget{classAriadne_1_1Integer_ac33f0890e48d4078f5f663e1573dfa9b}\label{classAriadne_1_1Integer_ac33f0890e48d4078f5f663e1573dfa9b} 
+\mbox{\hyperlink{classAriadne_1_1Boolean}{Boolean}} {\bfseries operator$>$} (\mbox{\hyperlink{classAriadne_1_1Integer}{Integer}} const \&z1, \mbox{\hyperlink{classAriadne_1_1Integer}{Integer}} const \&z2)
+\end{DoxyCompactItemize}
+\end{Indent}
+\begin{Indent}\textbf{ Arithmetic operations}\par
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1Integer_a48c5c6a7229ed3be31f77258c28f8946}\label{classAriadne_1_1Integer_a48c5c6a7229ed3be31f77258c28f8946} 
+\mbox{\hyperlink{namespaceAriadne_a008e7f6ae8f621fbb1d876061812b9b2}{Int}} {\bfseries log2floor} (\mbox{\hyperlink{classAriadne_1_1Natural}{Natural}} const \&n)
+\begin{DoxyCompactList}\small\item\em $\lfloor\log_{2}n\rfloor$. Returns {\ttfamily -\/1} if {\itshape n} is {\ttfamily 0}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Integer_a726b319801aeb61a4125fe1d378e65a8}\label{classAriadne_1_1Integer_a726b319801aeb61a4125fe1d378e65a8} 
+\mbox{\hyperlink{classAriadne_1_1Integer}{Integer}} {\bfseries nul} (\mbox{\hyperlink{classAriadne_1_1Integer}{Integer}} const \&z)
+\begin{DoxyCompactList}\small\item\em Zero {\itshape 0}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Integer_a8220790bdf04bdc2459f19709afda308}\label{classAriadne_1_1Integer_a8220790bdf04bdc2459f19709afda308} 
+\mbox{\hyperlink{classAriadne_1_1Integer}{Integer}} {\bfseries pos} (\mbox{\hyperlink{classAriadne_1_1Integer}{Integer}} const \&z)
+\begin{DoxyCompactList}\small\item\em Identity {\itshape +z}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Integer_a77af9d9db630e2843d7a629cc5a1b69b}\label{classAriadne_1_1Integer_a77af9d9db630e2843d7a629cc5a1b69b} 
+\mbox{\hyperlink{classAriadne_1_1Integer}{Integer}} {\bfseries neg} (\mbox{\hyperlink{classAriadne_1_1Integer}{Integer}} const \&z)
+\begin{DoxyCompactList}\small\item\em Negative {\itshape -\/z}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Integer_aacb7aa1ceeb72f43af94154946f2b8fd}\label{classAriadne_1_1Integer_aacb7aa1ceeb72f43af94154946f2b8fd} 
+\mbox{\hyperlink{classAriadne_1_1Natural}{Natural}} {\bfseries sqr} (\mbox{\hyperlink{classAriadne_1_1Integer}{Integer}} const \&z)
+\begin{DoxyCompactList}\small\item\em Square {\itshape z\textsuperscript{2}}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Integer_a0c92c0328b20065ee47c2ae064da5a2a}\label{classAriadne_1_1Integer_a0c92c0328b20065ee47c2ae064da5a2a} 
+\mbox{\hyperlink{classAriadne_1_1Dyadic}{Dyadic}} {\bfseries hlf} (\mbox{\hyperlink{classAriadne_1_1Integer}{Integer}} const \&z)
+\begin{DoxyCompactList}\small\item\em Half {\itshape z÷2}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Integer_aa41976024a9adcdb2ec14e87f3442532}\label{classAriadne_1_1Integer_aa41976024a9adcdb2ec14e87f3442532} 
+\mbox{\hyperlink{classAriadne_1_1Dyadic}{Dyadic}} {\bfseries shft} (\mbox{\hyperlink{classAriadne_1_1Integer}{Integer}} const \&z, \mbox{\hyperlink{namespaceAriadne_a008e7f6ae8f621fbb1d876061812b9b2}{Int}} n)
+\begin{DoxyCompactList}\small\item\em Bit-\/shift {\itshape z×2\textsuperscript{n}}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Integer_ab88930af4410e97af418dd4eba9ca69a}\label{classAriadne_1_1Integer_ab88930af4410e97af418dd4eba9ca69a} 
+\mbox{\hyperlink{classAriadne_1_1Rational}{Rational}} {\bfseries rec} (\mbox{\hyperlink{classAriadne_1_1Integer}{Integer}} const \&z)
+\begin{DoxyCompactList}\small\item\em Reciprocal {\itshape 1/z}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Integer_ae0ef154f89453051950fed0e7d8d6eb7}\label{classAriadne_1_1Integer_ae0ef154f89453051950fed0e7d8d6eb7} 
+\mbox{\hyperlink{classAriadne_1_1Integer}{Integer}} {\bfseries add} (\mbox{\hyperlink{classAriadne_1_1Integer}{Integer}} const \&z1, \mbox{\hyperlink{classAriadne_1_1Integer}{Integer}} const \&z2)
+\begin{DoxyCompactList}\small\item\em Sum {\itshape z1+z2}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Integer_aaffcb9b839ac95e843b4e11a3c24d22d}\label{classAriadne_1_1Integer_aaffcb9b839ac95e843b4e11a3c24d22d} 
+\mbox{\hyperlink{classAriadne_1_1Integer}{Integer}} {\bfseries sub} (\mbox{\hyperlink{classAriadne_1_1Integer}{Integer}} const \&z1, \mbox{\hyperlink{classAriadne_1_1Integer}{Integer}} const \&z2)
+\begin{DoxyCompactList}\small\item\em Difference {\itshape z1-\/z2}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Integer_a6bf3a61b714c6655ee0ef20697d0062f}\label{classAriadne_1_1Integer_a6bf3a61b714c6655ee0ef20697d0062f} 
+\mbox{\hyperlink{classAriadne_1_1Integer}{Integer}} {\bfseries mul} (\mbox{\hyperlink{classAriadne_1_1Integer}{Integer}} const \&z1, \mbox{\hyperlink{classAriadne_1_1Integer}{Integer}} const \&z2)
+\begin{DoxyCompactList}\small\item\em Product {\itshape z1×z2}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Integer_a470e7b5bf8022fc9d8c61ab2dc783964}\label{classAriadne_1_1Integer_a470e7b5bf8022fc9d8c61ab2dc783964} 
+\mbox{\hyperlink{classAriadne_1_1Rational}{Rational}} {\bfseries div} (\mbox{\hyperlink{classAriadne_1_1Integer}{Integer}} const \&z1, \mbox{\hyperlink{classAriadne_1_1Integer}{Integer}} const \&z2)
+\begin{DoxyCompactList}\small\item\em Quotient {\itshape z1÷z2}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Integer_a377bb3c3bbba43fc2161a3f612e2f47f}\label{classAriadne_1_1Integer_a377bb3c3bbba43fc2161a3f612e2f47f} 
+\mbox{\hyperlink{classAriadne_1_1Integer}{Integer}} {\bfseries fma} (\mbox{\hyperlink{classAriadne_1_1Integer}{Integer}} const \&z1, \mbox{\hyperlink{classAriadne_1_1Integer}{Integer}} const \&z2, \mbox{\hyperlink{classAriadne_1_1Integer}{Integer}} const \&z3)
+\begin{DoxyCompactList}\small\item\em Fused multiply-\/and-\/add {\itshape z1×z2+z3}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Integer_a6bbed2f80f3350afa22e6ec851fbc678}\label{classAriadne_1_1Integer_a6bbed2f80f3350afa22e6ec851fbc678} 
+\mbox{\hyperlink{classAriadne_1_1Integer}{Integer}} {\bfseries pow} (\mbox{\hyperlink{classAriadne_1_1Integer}{Integer}} const \&z, \mbox{\hyperlink{namespaceAriadne_aae901a69a841b1a085a0dfe218e38fe9}{Nat}} m)
+\begin{DoxyCompactList}\small\item\em Power {\itshape z\textsuperscript{m}}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Integer_a915adb9bcc5a06688ca5a187bbe6fc02}\label{classAriadne_1_1Integer_a915adb9bcc5a06688ca5a187bbe6fc02} 
+\mbox{\hyperlink{classAriadne_1_1Rational}{Rational}} {\bfseries pow} (\mbox{\hyperlink{classAriadne_1_1Integer}{Integer}} const \&z, \mbox{\hyperlink{namespaceAriadne_a008e7f6ae8f621fbb1d876061812b9b2}{Int}} n)
+\begin{DoxyCompactList}\small\item\em Power {\itshape z\textsuperscript{n}}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Integer_a8aa93d89af704e0ddab865e27a643f27}\label{classAriadne_1_1Integer_a8aa93d89af704e0ddab865e27a643f27} 
+\mbox{\hyperlink{classAriadne_1_1Integer}{Integer}} {\bfseries quot} (\mbox{\hyperlink{classAriadne_1_1Integer}{Integer}} const \&z1, \mbox{\hyperlink{classAriadne_1_1Integer}{Integer}} const \&z2)
+\item 
+\Hypertarget{classAriadne_1_1Integer_ab358688adf1651feb8d3982e0ca4d81a}\label{classAriadne_1_1Integer_ab358688adf1651feb8d3982e0ca4d81a} 
+\mbox{\hyperlink{classAriadne_1_1Integer}{Integer}} {\bfseries rem} (\mbox{\hyperlink{classAriadne_1_1Integer}{Integer}} const \&z1, \mbox{\hyperlink{classAriadne_1_1Integer}{Integer}} const \&z2)
+\end{DoxyCompactItemize}
+\end{Indent}
+\begin{Indent}\textbf{ Lattice operations}\par
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1Integer_a4933f5b2e2da41f2afcda614de533cee}\label{classAriadne_1_1Integer_a4933f5b2e2da41f2afcda614de533cee} 
+\mbox{\hyperlink{classAriadne_1_1Natural}{Natural}} {\bfseries abs} (\mbox{\hyperlink{classAriadne_1_1Integer}{Integer}} const \&z)
+\begin{DoxyCompactList}\small\item\em Absolute value {\itshape \texorpdfstring{$\vert$}{|}z\texorpdfstring{$\vert$}{|}}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Integer_abe578bab575a4ffa40fcc62dd7f976aa}\label{classAriadne_1_1Integer_abe578bab575a4ffa40fcc62dd7f976aa} 
+\mbox{\hyperlink{classAriadne_1_1Integer}{Integer}} {\bfseries min} (\mbox{\hyperlink{classAriadne_1_1Integer}{Integer}} const \&z1, \mbox{\hyperlink{classAriadne_1_1Integer}{Integer}} const \&z2)
+\begin{DoxyCompactList}\small\item\em Minimum {\itshape z1∧z2}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Integer_aaddd6144fb86f3aafbc5282578bba825}\label{classAriadne_1_1Integer_aaddd6144fb86f3aafbc5282578bba825} 
+\mbox{\hyperlink{classAriadne_1_1Integer}{Integer}} {\bfseries max} (\mbox{\hyperlink{classAriadne_1_1Integer}{Integer}} const \&z1, \mbox{\hyperlink{classAriadne_1_1Integer}{Integer}} const \&z2)
+\begin{DoxyCompactList}\small\item\em Maximum {\itshape z1∨z2}. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\end{Indent}
+\begin{Indent}\textbf{ Comparison operations}\par
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1Integer_aea2e77b7cdb39dd3dddcadf71045cb86}\label{classAriadne_1_1Integer_aea2e77b7cdb39dd3dddcadf71045cb86} 
+\mbox{\hyperlink{namespaceAriadne_aaed75bcf4435a6d8be243fbf9f2e375b}{Sign}} {\bfseries sgn} (\mbox{\hyperlink{classAriadne_1_1Integer}{Integer}} const \&z)
+\begin{DoxyCompactList}\small\item\em The sign of {\itshape z}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Integer_a4955aab5fc03d41e892cab58e1e80339}\label{classAriadne_1_1Integer_a4955aab5fc03d41e892cab58e1e80339} 
+\mbox{\hyperlink{namespaceAriadne_a0e36a4c4b857737f71444bff61a9edb6}{Comparison}} {\bfseries cmp} (\mbox{\hyperlink{classAriadne_1_1Integer}{Integer}} const \&w1, \mbox{\hyperlink{classAriadne_1_1Integer}{Integer}} const \&w2)
+\begin{DoxyCompactList}\small\item\em Compares which of {\itshape w1} and {\itshape w2} is larger. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Integer_a27726c4bbf3afede3a212eaa1f418bb8}\label{classAriadne_1_1Integer_a27726c4bbf3afede3a212eaa1f418bb8} 
+\mbox{\hyperlink{classAriadne_1_1Boolean}{Boolean}} {\bfseries eq} (\mbox{\hyperlink{classAriadne_1_1Integer}{Integer}} const \&w1, \mbox{\hyperlink{classAriadne_1_1Integer}{Integer}} const \&w2)
+\begin{DoxyCompactList}\small\item\em Tests if {\itshape w1} is equal to {\itshape w2}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Integer_af3b93ed637e19e36a131118777b1ee9d}\label{classAriadne_1_1Integer_af3b93ed637e19e36a131118777b1ee9d} 
+\mbox{\hyperlink{classAriadne_1_1Boolean}{Boolean}} {\bfseries lt} (\mbox{\hyperlink{classAriadne_1_1Integer}{Integer}} const \&w1, \mbox{\hyperlink{classAriadne_1_1Integer}{Integer}} const \&w2)
+\begin{DoxyCompactList}\small\item\em Tests if {\itshape w1} is less than {\itshape w2}. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\end{Indent}
+\begin{Indent}\textbf{ Special value tests}\par
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1Integer_a73c7cd7c9bb1419727f4d3594e4959c5}\label{classAriadne_1_1Integer_a73c7cd7c9bb1419727f4d3594e4959c5} 
+\mbox{\hyperlink{namespaceAriadne_a76a8b016e5ad61faf9062cc387df5016}{Bool}} {\bfseries is\+\_\+nan} (\mbox{\hyperlink{classAriadne_1_1Integer}{Integer}} const \&z)
+\begin{DoxyCompactList}\small\item\em Tests whether {\itshape z} is NaN (not-\/a-\/number). \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Integer_a30cbaaa3385726275b6882c385309000}\label{classAriadne_1_1Integer_a30cbaaa3385726275b6882c385309000} 
+\mbox{\hyperlink{namespaceAriadne_a76a8b016e5ad61faf9062cc387df5016}{Bool}} {\bfseries is\+\_\+inf} (\mbox{\hyperlink{classAriadne_1_1Integer}{Integer}} const \&z)
+\begin{DoxyCompactList}\small\item\em Tests whether {\itshape z} is ±∞. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Integer_a8b8e5f1e9bb88a50ffab909661530776}\label{classAriadne_1_1Integer_a8b8e5f1e9bb88a50ffab909661530776} 
+\mbox{\hyperlink{namespaceAriadne_a76a8b016e5ad61faf9062cc387df5016}{Bool}} {\bfseries is\+\_\+finite} (\mbox{\hyperlink{classAriadne_1_1Integer}{Integer}} const \&z)
+\begin{DoxyCompactList}\small\item\em Tests whether {\itshape z} is finite. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Integer_a511f32b8cf960b02dcca5d76874bb160}\label{classAriadne_1_1Integer_a511f32b8cf960b02dcca5d76874bb160} 
+\mbox{\hyperlink{namespaceAriadne_a76a8b016e5ad61faf9062cc387df5016}{Bool}} {\bfseries is\+\_\+zero} (\mbox{\hyperlink{classAriadne_1_1Integer}{Integer}} const \&z)
+\begin{DoxyCompactList}\small\item\em Tests whether {\itshape z} is zero. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\end{Indent}
+\begin{Indent}\textbf{ Input/output operations}\par
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1Integer_a1cddcc05aab04afb9e57b63d46080312}\label{classAriadne_1_1Integer_a1cddcc05aab04afb9e57b63d46080312} 
+\mbox{\hyperlink{namespaceAriadne_acbb98ddc4385af4599070e65a1a47ec1}{Output\+Stream}} \& {\bfseries operator$<$$<$} (\mbox{\hyperlink{namespaceAriadne_acbb98ddc4385af4599070e65a1a47ec1}{Output\+Stream}} \&os, \mbox{\hyperlink{classAriadne_1_1Integer}{Integer}} const \&z)
+\end{DoxyCompactItemize}
+\end{Indent}
+
+
+The documentation for this class was generated from the following files\+:\begin{DoxyCompactItemize}
+\item 
+source/numeric/\mbox{\hyperlink{integer_8hpp}{integer.\+hpp}}\item 
+source/numeric/integer.\+cpp\item 
+source/numeric/\mbox{\hyperlink{number_8cpp}{number.\+cpp}}\end{DoxyCompactItemize}

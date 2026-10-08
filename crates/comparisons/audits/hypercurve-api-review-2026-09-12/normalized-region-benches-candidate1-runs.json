@@ -1,0 +1,239 @@
+[
+  {
+    "target": "editing",
+    "name": "curve_region_source_related_algebraic_chord_regularization_reuse",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/normalized-region-benches-candidate1-libraries/editing-42be0d96f43548f0"
+    ],
+    "environment": {
+      "HYPERCURVE_EDIT_BENCH": "corner-solver",
+      "HYPERCURVE_EDIT_ITERATIONS": "1",
+      "HYPERCURVE_EDIT_CORNER_LANE": "curve_region_source_related_algebraic_chord_regularization_reuse"
+    },
+    "returncode": 0,
+    "elapsed_seconds": 0.00402028500684537,
+    "sha256": "d7e75353b85fbd7e12a7dbef3342c9428454705865d85eb2a8526598f6cd4da6",
+    "log": "normalized-region-benches-candidate1-curve_region_source_related_algebraic_chord_regularization_reuse.log"
+  },
+  {
+    "target": "editing",
+    "name": "curve_region_independent_field_algebraic_chord_boolean",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/normalized-region-benches-candidate1-libraries/editing-42be0d96f43548f0"
+    ],
+    "environment": {
+      "HYPERCURVE_EDIT_BENCH": "corner-solver",
+      "HYPERCURVE_EDIT_ITERATIONS": "1",
+      "HYPERCURVE_EDIT_CORNER_LANE": "curve_region_independent_field_algebraic_chord_boolean"
+    },
+    "returncode": 0,
+    "elapsed_seconds": 0.003900323004927486,
+    "sha256": "d7e75353b85fbd7e12a7dbef3342c9428454705865d85eb2a8526598f6cd4da6",
+    "log": "normalized-region-benches-candidate1-curve_region_independent_field_algebraic_chord_boolean.log"
+  },
+  {
+    "target": "editing",
+    "name": "curve_path_noninjective_collinear_algebraic_chord_intersection",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/normalized-region-benches-candidate1-libraries/editing-42be0d96f43548f0"
+    ],
+    "environment": {
+      "HYPERCURVE_EDIT_BENCH": "corner-solver",
+      "HYPERCURVE_EDIT_ITERATIONS": "1",
+      "HYPERCURVE_EDIT_CORNER_LANE": "curve_path_noninjective_collinear_algebraic_chord_intersection"
+    },
+    "returncode": 0,
+    "elapsed_seconds": 0.004031174001283944,
+    "sha256": "d7e75353b85fbd7e12a7dbef3342c9428454705865d85eb2a8526598f6cd4da6",
+    "log": "normalized-region-benches-candidate1-curve_path_noninjective_collinear_algebraic_chord_intersection.log"
+  },
+  {
+    "target": "editing",
+    "name": "curve_region_strict_interior_algebraic_chord_boolean",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/normalized-region-benches-candidate1-libraries/editing-42be0d96f43548f0"
+    ],
+    "environment": {
+      "HYPERCURVE_EDIT_BENCH": "corner-solver",
+      "HYPERCURVE_EDIT_ITERATIONS": "1",
+      "HYPERCURVE_EDIT_CORNER_LANE": "curve_region_strict_interior_algebraic_chord_boolean"
+    },
+    "returncode": 0,
+    "elapsed_seconds": 0.004088090005097911,
+    "sha256": "d7e75353b85fbd7e12a7dbef3342c9428454705865d85eb2a8526598f6cd4da6",
+    "log": "normalized-region-benches-candidate1-curve_region_strict_interior_algebraic_chord_boolean.log"
+  },
+  {
+    "target": "editing",
+    "name": "curve_region_axis_algebraic_miter_offset",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/normalized-region-benches-candidate1-libraries/editing-42be0d96f43548f0"
+    ],
+    "environment": {
+      "HYPERCURVE_EDIT_BENCH": "corner-solver",
+      "HYPERCURVE_EDIT_ITERATIONS": "1",
+      "HYPERCURVE_EDIT_CORNER_LANE": "curve_region_axis_algebraic_miter_offset"
+    },
+    "returncode": 0,
+    "elapsed_seconds": 0.004054151999298483,
+    "sha256": "d7e75353b85fbd7e12a7dbef3342c9428454705865d85eb2a8526598f6cd4da6",
+    "log": "normalized-region-benches-candidate1-curve_region_axis_algebraic_miter_offset.log"
+  },
+  {
+    "target": "editing",
+    "name": "curve_region_axis_algebraic_round_offset",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/normalized-region-benches-candidate1-libraries/editing-42be0d96f43548f0"
+    ],
+    "environment": {
+      "HYPERCURVE_EDIT_BENCH": "corner-solver",
+      "HYPERCURVE_EDIT_ITERATIONS": "1",
+      "HYPERCURVE_EDIT_CORNER_LANE": "curve_region_axis_algebraic_round_offset"
+    },
+    "returncode": 0,
+    "elapsed_seconds": 0.0015902809973340482,
+    "sha256": "d7e75353b85fbd7e12a7dbef3342c9428454705865d85eb2a8526598f6cd4da6",
+    "log": "normalized-region-benches-candidate1-curve_region_axis_algebraic_round_offset.log"
+  },
+  {
+    "target": "editing",
+    "name": "curve_region_axis_algebraic_repeated_miter_offset",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/normalized-region-benches-candidate1-libraries/editing-42be0d96f43548f0"
+    ],
+    "environment": {
+      "HYPERCURVE_EDIT_BENCH": "corner-solver",
+      "HYPERCURVE_EDIT_ITERATIONS": "1",
+      "HYPERCURVE_EDIT_CORNER_LANE": "curve_region_axis_algebraic_repeated_miter_offset"
+    },
+    "returncode": 0,
+    "elapsed_seconds": 0.0015256159822456539,
+    "sha256": "d7e75353b85fbd7e12a7dbef3342c9428454705865d85eb2a8526598f6cd4da6",
+    "log": "normalized-region-benches-candidate1-curve_region_axis_algebraic_repeated_miter_offset.log"
+  },
+  {
+    "target": "editing",
+    "name": "curve_region_axis_algebraic_neck_split",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/normalized-region-benches-candidate1-libraries/editing-42be0d96f43548f0"
+    ],
+    "environment": {
+      "HYPERCURVE_EDIT_BENCH": "corner-solver",
+      "HYPERCURVE_EDIT_ITERATIONS": "1",
+      "HYPERCURVE_EDIT_CORNER_LANE": "curve_region_axis_algebraic_neck_split"
+    },
+    "returncode": 0,
+    "elapsed_seconds": 0.003749433992197737,
+    "sha256": "d7e75353b85fbd7e12a7dbef3342c9428454705865d85eb2a8526598f6cd4da6",
+    "log": "normalized-region-benches-candidate1-curve_region_axis_algebraic_neck_split.log"
+  },
+  {
+    "target": "curve_region_boolean_batch",
+    "name": "analytic-squares-strict",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/normalized-region-benches-candidate1-libraries/curve_region_boolean_batch-d8b355b5fd6b0dbe"
+    ],
+    "environment": {
+      "HYPERCURVE_CURVE_REGION_BATCH_FIXTURE": "analytic-squares",
+      "HYPERCURVE_CURVE_REGION_BATCH_POLICY": "strict",
+      "HYPERCURVE_CURVE_REGION_BATCH_ITERATIONS": "1"
+    },
+    "returncode": 0,
+    "elapsed_seconds": 0.007706611999310553,
+    "sha256": "9d342a347bde5f281fd0c9a638143af149447bd5842f29a09b3b27989f4a6017",
+    "log": "normalized-region-benches-candidate1-analytic-squares-strict.log"
+  },
+  {
+    "target": "curve_region_boolean_batch",
+    "name": "analytic-squares-approximate-512",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/normalized-region-benches-candidate1-libraries/curve_region_boolean_batch-d8b355b5fd6b0dbe"
+    ],
+    "environment": {
+      "HYPERCURVE_CURVE_REGION_BATCH_FIXTURE": "analytic-squares",
+      "HYPERCURVE_CURVE_REGION_BATCH_POLICY": "approximate-512",
+      "HYPERCURVE_CURVE_REGION_BATCH_ITERATIONS": "1"
+    },
+    "returncode": 0,
+    "elapsed_seconds": 0.015852944983635098,
+    "sha256": "9d342a347bde5f281fd0c9a638143af149447bd5842f29a09b3b27989f4a6017",
+    "log": "normalized-region-benches-candidate1-analytic-squares-approximate-512.log"
+  },
+  {
+    "target": "curve_region_boolean_batch",
+    "name": "analytic-curved-cap-strict",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/normalized-region-benches-candidate1-libraries/curve_region_boolean_batch-d8b355b5fd6b0dbe"
+    ],
+    "environment": {
+      "HYPERCURVE_CURVE_REGION_BATCH_FIXTURE": "analytic-curved-cap",
+      "HYPERCURVE_CURVE_REGION_BATCH_POLICY": "strict",
+      "HYPERCURVE_CURVE_REGION_BATCH_ITERATIONS": "1"
+    },
+    "returncode": 0,
+    "elapsed_seconds": 0.0318626590014901,
+    "sha256": "9d342a347bde5f281fd0c9a638143af149447bd5842f29a09b3b27989f4a6017",
+    "log": "normalized-region-benches-candidate1-analytic-curved-cap-strict.log"
+  },
+  {
+    "target": "curve_region_boolean_batch",
+    "name": "analytic-curved-cap-approximate-512",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/normalized-region-benches-candidate1-libraries/curve_region_boolean_batch-d8b355b5fd6b0dbe"
+    ],
+    "environment": {
+      "HYPERCURVE_CURVE_REGION_BATCH_FIXTURE": "analytic-curved-cap",
+      "HYPERCURVE_CURVE_REGION_BATCH_POLICY": "approximate-512",
+      "HYPERCURVE_CURVE_REGION_BATCH_ITERATIONS": "1"
+    },
+    "returncode": 0,
+    "elapsed_seconds": 0.06413432900444604,
+    "sha256": "9d342a347bde5f281fd0c9a638143af149447bd5842f29a09b3b27989f4a6017",
+    "log": "normalized-region-benches-candidate1-analytic-curved-cap-approximate-512.log"
+  },
+  {
+    "target": "offset",
+    "name": "curve-region-algebraic-partition",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/normalized-region-benches-candidate1-libraries/offset-2fcb5af018efd2d1"
+    ],
+    "environment": {
+      "HYPERCURVE_OFFSET_BENCH_GROUP": "curve-region-algebraic-partition"
+    },
+    "returncode": 0,
+    "elapsed_seconds": 0.016011953994166106,
+    "sha256": "78de8308d8cbe31ef7aaece56c8182893c6cfa36e10a14cc2b16f2514c74edde",
+    "log": "normalized-region-benches-candidate1-curve-region-algebraic-partition.log"
+  },
+  {
+    "target": "offset",
+    "name": "curve-region-cyclic-algebraic-partition",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/normalized-region-benches-candidate1-libraries/offset-2fcb5af018efd2d1"
+    ],
+    "environment": {
+      "HYPERCURVE_OFFSET_BENCH_GROUP": "curve-region-cyclic-algebraic-partition"
+    },
+    "returncode": 0,
+    "elapsed_seconds": 0.007619219017215073,
+    "sha256": "78de8308d8cbe31ef7aaece56c8182893c6cfa36e10a14cc2b16f2514c74edde",
+    "log": "normalized-region-benches-candidate1-curve-region-cyclic-algebraic-partition.log"
+  },
+  {
+    "target": "comparative",
+    "name": "algebraic-round-rectangle",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/normalized-region-benches-candidate1-libraries/comparative-be0f791dcbab83b5"
+    ],
+    "environment": {
+      "HYPERCURVE_COMPARE_SAMPLES": "1",
+      "HYPERCURVE_COMPARE_ITERS": "1",
+      "HYPERCURVE_COMPARE_GROUP": "algebraic_round_offset/rectangle",
+      "HYPERCURVE_COMPARE_IMPL": "hypercurve"
+    },
+    "returncode": 0,
+    "elapsed_seconds": 0.0035587370221037418,
+    "sha256": "9eae65aaee985adbcc14f7b6f85904702fa0fc26c5db826c738ed46f41eb41ef",
+    "log": "normalized-region-benches-candidate1-algebraic-round-rectangle.log"
+  }
+]

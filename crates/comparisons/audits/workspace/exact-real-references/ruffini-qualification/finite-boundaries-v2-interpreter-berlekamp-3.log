@@ -1,0 +1,55 @@
+START	berlekamp/3/17/0/0
+RESULT	berlekamp/3/17/0/0	PASS	0	[0]
+START	berlekamp/3/17/0/1
+RESULT	berlekamp/3/17/0/1	UNRESOLVED	IterationLimit	[]
+START	berlekamp/3/17/0/2
+RESULT	berlekamp/3/17/0/2	PASS	2	[1,2]
+START	berlekamp/3/17/1/0
+RESULT	berlekamp/3/17/1/0	PASS	2	[0,2]
+START	berlekamp/3/17/1/1
+RESULT	berlekamp/3/17/1/1	PASS	1	[1]
+START	berlekamp/3/17/1/2
+RESULT	berlekamp/3/17/1/2	UNRESOLVED	IterationLimit	[]
+START	berlekamp/3/17/2/0
+RESULT	berlekamp/3/17/2/0	PASS	0	[0,1]
+START	berlekamp/3/17/2/1
+RESULT	berlekamp/3/17/2/1	PASS	2	[2]
+START	berlekamp/3/17/2/2
+RESULT	berlekamp/3/17/2/2	UNRESOLVED	IterationLimit	[]
+START	berlekamp/3/42/0/0
+RESULT	berlekamp/3/42/0/0	PASS	0	[0]
+START	berlekamp/3/42/0/1
+RESULT	berlekamp/3/42/0/1	UNRESOLVED	IterationLimit	[]
+START	berlekamp/3/42/0/2
+RESULT	berlekamp/3/42/0/2	PASS	2	[1,2]
+START	berlekamp/3/42/1/0
+RESULT	berlekamp/3/42/1/0	PASS	2	[0,2]
+START	berlekamp/3/42/1/1
+RESULT	berlekamp/3/42/1/1	PASS	1	[1]
+START	berlekamp/3/42/1/2
+RESULT	berlekamp/3/42/1/2	UNRESOLVED	IterationLimit	[]
+START	berlekamp/3/42/2/0
+RESULT	berlekamp/3/42/2/0	PASS	0	[0,1]
+START	berlekamp/3/42/2/1
+RESULT	berlekamp/3/42/2/1	PASS	2	[2]
+START	berlekamp/3/42/2/2
+RESULT	berlekamp/3/42/2/2	UNRESOLVED	IterationLimit	[]
+START	berlekamp/3/149/0/0
+RESULT	berlekamp/3/149/0/0	PASS	0	[0]
+START	berlekamp/3/149/0/1
+RESULT	berlekamp/3/149/0/1	UNRESOLVED	IterationLimit	[]
+START	berlekamp/3/149/0/2
+RESULT	berlekamp/3/149/0/2	PASS	2	[1,2]
+START	berlekamp/3/149/1/0
+RESULT	berlekamp/3/149/1/0	PASS	2	[0,2]
+START	berlekamp/3/149/1/1
+RESULT	berlekamp/3/149/1/1	PASS	1	[1]
+START	berlekamp/3/149/1/2
+RESULT	berlekamp/3/149/1/2	UNRESOLVED	IterationLimit	[]
+START	berlekamp/3/149/2/0
+RESULT	berlekamp/3/149/2/0	PASS	0	[0,1]
+START	berlekamp/3/149/2/1
+RESULT	berlekamp/3/149/2/1	PASS	2	[2]
+START	berlekamp/3/149/2/2
+RESULT	berlekamp/3/149/2/2	UNRESOLVED	IterationLimit	[]
+SUMMARY	27

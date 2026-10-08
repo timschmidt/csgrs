@@ -1,0 +1,19 @@
+[package]
+name = "numbers-qualification"
+version = "0.0.0"
+edition = "2024"
+publish = false
+autobins = false
+
+[dependencies]
+hyperreal = { path = "../../../../.audit-fractional-control.pXHyjP/hyperreal" }
+rug = { version = "1.30.0", default-features = false, features = ["float", "integer", "rational", "std"] }
+
+[[bin]]
+name = "constructible_hyper_field_memory"
+path = "../../hyper_field_memory.rs"
+
+[profile.release]
+debug = 0
+incremental = false
+codegen-units = 16

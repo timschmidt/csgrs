@@ -1,0 +1,7 @@
+{
+  "outer_session": 19908,
+  "outer_exit_code": 1,
+  "terminal": "common-point-classification-v734-terminal.json",
+  "cause": "The explicit full test inventory includes ignored tests. The runner omitted --include-ignored, so the next selected case was skipped, not executed. No tested geometry case failed.",
+  "completed_passing_cases": 199
+}

@@ -1,0 +1,38 @@
+{
+  "baselineCommit": "da26e961bf76adf13829d8a26ced6cdaacb6b564",
+  "baselineFilesVerified": 176,
+  "summaries": [
+    {
+      "tag": "hyper-proof-complete-snapshot-debug",
+      "rows": 270,
+      "counts": {
+        "algebraic_control:Equal": 90,
+        "log_identity:Unknown": 90,
+        "perturbed_control:NotEqual": 90
+      }
+    },
+    {
+      "tag": "hyper-proof-complete-snapshot-release",
+      "rows": 270,
+      "counts": {
+        "algebraic_control:Equal": 90,
+        "log_identity:Unknown": 90,
+        "perturbed_control:NotEqual": 90
+      }
+    },
+    {
+      "tag": "flint-proof-native",
+      "rows": 300,
+      "counts": {
+        "algebraic_control:Equal": 90,
+        "log_identity:Equal": 90,
+        "perturbed_control:NotEqual": 90,
+        "complex_branch_control:NotEqual": 30
+      }
+    }
+  ],
+  "nativeScalarTestFunctionsPassed": 29,
+  "nativeSupportingTestFunctionsPassed": 73,
+  "conclusion": "Confirmed scoped log-identity completeness gap; no production change yet.",
+  "limits": "Query clocks and numeric budgets differ; these runs are not comparative performance benchmarks."
+}

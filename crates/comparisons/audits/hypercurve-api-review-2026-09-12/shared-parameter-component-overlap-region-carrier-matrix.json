@@ -1,0 +1,27 @@
+{
+  "returncode": 0,
+  "elapsed_seconds": 1.4155075239978032,
+  "normal_library_sha256": "d30bc1c78a473adc5480b8cb0ff1c0cc20d813d9061281132a4c8019872fa30a",
+  "log": "shared-parameter-component-overlap-region-carrier-matrix.log",
+  "source": "region-carrier-evidence-matrix.rs",
+  "command": [
+    "rustc",
+    "--edition=2024",
+    "-O",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/region-carrier-evidence-matrix.rs",
+    "--extern",
+    "hypercurve=/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/libhypercurve-2c7ff6f3fbe07653.rlib",
+    "-L",
+    "dependency=/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps",
+    "-o",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/shared-parameter-component-overlap-region-carrier-matrix"
+  ],
+  "counts": {
+    "boundary_replays": 2016,
+    "analytic_replays": 432,
+    "queries": 448,
+    "endpoint_replays": 2208,
+    "repeated_path_trims": 1008,
+    "certainty": "Certified"
+  }
+}

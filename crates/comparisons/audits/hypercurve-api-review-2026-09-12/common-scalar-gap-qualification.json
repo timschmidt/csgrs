@@ -1,0 +1,67 @@
+{
+  "date": "2026-09-14",
+  "status": "qualified_increment_goal_active",
+  "commits": {
+    "hypercurve": "a3361cc",
+    "hyperbrep": "d82bc14"
+  },
+  "tests": {
+    "hypercurve_library": {
+      "passed": 976,
+      "failed": 0,
+      "ignored": 6,
+      "filtered_out": 4
+    },
+    "hypercurve_integrations": {
+      "hypercurve_arc_bezier": 12,
+      "hypercurve_bspline": 28,
+      "hypercurve_curve": 48,
+      "hypercurve_curve_intersection": 29,
+      "hypercurve_nurbs": 38,
+      "hypercurve_path_closure": 8,
+      "hypercurve_polynomial_spline": 18,
+      "hypercurve_rational_bezier": 48
+    },
+    "hyperbrep_path_tests": {
+      "passed": 19,
+      "failed": 0
+    },
+    "total_passed": 1224,
+    "new_regressions_included_in_library": 1,
+    "focused_passed_included_in_library": 15
+  },
+  "original_library_exclusions": [
+    "selected_parallel_normal_circle_intersects_genuinely_analytic_parallel_in_one_fiber",
+    "independent_oblique_chord_pair_fillets_extend_on_infinite_supports",
+    "selected_circle_and_analytic_parallel_extend_on_full_supports",
+    "pair_native_boolean_algebraic_chord_corner_publishes_a_third_generation_fillet"
+  ],
+  "checks": {
+    "hypercurve_all_targets_all_features": "passed",
+    "hyperbrep_all_targets_all_features": "passed",
+    "hypercurve_ui_offline_all_targets": "passed",
+    "hypercurve_docs_broken_links_denied": "passed",
+    "changed_rust_files_formatting": "passed",
+    "staged_whitespace": "passed"
+  },
+  "logs": [
+    "common-scalar-gap-focused-final.log",
+    "common-scalar-gap-qualification.log",
+    "common-scalar-gap-hyperbrep-paths.log",
+    "common-scalar-gap-all-targets.log",
+    "common-scalar-gap-hyperbrep-check.log",
+    "common-scalar-gap-ui-check.log",
+    "common-scalar-gap-docs.log"
+  ],
+  "scope": "Common native finite-scalar gap refinement, including mixed selected-fiber/recursive endpoints; remove three specialized sampling loops and their interfaces.",
+  "remaining_scope": [
+    "Actual selected finite-range ownership, preparation of reusable chart domains, circle extension ownership and full authored-domain TrimOrExtend publication",
+    "Representation, region-normalization, policy-continuation and algebra-layer obligations in implementation.md"
+  ],
+  "performance_claim": "Sampling uses each endpoint native refinement authority and does not request a global projection. No matched benchmark claim.",
+  "pushed": false,
+  "reproduction_log": "common-scalar-gap-before.log",
+  "excluded_trial_log": {
+    "common-scalar-gap-focused.log": "The initial fixture incorrectly required an automatically tightened complement enclosure to overlap; the final fixture uses wide certified bounds explicitly."
+  }
+}

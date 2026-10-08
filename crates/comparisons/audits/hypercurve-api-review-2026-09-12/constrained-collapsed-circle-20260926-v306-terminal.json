@@ -1,0 +1,11 @@
+{
+  "source_manifest": "constrained-fillet-api-20260926-v305-sources.json",
+  "library": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypercurve-85a9105cd1c82df7.rlib",
+  "library_sha256": "0344648efacea0f5c526c2c54832f548e261a7f3ddf970f97eed3f867452645c",
+  "source_sha256": "1a66b3fa1dee46e821341bade3ab8decb315ac6c89692139edcd4c19c67852c7",
+  "build_returncode": 0,
+  "binary_sha256": "bb709f6f10053800c3d7d4db8b200092bf3d86f0e477d072e5c4490c3d34839b",
+  "returncode": 0,
+  "elapsed_seconds": 0.0012621140340343118,
+  "all_processes_reaped": true
+}

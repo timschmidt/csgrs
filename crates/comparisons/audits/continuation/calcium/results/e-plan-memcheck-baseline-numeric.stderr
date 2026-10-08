@@ -1,0 +1,214 @@
+==3252012== Memcheck, a memory error detector
+==3252012== Copyright (C) 2002-2026, and GNU GPL'd, by Julian Seward et al.
+==3252012== Using Valgrind-3.27.1 and LibVEX; rerun with -h for copyright info
+==3252012== Command: /tmp/calcium-e-plan.mOIsBs/baseline-check numeric
+==3252012== 
+==3252012== 
+==3252012== HEAP SUMMARY:
+==3252012==     in use at exit: 35,656 bytes in 15 blocks
+==3252012==   total heap usage: 207,613 allocs, 207,598 frees, 1,311,547,868 bytes allocated
+==3252012== 
+==3252012== 48 bytes in 1 blocks are still reachable in loss record 1 of 15
+==3252012==    at 0x4A298E1: realloc (vg_replace_malloc.c:1741)
+==3252012==    by 0x408FE84: __gmp_default_reallocate (in /tmp/calcium-e-plan.mOIsBs/baseline-check)
+==3252012==    by 0x4091170: __gmpz_realloc (in /tmp/calcium-e-plan.mOIsBs/baseline-check)
+==3252012==    by 0x40907D2: __gmpz_cfdiv_q_2exp (in /tmp/calcium-e-plan.mOIsBs/baseline-check)
+==3252012==    by 0x4086AEF: mpz_normalize (in /tmp/calcium-e-plan.mOIsBs/baseline-check)
+==3252012==    by 0x4087638: mpfr_exp_2 (in /tmp/calcium-e-plan.mOIsBs/baseline-check)
+==3252012==    by 0x4079078: mpfr_exp (in /tmp/calcium-e-plan.mOIsBs/baseline-check)
+==3252012==    by 0x40735C4: e_plan_baseline_check::enclose (in /tmp/calcium-e-plan.mOIsBs/baseline-check)
+==3252012==    by 0x4072294: e_plan_baseline_check::main (in /tmp/calcium-e-plan.mOIsBs/baseline-check)
+==3252012==    by 0x406B2E2: std::sys::backtrace::__rust_begin_short_backtrace::<fn(), ()> (in /tmp/calcium-e-plan.mOIsBs/baseline-check)
+==3252012==    by 0x4077A08: std::rt::lang_start::<()>::{closure#0} (in /tmp/calcium-e-plan.mOIsBs/baseline-check)
+==3252012==    by 0x4187B86: std::rt::lang_start_internal (in /tmp/calcium-e-plan.mOIsBs/baseline-check)
+==3252012== 
+==3252012== 56 bytes in 1 blocks are still reachable in loss record 2 of 15
+==3252012==    at 0x4A21AE6: malloc (vg_replace_malloc.c:447)
+==3252012==    by 0x413CA23: <hyperreal::computable::node::ApproximationCache>::store (in /tmp/calcium-e-plan.mOIsBs/baseline-check)
+==3252012==    by 0x41250AB: <hyperreal::computable::node::Computable>::store_cache_value (in /tmp/calcium-e-plan.mOIsBs/baseline-check)
+==3252012==    by 0x411F72F: <hyperreal::computable::node::Computable>::approx_signal (in /tmp/calcium-e-plan.mOIsBs/baseline-check)
+==3252012==    by 0x4072051: e_plan_baseline_check::main (in /tmp/calcium-e-plan.mOIsBs/baseline-check)
+==3252012==    by 0x406B2E2: std::sys::backtrace::__rust_begin_short_backtrace::<fn(), ()> (in /tmp/calcium-e-plan.mOIsBs/baseline-check)
+==3252012==    by 0x4077A08: std::rt::lang_start::<()>::{closure#0} (in /tmp/calcium-e-plan.mOIsBs/baseline-check)
+==3252012==    by 0x4187B86: std::rt::lang_start_internal (in /tmp/calcium-e-plan.mOIsBs/baseline-check)
+==3252012==    by 0x4073EF4: main (in /tmp/calcium-e-plan.mOIsBs/baseline-check)
+==3252012== 
+==3252012== 80 bytes in 1 blocks are still reachable in loss record 3 of 15
+==3252012==    at 0x4A21AE6: malloc (vg_replace_malloc.c:447)
+==3252012==    by 0x408FE48: __gmp_default_allocate (in /tmp/calcium-e-plan.mOIsBs/baseline-check)
+==3252012==    by 0x4090C98: __gmpz_mul (in /tmp/calcium-e-plan.mOIsBs/baseline-check)
+==3252012==    by 0x408764C: mpfr_exp_2 (in /tmp/calcium-e-plan.mOIsBs/baseline-check)
+==3252012==    by 0x4079078: mpfr_exp (in /tmp/calcium-e-plan.mOIsBs/baseline-check)
+==3252012==    by 0x40735C4: e_plan_baseline_check::enclose (in /tmp/calcium-e-plan.mOIsBs/baseline-check)
+==3252012==    by 0x4072294: e_plan_baseline_check::main (in /tmp/calcium-e-plan.mOIsBs/baseline-check)
+==3252012==    by 0x406B2E2: std::sys::backtrace::__rust_begin_short_backtrace::<fn(), ()> (in /tmp/calcium-e-plan.mOIsBs/baseline-check)
+==3252012==    by 0x4077A08: std::rt::lang_start::<()>::{closure#0} (in /tmp/calcium-e-plan.mOIsBs/baseline-check)
+==3252012==    by 0x4187B86: std::rt::lang_start_internal (in /tmp/calcium-e-plan.mOIsBs/baseline-check)
+==3252012==    by 0x4073EF4: main (in /tmp/calcium-e-plan.mOIsBs/baseline-check)
+==3252012== 
+==3252012== 160 bytes in 1 blocks are still reachable in loss record 4 of 15
+==3252012==    at 0x4A21AE6: malloc (vg_replace_malloc.c:447)
+==3252012==    by 0x408FE48: __gmp_default_allocate (in /tmp/calcium-e-plan.mOIsBs/baseline-check)
+==3252012==    by 0x40911A3: __gmpz_realloc (in /tmp/calcium-e-plan.mOIsBs/baseline-check)
+==3252012==    by 0x40907D2: __gmpz_cfdiv_q_2exp (in /tmp/calcium-e-plan.mOIsBs/baseline-check)
+==3252012==    by 0x4086D42: mpfr_exp2_aux2 (in /tmp/calcium-e-plan.mOIsBs/baseline-check)
+==3252012==    by 0x4087845: mpfr_exp_2 (in /tmp/calcium-e-plan.mOIsBs/baseline-check)
+==3252012==    by 0x4079078: mpfr_exp (in /tmp/calcium-e-plan.mOIsBs/baseline-check)
+==3252012==    by 0x40735C4: e_plan_baseline_check::enclose (in /tmp/calcium-e-plan.mOIsBs/baseline-check)
+==3252012==    by 0x4072294: e_plan_baseline_check::main (in /tmp/calcium-e-plan.mOIsBs/baseline-check)
+==3252012==    by 0x406B2E2: std::sys::backtrace::__rust_begin_short_backtrace::<fn(), ()> (in /tmp/calcium-e-plan.mOIsBs/baseline-check)
+==3252012==    by 0x4077A08: std::rt::lang_start::<()>::{closure#0} (in /tmp/calcium-e-plan.mOIsBs/baseline-check)
+==3252012==    by 0x4187B86: std::rt::lang_start_internal (in /tmp/calcium-e-plan.mOIsBs/baseline-check)
+==3252012== 
+==3252012== 168 bytes in 1 blocks are still reachable in loss record 5 of 15
+==3252012==    at 0x4A298E1: realloc (vg_replace_malloc.c:1741)
+==3252012==    by 0x408FE84: __gmp_default_reallocate (in /tmp/calcium-e-plan.mOIsBs/baseline-check)
+==3252012==    by 0x4091170: __gmpz_realloc (in /tmp/calcium-e-plan.mOIsBs/baseline-check)
+==3252012==    by 0x40907D2: __gmpz_cfdiv_q_2exp (in /tmp/calcium-e-plan.mOIsBs/baseline-check)
+==3252012==    by 0x4086CB0: mpfr_exp2_aux2 (in /tmp/calcium-e-plan.mOIsBs/baseline-check)
+==3252012==    by 0x4087845: mpfr_exp_2 (in /tmp/calcium-e-plan.mOIsBs/baseline-check)
+==3252012==    by 0x4079078: mpfr_exp (in /tmp/calcium-e-plan.mOIsBs/baseline-check)
+==3252012==    by 0x40735B2: e_plan_baseline_check::enclose (in /tmp/calcium-e-plan.mOIsBs/baseline-check)
+==3252012==    by 0x4072294: e_plan_baseline_check::main (in /tmp/calcium-e-plan.mOIsBs/baseline-check)
+==3252012==    by 0x406B2E2: std::sys::backtrace::__rust_begin_short_backtrace::<fn(), ()> (in /tmp/calcium-e-plan.mOIsBs/baseline-check)
+==3252012==    by 0x4077A08: std::rt::lang_start::<()>::{closure#0} (in /tmp/calcium-e-plan.mOIsBs/baseline-check)
+==3252012==    by 0x4187B86: std::rt::lang_start_internal (in /tmp/calcium-e-plan.mOIsBs/baseline-check)
+==3252012== 
+==3252012== 168 bytes in 1 blocks are still reachable in loss record 6 of 15
+==3252012==    at 0x4A298E1: realloc (vg_replace_malloc.c:1741)
+==3252012==    by 0x408FE84: __gmp_default_reallocate (in /tmp/calcium-e-plan.mOIsBs/baseline-check)
+==3252012==    by 0x4091170: __gmpz_realloc (in /tmp/calcium-e-plan.mOIsBs/baseline-check)
+==3252012==    by 0x4091067: __gmpz_mul_2exp (in /tmp/calcium-e-plan.mOIsBs/baseline-check)
+==3252012==    by 0x4086DA8: mpfr_exp2_aux2 (in /tmp/calcium-e-plan.mOIsBs/baseline-check)
+==3252012==    by 0x4087845: mpfr_exp_2 (in /tmp/calcium-e-plan.mOIsBs/baseline-check)
+==3252012==    by 0x4079078: mpfr_exp (in /tmp/calcium-e-plan.mOIsBs/baseline-check)
+==3252012==    by 0x40735B2: e_plan_baseline_check::enclose (in /tmp/calcium-e-plan.mOIsBs/baseline-check)
+==3252012==    by 0x4072294: e_plan_baseline_check::main (in /tmp/calcium-e-plan.mOIsBs/baseline-check)
+==3252012==    by 0x406B2E2: std::sys::backtrace::__rust_begin_short_backtrace::<fn(), ()> (in /tmp/calcium-e-plan.mOIsBs/baseline-check)
+==3252012==    by 0x4077A08: std::rt::lang_start::<()>::{closure#0} (in /tmp/calcium-e-plan.mOIsBs/baseline-check)
+==3252012==    by 0x4187B86: std::rt::lang_start_internal (in /tmp/calcium-e-plan.mOIsBs/baseline-check)
+==3252012== 
+==3252012== 168 bytes in 1 blocks are still reachable in loss record 7 of 15
+==3252012==    at 0x4A298E1: realloc (vg_replace_malloc.c:1741)
+==3252012==    by 0x408FE84: __gmp_default_reallocate (in /tmp/calcium-e-plan.mOIsBs/baseline-check)
+==3252012==    by 0x4091170: __gmpz_realloc (in /tmp/calcium-e-plan.mOIsBs/baseline-check)
+==3252012==    by 0x40907D2: __gmpz_cfdiv_q_2exp (in /tmp/calcium-e-plan.mOIsBs/baseline-check)
+==3252012==    by 0x4086CB0: mpfr_exp2_aux2 (in /tmp/calcium-e-plan.mOIsBs/baseline-check)
+==3252012==    by 0x4087845: mpfr_exp_2 (in /tmp/calcium-e-plan.mOIsBs/baseline-check)
+==3252012==    by 0x4079078: mpfr_exp (in /tmp/calcium-e-plan.mOIsBs/baseline-check)
+==3252012==    by 0x40735C4: e_plan_baseline_check::enclose (in /tmp/calcium-e-plan.mOIsBs/baseline-check)
+==3252012==    by 0x4072294: e_plan_baseline_check::main (in /tmp/calcium-e-plan.mOIsBs/baseline-check)
+==3252012==    by 0x406B2E2: std::sys::backtrace::__rust_begin_short_backtrace::<fn(), ()> (in /tmp/calcium-e-plan.mOIsBs/baseline-check)
+==3252012==    by 0x4077A08: std::rt::lang_start::<()>::{closure#0} (in /tmp/calcium-e-plan.mOIsBs/baseline-check)
+==3252012==    by 0x4187B86: std::rt::lang_start_internal (in /tmp/calcium-e-plan.mOIsBs/baseline-check)
+==3252012== 
+==3252012== 168 bytes in 1 blocks are still reachable in loss record 8 of 15
+==3252012==    at 0x4A298E1: realloc (vg_replace_malloc.c:1741)
+==3252012==    by 0x408FE84: __gmp_default_reallocate (in /tmp/calcium-e-plan.mOIsBs/baseline-check)
+==3252012==    by 0x4091170: __gmpz_realloc (in /tmp/calcium-e-plan.mOIsBs/baseline-check)
+==3252012==    by 0x4091067: __gmpz_mul_2exp (in /tmp/calcium-e-plan.mOIsBs/baseline-check)
+==3252012==    by 0x4086DA8: mpfr_exp2_aux2 (in /tmp/calcium-e-plan.mOIsBs/baseline-check)
+==3252012==    by 0x4087845: mpfr_exp_2 (in /tmp/calcium-e-plan.mOIsBs/baseline-check)
+==3252012==    by 0x4079078: mpfr_exp (in /tmp/calcium-e-plan.mOIsBs/baseline-check)
+==3252012==    by 0x40735C4: e_plan_baseline_check::enclose (in /tmp/calcium-e-plan.mOIsBs/baseline-check)
+==3252012==    by 0x4072294: e_plan_baseline_check::main (in /tmp/calcium-e-plan.mOIsBs/baseline-check)
+==3252012==    by 0x406B2E2: std::sys::backtrace::__rust_begin_short_backtrace::<fn(), ()> (in /tmp/calcium-e-plan.mOIsBs/baseline-check)
+==3252012==    by 0x4077A08: std::rt::lang_start::<()>::{closure#0} (in /tmp/calcium-e-plan.mOIsBs/baseline-check)
+==3252012==    by 0x4187B86: std::rt::lang_start_internal (in /tmp/calcium-e-plan.mOIsBs/baseline-check)
+==3252012== 
+==3252012== 168 bytes in 1 blocks are still reachable in loss record 9 of 15
+==3252012==    at 0x4A21AE6: malloc (vg_replace_malloc.c:447)
+==3252012==    by 0x408FE48: __gmp_default_allocate (in /tmp/calcium-e-plan.mOIsBs/baseline-check)
+==3252012==    by 0x40911A3: __gmpz_realloc (in /tmp/calcium-e-plan.mOIsBs/baseline-check)
+==3252012==    by 0x40907D2: __gmpz_cfdiv_q_2exp (in /tmp/calcium-e-plan.mOIsBs/baseline-check)
+==3252012==    by 0x4086D42: mpfr_exp2_aux2 (in /tmp/calcium-e-plan.mOIsBs/baseline-check)
+==3252012==    by 0x4087845: mpfr_exp_2 (in /tmp/calcium-e-plan.mOIsBs/baseline-check)
+==3252012==    by 0x4079078: mpfr_exp (in /tmp/calcium-e-plan.mOIsBs/baseline-check)
+==3252012==    by 0x40735B2: e_plan_baseline_check::enclose (in /tmp/calcium-e-plan.mOIsBs/baseline-check)
+==3252012==    by 0x4072294: e_plan_baseline_check::main (in /tmp/calcium-e-plan.mOIsBs/baseline-check)
+==3252012==    by 0x406B2E2: std::sys::backtrace::__rust_begin_short_backtrace::<fn(), ()> (in /tmp/calcium-e-plan.mOIsBs/baseline-check)
+==3252012==    by 0x4077A08: std::rt::lang_start::<()>::{closure#0} (in /tmp/calcium-e-plan.mOIsBs/baseline-check)
+==3252012==    by 0x4187B86: std::rt::lang_start_internal (in /tmp/calcium-e-plan.mOIsBs/baseline-check)
+==3252012== 
+==3252012== 176 bytes in 1 blocks are still reachable in loss record 10 of 15
+==3252012==    at 0x4A298E1: realloc (vg_replace_malloc.c:1741)
+==3252012==    by 0x408FE84: __gmp_default_reallocate (in /tmp/calcium-e-plan.mOIsBs/baseline-check)
+==3252012==    by 0x4091170: __gmpz_realloc (in /tmp/calcium-e-plan.mOIsBs/baseline-check)
+==3252012==    by 0x40907D2: __gmpz_cfdiv_q_2exp (in /tmp/calcium-e-plan.mOIsBs/baseline-check)
+==3252012==    by 0x4086CEF: mpfr_exp2_aux2 (in /tmp/calcium-e-plan.mOIsBs/baseline-check)
+==3252012==    by 0x4087845: mpfr_exp_2 (in /tmp/calcium-e-plan.mOIsBs/baseline-check)
+==3252012==    by 0x4079078: mpfr_exp (in /tmp/calcium-e-plan.mOIsBs/baseline-check)
+==3252012==    by 0x40735C4: e_plan_baseline_check::enclose (in /tmp/calcium-e-plan.mOIsBs/baseline-check)
+==3252012==    by 0x4072294: e_plan_baseline_check::main (in /tmp/calcium-e-plan.mOIsBs/baseline-check)
+==3252012==    by 0x406B2E2: std::sys::backtrace::__rust_begin_short_backtrace::<fn(), ()> (in /tmp/calcium-e-plan.mOIsBs/baseline-check)
+==3252012==    by 0x4077A08: std::rt::lang_start::<()>::{closure#0} (in /tmp/calcium-e-plan.mOIsBs/baseline-check)
+==3252012==    by 0x4187B86: std::rt::lang_start_internal (in /tmp/calcium-e-plan.mOIsBs/baseline-check)
+==3252012== 
+==3252012== 176 bytes in 1 blocks are still reachable in loss record 11 of 15
+==3252012==    at 0x4A21AE6: malloc (vg_replace_malloc.c:447)
+==3252012==    by 0x408FE48: __gmp_default_allocate (in /tmp/calcium-e-plan.mOIsBs/baseline-check)
+==3252012==    by 0x40911A3: __gmpz_realloc (in /tmp/calcium-e-plan.mOIsBs/baseline-check)
+==3252012==    by 0x40907D2: __gmpz_cfdiv_q_2exp (in /tmp/calcium-e-plan.mOIsBs/baseline-check)
+==3252012==    by 0x4086CEF: mpfr_exp2_aux2 (in /tmp/calcium-e-plan.mOIsBs/baseline-check)
+==3252012==    by 0x4087845: mpfr_exp_2 (in /tmp/calcium-e-plan.mOIsBs/baseline-check)
+==3252012==    by 0x4079078: mpfr_exp (in /tmp/calcium-e-plan.mOIsBs/baseline-check)
+==3252012==    by 0x40735B2: e_plan_baseline_check::enclose (in /tmp/calcium-e-plan.mOIsBs/baseline-check)
+==3252012==    by 0x4072294: e_plan_baseline_check::main (in /tmp/calcium-e-plan.mOIsBs/baseline-check)
+==3252012==    by 0x406B2E2: std::sys::backtrace::__rust_begin_short_backtrace::<fn(), ()> (in /tmp/calcium-e-plan.mOIsBs/baseline-check)
+==3252012==    by 0x4077A08: std::rt::lang_start::<()>::{closure#0} (in /tmp/calcium-e-plan.mOIsBs/baseline-check)
+==3252012==    by 0x4187B86: std::rt::lang_start_internal (in /tmp/calcium-e-plan.mOIsBs/baseline-check)
+==3252012== 
+==3252012== 192 bytes in 1 blocks are still reachable in loss record 12 of 15
+==3252012==    at 0x4A21AE6: malloc (vg_replace_malloc.c:447)
+==3252012==    by 0x408FE48: __gmp_default_allocate (in /tmp/calcium-e-plan.mOIsBs/baseline-check)
+==3252012==    by 0x4090C98: __gmpz_mul (in /tmp/calcium-e-plan.mOIsBs/baseline-check)
+==3252012==    by 0x4087881: mpfr_exp_2 (in /tmp/calcium-e-plan.mOIsBs/baseline-check)
+==3252012==    by 0x4079078: mpfr_exp (in /tmp/calcium-e-plan.mOIsBs/baseline-check)
+==3252012==    by 0x40735B2: e_plan_baseline_check::enclose (in /tmp/calcium-e-plan.mOIsBs/baseline-check)
+==3252012==    by 0x4072294: e_plan_baseline_check::main (in /tmp/calcium-e-plan.mOIsBs/baseline-check)
+==3252012==    by 0x406B2E2: std::sys::backtrace::__rust_begin_short_backtrace::<fn(), ()> (in /tmp/calcium-e-plan.mOIsBs/baseline-check)
+==3252012==    by 0x4077A08: std::rt::lang_start::<()>::{closure#0} (in /tmp/calcium-e-plan.mOIsBs/baseline-check)
+==3252012==    by 0x4187B86: std::rt::lang_start_internal (in /tmp/calcium-e-plan.mOIsBs/baseline-check)
+==3252012==    by 0x4073EF4: main (in /tmp/calcium-e-plan.mOIsBs/baseline-check)
+==3252012== 
+==3252012== 544 bytes in 1 blocks are still reachable in loss record 13 of 15
+==3252012==    at 0x4A21AE6: malloc (vg_replace_malloc.c:447)
+==3252012==    by 0x418AFB9: std::sys::pal::unix::stack_overflow::thread_info::set_current_info (in /tmp/calcium-e-plan.mOIsBs/baseline-check)
+==3252012==    by 0x4187ABF: std::rt::lang_start_internal (in /tmp/calcium-e-plan.mOIsBs/baseline-check)
+==3252012==    by 0x4073EF4: main (in /tmp/calcium-e-plan.mOIsBs/baseline-check)
+==3252012== 
+==3252012== 608 bytes in 1 blocks are still reachable in loss record 14 of 15
+==3252012==    at 0x4A298E1: realloc (vg_replace_malloc.c:1741)
+==3252012==    by 0x408FE84: __gmp_default_reallocate (in /tmp/calcium-e-plan.mOIsBs/baseline-check)
+==3252012==    by 0x408243D: mpfr_set_prec (in /tmp/calcium-e-plan.mOIsBs/baseline-check)
+==3252012==    by 0x408D381: mpfr_cache (in /tmp/calcium-e-plan.mOIsBs/baseline-check)
+==3252012==    by 0x408745A: mpfr_exp_2 (in /tmp/calcium-e-plan.mOIsBs/baseline-check)
+==3252012==    by 0x4079078: mpfr_exp (in /tmp/calcium-e-plan.mOIsBs/baseline-check)
+==3252012==    by 0x40735B2: e_plan_baseline_check::enclose (in /tmp/calcium-e-plan.mOIsBs/baseline-check)
+==3252012==    by 0x407201A: e_plan_baseline_check::main (in /tmp/calcium-e-plan.mOIsBs/baseline-check)
+==3252012==    by 0x406B2E2: std::sys::backtrace::__rust_begin_short_backtrace::<fn(), ()> (in /tmp/calcium-e-plan.mOIsBs/baseline-check)
+==3252012==    by 0x4077A08: std::rt::lang_start::<()>::{closure#0} (in /tmp/calcium-e-plan.mOIsBs/baseline-check)
+==3252012==    by 0x4187B86: std::rt::lang_start_internal (in /tmp/calcium-e-plan.mOIsBs/baseline-check)
+==3252012==    by 0x4073EF4: main (in /tmp/calcium-e-plan.mOIsBs/baseline-check)
+==3252012== 
+==3252012== 32,776 bytes in 1 blocks are still reachable in loss record 15 of 15
+==3252012==    at 0x4A21AE6: malloc (vg_replace_malloc.c:447)
+==3252012==    by 0x41466C2: <alloc::raw_vec::RawVecInner>::try_allocate_in (in /tmp/calcium-e-plan.mOIsBs/baseline-check)
+==3252012==    by 0x411F6C0: <hyperreal::computable::node::Computable>::approx_signal (in /tmp/calcium-e-plan.mOIsBs/baseline-check)
+==3252012==    by 0x4072051: e_plan_baseline_check::main (in /tmp/calcium-e-plan.mOIsBs/baseline-check)
+==3252012==    by 0x406B2E2: std::sys::backtrace::__rust_begin_short_backtrace::<fn(), ()> (in /tmp/calcium-e-plan.mOIsBs/baseline-check)
+==3252012==    by 0x4077A08: std::rt::lang_start::<()>::{closure#0} (in /tmp/calcium-e-plan.mOIsBs/baseline-check)
+==3252012==    by 0x4187B86: std::rt::lang_start_internal (in /tmp/calcium-e-plan.mOIsBs/baseline-check)
+==3252012==    by 0x4073EF4: main (in /tmp/calcium-e-plan.mOIsBs/baseline-check)
+==3252012== 
+==3252012== LEAK SUMMARY:
+==3252012==    definitely lost: 0 bytes in 0 blocks
+==3252012==    indirectly lost: 0 bytes in 0 blocks
+==3252012==      possibly lost: 0 bytes in 0 blocks
+==3252012==    still reachable: 35,656 bytes in 15 blocks
+==3252012==                       of which reachable via heuristic:
+==3252012==                         newarray           : 608 bytes in 1 blocks
+==3252012==         suppressed: 0 bytes in 0 blocks
+==3252012== 
+==3252012== For lists of detected and suppressed errors, rerun with: -s
+==3252012== ERROR SUMMARY: 0 errors from 0 contexts (suppressed: 0 from 0)

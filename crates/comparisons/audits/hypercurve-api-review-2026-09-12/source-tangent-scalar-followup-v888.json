@@ -1,0 +1,29 @@
+{
+  "kind": "read-only follow-up; symbolic fixture not run",
+  "source_hashes": {
+    "hypercurve/src/bezier_tangent_order.rs": "63bfa68a05601228661a901a880cc24702b36d2d0a7159f10b2696660486975e",
+    "hypersolve/src/algebraic_fiber.rs": "4dd2587871dc4daa3ed2ea8a4ab6f848cf818b2cba7971014904e1d04f5eaf5c"
+  },
+  "remaining_boundary": "Source-side sign witnesses retain their vector operands, but same_side_magnitude_difference and graph-third normalization still require independent represented scalar roots. A nonzero selected-expression scalar remains exact even without such a root.",
+  "fixture": {
+    "parameter": "alpha: 4*t^3-pi=0, selected in (0,1)",
+    "first": "A(t)=(P(t),t*P(t)), P(t)=4*t^3-pi",
+    "second": "B(t)=(P(t),t*P(t)+P(t)^2)",
+    "point": "A(alpha)=B(alpha)=(0,0), so endpoint positions reduce to represented zeros.",
+    "tangent": "Both tangents are (Pprime,alpha*Pprime), with Pprime(alpha)=12*alpha^2>0.",
+    "oracle": "At matched x=P(t)>0 near zero, B_y-A_y=x^2>0. Thus A precedes B counterclockwise from incoming positive horizontal direction.",
+    "curvature": "cross(Aprime,Asecond)=2*(Pprime)^2; cross(Bprime,Bsecond)=2*(Pprime)^2*(1+Pprime), so the second curvature is larger while both speeds agree.",
+    "degree_six_controls": "x[k]=-pi+choose(k,3)/5; y[k]=pi^2-k*pi/6-(2*pi/5)*choose(k,3)+(4/15)*choose(k,4)+16*[k=6]; all weights 1.",
+    "status": "Unrun; verify exact represented-point/source-tangent premises and actual public traversal before asserting a new failure."
+  },
+  "architecture": [
+    "Hypersolve algebraic_fiber.rs already has private LocalFieldElement (reduced numerator/denominator) and LocalAlgebraicField with selected-root/domain/sign/refinement machinery. Investigate reuse there before creating a second arithmetic grammar in Hypercurve.",
+    "A reusable scalar value must retain its selected-root owner and finite-denominator proof, accept arbitrary exact coefficients, and preserve irreducible-versus-selected-domain distinctions. Do not require a global quotient-ring inverse for a denominator only known nonzero at the selected root.",
+    "Expose only an ownership-safe exact value/context if needed; update controlled callers directly, retain specialized represented-root/native fast paths and success-only cache rules.",
+    "The common-tangent fixture may permit speed cancellation, but use it as evidence for the general scalar closure gap, not as a substitute for retained scalar arithmetic across all shared-root jets."
+  ],
+  "not_claimed": [
+    "No new public runtime or region failure proven yet.",
+    "No current Hypersolve edit or new build/probe/reviewer driver from this audit."
+  ]
+}

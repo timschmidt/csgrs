@@ -1,0 +1,32 @@
+\doxysubsection{Open\+Set\texorpdfstring{$<$}{<} P, T \texorpdfstring{$>$}{>} Class Template Reference}
+\hypertarget{classAriadne_1_1OpenSet}{}\label{classAriadne_1_1OpenSet}\index{OpenSet$<$ P, T $>$@{OpenSet$<$ P, T $>$}}
+
+
+{\ttfamily \#include $<$set.\+hpp$>$}
+
+
+
+\doxysubsubsection{Description}
+\subsubsection*{template$<$class P, class T$>$\newline
+class Ariadne\+::\+Open\+Set$<$ P, T $>$}
+Open sets, defined by a verifyable membership predicate. 
+
+Handle class for open sets. \doxysubsubsubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1OpenSet_a3c1a15a3831a647991a6a2c5bbe1e029}\label{classAriadne_1_1OpenSet_a3c1a15a3831a647991a6a2c5bbe1e029} 
+\mbox{\hyperlink{namespaceAriadne_a4b06015a4986ef014fb6643680cb04d2}{Dimension\+Type}} {\bfseries dimension} () const
+\begin{DoxyCompactList}\small\item\em The dimension of the set. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1OpenSet_a1bc2a1c0b248f6fc6bebe339f81b4fdd}\label{classAriadne_1_1OpenSet_a1bc2a1c0b248f6fc6bebe339f81b4fdd} 
+Lower\+Kleenean\+Type$<$ P $>$ {\bfseries overlaps} (const Basic\+Set\+Type \&bx) const
+\begin{DoxyCompactList}\small\item\em Tests if the set overlaps {\itshape bx}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1OpenSet_a8e9c60f420286fc46ed4c637f3d1085f}\label{classAriadne_1_1OpenSet_a8e9c60f420286fc46ed4c637f3d1085f} 
+Lower\+Kleenean\+Type$<$ P $>$ {\bfseries covers} (const Basic\+Set\+Type \&bx) const
+\begin{DoxyCompactList}\small\item\em Tests if the set covers of {\itshape bx}. A set {\itshape A} {\itshape covers} {\itshape B} if the interiors of {\itshape A} is a superset of the closure of {\itshape B}. A set $A$ {\itshape covers} $B$ if $A^\circ \supset \overline{B}$. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+The documentation for this class was generated from the following files\+:\begin{DoxyCompactItemize}
+\item 
+source/geometry/\mbox{\hyperlink{measurable__set_8hpp}{measurable\+\_\+set.\+hpp}}\item 
+source/geometry/\mbox{\hyperlink{set_8hpp}{set.\+hpp}}\item 
+source/geometry/\mbox{\hyperlink{set__wrapper_8hpp}{set\+\_\+wrapper.\+hpp}}\end{DoxyCompactItemize}

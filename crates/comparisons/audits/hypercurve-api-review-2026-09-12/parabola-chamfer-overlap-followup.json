@@ -1,0 +1,40 @@
+{
+  "status": "fixed and committed; all eight independent region comparisons pass",
+  "goal_status": "active",
+  "base_commit": "a3c843cbfa3ded3acd388dbd81371055fc40a633",
+  "minimal_curve": "Q(t)=(t^2,2t), 0<=t<=1. Let s=sqrt(sqrt(5)-2), so Q(s) is at unit Euclidean setback from Q(0).",
+  "independent_tail_controls": [
+    "(s^2,2s)",
+    "(s,1+s)",
+    "(1,2)"
+  ],
+  "independent_tail_map": "Q(s+(1-s)u), 0<=u<=1.",
+  "regions": "Line/parabola chamfer and symmetric two-parabola chamfer; generated and boundary-path-restored versions; STRICT and APPROXIMATE_512.",
+  "observations": [
+    "Both generated and independent regions admit Certified.",
+    "Generated endpoints certify coincidence with the independent exact nested-radical contact.",
+    "All eight generated/restored region XOR cases fail Boolean with Boundary.",
+    "The lower-level source/tail rational-Bezier intersection returns DegenerateResultant for both candidates and contacts under both policies.",
+    "Public Curve2 intersection on generated fragments separately still reports Unsupported; this is broader outstanding interface closure work."
+  ],
+  "artifacts": [
+    "parabola-chamfer-independent-region-probe.json",
+    "parabola-chamfer-independent-region-trace.json",
+    "parabola-chamfer-independent-pairs-probe.json",
+    "parabola-independent-tail-overlap-probe.json"
+  ],
+  "tests_to_migrate_after_repair": [
+    "unified_region_chamfer_retains_algebraic_bezier_cut",
+    "unified_region_chamfer_joins_two_algebraic_bezier_cuts"
+  ],
+  "constraint": "Do not drop independent set equality or restore required internal variants to make these tests pass.",
+  "confirmed_cause": "Endpoint contacts were deduplicated only by structural parameter equality. The two chart directions retained equivalent exact witnesses as separate contacts; shared-component replay then treated one interval as unresolved multiplicity.",
+  "implementation": "Reuse BezierParameter2::same_value under STRICT for contact identity; only certified equal pairs merge. The existing proof machinery and parameter witnesses are reused.",
+  "focused_results": [
+    "parabola-overlap-dedup-focused1.json",
+    "parabola-overlap-dedup-promotion-focused.exit",
+    "parabola-chamfer-independent-region-dedup1.json"
+  ],
+  "commit": "d4eda85eb95ee167efaad463ace09b93e589b1a0",
+  "qualification": "parabola-overlap-dedup-qualification.json"
+}

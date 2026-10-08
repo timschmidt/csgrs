@@ -1,0 +1,50 @@
+{
+  "status": "committed; qualified against the documented baseline",
+  "goal_status": "active",
+  "previous_commit": "41c645b169dbcf420cd1800e436fbf5468b4ed81",
+  "commit": "222e177628edbe07541e54c85a95ddf03b9cab8d",
+  "targets": 49,
+  "passed": 2206,
+  "passed_by_repo": {
+    "hypercurve": 1974,
+    "hyperbrep": 232
+  },
+  "known_failed": [
+    "approximate_512_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions",
+    "non_ph_bezier_pair_projective_fillet_retains_algebraic_extensions",
+    "nonconvex_algebraic_chord_expansion_is_exact_and_local_collapse_is_explicit",
+    "strict_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions",
+    "unified_mixed_line_arc_erosion_splits_after_a_curved_neck_collapse"
+  ],
+  "new_failures": [],
+  "ignored": 9,
+  "expensive_previously_unqualified_exclusions": 8,
+  "timeouts": 0,
+  "builds_and_checks": {
+    "-check": 0,
+    "-test-build": 0,
+    "-hyperbrep-check": 0,
+    "-hyperbrep-test-build": 0
+  },
+  "formatting_and_whitespace": "passed on unchanged qualification sources",
+  "source_verification": "circle-common-dispatch-source-verification.json",
+  "normal_library_sha256": "1408b5d764fd133df5fa4e8ddf9e8fe723f5f9a783b9b017a1e6e1c1dcdfe153",
+  "independent_probes_and_matrices": [
+    "circle-common-dispatch-probe-final.json",
+    "circle-common-dispatch-matrix.json",
+    "circle-common-dispatch-general-trim-matrix.json",
+    "circle-common-dispatch-constant-image-trim-matrix.json"
+  ],
+  "paired_region_replay": "circle-common-dispatch-paired-region-replay.json",
+  "evidence_audit": "circle-common-dispatch-evidence-audit.md",
+  "followup": "circle-common-dispatch-followup.json",
+  "performance_observation": {
+    "fixture": "selected_circle_and_non_ph_parallel_keep_both_crossings",
+    "initial_timeout_seconds": 180,
+    "reduced_norm_elapsed_seconds": 1.015014810996945,
+    "scope": "one documented fixture; no broad throughput, allocation or memory claim"
+  },
+  "remaining": "Parallel/rational, parallel/chord and parallel/parallel common dispatch; selected-center finiteness scope; publicly replayable region carrier charts; finite exterior and retraced domains; normalized public region construction; five promotion failures; eight unqualified expensive cases; broader original architecture goal.",
+  "workspace_repositories_checked": 30,
+  "workspace_repositories_clean": true
+}

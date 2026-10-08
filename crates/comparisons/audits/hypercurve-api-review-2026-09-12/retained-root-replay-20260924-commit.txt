@@ -1,0 +1,16 @@
+Replay retained coefficient roots before algebraic promotion
+
+Share the singleton-root identity certificate and its field embedding
+between native parameter comparison and retained polynomial signs.
+Consume Hypersolve root evidence directly, preserving exact queries when
+an older generated point no longer carries a native Bezier wrapper.
+
+Keep bounded strict replay and all existing complete fallbacks. Correct
+the extension regression to pair ordered source parameters with oriented
+traversal endpoints, retaining both exact endpoint assertions.
+
+Validation: formatting and both all-target Clippy configurations pass.
+Combined qualification has 1,457 passes, six ignored cases and four
+unchanged timeouts, including all 225 public integration cases passing.
+Four prior chamfer timeouts are resolved. The final test-only correction
+passes ten focused cases against production identical to the full run.

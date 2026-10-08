@@ -1,0 +1,111 @@
+{
+  "binaries": {
+    "historical": {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-domain-ownership-20260927-v527-hypercurve-tests",
+      "sha256": "b8083c1ba7e48b0bfd502aadc363b41bc5fd563cc45fed0907fb697746f2a796"
+    },
+    "current": {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/native-path-shims-20260928-v707-hypercurve-tests",
+      "sha256": "5bc63c1f9bb8c562fa648c2b039549d564aa1e1c54e5fa57f5399b71e8f86584"
+    }
+  },
+  "cases": [
+    {
+      "pair": 0,
+      "label": "historical",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-domain-ownership-20260927-v527-hypercurve-tests",
+        "--exact",
+        "curve::curve_fillet::tests::joined_path_selects_and_replays_a_continuous_fillet_family",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "log": "joined-fillet-comparison-20260928-v710-0-historical.log",
+      "elapsed_seconds": 3.017772409133613,
+      "returncode": 0,
+      "passed": true
+    },
+    {
+      "pair": 0,
+      "label": "current",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/native-path-shims-20260928-v707-hypercurve-tests",
+        "--exact",
+        "curve::curve_fillet::tests::joined_path_selects_and_replays_a_continuous_fillet_family",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "log": "joined-fillet-comparison-20260928-v710-0-current.log",
+      "elapsed_seconds": 0.31431858194991946,
+      "returncode": 0,
+      "passed": true
+    },
+    {
+      "pair": 1,
+      "label": "current",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/native-path-shims-20260928-v707-hypercurve-tests",
+        "--exact",
+        "curve::curve_fillet::tests::joined_path_selects_and_replays_a_continuous_fillet_family",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "log": "joined-fillet-comparison-20260928-v710-1-current.log",
+      "elapsed_seconds": 0.3142467369325459,
+      "returncode": 0,
+      "passed": true
+    },
+    {
+      "pair": 1,
+      "label": "historical",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-domain-ownership-20260927-v527-hypercurve-tests",
+        "--exact",
+        "curve::curve_fillet::tests::joined_path_selects_and_replays_a_continuous_fillet_family",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "log": "joined-fillet-comparison-20260928-v710-1-historical.log",
+      "elapsed_seconds": 3.0677436320111156,
+      "returncode": 0,
+      "passed": true
+    },
+    {
+      "pair": 2,
+      "label": "historical",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-domain-ownership-20260927-v527-hypercurve-tests",
+        "--exact",
+        "curve::curve_fillet::tests::joined_path_selects_and_replays_a_continuous_fillet_family",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "log": "joined-fillet-comparison-20260928-v710-2-historical.log",
+      "elapsed_seconds": 3.017884701024741,
+      "returncode": 0,
+      "passed": true
+    },
+    {
+      "pair": 2,
+      "label": "current",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/native-path-shims-20260928-v707-hypercurve-tests",
+        "--exact",
+        "curve::curve_fillet::tests::joined_path_selects_and_replays_a_continuous_fillet_family",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "log": "joined-fillet-comparison-20260928-v710-2-current.log",
+      "elapsed_seconds": 0.3142815539613366,
+      "returncode": 0,
+      "passed": true
+    }
+  ],
+  "qualification_complete": true,
+  "all_processes_reaped": true,
+  "scope": "Three serial paired runs; geometry test inputs/assertions match, only failure diagnostics differ. Current pinned binary predates the verified orientation-only rename.",
+  "medians": {
+    "historical": 3.017884701024741,
+    "current": 0.3142815539613366
+  }
+}

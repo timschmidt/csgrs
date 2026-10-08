@@ -1,0 +1,4 @@
+add_subdirectory(control_validator)
+add_subdirectory(dynamic_game)
+add_subdirectory(riccati)
+add_subdirectory(kirk)

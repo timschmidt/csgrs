@@ -1,0 +1,13 @@
+{
+  "tag": "zero-factor-native-check-v71",
+  "started": "2026-09-11T19:34:20.009Z",
+  "finished": "2026-09-11T19:34:49.522Z",
+  "elapsedSeconds": 29.511311644,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "node",
+  "args": [
+    "check-zero-factor-native-v71.mjs"
+  ],
+  "code": 0,
+  "signal": null
+}

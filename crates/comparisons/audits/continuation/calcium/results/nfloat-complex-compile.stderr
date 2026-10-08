@@ -1,0 +1,8 @@
+audits/continuation/calcium/flint-nfloat-complex-controls.c: In function ‘arithmetic’:
+audits/continuation/calcium/flint-nfloat-complex-controls.c:121:21: error: this ‘for’ clause does not guard... [-Werror=misleading-indentation]
+  121 |                     for(int i=0;i<2;i++) mpq_div(expected[i],expected[i],denom); break;
+      |                     ^~~
+audits/continuation/calcium/flint-nfloat-complex-controls.c:121:82: note: ...this statement, but the latter is misleadingly indented as if it were guarded by the ‘for’
+  121 |                     for(int i=0;i<2;i++) mpq_div(expected[i],expected[i],denom); break;
+      |                                                                                  ^~~~~
+cc1: all warnings being treated as errors

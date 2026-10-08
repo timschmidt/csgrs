@@ -1,0 +1,51 @@
+\doxysubsection{source/utility/typedefs.hpp File Reference}
+\hypertarget{typedefs_8hpp}{}\label{typedefs_8hpp}\index{source/utility/typedefs.hpp@{source/utility/typedefs.hpp}}
+{\ttfamily \#include $<$cstdint$>$}\newline
+{\ttfamily \#include $<$iosfwd$>$}\newline
+{\ttfamily \#include $<$type\+\_\+traits$>$}\newline
+{\ttfamily \#include $<$memory$>$}\newline
+\doxysubsubsubsection*{Classes}
+\begin{DoxyCompactItemize}
+\item 
+struct \mbox{\hyperlink{structAriadne_1_1SizeOne}{Size\+One}}
+\begin{DoxyCompactList}\small\item\em A tag for the size of a scalar object. \end{DoxyCompactList}\item 
+struct \mbox{\hyperlink{structAriadne_1_1IndexZero}{Index\+Zero}}
+\begin{DoxyCompactList}\small\item\em A tag for an index into a scalar object. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsubsection*{Namespaces}
+\begin{DoxyCompactItemize}
+\item 
+namespace \mbox{\hyperlink{namespaceAriadne}{Ariadne}}
+\begin{DoxyCompactList}\small\item\em Top-\/level Ariadne namespace. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsubsection*{Typedefs}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{namespaceAriadne_aacf806ba1ec54c669c300f0edafbb127}\label{namespaceAriadne_aacf806ba1ec54c669c300f0edafbb127} 
+using {\bfseries String\+Stream} = std\+::stringstream
+\begin{DoxyCompactList}\small\item\em Internal name for standard string stream. \end{DoxyCompactList}\item 
+\Hypertarget{namespaceAriadne_a1b0cafccc05c7c13545a6507648f6e75}\label{namespaceAriadne_a1b0cafccc05c7c13545a6507648f6e75} 
+using {\bfseries Char} = char
+\begin{DoxyCompactList}\small\item\em Internal name for builtin char type. \end{DoxyCompactList}\item 
+\Hypertarget{namespaceAriadne_a517889b28874c4d51c0713555cbf06c2}\label{namespaceAriadne_a517889b28874c4d51c0713555cbf06c2} 
+using {\bfseries Byte} = std\+::int8\+\_\+t
+\begin{DoxyCompactList}\small\item\em Internal name for builtin byte type (8 bits). \end{DoxyCompactList}\item 
+\Hypertarget{namespaceAriadne_af27e2448955784e46e43ebd13eeb215a}\label{namespaceAriadne_af27e2448955784e46e43ebd13eeb215a} 
+using {\bfseries String\+Type} = std\+::string
+\begin{DoxyCompactList}\small\item\em Internal name for builtin double-\/precision floats. \end{DoxyCompactList}\item 
+\Hypertarget{namespaceAriadne_a9534474203960fbf4168d1c2a55b923c}\label{namespaceAriadne_a9534474203960fbf4168d1c2a55b923c} 
+using {\bfseries Pointer\+Difference\+Type} = std\+::ptrdiff\+\_\+t
+\begin{DoxyCompactList}\small\item\em Internal name for standard difference type of container indices and pointers. \end{DoxyCompactList}\item 
+\Hypertarget{namespaceAriadne_a6955109c2667f9745f9358857613dc86}\label{namespaceAriadne_a6955109c2667f9745f9358857613dc86} 
+using {\bfseries Counter\+Type} = std\+::uint32\+\_\+t
+\begin{DoxyCompactList}\small\item\em Internal name for unsigned integer used as a step counter. \end{DoxyCompactList}\item 
+\Hypertarget{namespaceAriadne_a90f87c326bcb905255f4c8fd100d1d2c}\label{namespaceAriadne_a90f87c326bcb905255f4c8fd100d1d2c} 
+{\footnotesize template$<$class T$>$ }\\using {\bfseries Unique\+Pointer} = std\+::unique\+\_\+ptr$<$T$>$
+\begin{DoxyCompactList}\small\item\em Internal alias for standard unique pointer. \end{DoxyCompactList}\item 
+\Hypertarget{namespaceAriadne_a80311bc831cfc870fd65158180330a77}\label{namespaceAriadne_a80311bc831cfc870fd65158180330a77} 
+typedef std\+::uint16\+\_\+t {\bfseries Degree\+Type}
+\begin{DoxyCompactList}\small\item\em The type used for the degree of an index. \end{DoxyCompactList}\item 
+\Hypertarget{namespaceAriadne_a4b06015a4986ef014fb6643680cb04d2}\label{namespaceAriadne_a4b06015a4986ef014fb6643680cb04d2} 
+typedef Size\+Type {\bfseries Dimension\+Type}
+\begin{DoxyCompactList}\small\item\em The type used for the dimension of a geometric object. \end{DoxyCompactList}\item 
+\Hypertarget{namespaceAriadne_ae2efe5fd5fdd45f8e60589f22c35a15b}\label{namespaceAriadne_ae2efe5fd5fdd45f8e60589f22c35a15b} 
+typedef \mbox{\hyperlink{classAriadne_1_1Map}{Map}}$<$ \mbox{\hyperlink{classAriadne_1_1Variable}{Real\+Variable}}, \mbox{\hyperlink{namespaceAriadne_aae901a69a841b1a085a0dfe218e38fe9}{Nat}} $>$ {\bfseries subspace}
+\begin{DoxyCompactList}\small\item\em The type used for the subspace grid. \end{DoxyCompactList}\end{DoxyCompactItemize}

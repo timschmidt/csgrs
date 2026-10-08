@@ -1,0 +1,188 @@
+{
+  "checkpoint": 66,
+  "recorded": "2026-09-11T03:16:13.068Z",
+  "root": "/tmp/calcium-point-consumer.qyV59b",
+  "sourceBindingSha256": "a3759278703e4c7b9a05f4eb8adf4468074c29fd1164325423dab63b1430e50d",
+  "priorAppsSha256": "cce7f05a82b76b323bce45439a77f64d4c4bb45221431da1a8196539860860fc",
+  "baselineAppsSha256": "3c78fe321e0d5ceeacdcb332a289f9898d7269d34bd079e16c2d930aa20a96ba",
+  "artifacts": [
+    {
+      "variant": "baseline",
+      "crate": "hypercurve",
+      "example": "basic",
+      "files": [
+        {
+          "path": "/tmp/calcium-e-qualified-apps.AHiwfn/candidate-hypercurve-basic",
+          "bytes": 13494488,
+          "sha256": "dc4371cee27d5d90ec78d18ab0f72ce7c56c703b987e55d73772f59729ac09a7"
+        },
+        {
+          "path": "/tmp/calcium-e-qualified-apps.AHiwfn/candidate-hypercurve-basic.stripped",
+          "bytes": 11012856,
+          "sha256": "b434742e8f3147aa39610d309ec557521fcd29b488534dfe3a4e1f3140ca0966"
+        }
+      ],
+      "reusedFrom": "point-qualified-apps-summary.json"
+    },
+    {
+      "variant": "eager",
+      "crate": "hypercurve",
+      "example": "basic",
+      "files": [
+        {
+          "path": "/tmp/calcium-point-qualified-apps.QIBZlE/candidate-hypercurve-basic",
+          "bytes": 13495064,
+          "sha256": "e980f7e10280a1412030ab5f4be24cf26eec5939a76b0e58a45278cde7b1ff06"
+        },
+        {
+          "path": "/tmp/calcium-point-qualified-apps.QIBZlE/candidate-hypercurve-basic.stripped",
+          "bytes": 11013992,
+          "sha256": "34dc9d5f96b63769ce6ad516477f704740fe5febcd12f22ec320b2b17a6ca18a"
+        }
+      ],
+      "reusedFrom": "point-qualified-apps-summary.json"
+    },
+    {
+      "variant": "demand",
+      "crate": "hypercurve",
+      "example": "basic",
+      "files": [
+        {
+          "path": "/tmp/calcium-point-consumer.qyV59b/demand-basic",
+          "bytes": 13495088,
+          "sha256": "4e2ae4baad0f776e0a6f34d103177527030eb8806fd012b532912d3adbffe7a5"
+        },
+        {
+          "path": "/tmp/calcium-point-consumer.qyV59b/demand-basic.stripped",
+          "bytes": 11014424,
+          "sha256": "55768aee0ef245254e9fed9b1e9a55389c8d136a9028fb9a4bdbe49434437b10"
+        }
+      ]
+    },
+    {
+      "variant": "baseline",
+      "crate": "hypercurve",
+      "example": "arrangement",
+      "files": [
+        {
+          "path": "/tmp/calcium-e-qualified-apps.AHiwfn/candidate-hypercurve-arrangement",
+          "bytes": 14181296,
+          "sha256": "d6f14fbd841b38da9590782ab703fc85fabc445f048babc5e829b0e8949ddbe8"
+        },
+        {
+          "path": "/tmp/calcium-e-qualified-apps.AHiwfn/candidate-hypercurve-arrangement.stripped",
+          "bytes": 11587192,
+          "sha256": "53aadaadfc84758b856a35ad4e2769e0d3843a483c6dc3fa01197365c2f19eca"
+        }
+      ],
+      "reusedFrom": "point-qualified-apps-summary.json"
+    },
+    {
+      "variant": "eager",
+      "crate": "hypercurve",
+      "example": "arrangement",
+      "files": [
+        {
+          "path": "/tmp/calcium-point-qualified-apps.QIBZlE/candidate-hypercurve-arrangement",
+          "bytes": 14181832,
+          "sha256": "a4432fd2fcf2de5845e8bdc8388c83789109277ee7b04e69dc808cc2f9345e36"
+        },
+        {
+          "path": "/tmp/calcium-point-qualified-apps.QIBZlE/candidate-hypercurve-arrangement.stripped",
+          "bytes": 11588344,
+          "sha256": "067e0dde4d2b2101b583323196e9f44353057a7b6d61b24d3dcf16d91a9563f1"
+        }
+      ],
+      "reusedFrom": "point-qualified-apps-summary.json"
+    },
+    {
+      "variant": "demand",
+      "crate": "hypercurve",
+      "example": "arrangement",
+      "files": [
+        {
+          "path": "/tmp/calcium-point-consumer.qyV59b/demand-arrangement",
+          "bytes": 14181744,
+          "sha256": "5a7a7f263667955956eb0143fa20487020cbebdc450666e541fb06d193644b2f"
+        },
+        {
+          "path": "/tmp/calcium-point-consumer.qyV59b/demand-arrangement.stripped",
+          "bytes": 11588728,
+          "sha256": "37c69ddb36ca0699f85faabec05a83b02956e31ee3c54db7b84d99948610402d"
+        }
+      ]
+    }
+  ],
+  "reusedCold": {
+    "bindingSha256": "e6d1f16ca9e79bfe9700caf78f9b4d18f199edf9ce03ecae19fcec9fdab0220a",
+    "artifacts": [
+      {
+        "variant": "baseline",
+        "platform": "native",
+        "path": "/tmp/calcium-point-cold.3RcRIa/baseline",
+        "bytes": 3170352,
+        "sha256": "58a59d7b3579a7c1fd5f612c1fdf28237a3779ace5aa49e952830bf48a70310c"
+      },
+      {
+        "variant": "baseline",
+        "platform": "wasm",
+        "path": "/tmp/calcium-point-cold.3RcRIa/baseline.wasm",
+        "bytes": 1613729,
+        "sha256": "1b13db752566aa0d8fa80b9b3b4da8ceac3226af4d0a1c59188a49d5ccf20f50"
+      },
+      {
+        "variant": "eager",
+        "platform": "native",
+        "path": "/tmp/calcium-point-cold.3RcRIa/eager",
+        "bytes": 3170888,
+        "sha256": "42169aa548c7c8d5193dfab780d6ee0de0dc2d327d95e31f67cd365017dd6cb8"
+      },
+      {
+        "variant": "eager",
+        "platform": "wasm",
+        "path": "/tmp/calcium-point-cold.3RcRIa/eager.wasm",
+        "bytes": 1613955,
+        "sha256": "79058d78951fb7a5364347558d83a5d1b6026517261324b5fc8110ef7f1bf452"
+      },
+      {
+        "variant": "demand",
+        "platform": "native",
+        "path": "/tmp/calcium-point-cold.3RcRIa/demand",
+        "bytes": 3175064,
+        "sha256": "c15db10510906095aa7a3b64a30804d7758dd6e868a92aba224e4e33ea753706"
+      },
+      {
+        "variant": "demand",
+        "platform": "wasm",
+        "path": "/tmp/calcium-point-cold.3RcRIa/demand.wasm",
+        "bytes": 1614522,
+        "sha256": "5007dc2eb714f87ed34d13c2f3e1e8f8ccf0aa8d0333298a2b0637180c6b669e"
+      }
+    ]
+  },
+  "reusedWasm": {
+    "bindingSha256": "91ebf24a36d7e7c12f5d5bc4d47e57700a24c7639004b9ef4322f5ca57d1eced",
+    "artifacts": [
+      {
+        "variant": "baseline",
+        "path": "/tmp/calcium-point-wasm.jPk2WY/baseline.wasm",
+        "bytes": 1614156,
+        "sha256": "f9dc6f45bdb901e9386de7d8ad509a373bf03ce0babaa1805cb306d059d0e877"
+      },
+      {
+        "variant": "eager",
+        "path": "/tmp/calcium-point-wasm.jPk2WY/eager.wasm",
+        "bytes": 1614371,
+        "sha256": "05ba21965eef756746b54fa05ed38802c7663904cad027a2ed70cd9699c41d1c"
+      },
+      {
+        "variant": "demand",
+        "path": "/tmp/calcium-point-wasm.jPk2WY/demand.wasm",
+        "bytes": 1614858,
+        "sha256": "122381ac7e6cf469605119a8d89f331ab9c3d7dc2faafa0c002efcb2148067c2"
+      }
+    ]
+  },
+  "dedicatedBytes": 50279984,
+  "limits": "Two unchanged default-feature release examples and separate stripped copies. Prior frozen baseline/eager examples rerun; source/configuration matched, different build paths and linker layout remain confounders. The examples are representative consumers, not proof that the repaired binary-image path was executed. Cold/history collector binary sizes are reused frozen observations with matched harnesses, not newly rebuilt binaries. No full application, LTO/size-profile, allocator or timing qualification."
+}

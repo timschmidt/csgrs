@@ -1,0 +1,50 @@
+{
+  "diagnostic_only": true,
+  "source_manifest": "retained-rational-domain-20260927-v513-sources.json",
+  "source_directory": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/source-archives/retained-rational-domain-20260927-v513",
+  "workspace_guard": "retained-rational-domain-20260927-v510-sources.json",
+  "fixture_sha256": "935a89b66c14afb6c5a22e7828848da6eb979623e359099393a47da92ccd67d2",
+  "builds": [
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "test",
+        "--lib",
+        "--release",
+        "--all-features",
+        "--locked",
+        "--offline",
+        "--no-run",
+        "--message-format=json"
+      ],
+      "returncode": 0,
+      "log": "retained-rational-domain-20260927-v513-build.log",
+      "elapsed_seconds": 130.79379247198813,
+      "binary": {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-rational-domain-20260927-v513-tests",
+        "sha256": "ff5bed1e63e76330c5bd5e2663572a0604bb0524a96f8128170ee26c1d2326bd"
+      }
+    }
+  ],
+  "cases": [
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-rational-domain-20260927-v513-tests",
+        "--exact",
+        "bezier_region::tests::pair_native_boolean_analytic_corner_publishes_a_third_generation_fillet",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 101,
+      "log": "retained-rational-domain-20260927-v513-pair_native_boolean_analytic_corner_publishes_a_third_generation_fillet.log",
+      "elapsed_seconds": 0.21416775695979595,
+      "name": "bezier_region::tests::pair_native_boolean_analytic_corner_publishes_a_third_generation_fillet",
+      "passed": false
+    }
+  ],
+  "expected_cases": [
+    "bezier_region::tests::pair_native_boolean_analytic_corner_publishes_a_third_generation_fillet"
+  ],
+  "all_processes_reaped": true,
+  "probe_complete": true
+}

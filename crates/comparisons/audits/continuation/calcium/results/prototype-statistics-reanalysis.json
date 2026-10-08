@@ -1,0 +1,13 @@
+{
+  "tag": "prototype-statistics-reanalysis",
+  "started": "2026-09-11T01:58:49.457Z",
+  "finished": "2026-09-11T01:59:05.450Z",
+  "elapsedSeconds": 15.990874245,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "node",
+  "args": [
+    "reanalyse-prototype-statistics-v63.mjs"
+  ],
+  "code": 0,
+  "signal": null
+}

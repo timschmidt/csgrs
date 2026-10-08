@@ -1,0 +1,12 @@
+{
+  "returncode": 0,
+  "command": [
+    "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve-6e6572a45c5b177b",
+    "curve_intersection::curve_support_intersection::circle_dispatch_tests::selected_circle_retains_only_its_finite_source_frame",
+    "--exact",
+    "--test-threads=1"
+  ],
+  "binary_sha256": "1425cf363fc27ed2be1b29b44d65e10cdcd972a3a9965397a1304789d32976be",
+  "elapsed_seconds": 16.468516491004266,
+  "log": "selected-circle-local-frame-fixed.log"
+}

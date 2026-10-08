@@ -1,0 +1,66 @@
+{
+  "mode": "candidate",
+  "parent": "1b9fffe7f9b8195918b7c64ce66f07192f8915fd",
+  "selected_files": [
+    "src/bezier_algebraic_image.rs",
+    "src/bezier_offset.rs",
+    "src/bezier_parameter.rs",
+    "src/bezier_split.rs"
+  ],
+  "workspace_changed": [
+    "src/bezier_algebraic_image.rs",
+    "src/bezier_offset.rs",
+    "src/bezier_parameter.rs",
+    "src/bezier_region.rs",
+    "src/bezier_split.rs",
+    "src/curve.rs",
+    "src/curve_corner_chain.rs",
+    "tests/hypercurve_curve.rs"
+  ],
+  "workspace_guard": "local-chord-complete-replay-20260924-v76-sources.json",
+  "source_manifest": "native-evidence-reuse-20260925-v76-candidate-sources.json",
+  "patch": "native-evidence-reuse-20260925-v76.patch",
+  "checks": [
+    {
+      "label": "fmt",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustfmt",
+        "--edition",
+        "2024",
+        "--check",
+        "src/bezier_algebraic_image.rs",
+        "src/bezier_offset.rs",
+        "src/bezier_parameter.rs",
+        "src/bezier_split.rs"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 2.6675630901008844,
+      "limit_seconds": 60,
+      "log": "native-evidence-reuse-20260925-v76-candidate-fmt.log",
+      "ignored": false
+    },
+    {
+      "label": "clippy-0",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "clippy",
+        "--all-targets",
+        "--all-features",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "returncode": 101,
+      "elapsed_seconds": 24.586371012032032,
+      "limit_seconds": 1200,
+      "log": "native-evidence-reuse-20260925-v76-candidate-clippy-0.log",
+      "ignored": false
+    }
+  ],
+  "binaries": {},
+  "cases": [],
+  "all_processes_reaped": true,
+  "all_sources_unchanged": true
+}

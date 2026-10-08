@@ -1,0 +1,14 @@
+{
+  "tag": "erf-paired-alloc",
+  "started": "2026-09-08T10:55:57.586Z",
+  "finished": "2026-09-08T10:56:05.464Z",
+  "elapsedSeconds": 7.874838319,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison",
+  "command": "node",
+  "args": [
+    "audits/continuation/calcium/run-erf-bench.mjs",
+    "alloc"
+  ],
+  "code": 0,
+  "signal": null
+}

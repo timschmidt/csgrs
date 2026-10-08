@@ -1,0 +1,14 @@
+{
+  "tag": "monic-cost-verify-final",
+  "started": "2026-09-09T00:54:24.934Z",
+  "finished": "2026-09-09T00:54:32.558Z",
+  "elapsedSeconds": 7.6223631759999995,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison",
+  "command": "node",
+  "args": [
+    "audits/continuation/calcium/verify-monic-costs.mjs",
+    "--retained-live"
+  ],
+  "code": 0,
+  "signal": null
+}

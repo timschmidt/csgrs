@@ -1,0 +1,25 @@
+==3252048== Memcheck, a memory error detector
+==3252048== Copyright (C) 2002-2026, and GNU GPL'd, by Julian Seward et al.
+==3252048== Using Valgrind-3.27.1 and LibVEX; rerun with -h for copyright info
+==3252048== Command: /tmp/calcium-e-plan.mOIsBs/candidate-check plans
+==3252048== 
+==3252048== 
+==3252048== HEAP SUMMARY:
+==3252048==     in use at exit: 544 bytes in 1 blocks
+==3252048==   total heap usage: 50,813 allocs, 50,812 frees, 458,730,719 bytes allocated
+==3252048== 
+==3252048== 544 bytes in 1 blocks are still reachable in loss record 1 of 1
+==3252048==    at 0x4A21AE6: malloc (vg_replace_malloc.c:447)
+==3252048==    by 0x418B069: std::sys::pal::unix::stack_overflow::thread_info::set_current_info (in /tmp/calcium-e-plan.mOIsBs/candidate-check)
+==3252048==    by 0x4187B6F: std::rt::lang_start_internal (in /tmp/calcium-e-plan.mOIsBs/candidate-check)
+==3252048==    by 0x4072934: main (in /tmp/calcium-e-plan.mOIsBs/candidate-check)
+==3252048== 
+==3252048== LEAK SUMMARY:
+==3252048==    definitely lost: 0 bytes in 0 blocks
+==3252048==    indirectly lost: 0 bytes in 0 blocks
+==3252048==      possibly lost: 0 bytes in 0 blocks
+==3252048==    still reachable: 544 bytes in 1 blocks
+==3252048==         suppressed: 0 bytes in 0 blocks
+==3252048== 
+==3252048== For lists of detected and suppressed errors, rerun with: -s
+==3252048== ERROR SUMMARY: 0 errors from 0 contexts (suppressed: 0 from 0)

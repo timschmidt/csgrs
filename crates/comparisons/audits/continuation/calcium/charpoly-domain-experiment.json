@@ -1,0 +1,648 @@
+{
+  "schema": 1,
+  "recorded": "2026-09-09T03:18:41.689Z",
+  "files": {
+    "bind-charpoly-domain.mjs": "6ddd03ee56ba9331f0ce671afd8d2ba4c581fbd3a3cac4f191a34545ed0d9745",
+    "verify-charpoly-domain.mjs": "09748fcff9c3d0174d9c8e0875d2e4908a5ce64851887cbec9b8572e1ed55605",
+    "capture.mjs": "aaf6df6bbd73025a8541617ce83731ae5ea3fd2272bd98c15e3c4c12b713ce23",
+    "rank-cost-experiment.json": "21864bbc7d412989f05d65d76cd041ae110c9b13c13110aa060beffe7da7462a",
+    "record-charpoly-domain-reads.mjs": "8178c29900351461925e9412fb47a3c6a6d79ca2678dfde02c3fcbef964c7122",
+    "charpoly-domain-read-selection.json": "2f2be01739933aef0d310ffb6e7d697149764eb1b3a0466dc7959d3dbeddaf88",
+    "flint-matrix-solve-certificate-probe.c": "530bcfe5e928992b62df04cb8b6bdd7ef56589f3193051d00ff7d0318a252ce4",
+    "flint-charpoly-certificate-probe.c": "cf7764799b339f78eb060076d2252e6346319a64813b5bb8ba2926a606fbcefa",
+    "flint-ca-domain-probe-initial.c": "24558f814306dc642508616c17fb97860c15eb494f3365f77c4e1bd2c7ab4c88",
+    "flint-ca-domain-probe.c": "651d4687f1e672a6ca38b02b19951a310a2300308801b3ae7a91d584996512e2",
+    "flint-ca-arg-witness-probe.c": "27f860427219de7cef0d437ea0faec97883a9a106feeedc16754f4f9fdb2ce7a",
+    "flint-ca-negative-arg-witness-probe.c": "2f47df5404cb7807bb6d7d9bf290058e9e159ca7fa1d98048c8813e1409d9185",
+    "hyper-domain-probe.rs": "baaf3f25c04e13761bf7e09dcfc655dd0ef909e2cd075499c5116f83f83895e5",
+    "hyper-domain-probe/Cargo.toml": "0cb4c621ae3b5e9c60dfa511f5d870575ebad64781736734c7005173c13cadc3",
+    "hyper-domain-probe/Cargo.lock": "cac8a41c11d07227ad309b8d91302f45be3eeb49d90f95eaf2835036ad72bb3e",
+    "results/solve-certificate-native-compile.json": "2a312fc470ee7f0f03832d2fdce89aac69b0a3da42f04e4e1d51f43a8a6774dc",
+    "results/solve-certificate-native-compile.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/solve-certificate-native-compile.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/solve-certificate-native.json": "5a01ab52e59dd52c799f7527b0830af22d400732eb4a9cc47cdf99e207c47cd2",
+    "results/solve-certificate-native.stdout": "7c0b0b978c1645ee224eee460d79c710a87c39c02adce965d0e26415a021bbf7",
+    "results/solve-certificate-native.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/solve-certificate-memcheck.json": "3e6395263efdf8f65b4786ddc6d611e2aaa3e00566eee7da21307ee3a99e73f6",
+    "results/solve-certificate-memcheck.stdout": "7c0b0b978c1645ee224eee460d79c710a87c39c02adce965d0e26415a021bbf7",
+    "results/solve-certificate-memcheck.stderr": "45f7943794e886c4acf1d2d9612ec591146d4f6143fd9de8d6e7c0b1fa7739ca",
+    "results/charpoly-certificate-native-compile.json": "8eb53197e026ffe14dcdf74274e9269bd093ff4dcae4633125ca996ae93035dd",
+    "results/charpoly-certificate-native-compile.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/charpoly-certificate-native-compile.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/charpoly-certificate-native.json": "de77e3cabadebaa81fca024d158a0fc5ad8b24efc414bfde94405513227011d2",
+    "results/charpoly-certificate-native.stdout": "1a824b8e7d50b480f8f7025e3729925c1d93e6ca8910558755e0f048e9f3d445",
+    "results/charpoly-certificate-native.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/charpoly-certificate-memcheck.json": "216cc1d6c260e9016eba640520aa18f3c2e882f86cb5e0a9e6bb63a3621b37bf",
+    "results/charpoly-certificate-memcheck.stdout": "1a824b8e7d50b480f8f7025e3729925c1d93e6ca8910558755e0f048e9f3d445",
+    "results/charpoly-certificate-memcheck.stderr": "04b14bfa2188fc9177f2e9fb511c544eb6abd69853a22ef0d777756428d92ca6",
+    "results/ca-domain-native-compile.json": "f2707c2ce4d5ca0c6bffafbd5fedebf313d035cd30dea8d36d000fe5107d19e0",
+    "results/ca-domain-native-compile.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/ca-domain-native-compile.stderr": "a711c9303b54c206f75090d3472b2c06072bd19fd07dd24e510fac691628c0ad",
+    "results/ca-domain-native-compile-corrected.json": "122856a90d72ac5fd57ba66a539da0e8fcdf9da347c235d39dc511a84297f013",
+    "results/ca-domain-native-compile-corrected.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/ca-domain-native-compile-corrected.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/ca-domain-native.json": "ddaf9e46b3528ed1de0e81508ff7bce0f016844e9dd632f84e70faf02ad62d54",
+    "results/ca-domain-native.stdout": "9dc74cc9169e19235c22c53da6bab1c81cd5457ac089080f1d3c1c0e7dc1997d",
+    "results/ca-domain-native.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/ca-domain-memcheck.json": "b4d5377817c01c3eb1939646525be59baf4c3fb0f957e6a37e169973d62dee8a",
+    "results/ca-domain-memcheck.stdout": "9dc74cc9169e19235c22c53da6bab1c81cd5457ac089080f1d3c1c0e7dc1997d",
+    "results/ca-domain-memcheck.stderr": "856999204360ece55ef0e98e9f1fe7817741d92121e26f0cfb98580b0ad14afa",
+    "results/ca-arg-witness-compile.json": "6c72e6459fe2582297452b8949ff732c00ae595a435652ed7be7b29482043936",
+    "results/ca-arg-witness-compile.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/ca-arg-witness-compile.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/ca-arg-witness-native.json": "8bf7324f947d28686ef837b40fa159cd33b398d47b29522a4c9cf2ba9bbe567c",
+    "results/ca-arg-witness-native.stdout": "a983484cd4d208c33ffd82ca83f7ee0a4d1aaa7ad6ee8bdeb3bb048d5e13adc6",
+    "results/ca-arg-witness-native.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/ca-arg-witness-memcheck.json": "b77b07028b03fcaa0dcb3e3f6a658c0f4aa796a13ee655285cc68155f8f37fa6",
+    "results/ca-arg-witness-memcheck.stdout": "a983484cd4d208c33ffd82ca83f7ee0a4d1aaa7ad6ee8bdeb3bb048d5e13adc6",
+    "results/ca-arg-witness-memcheck.stderr": "0f17a528495af2f4ec84e25c54e631f81921fd76ab8828b876ecf57aec0e08bf",
+    "results/ca-negative-arg-witness-compile.json": "795362f560121e32f929a15b70a753b89e71bcd6536419892d6380e53c44fd6d",
+    "results/ca-negative-arg-witness-compile.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/ca-negative-arg-witness-compile.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/ca-negative-arg-witness-native.json": "bd10167b855c8eddf27b2acc2f2148d0c71d8053eff9443e7d950d4d205985b9",
+    "results/ca-negative-arg-witness-native.stdout": "a815c34f930132b20d51581fe69ae267c4f7060190969276219e1fa01f14862b",
+    "results/ca-negative-arg-witness-native.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/ca-negative-arg-witness-memcheck.json": "fc109cf08e306a271f42ed56fd8dc1a503a03555b81c511c219de46baec5ea96",
+    "results/ca-negative-arg-witness-memcheck.stdout": "a815c34f930132b20d51581fe69ae267c4f7060190969276219e1fa01f14862b",
+    "results/ca-negative-arg-witness-memcheck.stderr": "5ae4e07ab052ba9b7a6532bb1ff20d6ff45d4068306c123b73fb8f1f20355b7f",
+    "results/hyper-domain-debug.json": "5944af1b8445e9e6abc4252af812c1b4a95aee2fd20cddf68218793324ed3a54",
+    "results/hyper-domain-debug.stdout": "d238dbf72c4efe6bf18087a5cc5c3c2ae159705bce8a9984bace8e09e0dee67a",
+    "results/hyper-domain-debug.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/hyper-domain-release.json": "eca824114ded3a959a8ed3e3eb5973e93e67c960d24b1f0af00e55bc324ce260",
+    "results/hyper-domain-release.stdout": "d238dbf72c4efe6bf18087a5cc5c3c2ae159705bce8a9984bace8e09e0dee67a",
+    "results/hyper-domain-release.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/hyper-domain-memcheck.json": "86e4a8042fe708b40f4b82b818940c76eae861b645f14eb497eec7ea719724dc",
+    "results/hyper-domain-memcheck.stdout": "d238dbf72c4efe6bf18087a5cc5c3c2ae159705bce8a9984bace8e09e0dee67a",
+    "results/hyper-domain-memcheck.stderr": "049454cc968fd162415413ee912eb6138707ccb17c006def6a3d32d69fe41e1f"
+  },
+  "gates": [
+    {
+      "tag": "solve-certificate-native-compile",
+      "code": 0
+    },
+    {
+      "tag": "solve-certificate-native",
+      "code": 0
+    },
+    {
+      "tag": "solve-certificate-memcheck",
+      "code": 0
+    },
+    {
+      "tag": "charpoly-certificate-native-compile",
+      "code": 0
+    },
+    {
+      "tag": "charpoly-certificate-native",
+      "code": 0
+    },
+    {
+      "tag": "charpoly-certificate-memcheck",
+      "code": 0
+    },
+    {
+      "tag": "ca-domain-native-compile",
+      "code": 1
+    },
+    {
+      "tag": "ca-domain-native-compile-corrected",
+      "code": 0
+    },
+    {
+      "tag": "ca-domain-native",
+      "code": 1
+    },
+    {
+      "tag": "ca-domain-memcheck",
+      "code": 1
+    },
+    {
+      "tag": "ca-arg-witness-compile",
+      "code": 0
+    },
+    {
+      "tag": "ca-arg-witness-native",
+      "code": 1
+    },
+    {
+      "tag": "ca-arg-witness-memcheck",
+      "code": 1
+    },
+    {
+      "tag": "ca-negative-arg-witness-compile",
+      "code": 0
+    },
+    {
+      "tag": "ca-negative-arg-witness-native",
+      "code": 0
+    },
+    {
+      "tag": "ca-negative-arg-witness-memcheck",
+      "code": 0
+    },
+    {
+      "tag": "hyper-domain-debug",
+      "code": 0
+    },
+    {
+      "tag": "hyper-domain-release",
+      "code": 0
+    },
+    {
+      "tag": "hyper-domain-memcheck",
+      "code": 0
+    }
+  ],
+  "reads": [
+    {
+      "repo": "calcium",
+      "path": "ca_mat/test/t-nonsingular_solve.c",
+      "ranges": [
+        [
+          1,
+          99
+        ]
+      ],
+      "note": "Complete independent calcium read: Default solve tests generic dimensions up to 3, otherwise rational up to 5; initialized generic X. Success checks AX=B and failure checks zero determinant, but each rejects only False, accepting Unknown. Unknown solve status accepted without a required decision. No RHS/output alias or independent solution oracle."
+    },
+    {
+      "repo": "flint",
+      "path": "src/ca_mat/test/t-nonsingular_solve.c",
+      "ranges": [
+        [
+          1,
+          90
+        ]
+      ],
+      "note": "Complete independent flint read: Default solve tests generic dimensions up to 3, otherwise rational up to 5; initialized generic X. Success checks AX=B and failure checks zero determinant, but each rejects only False, accepting Unknown. Unknown solve status accepted without a required decision. No RHS/output alias or independent solution oracle."
+    },
+    {
+      "repo": "calcium",
+      "path": "ca_mat/test/t-nonsingular_solve_adjugate.c",
+      "ranges": [
+        [
+          1,
+          99
+        ]
+      ],
+      "note": "Complete independent calcium read: Independent adjugate-solve test read: generic only up to 3, rational through 5, seeded X, backend AX=B/determinant checks conditional on status. Unknown equalities and Unknown solve status accepted. No independent coefficient oracle or alias qualification."
+    },
+    {
+      "repo": "flint",
+      "path": "src/ca_mat/test/t-nonsingular_solve_adjugate.c",
+      "ranges": [
+        [
+          1,
+          90
+        ]
+      ],
+      "note": "Complete independent flint read: Independent adjugate-solve test read: generic only up to 3, rational through 5, seeded X, backend AX=B/determinant checks conditional on status. Unknown equalities and Unknown solve status accepted. No independent coefficient oracle or alias qualification."
+    },
+    {
+      "repo": "calcium",
+      "path": "ca_mat/test/t-nonsingular_solve_fflu.c",
+      "ranges": [
+        [
+          1,
+          99
+        ]
+      ],
+      "note": "Complete independent calcium read: Independent fraction-free solve test read: same conditional AX=B and determinant assertions accepting Unknown, dimensions through 5 with generic values only through 3, initialized X. Does not prove universal successful solve or failure-output validity."
+    },
+    {
+      "repo": "flint",
+      "path": "src/ca_mat/test/t-nonsingular_solve_fflu.c",
+      "ranges": [
+        [
+          1,
+          90
+        ]
+      ],
+      "note": "Complete independent flint read: Independent fraction-free solve test read: same conditional AX=B and determinant assertions accepting Unknown, dimensions through 5 with generic values only through 3, initialized X. Does not prove universal successful solve or failure-output validity."
+    },
+    {
+      "repo": "calcium",
+      "path": "ca_mat/test/t-nonsingular_solve_lu.c",
+      "ranges": [
+        [
+          1,
+          99
+        ]
+      ],
+      "note": "Complete independent calcium read: Independent LU solve test read: conditional same-backend product/determinant checks reject only False, Unknown status accepted. Small generic/rational dimensions and seeded output, no explicit whole RHS alias."
+    },
+    {
+      "repo": "flint",
+      "path": "src/ca_mat/test/t-nonsingular_solve_lu.c",
+      "ranges": [
+        [
+          1,
+          90
+        ]
+      ],
+      "note": "Complete independent flint read: Independent LU solve test read: conditional same-backend product/determinant checks reject only False, Unknown status accepted. Small generic/rational dimensions and seeded output, no explicit whole RHS alias."
+    },
+    {
+      "repo": "calcium",
+      "path": "ca_mat/test/t-solve_tril.c",
+      "ranges": [
+        [
+          1,
+          98
+        ]
+      ],
+      "note": "Complete independent calcium read: Lower triangular tests dimensions/RHS columns 0..14 with rational entries only (number-field TODO), known positive diagonal, unit mode replacing stored diagonal after RHS construction, optional whole RHS/output alias and seeded output. Backend matrix product constructs B; equality rejects only False. Classical/recursive coverage only through default dispatch."
+    },
+    {
+      "repo": "flint",
+      "path": "src/ca_mat/test/t-solve_tril.c",
+      "ranges": [
+        [
+          1,
+          90
+        ]
+      ],
+      "note": "Complete independent flint read: Lower triangular tests dimensions/RHS columns 0..14 with rational entries only (number-field TODO), known positive diagonal, unit mode replacing stored diagonal after RHS construction, optional whole RHS/output alias and seeded output. Backend matrix product constructs B; equality rejects only False. Classical/recursive coverage only through default dispatch."
+    },
+    {
+      "repo": "calcium",
+      "path": "ca_mat/test/t-solve_triu.c",
+      "ranges": [
+        [
+          1,
+          97
+        ]
+      ],
+      "note": "Complete independent calcium read: Independent upper triangular test read: rational dimensions 0..14, positive diagonal, unit-mode ignored stored diagonal, optional whole RHS alias, seeded output. Same-backend RHS multiplication and Unknown-permissive equality; number-field TODO. No direct separate classical/recursive branch requirement."
+    },
+    {
+      "repo": "flint",
+      "path": "src/ca_mat/test/t-solve_triu.c",
+      "ranges": [
+        [
+          1,
+          89
+        ]
+      ],
+      "note": "Complete independent flint read: Independent upper triangular test read: rational dimensions 0..14, positive diagonal, unit-mode ignored stored diagonal, optional whole RHS alias, seeded output. Same-backend RHS multiplication and Unknown-permissive equality; number-field TODO. No direct separate classical/recursive branch requirement."
+    },
+    {
+      "repo": "calcium",
+      "path": "ca_mat/charpoly_danilevsky.c",
+      "ranges": [
+        [
+          1,
+          239
+        ]
+      ],
+      "note": "Complete independent calcium read: Owned copy before inplace similarity elimination; archive implements pivot search, block split, row/column permutation, certified inversion and polynomial block multiplication, with immediate Unknown failure and unused T allocation. Current wrapper delegates to generic GR_CTX_CC_CA implementation. Fits output before status, so failure output is not a certificate. Hyper already has pivot-free determinant and algebraic-fiber Berkowitz support; no missing global capability inferred."
+    },
+    {
+      "repo": "flint",
+      "path": "src/ca_mat/charpoly_danilevsky.c",
+      "ranges": [
+        [
+          1,
+          49
+        ]
+      ],
+      "note": "Complete independent flint read: Owned copy before inplace similarity elimination; archive implements pivot search, block split, row/column permutation, certified inversion and polynomial block multiplication, with immediate Unknown failure and unused T allocation. Current wrapper delegates to generic GR_CTX_CC_CA implementation. Fits output before status, so failure output is not a certificate. Hyper already has pivot-free determinant and algebraic-fiber Berkowitz support; no missing global capability inferred."
+    },
+    {
+      "repo": "calcium",
+      "path": "ca_mat/test/t-charpoly.c",
+      "ranges": [
+        [
+          1,
+          64
+        ]
+      ],
+      "note": "Complete independent calcium read: Generic dimensions 0..4; requires output length n+1 and p(A) zero with T_TRUE (not Unknown-permissive here). Same-backend matrix-polynomial annihilation is not an independent full coefficient oracle: annihilators may be nonunique when the minimal polynomial has smaller degree."
+    },
+    {
+      "repo": "flint",
+      "path": "src/ca_mat/test/t-charpoly.c",
+      "ranges": [
+        [
+          1,
+          56
+        ]
+      ],
+      "note": "Complete independent flint read: Generic dimensions 0..4; requires output length n+1 and p(A) zero with T_TRUE (not Unknown-permissive here). Same-backend matrix-polynomial annihilation is not an independent full coefficient oracle: annihilators may be nonunique when the minimal polynomial has smaller degree."
+    },
+    {
+      "repo": "calcium",
+      "path": "ca_mat/test/t-charpoly_danilevsky.c",
+      "ranges": [
+        [
+          1,
+          65
+        ]
+      ],
+      "note": "Complete independent calcium read: Rational dimensions 0..9, checks length and required-True annihilation only if algorithm reports success. No required success or independent characteristic coefficient oracle; leading monicity not separately asserted beyond length."
+    },
+    {
+      "repo": "flint",
+      "path": "src/ca_mat/test/t-charpoly_danilevsky.c",
+      "ranges": [
+        [
+          1,
+          57
+        ]
+      ],
+      "note": "Complete independent flint read: Rational dimensions 0..9, checks length and required-True annihilation only if algorithm reports success. No required success or independent characteristic coefficient oracle; leading monicity not separately asserted beyond length."
+    },
+    {
+      "repo": "calcium",
+      "path": "ca_mat/companion.c",
+      "ranges": [
+        [
+          1,
+          65
+        ]
+      ],
+      "note": "Complete independent calcium read: Checks dimensions from polynomial length, rejects special leading coefficient/inverse; writes superdiagonal ones and negative normalized coefficients in last row, with n=0 empty case. Known-one normalization echoes already retained Hyper monic fact preservation; no new unconditional leading-one inference."
+    },
+    {
+      "repo": "flint",
+      "path": "src/ca_mat/companion.c",
+      "ranges": [
+        [
+          1,
+          65
+        ]
+      ],
+      "note": "Complete independent flint read: Checks dimensions from polynomial length, rejects special leading coefficient/inverse; writes superdiagonal ones and negative normalized coefficients in last row, with n=0 empty case. Known-one normalization echoes already retained Hyper monic fact preservation; no new unconditional leading-one inference."
+    },
+    {
+      "repo": "calcium",
+      "path": "ca_mat/test/t-companion.c",
+      "ranges": [
+        [
+          1,
+          71
+        ]
+      ],
+      "note": "Complete independent calcium read: Generic nonempty polynomials through length 4 and seeded 100-bit rational matrices. On successful companion construction, compares charpoly multiplied by original lead against original, rejecting only False. Uses tested characteristic kernel rather than independent oracle; non-success allowed."
+    },
+    {
+      "repo": "flint",
+      "path": "src/ca_mat/test/t-companion.c",
+      "ranges": [
+        [
+          1,
+          63
+        ]
+      ],
+      "note": "Complete independent flint read: Generic nonempty polynomials through length 4 and seeded 100-bit rational matrices. On successful companion construction, compares charpoly multiplied by original lead against original, rejecting only False. Uses tested characteristic kernel rather than independent oracle; non-success allowed."
+    },
+    {
+      "repo": "calcium",
+      "path": "ca_mat/eigenvalues.c",
+      "ranges": [
+        [
+          1,
+          24
+        ]
+      ],
+      "note": "Complete independent calcium read: Thin default characteristic-polynomial then ca_poly_roots wrapper, clearing temporary. Root capabilities/unknown propagation depend on already audited polynomial roots; not an independent spectral implementation."
+    },
+    {
+      "repo": "flint",
+      "path": "src/ca_mat/eigenvalues.c",
+      "ranges": [
+        [
+          1,
+          25
+        ]
+      ],
+      "note": "Complete independent flint read: Thin default characteristic-polynomial then ca_poly_roots wrapper, clearing temporary. Root capabilities/unknown propagation depend on already audited polynomial roots; not an independent spectral implementation."
+    },
+    {
+      "repo": "calcium",
+      "path": "ca_mat/diagonalization.c",
+      "ranges": [
+        [
+          1,
+          100
+        ]
+      ],
+      "note": "Complete independent calcium read: Precomputed variant zeros D, computes right kernels of A-lambda I, returns Unknown on kernel failure and False when geometric nullity differs from supplied algebraic multiplicity; forms P from kernel columns. Trusts complete valid supplied roots; no broad alias promise inferred. Public wrapper checks square, owns root data, propagates unknown root construction."
+    },
+    {
+      "repo": "flint",
+      "path": "src/ca_mat/diagonalization.c",
+      "ranges": [
+        [
+          1,
+          101
+        ]
+      ],
+      "note": "Complete independent flint read: Precomputed variant zeros D, computes right kernels of A-lambda I, returns Unknown on kernel failure and False when geometric nullity differs from supplied algebraic multiplicity; forms P from kernel columns. Trusts complete valid supplied roots; no broad alias promise inferred. Public wrapper checks square, owns root data, propagates unknown root construction."
+    },
+    {
+      "repo": "calcium",
+      "path": "ca_mat/test/t-diagonalization.c",
+      "ranges": [
+        [
+          1,
+          96
+        ]
+      ],
+      "note": "Complete independent calcium read: Dimensions 0..3, generic only up to 2; rational otherwise. Conditional success then inverse P and conditional PDP^-1 comparison, rejecting only False. Non-diagonalizable and alias cases remain TODO; Unknown inverse/equality or diagonalization not rejected. No independent required-success spectrum oracle."
+    },
+    {
+      "repo": "flint",
+      "path": "src/ca_mat/test/t-diagonalization.c",
+      "ranges": [
+        [
+          1,
+          88
+        ]
+      ],
+      "note": "Complete independent flint read: Dimensions 0..3, generic only up to 2; rational otherwise. Conditional success then inverse P and conditional PDP^-1 comparison, rejecting only False. Non-diagonalizable and alias cases remain TODO; Unknown inverse/equality or diagonalization not rejected. No independent required-success spectrum oracle."
+    },
+    {
+      "repo": "flint",
+      "path": "src/gr_mat/charpoly_danilevsky.c",
+      "ranges": [
+        [
+          1,
+          214
+        ]
+      ],
+      "note": "Complete read: generic similarity elimination and block splitting, Unknown pivots/status failures abort without a coefficient certificate; all scalar statuses ORed. Strided dot computes into temporary then swaps because generic dot output cannot overlap later inputs. T vector and c scalar allocated/cleared but unused. Square and zero-ring wrapper handling. Underlying CA has no specialized vector-dot registration; no optimized joint dot inferred."
+    },
+    {
+      "repo": "flint",
+      "path": "src/gr/ca.c",
+      "ranges": [
+        [
+          1,
+          1831
+        ]
+      ],
+      "note": "Complete 1,831-line current generic CA wrapper read: typed RR/CC/AA/QQbar/extended contexts, borrowed versus owned cleanup, checked coercions, exact/uncanonical/non-threadsafe flags, scalar arithmetic/special functions/conversions, polynomial roots, matrix forwarding and entire method table. RR asin/acos omit real-result checks; arg omits algebraic-domain checks; field flag reused for real-vector-space property incorrectly includes algebraic contexts. Native valid-input probes qualify these, with inherited negative-rational Arg phase defect independently witnessed. Floor/ceil of complex values intentionally use the real part. Approximate binary64 getter is not assumed correctly rounded. Generic vector/dot defaults remain active. No representation or ownership port proposed."
+    },
+    {
+      "repo": "flint",
+      "path": "src/gr/test/t-ca.c",
+      "ranges": [
+        [
+          1,
+          37
+        ]
+      ],
+      "note": "Complete wrapper test registration read: initializes RR, CC, AA, QQbar and invokes gr_test_ring with 100 iterations and flags 0, then clears. Called test framework was not read in full, so registration alone does not establish its domain/special-function coverage."
+    },
+    {
+      "repo": "flint",
+      "path": "src/gr_vec.h",
+      "ranges": [
+        [
+          1,
+          250
+        ]
+      ],
+      "note": "Complete header read, including repaired earlier truncated ranges: method-table vector/scalar wrappers, normalization, borrowed shallow-header memcpy, contiguous/reversed/strided dots and sum/product declarations. No ownership port or implementation coverage inferred from declarations."
+    },
+    {
+      "repo": "flint",
+      "path": "doc/source/gr.rst",
+      "ranges": [
+        [
+          1,
+          220
+        ],
+        [
+          530,
+          600
+        ],
+        [
+          820,
+          910
+        ]
+      ],
+      "note": "Only recorded documentation ranges read: mathematical typed-parent/GR_SUCCESS contract, DOMAIN versus UNABLE, failed output has no valid mathematical interpretation, property/predicate distinctions, complex integer-part conventions and arithmetic domains."
+    },
+    {
+      "repo": "flint",
+      "path": "doc/source/gr_special.rst",
+      "ranges": [
+        [
+          1,
+          90
+        ]
+      ],
+      "note": "Only elementary-function documentation 1..90 read; declarations do not provide a promotion exception to the generic typed-parent success contract."
+    },
+    {
+      "repo": "flint",
+      "path": "doc/source/gr_domains.rst",
+      "ranges": [
+        [
+          1,
+          92
+        ],
+        [
+          225,
+          275
+        ]
+      ],
+      "note": "Only recorded documentation ranges read: context mathematical-property truth, exact versus canonical predicates, RR/CC/AA/QQbar domains and extended contexts admitting special values."
+    },
+    {
+      "repo": "flint",
+      "path": "src/gr_generic/generic.c",
+      "ranges": [
+        [
+          1,
+          43
+        ],
+        [
+          1980,
+          2275
+        ],
+        [
+          2390,
+          2582
+        ],
+        [
+          2776,
+          2790
+        ],
+        [
+          3034,
+          3152
+        ],
+        [
+          3170,
+          3233
+        ]
+      ],
+      "note": "Only recorded ranges read: generic context cleanup is no-op, default method table and bounded table initialization. Resolves qqbar cleanup-skip question as no leak in this pinned implementation, not whole generic-ring qualification. Additional recorded ranges: vector/scalar binary-op macros, addmul/submul single temporary and status aggregation, contiguous/reversed/strided generic dot implementations and vector method registrations. Strided optimized-dot path gathers shallow headers only when a specialized contiguous dot exists; CA has none and falls through to a scalar loop. Output cannot alias later input elements. Range beginning 1980 is inside normalization, not full-function coverage."
+    }
+  ],
+  "binaries": {
+    "/tmp/calcium-charpoly-solves.lbZlN8/flint-solve-certificate": {
+      "sha256": "fecc17645118da2e28c3e771d3209675a21d324b53a24357a4b2cdabdbbd5128",
+      "bytes": 18264
+    },
+    "/tmp/calcium-charpoly-solves.lbZlN8/flint-charpoly-certificate": {
+      "sha256": "14788d1150d80ce5639ab6008bf1de1fa7276f2c2b4949c015670ccafb5846fa",
+      "bytes": 13624
+    },
+    "/tmp/calcium-charpoly-solves.lbZlN8/flint-ca-domain": {
+      "sha256": "03698b79370e3b8d198969947c24d2f620955c9dd91a7e05287554983cbf342d",
+      "bytes": 13152
+    },
+    "/tmp/calcium-charpoly-solves.lbZlN8/flint-ca-arg-witness": {
+      "sha256": "5d7ba7a905ab207d31cecd57ca32074aa9fda99f807dbb32a9a0f3d04132c96f",
+      "bytes": 13128
+    },
+    "/tmp/calcium-charpoly-solves.lbZlN8/flint-ca-negative-arg-witness": {
+      "sha256": "17887ea009d140deffbb30ea65fe440b1f8f2379c9f2b563d451fd26f1f317df",
+      "bytes": 13176
+    },
+    "/tmp/calcium-charpoly-solves.lbZlN8/hyper-domain-debug": {
+      "sha256": "af2c784815a7da23fc6a2456679dd07d85e3cc68728f4f98558012f79e47792d",
+      "bytes": 3989744
+    },
+    "/tmp/calcium-charpoly-solves.lbZlN8/hyper-domain-release": {
+      "sha256": "1b9ee28c29f820ca1467335cf16fb5fc09e2dea9d35048ff9cce2e2a7b3d8b77",
+      "bytes": 2142808
+    }
+  },
+  "status": "No production or donor transfer. All structured solve/characteristic controls pass. Generic CA typed-domain/property failures are reproduced; the negative-rational principal-argument defect is a reproduction of checkpoint six, not a newly discovered independent defect. Hyper public inverse-trig domain controls pass. Entire ecosystem audit incomplete; isolated rank v1 remains unselected.",
+  "limits": "Current FLINT executed; archived corresponding files independently read, not executed. Integer/scalar RHS and known-spectrum coefficient oracles avoid tested matrix kernels but share the scalar backend. Sampled dimensions, seeded outputs and valid whole aliases are not full branch/arbitrary-state coverage. Failed operation outputs are not inspected. Domain-row counts repeat values and lifecycles, not distinct bugs; a separate exact negative-pi value witness resolves algebraicity-predicate Unknown without treating Unknown as False or changing the correct positive-pi principal oracle. Hyper checks domain acceptance/rejection and refinability, not independent inverse-trig numerical accuracy; original/shared scalar inputs are not guaranteed cold. No new matched performance, allocation or binary-size comparison and no new production candidate. Focused clean memory controls do not supersede earlier mathematical failures or Rust-thread possible-loss reports.",
+  "hyperReadRanges": {
+    "hypersolve/src/bareiss.rs": [
+      [
+        260,
+        341
+      ]
+    ],
+    "hypersolve/src/algebraic_fiber.rs": [
+      [
+        2030,
+        2195
+      ]
+    ],
+    "hyperreal/src/real/arithmetic/facts.rs": [
+      [
+        1080,
+        1135
+      ]
+    ],
+    "hyperreal/src/real/arithmetic/elementary_functions.rs": [
+      [
+        2990,
+        3163
+      ]
+    ]
+  },
+  "nativeLibrary": {
+    "path": "/home/tim/Documents/GitHub/workspace/exact-real-references/flint/libflint.so",
+    "sha256": "8dcdbb4aa08d67712b14febd006d1392d07737b1ad8c1f8f5930a152701e0032"
+  }
+}

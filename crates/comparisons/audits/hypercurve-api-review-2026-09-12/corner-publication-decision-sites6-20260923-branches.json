@@ -1,0 +1,122 @@
+{
+  "CHORD_RATIONAL:72724": {
+    "file": "src/bezier_offset.rs",
+    "line": 72724,
+    "context": "Decided(lower), Classification::Decided(upper)) => (lower, upper),\n            (Classification::Uncertain(reason), _) | (_, Classification::Uncertain(reason)) => {\n                return Ok(Classification::Uncertain(reason));\n            }\n        };\n        Ok(Classification::Decided(match (lower, upper) {\n      "
+  },
+  "CHORD_RATIONAL:75828": {
+    "file": "src/bezier_offset.rs",
+    "line": 75828,
+    "context": "rce_incidence_system(source, source_parameter, policy)? {\n            Classification::Decided(system) => system,\n            Classification::Uncertain(reason) => {\n                return Ok(Classification::Uncertain(reason));\n            }\n        };\n        let retained_root = parameter_representation(source_para"
+  },
+  "CHORD_RATIONAL:75873": {
+    "file": "src/bezier_offset.rs",
+    "line": 75873,
+    "context": "record(\n                    \"hypercurve\",\n                    \"algebraic-chord-source-incidence\",\n                    \"unsupported-coefficient\",\n                );\n                return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));\n            }\n            AlgebraicFiberDiagonalDeflationStatus::Undecided => {\n         "
+  },
+  "CHORD_RATIONAL:75876": {
+    "file": "src/bezier_offset.rs",
+    "line": 75876,
+    "context": "              return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));\n            }\n            AlgebraicFiberDiagonalDeflationStatus::Undecided => {\n                return Ok(Classification::Uncertain(UncertaintyReason::Predicate));\n            }\n            AlgebraicFiberDiagonalDeflationStatus::Deflated => {\n          "
+  },
+  "CHORD_RATIONAL:75879": {
+    "file": "src/bezier_offset.rs",
+    "line": 75879,
+    "context": "\n                return Ok(Classification::Uncertain(UncertaintyReason::Predicate));\n            }\n            AlgebraicFiberDiagonalDeflationStatus::Deflated => {\n                return Ok(Classification::Uncertain(UncertaintyReason::Boundary));\n            }\n        };\n\n        let count = count_bivariate_fiber_roots_at_algebraic_pa"
+  },
+  "CHORD_RATIONAL:75908": {
+    "file": "src/bezier_offset.rs",
+    "line": 75908,
+    "context": " => {\n                return Err(CurveError::InvalidBezierAlgebraicParameter);\n            }\n            AlgebraicFiberRootCountStatus::UnsupportedCoefficient => {\n                return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));\n            }\n            AlgebraicFiberRootCountStatus::Undecided => {\n                r"
+  },
+  "CHORD_RATIONAL:75911": {
+    "file": "src/bezier_offset.rs",
+    "line": 75911,
+    "context": " => {\n                return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));\n            }\n            AlgebraicFiberRootCountStatus::Undecided => {\n                return Ok(Classification::Uncertain(UncertaintyReason::Predicate));\n            }\n        };\n\n        // Diagonal deflation returns a fiber polynomial alread"
+  },
+  "CHORD_RATIONAL:75937": {
+    "file": "src/bezier_offset.rs",
+    "line": 75937,
+    "context": "ierAlgebraicChordRationalIntersections2::DegenerateProjection,\n                    ));\n                }\n                Classification::Uncertain(reason) => {\n                    return Ok(Classification::Uncertain(reason));\n                }\n            }\n        } else {\n            Vec::new()\n        };\n      "
+  },
+  "CHORD_RATIONAL:75964": {
+    "file": "src/bezier_offset.rs",
+    "line": 75964,
+    "context": "ce, &retained_parameter, policy)? {\n                    Classification::Decided(point) => point,\n                    Classification::Uncertain(reason) => {\n                        return Ok(Classification::Uncertain(reason));\n                    }\n                };\n            let chord_parameter = match self.par"
+  },
+  "CHORD_RATIONAL:75975": {
+    "file": "src/bezier_offset.rs",
+    "line": 75975,
+    "context": " BezierAlgebraicChordRationalIntersections2::NotSourceRelated,\n                    ));\n                }\n                Classification::Uncertain(reason) => {\n                    return Ok(Classification::Uncertain(reason));\n                }\n            };\n            let tangent_cross_sign = match algebraic_sel"
+  },
+  "CHORD_RATIONAL:75987": {
+    "file": "src/bezier_offset.rs",
+    "line": 75987,
+    "context": ")? {\n                Classification::Decided(sign) => product_sign(sign, system.chord_denominator_sign),\n                Classification::Uncertain(reason) => {\n                    return Ok(Classification::Uncertain(reason));\n                }\n            };\n            contacts.push(BezierAlgebraicChordRationalCo"
+  },
+  "CHORD_RATIONAL:76001": {
+    "file": "src/bezier_offset.rs",
+    "line": 76001,
+    "context": "nce_at_parameter(source, &candidate, policy)? {\n                Classification::Decided(point) => point,\n                Classification::Uncertain(reason) => {\n                    return Ok(Classification::Uncertain(reason));\n                }\n            };\n            let chord_parameter = match self.parameter_a"
+  },
+  "CHORD_RATIONAL:76008": {
+    "file": "src/bezier_offset.rs",
+    "line": 76008,
+    "context": "ation::Decided(Some(parameter)) => parameter,\n                Classification::Decided(None) => continue,\n                Classification::Uncertain(reason) => {\n                    return Ok(Classification::Uncertain(reason));\n                }\n            };\n            let tangent_cross_sign = match algebraic_sel"
+  },
+  "CHORD_RATIONAL:76020": {
+    "file": "src/bezier_offset.rs",
+    "line": 76020,
+    "context": ")? {\n                Classification::Decided(sign) => product_sign(sign, system.chord_denominator_sign),\n                Classification::Uncertain(reason) => {\n                    return Ok(Classification::Uncertain(reason));\n                }\n            };\n            contacts.push(BezierAlgebraicChordRationalCo"
+  },
+  "CHORD_RATIONAL:78184": {
+    "file": "src/bezier_offset.rs",
+    "line": 78184,
+    "context": "point,\n                second_point,\n                ..\n            } => vec![first_point, second_point],\n            LineCircleRelation::Uncertain { reason } => {\n                return Ok(Some(Classification::Uncertain(reason)));\n            }\n        };\n        let (chord_dx, chord_dy) = line.delta();\n        let mut"
+  },
+  "CHORD_RATIONAL:78224": {
+    "file": "src/bezier_offset.rs",
+    "line": 78224,
+    "context": "ation::Decided(Some(parameter)) => parameter,\n                Classification::Decided(None) => continue,\n                Classification::Uncertain(reason) => {\n                    return Ok(Some(Classification::Uncertain(reason)));\n                }\n            };\n            let (radial_x, radial_y) = hit.delta_from(ar"
+  },
+  "CHORD_RATIONAL:78236": {
+    "file": "src/bezier_offset.rs",
+    "line": 78236,
+    "context": "          Real::diff_of_products(&chord_dx, &source_dy, &chord_dy, &source_dx);\n            let Some(tangent_cross_sign) = real_sign(&tangent_cross, policy) else {\n                return Ok(Some(Classification::Uncertain(UncertaintyReason::RealSign)));\n            };\n            for source_parameter in source_parameters {\n                if"
+  },
+  "CHORD_RATIONAL:78244": {
+    "file": "src/bezier_offset.rs",
+    "line": 78244,
+    "context": "::Ordering::Equal) => continue,\n                        Classification::Decided(_) => {}\n                        Classification::Uncertain(reason) => {\n                            return Ok(Some(Classification::Uncertain(reason)));\n                        }\n                    }\n                }\n                contact"
+  },
+  "CHORD_RATIONAL:79519": {
+    "file": "src/bezier_offset.rs",
+    "line": 79519,
+    "context": "         &policy.strict_counterpart(),\n            )? {\n                Classification::Decided(true) => {}\n                Classification::Decided(false) => {\n                    return Ok(Classification::Uncertain(UncertaintyReason::Boundary));\n                }\n                Classification::Uncertain(reason) => return Ok(Classifi"
+  },
+  "CHORD_RATIONAL:79600": {
+    "file": "src/bezier_offset.rs",
+    "line": 79600,
+    "context": "ed(BezierLineContactRelation::Contacts { contacts }) => {\n                    contacts\n                }\n                Classification::Uncertain(reason) => {\n                    return Ok(Classification::Uncertain(reason));\n                }\n            };\n            let mut contacts = Vec::with_capacity(line_c"
+  },
+  "CHORD_RATIONAL:79611": {
+    "file": "src/bezier_offset.rs",
+    "line": 79611,
+    "context": "::Ordering::Equal) => continue,\n                        Classification::Decided(_) => {}\n                        Classification::Uncertain(reason) => {\n                            return Ok(Classification::Uncertain(reason));\n                        }\n                    }\n                }\n                let poi"
+  },
+  "CHORD_RATIONAL:79622": {
+    "file": "src/bezier_offset.rs",
+    "line": 79622,
+    "context": "       policy,\n                )? {\n                    Classification::Decided(point) => point,\n                    Classification::Uncertain(reason) => {\n                        return Ok(Classification::Uncertain(reason));\n                    }\n                };\n                let chord_parameter =\n          "
+  },
+  "CHORD_RATIONAL:79630": {
+    "file": "src/bezier_offset.rs",
+    "line": 79630,
+    "context": "meter)) => parameter,\n                        Classification::Decided(None) => continue,\n                        Classification::Uncertain(reason) => {\n                            return Ok(Classification::Uncertain(reason));\n                        }\n                    };\n                let tangent_cross_sign ="
+  },
+  "CHORD_RATIONAL:79645": {
+    "file": "src/bezier_offset.rs",
+    "line": 79645,
+    "context": ", None) => RealSign::Zero,\n                    (BezierLineContactKind::Crossing, None)\n                    | (BezierLineContactKind::Tangent, Some(_)) => {\n                        return Ok(Classification::Uncertain(UncertaintyReason::Predicate));\n                    }\n                };\n                contacts.push(BezierAlgebraicCho"
+  }
+}

@@ -1,0 +1,7 @@
+{
+  "outer_session": 90204,
+  "outer_exit_code": null,
+  "observation": "Final write_stdin output was truncated across context compaction. Recovery returned Unknown process id 90204. Do not invent the lost exit status; replace this performance baseline with an unchanged-source replay under a new observed handle.",
+  "terminal": "high-order-derivative-probe-v839-terminal.json",
+  "terminal_sha256": "d15b77b0922b24551596cfcba0eb0a15a99d670f4e14c60e5031eac3d0d27a36"
+}

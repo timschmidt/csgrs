@@ -1,0 +1,38 @@
+{
+  "sourceSha256": "6414c38c1ff11e95f03f8eef02fff4b003f290489e2c3826be17b9f7f87ef556",
+  "files": [
+    {
+      "name": "constants02",
+      "sha256": "c22faac10da1f00f61ea24cd48456266f3e7491cb1dda064dd496ebfb1312b88",
+      "physicalLines": 256,
+      "coordinates": 4,
+      "fullRounds": 8,
+      "partialRounds": 56,
+      "finalNewline": false,
+      "canonicalDecimalAndRange": true
+    },
+    {
+      "name": "constants03",
+      "sha256": "02bd1dd931dd45aca6408c17334b8e03e0ef497ac71e01157f6fe22fb02b7f56",
+      "physicalLines": 340,
+      "coordinates": 5,
+      "fullRounds": 8,
+      "partialRounds": 60,
+      "finalNewline": false,
+      "canonicalDecimalAndRange": true
+    },
+    {
+      "name": "constants04",
+      "sha256": "a35b1e3140018871383ba81bb56a285cd68fbe7778443be72b59f490374ede58",
+      "physicalLines": 408,
+      "coordinates": 6,
+      "fullRounds": 8,
+      "partialRounds": 60,
+      "finalNewline": false,
+      "canonicalDecimalAndRange": true
+    }
+  ],
+  "totalEntries": 1004,
+  "predicateControls": 15,
+  "scope": "only constants02, constants03 and constants04 explicitly read; dimension/format/range checks, not generating-procedure or cryptographic qualification and not unread-data credit"
+}

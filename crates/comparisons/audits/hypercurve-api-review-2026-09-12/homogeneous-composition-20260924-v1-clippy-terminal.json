@@ -1,0 +1,17 @@
+{
+  "command": [
+    "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+    "clippy",
+    "--all-targets",
+    "--all-features",
+    "--locked",
+    "--offline",
+    "--message-format=json",
+    "--",
+    "-D",
+    "warnings"
+  ],
+  "returncode": 101,
+  "elapsed_seconds": 19.393239791039377,
+  "all_processes_reaped": true
+}

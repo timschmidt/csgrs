@@ -1,0 +1,18 @@
+[
+  {
+    "name": "bezier_region::tests::selected_circle_fillet_crosses_an_independently_reframed_run",
+    "returncode": 101,
+    "passed": false,
+    "limit_seconds": 60,
+    "elapsed_seconds": 0.17160528292879462,
+    "log": "reframed-seam-20260923-trace1-case-0.log"
+  },
+  {
+    "name": "bezier_region::tests::independent_oblique_chord_pair_fillets_extend_on_infinite_supports",
+    "returncode": 0,
+    "passed": true,
+    "limit_seconds": 75,
+    "elapsed_seconds": 0.850184126989916,
+    "log": "reframed-seam-20260923-trace1-case-1.log"
+  }
+]

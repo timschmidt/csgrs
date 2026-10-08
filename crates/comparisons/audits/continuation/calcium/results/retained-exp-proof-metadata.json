@@ -1,0 +1,19 @@
+{
+  "tag": "retained-exp-proof-metadata",
+  "started": "2026-09-08T22:36:42.678Z",
+  "finished": "2026-09-08T22:36:42.704Z",
+  "elapsedSeconds": 0.02392738899999999,
+  "cwd": "/home/tim/Documents/GitHub/workspace/hyperreal",
+  "command": "cargo",
+  "args": [
+    "metadata",
+    "--format-version",
+    "1",
+    "--no-deps",
+    "--all-features",
+    "--offline",
+    "--locked"
+  ],
+  "code": 0,
+  "signal": null
+}

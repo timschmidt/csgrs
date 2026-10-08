@@ -1,0 +1,45 @@
+[1 of 6] Compiling AERN2.Poly.Basics ( /home/tim/Documents/GitHub/workspace/exact-real-references/aern2/aern2-fun-univariate/src/AERN2/Poly/Basics.hs, /tmp/ghc9_0/ghc_4.o, /tmp/ghc9_0/ghc_4.dyn_o )
+
+/home/tim/Documents/GitHub/workspace/exact-real-references/aern2/aern2-fun-univariate/src/AERN2/Poly/Basics.hs:80:44: error: [GHC-76037]
+    Not in scope: type constructor or class ‘CanAddSubMulDivCNBy’
+    Suggested fix:
+      Perhaps use one of these:
+        ‘CanAddSubMulDivBy’ (imported from MixedTypesNumPrelude),
+        ‘CanAddSubMulBy’ (imported from MixedTypesNumPrelude)
+   |
+80 |   (PolyCoeffRing c, Field c, HasDyadics c, CanAddSubMulDivCNBy c Dyadic) =>
+   |                                            ^^^^^^^^^^^^^^^^^^^
+
+/home/tim/Documents/GitHub/workspace/exact-real-references/aern2/aern2-fun-univariate/src/AERN2/Poly/Basics.hs:91:22: error: [GHC-76037]
+    Not in scope: type constructor or class ‘CanAddSubMulDivCNBy’
+    Suggested fix:
+      Perhaps use one of these:
+        ‘CanAddSubMulDivBy’ (imported from MixedTypesNumPrelude),
+        ‘CanAddSubMulBy’ (imported from MixedTypesNumPrelude)
+   |
+91 |   (PolyCoeffField c, CanAddSubMulDivCNBy c CauchyReal
+   |                      ^^^^^^^^^^^^^^^^^^^
+
+/home/tim/Documents/GitHub/workspace/exact-real-references/aern2/aern2-fun-univariate/src/AERN2/Poly/Basics.hs:91:44: error: [GHC-76037]
+    Not in scope: type constructor or class ‘CauchyReal’
+   |
+91 |   (PolyCoeffField c, CanAddSubMulDivCNBy c CauchyReal
+   |                                            ^^^^^^^^^^
+
+/home/tim/Documents/GitHub/workspace/exact-real-references/aern2/aern2-fun-univariate/src/AERN2/Poly/Basics.hs:100:30: error: [GHC-76037]
+    Not in scope: type constructor or class ‘CanEnsureCE’
+    |
+100 | instance (CanBeErrors es) => CanEnsureCE es (Poly c)
+    |                              ^^^^^^^^^^^
+
+/home/tim/Documents/GitHub/workspace/exact-real-references/aern2/aern2-fun-univariate/src/AERN2/Poly/Basics.hs:102:30: error: [GHC-76037]
+    Not in scope: type constructor or class ‘CanExtractCE’
+    |
+102 | instance (CanBeErrors es) => CanExtractCE es Poly
+    |                              ^^^^^^^^^^^^
+
+/home/tim/Documents/GitHub/workspace/exact-real-references/aern2/aern2-fun-univariate/src/AERN2/Poly/Basics.hs:111:30: error: [GHC-76037]
+    Not in scope: type constructor or class ‘CanExtractCE’
+    |
+111 | instance (CanBeErrors es) => CanExtractCE es (Map.Map Degree)
+    |                              ^^^^^^^^^^^^

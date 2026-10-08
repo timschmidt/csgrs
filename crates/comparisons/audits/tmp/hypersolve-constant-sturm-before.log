@@ -1,0 +1,22 @@
+   Compiling hyperreal v0.13.1 (/home/tim/Documents/GitHub/workspace/hyperreal)
+   Compiling hyperlattice v0.6.1 (/home/tim/Documents/GitHub/workspace/hyperlattice)
+   Compiling hyperlimit v0.4.1 (/home/tim/Documents/GitHub/workspace/hyperlimit)
+   Compiling hypersolve v0.3.1 (/home/tim/Documents/GitHub/workspace/hypersolve)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 8.09s
+     Running unittests src/lib.rs (target/debug/deps/hypersolve-3006950ef9f7f419)
+
+running 1 test
+
+thread 'root_isolation::tests::nonzero_constant_sturm_chains_need_no_derivative' (751) panicked at src/root_isolation.rs:3304:26:
+a certified nonzero constant owns an exact one-row Sturm chain
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+test root_isolation::tests::nonzero_constant_sturm_chains_need_no_derivative ... FAILED
+
+failures:
+
+failures:
+    root_isolation::tests::nonzero_constant_sturm_chains_need_no_derivative
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 409 filtered out; finished in 0.00s
+
+error: test failed, to rerun pass `--lib`

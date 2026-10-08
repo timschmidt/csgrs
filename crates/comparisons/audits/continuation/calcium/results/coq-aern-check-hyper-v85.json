@@ -1,0 +1,13 @@
+{
+  "tag": "coq-aern-check-hyper-v85",
+  "started": "2026-09-12T05:37:59.230Z",
+  "finished": "2026-09-12T05:37:59.697Z",
+  "elapsedSeconds": 0.465219912,
+  "cwd": "/home/tim/Documents/GitHub/workspace",
+  "command": "node",
+  "args": [
+    "exactcore-hyper-comparison/audits/continuation/coq-aern/check-hyper-v85.mjs"
+  ],
+  "code": 0,
+  "signal": null
+}

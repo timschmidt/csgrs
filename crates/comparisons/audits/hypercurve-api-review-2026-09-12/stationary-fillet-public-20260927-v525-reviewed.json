@@ -1,0 +1,18 @@
+{
+  "qualification": "stationary-fillet-public-20260927-v525-terminal.json",
+  "source_manifest": "stationary-fillet-public-20260927-v525-sources.json",
+  "outer_session_reaped": 34409,
+  "validated_files": 2047,
+  "selected_geometry_tests": 30,
+  "checks": 3,
+  "repos": {
+    "hypercurve": {
+      "parent": "061585222021cfbf56a531d4ef9a9dd3804e692b",
+      "paths": {
+        "tests/hypercurve_stationary_fillets.rs": "fa9bba6a9c0b331913d5196c7332593d8945df4a521c7406cb2e118f19c69b35"
+      }
+    }
+  },
+  "scope": "Public stationary fillet contact and composition regressions; overall implementation goal remains active",
+  "performance_changes": []
+}

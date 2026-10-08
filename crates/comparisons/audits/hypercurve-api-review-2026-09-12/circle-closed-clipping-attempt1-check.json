@@ -1,0 +1,11 @@
+{
+  "sources": {
+    "src/bezier_offset.rs": "6c1b489fa7f96e764e3b6d501b058cb713b28a89081fd0ca5e680e4fa592d9ba",
+    "src/curve.rs": "6fad455f0704237de44da750b190a2cff34957390e7bf9e577bf548437be5538",
+    "src/curve_intersection.rs": "ab737989da9d575994215b02b7d4f08678ae9814d43ca2938452f3b2de076fe0",
+    "src/curve_region_boolean.rs": "64cfe4a42287cc71c49121a044f3d3c784bd79ed0fa7aa03b8a6a3d3bb1a4bda",
+    "src/curve_support_intersection.rs": "793f826c26dfa1f65dc0e9b2350f4cd39421373dfb05df60e210f124f25e87f8"
+  },
+  "check_exit": 101,
+  "check_seconds": 16.78966009800206
+}

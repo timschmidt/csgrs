@@ -1,0 +1,25 @@
+DONE exp
+DONE log
+DONE sqrt
+DONE sin
+DONE cos
+DONE tan
+DONE asin
+DONE acos
+DONE atan
+DONE sinh
+DONE cosh
+DONE tanh
+DONE asinh
+DONE acosh
+DONE atanh
+DONE expBounded
+DONE logBounded
+DONE sinBounded
+DONE cosBounded
+DONE atanBounded
+TOTAL PASS 15379
+TOTAL FAIL 0
+TOTAL TIMEOUT 0
+TOTAL EXCEPTION 0
+TOTAL UNRESOLVED 0

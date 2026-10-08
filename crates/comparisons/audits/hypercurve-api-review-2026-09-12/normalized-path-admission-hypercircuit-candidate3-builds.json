@@ -1,0 +1,45 @@
+[
+  {
+    "kind": "check",
+    "command": [
+      "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+      "check",
+      "--all-targets",
+      "--no-default-features",
+      "--features",
+      "geometry",
+      "--locked",
+      "--offline"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 5.973224162007682,
+    "log": "normalized-path-admission-hypercircuit-candidate3-check.log"
+  },
+  {
+    "kind": "test-build",
+    "command": [
+      "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+      "test",
+      "--release",
+      "--no-default-features",
+      "--features",
+      "geometry",
+      "--locked",
+      "--offline",
+      "--lib",
+      "--test",
+      "materialize",
+      "--test",
+      "fabrication",
+      "--test",
+      "curved_outline",
+      "--test",
+      "preview",
+      "--no-run",
+      "--message-format=json"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 201.92418280398124,
+    "log": "normalized-path-admission-hypercircuit-candidate3-test-build.log"
+  }
+]

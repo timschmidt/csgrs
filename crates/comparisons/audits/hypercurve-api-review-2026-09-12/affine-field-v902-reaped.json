@@ -1,0 +1,8 @@
+{
+  "outer_session": 76048,
+  "outer_exit_code": 1,
+  "formatter_session": 90802,
+  "formatter_exit_code": 0,
+  "failure": "caller regression failed: algebraic_tensor_image::tests::tensor_image_retains_carriers_for_a_complete_nonrational_point_tuple",
+  "passed_cases": 149
+}

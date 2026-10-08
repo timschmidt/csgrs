@@ -1,0 +1,7 @@
+Classify retained points equal to an exterior probe origin
+
+A retained query point can equal the first exterior candidate of a certified boundary enclosure. The probe chord then reports ZeroLengthLine, which previously escaped as a classification error. Reuse that exact equality as an Outside witness. Other errors, uncertain-direction retries, endpoint ownership and winding decisions are unchanged; no additional equality evaluation or coordinate materialization is needed.
+
+Independent rectangle oracles cover nonmaterialized chord-normal, analytic-parallel, transformed recursive and lazy endpoint points at interior, exterior, boundary and vertex positions. The original probe reproduced four failures; all 360 oracle checks now pass under both policies.
+
+Validation: 15 release regressions, including existing winding, nesting, endpoint ownership and predicate guards; six all-target feature/lint, formatting, region-Boolean fuzz, documentation and downstream checks pass. Public classification API migration remains a separate follow-up.

@@ -1,0 +1,45 @@
+name: Coverage
+
+on:
+  push:
+    branches:
+    - main
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        submodules: recursive
+
+    - name: Get Concurrency
+      run: echo NPROC="nproc" >> $GITHUB_ENV
+
+    - name: Set Up Dependencies
+      run: sudo apt install -y cmake ninja-build pkg-config lcov clang-16 g++-13
+
+    - name: Create Build Environment
+      run: cmake -E make_directory ${{runner.workspace}}/build
+
+    - name: Configure CMake
+      working-directory: ${{runner.workspace}}/build
+      run: cmake ${{runner.workspace}}/conclog -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_COMPILER=g++-13 -G "Ninja" -DCOVERAGE=ON
+
+    - name: Build
+      working-directory: ${{runner.workspace}}/build
+      run: cmake --build . --parallel $($NPROC)
+
+    - name: Test
+      working-directory: ${{runner.workspace}}/build
+      run: ctest -j $($NPROC) --output-on-failure
+
+    - name: Generate Code Coverage
+      working-directory: ${{runner.workspace}}/conclog
+      run: |
+        lcov --directory ${{runner.workspace}}/build --capture --output-file coverage.info
+        lcov --remove coverage.info '/usr/*' --output-file coverage.info
+        lcov --list coverage.info
+        bash <(curl -s https://codecov.io/bash) -f coverage.info || echo "Codecov did not collect coverage reports"

@@ -1,0 +1,16 @@
+[package]
+name = "calcium-monic-cost-trial"
+version = "0.1.0"
+edition = "2024"
+publish = false
+[workspace]
+[dependencies]
+hyperreal = { path = "../polynomial-monic-trial/hyperreal" }
+hyperlimit = { path = "../polynomial-monic-trial/hyperlimit" }
+hypersolve = { path = "../polynomial-monic-trial/hypersolve" }
+[[bin]]
+name = "calcium-monic-trial-cpu"
+path = "../monic-cpu.rs"
+[[bin]]
+name = "calcium-monic-trial-allocation"
+path = "../monic-allocation.rs"

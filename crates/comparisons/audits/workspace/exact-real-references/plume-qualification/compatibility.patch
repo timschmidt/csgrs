@@ -1,0 +1,87 @@
+diff -ru exact-real-references/Plume/versioned/v1.2/Alex.hs .audit-plume.SZHOs8/compat/Alex.hs
+--- exact-real-references/Plume/versioned/v1.2/Alex.hs	1998-06-11 12:16:01.000000000 -0400
++++ .audit-plume.SZHOs8/compat/Alex.hs	2026-09-06 00:17:14.781126040 -0400
+@@ -25,7 +25,7 @@
+ 
+ module Alex where
+ 
+-import Array
++import Data.Array
+ 
+ 
+ 
+@@ -346,7 +346,7 @@
+ 	dp_out df ar = (bounds ar,[(c,n)| (c,n)<-assocs ar, n/=df])
+ 
+ load_dfa:: [(String,f)] -> f -> DFADump -> DFA f
+-load_dfa al df dmp = map f (recover_dfa dmp)
++load_dfa al df dmp = fmap f (recover_dfa dmp)
+ 	where
+ 	f (St clr accs dflt ar) = St clr (map g accs) dflt ar
+ 
+diff -ru exact-real-references/Plume/versioned/v1.2/Calc.hs .audit-plume.SZHOs8/compat/Calc.hs
+--- exact-real-references/Plume/versioned/v1.2/Calc.hs	1998-06-11 12:16:01.000000000 -0400
++++ .audit-plume.SZHOs8/compat/Calc.hs	2026-09-06 00:17:14.877127459 -0400
+@@ -86,7 +86,7 @@
+ 
+ 
+ evalAVar :: Database -> AVar -> Poss_SBinFloat
+-evalAVar db (A_Var var)		   = if (fres == NoVar) then zero
++evalAVar db (A_Var var)		   = if (fres == NoVar) then Nothing
+ 				     else evalExp1 db fres
+ 	 where fres = dbFetch db var
+ 
+@@ -99,4 +99,3 @@
+ 
+ 
+ 
+-
+diff -ru exact-real-references/Plume/versioned/v1.2/ICalc.hs .audit-plume.SZHOs8/compat/ICalc.hs
+--- exact-real-references/Plume/versioned/v1.2/ICalc.hs	1998-06-11 12:16:03.000000000 -0400
++++ .audit-plume.SZHOs8/compat/ICalc.hs	2026-09-06 00:17:14.972128863 -0400
+@@ -96,7 +96,7 @@
+ 
+ 
+ evalAVar :: Database -> AVar -> Poss_SBinFloat
+-evalAVar db (A_Var var)		   = if (fres == NoVar) then zero
++evalAVar db (A_Var var)		   = if (fres == NoVar) then Nothing
+ 				     else evalExp1 db fres
+ 	 where fres = dbFetch db var
+ 
+@@ -157,7 +157,7 @@
+ ievalAVar :: Database -> AVar -> AVar -> Poss_sbf_to_sbf
+ ievalAVar db (A_Var v) (A_Var avar)
+ 	    | v==avar   = return id
+-	    | otherwise = if (fres == NoVar) then zero
++	    | otherwise = if (fres == NoVar) then Nothing
+ 			  else ievalExp1 db (A_Var v) fres
+ 	 where fres = dbFetch db avar
+ 
+@@ -165,4 +165,3 @@
+ 
+ 
+ icalc db s d = evaluate db (parse s) d
+-
+diff -ru exact-real-references/Plume/versioned/v1.2/Utils.hs .audit-plume.SZHOs8/compat/Utils.hs
+--- exact-real-references/Plume/versioned/v1.2/Utils.hs	1998-06-11 12:16:07.000000000 -0400
++++ .audit-plume.SZHOs8/compat/Utils.hs	2026-09-06 00:09:51.613578118 -0400
+@@ -1,7 +1,7 @@
+ module Utils (ctoi, itoc, 
+ Perhaps, pos, unsure, neg, opp,
+ listhead, pow,
+-take_integer, drop_integer,
++take_integer, drop_integer, toInt, fromInt,
+ isSpace', isUpper', isLower', isAlpha', isDigit', isAlphanum'
+ )
+ 	 where
+@@ -64,3 +64,10 @@
+ 
+ drop_integer :: (Integral a) => a -> [b] -> [b]
+ drop_integer n x = drop (toInt n) x
++
++-- Audit-only Haskell 1.4 Prelude compatibility; numerical formulas unchanged.
++toInt :: Integral a => a -> Int
++toInt = fromIntegral
++
++fromInt :: Num a => Int -> a
++fromInt = fromIntegral

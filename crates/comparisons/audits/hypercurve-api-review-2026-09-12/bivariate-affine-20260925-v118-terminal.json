@@ -1,0 +1,286 @@
+{
+  "parents": {
+    "hypercurve": "f06e89f37c52befbdab6a6f664165fffab6888f9",
+    "hypersolve": "60a4e609d382c681ee98a1de6b4bdb7673487d37",
+    "hyperreal": "0cb5f29aee065c73e234e0ebb0a9e106398515bb"
+  },
+  "source_manifest": "local-chord-complete-replay-20260924-v118-sources.json",
+  "source_directory": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/source-archives/hypercurve-local-chord-complete-replay-v118-20260924",
+  "build_source_directory": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/build-workspace-20260925",
+  "checks": [
+    {
+      "repo": "hypersolve",
+      "label": "hypersolve-fmt",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustfmt",
+        "--edition",
+        "2024",
+        "--check",
+        "src/curve_resultant.rs"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.06389742996543646,
+      "log": "bivariate-affine-20260925-v118-hypersolve-fmt.log"
+    },
+    {
+      "repo": "hypersolve",
+      "label": "hypersolve-clippy-0",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "clippy",
+        "--all-targets",
+        "--all-features",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 7.124711949029006,
+      "log": "bivariate-affine-20260925-v118-hypersolve-clippy-0.log"
+    },
+    {
+      "repo": "hypersolve",
+      "label": "hypersolve-clippy-1",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "clippy",
+        "--all-targets",
+        "--no-default-features",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 9.528009984991513,
+      "log": "bivariate-affine-20260925-v118-hypersolve-clippy-1.log"
+    },
+    {
+      "repo": "hypercurve",
+      "label": "hypercurve-fmt",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustfmt",
+        "--edition",
+        "2024",
+        "--check",
+        "src/bezier_offset.rs"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 2.1168799300212413,
+      "log": "bivariate-affine-20260925-v118-hypercurve-fmt.log"
+    },
+    {
+      "repo": "hypercurve",
+      "label": "hypercurve-clippy-0",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "clippy",
+        "--all-targets",
+        "--all-features",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 23.45057225797791,
+      "log": "bivariate-affine-20260925-v118-hypercurve-clippy-0.log"
+    },
+    {
+      "repo": "hypercurve",
+      "label": "hypercurve-clippy-1",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "clippy",
+        "--all-targets",
+        "--no-default-features",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 22.449146735016257,
+      "log": "bivariate-affine-20260925-v118-hypercurve-clippy-1.log"
+    },
+    {
+      "repo": "hyperbrep",
+      "label": "hyperbrep-check",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "check",
+        "--all-targets",
+        "--all-features",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 17.389624800998718,
+      "log": "bivariate-affine-20260925-v118-hyperbrep-check.log"
+    }
+  ],
+  "cases": [
+    {
+      "repo": "hypersolve",
+      "label": "hypersolve-full",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/bivariate-affine-20260925-v118-hypersolve",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 3.819338339031674,
+      "log": "bivariate-affine-20260925-v118-hypersolve-full.log"
+    },
+    {
+      "repo": "hypercurve",
+      "label": "case-00",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/bivariate-affine-20260925-v118-hypercurve",
+        "--exact",
+        "bezier_region::tests::one_fragment_nonzero_parallel_loop_extends_chamfer_cuts_on_one_finite_envelope",
+        "--test-threads=1",
+        "--nocapture",
+        "--color",
+        "never"
+      ],
+      "returncode": "timeout",
+      "elapsed_seconds": 75.00692359602544,
+      "log": "bivariate-affine-20260925-v118-case-00.log",
+      "name": "bezier_region::tests::one_fragment_nonzero_parallel_loop_extends_chamfer_cuts_on_one_finite_envelope"
+    },
+    {
+      "repo": "hypercurve",
+      "label": "case-01",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/bivariate-affine-20260925-v118-hypercurve",
+        "--exact",
+        "bezier_offset::conversion_tests::algebraic_selected_fiber_incident_chart_preserves_affine_authority",
+        "--test-threads=1",
+        "--nocapture",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.0036020330153405666,
+      "log": "bivariate-affine-20260925-v118-case-01.log",
+      "name": "bezier_offset::conversion_tests::algebraic_selected_fiber_incident_chart_preserves_affine_authority"
+    },
+    {
+      "repo": "hypercurve",
+      "label": "case-02",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/bivariate-affine-20260925-v118-hypercurve",
+        "--exact",
+        "bezier_offset::conversion_tests::bivariate_bernstein_sign_excludes_only_strict_unit_square_misses",
+        "--test-threads=1",
+        "--nocapture",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.0035252090310677886,
+      "log": "bivariate-affine-20260925-v118-case-02.log",
+      "name": "bezier_offset::conversion_tests::bivariate_bernstein_sign_excludes_only_strict_unit_square_misses"
+    },
+    {
+      "repo": "hypercurve",
+      "label": "case-03",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/bivariate-affine-20260925-v118-hypercurve",
+        "--exact",
+        "bezier_offset::conversion_tests::poincare_miranda_preconditions_rotated_transverse_system_exactly",
+        "--test-threads=1",
+        "--nocapture",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.003539597033523023,
+      "log": "bivariate-affine-20260925-v118-case-03.log",
+      "name": "bezier_offset::conversion_tests::poincare_miranda_preconditions_rotated_transverse_system_exactly"
+    },
+    {
+      "repo": "hypercurve",
+      "label": "case-04",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/bivariate-affine-20260925-v118-hypercurve",
+        "--exact",
+        "bezier_offset::conversion_tests::selected_fiber_affine_chart_round_trip_avoids_global_projection",
+        "--test-threads=1",
+        "--nocapture",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.0156399579718709,
+      "log": "bivariate-affine-20260925-v118-case-04.log",
+      "name": "bezier_offset::conversion_tests::selected_fiber_affine_chart_round_trip_avoids_global_projection"
+    },
+    {
+      "repo": "hypercurve",
+      "label": "case-05",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/bivariate-affine-20260925-v118-hypercurve",
+        "--exact",
+        "bezier_offset::conversion_tests::selected_fiber_comparison_reuses_high_degree_affine_root_identity",
+        "--test-threads=1",
+        "--nocapture",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.003519919002428651,
+      "log": "bivariate-affine-20260925-v118-case-05.log",
+      "name": "bezier_offset::conversion_tests::selected_fiber_comparison_reuses_high_degree_affine_root_identity"
+    },
+    {
+      "repo": "hypercurve",
+      "label": "case-06",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/bivariate-affine-20260925-v118-hypercurve",
+        "--exact",
+        "bezier_offset::conversion_tests::selected_parallel_normal_circle_intersects_genuinely_analytic_parallel_in_one_fiber",
+        "--test-threads=1",
+        "--nocapture",
+        "--color",
+        "never"
+      ],
+      "returncode": "timeout",
+      "elapsed_seconds": 75.05283516889904,
+      "log": "bivariate-affine-20260925-v118-case-06.log",
+      "name": "bezier_offset::conversion_tests::selected_parallel_normal_circle_intersects_genuinely_analytic_parallel_in_one_fiber"
+    }
+  ],
+  "binaries": {
+    "hypersolve": {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/bivariate-affine-20260925-v118-hypersolve",
+      "sha256": "b08348766ddd4ea9b09a032212b9a404aa1dfb6bce149b1a6fc42b2aa63004b6"
+    },
+    "hypercurve": {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/bivariate-affine-20260925-v118-hypercurve",
+      "sha256": "1cf1a868d89c572364aa9a17701011967833f85783c7d38d1cc365c4aa56a47b"
+    }
+  },
+  "all_processes_reaped": true,
+  "diagnostic_only": true,
+  "hypersolve_build_returncode": 0,
+  "hypersolve_passed": 516,
+  "hypercurve_build_returncode": 0,
+  "selection": [
+    "bezier_region::tests::one_fragment_nonzero_parallel_loop_extends_chamfer_cuts_on_one_finite_envelope",
+    "bezier_offset::conversion_tests::algebraic_selected_fiber_incident_chart_preserves_affine_authority",
+    "bezier_offset::conversion_tests::bivariate_bernstein_sign_excludes_only_strict_unit_square_misses",
+    "bezier_offset::conversion_tests::poincare_miranda_preconditions_rotated_transverse_system_exactly",
+    "bezier_offset::conversion_tests::selected_fiber_affine_chart_round_trip_avoids_global_projection",
+    "bezier_offset::conversion_tests::selected_fiber_comparison_reuses_high_degree_affine_root_identity",
+    "bezier_offset::conversion_tests::selected_parallel_normal_circle_intersects_genuinely_analytic_parallel_in_one_fiber"
+  ],
+  "all_sources_unchanged": true
+}

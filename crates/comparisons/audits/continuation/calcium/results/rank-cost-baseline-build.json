@@ -1,0 +1,21 @@
+{
+  "tag": "rank-cost-baseline-build",
+  "started": "2026-09-09T02:29:46.081Z",
+  "finished": "2026-09-09T02:29:46.893Z",
+  "elapsedSeconds": 0.810490311,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/rank-cost-baseline",
+  "command": "env",
+  "args": [
+    "CARGO_TARGET_DIR=/tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse",
+    "CARGO_INCREMENTAL=0",
+    "CARGO_PROFILE_DEV_DEBUG=0",
+    "CARGO_BUILD_JOBS=2",
+    "cargo",
+    "build",
+    "--offline",
+    "--release",
+    "--bins"
+  ],
+  "code": 0,
+  "signal": null
+}

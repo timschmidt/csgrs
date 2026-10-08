@@ -1,0 +1,20 @@
+FAIL atan -11/8 p=32 error_ulps=8.126047587e1
+FAIL atan -11/8 p=80 error_ulps=2.174261933e7
+FAIL atan -11/8 p=160 error_ulps=3.381121333e16
+FAIL atan -21/16 p=32 error_ulps=2.147006685e1
+FAIL atan -21/16 p=80 error_ulps=1.197932323e6
+FAIL atan -21/16 p=160 error_ulps=1.310296688e14
+FAIL atan -5/4 p=32 error_ulps=5.138625271e0
+FAIL atan -5/4 p=80 error_ulps=4.757235231e4
+acos	checks=28	failures=0
+acosh	checks=16	failures=0
+asin	checks=28	failures=0
+asinh	checks=20	failures=0
+atan	checks=52	failures=12
+atanh	checks=20	failures=0
+cos	checks=28	failures=0
+exp	checks=28	failures=0
+log	checks=28	failures=0
+sin	checks=28	failures=0
+sqrt	checks=20	failures=0
+TOTAL elementary	checks=296	failures=12

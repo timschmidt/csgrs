@@ -1,0 +1,12 @@
+{
+  "repos": {
+    "hypercurve": {
+      "parent": "136379278dc8f552dc064bbe9d5ea3159f530158",
+      "paths": {
+        "src/rational_bezier_general.rs": "a805de6ec680c0fb4ef351d89bbbc531e7c072a9507246cfe21b3e9b7cd64315"
+      }
+    }
+  },
+  "qualification": "conic-contact-domain-v796-terminal.json",
+  "verified_source_files": 2048
+}

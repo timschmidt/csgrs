@@ -1,0 +1,18 @@
+{
+  "tag": "zero-factor-native-cpu-8-candidate-v71",
+  "started": "2026-09-11T19:31:31.699Z",
+  "finished": "2026-09-11T19:31:33.029Z",
+  "elapsedSeconds": 1.3282895670000001,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "taskset",
+  "args": [
+    "-c",
+    "2",
+    "/tmp/calcium-zero-cost.cEHSth/candidate-cpu",
+    "cpu",
+    "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/zero-factor-cost-input-v71.json",
+    "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/zero-factor-native-cpu-8-plan-v71.json"
+  ],
+  "code": 0,
+  "signal": null
+}

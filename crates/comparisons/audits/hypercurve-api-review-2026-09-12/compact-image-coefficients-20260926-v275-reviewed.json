@@ -1,0 +1,99 @@
+{
+  "parents": {
+    "hyperreal": "0cb5f29aee065c73e234e0ebb0a9e106398515bb",
+    "hypersolve": "8af4c7f48a4da6d61db8b49b74bb3370d6e89057"
+  },
+  "source_manifest": "compact-image-coefficients-20260926-v275-sources.json",
+  "changed_files": {
+    "hyperreal": [
+      "src/computable/node/quadratic_tower.rs",
+      "src/real/arithmetic/quadratic_tower_sign.rs"
+    ],
+    "hypersolve": [
+      "src/algebraic_tensor_image.rs"
+    ]
+  },
+  "source_count": 2046,
+  "qualified_cases": 560,
+  "checks": [
+    [
+      "hyperreal-tower-tests",
+      0
+    ],
+    [
+      "hypersolve-all-tests",
+      0
+    ],
+    [
+      "hyperreal-format",
+      0
+    ],
+    [
+      "hyperreal-clippy-all-features",
+      0
+    ],
+    [
+      "hyperreal-clippy-no-default",
+      0
+    ],
+    [
+      "hypersolve-format",
+      0
+    ],
+    [
+      "hypersolve-clippy-all-features",
+      0
+    ],
+    [
+      "hypersolve-clippy-no-default",
+      0
+    ]
+  ],
+  "known_limitations": [
+    {
+      "name": "approximate_512_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions",
+      "returncode": 124,
+      "log": "compact-image-coefficients-20260926-v275-reoffset.log",
+      "elapsed_seconds": 90.03300648205914
+    }
+  ],
+  "repositories": {
+    "hypersdf": "",
+    "hyperbrep": "",
+    "hyperparts": "",
+    "alumina-interface": "",
+    "hyperlattice": "",
+    "citizen-builder": "",
+    "csgrs-ffi": "",
+    "alumina-firmware": "",
+    "videos": "",
+    "hypertri": "",
+    "hyperreal": " M src/computable/node/quadratic_tower.rs\n M src/real/arithmetic/quadratic_tower_sign.rs\n",
+    "hyperpath": "",
+    "hypervoxel": "",
+    "hypergraphics": "",
+    "hyperevolution": "",
+    "exactcore-hyper-comparison": "",
+    "hypersolve": " M src/algebraic_tensor_image.rs\n",
+    "hypercurve": "",
+    "crcalc": "",
+    "openscad-rs": "",
+    "hypermesh": "",
+    "csgrs": "",
+    "synaps-cad": "",
+    "hyperdrc": "",
+    "hyperphysics": "",
+    "hyperlimit": "",
+    "hyperpack": "",
+    "NURBS_BREP_kernel": "",
+    "ExactCalculator": "",
+    "hypercircuit": ""
+  },
+  "all_owned_sessions_reaped": [
+    69441,
+    23774,
+    67954,
+    87117,
+    24476
+  ]
+}

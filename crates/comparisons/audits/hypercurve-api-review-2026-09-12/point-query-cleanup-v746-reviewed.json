@@ -1,0 +1,26 @@
+{
+  "qualification": "point-query-cleanup-v746-terminal.json",
+  "source_manifest": "point-query-cleanup-v746-sources.json",
+  "outer_session_reaped": 14552,
+  "validated_files": 2048,
+  "tests": 44,
+  "checks": 7,
+  "repos": {
+    "hyperbrep": {
+      "parent": "34036d0e1b7d96918147b0902af28a1f0291252a",
+      "paths": {
+        "src/boolean.rs": "d1bdc6066362bdab97c6200a7169f12b6d9ac9d43e589026a9ba7d1dd15b02f5"
+      }
+    },
+    "hypercurve": {
+      "parent": "61c298509eaf01da1c39ab1efbce31785a6c063a",
+      "paths": {
+        "src/bezier_region.rs": "5b1f6c0879e14857b24e9c3383bad685f2819b00605734893af6dc0ef6594806",
+        "src/native_region_tests.rs": "f456fdd845554ee2cb08654f8916c2e68ff9b8bf6a84b5fb54af20ea9c958dd0",
+        "tests/hypercurve_curve_region_promotion.rs": "789b605df1393e83eb75c7c3e216afe77f56e5242154315e6c79abcb7a91b6e7"
+      }
+    }
+  },
+  "scope": "Remove borrowed constructor forwarding, skip unused native batch preparation, and classify retained clipping representatives directly",
+  "unresolved": "The full exact-geometry implementation goal remains active; this cleanup does not claim full spatial BREP closure or a measured speedup."
+}

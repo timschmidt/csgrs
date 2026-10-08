@@ -1,0 +1,30 @@
+{
+  "tag": "vector-state-compile",
+  "started": "2026-09-08T22:22:43.854Z",
+  "finished": "2026-09-08T22:22:43.988Z",
+  "elapsedSeconds": 0.13160405500000003,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison",
+  "command": "gcc",
+  "args": [
+    "-O2",
+    "-g0",
+    "-Wall",
+    "-Wextra",
+    "-Werror",
+    "-isystem",
+    "../exact-real-references/flint/src",
+    "audits/continuation/calcium/flint-vector-state-probe.c",
+    "-L",
+    "../exact-real-references/flint",
+    "-Wl,-rpath,/home/tim/Documents/GitHub/workspace/exact-real-references/flint",
+    "-lflint",
+    "-lmpfr",
+    "-lgmp",
+    "-lm",
+    "-lpthread",
+    "-o",
+    "/tmp/calcium-reuse-costs.73SR1w/flint-vector-state-probe"
+  ],
+  "code": 0,
+  "signal": null
+}

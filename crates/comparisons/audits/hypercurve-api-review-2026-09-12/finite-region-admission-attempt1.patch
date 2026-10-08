@@ -1,0 +1,432 @@
+diff --git a/src/bezier_region.rs b/src/bezier_region.rs
+index 7e783dd..cb05eef 100644
+--- a/src/bezier_region.rs
++++ b/src/bezier_region.rs
+@@ -3351,7 +3351,11 @@ fn retained_corner_fragment_trim(
+         )
+     })?;
+     let split = match curve
+-        .split_at_parameters_refined(&[parameter], policy)
++        .split_at_parameters_refined(
++            &BezierParameterRange2::from_exact(Real::zero(), Real::one()),
++            &[parameter],
++            policy,
++        )
+         .map_err(|cause| curve_region_edit_error(operation, cause))?
+     {
+         Classification::Decided(split) => split,
+@@ -3759,7 +3763,11 @@ fn retained_corner_fragment_between_cuts(
+             parameters.push(previous_parameter);
+         }
+         let split = match curve
+-            .split_at_parameters_refined(&parameters, policy)
++            .split_at_parameters_refined(
++                &BezierParameterRange2::from_exact(Real::zero(), Real::one()),
++                &parameters,
++                policy,
++            )
+             .map_err(|cause| curve_region_edit_error(operation, cause))?
+         {
+             Classification::Decided(split) => split,
+diff --git a/src/bezier_split.rs b/src/bezier_split.rs
+index ea0f45e..9d16fb3 100644
+--- a/src/bezier_split.rs
++++ b/src/bezier_split.rs
+@@ -1801,90 +1801,46 @@ impl BezierSubcurve2 {
+         }
+     }
+ 
++    /// Splits one certified ordered finite source range, preserving algebraic
++    /// endpoint images and materializing represented intervals when possible.
+     pub(crate) fn split_at_parameters_refined(
+         &self,
++        range: &BezierParameterRange2,
+         parameters: &[BezierParameter2],
+         policy: &CurveContext,
+     ) -> CurveResult<Classification<BezierSplitMaterialization2>> {
+-        match self {
+-            Self::Quadratic(curve) => split_curve_at_parameters(
+-                parameters,
+-                policy,
+-                true,
+-                false,
+-                |_| true,
+-                |start, end| {
+-                    Ok(Self::Quadratic(
+-                        curve.subcurve_between_exact(start, end, policy)?,
+-                    ))
+-                },
+-                |parameter| {
+-                    BezierAlgebraicEndpointImage2::quadratic_first_order(curve, parameter, policy)
+-                },
+-                self.clone(),
+-            ),
+-            Self::Cubic(curve) => split_curve_at_parameters(
+-                parameters,
+-                policy,
+-                true,
+-                false,
+-                |_| true,
+-                |start, end| {
+-                    Ok(Self::Cubic(
+-                        curve.subcurve_between_exact(start, end, policy)?,
+-                    ))
+-                },
+-                |parameter| {
+-                    BezierAlgebraicEndpointImage2::cubic_first_order(curve, parameter, policy)
+-                },
+-                self.clone(),
+-            ),
+-            Self::RationalQuadratic(curve) => split_curve_at_parameters(
+-                parameters,
+-                policy,
+-                true,
+-                false,
+-                |parameter| {
+-                    matches!(
+-                        curve.point_at(parameter.clone(), policy),
+-                        Classification::Decided(_)
+-                    )
+-                },
+-                |start, end| {
+-                    Ok(Self::RationalQuadratic(
+-                        curve.subcurve_between_exact(start, end, policy)?,
+-                    ))
+-                },
+-                |parameter| {
+-                    BezierAlgebraicEndpointImage2::rational_quadratic_first_order(
+-                        curve, parameter, policy,
+-                    )
+-                },
+-                self.clone(),
+-            ),
+-            Self::Rational(curve) => split_curve_at_parameters(
+-                parameters,
+-                policy,
+-                true,
+-                false,
+-                |parameter| {
+-                    matches!(
+-                        curve.point_at_classified(parameter, policy),
+-                        Classification::Decided(_)
+-                    )
+-                },
+-                |start, end| match curve.subcurve_between_exact(start, end, policy)? {
+-                    Classification::Decided(curve) => Ok(Self::Rational(curve)),
++        split_curve_at_parameters(
++            range,
++            parameters,
++            policy,
++            true,
++            false,
++            |parameter| matches!(self.point_at(parameter, policy), Classification::Decided(_)),
++            |start, end| {
++                // Keep compact native kernels on their certified domain. An
++                // exterior interval gets a fresh affine chart; unit-domain
++                // injectivity facts must not escape with that extension.
++                let result = if in_closed_unit_interval(start, policy) == Some(true)
++                    && in_closed_unit_interval(end, policy) == Some(true)
++                {
++                    self.subcurve_between_exact(start, end, policy)?
++                } else {
++                    self.subcurve_between_affine_exact(start, end, policy)?
++                };
++                match result {
++                    Classification::Decided(curve) => Ok(curve),
+                     Classification::Uncertain(reason) => Err(CurveError::Topology(format!(
+-                        "general rational Bezier exact split is uncertified: {reason:?}"
++                        "Bezier exact split is uncertified: {reason:?}"
+                     ))),
+-                },
+-                |parameter| {
+-                    BezierAlgebraicEndpointImage2::rational_first_order(curve, parameter, policy)
+-                },
+-                self.clone(),
+-            ),
+-        }
++                }
++            },
++            |parameter| {
++                BezierAlgebraicEndpointImage2::from_source_curve_first_order(
++                    self, parameter, policy,
++                )
++            },
++            self.clone(),
++        )
+     }
+ 
+     pub(crate) fn subcurve_between_exact(
+@@ -2346,6 +2302,7 @@ impl QuadraticBezier2 {
+         policy: &CurveContext,
+     ) -> CurveResult<Classification<BezierSplitMaterialization2>> {
+         split_curve_at_parameters(
++            &BezierParameterRange2::from_exact(Real::zero(), Real::one()),
+             parameters,
+             policy,
+             false,
+@@ -2469,6 +2426,7 @@ impl CubicBezier2 {
+         policy: &CurveContext,
+     ) -> CurveResult<Classification<BezierSplitMaterialization2>> {
+         split_curve_at_parameters(
++            &BezierParameterRange2::from_exact(Real::zero(), Real::one()),
+             parameters,
+             policy,
+             false,
+@@ -2567,6 +2525,7 @@ impl RationalQuadraticBezier2 {
+         policy: &CurveContext,
+     ) -> CurveResult<Classification<BezierSplitMaterialization2>> {
+         split_curve_at_parameters(
++            &BezierParameterRange2::from_exact(Real::zero(), Real::one()),
+             parameters,
+             policy,
+             false,
+@@ -2682,6 +2641,7 @@ impl RationalBezier2 {
+         policy: &CurveContext,
+     ) -> CurveResult<Classification<BezierSplitMaterialization2>> {
+         split_curve_at_parameters(
++            &BezierParameterRange2::from_exact(Real::zero(), Real::one()),
+             parameters,
+             policy,
+             false,
+@@ -2705,6 +2665,7 @@ impl RationalBezier2 {
+ }
+ 
+ fn split_curve_at_parameters<F, G, H>(
++    range: &BezierParameterRange2,
+     parameters: &[BezierParameter2],
+     policy: &CurveContext,
+     refine_ordering: bool,
+@@ -2719,10 +2680,7 @@ where
+     G: FnMut(&BezierAlgebraicParameter2) -> CurveResult<BezierAlgebraicEndpointImage2>,
+     H: FnMut(&Real) -> bool,
+ {
+-    let mut boundaries = vec![
+-        BezierParameter2::Exact(Real::zero()),
+-        BezierParameter2::Exact(Real::one()),
+-    ];
++    let mut boundaries = vec![range.start().clone(), range.end().clone()];
+     for parameter in parameters {
+         validate_parameter(parameter, policy)?;
+         let promoted = if promote_exact_points {
+@@ -2746,6 +2704,17 @@ where
+         Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+     }
+ 
++    for (actual, expected) in [
++        (boundaries.first().unwrap(), range.start()),
++        (boundaries.last().unwrap(), range.end()),
++    ] {
++        match compare_boundary_parameters(actual, expected, policy, refine_ordering)? {
++            Classification::Decided(Ordering::Equal) => {}
++            Classification::Decided(_) => return Err(CurveError::InvalidBezierParameter),
++            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
++        }
++    }
++
+     let endpoint_images = boundaries
+         .iter()
+         .map(|boundary| endpoint_image_for(boundary, &mut endpoint_image))
+diff --git a/src/curve_region_boolean.rs b/src/curve_region_boolean.rs
+index f3f68bf..c4ad2f3 100644
+--- a/src/curve_region_boolean.rs
++++ b/src/curve_region_boolean.rs
+@@ -1243,7 +1243,8 @@ impl CurveRegion2 {
+         })
+     }
+ 
+-    /// Collects exact contacts and overlaps against another region immediately.
++    /// Collects exact contacts and overlaps between regularized region boundaries.
++    /// Authored winding and canceled seams are resolved before intersection.
+     pub fn intersect_region(
+         &self,
+         other: &Self,
+@@ -1257,7 +1258,8 @@ impl CurveRegion2 {
+         other: &Self,
+         policy: &CurveContext,
+     ) -> ExactCurveResult<CurveRegionIntersectionResult2> {
+-        CurveRegionBooleanContext::try_new(self, other, policy)?.build_intersection_evidence()
++        let (first, second) = self.regularized_pair(other, policy)?;
++        CurveRegionBooleanContext::try_new(&first, &second, policy)?.build_intersection_evidence()
+     }
+ }
+ 
+@@ -12385,8 +12387,7 @@ fn split_carrier_with_refinement(
+     // Specialized event splitters receive only authored endpoints, contacts
+     // admitted by `parameter_in_carrier`, and clipped overlap endpoints.
+     // Their sorted event windows are therefore already within the finite
+-    // carrier. Only generic whole-curve materialization needs a second range
+-    // clip below.
++    // carrier. Bezier materialization uses that same certified range.
+     if matches!(carrier.geometry, CurveSupport2::Parallel(_)) {
+         return split_analytic_carrier(carrier, events, max_refinement_steps, policy);
+     }
+@@ -12405,18 +12406,31 @@ fn split_carrier_with_refinement(
+         .into_iter()
+         .map(|parameter| parameter.refined_isolating_interval(max_refinement_steps, policy))
+         .collect::<Vec<_>>();
+-    let materialization = match carrier
+-        .geometry
+-        .bezier()
+-        .split_at_parameters_refined(&parameters, policy)?
+-    {
+-        Classification::Decided(materialization) => materialization,
+-        Classification::Uncertain(reason) => {
+-            return Err(CurveError::Topology(format!(
+-                "retained curved-region split remained uncertain: {reason:?}"
+-            )));
+-        }
+-    };
++    let range = BezierParameterRange2::new_validated(
++        carrier
++            .start
++            .as_bezier_parameter()
++            .ok_or(CurveError::InvalidCurveParameter)?
++            .clone(),
++        carrier
++            .end
++            .as_bezier_parameter()
++            .ok_or(CurveError::InvalidCurveParameter)?
++            .clone(),
++    );
++    let materialization =
++        match carrier
++            .geometry
++            .bezier()
++            .split_at_parameters_refined(&range, &parameters, policy)?
++        {
++            Classification::Decided(materialization) => materialization,
++            Classification::Uncertain(reason) => {
++                return Err(CurveError::Topology(format!(
++                    "retained curved-region split remained uncertain: {reason:?}"
++                )));
++            }
++        };
+     let mut output = Vec::new();
+     for fragment in materialization.fragments() {
+         let Some((start, end)) = fragment_range(fragment) else {
+@@ -12426,9 +12440,6 @@ fn split_carrier_with_refinement(
+         };
+         let start_parameter = CurveParameter2::from(start.clone());
+         let end_parameter = CurveParameter2::from(end.clone());
+-        if !parameter_range_inside_carrier(&start_parameter, &end_parameter, carrier, policy)? {
+-            continue;
+-        }
+         let start_topology_vertex = event_vertex(events, &start_parameter, policy)?;
+         let end_topology_vertex = event_vertex(events, &end_parameter, policy)?;
+         let fragment = compact_retained_circular_fragment(
+@@ -15530,26 +15541,6 @@ fn parameter_location_in_carrier(
+     })
+ }
+ 
+-fn parameter_range_inside_carrier(
+-    start: &CurveParameter2,
+-    end: &CurveParameter2,
+-    carrier: &RegionCarrier,
+-    policy: &CurveContext,
+-) -> Result<bool, CurveError> {
+-    let start_cmp = start.cmp_by_refinement(&carrier.start, policy)?;
+-    let end_cmp = end.cmp_by_refinement(&carrier.end, policy)?;
+-    match (start_cmp, end_cmp) {
+-        (Classification::Decided(start_cmp), Classification::Decided(end_cmp)) => {
+-            Ok(!start_cmp.is_lt() && !end_cmp.is_gt())
+-        }
+-        (Classification::Uncertain(reason), _) | (_, Classification::Uncertain(reason)) => {
+-            Err(CurveError::Topology(format!(
+-                "curved-region carrier ordering remained uncertain: {reason:?}"
+-            )))
+-        }
+-    }
+-}
+-
+ fn ranges_intersect(
+     range: &CurveParameterRange2,
+     carrier: &RegionCarrier,
+@@ -17326,7 +17317,11 @@ mod certified_successor_tests {
+             let source_parameter = BezierParameter2::Algebraic(parameter.clone());
+             let materialization = decided(
+                 source_curve
+-                    .split_at_parameters_refined(std::slice::from_ref(&source_parameter), &policy)
++                    .split_at_parameters_refined(
++                        &BezierParameterRange2::from_exact(Real::zero(), Real::one()),
++                        std::slice::from_ref(&source_parameter),
++                        &policy,
++                    )
+                     .expect("exact algebraic source split"),
+             );
+             let source_fragment = materialization.fragments()[0].clone();
+@@ -17476,7 +17471,11 @@ mod certified_successor_tests {
+             let source_parameter = BezierParameter2::Algebraic(parameter);
+             let source_fragment = decided(
+                 source_curve
+-                    .split_at_parameters_refined(std::slice::from_ref(&source_parameter), &policy)
++                    .split_at_parameters_refined(
++                        &BezierParameterRange2::from_exact(Real::zero(), Real::one()),
++                        std::slice::from_ref(&source_parameter),
++                        &policy,
++                    )
+                     .expect("exact algebraic source split"),
+             )
+             .fragments()[0]
+@@ -17609,14 +17608,22 @@ mod certified_successor_tests {
+             );
+             let x_fragment = decided(
+                 x_axis
+-                    .split_at_parameters_refined(std::slice::from_ref(&first_parameter), &policy)
++                    .split_at_parameters_refined(
++                        &BezierParameterRange2::from_exact(Real::zero(), Real::one()),
++                        std::slice::from_ref(&first_parameter),
++                        &policy,
++                    )
+                     .expect("exact x-axis split"),
+             )
+             .fragments()[0]
+                 .clone();
+             let y_fragment = decided(
+                 y_axis
+-                    .split_at_parameters_refined(std::slice::from_ref(&second_parameter), &policy)
++                    .split_at_parameters_refined(
++                        &BezierParameterRange2::from_exact(Real::zero(), Real::one()),
++                        std::slice::from_ref(&second_parameter),
++                        &policy,
++                    )
+                     .expect("exact y-axis split"),
+             )
+             .fragments()[0]
+@@ -17863,14 +17870,22 @@ mod certified_successor_tests {
+             );
+             let half_fragment = decided(
+                 half_source
+-                    .split_at_parameters_refined(std::slice::from_ref(&half_parameter), &policy)
++                    .split_at_parameters_refined(
++                        &BezierParameterRange2::from_exact(Real::zero(), Real::one()),
++                        std::slice::from_ref(&half_parameter),
++                        &policy,
++                    )
+                     .expect("exact half-source split"),
+             )
+             .fragments()[0]
+                 .clone();
+             let third_fragment = decided(
+                 third_source
+-                    .split_at_parameters_refined(std::slice::from_ref(&third_parameter), &policy)
++                    .split_at_parameters_refined(
++                        &BezierParameterRange2::from_exact(Real::zero(), Real::one()),
++                        std::slice::from_ref(&third_parameter),
++                        &policy,
++                    )
+                     .expect("exact third-source split"),
+             )
+             .fragments()[0]
+@@ -19797,7 +19812,11 @@ mod certified_successor_tests {
+             );
+             let source_fragment = decided(
+                 source_curve
+-                    .split_at_parameters_refined(std::slice::from_ref(&source_parameter), &policy)
++                    .split_at_parameters_refined(
++                        &BezierParameterRange2::from_exact(Real::zero(), Real::one()),
++                        std::slice::from_ref(&source_parameter),
++                        &policy,
++                    )
+                     .expect("exact source split"),
+             )
+             .fragments()[0]

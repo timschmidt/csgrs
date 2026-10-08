@@ -1,0 +1,7 @@
+Reuse exact rational samples and quadratic resultant interpolation
+
+Bivariate resultant interpolation now reuses the exact scalar-value kernel after certifying rational coefficients. Clear each polynomial's rational content once, use the existing flat integer determinant, and restore both signed contents to their resultant homogeneity powers. General exact coefficients retain the existing predicate path.
+
+Replace repeated Lagrange basis construction with exact divided differences and nested Newton conversion, reducing reconstruction from cubic to quadratic arithmetic work with linear live storage. Preserve nonuniform sample nodes, skipped degree-drop fibers, full coefficient scale and final strict trimming. No curve-specific algorithm or public interface is added.
+
+Validation: 218 algebraic and 174 geometry release tests across six pinned binaries, plus nine lint/format/fuzz/docs/downstream checks. Independent tests verify fractional coefficients against the full determinant report, a signed degree-13 identity on both axes including exceptional fibers, and pi/sqrt(2) interpolation. Four degree-six offset cases that exceeded 180 seconds now complete in 47-48 seconds with both expected crossing contacts.

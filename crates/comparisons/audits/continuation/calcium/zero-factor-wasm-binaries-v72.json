@@ -1,0 +1,36 @@
+{
+  "checkpoint": 72,
+  "root": "/tmp/calcium-zero-wasm.ATQP07",
+  "artifacts": [
+    {
+      "variant": "baseline",
+      "kind": "rational",
+      "path": "/tmp/calcium-zero-wasm.ATQP07/baseline-rational.wasm",
+      "bytes": 1292409,
+      "sha256": "24738af2d865c2c7c8a7fe4d494b358ea34d3467483c0eb0c03fa352d792b06b"
+    },
+    {
+      "variant": "baseline",
+      "kind": "history",
+      "path": "/tmp/calcium-zero-wasm.ATQP07/baseline-history.wasm",
+      "bytes": 1615521,
+      "sha256": "1046d83678faa2f3383d8848fef7ea6c4cf71fec17bea67b68f8b97005fb668f"
+    },
+    {
+      "variant": "candidate",
+      "kind": "rational",
+      "path": "/tmp/calcium-zero-wasm.ATQP07/candidate-rational.wasm",
+      "bytes": 1293885,
+      "sha256": "3f65f1b98fb8fc3d11fa7d56538633937e1288ab750c52ac2a447313ca771215"
+    },
+    {
+      "variant": "candidate",
+      "kind": "history",
+      "path": "/tmp/calcium-zero-wasm.ATQP07/candidate-history.wasm",
+      "bytes": 1617066,
+      "sha256": "77cf0377cca08648a1a32ba2ce9d28c9bb212bfb8f698785cbfe29326d7a44e9"
+    }
+  ],
+  "originSha256": "e5662a5cecde51f8bc8e72db25f8172e51a85cbfe656ecfe73e62eb0d619056f",
+  "recorded": "2026-09-11T20:06:35.920Z"
+}

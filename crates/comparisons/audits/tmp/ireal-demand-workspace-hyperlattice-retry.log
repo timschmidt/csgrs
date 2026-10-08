@@ -1,0 +1,369 @@
+    Blocking waiting for file lock on build directory
+   Compiling num-rational v0.4.2
+   Compiling libmimalloc-sys v0.1.47
+   Compiling xprec v0.2.2
+   Compiling ciborium v0.2.2
+   Compiling itertools v0.14.0
+   Compiling smartstring v1.0.1
+   Compiling tracing-attributes v0.1.31
+   Compiling bitflags v1.3.2
+   Compiling colored v3.1.1
+   Compiling log v0.4.29
+   Compiling lazy_static v1.5.0
+   Compiling fixedbitset v0.5.7
+   Compiling dyn-clone v1.0.20
+   Compiling pin-project-lite v0.2.17
+   Compiling tracing v0.1.44
+   Compiling petgraph v0.8.3
+   Compiling clap_builder v4.6.0
+   Compiling numerica v1.4.3
+   Compiling sharded-slab v0.1.7
+   Compiling tracing-log v0.2.0
+   Compiling region v3.0.2
+   Compiling num v0.4.3
+   Compiling wasmtime-jit-icache-coherence v34.0.2
+   Compiling brotli-decompressor v5.0.0
+   Compiling matchers v0.2.0
+   Compiling itertools v0.13.0
+   Compiling derive_arbitrary v1.4.2
+   Compiling thread_local v1.1.9
+   Compiling symbolica v1.5.1
+   Compiling static_assertions v1.1.0
+   Compiling nu-ansi-term v0.50.3
+   Compiling spec_math v0.1.6
+   Compiling symjit v2.14.9
+   Compiling tracing-subscriber v0.3.23
+   Compiling criterion-plot v0.6.0
+   Compiling arbitrary v1.4.2
+   Compiling brotli v8.0.2
+   Compiling hyperreal v0.13.1 (/home/tim/Documents/GitHub/workspace/hyperreal)
+   Compiling mimalloc v0.1.50
+   Compiling graphica v1.2.1
+   Compiling clap v4.6.1
+   Compiling regex v1.12.3
+   Compiling tinytemplate v1.2.1
+   Compiling libloading v0.9.0
+   Compiling append-only-vec v0.1.8
+   Compiling tinyjson v2.5.1
+   Compiling byteorder v1.5.0
+   Compiling bytes v1.11.1
+   Compiling self_cell v1.2.2
+   Compiling criterion v0.7.0
+   Compiling proptest v1.11.0
+   Compiling hyperlattice v0.6.1 (/home/tim/Documents/GitHub/workspace/hyperlattice)
+    Finished `release` profile [optimized] target(s) in 4m 28s
+     Running unittests src/lib.rs (.audit-targets/ireal-derivative-18555/release/deps/hyperlattice-cd5f42162caa2e33)
+
+running 19 tests
+test algebra2::tests::displacement2_builds_coordinate_difference ... ok
+test algebra2::tests::displacement2_facts_expose_axis_and_zero_masks ... ok
+test algebra2::tests::orient2_expr_facts_track_axis_collinear_and_perpendicular_cases ... ok
+test algebra2::tests::orient2_expr_matches_counter_clockwise_triangle ... ok
+test algebra2::tests::product_sum_facts_track_structurally_zero_terms ... ok
+test algebra2::tests::product_sum_helpers_preserve_short_exact_expressions ... ok
+test algebra2::tests::squared_distance2_avoids_square_root ... ok
+test algebra2::tests::squared_norm2_reuses_cached_displacement ... ok
+test algebra2::tests::wedge2_builds_signed_area_expression ... ok
+test matrix::core::fact_layout_tests::immediate_matrix_facts_retain_one_exact_set_summary ... ok
+test point::tests::point_boundary_arrays_reject_nonfinite_values ... ok
+test point::tests::point_centroid_weighted_sum_and_lerp_stay_in_real_coordinates ... ok
+test projective::tests::nonsparse_or_symbolic_rows_use_the_expanded_fallback ... ok
+test projective::tests::parallel_planes_produce_point_at_infinity_without_affine_division ... ok
+test projective::tests::sparse_intersection_handles_multiple_sparse_and_degenerate_rows ... ok
+test projective::tests::three_plane_intersection_preserves_homogeneous_point ... ok
+test projective::tests::two_plane_line_and_line_plane_match_three_plane_intersection ... ok
+test projective::tests::sparse_exact_row_matches_expanded_cofactors_for_every_position ... ok
+test projective::tests::wide_dyadic_affine_point_matches_independent_exact_division ... ok
+
+test result: ok. 19 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/adversarial_borrowed_owned.rs (.audit-targets/ireal-derivative-18555/release/deps/adversarial_borrowed_owned-1333256d70dbd30d)
+
+running 5 tests
+test complex_owned_and_borrowed_division_paths_match_after_cache_warming ... ok
+test matrix4_checked_abort_paths_match_non_abort_paths ... ok
+test scalar_owned_and_borrowed_paths_match_for_adversarial_values ... ok
+test matrix_owned_borrowed_and_checked_paths_match_on_mixed_forms ... ok
+test vector_owned_borrowed_and_cached_paths_are_semantically_flat ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/adversarial_constraint_props.rs (.audit-targets/ireal-derivative-18555/release/deps/adversarial_constraint_props-40872f882e66de1a)
+
+running 5 tests
+test distance_equality_residual_is_exact_zero_for_identical_points ... ok
+test midpoint_constraint_residual_is_exact_zero ... ok
+test distance_residual_is_translation_invariant ... ok
+test perpendicularity_residual_is_exact_zero_for_constructed_orthogonal_vectors ... ok
+test projection_residual_is_zero_after_projecting_onto_axis ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/adversarial_matrix_invariants.rs (.audit-targets/ireal-derivative-18555/release/deps/adversarial_matrix_invariants-d8b48f700257dc3c)
+
+running 6 tests
+test determinant_product_identity_holds_for_mixed_matrices ... ok
+test matrix3_adversarial_exact_and_symbolic_kernels_obey_algebra ... ok
+test singular_and_unknown_pivot_cases_remain_rejected_by_checked_paths ... ok
+test sparse_symbolic_transform_preserves_zero_and_sign_facts ... ok
+test matrix4_adversarial_exact_kernels_obey_algebra ... ok
+test vector_normalize_and_dot_invariants_cover_cancellation_and_huge_tiny_mix ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/adversarial_props.rs (.audit-targets/ireal-derivative-18555/release/deps/adversarial_props-cb10151d4ebcf0f5)
+
+running 8 tests
+test scalar_fact_invariants_hold_for_generated_mixed_forms ... ok
+test scalar_owned_and_borrowed_arithmetic_paths_are_equivalent ... ok
+test complex_owned_and_borrowed_paths_are_equivalent ... ok
+test singular_matrix3_duplicate_rows_are_rejected_by_checked_inverse ... ok
+test triangular_determinant_product_identity_holds ... ok
+test upper_triangular_matrix3_inverse_division_and_power_invariants ... ok
+test vector_dot_is_symmetric_and_distributive_for_exact_inputs ... ok
+test upper_triangular_matrix4_inverse_division_and_power_invariants ... ok
+
+test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+     Running tests/adversarial_regressions.rs (.audit-targets/ireal-derivative-18555/release/deps/adversarial_regressions-8f8e73fe30d10b16)
+
+running 7 tests
+test complex_zero_and_unknown_norms_are_rejected_by_checked_division ... ok
+test algebraic_line_plane_intersections_replay_exact_incidence ... ok
+test hidden_singular_matrix_by_symbolic_cancellation_is_detected ... ok
+test homogeneous_transform_helpers_match_direct_multiplication_for_points_and_directions ... ok
+test matrix_power_edges_do_not_hide_domain_errors ... ok
+test matrix_division_and_inverse_are_consistent_under_cached_determinant_warming ... ok
+test normalization_checked_rejects_unknown_zero_norm_but_preserves_exact_unit_vectors ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/adversarial_scalar_semantics.rs (.audit-targets/ireal-derivative-18555/release/deps/adversarial_scalar_semantics-9aaa0bd6be4209e2)
+
+running 7 tests
+test checked_reciprocal_distinguishes_zero_nonzero_and_unknown_zero ... ok
+test domain_boundary_errors_do_not_stale_cache_valid_neighbors ... ok
+test exact_special_forms_and_principal_branches_are_guarded ... ok
+test fact_api_invariants_are_self_consistent_for_adversarial_forms ... ok
+test float_import_regressions_cover_zero_subnormals_decimals_and_large_values ... ok
+test structural_equivalents_built_by_different_histories_agree ... ok
+test scalar_fact_queries_survive_repeated_cache_warming ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/api_surface_coverage.rs (.audit-targets/ireal-derivative-18555/release/deps/api_surface_coverage-4561e3fe45565a9a)
+
+running 6 tests
+test algebra_fact_packets_cover_zero_nonzero_unknown_and_large_masks ... ok
+test generic_shared_scale_surfaces_cover_empty_wide_and_schedule_queries ... ok
+test complex_power_status_ownership_and_symbolic_fallbacks_are_covered ... ok
+test point_views_facts_conversions_collections_and_ownership_forms_are_covered ... ok
+test scalar_unknown_domain_active_abort_and_projective_general_path_are_covered ... ok
+test vector_public_surface_and_all_abort_sparse_masks_are_covered ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/borrowed_ops.rs (.audit-targets/ireal-derivative-18555/release/deps/borrowed_ops-11fc250b072dcee8)
+
+running 4 tests
+test borrowed_complex_ops_match_owned_ops ... ok
+test borrowed_matrix_ops_match_owned_ops ... ok
+test borrowed_scalar_ops_match_owned_ops ... ok
+test borrowed_vector_ops_match_owned_ops ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/complex.rs (.audit-targets/ireal-derivative-18555/release/deps/complex-7a98fb5c5b31c0d6)
+
+running 6 tests
+test checked_complex_operations_reject_zero_denominators ... ok
+test complex_display_forwards_real_formatting ... ok
+test complex_division_preserves_exact_components_for_all_ownership_forms ... ok
+test complex_i_squared ... ok
+test complex_multiplication_preserves_exact_components_for_all_ownership_forms ... ok
+test complex_negative_one_power_uses_reciprocal_semantics ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/geometric.rs (.audit-targets/ireal-derivative-18555/release/deps/geometric-3f2ee59a9a2764e3)
+
+running 10 tests
+test matrix3_determinant_tracks_area_scale_not_translation ... ok
+test matrix3_affine_transform_scales_then_translates_points ... ok
+test matrix3_integer_power_repeats_translation ... ok
+test matrix3_translation_does_not_move_directions ... ok
+test matrix4_determinant_tracks_volume_scale_not_translation ... ok
+test matrix3_inverse_round_trips_affine_points ... ok
+test matrix4_homogeneous_translation_moves_points_not_directions ... ok
+test matrix4_inverse_round_trips_scaled_translated_points ... ok
+test vector3_normalize_preserves_direction_and_unit_length ... ok
+test vector4_dot_product_separates_orthogonal_homogeneous_axes ... ok
+
+test result: ok. 10 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/gmp_benchmark_coverage.rs (.audit-targets/ireal-derivative-18555/release/deps/gmp_benchmark_coverage-a03113a77de9a3e5)
+
+running 3 tests
+test generated_report_includes_gmp_column_and_ratio ... ok
+test gmp_engine_exposes_the_complete_numerica_adapter_surface ... ok
+test every_numerica_benchmark_family_has_gmp_parity ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/matrix.rs (.audit-targets/ireal-derivative-18555/release/deps/matrix-9d4bf9229f630ef0)
+
+running 67 tests
+test axis_angle_coordinate_axes_retain_named_rotation_structure ... ok
+test checked_matrix3_division_matches_ordinary_right_division ... ok
+test checked_matrix_inverse_rejects_singular_matrices ... ok
+test checked_matrix_inverse_rejects_unknown_zero_pivots ... ok
+test checked_matrix_scalar_division_accepts_abort_signal ... ok
+test hyperreal_matrix_transform_diagonal_and_translation_semantics ... ok
+test hyperreal_matrix_transform_direction_zero_lane_facts ... ok
+test hyperreal_matrix_transform_identity_preserves_facts ... ok
+test hyperreal_matrix_transform_preserves_exact_rational_facts ... ok
+test hyperreal_matrix_transform_preserves_homogeneous_direction_points_semantics ... ok
+test hyperreal_matrix_transform_propagates_zero_and_sign ... ok
+test hyperreal_matrix_transform_symbolic_no_translation_zero_lane_facts ... ok
+test matrix3_inverse_and_power ... ok
+test matrix3_division_solves_right_division ... ok
+test matrix3_known_diagonal_div_vector_matches_matrix_division ... ok
+test matrix3_known_diagonal_division_matches_matrix_division ... ok
+test matrix3_known_diagonal_inverse_matches_matrix_inverse ... ok
+test matrix3_known_lower_triangular_div_matrix_matches_matrix_division ... ok
+test matrix3_known_lower_triangular_inverse_checked_rejects_singular_divisor ... ok
+test matrix3_known_lower_triangular_inverse_matches_matrix_inverse ... ok
+test matrix3_known_uniform_scale_inverse_matches_matrix_inverse ... ok
+test matrix3_known_upper_triangular_div_matrix_matches_matrix_division ... ok
+test matrix3_known_upper_triangular_div_matrix_checked_matches_ordinary ... ok
+test matrix3_known_upper_triangular_inverse_checked_rejects_singular_divisor ... ok
+test matrix3_known_upper_triangular_inverse_matches_matrix_inverse ... ok
+test matrix3_negative_power_matches_repeated_inverse_product ... ok
+test matrix4_assumed_homogeneous_batches_match_single_lane_transforms ... ok
+test matrix4_dense_fractional_determinant_uses_exact_value ... ok
+test matrix4_diagonal_inverse_uses_only_diagonal_reciprocals ... ok
+test matrix4_identity_and_vector_multiply ... ok
+test matrix4_division_solves_right_division ... ok
+test matrix4_known_affine_orthonormal_matches_generic_paths ... ok
+test matrix4_inverse_and_determinant_cover_general_integer_matrix ... ok
+test matrix4_known_affine_translation_matches_generic_paths ... ok
+test matrix4_known_diagonal_div_vector_direction_matches_matrix_division ... ok
+test matrix4_known_diagonal_div_vector_direction_only_matches_matrix_division ... ok
+test matrix4_known_diagonal_div_vector_matches_matrix_division ... ok
+test matrix4_known_diagonal_div_vector_point_matches_matrix_division ... ok
+test matrix4_known_diagonal_div_vector_point_scaled_w ... ok
+test matrix4_known_diagonal_division_matches_matrix_division ... ok
+test matrix4_known_diagonal_inverse_matches_matrix_inverse ... ok
+test matrix4_known_lower_triangular_div_matrix_matches_matrix_division ... ok
+test matrix4_known_lower_triangular_inverse_checked_rejects_singular_divisor ... ok
+test matrix4_known_lower_triangular_inverse_matches_matrix_inverse ... ok
+test matrix4_known_signed_permutation_matches_generic_paths ... ok
+test matrix4_known_uniform_scale_inverse_matches_matrix_inverse ... ok
+test matrix4_known_upper_triangular_div_matrix_checked_matches_ordinary ... ok
+test matrix4_known_upper_triangular_inverse_checked_rejects_singular_divisor ... ok
+test matrix4_known_upper_triangular_div_matrix_matches_matrix_division ... ok
+test matrix4_known_upper_triangular_inverse_matches_matrix_inverse ... ok
+test matrix4_negative_homogeneous_weight_stays_on_generic_projective_path ... ok
+test matrix4_negative_power_matches_repeated_inverse_product ... ok
+test matrix4_structural_facts_certify_signed_permutation_rows ... ok
+test matrix4_translated_diagonal_affine_preserves_point_direction_semantics ... ok
+test matrix4_uniform_scale_inverse_reuses_one_reciprocal_semantics ... ok
+test matrix_display_forwards_real_formatting ... ok
+test matrix_exact_facts_expose_dyadic_and_shared_denominator_schedules ... ok
+test matrix_scalar_add_and_subtract_are_componentwise ... ok
+test matrix_structural_facts_certify_exact_rational_uniform_scale_conservatively ... ok
+test matrix_structural_facts_expose_sparse_masks_and_shape_flags ... ok
+test matrix_structural_facts_expose_transform_kind_provenance ... ok
+test matrix_structural_facts_expose_zero_lane_certificates ... ok
+test matrix_structural_facts_select_advisory_determinant_schedules ... ok
+test matrix_structural_facts_summarize_symbolic_dependencies ... ok
+test matrix_transform_batch_matches_pointwise_transform ... ok
+test ordinary_matrix_inverse_prefers_known_nonzero_pivots ... ok
+test targeted_fractional_matrix_forms_round_trip_exactly ... ok
+
+test result: ok. 67 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/matrix_api_surface_coverage.rs (.audit-targets/ireal-derivative-18555/release/deps/matrix_api_surface_coverage-93673477885ba245)
+
+running 6 tests
+test affine_rotation_signed_permutation_and_transform_apis_cover_object_routes ... ok
+test common_matrix_surface_covers_powers_scalars_ownership_and_formatting ... ok
+test pivot_errors_and_unknown_zero_checked_paths_are_explicit ... ok
+test structural_fact_accessors_and_schedule_classifiers_are_exhaustive ... ok
+test triangular_diagonal_and_uniform_known_shape_apis_cover_both_sizes ... ok
+test generic_and_affine_right_division_dispatches_cover_owned_borrowed_checked_and_abort ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/readme.rs (.audit-targets/ireal-derivative-18555/release/deps/readme-421ea1fc5777e506)
+
+running 2 tests
+test readme_quickstart_matches_the_runnable_example ... ok
+test readme_release_metadata_matches_the_manifest ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/real_representations.rs (.audit-targets/ireal-derivative-18555/release/deps/real_representations-53384997e1f845db)
+
+running 4 tests
+test every_lattice_arbitrary_implementation_accepts_float_and_integer_storage_paths ... ok
+test every_real_certificate_crosses_every_lattice_carrier ... ok
+test serialized_certificate_tags_make_the_private_inventory_drift_detecting ... ok
+test every_ordered_pair_of_real_certificates_crosses_lattice_arithmetic ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.05s
+
+     Running tests/scalar.rs (.audit-targets/ireal-derivative-18555/release/deps/scalar-23f512166be51b97)
+
+running 13 tests
+test borrowed_scalar_reciprocal_does_not_consume_input ... ok
+test checked_scalar_reciprocal_rejects_zero ... ok
+test checked_scalar_reciprocal_rejects_unknown_zero ... ok
+test hyperbolic_facades_preserve_canonical_exact_log_collapses ... ok
+test hyperreal_inverse_trig_helpers_preserve_exact_paths ... ok
+test hyperreal_scalar_forwards_symbolic_structural_facts ... ok
+test hyperreal_scalar_keeps_unknown_structural_facts_unknown ... ok
+test inverse_scalar_helpers_accept_abort_signal ... ok
+test scalar_functions ... ok
+test scalar_functions_reject_invalid_domains ... ok
+test scalar_structural_facts_classify_basic_values ... ok
+test scalar_to_f64_lossy_is_borrowed ... ok
+test zero_status_classifies_basic_values ... ok
+
+test result: ok. 13 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/vector.rs (.audit-targets/ireal-derivative-18555/release/deps/vector-d2b96f5056221134)
+
+running 21 tests
+test checked_vector_operations_reject_unknown_zero_divisors ... ok
+test checked_vector_operations_reject_zero_divisors ... ok
+test finite_f64_array_boundary_is_checked_and_lossy_export_is_explicit ... ok
+test owned_shared_scale_vector_retains_one_fact_packet ... ok
+test owned_shared_scale_vectors_preserve_common_scale_across_lifetimes ... ok
+test shared_scale_vectors_use_known_exact_cross_products ... ok
+test shared_scale_vectors_use_known_exact_dot_products ... ok
+test shared_scale_vectors_use_known_exact_wedge_products ... ok
+test vector2_structural_facts_certify_signed_unit_axes ... ok
+test vector2_structural_facts_expose_zero_mask_without_topology ... ok
+test vector3_and_vector4_structural_facts_expose_sparse_masks_and_homogeneous_kind ... ok
+test vector3_checked_basis_and_unit_cross_are_owned_lattice_helpers ... ok
+test vector3_squared_distance_stays_in_hyperreal_space ... ok
+test vector_affine_aggregate_helpers_keep_components_in_hyperreal_space ... ok
+test vector_display_forwards_real_formatting ... ok
+test vector_dot_and_normalize ... ok
+test vector_exact_facts_carry_common_scale_without_denominator_access ... ok
+test vector_scalar_add_and_subtract_are_componentwise ... ok
+test vector_facts_classify_squared_norm_zero_status_without_self_dot ... ok
+test vector_shared_scale_views_preserve_borrowed_common_scale_facts ... ok
+test vector_structural_facts_summarize_symbolic_dependencies ... ok
+
+test result: ok. 21 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests hyperlattice
+
+running 1 test
+test src/lib.rs - (line 22) ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+all doctests ran in 0.21s; merged doctests compilation took 0.21s

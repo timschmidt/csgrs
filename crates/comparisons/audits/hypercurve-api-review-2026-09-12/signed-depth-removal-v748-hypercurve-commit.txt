@@ -1,0 +1,7 @@
+Use point membership as the regularized region query
+
+Remove CurveRegion2::signed_depth and its duplicate native/retained role-accumulation implementation. Public region constructors already resolve authored winding into a regularized filled set. Update test and benchmark callers to classify_point, preserve every distinct membership oracle, and document the region invariant. Keep internal contour winding and signed contributions used by construction and classification.
+
+The native benchmark now reports common exact-point classification; historical signed-depth timings remain documented without a new speedup claim. No compatibility wrapper remains.
+
+Validation: 45 release regressions across two binaries, both all-target feature/lint configurations, formatting, region-Boolean fuzz, warning-denied documentation and downstream checks.

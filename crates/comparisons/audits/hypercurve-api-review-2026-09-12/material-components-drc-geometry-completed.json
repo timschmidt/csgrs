@@ -1,0 +1,15 @@
+{
+  "name": "material-components-drc-geometry-completed",
+  "command": [
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/material-components-candidate1-libraries/hyperdrc-d361103748bcc0cb",
+    "geometry::tests::",
+    "--test-threads=2",
+    "--skip",
+    "circle_polygon_normalizes_invalid_segment_counts"
+  ],
+  "timeout": 60,
+  "binary_sha256": "d90445b388a11e4b89f3852f7ff04ea4fd36f492128a7771e1d3b44617dc335a",
+  "returncode": 0,
+  "timed_out": false,
+  "elapsed_seconds": 23.550809450011002
+}

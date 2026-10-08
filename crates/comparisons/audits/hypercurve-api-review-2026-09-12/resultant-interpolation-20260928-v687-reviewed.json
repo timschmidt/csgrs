@@ -1,0 +1,39 @@
+{
+  "qualification": "resultant-interpolation-20260928-v687-terminal.json",
+  "source_manifest": "resultant-interpolation-20260928-v687-sources.json",
+  "outer_session_reaped": 86896,
+  "validated_files": 2047,
+  "selected_geometry_tests": 174,
+  "selected_algebraic_tests": 218,
+  "checks": 9,
+  "repos": {
+    "hypercurve": {
+      "parent": "a5994a40e1d07c845972c2089bcf862f1d8b297f",
+      "paths": {
+        "src/bezier_offset.rs": "9e89875a27833f5a9619e561577f33c48bbafabbcf5145b27ce676eee754af05"
+      }
+    },
+    "hypersolve": {
+      "parent": "6f983ba91cf6566411e6a10bbf8a389b8a203abd",
+      "paths": {
+        "src/curve_resultant.rs": "35d2009270d8bfb2c5ec61ee2d88441c38a9098851738009ae078b1b9d174c68",
+        "src/resultant.rs": "b9a5a9dd962a338ba93f531435449e7974a883bc4f2d206b79beb6ca28d91bd3"
+      }
+    }
+  },
+  "scope": "Reuse rational scalar resultant samples with exact signed content and construct interpolation in quadratic work; retain independent polynomial reparameterization geometry regressions; full implementation goal remains active",
+  "performance_changes": [],
+  "actual_build_artifacts": {
+    "hypersolve": [
+      "hypersolve"
+    ],
+    "hypercurve": [
+      "hypercurve",
+      "hypercurve_analytic_parallel_region",
+      "hypercurve_curve",
+      "hypercurve_curve_intersection",
+      "hypercurve_stationary_fillets"
+    ]
+  },
+  "unresolved": "The four degree-six probes now complete in 47-48 seconds; further curve/API simplification and computational closure work remains. This qualification does not establish every arbitrary composition."
+}

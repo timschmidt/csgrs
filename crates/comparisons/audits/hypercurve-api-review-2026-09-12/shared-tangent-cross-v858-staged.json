@@ -1,0 +1,13 @@
+{
+  "repos": {
+    "hypercurve": {
+      "parent": "65919fb5c608de1f3e7d5503810016fd4c04481c",
+      "paths": {
+        "src/bezier_algebraic_image.rs": "9dc74b6377bd83d38c9dba6681d0b59e6c730d2ef0b2890dd29dc3a00e88f066",
+        "src/bezier_tangent_order.rs": "8442f829f428bc688174b9c765510a9dc9ac03fe4dda306f4e3923e601dddc10"
+      }
+    }
+  },
+  "qualification": "shared-tangent-cross-v858-terminal.json",
+  "verified_source_files": 2048
+}

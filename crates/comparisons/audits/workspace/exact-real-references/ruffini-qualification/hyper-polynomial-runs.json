@@ -1,0 +1,24 @@
+[
+  {
+    "mode": "debug",
+    "binary": "/home/tim/Documents/GitHub/workspace/.audit-targets/ireal-derivative-18555/debug/ruffini_polynomial_hyper",
+    "binarySha256": "21b87bc5d7808e6c28c3f026004eeb4d6ed025460687240fec0347cf25da245c",
+    "sourceSha256": "8b47ccec76324c2f439b51cb5dba1f3a64d1dd7cd411b8db5ffda7e92dc2bbe4",
+    "status": 0,
+    "error": null,
+    "signal": null,
+    "file": "hyper-polynomial-debug.log",
+    "sha256": "93f9b74fa61caa4eb7789da201fcff4f776015989bcb6c96f7740a8c6ab0d545"
+  },
+  {
+    "mode": "release",
+    "binary": "/home/tim/Documents/GitHub/workspace/.audit-targets/ireal-derivative-18555/release/ruffini_polynomial_hyper",
+    "binarySha256": "1f3f0b3ab035bce291961917db0949fc7bbad982ab3ec1b62aafb966a95f07bf",
+    "sourceSha256": "8b47ccec76324c2f439b51cb5dba1f3a64d1dd7cd411b8db5ffda7e92dc2bbe4",
+    "status": 0,
+    "error": null,
+    "signal": null,
+    "file": "hyper-polynomial-release.log",
+    "sha256": "93f9b74fa61caa4eb7789da201fcff4f776015989bcb6c96f7740a8c6ab0d545"
+  }
+]

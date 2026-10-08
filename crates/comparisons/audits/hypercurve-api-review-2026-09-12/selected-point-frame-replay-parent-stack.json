@@ -1,0 +1,12 @@
+{
+  "parent_commit": "3eabc047e4e826385aa6ab7720cdc966dc06f1a1",
+  "executable": "finite-circle-native-poles-charts-baseline",
+  "executable_sha256": "b97e00ec94fb8cda2510c103a336100b2d3ddef8aa7a71c410719d18cd529dd5",
+  "normal_library": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-circle-domains-libraries/libhypercurve-ee303709bdb4cb6a.rlib",
+  "normal_library_sha256": "8eb7cd1fbaa241bf01e599e07ca251959c800c77c62a8091232bad9d52006638",
+  "trace": "finite-circle-native-poles-native-stack.log",
+  "trace_sha256": "3a7a49eaf996f54b537b7612ca523d46f09d844b4a296d2391dde47502fdfa09",
+  "interruption_seconds": 5,
+  "child_terminated": true,
+  "conclusion": "The first contact was already returned. Public point coincidence called selected-fiber global promotion through represented coordinates while comparing raw and reduced tangent frames. No numerical library change is needed for that structural replay."
+}

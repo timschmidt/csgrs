@@ -1,0 +1,41 @@
+   Compiling hypersolve v0.3.1 (/home/tim/Documents/GitHub/workspace/hypersolve)
+    Finished `release` profile [optimized] target(s) in 20.25s
+     Running unittests src/lib.rs (target/release/deps/hypersolve-f165f92bff40da5b)
+
+running 33 tests
+test algebraic_fiber::tests::local_exact_division_preserves_skipped_degrees_and_denominators ... ok
+test algebraic_fiber::tests::local_constant_signs_reuse_native_proofs_without_field_cache_entries ... ok
+test algebraic_fiber::tests::local_fiber_export_moves_ragged_coefficients_in_both_orientations ... ok
+test algebraic_fiber::tests::diagonal_fiber_deflation_removes_the_exact_local_multiplicity ... ok
+test algebraic_fiber::tests::local_field_replays_stale_root_payloads_before_constant_fiber_shortcuts ... ok
+test algebraic_fiber::tests::local_field_sturm_batches_preserve_endpoint_reports_in_both_orientations ... ok
+test algebraic_fiber::tests::local_field_sturm_reports_an_identically_zero_specialization ... ok
+test algebraic_fiber::tests::local_image_convolution_preserves_sparse_zero_slots ... ok
+test algebraic_fiber::tests::local_constant_signs_keep_the_unresolved_native_fact_fallback ... ok
+test algebraic_fiber::tests::local_small_determinant_preserves_row_major_orientation ... ok
+test algebraic_fiber::tests::local_field_sturm_reports_rational_endpoint_roots_and_input_boundaries ... ok
+test algebraic_fiber::tests::local_field_gcd_handles_specialized_degree_drops_in_both_orientations ... ok
+test algebraic_fiber::tests::local_field_sturm_handles_a_reducible_defining_polynomial ... ok
+test algebraic_fiber::tests::polynomial_fiber_image_retains_base_parameter_axis ... ok
+test algebraic_fiber::tests::local_field_sturm_batches_candidate_intervals_without_changing_reports ... ok
+test algebraic_fiber::tests::local_field_sturm_counts_even_multiplicity_in_both_orientations ... ok
+test algebraic_fiber::tests::polynomial_fiber_image_projects_a_nonsquare_radical_relation_directly ... ok
+test algebraic_fiber::tests::primitive_local_image_content_rejects_unsupported_zero_remainders ... ok
+test algebraic_fiber::tests::quotient_ring_fiber_projection_retains_the_complete_norm_roots ... ok
+test algebraic_fiber::tests::quotient_ring_fiber_projection_obeys_an_explicit_degree_budget ... ok
+test algebraic_fiber::tests::primitive_local_image_content_accepts_policy_certified_zero_remainders ... ok
+test algebraic_fiber::tests::quotient_ring_fiber_projection_shares_local_field_admission_in_both_orientations ... ok
+test algebraic_fiber::tests::rational_fiber_reduction_preserves_degree_fifteen_correlation ... ok
+test algebraic_fiber::tests::rational_fiber_reduction_preserves_ragged_zero_and_dependent_residuals ... ok
+test algebraic_fiber::tests::selected_algebraic_fiber_isolation_uses_division_free_bernstein_path ... ok
+test algebraic_fiber::tests::selected_algebraic_fiber_isolation_falls_back_for_repeated_irrational_root ... ok
+test algebraic_fiber::tests::polynomial_fiber_image_saturates_an_identically_zero_source_conjugate ... ok
+test algebraic_fiber::tests::selected_fiber_fallback_partitions_at_a_deflated_rational_root ... ok
+test algebraic_fiber::tests::polynomial_fiber_image_trims_only_strictly_exact_zero_degree ... ok
+test algebraic_fiber::tests::selected_fiber_accepts_exact_real_base_coefficients ... ok
+test algebraic_fiber::tests::polynomial_fiber_image_preserves_a_degree_135_selected_tower ... ok
+test algebraic_fiber::tests::selected_fiber_incomplete_report_preserves_fallback_progress ... ok
+test algebraic_fiber::tests::polynomial_fiber_image_saturates_a_fourfold_multicoefficient_component ... ok
+
+test result: ok. 33 passed; 0 failed; 0 ignored; 0 measured; 391 filtered out; finished in 0.02s
+

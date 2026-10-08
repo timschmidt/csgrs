@@ -1,0 +1,20 @@
+{
+  "repos": {
+    "hypercurve": {
+      "commit": "7695ddc6ca2583102bca05327b08c4e0f6053f4b",
+      "parent": "ada3cd00de4b9ddb430aeb4f2d32f512ca9b248e",
+      "paths": {
+        "src/bezier_moment.rs": "70c69f8b0debdc87da01865b25a12a44858974d873ff9a518a1437f9d228d27d",
+        "src/bezier_retained_measure.rs": "56eb8c2d25123085551479f284393d195aeab9af930ee89ac3a2fc7d7053d1f7",
+        "src/bezier_retained_overlap.rs": "e095e19b5f6b85755b8198585952117f1c436e092f402f6b0af33e312585d060",
+        "src/bezier_split.rs": "395838f1d7317ab59f7adc899de072935ba335d16bbebd61e2a49f0ccfbbe49e",
+        "src/curve.rs": "7609c9ce9e2995f49a54c773dea10152021f3dfc74366e05465ea511eae2f739",
+        "src/rational_bezier.rs": "002cebbafe25928e508388619b17b9bd6c64da797a2be5f402ab6bc1f34e034c",
+        "tests/hypercurve_bezier_split_materialization.rs": "de6f4111c6dd33a41fe8f3e222f78cee009a05e6af6dfab8cd1954c89a53cb4e"
+      }
+    }
+  },
+  "qualification": "conic-subdivision-20260928-v653-terminal.json",
+  "verified_source_files": 2047,
+  "clean_repositories": 30
+}

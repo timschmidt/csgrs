@@ -1,0 +1,11 @@
+file:///home/tim/Documents/GitHub/workspace/exact-real-references/plume-qualification/analyze-late.mjs:21
+if(read('../../.audit-plume-late.4Yth3g/overlay/Tests.hs')!==originalTests.replace('module Tests (tabulate) where','module Tests where')) throw Error('Unexpected Tests bridge');
+                                                                                                                                                ^
+
+Error: Unexpected Tests bridge
+    at file:///home/tim/Documents/GitHub/workspace/exact-real-references/plume-qualification/analyze-late.mjs:21:145
+    at ModuleJob.run (node:internal/modules/esm/module_job:343:25)
+    at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:665:26)
+    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+
+Node.js v22.22.2

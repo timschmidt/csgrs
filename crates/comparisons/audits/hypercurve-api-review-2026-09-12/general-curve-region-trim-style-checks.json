@@ -1,0 +1,26 @@
+[
+  {
+    "repo": "hypercurve",
+    "check": "format",
+    "returncode": 0,
+    "output": ""
+  },
+  {
+    "repo": "hypercurve",
+    "check": "whitespace",
+    "returncode": 0,
+    "output": ""
+  },
+  {
+    "repo": "hyperbrep",
+    "check": "format",
+    "returncode": 0,
+    "output": ""
+  },
+  {
+    "repo": "hyperbrep",
+    "check": "whitespace",
+    "returncode": 0,
+    "output": ""
+  }
+]

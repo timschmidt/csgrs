@@ -1,0 +1,18 @@
+[
+  {
+    "mode": "jit",
+    "status": 0,
+    "error": null,
+    "signal": null,
+    "file": "jit-classgroup.log",
+    "sha256": "906dc78d306a1454f9b929d0b824a06c0bb5113dbaf0f6e9156686f655d89c0a"
+  },
+  {
+    "mode": "interpreter",
+    "status": 0,
+    "error": null,
+    "signal": null,
+    "file": "interpreter-classgroup.log",
+    "sha256": "906dc78d306a1454f9b929d0b824a06c0bb5113dbaf0f6e9156686f655d89c0a"
+  }
+]

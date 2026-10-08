@@ -1,0 +1,14 @@
+{
+  "9049": "                    Classification::Decided(bounds) => bounds,\n                    Classification::Uncertain(reason) => {\n                        last_reason = reason;\n                        complete = false;\n                        break;\n",
+  "9062": "                        Classification::Decided(bounds) => bounds,\n                        Classification::Uncertain(reason) => {\n                            last_reason = reason;\n                            complete = false;\n                            break;\n",
+  "9095": "                Classification::Decided(probe) => probe,\n                Classification::Uncertain(reason) => {\n                    last_reason = reason;\n                    continue;\n                }\n",
+  "9103": "                Ok(evidence) => evidence,\n                Err(ExactCurveError::Blocked(blocker)) => {\n                    last_reason = blocker.reason();\n                    continue;\n                }\n",
+  "9109": "            };\n            if !evidence.overlaps().is_empty() {\n                last_reason = UncertaintyReason::Boundary;\n                continue;\n            }\n",
+  "9113": "            }\n            if let Some(blocker) = evidence.blockers().first() {\n                last_reason = blocker\n                    .uncertainty_reason()\n                    .unwrap_or(UncertaintyReason::Unsupported);\n",
+  "9130": "                    Classification::Decided(order) => order,\n                    Classification::Uncertain(reason) => {\n                        last_reason = reason;\n                        ambiguous = true;\n                        break;\n",
+  "9163": "                else {\n                    if order == Ordering::Equal {\n                        last_reason = UncertaintyReason::Boundary;\n                        ambiguous = true;\n                        break;\n",
+  "9174": "                        || target_cross.replace(cross_is_positive).is_some()\n                    {\n                        last_reason = UncertaintyReason::Boundary;\n                        ambiguous = true;\n                        break;\n",
+  "9190": "                    {\n                        Classification::Decided(Ordering::Equal) => {\n                            last_reason = UncertaintyReason::Boundary;\n                            ambiguous = true;\n                            break;\n",
+  "9196": "                        Classification::Decided(Ordering::Less | Ordering::Greater) => {}\n                        Classification::Uncertain(reason) => {\n                            last_reason = reason;\n                            ambiguous = true;\n                            break;\n",
+  "9215": "            }\n            let Some(target_cross) = target_cross else {\n                last_reason = UncertaintyReason::Boundary;\n                continue;\n            };\n"
+}

@@ -1,0 +1,65 @@
+{
+  "source_manifest": "stationary-fillet-20260927-v484-sources.json",
+  "source_directory": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/source-archives/stationary-fillet-20260927-v484",
+  "fixture_sha256": "d52f5bf70c81e016deb27f308714c3a6ab1accbd623c99a552e4d546113a0edc",
+  "library": {
+    "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/libhypercurve.rlib",
+    "sha256": "8f0141d3f7d540cf82ccb02398af164641fd2eb0e7d27f6afbf7767667aef45a"
+  },
+  "expected_cases": [
+    "stationary_contact_exact_scalars_strict",
+    "stationary_contact_exact_scalars_approximate"
+  ],
+  "cases": [
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/stationary-fillet-exact-scalars-20260927-v487-tests",
+        "--exact",
+        "stationary_contact_exact_scalars_strict",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "stationary-fillet-exact-scalars-20260927-v487-stationary_contact_exact_scalars_strict.log",
+      "elapsed_seconds": 0.11390208592638373,
+      "name": "stationary_contact_exact_scalars_strict",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/stationary-fillet-exact-scalars-20260927-v487-tests",
+        "--exact",
+        "stationary_contact_exact_scalars_approximate",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "stationary-fillet-exact-scalars-20260927-v487-stationary_contact_exact_scalars_approximate.log",
+      "elapsed_seconds": 0.11387264705263078,
+      "name": "stationary_contact_exact_scalars_approximate",
+      "passed": true
+    }
+  ],
+  "all_processes_reaped": true,
+  "probe_complete": true,
+  "build": {
+    "command": [
+      "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustc",
+      "--edition=2024",
+      "--test",
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/stationary-fillet-exact-scalars-v487.rs",
+      "-C",
+      "opt-level=3",
+      "-L",
+      "dependency=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps",
+      "--extern",
+      "hypercurve=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/libhypercurve.rlib",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/stationary-fillet-exact-scalars-20260927-v487-tests"
+    ],
+    "returncode": 0,
+    "log": "stationary-fillet-exact-scalars-20260927-v487-build.log",
+    "elapsed_seconds": 0.6145806962158531
+  },
+  "binary_sha256": "32b6e81608e6f681c2e35a02de6094a83ac711483a4e956e256bb975a397a93f"
+}

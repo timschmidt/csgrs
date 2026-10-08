@@ -1,0 +1,21 @@
+{
+  "command": "cargo",
+  "args": [
+    "test",
+    "--offline",
+    "--locked",
+    "--manifest-path",
+    "source/hyperreal/Cargo.toml",
+    "--lib",
+    "cache_rescale_",
+    "--",
+    "--test-threads=1"
+  ],
+  "begin": "2026-09-07T05:48:51.997Z",
+  "end": "2026-09-07T05:48:56.243Z",
+  "status": 0,
+  "signal": null,
+  "error": null,
+  "stdout": "\nrunning 5 tests\ntest computable::node::cache_rescale_tests::cache_rescale_concurrent_monotone_publication ... ok\ntest computable::node::cache_rescale_tests::cache_rescale_extreme_gaps ... ok\ntest computable::node::cache_rescale_tests::cache_rescale_limb_and_halfway_boundaries ... ok\ntest computable::node::cache_rescale_tests::cache_rescale_public_warmed_extreme ... ok\ntest computable::node::cache_rescale_tests::cache_rescale_rounding_and_misses ... ok\n\ntest result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 674 filtered out; finished in 0.19s\n\n",
+  "stderr": "   Compiling hyperreal v0.13.1 (/home/tim/Documents/GitHub/workspace/exact-real-references/ruffini-qualification/cache-public-pilot/source/hyperreal)\n    Finished `test` profile [unoptimized] target(s) in 4.03s\n     Running unittests src/lib.rs (target/debug/deps/hyperreal-256b9c5bde2d3c5f)\n"
+}

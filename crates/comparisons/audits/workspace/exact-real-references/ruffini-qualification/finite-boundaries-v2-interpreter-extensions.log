@@ -1,0 +1,2425 @@
+START	inverse/2/[1,1,1]/1/0/int
+RESULT	inverse/2/[1,1,1]/1/0/int	DOMAIN_REJECT	NotInvertibleException	-1
+START	inverse/2/[1,1,1]/1/1/int
+RESULT	inverse/2/[1,1,1]/1/1/int	EXCEPTION	NotInvertibleException	1
+START	inverse/2/[1,1,1]/1/2/int
+RESULT	inverse/2/[1,1,1]/1/2/int	PASS	0:1,1:1	3
+START	inverse/2/[1,1,1]/1/3/int
+RESULT	inverse/2/[1,1,1]/1/3/int	PASS	1:1	2
+START	inverse/2/[1,0,1,1]/1/0/int
+RESULT	inverse/2/[1,0,1,1]/1/0/int	DOMAIN_REJECT	NotInvertibleException	-1
+START	inverse/2/[1,0,1,1]/1/1/int
+RESULT	inverse/2/[1,0,1,1]/1/1/int	EXCEPTION	NotInvertibleException	1
+START	inverse/2/[1,0,1,1]/1/2/int
+RESULT	inverse/2/[1,0,1,1]/1/2/int	EXCEPTION	NotInvertibleException	6
+START	inverse/2/[1,0,1,1]/1/3/int
+RESULT	inverse/2/[1,0,1,1]/1/3/int	EXCEPTION	NotInvertibleException	4
+START	inverse/2/[1,0,1,1]/1/4/int
+RESULT	inverse/2/[1,0,1,1]/1/4/int	PASS	0:1,1:1	3
+START	inverse/2/[1,0,1,1]/1/5/int
+RESULT	inverse/2/[1,0,1,1]/1/5/int	PASS	0:1,1:1,2:1	7
+START	inverse/2/[1,0,1,1]/1/6/int
+RESULT	inverse/2/[1,0,1,1]/1/6/int	PASS	1:1	2
+START	inverse/2/[1,0,1,1]/1/7/int
+RESULT	inverse/2/[1,0,1,1]/1/7/int	PASS	0:1,2:1	5
+START	inverse/3/[2,2,1]/1/0/int
+RESULT	inverse/3/[2,2,1]/1/0/int	DOMAIN_REJECT	NotInvertibleException	-1
+START	inverse/3/[2,2,1]/1/1/int
+RESULT	inverse/3/[2,2,1]/1/1/int	EXCEPTION	NotInvertibleException	1
+START	inverse/3/[2,2,1]/1/2/int
+RESULT	inverse/3/[2,2,1]/1/2/int	EXCEPTION	NotInvertibleException	2
+START	inverse/3/[2,2,1]/1/3/int
+RESULT	inverse/3/[2,2,1]/1/3/int	WRONG	0:1,1:2	5
+START	inverse/3/[2,2,1]/1/4/int
+RESULT	inverse/3/[2,2,1]/1/4/int	PASS	0:2,1:2	8
+START	inverse/3/[2,2,1]/1/5/int
+RESULT	inverse/3/[2,2,1]/1/5/int	WRONG	1:2	3
+START	inverse/3/[2,2,1]/1/6/int
+RESULT	inverse/3/[2,2,1]/1/6/int	WRONG	0:2,1:1	7
+START	inverse/3/[2,2,1]/1/7/int
+RESULT	inverse/3/[2,2,1]/1/7/int	WRONG	1:1	6
+START	inverse/3/[2,2,1]/1/8/int
+RESULT	inverse/3/[2,2,1]/1/8/int	PASS	0:1,1:1	4
+START	inverse/3/[2,2,1]/2/0/int
+RESULT	inverse/3/[2,2,1]/2/0/int	DOMAIN_REJECT	NotInvertibleException	-1
+START	inverse/3/[2,2,1]/2/1/int
+RESULT	inverse/3/[2,2,1]/2/1/int	EXCEPTION	NotInvertibleException	1
+START	inverse/3/[2,2,1]/2/2/int
+RESULT	inverse/3/[2,2,1]/2/2/int	EXCEPTION	NotInvertibleException	2
+START	inverse/3/[2,2,1]/2/3/int
+RESULT	inverse/3/[2,2,1]/2/3/int	PASS	0:2,1:1	5
+START	inverse/3/[2,2,1]/2/4/int
+RESULT	inverse/3/[2,2,1]/2/4/int	WRONG	0:1,1:1	8
+START	inverse/3/[2,2,1]/2/5/int
+RESULT	inverse/3/[2,2,1]/2/5/int	PASS	1:1	3
+START	inverse/3/[2,2,1]/2/6/int
+RESULT	inverse/3/[2,2,1]/2/6/int	PASS	0:1,1:2	7
+START	inverse/3/[2,2,1]/2/7/int
+RESULT	inverse/3/[2,2,1]/2/7/int	PASS	1:2	6
+START	inverse/3/[2,2,1]/2/8/int
+RESULT	inverse/3/[2,2,1]/2/8/int	WRONG	0:2,1:2	4
+START	inverse/5/[2,0,1]/1/0/int
+RESULT	inverse/5/[2,0,1]/1/0/int	DOMAIN_REJECT	NotInvertibleException	-1
+START	inverse/5/[2,0,1]/1/0/big
+RESULT	inverse/5/[2,0,1]/1/0/big	DOMAIN_REJECT	NotInvertibleException	-1
+START	inverse/5/[2,0,1]/1/0/normalized
+RESULT	inverse/5/[2,0,1]/1/0/normalized	DOMAIN_REJECT	NotInvertibleException	-1
+START	inverse/5/[2,0,1]/1/1/int
+RESULT	inverse/5/[2,0,1]/1/1/int	EXCEPTION	NotInvertibleException	1
+START	inverse/5/[2,0,1]/1/1/big
+RESULT	inverse/5/[2,0,1]/1/1/big	EXCEPTION	NotInvertibleException	1
+START	inverse/5/[2,0,1]/1/1/normalized
+RESULT	inverse/5/[2,0,1]/1/1/normalized	EXCEPTION	NotInvertibleException	1
+START	inverse/5/[2,0,1]/1/2/int
+RESULT	inverse/5/[2,0,1]/1/2/int	EXCEPTION	NotInvertibleException	3
+START	inverse/5/[2,0,1]/1/2/big
+RESULT	inverse/5/[2,0,1]/1/2/big	EXCEPTION	NotInvertibleException	3
+START	inverse/5/[2,0,1]/1/2/normalized
+RESULT	inverse/5/[2,0,1]/1/2/normalized	EXCEPTION	NotInvertibleException	3
+START	inverse/5/[2,0,1]/1/3/int
+RESULT	inverse/5/[2,0,1]/1/3/int	EXCEPTION	NotInvertibleException	2
+START	inverse/5/[2,0,1]/1/3/big
+RESULT	inverse/5/[2,0,1]/1/3/big	EXCEPTION	NotInvertibleException	2
+START	inverse/5/[2,0,1]/1/3/normalized
+RESULT	inverse/5/[2,0,1]/1/3/normalized	EXCEPTION	NotInvertibleException	2
+START	inverse/5/[2,0,1]/1/4/int
+RESULT	inverse/5/[2,0,1]/1/4/int	EXCEPTION	NotInvertibleException	4
+START	inverse/5/[2,0,1]/1/4/big
+RESULT	inverse/5/[2,0,1]/1/4/big	EXCEPTION	NotInvertibleException	4
+START	inverse/5/[2,0,1]/1/4/normalized
+RESULT	inverse/5/[2,0,1]/1/4/normalized	EXCEPTION	NotInvertibleException	4
+START	inverse/5/[2,0,1]/1/5/int
+RESULT	inverse/5/[2,0,1]/1/5/int	WRONG	1:4	10
+START	inverse/5/[2,0,1]/1/5/big
+RESULT	inverse/5/[2,0,1]/1/5/big	WRONG	1:4	10
+START	inverse/5/[2,0,1]/1/5/normalized
+RESULT	inverse/5/[2,0,1]/1/5/normalized	PASS	1:2	10
+START	inverse/5/[2,0,1]/1/6/int
+RESULT	inverse/5/[2,0,1]/1/6/int	WRONG	0:1,1:4	17
+START	inverse/5/[2,0,1]/1/6/big
+RESULT	inverse/5/[2,0,1]/1/6/big	WRONG	0:1,1:4	17
+START	inverse/5/[2,0,1]/1/6/normalized
+RESULT	inverse/5/[2,0,1]/1/6/normalized	PASS	0:2,1:3	17
+START	inverse/5/[2,0,1]/1/7/int
+RESULT	inverse/5/[2,0,1]/1/7/int	PASS	0:2,1:4	22
+START	inverse/5/[2,0,1]/1/7/big
+RESULT	inverse/5/[2,0,1]/1/7/big	PASS	0:2,1:4	22
+START	inverse/5/[2,0,1]/1/7/normalized
+RESULT	inverse/5/[2,0,1]/1/7/normalized	PASS	0:2,1:4	22
+START	inverse/5/[2,0,1]/1/8/int
+RESULT	inverse/5/[2,0,1]/1/8/int	PASS	0:3,1:4	23
+START	inverse/5/[2,0,1]/1/8/big
+RESULT	inverse/5/[2,0,1]/1/8/big	PASS	0:3,1:4	23
+START	inverse/5/[2,0,1]/1/8/normalized
+RESULT	inverse/5/[2,0,1]/1/8/normalized	PASS	0:3,1:4	23
+START	inverse/5/[2,0,1]/1/9/int
+RESULT	inverse/5/[2,0,1]/1/9/int	WRONG	0:4,1:4	18
+START	inverse/5/[2,0,1]/1/9/big
+RESULT	inverse/5/[2,0,1]/1/9/big	WRONG	0:4,1:4	18
+START	inverse/5/[2,0,1]/1/9/normalized
+RESULT	inverse/5/[2,0,1]/1/9/normalized	PASS	0:3,1:3	18
+START	inverse/5/[2,0,1]/1/10/int
+RESULT	inverse/5/[2,0,1]/1/10/int	WRONG	1:2	5
+START	inverse/5/[2,0,1]/1/10/big
+RESULT	inverse/5/[2,0,1]/1/10/big	WRONG	1:2	5
+START	inverse/5/[2,0,1]/1/10/normalized
+RESULT	inverse/5/[2,0,1]/1/10/normalized	PASS	1:1	5
+START	inverse/5/[2,0,1]/1/11/int
+RESULT	inverse/5/[2,0,1]/1/11/int	PASS	0:4,1:2	14
+START	inverse/5/[2,0,1]/1/11/big
+RESULT	inverse/5/[2,0,1]/1/11/big	PASS	0:4,1:2	14
+START	inverse/5/[2,0,1]/1/11/normalized
+RESULT	inverse/5/[2,0,1]/1/11/normalized	PASS	0:4,1:2	14
+START	inverse/5/[2,0,1]/1/12/int
+RESULT	inverse/5/[2,0,1]/1/12/int	WRONG	0:3,1:2	21
+START	inverse/5/[2,0,1]/1/12/big
+RESULT	inverse/5/[2,0,1]/1/12/big	WRONG	0:3,1:2	21
+START	inverse/5/[2,0,1]/1/12/normalized
+RESULT	inverse/5/[2,0,1]/1/12/normalized	PASS	0:1,1:4	21
+START	inverse/5/[2,0,1]/1/13/int
+RESULT	inverse/5/[2,0,1]/1/13/int	WRONG	0:2,1:2	24
+START	inverse/5/[2,0,1]/1/13/big
+RESULT	inverse/5/[2,0,1]/1/13/big	WRONG	0:2,1:2	24
+START	inverse/5/[2,0,1]/1/13/normalized
+RESULT	inverse/5/[2,0,1]/1/13/normalized	PASS	0:4,1:4	24
+START	inverse/5/[2,0,1]/1/14/int
+RESULT	inverse/5/[2,0,1]/1/14/int	PASS	0:1,1:2	11
+START	inverse/5/[2,0,1]/1/14/big
+RESULT	inverse/5/[2,0,1]/1/14/big	PASS	0:1,1:2	11
+START	inverse/5/[2,0,1]/1/14/normalized
+RESULT	inverse/5/[2,0,1]/1/14/normalized	PASS	0:1,1:2	11
+START	inverse/5/[2,0,1]/1/15/int
+RESULT	inverse/5/[2,0,1]/1/15/int	WRONG	1:3	20
+START	inverse/5/[2,0,1]/1/15/big
+RESULT	inverse/5/[2,0,1]/1/15/big	WRONG	1:3	20
+START	inverse/5/[2,0,1]/1/15/normalized
+RESULT	inverse/5/[2,0,1]/1/15/normalized	PASS	1:4	20
+START	inverse/5/[2,0,1]/1/16/int
+RESULT	inverse/5/[2,0,1]/1/16/int	PASS	0:4,1:3	19
+START	inverse/5/[2,0,1]/1/16/big
+RESULT	inverse/5/[2,0,1]/1/16/big	PASS	0:4,1:3	19
+START	inverse/5/[2,0,1]/1/16/normalized
+RESULT	inverse/5/[2,0,1]/1/16/normalized	PASS	0:4,1:3	19
+START	inverse/5/[2,0,1]/1/17/int
+RESULT	inverse/5/[2,0,1]/1/17/int	WRONG	0:3,1:3	6
+START	inverse/5/[2,0,1]/1/17/big
+RESULT	inverse/5/[2,0,1]/1/17/big	WRONG	0:3,1:3	6
+START	inverse/5/[2,0,1]/1/17/normalized
+RESULT	inverse/5/[2,0,1]/1/17/normalized	PASS	0:1,1:1	6
+START	inverse/5/[2,0,1]/1/18/int
+RESULT	inverse/5/[2,0,1]/1/18/int	WRONG	0:2,1:3	9
+START	inverse/5/[2,0,1]/1/18/big
+RESULT	inverse/5/[2,0,1]/1/18/big	WRONG	0:2,1:3	9
+START	inverse/5/[2,0,1]/1/18/normalized
+RESULT	inverse/5/[2,0,1]/1/18/normalized	PASS	0:4,1:1	9
+START	inverse/5/[2,0,1]/1/19/int
+RESULT	inverse/5/[2,0,1]/1/19/int	PASS	0:1,1:3	16
+START	inverse/5/[2,0,1]/1/19/big
+RESULT	inverse/5/[2,0,1]/1/19/big	PASS	0:1,1:3	16
+START	inverse/5/[2,0,1]/1/19/normalized
+RESULT	inverse/5/[2,0,1]/1/19/normalized	PASS	0:1,1:3	16
+START	inverse/5/[2,0,1]/1/20/int
+RESULT	inverse/5/[2,0,1]/1/20/int	WRONG	1:1	15
+START	inverse/5/[2,0,1]/1/20/big
+RESULT	inverse/5/[2,0,1]/1/20/big	WRONG	1:1	15
+START	inverse/5/[2,0,1]/1/20/normalized
+RESULT	inverse/5/[2,0,1]/1/20/normalized	PASS	1:3	15
+START	inverse/5/[2,0,1]/1/21/int
+RESULT	inverse/5/[2,0,1]/1/21/int	WRONG	0:1,1:1	12
+START	inverse/5/[2,0,1]/1/21/big
+RESULT	inverse/5/[2,0,1]/1/21/big	WRONG	0:1,1:1	12
+START	inverse/5/[2,0,1]/1/21/normalized
+RESULT	inverse/5/[2,0,1]/1/21/normalized	PASS	0:2,1:2	12
+START	inverse/5/[2,0,1]/1/22/int
+RESULT	inverse/5/[2,0,1]/1/22/int	PASS	0:2,1:1	7
+START	inverse/5/[2,0,1]/1/22/big
+RESULT	inverse/5/[2,0,1]/1/22/big	PASS	0:2,1:1	7
+START	inverse/5/[2,0,1]/1/22/normalized
+RESULT	inverse/5/[2,0,1]/1/22/normalized	PASS	0:2,1:1	7
+START	inverse/5/[2,0,1]/1/23/int
+RESULT	inverse/5/[2,0,1]/1/23/int	PASS	0:3,1:1	8
+START	inverse/5/[2,0,1]/1/23/big
+RESULT	inverse/5/[2,0,1]/1/23/big	PASS	0:3,1:1	8
+START	inverse/5/[2,0,1]/1/23/normalized
+RESULT	inverse/5/[2,0,1]/1/23/normalized	PASS	0:3,1:1	8
+START	inverse/5/[2,0,1]/1/24/int
+RESULT	inverse/5/[2,0,1]/1/24/int	WRONG	0:4,1:1	13
+START	inverse/5/[2,0,1]/1/24/big
+RESULT	inverse/5/[2,0,1]/1/24/big	WRONG	0:4,1:1	13
+START	inverse/5/[2,0,1]/1/24/normalized
+RESULT	inverse/5/[2,0,1]/1/24/normalized	PASS	0:3,1:2	13
+START	inverse/5/[2,0,1]/2/0/int
+RESULT	inverse/5/[2,0,1]/2/0/int	DOMAIN_REJECT	NotInvertibleException	-1
+START	inverse/5/[2,0,1]/2/0/big
+RESULT	inverse/5/[2,0,1]/2/0/big	DOMAIN_REJECT	NotInvertibleException	-1
+START	inverse/5/[2,0,1]/2/0/normalized
+RESULT	inverse/5/[2,0,1]/2/0/normalized	DOMAIN_REJECT	NotInvertibleException	-1
+START	inverse/5/[2,0,1]/2/1/int
+RESULT	inverse/5/[2,0,1]/2/1/int	EXCEPTION	NotInvertibleException	1
+START	inverse/5/[2,0,1]/2/1/big
+RESULT	inverse/5/[2,0,1]/2/1/big	EXCEPTION	NotInvertibleException	1
+START	inverse/5/[2,0,1]/2/1/normalized
+RESULT	inverse/5/[2,0,1]/2/1/normalized	EXCEPTION	NotInvertibleException	1
+START	inverse/5/[2,0,1]/2/2/int
+RESULT	inverse/5/[2,0,1]/2/2/int	EXCEPTION	NotInvertibleException	3
+START	inverse/5/[2,0,1]/2/2/big
+RESULT	inverse/5/[2,0,1]/2/2/big	EXCEPTION	NotInvertibleException	3
+START	inverse/5/[2,0,1]/2/2/normalized
+RESULT	inverse/5/[2,0,1]/2/2/normalized	EXCEPTION	NotInvertibleException	3
+START	inverse/5/[2,0,1]/2/3/int
+RESULT	inverse/5/[2,0,1]/2/3/int	EXCEPTION	NotInvertibleException	2
+START	inverse/5/[2,0,1]/2/3/big
+RESULT	inverse/5/[2,0,1]/2/3/big	EXCEPTION	NotInvertibleException	2
+START	inverse/5/[2,0,1]/2/3/normalized
+RESULT	inverse/5/[2,0,1]/2/3/normalized	EXCEPTION	NotInvertibleException	2
+START	inverse/5/[2,0,1]/2/4/int
+RESULT	inverse/5/[2,0,1]/2/4/int	EXCEPTION	NotInvertibleException	4
+START	inverse/5/[2,0,1]/2/4/big
+RESULT	inverse/5/[2,0,1]/2/4/big	EXCEPTION	NotInvertibleException	4
+START	inverse/5/[2,0,1]/2/4/normalized
+RESULT	inverse/5/[2,0,1]/2/4/normalized	EXCEPTION	NotInvertibleException	4
+START	inverse/5/[2,0,1]/2/5/int
+RESULT	inverse/5/[2,0,1]/2/5/int	WRONG	1:3	10
+START	inverse/5/[2,0,1]/2/5/big
+RESULT	inverse/5/[2,0,1]/2/5/big	WRONG	1:3	10
+START	inverse/5/[2,0,1]/2/5/normalized
+RESULT	inverse/5/[2,0,1]/2/5/normalized	PASS	1:2	10
+START	inverse/5/[2,0,1]/2/6/int
+RESULT	inverse/5/[2,0,1]/2/6/int	PASS	0:2,1:3	17
+START	inverse/5/[2,0,1]/2/6/big
+RESULT	inverse/5/[2,0,1]/2/6/big	PASS	0:2,1:3	17
+START	inverse/5/[2,0,1]/2/6/normalized
+RESULT	inverse/5/[2,0,1]/2/6/normalized	PASS	0:2,1:3	17
+START	inverse/5/[2,0,1]/2/7/int
+RESULT	inverse/5/[2,0,1]/2/7/int	WRONG	0:4,1:3	22
+START	inverse/5/[2,0,1]/2/7/big
+RESULT	inverse/5/[2,0,1]/2/7/big	WRONG	0:4,1:3	22
+START	inverse/5/[2,0,1]/2/7/normalized
+RESULT	inverse/5/[2,0,1]/2/7/normalized	PASS	0:2,1:4	22
+START	inverse/5/[2,0,1]/2/8/int
+RESULT	inverse/5/[2,0,1]/2/8/int	WRONG	0:1,1:3	23
+START	inverse/5/[2,0,1]/2/8/big
+RESULT	inverse/5/[2,0,1]/2/8/big	WRONG	0:1,1:3	23
+START	inverse/5/[2,0,1]/2/8/normalized
+RESULT	inverse/5/[2,0,1]/2/8/normalized	PASS	0:3,1:4	23
+START	inverse/5/[2,0,1]/2/9/int
+RESULT	inverse/5/[2,0,1]/2/9/int	PASS	0:3,1:3	18
+START	inverse/5/[2,0,1]/2/9/big
+RESULT	inverse/5/[2,0,1]/2/9/big	PASS	0:3,1:3	18
+START	inverse/5/[2,0,1]/2/9/normalized
+RESULT	inverse/5/[2,0,1]/2/9/normalized	PASS	0:3,1:3	18
+START	inverse/5/[2,0,1]/2/10/int
+RESULT	inverse/5/[2,0,1]/2/10/int	WRONG	1:4	5
+START	inverse/5/[2,0,1]/2/10/big
+RESULT	inverse/5/[2,0,1]/2/10/big	WRONG	1:4	5
+START	inverse/5/[2,0,1]/2/10/normalized
+RESULT	inverse/5/[2,0,1]/2/10/normalized	PASS	1:1	5
+START	inverse/5/[2,0,1]/2/11/int
+RESULT	inverse/5/[2,0,1]/2/11/int	WRONG	0:3,1:4	14
+START	inverse/5/[2,0,1]/2/11/big
+RESULT	inverse/5/[2,0,1]/2/11/big	WRONG	0:3,1:4	14
+START	inverse/5/[2,0,1]/2/11/normalized
+RESULT	inverse/5/[2,0,1]/2/11/normalized	PASS	0:4,1:2	14
+START	inverse/5/[2,0,1]/2/12/int
+RESULT	inverse/5/[2,0,1]/2/12/int	PASS	0:1,1:4	21
+START	inverse/5/[2,0,1]/2/12/big
+RESULT	inverse/5/[2,0,1]/2/12/big	PASS	0:1,1:4	21
+START	inverse/5/[2,0,1]/2/12/normalized
+RESULT	inverse/5/[2,0,1]/2/12/normalized	PASS	0:1,1:4	21
+START	inverse/5/[2,0,1]/2/13/int
+RESULT	inverse/5/[2,0,1]/2/13/int	PASS	0:4,1:4	24
+START	inverse/5/[2,0,1]/2/13/big
+RESULT	inverse/5/[2,0,1]/2/13/big	PASS	0:4,1:4	24
+START	inverse/5/[2,0,1]/2/13/normalized
+RESULT	inverse/5/[2,0,1]/2/13/normalized	PASS	0:4,1:4	24
+START	inverse/5/[2,0,1]/2/14/int
+RESULT	inverse/5/[2,0,1]/2/14/int	WRONG	0:2,1:4	11
+START	inverse/5/[2,0,1]/2/14/big
+RESULT	inverse/5/[2,0,1]/2/14/big	WRONG	0:2,1:4	11
+START	inverse/5/[2,0,1]/2/14/normalized
+RESULT	inverse/5/[2,0,1]/2/14/normalized	PASS	0:1,1:2	11
+START	inverse/5/[2,0,1]/2/15/int
+RESULT	inverse/5/[2,0,1]/2/15/int	WRONG	1:1	20
+START	inverse/5/[2,0,1]/2/15/big
+RESULT	inverse/5/[2,0,1]/2/15/big	WRONG	1:1	20
+START	inverse/5/[2,0,1]/2/15/normalized
+RESULT	inverse/5/[2,0,1]/2/15/normalized	PASS	1:4	20
+START	inverse/5/[2,0,1]/2/16/int
+RESULT	inverse/5/[2,0,1]/2/16/int	WRONG	0:3,1:1	19
+START	inverse/5/[2,0,1]/2/16/big
+RESULT	inverse/5/[2,0,1]/2/16/big	WRONG	0:3,1:1	19
+START	inverse/5/[2,0,1]/2/16/normalized
+RESULT	inverse/5/[2,0,1]/2/16/normalized	PASS	0:4,1:3	19
+START	inverse/5/[2,0,1]/2/17/int
+RESULT	inverse/5/[2,0,1]/2/17/int	PASS	0:1,1:1	6
+START	inverse/5/[2,0,1]/2/17/big
+RESULT	inverse/5/[2,0,1]/2/17/big	PASS	0:1,1:1	6
+START	inverse/5/[2,0,1]/2/17/normalized
+RESULT	inverse/5/[2,0,1]/2/17/normalized	PASS	0:1,1:1	6
+START	inverse/5/[2,0,1]/2/18/int
+RESULT	inverse/5/[2,0,1]/2/18/int	PASS	0:4,1:1	9
+START	inverse/5/[2,0,1]/2/18/big
+RESULT	inverse/5/[2,0,1]/2/18/big	PASS	0:4,1:1	9
+START	inverse/5/[2,0,1]/2/18/normalized
+RESULT	inverse/5/[2,0,1]/2/18/normalized	PASS	0:4,1:1	9
+START	inverse/5/[2,0,1]/2/19/int
+RESULT	inverse/5/[2,0,1]/2/19/int	WRONG	0:2,1:1	16
+START	inverse/5/[2,0,1]/2/19/big
+RESULT	inverse/5/[2,0,1]/2/19/big	WRONG	0:2,1:1	16
+START	inverse/5/[2,0,1]/2/19/normalized
+RESULT	inverse/5/[2,0,1]/2/19/normalized	PASS	0:1,1:3	16
+START	inverse/5/[2,0,1]/2/20/int
+RESULT	inverse/5/[2,0,1]/2/20/int	WRONG	1:2	15
+START	inverse/5/[2,0,1]/2/20/big
+RESULT	inverse/5/[2,0,1]/2/20/big	WRONG	1:2	15
+START	inverse/5/[2,0,1]/2/20/normalized
+RESULT	inverse/5/[2,0,1]/2/20/normalized	PASS	1:3	15
+START	inverse/5/[2,0,1]/2/21/int
+RESULT	inverse/5/[2,0,1]/2/21/int	PASS	0:2,1:2	12
+START	inverse/5/[2,0,1]/2/21/big
+RESULT	inverse/5/[2,0,1]/2/21/big	PASS	0:2,1:2	12
+START	inverse/5/[2,0,1]/2/21/normalized
+RESULT	inverse/5/[2,0,1]/2/21/normalized	PASS	0:2,1:2	12
+START	inverse/5/[2,0,1]/2/22/int
+RESULT	inverse/5/[2,0,1]/2/22/int	WRONG	0:4,1:2	7
+START	inverse/5/[2,0,1]/2/22/big
+RESULT	inverse/5/[2,0,1]/2/22/big	WRONG	0:4,1:2	7
+START	inverse/5/[2,0,1]/2/22/normalized
+RESULT	inverse/5/[2,0,1]/2/22/normalized	PASS	0:2,1:1	7
+START	inverse/5/[2,0,1]/2/23/int
+RESULT	inverse/5/[2,0,1]/2/23/int	WRONG	0:1,1:2	8
+START	inverse/5/[2,0,1]/2/23/big
+RESULT	inverse/5/[2,0,1]/2/23/big	WRONG	0:1,1:2	8
+START	inverse/5/[2,0,1]/2/23/normalized
+RESULT	inverse/5/[2,0,1]/2/23/normalized	PASS	0:3,1:1	8
+START	inverse/5/[2,0,1]/2/24/int
+RESULT	inverse/5/[2,0,1]/2/24/int	PASS	0:3,1:2	13
+START	inverse/5/[2,0,1]/2/24/big
+RESULT	inverse/5/[2,0,1]/2/24/big	PASS	0:3,1:2	13
+START	inverse/5/[2,0,1]/2/24/normalized
+RESULT	inverse/5/[2,0,1]/2/24/normalized	PASS	0:3,1:2	13
+START	inverse/5/[2,0,1]/3/0/int
+RESULT	inverse/5/[2,0,1]/3/0/int	DOMAIN_REJECT	NotInvertibleException	-1
+START	inverse/5/[2,0,1]/3/0/big
+RESULT	inverse/5/[2,0,1]/3/0/big	DOMAIN_REJECT	NotInvertibleException	-1
+START	inverse/5/[2,0,1]/3/0/normalized
+RESULT	inverse/5/[2,0,1]/3/0/normalized	DOMAIN_REJECT	NotInvertibleException	-1
+START	inverse/5/[2,0,1]/3/1/int
+RESULT	inverse/5/[2,0,1]/3/1/int	EXCEPTION	NotInvertibleException	1
+START	inverse/5/[2,0,1]/3/1/big
+RESULT	inverse/5/[2,0,1]/3/1/big	EXCEPTION	NotInvertibleException	1
+START	inverse/5/[2,0,1]/3/1/normalized
+RESULT	inverse/5/[2,0,1]/3/1/normalized	EXCEPTION	NotInvertibleException	1
+START	inverse/5/[2,0,1]/3/2/int
+RESULT	inverse/5/[2,0,1]/3/2/int	EXCEPTION	NotInvertibleException	3
+START	inverse/5/[2,0,1]/3/2/big
+RESULT	inverse/5/[2,0,1]/3/2/big	EXCEPTION	NotInvertibleException	3
+START	inverse/5/[2,0,1]/3/2/normalized
+RESULT	inverse/5/[2,0,1]/3/2/normalized	EXCEPTION	NotInvertibleException	3
+START	inverse/5/[2,0,1]/3/3/int
+RESULT	inverse/5/[2,0,1]/3/3/int	EXCEPTION	NotInvertibleException	2
+START	inverse/5/[2,0,1]/3/3/big
+RESULT	inverse/5/[2,0,1]/3/3/big	EXCEPTION	NotInvertibleException	2
+START	inverse/5/[2,0,1]/3/3/normalized
+RESULT	inverse/5/[2,0,1]/3/3/normalized	EXCEPTION	NotInvertibleException	2
+START	inverse/5/[2,0,1]/3/4/int
+RESULT	inverse/5/[2,0,1]/3/4/int	EXCEPTION	NotInvertibleException	4
+START	inverse/5/[2,0,1]/3/4/big
+RESULT	inverse/5/[2,0,1]/3/4/big	EXCEPTION	NotInvertibleException	4
+START	inverse/5/[2,0,1]/3/4/normalized
+RESULT	inverse/5/[2,0,1]/3/4/normalized	EXCEPTION	NotInvertibleException	4
+START	inverse/5/[2,0,1]/3/5/int
+RESULT	inverse/5/[2,0,1]/3/5/int	PASS	1:2	10
+START	inverse/5/[2,0,1]/3/5/big
+RESULT	inverse/5/[2,0,1]/3/5/big	PASS	1:2	10
+START	inverse/5/[2,0,1]/3/5/normalized
+RESULT	inverse/5/[2,0,1]/3/5/normalized	PASS	1:2	10
+START	inverse/5/[2,0,1]/3/6/int
+RESULT	inverse/5/[2,0,1]/3/6/int	WRONG	0:3,1:2	17
+START	inverse/5/[2,0,1]/3/6/big
+RESULT	inverse/5/[2,0,1]/3/6/big	WRONG	0:3,1:2	17
+START	inverse/5/[2,0,1]/3/6/normalized
+RESULT	inverse/5/[2,0,1]/3/6/normalized	PASS	0:2,1:3	17
+START	inverse/5/[2,0,1]/3/7/int
+RESULT	inverse/5/[2,0,1]/3/7/int	WRONG	0:1,1:2	22
+START	inverse/5/[2,0,1]/3/7/big
+RESULT	inverse/5/[2,0,1]/3/7/big	WRONG	0:1,1:2	22
+START	inverse/5/[2,0,1]/3/7/normalized
+RESULT	inverse/5/[2,0,1]/3/7/normalized	PASS	0:2,1:4	22
+START	inverse/5/[2,0,1]/3/8/int
+RESULT	inverse/5/[2,0,1]/3/8/int	WRONG	0:4,1:2	23
+START	inverse/5/[2,0,1]/3/8/big
+RESULT	inverse/5/[2,0,1]/3/8/big	WRONG	0:4,1:2	23
+START	inverse/5/[2,0,1]/3/8/normalized
+RESULT	inverse/5/[2,0,1]/3/8/normalized	PASS	0:3,1:4	23
+START	inverse/5/[2,0,1]/3/9/int
+RESULT	inverse/5/[2,0,1]/3/9/int	WRONG	0:2,1:2	18
+START	inverse/5/[2,0,1]/3/9/big
+RESULT	inverse/5/[2,0,1]/3/9/big	WRONG	0:2,1:2	18
+START	inverse/5/[2,0,1]/3/9/normalized
+RESULT	inverse/5/[2,0,1]/3/9/normalized	PASS	0:3,1:3	18
+START	inverse/5/[2,0,1]/3/10/int
+RESULT	inverse/5/[2,0,1]/3/10/int	PASS	1:1	5
+START	inverse/5/[2,0,1]/3/10/big
+RESULT	inverse/5/[2,0,1]/3/10/big	PASS	1:1	5
+START	inverse/5/[2,0,1]/3/10/normalized
+RESULT	inverse/5/[2,0,1]/3/10/normalized	PASS	1:1	5
+START	inverse/5/[2,0,1]/3/11/int
+RESULT	inverse/5/[2,0,1]/3/11/int	WRONG	0:2,1:1	14
+START	inverse/5/[2,0,1]/3/11/big
+RESULT	inverse/5/[2,0,1]/3/11/big	WRONG	0:2,1:1	14
+START	inverse/5/[2,0,1]/3/11/normalized
+RESULT	inverse/5/[2,0,1]/3/11/normalized	PASS	0:4,1:2	14
+START	inverse/5/[2,0,1]/3/12/int
+RESULT	inverse/5/[2,0,1]/3/12/int	WRONG	0:4,1:1	21
+START	inverse/5/[2,0,1]/3/12/big
+RESULT	inverse/5/[2,0,1]/3/12/big	WRONG	0:4,1:1	21
+START	inverse/5/[2,0,1]/3/12/normalized
+RESULT	inverse/5/[2,0,1]/3/12/normalized	PASS	0:1,1:4	21
+START	inverse/5/[2,0,1]/3/13/int
+RESULT	inverse/5/[2,0,1]/3/13/int	WRONG	0:1,1:1	24
+START	inverse/5/[2,0,1]/3/13/big
+RESULT	inverse/5/[2,0,1]/3/13/big	WRONG	0:1,1:1	24
+START	inverse/5/[2,0,1]/3/13/normalized
+RESULT	inverse/5/[2,0,1]/3/13/normalized	PASS	0:4,1:4	24
+START	inverse/5/[2,0,1]/3/14/int
+RESULT	inverse/5/[2,0,1]/3/14/int	WRONG	0:3,1:1	11
+START	inverse/5/[2,0,1]/3/14/big
+RESULT	inverse/5/[2,0,1]/3/14/big	WRONG	0:3,1:1	11
+START	inverse/5/[2,0,1]/3/14/normalized
+RESULT	inverse/5/[2,0,1]/3/14/normalized	PASS	0:1,1:2	11
+START	inverse/5/[2,0,1]/3/15/int
+RESULT	inverse/5/[2,0,1]/3/15/int	PASS	1:4	20
+START	inverse/5/[2,0,1]/3/15/big
+RESULT	inverse/5/[2,0,1]/3/15/big	PASS	1:4	20
+START	inverse/5/[2,0,1]/3/15/normalized
+RESULT	inverse/5/[2,0,1]/3/15/normalized	PASS	1:4	20
+START	inverse/5/[2,0,1]/3/16/int
+RESULT	inverse/5/[2,0,1]/3/16/int	WRONG	0:2,1:4	19
+START	inverse/5/[2,0,1]/3/16/big
+RESULT	inverse/5/[2,0,1]/3/16/big	WRONG	0:2,1:4	19
+START	inverse/5/[2,0,1]/3/16/normalized
+RESULT	inverse/5/[2,0,1]/3/16/normalized	PASS	0:4,1:3	19
+START	inverse/5/[2,0,1]/3/17/int
+RESULT	inverse/5/[2,0,1]/3/17/int	WRONG	0:4,1:4	6
+START	inverse/5/[2,0,1]/3/17/big
+RESULT	inverse/5/[2,0,1]/3/17/big	WRONG	0:4,1:4	6
+START	inverse/5/[2,0,1]/3/17/normalized
+RESULT	inverse/5/[2,0,1]/3/17/normalized	PASS	0:1,1:1	6
+START	inverse/5/[2,0,1]/3/18/int
+RESULT	inverse/5/[2,0,1]/3/18/int	WRONG	0:1,1:4	9
+START	inverse/5/[2,0,1]/3/18/big
+RESULT	inverse/5/[2,0,1]/3/18/big	WRONG	0:1,1:4	9
+START	inverse/5/[2,0,1]/3/18/normalized
+RESULT	inverse/5/[2,0,1]/3/18/normalized	PASS	0:4,1:1	9
+START	inverse/5/[2,0,1]/3/19/int
+RESULT	inverse/5/[2,0,1]/3/19/int	WRONG	0:3,1:4	16
+START	inverse/5/[2,0,1]/3/19/big
+RESULT	inverse/5/[2,0,1]/3/19/big	WRONG	0:3,1:4	16
+START	inverse/5/[2,0,1]/3/19/normalized
+RESULT	inverse/5/[2,0,1]/3/19/normalized	PASS	0:1,1:3	16
+START	inverse/5/[2,0,1]/3/20/int
+RESULT	inverse/5/[2,0,1]/3/20/int	PASS	1:3	15
+START	inverse/5/[2,0,1]/3/20/big
+RESULT	inverse/5/[2,0,1]/3/20/big	PASS	1:3	15
+START	inverse/5/[2,0,1]/3/20/normalized
+RESULT	inverse/5/[2,0,1]/3/20/normalized	PASS	1:3	15
+START	inverse/5/[2,0,1]/3/21/int
+RESULT	inverse/5/[2,0,1]/3/21/int	WRONG	0:3,1:3	12
+START	inverse/5/[2,0,1]/3/21/big
+RESULT	inverse/5/[2,0,1]/3/21/big	WRONG	0:3,1:3	12
+START	inverse/5/[2,0,1]/3/21/normalized
+RESULT	inverse/5/[2,0,1]/3/21/normalized	PASS	0:2,1:2	12
+START	inverse/5/[2,0,1]/3/22/int
+RESULT	inverse/5/[2,0,1]/3/22/int	WRONG	0:1,1:3	7
+START	inverse/5/[2,0,1]/3/22/big
+RESULT	inverse/5/[2,0,1]/3/22/big	WRONG	0:1,1:3	7
+START	inverse/5/[2,0,1]/3/22/normalized
+RESULT	inverse/5/[2,0,1]/3/22/normalized	PASS	0:2,1:1	7
+START	inverse/5/[2,0,1]/3/23/int
+RESULT	inverse/5/[2,0,1]/3/23/int	WRONG	0:4,1:3	8
+START	inverse/5/[2,0,1]/3/23/big
+RESULT	inverse/5/[2,0,1]/3/23/big	WRONG	0:4,1:3	8
+START	inverse/5/[2,0,1]/3/23/normalized
+RESULT	inverse/5/[2,0,1]/3/23/normalized	PASS	0:3,1:1	8
+START	inverse/5/[2,0,1]/3/24/int
+RESULT	inverse/5/[2,0,1]/3/24/int	WRONG	0:2,1:3	13
+START	inverse/5/[2,0,1]/3/24/big
+RESULT	inverse/5/[2,0,1]/3/24/big	WRONG	0:2,1:3	13
+START	inverse/5/[2,0,1]/3/24/normalized
+RESULT	inverse/5/[2,0,1]/3/24/normalized	PASS	0:3,1:2	13
+START	inverse/5/[2,0,1]/4/0/int
+RESULT	inverse/5/[2,0,1]/4/0/int	DOMAIN_REJECT	NotInvertibleException	-1
+START	inverse/5/[2,0,1]/4/0/big
+RESULT	inverse/5/[2,0,1]/4/0/big	DOMAIN_REJECT	NotInvertibleException	-1
+START	inverse/5/[2,0,1]/4/0/normalized
+RESULT	inverse/5/[2,0,1]/4/0/normalized	DOMAIN_REJECT	NotInvertibleException	-1
+START	inverse/5/[2,0,1]/4/1/int
+RESULT	inverse/5/[2,0,1]/4/1/int	EXCEPTION	NotInvertibleException	1
+START	inverse/5/[2,0,1]/4/1/big
+RESULT	inverse/5/[2,0,1]/4/1/big	EXCEPTION	NotInvertibleException	1
+START	inverse/5/[2,0,1]/4/1/normalized
+RESULT	inverse/5/[2,0,1]/4/1/normalized	EXCEPTION	NotInvertibleException	1
+START	inverse/5/[2,0,1]/4/2/int
+RESULT	inverse/5/[2,0,1]/4/2/int	EXCEPTION	NotInvertibleException	3
+START	inverse/5/[2,0,1]/4/2/big
+RESULT	inverse/5/[2,0,1]/4/2/big	EXCEPTION	NotInvertibleException	3
+START	inverse/5/[2,0,1]/4/2/normalized
+RESULT	inverse/5/[2,0,1]/4/2/normalized	EXCEPTION	NotInvertibleException	3
+START	inverse/5/[2,0,1]/4/3/int
+RESULT	inverse/5/[2,0,1]/4/3/int	EXCEPTION	NotInvertibleException	2
+START	inverse/5/[2,0,1]/4/3/big
+RESULT	inverse/5/[2,0,1]/4/3/big	EXCEPTION	NotInvertibleException	2
+START	inverse/5/[2,0,1]/4/3/normalized
+RESULT	inverse/5/[2,0,1]/4/3/normalized	EXCEPTION	NotInvertibleException	2
+START	inverse/5/[2,0,1]/4/4/int
+RESULT	inverse/5/[2,0,1]/4/4/int	EXCEPTION	NotInvertibleException	4
+START	inverse/5/[2,0,1]/4/4/big
+RESULT	inverse/5/[2,0,1]/4/4/big	EXCEPTION	NotInvertibleException	4
+START	inverse/5/[2,0,1]/4/4/normalized
+RESULT	inverse/5/[2,0,1]/4/4/normalized	EXCEPTION	NotInvertibleException	4
+START	inverse/5/[2,0,1]/4/5/int
+RESULT	inverse/5/[2,0,1]/4/5/int	WRONG	1:1	10
+START	inverse/5/[2,0,1]/4/5/big
+RESULT	inverse/5/[2,0,1]/4/5/big	WRONG	1:1	10
+START	inverse/5/[2,0,1]/4/5/normalized
+RESULT	inverse/5/[2,0,1]/4/5/normalized	PASS	1:2	10
+START	inverse/5/[2,0,1]/4/6/int
+RESULT	inverse/5/[2,0,1]/4/6/int	WRONG	0:4,1:1	17
+START	inverse/5/[2,0,1]/4/6/big
+RESULT	inverse/5/[2,0,1]/4/6/big	WRONG	0:4,1:1	17
+START	inverse/5/[2,0,1]/4/6/normalized
+RESULT	inverse/5/[2,0,1]/4/6/normalized	PASS	0:2,1:3	17
+START	inverse/5/[2,0,1]/4/7/int
+RESULT	inverse/5/[2,0,1]/4/7/int	WRONG	0:3,1:1	22
+START	inverse/5/[2,0,1]/4/7/big
+RESULT	inverse/5/[2,0,1]/4/7/big	WRONG	0:3,1:1	22
+START	inverse/5/[2,0,1]/4/7/normalized
+RESULT	inverse/5/[2,0,1]/4/7/normalized	PASS	0:2,1:4	22
+START	inverse/5/[2,0,1]/4/8/int
+RESULT	inverse/5/[2,0,1]/4/8/int	WRONG	0:2,1:1	23
+START	inverse/5/[2,0,1]/4/8/big
+RESULT	inverse/5/[2,0,1]/4/8/big	WRONG	0:2,1:1	23
+START	inverse/5/[2,0,1]/4/8/normalized
+RESULT	inverse/5/[2,0,1]/4/8/normalized	PASS	0:3,1:4	23
+START	inverse/5/[2,0,1]/4/9/int
+RESULT	inverse/5/[2,0,1]/4/9/int	WRONG	0:1,1:1	18
+START	inverse/5/[2,0,1]/4/9/big
+RESULT	inverse/5/[2,0,1]/4/9/big	WRONG	0:1,1:1	18
+START	inverse/5/[2,0,1]/4/9/normalized
+RESULT	inverse/5/[2,0,1]/4/9/normalized	PASS	0:3,1:3	18
+START	inverse/5/[2,0,1]/4/10/int
+RESULT	inverse/5/[2,0,1]/4/10/int	WRONG	1:3	5
+START	inverse/5/[2,0,1]/4/10/big
+RESULT	inverse/5/[2,0,1]/4/10/big	WRONG	1:3	5
+START	inverse/5/[2,0,1]/4/10/normalized
+RESULT	inverse/5/[2,0,1]/4/10/normalized	PASS	1:1	5
+START	inverse/5/[2,0,1]/4/11/int
+RESULT	inverse/5/[2,0,1]/4/11/int	WRONG	0:1,1:3	14
+START	inverse/5/[2,0,1]/4/11/big
+RESULT	inverse/5/[2,0,1]/4/11/big	WRONG	0:1,1:3	14
+START	inverse/5/[2,0,1]/4/11/normalized
+RESULT	inverse/5/[2,0,1]/4/11/normalized	PASS	0:4,1:2	14
+START	inverse/5/[2,0,1]/4/12/int
+RESULT	inverse/5/[2,0,1]/4/12/int	WRONG	0:2,1:3	21
+START	inverse/5/[2,0,1]/4/12/big
+RESULT	inverse/5/[2,0,1]/4/12/big	WRONG	0:2,1:3	21
+START	inverse/5/[2,0,1]/4/12/normalized
+RESULT	inverse/5/[2,0,1]/4/12/normalized	PASS	0:1,1:4	21
+START	inverse/5/[2,0,1]/4/13/int
+RESULT	inverse/5/[2,0,1]/4/13/int	WRONG	0:3,1:3	24
+START	inverse/5/[2,0,1]/4/13/big
+RESULT	inverse/5/[2,0,1]/4/13/big	WRONG	0:3,1:3	24
+START	inverse/5/[2,0,1]/4/13/normalized
+RESULT	inverse/5/[2,0,1]/4/13/normalized	PASS	0:4,1:4	24
+START	inverse/5/[2,0,1]/4/14/int
+RESULT	inverse/5/[2,0,1]/4/14/int	WRONG	0:4,1:3	11
+START	inverse/5/[2,0,1]/4/14/big
+RESULT	inverse/5/[2,0,1]/4/14/big	WRONG	0:4,1:3	11
+START	inverse/5/[2,0,1]/4/14/normalized
+RESULT	inverse/5/[2,0,1]/4/14/normalized	PASS	0:1,1:2	11
+START	inverse/5/[2,0,1]/4/15/int
+RESULT	inverse/5/[2,0,1]/4/15/int	WRONG	1:2	20
+START	inverse/5/[2,0,1]/4/15/big
+RESULT	inverse/5/[2,0,1]/4/15/big	WRONG	1:2	20
+START	inverse/5/[2,0,1]/4/15/normalized
+RESULT	inverse/5/[2,0,1]/4/15/normalized	PASS	1:4	20
+START	inverse/5/[2,0,1]/4/16/int
+RESULT	inverse/5/[2,0,1]/4/16/int	WRONG	0:1,1:2	19
+START	inverse/5/[2,0,1]/4/16/big
+RESULT	inverse/5/[2,0,1]/4/16/big	WRONG	0:1,1:2	19
+START	inverse/5/[2,0,1]/4/16/normalized
+RESULT	inverse/5/[2,0,1]/4/16/normalized	PASS	0:4,1:3	19
+START	inverse/5/[2,0,1]/4/17/int
+RESULT	inverse/5/[2,0,1]/4/17/int	WRONG	0:2,1:2	6
+START	inverse/5/[2,0,1]/4/17/big
+RESULT	inverse/5/[2,0,1]/4/17/big	WRONG	0:2,1:2	6
+START	inverse/5/[2,0,1]/4/17/normalized
+RESULT	inverse/5/[2,0,1]/4/17/normalized	PASS	0:1,1:1	6
+START	inverse/5/[2,0,1]/4/18/int
+RESULT	inverse/5/[2,0,1]/4/18/int	WRONG	0:3,1:2	9
+START	inverse/5/[2,0,1]/4/18/big
+RESULT	inverse/5/[2,0,1]/4/18/big	WRONG	0:3,1:2	9
+START	inverse/5/[2,0,1]/4/18/normalized
+RESULT	inverse/5/[2,0,1]/4/18/normalized	PASS	0:4,1:1	9
+START	inverse/5/[2,0,1]/4/19/int
+RESULT	inverse/5/[2,0,1]/4/19/int	WRONG	0:4,1:2	16
+START	inverse/5/[2,0,1]/4/19/big
+RESULT	inverse/5/[2,0,1]/4/19/big	WRONG	0:4,1:2	16
+START	inverse/5/[2,0,1]/4/19/normalized
+RESULT	inverse/5/[2,0,1]/4/19/normalized	PASS	0:1,1:3	16
+START	inverse/5/[2,0,1]/4/20/int
+RESULT	inverse/5/[2,0,1]/4/20/int	WRONG	1:4	15
+START	inverse/5/[2,0,1]/4/20/big
+RESULT	inverse/5/[2,0,1]/4/20/big	WRONG	1:4	15
+START	inverse/5/[2,0,1]/4/20/normalized
+RESULT	inverse/5/[2,0,1]/4/20/normalized	PASS	1:3	15
+START	inverse/5/[2,0,1]/4/21/int
+RESULT	inverse/5/[2,0,1]/4/21/int	WRONG	0:4,1:4	12
+START	inverse/5/[2,0,1]/4/21/big
+RESULT	inverse/5/[2,0,1]/4/21/big	WRONG	0:4,1:4	12
+START	inverse/5/[2,0,1]/4/21/normalized
+RESULT	inverse/5/[2,0,1]/4/21/normalized	PASS	0:2,1:2	12
+START	inverse/5/[2,0,1]/4/22/int
+RESULT	inverse/5/[2,0,1]/4/22/int	WRONG	0:3,1:4	7
+START	inverse/5/[2,0,1]/4/22/big
+RESULT	inverse/5/[2,0,1]/4/22/big	WRONG	0:3,1:4	7
+START	inverse/5/[2,0,1]/4/22/normalized
+RESULT	inverse/5/[2,0,1]/4/22/normalized	PASS	0:2,1:1	7
+START	inverse/5/[2,0,1]/4/23/int
+RESULT	inverse/5/[2,0,1]/4/23/int	WRONG	0:2,1:4	8
+START	inverse/5/[2,0,1]/4/23/big
+RESULT	inverse/5/[2,0,1]/4/23/big	WRONG	0:2,1:4	8
+START	inverse/5/[2,0,1]/4/23/normalized
+RESULT	inverse/5/[2,0,1]/4/23/normalized	PASS	0:3,1:1	8
+START	inverse/5/[2,0,1]/4/24/int
+RESULT	inverse/5/[2,0,1]/4/24/int	WRONG	0:1,1:4	13
+START	inverse/5/[2,0,1]/4/24/big
+RESULT	inverse/5/[2,0,1]/4/24/big	WRONG	0:1,1:4	13
+START	inverse/5/[2,0,1]/4/24/normalized
+RESULT	inverse/5/[2,0,1]/4/24/normalized	PASS	0:3,1:2	13
+START	inverse/7/[1,0,1]/1/0/int
+RESULT	inverse/7/[1,0,1]/1/0/int	DOMAIN_REJECT	NotInvertibleException	-1
+START	inverse/7/[1,0,1]/1/0/big
+RESULT	inverse/7/[1,0,1]/1/0/big	DOMAIN_REJECT	NotInvertibleException	-1
+START	inverse/7/[1,0,1]/1/0/normalized
+RESULT	inverse/7/[1,0,1]/1/0/normalized	DOMAIN_REJECT	NotInvertibleException	-1
+START	inverse/7/[1,0,1]/1/1/int
+RESULT	inverse/7/[1,0,1]/1/1/int	EXCEPTION	NotInvertibleException	1
+START	inverse/7/[1,0,1]/1/1/big
+RESULT	inverse/7/[1,0,1]/1/1/big	EXCEPTION	NotInvertibleException	1
+START	inverse/7/[1,0,1]/1/1/normalized
+RESULT	inverse/7/[1,0,1]/1/1/normalized	EXCEPTION	NotInvertibleException	1
+START	inverse/7/[1,0,1]/1/2/int
+RESULT	inverse/7/[1,0,1]/1/2/int	EXCEPTION	NotInvertibleException	4
+START	inverse/7/[1,0,1]/1/2/big
+RESULT	inverse/7/[1,0,1]/1/2/big	EXCEPTION	NotInvertibleException	4
+START	inverse/7/[1,0,1]/1/2/normalized
+RESULT	inverse/7/[1,0,1]/1/2/normalized	EXCEPTION	NotInvertibleException	4
+START	inverse/7/[1,0,1]/1/3/int
+RESULT	inverse/7/[1,0,1]/1/3/int	EXCEPTION	NotInvertibleException	5
+START	inverse/7/[1,0,1]/1/3/big
+RESULT	inverse/7/[1,0,1]/1/3/big	EXCEPTION	NotInvertibleException	5
+START	inverse/7/[1,0,1]/1/3/normalized
+RESULT	inverse/7/[1,0,1]/1/3/normalized	EXCEPTION	NotInvertibleException	5
+START	inverse/7/[1,0,1]/1/4/int
+RESULT	inverse/7/[1,0,1]/1/4/int	EXCEPTION	NotInvertibleException	2
+START	inverse/7/[1,0,1]/1/4/big
+RESULT	inverse/7/[1,0,1]/1/4/big	EXCEPTION	NotInvertibleException	2
+START	inverse/7/[1,0,1]/1/4/normalized
+RESULT	inverse/7/[1,0,1]/1/4/normalized	EXCEPTION	NotInvertibleException	2
+START	inverse/7/[1,0,1]/1/5/int
+RESULT	inverse/7/[1,0,1]/1/5/int	EXCEPTION	NotInvertibleException	3
+START	inverse/7/[1,0,1]/1/5/big
+RESULT	inverse/7/[1,0,1]/1/5/big	EXCEPTION	NotInvertibleException	3
+START	inverse/7/[1,0,1]/1/5/normalized
+RESULT	inverse/7/[1,0,1]/1/5/normalized	EXCEPTION	NotInvertibleException	3
+START	inverse/7/[1,0,1]/1/6/int
+RESULT	inverse/7/[1,0,1]/1/6/int	EXCEPTION	NotInvertibleException	6
+START	inverse/7/[1,0,1]/1/6/big
+RESULT	inverse/7/[1,0,1]/1/6/big	EXCEPTION	NotInvertibleException	6
+START	inverse/7/[1,0,1]/1/6/normalized
+RESULT	inverse/7/[1,0,1]/1/6/normalized	EXCEPTION	NotInvertibleException	6
+START	inverse/7/[1,0,1]/1/7/int
+RESULT	inverse/7/[1,0,1]/1/7/int	PASS	1:6	42
+START	inverse/7/[1,0,1]/1/7/big
+RESULT	inverse/7/[1,0,1]/1/7/big	PASS	1:6	42
+START	inverse/7/[1,0,1]/1/7/normalized
+RESULT	inverse/7/[1,0,1]/1/7/normalized	PASS	1:6	42
+START	inverse/7/[1,0,1]/1/8/int
+RESULT	inverse/7/[1,0,1]/1/8/int	WRONG	0:1,1:6	25
+START	inverse/7/[1,0,1]/1/8/big
+RESULT	inverse/7/[1,0,1]/1/8/big	WRONG	0:1,1:6	25
+START	inverse/7/[1,0,1]/1/8/normalized
+RESULT	inverse/7/[1,0,1]/1/8/normalized	PASS	0:4,1:3	25
+START	inverse/7/[1,0,1]/1/9/int
+RESULT	inverse/7/[1,0,1]/1/9/int	WRONG	0:2,1:6	34
+START	inverse/7/[1,0,1]/1/9/big
+RESULT	inverse/7/[1,0,1]/1/9/big	WRONG	0:2,1:6	34
+START	inverse/7/[1,0,1]/1/9/normalized
+RESULT	inverse/7/[1,0,1]/1/9/normalized	PASS	0:6,1:4	34
+START	inverse/7/[1,0,1]/1/10/int
+RESULT	inverse/7/[1,0,1]/1/10/int	WRONG	0:3,1:6	15
+START	inverse/7/[1,0,1]/1/10/big
+RESULT	inverse/7/[1,0,1]/1/10/big	WRONG	0:3,1:6	15
+START	inverse/7/[1,0,1]/1/10/normalized
+RESULT	inverse/7/[1,0,1]/1/10/normalized	PASS	0:1,1:2	15
+START	inverse/7/[1,0,1]/1/11/int
+RESULT	inverse/7/[1,0,1]/1/11/int	WRONG	0:4,1:6	20
+START	inverse/7/[1,0,1]/1/11/big
+RESULT	inverse/7/[1,0,1]/1/11/big	WRONG	0:4,1:6	20
+START	inverse/7/[1,0,1]/1/11/normalized
+RESULT	inverse/7/[1,0,1]/1/11/normalized	PASS	0:6,1:2	20
+START	inverse/7/[1,0,1]/1/12/int
+RESULT	inverse/7/[1,0,1]/1/12/int	WRONG	0:5,1:6	29
+START	inverse/7/[1,0,1]/1/12/big
+RESULT	inverse/7/[1,0,1]/1/12/big	WRONG	0:5,1:6	29
+START	inverse/7/[1,0,1]/1/12/normalized
+RESULT	inverse/7/[1,0,1]/1/12/normalized	PASS	0:1,1:4	29
+START	inverse/7/[1,0,1]/1/13/int
+RESULT	inverse/7/[1,0,1]/1/13/int	WRONG	0:6,1:6	24
+START	inverse/7/[1,0,1]/1/13/big
+RESULT	inverse/7/[1,0,1]/1/13/big	WRONG	0:6,1:6	24
+START	inverse/7/[1,0,1]/1/13/normalized
+RESULT	inverse/7/[1,0,1]/1/13/normalized	PASS	0:3,1:3	24
+START	inverse/7/[1,0,1]/1/14/int
+RESULT	inverse/7/[1,0,1]/1/14/int	PASS	1:3	21
+START	inverse/7/[1,0,1]/1/14/big
+RESULT	inverse/7/[1,0,1]/1/14/big	PASS	1:3	21
+START	inverse/7/[1,0,1]/1/14/normalized
+RESULT	inverse/7/[1,0,1]/1/14/normalized	PASS	1:3	21
+START	inverse/7/[1,0,1]/1/15/int
+RESULT	inverse/7/[1,0,1]/1/15/int	WRONG	0:2,1:3	10
+START	inverse/7/[1,0,1]/1/15/big
+RESULT	inverse/7/[1,0,1]/1/15/big	WRONG	0:2,1:3	10
+START	inverse/7/[1,0,1]/1/15/normalized
+RESULT	inverse/7/[1,0,1]/1/15/normalized	PASS	0:3,1:1	10
+START	inverse/7/[1,0,1]/1/16/int
+RESULT	inverse/7/[1,0,1]/1/16/int	WRONG	0:4,1:3	37
+START	inverse/7/[1,0,1]/1/16/big
+RESULT	inverse/7/[1,0,1]/1/16/big	WRONG	0:4,1:3	37
+START	inverse/7/[1,0,1]/1/16/normalized
+RESULT	inverse/7/[1,0,1]/1/16/normalized	PASS	0:2,1:5	37
+START	inverse/7/[1,0,1]/1/17/int
+RESULT	inverse/7/[1,0,1]/1/17/int	WRONG	0:6,1:3	18
+START	inverse/7/[1,0,1]/1/17/big
+RESULT	inverse/7/[1,0,1]/1/17/big	WRONG	0:6,1:3	18
+START	inverse/7/[1,0,1]/1/17/normalized
+RESULT	inverse/7/[1,0,1]/1/17/normalized	PASS	0:4,1:2	18
+START	inverse/7/[1,0,1]/1/18/int
+RESULT	inverse/7/[1,0,1]/1/18/int	WRONG	0:1,1:3	17
+START	inverse/7/[1,0,1]/1/18/big
+RESULT	inverse/7/[1,0,1]/1/18/big	WRONG	0:1,1:3	17
+START	inverse/7/[1,0,1]/1/18/normalized
+RESULT	inverse/7/[1,0,1]/1/18/normalized	PASS	0:3,1:2	17
+START	inverse/7/[1,0,1]/1/19/int
+RESULT	inverse/7/[1,0,1]/1/19/int	WRONG	0:3,1:3	40
+START	inverse/7/[1,0,1]/1/19/big
+RESULT	inverse/7/[1,0,1]/1/19/big	WRONG	0:3,1:3	40
+START	inverse/7/[1,0,1]/1/19/normalized
+RESULT	inverse/7/[1,0,1]/1/19/normalized	PASS	0:5,1:5	40
+START	inverse/7/[1,0,1]/1/20/int
+RESULT	inverse/7/[1,0,1]/1/20/int	WRONG	0:5,1:3	11
+START	inverse/7/[1,0,1]/1/20/big
+RESULT	inverse/7/[1,0,1]/1/20/big	WRONG	0:5,1:3	11
+START	inverse/7/[1,0,1]/1/20/normalized
+RESULT	inverse/7/[1,0,1]/1/20/normalized	PASS	0:4,1:1	11
+START	inverse/7/[1,0,1]/1/21/int
+RESULT	inverse/7/[1,0,1]/1/21/int	PASS	1:2	14
+START	inverse/7/[1,0,1]/1/21/big
+RESULT	inverse/7/[1,0,1]/1/21/big	PASS	1:2	14
+START	inverse/7/[1,0,1]/1/21/normalized
+RESULT	inverse/7/[1,0,1]/1/21/normalized	PASS	1:2	14
+START	inverse/7/[1,0,1]/1/22/int
+RESULT	inverse/7/[1,0,1]/1/22/int	WRONG	0:4,1:2	47
+START	inverse/7/[1,0,1]/1/22/big
+RESULT	inverse/7/[1,0,1]/1/22/big	WRONG	0:4,1:2	47
+START	inverse/7/[1,0,1]/1/22/normalized
+RESULT	inverse/7/[1,0,1]/1/22/normalized	PASS	0:5,1:6	47
+START	inverse/7/[1,0,1]/1/23/int
+RESULT	inverse/7/[1,0,1]/1/23/int	WRONG	0:1,1:2	26
+START	inverse/7/[1,0,1]/1/23/big
+RESULT	inverse/7/[1,0,1]/1/23/big	WRONG	0:1,1:2	26
+START	inverse/7/[1,0,1]/1/23/normalized
+RESULT	inverse/7/[1,0,1]/1/23/normalized	PASS	0:5,1:3	26
+START	inverse/7/[1,0,1]/1/24/int
+RESULT	inverse/7/[1,0,1]/1/24/int	WRONG	0:5,1:2	13
+START	inverse/7/[1,0,1]/1/24/big
+RESULT	inverse/7/[1,0,1]/1/24/big	WRONG	0:5,1:2	13
+START	inverse/7/[1,0,1]/1/24/normalized
+RESULT	inverse/7/[1,0,1]/1/24/normalized	PASS	0:6,1:1	13
+START	inverse/7/[1,0,1]/1/25/int
+RESULT	inverse/7/[1,0,1]/1/25/int	WRONG	0:2,1:2	8
+START	inverse/7/[1,0,1]/1/25/big
+RESULT	inverse/7/[1,0,1]/1/25/big	WRONG	0:2,1:2	8
+START	inverse/7/[1,0,1]/1/25/normalized
+RESULT	inverse/7/[1,0,1]/1/25/normalized	PASS	0:1,1:1	8
+START	inverse/7/[1,0,1]/1/26/int
+RESULT	inverse/7/[1,0,1]/1/26/int	WRONG	0:6,1:2	23
+START	inverse/7/[1,0,1]/1/26/big
+RESULT	inverse/7/[1,0,1]/1/26/big	WRONG	0:6,1:2	23
+START	inverse/7/[1,0,1]/1/26/normalized
+RESULT	inverse/7/[1,0,1]/1/26/normalized	PASS	0:2,1:3	23
+START	inverse/7/[1,0,1]/1/27/int
+RESULT	inverse/7/[1,0,1]/1/27/int	WRONG	0:3,1:2	44
+START	inverse/7/[1,0,1]/1/27/big
+RESULT	inverse/7/[1,0,1]/1/27/big	WRONG	0:3,1:2	44
+START	inverse/7/[1,0,1]/1/27/normalized
+RESULT	inverse/7/[1,0,1]/1/27/normalized	PASS	0:2,1:6	44
+START	inverse/7/[1,0,1]/1/28/int
+RESULT	inverse/7/[1,0,1]/1/28/int	PASS	1:5	35
+START	inverse/7/[1,0,1]/1/28/big
+RESULT	inverse/7/[1,0,1]/1/28/big	PASS	1:5	35
+START	inverse/7/[1,0,1]/1/28/normalized
+RESULT	inverse/7/[1,0,1]/1/28/normalized	PASS	1:5	35
+START	inverse/7/[1,0,1]/1/29/int
+RESULT	inverse/7/[1,0,1]/1/29/int	WRONG	0:4,1:5	12
+START	inverse/7/[1,0,1]/1/29/big
+RESULT	inverse/7/[1,0,1]/1/29/big	WRONG	0:4,1:5	12
+START	inverse/7/[1,0,1]/1/29/normalized
+RESULT	inverse/7/[1,0,1]/1/29/normalized	PASS	0:5,1:1	12
+START	inverse/7/[1,0,1]/1/30/int
+RESULT	inverse/7/[1,0,1]/1/30/int	WRONG	0:1,1:5	33
+START	inverse/7/[1,0,1]/1/30/big
+RESULT	inverse/7/[1,0,1]/1/30/big	WRONG	0:1,1:5	33
+START	inverse/7/[1,0,1]/1/30/normalized
+RESULT	inverse/7/[1,0,1]/1/30/normalized	PASS	0:5,1:4	33
+START	inverse/7/[1,0,1]/1/31/int
+RESULT	inverse/7/[1,0,1]/1/31/int	WRONG	0:5,1:5	48
+START	inverse/7/[1,0,1]/1/31/big
+RESULT	inverse/7/[1,0,1]/1/31/big	WRONG	0:5,1:5	48
+START	inverse/7/[1,0,1]/1/31/normalized
+RESULT	inverse/7/[1,0,1]/1/31/normalized	PASS	0:6,1:6	48
+START	inverse/7/[1,0,1]/1/32/int
+RESULT	inverse/7/[1,0,1]/1/32/int	WRONG	0:2,1:5	43
+START	inverse/7/[1,0,1]/1/32/big
+RESULT	inverse/7/[1,0,1]/1/32/big	WRONG	0:2,1:5	43
+START	inverse/7/[1,0,1]/1/32/normalized
+RESULT	inverse/7/[1,0,1]/1/32/normalized	PASS	0:1,1:6	43
+START	inverse/7/[1,0,1]/1/33/int
+RESULT	inverse/7/[1,0,1]/1/33/int	WRONG	0:6,1:5	30
+START	inverse/7/[1,0,1]/1/33/big
+RESULT	inverse/7/[1,0,1]/1/33/big	WRONG	0:6,1:5	30
+START	inverse/7/[1,0,1]/1/33/normalized
+RESULT	inverse/7/[1,0,1]/1/33/normalized	PASS	0:2,1:4	30
+START	inverse/7/[1,0,1]/1/34/int
+RESULT	inverse/7/[1,0,1]/1/34/int	WRONG	0:3,1:5	9
+START	inverse/7/[1,0,1]/1/34/big
+RESULT	inverse/7/[1,0,1]/1/34/big	WRONG	0:3,1:5	9
+START	inverse/7/[1,0,1]/1/34/normalized
+RESULT	inverse/7/[1,0,1]/1/34/normalized	PASS	0:2,1:1	9
+START	inverse/7/[1,0,1]/1/35/int
+RESULT	inverse/7/[1,0,1]/1/35/int	PASS	1:4	28
+START	inverse/7/[1,0,1]/1/35/big
+RESULT	inverse/7/[1,0,1]/1/35/big	PASS	1:4	28
+START	inverse/7/[1,0,1]/1/35/normalized
+RESULT	inverse/7/[1,0,1]/1/35/normalized	PASS	1:4	28
+START	inverse/7/[1,0,1]/1/36/int
+RESULT	inverse/7/[1,0,1]/1/36/int	WRONG	0:2,1:4	45
+START	inverse/7/[1,0,1]/1/36/big
+RESULT	inverse/7/[1,0,1]/1/36/big	WRONG	0:2,1:4	45
+START	inverse/7/[1,0,1]/1/36/normalized
+RESULT	inverse/7/[1,0,1]/1/36/normalized	PASS	0:3,1:6	45
+START	inverse/7/[1,0,1]/1/37/int
+RESULT	inverse/7/[1,0,1]/1/37/int	WRONG	0:4,1:4	16
+START	inverse/7/[1,0,1]/1/37/big
+RESULT	inverse/7/[1,0,1]/1/37/big	WRONG	0:4,1:4	16
+START	inverse/7/[1,0,1]/1/37/normalized
+RESULT	inverse/7/[1,0,1]/1/37/normalized	PASS	0:2,1:2	16
+START	inverse/7/[1,0,1]/1/38/int
+RESULT	inverse/7/[1,0,1]/1/38/int	WRONG	0:6,1:4	39
+START	inverse/7/[1,0,1]/1/38/big
+RESULT	inverse/7/[1,0,1]/1/38/big	WRONG	0:6,1:4	39
+START	inverse/7/[1,0,1]/1/38/normalized
+RESULT	inverse/7/[1,0,1]/1/38/normalized	PASS	0:4,1:5	39
+START	inverse/7/[1,0,1]/1/39/int
+RESULT	inverse/7/[1,0,1]/1/39/int	WRONG	0:1,1:4	38
+START	inverse/7/[1,0,1]/1/39/big
+RESULT	inverse/7/[1,0,1]/1/39/big	WRONG	0:1,1:4	38
+START	inverse/7/[1,0,1]/1/39/normalized
+RESULT	inverse/7/[1,0,1]/1/39/normalized	PASS	0:3,1:5	38
+START	inverse/7/[1,0,1]/1/40/int
+RESULT	inverse/7/[1,0,1]/1/40/int	WRONG	0:3,1:4	19
+START	inverse/7/[1,0,1]/1/40/big
+RESULT	inverse/7/[1,0,1]/1/40/big	WRONG	0:3,1:4	19
+START	inverse/7/[1,0,1]/1/40/normalized
+RESULT	inverse/7/[1,0,1]/1/40/normalized	PASS	0:5,1:2	19
+START	inverse/7/[1,0,1]/1/41/int
+RESULT	inverse/7/[1,0,1]/1/41/int	WRONG	0:5,1:4	46
+START	inverse/7/[1,0,1]/1/41/big
+RESULT	inverse/7/[1,0,1]/1/41/big	WRONG	0:5,1:4	46
+START	inverse/7/[1,0,1]/1/41/normalized
+RESULT	inverse/7/[1,0,1]/1/41/normalized	PASS	0:4,1:6	46
+START	inverse/7/[1,0,1]/1/42/int
+RESULT	inverse/7/[1,0,1]/1/42/int	PASS	1:1	7
+START	inverse/7/[1,0,1]/1/42/big
+RESULT	inverse/7/[1,0,1]/1/42/big	PASS	1:1	7
+START	inverse/7/[1,0,1]/1/42/normalized
+RESULT	inverse/7/[1,0,1]/1/42/normalized	PASS	1:1	7
+START	inverse/7/[1,0,1]/1/43/int
+RESULT	inverse/7/[1,0,1]/1/43/int	WRONG	0:1,1:1	32
+START	inverse/7/[1,0,1]/1/43/big
+RESULT	inverse/7/[1,0,1]/1/43/big	WRONG	0:1,1:1	32
+START	inverse/7/[1,0,1]/1/43/normalized
+RESULT	inverse/7/[1,0,1]/1/43/normalized	PASS	0:4,1:4	32
+START	inverse/7/[1,0,1]/1/44/int
+RESULT	inverse/7/[1,0,1]/1/44/int	WRONG	0:2,1:1	27
+START	inverse/7/[1,0,1]/1/44/big
+RESULT	inverse/7/[1,0,1]/1/44/big	WRONG	0:2,1:1	27
+START	inverse/7/[1,0,1]/1/44/normalized
+RESULT	inverse/7/[1,0,1]/1/44/normalized	PASS	0:6,1:3	27
+START	inverse/7/[1,0,1]/1/45/int
+RESULT	inverse/7/[1,0,1]/1/45/int	WRONG	0:3,1:1	36
+START	inverse/7/[1,0,1]/1/45/big
+RESULT	inverse/7/[1,0,1]/1/45/big	WRONG	0:3,1:1	36
+START	inverse/7/[1,0,1]/1/45/normalized
+RESULT	inverse/7/[1,0,1]/1/45/normalized	PASS	0:1,1:5	36
+START	inverse/7/[1,0,1]/1/46/int
+RESULT	inverse/7/[1,0,1]/1/46/int	WRONG	0:4,1:1	41
+START	inverse/7/[1,0,1]/1/46/big
+RESULT	inverse/7/[1,0,1]/1/46/big	WRONG	0:4,1:1	41
+START	inverse/7/[1,0,1]/1/46/normalized
+RESULT	inverse/7/[1,0,1]/1/46/normalized	PASS	0:6,1:5	41
+START	inverse/7/[1,0,1]/1/47/int
+RESULT	inverse/7/[1,0,1]/1/47/int	WRONG	0:5,1:1	22
+START	inverse/7/[1,0,1]/1/47/big
+RESULT	inverse/7/[1,0,1]/1/47/big	WRONG	0:5,1:1	22
+START	inverse/7/[1,0,1]/1/47/normalized
+RESULT	inverse/7/[1,0,1]/1/47/normalized	PASS	0:1,1:3	22
+START	inverse/7/[1,0,1]/1/48/int
+RESULT	inverse/7/[1,0,1]/1/48/int	WRONG	0:6,1:1	31
+START	inverse/7/[1,0,1]/1/48/big
+RESULT	inverse/7/[1,0,1]/1/48/big	WRONG	0:6,1:1	31
+START	inverse/7/[1,0,1]/1/48/normalized
+RESULT	inverse/7/[1,0,1]/1/48/normalized	PASS	0:3,1:4	31
+START	inverse/7/[1,0,1]/2/0/int
+RESULT	inverse/7/[1,0,1]/2/0/int	DOMAIN_REJECT	NotInvertibleException	-1
+START	inverse/7/[1,0,1]/2/0/big
+RESULT	inverse/7/[1,0,1]/2/0/big	DOMAIN_REJECT	NotInvertibleException	-1
+START	inverse/7/[1,0,1]/2/0/normalized
+RESULT	inverse/7/[1,0,1]/2/0/normalized	DOMAIN_REJECT	NotInvertibleException	-1
+START	inverse/7/[1,0,1]/2/1/int
+RESULT	inverse/7/[1,0,1]/2/1/int	EXCEPTION	NotInvertibleException	1
+START	inverse/7/[1,0,1]/2/1/big
+RESULT	inverse/7/[1,0,1]/2/1/big	EXCEPTION	NotInvertibleException	1
+START	inverse/7/[1,0,1]/2/1/normalized
+RESULT	inverse/7/[1,0,1]/2/1/normalized	EXCEPTION	NotInvertibleException	1
+START	inverse/7/[1,0,1]/2/2/int
+RESULT	inverse/7/[1,0,1]/2/2/int	EXCEPTION	NotInvertibleException	4
+START	inverse/7/[1,0,1]/2/2/big
+RESULT	inverse/7/[1,0,1]/2/2/big	EXCEPTION	NotInvertibleException	4
+START	inverse/7/[1,0,1]/2/2/normalized
+RESULT	inverse/7/[1,0,1]/2/2/normalized	EXCEPTION	NotInvertibleException	4
+START	inverse/7/[1,0,1]/2/3/int
+RESULT	inverse/7/[1,0,1]/2/3/int	EXCEPTION	NotInvertibleException	5
+START	inverse/7/[1,0,1]/2/3/big
+RESULT	inverse/7/[1,0,1]/2/3/big	EXCEPTION	NotInvertibleException	5
+START	inverse/7/[1,0,1]/2/3/normalized
+RESULT	inverse/7/[1,0,1]/2/3/normalized	EXCEPTION	NotInvertibleException	5
+START	inverse/7/[1,0,1]/2/4/int
+RESULT	inverse/7/[1,0,1]/2/4/int	EXCEPTION	NotInvertibleException	2
+START	inverse/7/[1,0,1]/2/4/big
+RESULT	inverse/7/[1,0,1]/2/4/big	EXCEPTION	NotInvertibleException	2
+START	inverse/7/[1,0,1]/2/4/normalized
+RESULT	inverse/7/[1,0,1]/2/4/normalized	EXCEPTION	NotInvertibleException	2
+START	inverse/7/[1,0,1]/2/5/int
+RESULT	inverse/7/[1,0,1]/2/5/int	EXCEPTION	NotInvertibleException	3
+START	inverse/7/[1,0,1]/2/5/big
+RESULT	inverse/7/[1,0,1]/2/5/big	EXCEPTION	NotInvertibleException	3
+START	inverse/7/[1,0,1]/2/5/normalized
+RESULT	inverse/7/[1,0,1]/2/5/normalized	EXCEPTION	NotInvertibleException	3
+START	inverse/7/[1,0,1]/2/6/int
+RESULT	inverse/7/[1,0,1]/2/6/int	EXCEPTION	NotInvertibleException	6
+START	inverse/7/[1,0,1]/2/6/big
+RESULT	inverse/7/[1,0,1]/2/6/big	EXCEPTION	NotInvertibleException	6
+START	inverse/7/[1,0,1]/2/6/normalized
+RESULT	inverse/7/[1,0,1]/2/6/normalized	EXCEPTION	NotInvertibleException	6
+START	inverse/7/[1,0,1]/2/7/int
+RESULT	inverse/7/[1,0,1]/2/7/int	WRONG	1:5	42
+START	inverse/7/[1,0,1]/2/7/big
+RESULT	inverse/7/[1,0,1]/2/7/big	WRONG	1:5	42
+START	inverse/7/[1,0,1]/2/7/normalized
+RESULT	inverse/7/[1,0,1]/2/7/normalized	PASS	1:6	42
+START	inverse/7/[1,0,1]/2/8/int
+RESULT	inverse/7/[1,0,1]/2/8/int	WRONG	0:2,1:5	25
+START	inverse/7/[1,0,1]/2/8/big
+RESULT	inverse/7/[1,0,1]/2/8/big	WRONG	0:2,1:5	25
+START	inverse/7/[1,0,1]/2/8/normalized
+RESULT	inverse/7/[1,0,1]/2/8/normalized	PASS	0:4,1:3	25
+START	inverse/7/[1,0,1]/2/9/int
+RESULT	inverse/7/[1,0,1]/2/9/int	WRONG	0:4,1:5	34
+START	inverse/7/[1,0,1]/2/9/big
+RESULT	inverse/7/[1,0,1]/2/9/big	WRONG	0:4,1:5	34
+START	inverse/7/[1,0,1]/2/9/normalized
+RESULT	inverse/7/[1,0,1]/2/9/normalized	PASS	0:6,1:4	34
+START	inverse/7/[1,0,1]/2/10/int
+RESULT	inverse/7/[1,0,1]/2/10/int	WRONG	0:6,1:5	15
+START	inverse/7/[1,0,1]/2/10/big
+RESULT	inverse/7/[1,0,1]/2/10/big	WRONG	0:6,1:5	15
+START	inverse/7/[1,0,1]/2/10/normalized
+RESULT	inverse/7/[1,0,1]/2/10/normalized	PASS	0:1,1:2	15
+START	inverse/7/[1,0,1]/2/11/int
+RESULT	inverse/7/[1,0,1]/2/11/int	WRONG	0:1,1:5	20
+START	inverse/7/[1,0,1]/2/11/big
+RESULT	inverse/7/[1,0,1]/2/11/big	WRONG	0:1,1:5	20
+START	inverse/7/[1,0,1]/2/11/normalized
+RESULT	inverse/7/[1,0,1]/2/11/normalized	PASS	0:6,1:2	20
+START	inverse/7/[1,0,1]/2/12/int
+RESULT	inverse/7/[1,0,1]/2/12/int	WRONG	0:3,1:5	29
+START	inverse/7/[1,0,1]/2/12/big
+RESULT	inverse/7/[1,0,1]/2/12/big	WRONG	0:3,1:5	29
+START	inverse/7/[1,0,1]/2/12/normalized
+RESULT	inverse/7/[1,0,1]/2/12/normalized	PASS	0:1,1:4	29
+START	inverse/7/[1,0,1]/2/13/int
+RESULT	inverse/7/[1,0,1]/2/13/int	WRONG	0:5,1:5	24
+START	inverse/7/[1,0,1]/2/13/big
+RESULT	inverse/7/[1,0,1]/2/13/big	WRONG	0:5,1:5	24
+START	inverse/7/[1,0,1]/2/13/normalized
+RESULT	inverse/7/[1,0,1]/2/13/normalized	PASS	0:3,1:3	24
+START	inverse/7/[1,0,1]/2/14/int
+RESULT	inverse/7/[1,0,1]/2/14/int	WRONG	1:6	21
+START	inverse/7/[1,0,1]/2/14/big
+RESULT	inverse/7/[1,0,1]/2/14/big	WRONG	1:6	21
+START	inverse/7/[1,0,1]/2/14/normalized
+RESULT	inverse/7/[1,0,1]/2/14/normalized	PASS	1:3	21
+START	inverse/7/[1,0,1]/2/15/int
+RESULT	inverse/7/[1,0,1]/2/15/int	WRONG	0:4,1:6	10
+START	inverse/7/[1,0,1]/2/15/big
+RESULT	inverse/7/[1,0,1]/2/15/big	WRONG	0:4,1:6	10
+START	inverse/7/[1,0,1]/2/15/normalized
+RESULT	inverse/7/[1,0,1]/2/15/normalized	PASS	0:3,1:1	10
+START	inverse/7/[1,0,1]/2/16/int
+RESULT	inverse/7/[1,0,1]/2/16/int	WRONG	0:1,1:6	37
+START	inverse/7/[1,0,1]/2/16/big
+RESULT	inverse/7/[1,0,1]/2/16/big	WRONG	0:1,1:6	37
+START	inverse/7/[1,0,1]/2/16/normalized
+RESULT	inverse/7/[1,0,1]/2/16/normalized	PASS	0:2,1:5	37
+START	inverse/7/[1,0,1]/2/17/int
+RESULT	inverse/7/[1,0,1]/2/17/int	WRONG	0:5,1:6	18
+START	inverse/7/[1,0,1]/2/17/big
+RESULT	inverse/7/[1,0,1]/2/17/big	WRONG	0:5,1:6	18
+START	inverse/7/[1,0,1]/2/17/normalized
+RESULT	inverse/7/[1,0,1]/2/17/normalized	PASS	0:4,1:2	18
+START	inverse/7/[1,0,1]/2/18/int
+RESULT	inverse/7/[1,0,1]/2/18/int	WRONG	0:2,1:6	17
+START	inverse/7/[1,0,1]/2/18/big
+RESULT	inverse/7/[1,0,1]/2/18/big	WRONG	0:2,1:6	17
+START	inverse/7/[1,0,1]/2/18/normalized
+RESULT	inverse/7/[1,0,1]/2/18/normalized	PASS	0:3,1:2	17
+START	inverse/7/[1,0,1]/2/19/int
+RESULT	inverse/7/[1,0,1]/2/19/int	WRONG	0:6,1:6	40
+START	inverse/7/[1,0,1]/2/19/big
+RESULT	inverse/7/[1,0,1]/2/19/big	WRONG	0:6,1:6	40
+START	inverse/7/[1,0,1]/2/19/normalized
+RESULT	inverse/7/[1,0,1]/2/19/normalized	PASS	0:5,1:5	40
+START	inverse/7/[1,0,1]/2/20/int
+RESULT	inverse/7/[1,0,1]/2/20/int	WRONG	0:3,1:6	11
+START	inverse/7/[1,0,1]/2/20/big
+RESULT	inverse/7/[1,0,1]/2/20/big	WRONG	0:3,1:6	11
+START	inverse/7/[1,0,1]/2/20/normalized
+RESULT	inverse/7/[1,0,1]/2/20/normalized	PASS	0:4,1:1	11
+START	inverse/7/[1,0,1]/2/21/int
+RESULT	inverse/7/[1,0,1]/2/21/int	WRONG	1:4	14
+START	inverse/7/[1,0,1]/2/21/big
+RESULT	inverse/7/[1,0,1]/2/21/big	WRONG	1:4	14
+START	inverse/7/[1,0,1]/2/21/normalized
+RESULT	inverse/7/[1,0,1]/2/21/normalized	PASS	1:2	14
+START	inverse/7/[1,0,1]/2/22/int
+RESULT	inverse/7/[1,0,1]/2/22/int	WRONG	0:1,1:4	47
+START	inverse/7/[1,0,1]/2/22/big
+RESULT	inverse/7/[1,0,1]/2/22/big	WRONG	0:1,1:4	47
+START	inverse/7/[1,0,1]/2/22/normalized
+RESULT	inverse/7/[1,0,1]/2/22/normalized	PASS	0:5,1:6	47
+START	inverse/7/[1,0,1]/2/23/int
+RESULT	inverse/7/[1,0,1]/2/23/int	WRONG	0:2,1:4	26
+START	inverse/7/[1,0,1]/2/23/big
+RESULT	inverse/7/[1,0,1]/2/23/big	WRONG	0:2,1:4	26
+START	inverse/7/[1,0,1]/2/23/normalized
+RESULT	inverse/7/[1,0,1]/2/23/normalized	PASS	0:5,1:3	26
+START	inverse/7/[1,0,1]/2/24/int
+RESULT	inverse/7/[1,0,1]/2/24/int	WRONG	0:3,1:4	13
+START	inverse/7/[1,0,1]/2/24/big
+RESULT	inverse/7/[1,0,1]/2/24/big	WRONG	0:3,1:4	13
+START	inverse/7/[1,0,1]/2/24/normalized
+RESULT	inverse/7/[1,0,1]/2/24/normalized	PASS	0:6,1:1	13
+START	inverse/7/[1,0,1]/2/25/int
+RESULT	inverse/7/[1,0,1]/2/25/int	WRONG	0:4,1:4	8
+START	inverse/7/[1,0,1]/2/25/big
+RESULT	inverse/7/[1,0,1]/2/25/big	WRONG	0:4,1:4	8
+START	inverse/7/[1,0,1]/2/25/normalized
+RESULT	inverse/7/[1,0,1]/2/25/normalized	PASS	0:1,1:1	8
+START	inverse/7/[1,0,1]/2/26/int
+RESULT	inverse/7/[1,0,1]/2/26/int	WRONG	0:5,1:4	23
+START	inverse/7/[1,0,1]/2/26/big
+RESULT	inverse/7/[1,0,1]/2/26/big	WRONG	0:5,1:4	23
+START	inverse/7/[1,0,1]/2/26/normalized
+RESULT	inverse/7/[1,0,1]/2/26/normalized	PASS	0:2,1:3	23
+START	inverse/7/[1,0,1]/2/27/int
+RESULT	inverse/7/[1,0,1]/2/27/int	WRONG	0:6,1:4	44
+START	inverse/7/[1,0,1]/2/27/big
+RESULT	inverse/7/[1,0,1]/2/27/big	WRONG	0:6,1:4	44
+START	inverse/7/[1,0,1]/2/27/normalized
+RESULT	inverse/7/[1,0,1]/2/27/normalized	PASS	0:2,1:6	44
+START	inverse/7/[1,0,1]/2/28/int
+RESULT	inverse/7/[1,0,1]/2/28/int	WRONG	1:3	35
+START	inverse/7/[1,0,1]/2/28/big
+RESULT	inverse/7/[1,0,1]/2/28/big	WRONG	1:3	35
+START	inverse/7/[1,0,1]/2/28/normalized
+RESULT	inverse/7/[1,0,1]/2/28/normalized	PASS	1:5	35
+START	inverse/7/[1,0,1]/2/29/int
+RESULT	inverse/7/[1,0,1]/2/29/int	WRONG	0:1,1:3	12
+START	inverse/7/[1,0,1]/2/29/big
+RESULT	inverse/7/[1,0,1]/2/29/big	WRONG	0:1,1:3	12
+START	inverse/7/[1,0,1]/2/29/normalized
+RESULT	inverse/7/[1,0,1]/2/29/normalized	PASS	0:5,1:1	12
+START	inverse/7/[1,0,1]/2/30/int
+RESULT	inverse/7/[1,0,1]/2/30/int	WRONG	0:2,1:3	33
+START	inverse/7/[1,0,1]/2/30/big
+RESULT	inverse/7/[1,0,1]/2/30/big	WRONG	0:2,1:3	33
+START	inverse/7/[1,0,1]/2/30/normalized
+RESULT	inverse/7/[1,0,1]/2/30/normalized	PASS	0:5,1:4	33
+START	inverse/7/[1,0,1]/2/31/int
+RESULT	inverse/7/[1,0,1]/2/31/int	WRONG	0:3,1:3	48
+START	inverse/7/[1,0,1]/2/31/big
+RESULT	inverse/7/[1,0,1]/2/31/big	WRONG	0:3,1:3	48
+START	inverse/7/[1,0,1]/2/31/normalized
+RESULT	inverse/7/[1,0,1]/2/31/normalized	PASS	0:6,1:6	48
+START	inverse/7/[1,0,1]/2/32/int
+RESULT	inverse/7/[1,0,1]/2/32/int	WRONG	0:4,1:3	43
+START	inverse/7/[1,0,1]/2/32/big
+RESULT	inverse/7/[1,0,1]/2/32/big	WRONG	0:4,1:3	43
+START	inverse/7/[1,0,1]/2/32/normalized
+RESULT	inverse/7/[1,0,1]/2/32/normalized	PASS	0:1,1:6	43
+START	inverse/7/[1,0,1]/2/33/int
+RESULT	inverse/7/[1,0,1]/2/33/int	WRONG	0:5,1:3	30
+START	inverse/7/[1,0,1]/2/33/big
+RESULT	inverse/7/[1,0,1]/2/33/big	WRONG	0:5,1:3	30
+START	inverse/7/[1,0,1]/2/33/normalized
+RESULT	inverse/7/[1,0,1]/2/33/normalized	PASS	0:2,1:4	30
+START	inverse/7/[1,0,1]/2/34/int
+RESULT	inverse/7/[1,0,1]/2/34/int	WRONG	0:6,1:3	9
+START	inverse/7/[1,0,1]/2/34/big
+RESULT	inverse/7/[1,0,1]/2/34/big	WRONG	0:6,1:3	9
+START	inverse/7/[1,0,1]/2/34/normalized
+RESULT	inverse/7/[1,0,1]/2/34/normalized	PASS	0:2,1:1	9
+START	inverse/7/[1,0,1]/2/35/int
+RESULT	inverse/7/[1,0,1]/2/35/int	WRONG	1:1	28
+START	inverse/7/[1,0,1]/2/35/big
+RESULT	inverse/7/[1,0,1]/2/35/big	WRONG	1:1	28
+START	inverse/7/[1,0,1]/2/35/normalized
+RESULT	inverse/7/[1,0,1]/2/35/normalized	PASS	1:4	28
+START	inverse/7/[1,0,1]/2/36/int
+RESULT	inverse/7/[1,0,1]/2/36/int	WRONG	0:4,1:1	45
+START	inverse/7/[1,0,1]/2/36/big
+RESULT	inverse/7/[1,0,1]/2/36/big	WRONG	0:4,1:1	45
+START	inverse/7/[1,0,1]/2/36/normalized
+RESULT	inverse/7/[1,0,1]/2/36/normalized	PASS	0:3,1:6	45
+START	inverse/7/[1,0,1]/2/37/int
+RESULT	inverse/7/[1,0,1]/2/37/int	WRONG	0:1,1:1	16
+START	inverse/7/[1,0,1]/2/37/big
+RESULT	inverse/7/[1,0,1]/2/37/big	WRONG	0:1,1:1	16
+START	inverse/7/[1,0,1]/2/37/normalized
+RESULT	inverse/7/[1,0,1]/2/37/normalized	PASS	0:2,1:2	16
+START	inverse/7/[1,0,1]/2/38/int
+RESULT	inverse/7/[1,0,1]/2/38/int	WRONG	0:5,1:1	39
+START	inverse/7/[1,0,1]/2/38/big
+RESULT	inverse/7/[1,0,1]/2/38/big	WRONG	0:5,1:1	39
+START	inverse/7/[1,0,1]/2/38/normalized
+RESULT	inverse/7/[1,0,1]/2/38/normalized	PASS	0:4,1:5	39
+START	inverse/7/[1,0,1]/2/39/int
+RESULT	inverse/7/[1,0,1]/2/39/int	WRONG	0:2,1:1	38
+START	inverse/7/[1,0,1]/2/39/big
+RESULT	inverse/7/[1,0,1]/2/39/big	WRONG	0:2,1:1	38
+START	inverse/7/[1,0,1]/2/39/normalized
+RESULT	inverse/7/[1,0,1]/2/39/normalized	PASS	0:3,1:5	38
+START	inverse/7/[1,0,1]/2/40/int
+RESULT	inverse/7/[1,0,1]/2/40/int	WRONG	0:6,1:1	19
+START	inverse/7/[1,0,1]/2/40/big
+RESULT	inverse/7/[1,0,1]/2/40/big	WRONG	0:6,1:1	19
+START	inverse/7/[1,0,1]/2/40/normalized
+RESULT	inverse/7/[1,0,1]/2/40/normalized	PASS	0:5,1:2	19
+START	inverse/7/[1,0,1]/2/41/int
+RESULT	inverse/7/[1,0,1]/2/41/int	WRONG	0:3,1:1	46
+START	inverse/7/[1,0,1]/2/41/big
+RESULT	inverse/7/[1,0,1]/2/41/big	WRONG	0:3,1:1	46
+START	inverse/7/[1,0,1]/2/41/normalized
+RESULT	inverse/7/[1,0,1]/2/41/normalized	PASS	0:4,1:6	46
+START	inverse/7/[1,0,1]/2/42/int
+RESULT	inverse/7/[1,0,1]/2/42/int	WRONG	1:2	7
+START	inverse/7/[1,0,1]/2/42/big
+RESULT	inverse/7/[1,0,1]/2/42/big	WRONG	1:2	7
+START	inverse/7/[1,0,1]/2/42/normalized
+RESULT	inverse/7/[1,0,1]/2/42/normalized	PASS	1:1	7
+START	inverse/7/[1,0,1]/2/43/int
+RESULT	inverse/7/[1,0,1]/2/43/int	WRONG	0:2,1:2	32
+START	inverse/7/[1,0,1]/2/43/big
+RESULT	inverse/7/[1,0,1]/2/43/big	WRONG	0:2,1:2	32
+START	inverse/7/[1,0,1]/2/43/normalized
+RESULT	inverse/7/[1,0,1]/2/43/normalized	PASS	0:4,1:4	32
+START	inverse/7/[1,0,1]/2/44/int
+RESULT	inverse/7/[1,0,1]/2/44/int	WRONG	0:4,1:2	27
+START	inverse/7/[1,0,1]/2/44/big
+RESULT	inverse/7/[1,0,1]/2/44/big	WRONG	0:4,1:2	27
+START	inverse/7/[1,0,1]/2/44/normalized
+RESULT	inverse/7/[1,0,1]/2/44/normalized	PASS	0:6,1:3	27
+START	inverse/7/[1,0,1]/2/45/int
+RESULT	inverse/7/[1,0,1]/2/45/int	WRONG	0:6,1:2	36
+START	inverse/7/[1,0,1]/2/45/big
+RESULT	inverse/7/[1,0,1]/2/45/big	WRONG	0:6,1:2	36
+START	inverse/7/[1,0,1]/2/45/normalized
+RESULT	inverse/7/[1,0,1]/2/45/normalized	PASS	0:1,1:5	36
+START	inverse/7/[1,0,1]/2/46/int
+RESULT	inverse/7/[1,0,1]/2/46/int	WRONG	0:1,1:2	41
+START	inverse/7/[1,0,1]/2/46/big
+RESULT	inverse/7/[1,0,1]/2/46/big	WRONG	0:1,1:2	41
+START	inverse/7/[1,0,1]/2/46/normalized
+RESULT	inverse/7/[1,0,1]/2/46/normalized	PASS	0:6,1:5	41
+START	inverse/7/[1,0,1]/2/47/int
+RESULT	inverse/7/[1,0,1]/2/47/int	WRONG	0:3,1:2	22
+START	inverse/7/[1,0,1]/2/47/big
+RESULT	inverse/7/[1,0,1]/2/47/big	WRONG	0:3,1:2	22
+START	inverse/7/[1,0,1]/2/47/normalized
+RESULT	inverse/7/[1,0,1]/2/47/normalized	PASS	0:1,1:3	22
+START	inverse/7/[1,0,1]/2/48/int
+RESULT	inverse/7/[1,0,1]/2/48/int	WRONG	0:5,1:2	31
+START	inverse/7/[1,0,1]/2/48/big
+RESULT	inverse/7/[1,0,1]/2/48/big	WRONG	0:5,1:2	31
+START	inverse/7/[1,0,1]/2/48/normalized
+RESULT	inverse/7/[1,0,1]/2/48/normalized	PASS	0:3,1:4	31
+START	inverse/7/[1,0,1]/3/0/int
+RESULT	inverse/7/[1,0,1]/3/0/int	DOMAIN_REJECT	NotInvertibleException	-1
+START	inverse/7/[1,0,1]/3/0/big
+RESULT	inverse/7/[1,0,1]/3/0/big	DOMAIN_REJECT	NotInvertibleException	-1
+START	inverse/7/[1,0,1]/3/0/normalized
+RESULT	inverse/7/[1,0,1]/3/0/normalized	DOMAIN_REJECT	NotInvertibleException	-1
+START	inverse/7/[1,0,1]/3/1/int
+RESULT	inverse/7/[1,0,1]/3/1/int	EXCEPTION	NotInvertibleException	1
+START	inverse/7/[1,0,1]/3/1/big
+RESULT	inverse/7/[1,0,1]/3/1/big	EXCEPTION	NotInvertibleException	1
+START	inverse/7/[1,0,1]/3/1/normalized
+RESULT	inverse/7/[1,0,1]/3/1/normalized	EXCEPTION	NotInvertibleException	1
+START	inverse/7/[1,0,1]/3/2/int
+RESULT	inverse/7/[1,0,1]/3/2/int	EXCEPTION	NotInvertibleException	4
+START	inverse/7/[1,0,1]/3/2/big
+RESULT	inverse/7/[1,0,1]/3/2/big	EXCEPTION	NotInvertibleException	4
+START	inverse/7/[1,0,1]/3/2/normalized
+RESULT	inverse/7/[1,0,1]/3/2/normalized	EXCEPTION	NotInvertibleException	4
+START	inverse/7/[1,0,1]/3/3/int
+RESULT	inverse/7/[1,0,1]/3/3/int	EXCEPTION	NotInvertibleException	5
+START	inverse/7/[1,0,1]/3/3/big
+RESULT	inverse/7/[1,0,1]/3/3/big	EXCEPTION	NotInvertibleException	5
+START	inverse/7/[1,0,1]/3/3/normalized
+RESULT	inverse/7/[1,0,1]/3/3/normalized	EXCEPTION	NotInvertibleException	5
+START	inverse/7/[1,0,1]/3/4/int
+RESULT	inverse/7/[1,0,1]/3/4/int	EXCEPTION	NotInvertibleException	2
+START	inverse/7/[1,0,1]/3/4/big
+RESULT	inverse/7/[1,0,1]/3/4/big	EXCEPTION	NotInvertibleException	2
+START	inverse/7/[1,0,1]/3/4/normalized
+RESULT	inverse/7/[1,0,1]/3/4/normalized	EXCEPTION	NotInvertibleException	2
+START	inverse/7/[1,0,1]/3/5/int
+RESULT	inverse/7/[1,0,1]/3/5/int	EXCEPTION	NotInvertibleException	3
+START	inverse/7/[1,0,1]/3/5/big
+RESULT	inverse/7/[1,0,1]/3/5/big	EXCEPTION	NotInvertibleException	3
+START	inverse/7/[1,0,1]/3/5/normalized
+RESULT	inverse/7/[1,0,1]/3/5/normalized	EXCEPTION	NotInvertibleException	3
+START	inverse/7/[1,0,1]/3/6/int
+RESULT	inverse/7/[1,0,1]/3/6/int	EXCEPTION	NotInvertibleException	6
+START	inverse/7/[1,0,1]/3/6/big
+RESULT	inverse/7/[1,0,1]/3/6/big	EXCEPTION	NotInvertibleException	6
+START	inverse/7/[1,0,1]/3/6/normalized
+RESULT	inverse/7/[1,0,1]/3/6/normalized	EXCEPTION	NotInvertibleException	6
+START	inverse/7/[1,0,1]/3/7/int
+RESULT	inverse/7/[1,0,1]/3/7/int	WRONG	1:4	42
+START	inverse/7/[1,0,1]/3/7/big
+RESULT	inverse/7/[1,0,1]/3/7/big	WRONG	1:4	42
+START	inverse/7/[1,0,1]/3/7/normalized
+RESULT	inverse/7/[1,0,1]/3/7/normalized	PASS	1:6	42
+START	inverse/7/[1,0,1]/3/8/int
+RESULT	inverse/7/[1,0,1]/3/8/int	WRONG	0:3,1:4	25
+START	inverse/7/[1,0,1]/3/8/big
+RESULT	inverse/7/[1,0,1]/3/8/big	WRONG	0:3,1:4	25
+START	inverse/7/[1,0,1]/3/8/normalized
+RESULT	inverse/7/[1,0,1]/3/8/normalized	PASS	0:4,1:3	25
+START	inverse/7/[1,0,1]/3/9/int
+RESULT	inverse/7/[1,0,1]/3/9/int	PASS	0:6,1:4	34
+START	inverse/7/[1,0,1]/3/9/big
+RESULT	inverse/7/[1,0,1]/3/9/big	PASS	0:6,1:4	34
+START	inverse/7/[1,0,1]/3/9/normalized
+RESULT	inverse/7/[1,0,1]/3/9/normalized	PASS	0:6,1:4	34
+START	inverse/7/[1,0,1]/3/10/int
+RESULT	inverse/7/[1,0,1]/3/10/int	WRONG	0:2,1:4	15
+START	inverse/7/[1,0,1]/3/10/big
+RESULT	inverse/7/[1,0,1]/3/10/big	WRONG	0:2,1:4	15
+START	inverse/7/[1,0,1]/3/10/normalized
+RESULT	inverse/7/[1,0,1]/3/10/normalized	PASS	0:1,1:2	15
+START	inverse/7/[1,0,1]/3/11/int
+RESULT	inverse/7/[1,0,1]/3/11/int	WRONG	0:5,1:4	20
+START	inverse/7/[1,0,1]/3/11/big
+RESULT	inverse/7/[1,0,1]/3/11/big	WRONG	0:5,1:4	20
+START	inverse/7/[1,0,1]/3/11/normalized
+RESULT	inverse/7/[1,0,1]/3/11/normalized	PASS	0:6,1:2	20
+START	inverse/7/[1,0,1]/3/12/int
+RESULT	inverse/7/[1,0,1]/3/12/int	PASS	0:1,1:4	29
+START	inverse/7/[1,0,1]/3/12/big
+RESULT	inverse/7/[1,0,1]/3/12/big	PASS	0:1,1:4	29
+START	inverse/7/[1,0,1]/3/12/normalized
+RESULT	inverse/7/[1,0,1]/3/12/normalized	PASS	0:1,1:4	29
+START	inverse/7/[1,0,1]/3/13/int
+RESULT	inverse/7/[1,0,1]/3/13/int	WRONG	0:4,1:4	24
+START	inverse/7/[1,0,1]/3/13/big
+RESULT	inverse/7/[1,0,1]/3/13/big	WRONG	0:4,1:4	24
+START	inverse/7/[1,0,1]/3/13/normalized
+RESULT	inverse/7/[1,0,1]/3/13/normalized	PASS	0:3,1:3	24
+START	inverse/7/[1,0,1]/3/14/int
+RESULT	inverse/7/[1,0,1]/3/14/int	WRONG	1:2	21
+START	inverse/7/[1,0,1]/3/14/big
+RESULT	inverse/7/[1,0,1]/3/14/big	WRONG	1:2	21
+START	inverse/7/[1,0,1]/3/14/normalized
+RESULT	inverse/7/[1,0,1]/3/14/normalized	PASS	1:3	21
+START	inverse/7/[1,0,1]/3/15/int
+RESULT	inverse/7/[1,0,1]/3/15/int	WRONG	0:6,1:2	10
+START	inverse/7/[1,0,1]/3/15/big
+RESULT	inverse/7/[1,0,1]/3/15/big	WRONG	0:6,1:2	10
+START	inverse/7/[1,0,1]/3/15/normalized
+RESULT	inverse/7/[1,0,1]/3/15/normalized	PASS	0:3,1:1	10
+START	inverse/7/[1,0,1]/3/16/int
+RESULT	inverse/7/[1,0,1]/3/16/int	WRONG	0:5,1:2	37
+START	inverse/7/[1,0,1]/3/16/big
+RESULT	inverse/7/[1,0,1]/3/16/big	WRONG	0:5,1:2	37
+START	inverse/7/[1,0,1]/3/16/normalized
+RESULT	inverse/7/[1,0,1]/3/16/normalized	PASS	0:2,1:5	37
+START	inverse/7/[1,0,1]/3/17/int
+RESULT	inverse/7/[1,0,1]/3/17/int	PASS	0:4,1:2	18
+START	inverse/7/[1,0,1]/3/17/big
+RESULT	inverse/7/[1,0,1]/3/17/big	PASS	0:4,1:2	18
+START	inverse/7/[1,0,1]/3/17/normalized
+RESULT	inverse/7/[1,0,1]/3/17/normalized	PASS	0:4,1:2	18
+START	inverse/7/[1,0,1]/3/18/int
+RESULT	inverse/7/[1,0,1]/3/18/int	PASS	0:3,1:2	17
+START	inverse/7/[1,0,1]/3/18/big
+RESULT	inverse/7/[1,0,1]/3/18/big	PASS	0:3,1:2	17
+START	inverse/7/[1,0,1]/3/18/normalized
+RESULT	inverse/7/[1,0,1]/3/18/normalized	PASS	0:3,1:2	17
+START	inverse/7/[1,0,1]/3/19/int
+RESULT	inverse/7/[1,0,1]/3/19/int	WRONG	0:2,1:2	40
+START	inverse/7/[1,0,1]/3/19/big
+RESULT	inverse/7/[1,0,1]/3/19/big	WRONG	0:2,1:2	40
+START	inverse/7/[1,0,1]/3/19/normalized
+RESULT	inverse/7/[1,0,1]/3/19/normalized	PASS	0:5,1:5	40
+START	inverse/7/[1,0,1]/3/20/int
+RESULT	inverse/7/[1,0,1]/3/20/int	WRONG	0:1,1:2	11
+START	inverse/7/[1,0,1]/3/20/big
+RESULT	inverse/7/[1,0,1]/3/20/big	WRONG	0:1,1:2	11
+START	inverse/7/[1,0,1]/3/20/normalized
+RESULT	inverse/7/[1,0,1]/3/20/normalized	PASS	0:4,1:1	11
+START	inverse/7/[1,0,1]/3/21/int
+RESULT	inverse/7/[1,0,1]/3/21/int	WRONG	1:6	14
+START	inverse/7/[1,0,1]/3/21/big
+RESULT	inverse/7/[1,0,1]/3/21/big	WRONG	1:6	14
+START	inverse/7/[1,0,1]/3/21/normalized
+RESULT	inverse/7/[1,0,1]/3/21/normalized	PASS	1:2	14
+START	inverse/7/[1,0,1]/3/22/int
+RESULT	inverse/7/[1,0,1]/3/22/int	PASS	0:5,1:6	47
+START	inverse/7/[1,0,1]/3/22/big
+RESULT	inverse/7/[1,0,1]/3/22/big	PASS	0:5,1:6	47
+START	inverse/7/[1,0,1]/3/22/normalized
+RESULT	inverse/7/[1,0,1]/3/22/normalized	PASS	0:5,1:6	47
+START	inverse/7/[1,0,1]/3/23/int
+RESULT	inverse/7/[1,0,1]/3/23/int	WRONG	0:3,1:6	26
+START	inverse/7/[1,0,1]/3/23/big
+RESULT	inverse/7/[1,0,1]/3/23/big	WRONG	0:3,1:6	26
+START	inverse/7/[1,0,1]/3/23/normalized
+RESULT	inverse/7/[1,0,1]/3/23/normalized	PASS	0:5,1:3	26
+START	inverse/7/[1,0,1]/3/24/int
+RESULT	inverse/7/[1,0,1]/3/24/int	WRONG	0:1,1:6	13
+START	inverse/7/[1,0,1]/3/24/big
+RESULT	inverse/7/[1,0,1]/3/24/big	WRONG	0:1,1:6	13
+START	inverse/7/[1,0,1]/3/24/normalized
+RESULT	inverse/7/[1,0,1]/3/24/normalized	PASS	0:6,1:1	13
+START	inverse/7/[1,0,1]/3/25/int
+RESULT	inverse/7/[1,0,1]/3/25/int	WRONG	0:6,1:6	8
+START	inverse/7/[1,0,1]/3/25/big
+RESULT	inverse/7/[1,0,1]/3/25/big	WRONG	0:6,1:6	8
+START	inverse/7/[1,0,1]/3/25/normalized
+RESULT	inverse/7/[1,0,1]/3/25/normalized	PASS	0:1,1:1	8
+START	inverse/7/[1,0,1]/3/26/int
+RESULT	inverse/7/[1,0,1]/3/26/int	WRONG	0:4,1:6	23
+START	inverse/7/[1,0,1]/3/26/big
+RESULT	inverse/7/[1,0,1]/3/26/big	WRONG	0:4,1:6	23
+START	inverse/7/[1,0,1]/3/26/normalized
+RESULT	inverse/7/[1,0,1]/3/26/normalized	PASS	0:2,1:3	23
+START	inverse/7/[1,0,1]/3/27/int
+RESULT	inverse/7/[1,0,1]/3/27/int	PASS	0:2,1:6	44
+START	inverse/7/[1,0,1]/3/27/big
+RESULT	inverse/7/[1,0,1]/3/27/big	PASS	0:2,1:6	44
+START	inverse/7/[1,0,1]/3/27/normalized
+RESULT	inverse/7/[1,0,1]/3/27/normalized	PASS	0:2,1:6	44
+START	inverse/7/[1,0,1]/3/28/int
+RESULT	inverse/7/[1,0,1]/3/28/int	WRONG	1:1	35
+START	inverse/7/[1,0,1]/3/28/big
+RESULT	inverse/7/[1,0,1]/3/28/big	WRONG	1:1	35
+START	inverse/7/[1,0,1]/3/28/normalized
+RESULT	inverse/7/[1,0,1]/3/28/normalized	PASS	1:5	35
+START	inverse/7/[1,0,1]/3/29/int
+RESULT	inverse/7/[1,0,1]/3/29/int	PASS	0:5,1:1	12
+START	inverse/7/[1,0,1]/3/29/big
+RESULT	inverse/7/[1,0,1]/3/29/big	PASS	0:5,1:1	12
+START	inverse/7/[1,0,1]/3/29/normalized
+RESULT	inverse/7/[1,0,1]/3/29/normalized	PASS	0:5,1:1	12
+START	inverse/7/[1,0,1]/3/30/int
+RESULT	inverse/7/[1,0,1]/3/30/int	WRONG	0:3,1:1	33
+START	inverse/7/[1,0,1]/3/30/big
+RESULT	inverse/7/[1,0,1]/3/30/big	WRONG	0:3,1:1	33
+START	inverse/7/[1,0,1]/3/30/normalized
+RESULT	inverse/7/[1,0,1]/3/30/normalized	PASS	0:5,1:4	33
+START	inverse/7/[1,0,1]/3/31/int
+RESULT	inverse/7/[1,0,1]/3/31/int	WRONG	0:1,1:1	48
+START	inverse/7/[1,0,1]/3/31/big
+RESULT	inverse/7/[1,0,1]/3/31/big	WRONG	0:1,1:1	48
+START	inverse/7/[1,0,1]/3/31/normalized
+RESULT	inverse/7/[1,0,1]/3/31/normalized	PASS	0:6,1:6	48
+START	inverse/7/[1,0,1]/3/32/int
+RESULT	inverse/7/[1,0,1]/3/32/int	WRONG	0:6,1:1	43
+START	inverse/7/[1,0,1]/3/32/big
+RESULT	inverse/7/[1,0,1]/3/32/big	WRONG	0:6,1:1	43
+START	inverse/7/[1,0,1]/3/32/normalized
+RESULT	inverse/7/[1,0,1]/3/32/normalized	PASS	0:1,1:6	43
+START	inverse/7/[1,0,1]/3/33/int
+RESULT	inverse/7/[1,0,1]/3/33/int	WRONG	0:4,1:1	30
+START	inverse/7/[1,0,1]/3/33/big
+RESULT	inverse/7/[1,0,1]/3/33/big	WRONG	0:4,1:1	30
+START	inverse/7/[1,0,1]/3/33/normalized
+RESULT	inverse/7/[1,0,1]/3/33/normalized	PASS	0:2,1:4	30
+START	inverse/7/[1,0,1]/3/34/int
+RESULT	inverse/7/[1,0,1]/3/34/int	PASS	0:2,1:1	9
+START	inverse/7/[1,0,1]/3/34/big
+RESULT	inverse/7/[1,0,1]/3/34/big	PASS	0:2,1:1	9
+START	inverse/7/[1,0,1]/3/34/normalized
+RESULT	inverse/7/[1,0,1]/3/34/normalized	PASS	0:2,1:1	9
+START	inverse/7/[1,0,1]/3/35/int
+RESULT	inverse/7/[1,0,1]/3/35/int	WRONG	1:5	28
+START	inverse/7/[1,0,1]/3/35/big
+RESULT	inverse/7/[1,0,1]/3/35/big	WRONG	1:5	28
+START	inverse/7/[1,0,1]/3/35/normalized
+RESULT	inverse/7/[1,0,1]/3/35/normalized	PASS	1:4	28
+START	inverse/7/[1,0,1]/3/36/int
+RESULT	inverse/7/[1,0,1]/3/36/int	WRONG	0:6,1:5	45
+START	inverse/7/[1,0,1]/3/36/big
+RESULT	inverse/7/[1,0,1]/3/36/big	WRONG	0:6,1:5	45
+START	inverse/7/[1,0,1]/3/36/normalized
+RESULT	inverse/7/[1,0,1]/3/36/normalized	PASS	0:3,1:6	45
+START	inverse/7/[1,0,1]/3/37/int
+RESULT	inverse/7/[1,0,1]/3/37/int	WRONG	0:5,1:5	16
+START	inverse/7/[1,0,1]/3/37/big
+RESULT	inverse/7/[1,0,1]/3/37/big	WRONG	0:5,1:5	16
+START	inverse/7/[1,0,1]/3/37/normalized
+RESULT	inverse/7/[1,0,1]/3/37/normalized	PASS	0:2,1:2	16
+START	inverse/7/[1,0,1]/3/38/int
+RESULT	inverse/7/[1,0,1]/3/38/int	PASS	0:4,1:5	39
+START	inverse/7/[1,0,1]/3/38/big
+RESULT	inverse/7/[1,0,1]/3/38/big	PASS	0:4,1:5	39
+START	inverse/7/[1,0,1]/3/38/normalized
+RESULT	inverse/7/[1,0,1]/3/38/normalized	PASS	0:4,1:5	39
+START	inverse/7/[1,0,1]/3/39/int
+RESULT	inverse/7/[1,0,1]/3/39/int	PASS	0:3,1:5	38
+START	inverse/7/[1,0,1]/3/39/big
+RESULT	inverse/7/[1,0,1]/3/39/big	PASS	0:3,1:5	38
+START	inverse/7/[1,0,1]/3/39/normalized
+RESULT	inverse/7/[1,0,1]/3/39/normalized	PASS	0:3,1:5	38
+START	inverse/7/[1,0,1]/3/40/int
+RESULT	inverse/7/[1,0,1]/3/40/int	WRONG	0:2,1:5	19
+START	inverse/7/[1,0,1]/3/40/big
+RESULT	inverse/7/[1,0,1]/3/40/big	WRONG	0:2,1:5	19
+START	inverse/7/[1,0,1]/3/40/normalized
+RESULT	inverse/7/[1,0,1]/3/40/normalized	PASS	0:5,1:2	19
+START	inverse/7/[1,0,1]/3/41/int
+RESULT	inverse/7/[1,0,1]/3/41/int	WRONG	0:1,1:5	46
+START	inverse/7/[1,0,1]/3/41/big
+RESULT	inverse/7/[1,0,1]/3/41/big	WRONG	0:1,1:5	46
+START	inverse/7/[1,0,1]/3/41/normalized
+RESULT	inverse/7/[1,0,1]/3/41/normalized	PASS	0:4,1:6	46
+START	inverse/7/[1,0,1]/3/42/int
+RESULT	inverse/7/[1,0,1]/3/42/int	WRONG	1:3	7
+START	inverse/7/[1,0,1]/3/42/big
+RESULT	inverse/7/[1,0,1]/3/42/big	WRONG	1:3	7
+START	inverse/7/[1,0,1]/3/42/normalized
+RESULT	inverse/7/[1,0,1]/3/42/normalized	PASS	1:1	7
+START	inverse/7/[1,0,1]/3/43/int
+RESULT	inverse/7/[1,0,1]/3/43/int	WRONG	0:3,1:3	32
+START	inverse/7/[1,0,1]/3/43/big
+RESULT	inverse/7/[1,0,1]/3/43/big	WRONG	0:3,1:3	32
+START	inverse/7/[1,0,1]/3/43/normalized
+RESULT	inverse/7/[1,0,1]/3/43/normalized	PASS	0:4,1:4	32
+START	inverse/7/[1,0,1]/3/44/int
+RESULT	inverse/7/[1,0,1]/3/44/int	PASS	0:6,1:3	27
+START	inverse/7/[1,0,1]/3/44/big
+RESULT	inverse/7/[1,0,1]/3/44/big	PASS	0:6,1:3	27
+START	inverse/7/[1,0,1]/3/44/normalized
+RESULT	inverse/7/[1,0,1]/3/44/normalized	PASS	0:6,1:3	27
+START	inverse/7/[1,0,1]/3/45/int
+RESULT	inverse/7/[1,0,1]/3/45/int	WRONG	0:2,1:3	36
+START	inverse/7/[1,0,1]/3/45/big
+RESULT	inverse/7/[1,0,1]/3/45/big	WRONG	0:2,1:3	36
+START	inverse/7/[1,0,1]/3/45/normalized
+RESULT	inverse/7/[1,0,1]/3/45/normalized	PASS	0:1,1:5	36
+START	inverse/7/[1,0,1]/3/46/int
+RESULT	inverse/7/[1,0,1]/3/46/int	WRONG	0:5,1:3	41
+START	inverse/7/[1,0,1]/3/46/big
+RESULT	inverse/7/[1,0,1]/3/46/big	WRONG	0:5,1:3	41
+START	inverse/7/[1,0,1]/3/46/normalized
+RESULT	inverse/7/[1,0,1]/3/46/normalized	PASS	0:6,1:5	41
+START	inverse/7/[1,0,1]/3/47/int
+RESULT	inverse/7/[1,0,1]/3/47/int	PASS	0:1,1:3	22
+START	inverse/7/[1,0,1]/3/47/big
+RESULT	inverse/7/[1,0,1]/3/47/big	PASS	0:1,1:3	22
+START	inverse/7/[1,0,1]/3/47/normalized
+RESULT	inverse/7/[1,0,1]/3/47/normalized	PASS	0:1,1:3	22
+START	inverse/7/[1,0,1]/3/48/int
+RESULT	inverse/7/[1,0,1]/3/48/int	WRONG	0:4,1:3	31
+START	inverse/7/[1,0,1]/3/48/big
+RESULT	inverse/7/[1,0,1]/3/48/big	WRONG	0:4,1:3	31
+START	inverse/7/[1,0,1]/3/48/normalized
+RESULT	inverse/7/[1,0,1]/3/48/normalized	PASS	0:3,1:4	31
+START	inverse/7/[1,0,1]/4/0/int
+RESULT	inverse/7/[1,0,1]/4/0/int	DOMAIN_REJECT	NotInvertibleException	-1
+START	inverse/7/[1,0,1]/4/0/big
+RESULT	inverse/7/[1,0,1]/4/0/big	DOMAIN_REJECT	NotInvertibleException	-1
+START	inverse/7/[1,0,1]/4/0/normalized
+RESULT	inverse/7/[1,0,1]/4/0/normalized	DOMAIN_REJECT	NotInvertibleException	-1
+START	inverse/7/[1,0,1]/4/1/int
+RESULT	inverse/7/[1,0,1]/4/1/int	EXCEPTION	NotInvertibleException	1
+START	inverse/7/[1,0,1]/4/1/big
+RESULT	inverse/7/[1,0,1]/4/1/big	EXCEPTION	NotInvertibleException	1
+START	inverse/7/[1,0,1]/4/1/normalized
+RESULT	inverse/7/[1,0,1]/4/1/normalized	EXCEPTION	NotInvertibleException	1
+START	inverse/7/[1,0,1]/4/2/int
+RESULT	inverse/7/[1,0,1]/4/2/int	EXCEPTION	NotInvertibleException	4
+START	inverse/7/[1,0,1]/4/2/big
+RESULT	inverse/7/[1,0,1]/4/2/big	EXCEPTION	NotInvertibleException	4
+START	inverse/7/[1,0,1]/4/2/normalized
+RESULT	inverse/7/[1,0,1]/4/2/normalized	EXCEPTION	NotInvertibleException	4
+START	inverse/7/[1,0,1]/4/3/int
+RESULT	inverse/7/[1,0,1]/4/3/int	EXCEPTION	NotInvertibleException	5
+START	inverse/7/[1,0,1]/4/3/big
+RESULT	inverse/7/[1,0,1]/4/3/big	EXCEPTION	NotInvertibleException	5
+START	inverse/7/[1,0,1]/4/3/normalized
+RESULT	inverse/7/[1,0,1]/4/3/normalized	EXCEPTION	NotInvertibleException	5
+START	inverse/7/[1,0,1]/4/4/int
+RESULT	inverse/7/[1,0,1]/4/4/int	EXCEPTION	NotInvertibleException	2
+START	inverse/7/[1,0,1]/4/4/big
+RESULT	inverse/7/[1,0,1]/4/4/big	EXCEPTION	NotInvertibleException	2
+START	inverse/7/[1,0,1]/4/4/normalized
+RESULT	inverse/7/[1,0,1]/4/4/normalized	EXCEPTION	NotInvertibleException	2
+START	inverse/7/[1,0,1]/4/5/int
+RESULT	inverse/7/[1,0,1]/4/5/int	EXCEPTION	NotInvertibleException	3
+START	inverse/7/[1,0,1]/4/5/big
+RESULT	inverse/7/[1,0,1]/4/5/big	EXCEPTION	NotInvertibleException	3
+START	inverse/7/[1,0,1]/4/5/normalized
+RESULT	inverse/7/[1,0,1]/4/5/normalized	EXCEPTION	NotInvertibleException	3
+START	inverse/7/[1,0,1]/4/6/int
+RESULT	inverse/7/[1,0,1]/4/6/int	EXCEPTION	NotInvertibleException	6
+START	inverse/7/[1,0,1]/4/6/big
+RESULT	inverse/7/[1,0,1]/4/6/big	EXCEPTION	NotInvertibleException	6
+START	inverse/7/[1,0,1]/4/6/normalized
+RESULT	inverse/7/[1,0,1]/4/6/normalized	EXCEPTION	NotInvertibleException	6
+START	inverse/7/[1,0,1]/4/7/int
+RESULT	inverse/7/[1,0,1]/4/7/int	WRONG	1:3	42
+START	inverse/7/[1,0,1]/4/7/big
+RESULT	inverse/7/[1,0,1]/4/7/big	WRONG	1:3	42
+START	inverse/7/[1,0,1]/4/7/normalized
+RESULT	inverse/7/[1,0,1]/4/7/normalized	PASS	1:6	42
+START	inverse/7/[1,0,1]/4/8/int
+RESULT	inverse/7/[1,0,1]/4/8/int	PASS	0:4,1:3	25
+START	inverse/7/[1,0,1]/4/8/big
+RESULT	inverse/7/[1,0,1]/4/8/big	PASS	0:4,1:3	25
+START	inverse/7/[1,0,1]/4/8/normalized
+RESULT	inverse/7/[1,0,1]/4/8/normalized	PASS	0:4,1:3	25
+START	inverse/7/[1,0,1]/4/9/int
+RESULT	inverse/7/[1,0,1]/4/9/int	WRONG	0:1,1:3	34
+START	inverse/7/[1,0,1]/4/9/big
+RESULT	inverse/7/[1,0,1]/4/9/big	WRONG	0:1,1:3	34
+START	inverse/7/[1,0,1]/4/9/normalized
+RESULT	inverse/7/[1,0,1]/4/9/normalized	PASS	0:6,1:4	34
+START	inverse/7/[1,0,1]/4/10/int
+RESULT	inverse/7/[1,0,1]/4/10/int	WRONG	0:5,1:3	15
+START	inverse/7/[1,0,1]/4/10/big
+RESULT	inverse/7/[1,0,1]/4/10/big	WRONG	0:5,1:3	15
+START	inverse/7/[1,0,1]/4/10/normalized
+RESULT	inverse/7/[1,0,1]/4/10/normalized	PASS	0:1,1:2	15
+START	inverse/7/[1,0,1]/4/11/int
+RESULT	inverse/7/[1,0,1]/4/11/int	WRONG	0:2,1:3	20
+START	inverse/7/[1,0,1]/4/11/big
+RESULT	inverse/7/[1,0,1]/4/11/big	WRONG	0:2,1:3	20
+START	inverse/7/[1,0,1]/4/11/normalized
+RESULT	inverse/7/[1,0,1]/4/11/normalized	PASS	0:6,1:2	20
+START	inverse/7/[1,0,1]/4/12/int
+RESULT	inverse/7/[1,0,1]/4/12/int	WRONG	0:6,1:3	29
+START	inverse/7/[1,0,1]/4/12/big
+RESULT	inverse/7/[1,0,1]/4/12/big	WRONG	0:6,1:3	29
+START	inverse/7/[1,0,1]/4/12/normalized
+RESULT	inverse/7/[1,0,1]/4/12/normalized	PASS	0:1,1:4	29
+START	inverse/7/[1,0,1]/4/13/int
+RESULT	inverse/7/[1,0,1]/4/13/int	PASS	0:3,1:3	24
+START	inverse/7/[1,0,1]/4/13/big
+RESULT	inverse/7/[1,0,1]/4/13/big	PASS	0:3,1:3	24
+START	inverse/7/[1,0,1]/4/13/normalized
+RESULT	inverse/7/[1,0,1]/4/13/normalized	PASS	0:3,1:3	24
+START	inverse/7/[1,0,1]/4/14/int
+RESULT	inverse/7/[1,0,1]/4/14/int	WRONG	1:5	21
+START	inverse/7/[1,0,1]/4/14/big
+RESULT	inverse/7/[1,0,1]/4/14/big	WRONG	1:5	21
+START	inverse/7/[1,0,1]/4/14/normalized
+RESULT	inverse/7/[1,0,1]/4/14/normalized	PASS	1:3	21
+START	inverse/7/[1,0,1]/4/15/int
+RESULT	inverse/7/[1,0,1]/4/15/int	WRONG	0:1,1:5	10
+START	inverse/7/[1,0,1]/4/15/big
+RESULT	inverse/7/[1,0,1]/4/15/big	WRONG	0:1,1:5	10
+START	inverse/7/[1,0,1]/4/15/normalized
+RESULT	inverse/7/[1,0,1]/4/15/normalized	PASS	0:3,1:1	10
+START	inverse/7/[1,0,1]/4/16/int
+RESULT	inverse/7/[1,0,1]/4/16/int	PASS	0:2,1:5	37
+START	inverse/7/[1,0,1]/4/16/big
+RESULT	inverse/7/[1,0,1]/4/16/big	PASS	0:2,1:5	37
+START	inverse/7/[1,0,1]/4/16/normalized
+RESULT	inverse/7/[1,0,1]/4/16/normalized	PASS	0:2,1:5	37
+START	inverse/7/[1,0,1]/4/17/int
+RESULT	inverse/7/[1,0,1]/4/17/int	WRONG	0:3,1:5	18
+START	inverse/7/[1,0,1]/4/17/big
+RESULT	inverse/7/[1,0,1]/4/17/big	WRONG	0:3,1:5	18
+START	inverse/7/[1,0,1]/4/17/normalized
+RESULT	inverse/7/[1,0,1]/4/17/normalized	PASS	0:4,1:2	18
+START	inverse/7/[1,0,1]/4/18/int
+RESULT	inverse/7/[1,0,1]/4/18/int	WRONG	0:4,1:5	17
+START	inverse/7/[1,0,1]/4/18/big
+RESULT	inverse/7/[1,0,1]/4/18/big	WRONG	0:4,1:5	17
+START	inverse/7/[1,0,1]/4/18/normalized
+RESULT	inverse/7/[1,0,1]/4/18/normalized	PASS	0:3,1:2	17
+START	inverse/7/[1,0,1]/4/19/int
+RESULT	inverse/7/[1,0,1]/4/19/int	PASS	0:5,1:5	40
+START	inverse/7/[1,0,1]/4/19/big
+RESULT	inverse/7/[1,0,1]/4/19/big	PASS	0:5,1:5	40
+START	inverse/7/[1,0,1]/4/19/normalized
+RESULT	inverse/7/[1,0,1]/4/19/normalized	PASS	0:5,1:5	40
+START	inverse/7/[1,0,1]/4/20/int
+RESULT	inverse/7/[1,0,1]/4/20/int	WRONG	0:6,1:5	11
+START	inverse/7/[1,0,1]/4/20/big
+RESULT	inverse/7/[1,0,1]/4/20/big	WRONG	0:6,1:5	11
+START	inverse/7/[1,0,1]/4/20/normalized
+RESULT	inverse/7/[1,0,1]/4/20/normalized	PASS	0:4,1:1	11
+START	inverse/7/[1,0,1]/4/21/int
+RESULT	inverse/7/[1,0,1]/4/21/int	WRONG	1:1	14
+START	inverse/7/[1,0,1]/4/21/big
+RESULT	inverse/7/[1,0,1]/4/21/big	WRONG	1:1	14
+START	inverse/7/[1,0,1]/4/21/normalized
+RESULT	inverse/7/[1,0,1]/4/21/normalized	PASS	1:2	14
+START	inverse/7/[1,0,1]/4/22/int
+RESULT	inverse/7/[1,0,1]/4/22/int	WRONG	0:2,1:1	47
+START	inverse/7/[1,0,1]/4/22/big
+RESULT	inverse/7/[1,0,1]/4/22/big	WRONG	0:2,1:1	47
+START	inverse/7/[1,0,1]/4/22/normalized
+RESULT	inverse/7/[1,0,1]/4/22/normalized	PASS	0:5,1:6	47
+START	inverse/7/[1,0,1]/4/23/int
+RESULT	inverse/7/[1,0,1]/4/23/int	WRONG	0:4,1:1	26
+START	inverse/7/[1,0,1]/4/23/big
+RESULT	inverse/7/[1,0,1]/4/23/big	WRONG	0:4,1:1	26
+START	inverse/7/[1,0,1]/4/23/normalized
+RESULT	inverse/7/[1,0,1]/4/23/normalized	PASS	0:5,1:3	26
+START	inverse/7/[1,0,1]/4/24/int
+RESULT	inverse/7/[1,0,1]/4/24/int	PASS	0:6,1:1	13
+START	inverse/7/[1,0,1]/4/24/big
+RESULT	inverse/7/[1,0,1]/4/24/big	PASS	0:6,1:1	13
+START	inverse/7/[1,0,1]/4/24/normalized
+RESULT	inverse/7/[1,0,1]/4/24/normalized	PASS	0:6,1:1	13
+START	inverse/7/[1,0,1]/4/25/int
+RESULT	inverse/7/[1,0,1]/4/25/int	PASS	0:1,1:1	8
+START	inverse/7/[1,0,1]/4/25/big
+RESULT	inverse/7/[1,0,1]/4/25/big	PASS	0:1,1:1	8
+START	inverse/7/[1,0,1]/4/25/normalized
+RESULT	inverse/7/[1,0,1]/4/25/normalized	PASS	0:1,1:1	8
+START	inverse/7/[1,0,1]/4/26/int
+RESULT	inverse/7/[1,0,1]/4/26/int	WRONG	0:3,1:1	23
+START	inverse/7/[1,0,1]/4/26/big
+RESULT	inverse/7/[1,0,1]/4/26/big	WRONG	0:3,1:1	23
+START	inverse/7/[1,0,1]/4/26/normalized
+RESULT	inverse/7/[1,0,1]/4/26/normalized	PASS	0:2,1:3	23
+START	inverse/7/[1,0,1]/4/27/int
+RESULT	inverse/7/[1,0,1]/4/27/int	WRONG	0:5,1:1	44
+START	inverse/7/[1,0,1]/4/27/big
+RESULT	inverse/7/[1,0,1]/4/27/big	WRONG	0:5,1:1	44
+START	inverse/7/[1,0,1]/4/27/normalized
+RESULT	inverse/7/[1,0,1]/4/27/normalized	PASS	0:2,1:6	44
+START	inverse/7/[1,0,1]/4/28/int
+RESULT	inverse/7/[1,0,1]/4/28/int	WRONG	1:6	35
+START	inverse/7/[1,0,1]/4/28/big
+RESULT	inverse/7/[1,0,1]/4/28/big	WRONG	1:6	35
+START	inverse/7/[1,0,1]/4/28/normalized
+RESULT	inverse/7/[1,0,1]/4/28/normalized	PASS	1:5	35
+START	inverse/7/[1,0,1]/4/29/int
+RESULT	inverse/7/[1,0,1]/4/29/int	WRONG	0:2,1:6	12
+START	inverse/7/[1,0,1]/4/29/big
+RESULT	inverse/7/[1,0,1]/4/29/big	WRONG	0:2,1:6	12
+START	inverse/7/[1,0,1]/4/29/normalized
+RESULT	inverse/7/[1,0,1]/4/29/normalized	PASS	0:5,1:1	12
+START	inverse/7/[1,0,1]/4/30/int
+RESULT	inverse/7/[1,0,1]/4/30/int	WRONG	0:4,1:6	33
+START	inverse/7/[1,0,1]/4/30/big
+RESULT	inverse/7/[1,0,1]/4/30/big	WRONG	0:4,1:6	33
+START	inverse/7/[1,0,1]/4/30/normalized
+RESULT	inverse/7/[1,0,1]/4/30/normalized	PASS	0:5,1:4	33
+START	inverse/7/[1,0,1]/4/31/int
+RESULT	inverse/7/[1,0,1]/4/31/int	PASS	0:6,1:6	48
+START	inverse/7/[1,0,1]/4/31/big
+RESULT	inverse/7/[1,0,1]/4/31/big	PASS	0:6,1:6	48
+START	inverse/7/[1,0,1]/4/31/normalized
+RESULT	inverse/7/[1,0,1]/4/31/normalized	PASS	0:6,1:6	48
+START	inverse/7/[1,0,1]/4/32/int
+RESULT	inverse/7/[1,0,1]/4/32/int	PASS	0:1,1:6	43
+START	inverse/7/[1,0,1]/4/32/big
+RESULT	inverse/7/[1,0,1]/4/32/big	PASS	0:1,1:6	43
+START	inverse/7/[1,0,1]/4/32/normalized
+RESULT	inverse/7/[1,0,1]/4/32/normalized	PASS	0:1,1:6	43
+START	inverse/7/[1,0,1]/4/33/int
+RESULT	inverse/7/[1,0,1]/4/33/int	WRONG	0:3,1:6	30
+START	inverse/7/[1,0,1]/4/33/big
+RESULT	inverse/7/[1,0,1]/4/33/big	WRONG	0:3,1:6	30
+START	inverse/7/[1,0,1]/4/33/normalized
+RESULT	inverse/7/[1,0,1]/4/33/normalized	PASS	0:2,1:4	30
+START	inverse/7/[1,0,1]/4/34/int
+RESULT	inverse/7/[1,0,1]/4/34/int	WRONG	0:5,1:6	9
+START	inverse/7/[1,0,1]/4/34/big
+RESULT	inverse/7/[1,0,1]/4/34/big	WRONG	0:5,1:6	9
+START	inverse/7/[1,0,1]/4/34/normalized
+RESULT	inverse/7/[1,0,1]/4/34/normalized	PASS	0:2,1:1	9
+START	inverse/7/[1,0,1]/4/35/int
+RESULT	inverse/7/[1,0,1]/4/35/int	WRONG	1:2	28
+START	inverse/7/[1,0,1]/4/35/big
+RESULT	inverse/7/[1,0,1]/4/35/big	WRONG	1:2	28
+START	inverse/7/[1,0,1]/4/35/normalized
+RESULT	inverse/7/[1,0,1]/4/35/normalized	PASS	1:4	28
+START	inverse/7/[1,0,1]/4/36/int
+RESULT	inverse/7/[1,0,1]/4/36/int	WRONG	0:1,1:2	45
+START	inverse/7/[1,0,1]/4/36/big
+RESULT	inverse/7/[1,0,1]/4/36/big	WRONG	0:1,1:2	45
+START	inverse/7/[1,0,1]/4/36/normalized
+RESULT	inverse/7/[1,0,1]/4/36/normalized	PASS	0:3,1:6	45
+START	inverse/7/[1,0,1]/4/37/int
+RESULT	inverse/7/[1,0,1]/4/37/int	PASS	0:2,1:2	16
+START	inverse/7/[1,0,1]/4/37/big
+RESULT	inverse/7/[1,0,1]/4/37/big	PASS	0:2,1:2	16
+START	inverse/7/[1,0,1]/4/37/normalized
+RESULT	inverse/7/[1,0,1]/4/37/normalized	PASS	0:2,1:2	16
+START	inverse/7/[1,0,1]/4/38/int
+RESULT	inverse/7/[1,0,1]/4/38/int	WRONG	0:3,1:2	39
+START	inverse/7/[1,0,1]/4/38/big
+RESULT	inverse/7/[1,0,1]/4/38/big	WRONG	0:3,1:2	39
+START	inverse/7/[1,0,1]/4/38/normalized
+RESULT	inverse/7/[1,0,1]/4/38/normalized	PASS	0:4,1:5	39
+START	inverse/7/[1,0,1]/4/39/int
+RESULT	inverse/7/[1,0,1]/4/39/int	WRONG	0:4,1:2	38
+START	inverse/7/[1,0,1]/4/39/big
+RESULT	inverse/7/[1,0,1]/4/39/big	WRONG	0:4,1:2	38
+START	inverse/7/[1,0,1]/4/39/normalized
+RESULT	inverse/7/[1,0,1]/4/39/normalized	PASS	0:3,1:5	38
+START	inverse/7/[1,0,1]/4/40/int
+RESULT	inverse/7/[1,0,1]/4/40/int	PASS	0:5,1:2	19
+START	inverse/7/[1,0,1]/4/40/big
+RESULT	inverse/7/[1,0,1]/4/40/big	PASS	0:5,1:2	19
+START	inverse/7/[1,0,1]/4/40/normalized
+RESULT	inverse/7/[1,0,1]/4/40/normalized	PASS	0:5,1:2	19
+START	inverse/7/[1,0,1]/4/41/int
+RESULT	inverse/7/[1,0,1]/4/41/int	WRONG	0:6,1:2	46
+START	inverse/7/[1,0,1]/4/41/big
+RESULT	inverse/7/[1,0,1]/4/41/big	WRONG	0:6,1:2	46
+START	inverse/7/[1,0,1]/4/41/normalized
+RESULT	inverse/7/[1,0,1]/4/41/normalized	PASS	0:4,1:6	46
+START	inverse/7/[1,0,1]/4/42/int
+RESULT	inverse/7/[1,0,1]/4/42/int	WRONG	1:4	7
+START	inverse/7/[1,0,1]/4/42/big
+RESULT	inverse/7/[1,0,1]/4/42/big	WRONG	1:4	7
+START	inverse/7/[1,0,1]/4/42/normalized
+RESULT	inverse/7/[1,0,1]/4/42/normalized	PASS	1:1	7
+START	inverse/7/[1,0,1]/4/43/int
+RESULT	inverse/7/[1,0,1]/4/43/int	PASS	0:4,1:4	32
+START	inverse/7/[1,0,1]/4/43/big
+RESULT	inverse/7/[1,0,1]/4/43/big	PASS	0:4,1:4	32
+START	inverse/7/[1,0,1]/4/43/normalized
+RESULT	inverse/7/[1,0,1]/4/43/normalized	PASS	0:4,1:4	32
+START	inverse/7/[1,0,1]/4/44/int
+RESULT	inverse/7/[1,0,1]/4/44/int	WRONG	0:1,1:4	27
+START	inverse/7/[1,0,1]/4/44/big
+RESULT	inverse/7/[1,0,1]/4/44/big	WRONG	0:1,1:4	27
+START	inverse/7/[1,0,1]/4/44/normalized
+RESULT	inverse/7/[1,0,1]/4/44/normalized	PASS	0:6,1:3	27
+START	inverse/7/[1,0,1]/4/45/int
+RESULT	inverse/7/[1,0,1]/4/45/int	WRONG	0:5,1:4	36
+START	inverse/7/[1,0,1]/4/45/big
+RESULT	inverse/7/[1,0,1]/4/45/big	WRONG	0:5,1:4	36
+START	inverse/7/[1,0,1]/4/45/normalized
+RESULT	inverse/7/[1,0,1]/4/45/normalized	PASS	0:1,1:5	36
+START	inverse/7/[1,0,1]/4/46/int
+RESULT	inverse/7/[1,0,1]/4/46/int	WRONG	0:2,1:4	41
+START	inverse/7/[1,0,1]/4/46/big
+RESULT	inverse/7/[1,0,1]/4/46/big	WRONG	0:2,1:4	41
+START	inverse/7/[1,0,1]/4/46/normalized
+RESULT	inverse/7/[1,0,1]/4/46/normalized	PASS	0:6,1:5	41
+START	inverse/7/[1,0,1]/4/47/int
+RESULT	inverse/7/[1,0,1]/4/47/int	WRONG	0:6,1:4	22
+START	inverse/7/[1,0,1]/4/47/big
+RESULT	inverse/7/[1,0,1]/4/47/big	WRONG	0:6,1:4	22
+START	inverse/7/[1,0,1]/4/47/normalized
+RESULT	inverse/7/[1,0,1]/4/47/normalized	PASS	0:1,1:3	22
+START	inverse/7/[1,0,1]/4/48/int
+RESULT	inverse/7/[1,0,1]/4/48/int	PASS	0:3,1:4	31
+START	inverse/7/[1,0,1]/4/48/big
+RESULT	inverse/7/[1,0,1]/4/48/big	PASS	0:3,1:4	31
+START	inverse/7/[1,0,1]/4/48/normalized
+RESULT	inverse/7/[1,0,1]/4/48/normalized	PASS	0:3,1:4	31
+START	inverse/7/[1,0,1]/5/0/int
+RESULT	inverse/7/[1,0,1]/5/0/int	DOMAIN_REJECT	NotInvertibleException	-1
+START	inverse/7/[1,0,1]/5/0/big
+RESULT	inverse/7/[1,0,1]/5/0/big	DOMAIN_REJECT	NotInvertibleException	-1
+START	inverse/7/[1,0,1]/5/0/normalized
+RESULT	inverse/7/[1,0,1]/5/0/normalized	DOMAIN_REJECT	NotInvertibleException	-1
+START	inverse/7/[1,0,1]/5/1/int
+RESULT	inverse/7/[1,0,1]/5/1/int	EXCEPTION	NotInvertibleException	1
+START	inverse/7/[1,0,1]/5/1/big
+RESULT	inverse/7/[1,0,1]/5/1/big	EXCEPTION	NotInvertibleException	1
+START	inverse/7/[1,0,1]/5/1/normalized
+RESULT	inverse/7/[1,0,1]/5/1/normalized	EXCEPTION	NotInvertibleException	1
+START	inverse/7/[1,0,1]/5/2/int
+RESULT	inverse/7/[1,0,1]/5/2/int	EXCEPTION	NotInvertibleException	4
+START	inverse/7/[1,0,1]/5/2/big
+RESULT	inverse/7/[1,0,1]/5/2/big	EXCEPTION	NotInvertibleException	4
+START	inverse/7/[1,0,1]/5/2/normalized
+RESULT	inverse/7/[1,0,1]/5/2/normalized	EXCEPTION	NotInvertibleException	4
+START	inverse/7/[1,0,1]/5/3/int
+RESULT	inverse/7/[1,0,1]/5/3/int	EXCEPTION	NotInvertibleException	5
+START	inverse/7/[1,0,1]/5/3/big
+RESULT	inverse/7/[1,0,1]/5/3/big	EXCEPTION	NotInvertibleException	5
+START	inverse/7/[1,0,1]/5/3/normalized
+RESULT	inverse/7/[1,0,1]/5/3/normalized	EXCEPTION	NotInvertibleException	5
+START	inverse/7/[1,0,1]/5/4/int
+RESULT	inverse/7/[1,0,1]/5/4/int	EXCEPTION	NotInvertibleException	2
+START	inverse/7/[1,0,1]/5/4/big
+RESULT	inverse/7/[1,0,1]/5/4/big	EXCEPTION	NotInvertibleException	2
+START	inverse/7/[1,0,1]/5/4/normalized
+RESULT	inverse/7/[1,0,1]/5/4/normalized	EXCEPTION	NotInvertibleException	2
+START	inverse/7/[1,0,1]/5/5/int
+RESULT	inverse/7/[1,0,1]/5/5/int	EXCEPTION	NotInvertibleException	3
+START	inverse/7/[1,0,1]/5/5/big
+RESULT	inverse/7/[1,0,1]/5/5/big	EXCEPTION	NotInvertibleException	3
+START	inverse/7/[1,0,1]/5/5/normalized
+RESULT	inverse/7/[1,0,1]/5/5/normalized	EXCEPTION	NotInvertibleException	3
+START	inverse/7/[1,0,1]/5/6/int
+RESULT	inverse/7/[1,0,1]/5/6/int	EXCEPTION	NotInvertibleException	6
+START	inverse/7/[1,0,1]/5/6/big
+RESULT	inverse/7/[1,0,1]/5/6/big	EXCEPTION	NotInvertibleException	6
+START	inverse/7/[1,0,1]/5/6/normalized
+RESULT	inverse/7/[1,0,1]/5/6/normalized	EXCEPTION	NotInvertibleException	6
+START	inverse/7/[1,0,1]/5/7/int
+RESULT	inverse/7/[1,0,1]/5/7/int	WRONG	1:2	42
+START	inverse/7/[1,0,1]/5/7/big
+RESULT	inverse/7/[1,0,1]/5/7/big	WRONG	1:2	42
+START	inverse/7/[1,0,1]/5/7/normalized
+RESULT	inverse/7/[1,0,1]/5/7/normalized	PASS	1:6	42
+START	inverse/7/[1,0,1]/5/8/int
+RESULT	inverse/7/[1,0,1]/5/8/int	WRONG	0:5,1:2	25
+START	inverse/7/[1,0,1]/5/8/big
+RESULT	inverse/7/[1,0,1]/5/8/big	WRONG	0:5,1:2	25
+START	inverse/7/[1,0,1]/5/8/normalized
+RESULT	inverse/7/[1,0,1]/5/8/normalized	PASS	0:4,1:3	25
+START	inverse/7/[1,0,1]/5/9/int
+RESULT	inverse/7/[1,0,1]/5/9/int	WRONG	0:3,1:2	34
+START	inverse/7/[1,0,1]/5/9/big
+RESULT	inverse/7/[1,0,1]/5/9/big	WRONG	0:3,1:2	34
+START	inverse/7/[1,0,1]/5/9/normalized
+RESULT	inverse/7/[1,0,1]/5/9/normalized	PASS	0:6,1:4	34
+START	inverse/7/[1,0,1]/5/10/int
+RESULT	inverse/7/[1,0,1]/5/10/int	PASS	0:1,1:2	15
+START	inverse/7/[1,0,1]/5/10/big
+RESULT	inverse/7/[1,0,1]/5/10/big	PASS	0:1,1:2	15
+START	inverse/7/[1,0,1]/5/10/normalized
+RESULT	inverse/7/[1,0,1]/5/10/normalized	PASS	0:1,1:2	15
+START	inverse/7/[1,0,1]/5/11/int
+RESULT	inverse/7/[1,0,1]/5/11/int	PASS	0:6,1:2	20
+START	inverse/7/[1,0,1]/5/11/big
+RESULT	inverse/7/[1,0,1]/5/11/big	PASS	0:6,1:2	20
+START	inverse/7/[1,0,1]/5/11/normalized
+RESULT	inverse/7/[1,0,1]/5/11/normalized	PASS	0:6,1:2	20
+START	inverse/7/[1,0,1]/5/12/int
+RESULT	inverse/7/[1,0,1]/5/12/int	WRONG	0:4,1:2	29
+START	inverse/7/[1,0,1]/5/12/big
+RESULT	inverse/7/[1,0,1]/5/12/big	WRONG	0:4,1:2	29
+START	inverse/7/[1,0,1]/5/12/normalized
+RESULT	inverse/7/[1,0,1]/5/12/normalized	PASS	0:1,1:4	29
+START	inverse/7/[1,0,1]/5/13/int
+RESULT	inverse/7/[1,0,1]/5/13/int	WRONG	0:2,1:2	24
+START	inverse/7/[1,0,1]/5/13/big
+RESULT	inverse/7/[1,0,1]/5/13/big	WRONG	0:2,1:2	24
+START	inverse/7/[1,0,1]/5/13/normalized
+RESULT	inverse/7/[1,0,1]/5/13/normalized	PASS	0:3,1:3	24
+START	inverse/7/[1,0,1]/5/14/int
+RESULT	inverse/7/[1,0,1]/5/14/int	WRONG	1:1	21
+START	inverse/7/[1,0,1]/5/14/big
+RESULT	inverse/7/[1,0,1]/5/14/big	WRONG	1:1	21
+START	inverse/7/[1,0,1]/5/14/normalized
+RESULT	inverse/7/[1,0,1]/5/14/normalized	PASS	1:3	21
+START	inverse/7/[1,0,1]/5/15/int
+RESULT	inverse/7/[1,0,1]/5/15/int	PASS	0:3,1:1	10
+START	inverse/7/[1,0,1]/5/15/big
+RESULT	inverse/7/[1,0,1]/5/15/big	PASS	0:3,1:1	10
+START	inverse/7/[1,0,1]/5/15/normalized
+RESULT	inverse/7/[1,0,1]/5/15/normalized	PASS	0:3,1:1	10
+START	inverse/7/[1,0,1]/5/16/int
+RESULT	inverse/7/[1,0,1]/5/16/int	WRONG	0:6,1:1	37
+START	inverse/7/[1,0,1]/5/16/big
+RESULT	inverse/7/[1,0,1]/5/16/big	WRONG	0:6,1:1	37
+START	inverse/7/[1,0,1]/5/16/normalized
+RESULT	inverse/7/[1,0,1]/5/16/normalized	PASS	0:2,1:5	37
+START	inverse/7/[1,0,1]/5/17/int
+RESULT	inverse/7/[1,0,1]/5/17/int	WRONG	0:2,1:1	18
+START	inverse/7/[1,0,1]/5/17/big
+RESULT	inverse/7/[1,0,1]/5/17/big	WRONG	0:2,1:1	18
+START	inverse/7/[1,0,1]/5/17/normalized
+RESULT	inverse/7/[1,0,1]/5/17/normalized	PASS	0:4,1:2	18
+START	inverse/7/[1,0,1]/5/18/int
+RESULT	inverse/7/[1,0,1]/5/18/int	WRONG	0:5,1:1	17
+START	inverse/7/[1,0,1]/5/18/big
+RESULT	inverse/7/[1,0,1]/5/18/big	WRONG	0:5,1:1	17
+START	inverse/7/[1,0,1]/5/18/normalized
+RESULT	inverse/7/[1,0,1]/5/18/normalized	PASS	0:3,1:2	17
+START	inverse/7/[1,0,1]/5/19/int
+RESULT	inverse/7/[1,0,1]/5/19/int	WRONG	0:1,1:1	40
+START	inverse/7/[1,0,1]/5/19/big
+RESULT	inverse/7/[1,0,1]/5/19/big	WRONG	0:1,1:1	40
+START	inverse/7/[1,0,1]/5/19/normalized
+RESULT	inverse/7/[1,0,1]/5/19/normalized	PASS	0:5,1:5	40
+START	inverse/7/[1,0,1]/5/20/int
+RESULT	inverse/7/[1,0,1]/5/20/int	PASS	0:4,1:1	11
+START	inverse/7/[1,0,1]/5/20/big
+RESULT	inverse/7/[1,0,1]/5/20/big	PASS	0:4,1:1	11
+START	inverse/7/[1,0,1]/5/20/normalized
+RESULT	inverse/7/[1,0,1]/5/20/normalized	PASS	0:4,1:1	11
+START	inverse/7/[1,0,1]/5/21/int
+RESULT	inverse/7/[1,0,1]/5/21/int	WRONG	1:3	14
+START	inverse/7/[1,0,1]/5/21/big
+RESULT	inverse/7/[1,0,1]/5/21/big	WRONG	1:3	14
+START	inverse/7/[1,0,1]/5/21/normalized
+RESULT	inverse/7/[1,0,1]/5/21/normalized	PASS	1:2	14
+START	inverse/7/[1,0,1]/5/22/int
+RESULT	inverse/7/[1,0,1]/5/22/int	WRONG	0:6,1:3	47
+START	inverse/7/[1,0,1]/5/22/big
+RESULT	inverse/7/[1,0,1]/5/22/big	WRONG	0:6,1:3	47
+START	inverse/7/[1,0,1]/5/22/normalized
+RESULT	inverse/7/[1,0,1]/5/22/normalized	PASS	0:5,1:6	47
+START	inverse/7/[1,0,1]/5/23/int
+RESULT	inverse/7/[1,0,1]/5/23/int	PASS	0:5,1:3	26
+START	inverse/7/[1,0,1]/5/23/big
+RESULT	inverse/7/[1,0,1]/5/23/big	PASS	0:5,1:3	26
+START	inverse/7/[1,0,1]/5/23/normalized
+RESULT	inverse/7/[1,0,1]/5/23/normalized	PASS	0:5,1:3	26
+START	inverse/7/[1,0,1]/5/24/int
+RESULT	inverse/7/[1,0,1]/5/24/int	WRONG	0:4,1:3	13
+START	inverse/7/[1,0,1]/5/24/big
+RESULT	inverse/7/[1,0,1]/5/24/big	WRONG	0:4,1:3	13
+START	inverse/7/[1,0,1]/5/24/normalized
+RESULT	inverse/7/[1,0,1]/5/24/normalized	PASS	0:6,1:1	13
+START	inverse/7/[1,0,1]/5/25/int
+RESULT	inverse/7/[1,0,1]/5/25/int	WRONG	0:3,1:3	8
+START	inverse/7/[1,0,1]/5/25/big
+RESULT	inverse/7/[1,0,1]/5/25/big	WRONG	0:3,1:3	8
+START	inverse/7/[1,0,1]/5/25/normalized
+RESULT	inverse/7/[1,0,1]/5/25/normalized	PASS	0:1,1:1	8
+START	inverse/7/[1,0,1]/5/26/int
+RESULT	inverse/7/[1,0,1]/5/26/int	PASS	0:2,1:3	23
+START	inverse/7/[1,0,1]/5/26/big
+RESULT	inverse/7/[1,0,1]/5/26/big	PASS	0:2,1:3	23
+START	inverse/7/[1,0,1]/5/26/normalized
+RESULT	inverse/7/[1,0,1]/5/26/normalized	PASS	0:2,1:3	23
+START	inverse/7/[1,0,1]/5/27/int
+RESULT	inverse/7/[1,0,1]/5/27/int	WRONG	0:1,1:3	44
+START	inverse/7/[1,0,1]/5/27/big
+RESULT	inverse/7/[1,0,1]/5/27/big	WRONG	0:1,1:3	44
+START	inverse/7/[1,0,1]/5/27/normalized
+RESULT	inverse/7/[1,0,1]/5/27/normalized	PASS	0:2,1:6	44
+START	inverse/7/[1,0,1]/5/28/int
+RESULT	inverse/7/[1,0,1]/5/28/int	WRONG	1:4	35
+START	inverse/7/[1,0,1]/5/28/big
+RESULT	inverse/7/[1,0,1]/5/28/big	WRONG	1:4	35
+START	inverse/7/[1,0,1]/5/28/normalized
+RESULT	inverse/7/[1,0,1]/5/28/normalized	PASS	1:5	35
+START	inverse/7/[1,0,1]/5/29/int
+RESULT	inverse/7/[1,0,1]/5/29/int	WRONG	0:6,1:4	12
+START	inverse/7/[1,0,1]/5/29/big
+RESULT	inverse/7/[1,0,1]/5/29/big	WRONG	0:6,1:4	12
+START	inverse/7/[1,0,1]/5/29/normalized
+RESULT	inverse/7/[1,0,1]/5/29/normalized	PASS	0:5,1:1	12
+START	inverse/7/[1,0,1]/5/30/int
+RESULT	inverse/7/[1,0,1]/5/30/int	PASS	0:5,1:4	33
+START	inverse/7/[1,0,1]/5/30/big
+RESULT	inverse/7/[1,0,1]/5/30/big	PASS	0:5,1:4	33
+START	inverse/7/[1,0,1]/5/30/normalized
+RESULT	inverse/7/[1,0,1]/5/30/normalized	PASS	0:5,1:4	33
+START	inverse/7/[1,0,1]/5/31/int
+RESULT	inverse/7/[1,0,1]/5/31/int	WRONG	0:4,1:4	48
+START	inverse/7/[1,0,1]/5/31/big
+RESULT	inverse/7/[1,0,1]/5/31/big	WRONG	0:4,1:4	48
+START	inverse/7/[1,0,1]/5/31/normalized
+RESULT	inverse/7/[1,0,1]/5/31/normalized	PASS	0:6,1:6	48
+START	inverse/7/[1,0,1]/5/32/int
+RESULT	inverse/7/[1,0,1]/5/32/int	WRONG	0:3,1:4	43
+START	inverse/7/[1,0,1]/5/32/big
+RESULT	inverse/7/[1,0,1]/5/32/big	WRONG	0:3,1:4	43
+START	inverse/7/[1,0,1]/5/32/normalized
+RESULT	inverse/7/[1,0,1]/5/32/normalized	PASS	0:1,1:6	43
+START	inverse/7/[1,0,1]/5/33/int
+RESULT	inverse/7/[1,0,1]/5/33/int	PASS	0:2,1:4	30
+START	inverse/7/[1,0,1]/5/33/big
+RESULT	inverse/7/[1,0,1]/5/33/big	PASS	0:2,1:4	30
+START	inverse/7/[1,0,1]/5/33/normalized
+RESULT	inverse/7/[1,0,1]/5/33/normalized	PASS	0:2,1:4	30
+START	inverse/7/[1,0,1]/5/34/int
+RESULT	inverse/7/[1,0,1]/5/34/int	WRONG	0:1,1:4	9
+START	inverse/7/[1,0,1]/5/34/big
+RESULT	inverse/7/[1,0,1]/5/34/big	WRONG	0:1,1:4	9
+START	inverse/7/[1,0,1]/5/34/normalized
+RESULT	inverse/7/[1,0,1]/5/34/normalized	PASS	0:2,1:1	9
+START	inverse/7/[1,0,1]/5/35/int
+RESULT	inverse/7/[1,0,1]/5/35/int	WRONG	1:6	28
+START	inverse/7/[1,0,1]/5/35/big
+RESULT	inverse/7/[1,0,1]/5/35/big	WRONG	1:6	28
+START	inverse/7/[1,0,1]/5/35/normalized
+RESULT	inverse/7/[1,0,1]/5/35/normalized	PASS	1:4	28
+START	inverse/7/[1,0,1]/5/36/int
+RESULT	inverse/7/[1,0,1]/5/36/int	PASS	0:3,1:6	45
+START	inverse/7/[1,0,1]/5/36/big
+RESULT	inverse/7/[1,0,1]/5/36/big	PASS	0:3,1:6	45
+START	inverse/7/[1,0,1]/5/36/normalized
+RESULT	inverse/7/[1,0,1]/5/36/normalized	PASS	0:3,1:6	45
+START	inverse/7/[1,0,1]/5/37/int
+RESULT	inverse/7/[1,0,1]/5/37/int	WRONG	0:6,1:6	16
+START	inverse/7/[1,0,1]/5/37/big
+RESULT	inverse/7/[1,0,1]/5/37/big	WRONG	0:6,1:6	16
+START	inverse/7/[1,0,1]/5/37/normalized
+RESULT	inverse/7/[1,0,1]/5/37/normalized	PASS	0:2,1:2	16
+START	inverse/7/[1,0,1]/5/38/int
+RESULT	inverse/7/[1,0,1]/5/38/int	WRONG	0:2,1:6	39
+START	inverse/7/[1,0,1]/5/38/big
+RESULT	inverse/7/[1,0,1]/5/38/big	WRONG	0:2,1:6	39
+START	inverse/7/[1,0,1]/5/38/normalized
+RESULT	inverse/7/[1,0,1]/5/38/normalized	PASS	0:4,1:5	39
+START	inverse/7/[1,0,1]/5/39/int
+RESULT	inverse/7/[1,0,1]/5/39/int	WRONG	0:5,1:6	38
+START	inverse/7/[1,0,1]/5/39/big
+RESULT	inverse/7/[1,0,1]/5/39/big	WRONG	0:5,1:6	38
+START	inverse/7/[1,0,1]/5/39/normalized
+RESULT	inverse/7/[1,0,1]/5/39/normalized	PASS	0:3,1:5	38
+START	inverse/7/[1,0,1]/5/40/int
+RESULT	inverse/7/[1,0,1]/5/40/int	WRONG	0:1,1:6	19
+START	inverse/7/[1,0,1]/5/40/big
+RESULT	inverse/7/[1,0,1]/5/40/big	WRONG	0:1,1:6	19
+START	inverse/7/[1,0,1]/5/40/normalized
+RESULT	inverse/7/[1,0,1]/5/40/normalized	PASS	0:5,1:2	19
+START	inverse/7/[1,0,1]/5/41/int
+RESULT	inverse/7/[1,0,1]/5/41/int	PASS	0:4,1:6	46
+START	inverse/7/[1,0,1]/5/41/big
+RESULT	inverse/7/[1,0,1]/5/41/big	PASS	0:4,1:6	46
+START	inverse/7/[1,0,1]/5/41/normalized
+RESULT	inverse/7/[1,0,1]/5/41/normalized	PASS	0:4,1:6	46
+START	inverse/7/[1,0,1]/5/42/int
+RESULT	inverse/7/[1,0,1]/5/42/int	WRONG	1:5	7
+START	inverse/7/[1,0,1]/5/42/big
+RESULT	inverse/7/[1,0,1]/5/42/big	WRONG	1:5	7
+START	inverse/7/[1,0,1]/5/42/normalized
+RESULT	inverse/7/[1,0,1]/5/42/normalized	PASS	1:1	7
+START	inverse/7/[1,0,1]/5/43/int
+RESULT	inverse/7/[1,0,1]/5/43/int	WRONG	0:5,1:5	32
+START	inverse/7/[1,0,1]/5/43/big
+RESULT	inverse/7/[1,0,1]/5/43/big	WRONG	0:5,1:5	32
+START	inverse/7/[1,0,1]/5/43/normalized
+RESULT	inverse/7/[1,0,1]/5/43/normalized	PASS	0:4,1:4	32
+START	inverse/7/[1,0,1]/5/44/int
+RESULT	inverse/7/[1,0,1]/5/44/int	WRONG	0:3,1:5	27
+START	inverse/7/[1,0,1]/5/44/big
+RESULT	inverse/7/[1,0,1]/5/44/big	WRONG	0:3,1:5	27
+START	inverse/7/[1,0,1]/5/44/normalized
+RESULT	inverse/7/[1,0,1]/5/44/normalized	PASS	0:6,1:3	27
+START	inverse/7/[1,0,1]/5/45/int
+RESULT	inverse/7/[1,0,1]/5/45/int	PASS	0:1,1:5	36
+START	inverse/7/[1,0,1]/5/45/big
+RESULT	inverse/7/[1,0,1]/5/45/big	PASS	0:1,1:5	36
+START	inverse/7/[1,0,1]/5/45/normalized
+RESULT	inverse/7/[1,0,1]/5/45/normalized	PASS	0:1,1:5	36
+START	inverse/7/[1,0,1]/5/46/int
+RESULT	inverse/7/[1,0,1]/5/46/int	PASS	0:6,1:5	41
+START	inverse/7/[1,0,1]/5/46/big
+RESULT	inverse/7/[1,0,1]/5/46/big	PASS	0:6,1:5	41
+START	inverse/7/[1,0,1]/5/46/normalized
+RESULT	inverse/7/[1,0,1]/5/46/normalized	PASS	0:6,1:5	41
+START	inverse/7/[1,0,1]/5/47/int
+RESULT	inverse/7/[1,0,1]/5/47/int	WRONG	0:4,1:5	22
+START	inverse/7/[1,0,1]/5/47/big
+RESULT	inverse/7/[1,0,1]/5/47/big	WRONG	0:4,1:5	22
+START	inverse/7/[1,0,1]/5/47/normalized
+RESULT	inverse/7/[1,0,1]/5/47/normalized	PASS	0:1,1:3	22
+START	inverse/7/[1,0,1]/5/48/int
+RESULT	inverse/7/[1,0,1]/5/48/int	WRONG	0:2,1:5	31
+START	inverse/7/[1,0,1]/5/48/big
+RESULT	inverse/7/[1,0,1]/5/48/big	WRONG	0:2,1:5	31
+START	inverse/7/[1,0,1]/5/48/normalized
+RESULT	inverse/7/[1,0,1]/5/48/normalized	PASS	0:3,1:4	31
+START	inverse/7/[1,0,1]/6/0/int
+RESULT	inverse/7/[1,0,1]/6/0/int	DOMAIN_REJECT	NotInvertibleException	-1
+START	inverse/7/[1,0,1]/6/0/big
+RESULT	inverse/7/[1,0,1]/6/0/big	DOMAIN_REJECT	NotInvertibleException	-1
+START	inverse/7/[1,0,1]/6/0/normalized
+RESULT	inverse/7/[1,0,1]/6/0/normalized	DOMAIN_REJECT	NotInvertibleException	-1
+START	inverse/7/[1,0,1]/6/1/int
+RESULT	inverse/7/[1,0,1]/6/1/int	EXCEPTION	NotInvertibleException	1
+START	inverse/7/[1,0,1]/6/1/big
+RESULT	inverse/7/[1,0,1]/6/1/big	EXCEPTION	NotInvertibleException	1
+START	inverse/7/[1,0,1]/6/1/normalized
+RESULT	inverse/7/[1,0,1]/6/1/normalized	EXCEPTION	NotInvertibleException	1
+START	inverse/7/[1,0,1]/6/2/int
+RESULT	inverse/7/[1,0,1]/6/2/int	EXCEPTION	NotInvertibleException	4
+START	inverse/7/[1,0,1]/6/2/big
+RESULT	inverse/7/[1,0,1]/6/2/big	EXCEPTION	NotInvertibleException	4
+START	inverse/7/[1,0,1]/6/2/normalized
+RESULT	inverse/7/[1,0,1]/6/2/normalized	EXCEPTION	NotInvertibleException	4
+START	inverse/7/[1,0,1]/6/3/int
+RESULT	inverse/7/[1,0,1]/6/3/int	EXCEPTION	NotInvertibleException	5
+START	inverse/7/[1,0,1]/6/3/big
+RESULT	inverse/7/[1,0,1]/6/3/big	EXCEPTION	NotInvertibleException	5
+START	inverse/7/[1,0,1]/6/3/normalized
+RESULT	inverse/7/[1,0,1]/6/3/normalized	EXCEPTION	NotInvertibleException	5
+START	inverse/7/[1,0,1]/6/4/int
+RESULT	inverse/7/[1,0,1]/6/4/int	EXCEPTION	NotInvertibleException	2
+START	inverse/7/[1,0,1]/6/4/big
+RESULT	inverse/7/[1,0,1]/6/4/big	EXCEPTION	NotInvertibleException	2
+START	inverse/7/[1,0,1]/6/4/normalized
+RESULT	inverse/7/[1,0,1]/6/4/normalized	EXCEPTION	NotInvertibleException	2
+START	inverse/7/[1,0,1]/6/5/int
+RESULT	inverse/7/[1,0,1]/6/5/int	EXCEPTION	NotInvertibleException	3
+START	inverse/7/[1,0,1]/6/5/big
+RESULT	inverse/7/[1,0,1]/6/5/big	EXCEPTION	NotInvertibleException	3
+START	inverse/7/[1,0,1]/6/5/normalized
+RESULT	inverse/7/[1,0,1]/6/5/normalized	EXCEPTION	NotInvertibleException	3
+START	inverse/7/[1,0,1]/6/6/int
+RESULT	inverse/7/[1,0,1]/6/6/int	EXCEPTION	NotInvertibleException	6
+START	inverse/7/[1,0,1]/6/6/big
+RESULT	inverse/7/[1,0,1]/6/6/big	EXCEPTION	NotInvertibleException	6
+START	inverse/7/[1,0,1]/6/6/normalized
+RESULT	inverse/7/[1,0,1]/6/6/normalized	EXCEPTION	NotInvertibleException	6
+START	inverse/7/[1,0,1]/6/7/int
+RESULT	inverse/7/[1,0,1]/6/7/int	WRONG	1:1	42
+START	inverse/7/[1,0,1]/6/7/big
+RESULT	inverse/7/[1,0,1]/6/7/big	WRONG	1:1	42
+START	inverse/7/[1,0,1]/6/7/normalized
+RESULT	inverse/7/[1,0,1]/6/7/normalized	PASS	1:6	42
+START	inverse/7/[1,0,1]/6/8/int
+RESULT	inverse/7/[1,0,1]/6/8/int	WRONG	0:6,1:1	25
+START	inverse/7/[1,0,1]/6/8/big
+RESULT	inverse/7/[1,0,1]/6/8/big	WRONG	0:6,1:1	25
+START	inverse/7/[1,0,1]/6/8/normalized
+RESULT	inverse/7/[1,0,1]/6/8/normalized	PASS	0:4,1:3	25
+START	inverse/7/[1,0,1]/6/9/int
+RESULT	inverse/7/[1,0,1]/6/9/int	WRONG	0:5,1:1	34
+START	inverse/7/[1,0,1]/6/9/big
+RESULT	inverse/7/[1,0,1]/6/9/big	WRONG	0:5,1:1	34
+START	inverse/7/[1,0,1]/6/9/normalized
+RESULT	inverse/7/[1,0,1]/6/9/normalized	PASS	0:6,1:4	34
+START	inverse/7/[1,0,1]/6/10/int
+RESULT	inverse/7/[1,0,1]/6/10/int	WRONG	0:4,1:1	15
+START	inverse/7/[1,0,1]/6/10/big
+RESULT	inverse/7/[1,0,1]/6/10/big	WRONG	0:4,1:1	15
+START	inverse/7/[1,0,1]/6/10/normalized
+RESULT	inverse/7/[1,0,1]/6/10/normalized	PASS	0:1,1:2	15
+START	inverse/7/[1,0,1]/6/11/int
+RESULT	inverse/7/[1,0,1]/6/11/int	WRONG	0:3,1:1	20
+START	inverse/7/[1,0,1]/6/11/big
+RESULT	inverse/7/[1,0,1]/6/11/big	WRONG	0:3,1:1	20
+START	inverse/7/[1,0,1]/6/11/normalized
+RESULT	inverse/7/[1,0,1]/6/11/normalized	PASS	0:6,1:2	20
+START	inverse/7/[1,0,1]/6/12/int
+RESULT	inverse/7/[1,0,1]/6/12/int	WRONG	0:2,1:1	29
+START	inverse/7/[1,0,1]/6/12/big
+RESULT	inverse/7/[1,0,1]/6/12/big	WRONG	0:2,1:1	29
+START	inverse/7/[1,0,1]/6/12/normalized
+RESULT	inverse/7/[1,0,1]/6/12/normalized	PASS	0:1,1:4	29
+START	inverse/7/[1,0,1]/6/13/int
+RESULT	inverse/7/[1,0,1]/6/13/int	WRONG	0:1,1:1	24
+START	inverse/7/[1,0,1]/6/13/big
+RESULT	inverse/7/[1,0,1]/6/13/big	WRONG	0:1,1:1	24
+START	inverse/7/[1,0,1]/6/13/normalized
+RESULT	inverse/7/[1,0,1]/6/13/normalized	PASS	0:3,1:3	24
+START	inverse/7/[1,0,1]/6/14/int
+RESULT	inverse/7/[1,0,1]/6/14/int	WRONG	1:4	21
+START	inverse/7/[1,0,1]/6/14/big
+RESULT	inverse/7/[1,0,1]/6/14/big	WRONG	1:4	21
+START	inverse/7/[1,0,1]/6/14/normalized
+RESULT	inverse/7/[1,0,1]/6/14/normalized	PASS	1:3	21
+START	inverse/7/[1,0,1]/6/15/int
+RESULT	inverse/7/[1,0,1]/6/15/int	WRONG	0:5,1:4	10
+START	inverse/7/[1,0,1]/6/15/big
+RESULT	inverse/7/[1,0,1]/6/15/big	WRONG	0:5,1:4	10
+START	inverse/7/[1,0,1]/6/15/normalized
+RESULT	inverse/7/[1,0,1]/6/15/normalized	PASS	0:3,1:1	10
+START	inverse/7/[1,0,1]/6/16/int
+RESULT	inverse/7/[1,0,1]/6/16/int	WRONG	0:3,1:4	37
+START	inverse/7/[1,0,1]/6/16/big
+RESULT	inverse/7/[1,0,1]/6/16/big	WRONG	0:3,1:4	37
+START	inverse/7/[1,0,1]/6/16/normalized
+RESULT	inverse/7/[1,0,1]/6/16/normalized	PASS	0:2,1:5	37
+START	inverse/7/[1,0,1]/6/17/int
+RESULT	inverse/7/[1,0,1]/6/17/int	WRONG	0:1,1:4	18
+START	inverse/7/[1,0,1]/6/17/big
+RESULT	inverse/7/[1,0,1]/6/17/big	WRONG	0:1,1:4	18
+START	inverse/7/[1,0,1]/6/17/normalized
+RESULT	inverse/7/[1,0,1]/6/17/normalized	PASS	0:4,1:2	18
+START	inverse/7/[1,0,1]/6/18/int
+RESULT	inverse/7/[1,0,1]/6/18/int	WRONG	0:6,1:4	17
+START	inverse/7/[1,0,1]/6/18/big
+RESULT	inverse/7/[1,0,1]/6/18/big	WRONG	0:6,1:4	17
+START	inverse/7/[1,0,1]/6/18/normalized
+RESULT	inverse/7/[1,0,1]/6/18/normalized	PASS	0:3,1:2	17
+START	inverse/7/[1,0,1]/6/19/int
+RESULT	inverse/7/[1,0,1]/6/19/int	WRONG	0:4,1:4	40
+START	inverse/7/[1,0,1]/6/19/big
+RESULT	inverse/7/[1,0,1]/6/19/big	WRONG	0:4,1:4	40
+START	inverse/7/[1,0,1]/6/19/normalized
+RESULT	inverse/7/[1,0,1]/6/19/normalized	PASS	0:5,1:5	40
+START	inverse/7/[1,0,1]/6/20/int
+RESULT	inverse/7/[1,0,1]/6/20/int	WRONG	0:2,1:4	11
+START	inverse/7/[1,0,1]/6/20/big
+RESULT	inverse/7/[1,0,1]/6/20/big	WRONG	0:2,1:4	11
+START	inverse/7/[1,0,1]/6/20/normalized
+RESULT	inverse/7/[1,0,1]/6/20/normalized	PASS	0:4,1:1	11
+START	inverse/7/[1,0,1]/6/21/int
+RESULT	inverse/7/[1,0,1]/6/21/int	WRONG	1:5	14
+START	inverse/7/[1,0,1]/6/21/big
+RESULT	inverse/7/[1,0,1]/6/21/big	WRONG	1:5	14
+START	inverse/7/[1,0,1]/6/21/normalized
+RESULT	inverse/7/[1,0,1]/6/21/normalized	PASS	1:2	14
+START	inverse/7/[1,0,1]/6/22/int
+RESULT	inverse/7/[1,0,1]/6/22/int	WRONG	0:3,1:5	47
+START	inverse/7/[1,0,1]/6/22/big
+RESULT	inverse/7/[1,0,1]/6/22/big	WRONG	0:3,1:5	47
+START	inverse/7/[1,0,1]/6/22/normalized
+RESULT	inverse/7/[1,0,1]/6/22/normalized	PASS	0:5,1:6	47
+START	inverse/7/[1,0,1]/6/23/int
+RESULT	inverse/7/[1,0,1]/6/23/int	WRONG	0:6,1:5	26
+START	inverse/7/[1,0,1]/6/23/big
+RESULT	inverse/7/[1,0,1]/6/23/big	WRONG	0:6,1:5	26
+START	inverse/7/[1,0,1]/6/23/normalized
+RESULT	inverse/7/[1,0,1]/6/23/normalized	PASS	0:5,1:3	26
+START	inverse/7/[1,0,1]/6/24/int
+RESULT	inverse/7/[1,0,1]/6/24/int	WRONG	0:2,1:5	13
+START	inverse/7/[1,0,1]/6/24/big
+RESULT	inverse/7/[1,0,1]/6/24/big	WRONG	0:2,1:5	13
+START	inverse/7/[1,0,1]/6/24/normalized
+RESULT	inverse/7/[1,0,1]/6/24/normalized	PASS	0:6,1:1	13
+START	inverse/7/[1,0,1]/6/25/int
+RESULT	inverse/7/[1,0,1]/6/25/int	WRONG	0:5,1:5	8
+START	inverse/7/[1,0,1]/6/25/big
+RESULT	inverse/7/[1,0,1]/6/25/big	WRONG	0:5,1:5	8
+START	inverse/7/[1,0,1]/6/25/normalized
+RESULT	inverse/7/[1,0,1]/6/25/normalized	PASS	0:1,1:1	8
+START	inverse/7/[1,0,1]/6/26/int
+RESULT	inverse/7/[1,0,1]/6/26/int	WRONG	0:1,1:5	23
+START	inverse/7/[1,0,1]/6/26/big
+RESULT	inverse/7/[1,0,1]/6/26/big	WRONG	0:1,1:5	23
+START	inverse/7/[1,0,1]/6/26/normalized
+RESULT	inverse/7/[1,0,1]/6/26/normalized	PASS	0:2,1:3	23
+START	inverse/7/[1,0,1]/6/27/int
+RESULT	inverse/7/[1,0,1]/6/27/int	WRONG	0:4,1:5	44
+START	inverse/7/[1,0,1]/6/27/big
+RESULT	inverse/7/[1,0,1]/6/27/big	WRONG	0:4,1:5	44
+START	inverse/7/[1,0,1]/6/27/normalized
+RESULT	inverse/7/[1,0,1]/6/27/normalized	PASS	0:2,1:6	44
+START	inverse/7/[1,0,1]/6/28/int
+RESULT	inverse/7/[1,0,1]/6/28/int	WRONG	1:2	35
+START	inverse/7/[1,0,1]/6/28/big
+RESULT	inverse/7/[1,0,1]/6/28/big	WRONG	1:2	35
+START	inverse/7/[1,0,1]/6/28/normalized
+RESULT	inverse/7/[1,0,1]/6/28/normalized	PASS	1:5	35
+START	inverse/7/[1,0,1]/6/29/int
+RESULT	inverse/7/[1,0,1]/6/29/int	WRONG	0:3,1:2	12
+START	inverse/7/[1,0,1]/6/29/big
+RESULT	inverse/7/[1,0,1]/6/29/big	WRONG	0:3,1:2	12
+START	inverse/7/[1,0,1]/6/29/normalized
+RESULT	inverse/7/[1,0,1]/6/29/normalized	PASS	0:5,1:1	12
+START	inverse/7/[1,0,1]/6/30/int
+RESULT	inverse/7/[1,0,1]/6/30/int	WRONG	0:6,1:2	33
+START	inverse/7/[1,0,1]/6/30/big
+RESULT	inverse/7/[1,0,1]/6/30/big	WRONG	0:6,1:2	33
+START	inverse/7/[1,0,1]/6/30/normalized
+RESULT	inverse/7/[1,0,1]/6/30/normalized	PASS	0:5,1:4	33
+START	inverse/7/[1,0,1]/6/31/int
+RESULT	inverse/7/[1,0,1]/6/31/int	WRONG	0:2,1:2	48
+START	inverse/7/[1,0,1]/6/31/big
+RESULT	inverse/7/[1,0,1]/6/31/big	WRONG	0:2,1:2	48
+START	inverse/7/[1,0,1]/6/31/normalized
+RESULT	inverse/7/[1,0,1]/6/31/normalized	PASS	0:6,1:6	48
+START	inverse/7/[1,0,1]/6/32/int
+RESULT	inverse/7/[1,0,1]/6/32/int	WRONG	0:5,1:2	43
+START	inverse/7/[1,0,1]/6/32/big
+RESULT	inverse/7/[1,0,1]/6/32/big	WRONG	0:5,1:2	43
+START	inverse/7/[1,0,1]/6/32/normalized
+RESULT	inverse/7/[1,0,1]/6/32/normalized	PASS	0:1,1:6	43
+START	inverse/7/[1,0,1]/6/33/int
+RESULT	inverse/7/[1,0,1]/6/33/int	WRONG	0:1,1:2	30
+START	inverse/7/[1,0,1]/6/33/big
+RESULT	inverse/7/[1,0,1]/6/33/big	WRONG	0:1,1:2	30
+START	inverse/7/[1,0,1]/6/33/normalized
+RESULT	inverse/7/[1,0,1]/6/33/normalized	PASS	0:2,1:4	30
+START	inverse/7/[1,0,1]/6/34/int
+RESULT	inverse/7/[1,0,1]/6/34/int	WRONG	0:4,1:2	9
+START	inverse/7/[1,0,1]/6/34/big
+RESULT	inverse/7/[1,0,1]/6/34/big	WRONG	0:4,1:2	9
+START	inverse/7/[1,0,1]/6/34/normalized
+RESULT	inverse/7/[1,0,1]/6/34/normalized	PASS	0:2,1:1	9
+START	inverse/7/[1,0,1]/6/35/int
+RESULT	inverse/7/[1,0,1]/6/35/int	WRONG	1:3	28
+START	inverse/7/[1,0,1]/6/35/big
+RESULT	inverse/7/[1,0,1]/6/35/big	WRONG	1:3	28
+START	inverse/7/[1,0,1]/6/35/normalized
+RESULT	inverse/7/[1,0,1]/6/35/normalized	PASS	1:4	28
+START	inverse/7/[1,0,1]/6/36/int
+RESULT	inverse/7/[1,0,1]/6/36/int	WRONG	0:5,1:3	45
+START	inverse/7/[1,0,1]/6/36/big
+RESULT	inverse/7/[1,0,1]/6/36/big	WRONG	0:5,1:3	45
+START	inverse/7/[1,0,1]/6/36/normalized
+RESULT	inverse/7/[1,0,1]/6/36/normalized	PASS	0:3,1:6	45
+START	inverse/7/[1,0,1]/6/37/int
+RESULT	inverse/7/[1,0,1]/6/37/int	WRONG	0:3,1:3	16
+START	inverse/7/[1,0,1]/6/37/big
+RESULT	inverse/7/[1,0,1]/6/37/big	WRONG	0:3,1:3	16
+START	inverse/7/[1,0,1]/6/37/normalized
+RESULT	inverse/7/[1,0,1]/6/37/normalized	PASS	0:2,1:2	16
+START	inverse/7/[1,0,1]/6/38/int
+RESULT	inverse/7/[1,0,1]/6/38/int	WRONG	0:1,1:3	39
+START	inverse/7/[1,0,1]/6/38/big
+RESULT	inverse/7/[1,0,1]/6/38/big	WRONG	0:1,1:3	39
+START	inverse/7/[1,0,1]/6/38/normalized
+RESULT	inverse/7/[1,0,1]/6/38/normalized	PASS	0:4,1:5	39
+START	inverse/7/[1,0,1]/6/39/int
+RESULT	inverse/7/[1,0,1]/6/39/int	WRONG	0:6,1:3	38
+START	inverse/7/[1,0,1]/6/39/big
+RESULT	inverse/7/[1,0,1]/6/39/big	WRONG	0:6,1:3	38
+START	inverse/7/[1,0,1]/6/39/normalized
+RESULT	inverse/7/[1,0,1]/6/39/normalized	PASS	0:3,1:5	38
+START	inverse/7/[1,0,1]/6/40/int
+RESULT	inverse/7/[1,0,1]/6/40/int	WRONG	0:4,1:3	19
+START	inverse/7/[1,0,1]/6/40/big
+RESULT	inverse/7/[1,0,1]/6/40/big	WRONG	0:4,1:3	19
+START	inverse/7/[1,0,1]/6/40/normalized
+RESULT	inverse/7/[1,0,1]/6/40/normalized	PASS	0:5,1:2	19
+START	inverse/7/[1,0,1]/6/41/int
+RESULT	inverse/7/[1,0,1]/6/41/int	WRONG	0:2,1:3	46
+START	inverse/7/[1,0,1]/6/41/big
+RESULT	inverse/7/[1,0,1]/6/41/big	WRONG	0:2,1:3	46
+START	inverse/7/[1,0,1]/6/41/normalized
+RESULT	inverse/7/[1,0,1]/6/41/normalized	PASS	0:4,1:6	46
+START	inverse/7/[1,0,1]/6/42/int
+RESULT	inverse/7/[1,0,1]/6/42/int	WRONG	1:6	7
+START	inverse/7/[1,0,1]/6/42/big
+RESULT	inverse/7/[1,0,1]/6/42/big	WRONG	1:6	7
+START	inverse/7/[1,0,1]/6/42/normalized
+RESULT	inverse/7/[1,0,1]/6/42/normalized	PASS	1:1	7
+START	inverse/7/[1,0,1]/6/43/int
+RESULT	inverse/7/[1,0,1]/6/43/int	WRONG	0:6,1:6	32
+START	inverse/7/[1,0,1]/6/43/big
+RESULT	inverse/7/[1,0,1]/6/43/big	WRONG	0:6,1:6	32
+START	inverse/7/[1,0,1]/6/43/normalized
+RESULT	inverse/7/[1,0,1]/6/43/normalized	PASS	0:4,1:4	32
+START	inverse/7/[1,0,1]/6/44/int
+RESULT	inverse/7/[1,0,1]/6/44/int	WRONG	0:5,1:6	27
+START	inverse/7/[1,0,1]/6/44/big
+RESULT	inverse/7/[1,0,1]/6/44/big	WRONG	0:5,1:6	27
+START	inverse/7/[1,0,1]/6/44/normalized
+RESULT	inverse/7/[1,0,1]/6/44/normalized	PASS	0:6,1:3	27
+START	inverse/7/[1,0,1]/6/45/int
+RESULT	inverse/7/[1,0,1]/6/45/int	WRONG	0:4,1:6	36
+START	inverse/7/[1,0,1]/6/45/big
+RESULT	inverse/7/[1,0,1]/6/45/big	WRONG	0:4,1:6	36
+START	inverse/7/[1,0,1]/6/45/normalized
+RESULT	inverse/7/[1,0,1]/6/45/normalized	PASS	0:1,1:5	36
+START	inverse/7/[1,0,1]/6/46/int
+RESULT	inverse/7/[1,0,1]/6/46/int	WRONG	0:3,1:6	41
+START	inverse/7/[1,0,1]/6/46/big
+RESULT	inverse/7/[1,0,1]/6/46/big	WRONG	0:3,1:6	41
+START	inverse/7/[1,0,1]/6/46/normalized
+RESULT	inverse/7/[1,0,1]/6/46/normalized	PASS	0:6,1:5	41
+START	inverse/7/[1,0,1]/6/47/int
+RESULT	inverse/7/[1,0,1]/6/47/int	WRONG	0:2,1:6	22
+START	inverse/7/[1,0,1]/6/47/big
+RESULT	inverse/7/[1,0,1]/6/47/big	WRONG	0:2,1:6	22
+START	inverse/7/[1,0,1]/6/47/normalized
+RESULT	inverse/7/[1,0,1]/6/47/normalized	PASS	0:1,1:3	22
+START	inverse/7/[1,0,1]/6/48/int
+RESULT	inverse/7/[1,0,1]/6/48/int	WRONG	0:1,1:6	31
+START	inverse/7/[1,0,1]/6/48/big
+RESULT	inverse/7/[1,0,1]/6/48/big	WRONG	0:1,1:6	31
+START	inverse/7/[1,0,1]/6/48/normalized
+RESULT	inverse/7/[1,0,1]/6/48/normalized	PASS	0:3,1:4	31
+SUMMARY	1212

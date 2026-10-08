@@ -1,0 +1,48 @@
+name: Coverage
+
+on:
+  push:
+    branches:
+    - master
+  pull_request:
+
+jobs:
+  build:
+
+    name: "Coverage"
+
+    runs-on: ubuntu-24.04
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Get Concurrency
+      run: echo NPROC="nproc" >> $GITHUB_ENV
+
+    - name: Set Up Dependencies
+      run: |
+        sudo apt install -y cmake ninja-build pkg-config lcov g++-13 libcairo2-dev gnuplot libmpfr-dev python3-pip python3-dev gnuplot
+        sudo pip3 install coverage pytest
+
+    - name: Create Build Environment
+      run: cmake -E make_directory ${{runner.workspace}}/build
+
+    - name: Configure CMake
+      working-directory: ${{runner.workspace}}/build
+      run: cmake $GITHUB_WORKSPACE -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_COMPILER=g++-13 -G "Ninja" -DCOVERAGE=ON -DPYTHON_ENFORCE_TESTS=ON
+
+    - name: Build Library, Bindings and Tests
+      working-directory: ${{runner.workspace}}/build
+      run: cmake --build . --parallel $($NPROC) --target pyariadne tests
+
+    - name: Test
+      working-directory: ${{runner.workspace}}/build
+      run: ctest -j $($NPROC) --output-on-failure
+
+    - name: Generate Code Coverage
+      working-directory: ${{runner.workspace}}/ariadne
+      run: |
+        lcov --directory ${{runner.workspace}}/build --capture --output-file coverage.info
+        lcov --remove coverage.info '/usr/*' --output-file coverage.info
+        lcov --list coverage.info
+        bash <(curl -s https://codecov.io/bash) -f coverage.info || echo "Codecov did not collect coverage reports"

@@ -1,0 +1,42 @@
+curve_region_clone: 1000000 iterations in 3.523199ms (3ns/iter), checksum=1000000
+curve_region_empty: 1000000 iterations in 3.082049ms (3ns/iter), checksum=0
+cubic_bezier_exact_area_moments: 20000 iterations in 304.405793ms (15.22µs/iter)
+cubic_bezier_prefix_area_moments: 20000 iterations in 395.516454ms (19.775µs/iter)
+cubic_bezier_prefix_length_bounds: 20000 iterations in 86.970874ms (4.348µs/iter)
+curve_region_boolean_immediate_union: 1000 iterations in 205.512876ms (205.512µs/iter), checksum=0
+curve_region_boolean_immediate_all_ops: 1000 iterations in 424.682396ms (424.682µs/iter), checksum=0
+curve_region_boolean_retained_algebraic_all_ops: 100 iterations in 22.34209ms (223.42µs/iter), checksum=1100
+bezier_region_algebraic_ray_classification: 2000 iterations in 120.02621ms (60.013µs/iter), checksum=4000
+bezier_region_materialization: 20000 iterations in 65.959143ms (3.297µs/iter), checksum=0
+curve_region_cached_classification: 2000 iterations in 78.106851ms (39.053µs/iter), checksum=4000
+curve_region_immediate_native_signed_depth: 2000 iterations in 1.745801ms (872ns/iter), checksum=2000
+bezier_retained_region_materialization: 20000 iterations in 275.706149ms (13.785µs/iter), checksum=0
+curve_region_cached_algebraic_classification: 2000 iterations in 104.586377ms (52.293µs/iter), checksum=4000
+bezier_retained_algebraic_source_envelope: 20000 iterations in 312.171332ms (15.608µs/iter), checksum=0
+bezier_retained_algebraic_exact_endpoint_envelope: 20000 iterations in 134.857885ms (6.742µs/iter), checksum=0
+bezier_retained_algebraic_line_authoritative_roles: 20000 iterations in 3.147002905s (157.35µs/iter), checksum=0
+bezier_resolved_overlap_region_materialization: 20000 iterations in 523.833406ms (26.191µs/iter), checksum=0
+bezier_conic_region_exact_area: 20000 iterations in 579.050965ms (28.952µs/iter), checksum=0
+	Command being timed: "taskset -c 7 /tmp/hypercurve-local-refinement-frozen-baseline-region"
+	User time (seconds): 6.75
+	System time (seconds): 0.00
+	Percent of CPU this job got: 99%
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:06.79
+	Average shared text size (kbytes): 0
+	Average unshared data size (kbytes): 0
+	Average stack size (kbytes): 0
+	Average total size (kbytes): 0
+	Maximum resident set size (kbytes): 10256
+	Average resident set size (kbytes): 0
+	Major (requiring I/O) page faults: 0
+	Minor (reclaiming a frame) page faults: 443
+	Voluntary context switches: 1
+	Involuntary context switches: 224
+	Swaps: 0
+	File system inputs: 0
+	File system outputs: 0
+	Socket messages sent: 0
+	Socket messages received: 0
+	Signals delivered: 0
+	Page size (bytes): 4096
+	Exit status: 0

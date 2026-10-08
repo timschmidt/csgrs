@@ -1,0 +1,27 @@
+{
+  "returncode": 0,
+  "elapsed_seconds": 0.21393894898938015,
+  "normal_library_sha256": "afb7e837f49d41ad1dce4d9ab147b8080a87df90720cd11eb5dd2be9f57fdfd7",
+  "log": "mixed-circle-components-family-matrix.log",
+  "source": "native-rational-publication-family-matrix.rs",
+  "command": [
+    "rustc",
+    "--edition=2024",
+    "-O",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/native-rational-publication-family-matrix.rs",
+    "--extern",
+    "hypercurve=/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/libhypercurve-2c7ff6f3fbe07653.rlib",
+    "-L",
+    "dependency=/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps",
+    "-o",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/mixed-circle-components-family-matrix"
+  ],
+  "source_sha256": "4997d7958bc2ef9da3b91d65b97732be5c8c6d142015708f8360c02b5866c6bb",
+  "executable_sha256": "78a5b1acb62b894f157f0ffcfecaf5c6e72591c3d733937893c3e4bb9d03c0bf",
+  "counts": {
+    "complete_queries": 416,
+    "restrictions": 1440,
+    "point_replays": 5120,
+    "path_topologies": 8
+  }
+}

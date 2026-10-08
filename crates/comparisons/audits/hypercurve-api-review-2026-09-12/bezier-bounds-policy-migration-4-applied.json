@@ -1,0 +1,14 @@
+[
+  {
+    "file": "hypercurve/tests/hypercurve_nurbs.rs",
+    "before_sha256": "b0e24d3c428aab56aa1b09f3c1486c2b7dbf250aaf170b555bd97545dd45bfce",
+    "after_sha256": "25ad8f494be1228e9cb3ab9dcfa426d76474cc6f07176c989fc80d30605b6dfa",
+    "deletions": [
+      {
+        "byte_start": 36629,
+        "byte_end": 36650,
+        "old": "&CurveContext::STRICT"
+      }
+    ]
+  }
+]

@@ -1,0 +1,7 @@
+{
+  "outer_session": 78300,
+  "outer_exit_code": 1,
+  "terminal": "common-point-classification-v738-terminal.json",
+  "passed_cases": 340,
+  "failure": "nonconvex_algebraic_chord_expansion_is_exact_and_local_collapse_is_explicit"
+}

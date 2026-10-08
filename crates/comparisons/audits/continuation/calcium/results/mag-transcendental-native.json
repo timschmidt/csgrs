@@ -1,0 +1,11 @@
+{
+  "tag": "mag-transcendental-native",
+  "started": "2026-09-09T23:34:12.028Z",
+  "finished": "2026-09-09T23:34:12.194Z",
+  "elapsedSeconds": 0.162885217,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison",
+  "command": "/tmp/calcium-mag-transcendental.p8Wy83/mag-transcendental-controls",
+  "args": [],
+  "code": 0,
+  "signal": null
+}

@@ -1,0 +1,18 @@
+{
+  "tag": "polynomial-decision-native-memcheck",
+  "started": "2026-09-08T22:53:22.904Z",
+  "finished": "2026-09-08T22:53:23.328Z",
+  "elapsedSeconds": 0.42173858200000003,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison",
+  "command": "valgrind",
+  "args": [
+    "--tool=memcheck",
+    "--leak-check=full",
+    "--show-leak-kinds=all",
+    "--errors-for-leak-kinds=definite,indirect,possible",
+    "--error-exitcode=99",
+    "/tmp/calcium-polynomial-decision.ItisYX/flint-polynomial-decision-probe"
+  ],
+  "code": 0,
+  "signal": null
+}

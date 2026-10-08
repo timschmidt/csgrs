@@ -1,0 +1,14 @@
+{
+  "repos": {
+    "hypercurve": {
+      "commit": "07b77cbe2512f5293713344abc239777797581f2",
+      "parent": "9aad1db6734065752a9b6d20648aceecddfebeae",
+      "paths": {
+        "src/bezier_offset.rs": "7a167c101692b2e10d6222159e7ccda6ce5c43c9967124b58658f8e5aaa1e7c3"
+      }
+    }
+  },
+  "qualification": "stationary-contact-signs-20260927-v498-terminal.json",
+  "verified_source_files": 2047,
+  "clean_repositories": 30
+}

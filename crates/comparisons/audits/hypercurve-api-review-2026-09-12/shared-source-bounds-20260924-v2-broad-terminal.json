@@ -1,0 +1,117 @@
+{
+  "checks": [
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "clippy",
+        "--all-targets",
+        "--all-features",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "returncode": 0,
+      "log": "shared-source-bounds-20260924-v2-check-0.log"
+    },
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "clippy",
+        "--all-targets",
+        "--no-default-features",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "returncode": 0,
+      "log": "shared-source-bounds-20260924-v2-check-1.log"
+    }
+  ],
+  "command": [
+    "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+    "test",
+    "--release",
+    "--all-features",
+    "--no-run",
+    "--message-format=json",
+    "--locked",
+    "--offline",
+    "--test",
+    "hypercurve_path_closure",
+    "--test",
+    "hypercurve_curve_region_boolean",
+    "--test",
+    "hypercurve_bezier_arrangement",
+    "--test",
+    "hypercurve_curve_region_boolean_fuzz",
+    "--test",
+    "hypercurve_pcb_boolean_regressions"
+  ],
+  "binaries": {
+    "hypercurve": {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/shared-source-bounds-20260924-v2-libtest",
+      "sha256": "4a1258d18cff24e0dc2bbedd60c7f34f05281b8204fb77577392883cdd9882f3"
+    },
+    "hypercurve_curve_region_boolean": {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/shared-source-bounds-20260924-v2-broad-hypercurve_curve_region_boolean",
+      "sha256": "a0265ec89943b6c3377675e39b016de74990eb3ecb33f9dd24cc21ad863038e5"
+    },
+    "hypercurve_path_closure": {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/shared-source-bounds-20260924-v2-broad-hypercurve_path_closure",
+      "sha256": "cf60fba0f8de9113192908cc8372b9dcba3adea68bda1565c919336883370a6c"
+    },
+    "hypercurve_bezier_arrangement": {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/shared-source-bounds-20260924-v2-broad-hypercurve_bezier_arrangement",
+      "sha256": "110a33fc4a62f25802c9291ce1091aecacdc4ebd86ef83903bacc1cd5277a928"
+    },
+    "hypercurve_curve_region_boolean_fuzz": {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/shared-source-bounds-20260924-v2-broad-hypercurve_curve_region_boolean_fuzz",
+      "sha256": "622c1dd3563b438890181e782f49ece26d18c4524fc2593f4a5399e9b706f468"
+    },
+    "hypercurve_pcb_boolean_regressions": {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/shared-source-bounds-20260924-v2-broad-hypercurve_pcb_boolean_regressions",
+      "sha256": "dfd13dc8b1c16f031a1a58ef8b3848c4a714430d81f654d624cfbbcfc707f6e1"
+    }
+  },
+  "attempted": 437,
+  "passed": 431,
+  "ignored": 3,
+  "nonpasses": [
+    {
+      "target": "hypercurve",
+      "name": "bezier_region::curve_corner_chain::tests::extended_fillet_region_classifies_both_sides_of_its_companion",
+      "returncode": "timeout",
+      "passed": false,
+      "ignored": false,
+      "elapsed_seconds": 75.00416293391027,
+      "limit_seconds": 75,
+      "log": "shared-source-bounds-20260924-v2-broad-case-0191.log"
+    },
+    {
+      "target": "hypercurve",
+      "name": "bezier_region::tests::one_fragment_ph_loop_projective_corners_retain_one_extended_interval",
+      "returncode": 101,
+      "passed": false,
+      "ignored": false,
+      "elapsed_seconds": 0.06443182798102498,
+      "limit_seconds": 75,
+      "log": "shared-source-bounds-20260924-v2-broad-case-0211.log"
+    },
+    {
+      "target": "hypercurve",
+      "name": "bezier_region::tests::pair_native_boolean_algebraic_chord_corner_publishes_a_third_generation_fillet",
+      "returncode": "timeout",
+      "passed": false,
+      "ignored": false,
+      "elapsed_seconds": 75.00277767900843,
+      "limit_seconds": 75,
+      "log": "shared-source-bounds-20260924-v2-broad-case-0213.log"
+    }
+  ],
+  "all_sources_unchanged": true,
+  "all_processes_reaped": true
+}

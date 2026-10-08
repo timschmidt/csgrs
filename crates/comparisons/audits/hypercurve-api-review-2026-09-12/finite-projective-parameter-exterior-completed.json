@@ -1,0 +1,30 @@
+{
+  "returncode": 0,
+  "elapsed_seconds": 0.21392643798026256,
+  "normal_library_sha256": "5cc578428c0ecd41b54f2dca195f416779e365698dcb4ad46588dd84bd0ef96a",
+  "log": "finite-projective-parameter-exterior-completed.log",
+  "source": "finite-circle-affine-completed.rs",
+  "command": [
+    "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustc",
+    "--edition=2024",
+    "-O",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-circle-affine-completed.rs",
+    "--extern",
+    "hypercurve=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypercurve-1201b30e361703ad.rlib",
+    "-L",
+    "dependency=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps",
+    "-o",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-projective-parameter-exterior-completed"
+  ],
+  "run_command": [
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-projective-parameter-exterior-completed"
+  ],
+  "source_sha256": "8cf0ac89526f9eb5b9a11532f6c4342c72840c80b608f5b843a0b7766b93bf97",
+  "executable_sha256": "3370b4054772237b1b8b5dd00197e682a0d937876f1331374c123394d42490aa",
+  "counts": {
+    "complete": 8,
+    "incomplete": 0,
+    "point_replays": 16,
+    "topologies": 8
+  }
+}

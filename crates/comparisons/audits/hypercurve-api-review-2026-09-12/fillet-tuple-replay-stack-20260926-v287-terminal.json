@@ -1,0 +1,50 @@
+{
+  "command": [
+    "/usr/bin/gdb",
+    "--nx",
+    "--quiet",
+    "--batch",
+    "-ex",
+    "set pagination off",
+    "-ex",
+    "set confirm off",
+    "-ex",
+    "set debuginfod enabled off",
+    "-ex",
+    "set print frame-arguments none",
+    "-ex",
+    "set print elements 8",
+    "-ex",
+    "set substitute-path /home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/build-workspace-20260925 /home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/source-archives/selected-tuple-replay-20260926-v286",
+    "-ex",
+    "run",
+    "-ex",
+    "thread apply all bt 90",
+    "-ex",
+    "thread apply all bt -45",
+    "-ex",
+    "kill",
+    "-ex",
+    "quit",
+    "--args",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/selected-tuple-replay-20260926-v286-hypercurve_curve_region_promotion",
+    "--exact",
+    "approximate_512_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions",
+    "--nocapture",
+    "--test-threads=1"
+  ],
+  "source_manifest": "selected-tuple-replay-20260926-v286-sources.json",
+  "binary": {
+    "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/selected-tuple-replay-20260926-v286-hypercurve_curve_region_promotion",
+    "sha256": "fc0b91604e0ee6ead895a44d10766e1274a57f79d76cd9485fccf6b291b7285e"
+  },
+  "driver_sha256": "36f6d21469494932d7245b31176073b13288db3747cec9fb6606d503393031dd",
+  "all_processes_reaped": true,
+  "owned_inferiors": [
+    2371054
+  ],
+  "interrupt_sent": true,
+  "returncode": 0,
+  "elapsed_seconds": 35.46587034803815,
+  "stack_captured": true
+}

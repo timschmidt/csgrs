@@ -1,0 +1,57 @@
+{
+  "alumina-interface": [
+    "crates/alumina-interface-core/src/direct_motion.rs",
+    "crates/alumina-interface-core/src/machine_profile.rs",
+    "crates/alumina-interface-core/src/servo_motion.rs"
+  ],
+  "hypercurve": [
+    "benches/bezier_evaluation.rs",
+    "fuzz/fuzz_targets/hyperreal_representations.rs",
+    "src/bbox.rs",
+    "src/bezier_offset.rs",
+    "src/bezier_parameter.rs",
+    "src/curve_string.rs",
+    "src/rational_bezier_general.rs",
+    "src/self_intersect.rs"
+  ],
+  "hyperlattice": [
+    "benches/retained_fuzz.rs",
+    "fuzz/fuzz_targets/hyperreal_representations.rs",
+    "tests/real_representations.rs"
+  ],
+  "hyperlimit": [
+    "scripts/generate_stack_exactness_file_audit.sh",
+    "src/resolve.rs",
+    "tests/adversarial_predicates.rs",
+    "tests/real_representations.rs"
+  ],
+  "hypermesh": [
+    "fuzz/fuzz_targets/boolean_hyperreal_representations.rs",
+    "src/point_interner.rs"
+  ],
+  "hyperpath": [
+    "fuzz/fuzz_targets/hyperreal_representations.rs"
+  ],
+  "hyperreal": [
+    "README.md",
+    "benches/numerical_micro.rs",
+    "benches/real_representations.rs",
+    "benches/scalar_micro.rs",
+    "examples/allocation_profile.rs",
+    "fuzz/fuzz_targets/real_exact.rs",
+    "fuzz/fuzz_targets/structural_representations.rs",
+    "src/computable/node/linear_demand_tests.rs",
+    "src/real/arithmetic/facts.rs",
+    "src/real/arithmetic/tests.rs",
+    "src/real/tests.rs",
+    "tests/gmp_api_coverage.rs",
+    "tests/real_representations.rs"
+  ],
+  "hypersolve": [
+    "fuzz/fuzz_targets/hyperreal_representations.rs",
+    "src/algebraic_sqrt.rs",
+    "src/bareiss.rs",
+    "src/tensor_resultant.rs",
+    "tests/real_representations.rs"
+  ]
+}

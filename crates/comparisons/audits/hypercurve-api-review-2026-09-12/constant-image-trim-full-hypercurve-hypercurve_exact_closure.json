@@ -1,0 +1,31 @@
+{
+  "repo": "hypercurve",
+  "target": "hypercurve_exact_closure",
+  "binary": "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve_exact_closure-1228878071349ea9",
+  "command": [
+    "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve_exact_closure-1228878071349ea9",
+    "--test-threads=4",
+    "--color",
+    "never"
+  ],
+  "sha256": "d546b1f7958191a02600f9dede43e8dc4d9b86e2b7129df884f882112cc9a776",
+  "returncode": 0,
+  "timed_out": false,
+  "elapsed_seconds": 27.349347946990747,
+  "log": "constant-image-trim-full-hypercurve-hypercurve_exact_closure.log",
+  "passed": [
+    "identical_and_empty_booleans_regularize_authored_winding",
+    "authored_rational_cap_offset_does_not_require_a_signed_area_representation",
+    "zero_offset_regularizes_overlapping_authored_material",
+    "authored_rational_boolean_operands_do_not_require_signed_area",
+    "normalized_rational_cap_round_offset_retains_exact_unit_directions",
+    "curved_offset_regularizes_interior_folds_despite_convex_endpoint_turns"
+  ],
+  "failed": [],
+  "ignored": [],
+  "summaries": [
+    "test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 27.31s"
+  ],
+  "new_failures": [],
+  "known_failures": []
+}

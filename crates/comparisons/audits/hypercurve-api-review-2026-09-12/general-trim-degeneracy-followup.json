@@ -1,0 +1,27 @@
+{
+  "status": "resolved for positive-length curve and path clipping",
+  "goal_status": "active",
+  "probe": "general-trim-degenerate-probe.rs",
+  "log": "general-trim-degenerate-probe.log",
+  "normal_library_sha256": "0c0c677aec8bb0f04e3e3694aa275299386a546e3380885fb6eb0972e1797da8",
+  "observations": [
+    "A constant quadratic at (0,0), inside the square [-5,5]^2, trims to one Certified Curve2 point trace.",
+    "The same constant quadratic at (5,0), on the square boundary, blocks with Subdivision/QuadraticBezier/Boundary.",
+    "The same constant quadratic at (6,0), outside, trims to an empty Certified result."
+  ],
+  "semantic_contract": "Curve2 region trimming currently promises positive-length pieces and drops isolated tangency. Constant source images need consistent handling under that contract.",
+  "evidence_note": "The former native-only trim also classified a constant fragment representative and retained Inside fragments; the same boundary component blocker existed before this migration. No baseline constant-curve executable probe was run.",
+  "resolution": {
+    "commit": "41c645b169dbcf420cd1800e436fbf5468b4ed81",
+    "qualification": "constant-image-trim-qualification.json",
+    "evidence_audit": "constant-image-trim-evidence-audit.md",
+    "probe": "constant-image-trim-degenerate-probe.json",
+    "matrix": "constant-image-trim-matrix.json"
+  },
+  "completed_work": [
+    "Consolidate exact point-image recognition on prepared supports, including rational homogeneous controls and selected restrictions, without using endpoint equality as a constancy proof.",
+    "Prevent constant images from becoming unexplained shared-parameter-component blockers in positive-length clipping.",
+    "Define and test connected path grouping across constant spline spans and constant authored curves while preserving genuine gaps caused by excluded positive-length excursions.",
+    "Cover inside, boundary, outside, zero weights where supported, selected parameter cuts, reversal, both policies and repeated operations."
+  ]
+}

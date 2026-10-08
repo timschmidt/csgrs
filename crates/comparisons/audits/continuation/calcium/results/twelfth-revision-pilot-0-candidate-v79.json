@@ -1,0 +1,18 @@
+{
+  "tag": "twelfth-revision-pilot-0-candidate-v79",
+  "started": "2026-09-12T00:52:17.504Z",
+  "finished": "2026-09-12T00:52:17.600Z",
+  "elapsedSeconds": 0.093011583,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "taskset",
+  "args": [
+    "-c",
+    "2",
+    "/tmp/calcium-twelfth-revision-v79.BSucfi/candidate-cpu",
+    "cpu",
+    "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/twelfth-cost-input-v78.json",
+    "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/twelfth-revision-pilot-0-candidate-v79-plan.json"
+  ],
+  "code": 0,
+  "signal": null
+}

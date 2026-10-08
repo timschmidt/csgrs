@@ -1,0 +1,70 @@
+{
+  "status": "committed; original goal remains active",
+  "goal_status": "active",
+  "base_commit": "ef0354f60e200c64c52e609ded7dadd63cb24f70",
+  "change": [
+    "Dispatch retained chord/chord and chord/rational-source curve and open-path pairs through shared finite geometry kernels.",
+    "Move source-related and exact-linear chord replay out of the region adapter; preserve all open-curve endpoint contacts while region adjacency stays local.",
+    "Retain typed rational, chord/rational and chord/chord overlap transport with original support authority.",
+    "Standardize chord-pair ranges as paired boundaries in the first traversal order and update all internal consumers directly.",
+    "Reuse monotone source-interval certificates for selected overlap clipping and finite-chord certificates for point evaluation; avoid root promotion and Cartesian incidence reconstruction.",
+    "Preserve reusable chord/rational tangent and contact-location certificates on recursive affine-line parameters; decline the shortcut rather than overwrite prior specialized identity.",
+    "Replace storage/dispatch-specific trim and offset assertions with independent exact endpoint, point and parameter-reuse checks while retaining direct recursive kernel coverage."
+  ],
+  "regressions": {
+    "generated_chords_keep_open_contacts_and_general_locations": "128 primary curve/open-path queries: crossing, source endpoint, authored endpoint and disjointness; both policies, reversals, operand orders; exact evaluation and subdivision.",
+    "generated_chord_overlaps_retain_independent_and_selected_boundaries": "48 queries: independently generated chords, authored radical lines and selected tails; paired endpoint identity, relative orientation and evaluation.",
+    "generated_chord_cuts_reenter_collinear_endpoint_intersections": "48 primary queries plus four setup intersections: contact -> chord split -> overlap -> line split -> exact collinear endpoint intersection.",
+    "evidence_regressions": "Four focused tests pass, including the unchanged third-field tangent replay check, independent trim endpoints and direct recursive/common offset-line replay."
+  },
+  "qualification": {
+    "results": "chord-support-intersection-full-results.json",
+    "targets": 49,
+    "passed": 2166,
+    "failed": 9,
+    "ignored": 9,
+    "new_failures": 0,
+    "hypercurve_passed": 1934,
+    "hyperbrep_passed": 232,
+    "remaining_failures": [
+      "approximate_512_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions",
+      "arc_parabola_fillet_recovers_exact_complement_contacts",
+      "axis_aligned_algebraic_chords_reenter_exact_region_offsets",
+      "line_parabola_fillet_extends_the_regular_incident_cell_exactly",
+      "non_ph_bezier_pair_projective_fillet_retains_algebraic_extensions",
+      "nonconvex_algebraic_chord_expansion_is_exact_and_local_collapse_is_explicit",
+      "strict_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions",
+      "unified_mixed_line_arc_erosion_splits_after_a_curved_neck_collapse",
+      "unified_region_non_miter_erosions_split_after_neck_collapse"
+    ],
+    "timeouts": 0,
+    "previously_unqualified_expensive_cases": 8,
+    "full_suite_passing": false,
+    "all_target_checks": true,
+    "immutable_sources": true,
+    "source_files": 396,
+    "formatting_and_whitespace_checks": true,
+    "caller_audit": "chord-support-intersection-caller-audit.json"
+  },
+  "generated_pair_probe": {
+    "record": "chord-support-intersection-generated-pairs-probe-final.json",
+    "baseline_unresolved_pairs": 18,
+    "remaining_unresolved_pairs": 0,
+    "independent_region_empty_xors": 8,
+    "rlib_sha256": "2fd7279d1e56cf56de0db69880ebdb9ebe2f4f31dc62e7a11aa9b767263b2758"
+  },
+  "evidence_audit": "chord-support-intersection-evidence-audit.md",
+  "pre_evidence_qualification": "chord-support-intersection-pre-evidence-qualification/",
+  "performance_claim": null,
+  "remaining": [
+    "Selected-circle and analytic-parallel common pair dispatch.",
+    "Finite exterior source domains and complete partially coincident non-injective/retraced parameter relations.",
+    "Inverse branch transport for a later narrower chord domain in a chord/rational correspondence.",
+    "General curve/path split topology without native Bezier materialization.",
+    "Nine pre-existing promotion failures and eight expensive unqualified cases.",
+    "The broader full-family API, region-normalization and computational-closure architecture plan."
+  ],
+  "commit": "0facb05f1c0949c475a98be078dcbc389b522cfd",
+  "workspace_clean_repositories": 30,
+  "workspace_after_commit": "chord-support-intersection-workspace-after-commit.json"
+}

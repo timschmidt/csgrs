@@ -1,0 +1,84 @@
+\doxysubsection{Argument\+Parser\+Interface Class Reference}
+\hypertarget{classAriadne_1_1ArgumentParserInterface}{}\label{classAriadne_1_1ArgumentParserInterface}\index{ArgumentParserInterface@{ArgumentParserInterface}}
+
+
+{\ttfamily \#include $<$command\+\_\+line\+\_\+interface.\+hpp$>$}
+
+
+
+\doxysubsubsection{Description}
+Interface for a parser for a given CLI argument. Inheritance diagram for Argument\+Parser\+Interface\+:\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[height=2.000000cm]{classAriadne_1_1ArgumentParserInterface}
+\end{center}
+\end{figure}
+\doxysubsubsubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+virtual \mbox{\hyperlink{namespaceAriadne_a76a8b016e5ad61faf9062cc387df5016}{Bool}} \mbox{\hyperlink{classAriadne_1_1ArgumentParserInterface_ae702ba4a04e7ddf2138b35e38c43f2f8}{is\+\_\+consumable}} (\mbox{\hyperlink{classAriadne_1_1ArgumentStream}{Argument\+Stream}} const \&stream) const =0
+\begin{DoxyCompactList}\small\item\em If the tip of the stream is consumable by this parser. \end{DoxyCompactList}\item 
+virtual \mbox{\hyperlink{classAriadne_1_1ArgumentPack}{Argument\+Pack}} \mbox{\hyperlink{classAriadne_1_1ArgumentParserInterface_a015b52492b354b609d03949a6c1dd55c}{consume}} (\mbox{\hyperlink{classAriadne_1_1ArgumentStream}{Argument\+Stream}} \&stream) const =0
+\begin{DoxyCompactList}\small\item\em Consume the stream, returning a pack of the arguments for processing. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1ArgumentParserInterface_a1914a7561124e173d2dd75d942a2b8fa}\label{classAriadne_1_1ArgumentParserInterface_a1914a7561124e173d2dd75d942a2b8fa} 
+virtual Size\+Type {\bfseries help\+\_\+description\+\_\+header\+\_\+size} () const =0
+\begin{DoxyCompactList}\small\item\em The size in characters of the help description header for the argument. \end{DoxyCompactList}\item 
+virtual \mbox{\hyperlink{classAriadne_1_1String}{String}} \mbox{\hyperlink{classAriadne_1_1ArgumentParserInterface_a583e1c8bff1be421af998061fdab5aff}{help\+\_\+description}} (Size\+Type num\+\_\+chars\+\_\+to\+\_\+separate\+\_\+instructions) const =0
+\begin{DoxyCompactList}\small\item\em The description to print for the help. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\label{doc-func-members}
+\Hypertarget{classAriadne_1_1ArgumentParserInterface_doc-func-members}
+\doxysubsubsection{Member Function Documentation}
+\Hypertarget{classAriadne_1_1ArgumentParserInterface_ae702ba4a04e7ddf2138b35e38c43f2f8}\index{ArgumentParserInterface@{ArgumentParserInterface}!is\_consumable@{is\_consumable}}
+\index{is\_consumable@{is\_consumable}!ArgumentParserInterface@{ArgumentParserInterface}}
+\doxyparagraph{\texorpdfstring{is\_consumable()}{is\_consumable()}}
+{\footnotesize\ttfamily \label{classAriadne_1_1ArgumentParserInterface_ae702ba4a04e7ddf2138b35e38c43f2f8} 
+virtual \mbox{\hyperlink{namespaceAriadne_a76a8b016e5ad61faf9062cc387df5016}{Bool}} is\+\_\+consumable (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{classAriadne_1_1ArgumentStream}{Argument\+Stream}} const \&}]{stream}{}\end{DoxyParamCaption}) const\hspace{0.3cm}{\ttfamily [pure virtual]}}
+
+
+
+If the tip of the stream is consumable by this parser. 
+
+Checks only the kind, not the value 
+
+Implemented in \mbox{\hyperlink{classAriadne_1_1ArgumentParserBase_a74269b3c00b2f8b62fa9fce4040726a7}{Argument\+Parser\+Base}}.
+
+\Hypertarget{classAriadne_1_1ArgumentParserInterface_a015b52492b354b609d03949a6c1dd55c}\index{ArgumentParserInterface@{ArgumentParserInterface}!consume@{consume}}
+\index{consume@{consume}!ArgumentParserInterface@{ArgumentParserInterface}}
+\doxyparagraph{\texorpdfstring{consume()}{consume()}}
+{\footnotesize\ttfamily \label{classAriadne_1_1ArgumentParserInterface_a015b52492b354b609d03949a6c1dd55c} 
+virtual \mbox{\hyperlink{classAriadne_1_1ArgumentPack}{Argument\+Pack}} consume (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{classAriadne_1_1ArgumentStream}{Argument\+Stream}} \&}]{stream}{}\end{DoxyParamCaption}) const\hspace{0.3cm}{\ttfamily [pure virtual]}}
+
+
+
+Consume the stream, returning a pack of the arguments for processing. 
+
+
+\begin{DoxyExceptions}{Exceptions}
+{\em \doxylink{classAriadne_1_1InvalidArgumentValueException}{Invalid\+Argument\+Value\+Exception}} & if the value is incorrect\\
+\hline
+\end{DoxyExceptions}
+Assumes that it has already been checked by is\+\_\+consumable 
+
+Implemented in \mbox{\hyperlink{classAriadne_1_1ArgumentParserBase_a23688b54569b903e666bb34859404ff1}{Argument\+Parser\+Base}}.
+
+\Hypertarget{classAriadne_1_1ArgumentParserInterface_a583e1c8bff1be421af998061fdab5aff}\index{ArgumentParserInterface@{ArgumentParserInterface}!help\_description@{help\_description}}
+\index{help\_description@{help\_description}!ArgumentParserInterface@{ArgumentParserInterface}}
+\doxyparagraph{\texorpdfstring{help\_description()}{help\_description()}}
+{\footnotesize\ttfamily \label{classAriadne_1_1ArgumentParserInterface_a583e1c8bff1be421af998061fdab5aff} 
+virtual \mbox{\hyperlink{classAriadne_1_1String}{String}} help\+\_\+description (\begin{DoxyParamCaption}\item[{Size\+Type}]{num\+\_\+chars\+\_\+to\+\_\+separate\+\_\+instructions}{}\end{DoxyParamCaption}) const\hspace{0.3cm}{\ttfamily [pure virtual]}}
+
+
+
+The description to print for the help. 
+
+Takes {\itshape num\+\_\+chars\+\_\+to\+\_\+separate\+\_\+instructions} as the number of spaces that separate the instructions in the help summary for the argument 
+
+Implemented in \mbox{\hyperlink{classAriadne_1_1ArgumentParserBase_a62bfab9370f2f9dca55c95e3c6b6a9b0}{Argument\+Parser\+Base}}.
+
+
+
+The documentation for this class was generated from the following file\+:\begin{DoxyCompactItemize}
+\item 
+source/io/\mbox{\hyperlink{command__line__interface_8hpp}{command\+\_\+line\+\_\+interface.\+hpp}}\end{DoxyCompactItemize}

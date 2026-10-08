@@ -1,0 +1,6 @@
+## V680 timed out; V684 Newton interpolation candidate prepared
+
+Exact outer 66933 reaped 1. All 217 affected HS release tests/three checks passed; the first strict HC monotone stress case still timed out at 186.405 seconds including reaping, so remaining three were not run. V682 initial stack could not unwind the worker; V683 corrected the target sysroot, captured hypersolve::curve_resultant::interpolate_samples in rational additions, and detached successfully. No production mutation or promotion.
+
+V684 isolated candidate keeps V679 rational value sampling and replaces cubic-work repeated Lagrange basis rebuilding with exact divided differences plus nested Newton-to-power conversion, using quadratic work and linear live storage. Arbitrary exact Real coefficients, nonuniform nodes, omitted degree-drop fibers, sign/scale and final strict trimming remain part of the contract. One independent test covers pi/sqrt(2) coefficients, nonuniform node reversal, duplicate-node rejection and empty interpolation. Independent Python Fraction recovery checked generated distinct nonuniform nodes through degree 13. Candidate formatter synchronously exited 0. V685 rerun prepared; same HS modules/checks then same four bounded HC stress cases. V681 kernel timing fixture remains unrun. Next unused artifact V686; full goal active.
+

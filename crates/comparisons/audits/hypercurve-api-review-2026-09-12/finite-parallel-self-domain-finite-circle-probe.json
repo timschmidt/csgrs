@@ -1,0 +1,25 @@
+{
+  "returncode": 0,
+  "elapsed_seconds": 0.03172374700079672,
+  "normal_library_sha256": "3373e039ed600e993316e2c8e687894bd65f5f108406e16140a53166e454f13e",
+  "log": "finite-parallel-self-domain-finite-circle-probe.log",
+  "source": "finite-circle-domain-next.rs",
+  "command": [
+    "rustc",
+    "--edition=2024",
+    "-O",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-circle-domain-next.rs",
+    "--extern",
+    "hypercurve=/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/libhypercurve-2c7ff6f3fbe07653.rlib",
+    "-L",
+    "dependency=/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps",
+    "-o",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-parallel-self-domain-finite-circle-probe"
+  ],
+  "source_sha256": "f427b563be65e95beaa9471b48ad919e3decaacc593810b7cb19910d91bad6dd",
+  "executable_sha256": "41d44fd794097d8989cc4d5128b55a728822d31eae97727bad88cc9885026f15",
+  "counts": {
+    "complete": 8,
+    "incomplete": 0
+  }
+}

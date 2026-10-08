@@ -1,0 +1,1258 @@
+diff --git a/src/bezier_offset.rs b/src/bezier_offset.rs
+--- a/src/bezier_offset.rs
++++ b/src/bezier_offset.rs
+@@ -4338,6 +4338,17 @@
+         self.data.root.exact_root.as_ref()
+     }
+ 
++    /// Reuses an already proved native representation without projecting the
++    /// fiber. Bounded consumers may import this evidence even when constructing
++    /// a new global parameter would exceed their budget.
++    fn retained_bezier_parameter(&self) -> Option<BezierParameter2> {
++        self.data.representations.bezier.get().cloned().or_else(|| {
++            self.represented_value()
++                .cloned()
++                .map(BezierParameter2::Exact)
++        })
++    }
++
+     /// Imports a linear or quadratic fiber root into its retained coefficient
+     /// field. The original certified singleton selects the radical branch;
+     /// neither the base root nor this scalar needs an independent global image.
+@@ -4766,13 +4777,8 @@
+         policy: &CurveContext,
+     ) -> CurveResult<Classification<BezierParameter2>> {
+         self.validate_policy(policy)?;
+-        if let Some(parameter) = self.data.representations.bezier.get() {
+-            return Ok(Classification::Decided(parameter.clone()));
+-        }
+-        if let Some(value) = self.represented_value() {
+-            return Ok(Classification::Decided(BezierParameter2::Exact(
+-                value.clone(),
+-            )));
++        if let Some(parameter) = self.retained_bezier_parameter() {
++            return Ok(Classification::Decided(parameter));
+         }
+         let range = CurveParameterRange2::new_validated(
+             CurveParameter2::from(BezierParameter2::Exact(self.data.root.lower.clone())),
+@@ -95264,51 +95270,50 @@
+         &self,
+         policy: &CurveContext,
+     ) -> CurveResult<Classification<Option<BezierRecursiveQuadraticProjectivePoint2>>> {
+-        if let BezierAnalyticParallelPointParameter2::SelectedFiber(parameter) =
+-            &self.data.parameter
+-            && let Some(parameter) = parameter.recursive_projective_parameter(policy)?
+-            && let Ok(Classification::Decided(Some(point))) =
+-                self.recursive_projective_point_from_recursive_parameter(&parameter, policy)
+-        {
+-            return Ok(Classification::Decided(Some(point)));
+-        }
+-        if policy.has_bounded_exact_predicate_budget()
+-            && match &self.data.parameter {
+-                BezierAnalyticParallelPointParameter2::SelectedFiber(_) => true,
+-                BezierAnalyticParallelPointParameter2::RecursiveProjective(parameter) => {
+-                    parameter.projective_scalar().is_none()
+-                }
+-                BezierAnalyticParallelPointParameter2::Bezier(_) => false,
+-            }
+-        {
+-            // A local root remains a valid point without global coordinate
+-            // publication. Speculative field imports must not promote it
+-            // before a predicate can reuse its retained defining relation.
+-            return Ok(Classification::Uncertain(UncertaintyReason::Predicate));
+-        }
+         let parameter = match &self.data.parameter {
+             BezierAnalyticParallelPointParameter2::Bezier(parameter) => parameter.clone(),
+             BezierAnalyticParallelPointParameter2::SelectedFiber(parameter) => {
+-                match policy.strict_predicate_pass(|| {
+-                    parameter.promoted_bezier_parameter_complete(policy)
+-                })? {
+-                    Classification::Decided(parameter) => parameter,
+-                    Classification::Uncertain(reason) => {
+-                        return Ok(Classification::Uncertain(reason));
++                parameter.validate_policy(policy)?;
++                if let Some(parameter) = parameter.retained_bezier_parameter() {
++                    parameter
++                } else {
++                    if let Some(parameter) = parameter.recursive_projective_parameter(policy)?
++                        && let Ok(Classification::Decided(Some(point))) = self
++                            .recursive_projective_point_from_recursive_parameter(&parameter, policy)
++                    {
++                        return Ok(Classification::Decided(Some(point)));
+                     }
++                    if policy.has_bounded_exact_predicate_budget() {
++                        // New global projection is cold work. Reusing an
++                        // existing native or local-field proof above is not.
++                        return Ok(Classification::Uncertain(UncertaintyReason::Predicate));
++                    }
++                    match parameter.promoted_bezier_parameter_complete(policy)? {
++                        Classification::Decided(parameter) => parameter,
++                        Classification::Uncertain(reason) => {
++                            return Ok(Classification::Uncertain(reason));
++                        }
++                    }
+                 }
+             }
+             BezierAnalyticParallelPointParameter2::RecursiveProjective(parameter) => {
+-                if parameter.projective_scalar().is_some() {
+-                    return self
+-                        .recursive_projective_point_from_recursive_parameter(parameter, policy);
+-                }
+-                match policy.strict_predicate_pass(|| {
+-                    parameter.promoted_bezier_parameter_complete(policy)
+-                })? {
+-                    Classification::Decided(parameter) => parameter,
+-                    Classification::Uncertain(reason) => {
+-                        return Ok(Classification::Uncertain(reason));
++                parameter.validate_policy(policy)?;
++                if let Some(parameter) = parameter.data.projection.parameter.get() {
++                    parameter.clone()
++                } else {
++                    if parameter.projective_scalar().is_some() {
++                        return self.recursive_projective_point_from_recursive_parameter(
++                            parameter, policy,
++                        );
++                    }
++                    if policy.has_bounded_exact_predicate_budget() {
++                        return Ok(Classification::Uncertain(UncertaintyReason::Predicate));
++                    }
++                    match parameter.promoted_bezier_parameter_complete(policy)? {
++                        Classification::Decided(parameter) => parameter,
++                        Classification::Uncertain(reason) => {
++                            return Ok(Classification::Uncertain(reason));
++                        }
+                     }
+                 }
+             }
+@@ -134555,6 +134560,110 @@
+                     Classification::Decided((if reversed { Positive } else { Negative }, Zero)),
+                 );
+                 assert!(selected.data.representations.bezier.get().is_none());
++            }
++        }
++    }
++
++    #[test]
++    fn bounded_point_import_reuses_certified_native_fiber_parameters() {
++        let half = (Real::one() / Real::from(2_i8)).unwrap();
++        let expected_parameter = half.clone().sqrt().unwrap();
++        let source = QuadraticBezier2::new(
++            Point2::from_values(0, 0),
++            Point2::new(Real::zero(), half.clone()),
++            Point2::from_values(2, 1),
++        );
++        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
++            let seed =
++                high_degree_quadratic_selected_fiber_parameter_for_test(half.clone(), &policy);
++            let native = BezierAlgebraicParameter2::from_certified_singleton(
++                match BezierParameterPolynomial::try_new_power_basis(
++                    vec![Real::from(-1_i8), Real::zero(), Real::from(2_i8)],
++                    &policy,
++                )
++                .unwrap()
++                {
++                    Classification::Decided(polynomial) => polynomial,
++                    Classification::Uncertain(reason) => panic!("native polynomial: {reason:?}"),
++                },
++                match BezierParameterInterval::try_new_ordered(half.clone(), Real::one(), &policy)
++                    .unwrap()
++                {
++                    Classification::Decided(interval) => interval,
++                    Classification::Uncertain(reason) => panic!("native interval: {reason:?}"),
++                },
++            );
++            for representation in 0..3 {
++                for distance in [Real::zero(), half.clone()] {
++                    let selected = BezierAlgebraicSelectedFiberAuthority2::new(
++                        BivariatePolynomial::new(vec![vec![
++                            -half.clone(),
++                            Real::zero(),
++                            Real::one(),
++                        ]]),
++                        seed.data.authority.data.retained_parameter.clone(),
++                        &policy,
++                    )
++                    .parameter(IsolatedRootInterval {
++                        lower: half.clone(),
++                        upper: Real::one(),
++                        exact_root: (representation == 0).then(|| expected_parameter.clone()),
++                        distinct_root_count: 1,
++                    });
++                    if representation != 0 {
++                        selected.retain_certified_parameter(if representation == 1 {
++                            BezierParameter2::Exact(expected_parameter.clone())
++                        } else {
++                            BezierParameter2::Algebraic(native.clone())
++                        });
++                    }
++                    let parallel = source.parallel_left(distance).unwrap();
++                    let expected = match parallel.point_at(&expected_parameter, &policy).unwrap() {
++                        Classification::Decided(point) => point,
++                        Classification::Uncertain(reason) => panic!("expected point: {reason:?}"),
++                    };
++                    let point = BezierAnalyticParallelPoint2::new_selected_fiber(
++                        parallel,
++                        selected.clone(),
++                        &policy,
++                    );
++                    let Classification::Decided(Some(imported)) = policy
++                        .bounded_exact_predicate_pass(|| point.recursive_projective_point(&policy))
++                        .unwrap()
++                    else {
++                        panic!(
++                            "a certified native fiber parameter must import under a bounded budget"
++                        );
++                    };
++                    for (coordinate, expected) in
++                        [(&imported.x, expected.x()), (&imported.y, expected.y())]
++                    {
++                        assert_eq!(
++                            coordinate
++                                .subtract(&imported.denominator.scale(expected).unwrap())
++                                .unwrap()
++                                .sign(&CurveContext::STRICT)
++                                .unwrap(),
++                            Classification::Decided(RealSign::Zero),
++                        );
++                    }
++                    assert!(selected.data.representations.projective.get().is_none());
++                    assert_eq!(
++                        selected.data.representations.bezier.get().is_some(),
++                        representation != 0
++                    );
++                    let Classification::Decided(Some(replayed)) =
++                        point.clone().recursive_projective_point(&policy).unwrap()
++                    else {
++                        panic!("a cloned point must retain its certified recursive field");
++                    };
++                    assert!(
++                        imported
++                            .denominator
++                            .field()
++                            .same_field(&replayed.denominator.field())
++                    );
++                }
+             }
+         }
+     }
+diff --git a/src/bezier_algebraic_image.rs b/src/bezier_algebraic_image.rs
+index 06ddd053..493de499 100644
+--- a/src/bezier_algebraic_image.rs
++++ b/src/bezier_algebraic_image.rs
+@@ -2445,7 +2445,15 @@ pub(crate) fn certified_parameter_representation(
+     policy: &CurveContext,
+ ) -> AlgebraicRootRepresentation {
+     let interval = parameter.interval();
+-    let exact_root = linear_parameter_witness(parameter, policy);
++    let exact_root = parameter.scalar().cloned().or_else(|| {
++        if parameter.polynomial().degree() != 1 {
++            return None;
++        }
++        match parameter.represented_exact_point(&policy.strict_counterpart()) {
++            Ok(Classification::Decided(root)) => root,
++            Ok(Classification::Uncertain(_)) | Err(_) => None,
++        }
++    });
+     AlgebraicRootRepresentation {
+         constraint_index: 0,
+         symbol: SymbolId(0),
+@@ -2472,22 +2480,6 @@ fn validate_parameter_representation(
+         validate_algebraic_root_representation(representation, policy.predicate_policy());
+ }
+ 
+-fn linear_parameter_witness(
+-    parameter: &BezierAlgebraicParameter2,
+-    policy: &CurveContext,
+-) -> Option<Real> {
+-    let coefficients = parameter.polynomial().coefficients();
+-    if coefficients.len() != 2 {
+-        return None;
+-    }
+-    let root = (Real::zero() - coefficients[0].clone()) / coefficients[1].clone();
+-    let root = root.ok()?;
+-    let interval = parameter.interval();
+-    let starts_after_root = compare_reals(interval.start(), &root, policy)? != Ordering::Greater;
+-    let ends_before_root = compare_reals(&root, interval.end(), policy)? != Ordering::Greater;
+-    (starts_after_root && ends_before_root).then_some(root)
+-}
+-
+ fn quadratic_point_coefficients(curve: &QuadraticBezier2) -> CoordinatePolynomials {
+     CoordinatePolynomials {
+         x: quadratic_bernstein_to_power([curve.start().x(), curve.control().x(), curve.end().x()])
+diff --git a/src/bezier_parameter.rs b/src/bezier_parameter.rs
+index 5c2e7c99..006ca470 100644
+--- a/src/bezier_parameter.rs
++++ b/src/bezier_parameter.rs
+@@ -24,6 +24,7 @@
+ use std::cmp::Ordering;
+ use std::ops::Neg;
+ use std::sync::Arc;
++use std::sync::atomic::{AtomicBool, Ordering as AtomicOrdering};
+ use std::sync::{Mutex, OnceLock};
+ 
+ use hyperreal::{CertifiedRealSign, Rational as HyperRational, Real, RealSign};
+@@ -140,7 +141,8 @@ pub(crate) fn normalized_projective_chart(
+ 
+ #[derive(Debug, Default)]
+ struct BezierAlgebraicParameterSharedData {
+-    represented_exact_point: OnceLock<Option<Real>>,
++    represented_exact_point: OnceLock<Real>,
++    point_reconstruction_exhausted: AtomicBool,
+     sturm_sequence: OnceLock<Arc<UnivariateSturmSequence>>,
+     simple_root: OnceLock<bool>,
+     rational_images: Mutex<Vec<RetainedRationalBezierAlgebraicImages>>,
+@@ -834,11 +836,7 @@ fn map_compact_incident_ray_root(
+                 }
+                 let retained =
+                     BezierAlgebraicParameter2::from_certified_singleton(source.clone(), interval);
+-                let _ = retained
+-                    .data
+-                    .shared
+-                    .represented_exact_point
+-                    .set(Some(mapped));
++                let _ = retained.data.shared.represented_exact_point.set(mapped);
+                 return Ok(BezierParameter2::Algebraic(retained));
+             }
+             Ok(BezierParameter2::Exact(mapped))
+@@ -1023,6 +1021,9 @@ impl BezierAlgebraicParameter2 {
+         numerator: [Real; 2],
+         denominator: [Real; 2],
+     ) -> Self {
++        let exact_point = source.scalar().and_then(|value| {
++            (Real::eval_poly(&numerator, value) / Real::eval_poly(&denominator, value)).ok()
++        });
+         let (root, numerator, denominator) = match &source.data.projective_source {
+             Some(chart) => {
+                 let compose = |row: &[Real; 2]| {
+@@ -1055,6 +1056,9 @@ impl BezierAlgebraicParameter2 {
+         if source.data.shared.simple_root.get() == Some(&true) {
+             let _ = parameter.data.shared.simple_root.set(true);
+         }
++        if let Some(point) = exact_point {
++            let _ = parameter.data.shared.represented_exact_point.set(point);
++        }
+         parameter
+     }
+ 
+@@ -1419,18 +1423,33 @@ impl BezierAlgebraicParameter2 {
+     /// bounds the reduced denominator by the leading coefficient, and the
+     /// retained Sturm isolator is refined until rational reconstruction is
+     /// unique under that bound. Continued-fraction candidates are accepted
+-    /// only after exact polynomial replay. Nonlinear non-rational coefficients
+-    /// and irrational roots return `None` without demoting the algebraic
+-    /// carrier.
++    /// only after exact polynomial replay. A strict scalar witness already
++    /// learned from another query takes precedence over this optional search,
++    /// including for irrational and non-rational-coefficient roots. An
++    /// unsuccessful search returns `None` without demoting the carrier or
++    /// preventing a later query from supplying a witness.
+     #[inline]
+     pub fn represented_exact_point(
+         &self,
+         policy: &CurveContext,
+     ) -> CurveResult<Classification<Option<Real>>> {
+-        if let Some(root) = self.data.shared.represented_exact_point.get() {
+-            return Ok(Classification::Decided(root.clone()));
++        if let Some(root) = self.scalar() {
++            return Ok(Classification::Decided(Some(root.clone())));
++        }
++        if self
++            .data
++            .shared
++            .point_reconstruction_exhausted
++            .load(AtomicOrdering::Relaxed)
++        {
++            return Ok(Classification::Decided(None));
+         }
+-        self.compute_represented_exact_point(policy)
++        self.compute_represented_exact_point(&policy.strict_counterpart())
++    }
++
++    /// Returns only an already certified scalar witness, without reconstruction.
++    pub(crate) fn scalar(&self) -> Option<&Real> {
++        self.data.shared.represented_exact_point.get()
+     }
+ 
+     fn compute_represented_exact_point(
+@@ -1442,7 +1461,7 @@ impl BezierAlgebraicParameter2 {
+         } else {
+             let Some(denominator_bound) = rational_root_denominator_bound(&self.data.polynomial)
+             else {
+-                return self.cache_represented_exact_point(None);
++                return self.cache_decided_represented_exact_point(Classification::Decided(None));
+             };
+             let sequence = match self.retained_sturm_sequence(policy)? {
+                 Classification::Decided(sequence) => sequence,
+@@ -1511,25 +1530,42 @@ impl BezierAlgebraicParameter2 {
+         }
+     }
+ 
+-    fn represented_exact_point_with_cached_sequence(
++    /// Optional isolation fast path. A large rational-root denominator bound
++    /// can demand hundreds of extra Sturm bisections after isolation is done.
++    /// Keep that root in its exact algebraic carrier and leave complete
++    /// reconstruction to `represented_exact_point`; a skipped attempt must
++    /// not populate its negative-result cache.
++    fn represented_exact_point_during_isolation(
+         &self,
+         policy: &CurveContext,
+         denominator_bound: Option<&BigUint>,
+         sequence: &Arc<UnivariateSturmSequence>,
+         trace: Option<&mut BezierRootIsolationTrace2>,
+     ) -> CurveResult<Classification<Option<Real>>> {
+-        if let Some(root) = self.data.shared.represented_exact_point.get() {
+-            return Ok(Classification::Decided(root.clone()));
++        if let Some(root) = self.scalar() {
++            return Ok(Classification::Decided(Some(root.clone())));
++        }
++        if self
++            .data
++            .shared
++            .point_reconstruction_exhausted
++            .load(AtomicOrdering::Relaxed)
++        {
++            return Ok(Classification::Decided(None));
+         }
++        let strict = policy.strict_counterpart();
+         if self.data.polynomial.degree() == 1 {
+-            let result = self.represented_linear_root(policy)?;
++            let result = self.represented_linear_root(&strict)?;
+             return self.cache_decided_represented_exact_point(result);
+         }
+         let Some(denominator_bound) = denominator_bound else {
+-            return self.cache_represented_exact_point(None);
++            return self.cache_decided_represented_exact_point(Classification::Decided(None));
+         };
++        if denominator_bound.bits() > u64::BITS.into() {
++            return Ok(Classification::Decided(None));
++        }
+         let result = self.represented_rational_root_with_sequence(
+-            policy,
++            &strict,
+             denominator_bound.clone(),
+             sequence,
+             trace,
+@@ -1541,20 +1577,23 @@ impl BezierAlgebraicParameter2 {
+         &self,
+         result: Classification<Option<Real>>,
+     ) -> CurveResult<Classification<Option<Real>>> {
+-        if let Classification::Decided(root) = &result {
+-            let _ = self.data.shared.represented_exact_point.set(root.clone());
++        match &result {
++            Classification::Decided(Some(root)) => {
++                let _ = self.data.shared.represented_exact_point.set(root.clone());
++            }
++            Classification::Decided(None) => {
++                // Exhaustion of this optional search does not disprove the
++                // existence of an arbitrary Real witness learned later.
++                self.data
++                    .shared
++                    .point_reconstruction_exhausted
++                    .store(true, AtomicOrdering::Relaxed);
++            }
++            Classification::Uncertain(_) => {}
+         }
+         Ok(result)
+     }
+ 
+-    fn cache_represented_exact_point(
+-        &self,
+-        root: Option<Real>,
+-    ) -> CurveResult<Classification<Option<Real>>> {
+-        let _ = self.data.shared.represented_exact_point.set(root.clone());
+-        Ok(Classification::Decided(root))
+-    }
+-
+     fn represented_linear_root(
+         &self,
+         policy: &CurveContext,
+@@ -1600,10 +1639,10 @@ impl BezierParameter2 {
+ 
+     /// Returns a stored `Real` view without reconstructing a selected root.
+     /// A selected parameter remains exact when this view is absent.
+-    pub const fn scalar(&self) -> Option<&Real> {
++    pub fn scalar(&self) -> Option<&Real> {
+         match self {
+             Self::Exact(value) => Some(value),
+-            Self::Algebraic(_) => None,
++            Self::Algebraic(parameter) => parameter.scalar(),
+         }
+     }
+ 
+@@ -1904,17 +1943,16 @@ impl BezierParameter2 {
+         &self,
+         policy: &CurveContext,
+     ) -> CurveResult<Classification<BezierParameterInterval>> {
+-        match self {
+-            // Public exact-parameter construction validates the authored
+-            // segment domain. Internal corner-extension and incident charts
+-            // also use this representation for finite affine parameters
+-            // outside `[0, 1]`; an enclosure query must preserve those values
+-            // rather than reapplying the public-domain constraint.
+-            Self::Exact(value) => {
+-                BezierParameterInterval::try_new_ordered(value.clone(), value.clone(), policy)
+-            }
+-            Self::Algebraic(value) => Ok(Classification::Decided(value.interval().clone())),
+-        }
++        // Internal incident charts may carry finite values outside [0, 1].
++        // An enclosure query preserves them without reapplying the authored
++        // domain, and an already proved scalar needs no further isolation.
++        if let Some(value) = self.scalar() {
++            return BezierParameterInterval::try_new_ordered(value.clone(), value.clone(), policy);
++        }
++        let Self::Algebraic(value) = self else {
++            unreachable!("an exact parameter always has a scalar view");
++        };
++        Ok(Classification::Decided(value.interval().clone()))
+     }
+ 
+     /// Constructs an exact scalar strictly between these parameters.
+@@ -2162,6 +2200,9 @@ impl BezierParameter2 {
+         if max_refinement_steps == 0 {
+             return self;
+         }
++        if let Some(value) = self.scalar() {
++            return Self::Exact(value.clone());
++        }
+         let Self::Algebraic(algebraic) = self else {
+             return self;
+         };
+@@ -2207,10 +2248,10 @@ impl BezierParameter2 {
+         if self == other {
+             return Ok(Classification::Decided(Ordering::Equal));
+         }
+-        if let (Self::Exact(left), Self::Exact(right)) = (self, other) {
+-            return Ok(compare_reals(left, right, policy)
+-                .map(Classification::Decided)
+-                .unwrap_or(Classification::Uncertain(UncertaintyReason::Ordering)));
++        if let (Some(left), Some(right)) = (self.scalar(), other.scalar())
++            && let Some(ordering) = compare_reals(left, right, policy)
++        {
++            return Ok(Classification::Decided(ordering));
+         }
+ 
+         let left = match self.known_interval(policy)? {
+@@ -2222,7 +2263,7 @@ impl BezierParameter2 {
+             Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+         };
+ 
+-        if let Some(ordering) = disjoint_parameter_interval_order(&left, &right, policy) {
++        if let Some(ordering) = parameter_interval_order(&left, &right, policy) {
+             return Ok(Classification::Decided(ordering));
+         }
+ 
+@@ -2268,10 +2309,10 @@ impl BezierParameter2 {
+         if self == other {
+             return Ok(Classification::Decided(Ordering::Equal));
+         }
+-        if let (Self::Exact(left), Self::Exact(right)) = (self, other) {
+-            return Ok(compare_reals(left, right, policy)
+-                .map(Classification::Decided)
+-                .unwrap_or(Classification::Uncertain(UncertaintyReason::Ordering)));
++        if let (Some(left), Some(right)) = (self.scalar(), other.scalar())
++            && let Some(ordering) = compare_reals(left, right, policy)
++        {
++            return Ok(Classification::Decided(ordering));
+         }
+         let left = match self.known_interval(policy)? {
+             Classification::Decided(interval) => interval,
+@@ -2281,7 +2322,7 @@ impl BezierParameter2 {
+             Classification::Decided(interval) => interval,
+             Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+         };
+-        if let Some(ordering) = disjoint_parameter_interval_order(&left, &right, policy) {
++        if let Some(ordering) = parameter_interval_order(&left, &right, policy) {
+             return Ok(Classification::Decided(ordering));
+         }
+ 
+@@ -2295,10 +2336,10 @@ impl BezierParameter2 {
+         for steps in [1, 3, 7, 15, 31] {
+             let refined_left = left_refinement.refine_to(steps);
+             let refined_right = right_refinement.refine_to(steps);
+-            if let (Self::Exact(left), Self::Exact(right)) = (refined_left, refined_right) {
+-                return Ok(compare_reals(left, right, policy)
+-                    .map(Classification::Decided)
+-                    .unwrap_or(Classification::Uncertain(UncertaintyReason::Ordering)));
++            if let (Some(left), Some(right)) = (refined_left.scalar(), refined_right.scalar())
++                && let Some(ordering) = compare_reals(left, right, policy)
++            {
++                return Ok(Classification::Decided(ordering));
+             }
+             let left = match refined_left.known_interval(policy)? {
+                 Classification::Decided(interval) => interval,
+@@ -2308,7 +2349,7 @@ impl BezierParameter2 {
+                 Classification::Decided(interval) => interval,
+                 Classification::Uncertain(_) => continue,
+             };
+-            if let Some(ordering) = disjoint_parameter_interval_order(&left, &right, policy) {
++            if let Some(ordering) = parameter_interval_order(&left, &right, policy) {
+                 return Ok(Classification::Decided(ordering));
+             }
+         }
+@@ -2340,6 +2381,11 @@ impl BezierParameter2 {
+         {
+             return Ok(Classification::Decided(true));
+         }
++        if let (Some(left), Some(right)) = (self.scalar(), other.scalar())
++            && let Some(ordering) = compare_reals(left, right, policy)
++        {
++            return Ok(Classification::Decided(ordering.is_eq()));
++        }
+         match (self, other) {
+             (Self::Exact(left), Self::Exact(right)) => compare_reals(left, right, policy)
+                 .map(|ordering| Classification::Decided(ordering.is_eq()))
+@@ -2347,21 +2393,36 @@ impl BezierParameter2 {
+                 .unwrap_or_else(|| Ok(Classification::Uncertain(UncertaintyReason::Ordering))),
+             (Self::Exact(exact), Self::Algebraic(algebraic))
+             | (Self::Algebraic(algebraic), Self::Exact(exact)) => {
+-                let interval = algebraic.interval();
+-                let lower = compare_reals(exact, interval.start(), policy);
+-                let upper = compare_reals(exact, interval.end(), policy);
+-                match (lower, upper) {
+-                    (Some(Ordering::Less), _) | (_, Some(Ordering::Greater)) => {
+-                        Ok(Classification::Decided(false))
+-                    }
+-                    (Some(_), Some(_)) => {
+-                        match real_sign(&algebraic.polynomial().evaluate(exact), policy) {
+-                            Some(RealSign::Zero) => Ok(Classification::Decided(true)),
+-                            Some(_) => Ok(Classification::Decided(false)),
+-                            None => Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
++                let compare = |attempt: &CurveContext| {
++                    let interval = algebraic.interval();
++                    let lower = compare_reals(exact, interval.start(), attempt);
++                    let upper = compare_reals(exact, interval.end(), attempt);
++                    match (lower, upper) {
++                        (Some(Ordering::Less), _) | (_, Some(Ordering::Greater)) => {
++                            Classification::Decided(false)
+                         }
++                        (Some(_), Some(_)) => {
++                            match real_sign(&algebraic.polynomial().evaluate(exact), attempt) {
++                                Some(RealSign::Zero) => Classification::Decided(true),
++                                Some(_) => Classification::Decided(false),
++                                None => Classification::Uncertain(UncertaintyReason::RealSign),
++                            }
++                        }
++                        _ => Classification::Uncertain(UncertaintyReason::Ordering),
+                     }
+-                    _ => Ok(Classification::Uncertain(UncertaintyReason::Ordering)),
++                };
++                let certified = compare(&policy.strict_counterpart());
++                if certified == Classification::Decided(true) {
++                    let _ = algebraic
++                        .data
++                        .shared
++                        .represented_exact_point
++                        .set(exact.clone());
++                }
++                if certified.is_decided() || !policy.permits_approximate_512() {
++                    Ok(certified)
++                } else {
++                    Ok(compare(policy))
+                 }
+             }
+             (Self::Algebraic(left), Self::Algebraic(right)) => {
+@@ -2418,11 +2479,17 @@ impl BezierParameter2 {
+     }
+ }
+ 
+-fn disjoint_parameter_interval_order(
++fn parameter_interval_order(
+     left: &BezierParameterInterval,
+     right: &BezierParameterInterval,
+     policy: &CurveContext,
+ ) -> Option<Ordering> {
++    // A retained scalar witness collapses its enclosure to one point. Two
++    // such enclosures can coincide, including if another query learned the
++    // witness after a caller's earlier scalar-view check.
++    if left.start() == left.end() && right.start() == right.end() {
++        return compare_reals(left.start(), right.start(), policy);
++    }
+     if matches!(
+         compare_reals(left.end(), right.start(), policy),
+         Some(Ordering::Less | Ordering::Equal)
+@@ -2480,6 +2547,9 @@ pub(crate) fn signed_coefficients_at_parameter(
+     if let Some(sign) =
+         strict_coefficients_sign_on_parameter_interval(coefficients, parameter, &strict_policy)?
+     {
++        if sign == RealSign::Zero {
++            retain_linear_zero_witness(coefficients, parameter, &strict_policy);
++        }
+         #[cfg(feature = "dispatch-trace")]
+         hyperreal::dispatch_trace::record(
+             "hypercurve",
+@@ -2490,6 +2560,9 @@ pub(crate) fn signed_coefficients_at_parameter(
+     }
+     let direct = polynomial_sign_by_algebraic_replay(coefficients, parameter, &strict_policy)?;
+     if direct.is_decided() {
++        if direct == Classification::Decided(RealSign::Zero) {
++            retain_linear_zero_witness(coefficients, parameter, &strict_policy);
++        }
+         return Ok(direct);
+     }
+     if let Some(sign) = strict_polynomial_sign_on_refined_parameter_interval(
+@@ -2497,6 +2570,9 @@ pub(crate) fn signed_coefficients_at_parameter(
+         parameter,
+         &strict_policy,
+     )? {
++        if sign == RealSign::Zero {
++            retain_linear_zero_witness(coefficients, parameter, &strict_policy);
++        }
+         return Ok(Classification::Decided(sign));
+     }
+     if policy.permits_approximate_512() {
+@@ -2514,6 +2590,37 @@ pub(crate) fn signed_coefficients_at_parameter(
+     Ok(direct)
+ }
+ 
++/// The caller has proved this query zero under STRICT. Only a genuinely
++/// linear equation supplies a scalar witness; approximate trailing zeros
++/// cannot change its degree. Failure to construct the optional quotient does
++/// not invalidate the existing zero certificate.
++fn retain_linear_zero_witness(
++    coefficients: &[Real],
++    parameter: &BezierParameter2,
++    strict: &CurveContext,
++) {
++    let BezierParameter2::Algebraic(parameter) = parameter else {
++        return;
++    };
++    if parameter.scalar().is_some() {
++        return;
++    }
++    let [constant, slope, higher @ ..] = coefficients else {
++        return;
++    };
++    if !higher.iter().all(Real::definitely_zero)
++        || !matches!(
++            real_sign(slope, strict),
++            Some(RealSign::Positive | RealSign::Negative)
++        )
++    {
++        return;
++    }
++    if let Ok(root) = -constant / slope {
++        let _ = parameter.data.shared.represented_exact_point.set(root);
++    }
++}
++
+ fn polynomial_sign_by_algebraic_replay(
+     coefficients: &[Real],
+     parameter: &BezierParameter2,
+@@ -2784,17 +2891,16 @@ pub(crate) fn strict_coefficients_sign_on_parameter_interval(
+     parameter: &BezierParameter2,
+     policy: &CurveContext,
+ ) -> CurveResult<Option<RealSign>> {
+-    match parameter {
+-        BezierParameter2::Exact(parameter) => {
+-            Ok(real_sign(&Real::eval_poly(coefficients, parameter), policy))
+-        }
+-        BezierParameter2::Algebraic(parameter) => {
+-            let interval = parameter.interval();
+-            let restricted =
+-                restrict_power_basis_to_interval(coefficients, interval.start(), interval.end());
+-            univariate_unit_interval_strict_bernstein_sign(&restricted, policy)
+-        }
++    if let Some(value) = parameter.scalar() {
++        return Ok(real_sign(&Real::eval_poly(coefficients, value), policy));
+     }
++    let BezierParameter2::Algebraic(parameter) = parameter else {
++        unreachable!("an exact parameter always has a scalar view");
++    };
++    let interval = parameter.interval();
++    let restricted =
++        restrict_power_basis_to_interval(coefficients, interval.start(), interval.end());
++    univariate_unit_interval_strict_bernstein_sign(&restricted, policy)
+ }
+ 
+ /// Encloses a polynomial value over one retained parameter interval with
+@@ -2808,16 +2914,17 @@ pub(crate) fn coefficients_value_interval_on_parameter_interval(
+     parameter: &BezierParameter2,
+     precision: i32,
+ ) -> CurveResult<Option<[HyperRational; 2]>> {
+-    let restricted = match parameter {
+-        BezierParameter2::Exact(parameter) => {
+-            vec![Real::eval_poly(coefficients, parameter)]
+-        }
+-        BezierParameter2::Algebraic(parameter) => restrict_power_basis_to_interval(
+-            coefficients,
+-            parameter.interval().start(),
+-            parameter.interval().end(),
+-        ),
++    if let Some(value) = parameter.scalar() {
++        return coefficients_dyadic_convex_hull(&[Real::eval_poly(coefficients, value)], precision);
++    }
++    let BezierParameter2::Algebraic(parameter) = parameter else {
++        unreachable!("an exact parameter always has a scalar view");
+     };
++    let restricted = restrict_power_basis_to_interval(
++        coefficients,
++        parameter.interval().start(),
++        parameter.interval().end(),
++    );
+     coefficients_dyadic_convex_hull(&restricted, precision)
+ }
+ 
+@@ -2963,14 +3070,17 @@ enum RefinedParameter<'a> {
+ 
+ impl<'a> RefinedParameter<'a> {
+     fn from_parameter(parameter: &'a BezierParameter2) -> Self {
+-        match parameter {
+-            BezierParameter2::Exact(value) => Self::Exact(value.clone()),
+-            BezierParameter2::Algebraic(parameter) => Self::Algebraic {
+-                parameter,
+-                interval: parameter.interval().clone(),
+-                sturm_sequence: parameter.data.shared.sturm_sequence.get().map(Arc::clone),
+-                start_variations: None,
+-            },
++        if let Some(value) = parameter.scalar() {
++            return Self::Exact(value.clone());
++        }
++        let BezierParameter2::Algebraic(parameter) = parameter else {
++            unreachable!("an exact parameter always has a scalar view");
++        };
++        Self::Algebraic {
++            parameter,
++            interval: parameter.interval().clone(),
++            sturm_sequence: parameter.data.shared.sturm_sequence.get().map(Arc::clone),
++            start_variations: None,
+         }
+     }
+ 
+@@ -3034,15 +3144,19 @@ impl<'a> RefinedParameter<'a> {
+         // the unchanged left endpoint's variations remain valid after a split.
+         let start_count = match *start_variations {
+             Some(variations) => variations,
+-            None => match sign_variations_at(sequence, interval.start(), policy)? {
+-                Classification::Decided(variations) => {
+-                    *start_variations = Some(variations);
+-                    variations
+-                }
+-                Classification::Uncertain(reason) => {
+-                    return Ok(Classification::Uncertain(reason));
+-                }
+-            },
++            None => {
++                let variations = match sturm_point_evidence(sequence, interval.start(), policy)? {
++                    Classification::Decided(SturmPointEvidence::NonRoot(variations)) => variations,
++                    Classification::Decided(SturmPointEvidence::Root) => {
++                        return Err(CurveError::InvalidBezierAlgebraicParameter);
++                    }
++                    Classification::Uncertain(reason) => {
++                        return Ok(Classification::Uncertain(reason));
++                    }
++                };
++                *start_variations = Some(variations);
++                variations
++            }
+         };
+         let left_count = start_count
+             .checked_sub(midpoint_variations)
+@@ -3088,9 +3202,19 @@ fn compare_distinct_parameters(
+     for refinement_count in 0..=max_ordering_refinements {
+         if let (RefinedParameter::Exact(first), RefinedParameter::Exact(second)) = (&first, &second)
+         {
+-            return Ok(compare_reals(first, second, policy)
+-                .map(Classification::Decided)
+-                .unwrap_or(Classification::Uncertain(UncertaintyReason::Ordering)));
++            if let Some(ordering) = compare_reals(first, second, policy) {
++                return Ok(Classification::Decided(ordering));
++            }
++            // Optional scalar views must not discard the original defining
++            // relations when those scalars alone cannot decide an order.
++            return Ok(exact_difference_or_uncertain(
++                first_parameter,
++                second_parameter,
++                None,
++                None,
++                policy,
++                UncertaintyReason::Ordering,
++            ));
+         }
+         let (first_start, first_end) = first.bounds();
+         let (second_start, second_end) = second.bounds();
+@@ -4338,7 +4462,7 @@ fn search_interval_roots(
+                 interval,
+                 Arc::clone(&sequence),
+             );
+-            match parameter.represented_exact_point_with_cached_sequence(
++            match parameter.represented_exact_point_during_isolation(
+                 policy,
+                 rational_root_denominator_bound.as_ref(),
+                 &sequence,
+@@ -5629,6 +5753,91 @@ mod conversion_tests {
+         );
+     }
+ 
++    #[test]
++    fn solver_owned_root_refinement_excludes_repeated_lower_endpoints() {
++        let alpha = Real::from(2_i8).sqrt().unwrap();
++        let scale = Real::from(3_i8).sqrt().unwrap();
++        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
++            for scale in [
++                Real::one(),
++                Real::from(-3_i8),
++                scale.clone(),
++                -scale.clone(),
++            ] {
++                // The selected root is sqrt(2), while the excluded lower
++                // endpoint is another root, simple or repeated respectively.
++                for coefficients in [vec![2, -2, -1, 1], vec![4, -8, 0, 8, -3, -2, 1]] {
++                    let coefficients = coefficients
++                        .into_iter()
++                        .map(|coefficient| Real::from(coefficient) * &scale)
++                        .collect::<Vec<_>>();
++                    let sequence = UnivariateSturmSequence::new(
++                        &coefficients,
++                        hypersolve::PredicatePolicy::STRICT,
++                    )
++                    .unwrap();
++                    assert_eq!(
++                        sequence.count_distinct_roots(
++                            &Real::one(),
++                            &Real::from(2_i8),
++                            hypersolve::PredicatePolicy::STRICT,
++                        ),
++                        Some(1)
++                    );
++                    let source = AlgebraicRootRepresentation {
++                        constraint_index: 0,
++                        symbol: hypersolve::SymbolId(0),
++                        interval_index: 0,
++                        polynomial_coefficients: coefficients,
++                        interval: hypersolve::IsolatedRootInterval {
++                            lower: Real::one(),
++                            upper: Real::from(2_i8),
++                            exact_root: None,
++                            distinct_root_count: 1,
++                        },
++                        validation: hypersolve::AlgebraicRootValidationReport {
++                            status: hypersolve::AlgebraicRootValidationStatus::Valid,
++                            message: None,
++                        },
++                    };
++                    let Classification::Decided(parameter) =
++                        BezierParameter2::from_algebraic_root_representation_unbounded(
++                            &source, &policy,
++                        )
++                        .unwrap()
++                    else {
++                        panic!("the solver-owned finite isolator must remain representable");
++                    };
++                    let mut refinement = BezierParameterRefinement2::new(&parameter, &policy);
++                    for steps in [2_usize, 8, 16] {
++                        let BezierParameter2::Algebraic(refined) = refinement.refine_to(steps)
++                        else {
++                            panic!("sqrt(2) cannot become a dyadic bisection witness");
++                        };
++                        let lower = refined.interval().start();
++                        let upper = refined.interval().end();
++                        assert_eq!(
++                            compare_reals(lower, &alpha, &CurveContext::STRICT),
++                            Some(Ordering::Less)
++                        );
++                        assert_eq!(
++                            compare_reals(&alpha, upper, &CurveContext::STRICT),
++                            Some(Ordering::Less)
++                        );
++                        assert!(matches!(
++                            compare_reals(
++                                &(upper - lower),
++                                &rational(1, 1_i32 << steps),
++                                &CurveContext::STRICT,
++                            ),
++                            Some(Ordering::Less | Ordering::Equal)
++                        ));
++                    }
++                }
++            }
++        }
++    }
++
+     #[test]
+     fn retained_refinement_matches_square_free_reference_and_shares_sturm_work() {
+         let policy = CurveContext::STRICT;
+@@ -6108,6 +6317,61 @@ mod conversion_tests {
+         }
+     }
+ 
++    #[test]
++    fn isolation_retains_large_rational_roots_until_projection_is_requested() {
++        let denominator = (BigUint::one() << 96_usize) + BigUint::one();
++        let numerator = (BigInt::one() << 95_usize) + BigInt::one();
++        let expected = Real::new(
++            HyperRational::from_bigint_fraction(numerator.clone(), denominator.clone()).unwrap(),
++        );
++        let numerator = Real::new(HyperRational::from_bigint(numerator));
++        let denominator = Real::new(HyperRational::from_bigint(BigInt::from(denominator)));
++        // (D*t-N)*(t^2-2) has exactly one root in [0,1]: N/D.
++        // It is neither a dyadic subdivision point nor a linear carrier.
++        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
++            for scale in [Real::one(), rational(-7, 97)] {
++                let defining = decided(
++                    BezierParameterPolynomial::try_new_power_basis(
++                        [
++                            Real::from(2_i8) * &numerator,
++                            Real::from(-2_i8) * &denominator,
++                            -numerator.clone(),
++                            denominator.clone(),
++                        ]
++                        .into_iter()
++                        .map(|value| value * &scale)
++                        .collect(),
++                        &policy,
++                    )
++                    .unwrap(),
++                    "large rational root polynomial",
++                );
++                let result = decided(
++                    defining
++                        .isolate_unit_interval_roots_with_trace(&policy)
++                        .unwrap(),
++                    "large rational root isolation",
++                );
++                assert_eq!(result.roots().len(), 1);
++                assert_eq!(result.trace().rational_reconstruction_refinements(), 0);
++                let BezierParameter2::Algebraic(root) = &result.roots()[0] else {
++                    panic!("optional rational reconstruction must remain demand-driven")
++                };
++                assert!(root.data.shared.represented_exact_point.get().is_none());
++                assert_eq!(
++                    root.represented_exact_point(&policy).unwrap(),
++                    Classification::Decided(Some(expected.clone()))
++                );
++                assert_eq!(
++                    result.roots()[0]
++                        .same_value(&BezierParameter2::Exact(expected.clone()), &policy)
++                        .unwrap(),
++                    Classification::Decided(true)
++                );
++            }
++        }
++    }
++
+     #[test]
+     fn rational_reconstruction_reuses_sturm_ownership_across_both_children() {
+         let cases = [
+@@ -6643,6 +6907,209 @@ mod conversion_tests {
+         }
+     }
+ 
++    #[test]
++    fn strict_linear_queries_retain_witnesses_after_rational_reconstruction_declines() {
++        let alpha = rational(1, 2).sqrt().unwrap();
++        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
++            for scale in [Real::one(), Real::from(-7), Real::pi()] {
++                let parameter = algebraic_parameter(&polynomial(&[-1, 0, 2]));
++                let BezierParameter2::Algebraic(owner) = &parameter else {
++                    unreachable!()
++                };
++                assert!(matches!(
++                    owner.represented_exact_point(&policy).unwrap(),
++                    Classification::Decided(None)
++                ));
++                let refined = parameter.clone().refined_isolating_interval(3, &policy);
++                assert!(parameter.scalar().is_none());
++                policy.strict_predicate_pass(|| {
++                    assert_eq!(
++                        signed_coefficients_at_parameter(
++                            &[-(&scale * &alpha), scale.clone(), Real::zero()],
++                            &parameter,
++                            &policy,
++                        )
++                        .unwrap(),
++                        Classification::Decided(RealSign::Zero)
++                    );
++                });
++                for retained in [&parameter, &refined] {
++                    let scalar = retained
++                        .scalar()
++                        .expect("a proved linear zero must retain its exact scalar witness");
++                    assert_eq!(
++                        compare_reals(scalar, &alpha, &policy),
++                        Some(Ordering::Equal)
++                    );
++                    let interval = decided(
++                        retained.known_interval(&policy).unwrap(),
++                        "the witnessed parameter's enclosure",
++                    );
++                    assert_eq!(
++                        compare_reals(interval.start(), interval.end(), &policy),
++                        Some(Ordering::Equal)
++                    );
++                }
++                let Classification::Decided(Some(recovered)) =
++                    owner.represented_exact_point(&policy).unwrap()
++                else {
++                    panic!("failed rational reconstruction must not reject an irrational witness");
++                };
++                assert_eq!(
++                    compare_reals(&recovered, &alpha, &policy),
++                    Some(Ordering::Equal)
++                );
++                let replay = crate::bezier_algebraic_image::certified_parameter_representation(
++                    owner, &policy,
++                );
++                assert_eq!(
++                    compare_reals(
++                        replay
++                            .exact_point_witness()
++                            .expect("replay must reuse the witness"),
++                        &alpha,
++                        &policy,
++                    ),
++                    Some(Ordering::Equal)
++                );
++                assert!(replay.polynomial_coefficients == owner.polynomial().coefficients());
++            }
++        }
++    }
++
++    #[test]
++    fn strict_scalar_equalities_retain_arbitrary_real_parameter_witnesses() {
++        let alpha = rational(1, 2).sqrt().unwrap();
++        let pi_quarter = (Real::pi() / Real::from(4)).unwrap();
++        let linear = decided(
++            BezierParameterPolynomial::try_new_power_basis(
++                vec![-pi_quarter.clone(), Real::one()],
++                &CurveContext::STRICT,
++            )
++            .unwrap(),
++            "an arbitrary Real linear root",
++        );
++        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
++            for (defining, expected) in [
++                (polynomial(&[-1, 0, 2]), alpha.clone()),
++                (linear.clone(), pi_quarter.clone()),
++            ] {
++                let parameter = algebraic_parameter(&defining);
++                let shared = parameter.clone();
++                for rejected in [Real::zero(), rational(3, 5), -expected.clone()] {
++                    assert_eq!(
++                        parameter
++                            .same_value(&BezierParameter2::Exact(rejected), &policy)
++                            .unwrap(),
++                        Classification::Decided(false)
++                    );
++                    assert!(parameter.scalar().is_none());
++                }
++                policy.strict_predicate_pass(|| {
++                    assert_eq!(
++                        parameter
++                            .same_value(&BezierParameter2::Exact(expected.clone()), &policy)
++                            .unwrap(),
++                        Classification::Decided(true)
++                    );
++                });
++                let scalar = shared
++                    .scalar()
++                    .expect("strict equality must retain the shared exact scalar witness");
++                assert_eq!(
++                    compare_reals(scalar, &expected, &policy),
++                    Some(Ordering::Equal)
++                );
++                let general = crate::CurveParameter2::from(shared.clone());
++                assert_eq!(
++                    compare_reals(
++                        general
++                            .scalar()
++                            .expect("the general view must reuse the witness"),
++                        &expected,
++                        &policy
++                    ),
++                    Some(Ordering::Equal)
++                );
++                let reversed = shared.unit_complement();
++                assert_eq!(
++                    reversed
++                        .same_value(&BezierParameter2::Exact(Real::one() - expected), &policy)
++                        .unwrap(),
++                    Classification::Decided(true)
++                );
++            }
++        }
++    }
++
++    #[test]
++    fn nonlinear_and_approximate_zeroes_do_not_create_scalar_witnesses() {
++        let alpha = rational(1, 2).sqrt().unwrap();
++        let epsilon = Real::one() - Real::from(2_i8).powi_i64(-600).unwrap().cos();
++        assert_eq!(real_sign(&epsilon, &CurveContext::STRICT), None);
++
++        let parameter = algebraic_parameter(&polynomial(&[-1, 0, 2]));
++        assert_eq!(
++            signed_coefficients_at_parameter(
++                &[Real::from(-1), Real::zero(), Real::from(2)],
++                &parameter,
++                &CurveContext::STRICT,
++            )
++            .unwrap(),
++            Classification::Decided(RealSign::Zero)
++        );
++        assert!(parameter.scalar().is_none());
++
++        let approximate =
++            crate::policy::resolve_certified_operation(&CurveContext::APPROXIMATE_512, |attempt| {
++                signed_coefficients_at_parameter(
++                    &[-alpha.clone(), Real::one(), epsilon.clone()],
++                    &parameter,
++                    attempt,
++                )
++            })
++            .unwrap();
++        assert_eq!(approximate.value, Classification::Decided(RealSign::Zero));
++        assert_eq!(
++            approximate.certainty,
++            crate::CurveCertainty::Approximate512Consumed
++        );
++        assert!(parameter.scalar().is_none());
++
++        let nearby = BezierParameter2::Exact(&alpha + epsilon);
++        let approximate =
++            crate::policy::resolve_certified_operation(&CurveContext::APPROXIMATE_512, |attempt| {
++                parameter.same_value(&nearby, attempt)
++            })
++            .unwrap();
++        assert_eq!(approximate.value, Classification::Decided(true));
++        assert_eq!(
++            approximate.certainty,
++            crate::CurveCertainty::Approximate512Consumed
++        );
++        assert!(parameter.scalar().is_none());
++
++        assert_eq!(
++            parameter
++                .same_value(
++                    &BezierParameter2::Exact(alpha.clone()),
++                    &CurveContext::STRICT
++                )
++                .unwrap(),
++            Classification::Decided(true)
++        );
++        assert_eq!(
++            compare_reals(
++                parameter
++                    .scalar()
++                    .expect("the later strict witness must be retained"),
++                &alpha,
++                &CurveContext::STRICT,
++            ),
++            Some(Ordering::Equal)
++        );
++    }
++
+     #[test]
+     fn collapsed_exact_real_representation_imports_as_an_exact_parameter() {
+         let value = (Real::one() / Real::pi()).unwrap();
+diff --git a/src/bezier_split.rs b/src/bezier_split.rs
+index 46953e72..24997e14 100644
+--- a/src/bezier_split.rs
++++ b/src/bezier_split.rs
+@@ -218,7 +218,7 @@ impl CurveParameter2 {
+ 
+     /// Returns a stored chart scalar without reconstructing selected evidence.
+     /// Absence of this view does not limit the parameter's exact meaning.
+-    pub const fn scalar(&self) -> Option<&Real> {
++    pub fn scalar(&self) -> Option<&Real> {
+         match &self.data {
+             CurveParameterData2::Bezier(parameter) => parameter.scalar(),
+             CurveParameterData2::SelectedFiber(_) | CurveParameterData2::RecursiveProjective(_) => {

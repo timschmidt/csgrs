@@ -1,0 +1,16 @@
+{
+  "tag": "point-qualified-app-hypercurve-arrangement-strip",
+  "started": "2026-09-10T20:41:38.965Z",
+  "finished": "2026-09-10T20:41:39.002Z",
+  "elapsedSeconds": 0.034852286,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "strip",
+  "args": [
+    "--strip-all",
+    "-o",
+    "/tmp/calcium-point-qualified-apps.QIBZlE/candidate-hypercurve-arrangement.stripped",
+    "/tmp/calcium-point-qualified-apps.QIBZlE/candidate-hypercurve-arrangement"
+  ],
+  "code": 0,
+  "signal": null
+}

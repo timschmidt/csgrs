@@ -1,0 +1,112 @@
+{
+  "hypersolve_head": "60a4e609d382c681ee98a1de6b4bdb7673487d37",
+  "diagnostic_only": true,
+  "parent": "190adc7a1d3a94263f87a9ade8a68b588f54527a",
+  "source_manifest": "local-chord-complete-replay-20260924-v110-sources.json",
+  "source_directory": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/source-archives/hypercurve-local-chord-complete-replay-v110-20260924",
+  "build_source_directory": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/build-workspace-20260925",
+  "checks": [],
+  "binaries": {
+    "hyperreal": {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/compact-quadratic-arithmetic-20260925-v110-hyperreal",
+      "sha256": "c66a045a0046f36526e94b8a0df743836b2f0cf9a84d11f4f8b1b39a48acc397"
+    },
+    "hypersolve": {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/compact-quadratic-arithmetic-20260925-v110-hypersolve",
+      "sha256": "0760d8a9cdf5cb63bc969d31c98db8f4c80ac0841f1bc4a7354d04009544f99a"
+    }
+  },
+  "cases": [
+    {
+      "label": "hyperreal-quadratic-arithmetic",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/compact-quadratic-arithmetic-20260925-v110-hyperreal",
+        "--test-threads=1",
+        "--nocapture"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.4191771548939869,
+      "log": "compact-quadratic-arithmetic-20260925-v110-hyperreal-quadratic-arithmetic.log",
+      "target": "hyperreal",
+      "name": "exact_quadratic_normal_form"
+    },
+    {
+      "label": "nonrational_local_coefficients_preserve_repeated_fiber_roots",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/compact-quadratic-arithmetic-20260925-v110-hypersolve",
+        "--exact",
+        "algebraic_fiber::tests::nonrational_local_coefficients_preserve_repeated_fiber_roots",
+        "--test-threads=1",
+        "--nocapture"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.4268229709705338,
+      "log": "compact-quadratic-arithmetic-20260925-v110-nonrational_local_coefficients_preserve_repeated_fiber_roots.log",
+      "target": "hypersolve",
+      "name": "algebraic_fiber::tests::nonrational_local_coefficients_preserve_repeated_fiber_roots"
+    },
+    {
+      "label": "local_division_preserves_arbitrary_exact_base_coefficients",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/compact-quadratic-arithmetic-20260925-v110-hypersolve",
+        "--exact",
+        "algebraic_fiber::tests::local_division_preserves_arbitrary_exact_base_coefficients",
+        "--test-threads=1",
+        "--nocapture"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.4000758050242439,
+      "log": "compact-quadratic-arithmetic-20260925-v110-local_division_preserves_arbitrary_exact_base_coefficients.log",
+      "target": "hypersolve",
+      "name": "algebraic_fiber::tests::local_division_preserves_arbitrary_exact_base_coefficients"
+    },
+    {
+      "label": "local_division_preserves_wide_exact_quotients_beyond_modular_reconstruction",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/compact-quadratic-arithmetic-20260925-v110-hypersolve",
+        "--exact",
+        "algebraic_fiber::tests::local_division_preserves_wide_exact_quotients_beyond_modular_reconstruction",
+        "--test-threads=1",
+        "--nocapture"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.5929177009966224,
+      "log": "compact-quadratic-arithmetic-20260925-v110-local_division_preserves_wide_exact_quotients_beyond_modular_reconstruction.log",
+      "target": "hypersolve",
+      "name": "algebraic_fiber::tests::local_division_preserves_wide_exact_quotients_beyond_modular_reconstruction"
+    },
+    {
+      "label": "local_division_removes_only_foreign_factors_and_reuses_older_values",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/compact-quadratic-arithmetic-20260925-v110-hypersolve",
+        "--exact",
+        "algebraic_fiber::tests::local_division_removes_only_foreign_factors_and_reuses_older_values",
+        "--test-threads=1",
+        "--nocapture"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.4025988820940256,
+      "log": "compact-quadratic-arithmetic-20260925-v110-local_division_removes_only_foreign_factors_and_reuses_older_values.log",
+      "target": "hypersolve",
+      "name": "algebraic_fiber::tests::local_division_removes_only_foreign_factors_and_reuses_older_values"
+    },
+    {
+      "label": "hypersolve-full",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/compact-quadratic-arithmetic-20260925-v110-hypersolve",
+        "--test-threads=2",
+        "--color",
+        "never"
+      ],
+      "returncode": 101,
+      "elapsed_seconds": 2.7642283050809056,
+      "log": "compact-quadratic-arithmetic-20260925-v110-hypersolve-full.log",
+      "target": "hypersolve",
+      "name": "full-library"
+    }
+  ],
+  "all_processes_reaped": true,
+  "hyperreal_build_returncode": 0,
+  "all_sources_unchanged": true,
+  "hypersolve_build_returncode": 0
+}

@@ -1,0 +1,15 @@
+{
+  "tag": "point-consumer-cold-size-v66",
+  "started": "2026-09-11T03:16:12.608Z",
+  "finished": "2026-09-11T03:16:12.621Z",
+  "elapsedSeconds": 0.010572766,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "size",
+  "args": [
+    "/tmp/calcium-point-cold.3RcRIa/baseline",
+    "/tmp/calcium-point-cold.3RcRIa/eager",
+    "/tmp/calcium-point-cold.3RcRIa/demand"
+  ],
+  "code": 0,
+  "signal": null
+}

@@ -1,0 +1,13 @@
+{
+  "tag": "quadratic-extraction-confirm-v82",
+  "started": "2026-09-12T03:13:33.571Z",
+  "finished": "2026-09-12T03:13:34.039Z",
+  "elapsedSeconds": 0.46488811199999996,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "node",
+  "args": [
+    "confirm-quadratic-extraction-v82.mjs"
+  ],
+  "code": 0,
+  "signal": null
+}

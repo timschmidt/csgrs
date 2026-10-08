@@ -1,0 +1,424 @@
+[
+  {
+    "repo": "calcium",
+    "path": "doc/source/fmpz_mpoly_q.rst",
+    "ranges": [
+      [
+        1,
+        201
+      ]
+    ],
+    "note": "Checkpoint46: Complete rational-function contract: canonical coprime polynomial pair with positive leading denominator, context ordering, scalar arithmetic/content and explicit formal-field semantics. Current manual additionally makes canonical-input assumptions explicit and documents generic string parsing. Archived counterpart is source documentation only; archived implementation remains unread."
+  },
+  {
+    "repo": "flint",
+    "path": "doc/source/fmpz_mpoly_q.rst",
+    "ranges": [
+      [
+        1,
+        217
+      ]
+    ],
+    "note": "Checkpoint46: Complete rational-function contract: canonical coprime polynomial pair with positive leading denominator, context ordering, scalar arithmetic/content and explicit formal-field semantics. Current manual additionally makes canonical-input assumptions explicit and documents generic string parsing. Archived counterpart is source documentation only; archived implementation remains unread."
+  },
+  {
+    "repo": "flint",
+    "path": "src/fmpz_mpoly_q.h",
+    "ranges": [
+      [
+        1,
+        299
+      ]
+    ],
+    "note": "Checkpoint46: Complete public API and inline properties, constants, signed wrappers, scalar-content early exit, GCD-success requirement and exact-division dispatch. Zero content is represented as one in the implementation. Formal-field equality is not partial computable-real equality or selected-root domain evidence."
+  },
+  {
+    "repo": "flint",
+    "path": "src/fmpz_mpoly_q/add.c",
+    "ranges": [
+      [
+        1,
+        521
+      ]
+    ],
+    "note": "Checkpoint46: Zero/equal/unit/scalar denominator dispatch; denominator GCD reduces cross products, then cancellation is restricted to the old GCD. Public operand aliases use temporaries where needed. Scalar-content GCDs avoid general multivariate GCD."
+  },
+  {
+    "repo": "flint",
+    "path": "src/fmpz_mpoly_q/canonicalise.c",
+    "ranges": [
+      [
+        1,
+        82
+      ]
+    ],
+    "note": "Checkpoint46: Unit/zero/constant numerator or denominator shortcuts, otherwise exact polynomial GCD and division. Direct construction requires valid polynomial objects and nonzero denominator; no invalid-input probes."
+  },
+  {
+    "repo": "flint",
+    "path": "src/fmpz_mpoly_q/clear.c",
+    "ranges": [
+      [
+        1,
+        19
+      ]
+    ],
+    "note": "Checkpoint46: Clear both owned polynomial components."
+  },
+  {
+    "repo": "flint",
+    "path": "src/fmpz_mpoly_q/div.c",
+    "ranges": [
+      [
+        1,
+        134
+      ]
+    ],
+    "note": "Checkpoint46: Reject zero divisor before zero dividend; reciprocal multiplication, right-output-alias temporaries and positive leading-denominator normalization. Scalar negative divisors are sign-normalized before multiply."
+  },
+  {
+    "repo": "flint",
+    "path": "src/fmpz_mpoly_q/equal.c",
+    "ranges": [
+      [
+        1,
+        19
+      ]
+    ],
+    "note": "Checkpoint46: Structural pair equality is mathematical equality only under the canonical rational-function invariant."
+  },
+  {
+    "repo": "flint",
+    "path": "src/fmpz_mpoly_q/evaluate_acb.c",
+    "ranges": [
+      [
+        1,
+        40
+      ]
+    ],
+    "note": "Checkpoint46: Evaluate denominator first, emit indeterminate if its enclosure contains zero, otherwise evaluate numerator and divide. Unit denominator bypasses denominator evaluation; ball semantics do not establish original authored-domain validity after formal cancellation."
+  },
+  {
+    "repo": "flint",
+    "path": "src/fmpz_mpoly_q/init.c",
+    "ranges": [
+      [
+        1,
+        20
+      ]
+    ],
+    "note": "Checkpoint46: Initialize both polynomials and denominator one, yielding canonical zero."
+  },
+  {
+    "repo": "flint",
+    "path": "src/fmpz_mpoly_q/inlines.c",
+    "ranges": [
+      [
+        1,
+        13
+      ]
+    ],
+    "note": "Checkpoint46: Emit header inline definitions in one translation unit."
+  },
+  {
+    "repo": "flint",
+    "path": "src/fmpz_mpoly_q/inv.c",
+    "ranges": [
+      [
+        1,
+        32
+      ]
+    ],
+    "note": "Checkpoint46: Nonzero requirement, public self alias through pair swap, then denominator leading-sign normalization."
+  },
+  {
+    "repo": "flint",
+    "path": "src/fmpz_mpoly_q/is_canonical.c",
+    "ranges": [
+      [
+        1,
+        40
+      ]
+    ],
+    "note": "Checkpoint46: Checks polynomial term representation, nonzero positive-leading denominator and GCD one. Uses the same GCD backend as normalization, so this alone is not an independent numerical oracle."
+  },
+  {
+    "repo": "flint",
+    "path": "src/fmpz_mpoly_q/mul.c",
+    "ranges": [
+      [
+        1,
+        297
+      ]
+    ],
+    "note": "Checkpoint46: Zero/equal-denominator fast cases; pre-cancel numerator against opposite denominator, with scalar-content variants. No post-product full GCD is needed for canonical inputs."
+  },
+  {
+    "repo": "flint",
+    "path": "src/fmpz_mpoly_q/neg.c",
+    "ranges": [
+      [
+        1,
+        19
+      ]
+    ],
+    "note": "Checkpoint46: Negate numerator and copy denominator, including public whole-object in-place use."
+  },
+  {
+    "repo": "flint",
+    "path": "src/fmpz_mpoly_q/print_pretty.c",
+    "ranges": [
+      [
+        1,
+        66
+      ]
+    ],
+    "note": "Checkpoint46: Direct denominator-aware printing; string conversion/parser route through a fresh generic-ring context and optional variable names. Parsing failure contracts remain unexecuted; generic wrapper support still unread."
+  },
+  {
+    "repo": "flint",
+    "path": "src/fmpz_mpoly_q/randtest.c",
+    "ranges": [
+      [
+        1,
+        41
+      ]
+    ],
+    "note": "Checkpoint46: Bounded random numerator, bias toward unit or scalar denominator, replace zero denominator by one, then canonicalize."
+  },
+  {
+    "repo": "flint",
+    "path": "src/fmpz_mpoly_q/set.c",
+    "ranges": [
+      [
+        1,
+        43
+      ]
+    ],
+    "note": "Checkpoint46: Self-copy guard and scalar/rational imports; input rational canonicality is assumed, not repaired."
+  },
+  {
+    "repo": "flint",
+    "path": "src/fmpz_mpoly_q/sub.c",
+    "ranges": [
+      [
+        1,
+        523
+      ]
+    ],
+    "note": "Checkpoint46: Full signed counterpart of add, including negation when scalar-denominator operands are reversed, zero numerator, same denominators and alias-aware cross differences. Same canonical-input prerequisites."
+  },
+  {
+    "repo": "flint",
+    "path": "src/fmpz_mpoly_q/swap.c",
+    "ranges": [
+      [
+        1,
+        19
+      ]
+    ],
+    "note": "Checkpoint46: Swap both polynomial components without rebuilding coefficients."
+  },
+  {
+    "repo": "flint",
+    "path": "src/fmpz_mpoly_q/test/main.c",
+    "ranges": [
+      [
+        1,
+        53
+      ]
+    ],
+    "note": "Checkpoint46: All15 test registrations and includes read."
+  },
+  {
+    "repo": "flint",
+    "path": "src/fmpz_mpoly_q/test/t-add.c",
+    "ranges": [
+      [
+        1,
+        88
+      ]
+    ],
+    "note": "Checkpoint46: Read complete t-add.c: finite random arithmetic with shared polynomial/GCD canonical reference or shared scalar wrapper; all contexts use ORD_LEX. General binary tests randomly choose one whole-object alias. Scalar-wrapper tests do not explicitly exercise their own in-place output branch."
+  },
+  {
+    "repo": "flint",
+    "path": "src/fmpz_mpoly_q/test/t-add_fmpq.c",
+    "ranges": [
+      [
+        1,
+        60
+      ]
+    ],
+    "note": "Checkpoint46: Read complete t-add_fmpq.c: finite random arithmetic with shared polynomial/GCD canonical reference or shared scalar wrapper; all contexts use ORD_LEX. General binary tests randomly choose one whole-object alias. Scalar-wrapper tests do not explicitly exercise their own in-place output branch."
+  },
+  {
+    "repo": "flint",
+    "path": "src/fmpz_mpoly_q/test/t-add_fmpz.c",
+    "ranges": [
+      [
+        1,
+        59
+      ]
+    ],
+    "note": "Checkpoint46: Read complete t-add_fmpz.c: finite random arithmetic with shared polynomial/GCD canonical reference or shared scalar wrapper; all contexts use ORD_LEX. General binary tests randomly choose one whole-object alias. Scalar-wrapper tests do not explicitly exercise their own in-place output branch."
+  },
+  {
+    "repo": "flint",
+    "path": "src/fmpz_mpoly_q/test/t-div.c",
+    "ranges": [
+      [
+        1,
+        82
+      ]
+    ],
+    "note": "Checkpoint46: Read complete t-div.c: finite random arithmetic with shared polynomial/GCD canonical reference or shared scalar wrapper; all contexts use ORD_LEX. General binary tests randomly choose one whole-object alias. Scalar-wrapper tests do not explicitly exercise their own in-place output branch."
+  },
+  {
+    "repo": "flint",
+    "path": "src/fmpz_mpoly_q/test/t-div_fmpq.c",
+    "ranges": [
+      [
+        1,
+        60
+      ]
+    ],
+    "note": "Checkpoint46: Read complete t-div_fmpq.c: finite random arithmetic with shared polynomial/GCD canonical reference or shared scalar wrapper; all contexts use ORD_LEX. General binary tests randomly choose one whole-object alias. Scalar-wrapper tests do not explicitly exercise their own in-place output branch."
+  },
+  {
+    "repo": "flint",
+    "path": "src/fmpz_mpoly_q/test/t-div_fmpz.c",
+    "ranges": [
+      [
+        1,
+        60
+      ]
+    ],
+    "note": "Checkpoint46: Read complete t-div_fmpz.c: finite random arithmetic with shared polynomial/GCD canonical reference or shared scalar wrapper; all contexts use ORD_LEX. General binary tests randomly choose one whole-object alias. Scalar-wrapper tests do not explicitly exercise their own in-place output branch."
+  },
+  {
+    "repo": "flint",
+    "path": "src/fmpz_mpoly_q/test/t-get_set_str.c",
+    "ranges": [
+      [
+        1,
+        54
+      ]
+    ],
+    "note": "Checkpoint46: Valid generated string roundtrips under optional names; no malformed input or failure-output qualification."
+  },
+  {
+    "repo": "flint",
+    "path": "src/fmpz_mpoly_q/test/t-inv.c",
+    "ranges": [
+      [
+        1,
+        62
+      ]
+    ],
+    "note": "Checkpoint46: Inverse/inverse identity and canonicality, random public in-place choice, nonzero inputs."
+  },
+  {
+    "repo": "flint",
+    "path": "src/fmpz_mpoly_q/test/t-mul.c",
+    "ranges": [
+      [
+        1,
+        80
+      ]
+    ],
+    "note": "Checkpoint46: Read complete t-mul.c: finite random arithmetic with shared polynomial/GCD canonical reference or shared scalar wrapper; all contexts use ORD_LEX. General binary tests randomly choose one whole-object alias. Scalar-wrapper tests do not explicitly exercise their own in-place output branch."
+  },
+  {
+    "repo": "flint",
+    "path": "src/fmpz_mpoly_q/test/t-mul_fmpq.c",
+    "ranges": [
+      [
+        1,
+        60
+      ]
+    ],
+    "note": "Checkpoint46: Read complete t-mul_fmpq.c: finite random arithmetic with shared polynomial/GCD canonical reference or shared scalar wrapper; all contexts use ORD_LEX. General binary tests randomly choose one whole-object alias. Scalar-wrapper tests do not explicitly exercise their own in-place output branch."
+  },
+  {
+    "repo": "flint",
+    "path": "src/fmpz_mpoly_q/test/t-mul_fmpz.c",
+    "ranges": [
+      [
+        1,
+        60
+      ]
+    ],
+    "note": "Checkpoint46: Read complete t-mul_fmpz.c: finite random arithmetic with shared polynomial/GCD canonical reference or shared scalar wrapper; all contexts use ORD_LEX. General binary tests randomly choose one whole-object alias. Scalar-wrapper tests do not explicitly exercise their own in-place output branch."
+  },
+  {
+    "repo": "flint",
+    "path": "src/fmpz_mpoly_q/test/t-randtest.c",
+    "ranges": [
+      [
+        1,
+        47
+      ]
+    ],
+    "note": "Checkpoint46: Random canonicality checks share the normalization GCD backend."
+  },
+  {
+    "repo": "flint",
+    "path": "src/fmpz_mpoly_q/test/t-sub.c",
+    "ranges": [
+      [
+        1,
+        88
+      ]
+    ],
+    "note": "Checkpoint46: Read complete t-sub.c: finite random arithmetic with shared polynomial/GCD canonical reference or shared scalar wrapper; all contexts use ORD_LEX. General binary tests randomly choose one whole-object alias. Scalar-wrapper tests do not explicitly exercise their own in-place output branch."
+  },
+  {
+    "repo": "flint",
+    "path": "src/fmpz_mpoly_q/test/t-sub_fmpq.c",
+    "ranges": [
+      [
+        1,
+        59
+      ]
+    ],
+    "note": "Checkpoint46: Read complete t-sub_fmpq.c: finite random arithmetic with shared polynomial/GCD canonical reference or shared scalar wrapper; all contexts use ORD_LEX. General binary tests randomly choose one whole-object alias. Scalar-wrapper tests do not explicitly exercise their own in-place output branch."
+  },
+  {
+    "repo": "flint",
+    "path": "src/fmpz_mpoly_q/test/t-sub_fmpz.c",
+    "ranges": [
+      [
+        1,
+        59
+      ]
+    ],
+    "note": "Checkpoint46: Read complete t-sub_fmpz.c: finite random arithmetic with shared polynomial/GCD canonical reference or shared scalar wrapper; all contexts use ORD_LEX. General binary tests randomly choose one whole-object alias. Scalar-wrapper tests do not explicitly exercise their own in-place output branch."
+  },
+  {
+    "repo": "flint",
+    "path": "src/fmpz_mpoly_q/used_vars.c",
+    "ranges": [
+      [
+        1,
+        89
+      ]
+    ],
+    "note": "Checkpoint46: Zeroed public masks merge numerator/denominator degree flags, with constant and one-variable shortcuts. Private comment says AND although the operation is OR; no arithmetic defect follows."
+  },
+  {
+    "repo": "flint",
+    "path": "src/fmpz_mpoly.h",
+    "ranges": [
+      [
+        75,
+        90
+      ],
+      [
+        245,
+        315
+      ]
+    ],
+    "note": "Checkpoint46 supporting public API excerpts: fixed variable-count/order context lifecycle, coefficient insertion and complete term coefficient/exponent extraction. Bounded canonical polynomial inputs only; underlying polynomial arithmetic/GCD and remaining header are not declared read."
+  }
+]

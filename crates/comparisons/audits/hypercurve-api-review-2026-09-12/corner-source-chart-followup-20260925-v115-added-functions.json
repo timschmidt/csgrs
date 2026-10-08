@@ -1,0 +1,21 @@
+[
+  "certified_derivative_scale_sign_on_range",
+  "certifies_simple_closed_parallel",
+  "closed_parallel_endpoint_contacts",
+  "closed_parallel_secants_retain_endpoints_and_both_seam_parameters",
+  "closed_parallel_turn_certificate_rejects_multiple_traversal",
+  "closed_parallel_turn_certificate_retains_only_the_seam",
+  "curve_parameter",
+  "incidence_polynomial",
+  "local_parallel_endpoint_clipping_reuses_a_coefficient_root",
+  "new",
+  "parameter_at_certified_support_point_by_local_evidence",
+  "recursive_local_isolation_reuses_exact_signs_below_interval_precision",
+  "regular_parallel_orientation_reuse_rejects_ranges_crossing_cusps",
+  "retain_corner_extension_interval",
+  "selected_source_range_retains_incident_endpoint_and_contacts_locally",
+  "sizes",
+  "source_box",
+  "squared_magnitude_difference",
+  "unused_positive_radicals_do_not_block_recursive_enclosures"
+]

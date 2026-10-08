@@ -1,0 +1,15 @@
+{
+  "returncode": 0,
+  "seconds": 0.031816777991480194,
+  "command": [
+    "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve_curve_intersection-e3a50a789eb6a53e",
+    "--test-threads=4",
+    "--color",
+    "never"
+  ],
+  "rlib_sha256": "e3235de6bd4625c854e6c41fd9493663d52a1039fa4ec693dfd48219cc64c1d0",
+  "unresolved_pairs": [],
+  "summary": [
+    "test result: ok. 31 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s"
+  ]
+}

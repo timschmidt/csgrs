@@ -1,0 +1,26 @@
+{
+  "returncode": 0,
+  "elapsed_seconds": 0.9649259840080049,
+  "normal_library_sha256": "e202ba018058d08c8c82bec93bd0450757fd5fd6645097bea76f6108b6113aa1",
+  "log": "finite-region-bounds-analytic-probe.log",
+  "source": "analytic-common-dispatch-completed.rs",
+  "command": [
+    "rustc",
+    "--edition=2024",
+    "-O",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/analytic-common-dispatch-completed.rs",
+    "--extern",
+    "hypercurve=/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/libhypercurve-2c7ff6f3fbe07653.rlib",
+    "-L",
+    "dependency=/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps",
+    "-o",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-region-bounds-analytic-probe"
+  ],
+  "source_sha256": "435ca28d063a5d18fc1e613c263adb8c759297294a2b10300a4814b7859c5a44",
+  "executable_sha256": "a490ad7d4fbd1c93443c7073b292c0438553bdc7837602823df92e6e8825234a",
+  "counts": {
+    "completed_common_queries": 12,
+    "point_replays": 32,
+    "lower_kernels_complete": true
+  }
+}

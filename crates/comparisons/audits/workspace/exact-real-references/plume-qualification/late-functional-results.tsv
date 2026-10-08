@@ -1,0 +1,12 @@
+quadratic-min	0	0	1	1	1	5	5
+quadratic-min	4	-1	4	1	16	5	9
+quadratic-min	6	-1	4	1	64	5	11
+quadratic-min	8	-1	4	1	256	5	13
+quadratic-max	0	1	1	1	1	6	6
+quadratic-max	4	9	16	1	16	6	10
+quadratic-max	6	17	32	1	64	6	12
+square-integral	0	0	1	1	1	5	5
+reciprocal-max	0	14	1	1	1	10	10
+reciprocal-max	4	29	2	1	16	10	14
+reciprocal-max	6	29	2	1	64	10	16
+reciprocal-max	8	1857	128	1	256	10	18

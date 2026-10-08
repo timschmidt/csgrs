@@ -1,0 +1,13 @@
+{
+  "tag": "mpoly-bridge-linked-libraries",
+  "started": "2026-09-10T04:42:55.289Z",
+  "finished": "2026-09-10T04:42:55.315Z",
+  "elapsedSeconds": 0.02345927300000001,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison",
+  "command": "ldd",
+  "args": [
+    "/tmp/calcium-mpoly-bridge.7pQl1d/controls"
+  ],
+  "code": 0,
+  "signal": null
+}

@@ -1,0 +1,15 @@
+Replay represented-circle incidence in retained point fields
+
+After short strict separation checks, reuse the shared projective radial
+residual to certify exact incidence for deeply retained query points. Preserve
+native formulas and the complete refinement fallback; the optional replay
+cannot consume an approximate terminal. No new carrier or cache is needed.
+
+A new geometric regression reproduces strict uncertainty on the parent and
+now certifies boundary, inside and outside signs under reflection, both
+policies and lazy endpoint views. Repeated opaque-zero queries preserve
+explicit approximate certainty and later strict uncertainty.
+
+Formatting and both all-target Clippy configurations pass. All eight focused
+cases pass. Affected qualification: 620 passes, three ignored, three unchanged
+timeouts across 626 cases; all 225 public integration cases pass.

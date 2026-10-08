@@ -1,0 +1,4 @@
+   Compiling serde_core v1.0.229
+    Checking serde_json v1.0.151
+    Checking twelfth-cost-v78 v0.1.0 (/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/twelfth-cost-baseline-app-v78)
+    Finished `dev` profile [unoptimized] target(s) in 1.56s

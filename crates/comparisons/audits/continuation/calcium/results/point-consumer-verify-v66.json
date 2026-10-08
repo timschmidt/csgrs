@@ -1,0 +1,13 @@
+{
+  "tag": "point-consumer-verify-v66",
+  "started": "2026-09-11T03:22:14.530Z",
+  "finished": "2026-09-11T03:22:18.866Z",
+  "elapsedSeconds": 4.3336106690000005,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "node",
+  "args": [
+    "verify-point-consumer-v66.mjs"
+  ],
+  "code": 0,
+  "signal": null
+}

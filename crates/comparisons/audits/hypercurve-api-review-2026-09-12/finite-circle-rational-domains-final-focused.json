@@ -1,0 +1,92 @@
+[
+  {
+    "name": "denominator_sign_",
+    "matched_tests": 2,
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve-6e6572a45c5b177b",
+      "denominator_sign_",
+      "--nocapture",
+      "--test-threads=1"
+    ],
+    "binary": "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve-6e6572a45c5b177b",
+    "sha256": "b27177a91836e6daffbad974398ee370207b609bbe5628a0726b438fb50a69c3",
+    "returncode": 0,
+    "elapsed_seconds": 0.007688332989346236,
+    "log": "finite-circle-rational-domains-focused-denominator_sign_.log"
+  },
+  {
+    "name": "finite_circle_components_replay_one_field_and_selected_inverses",
+    "matched_tests": 1,
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve-6e6572a45c5b177b",
+      "finite_circle_components_replay_one_field_and_selected_inverses",
+      "--nocapture",
+      "--test-threads=1"
+    ],
+    "binary": "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve-6e6572a45c5b177b",
+    "sha256": "b27177a91836e6daffbad974398ee370207b609bbe5628a0726b438fb50a69c3",
+    "returncode": 0,
+    "elapsed_seconds": 0.06385931099066511,
+    "log": "finite-circle-rational-domains-focused-finite_circle_components_replay_one_field_and_selected_inverses.log"
+  },
+  {
+    "name": "finite_circle_components_replay_chord_normal_and_represented_inverses",
+    "matched_tests": 1,
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve-6e6572a45c5b177b",
+      "finite_circle_components_replay_chord_normal_and_represented_inverses",
+      "--nocapture",
+      "--test-threads=1"
+    ],
+    "binary": "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve-6e6572a45c5b177b",
+    "sha256": "b27177a91836e6daffbad974398ee370207b609bbe5628a0726b438fb50a69c3",
+    "returncode": 0,
+    "elapsed_seconds": 3.6697521379974205,
+    "log": "finite-circle-rational-domains-focused-finite_circle_components_replay_chord_normal_and_represented_inverses.log"
+  },
+  {
+    "name": "finite_circle_components_replay_pair_radial_and_recursive_inverses",
+    "matched_tests": 1,
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve-6e6572a45c5b177b",
+      "finite_circle_components_replay_pair_radial_and_recursive_inverses",
+      "--nocapture",
+      "--test-threads=1"
+    ],
+    "binary": "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve-6e6572a45c5b177b",
+    "sha256": "b27177a91836e6daffbad974398ee370207b609bbe5628a0726b438fb50a69c3",
+    "returncode": 0,
+    "elapsed_seconds": 0.5144975830044132,
+    "log": "finite-circle-rational-domains-focused-finite_circle_components_replay_pair_radial_and_recursive_inverses.log"
+  },
+  {
+    "name": "selected_circle_and_retained_rational_arc_fillet_exactly",
+    "matched_tests": 1,
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve-6e6572a45c5b177b",
+      "selected_circle_and_retained_rational_arc_fillet_exactly",
+      "--nocapture",
+      "--test-threads=1"
+    ],
+    "binary": "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve-6e6572a45c5b177b",
+    "sha256": "b27177a91836e6daffbad974398ee370207b609bbe5628a0726b438fb50a69c3",
+    "returncode": 0,
+    "elapsed_seconds": 1.1653870410227682,
+    "log": "finite-circle-rational-domains-focused-selected_circle_and_retained_rational_arc_fillet_exactly.log"
+  },
+  {
+    "name": "selected_circle_and_retained_rational_arc_extend_on_full_supports",
+    "matched_tests": 1,
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve-6e6572a45c5b177b",
+      "selected_circle_and_retained_rational_arc_extend_on_full_supports",
+      "--nocapture",
+      "--test-threads=1"
+    ],
+    "binary": "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve-6e6572a45c5b177b",
+    "sha256": "b27177a91836e6daffbad974398ee370207b609bbe5628a0726b438fb50a69c3",
+    "returncode": 0,
+    "elapsed_seconds": 0.8149755349732004,
+    "log": "finite-circle-rational-domains-focused-selected_circle_and_retained_rational_arc_extend_on_full_supports.log"
+  }
+]

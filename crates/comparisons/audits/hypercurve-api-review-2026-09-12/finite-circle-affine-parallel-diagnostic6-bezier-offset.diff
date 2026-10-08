@@ -1,0 +1,179 @@
+diff --git a/src/bezier_offset.rs b/src/bezier_offset.rs
+index 07cdc08..b1254d8 100644
+--- a/src/bezier_offset.rs
++++ b/src/bezier_offset.rs
+@@ -93692,6 +93692,43 @@ impl BezierAnalyticParallelPoint2 {
+         Ok((&differential.tangent_x, &differential.tangent_y))
+     }
+ 
++    /// A constant regular frame is a represented translation, even when its
++    /// speed is irrational. Reuse those coefficients in the parameter's field
++    /// instead of adjoining another copy of the same positive speed root.
++    fn constant_frame_translation(&self, policy: &CurveContext) -> CurveResult<Option<[Real; 2]>> {
++        let mut translation = [
++            self.data.translation_x.clone(),
++            self.data.translation_y.clone(),
++        ];
++        if self.data.parallel.distance().zero_status() == ZeroKnowledge::Zero
++            && self.data.tangent_distance.zero_status() == ZeroKnowledge::Zero
++        {
++            return Ok(Some(translation));
++        }
++        let (x, y) = self.frame_tangent_power_basis()?;
++        if [x, y].into_iter().any(|component| {
++            component
++                .iter()
++                .skip(1)
++                .any(|coefficient| coefficient.zero_status() != ZeroKnowledge::Zero)
++        }) {
++            return Ok(None);
++        }
++        let x = x.first().cloned().unwrap_or_else(Real::zero);
++        let y = y.first().cloned().unwrap_or_else(Real::zero);
++        let speed_squared = &x * &x + &y * &y;
++        if real_sign(&speed_squared, &policy.strict_counterpart()) != Some(RealSign::Positive) {
++            return Ok(None);
++        }
++        let speed = speed_squared.sqrt()?;
++        let normal = self.data.parallel.distance();
++        let tangent = &self.data.tangent_distance;
++        translation[0] =
++            &translation[0] + (Real::diff_of_products(tangent, &x, normal, &y) / &speed)?;
++        translation[1] = &translation[1] + ((tangent * &y + normal * &x) / speed)?;
++        Ok(Some(translation))
++    }
++
+     /// Publishes the authored tangent support shared with `end` directly in
+     /// the selected parameter field.
+     ///
+@@ -94012,14 +94049,15 @@ impl BezierAnalyticParallelPoint2 {
+         let source = self.data.parallel.source_power_basis()?;
+         let unit_weight = [Real::one()];
+         let weight = source.weight.unwrap_or(&unit_weight);
+-        let translated_x = polynomial_add(
+-            source.x_numerator,
+-            &polynomial_scale(weight, &self.data.translation_x),
+-        );
+-        let translated_y = polynomial_add(
+-            source.y_numerator,
+-            &polynomial_scale(weight, &self.data.translation_y),
+-        );
++        let translation = self.constant_frame_translation(policy)?;
++        let (translation_x, translation_y) = translation.as_ref().map_or(
++            (&self.data.translation_x, &self.data.translation_y),
++            |[x, y]| (x, y),
++        );
++        let translated_x =
++            polynomial_add(source.x_numerator, &polynomial_scale(weight, translation_x));
++        let translated_y =
++            polynomial_add(source.y_numerator, &polynomial_scale(weight, translation_y));
+         let source_degree = [translated_x.len(), translated_y.len(), weight.len()]
+             .into_iter()
+             .max()
+@@ -94039,9 +94077,7 @@ impl BezierAnalyticParallelPoint2 {
+         else {
+             return Ok(Classification::Decided(None));
+         };
+-        let zero_frame = self.data.parallel.distance().zero_status() == ZeroKnowledge::Zero
+-            && self.data.tangent_distance.zero_status() == ZeroKnowledge::Zero;
+-        let point = if zero_frame {
++        let point = if translation.is_some() {
+             BezierRecursiveQuadraticProjectivePoint2 {
+                 x: translated_x,
+                 y: translated_y,
+@@ -94286,23 +94322,22 @@ impl BezierAnalyticParallelPoint2 {
+         let source = self.data.parallel.source_power_basis()?;
+         let unit_weight = [Real::one()];
+         let weight = source.weight.unwrap_or(&unit_weight);
+-        let translated_x = polynomial_add(
+-            source.x_numerator,
+-            &polynomial_scale(weight, &self.data.translation_x),
+-        );
+-        let translated_y = polynomial_add(
+-            source.y_numerator,
+-            &polynomial_scale(weight, &self.data.translation_y),
+-        );
++        let translation = self.constant_frame_translation(policy)?;
++        let (translation_x, translation_y) = translation.as_ref().map_or(
++            (&self.data.translation_x, &self.data.translation_y),
++            |[x, y]| (x, y),
++        );
++        let translated_x =
++            polynomial_add(source.x_numerator, &polynomial_scale(weight, translation_x));
++        let translated_y =
++            polynomial_add(source.y_numerator, &polynomial_scale(weight, translation_y));
+         let parameter_source = bezier_parameter_root_representation(&parameter);
+         let tensor =
+             |coefficients: &[Real]| DenseTensorPolynomial::from_axis_polynomial(1, 0, coefficients);
+         let Some(one) = tensor(std::slice::from_ref(&Real::one())) else {
+             return Ok(Classification::Decided(None));
+         };
+-        let zero_frame = self.data.parallel.distance().zero_status() == ZeroKnowledge::Zero
+-            && self.data.tangent_distance.zero_status() == ZeroKnowledge::Zero;
+-        let point = if zero_frame {
++        let point = if translation.is_some() {
+             let Some(field) =
+                 BezierRecursiveQuadraticField2::base(vec![parameter_source], one.clone(), one)
+             else {
+@@ -98833,7 +98868,16 @@ pub(crate) fn recursive_projective_point_evidence_equality(
+             return Ok(Classification::Decided(Some(false)));
+         }
+     }
+-    let points = match recursive_projective_evidence_points(&[first, second], policy)? {
++    let imported = recursive_projective_evidence_points(&[first, second], policy);
++    if std::env::var_os("HYPERCURVE_DEBUG_AFFINE_REPLAY").is_some() {
++        eprintln!("affine equality imports={} bounded={}", match &imported {
++            Ok(Classification::Decided(Some(_))) => "some",
++            Ok(Classification::Decided(None)) => "none",
++            Ok(Classification::Uncertain(_)) => "uncertain",
++            Err(_) => "error",
++        }, policy.has_bounded_exact_predicate_budget());
++    }
++    let points = match imported? {
+         Classification::Decided(Some(points)) => points,
+         Classification::Decided(None) => return Ok(Classification::Decided(None)),
+         Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+@@ -98842,7 +98886,11 @@ pub(crate) fn recursive_projective_point_evidence_equality(
+         .try_into()
+         .expect("a recursive point equality retains two points");
+     for axis in [Axis2::X, Axis2::Y] {
+-        match first.axis_order(&second, axis, policy)? {
++        let order = first.axis_order(&second, axis, policy);
++        if std::env::var_os("HYPERCURVE_DEBUG_AFFINE_REPLAY").is_some() {
++            eprintln!("affine equality axis={axis:?} order={order:?}");
++        }
++        match order? {
+             Some(Classification::Decided(std::cmp::Ordering::Equal)) => {}
+             Some(Classification::Decided(
+                 std::cmp::Ordering::Less | std::cmp::Ordering::Greater,
+@@ -118930,7 +118978,14 @@ impl BezierParallel2 {
+         }
+         let power_basis = match self.source() {
+             BezierParallelSource2::Quadratic(source) => {
+-                polynomial_control_power_basis(&source.control_points())?
++                if let Some(line) = source.retained_exact_line_image() {
++                    (
++                        vec![line.start().x().clone(), line.end().x() - line.start().x()],
++                        vec![line.start().y().clone(), line.end().y() - line.start().y()],
++                    )
++                } else {
++                    polynomial_control_power_basis(&source.control_points())?
++                }
+             }
+             BezierParallelSource2::Cubic(source) => {
+                 polynomial_control_power_basis(&source.control_points())?
+@@ -124477,7 +124532,13 @@ fn polynomial_coefficients_are_identically_zero(
+             Some(RealSign::Positive | RealSign::Negative) => {
+                 return Classification::Decided(false);
+             }
+-            None => uncertain = true,
++            None => {
++                if std::env::var_os("HYPERCURVE_DEBUG_AFFINE_REPLAY").is_some() {
++                    eprintln!("uncertain coefficient {} {:?}", coefficient, coefficient.zero_status());
++                    eprintln!("coefficient debug {}", format!("{coefficient:?}").chars().take(4000).collect::<String>());
++                }
++                uncertain = true;
++            },
+         }
+     }
+     if uncertain {

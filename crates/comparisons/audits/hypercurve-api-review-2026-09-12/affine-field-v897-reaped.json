@@ -1,0 +1,5 @@
+{
+  "outer_session": 39753,
+  "outer_exit_code": 1,
+  "observed": "write_stdin returned exit_code 1; three E0308 Cow operand conversion errors in Hypersolve; no tests ran"
+}

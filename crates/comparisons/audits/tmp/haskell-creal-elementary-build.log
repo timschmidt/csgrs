@@ -1,0 +1,106 @@
+[1 of 3] Compiling Data.CReal.Internal ( /home/tim/Documents/GitHub/workspace/exact-real-references/haskell-exact-real/src/Data/CReal/Internal.hs, /tmp/haskell-creal-audit.rafb8h/elementary-build/Data/CReal/Internal.o )
+ld.lld: error: relocation R_X86_64_32 cannot be used against local symbol; recompile with -fPIC
+>>> defined in /tmp/haskell-creal-audit.rafb8h/elementary-oracle.o
+>>> referenced by elementary-oracle.c
+>>>               /tmp/haskell-creal-audit.rafb8h/elementary-oracle.o:(creal_oracle)
+
+ld.lld: error: relocation R_X86_64_32 cannot be used against symbol 'mpfr_exp'; recompile with -fPIC
+>>> defined in /usr/lib/gcc/x86_64-redhat-linux/15/../../../../lib64/libmpfr.so
+>>> referenced by elementary-oracle.c
+>>>               /tmp/haskell-creal-audit.rafb8h/elementary-oracle.o:(creal_oracle)
+
+ld.lld: error: relocation R_X86_64_32 cannot be used against local symbol; recompile with -fPIC
+>>> defined in /tmp/haskell-creal-audit.rafb8h/elementary-oracle.o
+>>> referenced by elementary-oracle.c
+>>>               /tmp/haskell-creal-audit.rafb8h/elementary-oracle.o:(creal_oracle)
+
+ld.lld: error: relocation R_X86_64_32 cannot be used against local symbol; recompile with -fPIC
+>>> defined in /tmp/haskell-creal-audit.rafb8h/elementary-oracle.o
+>>> referenced by elementary-oracle.c
+>>>               /tmp/haskell-creal-audit.rafb8h/elementary-oracle.o:(creal_oracle)
+
+ld.lld: error: relocation R_X86_64_32 cannot be used against symbol 'mpfr_log'; recompile with -fPIC
+>>> defined in /usr/lib/gcc/x86_64-redhat-linux/15/../../../../lib64/libmpfr.so
+>>> referenced by elementary-oracle.c
+>>>               /tmp/haskell-creal-audit.rafb8h/elementary-oracle.o:(creal_oracle)
+
+ld.lld: error: relocation R_X86_64_32 cannot be used against local symbol; recompile with -fPIC
+>>> defined in /tmp/haskell-creal-audit.rafb8h/elementary-oracle.o
+>>> referenced by elementary-oracle.c
+>>>               /tmp/haskell-creal-audit.rafb8h/elementary-oracle.o:(creal_oracle)
+
+ld.lld: error: relocation R_X86_64_32 cannot be used against symbol 'mpfr_sin'; recompile with -fPIC
+>>> defined in /usr/lib/gcc/x86_64-redhat-linux/15/../../../../lib64/libmpfr.so
+>>> referenced by elementary-oracle.c
+>>>               /tmp/haskell-creal-audit.rafb8h/elementary-oracle.o:(creal_oracle)
+
+ld.lld: error: relocation R_X86_64_32 cannot be used against local symbol; recompile with -fPIC
+>>> defined in /tmp/haskell-creal-audit.rafb8h/elementary-oracle.o
+>>> referenced by elementary-oracle.c
+>>>               /tmp/haskell-creal-audit.rafb8h/elementary-oracle.o:(creal_oracle)
+
+ld.lld: error: relocation R_X86_64_32 cannot be used against symbol 'mpfr_cos'; recompile with -fPIC
+>>> defined in /usr/lib/gcc/x86_64-redhat-linux/15/../../../../lib64/libmpfr.so
+>>> referenced by elementary-oracle.c
+>>>               /tmp/haskell-creal-audit.rafb8h/elementary-oracle.o:(creal_oracle)
+
+ld.lld: error: relocation R_X86_64_32 cannot be used against local symbol; recompile with -fPIC
+>>> defined in /tmp/haskell-creal-audit.rafb8h/elementary-oracle.o
+>>> referenced by elementary-oracle.c
+>>>               /tmp/haskell-creal-audit.rafb8h/elementary-oracle.o:(creal_oracle)
+
+ld.lld: error: relocation R_X86_64_32 cannot be used against symbol 'mpfr_atan'; recompile with -fPIC
+>>> defined in /usr/lib/gcc/x86_64-redhat-linux/15/../../../../lib64/libmpfr.so
+>>> referenced by elementary-oracle.c
+>>>               /tmp/haskell-creal-audit.rafb8h/elementary-oracle.o:(creal_oracle)
+
+ld.lld: error: relocation R_X86_64_32 cannot be used against local symbol; recompile with -fPIC
+>>> defined in /tmp/haskell-creal-audit.rafb8h/elementary-oracle.o
+>>> referenced by elementary-oracle.c
+>>>               /tmp/haskell-creal-audit.rafb8h/elementary-oracle.o:(creal_oracle)
+
+ld.lld: error: relocation R_X86_64_32 cannot be used against symbol 'mpfr_asin'; recompile with -fPIC
+>>> defined in /usr/lib/gcc/x86_64-redhat-linux/15/../../../../lib64/libmpfr.so
+>>> referenced by elementary-oracle.c
+>>>               /tmp/haskell-creal-audit.rafb8h/elementary-oracle.o:(creal_oracle)
+
+ld.lld: error: relocation R_X86_64_32 cannot be used against local symbol; recompile with -fPIC
+>>> defined in /tmp/haskell-creal-audit.rafb8h/elementary-oracle.o
+>>> referenced by elementary-oracle.c
+>>>               /tmp/haskell-creal-audit.rafb8h/elementary-oracle.o:(creal_oracle)
+
+ld.lld: error: relocation R_X86_64_32 cannot be used against symbol 'mpfr_acos'; recompile with -fPIC
+>>> defined in /usr/lib/gcc/x86_64-redhat-linux/15/../../../../lib64/libmpfr.so
+>>> referenced by elementary-oracle.c
+>>>               /tmp/haskell-creal-audit.rafb8h/elementary-oracle.o:(creal_oracle)
+
+ld.lld: error: relocation R_X86_64_32 cannot be used against local symbol; recompile with -fPIC
+>>> defined in /tmp/haskell-creal-audit.rafb8h/elementary-oracle.o
+>>> referenced by elementary-oracle.c
+>>>               /tmp/haskell-creal-audit.rafb8h/elementary-oracle.o:(creal_oracle)
+
+ld.lld: error: relocation R_X86_64_32 cannot be used against symbol 'mpfr_sqrt'; recompile with -fPIC
+>>> defined in /usr/lib/gcc/x86_64-redhat-linux/15/../../../../lib64/libmpfr.so
+>>> referenced by elementary-oracle.c
+>>>               /tmp/haskell-creal-audit.rafb8h/elementary-oracle.o:(creal_oracle)
+
+ld.lld: error: relocation R_X86_64_32 cannot be used against local symbol; recompile with -fPIC
+>>> defined in /tmp/haskell-creal-audit.rafb8h/elementary-oracle.o
+>>> referenced by elementary-oracle.c
+>>>               /tmp/haskell-creal-audit.rafb8h/elementary-oracle.o:(creal_oracle)
+
+ld.lld: error: relocation R_X86_64_32 cannot be used against symbol 'mpfr_tan'; recompile with -fPIC
+>>> defined in /usr/lib/gcc/x86_64-redhat-linux/15/../../../../lib64/libmpfr.so
+>>> referenced by elementary-oracle.c
+>>>               /tmp/haskell-creal-audit.rafb8h/elementary-oracle.o:(creal_oracle)
+
+ld.lld: error: relocation R_X86_64_32 cannot be used against local symbol; recompile with -fPIC
+>>> defined in /tmp/haskell-creal-audit.rafb8h/elementary-oracle.o
+>>> referenced by elementary-oracle.c
+>>>               /tmp/haskell-creal-audit.rafb8h/elementary-oracle.o:(creal_oracle)
+
+ld.lld: error: too many errors emitted, stopping now (use --error-limit=0 to see all errors)
+collect2: error: ld returned 1 exit status
+
+<no location info>: error:
+    `gcc' failed in phase `Linker'. (Exit code: 1)

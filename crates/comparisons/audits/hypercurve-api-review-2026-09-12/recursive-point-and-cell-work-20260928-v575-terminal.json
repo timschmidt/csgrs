@@ -1,0 +1,121 @@
+{
+  "normal_production_build": false,
+  "source_manifest": "recursive-point-and-cell-work-20260928-v575-sources.json",
+  "source_directory": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/source-archives/recursive-point-and-cell-work-20260928-v575",
+  "builds": [
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "test",
+        "--lib",
+        "--release",
+        "--all-features",
+        "--locked",
+        "--offline",
+        "--no-run",
+        "--message-format=json"
+      ],
+      "returncode": 0,
+      "log": "recursive-point-and-cell-work-20260928-v575-build.log",
+      "elapsed_seconds": 141.34029373992234,
+      "binaries": {
+        "hypercurve": {
+          "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/recursive-point-and-cell-work-20260928-v575-hypercurve-tests",
+          "sha256": "cd5b150ead09a03e44a721e8c3573e1dca3e3a3129a92c0f250245b706d80f73"
+        }
+      }
+    }
+  ],
+  "cases": [
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/recursive-point-and-cell-work-20260928-v575-hypercurve-tests",
+        "--exact",
+        "curve::curve_fillet::stationary_recursive_point_constraint_regression::stationary_fillet_family_accepts_independent_recursive_point_constraints",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 101,
+      "log": "recursive-point-and-cell-work-20260928-v575-stationary_fillet_family_accepts_independent_recursive_point_constraints.log",
+      "elapsed_seconds": 11.02909768302925,
+      "target": "hypercurve",
+      "name": "curve::curve_fillet::stationary_recursive_point_constraint_regression::stationary_fillet_family_accepts_independent_recursive_point_constraints",
+      "passed": false
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/recursive-point-and-cell-work-20260928-v575-hypercurve-tests",
+        "--exact",
+        "curve::curve_fillet::tests::joined_path_selects_and_replays_a_continuous_fillet_family",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "recursive-point-and-cell-work-20260928-v575-joined_path_selects_and_replays_a_continuous_fillet_family.log",
+      "elapsed_seconds": 5.471527335932478,
+      "target": "hypercurve",
+      "name": "curve::curve_fillet::tests::joined_path_selects_and_replays_a_continuous_fillet_family",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/recursive-point-and-cell-work-20260928-v575-hypercurve-tests",
+        "--exact",
+        "curve::curve_fillet::stationary_continuous_family_regression::continuous_fillets_preserve_stationary_reparameterization",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "recursive-point-and-cell-work-20260928-v575-continuous_fillets_preserve_stationary_reparameterization.log",
+      "elapsed_seconds": 33.96244190214202,
+      "target": "hypercurve",
+      "name": "curve::curve_fillet::stationary_continuous_family_regression::continuous_fillets_preserve_stationary_reparameterization",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/recursive-point-and-cell-work-20260928-v575-hypercurve-tests",
+        "--exact",
+        "curve::curve_fillet::stationary_family_composition_regression::normalized_region_selects_and_reuses_a_stationary_fillet_family",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "recursive-point-and-cell-work-20260928-v575-normalized_region_selects_and_reuses_a_stationary_fillet_family.log",
+      "elapsed_seconds": 1.9665145890321583,
+      "target": "hypercurve",
+      "name": "curve::curve_fillet::stationary_family_composition_regression::normalized_region_selects_and_reuses_a_stationary_fillet_family",
+      "passed": true
+    }
+  ],
+  "checks": [],
+  "expected_cases": {
+    "hypercurve": [
+      "curve::curve_fillet::stationary_recursive_point_constraint_regression::stationary_fillet_family_accepts_independent_recursive_point_constraints",
+      "curve::curve_fillet::tests::joined_path_selects_and_replays_a_continuous_fillet_family",
+      "curve::curve_fillet::stationary_continuous_family_regression::continuous_fillets_preserve_stationary_reparameterization",
+      "curve::curve_fillet::stationary_family_composition_regression::normalized_region_selects_and_reuses_a_stationary_fillet_family"
+    ]
+  },
+  "all_processes_reaped": true,
+  "probe_complete": true,
+  "qualification_complete": false,
+  "performance": [
+    {
+      "name": "curve::curve_fillet::tests::joined_path_selects_and_replays_a_continuous_fillet_family",
+      "before": 5.471847384003922,
+      "after": 5.471527335932478
+    },
+    {
+      "name": "curve::curve_fillet::stationary_continuous_family_regression::continuous_fillets_preserve_stationary_reparameterization",
+      "before": 34.16367562301457,
+      "after": 33.96244190214202
+    },
+    {
+      "name": "curve::curve_fillet::stationary_family_composition_regression::normalized_region_selects_and_reuses_a_stationary_fillet_family",
+      "before": 1.916426933836192,
+      "after": 1.9665145890321583
+    }
+  ],
+  "failure": "focused regression failure"
+}

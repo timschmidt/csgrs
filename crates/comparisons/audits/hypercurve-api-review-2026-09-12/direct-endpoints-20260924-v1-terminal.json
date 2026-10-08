@@ -1,0 +1,19 @@
+{
+  "checks": [
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "check",
+        "--all-targets",
+        "--all-features",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "log": "direct-endpoints-20260924-v1-check-0.log"
+    }
+  ],
+  "tests_executed": 0,
+  "all_sources_unchanged": true,
+  "all_processes_reaped": true
+}

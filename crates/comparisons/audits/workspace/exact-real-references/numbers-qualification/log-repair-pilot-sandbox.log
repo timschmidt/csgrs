@@ -1,0 +1,13 @@
+{"label":"0-before-ln-rational","args":["ln-rational","256"],"status":0,"error":"EPERM","signal":null,"stdout":"ln-rational\t256\t334613\t336936\t4086\t221056\t13728409197463182528\n","stderr":"","sha256":"de78b99d1b52b2beed3c310f1591ccc8c6a57a1d36671af8e643866a8fba34f2","source":"e28729898ed85f06f45c72440ce1a8bf3b4908faa3aa04a00a81ef7d1b480ca9"}
+file:///home/tim/Documents/GitHub/workspace/exact-real-references/numbers-qualification/run-log-repair.mjs:12
+  if(r.error||r.status!==0||/^FAIL /m.test(r.stdout))throw Error('failed request '+label);
+                                                           ^
+
+Error: failed request 0-before-ln-rational
+    at run (file:///home/tim/Documents/GitHub/workspace/exact-real-references/numbers-qualification/run-log-repair.mjs:12:60)
+    at file:///home/tim/Documents/GitHub/workspace/exact-real-references/numbers-qualification/run-log-repair.mjs:19:72
+    at ModuleJob.run (node:internal/modules/esm/module_job:343:25)
+    at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:665:26)
+    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+
+Node.js v22.22.2

@@ -1,0 +1,140 @@
+<!DOCTYPE kmpdoc>
+<kmpdoc version="4">
+    <axes width="0.1" color="#808080" tic-legth="0.5" tic-width="0.1">
+        <show-axes>1</show-axes>
+        <show-arrows>1</show-arrows>
+        <show-label>1</show-label>
+        <xmin>-4.041201482028356</xmin>
+        <xmax>3.966782877377192</xmax>
+        <ymin>-3.963428537803507</ymin>
+        <ymax>3.969195236589115</ymax>
+    </axes>
+    <grid width="0.1" color="#c0c0c0">
+        <mode>2</mode>
+    </grid>
+    <scale>
+        <tic-x-mode>0</tic-x-mode>
+        <tic-y-mode>0</tic-y-mode>
+        <tic-x>1</tic-x>
+        <tic-y>1</tic-y>
+    </scale>
+    <function f2-use-gradient="0" f1-use-gradient="0" f0-width="0.3" type="parametric" use-parameter-slider="0" f1-show-plot-name="0" f1-gradient="0;#000000,1;#ffffff," f1-width="0.3" integral-color="#006400" integral-style="SolidLine" f0-show-tangent-field="0" f0-style="SolidLine" f1-visible="0" f1-show-tangent-field="0" f0-show-plot-name="0" integral-show-plot-name="0" f0-gradient="0;#000000,1;#ffffff," integral-use-gradient="0" f2-show-tangent-field="0" f2-width="0.3" integral-visible="0" f1-style="SolidLine" integral-show-tangent-field="0" f0-color="#006400" f1-show-extrema="0" f2-show-plot-name="0" f2-show-extrema="0" integral-show-extrema="0" f2-style="SolidLine" f0-show-extrema="0" integral-gradient="0;#000000,1;#ffffff," f1-color="#006400" f0-visible="1" parameter-slider="0" f2-gradient="0;#000000,1;#ffffff," f0-use-gradient="0" integral-width="0.3" use-parameter-list="0" f2-color="#006400" f2-visible="0">
+        <equation-0 step="0.05">g_x(t) = 3t/2</equation-0>
+        <equation-1 step="0.05">g_y(t) = 3(1−(t/2)^2)</equation-1>
+        <arg-min use="1">−1</arg-min>
+        <arg-max use="1">1</arg-max>
+    </function>
+    <function f2-use-gradient="0" f1-use-gradient="0" f0-width="0.3" type="parametric" use-parameter-slider="0" f1-show-plot-name="0" f1-gradient="0;#000000,1;#ffffff," f1-width="0.3" integral-color="#006400" integral-style="SolidLine" f0-show-tangent-field="0" f0-style="SolidLine" f1-visible="0" f1-show-tangent-field="0" f0-show-plot-name="0" integral-show-plot-name="0" f0-gradient="0;#000000,1;#ffffff," integral-use-gradient="0" f2-show-tangent-field="0" f2-width="0.3" integral-visible="0" f1-style="SolidLine" integral-show-tangent-field="0" f0-color="#006400" f1-show-extrema="0" f2-show-plot-name="0" f2-show-extrema="0" integral-show-extrema="0" f2-style="SolidLine" f0-show-extrema="0" integral-gradient="0;#000000,1;#ffffff," f1-color="#006400" f0-visible="1" parameter-slider="0" f2-gradient="0;#000000,1;#ffffff," f0-use-gradient="0" integral-width="0.3" use-parameter-list="0" f2-color="#006400" f2-visible="0">
+        <equation-0 step="0.05">f(t) = −(2+t)/2</equation-0>
+        <equation-1 step="0.05">f(t) = 3/4(t+2)</equation-1>
+        <arg-min use="1">−1</arg-min>
+        <arg-max use="1">1</arg-max>
+    </function>
+    <function f2-use-gradient="0" f1-use-gradient="0" f0-width="0.3" type="parametric" use-parameter-slider="0" f1-show-plot-name="0" f1-gradient="0;#000000,1;#ffffff," f1-width="0.3" integral-color="#006400" integral-style="SolidLine" f0-show-tangent-field="0" f0-style="SolidLine" f1-visible="0" f1-show-tangent-field="0" f0-show-plot-name="0" integral-show-plot-name="0" f0-gradient="0;#000000,1;#ffffff," integral-use-gradient="0" f2-show-tangent-field="0" f2-width="0.3" integral-visible="0" f1-style="SolidLine" integral-show-tangent-field="0" f0-color="#006400" f1-show-extrema="0" f2-show-plot-name="0" f2-show-extrema="0" integral-show-extrema="0" f2-style="SolidLine" f0-show-extrema="0" integral-gradient="0;#000000,1;#ffffff," f1-color="#006400" f0-visible="1" parameter-slider="0" f2-gradient="0;#000000,1;#ffffff," f0-use-gradient="0" integral-width="0.3" use-parameter-list="0" f2-color="#006400" f2-visible="0">
+        <equation-0 step="0.05">g(t) = t/2</equation-0>
+        <equation-1 step="0.05">g(t) = 1−(t/2)^2</equation-1>
+        <arg-min use="1">−1</arg-min>
+        <arg-max use="1">1</arg-max>
+    </function>
+    <function f2-use-gradient="0" f1-use-gradient="0" f0-width="0.3" type="parametric" use-parameter-slider="0" f1-show-plot-name="0" f1-gradient="0;#000000,1;#ffffff," f1-width="0.3" integral-color="#006400" integral-style="SolidLine" f0-show-tangent-field="0" f0-style="SolidLine" f1-visible="0" f1-show-tangent-field="0" f0-show-plot-name="0" integral-show-plot-name="0" f0-gradient="0;#000000,1;#ffffff," integral-use-gradient="0" f2-show-tangent-field="0" f2-width="0.3" integral-visible="0" f1-style="SolidLine" integral-show-tangent-field="0" f0-color="#006400" f1-show-extrema="0" f2-show-plot-name="0" f2-show-extrema="0" integral-show-extrema="0" f2-style="SolidLine" f0-show-extrema="0" integral-gradient="0;#000000,1;#ffffff," f1-color="#006400" f0-visible="1" parameter-slider="0" f2-gradient="0;#000000,1;#ffffff," f0-use-gradient="0" integral-width="0.3" use-parameter-list="0" f2-color="#006400" f2-visible="0">
+        <equation-0 step="0.05">h(t) = (2+t)/2</equation-0>
+        <equation-1 step="0.05">h(t) = 3/4(t+2)</equation-1>
+        <arg-min use="1">−1</arg-min>
+        <arg-max use="1">1</arg-max>
+    </function>
+    <function f2-use-gradient="0" f1-use-gradient="0" f0-width="0.3" type="parametric" use-parameter-slider="0" f1-show-plot-name="0" f1-gradient="0;#000000,1;#ffffff," f1-width="0.3" integral-color="#ff1493" integral-style="SolidLine" f0-show-tangent-field="0" f0-style="SolidLine" f1-visible="0" f1-show-tangent-field="0" f0-show-plot-name="0" integral-show-plot-name="0" f0-gradient="0;#000000,1;#ffffff," integral-use-gradient="0" f2-show-tangent-field="0" f2-width="0.3" integral-visible="0" f1-style="SolidLine" integral-show-tangent-field="0" f0-color="#ff1493" f1-show-extrema="0" f2-show-plot-name="0" f2-show-extrema="0" integral-show-extrema="0" f2-style="SolidLine" f0-show-extrema="0" integral-gradient="0;#000000,1;#ffffff," f1-color="#ff1493" f0-visible="1" parameter-slider="0" f2-gradient="0;#000000,1;#ffffff," f0-use-gradient="0" integral-width="0.3" use-parameter-list="0" f2-color="#ff1493" f2-visible="0">
+        <equation-0 step="0.05">i_x(t) = 0.80593501647583(t+1)+0.46365941992961585</equation-0>
+        <equation-1 step="0.05">i_y(t) = 0.7579891298944256(t+1)+0.43607585362974993</equation-1>
+        <arg-min use="1">−1</arg-min>
+        <arg-max use="1">1</arg-max>
+    </function>
+    <function f2-use-gradient="0" f1-use-gradient="0" f0-width="0.3" type="parametric" use-parameter-slider="0" f1-show-plot-name="0" f1-gradient="0;#000000,1;#ffffff," f1-width="0.3" integral-color="#ff1493" integral-style="SolidLine" f0-show-tangent-field="0" f0-style="SolidLine" f1-visible="0" f1-show-tangent-field="0" f0-show-plot-name="0" integral-show-plot-name="0" f0-gradient="0;#000000,1;#ffffff," integral-use-gradient="0" f2-show-tangent-field="0" f2-width="0.3" integral-visible="0" f1-style="SolidLine" integral-show-tangent-field="0" f0-color="#ff1493" f1-show-extrema="0" f2-show-plot-name="0" f2-show-extrema="0" integral-show-extrema="0" f2-style="SolidLine" f0-show-extrema="0" integral-gradient="0;#000000,1;#ffffff," f1-color="#ff1493" f0-visible="1" parameter-slider="0" f2-gradient="0;#000000,1;#ffffff," f0-use-gradient="0" integral-width="0.3" use-parameter-list="0" f2-color="#ff1493" f2-visible="0">
+        <equation-0 step="0.05">i(t) = −0.8059350164758291(t+1)−0.4636594199296152</equation-0>
+        <equation-1 step="0.05">i(t) = 0.7579891298944234(t+1)+0.43607585362974793</equation-1>
+        <arg-min use="1">−1</arg-min>
+        <arg-max use="1">1</arg-max>
+    </function>
+    <function f2-use-gradient="0" f1-use-gradient="0" f0-width="0.3" type="parametric" use-parameter-slider="0" f1-show-plot-name="0" f1-gradient="0;#000000,1;#ffffff," f1-width="0.3" integral-color="#ff1493" integral-style="SolidLine" f0-show-tangent-field="0" f0-style="SolidLine" f1-visible="0" f1-show-tangent-field="0" f0-show-plot-name="0" integral-show-plot-name="0" f0-gradient="0;#000000,1;#ffffff," integral-use-gradient="0" f2-show-tangent-field="0" f2-width="0.3" integral-visible="0" f1-style="SolidLine" integral-show-tangent-field="0" f0-color="#ff1493" f1-show-extrema="0" f2-show-plot-name="0" f2-show-extrema="0" integral-show-extrema="0" f2-style="SolidLine" f0-show-extrema="0" integral-gradient="0;#000000,1;#ffffff," f1-color="#ff1493" f0-visible="1" parameter-slider="0" f2-gradient="0;#000000,1;#ffffff," f0-use-gradient="0" integral-width="0.3" use-parameter-list="0" f2-color="#ff1493" f2-visible="0">
+        <equation-0 step="0.05">j(t) = 0.4636594199296155(t+1)−0.4636594199296152</equation-0>
+        <equation-1 step="0.05">j(t) = −0.29432970996480745(t+1)^2+0.5886594199296159(t+1)+0.43607585362974793</equation-1>
+        <arg-min use="1">−1</arg-min>
+        <arg-max use="1">1</arg-max>
+    </function>
+    <function f2-use-gradient="0" f1-use-gradient="0" f0-width="0.3" type="parametric" use-parameter-slider="0" f1-show-plot-name="0" f1-gradient="0;#000000,1;#ffffff," f1-width="0.3" integral-color="#ff1493" integral-style="SolidLine" f0-show-tangent-field="0" f0-style="SolidLine" f1-visible="0" f1-show-tangent-field="0" f0-show-plot-name="0" integral-show-plot-name="0" f0-gradient="0;#000000,1;#ffffff," integral-use-gradient="0" f2-show-tangent-field="0" f2-width="0.3" integral-visible="0" f1-style="SolidLine" integral-show-tangent-field="0" f0-color="#ff1493" f1-show-extrema="0" f2-show-plot-name="0" f2-show-extrema="0" integral-show-extrema="0" f2-style="SolidLine" f0-show-extrema="0" integral-gradient="0;#000000,1;#ffffff," f1-color="#ff1493" f0-visible="1" parameter-slider="0" f2-gradient="0;#000000,1;#ffffff," f0-use-gradient="0" integral-width="0.3" use-parameter-list="0" f2-color="#ff1493" f2-visible="0">
+        <equation-0 step="0.05">k(t) = 2.0755294528812747(t+1)−2.0755294528812733</equation-0>
+        <equation-1 step="0.05">k(t) = −1.3175403229868503(t+1)^2+2.635080645973704(t+1)+1.9520541134185947</equation-1>
+        <arg-min use="1">−1</arg-min>
+        <arg-max use="1">1</arg-max>
+    </function>
+    <function f2-use-gradient="0" f1-use-gradient="0" f0-width="0.3" type="parametric" use-parameter-slider="0" f1-show-plot-name="0" f1-gradient="0;#000000,1;#ffffff," f1-width="0.3" integral-color="#006400" integral-style="SolidLine" f0-show-tangent-field="0" f0-style="SolidLine" f1-visible="0" f1-show-tangent-field="0" f0-show-plot-name="0" integral-show-plot-name="0" f0-gradient="0;#000000,1;#ffffff," integral-use-gradient="0" f2-show-tangent-field="0" f2-width="0.3" integral-visible="0" f1-style="SolidLine" integral-show-tangent-field="0" f0-color="#0000ff" f1-show-extrema="0" f2-show-plot-name="0" f2-show-extrema="0" integral-show-extrema="0" f2-style="SolidLine" f0-show-extrema="0" integral-gradient="0;#000000,1;#ffffff," f1-color="#006400" f0-visible="1" parameter-slider="0" f2-gradient="0;#000000,1;#ffffff," f0-use-gradient="0" integral-width="0.3" use-parameter-list="0" f2-color="#006400" f2-visible="0">
+        <equation-0 step="0.05">l(t) = −(2+t)/2−0.125</equation-0>
+        <equation-1 step="0.05">l(t) = 3/4(t+2)−0.125</equation-1>
+        <arg-min use="1">−1</arg-min>
+        <arg-max use="1">1</arg-max>
+    </function>
+    <function f2-use-gradient="0" f1-use-gradient="0" f0-width="0.3" type="parametric" use-parameter-slider="0" f1-show-plot-name="0" f1-gradient="0;#000000,1;#ffffff," f1-width="0.3" integral-color="#006400" integral-style="SolidLine" f0-show-tangent-field="0" f0-style="SolidLine" f1-visible="0" f1-show-tangent-field="0" f0-show-plot-name="0" integral-show-plot-name="0" f0-gradient="0;#000000,1;#ffffff," integral-use-gradient="0" f2-show-tangent-field="0" f2-width="0.3" integral-visible="0" f1-style="SolidLine" integral-show-tangent-field="0" f0-color="#0000ff" f1-show-extrema="0" f2-show-plot-name="0" f2-show-extrema="0" integral-show-extrema="0" f2-style="SolidLine" f0-show-extrema="0" integral-gradient="0;#000000,1;#ffffff," f1-color="#006400" f0-visible="1" parameter-slider="0" f2-gradient="0;#000000,1;#ffffff," f0-use-gradient="0" integral-width="0.3" use-parameter-list="0" f2-color="#006400" f2-visible="0">
+        <equation-0 step="0.05">m(t) = (2+t)/2+0.125</equation-0>
+        <equation-1 step="0.05">m(t) = 3/4(t+2)−0.125</equation-1>
+        <arg-min use="1">−1</arg-min>
+        <arg-max use="1">1</arg-max>
+    </function>
+    <function f2-use-gradient="0" f1-use-gradient="0" f0-width="0.3" type="parametric" use-parameter-slider="0" f1-show-plot-name="0" f1-gradient="0;#000000,1;#ffffff," f1-width="0.3" integral-color="#006400" integral-style="SolidLine" f0-show-tangent-field="0" f0-style="SolidLine" f1-visible="0" f1-show-tangent-field="0" f0-show-plot-name="0" integral-show-plot-name="0" f0-gradient="0;#000000,1;#ffffff," integral-use-gradient="0" f2-show-tangent-field="0" f2-width="0.3" integral-visible="0" f1-style="SolidLine" integral-show-tangent-field="0" f0-color="#0000ff" f1-show-extrema="0" f2-show-plot-name="0" f2-show-extrema="0" integral-show-extrema="0" f2-style="SolidLine" f0-show-extrema="0" integral-gradient="0;#000000,1;#ffffff," f1-color="#006400" f0-visible="1" parameter-slider="0" f2-gradient="0;#000000,1;#ffffff," f0-use-gradient="0" integral-width="0.3" use-parameter-list="0" f2-color="#006400" f2-visible="0">
+        <equation-0 step="0.05">n(t) = t/2+0.125</equation-0>
+        <equation-1 step="0.05">n(t) = 1−(t/2)^2−0.125</equation-1>
+        <arg-min use="1">−1</arg-min>
+        <arg-max use="1">−0.25</arg-max>
+    </function>
+    <function f2-use-gradient="0" f1-use-gradient="0" f0-width="0.3" type="parametric" use-parameter-slider="0" f1-show-plot-name="0" f1-gradient="0;#000000,1;#ffffff," f1-width="0.3" integral-color="#006400" integral-style="SolidLine" f0-show-tangent-field="0" f0-style="SolidLine" f1-visible="0" f1-show-tangent-field="0" f0-show-plot-name="0" integral-show-plot-name="0" f0-gradient="0;#000000,1;#ffffff," integral-use-gradient="0" f2-show-tangent-field="0" f2-width="0.3" integral-visible="0" f1-style="SolidLine" integral-show-tangent-field="0" f0-color="#0000ff" f1-show-extrema="0" f2-show-plot-name="0" f2-show-extrema="0" integral-show-extrema="0" f2-style="SolidLine" f0-show-extrema="0" integral-gradient="0;#000000,1;#ffffff," f1-color="#006400" f0-visible="1" parameter-slider="0" f2-gradient="0;#000000,1;#ffffff," f0-use-gradient="0" integral-width="0.3" use-parameter-list="0" f2-color="#006400" f2-visible="0">
+        <equation-0 step="0.05">o(t) = t/2−0.125</equation-0>
+        <equation-1 step="0.05">o(t) = 1−(t/2)^2−0.125</equation-1>
+        <arg-min use="1">0.25</arg-min>
+        <arg-max use="1">1</arg-max>
+    </function>
+    <function f2-use-gradient="0" f1-use-gradient="0" f0-width="0.3" type="parametric" use-parameter-slider="0" f1-show-plot-name="0" f1-gradient="0;#000000,1;#ffffff," f1-width="0.3" integral-color="#006400" integral-style="SolidLine" f0-show-tangent-field="0" f0-style="SolidLine" f1-visible="0" f1-show-tangent-field="0" f0-show-plot-name="0" integral-show-plot-name="0" f0-gradient="0;#000000,1;#ffffff," integral-use-gradient="0" f2-show-tangent-field="0" f2-width="0.3" integral-visible="0" f1-style="SolidLine" integral-show-tangent-field="0" f0-color="#0000ff" f1-show-extrema="0" f2-show-plot-name="0" f2-show-extrema="0" integral-show-extrema="0" f2-style="SolidLine" f0-show-extrema="0" integral-gradient="0;#000000,1;#ffffff," f1-color="#006400" f0-visible="1" parameter-slider="0" f2-gradient="0;#000000,1;#ffffff," f0-use-gradient="0" integral-width="0.3" use-parameter-list="0" f2-color="#006400" f2-visible="0">
+        <equation-0 step="0.05">p(t) = 3t/2+0.125</equation-0>
+        <equation-1 step="0.05">p(t) = 3(1−(t/2)^2)+0.125</equation-1>
+        <arg-min use="1">0</arg-min>
+        <arg-max use="1">1</arg-max>
+    </function>
+    <function f2-use-gradient="0" f1-use-gradient="0" f0-width="0.3" type="parametric" use-parameter-slider="0" f1-show-plot-name="0" f1-gradient="0;#000000,1;#ffffff," f1-width="0.3" integral-color="#006400" integral-style="SolidLine" f0-show-tangent-field="0" f0-style="SolidLine" f1-visible="0" f1-show-tangent-field="0" f0-show-plot-name="0" integral-show-plot-name="0" f0-gradient="0;#000000,1;#ffffff," integral-use-gradient="0" f2-show-tangent-field="0" f2-width="0.3" integral-visible="0" f1-style="SolidLine" integral-show-tangent-field="0" f0-color="#0000ff" f1-show-extrema="0" f2-show-plot-name="0" f2-show-extrema="0" integral-show-extrema="0" f2-style="SolidLine" f0-show-extrema="0" integral-gradient="0;#000000,1;#ffffff," f1-color="#006400" f0-visible="1" parameter-slider="0" f2-gradient="0;#000000,1;#ffffff," f0-use-gradient="0" integral-width="0.3" use-parameter-list="0" f2-color="#006400" f2-visible="0">
+        <equation-0 step="0.05">q(t) = 3t/2−0.125</equation-0>
+        <equation-1 step="0.05">q(t) = 3(1−(t/2)^2)+0.125</equation-1>
+        <arg-min use="1">−1</arg-min>
+        <arg-max use="1">0</arg-max>
+    </function>
+    <function f2-use-gradient="0" f1-use-gradient="0" f0-width="0.3" type="parametric" use-parameter-slider="0" f1-show-plot-name="0" f1-gradient="0;#000000,1;#ffffff," f1-width="0.3" integral-color="#006400" integral-style="SolidLine" f0-show-tangent-field="0" f0-style="SolidLine" f1-visible="0" f1-show-tangent-field="0" f0-show-plot-name="0" integral-show-plot-name="0" f0-gradient="0;#000000,1;#ffffff," integral-use-gradient="0" f2-show-tangent-field="0" f2-width="0.3" integral-visible="0" f1-style="SolidLine" integral-show-tangent-field="0" f0-color="#0000ff" f1-show-extrema="0" f2-show-plot-name="0" f2-show-extrema="0" integral-show-extrema="0" f2-style="SolidLine" f0-show-extrema="0" integral-gradient="0;#000000,1;#ffffff," f1-color="#006400" f0-visible="1" parameter-slider="0" f2-gradient="0;#000000,1;#ffffff," f0-use-gradient="0" integral-width="0.3" use-parameter-list="0" f2-color="#006400" f2-visible="0">
+        <equation-0 step="0.05">r(t) = 0.125t</equation-0>
+        <equation-1 step="0.05">r(t) = 3.125</equation-1>
+        <arg-min use="1">−1</arg-min>
+        <arg-max use="1">1</arg-max>
+    </function>
+    <function f2-use-gradient="0" f1-use-gradient="0" f0-width="0.3" type="parametric" use-parameter-slider="0" f1-show-plot-name="0" f1-gradient="0;#000000,1;#ffffff," f1-width="0.3" integral-color="#006400" integral-style="SolidLine" f0-show-tangent-field="0" f0-style="SolidLine" f1-visible="0" f1-show-tangent-field="0" f0-show-plot-name="0" integral-show-plot-name="0" f0-gradient="0;#000000,1;#ffffff," integral-use-gradient="0" f2-show-tangent-field="0" f2-width="0.3" integral-visible="0" f1-style="SolidLine" integral-show-tangent-field="0" f0-color="#0000ff" f1-show-extrema="0" f2-show-plot-name="0" f2-show-extrema="0" integral-show-extrema="0" f2-style="SolidLine" f0-show-extrema="0" integral-gradient="0;#000000,1;#ffffff," f1-color="#006400" f0-visible="1" parameter-slider="0" f2-gradient="0;#000000,1;#ffffff," f0-use-gradient="0" integral-width="0.3" use-parameter-list="0" f2-color="#006400" f2-visible="0">
+        <equation-0 step="0.05">s(t) = 0.5+0.125t</equation-0>
+        <equation-1 step="0.05">s(t) = 0.75−0.125</equation-1>
+        <arg-min use="1">−1</arg-min>
+        <arg-max use="1">1</arg-max>
+    </function>
+    <function f2-use-gradient="0" f1-use-gradient="0" f0-width="0.3" type="parametric" use-parameter-slider="0" f1-show-plot-name="0" f1-gradient="0;#000000,1;#ffffff," f1-width="0.3" integral-color="#006400" integral-style="SolidLine" f0-show-tangent-field="0" f0-style="SolidLine" f1-visible="0" f1-show-tangent-field="0" f0-show-plot-name="0" integral-show-plot-name="0" f0-gradient="0;#000000,1;#ffffff," integral-use-gradient="0" f2-show-tangent-field="0" f2-width="0.3" integral-visible="0" f1-style="SolidLine" integral-show-tangent-field="0" f0-color="#0000ff" f1-show-extrema="0" f2-show-plot-name="0" f2-show-extrema="0" integral-show-extrema="0" f2-style="SolidLine" f0-show-extrema="0" integral-gradient="0;#000000,1;#ffffff," f1-color="#006400" f0-visible="1" parameter-slider="0" f2-gradient="0;#000000,1;#ffffff," f0-use-gradient="0" integral-width="0.3" use-parameter-list="0" f2-color="#006400" f2-visible="0">
+        <equation-0 step="0.05">t(t) = −0.5+0.125t</equation-0>
+        <equation-1 step="0.05">t(t) = 0.75−0.125</equation-1>
+        <arg-min use="1">−1</arg-min>
+        <arg-max use="1">1</arg-max>
+    </function>
+    <function f2-use-gradient="0" f1-use-gradient="0" f0-width="0.3" type="parametric" use-parameter-slider="0" f1-show-plot-name="0" f1-gradient="0;#000000,1;#ffffff," f1-width="0.3" integral-color="#006400" integral-style="SolidLine" f0-show-tangent-field="0" f0-style="SolidLine" f1-visible="0" f1-show-tangent-field="0" f0-show-plot-name="0" integral-show-plot-name="0" f0-gradient="0;#000000,1;#ffffff," integral-use-gradient="0" f2-show-tangent-field="0" f2-width="0.3" integral-visible="0" f1-style="SolidLine" integral-show-tangent-field="0" f0-color="#0000ff" f1-show-extrema="0" f2-show-plot-name="0" f2-show-extrema="0" integral-show-extrema="0" f2-style="SolidLine" f0-show-extrema="0" integral-gradient="0;#000000,1;#ffffff," f1-color="#006400" f0-visible="1" parameter-slider="0" f2-gradient="0;#000000,1;#ffffff," f0-use-gradient="0" integral-width="0.3" use-parameter-list="0" f2-color="#006400" f2-visible="0">
+        <equation-0 step="0.05">u(t) = 1.5+0.125</equation-0>
+        <equation-1 step="0.05">u(t) = 2.25+0.125t</equation-1>
+        <arg-min use="1">−1</arg-min>
+        <arg-max use="1">1</arg-max>
+    </function>
+    <function f2-use-gradient="0" f1-use-gradient="0" f0-width="0.3" type="parametric" use-parameter-slider="0" f1-show-plot-name="0" f1-gradient="0;#000000,1;#ffffff," f1-width="0.3" integral-color="#006400" integral-style="SolidLine" f0-show-tangent-field="0" f0-style="SolidLine" f1-visible="0" f1-show-tangent-field="0" f0-show-plot-name="0" integral-show-plot-name="0" f0-gradient="0;#000000,1;#ffffff," integral-use-gradient="0" f2-show-tangent-field="0" f2-width="0.3" integral-visible="0" f1-style="SolidLine" integral-show-tangent-field="0" f0-color="#0000ff" f1-show-extrema="0" f2-show-plot-name="0" f2-show-extrema="0" integral-show-extrema="0" f2-style="SolidLine" f0-show-extrema="0" integral-gradient="0;#000000,1;#ffffff," f1-color="#006400" f0-visible="1" parameter-slider="0" f2-gradient="0;#000000,1;#ffffff," f0-use-gradient="0" integral-width="0.3" use-parameter-list="0" f2-color="#006400" f2-visible="0">
+        <equation-0 step="0.05">v(t) = −1.5−0.125</equation-0>
+        <equation-1 step="0.05">v(t) = 2.25+0.125t</equation-1>
+        <arg-min use="1">−1</arg-min>
+        <arg-max use="1">1</arg-max>
+    </function>
+    <fonts>
+        <axes-font>Comic Sans MS</axes-font>
+        <label-font>Comic Sans MS</label-font>
+        <header-table-font>Comic Sans MS</header-table-font>
+    </fonts>
+</kmpdoc>

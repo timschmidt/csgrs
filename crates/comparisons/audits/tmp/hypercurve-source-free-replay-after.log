@@ -1,0 +1,9 @@
+   Compiling hypercurve v0.3.1 (/home/tim/Documents/GitHub/workspace/hypercurve)
+    Finished `release` profile [optimized] target(s) in 1m 08s
+     Running unittests src/lib.rs (target/release/deps/hypercurve-6e6572a45c5b177b)
+
+running 1 test
+test bezier_offset::conversion_tests::recursive_scalar_native_replay_preserves_selected_source_authority ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 894 filtered out; finished in 0.00s
+

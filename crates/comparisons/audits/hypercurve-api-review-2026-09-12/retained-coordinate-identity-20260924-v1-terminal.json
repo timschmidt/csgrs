@@ -1,0 +1,71 @@
+{
+  "checks": [
+    {
+      "label": "fmt",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustfmt",
+        "--edition",
+        "2024",
+        "--check",
+        "src/bezier_offset.rs"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 2.3329198140418157,
+      "log": "retained-coordinate-identity-20260924-v1-fmt.log"
+    },
+    {
+      "label": "clippy-1",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "clippy",
+        "--all-targets",
+        "--all-features",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 25.726838220027275,
+      "log": "retained-coordinate-identity-20260924-v1-clippy-1.log"
+    },
+    {
+      "label": "clippy-2",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "clippy",
+        "--all-targets",
+        "--no-default-features",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 24.8662962699309,
+      "log": "retained-coordinate-identity-20260924-v1-clippy-2.log"
+    }
+  ],
+  "cases": [
+    {
+      "label": "one_fragment_materialized_loop_chamfers_to_one_middle_interval",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-coordinate-identity-20260924-v1-libtest",
+        "--exact",
+        "bezier_region::tests::one_fragment_materialized_loop_chamfers_to_one_middle_interval",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": "timeout",
+      "elapsed_seconds": 75.30525588802993,
+      "log": "retained-coordinate-identity-20260924-v1-one_fragment_materialized_loop_chamfers_to_one_middle_interval.log"
+    }
+  ],
+  "all_processes_reaped": true,
+  "binary_sha256": "0f05605aa84eb7355c2bb35a640d180334a24f9b8390862cc90bea6b61be87e5",
+  "all_sources_unchanged": true
+}

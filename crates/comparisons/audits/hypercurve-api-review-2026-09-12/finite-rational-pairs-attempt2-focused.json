@@ -1,0 +1,50 @@
+[
+  {
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve-6e6572a45c5b177b",
+      "finite_rational_pairs_replay_all_roots_and_stationary_points",
+      "--nocapture",
+      "--test-threads=1"
+    ],
+    "returncode": 0,
+    "seconds": 0.03161727498809341,
+    "binary_sha256": "45e9224ce99f82179c8041c0015181362fdb8a4daadd72b8b3d42f69e15e1a7b",
+    "log": "finite-rational-pairs-attempt2-finite_rational_pairs_replay_all_roots_and_stationary_points.log"
+  },
+  {
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve-6e6572a45c5b177b",
+      "finite_rational_pairs_keep_nonlinear_correspondences_and_residual_contacts",
+      "--nocapture",
+      "--test-threads=1"
+    ],
+    "returncode": 0,
+    "seconds": 0.015642958009266295,
+    "binary_sha256": "45e9224ce99f82179c8041c0015181362fdb8a4daadd72b8b3d42f69e15e1a7b",
+    "log": "finite-rational-pairs-attempt2-finite_rational_pairs_keep_nonlinear_correspondences_and_residual_contacts.log"
+  },
+  {
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve-6e6572a45c5b177b",
+      "finite_rational_pairs_keep_retracing_and_point_fibers",
+      "--nocapture",
+      "--test-threads=1"
+    ],
+    "returncode": 0,
+    "seconds": 0.015558404993498698,
+    "binary_sha256": "45e9224ce99f82179c8041c0015181362fdb8a4daadd72b8b3d42f69e15e1a7b",
+    "log": "finite-rational-pairs-attempt2-finite_rational_pairs_keep_retracing_and_point_fibers.log"
+  },
+  {
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve-6e6572a45c5b177b",
+      "finite_rational_pairs_certify_poles_on_the_active_domain",
+      "--nocapture",
+      "--test-threads=1"
+    ],
+    "returncode": 0,
+    "seconds": 0.007490087009500712,
+    "binary_sha256": "45e9224ce99f82179c8041c0015181362fdb8a4daadd72b8b3d42f69e15e1a7b",
+    "log": "finite-rational-pairs-attempt2-finite_rational_pairs_certify_poles_on_the_active_domain.log"
+  }
+]

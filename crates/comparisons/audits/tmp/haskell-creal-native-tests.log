@@ -1,0 +1,1144 @@
+exact-real> test (suite: test, args: --num-threads=2 --timeout=10s --quickcheck-replay=142857)
+
+Main
+  Non precision Tests
+    decimalDigits:                                                              OK
+      +++ OK, passed 100 tests.
+    showIntegral:                                                               OK
+      +++ OK, passed 100 tests.
+    showNumDigits:                                                              OK
+      +++ OK, passed 100 tests.
+    convergeErrEmptyCReal:                                                      OK
+    convergeErrEmptyUnit:                                                       OK
+    convergeEmptyCReal:                                                         OK
+    convergeEmptyUnit:                                                          OK
+    convergeCollatzInteger:                                                     OK
+      +++ OK, passed 100 tests.
+    convergeErrSqrtInteger:                                                     OK
+      +++ OK, passed 100 tests.
+  Precision Tests @0
+    Test Floating instance
+      Test Fractional instance
+        field
+          Abelian under Sum
+            group
+              monoid
+                left  identity:                                                 OK
+                  +++ OK, passed 100 tests.
+                right identity:                                                 OK
+                  +++ OK, passed 100 tests.
+                associativity:                                                  OK
+                  +++ OK, passed 100 tests.
+                mappend = (<>):                                                 OK
+                  +++ OK, passed 100 tests.
+                mconcat:                                                        OK
+                  +++ OK, passed 100 tests.
+              left inverse element:                                             OK
+                +++ OK, passed 100 tests.
+              right inverse element:                                            OK
+                +++ OK, passed 100 tests.
+            commutative:                                                        OK
+              +++ OK, passed 100 tests.
+          Abelian under Product NonZero
+            group
+              monoid
+                left  identity:                                                 OK
+                  +++ OK, passed 100 tests.
+                right identity:                                                 OK
+                  +++ OK, passed 100 tests.
+                associativity:                                                  OK
+                  +++ OK, passed 100 tests.
+                mappend = (<>):                                                 OK (0.01s)
+                  +++ OK, passed 100 tests.
+                mconcat:                                                        OK (0.10s)
+                  +++ OK, passed 100 tests.
+              left inverse element:                                             OK (0.02s)
+                +++ OK, passed 100 tests.
+              right inverse element:                                            OK (0.02s)
+                +++ OK, passed 100 tests.
+            commutative:                                                        OK (0.02s)
+              +++ OK, passed 100 tests.
+          * distributes over +
+            left distributes:                                                   OK
+              +++ OK, passed 100 tests.
+            right distributes:                                                  OK
+              +++ OK, passed 100 tests.
+        Num instance aux tests
+          x + negate y = x - y:                                                 OK
+            +++ OK, passed 100 tests.
+          abs is idempotent:                                                    OK
+            +++ OK, passed 100 tests.
+          abs-signum law:                                                       OK
+            +++ OK, passed 100 tests.
+        x * recip y = x / y:                                                    OK
+          +++ OK, passed 100 tests.
+        fromRational (x % y) = fromInteger x / fromInteger y:                   OK
+          +++ OK, passed 100 tests.
+      π/4 = atan 1:                                                             OK
+      log == logBase e:                                                         OK
+        +++ OK, passed 100 tests.
+      exp == (e **):                                                            OK (0.03s)
+        +++ OK, passed 100 tests.
+      sqrt x * sqrt x = x:                                                      OK
+        +++ OK, passed 100 tests.
+      law of exponents:                                                         OK (0.13s)
+        +++ OK, passed 100 tests.
+      logarithm definition:                                                     OK (0.04s)
+        +++ OK, passed 100 tests; 19 discarded.
+      sine cosine definition:                                                   OK (0.02s)
+        +++ OK, passed 100 tests.
+      0 < x cos x:                                                              OK (0.02s)
+        +++ OK, passed 100 tests.
+      x cos x < sin x:                                                          OK (0.02s)
+        +++ OK, passed 100 tests.
+      sin x < x:                                                                OK
+        +++ OK, passed 100 tests.
+      tangent definition:                                                       OK (0.01s)
+        +++ OK, passed 100 tests; 98 discarded.
+      asin left inverse:                                                        OK (0.02s)
+        +++ OK, passed 100 tests.
+      acos left inverse:                                                        OK
+        +++ OK, passed 100 tests.
+      atan left inverse:                                                        OK (0.01s)
+        +++ OK, passed 100 tests.
+      sinh definition:                                                          OK (0.04s)
+        +++ OK, passed 100 tests.
+      cosh definition:                                                          OK
+        +++ OK, passed 100 tests.
+      tanh definition:                                                          OK (0.05s)
+        +++ OK, passed 100 tests.
+      sinh left inverse:                                                        OK (0.08s)
+        +++ OK, passed 100 tests.
+      cosh left inverse:                                                        OK (0.03s)
+        +++ OK, passed 100 tests.
+      tanh left inverse:                                                        OK (0.06s)
+        +++ OK, passed 100 tests.
+    Test Ord instance
+      < is a strict total ordering
+        irreflexive:                                                            OK (0.02s)
+          +++ OK, passed 100 tests.
+        transitive:                                                             OK (0.02s)
+          +++ OK, passed 100 tests; 472 discarded.
+        connected:                                                              OK
+          +++ OK, passed 100 tests; 12 discarded.
+      < is a strict total ordering
+        irreflexive:                                                            OK
+          +++ OK, passed 100 tests.
+        transitive:                                                             OK
+          +++ OK, passed 100 tests; 552 discarded.
+        connected:                                                              OK
+          +++ OK, passed 100 tests; 12 discarded.
+      < is the complement of >=
+        strictOrd:                                                              OK
+          +++ OK, passed 100 tests.
+      > is the complement of <=
+        strictOrd:                                                              OK
+          +++ OK, passed 100 tests.
+      max x y >= x and y:                                                       OK
+        +++ OK, passed 100 tests.
+      max x y == x or y:                                                        OK
+        +++ OK, passed 100 tests.
+      min x y >= x and y:                                                       OK
+        +++ OK, passed 100 tests.
+      min x y == x or y:                                                        OK
+        +++ OK, passed 100 tests.
+    Test Real instance
+      fromRational toRational left inverse:                                     OK
+        +++ OK, passed 100 tests.
+      toRational fromRational left inverse (within error):                      OK
+        +++ OK, passed 100 tests.
+    Test RealFrac instance
+      properFraction laws
+        x = n + f:                                                              OK
+          +++ OK, passed 100 tests.
+        n has same sign or is zero:                                             OK
+          +++ OK, passed 100 tests.
+        abs f < 1:                                                              OK
+          +++ OK, passed 100 tests.
+        f has same sign or is zero:                                             OK
+          +++ OK, passed 100 tests.
+      truncate laws
+        abs (truncate x) <= abs x:                                              OK
+          +++ OK, passed 100 tests.
+        abs (truncate x) + 1 > abs x:                                           OK
+          +++ OK, passed 100 tests.
+        truncate x has same sign or is zero:                                    OK
+          +++ OK, passed 100 tests.
+      round laws
+        abs (round x - x) <= 0.5:                                               OK
+          +++ OK, passed 100 tests.
+        round to even if eqiudistant:                                           OK
+          +++ OK, passed 100 tests.
+      ceiling laws
+        ceiling x - 1 < x:                                                      OK
+          +++ OK, passed 100 tests.
+        ceiling x >= x:                                                         OK
+          +++ OK, passed 100 tests.
+      floor laws
+        floor x + 1 > x:                                                        OK
+          +++ OK, passed 100 tests.
+        floor x <= x:                                                           OK
+          +++ OK, passed 100 tests.
+    Test RealFloat instance
+      decodeFloat laws
+        x = m*b^^n:                                                             OK
+          +++ OK, passed 100 tests.
+      encodeFloat decodeFloat left inverse:                                     OK
+        +++ OK, passed 100 tests.
+      scaleFloat definition:                                                    OK
+        +++ OK, passed 100 tests.
+      atan2 laws
+        atan2 range:                                                            OK
+          +++ OK, passed 100 tests.
+        atan2 y 1 = atan y:                                                     OK
+          +++ OK, passed 100 tests.
+      exponent of 0 is 0:                                                       OK
+        +++ OK, passed 1 test.
+      exponent x = snd (decodeFloat x) + floatDigits x:                         OK
+        +++ OK, passed 100 tests.
+      x = significand x * b ^^ exponent x, where b is the floating-point radix: OK
+        +++ OK, passed 100 tests.
+    Test Read instance
+      read show left inverse:                                                   OK (0.02s)
+        +++ OK, passed 100 tests.
+    Test Random instance
+      randomR range:                                                            OK (0.04s)
+        +++ OK, passed 100 tests; 104 discarded.
+      randomR zero bounds:                                                      OK (0.06s)
+        +++ OK, passed 100 tests.
+      random range:                                                             OK (0.02s)
+        +++ OK, passed 100 tests.
+    shiftL:                                                                     OK
+      +++ OK, passed 100 tests.
+    shiftR:                                                                     OK
+      +++ OK, passed 100 tests.
+    convergePointNineRecurringCReal:                                            OK (0.02s)
+    convergeErrSqrtCReal:                                                       OK (0.03s)
+      +++ OK, passed 100 tests.
+    convergeErrSmallSqrtCReal:                                                  OK (0.02s)
+      +++ OK, passed 100 tests.
+    bounded functions
+      mulBounded:                                                               OK
+        +++ OK, passed 100 tests.
+      mulBoundedL:                                                              OK
+        +++ OK, passed 100 tests.
+      mulBoundedR:                                                              OK
+        +++ OK, passed 100 tests.
+      recipBounded:                                                             OK
+        +++ OK, passed 100 tests.
+      expBounded:                                                               OK
+        +++ OK, passed 100 tests.
+      logBounded:                                                               OK
+        +++ OK, passed 100 tests.
+      sinBounded:                                                               OK
+        +++ OK, passed 100 tests.
+      cosBounded:                                                               OK
+        +++ OK, passed 100 tests.
+      atanBounded:                                                              OK
+        +++ OK, passed 100 tests.
+    expPosNeg:                                                                  OK
+      +++ OK, passed 100 tests.
+    square:                                                                     OK
+      +++ OK, passed 100 tests.
+  Precision Tests @1
+    Test Floating instance
+      Test Fractional instance
+        field
+          Abelian under Sum
+            group
+              monoid
+                left  identity:                                                 OK
+                  +++ OK, passed 100 tests.
+                right identity:                                                 OK
+                  +++ OK, passed 100 tests.
+                associativity:                                                  OK
+                  +++ OK, passed 100 tests.
+                mappend = (<>):                                                 OK
+                  +++ OK, passed 100 tests.
+                mconcat:                                                        OK
+                  +++ OK, passed 100 tests.
+              left inverse element:                                             OK
+                +++ OK, passed 100 tests.
+              right inverse element:                                            OK
+                +++ OK, passed 100 tests.
+            commutative:                                                        OK
+              +++ OK, passed 100 tests.
+          Abelian under Product NonZero
+            group
+              monoid
+                left  identity:                                                 OK
+                  +++ OK, passed 100 tests.
+                right identity:                                                 OK
+                  +++ OK, passed 100 tests.
+                associativity:                                                  OK (0.01s)
+                  +++ OK, passed 100 tests.
+                mappend = (<>):                                                 OK
+                  +++ OK, passed 100 tests.
+                mconcat:                                                        OK (0.09s)
+                  +++ OK, passed 100 tests.
+              left inverse element:                                             OK (0.02s)
+                +++ OK, passed 100 tests.
+              right inverse element:                                            OK (0.02s)
+                +++ OK, passed 100 tests.
+            commutative:                                                        OK (0.02s)
+              +++ OK, passed 100 tests.
+          * distributes over +
+            left distributes:                                                   OK (0.02s)
+              +++ OK, passed 100 tests.
+            right distributes:                                                  OK
+              +++ OK, passed 100 tests.
+        Num instance aux tests
+          x + negate y = x - y:                                                 OK
+            +++ OK, passed 100 tests.
+          abs is idempotent:                                                    OK
+            +++ OK, passed 100 tests.
+          abs-signum law:                                                       OK
+            +++ OK, passed 100 tests.
+        x * recip y = x / y:                                                    OK
+          +++ OK, passed 100 tests.
+        fromRational (x % y) = fromInteger x / fromInteger y:                   OK
+          +++ OK, passed 100 tests.
+      π/4 = atan 1:                                                             OK
+      log == logBase e:                                                         OK
+        +++ OK, passed 100 tests.
+      exp == (e **):                                                            OK (0.03s)
+        +++ OK, passed 100 tests.
+      sqrt x * sqrt x = x:                                                      OK
+        +++ OK, passed 100 tests.
+      law of exponents:                                                         OK (0.10s)
+        +++ OK, passed 100 tests.
+      logarithm definition:                                                     OK (0.06s)
+        +++ OK, passed 100 tests; 3 discarded.
+      sine cosine definition:                                                   OK (0.03s)
+        +++ OK, passed 100 tests.
+      0 < x cos x:                                                              OK
+        +++ OK, passed 100 tests.
+      x cos x < sin x:                                                          OK
+        +++ OK, passed 100 tests.
+      sin x < x:                                                                OK
+        +++ OK, passed 100 tests.
+      tangent definition:                                                       OK
+        +++ OK, passed 100 tests; 22 discarded.
+      asin left inverse:                                                        OK (0.02s)
+        +++ OK, passed 100 tests.
+      acos left inverse:                                                        OK (0.01s)
+        +++ OK, passed 100 tests.
+      atan left inverse:                                                        OK (0.01s)
+        +++ OK, passed 100 tests.
+      sinh definition:                                                          OK (0.01s)
+        +++ OK, passed 100 tests.
+      cosh definition:                                                          OK (0.02s)
+        +++ OK, passed 100 tests.
+      tanh definition:                                                          OK (0.09s)
+        +++ OK, passed 100 tests.
+      sinh left inverse:                                                        OK (0.10s)
+        +++ OK, passed 100 tests.
+      cosh left inverse:                                                        OK (0.02s)
+        +++ OK, passed 100 tests.
+      tanh left inverse:                                                        OK (0.08s)
+        +++ OK, passed 100 tests.
+    Test Ord instance
+      < is a strict total ordering
+        irreflexive:                                                            OK (0.02s)
+          +++ OK, passed 100 tests.
+        transitive:                                                             OK (0.02s)
+          +++ OK, passed 100 tests; 472 discarded.
+        connected:                                                              OK (0.02s)
+          +++ OK, passed 100 tests; 5 discarded.
+      < is a strict total ordering
+        irreflexive:                                                            OK (0.02s)
+          +++ OK, passed 100 tests.
+        transitive:                                                             OK
+          +++ OK, passed 100 tests; 552 discarded.
+        connected:                                                              OK
+          +++ OK, passed 100 tests; 5 discarded.
+      < is the complement of >=
+        strictOrd:                                                              OK
+          +++ OK, passed 100 tests.
+      > is the complement of <=
+        strictOrd:                                                              OK
+          +++ OK, passed 100 tests.
+      max x y >= x and y:                                                       OK
+        +++ OK, passed 100 tests.
+      max x y == x or y:                                                        OK
+        +++ OK, passed 100 tests.
+      min x y >= x and y:                                                       OK
+        +++ OK, passed 100 tests.
+      min x y == x or y:                                                        OK
+        +++ OK, passed 100 tests.
+    Test Real instance
+      fromRational toRational left inverse:                                     OK
+        +++ OK, passed 100 tests.
+      toRational fromRational left inverse (within error):                      OK
+        +++ OK, passed 100 tests.
+    Test RealFrac instance
+      properFraction laws
+        x = n + f:                                                              OK
+          +++ OK, passed 100 tests.
+        n has same sign or is zero:                                             OK
+          +++ OK, passed 100 tests.
+        abs f < 1:                                                              OK
+          +++ OK, passed 100 tests.
+        f has same sign or is zero:                                             OK
+          +++ OK, passed 100 tests.
+      truncate laws
+        abs (truncate x) <= abs x:                                              OK
+          +++ OK, passed 100 tests.
+        abs (truncate x) + 1 > abs x:                                           OK
+          +++ OK, passed 100 tests.
+        truncate x has same sign or is zero:                                    OK
+          +++ OK, passed 100 tests.
+      round laws
+        abs (round x - x) <= 0.5:                                               OK
+          +++ OK, passed 100 tests.
+        round to even if eqiudistant:                                           OK
+          +++ OK, passed 100 tests.
+      ceiling laws
+        ceiling x - 1 < x:                                                      OK
+          +++ OK, passed 100 tests.
+        ceiling x >= x:                                                         OK
+          +++ OK, passed 100 tests.
+      floor laws
+        floor x + 1 > x:                                                        OK
+          +++ OK, passed 100 tests.
+        floor x <= x:                                                           OK
+          +++ OK, passed 100 tests.
+    Test RealFloat instance
+      decodeFloat laws
+        x = m*b^^n:                                                             OK
+          +++ OK, passed 100 tests.
+      encodeFloat decodeFloat left inverse:                                     OK
+        +++ OK, passed 100 tests.
+      scaleFloat definition:                                                    OK
+        +++ OK, passed 100 tests.
+      atan2 laws
+        atan2 range:                                                            OK
+          +++ OK, passed 100 tests.
+        atan2 y 1 = atan y:                                                     OK
+          +++ OK, passed 100 tests.
+      exponent of 0 is 0:                                                       OK
+        +++ OK, passed 1 test.
+      exponent x = snd (decodeFloat x) + floatDigits x:                         OK
+        +++ OK, passed 100 tests.
+      x = significand x * b ^^ exponent x, where b is the floating-point radix: OK (0.02s)
+        +++ OK, passed 100 tests.
+    Test Read instance
+      read show left inverse:                                                   OK
+        +++ OK, passed 100 tests.
+    Test Random instance
+      randomR range:                                                            OK (0.07s)
+        +++ OK, passed 100 tests; 104 discarded.
+      randomR zero bounds:                                                      OK (0.06s)
+        +++ OK, passed 100 tests.
+      random range:                                                             OK (0.04s)
+        +++ OK, passed 100 tests.
+    shiftL:                                                                     OK (0.01s)
+      +++ OK, passed 100 tests.
+    shiftR:                                                                     OK (0.05s)
+      +++ OK, passed 100 tests.
+    convergePointNineRecurringCReal:                                            OK
+    convergeErrSqrtCReal:                                                       OK (0.04s)
+      +++ OK, passed 100 tests.
+    convergeErrSmallSqrtCReal:                                                  OK (0.03s)
+      +++ OK, passed 100 tests.
+    bounded functions
+      mulBounded:                                                               OK
+        +++ OK, passed 100 tests.
+      mulBoundedL:                                                              OK
+        +++ OK, passed 100 tests.
+      mulBoundedR:                                                              OK
+        +++ OK, passed 100 tests.
+      recipBounded:                                                             OK
+        +++ OK, passed 100 tests; 11 discarded.
+      expBounded:                                                               OK
+        +++ OK, passed 100 tests.
+      logBounded:                                                               OK
+        +++ OK, passed 100 tests.
+      sinBounded:                                                               OK
+        +++ OK, passed 100 tests.
+      cosBounded:                                                               OK
+        +++ OK, passed 100 tests.
+      atanBounded:                                                              OK
+        +++ OK, passed 100 tests.
+    expPosNeg:                                                                  OK
+      +++ OK, passed 100 tests.
+    square:                                                                     OK
+      +++ OK, passed 100 tests.
+  Precision Tests @2
+    Test Floating instance
+      Test Fractional instance
+        field
+          Abelian under Sum
+            group
+              monoid
+                left  identity:                                                 OK
+                  +++ OK, passed 100 tests.
+                right identity:                                                 OK
+                  +++ OK, passed 100 tests.
+                associativity:                                                  OK
+                  +++ OK, passed 100 tests.
+                mappend = (<>):                                                 OK
+                  +++ OK, passed 100 tests.
+                mconcat:                                                        OK
+                  +++ OK, passed 100 tests.
+              left inverse element:                                             OK
+                +++ OK, passed 100 tests.
+              right inverse element:                                            OK
+                +++ OK, passed 100 tests.
+            commutative:                                                        OK
+              +++ OK, passed 100 tests.
+          Abelian under Product NonZero
+            group
+              monoid
+                left  identity:                                                 OK
+                  +++ OK, passed 100 tests.
+                right identity:                                                 OK
+                  +++ OK, passed 100 tests.
+                associativity:                                                  OK
+                  +++ OK, passed 100 tests.
+                mappend = (<>):                                                 OK (0.04s)
+                  +++ OK, passed 100 tests.
+                mconcat:                                                        OK (0.10s)
+                  +++ OK, passed 100 tests.
+              left inverse element:                                             OK (0.02s)
+                +++ OK, passed 100 tests.
+              right inverse element:                                            OK (0.02s)
+                +++ OK, passed 100 tests.
+            commutative:                                                        OK (0.01s)
+              +++ OK, passed 100 tests.
+          * distributes over +
+            left distributes:                                                   OK
+              +++ OK, passed 100 tests.
+            right distributes:                                                  OK
+              +++ OK, passed 100 tests.
+        Num instance aux tests
+          x + negate y = x - y:                                                 OK
+            +++ OK, passed 100 tests.
+          abs is idempotent:                                                    OK
+            +++ OK, passed 100 tests.
+          abs-signum law:                                                       OK
+            +++ OK, passed 100 tests.
+        x * recip y = x / y:                                                    OK
+          +++ OK, passed 100 tests.
+        fromRational (x % y) = fromInteger x / fromInteger y:                   OK
+          +++ OK, passed 100 tests.
+      π/4 = atan 1:                                                             OK
+      log == logBase e:                                                         OK (0.02s)
+        +++ OK, passed 100 tests.
+      exp == (e **):                                                            OK (0.01s)
+        +++ OK, passed 100 tests.
+      sqrt x * sqrt x = x:                                                      OK (0.03s)
+        +++ OK, passed 100 tests.
+      law of exponents:                                                         OK (0.09s)
+        +++ OK, passed 100 tests.
+      logarithm definition:                                                     OK (0.06s)
+        +++ OK, passed 100 tests; 3 discarded.
+      sine cosine definition:                                                   OK
+        +++ OK, passed 100 tests.
+      0 < x cos x:                                                              OK
+        +++ OK, passed 100 tests.
+      x cos x < sin x:                                                          OK
+        +++ OK, passed 100 tests.
+      sin x < x:                                                                OK (0.01s)
+        +++ OK, passed 100 tests.
+      tangent definition:                                                       OK
+        +++ OK, passed 100 tests; 7 discarded.
+      asin left inverse:                                                        OK
+        +++ OK, passed 100 tests.
+      acos left inverse:                                                        OK
+        +++ OK, passed 100 tests.
+      atan left inverse:                                                        OK (0.03s)
+        +++ OK, passed 100 tests.
+      sinh definition:                                                          OK (0.02s)
+        +++ OK, passed 100 tests.
+      cosh definition:                                                          OK (0.03s)
+        +++ OK, passed 100 tests.
+      tanh definition:                                                          OK (0.04s)
+        +++ OK, passed 100 tests.
+      sinh left inverse:                                                        OK (0.11s)
+        +++ OK, passed 100 tests.
+      cosh left inverse:                                                        OK (0.02s)
+        +++ OK, passed 100 tests.
+      tanh left inverse:                                                        OK (0.12s)
+        +++ OK, passed 100 tests.
+    Test Ord instance
+      < is a strict total ordering
+        irreflexive:                                                            OK (0.02s)
+          +++ OK, passed 100 tests.
+        transitive:                                                             OK (0.02s)
+          +++ OK, passed 100 tests; 464 discarded.
+        connected:                                                              OK
+          +++ OK, passed 100 tests; 3 discarded.
+      < is a strict total ordering
+        irreflexive:                                                            OK
+          +++ OK, passed 100 tests.
+        transitive:                                                             OK
+          +++ OK, passed 100 tests; 443 discarded.
+        connected:                                                              OK
+          +++ OK, passed 100 tests; 3 discarded.
+      < is the complement of >=
+        strictOrd:                                                              OK
+          +++ OK, passed 100 tests.
+      > is the complement of <=
+        strictOrd:                                                              OK
+          +++ OK, passed 100 tests.
+      max x y >= x and y:                                                       OK
+        +++ OK, passed 100 tests.
+      max x y == x or y:                                                        OK
+        +++ OK, passed 100 tests.
+      min x y >= x and y:                                                       OK
+        +++ OK, passed 100 tests.
+      min x y == x or y:                                                        OK
+        +++ OK, passed 100 tests.
+    Test Real instance
+      fromRational toRational left inverse:                                     OK
+        +++ OK, passed 100 tests.
+      toRational fromRational left inverse (within error):                      OK
+        +++ OK, passed 100 tests.
+    Test RealFrac instance
+      properFraction laws
+        x = n + f:                                                              OK
+          +++ OK, passed 100 tests.
+        n has same sign or is zero:                                             OK
+          +++ OK, passed 100 tests.
+        abs f < 1:                                                              OK
+          +++ OK, passed 100 tests.
+        f has same sign or is zero:                                             OK
+          +++ OK, passed 100 tests.
+      truncate laws
+        abs (truncate x) <= abs x:                                              OK
+          +++ OK, passed 100 tests.
+        abs (truncate x) + 1 > abs x:                                           OK
+          +++ OK, passed 100 tests.
+        truncate x has same sign or is zero:                                    OK
+          +++ OK, passed 100 tests.
+      round laws
+        abs (round x - x) <= 0.5:                                               OK
+          +++ OK, passed 100 tests.
+        round to even if eqiudistant:                                           OK
+          +++ OK, passed 100 tests.
+      ceiling laws
+        ceiling x - 1 < x:                                                      OK
+          +++ OK, passed 100 tests.
+        ceiling x >= x:                                                         OK
+          +++ OK, passed 100 tests.
+      floor laws
+        floor x + 1 > x:                                                        OK
+          +++ OK, passed 100 tests.
+        floor x <= x:                                                           OK
+          +++ OK, passed 100 tests.
+    Test RealFloat instance
+      decodeFloat laws
+        x = m*b^^n:                                                             OK
+          +++ OK, passed 100 tests.
+      encodeFloat decodeFloat left inverse:                                     OK
+        +++ OK, passed 100 tests.
+      scaleFloat definition:                                                    OK
+        +++ OK, passed 100 tests.
+      atan2 laws
+        atan2 range:                                                            OK
+          +++ OK, passed 100 tests.
+        atan2 y 1 = atan y:                                                     OK
+          +++ OK, passed 100 tests.
+      exponent of 0 is 0:                                                       OK
+        +++ OK, passed 1 test.
+      exponent x = snd (decodeFloat x) + floatDigits x:                         OK
+        +++ OK, passed 100 tests.
+      x = significand x * b ^^ exponent x, where b is the floating-point radix: OK
+        +++ OK, passed 100 tests.
+    Test Read instance
+      read show left inverse:                                                   OK
+        +++ OK, passed 100 tests.
+    Test Random instance
+      randomR range:                                                            OK (0.06s)
+        +++ OK, passed 100 tests; 104 discarded.
+      randomR zero bounds:                                                      OK (0.06s)
+        +++ OK, passed 100 tests.
+      random range:                                                             OK (0.02s)
+        +++ OK, passed 100 tests.
+    shiftL:                                                                     OK (0.01s)
+      +++ OK, passed 100 tests.
+    shiftR:                                                                     OK
+      +++ OK, passed 100 tests.
+    convergePointNineRecurringCReal:                                            OK
+    convergeErrSqrtCReal:                                                       OK (0.02s)
+      +++ OK, passed 100 tests.
+    convergeErrSmallSqrtCReal:                                                  OK (0.02s)
+      +++ OK, passed 100 tests.
+    bounded functions
+      mulBounded:                                                               OK
+        +++ OK, passed 100 tests.
+      mulBoundedL:                                                              OK
+        +++ OK, passed 100 tests.
+      mulBoundedR:                                                              OK
+        +++ OK, passed 100 tests.
+      recipBounded:                                                             OK
+        +++ OK, passed 100 tests; 12 discarded.
+      expBounded:                                                               OK
+        +++ OK, passed 100 tests.
+      logBounded:                                                               OK
+        +++ OK, passed 100 tests.
+      sinBounded:                                                               OK
+        +++ OK, passed 100 tests.
+      cosBounded:                                                               OK
+        +++ OK, passed 100 tests.
+      atanBounded:                                                              OK
+        +++ OK, passed 100 tests.
+    expPosNeg:                                                                  OK
+      +++ OK, passed 100 tests.
+    square:                                                                     OK
+      +++ OK, passed 100 tests.
+  Precision Tests @10
+    Test Floating instance
+      Test Fractional instance
+        field
+          Abelian under Sum
+            group
+              monoid
+                left  identity:                                                 OK
+                  +++ OK, passed 100 tests.
+                right identity:                                                 OK
+                  +++ OK, passed 100 tests.
+                associativity:                                                  OK
+                  +++ OK, passed 100 tests.
+                mappend = (<>):                                                 OK
+                  +++ OK, passed 100 tests.
+                mconcat:                                                        OK
+                  +++ OK, passed 100 tests.
+              left inverse element:                                             OK
+                +++ OK, passed 100 tests.
+              right inverse element:                                            OK
+                +++ OK, passed 100 tests.
+            commutative:                                                        OK
+              +++ OK, passed 100 tests.
+          Abelian under Product NonZero
+            group
+              monoid
+                left  identity:                                                 OK
+                  +++ OK, passed 100 tests.
+                right identity:                                                 OK
+                  +++ OK, passed 100 tests.
+                associativity:                                                  OK (0.04s)
+                  +++ OK, passed 100 tests.
+                mappend = (<>):                                                 OK
+                  +++ OK, passed 100 tests.
+                mconcat:                                                        OK (0.10s)
+                  +++ OK, passed 100 tests.
+              left inverse element:                                             OK (0.02s)
+                +++ OK, passed 100 tests.
+              right inverse element:                                            OK (0.02s)
+                +++ OK, passed 100 tests.
+            commutative:                                                        OK (0.02s)
+              +++ OK, passed 100 tests.
+          * distributes over +
+            left distributes:                                                   OK
+              +++ OK, passed 100 tests.
+            right distributes:                                                  OK
+              +++ OK, passed 100 tests.
+        Num instance aux tests
+          x + negate y = x - y:                                                 OK
+            +++ OK, passed 100 tests.
+          abs is idempotent:                                                    OK
+            +++ OK, passed 100 tests.
+          abs-signum law:                                                       OK
+            +++ OK, passed 100 tests.
+        x * recip y = x / y:                                                    OK
+          +++ OK, passed 100 tests.
+        fromRational (x % y) = fromInteger x / fromInteger y:                   OK
+          +++ OK, passed 100 tests.
+      π/4 = atan 1:                                                             OK
+      log == logBase e:                                                         OK (0.01s)
+        +++ OK, passed 100 tests.
+      exp == (e **):                                                            OK
+        +++ OK, passed 100 tests.
+      sqrt x * sqrt x = x:                                                      OK
+        +++ OK, passed 100 tests.
+      law of exponents:                                                         OK (0.13s)
+        +++ OK, passed 100 tests.
+      logarithm definition:                                                     OK (0.05s)
+        +++ OK, passed 100 tests.
+      sine cosine definition:                                                   OK (0.02s)
+        +++ OK, passed 100 tests.
+      0 < x cos x:                                                              OK (0.02s)
+        +++ OK, passed 100 tests.
+      x cos x < sin x:                                                          OK (0.02s)
+        +++ OK, passed 100 tests.
+      sin x < x:                                                                OK (0.01s)
+        +++ OK, passed 100 tests.
+      tangent definition:                                                       OK (0.02s)
+        +++ OK, passed 100 tests.
+      asin left inverse:                                                        OK
+        +++ OK, passed 100 tests.
+      acos left inverse:                                                        OK (0.05s)
+        +++ OK, passed 100 tests.
+      atan left inverse:                                                        OK (0.02s)
+        +++ OK, passed 100 tests.
+      sinh definition:                                                          OK (0.02s)
+        +++ OK, passed 100 tests.
+      cosh definition:                                                          OK (0.01s)
+        +++ OK, passed 100 tests.
+      tanh definition:                                                          OK (0.09s)
+        +++ OK, passed 100 tests.
+      sinh left inverse:                                                        OK (0.13s)
+        +++ OK, passed 100 tests.
+      cosh left inverse:                                                        OK (0.05s)
+        +++ OK, passed 100 tests.
+      tanh left inverse:                                                        OK (0.10s)
+        +++ OK, passed 100 tests.
+    Test Ord instance
+      < is a strict total ordering
+        irreflexive:                                                            OK (0.02s)
+          +++ OK, passed 100 tests.
+        transitive:                                                             OK (0.02s)
+          +++ OK, passed 100 tests; 440 discarded.
+        connected:                                                              OK (0.02s)
+          +++ OK, passed 100 tests.
+      < is a strict total ordering
+        irreflexive:                                                            OK (0.02s)
+          +++ OK, passed 100 tests.
+        transitive:                                                             OK (0.01s)
+          +++ OK, passed 100 tests; 443 discarded.
+        connected:                                                              OK
+          +++ OK, passed 100 tests.
+      < is the complement of >=
+        strictOrd:                                                              OK
+          +++ OK, passed 100 tests.
+      > is the complement of <=
+        strictOrd:                                                              OK
+          +++ OK, passed 100 tests.
+      max x y >= x and y:                                                       OK
+        +++ OK, passed 100 tests.
+      max x y == x or y:                                                        OK
+        +++ OK, passed 100 tests.
+      min x y >= x and y:                                                       OK
+        +++ OK, passed 100 tests.
+      min x y == x or y:                                                        OK
+        +++ OK, passed 100 tests.
+    Test Real instance
+      fromRational toRational left inverse:                                     OK
+        +++ OK, passed 100 tests.
+      toRational fromRational left inverse (within error):                      OK
+        +++ OK, passed 100 tests.
+    Test RealFrac instance
+      properFraction laws
+        x = n + f:                                                              OK
+          +++ OK, passed 100 tests.
+        n has same sign or is zero:                                             OK
+          +++ OK, passed 100 tests.
+        abs f < 1:                                                              OK
+          +++ OK, passed 100 tests.
+        f has same sign or is zero:                                             OK
+          +++ OK, passed 100 tests.
+      truncate laws
+        abs (truncate x) <= abs x:                                              OK
+          +++ OK, passed 100 tests.
+        abs (truncate x) + 1 > abs x:                                           OK
+          +++ OK, passed 100 tests.
+        truncate x has same sign or is zero:                                    OK
+          +++ OK, passed 100 tests.
+      round laws
+        abs (round x - x) <= 0.5:                                               OK
+          +++ OK, passed 100 tests.
+        round to even if eqiudistant:                                           OK
+          +++ OK, passed 100 tests.
+      ceiling laws
+        ceiling x - 1 < x:                                                      OK
+          +++ OK, passed 100 tests.
+        ceiling x >= x:                                                         OK
+          +++ OK, passed 100 tests.
+      floor laws
+        floor x + 1 > x:                                                        OK
+          +++ OK, passed 100 tests.
+        floor x <= x:                                                           OK
+          +++ OK, passed 100 tests.
+    Test RealFloat instance
+      decodeFloat laws
+        x = m*b^^n:                                                             OK
+          +++ OK, passed 100 tests.
+      encodeFloat decodeFloat left inverse:                                     OK
+        +++ OK, passed 100 tests.
+      scaleFloat definition:                                                    OK
+        +++ OK, passed 100 tests.
+      atan2 laws
+        atan2 range:                                                            OK
+          +++ OK, passed 100 tests.
+        atan2 y 1 = atan y:                                                     OK
+          +++ OK, passed 100 tests.
+      exponent of 0 is 0:                                                       OK
+        +++ OK, passed 1 test.
+      exponent x = snd (decodeFloat x) + floatDigits x:                         OK
+        +++ OK, passed 100 tests.
+      x = significand x * b ^^ exponent x, where b is the floating-point radix: OK
+        +++ OK, passed 100 tests.
+    Test Read instance
+      read show left inverse:                                                   OK
+        +++ OK, passed 100 tests.
+    Test Random instance
+      randomR range:                                                            OK (0.05s)
+        +++ OK, passed 100 tests; 104 discarded.
+      randomR zero bounds:                                                      OK (0.03s)
+        +++ OK, passed 100 tests.
+      random range:                                                             OK (0.02s)
+        +++ OK, passed 100 tests.
+    shiftL:                                                                     OK (0.01s)
+      +++ OK, passed 100 tests.
+    shiftR:                                                                     OK
+      +++ OK, passed 100 tests.
+    convergePointNineRecurringCReal:                                            OK
+    convergeErrSqrtCReal:                                                       OK (0.03s)
+      +++ OK, passed 100 tests.
+    convergeErrSmallSqrtCReal:                                                  OK (0.02s)
+      +++ OK, passed 100 tests.
+    bounded functions
+      mulBounded:                                                               OK
+        +++ OK, passed 100 tests.
+      mulBoundedL:                                                              OK
+        +++ OK, passed 100 tests.
+      mulBoundedR:                                                              OK
+        +++ OK, passed 100 tests.
+      recipBounded:                                                             OK
+        +++ OK, passed 100 tests; 17 discarded.
+      expBounded:                                                               OK
+        +++ OK, passed 100 tests.
+      logBounded:                                                               OK
+        +++ OK, passed 100 tests.
+      sinBounded:                                                               OK
+        +++ OK, passed 100 tests.
+      cosBounded:                                                               OK
+        +++ OK, passed 100 tests.
+      atanBounded:                                                              OK
+        +++ OK, passed 100 tests.
+    expPosNeg:                                                                  OK
+      +++ OK, passed 100 tests.
+    square:                                                                     OK
+      +++ OK, passed 100 tests.
+  Precision Tests @30
+    Test Floating instance
+      Test Fractional instance
+        field
+          Abelian under Sum
+            group
+              monoid
+                left  identity:                                                 OK
+                  +++ OK, passed 100 tests.
+                right identity:                                                 OK
+                  +++ OK, passed 100 tests.
+                associativity:                                                  OK
+                  +++ OK, passed 100 tests.
+                mappend = (<>):                                                 OK
+                  +++ OK, passed 100 tests.
+                mconcat:                                                        OK
+                  +++ OK, passed 100 tests.
+              left inverse element:                                             OK
+                +++ OK, passed 100 tests.
+              right inverse element:                                            OK
+                +++ OK, passed 100 tests.
+            commutative:                                                        OK
+              +++ OK, passed 100 tests.
+          Abelian under Product NonZero
+            group
+              monoid
+                left  identity:                                                 OK
+                  +++ OK, passed 100 tests.
+                right identity:                                                 OK
+                  +++ OK, passed 100 tests.
+                associativity:                                                  OK (0.01s)
+                  +++ OK, passed 100 tests.
+                mappend = (<>):                                                 OK
+                  +++ OK, passed 100 tests.
+                mconcat:                                                        OK (0.10s)
+                  +++ OK, passed 100 tests.
+              left inverse element:                                             OK (0.02s)
+                +++ OK, passed 100 tests.
+              right inverse element:                                            OK (0.02s)
+                +++ OK, passed 100 tests.
+            commutative:                                                        OK
+              +++ OK, passed 100 tests.
+          * distributes over +
+            left distributes:                                                   OK (0.02s)
+              +++ OK, passed 100 tests.
+            right distributes:                                                  OK
+              +++ OK, passed 100 tests.
+        Num instance aux tests
+          x + negate y = x - y:                                                 OK
+            +++ OK, passed 100 tests.
+          abs is idempotent:                                                    OK
+            +++ OK, passed 100 tests.
+          abs-signum law:                                                       OK
+            +++ OK, passed 100 tests.
+        x * recip y = x / y:                                                    OK
+          +++ OK, passed 100 tests.
+        fromRational (x % y) = fromInteger x / fromInteger y:                   OK
+          +++ OK, passed 100 tests.
+      π/4 = atan 1:                                                             OK
+      log == logBase e:                                                         OK (0.03s)
+        +++ OK, passed 100 tests.
+      exp == (e **):                                                            OK (0.03s)
+        +++ OK, passed 100 tests.
+      sqrt x * sqrt x = x:                                                      OK
+        +++ OK, passed 100 tests.
+      law of exponents:                                                         OK (0.14s)
+        +++ OK, passed 100 tests.
+      logarithm definition:                                                     OK (0.10s)
+        +++ OK, passed 100 tests.
+      sine cosine definition:                                                   OK (0.02s)
+        +++ OK, passed 100 tests.
+      0 < x cos x:                                                              OK
+        +++ OK, passed 100 tests.
+      x cos x < sin x:                                                          OK
+        +++ OK, passed 100 tests.
+      sin x < x:                                                                OK (0.01s)
+        +++ OK, passed 100 tests.
+      tangent definition:                                                       OK (0.02s)
+        +++ OK, passed 100 tests.
+      asin left inverse:                                                        OK (0.01s)
+        +++ OK, passed 100 tests.
+      acos left inverse:                                                        OK
+        +++ OK, passed 100 tests.
+      atan left inverse:                                                        OK (0.08s)
+        +++ OK, passed 100 tests.
+      sinh definition:                                                          OK (0.02s)
+        +++ OK, passed 100 tests.
+      cosh definition:                                                          OK (0.02s)
+        +++ OK, passed 100 tests.
+      tanh definition:                                                          OK (0.08s)
+        +++ OK, passed 100 tests.
+      sinh left inverse:                                                        OK (0.14s)
+        +++ OK, passed 100 tests.
+      cosh left inverse:                                                        OK (0.06s)
+        +++ OK, passed 100 tests.
+      tanh left inverse:                                                        OK (0.10s)
+        +++ OK, passed 100 tests.
+    Test Ord instance
+      < is a strict total ordering
+        irreflexive:                                                            OK (0.02s)
+          +++ OK, passed 100 tests.
+        transitive:                                                             OK (0.02s)
+          +++ OK, passed 100 tests; 464 discarded.
+        connected:                                                              OK (0.02s)
+          +++ OK, passed 100 tests.
+      < is a strict total ordering
+        irreflexive:                                                            OK
+          +++ OK, passed 100 tests.
+        transitive:                                                             OK
+          +++ OK, passed 100 tests; 443 discarded.
+        connected:                                                              OK
+          +++ OK, passed 100 tests.
+      < is the complement of >=
+        strictOrd:                                                              OK
+          +++ OK, passed 100 tests.
+      > is the complement of <=
+        strictOrd:                                                              OK
+          +++ OK, passed 100 tests.
+      max x y >= x and y:                                                       OK
+        +++ OK, passed 100 tests.
+      max x y == x or y:                                                        OK
+        +++ OK, passed 100 tests.
+      min x y >= x and y:                                                       OK
+        +++ OK, passed 100 tests.
+      min x y == x or y:                                                        OK
+        +++ OK, passed 100 tests.
+    Test Real instance
+      fromRational toRational left inverse:                                     OK
+        +++ OK, passed 100 tests.
+      toRational fromRational left inverse (within error):                      OK
+        +++ OK, passed 100 tests.
+    Test RealFrac instance
+      properFraction laws
+        x = n + f:                                                              OK
+          +++ OK, passed 100 tests.
+        n has same sign or is zero:                                             OK
+          +++ OK, passed 100 tests.
+        abs f < 1:                                                              OK
+          +++ OK, passed 100 tests.
+        f has same sign or is zero:                                             OK
+          +++ OK, passed 100 tests.
+      truncate laws
+        abs (truncate x) <= abs x:                                              OK
+          +++ OK, passed 100 tests.
+        abs (truncate x) + 1 > abs x:                                           OK
+          +++ OK, passed 100 tests.
+        truncate x has same sign or is zero:                                    OK
+          +++ OK, passed 100 tests.
+      round laws
+        abs (round x - x) <= 0.5:                                               OK
+          +++ OK, passed 100 tests.
+        round to even if eqiudistant:                                           OK
+          +++ OK, passed 100 tests.
+      ceiling laws
+        ceiling x - 1 < x:                                                      OK
+          +++ OK, passed 100 tests.
+        ceiling x >= x:                                                         OK
+          +++ OK, passed 100 tests.
+      floor laws
+        floor x + 1 > x:                                                        OK
+          +++ OK, passed 100 tests.
+        floor x <= x:                                                           OK
+          +++ OK, passed 100 tests.
+    Test RealFloat instance
+      decodeFloat laws
+        x = m*b^^n:                                                             OK
+          +++ OK, passed 100 tests.
+      encodeFloat decodeFloat left inverse:                                     OK
+        +++ OK, passed 100 tests.
+      scaleFloat definition:                                                    OK
+        +++ OK, passed 100 tests.
+      atan2 laws
+        atan2 range:                                                            OK (0.01s)
+          +++ OK, passed 100 tests.
+        atan2 y 1 = atan y:                                                     OK
+          +++ OK, passed 100 tests.
+      exponent of 0 is 0:                                                       OK
+        +++ OK, passed 1 test.
+      exponent x = snd (decodeFloat x) + floatDigits x:                         OK
+        +++ OK, passed 100 tests.
+      x = significand x * b ^^ exponent x, where b is the floating-point radix: OK
+        +++ OK, passed 100 tests.
+    Test Read instance
+      read show left inverse:                                                   OK
+        +++ OK, passed 100 tests.
+    Test Random instance
+      randomR range:                                                            OK (0.08s)
+        +++ OK, passed 100 tests; 104 discarded.
+      randomR zero bounds:                                                      OK (0.12s)
+        +++ OK, passed 100 tests.
+      random range:                                                             OK (0.02s)
+        +++ OK, passed 100 tests.
+    shiftL:                                                                     OK (0.01s)
+      +++ OK, passed 100 tests.
+    shiftR:                                                                     OK (0.02s)
+      +++ OK, passed 100 tests.
+    convergePointNineRecurringCReal:                                            OK
+    convergeErrSqrtCReal:                                                       OK (0.03s)
+      +++ OK, passed 100 tests.
+    convergeErrSmallSqrtCReal:                                                  OK (0.01s)
+      +++ OK, passed 100 tests.
+    bounded functions
+      mulBounded:                                                               OK
+        +++ OK, passed 100 tests.
+      mulBoundedL:                                                              OK
+        +++ OK, passed 100 tests.
+      mulBoundedR:                                                              OK
+        +++ OK, passed 100 tests.
+      recipBounded:                                                             OK
+        +++ OK, passed 100 tests; 14 discarded.
+      expBounded:                                                               OK
+        +++ OK, passed 100 tests.
+      logBounded:                                                               OK (0.02s)
+        +++ OK, passed 100 tests.
+      sinBounded:                                                               OK
+        +++ OK, passed 100 tests.
+      cosBounded:                                                               OK
+        +++ OK, passed 100 tests.
+      atanBounded:                                                              OK
+        +++ OK, passed 100 tests.
+    expPosNeg:                                                                  OK (0.01s)
+      +++ OK, passed 100 tests.
+    square:                                                                     OK
+      +++ OK, passed 100 tests.
+
+All 499 tests passed (3.45s)
+
+
+
+exact-real> Test suite test passed

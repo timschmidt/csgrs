@@ -1,0 +1,38 @@
+==531994== Memcheck, a memory error detector
+==531994== Copyright (C) 2002-2026, and GNU GPL'd, by Julian Seward et al.
+==531994== Using Valgrind-3.27.1 and LibVEX; rerun with -h for copyright info
+==531994== Command: /tmp/calcium-qqbar-remainder-v84.1aubRO/cleanup-cubic cleanup 4 128
+==531994== 
+==531994== 
+==531994== HEAP SUMMARY:
+==531994==     in use at exit: 52,224 bytes in 512 blocks
+==531994==   total heap usage: 15,242 allocs, 14,730 frees, 969,448 bytes allocated
+==531994== 
+==531994== 6,144 bytes in 384 blocks are indirectly lost in loss record 1 of 2
+==531994==    at 0x48486CD: calloc (vg_replace_malloc.c:1616)
+==531994==    by 0x48DCE09: flint_calloc (in /home/tim/Documents/GitHub/workspace/exact-real-references/flint/libflint.so.25.0.0)
+==531994==    by 0x4AC5624: fmpz_poly_realloc (in /home/tim/Documents/GitHub/workspace/exact-real-references/flint/libflint.so.25.0.0)
+==531994==    by 0x4AC8A47: fmpz_poly_set_coeff_si (in /home/tim/Documents/GitHub/workspace/exact-real-references/flint/libflint.so.25.0.0)
+==531994==    by 0x51B0D4A: qqbar_init (in /home/tim/Documents/GitHub/workspace/exact-real-references/flint/libflint.so.25.0.0)
+==531994==    by 0x50B7ABF: _gr_qqbar_poly_roots.part.0 (in /home/tim/Documents/GitHub/workspace/exact-real-references/flint/libflint.so.25.0.0)
+==531994==    by 0x400D87: gr_poly_roots (gr_poly.h:631)
+==531994==    by 0x400D87: root_cleanup.isra.0 (flint-qqbar-cleanup-cubic-v84.c:51)
+==531994==    by 0x40073C: main (flint-qqbar-cleanup-cubic-v84.c:81)
+==531994== 
+==531994== 52,224 (46,080 direct, 6,144 indirect) bytes in 128 blocks are definitely lost in loss record 2 of 2
+==531994==    at 0x4840AE6: malloc (vg_replace_malloc.c:447)
+==531994==    by 0x48DCD79: flint_malloc (in /home/tim/Documents/GitHub/workspace/exact-real-references/flint/libflint.so.25.0.0)
+==531994==    by 0x50B7A93: _gr_qqbar_poly_roots.part.0 (in /home/tim/Documents/GitHub/workspace/exact-real-references/flint/libflint.so.25.0.0)
+==531994==    by 0x400D87: gr_poly_roots (gr_poly.h:631)
+==531994==    by 0x400D87: root_cleanup.isra.0 (flint-qqbar-cleanup-cubic-v84.c:51)
+==531994==    by 0x40073C: main (flint-qqbar-cleanup-cubic-v84.c:81)
+==531994== 
+==531994== LEAK SUMMARY:
+==531994==    definitely lost: 46,080 bytes in 128 blocks
+==531994==    indirectly lost: 6,144 bytes in 384 blocks
+==531994==      possibly lost: 0 bytes in 0 blocks
+==531994==    still reachable: 0 bytes in 0 blocks
+==531994==         suppressed: 0 bytes in 0 blocks
+==531994== 
+==531994== For lists of detected and suppressed errors, rerun with: -s
+==531994== ERROR SUMMARY: 2 errors from 2 contexts (suppressed: 0 from 0)

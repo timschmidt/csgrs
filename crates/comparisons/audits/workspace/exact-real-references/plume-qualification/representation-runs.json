@@ -1,0 +1,218 @@
+[
+  {
+    "rep": "endpoint",
+    "exponent": 1,
+    "bits": 8,
+    "status": 0,
+    "signal": null,
+    "stdout": "ln 2 1 8 161 256 1 256\n",
+    "stderr": ""
+  },
+  {
+    "rep": "endpoint",
+    "exponent": 1,
+    "bits": 24,
+    "status": 0,
+    "signal": null,
+    "stdout": "ln 2 1 24 10485761 16777216 1 16777216\n",
+    "stderr": ""
+  },
+  {
+    "rep": "endpoint",
+    "exponent": 1,
+    "bits": 64,
+    "status": 0,
+    "signal": null,
+    "stdout": "ln 2 1 64 11529215046068469761 18446744073709551616 1 18446744073709551616\n",
+    "stderr": ""
+  },
+  {
+    "rep": "endpoint",
+    "exponent": 3,
+    "bits": 8,
+    "status": 0,
+    "signal": null,
+    "stdout": "ln 8 1 8 133 64 1 256\n",
+    "stderr": ""
+  },
+  {
+    "rep": "endpoint",
+    "exponent": 3,
+    "bits": 24,
+    "status": 0,
+    "signal": null,
+    "stdout": "ln 8 1 24 1065 512 1 16777216\n",
+    "stderr": ""
+  },
+  {
+    "rep": "endpoint",
+    "exponent": 3,
+    "bits": 64,
+    "status": 0,
+    "signal": null,
+    "stdout": "ln 8 1 64 1065 512 1 18446744073709551616\n",
+    "stderr": ""
+  },
+  {
+    "rep": "terminating",
+    "exponent": 1,
+    "bits": 8,
+    "status": 0,
+    "signal": null,
+    "stdout": "ln 2 1 8 89 128 1 256\n",
+    "stderr": ""
+  },
+  {
+    "rep": "terminating",
+    "exponent": 1,
+    "bits": 24,
+    "status": 0,
+    "signal": null,
+    "stdout": "ln 2 1 24 1453635 2097152 1 16777216\n",
+    "stderr": ""
+  },
+  {
+    "rep": "terminating",
+    "exponent": 1,
+    "bits": 64,
+    "status": 0,
+    "signal": null,
+    "stdout": "ln 2 1 64 3196577161300663915 4611686018427387904 1 18446744073709551616\n",
+    "stderr": ""
+  },
+  {
+    "rep": "terminating",
+    "exponent": 3,
+    "bits": 8,
+    "status": 0,
+    "signal": null,
+    "stdout": "ln 8 1 8 133 64 1 256\n",
+    "stderr": ""
+  },
+  {
+    "rep": "terminating",
+    "exponent": 3,
+    "bits": 24,
+    "status": 0,
+    "signal": null,
+    "stdout": "ln 8 1 24 1065 512 1 16777216\n",
+    "stderr": ""
+  },
+  {
+    "rep": "terminating",
+    "exponent": 3,
+    "bits": 64,
+    "status": 0,
+    "signal": null,
+    "stdout": "ln 8 1 64 1065 512 1 18446744073709551616\n",
+    "stderr": ""
+  },
+  {
+    "rep": "redundant",
+    "exponent": 1,
+    "bits": 8,
+    "status": 0,
+    "signal": null,
+    "stdout": "ln 2 1 8 161 256 1 256\n",
+    "stderr": ""
+  },
+  {
+    "rep": "redundant",
+    "exponent": 1,
+    "bits": 24,
+    "status": 0,
+    "signal": null,
+    "stdout": "ln 2 1 24 10485761 16777216 1 16777216\n",
+    "stderr": ""
+  },
+  {
+    "rep": "redundant",
+    "exponent": 1,
+    "bits": 64,
+    "status": 0,
+    "signal": null,
+    "stdout": "ln 2 1 64 11529215046068469761 18446744073709551616 1 18446744073709551616\n",
+    "stderr": ""
+  },
+  {
+    "rep": "redundant",
+    "exponent": 3,
+    "bits": 8,
+    "status": 0,
+    "signal": null,
+    "stdout": "ln 8 1 8 133 64 1 256\n",
+    "stderr": ""
+  },
+  {
+    "rep": "redundant",
+    "exponent": 3,
+    "bits": 24,
+    "status": 0,
+    "signal": null,
+    "stdout": "ln 8 1 24 1065 512 1 16777216\n",
+    "stderr": ""
+  },
+  {
+    "rep": "redundant",
+    "exponent": 3,
+    "bits": 64,
+    "status": 0,
+    "signal": null,
+    "stdout": "ln 8 1 64 1065 512 1 18446744073709551616\n",
+    "stderr": ""
+  },
+  {
+    "rep": "decimal",
+    "exponent": 1,
+    "bits": 8,
+    "status": 0,
+    "signal": null,
+    "stdout": "ln 2 1 8 89 128 1 256\n",
+    "stderr": ""
+  },
+  {
+    "rep": "decimal",
+    "exponent": 1,
+    "bits": 24,
+    "status": 0,
+    "signal": null,
+    "stdout": "ln 2 1 24 1453635 2097152 1 16777216\n",
+    "stderr": ""
+  },
+  {
+    "rep": "decimal",
+    "exponent": 1,
+    "bits": 64,
+    "status": 0,
+    "signal": null,
+    "stdout": "ln 2 1 64 3196577161300663915 4611686018427387904 1 18446744073709551616\n",
+    "stderr": ""
+  },
+  {
+    "rep": "decimal",
+    "exponent": 3,
+    "bits": 8,
+    "status": 0,
+    "signal": null,
+    "stdout": "ln 8 1 8 133 64 1 256\n",
+    "stderr": ""
+  },
+  {
+    "rep": "decimal",
+    "exponent": 3,
+    "bits": 24,
+    "status": 0,
+    "signal": null,
+    "stdout": "ln 8 1 24 1065 512 1 16777216\n",
+    "stderr": ""
+  },
+  {
+    "rep": "decimal",
+    "exponent": 3,
+    "bits": 64,
+    "status": 0,
+    "signal": null,
+    "stdout": "ln 8 1 64 1065 512 1 18446744073709551616\n",
+    "stderr": ""
+  }
+]

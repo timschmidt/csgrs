@@ -1,0 +1,5 @@
+2026-09-05T19:50:16.522317Z  INFO 🚀 Starting trunk 0.21.14
+2026-09-05T19:50:16.531151Z  INFO 📦 starting build
+    Finished `release` profile [optimized] target(s) in 0.16s
+2026-09-05T19:50:31.039219Z  INFO applying new distribution
+2026-09-05T19:50:31.039368Z  INFO ✅ success

@@ -1,0 +1,11 @@
+{
+  "tag": "polynomial-facts-native",
+  "started": "2026-09-08T23:37:31.396Z",
+  "finished": "2026-09-08T23:37:31.441Z",
+  "elapsedSeconds": 0.042638846,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison",
+  "command": "/tmp/calcium-polynomial-facts.ZX8NqH/flint-polynomial-arithmetic-probe",
+  "args": [],
+  "code": 0,
+  "signal": null
+}

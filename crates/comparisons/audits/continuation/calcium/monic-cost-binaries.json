@@ -1,0 +1,26 @@
+{
+  "baseline-cpu": {
+    "path": "/tmp/calcium-monic-costs.U6fpvm/baseline-cpu",
+    "sha256": "e4df35d116d5dce06300854882a45476bee10ae80550686284295f51e67799d4",
+    "bytes": 2392624,
+    "size": "text\t   data\t    bss\t    dec\t    hex\tfilename\n1697729\t 219360\t   4528\t1921617\t 1d5251\t/tmp/calcium-monic-costs.U6fpvm/baseline-cpu"
+  },
+  "baseline-allocation": {
+    "path": "/tmp/calcium-monic-costs.U6fpvm/baseline-allocation",
+    "sha256": "19bb5e6ff2adb44e8d8c2dcd6d8237e8e95657a5f403bf99e52caef5f022e751",
+    "bytes": 2396752,
+    "size": "text\t   data\t    bss\t    dec\t    hex\tfilename\n1701137\t 219368\t   1160\t1921665\t 1d5281\t/tmp/calcium-monic-costs.U6fpvm/baseline-allocation"
+  },
+  "trial-cpu": {
+    "path": "/tmp/calcium-monic-costs.U6fpvm/trial-cpu",
+    "sha256": "cd93c7472d3e433d91c15c2590d4f88933d32893d3d9e4ff5ba32185fbffe30c",
+    "bytes": 2394024,
+    "size": "text\t   data\t    bss\t    dec\t    hex\tfilename\n1697765\t 219360\t   4496\t1921621\t 1d5255\t/tmp/calcium-monic-costs.U6fpvm/trial-cpu"
+  },
+  "trial-allocation": {
+    "path": "/tmp/calcium-monic-costs.U6fpvm/trial-allocation",
+    "sha256": "bdb8a6aa989b3aef19f76b06c21d9c9d547695a47a20f6f315b31b4a4cc2fba3",
+    "bytes": 2398160,
+    "size": "text\t   data\t    bss\t    dec\t    hex\tfilename\n1701173\t 219368\t   1112\t1921653\t 1d5275\t/tmp/calcium-monic-costs.U6fpvm/trial-allocation"
+  }
+}

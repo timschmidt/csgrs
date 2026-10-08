@@ -1,0 +1,26 @@
+{
+  "returncode": 0,
+  "elapsed_seconds": 1.0150960730097722,
+  "normal_library_sha256": "d680fbce859f7d1e7f470916621fb407de5f877a836cacaf4fe3a7fa514000c0",
+  "log": "finite-analytic-pair-domains-cubic-replay.log",
+  "source": "finite-domain-chord-cubic-replay.rs",
+  "command": [
+    "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustc",
+    "--edition=2024",
+    "-O",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-domain-chord-cubic-replay.rs",
+    "--extern",
+    "hypercurve=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypercurve-a7ee000b69ee5146.rlib",
+    "-L",
+    "dependency=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps",
+    "-o",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-analytic-pair-domains-cubic-replay"
+  ],
+  "source_sha256": "883ea6bc0007433637ee9f49c1c4e5ace7731f236e56789a82fec053fde7d508",
+  "executable_sha256": "04cd76e38e0e65e6637712c52f2c7aaa7eebab0684b92fa47f7e71b928bd97f6",
+  "counts": {
+    "queries": 44,
+    "point_replays": 16,
+    "splits": 4
+  }
+}

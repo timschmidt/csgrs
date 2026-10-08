@@ -1,0 +1,214 @@
+\doxysubsection{Zonotope Class Reference}
+\hypertarget{classAriadne_1_1Zonotope}{}\label{classAriadne_1_1Zonotope}\index{Zonotope@{Zonotope}}
+
+
+{\ttfamily \#include $<$zonotope.\+hpp$>$}
+
+
+
+\doxysubsubsection{Description}
+A zonotope of arbitrary dimension. 
+
+A zonotope is a set of the form $c+Ge$, where $||e||_{\infty}\leq1$. The columns of the matrix $G$ are the {\itshape generators} of the zonotope.
+
+Zonotopes are always is\+\_\+bounded. A zonotope always contains its centre point, so can never be empty. However, it may not be regular.
+
+The intersection and membership tests may be performed using algorithms from\+: ~\newline
+ Guibas, Leonidas J.; Nguyen, An; Zhang, Li, "{}\+Zonotopes as bounding volumes."{} {\itshape Proceedings of the Fourteenth Annual ACM-\/\+SIAM Symposium on Discrete Algorithms} (Baltimore, MD, 2003), 803--812, ACM, New York, 2003.
+
+{\bfseries{\doxylink{classAriadne_1_1Storage}{Storage}\+:}} A Zonotope in dimension d with n generators is described by d(n+1) real numbers. The ith component of the centre is given by the ith element, and the ith component of the kth generator is given by the (kd+i)th element. Inheritance diagram for Zonotope\+:\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[height=4.000000cm]{classAriadne_1_1Zonotope}
+\end{center}
+\end{figure}
+\doxysubsubsubsection*{Public Member Functions}
+\begin{Indent}\textbf{ Constructors and destructors}\par
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1Zonotope_a89162593330a72ca7b7f2b45d0b6de8c}\label{classAriadne_1_1Zonotope_a89162593330a72ca7b7f2b45d0b6de8c} 
+virtual {\bfseries \texorpdfstring{$\sim$}{\string~}\+Zonotope} ()=default
+\begin{DoxyCompactList}\small\item\em Virtual destructor. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Zonotope_a8d5e8885cfce2276f67cb08f547436e2}\label{classAriadne_1_1Zonotope_a8d5e8885cfce2276f67cb08f547436e2} 
+{\bfseries Zonotope} ()
+\begin{DoxyCompactList}\small\item\em Default constructor yields a zonotope with dimension zero and no generators. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Zonotope_adcbd42766dfadd151a5c97e77c51cf2e}\label{classAriadne_1_1Zonotope_adcbd42766dfadd151a5c97e77c51cf2e} 
+{\bfseries Zonotope} (Dimension\+Type d)
+\begin{DoxyCompactList}\small\item\em Construct a zonotope of dimension {\itshape d} with no generators. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Zonotope_ab9104f634786c41fc07bada95279cca2}\label{classAriadne_1_1Zonotope_ab9104f634786c41fc07bada95279cca2} 
+{\bfseries Zonotope} (Dimension\+Type d, Size\+Type m)
+\begin{DoxyCompactList}\small\item\em Construct a zonotope of dimension {\itshape n} with centre at the origin and {\itshape m} generators. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Zonotope_aa47ebb6809d47f9f261e8e5683ee3cd7}\label{classAriadne_1_1Zonotope_aa47ebb6809d47f9f261e8e5683ee3cd7} 
+{\bfseries Zonotope} (const \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ Float\+DP $>$ \&c, const \mbox{\hyperlink{classAriadne_1_1Matrix}{Matrix}}$<$ Float\+DP $>$ \&G, const \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ Float\+DP $>$ \&e)
+\begin{DoxyCompactList}\small\item\em Construct from centre, generators, and a uniform error term. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Zonotope_ae75977a9744d9c7681d8ff7ec3a6900a}\label{classAriadne_1_1Zonotope_ae75977a9744d9c7681d8ff7ec3a6900a} 
+{\bfseries Zonotope} (const \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ Float\+DP $>$ \&c, const \mbox{\hyperlink{classAriadne_1_1Matrix}{Matrix}}$<$ Float\+DP $>$ \&G)
+\begin{DoxyCompactList}\small\item\em Construct from centre and generators. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Zonotope_a07494f625a98209224bb8a3e32d9b7b7}\label{classAriadne_1_1Zonotope_a07494f625a98209224bb8a3e32d9b7b7} 
+{\bfseries Zonotope} (const \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ \mbox{\hyperlink{group__FunctionModule_gab4f81d909c87bd33486c446890723bb1}{Exact\+Interval\+Type}} $>$ \&c, const \mbox{\hyperlink{classAriadne_1_1Matrix}{Matrix}}$<$ Float\+DP $>$ \&G)
+\begin{DoxyCompactList}\small\item\em Construct from interval centre and a generator matrix. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Zonotope_a066a6325fdf48cc850fa9550eefaef52}\label{classAriadne_1_1Zonotope_a066a6325fdf48cc850fa9550eefaef52} 
+{\bfseries Zonotope} (const \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ Float\+DP $>$ \&c, const \mbox{\hyperlink{classAriadne_1_1Matrix}{Matrix}}$<$ \mbox{\hyperlink{group__FunctionModule_gab4f81d909c87bd33486c446890723bb1}{Exact\+Interval\+Type}} $>$ \&G)
+\begin{DoxyCompactList}\small\item\em Construct from centre and an interval generator matrix. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Zonotope_a47017ed9c843d3d78f9fff61c3ef3554}\label{classAriadne_1_1Zonotope_a47017ed9c843d3d78f9fff61c3ef3554} 
+{\bfseries Zonotope} (const \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ \mbox{\hyperlink{group__FunctionModule_gab4f81d909c87bd33486c446890723bb1}{Exact\+Interval\+Type}} $>$ \&c, const \mbox{\hyperlink{classAriadne_1_1Matrix}{Matrix}}$<$ \mbox{\hyperlink{group__FunctionModule_gab4f81d909c87bd33486c446890723bb1}{Exact\+Interval\+Type}} $>$ \&G)
+\begin{DoxyCompactList}\small\item\em Construct from an interval centre and an interval generator matrix. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Zonotope_aa470bca18f7573041aa1aeb8e5c85c6d}\label{classAriadne_1_1Zonotope_aa470bca18f7573041aa1aeb8e5c85c6d} 
+{\footnotesize template$<$class XX$>$ }\\{\bfseries Zonotope} (Dimension\+Type d, Size\+Type m, const XX \texorpdfstring{$\ast$}{*}ptr)
+\begin{DoxyCompactList}\small\item\em Construct a zonotope of dimension {\itshape d} with centre at the origin and {\itshape m} generators from the data beginning at {\itshape ptr}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Zonotope_abb4609e8f16289a466a97d90a87b916a}\label{classAriadne_1_1Zonotope_abb4609e8f16289a466a97d90a87b916a} 
+{\bfseries Zonotope} (\mbox{\hyperlink{namespaceAriadne_a8d51a34ecd8621e992f2470124281c93}{Initializer\+List}}$<$ std\+::tuple$<$ Float\+DP, \mbox{\hyperlink{namespaceAriadne_a8d51a34ecd8621e992f2470124281c93}{Initializer\+List}}$<$ Float\+DP $>$, Float\+DP $>$ $>$ lst)
+\begin{DoxyCompactList}\small\item\em Construct a zonotope of dimension {\itshape d} with {\itshape m} generators from raw data. The data format is (c0,G00,G01,...,G0m,e0,c1,G10,...,G1m,e1,...). \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Zonotope_ae1629cc8fd5cdaf2de392db47438ae1f}\label{classAriadne_1_1Zonotope_ae1629cc8fd5cdaf2de392db47438ae1f} 
+{\bfseries Zonotope} (const \mbox{\hyperlink{group__FunctionModule_gafdd31b4d01081cd09aad2ce11117f867}{Exact\+Box\+Type}} \&r)
+\begin{DoxyCompactList}\small\item\em Convert from a box. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Zonotope_a177167cdb0eb7e7da9012142559aef1f}\label{classAriadne_1_1Zonotope_a177167cdb0eb7e7da9012142559aef1f} 
+{\bfseries Zonotope} (const \mbox{\hyperlink{classAriadne_1_1Zonotope}{Zonotope}} \&z)
+\begin{DoxyCompactList}\small\item\em Copy constructor. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Zonotope_a9ef929ffc63f3261071e0da8e6d73a71}\label{classAriadne_1_1Zonotope_a9ef929ffc63f3261071e0da8e6d73a71} 
+\mbox{\hyperlink{classAriadne_1_1Zonotope}{Zonotope}} \& {\bfseries operator=} (const \mbox{\hyperlink{classAriadne_1_1Zonotope}{Zonotope}} \&z)
+\begin{DoxyCompactList}\small\item\em Copy assignment operator. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Zonotope_a7f58fde70a336573dfa944a463940391}\label{classAriadne_1_1Zonotope_a7f58fde70a336573dfa944a463940391} 
+\mbox{\hyperlink{classAriadne_1_1Zonotope}{Zonotope}} \texorpdfstring{$\ast$}{*} {\bfseries clone} () const
+\begin{DoxyCompactList}\small\item\em Cloning operator. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\end{Indent}
+\begin{Indent}\textbf{ Data access}\par
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1Zonotope_a3c1a15a3831a647991a6a2c5bbe1e029}\label{classAriadne_1_1Zonotope_a3c1a15a3831a647991a6a2c5bbe1e029} 
+Dimension\+Type {\bfseries dimension} () const
+\begin{DoxyCompactList}\small\item\em The dimension of the zonotope. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Zonotope_af3d0de65ab4a6976b4fab41373ef8cd1}\label{classAriadne_1_1Zonotope_af3d0de65ab4a6976b4fab41373ef8cd1} 
+Size\+Type {\bfseries number\+\_\+of\+\_\+generators} () const
+\begin{DoxyCompactList}\small\item\em The number of generators of the zonotope. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Zonotope_aba3d3fa21fe422a281dcdeae93aba8d2}\label{classAriadne_1_1Zonotope_aba3d3fa21fe422a281dcdeae93aba8d2} 
+\mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ \mbox{\hyperlink{group__FunctionModule_gab4f81d909c87bd33486c446890723bb1}{Exact\+Interval\+Type}} $>$ {\bfseries domain} () const
+\begin{DoxyCompactList}\small\item\em The domain. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Zonotope_a25ad7d7debf1aa9b557293a84fbd0a7b}\label{classAriadne_1_1Zonotope_a25ad7d7debf1aa9b557293a84fbd0a7b} 
+const \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ Float\+DP $>$ \& {\bfseries centre} () const
+\begin{DoxyCompactList}\small\item\em The centre. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Zonotope_a0181242c89943263a274e1fd72e957b4}\label{classAriadne_1_1Zonotope_a0181242c89943263a274e1fd72e957b4} 
+const \mbox{\hyperlink{classAriadne_1_1Matrix}{Matrix}}$<$ Float\+DP $>$ \& {\bfseries generators} () const
+\begin{DoxyCompactList}\small\item\em The matrix of principle directions. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Zonotope_afb467701a0abc65becaa9427f50f9614}\label{classAriadne_1_1Zonotope_afb467701a0abc65becaa9427f50f9614} 
+const \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ Float\+DP $>$ \& {\bfseries error} () const
+\begin{DoxyCompactList}\small\item\em The uniform error bound. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Zonotope_adbad5014393d59a2d0e0dfd342e66b07}\label{classAriadne_1_1Zonotope_adbad5014393d59a2d0e0dfd342e66b07} 
+\mbox{\hyperlink{group__FunctionModule_gadb510bd9aa076e5ae44245b498901ca6}{Upper\+Box\+Type}} {\bfseries bounding\+\_\+box} () const
+\begin{DoxyCompactList}\small\item\em A bounding box for the set. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Zonotope_afef17e7dc0874199b64f3f21755ce104}\label{classAriadne_1_1Zonotope_afef17e7dc0874199b64f3f21755ce104} 
+Float\+DP {\bfseries radius} () const
+\begin{DoxyCompactList}\small\item\em The radius of the set in the supremum norm. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Zonotope_a115c02be629c1602aee578624be73356}\label{classAriadne_1_1Zonotope_a115c02be629c1602aee578624be73356} 
+\mbox{\hyperlink{classAriadne_1_1ValidatedKleenean}{Validated\+Kleenean}} {\bfseries contains} (const Exact\+Point \&pt) const
+\begin{DoxyCompactList}\small\item\em Test if the set contains a point. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Zonotope_a258cd9c89da4fed178fa7fb6cd3f1de6}\label{classAriadne_1_1Zonotope_a258cd9c89da4fed178fa7fb6cd3f1de6} 
+\mbox{\hyperlink{classAriadne_1_1ValidatedKleenean}{Validated\+Kleenean}} {\bfseries separated} (const \mbox{\hyperlink{group__FunctionModule_gafdd31b4d01081cd09aad2ce11117f867}{Exact\+Box\+Type}} \&bx) const
+\begin{DoxyCompactList}\small\item\em Test if the set is disjoint from a box. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Zonotope_a2f583f9bda6280a39797bab3f09ebbb0}\label{classAriadne_1_1Zonotope_a2f583f9bda6280a39797bab3f09ebbb0} 
+\mbox{\hyperlink{classAriadne_1_1ValidatedKleenean}{Validated\+Kleenean}} {\bfseries inside} (const \mbox{\hyperlink{group__FunctionModule_gafdd31b4d01081cd09aad2ce11117f867}{Exact\+Box\+Type}} \&bx) const
+\begin{DoxyCompactList}\small\item\em Test if the set is a inside of a box. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\end{Indent}
+\begin{Indent}\textbf{ Input/output.}\par
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1Zonotope_aec3050510f58e6f3fece416706247410}\label{classAriadne_1_1Zonotope_aec3050510f58e6f3fece416706247410} 
+\mbox{\hyperlink{namespaceAriadne_acbb98ddc4385af4599070e65a1a47ec1}{Output\+Stream}} \& {\bfseries \+\_\+write} (\mbox{\hyperlink{namespaceAriadne_acbb98ddc4385af4599070e65a1a47ec1}{Output\+Stream}} \&os) const
+\begin{DoxyCompactList}\small\item\em Write to an output stream. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Zonotope_a86ed7114183bd4347210832b1a41532b}\label{classAriadne_1_1Zonotope_a86ed7114183bd4347210832b1a41532b} 
+\mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} {\bfseries draw} (\mbox{\hyperlink{classAriadne_1_1CanvasInterface}{Canvas\+Interface}} \&c, const Projection2d \&p) const
+\begin{DoxyCompactList}\small\item\em Draw on a canvas. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\end{Indent}
+\doxyparagraph*{Public Member Functions inherited from \mbox{\hyperlink{classAriadne_1_1BoundedSetInterface}{Bounded\+Set\+Interface$<$ P, T $>$}}}
+\begin{DoxyCompactItemize}
+\item 
+virtual Lower\+Kleenean\+Type$<$ P $>$ {\bfseries inside} (const \mbox{\hyperlink{classAriadne_1_1SetInterfaceBase_a621a6488ff988ea56df9398b55b4241f}{Basic\+Set\+Type}} \&bx) const =0
+\begin{DoxyCompactList}\small\item\em Tests if the set is a inside of {\itshape bx}. A set {\itshape A} is {\itshape inside} {\itshape B} if the closure of {\itshape A} is a subset of the interior of {\itshape B}. A set $A$ is {\itshape inside} $B$ if $\,\overline{\!A} \subset B^\circ$. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxyparagraph*{Public Member Functions inherited from \mbox{\hyperlink{classAriadne_1_1SetInterfaceBase}{Set\+Interface\+Base$<$ T $>$}}}
+\begin{DoxyCompactItemize}
+\item 
+virtual {\bfseries \texorpdfstring{$\sim$}{\string~}\+Set\+Interface\+Base} ()=default
+\begin{DoxyCompactList}\small\item\em Virtual destructor. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxyparagraph*{Public Member Functions inherited from \mbox{\hyperlink{classAriadne_1_1ClosedSetInterface}{Closed\+Set\+Interface$<$ P, T $>$}}}
+\begin{DoxyCompactItemize}
+\item 
+virtual Lower\+Kleenean\+Type$<$ P $>$ {\bfseries separated} (const \mbox{\hyperlink{classAriadne_1_1SetInterfaceBase_a621a6488ff988ea56df9398b55b4241f}{Basic\+Set\+Type}} \&bx) const =0
+\begin{DoxyCompactList}\small\item\em Tests if the set is separated from {\itshape bx}. A set {\itshape A} is {\itshape separated} from {\itshape B} if the closures of {\itshape A} and {\itshape B} are disjoint. A set $A$ is {\itshape separated} from $B$ if $\,\overline{\!A} \cap \overline{B} = \emptyset$. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxyparagraph*{Public Member Functions inherited from \mbox{\hyperlink{classAriadne_1_1Drawable2dInterface}{Drawable2d\+Interface}}}
+\begin{DoxyCompactItemize}
+\item 
+virtual {\bfseries \texorpdfstring{$\sim$}{\string~}\+Drawable2d\+Interface} ()=default
+\begin{DoxyCompactList}\small\item\em brief Virtual destructor. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsubsection*{Friends}
+\begin{Indent}\textbf{ Logical predicates}\par
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1Zonotope_aa727640a46e001efd71fd5d90d81ed07}\label{classAriadne_1_1Zonotope_aa727640a46e001efd71fd5d90d81ed07} 
+\mbox{\hyperlink{namespaceAriadne_a76a8b016e5ad61faf9062cc387df5016}{Bool}} {\bfseries operator==} (const \mbox{\hyperlink{classAriadne_1_1Zonotope}{Zonotope}} \&z1, const \mbox{\hyperlink{classAriadne_1_1Zonotope}{Zonotope}} \&z2)
+\begin{DoxyCompactList}\small\item\em Test for equality of representation. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\end{Indent}
+\begin{Indent}\textbf{ Geometric binary predicates}\par
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1Zonotope_ada3843265aa475e44832d235875aeab2}\label{classAriadne_1_1Zonotope_ada3843265aa475e44832d235875aeab2} 
+\mbox{\hyperlink{classAriadne_1_1ValidatedKleenean}{Validated\+Kleenean}} {\bfseries separated} (const \mbox{\hyperlink{classAriadne_1_1Zonotope}{Zonotope}} \&z, const \mbox{\hyperlink{group__FunctionModule_gafdd31b4d01081cd09aad2ce11117f867}{Exact\+Box\+Type}} \&r)
+\begin{DoxyCompactList}\small\item\em Tests disjointness of {\itshape z} and {\itshape r}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Zonotope_a02b38db1fbaab7ad3a4504ab9a28812d}\label{classAriadne_1_1Zonotope_a02b38db1fbaab7ad3a4504ab9a28812d} 
+\mbox{\hyperlink{classAriadne_1_1ValidatedKleenean}{Validated\+Kleenean}} {\bfseries overlaps} (const \mbox{\hyperlink{classAriadne_1_1Zonotope}{Zonotope}} \&z, const \mbox{\hyperlink{group__FunctionModule_gafdd31b4d01081cd09aad2ce11117f867}{Exact\+Box\+Type}} \&r)
+\begin{DoxyCompactList}\small\item\em Tests if {\itshape z} and {\itshape r} intersect. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Zonotope_a80ab1f5822c06b8a55704e3c938b4054}\label{classAriadne_1_1Zonotope_a80ab1f5822c06b8a55704e3c938b4054} 
+\mbox{\hyperlink{classAriadne_1_1ValidatedKleenean}{Validated\+Kleenean}} {\bfseries inside} (const \mbox{\hyperlink{classAriadne_1_1Zonotope}{Zonotope}} \&z, const \mbox{\hyperlink{group__FunctionModule_gafdd31b4d01081cd09aad2ce11117f867}{Exact\+Box\+Type}} \&r)
+\begin{DoxyCompactList}\small\item\em Tests inclusion of {\itshape z} in {\itshape r}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Zonotope_ae861a5a8dcc5b74f60f66d7121a81d96}\label{classAriadne_1_1Zonotope_ae861a5a8dcc5b74f60f66d7121a81d96} 
+\mbox{\hyperlink{classAriadne_1_1ValidatedKleenean}{Validated\+Kleenean}} {\bfseries separated} (const \mbox{\hyperlink{group__FunctionModule_gafdd31b4d01081cd09aad2ce11117f867}{Exact\+Box\+Type}} \&r, const \mbox{\hyperlink{classAriadne_1_1Zonotope}{Zonotope}} \&z)
+\begin{DoxyCompactList}\small\item\em Tests disjointness of {\itshape r} and {\itshape z}. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\end{Indent}
+\begin{Indent}\textbf{ Approximation operations.}\par
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1Zonotope_ac7f8185322d499cf81fbdfc1e3288703}\label{classAriadne_1_1Zonotope_ac7f8185322d499cf81fbdfc1e3288703} 
+\mbox{\hyperlink{classAriadne_1_1Zonotope}{Zonotope}} {\bfseries approximation} (const \mbox{\hyperlink{classAriadne_1_1Zonotope}{Zonotope}} \&z)
+\begin{DoxyCompactList}\small\item\em Compute an simplified approximation of the zonotope {\itshape z}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Zonotope_a87036ea249c7296a9407309b00352e55}\label{classAriadne_1_1Zonotope_a87036ea249c7296a9407309b00352e55} 
+\mbox{\hyperlink{classAriadne_1_1Zonotope}{Zonotope}} {\bfseries over\+\_\+approximation} (const \mbox{\hyperlink{classAriadne_1_1Zonotope}{Zonotope}} \&z)
+\begin{DoxyCompactList}\small\item\em Compute an over-\/approximation of the zonotope {\itshape z}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Zonotope_aa1004244634669a7db570def029acf04}\label{classAriadne_1_1Zonotope_aa1004244634669a7db570def029acf04} 
+\mbox{\hyperlink{classAriadne_1_1Zonotope}{Zonotope}} {\bfseries error\+\_\+free\+\_\+over\+\_\+approximation} (const \mbox{\hyperlink{classAriadne_1_1Zonotope}{Zonotope}} \&z)
+\begin{DoxyCompactList}\small\item\em Compute an over-\/approximation of the zonotope {\itshape z} without a uniform error term. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Zonotope_aef7f090955dbe71dc4249fe0bfb74ade}\label{classAriadne_1_1Zonotope_aef7f090955dbe71dc4249fe0bfb74ade} 
+\mbox{\hyperlink{classAriadne_1_1Zonotope}{Zonotope}} {\bfseries orthogonal\+\_\+over\+\_\+approximation} (const \mbox{\hyperlink{classAriadne_1_1Zonotope}{Zonotope}} \&z)
+\begin{DoxyCompactList}\small\item\em Compute an over-\/approximation of the zonotope {\itshape z} by a non-\/coordinate aligned orthotope. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Zonotope_a8b8f2c773aa2d4221575299deeb923f9}\label{classAriadne_1_1Zonotope_a8b8f2c773aa2d4221575299deeb923f9} 
+\mbox{\hyperlink{classAriadne_1_1Zonotope}{Zonotope}} {\bfseries nonsingular\+\_\+over\+\_\+approximation} (const \mbox{\hyperlink{classAriadne_1_1Zonotope}{Zonotope}} \&)
+\begin{DoxyCompactList}\small\item\em Compute an over-\/approximation of a zonotope {\itshape z} with nonsingular generator matrix. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Zonotope_a9aea49ee48a9ea5cee7499fd93815afd}\label{classAriadne_1_1Zonotope_a9aea49ee48a9ea5cee7499fd93815afd} 
+\mbox{\hyperlink{classAriadne_1_1Zonotope}{Zonotope}} {\bfseries cascade\+\_\+over\+\_\+approximation} (const \mbox{\hyperlink{classAriadne_1_1Zonotope}{Zonotope}} \&z, Size\+Type b)
+\begin{DoxyCompactList}\small\item\em Compute a cascade-\/over-\/approximation of the zonotope {\itshape z} with {\itshape b} blocks of {\itshape d} generators. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\end{Indent}
+\begin{Indent}\textbf{ Function operations.}\par
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1Zonotope_ace0541dfe3f67a26ec48392d82d53ef9}\label{classAriadne_1_1Zonotope_ace0541dfe3f67a26ec48392d82d53ef9} 
+\mbox{\hyperlink{classAriadne_1_1Zonotope}{Zonotope}} {\bfseries apply} (const \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ \mbox{\hyperlink{classAriadne_1_1Affine}{Affine}}$<$ \mbox{\hyperlink{group__FunctionModule_gab4f81d909c87bd33486c446890723bb1}{Exact\+Interval\+Type}} $>$ $>$ \&af, const \mbox{\hyperlink{classAriadne_1_1Zonotope}{Zonotope}} \&z)
+\begin{DoxyCompactList}\small\item\em Compute the image of {\itshape z} under a function given by the affine form {\itshape af}. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\end{Indent}
+\doxyparagraph*{Friends inherited from \mbox{\hyperlink{classAriadne_1_1CompactSetInterface}{Compact\+Set\+Interface$<$ P, T $>$}}}
+\doxyparagraph*{Friends inherited from \mbox{\hyperlink{classAriadne_1_1ClosedSetInterface}{Closed\+Set\+Interface$<$ P, T $>$}}}
+\doxysubsubsubsection*{Additional Inherited Members}
+\doxyparagraph*{Public Types inherited from \mbox{\hyperlink{classAriadne_1_1SetInterfaceBase}{Set\+Interface\+Base$<$ T $>$}}}
+\begin{DoxyCompactItemize}
+\item 
+typedef T {\bfseries Element\+Type}
+\begin{DoxyCompactList}\small\item\em The type of element of the set. \end{DoxyCompactList}\item 
+typedef Set\+Traits$<$ T $>$\+::\+Dimension\+Type {\bfseries Dimension\+Type}
+\begin{DoxyCompactList}\small\item\em The type representing the dimension of the set. \end{DoxyCompactList}\item 
+typedef Set\+Traits$<$ T $>$\+::\+Basic\+Set\+Type {\bfseries Basic\+Set\+Type}
+\begin{DoxyCompactList}\small\item\em The type of basic set in the space. \end{DoxyCompactList}\item 
+typedef Set\+Traits$<$ T $>$\+::\+Bounding\+Set\+Type {\bfseries Bounding\+Set\+Type}
+\begin{DoxyCompactList}\small\item\em The type of basic set in the space. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+The documentation for this class was generated from the following files\+:\begin{DoxyCompactItemize}
+\item 
+source/geometry/\mbox{\hyperlink{zonotope_8hpp}{zonotope.\+hpp}}\item 
+source/geometry/zonotope.\+cpp\end{DoxyCompactItemize}

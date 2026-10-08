@@ -1,0 +1,2997 @@
+//! Exact univariate algebraic root isolation.
+//!
+//! This module is a proof package, not a numerical proposal engine. It extracts
+//! exact-rational univariate polynomial residuals, reduces repeated factors,
+//! and isolates distinct real roots with Sturm sign-variation counts over
+//! rational intervals. The boundary remains explicit: algebraic isolation
+//! constructs certified exact intervals, while ordinary candidate replay
+//! decides whether a solver assignment is acceptable.
+
+use std::cmp::Ordering;
+use std::collections::HashMap;
+
+use hyperlimit::{PredicatePolicy, compare_reals, reciprocal_real};
+use hyperreal::{Rational as HyperRational, Real};
+use num::bigint::Sign;
+use num::{BigInt, One, Zero};
+
+use crate::analysis::ProblemAnalysis;
+use crate::certification::{
+    CandidateCertificationConfig, CandidateCertificationReport, certify_candidate_with_config,
+};
+use crate::eval::EvaluationContext;
+use crate::integer_interpolation::{
+    primitive_integer_polynomial_gcd, primitive_integer_polynomials_are_coprime_modular,
+};
+use crate::model::{ConstraintKind, Problem};
+use crate::symbolic::{Expr, SymbolId};
+
+const ALGEBRAIC_IMAGE_REFINEMENT_ROUNDS: usize = 8;
+const ALGEBRAIC_IMAGE_REFINEMENT_STEPS: usize = 8;
+
+/// Multiplicity evidence found before Sturm isolation.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub enum RootMultiplicityStatus {
+    /// The input polynomial is square-free.
+    SquareFree,
+    /// A nonconstant gcd with the derivative was found exactly.
+    RepeatedRootsDetected {
+        /// Degree of `gcd(p, p')`.
+        gcd_degree: usize,
+    },
+}
+
+/// Status for one univariate root-isolation row.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub enum RootIsolationStatus {
+    /// Every distinct real root was isolated.
+    Isolated,
+    /// Roots were isolated after removing repeated factors.
+    MultipleRoot,
+    /// The row is nonconstant and has no real roots.
+    NoRealRoots,
+    /// The row is outside the exact-rational univariate package.
+    UnsupportedCoefficient,
+    /// Exact comparisons or polynomial division did not decide.
+    Undecided,
+}
+
+/// One exact isolating interval for a distinct real root.
+#[derive(Clone, Debug, PartialEq)]
+pub struct IsolatedRootInterval {
+    /// Lower exact rational endpoint.
+    pub lower: Real,
+    /// Upper exact rational endpoint.
+    pub upper: Real,
+    /// Exact root value when subdivision landed on a rational root.
+    pub exact_root: Option<Real>,
+    /// Number of distinct roots certified in the interval.
+    pub distinct_root_count: usize,
+}
+
+/// Report for isolating roots of one active univariate equality residual.
+#[derive(Clone, Debug, PartialEq)]
+pub struct UnivariateRootIsolationReport {
+    /// Source constraint index.
+    pub constraint_index: usize,
+    /// Solver symbol used by the univariate polynomial, if extraction reached
+    /// symbol discovery.
+    pub symbol: Option<SymbolId>,
+    /// Degree of the extracted polynomial after trimming structural zeros.
+    pub degree: Option<usize>,
+    /// Final isolation status.
+    pub status: RootIsolationStatus,
+    /// Multiplicity evidence for supported nonconstant rows.
+    pub multiplicity: Option<RootMultiplicityStatus>,
+    /// Exact isolating intervals for distinct real roots.
+    pub intervals: Vec<IsolatedRootInterval>,
+    /// Compact unsupported/undecided reason for diagnostics.
+    pub message: Option<String>,
+}
+
+/// Bounded refinement controls for univariate root isolation.
+///
+/// These controls do not introduce a tolerance acceptance rule. They only tell
+/// the exact Sturm isolator how far to subdivide intervals that already have a
+/// certified distinct-root count. Acceptance still belongs to exact candidate
+/// replay or to a future algebraic-number package, preserving the exact
+/// construction/proof boundary.
+#[derive(Clone, Debug, PartialEq)]
+pub struct RootIsolationConfig {
+    /// Exact comparison/refinement policy used by `hyperlimit`.
+    pub policy: PredicatePolicy,
+    /// Optional exact maximum width for non-rational isolating intervals.
+    pub max_interval_width: Option<Real>,
+    /// Maximum additional bisection steps once an interval has one certified
+    /// root. This bounds work for clustered roots.
+    pub max_refinement_steps: usize,
+}
+
+impl Default for RootIsolationConfig {
+    fn default() -> Self {
+        Self {
+            policy: PredicatePolicy::APPROXIMATE_512,
+            max_interval_width: None,
+            max_refinement_steps: 0,
+        }
+    }
+}
+
+/// Status for refining one already-isolated algebraic root interval.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub enum IsolatedRootRefinementStatus {
+    /// The interval was refined while preserving exactly one distinct root.
+    Refined,
+    /// The interval already carries an exact rational root witness.
+    ExactRoot,
+    /// The coefficient vector is empty, constant, or not exact-rational.
+    InvalidPolynomial,
+    /// The interval endpoints are not ordered.
+    InvalidInterval,
+    /// The supplied interval did not certify exactly one distinct root.
+    NonUnitIsolation,
+    /// Exact comparisons, polynomial division, or Sturm counts did not decide.
+    Undecided,
+}
+
+/// Refinement report for one isolated algebraic root interval.
+///
+/// The input interval is treated as exact evidence, not as a floating estimate.
+/// The implementation recomputes the square-free Sturm count inside the
+/// interval, then bisects only into the subinterval that still contains exactly
+/// one distinct root. This follows Sturm's theorem, the Collins-Loos
+/// isolation model, and the exact-object refinement boundary.
+#[derive(Clone, Debug, PartialEq)]
+pub struct IsolatedRootRefinementReport {
+    /// Final refinement status.
+    pub status: IsolatedRootRefinementStatus,
+    /// Original interval supplied by the caller.
+    pub original_interval: IsolatedRootInterval,
+    /// Refined interval when refinement or exact-root replay succeeded.
+    pub refined_interval: Option<IsolatedRootInterval>,
+    /// Number of bisection steps accepted.
+    pub refinement_steps: usize,
+    /// Compact diagnostic reason for invalid or undecided reports.
+    pub message: Option<String>,
+}
+
+/// Replay status for an exact rational root witness found by isolation.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub enum AlgebraicRootCandidateStatus {
+    /// The isolating interval did not land on an exact rational root witness.
+    NoExactRationalWitness,
+    /// The exact rational witness was replayed and certified against all
+    /// active residuals.
+    ReplayCertified,
+    /// The exact rational witness replayed but did not satisfy every active
+    /// residual.
+    ReplayRejected,
+}
+
+/// Candidate replay report for one isolated root interval.
+#[derive(Clone, Debug, PartialEq)]
+pub struct AlgebraicRootCandidateReport {
+    /// Source constraint index from the isolation report.
+    pub constraint_index: usize,
+    /// Solver symbol bound for replay.
+    pub symbol: Option<SymbolId>,
+    /// Root interval ordinal within the isolation report.
+    pub interval_index: usize,
+    /// Exact rational root witness, when one exists.
+    pub exact_root: Option<Real>,
+    /// Full candidate certification report for exact rational witnesses.
+    pub certification: Option<CandidateCertificationReport>,
+    /// Replay status.
+    pub status: AlgebraicRootCandidateStatus,
+}
+
+/// Status for Descartes-sign root-count bounds.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub enum DescartesRootCountStatus {
+    /// Descartes variation bounds were computed exactly.
+    Counted,
+    /// The expression is outside the exact-rational univariate package.
+    UnsupportedCoefficient,
+    /// Exact coefficient signs or degree trimming did not decide.
+    Undecided,
+}
+
+/// Descartes sign-variation bounds for one univariate polynomial row.
+///
+/// Descartes' rule of signs gives an exact upper bound on positive real roots
+/// and the parity of the gap to the true count. Applying the same rule to
+/// `p(-x)` gives the negative-root bound. This is not full isolation, but it
+/// is a cheap proof-producing algebraic filter that can reject impossible
+/// root topologies before Sturm subdivision, using Descartes' rule of signs and
+/// the standard real-root isolation model.
+#[derive(Clone, Debug, PartialEq)]
+pub struct DescartesRootCountReport {
+    /// Source constraint index.
+    pub constraint_index: usize,
+    /// Solver symbol used by the univariate polynomial, when supported.
+    pub symbol: Option<SymbolId>,
+    /// Degree after exact trimming.
+    pub degree: Option<usize>,
+    /// Count status.
+    pub status: DescartesRootCountStatus,
+    /// Multiplicity of the root at zero, detected from leading zero
+    /// coefficients. This is exact for supported rows.
+    pub zero_root_multiplicity: Option<usize>,
+    /// Descartes upper bound for positive roots.
+    pub positive_variations: Option<usize>,
+    /// Descartes upper bound for negative roots, computed from `p(-x)`.
+    pub negative_variations: Option<usize>,
+    /// True positive-root count has the same parity as this value.
+    pub positive_root_count_parity: Option<usize>,
+    /// True negative-root count has the same parity as this value.
+    pub negative_root_count_parity: Option<usize>,
+    /// Compact unsupported/undecided reason.
+    pub message: Option<String>,
+}
+
+/// Status for Bernstein interval root-count bounds.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub enum BernsteinRootCountStatus {
+    /// Bernstein variation bounds were computed exactly.
+    Counted,
+    /// The interval is invalid, usually because `lower >= upper`.
+    InvalidInterval,
+    /// The expression is outside the exact-rational univariate package.
+    UnsupportedCoefficient,
+    /// Exact signs, endpoint comparisons, or coefficient conversion did not decide.
+    Undecided,
+}
+
+/// Bernstein sign-variation bounds over one exact interval.
+///
+/// The polynomial is transformed from the power basis on `[lower, upper]` into
+/// Bernstein form and Descartes sign variation is applied to the Bernstein
+/// control coefficients. This gives a proof-producing bound for roots inside a
+/// finite interval and is the standard subdivision-facing sibling of the
+/// global Descartes count, using Bernstein-form root counting and the standard
+/// real-root isolation model.
+#[derive(Clone, Debug, PartialEq)]
+pub struct BernsteinRootCountReport {
+    /// Source constraint index.
+    pub constraint_index: usize,
+    /// Solver symbol used by the univariate polynomial, when supported.
+    pub symbol: Option<SymbolId>,
+    /// Degree after exact trimming.
+    pub degree: Option<usize>,
+    /// Interval lower endpoint.
+    pub lower: Real,
+    /// Interval upper endpoint.
+    pub upper: Real,
+    /// Count status.
+    pub status: BernsteinRootCountStatus,
+    /// Exact Bernstein coefficients over `[lower, upper]`, when supported.
+    pub bernstein_coefficients: Vec<Real>,
+    /// Bernstein sign-variation upper bound for roots in the interval.
+    pub variation_bound: Option<usize>,
+    /// True interval-root count has the same parity as this value.
+    pub root_count_parity: Option<usize>,
+    /// Whether `p(lower) == 0` was certified.
+    pub root_at_lower: Option<bool>,
+    /// Whether `p(upper) == 0` was certified.
+    pub root_at_upper: Option<bool>,
+    /// Compact unsupported/undecided reason.
+    pub message: Option<String>,
+}
+
+/// Terminal status for one interval in recursive Bernstein subdivision.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub enum BernsteinSubdivisionIntervalStatus {
+    /// The interval has no certified root evidence.
+    Empty,
+    /// A root was certified exactly at an interval endpoint.
+    EndpointRoot,
+    /// The interval has Bernstein variation one and therefore isolates at most
+    /// one root. Endpoint roots are reported separately.
+    Isolating,
+    /// The interval still has variation greater than one at the configured
+    /// subdivision depth.
+    DepthLimit,
+}
+
+/// One terminal interval from recursive Bernstein subdivision.
+#[derive(Clone, Debug, PartialEq)]
+pub struct BernsteinSubdivisionInterval {
+    /// Lower endpoint.
+    pub lower: Real,
+    /// Upper endpoint.
+    pub upper: Real,
+    /// Exact root witness for endpoint roots.
+    pub exact_root: Option<Real>,
+    /// Bernstein variation bound for this terminal interval.
+    pub variation_bound: Option<usize>,
+    /// Terminal interval status.
+    pub status: BernsteinSubdivisionIntervalStatus,
+}
+
+/// Status for recursive Bernstein subdivision of one row.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub enum BernsteinSubdivisionStatus {
+    /// Subdivision completed within the configured depth.
+    Completed,
+    /// At least one interval still had multiple possible roots at the depth
+    /// limit.
+    DepthLimit,
+    /// The input interval was invalid.
+    InvalidInterval,
+    /// The expression is outside the exact-rational univariate package.
+    UnsupportedCoefficient,
+    /// Exact signs, endpoint comparisons, or coefficient conversion did not decide.
+    Undecided,
+}
+
+/// Configuration for recursive Bernstein subdivision.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct BernsteinSubdivisionConfig {
+    /// Exact comparison policy used by `hyperlimit`.
+    pub policy: PredicatePolicy,
+    /// Maximum recursive bisection depth.
+    pub max_depth: usize,
+}
+
+impl Default for BernsteinSubdivisionConfig {
+    fn default() -> Self {
+        Self {
+            policy: PredicatePolicy::APPROXIMATE_512,
+            max_depth: 32,
+        }
+    }
+}
+
+/// Recursive Bernstein subdivision report for one univariate row.
+///
+/// This report is the subdivision-facing companion to
+/// [`BernsteinRootCountReport`]. It repeatedly bisects intervals whose
+/// Bernstein sign variation is greater than one and stops only when intervals
+/// are empty, have an exact endpoint root, have variation one, or reach the
+/// configured depth limit. It follows the Bernstein subdivision literature of
+/// the Bernstein-form construction while preserving the exact proof boundary.
+#[derive(Clone, Debug, PartialEq)]
+pub struct BernsteinSubdivisionReport {
+    /// Source constraint index.
+    pub constraint_index: usize,
+    /// Solver symbol used by the univariate polynomial, when supported.
+    pub symbol: Option<SymbolId>,
+    /// Degree after exact trimming.
+    pub degree: Option<usize>,
+    /// Initial lower endpoint.
+    pub lower: Real,
+    /// Initial upper endpoint.
+    pub upper: Real,
+    /// Final subdivision status.
+    pub status: BernsteinSubdivisionStatus,
+    /// Terminal intervals and exact endpoint roots.
+    pub intervals: Vec<BernsteinSubdivisionInterval>,
+    /// Compact unsupported/undecided reason.
+    pub message: Option<String>,
+}
+
+/// Isolate distinct real roots for active univariate equality residuals.
+///
+/// The first implementation accepts exact-rational univariate polynomial rows
+/// collected from the source expression tree. It deliberately rejects
+/// non-equality, multivariate, transcendental, and non-exact-rational rows
+/// instead of hiding them behind primitive floating-point estimates.
+pub fn isolate_univariate_polynomial_roots(
+    analysis: &ProblemAnalysis<'_>,
+    policy: PredicatePolicy,
+) -> Vec<UnivariateRootIsolationReport> {
+    isolate_univariate_polynomial_roots_with_config(
+        analysis,
+        RootIsolationConfig {
+            policy,
+            ..RootIsolationConfig::default()
+        },
+    )
+}
+
+/// Isolate distinct real roots with explicit bounded-refinement controls.
+pub fn isolate_univariate_polynomial_roots_with_config(
+    analysis: &ProblemAnalysis<'_>,
+    config: RootIsolationConfig,
+) -> Vec<UnivariateRootIsolationReport> {
+    let mut reports = Vec::new();
+    for (constraint_index, constraint) in analysis.problem().constraints.iter().enumerate() {
+        if !constraint.active {
+            continue;
+        }
+        if constraint.kind != ConstraintKind::Equality {
+            continue;
+        }
+        reports.push(isolate_univariate_polynomial_expr_with_config(
+            constraint_index,
+            &constraint.residual,
+            analysis.problem(),
+            config.clone(),
+        ));
+    }
+    reports
+}
+
+/// Isolate distinct real roots for one univariate polynomial expression.
+///
+/// This lower-level entry point is useful for tests and domain builders that
+/// want the exact algebraic package without constructing a full solver pass.
+pub fn isolate_univariate_polynomial_expr(
+    constraint_index: usize,
+    expression: &Expr,
+    problem: &Problem,
+    policy: PredicatePolicy,
+) -> UnivariateRootIsolationReport {
+    isolate_univariate_polynomial_expr_with_config(
+        constraint_index,
+        expression,
+        problem,
+        RootIsolationConfig {
+            policy,
+            ..RootIsolationConfig::default()
+        },
+    )
+}
+
+/// Isolate distinct real roots for one expression with refinement controls.
+pub fn isolate_univariate_polynomial_expr_with_config(
+    constraint_index: usize,
+    expression: &Expr,
+    problem: &Problem,
+    config: RootIsolationConfig,
+) -> UnivariateRootIsolationReport {
+    let policy = config.policy;
+    let extracted = match collect_univariate_polynomial(expression) {
+        Some(extracted) => extracted,
+        None => {
+            return root_isolation_report(
+                constraint_index,
+                None,
+                None,
+                RootIsolationStatus::UnsupportedCoefficient,
+                None,
+                Vec::new(),
+                Some("expression is not a supported univariate polynomial".to_owned()),
+            );
+        }
+    };
+    let Some(symbol) = extracted.symbol else {
+        return root_isolation_report(
+            constraint_index,
+            None,
+            Some(0),
+            RootIsolationStatus::NoRealRoots,
+            Some(RootMultiplicityStatus::SquareFree),
+            Vec::new(),
+            Some("constant polynomial row has no isolated variable roots".to_owned()),
+        );
+    };
+    if !problem
+        .variables
+        .iter()
+        .any(|variable| variable.symbol == symbol)
+    {
+        return root_isolation_report(
+            constraint_index,
+            Some(symbol),
+            None,
+            RootIsolationStatus::UnsupportedCoefficient,
+            None,
+            Vec::new(),
+            Some("polynomial symbol is not present in the problem".to_owned()),
+        );
+    }
+    let Some(poly) = trim_polynomial(extracted.coefficients, policy) else {
+        return root_isolation_report(
+            constraint_index,
+            Some(symbol),
+            None,
+            RootIsolationStatus::Undecided,
+            None,
+            Vec::new(),
+            Some("could not decide polynomial degree".to_owned()),
+        );
+    };
+    let degree = poly.len().saturating_sub(1);
+    if degree == 0 {
+        return root_isolation_report(
+            constraint_index,
+            Some(symbol),
+            Some(degree),
+            RootIsolationStatus::NoRealRoots,
+            Some(RootMultiplicityStatus::SquareFree),
+            Vec::new(),
+            Some("constant polynomial row has no isolated variable roots".to_owned()),
+        );
+    }
+    if poly
+        .iter()
+        .any(|coefficient| coefficient.exact_rational_ref().is_none())
+    {
+        return root_isolation_report(
+            constraint_index,
+            Some(symbol),
+            Some(degree),
+            RootIsolationStatus::UnsupportedCoefficient,
+            None,
+            Vec::new(),
+            Some("all root-isolation coefficients must be exact rationals".to_owned()),
+        );
+    }
+
+    let derivative = derivative(&poly);
+    let gcd = match polynomial_gcd(poly.clone(), derivative, policy) {
+        Some(gcd) => gcd,
+        None => {
+            return root_isolation_report(
+                constraint_index,
+                Some(symbol),
+                Some(degree),
+                RootIsolationStatus::Undecided,
+                None,
+                Vec::new(),
+                Some("polynomial gcd was undecided".to_owned()),
+            );
+        }
+    };
+    let gcd_degree = gcd.len().saturating_sub(1);
+    let multiplicity = if gcd_degree > 0 {
+        RootMultiplicityStatus::RepeatedRootsDetected { gcd_degree }
+    } else {
+        RootMultiplicityStatus::SquareFree
+    };
+    let square_free = if gcd_degree > 0 {
+        match polynomial_div_rem(poly, &gcd, policy).and_then(|(quotient, remainder)| {
+            is_zero_polynomial(&remainder, policy)?.then_some(quotient)
+        }) {
+            Some(square_free) => square_free,
+            None => {
+                return root_isolation_report(
+                    constraint_index,
+                    Some(symbol),
+                    Some(degree),
+                    RootIsolationStatus::Undecided,
+                    Some(multiplicity),
+                    Vec::new(),
+                    Some("square-free quotient was undecided".to_owned()),
+                );
+            }
+        }
+    } else {
+        // The original polynomial is already square-free.
+        trim_polynomial(
+            collect_univariate_polynomial(expression)
+                .expect("already collected")
+                .coefficients,
+            policy,
+        )
+        .expect("already trimmed")
+    };
+
+    let intervals = match isolate_square_free_roots(&square_free, &config) {
+        Some(intervals) => intervals,
+        None => {
+            return root_isolation_report(
+                constraint_index,
+                Some(symbol),
+                Some(degree),
+                RootIsolationStatus::Undecided,
+                Some(multiplicity),
+                Vec::new(),
+                Some("Sturm isolation did not decide".to_owned()),
+            );
+        }
+    };
+    let status = if intervals.is_empty() {
+        RootIsolationStatus::NoRealRoots
+    } else if matches!(
+        multiplicity,
+        RootMultiplicityStatus::RepeatedRootsDetected { .. }
+    ) {
+        RootIsolationStatus::MultipleRoot
+    } else {
+        RootIsolationStatus::Isolated
+    };
+    root_isolation_report(
+        constraint_index,
+        Some(symbol),
+        Some(degree),
+        status,
+        Some(multiplicity),
+        intervals,
+        None,
+    )
+}
+
+/// Refine one exact isolating interval for a univariate polynomial.
+///
+/// This is the low-level refinement hook for represented algebraic numbers.
+/// It does not approximate a root. It validates an exact-rational polynomial,
+/// removes repeated factors with a polynomial gcd, verifies by Sturm counts
+/// that the supplied interval contains one distinct real root, and then
+/// repeatedly bisects toward the subinterval whose Sturm count remains one.
+/// The algorithm uses Sturm's theorem and the standard real-root isolation
+/// model; exact refinement remains the design rule used here.
+pub fn refine_isolated_univariate_polynomial_interval(
+    polynomial: &[Real],
+    interval: &IsolatedRootInterval,
+    config: RootIsolationConfig,
+) -> IsolatedRootRefinementReport {
+    let policy = config.policy;
+    if interval.distinct_root_count != 1 {
+        return root_refinement_report(
+            IsolatedRootRefinementStatus::NonUnitIsolation,
+            interval.clone(),
+            None,
+            0,
+            Some("refinement requires an interval with exactly one distinct root".to_owned()),
+        );
+    }
+    if let Some(root) = &interval.exact_root {
+        return root_refinement_report(
+            IsolatedRootRefinementStatus::ExactRoot,
+            interval.clone(),
+            Some(IsolatedRootInterval {
+                lower: root.clone(),
+                upper: root.clone(),
+                exact_root: Some(root.clone()),
+                distinct_root_count: 1,
+            }),
+            0,
+            None,
+        );
+    }
+    match compare_reals(&interval.lower, &interval.upper, policy).value() {
+        Some(Ordering::Less) => {}
+        Some(Ordering::Equal | Ordering::Greater) => {
+            return root_refinement_report(
+                IsolatedRootRefinementStatus::InvalidInterval,
+                interval.clone(),
+                None,
+                0,
+                Some(
+                    "refinement interval must have positive width unless it has a witness"
+                        .to_owned(),
+                ),
+            );
+        }
+        None => {
+            return root_refinement_report(
+                IsolatedRootRefinementStatus::Undecided,
+                interval.clone(),
+                None,
+                0,
+                Some("could not compare refinement interval endpoints".to_owned()),
+            );
+        }
+    }
+    let Some(trimmed) = trim_polynomial(polynomial.to_vec(), policy) else {
+        return root_refinement_report(
+            IsolatedRootRefinementStatus::Undecided,
+            interval.clone(),
+            None,
+            0,
+            Some("could not decide polynomial degree".to_owned()),
+        );
+    };
+    if trimmed.len() <= 1 {
+        return root_refinement_report(
+            IsolatedRootRefinementStatus::InvalidPolynomial,
+            interval.clone(),
+            None,
+            0,
+            Some("refinement requires a nonconstant exact polynomial".to_owned()),
+        );
+    }
+    let Some(square_free) = square_free_part(trimmed, policy) else {
+        return root_refinement_report(
+            IsolatedRootRefinementStatus::Undecided,
+            interval.clone(),
+            None,
+            0,
+            Some("could not compute square-free polynomial part".to_owned()),
+        );
+    };
+    let Some(sturm) = sturm_sequence(&square_free, policy) else {
+        return root_refinement_report(
+            IsolatedRootRefinementStatus::Undecided,
+            interval.clone(),
+            None,
+            0,
+            Some("could not build Sturm sequence for refinement".to_owned()),
+        );
+    };
+    let Some(root_count) = sturm_count(&sturm, &interval.lower, &interval.upper, policy) else {
+        return root_refinement_report(
+            IsolatedRootRefinementStatus::Undecided,
+            interval.clone(),
+            None,
+            0,
+            Some("could not count roots in refinement interval".to_owned()),
+        );
+    };
+    if root_count != 1 {
+        return root_refinement_report(
+            IsolatedRootRefinementStatus::NonUnitIsolation,
+            interval.clone(),
+            None,
+            0,
+            Some("Sturm count did not confirm exactly one root in interval".to_owned()),
+        );
+    }
+
+    let mut lower = interval.lower.clone();
+    let mut upper = interval.upper.clone();
+    let mut steps = 0;
+    for _ in 0..config.max_refinement_steps {
+        if let Some(max_width) = &config.max_interval_width {
+            let width = upper.clone() - lower.clone();
+            match compare_reals(&width, max_width, policy).value() {
+                Some(Ordering::Less | Ordering::Equal) => break,
+                Some(Ordering::Greater) => {}
+                None => {
+                    return root_refinement_report(
+                        IsolatedRootRefinementStatus::Undecided,
+                        interval.clone(),
+                        None,
+                        steps,
+                        Some("could not compare refined interval width".to_owned()),
+                    );
+                }
+            }
+        }
+        let Some(midpoint) = ((lower.clone() + upper.clone()) / Real::from(2)).ok() else {
+            return root_refinement_report(
+                IsolatedRootRefinementStatus::Undecided,
+                interval.clone(),
+                None,
+                steps,
+                Some("could not bisect refinement interval".to_owned()),
+            );
+        };
+        match sign_at(&square_free, &midpoint, policy) {
+            Some(Ordering::Equal) => {
+                return root_refinement_report(
+                    IsolatedRootRefinementStatus::ExactRoot,
+                    interval.clone(),
+                    Some(IsolatedRootInterval {
+                        lower: midpoint.clone(),
+                        upper: midpoint.clone(),
+                        exact_root: Some(midpoint),
+                        distinct_root_count: 1,
+                    }),
+                    steps + 1,
+                    None,
+                );
+            }
+            Some(Ordering::Less | Ordering::Greater) => {}
+            None => {
+                return root_refinement_report(
+                    IsolatedRootRefinementStatus::Undecided,
+                    interval.clone(),
+                    None,
+                    steps,
+                    Some("could not evaluate polynomial at refinement midpoint".to_owned()),
+                );
+            }
+        }
+        let Some(left_count) = sturm_count(&sturm, &lower, &midpoint, policy) else {
+            return root_refinement_report(
+                IsolatedRootRefinementStatus::Undecided,
+                interval.clone(),
+                None,
+                steps,
+                Some("could not count roots in left refinement interval".to_owned()),
+            );
+        };
+        match left_count {
+            1 => upper = midpoint,
+            0 => lower = midpoint,
+            _ => {
+                return root_refinement_report(
+                    IsolatedRootRefinementStatus::NonUnitIsolation,
+                    interval.clone(),
+                    None,
+                    steps,
+                    Some("refinement split found multiple roots in a child interval".to_owned()),
+                );
+            }
+        }
+        steps += 1;
+    }
+
+    root_refinement_report(
+        IsolatedRootRefinementStatus::Refined,
+        interval.clone(),
+        Some(IsolatedRootInterval {
+            lower,
+            upper,
+            exact_root: None,
+            distinct_root_count: 1,
+        }),
+        steps,
+        None,
+    )
+}
+
+/// Replay exact rational root witnesses produced by isolation.
+///
+/// Sturm isolation usually returns intervals, not concrete algebraic numbers.
+/// When subdivision lands on a rational root exactly, this helper binds that
+/// witness into a cloned candidate context and replays the full analysis
+/// problem. Non-rational intervals are reported as explicit non-witnesses
+/// rather than approximated. This follows the standard real-root isolation model and
+/// the exact-decision rule that constructed algebraic evidence still needs exact replay
+/// before becoming a solver decision.
+pub fn certify_isolated_rational_root_witnesses(
+    analysis: &ProblemAnalysis<'_>,
+    base_context: &EvaluationContext,
+    reports: &[UnivariateRootIsolationReport],
+) -> Vec<AlgebraicRootCandidateReport> {
+    certify_isolated_rational_root_witnesses_with_config(
+        analysis,
+        base_context,
+        reports,
+        CandidateCertificationConfig::default(),
+    )
+}
+
+/// Replay exact rational root witnesses with a candidate-certification policy.
+pub fn certify_isolated_rational_root_witnesses_with_config(
+    analysis: &ProblemAnalysis<'_>,
+    base_context: &EvaluationContext,
+    reports: &[UnivariateRootIsolationReport],
+    certification_config: CandidateCertificationConfig,
+) -> Vec<AlgebraicRootCandidateReport> {
+    let mut candidates = Vec::new();
+    for report in reports {
+        for (interval_index, interval) in report.intervals.iter().enumerate() {
+            let Some(root) = interval.exact_root.clone() else {
+                candidates.push(AlgebraicRootCandidateReport {
+                    constraint_index: report.constraint_index,
+                    symbol: report.symbol,
+                    interval_index,
+                    exact_root: None,
+                    certification: None,
+                    status: AlgebraicRootCandidateStatus::NoExactRationalWitness,
+                });
+                continue;
+            };
+            let Some(symbol) = report.symbol else {
+                candidates.push(AlgebraicRootCandidateReport {
+                    constraint_index: report.constraint_index,
+                    symbol: None,
+                    interval_index,
+                    exact_root: Some(root),
+                    certification: None,
+                    status: AlgebraicRootCandidateStatus::NoExactRationalWitness,
+                });
+                continue;
+            };
+            let mut candidate = base_context.clone();
+            candidate.bind(symbol, root.clone());
+            let certification =
+                certify_candidate_with_config(analysis, &candidate, certification_config);
+            let status = if certification.all_satisfied() {
+                AlgebraicRootCandidateStatus::ReplayCertified
+            } else {
+                AlgebraicRootCandidateStatus::ReplayRejected
+            };
+            candidates.push(AlgebraicRootCandidateReport {
+                constraint_index: report.constraint_index,
+                symbol: Some(symbol),
+                interval_index,
+                exact_root: Some(root),
+                certification: Some(certification),
+                status,
+            });
+        }
+    }
+    candidates
+}
+
+/// Compute Descartes sign-variation root-count bounds for active equality rows.
+///
+/// This is a bounded algebraic prefilter. It reports exact upper bounds and
+/// parity constraints for positive and negative real roots of supported
+/// exact-rational univariate polynomials. It deliberately does not estimate
+/// roots numerically or certify a candidate solution.
+pub fn count_descartes_univariate_polynomial_roots(
+    analysis: &ProblemAnalysis<'_>,
+    policy: PredicatePolicy,
+) -> Vec<DescartesRootCountReport> {
+    let mut reports = Vec::new();
+    for (constraint_index, constraint) in analysis.problem().constraints.iter().enumerate() {
+        if !constraint.active || constraint.kind != ConstraintKind::Equality {
+            continue;
+        }
+        reports.push(count_descartes_univariate_polynomial_expr(
+            constraint_index,
+            &constraint.residual,
+            analysis.problem(),
+            policy,
+        ));
+    }
+    reports
+}
+
+/// Compute Descartes sign-variation bounds for one expression.
+pub fn count_descartes_univariate_polynomial_expr(
+    constraint_index: usize,
+    expression: &Expr,
+    problem: &Problem,
+    policy: PredicatePolicy,
+) -> DescartesRootCountReport {
+    let extracted = match collect_univariate_polynomial(expression) {
+        Some(extracted) => extracted,
+        None => {
+            return descartes_report(
+                constraint_index,
+                None,
+                None,
+                DescartesRootCountStatus::UnsupportedCoefficient,
+                None,
+                None,
+                None,
+                Some("expression is not a supported univariate polynomial".to_owned()),
+            );
+        }
+    };
+    let Some(symbol) = extracted.symbol else {
+        return descartes_report(
+            constraint_index,
+            None,
+            Some(0),
+            DescartesRootCountStatus::Counted,
+            Some(0),
+            Some(0),
+            Some(0),
+            Some("constant polynomial row has no variable roots".to_owned()),
+        );
+    };
+    if !problem
+        .variables
+        .iter()
+        .any(|variable| variable.symbol == symbol)
+    {
+        return descartes_report(
+            constraint_index,
+            Some(symbol),
+            None,
+            DescartesRootCountStatus::UnsupportedCoefficient,
+            None,
+            None,
+            None,
+            Some("polynomial symbol is not present in the problem".to_owned()),
+        );
+    }
+
+    let zero_root_multiplicity = match leading_zero_multiplicity(&extracted.coefficients, policy) {
+        Some(multiplicity) => multiplicity,
+        None => {
+            return descartes_report(
+                constraint_index,
+                Some(symbol),
+                None,
+                DescartesRootCountStatus::Undecided,
+                None,
+                None,
+                None,
+                Some("could not decide zero-root multiplicity".to_owned()),
+            );
+        }
+    };
+    let Some(poly) = trim_polynomial(extracted.coefficients, policy) else {
+        return descartes_report(
+            constraint_index,
+            Some(symbol),
+            None,
+            DescartesRootCountStatus::Undecided,
+            Some(zero_root_multiplicity),
+            None,
+            None,
+            Some("could not decide polynomial degree".to_owned()),
+        );
+    };
+    if poly
+        .iter()
+        .any(|coefficient| coefficient.exact_rational_ref().is_none())
+    {
+        return descartes_report(
+            constraint_index,
+            Some(symbol),
+            Some(poly.len().saturating_sub(1)),
+            DescartesRootCountStatus::UnsupportedCoefficient,
+            Some(zero_root_multiplicity),
+            None,
+            None,
+            Some("all Descartes coefficients must be exact rationals".to_owned()),
+        );
+    }
+    let positive = match sign_variations_for_coefficients(&poly, policy) {
+        Some(variations) => variations,
+        None => {
+            return descartes_report(
+                constraint_index,
+                Some(symbol),
+                Some(poly.len().saturating_sub(1)),
+                DescartesRootCountStatus::Undecided,
+                Some(zero_root_multiplicity),
+                None,
+                None,
+                Some("could not decide positive coefficient signs".to_owned()),
+            );
+        }
+    };
+    let mut reflected = poly.clone();
+    for (degree, coefficient) in reflected.iter_mut().enumerate() {
+        if degree % 2 == 1 {
+            *coefficient = -coefficient.clone();
+        }
+    }
+    let negative = match sign_variations_for_coefficients(&reflected, policy) {
+        Some(variations) => variations,
+        None => {
+            return descartes_report(
+                constraint_index,
+                Some(symbol),
+                Some(poly.len().saturating_sub(1)),
+                DescartesRootCountStatus::Undecided,
+                Some(zero_root_multiplicity),
+                Some(positive),
+                None,
+                Some("could not decide negative coefficient signs".to_owned()),
+            );
+        }
+    };
+    descartes_report(
+        constraint_index,
+        Some(symbol),
+        Some(poly.len().saturating_sub(1)),
+        DescartesRootCountStatus::Counted,
+        Some(zero_root_multiplicity),
+        Some(positive),
+        Some(negative),
+        None,
+    )
+}
+
+/// Compute Bernstein interval root-count bounds for active equality rows.
+///
+/// Each supported row is converted exactly to Bernstein form over the supplied
+/// interval. The sign variation of the Bernstein coefficients is an exact upper
+/// bound on the number of roots in the interval, with the same parity as the
+/// true count. Endpoint roots are reported separately so callers can keep open
+/// and closed interval policy outside this algebraic filter.
+pub fn count_bernstein_univariate_polynomial_interval_roots(
+    analysis: &ProblemAnalysis<'_>,
+    lower: Real,
+    upper: Real,
+    policy: PredicatePolicy,
+) -> Vec<BernsteinRootCountReport> {
+    let mut reports = Vec::new();
+    for (constraint_index, constraint) in analysis.problem().constraints.iter().enumerate() {
+        if !constraint.active || constraint.kind != ConstraintKind::Equality {
+            continue;
+        }
+        reports.push(count_bernstein_univariate_polynomial_interval_expr(
+            constraint_index,
+            &constraint.residual,
+            analysis.problem(),
+            lower.clone(),
+            upper.clone(),
+            policy,
+        ));
+    }
+    reports
+}
+
+/// Compute a Bernstein interval root-count bound for one expression.
+pub fn count_bernstein_univariate_polynomial_interval_expr(
+    constraint_index: usize,
+    expression: &Expr,
+    problem: &Problem,
+    lower: Real,
+    upper: Real,
+    policy: PredicatePolicy,
+) -> BernsteinRootCountReport {
+    match compare_reals(&lower, &upper, policy).value() {
+        Some(Ordering::Less) => {}
+        Some(Ordering::Equal | Ordering::Greater) => {
+            return bernstein_report(
+                constraint_index,
+                None,
+                None,
+                lower,
+                upper,
+                BernsteinRootCountStatus::InvalidInterval,
+                Vec::new(),
+                None,
+                None,
+                None,
+                Some("Bernstein interval requires lower < upper".to_owned()),
+            );
+        }
+        None => {
+            return bernstein_report(
+                constraint_index,
+                None,
+                None,
+                lower,
+                upper,
+                BernsteinRootCountStatus::Undecided,
+                Vec::new(),
+                None,
+                None,
+                None,
+                Some("could not compare Bernstein interval endpoints".to_owned()),
+            );
+        }
+    }
+
+    let extracted = match collect_univariate_polynomial(expression) {
+        Some(extracted) => extracted,
+        None => {
+            return bernstein_report(
+                constraint_index,
+                None,
+                None,
+                lower,
+                upper,
+                BernsteinRootCountStatus::UnsupportedCoefficient,
+                Vec::new(),
+                None,
+                None,
+                None,
+                Some("expression is not a supported univariate polynomial".to_owned()),
+            );
+        }
+    };
+    let Some(symbol) = extracted.symbol else {
+        return bernstein_report(
+            constraint_index,
+            None,
+            Some(0),
+            lower,
+            upper,
+            BernsteinRootCountStatus::Counted,
+            vec![
+                extracted
+                    .coefficients
+                    .first()
+                    .cloned()
+                    .unwrap_or_else(Real::zero),
+            ],
+            Some(false),
+            Some(false),
+            Some(0),
+            Some("constant polynomial row has no variable roots".to_owned()),
+        );
+    };
+    if !problem
+        .variables
+        .iter()
+        .any(|variable| variable.symbol == symbol)
+    {
+        return bernstein_report(
+            constraint_index,
+            Some(symbol),
+            None,
+            lower,
+            upper,
+            BernsteinRootCountStatus::UnsupportedCoefficient,
+            Vec::new(),
+            None,
+            None,
+            None,
+            Some("polynomial symbol is not present in the problem".to_owned()),
+        );
+    }
+    let Some(poly) = trim_polynomial(extracted.coefficients, policy) else {
+        return bernstein_report(
+            constraint_index,
+            Some(symbol),
+            None,
+            lower,
+            upper,
+            BernsteinRootCountStatus::Undecided,
+            Vec::new(),
+            None,
+            None,
+            None,
+            Some("could not decide polynomial degree".to_owned()),
+        );
+    };
+    if poly
+        .iter()
+        .any(|coefficient| coefficient.exact_rational_ref().is_none())
+    {
+        return bernstein_report(
+            constraint_index,
+            Some(symbol),
+            Some(poly.len().saturating_sub(1)),
+            lower,
+            upper,
+            BernsteinRootCountStatus::UnsupportedCoefficient,
+            Vec::new(),
+            None,
+            None,
+            None,
+            Some("all Bernstein coefficients must start from exact rationals".to_owned()),
+        );
+    }
+    let endpoint_lower =
+        match compare_reals(&evaluate_polynomial(&poly, &lower), &Real::zero(), policy).value() {
+            Some(ordering) => ordering == Ordering::Equal,
+            None => {
+                return bernstein_report(
+                    constraint_index,
+                    Some(symbol),
+                    Some(poly.len().saturating_sub(1)),
+                    lower,
+                    upper,
+                    BernsteinRootCountStatus::Undecided,
+                    Vec::new(),
+                    None,
+                    None,
+                    None,
+                    Some("could not decide lower endpoint sign".to_owned()),
+                );
+            }
+        };
+    let endpoint_upper =
+        match compare_reals(&evaluate_polynomial(&poly, &upper), &Real::zero(), policy).value() {
+            Some(ordering) => ordering == Ordering::Equal,
+            None => {
+                return bernstein_report(
+                    constraint_index,
+                    Some(symbol),
+                    Some(poly.len().saturating_sub(1)),
+                    lower,
+                    upper,
+                    BernsteinRootCountStatus::Undecided,
+                    Vec::new(),
+                    Some(endpoint_lower),
+                    None,
+                    None,
+                    Some("could not decide upper endpoint sign".to_owned()),
+                );
+            }
+        };
+    let bernstein = match power_to_bernstein_on_interval(&poly, &lower, &upper) {
+        Some(coefficients) => coefficients,
+        None => {
+            return bernstein_report(
+                constraint_index,
+                Some(symbol),
+                Some(poly.len().saturating_sub(1)),
+                lower,
+                upper,
+                BernsteinRootCountStatus::Undecided,
+                Vec::new(),
+                Some(endpoint_lower),
+                Some(endpoint_upper),
+                None,
+                Some("could not convert polynomial to Bernstein form".to_owned()),
+            );
+        }
+    };
+    let variations = match sign_variations_for_coefficients(&bernstein, policy) {
+        Some(variations) => variations,
+        None => {
+            return bernstein_report(
+                constraint_index,
+                Some(symbol),
+                Some(poly.len().saturating_sub(1)),
+                lower,
+                upper,
+                BernsteinRootCountStatus::Undecided,
+                bernstein,
+                Some(endpoint_lower),
+                Some(endpoint_upper),
+                None,
+                Some("could not decide Bernstein coefficient signs".to_owned()),
+            );
+        }
+    };
+    bernstein_report(
+        constraint_index,
+        Some(symbol),
+        Some(poly.len().saturating_sub(1)),
+        lower,
+        upper,
+        BernsteinRootCountStatus::Counted,
+        bernstein,
+        Some(endpoint_lower),
+        Some(endpoint_upper),
+        Some(variations),
+        None,
+    )
+}
+
+/// Recursively subdivide active equality rows with Bernstein root-count bounds.
+///
+/// This produces terminal interval evidence over a caller-supplied exact
+/// interval. It is useful as a finite-interval algebraic filter before a
+/// stronger Sturm proof or future algebraic-number construction.
+pub fn subdivide_bernstein_univariate_polynomial_interval_roots(
+    analysis: &ProblemAnalysis<'_>,
+    lower: Real,
+    upper: Real,
+    config: BernsteinSubdivisionConfig,
+) -> Vec<BernsteinSubdivisionReport> {
+    let mut reports = Vec::new();
+    for (constraint_index, constraint) in analysis.problem().constraints.iter().enumerate() {
+        if !constraint.active || constraint.kind != ConstraintKind::Equality {
+            continue;
+        }
+        reports.push(subdivide_bernstein_univariate_polynomial_interval_expr(
+            constraint_index,
+            &constraint.residual,
+            analysis.problem(),
+            lower.clone(),
+            upper.clone(),
+            config,
+        ));
+    }
+    reports
+}
+
+/// Recursively subdivide one expression with Bernstein root-count bounds.
+pub fn subdivide_bernstein_univariate_polynomial_interval_expr(
+    constraint_index: usize,
+    expression: &Expr,
+    problem: &Problem,
+    lower: Real,
+    upper: Real,
+    config: BernsteinSubdivisionConfig,
+) -> BernsteinSubdivisionReport {
+    let first = count_bernstein_univariate_polynomial_interval_expr(
+        constraint_index,
+        expression,
+        problem,
+        lower.clone(),
+        upper.clone(),
+        config.policy,
+    );
+    if first.status != BernsteinRootCountStatus::Counted {
+        return bernstein_subdivision_report(
+            constraint_index,
+            first.symbol,
+            first.degree,
+            lower,
+            upper,
+            match first.status {
+                BernsteinRootCountStatus::InvalidInterval => {
+                    BernsteinSubdivisionStatus::InvalidInterval
+                }
+                BernsteinRootCountStatus::UnsupportedCoefficient => {
+                    BernsteinSubdivisionStatus::UnsupportedCoefficient
+                }
+                BernsteinRootCountStatus::Undecided => BernsteinSubdivisionStatus::Undecided,
+                BernsteinRootCountStatus::Counted => unreachable!(),
+            },
+            Vec::new(),
+            first.message,
+        );
+    }
+
+    let mut intervals = Vec::new();
+    let mut hit_depth_limit = false;
+    let mut undecided = None;
+    subdivide_bernstein_interval(
+        constraint_index,
+        expression,
+        problem,
+        lower.clone(),
+        upper.clone(),
+        config,
+        0,
+        &mut intervals,
+        &mut hit_depth_limit,
+        &mut undecided,
+    );
+    let status = if undecided.is_some() {
+        BernsteinSubdivisionStatus::Undecided
+    } else if hit_depth_limit {
+        BernsteinSubdivisionStatus::DepthLimit
+    } else {
+        BernsteinSubdivisionStatus::Completed
+    };
+    bernstein_subdivision_report(
+        constraint_index,
+        first.symbol,
+        first.degree,
+        lower,
+        upper,
+        status,
+        intervals,
+        undecided,
+    )
+}
+
+#[derive(Clone, Debug)]
+struct ExtractedPolynomial {
+    symbol: Option<SymbolId>,
+    coefficients: Vec<Real>,
+}
+
+impl ExtractedPolynomial {
+    fn constant(value: Real) -> Self {
+        Self {
+            symbol: None,
+            coefficients: vec![value],
+        }
+    }
+
+    fn symbol(symbol: SymbolId) -> Self {
+        Self {
+            symbol: Some(symbol),
+            coefficients: vec![Real::zero(), Real::one()],
+        }
+    }
+
+    fn scale(mut self, scale: Real) -> Self {
+        for coefficient in &mut self.coefficients {
+            *coefficient = coefficient.clone() * scale.clone();
+        }
+        self
+    }
+
+    fn add(self, other: Self) -> Option<Self> {
+        let symbol = merge_symbol(self.symbol, other.symbol)?;
+        let len = self.coefficients.len().max(other.coefficients.len());
+        let mut coefficients = vec![Real::zero(); len];
+        for (index, coefficient) in self.coefficients.into_iter().enumerate() {
+            coefficients[index] = coefficients[index].clone() + coefficient;
+        }
+        for (index, coefficient) in other.coefficients.into_iter().enumerate() {
+            coefficients[index] = coefficients[index].clone() + coefficient;
+        }
+        Some(Self {
+            symbol,
+            coefficients,
+        })
+    }
+
+    fn multiply(self, other: Self) -> Option<Self> {
+        let symbol = merge_symbol(self.symbol, other.symbol)?;
+        let mut coefficients =
+            vec![Real::zero(); self.coefficients.len() + other.coefficients.len() - 1];
+        for (left_index, left) in self.coefficients.into_iter().enumerate() {
+            for (right_index, right) in other.coefficients.iter().enumerate() {
+                let index = left_index + right_index;
+                coefficients[index] = coefficients[index].clone() + left.clone() * right.clone();
+            }
+        }
+        Some(Self {
+            symbol,
+            coefficients,
+        })
+    }
+
+    fn powi(self, exponent: i64) -> Option<Self> {
+        if exponent < 0 {
+            return None;
+        }
+        let mut result = Self::constant(Real::one());
+        for _ in 0..exponent {
+            result = result.multiply(self.clone())?;
+        }
+        Some(result)
+    }
+}
+
+fn collect_univariate_polynomial(expression: &Expr) -> Option<ExtractedPolynomial> {
+    match expression {
+        Expr::Constant(value) => Some(ExtractedPolynomial::constant(value.clone())),
+        Expr::Symbol(symbol) => Some(ExtractedPolynomial::symbol(symbol.id)),
+        Expr::Add(left, right) => {
+            collect_univariate_polynomial(left)?.add(collect_univariate_polynomial(right)?)
+        }
+        Expr::Sub(left, right) => collect_univariate_polynomial(left)?
+            .add(collect_univariate_polynomial(right)?.scale(-Real::one())),
+        Expr::Neg(value) => Some(collect_univariate_polynomial(value)?.scale(-Real::one())),
+        Expr::Mul(left, right) => {
+            collect_univariate_polynomial(left)?.multiply(collect_univariate_polynomial(right)?)
+        }
+        Expr::Div(left, right) => {
+            let denominator = constant_value(right)?;
+            let reciprocal = (Real::one() / denominator).ok()?;
+            Some(collect_univariate_polynomial(left)?.scale(reciprocal))
+        }
+        Expr::PowI(value, exponent) => collect_univariate_polynomial(value)?.powi(*exponent),
+        Expr::Sqrt(_)
+        | Expr::Sin(_)
+        | Expr::Cos(_)
+        | Expr::Ln(_)
+        | Expr::Log10(_)
+        | Expr::Asin(_)
+        | Expr::Acos(_)
+        | Expr::Acosh(_)
+        | Expr::Atanh(_) => None,
+    }
+}
+
+fn merge_symbol(left: Option<SymbolId>, right: Option<SymbolId>) -> Option<Option<SymbolId>> {
+    match (left, right) {
+        (None, None) => Some(None),
+        (Some(symbol), None) | (None, Some(symbol)) => Some(Some(symbol)),
+        (Some(left), Some(right)) if left == right => Some(Some(left)),
+        (Some(_), Some(_)) => None,
+    }
+}
+
+fn constant_value(expression: &Expr) -> Option<Real> {
+    let facts = expression.structural_facts();
+    if !facts.dependencies.is_empty() {
+        return None;
+    }
+    expression.eval_real(&HashMap::new()).ok()
+}
+
+fn isolate_square_free_roots(
+    polynomial: &[Real],
+    config: &RootIsolationConfig,
+) -> Option<Vec<IsolatedRootInterval>> {
+    let policy = config.policy;
+    let sturm = sturm_sequence(polynomial, policy)?;
+    let bound = cauchy_bound(polynomial, policy)?;
+    let lower = -bound.clone();
+    let upper = bound;
+    let root_count = sturm_count(&sturm, &lower, &upper, policy)?;
+    let mut intervals = Vec::new();
+    isolate_interval(
+        &sturm,
+        &lower,
+        &upper,
+        root_count,
+        config,
+        0,
+        &mut intervals,
+    )?;
+    Some(intervals)
+}
+
+fn isolate_interval(
+    sturm: &[Vec<Real>],
+    lower: &Real,
+    upper: &Real,
+    root_count: usize,
+    config: &RootIsolationConfig,
+    refinement_step: usize,
+    intervals: &mut Vec<IsolatedRootInterval>,
+) -> Option<()> {
+    let policy = config.policy;
+    if root_count == 0 {
+        return Some(());
+    }
+    if root_count == 1 {
+        if should_refine_one_root_interval(lower, upper, config, refinement_step)? {
+            let midpoint = ((lower.clone() + upper.clone()) / Real::from(2)).ok()?;
+            let first = &sturm[0];
+            if sign_at(first, &midpoint, policy)? == Ordering::Equal {
+                intervals.push(IsolatedRootInterval {
+                    lower: midpoint.clone(),
+                    upper: midpoint.clone(),
+                    exact_root: Some(midpoint),
+                    distinct_root_count: 1,
+                });
+                return Some(());
+            }
+            let left_count = sturm_count(sturm, lower, &midpoint, policy)?;
+            let right_count = root_count.checked_sub(left_count)?;
+            isolate_interval(
+                sturm,
+                lower,
+                &midpoint,
+                left_count,
+                config,
+                refinement_step + 1,
+                intervals,
+            )?;
+            isolate_interval(
+                sturm,
+                &midpoint,
+                upper,
+                right_count,
+                config,
+                refinement_step + 1,
+                intervals,
+            )?;
+            return Some(());
+        }
+        intervals.push(IsolatedRootInterval {
+            lower: lower.clone(),
+            upper: upper.clone(),
+            exact_root: None,
+            distinct_root_count: 1,
+        });
+        return Some(());
+    }
+
+    let midpoint = ((lower.clone() + upper.clone()) / Real::from(2)).ok()?;
+    let first = &sturm[0];
+    if sign_at(first, &midpoint, policy)? == Ordering::Equal {
+        intervals.push(IsolatedRootInterval {
+            lower: midpoint.clone(),
+            upper: midpoint.clone(),
+            exact_root: Some(midpoint.clone()),
+            distinct_root_count: 1,
+        });
+        let mut left_count = sturm_count(sturm, lower, &midpoint, policy)?;
+        let mut right_count = sturm_count(sturm, &midpoint, upper, policy)?;
+        // Sturm endpoint conventions can count a rational root that lies
+        // exactly on the split point as part of one adjacent interval. The
+        // point root has already been emitted above, so trim the adjacent
+        // counts back to the remaining distinct roots before recursing.
+        let remaining = root_count.checked_sub(1)?;
+        while left_count + right_count > remaining {
+            if left_count > 0 {
+                left_count -= 1;
+            } else if right_count > 0 {
+                right_count -= 1;
+            } else {
+                return None;
+            }
+        }
+        isolate_interval(sturm, lower, &midpoint, left_count, config, 0, intervals)?;
+        isolate_interval(sturm, &midpoint, upper, right_count, config, 0, intervals)?;
+        return Some(());
+    }
+
+    let left_count = sturm_count(sturm, lower, &midpoint, policy)?;
+    let right_count = root_count.checked_sub(left_count)?;
+    isolate_interval(sturm, lower, &midpoint, left_count, config, 0, intervals)?;
+    isolate_interval(sturm, &midpoint, upper, right_count, config, 0, intervals)
+}
+
+fn should_refine_one_root_interval(
+    lower: &Real,
+    upper: &Real,
+    config: &RootIsolationConfig,
+    refinement_step: usize,
+) -> Option<bool> {
+    if refinement_step >= config.max_refinement_steps {
+        return Some(false);
+    }
+    let Some(max_width) = &config.max_interval_width else {
+        return Some(false);
+    };
+    let width = upper.clone() - lower.clone();
+    match compare_reals(&width, max_width, config.policy).value()? {
+        Ordering::Greater => Some(true),
+        Ordering::Equal | Ordering::Less => Some(false),
+    }
+}
+
+fn sturm_sequence(polynomial: &[Real], policy: PredicatePolicy) -> Option<Vec<Vec<Real>>> {
+    let p0 = trim_polynomial(polynomial.to_vec(), policy)?;
+    let p1 = trim_polynomial(derivative(&p0), policy)?;
+    let mut sequence = vec![p0, p1];
+    loop {
+        let last = sequence.last()?.clone();
+        if last.len() == 1 {
+            break;
+        }
+        let previous = sequence.get(sequence.len() - 2)?.clone();
+        let (_, remainder) = polynomial_div_rem(previous, &last, policy)?;
+        if is_zero_polynomial(&remainder, policy)? {
+            break;
+        }
+        sequence.push(remainder.into_iter().map(|value| -value).collect());
+    }
+    Some(sequence)
+}
+
+fn sturm_count(
+    sturm: &[Vec<Real>],
+    lower: &Real,
+    upper: &Real,
+    policy: PredicatePolicy,
+) -> Option<usize> {
+    let lower_variations = sign_variations(sturm, lower, policy)?;
+    let upper_variations = sign_variations(sturm, upper, policy)?;
+    lower_variations.checked_sub(upper_variations)
+}
+
+fn sign_variations(sturm: &[Vec<Real>], point: &Real, policy: PredicatePolicy) -> Option<usize> {
+    let mut previous = None;
+    let mut variations = 0;
+    for polynomial in sturm {
+        let sign = sign_at(polynomial, point, policy)?;
+        if sign == Ordering::Equal {
+            continue;
+        }
+        if let Some(previous) = previous
+            && previous != sign
+        {
+            variations += 1;
+        }
+        previous = Some(sign);
+    }
+    Some(variations)
+}
+
+fn sign_at(polynomial: &[Real], point: &Real, policy: PredicatePolicy) -> Option<Ordering> {
+    let value = evaluate_polynomial(polynomial, point);
+    compare_reals(&value, &Real::zero(), policy).value()
+}
+
+fn cauchy_bound(polynomial: &[Real], policy: PredicatePolicy) -> Option<Real> {
+    let leading = abs_real(polynomial.last()?);
+    let mut max_ratio = Real::zero();
+    for coefficient in &polynomial[..polynomial.len() - 1] {
+        let ratio = (abs_real(coefficient) / leading.clone()).ok()?;
+        if compare_reals(&ratio, &max_ratio, policy).value()? == Ordering::Greater {
+            max_ratio = ratio;
+        }
+    }
+    Some(max_ratio + Real::one())
+}
+
+fn evaluate_polynomial(polynomial: &[Real], point: &Real) -> Real {
+    polynomial
+        .iter()
+        .rev()
+        .cloned()
+        .fold(Real::zero(), |value, coefficient| {
+            value * point.clone() + coefficient
+        })
+}
+
+fn derivative(polynomial: &[Real]) -> Vec<Real> {
+    if polynomial.len() <= 1 {
+        return vec![Real::zero()];
+    }
+    polynomial
+        .iter()
+        .enumerate()
+        .skip(1)
+        .map(|(degree, coefficient)| coefficient.clone() * Real::from(degree as i64))
+        .collect()
+}
+
+pub(crate) fn polynomial_gcd(
+    mut left: Vec<Real>,
+    mut right: Vec<Real>,
+    policy: PredicatePolicy,
+) -> Option<Vec<Real>> {
+    left = trim_polynomial(left, policy)?;
+    right = trim_polynomial(right, policy)?;
+    if primitive_integer_polynomials_are_coprime_modular(&left, &right) == Some(true) {
+        return Some(vec![Real::one()]);
+    }
+    if let Some(gcd) = primitive_integer_polynomial_gcd(&left, &right) {
+        return gcd_monic_normalize(gcd, policy);
+    }
+    loop {
+        let right_is_zero = is_zero_polynomial(&right, policy)?;
+        if right_is_zero {
+            break;
+        }
+        let (_, remainder) = polynomial_div_rem(left, &right, policy)?;
+        left = right;
+        right = trim_polynomial(remainder, policy)?;
+    }
+    gcd_monic_normalize(left, policy)
+}
+
+pub(crate) fn polynomials_share_one_root_in_interval(
+    left: &[Real],
+    right: &[Real],
+    lower: &Real,
+    upper: &Real,
+    policy: PredicatePolicy,
+) -> Option<bool> {
+    if compare_reals(lower, upper, policy).value()? != Ordering::Less {
+        return Some(false);
+    }
+    let gcd = if left == right {
+        left.to_vec()
+    } else {
+        polynomial_gcd(left.to_vec(), right.to_vec(), policy)?
+    };
+    if gcd.len() <= 1 {
+        return Some(false);
+    }
+    let square_free = square_free_part(gcd, policy)?;
+    let sturm = sturm_sequence(&square_free, policy)?;
+    match sturm_count(&sturm, lower, upper, policy)? {
+        0 => Some(false),
+        1 => Some(true),
+        _ => None,
+    }
+}
+
+/// Certifies one distinct root through exact Bernstein variation, removing a
+/// repeated factor only when the direct variation does not already decide.
+pub fn polynomial_has_one_distinct_root_in_open_interval(
+    polynomial: &[Real],
+    lower: &Real,
+    upper: &Real,
+    policy: PredicatePolicy,
+) -> Option<bool> {
+    if compare_reals(lower, upper, policy).value()? != Ordering::Less {
+        return Some(false);
+    }
+    let lower_value = evaluate_polynomial(polynomial, lower);
+    let upper_value = evaluate_polynomial(polynomial, upper);
+    let lower_sign = compare_reals(&lower_value, &Real::zero(), policy).value()?;
+    let upper_sign = compare_reals(&upper_value, &Real::zero(), policy).value()?;
+    if lower_sign == Ordering::Equal || upper_sign == Ordering::Equal {
+        return Some(false);
+    }
+    if polynomial.len() <= 3 && lower_sign != upper_sign {
+        return Some(true);
+    }
+    // A narrow candidate interval commonly arrives with an independent exact
+    // existence proof (for example, selected algebraic-fiber isolation). An
+    // exact Horner enclosure of the derivative certifies monotonicity in
+    // linear work and avoids a high-degree Bernstein basis change whenever it
+    // excludes zero. Endpoint signs then decide whether the interval owns one
+    // root or none.
+    let derivative = derivative(polynomial);
+    if let Some((derivative_lower, derivative_upper)) =
+        polynomial_interval_enclosure(&derivative, lower, upper, policy)
+    {
+        let derivative_lower_sign =
+            compare_reals(&derivative_lower, &Real::zero(), policy).value()?;
+        let derivative_upper_sign =
+            compare_reals(&derivative_upper, &Real::zero(), policy).value()?;
+        if derivative_lower_sign == Ordering::Greater || derivative_upper_sign == Ordering::Less {
+            return Some(lower_sign != upper_sign);
+        }
+    }
+    let variations = polynomial_interval_bernstein_variations(
+        polynomial,
+        lower,
+        upper,
+        lower_value,
+        upper_value,
+        policy,
+    )?;
+    if variations <= 1 {
+        return Some(variations == 1);
+    }
+    let square_free = square_free_part(polynomial.to_vec(), policy)?;
+    let variations = polynomial_interval_bernstein_variations(
+        &square_free,
+        lower,
+        upper,
+        evaluate_polynomial(&square_free, lower),
+        evaluate_polynomial(&square_free, upper),
+        policy,
+    )?;
+    Some(variations == 1)
+}
+
+/// Proves that a closed exact-rational interval contains no distinct root.
+///
+/// A Horner interval exclusion handles the common narrow-interval case in
+/// linear work. Endpoint replay and a square-free Sturm count remain the
+/// complete exact fallback; an undecided coefficient predicate returns
+/// `None` rather than treating absence of evidence as an empty interval.
+pub(crate) fn polynomial_has_no_distinct_root_in_closed_interval(
+    polynomial: &[Real],
+    lower: &Real,
+    upper: &Real,
+    policy: PredicatePolicy,
+) -> Option<bool> {
+    match compare_reals(lower, upper, policy).value()? {
+        Ordering::Greater => return None,
+        Ordering::Equal => {
+            return Some(
+                compare_reals(
+                    &evaluate_polynomial(polynomial, lower),
+                    &Real::zero(),
+                    policy,
+                )
+                .value()?
+                    != Ordering::Equal,
+            );
+        }
+        Ordering::Less => {}
+    }
+    let lower_sign = compare_reals(
+        &evaluate_polynomial(polynomial, lower),
+        &Real::zero(),
+        policy,
+    )
+    .value()?;
+    let upper_sign = compare_reals(
+        &evaluate_polynomial(polynomial, upper),
+        &Real::zero(),
+        policy,
+    )
+    .value()?;
+    if lower_sign == Ordering::Equal || upper_sign == Ordering::Equal {
+        return Some(false);
+    }
+    if let Some((range_lower, range_upper)) =
+        polynomial_interval_enclosure(polynomial, lower, upper, policy)
+    {
+        let range_lower_sign = compare_reals(&range_lower, &Real::zero(), policy).value()?;
+        let range_upper_sign = compare_reals(&range_upper, &Real::zero(), policy).value()?;
+        if range_lower_sign == Ordering::Greater || range_upper_sign == Ordering::Less {
+            return Some(true);
+        }
+    }
+    let square_free = square_free_part(polynomial.to_vec(), policy)?;
+    let sturm = sturm_sequence(&square_free, policy)?;
+    Some(sturm_count(&sturm, lower, upper, policy)? == 0)
+}
+
+fn polynomial_interval_enclosure(
+    polynomial: &[Real],
+    lower: &Real,
+    upper: &Real,
+    policy: PredicatePolicy,
+) -> Option<(Real, Real)> {
+    let leading = polynomial.last()?.clone();
+    let mut range_lower = leading.clone();
+    let mut range_upper = leading;
+    for coefficient in polynomial[..polynomial.len().saturating_sub(1)]
+        .iter()
+        .rev()
+    {
+        let products = [
+            &range_lower * lower,
+            &range_lower * upper,
+            &range_upper * lower,
+            &range_upper * upper,
+        ];
+        let mut product_lower = products[0].clone();
+        let mut product_upper = products[0].clone();
+        for product in &products[1..] {
+            if compare_reals(product, &product_lower, policy).value()? == Ordering::Less {
+                product_lower = product.clone();
+            }
+            if compare_reals(product, &product_upper, policy).value()? == Ordering::Greater {
+                product_upper = product.clone();
+            }
+        }
+        range_lower = product_lower + coefficient;
+        range_upper = product_upper + coefficient;
+    }
+    Some((range_lower, range_upper))
+}
+
+/// Refines one represented source root until its conservative image enclosure
+/// contains one distinct root of the exact image polynomial.
+pub(crate) fn certify_algebraic_image_interval<F>(
+    source_polynomial: &[Real],
+    source_interval: &IsolatedRootInterval,
+    image_polynomial: &[Real],
+    policy: PredicatePolicy,
+    mut enclosure: F,
+) -> Option<IsolatedRootInterval>
+where
+    F: FnMut(&IsolatedRootInterval) -> Option<IsolatedRootInterval>,
+{
+    let mut source_interval = source_interval.clone();
+    for round in 0..=ALGEBRAIC_IMAGE_REFINEMENT_ROUNDS {
+        if let Some(mut image_interval) = enclosure(&source_interval) {
+            let exact_image = match image_interval.exact_root.as_ref() {
+                Some(root) => sign_at(image_polynomial, root, policy)? == Ordering::Equal,
+                None => false,
+            };
+            if exact_image
+                || polynomial_has_one_distinct_root_in_open_interval(
+                    image_polynomial,
+                    &image_interval.lower,
+                    &image_interval.upper,
+                    policy,
+                ) == Some(true)
+            {
+                image_interval.distinct_root_count = 1;
+                return Some(image_interval);
+            }
+        }
+        if round == ALGEBRAIC_IMAGE_REFINEMENT_ROUNDS {
+            break;
+        }
+        let refinement = refine_isolated_univariate_polynomial_interval(
+            source_polynomial,
+            &source_interval,
+            RootIsolationConfig {
+                policy,
+                max_interval_width: None,
+                max_refinement_steps: ALGEBRAIC_IMAGE_REFINEMENT_STEPS,
+            },
+        );
+        if !matches!(
+            refinement.status,
+            IsolatedRootRefinementStatus::Refined | IsolatedRootRefinementStatus::ExactRoot
+        ) {
+            return None;
+        }
+        let refined = refinement.refined_interval?;
+        if refined == source_interval {
+            return None;
+        }
+        source_interval = refined;
+    }
+    None
+}
+
+fn polynomial_interval_bernstein_variations(
+    polynomial: &[Real],
+    lower: &Real,
+    upper: &Real,
+    lower_value: Real,
+    upper_value: Real,
+    policy: PredicatePolicy,
+) -> Option<usize> {
+    if let [_, _] = polynomial {
+        return sign_variations_for_coefficients(&[lower_value, upper_value], policy);
+    }
+    if let [_, _, quadratic] = polynomial {
+        let derivative_at_lower =
+            polynomial[1].clone() + Real::from(2_i8) * quadratic.clone() * lower.clone();
+        let middle = lower_value.clone()
+            + ((upper.clone() - lower.clone()) * derivative_at_lower / Real::from(2_i8)).ok()?;
+        return sign_variations_for_coefficients(&[lower_value, middle, upper_value], policy);
+    }
+    if let Some(variations) =
+        exact_rational_polynomial_interval_bernstein_variations(polynomial, lower, upper)
+    {
+        return Some(variations);
+    }
+    sign_variations_for_coefficients(
+        &power_to_bernstein_on_interval(polynomial, lower, upper)?,
+        policy,
+    )
+}
+
+/// Computes the same affine power-to-Bernstein sign sequence as the generic
+/// `Real` path after clearing every positive denominator once. Resultants and
+/// isolator endpoints are exact rationals, so this fraction-free path avoids a
+/// rational reduction after every intermediate multiply and add.
+fn exact_rational_polynomial_interval_bernstein_variations(
+    polynomial: &[Real],
+    lower: &Real,
+    upper: &Real,
+) -> Option<usize> {
+    let rationals = polynomial
+        .iter()
+        .map(Real::exact_rational_ref)
+        .collect::<Option<Vec<_>>>()?;
+    let coefficients = HyperRational::primitive_bigint_ratio(&rationals);
+    let one = HyperRational::one();
+    let endpoints = HyperRational::primitive_bigint_ratio(&[
+        lower.exact_rational_ref()?,
+        upper.exact_rational_ref()?,
+        &one,
+    ]);
+    let [lower, upper, scale] = endpoints.as_slice() else {
+        return None;
+    };
+    if scale.sign() != Sign::Plus {
+        return None;
+    }
+    let width = upper - lower;
+    let degree = coefficients.len().checked_sub(1)?;
+
+    // S^n p((L + W x) / S), formed by affine Horner composition. The positive
+    // factor S^n preserves every Bernstein coefficient sign.
+    let mut shifted_power = vec![coefficients.last()?.clone()];
+    let mut scale_power = BigInt::one();
+    for coefficient in coefficients[..degree].iter().rev() {
+        scale_power *= scale;
+        let old_len = shifted_power.len();
+        shifted_power.push(BigInt::zero());
+        for power in (1..=old_len).rev() {
+            shifted_power[power] =
+                &shifted_power[power] * lower + &shifted_power[power - 1] * &width;
+        }
+        shifted_power[0] = &shifted_power[0] * lower + coefficient * &scale_power;
+    }
+
+    // Multiplying control i by the positive falling factorial (n)_i clears
+    // every C(n,k) denominator. The weight recurrence remains integral:
+    // w[k+1] = w[k] (i-k)/(n-k).
+    let mut previous = None;
+    let mut variations = 0_usize;
+    let mut degree_falling = BigInt::one();
+    for index in 0..=degree {
+        if index != 0 {
+            degree_falling *= BigInt::from(degree - index + 1);
+        }
+        let mut weight = degree_falling.clone();
+        let mut value = BigInt::zero();
+        for (power, coefficient) in shifted_power.iter().enumerate().take(index + 1) {
+            value += coefficient * &weight;
+            if power != index {
+                weight *= BigInt::from(index - power);
+                weight /= BigInt::from(degree - power);
+            }
+        }
+        let sign = value.sign();
+        if sign == Sign::NoSign {
+            continue;
+        }
+        if previous.is_some_and(|previous| previous != sign) {
+            variations += 1;
+        }
+        previous = Some(sign);
+    }
+    Some(variations)
+}
+
+/// Returns the exact square-free part of a nonzero polynomial.
+///
+/// The result has the same distinct roots as `polynomial`. `None` means that
+/// coefficient classification, GCD construction, or exact division could not
+/// be certified under `policy`; it never returns an approximate polynomial.
+pub fn square_free_part(polynomial: Vec<Real>, policy: PredicatePolicy) -> Option<Vec<Real>> {
+    let polynomial = trim_polynomial(polynomial, policy)?;
+    let gcd = polynomial_gcd(polynomial.clone(), derivative(&polynomial), policy)?;
+    if gcd.len() <= 1 {
+        return Some(polynomial);
+    }
+    let (quotient, remainder) = polynomial_div_rem(polynomial, &gcd, policy)?;
+    is_zero_polynomial(&remainder, policy)?.then_some(quotient)
+}
+
+pub(crate) fn polynomial_div_rem(
+    dividend: Vec<Real>,
+    divisor: &[Real],
+    policy: PredicatePolicy,
+) -> Option<(Vec<Real>, Vec<Real>)> {
+    let divisor = trim_polynomial(divisor.to_vec(), policy)?;
+    if is_zero_polynomial(&divisor, policy)? {
+        return None;
+    }
+    let mut remainder = trim_polynomial(dividend, policy)?;
+    if remainder.len() < divisor.len() {
+        return Some((vec![Real::zero()], remainder));
+    }
+    let mut quotient = vec![Real::zero(); remainder.len() - divisor.len() + 1];
+    let divisor_degree = divisor.len() - 1;
+    let divisor_leading = divisor.last()?.clone();
+    let divisor_leading_inverse = reciprocal_real(&divisor_leading, policy).ok()?.value()?;
+    while remainder.len() >= divisor.len() && !is_zero_polynomial(&remainder, policy)? {
+        let degree_delta = remainder.len() - divisor.len();
+        let scale = remainder.last()? * &divisor_leading_inverse;
+        quotient[degree_delta] = quotient[degree_delta].clone() + scale.clone();
+        for (index, divisor_coefficient) in divisor.iter().enumerate().take(divisor_degree) {
+            let target = degree_delta + index;
+            remainder[target] =
+                remainder[target].clone() - scale.clone() * divisor_coefficient.clone();
+        }
+        // The selected quotient coefficient cancels the leading term by
+        // construction. Publish that algebraic identity directly instead of
+        // asking `Real` to rediscover `(a / b) * b == a` through bounded
+        // expression refinement for a general exact denominator.
+        remainder[degree_delta + divisor_degree] = Real::zero();
+        remainder = trim_polynomial(remainder, policy)?;
+    }
+    Some((trim_polynomial(quotient, policy)?, remainder))
+}
+
+/// Reduces one dense polynomial modulo a divisor whose leading degree is
+/// certified once, without classifying intermediate dividend coefficients.
+///
+/// Quotient-ring tensor reduction does not need a trimmed quotient or
+/// remainder: every power at or above the divisor degree is eliminated by an
+/// exact field operation and the dense caller retains the fixed remainder
+/// shape. Avoiding repeated zero tests is essential when coefficients are
+/// correlated `Real` expressions whose cancellation follows from the very
+/// divisor relation being applied.
+pub(crate) fn polynomial_remainder_modulo_certified_divisor(
+    dividend: Vec<Real>,
+    divisor: &[Real],
+    policy: PredicatePolicy,
+) -> Option<Vec<Real>> {
+    let divisor = trim_polynomial(divisor.to_vec(), policy)?;
+    if divisor.len() <= 1 || is_zero_polynomial(&divisor, policy)? {
+        return None;
+    }
+    let divisor_degree = divisor.len() - 1;
+    let divisor_leading_inverse = reciprocal_real(divisor.last()?, policy).ok()?.value()?;
+    let mut remainder = dividend;
+    if remainder.len() <= divisor_degree {
+        return Some(remainder);
+    }
+    for power in (divisor_degree..remainder.len()).rev() {
+        if remainder[power].definitely_zero() {
+            continue;
+        }
+        let scale = &remainder[power] * &divisor_leading_inverse;
+        let target_start = power - divisor_degree;
+        for (index, divisor_coefficient) in divisor.iter().take(divisor_degree).enumerate() {
+            let target = target_start + index;
+            remainder[target] = remainder[target].clone() - &scale * divisor_coefficient;
+        }
+    }
+    remainder.truncate(divisor_degree);
+    Some(remainder)
+}
+
+fn root_refinement_report(
+    status: IsolatedRootRefinementStatus,
+    original_interval: IsolatedRootInterval,
+    refined_interval: Option<IsolatedRootInterval>,
+    refinement_steps: usize,
+    message: Option<String>,
+) -> IsolatedRootRefinementReport {
+    IsolatedRootRefinementReport {
+        status,
+        original_interval,
+        refined_interval,
+        refinement_steps,
+        message,
+    }
+}
+
+fn trim_polynomial(mut polynomial: Vec<Real>, policy: PredicatePolicy) -> Option<Vec<Real>> {
+    while polynomial.len() > 1 {
+        let trailing = polynomial.last()?;
+        match compare_reals(trailing, &Real::zero(), policy).value()? {
+            Ordering::Equal => {
+                polynomial.pop();
+            }
+            Ordering::Less | Ordering::Greater => break,
+        }
+    }
+    if polynomial.is_empty() {
+        polynomial.push(Real::zero());
+    }
+    Some(polynomial)
+}
+
+fn is_zero_polynomial(polynomial: &[Real], policy: PredicatePolicy) -> Option<bool> {
+    polynomial.iter().try_fold(true, |all_zero, coefficient| {
+        let sign = compare_reals(coefficient, &Real::zero(), policy).value()?;
+        Some(all_zero && sign == Ordering::Equal)
+    })
+}
+
+fn gcd_monic_normalize(mut polynomial: Vec<Real>, policy: PredicatePolicy) -> Option<Vec<Real>> {
+    polynomial = trim_polynomial(polynomial, policy)?;
+    if polynomial.len() == 1 {
+        return Some(if is_zero_polynomial(&polynomial, policy)? {
+            vec![Real::zero()]
+        } else {
+            vec![Real::one()]
+        });
+    }
+    let leading = polynomial.last()?.clone();
+    let inverse = reciprocal_real(&leading, policy).ok()?.value()?;
+    Some(
+        polynomial
+            .into_iter()
+            .map(|coefficient| coefficient * &inverse)
+            .collect(),
+    )
+}
+
+fn abs_real(value: &Real) -> Real {
+    value.abs()
+}
+
+fn leading_zero_multiplicity(polynomial: &[Real], policy: PredicatePolicy) -> Option<usize> {
+    let mut multiplicity = 0;
+    for coefficient in polynomial {
+        match compare_reals(coefficient, &Real::zero(), policy).value()? {
+            Ordering::Equal => multiplicity += 1,
+            Ordering::Less | Ordering::Greater => return Some(multiplicity),
+        }
+    }
+    Some(0)
+}
+
+fn sign_variations_for_coefficients(
+    coefficients: &[Real],
+    policy: PredicatePolicy,
+) -> Option<usize> {
+    let mut previous = None;
+    let mut variations = 0;
+    for coefficient in coefficients.iter().rev() {
+        let sign = compare_reals(coefficient, &Real::zero(), policy).value()?;
+        if sign == Ordering::Equal {
+            continue;
+        }
+        if let Some(previous) = previous
+            && previous != sign
+        {
+            variations += 1;
+        }
+        previous = Some(sign);
+    }
+    Some(variations)
+}
+
+fn power_to_bernstein_on_interval(
+    polynomial: &[Real],
+    lower: &Real,
+    upper: &Real,
+) -> Option<Vec<Real>> {
+    let leading = polynomial.last()?.clone();
+    let degree = polynomial.len().saturating_sub(1);
+    let width = upper.clone() - lower.clone();
+    // Horner composition by `lower + width*x` performs the affine power-basis
+    // change in quadratic time without materializing large binomial integers.
+    let mut shifted_power = vec![leading];
+    for coefficient in polynomial[..degree].iter().rev() {
+        let old_len = shifted_power.len();
+        shifted_power.push(Real::zero());
+        for power in (1..=old_len).rev() {
+            shifted_power[power] =
+                shifted_power[power].clone() * lower + shifted_power[power - 1].clone() * &width;
+        }
+        shifted_power[0] = shifted_power[0].clone() * lower + coefficient;
+    }
+
+    let mut bernstein = vec![Real::zero(); degree + 1];
+    for (i, target) in bernstein.iter_mut().enumerate().take(degree + 1) {
+        let mut value = Real::zero();
+        let mut ratio = Real::one();
+        for (j, coefficient) in shifted_power.iter().enumerate().take(i + 1) {
+            value += coefficient * &ratio;
+            if j != i {
+                let numerator = Real::from(u64::try_from(i - j).ok()?);
+                let denominator = Real::from(u64::try_from(degree - j).ok()?);
+                ratio = ((ratio * numerator) / denominator).ok()?;
+            }
+        }
+        *target = value;
+    }
+    Some(bernstein)
+}
+
+#[allow(clippy::too_many_arguments)]
+fn subdivide_bernstein_interval(
+    constraint_index: usize,
+    expression: &Expr,
+    problem: &Problem,
+    lower: Real,
+    upper: Real,
+    config: BernsteinSubdivisionConfig,
+    depth: usize,
+    intervals: &mut Vec<BernsteinSubdivisionInterval>,
+    hit_depth_limit: &mut bool,
+    undecided: &mut Option<String>,
+) {
+    if undecided.is_some() {
+        return;
+    }
+    let report = count_bernstein_univariate_polynomial_interval_expr(
+        constraint_index,
+        expression,
+        problem,
+        lower.clone(),
+        upper.clone(),
+        config.policy,
+    );
+    if report.status != BernsteinRootCountStatus::Counted {
+        *undecided = report
+            .message
+            .or_else(|| Some("Bernstein subdivision encountered an undecided interval".to_owned()));
+        return;
+    }
+
+    if report.root_at_lower == Some(true) {
+        push_unique_bernstein_endpoint(intervals, lower.clone());
+    }
+    if report.root_at_upper == Some(true) {
+        push_unique_bernstein_endpoint(intervals, upper.clone());
+    }
+
+    match report.variation_bound {
+        Some(0) => {
+            intervals.push(BernsteinSubdivisionInterval {
+                lower,
+                upper,
+                exact_root: None,
+                variation_bound: Some(0),
+                status: BernsteinSubdivisionIntervalStatus::Empty,
+            });
+        }
+        Some(1) => {
+            if report.root_at_lower == Some(true) || report.root_at_upper == Some(true) {
+                return;
+            }
+            intervals.push(BernsteinSubdivisionInterval {
+                lower,
+                upper,
+                exact_root: None,
+                variation_bound: Some(1),
+                status: BernsteinSubdivisionIntervalStatus::Isolating,
+            });
+        }
+        Some(variation) => {
+            if depth >= config.max_depth {
+                *hit_depth_limit = true;
+                intervals.push(BernsteinSubdivisionInterval {
+                    lower,
+                    upper,
+                    exact_root: None,
+                    variation_bound: Some(variation),
+                    status: BernsteinSubdivisionIntervalStatus::DepthLimit,
+                });
+                return;
+            }
+            let Some(midpoint) = ((lower.clone() + upper.clone()) / Real::from(2)).ok() else {
+                *undecided = Some("could not bisect Bernstein interval".to_owned());
+                return;
+            };
+            subdivide_bernstein_interval(
+                constraint_index,
+                expression,
+                problem,
+                lower,
+                midpoint.clone(),
+                config,
+                depth + 1,
+                intervals,
+                hit_depth_limit,
+                undecided,
+            );
+            subdivide_bernstein_interval(
+                constraint_index,
+                expression,
+                problem,
+                midpoint,
+                upper,
+                config,
+                depth + 1,
+                intervals,
+                hit_depth_limit,
+                undecided,
+            );
+        }
+        None => {
+            *undecided = Some("Bernstein variation bound was unavailable".to_owned());
+        }
+    }
+}
+
+fn push_unique_bernstein_endpoint(intervals: &mut Vec<BernsteinSubdivisionInterval>, root: Real) {
+    if intervals
+        .iter()
+        .any(|interval| interval.exact_root.as_ref() == Some(&root))
+    {
+        return;
+    }
+    intervals.push(BernsteinSubdivisionInterval {
+        lower: root.clone(),
+        upper: root.clone(),
+        exact_root: Some(root),
+        variation_bound: Some(0),
+        status: BernsteinSubdivisionIntervalStatus::EndpointRoot,
+    });
+}
+
+fn root_isolation_report(
+    constraint_index: usize,
+    symbol: Option<SymbolId>,
+    degree: Option<usize>,
+    status: RootIsolationStatus,
+    multiplicity: Option<RootMultiplicityStatus>,
+    intervals: Vec<IsolatedRootInterval>,
+    message: Option<String>,
+) -> UnivariateRootIsolationReport {
+    UnivariateRootIsolationReport {
+        constraint_index,
+        symbol,
+        degree,
+        status,
+        multiplicity,
+        intervals,
+        message,
+    }
+}
+
+#[allow(clippy::too_many_arguments)]
+fn bernstein_report(
+    constraint_index: usize,
+    symbol: Option<SymbolId>,
+    degree: Option<usize>,
+    lower: Real,
+    upper: Real,
+    status: BernsteinRootCountStatus,
+    bernstein_coefficients: Vec<Real>,
+    root_at_lower: Option<bool>,
+    root_at_upper: Option<bool>,
+    variation_bound: Option<usize>,
+    message: Option<String>,
+) -> BernsteinRootCountReport {
+    BernsteinRootCountReport {
+        constraint_index,
+        symbol,
+        degree,
+        lower,
+        upper,
+        status,
+        bernstein_coefficients,
+        root_count_parity: variation_bound.map(|count| count % 2),
+        variation_bound,
+        root_at_lower,
+        root_at_upper,
+        message,
+    }
+}
+
+#[allow(clippy::too_many_arguments)]
+fn bernstein_subdivision_report(
+    constraint_index: usize,
+    symbol: Option<SymbolId>,
+    degree: Option<usize>,
+    lower: Real,
+    upper: Real,
+    status: BernsteinSubdivisionStatus,
+    intervals: Vec<BernsteinSubdivisionInterval>,
+    message: Option<String>,
+) -> BernsteinSubdivisionReport {
+    BernsteinSubdivisionReport {
+        constraint_index,
+        symbol,
+        degree,
+        lower,
+        upper,
+        status,
+        intervals,
+        message,
+    }
+}
+
+#[allow(clippy::too_many_arguments)]
+fn descartes_report(
+    constraint_index: usize,
+    symbol: Option<SymbolId>,
+    degree: Option<usize>,
+    status: DescartesRootCountStatus,
+    zero_root_multiplicity: Option<usize>,
+    positive_variations: Option<usize>,
+    negative_variations: Option<usize>,
+    message: Option<String>,
+) -> DescartesRootCountReport {
+    DescartesRootCountReport {
+        constraint_index,
+        symbol,
+        degree,
+        status,
+        zero_root_multiplicity,
+        positive_root_count_parity: positive_variations.map(|count| count % 2),
+        positive_variations,
+        negative_root_count_parity: negative_variations.map(|count| count % 2),
+        negative_variations,
+        message,
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::eval::context_from_problem;
+    use crate::model::Constraint;
+    use proptest::prelude::*;
+
+    fn real(value: i64) -> Real {
+        Real::from(value)
+    }
+
+    #[test]
+    fn fixed_degree_remainder_does_not_predicate_on_correlated_coefficients() {
+        let sqrt_two = real(2).sqrt().expect("positive square root");
+        let sqrt_three = real(3).sqrt().expect("positive square root");
+        let sum = &sqrt_two + &sqrt_three;
+        let correlated_zero =
+            &sum * &sum - (real(5) + real(2) * real(6).sqrt().expect("positive square root"));
+        assert!(!correlated_zero.definitely_zero());
+
+        let modulus = [real(-2), Real::zero(), Real::one()];
+        let dividend = vec![Real::zero(), Real::zero(), correlated_zero, Real::one()];
+        assert!(
+            polynomial_div_rem(dividend.clone(), &modulus, PredicatePolicy::STRICT).is_none(),
+            "generic division should expose the correlated leading cancellation"
+        );
+        let remainder = polynomial_remainder_modulo_certified_divisor(
+            dividend,
+            &modulus,
+            PredicatePolicy::STRICT,
+        )
+        .expect("fixed-degree quotient reduction is purely algebraic");
+        assert_eq!(remainder.len(), 2);
+        assert_eq!(remainder[1], real(2));
+    }
+
+    #[test]
+    fn fraction_free_bernstein_exceeds_machine_binomial_range_exactly() {
+        // (x - 1/2)(x + 1)^79 has exactly one root in (2/5, 3/5). Degree 80
+        // makes its central binomial coefficient larger than u64, exercising
+        // the fraction-free falling-factorial basis conversion directly.
+        let mut repeated_factor = vec![Real::one()];
+        for _ in 0..79 {
+            let mut next = vec![Real::zero(); repeated_factor.len() + 1];
+            for (index, coefficient) in repeated_factor.iter().enumerate() {
+                next[index] += coefficient.clone();
+                next[index + 1] += coefficient.clone();
+            }
+            repeated_factor = next;
+        }
+        let half = (real(1) / real(2)).unwrap();
+        let mut polynomial = vec![Real::zero(); repeated_factor.len() + 1];
+        for (index, coefficient) in repeated_factor.iter().enumerate() {
+            polynomial[index] -= half.clone() * coefficient.clone();
+            polynomial[index + 1] += coefficient.clone();
+        }
+
+        assert_eq!(
+            exact_rational_polynomial_interval_bernstein_variations(
+                &polynomial,
+                &(real(2) / real(5)).unwrap(),
+                &(real(3) / real(5)).unwrap(),
+            ),
+            Some(1)
+        );
+    }
+
+    #[test]
+    fn sturm_isolates_distinct_repeated_and_no_real_roots() {
+        let x = Expr::symbol(SymbolId(0), "x");
+        let mut problem = Problem::default();
+        problem.add_variable("x", real(0));
+        problem.add_constraint(Constraint::equality(
+            "three roots",
+            x.clone().powi(3) - Expr::int(6) * x.clone().powi(2) + Expr::int(11) * x.clone()
+                - Expr::int(6),
+        ));
+        problem.add_constraint(Constraint::equality(
+            "repeated root",
+            (x.clone() - Expr::int(2)).powi(2) * (x.clone() + Expr::int(1)),
+        ));
+        problem.add_constraint(Constraint::equality(
+            "no real roots",
+            x.powi(2) + Expr::int(1),
+        ));
+
+        let reports = isolate_univariate_polynomial_roots(
+            &problem.analyze(),
+            PredicatePolicy::APPROXIMATE_512,
+        );
+
+        assert_eq!(reports.len(), 3);
+        assert_eq!(reports[0].status, RootIsolationStatus::Isolated);
+        assert_eq!(reports[0].intervals.len(), 3);
+        assert_eq!(
+            reports[0].multiplicity,
+            Some(RootMultiplicityStatus::SquareFree)
+        );
+        assert_eq!(reports[1].status, RootIsolationStatus::MultipleRoot);
+        assert_eq!(
+            reports[1].multiplicity,
+            Some(RootMultiplicityStatus::RepeatedRootsDetected { gcd_degree: 1 })
+        );
+        assert_eq!(reports[1].intervals.len(), 2);
+        assert_eq!(reports[2].status, RootIsolationStatus::NoRealRoots);
+        assert!(reports[2].intervals.is_empty());
+    }
+
+    #[test]
+    fn sturm_rejects_multivariate_rows_explicitly() {
+        let x = Expr::symbol(SymbolId(0), "x");
+        let y = Expr::symbol(SymbolId(1), "y");
+        let mut problem = Problem::default();
+        problem.add_variable("x", real(0));
+        problem.add_variable("y", real(0));
+        problem.add_constraint(Constraint::equality("xy", x * y));
+
+        let reports = isolate_univariate_polynomial_roots(
+            &problem.analyze(),
+            PredicatePolicy::APPROXIMATE_512,
+        );
+
+        assert_eq!(reports.len(), 1);
+        assert_eq!(
+            reports[0].status,
+            RootIsolationStatus::UnsupportedCoefficient
+        );
+        assert!(reports[0].message.is_some());
+    }
+
+    #[test]
+    fn bounded_refinement_and_rational_witness_replay_are_explicit() {
+        let x = Expr::symbol(SymbolId(0), "x");
+        let mut problem = Problem::default();
+        problem.add_variable("x", real(0));
+        problem.add_constraint(Constraint::equality(
+            "root minus one or one",
+            x.clone().powi(2) - Expr::int(1),
+        ));
+        problem.add_constraint(Constraint::equality("select root one", x - Expr::int(1)));
+        let analysis = problem.analyze();
+        let reports = isolate_univariate_polynomial_roots_with_config(
+            &analysis,
+            RootIsolationConfig {
+                policy: PredicatePolicy::APPROXIMATE_512,
+                max_interval_width: Some(Real::one()),
+                max_refinement_steps: 8,
+            },
+        );
+
+        assert_eq!(reports[0].intervals.len(), 2);
+        assert!(
+            reports[0]
+                .intervals
+                .iter()
+                .any(|interval| interval.exact_root == Some(real(1)))
+        );
+        let candidates = certify_isolated_rational_root_witnesses(
+            &analysis,
+            &context_from_problem(&problem),
+            &reports,
+        );
+
+        assert!(candidates.iter().any(|candidate| {
+            candidate.exact_root == Some(real(1))
+                && candidate.status == AlgebraicRootCandidateStatus::ReplayCertified
+        }));
+        assert!(candidates.iter().any(|candidate| {
+            candidate.exact_root == Some(real(-1))
+                && candidate.status == AlgebraicRootCandidateStatus::ReplayRejected
+        }));
+    }
+
+    #[test]
+    fn isolated_interval_refinement_separates_nested_quadratic_roots() {
+        let report = refine_isolated_univariate_polynomial_interval(
+            &[real(-2), Real::zero(), Real::one()],
+            &IsolatedRootInterval {
+                lower: real(1),
+                upper: real(2),
+                exact_root: None,
+                distinct_root_count: 1,
+            },
+            RootIsolationConfig {
+                max_refinement_steps: 4,
+                ..RootIsolationConfig::default()
+            },
+        );
+
+        assert_eq!(report.status, IsolatedRootRefinementStatus::Refined);
+        assert_eq!(report.refinement_steps, 4);
+        let refined = report.refined_interval.expect("refined interval");
+        assert_eq!(refined.distinct_root_count, 1);
+        assert!(refined.lower >= real(1));
+        assert!(refined.upper <= real(2));
+    }
+
+    #[test]
+    fn isolated_interval_refinement_rejects_bad_evidence_antagonistically() {
+        let bad_count = refine_isolated_univariate_polynomial_interval(
+            &[real(-1), Real::zero(), Real::one()],
+            &IsolatedRootInterval {
+                lower: real(-2),
+                upper: real(2),
+                exact_root: None,
+                distinct_root_count: 2,
+            },
+            RootIsolationConfig::default(),
+        );
+        assert_eq!(
+            bad_count.status,
+            IsolatedRootRefinementStatus::NonUnitIsolation
+        );
+
+        let bad_polynomial = refine_isolated_univariate_polynomial_interval(
+            &[real(0)],
+            &IsolatedRootInterval {
+                lower: real(0),
+                upper: real(1),
+                exact_root: None,
+                distinct_root_count: 1,
+            },
+            RootIsolationConfig::default(),
+        );
+        assert_eq!(
+            bad_polynomial.status,
+            IsolatedRootRefinementStatus::InvalidPolynomial
+        );
+    }
+
+    #[test]
+    fn isolated_interval_refinement_accepts_exact_real_coefficient_fields() {
+        let sqrt_two = real(2).sqrt().expect("positive exact square root");
+        let polynomial = vec![-sqrt_two, Real::one()];
+        let refinement = refine_isolated_univariate_polynomial_interval(
+            &polynomial,
+            &IsolatedRootInterval {
+                lower: real(1),
+                upper: real(2),
+                exact_root: None,
+                distinct_root_count: 1,
+            },
+            RootIsolationConfig {
+                policy: PredicatePolicy::STRICT,
+                max_interval_width: Some((Real::one() / real(4)).expect("nonzero divisor")),
+                max_refinement_steps: 4,
+            },
+        );
+        assert!(refinement.refined_interval.is_some(), "{refinement:?}");
+    }
+
+    #[test]
+    fn descartes_counts_positive_negative_and_zero_root_bounds() {
+        let x = Expr::symbol(SymbolId(0), "x");
+        let y = Expr::symbol(SymbolId(1), "y");
+        let mut problem = Problem::default();
+        problem.add_variable("x", real(0));
+        problem.add_variable("y", real(0));
+        problem.add_constraint(Constraint::equality(
+            "mixed signs",
+            x.clone().powi(3) - Expr::int(6) * x.clone().powi(2) + Expr::int(11) * x.clone()
+                - Expr::int(6),
+        ));
+        problem.add_constraint(Constraint::equality(
+            "zero and negative roots",
+            x.clone() * (x.clone() + Expr::int(2)),
+        ));
+        problem.add_constraint(Constraint::equality("multivariate unsupported", x * y));
+
+        let reports = count_descartes_univariate_polynomial_roots(
+            &problem.analyze(),
+            PredicatePolicy::APPROXIMATE_512,
+        );
+
+        assert_eq!(reports.len(), 3);
+        assert_eq!(reports[0].status, DescartesRootCountStatus::Counted);
+        assert_eq!(reports[0].positive_variations, Some(3));
+        assert_eq!(reports[0].positive_root_count_parity, Some(1));
+        assert_eq!(reports[0].negative_variations, Some(0));
+        assert_eq!(reports[0].negative_root_count_parity, Some(0));
+        assert_eq!(reports[0].zero_root_multiplicity, Some(0));
+
+        assert_eq!(reports[1].status, DescartesRootCountStatus::Counted);
+        assert_eq!(reports[1].zero_root_multiplicity, Some(1));
+        assert_eq!(reports[1].positive_variations, Some(0));
+        assert_eq!(reports[1].negative_variations, Some(1));
+
+        assert_eq!(
+            reports[2].status,
+            DescartesRootCountStatus::UnsupportedCoefficient
+        );
+    }
+
+    #[test]
+    fn bernstein_counts_interval_roots_and_endpoint_witnesses() {
+        let x = Expr::symbol(SymbolId(0), "x");
+        let y = Expr::symbol(SymbolId(1), "y");
+        let mut problem = Problem::default();
+        problem.add_variable("x", real(0));
+        problem.add_variable("y", real(0));
+        problem.add_constraint(Constraint::equality(
+            "three roots",
+            x.clone().powi(3) - Expr::int(6) * x.clone().powi(2) + Expr::int(11) * x.clone()
+                - Expr::int(6),
+        ));
+        problem.add_constraint(Constraint::equality(
+            "endpoint root",
+            x.clone() - Expr::int(2),
+        ));
+        problem.add_constraint(Constraint::equality("multivariate unsupported", x * y));
+
+        let reports = count_bernstein_univariate_polynomial_interval_roots(
+            &problem.analyze(),
+            real(0),
+            real(2),
+            PredicatePolicy::APPROXIMATE_512,
+        );
+
+        assert_eq!(reports.len(), 3);
+        assert_eq!(reports[0].status, BernsteinRootCountStatus::Counted);
+        assert_eq!(reports[0].variation_bound, Some(1));
+        assert_eq!(reports[0].root_count_parity, Some(1));
+        assert_eq!(reports[0].root_at_lower, Some(false));
+        assert_eq!(reports[0].root_at_upper, Some(true));
+        assert_eq!(reports[0].bernstein_coefficients.len(), 4);
+
+        assert_eq!(reports[1].status, BernsteinRootCountStatus::Counted);
+        assert_eq!(reports[1].root_at_lower, Some(false));
+        assert_eq!(reports[1].root_at_upper, Some(true));
+        assert_eq!(reports[1].variation_bound, Some(0));
+
+        assert_eq!(
+            reports[2].status,
+            BernsteinRootCountStatus::UnsupportedCoefficient
+        );
+    }
+
+    #[test]
+    fn bernstein_subdivision_partitions_empty_endpoint_isolating_and_depth_limit() {
+        let x = Expr::symbol(SymbolId(0), "x");
+        let mut problem = Problem::default();
+        problem.add_variable("x", real(0));
+        problem.add_constraint(Constraint::equality(
+            "three roots",
+            x.clone().powi(3) - Expr::int(6) * x.clone().powi(2) + Expr::int(11) * x.clone()
+                - Expr::int(6),
+        ));
+        problem.add_constraint(Constraint::equality(
+            "empty interval",
+            x.clone().powi(2) + Expr::int(1),
+        ));
+        let analysis = problem.analyze();
+        let complete = subdivide_bernstein_univariate_polynomial_interval_roots(
+            &analysis,
+            real(0),
+            real(4),
+            BernsteinSubdivisionConfig {
+                policy: PredicatePolicy::APPROXIMATE_512,
+                max_depth: 8,
+            },
+        );
+
+        assert_eq!(complete.len(), 2);
+        assert_eq!(complete[0].status, BernsteinSubdivisionStatus::Completed);
+        assert!(complete[0].intervals.iter().any(|interval| {
+            interval.status == BernsteinSubdivisionIntervalStatus::EndpointRoot
+                && interval.exact_root == Some(real(2))
+        }));
+        let endpoint_roots = complete[0]
+            .intervals
+            .iter()
+            .filter(|interval| interval.status == BernsteinSubdivisionIntervalStatus::EndpointRoot)
+            .count();
+        assert_eq!(endpoint_roots, 1);
+        assert!(
+            complete[1]
+                .intervals
+                .iter()
+                .any(|interval| interval.status == BernsteinSubdivisionIntervalStatus::Empty)
+        );
+
+        let depth_limited = subdivide_bernstein_univariate_polynomial_interval_roots(
+            &analysis,
+            real(0),
+            real(4),
+            BernsteinSubdivisionConfig {
+                policy: PredicatePolicy::APPROXIMATE_512,
+                max_depth: 0,
+            },
+        );
+        assert_eq!(
+            depth_limited[0].status,
+            BernsteinSubdivisionStatus::DepthLimit
+        );
+        assert!(depth_limited[0].intervals.iter().any(|interval| {
+            interval.status == BernsteinSubdivisionIntervalStatus::DepthLimit
+                && interval.variation_bound.unwrap_or(0) > 1
+        }));
+    }
+
+    proptest! {
+        #[test]
+        fn bernstein_generated_quadratic_interval_counts_one_interior_root(
+            root in -16_i16..=16,
+            other in -32_i16..=32,
+        ) {
+            let root = i64::from(root);
+            let other = i64::from(other);
+            prop_assume!(other < root - 1 || other > root + 1);
+            let x = Expr::symbol(SymbolId(0), "x");
+            let mut problem = Problem::default();
+            problem.add_variable("x", real(0));
+            problem.add_constraint(Constraint::equality(
+                "generated one interval root",
+                (x.clone() - Expr::int(root)) * (x - Expr::int(other)),
+            ));
+
+            let reports = count_bernstein_univariate_polynomial_interval_roots(
+                &problem.analyze(),
+                real(root - 1),
+                real(root + 1),
+                PredicatePolicy::APPROXIMATE_512,
+            );
+
+            prop_assert_eq!(reports.len(), 1);
+            prop_assert_eq!(&reports[0].status, &BernsteinRootCountStatus::Counted);
+            prop_assert_eq!(reports[0].root_at_lower, Some(false));
+            prop_assert_eq!(reports[0].root_at_upper, Some(false));
+            prop_assert_eq!(reports[0].variation_bound, Some(1));
+            prop_assert_eq!(reports[0].root_count_parity, Some(1));
+        }
+    }
+}

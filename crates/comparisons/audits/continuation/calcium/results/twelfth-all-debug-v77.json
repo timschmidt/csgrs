@@ -1,0 +1,23 @@
+{
+  "tag": "twelfth-all-debug-v77",
+  "started": "2026-09-11T22:58:32.842Z",
+  "finished": "2026-09-11T22:58:48.684Z",
+  "elapsedSeconds": 15.839732566999999,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/twelfth-relation-candidate-v77/hyperreal",
+  "command": "env",
+  "args": [
+    "CARGO_TARGET_DIR=/tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse",
+    "CARGO_INCREMENTAL=0",
+    "CARGO_PROFILE_DEV_DEBUG=0",
+    "CARGO_BUILD_JOBS=2",
+    "cargo",
+    "test",
+    "--locked",
+    "--offline",
+    "--all-features",
+    "--lib",
+    "--tests"
+  ],
+  "code": 0,
+  "signal": null
+}

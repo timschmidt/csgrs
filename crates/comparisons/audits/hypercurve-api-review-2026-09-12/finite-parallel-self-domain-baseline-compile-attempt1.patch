@@ -1,0 +1,90 @@
+diff --git a/src/curve_region_boolean.rs b/src/curve_region_boolean.rs
+index 001831e..adde70e 100644
+--- a/src/curve_region_boolean.rs
++++ b/src/curve_region_boolean.rs
+@@ -19803,6 +19803,85 @@ mod certified_successor_tests {
+         }
+     }
+ 
++    #[test]
++    fn finite_parallel_self_contacts_retain_active_domain() {
++        let p = Point2::from_values;
++        let q = |n, d| (Real::from(n) / Real::from(d)).unwrap();
++        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
++            for finite in [false, true] {
++                let source = if finite {
++                    CubicBezier2::new(
++                        p(-1, 0),
++                        Point2::new((-1).into(), q(-1, 3)),
++                        Point2::new(q(-2, 3), q(-2, 3)),
++                        p(0, 0),
++                    )
++                } else {
++                    CubicBezier2::new(
++                        p(3, -6),
++                        Point2::new(q(-7, 3), q(26, 3)),
++                        Point2::new(q(-7, 3), q(-26, 3)),
++                        p(3, 6),
++                    )
++                };
++                let parallel = source.parallel_left(Real::zero()).unwrap();
++                let fragment = BezierParallelFragment2::from_certified_range(
++                    parallel,
++                    BezierParameterRange2::new_validated(
++                        BezierParameter2::Exact(if finite { (-2).into() } else { 0.into() }),
++                        BezierParameter2::Exact(if finite { 2.into() } else { 1.into() }),
++                    ),
++                    false,
++                );
++                let region = CurveRegion2::new(vec![
++                    CurveRegionBoundaryLoop2::new(
++                        vec![
++                            BezierSplitFragment2::AnalyticParallel(fragment),
++                            BezierSplitFragment2::AlgebraicChord(decided(
++                                BezierAlgebraicChord2::try_new(
++                                    p(3, 6).into(),
++                                    p(3, -6).into(),
++                                    &policy,
++                                )
++                                .unwrap(),
++                            )),
++                        ],
++                        &policy,
++                    )
++                    .unwrap(),
++                ])
++                .unwrap();
++                let context = CurveRegionBooleanContext::try_new_unary(&region, &policy).unwrap();
++                let pair = context
++                    .data
++                    .pairs
++                    .iter()
++                    .find(|pair| pair.first_carrier_index == 0 && pair.second_carrier_index == 0)
++                    .expect("the noninjective active range needs self-incidence");
++                let result = context.pair_result(pair).unwrap();
++                assert!(result.blockers.is_empty(), "finite={finite}: {result:?}");
++                assert_eq!(result.contacts.len(), 1, "finite={finite}: {result:?}");
++                let contact = &result.contacts[0];
++                for (actual, expected) in [
++                    (
++                        contact.first_parameter(),
++                        if finite { Real::from(-1) } else { q(1, 4) },
++                    ),
++                    (
++                        contact.second_parameter(),
++                        if finite { Real::one() } else { q(3, 4) },
++                    ),
++                ] {
++                    assert_eq!(
++                        actual.same_value(&expected.into(), &policy).unwrap(),
++                        Classification::Decided(true)
++                    );
++                }
++                assert!(contact.is_certified_transverse());
++            }
++        }
++    }
++
+     #[test]
+     fn finite_self_crossing_regions_retain_boundary_ownership_on_reentry() {
+         fn certified<T>(outcome: CurveOutcome<T>) -> T {

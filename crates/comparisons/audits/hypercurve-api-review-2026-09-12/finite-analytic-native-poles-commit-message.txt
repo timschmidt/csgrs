@@ -1,0 +1,14 @@
+Fall back to finite analytic discovery when native evidence is incomplete
+
+A retained interval can exclude a pole elsewhere in its native source span.
+Require complete native pair evidence before accepting that fast path;
+otherwise reuse the common finite-domain solver in the original charts.
+
+The public regression repairs all 32 previously blocked displaced cases in
+its 128-case matrix. It verifies exact contacts, location replay, traversal
+and operand order under both policies. Preserve optional native tangent
+evidence while checking the displaced contact certificates and signs.
+
+Validation with pinned dependencies: 2,294 tests passed across Hypercurve and
+HyperBREP; five existing failures, nine ignored and eight prior expensive
+exclusions remain. Six focused tests and 34 public probes/matrices pass.

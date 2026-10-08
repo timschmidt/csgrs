@@ -1,0 +1,31 @@
+{
+  "root": "/tmp/calcium-point-wasm.jPk2WY",
+  "artifacts": [
+    {
+      "variant": "baseline",
+      "path": "/tmp/calcium-point-wasm.jPk2WY/baseline.wasm",
+      "bytes": 1614156,
+      "sha256": "f9dc6f45bdb901e9386de7d8ad509a373bf03ce0babaa1805cb306d059d0e877"
+    },
+    {
+      "variant": "eager",
+      "path": "/tmp/calcium-point-wasm.jPk2WY/eager.wasm",
+      "bytes": 1614371,
+      "sha256": "05ba21965eef756746b54fa05ed38802c7663904cad027a2ed70cd9699c41d1c"
+    },
+    {
+      "variant": "demand",
+      "path": "/tmp/calcium-point-wasm.jPk2WY/demand.wasm",
+      "bytes": 1614858,
+      "sha256": "122381ac7e6cf469605119a8d89f331ab9c3d7dc2faafa0c002efcb2148067c2"
+    }
+  ],
+  "originSha256": "1e77eb0e03ae193af21deaaa1c9910e2c70dc80cb9ff8775229919f1114de0e5",
+  "harnessSources": {
+    "point-history-base.rs": "5db127b416d4cb39a2faed2426f883a3d2b3cb5d8e74ca014f3de28f4e4df9a6",
+    "point-history-work.rs": "194791cab390fd063aa57388e4b36bdc24e3d1cf0fc64e0e49c640f581ba6527",
+    "point-wasm-work.rs": "4b64c97b339c7e00dffb918df53daff71ffe5383f9f8e2dd794ed07874b4bc02",
+    "point-wasm-platform.rs": "3c87c984248513a8da7960377a794665af3f6bd93480b9392bde3271ac10d2f3"
+  },
+  "recorded": "2026-09-10T23:31:33.603Z"
+}

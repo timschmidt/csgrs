@@ -1,0 +1,14 @@
+==470557== Memcheck, a memory error detector
+==470557== Copyright (C) 2002-2026, and GNU GPL'd, by Julian Seward et al.
+==470557== Using Valgrind-3.27.1 and LibVEX; rerun with -h for copyright info
+==470557== Command: /tmp/calcium-scalar-boundary-v81.nLhDoT/controls
+==470557== 
+==470557== 
+==470557== HEAP SUMMARY:
+==470557==     in use at exit: 0 bytes in 0 blocks
+==470557==   total heap usage: 1,682,521 allocs, 1,682,521 frees, 2,220,444,799 bytes allocated
+==470557== 
+==470557== All heap blocks were freed -- no leaks are possible
+==470557== 
+==470557== For lists of detected and suppressed errors, rerun with: -s
+==470557== ERROR SUMMARY: 0 errors from 0 contexts (suppressed: 0 from 0)

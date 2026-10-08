@@ -1,0 +1,1538 @@
+   Compiling autocfg v1.5.1
+   Compiling proc-macro2 v1.0.107
+   Compiling unicode-ident v1.0.24
+   Compiling quote v1.0.47
+   Compiling libc v0.2.189
+   Compiling cfg-if v1.0.4
+   Compiling zerocopy v0.8.56
+   Compiling serde_core v1.0.229
+   Compiling getrandom v0.3.4
+   Compiling crossbeam-utils v0.8.22
+   Compiling crossbeam-epoch v0.9.20
+   Compiling zmij v1.0.23
+   Compiling crossbeam-deque v0.8.7
+   Compiling serde v1.0.229
+   Compiling getrandom v0.4.3
+   Compiling rustix v1.1.4
+   Compiling linux-raw-sys v0.12.1
+   Compiling once_cell v1.21.4
+   Compiling serde_json v1.0.151
+   Compiling bitflags v2.13.1
+   Compiling rayon-core v1.13.0
+   Compiling regex-syntax v0.8.11
+   Compiling either v1.18.0
+   Compiling plotters-backend v0.3.7
+   Compiling ciborium-io v0.2.2
+   Compiling memchr v2.8.3
+   Compiling clap_lex v1.1.0
+   Compiling fastrand v2.5.0
+   Compiling itoa v1.0.18
+   Compiling num-traits v0.2.19
+   Compiling anstyle v1.0.14
+   Compiling itertools v0.10.5
+   Compiling quick-error v1.2.3
+   Compiling clap_builder v4.6.6
+   Compiling fnv v1.0.7
+   Compiling cast v0.3.0
+   Compiling plotters-svg v0.3.7
+   Compiling bit-vec v0.8.0
+   Compiling same-file v1.0.6
+   Compiling exactcore-hyper-comparison v0.1.0 (/home/tim/Documents/GitHub/workspace/csgrs/crates/comparisons)
+   Compiling walkdir v2.5.0
+   Compiling anes v0.1.6
+   Compiling syn v2.0.119
+   Compiling syn v3.0.3
+   Compiling bit-set v0.8.0
+   Compiling oorandom v11.1.5
+   Compiling unarray v0.1.4
+   Compiling wait-timeout v0.2.1
+   Compiling is-terminal v0.4.17
+   Compiling rand_core v0.9.5
+   Compiling num-integer v0.1.47
+   Compiling num-complex v0.4.6
+   Compiling plotters v0.3.7
+   Compiling rand_xorshift v0.4.0
+   Compiling rand v0.9.5
+   Compiling num-bigint v0.4.8
+   Compiling num-iter v0.1.46
+   Compiling rayon v1.12.0
+   Compiling criterion-plot v0.5.0
+   Compiling regex-automata v0.4.18
+   Compiling clap v4.6.6
+   Compiling tempfile v3.27.0
+   Compiling num-rational v0.4.2
+   Compiling serde_derive v1.0.229
+   Compiling rusty-fork v0.3.1
+   Compiling num v0.4.3
+   Compiling hyperreal v0.13.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperreal)
+   Compiling regex v1.13.1
+   Compiling zerocopy-derive v0.8.56
+   Compiling tinytemplate v1.2.1
+   Compiling hyperlattice v0.6.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperlattice)
+   Compiling half v2.7.1
+   Compiling ppv-lite86 v0.2.21
+   Compiling ciborium-ll v0.2.2
+   Compiling rand_chacha v0.9.0
+   Compiling ciborium v0.2.2
+   Compiling proptest v1.11.0
+   Compiling criterion v0.5.1
+   Compiling hyperlimit v0.4.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperlimit)
+   Compiling hypersolve v0.3.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypersolve)
+   Compiling hypertri v0.4.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypertri)
+   Compiling hypermesh v0.1.0 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypermesh)
+   Compiling hyperpath v0.3.0 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperpath)
+   Compiling hypercurve v0.3.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypercurve)
+    Finished `bench` profile [optimized] target(s) in 1m 29s
+     Running unittests src/lib.rs (crates/comparisons/target/release/deps/exactcore_hyper_comparison-758c03218133390f)
+
+running 3 tests
+test operation_catalog::tests::retained_catalog_has_160_unique_operations ... ok
+test smoke_tests::native_oracle_links_and_runs ... ok
+test smoke_tests::retained_feature_fixtures_construct_and_run ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running benches/comparable.rs (crates/comparisons/target/release/deps/comparable-6cf0cd1cf01e51f2)
+Testing rational.add/exactCorelib
+Success
+
+Testing rational.add/exactCorelib-retained
+Success
+
+Testing rational.add/hyper
+Success
+
+Testing rational.subtract/exactCorelib
+Success
+
+Testing rational.subtract/exactCorelib-retained
+Success
+
+Testing rational.subtract/hyper
+Success
+
+Testing rational.multiply/exactCorelib
+Success
+
+Testing rational.multiply/exactCorelib-retained
+Success
+
+Testing rational.multiply/hyper
+Success
+
+Testing rational.divide/exactCorelib
+Success
+
+Testing rational.divide/exactCorelib-retained
+Success
+
+Testing rational.divide/hyper
+Success
+
+Testing rational.negate/exactCorelib
+Success
+
+Testing rational.negate/exactCorelib-retained
+Success
+
+Testing rational.negate/hyper
+Success
+
+Testing rational.absolute/exactCorelib
+Success
+
+Testing rational.absolute/exactCorelib-retained
+Success
+
+Testing rational.absolute/hyper
+Success
+
+Testing rational.reciprocal/exactCorelib
+Success
+
+Testing rational.reciprocal/exactCorelib-retained
+Success
+
+Testing rational.reciprocal/hyper
+Success
+
+Testing rational.compare/exactCorelib
+Success
+
+Testing rational.compare/exactCorelib-retained
+Success
+
+Testing rational.compare/hyper
+Success
+
+Testing rational.parts/exactCorelib
+Success
+
+Testing rational.parts/exactCorelib-retained
+Success
+
+Testing rational.parts/hyper
+Success
+
+Testing real.negate/exactCorelib
+Success
+
+Testing real.negate/exactCorelib-retained
+Success
+
+Testing real.negate/hyper
+Success
+
+Testing real.absolute/exactCorelib
+Success
+
+Testing real.absolute/exactCorelib-retained
+Success
+
+Testing real.absolute/hyper
+Success
+
+Testing real.sqrt/exactCorelib
+Success
+
+Testing real.sqrt/exactCorelib-retained
+Success
+
+Testing real.sqrt/hyper
+Success
+
+Testing real.cbrt/exactCorelib
+Success
+
+Testing real.cbrt/exactCorelib-retained
+Success
+
+Testing real.cbrt/hyper
+Success
+
+Testing real.root_n/exactCorelib
+Success
+
+Testing real.root_n/exactCorelib-retained
+Success
+
+Testing real.root_n/hyper
+Success
+
+Testing real.exp/exactCorelib
+Success
+
+Testing real.exp/exactCorelib-retained
+Success
+
+Testing real.exp/hyper
+Success
+
+Testing real.ln/exactCorelib
+Success
+
+Testing real.ln/exactCorelib-retained
+Success
+
+Testing real.ln/hyper
+Success
+
+Testing real.log2/exactCorelib
+Success
+
+Testing real.log2/exactCorelib-retained
+Success
+
+Testing real.log2/hyper
+Success
+
+Testing real.log10/exactCorelib
+Success
+
+Testing real.log10/exactCorelib-retained
+Success
+
+Testing real.log10/hyper
+Success
+
+Testing real.sin/exactCorelib
+Success
+
+Testing real.sin/exactCorelib-retained
+Success
+
+Testing real.sin/hyper
+Success
+
+Testing real.cos/exactCorelib
+Success
+
+Testing real.cos/exactCorelib-retained
+Success
+
+Testing real.cos/hyper
+Success
+
+Testing real.tan/exactCorelib
+Success
+
+Testing real.tan/exactCorelib-retained
+Success
+
+Testing real.tan/hyper
+Success
+
+Testing real.asin/exactCorelib
+Success
+
+Testing real.asin/exactCorelib-retained
+Success
+
+Testing real.asin/hyper
+Success
+
+Testing real.acos/exactCorelib
+Success
+
+Testing real.acos/exactCorelib-retained
+Success
+
+Testing real.acos/hyper
+Success
+
+Testing real.atan/exactCorelib
+Success
+
+Testing real.atan/exactCorelib-retained
+Success
+
+Testing real.atan/hyper
+Success
+
+Testing real.square/exactCorelib
+Success
+
+Testing real.square/exactCorelib-retained
+Success
+
+Testing real.square/hyper
+Success
+
+Testing real.exp2/exactCorelib
+Success
+
+Testing real.exp2/exactCorelib-retained
+Success
+
+Testing real.exp2/hyper
+Success
+
+Testing real.exp10/exactCorelib
+Success
+
+Testing real.exp10/exactCorelib-retained
+Success
+
+Testing real.exp10/hyper
+Success
+
+Testing real.cot/exactCorelib
+Success
+
+Testing real.cot/exactCorelib-retained
+Success
+
+Testing real.cot/hyper
+Success
+
+Testing real.add/exactCorelib
+Success
+
+Testing real.add/exactCorelib-retained
+Success
+
+Testing real.add/hyper
+Success
+
+Testing real.subtract/exactCorelib
+Success
+
+Testing real.subtract/exactCorelib-retained
+Success
+
+Testing real.subtract/hyper
+Success
+
+Testing real.multiply/exactCorelib
+Success
+
+Testing real.multiply/exactCorelib-retained
+Success
+
+Testing real.multiply/hyper
+Success
+
+Testing real.divide/exactCorelib
+Success
+
+Testing real.divide/exactCorelib-retained
+Success
+
+Testing real.divide/hyper
+Success
+
+Testing real.powi/exactCorelib
+Success
+
+Testing real.powi/exactCorelib-retained
+Success
+
+Testing real.powi/hyper
+Success
+
+Testing real.pi/exactCorelib
+Success
+
+Testing real.pi/exactCorelib-retained
+Success
+
+Testing real.pi/hyper
+Success
+
+Testing real.e/exactCorelib
+Success
+
+Testing real.e/exactCorelib-retained
+Success
+
+Testing real.e/hyper
+Success
+
+Testing real.sign/exactCorelib
+Success
+
+Testing real.sign/exactCorelib-retained
+Success
+
+Testing real.sign/hyper
+Success
+
+Testing real.floor/exactCorelib
+Success
+
+Testing real.floor/exactCorelib-retained
+Success
+
+Testing real.floor/hyper
+Success
+
+Testing real.ceil/exactCorelib
+Success
+
+Testing real.ceil/exactCorelib-retained
+Success
+
+Testing real.ceil/hyper
+Success
+
+Testing complex.add/exactCorelib
+Success
+
+Testing complex.add/exactCorelib-retained
+Success
+
+Testing complex.add/hyper
+Success
+
+Testing complex.subtract/exactCorelib
+Success
+
+Testing complex.subtract/exactCorelib-retained
+Success
+
+Testing complex.subtract/hyper
+Success
+
+Testing complex.multiply/exactCorelib
+Success
+
+Testing complex.multiply/exactCorelib-retained
+Success
+
+Testing complex.multiply/hyper
+Success
+
+Testing complex.divide/exactCorelib
+Success
+
+Testing complex.divide/exactCorelib-retained
+Success
+
+Testing complex.divide/hyper
+Success
+
+Testing complex.norm_squared/exactCorelib
+Success
+
+Testing complex.norm_squared/exactCorelib-retained
+Success
+
+Testing complex.norm_squared/hyper
+Success
+
+Testing vector2.add/exactCorelib
+Success
+
+Testing vector2.add/exactCorelib-retained
+Success
+
+Testing vector2.add/hyper
+Success
+
+Testing vector2.subtract/exactCorelib
+Success
+
+Testing vector2.subtract/exactCorelib-retained
+Success
+
+Testing vector2.subtract/hyper
+Success
+
+Testing vector2.dot/exactCorelib
+Success
+
+Testing vector2.dot/exactCorelib-retained
+Success
+
+Testing vector2.dot/hyper
+Success
+
+Testing vector2.norm/exactCorelib
+Success
+
+Testing vector2.norm/exactCorelib-retained
+Success
+
+Testing vector2.norm/hyper
+Success
+
+Testing vector2.wedge/exactCorelib
+Success
+
+Testing vector2.wedge/exactCorelib-retained
+Success
+
+Testing vector2.wedge/hyper
+Success
+
+Testing vector3.add/exactCorelib
+Success
+
+Testing vector3.add/exactCorelib-retained
+Success
+
+Testing vector3.add/hyper
+Success
+
+Testing vector3.subtract/exactCorelib
+Success
+
+Testing vector3.subtract/exactCorelib-retained
+Success
+
+Testing vector3.subtract/hyper
+Success
+
+Testing vector3.dot/exactCorelib
+Success
+
+Testing vector3.dot/exactCorelib-retained
+Success
+
+Testing vector3.dot/hyper
+Success
+
+Testing vector3.cross/exactCorelib
+Success
+
+Testing vector3.cross/exactCorelib-retained
+Success
+
+Testing vector3.cross/hyper
+Success
+
+Testing vector3.norm/exactCorelib
+Success
+
+Testing vector3.norm/exactCorelib-retained
+Success
+
+Testing vector3.norm/hyper
+Success
+
+Testing vector4.add/exactCorelib
+Success
+
+Testing vector4.add/exactCorelib-retained
+Success
+
+Testing vector4.add/hyper
+Success
+
+Testing vector4.subtract/exactCorelib
+Success
+
+Testing vector4.subtract/exactCorelib-retained
+Success
+
+Testing vector4.subtract/hyper
+Success
+
+Testing vector4.dot/exactCorelib
+Success
+
+Testing vector4.dot/exactCorelib-retained
+Success
+
+Testing vector4.dot/hyper
+Success
+
+Testing vector4.norm/exactCorelib
+Success
+
+Testing vector4.norm/exactCorelib-retained
+Success
+
+Testing vector4.norm/hyper
+Success
+
+Testing matrix3.add/exactCorelib
+Success
+
+Testing matrix3.add/exactCorelib-retained
+Success
+
+Testing matrix3.add/hyper
+Success
+
+Testing matrix3.subtract/exactCorelib
+Success
+
+Testing matrix3.subtract/exactCorelib-retained
+Success
+
+Testing matrix3.subtract/hyper
+Success
+
+Testing matrix3.multiply/exactCorelib
+Success
+
+Testing matrix3.multiply/exactCorelib-retained
+Success
+
+Testing matrix3.multiply/hyper
+Success
+
+Testing matrix3.transpose/exactCorelib
+Success
+
+Testing matrix3.transpose/exactCorelib-retained
+Success
+
+Testing matrix3.transpose/hyper
+Success
+
+Testing matrix3.determinant/exactCorelib
+Success
+
+Testing matrix3.determinant/exactCorelib-retained
+Success
+
+Testing matrix3.determinant/hyper
+Success
+
+Testing matrix3.inverse/exactCorelib
+Success
+
+Testing matrix3.inverse/exactCorelib-retained
+Success
+
+Testing matrix3.inverse/hyper
+Success
+
+Testing matrix4.add/exactCorelib
+Success
+
+Testing matrix4.add/exactCorelib-retained
+Success
+
+Testing matrix4.add/hyper
+Success
+
+Testing matrix4.subtract/exactCorelib
+Success
+
+Testing matrix4.subtract/exactCorelib-retained
+Success
+
+Testing matrix4.subtract/hyper
+Success
+
+Testing matrix4.multiply/exactCorelib
+Success
+
+Testing matrix4.multiply/exactCorelib-retained
+Success
+
+Testing matrix4.multiply/hyper
+Success
+
+Testing matrix4.transpose/exactCorelib
+Success
+
+Testing matrix4.transpose/exactCorelib-retained
+Success
+
+Testing matrix4.transpose/hyper
+Success
+
+Testing matrix4.determinant/exactCorelib
+Success
+
+Testing matrix4.determinant/exactCorelib-retained
+Success
+
+Testing matrix4.determinant/hyper
+Success
+
+Testing matrix4.inverse/exactCorelib
+Success
+
+Testing matrix4.inverse/exactCorelib-retained
+Success
+
+Testing matrix4.inverse/hyper
+Success
+
+Testing geometry2.orientation/exactCorelib
+Success
+
+Testing geometry2.orientation/exactCorelib-retained
+Success
+
+Testing geometry2.orientation/hyper
+Success
+
+Testing geometry2.area/exactCorelib
+Success
+
+Testing geometry2.area/exactCorelib-retained
+Success
+
+Testing geometry2.area/hyper
+Success
+
+Testing geometry2.between/exactCorelib
+Success
+
+Testing geometry2.between/exactCorelib-retained
+Success
+
+Testing geometry2.between/hyper
+Success
+
+Testing geometry2.line_relation_0/exactCorelib
+Success
+
+Testing geometry2.line_relation_0/exactCorelib-retained
+Success
+
+Testing geometry2.line_relation_0/hyper
+Success
+
+Testing geometry2.line_relation_1/exactCorelib
+Success
+
+Testing geometry2.line_relation_1/exactCorelib-retained
+Success
+
+Testing geometry2.line_relation_1/hyper
+Success
+
+Testing geometry2.line_relation_2/exactCorelib
+Success
+
+Testing geometry2.line_relation_2/exactCorelib-retained
+Success
+
+Testing geometry2.line_relation_2/hyper
+Success
+
+Testing geometry2.line_relation_3/exactCorelib
+Success
+
+Testing geometry2.line_relation_3/exactCorelib-retained
+Success
+
+Testing geometry2.line_relation_3/hyper
+Success
+
+Testing geometry2.line_relation_4/exactCorelib
+Success
+
+Testing geometry2.line_relation_4/exactCorelib-retained
+Success
+
+Testing geometry2.line_relation_4/hyper
+Success
+
+Testing geometry2.line_relation_5/exactCorelib
+Success
+
+Testing geometry2.line_relation_5/exactCorelib-retained
+Success
+
+Testing geometry2.line_relation_5/hyper
+Success
+
+Testing geometry2.line_relation_6/exactCorelib
+Success
+
+Testing geometry2.line_relation_6/exactCorelib-retained
+Success
+
+Testing geometry2.line_relation_6/hyper
+Success
+
+Testing geometry2.line_intersection/exactCorelib
+Success
+
+Testing geometry2.line_intersection/exactCorelib-retained
+Success
+
+Testing geometry2.line_intersection/hyper
+Success
+
+Testing geometry2.segment_relation_0/exactCorelib
+Success
+
+Testing geometry2.segment_relation_0/exactCorelib-retained
+Success
+
+Testing geometry2.segment_relation_0/hyper
+Success
+
+Testing geometry2.segment_relation_1/exactCorelib
+Success
+
+Testing geometry2.segment_relation_1/exactCorelib-retained
+Success
+
+Testing geometry2.segment_relation_1/hyper
+Success
+
+Testing geometry2.segment_relation_2/exactCorelib
+Success
+
+Testing geometry2.segment_relation_2/exactCorelib-retained
+Success
+
+Testing geometry2.segment_relation_2/hyper
+Success
+
+Testing geometry2.segment_relation_3/exactCorelib
+Success
+
+Testing geometry2.segment_relation_3/exactCorelib-retained
+Success
+
+Testing geometry2.segment_relation_3/hyper
+Success
+
+Testing geometry2.incircle/exactCorelib
+Success
+
+Testing geometry2.incircle/exactCorelib-retained
+Success
+
+Testing geometry2.incircle/hyper
+Success
+
+Testing geometry2.circle_line/exactCorelib
+Success
+
+Testing geometry2.circle_line/exactCorelib-retained
+Success
+
+Testing geometry2.circle_line/hyper
+Success
+
+Testing geometry2.circle_segment/exactCorelib
+Success
+
+Testing geometry2.circle_segment/exactCorelib-retained
+Success
+
+Testing geometry2.circle_segment/hyper
+Success
+
+Testing geometry2.circle_point_distance/exactCorelib
+Success
+
+Testing geometry2.circle_point_distance/exactCorelib-retained
+Success
+
+Testing geometry2.circle_point_distance/hyper
+Success
+
+Testing geometry2.circle_circle_distance/exactCorelib
+Success
+
+Testing geometry2.circle_circle_distance/exactCorelib-retained
+Success
+
+Testing geometry2.circle_circle_distance/hyper
+Success
+
+Testing geometry2.point_distance/exactCorelib
+Success
+
+Testing geometry2.point_distance/exactCorelib-retained
+Success
+
+Testing geometry2.point_distance/hyper
+Success
+
+Testing geometry2.line_point_distance/exactCorelib
+Success
+
+Testing geometry2.line_point_distance/exactCorelib-retained
+Success
+
+Testing geometry2.line_point_distance/hyper
+Success
+
+Testing geometry2.segment_point_distance/exactCorelib
+Success
+
+Testing geometry2.segment_point_distance/exactCorelib-retained
+Success
+
+Testing geometry2.segment_point_distance/hyper
+Success
+
+Testing geometry3.orientation/exactCorelib
+Success
+
+Testing geometry3.orientation/exactCorelib-retained
+Success
+
+Testing geometry3.orientation/hyper
+Success
+
+Testing geometry3.volume/exactCorelib
+Success
+
+Testing geometry3.volume/exactCorelib-retained
+Success
+
+Testing geometry3.volume/hyper
+Success
+
+Testing geometry3.line_relation_0/exactCorelib
+Success
+
+Testing geometry3.line_relation_0/exactCorelib-retained
+Success
+
+Testing geometry3.line_relation_0/hyper
+Success
+
+Testing geometry3.line_relation_1/exactCorelib
+Success
+
+Testing geometry3.line_relation_1/exactCorelib-retained
+Success
+
+Testing geometry3.line_relation_1/hyper
+Success
+
+Testing geometry3.line_relation_2/exactCorelib
+Success
+
+Testing geometry3.line_relation_2/exactCorelib-retained
+Success
+
+Testing geometry3.line_relation_2/hyper
+Success
+
+Testing geometry3.line_relation_3/exactCorelib
+Success
+
+Testing geometry3.line_relation_3/exactCorelib-retained
+Success
+
+Testing geometry3.line_relation_3/hyper
+Success
+
+Testing geometry3.line_relation_4/exactCorelib
+Success
+
+Testing geometry3.line_relation_4/exactCorelib-retained
+Success
+
+Testing geometry3.line_relation_4/hyper
+Success
+
+Testing geometry3.segment_relation_0/exactCorelib
+Success
+
+Testing geometry3.segment_relation_0/exactCorelib-retained
+Success
+
+Testing geometry3.segment_relation_0/hyper
+Success
+
+Testing geometry3.segment_relation_1/exactCorelib
+Success
+
+Testing geometry3.segment_relation_1/exactCorelib-retained
+Success
+
+Testing geometry3.segment_relation_1/hyper
+Success
+
+Testing geometry3.segment_relation_2/exactCorelib
+Success
+
+Testing geometry3.segment_relation_2/exactCorelib-retained
+Success
+
+Testing geometry3.segment_relation_2/hyper
+Success
+
+Testing geometry3.segment_relation_3/exactCorelib
+Success
+
+Testing geometry3.segment_relation_3/exactCorelib-retained
+Success
+
+Testing geometry3.segment_relation_3/hyper
+Success
+
+Testing geometry3.plane_relation_0/exactCorelib
+Success
+
+Testing geometry3.plane_relation_0/exactCorelib-retained
+Success
+
+Testing geometry3.plane_relation_0/hyper
+Success
+
+Testing geometry3.plane_relation_1/exactCorelib
+Success
+
+Testing geometry3.plane_relation_1/exactCorelib-retained
+Success
+
+Testing geometry3.plane_relation_1/hyper
+Success
+
+Testing geometry3.plane_relation_2/exactCorelib
+Success
+
+Testing geometry3.plane_relation_2/exactCorelib-retained
+Success
+
+Testing geometry3.plane_relation_2/hyper
+Success
+
+Testing geometry3.plane_relation_3/exactCorelib
+Success
+
+Testing geometry3.plane_relation_3/exactCorelib-retained
+Success
+
+Testing geometry3.plane_relation_3/hyper
+Success
+
+Testing geometry3.plane_relation_4/exactCorelib
+Success
+
+Testing geometry3.plane_relation_4/exactCorelib-retained
+Success
+
+Testing geometry3.plane_relation_4/hyper
+Success
+
+Testing geometry3.plane_relation_5/exactCorelib
+Success
+
+Testing geometry3.plane_relation_5/exactCorelib-retained
+Success
+
+Testing geometry3.plane_relation_5/hyper
+Success
+
+Testing geometry3.plane_relation_6/exactCorelib
+Success
+
+Testing geometry3.plane_relation_6/exactCorelib-retained
+Success
+
+Testing geometry3.plane_relation_6/hyper
+Success
+
+Testing geometry3.plane_relation_7/exactCorelib
+Success
+
+Testing geometry3.plane_relation_7/exactCorelib-retained
+Success
+
+Testing geometry3.plane_relation_7/hyper
+Success
+
+Testing geometry3.point_distance/exactCorelib
+Success
+
+Testing geometry3.point_distance/exactCorelib-retained
+Success
+
+Testing geometry3.point_distance/hyper
+Success
+
+Testing geometry3.line_point_distance/exactCorelib
+Success
+
+Testing geometry3.line_point_distance/exactCorelib-retained
+Success
+
+Testing geometry3.line_point_distance/hyper
+Success
+
+Testing geometry3.segment_point_distance/exactCorelib
+Success
+
+Testing geometry3.segment_point_distance/exactCorelib-retained
+Success
+
+Testing geometry3.segment_point_distance/hyper
+Success
+
+Testing geometry3.plane_point_distance/exactCorelib
+Success
+
+Testing geometry3.plane_point_distance/exactCorelib-retained
+Success
+
+Testing geometry3.plane_point_distance/hyper
+Success
+
+Testing geometry3.triangle_relation_0/exactCorelib
+Success
+
+Testing geometry3.triangle_relation_0/exactCorelib-retained
+Success
+
+Testing geometry3.triangle_relation_0/hyper
+Success
+
+Testing geometry3.triangle_relation_1/exactCorelib
+Success
+
+Testing geometry3.triangle_relation_1/exactCorelib-retained
+Success
+
+Testing geometry3.triangle_relation_1/hyper
+Success
+
+Testing geometry3.triangle_relation_2/exactCorelib
+Success
+
+Testing geometry3.triangle_relation_2/exactCorelib-retained
+Success
+
+Testing geometry3.triangle_relation_2/hyper
+Success
+
+Testing geometry3.triangle_relation_3/exactCorelib
+Success
+
+Testing geometry3.triangle_relation_3/exactCorelib-retained
+Success
+
+Testing geometry3.triangle_relation_3/hyper
+Success
+
+Testing geometry3.triangle_relation_4/exactCorelib
+Success
+
+Testing geometry3.triangle_relation_4/exactCorelib-retained
+Success
+
+Testing geometry3.triangle_relation_4/hyper
+Success
+
+Testing geometry3.triangle_relation_5/exactCorelib
+Success
+
+Testing geometry3.triangle_relation_5/exactCorelib-retained
+Success
+
+Testing geometry3.triangle_relation_5/hyper
+Success
+
+Testing geometry3.triangle_relation_6/exactCorelib
+Success
+
+Testing geometry3.triangle_relation_6/exactCorelib-retained
+Success
+
+Testing geometry3.triangle_relation_6/hyper
+Success
+
+Testing polynomial.evaluate/exactCorelib
+Success
+
+Testing polynomial.evaluate/exactCorelib-retained
+Success
+
+Testing polynomial.evaluate/hyper
+Success
+
+Testing polynomial.binary_0/exactCorelib
+Success
+
+Testing polynomial.binary_0/exactCorelib-retained
+Success
+
+Testing polynomial.binary_0/hyper
+Success
+
+Testing polynomial.binary_1/exactCorelib
+Success
+
+Testing polynomial.binary_1/exactCorelib-retained
+Success
+
+Testing polynomial.binary_1/hyper
+Success
+
+Testing polynomial.binary_2/exactCorelib
+Success
+
+Testing polynomial.binary_2/exactCorelib-retained
+Success
+
+Testing polynomial.binary_2/hyper
+Success
+
+Testing polynomial.binary_3/exactCorelib
+Success
+
+Testing polynomial.binary_3/exactCorelib-retained
+Success
+
+Testing polynomial.binary_3/hyper
+Success
+
+Testing polynomial.binary_4/exactCorelib
+Success
+
+Testing polynomial.binary_4/exactCorelib-retained
+Success
+
+Testing polynomial.binary_4/hyper
+Success
+
+Testing polynomial.derivative/exactCorelib
+Success
+
+Testing polynomial.derivative/exactCorelib-retained
+Success
+
+Testing polynomial.derivative/hyper
+Success
+
+Testing polynomial.resultant/exactCorelib
+Success
+
+Testing polynomial.resultant/exactCorelib-retained
+Success
+
+Testing polynomial.resultant/hyper
+Success
+
+Testing polynomial.discriminant/exactCorelib
+Success
+
+Testing polynomial.discriminant/exactCorelib-retained
+Success
+
+Testing polynomial.discriminant/hyper
+Success
+
+Testing polynomial.gcd/exactCorelib
+Success
+
+Testing polynomial.gcd/exactCorelib-retained
+Success
+
+Testing polynomial.gcd/hyper
+Success
+
+Testing polynomial.square_free/exactCorelib
+Success
+
+Testing polynomial.square_free/exactCorelib-retained
+Success
+
+Testing polynomial.square_free/hyper
+Success
+
+Testing polynomial.root_count/exactCorelib
+Success
+
+Testing polynomial.root_count/exactCorelib-retained
+Success
+
+Testing polynomial.root_count/hyper
+Success
+
+Testing polynomial.root_count_interval/exactCorelib
+Success
+
+Testing polynomial.root_count_interval/exactCorelib-retained
+Success
+
+Testing polynomial.root_count_interval/hyper
+Success
+
+Testing polynomial.root_isolation/exactCorelib
+Success
+
+Testing polynomial.root_isolation/exactCorelib-retained
+Success
+
+Testing polynomial.root_isolation/hyper
+Success
+
+Testing bivariate.evaluate/exactCorelib
+Success
+
+Testing bivariate.evaluate/exactCorelib-retained
+Success
+
+Testing bivariate.evaluate/hyper
+Success
+
+Testing bivariate.resultant/exactCorelib
+Success
+
+Testing bivariate.resultant/exactCorelib-retained
+Success
+
+Testing bivariate.resultant/hyper
+Success
+
+Testing triangulation.delaunay_complex/exactCorelib
+Success
+
+Testing triangulation.delaunay_complex/exactCorelib-retained
+Success
+
+Testing triangulation.delaunay_complex/hyper
+Success
+
+     Running benches/curves.rs (crates/comparisons/target/release/deps/curves-7b6e5dad2f4019a3)
+Testing curve.line_length/exactCorelib
+Success
+
+Testing curve.line_length/exactCorelib-retained
+Success
+
+Testing curve.line_length/hypercurve
+Success
+
+Testing curve.line_side/exactCorelib
+Success
+
+Testing curve.line_side/exactCorelib-retained
+Success
+
+Testing curve.line_side/hypercurve
+Success
+
+Testing curve.line_contains_point/exactCorelib
+Success
+
+Testing curve.line_contains_point/exactCorelib-retained
+Success
+
+Testing curve.line_contains_point/hypercurve
+Success
+
+Testing curve.line_intersection_topology/exactCorelib
+Success
+
+Testing curve.line_intersection_topology/exactCorelib-retained
+Success
+
+Testing curve.line_intersection_topology/hypercurve
+Success
+
+Testing curve.line_intersection_witness/exactCorelib
+Success
+
+Testing curve.line_intersection_witness/exactCorelib-retained
+Success
+
+Testing curve.line_intersection_witness/hypercurve
+Success
+
+Testing curve.segment_dispatch/exactCorelib
+Success
+
+Testing curve.segment_dispatch/exactCorelib-retained
+Success
+
+Testing curve.segment_dispatch/hypercurve
+Success
+
+Testing curve.supporting_line_circle/exactCorelib
+Success
+
+Testing curve.supporting_line_circle/exactCorelib-retained
+Success
+
+Testing curve.supporting_line_circle/hypercurve
+Success
+
+Testing curve.circle_point_distance/exactCorelib
+Success
+
+Testing curve.circle_point_distance/exactCorelib-retained
+Success
+
+Testing curve.circle_point_distance/hypercurve
+Success
+
+Testing curve.circle_circle_relation/exactCorelib
+Success
+
+Testing curve.circle_circle_relation/exactCorelib-retained
+Success
+
+Testing curve.circle_circle_relation/hypercurve
+Success
+
+     Running benches/meshes.rs (crates/comparisons/target/release/deps/meshes-16545862e342d62e)
+Testing mesh.plane_point_classification/exactCorelib
+Success
+
+Testing mesh.plane_point_classification/exactCorelib-retained
+Success
+
+Testing mesh.plane_point_classification/hypermesh
+Success
+
+Testing mesh.triangle_contains_point/exactCorelib
+Success
+
+Testing mesh.triangle_contains_point/exactCorelib-retained
+Success
+
+Testing mesh.triangle_contains_point/hypermesh
+Success
+
+Testing mesh.triangle_contains_point_strictly/exactCorelib
+Success
+
+Testing mesh.triangle_contains_point_strictly/exactCorelib-retained
+Success
+
+Testing mesh.triangle_contains_point_strictly/hypermesh
+Success
+
+Testing mesh.triangle_boundary_point/exactCorelib
+Success
+
+Testing mesh.triangle_boundary_point/exactCorelib-retained
+Success
+
+Testing mesh.triangle_boundary_point/hypermesh
+Success
+
+Testing mesh.triangle_triangle_intersection/exactCorelib
+Success
+
+Testing mesh.triangle_triangle_intersection/exactCorelib-retained
+Success
+
+Testing mesh.triangle_triangle_intersection/hypermesh
+Success
+
+     Running benches/paths.rs (crates/comparisons/target/release/deps/paths-8168283166780cd5)
+Testing path.line_length/exactCorelib
+Success
+
+Testing path.line_length/exactCorelib-retained
+Success
+
+Testing path.line_length/hyperpath
+Success
+
+Testing path.line_axis_classification/exactCorelib
+Success
+
+Testing path.line_axis_classification/exactCorelib-retained
+Success
+
+Testing path.line_axis_classification/hyperpath
+Success
+
+Testing path.line_endpoint_equality/exactCorelib
+Success
+
+Testing path.line_endpoint_equality/exactCorelib-retained
+Success
+
+Testing path.line_endpoint_equality/hyperpath
+Success
+
+Testing path.line_parameter_order/exactCorelib
+Success
+
+Testing path.line_parameter_order/exactCorelib-retained
+Success
+
+Testing path.line_parameter_order/hyperpath
+Success
+
+Testing path.circle_point_membership/exactCorelib
+Success
+
+Testing path.circle_point_membership/exactCorelib-retained
+Success
+
+Testing path.circle_point_membership/hyperpath
+Success
+
+Testing path.circle_segment_intersection/exactCorelib
+Success
+
+Testing path.circle_segment_intersection/exactCorelib-retained
+Success
+
+Testing path.circle_segment_intersection/hyperpath
+Success
+
+Testing path.circle_circle_relation/exactCorelib
+Success
+
+Testing path.circle_circle_relation/exactCorelib-retained
+Success
+
+Testing path.circle_circle_relation/hyperpath
+Success
+

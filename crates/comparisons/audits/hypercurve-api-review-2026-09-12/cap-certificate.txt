@@ -1,0 +1,7 @@
+W power: [Fraction(1, 1), Fraction(5, 1), Fraction(0, 1), Fraction(0, 1), Fraction(0, 1), Fraction(1, 1)]
+tangent x Bernstein: [Fraction(10, 1), Fraction(50, 3), Fraction(30, 1), Fraction(50, 1), Fraction(235, 3), Fraction(385, 3), Fraction(175, 1)]
+curvature numerator Bernstein: [Fraction(0, 1), Fraction(-2400, 13), Fraction(-7500, 13), Fraction(-14000, 11), Fraction(-344400, 143), Fraction(-1778000, 429), Fraction(-2843525, 429), Fraction(-128875, 13), Fraction(-17818000, 1287), Fraction(-2563800, 143), Fraction(-3032750, 143), Fraction(-285600, 13), Fraction(-220500, 13), Fraction(0, 1)]
+x tangent strictly positive: True
+curvature nonpositive: True
+Endpoint squared speeds: [Fraction(200, 1), Fraction(1250, 49)]
+Both endpoint curvatures vanish, so regular parallel derivatives have the same endpoint speeds.

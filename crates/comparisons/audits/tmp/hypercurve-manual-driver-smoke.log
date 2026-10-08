@@ -1,0 +1,15 @@
+
+running 5 tests
+test bezier_offset::conversion_tests::benchmark_correlated_circle_partition_offset_driver ... correlated_circle_partition_offset mode=mapped complete=true iterations=1 elapsed_ns=94173 ns_per_iter=94173.000 checksum=2
+ok
+test bezier_offset::conversion_tests::benchmark_independent_oblique_chord_cap_offset_driver ... independent_oblique_chord_cap mode=prebuilt_reoffset complete=true iterations=1 elapsed_ns=129310756 ns_per_iter=129310756.000 checksum=8
+ok
+test bezier_offset::conversion_tests::benchmark_nested_chord_mapped_cap_offset_driver ... nested_chord_mapped_cap mode=mapped_exact_offset complete=true iterations=1 elapsed_ns=4391858 ns_per_iter=4391858.000 checksum=4
+ok
+test bezier_offset::conversion_tests::benchmark_nonendpoint_rational_mapped_cap_offset_driver ... nonendpoint_rational_mapped_cap mode=exact_offset complete=true iterations=1 elapsed_ns=3047431 ns_per_iter=3047431.000 checksum=4
+ok
+test bezier_offset::conversion_tests::benchmark_pair_mapped_lens_offset_driver ... pair_mapped_lens_offset mode=exact_offset complete=true iterations=1 elapsed_ns=18452704 ns_per_iter=18452704.000 checksum=6
+ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 872 filtered out; finished in 1.04s
+

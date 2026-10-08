@@ -1,0 +1,22 @@
+{
+  "returncode": 0,
+  "elapsed_seconds": 0.003562266007065773,
+  "command": [
+    "rustc",
+    "--edition=2024",
+    "-O",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-region-winding-public.rs",
+    "--extern",
+    "hypercurve=/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/libhypercurve-2c7ff6f3fbe07653.rlib",
+    "-L",
+    "dependency=/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps",
+    "-o",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-region-bounds-attempt2-winding"
+  ],
+  "source": "finite-region-winding-public.rs",
+  "source_sha256": "556f33cdfb31390813934e671f2103efecca7fd93fa5c559ab3e8d2927a95d68",
+  "executable_sha256": "596eec8c1c410f812ee56655cdc2d028afeadf830e2d0d845edfd54280daa3a5",
+  "normal_library_sha256": "38e1559e89e0770f45b34c44c6c7eac0c35be41c28adee9120e3ad63b09a565f",
+  "library": "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/libhypercurve-2c7ff6f3fbe07653.rlib",
+  "log": "finite-region-bounds-attempt2-winding.log"
+}

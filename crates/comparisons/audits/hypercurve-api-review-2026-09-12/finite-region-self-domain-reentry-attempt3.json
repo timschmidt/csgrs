@@ -1,0 +1,23 @@
+{
+  "returncode": 0,
+  "elapsed_seconds": 0.007595900009619072,
+  "source": "finite-region-self-domain-reentry-diagnostic.rs",
+  "source_sha256": "578809e34916f19be71a0def9cbbd007b4a70830abb085e9c3cd56cbd7643aec",
+  "normal_library": "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/libhypercurve-2c7ff6f3fbe07653.rlib",
+  "normal_library_sha256": "9780dad4cc2d9ef78340cb1fb2edf3371386a2133995b86152e4643076722048",
+  "executable_sha256": "37dc78134c5959066e05b5ac7becf48b5b3b2a976538fb63de395137cedad286",
+  "log": "finite-region-self-domain-reentry-attempt3.log",
+  "command": [
+    "rustc",
+    "--edition=2024",
+    "-O",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-region-self-domain-reentry-diagnostic.rs",
+    "--extern",
+    "hypercurve=/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/libhypercurve-2c7ff6f3fbe07653.rlib",
+    "-L",
+    "dependency=/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps",
+    "-o",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-region-self-domain-reentry-attempt3"
+  ],
+  "commit": "84956dabadf9afcef4704f5b2dee880a282f1939"
+}

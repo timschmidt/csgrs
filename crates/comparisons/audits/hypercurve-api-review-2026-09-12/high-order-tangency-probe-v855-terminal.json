@@ -1,0 +1,30 @@
+{
+  "baseline": "endpoint-derivative-retention-v852-sources.json",
+  "rlib": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypercurve-85a9105cd1c82df7.rlib",
+  "rlib_sha256": "5acd8f28a33076a2481d7e61c73edb1321198cf6613b714fd965c43d0519bbac",
+  "source_sha256": "c1d579417aade7d24498677a62b794a4f33943263f3f7d21de3da3ccb25c359a",
+  "processes": [
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustc",
+        "--edition=2024",
+        "--crate-name",
+        "high_order_tangency_probe",
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/high-order-tangency-probe-v855.rs",
+        "--extern",
+        "hypercurve=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypercurve-85a9105cd1c82df7.rlib",
+        "-L",
+        "dependency=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps",
+        "-C",
+        "opt-level=3",
+        "-o",
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/high-order-tangency-probe-v855-binary"
+      ],
+      "returncode": 1,
+      "elapsed_seconds": 0.06389160105027258,
+      "log": "high-order-tangency-probe-v855-compile.log"
+    }
+  ],
+  "all_processes_reaped": true,
+  "failure": "compile failed"
+}

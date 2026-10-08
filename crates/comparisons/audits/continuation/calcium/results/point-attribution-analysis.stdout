@@ -1,0 +1,5 @@
+{"pass":0,"groups":8,"measured":1728,"qualification":48,"status":"pass"}
+{"pass":1,"groups":8,"measured":1728,"qualification":48,"status":"pass"}
+{"pass":2,"groups":8,"measured":1728,"qualification":48,"status":"pass"}
+{"pass":3,"groups":8,"measured":1728,"qualification":48,"status":"pass"}
+{"checkpoint":65,"status":"pass","measured":6912,"qualification":192,"emptyControls":1024}

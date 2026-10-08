@@ -1,0 +1,41 @@
+{
+  "source_manifest": "retained-native-circle-contact-20260927-v329-sources.json",
+  "source_directory": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/source-archives/retained-native-circle-contact-20260927-v329",
+  "cases": [
+    {
+      "binary": "retained-native-circle-contact-20260927-v329-hypercurve",
+      "name": "curve::curve_fillet::tests::native_circle_fillet_retains_selected_contacts_through_reconstruction",
+      "returncode": 101,
+      "log": "retained-native-circle-contact-20260927-v329-case-000.log",
+      "elapsed_seconds": 0.11390267603565007
+    }
+  ],
+  "builds": [
+    {
+      "crate": "hypercurve",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "test",
+        "--lib",
+        "--release",
+        "--all-features",
+        "--no-run",
+        "--message-format=json",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "log": "retained-native-circle-contact-20260927-v329-hypercurve-build.log",
+      "elapsed_seconds": 130.65255664498545,
+      "binary": {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-native-circle-contact-20260927-v329-hypercurve",
+        "sha256": "a7085b15a19050e4d6c0763dad17e1c8b60c6ac65a764f3d7c3757d2e4eec641"
+      }
+    }
+  ],
+  "all_processes_reaped": true,
+  "checks": [],
+  "qualification_scope": "Retained native-circle contacts, exact circular reconstruction, fillet and chamfer closure",
+  "failure": "case failure",
+  "qualification_complete": false
+}

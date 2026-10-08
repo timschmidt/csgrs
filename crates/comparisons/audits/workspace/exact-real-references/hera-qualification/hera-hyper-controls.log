@@ -1,0 +1,4 @@
+   Compiling creal-hyper-cache-audit v0.1.0 (/tmp/haskell-creal-audit.rafb8h/hyper-cache)
+    Finished `release` profile [optimized] target(s) in 0.31s
+     Running `/home/tim/Documents/GitHub/workspace/.audit-targets/ireal-derivative-18555/release/hera_controls`
+PASS imports/history=120; MPFR radical-sum/history=72; exact zero/one identities=35

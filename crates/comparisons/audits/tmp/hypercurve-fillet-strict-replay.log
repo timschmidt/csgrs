@@ -1,0 +1,51 @@
+   Compiling hypercurve v0.3.1 (/home/tim/Documents/GitHub/workspace/hypercurve)
+    Finished `release` profile [optimized] target(s) in 1m 06s
+     Running tests/hypercurve_curve_region_promotion.rs (target/release/deps/hypercurve_curve_region_promotion-2922d8dd6e249918)
+
+running 1 test
+test approximate_512_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions has been running for over 60 seconds
+approximate-512 consumed caller=src/bezier_parameter.rs:2623
+   0: <hypercurve::policy::CurveContext>::observe_approximate_512
+   1: hypercurve::classify::real_sign
+   2: <hypercurve::bezier_parameter::BezierParameter2>::refined_isolating_interval
+   3: <hypercurve::bezier_offset::BezierAnalyticParallelPoint2>::conservative_bounds_refined
+   4: <hypercurve::bezier_offset::BezierAlgebraicChordParallelPoint2>::conservative_bounds_refined_impl
+   5: hypercurve::bezier_offset::algebraic_chord_endpoint_bounds_refined_impl
+   6: <hypercurve::bezier_offset::BezierAlgebraicChordParallelPoint2>::conservative_bounds_refined_impl
+   7: hypercurve::bezier_offset::algebraic_chord_endpoint_bounds_refined_impl
+   8: <hypercurve::bezier_offset::BezierAlgebraicCuspSemicircle2>::represented_oblique_chord_intersections_in_domain
+   9: <hypercurve::bezier_offset::BezierAlgebraicCuspSemicircle2>::retained_represented_oblique_chord_intersections_in_domain
+  10: <hypercurve::bezier_offset::BezierAlgebraicCuspSemicircle2>::chord_intersections_in_domain_once
+  11: <hypercurve::bezier_offset::BezierAlgebraicCuspSemicircle2>::chord_intersections_in_domain_with_exact_line_preference
+  12: <hypercurve::curve_region_boolean::CurveRegionBooleanContext>::pair_result
+  13: <hypercurve::curve_region_boolean::CurveRegionBooleanContext>::build_split_topology
+  14: <hypercurve::curve_region_boolean::CurveRegionBooleanContext>::build_regularized_region
+  15: <hypercurve::bezier_region::CurveRegion2>::regularized_region_raw
+  16: <hypercurve::bezier_region::CurveRegion2>::offset_exact_boundary_walk_raw
+  17: <hypercurve::bezier_region::CurveRegion2>::offset::{closure#0}
+  18: <hypercurve::bezier_region::CurveRegion2>::offset
+  19: hypercurve_curve_region_promotion::assert_analytic_parallel_support_corners_retain_algebraic_fillet_centers_and_extensions
+  20: <hypercurve_curve_region_promotion::approximate_512_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions::{closure#0} as core::ops::function::FnOnce<()>>::call_once
+  21: test::__rust_begin_short_backtrace::<core::result::Result<(), alloc::string::String>, fn() -> core::result::Result<(), alloc::string::String>>
+  22: test::run_test::{closure#0}
+  23: std::sys::backtrace::__rust_begin_short_backtrace::<test::run_test::{closure#1}, ()>
+  24: <std::thread::lifecycle::spawn_unchecked<test::run_test::{closure#1}, ()>::{closure#1} as core::ops::function::FnOnce<()>>::call_once::{shim:vtable#0}
+  25: <std::sys::thread::unix::Thread>::new::thread_start
+  26: start_thread
+  27: __clone3
+
+retained analytic fillet re-offset paths: [DispatchCount { layer: "hypercurve", operation: "algebraic-chord-parameter-axis", path: "cross-axis-interval-separated", count: 6 }, DispatchCount { layer: "hypercurve", operation: "algebraic-chord-support-line", path: "procedural-parallel-exact-anchor", count: 2 }, DispatchCount { layer: "hypercurve", operation: "algebraic-chord-tangent-relation", path: "retained-construction-cross", count: 3 }, DispatchCount { layer: "hypercurve", operation: "algebraic-chord-tangent-relation", path: "retained-direction-authority", count: 6 }, DispatchCount { layer: "hypercurve", operation: "algebraic-chord-tangent-relation", path: "shared-endpoint-diagonal", count: 1 }, DispatchCount { layer: "hypercurve", operation: "algebraic-chord-tangent-relation", path: "shared-support-forward", count: 3 }, DispatchCount { layer: "hypercurve", operation: "algebraic-circle-chord-kernel", path: "certified-oblique-support-line", count: 2 }, DispatchCount { layer: "hypercurve", operation: "algebraic-circle-chord-kernel", path: "selected-parallel-normal-represented-fallback", count: 2 }, DispatchCount { layer: "hypercurve", operation: "algebraic-circle-chord-kernel-blocker", path: "certified-tangent", count: 1 }, DispatchCount { layer: "hypercurve", operation: "algebraic-circle-chord-pair", path: "kernel-unsupported", count: 1 }, DispatchCount { layer: "hypercurve", operation: "algebraic-circle-chord-pair", path: "supporting-circle-sibling-endpoint-tangent", count: 1 }, DispatchCount { layer: "hypercurve", operation: "algebraic-circle-parallel-kernel", path: "selected-normal-diagonal-rootless", count: 1 }, DispatchCount { layer: "hypercurve", operation: "algebraic-circle-parallel-kernel", path: "selected-normal-positive-affine-source", count: 1 }, DispatchCount { layer: "hypercurve", operation: "curve-region-exact-line-join", path: "represented-endpoints", count: 1 }, DispatchCount { layer: "hypercurve", operation: "curve-region-exact-offset-bevel-axis", path: "separated-tangent-components", count: 1 }, DispatchCount { layer: "hypercurve", operation: "curve-region-exact-offset-blocker", path: "regularization", count: 1 }, DispatchCount { layer: "hypercurve", operation: "curve-region-exact-offset-join", path: "bevel-outer", count: 7 }, DispatchCount { layer: "hypercurve", operation: "curve-region-exact-offset-join", path: "smooth-source-overlap", count: 3 }, DispatchCount { layer: "hypercurve", operation: "curve-region-exact-offset-span", path: "retained-oblique-algebraic-chord", count: 4 }, DispatchCount { layer: "hypercurve", operation: "curve-region-exact-offset-tangent", path: "retained-selected-circle-endpoint", count: 3 }, DispatchCount { layer: "hypercurve", operation: "curve-region-exact-offset-tangent", path: "selected-circle-chord-contact", count: 1 }, DispatchCount { layer: "hypercurve", operation: "curve-region-exact-offset-tangent-cross", path: "algebraic-chord-algebraic-chord", count: 1 }, DispatchCount { layer: "hypercurve", operation: "curve-region-exact-offset-tangent-cross", path: "algebraic-chord-circle-chord-contact", count: 2 }, DispatchCount { layer: "hypercurve", operation: "curve-region-exact-offset-tangent-cross", path: "selected-circle-pair-contact", count: 2 }, DispatchCount { layer: "hypercurve", operation: "curve-region-exact-offset-tangent-cross", path: "selected-circle-retained-parallel", count: 2 }, DispatchCount { layer: "hypercurve", operation: "curve-region-exact-offset-tangent-dot", path: "selected-chord-normal-algebraic-chord", count: 1 }, DispatchCount { layer: "hypercurve", operation: "curve-region-regularization-pair-blocker", path: "cusp-chord", count: 1 }, DispatchCount { layer: "hypercurve", operation: "curve-region-regularization-pair-blocker-adjacency", path: "nonadjacent", count: 1 }, DispatchCount { layer: "hypercurve", operation: "parallel-shared-source-parameter", path: "same-source-same-parameter", count: 6 }, DispatchCount { layer: "hypercurve", operation: "recursive-chord-displacement-speed", path: "new-generator", count: 2 }, DispatchCount { layer: "hypercurve", operation: "recursive-projective-axis-order", path: "interval-separated", count: 1 }, DispatchCount { layer: "hypercurve", operation: "recursive-projective-point", path: "analytic-parallel", count: 5 }, DispatchCount { layer: "hypercurve", operation: "represented-chord-parallel-blocker", path: "origin", count: 4 }, DispatchCount { layer: "hypercurve", operation: "represented-chord-parallel-origin-kind", path: "analytic-parallel", count: 2 }, DispatchCount { layer: "hypercurve", operation: "represented-chord-parallel-origin-kind", path: "chord-parallel", count: 2 }, DispatchCount { layer: "hypercurve", operation: "represented-chord-parallel-origin-mode", path: "endpoint-end-normal", count: 2 }, DispatchCount { layer: "hypercurve", operation: "represented-chord-parallel-origin-mode", path: "interior-normal", count: 2 }, DispatchCount { layer: "hypercurve", operation: "represented-chord-unit-direction", path: "independent-quotients", count: 2 }, DispatchCount { layer: "hypercurve", operation: "represented-circle-chord-blocker", path: "end-coordinate", count: 2 }, DispatchCount { layer: "hypercurve", operation: "represented-circle-chord-end-kind", path: "chord-parallel", count: 2 }, DispatchCount { layer: "hypercurve", operation: "represented-circle-chord-frame-kind", path: "parallel-normal", count: 2 }, DispatchCount { layer: "hypercurve", operation: "represented-circle-chord-start-kind", path: "chord-parallel", count: 2 }, DispatchCount { layer: "hypercurve", operation: "selected-circle-parallel-tangent-fast-path", path: "exact-parallel-normal", count: 6 }, DispatchCount { layer: "hypercurve", operation: "selected-circle-parallel-tangent-topology", path: "retained-affine-endpoint", count: 1 }, DispatchCount { layer: "hypercurve", operation: "selected-normal-affine-parameter", path: "retained-authority-identity", count: 1 }, DispatchCount { layer: "hypercurve", operation: "selected-normal-affine-parameter", path: "retained-center-identity", count: 1 }]
+
+thread 'approximate_512_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions' (148) panicked at tests/hypercurve_curve_region_promotion.rs:4754:17:
+the retained analytic fillet must re-enter the offset kernel: policy=CurveContext(1), mode=TrimOrExtend, corner=0, candidate=1, source_fragments=["analytic-parallel", "materialized", "chord", "materialized", "chord", "materialized", "chord", "materialized"], fragments=["selected-circle", "selected-circle", "analytic-parallel", "materialized", "chord", "materialized", "chord", "materialized", "chord", "chord"], error=Blocked(ExactCurveBlocker { operation: Offset, family: RationalBezier, reason: Unsupported })
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+test approximate_512_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions ... FAILED
+
+failures:
+
+failures:
+    approximate_512_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 99 filtered out; finished in 87.22s
+
+error: test failed, to rerun pass `--test hypercurve_curve_region_promotion`

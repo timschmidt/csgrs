@@ -1,0 +1,15 @@
+{
+  "tag": "retained-monic-fmt",
+  "started": "2026-09-09T01:45:19.213Z",
+  "finished": "2026-09-09T01:45:19.977Z",
+  "elapsedSeconds": 0.761899241,
+  "cwd": "/home/tim/Documents/GitHub/workspace/hypersolve",
+  "command": "cargo",
+  "args": [
+    "fmt",
+    "--",
+    "--check"
+  ],
+  "code": 0,
+  "signal": null
+}

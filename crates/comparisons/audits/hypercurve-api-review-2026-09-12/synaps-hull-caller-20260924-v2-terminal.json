@@ -1,0 +1,10 @@
+{
+  "all_targets_all_features_clippy_passed": true,
+  "library_and_test_builds_passed": true,
+  "focused_tests_passed": 2,
+  "render_probe_compile_returncode": 1,
+  "render_probe_error": "E0463: library dependencies searched beside the top-level rlib rather than in debug/deps",
+  "all_sources_unchanged": true,
+  "all_processes_reaped": true,
+  "visual_verification_complete": false
+}

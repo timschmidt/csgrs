@@ -1,0 +1,66 @@
+[
+  {
+    "name": "bezier_region::tests::selected_circle_fillet_owns_exact_smooth_run_seam_endpoint",
+    "returncode": 0,
+    "passed": true,
+    "limit_seconds": 75,
+    "elapsed_seconds": 0.1977340510347858,
+    "log": "normalized-corner-callers-20260923-focused1-case-0.log"
+  },
+  {
+    "name": "bezier_region::tests::selected_circle_fillet_crosses_an_independently_reframed_run",
+    "returncode": 101,
+    "passed": false,
+    "limit_seconds": 75,
+    "elapsed_seconds": 0.17055795597843826,
+    "log": "normalized-corner-callers-20260923-focused1-case-1.log"
+  },
+  {
+    "name": "bezier_region::tests::selected_circle_pair_fillets_extend_over_both_full_supports",
+    "returncode": 0,
+    "passed": true,
+    "limit_seconds": 75,
+    "elapsed_seconds": 0.29890164791140705,
+    "log": "normalized-corner-callers-20260923-focused1-case-2.log"
+  },
+  {
+    "name": "bezier_region::tests::independent_selected_circle_pair_fillets_extend_over_both_full_supports",
+    "returncode": 0,
+    "passed": true,
+    "limit_seconds": 75,
+    "elapsed_seconds": 7.010214132023975,
+    "log": "normalized-corner-callers-20260923-focused1-case-3.log"
+  },
+  {
+    "name": "bezier_region::tests::nonrepresented_chord_line_corner_fillets_through_shared_carriers",
+    "returncode": 0,
+    "passed": true,
+    "limit_seconds": 75,
+    "elapsed_seconds": 0.3493192580062896,
+    "log": "normalized-corner-callers-20260923-focused1-case-4.log"
+  },
+  {
+    "name": "bezier_region::tests::nonrepresented_chord_parallel_corner_fillets_without_reintersection",
+    "returncode": 0,
+    "passed": true,
+    "limit_seconds": 75,
+    "elapsed_seconds": 14.119052667054348,
+    "log": "normalized-corner-callers-20260923-focused1-case-5.log"
+  },
+  {
+    "name": "bezier_region::single_loop_corner_publication_tests::selected_circle_corner_candidates_publish_normalized_single_loops",
+    "returncode": 0,
+    "passed": true,
+    "limit_seconds": 75,
+    "elapsed_seconds": 0.1672690809937194,
+    "log": "normalized-corner-callers-20260923-focused1-case-6.log"
+  },
+  {
+    "name": "bezier_region::tests::independent_oblique_chord_pair_fillets_extend_on_infinite_supports",
+    "returncode": 101,
+    "passed": false,
+    "limit_seconds": 75,
+    "elapsed_seconds": 0.3579794940305874,
+    "log": "normalized-corner-callers-20260923-focused1-case-7.log"
+  }
+]

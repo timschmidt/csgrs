@@ -1,0 +1,6 @@
+{
+  "src/algebraic_fiber.rs": "ea4c48adccfeef8c3bc029aec39462fe5a53157c96a8dd8b0810ba796514eb6b",
+  "src/integer_interpolation.rs": "9ae996f88b88b5fd2522435a30cbb1a9a861b70da422f4b0d7dc11be3dc42f06",
+  "src/integer_interpolation/bivariate.rs": "b4107b98f610b8ed4442558c26e133f76a4c157dc6fe989609173500cb6a468b",
+  "tests/data/nonph_fillet_circle_contact.json": "1013900c911fadead6f0b56b05ddf2e5d57d781d65af75b642fad70083508929"
+}

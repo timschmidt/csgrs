@@ -1,0 +1,9 @@
+{
+  "head": "c980fed50380fdf26ec5ef0c633e61ed98cb8fea",
+  "sources": {
+    "src/bezier_offset.rs": "08975fe77390414292e19b59ce5489db2c7014174c049546cc1f363329c60bf9",
+    "src/bezier_region.rs": "80c1fce8e5754a23cbbaaebe293165b0186a8b03703af822be1172f2a85278e1",
+    "src/curve_region_boolean.rs": "3c12448ed98ef7fcace268277c4de4beb54860c9004182a0a3303752d4e17773"
+  },
+  "patch_sha256": "a7709bf61b98ca4ca5a10008cae5a0a8c5c1be60285626047e949a66a090db4c"
+}

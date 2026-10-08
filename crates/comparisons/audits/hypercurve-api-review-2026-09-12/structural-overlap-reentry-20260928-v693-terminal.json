@@ -1,0 +1,66 @@
+{
+  "normal_production_build": false,
+  "source_manifest": "structural-overlap-reentry-20260928-v693-sources.json",
+  "source_directory": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/source-archives/structural-overlap-reentry-20260928-v693",
+  "builds": [
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "test",
+        "--lib",
+        "--release",
+        "--all-features",
+        "--locked",
+        "--offline",
+        "--no-run",
+        "--message-format=json"
+      ],
+      "returncode": 0,
+      "log": "structural-overlap-reentry-20260928-v693-hypercurve-build.log",
+      "elapsed_seconds": 139.2215750690084,
+      "binaries": {
+        "hypercurve": {
+          "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/structural-overlap-reentry-20260928-v693-hypercurve-tests",
+          "sha256": "1f689abc4592e98e565759ebc291c87e1a128b38af550ca5a5e594e9e0fe4507"
+        }
+      }
+    }
+  ],
+  "cases": [
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/structural-overlap-reentry-20260928-v693-hypercurve-tests",
+        "--exact",
+        "bezier_offset::structural_overlap_trace_regression::monotone_reparameterization_preserves_structural_pair_crossings_strict",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "structural-overlap-reentry-20260928-v693-monotone_reparameterization_preserves_structural_pair_crossings_strict-b1b6dd2839.log",
+      "elapsed_seconds": 47.72666641115211,
+      "target": "hypercurve",
+      "name": "bezier_offset::structural_overlap_trace_regression::monotone_reparameterization_preserves_structural_pair_crossings_strict",
+      "passed": true
+    }
+  ],
+  "checks": [],
+  "test_listings": {
+    "hypercurve": {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/structural-overlap-reentry-20260928-v693-hypercurve-tests",
+        "--list"
+      ],
+      "returncode": 0,
+      "log": "structural-overlap-reentry-20260928-v693-hypercurve-list.log",
+      "elapsed_seconds": 0.007670242805033922
+    }
+  },
+  "expected_cases": {
+    "hypercurve": [
+      "bezier_offset::structural_overlap_trace_regression::monotone_reparameterization_preserves_structural_pair_crossings_strict"
+    ]
+  },
+  "all_processes_reaped": true,
+  "probe_complete": true,
+  "qualification_complete": false
+}

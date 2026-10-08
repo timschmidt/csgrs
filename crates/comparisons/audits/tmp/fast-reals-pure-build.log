@@ -1,0 +1,6 @@
+[1 of 6] Compiling Data.Approximate.ApproximateField ( /home/tim/Documents/GitHub/workspace/exact-real-references/haskell-fast-reals/src/Data/Approximate/ApproximateField.hs, pure-build/Data/Approximate/ApproximateField.o )
+[2 of 6] Compiling Data.Approximate.Floating.Dyadic ( /home/tim/Documents/GitHub/workspace/exact-real-references/haskell-fast-reals/src/Data/Approximate/Floating/Dyadic.hs, pure-build/Data/Approximate/Floating/Dyadic.o )
+[3 of 6] Compiling Data.Approximate.Interval ( /home/tim/Documents/GitHub/workspace/exact-real-references/haskell-fast-reals/src/Data/Approximate/Interval.hs, pure-build/Data/Approximate/Interval.o )
+[4 of 6] Compiling Data.Reals.Staged ( /home/tim/Documents/GitHub/workspace/exact-real-references/haskell-fast-reals/src/Data/Reals/Staged.hs, pure-build/Data/Reals/Staged.o )
+[5 of 6] Compiling Main             ( PureProbe.hs, pure-build/Main.o )
+[6 of 6] Linking pure-probe

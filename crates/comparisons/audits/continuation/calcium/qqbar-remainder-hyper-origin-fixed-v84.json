@@ -1,0 +1,62 @@
+{
+  "checkpoint": 84,
+  "recorded": "2026-09-12T04:54:51.291Z",
+  "current": {
+    "checkpoint": 75,
+    "originSha256": "f14634eec550e7d166e63ba28852460782668e42a288c2356e8541680e5b0191",
+    "changed": [
+      "hypersolve/src/algebraic_binary.rs",
+      "hypersolve/src/algebraic_binary/zero_factor_tests.rs"
+    ],
+    "previousLiveFiles": 956,
+    "liveFiles": 957,
+    "unchangedPreviousFiles": 955,
+    "qualifiedSolverFiles": 176,
+    "qualifiedConsumerFiles": 355,
+    "mainSha256": "63b08c8d7523d3e3410d3d6e84a04088fa9f4f7c3b66ab586bfe9af37fa1b002",
+    "testSha256": "8f8e2b7617f9c9b993f1190139bbbe960a723309bf09989b5001d061f2c49961",
+    "previousMainSha256": "e97877da6029f26e256943ca70f4005576574689f33288b71874165b4c8e87e6",
+    "historicalArtifacts": 1279,
+    "previousFinished": "2026-09-11T21:51:02.880Z",
+    "scope": "Exact promotion of the fully qualified zero-factor candidate; no other recorded live source/support change. Historical live flags describe older states. Source identity is separate from successful live regression/retention gates."
+  },
+  "files": {
+    "run-qqbar-remainder-hyper-fixed-v84.mjs": "93df625f97abb885404056a9e9c1886b98ecc3e7c0d3ebfc18414f669446adcd",
+    "qqbar-remainder-hyper-v84/src/main.rs": "73c1a65b772bd71793912cd25d344366983dc794d212c525b047289d7e4f222d",
+    "qqbar-remainder-hyper-v84/Cargo.toml": "5b0182e2629e57d7e0c1c53365c18bba2aa56c3de03493250ee83f1f828846b9",
+    "qqbar-remainder-hyper-v84/Cargo.lock": "832b9918a2d30a675f4bad95f7937673c0544e7d902e2ceda6884b2dbb944f12",
+    "point-qualified-capture.mjs": "8b574f18a85c470ef47f9eafc780c462a93e811ebe15695f0950cfef17ada66e",
+    "capture.mjs": "aaf6df6bbd73025a8541617ce83731ae5ea3fd2272bd98c15e3c4c12b713ce23"
+  },
+  "cargoEnv": [
+    "CARGO_TARGET_DIR=/tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse",
+    "CARGO_INCREMENTAL=0",
+    "CARGO_PROFILE_DEV_DEBUG=0",
+    "CARGO_BUILD_JOBS=2"
+  ],
+  "extraHyperReads": {
+    "hyperreal/src/real/arithmetic/elementary_functions.rs": [
+      [
+        3880,
+        4025
+      ]
+    ],
+    "hyperreal/src/real/arithmetic/linear_algebra.rs": [
+      [
+        2140,
+        2313
+      ]
+    ],
+    "hypersolve/src/polynomial.rs": [
+      [
+        1,
+        260
+      ]
+    ]
+  },
+  "extraHyperHashes": {
+    "hyperreal/src/real/arithmetic/elementary_functions.rs": "46e3e19125a205306982e3a054fdcf39bdbe8beb8cefc1a91194058490bf88db",
+    "hyperreal/src/real/arithmetic/linear_algebra.rs": "86ec7550aa1bd3badd4cc4ca7c70b1fb3695e1567a15a623097d793697320474",
+    "hypersolve/src/polynomial.rs": "263840d2556d62c5b95a5f954bc9720bbf3c8798b640e474f5157b0a99688035"
+  }
+}

@@ -1,0 +1,206 @@
+{
+  "diagnostic_only": true,
+  "checks": [
+    {
+      "label": "fmt",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustfmt",
+        "--edition",
+        "2024",
+        "--check",
+        "src/bezier_algebraic_image.rs",
+        "src/bezier_split.rs",
+        "src/bezier_offset.rs",
+        "src/bezier_parameter.rs",
+        "src/bezier_region.rs",
+        "src/curve.rs",
+        "src/curve_corner_chain.rs",
+        "src/curve_region_boolean.rs",
+        "tests/hypercurve_curve.rs"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 4.138489736011252,
+      "log": "native-root-witness-20260925-v72-fmt.log"
+    },
+    {
+      "label": "clippy-0",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "clippy",
+        "--all-targets",
+        "--all-features",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 36.257960304035805,
+      "log": "native-root-witness-20260925-v72-clippy-0.log"
+    },
+    {
+      "label": "clippy-1",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "clippy",
+        "--all-targets",
+        "--no-default-features",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 30.812437181011774,
+      "log": "native-root-witness-20260925-v72-clippy-1.log"
+    }
+  ],
+  "binaries": {
+    "hypercurve": {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/native-root-witness-20260925-v72-hypercurve",
+      "sha256": "4a4765fe63e716ff3de0cbc7a802d3d3203dd2aa649193e07bea03a5c19d189c"
+    }
+  },
+  "cases": [
+    {
+      "label": "strict_linear_queries_retain_witnesses_after_rational_reconstruction_declines",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/native-root-witness-20260925-v72-hypercurve",
+        "--exact",
+        "bezier_parameter::conversion_tests::strict_linear_queries_retain_witnesses_after_rational_reconstruction_declines",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.31073327793274075,
+      "log": "native-root-witness-20260925-v72-strict_linear_queries_retain_witnesses_after_rational_reconstruction_declines.log"
+    },
+    {
+      "label": "strict_scalar_equalities_retain_arbitrary_real_parameter_witnesses",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/native-root-witness-20260925-v72-hypercurve",
+        "--exact",
+        "bezier_parameter::conversion_tests::strict_scalar_equalities_retain_arbitrary_real_parameter_witnesses",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.3028530479641631,
+      "log": "native-root-witness-20260925-v72-strict_scalar_equalities_retain_arbitrary_real_parameter_witnesses.log"
+    },
+    {
+      "label": "nonlinear_and_approximate_zeroes_do_not_create_scalar_witnesses",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/native-root-witness-20260925-v72-hypercurve",
+        "--exact",
+        "bezier_parameter::conversion_tests::nonlinear_and_approximate_zeroes_do_not_create_scalar_witnesses",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.29447370197158307,
+      "log": "native-root-witness-20260925-v72-nonlinear_and_approximate_zeroes_do_not_create_scalar_witnesses.log"
+    },
+    {
+      "label": "selected_norm_carriers_exclude_foreign_endpoint_roots",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/native-root-witness-20260925-v72-hypercurve",
+        "--exact",
+        "bezier_offset::conversion_tests::selected_norm_carriers_exclude_foreign_endpoint_roots",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.3122575629968196,
+      "log": "native-root-witness-20260925-v72-selected_norm_carriers_exclude_foreign_endpoint_roots.log"
+    },
+    {
+      "label": "selected_norm_carriers_preserve_repeated_interior_roots",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/native-root-witness-20260925-v72-hypercurve",
+        "--exact",
+        "bezier_offset::conversion_tests::selected_norm_carriers_preserve_repeated_interior_roots",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.9272616020170972,
+      "log": "native-root-witness-20260925-v72-selected_norm_carriers_preserve_repeated_interior_roots.log"
+    },
+    {
+      "label": "imported_root_comparisons_preserve_owned_and_excluded_endpoints",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/native-root-witness-20260925-v72-hypercurve",
+        "--exact",
+        "bezier_parameter::conversion_tests::imported_root_comparisons_preserve_owned_and_excluded_endpoints",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 101,
+      "elapsed_seconds": 0.29637976200319827,
+      "log": "native-root-witness-20260925-v72-imported_root_comparisons_preserve_owned_and_excluded_endpoints.log"
+    },
+    {
+      "label": "decreasing_root_charts_preserve_owned_and_excluded_endpoints",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/native-root-witness-20260925-v72-hypercurve",
+        "--exact",
+        "bezier_parameter::conversion_tests::decreasing_root_charts_preserve_owned_and_excluded_endpoints",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 101,
+      "elapsed_seconds": 0.3199245270807296,
+      "log": "native-root-witness-20260925-v72-decreasing_root_charts_preserve_owned_and_excluded_endpoints.log"
+    },
+    {
+      "label": "isolation_retains_large_rational_roots_until_projection_is_requested",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/native-root-witness-20260925-v72-hypercurve",
+        "--exact",
+        "bezier_parameter::conversion_tests::isolation_retains_large_rational_roots_until_projection_is_requested",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.32222814997658134,
+      "log": "native-root-witness-20260925-v72-isolation_retains_large_rational_roots_until_projection_is_requested.log"
+    },
+    {
+      "label": "polynomial_sign_queries_do_not_require_a_known_degree",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/native-root-witness-20260925-v72-hypercurve",
+        "--exact",
+        "bezier_parameter::conversion_tests::polynomial_sign_queries_do_not_require_a_known_degree",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.310317226103507,
+      "log": "native-root-witness-20260925-v72-polynomial_sign_queries_do_not_require_a_known_degree.log"
+    }
+  ],
+  "all_processes_reaped": true,
+  "build_returncode": 0,
+  "all_sources_unchanged": true
+}

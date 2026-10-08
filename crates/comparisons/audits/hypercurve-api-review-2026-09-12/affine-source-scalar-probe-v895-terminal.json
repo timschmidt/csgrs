@@ -1,0 +1,40 @@
+{
+  "baseline": "selected-scalar-v893-sources.json",
+  "rlib": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypercurve-85a9105cd1c82df7.rlib",
+  "rlib_sha256": "f08a53392dc35da39439d4dc99f6c777f84b7e05966d9e7c6299c8a84a1477a9",
+  "source_sha256": "8dd4be91f1b05332c231370262ad439e84bc5b7e5b1beadaf115864085ca26cb",
+  "processes": [
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustc",
+        "--edition=2024",
+        "--crate-name",
+        "affine_source_scalar_probe",
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/affine-source-scalar-probe-v895.rs",
+        "--extern",
+        "hypercurve=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypercurve-85a9105cd1c82df7.rlib",
+        "-L",
+        "dependency=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps",
+        "-C",
+        "opt-level=3",
+        "-o",
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/affine-source-scalar-probe-v895-binary"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.6146688689477742,
+      "log": "affine-source-scalar-probe-v895-compile.log"
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/affine-source-scalar-probe-v895-binary"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.007577121024951339,
+      "log": "affine-source-scalar-probe-v895-cases.log"
+    }
+  ],
+  "all_processes_reaped": true,
+  "binary_sha256": "108aa9ec2a3a1164e29b06d6b829af32d0758c02ebef65ba4e72804987ab83b9",
+  "output": "policy=0 second=false point_represented=true retained_tangent=true vector_represented=false\npolicy=0 second=true point_represented=true retained_tangent=true vector_represented=false\npolicy=0 blocked=RealSign\npolicy=1 second=false point_represented=true retained_tangent=true vector_represented=false\npolicy=1 second=true point_represented=true retained_tangent=true vector_represented=false\npolicy=1 blocked=RealSign\ncomplete requests=2 blocked=2\n",
+  "probe_complete": true
+}

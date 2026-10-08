@@ -1,0 +1,109 @@
+/***************************************************************************
+ *            main_page.dox
+ *
+ *  Copyright  2004-20  Pieter Collins
+ *
+ ****************************************************************************/
+
+/*
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; either version 2 of the License, or
+ *  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Library General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program; if not, write to the Free Software
+ *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+ */
+
+/*!
+
+\file main_page.dox
+\brief Main page of Doxygen documentation
+
+
+\mainpage
+
+\section mainpage_introduction Introduction
+
+%Ariadne is a C++ package for set-based analysis of dynamical and control systems, including reachability analysis, robust simulation and safety verification. The package can handle systems with reset, flow and guard predicates given by nonlinear functions, making it one of the most general-purpose reachability tools available.
+
+The homepage of %Ariadne is <a href="http://www.ariadne-cps.org/">http://www.ariadne-cps.org/</a>.
+
+\section mainpage_installation Installation
+
+Full instructions on downloading and installing %Ariadne can be found on the \link installation_page %Installation \endlink page.
+
+
+\section mainpage_getting_started Getting Started
+
+An overview of %Ariadne's capabilities is given on the \ref overview_page documentation page.
+
+A more detailed explanation of the hybrid automaton class can be found on the \ref hybrid_automaton_page documentation page.
+
+A more detailed explanation of how to analyse a hybrid system can be found on the \ref system_analysis_page documentation page.
+
+An example of the use of %Ariadne for reachability analysis of a simple hybrid system is given on the \ref hybrid_evolution_tutorial_page  page. The example is contained in the files  \link tutorials/hybrid_evolution/hybrid_evolution_tutorial.cpp hybrid_evolution_tutorial.cpp \endlink and \link python/tutorials/hybrid_evolution_tutorial.py hybrid_evolution_tutorial.py \endlink.
+
+An example of the use of %Ariadne for general-purpose rigorous numerical computation is given ony the \ref rigorous_numerics_tutorial_page  page. The example is contained in the files  \link tutorials/rigorous_numerics/rigorous_numerics_tutorial.cpp rigorous_numerics_tutorial.cpp \endlink and \link python/tutorials/rigorous_numerics_tutorial.py rigorous_numerics_tutorial.py \endlink.
+
+Tutorials showing how to use the basic functionality of %Ariadne's Python interface can be found on the \ref python_module_tutorials_page documentation page. More advanced tutorials showing concrete examples of practical usage of %Ariadne can be found on the \ref python_example_tutorials_page page.
+
+
+\section mainpage_intermediate_usage Going further
+
+To go further using %Ariadne, you should understand the internal structure, which is best explored via the <A HREF="modules.html">Modules</A> page (also linked to at the top of this page)
+
+The supported operations in the Python interface for the various modules can be found on the \ref python_module_demonstrations_page documentation page.
+A guide on the differences between the Python interface and the documented C++ API can be found on the \ref python_interface_page page.
+
+
+\section mainpage_advanced_usage Advanced Usage
+
+The classes, methods, functions and associated type definitions are described in detail in the main documentation. Entities can be found either within the \ref Ariadne namespace documentation, the <A HREF="classes.html">Class Index</A> (also linked to at the top-left of this page) or through the search bar at the top-right. Probably the best way of getting a structured overview is via the <A HREF="modules.html">Modules</A> page.
+
+\section mainpage_mathematical_foundations Mathematical Foundations
+
+More information on the mathematical foundations of %Ariadne can be found on the following pages:
+
+ - \ref computable_analysis_page
+ - \ref topology_page
+ - \ref type_system_page
+ - \ref logic_page
+ - \ref real_numbers_page
+ - \ref linear_algebra_page
+ - \ref linear_programming_page
+ - \ref function_evaluation_page
+ - \ref function_models_page
+ - \ref algebraic_equations_page
+ - \ref integration_methods_page
+ - \ref nonlinear_programming_page
+ - \ref constraint_satisfaction_page
+ - \ref geometry_page
+ - \ref evolution_page
+ - \ref hybrid_systems_page
+ - \ref hybrid_evolution_page
+ - \ref model_checking_page
+
+ - \ref references_page
+
+
+\section developer_documentation Developer Documentation
+
+\htmlonly A more detailed description of Ariadne's capabilities can be found in the documentation for the individual <a href="modules.html">Modules</a> and <a href="annotated.html">Classes</a>.  \endhtmlonly
+\latexonly A more detailed description of Ariadne's capabilities can be found in the documentation for the individual Modules and Classes. \endlatexonly
+Coding guideline are given on the \ref coding_guidelines_page documentation page.
+
+\example tutorials/rigorous_numerics/rigorous_numerics_tutorial.cpp An introduction to Ariadne's facilities for rigorous numerics.
+\example tutorials/hybrid_evolution/hybrid_evolution_tutorial.cpp A simple nonlinear model of a heating system.
+
+\example python/tutorials/rigorous_numerics_tutorial.py A tutorial on using the Python interface.
+\example python/tutorials/hybrid_evolution_tutorial.py A tutorial on using the Python interface to analyse a system.
+
+
+*/

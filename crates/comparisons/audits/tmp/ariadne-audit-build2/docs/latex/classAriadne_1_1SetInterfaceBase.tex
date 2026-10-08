@@ -1,0 +1,53 @@
+\doxysubsection{Set\+Interface\+Base\texorpdfstring{$<$}{<} T \texorpdfstring{$>$}{>} Class Template Reference}
+\hypertarget{classAriadne_1_1SetInterfaceBase}{}\label{classAriadne_1_1SetInterfaceBase}\index{SetInterfaceBase$<$ T $>$@{SetInterfaceBase$<$ T $>$}}
+
+
+{\ttfamily \#include $<$set\+\_\+interface.\+hpp$>$}
+
+
+
+\doxysubsubsection{Description}
+\subsubsection*{template$<$class T$>$\newline
+class Ariadne\+::\+Set\+Interface\+Base$<$ T $>$}
+Base class for sets described by predicates involving boxes. Inheritance diagram for Set\+Interface\+Base\texorpdfstring{$<$}{<} T \texorpdfstring{$>$}{>}\+:\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[height=10.000000cm]{classAriadne_1_1SetInterfaceBase}
+\end{center}
+\end{figure}
+\doxysubsubsubsection*{Public Types}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1SetInterfaceBase_a367f2f6dcbdbf1c2d2eacf1819163462}\label{classAriadne_1_1SetInterfaceBase_a367f2f6dcbdbf1c2d2eacf1819163462} 
+typedef T {\bfseries Element\+Type}
+\begin{DoxyCompactList}\small\item\em The type of element of the set. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1SetInterfaceBase_aa7182f86fbdcb1b29488c09b3340918d}\label{classAriadne_1_1SetInterfaceBase_aa7182f86fbdcb1b29488c09b3340918d} 
+typedef Set\+Traits$<$ T $>$\+::\+Dimension\+Type {\bfseries Dimension\+Type}
+\begin{DoxyCompactList}\small\item\em The type representing the dimension of the set. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1SetInterfaceBase_a621a6488ff988ea56df9398b55b4241f}\label{classAriadne_1_1SetInterfaceBase_a621a6488ff988ea56df9398b55b4241f} 
+typedef Set\+Traits$<$ T $>$\+::\+Basic\+Set\+Type {\bfseries Basic\+Set\+Type}
+\begin{DoxyCompactList}\small\item\em The type of basic set in the space. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1SetInterfaceBase_ab5c2d7aed89a71a05a54e1dc271960b1}\label{classAriadne_1_1SetInterfaceBase_ab5c2d7aed89a71a05a54e1dc271960b1} 
+typedef Set\+Traits$<$ T $>$\+::\+Bounding\+Set\+Type {\bfseries Bounding\+Set\+Type}
+\begin{DoxyCompactList}\small\item\em The type of basic set in the space. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1SetInterfaceBase_aa6bae791250ad6f7723e228a70a69e86}\label{classAriadne_1_1SetInterfaceBase_aa6bae791250ad6f7723e228a70a69e86} 
+virtual {\bfseries \texorpdfstring{$\sim$}{\string~}\+Set\+Interface\+Base} ()=default
+\begin{DoxyCompactList}\small\item\em Virtual destructor. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1SetInterfaceBase_a766321233c76a168becf6a7d99d00406}\label{classAriadne_1_1SetInterfaceBase_a766321233c76a168becf6a7d99d00406} 
+virtual \mbox{\hyperlink{classAriadne_1_1SetInterfaceBase}{Set\+Interface\+Base}} \texorpdfstring{$\ast$}{*} {\bfseries clone} () const =0
+\begin{DoxyCompactList}\small\item\em Construct a dynamically-\/allocated copy. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1SetInterfaceBase_a20229d111f40efba6bd023a69794d261}\label{classAriadne_1_1SetInterfaceBase_a20229d111f40efba6bd023a69794d261} 
+virtual \mbox{\hyperlink{classAriadne_1_1SetInterfaceBase_aa7182f86fbdcb1b29488c09b3340918d}{Dimension\+Type}} {\bfseries dimension} () const =0
+\begin{DoxyCompactList}\small\item\em The dimension of the set. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1SetInterfaceBase_a9d7f3502ac31c1ccfa6a119d651a521b}\label{classAriadne_1_1SetInterfaceBase_a9d7f3502ac31c1ccfa6a119d651a521b} 
+virtual \mbox{\hyperlink{namespaceAriadne_acbb98ddc4385af4599070e65a1a47ec1}{Output\+Stream}} \& {\bfseries \+\_\+write} (\mbox{\hyperlink{namespaceAriadne_acbb98ddc4385af4599070e65a1a47ec1}{Output\+Stream}} \&os) const =0
+\begin{DoxyCompactList}\small\item\em Write to an output stream. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+The documentation for this class was generated from the following files\+:\begin{DoxyCompactItemize}
+\item 
+source/geometry/set.\+decl.\+hpp\item 
+source/geometry/\mbox{\hyperlink{set__interface_8hpp}{set\+\_\+interface.\+hpp}}\end{DoxyCompactItemize}

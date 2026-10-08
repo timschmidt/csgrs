@@ -1,0 +1,12 @@
+[package]
+name = "audit-sign-filter-probe"
+version = "0.0.0"
+edition = "2024"
+publish = false
+
+[workspace]
+
+[dependencies]
+hyperreal = { path = "../../../../../hyperreal", features = ["dispatch-trace"] }
+hyperlimit = { path = "../../../../../hyperlimit", features = ["dispatch-trace"] }
+serde_json = "1"

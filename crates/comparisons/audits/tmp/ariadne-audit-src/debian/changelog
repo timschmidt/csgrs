@@ -1,0 +1,6 @@
+ariadne (2.5.3-1) noble; urgency=medium
+
+  * Add support for multivalued functions, add multiple point dynamics
+    simulators, support ARM64, minor changes and fixes
+
+ -- Luca Geretti <luca.geretti@gmail.com>  Thu, 3 Jul 2025 10:00:00 +0100

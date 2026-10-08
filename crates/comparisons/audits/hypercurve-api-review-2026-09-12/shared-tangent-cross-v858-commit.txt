@@ -1,0 +1,16 @@
+Sign retained tangent determinants in their selected parameter
+
+Exact derivative images can retain rational expressions without separate
+coordinate roots. Decide their cross product directly when existing root
+identity evidence proves a common selected parameter. Share the point-image
+identity check, preserve both denominator signs, and reduce the combined
+determinant before certified source-root sign evaluation.
+
+Keep independent represented-coordinate arithmetic unchanged. Cover analytic
+positive, negative and zero signs, equivalent isolators, mixed image forms,
+negative homogeneous weights and distinct roots of the same polynomial.
+
+Validation: 330 selected release tests in 12 pinned binaries; all-feature and
+no-default-feature Hypercurve clippy, formatting, four fuzz targets, docs,
+Hyperbrep clippy and csgrs check. Reviewed source and repository records in
+hypercurve-api-review-2026-09-12/shared-tangent-cross-v858-reviewed.json.

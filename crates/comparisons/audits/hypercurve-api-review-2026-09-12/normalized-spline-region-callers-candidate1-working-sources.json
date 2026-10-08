@@ -1,0 +1,18 @@
+[
+  {
+    "file": "hypercurve/tests/hypercurve_bspline.rs",
+    "sha256": "b23781e1c416176158c803222b7e0f91cfbf3f1f4a0824bf4e11e7624f871a78"
+  },
+  {
+    "file": "hypercurve/benches/bezier_region.rs",
+    "sha256": "3a1f7c948dff1c8fa4457b3aeffe66bf86924826cac56ccdced2961a49d8f1e3"
+  },
+  {
+    "file": "hypercurve/fuzz/fuzz_targets/bezier_region.rs",
+    "sha256": "829d7a4ff5b27031e1c9600f2e67bf26434393b7d0a2a9754cdbfb869e9d29e6"
+  },
+  {
+    "file": "hypercurve/src/bezier_offset.rs",
+    "sha256": "3297b5740d2e63c8fc5cb8acb27121054bc160d3f233a898a0f78f5103664875"
+  }
+]

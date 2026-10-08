@@ -1,0 +1,110 @@
+{
+  "status": "implemented, qualified, and committed; original goal remains active",
+  "commits": {
+    "hypercurve": "444d8fa30cc5d5798b965d7ded2779ed27e580f1",
+    "hyperbrep": "8a84ee7db02fd2720ac89a1a6a227ee4ec2a8171"
+  },
+  "base": "b1f07b35d8a43ba6d5ce85b11a11ea18582ef51e",
+  "change": "Share logarithmic ordered span selection across NURBS and polynomial splines; reuse established positive, contiguous interval ordering and the existing NURBS decomposition borrow.",
+  "api_changes": false,
+  "new_cache_allocations": false,
+  "semantic_contract": "Both incident spans remain available at a shared knot. Left/right/automatic semantics, outside-domain errors, exact parameterization, derivative scaling, and context uncertainty remain intact.",
+  "hypercurve_library": {
+    "passed": 1022,
+    "ignored": 6,
+    "filtered_out": 4
+  },
+  "hypercurve_integration": {
+    "passed": 411,
+    "targets": [
+      {
+        "target": "hypercurve_arc_bezier.rs",
+        "passed": 12
+      },
+      {
+        "target": "hypercurve_bezier_arrangement.rs",
+        "passed": 57
+      },
+      {
+        "target": "hypercurve_bezier_fit_offset.rs",
+        "passed": 101
+      },
+      {
+        "target": "hypercurve_bspline.rs",
+        "passed": 24
+      },
+      {
+        "target": "hypercurve_curve.rs",
+        "passed": 48
+      },
+      {
+        "target": "hypercurve_curve_intersection.rs",
+        "passed": 29
+      },
+      {
+        "target": "hypercurve_nurbs.rs",
+        "passed": 42
+      },
+      {
+        "target": "hypercurve_nurbs_interpolation.rs",
+        "passed": 6
+      },
+      {
+        "target": "hypercurve_path_closure.rs",
+        "passed": 9
+      },
+      {
+        "target": "hypercurve_polynomial_spline.rs",
+        "passed": 18
+      },
+      {
+        "target": "hypercurve_rational_bezier.rs",
+        "passed": 48
+      },
+      {
+        "target": "hypercurve_svg.rs",
+        "passed": 17
+      }
+    ]
+  },
+  "hyperbrep_library": {
+    "passed": 232
+  },
+  "unique_passed_tests": 1665,
+  "logs": [
+    "spline-parameter-search-release-final.log",
+    "spline-parameter-search-hyperbrep-release-final.log",
+    "spline-parameter-search-hypercurve-all-targets.log",
+    "spline-parameter-search-hyperbrep-all-targets.log"
+  ],
+  "regression": "spline_parameter_search_preserves_every_discontinuous_knot_side exercises 65 nonuniformly spaced discontinuous spans of both polynomial and nonuniform-weight rational families, every knot side and outer endpoint, interior positions and derivatives, automatic-side ambiguity, and invalid parameters, under both contexts.",
+  "formatting": "Changed Rust files passed rustfmt --edition 2024 --config skip_children=true --check; staged whitespace checks passed.",
+  "ignored_tests": [
+    "bezier_offset::conversion_tests::benchmark_correlated_circle_partition_offset_driver",
+    "bezier_offset::conversion_tests::benchmark_independent_oblique_chord_cap_offset_driver",
+    "bezier_offset::conversion_tests::benchmark_nested_chord_mapped_cap_offset_driver",
+    "bezier_offset::conversion_tests::benchmark_nonendpoint_rational_mapped_cap_offset_driver",
+    "bezier_offset::conversion_tests::benchmark_pair_mapped_lens_offset_driver",
+    "bezier_offset::conversion_tests::selected_fiber_genuinely_analytic_contacts_complete_region_booleans"
+  ],
+  "established_expensive_exclusions": [
+    "selected_parallel_normal_circle_intersects_genuinely_analytic_parallel_in_one_fiber",
+    "independent_oblique_chord_pair_fillets_extend_on_infinite_supports",
+    "selected_circle_and_analytic_parallel_extend_on_full_supports",
+    "pair_native_boolean_algebraic_chord_corner_publishes_a_third_generation_fillet"
+  ],
+  "performance": "spline-parameter-search-performance.json",
+  "performance_summary": "Cached midpoint medians at 64/256/1024 controls fell from 2.452/7.228/26.699 microseconds to 0.920/0.926/0.973 microseconds, respectively. Cold decomposition ratios were 0.999/1.011/1.007. Seven alternating single-CPU runs of 101 iterations; this is a local microbenchmark.",
+  "source_hashes": "spline-parameter-search-source-hashes.json",
+  "workspace_status": "spline-parameter-search-workspace-after-commit.json",
+  "clean_repository_count": 30,
+  "preceding_api_migration": "homogeneous-nurbs-qualification.json",
+  "scope_note": "The preceding migration records UI, fuzz, and documentation checks. This stage changes private search/evaluation machinery only; public APIs and persistence schemas are unchanged. Its full geometry and downstream suites plus both all-targets checks are recorded above.",
+  "remaining_scope": [
+    "Finite raw unit endpoints are still required by RationalBezier2; general charts with poles at those raw endpoints need continued work.",
+    "RationalQuadraticBezier2 retains separate affine control machinery; shared homogeneous conic authority remains an architectural reduction opportunity.",
+    "HyperBREP 3D rational curves and tensor surfaces retain affine-control target requirements; no full 3D homogeneous migration is claimed.",
+    "Constant/collapsed supports, broader recursive region closure, selected-fiber/root refinement reuse, and repeated composed-workload growth remain part of the original active goal."
+  ],
+  "goal_status": "active"
+}

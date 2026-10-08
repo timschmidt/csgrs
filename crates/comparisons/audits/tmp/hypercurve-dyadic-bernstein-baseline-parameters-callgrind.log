@@ -1,0 +1,47 @@
+==36== Callgrind, a call-graph generating cache profiler
+==36== Copyright (C) 2002-2017, and GNU GPL'd, by Josef Weidendorfer et al.
+==36== Using Valgrind-3.27.1 and LibVEX; rerun with -h for copyright info
+==36== Command: /tmp/hypercurve-recursive-radial-baseline-test bezier_parameter::conversion_tests --nocapture --test-threads=1
+==36== 
+==36== For interactive control, run 'callgrind_control -h'.
+
+running 31 tests
+test bezier_parameter::conversion_tests::algebraic_sign_filter_has_no_fixed_refinement_cap ... ok
+test bezier_parameter::conversion_tests::algebraic_sign_filter_preserves_selected_root_and_boundary_ownership ... ok
+test bezier_parameter::conversion_tests::algebraic_unit_complement_preserves_the_exact_singleton_root ... ok
+test bezier_parameter::conversion_tests::arbitrary_degree_nonrational_bernstein_isolates_every_simple_root ... ok
+test bezier_parameter::conversion_tests::authoritative_sturm_sequence_has_no_historical_degree_cap ... ok
+test bezier_parameter::conversion_tests::bernstein_simple_root_certificates_avoid_multiplicity_sturm_rebuilds ... ok
+test bezier_parameter::conversion_tests::bernstein_to_power_remains_exact_beyond_u64_binomials ... ok
+test bezier_parameter::conversion_tests::carried_sturm_variations_match_partition_root_counts ... ok
+test bezier_parameter::conversion_tests::collapsed_exact_real_representation_imports_as_an_exact_parameter ... ok
+test bezier_parameter::conversion_tests::finite_interval_isolation_has_no_fixed_dyadic_depth_limit ... ok
+test bezier_parameter::conversion_tests::incident_ray_isolation_orders_exact_roots_away_from_the_anchor ... ok
+test bezier_parameter::conversion_tests::incident_ray_isolation_retains_irrational_exterior_root_authority ... ok
+test bezier_parameter::conversion_tests::interval_root_isolation_uses_original_polynomial_and_closed_boundaries ... ok
+test bezier_parameter::conversion_tests::modular_sieve_rejects_only_rootless_rational_reductions ... ok
+test bezier_parameter::conversion_tests::modular_sieve_retains_polynomials_with_known_rational_roots ... ok
+test bezier_parameter::conversion_tests::native_small_modulus_matches_bigint_floor_remainder ... ok
+test bezier_parameter::conversion_tests::nested_nonrational_quadratic_root_materializes_exactly ... ok
+test bezier_parameter::conversion_tests::nonrational_low_degree_roots_materialize_without_sturm_work ... ok
+test bezier_parameter::conversion_tests::nonrational_power_evaluation_uses_exact_endpoint_identities ... ok
+test bezier_parameter::conversion_tests::progressive_refinement_matches_one_pass_proof_budget ... ok
+test bezier_parameter::conversion_tests::rational_basis_subdivision_matches_the_shared_bernstein_kernel ... ok
+test bezier_parameter::conversion_tests::rational_reconstruction_reuses_sturm_ownership_across_both_children ... ok
+test bezier_parameter::conversion_tests::refinement_to_an_exact_root_precedes_touching_interval_order ... ok
+test bezier_parameter::conversion_tests::retained_refinement_matches_square_free_reference_and_shares_sturm_work ... ok
+test bezier_parameter::conversion_tests::retained_sturm_certificate_classifies_mixed_root_multiplicity ... ok
+test bezier_parameter::conversion_tests::simple_root_certificate_accepts_an_endpoint_deflated_algebraic_carrier ... ok
+test bezier_parameter::conversion_tests::simple_root_certificate_distinguishes_algebraic_multiplicity ... ok
+test bezier_parameter::conversion_tests::simple_root_certificate_distinguishes_exact_multiplicity ... ok
+test bezier_parameter::conversion_tests::square_free_degree_128_bernstein_isolates_every_unit_root ... ok
+test bezier_parameter::conversion_tests::strict_gap_preserves_irrational_and_repeated_root_ownership ... ok
+test bezier_parameter::conversion_tests::strict_gap_refines_both_overlapping_algebraic_parameters ... ok
+
+test result: ok. 31 passed; 0 failed; 0 ignored; 0 measured; 854 filtered out; finished in 2.61s
+
+==36== 
+==36== Events    : Ir
+==36== Collected : 377855265
+==36== 
+==36== I   refs:      377,855,265

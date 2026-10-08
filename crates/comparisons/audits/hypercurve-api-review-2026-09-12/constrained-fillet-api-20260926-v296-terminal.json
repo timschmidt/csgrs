@@ -1,0 +1,26 @@
+{
+  "source_manifest": "constrained-fillet-api-20260926-v296-sources.json",
+  "source_directory": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/source-archives/constrained-fillet-api-20260926-v296",
+  "cases": [],
+  "builds": [],
+  "all_processes_reaped": true,
+  "checks": [
+    {
+      "label": "check-all-targets",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "check",
+        "--all-targets",
+        "--all-features",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 101,
+      "log": "constrained-fillet-api-20260926-v296-check-all-targets.log",
+      "elapsed_seconds": 17.13832258398179
+    }
+  ],
+  "qualification_scope": "Retained point-incidence parameter visitation and demand-driven existence checks; all-preimage, collapsed-circle, correlated exterior, membership, component and fillet controls; both feature Clippy checks",
+  "failure": "check-all-targets failed",
+  "qualification_complete": false
+}

@@ -1,0 +1,42 @@
+{
+  "sources": [
+    [
+      "/home/tim/Documents/GitHub/workspace/exact-real-references/ruffini-qualification/ClassGroupContracts.java",
+      "76ea9f964e5502d8289ba3bd50f70105c29a5b8b9f104aaee456126783f4a76f"
+    ],
+    [
+      "/home/tim/Documents/GitHub/workspace/exact-real-references/Ruffini/class-group/src/main/java/dk/jonaslindstrom/ruffini/quadraticform/ClassGroup.java",
+      "7310be3a9e8229ac63cbcf485ac431b99f7ebafa70cbd7981887ae4cc4c1988d"
+    ],
+    [
+      "/home/tim/Documents/GitHub/workspace/exact-real-references/Ruffini/class-group/src/main/java/dk/jonaslindstrom/ruffini/quadraticform/QuadraticForm.java",
+      "d784c58b094cef1b1e2b4747ea6d03baf35949eb8d7a093c022e30d5516d4208"
+    ],
+    [
+      "/home/tim/Documents/GitHub/workspace/exact-real-references/Ruffini/class-group/test/java/QuadraticFormTests.java",
+      "0ea446334083a05fc1fc787eae826bd9e2ed9b81e2b94d1fb84eb1e8e3a9a31d"
+    ]
+  ],
+  "classes": [
+    [
+      "ClassGroupContracts$Check.class",
+      "c0d1b38d25696860d244c4bc267dae87227869d7d13ce34f183e4248eb5e2dcc"
+    ],
+    [
+      "ClassGroupContracts.class",
+      "b44c1a086b13be3e35997d106b803079a94f05d5927af8ecafc960d0607b1c9d"
+    ],
+    [
+      "dk/jonaslindstrom/ruffini/quadraticform/ClassGroup.class",
+      "2328813b4ce8803989ef6a317f6db5e796f073e35e9491e075639422a7218176"
+    ],
+    [
+      "dk/jonaslindstrom/ruffini/quadraticform/QuadraticForm.class",
+      "8cbd9935ab7120d2857b545249e67ec35568601ee7f2eaa1835995269aecbd4a"
+    ]
+  ],
+  "originalTestBuild": {
+    "status": 1,
+    "error": null
+  }
+}

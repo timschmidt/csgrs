@@ -1,0 +1,13 @@
+{
+  "tag": "point-demand-campaign",
+  "started": "2026-09-10T22:35:52.121Z",
+  "finished": "2026-09-10T22:45:35.556Z",
+  "elapsedSeconds": 583.432333468,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "node",
+  "args": [
+    "run-point-demand-campaign.mjs"
+  ],
+  "code": 0,
+  "signal": null
+}

@@ -1,0 +1,108 @@
+name:               rounded
+version:            0.1
+synopsis:           Correctly-rounded arbitrary-precision floating-point arithmetic
+homepage:           https://github.com/ekmett/rounded
+bug-reports:        https://github.com/ekmett/rounded/issues
+license:            LGPL
+license-file:       LICENSE
+author:             Edward A. Kmett, Daniel G. Peebles, Claude Heiland-Allen
+maintainer:         Claude Heiland-Allen <claude@mathr.co.uk>
+copyright:          Copyright (C) 2012-2014 Edward A. Kmett, Daniel G. Peebles;
+                    Copyright (C) 2013-2018 Claude Heiland-Allen
+category:           Numeric, Math
+build-type:         Simple
+cabal-version:      1.22
+tested-with:        GHC == 7.10.3, GHC == 8.0.2, GHC == 8.2.2, GHC == 8.4.4, GHC == 8.6.1
+description:
+    This package provides numeric instances for MPFR that use
+    \"Implicit Configurations\" from
+    <http://www.cs.rutgers.edu/~ccshan/prepose/prepose.pdf>
+    to choose a 'Rounding' and 'Precision'. For those that do not want to
+    use reflection, explicit instances are provided for common precisions
+    and for the built-in rounding modes.
+    .
+    This package should work correctly with GHC 7.10.1 or later.
+    .
+    >>> import Numeric.Rounded
+    >>> :set -XDataKinds
+    >>> exp pi :: Rounded TowardZero 512
+    23.140692632779269005729086367948547380266106242600211993445046409524342350690452783516971997067549219675952704801087773144428044414693835844717445879609842
+
+extra-source-files: README.markdown CHANGELOG.markdown test.hs test.txt
+
+source-repository head
+  type: git
+  location: git://github.com/ekmett/rounded.git
+
+source-repository this
+  type: git
+  location: git://github.com/ekmett/rounded.git
+  tag: rounded-0.1
+
+library
+  exposed-modules:
+    Numeric.Rounded
+    Numeric.Rounded.Interval
+    Numeric.Rounded.Simple
+    Numeric.MPFR.Types
+    Numeric.MPFR.Raw
+    Numeric.MPFR.Raw.Safe
+    Numeric.MPFR.Raw.Unsafe
+
+  other-modules:
+    Numeric.Rounded.Internal
+    Numeric.Rounded.Rounding
+    Numeric.Rounded.Precision
+
+  build-depends:
+    base             >= 4.8     && < 4.13,
+    ghc-prim         >= 0.4     && < 0.6,
+    reflection       >= 2.1.2   && < 2.2,
+    singletons       >= 2.1     && < 2.6,
+    hgmp             >= 0.1.1   && < 0.2,
+    long-double      >= 0.1     && < 0.2
+
+  ghc-options:     -Wall -fspec-constr -funbox-strict-fields -fno-warn-unticked-promoted-constructors
+  build-tools:     hsc2hs
+
+  extra-libraries: mpfr gmp
+
+  hs-source-dirs:  src
+  c-sources:       cbits/wrappers.c
+
+  default-language: Haskell2010
+  other-extensions:
+    CPP
+    DataKinds
+    DeriveDataTypeable
+    DeriveGeneric
+    EmptyDataDecls
+    FlexibleContexts
+    FlexibleInstances
+    ForeignFunctionInterface
+    GeneralizedNewtypeDeriving
+    KindSignatures
+    MagicHash
+    MultiParamTypeClasses
+    PatternSynonyms
+    PolyKinds
+    Rank2Types
+    RankNTypes
+    RoleAnnotations
+    ScopedTypeVariables
+    TypeFamilies
+    TypeSynonymInstances
+    UnboxedTuples
+    UndecidableInstances
+
+test-suite rounded-test
+  type: exitcode-stdio-1.0
+  main-is: test.hs
+  build-depends:
+    base,
+    long-double,
+    rounded
+  default-language: Haskell2010
+  other-extensions:
+    DataKinds
+    ScopedTypeVariables

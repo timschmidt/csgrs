@@ -1,0 +1,326 @@
+[
+  {
+    "round": 0,
+    "family": "opaque-negative",
+    "variant": "after",
+    "sha256": "bfd68b49b7b38f3831233f634b9b26c8ff2e61b2d2bc54936ef382075c050255",
+    "args": [
+      "-c",
+      "6",
+      "/home/tim/Documents/GitHub/workspace/.audit-numbers.rjcbha/atan-after",
+      "bench",
+      "opaque-negative",
+      "256"
+    ],
+    "status": 0,
+    "signal": null,
+    "stdout": "opaque-negative\t256\t4320231\t4337032\t53015\t2731120\t10637894588566977728\n",
+    "stderr": ""
+  },
+  {
+    "round": 0,
+    "family": "hint-large",
+    "variant": "after",
+    "sha256": "bfd68b49b7b38f3831233f634b9b26c8ff2e61b2d2bc54936ef382075c050255",
+    "args": [
+      "-c",
+      "6",
+      "/home/tim/Documents/GitHub/workspace/.audit-numbers.rjcbha/atan-after",
+      "bench",
+      "hint-large",
+      "256"
+    ],
+    "status": 0,
+    "signal": null,
+    "stdout": "hint-large\t256\t20814916\t20898576\t238323\t14562632\t16787239134653931520\n",
+    "stderr": ""
+  },
+  {
+    "round": 1,
+    "family": "opaque-negative",
+    "variant": "after",
+    "sha256": "bfd68b49b7b38f3831233f634b9b26c8ff2e61b2d2bc54936ef382075c050255",
+    "args": [
+      "-c",
+      "6",
+      "/home/tim/Documents/GitHub/workspace/.audit-numbers.rjcbha/atan-after",
+      "bench",
+      "opaque-negative",
+      "256"
+    ],
+    "status": 0,
+    "signal": null,
+    "stdout": "opaque-negative\t256\t4354378\t4370881\t53015\t2731120\t10637894588566977728\n",
+    "stderr": ""
+  },
+  {
+    "round": 1,
+    "family": "hint-large",
+    "variant": "after",
+    "sha256": "bfd68b49b7b38f3831233f634b9b26c8ff2e61b2d2bc54936ef382075c050255",
+    "args": [
+      "-c",
+      "6",
+      "/home/tim/Documents/GitHub/workspace/.audit-numbers.rjcbha/atan-after",
+      "bench",
+      "hint-large",
+      "256"
+    ],
+    "status": 0,
+    "signal": null,
+    "stdout": "hint-large\t256\t21579434\t21669813\t238323\t14562632\t16787239134653931520\n",
+    "stderr": ""
+  },
+  {
+    "round": 2,
+    "family": "opaque-negative",
+    "variant": "after",
+    "sha256": "bfd68b49b7b38f3831233f634b9b26c8ff2e61b2d2bc54936ef382075c050255",
+    "args": [
+      "-c",
+      "6",
+      "/home/tim/Documents/GitHub/workspace/.audit-numbers.rjcbha/atan-after",
+      "bench",
+      "opaque-negative",
+      "256"
+    ],
+    "status": 0,
+    "signal": null,
+    "stdout": "opaque-negative\t256\t4357747\t4374490\t53015\t2731120\t10637894588566977728\n",
+    "stderr": ""
+  },
+  {
+    "round": 2,
+    "family": "hint-large",
+    "variant": "after",
+    "sha256": "bfd68b49b7b38f3831233f634b9b26c8ff2e61b2d2bc54936ef382075c050255",
+    "args": [
+      "-c",
+      "6",
+      "/home/tim/Documents/GitHub/workspace/.audit-numbers.rjcbha/atan-after",
+      "bench",
+      "hint-large",
+      "256"
+    ],
+    "status": 0,
+    "signal": null,
+    "stdout": "hint-large\t256\t21181645\t21278900\t238323\t14562632\t16787239134653931520\n",
+    "stderr": ""
+  },
+  {
+    "round": 3,
+    "family": "opaque-negative",
+    "variant": "after",
+    "sha256": "bfd68b49b7b38f3831233f634b9b26c8ff2e61b2d2bc54936ef382075c050255",
+    "args": [
+      "-c",
+      "6",
+      "/home/tim/Documents/GitHub/workspace/.audit-numbers.rjcbha/atan-after",
+      "bench",
+      "opaque-negative",
+      "256"
+    ],
+    "status": 0,
+    "signal": null,
+    "stdout": "opaque-negative\t256\t4310342\t4330183\t53015\t2731120\t10637894588566977728\n",
+    "stderr": ""
+  },
+  {
+    "round": 3,
+    "family": "hint-large",
+    "variant": "after",
+    "sha256": "bfd68b49b7b38f3831233f634b9b26c8ff2e61b2d2bc54936ef382075c050255",
+    "args": [
+      "-c",
+      "6",
+      "/home/tim/Documents/GitHub/workspace/.audit-numbers.rjcbha/atan-after",
+      "bench",
+      "hint-large",
+      "256"
+    ],
+    "status": 0,
+    "signal": null,
+    "stdout": "hint-large\t256\t20577307\t20663183\t238323\t14562632\t16787239134653931520\n",
+    "stderr": ""
+  },
+  {
+    "round": 4,
+    "family": "opaque-negative",
+    "variant": "after",
+    "sha256": "bfd68b49b7b38f3831233f634b9b26c8ff2e61b2d2bc54936ef382075c050255",
+    "args": [
+      "-c",
+      "6",
+      "/home/tim/Documents/GitHub/workspace/.audit-numbers.rjcbha/atan-after",
+      "bench",
+      "opaque-negative",
+      "256"
+    ],
+    "status": 0,
+    "signal": null,
+    "stdout": "opaque-negative\t256\t4371436\t4387659\t53015\t2731120\t10637894588566977728\n",
+    "stderr": ""
+  },
+  {
+    "round": 4,
+    "family": "hint-large",
+    "variant": "after",
+    "sha256": "bfd68b49b7b38f3831233f634b9b26c8ff2e61b2d2bc54936ef382075c050255",
+    "args": [
+      "-c",
+      "6",
+      "/home/tim/Documents/GitHub/workspace/.audit-numbers.rjcbha/atan-after",
+      "bench",
+      "hint-large",
+      "256"
+    ],
+    "status": 0,
+    "signal": null,
+    "stdout": "hint-large\t256\t20765143\t20871158\t238323\t14562632\t16787239134653931520\n",
+    "stderr": ""
+  },
+  {
+    "round": 5,
+    "family": "opaque-negative",
+    "variant": "after",
+    "sha256": "bfd68b49b7b38f3831233f634b9b26c8ff2e61b2d2bc54936ef382075c050255",
+    "args": [
+      "-c",
+      "6",
+      "/home/tim/Documents/GitHub/workspace/.audit-numbers.rjcbha/atan-after",
+      "bench",
+      "opaque-negative",
+      "256"
+    ],
+    "status": 0,
+    "signal": null,
+    "stdout": "opaque-negative\t256\t4344370\t4362700\t53015\t2731120\t10637894588566977728\n",
+    "stderr": ""
+  },
+  {
+    "round": 5,
+    "family": "hint-large",
+    "variant": "after",
+    "sha256": "bfd68b49b7b38f3831233f634b9b26c8ff2e61b2d2bc54936ef382075c050255",
+    "args": [
+      "-c",
+      "6",
+      "/home/tim/Documents/GitHub/workspace/.audit-numbers.rjcbha/atan-after",
+      "bench",
+      "hint-large",
+      "256"
+    ],
+    "status": 0,
+    "signal": null,
+    "stdout": "hint-large\t256\t20627632\t20718269\t238323\t14562632\t16787239134653931520\n",
+    "stderr": ""
+  },
+  {
+    "round": 6,
+    "family": "opaque-negative",
+    "variant": "after",
+    "sha256": "bfd68b49b7b38f3831233f634b9b26c8ff2e61b2d2bc54936ef382075c050255",
+    "args": [
+      "-c",
+      "6",
+      "/home/tim/Documents/GitHub/workspace/.audit-numbers.rjcbha/atan-after",
+      "bench",
+      "opaque-negative",
+      "256"
+    ],
+    "status": 0,
+    "signal": null,
+    "stdout": "opaque-negative\t256\t4376416\t4399308\t53015\t2731120\t10637894588566977728\n",
+    "stderr": ""
+  },
+  {
+    "round": 6,
+    "family": "hint-large",
+    "variant": "after",
+    "sha256": "bfd68b49b7b38f3831233f634b9b26c8ff2e61b2d2bc54936ef382075c050255",
+    "args": [
+      "-c",
+      "6",
+      "/home/tim/Documents/GitHub/workspace/.audit-numbers.rjcbha/atan-after",
+      "bench",
+      "hint-large",
+      "256"
+    ],
+    "status": 0,
+    "signal": null,
+    "stdout": "hint-large\t256\t21221113\t21321307\t238323\t14562632\t16787239134653931520\n",
+    "stderr": ""
+  },
+  {
+    "round": 7,
+    "family": "opaque-negative",
+    "variant": "after",
+    "sha256": "bfd68b49b7b38f3831233f634b9b26c8ff2e61b2d2bc54936ef382075c050255",
+    "args": [
+      "-c",
+      "6",
+      "/home/tim/Documents/GitHub/workspace/.audit-numbers.rjcbha/atan-after",
+      "bench",
+      "opaque-negative",
+      "256"
+    ],
+    "status": 0,
+    "signal": null,
+    "stdout": "opaque-negative\t256\t4364917\t4382629\t53015\t2731120\t10637894588566977728\n",
+    "stderr": ""
+  },
+  {
+    "round": 7,
+    "family": "hint-large",
+    "variant": "after",
+    "sha256": "bfd68b49b7b38f3831233f634b9b26c8ff2e61b2d2bc54936ef382075c050255",
+    "args": [
+      "-c",
+      "6",
+      "/home/tim/Documents/GitHub/workspace/.audit-numbers.rjcbha/atan-after",
+      "bench",
+      "hint-large",
+      "256"
+    ],
+    "status": 0,
+    "signal": null,
+    "stdout": "hint-large\t256\t20706626\t20799363\t238323\t14562632\t16787239134653931520\n",
+    "stderr": ""
+  },
+  {
+    "round": 8,
+    "family": "opaque-negative",
+    "variant": "after",
+    "sha256": "bfd68b49b7b38f3831233f634b9b26c8ff2e61b2d2bc54936ef382075c050255",
+    "args": [
+      "-c",
+      "6",
+      "/home/tim/Documents/GitHub/workspace/.audit-numbers.rjcbha/atan-after",
+      "bench",
+      "opaque-negative",
+      "256"
+    ],
+    "status": 0,
+    "signal": null,
+    "stdout": "opaque-negative\t256\t4342510\t4361211\t53015\t2731120\t10637894588566977728\n",
+    "stderr": ""
+  },
+  {
+    "round": 8,
+    "family": "hint-large",
+    "variant": "after",
+    "sha256": "bfd68b49b7b38f3831233f634b9b26c8ff2e61b2d2bc54936ef382075c050255",
+    "args": [
+      "-c",
+      "6",
+      "/home/tim/Documents/GitHub/workspace/.audit-numbers.rjcbha/atan-after",
+      "bench",
+      "hint-large",
+      "256"
+    ],
+    "status": 0,
+    "signal": null,
+    "stdout": "hint-large\t256\t20624954\t20738747\t238323\t14562632\t16787239134653931520\n",
+    "stderr": ""
+  }
+]

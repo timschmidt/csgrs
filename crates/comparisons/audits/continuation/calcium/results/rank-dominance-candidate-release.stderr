@@ -1,0 +1,8 @@
+    Blocking waiting for file lock on build directory
+   Compiling hyperreal v0.13.1 (/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/rank-dominance-trial/hyperreal)
+   Compiling hyperlattice v0.6.1 (/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/rank-dominance-trial/hyperlattice)
+   Compiling hyperlimit v0.4.1 (/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/rank-dominance-trial/hyperlimit)
+   Compiling hypersolve v0.3.1 (/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/rank-dominance-trial/hypersolve)
+   Compiling calcium-rank-dominance-candidate v0.1.0 (/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/rank-dominance-candidate)
+    Finished `release` profile [optimized] target(s) in 1m 04s
+     Running `/tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/release/calcium-rank-dominance-candidate`

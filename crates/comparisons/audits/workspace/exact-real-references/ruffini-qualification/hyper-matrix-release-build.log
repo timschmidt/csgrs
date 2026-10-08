@@ -1,0 +1,7 @@
+   Compiling hyperlattice v0.6.1 (/home/tim/Documents/GitHub/workspace/hyperlattice)
+   Compiling hyperlimit v0.4.1 (/home/tim/Documents/GitHub/workspace/hyperlimit)
+   Compiling hypersolve v0.3.1 (/home/tim/Documents/GitHub/workspace/hypersolve)
+   Compiling ruffini-matrix-controls v0.0.0 (/home/tim/Documents/GitHub/workspace/exact-real-references/ruffini-qualification/matrix-hyper)
+    Finished `release` profile [optimized] target(s) in 10.60s
+
+{"status":0,"error":null}

@@ -1,0 +1,8 @@
+{
+  "status": "invalid candidate runtime evidence",
+  "reason": "copy2 restored candidate source mtime older than the parent Cargo release fingerprint; parent and candidate executables are identical",
+  "parent_binary_sha256": "172b7824e25abede04f979fa06da899efcb4ec650f6edbc905925fa6f889829f",
+  "candidate_binary_sha256": "172b7824e25abede04f979fa06da899efcb4ec650f6edbc905925fa6f889829f",
+  "runtime_interpretation": "All candidate-labelled runtime rows exercised the committed parent. Only the independent candidate cargo check applies to changed source.",
+  "replacement": "normalized-analytic-region-candidate3"
+}

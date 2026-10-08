@@ -1,0 +1,43 @@
+
+running 1 test
+approximate-512 consumed caller=src/bezier_offset.rs:88317
+   0: <hypercurve::policy::CurveContext>::observe_approximate_512
+   1: <hypercurve::bezier_offset::BezierAlgebraicChord2>::oriented_side_by_refinement_with_limit
+   2: <hypercurve::bezier_offset::BezierAlgebraicChord2>::oriented_side_by_refinement
+   3: <hypercurve::bezier_offset::BezierAlgebraicChordSupportPredicate2>::oriented_side
+   4: <hypercurve::bezier_offset::BezierAlgebraicChord2>::contains_point
+   5: <hypercurve::bezier_offset::BezierAlgebraicChord2>::forward_ray_winding_delta_skipping_incident_origin
+   6: hypercurve::bezier_region::classify_point_with_retained_ray_skipping_origin
+   7: <hypercurve::bezier_region::CurveRegion2>::classify_point_from_boundary_side_ray_with_windings
+   8: <hypercurve::curve_region_boolean::CurveRegionBooleanContext>::fragment_side_classification_with_reference_tangent
+   9: <hypercurve::curve_region_boolean::CurveRegionBooleanContext>::regularized_fragment_geometric_decision
+  10: <hypercurve::curve_region_boolean::CurveRegionBooleanContext>::regularized_fragment_actions
+  11: <hypercurve::curve_region_boolean::CurveRegionBooleanContext>::build_regularized_region
+  12: <hypercurve::bezier_region::CurveRegion2>::regularized_region_raw
+  13: hypercurve::bezier_region::regularized_exact_offset_band_arrangement
+  14: <hypercurve::bezier_region::CurveRegion2>::offset::{closure#0}
+  15: <hypercurve::bezier_region::CurveRegion2>::offset
+  16: <hypercurve_curve_region_promotion::algebraic_chord_material_hole_contact_and_hole_collapse_are_exact::{closure#0} as core::ops::function::FnOnce<()>>::call_once
+  17: test::__rust_begin_short_backtrace::<core::result::Result<(), alloc::string::String>, fn() -> core::result::Result<(), alloc::string::String>>
+  18: test::run_test::{closure#0}
+  19: std::sys::backtrace::__rust_begin_short_backtrace::<test::run_test::{closure#1}, ()>
+  20: <std::thread::lifecycle::spawn_unchecked<test::run_test::{closure#1}, ()>::{closure#1} as core::ops::function::FnOnce<()>>::call_once::{shim:vtable#0}
+  21: <std::sys::thread::unix::Thread>::new::thread_start
+  22: start_thread
+  23: __clone3
+
+
+thread 'algebraic_chord_material_hole_contact_and_hole_collapse_are_exact' (37) panicked at tests/hypercurve_curve_region_promotion.rs:6183:9:
+assertion `left == right` failed
+  left: Approximate512Consumed
+ right: Certified
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+test algebraic_chord_material_hole_contact_and_hole_collapse_are_exact ... FAILED
+
+failures:
+
+failures:
+    algebraic_chord_material_hole_contact_and_hole_collapse_are_exact
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 99 filtered out; finished in 8.22s
+

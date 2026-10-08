@@ -1,0 +1,463 @@
+{
+  "parent_hypercurve": "9aab7d22f4d08608be75e99efde8def1145722b7",
+  "scope": "Make the two raw CurveRegion2 factories crate-private after migrating all callers. Retain malformed-loop checks in crate-private tests. Recognize selected fibers as retained geometry and recover native exact line endpoints only under a certified finite monotone line image, sharing scalar witnesses with the chord path.",
+  "unique_passing_tests": 1384,
+  "focused": [
+    {
+      "target": "bezier-region",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/private-region-factories-candidate3-libraries/hypercurve_bezier_region-95990204ab2cc359",
+        "--test-threads=2",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "passed": true,
+      "expected": "34 passed;",
+      "elapsed_seconds": 0.11379539998597465,
+      "sha256": "999594c530522f0399c7945d0abc28ea89463a1d924a738eb7c56c2cdf424649",
+      "log": "private-region-factories-candidate3-bezier-region.log"
+    },
+    {
+      "target": "retained_region_constructor_rejects_reused_arrangement_sources_across_loops",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/private-region-factories-candidate3-libraries/hypercurve-0b4591d2a89c50f8",
+        "--exact",
+        "bezier_region::tests::retained_region_constructor_rejects_reused_arrangement_sources_across_loops",
+        "--test-threads=2",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "passed": true,
+      "expected": "1 passed;",
+      "elapsed_seconds": 0.003456323000136763,
+      "sha256": "ee752c51e7ed9f0ca6c3b660b194072c0580b5bebf84167462821c5e7e8dbc72",
+      "log": "private-region-factories-candidate3-retained_region_constructor_rejects_reused_arrangement_sources_across_loops.log"
+    },
+    {
+      "target": "native_boundary_loops_convert_into_unified_region_validation",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/private-region-factories-candidate3-libraries/hypercurve-0b4591d2a89c50f8",
+        "--exact",
+        "bezier_region::tests::native_boundary_loops_convert_into_unified_region_validation",
+        "--test-threads=2",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "passed": true,
+      "expected": "1 passed;",
+      "elapsed_seconds": 0.003469702001893893,
+      "sha256": "ee752c51e7ed9f0ca6c3b660b194072c0580b5bebf84167462821c5e7e8dbc72",
+      "log": "private-region-factories-candidate3-native_boundary_loops_convert_into_unified_region_validation.log"
+    },
+    {
+      "target": "retained_region_constructor_rejects_duplicate_boundary_loops",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/private-region-factories-candidate3-libraries/hypercurve-0b4591d2a89c50f8",
+        "--exact",
+        "bezier_region::tests::retained_region_constructor_rejects_duplicate_boundary_loops",
+        "--test-threads=2",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "passed": true,
+      "expected": "1 passed;",
+      "elapsed_seconds": 0.003482561995042488,
+      "sha256": "ee752c51e7ed9f0ca6c3b660b194072c0580b5bebf84167462821c5e7e8dbc72",
+      "log": "private-region-factories-candidate3-retained_region_constructor_rejects_duplicate_boundary_loops.log"
+    },
+    {
+      "target": "selected_fiber_line_images_reuse_exact_real_endpoints_in_both_directions",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/private-region-factories-candidate3-libraries/hypercurve-0b4591d2a89c50f8",
+        "--exact",
+        "bezier_region::tests::selected_fiber_line_images_reuse_exact_real_endpoints_in_both_directions",
+        "--test-threads=2",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "passed": true,
+      "expected": "1 passed;",
+      "elapsed_seconds": 0.0034574739984236658,
+      "sha256": "ee752c51e7ed9f0ca6c3b660b194072c0580b5bebf84167462821c5e7e8dbc72",
+      "log": "private-region-factories-candidate3-selected_fiber_line_images_reuse_exact_real_endpoints_in_both_directions.log"
+    },
+    {
+      "target": "selected_fiber_line_image_fit_rejects_nonmonotone_subrange_excursions",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/private-region-factories-candidate3-libraries/hypercurve-0b4591d2a89c50f8",
+        "--exact",
+        "bezier_region::tests::selected_fiber_line_image_fit_rejects_nonmonotone_subrange_excursions",
+        "--test-threads=2",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "passed": true,
+      "expected": "1 passed;",
+      "elapsed_seconds": 0.0034688830201048404,
+      "sha256": "ee752c51e7ed9f0ca6c3b660b194072c0580b5bebf84167462821c5e7e8dbc72",
+      "log": "private-region-factories-candidate3-selected_fiber_line_image_fit_rejects_nonmonotone_subrange_excursions.log"
+    }
+  ],
+  "broader": [
+    {
+      "target": "hypercurve",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/private-region-factories-broader1-libraries/hypercurve-0b4591d2a89c50f8",
+        "--test-threads=4",
+        "--color",
+        "never",
+        "--skip",
+        "selected_parallel_normal_circle_intersects_genuinely_analytic_parallel_in_one_fiber",
+        "--skip",
+        "independent_oblique_chord_pair_fillets_extend_on_infinite_supports",
+        "--skip",
+        "selected_circle_and_analytic_parallel_extend_on_full_supports",
+        "--skip",
+        "pair_native_boolean_algebraic_chord_corner_publishes_a_third_generation_fillet"
+      ],
+      "skipped": [
+        "selected_parallel_normal_circle_intersects_genuinely_analytic_parallel_in_one_fiber",
+        "independent_oblique_chord_pair_fillets_extend_on_infinite_supports",
+        "selected_circle_and_analytic_parallel_extend_on_full_supports",
+        "pair_native_boolean_algebraic_chord_corner_publishes_a_third_generation_fillet"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 151.86975713900756,
+      "sha256": "ee752c51e7ed9f0ca6c3b660b194072c0580b5bebf84167462821c5e7e8dbc72",
+      "log": "private-region-factories-broader1-hypercurve.log",
+      "summary": "test result: ok. 1187 passed; 0 failed; 6 ignored; 0 measured; 4 filtered out; finished in 151.76s"
+    },
+    {
+      "target": "hypercurve_curve_region_promotion",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/private-region-factories-broader1-libraries/hypercurve_curve_region_promotion-e523831f2638d8ff",
+        "--test-threads=4",
+        "--color",
+        "never",
+        "--skip",
+        "approximate_512_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions",
+        "--skip",
+        "non_ph_bezier_pair_projective_fillet_retains_algebraic_extensions",
+        "--skip",
+        "nonconvex_algebraic_chord_expansion_is_exact_and_local_collapse_is_explicit",
+        "--skip",
+        "strict_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions",
+        "--skip",
+        "unified_mixed_line_arc_erosion_splits_after_a_curved_neck_collapse"
+      ],
+      "skipped": [
+        "approximate_512_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions",
+        "non_ph_bezier_pair_projective_fillet_retains_algebraic_extensions",
+        "nonconvex_algebraic_chord_expansion_is_exact_and_local_collapse_is_explicit",
+        "strict_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions",
+        "unified_mixed_line_arc_erosion_splits_after_a_curved_neck_collapse"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 39.836450992006576,
+      "sha256": "5a922e2d957c90edbe7249986670fb796a586b2535ac8dc35252dd3d6522ae47",
+      "log": "private-region-factories-broader1-hypercurve_curve_region_promotion.log",
+      "summary": "test result: ok. 97 passed; 0 failed; 0 ignored; 0 measured; 5 filtered out; finished in 39.81s"
+    },
+    {
+      "target": "hypercurve_curve_range",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/private-region-factories-broader1-libraries/hypercurve_curve_range-d8949596fe59b528",
+        "--test-threads=4",
+        "--color",
+        "never"
+      ],
+      "skipped": [],
+      "returncode": 0,
+      "elapsed_seconds": 0.16402766102692112,
+      "sha256": "bc5d1c2f729e7496150e2ee7c5a36c852f851e2ea59954210b0eaa22704ce1e6",
+      "log": "private-region-factories-broader1-hypercurve_curve_range.log",
+      "summary": "test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.15s"
+    },
+    {
+      "target": "hypercurve_path_closure",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/private-region-factories-broader1-libraries/hypercurve_path_closure-34c4b0240fb4e48a",
+        "--test-threads=4",
+        "--color",
+        "never"
+      ],
+      "skipped": [],
+      "returncode": 0,
+      "elapsed_seconds": 33.06700575197465,
+      "sha256": "6ce40ac0669909497d84701420d95bfe89cbf4c8c294141136deb7f99439e0d4",
+      "log": "private-region-factories-broader1-hypercurve_path_closure.log",
+      "summary": "test result: ok. 12 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 33.02s"
+    },
+    {
+      "target": "hypercurve_curve_intersection",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/private-region-factories-broader1-libraries/hypercurve_curve_intersection-38c349bc201247b4",
+        "--test-threads=4",
+        "--color",
+        "never"
+      ],
+      "skipped": [],
+      "returncode": 0,
+      "elapsed_seconds": 11.49520714499522,
+      "sha256": "e057ad17544e84826ae8da66a650fa7b4c9d0c45aeda9f35e184bdb9c433aa78",
+      "log": "private-region-factories-broader1-hypercurve_curve_intersection.log",
+      "summary": "test result: ok. 51 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 11.45s"
+    },
+    {
+      "target": "approximate_512_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/private-region-factories-broader1-libraries/hypercurve_curve_region_promotion-e523831f2638d8ff",
+        "--exact",
+        "approximate_512_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions",
+        "--test-threads=1",
+        "--nocapture",
+        "--color",
+        "never"
+      ],
+      "returncode": 101,
+      "known_failure_matches": true,
+      "elapsed_seconds": 0.6234842779813334,
+      "sha256": "5a922e2d957c90edbe7249986670fb796a586b2535ac8dc35252dd3d6522ae47",
+      "log": "private-region-factories-broader1-known-approximate_512_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions.log"
+    },
+    {
+      "target": "non_ph_bezier_pair_projective_fillet_retains_algebraic_extensions",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/private-region-factories-broader1-libraries/hypercurve_curve_region_promotion-e523831f2638d8ff",
+        "--exact",
+        "non_ph_bezier_pair_projective_fillet_retains_algebraic_extensions",
+        "--test-threads=1",
+        "--nocapture",
+        "--color",
+        "never"
+      ],
+      "returncode": 101,
+      "known_failure_matches": true,
+      "elapsed_seconds": 5.6813124809996225,
+      "sha256": "5a922e2d957c90edbe7249986670fb796a586b2535ac8dc35252dd3d6522ae47",
+      "log": "private-region-factories-broader1-known-non_ph_bezier_pair_projective_fillet_retains_algebraic_extensions.log"
+    },
+    {
+      "target": "nonconvex_algebraic_chord_expansion_is_exact_and_local_collapse_is_explicit",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/private-region-factories-broader1-libraries/hypercurve_curve_region_promotion-e523831f2638d8ff",
+        "--exact",
+        "nonconvex_algebraic_chord_expansion_is_exact_and_local_collapse_is_explicit",
+        "--test-threads=1",
+        "--nocapture",
+        "--color",
+        "never"
+      ],
+      "returncode": 101,
+      "known_failure_matches": true,
+      "elapsed_seconds": 0.3233247659809422,
+      "sha256": "5a922e2d957c90edbe7249986670fb796a586b2535ac8dc35252dd3d6522ae47",
+      "log": "private-region-factories-broader1-known-nonconvex_algebraic_chord_expansion_is_exact_and_local_collapse_is_explicit.log"
+    },
+    {
+      "target": "strict_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/private-region-factories-broader1-libraries/hypercurve_curve_region_promotion-e523831f2638d8ff",
+        "--exact",
+        "strict_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions",
+        "--test-threads=1",
+        "--nocapture",
+        "--color",
+        "never"
+      ],
+      "returncode": 101,
+      "known_failure_matches": true,
+      "elapsed_seconds": 0.6235885909991339,
+      "sha256": "5a922e2d957c90edbe7249986670fb796a586b2535ac8dc35252dd3d6522ae47",
+      "log": "private-region-factories-broader1-known-strict_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions.log"
+    },
+    {
+      "target": "unified_mixed_line_arc_erosion_splits_after_a_curved_neck_collapse",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/private-region-factories-broader1-libraries/hypercurve_curve_region_promotion-e523831f2638d8ff",
+        "--exact",
+        "unified_mixed_line_arc_erosion_splits_after_a_curved_neck_collapse",
+        "--test-threads=1",
+        "--nocapture",
+        "--color",
+        "never"
+      ],
+      "returncode": 101,
+      "known_failure_matches": true,
+      "elapsed_seconds": 0.37306032099877484,
+      "sha256": "5a922e2d957c90edbe7249986670fb796a586b2535ac8dc35252dd3d6522ae47",
+      "log": "private-region-factories-broader1-known-unified_mixed_line_arc_erosion_splits_after_a_curved_neck_collapse.log"
+    }
+  ],
+  "builds": [
+    {
+      "kind": "hypercurve-check",
+      "repo": "hypercurve",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "check",
+        "--all-targets",
+        "--no-default-features",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 17.292518571019173
+    },
+    {
+      "kind": "test-build",
+      "repo": "hypercurve",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "test",
+        "--release",
+        "--all-features",
+        "--lib",
+        "--test",
+        "hypercurve_bezier_region",
+        "--no-run",
+        "--message-format=json",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 178.36630833797972
+    },
+    {
+      "kind": "hyperbrep-check",
+      "repo": "hyperbrep",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "check",
+        "--all-targets",
+        "--no-default-features",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 15.840858721989207
+    },
+    {
+      "kind": "hyperdrc-check",
+      "repo": "hyperdrc",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "check",
+        "--all-targets",
+        "--no-default-features",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 18.094065212004352
+    },
+    {
+      "kind": "hypercircuit-check",
+      "repo": "hypercircuit",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "check",
+        "--all-targets",
+        "--no-default-features",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.11393277099705301
+    },
+    {
+      "kind": "csgrs-check",
+      "repo": "csgrs",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "check",
+        "--all-targets",
+        "--no-default-features",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 11.983246365009109
+    },
+    {
+      "kind": "fuzz-check",
+      "repo": "hypercurve",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "check",
+        "--manifest-path",
+        "fuzz/Cargo.toml",
+        "--bin",
+        "bezier_region",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 11.482657204003772
+    }
+  ],
+  "broader_build": {
+    "command": [
+      "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+      "test",
+      "--release",
+      "--all-features",
+      "--lib",
+      "--test",
+      "hypercurve_curve_region_promotion",
+      "--test",
+      "hypercurve_curve_range",
+      "--test",
+      "hypercurve_path_closure",
+      "--test",
+      "hypercurve_curve_intersection",
+      "--no-run",
+      "--message-format=json",
+      "--locked",
+      "--offline"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 14.236586977000115
+  },
+  "public_admission_probe": {
+    "command": [
+      "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustc",
+      "--edition=2024",
+      "-O",
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/normalized-retained-admission-completed.rs",
+      "--extern",
+      "hypercurve=/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/private-region-factories-candidate3-libraries/libhypercurve-bacb55d5ec235376.rlib",
+      "-L",
+      "dependency=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/private-region-factories-candidate3-libraries/admission-public"
+    ],
+    "compile_returncode": 0,
+    "run_returncode": 0,
+    "source_sha256": "67e4454e799b2fa4561784a86a4e6eee44aeeeeede35a1cf33fd4f3310ea17c1",
+    "binary_sha256": "c94942fe56e74a6b83e7e0046dab8fc0131a67f248aa55596558b904f23df49e",
+    "library_sha256": "7ee45522b1f2248fc54a35bf4f0683f7c2282bee2f93c5cb6518b29bc0790379",
+    "elapsed_seconds": 0.5499935389962047
+  },
+  "public_admission_cases": 8,
+  "public_admission_memberships": 16,
+  "isolated_sources": "private-region-factories-candidate3-isolated-sources.json",
+  "working_sources": "private-region-factories-candidate3-working-sources.json",
+  "limitations": [
+    "Five existing promotion failures reproduced with identical panic messages. Four previously held-out expensive library tests were excluded from the broad library run; six library tests remain ignored.",
+    "Two analytic-region closure cases previously timed out on parent and candidate; not re-run for this slice. Required closure work remains unfinished.",
+    "Selected-fiber native line specialization certifies monotonicity on the unit source chart and requires represented endpoint witnesses. Other exact carriers retain their general machinery.",
+    "Corner replacement and XOR fallback still require normalized publication. See normalized-operation-publication-next.md.",
+    "Pinned Hyperreal snapshot used; other-session working changes untouched. The unqualified mapped-point inverse changes in src/bezier_offset.rs were excluded."
+  ],
+  "earlier_candidates": [
+    "Candidate1 exposed three selected-fiber dispatch gaps without weakening the existing assertions.",
+    "Candidate2 had one unit-test compile error (missing operation argument); candidate3 fixed it and passed all targeted checks."
+  ]
+}

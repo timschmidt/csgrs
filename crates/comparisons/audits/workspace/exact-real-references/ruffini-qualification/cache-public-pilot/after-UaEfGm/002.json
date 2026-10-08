@@ -1,0 +1,15 @@
+{
+  "command": "cargo",
+  "args": [
+    "build",
+    "--offline",
+    "--release"
+  ],
+  "begin": "2026-09-07T05:48:56.243Z",
+  "end": "2026-09-07T05:49:03.115Z",
+  "status": 0,
+  "signal": null,
+  "error": null,
+  "stdout": "",
+  "stderr": "   Compiling hyperreal v0.13.1 (/home/tim/Documents/GitHub/workspace/exact-real-references/ruffini-qualification/cache-public-pilot/source/hyperreal)\n   Compiling ruffini_cache_public_pilot v0.0.0 (/home/tim/Documents/GitHub/workspace/exact-real-references/ruffini-qualification/cache-public-pilot)\n    Finished `release` profile [optimized] target(s) in 6.85s\n"
+}

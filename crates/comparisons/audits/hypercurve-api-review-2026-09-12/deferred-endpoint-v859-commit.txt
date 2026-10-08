@@ -1,0 +1,14 @@
+Consolidate deferred endpoint construction around one exact source
+
+Four private family constructors stored the same source enum, selected
+parameter, policy and empty success caches. Replace their dispatch and
+infallible Result wrappers with one direct constructor. Update split,
+support, transform and test callers without compatibility wrappers.
+
+Point/tangent evaluation, finite-domain checks, lazy caching and eager
+endpoint construction remain unchanged.
+
+Validation: 330 selected release tests across 12 pinned binaries, both
+Hypercurve clippy configurations, formatting, four fuzz targets, docs,
+Hyperbrep clippy and csgrs check. Source records are in
+hypercurve-api-review-2026-09-12/deferred-endpoint-v859-reviewed.json.

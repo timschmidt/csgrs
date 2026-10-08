@@ -1,0 +1,585 @@
+                                   Real numbers and intervals in Haskell
+                                           The ireal package
+
+                                                       Björn von Sydow
+                                                 bjorn.von.sydow@gmail.com
+
+                                                        December 9, 2014
+
+
+Abstract                                                             on the efficiency of floating-point computations, but also
+                                                                     has to cope with the presence of round-off errors.
+This paper describes the package ireal, which provides                  At the opposite end of the spectrum we find the com-
+potentially arbitrary precision real and interval arithmetic.        putable reals, which allow for error-free computation with
+The package is based on ideas that go back to Boehm                  potentially arbitrary precision. The concept goes back to
+and Cartwright and which are also used in a well-known               Turing, who established their basic properties, including the
+Haskell implementation of computable reals by David                  disturbing facts that equality of computable real numbers is
+Lester. We believe that our package is significantly faster          undecidable and that the basic arithmetic operators are not
+than other Haskell packages for exact real arithmetic. Two           computable in the standard decimal representation. The re-
+essential features which contribute to this are the following:       striction to a subset of real numbers is natural, since the real
+                                                                     numbers form an uncountable set, and thus one cannot rep-
+    • Our package merges real numbers and intervals in one           resent them all finitely as terms in a programming language.
+      type IReal, which enables us to control the precision          Many different implementation techniques for computable
+      of subexpressions, an ability which is crucial for effi-       real numbers have been proposed over the years. One im-
+      ciency in some situations.                                     portant distinguishing feature between different approaches
+                                                                     is whether the precision required in a computation is speci-
+    • A memoizing technique is used to speed up recom-               fied in advance or not. In one approach, a real number is an
+      putations of the same number at different precisions.          infinite object which can, indefinitely, emit more and more
+      Unfortunately, this is implemented using impure parts          information on request, like a lazy infinite list (even though
+      of Haskell.                                                    the standard decimal representation cannot be used). In an-
+                                                                     other, the desired precision has to be given beforehand; in
+In spite of these improvements, our package is still far be-
+                                                                     effect, a real number is a function which takes the desired
+yond the best imperative C/C++ packages. But in some
+                                                                     precision as input and returns an approximation with this
+cases the difference is less than an order of magnitude, so
+                                                                     precision. For the lazy functional programmer, the first ap-
+we believe that our package can be used not only as a calcu-
+                                                                     proach may seem more elegant, but, unfortunately, all expe-
+lator, but also for small-scale problems in mathematics and
+                                                                     rience indicates that it is vastly inferior from an efficiency
+its applications. A selection of such examples are provided
+                                                                     point of view1 [1]. The burden of having to maintain all in-
+with the distribution.
+                                                                     formation needed in order to be able to continue to arbitrary
+   This paper is mostly an introduction to the use of the
+                                                                     precision is just too high, compared to the competition who
+package and not a detailed explanation of the implementa-
+                                                                     knows the limits of what will be requested. But also the less
+tion.
+                                                                     inefficient versions are, on contemporary hardware, orders
+                                                                     of magnitude slower than floating-point arithmetic.
+1     Introduction                                                      An intermediate approach to high precision computation
+                                                                     over the reals is to use a library for multi-precision float-
+How should real numbers be represented in computers?                 ing point numbers. These are based on similar ideas as
+This old question is of immense practical importance for             the hardware-supported IEEE floating point numbers, but
+scientific computing, but also of great theoretical interest.        extended in software to mantissas of arbitrary, but fixed,
+For most purposes, the obvious answer is as floating-point           length. An example is the C library MPFR [9], which pro-
+numbers. These have evolved via numerous poorly defined,                1 The present author regrets that he did not trust this evidence, but spent
+vendor-specific formats to the present, carefully specified          too much time on fruitless attempts to make a competitive implementation
+IEEE standard. All large-scale numerical computing relies            based on continued fractions.
+
+
+                                                                 1
+vides such numbers with supporting arithmetic and all the              tasks are within an order of magnitude of those used by
+mathematical functions in C, including correct rounding in             standard numerical methods. Methods from validated nu-
+various rounding modes. This is a very efficient alternative,          merics and associated computations can also play promi-
+with the disadvantage that it provides correctly rounded               nent roles in mathematical proofs, as witnessed by [11].
+results only for atomic operations; the result is correctly               In common interval arithmetic systems, numbers and in-
+rounded if the arguments are exact. For compound expres-               tervals are distinct types. Numbers are typically of type
+sions, where intermediate results are rounded, a manual er-            Double and there is an abstract type Interval, represented
+ror analysis must be performed.                                        by a pair of numbers. A number can be coerced to a degen-
+   So, the applications for implementations of computable              erate, or thin, interval in order to do arithmetic, but concep-
+reals are limited, but significant; they include small-scale           tually, numbers and intervals are different things.
+but high-precision tasks in mathematics and applications,                 In the context of computable reals, however, the dis-
+reference versions of numerical algorithms and other com-              tinction between numbers and intervals becomes blurred.
+putations over the reals, and educational applications.                At any point in a computation, a number is only partially
+However, in order to explore these possibilities beyond the            known; in effect, it is known as an interval approximation.
+most trivial situations, the inefficiencies of real number             Conversely, a sufficiently narrow interval is indistinguish-
+computation must be kept to a minimum. Unfortunately,                  able from a number, when computed to low precision. Us-
+the real number packages available on Hackage so far do                ing the second approach above, both a real number and a
+not meet the requirements. The best candidate seems to                 real interval can be represented as a function from the type
+be Lester’s CReal module, which is part of the numbers                 of precisions to the type of rational intervals. What dis-
+package. This is, however, too slow for most applications              tinguishes a number from an interval is the property that
+beyond its intended use as a calculator, i.e. to compute a             the lengths of its approximating intervals tend to zero as
+high-precision value of a moderately complicated real ex-              precision increases beyond bounds, something which is not
+pression.                                                              observable during computation. Thus, in our implementa-
+   This paper describes a Haskell implementation of the                tion we merge intervals and numbers into a common type
+computable reals, based on ideas very similar to Lester’s              IReal. This brings not only conceptual simplification, but
+module, and, by transitivity, on Boehm’s and Cartwright’s              also gives us the crucial ability to control the precision of
+earlier work [1]. However, it adds substantial engineer-               intermediate results. As we will see, this ability will be es-
+ing improvements and a few important new ideas, which                  sential in many situations.
+in some cases lead to orders of magnitude in speedup. We                  This paper is intended as an introduction to the use of
+should note immediately that Lester deliberately avoided               the package; it is not a detailed description of the imple-
+some simple and obvious improvements in order to facili-               mentation. However, in order to make best use of the pack-
+tate another of his goals: to formally prove the implemen-             age, some properties of the implementation should be un-
+tation correct in PVS [5, 6]. Our package is still painfully           derstood; these properties are explained here.
+slow in many situations, but it does extend the range of
+problems that can be treated.                                          2   Simple ghci interaction
+   In order to discuss our more significant improvements
+we will first review another idea: interval arithmetic. Com-           In this section, we illustrate the simplest interactive usage
+puting with floating-point numbers inevitably involves nu-             of our package. Two somewhat more substantial examples
+merical approximations, and careful selection of robust al-            are discussed in section 5; further application examples are
+gorithms is needed to keep errors under control, provide               supplied with the distribution and are briefly discussed in
+realistic error estimates and thus give reliable results. A fur-       section 6.
+ther step towards trustworthy scientific computing is taken               The type IReal is an instance of all the standard numeric
+in the field of validated numerics [12], where interval rep-           classes:
+resentations of real numbers are used, together with other             > exp (sin 1.6) + pi * sqrt 3 ? 30
+techniques such as automatic differentiation, to provide ap-           8.158521101133937220554906871457
+proximate solutions, which are guaranteed to enclose the
+exact solution to a problem. Interval arithmetic combines              Here we used the ? operator, which takes the number of
+smoothly with floating-point numbers, since the IEEE stan-             decimals as second argument. We can request higher preci-
+dard provides several rounding modes, so intermediate val-             sion:
+ues can be rounded “outwards”, thus yielding conservative              > exp (sin 1.6) + pi * sqrt 3 ? 500
+approximations. Highly sophisticated libraries and tool-               8.1585211011339372205549068714566893359638540645266
+boxes with interval algorithms for a wide range of problems            621248429487858987923531748273058985507809309213353
+are available [3, 10]. Using these, the resources needed               405025836212937095538277896577234878099264698098547
+to compute verified solutions to many large-scale numeric              434834690827025787674700554210918547995083954772274
+
+
+                                                                   2
+698366651070974841651537156007874775950204996964627                   > exp (sin (0.5 +- 1e-40)) + pi * sqrt (3 +- 1e-50) ? 40
+895931005821835142268064237677239672492891538676097                   7.056544389144737295099235698512757979470[| 1 .. 5 |]
+448072070415221517896256740470951264756385302167668
+779056108765292318511746872053953038800519590979341                      Finally, we note that we can compute values far beyond
+091494013057457755671364586688209441689724254241783                   the reach of double precision arithmetic:
+9614723465240073507715670115255386679823477
+                                                                      > exp 10000 ?? 10
+   Simple expressions like this are computed instanta-                0.8806818226e4343
+neously; also 5000 decimals takes only a small fraction of a
+                                                                      The ?? operator demands output in scientific notation, with
+second on a typical laptop. But 50000 decimals is problem-
+                                                                      the indicated number of significant digits.
+atic for our implementation; it is doable, but takes several
+seconds. It turns out that different algorithms are suitable in
+different ranges of precision and we have chosen the ones             3   Representing real numbers
+that behave well in the low range, up to at most a few thou-
+sand decimals, less for substantial computations. Indeed,             As mentioned above, this paper does not focus on the in-
+our main interest is in solving problems with moderate pre-           ternals of the package. However, in order to make efficient
+cision in end results correctly, which may require high pre-          use of it, some aspects of the implementation must be un-
+cision in intermediate results.                                       derstood.
+   Note that even though IReal is an instance of Show, us-               We begin with a discussion of the representation of real
+ing ? is the default way to print IReal values. See section           numbers. We assume that the set of real numbers, the arith-
+4 below for more discussion on this.                                  metic operations and the elementary functions are already
+   Interval values are built using the +- operator:                   well understood, and our problem is to represent real num-
+> exp (sin (1.6 +- 0.05)) + pi * sqrt (3 +- 0.02) ? 20                bers and their arithmetic using the data types and operations
+8.1[| 3300320390 .. 7778778516 |]                                     available to us in Haskell. Following the ideas from [1] and
+                                                                      [6], we represent the number x by a function x̂ : N → Z,
+The result is displayed in non-standard, but hopefully easily         with the requirement that for all p ∈ N
+understandable notation. The resulting interval is conserva-
+tive: it is guaranteed to include all values of the expression                             |x · 2 p − x̂(p)| < 1.              (1)
+           √
+esin x + π y for x ∈ [1.55, 1.65] and y ∈ [2.98, 3.02]. One
+can note that the maximal value is attained not in a corner           This requirement may be more intuitive if we divide by 2 p
+of this rectangle of the xy plane, but in (π/2, 3.02). We also        to get
+see that the result does not display 20 decimals; interval up-
+per and lower bounds display at most 10 differing decimal                                          x̂(p)    1
+                                                                                            |x −       p
+                                                                                                         |< p
+positions.                                                                                           2     2
+   As always in interval arithmetic, the result may be too            So, for a given precision p, we have to find a rational num-
+pessimistic, because of the well-known dependency prob-
+                                                                      ber with denominator 2 p , which approximates x to within
+lem:
+                                                                      2−p . The advantage in restricting the denominator to this
+> let x = 1 +- 2 in x * x ? 10                                        special form is that the function values need indicate only
+[| -3 .. 9 |]                                                         the integer numerator, rather than the approximating ratio-
+                                                                      nal number, and we can do most of the required computa-
+The value -3 would result if the left occurrence of x had
+                                                                      tions in (unbounded) integer arithmetic.
+the value -1 and the right occurrence the value 3 (or con-
+                                                                         Note that for a given real number
+                                                                                                        √ x, (1) does not uniquely
+versely). Multiple occurrences of an interval-valued vari-
+                                                                      specify x̂. For example, if x = 2, then x̂(1) can be 2 or 3,
+able in an expression will always lead to such overestima-
+                                                                      x̂(2) either 5 or 6 and x̂(3) either 11 or 12.
+tion. The techniques developed in applications of interval
+                                                                         It follows easily from (1) that for all p, r ∈ N
+analysis to mitigate this annoying problem apply also to our
+package.                                                                               |x̂(p + r) − x̂(p) · 2r | ≤ 2r .        (2)
+   To illustrate the discussion at the end of the Introduction,
+let us compute a very narrow interval:                         Conversely, for any function x̂ satisfying (2), the sequence
+                                                                 x̂(p)
+> exp (sin (0.5 +- 1e-40)) + pi * sqrt (3 +- 1e-50) ? 30 { 2 p }∞      p=0 of rational numbers is a Cauchy sequence, and
+7.056544389144737295099235698513                               thus represents a real number.
+                                                                   In order to do arithmetic, assume that we know represen-
+The result is certainly an interval, but at the requested pre-
+cision of 30 decimals, it looks like a number. By requesting   tations  x̂ and ŷ of real numbers x and y. Then
+more decimals, the true nature of the result becomes appar-
+ent:                                                                          + y(p) = scale (x̂(p + 2) + ŷ(p + 2))(−2),
+                                                                             xd
+
+
+                                                                  3
+where scale m p = m · 2 p , correctly rounded. Thus, to ap-          Display format. IReal values shown as output are not
+proximate x + y to precision p we have to approximate the            correctly rounded. The error can be up to one unit in the
+operands to slightly higher precision and then scale down            least significant digit, not 0.5 as correct rounding would de-
+the sum. The proof of this is straightforward:                       mand. This is for computability reasons: the decimal no-
+                                                                     tation with correct rounding does not have enough redun-
+           |(x̂(p + 2) + ŷ(p + 2)) − (x + y) · 2 p+2 |              dancy.
+        ≤ |x̂(p + 2) − x · 2 p+2 | + |ŷ(p + 2) − y · 2 p+2 |           As a simple illustration of the problems with correct
+        < 2.                                                         rounding, consider computing the value of an expression
+                                                                     which has value exactly 0.25, and displaying the result
+Division by 4 gives |(x̂(p+2)+ ŷ(p+2))/4−(x+y)·2 p | <              with one decimal. The computation proceeds by comput-
+1/2. Rounding to scale (x̂(p + 2) + ŷ(p + 2))(−2) adds an-          ing increasingly narrow interval approximations which all
+other 1/2 to the error estimate.                                     include the exact value 0.25, but none of these allows to de-
+  This reasoning suggests the following code fragment                cide if the single correctly rounded decimal should be 2 or
+(which will be slightly modified later):                             3, leading to non-termination. Thus, more redundancy in
+                                                                     output is necessary. Our chosen policy allows that, as soon
+data IReal = IR (Int -> Integer)
+                                                                     as we know that the value is greater than 0.2 and less than
+instance Num IReal where
+                                                                     0.3, we can output either of these.
+  IR x + IR y = IR (\p -> scale (x(p+2) + y(p+2)) (-2))
+                                                                        This redundancy is also the reason for not recommending
+  IR x * IR y = IR f
+                                                                     to use the Show instance; we cannot guarantee to provide
+    where sx = lg2 (abs (x 0)) + 3
+                                                                     equal string representations for equal values. This is less of
+          sy = lg2 (abs (y 0)) + 3
+                                                                     a problem for ?, which is a command, not an expression:
+          f p = scale (x (p+sy) * y (p+sx)) (-(p+sx+sy)) (?) :: IReal -> Int -> IO ()
+
+    fromInteger n = IR (shift n)                                     Our reason for providing the instance at all is that some
+    ...                                                              QuickCheck combinators require it to be present.
+We will not explain the code for multiplication in detail, but
+two things should be noted:                                          Partial functions. Functions, which have a subset of
+                                                                     the reals as their natural domain, will often lead to non-
+    • Again we approximate x and y to higher precision, per-         termination when applied to an argument at the border of
+      form the operation and then scale down the result.             their domain. An example is 1/ sin π, where the denomi-
+    • Here, the required extra precision depends on the size         nator will be approximated to ever higher precisions, in a
+      of the other factor, so we first make a crude approxi-         fruitless attempt to √
+                                                                                          bound it away from zero. Similar re-
+      mation of the operands (to precision zero), in order to        marks apply to e.g. 0 and log 0.
+      estimate the precision required in the main step.
+                                                                     Comparison operators. Equality on the computable re-
+The proof that the multiplication algorithm is correct is            als is undecidable; IReal is an instance of Eq, but the
+omitted; see [1, 5].                                                 Boolean expression e1 == e2 will lead to non-termination
+   The final code line above shows the fromInteger func-             if the values of the two expressions are actually equal as
+tion, which coerces an integer into a real number. To repre-         real numbers. On the other hand, non-equal numbers will
+sent integer n at precision p, we simply need to multiply n          be correctly identified as such. Similar remarks hold for
+by 2 p , or, equivalently, shift n to the left p steps.              other comparisons.
+   In the above, we implicitly made coercions as needed                 As a weak substitute we provide total, but approximate
+between integers, rational and real numbers, as is usually           tests in the form of the three operators
+done in mathematics. Another approach could be to start
+out from integers and rational numbers only and define a             (=?=), (<!), (>!) :: IReal -> IReal -> Int -> Bool
+real number to be a function x̂ : N → Z satisfying (2). In           The types may be surprising, but the intuition here is that
+this paper we will, however, not develop this point of view          e1 =?= e2 is a function which, when applied to a precision
+further.                                                             q, returns a Boolean value, with the semantics that if this
+                                                                     value is True, then |e1 − e2 | < 2−q ; if it is False, they are
+                                                                     definitely unequal. Similarly, if (e1 <!e2 ) q is True, then x
+4     Limitations                                                    is definitely less than y; if it is False, then e1 > e2 − 2−q .
+                                                                     To facilitate the common practice of working with decimal
+Our implementation has a number of unavoidable limita-               precisions, we provide a simple conversion function
+tions, having to do with fundamental properties of the com-
+putable reals.                                                       atDecimals :: (Int -> a) -> Int -> a,
+
+
+                                                                 4
+with the property that if e1 =?= e2 ‘atDecimals‘ d is True,               The maximal precision necessary for the operands now
+then |e1 − e2 | < 10−d .                                                  grows logarithmically, rather than linearly, with the number
+                                                                          of terms, and the timing behaviour is as should be expected:
+5       Two examples                                                        k                 Value                         Time (s)
+                                                                            3   1.036927755143120425914699111457              0.01
+In this section we consider two a bit more demanding
+                                                                            4   1.036927755143369901336365069791              0.11
+computations, which also illustrate that computing in type
+                                                                            5   1.036927755143369926328865536457              1.06
+IReal requires knowledge of some of its idiosyncrasies.
+                                                                            6   1.036927755143369926331365236458              11.2
+In particular, evaluating a compound expression to a given
+precision will typically mean that the subexpressions will                The function bsum is provided in the package, and should
+have to be evaluated to higher precisions. In some situ-                  be preferred in most situations where sums of many terms
+ations, for heavily nested expressions, this may lead to ex-              are computed.
+cessive precision requirements and very slow computations.                   Finally, we note that the method used here is extremely
+                                                                          naive as a means of computing ζ(5).The last approximation
+5.1     Approximating ζ(5)                                                above, using a million terms, has only 24 correct decimals.
+                                                                          This can be improved a bit by estimating the remainder, but
+This example shows that very unbalanced expression trees                  much more sophisticated methods exist. Among the exam-
+can be harmful when computing with IReals.                                ples provided with the distribution is a file demonstrating
+  We consider the sum                                                     how to compute ζ(5) to a thousand decimals in little time.
+                                     ∞
+                                       1
+                         ζ(5) = ∑       5
+                                          ,
+                                   n=1 n                                  5.2   The logistic map
+i.e. the value of the Riemann zeta function at 5. Let us                  Sometimes the general estimates of how much extra preci-
+approximate it by replacing ∞ by 10k for suitable k:                      sion is needed in subexpressions are far too pessimistic. In
+> sum [recip (fromInteger (nˆ5)) | n <- [1..10ˆk]] ? 30                   such cases one may use the the predefined function
+
+The following table shows the result for small k, and also                prec :: Int -> IReal -> IReal
+the computation time:
+                                                                          to bound the precision and improve efficiency. The intu-
+    k                  Value                               Time (s)       ition here is that prec q x is “x evaluated at decimal preci-
+    2    1.036927752692953288826366860916                    0.01         sion q”, i.e. a value that differs from x by at most 10−q –
+    3    1.036927755143120425914699111457                    0.02         in fact, prec q x is a real interval of width 10−q containing
+    4    1.036927755143369901336365069790                    2.97         x. Using prec implies a trade-off between precision and
+    5                  ?????                                > 100         speed: prec q x immediately computes the approximation
+Not only is the time exponential in k, as should be expected,             at precision q and all subsequent approximations, also to
+but it grows so quickly that it is not feasible to compute the            higher precision, are then just scaling (since they will not
+sum of more than a few tens of thousands of terms.                        increase the actual precision) and thus very fast. The ben-
+  The reason for this disappointing performance is in the                 efits of this become apparent in situations where x will be
+definition of addition and its interaction with the prelude               computed many times, at various (high) precisions, but the
+function sum, which leftfolds the summation, thus comput-                 actual precision needed can be bounded to q.
+ing ∑ni=1 xi as                                                              The logistic map provides a simple, well-known example
+                                                                          of chaotic behaviour in non-linear dynamic systems. The
+               (. . . ((x1 + x2 ) + x3 ) + . . .) + xn .                  map is defined by
+   Thus, when we request the value of this sum at precision                                   fc (x) = c · x · (1 − x),
+p we need to compute xn at precision p + 2, xn−1 at pre-
+cision p + 4, . . . , x1 at precision p + 2n. So, for n = 105 ,           where 0 < c ≤ 4 is a parameter. For the indicated parameter
+we need to add (many) integers with up to 200 000 binary                  values, fc maps the unit interval 0 ≤ x ≤ 1 into itself, and
+digits.                                                                   we can iterate the map starting from some initial value x0 .
+   To fix the problem, we simply change to a balanced sum                 To compute the resulting orbit, we define
+operator:
+                                                                          orbit c x0 = iterate f x0
+bsum [] = 0                                                                  where f x = c * x * (1 - x)
+bsum [x] = x
+bsum xs = bsum (f xs)                                                     This is not the place to tell the fascinating story of how
+  where f (x:y:xs) = x+y : f xs                                           orbits depend on c; we have to be content with noting that
+        f xs = xs                                                         for most c above a threshold value c0 ≈ 3.5699, the orbit
+
+
+                                                                      5
+becomes chaotic, wandering aimlessly along its attractor.               error-prone analysis to determine the required q. However,
+What is interesting for us is that in this range of parameter           this is not as harmful as it seems – if we erroneously pro-
+values, orbits cannot be computed in type Double, as shown              vide a too small first argument to prec, this will not make
+by this ghci interaction:                                               the computed result invalid, but the result will be an interval
+                                                                        which simply is too wide for the requested precision:
+> orbit 3.75 0.3 !! 100
+0.2700006882287392                                                      > let q = ceiling (1000 * logBase 10 3.75 + 100) - 2
+> orbit 3.75 0.3 !! 100 ? 30                                              in iterate (prec q . f 3.75) 0.3 !! 1000 ? 100
+0.779073576335491987762386034597                                        0.6735323088616032058281479405090590454180011125314
+                                                                        3857517111647653000562069969855954029952561374404
+First the value of the expression is computed using the de-
+                                                                        [| 06 .. 13 |]
+fault type Double, and then in type IReal. As we know,
+the latter result has an error less than 10−30 . Thus, we see           Thus, the computation itself provides a conservative error
+that the computed Double value is completely useless. This              estimate; we could also have determined a suitable q by
+is typical for chaotic behaviour: extremely small initial dis-          trial and error and still got a rigorous result.
+turbances (such as rounding errors) grow exponentially and                 The moral here is more general than this example: when
+come to dominate the computed value after a few dozen                   using the prelude function iterate to compute a list of
+steps. In type IReal, on the other hand, we can in principle            IReal values, it is often useful (or essential) to combine
+trace the orbit arbitrarily long, but in practice we face prob-         this with bounding the precision using prec.
+lems with exponentially growing computation times, so we
+can only compute a few hundred steps of the orbit. The
+main reason is the fact, noted above, that in a multiplica-             6     Further applications
+tion both operands are computed twice: first the operands
+are evaluated to low precision (with an error of 1) in order            In directory applications of the distribution we give a
+to determine which precision is needed in the main approxi-             number of small example applications to indicate how the
+mation. This causes exponential behaviour in deeply nested              package can be used. These are only briefly discussed here.
+expressions as here.                                                    For each file we mention below a typical problem that can
+   The remedy is to note that we can actually bound the                 be solved in less than a second on a 2.5 GHz MacBook Pro.
+precision required in intermediate results more exactly than            These examples are more or less arbitrarily chosen, just to
+the worst-case estimates inherent in the multiplication al-             give an impression of what is possible.
+gorithm.
+   So, we consider the following question: if x0 is disturbed               • Automatic differentiation (FAD.hs). This is not an ap-
+to x00 with |x00 −x0 | < 10−q , how is xn affected? We have that              plication of real arithmetic, but several of the other ap-
+        (n)
+xn = fc (x0 ), where the (n) superscript denotes function                     plications make use of automatic differentiation. Un-
+application iterated n times. Hence, using the mean value                     like the case of real arithmetic, several useful packages
+theorem, we get                                                               implementing this technique are available on Hackage.
+                                                                              However, they all seem to define the derivative of a
+                                d (n)                                         product f · g by directly using the elementary fact
+    |xn0 − xn | ≤ sup              fc (x) |x00 − x0 | < cn 10−q .
+                 x∈[x00 ,x0 ]   dx
+                                                                                            d             df        dg
+                                                                                               ( f · g) =    ·g+ f · .
+From this we can deduce that to ensure |xn0 − xn | < 10−d , it                              dx            dx        dx
+is enough that q ≥ n log10 c + d. In fact, this estimate holds
+                                                                              This is elegant, but becomes exponential in the order
+at every iteration, so that in order to compute xn with an
+                                                                              of differentiation for higher derivatives, and hence un-
+error of at most 10−d , we can replace fc by prec q ◦ fc in
+                                                                              suitable for much of validated numerics, which often
+the definition of the orbit.
+   Using this idea we can follow the orbit to thousands of                    uses moderately high order derivatives. We therefore
+elements in a fraction of a second. Let us compute x1000                      provide a module FAD that offers simple forward au-
+with 100 decimals:                                                            tomatic differentiation with a more involved but more
+                                                                              efficient definition of differentiation of products.
+> let f c x = c * x * (1-x)
+> let q = ceiling (1000 * logBase 10 3.75 + 100)                            • Newton’s method for solving equations (Newton.hs).
+  in iterate (prec q . f 3.75) 0.3 !! 1000 ? 100                              Here we implement the interval Newton’s method,
+0.6735323088616032058281479405090590454180011125314
+                                                                              which in many respects has much nicer behaviour than
+385751711164765300056206996985595402995256137440410
+                                                                              the classical version (see [12]). As an example, we
+The methodology here, to limit the precision of intermedi-                    consider the equation 3 cos(30x2 ) = x3 , and find the
+ate results, might seem dangerous; we made a manual and                       19 roots in [−1, 1], all to 1000 decimals, in a second.
+
+
+                                                                    6
+• Fast Fourier Transform (FFT.hs). This modules offers                • An experiment in parallel execution (Para.hs). A
+  a simple-minded implementation of the FFT for lists                   summation is split into several subsums, which are
+  of complex numbers. Based on this, we also provide                    sparked individually. This has only been tested on a
+  cosine and sine transforms. These functions illustrate                two-core machine where speedup is almost perfect.
+  the technique to give an extra precision parameter in
+  order to improve efficiency. The FFT of a 512-element
+  list can be computed to 100 decimals in less than a             7    Representing intervals
+  second.
+                                                                  We now turn to representing intervals. The obvious intu-
+• Clenshaw-Curtis quadrature (ClenshawCurtis.hs).                 ition is that a real interval is a pair of real numbers, the
+  We use Waldvogel’s elegant method to compute                    lower and upper bound. To merge numbers and intervals
+  weights [13], based on the discrete cosine transform,           into one type, we define a real interval I to be a function
+  and show as an example how to quickly compute                    fI : N → Z × Z, with the property that if (l, u) = fI (p), then
+
+                            1
+                                 Z 1                                                      l < x · 2 p < u.
+                                       −x2
+                  erf(1) = √           e     dx
+                             π    −1                              for all x ∈ I. This requirement is not enough, however; it
+                                                                  does not ensure that ever higher precisions converge to an
+  to 100 decimals, using 129 points. The argument
+                                                                  interval. We must also require that the end points are real
+  that 129 points are enough can be based either on
+                                                                  numbers, i.e. that λp.fst( fI (p)) and λp.snd( fI (p)) satisfy
+  well-known strict error estimates for Clenshaw-Curtis
+                                                                  (2).
+  quadrature with analytic integrands, or, less rigor-
+                                                                     Also numbers are represented by functions of this type,
+  ously, on computation of a sequence of approxima-
+                                                                  with the further property that the function values (l, u) are
+  tions with more and more points.                                always thin intervals, i.e. fulfil u = l + 2. Thus we are led
+                                                                  to modify the code fragment from section 3:
+• A much better way to implement the error function is
+  given in Erf.hs, using a MacLaurin expansion and                data IntegerInterval = I (Integer, Integer)
+  some of the internal auxiliary functions of the library.
+  This exemplifies how the library can be extended to             midI (I (l,u)) = shift (l+u) (-1)
+  special functions. Now erf(1) can be computed to                radI (I (l,u)) = shift (u-l+1) (-1)
+  20000 decimals in a second.                                     lowerI (I (l,_)) = l
+                                                                  upperI (I (_,u)) = u
+• Linear algebra (LinAlg.hs). Common linear alge-
+                                                                  isThin x = radI x == 1
+  bra algorithms, typically based on mutating vectors
+  and matrices, are difficult to express in functional lan-       instance Num IntegerInterval where
+  guages and we do not address that problem. Here we                 I (l1,u1) + I (l2,u2) = I (l1+l2, u1+u2)
+  offer a simple solver for systems of linear equations,             fromInteger n = I (n-1,n+1)
+  based on LQ-factorization, where the lower triangular              ...
+  L is represented as a list of lists and the orthogonal
+  Q as a list of normal vectors of Householder reflec-            data IReal = IR (Int -> IntegerInterval)
+  tors. Only small systems can be handled, but on the
+  other hand extremely ill-conditioned problems pose no           instance Num IReal where
+  problems. A 25×25 system with the notoriously ill-                 IR x + IR y = IR (\p -> scale (x(p+2) + y(p+2)) (-2))
+                                                                     ...
+  conditioned Hilbert matrix as coefficient matrix can be
+  solved to 100 decimals in a second.                             We omit the straightforward definition of scaling for integer
+                                                                  intervals; given that, the definition of addition is as before.
+• Solving initial value problems for ordinary differen-           Multiplication becomes quite a bit more complicated, since
+  tial equations (ODE.hs and Taylor.hs). The solver               we need to keep track of signs in order to ensure that the
+  uses a variable order Taylor method, combined with              two endpoints are ordered.
+  Picard-Lindelöf’s method, to guarantee a valid enclo-
+  sure, following the ideas in [12].
+                                                                  8    Elementary functions
+• Computing ζ(5) efficiently (Zeta.hs). In this file we
+  use Koecher’s formula to compute ζ(5) to much higher            Following well-established ideas for high-precision compu-
+  precision than in section 5; a second is enough for             tation with real numbers, most of the functions in Floating
+  1000 decimals.                                                  are implemented using truncated MacLaurin expansions,
+
+
+                                                              7
+combined with extensive range reductions, so that the ex-              • Many trigonometric and other identities, well-known
+pansions are only used for “small” arguments. Let us con-                from calculus, are tested.
+sider the exponential function as an example. For any x and
+                                                                       • We test that IReal and Double versions of functions
+n we have
+                                                                         give consistent results, e.g. differ in at most the two
+                       ex = ex−n log 2 · 2n                              least significant bits of the Double mantissa.
+                                                                       • We also test the tools themselves, such as that both
+Thus, to compute ex , we first choose integer n such that                generated numbers and randomly generated expres-
+x − n log 2 is small, by computing x/ log 2 to precision 0.              sions with real number variables are proper real num-
+Then we use the MacLaurin expansion to compute ex−n log 2                bers (i.e. satisfy the Cauchy criterion), that functions
+and scale the result n steps.                                            applied to interval arguments give proper intervals as
+                                                                         results (i.e. both endpoints are proper real numbers),
+9     Correctness                                                        etc.
+                                                                     The fact that our package passes the testsuite strongly in-
+We have proved informally the correctness of the arithmetic          creases our confidence in the correctness of the implemen-
+operations and the general MacLaurin expansion function              tation. The methodology of combining informal proofs
+used for the elementary functions. We do not give the                (which prove correctness but may contain bugs) and exten-
+details here; the proofs are similar to those in Lester and          sive machine-tested properties (which cover only some as-
+Boehm, with some extra details to handle intervals. In par-          pects of correctness but are less susceptible to mistakes) is
+ticular the latter are a bit messy, with accompanying risk of        quite powerful; it certainly falls short of completely formal,
+mistakes in the proofs.                                              machine-checked proofs, but it also involves far less effort.
+   Instead, we will discuss the property-based testing we               Our current testsuite is a bit ad hoc; it would be an in-
+have done of the implementation, using QuickCheck. The               teresting problem to design a systematic suite for real arith-
+real numbers and the elementary functions form a rich the-           metic, including the elementary functions.
+ory, with many properties that can be tested. A few exam-
+ples are
+                                                                     10    Memoization
+          exp(log x) = x, for all x > 0.
+                                                                     We have to discuss one more internal detail of the imple-
+      sin x + cos2 x = 1, for all x,
+         2
+                                                                     mentation; it is a dark corner, which makes use of unsafe,
+     log |x| + log |y| = log |xy|, for all non-zero x and y.         impure parts of Haskell.
+                                                                        A real number is a function, and in an involved compu-
+In order to test properties like these, several steps are nec-       tation we may compute approximations of it many times,
+essary:                                                              to different precisions. But the function values for differ-
+                                                                     ent precision arguments are not independent. In fact, if
+    • As discussed above, equality between computable re-            x̂(p) = n and q < p, then scale n (q − p) is a valid result for
+      als is not decidable, so we cannot test the above prop-        x̂(q). Thus, if we cache the result of the highest precision
+      erties. We have to be content with testing that the two        approximation computed so far, approximations to lower
+      sides differ at most by a very small amount ε; in our          precision can be computed very quickly. It turns out that
+                                                                     doing so is crucial for efficiency and in our implementation
+      test suite we have chosen ε = 10−200 .
+                                                                     a number is such a memoized function. But our memo-
+                                                                     ization mechanism is based on storing the highest approx-
+    • We have to define generators of real numbers, i.e.
+                                                                     imation in an MVar, using techniques borrowed from Au-
+      functions that generate pseudorandom numbers, uni-             gustsson’s uglymemo, culminating in the spectacularly ugly
+      formly distributed over a given range.                         definition
+    • We have to express the tests using the QuickCheck              unsafeMemo f = unsafePerformIO .
+      combinators.                                                                     unsafePerformIO (memoIO f)
+                                                                     We have spent considerable time searching for a pure, el-
+   We have implemented these steps and also added a num-
+                                                                     egant and efficient solution to this memoization problem,
+ber of other tests; it is easy to come up with a large number
+                                                                     without success.
+of tests, such as the following:
+
+    • Not only exp and log are inverses of each other, but           11    Other implementations
+      also sin and asin, sinh and asinh, sqrt and (ˆ2), and
+      others, leading to tests similar to the first example          We have already mentioned the work of Boehm and
+      above.                                                         Cartwright and that of Lester. A Java version of the for-
+
+
+                                                                 8
+mer is available as a calculator (see [2]). Lester’s Haskell         [9] The GNU MPFR Library.
+module is available on Hackage as part of Augustsson’s                   URL: http://www.mpfr.org.
+numbers package.
+   Several packages for multi-precision real arithmetic,            [10] S.M. Rump. INTLAB - INTerval LABoratory. In Ti-
+based on GNU MPFR are also available on Hackage, in-                     bor Csendes, editor, Developments in Reliable Com-
+cluding hmpfr, HERA and the various AERN packages. Un-                   puting, pp. 77–104. Kluwer Academic Publishers,
+fortunately, these packages require a specially compiled                 Dordrecht, 1999.
+ghc to avoid conflicts caused by the fact that both ghc and              URL: http://www.ti3.tuhh.de/rump/intlab.
+MPFR rely on the GNU library GMP for bignum arith-                  [11] Warwick Tucker. A Rigorous ODE Solver and
+metic.                                                                   Smale’s 14th Problem, Foundations of Computational
+   Other Haskell implementations of computable reals, not                Mathematics (2) (1) 2002, pp. 53–117.
+available on Hackage, are Plume’s Calculator for Exact
+Real Computations and Potts’ and Edalat’s IC-reals, based           [12] Warwick Tucker. Validated Numerics: A Short Intro-
+on continued fractions. Our package seems easier to install              duction to Rigorous Computations. Princeton Univer-
+and significantly less inefficient than both of these.                   sity Press 2011.
+   Compared to the best C/C++ packages, such as Müller’s
+iRRAM [4], our package is much slower. We have only                 [13] Jörg Waldvogel. Fast Construction of the Fejér
+made comparisons by trying the problems from competi-                    and Clenshaw-Curtis Quadrature Rules. BIT (43)(1),
+tions such as [7] and [8], where our package for many prob-              2003, pp. 1-18.
+lems are only a few times slower, while there are other prob-
+lems that we just can’t handle.
+
+
+References
+ [1] Hans Boehm and Robert Cartwright. Exact real arith-
+     metic: formulating real numbers as functions, in Re-
+     search topics in functional programming, Addison-
+     Wesley 1990, pp. 43–64.
+
+ [2] Hans-J. Boehm. The constructive reals as a Java Li-
+     brary, J. Log. Algebr. Program (64) 2004, pp. 3–11.
+     The calculator is available at
+     http://www.hboehm.info/crcalc/CRCalc.html.
+
+ [3] boost Interval Analysis Library.
+     URL: http://www.boost.org.
+
+ [4] iRRAM - Exact Arithmetic in C++.
+     URL: http://irram.uni-trier.de.
+
+ [5] David Lester and Paul Gowland. Using PVS to vali-
+     date the algorithms of an exact arithmetic, Theoretical
+     Computer Science (291)(2) 2003, pp. 203–218.
+
+ [6] David Lester. The world’s shortest correct exact real
+     arithmetic program?, Information and Computation
+     (216) 2012, pp. 39-46.
+
+ [7] Milad Niqui and Freek Wiedijk. ’Many digits’
+     Friendly Competition. Tech report, Radbout Univer-
+     sity Nijmegen, 2005.
+     URL: http://www.cs.ru.nl/ freek/pubs/comp rep.pdf.
+
+ [8] More Digits Friendly Competition, at RNC 7, LO-
+     RIA, Nancy, France, July 2006.
+     URL: http://rnc7.loria.fr/competition.html
+
+
+                                                                9
+

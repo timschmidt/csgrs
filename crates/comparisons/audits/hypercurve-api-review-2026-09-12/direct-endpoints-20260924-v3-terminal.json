@@ -1,0 +1,81 @@
+{
+  "checks": [
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "check",
+        "--all-targets",
+        "--all-features",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "log": "direct-endpoints-20260924-v3-check-0.log"
+    },
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "check",
+        "--all-targets",
+        "--no-default-features",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "log": "direct-endpoints-20260924-v3-check-1.log"
+    }
+  ],
+  "cases": [
+    {
+      "name": "bezier_region::tests::retained_boundary_identity_requires_finite_affine_endpoints",
+      "returncode": 0,
+      "passed": true,
+      "limit_seconds": 120,
+      "elapsed_seconds": 0.13299606600776315,
+      "log": "direct-endpoints-20260924-v3-case-0.log"
+    },
+    {
+      "name": "bezier_region::tests::retained_algebraic_straights_trim_or_extend_chamfer_and_fillet",
+      "returncode": 0,
+      "passed": true,
+      "limit_seconds": 120,
+      "elapsed_seconds": 0.16126271593384445,
+      "log": "direct-endpoints-20260924-v3-case-1.log"
+    },
+    {
+      "name": "bezier_offset::conversion_tests::selected_fiber_transverse_mapped_cut_inverts_by_point",
+      "returncode": 0,
+      "passed": true,
+      "limit_seconds": 120,
+      "elapsed_seconds": 4.809243896044791,
+      "log": "direct-endpoints-20260924-v3-case-2.log"
+    },
+    {
+      "name": "bezier_region::tests::boundary_curve_views_share_retained_domains_and_endpoint_evidence",
+      "returncode": 0,
+      "passed": true,
+      "limit_seconds": 120,
+      "elapsed_seconds": 0.14177345403004438,
+      "log": "direct-endpoints-20260924-v3-case-3.log"
+    },
+    {
+      "name": "bezier_region::tests::retained_polynomial_chamfer_extends_exact_and_algebraic_incident_roots",
+      "returncode": 0,
+      "passed": true,
+      "limit_seconds": 120,
+      "elapsed_seconds": 0.16620026796590537,
+      "log": "direct-endpoints-20260924-v3-case-4.log"
+    },
+    {
+      "name": "bezier_region::tests::retained_rational_chamfer_extends_exact_and_algebraic_pre_pole_roots",
+      "returncode": 0,
+      "passed": true,
+      "limit_seconds": 120,
+      "elapsed_seconds": 0.20684956794138998,
+      "log": "direct-endpoints-20260924-v3-case-5.log"
+    }
+  ],
+  "binary_sha256": "9c76c9ab554dcaeddf13218d81c5a4f89590a4b7b92673e2651e5d0ae8f7dce2",
+  "all_sources_unchanged": true,
+  "all_processes_reaped": true
+}

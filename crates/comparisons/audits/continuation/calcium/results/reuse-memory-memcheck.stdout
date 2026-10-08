@@ -1,0 +1,1 @@
+{"threads":8,"rounds":64,"depth":8,"equal":512,"queries":512,"worker_before":[5433, 68],"worker_after":[23865, 324],"process_before":[3841, 46],"process_after":[3841, 46],"peak_bytes":27497}

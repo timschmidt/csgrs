@@ -1,0 +1,263 @@
+diff --git a/src/bezier_offset.rs b/src/bezier_offset.rs
+index a7ee5d2..232ca6c 100644
+--- a/src/bezier_offset.rs
++++ b/src/bezier_offset.rs
+@@ -52423,16 +52423,72 @@ impl BezierAlgebraicCuspSemicircleParameter2 {
+         else {
+             return Ok(false);
+         };
+-        if first_curve != second_curve || first_distance != second_distance {
+-            return Ok(false);
+-        }
+-        // Both constructions certify incidence on this very circle and source
+-        // chart. Each source parameter therefore satisfies the selected fiber's
+-        // circle-incidence equation. Strict containment in its singleton proves
+-        // the roots equal without evaluating either global projection polynomial.
+-        // This uses the two geometric incidence proofs, not interval overlap.
++        let charts = if first_curve == second_curve && first_distance == second_distance {
++            None
++        } else {
++            // Independently authored affine line charts can retain the same
++            // circle contact. Transport their source parameters before using
++            // the incidence isolator; comparing their equal angular images
++            // by repeated bisection cannot establish equality.
++            if real_sign(&first_distance, &strict) != Some(RealSign::Zero)
++                || real_sign(&second_distance, &strict) != Some(RealSign::Zero)
++            {
++                return Ok(false);
++            }
++            let (Some(first_line), Some(second_line)) = (
++                first_curve.exact_linear_parameterization_line(),
++                second_curve.exact_linear_parameterization_line(),
++            ) else {
++                return Ok(false);
++            };
++            let (first_x, first_y) = first_line.delta();
++            let (second_x, second_y) = second_line.delta();
++            let offset_x = second_line.start().x() - first_line.start().x();
++            let offset_y = second_line.start().y() - first_line.start().y();
++            if real_sign(
++                &Real::diff_of_products(&first_x, &second_y, &first_y, &second_x),
++                &strict,
++            ) != Some(RealSign::Zero)
++                || real_sign(
++                    &Real::diff_of_products(&first_x, &offset_y, &first_y, &offset_x),
++                    &strict,
++                ) != Some(RealSign::Zero)
++            {
++                return Ok(false);
++            }
++            let Some((first_delta, second_delta, offset)) = [
++                (&first_x, &second_x, &offset_x),
++                (&first_y, &second_y, &offset_y),
++            ]
++            .into_iter()
++            .find(|(first, second, _)| {
++                matches!(
++                    real_sign(first, &strict),
++                    Some(RealSign::Positive | RealSign::Negative)
++                ) && matches!(
++                    real_sign(second, &strict),
++                    Some(RealSign::Positive | RealSign::Negative)
++                )
++            }) else {
++                return Ok(false);
++            };
++            Some([
++                [(second_delta / first_delta)?, (offset / first_delta)?],
++                [(first_delta / second_delta)?, (-offset / second_delta)?],
++            ])
++        };
++        // Both constructions certify incidence on this very circle. In a
++        // common source chart, each parameter therefore satisfies the selected
++        // fiber's circle-incidence equation. Strict containment in its
++        // singleton proves equality; interval overlap alone does not.
+         let same_root = policy.strict_predicate_pass(|| -> CurveResult<bool> {
+-            for (selected, incident) in [
++            let map_incident = |parameter: &CurveParameter2, target: usize| match &charts {
++                Some(charts) => {
++                    parameter.affine_image_unbounded(&charts[target][0], &charts[target][1], policy)
++                }
++                None => Ok(Classification::Decided(parameter.clone())),
++            };
++            for (target, (selected, incident)) in [
+                 (
+                     first.isolated_circle_incidence_parameter(),
+                     &second_parameter,
+@@ -52441,10 +52497,16 @@ impl BezierAlgebraicCuspSemicircleParameter2 {
+                     second.isolated_circle_incidence_parameter(),
+                     &first_parameter,
+                 ),
+-            ] {
++            ]
++            .into_iter()
++            .enumerate()
++            {
+                 let Some(selected) = selected else {
+                     continue;
+                 };
++                let Classification::Decided(incident) = map_incident(incident, target)? else {
++                    continue;
++                };
+                 let lower =
+                     CurveParameter2::from(BezierParameter2::Exact(selected.root().lower.clone()));
+                 let upper =
+@@ -52460,6 +52522,10 @@ impl BezierAlgebraicCuspSemicircleParameter2 {
+                     return Ok(true);
+                 }
+             }
++            let Classification::Decided(second_parameter) = map_incident(&second_parameter, 0)?
++            else {
++                return Ok(false);
++            };
+             Ok(first_parameter.same_value(&second_parameter, policy)?
+                 == Classification::Decided(true))
+         })?;
+diff --git a/src/curve_support_intersection.rs b/src/curve_support_intersection.rs
+index f4ea676..bbd37fa 100644
+--- a/src/curve_support_intersection.rs
++++ b/src/curve_support_intersection.rs
+@@ -402,34 +402,18 @@ impl Pair<'_> {
+         result: &mut Evidence,
+     ) -> ExactCurveResult<()> {
+         let mut circle_parameter = CurveParameter2::from_algebraic_cusp(circle_parameter);
+-        let (mut first, mut second) = if circle_first {
+-            (circle_parameter.clone(), other_parameter)
+-        } else {
+-            (other_parameter, circle_parameter.clone())
+-        };
+-        if !contains(
+-            &self.first.range,
+-            &first,
+-            self.first.support.family(),
+-            self.policy,
+-        )? || !contains(
+-            &self.second.range,
+-            &second,
+-            self.second.support.family(),
+-            self.policy,
+-        )? {
+-            return Ok(());
+-        }
+-        // Endpoint equality is already a parameter-space theorem. Keep the
+-        // endpoint's original point and parameter authority when publishing a
+-        // new contact, so evaluation and later cuts replay the same witness.
++        // Identify either endpoint before ordering against the complete
++        // range. The retained endpoint can be much cheaper to order against
++        // its opposite boundary than an independently isolated equal contact.
++        // Keep this optional canonicalization bounded; domain admission below
++        // still owns every required exact comparison.
+         let mut point = point;
+         for at_start in [true, false] {
+             let endpoint =
+                 CurveParameter2::from_algebraic_cusp(circle.endpoint_parameter(at_start).clone());
+             if self
+                 .policy
+-                .strict_predicate_pass(|| {
++                .bounded_exact_predicate_pass(|| {
+                     circle_parameter.cmp_by_refinement(&endpoint, self.policy)
+                 })
+                 .map_err(|cause| {
+@@ -454,15 +438,28 @@ impl Pair<'_> {
+                 })?
+             {
+                 circle_parameter = endpoint;
+-                if circle_first {
+-                    first = circle_parameter.clone();
+-                } else {
+-                    second = circle_parameter.clone();
+-                }
+                 point = Some(retained);
+             }
+             break;
+         }
++        let (first, second) = if circle_first {
++            (circle_parameter.clone(), other_parameter)
++        } else {
++            (other_parameter, circle_parameter.clone())
++        };
++        if !contains(
++            &self.first.range,
++            &first,
++            self.first.support.family(),
++            self.policy,
++        )? || !contains(
++            &self.second.range,
++            &second,
++            self.second.support.family(),
++            self.policy,
++        )? {
++            return Ok(());
++        }
+         let point = match point {
+             Some(point) => point,
+             None => Curve2::from_retained_fragment(BezierSplitFragment2::AlgebraicCuspSemicircle(
+diff --git a/tests/hypercurve_curve_intersection.rs b/tests/hypercurve_curve_intersection.rs
+index 4e66a4b..1ec2844 100644
+--- a/tests/hypercurve_curve_intersection.rs
++++ b/tests/hypercurve_curve_intersection.rs
+@@ -1723,6 +1723,64 @@ fn retained_noninjective_domains_keep_off_diagonal_contacts_and_traversal_signs(
+     }
+ }
+ 
++#[test]
++fn selected_circle_tangency_reuses_independent_affine_line_charts() {
++    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
++        let path = CurvePath2::try_new(vec![
++            LineSeg2::try_new(p(-4, 0), p(0, 0)).unwrap().into(),
++            QuadraticBezier2::new(p(0, 0), p(0, 1), p(1, 2)).into(),
++        ])
++        .unwrap();
++        let hypercurve::CurveCornerSolutions2::Unique(path) = path
++            .fillet_vertex_by_radius(1, q(1, 4), hypercurve::CurveCornerMode2::TrimOnly, &policy)
++            .unwrap()
++            .into_value()
++        else {
++            panic!("unique retained fillet")
++        };
++        let circle = &path.curves()[1];
++        assert!(circle.geometry().is_none());
++        let endpoint = circle.start();
++        for line in [
++            Curve2::from(LineSeg2::try_new(p(-1, 0), p(1, 0)).unwrap()),
++            Curve2::from(LineSeg2::try_new(p(2, 0), p(-2, 0)).unwrap()),
++            Curve2::from(QuadraticBezier2::new(p(-3, 0), p(-1, 0), p(1, 0))),
++        ] {
++            for (first, second) in [(circle, &line), (&line, circle)] {
++                let outcome = first.intersect_curve(second, &policy).unwrap();
++                assert_eq!(outcome.certainty, CurveCertainty::Certified);
++                assert!(
++                    outcome.value.is_complete(),
++                    "{:?}",
++                    outcome.value.blockers()
++                );
++                let [contact] = outcome.value.contacts() else {
++                    panic!("one tangency")
++                };
++                assert!(!contact.is_certified_transverse());
++                assert_eq!(
++                    contact.tangent_cross_sign(),
++                    Some(hypercurve::RealSign::Zero)
++                );
++                assert!(decided(
++                    contact.point().coincides_with(&endpoint, &policy).value
++                ));
++                for (curve, location) in [(first, contact.first()), (second, contact.second())] {
++                    let parameter = decided(location.parameter(&policy).unwrap());
++                    let point = curve.point_at(&parameter, &policy).unwrap();
++                    assert_eq!(point.certainty, CurveCertainty::Certified);
++                    assert!(decided(
++                        point.value.coincides_with(contact.point(), &policy).value
++                    ));
++                }
++                let topology = first.intersection_topology(second, &policy).unwrap();
++                assert_eq!(topology.certainty, CurveCertainty::Certified);
++                assert!(topology.value.result().is_complete());
++            }
++        }
++    }
++}
++
+ #[test]
+ fn native_retraced_overlaps_survive_independent_restriction() {
+     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {

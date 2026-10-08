@@ -1,0 +1,16 @@
+{
+  "hypercurve/src/bezier_algebraic_image.rs": "df0fa7888565586faba15f96e180ef6d58330dc05b303149f578e8558f651c13",
+  "hypercurve/src/bezier_split_endpoint.rs": "34e4f49696aac7248d7001f7a5500f8d98d02e1da6cb69efe542ac167143df08",
+  "hypercurve/src/lib.rs": "513c888cb25af3ec61fd4a7422b583471e1b4b3499537849a85561f3be472298",
+  "hypercurve/src/bezier_split.rs": "e6e18e16c64fb1547a7051b6f230563dcd949792710e1e26e6e0c7d7cadb358a",
+  "hypercurve/src/bezier_arrangement.rs": "c1c557b325093a7b51069ab7aa3f846dbe65215478891ce5562c6cde33c7e171",
+  "hypercurve/src/bezier_region.rs": "cc3cd8cbdf7132debde8e682450cddaced52534f3b7c62e5bb6c712fe6c0aef8",
+  "hypercurve/src/bezier_retained_measure.rs": "d3d2d6d0c8f9dbe7ed0a4d445af611956f15719edf18e04f77abdd89231b0420",
+  "hypercurve/tests/hypercurve_bezier_algebraic_image.rs": "b6415cebde8c1ccd95f83f0a593120b93193c581bb73dfa3005dd2165cbf33e8",
+  "hypercurve/tests/hypercurve_bezier_split_materialization.rs": "18c6b75855e5bd2d99828cc882eb5df9f76171fd0f0e4b8000587b2d692116fe",
+  "hypercurve/tests/hypercurve_bezier_algebraic_parameter.rs": "2c93d63310513b9543bbd48a73999a1818e2e6e3866f2f9d06a5c2e2e7187d28",
+  "hypercurve/tests/hypercurve_bezier_arrangement.rs": "bf310743cee423ecc80295e2c66968a68c38285310f7d11fc6288c158954dc1e",
+  "hypercurve/tests/hypercurve_bezier_region.rs": "e35394aaa9a24ce0e4816d827c766ffe15fc1731ec80eb049358c861014f25f7",
+  "hypercurve/benches/bezier_algebraic_parameter.rs": "838d5193eeb9a7f534de3eb338f9225f65ec692559ccfd79c7195c299e28a3b8",
+  "hypercurve/fuzz/fuzz_targets/bezier_algebraic_image.rs": "dc5f0e7f3cad10b1354910bf454195a8dc3301b5edcd093ed9dacb17a2212745"
+}

@@ -1,0 +1,13 @@
+{
+  "tag": "point-extended-public-candidate",
+  "started": "2026-09-10T21:08:22.666Z",
+  "finished": "2026-09-10T21:08:22.769Z",
+  "elapsedSeconds": 0.101343597,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "/tmp/calcium-point-extended.ejZUdW/candidate-cpu",
+  "args": [
+    "check"
+  ],
+  "code": 0,
+  "signal": null
+}

@@ -1,0 +1,29 @@
+{
+  "repo": "hypercurve",
+  "target": "hypercurve_derivative_completeness",
+  "binary": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve_derivative_completeness-d7b3530b953082db",
+  "command": [
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve_derivative_completeness-d7b3530b953082db",
+    "--test-threads=4",
+    "--color",
+    "never"
+  ],
+  "sha256": "6d13b7c3d7e2a2216ec9fe365a71ed6ab6b1ef64a2462fed141dbbece19b7212",
+  "returncode": 0,
+  "timed_out": false,
+  "elapsed_seconds": 0.06377773598069325,
+  "log": "finite-selected-point-domains-full-hypercurve-hypercurve_derivative_completeness.log",
+  "passed": [
+    "high_derivative_requests_preserve_domain_and_size_guards",
+    "common_transcendental_weight_scale_preserves_high_derivatives",
+    "rational_line_derivatives_exceed_machine_binomial_orders",
+    "dense_denominator_derivatives_use_exact_large_binomials"
+  ],
+  "failed": [],
+  "ignored": [],
+  "summaries": [
+    "test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.04s"
+  ],
+  "new_failures": [],
+  "known_failures": []
+}

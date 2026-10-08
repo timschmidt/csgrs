@@ -1,0 +1,65 @@
+path	lines	classification
+.gitignore	6	metadata
+LICENCE.txt	26	license
+README.md	63	architecture/build docs
+dune-project	24	build metadata
+marshall.opam	33	package metadata
+prelude.asd	0	empty prelude marker
+examples/example.asd	88	language/examples
+src/dune	11	build metadata
+src/marshall.odocl	10	doc module list
+src/marshall.ml	3	entry module
+src/preamble.ml	3	entry prelude
+src/common.ml	29	OCaml helpers
+src/environment.ml	26	environment/lookup
+src/error.ml	14	error type
+src/message.ml	59	diagnostics
+src/syntax.ml	156	AST/types
+src/typecheck.ml	85	type checker
+src/print.ml	45	pretty printer
+src/lexer.mll	149	lexer
+src/parser.mly	261	parser grammar
+src/interval.ml	273	Kaucher interval arithmetic
+src/region.ml	249	interval-region Boolean algebra
+src/dyadic.ml	53	dyadic interface
+src/dyadic_num.ml	342	exact rational backend (unfinished normalization)
+src/dyadic_bignum.ml	400	big-int dyadic backend
+src/dyadic_mpfr.ml	306	MPFR backend
+src/dyadic_test.ml	42	backend smoke test
+src/approximate.ml	198	lower/upper approximants
+src/newton.ml	216	interval Newton/symbolic derivatives
+src/eval.ml	371	refining evaluator
+src/main.ml	168	CLI/runtime
+etc/haskell/COPYRIGHT.txt	26	license
+etc/haskell/README.txt	37	build/use notes
+etc/haskell/doc/README.txt	5	Haddock notes
+etc/haskell/Staged.hs	119	precision/rounding staging
+etc/haskell/Dyadic.hs	285	approximate dyadic field
+etc/haskell/Interval.hs	149	Kaucher intervals
+etc/haskell/Reals.hs	149	staged real completion
+etc/haskell/Space.hs	66	Sierpinski/compact/overt classes
+etc/haskell/Searchable.hs	74	searchable spaces
+etc/haskell/Lipschitz.hs	44	Lipschitz/Arrow experiment
+etc/haskell/test_lim.hs	104	unfinished limit examples
+etc/haskell/monads.lhs	222	monad tutorial
+etc/haskell/notes.tex	951	constructive topology notes
+doc/scan-2014/slides.tex	557	exact-real design slides
+doc/scan-2014/interval_lattice.pdf_t	15	generated figure TeX
+doc/scan-2014/cut_refine.eps	164	generated PostScript figure
+doc/scan-2014/cuts.eps	206	generated PostScript figure
+doc/scan-2014/interval_lattice.eps	117	generated PostScript figure
+doc/scan-2014/lower_upper.eps	160	generated PostScript figure
+doc/scan-2014/max.eps	169	generated PostScript figure
+doc/scan-2014/newton.eps	166	generated PostScript figure
+doc/scan-2014/cut_refine.fig	26	generated xfig source
+doc/scan-2014/cuts.fig	50	generated xfig source
+doc/scan-2014/interval_lattice.fig	15	generated xfig source
+doc/scan-2014/lower_upper.fig	25	generated xfig source
+doc/scan-2014/max.fig	21	generated xfig source
+doc/scan-2014/newton.fig	24	generated xfig source
+doc/scan-2014/cut_refine.pdf	118	generated PDF figure
+doc/scan-2014/cuts.pdf	84	generated PDF figure
+doc/scan-2014/interval_lattice.pdf	79	generated PDF figure
+doc/scan-2014/lower_upper.pdf	81	generated PDF figure
+doc/scan-2014/max.pdf	83	generated PDF figure
+doc/scan-2014/newton.pdf	90	generated PDF figure

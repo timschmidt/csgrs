@@ -1,0 +1,35 @@
+{
+  "sourceFiles": 19,
+  "sourceLines": 1786,
+  "catalogueFiles": 1,
+  "catalogueLines": 54,
+  "scope": "Actual independent reading recorded; hashes alone do not establish reading."
+}
+{
+  "basicPerBuild": {
+    "checks": 117837,
+    "failures": 99,
+    "ordinaryApproximationChecks": 117304,
+    "ordinaryFailures": 0
+  },
+  "elementaryPerBuild": {
+    "checks": 296,
+    "failures": 12
+  },
+  "continuedFractionPerBuild": {
+    "checks": 296,
+    "failures": 63
+  },
+  "optimizationRepeats": "all O0/O2 finite outputs and numerical verdicts identical",
+  "upstreamCompatibilityTests": "two properties, 10000 generated cases each",
+  "hyperPerBuild": {
+    "elementaryHistory": 1184,
+    "exactSignTruncationHistory": 219
+  },
+  "frozenHyperColdWarmBaseline": {
+    "requests": 18,
+    "passes": 14,
+    "caps": 4
+  },
+  "status": "OPEN: Hyper negative opaque atan reduction needs repair and full qualification; performance experiments not yet started."
+}

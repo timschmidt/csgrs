@@ -1,0 +1,426 @@
+{
+  "schema": 1,
+  "captured_on": "2026-07-31",
+  "checkpoint": "closed-curve-path-policy",
+  "source_revision": "a24563c3c79b5a9a1d0b2923cb459d3d2e6aec94",
+  "parent_revision": "631bb0466141ebdc323c41ea5ca02a8ac4dd486e",
+  "implementation_revisions": [
+    "a24563c3c79b5a9a1d0b2923cb459d3d2e6aec94"
+  ],
+  "frozen_baseline_revision": "dfc4ec5f9546560765bd33d4a88292581869adb8",
+  "baseline": "../baselines/2026-07-31/baseline.json",
+  "semantic_evidence": {
+    "policy_explicit_public_apis": [
+      "CurvePath2::bezier_boundary_loop",
+      "CurvePath2::classify_point"
+    ],
+    "boundary_return_contract": "CurveOutcome<&NativeBezierBoundaryLoop2>",
+    "classification_return_contract": "CurveOutcome<Classification<ContourPointLocation>>",
+    "internal_composition_uses_raw_classification_kernel": true,
+    "complete_operation_geometry_is_evaluated_once": true,
+    "operation_certainty_is_aggregated_once": true,
+    "closed_boundary_revalidates_every_authored_join_and_the_closing_seam": true,
+    "promoted_native_fragment_cycle_is_fully_validated": true,
+    "shared_connectivity_validator_is_used_by_boundary_region_construction_and_closed_edits": true,
+    "strict_connectivity_evidence_avoids_repeating_certified_authored_join_predicates": true,
+    "approximately_constructed_nonstructural_joins_are_revalidated_for_each_later_policy": true,
+    "borrowed_path_materialization_conservatively_revalidates_connectivity": true,
+    "strict_symbolic_closing_seam_result": "Arrangement/RealSign blocker",
+    "approximate_512_symbolic_closing_seam_result": "complete exact boundary and Inside classification with Approximate512Consumed",
+    "approximate_first_boundary_cache_cannot_answer_a_later_strict_request": true,
+    "repeated_approximate_boundary_replays_terminal_consumption": true,
+    "strict_classification_after_approximate_boundary_returns_a_certified_outer_outcome_with_inner_RealSign_uncertainty": true,
+    "strict_region_construction_rejects_an_approximately_joined_internal_path_with_Construction_RealSign": true,
+    "approximate_region_construction_completes_and_reports_consumption": true,
+    "returned_boundary_and_region_geometry_remain_exact": true,
+    "duplicate_native_fragment_vector_removed_from_NativeBezierBoundaryLoop2": true,
+    "removed_native_boundary_apis": [
+      "NativeBezierBoundaryLoop2::fragments",
+      "NativeBezierBoundaryLoop2::into_parts"
+    ],
+    "compatibility_overload_deref_or_implicit_value_shim_added": false,
+    "hypermesh_modified": false
+  },
+  "layout_and_retained_memory_evidence": {
+    "measurement": "64-bit compile-time size assertions against the immediate parent and candidate layouts",
+    "curve_path_handle_bytes": {
+      "parent": 8,
+      "candidate": 8
+    },
+    "curve_path_data_bytes": {
+      "parent": 168,
+      "candidate": 160,
+      "change_bytes": -8,
+      "change_percent": -4.7619
+    },
+    "native_bezier_boundary_loop_bytes": {
+      "parent": 48,
+      "candidate": 24,
+      "change_bytes": -24,
+      "change_percent": -50.0
+    },
+    "retained_allocation_change": "one duplicate Vec<NativeBezierFragment2> carrier and its fragment-buffer allocation are removed from each materialized native boundary",
+    "reuse": "NativeBezierBoundaryLoop2 retains only the validated BezierBoundaryLoop2 and CurvePath2 reuses its separately cached native fragments"
+  },
+  "matched_closed_path_benchmarks": {
+    "command": "eleven interleaved parent/candidate executions of matched release curve_path artifacts, reversing execution order on alternate pairs",
+    "benchmark_harness": "benches/curve_path.rs",
+    "parent_revision": "631bb0466141ebdc323c41ea5ca02a8ac4dd486e",
+    "candidate_revision": "a24563c3c79b5a9a1d0b2923cb459d3d2e6aec94",
+    "cached_boundary_loop": {
+      "iterations_per_process": 2000000,
+      "parent_total_ms": [
+        5.360152,
+        5.283148,
+        5.462785,
+        5.384531,
+        4.841677,
+        5.335814,
+        4.690708,
+        4.718956,
+        5.524031,
+        5.403839,
+        5.662072
+      ],
+      "candidate_total_ms": [
+        6.348965,
+        6.636885,
+        6.314556,
+        5.686780,
+        5.734977,
+        6.544821,
+        6.694161,
+        6.263851,
+        6.682071,
+        5.815971,
+        6.893907
+      ],
+      "parent_median_ns_per_iteration": 2.680076,
+      "candidate_median_ns_per_iteration": 3.174482,
+      "absolute_median_change_ns": 0.494406,
+      "median_change_percent": 18.4475,
+      "paired_geomean_change_percent": 20.7054
+    },
+    "fresh_boundary_loop": {
+      "iterations_per_process": 20000,
+      "parent_total_ms": [
+        16.996124,
+        18.324672,
+        17.617071,
+        18.586644,
+        17.439573,
+        16.371407,
+        16.299801,
+        16.403084,
+        17.682057,
+        17.851765,
+        17.645480
+      ],
+      "candidate_total_ms": [
+        12.320594,
+        13.248710,
+        11.699927,
+        11.855677,
+        12.875757,
+        12.346803,
+        12.563348,
+        13.062114,
+        12.998738,
+        13.998469,
+        12.133608
+      ],
+      "parent_median_ns_per_iteration": 880.853550,
+      "candidate_median_ns_per_iteration": 628.167400,
+      "median_change_percent": -28.6865,
+      "paired_geomean_change_percent": -27.2794
+    },
+    "cached_point_classification": {
+      "iterations_per_process": 50000,
+      "parent_total_ms": [
+        382.077931,
+        384.980912,
+        381.373030,
+        382.692039,
+        374.917773,
+        377.083675,
+        378.380915,
+        381.635922,
+        400.659836,
+        385.907788,
+        377.778447
+      ],
+      "candidate_total_ms": [
+        393.985574,
+        379.577733,
+        377.187647,
+        381.949910,
+        386.208638,
+        379.720823,
+        376.378423,
+        379.999964,
+        409.459682,
+        386.832645,
+        384.666444
+      ],
+      "parent_median_us_per_iteration": 7.632718,
+      "candidate_median_us_per_iteration": 7.638998,
+      "median_change_percent": 0.0823,
+      "paired_geomean_change_percent": 0.6641
+    },
+    "interpretation": "full join validation and explicit certainty add 0.494 ns to the cached boundary reference accessor; removing duplicate retained fragments makes fresh boundary materialization 28.69 percent faster; classification is neutral"
+  },
+  "complete_curve_path_instruction_control": {
+    "command": "seven interleaved perf stat -e instructions executions of the complete matched release curve_path benchmark",
+    "parent_instructions": [
+      6987914871,
+      6987899237,
+      6987863841,
+      6987938170,
+      6987937943,
+      6987858764,
+      6987848300
+    ],
+    "candidate_instructions": [
+      6950048247,
+      6950043331,
+      6950060693,
+      6950030110,
+      6950033170,
+      6950026821,
+      6950024590
+    ],
+    "parent_median": 6987899237,
+    "candidate_median": 6950033170,
+    "median_change_percent": -0.5419,
+    "paired_geomean_change_percent": -0.5417,
+    "interpretation": "the complete path workload retires 0.54 percent fewer instructions after eliminating duplicated boundary-fragment retention"
+  },
+  "matched_pathological_curve_region2": {
+    "command": "seven interleaved parent/candidate executions of matched release pathological_regions artifacts, reversing execution order on alternate pairs",
+    "cells": 67,
+    "operations": 268,
+    "completed_operations": 268,
+    "blockers": 0,
+    "checksum": 6,
+    "candidate_pairs": 603,
+    "retained_fragments": 3248,
+    "point_classifications": 134,
+    "parent_build_ms": [
+      72.154809,
+      73.183179,
+      75.213608,
+      74.417154,
+      71.992370,
+      73.162960,
+      74.072827
+    ],
+    "candidate_build_ms": [
+      73.979904,
+      72.387733,
+      74.979395,
+      75.984415,
+      74.498588,
+      73.073756,
+      75.345540
+    ],
+    "parent_build_median_ms": 73.183179,
+    "candidate_build_median_ms": 74.498588,
+    "build_median_change_percent": 1.7974,
+    "build_paired_geomean_change_percent": 1.1756,
+    "parent_boolean_ms": [
+      476.513202,
+      481.776260,
+      477.967841,
+      475.689958,
+      468.046243,
+      465.293241,
+      465.870072
+    ],
+    "candidate_boolean_ms": [
+      456.963673,
+      468.580495,
+      472.207937,
+      474.119425,
+      464.197527,
+      459.699905,
+      462.324005
+    ],
+    "parent_boolean_median_ms": 475.689958,
+    "candidate_boolean_median_ms": 464.197527,
+    "boolean_median_change_percent": -2.4159,
+    "boolean_paired_geomean_change_percent": -1.6025,
+    "parent_observed_rss_delta_mib": [
+      34.5,
+      34.1,
+      34.3,
+      34.4,
+      34.5,
+      34.4,
+      34.2
+    ],
+    "candidate_observed_rss_delta_mib": [
+      34.8,
+      34.5,
+      34.5,
+      34.6,
+      34.6,
+      34.6,
+      34.5
+    ],
+    "parent_observed_rss_delta_mib_median": 34.4,
+    "candidate_observed_rss_delta_mib_median": 34.6,
+    "interpretation": "all topology and checksums are identical; Boolean execution improves 1.60 percent by paired geometric mean, retained construction adds 1.18 percent, and process-scale RSS moves 0.2 MiB within layout noise"
+  },
+  "comparative_release_medians_ns": {
+    "command": "HYPERCURVE_COMPARE_SAMPLES=7 HYPERCURVE_COMPARE_SAMPLE_MS=75 matched release comparative executions",
+    "rectangle_union": {
+      "parent_hypercurve": 4714.9,
+      "candidate_hypercurve": 4654.4,
+      "hypercurve_contours": 4583.0,
+      "hypercurve_loops": 5052.2,
+      "cavalier_contours": 885.1,
+      "i_overlay": 1009.5,
+      "geo": 1252.2,
+      "change_from_parent_percent": -1.2832,
+      "change_from_preceding_checkpoint_percent": -3.5397
+    },
+    "star64_intersection": {
+      "parent_hypercurve": 36050.8,
+      "candidate_hypercurve": 37616.9,
+      "hypercurve_contours": 37174.4,
+      "hypercurve_loops": 99540.7,
+      "cavalier_contours": 27540.1,
+      "i_overlay": 34152.2,
+      "geo": 35936.9,
+      "broad_change_from_parent_percent": 4.3441,
+      "broad_change_from_preceding_checkpoint_percent": 5.4563,
+      "focused_matched_control_rejects_the_broad_run_regression": true
+    },
+    "star256_intersection": {
+      "parent_hypercurve": 419198.1,
+      "candidate_hypercurve": 419752.8,
+      "hypercurve_contours": 295535.5,
+      "hypercurve_loops": 842226.5,
+      "cavalier_contours": 478524.6,
+      "i_overlay": 508630.9,
+      "geo": 511641.5,
+      "change_from_parent_percent": 0.1323,
+      "change_from_preceding_checkpoint_percent": -0.1007
+    },
+    "star1024_intersection": {
+      "parent_hypercurve": 5031000.8,
+      "candidate_hypercurve": 5035178.5,
+      "hypercurve_contours": 3899310.2,
+      "hypercurve_loops": 10654728.9,
+      "cavalier_contours": 19192638.0,
+      "i_overlay": 9979557.6,
+      "geo": 9954060.8,
+      "change_from_parent_percent": 0.0830,
+      "change_from_preceding_checkpoint_percent": -0.6950
+    },
+    "inward_capsule_offset": {
+      "parent_hypercurve": 19449.8,
+      "candidate_hypercurve": 18405.0,
+      "cavalier_contours": 918.4,
+      "change_from_parent_percent": -5.3718,
+      "change_from_preceding_checkpoint_percent": -3.6665
+    },
+    "certified_open_cubic_offset": {
+      "parent_hypercurve": 29767500.7,
+      "candidate_hypercurve": 29412058.3,
+      "curvo_heuristic": 8070.9,
+      "change_from_parent_percent": -1.1941,
+      "change_from_preceding_checkpoint_percent": 0.3031
+    },
+    "source_chord_cubic_fallback": {
+      "parent_hypercurve": 917634.9,
+      "candidate_hypercurve": 916540.4,
+      "change_from_parent_percent": -0.1193,
+      "change_from_preceding_checkpoint_percent": -0.3930
+    },
+    "rational_cubic_nurbs_evaluation": {
+      "parent_hypercurve": 1537.4,
+      "candidate_hypercurve": 1556.7,
+      "curvo": 58.3,
+      "change_from_parent_percent": 1.2554,
+      "change_from_preceding_checkpoint_percent": 1.1304
+    },
+    "interpretation": "all broad exact lanes except the noisy 64-vertex process stay within 1.3 percent of the parent; the isolated star64 control is neutral; Hypercurve retains its measured larger-star advantage, while offset and NURBS peers retain explicitly non-equivalent guarantees"
+  },
+  "focused_star64_control": {
+    "command": "five matched parent/candidate processes, each reporting eleven 150 ms samples",
+    "parent_process_medians_ns": [
+      35426.2,
+      35644.9,
+      36624.5,
+      35541.4,
+      36373.7
+    ],
+    "candidate_process_medians_ns": [
+      35558.1,
+      35682.9,
+      35990.8,
+      35670.8,
+      35510.5
+    ],
+    "parent_median_ns": 35644.9,
+    "candidate_median_ns": 35670.8,
+    "median_change_percent": 0.0727,
+    "paired_geomean_change_percent": -0.6589,
+    "interpretation": "the focused matched control rejects the broad-run apparent star64 regression"
+  },
+  "release_pathological_binary": {
+    "measurement": "matched release executables copied and stripped with strip --strip-all",
+    "parent_bytes": 5498520,
+    "candidate_bytes": 5504648,
+    "delta_bytes": 6128,
+    "delta_percent": 0.1115,
+    "frozen_baseline_bytes": 5531293,
+    "delta_from_frozen_baseline_bytes": -26645,
+    "delta_from_frozen_baseline_percent": -0.4817,
+    "interpretation": "typed public outcomes and whole-path policy validation add 6,128 bytes while the executable remains 26,645 bytes below the frozen consolidation baseline"
+  },
+  "static_callgraph": {
+    "command": "/home/tim/Documents/GitHub/workspace/tools/hyper-callgraph/target/release/hyper-callgraph --root /home/tim/Documents/GitHub/workspace --out-dir /tmp/hypercurve-closed-path-policy-callgraph --crate-name hypercurve --include-examples --include-tests --include-bench --include-fuzz --format json",
+    "nodes": 22539,
+    "edges": 38601,
+    "artifact": "/tmp/hypercurve-closed-path-policy-callgraph/callgraph.json",
+    "policy_boundary_materialization_node_present": true,
+    "raw_classification_node_present": true,
+    "shared_connectivity_validator_node_present": true,
+    "removed_native_boundary_fragments_and_into_parts_nodes_absent": true
+  },
+  "caller_audit": {
+    "hypercurve_tests_benches_examples_and_fuzz": "all migrated and warning-clean",
+    "csgrs_all_feature_check": "pass",
+    "hypercurve_ui_all_target_check_and_warning_denied_clippy": "pass",
+    "hyperbrep": "current branch already requires the accumulated CurvePolicy-to-CurveContext and explicit-outcome cutovers; migration remains deferred until the remaining Phase 1 public policy surfaces stabilize",
+    "caller_cutover_deferred_until_remaining_phase_1_public_policy_surfaces_stabilize": true,
+    "compatibility_shim_added": false,
+    "hypermesh_modified": false
+  },
+  "remaining_policy_audit": {
+    "public_circular_arc_directed_sweep_angle_is_a_strict_wrapper": true,
+    "public_curve_and_path_native_fragment_accessors_are_strict_wrappers": true,
+    "public_curve_region_materialized_boundary_paths_is_a_strict_wrapper": true,
+    "spline_reconstruction_and_subcurve_policy_cut_is_incomplete": true,
+    "next_action": "cut over public native-fragment and directed-sweep surfaces, then CurveRegion2 materialized boundary paths and spline subcurve/reconstruction propagation"
+  },
+  "verification": {
+    "cargo_test_all_features": "pass",
+    "unit_tests": 260,
+    "all_integration_tests": "pass except two explicitly ignored release-scale PCB performance corpora",
+    "generated_curve_region_boolean_corpus_seconds": 163.81,
+    "pathological_operations": "268/268 decided with no blockers",
+    "cargo_clippy_all_features_all_targets_deny_warnings": "pass",
+    "cargo_clippy_no_default_features_all_targets_deny_warnings": "pass",
+    "cargo_check_no_default_features_all_targets": "pass",
+    "cargo_check_fuzz_all_targets": "pass",
+    "cargo_doc_all_features_deny_warnings": "pass",
+    "csgrs_cargo_check_all_features": "pass",
+    "hypercurve_ui_cargo_check_all_targets": "pass",
+    "hypercurve_ui_cargo_clippy_all_targets_deny_warnings": "pass",
+    "cargo_fmt_all_check": "pass",
+    "git_diff_check": "pass"
+  }
+}

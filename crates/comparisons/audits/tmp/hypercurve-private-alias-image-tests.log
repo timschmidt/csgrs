@@ -1,0 +1,17 @@
+   Compiling hypercurve v0.3.1 (/home/tim/Documents/GitHub/workspace/hypercurve)
+    Finished `release` profile [optimized] target(s) in 59.26s
+     Running tests/hypercurve_bezier_algebraic_image.rs (target/release/deps/hypercurve_bezier_algebraic_image-518d6573f1a8e09f)
+
+running 9 tests
+test cubic_point_and_tangent_images_use_power_basis_resultants ... ok
+test quadratic_point_and_tangent_images_retain_algebraic_coordinate_evidence ... ok
+test nonmonotone_coordinate_image_is_certified_without_sampling ... ok
+test rational_quadratic_denominator_boundary_is_reported ... ok
+test rational_image_cache_keeps_curve_family_certificate_shapes_distinct ... ok
+test rational_quadratic_point_and_tangent_images_retain_quotient_evidence ... ok
+test rational_point_image_transforms_exact_real_linear_root ... ok
+test linear_coordinate_images_match_exact_midpoint_values ... ok
+test rational_line_image_matches_exact_midpoint_values ... ok
+
+test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+

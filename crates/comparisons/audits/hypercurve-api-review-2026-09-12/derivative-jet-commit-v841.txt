@@ -1,0 +1,23 @@
+Bound selected-root derivative growth with the source Leibniz recurrence
+
+Repeatedly differentiating quotient numerators grows their polynomial degree
+with every requested order, even when their selected-root values have small
+representations. Compute the quotient derivatives from original source
+derivatives and previously reduced values instead. Retain reduced numerator,
+denominator-derivative and denominator-power values; never differentiate a
+reduced representative. Share the existing exact binomial helper.
+
+Keep the original affine domain and selected-root identity without requiring
+an inverse modulo the whole defining polynomial. Independent Taylor-series
+regressions check all derivatives through order 80 under both policies,
+including zero tails and binomials beyond u64. Existing reducible-source,
+nonrational-coefficient and pole regressions retain their exact results.
+
+Validation: 325 release cases across 12 pinned binaries; all-target Clippy
+with/without defaults, formatting, four fuzz targets, rustdoc with warnings
+denied, Hyperbrep Clippy, and csgrs checks. Three unchanged-source probes
+preserve 36 derivative samples, four finite/pole selections, and two
+high-order Taylor cases. Degree40/order80 Rust allocation requests fall
+from 886038 to 6880 and requested bytes from 132172376 to 1044632. The
+smallest degree-one cases add 2-5% allocation requests; measurements do not
+establish a uniform speedup or native-library/peak-memory reduction.

@@ -1,0 +1,1564 @@
+{
+  "hypercurve/benches/bezier_region.rs": [
+    {
+      "line": 9,
+      "text": "Curve2, CurveBoundaryInteriorSide2, CurveContext, CurveError, CurvePath2, CurvePoint2,"
+    },
+    {
+      "line": 109,
+      "text": "interior_side: CurveBoundaryInteriorSide2,"
+    },
+    {
+      "line": 112,
+      "text": "CurveRegion2::try_from_boundary_paths_with_loop_topology("
+    },
+    {
+      "line": 335,
+      "text": "let curved_region = path_region(&curved, CurveBoundaryInteriorSide2::Left, &policy)?;"
+    },
+    {
+      "line": 336,
+      "text": "let cutter_region = path_region(&cutter, CurveBoundaryInteriorSide2::Left, &policy)?;"
+    }
+  ],
+  "hypercurve/benches/comparative.rs": [
+    {
+      "line": 19,
+      "text": "BezierParameterPolynomial, CurveBoundaryInteriorSide2, CurvePoint2, Similarity2,"
+    },
+    {
+      "line": 641,
+      "text": "let hypercurve = CurveRegion2::try_from_boundary_paths_with_loop_topology("
+    },
+    {
+      "line": 645,
+      "text": "&[CurveBoundaryInteriorSide2::Left],"
+    }
+  ],
+  "hypercurve/benches/curve_path.rs": [
+    {
+      "line": 5,
+      "text": "BooleanOp, CircularArc2, Classification, CubicBezier2, Curve2, CurveBoundaryInteriorSide2,"
+    },
+    {
+      "line": 39,
+      "text": "interior_side: CurveBoundaryInteriorSide2,"
+    },
+    {
+      "line": 42,
+      "text": "CurveRegion2::try_from_boundary_paths_with_loop_topology("
+    },
+    {
+      "line": 286,
+      "text": "path_region(&partial_first, CurveBoundaryInteriorSide2::Left, &policy);"
+    },
+    {
+      "line": 288,
+      "text": "path_region(&partial_second, CurveBoundaryInteriorSide2::Left, &policy);"
+    },
+    {
+      "line": 345,
+      "text": "CurveBoundaryInteriorSide2::Left,"
+    },
+    {
+      "line": 350,
+      "text": "CurveBoundaryInteriorSide2::Left,"
+    },
+    {
+      "line": 382,
+      "text": "path_region(&nonlinear_first, CurveBoundaryInteriorSide2::Right, &policy);"
+    },
+    {
+      "line": 385,
+      "text": "CurveBoundaryInteriorSide2::Right,"
+    },
+    {
+      "line": 455,
+      "text": "CurveBoundaryInteriorSide2::Left,"
+    },
+    {
+      "line": 460,
+      "text": "CurveBoundaryInteriorSide2::Left,"
+    }
+  ],
+  "hypercurve/benches/curve_region_boolean_batch.rs": [
+    {
+      "line": 6,
+      "text": "CircularArc2, Classification, Contour2, CubicBezier2, Curve2, CurveBoundaryInteriorSide2,"
+    },
+    {
+      "line": 147,
+      "text": "CurveRegion2::try_from_boundary_paths_with_loop_topology("
+    },
+    {
+      "line": 153,
+      "text": "&[CurveBoundaryInteriorSide2::Left],"
+    },
+    {
+      "line": 183,
+      "text": "CurveRegion2::try_from_boundary_paths_with_loop_topology("
+    },
+    {
+      "line": 187,
+      "text": "&[CurveBoundaryInteriorSide2::Left],"
+    },
+    {
+      "line": 197,
+      "text": "interior_side: CurveBoundaryInteriorSide2,"
+    },
+    {
+      "line": 201,
+      "text": "CurveRegion2::try_from_boundary_paths_with_loop_topology("
+    },
+    {
+      "line": 213,
+      "text": "&promote(&clip, CurveBoundaryInteriorSide2::Left),"
+    },
+    {
+      "line": 257,
+      "text": "CurveBoundaryInteriorSide2::Left,"
+    },
+    {
+      "line": 263,
+      "text": "CurveBoundaryInteriorSide2::Left,"
+    },
+    {
+      "line": 289,
+      "text": "CurveBoundaryInteriorSide2::Left,"
+    },
+    {
+      "line": 295,
+      "text": "CurveBoundaryInteriorSide2::Left,"
+    },
+    {
+      "line": 333,
+      "text": "CurveBoundaryInteriorSide2::Left,"
+    },
+    {
+      "line": 339,
+      "text": "CurveBoundaryInteriorSide2::Left,"
+    }
+  ],
+  "hypercurve/benches/editing.rs": [
+    {
+      "line": 15,
+      "text": "BezierParameterPolynomial, CubicBezier2, CurveBoundaryInteriorSide2, CurvePoint2,"
+    },
+    {
+      "line": 775,
+      "text": "Ok(CurveRegion2::try_from_boundary_paths_with_loop_topology("
+    },
+    {
+      "line": 779,
+      "text": "&[CurveBoundaryInteriorSide2::Left],"
+    },
+    {
+      "line": 807,
+      "text": "let chord_region = CurveRegion2::try_from_boundary_paths_with_loop_topology("
+    },
+    {
+      "line": 811,
+      "text": "&[CurveBoundaryInteriorSide2::Left],"
+    },
+    {
+      "line": 820,
+      "text": "let source_region = CurveRegion2::try_from_boundary_paths_with_loop_topology("
+    },
+    {
+      "line": 824,
+      "text": "&[CurveBoundaryInteriorSide2::Left],"
+    },
+    {
+      "line": 895,
+      "text": "CurveRegion2::try_from_boundary_paths_with_loop_topology("
+    },
+    {
+      "line": 899,
+      "text": "&[CurveBoundaryInteriorSide2::Left],"
+    },
+    {
+      "line": 944,
+      "text": "Ok(CurveRegion2::try_from_boundary_paths_with_loop_topology("
+    },
+    {
+      "line": 948,
+      "text": "&[CurveBoundaryInteriorSide2::Left],"
+    },
+    {
+      "line": 1000,
+      "text": "Ok(CurveRegion2::try_from_boundary_paths_with_loop_topology("
+    },
+    {
+      "line": 1004,
+      "text": "&[CurveBoundaryInteriorSide2::Left],"
+    }
+  ],
+  "hypercurve/benches/offset.rs": [
+    {
+      "line": 7,
+      "text": "CircularArc2, Classification, CubicBezier2, Curve2, CurveBoundaryInteriorSide2, CurveContext,"
+    },
+    {
+      "line": 862,
+      "text": "Ok(CurveRegion2::try_from_boundary_paths_with_loop_topology("
+    },
+    {
+      "line": 866,
+      "text": "&[CurveBoundaryInteriorSide2::Right],"
+    }
+  ],
+  "hypercurve/src/bezier_offset.rs": [
+    {
+      "line": 136663,
+      "text": "CurveBoundaryInteriorSide2, CurveCertainty, CurveCornerMode2, CurveCornerSolutions2,"
+    },
+    {
+      "line": 144017,
+      "text": "vec![CurveBoundaryInteriorSide2::Right],"
+    },
+    {
+      "line": 144041,
+      "text": "vec![CurveBoundaryInteriorSide2::Left],"
+    },
+    {
+      "line": 148742,
+      "text": "vec![CurveBoundaryInteriorSide2::Left],"
+    },
+    {
+      "line": 148778,
+      "text": "vec![CurveBoundaryInteriorSide2::Left],"
+    },
+    {
+      "line": 149034,
+      "text": "vec![CurveBoundaryInteriorSide2::Left],"
+    },
+    {
+      "line": 149545,
+      "text": "vec![CurveBoundaryInteriorSide2::Left],"
+    },
+    {
+      "line": 149678,
+      "text": "vec![CurveBoundaryInteriorSide2::Left],"
+    },
+    {
+      "line": 149739,
+      "text": "vec![CurveBoundaryInteriorSide2::Left],"
+    },
+    {
+      "line": 149892,
+      "text": "vec![CurveBoundaryInteriorSide2::Left],"
+    },
+    {
+      "line": 150056,
+      "text": "vec![CurveBoundaryInteriorSide2::Left],"
+    },
+    {
+      "line": 150197,
+      "text": "vec![CurveBoundaryInteriorSide2::Left],"
+    },
+    {
+      "line": 150547,
+      "text": "vec![CurveBoundaryInteriorSide2::Right],"
+    },
+    {
+      "line": 153358,
+      "text": "vec![CurveBoundaryInteriorSide2::Left],"
+    },
+    {
+      "line": 154132,
+      "text": "vec![CurveBoundaryInteriorSide2::Left],"
+    },
+    {
+      "line": 154519,
+      "text": "vec![CurveBoundaryInteriorSide2::Left],"
+    },
+    {
+      "line": 154648,
+      "text": "vec![CurveBoundaryInteriorSide2::Left],"
+    },
+    {
+      "line": 154780,
+      "text": "vec![CurveBoundaryInteriorSide2::Left],"
+    },
+    {
+      "line": 154947,
+      "text": "vec![CurveBoundaryInteriorSide2::Left],"
+    },
+    {
+      "line": 156174,
+      "text": "vec![CurveBoundaryInteriorSide2::Left],"
+    },
+    {
+      "line": 156211,
+      "text": "(fragments, CurveBoundaryInteriorSide2::Left),"
+    },
+    {
+      "line": 156212,
+      "text": "(cyclic, CurveBoundaryInteriorSide2::Left),"
+    },
+    {
+      "line": 156213,
+      "text": "(reversed, CurveBoundaryInteriorSide2::Right),"
+    },
+    {
+      "line": 156454,
+      "text": "vec![CurveBoundaryInteriorSide2::Left],"
+    },
+    {
+      "line": 156723,
+      "text": "vec![CurveBoundaryInteriorSide2::Left],"
+    },
+    {
+      "line": 156895,
+      "text": "vec![CurveBoundaryInteriorSide2::Left],"
+    },
+    {
+      "line": 157114,
+      "text": "vec![CurveBoundaryInteriorSide2::Left],"
+    },
+    {
+      "line": 157341,
+      "text": "vec![CurveBoundaryInteriorSide2::Left],"
+    },
+    {
+      "line": 157531,
+      "text": "vec![CurveBoundaryInteriorSide2::Left],"
+    },
+    {
+      "line": 158976,
+      "text": "vec![crate::CurveBoundaryInteriorSide2::Left],"
+    },
+    {
+      "line": 159201,
+      "text": "vec![crate::CurveBoundaryInteriorSide2::Left],"
+    },
+    {
+      "line": 159290,
+      "text": "vec![crate::CurveBoundaryInteriorSide2::Left],"
+    },
+    {
+      "line": 159482,
+      "text": "vec![crate::CurveBoundaryInteriorSide2::Left],"
+    },
+    {
+      "line": 162739,
+      "text": "vec![CurveBoundaryInteriorSide2::Right],"
+    },
+    {
+      "line": 162771,
+      "text": "vec![CurveBoundaryInteriorSide2::Right],"
+    },
+    {
+      "line": 162804,
+      "text": "vec![CurveBoundaryInteriorSide2::Left],"
+    },
+    {
+      "line": 167227,
+      "text": "vec![CurveBoundaryInteriorSide2::Left],"
+    },
+    {
+      "line": 167575,
+      "text": "vec![CurveBoundaryInteriorSide2::Left],"
+    },
+    {
+      "line": 167608,
+      "text": "vec![CurveBoundaryInteriorSide2::Right],"
+    },
+    {
+      "line": 171874,
+      "text": "vec![crate::CurveBoundaryInteriorSide2::Left],"
+    },
+    {
+      "line": 183041,
+      "text": "vec![CurveBoundaryInteriorSide2::Left],"
+    },
+    {
+      "line": 183070,
+      "text": "vec![CurveBoundaryInteriorSide2::Left],"
+    },
+    {
+      "line": 184810,
+      "text": "vec![CurveBoundaryInteriorSide2::Left],"
+    },
+    {
+      "line": 185943,
+      "text": "vec![CurveBoundaryInteriorSide2::Left],"
+    },
+    {
+      "line": 185965,
+      "text": "vec![CurveBoundaryInteriorSide2::Left],"
+    },
+    {
+      "line": 186086,
+      "text": "vec![CurveBoundaryInteriorSide2::Left],"
+    },
+    {
+      "line": 187692,
+      "text": "vec![CurveBoundaryInteriorSide2::Left],"
+    },
+    {
+      "line": 188002,
+      "text": "vec![CurveBoundaryInteriorSide2::Left],"
+    },
+    {
+      "line": 188057,
+      "text": "vec![CurveBoundaryInteriorSide2::Right],"
+    },
+    {
+      "line": 188209,
+      "text": "vec![CurveBoundaryInteriorSide2::Left],"
+    },
+    {
+      "line": 188229,
+      "text": "vec![CurveBoundaryInteriorSide2::Left],"
+    },
+    {
+      "line": 188374,
+      "text": "vec![CurveBoundaryInteriorSide2::Left],"
+    },
+    {
+      "line": 188403,
+      "text": "vec![CurveBoundaryInteriorSide2::Left],"
+    }
+  ],
+  "hypercurve/src/bezier_region.rs": [
+    {
+      "line": 491,
+      "text": "pub enum CurveBoundaryInteriorSide2 {"
+    },
+    {
+      "line": 10150,
+      "text": "let mut promoted = Self::try_from_boundary_paths_with_loop_semantics_raw("
+    },
+    {
+      "line": 10326,
+      "text": "Self::try_from_boundary_paths_with_loop_semantics_raw("
+    },
+    {
+      "line": 10342,
+      "text": "pub fn try_from_boundary_paths_with_loop_topology("
+    },
+    {
+      "line": 10346,
+      "text": "interior_sides: &[CurveBoundaryInteriorSide2],"
+    },
+    {
+      "line": 10362,
+      "text": "Self::try_from_boundary_paths_with_loop_semantics_raw("
+    },
+    {
+      "line": 10370,
+      "text": ".map(|side| *side == CurveBoundaryInteriorSide2::Left)"
+    },
+    {
+      "line": 10378,
+      "text": "pub(crate) fn try_from_boundary_paths_with_loop_semantics_raw("
+    },
+    {
+      "line": 10642,
+      "text": "interior_sides: Vec<CurveBoundaryInteriorSide2>,"
+    },
+    {
+      "line": 10662,
+      "text": ".map(|side| side == CurveBoundaryInteriorSide2::Left)"
+    },
+    {
+      "line": 11853,
+      "text": "CurveBoundaryInteriorSide2::Left"
+    },
+    {
+      "line": 11855,
+      "text": "CurveBoundaryInteriorSide2::Right"
+    },
+    {
+      "line": 18318,
+      "text": "CurveBoundaryInteriorSide2::Right"
+    },
+    {
+      "line": 18320,
+      "text": "CurveBoundaryInteriorSide2::Left"
+    },
+    {
+      "line": 18548,
+      "text": "CurveBoundaryInteriorSide2::Right"
+    },
+    {
+      "line": 18550,
+      "text": "CurveBoundaryInteriorSide2::Left"
+    },
+    {
+      "line": 19225,
+      "text": "vec![CurveBoundaryInteriorSide2::Left],"
+    },
+    {
+      "line": 19377,
+      "text": "vec![CurveBoundaryInteriorSide2::Left],"
+    },
+    {
+      "line": 19872,
+      "text": "vec![CurveBoundaryInteriorSide2::Left],"
+    },
+    {
+      "line": 20000,
+      "text": "vec![CurveBoundaryInteriorSide2::Left],"
+    },
+    {
+      "line": 20085,
+      "text": "CurveBoundaryInteriorSide2::Right"
+    },
+    {
+      "line": 20087,
+      "text": "CurveBoundaryInteriorSide2::Left"
+    },
+    {
+      "line": 20155,
+      "text": "CurveBoundaryInteriorSide2::Right"
+    },
+    {
+      "line": 20157,
+      "text": "CurveBoundaryInteriorSide2::Left"
+    },
+    {
+      "line": 20205,
+      "text": "CurveBoundaryInteriorSide2::Right"
+    },
+    {
+      "line": 20207,
+      "text": "CurveBoundaryInteriorSide2::Left"
+    },
+    {
+      "line": 20260,
+      "text": "CurveBoundaryInteriorSide2::Right"
+    },
+    {
+      "line": 20262,
+      "text": "CurveBoundaryInteriorSide2::Left"
+    },
+    {
+      "line": 20338,
+      "text": "CurveBoundaryInteriorSide2::Right"
+    },
+    {
+      "line": 20340,
+      "text": "CurveBoundaryInteriorSide2::Left"
+    },
+    {
+      "line": 21192,
+      "text": "CurveBoundaryInteriorSide2::Right"
+    },
+    {
+      "line": 21194,
+      "text": "CurveBoundaryInteriorSide2::Left"
+    },
+    {
+      "line": 21365,
+      "text": "CurveBoundaryInteriorSide2::Left"
+    },
+    {
+      "line": 21367,
+      "text": "CurveBoundaryInteriorSide2::Right"
+    },
+    {
+      "line": 21449,
+      "text": "CurveBoundaryInteriorSide2::Left"
+    },
+    {
+      "line": 21451,
+      "text": "CurveBoundaryInteriorSide2::Right"
+    },
+    {
+      "line": 21594,
+      "text": "CurveBoundaryInteriorSide2::Left"
+    },
+    {
+      "line": 21596,
+      "text": "CurveBoundaryInteriorSide2::Right"
+    },
+    {
+      "line": 21704,
+      "text": "CurveBoundaryInteriorSide2::Right"
+    },
+    {
+      "line": 21706,
+      "text": "CurveBoundaryInteriorSide2::Left"
+    },
+    {
+      "line": 22051,
+      "text": "CurveBoundaryInteriorSide2::Left"
+    },
+    {
+      "line": 22053,
+      "text": "CurveBoundaryInteriorSide2::Right"
+    },
+    {
+      "line": 22108,
+      "text": "CurveBoundaryInteriorSide2::Left"
+    },
+    {
+      "line": 22110,
+      "text": "CurveBoundaryInteriorSide2::Right"
+    },
+    {
+      "line": 22216,
+      "text": "CurveBoundaryInteriorSide2::Left"
+    },
+    {
+      "line": 22218,
+      "text": "CurveBoundaryInteriorSide2::Right"
+    },
+    {
+      "line": 22318,
+      "text": "CurveBoundaryInteriorSide2::Left"
+    },
+    {
+      "line": 22320,
+      "text": "CurveBoundaryInteriorSide2::Right"
+    },
+    {
+      "line": 22489,
+      "text": "CurveBoundaryInteriorSide2::Left"
+    },
+    {
+      "line": 22491,
+      "text": "CurveBoundaryInteriorSide2::Right"
+    },
+    {
+      "line": 22652,
+      "text": "CurveBoundaryInteriorSide2::Left"
+    },
+    {
+      "line": 22654,
+      "text": "CurveBoundaryInteriorSide2::Right"
+    },
+    {
+      "line": 23120,
+      "text": "let region = CurveRegion2::try_from_boundary_paths_with_loop_topology("
+    },
+    {
+      "line": 23125,
+      "text": "CurveBoundaryInteriorSide2::Right"
+    },
+    {
+      "line": 23127,
+      "text": "CurveBoundaryInteriorSide2::Left"
+    },
+    {
+      "line": 23633,
+      "text": "vec![CurveBoundaryInteriorSide2::Left],"
+    },
+    {
+      "line": 24418,
+      "text": "CurveBoundaryInteriorSide2::Left"
+    },
+    {
+      "line": 24420,
+      "text": "CurveBoundaryInteriorSide2::Right"
+    },
+    {
+      "line": 25208,
+      "text": "vec![CurveBoundaryInteriorSide2::Left],"
+    },
+    {
+      "line": 25219,
+      "text": "CurveBoundaryInteriorSide2::Right"
+    },
+    {
+      "line": 25221,
+      "text": "CurveBoundaryInteriorSide2::Left"
+    },
+    {
+      "line": 25280,
+      "text": "vec![CurveBoundaryInteriorSide2::Left],"
+    },
+    {
+      "line": 25319,
+      "text": "vec![CurveBoundaryInteriorSide2::Right],"
+    },
+    {
+      "line": 26633,
+      "text": "vec![CurveBoundaryInteriorSide2::Left],"
+    },
+    {
+      "line": 26745,
+      "text": "CurveBoundaryInteriorSide2::Right"
+    },
+    {
+      "line": 26747,
+      "text": "CurveBoundaryInteriorSide2::Left"
+    },
+    {
+      "line": 27911,
+      "text": "CurveBoundaryInteriorSide2::Right"
+    },
+    {
+      "line": 27913,
+      "text": "CurveBoundaryInteriorSide2::Left"
+    },
+    {
+      "line": 28169,
+      "text": "CurveBoundaryInteriorSide2::Right"
+    },
+    {
+      "line": 28171,
+      "text": "CurveBoundaryInteriorSide2::Left"
+    },
+    {
+      "line": 28408,
+      "text": "CurveBoundaryInteriorSide2::Left"
+    },
+    {
+      "line": 28410,
+      "text": "CurveBoundaryInteriorSide2::Right"
+    },
+    {
+      "line": 28873,
+      "text": "vec![CurveBoundaryInteriorSide2::Left],"
+    },
+    {
+      "line": 28885,
+      "text": "CurveBoundaryInteriorSide2::Right,"
+    },
+    {
+      "line": 28888,
+      "text": "(region_fragments.clone(), CurveBoundaryInteriorSide2::Left)"
+    },
+    {
+      "line": 29046,
+      "text": "vec![CurveBoundaryInteriorSide2::Left],"
+    },
+    {
+      "line": 29252,
+      "text": "CurveBoundaryInteriorSide2::Right"
+    },
+    {
+      "line": 29254,
+      "text": "CurveBoundaryInteriorSide2::Left"
+    },
+    {
+      "line": 29327,
+      "text": "CurveBoundaryInteriorSide2::Right"
+    },
+    {
+      "line": 29329,
+      "text": "CurveBoundaryInteriorSide2::Left"
+    },
+    {
+      "line": 29411,
+      "text": "CurveBoundaryInteriorSide2::Left"
+    },
+    {
+      "line": 29413,
+      "text": "CurveBoundaryInteriorSide2::Right"
+    },
+    {
+      "line": 29472,
+      "text": "CurveBoundaryInteriorSide2::Right"
+    },
+    {
+      "line": 29474,
+      "text": "CurveBoundaryInteriorSide2::Left"
+    },
+    {
+      "line": 29601,
+      "text": "CurveBoundaryInteriorSide2::Left"
+    },
+    {
+      "line": 29603,
+      "text": "CurveBoundaryInteriorSide2::Right"
+    },
+    {
+      "line": 29716,
+      "text": "CurveBoundaryInteriorSide2::Right"
+    },
+    {
+      "line": 29718,
+      "text": "CurveBoundaryInteriorSide2::Left"
+    },
+    {
+      "line": 31808,
+      "text": "CurveBoundaryInteriorSide2::Left"
+    },
+    {
+      "line": 31810,
+      "text": "CurveBoundaryInteriorSide2::Right"
+    }
+  ],
+  "hypercurve/src/curve_region_boolean.rs": [
+    {
+      "line": 16800,
+      "text": "vec![crate::CurveBoundaryInteriorSide2::Left],"
+    },
+    {
+      "line": 16955,
+      "text": "vec![crate::CurveBoundaryInteriorSide2::Left],"
+    },
+    {
+      "line": 17666,
+      "text": "vec![crate::CurveBoundaryInteriorSide2::Left],"
+    },
+    {
+      "line": 17943,
+      "text": "vec![crate::CurveBoundaryInteriorSide2::Left],"
+    },
+    {
+      "line": 18116,
+      "text": "vec![crate::CurveBoundaryInteriorSide2::Left; 2],"
+    },
+    {
+      "line": 18262,
+      "text": "vec![crate::CurveBoundaryInteriorSide2::Left],"
+    },
+    {
+      "line": 18269,
+      "text": "vec![crate::CurveBoundaryInteriorSide2::Left],"
+    },
+    {
+      "line": 18490,
+      "text": "vec![crate::CurveBoundaryInteriorSide2::Left],"
+    },
+    {
+      "line": 18520,
+      "text": "vec![crate::CurveBoundaryInteriorSide2::Left],"
+    },
+    {
+      "line": 19278,
+      "text": "vec![crate::CurveBoundaryInteriorSide2::Left],"
+    },
+    {
+      "line": 20438,
+      "text": "vec![crate::CurveBoundaryInteriorSide2::Left],"
+    },
+    {
+      "line": 20628,
+      "text": "vec![crate::CurveBoundaryInteriorSide2::Left],"
+    },
+    {
+      "line": 20663,
+      "text": "vec![crate::CurveBoundaryInteriorSide2::Right],"
+    },
+    {
+      "line": 20988,
+      "text": "use crate::CurveBoundaryInteriorSide2::{Left, Right};"
+    },
+    {
+      "line": 21197,
+      "text": "let raw = CurveRegion2::try_from_boundary_paths_with_loop_semantics_raw("
+    },
+    {
+      "line": 21300,
+      "text": "vec![crate::CurveBoundaryInteriorSide2::Left],"
+    },
+    {
+      "line": 21483,
+      "text": "vec![crate::CurveBoundaryInteriorSide2::Left],"
+    },
+    {
+      "line": 21695,
+      "text": "crate::CurveBoundaryInteriorSide2::Left,"
+    },
+    {
+      "line": 21700,
+      "text": "crate::CurveBoundaryInteriorSide2::Right,"
+    },
+    {
+      "line": 21799,
+      "text": "vec![crate::CurveBoundaryInteriorSide2::Left],"
+    },
+    {
+      "line": 21857,
+      "text": "CurveRegion2::try_from_boundary_paths_with_loop_topology("
+    },
+    {
+      "line": 21869,
+      "text": "&[crate::CurveBoundaryInteriorSide2::Left],"
+    },
+    {
+      "line": 21914,
+      "text": "let parabola_region = CurveRegion2::try_from_boundary_paths_with_loop_topology("
+    },
+    {
+      "line": 21929,
+      "text": "&[crate::CurveBoundaryInteriorSide2::Left],"
+    },
+    {
+      "line": 21954,
+      "text": "let dyadic_crossing_region = CurveRegion2::try_from_boundary_paths_with_loop_topology("
+    },
+    {
+      "line": 21970,
+      "text": "&[crate::CurveBoundaryInteriorSide2::Left],"
+    },
+    {
+      "line": 21986,
+      "text": "let tangent_region = CurveRegion2::try_from_boundary_paths_with_loop_topology("
+    },
+    {
+      "line": 22005,
+      "text": "&[crate::CurveBoundaryInteriorSide2::Right],"
+    },
+    {
+      "line": 22060,
+      "text": "crate::CurveBoundaryInteriorSide2::Left,"
+    },
+    {
+      "line": 22061,
+      "text": "crate::CurveBoundaryInteriorSide2::Right,"
+    },
+    {
+      "line": 22536,
+      "text": "crate::CurveBoundaryInteriorSide2::Right"
+    },
+    {
+      "line": 22538,
+      "text": "crate::CurveBoundaryInteriorSide2::Left"
+    }
+  ],
+  "hypercurve/src/curve_region_trim.rs": [
+    {
+      "line": 970,
+      "text": "CircularArc2, Contour2, CurveBoundaryInteriorSide2, CurveCertainty, CurveContext,"
+    },
+    {
+      "line": 1038,
+      "text": "let region = CurveRegion2::try_from_boundary_paths_with_loop_topology("
+    },
+    {
+      "line": 1042,
+      "text": "&[CurveBoundaryInteriorSide2::Left],"
+    },
+    {
+      "line": 1142,
+      "text": "let region = CurveRegion2::try_from_boundary_paths_with_loop_topology("
+    },
+    {
+      "line": 1146,
+      "text": "&[CurveBoundaryInteriorSide2::Left],"
+    },
+    {
+      "line": 1658,
+      "text": "CurveBoundaryInteriorSide2::Right"
+    },
+    {
+      "line": 1660,
+      "text": "CurveBoundaryInteriorSide2::Left"
+    }
+  ],
+  "hypercurve/src/lib.rs": [
+    {
+      "line": 131,
+      "text": "BezierBoundaryLoop2, CurveBoundaryInteriorSide2, CurveRegion2, CurveRegionArrangement2,"
+    }
+  ],
+  "hypercurve/tests/hypercurve_analytic_parallel_region.rs": [
+    {
+      "line": 5,
+      "text": "CurveBoundaryInteriorSide2, CurveCertainty, CurveContext, CurveFamily2, CurveParameterRange2,"
+    },
+    {
+      "line": 92,
+      "text": "CurveRegion2::try_from_boundary_paths_with_loop_topology("
+    },
+    {
+      "line": 98,
+      "text": "&[CurveBoundaryInteriorSide2::Left],"
+    },
+    {
+      "line": 170,
+      "text": "CurveRegion2::try_from_boundary_paths_with_loop_topology("
+    },
+    {
+      "line": 174,
+      "text": "&[CurveBoundaryInteriorSide2::Left],"
+    },
+    {
+      "line": 230,
+      "text": "let region = CurveRegion2::try_from_boundary_paths_with_loop_topology("
+    },
+    {
+      "line": 235,
+      "text": "CurveBoundaryInteriorSide2::Left"
+    },
+    {
+      "line": 237,
+      "text": "CurveBoundaryInteriorSide2::Right"
+    },
+    {
+      "line": 572,
+      "text": "CurveRegion2::try_from_boundary_paths_with_loop_topology("
+    },
+    {
+      "line": 576,
+      "text": "&[CurveBoundaryInteriorSide2::Left],"
+    },
+    {
+      "line": 820,
+      "text": "CurveRegion2::try_from_boundary_paths_with_loop_topology("
+    },
+    {
+      "line": 824,
+      "text": "&[CurveBoundaryInteriorSide2::Right],"
+    },
+    {
+      "line": 879,
+      "text": "CurveRegion2::try_from_boundary_paths_with_loop_topology("
+    },
+    {
+      "line": 885,
+      "text": "&[CurveBoundaryInteriorSide2::Left],"
+    }
+  ],
+  "hypercurve/tests/hypercurve_bezier_region.rs": [
+    {
+      "line": 1474,
+      "text": "let authored = CurveRegion2::try_from_boundary_paths_with_loop_topology("
+    },
+    {
+      "line": 1481,
+      "text": "&[hypercurve::CurveBoundaryInteriorSide2::Left; 2],"
+    }
+  ],
+  "hypercurve/tests/hypercurve_curve_intersection.rs": [
+    {
+      "line": 8,
+      "text": "BooleanOp, CircularArc2, Classification, CubicBezier2, Curve2, CurveBoundaryInteriorSide2,"
+    },
+    {
+      "line": 85,
+      "text": "interior_side: CurveBoundaryInteriorSide2,"
+    },
+    {
+      "line": 88,
+      "text": "CurveRegion2::try_from_boundary_paths_with_loop_topology("
+    },
+    {
+      "line": 103,
+      "text": "first_interior_side: CurveBoundaryInteriorSide2,"
+    },
+    {
+      "line": 104,
+      "text": "second_interior_side: CurveBoundaryInteriorSide2,"
+    },
+    {
+      "line": 2376,
+      "text": "CurveBoundaryInteriorSide2::Left,"
+    },
+    {
+      "line": 2377,
+      "text": "CurveBoundaryInteriorSide2::Left,"
+    },
+    {
+      "line": 2441,
+      "text": "CurveBoundaryInteriorSide2::Left,"
+    },
+    {
+      "line": 2442,
+      "text": "CurveBoundaryInteriorSide2::Left,"
+    },
+    {
+      "line": 2467,
+      "text": "CurveBoundaryInteriorSide2::Left,"
+    },
+    {
+      "line": 2472,
+      "text": "CurveBoundaryInteriorSide2::Left,"
+    },
+    {
+      "line": 2484,
+      "text": "let approximate_first = path_region(&first, CurveBoundaryInteriorSide2::Left, &approximate);"
+    },
+    {
+      "line": 2485,
+      "text": "let approximate_second = path_region(&second, CurveBoundaryInteriorSide2::Left, &approximate);"
+    },
+    {
+      "line": 2834,
+      "text": "CurveBoundaryInteriorSide2::Left,"
+    },
+    {
+      "line": 2835,
+      "text": "CurveBoundaryInteriorSide2::Left,"
+    },
+    {
+      "line": 2952,
+      "text": "CurveBoundaryInteriorSide2::Right,"
+    },
+    {
+      "line": 2953,
+      "text": "CurveBoundaryInteriorSide2::Right,"
+    },
+    {
+      "line": 3039,
+      "text": "(&same, CurveBoundaryInteriorSide2::Left),"
+    },
+    {
+      "line": 3040,
+      "text": "(&reversed, CurveBoundaryInteriorSide2::Right),"
+    },
+    {
+      "line": 3052,
+      "text": "CurveBoundaryInteriorSide2::Left,"
+    },
+    {
+      "line": 3136,
+      "text": "CurveBoundaryInteriorSide2::Left,"
+    },
+    {
+      "line": 3137,
+      "text": "CurveBoundaryInteriorSide2::Left,"
+    },
+    {
+      "line": 3169,
+      "text": "CurveBoundaryInteriorSide2::Left,"
+    },
+    {
+      "line": 3170,
+      "text": "CurveBoundaryInteriorSide2::Left,"
+    },
+    {
+      "line": 3189,
+      "text": "CurveBoundaryInteriorSide2::Left,"
+    },
+    {
+      "line": 3190,
+      "text": "CurveBoundaryInteriorSide2::Left,"
+    },
+    {
+      "line": 3220,
+      "text": "CurveBoundaryInteriorSide2::Left,"
+    },
+    {
+      "line": 3221,
+      "text": "CurveBoundaryInteriorSide2::Left,"
+    },
+    {
+      "line": 3256,
+      "text": "CurveBoundaryInteriorSide2::Left,"
+    },
+    {
+      "line": 3257,
+      "text": "CurveBoundaryInteriorSide2::Left,"
+    },
+    {
+      "line": 3266,
+      "text": "CurveBoundaryInteriorSide2::Left,"
+    },
+    {
+      "line": 3267,
+      "text": "CurveBoundaryInteriorSide2::Left,"
+    },
+    {
+      "line": 3315,
+      "text": "CurveBoundaryInteriorSide2::Left,"
+    },
+    {
+      "line": 3316,
+      "text": "CurveBoundaryInteriorSide2::Left,"
+    },
+    {
+      "line": 3356,
+      "text": "CurveBoundaryInteriorSide2::Left,"
+    },
+    {
+      "line": 3357,
+      "text": "CurveBoundaryInteriorSide2::Left,"
+    },
+    {
+      "line": 3516,
+      "text": "CurveBoundaryInteriorSide2::Left,"
+    },
+    {
+      "line": 3517,
+      "text": "CurveBoundaryInteriorSide2::Left,"
+    }
+  ],
+  "hypercurve/tests/hypercurve_curve_region_boolean.rs": [
+    {
+      "line": 9,
+      "text": "CircularArc2, CubicBezier2, CurveBoundaryInteriorSide2, CurveRegionLoopRole, FillRule,"
+    },
+    {
+      "line": 111,
+      "text": "CurveRegion2::try_from_boundary_paths_with_loop_topology("
+    },
+    {
+      "line": 116,
+      "text": "CurveBoundaryInteriorSide2::Right"
+    },
+    {
+      "line": 118,
+      "text": "CurveBoundaryInteriorSide2::Left"
+    },
+    {
+      "line": 176,
+      "text": "(Real::zero(), q(1, 4), CurveBoundaryInteriorSide2::Right),"
+    },
+    {
+      "line": 177,
+      "text": "(q(3, 4), Real::one(), CurveBoundaryInteriorSide2::Left),"
+    },
+    {
+      "line": 208,
+      "text": "CurveRegion2::try_from_boundary_paths_with_loop_topology("
+    },
+    {
+      "line": 272,
+      "text": "interior_side: CurveBoundaryInteriorSide2,"
+    },
+    {
+      "line": 275,
+      "text": "CurveRegion2::try_from_boundary_paths_with_loop_topology("
+    },
+    {
+      "line": 290,
+      "text": "first_interior_side: CurveBoundaryInteriorSide2,"
+    },
+    {
+      "line": 291,
+      "text": "second_interior_side: CurveBoundaryInteriorSide2,"
+    },
+    {
+      "line": 550,
+      "text": "CurveRegion2::try_from_boundary_paths_with_loop_topology("
+    },
+    {
+      "line": 554,
+      "text": "&[CurveBoundaryInteriorSide2::Left],"
+    },
+    {
+      "line": 677,
+      "text": "CurveRegion2::try_from_boundary_paths_with_loop_topology("
+    },
+    {
+      "line": 681,
+      "text": "&[CurveBoundaryInteriorSide2::Left],"
+    },
+    {
+      "line": 706,
+      "text": "CurveRegion2::try_from_boundary_paths_with_loop_topology("
+    },
+    {
+      "line": 710,
+      "text": "&[CurveBoundaryInteriorSide2::Left],"
+    },
+    {
+      "line": 737,
+      "text": "CurveRegion2::try_from_boundary_paths_with_loop_topology("
+    },
+    {
+      "line": 743,
+      "text": "&[CurveBoundaryInteriorSide2::Left],"
+    },
+    {
+      "line": 1462,
+      "text": "CurveBoundaryInteriorSide2::Left,"
+    },
+    {
+      "line": 1554,
+      "text": "CurveRegion2::try_from_boundary_paths_with_loop_topology("
+    },
+    {
+      "line": 1558,
+      "text": "&[CurveBoundaryInteriorSide2::Right],"
+    },
+    {
+      "line": 1824,
+      "text": "CurveBoundaryInteriorSide2::Left,"
+    },
+    {
+      "line": 1825,
+      "text": "CurveBoundaryInteriorSide2::Left,"
+    },
+    {
+      "line": 1883,
+      "text": "CurveBoundaryInteriorSide2::Left,"
+    },
+    {
+      "line": 1884,
+      "text": "CurveBoundaryInteriorSide2::Left,"
+    },
+    {
+      "line": 1891,
+      "text": "CurveBoundaryInteriorSide2::Left,"
+    },
+    {
+      "line": 1892,
+      "text": "CurveBoundaryInteriorSide2::Left,"
+    },
+    {
+      "line": 1962,
+      "text": "CurveBoundaryInteriorSide2::Left,"
+    },
+    {
+      "line": 1963,
+      "text": "CurveBoundaryInteriorSide2::Left,"
+    },
+    {
+      "line": 1968,
+      "text": "(&cubic, CurveBoundaryInteriorSide2::Left),"
+    },
+    {
+      "line": 1969,
+      "text": "(&reversed_cubic, CurveBoundaryInteriorSide2::Right),"
+    },
+    {
+      "line": 1976,
+      "text": "CurveBoundaryInteriorSide2::Left,"
+    },
+    {
+      "line": 2041,
+      "text": "CurveBoundaryInteriorSide2::Left,"
+    },
+    {
+      "line": 2042,
+      "text": "CurveBoundaryInteriorSide2::Left,"
+    },
+    {
+      "line": 2047,
+      "text": "(&reparameterized, CurveBoundaryInteriorSide2::Left),"
+    },
+    {
+      "line": 2048,
+      "text": "(&reversed_reparameterized, CurveBoundaryInteriorSide2::Right),"
+    },
+    {
+      "line": 2055,
+      "text": "CurveBoundaryInteriorSide2::Left,"
+    },
+    {
+      "line": 2142,
+      "text": "CurveBoundaryInteriorSide2::Left,"
+    },
+    {
+      "line": 2143,
+      "text": "CurveBoundaryInteriorSide2::Left,"
+    },
+    {
+      "line": 2150,
+      "text": "CurveBoundaryInteriorSide2::Left,"
+    },
+    {
+      "line": 2151,
+      "text": "CurveBoundaryInteriorSide2::Left,"
+    },
+    {
+      "line": 2270,
+      "text": "CurveBoundaryInteriorSide2::Left,"
+    },
+    {
+      "line": 2271,
+      "text": "CurveBoundaryInteriorSide2::Left,"
+    },
+    {
+      "line": 2284,
+      "text": "(&second, CurveBoundaryInteriorSide2::Left),"
+    },
+    {
+      "line": 2285,
+      "text": "(&second_reversed, CurveBoundaryInteriorSide2::Right),"
+    },
+    {
+      "line": 2306,
+      "text": "CurveBoundaryInteriorSide2::Left,"
+    }
+  ],
+  "hypercurve/tests/hypercurve_curve_region_boolean_fuzz.rs": [
+    {
+      "line": 7,
+      "text": "BooleanOp, CircularArc2, CubicBezier2, Curve2, CurveBoundaryInteriorSide2, CurveContext,"
+    },
+    {
+      "line": 244,
+      "text": "CurveRegion2::try_from_boundary_paths_with_loop_topology("
+    },
+    {
+      "line": 248,
+      "text": "&[CurveBoundaryInteriorSide2::Left],"
+    },
+    {
+      "line": 836,
+      "text": "CurveRegion2::try_from_boundary_paths_with_loop_topology("
+    },
+    {
+      "line": 841,
+      "text": "CurveBoundaryInteriorSide2::Right"
+    },
+    {
+      "line": 843,
+      "text": "CurveBoundaryInteriorSide2::Left"
+    },
+    {
+      "line": 1145,
+      "text": "CurveRegion2::try_from_boundary_paths_with_loop_topology("
+    },
+    {
+      "line": 1155,
+      "text": "let forward = CurveRegion2::try_from_boundary_paths_with_loop_topology("
+    },
+    {
+      "line": 1159,
+      "text": "&[CurveBoundaryInteriorSide2::Left],"
+    },
+    {
+      "line": 1168,
+      "text": "let reversed = CurveRegion2::try_from_boundary_paths_with_loop_topology("
+    },
+    {
+      "line": 1172,
+      "text": "&[CurveBoundaryInteriorSide2::Right],"
+    },
+    {
+      "line": 1420,
+      "text": "CurveRegion2::try_from_boundary_paths_with_loop_topology("
+    },
+    {
+      "line": 1424,
+      "text": "&[CurveBoundaryInteriorSide2::Left],"
+    }
+  ],
+  "hypercurve/tests/hypercurve_curve_region_promotion.rs": [
+    {
+      "line": 5,
+      "text": "BezierParameterPolynomial, CurveBoundaryInteriorSide2, CurvePoint2,"
+    },
+    {
+      "line": 451,
+      "text": "CurveRegion2::try_from_boundary_paths_with_loop_topology("
+    },
+    {
+      "line": 455,
+      "text": "&[CurveBoundaryInteriorSide2::Left],"
+    },
+    {
+      "line": 680,
+      "text": "CurveRegion2::try_from_boundary_paths_with_loop_topology("
+    },
+    {
+      "line": 686,
+      "text": "CurveBoundaryInteriorSide2::Right,"
+    },
+    {
+      "line": 687,
+      "text": "CurveBoundaryInteriorSide2::Left,"
+    },
+    {
+      "line": 691,
+      "text": "CurveBoundaryInteriorSide2::Left,"
+    },
+    {
+      "line": 692,
+      "text": "CurveBoundaryInteriorSide2::Right,"
+    },
+    {
+      "line": 842,
+      "text": "CurveRegion2::try_from_boundary_paths_with_loop_topology("
+    },
+    {
+      "line": 846,
+      "text": "&[CurveBoundaryInteriorSide2::Left],"
+    },
+    {
+      "line": 922,
+      "text": "CurveRegion2::try_from_boundary_paths_with_loop_topology("
+    },
+    {
+      "line": 927,
+      "text": "CurveBoundaryInteriorSide2::Right"
+    },
+    {
+      "line": 929,
+      "text": "CurveBoundaryInteriorSide2::Left"
+    },
+    {
+      "line": 2973,
+      "text": "let source = CurveRegion2::try_from_boundary_paths_with_loop_topology("
+    },
+    {
+      "line": 2977,
+      "text": "&[CurveBoundaryInteriorSide2::Left],"
+    },
+    {
+      "line": 3969,
+      "text": "let region = CurveRegion2::try_from_boundary_paths_with_loop_topology("
+    },
+    {
+      "line": 3974,
+      "text": "CurveBoundaryInteriorSide2::Right"
+    },
+    {
+      "line": 3976,
+      "text": "CurveBoundaryInteriorSide2::Left"
+    },
+    {
+      "line": 4040,
+      "text": "CurveRegion2::try_from_boundary_paths_with_loop_topology("
+    },
+    {
+      "line": 4044,
+      "text": "&[CurveBoundaryInteriorSide2::Left],"
+    },
+    {
+      "line": 4057,
+      "text": "CurveRegion2::try_from_boundary_paths_with_loop_topology("
+    },
+    {
+      "line": 4061,
+      "text": "&[CurveBoundaryInteriorSide2::Right],"
+    },
+    {
+      "line": 4222,
+      "text": "CurveBoundaryInteriorSide2::Right"
+    },
+    {
+      "line": 4224,
+      "text": "CurveBoundaryInteriorSide2::Left"
+    },
+    {
+      "line": 4229,
+      "text": "CurveRegion2::try_from_boundary_paths_with_loop_topology("
+    },
+    {
+      "line": 4342,
+      "text": "CurveBoundaryInteriorSide2::Right"
+    },
+    {
+      "line": 4344,
+      "text": "CurveBoundaryInteriorSide2::Left"
+    },
+    {
+      "line": 4349,
+      "text": "CurveRegion2::try_from_boundary_paths_with_loop_topology("
+    },
+    {
+      "line": 4746,
+      "text": "CurveBoundaryInteriorSide2::Right"
+    },
+    {
+      "line": 4748,
+      "text": "CurveBoundaryInteriorSide2::Left"
+    },
+    {
+      "line": 4753,
+      "text": "CurveRegion2::try_from_boundary_paths_with_loop_topology("
+    },
+    {
+      "line": 5713,
+      "text": "let retained_region = CurveRegion2::try_from_boundary_paths_with_loop_topology("
+    },
+    {
+      "line": 5717,
+      "text": "&[CurveBoundaryInteriorSide2::Left],"
+    },
+    {
+      "line": 6486,
+      "text": "let source = CurveRegion2::try_from_boundary_paths_with_loop_topology("
+    },
+    {
+      "line": 6491,
+      "text": "CurveBoundaryInteriorSide2::Right"
+    },
+    {
+      "line": 6493,
+      "text": "CurveBoundaryInteriorSide2::Left"
+    }
+  ]
+}

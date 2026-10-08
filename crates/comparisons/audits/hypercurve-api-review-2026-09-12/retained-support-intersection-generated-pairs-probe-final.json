@@ -1,0 +1,28 @@
+{
+  "source": "parabola-chamfer-independent-pairs-probe.rs",
+  "source_sha256": "5d1265f9a593bf65e85ad89bf0ec144f96847adc5aa367f0fa135bcdc1455751",
+  "returncode": 0,
+  "seconds": 0.41459047800162807,
+  "rlib_sha256": "4115bb5ea8d11d89f928f126b1ede4823da16e665b9706202016c632d679d85c",
+  "unresolved_pairs": [
+    "pair (1,0) Line/Line blocker Uncertain(Unsupported)",
+    "pair (1,1) Line/Line blocker Uncertain(Unsupported)",
+    "pair (1,2) Line/QuadraticBezier blocker Uncertain(Unsupported)",
+    "pair (1,3) Line/Line blocker Uncertain(Unsupported)",
+    "pair (1,4) Line/Line blocker Uncertain(Unsupported)",
+    "pair (1,0) Line/QuadraticBezier blocker Uncertain(Unsupported)",
+    "pair (1,1) Line/Line blocker Uncertain(Unsupported)",
+    "pair (1,2) Line/QuadraticBezier blocker Uncertain(Unsupported)",
+    "pair (1,3) Line/Line blocker Uncertain(Unsupported)",
+    "pair (1,0) Line/Line blocker Uncertain(Unsupported)",
+    "pair (1,1) Line/Line blocker Uncertain(Unsupported)",
+    "pair (1,2) Line/QuadraticBezier blocker Uncertain(Unsupported)",
+    "pair (1,3) Line/Line blocker Uncertain(Unsupported)",
+    "pair (1,4) Line/Line blocker Uncertain(Unsupported)",
+    "pair (1,0) Line/QuadraticBezier blocker Uncertain(Unsupported)",
+    "pair (1,1) Line/Line blocker Uncertain(Unsupported)",
+    "pair (1,2) Line/QuadraticBezier blocker Uncertain(Unsupported)",
+    "pair (1,3) Line/Line blocker Uncertain(Unsupported)"
+  ],
+  "independent_region_xor_empty": 8
+}

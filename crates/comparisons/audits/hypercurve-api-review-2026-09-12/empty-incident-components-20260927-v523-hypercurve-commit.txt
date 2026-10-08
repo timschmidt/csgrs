@@ -1,0 +1,5 @@
+Omit empty incident charts before component selection
+
+An extension stopped at its own anchor created a zero-length compact range and rejected otherwise valid finite components with InvalidBezierRange. Decide exact ray emptiness from its barrier ordering and omit only the empty extension, on demand. Retain finite components, endpoint ownership, and exact contact constraints.
+
+Validation: 19 focused release regressions, Clippy with all and no default features, formatting, denied-warning documentation, editing-fuzz compilation, and Hyperbrep compilation. The regression covers both axes and directions, barriers at or behind their anchors, unit and exterior finite spans, and selection by either exact contact including closed finite endpoints and an independently represented algebraic barrier.

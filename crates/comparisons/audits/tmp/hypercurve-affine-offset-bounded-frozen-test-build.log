@@ -1,0 +1,7 @@
+   Compiling hyperreal v0.13.1 (/tmp/hypercurve-affine-offset-control.JVwgaq/hyperreal)
+   Compiling hyperlattice v0.6.1 (/tmp/hypercurve-affine-offset-control.JVwgaq/hyperlattice)
+   Compiling hyperlimit v0.4.1 (/tmp/hypercurve-affine-offset-control.JVwgaq/hyperlimit)
+   Compiling hypersolve v0.3.1 (/tmp/hypercurve-affine-offset-control.JVwgaq/hypersolve)
+   Compiling hypertri v0.4.1 (/tmp/hypercurve-affine-offset-control.JVwgaq/hypertri)
+   Compiling hypercurve v0.3.1 (/tmp/hypercurve-affine-offset-control.JVwgaq/hypercurve)
+    Finished `release` profile [optimized] target(s) in 1m 38s

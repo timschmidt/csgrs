@@ -1,0 +1,4 @@
+    Blocking waiting for file lock on build directory
+ Documenting hypercurve v0.3.1 (/home/tim/Documents/GitHub/workspace/hypercurve)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 27.88s
+   Generated /home/tim/Documents/GitHub/workspace/hypercurve/target/doc/hypercurve/index.html

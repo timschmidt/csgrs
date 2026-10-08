@@ -1,0 +1,163 @@
+{
+  "candidates": {
+    "hypercurve/src/bezier_algebraic_image.rs": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/polynomial-derivative-candidate-v811/hypercurve/src/bezier_algebraic_image.rs",
+    "hypercurve/src/bezier_split_endpoint.rs": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/polynomial-derivative-candidate-v811/hypercurve/src/bezier_split_endpoint.rs",
+    "hypercurve/src/bezier_tangent_order.rs": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/polynomial-derivative-candidate-v811/hypercurve/src/bezier_tangent_order.rs",
+    "hypercurve/src/bezier_arrangement.rs": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/polynomial-derivative-candidate-v811/hypercurve/src/bezier_arrangement.rs",
+    "hypercurve/src/curve_region_boolean.rs": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/polynomial-derivative-candidate-v811/hypercurve/src/curve_region_boolean.rs",
+    "hypercurve/src/lib.rs": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/polynomial-derivative-candidate-v811/hypercurve/src/lib.rs",
+    "hypercurve/benches/bezier_tangent_order.rs": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/polynomial-derivative-candidate-v811/hypercurve/benches/bezier_tangent_order.rs",
+    "hypercurve/fuzz/fuzz_targets/bezier_tangent_order.rs": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/polynomial-derivative-candidate-v811/hypercurve/fuzz/fuzz_targets/bezier_tangent_order.rs",
+    "hypercurve/tests/hypercurve_bezier_tangent_order.rs": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/polynomial-derivative-candidate-v811/hypercurve/tests/hypercurve_bezier_tangent_order.rs",
+    "hypercurve/tests/hypercurve_bezier_split_materialization.rs": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/polynomial-derivative-candidate-v811/hypercurve/tests/hypercurve_bezier_split_materialization.rs",
+    "hypercurve/tests/hypercurve_bezier_algebraic_image.rs": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/polynomial-derivative-candidate-v811/hypercurve/tests/hypercurve_bezier_algebraic_image.rs"
+  },
+  "base": {
+    "hypercurve/src/bezier_algebraic_image.rs": "54038fed275528ce95f43d6107b6e042af040a70067b1b1c6113952a9ad469c3",
+    "hypercurve/src/bezier_split_endpoint.rs": "ce56348f8b212aa26e269e1afdd2676c65b3b8a788d62791248dddbfa7f1d0ed",
+    "hypercurve/src/bezier_tangent_order.rs": "515d1af1e54271952d7f9eefdd3ecfb662d70eb84c31835e97300d5fd784ba24",
+    "hypercurve/src/bezier_arrangement.rs": "c71bdedab5ac82cc7e3ab7a9e1736198f7dd28ba1872fb29c774fb31b644b00c",
+    "hypercurve/src/curve_region_boolean.rs": "e812f9bcaa0be1513b573b6eb4f5e9e8b3eae00df49a2e6c803332b28286ea78",
+    "hypercurve/src/lib.rs": "43030339581b5e3b12f9c0ea1a1314fd8dce0c818358f11c00b31793b2d73715",
+    "hypercurve/benches/bezier_tangent_order.rs": "6abc38ce01ff763fac5d7af83ca465acaa5d5278b44795c08ed670465b7e4701",
+    "hypercurve/fuzz/fuzz_targets/bezier_tangent_order.rs": "6584c863ec522aaf131ae9a40c43fc7e7b6275337857415de2a0243027c9ba22",
+    "hypercurve/tests/hypercurve_bezier_tangent_order.rs": "0fe8df30d86b210347f3258076dd178d643fa29b5a997f618bc416a0e3e799bd",
+    "hypercurve/tests/hypercurve_bezier_split_materialization.rs": "d5ee396094600d9980daee566bf925b4fce8d45ec7a4a6ea7c19651a174c181c",
+    "hypercurve/tests/hypercurve_bezier_algebraic_image.rs": "3bb97d3de4a6cd052ccdb97abf838a81d0028449b74b7e2428ef01bc1af25edf"
+  },
+  "promoted": {
+    "hypercurve/src/bezier_algebraic_image.rs": "de4586d6ba870559409f6bfba14c029c4c5294e4addcdabfc0eda2ce9c9205d1",
+    "hypercurve/src/bezier_split_endpoint.rs": "1a0bc376c726c9a65371ee3a09a08ce39855c00af18e5f743041d8c554f69a5c",
+    "hypercurve/src/bezier_tangent_order.rs": "0fb01ea2a0ea0ec026f3d218d8f0be5e549315dd7321336e12a60c3018cfcc40",
+    "hypercurve/src/bezier_arrangement.rs": "5ffc1cb5eea4055fd50834f5138178b604ee39e5f7d3461705de66f298de9111",
+    "hypercurve/src/curve_region_boolean.rs": "5fe889a565ff00a664fcce29f119587f5b7f836632b4cb2b9cacc14ee9107b9a",
+    "hypercurve/src/lib.rs": "44c01355008d479cb6c61a8d27a073b47e0e3e10a964d87f1924796f1a7f0f87",
+    "hypercurve/benches/bezier_tangent_order.rs": "08922b9d6fa854a684394bdeddde223070972fbd9bdff22b9a4e68c01b744345",
+    "hypercurve/fuzz/fuzz_targets/bezier_tangent_order.rs": "8416bba0e99a52f545b68acadf709a417a4efad86b06ba8b6376c8c7eb0817fd",
+    "hypercurve/tests/hypercurve_bezier_tangent_order.rs": "186794114be41e5d22d642e4117d457454d2938f28e42e1169690a32e1cdaaa8",
+    "hypercurve/tests/hypercurve_bezier_split_materialization.rs": "b1dd11c3dfc8116638ab580efa2a9409d9f7e98bb6b4fca47e4c7559f23c6b5f",
+    "hypercurve/tests/hypercurve_bezier_algebraic_image.rs": "262763bc43d0eefbaac8e3582645351c63a15b8f4b707638a5de301f70a6ff53"
+  },
+  "parents": {
+    "ExactCalculator": {
+      "head": "7265aa3a922a7e7c0389dae4b26cca562aa777a6",
+      "status": ""
+    },
+    "NURBS_BREP_kernel": {
+      "head": "1aef37b12a92c993c2046f7886593bb0a555c414",
+      "status": ""
+    },
+    "alumina-firmware": {
+      "head": "bdee397d0b80841f16bf17e7bcd029b4feb2c212",
+      "status": ""
+    },
+    "alumina-interface": {
+      "head": "b21c9214c59d41e8272b8644dd436b44b7e15e89",
+      "status": ""
+    },
+    "citizen-builder": {
+      "head": "c4230238e28fd88fc8156fceb2c43698e67c27ca",
+      "status": ""
+    },
+    "crcalc": {
+      "head": "4f398d699c9d498deb45520ea7ebb020627bc640",
+      "status": ""
+    },
+    "csgrs": {
+      "head": "0346ab8d5b5093b5507535f7707982e4cd2918b2",
+      "status": ""
+    },
+    "csgrs-ffi": {
+      "head": "6057435ce4c0b37bac99aec29922b90e6652c575",
+      "status": ""
+    },
+    "exactcore-hyper-comparison": {
+      "head": "74b90b328f720997d38da80af5620f167b3b0619",
+      "status": ""
+    },
+    "hyperbrep": {
+      "head": "817593f3c17f4eb3f02d7174dc1691e2bf6ee0f3",
+      "status": ""
+    },
+    "hypercircuit": {
+      "head": "ad421497ce6e88fe936818ec198c8a1b779776c7",
+      "status": ""
+    },
+    "hypercurve": {
+      "head": "1f210047efcdae2fa6f62140be2b360b8261b899",
+      "status": ""
+    },
+    "hyperdrc": {
+      "head": "ce49bba5d16f78ae8559a0eabe3e4478b72fd4bf",
+      "status": ""
+    },
+    "hyperevolution": {
+      "head": "99645e3cefb7eea3af86abc15db68f7fcb31ca95",
+      "status": ""
+    },
+    "hypergraphics": {
+      "head": "75219dede7a2387ab30c84664b1293ec71d736d2",
+      "status": ""
+    },
+    "hyperlattice": {
+      "head": "035a8c822ca60e30daf0e3143843a65be0e6aedb",
+      "status": ""
+    },
+    "hyperlimit": {
+      "head": "d80f53329d7cab4130c62c2cbd4ec2d9f73c7c43",
+      "status": ""
+    },
+    "hypermesh": {
+      "head": "55cc20ada8bc502f1b3c1651b422f0a040239060",
+      "status": ""
+    },
+    "hyperpack": {
+      "head": "34857861561d643d7578753b8f8314d0fbca2c5b",
+      "status": ""
+    },
+    "hyperparts": {
+      "head": "d8626e9d36256afc4a8eb0380ae94c9ed5619107",
+      "status": ""
+    },
+    "hyperpath": {
+      "head": "96d03475ba4c5e971943a775898cbc697a132154",
+      "status": ""
+    },
+    "hyperphysics": {
+      "head": "dcbc7cf3489a1299de16a946fd7f5e5658b6f15f",
+      "status": ""
+    },
+    "hyperreal": {
+      "head": "a4b5a570155cb3bccbbe4679522b5cd3f962c174",
+      "status": ""
+    },
+    "hypersdf": {
+      "head": "b37825900457420cb64da385b8525acab33e31c5",
+      "status": ""
+    },
+    "hypersolve": {
+      "head": "106130aa5c45672fe170386635ad7e94741097d7",
+      "status": ""
+    },
+    "hypertri": {
+      "head": "6a2092c066964f3b7528299a72ef0ed1af4b1ff0",
+      "status": ""
+    },
+    "hypervoxel": {
+      "head": "0486b1465a249a04973520a4138a39395ded2f23",
+      "status": ""
+    },
+    "openscad-rs": {
+      "head": "f21b39486a6b35403ee8af9e7fba7cb62a045a5a",
+      "status": ""
+    },
+    "synaps-cad": {
+      "head": "da8da78636e573c04f8a5c4cd8cc900162b781ba",
+      "status": ""
+    },
+    "videos": {
+      "head": "4209b983cc0d937981f22a6fa7df384303fcc8bd",
+      "status": ""
+    }
+  }
+}

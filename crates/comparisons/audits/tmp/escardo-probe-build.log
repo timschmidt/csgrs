@@ -1,0 +1,8 @@
+
+Escardo.hs:2:17: warning: [-Wunrecognised-warning-flags]
+    unrecognised warning flag: -Wno-x-partial
+  |
+2 | {-# OPTIONS_GHC -Wno-x-partial #-}
+  |                 ^^^^^^^^^^^^^^
+[2 of 3] Compiling EscardoProbe     ( EscardoProbe.hs, probe-build/EscardoProbe.o ) [Source file changed]
+[3 of 3] Linking escardo-probe [Objects changed]

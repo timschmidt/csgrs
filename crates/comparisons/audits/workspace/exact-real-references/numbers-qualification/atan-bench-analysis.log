@@ -1,0 +1,133 @@
+{
+  "observations": 144,
+  "afterWarmup": 128,
+  "samplesPerProcess": 256,
+  "paired": [
+    {
+      "family": "rational",
+      "medianCpuNsBefore": 701667,
+      "medianCpuNsAfter": 701566,
+      "pairedCpuSpeedupMedian": 1.0001495955892845,
+      "pairedBootstrap95": [
+        0.979034385643453,
+        1.0109303179676696
+      ],
+      "allocationCallsBefore": 9217,
+      "allocationCallsAfter": 9217,
+      "requestedBytesBefore": 413344,
+      "requestedBytesAfter": 413344
+    },
+    {
+      "family": "known-small",
+      "medianCpuNsBefore": 956351.5,
+      "medianCpuNsAfter": 994287,
+      "pairedCpuSpeedupMedian": 0.958793896499321,
+      "pairedBootstrap95": [
+        0.9481986989066349,
+        0.9840358948190907
+      ],
+      "allocationCallsBefore": 15747,
+      "allocationCallsAfter": 15747,
+      "requestedBytesBefore": 947512,
+      "requestedBytesAfter": 947512
+    },
+    {
+      "family": "known-negative",
+      "medianCpuNsBefore": 1257841,
+      "medianCpuNsAfter": 1290083,
+      "pairedCpuSpeedupMedian": 0.9725494985074739,
+      "pairedBootstrap95": [
+        0.9665408917613512,
+        1.0164228855183548
+      ],
+      "allocationCallsBefore": 21892,
+      "allocationCallsAfter": 21892,
+      "requestedBytesBefore": 1673632,
+      "requestedBytesAfter": 1673632
+    },
+    {
+      "family": "opaque-small",
+      "medianCpuNsBefore": 1210224.5,
+      "medianCpuNsAfter": 1207389,
+      "pairedCpuSpeedupMedian": 1.0000225528140003,
+      "pairedBootstrap95": [
+        0.9842288615870627,
+        1.0101310710980664
+      ],
+      "allocationCallsBefore": 15035,
+      "allocationCallsAfter": 15035,
+      "requestedBytesBefore": 693440,
+      "requestedBytesAfter": 693440
+    },
+    {
+      "family": "opaque-positive",
+      "medianCpuNsBefore": 3371034.5,
+      "medianCpuNsAfter": 4006961,
+      "pairedCpuSpeedupMedian": 0.8378256520575109,
+      "pairedBootstrap95": [
+        0.8334835682521288,
+        0.8479594043248165
+      ],
+      "allocationCallsBefore": 39097,
+      "allocationCallsAfter": 45333,
+      "requestedBytesBefore": 1795424,
+      "requestedBytesAfter": 2071824
+    },
+    {
+      "family": "warm-negative",
+      "medianCpuNsBefore": 2220141,
+      "medianCpuNsAfter": 2564812,
+      "pairedCpuSpeedupMedian": 0.8662823171267973,
+      "pairedBootstrap95": [
+        0.8609592569043902,
+        0.8865098998281964
+      ],
+      "allocationCallsBefore": 34498,
+      "allocationCallsAfter": 39174,
+      "requestedBytesBefore": 1878224,
+      "requestedBytesAfter": 2131712
+    },
+    {
+      "family": "hint-small",
+      "medianCpuNsBefore": 2388316,
+      "medianCpuNsAfter": 2634066,
+      "pairedCpuSpeedupMedian": 0.9067046836123267,
+      "pairedBootstrap95": [
+        0.8892032536391046,
+        0.9112199042642408
+      ],
+      "allocationCallsBefore": 36613,
+      "allocationCallsAfter": 36613,
+      "requestedBytesBefore": 1824336,
+      "requestedBytesAfter": 1824336
+    }
+  ],
+  "repaired": [
+    {
+      "family": "opaque-negative",
+      "medianCpuNs": 4356062.5,
+      "allocationCalls": 53015,
+      "requestedBytes": 2731120,
+      "baseline": "nontermination cap, not a timing ratio"
+    },
+    {
+      "family": "hint-large",
+      "medianCpuNs": 20735884.5,
+      "allocationCalls": 238323,
+      "requestedBytes": 14562632,
+      "baseline": "nontermination cap, not a timing ratio"
+    }
+  ],
+  "auditBinaryDelta": {
+    "fileBytes": -64,
+    "textBytes": -68,
+    "dataBytes": 0,
+    "bssBytes": 64,
+    "loadedTotalBytes": -4
+  },
+  "limitations": [
+    "One host, fresh CPU6-pinned process pairs; 8 post-warmup pairs/family.",
+    "Times include allocator counters; cumulative requested bytes are not peak residency.",
+    "No throughput claim for the donor or ratio against a timed-out baseline."
+  ]
+}

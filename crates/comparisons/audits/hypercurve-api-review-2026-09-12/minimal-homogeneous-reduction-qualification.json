@@ -1,0 +1,33 @@
+{
+  "status": "implemented, qualified, committed; original goal active",
+  "commit": "1f49f12f401c37a7978635d942db5487cc202281",
+  "preceding_commit": "cbe81518b359e22473a6b4fe562abaadb5f46456",
+  "change": "Publish certified inverse Bernstein degree reduction through the existing validated homogeneous constructor. Retain the original endpoint values, parameter lineage and exact line evidence; remove affine control projection and reconstruction. No common factor is cancelled.",
+  "tests": {
+    "hypercurve_library": 1025,
+    "hypercurve_integration": 413,
+    "hyperbrep_library": 232,
+    "unique_total": 1670,
+    "library_ignored": 6,
+    "established_expensive_library_exclusions": 4
+  },
+  "logs": [
+    "minimal-homogeneous-reduction-release.log",
+    "minimal-homogeneous-reduction-hyperbrep-release.log",
+    "minimal-homogeneous-reduction-all-targets.log",
+    "minimal-homogeneous-reduction-hyperbrep-all-targets.log"
+  ],
+  "baseline": "The new regression fails on cbe8151 in minimal-homogeneous-reduction-parent-test.log. It passes after the homogeneous publication change in minimal-homogeneous-reduction-fixed-test.log.",
+  "regressions": [
+    "Independent degree-twelve homogeneous sources reduce to degree two with infinite or zero controls, unit, negative sqrt(2) and pi gauges, both contexts and reversal; source-root identity, parameter range and finite point or pole behavior are retained.",
+    "Extended public boundary composition coverage admits independently authored elevated Bezier and elevated NURBS semicircles through Boolean, fillet/chamfer, offset and another Boolean."
+  ],
+  "formatting": "Changed Rust formatting and git diff --check passed.",
+  "source_sha256": {
+    "src/rational_bezier_general.rs": "acfdaec8af914707f502297823cb8cce56d52b45b5a13df184602a7284a35ada",
+    "tests/hypercurve_path_closure.rs": "2757388103125f1ddc8d29c9cd46d3f436d4b94e187bbf5ee15de8f4eb550a20"
+  },
+  "workspace_status": "minimal-homogeneous-reduction-workspace-after-commit.json",
+  "clean_repository_count": 30,
+  "goal_status": "active"
+}

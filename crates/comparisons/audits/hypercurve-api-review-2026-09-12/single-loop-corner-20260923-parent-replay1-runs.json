@@ -1,0 +1,114 @@
+[
+  {
+    "name": "bezier_offset::conversion_tests::independently_encoded_nonrepresented_analytic_circle_publishes_overlap",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/single-loop-corner-20260923-attempt1-libraries/parent-libtest",
+      "--exact",
+      "bezier_offset::conversion_tests::independently_encoded_nonrepresented_analytic_circle_publishes_overlap",
+      "--test-threads=1",
+      "--nocapture",
+      "--color",
+      "never"
+    ],
+    "returncode": 101,
+    "elapsed_seconds": 0.11401189095340669,
+    "log": "single-loop-corner-20260923-parent-replay1-independently_encoded_nonrepresented_analytic_circle_publishes_overlap.log",
+    "binary_sha256": "08949cda980234983841e1696c33c6ccd16d2e2ff642ece106c6a09d6445c752"
+  },
+  {
+    "name": "bezier_offset::conversion_tests::nonrepresented_center_nonrational_chamfer_inverts_with_retained_authority",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/single-loop-corner-20260923-attempt1-libraries/parent-libtest",
+      "--exact",
+      "bezier_offset::conversion_tests::nonrepresented_center_nonrational_chamfer_inverts_with_retained_authority",
+      "--test-threads=1",
+      "--nocapture",
+      "--color",
+      "never"
+    ],
+    "returncode": 101,
+    "elapsed_seconds": 0.1639751100447029,
+    "log": "single-loop-corner-20260923-parent-replay1-nonrepresented_center_nonrational_chamfer_inverts_with_retained_authority.log",
+    "binary_sha256": "08949cda980234983841e1696c33c6ccd16d2e2ff642ece106c6a09d6445c752"
+  },
+  {
+    "name": "bezier_offset::conversion_tests::selected_fiber_transverse_mapped_cut_inverts_by_point",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/single-loop-corner-20260923-attempt1-libraries/parent-libtest",
+      "--exact",
+      "bezier_offset::conversion_tests::selected_fiber_transverse_mapped_cut_inverts_by_point",
+      "--test-threads=1",
+      "--nocapture",
+      "--color",
+      "never"
+    ],
+    "returncode": 101,
+    "elapsed_seconds": 0.015672487090341747,
+    "log": "single-loop-corner-20260923-parent-replay1-selected_fiber_transverse_mapped_cut_inverts_by_point.log",
+    "binary_sha256": "08949cda980234983841e1696c33c6ccd16d2e2ff642ece106c6a09d6445c752"
+  },
+  {
+    "name": "bezier_region::tests::algebraic_endpoint_images_reenter_shared_corner_carriers",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/single-loop-corner-20260923-attempt1-libraries/parent-libtest",
+      "--exact",
+      "bezier_region::tests::algebraic_endpoint_images_reenter_shared_corner_carriers",
+      "--test-threads=1",
+      "--nocapture",
+      "--color",
+      "never"
+    ],
+    "returncode": 101,
+    "elapsed_seconds": 0.11379190708976239,
+    "log": "single-loop-corner-20260923-parent-replay1-algebraic_endpoint_images_reenter_shared_corner_carriers.log",
+    "binary_sha256": "08949cda980234983841e1696c33c6ccd16d2e2ff642ece106c6a09d6445c752"
+  },
+  {
+    "name": "bezier_region::tests::general_nonrepresented_chord_and_retained_rational_arc_complete_the_fillet_kernel",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/single-loop-corner-20260923-attempt1-libraries/parent-libtest",
+      "--exact",
+      "bezier_region::tests::general_nonrepresented_chord_and_retained_rational_arc_complete_the_fillet_kernel",
+      "--test-threads=1",
+      "--nocapture",
+      "--color",
+      "never"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.16394402203150094,
+    "log": "single-loop-corner-20260923-parent-replay1-general_nonrepresented_chord_and_retained_rational_arc_complete_the_fillet_kernel.log",
+    "binary_sha256": "08949cda980234983841e1696c33c6ccd16d2e2ff642ece106c6a09d6445c752"
+  },
+  {
+    "name": "bezier_region::tests::independent_oblique_chord_pair_fillet_crosses_a_rational_line_exactly",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/single-loop-corner-20260923-attempt1-libraries/parent-libtest",
+      "--exact",
+      "bezier_region::tests::independent_oblique_chord_pair_fillet_crosses_a_rational_line_exactly",
+      "--test-threads=1",
+      "--nocapture",
+      "--color",
+      "never"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 1.165366088040173,
+    "log": "single-loop-corner-20260923-parent-replay1-independent_oblique_chord_pair_fillet_crosses_a_rational_line_exactly.log",
+    "binary_sha256": "08949cda980234983841e1696c33c6ccd16d2e2ff642ece106c6a09d6445c752"
+  },
+  {
+    "name": "bezier_region::tests::independent_oblique_chord_pair_fillet_crosses_algebraic_chords_exactly",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/single-loop-corner-20260923-attempt1-libraries/parent-libtest",
+      "--exact",
+      "bezier_region::tests::independent_oblique_chord_pair_fillet_crosses_algebraic_chords_exactly",
+      "--test-threads=1",
+      "--nocapture",
+      "--color",
+      "never"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 3.4189137099310756,
+    "log": "single-loop-corner-20260923-parent-replay1-independent_oblique_chord_pair_fillet_crosses_algebraic_chords_exactly.log",
+    "binary_sha256": "08949cda980234983841e1696c33c6ccd16d2e2ff642ece106c6a09d6445c752"
+  }
+]

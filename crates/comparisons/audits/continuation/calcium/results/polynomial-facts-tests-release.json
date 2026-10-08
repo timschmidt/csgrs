@@ -1,0 +1,23 @@
+{
+  "tag": "polynomial-facts-tests-release",
+  "started": "2026-09-08T23:17:28.772Z",
+  "finished": "2026-09-08T23:19:50.210Z",
+  "elapsedSeconds": 141.436322546,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/polynomial-facts-trial/hypersolve",
+  "command": "env",
+  "args": [
+    "CARGO_TARGET_DIR=/tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse",
+    "CARGO_INCREMENTAL=0",
+    "CARGO_BUILD_JOBS=2",
+    "cargo",
+    "test",
+    "--offline",
+    "--locked",
+    "--release",
+    "--all-features",
+    "--lib",
+    "--tests"
+  ],
+  "code": 0,
+  "signal": null
+}

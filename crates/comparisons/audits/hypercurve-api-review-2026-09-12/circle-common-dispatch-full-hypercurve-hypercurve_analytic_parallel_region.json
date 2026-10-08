@@ -1,0 +1,42 @@
+{
+  "repo": "hypercurve",
+  "target": "hypercurve_analytic_parallel_region",
+  "binary": "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve_analytic_parallel_region-68a34b9751e86ddf",
+  "command": [
+    "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve_analytic_parallel_region-68a34b9751e86ddf",
+    "--test-threads=4",
+    "--color",
+    "never",
+    "--skip",
+    "radical_parallel_cusp_offsets_exactly_under_both_policies",
+    "--skip",
+    "retained_rational_arc_and_analytic_parallel_fillet_exactly"
+  ],
+  "sha256": "0af201220a5819206b986f37207a23093aa6443d6515350e6f2d493c6ba6add0",
+  "returncode": 0,
+  "timed_out": false,
+  "elapsed_seconds": 34.65892026999791,
+  "log": "circle-common-dispatch-full-hypercurve-hypercurve_analytic_parallel_region.log",
+  "passed": [
+    "analytic_parallel_circle_fast_path_excludes_other_support_contacts",
+    "analytic_parallel_circle_tangency_retains_zero_cross_evidence",
+    "analytic_parallel_chamfers_retain_normalized_cut_points",
+    "curve_trim_intersects_analytic_parallel_region_boundaries",
+    "curve_trim_retains_an_analytic_parallel_boundary_overlap",
+    "analytic_parallel_fragments_retain_exact_region_evidence_under_both_policies",
+    "general_boundary_paths_preserve_analytic_carriers_and_boolean_reentry",
+    "radical_parallel_cusp_spans_connect_under_both_policies",
+    "analytic_parallel_intersects_independently_parameterized_circles_exactly",
+    "retained_arc_fillet_preserves_past_center_tangent_orientation",
+    "retained_rational_arc_and_analytic_parallel_fillet_extends_exactly",
+    "algebraic_endpoint_analytic_parallel_chamfers_replay_selected_distance",
+    "cusp_split_analytic_self_crossing_regularizes_under_both_policies"
+  ],
+  "failed": [],
+  "ignored": [],
+  "summaries": [
+    "test result: ok. 13 passed; 0 failed; 0 ignored; 0 measured; 2 filtered out; finished in 34.63s"
+  ],
+  "new_failures": [],
+  "known_failures": []
+}

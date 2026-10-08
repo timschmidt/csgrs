@@ -1,0 +1,122 @@
+   Compiling exactcore-hyper-comparison v0.1.0 (/home/tim/Documents/GitHub/workspace/csgrs/crates/comparisons)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 23.74s
+     Running unittests src/lib.rs (crates/comparisons/target/debug/deps/exactcore_hyper_comparison-1397ad915da245f2)
+
+running 3 tests
+test operation_catalog::tests::retained_catalog_has_160_unique_operations ... ok
+test smoke_tests::native_oracle_links_and_runs ... ok
+test smoke_tests::retained_feature_fixtures_construct_and_run ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/coverage_manifest.rs (crates/comparisons/target/debug/deps/coverage_manifest-c21e4ef7beb8b498)
+
+running 5 tests
+test every_comparable_row_names_tests_benchmarks_and_known_crates ... ok
+test every_hyper_crate_has_an_explicit_audit_disposition ... ok
+test every_native_oracle_entry_point_is_mapped_tested_and_benchmarked ... ok
+test exhaustive_report_mentions_every_manifest_row_and_crate ... ok
+test retained_benchmarks_and_memory_catalog_have_identical_operation_ids ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+     Running tests/geometry_2d.rs (crates/comparisons/target/debug/deps/geometry_2d-61883dcb70648838)
+
+running 12 tests
+test circle_line_and_segment_boundary_relations_match ... ok
+test exactcore_circle_line_distance_is_not_a_signed_boundary_distance ... ignored, known exactCorelib Circle2d line distance clamps secants to zero
+test exactcore_coincident_lines_report_disjoint_dimension ... ignored, known exactCorelib Line2d::intersects checks parallel before coincident
+test exactcore_line_member_orientation_does_not_match_free_orientation2d ... ignored, known exactCorelib Line2d orientation convention is reversed
+test incircle_sign_matches_for_both_windings_and_boundary ... ok
+test integer_orientation_properties_match ... ok
+test line_relations_and_exact_intersection_construction_match ... ok
+test nondegenerate_segment_intersection_properties_match ... ok
+test orientation_area_line_side_and_collinearity_match ... ok
+test point_line_and_segment_distances_match ... ok
+test segment_intersection_topology_matches ... ok
+test strict_between_and_closed_segment_point_classification_match ... ok
+
+test result: ok. 9 passed; 0 failed; 3 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+     Running tests/geometry_3d.rs (crates/comparisons/target/debug/deps/geometry_3d-1314aadbcdcd8768)
+
+running 11 tests
+test exactcore_disjoint_coplanar_triangle_and_segment_report_intersection ... ignored, known exactCorelib coplanar Triangle3d intersection treats -1 as true
+test exactcore_disjoint_triangles_report_intersection ... ignored, known exactCorelib Triangle3d::do_intersect uses dimensions as booleans
+test exactcore_identical_planes_do_not_report_coincidence ... ignored, known exactCorelib Plane3d::isCoincident predicate is inverted
+test exactcore_transverse_origin_planes_report_wrong_dimension ... ignored, known exactCorelib Plane3d::isCoincident can label transverse planes coincident
+test integer_orientation3_properties_match ... ok
+test line3_incidence_parallel_skew_and_intersection_dimension_match ... ok
+test orientation_and_signed_tetrahedral_volume_match ... ok
+test plane_point_line_segment_and_plane_relations_match ... ok
+test point_line_segment_and_plane_distances_match_with_predicates ... ok
+test segment3_point_and_intersection_topology_match ... ok
+test triangle3_point_and_noncoplanar_intersections_match ... ok
+
+test result: ok. 7 passed; 0 failed; 4 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+     Running tests/linear_algebra.rs (crates/comparisons/target/debug/deps/linear_algebra-b7c1477177968507)
+
+running 8 tests
+test complex_cartesian_arithmetic_and_norm_match ... ok
+test exactcore_matrix_determinant_loses_column_swap_sign_and_position ... ignored, known exactCorelib Bareiss column-pivot defect; run with --ignored to characterize
+test matrix3_integer_determinants_match ... ok
+test matrix3_operations_determinant_and_inverse_match ... ok
+test matrix4_operations_determinant_and_inverse_match ... ok
+test vector3_integer_properties_match ... ok
+test vector_arithmetic_dot_norm_wedge_and_cross_match ... ok
+test vector_squared_norm_and_zero_vectors_match ... ok
+
+test result: ok. 7 passed; 0 failed; 1 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+     Running tests/polynomial.rs (crates/comparisons/target/debug/deps/polynomial-fdb7bd76ce402d31)
+
+running 14 tests
+test bivariate_evaluation_and_resultant_specializations_match ... ok
+test constant_polynomial_resultant_uses_the_standard_convention ... ignored, known exactCore res() constant-polynomial base case uses a nonstandard zero result
+test evaluation_addition_subtraction_multiplication_and_composition_match ... ok
+test exactcore_sturm_counts_three_simple_integer_roots ... ignored, known exactCore Sturm sequence loses one of three simple integer roots
+test gcd_and_square_free_degrees_match ... ok
+test iterated_derivatives_match ... ok
+test linear_resultants_match_exactcore_argument_orientation ... ok
+test polynomial_discriminant_matches_the_standard_definition ... ignored, exactCore disc() is explicitly a cheap resultant proxy and omits normalization
+test polynomial_evaluation_and_derivative_properties_match ... ok
+test pseudo_remainder_value_matches_hypersolve_chain_first_step ... ok
+test sturm_integer_interval_counts_match_hyper_open_interval_certification ... ok
+test sturm_root_counts_and_isolating_intervals_match ... ok
+test univariate_resultant_matches_the_standard_sylvester_orientation ... ignored, exactCore res() negates the standard nonconstant resultant orientation
+test univariate_resultants_match_after_the_documented_argument_orientation ... ok
+
+test result: ok. 10 passed; 0 failed; 4 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+     Running tests/scalars.rs (crates/comparisons/target/debug/deps/scalars-86940a91a794e4bd)
+
+running 7 tests
+test exact_real_arithmetic_constants_roots_and_elementary_functions_match ... ok
+test exact_real_sign_floor_and_ceil_match ... ok
+test rational_arithmetic_and_comparison_tables_match ... ok
+test rational_binary_properties_match ... ok
+test rational_construction_reduction_parts_and_queries_match ... ok
+test rational_unary_operations_match ... ok
+test shared_domain_failures_are_rejected ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+     Running tests/triangulation.rs (crates/comparisons/target/debug/deps/triangulation-41f0e78f3c6d0cc4)
+
+running 6 tests
+test cocircular_core_complex_contains_hypertri_tie_broken_triangulation ... ok
+test collinear_inputs_have_no_two_dimensional_cells ... ok
+test duplicate_point_preconditions_match ... ignored, the exactCore-backed adapter accepts duplicate coordinates while hypertri rejects them explicitly
+test exhaustive_empty_circle_delaunay_cells_match ... ok
+test integer_point_delaunay_complexes_match ... ok
+test ordinary_hypertri_delaunay_equals_core_when_the_complex_is_simplicial ... ok
+
+test result: ok. 5 passed; 0 failed; 1 ignored; 0 measured; 0 filtered out; finished in 0.14s
+
+   Doc-tests exactcore_hyper_comparison
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+

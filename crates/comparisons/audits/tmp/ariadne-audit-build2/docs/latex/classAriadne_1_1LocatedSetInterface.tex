@@ -1,0 +1,79 @@
+\doxysubsection{Located\+Set\+Interface\texorpdfstring{$<$}{<} P, T \texorpdfstring{$>$}{>} Class Template Reference}
+\hypertarget{classAriadne_1_1LocatedSetInterface}{}\label{classAriadne_1_1LocatedSetInterface}\index{LocatedSetInterface$<$ P, T $>$@{LocatedSetInterface$<$ P, T $>$}}
+
+
+{\ttfamily \#include $<$set\+\_\+interface.\+hpp$>$}
+
+
+
+\doxysubsubsection{Description}
+\subsubsection*{template$<$class P, class T$>$\newline
+class Ariadne\+::\+Located\+Set\+Interface$<$ P, T $>$}
+Interface for located (overt and compact) sets. Inheritance diagram for Located\+Set\+Interface\texorpdfstring{$<$}{<} P, T \texorpdfstring{$>$}{>}\+:\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[height=4.148148cm]{classAriadne_1_1LocatedSetInterface}
+\end{center}
+\end{figure}
+\doxysubsubsubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1LocatedSetInterface_ac891094bbd399610b25dd92746df3352}\label{classAriadne_1_1LocatedSetInterface_ac891094bbd399610b25dd92746df3352} 
+virtual \mbox{\hyperlink{classAriadne_1_1LocatedSetInterface}{Located\+Set\+Interface}}$<$ P, T $>$ \texorpdfstring{$\ast$}{*} {\bfseries clone} () const =0
+\begin{DoxyCompactList}\small\item\em Construct a dynamically-\/allocated copy. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxyparagraph*{Public Member Functions inherited from \mbox{\hyperlink{classAriadne_1_1OvertSetInterface}{Overt\+Set\+Interface$<$ P, T $>$}}}
+\begin{DoxyCompactItemize}
+\item 
+virtual Lower\+Kleenean\+Type$<$ P $>$ {\bfseries overlaps} (const \mbox{\hyperlink{classAriadne_1_1SetInterfaceBase_a621a6488ff988ea56df9398b55b4241f}{Basic\+Set\+Type}} \&bx) const =0
+\begin{DoxyCompactList}\small\item\em Tests if the set overlaps {\itshape bx}. Sets {\itshape A} and {\itshape B} {\itshape overlap} if the interiors of {\itshape A} and {\itshape B} intersect. Sets $A$ and $B$ {\itshape overlap} if $A^\circ \cap B^\circ \neq \emptyset$. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxyparagraph*{Public Member Functions inherited from \mbox{\hyperlink{classAriadne_1_1SetInterfaceBase}{Set\+Interface\+Base$<$ T $>$}}}
+\begin{DoxyCompactItemize}
+\item 
+virtual {\bfseries \texorpdfstring{$\sim$}{\string~}\+Set\+Interface\+Base} ()=default
+\begin{DoxyCompactList}\small\item\em Virtual destructor. \end{DoxyCompactList}\item 
+virtual \mbox{\hyperlink{classAriadne_1_1SetInterfaceBase_aa7182f86fbdcb1b29488c09b3340918d}{Dimension\+Type}} {\bfseries dimension} () const =0
+\begin{DoxyCompactList}\small\item\em The dimension of the set. \end{DoxyCompactList}\item 
+virtual \mbox{\hyperlink{namespaceAriadne_acbb98ddc4385af4599070e65a1a47ec1}{Output\+Stream}} \& {\bfseries \+\_\+write} (\mbox{\hyperlink{namespaceAriadne_acbb98ddc4385af4599070e65a1a47ec1}{Output\+Stream}} \&os) const =0
+\begin{DoxyCompactList}\small\item\em Write to an output stream. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxyparagraph*{Public Member Functions inherited from \mbox{\hyperlink{classAriadne_1_1BoundedSetInterface}{Bounded\+Set\+Interface$<$ P, T $>$}}}
+\begin{DoxyCompactItemize}
+\item 
+virtual Lower\+Kleenean\+Type$<$ P $>$ {\bfseries inside} (const \mbox{\hyperlink{classAriadne_1_1SetInterfaceBase_a621a6488ff988ea56df9398b55b4241f}{Basic\+Set\+Type}} \&bx) const =0
+\begin{DoxyCompactList}\small\item\em Tests if the set is a inside of {\itshape bx}. A set {\itshape A} is {\itshape inside} {\itshape B} if the closure of {\itshape A} is a subset of the interior of {\itshape B}. A set $A$ is {\itshape inside} $B$ if $\,\overline{\!A} \subset B^\circ$. \end{DoxyCompactList}\item 
+virtual \mbox{\hyperlink{classAriadne_1_1SetInterfaceBase_ab5c2d7aed89a71a05a54e1dc271960b1}{Bounding\+Set\+Type}} {\bfseries bounding\+\_\+box} () const =0
+\begin{DoxyCompactList}\small\item\em Returns a bounding box for the set. If the set is empty, then the first component of the result should be empty. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxyparagraph*{Public Member Functions inherited from \mbox{\hyperlink{classAriadne_1_1ClosedSetInterface}{Closed\+Set\+Interface$<$ P, T $>$}}}
+\begin{DoxyCompactItemize}
+\item 
+virtual Lower\+Kleenean\+Type$<$ P $>$ {\bfseries separated} (const \mbox{\hyperlink{classAriadne_1_1SetInterfaceBase_a621a6488ff988ea56df9398b55b4241f}{Basic\+Set\+Type}} \&bx) const =0
+\begin{DoxyCompactList}\small\item\em Tests if the set is separated from {\itshape bx}. A set {\itshape A} is {\itshape separated} from {\itshape B} if the closures of {\itshape A} and {\itshape B} are disjoint. A set $A$ is {\itshape separated} from $B$ if $\,\overline{\!A} \cap \overline{B} = \emptyset$. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsubsection*{Friends}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1LocatedSetInterface_a79cda46313dea2e80e476af6da1e4baf}\label{classAriadne_1_1LocatedSetInterface_a79cda46313dea2e80e476af6da1e4baf} 
+Kleenean\+Type$<$ P $>$ {\bfseries overlap} (const \mbox{\hyperlink{classAriadne_1_1LocatedSetInterface}{Located\+Set\+Interface}}$<$ P, T $>$ \&ls, const \mbox{\hyperlink{classAriadne_1_1RegularSetInterface}{Regular\+Set\+Interface}}$<$ P, T $>$ \&rs)
+\begin{DoxyCompactList}\small\item\em Tests if {\itshape ls} overlaps {\itshape rs}, to a tolerance of {\itshape eps}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1LocatedSetInterface_ad88ab01b7e845fa581482994a6d5fe6d}\label{classAriadne_1_1LocatedSetInterface_ad88ab01b7e845fa581482994a6d5fe6d} 
+Kleenean\+Type$<$ P $>$ {\bfseries inside} (const \mbox{\hyperlink{classAriadne_1_1LocatedSetInterface}{Located\+Set\+Interface}}$<$ P, T $>$ \&ls, const \mbox{\hyperlink{classAriadne_1_1RegularSetInterface}{Regular\+Set\+Interface}}$<$ P, T $>$ \&rs)
+\begin{DoxyCompactList}\small\item\em Tests if {\itshape ls} is a inside of {\itshape rs}, to a tolerance of {\itshape eps}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1LocatedSetInterface_aa13a182656fc129ff1e1f78e874c2aa8}\label{classAriadne_1_1LocatedSetInterface_aa13a182656fc129ff1e1f78e874c2aa8} 
+Kleenean\+Type$<$ P $>$ {\bfseries separated} (const \mbox{\hyperlink{classAriadne_1_1LocatedSetInterface}{Located\+Set\+Interface}}$<$ P, T $>$ \&ls, const \mbox{\hyperlink{classAriadne_1_1RegularSetInterface}{Regular\+Set\+Interface}}$<$ P, T $>$ \&rs)
+\begin{DoxyCompactList}\small\item\em Tests if {\itshape ls} is disjoint from {\itshape rs}, to a tolerance of {\itshape eps}. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsubsection*{Additional Inherited Members}
+\doxyparagraph*{Public Types inherited from \mbox{\hyperlink{classAriadne_1_1SetInterfaceBase}{Set\+Interface\+Base$<$ T $>$}}}
+\begin{DoxyCompactItemize}
+\item 
+typedef T {\bfseries Element\+Type}
+\begin{DoxyCompactList}\small\item\em The type of element of the set. \end{DoxyCompactList}\item 
+typedef Set\+Traits$<$ T $>$\+::\+Dimension\+Type {\bfseries Dimension\+Type}
+\begin{DoxyCompactList}\small\item\em The type representing the dimension of the set. \end{DoxyCompactList}\item 
+typedef Set\+Traits$<$ T $>$\+::\+Basic\+Set\+Type {\bfseries Basic\+Set\+Type}
+\begin{DoxyCompactList}\small\item\em The type of basic set in the space. \end{DoxyCompactList}\item 
+typedef Set\+Traits$<$ T $>$\+::\+Bounding\+Set\+Type {\bfseries Bounding\+Set\+Type}
+\begin{DoxyCompactList}\small\item\em The type of basic set in the space. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+The documentation for this class was generated from the following files\+:\begin{DoxyCompactItemize}
+\item 
+source/geometry/set.\+decl.\+hpp\item 
+source/geometry/\mbox{\hyperlink{set__interface_8hpp}{set\+\_\+interface.\+hpp}}\end{DoxyCompactItemize}

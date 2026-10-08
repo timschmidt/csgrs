@@ -1,0 +1,79 @@
+Name:           aern-real
+Version:        0.5.0
+Cabal-Version:  >= 1.8
+Build-Type:     Simple
+License:        BSD3
+License-File:   LICENCE
+Author:         Michal Konecny
+Copyright:      (c) 2012 Michal Konecny, Jan Duracz
+Maintainer:     mikkonecny@gmail.com
+Homepage:       http://code.google.com/p/aern/
+Stability:      experimental
+Category:       Data, Math
+Synopsis:       arbitrary precision real interval arithmetic
+Tested-with:
+                GHC==7.6.3
+Description:
+    Type classes abstracting typical approximate real number arithmetic operations
+    including rounded
+    field operations and common elementary operations.
+    Two kinds of rounding are supported: rounding up/down in the numerical order
+    or rounding in/out in a refinement order.
+    .
+    A concrete implementation of in-out-rounded operations
+    is given for intervals in the package aern-interval.
+    Concrete implementations of up-down-rounded operations is
+    given in aern-double for ordinary 'Double'
+    fixed-precision numbers and in aern-mpfr for arbitary precision
+    floating-point numbers.  These numbers can serve as interval endpoints.
+    .   
+    /This package does not compile with ghc 7.0.* due to a/ 
+    /compiler bug that has been fixed for the 7.2.1 release./
+
+source-repository head
+  type:     mercurial
+  location: http://code.google.com/p/aern/aern-real
+
+source-repository this
+  type:     mercurial
+  location: http://code.google.com/p/aern/aern-real
+  tag:      release-0.5.0
+
+
+Library
+  hs-source-dirs: src concepts
+  ghc-options:    -Wall
+  Build-Depends:
+        base >= 4.4,
+        QuickCheck >= 2.4,
+        test-framework >= 0.3.3, 
+        test-framework-quickcheck2 >= 0.2,
+        criterion >= 0.5,
+        aern-order == 0.5.*
+  Exposed-modules:
+                  Numeric.AERN.Misc.IntegerArithmetic,
+                  Numeric.AERN.RealArithmetic.Auxiliary,
+                  Numeric.AERN.RealArithmetic.Bench,
+                  Numeric.AERN.RealArithmetic.ExactOps,
+                  Numeric.AERN.RealArithmetic.Laws,
+                  Numeric.AERN.RealArithmetic.Measures,
+                  Numeric.AERN.RealArithmetic.NumericOrderRounding,
+                  Numeric.AERN.RealArithmetic.NumericOrderRounding.Operators,
+                  Numeric.AERN.RealArithmetic.NumericOrderRounding.ElementaryFromFieldOps.Sqrt,
+                  Numeric.AERN.RealArithmetic.RefinementOrderRounding,
+                  Numeric.AERN.RealArithmetic.RefinementOrderRounding.Operators,
+                  Numeric.AERN.RealArithmetic.RefinementOrderRounding.ElementaryFromFieldOps.Exponentiation,
+                  Numeric.AERN.RealArithmetic.RefinementOrderRounding.ElementaryFromFieldOps.SineCosine
+  Other-modules:
+    BinaryOpsSimplified,
+    Numeric.AERN.RealArithmetic.NumericOrderRounding.Conversion,
+    Numeric.AERN.RealArithmetic.NumericOrderRounding.Elementary,
+    Numeric.AERN.RealArithmetic.NumericOrderRounding.FieldOps,
+    Numeric.AERN.RealArithmetic.NumericOrderRounding.SpecialConst,
+    Numeric.AERN.RealArithmetic.RefinementOrderRounding.Conversion,
+    Numeric.AERN.RealArithmetic.RefinementOrderRounding.Elementary,
+    Numeric.AERN.RealArithmetic.RefinementOrderRounding.FieldOps,
+    Numeric.AERN.RealArithmetic.RefinementOrderRounding.MixedFieldOps,
+    Numeric.AERN.RealArithmetic.RefinementOrderRounding.SpecialConst,
+    Numeric.AERN.RealArithmetic.NumericOrderRounding.MixedFieldOps
+

@@ -1,0 +1,135 @@
+{
+  "status": "committed and qualified against the documented baseline",
+  "goal_status": "active",
+  "previous_commit": "adb4756b7e9cf4adcb81f1f3d0d50461e5f9f13b",
+  "commit": "6cd217e5840cfd68c76e3dc6d8fff10f77440353",
+  "targets": 49,
+  "passed": 2268,
+  "passed_by_repo": {
+    "hypercurve": 2036,
+    "hyperbrep": 232
+  },
+  "known_failed": [
+    "approximate_512_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions",
+    "non_ph_bezier_pair_projective_fillet_retains_algebraic_extensions",
+    "nonconvex_algebraic_chord_expansion_is_exact_and_local_collapse_is_explicit",
+    "strict_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions",
+    "unified_mixed_line_arc_erosion_splits_after_a_curved_neck_collapse"
+  ],
+  "new_failures": [],
+  "ignored": 9,
+  "expensive_previously_unqualified_exclusions": 8,
+  "timeouts": 0,
+  "builds_and_checks": {
+    "-check": 0,
+    "-test-build": 0,
+    "-hyperbrep-check": 0,
+    "-hyperbrep-test-build": 0
+  },
+  "formatting_and_whitespace": "passed on final frozen sources",
+  "formatted_files": {
+    "hypercurve": [
+      "src/bezier_offset.rs",
+      "src/bezier_region.rs",
+      "src/bezier_retained_measure.rs",
+      "src/bezier_split.rs",
+      "src/bezier_topology.rs",
+      "src/curve_region_boolean.rs",
+      "src/curve_support.rs",
+      "src/rational_bezier_general.rs",
+      "tests/hypercurve_curve_region_boolean.rs"
+    ],
+    "hyperbrep": []
+  },
+  "additional_caller_checks": [
+    {
+      "target": "fuzz",
+      "command": [
+        "cargo",
+        "check",
+        "--manifest-path",
+        "fuzz/Cargo.toml",
+        "--all-targets",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 10.17978530601249,
+      "log": "finite-region-bounds-fuzz-check.log"
+    },
+    {
+      "target": "ui",
+      "command": [
+        "cargo",
+        "check",
+        "--manifest-path",
+        "examples/hypercurve_ui/Cargo.toml",
+        "--all-targets",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 10.429405219008913,
+      "log": "finite-region-bounds-ui-check.log"
+    },
+    {
+      "target": "hyperbrep-fuzz",
+      "command": [
+        "cargo",
+        "check",
+        "--manifest-path",
+        "fuzz/Cargo.toml",
+        "--all-targets",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 12.23226572200656,
+      "log": "finite-region-bounds-hyperbrep-fuzz-check.log"
+    }
+  ],
+  "source_verification": "finite-region-bounds-source-verification.json",
+  "focused_regression_checks": "finite-region-bounds-focused.json",
+  "normal_library": "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/libhypercurve-2c7ff6f3fbe07653.rlib",
+  "normal_library_sha256": "e202ba018058d08c8c82bec93bd0450757fd5fd6645097bea76f6108b6113aa1",
+  "archived_library": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-region-bounds-libraries/libhypercurve-2c7ff6f3fbe07653.rlib",
+  "independent_probes_and_matrices": [
+    "finite-region-bounds-public-replay.json",
+    "finite-region-bounds-affine-parallel-replay.json",
+    "finite-region-bounds-exterior-completed.json",
+    "finite-region-bounds-tangent-matrix.json",
+    "finite-region-bounds-finite-circle-probe.json",
+    "finite-region-bounds-family-matrix.json",
+    "finite-region-bounds-completed.json",
+    "finite-region-bounds-unit-replay.json",
+    "finite-region-bounds-retained-chord-matrix.json",
+    "finite-region-bounds-finite-matrix.json",
+    "finite-region-bounds-cubic-replay.json",
+    "finite-region-bounds-baseline-recheck.json",
+    "finite-region-bounds-replay-matrix-run.json",
+    "finite-region-bounds-analytic-probe.json",
+    "finite-region-bounds-endpoint-probe.json",
+    "finite-region-bounds-completed-probe.json",
+    "finite-region-bounds-probe-final.json",
+    "finite-region-bounds-circle-matrix.json",
+    "finite-region-bounds-region-carrier-matrix.json",
+    "finite-region-bounds-general-trim-matrix.json",
+    "finite-region-bounds-constant-image-trim-matrix.json",
+    "finite-region-bounds-region-public.json",
+    "finite-region-bounds-region-explicit.json",
+    "finite-region-bounds-bounds-public.json",
+    "finite-region-bounds-winding-public.json"
+  ],
+  "discovery_probes": [
+    "finite-region-bounds-baseline.json",
+    "finite-region-winding-baseline.json"
+  ],
+  "failed_qualification_attempts": [
+    "finite-region-bounds-attempt1-compile-error/",
+    "finite-region-bounds-attempt2-review/"
+  ],
+  "evidence_audit": "finite-region-bounds-worklog.md",
+  "performance_claim": null,
+  "remaining": "Finite injectivity and region pair preparation, self-intersection caches and analytic point incidence; normalized public region construction; independent circle inverse replay and finite analytic pairs; five existing promotion failures; eight unqualified expensive tests; original algebraic and computational architecture goal.",
+  "post_commit_verification": "finite-region-bounds-post-commit.json"
+}

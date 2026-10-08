@@ -1,0 +1,48 @@
+{
+  "baseline": "affine-field-v898-sources.json",
+  "source_sha256": "4040019aee60d70ef59102db4cd9d49881de345b4a6bcc40db1be88218e79344",
+  "processes": [
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "build",
+        "--release",
+        "--all-features",
+        "--locked",
+        "--offline",
+        "--message-format=json"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 36.46261967602186,
+      "log": "affine-inference-probe-v899-normal-build.log"
+    },
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustc",
+        "--edition=2024",
+        "--crate-name",
+        "affine_inference_probe",
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/affine-inference-probe-v899.rs",
+        "--extern",
+        "hyperreal=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperreal-225c5ceb5150a3b3.rlib",
+        "--extern",
+        "hypersolve=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/libhypersolve.rlib",
+        "-L",
+        "dependency=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release",
+        "-C",
+        "opt-level=3",
+        "-o",
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/affine-inference-probe-v899-binary"
+      ],
+      "returncode": 1,
+      "elapsed_seconds": 0.03188551589846611,
+      "log": "affine-inference-probe-v899-compile.log"
+    }
+  ],
+  "all_processes_reaped": true,
+  "rlibs": {
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperreal-225c5ceb5150a3b3.rlib": "e4c5d2c2dc8dfcf53a277abc30bfb3dd6f62cbbbf966aabf820540da80d96c46",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/libhypersolve.rlib": "c15258238e1cdd4a96ca7ef304174ccc3777c310d32589c728b11667619e39e2"
+  },
+  "failure": "compile failed"
+}

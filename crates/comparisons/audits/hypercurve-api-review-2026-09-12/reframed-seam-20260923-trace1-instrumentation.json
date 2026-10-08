@@ -1,0 +1,9 @@
+{
+  "sites": {
+    "src/bezier_offset.rs": 3,
+    "src/bezier_split.rs": 1,
+    "src/curve_intersection.rs": 2,
+    "src/curve_region_boolean.rs": 2
+  },
+  "main_region_sha256": "81d9e112ef15f6243d1497da0d7a0ad9a583b284fdeefce3a2528baf67c9c858"
+}

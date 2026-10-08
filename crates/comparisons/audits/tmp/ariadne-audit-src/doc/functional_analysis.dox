@@ -1,0 +1,86 @@
+/***************************************************************************
+ *            functional_analysis.dox
+ *
+ *  Copyright  2020  Pieter Collins
+ *
+ ****************************************************************************/
+
+/*
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; either version 2 of the License, or
+ *  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Library General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program; if not, write to the Free Software
+ *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+ */
+
+
+/*! \file functional_analysis.dox
+ *  \brief Documentation on computable function types from analysis
+ */
+
+namespace Ariadne {
+
+/*!
+
+\page functional_analysis_page Functional Analysis
+
+This page describes the theory of computable functional analysis
+For details on how this is implemented in %Ariadne, see the \ref FunctionModule documentation.
+
+\section continuous_functions Continuous functions
+
+There are many kinds of functions arising in continuous mathematics.
+The most basic are the continuous functions between topological spaces.
+In computability theory, there is always a type of continuous functions \f$\X\to\Y\f$, also denoted \f$\mathcal{C}(\X;\Y)\f$.
+The function type is defined by the <em>evaluation</em> or function <em>call</em>, so the information on a function \f$f\f$ is precisely enough to compute \f$f(x)\f$ for any \f$x:\X\f$, or equivalently, to support the evaluation operator \f$\varepsilon:\mathcal{C}(\X;\Y)\times\X\to\Y\f$ given by \f$\varepsilon(f,x):=f(x)\f$.
+
+When objects in \f$X,Y\f$ are represented as infinite intersections of objects in \f$\hatX\subset \mathcal{P}(X)\f$ and \f$\hatY\subset\mathcal{P}(Y)\f$, a continuous function \f$f\f$ can be specified by, and specifies, a function \f$\hat{f}:\hatX\to\hatY\f$ with the properties:
+ - validity: \f$x\in\hat{x} \implies f(x)\in \hat{f}(\hat{x})\f$,
+ - convergence: \f$\bigcap_{n=0}^{\infty}\hat{x}_n=\{x\} \implies \bigcap_{n=0}^{\infty} \hat{f}(\hat{x}_n)=\{y\}\f$, and
+ - monotonicity (optionally) \f$\hat{x}_1\subset\hat{x}_2 \implies \hat{f}(\hat{x}_1)\subset \hat{f}(\hat{x}_1)\f$
+.
+
+We have the following basic constructions:
+ - If \f$f_1:\X\to\Y_1\f$ and \f$f_2:\X\to\Y_2\f$, then the function \f$f_{1,2}:\X\to\Y_1\times\Y_2\f$ given by \f$f_{1,2}(x)=(f_1(x),f_2(x))\f$ is computable from \f$f_1,f_2\f$.
+ - If \f$f_1:\X_1\to\Y_1\f$ and \f$f_2:\X_2\to\Y_2\f$, then the function \f$f_{1;2}:\X_1\times\X_2\to\Y_1\times\Y_2\f$ given by \f$f_{1;2}(x_1,x_2)=(f_1(x_1),f_2(x_2))\f$ is computable from \f$f_1,f_2\f$.
+ - If \f$f:\X\to\Y\f$ and  \f$g:\Y\to\Z\f$, then the composition \f$(f,g)\mapsto g\circ f\f$, where \f$g\circ f:\X\to\Z:x\mapsto g(f(x))\f$, is computable given \f$f\f$ and \f$g\f$.
+.
+From these basic constructions, we can easily see that e.g. if \f$f_1,f_2:\X\to\R\f$, then the function \f$f_1+f_2\f$ defined by \f$[f_1+f_2](x)=f_1(x)+f_2(x)\f$ is computable, and if \f$f:\X\to\R\f$, then e.g. \f$\exp(f)\f$ given by \f$[\exp(f)](x)=\exp(f(x))\f$ is computable from \f$f\f$.
+
+Definite and indefinite integrals of real-valued functions are computable; in particular, given \f$f:\R\to\R\f$, and fixed \f$a:\R\f$ the function \f$\tilde{f}\f$ given by \f$\tilde{f}(x)=\int_a^x f(\xi)\,d\xi\f$ is computable.
+
+\section differentiable_functions Differentiable functions
+
+The operation of differentiation is <em>un</em>computable, since it is not continuous.
+This can by seen by considering \f$f_n(x)=\frac{1}{n}\sin(n^2x)\f$.
+Then \f$f_n\to0\f$ uniformly on \f$\R\f$, but since \f$f_n'(x)=n\cos(n^2x)\f$, the sequence \f$f_n'\f$ diverges.
+
+In order to differentiate a function, we therefore need more information.
+The type of continuously differentiable functions \f$C^1(\R;\R)\f$ consists of pairs \f$(f,f')\f$ where \f$f\f$ is an antiderivative of \f$f'\f$.
+In other words, to specify a differentiable function, we need to explicitly provide the derivative.
+Since integration is computable, it suffices to give a single value of \f$f\f$ e.g. \f$f(x)=f_a\f$ when \f$x=a\f$.
+If symbolic information about a function is available, then we can of course compute the derivative(s) from this.
+
+\section function_patches Functions on bounded domains
+
+Functions \f$f:D\to\R\f$ where \f$D\f$ is a regular compact subset of \f$R^n\f$ are particularly nice to work with computationally.
+Any continuous function \f$f:D\to\R\f$ has a finite <em>supremum norm</em> \f$\|f\|_{D,\infty} := \sup_{x \in D} |f(x)|\f$.
+By the Weierstrass approximation theorem, \f$f\f$ can be approximated arbitrarily accurately in the uniform norm by a polynomial \f$p\f$ with (dyadic) rational coefficients.
+
+
+\section measurable_functions Measurable functions
+
+Classically, if \f$(X,E)\f$ is a measure space with sigma-algebra \f$E\f$, and \f$(Y,\tau)\f$ is a topological space, then a function \f$f:X\to Y\f$ is <em>measurable</em> if \f$f^{-1}(V)\f$ is a measurable set in \f$E\f$ whenever \f$V\f$ is an open set in \f$\tau\f$.
+
+
+*/
+
+} // namespace Ariadne

@@ -1,0 +1,13 @@
+{
+  "repos": {
+    "hypercurve": {
+      "parent": "dadd0ade7aefe1a060aad81c15edd4e3244977e3",
+      "paths": {
+        "src/bezier_arrangement.rs": "b62f22831478f041a0aeb453ba53f515250c430fa93d267db6d1434cef29b1fb",
+        "tests/hypercurve_bezier_arrangement.rs": "2a40466f4c63279ef274e63391e3dc5b3aba65115e8d527b7953c3e16f71a15c"
+      }
+    }
+  },
+  "qualification": "polynomial-zero-jet-v874-terminal.json",
+  "verified_source_files": 2048
+}

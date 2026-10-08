@@ -1,0 +1,31 @@
+{
+  "status": "remaining closure probe, separate from passing qualification",
+  "commit": "5c115f5171c0c90623cddaa7c268bac4d316d758",
+  "returncode": 101,
+  "elapsed_seconds": 4.219953060994158,
+  "source": "finite-circle-native-poles-public.rs",
+  "source_sha256": "4c0b3a6dd6472258d37dd226209c3261a7341ea0cbb149af77ac2b3de1ce552c",
+  "normal_library": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypercurve-930b1fe968ca3c94.rlib",
+  "normal_library_sha256": "476ce4085af4463f86d6182e476e0fa13af9266727aaefa54be4b0293d704b2a",
+  "executable": "selected-point-frame-replay-remaining-circle-domains",
+  "executable_sha256": "243ac956d7dc33e571890d8781c2a5551b26db7bfbab3826bbd1dae430e00f7f",
+  "command": [
+    "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustc",
+    "--edition=2024",
+    "-O",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-circle-native-poles-public.rs",
+    "--extern",
+    "hypercurve=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypercurve-930b1fe968ca3c94.rlib",
+    "-L",
+    "dependency=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps",
+    "-o",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/selected-point-frame-replay-remaining-circle-domains"
+  ],
+  "log": "selected-point-frame-replay-remaining-circle-domains.log",
+  "counts": {
+    "cases": 64,
+    "contacts": 48,
+    "point_replays": 96,
+    "failures": 16
+  }
+}

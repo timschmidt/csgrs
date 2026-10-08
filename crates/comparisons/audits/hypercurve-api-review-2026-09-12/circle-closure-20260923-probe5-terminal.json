@@ -1,0 +1,23 @@
+{
+  "cases": [
+    {
+      "name": "bezier_region::tests::nonrepresented_chord_and_retained_rational_arc_share_the_fillet_kernel",
+      "returncode": 0,
+      "passed": true,
+      "limit_seconds": 90,
+      "elapsed_seconds": 0.6502276279497892,
+      "log": "circle-closure-20260923-probe5-case-0.log"
+    },
+    {
+      "name": "bezier_offset::conversion_tests::selected_fiber_transverse_mapped_cut_inverts_by_point",
+      "returncode": 101,
+      "passed": false,
+      "limit_seconds": 90,
+      "elapsed_seconds": 0.2516633600462228,
+      "log": "circle-closure-20260923-probe5-case-1.log"
+    }
+  ],
+  "binary_sha256": "a0957d8ac33b15e9a92619f592063b95233fa0d82d7c0b9f8b038db07fc08bed",
+  "all_sources_unchanged": true,
+  "all_processes_reaped": true
+}

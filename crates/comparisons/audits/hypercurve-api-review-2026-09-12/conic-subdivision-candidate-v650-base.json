@@ -1,0 +1,9 @@
+{
+  "src/bezier_split.rs": "a20b0fad185fb60c7892601b5ce4a64fa10335720b0ef210aa681f0f1b0fe6d3",
+  "src/curve.rs": "2897454e1a5eef41cb845479e1a690065c1874cf82a33eb782401820e000360b",
+  "src/bezier_retained_measure.rs": "32783cf2c5007e0dee1a596b5c65e02105490084472530ba070b3528f3992531",
+  "src/bezier_retained_overlap.rs": "ed88ca4fdcb461a2e9d655f32b813a258c46be8e8ea7f68c8d787e6922041708",
+  "src/bezier_moment.rs": "e1f80543e4cd0c24e8718ef32c084f41fef65ec68d0b0e5f562ef51da046d2bd",
+  "tests/hypercurve_bezier_split_materialization.rs": "5ab34004ecb4acba3dba8c0ffc5374433202a789adf93484517964d625db381e",
+  "src/rational_bezier.rs": "d4c3019c1a3614bb18442cc652e230f31673c1961dcd8d2b3764d410d70a8c1c"
+}

@@ -1,0 +1,5 @@
+Order regular source cells independently of range traversal
+
+Merge source singularities and parallel cusps between the exact numerically ordered bounds. Reversed ranges now produce the same increasing regular cells without discarding their retained outer endpoint authorities.
+
+Validation: 19 release regressions for regular pair replay, endpoint ownership, and source-cell ordering; Clippy with all and no default features, formatting, denied-warning documentation, editing-fuzz compilation, and Hyperbrep compilation. The new regression checks a cubic source cusp and independently known parallel cusps on whole and algebraically bounded ranges in both orientations and policies.

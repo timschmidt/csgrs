@@ -1,0 +1,15 @@
+{
+  "tag": "reuse-memory-elf-reuse",
+  "started": "2026-09-08T22:02:13.745Z",
+  "finished": "2026-09-08T22:02:13.768Z",
+  "elapsedSeconds": 0.021606337999999992,
+  "cwd": "/home/tim/Documents/GitHub/workspace",
+  "command": "readelf",
+  "args": [
+    "-W",
+    "-l",
+    "/tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/release/calcium-reuse-live-memory-reuse"
+  ],
+  "code": 0,
+  "signal": null
+}

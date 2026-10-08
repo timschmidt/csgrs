@@ -1,0 +1,42 @@
+diff --git a/src/bezier_offset.rs b/src/bezier_offset.rs
+index 19a6af9..e8ea08e 100644
+--- a/src/bezier_offset.rs
++++ b/src/bezier_offset.rs
+@@ -82955,12 +82955,32 @@ fn algebraic_chord_point_coordinate_order_by_refinement(
+         }
+     }
+     for (candidate, other, reverse) in [(first, second, false), (second, first, true)] {
+-        if let CurvePoint2(CurvePointData2::AnalyticParallel(candidate)) = candidate
+-            && let Ok(Classification::Decided(Some(order))) = policy.strict_predicate_pass(|| {
++        if let CurvePoint2(CurvePointData2::AnalyticParallel(candidate)) = candidate {
++            let native = policy.strict_predicate_pass(|| {
+                 candidate.retained_parameter_axis_order_to_point(other, axis, policy)
+-            })
+-        {
+-            return Classification::Decided(if reverse { order.reverse() } else { order });
++            });
++            if std::env::var_os("HC_TRACE_AXIS_DECLINE").is_some() {
++                eprintln!(
++                    "native-axis axis={axis:?} reverse={reverse} normal={:?} tangent={:?} parameter={:?} other={:?} native={native:?}",
++                    candidate.data.parallel.distance().to_f64_lossy(),
++                    candidate.data.tangent_distance.to_f64_lossy(),
++                    std::mem::discriminant(&candidate.data.parameter),
++                    std::mem::discriminant(&other.0),
++                );
++                if let BezierAnalyticParallelPointParameter2::RecursiveProjective(parameter) =
++                    &candidate.data.parameter
++                {
++                    eprintln!("native-axis polynomial={} scalar={} bounds=({:?}, {:?})",
++                        parameter.polynomial_authority().is_some(),
++                        parameter.projective_scalar().is_some(),
++                        parameter.data.lower.to_f64_lossy(),
++                        parameter.data.upper.to_f64_lossy(),
++                    );
++                }
++            }
++            if let Ok(Classification::Decided(Some(order))) = native {
++                return Classification::Decided(if reverse { order.reverse() } else { order });
++            }
+         }
+     }
+     if policy.has_bounded_exact_predicate_budget() {

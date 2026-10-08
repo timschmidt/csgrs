@@ -1,0 +1,16 @@
+{
+  "command": [
+    "cargo",
+    "test",
+    "--release",
+    "--all-features",
+    "--offline",
+    "--lib",
+    "point_component_dispatch_tests",
+    "--",
+    "--test-threads=1",
+    "--nocapture"
+  ],
+  "returncode": 0,
+  "elapsed_seconds": 111.82119559000421
+}

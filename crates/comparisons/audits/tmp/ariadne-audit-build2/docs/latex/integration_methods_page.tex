@@ -1,0 +1,106 @@
+\doxysection{Integration Methods }
+\hypertarget{integration_methods_page}{}\label{integration_methods_page}\index{Integration Methods@{Integration Methods}}
+A system of differential equations is be defined by $\dot{x}=f(x,t,a)$ where $x:\R^n$ is the {\itshape state} variable, $t:\R$ is {\itshape time}, $a:\R^m$ is a {\itshape parameter}, $f:\R^n\times\R\times\R^m\to\R^n$ and $\dot{x}(t)=\dx/dt$ denotes differentiation with respect to time. A system of differential equations is {\itshape time-\/independent} (or {\itshape autonomous}) if $\dot{x}=f(x,a)$ and additionally {\itshape parameter-\/free} if it has the form $\dot{y}=f(y)$ where $f:\R^n\to\R^n$. The solution {\itshape flow} $\phi$ is the function $\phi:\R^n\times\R\times\R^m\to\R^n$ satisfying \[ \dot{\phi}(x,t,a) = f(\phi(x,t,a),t,a), \quad  \phi(x,0,a)=x . \] For a time-\/independent system, $\phi$ forms a {\itshape semigroup} \[$]\phi(x,t_1+t_2,a)=\phi(\phi(x,t_1,a),t_2,a) . \]
+
+Computing the flow of a system of differential equations is also known as {\itshape integrating} the system. Integration in Ariadne is performed using {\itshape integration steps} and {\itshape reachability steps} on {\itshape basic sets}, typically cuboids or zonotopes. From time-\/to-\/time, the basic set may be {\itshape regularised} or {\itshape subdivided} to prevent loss of accuracy.\hypertarget{integration_methods_page_taylorexpansion}{}\doxysubsection{\texorpdfstring{Taylor Series Expansions}{Taylor Series Expansions}}\label{integration_methods_page_taylorexpansion}
+Most integration methods used in Ariadne are based on Taylor expansion of solutions curves. For the system $\dot{y}=f(y)$ we have     \[ \begin{aligned}
+     \frac{\dy}{\dt} &= f(y) \\[1px]
+ \frac{\d^2y}{\dt^2} &= \Df(y)\,f(y) \\[1px]
+ \frac{\d^3y}{\dt^3} &= \D^2f(y)\,(f(y))^2 + (\Df(y))^2\,f(y) \\[1px]
+ \frac{\d^4y}{\dt^4} &= \D^3f(y)\,(f(y))^3 + 3\,\D^2f(y)\,\Df(y)\,(f(y))^2 + \Df(y)\,\D^2f(y)\,(f(y))^2 + (\Df(y))^3\,f(y) \end{aligned} \] If we define functions $f^{(k)}:\mathbb{R}^n\rightarrow\mathbb{R}^{n}$ by $f^{(0)}(y)=y$ and $f^{(k+1)}(y)={\displaystyle \Df^{(k)}(y)\cdot f(y)}$, then \[ \dfrac{\d^ky}{\dt^k}   = f^{(k)}(y).  \]
+
+The first spacial derivative $\dy/\dx$ of the solution $y$ with respect to the initial condition $x$ satisfies    \[ \begin{aligned}
+ \frac{\d}{\dt}     \frac{\dy}{\dx} &= \bigl( \Df(y) \bigr) \, \frac{\dy}{\dx} \\[1px]
+ \frac{\d^2}{\dt^2} \frac{\dy}{\dx} &= \bigl( \D^2f(y)\,f(y)  + (\Df(y))^2 \bigr) \, \frac{\dy}{\dx} \\[1px]
+ \frac{\d^3}{\dt^3} \frac{\dy}{\dx} &= \bigl( \D^3f(y)\,(f(y))^2 + 3\,\D^2f(y)\,\Df(y)\,f(y) + \Df(y)\,\D^2f(y)\,f(y) + (\Df(y))^3 \bigr) \, \frac{\dy}{\dx} \end{aligned} \] If $F^{(0)}(y)=I$ and $F^{(k+1)}(y) = D \bigl(F^{(k)}(y) \cdot f(y) \bigr)$, then \[ \dfrac{\d^{k+1}y}{\dt^{k+1}}  = F^{(k)}(y) \, f(y) \quad \text{and} \quad \dfrac{\d^k}{\dt^k} \dfrac{\dy}{\dx} = F^{(k)}(y) \, \dfrac{\dy}{\dx} \]
+
+The second spacial derivative $d^2y/\dx^2$ of the solution satisfies     \[ \begin{aligned}
+ \frac{\d}{\dt}     \frac{\d^2y}{\dx^2} &= \D^2f(y)\frac{\dy}{\dx} + \Df(y)\frac{\d^2y}{\dx^2} \\[1px]
+ \frac{\d^2}{\dt^2} \frac{\d^2y}{\dx^2} &= \bigl( \D^3f(y)\,f(y) + 3\D^2f(y)\Df(y) \bigr) \, \left(\frac{\dy}{\dx}\right)^2
+                                         + \bigl( \D^2f(y)f(y)+\Df(y)^2 \bigr) \frac{\d^2y}{\dx^2}
+\end{aligned} \]\hypertarget{integration_methods_page_boundingenclosure}{}\doxysubsection{\texorpdfstring{Bounding enclosures}{Bounding enclosures}}\label{integration_methods_page_boundingenclosure}
+For most integration methods, it is necessary to find a rough {\itshape bounding enclosure} $B$ for the time-\/ $h$ integration of an initial set $X$. A sufficient condition for $B$ to be an enclosure is \[ X+[0,h]f(B) \subset B . \] This condition can always be satisfied for a continuous vector field by choosing the step size $h$ sufficiently small. If $B$ is an enclosure for $\phi([0,h],X)$ satisfying $X+[0,h]f(B) \subset B$, then \[ B\textnormal{\textquotesingle} = X+[0,h]f(B)\] is a tighter enclosure.
+
+To compute approximations to the spacial derivative $\frac{\dy}{\dx} = \D\phi(x,t)$, it is necessary to find a rough enclosure for $ \frac{\dy}{\dx}$.
+
+Suppose $V(t)$ is a matrix-\/valued function satisfying $ \dot{V}(t) = A(t) V(t) $. Then we have \[ ||V(t)-V(0)|| \leq ||V(0)|| \bigl( e^{L(t)} -1  \bigr) \text{ where } L(t) = \int_0^t ||A(\tau)|| \,\d\tau \] Additionally, \[ ||V(t)|| \leq e^{l(t)} \, ||V(0)|| \text{ where } l(t) = \int_0^t \lambda(A(\tau))\,\d\tau \text{ and } \lambda(A) = \lim_{h\to0} \frac{||I+Ah||-1}{h} \] The quantity $\lambda(A)$ is the {\itshape logarithmic derivative}. In Ariadne, we use the supremum norm, yielding \[ ||v||_\infty = \max_{i}|v_i|; \quad ||A||_\infty = \max_i\sum_j |a_{ij}|; \quad \lambda_\infty(A) = \max_{i} \bigl( a_{ii} + \sum_{j\neq i} |a_{ij} | \bigr)   . \]
+
+Hence if $B$ is a bounding enclosure for $\Phi([0,h],x)$, then  \[ \begin{array}{c} ||\D\phi(x,t)-I||_\infty \leq e^{Lt} - 1 \quad \text{where} \quad L = ||\Df(B)||_\infty \\[1px]
+                   ||\D\phi(x,t)||_\infty \leq e^{lt} \quad \text{where} \quad l=\lambda_\infty(\Df(B)) \end{array}  \] A bounding eclosure for $ \D\phi(x,t)$ is given by the matrix $W$, where \[  W_{ij}= \delta_{ij} \pm (e^{Lt}-1).  \]
+
+Note that the solution of a differential equation may become unbounded in finite time. A simple example is the system $\dot{x} = x^2$, for which the solution $x(t) = 1/(1/x_0-t) $ for $x(0)=x_0>0$ is only defined for $t<1/x_0$.\hypertarget{integration_methods_page_affineintegrator}{}\doxysubsection{\texorpdfstring{Affine Integrator}{Affine Integrator}}\label{integration_methods_page_affineintegrator}
+An affine vector field $ \dot{y}=Ay+b $ can be integrated directly using the formula  \[ \begin{aligned} y(x,t) &=e^{At}x + A^{-1}(e^{At}-I)b \\
+                         &= x+ t \sum_{n=0}^{\infty} \frac{A^nt^n}{(n+1)!} \bigl(Ax+b\bigr) \end{aligned} \] The spacial derivative $\Dy(x,t)$ is given by \[  \Dy(x,t) = e^{At} \] When applied to a zonotope $c_0+G_0e$, the the centre and generators of the integrated zonotope become \[ c_1 = e^{Ah}c_0 + A^{-1}(e^{Ah}-I)b; \qquad  G_1 = e^{Ah} G_0, \] which are easily computed using interval arithmetic.\hypertarget{integration_methods_page_eulerintegrator}{}\doxysubsection{\texorpdfstring{Euler method}{Euler method}}\label{integration_methods_page_eulerintegrator}
+The classical Euler method is $ y_1 = y_0 + hf(y_0) \approx y(h) $ with one-\/step error bound $ ||y_1-y(h)|| = h ||f(y_0)-f(\eta)|| = \frac{h^2}{2} || \Df(\eta)f(\eta) || . $ The solution is given by \[ y(x,t) = x + t f(\xi)  . \] The method can be implemented directly using interval arithmetic by \[ Y = X + tf(B) . \] where the initial set $X$ and the final set $Y$ are cuboids, and $B$ is a bound for $\phi([0,t],X)$. The accuracy is usually too poor for this method to be useful.\hypertarget{integration_methods_page_lohnerintegrator}{}\doxysubsection{\texorpdfstring{Lohner Integrator}{Lohner Integrator}}\label{integration_methods_page_lohnerintegrator}
+The classical Lohner integrator is a first-\/order in space integration scheme. To compute $y(x,t)=\phi(x,t)$, we use     \[ \begin{aligned} y(x,t) &= y(x,t)-y(x,0) + y(x,0) \\
+                           &= t\dot{y}(x,0)+\frac{t^2}{2}\ddot{y}(x,\tau) + x \\
+                           &= t\bigl(\dot{y}(c,0) + \dot{y}\textnormal{\textquotesingle}(\xi,0)\cdot(x-c) \bigr) + \frac{t^2}{2}\ddot{y}(x,\tau) + (x-c) + c \\
+                           &= c+tf(c)+\frac{t^2}{2} \Df(y(x,\tau))f(y(x,\tau)) + \bigl(I+t\,\Df(\xi)\bigr)\cdot(x-c) \\[1px]
+                           &\in c+tf(c)+\frac{t^2}{2} \Df(B)f(B) + \bigl(I+t\,\Df(X)\bigr)\cdot(x-c) \end{aligned} \]
+
+A reachability step over the interval $[0,h]$ is most easily obtained using an Euler step from the time $h/2$ flow.  \[ \begin{aligned} y(x,t) &= y(x,h/2) + (t-h/2) \, \dot{y}(x,\tau) \\
+                           &\in y(x,h/2) + \frac{h}{2}\,f(B)\,[-1,1] \end{aligned} \]
+
+Following Zgliczynski (2002) we can derive higher-\/order in time methods as follows. Let  \[ P_n(x,h) = \sum_{j=0}^{n} \frac{h^j}{j!} f^{(j)}(x), \quad  R_n(B,h)= \frac{h^{n+1}}{(n+1)!} f^{(n+1)}(B), \qquad
+\text{where} \quad f^{(n)} = \Df^{(n-1)}\cdot f, \quad f^{(0)}(x) = x . \] If $X_0$ is the initial set with centre $x_0$, and $B$ is an enclosure for $ \phi(X_0,[0,h])$, then the classical Lohner scheme is \[ X_1 = P_n(x_0,h) + DP_n(X_0,h)\cdot(X_0-x_0) + R_n(B,h) \] The first-\/ and second-\/ order updates are  \[ \begin{aligned} X_1 &= x_0 + h f(x_0) + (I+hDf(X_0)) \cdot (X_0-x_0) + \frac{h^2}{2} \Df(B) f(B) \\[1px]
+    X_1 &= x_0 + h f(x_0) + \frac{h^2}{2} \Df(x_0)f(x_0) \;+\; \Bigl(I+hDf(X_0)+\frac{h^2}{2} \bigl( \D^2f(X_0) f(X_0) + (\Df(X_0))^2 \bigr) \Bigr) \cdot (X_0-x_0) \;+\; \frac{h^3}{3} \bigl( \D^2f(B) f(B) + (\Df(B)^2) \bigr) f(B) \end{aligned}  \]
+
+If the initial set is a zonotope with centre $c_0$ and generators $G_0$, then the new centre and generators can be computed with the classical method by \[ c_1 = c_0 + h f(c_0) + \frac{h^2}{2} \Df(B) f(B) ;  \qquad  G_1 = \bigl(I  + h \Df(X_0) \bigr)\, G_0. \] These schemes may be easily implemented using interval arithmetic.
+
+To reduce the wrapping effect in the generator matrix, the interval matrix $G$ may be replaced by its average $\widetilde{G}$, and the error absorbed into the centre $\tilde{c} = c+(G-\tilde{G})e$, where $e$ is the interval vector with elements $[-1,1]$.
+
+The Lohner integration step is usually used in conjunction with an orthogonal regularisation scheme. The generator matrix is factorised $ G = QR $ where $Q$ is orthonormal and $R$ is upper-\/triangular, and the new generators $G\textnormal{\textquotesingle}$ are given by $ G\textnormal{\textquotesingle} = QD $, where $\D$ is diagonal with $D_{ii}=\sum_{j} |R_{ij}|$.\hypertarget{integration_methods_page_c1lohnerintegrator}{}\doxysubsection{\texorpdfstring{C1 Lohner Integrator}{C1 Lohner Integrator}}\label{integration_methods_page_c1lohnerintegrator}
+Alternatively, by computing bounds on the Jacobian derivative $y\textnormal{\textquotesingle}(x,t)=\D\phi(x,t)$, we obtain a C\textsuperscript{1} Lohner integrator     \[ \begin{aligned} y(x,t) &= y(x,t)-y(c,t) + y(c,t) \\
+                           &= y\textnormal{\textquotesingle}(\xi,t)\cdot(x-c) + y(c,0) + t\dot{y}(c,0) + \frac{t^2}{2} \ddot{y}(c,\tau) \\
+                           &= t\dot{y}\textnormal{\textquotesingle}(\xi,\tau)\cdot(x-c) + t\dot{y}(c,0) + \frac{t^2}{2} \ddot{y}(c,\tau) \\
+                           &= c+tf(c)+\frac{t^2}{2}\,\Df(y(c,\tau))\,f(y(c,\tau)) + \bigl(I+t\,\Df(y(\xi,\tau))\,y\textnormal{\textquotesingle}(\xi,\tau)\bigr)\cdot(x-c) \\[1px]
+                           &\in c+tf(c)+\frac{t^2}{2}\,\Df(B_c)\,f(B_c) + \bigl(I+t\,\Df(B)\,W\bigr)\cdot(x-c) \end{aligned} \] The Jacobian derivative itself is obtained by   \[ \begin{aligned} y\textnormal{\textquotesingle}(x,t) &= y\textnormal{\textquotesingle}(x,0) + t \dot{y}\textnormal{\textquotesingle}(x,\tau) \\
+                            &= I + t\,\Df(y(x,\tau))\,y\textnormal{\textquotesingle}(x,\tau) \\[1px]
+                            &\in I + t\,\Df(B)\,W \end{aligned} \]
+
+If $W$ is an enclosure for $\D\phi(X_0,[0,h])$, then the C\textsuperscript{1} Lohner scheme is \[ X_1 = P_n(x_0,h) + R_n(B_c,h) + \bigl(DP_{n-1}(B,h)+DR_n(B,h)W\bigr)\cdot(X_0-x_0); \qquad J_1=\bigl(DP_{n-1}(B,h)+DR_n(B,h)W\bigr)\,J_0 \] The first-\/ and second-\/order updates for the Jacobian derivative are  \[ \begin{aligned}  J_1 &= \bigl( I + t\,\Df(B)\,W \bigr) \, J_0 \\[1px]
+                     J_1 &= \bigl( I + t\,\Df(B) + \frac{t^2}{2}\,(\D^2f(B)f(B)+ \Df(B)^2)\,W \bigr) \, J_0 \end{aligned} \]
+
+If the initial set is a zonotope, the new centre and generators can be computed by \[ c_1 = c_0 + h f(c_0) + \frac{h^2}{2} \Df(B_c) f(B_c) ;  \qquad  G_1 = \bigl(I+h\,\Df(B)\,W\bigr)  \, G_0. \]\hypertarget{integration_methods_page_picardintegrator}{}\doxysubsection{\texorpdfstring{Picard methods}{Picard methods}}\label{integration_methods_page_picardintegrator}
+Differential equation $\dot{x}=\dx/\dt=f(x)$ Solution flow $\phi(x,t)$ gives solution at time $t$ starting at $x$, so is defined by\+: \[ \dot{\phi}(x,t) = f(\phi(x,t))  \ \text{ and }\   \phi(x,0)=x . \] It also satisfies $\phi(x,t1+t2) = \phi( \phi(x,t1) , t2 )$.
+
+By integrating $\dot{\phi}(x,t)$ from $0$ to $t$, we obtain the integral equation
+
+\[ \phi(x,t) = x + \int_0^t f(\phi(x,\tau)) \d\tau \]
+
+Classical Picard iteration takes an initial function, e.\+g. $\phi_0(x,t) = x$, and computes iterates \[ \phi_{n+1}(x,t) = x + \int_0^t f(\phi_{n}(x,\tau)) \d\tau \]
+
+As long as solutions remain bounded, this iteration converges for all $x$, $t$ to the solution.
+
+However, the proof relies on taking sufficiently small steps, and using the contraction mapping theorem\+: If $f:X \to X$, and there exists $ 0<k<1 $ such that for all $x_1,x_2 in X$, $d(f(x_1),f(x_2)) \leq k \, d(x_1,x_2)$, then there exists a unique $x_*$ such that $f(x_*) = x_*$.
+
+If $h$ is sufficiently small (and $g$ is a Lipschitz mapping), then the map taking $\phi$ to $x + \int_0^t f(\phi(x,\tau)) \d\tau$ for $t \in [0,h]$ is a contraction mapping.
+
+To get a rigorous solution, one approach is to start with a validated function phi and contract.
+
+To get a validated function, we use a bound $B$ for $\{ \phi(x,t) | x \in \D \wedge t \in [0,h]\}$ For this, we need a sufficiently small $h$ for such a bound to exist. A sufficient condition is $\D + h \, f(B) \subset B$.\hypertarget{integration_methods_page_taylorintegrator}{}\doxysubsection{\texorpdfstring{Taylor methods}{Taylor methods}}\label{integration_methods_page_taylorintegrator}
+Methods based on higher-\/order Taylor expansions can be devised. A second-\/order in time and first-\/order in space integrator for zonotopes is given by    \[ \begin{aligned}
+      c_1 &= c_0 \;+\; h\,f(c_0) \;+\; \frac{h^2}{2}\,\Df(c_0)\,f(c_0) \;+\; \frac{h^3}{6}\,\bigl( \D^2f(B_c)\,f(B_c) + (\Df(B_c))^2 \bigr)\,f(B_c); \\[1px]
+      G_1 &= G_0 \;+\; h\,\Df(c_0) \;+\; \frac{h^2}{2}\,\bigl( \D^2f(B)\,f(B) + (\Df(B))^2 \bigr)
+    \end{aligned} \] For higher order in space, Taylor sets must be used.\hypertarget{integration_methods_page_evolutionerror}{}\doxysubsection{\texorpdfstring{Error bounds for integration methods}{Error bounds for integration methods}}\label{integration_methods_page_evolutionerror}
+The growth rate of the difference of two solutions of a differential equation $\dot{x}(t)=f(x(t))$ is governed by the logarithmic norm $l$ of $\Df$. \[ ||x(t) - y(t) || \leq e^{lt} || x(0)-y(0) || . \] The error of a C\textsuperscript{0} integrator, such as the Euler integrator, or the uniform part of a Taylor integrator, is bound by the Lipschitz constant $L$ of $f$, which is equal to the norm of $\Df$. \[ ||x(t) - y(t) || \leq e^{Lt} || x(0)-y(0) || . \] For a set-\/based integrator, we can therefore approximate the error by \[ \varepsilon(t) \leq \epsilon_0 (e^{k_0Lt}-1) + e^{k_1lt} r_0 \] where $r_0$ is the initial radius, $k_0$ and $k_0$ are constants related to the integration method (approximately $1+Lh$ for a typical step-\/size $h$) and $\epsilon_0$ depends on small round-\/off errors and higher-\/order terms (of order $h^2$).
+
+The error in the constant term may be alleviated by reincorporating the zero-\/order error into the first-\/order terms. This is especially useful if the Lipschitz constant $L$ is much larger than the logarithmic norm $l$. In this case, the zero-\/order error may be bounded by a constant times the first-\/order error. \[ \varepsilon(t) \leq ce^{klt} r . \]
+
+If the initial set is based on a grid with sets of order $r$, and $t$ is the lock-\/to-\/grid time, then at each lock-\/to grid step an additional error of order approximately $r$ is incurred. The error bound is then approximately \[ \varepsilon(t) \leq \epsilon_0 e^{k_0Lt} + (1+e^{k_1lt}) r . \]\hypertarget{integration_methods_page_varyingendtime}{}\doxysubsection{\texorpdfstring{Time-\/varying Integration Methods}{Time-\/varying Integration Methods}}\label{integration_methods_page_varyingendtime}
+Suppose the integration time depends on $x$. We therefore want to compute $y(x,s(x)) := \phi(x,s(x))$. We have    \[ \begin{aligned} y(x,s(x)) &= y(x,s(x)))-y(x,s(c)) + y(x,s(c)) \\
+                           &= y\textnormal{\textquotesingle}(x,s(\xi)) \bigl( s(x) - s(c) \bigr) + y(x,s(c)) \\
+                           &= f(\xi) \, \nabla s(\xi) \cdot(x-c) + y(x,s(c)) \\
+                           &\in y(x,s(c)) + \bigl( f(B) \nabla s(B) \bigr) \cdot (x-c)  \end{aligned} \]\hypertarget{integration_methods_page_differential_inclusions}{}\doxysubsection{\texorpdfstring{Differential Inclusions}{Differential Inclusions}}\label{integration_methods_page_differential_inclusions}
+A {\itshape differential inclusion} is a dynamic system of the form \[ \der{x} \in F(t,x) \] where $F:\R\times\R^n \rightrightarrows \R^n$.\hypertarget{integration_methods_page_interval_taylor_model_differential_inclusions}{}\doxysubsubsection{\texorpdfstring{Solution using interval Taylor models}{Solution using interval Taylor models}}\label{integration_methods_page_interval_taylor_model_differential_inclusions}
+We now describe the solution of differential inclusions using interval Taylor models. This approach was first used in Flow\texorpdfstring{$\ast$}{*} by Chen (2015)\mbox{[}§3.5\mbox{]}.
+
+Consider the differential inclusion \[ \der{x} = f(x,v); \quad v(t) \in V \] where (for simplicity) $V$ is taken to be a compact box, $V=\prod_{i=1}^{m} V_i$. A {\itshape solution} is an almost-\/everywhere differentiable function $\xi:[0,\infty)\to\R^n$, such that for almost all $t$, \[ \der{\xi}(t) \in \overline{\mathrm{conv}}\bigl( f(\xi(t),V) \bigr) . \] If $f(t,x,V)$ is everywhere convex, then we can find a measurable $\nu:[0,\infty)\to V$ such that \[ \der{\xi}(t) = f(\xi(t),\nu(t)) \bigr) . \]
+
+For simplicity, we henceforth take $f(t,x,V)$ everywhere convex.
+
+We say an {\itshape interval Taylor model} (see \doxysectlink{function_models_page_interval_taylor_models}{Interval Taylor Models}{2} for more details) \[ \hat{\Phi}(x,t) = \sum_{\alpha,k} \widehat{C}_{\alpha,k} x^\alpha t^k \] over-\/approximates the set of solutions of the differential inclusion if \[ \forall \text{ solutions } \xi \text{ of } \der{x}(t)\in F(x(t)), \ \xi \in \hat{\Phi} . \] In other words, \[ \forall \text{ solutions } \xi \text{ of } \der{x}(t)\in F(x(t)), \ \exists \text{ functions } \gamma_{\alpha,k}:[0,h]\to \widehat{C}_{\alpha,k},\  \xi(t) = \sum_{\alpha,k} \gamma_{\alpha,k}(t) \xi(0)^\alpha t^k . \]
+
+Now suppose $\hat{\Phi}$ over-\/approximates the set of solutions. Then we claim that \[ \hat{\Phi}\textnormal{\textquotesingle}(x,t) := x + \int_0^t f(\hat{\Phi}(x,\tau),V)\,\d\tau \] also over-\/approximates the set of solutions. For if $\xi$ is a solution with $\der{\xi}(t) = f(\xi(t),\nu(t)) \text{ a.e.}$, then $\der{\xi}(t) \in f(\hat{\Phi}(\xi(0),t),\nu(t)) \subset f(\hat{\Phi}(\xi(0),t),V) \text{ a.e.}$, so $\xi(t)-\xi(0) \in \int_0^t f(\hat{\Phi}(\xi(0),\tau),V)\,\d\tau$.
+
+This gives rise to the iterative Picard method for solving differential inclusions, by taking an initial $\hat{\Phi}_0(x,t) = \hat{B}_0$, where $\hat{B}_0$ is a box containing all solutions over a time interval $[0\!:\!h]$. 

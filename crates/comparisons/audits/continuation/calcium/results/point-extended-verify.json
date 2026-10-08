@@ -1,0 +1,13 @@
+{
+  "tag": "point-extended-verify",
+  "started": "2026-09-10T21:30:23.741Z",
+  "finished": "2026-09-10T21:30:31.317Z",
+  "elapsedSeconds": 7.573658410999999,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "node",
+  "args": [
+    "verify-point-extended.mjs"
+  ],
+  "code": 0,
+  "signal": null
+}

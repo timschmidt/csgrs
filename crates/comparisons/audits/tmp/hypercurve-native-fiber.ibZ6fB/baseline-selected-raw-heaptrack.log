@@ -1,0 +1,9 @@
+heaptrack output will be written to "/tmp/hypercurve-native-fiber.ibZ6fB/baseline-selected-raw.heap.raw.zst"
+starting application, this might take some time...
+
+running 1 test
+test bezier_offset::conversion_tests::selected_fiber_genuinely_analytic_contacts_complete_region_booleans ... zstd: error 70 : Write error : cannot write block : Disk quota exceeded 
+Terminated                 LD_PRELOAD="$LIBHEAPTRACK_PRELOAD${LD_PRELOAD:+:$LD_PRELOAD}" DUMP_HEAPTRACK_OUTPUT="$pipe" "$client" "$@"
+Heaptrack finished! Now run the following to investigate the data:
+
+  zstd -dc < "/tmp/hypercurve-native-fiber.ibZ6fB/baseline-selected-raw.heap.raw.zst" | /usr/lib64/heaptrack/libexec/heaptrack_interpret | zstd -c > "/tmp/hypercurve-native-fiber.ibZ6fB/baseline-selected-raw.heap.zst"

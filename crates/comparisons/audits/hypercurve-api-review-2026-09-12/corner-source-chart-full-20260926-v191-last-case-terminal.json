@@ -1,0 +1,23 @@
+{
+  "qualification": "corner-source-chart-full-20260926-v191-terminal.json",
+  "source_manifest": "local-chord-complete-replay-20260924-v191-sources.json",
+  "binary": {
+    "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/corner-source-chart-full-20260926-v191-hypercurve_analytic_parallel_region",
+    "sha256": "b48943492c446dfdbb4649c5c53d302032790cbd78759b80201f6cf9500ebb2b"
+  },
+  "name": "algebraic_endpoint_analytic_parallel_chamfers_replay_selected_distance",
+  "all_processes_reaped": true,
+  "returncode": 0,
+  "elapsed_seconds": 9.62100942095276,
+  "command": [
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/corner-source-chart-full-20260926-v191-hypercurve_analytic_parallel_region",
+    "--exact",
+    "algebraic_endpoint_analytic_parallel_chamfers_replay_selected_distance",
+    "--nocapture",
+    "--test-threads=1",
+    "--color",
+    "never"
+  ],
+  "log": "corner-source-chart-full-20260926-v191-case-498.log",
+  "all_sources_and_binaries_unchanged": true
+}

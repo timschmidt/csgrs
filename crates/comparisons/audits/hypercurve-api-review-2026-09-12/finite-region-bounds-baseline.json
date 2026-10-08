@@ -1,0 +1,22 @@
+{
+  "returncode": 101,
+  "elapsed_seconds": 0.0035706049820873886,
+  "command": [
+    "rustc",
+    "--edition=2024",
+    "-O",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-region-bounds-public.rs",
+    "--extern",
+    "hypercurve=/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-region-admission-libraries/libhypercurve-2c7ff6f3fbe07653.rlib",
+    "-L",
+    "dependency=/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps",
+    "-o",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-region-bounds-baseline"
+  ],
+  "source": "finite-region-bounds-public.rs",
+  "source_sha256": "60ae3a84f343f48af491042682a68fa866ff85402e5d51e3294aebd9f2a58dd9",
+  "executable_sha256": "665c2ce53b8f50869cd9599a81dbeeed0366f4ba64db03e85038db382471d2c5",
+  "normal_library_sha256": "3e352ef20e456aae00e39f18109487148b4f957e923ef3e055d8fb622380b13d",
+  "library": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-region-admission-libraries/libhypercurve-2c7ff6f3fbe07653.rlib",
+  "log": "finite-region-bounds-baseline.log"
+}

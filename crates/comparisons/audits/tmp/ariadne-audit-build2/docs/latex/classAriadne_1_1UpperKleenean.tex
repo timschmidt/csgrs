@@ -1,0 +1,41 @@
+\doxysubsection{Upper\+Kleenean Class Reference}
+\hypertarget{classAriadne_1_1UpperKleenean}{}\label{classAriadne_1_1UpperKleenean}\index{UpperKleenean@{UpperKleenean}}
+
+
+{\ttfamily \#include $<$logical.\+hpp$>$}
+
+
+
+\doxysubsubsection{Description}
+A logical class representing the result of a falsifyable predicate over a continuous (uncountable) data type. \doxysubsubsubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1UpperKleenean_ab252e4acf7457333e136818502b154de}\label{classAriadne_1_1UpperKleenean_ab252e4acf7457333e136818502b154de} 
+{\bfseries Upper\+Kleenean} (\mbox{\hyperlink{classAriadne_1_1Kleenean}{Kleenean}} k)
+\begin{DoxyCompactList}\small\item\em Convert from a Kleenean predicate. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1UpperKleenean_ade5f219b4c7a5fccb79564992f02a668}\label{classAriadne_1_1UpperKleenean_ade5f219b4c7a5fccb79564992f02a668} 
+\mbox{\hyperlink{classAriadne_1_1ValidatedUpperKleenean}{Validated\+Upper\+Kleenean}} {\bfseries check} (\mbox{\hyperlink{classAriadne_1_1Effort}{Effort}} e) const
+\begin{DoxyCompactList}\small\item\em Check the value using effort {\itshape e}. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsubsection*{Friends}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1UpperKleenean_a4c516985ab7de4c8468f0711ea8feb4f}\label{classAriadne_1_1UpperKleenean_a4c516985ab7de4c8468f0711ea8feb4f} 
+\mbox{\hyperlink{classAriadne_1_1ValidatedUpperKleenean}{Validated\+Upper\+Kleenean}} {\bfseries check} (\mbox{\hyperlink{classAriadne_1_1UpperKleenean}{Upper\+Kleenean}} const \&uk, \mbox{\hyperlink{classAriadne_1_1Effort}{Effort}} e)
+\begin{DoxyCompactList}\small\item\em Check the value of {\itshape uk} using effort {\itshape e}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1UpperKleenean_acacb32b8ae746dedc8fd5ca241d34758}\label{classAriadne_1_1UpperKleenean_acacb32b8ae746dedc8fd5ca241d34758} 
+\mbox{\hyperlink{classAriadne_1_1LowerKleenean}{Lower\+Kleenean}} {\bfseries operator!} (\mbox{\hyperlink{classAriadne_1_1UpperKleenean}{Upper\+Kleenean}} const \&l)
+\begin{DoxyCompactList}\small\item\em Logical negation. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1UpperKleenean_a22a26fa0df49aa6f7d892896170b7013}\label{classAriadne_1_1UpperKleenean_a22a26fa0df49aa6f7d892896170b7013} 
+\mbox{\hyperlink{classAriadne_1_1UpperKleenean}{Upper\+Kleenean}} {\bfseries operator\&\&} (\mbox{\hyperlink{classAriadne_1_1UpperKleenean}{Upper\+Kleenean}} const \&l1, \mbox{\hyperlink{classAriadne_1_1UpperKleenean}{Upper\+Kleenean}} const \&l2)
+\begin{DoxyCompactList}\small\item\em Logical conjunction. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1UpperKleenean_a1d110677beb2487f9ca9af357c722e79}\label{classAriadne_1_1UpperKleenean_a1d110677beb2487f9ca9af357c722e79} 
+\mbox{\hyperlink{classAriadne_1_1UpperKleenean}{Upper\+Kleenean}} {\bfseries operator\texorpdfstring{$\vert$}{|}\texorpdfstring{$\vert$}{|}} (\mbox{\hyperlink{classAriadne_1_1UpperKleenean}{Upper\+Kleenean}} const \&l1, \mbox{\hyperlink{classAriadne_1_1UpperKleenean}{Upper\+Kleenean}} const \&l2)
+\begin{DoxyCompactList}\small\item\em Logical disjunction. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1UpperKleenean_a021909ba8aeabbc7b24ccd876e5444e3}\label{classAriadne_1_1UpperKleenean_a021909ba8aeabbc7b24ccd876e5444e3} 
+\mbox{\hyperlink{classAriadne_1_1UpperKleenean}{Upper\+Kleenean}} {\bfseries conjunction} (\mbox{\hyperlink{classAriadne_1_1Sequence}{Sequence}}$<$ \mbox{\hyperlink{classAriadne_1_1UpperKleenean}{Upper\+Kleenean}} $>$ const \&k)
+\begin{DoxyCompactList}\small\item\em Conjunction of an infinte sequence of logical values. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+The documentation for this class was generated from the following file\+:\begin{DoxyCompactItemize}
+\item 
+source/foundations/\mbox{\hyperlink{logical_8hpp}{logical.\+hpp}}\end{DoxyCompactItemize}

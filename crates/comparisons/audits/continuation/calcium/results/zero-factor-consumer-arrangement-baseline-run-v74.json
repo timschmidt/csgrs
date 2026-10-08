@@ -1,0 +1,11 @@
+{
+  "tag": "zero-factor-consumer-arrangement-baseline-run-v74",
+  "started": "2026-09-11T21:47:57.026Z",
+  "finished": "2026-09-11T21:47:57.039Z",
+  "elapsedSeconds": 0.010923519999999996,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "/tmp/calcium-point-consumer.qyV59b/demand-arrangement.stripped",
+  "args": [],
+  "code": 0,
+  "signal": null
+}

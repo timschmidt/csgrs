@@ -1,0 +1,14 @@
+Preserve affine contact blockers through exact point construction
+
+Return classified contact evidence instead of erasing failure reasons into
+None. Reject certified poles before retained-source fallbacks; distinguish
+scalar nonzero proof failure from division by zero. Remove the redundant
+rational endpoint adapter and migrate every controlled caller directly.
+
+Add pole and finite-neighbor regressions for scalar and isolated parameters,
+including the private contact fallback. Preserve geometry-owned non-pole
+expressions and optional solver replay paths.
+
+Validation: 154 selected release cases across eight pinned test binaries;
+Clippy with and without default features, formatting, three fuzz targets,
+documentation, Hyperbrep Clippy, and Csgrs all-target check.

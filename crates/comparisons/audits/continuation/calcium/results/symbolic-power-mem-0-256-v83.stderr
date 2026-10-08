@@ -1,0 +1,14 @@
+==501523== Memcheck, a memory error detector
+==501523== Copyright (C) 2002-2026, and GNU GPL'd, by Julian Seward et al.
+==501523== Using Valgrind-3.27.1 and LibVEX; rerun with -h for copyright info
+==501523== Command: /tmp/calcium-symbolic-boundary-v83.JuGH8X/controls powers 0 256
+==501523== 
+==501523== 
+==501523== HEAP SUMMARY:
+==501523==     in use at exit: 0 bytes in 0 blocks
+==501523==   total heap usage: 6,390 allocs, 6,390 frees, 214,608 bytes allocated
+==501523== 
+==501523== All heap blocks were freed -- no leaks are possible
+==501523== 
+==501523== For lists of detected and suppressed errors, rerun with: -s
+==501523== ERROR SUMMARY: 0 errors from 0 contexts (suppressed: 0 from 0)

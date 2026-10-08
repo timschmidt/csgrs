@@ -1,0 +1,45 @@
+   Compiling hyperlattice v0.6.1 (/home/tim/Documents/GitHub/workspace/hyperlattice)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1.76s
+     Running tests/adversarial_scalar_semantics.rs (target/debug/deps/adversarial_scalar_semantics-acd7dc4583f2e986)
+
+running 7 tests
+test domain_boundary_errors_do_not_stale_cache_valid_neighbors ... ok
+test checked_reciprocal_distinguishes_zero_nonzero_and_unknown_zero ... ok
+test float_import_regressions_cover_zero_subnormals_decimals_and_large_values ... ok
+test exact_special_forms_and_principal_branches_are_guarded ... ok
+test fact_api_invariants_are_self_consistent_for_adversarial_forms ... ok
+test structural_equivalents_built_by_different_histories_agree ... ok
+test scalar_fact_queries_survive_repeated_cache_warming ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/readme.rs (target/debug/deps/readme-8f29ba5ed93b7c75)
+
+running 2 tests
+test readme_quickstart_matches_the_runnable_example ... ok
+test readme_release_metadata_matches_the_manifest ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/scalar.rs (target/debug/deps/scalar-8f42d2c5523ebaad)
+
+running 16 tests
+test borrowed_scalar_reciprocal_does_not_consume_input ... ok
+test checked_scalar_reciprocal_rejects_zero ... ok
+test hyperreal_inverse_trig_helpers_preserve_exact_paths ... ok
+test checked_scalar_reciprocal_rejects_unknown_zero ... ok
+test hyperreal_scalar_forwards_symbolic_structural_facts ... ok
+test native_hyperbolic_operations_preserve_exact_log_collapses ... ok
+test native_inverse_functions_accept_abort_signal ... ok
+test hyperreal_scalar_keeps_unknown_structural_facts_unknown ... ok
+test scalar_functions_reject_invalid_domains ... ok
+test scalar_structural_facts_classify_basic_values ... ok
+test scalar_functions ... ok
+test scalar_to_f64_lossy_is_borrowed ... ok
+test structural_queries_and_checked_guards_do_not_depend_on_abort ... ok
+test zero_status_classifies_basic_values ... ok
+test structural_checked_reciprocal_does_not_invoke_native_refinement ... ok
+test native_domain_errors_preserve_structural_certificates_with_active_abort ... ok
+
+test result: ok. 16 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+

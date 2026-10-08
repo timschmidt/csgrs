@@ -1,0 +1,13 @@
+{
+  "tag": "scalar-boundary-check-v81",
+  "started": "2026-09-12T02:38:53.983Z",
+  "finished": "2026-09-12T02:38:55.195Z",
+  "elapsedSeconds": 1.210383234,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "node",
+  "args": [
+    "check-scalar-boundary-v81.mjs"
+  ],
+  "code": 1,
+  "signal": null
+}

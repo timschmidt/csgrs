@@ -1,0 +1,5 @@
+{
+  "cases": 9360,
+  "failures": [],
+  "method": "Exact integer circle/ray intersections, minor arc chord-side ownership and half-open endpoint derivative signs; radius 5."
+}

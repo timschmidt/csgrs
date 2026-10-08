@@ -1,0 +1,39 @@
+{
+  "repo": "hypercurve",
+  "target": "hypercurve_contour",
+  "binary": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve_contour-cd6a976f1233354c",
+  "command": [
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve_contour-cd6a976f1233354c",
+    "--test-threads=4",
+    "--color",
+    "never"
+  ],
+  "sha256": "f58a58cb897ce70a8825ad71cacda2433c6528875b827e32c59f3d3d369dc3a4",
+  "returncode": 0,
+  "timed_out": false,
+  "elapsed_seconds": 0.0034016669960692525,
+  "log": "opposed-endpoint-contact-full1-full-hypercurve-hypercurve_contour.log",
+  "passed": [
+    "batched_contour_classification_matches_scalar_classification",
+    "contour_aabb_edge_hit_still_checks_boundary",
+    "batched_line_contour_classification_preserves_half_open_vertex_cases",
+    "circular_contour_winds_positive_semicircle_counter_clockwise",
+    "contour_aabb_miss_classifies_outside_and_zero_winding",
+    "contour_builds_closed_bulge_loop",
+    "contour_line_merge_preserves_mixed_segment_kinds",
+    "contour_merge_adjacent_collinear_lines",
+    "contour_merge_adjacent_collinear_lines_merges_wraparound_run",
+    "contour_rejects_open_segment_chain",
+    "exact_boundary_equality_ignores_closed_start_and_direction",
+    "rectangle_classifies_inside_outside_and_boundary",
+    "even_odd_fill_uses_winding_parity",
+    "rectangle_winding_is_positive_inside_and_boundary_is_explicit"
+  ],
+  "failed": [],
+  "ignored": [],
+  "summaries": [
+    "test result: ok. 14 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s"
+  ],
+  "new_failures": [],
+  "known_failures": []
+}

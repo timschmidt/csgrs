@@ -1,0 +1,13 @@
+{
+  "hypercurve/src/bezier_algebraic_image.rs": "54038fed275528ce95f43d6107b6e042af040a70067b1b1c6113952a9ad469c3",
+  "hypercurve/src/bezier_split_endpoint.rs": "ce56348f8b212aa26e269e1afdd2676c65b3b8a788d62791248dddbfa7f1d0ed",
+  "hypercurve/src/bezier_tangent_order.rs": "515d1af1e54271952d7f9eefdd3ecfb662d70eb84c31835e97300d5fd784ba24",
+  "hypercurve/src/bezier_arrangement.rs": "c71bdedab5ac82cc7e3ab7a9e1736198f7dd28ba1872fb29c774fb31b644b00c",
+  "hypercurve/src/curve_region_boolean.rs": "e812f9bcaa0be1513b573b6eb4f5e9e8b3eae00df49a2e6c803332b28286ea78",
+  "hypercurve/src/lib.rs": "43030339581b5e3b12f9c0ea1a1314fd8dce0c818358f11c00b31793b2d73715",
+  "hypercurve/benches/bezier_tangent_order.rs": "6abc38ce01ff763fac5d7af83ca465acaa5d5278b44795c08ed670465b7e4701",
+  "hypercurve/fuzz/fuzz_targets/bezier_tangent_order.rs": "6584c863ec522aaf131ae9a40c43fc7e7b6275337857415de2a0243027c9ba22",
+  "hypercurve/tests/hypercurve_bezier_tangent_order.rs": "0fe8df30d86b210347f3258076dd178d643fa29b5a997f618bc416a0e3e799bd",
+  "hypercurve/tests/hypercurve_bezier_split_materialization.rs": "d5ee396094600d9980daee566bf925b4fce8d45ec7a4a6ea7c19651a174c181c",
+  "hypercurve/tests/hypercurve_bezier_algebraic_image.rs": "3bb97d3de4a6cd052ccdb97abf838a81d0028449b74b7e2428ef01bc1af25edf"
+}

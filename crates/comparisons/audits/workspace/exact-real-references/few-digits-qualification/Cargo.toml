@@ -1,0 +1,32 @@
+[package]
+name = "few-digits-qualification"
+version = "0.0.0"
+edition = "2024"
+publish = false
+autobins = false
+
+[dependencies]
+hyperreal = { path = "../../hyperreal" }
+num = { version = "0.4.3", features = ["num-bigint"] }
+rug = { version = "1.30.0", default-features = false, features = ["float", "integer", "rational", "std"] }
+
+[[bin]]
+name = "few_digits_oracle"
+path = "few_digits_oracle.rs"
+[[bin]]
+name = "few_digits_controls"
+path = "few_digits_controls.rs"
+[[bin]]
+name = "few_digits_sum"
+path = "few_digits_sum.rs"
+[[bin]]
+name = "few_digits_compression_oracle"
+path = "few_digits_compression_oracle.rs"
+[[bin]]
+name = "few_digits_polynomial_controls"
+path = "few_digits_polynomial_controls.rs"
+
+[profile.release]
+debug = 0
+incremental = false
+codegen-units = 16

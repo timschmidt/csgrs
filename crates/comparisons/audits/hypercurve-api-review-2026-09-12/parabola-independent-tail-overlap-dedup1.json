@@ -1,0 +1,18 @@
+{
+  "command": [
+    "rustc",
+    "--edition=2024",
+    "-O",
+    "parabola-independent-tail-overlap-probe.rs",
+    "--extern",
+    "hypercurve=/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/libhypercurve-2c7ff6f3fbe07653.rlib",
+    "-L",
+    "dependency=/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps",
+    "-o",
+    "parabola-independent-tail-overlap-dedup1"
+  ],
+  "library_sha256": "af3f8aa47e08971d977cf46d6cc6ea9eef6c3fd979aeb9a40d81a7dddc931582",
+  "binary_sha256": "4ecaff768d637f71123865ef3a7f364f0591c956b2d67dde2c8823140341a62b",
+  "returncode": 0,
+  "elapsed_seconds": 0.06883184199978132
+}

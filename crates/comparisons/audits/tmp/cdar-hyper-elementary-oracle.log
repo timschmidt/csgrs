@@ -1,0 +1,9 @@
+exp: 930 directed-MPFR unit-error checks PASS
+log: 486 directed-MPFR unit-error checks PASS
+sin: 978 directed-MPFR unit-error checks PASS
+cos: 978 directed-MPFR unit-error checks PASS
+sqrt: 492 directed-MPFR unit-error checks PASS
+atan: 978 directed-MPFR unit-error checks PASS
+asin: 198 directed-MPFR unit-error checks PASS
+acos: 198 directed-MPFR unit-error checks PASS
+5244 approximation checks PASS; 18 finite/nonfinite conversion checks PASS

@@ -1,0 +1,20 @@
+{
+  "command": [
+    "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+    "test",
+    "--release",
+    "--all-features",
+    "--locked",
+    "--offline",
+    "--lib",
+    "finite_point_inverse_replays_nonrepresented_center_cuts",
+    "--",
+    "--nocapture"
+  ],
+  "returncode": 101,
+  "elapsed_seconds": 123.01781905800453,
+  "log": "finite-point-inverse-baseline.log",
+  "cargo_incremental": "0",
+  "archived_libtest": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-point-inverse-baseline-artifacts/hypercurve-9d306237de41e1bc",
+  "libtest_sha256": "1e45e92fdc971fdd5ea44c8ec632aec0f42743ad23454d35f53f55620ba3f99b"
+}

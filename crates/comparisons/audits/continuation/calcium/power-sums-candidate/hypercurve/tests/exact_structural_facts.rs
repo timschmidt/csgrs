@@ -1,0 +1,227 @@
+use hypercurve::{
+    BulgeVertex2, Classification, Contour2, CurveContext, CurveRegion2, CurveString2,
+    EndpointTangent2, FillRule, LineLineIntersection, LineSeg2, Point2, Real, Segment2,
+    SegmentKind, SymbolicDependencyMask, ZeroKnowledge,
+};
+
+fn r(value: i32) -> Real {
+    value.into()
+}
+
+fn p(x: i32, y: i32) -> Point2 {
+    Point2::new(r(x), r(y))
+}
+
+fn vertex(x: i32, y: i32, bulge: i32) -> BulgeVertex2 {
+    BulgeVertex2::new(p(x, y), r(bulge))
+}
+
+fn policy() -> CurveContext {
+    CurveContext::STRICT
+}
+
+#[test]
+fn endpoint_tangents_use_canonical_scalar_zero_knowledge() {
+    for (dx, dy, expected) in [
+        (r(0), r(0), ZeroKnowledge::Zero),
+        (Real::pi(), r(0), ZeroKnowledge::NonZero),
+        (r(0), r(-1), ZeroKnowledge::NonZero),
+    ] {
+        let status: ZeroKnowledge = EndpointTangent2::new(dx, dy).zero_status();
+        assert_eq!(status, expected);
+    }
+}
+
+#[test]
+fn point_facts_preserve_exact_scale_and_symbolic_dependencies() {
+    let rational = Point2::new(
+        (Real::one() / Real::from(3_i8)).unwrap(),
+        (Real::from(2_i8) / Real::from(3_i8)).unwrap(),
+    );
+    let rational_facts = rational.structural_facts();
+
+    assert!(rational_facts.all_exact_rational());
+    assert!(rational_facts.has_shared_denominator_schedule());
+    assert_eq!(rational_facts.known_zero_mask, 0);
+    assert_eq!(
+        rational_facts.symbolic_dependencies,
+        SymbolicDependencyMask::NONE
+    );
+
+    let symbolic = Point2::new(Real::pi(), Real::one());
+    let symbolic_facts = symbolic.structural_facts();
+    assert!(!symbolic_facts.all_exact_rational());
+    assert!(
+        symbolic_facts
+            .symbolic_dependencies
+            .contains(SymbolicDependencyMask::PI)
+    );
+}
+
+#[test]
+fn line_segment_facts_certify_axis_alignment_without_float_predicates() {
+    let horizontal = LineSeg2::try_new(p(0, 3), p(8, 3)).unwrap();
+    let facts = horizontal.structural_facts();
+
+    assert_eq!(facts.delta_known_zero_mask, 0b10);
+    assert!(facts.is_axis_aligned());
+    assert!(facts.coordinate_exact.all_exact_rational);
+
+    let diagonal = LineSeg2::try_new(p(0, 0), p(8, 3)).unwrap();
+    assert!(!diagonal.structural_facts().is_axis_aligned());
+}
+
+#[test]
+fn curve_query_facts_summarize_segment_families_and_dependencies() {
+    let line = Segment2::Line(
+        LineSeg2::try_new(
+            Point2::new(Real::pi(), Real::zero()),
+            Point2::new(Real::pi(), r(4)),
+        )
+        .unwrap(),
+    );
+    let arc = Segment2::from_bulge(
+        Point2::new(Real::pi(), r(4)),
+        Point2::new(Real::pi() + Real::from(2_i8), r(4)),
+        r(1),
+    )
+    .unwrap();
+    let curve = CurveString2::try_new(vec![line, arc]).unwrap();
+
+    let facts = hypercurve::CurveString2::structural_facts(&curve, &policy());
+
+    assert_eq!(curve.segments().len(), 2);
+    assert_eq!(facts.segment_kinds.lines, 1);
+    assert_eq!(facts.segment_kinds.arcs, 1);
+    assert_eq!(facts.segment_kinds.total(), 2);
+    // Hyperreal canonicalizes the arc-cardinal `pi +/- atan` forms before an
+    // optional predicate backend is needed, so both policy builds certify the
+    // complete curve box.
+    assert_eq!(facts.decided_segment_box_count, 2);
+    assert!(facts.has_decided_curve_box);
+
+    let approximate_facts =
+        hypercurve::CurveString2::structural_facts(&curve, &CurveContext::APPROXIMATE_512);
+    assert_eq!(approximate_facts.decided_segment_box_count, 2);
+    assert!(approximate_facts.has_decided_curve_box);
+    assert!(!facts.all_exact_rational());
+    assert!(
+        facts
+            .symbolic_dependencies
+            .contains(SymbolicDependencyMask::PI)
+    );
+}
+
+#[test]
+fn region_facts_preserve_all_line_exact_grid_shape() {
+    let contour = Contour2::from_bulge_vertices_with_fill_rule(
+        &[
+            vertex(0, 0, 0),
+            vertex(4, 0, 0),
+            vertex(4, 3, 0),
+            vertex(0, 3, 0),
+        ],
+        FillRule::NonZero,
+    )
+    .unwrap();
+    let region = CurveRegion2::try_from_native_material_contours(vec![contour], &policy())
+        .unwrap()
+        .into_value();
+    let Classification::Decided(facts) = region.structural_facts(&policy()).unwrap().into_value()
+    else {
+        panic!("a native exact region must retain structural facts");
+    };
+
+    assert_eq!(region.boundary_loops()[0].len(), 4);
+    assert_eq!(facts.material_contour_count, 1);
+    assert_eq!(facts.hole_contour_count, 0);
+    assert_eq!(facts.segment_kinds.lines, 4);
+    assert_eq!(facts.segment_kinds.arcs, 0);
+    assert!(facts.segment_kinds.all_lines());
+    assert!(facts.scalar_exact.all_exact_rational);
+    assert_eq!(facts.symbolic_dependencies, SymbolicDependencyMask::NONE);
+    assert!(facts.has_decided_region_box);
+
+    assert_eq!(
+        region
+            .classify_point(&p(1, 1), &policy())
+            .unwrap()
+            .into_value(),
+        Classification::Decided(hypercurve::RegionPointLocation::Inside)
+    );
+}
+
+#[test]
+fn native_segment_facts_evidence_kind_specific_shape() {
+    let line = Segment2::Line(LineSeg2::try_new(p(0, 0), p(0, 5)).unwrap());
+    let line_facts = line.structural_facts();
+    assert_eq!(line_facts.kind, SegmentKind::Line);
+    assert!(line_facts.axis_aligned_line);
+
+    let arc = Segment2::from_bulge(p(-1, 0), p(1, 0), r(1)).unwrap();
+    let arc_facts = arc.structural_facts();
+    assert_eq!(arc_facts.kind, SegmentKind::Arc);
+    assert!(arc_facts.exact_rational_arc_radius);
+}
+
+#[test]
+fn symbolic_bulge_sign_selects_arc_orientation_exactly() {
+    let positive = Segment2::from_bulge(p(-1, 0), p(1, 0), Real::pi()).unwrap();
+    let Segment2::Arc(positive) = positive else {
+        panic!("nonzero symbolic bulge should produce an arc");
+    };
+    assert!(!positive.is_clockwise());
+    assert!(
+        positive
+            .structural_facts()
+            .symbolic_dependencies
+            .contains(SymbolicDependencyMask::PI)
+    );
+
+    let negative = Segment2::from_bulge(p(-1, 0), p(1, 0), -Real::pi()).unwrap();
+    let Segment2::Arc(negative) = negative else {
+        panic!("nonzero symbolic bulge should produce an arc");
+    };
+    assert!(negative.is_clockwise());
+}
+
+#[test]
+fn certified_line_parameters_keep_tiny_exact_endpoint_gap() {
+    let tiny = (Real::one() / Real::from(1_000_000_000_000_i64)).unwrap();
+    let left = LineSeg2::try_new(
+        Point2::new(Real::zero(), Real::zero()),
+        Point2::new(Real::one(), Real::zero()),
+    )
+    .unwrap();
+    let right = LineSeg2::try_new(
+        Point2::new(Real::one() + tiny.clone(), Real::zero()),
+        Point2::new(Real::from(2_i8), Real::zero()),
+    )
+    .unwrap();
+
+    assert_eq!(
+        left.intersect_line(&right, &policy()).unwrap(),
+        LineLineIntersection::None,
+        "certified parameter ordering must not collapse a tiny exact gap"
+    );
+}
+
+#[test]
+fn certified_line_parameters_retain_exact_endpoint_touch() {
+    let left = LineSeg2::try_new(
+        Point2::new(Real::zero(), Real::zero()),
+        Point2::new(Real::one(), Real::zero()),
+    )
+    .unwrap();
+    let right = LineSeg2::try_new(
+        Point2::new(Real::one(), Real::zero()),
+        Point2::new(Real::from(2_i8), Real::zero()),
+    )
+    .unwrap();
+
+    let intersection = left.intersect_line(&right, &policy()).unwrap();
+    let LineLineIntersection::Point { kind, .. } = intersection else {
+        panic!("expected a certified endpoint touch");
+    };
+    assert_eq!(kind, hypercurve::IntersectionKind::Endpoint);
+}

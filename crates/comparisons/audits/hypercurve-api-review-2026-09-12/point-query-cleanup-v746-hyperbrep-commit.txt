@@ -1,0 +1,5 @@
+Classify retained clipping representatives directly
+
+Pass exact curve points from retained interval evaluation into the common region classifier. Remove the coordinate-projection guard that prematurely reported Unsupported for generated representatives.
+
+Validation: retained plane/extrusion and axial cone clipping plus generated offset endpoint nesting regressions; downstream all-target Clippy and caller checks pass in the shared 44-case qualification.

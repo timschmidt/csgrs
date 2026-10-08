@@ -1,0 +1,57 @@
+\doxysubsection{Constraint\+Solver Class Reference}
+\hypertarget{classAriadne_1_1ConstraintSolver}{}\label{classAriadne_1_1ConstraintSolver}\index{ConstraintSolver@{ConstraintSolver}}
+
+
+{\ttfamily \#include $<$constraint\+\_\+solver.\+hpp$>$}
+
+
+
+\doxysubsubsection{Description}
+A class for finding solutions of systems of constraints of the form $g(y) \leq c$. Inheritance diagram for Constraint\+Solver\+:\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[height=2.000000cm]{classAriadne_1_1ConstraintSolver}
+\end{center}
+\end{figure}
+\doxysubsubsubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1ConstraintSolver_a3d3ac2b032ed997775e98d01a6808524}\label{classAriadne_1_1ConstraintSolver_a3d3ac2b032ed997775e98d01a6808524} 
+virtual \mbox{\hyperlink{namespaceAriadne_abbe0884d033ed6289d1f654576d7bb07}{Pair}}$<$ \mbox{\hyperlink{classAriadne_1_1ValidatedKleenean}{Validated\+Kleenean}}, \mbox{\hyperlink{classAriadne_1_1Point}{Exact\+Point\+Type}} $>$ {\bfseries feasible} (const \mbox{\hyperlink{group__FunctionModule_gafdd31b4d01081cd09aad2ce11117f867}{Exact\+Box\+Type}} \&domain, const Validated\+Vector\+Multivariate\+Function \&function, const \mbox{\hyperlink{group__FunctionModule_gafdd31b4d01081cd09aad2ce11117f867}{Exact\+Box\+Type}} \&codomain) const
+\begin{DoxyCompactList}\small\item\em Test if the image of the box {\itshape domain} under the function {\itshape function} intersects {\itshape codomain}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1ConstraintSolver_a2b72c76fa2dc22a4baeb66d3155eab40}\label{classAriadne_1_1ConstraintSolver_a2b72c76fa2dc22a4baeb66d3155eab40} 
+virtual \mbox{\hyperlink{classAriadne_1_1ValidatedKleenean}{Validated\+Kleenean}} {\bfseries check\+\_\+feasibility} (const \mbox{\hyperlink{group__FunctionModule_gafdd31b4d01081cd09aad2ce11117f867}{Exact\+Box\+Type}} \&domain, const Validated\+Vector\+Multivariate\+Function \&function, const \mbox{\hyperlink{group__FunctionModule_gafdd31b4d01081cd09aad2ce11117f867}{Exact\+Box\+Type}} \&codomain, const \mbox{\hyperlink{classAriadne_1_1Point}{Exact\+Point\+Type}} \&point) const
+\begin{DoxyCompactList}\small\item\em Test if {\itshape point} is in {\itshape domain} and the image of {\itshape point} under the function {\itshape function} lies in {\itshape codomain}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1ConstraintSolver_a8176f8c58feb9f766c52b4724e38c93c}\label{classAriadne_1_1ConstraintSolver_a8176f8c58feb9f766c52b4724e38c93c} 
+virtual \mbox{\hyperlink{namespaceAriadne_a76a8b016e5ad61faf9062cc387df5016}{Bool}} {\bfseries reduce} (\mbox{\hyperlink{group__FunctionModule_gadb510bd9aa076e5ae44245b498901ca6}{Upper\+Box\+Type}} \&domain, const Validated\+Vector\+Multivariate\+Function \&function, const \mbox{\hyperlink{group__FunctionModule_gafdd31b4d01081cd09aad2ce11117f867}{Exact\+Box\+Type}} \&codomain) const
+\begin{DoxyCompactList}\small\item\em Try to reduce the size of the domain by propagating interval constraints. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1ConstraintSolver_a537fc0d5482330e87afa298ed51cd066}\label{classAriadne_1_1ConstraintSolver_a537fc0d5482330e87afa298ed51cd066} 
+virtual \mbox{\hyperlink{namespaceAriadne_abbe0884d033ed6289d1f654576d7bb07}{Pair}}$<$ \mbox{\hyperlink{classAriadne_1_1ValidatedKleenean}{Validated\+Kleenean}}, \mbox{\hyperlink{classAriadne_1_1Point}{Exact\+Point\+Type}} $>$ {\bfseries feasible} (const \mbox{\hyperlink{group__FunctionModule_gafdd31b4d01081cd09aad2ce11117f867}{Exact\+Box\+Type}} \&domain, const \mbox{\hyperlink{classAriadne_1_1List}{List}}$<$ \mbox{\hyperlink{classAriadne_1_1Constraint}{Validated\+Constraint}} $>$ \&constraints) const
+\begin{DoxyCompactList}\small\item\em Test if the constraints are solvable using a nonlinear feasibility test. Returns an approximate feasible point if the result is true. (Deprecated) \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1ConstraintSolver_aa4e468ff6852628f6514c07d42769798}\label{classAriadne_1_1ConstraintSolver_aa4e468ff6852628f6514c07d42769798} 
+virtual \mbox{\hyperlink{namespaceAriadne_a76a8b016e5ad61faf9062cc387df5016}{Bool}} {\bfseries reduce} (\mbox{\hyperlink{group__FunctionModule_gadb510bd9aa076e5ae44245b498901ca6}{Upper\+Box\+Type}} \&domain, const \mbox{\hyperlink{classAriadne_1_1List}{List}}$<$ \mbox{\hyperlink{classAriadne_1_1Constraint}{Validated\+Constraint}} $>$ \&constraints) const
+\begin{DoxyCompactList}\small\item\em Try to reduce the size of the domain by propagating interval constraints. (Deprecated) \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1ConstraintSolver_a6538d206590c6e851aa27d8ae842eaf6}\label{classAriadne_1_1ConstraintSolver_a6538d206590c6e851aa27d8ae842eaf6} 
+\mbox{\hyperlink{namespaceAriadne_a76a8b016e5ad61faf9062cc387df5016}{Bool}} {\bfseries hull\+\_\+reduce} (\mbox{\hyperlink{group__FunctionModule_gadb510bd9aa076e5ae44245b498901ca6}{Upper\+Box\+Type}} \&bx, const Validated\+Vector\+Multivariate\+Function \&function, const \mbox{\hyperlink{group__FunctionModule_gafdd31b4d01081cd09aad2ce11117f867}{Exact\+Box\+Type}} \&codomain) const
+\begin{DoxyCompactList}\small\item\em Try to enforce hull consistency by propagating several interval constraints at once. This method is sharp if each variable occurs at most once in the constraint. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1ConstraintSolver_aed736ba84b92c296838780fdaa239784}\label{classAriadne_1_1ConstraintSolver_aed736ba84b92c296838780fdaa239784} 
+\mbox{\hyperlink{namespaceAriadne_a76a8b016e5ad61faf9062cc387df5016}{Bool}} {\bfseries hull\+\_\+reduce} (\mbox{\hyperlink{group__FunctionModule_gadb510bd9aa076e5ae44245b498901ca6}{Upper\+Box\+Type}} \&bx, const Validated\+Scalar\+Multivariate\+Function \&function, const \mbox{\hyperlink{group__FunctionModule_gab4f81d909c87bd33486c446890723bb1}{Exact\+Interval\+Type}} \&codomain) const
+\begin{DoxyCompactList}\small\item\em Try to enforce hull consistency by propagating an interval constraint. This method is sharp if each variable occurs at most once in the constraint. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1ConstraintSolver_af487d052f6ebd443dfd816ea21da660e}\label{classAriadne_1_1ConstraintSolver_af487d052f6ebd443dfd816ea21da660e} 
+\mbox{\hyperlink{namespaceAriadne_a76a8b016e5ad61faf9062cc387df5016}{Bool}} {\bfseries lyapunov\+\_\+reduce} (\mbox{\hyperlink{group__FunctionModule_gadb510bd9aa076e5ae44245b498901ca6}{Upper\+Box\+Type}} \&domain, const \mbox{\hyperlink{group__FunctionModelSubModule_ga2c22c0befb7ccf11c80015eee7e7a78b}{Validated\+Vector\+Multivariate\+Taylor\+Function\+Model\+DP}} \&function, const \mbox{\hyperlink{group__FunctionModule_gafdd31b4d01081cd09aad2ce11117f867}{Exact\+Box\+Type}} \&codomain, \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ \mbox{\hyperlink{namespaceAriadne_af915b9f1459c9691328efa71c6f39c6e}{Float\+DP}} $>$ centre, \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ \mbox{\hyperlink{namespaceAriadne_af915b9f1459c9691328efa71c6f39c6e}{Float\+DP}} $>$ multpliers) const
+\begin{DoxyCompactList}\small\item\em Reduce the {\itshape domain} by testing intersection of {\itshape multipliers} inner product {\itshape function}({\itshape domain}) with {\itshape multipliers} innner product {\itshape codomain}, centering at {\itshape centre}. Reduces $(\lambda\cdot f)(X) \cap (\lambda\cdot C)$, evaluating $g(x)=g(x^*)+Dg(X) (X-x^*)$. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1ConstraintSolver_ab06bcc23f70b58cc3ce58dcd14e00454}\label{classAriadne_1_1ConstraintSolver_ab06bcc23f70b58cc3ce58dcd14e00454} 
+\mbox{\hyperlink{namespaceAriadne_a76a8b016e5ad61faf9062cc387df5016}{Bool}} {\bfseries box\+\_\+reduce} (\mbox{\hyperlink{group__FunctionModule_gadb510bd9aa076e5ae44245b498901ca6}{Upper\+Box\+Type}} \&bx, const Validated\+Scalar\+Multivariate\+Function \&function, const \mbox{\hyperlink{group__FunctionModule_gab4f81d909c87bd33486c446890723bb1}{Exact\+Interval\+Type}} \&, \mbox{\hyperlink{namespaceAriadne_acd8b5f68421eb22a84277ef7c9c0ee2a}{Size\+Type}} j) const
+\begin{DoxyCompactList}\small\item\em Try to enforce hull consistency by reducing a constraint with respect to one variable. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1ConstraintSolver_a284750ea98b0bc17bebe95cadbb04f9c}\label{classAriadne_1_1ConstraintSolver_a284750ea98b0bc17bebe95cadbb04f9c} 
+\mbox{\hyperlink{namespaceAriadne_a76a8b016e5ad61faf9062cc387df5016}{Bool}} {\bfseries monotone\+\_\+reduce} (\mbox{\hyperlink{group__FunctionModule_gadb510bd9aa076e5ae44245b498901ca6}{Upper\+Box\+Type}} \&bx, const Validated\+Scalar\+Multivariate\+Function \&function, const \mbox{\hyperlink{group__FunctionModule_gab4f81d909c87bd33486c446890723bb1}{Exact\+Interval\+Type}} \&, \mbox{\hyperlink{namespaceAriadne_acd8b5f68421eb22a84277ef7c9c0ee2a}{Size\+Type}} j) const
+\begin{DoxyCompactList}\small\item\em Try to enforce hull consistency by reducing an a monotone dimension. This method is sharp if each variable occurs at most once in the constraint. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1ConstraintSolver_ab90659dcfafa0a1f0016a614cea8f607}\label{classAriadne_1_1ConstraintSolver_ab90659dcfafa0a1f0016a614cea8f607} 
+\mbox{\hyperlink{namespaceAriadne_abbe0884d033ed6289d1f654576d7bb07}{Pair}}$<$ \mbox{\hyperlink{group__FunctionModule_gadb510bd9aa076e5ae44245b498901ca6}{Upper\+Box\+Type}}, \mbox{\hyperlink{group__FunctionModule_gadb510bd9aa076e5ae44245b498901ca6}{Upper\+Box\+Type}} $>$ {\bfseries split} (const \mbox{\hyperlink{group__FunctionModule_gadb510bd9aa076e5ae44245b498901ca6}{Upper\+Box\+Type}} \&domain, const Validated\+Vector\+Multivariate\+Function \&function, const \mbox{\hyperlink{group__FunctionModule_gafdd31b4d01081cd09aad2ce11117f867}{Exact\+Box\+Type}} \&codomain) const
+\begin{DoxyCompactList}\small\item\em Split the domain into two pieces to help try to solve the constraints. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+The documentation for this class was generated from the following files\+:\begin{DoxyCompactItemize}
+\item 
+source/solvers/\mbox{\hyperlink{constraint__solver_8hpp}{constraint\+\_\+solver.\+hpp}}\item 
+source/solvers/constraint\+\_\+solver.\+cpp\end{DoxyCompactItemize}

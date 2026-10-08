@@ -1,0 +1,15 @@
+Reuse retained quadratic reductions during scalar approximation
+
+Evaluate an already cached exact quadratic-tower reduction at the requested
+precision, including below general expression nodes. Reuse the ordinary
+approximation kernels, abort signal and numerical cache publication without
+rediscovering a field or constraining arbitrary exact expressions.
+
+Cover long retained histories, finer and coarser precision requests, nested
+radicals with signed coefficients, inverses and concurrent cache publication.
+Classify the existing exact tower compaction API in the GMP coverage audit.
+
+Validation: Hyperreal unit and integration suites, 527 Hypersolve unit tests,
+232 selected Hypercurve release tests, all-target Clippy, formatting, editing
+fuzz compilation, denied-warning docs and Hyperbrep checks. The two recorded
+full extended-fillet re-offset performance failures remain unresolved.

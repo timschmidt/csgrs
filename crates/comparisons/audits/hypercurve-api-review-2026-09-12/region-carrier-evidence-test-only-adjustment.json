@@ -1,0 +1,10 @@
+{
+  "changed": [
+    "hypercurve/src/curve_region_boolean.rs"
+  ],
+  "production_prefix_unchanged": true,
+  "normal_library_sha256": "f551a11d28cdb89c52b47a0bc2009066f78c99659ab275ce54adb47ff741f4b7",
+  "frozen_final_source_manifest": "region-carrier-evidence-source-before-tests.json",
+  "normal_build_source_manifest": "region-carrier-evidence-source-before-normal-builds.json",
+  "reason": "Keep the new exterior/selected-range point replay assertion in its focused regression, while preserving the additional generic retracing-point equality stress reproducer separately."
+}

@@ -1,0 +1,22 @@
+   Compiling hypercurve v0.3.1 (/home/tim/Documents/GitHub/workspace/hypercurve)
+    Finished `release` profile [optimized] target(s) in 1m 04s
+     Running unittests src/lib.rs (target/release/deps/hypercurve-6e6572a45c5b177b)
+
+running 2 tests
+test bezier_offset::conversion_tests::fiber_specialization_preserves_axis_order_and_ragged_zero_rows ... ok
+test bezier_offset::conversion_tests::fiber_specialization_retains_native_quadratic_root_certificates ... 
+thread 'bezier_offset::conversion_tests::fiber_specialization_retains_native_quadratic_root_certificates' (109) panicked at src/bezier_offset.rs:130699:21:
+assertion `left == right` failed: bivariate second fiber, coefficient row 0
+  left: Unknown
+ right: Zero
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+FAILED
+
+failures:
+
+failures:
+    bezier_offset::conversion_tests::fiber_specialization_retains_native_quadratic_root_certificates
+
+test result: FAILED. 1 passed; 1 failed; 0 ignored; 0 measured; 897 filtered out; finished in 0.00s
+
+error: test failed, to rerun pass `--lib`

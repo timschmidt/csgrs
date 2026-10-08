@@ -1,0 +1,19 @@
+heaptrack output will be written to "/tmp/hypercurve-active-radical-candidate-sheets.heap.zst"
+starting application, this might take some time...
+NOTE: heaptrack detected DEBUGINFOD_URLS but will disable it to prevent 
+unintended network delays during recording
+If you really want to use DEBUGINFOD, export HEAPTRACK_ENABLE_DEBUGINFOD=1
+
+running 2 tests
+test bezier_offset::conversion_tests::chord_normal_dense_sheet_replay_keeps_even_roots_and_zero_components ... ok
+test bezier_offset::conversion_tests::chord_normal_dense_sheet_replay_rejects_conjugate_roots ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 889 filtered out; finished in 0.05s
+
+heaptrack stats:
+	allocations:          	6601
+	leaked allocations:   	246
+	temporary allocations:	1103
+Heaptrack finished! Now run the following to investigate the data:
+
+  heaptrack --analyze "/tmp/hypercurve-active-radical-candidate-sheets.heap.zst"

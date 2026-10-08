@@ -1,0 +1,14 @@
+[
+  {
+    "file": "hypercurve/src/bezier_region.rs",
+    "sha256": "cc1f84b312631f0e556034139e12546d236b3f7d84524cfee35c00f18369da45"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_bezier_region.rs",
+    "sha256": "1edb314ff68d86ac2adfa0ad85d1c6b560a4c518ac6aa389531d6ae117a3246b"
+  },
+  {
+    "file": "hypercurve/src/bezier_offset.rs",
+    "sha256": "3297b5740d2e63c8fc5cb8acb27121054bc160d3f233a898a0f78f5103664875"
+  }
+]

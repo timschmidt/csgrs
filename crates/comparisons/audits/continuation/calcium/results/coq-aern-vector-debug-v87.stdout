@@ -1,0 +1,37 @@
+
+running 6 tests
+test algebra_fact_packets_cover_zero_nonzero_unknown_and_large_masks ... ok
+test generic_shared_scale_surfaces_cover_empty_wide_and_schedule_queries ... ok
+test scalar_unknown_domain_active_abort_and_projective_general_path_are_covered ... ok
+test point_views_facts_conversions_collections_and_ownership_forms_are_covered ... ok
+test complex_power_status_ownership_and_symbolic_fallbacks_are_covered ... ok
+test vector_public_surface_and_all_abort_sparse_masks_are_covered ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 21 tests
+test owned_shared_scale_vector_retains_one_fact_packet ... ok
+test finite_f64_array_boundary_is_checked_and_lossy_export_is_explicit ... ok
+test checked_vector_operations_reject_zero_divisors ... ok
+test checked_vector_operations_reject_unknown_zero_divisors ... ok
+test vector2_structural_facts_certify_signed_unit_axes ... ok
+test shared_scale_vectors_use_known_exact_dot_products ... ok
+test shared_scale_vectors_use_known_exact_wedge_products ... ok
+test shared_scale_vectors_use_known_exact_cross_products ... ok
+test vector3_and_vector4_structural_facts_expose_sparse_masks_and_homogeneous_kind ... ok
+test owned_shared_scale_vectors_preserve_common_scale_across_lifetimes ... ok
+test vector2_structural_facts_expose_zero_mask_without_topology ... ok
+test vector3_checked_basis_and_unit_cross_are_owned_lattice_helpers ... ok
+test vector3_squared_distance_stays_in_hyperreal_space ... ok
+test vector_affine_aggregate_helpers_keep_components_in_hyperreal_space ... ok
+test vector_display_forwards_real_formatting ... ok
+test vector_dot_and_normalize ... ok
+test vector_exact_facts_carry_common_scale_without_denominator_access ... ok
+test vector_scalar_add_and_subtract_are_componentwise ... ok
+test vector_shared_scale_views_preserve_borrowed_common_scale_facts ... ok
+test vector_structural_facts_summarize_symbolic_dependencies ... ok
+test vector_facts_classify_squared_norm_zero_status_without_self_dot ... ok
+
+test result: ok. 21 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+

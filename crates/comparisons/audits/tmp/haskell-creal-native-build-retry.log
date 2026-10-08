@@ -1,0 +1,596 @@
+All test running disabled by --no-run-tests flag. To mute this message in future, set
+notify-if-no-run-tests: false in Stack's configuration.
+All benchmark running disabled by --no-run-benchmarks flag. To mute this message in future, set
+notify-if-no-run-benchmarks: false in Stack's configuration.
+cabal-doctest   > configure
+checkers        > configure
+cabal-doctest   > Configuring cabal-doctest-1.0.11...
+checkers        > Configuring checkers-0.6.0...
+checkers        > build with ghc-9.6.7
+cabal-doctest   > build with ghc-9.6.7
+checkers        > Preprocessing library for checkers-0.6.0..
+checkers        > Building library for checkers-0.6.0..
+cabal-doctest   > Preprocessing library for cabal-doctest-1.0.11..
+cabal-doctest   > Building library for cabal-doctest-1.0.11..
+checkers        > [ 1 of 15] Compiling Control.Monad.Extensions
+cabal-doctest   > [1 of 1] Compiling Distribution.Extra.Doctest
+checkers        > [ 2 of 15] Compiling Test.QuickCheck.Bottoms
+checkers        > [ 3 of 15] Compiling Test.QuickCheck.Instances.Array
+checkers        > [ 4 of 15] Compiling Test.QuickCheck.Instances.Maybe
+checkers        > [ 5 of 15] Compiling Test.QuickCheck.Instances.Num
+checkers        > [ 6 of 15] Compiling Test.QuickCheck.Instances.List
+checkers        > 
+checkers        > /tmp/stack-097f18e4d21172e0/checkers-0.6.0/src/Test/QuickCheck/Instances/List.hs:13:1: warning: [-Wunused-imports]
+checkers        >     The import of ‘Control.Applicative’ is redundant
+checkers        >       except perhaps to import instances from ‘Control.Applicative’
+checkers        >     To import instances alone, use: import Control.Applicative()
+checkers        >    |
+checkers        > 13 | import Control.Applicative
+checkers        >    | ^^^^^^^^^^^^^^^^^^^^^^^^^^
+checkers        > [ 7 of 15] Compiling Test.QuickCheck.Instances.Ord
+checkers        > [ 8 of 15] Compiling Test.QuickCheck.Instances.Tuple
+checkers        > [ 9 of 15] Compiling Test.QuickCheck.Utils
+checkers        > [10 of 15] Compiling Test.QuickCheck.Checkers
+cabal-doctest   > copy/register
+cabal-doctest   > Installing library in /tmp/aern2-stack.ryVCFK/snapshots/x86_64-linux-tinfo6/a9cdb111ba43c34a9894161df33edb1b290c1c61f1b004418a8411cbdf470c15/9.6.7/lib/x86_64-linux-ghc-9.6.7/cabal-doctest-1.0.11-9ugT4ZwBM0w8IgSkyC0u7Q
+cabal-doctest   > Registering library for cabal-doctest-1.0.11..
+checkers        > [11 of 15] Compiling Test.QuickCheck.Later
+checkers        > [12 of 15] Compiling Test.QuickCheck.Instances.Eq
+checkers        > [13 of 15] Compiling Test.QuickCheck.Instances.Char
+checkers        > [14 of 15] Compiling Test.QuickCheck.Instances
+ghc-paths       > configure
+checkers        > [15 of 15] Compiling Test.QuickCheck.Classes
+ghc-paths       > [1 of 3] Compiling Main             ( /tmp/stack-097f18e4d21172e0/ghc-paths-0.1.0.12/Setup.hs, /tmp/stack-097f18e4d21172e0/ghc-paths-0.1.0.12/.stack-work/dist/x86_64-linux-tinfo6/ghc-9.6.7/setup/Main.o )
+ghc-paths       > [2 of 3] Compiling StackSetupShim   ( /tmp/aern2-stack.ryVCFK/setup-exe-src/setup-shim-O_vy6YIf.hs, /tmp/stack-097f18e4d21172e0/ghc-paths-0.1.0.12/.stack-work/dist/x86_64-linux-tinfo6/ghc-9.6.7/setup/StackSetupShim.o )
+ghc-paths       > [3 of 3] Linking /tmp/stack-097f18e4d21172e0/ghc-paths-0.1.0.12/.stack-work/dist/x86_64-linux-tinfo6/ghc-9.6.7/setup/setup
+ghc-paths       > Configuring ghc-paths-0.1.0.12...
+ghc-paths       > build with ghc-9.6.7
+ghc-paths       > Preprocessing library for ghc-paths-0.1.0.12..
+ghc-paths       > Building library for ghc-paths-0.1.0.12..
+ghc-paths       > [1 of 1] Compiling GHC.Paths
+checkers        > copy/register
+checkers        > Installing library in /tmp/aern2-stack.ryVCFK/snapshots/x86_64-linux-tinfo6/a9cdb111ba43c34a9894161df33edb1b290c1c61f1b004418a8411cbdf470c15/9.6.7/lib/x86_64-linux-ghc-9.6.7/checkers-0.6.0-K9MT8q7WxrYI48Sqg07W2a
+checkers        > Registering library for checkers-0.6.0..
+ghc-paths       > copy/register
+ghc-paths       > Installing library in /tmp/aern2-stack.ryVCFK/snapshots/x86_64-linux-tinfo6/a9cdb111ba43c34a9894161df33edb1b290c1c61f1b004418a8411cbdf470c15/9.6.7/lib/x86_64-linux-ghc-9.6.7/ghc-paths-0.1.0.12-FYbNroakwr3J9PgmQPEoze
+ghc-paths       > Registering library for ghc-paths-0.1.0.12..
+groups          > configure
+groups          > Configuring groups-0.5.3...
+happy           > configure
+happy           > Configuring happy-1.20.1.1...
+groups          > build with ghc-9.6.7
+happy           > build with ghc-9.6.7
+groups          > Preprocessing library for groups-0.5.3..
+groups          > Building library for groups-0.5.3..
+happy           > Preprocessing executable 'happy' for happy-1.20.1.1..
+happy           > Building executable 'happy' for happy-1.20.1.1..
+groups          > [1 of 1] Compiling Data.Group
+happy           > [ 1 of 19] Compiling AbsSyn
+happy           > [ 2 of 19] Compiling GenUtils
+happy           > [ 3 of 19] Compiling NameSet
+happy           > [ 4 of 19] Compiling ParamRules
+groups          > copy/register
+groups          > Installing library in /tmp/aern2-stack.ryVCFK/snapshots/x86_64-linux-tinfo6/a9cdb111ba43c34a9894161df33edb1b290c1c61f1b004418a8411cbdf470c15/9.6.7/lib/x86_64-linux-ghc-9.6.7/groups-0.5.3-3ipb3NY6qZ2Gi0u9EcSbaL
+happy           > [ 5 of 19] Compiling ParseMonad
+happy           > [ 6 of 19] Compiling Lexer
+groups          > Registering library for groups-0.5.3..
+syb             > configure
+syb             > Configuring syb-0.7.2.4...
+happy           > [ 7 of 19] Compiling AttrGrammar
+happy           > [ 8 of 19] Compiling AttrGrammarParser
+happy           > [ 9 of 19] Compiling Grammar
+syb             > build with ghc-9.6.7
+syb             > Preprocessing library for syb-0.7.2.4..
+syb             > Building library for syb-0.7.2.4..
+syb             > [ 1 of 16] Compiling Data.Generics.Aliases
+syb             > [ 2 of 16] Compiling Data.Generics.Basics
+syb             > [ 3 of 16] Compiling Data.Generics.Builders
+syb             > [ 4 of 16] Compiling Data.Generics.Instances
+happy           > [10 of 19] Compiling LALR
+syb             > [ 5 of 16] Compiling Data.Generics.Schemes
+syb             > [ 6 of 16] Compiling Data.Generics.Text
+syb             > [ 7 of 16] Compiling Data.Generics.Twins
+happy           > [11 of 19] Compiling First
+happy           > [12 of 19] Compiling Parser
+syb             > [ 8 of 16] Compiling Data.Generics
+syb             > [ 9 of 16] Compiling Generics.SYB
+syb             > [10 of 16] Compiling Generics.SYB.Aliases
+syb             > [11 of 16] Compiling Generics.SYB.Basics
+syb             > [12 of 16] Compiling Generics.SYB.Builders
+syb             > [13 of 16] Compiling Generics.SYB.Instances
+syb             > [14 of 16] Compiling Generics.SYB.Schemes
+syb             > [15 of 16] Compiling Generics.SYB.Text
+syb             > [16 of 16] Compiling Generics.SYB.Twins
+happy           > [13 of 19] Compiling Paths_happy
+syb             > copy/register
+happy           > [14 of 19] Compiling Info
+syb             > Installing library in /tmp/aern2-stack.ryVCFK/snapshots/x86_64-linux-tinfo6/a9cdb111ba43c34a9894161df33edb1b290c1c61f1b004418a8411cbdf470c15/9.6.7/lib/x86_64-linux-ghc-9.6.7/syb-0.7.2.4-FBa2dfZrzzu7owkvhCx23j
+syb             > Registering library for syb-0.7.2.4..
+happy           > [15 of 19] Compiling PrettyGrammar
+happy           > [16 of 19] Compiling ProduceGLRCode
+doctest         > configure
+doctest         > Configuring doctest-0.22.6...
+happy           > [17 of 19] Compiling Target
+happy           > [18 of 19] Compiling ProduceCode
+doctest         > build with ghc-9.6.7
+doctest         > Preprocessing library for doctest-0.22.6..
+doctest         > Building library for doctest-0.22.6..
+doctest         > [ 1 of 25] Compiling Imports
+doctest         > [ 2 of 25] Compiling GhcUtil
+doctest         > [ 3 of 25] Compiling Cabal.Paths
+doctest         > [ 4 of 25] Compiling Cabal.Options
+doctest         > [ 5 of 25] Compiling Language.Haskell.GhciWrapper
+doctest         > [ 6 of 25] Compiling Interpreter
+doctest         > [ 7 of 25] Compiling Location
+doctest         > [ 8 of 25] Compiling PackageDBs
+doctest         > [ 9 of 25] Compiling Paths_doctest
+doctest         > [10 of 25] Compiling Info
+doctest         > [11 of 25] Compiling Options
+doctest         > [12 of 25] Compiling Cabal
+doctest         > [13 of 25] Compiling Test.DocTest.Internal.Cabal
+happy           > [19 of 19] Compiling Main
+doctest         > [14 of 25] Compiling Test.DocTest.Internal.Location
+doctest         > [15 of 25] Compiling Util
+doctest         > [16 of 25] Compiling Extract
+doctest         > [17 of 25] Compiling Test.DocTest.Internal.Extract
+doctest         > [18 of 25] Compiling Parse
+doctest         > [19 of 25] Compiling Test.DocTest.Internal.Parse
+doctest         > [20 of 25] Compiling Runner.Example
+happy           > [20 of 20] Linking .stack-work/dist/x86_64-linux-tinfo6/ghc-9.6.7/build/happy/happy
+happy           > copy/register
+doctest         > [21 of 25] Compiling Property
+happy           > Installing executable happy in /tmp/aern2-stack.ryVCFK/snapshots/x86_64-linux-tinfo6/a9cdb111ba43c34a9894161df33edb1b290c1c61f1b004418a8411cbdf470c15/9.6.7/bin
+doctest         > [22 of 25] Compiling Runner
+doctest         > [23 of 25] Compiling Run
+doctest         > [24 of 25] Compiling Test.DocTest.Internal.Run
+doctest         > [25 of 25] Compiling Test.DocTest
+doctest         > Preprocessing executable 'doctest' for doctest-0.22.6..
+doctest         > Building executable 'doctest' for doctest-0.22.6..
+doctest         > [1 of 2] Compiling Main
+doctest         > [2 of 2] Compiling Paths_doctest
+doctest         > [3 of 3] Linking .stack-work/dist/x86_64-linux-tinfo6/ghc-9.6.7/build/doctest/doctest
+doctest         > copy/register
+doctest         > Installing library in /tmp/aern2-stack.ryVCFK/snapshots/x86_64-linux-tinfo6/a9cdb111ba43c34a9894161df33edb1b290c1c61f1b004418a8411cbdf470c15/9.6.7/lib/x86_64-linux-ghc-9.6.7/doctest-0.22.6-88TLQ5hLYdG13z4uJPhwj
+doctest         > Installing executable doctest in /tmp/aern2-stack.ryVCFK/snapshots/x86_64-linux-tinfo6/a9cdb111ba43c34a9894161df33edb1b290c1c61f1b004418a8411cbdf470c15/9.6.7/bin
+doctest         > Registering library for doctest-0.22.6..
+haskell-src-exts> configure
+haskell-src-exts> Configuring haskell-src-exts-1.23.1...
+haskell-src-exts> build with ghc-9.6.7
+haskell-src-exts> Preprocessing library for haskell-src-exts-1.23.1..
+haskell-src-exts> unused rules: 3
+haskell-src-exts> Building library for haskell-src-exts-1.23.1..
+haskell-src-exts> [ 1 of 18] Compiling Language.Haskell.Exts.Extension
+haskell-src-exts> [ 2 of 18] Compiling Language.Haskell.Exts.ExtScheme
+haskell-src-exts> [ 3 of 18] Compiling Language.Haskell.Exts.SrcLoc
+haskell-src-exts> [ 4 of 18] Compiling Language.Haskell.Exts.Syntax
+haskell-src-exts> [ 5 of 18] Compiling Language.Haskell.Exts.ParseSyntax
+haskell-src-exts> [ 6 of 18] Compiling Language.Haskell.Exts.Pretty
+haskell-src-exts> 
+haskell-src-exts> /tmp/stack-097f18e4d21172e0/haskell-src-exts-1.23.1/src/Language/Haskell/Exts/Pretty.hs:119:9: warning: [-Wnoncanonical-monad-instances]
+haskell-src-exts>     Noncanonical ‘(>>)’ definition detected
+haskell-src-exts>     in the instance declaration for ‘Monad (DocM s)’.
+haskell-src-exts>     ‘(>>)’ will eventually be removed in favour of ‘(*>)’
+haskell-src-exts>     Either remove definition for ‘(>>)’ (recommended) or define as ‘(>>) = (*>)’
+haskell-src-exts>     See also: https://gitlab.haskell.org/ghc/ghc/-/wikis/proposal/monad-of-no-return
+haskell-src-exts>     |
+haskell-src-exts> 119 |         (>>) = then_DocM
+haskell-src-exts>     |         ^^^^^^^^^^^^^^^^
+haskell-src-exts> 
+haskell-src-exts> /tmp/stack-097f18e4d21172e0/haskell-src-exts-1.23.1/src/Language/Haskell/Exts/Pretty.hs:120:9: warning: [-Wnoncanonical-monad-instances]
+haskell-src-exts>     Noncanonical ‘return’ definition detected
+haskell-src-exts>     in the instance declaration for ‘Monad (DocM s)’.
+haskell-src-exts>     ‘return’ will eventually be removed in favour of ‘pure’
+haskell-src-exts>     Either remove definition for ‘return’ (recommended) or define as ‘return = pure’
+haskell-src-exts>     See also: https://gitlab.haskell.org/ghc/ghc/-/wikis/proposal/monad-of-no-return
+haskell-src-exts>     |
+haskell-src-exts> 120 |         return = retDocM
+haskell-src-exts>     |         ^^^^^^^^^^^^^^^^
+haskell-src-exts> [ 7 of 18] Compiling Language.Haskell.Exts.Fixity
+haskell-src-exts> [ 8 of 18] Compiling Language.Haskell.Exts.Comments
+haskell-src-exts> [ 9 of 18] Compiling Language.Haskell.Exts.ParseMonad
+haskell-src-exts> 
+haskell-src-exts> /tmp/stack-097f18e4d21172e0/haskell-src-exts-1.23.1/src/Language/Haskell/Exts/ParseMonad.hs:101:3: warning: [-Wnoncanonical-monad-instances]
+haskell-src-exts>     Noncanonical ‘return’ definition detected
+haskell-src-exts>     in the instance declaration for ‘Monad ParseResult’.
+haskell-src-exts>     ‘return’ will eventually be removed in favour of ‘pure’
+haskell-src-exts>     Either remove definition for ‘return’ (recommended) or define as ‘return = pure’
+haskell-src-exts>     See also: https://gitlab.haskell.org/ghc/ghc/-/wikis/proposal/monad-of-no-return
+haskell-src-exts>     |
+haskell-src-exts> 101 |   return = ParseOk
+haskell-src-exts>     |   ^^^^^^^^^^^^^^^^
+haskell-src-exts> 
+haskell-src-exts> /tmp/stack-097f18e4d21172e0/haskell-src-exts-1.23.1/src/Language/Haskell/Exts/ParseMonad.hs:245:3: warning: [-Wnoncanonical-monad-instances]
+haskell-src-exts>     Noncanonical ‘pure = return’ definition detected
+haskell-src-exts>     in the instance declaration for ‘Applicative P’.
+haskell-src-exts>     Move definition from ‘return’ to ‘pure’
+haskell-src-exts>     See also: https://gitlab.haskell.org/ghc/ghc/-/wikis/proposal/monad-of-no-return
+haskell-src-exts>     |
+haskell-src-exts> 245 |   pure = return
+haskell-src-exts>     |   ^^^^^^^^^^^^^
+haskell-src-exts> 
+haskell-src-exts> /tmp/stack-097f18e4d21172e0/haskell-src-exts-1.23.1/src/Language/Haskell/Exts/ParseMonad.hs:249:5: warning: [-Wnoncanonical-monad-instances]
+haskell-src-exts>     Noncanonical ‘return’ definition detected
+haskell-src-exts>     in the instance declaration for ‘Monad P’.
+haskell-src-exts>     ‘return’ will eventually be removed in favour of ‘pure’
+haskell-src-exts>     Either remove definition for ‘return’ (recommended) or define as ‘return = pure’
+haskell-src-exts>     See also: https://gitlab.haskell.org/ghc/ghc/-/wikis/proposal/monad-of-no-return
+haskell-src-exts>     |
+haskell-src-exts> 249 |     return a = P $ \_i _x _y _l _ch s _m -> Ok s a
+haskell-src-exts>     |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+haskell-src-exts> 
+haskell-src-exts> /tmp/stack-097f18e4d21172e0/haskell-src-exts-1.23.1/src/Language/Haskell/Exts/ParseMonad.hs:357:5: warning: [-Wnoncanonical-monad-instances]
+haskell-src-exts>     Noncanonical ‘pure = return’ definition detected
+haskell-src-exts>     in the instance declaration for ‘Applicative (Lex r)’.
+haskell-src-exts>     Move definition from ‘return’ to ‘pure’
+haskell-src-exts>     See also: https://gitlab.haskell.org/ghc/ghc/-/wikis/proposal/monad-of-no-return
+haskell-src-exts>     |
+haskell-src-exts> 357 |     pure = return
+haskell-src-exts>     |     ^^^^^^^^^^^^^
+haskell-src-exts> 
+haskell-src-exts> /tmp/stack-097f18e4d21172e0/haskell-src-exts-1.23.1/src/Language/Haskell/Exts/ParseMonad.hs:361:5: warning: [-Wnoncanonical-monad-instances]
+haskell-src-exts>     Noncanonical ‘return’ definition detected
+haskell-src-exts>     in the instance declaration for ‘Monad (Lex r)’.
+haskell-src-exts>     ‘return’ will eventually be removed in favour of ‘pure’
+haskell-src-exts>     Either remove definition for ‘return’ (recommended) or define as ‘return = pure’
+haskell-src-exts>     See also: https://gitlab.haskell.org/ghc/ghc/-/wikis/proposal/monad-of-no-return
+haskell-src-exts>     |
+haskell-src-exts> 361 |     return a = Lex $ \k -> k a
+haskell-src-exts>     |     ^^^^^^^^^^^^^^^^^^^^^^^^^^
+haskell-src-exts> 
+haskell-src-exts> /tmp/stack-097f18e4d21172e0/haskell-src-exts-1.23.1/src/Language/Haskell/Exts/ParseMonad.hs:363:5: warning: [-Wnoncanonical-monad-instances]
+haskell-src-exts>     Noncanonical ‘(>>)’ definition detected
+haskell-src-exts>     in the instance declaration for ‘Monad (Lex r)’.
+haskell-src-exts>     ‘(>>)’ will eventually be removed in favour of ‘(*>)’
+haskell-src-exts>     Either remove definition for ‘(>>)’ (recommended) or define as ‘(>>) = (*>)’
+haskell-src-exts>     See also: https://gitlab.haskell.org/ghc/ghc/-/wikis/proposal/monad-of-no-return
+haskell-src-exts>     |
+haskell-src-exts> 363 |     Lex v >> Lex w = Lex $ \k -> v (\_ -> w k)
+haskell-src-exts>     |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+haskell-src-exts> 
+haskell-src-exts> /tmp/stack-097f18e4d21172e0/haskell-src-exts-1.23.1/src/Language/Haskell/Exts/ParseMonad.hs:380:32: warning: [GHC-62161] [-Wincomplete-uni-patterns]
+haskell-src-exts>     Pattern match(es) are non-exhaustive
+haskell-src-exts>     In a pattern binding: Patterns of type ‘[Char]’ not matched: []
+haskell-src-exts>     |
+haskell-src-exts> 380 |                         -> let (newCh:rest)= if n > 0 then drop (n-1) r else (ch:r)
+haskell-src-exts>     |                                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+haskell-src-exts> 
+haskell-src-exts> /tmp/stack-097f18e4d21172e0/haskell-src-exts-1.23.1/src/Language/Haskell/Exts/ParseMonad.hs:401:29: warning: [GHC-62161] [-Wincomplete-uni-patterns]
+haskell-src-exts>     Pattern match(es) are non-exhaustive
+haskell-src-exts>     In a lambda abstraction:
+haskell-src-exts>         Patterns of type ‘[Char]’, ‘Int’ not matched: [] _
+haskell-src-exts>     |
+haskell-src-exts> 401 | lexTab = Lex $ \cont -> P $ \(_:r) x -> runP (cont ()) r (nextTab x)
+haskell-src-exts>     |                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+haskell-src-exts> [10 of 18] Compiling Language.Haskell.Exts.ParseUtils
+haskell-src-exts> 
+haskell-src-exts> /tmp/stack-097f18e4d21172e0/haskell-src-exts-1.23.1/src/Language/Haskell/Exts/ParseUtils.hs:824:43: warning: [GHC-62161] [-Wincomplete-uni-patterns]
+haskell-src-exts>     Pattern match(es) are non-exhaustive
+haskell-src-exts>     In a pattern binding: Patterns of type ‘[Pat L]’ not matched: []
+haskell-src-exts>     |
+haskell-src-exts> 824 |                                  else let (a:bs) = ps
+haskell-src-exts>     |                                           ^^^^^^^^^^^
+haskell-src-exts> 
+haskell-src-exts> /tmp/stack-097f18e4d21172e0/haskell-src-exts-1.23.1/src/Language/Haskell/Exts/ParseUtils.hs:856:44: warning: [GHC-62161] [-Wincomplete-uni-patterns]
+haskell-src-exts>     Pattern match(es) are non-exhaustive
+haskell-src-exts>     In a pattern binding:
+haskell-src-exts>         Patterns of type ‘[SrcSpan]’ not matched:
+haskell-src-exts>             []
+haskell-src-exts>             [_]
+haskell-src-exts>             (_:_:_:_)
+haskell-src-exts>     |
+haskell-src-exts> 856 |                                        let [x,y] = srcInfoPoints l
+haskell-src-exts>     |                                            ^^^^^^^^^^^^^^^^^^^^^^^
+haskell-src-exts> 
+haskell-src-exts> /tmp/stack-097f18e4d21172e0/haskell-src-exts-1.23.1/src/Language/Haskell/Exts/ParseUtils.hs:906:7: warning: [GHC-62161] [-Wincomplete-uni-patterns]
+haskell-src-exts>     Pattern match(es) are non-exhaustive
+haskell-src-exts>     In a pattern binding: Patterns of type ‘[SrcSpan]’ not matched: []
+haskell-src-exts>     |
+haskell-src-exts> 906 |   let (b:_) = srcInfoPoints loc in return (name,typ,b)
+haskell-src-exts>     |       ^^^^^^^^^^^^^^^^^^^^^^^^^
+haskell-src-exts> 
+haskell-src-exts> /tmp/stack-097f18e4d21172e0/haskell-src-exts-1.23.1/src/Language/Haskell/Exts/ParseUtils.hs:1289:17: warning: [GHC-62161] [-Wincomplete-uni-patterns]
+haskell-src-exts>     Pattern match(es) are non-exhaustive
+haskell-src-exts>     In a lambda abstraction:
+haskell-src-exts>         Patterns of type ‘(Int, Either SrcSpan (CName L))’ not matched:
+haskell-src-exts>             (_, (Right _))
+haskell-src-exts>      |
+haskell-src-exts> 1289 |                (\(n,Left s) -> EWildcard (noInfoSpan s) n)
+haskell-src-exts>      |                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+haskell-src-exts> [11 of 18] Compiling Language.Haskell.Exts.InternalLexer
+haskell-src-exts> [12 of 18] Compiling Language.Haskell.Exts.Lexer
+haskell-src-exts> [13 of 18] Compiling Language.Haskell.Exts.InternalParser
+haskell-src-exts> [14 of 18] Compiling Language.Haskell.Exts.Parser
+haskell-src-exts> [15 of 18] Compiling Language.Haskell.Exts.ExactPrint
+haskell-src-exts> 
+haskell-src-exts> /tmp/stack-097f18e4d21172e0/haskell-src-exts-1.23.1/src/Language/Haskell/Exts/ExactPrint.hs:50:3: warning: [-Wnoncanonical-monad-instances]
+haskell-src-exts>     Noncanonical ‘pure = return’ definition detected
+haskell-src-exts>     in the instance declaration for ‘Applicative EP’.
+haskell-src-exts>     Move definition from ‘return’ to ‘pure’
+haskell-src-exts>     See also: https://gitlab.haskell.org/ghc/ghc/-/wikis/proposal/monad-of-no-return
+haskell-src-exts>    |
+haskell-src-exts> 50 |   pure = return
+haskell-src-exts>    |   ^^^^^^^^^^^^^
+haskell-src-exts> 
+haskell-src-exts> /tmp/stack-097f18e4d21172e0/haskell-src-exts-1.23.1/src/Language/Haskell/Exts/ExactPrint.hs:54:3: warning: [-Wnoncanonical-monad-instances]
+haskell-src-exts>     Noncanonical ‘return’ definition detected
+haskell-src-exts>     in the instance declaration for ‘Monad EP’.
+haskell-src-exts>     ‘return’ will eventually be removed in favour of ‘pure’
+haskell-src-exts>     Either remove definition for ‘return’ (recommended) or define as ‘return = pure’
+haskell-src-exts>     See also: https://gitlab.haskell.org/ghc/ghc/-/wikis/proposal/monad-of-no-return
+haskell-src-exts>    |
+haskell-src-exts> 54 |   return x = EP $ \l cs -> (x, l, cs, id)
+haskell-src-exts>    |   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+haskell-src-exts> 
+haskell-src-exts> /tmp/stack-097f18e4d21172e0/haskell-src-exts-1.23.1/src/Language/Haskell/Exts/ExactPrint.hs:381:18: warning: [GHC-62161] [-Wincomplete-uni-patterns]
+haskell-src-exts>     Pattern match(es) are non-exhaustive
+haskell-src-exts>     In a pattern binding: Patterns of type ‘[SrcSpan]’ not matched: []
+haskell-src-exts>     |
+haskell-src-exts> 381 |              let (x:pts') = pts
+haskell-src-exts>     |                  ^^^^^^^^^^^^^^
+haskell-src-exts> 
+haskell-src-exts> /tmp/stack-097f18e4d21172e0/haskell-src-exts-1.23.1/src/Language/Haskell/Exts/ExactPrint.hs:702:21: warning: [GHC-62161] [-Wincomplete-uni-patterns]
+haskell-src-exts>     Pattern match(es) are non-exhaustive
+haskell-src-exts>     In a pattern binding: Patterns of type ‘[SrcSpan]’ not matched: []
+haskell-src-exts>     |
+haskell-src-exts> 702 |                 let (p:pts') = pts
+haskell-src-exts>     |                     ^^^^^^^^^^^^^^
+haskell-src-exts> 
+haskell-src-exts> /tmp/stack-097f18e4d21172e0/haskell-src-exts-1.23.1/src/Language/Haskell/Exts/ExactPrint.hs:742:13: warning: [GHC-62161] [-Wincomplete-uni-patterns]
+haskell-src-exts>     Pattern match(es) are non-exhaustive
+haskell-src-exts>     In a pattern binding: Patterns of type ‘[SrcSpan]’ not matched: []
+haskell-src-exts>     |
+haskell-src-exts> 742 |         let (pat:pts) = srcInfoPoints l
+haskell-src-exts>     |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+haskell-src-exts> 
+haskell-src-exts> /tmp/stack-097f18e4d21172e0/haskell-src-exts-1.23.1/src/Language/Haskell/Exts/ExactPrint.hs:1748:13: warning: [GHC-62161] [-Wincomplete-uni-patterns]
+haskell-src-exts>     Pattern match(es) are non-exhaustive
+haskell-src-exts>     In a pattern binding: Patterns of type ‘[SrcSpan]’ not matched: []
+haskell-src-exts>      |
+haskell-src-exts> 1748 |         let (opt:pts) = srcInfoPoints l
+haskell-src-exts>      |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+haskell-src-exts> [16 of 18] Compiling Language.Haskell.Exts.Build
+haskell-src-exts> [17 of 18] Compiling Language.Preprocessor.Unlit
+haskell-src-exts> 
+haskell-src-exts> /tmp/stack-097f18e4d21172e0/haskell-src-exts-1.23.1/src/Language/Preprocessor/Unlit.hs:17:25: warning: [GHC-63397] [-Wname-shadowing]
+haskell-src-exts>     This binding for ‘x’ shadows the existing binding
+haskell-src-exts>       bound at src/Language/Preprocessor/Unlit.hs:14:17
+haskell-src-exts>    |
+haskell-src-exts> 17 |          allProg (('\\':x):xs) |  "end{code}"`isPrefixOf`x = Blank : classify xs
+haskell-src-exts>    |                         ^
+haskell-src-exts> 
+haskell-src-exts> /tmp/stack-097f18e4d21172e0/haskell-src-exts-1.23.1/src/Language/Preprocessor/Unlit.hs:17:28: warning: [GHC-63397] [-Wname-shadowing]
+haskell-src-exts>     This binding for ‘xs’ shadows the existing binding
+haskell-src-exts>       bound at src/Language/Preprocessor/Unlit.hs:14:20
+haskell-src-exts>    |
+haskell-src-exts> 17 |          allProg (('\\':x):xs) |  "end{code}"`isPrefixOf`x = Blank : classify xs
+haskell-src-exts>    |                            ^^
+haskell-src-exts> 
+haskell-src-exts> /tmp/stack-097f18e4d21172e0/haskell-src-exts-1.23.1/src/Language/Preprocessor/Unlit.hs:18:19: warning: [GHC-63397] [-Wname-shadowing]
+haskell-src-exts>     This binding for ‘x’ shadows the existing binding
+haskell-src-exts>       bound at src/Language/Preprocessor/Unlit.hs:14:17
+haskell-src-exts>    |
+haskell-src-exts> 18 |          allProg (x:xs) = Program x:allProg xs
+haskell-src-exts>    |                   ^
+haskell-src-exts> 
+haskell-src-exts> /tmp/stack-097f18e4d21172e0/haskell-src-exts-1.23.1/src/Language/Preprocessor/Unlit.hs:18:21: warning: [GHC-63397] [-Wname-shadowing]
+haskell-src-exts>     This binding for ‘xs’ shadows the existing binding
+haskell-src-exts>       bound at src/Language/Preprocessor/Unlit.hs:14:20
+haskell-src-exts>    |
+haskell-src-exts> 18 |          allProg (x:xs) = Program x:allProg xs
+haskell-src-exts>    |                     ^^
+haskell-src-exts> 
+haskell-src-exts> /tmp/stack-097f18e4d21172e0/haskell-src-exts-1.23.1/src/Language/Preprocessor/Unlit.hs:27:11: warning: [-Wunused-matches]
+haskell-src-exts>     Defined but not used: ‘x’
+haskell-src-exts>    |
+haskell-src-exts> 27 | classify (x:xs)                 = Comment:classify xs
+haskell-src-exts>    |           ^
+haskell-src-exts> 
+haskell-src-exts> /tmp/stack-097f18e4d21172e0/haskell-src-exts-1.23.1/src/Language/Preprocessor/Unlit.hs:46:17: warning: [-Wunused-matches]
+haskell-src-exts>     Defined but not used: ‘y’
+haskell-src-exts>    |
+haskell-src-exts> 46 | adjacent file n y@(Program _) (x@Comment      :xs) = error (message file n "program" "comment")
+haskell-src-exts>    |                 ^
+haskell-src-exts> 
+haskell-src-exts> /tmp/stack-097f18e4d21172e0/haskell-src-exts-1.23.1/src/Language/Preprocessor/Unlit.hs:46:32: warning: [-Wunused-matches]
+haskell-src-exts>     Defined but not used: ‘x’
+haskell-src-exts>    |
+haskell-src-exts> 46 | adjacent file n y@(Program _) (x@Comment      :xs) = error (message file n "program" "comment")
+haskell-src-exts>    |                                ^
+haskell-src-exts> 
+haskell-src-exts> /tmp/stack-097f18e4d21172e0/haskell-src-exts-1.23.1/src/Language/Preprocessor/Unlit.hs:46:48: warning: [-Wunused-matches]
+haskell-src-exts>     Defined but not used: ‘xs’
+haskell-src-exts>    |
+haskell-src-exts> 46 | adjacent file n y@(Program _) (x@Comment      :xs) = error (message file n "program" "comment")
+haskell-src-exts>    |                                                ^^
+haskell-src-exts> 
+haskell-src-exts> /tmp/stack-097f18e4d21172e0/haskell-src-exts-1.23.1/src/Language/Preprocessor/Unlit.hs:47:10: warning: [-Wunused-matches]
+haskell-src-exts>     Defined but not used: ‘file’
+haskell-src-exts>    |
+haskell-src-exts> 47 | adjacent file n y@(Program _) (x@(Include i f):xs) = x: adjacent f    i     y xs
+haskell-src-exts>    |          ^^^^
+haskell-src-exts> 
+haskell-src-exts> /tmp/stack-097f18e4d21172e0/haskell-src-exts-1.23.1/src/Language/Preprocessor/Unlit.hs:47:15: warning: [-Wunused-matches]
+haskell-src-exts>     Defined but not used: ‘n’
+haskell-src-exts>    |
+haskell-src-exts> 47 | adjacent file n y@(Program _) (x@(Include i f):xs) = x: adjacent f    i     y xs
+haskell-src-exts>    |               ^
+haskell-src-exts> 
+haskell-src-exts> /tmp/stack-097f18e4d21172e0/haskell-src-exts-1.23.1/src/Language/Preprocessor/Unlit.hs:49:17: warning: [-Wunused-matches]
+haskell-src-exts>     Defined but not used: ‘y’
+haskell-src-exts>    |
+haskell-src-exts> 49 | adjacent file n y@Comment     (x@(Program _)  :xs) = error (message file n "comment" "program")
+haskell-src-exts>    |                 ^
+haskell-src-exts> 
+haskell-src-exts> /tmp/stack-097f18e4d21172e0/haskell-src-exts-1.23.1/src/Language/Preprocessor/Unlit.hs:49:32: warning: [-Wunused-matches]
+haskell-src-exts>     Defined but not used: ‘x’
+haskell-src-exts>    |
+haskell-src-exts> 49 | adjacent file n y@Comment     (x@(Program _)  :xs) = error (message file n "comment" "program")
+haskell-src-exts>    |                                ^
+haskell-src-exts> 
+haskell-src-exts> /tmp/stack-097f18e4d21172e0/haskell-src-exts-1.23.1/src/Language/Preprocessor/Unlit.hs:49:48: warning: [-Wunused-matches]
+haskell-src-exts>     Defined but not used: ‘xs’
+haskell-src-exts>    |
+haskell-src-exts> 49 | adjacent file n y@Comment     (x@(Program _)  :xs) = error (message file n "comment" "program")
+haskell-src-exts>    |                                                ^^
+haskell-src-exts> 
+haskell-src-exts> /tmp/stack-097f18e4d21172e0/haskell-src-exts-1.23.1/src/Language/Preprocessor/Unlit.hs:50:10: warning: [-Wunused-matches]
+haskell-src-exts>     Defined but not used: ‘file’
+haskell-src-exts>    |
+haskell-src-exts> 50 | adjacent file n y@Comment     (x@(Include i f):xs) = x: adjacent f    i     y xs
+haskell-src-exts>    |          ^^^^
+haskell-src-exts> 
+haskell-src-exts> /tmp/stack-097f18e4d21172e0/haskell-src-exts-1.23.1/src/Language/Preprocessor/Unlit.hs:50:15: warning: [-Wunused-matches]
+haskell-src-exts>     Defined but not used: ‘n’
+haskell-src-exts>    |
+haskell-src-exts> 50 | adjacent file n y@Comment     (x@(Include i f):xs) = x: adjacent f    i     y xs
+haskell-src-exts>    |               ^
+haskell-src-exts> 
+haskell-src-exts> /tmp/stack-097f18e4d21172e0/haskell-src-exts-1.23.1/src/Language/Preprocessor/Unlit.hs:52:10: warning: [-Wunused-matches]
+haskell-src-exts>     Defined but not used: ‘file’
+haskell-src-exts>    |
+haskell-src-exts> 52 | adjacent file n y@Blank       (x@(Include i f):xs) = x: adjacent f    i     y xs
+haskell-src-exts>    |          ^^^^
+haskell-src-exts> 
+haskell-src-exts> /tmp/stack-097f18e4d21172e0/haskell-src-exts-1.23.1/src/Language/Preprocessor/Unlit.hs:52:15: warning: [-Wunused-matches]
+haskell-src-exts>     Defined but not used: ‘n’
+haskell-src-exts>    |
+haskell-src-exts> 52 | adjacent file n y@Blank       (x@(Include i f):xs) = x: adjacent f    i     y xs
+haskell-src-exts>    |               ^
+haskell-src-exts> 
+haskell-src-exts> /tmp/stack-097f18e4d21172e0/haskell-src-exts-1.23.1/src/Language/Preprocessor/Unlit.hs:54:34: warning: [-Wunused-matches]
+haskell-src-exts>     Defined but not used: ‘next’
+haskell-src-exts>    |
+haskell-src-exts> 54 | adjacent file n _             (x@next         :xs) = x: adjacent file (n+1) x xs
+haskell-src-exts>    |                                  ^^^^
+haskell-src-exts> 
+haskell-src-exts> /tmp/stack-097f18e4d21172e0/haskell-src-exts-1.23.1/src/Language/Preprocessor/Unlit.hs:55:10: warning: [-Wunused-matches]
+haskell-src-exts>     Defined but not used: ‘file’
+haskell-src-exts>    |
+haskell-src-exts> 55 | adjacent file n _             []                   = []
+haskell-src-exts>    |          ^^^^
+haskell-src-exts> 
+haskell-src-exts> /tmp/stack-097f18e4d21172e0/haskell-src-exts-1.23.1/src/Language/Preprocessor/Unlit.hs:55:15: warning: [-Wunused-matches]
+haskell-src-exts>     Defined but not used: ‘n’
+haskell-src-exts>    |
+haskell-src-exts> 55 | adjacent file n _             []                   = []
+haskell-src-exts>    |               ^
+haskell-src-exts> 
+haskell-src-exts> /tmp/stack-097f18e4d21172e0/haskell-src-exts-1.23.1/src/Language/Preprocessor/Unlit.hs:69:22: warning: [GHC-63397] [-Wname-shadowing]
+haskell-src-exts>     This binding for ‘s’ shadows the existing binding
+haskell-src-exts>       bound at src/Language/Preprocessor/Unlit.hs:66:9
+haskell-src-exts>    |
+haskell-src-exts> 69 |   lines' ('\^M':'\n':s) acc = acc [] : lines' s id      -- DOS
+haskell-src-exts>    |                      ^
+haskell-src-exts> 
+haskell-src-exts> /tmp/stack-097f18e4d21172e0/haskell-src-exts-1.23.1/src/Language/Preprocessor/Unlit.hs:70:17: warning: [GHC-63397] [-Wname-shadowing]
+haskell-src-exts>     This binding for ‘s’ shadows the existing binding
+haskell-src-exts>       bound at src/Language/Preprocessor/Unlit.hs:66:9
+haskell-src-exts>    |
+haskell-src-exts> 70 |   lines' ('\^M':s)      acc = acc [] : lines' s id      -- MacOS
+haskell-src-exts>    |                 ^
+haskell-src-exts> 
+haskell-src-exts> /tmp/stack-097f18e4d21172e0/haskell-src-exts-1.23.1/src/Language/Preprocessor/Unlit.hs:71:16: warning: [GHC-63397] [-Wname-shadowing]
+haskell-src-exts>     This binding for ‘s’ shadows the existing binding
+haskell-src-exts>       bound at src/Language/Preprocessor/Unlit.hs:66:9
+haskell-src-exts>    |
+haskell-src-exts> 71 |   lines' ('\n':s)       acc = acc [] : lines' s id      -- Unix
+haskell-src-exts>    |                ^
+haskell-src-exts> 
+haskell-src-exts> /tmp/stack-097f18e4d21172e0/haskell-src-exts-1.23.1/src/Language/Preprocessor/Unlit.hs:72:13: warning: [GHC-63397] [-Wname-shadowing]
+haskell-src-exts>     This binding for ‘s’ shadows the existing binding
+haskell-src-exts>       bound at src/Language/Preprocessor/Unlit.hs:66:9
+haskell-src-exts>    |
+haskell-src-exts> 72 |   lines' (c:s)          acc = lines' s (acc . (c:))
+haskell-src-exts>    |             ^
+haskell-src-exts> [18 of 18] Compiling Language.Haskell.Exts
+haskell-src-exts> copy/register
+haskell-src-exts> Installing library in /tmp/aern2-stack.ryVCFK/snapshots/x86_64-linux-tinfo6/a9cdb111ba43c34a9894161df33edb1b290c1c61f1b004418a8411cbdf470c15/9.6.7/lib/x86_64-linux-ghc-9.6.7/haskell-src-exts-1.23.1-3FJzC4LIqYAD0q0bnl8iGb
+haskell-src-exts> Registering library for haskell-src-exts-1.23.1..
+tasty-th        > configure
+tasty-th        > Warning: tasty-th.cabal:34:3: The field "default-language" is available only
+tasty-th        > since the Cabal specification version 1.10. This field will be ignored.
+tasty-th        > Warning: tasty-th.cabal:24:3: The field "other-extensions" is available only
+tasty-th        > since the Cabal specification version 1.10.
+tasty-th        > Configuring tasty-th-0.1.7...
+tasty-th        > build with ghc-9.6.7
+tasty-th        > Preprocessing library for tasty-th-0.1.7..
+tasty-th        > Building library for tasty-th-0.1.7..
+tasty-th        > [1 of 1] Compiling Test.Tasty.TH
+tasty-th        > copy/register
+tasty-th        > Installing library in /tmp/aern2-stack.ryVCFK/snapshots/x86_64-linux-tinfo6/a9cdb111ba43c34a9894161df33edb1b290c1c61f1b004418a8411cbdf470c15/9.6.7/lib/x86_64-linux-ghc-9.6.7/tasty-th-0.1.7-Bo1nqBXK4JnGMMHhgIp9FK
+tasty-th        > Registering library for tasty-th-0.1.7..
+exact-real      > configure (lib + test + bench)
+[1 of 3] Compiling Main             ( /tmp/haskell-creal-audit.rafb8h/exact-real/Setup.hs, /tmp/haskell-creal-audit.rafb8h/exact-real/.stack-work/dist/x86_64-linux-tinfo6/ghc-9.6.7/setup/Main.o )
+[2 of 3] Compiling StackSetupShim   ( /tmp/aern2-stack.ryVCFK/setup-exe-src/setup-shim-O_vy6YIf.hs, /tmp/haskell-creal-audit.rafb8h/exact-real/.stack-work/dist/x86_64-linux-tinfo6/ghc-9.6.7/setup/StackSetupShim.o )
+[3 of 3] Linking /tmp/haskell-creal-audit.rafb8h/exact-real/.stack-work/dist/x86_64-linux-tinfo6/ghc-9.6.7/setup/setup
+Configuring exact-real-0.12.5.1...
+exact-real      > build (lib + test + bench) with ghc-9.6.7
+Preprocessing test suite 'doctests' for exact-real-0.12.5.1..
+Building test suite 'doctests' for exact-real-0.12.5.1..
+[1 of 2] Compiling Build_doctests
+[2 of 2] Compiling Main
+[3 of 3] Linking .stack-work/dist/x86_64-linux-tinfo6/ghc-9.6.7/build/doctests/doctests
+Preprocessing library for exact-real-0.12.5.1..
+Building library for exact-real-0.12.5.1..
+[1 of 4] Compiling Data.CReal.Internal
+[2 of 4] Compiling Data.CReal.Converge
+[3 of 4] Compiling Data.CReal
+[4 of 4] Compiling Paths_exact_real
+Preprocessing test suite 'test' for exact-real-0.12.5.1..
+Building test suite 'test' for exact-real-0.12.5.1..
+[ 1 of 16] Compiling Data.CReal.Extra
+[ 2 of 16] Compiling Paths_exact_real
+[ 3 of 16] Compiling Random
+[ 4 of 16] Compiling Read
+[ 5 of 16] Compiling Real
+[ 6 of 16] Compiling RealFloat
+
+/tmp/haskell-creal-audit.rafb8h/exact-real/test/RealFloat.hs:23:31: warning: [GHC-63397] [-Wname-shadowing]
+    This binding for ‘x’ shadows the existing binding
+      bound at test/RealFloat.hs:13:11
+   |
+23 |                             (\x -> exponent (x :: a) =-= snd (decodeFloat x) + floatDigits x)
+   |                               ^
+
+/tmp/haskell-creal-audit.rafb8h/exact-real/test/RealFloat.hs:25:31: warning: [GHC-63397] [-Wname-shadowing]
+    This binding for ‘x’ shadows the existing binding
+      bound at test/RealFloat.hs:13:11
+   |
+25 |                             (\x -> (x :: a) =-= significand x * fromInteger (floatRadix x) ^^ exponent x)
+   |                               ^
+[ 7 of 16] Compiling RealFrac
+[ 8 of 16] Compiling Test.QuickCheck.Extra
+[ 9 of 16] Compiling BoundedFunctions
+
+/tmp/haskell-creal-audit.rafb8h/exact-real/test/BoundedFunctions.hs:16:48: warning: [GHC-58520] [-Wtype-equality-requires-operators]
+    The use of ‘~’ without TypeOperators
+    will become an error in a future GHC release.
+    Suggested fix: Perhaps you intended to use TypeOperators
+   |
+16 | boundedFunctions :: forall a n. (KnownNat n, a ~ CReal n) =>  a -> TestTree
+   |                                                ^
+[10 of 16] Compiling Test.Tasty.Extra
+[11 of 16] Compiling Test.QuickCheck.Classes.Extra
+[12 of 16] Compiling Num
+[13 of 16] Compiling Fractional
+[14 of 16] Compiling Floating
+[15 of 16] Compiling Ord
+[16 of 16] Compiling Main
+
+/tmp/haskell-creal-audit.rafb8h/exact-real/test/Test.hs:17:1: warning: [-Wunused-imports]
+    The import of ‘Numeric.Natural’ is redundant
+      except perhaps to import instances from ‘Numeric.Natural’
+    To import instances alone, use: import Numeric.Natural()
+   |
+17 | import           Numeric.Natural
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[17 of 17] Linking .stack-work/dist/x86_64-linux-tinfo6/ghc-9.6.7/build/test/test
+Preprocessing benchmark 'bench' for exact-real-0.12.5.1..
+Building benchmark 'bench' for exact-real-0.12.5.1..
+[1 of 2] Compiling Main
+[2 of 2] Compiling Paths_exact_real
+[3 of 3] Linking .stack-work/dist/x86_64-linux-tinfo6/ghc-9.6.7/build/bench/bench
+exact-real      > copy/register
+Installing library in /tmp/haskell-creal-audit.rafb8h/.stack-work/install/x86_64-linux-tinfo6/a9cdb111ba43c34a9894161df33edb1b290c1c61f1b004418a8411cbdf470c15/9.6.7/lib/x86_64-linux-ghc-9.6.7/exact-real-0.12.5.1-D1CqH57WDC6CEUHkdWZSdf
+Registering library for exact-real-0.12.5.1..
+Completed 10 action(s).

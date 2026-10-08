@@ -1,0 +1,91 @@
+{
+  "parent_commit": "34ae22f1ca9059356b2a6a1fcb3f9263b2c46577",
+  "source": "finite-selected-point-domains-public.rs",
+  "source_sha256": "c0268b16b9731d8ac7e8a36c8b5a09993d5a68015368d2c4f88ae067e9bb9a6b",
+  "executable": "finite-selected-point-domains-public",
+  "executable_sha256": "0aa75a6c20597fe54d952e6e390f1b040b682d9050be0d93527a9083e09cd90a",
+  "normal_library": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypercurve-9eb8c540d8ca7826.rlib",
+  "normal_library_sha256": "5ab0beb19caab2b6ecaf12007a8f07af332a198e59837ce063f5b418f4003187",
+  "compile_command": [
+    "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustc",
+    "--edition=2024",
+    "-O",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-selected-point-domains-public.rs",
+    "--extern",
+    "hypercurve=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypercurve-9eb8c540d8ca7826.rlib",
+    "-L",
+    "dependency=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps",
+    "-o",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-selected-point-domains-public"
+  ],
+  "queries": [
+    {
+      "chart": 0,
+      "repeat": false,
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-selected-point-domains-public",
+        "0"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.01569103600922972,
+      "log": "finite-selected-point-domains-public-chart0-repeat0.log",
+      "counts": {
+        "cases": 4,
+        "successes": 4,
+        "point_replays": 16,
+        "failures": 0
+      }
+    },
+    {
+      "chart": 1,
+      "repeat": false,
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-selected-point-domains-public",
+        "1"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.01742784699308686,
+      "log": "finite-selected-point-domains-public-chart1-repeat0.log",
+      "counts": {
+        "cases": 4,
+        "successes": 4,
+        "point_replays": 16,
+        "failures": 0
+      }
+    },
+    {
+      "chart": 2,
+      "repeat": false,
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-selected-point-domains-public",
+        "2"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.06393324601231143,
+      "log": "finite-selected-point-domains-public-chart2-repeat0.log",
+      "counts": {
+        "cases": 4,
+        "successes": 4,
+        "point_replays": 16,
+        "failures": 0
+      }
+    },
+    {
+      "chart": 3,
+      "repeat": false,
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-selected-point-domains-public",
+        "3"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.06375236800522543,
+      "log": "finite-selected-point-domains-public-chart3-repeat0.log",
+      "counts": {
+        "cases": 4,
+        "successes": 4,
+        "point_replays": 16,
+        "failures": 0
+      }
+    }
+  ]
+}

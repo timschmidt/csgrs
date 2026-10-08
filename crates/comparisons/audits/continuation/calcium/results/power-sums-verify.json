@@ -1,0 +1,13 @@
+{
+  "tag": "power-sums-verify",
+  "started": "2026-09-10T18:50:20.572Z",
+  "finished": "2026-09-10T18:50:23.896Z",
+  "elapsedSeconds": 3.321255286,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "node",
+  "args": [
+    "verify-power-sums.mjs"
+  ],
+  "code": 0,
+  "signal": null
+}

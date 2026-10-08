@@ -1,0 +1,90 @@
+[
+  {
+    "name": "bezier_offset::conversion_tests::recursive_bounds_refine_each_shared_source_once",
+    "returncode": 0,
+    "passed": true,
+    "elapsed_seconds": 0.2908528429688886,
+    "limit_seconds": 60,
+    "log": "shared-source-bounds-20260924-v2-case-0.log"
+  },
+  {
+    "name": "bezier_offset::conversion_tests::recursive_sign_replays_correlated_real_witness_before_deep_intervals",
+    "returncode": 0,
+    "passed": true,
+    "elapsed_seconds": 0.2735401280224323,
+    "limit_seconds": 60,
+    "log": "shared-source-bounds-20260924-v2-case-1.log"
+  },
+  {
+    "name": "bezier_offset::conversion_tests::recursive_projective_bounds_enclose_scaled_nested_radicals",
+    "returncode": 0,
+    "passed": true,
+    "elapsed_seconds": 0.27761617896612734,
+    "limit_seconds": 60,
+    "log": "shared-source-bounds-20260924-v2-case-2.log"
+  },
+  {
+    "name": "bezier_offset::conversion_tests::recursive_projective_bounds_reuse_positive_denominator_certificate",
+    "returncode": 0,
+    "passed": true,
+    "elapsed_seconds": 0.2777571689803153,
+    "limit_seconds": 60,
+    "log": "shared-source-bounds-20260924-v2-case-3.log"
+  },
+  {
+    "name": "bezier_offset::conversion_tests::recursive_real_witnesses_do_not_require_unused_selected_generators",
+    "returncode": 0,
+    "passed": true,
+    "elapsed_seconds": 0.2706521060317755,
+    "limit_seconds": 60,
+    "log": "shared-source-bounds-20260924-v2-case-4.log"
+  },
+  {
+    "name": "bezier_offset::conversion_tests::retained_real_witnesses_collapse_recursive_source_box_coefficients",
+    "returncode": 0,
+    "passed": true,
+    "elapsed_seconds": 0.26579028903506696,
+    "limit_seconds": 60,
+    "log": "shared-source-bounds-20260924-v2-case-5.log"
+  },
+  {
+    "name": "bezier_offset::conversion_tests::selected_fiber_points_reuse_projective_roots_without_global_promotion",
+    "returncode": 0,
+    "passed": true,
+    "elapsed_seconds": 0.335212545003742,
+    "limit_seconds": 60,
+    "log": "shared-source-bounds-20260924-v2-case-6.log"
+  },
+  {
+    "name": "bezier_region::tests::nonlinear_selected_corner_chamfers_through_retained_fixed_distance_image",
+    "returncode": 0,
+    "passed": true,
+    "elapsed_seconds": 5.339455969980918,
+    "limit_seconds": 75,
+    "log": "shared-source-bounds-20260924-v2-case-7.log"
+  },
+  {
+    "name": "bezier_region::tests::recursive_selected_radial_projective_chamfer_reenters_corner_kernel",
+    "returncode": 0,
+    "passed": true,
+    "elapsed_seconds": 60.87165737291798,
+    "limit_seconds": 75,
+    "log": "shared-source-bounds-20260924-v2-case-8.log"
+  },
+  {
+    "name": "bezier_region::curve_corner_chain::tests::extended_fillet_region_classifies_both_sides_of_its_companion",
+    "returncode": "timeout",
+    "passed": false,
+    "elapsed_seconds": 75.2719523969572,
+    "limit_seconds": 75,
+    "log": "shared-source-bounds-20260924-v2-case-9.log"
+  },
+  {
+    "name": "bezier_region::tests::pair_native_boolean_algebraic_chord_corner_publishes_a_third_generation_fillet",
+    "returncode": "timeout",
+    "passed": false,
+    "elapsed_seconds": 75.27137892600149,
+    "limit_seconds": 75,
+    "log": "shared-source-bounds-20260924-v2-case-10.log"
+  }
+]

@@ -1,0 +1,149 @@
+{
+  "status": "all exact expected signs pass in three interleaved process pairs",
+  "scope": "Captured scalar queries only. Runs begin after qualification, profiling and all held-out retries ended. No application-level speedup is claimed. Original columns compare identical degree-12 queries; reduced columns remain experimental and are excluded from this comparison.",
+  "source": "selected-power-query-replay.rs",
+  "binary_sha256": {
+    "selected-power-query-replay": "8cc27711bbb13645e01689a30f9070c55b3ab9a884f02beacef4760447503bbe",
+    "selected-power-query-replay-shared-gcd": "70facff2836f413f6c6f280cca0e77f8279c886eae77e083db63367e8ecf25ae"
+  },
+  "runs": [
+    {
+      "pair": 1,
+      "variant": "baseline",
+      "log": "shared-integer-gcd-query-comparison-1-baseline.log",
+      "exit_code": 0,
+      "query_ms": {
+        "10": 7.317608,
+        "13": 41.508654,
+        "19": 7.840933,
+        "21": 32.025274,
+        "24": 182.386444,
+        "31": 46.018844,
+        "33": 134.487648,
+        "43": 156.563904
+      }
+    },
+    {
+      "pair": 1,
+      "variant": "shared",
+      "log": "shared-integer-gcd-query-comparison-1-shared.log",
+      "exit_code": 0,
+      "query_ms": {
+        "10": 3.782471,
+        "13": 20.691352,
+        "19": 4.503532,
+        "21": 15.687444,
+        "24": 84.227575,
+        "31": 21.178438,
+        "33": 58.232847,
+        "43": 64.723031
+      }
+    },
+    {
+      "pair": 2,
+      "variant": "shared",
+      "log": "shared-integer-gcd-query-comparison-2-shared.log",
+      "exit_code": 0,
+      "query_ms": {
+        "10": 4.709177,
+        "13": 22.210417,
+        "19": 4.489262,
+        "21": 15.642607,
+        "24": 85.968745,
+        "31": 21.166048,
+        "33": 55.185106,
+        "43": 64.812256
+      }
+    },
+    {
+      "pair": 2,
+      "variant": "baseline",
+      "log": "shared-integer-gcd-query-comparison-2-baseline.log",
+      "exit_code": 0,
+      "query_ms": {
+        "10": 8.105004,
+        "13": 41.940964,
+        "19": 7.87421,
+        "21": 28.434951,
+        "24": 180.198153,
+        "31": 43.486138,
+        "33": 133.080654,
+        "43": 155.89795
+      }
+    },
+    {
+      "pair": 3,
+      "variant": "baseline",
+      "log": "shared-integer-gcd-query-comparison-3-baseline.log",
+      "exit_code": 0,
+      "query_ms": {
+        "10": 8.46076,
+        "13": 42.680944,
+        "19": 7.845382,
+        "21": 28.936486,
+        "24": 186.291245,
+        "31": 46.287486,
+        "33": 134.16641,
+        "43": 156.074068
+      }
+    },
+    {
+      "pair": 3,
+      "variant": "shared",
+      "log": "shared-integer-gcd-query-comparison-3-shared.log",
+      "exit_code": 0,
+      "query_ms": {
+        "10": 4.515541,
+        "13": 21.58538,
+        "19": 5.408599,
+        "21": 17.279245,
+        "24": 86.273024,
+        "31": 21.456399,
+        "33": 55.276069,
+        "43": 67.168784
+      }
+    }
+  ],
+  "summary": {
+    "10": {
+      "baseline_median_ms": 8.105004,
+      "shared_median_ms": 4.515541,
+      "ratio": 1.7949131676580945
+    },
+    "13": {
+      "baseline_median_ms": 41.940964,
+      "shared_median_ms": 21.58538,
+      "ratio": 1.943026437338606
+    },
+    "19": {
+      "baseline_median_ms": 7.845382,
+      "shared_median_ms": 4.503532,
+      "ratio": 1.7420509058223634
+    },
+    "21": {
+      "baseline_median_ms": 28.936486,
+      "shared_median_ms": 15.687444,
+      "ratio": 1.8445634610711599
+    },
+    "24": {
+      "baseline_median_ms": 182.386444,
+      "shared_median_ms": 85.968745,
+      "ratio": 2.1215436377488124
+    },
+    "31": {
+      "baseline_median_ms": 46.018844,
+      "shared_median_ms": 21.178438,
+      "ratio": 2.1729102023482563
+    },
+    "33": {
+      "baseline_median_ms": 134.16641,
+      "shared_median_ms": 55.276069,
+      "ratio": 2.427206066335868
+    },
+    "43": {
+      "baseline_median_ms": 156.074068,
+      "shared_median_ms": 64.812256,
+      "ratio": 2.4080949751232237
+    }
+  }
+}

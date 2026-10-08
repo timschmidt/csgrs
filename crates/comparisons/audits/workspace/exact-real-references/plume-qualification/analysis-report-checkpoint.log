@@ -1,0 +1,260 @@
+{
+  "source_files_verified": 174,
+  "benchmark_observations": 216,
+  "warmup_observations": 24,
+  "final_observations": 192,
+  "benchmark": [
+    {
+      "family": "dense",
+      "bits": 32,
+      "signed": {
+        "op": "signed",
+        "cpu_ms": 0.47727949999999997,
+        "cpu_min_ms": 0.458361,
+        "cpu_max_ms": 0.488979,
+        "allocated_bytes": 743224
+      },
+      "dyadic": {
+        "op": "dyadic",
+        "cpu_ms": 5.24516,
+        "cpu_min_ms": 3.489131,
+        "cpu_max_ms": 5.512651,
+        "allocated_bytes": 7798240
+      },
+      "time_ratio": 10.98970309849889,
+      "allocation_ratio": 10.492449113591595
+    },
+    {
+      "family": "dense",
+      "bits": 64,
+      "signed": {
+        "op": "signed",
+        "cpu_ms": 1.703049,
+        "cpu_min_ms": 1.226999,
+        "cpu_max_ms": 1.80274,
+        "allocated_bytes": 2567048
+      },
+      "dyadic": {
+        "op": "dyadic",
+        "cpu_ms": 14.1834255,
+        "cpu_min_ms": 8.940145,
+        "cpu_max_ms": 14.732862,
+        "allocated_bytes": 30412080
+      },
+      "time_ratio": 8.328254501191687,
+      "allocation_ratio": 11.847102196764533
+    },
+    {
+      "family": "dense",
+      "bits": 128,
+      "signed": {
+        "op": "signed",
+        "cpu_ms": 4.2978369999999995,
+        "cpu_min_ms": 3.11401,
+        "cpu_max_ms": 4.495397,
+        "allocated_bytes": 10224232
+      },
+      "dyadic": {
+        "op": "dyadic",
+        "cpu_ms": 55.7402885,
+        "cpu_min_ms": 34.884735,
+        "cpu_max_ms": 56.878144,
+        "allocated_bytes": 126718272
+      },
+      "time_ratio": 12.969381691301928,
+      "allocation_ratio": 12.3939159440044
+    },
+    {
+      "family": "dense",
+      "bits": 256,
+      "signed": {
+        "op": "signed",
+        "cpu_ms": 10.119433,
+        "cpu_min_ms": 6.796153,
+        "cpu_max_ms": 10.282793,
+        "allocated_bytes": 39025304
+      },
+      "dyadic": {
+        "op": "dyadic",
+        "cpu_ms": 247.2385005,
+        "cpu_min_ms": 162.766819,
+        "cpu_max_ms": 252.792413,
+        "allocated_bytes": 548448288
+      },
+      "time_ratio": 24.432050738415874,
+      "allocation_ratio": 14.053658313590587
+    },
+    {
+      "family": "sparse",
+      "bits": 32,
+      "signed": {
+        "op": "signed",
+        "cpu_ms": 0.070824,
+        "cpu_min_ms": 0.049106,
+        "cpu_max_ms": 0.071904,
+        "allocated_bytes": 173560
+      },
+      "dyadic": {
+        "op": "dyadic",
+        "cpu_ms": 4.718337,
+        "cpu_min_ms": 2.992891,
+        "cpu_max_ms": 4.880974,
+        "allocated_bytes": 6846152
+      },
+      "time_ratio": 66.62059471365639,
+      "allocation_ratio": 39.44544825996773
+    },
+    {
+      "family": "sparse",
+      "bits": 64,
+      "signed": {
+        "op": "signed",
+        "cpu_ms": 0.229797,
+        "cpu_min_ms": 0.179245,
+        "cpu_max_ms": 0.23686,
+        "allocated_bytes": 608440
+      },
+      "dyadic": {
+        "op": "dyadic",
+        "cpu_ms": 12.1242955,
+        "cpu_min_ms": 7.584168,
+        "cpu_max_ms": 12.427667,
+        "allocated_bytes": 26861688
+      },
+      "time_ratio": 52.76089548601592,
+      "allocation_ratio": 44.14845835250805
+    },
+    {
+      "family": "sparse",
+      "bits": 128,
+      "signed": {
+        "op": "signed",
+        "cpu_ms": 1.197384,
+        "cpu_min_ms": 0.832502,
+        "cpu_max_ms": 1.214999,
+        "allocated_bytes": 2212104
+      },
+      "dyadic": {
+        "op": "dyadic",
+        "cpu_ms": 43.960837999999995,
+        "cpu_min_ms": 28.570803,
+        "cpu_max_ms": 46.350651,
+        "allocated_bytes": 112083248
+      },
+      "time_ratio": 36.71406833563835,
+      "allocation_ratio": 50.6681638837957
+    },
+    {
+      "family": "sparse",
+      "bits": 256,
+      "signed": {
+        "op": "signed",
+        "cpu_ms": 3.3839745,
+        "cpu_min_ms": 2.319866,
+        "cpu_max_ms": 3.498719,
+        "allocated_bytes": 8206568
+      },
+      "dyadic": {
+        "op": "dyadic",
+        "cpu_ms": 190.6570565,
+        "cpu_min_ms": 123.612771,
+        "cpu_max_ms": 204.853771,
+        "allocated_bytes": 482447632
+      },
+      "time_ratio": 56.34116229303738,
+      "allocation_ratio": 58.787989327572745
+    },
+    {
+      "family": "terminating",
+      "bits": 32,
+      "signed": {
+        "op": "signed",
+        "cpu_ms": 0.0588,
+        "cpu_min_ms": 0.039897,
+        "cpu_max_ms": 0.063514,
+        "allocated_bytes": 180568
+      },
+      "dyadic": {
+        "op": "dyadic",
+        "cpu_ms": 3.3786235,
+        "cpu_min_ms": 2.429158,
+        "cpu_max_ms": 3.548174,
+        "allocated_bytes": 4798176
+      },
+      "time_ratio": 57.459583333333335,
+      "allocation_ratio": 26.57268175978025
+    },
+    {
+      "family": "terminating",
+      "bits": 64,
+      "signed": {
+        "op": "signed",
+        "cpu_ms": 0.110201,
+        "cpu_min_ms": 0.105971,
+        "cpu_max_ms": 0.11375,
+        "allocated_bytes": 389464
+      },
+      "dyadic": {
+        "op": "dyadic",
+        "cpu_ms": 6.30691,
+        "cpu_min_ms": 6.103962,
+        "cpu_max_ms": 6.863849,
+        "allocated_bytes": 17581792
+      },
+      "time_ratio": 57.23096886598126,
+      "allocation_ratio": 45.14356140747284
+    },
+    {
+      "family": "terminating",
+      "bits": 128,
+      "signed": {
+        "op": "signed",
+        "cpu_ms": 0.28106200000000003,
+        "cpu_min_ms": 0.272907,
+        "cpu_max_ms": 0.290156,
+        "allocated_bytes": 845552
+      },
+      "dyadic": {
+        "op": "dyadic",
+        "cpu_ms": 17.272844,
+        "cpu_min_ms": 17.032204,
+        "cpu_max_ms": 17.474957,
+        "allocated_bytes": 67566712
+      },
+      "time_ratio": 61.45563612299065,
+      "allocation_ratio": 79.90840539671126
+    },
+    {
+      "family": "terminating",
+      "bits": 256,
+      "signed": {
+        "op": "signed",
+        "cpu_ms": 0.6757340000000001,
+        "cpu_min_ms": 0.536265,
+        "cpu_max_ms": 0.689723,
+        "allocated_bytes": 1786208
+      },
+      "dyadic": {
+        "op": "dyadic",
+        "cpu_ms": 60.9709565,
+        "cpu_min_ms": 59.659966,
+        "cpu_max_ms": 61.714678,
+        "allocated_bytes": 265082600
+      },
+      "time_ratio": 90.2292270331225,
+      "allocation_ratio": 148.4052249234132
+    }
+  ],
+  "elementary": {
+    "requests": 129,
+    "finite": 116,
+    "heap_limits": 9,
+    "timeouts": 4
+  },
+  "functional": {
+    "requests": 270,
+    "passed": 236,
+    "failed": 0,
+    "timeouts": 34
+  }
+}

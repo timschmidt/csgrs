@@ -1,0 +1,13 @@
+{
+  "baseline": "classified-derivative-v820-sources.json",
+  "source": "hypercurve/src/bezier_tangent_order.rs",
+  "sha256": "0fb01ea2a0ea0ec026f3d218d8f0be5e549315dd7321336e12a60c3018cfcc40",
+  "findings": [
+    "Tangent ordering retains a separate represented-vector carrier and public construction/extraction/status/evidence report types.",
+    "The arrangement adapter retained_algebraic_tangent still accepts only materialized coordinate images. Exact retained expressions use other dispatch paths or report a blocker; this audit alone proves no public region closure failure.",
+    "Rational optional higher endpoint derivatives remain filtered to Transformed because this adapter cannot consume expressions; removing that filter alone would not establish closure."
+  ],
+  "next_step": "Trace report-field consumers and exact-expression order predicates before selecting any simplification. Preserve root/arithmetic evidence and higher-order demand.",
+  "runtime_counterexample": false,
+  "candidate_prepared": false
+}

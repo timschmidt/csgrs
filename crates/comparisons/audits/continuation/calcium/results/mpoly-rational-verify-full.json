@@ -1,0 +1,14 @@
+{
+  "tag": "mpoly-rational-verify-full",
+  "started": "2026-09-10T03:46:31.660Z",
+  "finished": "2026-09-10T03:47:27.858Z",
+  "elapsedSeconds": 56.195620347,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "node",
+  "args": [
+    "verify-mpoly-rational.mjs",
+    "--e-plan-live"
+  ],
+  "code": 0,
+  "signal": null
+}

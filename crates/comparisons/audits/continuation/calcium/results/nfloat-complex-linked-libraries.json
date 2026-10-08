@@ -1,0 +1,13 @@
+{
+  "tag": "nfloat-complex-linked-libraries",
+  "started": "2026-09-09T17:07:41.367Z",
+  "finished": "2026-09-09T17:07:41.394Z",
+  "elapsedSeconds": 0.02466293900000001,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison",
+  "command": "ldd",
+  "args": [
+    "/tmp/calcium-complex-controls.8yAaAz/nfloat-complex-controls"
+  ],
+  "code": 0,
+  "signal": null
+}

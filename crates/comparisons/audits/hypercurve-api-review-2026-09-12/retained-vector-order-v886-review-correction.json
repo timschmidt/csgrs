@@ -1,0 +1,7 @@
+{
+  "initial_review_exit_code": 1,
+  "initial_review_outer": "synchronous exec_command completion",
+  "before_sha256": "42ed295227de14ce101de7e72b60b3e1bbb15e6916a8b8be8e7f6b27b85b9b53",
+  "after_sha256": "b15d5bb30746aa5bc3c59e86cd7bb0087136f6f9b4226c3ceae8cea62c3fdec2",
+  "reason": "Rustfmt collapsed the unchanged interval_bilinear_sign call and removed its optional trailing argument comma. The reviewer now normalizes only that exact old call. No production, candidate, archive, mirror or probe bytes changed."
+}

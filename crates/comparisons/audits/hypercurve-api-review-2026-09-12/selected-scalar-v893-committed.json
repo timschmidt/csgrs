@@ -1,0 +1,25 @@
+{
+  "repos": {
+    "hypercurve": {
+      "commit": "68e72280b1200871d0f539d90bdb3d1450958b99",
+      "parent": "c19a037b19ad12537fa93d5567cfeb2f10a11457",
+      "paths": {
+        "src/bezier_algebraic_image.rs": "87e43fdcc9da937379a54201d7e7786245adfd103a2722fec264b9aac47993a9",
+        "src/bezier_tangent_order.rs": "237057a615ad662d6ae21dafb2298fbe9091e225f2e18fd3e8b530a5ea0e8aae",
+        "tests/hypercurve_bezier_arrangement.rs": "8311e7d024397eb03032abd216c462c7c29cc21b8ca75f8388a9887c21049317",
+        "tests/hypercurve_bezier_tangent_order.rs": "21ba578723fa2ece6d9710941215b8b7797ec1752fabcf5f35ad40bc00250b9f"
+      }
+    },
+    "hypersolve": {
+      "commit": "0befc6a22ee866cd0364cd8aac7127f703bce453",
+      "parent": "106130aa5c45672fe170386635ad7e94741097d7",
+      "paths": {
+        "src/algebraic_fiber.rs": "755730da380d95c3fd9de9de0a8ddb799d228c205ec6dd1cbfaaf39c581097ae",
+        "src/lib.rs": "6077af23f532d33d6497b4806aa6a203f854ea507140cbacef97169d284ec2ff"
+      }
+    }
+  },
+  "qualification": "selected-scalar-v893-terminal.json",
+  "verified_source_files": 2048,
+  "clean_repositories": 30
+}

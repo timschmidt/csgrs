@@ -1,0 +1,253 @@
+START	dyadic-0--8
+PASS	dyadic-0--8	20938000	True
+START	dyadic-0--7
+PASS	dyadic-0--7	4380000	True
+START	dyadic-0--6
+PASS	dyadic-0--6	4930000	True
+START	dyadic-0--5
+PASS	dyadic-0--5	5399000	True
+START	dyadic-0--4
+PASS	dyadic-0--4	2530000	True
+START	dyadic-0--3
+PASS	dyadic-0--3	3640000	True
+START	dyadic-0--2
+PASS	dyadic-0--2	4519000	True
+START	dyadic-0--1
+PASS	dyadic-0--1	4029000	True
+START	dyadic-0-0
+PASS	dyadic-0-0	1460000	True
+START	dyadic-0-1
+PASS	dyadic-0-1	1919000	True
+START	dyadic-0-2
+PASS	dyadic-0-2	2099000	True
+START	dyadic-0-3
+PASS	dyadic-0-3	4529000	True
+START	dyadic-0-4
+PASS	dyadic-0-4	4340000	True
+START	dyadic-0-5
+PASS	dyadic-0-5	2520000	True
+START	dyadic-0-6
+PASS	dyadic-0-6	2470000	True
+START	dyadic-0-7
+PASS	dyadic-0-7	4650000	True
+START	dyadic-0-8
+PASS	dyadic-0-8	2490000	True
+START	dyadic-1--8
+PASS	dyadic-1--8	20728000	True
+START	dyadic-1--7
+PASS	dyadic-1--7	6489000	True
+START	dyadic-1--6
+PASS	dyadic-1--6	4800000	True
+START	dyadic-1--5
+PASS	dyadic-1--5	5600000	True
+START	dyadic-1--4
+PASS	dyadic-1--4	4399000	True
+START	dyadic-1--3
+PASS	dyadic-1--3	5029000	True
+START	dyadic-1--2
+PASS	dyadic-1--2	2010000	True
+START	dyadic-1--1
+PASS	dyadic-1--1	2400000	True
+START	dyadic-1-0
+PASS	dyadic-1-0	1400000	True
+START	dyadic-1-1
+PASS	dyadic-1-1	2480000	True
+START	dyadic-1-2
+PASS	dyadic-1-2	1910000	True
+START	dyadic-1-3
+PASS	dyadic-1-3	7269000	True
+START	dyadic-1-4
+PASS	dyadic-1-4	6609000	True
+START	dyadic-1-5
+PASS	dyadic-1-5	4590000	True
+START	dyadic-1-6
+PASS	dyadic-1-6	6770000	True
+START	dyadic-1-7
+PASS	dyadic-1-7	8079000	True
+START	dyadic-1-8
+PASS	dyadic-1-8	3900000	True
+START	dyadic-2--8
+PASS	dyadic-2--8	7959000	True
+START	dyadic-2--7
+PASS	dyadic-2--7	9639000	True
+START	dyadic-2--6
+PASS	dyadic-2--6	7959000	True
+START	dyadic-2--5
+PASS	dyadic-2--5	8249000	True
+START	dyadic-2--4
+PASS	dyadic-2--4	3360000	True
+START	dyadic-2--3
+PASS	dyadic-2--3	8070000	True
+START	dyadic-2--2
+PASS	dyadic-2--2	6749000	True
+START	dyadic-2--1
+PASS	dyadic-2--1	4209000	True
+START	dyadic-2-0
+PASS	dyadic-2-0	2110000	True
+START	dyadic-2-1
+PASS	dyadic-2-1	7299000	True
+START	dyadic-2-2
+PASS	dyadic-2-2	6589000	True
+START	dyadic-2-3
+PASS	dyadic-2-3	4770000	True
+START	dyadic-2-4
+PASS	dyadic-2-4	5939000	True
+START	dyadic-2-5
+PASS	dyadic-2-5	8290000	True
+START	dyadic-2-6
+PASS	dyadic-2-6	6990000	True
+START	dyadic-2-7
+PASS	dyadic-2-7	8379000	True
+START	dyadic-2-8
+PASS	dyadic-2-8	3829000	True
+START	dyadic-3--8
+PASS	dyadic-3--8	7579000	True
+START	dyadic-3--7
+PASS	dyadic-3--7	9319000	True
+START	dyadic-3--6
+PASS	dyadic-3--6	8319000	True
+START	dyadic-3--5
+PASS	dyadic-3--5	8939000	True
+START	dyadic-3--4
+PASS	dyadic-3--4	6970000	True
+START	dyadic-3--3
+PASS	dyadic-3--3	8250000	True
+START	dyadic-3--2
+PASS	dyadic-3--2	7320000	True
+START	dyadic-3--1
+PASS	dyadic-3--1	8019000	True
+START	dyadic-3-0
+PASS	dyadic-3-0	2190000	True
+START	dyadic-3-1
+PASS	dyadic-3-1	7789000	True
+START	dyadic-3-2
+PASS	dyadic-3-2	7309000	True
+START	dyadic-3-3
+PASS	dyadic-3-3	7979000	True
+START	dyadic-3-4
+PASS	dyadic-3-4	7559000	True
+START	dyadic-3-5
+PASS	dyadic-3-5	8299000	True
+START	dyadic-3-6
+PASS	dyadic-3-6	7639000	True
+START	dyadic-3-7
+PASS	dyadic-3-7	8489000	True
+START	dyadic-3-8
+PASS	dyadic-3-8	3480000	True
+START	dyadic-4--8
+PASS	dyadic-4--8	8459000	True
+START	dyadic-4--7
+PASS	dyadic-4--7	15168000	True
+START	dyadic-4--6
+PASS	dyadic-4--6	8709000	True
+START	dyadic-4--5
+PASS	dyadic-4--5	9199000	True
+START	dyadic-4--4
+PASS	dyadic-4--4	8069000	True
+START	dyadic-4--3
+PASS	dyadic-4--3	11859000	True
+START	dyadic-4--2
+PASS	dyadic-4--2	8749000	True
+START	dyadic-4--1
+PASS	dyadic-4--1	8979000	True
+START	dyadic-4-0
+PASS	dyadic-4-0	1950000	True
+START	dyadic-4-1
+PASS	dyadic-4-1	8410000	True
+START	dyadic-4-2
+PASS	dyadic-4-2	7260000	True
+START	dyadic-4-3
+PASS	dyadic-4-3	9389000	True
+START	dyadic-4-4
+PASS	dyadic-4-4	7619000	True
+START	dyadic-4-5
+PASS	dyadic-4-5	12099000	True
+START	dyadic-4-6
+PASS	dyadic-4-6	11369000	True
+START	dyadic-4-7
+PASS	dyadic-4-7	12669000	True
+START	dyadic-4-8
+PASS	dyadic-4-8	7159000	True
+START	negative-integer--8
+PASS	negative-integer--8	12929000	True
+START	negative-integer--7
+PASS	negative-integer--7	4699000	True
+START	negative-integer--6
+PASS	negative-integer--6	7119000	True
+START	negative-integer--5
+PASS	negative-integer--5	6969000	True
+START	negative-integer--4
+PASS	negative-integer--4	3559000	True
+START	negative-integer--3
+PASS	negative-integer--3	6610000	True
+START	negative-integer--2
+PASS	negative-integer--2	3939000	True
+START	negative-integer--1
+PASS	negative-integer--1	2650000	True
+START	negative-integer-0
+PASS	negative-integer-0	2039000	True
+START	negative-integer-1
+PASS	negative-integer-1	5310000	True
+START	negative-integer-2
+PASS	negative-integer-2	3060000	True
+START	negative-integer-3
+PASS	negative-integer-3	3239000	True
+START	negative-integer-4
+PASS	negative-integer-4	6229000	True
+START	negative-integer-5
+PASS	negative-integer-5	3580000	True
+START	negative-integer-6
+PASS	negative-integer-6	6699000	True
+START	negative-integer-7
+PASS	negative-integer-7	3849000	True
+START	negative-integer-8
+PASS	negative-integer-8	6739000	True
+START	zero-zero
+PASS	zero-zero	1910000	True
+START	zero-positive
+PASS	zero-positive	7109000	True
+START	sqrt-negative
+PASS	sqrt-negative	11639000	Construct sqrt: negative argument
+START	sqrt-negative-dyadic
+PASS	sqrt-negative-dyadic	6729000	Construct sqrt: negative argument
+START	inverse-zero
+PASS	inverse-zero	5369000	Ratio has zero denominator
+START	zero-negative
+PASS	zero-negative	1960000	Ratio has zero denominator
+START	irrational-rational
+PASS	irrational-rational	2180000	cannot convert irrational Construct to rational
+START	irrational-exponent
+PASS	irrational-exponent	1790000	cannot convert irrational Construct to rational
+START	nondyadic-exponent
+PASS	nondyadic-exponent	2310000	(** non-dyadic-rational) is not constructible
+START	unsupported-exp
+PASS	unsupported-exp	1890000	exp is not constructible
+START	unsupported-log
+PASS	unsupported-log	1549000	log is not constructible
+START	unsupported-sin
+PASS	unsupported-sin	1640000	sin is not constructible
+START	unsupported-cos
+PASS	unsupported-cos	1680000	cos is not constructible
+START	unsupported-tan
+PASS	unsupported-tan	1770000	tan is not constructible
+START	unsupported-asin
+PASS	unsupported-asin	1600000	asin is not constructible
+START	unsupported-acos
+PASS	unsupported-acos	1520000	acos is not constructible
+START	unsupported-atan
+PASS	unsupported-atan	1460000	atan is not constructible
+START	unsupported-sinh
+PASS	unsupported-sinh	1630000	sinh is not constructible
+START	unsupported-cosh
+PASS	unsupported-cosh	4480000	cosh is not constructible
+START	unsupported-tanh
+PASS	unsupported-tanh	1670000	tanh is not constructible
+START	unsupported-asinh
+PASS	unsupported-asinh	1500000	asinh is not constructible
+START	unsupported-acosh
+PASS	unsupported-acosh	1740000	acosh is not constructible
+START	unsupported-atanh
+PASS	unsupported-atanh	1550000	atanh is not constructible
+START	unsupported-pi
+PASS	unsupported-pi	1719000	pi is not constructible
+SUMMARY	126	126

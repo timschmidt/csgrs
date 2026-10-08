@@ -1,0 +1,5 @@
+Certify general selected-root signs with interval Newton
+
+Contract a certified dyadic enclosure of the caller-owned root by interval Newton, and decide only signs proved over that enclosure. Round outward to control denominator growth, reuse the shared rational interval product, and preserve the original equation, root identity and endpoint ownership. Retain the primitive integer path for rational coefficients. Bounded filter work leaves exact-zero, repeated-root and higher-precision queries to the existing exact algebraic replay.
+
+Validation: 901 Hypersolve tests, 323 selected Hypercurve release tests, eleven independently proved captured root queries, Clippy, formatting, denied-warning docs, editing fuzz compilation, and Hyperbrep compilation. Two full extended-fillet re-offset tests remain unresolved and excluded from the passing scope; the latest stack identifies a later local-field GCD during selected-parameter ordering.

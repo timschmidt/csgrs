@@ -1,0 +1,20 @@
+{
+  "command": [
+    "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+    "test",
+    "--test",
+    "hypercurve_path_closure",
+    "--release",
+    "--all-features",
+    "--no-run",
+    "--message-format=json",
+    "--locked",
+    "--offline"
+  ],
+  "returncode": 101,
+  "elapsed_seconds": 0.149223153013736,
+  "limit_seconds": 30,
+  "binary_sha256": "f7a7d5e99e3a035d8bfac290cd20729712a2a47f3b7c8e195a89efa34acaada6",
+  "all_sources_unchanged": true,
+  "all_processes_reaped": true
+}

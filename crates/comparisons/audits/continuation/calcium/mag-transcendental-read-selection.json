@@ -1,0 +1,442 @@
+[
+  {
+    "repo": "flint",
+    "path": "src/mag/atan.c",
+    "newRanges": [
+      [
+        1,
+        126
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "src/mag/bernoulli_div_fac_ui.c",
+    "newRanges": [
+      [
+        1,
+        70
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "src/mag/bin_uiui.c",
+    "newRanges": [
+      [
+        1,
+        68
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "src/mag/binpow_uiui.c",
+    "newRanges": [
+      [
+        1,
+        49
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "src/mag/const_pi.c",
+    "newRanges": [
+      [
+        1,
+        28
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "src/mag/cosh.c",
+    "newRanges": [
+      [
+        1,
+        58
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "src/mag/d_log.c",
+    "newRanges": [
+      [
+        1,
+        212
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "src/mag/exp.c",
+    "newRanges": [
+      [
+        1,
+        202
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "src/mag/exp_tail.c",
+    "newRanges": [
+      [
+        1,
+        47
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "src/mag/expinv.c",
+    "newRanges": [
+      [
+        1,
+        82
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "src/mag/expm1.c",
+    "newRanges": [
+      [
+        1,
+        74
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "src/mag/fac_ui.c",
+    "newRanges": [
+      [
+        1,
+        579
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "src/mag/geom_series.c",
+    "newRanges": [
+      [
+        1,
+        47
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "src/mag/get_d.c",
+    "newRanges": [
+      [
+        1,
+        37
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "src/mag/get_d_log2_approx.c",
+    "newRanges": [
+      [
+        1,
+        43
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "src/mag/get_fmpq.c",
+    "newRanges": [
+      [
+        1,
+        21
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "src/mag/get_fmpz.c",
+    "newRanges": [
+      [
+        1,
+        29
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "src/mag/hurwitz_zeta_uiui.c",
+    "newRanges": [
+      [
+        1,
+        39
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "src/mag/inlines.c",
+    "newRanges": [
+      [
+        1,
+        13
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "src/mag/io.c",
+    "newRanges": [
+      [
+        1,
+        163
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "src/mag/log.c",
+    "newRanges": [
+      [
+        1,
+        220
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "src/mag/log1p.c",
+    "newRanges": [
+      [
+        1,
+        65
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "src/mag/log_ui.c",
+    "newRanges": [
+      [
+        1,
+        29
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "src/mag/polylog_tail.c",
+    "newRanges": [
+      [
+        1,
+        98
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "src/mag/randtest.c",
+    "newRanges": [
+      [
+        1,
+        46
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "src/mag/root.c",
+    "newRanges": [
+      [
+        1,
+        57
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "src/mag/set_d.c",
+    "newRanges": [
+      [
+        1,
+        55
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "src/mag/set_d_2exp_fmpz.c",
+    "newRanges": [
+      [
+        1,
+        75
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "src/mag/sinh.c",
+    "newRanges": [
+      [
+        1,
+        95
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "src/mag/impl.h",
+    "newRanges": [
+      [
+        1,
+        21
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "src/double_extras.h",
+    "newRanges": [
+      [
+        1,
+        108
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "src/mag/test/t-exp.c",
+    "newRanges": [
+      [
+        1,
+        164
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "src/mag/test/t-expinv.c",
+    "newRanges": [
+      [
+        1,
+        159
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "src/mag/test/t-expm1.c",
+    "newRanges": [
+      [
+        1,
+        93
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "src/mag/test/t-log.c",
+    "newRanges": [
+      [
+        1,
+        208
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "src/mag/test/t-neg_log.c",
+    "newRanges": [
+      [
+        1,
+        216
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "src/mag/test/t-log1p.c",
+    "newRanges": [
+      [
+        1,
+        83
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "src/mag/test/t-atan.c",
+    "newRanges": [
+      [
+        1,
+        140
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "src/mag/test/t-sinh.c",
+    "newRanges": [
+      [
+        1,
+        142
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "src/mag/test/t-cosh.c",
+    "newRanges": [
+      [
+        1,
+        142
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "src/mag/test/t-root.c",
+    "newRanges": [
+      [
+        1,
+        78
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "src/mag/test/t-d_log_lower_bound.c",
+    "newRanges": [
+      [
+        1,
+        105
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "src/mag/test/t-d_log_upper_bound.c",
+    "newRanges": [
+      [
+        1,
+        105
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "src/mag/test/t-exp_tail.c",
+    "newRanges": [
+      [
+        1,
+        169
+      ]
+    ]
+  }
+]

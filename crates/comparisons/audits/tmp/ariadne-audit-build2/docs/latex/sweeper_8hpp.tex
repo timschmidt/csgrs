@@ -1,0 +1,36 @@
+\doxysubsection{source/algebra/sweeper.hpp File Reference}
+\hypertarget{sweeper_8hpp}{}\label{sweeper_8hpp}\index{source/algebra/sweeper.hpp@{source/algebra/sweeper.hpp}}
+
+
+\doxysubsubsection{Description}
+Classes for simplifying the representation of a polynomial expansion. 
+
+{\ttfamily \#include "{}utility/macros.\+hpp"{}}\newline
+{\ttfamily \#include "{}utility/attribute.\+hpp"{}}\newline
+{\ttfamily \#include "{}numeric/float.\+decl.\+hpp"{}}\newline
+{\ttfamily \#include "{}algebra/multi\+\_\+index.\+hpp"{}}\newline
+{\ttfamily \#include "{}algebra/expansion.\+hpp"{}}\newline
+\doxysubsubsubsection*{Classes}
+\begin{DoxyCompactItemize}
+\item 
+class \mbox{\hyperlink{classAriadne_1_1Sweeper}{Sweeper$<$ F $>$}}
+\begin{DoxyCompactList}\small\item\em A class for removing terms in a polynomial expansion which fall below some significance level, putting them in a uniform error. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1ThresholdSweeper}{Threshold\+Sweeper$<$ F $>$}}
+\begin{DoxyCompactList}\small\item\em A sweeper class which discards terms whose absolute value is smaller than a threshold. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1RelativeThresholdSweeper}{Relative\+Threshold\+Sweeper$<$ F $>$}}
+\begin{DoxyCompactList}\small\item\em A sweeper class which does not discard any terms at all. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1TrivialSweeper}{Trivial\+Sweeper$<$ F $>$}}
+\begin{DoxyCompactList}\small\item\em A sweeper class which does not discard any terms at all. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1NullSweeper}{Null\+Sweeper$<$ F $>$}}
+\begin{DoxyCompactList}\small\item\em A sweeper class which only discards the zero term. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1AffineSweeper}{Affine\+Sweeper$<$ F $>$}}
+\begin{DoxyCompactList}\small\item\em A sweeper class which discards non-\/affine terms. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1GradedSweeper}{Graded\+Sweeper$<$ F $>$}}
+\begin{DoxyCompactList}\small\item\em A sweeper class which discards terms whose total degree is above some threshold. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1GradedThresholdSweeper}{Graded\+Threshold\+Sweeper$<$ F $>$}}
+\begin{DoxyCompactList}\small\item\em A sweeper class which discards terms whose total degree is above some threshold or whose absolute value is smaller than a threshold. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsubsection*{Namespaces}
+\begin{DoxyCompactItemize}
+\item 
+namespace \mbox{\hyperlink{namespaceAriadne}{Ariadne}}
+\begin{DoxyCompactList}\small\item\em Top-\/level Ariadne namespace. \end{DoxyCompactList}\end{DoxyCompactItemize}

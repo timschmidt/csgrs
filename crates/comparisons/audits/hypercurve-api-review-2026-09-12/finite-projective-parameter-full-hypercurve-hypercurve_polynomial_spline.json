@@ -1,0 +1,43 @@
+{
+  "repo": "hypercurve",
+  "target": "hypercurve_polynomial_spline",
+  "binary": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve_polynomial_spline-e65f36ff0ddaa267",
+  "command": [
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve_polynomial_spline-e65f36ff0ddaa267",
+    "--test-threads=4",
+    "--color",
+    "never"
+  ],
+  "sha256": "5331415448a53f876e72196405481d01afe42677f1fea9cb92b6a59ea4115b57",
+  "returncode": 0,
+  "timed_out": false,
+  "elapsed_seconds": 0.0034794610110111535,
+  "log": "finite-projective-parameter-full-hypercurve-hypercurve_polynomial_spline.log",
+  "passed": [
+    "invalid_polynomial_spline_evidence_context_and_source",
+    "discontinuous_polynomial_knot_requires_explicit_point_side",
+    "linear_polynomial_spline_evaluates_elevated_spans",
+    "higher_degree_polynomial_spline_uses_exact_unit_weight_bezier_spans",
+    "periodic_polynomial_spline_evidence_layout_and_wrapping_errors",
+    "periodic_polynomial_spline_wraps_and_reuses_exact_native_evaluation",
+    "polynomial_spline_clones_share_one_decomposition",
+    "periodic_polynomial_editing_preserves_only_whole_curve_periodicity",
+    "polynomial_spline_corner_requires_explicit_derivative_side",
+    "polynomial_spline_interior_knot_uses_retained_span_boundary",
+    "polynomial_spline_knot_insertion_split_and_subcurve_are_exact",
+    "polynomial_spline_out_of_domain_evaluation_is_contextual",
+    "polynomial_spline_reversal_preserves_domain_source_and_image",
+    "polynomial_spline_construction_obeys_terminal_policy_without_replacing_knots",
+    "polynomial_exact_edits_obey_terminal_policy_through_unit_weight_nurbs",
+    "unclamped_polynomial_spline_retains_exact_active_domain_endpoints",
+    "periodic_polynomial_wrapping_obeys_terminal_policy",
+    "polynomial_subdivision_reconstruction_obeys_terminal_policy"
+  ],
+  "failed": [],
+  "ignored": [],
+  "summaries": [
+    "test result: ok. 18 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s"
+  ],
+  "new_failures": [],
+  "known_failures": []
+}

@@ -1,0 +1,16 @@
+{
+  "head": "d00fa186b720f4224e512d9185bc859c624b4608",
+  "all_owned_processes_reaped": true,
+  "main_only_unqualified_region_dirty": true,
+  "rejected_trials": [
+    {
+      "prefix": "corner-publication-decision-sites-20260923-trace7",
+      "binary_sha256": "c4975192e7ba27f50e22cf4858ef98e1261369e0a1e2dd423deccebb475aaf54"
+    },
+    {
+      "prefix": "corner-publication-decision-sites-20260923-trace8",
+      "binary_sha256": "61c83a3e1f99783d281828e2597097649bb140e22d5a7ac743b57a359911a41b"
+    }
+  ],
+  "production_fallback_changes_reverted": true
+}

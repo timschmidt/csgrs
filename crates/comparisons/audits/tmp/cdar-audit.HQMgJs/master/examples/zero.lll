@@ -1,0 +1,9 @@
+	rlim lbl	# limit of 2^(-n)
+	ret		# end
+lbl:	ineg		# p -> -p
+	ipush 1		# -p 1
+	zconv
+	rconv
+	rot 2 1		# 1 -p
+	rsh		# 2^-p
+	ret		# return from limit

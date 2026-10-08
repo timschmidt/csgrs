@@ -1,0 +1,70 @@
+{
+  "schema": 1,
+  "repository": "https://github.com/timschmidt/exactcore-hyper-comparison",
+  "revision": "1e3b1f7a8114b6bcf5078c31706719b054d87d46",
+  "inventory_sha256": "3cb7b9ef3f53288fd6065e630dc6855cf86a1ee3184fb85a5f5da4c1a8f0cf4a",
+  "scope": "Every upstream tracked file and symlink, with all five LFS payloads materialized and checked. New integration files are maintained by the monorepo.",
+  "adaptation_scope": "Active harness port to the monorepo and exact-only curve API, fail-closed benchmark fixtures, portable Git mode validation, current Clippy fixes, and rustfmt. Historical audits are unchanged.",
+  "adaptations": [
+    {
+      "path": ".gitattributes",
+      "sha256": "0275ed31d0bb5e113a30652927b0947bc25f9a5f7c4b4ced54ab6a8b8c355b76"
+    },
+    {
+      "path": ".gitignore",
+      "sha256": "0e62966719dcfce80ecd855c7af0a4541f9e425739a7f95fe95d8d985d2a6ff2"
+    },
+    {
+      "path": "Cargo.toml",
+      "sha256": "9d409c668f2061967cd291e100fca82e12e0ead53ad8350509ffc580bbec9971"
+    },
+    {
+      "path": "README.md",
+      "sha256": "2799d370a495a96a95d8d45aa1d0374f7321ec724513354b58205c8be8720411"
+    },
+    {
+      "path": "THIRD_PARTY.md",
+      "sha256": "fa3f7e6dc45078fa8f32e6d379697b49089dcf143a79baa6c337161c9a21d572"
+    },
+    {
+      "path": "benches/curves.rs",
+      "sha256": "4b3cc42d44e26cd95422000c16ac06f34c6ff84f1b35af8c88000d02082b0324"
+    },
+    {
+      "path": "build.rs",
+      "sha256": "4a529061aabda9f1a0c4ff38504c18c7de3e10669d932a459f3ba9cc83200c5b"
+    },
+    {
+      "path": "scripts/consolidate-audits.py",
+      "sha256": "6f3ef2634b37a0bf471947f974e7aa11e1210ebc66d45ac7d2581ba0b7727a0c"
+    },
+    {
+      "path": "scripts/test-consolidate-audits.py",
+      "sha256": "76c4a7b1a76c3b1ba44fd68d5bfb84b3172e0da87ce84bd8b08c9f031aea11fb"
+    },
+    {
+      "path": "src/bin/memory_sweep.rs",
+      "sha256": "d476bcbd0e2add977a3ce01e14197336fe8b7306af54030216c79b040d141ecc"
+    },
+    {
+      "path": "src/lib.rs",
+      "sha256": "2fbed59ab20a180bb7561ba602e3daeae02619ba46306d9eab246df976ed8196"
+    },
+    {
+      "path": "src/memory_operations.rs",
+      "sha256": "8736362504d8028b1247763b552403298e8896da2ecfee1600c0b607929047e9"
+    },
+    {
+      "path": "tests/curves.rs",
+      "sha256": "17e48a90d0d78fde46af4f0e0d415001d4666cc63e57283cec9e58ac2943c7c3"
+    }
+  ],
+  "legacy_migration_discrepancies": [
+    {
+      "path": "audits/workspace/EXACTCORELIB_AUDIT_PROGRESS.md",
+      "manifest_sha256": "27c9e13a4dd9df7a5ec0c8753b3361d367e4fd056e302a90db2c0ccce1e88608",
+      "pinned_revision_sha256": "1d5a0e9b9bb9aa2bece323afd7664cac4cf9329ec565ff9f8659c0e2f80c6d17",
+      "status": "Pre-existing difference between the older migration manifest and the pinned upstream tree; both preserved unchanged."
+    }
+  ]
+}

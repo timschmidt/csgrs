@@ -1,0 +1,4 @@
+Note: /home/tim/Documents/GitHub/workspace/exact-real-references/Ruffini/common/src/main/java/dk/jonaslindstrom/ruffini/common/algorithms/EuclideanAlgorithm.java uses unchecked or unsafe operations.
+Note: Recompile with -Xlint:unchecked for details.
+
+{"status":0,"signal":null,"error":"spawnSync javac EPERM"}

@@ -1,0 +1,27 @@
+{
+  "returncode": 0,
+  "elapsed_seconds": 3.1682070970127825,
+  "normal_library_sha256": "476ce4085af4463f86d6182e476e0fa13af9266727aaefa54be4b0293d704b2a",
+  "log": "selected-point-frame-replay-rational-public.log",
+  "source": "finite-circle-native-poles-charts-public.rs",
+  "command": [
+    "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustc",
+    "--edition=2024",
+    "-O",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-circle-native-poles-charts-public.rs",
+    "--extern",
+    "hypercurve=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypercurve-930b1fe968ca3c94.rlib",
+    "-L",
+    "dependency=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps",
+    "-o",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/selected-point-frame-replay-rational-public"
+  ],
+  "source_sha256": "5db37216d54f7ee63711e8d0d36396d4923d626d1f77f9e79d0ef4fdc7b8b6b9",
+  "executable_sha256": "932de04ab20bd29b218f76e6bb366233944637df5d1f54fb732690b2074157ec",
+  "counts": {
+    "cases": 16,
+    "contacts": 16,
+    "point_replays": 32,
+    "failures": 0
+  }
+}

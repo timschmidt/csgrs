@@ -1,0 +1,17 @@
+{"bits":32,"fixtures":432,"components":5184,"inputChecks":1728,"zeroComponents":288}
+{"bits":64,"fixtures":864,"components":10368,"inputChecks":3456,"zeroComponents":576}
+{"bits":127,"fixtures":1296,"components":15552,"inputChecks":5184,"zeroComponents":864}
+{"bits":128,"fixtures":1728,"components":20736,"inputChecks":6912,"zeroComponents":1152}
+{"bits":129,"fixtures":2160,"components":25920,"inputChecks":8640,"zeroComponents":1440}
+{"bits":191,"fixtures":2592,"components":31104,"inputChecks":10368,"zeroComponents":1728}
+{"bits":192,"fixtures":3024,"components":36288,"inputChecks":12096,"zeroComponents":2016}
+{"bits":193,"fixtures":3456,"components":41472,"inputChecks":13824,"zeroComponents":2304}
+{"bits":255,"fixtures":3888,"components":46656,"inputChecks":15552,"zeroComponents":2592}
+{"bits":256,"fixtures":4320,"components":51840,"inputChecks":17280,"zeroComponents":2880}
+{"bits":257,"fixtures":4752,"components":57024,"inputChecks":19008,"zeroComponents":3168}
+{"bits":511,"fixtures":5184,"components":62208,"inputChecks":20736,"zeroComponents":3456}
+{"bits":512,"fixtures":5616,"components":67392,"inputChecks":22464,"zeroComponents":3744}
+{"bits":513,"fixtures":6048,"components":72576,"inputChecks":24192,"zeroComponents":4032}
+{"bits":1024,"fixtures":6480,"components":77760,"inputChecks":25920,"zeroComponents":4320}
+{"bits":2048,"fixtures":6912,"components":82944,"inputChecks":27648,"zeroComponents":4608}
+{"status":"pass","fixtures":6912,"components":82944,"inputChecks":27648,"zeroComponents":4608}

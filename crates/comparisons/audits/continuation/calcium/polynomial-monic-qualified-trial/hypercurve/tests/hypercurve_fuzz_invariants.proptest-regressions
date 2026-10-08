@@ -1,0 +1,8 @@
+# Seeds for failure cases proptest has generated in the past. It is
+# automatically read and these particular cases re-run before any
+# novel cases are generated.
+#
+# It is recommended to check this file in to source control so that
+# everyone who runs the test benefits from these saved cases.
+cc afb3dcc4f4ee771a94c092469c35ae8b6590ae6050271fae72b5c6ba40d4660f # shrinks to a_rect = Rect { xmin: 47, ymin: -7, xmax: 60, ymax: -5 }, b_rect = Rect { xmin: 47, ymin: -5, xmax: 60, ymax: -3 }
+cc 8e73257d4336a36591a1000163910ff63fb70c5e1738ebf264ab3a6c6c79235f # shrinks to a_rect = Rect { xmin: 43, ymin: 0, xmax: 45, ymax: 25 }, b_rect = Rect { xmin: 3, ymin: 1, xmax: 44, ymax: 3 }

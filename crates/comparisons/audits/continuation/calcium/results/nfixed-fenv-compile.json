@@ -1,0 +1,25 @@
+{
+  "tag": "nfixed-fenv-compile",
+  "started": "2026-09-09T16:47:32.485Z",
+  "finished": "2026-09-09T16:47:32.553Z",
+  "elapsedSeconds": 0.06521792700000001,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison",
+  "command": "gcc",
+  "args": [
+    "-O2",
+    "-g0",
+    "-frounding-math",
+    "-ffp-contract=off",
+    "-Wall",
+    "-Wextra",
+    "-Werror",
+    "audits/continuation/calcium/fenv-product-control.c",
+    "-lmpfr",
+    "-lgmp",
+    "-lm",
+    "-o",
+    "/tmp/calcium-nfixed-controls.qZn5o6/fenv-product-control"
+  ],
+  "code": 0,
+  "signal": null
+}

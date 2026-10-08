@@ -1,0 +1,18 @@
+Retain reduced denominator powers in algebraic derivative recurrence
+
+Derivative images already reduce their published denominators at the selected
+source root. Reuse those reduced values between multiplications instead of
+retaining and expanding the full D^(k+1) polynomial. Keep numerator recurrence
+on full source polynomials because those polynomials are differentiated.
+Preserve original pole semantics and the existing certified reduction fallback.
+
+The new independent regression checks eight derivative orders across homogeneous
+source degrees and a reducible source equation sharing a factor with D: a
+finite selected root remains usable while the excluded root remains a pole.
+
+Validation: 324 release cases across 12 executables, seven integration checks,
+36 unchanged public probe samples with independent exact-value checks, and
+four unchanged finite/pole domain cases. On the degree-15/eight-order probe,
+median Rust allocation requests fell from about 133k to 87k and requested
+bytes from 8.7MB to 5.8MB under both policies. Timings are allocator-instrumented
+and workload-local; no uniform performance claim.

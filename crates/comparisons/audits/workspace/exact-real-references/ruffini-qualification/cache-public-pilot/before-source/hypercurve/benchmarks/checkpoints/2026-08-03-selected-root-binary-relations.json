@@ -1,0 +1,236 @@
+{
+  "schema": "hypercurve.performance-checkpoint.v1",
+  "captured_on": "2026-08-03",
+  "checkpoint": "selected-root binary relations for trivariate winding",
+  "source_revision": "7aa75c8ed7cfe2eb89e42b7638999dd8fc60e3a8",
+  "semantic_revisions": {
+    "hypersolve": [
+      "110ab41"
+    ],
+    "hypercurve": [
+      "52d8a8a",
+      "7aa75c8"
+    ]
+  },
+  "comparison_revision": "9250d7c2bf3c3fcf7d8037e5235b3fc06c99f579",
+  "comparison_evidence_revision": "10b21a7",
+  "dependency_revisions": {
+    "hyperreal": "6c7b8325382135e424dfdb1d7442d454c9665d75",
+    "hyperlattice": "d11ca2f0e825d8e26048cfda5d1101df21dcfef0",
+    "hyperlimit": "bb1c5e7c418bb8af25701c8201f833fa485b9e9a",
+    "hypersolve": "110ab4110eed6202cc5209002b099466e629ee05",
+    "hypertri": "74d739f78280fd8b4bf1a0c6170ac7c1f127e55e",
+    "hyperbrep": "6336697cd124ef6ef8384166b1f90ef2fceb6663"
+  },
+  "scope": {
+    "included": [
+      "exact selected-root sum and product recognition through Hypersolve represented-root arithmetic",
+      "exact selected-image versus authored-result comparison that rejects foreign selected roots",
+      "sum substitution by exact binomial expansion and product substitution by exponent fusion",
+      "subtraction relations by rearrangement to a sum and division relations by rearrangement to a product",
+      "all three result-axis orders and all six substitution-axis orders",
+      "exact interval rejection before any unrelated binary resultant construction",
+      "cubic-by-cubic degree-nine algebraic image construction in Hypersolve",
+      "identical certified STRICT and APPROXIMATE_512 paths for supported identities",
+      "a nonlinear rational three-field control that retains the shared 512-bit terminal",
+      "allocation, linked-size, historical, competitive, policy, and static-callgraph evidence"
+    ],
+    "excluded": [
+      "general rational functions of two independent selected roots",
+      "primitive-element or compositum construction above the bounded degree-nine binary package",
+      "dense tensors above the existing 16384-control resource ceiling",
+      "algebraic analytic-parallel endpoint images whose point retains an analytic radical",
+      "broader noncircular independent-field shared-component correspondence",
+      "finite projection and export of algebraic cusp carriers",
+      "fillet, chamfer, historical-engine deletion, and caller cutover work",
+      "hypermesh"
+    ]
+  },
+  "mathematical_contract": {
+    "construction": "Hypersolve constructs the selected arithmetic image of two represented roots by an exact rational resultant and a Sturm-certified image isolator. Cubic-by-cubic images are admitted at the minimal required resultant-degree bound of nine.",
+    "selected_root_proof": "Hypercurve separately compares the constructed image with the third authored representation using exact refinement, common-root replay, and difference construction. Polynomial-factor coincidence alone is never accepted as equality of the selected roots.",
+    "canonical_relations": "Testing z=x+y for each axis permutation covers addition and subtraction because z=x-y is equivalent to x=z+y. Testing z=x*y for each permutation covers multiplication and division because z=x/y is equivalent to x=z*y. Bezier parameters are retained in the closed unit interval.",
+    "interval_gate": "Exact source isolator endpoints bound sums directly and products monotonically on [0,1]. Disjoint image/result intervals reject a candidate before resultant construction; undecided or nonstandard bounds conservatively retain the candidate.",
+    "sum_substitution": "For z=x+y, every z^k is expanded exactly as sum_j binomial(k,j)*x^(k-j)*y^j, producing one bounded bivariate tensor.",
+    "product_substitution": "For z=x*y, each monomial x^i*y^j*z^k maps exactly to x^(i+k)*y^(j+k), producing one bounded bivariate tensor without a power table.",
+    "post_substitution_authority": "The resulting bivariate value is decided by Hypercurve's strict direct, common-fiber, and refinement authorities. No approximate arithmetic participates in a Certified result.",
+    "resource_bound": "Checked output dimensions preserve the existing 16384-control ceiling. Unsupported arithmetic, degree overflow, nonisolating images, or unresolved selected-root comparison returns no exact claim.",
+    "policy": "Supported sum/product identities are Certified under STRICT and APPROXIMATE_512 without terminal consumption. The remaining rational three-field control is Predicate uncertainty in STRICT and may return Zero only after APPROXIMATE_512 records the shared terminal.",
+    "failure": "No floating tolerance, sampled equality, guessed conjugate, compatibility shim, or second Boolean engine is introduced."
+  },
+  "capability": {
+    "comparison_revision": "The cubic identity (a*b-c)*(1+a)*(1+b)*(1+c), with a^3=1/2, b^3=1/3, and c^3=1/6, was nonlinear below every defining degree. STRICT was uncertain and APPROXIMATE_512 consumed its terminal.",
+    "source_revision": "Hypersolve now constructs the exact selected product a*b, proves that it is the authored c, and Hypercurve substitutes c=a*b before invoking the bivariate sign authority. The corresponding independently represented cubic-sum identity follows the same graph.",
+    "multiplicative_fixture": "All three placements of the product root return Certified Zero under STRICT and APPROXIMATE_512; neither policy consumes its terminal.",
+    "additive_fixture": "For a^3=1/20, b^3=1/30, and the selected degree-nine root s=a+b, all three placements of s return Certified Zero under both policies.",
+    "differential_axis_coverage": "A dense 3x4x2 tensor receives exact sum and product substitution in all six ordered axis arrangements, and every bivariate evaluation equals direct trivariate evaluation.",
+    "foreign_root_coverage": "A selected cubic root unrelated to a*b is rejected even though the arithmetic package remains capable of constructing the product.",
+    "remaining_policy_control": "For a^3=1/2, b^3=1/3, and c=a*b/(a+b), the quadratic-in-every-axis zero a*b-c*(a+b) is not a pairwise sum or product relation. STRICT remains explicitly uncertain and APPROXIMATE_512 consumes the terminal.",
+    "remaining_exactness_boundary": "Prove general low-degree rational relations among three selected roots or construct a bounded compositum only when quotient, affine, linear-resultant, sum, and product reductions all fail.",
+    "historical_exact_peer": false,
+    "competitive_exact_peer": false
+  },
+  "benchmark": {
+    "host": "AMD Ryzen 7 5800X3D",
+    "toolchain": "rustc 1.97.0, LLVM 22.1.6, x86_64-unknown-linux-gnu",
+    "primary_method": "all-feature release unit-test and comparative executables pinned to CPU 11; exact fully-qualified filters; seven perf-stat repetitions for focused fixtures and three for fixed-work controls; median retired instructions and branches are primary",
+    "multiplicative_cubic_all_axis_orders": {
+      "policy_evaluations": 6,
+      "axis_orders": 3,
+      "median_task_clock_ms": 4.96,
+      "median_cycles": 14651672,
+      "median_instructions": 29964641,
+      "median_branches": 6331810,
+      "median_branch_misses": 92812,
+      "instructions_per_policy_evaluation": 4994106.833333,
+      "comparison_terminal_policy_evaluations": 2,
+      "comparison_terminal_instructions": 644965484,
+      "comparison_terminal_branches": 106601508,
+      "aggregate_instruction_change_percent_despite_triple_coverage": -95.354071,
+      "aggregate_branch_change_percent_despite_triple_coverage": -94.060299,
+      "per_evaluation_instruction_speedup": 64.572656,
+      "certainty": "Certified under STRICT and APPROXIMATE_512",
+      "approximate_terminal_consumed": false
+    },
+    "additive_cubic_all_axis_orders": {
+      "policy_evaluations": 6,
+      "axis_orders": 3,
+      "median_task_clock_ms": 5.31,
+      "median_cycles": 17152313,
+      "median_instructions": 37199214,
+      "median_branches": 7744965,
+      "median_branch_misses": 116739,
+      "certainty": "Certified under STRICT and APPROXIMATE_512",
+      "approximate_terminal_consumed": false
+    },
+    "remaining_rational_three_field_terminal": {
+      "policy_evaluations": 2,
+      "explicit_unsupported_preflight_checks": 1,
+      "median_task_clock_ms": 30.58,
+      "median_cycles": 122678062,
+      "median_instructions": 390817940,
+      "median_branches": 65680732,
+      "median_branch_misses": 373211,
+      "strict_result": "Predicate uncertainty",
+      "approximate_result": "Zero with Approximate512Consumed"
+    },
+    "fixed_work_historical_controls": {
+      "method": "current release comparative executable pinned to CPU 11; three complete perf-stat repetitions; fixture construction excluded",
+      "line_arc_capsule_inward": {
+        "iterations": 10000,
+        "comparison_instructions": 1985161423,
+        "current_instructions": 1984854000,
+        "instruction_change_percent": -0.015486,
+        "current_branches": 402513682
+      },
+      "certified_open_cubic_offset": {
+        "iterations": 10,
+        "comparison_instructions": 3447691859,
+        "current_instructions": 3447283463,
+        "instruction_change_percent": -0.011845,
+        "current_branches": 649580810
+      },
+      "interpretation": "Both authoritative historical offset lanes remain instruction-neutral and do not execute the cold selected-root relation package."
+    },
+    "competitive_context": {
+      "method": "current release comparative executable pinned to CPU 11; 11 complete samples at a 100 ms target; fixture construction excluded",
+      "direct_guarantee_equivalent": false,
+      "line_arc_capsule_inward_ns": {
+        "hypercurve_exact": 18261.5,
+        "cavalier_contours": 932.5,
+        "hypercurve_to_cavalier_ratio": 19.583378
+      },
+      "open_cubic_offset_ns": {
+        "hypercurve_certified": 29750724.5,
+        "hypercurve_chord_fallback": 995362.9,
+        "curvo_heuristic": 8522.5,
+        "certified_to_curvo_ratio": 3490.844764,
+        "chord_fallback_to_curvo_ratio": 116.792361
+      },
+      "interpretation": "Cavalier and Curvo remain throughput targets rather than exactness peers. Fixed-work instructions show the new proof is isolated from ordinary offset lanes."
+    }
+  },
+  "memory": {
+    "tool": "Heaptrack direct all-feature release-unit-test trace with an exact fully-qualified filter; heaptrack_print summary is authoritative",
+    "multiplicative_cubic_all_axis_orders": {
+      "policy_evaluations": 6,
+      "allocation_calls": 43546,
+      "temporary_allocations": 2887,
+      "peak_heap_kib": 337.68,
+      "recorder_peak_rss_mib": 12.68,
+      "comparison_terminal_policy_evaluations": 2,
+      "comparison_terminal_allocation_calls": 1206015,
+      "comparison_terminal_temporary_allocations": 285784,
+      "aggregate_allocation_change_percent_despite_triple_coverage": -96.389265,
+      "aggregate_temporary_change_percent_despite_triple_coverage": -98.989796,
+      "per_evaluation_allocation_speedup": 83.085588,
+      "peak_heap_change_percent": 18.475896,
+      "interpretation": "Six certified evaluations use 1,162,469 fewer allocation calls than the former two-evaluation terminal control. The test's three retained fixtures raise peak live heap by 52.66 KiB while eliminating repeated 512-bit refinement churn."
+    },
+    "profiles_retained": false
+  },
+  "release_size": {
+    "method": "representative curve_region_boolean_batch release benchmark executables at 9250d7c and 7aa75c8",
+    "default_features": {
+      "comparison_file_bytes": 8335904,
+      "current_file_bytes": 8339144,
+      "file_change_bytes": 3240,
+      "file_change_percent": 0.038868,
+      "comparison_size_text_bytes": 6353969,
+      "current_size_text_bytes": 6359421,
+      "size_text_change_bytes": 5452,
+      "size_text_change_percent": 0.085805,
+      "comparison_actual_text_section_bytes": 4808903,
+      "current_actual_text_section_bytes": 4815447,
+      "actual_text_change_bytes": 6544,
+      "actual_text_change_percent": 0.136081
+    },
+    "no_default_features": {
+      "comparison_file_bytes": 7989560,
+      "current_file_bytes": 7989592,
+      "file_change_bytes": 32,
+      "file_change_percent": 0.000401,
+      "comparison_size_text_bytes": 6080389,
+      "current_size_text_bytes": 6080389,
+      "size_text_change_bytes": 0,
+      "size_text_change_percent": 0.0,
+      "comparison_actual_text_section_bytes": 4576151,
+      "current_actual_text_section_bytes": 4576151,
+      "actual_text_change_bytes": 0,
+      "actual_text_change_percent": 0.0
+    },
+    "interpretation": "The complete predicate-enabled binary-relation package adds 6.39 KiB of actual production .text. Feature-disabled allocated text remains byte-identical; its 32-byte file change is metadata."
+  },
+  "static_callgraph": {
+    "tool": "tools/hyper-callgraph",
+    "command": "tools/hyper-callgraph/target/release/hyper-callgraph --root hypercurve --out-dir target/callgraph-hypercurve-binary-relations --crate-name hypercurve --include-tests --format json --per-library",
+    "current_output": "target/callgraph-hypercurve-binary-relations/callgraph.json",
+    "matched_hypercurve_with_tests": {
+      "comparison_nodes": 23832,
+      "current_nodes": 23864,
+      "node_change_percent": 0.134273,
+      "comparison_edges": 44857,
+      "current_edges": 44963,
+      "edge_change_percent": 0.236306
+    },
+    "confirmed_paths": [
+      "trivariate_parameter_triple_sign_by_refinement -> trivariate_binary_related_parameter_sign",
+      "trivariate_binary_related_parameter_sign -> exact interval overlap rejection -> exact_parameter_binary_relation",
+      "exact_parameter_binary_relation -> Hypersolve represented-root arithmetic -> exact selected-root difference comparison",
+      "trivariate_binary_related_parameter_sign -> trivariate_substitute_sum_axis -> signed_bivariate_at_parameter_pair_exact_first",
+      "trivariate_binary_related_parameter_sign -> trivariate_substitute_product_axis -> signed_bivariate_at_parameter_pair_exact_first"
+    ]
+  },
+  "verification": {
+    "hypersolve_library": "passed at dependency revision: 214 tests",
+    "hypercurve_all_features_library": "passed at source revision: 400 tests",
+    "hypercurve_default_features_library": "passed at source revision: 396 tests",
+    "hypercurve_no_default_features_library": "passed at source revision: 320 tests",
+    "hypercurve_clippy_all_features_all_targets": "passed with -D warnings",
+    "hypercurve_clippy_no_default_features_all_targets": "passed with -D warnings",
+    "strict_and_approximate": "passed sum/product identities as Certified under both policies, all axis substitutions, unrelated selected-root rejection, and rational three-field STRICT uncertainty plus APPROXIMATE_512 terminal consumption",
+    "release_builds": "passed all-feature release unit-test, comparative, and default/minimal representative benchmark artifacts",
+    "format": "passed",
+    "diff_check": "passed"
+  }
+}

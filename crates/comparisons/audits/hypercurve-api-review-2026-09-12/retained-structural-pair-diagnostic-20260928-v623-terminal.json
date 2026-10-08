@@ -1,0 +1,87 @@
+{
+  "normal_production_build": false,
+  "source_manifest": "retained-structural-pair-diagnostic-20260928-v623-sources.json",
+  "source_directory": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/source-archives/retained-structural-pair-diagnostic-20260928-v623",
+  "builds": [
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "test",
+        "--lib",
+        "--test",
+        "hypercurve_analytic_parallel_region",
+        "--release",
+        "--all-features",
+        "--locked",
+        "--offline",
+        "--no-run",
+        "--message-format=json"
+      ],
+      "returncode": 0,
+      "log": "retained-structural-pair-diagnostic-20260928-v623-build.log",
+      "elapsed_seconds": 192.39411791809835,
+      "binaries": {
+        "hypercurve_analytic_parallel_region": {
+          "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-structural-pair-diagnostic-20260928-v623-hypercurve_analytic_parallel_region-tests",
+          "sha256": "cb59b0402989b8570d388a22755466c8a25fc7e34f43242b3952f672b99f2948"
+        },
+        "hypercurve": {
+          "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-structural-pair-diagnostic-20260928-v623-hypercurve-tests",
+          "sha256": "dbb836987e63c955ff916de662d8ad6bf04026c2746fb84e498a41439ab78270"
+        }
+      }
+    }
+  ],
+  "cases": [
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-structural-pair-diagnostic-20260928-v623-hypercurve_analytic_parallel_region-tests",
+        "--exact",
+        "radical_parallel_cusp_offsets_exactly_under_both_policies",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 101,
+      "log": "retained-structural-pair-diagnostic-20260928-v623-radical_parallel_cusp_offsets_exactly_under_both_policies.log",
+      "elapsed_seconds": 0.015633387956768274,
+      "target": "hypercurve_analytic_parallel_region",
+      "name": "radical_parallel_cusp_offsets_exactly_under_both_policies",
+      "passed": false
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-structural-pair-diagnostic-20260928-v623-hypercurve-tests",
+        "--exact",
+        "bezier_offset::retained_structural_pair_domain_regression::retained_structural_correspondence_preserves_off_diagonal_contact_domains",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "retained-structural-pair-diagnostic-20260928-v623-retained_structural_correspondence_preserves_off_diagonal_contact_domains.log",
+      "elapsed_seconds": 1.1652357429265976,
+      "target": "hypercurve",
+      "name": "bezier_offset::retained_structural_pair_domain_regression::retained_structural_correspondence_preserves_off_diagonal_contact_domains",
+      "passed": true
+    }
+  ],
+  "checks": [],
+  "expected_cases": {
+    "hypercurve_analytic_parallel_region": [
+      "radical_parallel_cusp_offsets_exactly_under_both_policies"
+    ],
+    "hypercurve": [
+      "bezier_offset::retained_structural_pair_domain_regression::retained_structural_correspondence_preserves_off_diagonal_contact_domains"
+    ]
+  },
+  "all_processes_reaped": true,
+  "probe_complete": true,
+  "qualification_complete": false,
+  "performance": [
+    {
+      "name": "radical_parallel_cusp_offsets_exactly_under_both_policies",
+      "before": 62.99474022979848,
+      "after": 0.015633387956768274
+    }
+  ],
+  "failure": "focused regression failure"
+}

@@ -1,0 +1,3941 @@
+{
+  "mode": "allocation",
+  "started": "2026-09-10T19:54:57.997Z",
+  "finished": "2026-09-10T19:55:01.565Z",
+  "cpu": 6,
+  "binaries": {
+    "baseline": {
+      "path": "/tmp/calcium-power-sums.2CGTky/baseline-allocation",
+      "bytes": 2700056,
+      "sha256": "41acdfcd1962341a97066997dbf298c2447017748bc74edd991088c5d01c9360"
+    },
+    "candidate": {
+      "path": "/tmp/calcium-point-image.4f6mja/guard-allocation",
+      "sha256": "e7765b52a60f1753a4d8a3e13afee57412e447dfbb8fc94657eaa6249ff9ecd7",
+      "bytes": 2700336
+    }
+  },
+  "summaries": [
+    {
+      "case": 0,
+      "lifecycle": "retained",
+      "iterations": 64,
+      "observations": 6,
+      "sameFullResult": false,
+      "statuses": {
+        "baseline": "InvalidTransformedEvidence",
+        "candidate": "Transformed"
+      },
+      "measurements": {
+        "baseline": {
+          "requests": {
+            "min": 2432,
+            "max": 2432
+          },
+          "requested_bytes": {
+            "min": 237120,
+            "max": 237120
+          },
+          "live_delta": {
+            "min": 0,
+            "max": 0
+          },
+          "peak_delta": {
+            "min": 1992,
+            "max": 1992
+          }
+        },
+        "candidate": {
+          "requests": {
+            "min": 2368,
+            "max": 2368
+          },
+          "requested_bytes": {
+            "min": 233472,
+            "max": 233472
+          },
+          "live_delta": {
+            "min": 0,
+            "max": 0
+          },
+          "peak_delta": {
+            "min": 1992,
+            "max": 1992
+          }
+        }
+      }
+    },
+    {
+      "case": 0,
+      "lifecycle": "fresh",
+      "iterations": 64,
+      "observations": 6,
+      "sameFullResult": false,
+      "statuses": {
+        "baseline": "InvalidTransformedEvidence",
+        "candidate": "Transformed"
+      },
+      "measurements": {
+        "baseline": {
+          "requests": {
+            "min": 3328,
+            "max": 3328
+          },
+          "requested_bytes": {
+            "min": 318016,
+            "max": 318016
+          },
+          "live_delta": {
+            "min": 104,
+            "max": 104
+          },
+          "peak_delta": {
+            "min": 3328,
+            "max": 3328
+          }
+        },
+        "candidate": {
+          "requests": {
+            "min": 3264,
+            "max": 3264
+          },
+          "requested_bytes": {
+            "min": 314368,
+            "max": 314368
+          },
+          "live_delta": {
+            "min": 104,
+            "max": 104
+          },
+          "peak_delta": {
+            "min": 3328,
+            "max": 3328
+          }
+        }
+      }
+    },
+    {
+      "case": 1,
+      "lifecycle": "retained",
+      "iterations": 64,
+      "observations": 6,
+      "sameFullResult": false,
+      "statuses": {
+        "baseline": "InvalidTransformedEvidence",
+        "candidate": "Transformed"
+      },
+      "measurements": {
+        "baseline": {
+          "requests": {
+            "min": 2432,
+            "max": 2432
+          },
+          "requested_bytes": {
+            "min": 237120,
+            "max": 237120
+          },
+          "live_delta": {
+            "min": 0,
+            "max": 0
+          },
+          "peak_delta": {
+            "min": 1992,
+            "max": 1992
+          }
+        },
+        "candidate": {
+          "requests": {
+            "min": 2432,
+            "max": 2432
+          },
+          "requested_bytes": {
+            "min": 244736,
+            "max": 244736
+          },
+          "live_delta": {
+            "min": 0,
+            "max": 0
+          },
+          "peak_delta": {
+            "min": 1992,
+            "max": 1992
+          }
+        }
+      }
+    },
+    {
+      "case": 1,
+      "lifecycle": "fresh",
+      "iterations": 64,
+      "observations": 6,
+      "sameFullResult": false,
+      "statuses": {
+        "baseline": "InvalidTransformedEvidence",
+        "candidate": "Transformed"
+      },
+      "measurements": {
+        "baseline": {
+          "requests": {
+            "min": 3328,
+            "max": 3328
+          },
+          "requested_bytes": {
+            "min": 318016,
+            "max": 318016
+          },
+          "live_delta": {
+            "min": 104,
+            "max": 104
+          },
+          "peak_delta": {
+            "min": 3328,
+            "max": 3328
+          }
+        },
+        "candidate": {
+          "requests": {
+            "min": 3328,
+            "max": 3328
+          },
+          "requested_bytes": {
+            "min": 325632,
+            "max": 325632
+          },
+          "live_delta": {
+            "min": 104,
+            "max": 104
+          },
+          "peak_delta": {
+            "min": 3328,
+            "max": 3328
+          }
+        }
+      }
+    },
+    {
+      "case": 2,
+      "lifecycle": "retained",
+      "iterations": 64,
+      "observations": 6,
+      "sameFullResult": false,
+      "statuses": {
+        "baseline": "InvalidTransformedEvidence",
+        "candidate": "Transformed"
+      },
+      "measurements": {
+        "baseline": {
+          "requests": {
+            "min": 1920,
+            "max": 1920
+          },
+          "requested_bytes": {
+            "min": 181824,
+            "max": 181824
+          },
+          "live_delta": {
+            "min": 0,
+            "max": 0
+          },
+          "peak_delta": {
+            "min": 1536,
+            "max": 1536
+          }
+        },
+        "candidate": {
+          "requests": {
+            "min": 1856,
+            "max": 1856
+          },
+          "requested_bytes": {
+            "min": 178176,
+            "max": 178176
+          },
+          "live_delta": {
+            "min": 0,
+            "max": 0
+          },
+          "peak_delta": {
+            "min": 1536,
+            "max": 1536
+          }
+        }
+      }
+    },
+    {
+      "case": 2,
+      "lifecycle": "fresh",
+      "iterations": 64,
+      "observations": 6,
+      "sameFullResult": false,
+      "statuses": {
+        "baseline": "InvalidTransformedEvidence",
+        "candidate": "Transformed"
+      },
+      "measurements": {
+        "baseline": {
+          "requests": {
+            "min": 2816,
+            "max": 2816
+          },
+          "requested_bytes": {
+            "min": 262720,
+            "max": 262720
+          },
+          "live_delta": {
+            "min": 104,
+            "max": 104
+          },
+          "peak_delta": {
+            "min": 2872,
+            "max": 2872
+          }
+        },
+        "candidate": {
+          "requests": {
+            "min": 2752,
+            "max": 2752
+          },
+          "requested_bytes": {
+            "min": 259072,
+            "max": 259072
+          },
+          "live_delta": {
+            "min": 104,
+            "max": 104
+          },
+          "peak_delta": {
+            "min": 2872,
+            "max": 2872
+          }
+        }
+      }
+    },
+    {
+      "case": 3,
+      "lifecycle": "retained",
+      "iterations": 64,
+      "observations": 6,
+      "sameFullResult": false,
+      "statuses": {
+        "baseline": "InvalidTransformedEvidence",
+        "candidate": "Transformed"
+      },
+      "measurements": {
+        "baseline": {
+          "requests": {
+            "min": 1920,
+            "max": 1920
+          },
+          "requested_bytes": {
+            "min": 181824,
+            "max": 181824
+          },
+          "live_delta": {
+            "min": 0,
+            "max": 0
+          },
+          "peak_delta": {
+            "min": 1536,
+            "max": 1536
+          }
+        },
+        "candidate": {
+          "requests": {
+            "min": 1920,
+            "max": 1920
+          },
+          "requested_bytes": {
+            "min": 189440,
+            "max": 189440
+          },
+          "live_delta": {
+            "min": 0,
+            "max": 0
+          },
+          "peak_delta": {
+            "min": 1536,
+            "max": 1536
+          }
+        }
+      }
+    },
+    {
+      "case": 3,
+      "lifecycle": "fresh",
+      "iterations": 64,
+      "observations": 6,
+      "sameFullResult": false,
+      "statuses": {
+        "baseline": "InvalidTransformedEvidence",
+        "candidate": "Transformed"
+      },
+      "measurements": {
+        "baseline": {
+          "requests": {
+            "min": 3200,
+            "max": 3200
+          },
+          "requested_bytes": {
+            "min": 321088,
+            "max": 321088
+          },
+          "live_delta": {
+            "min": 104,
+            "max": 104
+          },
+          "peak_delta": {
+            "min": 2872,
+            "max": 2872
+          }
+        },
+        "candidate": {
+          "requests": {
+            "min": 3264,
+            "max": 3264
+          },
+          "requested_bytes": {
+            "min": 335360,
+            "max": 335360
+          },
+          "live_delta": {
+            "min": 104,
+            "max": 104
+          },
+          "peak_delta": {
+            "min": 2872,
+            "max": 2872
+          }
+        }
+      }
+    },
+    {
+      "case": 4,
+      "lifecycle": "retained",
+      "iterations": 64,
+      "observations": 6,
+      "sameFullResult": true,
+      "statuses": {
+        "baseline": "Transformed",
+        "candidate": "Transformed"
+      },
+      "measurements": {
+        "baseline": {
+          "requests": {
+            "min": 8256,
+            "max": 8256
+          },
+          "requested_bytes": {
+            "min": 1061888,
+            "max": 1061888
+          },
+          "live_delta": {
+            "min": 0,
+            "max": 0
+          },
+          "peak_delta": {
+            "min": 4904,
+            "max": 4904
+          }
+        },
+        "candidate": {
+          "requests": {
+            "min": 8256,
+            "max": 8256
+          },
+          "requested_bytes": {
+            "min": 1061888,
+            "max": 1061888
+          },
+          "live_delta": {
+            "min": 0,
+            "max": 0
+          },
+          "peak_delta": {
+            "min": 4904,
+            "max": 4904
+          }
+        }
+      }
+    },
+    {
+      "case": 4,
+      "lifecycle": "fresh",
+      "iterations": 64,
+      "observations": 6,
+      "sameFullResult": true,
+      "statuses": {
+        "baseline": "Transformed",
+        "candidate": "Transformed"
+      },
+      "measurements": {
+        "baseline": {
+          "requests": {
+            "min": 9024,
+            "max": 9024
+          },
+          "requested_bytes": {
+            "min": 1136640,
+            "max": 1136640
+          },
+          "live_delta": {
+            "min": 0,
+            "max": 0
+          },
+          "peak_delta": {
+            "min": 6024,
+            "max": 6024
+          }
+        },
+        "candidate": {
+          "requests": {
+            "min": 9024,
+            "max": 9024
+          },
+          "requested_bytes": {
+            "min": 1136640,
+            "max": 1136640
+          },
+          "live_delta": {
+            "min": 0,
+            "max": 0
+          },
+          "peak_delta": {
+            "min": 6024,
+            "max": 6024
+          }
+        }
+      }
+    },
+    {
+      "case": 5,
+      "lifecycle": "retained",
+      "iterations": 64,
+      "observations": 6,
+      "sameFullResult": true,
+      "statuses": {
+        "baseline": "Transformed",
+        "candidate": "Transformed"
+      },
+      "measurements": {
+        "baseline": {
+          "requests": {
+            "min": 8256,
+            "max": 8256
+          },
+          "requested_bytes": {
+            "min": 1061888,
+            "max": 1061888
+          },
+          "live_delta": {
+            "min": 0,
+            "max": 0
+          },
+          "peak_delta": {
+            "min": 4904,
+            "max": 4904
+          }
+        },
+        "candidate": {
+          "requests": {
+            "min": 8256,
+            "max": 8256
+          },
+          "requested_bytes": {
+            "min": 1061888,
+            "max": 1061888
+          },
+          "live_delta": {
+            "min": 0,
+            "max": 0
+          },
+          "peak_delta": {
+            "min": 4904,
+            "max": 4904
+          }
+        }
+      }
+    },
+    {
+      "case": 5,
+      "lifecycle": "fresh",
+      "iterations": 64,
+      "observations": 6,
+      "sameFullResult": true,
+      "statuses": {
+        "baseline": "Transformed",
+        "candidate": "Transformed"
+      },
+      "measurements": {
+        "baseline": {
+          "requests": {
+            "min": 9024,
+            "max": 9024
+          },
+          "requested_bytes": {
+            "min": 1136640,
+            "max": 1136640
+          },
+          "live_delta": {
+            "min": 0,
+            "max": 0
+          },
+          "peak_delta": {
+            "min": 6024,
+            "max": 6024
+          }
+        },
+        "candidate": {
+          "requests": {
+            "min": 9024,
+            "max": 9024
+          },
+          "requested_bytes": {
+            "min": 1136640,
+            "max": 1136640
+          },
+          "live_delta": {
+            "min": 0,
+            "max": 0
+          },
+          "peak_delta": {
+            "min": 6024,
+            "max": 6024
+          }
+        }
+      }
+    },
+    {
+      "case": 6,
+      "lifecycle": "retained",
+      "iterations": 64,
+      "observations": 6,
+      "sameFullResult": true,
+      "statuses": {
+        "baseline": "Transformed",
+        "candidate": "Transformed"
+      },
+      "measurements": {
+        "baseline": {
+          "requests": {
+            "min": 7104,
+            "max": 7104
+          },
+          "requested_bytes": {
+            "min": 842240,
+            "max": 842240
+          },
+          "live_delta": {
+            "min": 0,
+            "max": 0
+          },
+          "peak_delta": {
+            "min": 2688,
+            "max": 2688
+          }
+        },
+        "candidate": {
+          "requests": {
+            "min": 7104,
+            "max": 7104
+          },
+          "requested_bytes": {
+            "min": 842240,
+            "max": 842240
+          },
+          "live_delta": {
+            "min": 0,
+            "max": 0
+          },
+          "peak_delta": {
+            "min": 2688,
+            "max": 2688
+          }
+        }
+      }
+    },
+    {
+      "case": 6,
+      "lifecycle": "fresh",
+      "iterations": 64,
+      "observations": 6,
+      "sameFullResult": true,
+      "statuses": {
+        "baseline": "Transformed",
+        "candidate": "Transformed"
+      },
+      "measurements": {
+        "baseline": {
+          "requests": {
+            "min": 7936,
+            "max": 7936
+          },
+          "requested_bytes": {
+            "min": 928256,
+            "max": 928256
+          },
+          "live_delta": {
+            "min": 0,
+            "max": 0
+          },
+          "peak_delta": {
+            "min": 3872,
+            "max": 3872
+          }
+        },
+        "candidate": {
+          "requests": {
+            "min": 7936,
+            "max": 7936
+          },
+          "requested_bytes": {
+            "min": 928256,
+            "max": 928256
+          },
+          "live_delta": {
+            "min": 0,
+            "max": 0
+          },
+          "peak_delta": {
+            "min": 3872,
+            "max": 3872
+          }
+        }
+      }
+    },
+    {
+      "case": 7,
+      "lifecycle": "retained",
+      "iterations": 64,
+      "observations": 6,
+      "sameFullResult": true,
+      "statuses": {
+        "baseline": "Transformed",
+        "candidate": "Transformed"
+      },
+      "measurements": {
+        "baseline": {
+          "requests": {
+            "min": 7296,
+            "max": 7296
+          },
+          "requested_bytes": {
+            "min": 871936,
+            "max": 871936
+          },
+          "live_delta": {
+            "min": 0,
+            "max": 0
+          },
+          "peak_delta": {
+            "min": 2864,
+            "max": 2864
+          }
+        },
+        "candidate": {
+          "requests": {
+            "min": 7296,
+            "max": 7296
+          },
+          "requested_bytes": {
+            "min": 871936,
+            "max": 871936
+          },
+          "live_delta": {
+            "min": 0,
+            "max": 0
+          },
+          "peak_delta": {
+            "min": 2864,
+            "max": 2864
+          }
+        }
+      }
+    },
+    {
+      "case": 7,
+      "lifecycle": "fresh",
+      "iterations": 64,
+      "observations": 6,
+      "sameFullResult": true,
+      "statuses": {
+        "baseline": "Transformed",
+        "candidate": "Transformed"
+      },
+      "measurements": {
+        "baseline": {
+          "requests": {
+            "min": 8512,
+            "max": 8512
+          },
+          "requested_bytes": {
+            "min": 1016320,
+            "max": 1016320
+          },
+          "live_delta": {
+            "min": 0,
+            "max": 0
+          },
+          "peak_delta": {
+            "min": 4928,
+            "max": 4928
+          }
+        },
+        "candidate": {
+          "requests": {
+            "min": 8512,
+            "max": 8512
+          },
+          "requested_bytes": {
+            "min": 1016320,
+            "max": 1016320
+          },
+          "live_delta": {
+            "min": 0,
+            "max": 0
+          },
+          "peak_delta": {
+            "min": 4928,
+            "max": 4928
+          }
+        }
+      }
+    },
+    {
+      "case": 8,
+      "lifecycle": "retained",
+      "iterations": 64,
+      "observations": 6,
+      "sameFullResult": true,
+      "statuses": {
+        "baseline": "Transformed",
+        "candidate": "Transformed"
+      },
+      "measurements": {
+        "baseline": {
+          "requests": {
+            "min": 18688,
+            "max": 18688
+          },
+          "requested_bytes": {
+            "min": 3124736,
+            "max": 3124736
+          },
+          "live_delta": {
+            "min": 0,
+            "max": 0
+          },
+          "peak_delta": {
+            "min": 15136,
+            "max": 15136
+          }
+        },
+        "candidate": {
+          "requests": {
+            "min": 18688,
+            "max": 18688
+          },
+          "requested_bytes": {
+            "min": 3124736,
+            "max": 3124736
+          },
+          "live_delta": {
+            "min": 0,
+            "max": 0
+          },
+          "peak_delta": {
+            "min": 15136,
+            "max": 15136
+          }
+        }
+      }
+    },
+    {
+      "case": 8,
+      "lifecycle": "fresh",
+      "iterations": 64,
+      "observations": 6,
+      "sameFullResult": true,
+      "statuses": {
+        "baseline": "Transformed",
+        "candidate": "Transformed"
+      },
+      "measurements": {
+        "baseline": {
+          "requests": {
+            "min": 19456,
+            "max": 19456
+          },
+          "requested_bytes": {
+            "min": 3206656,
+            "max": 3206656
+          },
+          "live_delta": {
+            "min": 0,
+            "max": 0
+          },
+          "peak_delta": {
+            "min": 16352,
+            "max": 16352
+          }
+        },
+        "candidate": {
+          "requests": {
+            "min": 19456,
+            "max": 19456
+          },
+          "requested_bytes": {
+            "min": 3206656,
+            "max": 3206656
+          },
+          "live_delta": {
+            "min": 0,
+            "max": 0
+          },
+          "peak_delta": {
+            "min": 16352,
+            "max": 16352
+          }
+        }
+      }
+    },
+    {
+      "case": 9,
+      "lifecycle": "retained",
+      "iterations": 64,
+      "observations": 6,
+      "sameFullResult": true,
+      "statuses": {
+        "baseline": "Transformed",
+        "candidate": "Transformed"
+      },
+      "measurements": {
+        "baseline": {
+          "requests": {
+            "min": 17600,
+            "max": 17600
+          },
+          "requested_bytes": {
+            "min": 3004928,
+            "max": 3004928
+          },
+          "live_delta": {
+            "min": 0,
+            "max": 0
+          },
+          "peak_delta": {
+            "min": 13160,
+            "max": 13160
+          }
+        },
+        "candidate": {
+          "requests": {
+            "min": 17600,
+            "max": 17600
+          },
+          "requested_bytes": {
+            "min": 3004928,
+            "max": 3004928
+          },
+          "live_delta": {
+            "min": 0,
+            "max": 0
+          },
+          "peak_delta": {
+            "min": 13160,
+            "max": 13160
+          }
+        }
+      }
+    },
+    {
+      "case": 9,
+      "lifecycle": "fresh",
+      "iterations": 64,
+      "observations": 6,
+      "sameFullResult": true,
+      "statuses": {
+        "baseline": "Transformed",
+        "candidate": "Transformed"
+      },
+      "measurements": {
+        "baseline": {
+          "requests": {
+            "min": 18368,
+            "max": 18368
+          },
+          "requested_bytes": {
+            "min": 3086848,
+            "max": 3086848
+          },
+          "live_delta": {
+            "min": 0,
+            "max": 0
+          },
+          "peak_delta": {
+            "min": 14376,
+            "max": 14376
+          }
+        },
+        "candidate": {
+          "requests": {
+            "min": 18368,
+            "max": 18368
+          },
+          "requested_bytes": {
+            "min": 3086848,
+            "max": 3086848
+          },
+          "live_delta": {
+            "min": 0,
+            "max": 0
+          },
+          "peak_delta": {
+            "min": 14376,
+            "max": 14376
+          }
+        }
+      }
+    },
+    {
+      "case": 10,
+      "lifecycle": "retained",
+      "iterations": 64,
+      "observations": 6,
+      "sameFullResult": true,
+      "statuses": {
+        "baseline": "Transformed",
+        "candidate": "Transformed"
+      },
+      "measurements": {
+        "baseline": {
+          "requests": {
+            "min": 10880,
+            "max": 10880
+          },
+          "requested_bytes": {
+            "min": 2146816,
+            "max": 2146816
+          },
+          "live_delta": {
+            "min": 0,
+            "max": 0
+          },
+          "peak_delta": {
+            "min": 4840,
+            "max": 4840
+          }
+        },
+        "candidate": {
+          "requests": {
+            "min": 10880,
+            "max": 10880
+          },
+          "requested_bytes": {
+            "min": 2146816,
+            "max": 2146816
+          },
+          "live_delta": {
+            "min": 0,
+            "max": 0
+          },
+          "peak_delta": {
+            "min": 4840,
+            "max": 4840
+          }
+        }
+      }
+    },
+    {
+      "case": 10,
+      "lifecycle": "fresh",
+      "iterations": 64,
+      "observations": 6,
+      "sameFullResult": true,
+      "statuses": {
+        "baseline": "Transformed",
+        "candidate": "Transformed"
+      },
+      "measurements": {
+        "baseline": {
+          "requests": {
+            "min": 11712,
+            "max": 11712
+          },
+          "requested_bytes": {
+            "min": 2240000,
+            "max": 2240000
+          },
+          "live_delta": {
+            "min": 0,
+            "max": 0
+          },
+          "peak_delta": {
+            "min": 6064,
+            "max": 6064
+          }
+        },
+        "candidate": {
+          "requests": {
+            "min": 11712,
+            "max": 11712
+          },
+          "requested_bytes": {
+            "min": 2240000,
+            "max": 2240000
+          },
+          "live_delta": {
+            "min": 0,
+            "max": 0
+          },
+          "peak_delta": {
+            "min": 6064,
+            "max": 6064
+          }
+        }
+      }
+    },
+    {
+      "case": 11,
+      "lifecycle": "retained",
+      "iterations": 64,
+      "observations": 6,
+      "sameFullResult": true,
+      "statuses": {
+        "baseline": "Transformed",
+        "candidate": "Transformed"
+      },
+      "measurements": {
+        "baseline": {
+          "requests": {
+            "min": 11712,
+            "max": 11712
+          },
+          "requested_bytes": {
+            "min": 2117632,
+            "max": 2117632
+          },
+          "live_delta": {
+            "min": 0,
+            "max": 0
+          },
+          "peak_delta": {
+            "min": 4944,
+            "max": 4944
+          }
+        },
+        "candidate": {
+          "requests": {
+            "min": 11712,
+            "max": 11712
+          },
+          "requested_bytes": {
+            "min": 2117632,
+            "max": 2117632
+          },
+          "live_delta": {
+            "min": 0,
+            "max": 0
+          },
+          "peak_delta": {
+            "min": 4944,
+            "max": 4944
+          }
+        }
+      }
+    },
+    {
+      "case": 11,
+      "lifecycle": "fresh",
+      "iterations": 64,
+      "observations": 6,
+      "sameFullResult": true,
+      "statuses": {
+        "baseline": "Transformed",
+        "candidate": "Transformed"
+      },
+      "measurements": {
+        "baseline": {
+          "requests": {
+            "min": 12928,
+            "max": 12928
+          },
+          "requested_bytes": {
+            "min": 2269184,
+            "max": 2269184
+          },
+          "live_delta": {
+            "min": 0,
+            "max": 0
+          },
+          "peak_delta": {
+            "min": 6832,
+            "max": 6832
+          }
+        },
+        "candidate": {
+          "requests": {
+            "min": 12928,
+            "max": 12928
+          },
+          "requested_bytes": {
+            "min": 2269184,
+            "max": 2269184
+          },
+          "live_delta": {
+            "min": 0,
+            "max": 0
+          },
+          "peak_delta": {
+            "min": 6832,
+            "max": 6832
+          }
+        }
+      }
+    },
+    {
+      "case": 12,
+      "lifecycle": "retained",
+      "iterations": 64,
+      "observations": 6,
+      "sameFullResult": true,
+      "statuses": {
+        "baseline": "Transformed",
+        "candidate": "Transformed"
+      },
+      "measurements": {
+        "baseline": {
+          "requests": {
+            "min": 17408,
+            "max": 17408
+          },
+          "requested_bytes": {
+            "min": 2812416,
+            "max": 2812416
+          },
+          "live_delta": {
+            "min": 0,
+            "max": 0
+          },
+          "peak_delta": {
+            "min": 12920,
+            "max": 12920
+          }
+        },
+        "candidate": {
+          "requests": {
+            "min": 17408,
+            "max": 17408
+          },
+          "requested_bytes": {
+            "min": 2812416,
+            "max": 2812416
+          },
+          "live_delta": {
+            "min": 0,
+            "max": 0
+          },
+          "peak_delta": {
+            "min": 12920,
+            "max": 12920
+          }
+        }
+      }
+    },
+    {
+      "case": 12,
+      "lifecycle": "fresh",
+      "iterations": 64,
+      "observations": 6,
+      "sameFullResult": true,
+      "statuses": {
+        "baseline": "Transformed",
+        "candidate": "Transformed"
+      },
+      "measurements": {
+        "baseline": {
+          "requests": {
+            "min": 18240,
+            "max": 18240
+          },
+          "requested_bytes": {
+            "min": 2900992,
+            "max": 2900992
+          },
+          "live_delta": {
+            "min": 0,
+            "max": 0
+          },
+          "peak_delta": {
+            "min": 14240,
+            "max": 14240
+          }
+        },
+        "candidate": {
+          "requests": {
+            "min": 18240,
+            "max": 18240
+          },
+          "requested_bytes": {
+            "min": 2900992,
+            "max": 2900992
+          },
+          "live_delta": {
+            "min": 0,
+            "max": 0
+          },
+          "peak_delta": {
+            "min": 14240,
+            "max": 14240
+          }
+        }
+      }
+    },
+    {
+      "case": 13,
+      "lifecycle": "retained",
+      "iterations": 64,
+      "observations": 6,
+      "sameFullResult": true,
+      "statuses": {
+        "baseline": "Transformed",
+        "candidate": "Transformed"
+      },
+      "measurements": {
+        "baseline": {
+          "requests": {
+            "min": 17280,
+            "max": 17280
+          },
+          "requested_bytes": {
+            "min": 2799104,
+            "max": 2799104
+          },
+          "live_delta": {
+            "min": 0,
+            "max": 0
+          },
+          "peak_delta": {
+            "min": 12088,
+            "max": 12088
+          }
+        },
+        "candidate": {
+          "requests": {
+            "min": 17280,
+            "max": 17280
+          },
+          "requested_bytes": {
+            "min": 2799104,
+            "max": 2799104
+          },
+          "live_delta": {
+            "min": 0,
+            "max": 0
+          },
+          "peak_delta": {
+            "min": 12088,
+            "max": 12088
+          }
+        }
+      }
+    },
+    {
+      "case": 13,
+      "lifecycle": "fresh",
+      "iterations": 64,
+      "observations": 6,
+      "sameFullResult": true,
+      "statuses": {
+        "baseline": "Transformed",
+        "candidate": "Transformed"
+      },
+      "measurements": {
+        "baseline": {
+          "requests": {
+            "min": 18112,
+            "max": 18112
+          },
+          "requested_bytes": {
+            "min": 2887680,
+            "max": 2887680
+          },
+          "live_delta": {
+            "min": 0,
+            "max": 0
+          },
+          "peak_delta": {
+            "min": 13408,
+            "max": 13408
+          }
+        },
+        "candidate": {
+          "requests": {
+            "min": 18112,
+            "max": 18112
+          },
+          "requested_bytes": {
+            "min": 2887680,
+            "max": 2887680
+          },
+          "live_delta": {
+            "min": 0,
+            "max": 0
+          },
+          "peak_delta": {
+            "min": 13408,
+            "max": 13408
+          }
+        }
+      }
+    },
+    {
+      "case": 14,
+      "lifecycle": "retained",
+      "iterations": 64,
+      "observations": 6,
+      "sameFullResult": true,
+      "statuses": {
+        "baseline": "Transformed",
+        "candidate": "Transformed"
+      },
+      "measurements": {
+        "baseline": {
+          "requests": {
+            "min": 12928,
+            "max": 12928
+          },
+          "requested_bytes": {
+            "min": 2314240,
+            "max": 2314240
+          },
+          "live_delta": {
+            "min": 0,
+            "max": 0
+          },
+          "peak_delta": {
+            "min": 7360,
+            "max": 7360
+          }
+        },
+        "candidate": {
+          "requests": {
+            "min": 12928,
+            "max": 12928
+          },
+          "requested_bytes": {
+            "min": 2314240,
+            "max": 2314240
+          },
+          "live_delta": {
+            "min": 0,
+            "max": 0
+          },
+          "peak_delta": {
+            "min": 7360,
+            "max": 7360
+          }
+        }
+      }
+    },
+    {
+      "case": 14,
+      "lifecycle": "fresh",
+      "iterations": 64,
+      "observations": 6,
+      "sameFullResult": true,
+      "statuses": {
+        "baseline": "Transformed",
+        "candidate": "Transformed"
+      },
+      "measurements": {
+        "baseline": {
+          "requests": {
+            "min": 14144,
+            "max": 14144
+          },
+          "requested_bytes": {
+            "min": 2451968,
+            "max": 2451968
+          },
+          "live_delta": {
+            "min": 0,
+            "max": 0
+          },
+          "peak_delta": {
+            "min": 9656,
+            "max": 9656
+          }
+        },
+        "candidate": {
+          "requests": {
+            "min": 14144,
+            "max": 14144
+          },
+          "requested_bytes": {
+            "min": 2451968,
+            "max": 2451968
+          },
+          "live_delta": {
+            "min": 0,
+            "max": 0
+          },
+          "peak_delta": {
+            "min": 9656,
+            "max": 9656
+          }
+        }
+      }
+    },
+    {
+      "case": 15,
+      "lifecycle": "retained",
+      "iterations": 64,
+      "observations": 6,
+      "sameFullResult": true,
+      "statuses": {
+        "baseline": "Transformed",
+        "candidate": "Transformed"
+      },
+      "measurements": {
+        "baseline": {
+          "requests": {
+            "min": 14400,
+            "max": 14400
+          },
+          "requested_bytes": {
+            "min": 2392576,
+            "max": 2392576
+          },
+          "live_delta": {
+            "min": 0,
+            "max": 0
+          },
+          "peak_delta": {
+            "min": 8096,
+            "max": 8096
+          }
+        },
+        "candidate": {
+          "requests": {
+            "min": 14400,
+            "max": 14400
+          },
+          "requested_bytes": {
+            "min": 2392576,
+            "max": 2392576
+          },
+          "live_delta": {
+            "min": 0,
+            "max": 0
+          },
+          "peak_delta": {
+            "min": 8096,
+            "max": 8096
+          }
+        }
+      }
+    },
+    {
+      "case": 15,
+      "lifecycle": "fresh",
+      "iterations": 64,
+      "observations": 6,
+      "sameFullResult": true,
+      "statuses": {
+        "baseline": "Transformed",
+        "candidate": "Transformed"
+      },
+      "measurements": {
+        "baseline": {
+          "requests": {
+            "min": 15680,
+            "max": 15680
+          },
+          "requested_bytes": {
+            "min": 2550784,
+            "max": 2550784
+          },
+          "live_delta": {
+            "min": 0,
+            "max": 0
+          },
+          "peak_delta": {
+            "min": 10504,
+            "max": 10504
+          }
+        },
+        "candidate": {
+          "requests": {
+            "min": 15680,
+            "max": 15680
+          },
+          "requested_bytes": {
+            "min": 2550784,
+            "max": 2550784
+          },
+          "live_delta": {
+            "min": 0,
+            "max": 0
+          },
+          "peak_delta": {
+            "min": 10504,
+            "max": 10504
+          }
+        }
+      }
+    },
+    {
+      "case": 16,
+      "lifecycle": "retained",
+      "iterations": 64,
+      "observations": 6,
+      "sameFullResult": true,
+      "statuses": {
+        "baseline": "Transformed",
+        "candidate": "Transformed"
+      },
+      "measurements": {
+        "baseline": {
+          "requests": {
+            "min": 12736,
+            "max": 12736
+          },
+          "requested_bytes": {
+            "min": 1326592,
+            "max": 1326592
+          },
+          "live_delta": {
+            "min": 0,
+            "max": 0
+          },
+          "peak_delta": {
+            "min": 3072,
+            "max": 3072
+          }
+        },
+        "candidate": {
+          "requests": {
+            "min": 12736,
+            "max": 12736
+          },
+          "requested_bytes": {
+            "min": 1326592,
+            "max": 1326592
+          },
+          "live_delta": {
+            "min": 0,
+            "max": 0
+          },
+          "peak_delta": {
+            "min": 3072,
+            "max": 3072
+          }
+        }
+      }
+    },
+    {
+      "case": 16,
+      "lifecycle": "fresh",
+      "iterations": 64,
+      "observations": 6,
+      "sameFullResult": true,
+      "statuses": {
+        "baseline": "Transformed",
+        "candidate": "Transformed"
+      },
+      "measurements": {
+        "baseline": {
+          "requests": {
+            "min": 13762,
+            "max": 13762
+          },
+          "requested_bytes": {
+            "min": 1451872,
+            "max": 1451872
+          },
+          "live_delta": {
+            "min": 768,
+            "max": 768
+          },
+          "peak_delta": {
+            "min": 5712,
+            "max": 5712
+          }
+        },
+        "candidate": {
+          "requests": {
+            "min": 13762,
+            "max": 13762
+          },
+          "requested_bytes": {
+            "min": 1451872,
+            "max": 1451872
+          },
+          "live_delta": {
+            "min": 768,
+            "max": 768
+          },
+          "peak_delta": {
+            "min": 5712,
+            "max": 5712
+          }
+        }
+      }
+    },
+    {
+      "case": 17,
+      "lifecycle": "retained",
+      "iterations": 64,
+      "observations": 6,
+      "sameFullResult": true,
+      "statuses": {
+        "baseline": "Transformed",
+        "candidate": "Transformed"
+      },
+      "measurements": {
+        "baseline": {
+          "requests": {
+            "min": 12800,
+            "max": 12800
+          },
+          "requested_bytes": {
+            "min": 1333248,
+            "max": 1333248
+          },
+          "live_delta": {
+            "min": 0,
+            "max": 0
+          },
+          "peak_delta": {
+            "min": 2968,
+            "max": 2968
+          }
+        },
+        "candidate": {
+          "requests": {
+            "min": 12800,
+            "max": 12800
+          },
+          "requested_bytes": {
+            "min": 1333248,
+            "max": 1333248
+          },
+          "live_delta": {
+            "min": 0,
+            "max": 0
+          },
+          "peak_delta": {
+            "min": 2968,
+            "max": 2968
+          }
+        }
+      }
+    },
+    {
+      "case": 17,
+      "lifecycle": "fresh",
+      "iterations": 64,
+      "observations": 6,
+      "sameFullResult": true,
+      "statuses": {
+        "baseline": "Transformed",
+        "candidate": "Transformed"
+      },
+      "measurements": {
+        "baseline": {
+          "requests": {
+            "min": 13826,
+            "max": 13826
+          },
+          "requested_bytes": {
+            "min": 1458528,
+            "max": 1458528
+          },
+          "live_delta": {
+            "min": 768,
+            "max": 768
+          },
+          "peak_delta": {
+            "min": 5608,
+            "max": 5608
+          }
+        },
+        "candidate": {
+          "requests": {
+            "min": 13826,
+            "max": 13826
+          },
+          "requested_bytes": {
+            "min": 1458528,
+            "max": 1458528
+          },
+          "live_delta": {
+            "min": 768,
+            "max": 768
+          },
+          "peak_delta": {
+            "min": 5608,
+            "max": 5608
+          }
+        }
+      }
+    },
+    {
+      "case": 18,
+      "lifecycle": "retained",
+      "iterations": 64,
+      "observations": 6,
+      "sameFullResult": true,
+      "statuses": {
+        "baseline": "Transformed",
+        "candidate": "Transformed"
+      },
+      "measurements": {
+        "baseline": {
+          "requests": {
+            "min": 12480,
+            "max": 12480
+          },
+          "requested_bytes": {
+            "min": 1243648,
+            "max": 1243648
+          },
+          "live_delta": {
+            "min": 0,
+            "max": 0
+          },
+          "peak_delta": {
+            "min": 2872,
+            "max": 2872
+          }
+        },
+        "candidate": {
+          "requests": {
+            "min": 12480,
+            "max": 12480
+          },
+          "requested_bytes": {
+            "min": 1243648,
+            "max": 1243648
+          },
+          "live_delta": {
+            "min": 0,
+            "max": 0
+          },
+          "peak_delta": {
+            "min": 2872,
+            "max": 2872
+          }
+        }
+      }
+    },
+    {
+      "case": 18,
+      "lifecycle": "fresh",
+      "iterations": 64,
+      "observations": 6,
+      "sameFullResult": true,
+      "statuses": {
+        "baseline": "Transformed",
+        "candidate": "Transformed"
+      },
+      "measurements": {
+        "baseline": {
+          "requests": {
+            "min": 13570,
+            "max": 13570
+          },
+          "requested_bytes": {
+            "min": 1380192,
+            "max": 1380192
+          },
+          "live_delta": {
+            "min": 768,
+            "max": 768
+          },
+          "peak_delta": {
+            "min": 5680,
+            "max": 5680
+          }
+        },
+        "candidate": {
+          "requests": {
+            "min": 13570,
+            "max": 13570
+          },
+          "requested_bytes": {
+            "min": 1380192,
+            "max": 1380192
+          },
+          "live_delta": {
+            "min": 768,
+            "max": 768
+          },
+          "peak_delta": {
+            "min": 5680,
+            "max": 5680
+          }
+        }
+      }
+    },
+    {
+      "case": 19,
+      "lifecycle": "retained",
+      "iterations": 64,
+      "observations": 6,
+      "sameFullResult": true,
+      "statuses": {
+        "baseline": "Transformed",
+        "candidate": "Transformed"
+      },
+      "measurements": {
+        "baseline": {
+          "requests": {
+            "min": 12608,
+            "max": 12608
+          },
+          "requested_bytes": {
+            "min": 1261568,
+            "max": 1261568
+          },
+          "live_delta": {
+            "min": 0,
+            "max": 0
+          },
+          "peak_delta": {
+            "min": 3048,
+            "max": 3048
+          }
+        },
+        "candidate": {
+          "requests": {
+            "min": 12608,
+            "max": 12608
+          },
+          "requested_bytes": {
+            "min": 1261568,
+            "max": 1261568
+          },
+          "live_delta": {
+            "min": 0,
+            "max": 0
+          },
+          "peak_delta": {
+            "min": 3048,
+            "max": 3048
+          }
+        }
+      }
+    },
+    {
+      "case": 19,
+      "lifecycle": "fresh",
+      "iterations": 64,
+      "observations": 6,
+      "sameFullResult": true,
+      "statuses": {
+        "baseline": "Transformed",
+        "candidate": "Transformed"
+      },
+      "measurements": {
+        "baseline": {
+          "requests": {
+            "min": 14018,
+            "max": 14018
+          },
+          "requested_bytes": {
+            "min": 1445216,
+            "max": 1445216
+          },
+          "live_delta": {
+            "min": 768,
+            "max": 768
+          },
+          "peak_delta": {
+            "min": 6520,
+            "max": 6520
+          }
+        },
+        "candidate": {
+          "requests": {
+            "min": 14018,
+            "max": 14018
+          },
+          "requested_bytes": {
+            "min": 1445216,
+            "max": 1445216
+          },
+          "live_delta": {
+            "min": 768,
+            "max": 768
+          },
+          "peak_delta": {
+            "min": 6520,
+            "max": 6520
+          }
+        }
+      }
+    },
+    {
+      "case": 20,
+      "lifecycle": "retained",
+      "iterations": 64,
+      "observations": 6,
+      "sameFullResult": true,
+      "statuses": {
+        "baseline": "Transformed",
+        "candidate": "Transformed"
+      },
+      "measurements": {
+        "baseline": {
+          "requests": {
+            "min": 9472,
+            "max": 9472
+          },
+          "requested_bytes": {
+            "min": 1229824,
+            "max": 1229824
+          },
+          "live_delta": {
+            "min": 0,
+            "max": 0
+          },
+          "peak_delta": {
+            "min": 7320,
+            "max": 7320
+          }
+        },
+        "candidate": {
+          "requests": {
+            "min": 9472,
+            "max": 9472
+          },
+          "requested_bytes": {
+            "min": 1229824,
+            "max": 1229824
+          },
+          "live_delta": {
+            "min": 0,
+            "max": 0
+          },
+          "peak_delta": {
+            "min": 7320,
+            "max": 7320
+          }
+        }
+      }
+    },
+    {
+      "case": 20,
+      "lifecycle": "fresh",
+      "iterations": 64,
+      "observations": 6,
+      "sameFullResult": true,
+      "statuses": {
+        "baseline": "Transformed",
+        "candidate": "Transformed"
+      },
+      "measurements": {
+        "baseline": {
+          "requests": {
+            "min": 10240,
+            "max": 10240
+          },
+          "requested_bytes": {
+            "min": 1304576,
+            "max": 1304576
+          },
+          "live_delta": {
+            "min": 0,
+            "max": 0
+          },
+          "peak_delta": {
+            "min": 8440,
+            "max": 8440
+          }
+        },
+        "candidate": {
+          "requests": {
+            "min": 10240,
+            "max": 10240
+          },
+          "requested_bytes": {
+            "min": 1304576,
+            "max": 1304576
+          },
+          "live_delta": {
+            "min": 0,
+            "max": 0
+          },
+          "peak_delta": {
+            "min": 8440,
+            "max": 8440
+          }
+        }
+      }
+    },
+    {
+      "case": 21,
+      "lifecycle": "retained",
+      "iterations": 64,
+      "observations": 6,
+      "sameFullResult": true,
+      "statuses": {
+        "baseline": "Transformed",
+        "candidate": "Transformed"
+      },
+      "measurements": {
+        "baseline": {
+          "requests": {
+            "min": 9280,
+            "max": 9280
+          },
+          "requested_bytes": {
+            "min": 1205248,
+            "max": 1205248
+          },
+          "live_delta": {
+            "min": 0,
+            "max": 0
+          },
+          "peak_delta": {
+            "min": 6728,
+            "max": 6728
+          }
+        },
+        "candidate": {
+          "requests": {
+            "min": 9280,
+            "max": 9280
+          },
+          "requested_bytes": {
+            "min": 1205248,
+            "max": 1205248
+          },
+          "live_delta": {
+            "min": 0,
+            "max": 0
+          },
+          "peak_delta": {
+            "min": 6728,
+            "max": 6728
+          }
+        }
+      }
+    },
+    {
+      "case": 21,
+      "lifecycle": "fresh",
+      "iterations": 64,
+      "observations": 6,
+      "sameFullResult": true,
+      "statuses": {
+        "baseline": "Transformed",
+        "candidate": "Transformed"
+      },
+      "measurements": {
+        "baseline": {
+          "requests": {
+            "min": 10048,
+            "max": 10048
+          },
+          "requested_bytes": {
+            "min": 1280000,
+            "max": 1280000
+          },
+          "live_delta": {
+            "min": 0,
+            "max": 0
+          },
+          "peak_delta": {
+            "min": 7848,
+            "max": 7848
+          }
+        },
+        "candidate": {
+          "requests": {
+            "min": 10048,
+            "max": 10048
+          },
+          "requested_bytes": {
+            "min": 1280000,
+            "max": 1280000
+          },
+          "live_delta": {
+            "min": 0,
+            "max": 0
+          },
+          "peak_delta": {
+            "min": 7848,
+            "max": 7848
+          }
+        }
+      }
+    },
+    {
+      "case": 22,
+      "lifecycle": "retained",
+      "iterations": 64,
+      "observations": 6,
+      "sameFullResult": true,
+      "statuses": {
+        "baseline": "Transformed",
+        "candidate": "Transformed"
+      },
+      "measurements": {
+        "baseline": {
+          "requests": {
+            "min": 7360,
+            "max": 7360
+          },
+          "requested_bytes": {
+            "min": 872960,
+            "max": 872960
+          },
+          "live_delta": {
+            "min": 0,
+            "max": 0
+          },
+          "peak_delta": {
+            "min": 4424,
+            "max": 4424
+          }
+        },
+        "candidate": {
+          "requests": {
+            "min": 7360,
+            "max": 7360
+          },
+          "requested_bytes": {
+            "min": 872960,
+            "max": 872960
+          },
+          "live_delta": {
+            "min": 0,
+            "max": 0
+          },
+          "peak_delta": {
+            "min": 4424,
+            "max": 4424
+          }
+        }
+      }
+    },
+    {
+      "case": 22,
+      "lifecycle": "fresh",
+      "iterations": 64,
+      "observations": 6,
+      "sameFullResult": true,
+      "statuses": {
+        "baseline": "Transformed",
+        "candidate": "Transformed"
+      },
+      "measurements": {
+        "baseline": {
+          "requests": {
+            "min": 8192,
+            "max": 8192
+          },
+          "requested_bytes": {
+            "min": 958976,
+            "max": 958976
+          },
+          "live_delta": {
+            "min": 0,
+            "max": 0
+          },
+          "peak_delta": {
+            "min": 5720,
+            "max": 5720
+          }
+        },
+        "candidate": {
+          "requests": {
+            "min": 8192,
+            "max": 8192
+          },
+          "requested_bytes": {
+            "min": 958976,
+            "max": 958976
+          },
+          "live_delta": {
+            "min": 0,
+            "max": 0
+          },
+          "peak_delta": {
+            "min": 5720,
+            "max": 5720
+          }
+        }
+      }
+    },
+    {
+      "case": 23,
+      "lifecycle": "retained",
+      "iterations": 64,
+      "observations": 6,
+      "sameFullResult": true,
+      "statuses": {
+        "baseline": "Transformed",
+        "candidate": "Transformed"
+      },
+      "measurements": {
+        "baseline": {
+          "requests": {
+            "min": 3520,
+            "max": 3520
+          },
+          "requested_bytes": {
+            "min": 576000,
+            "max": 576000
+          },
+          "live_delta": {
+            "min": 0,
+            "max": 0
+          },
+          "peak_delta": {
+            "min": 2584,
+            "max": 2584
+          }
+        },
+        "candidate": {
+          "requests": {
+            "min": 3520,
+            "max": 3520
+          },
+          "requested_bytes": {
+            "min": 576000,
+            "max": 576000
+          },
+          "live_delta": {
+            "min": 0,
+            "max": 0
+          },
+          "peak_delta": {
+            "min": 2584,
+            "max": 2584
+          }
+        }
+      }
+    },
+    {
+      "case": 23,
+      "lifecycle": "fresh",
+      "iterations": 64,
+      "observations": 6,
+      "sameFullResult": true,
+      "statuses": {
+        "baseline": "Transformed",
+        "candidate": "Transformed"
+      },
+      "measurements": {
+        "baseline": {
+          "requests": {
+            "min": 4736,
+            "max": 4736
+          },
+          "requested_bytes": {
+            "min": 720384,
+            "max": 720384
+          },
+          "live_delta": {
+            "min": 0,
+            "max": 0
+          },
+          "peak_delta": {
+            "min": 3704,
+            "max": 3704
+          }
+        },
+        "candidate": {
+          "requests": {
+            "min": 4736,
+            "max": 4736
+          },
+          "requested_bytes": {
+            "min": 720384,
+            "max": 720384
+          },
+          "live_delta": {
+            "min": 0,
+            "max": 0
+          },
+          "peak_delta": {
+            "min": 3704,
+            "max": 3704
+          }
+        }
+      }
+    },
+    {
+      "case": 24,
+      "lifecycle": "retained",
+      "iterations": 64,
+      "observations": 6,
+      "sameFullResult": true,
+      "statuses": {
+        "baseline": "Transformed",
+        "candidate": "Transformed"
+      },
+      "measurements": {
+        "baseline": {
+          "requests": {
+            "min": 16512,
+            "max": 16512
+          },
+          "requested_bytes": {
+            "min": 4448768,
+            "max": 4448768
+          },
+          "live_delta": {
+            "min": 0,
+            "max": 0
+          },
+          "peak_delta": {
+            "min": 15032,
+            "max": 15032
+          }
+        },
+        "candidate": {
+          "requests": {
+            "min": 16512,
+            "max": 16512
+          },
+          "requested_bytes": {
+            "min": 4448768,
+            "max": 4448768
+          },
+          "live_delta": {
+            "min": 0,
+            "max": 0
+          },
+          "peak_delta": {
+            "min": 15032,
+            "max": 15032
+          }
+        }
+      }
+    },
+    {
+      "case": 24,
+      "lifecycle": "fresh",
+      "iterations": 64,
+      "observations": 6,
+      "sameFullResult": true,
+      "statuses": {
+        "baseline": "Transformed",
+        "candidate": "Transformed"
+      },
+      "measurements": {
+        "baseline": {
+          "requests": {
+            "min": 17344,
+            "max": 17344
+          },
+          "requested_bytes": {
+            "min": 4551680,
+            "max": 4551680
+          },
+          "live_delta": {
+            "min": 0,
+            "max": 0
+          },
+          "peak_delta": {
+            "min": 16544,
+            "max": 16544
+          }
+        },
+        "candidate": {
+          "requests": {
+            "min": 17344,
+            "max": 17344
+          },
+          "requested_bytes": {
+            "min": 4551680,
+            "max": 4551680
+          },
+          "live_delta": {
+            "min": 0,
+            "max": 0
+          },
+          "peak_delta": {
+            "min": 16544,
+            "max": 16544
+          }
+        }
+      }
+    },
+    {
+      "case": 25,
+      "lifecycle": "retained",
+      "iterations": 64,
+      "observations": 6,
+      "sameFullResult": true,
+      "statuses": {
+        "baseline": "Transformed",
+        "candidate": "Transformed"
+      },
+      "measurements": {
+        "baseline": {
+          "requests": {
+            "min": 15808,
+            "max": 15808
+          },
+          "requested_bytes": {
+            "min": 4334080,
+            "max": 4334080
+          },
+          "live_delta": {
+            "min": 0,
+            "max": 0
+          },
+          "peak_delta": {
+            "min": 11472,
+            "max": 11472
+          }
+        },
+        "candidate": {
+          "requests": {
+            "min": 15808,
+            "max": 15808
+          },
+          "requested_bytes": {
+            "min": 4334080,
+            "max": 4334080
+          },
+          "live_delta": {
+            "min": 0,
+            "max": 0
+          },
+          "peak_delta": {
+            "min": 11472,
+            "max": 11472
+          }
+        }
+      }
+    },
+    {
+      "case": 25,
+      "lifecycle": "fresh",
+      "iterations": 64,
+      "observations": 6,
+      "sameFullResult": true,
+      "statuses": {
+        "baseline": "Transformed",
+        "candidate": "Transformed"
+      },
+      "measurements": {
+        "baseline": {
+          "requests": {
+            "min": 16640,
+            "max": 16640
+          },
+          "requested_bytes": {
+            "min": 4436992,
+            "max": 4436992
+          },
+          "live_delta": {
+            "min": 0,
+            "max": 0
+          },
+          "peak_delta": {
+            "min": 12984,
+            "max": 12984
+          }
+        },
+        "candidate": {
+          "requests": {
+            "min": 16640,
+            "max": 16640
+          },
+          "requested_bytes": {
+            "min": 4436992,
+            "max": 4436992
+          },
+          "live_delta": {
+            "min": 0,
+            "max": 0
+          },
+          "peak_delta": {
+            "min": 12984,
+            "max": 12984
+          }
+        }
+      }
+    },
+    {
+      "case": 26,
+      "lifecycle": "retained",
+      "iterations": 64,
+      "observations": 6,
+      "sameFullResult": true,
+      "statuses": {
+        "baseline": "Transformed",
+        "candidate": "Transformed"
+      },
+      "measurements": {
+        "baseline": {
+          "requests": {
+            "min": 8448,
+            "max": 8448
+          },
+          "requested_bytes": {
+            "min": 3558400,
+            "max": 3558400
+          },
+          "live_delta": {
+            "min": 0,
+            "max": 0
+          },
+          "peak_delta": {
+            "min": 6448,
+            "max": 6448
+          }
+        },
+        "candidate": {
+          "requests": {
+            "min": 8448,
+            "max": 8448
+          },
+          "requested_bytes": {
+            "min": 3558400,
+            "max": 3558400
+          },
+          "live_delta": {
+            "min": 0,
+            "max": 0
+          },
+          "peak_delta": {
+            "min": 6448,
+            "max": 6448
+          }
+        }
+      }
+    },
+    {
+      "case": 26,
+      "lifecycle": "fresh",
+      "iterations": 64,
+      "observations": 6,
+      "sameFullResult": true,
+      "statuses": {
+        "baseline": "Transformed",
+        "candidate": "Transformed"
+      },
+      "measurements": {
+        "baseline": {
+          "requests": {
+            "min": 9984,
+            "max": 9984
+          },
+          "requested_bytes": {
+            "min": 3743744,
+            "max": 3743744
+          },
+          "live_delta": {
+            "min": 0,
+            "max": 0
+          },
+          "peak_delta": {
+            "min": 7960,
+            "max": 7960
+          }
+        },
+        "candidate": {
+          "requests": {
+            "min": 9984,
+            "max": 9984
+          },
+          "requested_bytes": {
+            "min": 3743744,
+            "max": 3743744
+          },
+          "live_delta": {
+            "min": 0,
+            "max": 0
+          },
+          "peak_delta": {
+            "min": 7960,
+            "max": 7960
+          }
+        }
+      }
+    },
+    {
+      "case": 27,
+      "lifecycle": "retained",
+      "iterations": 64,
+      "observations": 6,
+      "sameFullResult": true,
+      "statuses": {
+        "baseline": "Transformed",
+        "candidate": "Transformed"
+      },
+      "measurements": {
+        "baseline": {
+          "requests": {
+            "min": 8512,
+            "max": 8512
+          },
+          "requested_bytes": {
+            "min": 3565056,
+            "max": 3565056
+          },
+          "live_delta": {
+            "min": 0,
+            "max": 0
+          },
+          "peak_delta": {
+            "min": 6448,
+            "max": 6448
+          }
+        },
+        "candidate": {
+          "requests": {
+            "min": 8512,
+            "max": 8512
+          },
+          "requested_bytes": {
+            "min": 3565056,
+            "max": 3565056
+          },
+          "live_delta": {
+            "min": 0,
+            "max": 0
+          },
+          "peak_delta": {
+            "min": 6448,
+            "max": 6448
+          }
+        }
+      }
+    },
+    {
+      "case": 27,
+      "lifecycle": "fresh",
+      "iterations": 64,
+      "observations": 6,
+      "sameFullResult": true,
+      "statuses": {
+        "baseline": "Transformed",
+        "candidate": "Transformed"
+      },
+      "measurements": {
+        "baseline": {
+          "requests": {
+            "min": 10240,
+            "max": 10240
+          },
+          "requested_bytes": {
+            "min": 3779584,
+            "max": 3779584
+          },
+          "live_delta": {
+            "min": 0,
+            "max": 0
+          },
+          "peak_delta": {
+            "min": 7960,
+            "max": 7960
+          }
+        },
+        "candidate": {
+          "requests": {
+            "min": 10240,
+            "max": 10240
+          },
+          "requested_bytes": {
+            "min": 3779584,
+            "max": 3779584
+          },
+          "live_delta": {
+            "min": 0,
+            "max": 0
+          },
+          "peak_delta": {
+            "min": 7960,
+            "max": 7960
+          }
+        }
+      }
+    },
+    {
+      "case": 28,
+      "lifecycle": "retained",
+      "iterations": 64,
+      "observations": 6,
+      "sameFullResult": true,
+      "statuses": {
+        "baseline": "UnsupportedDegree",
+        "candidate": "UnsupportedDegree"
+      },
+      "measurements": {
+        "baseline": {
+          "requests": {
+            "min": 1728,
+            "max": 1728
+          },
+          "requested_bytes": {
+            "min": 162816,
+            "max": 162816
+          },
+          "live_delta": {
+            "min": 0,
+            "max": 0
+          },
+          "peak_delta": {
+            "min": 1384,
+            "max": 1384
+          }
+        },
+        "candidate": {
+          "requests": {
+            "min": 1728,
+            "max": 1728
+          },
+          "requested_bytes": {
+            "min": 162816,
+            "max": 162816
+          },
+          "live_delta": {
+            "min": 0,
+            "max": 0
+          },
+          "peak_delta": {
+            "min": 1384,
+            "max": 1384
+          }
+        }
+      }
+    },
+    {
+      "case": 28,
+      "lifecycle": "fresh",
+      "iterations": 64,
+      "observations": 6,
+      "sameFullResult": true,
+      "statuses": {
+        "baseline": "UnsupportedDegree",
+        "candidate": "UnsupportedDegree"
+      },
+      "measurements": {
+        "baseline": {
+          "requests": {
+            "min": 2496,
+            "max": 2496
+          },
+          "requested_bytes": {
+            "min": 255488,
+            "max": 255488
+          },
+          "live_delta": {
+            "min": 0,
+            "max": 0
+          },
+          "peak_delta": {
+            "min": 2744,
+            "max": 2744
+          }
+        },
+        "candidate": {
+          "requests": {
+            "min": 2496,
+            "max": 2496
+          },
+          "requested_bytes": {
+            "min": 255488,
+            "max": 255488
+          },
+          "live_delta": {
+            "min": 0,
+            "max": 0
+          },
+          "peak_delta": {
+            "min": 2744,
+            "max": 2744
+          }
+        }
+      }
+    },
+    {
+      "case": 29,
+      "lifecycle": "retained",
+      "iterations": 64,
+      "observations": 6,
+      "sameFullResult": true,
+      "statuses": {
+        "baseline": "UnsupportedDegree",
+        "candidate": "UnsupportedDegree"
+      },
+      "measurements": {
+        "baseline": {
+          "requests": {
+            "min": 1728,
+            "max": 1728
+          },
+          "requested_bytes": {
+            "min": 162816,
+            "max": 162816
+          },
+          "live_delta": {
+            "min": 0,
+            "max": 0
+          },
+          "peak_delta": {
+            "min": 1384,
+            "max": 1384
+          }
+        },
+        "candidate": {
+          "requests": {
+            "min": 1728,
+            "max": 1728
+          },
+          "requested_bytes": {
+            "min": 162816,
+            "max": 162816
+          },
+          "live_delta": {
+            "min": 0,
+            "max": 0
+          },
+          "peak_delta": {
+            "min": 1384,
+            "max": 1384
+          }
+        }
+      }
+    },
+    {
+      "case": 29,
+      "lifecycle": "fresh",
+      "iterations": 64,
+      "observations": 6,
+      "sameFullResult": true,
+      "statuses": {
+        "baseline": "UnsupportedDegree",
+        "candidate": "UnsupportedDegree"
+      },
+      "measurements": {
+        "baseline": {
+          "requests": {
+            "min": 2496,
+            "max": 2496
+          },
+          "requested_bytes": {
+            "min": 255488,
+            "max": 255488
+          },
+          "live_delta": {
+            "min": 0,
+            "max": 0
+          },
+          "peak_delta": {
+            "min": 2744,
+            "max": 2744
+          }
+        },
+        "candidate": {
+          "requests": {
+            "min": 2496,
+            "max": 2496
+          },
+          "requested_bytes": {
+            "min": 255488,
+            "max": 255488
+          },
+          "live_delta": {
+            "min": 0,
+            "max": 0
+          },
+          "peak_delta": {
+            "min": 2744,
+            "max": 2744
+          }
+        }
+      }
+    },
+    {
+      "case": 30,
+      "lifecycle": "retained",
+      "iterations": 64,
+      "observations": 6,
+      "sameFullResult": true,
+      "statuses": {
+        "baseline": "UnsupportedDegree",
+        "candidate": "UnsupportedDegree"
+      },
+      "measurements": {
+        "baseline": {
+          "requests": {
+            "min": 1728,
+            "max": 1728
+          },
+          "requested_bytes": {
+            "min": 162816,
+            "max": 162816
+          },
+          "live_delta": {
+            "min": 0,
+            "max": 0
+          },
+          "peak_delta": {
+            "min": 1384,
+            "max": 1384
+          }
+        },
+        "candidate": {
+          "requests": {
+            "min": 1728,
+            "max": 1728
+          },
+          "requested_bytes": {
+            "min": 162816,
+            "max": 162816
+          },
+          "live_delta": {
+            "min": 0,
+            "max": 0
+          },
+          "peak_delta": {
+            "min": 1384,
+            "max": 1384
+          }
+        }
+      }
+    },
+    {
+      "case": 30,
+      "lifecycle": "fresh",
+      "iterations": 64,
+      "observations": 6,
+      "sameFullResult": true,
+      "statuses": {
+        "baseline": "UnsupportedDegree",
+        "candidate": "UnsupportedDegree"
+      },
+      "measurements": {
+        "baseline": {
+          "requests": {
+            "min": 2496,
+            "max": 2496
+          },
+          "requested_bytes": {
+            "min": 255488,
+            "max": 255488
+          },
+          "live_delta": {
+            "min": 0,
+            "max": 0
+          },
+          "peak_delta": {
+            "min": 2744,
+            "max": 2744
+          }
+        },
+        "candidate": {
+          "requests": {
+            "min": 2496,
+            "max": 2496
+          },
+          "requested_bytes": {
+            "min": 255488,
+            "max": 255488
+          },
+          "live_delta": {
+            "min": 0,
+            "max": 0
+          },
+          "peak_delta": {
+            "min": 2744,
+            "max": 2744
+          }
+        }
+      }
+    },
+    {
+      "case": 31,
+      "lifecycle": "retained",
+      "iterations": 64,
+      "observations": 6,
+      "sameFullResult": true,
+      "statuses": {
+        "baseline": "UnsupportedDegree",
+        "candidate": "UnsupportedDegree"
+      },
+      "measurements": {
+        "baseline": {
+          "requests": {
+            "min": 1728,
+            "max": 1728
+          },
+          "requested_bytes": {
+            "min": 162816,
+            "max": 162816
+          },
+          "live_delta": {
+            "min": 0,
+            "max": 0
+          },
+          "peak_delta": {
+            "min": 1384,
+            "max": 1384
+          }
+        },
+        "candidate": {
+          "requests": {
+            "min": 1728,
+            "max": 1728
+          },
+          "requested_bytes": {
+            "min": 162816,
+            "max": 162816
+          },
+          "live_delta": {
+            "min": 0,
+            "max": 0
+          },
+          "peak_delta": {
+            "min": 1384,
+            "max": 1384
+          }
+        }
+      }
+    },
+    {
+      "case": 31,
+      "lifecycle": "fresh",
+      "iterations": 64,
+      "observations": 6,
+      "sameFullResult": true,
+      "statuses": {
+        "baseline": "UnsupportedDegree",
+        "candidate": "UnsupportedDegree"
+      },
+      "measurements": {
+        "baseline": {
+          "requests": {
+            "min": 2496,
+            "max": 2496
+          },
+          "requested_bytes": {
+            "min": 255488,
+            "max": 255488
+          },
+          "live_delta": {
+            "min": 0,
+            "max": 0
+          },
+          "peak_delta": {
+            "min": 2744,
+            "max": 2744
+          }
+        },
+        "candidate": {
+          "requests": {
+            "min": 2496,
+            "max": 2496
+          },
+          "requested_bytes": {
+            "min": 255488,
+            "max": 255488
+          },
+          "live_delta": {
+            "min": 0,
+            "max": 0
+          },
+          "peak_delta": {
+            "min": 2744,
+            "max": 2744
+          }
+        }
+      }
+    },
+    {
+      "case": 32,
+      "lifecycle": "retained",
+      "iterations": 64,
+      "observations": 6,
+      "sameFullResult": true,
+      "statuses": {
+        "baseline": "Transformed",
+        "candidate": "Transformed"
+      },
+      "measurements": {
+        "baseline": {
+          "requests": {
+            "min": 2496,
+            "max": 2496
+          },
+          "requested_bytes": {
+            "min": 288768,
+            "max": 288768
+          },
+          "live_delta": {
+            "min": 0,
+            "max": 0
+          },
+          "peak_delta": {
+            "min": 1712,
+            "max": 1712
+          }
+        },
+        "candidate": {
+          "requests": {
+            "min": 2496,
+            "max": 2496
+          },
+          "requested_bytes": {
+            "min": 288768,
+            "max": 288768
+          },
+          "live_delta": {
+            "min": 0,
+            "max": 0
+          },
+          "peak_delta": {
+            "min": 1712,
+            "max": 1712
+          }
+        }
+      }
+    },
+    {
+      "case": 32,
+      "lifecycle": "fresh",
+      "iterations": 64,
+      "observations": 6,
+      "sameFullResult": true,
+      "statuses": {
+        "baseline": "Transformed",
+        "candidate": "Transformed"
+      },
+      "measurements": {
+        "baseline": {
+          "requests": {
+            "min": 3456,
+            "max": 3456
+          },
+          "requested_bytes": {
+            "min": 398336,
+            "max": 398336
+          },
+          "live_delta": {
+            "min": 0,
+            "max": 0
+          },
+          "peak_delta": {
+            "min": 2472,
+            "max": 2472
+          }
+        },
+        "candidate": {
+          "requests": {
+            "min": 3456,
+            "max": 3456
+          },
+          "requested_bytes": {
+            "min": 398336,
+            "max": 398336
+          },
+          "live_delta": {
+            "min": 0,
+            "max": 0
+          },
+          "peak_delta": {
+            "min": 2472,
+            "max": 2472
+          }
+        }
+      }
+    },
+    {
+      "case": 33,
+      "lifecycle": "retained",
+      "iterations": 64,
+      "observations": 6,
+      "sameFullResult": true,
+      "statuses": {
+        "baseline": "Transformed",
+        "candidate": "Transformed"
+      },
+      "measurements": {
+        "baseline": {
+          "requests": {
+            "min": 2496,
+            "max": 2496
+          },
+          "requested_bytes": {
+            "min": 288768,
+            "max": 288768
+          },
+          "live_delta": {
+            "min": 0,
+            "max": 0
+          },
+          "peak_delta": {
+            "min": 1712,
+            "max": 1712
+          }
+        },
+        "candidate": {
+          "requests": {
+            "min": 2496,
+            "max": 2496
+          },
+          "requested_bytes": {
+            "min": 288768,
+            "max": 288768
+          },
+          "live_delta": {
+            "min": 0,
+            "max": 0
+          },
+          "peak_delta": {
+            "min": 1712,
+            "max": 1712
+          }
+        }
+      }
+    },
+    {
+      "case": 33,
+      "lifecycle": "fresh",
+      "iterations": 64,
+      "observations": 6,
+      "sameFullResult": true,
+      "statuses": {
+        "baseline": "Transformed",
+        "candidate": "Transformed"
+      },
+      "measurements": {
+        "baseline": {
+          "requests": {
+            "min": 3456,
+            "max": 3456
+          },
+          "requested_bytes": {
+            "min": 398336,
+            "max": 398336
+          },
+          "live_delta": {
+            "min": 0,
+            "max": 0
+          },
+          "peak_delta": {
+            "min": 2472,
+            "max": 2472
+          }
+        },
+        "candidate": {
+          "requests": {
+            "min": 3456,
+            "max": 3456
+          },
+          "requested_bytes": {
+            "min": 398336,
+            "max": 398336
+          },
+          "live_delta": {
+            "min": 0,
+            "max": 0
+          },
+          "peak_delta": {
+            "min": 2472,
+            "max": 2472
+          }
+        }
+      }
+    },
+    {
+      "case": 34,
+      "lifecycle": "retained",
+      "iterations": 64,
+      "observations": 6,
+      "sameFullResult": false,
+      "statuses": {
+        "baseline": "InvalidTransformedEvidence",
+        "candidate": "Transformed"
+      },
+      "measurements": {
+        "baseline": {
+          "requests": {
+            "min": 1344,
+            "max": 1344
+          },
+          "requested_bytes": {
+            "min": 127552,
+            "max": 127552
+          },
+          "live_delta": {
+            "min": 0,
+            "max": 0
+          },
+          "peak_delta": {
+            "min": 1296,
+            "max": 1296
+          }
+        },
+        "candidate": {
+          "requests": {
+            "min": 1280,
+            "max": 1280
+          },
+          "requested_bytes": {
+            "min": 123904,
+            "max": 123904
+          },
+          "live_delta": {
+            "min": 0,
+            "max": 0
+          },
+          "peak_delta": {
+            "min": 1296,
+            "max": 1296
+          }
+        }
+      }
+    },
+    {
+      "case": 34,
+      "lifecycle": "fresh",
+      "iterations": 64,
+      "observations": 6,
+      "sameFullResult": false,
+      "statuses": {
+        "baseline": "InvalidTransformedEvidence",
+        "candidate": "Transformed"
+      },
+      "measurements": {
+        "baseline": {
+          "requests": {
+            "min": 1920,
+            "max": 1920
+          },
+          "requested_bytes": {
+            "min": 178752,
+            "max": 178752
+          },
+          "live_delta": {
+            "min": 0,
+            "max": 0
+          },
+          "peak_delta": {
+            "min": 2056,
+            "max": 2056
+          }
+        },
+        "candidate": {
+          "requests": {
+            "min": 1856,
+            "max": 1856
+          },
+          "requested_bytes": {
+            "min": 175104,
+            "max": 175104
+          },
+          "live_delta": {
+            "min": 0,
+            "max": 0
+          },
+          "peak_delta": {
+            "min": 2056,
+            "max": 2056
+          }
+        }
+      }
+    },
+    {
+      "case": 35,
+      "lifecycle": "retained",
+      "iterations": 64,
+      "observations": 6,
+      "sameFullResult": true,
+      "statuses": {
+        "baseline": "DenominatorMayContainZero",
+        "candidate": "DenominatorMayContainZero"
+      },
+      "measurements": {
+        "baseline": {
+          "requests": {
+            "min": 64,
+            "max": 64
+          },
+          "requested_bytes": {
+            "min": 4480,
+            "max": 4480
+          },
+          "live_delta": {
+            "min": 0,
+            "max": 0
+          },
+          "peak_delta": {
+            "min": 70,
+            "max": 70
+          }
+        },
+        "candidate": {
+          "requests": {
+            "min": 64,
+            "max": 64
+          },
+          "requested_bytes": {
+            "min": 4480,
+            "max": 4480
+          },
+          "live_delta": {
+            "min": 0,
+            "max": 0
+          },
+          "peak_delta": {
+            "min": 70,
+            "max": 70
+          }
+        }
+      }
+    },
+    {
+      "case": 35,
+      "lifecycle": "fresh",
+      "iterations": 64,
+      "observations": 6,
+      "sameFullResult": true,
+      "statuses": {
+        "baseline": "DenominatorMayContainZero",
+        "candidate": "DenominatorMayContainZero"
+      },
+      "measurements": {
+        "baseline": {
+          "requests": {
+            "min": 640,
+            "max": 640
+          },
+          "requested_bytes": {
+            "min": 55680,
+            "max": 55680
+          },
+          "live_delta": {
+            "min": 0,
+            "max": 0
+          },
+          "peak_delta": {
+            "min": 830,
+            "max": 830
+          }
+        },
+        "candidate": {
+          "requests": {
+            "min": 640,
+            "max": 640
+          },
+          "requested_bytes": {
+            "min": 55680,
+            "max": 55680
+          },
+          "live_delta": {
+            "min": 0,
+            "max": 0
+          },
+          "peak_delta": {
+            "min": 830,
+            "max": 830
+          }
+        }
+      }
+    },
+    {
+      "case": 36,
+      "lifecycle": "retained",
+      "iterations": 64,
+      "observations": 6,
+      "sameFullResult": true,
+      "statuses": {
+        "baseline": "Transformed",
+        "candidate": "Transformed"
+      },
+      "measurements": {
+        "baseline": {
+          "requests": {
+            "min": 23232,
+            "max": 23232
+          },
+          "requested_bytes": {
+            "min": 3592704,
+            "max": 3592704
+          },
+          "live_delta": {
+            "min": 0,
+            "max": 0
+          },
+          "peak_delta": {
+            "min": 18232,
+            "max": 18232
+          }
+        },
+        "candidate": {
+          "requests": {
+            "min": 23232,
+            "max": 23232
+          },
+          "requested_bytes": {
+            "min": 3592704,
+            "max": 3592704
+          },
+          "live_delta": {
+            "min": 0,
+            "max": 0
+          },
+          "peak_delta": {
+            "min": 18232,
+            "max": 18232
+          }
+        }
+      }
+    },
+    {
+      "case": 36,
+      "lifecycle": "fresh",
+      "iterations": 64,
+      "observations": 6,
+      "sameFullResult": true,
+      "statuses": {
+        "baseline": "Transformed",
+        "candidate": "Transformed"
+      },
+      "measurements": {
+        "baseline": {
+          "requests": {
+            "min": 24064,
+            "max": 24064
+          },
+          "requested_bytes": {
+            "min": 3681280,
+            "max": 3681280
+          },
+          "live_delta": {
+            "min": 0,
+            "max": 0
+          },
+          "peak_delta": {
+            "min": 19552,
+            "max": 19552
+          }
+        },
+        "candidate": {
+          "requests": {
+            "min": 24064,
+            "max": 24064
+          },
+          "requested_bytes": {
+            "min": 3681280,
+            "max": 3681280
+          },
+          "live_delta": {
+            "min": 0,
+            "max": 0
+          },
+          "peak_delta": {
+            "min": 19552,
+            "max": 19552
+          }
+        }
+      }
+    },
+    {
+      "case": 37,
+      "lifecycle": "retained",
+      "iterations": 64,
+      "observations": 6,
+      "sameFullResult": true,
+      "statuses": {
+        "baseline": "NonIsolatingImageInterval",
+        "candidate": "NonIsolatingImageInterval"
+      },
+      "measurements": {
+        "baseline": {
+          "requests": {
+            "min": 21568,
+            "max": 21568
+          },
+          "requested_bytes": {
+            "min": 3403136,
+            "max": 3403136
+          },
+          "live_delta": {
+            "min": 0,
+            "max": 0
+          },
+          "peak_delta": {
+            "min": 16470,
+            "max": 16470
+          }
+        },
+        "candidate": {
+          "requests": {
+            "min": 21568,
+            "max": 21568
+          },
+          "requested_bytes": {
+            "min": 3403136,
+            "max": 3403136
+          },
+          "live_delta": {
+            "min": 0,
+            "max": 0
+          },
+          "peak_delta": {
+            "min": 16470,
+            "max": 16470
+          }
+        }
+      }
+    },
+    {
+      "case": 37,
+      "lifecycle": "fresh",
+      "iterations": 64,
+      "observations": 6,
+      "sameFullResult": true,
+      "statuses": {
+        "baseline": "NonIsolatingImageInterval",
+        "candidate": "NonIsolatingImageInterval"
+      },
+      "measurements": {
+        "baseline": {
+          "requests": {
+            "min": 22400,
+            "max": 22400
+          },
+          "requested_bytes": {
+            "min": 3491712,
+            "max": 3491712
+          },
+          "live_delta": {
+            "min": 0,
+            "max": 0
+          },
+          "peak_delta": {
+            "min": 17790,
+            "max": 17790
+          }
+        },
+        "candidate": {
+          "requests": {
+            "min": 22400,
+            "max": 22400
+          },
+          "requested_bytes": {
+            "min": 3491712,
+            "max": 3491712
+          },
+          "live_delta": {
+            "min": 0,
+            "max": 0
+          },
+          "peak_delta": {
+            "min": 17790,
+            "max": 17790
+          }
+        }
+      }
+    },
+    {
+      "case": 38,
+      "lifecycle": "retained",
+      "iterations": 64,
+      "observations": 6,
+      "sameFullResult": true,
+      "statuses": {
+        "baseline": "Transformed",
+        "candidate": "Transformed"
+      },
+      "measurements": {
+        "baseline": {
+          "requests": {
+            "min": 14400,
+            "max": 14400
+          },
+          "requested_bytes": {
+            "min": 2593280,
+            "max": 2593280
+          },
+          "live_delta": {
+            "min": 0,
+            "max": 0
+          },
+          "peak_delta": {
+            "min": 10400,
+            "max": 10400
+          }
+        },
+        "candidate": {
+          "requests": {
+            "min": 14400,
+            "max": 14400
+          },
+          "requested_bytes": {
+            "min": 2593280,
+            "max": 2593280
+          },
+          "live_delta": {
+            "min": 0,
+            "max": 0
+          },
+          "peak_delta": {
+            "min": 10400,
+            "max": 10400
+          }
+        }
+      }
+    },
+    {
+      "case": 38,
+      "lifecycle": "fresh",
+      "iterations": 64,
+      "observations": 6,
+      "sameFullResult": true,
+      "statuses": {
+        "baseline": "Transformed",
+        "candidate": "Transformed"
+      },
+      "measurements": {
+        "baseline": {
+          "requests": {
+            "min": 15296,
+            "max": 15296
+          },
+          "requested_bytes": {
+            "min": 2693120,
+            "max": 2693120
+          },
+          "live_delta": {
+            "min": 0,
+            "max": 0
+          },
+          "peak_delta": {
+            "min": 11896,
+            "max": 11896
+          }
+        },
+        "candidate": {
+          "requests": {
+            "min": 15296,
+            "max": 15296
+          },
+          "requested_bytes": {
+            "min": 2693120,
+            "max": 2693120
+          },
+          "live_delta": {
+            "min": 0,
+            "max": 0
+          },
+          "peak_delta": {
+            "min": 11896,
+            "max": 11896
+          }
+        }
+      }
+    },
+    {
+      "case": 39,
+      "lifecycle": "retained",
+      "iterations": 64,
+      "observations": 6,
+      "sameFullResult": true,
+      "statuses": {
+        "baseline": "Transformed",
+        "candidate": "Transformed"
+      },
+      "measurements": {
+        "baseline": {
+          "requests": {
+            "min": 13504,
+            "max": 13504
+          },
+          "requested_bytes": {
+            "min": 2486272,
+            "max": 2486272
+          },
+          "live_delta": {
+            "min": 0,
+            "max": 0
+          },
+          "peak_delta": {
+            "min": 7584,
+            "max": 7584
+          }
+        },
+        "candidate": {
+          "requests": {
+            "min": 13504,
+            "max": 13504
+          },
+          "requested_bytes": {
+            "min": 2486272,
+            "max": 2486272
+          },
+          "live_delta": {
+            "min": 0,
+            "max": 0
+          },
+          "peak_delta": {
+            "min": 7584,
+            "max": 7584
+          }
+        }
+      }
+    },
+    {
+      "case": 39,
+      "lifecycle": "fresh",
+      "iterations": 64,
+      "observations": 6,
+      "sameFullResult": true,
+      "statuses": {
+        "baseline": "Transformed",
+        "candidate": "Transformed"
+      },
+      "measurements": {
+        "baseline": {
+          "requests": {
+            "min": 14784,
+            "max": 14784
+          },
+          "requested_bytes": {
+            "min": 2644480,
+            "max": 2644480
+          },
+          "live_delta": {
+            "min": 0,
+            "max": 0
+          },
+          "peak_delta": {
+            "min": 9992,
+            "max": 9992
+          }
+        },
+        "candidate": {
+          "requests": {
+            "min": 14784,
+            "max": 14784
+          },
+          "requested_bytes": {
+            "min": 2644480,
+            "max": 2644480
+          },
+          "live_delta": {
+            "min": 0,
+            "max": 0
+          },
+          "peak_delta": {
+            "min": 9992,
+            "max": 9992
+          }
+        }
+      }
+    }
+  ],
+  "limits": "Forty authored public queries, retained/fresh inputs, eight preconditioning calls per child. CPU pinned to core 6, twelve alternating ABBA/BAAB blocks, independently instrumented allocation binary. Fresh includes input construction/drop but not cold-process caches. Exact expected report and checksum checked for every observation. Changed outcomes are additional certified work, not equal-work speedups. Bootstrap intervals are per-group, not multiplicity-adjusted or universal. Rust requested bytes/live/peak omit native allocation overhead, RSS and stacks. No production retention or representative application-size qualification at this stage."
+}

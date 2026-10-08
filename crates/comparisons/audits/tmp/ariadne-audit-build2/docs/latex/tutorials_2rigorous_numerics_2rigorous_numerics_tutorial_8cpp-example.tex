@@ -1,0 +1,144 @@
+\doxysubsection{tutorials/rigorous\+\_\+numerics/rigorous\+\_\+numerics\+\_\+tutorial.\+cpp}
+\hypertarget{tutorials_2rigorous_numerics_2rigorous_numerics_tutorial_8cpp-example}{}\label{tutorials_2rigorous_numerics_2rigorous_numerics_tutorial_8cpp-example}An introduction to \doxylink{namespaceAriadne}{Ariadne}\textquotesingle{}s facilities for rigorous numerics.
+
+
+\begin{DoxyCodeInclude}{0}
+\DoxyCodeLine{\textcolor{comment}{/***************************************************************************}}
+\DoxyCodeLine{\textcolor{comment}{\ *\ \ \ \ \ \ \ \ \ \ \ \ rigorous\_numerics\_tutorial.cpp}}
+\DoxyCodeLine{\textcolor{comment}{\ *}}
+\DoxyCodeLine{\textcolor{comment}{\ *\ \ Copyright\ \ 2009-\/21\ \ Pieter\ Collins}}
+\DoxyCodeLine{\textcolor{comment}{\ *}}
+\DoxyCodeLine{\textcolor{comment}{\ ****************************************************************************/}}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{comment}{/*}}
+\DoxyCodeLine{\textcolor{comment}{\ *\ \ This\ file\ is\ part\ of\ Ariadne.}}
+\DoxyCodeLine{\textcolor{comment}{\ *}}
+\DoxyCodeLine{\textcolor{comment}{\ *\ \ Ariadne\ is\ free\ software:\ you\ can\ redistribute\ it\ and/or\ modify}}
+\DoxyCodeLine{\textcolor{comment}{\ *\ \ it\ under\ the\ terms\ of\ the\ GNU\ General\ Public\ License\ as\ published\ by}}
+\DoxyCodeLine{\textcolor{comment}{\ *\ \ the\ Free\ Software\ Foundation,\ either\ version\ 3\ of\ the\ License,\ or}}
+\DoxyCodeLine{\textcolor{comment}{\ *\ \ (at\ your\ option)\ any\ later\ version.}}
+\DoxyCodeLine{\textcolor{comment}{\ *}}
+\DoxyCodeLine{\textcolor{comment}{\ *\ \ Ariadne\ is\ distributed\ in\ the\ hope\ that\ it\ will\ be\ useful,}}
+\DoxyCodeLine{\textcolor{comment}{\ *\ \ but\ WITHOUT\ ANY\ WARRANTY;\ without\ even\ the\ implied\ warranty\ of}}
+\DoxyCodeLine{\textcolor{comment}{\ *\ \ MERCHANTABILITY\ or\ FITNESS\ FOR\ A\ PARTICULAR\ PURPOSE.\ \ See\ the}}
+\DoxyCodeLine{\textcolor{comment}{\ *\ \ GNU\ General\ Public\ License\ for\ more\ details.}}
+\DoxyCodeLine{\textcolor{comment}{\ *}}
+\DoxyCodeLine{\textcolor{comment}{\ *\ \ You\ should\ have\ received\ a\ copy\ of\ the\ GNU\ General\ Public\ License}}
+\DoxyCodeLine{\textcolor{comment}{\ *\ \ along\ with\ Ariadne.\ \ If\ not,\ see\ <https://www.gnu.org/licenses/>.}}
+\DoxyCodeLine{\textcolor{comment}{\ */}}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{preprocessor}{\#include\ <\mbox{\hyperlink{ariadne_8hpp}{ariadne.hpp}}>}}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{preprocessor}{\#define\ print(expr)\ \{\ CONCLOG\_PRINTLN(\#expr\ <<\ "{}:\ "{}\ <<\ (expr))\ \}}}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{keyword}{using\ namespace\ }\mbox{\hyperlink{namespaceAriadne}{Ariadne}};}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{keyword}{extern}\ \textcolor{keyword}{template}\ \mbox{\hyperlink{namespaceAriadne_aae901a69a841b1a085a0dfe218e38fe9}{Ariadne::Nat}}\ Ariadne::Error<Ariadne::FloatMP>::output\_places;}
+\DoxyCodeLine{\textcolor{keyword}{extern}\ \textcolor{keyword}{template}\ \mbox{\hyperlink{namespaceAriadne_aae901a69a841b1a085a0dfe218e38fe9}{Ariadne::Nat}}\ Ariadne::Approximation<Ariadne::FloatMP>::output\_places;}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{keywordtype}{int}\ \mbox{\hyperlink{ariadne__main_8hpp_ac0f2228420376f4db7e1274f2b41667c}{main}}(\textcolor{keywordtype}{int}\ argc,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ argv[])\ \{}
+\DoxyCodeLine{\ \ \ \ \textcolor{comment}{//\ Acquire\ arguments\ from\ the\ command\ line,\ use\ "{}-\/h"{}\ to\ see\ options}}
+\DoxyCodeLine{\ \ \ \ \textcolor{keywordflow}{if}\ (not\ CommandLineInterface::instance().acquire(argc,argv))\ \textcolor{keywordflow}{return}\ -\/1;}
+\DoxyCodeLine{\ \ \ \ }
+\DoxyCodeLine{\ \ \ \ CONCLOG\_PRINTLN(\textcolor{stringliteral}{"{}Numeric"{}});}
+\DoxyCodeLine{\ \ \ \ \{}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ CONCLOG\_SCOPE\_CREATE;}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ r\ =\ 6\ *\ atan(1/sqrt(\mbox{\hyperlink{classAriadne_1_1Real}{Real}}(3)));}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ print(r);}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ FloatDPBounds\ xdp=r.get(double\_precision);}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ FloatMPBounds\ xmp=r.get(precision(128\_bits));}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \mbox{\hyperlink{classAriadne_1_1ValidatedReal}{ValidatedReal}}\ ymp=r.compute(\mbox{\hyperlink{classAriadne_1_1Effort}{Effort}}(128));}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ FloatMPBall\ zmp=FloatMPBall(r.compute(\mbox{\hyperlink{classAriadne_1_1Accuracy}{Accuracy}}(128\_bits)).get(precision(128\_bits)));}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ print(xdp);\ print(xmp);\ print(ymp);\ print(zmp);}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ print(xmp.error());\ print(xmp-\/xmp);\ print(xmp-\/xmp+1);}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ print(zmp.error());\ print(zmp-\/zmp);\ print(zmp-\/zmp+1);}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ EffectiveNumber\ y=r;}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ print(y);}
+\DoxyCodeLine{\ \ \ \ \}}
+\DoxyCodeLine{}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ \ \ CONCLOG\_PRINTLN(\textcolor{stringliteral}{"{}Expression"{}});}
+\DoxyCodeLine{\ \ \ \ \{}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ CONCLOG\_SCOPE\_CREATE;}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ RealVariable\ x(\textcolor{stringliteral}{"{}x"{}});RealVariable\ y(\textcolor{stringliteral}{"{}y"{}});}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ RealConstant\ c(\textcolor{stringliteral}{"{}c"{}},3.75\_dy);}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ RealExpression\ e\ =\ c\ *\ x\ *\ (1-\/x);}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ print(x);\ print(c);\ print(e);}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \mbox{\hyperlink{classAriadne_1_1Real}{Real}}\ x0=1/2\_q;\ \mbox{\hyperlink{classAriadne_1_1Real}{Real}}\ y0=-\/2/3\_q;}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ RealValuation\ v(\{x|x0,y|y0\});}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ print(v);}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ x1=evaluate(e,v);}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ print(x1);\ print(x1.get(double\_precision))}
+\DoxyCodeLine{\ \ \ \ \}}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ \ \ CONCLOG\_PRINTLN(\textcolor{stringliteral}{"{}Linear\ Algebra"{}});}
+\DoxyCodeLine{\ \ \ \ \{}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ CONCLOG\_SCOPE\_CREATE;}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \mbox{\hyperlink{classAriadne_1_1Matrix}{Matrix<FloatMPApproximation>}}\ A(\{\{4,1,0\},\{1,4,1\},\{0,1,4\}\},precision(128\_bits));}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \mbox{\hyperlink{classAriadne_1_1Vector}{Vector<FloatMPApproximation>}}\ v(\{2.0,3,5\},precision(128\_bits));}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ print(inverse(A));}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ FloatMPApproximation::set\_output\_places(30);}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ print(inverse(A));}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ print(solve(A,v));}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \mbox{\hyperlink{classAriadne_1_1Matrix}{Matrix<FloatDPBounds>}}\ A\_approx(\{\{4,1,0\},\{1,4,1\},\{0,1,4\}\},double\_precision);}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \mbox{\hyperlink{classAriadne_1_1Vector}{Vector<FloatDPBounds>}}\ v\_approx(\{2.0\_x,3,5\},double\_precision);}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ print(A\_approx);}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ print(inverse(A\_approx));}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ print(solve(A\_approx,v\_approx));}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ print(gs\_solve(A\_approx,v\_approx));}
+\DoxyCodeLine{\ \ \ \ \}}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ \ \ CONCLOG\_PRINTLN(\textcolor{stringliteral}{"{}Function"{}});}
+\DoxyCodeLine{\ \ \ \ \{}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ CONCLOG\_SCOPE\_CREATE;}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \mbox{\hyperlink{classAriadne_1_1Real}{Real}}\ a(1.875\_dy),\ b(0.3\_dec);}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ \textcolor{keywordtype}{id}=EffectiveVectorMultivariateFunction::identity(\mbox{\hyperlink{classAriadne_1_1EuclideanDomain}{EuclideanDomain}}(2));}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ x=\textcolor{keywordtype}{id}[0];\ \textcolor{keyword}{auto}\ y=\textcolor{keywordtype}{id}[1];}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ h\ =\ EffectiveVectorMultivariateFunction\{a-\/x*x-\/b*y,x\};}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \mbox{\hyperlink{classAriadne_1_1Vector}{Vector<FloatDP>}}\ v(\{0.5\_x,1.0\_x\},double\_precision);}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ print(v);}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ print(h(v))}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ print(evaluate(h,v));}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ print(h.jacobian(v));}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ print(jacobian(h,v));}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ print(h.differential(v,3));}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \mbox{\hyperlink{group__FunctionModule_gaf5c0b733c80abb59b1c3d1eb58c20099}{BoxDomainType}}\ dom(\{\{0,1\},\{0.5\_x,1.5\_x\}\});}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ th\ =\ \mbox{\hyperlink{group__FunctionModelSubModule_ga2c22c0befb7ccf11c80015eee7e7a78b}{ValidatedVectorMultivariateTaylorFunctionModelDP}}(dom,h,\mbox{\hyperlink{classAriadne_1_1ThresholdSweeper}{ThresholdSweeper<FloatDP>}}(double\_precision,1e-\/4));}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ print(th);}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ thh=compose(h,th);}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ print(thh);}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ print(evaluate(thh,v));}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ print(h(h(v)));}
+\DoxyCodeLine{\ \ \ \ \}}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ \ \ CONCLOG\_PRINTLN(\textcolor{stringliteral}{"{}Geometry"{}});}
+\DoxyCodeLine{\ \ \ \ \{}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ CONCLOG\_SCOPE\_CREATE;}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ x=EffectiveScalarMultivariateFunction::coordinate(\mbox{\hyperlink{classAriadne_1_1EuclideanDomain}{EuclideanDomain}}(2),0);}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ y=EffectiveScalarMultivariateFunction::coordinate(\mbox{\hyperlink{classAriadne_1_1EuclideanDomain}{EuclideanDomain}}(2),1);}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ g\ =\ sqr(x)+4*sqr(y);}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ h\ =\ EffectiveVectorMultivariateFunction\{1+x+y*y,2+x-\/y\};}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ c=(g<=1);}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \mbox{\hyperlink{classAriadne_1_1ConstraintSet}{ConstraintSet}}\ cs=\{c\};}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ RealBox\ bx=\{\{-\/2,+2\},\{-\/2,+2\}\};}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \mbox{\hyperlink{group__FunctionModule_gac26293ef26d158369e62afb319a71474}{ApproximateBoxType}}\ bbx=\{\{-\/2,+4\},\{-\/2,+4\}\};}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \mbox{\hyperlink{classAriadne_1_1BoundedConstraintSet}{BoundedConstraintSet}}\ bcs(\{\{-\/2,+2\},\{-\/2,+2\}\},\{g<=1\});}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ bcs=intersection(bx,cs);}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \mbox{\hyperlink{classAriadne_1_1ConstrainedImageSet}{ConstrainedImageSet}}\ cis=image(bcs,h);}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ print(cis);}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \mbox{\hyperlink{classAriadne_1_1Figure}{Figure}}\ fig(bbx,0,1);\ \textcolor{comment}{//\ Set\ up\ a\ figure\ for\ a\ space\ restricted\ to\ the\ bounding\ box,\ drawing\ first\ two\ coordinates}}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ fig\ <<\ fill\_colour(0.0,0.5,0.5)\ <<\ bbx;\ \textcolor{comment}{//\ Use\ stream\ insertion\ to\ control\ graphics}}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ fig.set\_fill\_colour(0,1,1).draw(cis);\ \textcolor{comment}{//\ Use\ chained\ methods\ to\ control\ graphics}}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ fig.write(\textcolor{stringliteral}{"{}rigorous\_numerics\_tutorial"{}});\ \textcolor{comment}{//}}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ plot(\textcolor{stringliteral}{"{}rigorous\_numerics\_tutorial"{}},Projection2d(2,0,1),bbx,\{\{Colour(0,1,1),cis\}\});\ \textcolor{comment}{//\ Plot\ in\ one\ command}}
+\DoxyCodeLine{\ \ \ \ \}}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ \ \ \textcolor{keywordflow}{return}\ 0;}
+\DoxyCodeLine{\}}
+\DoxyCodeLine{}
+
+\end{DoxyCodeInclude}
+ 

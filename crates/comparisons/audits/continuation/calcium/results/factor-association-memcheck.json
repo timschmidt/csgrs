@@ -1,0 +1,18 @@
+{
+  "tag": "factor-association-memcheck",
+  "started": "2026-09-08T20:09:45.366Z",
+  "finished": "2026-09-08T20:09:45.842Z",
+  "elapsedSeconds": 0.472976449,
+  "cwd": "/home/tim/Documents/GitHub/workspace",
+  "command": "valgrind",
+  "args": [
+    "--tool=memcheck",
+    "--error-exitcode=99",
+    "--leak-check=full",
+    "--show-leak-kinds=all",
+    "--errors-for-leak-kinds=definite,indirect,possible",
+    ".audit-builds/calcium-factor-association-probe"
+  ],
+  "code": 1,
+  "signal": null
+}

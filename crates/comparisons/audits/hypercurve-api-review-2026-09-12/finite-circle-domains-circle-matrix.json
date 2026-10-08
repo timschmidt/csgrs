@@ -1,0 +1,28 @@
+{
+  "returncode": 0,
+  "elapsed_seconds": 3.868999986007111,
+  "normal_library_sha256": "8eb7cd1fbaa241bf01e599e07ca251959c800c77c62a8091232bad9d52006638",
+  "log": "finite-circle-domains-circle-matrix.log",
+  "source": "circle-common-dispatch-matrix.rs",
+  "command": [
+    "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustc",
+    "--edition=2024",
+    "-O",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/circle-common-dispatch-matrix.rs",
+    "--extern",
+    "hypercurve=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypercurve-ee303709bdb4cb6a.rlib",
+    "-L",
+    "dependency=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps",
+    "-o",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-circle-domains-circle-matrix"
+  ],
+  "source_sha256": "bfd9b0972efff9c5e3b12c4e7e6bcbd584e86cbe85b691a10c7c51ac083b65d3",
+  "executable_sha256": "b3b6f44d508b30859a8a89899c081a5194a045d7230be30c4612eb645ae5e265",
+  "counts": {
+    "cases": 48,
+    "pair_queries": 912,
+    "point_replays": 1536,
+    "topology_queries": 96,
+    "repeated_intersections": 384
+  }
+}

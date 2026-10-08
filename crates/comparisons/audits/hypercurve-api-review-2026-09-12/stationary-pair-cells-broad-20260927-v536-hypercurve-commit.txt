@@ -1,0 +1,7 @@
+Keep stationary pair fillets on their owned source cells
+
+Partition pair queries at source singularities and original offset cusps while retaining the original curves for cuts. Carry seam ownership and outward extension rays through the shared domain solver. Reuse certified finite-cell normal orientation and one shared source-frame reconstruction for isolated centers and constrained families. Point constraints replay the same branch frame; ordinary contacts keep their native cut evidence. General domains preserve their pointwise normal selector across singularities, while explicit regular source cells retain one-sided endpoint frames. Continuous families continue to require an exact center or contact constraint.
+
+Validation: 394 release regressions across eight binaries, including strict and approximate stationary pair contacts under both trimming modes and path reversals, all four constraint forms, opposite-normal rejection, continuous-family selection, and region/offset compositions. Six static/downstream checks passed on identical inputs.
+
+Performance: the joined continuous-family regression takes 5.37 s versus 3.02 s before source-cell preparation. Repeated source analysis is a follow-up reuse target. The two longer fillet/Boolean/reoffset regressions remain near 113 s.

@@ -1,0 +1,11 @@
+{
+  "tag": "arf-rounding-native",
+  "started": "2026-09-09T20:11:38.158Z",
+  "finished": "2026-09-09T20:11:40.005Z",
+  "elapsedSeconds": 1.844900803,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison",
+  "command": "/tmp/calcium-arf-rounding.9JsRt1/arf-rounding-controls",
+  "args": [],
+  "code": 0,
+  "signal": null
+}

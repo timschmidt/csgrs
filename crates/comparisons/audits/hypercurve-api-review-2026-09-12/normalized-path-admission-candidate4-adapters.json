@@ -1,0 +1,11 @@
+{
+  "command": [
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve_curve_region_promotion-e523831f2638d8ff",
+    "--test-threads=1",
+    "unified_region_offsets_quadratic_boundary_through_exact_parallel_arrangement",
+    "unified_region_reuses_design_parameter_corner_solvers"
+  ],
+  "returncode": 0,
+  "elapsed_seconds": 0.005627804028335959,
+  "binary_sha256": "3cfdbb644172c75e678cce374c648921ecf91af2ddb6d05fa3a8bc1d90cd69ad"
+}

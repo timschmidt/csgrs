@@ -1,0 +1,20 @@
+{
+  "tag": "scalar-boundary-memcheck-v81",
+  "started": "2026-09-12T02:23:02.087Z",
+  "finished": "2026-09-12T02:24:58.695Z",
+  "elapsedSeconds": 116.605289009,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "timeout",
+  "args": [
+    "180s",
+    "valgrind",
+    "--tool=memcheck",
+    "--leak-check=full",
+    "--show-leak-kinds=all",
+    "--errors-for-leak-kinds=definite,indirect,possible",
+    "--error-exitcode=97",
+    "/tmp/calcium-scalar-boundary-v81.nLhDoT/controls"
+  ],
+  "code": 0,
+  "signal": null
+}

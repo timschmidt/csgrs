@@ -1,0 +1,21 @@
+{
+  "status": "PROGRESS; full ecosystem audit OPEN",
+  "sourceSHA256": "25bfdb480ca0c23dc82a50ef47a1720e8b721e03e72f0b16a9ce7b9bede14d0b",
+  "sourceDataReadFiles": 244,
+  "sourceDataReadLines": 26222,
+  "separatelyReviewedAssets": 1,
+  "unreadFiles": [],
+  "unreadLines": 0,
+  "currentHyperSnapshotFiles": 397,
+  "currentDrift": [],
+  "artifactSHA256": {
+    "inventory.mjs": "f573a4c6f98678106f11009d01bb3c325d9444018d7b59b58daebf0c5b6743a6",
+    "../RUFFINI_FILE_INVENTORY.tsv": "a1d45f06ff397b832c124503a87b290da6b01a4fdbe05354a82ba54dccec8187",
+    "../RUFFINI_READ_COVERAGE.tsv": "73feacde6e1d6e2b176eeb62f0033d8120ab342d1258ad83cf6a68c8d843e38e",
+    "check-read-round-constants.mjs": "351a5dc4a34164a740673706fb3036af8dcbc70a34856d560f2a8cf73e9ccca2",
+    "read-round-constants-09-10-analysis.json": "a72d46bc2f108334b52bc43454a50bc81b8d9653062ffcad5653f10d0a12cee8",
+    "read-round-constants-09-10-11-analysis.json": "307eb857e664d30249fd45a82e752592c862501bcb7893c1c0fe6df7df70cb00"
+  },
+  "newProductionChanges": 0,
+  "scope": "Current coverage/resource fingerprint checkpoint; not a rerun of historical native arithmetic or performance qualification. File reads are credited explicitly in the ledger, never inferred from this checker."
+}

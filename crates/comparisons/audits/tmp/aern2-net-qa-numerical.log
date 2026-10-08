@@ -1,0 +1,11 @@
+pure cache sequential: True, answers=10
+stateful cache sequential: True, answers=10
+uncached sequential: True, answers=10
+stateful cache batch: True, answers=10
+cached log [("creates",1),("queries",10),("answers",10),("hit descriptions",5)]
+uncached log [("creates",1),("queries",10),("answers",10),("hit descriptions",0)]
+STM serial sequential: True, answers=10
+STM parallel sequential: True, answers=10
+STM parallel batch: True, answers=10
+STM logged sequential: True, answers=10
+parallel log [("creates",1),("queries",10),("answers",10),("hit descriptions",5)]

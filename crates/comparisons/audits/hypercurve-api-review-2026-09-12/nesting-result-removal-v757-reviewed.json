@@ -1,0 +1,22 @@
+{
+  "qualification": "nesting-result-removal-v757-terminal.json",
+  "source_manifest": "nesting-result-removal-v757-sources.json",
+  "outer_session_reaped": 7555,
+  "validated_files": 2048,
+  "tests": 73,
+  "checks": 8,
+  "repos": {
+    "hypercurve": {
+      "parent": "bda20dbd6c1275813e8415209c0a968e909f3dfd",
+      "paths": {
+        "fuzz/fuzz_targets/bezier_region.rs": "396b31ed768aeeefa66103c59f63ab84c9755013f7e79d13dc174d9252b494fb",
+        "src/bezier_region.rs": "9d9aa33c3a15a52f3df285935e26b23aba883185cdd9fbbe8804e96756eedf48",
+        "src/lib.rs": "0cfe54aab6be15c27d4ac8e7ad545d378ad57d7a75134eeaff9d5a5f87796e2d",
+        "src/native_region_tests.rs": "debc88eaec2019c3f294a26a5e2703b890600fa7e6dcd4777cf142d6a0be152d",
+        "tests/hypercurve_bezier_region.rs": "b2707720c4309a4056a1601c1e9089f1e9985b2cb123e767b49a516e73d5cbab"
+      }
+    }
+  },
+  "scope": "Remove duplicated public nesting report data and validation, retain the raw geometric authority and owning boundary provenance, and admit the exact empty native boundary set",
+  "unresolved": "The full exact-geometry implementation goal remains active; this cleanup does not claim full spatial BREP closure or a measured speedup."
+}

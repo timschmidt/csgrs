@@ -1,0 +1,18 @@
+{
+  "tag": "vector-state-memcheck",
+  "started": "2026-09-08T22:22:45.485Z",
+  "finished": "2026-09-08T22:22:45.971Z",
+  "elapsedSeconds": 0.483927655,
+  "cwd": "/home/tim/Documents/GitHub/workspace",
+  "command": "valgrind",
+  "args": [
+    "--tool=memcheck",
+    "--error-exitcode=99",
+    "--leak-check=full",
+    "--show-leak-kinds=all",
+    "--errors-for-leak-kinds=definite,indirect,possible",
+    "/tmp/calcium-reuse-costs.73SR1w/flint-vector-state-probe"
+  ],
+  "code": 1,
+  "signal": null
+}

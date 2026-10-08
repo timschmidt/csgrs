@@ -1,0 +1,25 @@
+path	read_ranges	status
+.gitignore	1-1	read
+.project	1-38	read
+LICENSE	1-26	read
+README.md	1-61	read
+Setup.hs	1-2	read
+haskell-fast-reals.cabal	1-70	read
+notes/Searchable.hs	1-74	read
+notes/monads.lhs	1-224	read
+notes/notes.tex	1-951	read
+notes/test_lim.hs	1-104	read
+src/Data/Approximate/ApproximateField.hs	1-108	read
+src/Data/Approximate/Floating/Dyadic.hs	1-261	read
+src/Data/Approximate/Floating/HMPFR.hs	1-49	read
+src/Data/Approximate/Floating/MPFR.hs	1-50	read
+src/Data/Approximate/Interval.hs	1-173	read
+src/Data/Reals/Lipschitz.hs	1-44	read
+src/Data/Reals/Reals.hs	1-142	read
+src/Data/Reals/Space.hs	1-72	read
+src/Data/Reals/Staged.hs	1-113	read
+testsuite/benchmarks/bench-float.hs	1-124	read
+testsuite/benchmarks/bench-reals.hs	1-58	read
+testsuite/benchmarks/timings-mpfr	n/a	identified ELF; not executed
+testsuite/benchmarks/timings-mpfr.c	1-168	read
+testsuite/tests/HTFTestReals.hs	1-41	read

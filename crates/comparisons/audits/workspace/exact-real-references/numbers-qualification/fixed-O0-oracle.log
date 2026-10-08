@@ -1,0 +1,67 @@
+FAIL sqrt 2/1 p=80 error_ulps=-1.087178324e0
+FAIL sqrt 1000/1 p=32 error_ulps=1.239346058e0
+FAIL exp 2/1 p=8 error_ulps=2.392038674e0
+FAIL exp 2/1 p=32 error_ulps=-4.472185731e0
+FAIL exp 2/1 p=80 error_ulps=-1.915543546e0
+FAIL exp 16/1 p=8 error_ulps=2.311552205e7
+FAIL exp 16/1 p=32 error_ulps=-4.302615773e7
+FAIL exp 16/1 p=80 error_ulps=-1.842912700e7
+FAIL exp 16/1 p=160 error_ulps=8.679260335e6
+FAIL log 1/1024 p=8 error_ulps=2.149089926e0
+FAIL log 1/1024 p=32 error_ulps=2.915947146e0
+FAIL log 1/1024 p=80 error_ulps=-1.470608505e0
+FAIL log 1/1024 p=160 error_ulps=-8.144950907e0
+FAIL log 1000/1 p=8 error_ulps=-2.641761676e0
+FAIL log 1000/1 p=32 error_ulps=-3.021262066e0
+FAIL log 1000/1 p=160 error_ulps=6.353063039e0
+FAIL sin -1000/1 p=8 error_ulps=-8.872683778e0
+FAIL sin -1000/1 p=80 error_ulps=1.636704949e1
+FAIL sin -1000/1 p=160 error_ulps=-1.922301478e1
+FAIL sin -1/2 p=8 error_ulps=-1.146086508e0
+FAIL sin -1/2 p=80 error_ulps=-1.565962578e0
+FAIL sin -1/2 p=160 error_ulps=-1.572506192e0
+FAIL sin 1/2 p=8 error_ulps=1.146086508e0
+FAIL sin 1/2 p=80 error_ulps=1.565962578e0
+FAIL cos -1000/1 p=8 error_ulps=-1.399981276e1
+FAIL cos -1000/1 p=32 error_ulps=1.231463794e0
+FAIL cos -1000/1 p=80 error_ulps=2.406486822e1
+FAIL cos -1000/1 p=160 error_ulps=-2.826406297e1
+FAIL cos 1000/1 p=8 error_ulps=-1.399981276e1
+FAIL cos 1000/1 p=32 error_ulps=1.231463794e0
+FAIL cos 1000/1 p=80 error_ulps=2.406486822e1
+FAIL cos 1000/1 p=160 error_ulps=-2.826406297e1
+FAIL atan -21/16 p=8 error_ulps=-1.003045701e0
+FAIL asin -1/2 p=32 error_ulps=1.069189141e0
+FAIL asin 1/2 p=32 error_ulps=-1.069189141e0
+FAIL acos -7/8 p=8 error_ulps=-8.051210427e2
+FAIL acos -7/8 p=32 error_ulps=-1.349303771e10
+FAIL acos -7/8 p=80 error_ulps=-3.797952474e24
+FAIL acos -7/8 p=160 error_ulps=-4.591442807e48
+FAIL acos -1/2 p=8 error_ulps=-8.035266276e2
+FAIL acos -1/2 p=32 error_ulps=-1.349303771e10
+FAIL acos -1/2 p=80 error_ulps=-3.797952474e24
+FAIL acos -1/2 p=160 error_ulps=-4.591442807e48
+FAIL asinh -10/1 p=8 error_ulps=1.410025922e1
+FAIL asinh -10/1 p=32 error_ulps=-1.562018893e1
+FAIL asinh -10/1 p=80 error_ulps=4.734070270e0
+FAIL asinh -10/1 p=160 error_ulps=-2.215340642e1
+FAIL asinh -1/1 p=8 error_ulps=1.855414501e0
+FAIL asinh -1/1 p=80 error_ulps=-3.742490032e0
+FAIL asinh 1/1 p=160 error_ulps=1.964395639e0
+FAIL asinh 10/1 p=8 error_ulps=-1.733109464e0
+FAIL acosh 2/1 p=160 error_ulps=1.209357218e0
+FAIL acosh 100/1 p=8 error_ulps=-1.969683203e0
+FAIL acosh 100/1 p=32 error_ulps=-1.386748337e0
+FAIL acosh 100/1 p=160 error_ulps=4.922170923e0
+acos	checks=28	failures=9
+acosh	checks=16	failures=4
+asin	checks=28	failures=2
+asinh	checks=20	failures=11
+atan	checks=52	failures=1
+atanh	checks=20	failures=0
+cos	checks=28	failures=8
+exp	checks=28	failures=7
+log	checks=28	failures=7
+sin	checks=28	failures=12
+sqrt	checks=20	failures=2
+TOTAL fixed	checks=296	failures=63

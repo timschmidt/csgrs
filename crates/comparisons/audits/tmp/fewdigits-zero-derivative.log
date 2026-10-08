@@ -1,0 +1,5 @@
+few-probe: Prelude.tail: empty list
+CallStack (from HasCallStack):
+  error, called at libraries/base/GHC/List.hs:1644:3 in base:GHC.List
+  errorEmptyList, called at libraries/base/GHC/List.hs:130:28 in base:GHC.List
+  tail, called at ./compat/Data/Multinomial.hs:148:75 in main:Data.Multinomial

@@ -1,0 +1,14 @@
+[
+  {
+    "binary": "stationary-ph-offset-analytic-circle-inverse",
+    "returncode": 0,
+    "wall_seconds": 25.096806604997255,
+    "log": "stationary-ph-offset-analytic-circle-inverse.log"
+  },
+  {
+    "binary": "stationary-ph-offset-analytic-circle-inverse-approximate",
+    "returncode": 0,
+    "wall_seconds": 23.545428738005285,
+    "log": "stationary-ph-offset-analytic-circle-inverse-approximate.log"
+  }
+]

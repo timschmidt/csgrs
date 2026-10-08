@@ -1,0 +1,82 @@
+   Compiling hyperreal v0.13.1 (/tmp/haskell-creal-audit.rafb8h/hyperreal-seeded)
+    Finished `release` profile [optimized] target(s) in 31.40s
+     Running unittests src/lib.rs (.audit-targets/ireal-derivative-18555/release/deps/hyperreal-f3a6d4fcdbc4d626)
+
+running 2 tests
+test computable::node::eager_seed_tests::unrepresentable_seed_precision_is_skipped ... ok
+test computable::node::eager_seed_tests::transplanted_unary_caches_enclose_independent_exact_endpoint_values ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 642 filtered out; finished in 0.00s
+
+     Running tests/adversarial_props.rs (.audit-targets/ireal-derivative-18555/release/deps/adversarial_props-9e4b13c49805ec0d)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 6 filtered out; finished in 0.00s
+
+     Running tests/adversarial_regressions.rs (.audit-targets/ireal-derivative-18555/release/deps/adversarial_regressions-7fc297bcf191ad55)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 8 filtered out; finished in 0.00s
+
+     Running tests/adversarial_semantics.rs (.audit-targets/ireal-derivative-18555/release/deps/adversarial_semantics-e8aa66173b68aaaf)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 5 filtered out; finished in 0.00s
+
+     Running tests/cli.rs (.audit-targets/ireal-derivative-18555/release/deps/cli-7a8b9bb29d7322c5)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/gmp_api_coverage.rs (.audit-targets/ireal-derivative-18555/release/deps/gmp_api_coverage-f986e63a43e2ea66)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 1 filtered out; finished in 0.00s
+
+     Running tests/numeric_roundtrip_formats.rs (.audit-targets/ireal-derivative-18555/release/deps/numeric_roundtrip_formats-5fb6285679433b48)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/numerical_cross_reference.rs (.audit-targets/ireal-derivative-18555/release/deps/numerical_cross_reference-5f47ba403716af7d)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 16 filtered out; finished in 0.00s
+
+     Running tests/public_numeric_semantics.rs (.audit-targets/ireal-derivative-18555/release/deps/public_numeric_semantics-bee99ed3e4e2f895)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 9 filtered out; finished in 0.00s
+
+     Running tests/rational_oracle.rs (.audit-targets/ireal-derivative-18555/release/deps/rational_oracle-30abb1dc0c41828c)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 5 filtered out; finished in 0.00s
+
+     Running tests/readme.rs (.audit-targets/ireal-derivative-18555/release/deps/readme-d265364ae8e42cf0)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 2 filtered out; finished in 0.00s
+
+     Running tests/readme_metadata.rs (.audit-targets/ireal-derivative-18555/release/deps/readme_metadata-f25a4607915395bf)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 2 filtered out; finished in 0.00s
+
+     Running tests/real_representations.rs (.audit-targets/ireal-derivative-18555/release/deps/real_representations-509975e555e7e3de)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 4 filtered out; finished in 0.00s
+

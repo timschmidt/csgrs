@@ -1,0 +1,19 @@
+{
+  "command": [
+    "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustc",
+    "--edition=2024",
+    "-O",
+    "normalized-admission-cycloidal-rack-pairs.rs",
+    "--extern",
+    "hypercurve=normalized-path-admission-full2-libraries/libhypercurve-bacb55d5ec235376.rlib",
+    "-L",
+    "dependency=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps",
+    "-o",
+    "normalized-admission-cycloidal-rack-pairs"
+  ],
+  "returncode": 0,
+  "elapsed_seconds": 0.06382513599237427,
+  "source_sha256": "0a382b1c254e440577419f90ef61b1c78981f9a942880e4cb12be154b2ef8519",
+  "binary_sha256": "599cc07135d89c98505f412e10834723820682bd55369c14000bbdaca585c372",
+  "library_sha256": "fd1203e4eb3e6fa064be46977d35d871e0185d2eed992d795a23ca191d56afdf"
+}

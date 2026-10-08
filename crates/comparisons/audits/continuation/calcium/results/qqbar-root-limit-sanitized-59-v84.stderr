@@ -1,0 +1,2 @@
+root-limit degree=59 limit=-1 coefficient_degree=2
+timeout: the monitored command dumped core

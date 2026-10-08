@@ -1,0 +1,354 @@
+[
+  {
+    "repo": "calcium",
+    "path": "qqbar/root_of_unity.c",
+    "ranges": [
+      [
+        1,
+        147
+      ]
+    ],
+    "note": "Checkpoint76: Full cyclotomic recognition, optional argument recovery and normalized construction with certified embedding; fixed 64-bit argument recovery and small-word domain noted."
+  },
+  {
+    "repo": "calcium",
+    "path": "qqbar/exp_pi_i.c",
+    "ranges": [
+      [
+        1,
+        19
+      ]
+    ],
+    "note": "Checkpoint76: Full doubled-denominator wrapper; documented near-word-boundary exclusion applies, no claimed in-contract overflow defect."
+  },
+  {
+    "repo": "calcium",
+    "path": "qqbar/cos_pi.c",
+    "ranges": [
+      [
+        1,
+        82
+      ]
+    ],
+    "note": "Checkpoint76: Full exact rational/period reduction, low-order constants, cos-minpoly construction and certified twice-cosine embedding followed by dyadic scaling."
+  },
+  {
+    "repo": "calcium",
+    "path": "qqbar/sin_pi.c",
+    "ranges": [
+      [
+        1,
+        20
+      ]
+    ],
+    "note": "Checkpoint76: Full complementary-cosine wrapper with machine-sized reduction/doubling; documented word-boundary restriction retained."
+  },
+  {
+    "repo": "calcium",
+    "path": "qqbar/tan_pi.c",
+    "ranges": [
+      [
+        1,
+        76
+      ]
+    ],
+    "note": "Checkpoint76: Full reduced-denominator poles/constants and generic root-of-unity reciprocal construction; explicit real-axis reset and temporary lifetime."
+  },
+  {
+    "repo": "calcium",
+    "path": "qqbar/cot_pi.c",
+    "ranges": [
+      [
+        1,
+        42
+      ]
+    ],
+    "note": "Checkpoint76: Full gcd, integer pole/half-turn zero and inverse-tangent construction."
+  },
+  {
+    "repo": "calcium",
+    "path": "qqbar/sec_pi.c",
+    "ranges": [
+      [
+        1,
+        22
+      ]
+    ],
+    "note": "Checkpoint76: Full cosine/pole/inverse wrapper; failed-call output is unspecified."
+  },
+  {
+    "repo": "calcium",
+    "path": "qqbar/csc_pi.c",
+    "ranges": [
+      [
+        1,
+        23
+      ]
+    ],
+    "note": "Checkpoint76: Full sine/pole/inverse wrapper; failed-call output is unspecified."
+  },
+  {
+    "repo": "calcium",
+    "path": "qqbar/test/t-root_of_unity.c",
+    "ranges": [
+      [
+        1,
+        76
+      ]
+    ],
+    "note": "Checkpoint76: Full upstream test source; small bounded random inputs, shared-backend overlap or root-reconstruction assertions, pole/return-flag coverage limits and cleanup reviewed. Source read, not newly executed."
+  },
+  {
+    "repo": "calcium",
+    "path": "qqbar/test/t-exp_pi_i.c",
+    "ranges": [
+      [
+        1,
+        70
+      ]
+    ],
+    "note": "Checkpoint76: Full upstream test source; small bounded random inputs, shared-backend overlap or root-reconstruction assertions, pole/return-flag coverage limits and cleanup reviewed. Source read, not newly executed."
+  },
+  {
+    "repo": "calcium",
+    "path": "qqbar/test/t-cos_pi.c",
+    "ranges": [
+      [
+        1,
+        70
+      ]
+    ],
+    "note": "Checkpoint76: Full upstream test source; small bounded random inputs, shared-backend overlap or root-reconstruction assertions, pole/return-flag coverage limits and cleanup reviewed. Source read, not newly executed."
+  },
+  {
+    "repo": "calcium",
+    "path": "qqbar/test/t-sin_pi.c",
+    "ranges": [
+      [
+        1,
+        70
+      ]
+    ],
+    "note": "Checkpoint76: Full upstream test source; small bounded random inputs, shared-backend overlap or root-reconstruction assertions, pole/return-flag coverage limits and cleanup reviewed. Source read, not newly executed."
+  },
+  {
+    "repo": "calcium",
+    "path": "qqbar/test/t-tan_pi.c",
+    "ranges": [
+      [
+        1,
+        75
+      ]
+    ],
+    "note": "Checkpoint76: Full upstream test source; small bounded random inputs, shared-backend overlap or root-reconstruction assertions, pole/return-flag coverage limits and cleanup reviewed. Source read, not newly executed."
+  },
+  {
+    "repo": "calcium",
+    "path": "qqbar/test/t-cot_pi.c",
+    "ranges": [
+      [
+        1,
+        75
+      ]
+    ],
+    "note": "Checkpoint76: Full upstream test source; small bounded random inputs, shared-backend overlap or root-reconstruction assertions, pole/return-flag coverage limits and cleanup reviewed. Source read, not newly executed."
+  },
+  {
+    "repo": "calcium",
+    "path": "qqbar/test/t-sec_pi.c",
+    "ranges": [
+      [
+        1,
+        74
+      ]
+    ],
+    "note": "Checkpoint76: Full upstream test source; small bounded random inputs, shared-backend overlap or root-reconstruction assertions, pole/return-flag coverage limits and cleanup reviewed. Source read, not newly executed."
+  },
+  {
+    "repo": "calcium",
+    "path": "qqbar/test/t-csc_pi.c",
+    "ranges": [
+      [
+        1,
+        74
+      ]
+    ],
+    "note": "Checkpoint76: Full upstream test source; small bounded random inputs, shared-backend overlap or root-reconstruction assertions, pole/return-flag coverage limits and cleanup reviewed. Source read, not newly executed."
+  },
+  {
+    "repo": "flint",
+    "path": "src/qqbar/root_of_unity.c",
+    "ranges": [
+      [
+        1,
+        146
+      ]
+    ],
+    "note": "Checkpoint76: Full cyclotomic recognition, optional argument recovery and normalized construction with certified embedding; fixed 64-bit argument recovery and small-word domain noted."
+  },
+  {
+    "repo": "flint",
+    "path": "src/qqbar/exp_pi_i.c",
+    "ranges": [
+      [
+        1,
+        18
+      ]
+    ],
+    "note": "Checkpoint76: Full doubled-denominator wrapper; documented near-word-boundary exclusion applies, no claimed in-contract overflow defect."
+  },
+  {
+    "repo": "flint",
+    "path": "src/qqbar/cos_pi.c",
+    "ranges": [
+      [
+        1,
+        82
+      ]
+    ],
+    "note": "Checkpoint76: Full exact rational/period reduction, low-order constants, cos-minpoly construction and certified twice-cosine embedding followed by dyadic scaling."
+  },
+  {
+    "repo": "flint",
+    "path": "src/qqbar/sin_pi.c",
+    "ranges": [
+      [
+        1,
+        19
+      ]
+    ],
+    "note": "Checkpoint76: Full complementary-cosine wrapper with machine-sized reduction/doubling; documented word-boundary restriction retained."
+  },
+  {
+    "repo": "flint",
+    "path": "src/qqbar/tan_pi.c",
+    "ranges": [
+      [
+        1,
+        77
+      ]
+    ],
+    "note": "Checkpoint76: Full reduced-denominator poles/constants and generic root-of-unity reciprocal construction; explicit real-axis reset and temporary lifetime."
+  },
+  {
+    "repo": "flint",
+    "path": "src/qqbar/cot_pi.c",
+    "ranges": [
+      [
+        1,
+        43
+      ]
+    ],
+    "note": "Checkpoint76: Full gcd, integer pole/half-turn zero and inverse-tangent construction."
+  },
+  {
+    "repo": "flint",
+    "path": "src/qqbar/sec_pi.c",
+    "ranges": [
+      [
+        1,
+        22
+      ]
+    ],
+    "note": "Checkpoint76: Full cosine/pole/inverse wrapper; failed-call output is unspecified."
+  },
+  {
+    "repo": "flint",
+    "path": "src/qqbar/csc_pi.c",
+    "ranges": [
+      [
+        1,
+        22
+      ]
+    ],
+    "note": "Checkpoint76: Full sine/pole/inverse wrapper; failed-call output is unspecified."
+  },
+  {
+    "repo": "flint",
+    "path": "src/qqbar/test/t-root_of_unity.c",
+    "ranges": [
+      [
+        1,
+        68
+      ]
+    ],
+    "note": "Checkpoint76: Full upstream test source; small bounded random inputs, shared-backend overlap or root-reconstruction assertions, pole/return-flag coverage limits and cleanup reviewed. Source read, not newly executed."
+  },
+  {
+    "repo": "flint",
+    "path": "src/qqbar/test/t-exp_pi_i.c",
+    "ranges": [
+      [
+        1,
+        62
+      ]
+    ],
+    "note": "Checkpoint76: Full upstream test source; small bounded random inputs, shared-backend overlap or root-reconstruction assertions, pole/return-flag coverage limits and cleanup reviewed. Source read, not newly executed."
+  },
+  {
+    "repo": "flint",
+    "path": "src/qqbar/test/t-cos_pi.c",
+    "ranges": [
+      [
+        1,
+        62
+      ]
+    ],
+    "note": "Checkpoint76: Full upstream test source; small bounded random inputs, shared-backend overlap or root-reconstruction assertions, pole/return-flag coverage limits and cleanup reviewed. Source read, not newly executed."
+  },
+  {
+    "repo": "flint",
+    "path": "src/qqbar/test/t-sin_pi.c",
+    "ranges": [
+      [
+        1,
+        62
+      ]
+    ],
+    "note": "Checkpoint76: Full upstream test source; small bounded random inputs, shared-backend overlap or root-reconstruction assertions, pole/return-flag coverage limits and cleanup reviewed. Source read, not newly executed."
+  },
+  {
+    "repo": "flint",
+    "path": "src/qqbar/test/t-tan_pi.c",
+    "ranges": [
+      [
+        1,
+        67
+      ]
+    ],
+    "note": "Checkpoint76: Full upstream test source; small bounded random inputs, shared-backend overlap or root-reconstruction assertions, pole/return-flag coverage limits and cleanup reviewed. Source read, not newly executed."
+  },
+  {
+    "repo": "flint",
+    "path": "src/qqbar/test/t-cot_pi.c",
+    "ranges": [
+      [
+        1,
+        67
+      ]
+    ],
+    "note": "Checkpoint76: Full upstream test source; small bounded random inputs, shared-backend overlap or root-reconstruction assertions, pole/return-flag coverage limits and cleanup reviewed. Source read, not newly executed."
+  },
+  {
+    "repo": "flint",
+    "path": "src/qqbar/test/t-sec_pi.c",
+    "ranges": [
+      [
+        1,
+        66
+      ]
+    ],
+    "note": "Checkpoint76: Full upstream test source; small bounded random inputs, shared-backend overlap or root-reconstruction assertions, pole/return-flag coverage limits and cleanup reviewed. Source read, not newly executed."
+  },
+  {
+    "repo": "flint",
+    "path": "src/qqbar/test/t-csc_pi.c",
+    "ranges": [
+      [
+        1,
+        66
+      ]
+    ],
+    "note": "Checkpoint76: Full upstream test source; small bounded random inputs, shared-backend overlap or root-reconstruction assertions, pole/return-flag coverage limits and cleanup reviewed. Source read, not newly executed."
+  }
+]

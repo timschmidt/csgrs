@@ -1,0 +1,30 @@
+{
+  "tag": "arf-conversion-compile",
+  "started": "2026-09-10T03:08:05.693Z",
+  "finished": "2026-09-10T03:08:05.906Z",
+  "elapsedSeconds": 0.21099373300000002,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison",
+  "command": "gcc",
+  "args": [
+    "-O2",
+    "-g0",
+    "-Wall",
+    "-Wextra",
+    "-Werror",
+    "-isystem",
+    "../exact-real-references/flint/src",
+    "audits/continuation/calcium/flint-arf-conversion-controls.c",
+    "-L",
+    "../exact-real-references/flint",
+    "-Wl,-rpath,/home/tim/Documents/GitHub/workspace/exact-real-references/flint",
+    "-lflint",
+    "-lmpfr",
+    "-lgmp",
+    "-lm",
+    "-lpthread",
+    "-o",
+    "/tmp/calcium-arf-conversion.ZnmLMf/controls"
+  ],
+  "code": 0,
+  "signal": null
+}

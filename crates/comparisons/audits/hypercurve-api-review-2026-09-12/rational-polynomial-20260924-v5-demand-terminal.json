@@ -1,0 +1,438 @@
+{
+  "measurements": [
+    {
+      "name": "small-1-dyadic",
+      "demand": "sign",
+      "reference_us": 0.13,
+      "candidate_us": 0.11,
+      "speedup": 1.1818181818181819
+    },
+    {
+      "name": "small-1-dyadic",
+      "demand": "canonical",
+      "reference_us": 0.12,
+      "candidate_us": 0.11,
+      "speedup": 1.0909090909090908
+    },
+    {
+      "name": "small-1-odd",
+      "demand": "sign",
+      "reference_us": 0.14,
+      "candidate_us": 0.14,
+      "speedup": 1
+    },
+    {
+      "name": "small-1-odd",
+      "demand": "canonical",
+      "reference_us": 0.14,
+      "candidate_us": 0.14,
+      "speedup": 1
+    },
+    {
+      "name": "small-2-dyadic",
+      "demand": "sign",
+      "reference_us": 0.24,
+      "candidate_us": 0.22999999999999998,
+      "speedup": 1.0434782608695652
+    },
+    {
+      "name": "small-2-dyadic",
+      "demand": "canonical",
+      "reference_us": 0.24,
+      "candidate_us": 0.22999999999999998,
+      "speedup": 1.0434782608695652
+    },
+    {
+      "name": "small-2-odd",
+      "demand": "sign",
+      "reference_us": 0.66,
+      "candidate_us": 0.33999999999999997,
+      "speedup": 1.9411764705882355
+    },
+    {
+      "name": "small-2-odd",
+      "demand": "canonical",
+      "reference_us": 0.33999999999999997,
+      "candidate_us": 0.33,
+      "speedup": 1.03030303030303
+    },
+    {
+      "name": "small-4-dyadic",
+      "demand": "sign",
+      "reference_us": 0.74,
+      "candidate_us": 0.74,
+      "speedup": 1
+    },
+    {
+      "name": "small-4-dyadic",
+      "demand": "canonical",
+      "reference_us": 0.74,
+      "candidate_us": 0.72,
+      "speedup": 1.027777777777778
+    },
+    {
+      "name": "small-4-odd",
+      "demand": "sign",
+      "reference_us": 0.7999999999999999,
+      "candidate_us": 0.78,
+      "speedup": 1.0256410256410255
+    },
+    {
+      "name": "small-4-odd",
+      "demand": "canonical",
+      "reference_us": 0.77,
+      "candidate_us": 0.83,
+      "speedup": 0.9277108433734941
+    },
+    {
+      "name": "small-8-dyadic",
+      "demand": "sign",
+      "reference_us": 0.98,
+      "candidate_us": 0.72,
+      "speedup": 1.3611111111111112
+    },
+    {
+      "name": "small-8-dyadic",
+      "demand": "canonical",
+      "reference_us": 0.9900000000000001,
+      "candidate_us": 0.76,
+      "speedup": 1.3026315789473686
+    },
+    {
+      "name": "small-8-odd",
+      "demand": "sign",
+      "reference_us": 1.32,
+      "candidate_us": 0.47,
+      "speedup": 2.808510638297873
+    },
+    {
+      "name": "small-8-odd",
+      "demand": "canonical",
+      "reference_us": 1.299,
+      "candidate_us": 0.54,
+      "speedup": 2.4055555555555554
+    },
+    {
+      "name": "small-32-dyadic",
+      "demand": "sign",
+      "reference_us": 5.769,
+      "candidate_us": 3.59,
+      "speedup": 1.6069637883008359
+    },
+    {
+      "name": "small-32-dyadic",
+      "demand": "canonical",
+      "reference_us": 5.7989999999999995,
+      "candidate_us": 3.55,
+      "speedup": 1.6335211267605634
+    },
+    {
+      "name": "small-32-odd",
+      "demand": "sign",
+      "reference_us": 8.129,
+      "candidate_us": 2.0389999999999997,
+      "speedup": 3.986758214811182
+    },
+    {
+      "name": "small-32-odd",
+      "demand": "canonical",
+      "reference_us": 8.1,
+      "candidate_us": 2.1799999999999997,
+      "speedup": 3.7155963302752295
+    },
+    {
+      "name": "small-64-dyadic",
+      "demand": "sign",
+      "reference_us": 15.029,
+      "candidate_us": 5.28,
+      "speedup": 2.846401515151515
+    },
+    {
+      "name": "small-64-dyadic",
+      "demand": "canonical",
+      "reference_us": 12.019,
+      "candidate_us": 5.16,
+      "speedup": 2.329263565891473
+    },
+    {
+      "name": "small-64-odd",
+      "demand": "sign",
+      "reference_us": 24.887999999999998,
+      "candidate_us": 3.8689999999999998,
+      "speedup": 6.432669940553114
+    },
+    {
+      "name": "small-64-odd",
+      "demand": "canonical",
+      "reference_us": 22.569,
+      "candidate_us": 4.399,
+      "speedup": 5.130484200954762
+    },
+    {
+      "name": "wide-2-128-dyadic",
+      "demand": "sign",
+      "reference_us": 0.9900000000000001,
+      "candidate_us": 1,
+      "speedup": 0.9900000000000001
+    },
+    {
+      "name": "wide-2-128-dyadic",
+      "demand": "canonical",
+      "reference_us": 0.9990000000000001,
+      "candidate_us": 1.04,
+      "speedup": 0.9605769230769231
+    },
+    {
+      "name": "wide-2-128-odd",
+      "demand": "sign",
+      "reference_us": 6.869,
+      "candidate_us": 6.4590000000000005,
+      "speedup": 1.0634773184703514
+    },
+    {
+      "name": "wide-2-128-odd",
+      "demand": "canonical",
+      "reference_us": 6.430000000000001,
+      "candidate_us": 10.22,
+      "speedup": 0.6291585127201565
+    },
+    {
+      "name": "wide-2-512-dyadic",
+      "demand": "sign",
+      "reference_us": 3.629,
+      "candidate_us": 3.5090000000000003,
+      "speedup": 1.0341977771444855
+    },
+    {
+      "name": "wide-2-512-dyadic",
+      "demand": "canonical",
+      "reference_us": 3.36,
+      "candidate_us": 3.4290000000000003,
+      "speedup": 0.9798775153105861
+    },
+    {
+      "name": "wide-2-512-odd",
+      "demand": "sign",
+      "reference_us": 14.989,
+      "candidate_us": 14.549000000000001,
+      "speedup": 1.0302426283593373
+    },
+    {
+      "name": "wide-2-512-odd",
+      "demand": "canonical",
+      "reference_us": 14.709,
+      "candidate_us": 14.449,
+      "speedup": 1.0179943248667729
+    },
+    {
+      "name": "wide-8-128-dyadic",
+      "demand": "sign",
+      "reference_us": 78.865,
+      "candidate_us": 1.8399999999999999,
+      "speedup": 42.86141304347826
+    },
+    {
+      "name": "wide-8-128-dyadic",
+      "demand": "canonical",
+      "reference_us": 78.95500000000001,
+      "candidate_us": 65.26599999999999,
+      "speedup": 1.2097416725400671
+    },
+    {
+      "name": "wide-8-128-odd",
+      "demand": "sign",
+      "reference_us": 208.126,
+      "candidate_us": 1.9300000000000002,
+      "speedup": 107.83730569948186
+    },
+    {
+      "name": "wide-8-128-odd",
+      "demand": "canonical",
+      "reference_us": 162.75900000000001,
+      "candidate_us": 68.305,
+      "speedup": 2.3828270258399824
+    },
+    {
+      "name": "wide-8-512-dyadic",
+      "demand": "sign",
+      "reference_us": 1019.3199999999999,
+      "candidate_us": 4.039,
+      "speedup": 252.36939836593217
+    },
+    {
+      "name": "wide-8-512-dyadic",
+      "demand": "canonical",
+      "reference_us": 942.676,
+      "candidate_us": 450.479,
+      "speedup": 2.0926080904992244
+    },
+    {
+      "name": "wide-8-512-odd",
+      "demand": "sign",
+      "reference_us": 1300.671,
+      "candidate_us": 5.38,
+      "speedup": 241.7604089219331
+    },
+    {
+      "name": "wide-8-512-odd",
+      "demand": "canonical",
+      "reference_us": 1281.6019999999999,
+      "candidate_us": 444.62899999999996,
+      "speedup": 2.8824075802523
+    },
+    {
+      "name": "wide-32-128-dyadic",
+      "demand": "sign",
+      "reference_us": 3333.831,
+      "candidate_us": 9.859,
+      "speedup": 338.15102951617814
+    },
+    {
+      "name": "wide-32-128-dyadic",
+      "demand": "canonical",
+      "reference_us": 3173.953,
+      "candidate_us": 477.24699999999996,
+      "speedup": 6.650545734179576
+    },
+    {
+      "name": "wide-32-128-odd",
+      "demand": "sign",
+      "reference_us": 2883.162,
+      "candidate_us": 12.189,
+      "speedup": 236.53802608909672
+    },
+    {
+      "name": "wide-32-128-odd",
+      "demand": "canonical",
+      "reference_us": 2876.863,
+      "candidate_us": 472.457,
+      "speedup": 6.089153086947595
+    },
+    {
+      "name": "wide-32-512-dyadic",
+      "demand": "sign",
+      "reference_us": 22325.508,
+      "candidate_us": 43.816,
+      "speedup": 509.5286653277342
+    },
+    {
+      "name": "wide-32-512-dyadic",
+      "demand": "canonical",
+      "reference_us": 22363.666,
+      "candidate_us": 888.47,
+      "speedup": 25.170986077188875
+    },
+    {
+      "name": "wide-32-512-odd",
+      "demand": "sign",
+      "reference_us": 24329.251,
+      "candidate_us": 54.756,
+      "speedup": 444.3211885455475
+    },
+    {
+      "name": "wide-32-512-odd",
+      "demand": "canonical",
+      "reference_us": 24339.079999999998,
+      "candidate_us": 892.029,
+      "speedup": 27.285077054669745
+    },
+    {
+      "name": "wide-64-128-dyadic",
+      "demand": "sign",
+      "reference_us": 15274.552,
+      "candidate_us": 27.848,
+      "speedup": 548.4972708991669
+    },
+    {
+      "name": "wide-64-128-dyadic",
+      "demand": "canonical",
+      "reference_us": 15344.027999999998,
+      "candidate_us": 401.462,
+      "speedup": 38.220374531088865
+    },
+    {
+      "name": "wide-64-128-odd",
+      "demand": "sign",
+      "reference_us": 17094.977000000003,
+      "candidate_us": 36.308,
+      "speedup": 470.8322408284676
+    },
+    {
+      "name": "wide-64-128-odd",
+      "demand": "canonical",
+      "reference_us": 17175.582,
+      "candidate_us": 1364.827,
+      "speedup": 12.58443890690908
+    },
+    {
+      "name": "wide-64-512-dyadic",
+      "demand": "sign",
+      "reference_us": 217388.239,
+      "candidate_us": 160.049,
+      "speedup": 1358.2605264637705
+    },
+    {
+      "name": "wide-64-512-dyadic",
+      "demand": "canonical",
+      "reference_us": 217728.40500000003,
+      "candidate_us": 15474.939,
+      "speedup": 14.069742375074954
+    },
+    {
+      "name": "wide-64-512-odd",
+      "demand": "sign",
+      "reference_us": 225945.452,
+      "candidate_us": 200.36599999999999,
+      "speedup": 1127.663635546949
+    },
+    {
+      "name": "wide-64-512-odd",
+      "demand": "canonical",
+      "reference_us": 226118.88,
+      "candidate_us": 15711.632,
+      "speedup": 14.391813657550024
+    },
+    {
+      "name": "cancelled-64-128",
+      "demand": "sign",
+      "reference_us": 14.328999999999999,
+      "candidate_us": 9.969999999999999,
+      "speedup": 1.4372116349047142
+    },
+    {
+      "name": "cancelled-64-128",
+      "demand": "canonical",
+      "reference_us": 12.209,
+      "candidate_us": 8.668999999999999,
+      "speedup": 1.4083515976467875
+    },
+    {
+      "name": "cancelled-64-512",
+      "demand": "sign",
+      "reference_us": 20.998,
+      "candidate_us": 18.619,
+      "speedup": 1.1277727053010367
+    },
+    {
+      "name": "cancelled-64-512",
+      "demand": "canonical",
+      "reference_us": 25.418999999999997,
+      "candidate_us": 19.769,
+      "speedup": 1.2858010015681116
+    }
+  ],
+  "libraries": {
+    "hyperreal": {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/libhyperreal.rlib",
+      "sha256": "23d0088894dce73a662b60828a74928f8f4d44ed9ed0e9b4fc42f51fabddbe03"
+    },
+    "num": {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libnum-dbc9a5d22d09e40c.rlib",
+      "sha256": "daa6d3d73a7d530043806304c2fb21ff7e347b39ec8b317a629d9abb510ffdf3"
+    }
+  },
+  "source_sha256": "9a3f45288672fdf6392cd2b6333cdb283055475fe533f1d7afbc32fed2943835",
+  "binary_sha256": "fcc96645b24b9118690623661622271eacf2003bc2d5ac02ab7753844bc03a90",
+  "all_processes_reaped": true,
+  "all_sources_unchanged": true
+}

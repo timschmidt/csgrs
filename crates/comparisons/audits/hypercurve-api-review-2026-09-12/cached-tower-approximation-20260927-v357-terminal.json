@@ -1,0 +1,2266 @@
+{
+  "source_manifest": "cached-tower-approximation-20260927-v357-sources.json",
+  "source_directory": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/source-archives/cached-tower-approximation-20260927-v357",
+  "cases": [
+    {
+      "binary": "cached-tower-approximation-20260927-v357-hypercurve",
+      "name": "bezier_offset::conversion_tests::recursive_local_root_orders_against_close_coefficient_generators",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-case-000.log",
+      "elapsed_seconds": 0.007646375917829573
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v357-hypercurve",
+      "name": "bezier_offset::conversion_tests::retained_parameter_import_keeps_original_axes_and_tower",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-case-001.log",
+      "elapsed_seconds": 0.007589140092022717
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v357-hypercurve",
+      "name": "bezier_offset::conversion_tests::recursive_scalar_comparison_replays_exact_equality_before_approximation",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-case-002.log",
+      "elapsed_seconds": 0.0035766350338235497
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v357-hypercurve",
+      "name": "bezier_offset::conversion_tests::recursive_local_isolation_reuses_exact_signs_below_interval_precision",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-case-003.log",
+      "elapsed_seconds": 0.0035359669709578156
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v357-hypercurve",
+      "name": "bezier_offset::conversion_tests::recursive_parameter_projection_preserves_roots_through_refinement_and_charts",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-case-004.log",
+      "elapsed_seconds": 0.015569732058793306
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v357-hypercurve",
+      "name": "bezier_offset::conversion_tests::recursive_polynomial_predicates_reuse_the_retained_field_relation",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-case-005.log",
+      "elapsed_seconds": 0.007607448031194508
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v357-hypercurve",
+      "name": "bezier_offset::conversion_tests::recursive_polynomial_queries_reuse_a_selected_proper_factor",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-case-006.log",
+      "elapsed_seconds": 0.03170218400191516
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v357-hypercurve",
+      "name": "bezier_offset::conversion_tests::recursive_ordered_field_isolation_does_not_guess_polynomial_degree",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-case-007.log",
+      "elapsed_seconds": 0.003540067933499813
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v357-hypercurve",
+      "name": "bezier_offset::conversion_tests::recursive_polynomial_isolators_keep_the_selected_root_after_endpoint_deflation",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-case-008.log",
+      "elapsed_seconds": 0.0035197980469092727
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v357-hypercurve",
+      "name": "bezier_offset::conversion_tests::recursive_polynomial_refinement_reuses_certified_bounds_and_identity",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-case-009.log",
+      "elapsed_seconds": 0.00352012796793133
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v357-hypercurve",
+      "name": "bezier_offset::conversion_tests::recursive_polynomial_crossing_signs_survive_exact_midpoint_collapse",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-case-010.log",
+      "elapsed_seconds": 0.0034850810188800097
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v357-hypercurve",
+      "name": "bezier_offset::conversion_tests::recursive_chord_parallel_retains_owned_roots_across_exterior_ranges",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-case-011.log",
+      "elapsed_seconds": 0.06376939394976944
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v357-hypercurve",
+      "name": "bezier_offset::conversion_tests::recursive_chord_parallel_local_roots_reject_conjugates_and_clip_exactly",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-case-012.log",
+      "elapsed_seconds": 0.031711313989944756
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v357-hypercurve",
+      "name": "bezier_offset::conversion_tests::exterior_chord_contact_deflation_preserves_other_contacts",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-case-013.log",
+      "elapsed_seconds": 0.007597638061270118
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v357-hypercurve",
+      "name": "bezier_offset::conversion_tests::recursive_chord_kernel_retains_all_cubic_crossings_with_opposite_endpoint_sides",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-case-014.log",
+      "elapsed_seconds": 0.0035650950158014894
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v357-hypercurve",
+      "name": "bezier_offset::conversion_tests::recursive_quadratic_endpoint_roots_keep_the_original_field",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-case-015.log",
+      "elapsed_seconds": 0.0035352479899302125
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v357-hypercurve",
+      "name": "bezier_offset::conversion_tests::retained_chord_incidence_replays_independently_allocated_coefficient_fields",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-case-016.log",
+      "elapsed_seconds": 0.015655055991373956
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v357-hypercurve",
+      "name": "bezier_offset::conversion_tests::recursive_field_embeddings_do_not_consume_approximate_generator_equalities",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-case-017.log",
+      "elapsed_seconds": 0.003556365962140262
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v357-hypercurve",
+      "name": "bezier_offset::conversion_tests::retained_parallel_contact_keeps_local_root_through_angular_and_point_queries",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-case-018.log",
+      "elapsed_seconds": 0.0076228969264775515
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v357-hypercurve",
+      "name": "bezier_offset::conversion_tests::recursive_parallel_expression_signs_keep_the_selected_speed_sheet",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-case-019.log",
+      "elapsed_seconds": 0.015647016000002623
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v357-hypercurve",
+      "name": "bezier_offset::conversion_tests::recursive_parallel_expression_signs_reject_poles_and_zero_speed",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-case-020.log",
+      "elapsed_seconds": 0.06381269101984799
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v357-hypercurve",
+      "name": "bezier_offset::conversion_tests::chord_normal_and_parallel_contacts_share_native_point_identity",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-case-021.log",
+      "elapsed_seconds": 0.003575234906747937
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v357-hypercurve",
+      "name": "bezier_offset::conversion_tests::selected_chord_normal_contact_accepts_complementary_radial_sign",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-case-022.log",
+      "elapsed_seconds": 0.003642990021035075
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v357-hypercurve",
+      "name": "bezier_offset::conversion_tests::dense_chord_normal_tangency_retains_a_finite_endpoint",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-case-023.log",
+      "elapsed_seconds": 0.0034630929585546255
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v357-hypercurve",
+      "name": "bezier_offset::conversion_tests::independent_cusp_chord_contacts_order_on_the_shared_axis",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-case-024.log",
+      "elapsed_seconds": 0.015628676977939904
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v357-hypercurve",
+      "name": "bezier_offset::conversion_tests::procedural_endpoint_chord_replays_complete_parallel_contacts",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-case-025.log",
+      "elapsed_seconds": 0.003531757974997163
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v357-hypercurve",
+      "name": "bezier_offset::conversion_tests::finite_circle_components_replay_chord_normal_and_represented_inverses",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-case-026.log",
+      "elapsed_seconds": 0.5644764660391957
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v357-hypercurve",
+      "name": "bezier_offset::conversion_tests::rank_independent_chord_normal_circle_partitions_rational_overlap",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-case-027.log",
+      "elapsed_seconds": 1.7163176060421392
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v357-hypercurve",
+      "name": "bezier_offset::conversion_tests::pair_radial_circle_retains_independent_field_chord_tangency",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-case-028.log",
+      "elapsed_seconds": 0.4143825239734724
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v357-hypercurve",
+      "name": "bezier_offset::conversion_tests::nested_procedural_chord_reversals_match_exact_side_and_winding",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-case-029.log",
+      "elapsed_seconds": 0.007685622083954513
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v357-hypercurve",
+      "name": "bezier_offset::conversion_tests::algebraic_chord_retains_independent_endpoint_fields_under_both_policies",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-case-030.log",
+      "elapsed_seconds": 0.015794236096553504
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v357-hypercurve",
+      "name": "bezier_offset::conversion_tests::noninjective_collinear_chord_overlap_partitions_every_monotone_branch",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-case-031.log",
+      "elapsed_seconds": 0.007690103026106954
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v357-hypercurve",
+      "name": "curve::curve_fillet::tests::collapsed_selected_circle_fillet_crosses_seams_and_reenters_region_editing",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-case-032.log",
+      "elapsed_seconds": 16.83762751496397
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v357-hypercurve",
+      "name": "curve::curve_fillet::tests::collapsed_selected_circle_fillet_reuses_constrained_contacts_and_support",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-case-033.log",
+      "elapsed_seconds": 42.77565913496073
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v357-hypercurve",
+      "name": "curve::curve_subdivision::tests::source_domain_nonlinear_fillet_crosses_circular_chart_infinity",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-case-034.log",
+      "elapsed_seconds": 0.26422428898513317
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v357-hypercurve",
+      "name": "curve::curve_fillet::tests::native_circle_fillet_retains_selected_contacts_through_reconstruction",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-case-035.log",
+      "elapsed_seconds": 0.26417520199902356
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v357-hypercurve",
+      "name": "curve::curve_fillet::tests::coincident_line_fillet_constraints_complete_the_authored_chart_solutions",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-case-036.log",
+      "elapsed_seconds": 0.1139269529376179
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v357-hypercurve",
+      "name": "curve::curve_fillet::tests::coincident_linear_fillet_domains_exclude_remote_endpoints",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-case-037.log",
+      "elapsed_seconds": 0.007663043914362788
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v357-hypercurve",
+      "name": "curve::curve_fillet::tests::coincident_retained_line_fillet_keeps_independent_endpoint_fields",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-case-038.log",
+      "elapsed_seconds": 0.11390871298499405
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v357-hypercurve",
+      "name": "bezier_offset::conversion_tests::point_incidence_checks_regular_frames_at_each_isolated_contact",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-case-039.log",
+      "elapsed_seconds": 0.003608162049204111
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v357-hypercurve",
+      "name": "curve::curve_fillet::tests::collapsed_parallel_fillet_requires_the_original_circle_normal",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-case-040.log",
+      "elapsed_seconds": 0.007578649907372892
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v357-hypercurve",
+      "name": "curve::curve_fillet::tests::collapsed_circle_parallel_fillet_replays_contacts_and_normal_sheets",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-case-041.log",
+      "elapsed_seconds": 0.03178753890097141
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v357-hypercurve",
+      "name": "curve::curve_fillet::tests::collapsed_fillet_point_contacts_preserve_distinct_bezier_preimages",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-case-042.log",
+      "elapsed_seconds": 0.007614528061822057
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v357-hypercurve",
+      "name": "curve::curve_fillet::tests::collapsed_circle_fillet_requires_each_free_contact_and_preserves_exact_trims",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-case-043.log",
+      "elapsed_seconds": 0.03168178605847061
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v357-hypercurve",
+      "name": "curve::curve_fillet::tests::collapsed_circular_spline_fillets_keep_authored_contact_parameters",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-case-044.log",
+      "elapsed_seconds": 0.007633916917257011
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v357-hypercurve",
+      "name": "bezier_region::tests::collapsed_pair_radial_fillet_rejects_the_excluded_contact",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-case-045.log",
+      "elapsed_seconds": 0.11389686400070786
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v357-hypercurve",
+      "name": "bezier_offset::conversion_tests::algebraic_cusp_semicircle_point_incidence_selects_exactly_one_half",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-case-046.log",
+      "elapsed_seconds": 0.007713161059655249
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v357-hypercurve",
+      "name": "bezier_offset::conversion_tests::chamfer_transported_mapped_cusp_cut_inverts_on_analytic_overlap",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-case-047.log",
+      "elapsed_seconds": 0.31422438798472285
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v357-hypercurve",
+      "name": "bezier_offset::conversion_tests::correlated_point_incidence_retains_exterior_contact_parameters",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-case-048.log",
+      "elapsed_seconds": 0.01570957200601697
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v357-hypercurve",
+      "name": "bezier_offset::conversion_tests::nonrepresented_center_nonrational_chamfer_inverts_with_retained_authority",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-case-049.log",
+      "elapsed_seconds": 0.16400919598527253
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v357-hypercurve",
+      "name": "bezier_offset::conversion_tests::nonrepresented_center_transverse_chamfer_inverts_by_correlated_point",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-case-050.log",
+      "elapsed_seconds": 0.0639692610129714
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v357-hypercurve",
+      "name": "bezier_offset::conversion_tests::point_incidence_visits_a_collapsed_circle_as_a_complete_domain",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-case-051.log",
+      "elapsed_seconds": 0.015826574992388487
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v357-hypercurve",
+      "name": "bezier_offset::conversion_tests::represented_circle_retained_point_incidence_observes_requested_policy",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-case-052.log",
+      "elapsed_seconds": 0.007567030959762633
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v357-hypercurve",
+      "name": "bezier_offset::conversion_tests::retained_point_incidence_visits_all_preimages_and_can_stop_at_one",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-case-053.log",
+      "elapsed_seconds": 0.00774924794677645
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v357-hypercurve",
+      "name": "bezier_offset::conversion_tests::transverse_chamfer_cut_inverts_by_radial_incidence",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-case-054.log",
+      "elapsed_seconds": 0.11388657498173416
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v357-hypercurve",
+      "name": "bezier_offset::parameter_component::tests::contact_constraints_distinguish_free_axes_from_empty_components",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-case-055.log",
+      "elapsed_seconds": 0.0036138430004939437
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v357-hypercurve",
+      "name": "bezier_offset::parameter_component::tests::incident_charts_keep_poles_and_finite_ownership_excluded",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-case-056.log",
+      "elapsed_seconds": 0.0035108799347653985
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v357-hypercurve",
+      "name": "bezier_offset::parameter_component::tests::one_contact_replays_correspondence_through_both_source_charts",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-case-057.log",
+      "elapsed_seconds": 0.0034858210710808635
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v357-hypercurve",
+      "name": "bezier_offset::parameter_component::tests::product_components_keep_fixed_axes_and_operand_roles",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-case-058.log",
+      "elapsed_seconds": 0.003503690008074045
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v357-hypercurve",
+      "name": "bezier_region::curve_corner_chain::tests::extended_fillet_circle_endpoints_obey_the_exact_radius_bound",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-case-059.log",
+      "elapsed_seconds": 5.421491465065628
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v357-hypercurve",
+      "name": "bezier_region::curve_corner_chain::tests::extended_fillet_region_classifies_both_sides_of_its_companion",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-case-060.log",
+      "elapsed_seconds": 11.2803676960757
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v357-hypercurve",
+      "name": "bezier_region::curve_corner_chain::tests::open_fillet_keeps_terminal_endpoints_and_exact_connectivity",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-case-061.log",
+      "elapsed_seconds": 0.0036006930749863386
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v357-hypercurve",
+      "name": "bezier_region::curve_corner_chain::tests::open_selected_chamfers_reenter_without_region_fill_semantics",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-case-062.log",
+      "elapsed_seconds": 0.007763467961922288
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v357-hypercurve",
+      "name": "bezier_region::tests::direct_mixed_and_retained_parallel_pairs_share_the_fillet_kernel",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-case-063.log",
+      "elapsed_seconds": 0.015667484025470912
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v357-hypercurve",
+      "name": "bezier_region::tests::general_nonrepresented_chord_and_retained_rational_arc_complete_the_fillet_kernel",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-case-064.log",
+      "elapsed_seconds": 0.6146414729300886
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v357-hypercurve",
+      "name": "bezier_region::tests::independent_oblique_chord_pair_fillet_crosses_a_rational_line_exactly",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-case-065.log",
+      "elapsed_seconds": 0.5145359130110592
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v357-hypercurve",
+      "name": "bezier_region::tests::independent_oblique_chord_pair_fillet_crosses_algebraic_chords_exactly",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-case-066.log",
+      "elapsed_seconds": 0.41431869997177273
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v357-hypercurve",
+      "name": "bezier_region::tests::independent_oblique_chord_pair_fillets_extend_on_infinite_supports",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-case-067.log",
+      "elapsed_seconds": 0.7148641460807994
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v357-hypercurve",
+      "name": "bezier_region::tests::independent_pair_native_fillet_crosses_a_boolean_cutter",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-case-068.log",
+      "elapsed_seconds": 0.7648780529852957
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v357-hypercurve",
+      "name": "bezier_region::tests::independent_selected_circle_pair_fillet_retains_pair_native_circle",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-case-069.log",
+      "elapsed_seconds": 0.11398035904858261
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v357-hypercurve",
+      "name": "bezier_region::tests::independent_selected_circle_pair_fillets_extend_over_both_full_supports",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-case-070.log",
+      "elapsed_seconds": 2.7677801330573857
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v357-hypercurve",
+      "name": "bezier_region::tests::major_retained_rational_arc_and_general_chord_share_the_fillet_kernel",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-case-071.log",
+      "elapsed_seconds": 2.768184875953011
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v357-hypercurve",
+      "name": "bezier_region::tests::noncollapsed_pair_radial_fillet_reenters_the_corner_kernel",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-case-072.log",
+      "elapsed_seconds": 0.11387931590434164
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v357-hypercurve",
+      "name": "bezier_region::tests::nonlinear_algebraic_endpoint_chamfer_uses_complete_incident_ray",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-case-073.log",
+      "elapsed_seconds": 2.6175867200363427
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v357-hypercurve",
+      "name": "bezier_region::tests::nonlinear_algebraic_endpoint_fillet_uses_complete_incident_domain",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-case-074.log",
+      "elapsed_seconds": 21.946529459906742
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v357-hypercurve",
+      "name": "bezier_region::tests::nonlinear_selected_corner_chamfers_through_retained_fixed_distance_image",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-case-075.log",
+      "elapsed_seconds": 4.9210931529523805
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v357-hypercurve",
+      "name": "bezier_region::tests::nonrepresented_cardinal_chord_pair_fillets_through_shared_carriers",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-case-076.log",
+      "elapsed_seconds": 0.007644066005013883
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v357-hypercurve",
+      "name": "bezier_region::tests::nonrepresented_chord_and_retained_rational_arc_share_the_fillet_kernel",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-case-077.log",
+      "elapsed_seconds": 0.6145643689669669
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v357-hypercurve",
+      "name": "bezier_region::tests::nonrepresented_chord_and_selected_circle_complete_the_fillet_kernel",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-case-078.log",
+      "elapsed_seconds": 0.9652393750147894
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v357-hypercurve",
+      "name": "bezier_region::tests::nonrepresented_chord_line_corner_fillets_through_shared_carriers",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-case-079.log",
+      "elapsed_seconds": 0.2140949679305777
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v357-hypercurve",
+      "name": "bezier_region::tests::nonrepresented_chord_parallel_corner_fillets_without_reintersection",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-case-080.log",
+      "elapsed_seconds": 0.6647758820326999
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v357-hypercurve",
+      "name": "bezier_region::tests::one_fragment_materialized_loop_chamfers_to_one_middle_interval",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-case-081.log",
+      "elapsed_seconds": 0.11393033200874925
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v357-hypercurve",
+      "name": "bezier_region::tests::one_fragment_materialized_loop_extends_algebraic_chamfer_cuts_once",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-case-082.log",
+      "elapsed_seconds": 9.577824574895203
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v357-hypercurve",
+      "name": "bezier_region::tests::one_fragment_nonzero_parallel_loop_extends_chamfer_cuts_on_one_finite_envelope",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-case-083.log",
+      "elapsed_seconds": 115.489281335962
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v357-hypercurve",
+      "name": "bezier_region::tests::one_fragment_ph_loop_fillets_through_rational_self_contact",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-case-084.log",
+      "elapsed_seconds": 2.517702165991068
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v357-hypercurve",
+      "name": "bezier_region::tests::one_fragment_retained_ph_loop_extends_fillet_on_one_analytic_carrier",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-case-085.log",
+      "elapsed_seconds": 0.36434820701833814
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v357-hypercurve",
+      "name": "bezier_region::tests::one_fragment_selected_loop_chamfers_from_one_interval",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-case-086.log",
+      "elapsed_seconds": 0.11396863893605769
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v357-hypercurve",
+      "name": "bezier_region::tests::one_fragment_selected_loop_extends_chamfer_cuts_on_its_analytic_carrier",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-case-087.log",
+      "elapsed_seconds": 12.782716896967031
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v357-hypercurve",
+      "name": "bezier_region::tests::one_fragment_selected_loop_fillets_from_one_interval",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-case-088.log",
+      "elapsed_seconds": 4.720997118973173
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v357-hypercurve",
+      "name": "bezier_region::tests::one_fragment_selected_loop_one_sided_chamfers_do_not_duplicate_the_source",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-case-089.log",
+      "elapsed_seconds": 1.465950372046791
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v357-hypercurve",
+      "name": "bezier_region::tests::pair_native_boolean_algebraic_chord_corner_publishes_a_third_generation_fillet",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-case-090.log",
+      "elapsed_seconds": 54.59237860701978
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v357-hypercurve",
+      "name": "bezier_region::tests::pair_native_boolean_analytic_corner_publishes_a_third_generation_fillet",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-case-091.log",
+      "elapsed_seconds": 0.46460969699546695
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v357-hypercurve",
+      "name": "bezier_region::tests::pair_native_boolean_corner_publishes_a_third_generation_fillet",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-case-092.log",
+      "elapsed_seconds": 3.518866874044761
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v357-hypercurve",
+      "name": "bezier_region::tests::recursive_selected_radial_projective_chamfer_reenters_corner_kernel",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-case-093.log",
+      "elapsed_seconds": 44.62849731196184
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v357-hypercurve",
+      "name": "bezier_region::tests::resource_blocked_selected_boundary_fillets_and_reconstructs_in_place",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-case-094.log",
+      "elapsed_seconds": 0.11394960107281804
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v357-hypercurve",
+      "name": "bezier_region::tests::resource_blocked_selected_corner_chamfers_in_its_affine_fiber",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-case-095.log",
+      "elapsed_seconds": 47.0833885979373
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v357-hypercurve",
+      "name": "bezier_region::tests::resource_blocked_selected_range_enters_shared_fillet_kernel_directly",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-case-096.log",
+      "elapsed_seconds": 0.007676613051444292
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v357-hypercurve",
+      "name": "bezier_region::tests::retained_algebraic_straights_trim_or_extend_chamfer_and_fillet",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-case-097.log",
+      "elapsed_seconds": 0.015649216016754508
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v357-hypercurve",
+      "name": "bezier_region::tests::retained_polynomial_chamfer_extends_exact_and_algebraic_incident_roots",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-case-098.log",
+      "elapsed_seconds": 0.06386919692158699
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v357-hypercurve",
+      "name": "bezier_region::tests::retained_rational_chamfer_extends_exact_and_algebraic_pre_pole_roots",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-case-099.log",
+      "elapsed_seconds": 0.06389679503627121
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v357-hypercurve",
+      "name": "bezier_region::tests::selected_circle_and_analytic_parallel_fillet_exactly",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-case-100.log",
+      "elapsed_seconds": 0.06378846289590001
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v357-hypercurve",
+      "name": "bezier_region::tests::selected_circle_and_direct_bezier_share_the_parallel_fillet_kernel",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-case-101.log",
+      "elapsed_seconds": 0.031876033055596054
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v357-hypercurve",
+      "name": "bezier_region::tests::selected_circle_and_major_retained_rational_arc_fillet_exactly",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-case-102.log",
+      "elapsed_seconds": 1.2655717020388693
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v357-hypercurve",
+      "name": "bezier_region::tests::selected_circle_and_retained_rational_arc_chamfer_extend_exactly",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-case-103.log",
+      "elapsed_seconds": 4.070293382043019
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v357-hypercurve",
+      "name": "bezier_region::tests::selected_circle_and_retained_rational_arc_fillet_exactly",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-case-104.log",
+      "elapsed_seconds": 0.36431549000553787
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v357-hypercurve",
+      "name": "bezier_region::tests::selected_circle_chamfer_crosses_one_sided_smooth_run_seam",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-case-105.log",
+      "elapsed_seconds": 0.16401308495551348
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v357-hypercurve",
+      "name": "bezier_region::tests::selected_circle_fillet_crosses_an_independently_reframed_run",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-case-106.log",
+      "elapsed_seconds": 0.11403292394243181
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v357-hypercurve",
+      "name": "bezier_region::tests::selected_circle_fillet_owns_exact_smooth_run_seam_endpoint",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-case-107.log",
+      "elapsed_seconds": 0.06387389695737511
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v357-hypercurve",
+      "name": "bezier_region::tests::selected_circle_mixed_fillet_crosses_one_sided_smooth_run_seam",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-case-108.log",
+      "elapsed_seconds": 0.26419540005736053
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v357-hypercurve",
+      "name": "bezier_region::tests::selected_circle_pair_fillets_extend_over_both_full_supports",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-case-109.log",
+      "elapsed_seconds": 0.11398664792068303
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v357-hypercurve",
+      "name": "bezier_region::tests::selected_circle_pair_with_rationalizable_support_fillet_exactly",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-case-110.log",
+      "elapsed_seconds": 0.015746328979730606
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v357-hypercurve",
+      "name": "bezier_region::tests::selected_parallel_companion_fillets_without_range_promotion",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-case-111.log",
+      "elapsed_seconds": 0.16405414196196944
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v357-hypercurve",
+      "name": "bezier_region::tests::selected_parallel_normal_circle_and_line_fillet_retains_recursive_contact",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-case-112.log",
+      "elapsed_seconds": 0.03208829800132662
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v357-hypercurve",
+      "name": "bezier_region::tests::translated_pair_native_circles_fillet_after_boolean_crossing",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-case-113.log",
+      "elapsed_seconds": 0.1640847590751946
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v357-hypercurve",
+      "name": "curve::curve_fillet::tests::circular_spline_contact_parameters_distinguish_repeated_point_visits",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-case-114.log",
+      "elapsed_seconds": 0.015786977019160986
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v357-hypercurve",
+      "name": "curve::curve_fillet::tests::continuous_fillet_constraints_accept_arbitrary_exact_real_contacts",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-case-115.log",
+      "elapsed_seconds": 0.21412924595642835
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v357-hypercurve",
+      "name": "curve::curve_fillet::tests::fillet_contacts_use_authored_spline_knots_across_multiple_charts",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-case-116.log",
+      "elapsed_seconds": 0.003565654973499477
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v357-hypercurve",
+      "name": "curve::curve_fillet::tests::isolated_fillet_constraints_are_conjunctive_and_use_input_parameters",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-case-117.log",
+      "elapsed_seconds": 0.003588902996852994
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v357-hypercurve",
+      "name": "curve::curve_fillet::tests::joined_path_selects_and_replays_a_continuous_fillet_family",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-case-118.log",
+      "elapsed_seconds": 3.0680966469226405
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v357-hypercurve",
+      "name": "curve::curve_fillet::tests::normalized_region_selects_and_reuses_a_continuous_fillet_family",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-case-119.log",
+      "elapsed_seconds": 0.11400384700391442
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v357-hypercurve",
+      "name": "curve::curve_fillet::tests::promoted_line_contact_constraints_keep_the_nonlinear_source_chart",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-case-120.log",
+      "elapsed_seconds": 0.0035955440253019333
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v357-hypercurve",
+      "name": "curve::curve_subdivision::tests::finite_parallel_pair_fillets_keep_exterior_source_domains",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-case-121.log",
+      "elapsed_seconds": 0.06384924810845405
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v357-hypercurve",
+      "name": "curve::curve_subdivision::tests::selected_circular_chart_fillets_continue_across_projective_infinity",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-case-122.log",
+      "elapsed_seconds": 0.06382594001479447
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v357-hypercurve",
+      "name": "curve::curve_subdivision::tests::selected_circular_corner_chamfers_retain_the_incident_point_field",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-case-123.log",
+      "elapsed_seconds": 0.9151405600132421
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v357-hypercurve",
+      "name": "curve::curve_subdivision::tests::source_domain_chamfers_cover_spline_knots_and_distinct_source_locations",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-case-124.log",
+      "elapsed_seconds": 0.01576803799252957
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v357-hypercurve",
+      "name": "curve::curve_subdivision::tests::source_domain_chamfers_preserve_all_selected_major_arc_contacts",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-case-125.log",
+      "elapsed_seconds": 0.007673403015360236
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v357-hypercurve",
+      "name": "curve::curve_subdivision::tests::source_domain_chamfers_reenter_paths_with_a_selected_spline_corner",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-case-126.log",
+      "elapsed_seconds": 0.5145129420561716
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v357-hypercurve",
+      "name": "curve::curve_subdivision::tests::source_domain_chamfers_retain_selected_centers_across_different_charts",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-case-127.log",
+      "elapsed_seconds": 0.5646198840113357
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v357-hypercurve",
+      "name": "curve::curve_subdivision::tests::source_domain_circle_extensions_do_not_republish_authored_chamfer_contacts",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-case-128.log",
+      "elapsed_seconds": 0.015684643993154168
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v357-hypercurve",
+      "name": "curve::curve_subdivision::tests::source_domain_fillets_continue_circular_splines_across_projective_infinity",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-case-129.log",
+      "elapsed_seconds": 0.03190009109675884
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v357-hypercurve",
+      "name": "curve::curve_subdivision::tests::source_domain_fillets_map_selected_line_contacts_into_spline_charts",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-case-130.log",
+      "elapsed_seconds": 0.01568944309838116
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v357-hypercurve",
+      "name": "curve::curve_subdivision::tests::source_domain_fillets_own_surviving_spline_tangents_and_reenter_chamfers",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-case-131.log",
+      "elapsed_seconds": 0.03175596101209521
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v357-hypercurve",
+      "name": "curve::curve_subdivision::tests::source_domain_fillets_preserve_all_selected_major_arc_contacts",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-case-132.log",
+      "elapsed_seconds": 0.0638072609435767
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v357-hypercurve",
+      "name": "curve::curve_subdivision::tests::source_domain_fillets_preserve_one_closed_authored_interval",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-case-133.log",
+      "elapsed_seconds": 0.007675664033740759
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v357-hypercurve",
+      "name": "curve::curve_subdivision::tests::source_domain_fillets_preserve_unmarked_affine_bezier_contacts",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-case-134.log",
+      "elapsed_seconds": 0.06382663908880204
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v357-hypercurve",
+      "name": "curve::tests::distinct_parallel_sources_keep_a_shared_fillet_center_family",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-case-135.log",
+      "elapsed_seconds": 0.03177030000369996
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v357-hypercurve",
+      "name": "curve::tests::fillet_center_contacts_keep_source_orientation_across_support_cusps",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-case-136.log",
+      "elapsed_seconds": 0.007615647977218032
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v357-hypercurve",
+      "name": "curve::tests::fillet_domains_control_each_circular_contact_independently",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-case-137.log",
+      "elapsed_seconds": 0.003550295950844884
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v357-hypercurve",
+      "name": "curve::tests::fillet_parallel_domains_expand_only_the_authorized_source",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-case-138.log",
+      "elapsed_seconds": 0.0075927890138700604
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v357-hypercurve",
+      "name": "curve::tests::parallel_fillet_extension_keeps_contacts_across_source_cusps",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-case-139.log",
+      "elapsed_seconds": 0.06392397300805897
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v357-hypercurve",
+      "name": "curve::tests::parallel_fillet_frame_retains_selected_normal_and_radial_distance",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-case-140.log",
+      "elapsed_seconds": 0.0035310080274939537
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v357-hypercurve",
+      "name": "curve::tests::rational_chamfer_solver_retains_pre_pole_extension",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-case-141.log",
+      "elapsed_seconds": 0.003528987057507038
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v357-hypercurve",
+      "name": "curve::tests::resource_blocked_selected_parallel_parameter_retains_local_fillet_frame",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-case-142.log",
+      "elapsed_seconds": 0.003520047990605235
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v357-hypercurve",
+      "name": "curve::tests::retained_parallel_and_direct_bezier_share_projective_fillet_extension",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-case-143.log",
+      "elapsed_seconds": 0.015594700002111495
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v357-hypercurve",
+      "name": "curve::tests::selected_circle_and_direct_bezier_share_projective_fillet_extension",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-case-144.log",
+      "elapsed_seconds": 0.06378144305199385
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v357-hypercurve",
+      "name": "curve::tests::selected_circle_and_native_line_share_projective_fillet_extension",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-case-145.log",
+      "elapsed_seconds": 0.03173293196596205
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v357-hypercurve",
+      "name": "curve::tests::selected_circular_fillet_overlap_is_clipped_to_the_finite_fragment",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-case-146.log",
+      "elapsed_seconds": 0.0035235389368608594
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v357-hypercurve",
+      "name": "curve::tests::selected_parallel_fillet_clips_a_positive_dimensional_center_component_locally",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-case-147.log",
+      "elapsed_seconds": 0.06374138605315238
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v357-hypercurve",
+      "name": "curve::tests::selected_parallel_fillet_keeps_contacts_beyond_interior_cusps",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-case-148.log",
+      "elapsed_seconds": 0.01567765395157039
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v357-hypercurve",
+      "name": "curve::tests::selected_spline_chamfer_cuts_reenter_the_authored_parameter_domain",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-case-149.log",
+      "elapsed_seconds": 0.007589699001982808
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v357-hypercurve",
+      "name": "curve::tests::selected_spline_fillet_cuts_reenter_the_authored_parameter_domain",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-case-150.log",
+      "elapsed_seconds": 0.007604688056744635
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v357-hypercurve",
+      "name": "curve_intersection::curve_support_intersection::circle_dispatch_tests::selected_fillet_tangency_replays_an_exterior_affine_source_chart",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-case-151.log",
+      "elapsed_seconds": 4.11988128896337
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v357-hypercurve",
+      "name": "curve_region_boolean::certified_successor_tests::boundary_probe_reuses_endpoint_incidence_and_keeps_residual_contacts",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-case-152.log",
+      "elapsed_seconds": 0.015703422017395496
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v357-hypercurve",
+      "name": "rational_bezier_general::tests::affine_subcurve_rejects_a_crossed_projective_pole",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-case-153.log",
+      "elapsed_seconds": 0.003667317912913859
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v357-hypercurve",
+      "name": "rational_bezier_general::tests::conic_parameter_primary_map_defers_fallback_image_polynomial",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-case-154.log",
+      "elapsed_seconds": 0.003551956033334136
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v357-hypercurve",
+      "name": "rational_bezier_general::tests::conic_parameter_refines_primary_map_before_constructing_fallback",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-case-155.log",
+      "elapsed_seconds": 0.0035142090637236834
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v357-hypercurve",
+      "name": "rational_bezier_general::tests::endpoint_projective_cubic_correspondence_maps_both_orientations",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-case-156.log",
+      "elapsed_seconds": 0.003537787008099258
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v357-hypercurve",
+      "name": "rational_bezier_general::tests::exact_degree_elevated_line_recovers_linear_parameter_transport",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-case-157.log",
+      "elapsed_seconds": 0.003494329983368516
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v357-hypercurve",
+      "name": "rational_bezier_general::tests::exact_high_degree_rational_elevation_recovers_its_minimal_parameter_frame",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-case-158.log",
+      "elapsed_seconds": 0.0035029399441555142
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v357-hypercurve",
+      "name": "rational_bezier_general::tests::implicit_conic_certificate_is_parameterization_independent_and_shared",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-case-159.log",
+      "elapsed_seconds": 0.0035358869936317205
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v357-hypercurve",
+      "name": "rational_bezier_general::tests::implicit_conic_contacts_retain_source_parameter_point_image_first",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-case-160.log",
+      "elapsed_seconds": 0.003513208939693868
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v357-hypercurve",
+      "name": "rational_bezier_general::tests::injectivity_scope_preserves_every_parameter_of_a_collapsed_chart",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-case-161.log",
+      "elapsed_seconds": 0.0035103689879179
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v357-hypercurve",
+      "name": "rational_bezier_general::tests::mixed_weight_projective_overlap_preserves_the_finite_parameter_domain",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-case-162.log",
+      "elapsed_seconds": 0.003519908059388399
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v357-hypercurve",
+      "name": "rational_bezier_general::tests::range_projective_correspondence_maps_and_inverts_oriented_ranges",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-case-163.log",
+      "elapsed_seconds": 0.0035258979769423604
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v357-hypercurve",
+      "name": "rational_bezier_general::tests::rational_parameter_image_map_reuses_quotient_authority_across_isolators",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-case-164.log",
+      "elapsed_seconds": 0.0034972799476236105
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v357-hypercurve",
+      "name": "rational_bezier_general::tests::unit_weight_degree_one_curve_exposes_its_exact_line_parameterization",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-case-165.log",
+      "elapsed_seconds": 0.003489300957880914
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v357-hypercurve_curve",
+      "name": "direct_bezier_pair_fillet_retains_both_incident_extensions",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-case-166.log",
+      "elapsed_seconds": 7.424930485896766
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v357-hypercurve_curve",
+      "name": "exact_arc_chamfer_solver_preserves_both_major_sweep_cuts",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-case-167.log",
+      "elapsed_seconds": 0.003651120001450181
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v357-hypercurve_curve",
+      "name": "exact_chamfer_solver_handles_native_line_arc_and_arc_arc_carriers",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-case-168.log",
+      "elapsed_seconds": 0.0035724450135603547
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v357-hypercurve_curve",
+      "name": "exact_line_arc_fillets_retain_rational_radius_across_source_scales",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-case-169.log",
+      "elapsed_seconds": 0.0637508649379015
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v357-hypercurve_curve",
+      "name": "exact_native_arc_fillet_solver_classifies_collapsed_and_coincident_offsets",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-case-170.log",
+      "elapsed_seconds": 0.0036172220716252923
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v357-hypercurve_curve",
+      "name": "exact_native_arc_fillet_solver_handles_every_native_pair_order",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-case-171.log",
+      "elapsed_seconds": 0.007598408963531256
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v357-hypercurve_curve",
+      "name": "exact_native_arc_fillet_uses_only_the_shared_approximate_terminal",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-case-172.log",
+      "elapsed_seconds": 0.003510889015160501
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v357-hypercurve_curve",
+      "name": "independently_parameterized_bezier_continuation_is_an_incident_fillet_component",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-case-173.log",
+      "elapsed_seconds": 0.21402565308380872
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v357-hypercurve_curve",
+      "name": "line_corner_solvers_derive_unique_trimmed_fillet_and_chamfer",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-case-174.log",
+      "elapsed_seconds": 0.003670798963867128
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v357-hypercurve_curve",
+      "name": "line_parabola_mixed_exact_algebraic_fillet_is_an_exact_open_path",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-case-175.log",
+      "elapsed_seconds": 0.06384823797270656
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v357-hypercurve_curve",
+      "name": "mixed_curve_path_fillet_accepts_every_non_arc_family_pair",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-case-176.log",
+      "elapsed_seconds": 0.03181244607549161
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v357-hypercurve_curve",
+      "name": "mixed_curve_path_fillet_preserves_arc_family_and_exact_tangency",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-case-177.log",
+      "elapsed_seconds": 0.0036141719901934266
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v357-hypercurve_curve",
+      "name": "polynomial_chamfer_materializes_represented_incident_extension",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-case-178.log",
+      "elapsed_seconds": 0.0036917959805577993
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v357-hypercurve_curve",
+      "name": "radical_line_image_fillets_preserve_retained_families",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-case-179.log",
+      "elapsed_seconds": 0.003507288987748325
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v357-hypercurve_curve",
+      "name": "rational_chamfer_materializes_the_incident_projective_cell",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-case-180.log",
+      "elapsed_seconds": 0.003551816917024553
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v357-hypercurve_curve",
+      "name": "represented_arc_bezier_fillets_use_circle_incidence",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-case-181.log",
+      "elapsed_seconds": 0.015618358040228486
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v357-hypercurve_curve",
+      "name": "represented_bezier_chamfer_retains_more_than_two_exact_cuts",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-case-182.log",
+      "elapsed_seconds": 0.003657788969576359
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v357-hypercurve_curve",
+      "name": "represented_bezier_pairs_use_independent_chamfer_and_exact_ph_fillet_routes",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-case-183.log",
+      "elapsed_seconds": 0.0035360470646992326
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v357-hypercurve_curve",
+      "name": "same_bezier_support_fillet_removes_the_projective_parameter_diagonal",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-case-184.log",
+      "elapsed_seconds": 7.525010138051584
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v357-hypercurve_curve",
+      "name": "same_ph_bezier_support_fillet_reuses_rational_projective_self_contact",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-case-185.log",
+      "elapsed_seconds": 0.11404332402162254
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v357-hypercurve_curve",
+      "name": "spline_chamfer_materializes_only_the_incident_extension_cell",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-case-186.log",
+      "elapsed_seconds": 0.0037894699489697814
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v357-hypercurve_curve",
+      "name": "spline_incident_span_pairs_reuse_exact_ph_fillet_fast_path",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-case-187.log",
+      "elapsed_seconds": 0.0076044281013309956
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v357-hypercurve_curve",
+      "name": "spline_line_fillet_preserves_the_authored_spline_and_adds_its_incident_cell",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-case-188.log",
+      "elapsed_seconds": 0.0036465689772740006
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v357-hypercurve_curve_region_promotion",
+      "name": "algebraic_chamfer_participates_in_a_disjoint_boolean_batch",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-case-189.log",
+      "elapsed_seconds": 0.007597438991069794
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v357-hypercurve_curve_region_promotion",
+      "name": "analytic_parallel_miter_tangent_legs_have_no_nondegenerate_fillet",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-case-190.log",
+      "elapsed_seconds": 0.007599578006193042
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v357-hypercurve_curve_region_promotion",
+      "name": "analytic_parallel_rejected_miters_remain_transverse_fillet_candidates",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-case-191.log",
+      "elapsed_seconds": 0.4643879620125517
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v357-hypercurve_curve_region_promotion",
+      "name": "approximate_512_trim_only_analytic_parallel_support_corners_retain_algebraic_fillet_centers",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-case-192.log",
+      "elapsed_seconds": 0.26429059309884906
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v357-hypercurve_curve_region_promotion",
+      "name": "arc_parabola_fillet_recovers_exact_complement_contacts",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-case-193.log",
+      "elapsed_seconds": 1.5661844830028713
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v357-hypercurve_curve_region_promotion",
+      "name": "canonical_exact_chord_regions_fillet_without_line_demotion",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-case-194.log",
+      "elapsed_seconds": 0.003587004030123353
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v357-hypercurve_curve_region_promotion",
+      "name": "line_parabola_fillet_extends_the_regular_incident_cell_exactly",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-case-195.log",
+      "elapsed_seconds": 3.3189158639870584
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v357-hypercurve_curve_region_promotion",
+      "name": "non_ph_bezier_pair_fillet_retains_general_selected_circle",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-case-196.log",
+      "elapsed_seconds": 1.8666861719684675
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v357-hypercurve_curve_region_promotion",
+      "name": "non_ph_bezier_pair_projective_fillet_retains_algebraic_extensions",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-case-197.log",
+      "elapsed_seconds": 11.180825214018114
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v357-hypercurve_curve_region_promotion",
+      "name": "one_field_algebraic_chamfer_regularizes_without_rebuilding_its_solver",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-case-198.log",
+      "elapsed_seconds": 0.0036464600125327706
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v357-hypercurve_curve_region_promotion",
+      "name": "retained_circular_regions_chamfer_over_the_full_support",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-case-199.log",
+      "elapsed_seconds": 0.5145687490003183
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v357-hypercurve_curve_region_promotion",
+      "name": "selected_algebraic_cusp_chamfers_use_the_unified_retained_kernel",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-case-200.log",
+      "elapsed_seconds": 2.467446896014735
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v357-hypercurve_curve_region_promotion",
+      "name": "selected_circle_support_chord_corners_retain_algebraic_fillet_centers",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-case-201.log",
+      "elapsed_seconds": 0.07254117191769183
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v357-hypercurve_curve_region_promotion",
+      "name": "selected_endpoint_chord_pairs_share_the_linear_fillet_kernel",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-case-202.log",
+      "elapsed_seconds": 0.003605143050663173
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v357-hypercurve_curve_region_promotion",
+      "name": "selected_endpoint_chords_share_linear_arc_fillet_incidence",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-case-203.log",
+      "elapsed_seconds": 0.007602029014378786
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v357-hypercurve_curve_region_promotion",
+      "name": "selected_endpoint_chords_share_linear_bezier_fillet_incidence",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-case-204.log",
+      "elapsed_seconds": 0.007727709016762674
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v357-hypercurve_curve_region_promotion",
+      "name": "strict_trim_only_analytic_parallel_support_corners_retain_algebraic_fillet_centers",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-case-205.log",
+      "elapsed_seconds": 0.26411818503402174
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v357-hypercurve_curve_region_promotion",
+      "name": "unified_region_chamfer_and_fillet_edit_higher_order_loops",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-case-206.log",
+      "elapsed_seconds": 0.0318170259706676
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v357-hypercurve_curve_region_promotion",
+      "name": "unified_region_chamfer_joins_two_algebraic_bezier_cuts",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-case-207.log",
+      "elapsed_seconds": 0.3141965690301731
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v357-hypercurve_curve_region_promotion",
+      "name": "unified_region_chamfer_reenters_general_algebraic_chords",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-case-208.log",
+      "elapsed_seconds": 1.415889687021263
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v357-hypercurve_curve_region_promotion",
+      "name": "unified_region_chamfer_retains_algebraic_bezier_cut",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-case-209.log",
+      "elapsed_seconds": 0.36429201101418585
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v357-hypercurve_curve_region_promotion",
+      "name": "unified_region_native_chamfer_uses_arc_sweep_evidence",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-case-210.log",
+      "elapsed_seconds": 0.03189785091672093
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v357-hypercurve_curve_region_promotion",
+      "name": "unified_region_native_fillet_retains_certified_arc_contacts",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-case-211.log",
+      "elapsed_seconds": 0.031787807936780155
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v357-hypercurve_path_closure",
+      "name": "finite_fixed_distance_domains::finite_chamfers_preserve_equivalent_source_charts",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-case-212.log",
+      "elapsed_seconds": 0.03174981102347374
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v357-hypercurve_path_closure",
+      "name": "finite_fixed_distance_domains::repeated_finite_chamfers_preserve_selected_cuts",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-case-213.log",
+      "elapsed_seconds": 32.411956961033866
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v357-hypercurve_path_closure",
+      "name": "finite_selected_point_domains::collapsed_circle_fillet_preserves_finite_parallel_domains",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-case-214.log",
+      "elapsed_seconds": 0.06387741700746119
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v357-hypercurve_path_closure",
+      "name": "selected_chamfers_preserve_all_major_arc_contacts",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-case-215.log",
+      "elapsed_seconds": 0.007614727015607059
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v357-hypercurve_path_closure",
+      "name": "selected_major_arc_fillets_keep_the_complete_authored_sweep",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-case-216.log",
+      "elapsed_seconds": 0.16398949606809765
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v357-hypercurve_path_closure",
+      "name": "selected_open_chamfers_reenter_the_public_path_api",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-case-217.log",
+      "elapsed_seconds": 0.007720979978330433
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v357-hypercurve_path_closure",
+      "name": "selected_open_fillets_accept_a_subsequent_chamfer",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-case-218.log",
+      "elapsed_seconds": 0.007694571977481246
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v357-hypercurve_path_closure",
+      "name": "selected_path_chamfers_close_through_all_region_booleans",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-case-219.log",
+      "elapsed_seconds": 0.015697733033448458
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v357-hypercurve_path_closure",
+      "name": "selected_spline_chamfers_keep_every_untrimmed_span",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-case-220.log",
+      "elapsed_seconds": 0.0035250880755484104
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v357-hypercurve_path_closure",
+      "name": "selected_spline_fillets_preserve_knot_charts_and_other_spans",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-case-221.log",
+      "elapsed_seconds": 0.007765666930936277
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v357-hypercurve_analytic_parallel_region",
+      "name": "algebraic_endpoint_analytic_parallel_chamfers_replay_selected_distance",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-case-222.log",
+      "elapsed_seconds": 14.134487163973972
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v357-hypercurve_analytic_parallel_region",
+      "name": "analytic_parallel_chamfers_retain_normalized_cut_points",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-case-223.log",
+      "elapsed_seconds": 0.03181049693375826
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v357-hypercurve_analytic_parallel_region",
+      "name": "retained_arc_fillet_preserves_past_center_tangent_orientation",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-case-224.log",
+      "elapsed_seconds": 0.21404386195354164
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v357-hypercurve_analytic_parallel_region",
+      "name": "retained_rational_arc_and_analytic_parallel_fillet_exactly",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-case-225.log",
+      "elapsed_seconds": 0.21411154698580503
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v357-hypercurve_analytic_parallel_region",
+      "name": "retained_rational_arc_and_analytic_parallel_fillet_extends_exactly",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-case-226.log",
+      "elapsed_seconds": 2.0668157779145986
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v357-hypercurve_curve_intersection",
+      "name": "finite_selected_circle_domains::retained_fillet_intersects_finite_analytic_parallel_in_all_charts",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-case-227.log",
+      "elapsed_seconds": 5.521961604943499
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v357-hypercurve_curve_intersection",
+      "name": "generated_chamfer_tails_reuse_paired_overlap_boundaries",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-case-228.log",
+      "elapsed_seconds": 0.015750079066492617
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v357-hypercurve_curve_intersection",
+      "name": "generated_fillet_arcs_intersect_themselves_after_restriction_and_reversal",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-case-229.log",
+      "elapsed_seconds": 0.0035880040377378464
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v357-hypercurve_curve_intersection",
+      "name": "generated_fillet_arcs_keep_tangent_contacts_with_their_trimmed_neighbors",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-case-230.log",
+      "elapsed_seconds": 0.03172959294170141
+    },
+    {
+      "binary": "cached-tower-approximation-20260927-v357-hypercurve_curve_region_boolean",
+      "name": "selected_fillet_region_intersection_closes_through_exterior_cap_booleans",
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-case-231.log",
+      "elapsed_seconds": 1.8667327689472586
+    }
+  ],
+  "builds": [
+    {
+      "crate": "hyperreal",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "test",
+        "--lib",
+        "--release",
+        "--all-features",
+        "--no-run",
+        "--message-format=json",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-hyperreal-build.log",
+      "elapsed_seconds": 31.36387775593903,
+      "binary": {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/cached-tower-approximation-20260927-v357-hyperreal",
+        "sha256": "c49aaaebbc5d67b577f8bf6e89b4cb3836edde7565402eb93d6cd9956d93188a"
+      }
+    },
+    {
+      "crate": "hypersolve",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "test",
+        "--lib",
+        "--release",
+        "--all-features",
+        "--no-run",
+        "--message-format=json",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-hypersolve-build.log",
+      "elapsed_seconds": 56.50265714304987,
+      "binary": {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/cached-tower-approximation-20260927-v357-hypersolve",
+        "sha256": "f2a557a29abb9c3e00cb330403f8a4ec3a900734f9c296537e7b9ebd9dc3b6e3"
+      }
+    },
+    {
+      "crate": "hypercurve",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "test",
+        "--lib",
+        "--release",
+        "--all-features",
+        "--no-run",
+        "--message-format=json",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-hypercurve-build.log",
+      "elapsed_seconds": 177.75116362504195,
+      "binary": {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/cached-tower-approximation-20260927-v357-hypercurve",
+        "sha256": "557c9d6a03c3c1ce4dad51a8789042c2f23e2c2c425bcce368250fe7bfe8be14"
+      }
+    },
+    {
+      "crate": "hypercurve",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "test",
+        "--test",
+        "hypercurve_curve",
+        "--release",
+        "--all-features",
+        "--no-run",
+        "--message-format=json",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-hypercurve_curve-build.log",
+      "elapsed_seconds": 85.95466872001998,
+      "binary": {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/cached-tower-approximation-20260927-v357-hypercurve_curve",
+        "sha256": "1163c5a6e4a47895a0b187d220432eeef92832abe8c8548a49b9733a3b8e89b0"
+      }
+    },
+    {
+      "crate": "hypercurve",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "test",
+        "--test",
+        "hypercurve_curve_region_promotion",
+        "--release",
+        "--all-features",
+        "--no-run",
+        "--message-format=json",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-hypercurve_curve_region_promotion-build.log",
+      "elapsed_seconds": 7.325423925067298,
+      "binary": {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/cached-tower-approximation-20260927-v357-hypercurve_curve_region_promotion",
+        "sha256": "b5aaa3ba0c000688dbbfab6e493d73408636c63e1bb12b33698bca1ab4da1fc3"
+      }
+    },
+    {
+      "crate": "hypercurve",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "test",
+        "--test",
+        "hypercurve_path_closure",
+        "--release",
+        "--all-features",
+        "--no-run",
+        "--message-format=json",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-hypercurve_path_closure-build.log",
+      "elapsed_seconds": 2.5177442940184847,
+      "binary": {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/cached-tower-approximation-20260927-v357-hypercurve_path_closure",
+        "sha256": "fc18a54ec44116320a94730049ee1ddacf0c10907202a8fb579fb54303e507ea"
+      }
+    },
+    {
+      "crate": "hypercurve",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "test",
+        "--test",
+        "hypercurve_analytic_parallel_region",
+        "--release",
+        "--all-features",
+        "--no-run",
+        "--message-format=json",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-hypercurve_analytic_parallel_region-build.log",
+      "elapsed_seconds": 2.1673075419384986,
+      "binary": {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/cached-tower-approximation-20260927-v357-hypercurve_analytic_parallel_region",
+        "sha256": "a53400cc6adef9d47f38f68701bfdf56cb27a894f9b6d11b5200361bd7e653b4"
+      }
+    },
+    {
+      "crate": "hypercurve",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "test",
+        "--test",
+        "hypercurve_curve_intersection",
+        "--release",
+        "--all-features",
+        "--no-run",
+        "--message-format=json",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-hypercurve_curve_intersection-build.log",
+      "elapsed_seconds": 4.220722880098037,
+      "binary": {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/cached-tower-approximation-20260927-v357-hypercurve_curve_intersection",
+        "sha256": "1741033af1f169f94977360535a00e3c26916e75d50b280a7deeea4d89ae74fb"
+      }
+    },
+    {
+      "crate": "hypercurve",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "test",
+        "--test",
+        "hypercurve_curve_region_boolean",
+        "--release",
+        "--all-features",
+        "--no-run",
+        "--message-format=json",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-hypercurve_curve_region_boolean-build.log",
+      "elapsed_seconds": 2.317301858915016,
+      "binary": {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/cached-tower-approximation-20260927-v357-hypercurve_curve_region_boolean",
+        "sha256": "abb33e1524157c8ba3d3c5ea769b7656fa809a6a32ad1e4b94605ec233c47646"
+      }
+    }
+  ],
+  "all_processes_reaped": true,
+  "checks": [
+    {
+      "label": "hyperreal-clippy",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "clippy",
+        "--all-targets",
+        "--all-features",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-hyperreal-clippy.log",
+      "elapsed_seconds": 5.222390037029982
+    },
+    {
+      "label": "hyperreal-full-lib",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/cached-tower-approximation-20260927-v357-hyperreal",
+        "--nocapture",
+        "--test-threads=2"
+      ],
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-hyperreal-full-lib.log",
+      "elapsed_seconds": 3.368607864016667
+    },
+    {
+      "label": "hypersolve-clippy",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "clippy",
+        "--all-targets",
+        "--all-features",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-hypersolve-clippy.log",
+      "elapsed_seconds": 9.328926814021543
+    },
+    {
+      "label": "hypersolve-full-lib",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/cached-tower-approximation-20260927-v357-hypersolve",
+        "--nocapture",
+        "--test-threads=2"
+      ],
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-hypersolve-full-lib.log",
+      "elapsed_seconds": 2.417390418006107
+    },
+    {
+      "label": "hyperreal-integration",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "test",
+        "--tests",
+        "--release",
+        "--all-features",
+        "--locked",
+        "--offline",
+        "--",
+        "--test-threads=2"
+      ],
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-hyperreal-integration.log",
+      "elapsed_seconds": 28.057472123065963
+    },
+    {
+      "label": "hyperreal-format",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustfmt",
+        "--edition",
+        "2024",
+        "--config",
+        "skip_children=true",
+        "--check",
+        "src/computable/node/quadratic_tower.rs",
+        "src/computable/node/approximation_queries.rs",
+        "tests/gmp_api_coverage.rs"
+      ],
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-hyperreal-format.log",
+      "elapsed_seconds": 0.06384390906896442
+    },
+    {
+      "label": "hypercurve-clippy-all-features",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "clippy",
+        "--all-targets",
+        "--all-features",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-hypercurve-clippy-all-features.log",
+      "elapsed_seconds": 27.65955787699204
+    },
+    {
+      "label": "hypercurve-clippy-no-default",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "clippy",
+        "--all-targets",
+        "--no-default-features",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-hypercurve-clippy-no-default.log",
+      "elapsed_seconds": 26.657592616043985
+    },
+    {
+      "label": "fuzz-check",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "check",
+        "--manifest-path",
+        "fuzz/Cargo.toml",
+        "--bin",
+        "curve_string_editing",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-fuzz-check.log",
+      "elapsed_seconds": 17.241264445940033
+    },
+    {
+      "label": "hyperreal-documentation",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "doc",
+        "--no-deps",
+        "--all-features",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-hyperreal-documentation.log",
+      "elapsed_seconds": 1.3159530049888417
+    },
+    {
+      "label": "hypercurve-documentation",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "doc",
+        "--no-deps",
+        "--all-features",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-hypercurve-documentation.log",
+      "elapsed_seconds": 8.977573159034364
+    },
+    {
+      "label": "hyperbrep-check",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "check",
+        "--all-targets",
+        "--all-features",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v357-hyperbrep-check.log",
+      "elapsed_seconds": 21.247854469926096
+    }
+  ],
+  "qualification_scope": "Retained scalar reduction approximation across scalar, solver, and selected geometry compositions",
+  "expected_cases": {
+    "hypercurve": [
+      "bezier_offset::conversion_tests::recursive_local_root_orders_against_close_coefficient_generators",
+      "bezier_offset::conversion_tests::retained_parameter_import_keeps_original_axes_and_tower",
+      "bezier_offset::conversion_tests::recursive_scalar_comparison_replays_exact_equality_before_approximation",
+      "bezier_offset::conversion_tests::recursive_local_isolation_reuses_exact_signs_below_interval_precision",
+      "bezier_offset::conversion_tests::recursive_parameter_projection_preserves_roots_through_refinement_and_charts",
+      "bezier_offset::conversion_tests::recursive_polynomial_predicates_reuse_the_retained_field_relation",
+      "bezier_offset::conversion_tests::recursive_polynomial_queries_reuse_a_selected_proper_factor",
+      "bezier_offset::conversion_tests::recursive_ordered_field_isolation_does_not_guess_polynomial_degree",
+      "bezier_offset::conversion_tests::recursive_polynomial_isolators_keep_the_selected_root_after_endpoint_deflation",
+      "bezier_offset::conversion_tests::recursive_polynomial_refinement_reuses_certified_bounds_and_identity",
+      "bezier_offset::conversion_tests::recursive_polynomial_crossing_signs_survive_exact_midpoint_collapse",
+      "bezier_offset::conversion_tests::recursive_chord_parallel_retains_owned_roots_across_exterior_ranges",
+      "bezier_offset::conversion_tests::recursive_chord_parallel_local_roots_reject_conjugates_and_clip_exactly",
+      "bezier_offset::conversion_tests::exterior_chord_contact_deflation_preserves_other_contacts",
+      "bezier_offset::conversion_tests::recursive_chord_kernel_retains_all_cubic_crossings_with_opposite_endpoint_sides",
+      "bezier_offset::conversion_tests::recursive_quadratic_endpoint_roots_keep_the_original_field",
+      "bezier_offset::conversion_tests::retained_chord_incidence_replays_independently_allocated_coefficient_fields",
+      "bezier_offset::conversion_tests::recursive_field_embeddings_do_not_consume_approximate_generator_equalities",
+      "bezier_offset::conversion_tests::retained_parallel_contact_keeps_local_root_through_angular_and_point_queries",
+      "bezier_offset::conversion_tests::recursive_parallel_expression_signs_keep_the_selected_speed_sheet",
+      "bezier_offset::conversion_tests::recursive_parallel_expression_signs_reject_poles_and_zero_speed",
+      "bezier_offset::conversion_tests::chord_normal_and_parallel_contacts_share_native_point_identity",
+      "bezier_offset::conversion_tests::selected_chord_normal_contact_accepts_complementary_radial_sign",
+      "bezier_offset::conversion_tests::dense_chord_normal_tangency_retains_a_finite_endpoint",
+      "bezier_offset::conversion_tests::independent_cusp_chord_contacts_order_on_the_shared_axis",
+      "bezier_offset::conversion_tests::procedural_endpoint_chord_replays_complete_parallel_contacts",
+      "bezier_offset::conversion_tests::finite_circle_components_replay_chord_normal_and_represented_inverses",
+      "bezier_offset::conversion_tests::rank_independent_chord_normal_circle_partitions_rational_overlap",
+      "bezier_offset::conversion_tests::pair_radial_circle_retains_independent_field_chord_tangency",
+      "bezier_offset::conversion_tests::nested_procedural_chord_reversals_match_exact_side_and_winding",
+      "bezier_offset::conversion_tests::algebraic_chord_retains_independent_endpoint_fields_under_both_policies",
+      "bezier_offset::conversion_tests::noninjective_collinear_chord_overlap_partitions_every_monotone_branch",
+      "curve::curve_fillet::tests::collapsed_selected_circle_fillet_crosses_seams_and_reenters_region_editing",
+      "curve::curve_fillet::tests::collapsed_selected_circle_fillet_reuses_constrained_contacts_and_support",
+      "curve::curve_subdivision::tests::source_domain_nonlinear_fillet_crosses_circular_chart_infinity",
+      "curve::curve_fillet::tests::native_circle_fillet_retains_selected_contacts_through_reconstruction",
+      "curve::curve_fillet::tests::coincident_line_fillet_constraints_complete_the_authored_chart_solutions",
+      "curve::curve_fillet::tests::coincident_linear_fillet_domains_exclude_remote_endpoints",
+      "curve::curve_fillet::tests::coincident_retained_line_fillet_keeps_independent_endpoint_fields",
+      "bezier_offset::conversion_tests::point_incidence_checks_regular_frames_at_each_isolated_contact",
+      "curve::curve_fillet::tests::collapsed_parallel_fillet_requires_the_original_circle_normal",
+      "curve::curve_fillet::tests::collapsed_circle_parallel_fillet_replays_contacts_and_normal_sheets",
+      "curve::curve_fillet::tests::collapsed_fillet_point_contacts_preserve_distinct_bezier_preimages",
+      "curve::curve_fillet::tests::collapsed_circle_fillet_requires_each_free_contact_and_preserves_exact_trims",
+      "curve::curve_fillet::tests::collapsed_circular_spline_fillets_keep_authored_contact_parameters",
+      "bezier_region::tests::collapsed_pair_radial_fillet_rejects_the_excluded_contact",
+      "bezier_offset::conversion_tests::algebraic_cusp_semicircle_point_incidence_selects_exactly_one_half",
+      "bezier_offset::conversion_tests::chamfer_transported_mapped_cusp_cut_inverts_on_analytic_overlap",
+      "bezier_offset::conversion_tests::correlated_point_incidence_retains_exterior_contact_parameters",
+      "bezier_offset::conversion_tests::nonrepresented_center_nonrational_chamfer_inverts_with_retained_authority",
+      "bezier_offset::conversion_tests::nonrepresented_center_transverse_chamfer_inverts_by_correlated_point",
+      "bezier_offset::conversion_tests::point_incidence_visits_a_collapsed_circle_as_a_complete_domain",
+      "bezier_offset::conversion_tests::represented_circle_retained_point_incidence_observes_requested_policy",
+      "bezier_offset::conversion_tests::retained_point_incidence_visits_all_preimages_and_can_stop_at_one",
+      "bezier_offset::conversion_tests::transverse_chamfer_cut_inverts_by_radial_incidence",
+      "bezier_offset::parameter_component::tests::contact_constraints_distinguish_free_axes_from_empty_components",
+      "bezier_offset::parameter_component::tests::incident_charts_keep_poles_and_finite_ownership_excluded",
+      "bezier_offset::parameter_component::tests::one_contact_replays_correspondence_through_both_source_charts",
+      "bezier_offset::parameter_component::tests::product_components_keep_fixed_axes_and_operand_roles",
+      "bezier_region::curve_corner_chain::tests::extended_fillet_circle_endpoints_obey_the_exact_radius_bound",
+      "bezier_region::curve_corner_chain::tests::extended_fillet_region_classifies_both_sides_of_its_companion",
+      "bezier_region::curve_corner_chain::tests::open_fillet_keeps_terminal_endpoints_and_exact_connectivity",
+      "bezier_region::curve_corner_chain::tests::open_selected_chamfers_reenter_without_region_fill_semantics",
+      "bezier_region::tests::direct_mixed_and_retained_parallel_pairs_share_the_fillet_kernel",
+      "bezier_region::tests::general_nonrepresented_chord_and_retained_rational_arc_complete_the_fillet_kernel",
+      "bezier_region::tests::independent_oblique_chord_pair_fillet_crosses_a_rational_line_exactly",
+      "bezier_region::tests::independent_oblique_chord_pair_fillet_crosses_algebraic_chords_exactly",
+      "bezier_region::tests::independent_oblique_chord_pair_fillets_extend_on_infinite_supports",
+      "bezier_region::tests::independent_pair_native_fillet_crosses_a_boolean_cutter",
+      "bezier_region::tests::independent_selected_circle_pair_fillet_retains_pair_native_circle",
+      "bezier_region::tests::independent_selected_circle_pair_fillets_extend_over_both_full_supports",
+      "bezier_region::tests::major_retained_rational_arc_and_general_chord_share_the_fillet_kernel",
+      "bezier_region::tests::noncollapsed_pair_radial_fillet_reenters_the_corner_kernel",
+      "bezier_region::tests::nonlinear_algebraic_endpoint_chamfer_uses_complete_incident_ray",
+      "bezier_region::tests::nonlinear_algebraic_endpoint_fillet_uses_complete_incident_domain",
+      "bezier_region::tests::nonlinear_selected_corner_chamfers_through_retained_fixed_distance_image",
+      "bezier_region::tests::nonrepresented_cardinal_chord_pair_fillets_through_shared_carriers",
+      "bezier_region::tests::nonrepresented_chord_and_retained_rational_arc_share_the_fillet_kernel",
+      "bezier_region::tests::nonrepresented_chord_and_selected_circle_complete_the_fillet_kernel",
+      "bezier_region::tests::nonrepresented_chord_line_corner_fillets_through_shared_carriers",
+      "bezier_region::tests::nonrepresented_chord_parallel_corner_fillets_without_reintersection",
+      "bezier_region::tests::one_fragment_materialized_loop_chamfers_to_one_middle_interval",
+      "bezier_region::tests::one_fragment_materialized_loop_extends_algebraic_chamfer_cuts_once",
+      "bezier_region::tests::one_fragment_nonzero_parallel_loop_extends_chamfer_cuts_on_one_finite_envelope",
+      "bezier_region::tests::one_fragment_ph_loop_fillets_through_rational_self_contact",
+      "bezier_region::tests::one_fragment_retained_ph_loop_extends_fillet_on_one_analytic_carrier",
+      "bezier_region::tests::one_fragment_selected_loop_chamfers_from_one_interval",
+      "bezier_region::tests::one_fragment_selected_loop_extends_chamfer_cuts_on_its_analytic_carrier",
+      "bezier_region::tests::one_fragment_selected_loop_fillets_from_one_interval",
+      "bezier_region::tests::one_fragment_selected_loop_one_sided_chamfers_do_not_duplicate_the_source",
+      "bezier_region::tests::pair_native_boolean_algebraic_chord_corner_publishes_a_third_generation_fillet",
+      "bezier_region::tests::pair_native_boolean_analytic_corner_publishes_a_third_generation_fillet",
+      "bezier_region::tests::pair_native_boolean_corner_publishes_a_third_generation_fillet",
+      "bezier_region::tests::recursive_selected_radial_projective_chamfer_reenters_corner_kernel",
+      "bezier_region::tests::resource_blocked_selected_boundary_fillets_and_reconstructs_in_place",
+      "bezier_region::tests::resource_blocked_selected_corner_chamfers_in_its_affine_fiber",
+      "bezier_region::tests::resource_blocked_selected_range_enters_shared_fillet_kernel_directly",
+      "bezier_region::tests::retained_algebraic_straights_trim_or_extend_chamfer_and_fillet",
+      "bezier_region::tests::retained_polynomial_chamfer_extends_exact_and_algebraic_incident_roots",
+      "bezier_region::tests::retained_rational_chamfer_extends_exact_and_algebraic_pre_pole_roots",
+      "bezier_region::tests::selected_circle_and_analytic_parallel_fillet_exactly",
+      "bezier_region::tests::selected_circle_and_direct_bezier_share_the_parallel_fillet_kernel",
+      "bezier_region::tests::selected_circle_and_major_retained_rational_arc_fillet_exactly",
+      "bezier_region::tests::selected_circle_and_retained_rational_arc_chamfer_extend_exactly",
+      "bezier_region::tests::selected_circle_and_retained_rational_arc_fillet_exactly",
+      "bezier_region::tests::selected_circle_chamfer_crosses_one_sided_smooth_run_seam",
+      "bezier_region::tests::selected_circle_fillet_crosses_an_independently_reframed_run",
+      "bezier_region::tests::selected_circle_fillet_owns_exact_smooth_run_seam_endpoint",
+      "bezier_region::tests::selected_circle_mixed_fillet_crosses_one_sided_smooth_run_seam",
+      "bezier_region::tests::selected_circle_pair_fillets_extend_over_both_full_supports",
+      "bezier_region::tests::selected_circle_pair_with_rationalizable_support_fillet_exactly",
+      "bezier_region::tests::selected_parallel_companion_fillets_without_range_promotion",
+      "bezier_region::tests::selected_parallel_normal_circle_and_line_fillet_retains_recursive_contact",
+      "bezier_region::tests::translated_pair_native_circles_fillet_after_boolean_crossing",
+      "curve::curve_fillet::tests::circular_spline_contact_parameters_distinguish_repeated_point_visits",
+      "curve::curve_fillet::tests::continuous_fillet_constraints_accept_arbitrary_exact_real_contacts",
+      "curve::curve_fillet::tests::fillet_contacts_use_authored_spline_knots_across_multiple_charts",
+      "curve::curve_fillet::tests::isolated_fillet_constraints_are_conjunctive_and_use_input_parameters",
+      "curve::curve_fillet::tests::joined_path_selects_and_replays_a_continuous_fillet_family",
+      "curve::curve_fillet::tests::normalized_region_selects_and_reuses_a_continuous_fillet_family",
+      "curve::curve_fillet::tests::promoted_line_contact_constraints_keep_the_nonlinear_source_chart",
+      "curve::curve_subdivision::tests::finite_parallel_pair_fillets_keep_exterior_source_domains",
+      "curve::curve_subdivision::tests::selected_circular_chart_fillets_continue_across_projective_infinity",
+      "curve::curve_subdivision::tests::selected_circular_corner_chamfers_retain_the_incident_point_field",
+      "curve::curve_subdivision::tests::source_domain_chamfers_cover_spline_knots_and_distinct_source_locations",
+      "curve::curve_subdivision::tests::source_domain_chamfers_preserve_all_selected_major_arc_contacts",
+      "curve::curve_subdivision::tests::source_domain_chamfers_reenter_paths_with_a_selected_spline_corner",
+      "curve::curve_subdivision::tests::source_domain_chamfers_retain_selected_centers_across_different_charts",
+      "curve::curve_subdivision::tests::source_domain_circle_extensions_do_not_republish_authored_chamfer_contacts",
+      "curve::curve_subdivision::tests::source_domain_fillets_continue_circular_splines_across_projective_infinity",
+      "curve::curve_subdivision::tests::source_domain_fillets_map_selected_line_contacts_into_spline_charts",
+      "curve::curve_subdivision::tests::source_domain_fillets_own_surviving_spline_tangents_and_reenter_chamfers",
+      "curve::curve_subdivision::tests::source_domain_fillets_preserve_all_selected_major_arc_contacts",
+      "curve::curve_subdivision::tests::source_domain_fillets_preserve_one_closed_authored_interval",
+      "curve::curve_subdivision::tests::source_domain_fillets_preserve_unmarked_affine_bezier_contacts",
+      "curve::tests::distinct_parallel_sources_keep_a_shared_fillet_center_family",
+      "curve::tests::fillet_center_contacts_keep_source_orientation_across_support_cusps",
+      "curve::tests::fillet_domains_control_each_circular_contact_independently",
+      "curve::tests::fillet_parallel_domains_expand_only_the_authorized_source",
+      "curve::tests::parallel_fillet_extension_keeps_contacts_across_source_cusps",
+      "curve::tests::parallel_fillet_frame_retains_selected_normal_and_radial_distance",
+      "curve::tests::rational_chamfer_solver_retains_pre_pole_extension",
+      "curve::tests::resource_blocked_selected_parallel_parameter_retains_local_fillet_frame",
+      "curve::tests::retained_parallel_and_direct_bezier_share_projective_fillet_extension",
+      "curve::tests::selected_circle_and_direct_bezier_share_projective_fillet_extension",
+      "curve::tests::selected_circle_and_native_line_share_projective_fillet_extension",
+      "curve::tests::selected_circular_fillet_overlap_is_clipped_to_the_finite_fragment",
+      "curve::tests::selected_parallel_fillet_clips_a_positive_dimensional_center_component_locally",
+      "curve::tests::selected_parallel_fillet_keeps_contacts_beyond_interior_cusps",
+      "curve::tests::selected_spline_chamfer_cuts_reenter_the_authored_parameter_domain",
+      "curve::tests::selected_spline_fillet_cuts_reenter_the_authored_parameter_domain",
+      "curve_intersection::curve_support_intersection::circle_dispatch_tests::selected_fillet_tangency_replays_an_exterior_affine_source_chart",
+      "curve_region_boolean::certified_successor_tests::boundary_probe_reuses_endpoint_incidence_and_keeps_residual_contacts",
+      "rational_bezier_general::tests::affine_subcurve_rejects_a_crossed_projective_pole",
+      "rational_bezier_general::tests::conic_parameter_primary_map_defers_fallback_image_polynomial",
+      "rational_bezier_general::tests::conic_parameter_refines_primary_map_before_constructing_fallback",
+      "rational_bezier_general::tests::endpoint_projective_cubic_correspondence_maps_both_orientations",
+      "rational_bezier_general::tests::exact_degree_elevated_line_recovers_linear_parameter_transport",
+      "rational_bezier_general::tests::exact_high_degree_rational_elevation_recovers_its_minimal_parameter_frame",
+      "rational_bezier_general::tests::implicit_conic_certificate_is_parameterization_independent_and_shared",
+      "rational_bezier_general::tests::implicit_conic_contacts_retain_source_parameter_point_image_first",
+      "rational_bezier_general::tests::injectivity_scope_preserves_every_parameter_of_a_collapsed_chart",
+      "rational_bezier_general::tests::mixed_weight_projective_overlap_preserves_the_finite_parameter_domain",
+      "rational_bezier_general::tests::range_projective_correspondence_maps_and_inverts_oriented_ranges",
+      "rational_bezier_general::tests::rational_parameter_image_map_reuses_quotient_authority_across_isolators",
+      "rational_bezier_general::tests::unit_weight_degree_one_curve_exposes_its_exact_line_parameterization"
+    ],
+    "hypercurve_curve": [
+      "direct_bezier_pair_fillet_retains_both_incident_extensions",
+      "exact_arc_chamfer_solver_preserves_both_major_sweep_cuts",
+      "exact_chamfer_solver_handles_native_line_arc_and_arc_arc_carriers",
+      "exact_line_arc_fillets_retain_rational_radius_across_source_scales",
+      "exact_native_arc_fillet_solver_classifies_collapsed_and_coincident_offsets",
+      "exact_native_arc_fillet_solver_handles_every_native_pair_order",
+      "exact_native_arc_fillet_uses_only_the_shared_approximate_terminal",
+      "independently_parameterized_bezier_continuation_is_an_incident_fillet_component",
+      "line_corner_solvers_derive_unique_trimmed_fillet_and_chamfer",
+      "line_parabola_mixed_exact_algebraic_fillet_is_an_exact_open_path",
+      "mixed_curve_path_fillet_accepts_every_non_arc_family_pair",
+      "mixed_curve_path_fillet_preserves_arc_family_and_exact_tangency",
+      "polynomial_chamfer_materializes_represented_incident_extension",
+      "radical_line_image_fillets_preserve_retained_families",
+      "rational_chamfer_materializes_the_incident_projective_cell",
+      "represented_arc_bezier_fillets_use_circle_incidence",
+      "represented_bezier_chamfer_retains_more_than_two_exact_cuts",
+      "represented_bezier_pairs_use_independent_chamfer_and_exact_ph_fillet_routes",
+      "same_bezier_support_fillet_removes_the_projective_parameter_diagonal",
+      "same_ph_bezier_support_fillet_reuses_rational_projective_self_contact",
+      "spline_chamfer_materializes_only_the_incident_extension_cell",
+      "spline_incident_span_pairs_reuse_exact_ph_fillet_fast_path",
+      "spline_line_fillet_preserves_the_authored_spline_and_adds_its_incident_cell"
+    ],
+    "hypercurve_curve_region_promotion": [
+      "algebraic_chamfer_participates_in_a_disjoint_boolean_batch",
+      "analytic_parallel_miter_tangent_legs_have_no_nondegenerate_fillet",
+      "analytic_parallel_rejected_miters_remain_transverse_fillet_candidates",
+      "approximate_512_trim_only_analytic_parallel_support_corners_retain_algebraic_fillet_centers",
+      "arc_parabola_fillet_recovers_exact_complement_contacts",
+      "canonical_exact_chord_regions_fillet_without_line_demotion",
+      "line_parabola_fillet_extends_the_regular_incident_cell_exactly",
+      "non_ph_bezier_pair_fillet_retains_general_selected_circle",
+      "non_ph_bezier_pair_projective_fillet_retains_algebraic_extensions",
+      "one_field_algebraic_chamfer_regularizes_without_rebuilding_its_solver",
+      "retained_circular_regions_chamfer_over_the_full_support",
+      "selected_algebraic_cusp_chamfers_use_the_unified_retained_kernel",
+      "selected_circle_support_chord_corners_retain_algebraic_fillet_centers",
+      "selected_endpoint_chord_pairs_share_the_linear_fillet_kernel",
+      "selected_endpoint_chords_share_linear_arc_fillet_incidence",
+      "selected_endpoint_chords_share_linear_bezier_fillet_incidence",
+      "strict_trim_only_analytic_parallel_support_corners_retain_algebraic_fillet_centers",
+      "unified_region_chamfer_and_fillet_edit_higher_order_loops",
+      "unified_region_chamfer_joins_two_algebraic_bezier_cuts",
+      "unified_region_chamfer_reenters_general_algebraic_chords",
+      "unified_region_chamfer_retains_algebraic_bezier_cut",
+      "unified_region_native_chamfer_uses_arc_sweep_evidence",
+      "unified_region_native_fillet_retains_certified_arc_contacts"
+    ],
+    "hypercurve_path_closure": [
+      "finite_fixed_distance_domains::finite_chamfers_preserve_equivalent_source_charts",
+      "finite_fixed_distance_domains::repeated_finite_chamfers_preserve_selected_cuts",
+      "finite_selected_point_domains::collapsed_circle_fillet_preserves_finite_parallel_domains",
+      "selected_chamfers_preserve_all_major_arc_contacts",
+      "selected_major_arc_fillets_keep_the_complete_authored_sweep",
+      "selected_open_chamfers_reenter_the_public_path_api",
+      "selected_open_fillets_accept_a_subsequent_chamfer",
+      "selected_path_chamfers_close_through_all_region_booleans",
+      "selected_spline_chamfers_keep_every_untrimmed_span",
+      "selected_spline_fillets_preserve_knot_charts_and_other_spans"
+    ],
+    "hypercurve_analytic_parallel_region": [
+      "algebraic_endpoint_analytic_parallel_chamfers_replay_selected_distance",
+      "analytic_parallel_chamfers_retain_normalized_cut_points",
+      "retained_arc_fillet_preserves_past_center_tangent_orientation",
+      "retained_rational_arc_and_analytic_parallel_fillet_exactly",
+      "retained_rational_arc_and_analytic_parallel_fillet_extends_exactly"
+    ],
+    "hypercurve_curve_intersection": [
+      "finite_selected_circle_domains::retained_fillet_intersects_finite_analytic_parallel_in_all_charts",
+      "generated_chamfer_tails_reuse_paired_overlap_boundaries",
+      "generated_fillet_arcs_intersect_themselves_after_restriction_and_reversal",
+      "generated_fillet_arcs_keep_tangent_contacts_with_their_trimmed_neighbors"
+    ],
+    "hypercurve_curve_region_boolean": [
+      "selected_fillet_region_intersection_closes_through_exterior_cap_booleans"
+    ]
+  },
+  "known_unresolved": [
+    "strict_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions",
+    "approximate_512_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions"
+  ],
+  "qualification_complete": true
+}

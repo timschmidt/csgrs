@@ -1,0 +1,6 @@
+{
+  "parent": "a34c0feffa0d7dba5d5e99f1c7e20882a5fd6ff4",
+  "candidate": "/tmp/hypercurve-fillet-companion-final-2026-09-23/hypercurve/src/curve_corner_chain.rs",
+  "sha256": "6ca2f00e00d09f06de7b221ea8f4da8dc9b8c1c498f4e17fbc79a4f47fbebe04",
+  "excluded_region_sha256": "1bc26463270fbe520873708bc6909db19a7af36356367f8bbc366b92696ed720"
+}

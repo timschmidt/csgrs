@@ -1,0 +1,26 @@
+[
+  {
+    "path": "tests/hypercurve_curve_region_promotion.rs",
+    "edits": 8,
+    "before": "1e365844e9c2651408c8d707b2c933b118507c40e64d6e735901f12a4f38895f",
+    "after": "6d578af81b167751c98d956d8fd76ff7cdd324db650b14e15856d23da1dfe67d"
+  },
+  {
+    "path": "tests/hypercurve_path_closure.rs",
+    "edits": 1,
+    "before": "cabe0c6d662ff492a295db8afea1c0d19771e9d9c63d94fe8ec2405481175ce6",
+    "after": "fad17a2193819253852b8f399386d97fa6b8e9d3a9bd0d872ae134a071dfef93"
+  },
+  {
+    "path": "benches/editing.rs",
+    "edits": 1,
+    "before": "b4bce5f3b81476446ccbe70aeac1f3da1a1ec850aaf9bf841fb000af5b7320c3",
+    "after": "ad64c083ea7cc0eeee9757d61db30f2ba8ebc54b350ec2c307d2a80dd81c50ac"
+  },
+  {
+    "path": "tests/hypercurve_curve_intersection.rs",
+    "edits": 1,
+    "before": "05c0d11244e4ec31ce1bf1c6fdef2744303547786b73af78c0dc73464296af7a",
+    "after": "b5e03ebc783eeff3db9107449b324f9f43810e199c45b7f702a9bf6ca4b10439"
+  }
+]

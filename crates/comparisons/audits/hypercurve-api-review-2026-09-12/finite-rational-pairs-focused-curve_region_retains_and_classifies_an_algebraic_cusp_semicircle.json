@@ -1,0 +1,28 @@
+{
+  "repo": "hypercurve",
+  "target": "lib",
+  "binary": "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve-6e6572a45c5b177b",
+  "filter": "curve_region_retains_and_classifies_an_algebraic_cusp_semicircle",
+  "command": [
+    "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve-6e6572a45c5b177b",
+    "--test-threads=4",
+    "--color",
+    "never",
+    "curve_region_retains_and_classifies_an_algebraic_cusp_semicircle"
+  ],
+  "sha256": "e4356ce48166d4f18e51f787f3bea60cf0a09b263ad34c264cd04fc20ff4c449",
+  "returncode": 0,
+  "timed_out": false,
+  "elapsed_seconds": 0.015586592999170534,
+  "log": "finite-rational-pairs-focused-curve_region_retains_and_classifies_an_algebraic_cusp_semicircle.log",
+  "passed": [
+    "bezier_offset::conversion_tests::curve_region_retains_and_classifies_an_algebraic_cusp_semicircle"
+  ],
+  "failed": [],
+  "ignored": [],
+  "summaries": [
+    "test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 1127 filtered out; finished in 0.01s"
+  ],
+  "new_failures": [],
+  "known_failures": []
+}

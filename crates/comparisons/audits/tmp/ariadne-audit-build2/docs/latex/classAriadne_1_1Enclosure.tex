@@ -1,0 +1,348 @@
+\doxysubsection{Enclosure Class Reference}
+\hypertarget{classAriadne_1_1Enclosure}{}\label{classAriadne_1_1Enclosure}\index{Enclosure@{Enclosure}}
+
+
+{\ttfamily \#include $<$enclosure.\+hpp$>$}
+
+
+
+\doxysubsubsection{Description}
+An enclosure for part of the reachable or evolved set of a dynamical system. Defined as $x=f(s)$ for $s\in D$ satisfying $g(s)\leq0$ and $h(s)=0$. Inheritance diagram for Enclosure\+:\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[height=2.000000cm]{classAriadne_1_1Enclosure}
+\end{center}
+\end{figure}
+\doxysubsubsubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1Enclosure_a3149b7516ca99453a3cf66ee736c853d}\label{classAriadne_1_1Enclosure_a3149b7516ca99453a3cf66ee736c853d} 
+{\bfseries Enclosure} ()
+\begin{DoxyCompactList}\small\item\em Construct a set with $D=\emptyset$ in $\mathbb{R}^0$. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Enclosure_a3f3a5d65da40f88a75d84b1dd68fbd07}\label{classAriadne_1_1Enclosure_a3f3a5d65da40f88a75d84b1dd68fbd07} 
+{\bfseries Enclosure} (Enclosure\+Configuration const \&config)
+\begin{DoxyCompactList}\small\item\em Construct a set with $D=\emptyset$ in $\mathbb{R}^0$. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Enclosure_a4703b3212e860346d95e55efa9d5eb9f}\label{classAriadne_1_1Enclosure_a4703b3212e860346d95e55efa9d5eb9f} 
+{\bfseries Enclosure} (const Real\+Box \&bx, const Enclosure\+Configuration \&config)
+\begin{DoxyCompactList}\small\item\em Construct a representation of the box {\itshape bx}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Enclosure_a5414f5e752d951242aa51160a33bbb7b}\label{classAriadne_1_1Enclosure_a5414f5e752d951242aa51160a33bbb7b} 
+{\bfseries Enclosure} (const \mbox{\hyperlink{group__FunctionModule_gafdd31b4d01081cd09aad2ce11117f867}{Exact\+Box\+Type}} \&bx, const Enclosure\+Configuration \&config)
+\begin{DoxyCompactList}\small\item\em Construct a representation of the box {\itshape bx}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Enclosure_a41c689d3fd719bd660d6e906489f9bf0}\label{classAriadne_1_1Enclosure_a41c689d3fd719bd660d6e906489f9bf0} 
+{\bfseries Enclosure} (const \mbox{\hyperlink{group__FunctionModule_gafdd31b4d01081cd09aad2ce11117f867}{Exact\+Box\+Type}} \&d, const Validated\+Vector\+Multivariate\+Function \&f, const Enclosure\+Configuration \&config)
+\begin{DoxyCompactList}\small\item\em Construct the set with parameter domain {\itshape d} and image function {\itshape f}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Enclosure_acf99c07a5a6c9fc50249a84c1997078c}\label{classAriadne_1_1Enclosure_acf99c07a5a6c9fc50249a84c1997078c} 
+{\bfseries Enclosure} (const \mbox{\hyperlink{group__FunctionModule_gafdd31b4d01081cd09aad2ce11117f867}{Exact\+Box\+Type}} \&d, const Validated\+Vector\+Multivariate\+Function \&f, const \mbox{\hyperlink{classAriadne_1_1List}{List}}$<$ \mbox{\hyperlink{classAriadne_1_1Constraint}{Validated\+Constraint}} $>$ \&c, const Enclosure\+Configuration \&config)
+\begin{DoxyCompactList}\small\item\em Construct the set with parameter domain {\itshape d}, image function {\itshape f} and constraints {\itshape c}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Enclosure_aa7e1feaa4f2ed0c3690ab69f8f3bd349}\label{classAriadne_1_1Enclosure_aa7e1feaa4f2ed0c3690ab69f8f3bd349} 
+{\bfseries Enclosure} (const \mbox{\hyperlink{group__FunctionModule_gafdd31b4d01081cd09aad2ce11117f867}{Exact\+Box\+Type}} \&d, const Validated\+Vector\+Multivariate\+Function \&sf, const Validated\+Scalar\+Multivariate\+Function \&tf, const \mbox{\hyperlink{classAriadne_1_1List}{List}}$<$ \mbox{\hyperlink{classAriadne_1_1Constraint}{Validated\+Constraint}} $>$ \&c, const Enclosure\+Configuration \&config)
+\begin{DoxyCompactList}\small\item\em Construct the set with parameter domain {\itshape d}, image function {\itshape sf}, time function {\itshape tf} and constraints {\itshape c}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Enclosure_ae1d1dc86ce40bd18531c92ac1a20415b}\label{classAriadne_1_1Enclosure_ae1d1dc86ce40bd18531c92ac1a20415b} 
+{\bfseries Enclosure} (const \mbox{\hyperlink{group__FunctionModule_gafdd31b4d01081cd09aad2ce11117f867}{Exact\+Box\+Type}} \&d, const Validated\+Vector\+Multivariate\+Function \&sf, const Validated\+Scalar\+Multivariate\+Function tf, const Validated\+Vector\+Multivariate\+Function \&g, const Validated\+Vector\+Multivariate\+Function \&h, const Enclosure\+Configuration \&fac)
+\begin{DoxyCompactList}\small\item\em Construct the set with domain {\itshape d}, space function {\itshape sf}, time function {\itshape tf}, negative constraints {\itshape g} and equality constraints {\itshape h}. (Not currently implemented.) \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Enclosure_a94a47d650379d7b47cfacc4ecf98b425}\label{classAriadne_1_1Enclosure_a94a47d650379d7b47cfacc4ecf98b425} 
+{\bfseries Enclosure} (const \mbox{\hyperlink{classAriadne_1_1BoundedConstraintSet}{Bounded\+Constraint\+Set}} \&set, const Enclosure\+Configuration \&fac)
+\begin{DoxyCompactList}\small\item\em Construct from an exact bounded constraint {\itshape set}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Enclosure_a2d5497ea40f30d3f2a3f91c0c904696f}\label{classAriadne_1_1Enclosure_a2d5497ea40f30d3f2a3f91c0c904696f} 
+virtual \mbox{\hyperlink{classAriadne_1_1Enclosure}{Enclosure}} \texorpdfstring{$\ast$}{*} {\bfseries clone} () const override
+\begin{DoxyCompactList}\small\item\em Create a dynamically-\/allocated copy. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Enclosure_a1baf865debf406a2e3bd12bdb5c0e7bd}\label{classAriadne_1_1Enclosure_a1baf865debf406a2e3bd12bdb5c0e7bd} 
+const Enclosure\+Configuration \& {\bfseries configuration} () const
+\begin{DoxyCompactList}\small\item\em The classes used to work with the set. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Enclosure_a8f3684d77742d9ad67747887be57f7e0}\label{classAriadne_1_1Enclosure_a8f3684d77742d9ad67747887be57f7e0} 
+\mbox{\hyperlink{group__FunctionModule_gafdd31b4d01081cd09aad2ce11117f867}{Exact\+Box\+Type}} {\bfseries domain} () const
+\begin{DoxyCompactList}\small\item\em The parameter domain $D$. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Enclosure_a82ef56808c951fee91c68e85fe125df6}\label{classAriadne_1_1Enclosure_a82ef56808c951fee91c68e85fe125df6} 
+\mbox{\hyperlink{group__FunctionModule_gafdd31b4d01081cd09aad2ce11117f867}{Exact\+Box\+Type}} {\bfseries reduced\+\_\+domain} () const
+\begin{DoxyCompactList}\small\item\em A subset of the parameter domain containing all feasible points. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Enclosure_a55b4120ba0ae5c9282c11d89472c6fe2}\label{classAriadne_1_1Enclosure_a55b4120ba0ae5c9282c11d89472c6fe2} 
+\mbox{\hyperlink{group__FunctionModule_gafdd31b4d01081cd09aad2ce11117f867}{Exact\+Box\+Type}} {\bfseries codomain} () const
+\begin{DoxyCompactList}\small\item\em An over-\/approximation to the image of $D$ under $f$. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Enclosure_a5e8644dabf697036d7329f9eb6509693}\label{classAriadne_1_1Enclosure_a5e8644dabf697036d7329f9eb6509693} 
+\mbox{\hyperlink{classAriadne_1_1FunctionPatch}{Validated\+Vector\+Multivariate\+Function\+Patch}} const \& {\bfseries state\+\_\+function} () const
+\begin{DoxyCompactList}\small\item\em The function giving the state {\ttfamily x} in terms of parameters {\ttfamily s}, $x=\xi(s)$. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Enclosure_aba8ac3b9e445e7e74f925eef60a0d462}\label{classAriadne_1_1Enclosure_aba8ac3b9e445e7e74f925eef60a0d462} 
+\mbox{\hyperlink{classAriadne_1_1FunctionPatch}{Validated\+Scalar\+Multivariate\+Function\+Patch}} const \& {\bfseries time\+\_\+function} () const
+\begin{DoxyCompactList}\small\item\em The function giving the time {\ttfamily t} in terms of parameters {\ttfamily s}, $t=\tau(s)$. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Enclosure_abb4979a78f9a277628521dd3b30ed4b3}\label{classAriadne_1_1Enclosure_abb4979a78f9a277628521dd3b30ed4b3} 
+\mbox{\hyperlink{classAriadne_1_1FunctionPatch}{Validated\+Vector\+Multivariate\+Function\+Patch}} const {\bfseries auxiliary\+\_\+function} () const
+\begin{DoxyCompactList}\small\item\em The function giving the auxiliary variables in terms of parameters {\ttfamily s}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Enclosure_adaf1b371ca772bce3024e9176531f774}\label{classAriadne_1_1Enclosure_adaf1b371ca772bce3024e9176531f774} 
+\mbox{\hyperlink{classAriadne_1_1FunctionPatch}{Validated\+Vector\+Multivariate\+Function\+Patch}} const {\bfseries state\+\_\+auxiliary\+\_\+function} () const
+\begin{DoxyCompactList}\small\item\em The function giving the state and auxiliary variables in terms of parameters {\ttfamily s}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Enclosure_a6a2dd7672aada7ca3f6a291448f6251f}\label{classAriadne_1_1Enclosure_a6a2dd7672aada7ca3f6a291448f6251f} 
+\mbox{\hyperlink{classAriadne_1_1FunctionPatch}{Validated\+Vector\+Multivariate\+Function\+Patch}} const {\bfseries state\+\_\+time\+\_\+auxiliary\+\_\+function} () const
+\begin{DoxyCompactList}\small\item\em The function giving the state, time and auxiliary variables in terms of parameters {\ttfamily s}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Enclosure_a0ad81a09988b7308efadd0dab499cc1c}\label{classAriadne_1_1Enclosure_a0ad81a09988b7308efadd0dab499cc1c} 
+\mbox{\hyperlink{classAriadne_1_1FunctionPatch}{Validated\+Scalar\+Multivariate\+Function\+Patch}} const \& {\bfseries dwell\+\_\+time\+\_\+function} () const
+\begin{DoxyCompactList}\small\item\em The function giving the time since the last discrete jump in terms of the parameters {\ttfamily s}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Enclosure_ab388ad4902d29b26ebd22c77101ad469}\label{classAriadne_1_1Enclosure_ab388ad4902d29b26ebd22c77101ad469} 
+\mbox{\hyperlink{classAriadne_1_1FunctionPatch}{Validated\+Vector\+Multivariate\+Function\+Patch}} const {\bfseries constraint\+\_\+function} () const
+\begin{DoxyCompactList}\small\item\em The function {\ttfamily g} of the constrants $g(s)\in C$. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Enclosure_a33bb49b37014dc690324a5052e8a4b25}\label{classAriadne_1_1Enclosure_a33bb49b37014dc690324a5052e8a4b25} 
+\mbox{\hyperlink{group__FunctionModule_gafdd31b4d01081cd09aad2ce11117f867}{Exact\+Box\+Type}} const {\bfseries constraint\+\_\+bounds} () const
+\begin{DoxyCompactList}\small\item\em The bounds {\ttfamily C} of the constrants $g(s)\in C$. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Enclosure_a59f1f2dbc5c31c21242b8b3b21f419d6}\label{classAriadne_1_1Enclosure_a59f1f2dbc5c31c21242b8b3b21f419d6} 
+\mbox{\hyperlink{classAriadne_1_1FunctionPatch}{Validated\+Scalar\+Multivariate\+Function\+Patch}} const {\bfseries get\+\_\+function} (\mbox{\hyperlink{namespaceAriadne_acd8b5f68421eb22a84277ef7c9c0ee2a}{Size\+Type}} i) const
+\begin{DoxyCompactList}\small\item\em The function of parameters {\itshape s} giving the {\itshape i\textsuperscript{th}} state variable. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Enclosure_a0c9a543329b4b1e11968f11308aaada8}\label{classAriadne_1_1Enclosure_a0c9a543329b4b1e11968f11308aaada8} 
+\mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} {\bfseries set\+\_\+auxiliary\+\_\+mapping} (Effective\+Vector\+Multivariate\+Function const \&aux)
+\begin{DoxyCompactList}\small\item\em \doxylink{classAriadne_1_1Set}{Set} the auxiliary function. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Enclosure_a912ae851680a21176c5f16532bc3e710}\label{classAriadne_1_1Enclosure_a912ae851680a21176c5f16532bc3e710} 
+Effective\+Vector\+Multivariate\+Function const \& {\bfseries auxiliary\+\_\+mapping} () const
+\begin{DoxyCompactList}\small\item\em Get the auxiliary function. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Enclosure_a8c723f7611a9623c84a72bea564257d9}\label{classAriadne_1_1Enclosure_a8c723f7611a9623c84a72bea564257d9} 
+\mbox{\hyperlink{classAriadne_1_1List}{List}}$<$ Enclosure\+Variable\+Kind $>$ const \& {\bfseries variable\+\_\+kinds} () const
+\begin{DoxyCompactList}\small\item\em A list detailing the kind of variable each of the domain parameters represents. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Enclosure_a0db56887b60781a83f40f511916bb424}\label{classAriadne_1_1Enclosure_a0db56887b60781a83f40f511916bb424} 
+\mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} {\bfseries substitute} (\mbox{\hyperlink{namespaceAriadne_acd8b5f68421eb22a84277ef7c9c0ee2a}{Size\+Type}} j, \mbox{\hyperlink{classAriadne_1_1FunctionPatch}{Validated\+Scalar\+Multivariate\+Function\+Patch}} v)
+\begin{DoxyCompactList}\small\item\em Substitutes the expression $x_j=v(x_1,\ldots,x_{j-1},x_{j+1}\ldots,x_n)$ into the function and constraints. Requires that $v(D_1,\ldots,D_{j-1},D_{j+1}\ldots,D_n) \subset D_j$ where $D$ is the domain. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Enclosure_a59a04847d1a7f1c48cf0bb2a3d89d541}\label{classAriadne_1_1Enclosure_a59a04847d1a7f1c48cf0bb2a3d89d541} 
+\mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} {\bfseries substitute} (\mbox{\hyperlink{namespaceAriadne_acd8b5f68421eb22a84277ef7c9c0ee2a}{Size\+Type}} j, \mbox{\hyperlink{namespaceAriadne_af915b9f1459c9691328efa71c6f39c6e}{Float\+DP}} c)
+\begin{DoxyCompactList}\small\item\em Substitutes the expression $x_j=c$ into the function and constraints. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Enclosure_a2ae4d3ddf25cda3c6de498773eca477c}\label{classAriadne_1_1Enclosure_a2ae4d3ddf25cda3c6de498773eca477c} 
+\mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} {\bfseries clear\+\_\+time} ()
+\begin{DoxyCompactList}\small\item\em \doxylink{classAriadne_1_1Set}{Set} the time function to zero. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Enclosure_a619b7bbdf661906f9e1bc4e61dfe2b99}\label{classAriadne_1_1Enclosure_a619b7bbdf661906f9e1bc4e61dfe2b99} 
+\mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} {\bfseries apply\+\_\+map} (Validated\+Vector\+Multivariate\+Function r)
+\begin{DoxyCompactList}\small\item\em Apply the map $r$ to the enclosure, obtaining $\phi\textnormal{\textquotesingle}(s)=r(\phi(s))(x,h)$ and $\tau\textnormal{\textquotesingle}(s)=\tau(s)$. $f$. The state variables are unchanged. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Enclosure_a2b4aceb57ef84448a7965d1132f92a44}\label{classAriadne_1_1Enclosure_a2b4aceb57ef84448a7965d1132f92a44} 
+\mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} {\bfseries apply\+\_\+map} (Validated\+Vector\+Multivariate\+Function r, Effective\+Vector\+Multivariate\+Function aux)
+\begin{DoxyCompactList}\small\item\em Apply the map $r$ to the enclosure, obtaining $\phi\textnormal{\textquotesingle}(s)=r(\phi(s))(x,h)$ and $\tau\textnormal{\textquotesingle}(s)=\tau(s)$. $f$. The auxiliary function is updated to {\itshape aux}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Enclosure_aca94616f84d95d2d9ef303a851c94751}\label{classAriadne_1_1Enclosure_aca94616f84d95d2d9ef303a851c94751} 
+\mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} {\bfseries apply\+\_\+discrete\+\_\+time\+\_\+map\+\_\+step} (Validated\+Vector\+Multivariate\+Function r)
+\begin{DoxyCompactList}\small\item\em Apply the map $r$ to the enclosure, obtaining $\phi\textnormal{\textquotesingle}(s)=r(\phi(s))(x,h)$ and $\tau\textnormal{\textquotesingle}(s)=\tau(s)$. $f$. The state variables are unchanged. Time is increased by one. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Enclosure_ad3c2313af4a4b2a70877200b87ce4bce}\label{classAriadne_1_1Enclosure_ad3c2313af4a4b2a70877200b87ce4bce} 
+\mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} {\bfseries apply\+\_\+fixed\+\_\+evolve\+\_\+step} (Validated\+Vector\+Multivariate\+Function phi, \mbox{\hyperlink{group__DifferentialEquationSubModule_ga6f1c6f216a042c31906593cafeb126fa}{Step\+Size\+Type}} h)
+\begin{DoxyCompactList}\small\item\em Apply the flow $\xi\textnormal{\textquotesingle}(s)=\phi(\xi(s),h)$ and $\tau\textnormal{\textquotesingle}(s)=\tau(s)+h$. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Enclosure_aba894d1020f24cc8d9e07a2a8065218c}\label{classAriadne_1_1Enclosure_aba894d1020f24cc8d9e07a2a8065218c} 
+\mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} {\bfseries apply\+\_\+space\+\_\+evolve\+\_\+step} (Validated\+Vector\+Multivariate\+Function phi, Validated\+Scalar\+Multivariate\+Function elps)
+\begin{DoxyCompactList}\small\item\em Apply the flow $xi\textnormal{\textquotesingle}(s)=\phi(\xi(s),\epsilon(\xi(s)))$, $\tau\textnormal{\textquotesingle}(s)=\tau(s)+\epsilon(\xi(s))$. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Enclosure_a0e55eab611080857ee551234a0c53c31}\label{classAriadne_1_1Enclosure_a0e55eab611080857ee551234a0c53c31} 
+\mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} {\bfseries apply\+\_\+spacetime\+\_\+evolve\+\_\+step} (Validated\+Vector\+Multivariate\+Function phi, Validated\+Scalar\+Multivariate\+Function elps)
+\begin{DoxyCompactList}\small\item\em Apply the flow $xi\textnormal{\textquotesingle}(s)=\phi(\xi(s),\epsilon(\xi(s),\tau(s)))$, $\tau\textnormal{\textquotesingle}(s)=\tau(s)+\epsilon(\xi(s),\tau(s))$. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Enclosure_a3c836df18afe2788ae6ca11dc96b7cc2}\label{classAriadne_1_1Enclosure_a3c836df18afe2788ae6ca11dc96b7cc2} 
+\mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} {\bfseries apply\+\_\+parameter\+\_\+evolve\+\_\+step} (Validated\+Vector\+Multivariate\+Function phi, Validated\+Scalar\+Multivariate\+Function elps)
+\begin{DoxyCompactList}\small\item\em \doxylink{classAriadne_1_1Set}{Set} $\xi\textnormal{\textquotesingle}(s)=\phi(\xi(s),\epsilon(s))$ and $\tau\textnormal{\textquotesingle}(s)=\tau(s)+\epsilon(s)$. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Enclosure_a2e265c9794e3f945ccbcb44ac22b9ea0}\label{classAriadne_1_1Enclosure_a2e265c9794e3f945ccbcb44ac22b9ea0} 
+\mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} {\bfseries apply\+\_\+finishing\+\_\+parameter\+\_\+evolve\+\_\+step} (Validated\+Vector\+Multivariate\+Function phi, Validated\+Scalar\+Multivariate\+Function omega)
+\begin{DoxyCompactList}\small\item\em \doxylink{classAriadne_1_1Set}{Set} $\xi\textnormal{\textquotesingle}(s)=\phi(\xi(s),\omega(s)-\tau(s))$ and $\tau\textnormal{\textquotesingle}(s)=\omega(s)$. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Enclosure_a2c746f36f93a1d23687dd55dd3ab4384}\label{classAriadne_1_1Enclosure_a2c746f36f93a1d23687dd55dd3ab4384} 
+\mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} {\bfseries apply\+\_\+full\+\_\+reach\+\_\+step} (\mbox{\hyperlink{classAriadne_1_1FunctionPatch}{Validated\+Vector\+Multivariate\+Function\+Patch}} phi)
+\begin{DoxyCompactList}\small\item\em \doxylink{classAriadne_1_1Set}{Set} $\xi\textnormal{\textquotesingle}(s,r)=\phi(\xi(s),r)$ and $\tau\textnormal{\textquotesingle}(s,r)=\tau(s)+r$ for $0\leq r\leq h$. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Enclosure_a303328c9a47670bbb90de6f19b124bbd}\label{classAriadne_1_1Enclosure_a303328c9a47670bbb90de6f19b124bbd} 
+\mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} {\bfseries apply\+\_\+spacetime\+\_\+reach\+\_\+step} (\mbox{\hyperlink{classAriadne_1_1FunctionPatch}{Validated\+Vector\+Multivariate\+Function\+Patch}} phi, Validated\+Scalar\+Multivariate\+Function elps)
+\begin{DoxyCompactList}\small\item\em Apply the flow $xi\textnormal{\textquotesingle}(s,r)=\phi(\xi(s),r)$, $\tau\textnormal{\textquotesingle}(s,r)=\tau(s)+r$, $0\leq r\leq\epsilon(\xi(s),\tau(s))$. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Enclosure_addb6543b4abdf425d082d9c6741a4778}\label{classAriadne_1_1Enclosure_addb6543b4abdf425d082d9c6741a4778} 
+\mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} {\bfseries apply\+\_\+parameter\+\_\+reach\+\_\+step} (\mbox{\hyperlink{classAriadne_1_1FunctionPatch}{Validated\+Vector\+Multivariate\+Function\+Patch}} phi, Validated\+Scalar\+Multivariate\+Function elps)
+\begin{DoxyCompactList}\small\item\em \doxylink{classAriadne_1_1Set}{Set} $\xi\textnormal{\textquotesingle}(s,r)=\phi(\xi(s),r)$ and $\tau\textnormal{\textquotesingle}(s,r)=\tau(s)+r$ for $0\leq r\leq\epsilon(s)$. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Enclosure_a3078640c16cc06f518c6ff7950d2938a}\label{classAriadne_1_1Enclosure_a3078640c16cc06f518c6ff7950d2938a} 
+\mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} {\bfseries new\+\_\+state\+\_\+constraint} (\mbox{\hyperlink{classAriadne_1_1Constraint}{Validated\+Constraint}} c)
+\begin{DoxyCompactList}\small\item\em Introduces the constraint $c$ applied to the state $x=f(s)$. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Enclosure_ace01897a28d8802ff2edb8f6d4731811}\label{classAriadne_1_1Enclosure_ace01897a28d8802ff2edb8f6d4731811} 
+\mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} {\bfseries new\+\_\+state\+\_\+time\+\_\+constraint} (\mbox{\hyperlink{classAriadne_1_1Constraint}{Validated\+Constraint}} c)
+\begin{DoxyCompactList}\small\item\em Introduces the constraint $c$ applied to the state and time $(x,t)$. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Enclosure_ad08cae49d6a06dda79b8355a4271bd18}\label{classAriadne_1_1Enclosure_ad08cae49d6a06dda79b8355a4271bd18} 
+\mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} {\bfseries new\+\_\+parameter\+\_\+constraint} (\mbox{\hyperlink{classAriadne_1_1Constraint}{Validated\+Constraint}} c)
+\begin{DoxyCompactList}\small\item\em Introduces the constraint $c$ applied to the parameter $s$. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Enclosure_a3675c1356b5cf49a166c7f487e7d1401}\label{classAriadne_1_1Enclosure_a3675c1356b5cf49a166c7f487e7d1401} 
+\mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} {\bfseries new\+\_\+state\+\_\+time\+\_\+bound} (Validated\+Scalar\+Multivariate\+Function gamma)
+\begin{DoxyCompactList}\small\item\em Introduces the constraint $\tau(s)\leq\gamma(\xi(s))$. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Enclosure_a7e417d96b82310e7d09474140c292041}\label{classAriadne_1_1Enclosure_a7e417d96b82310e7d09474140c292041} 
+\mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} {\bfseries new\+\_\+positive\+\_\+state\+\_\+constraint} (Validated\+Scalar\+Multivariate\+Function g)
+\begin{DoxyCompactList}\small\item\em Introduces the constraint $-g(\xi(s)) \leq 0$. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Enclosure_ad72272756ca9be9142db4e0771c42c99}\label{classAriadne_1_1Enclosure_ad72272756ca9be9142db4e0771c42c99} 
+\mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} {\bfseries new\+\_\+negative\+\_\+state\+\_\+constraint} (Validated\+Scalar\+Multivariate\+Function g)
+\begin{DoxyCompactList}\small\item\em Introduces the constraint $g(\xi(s)) \leq 0$. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Enclosure_aef40ceca9c729f397e3e83c242235224}\label{classAriadne_1_1Enclosure_aef40ceca9c729f397e3e83c242235224} 
+\mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} {\bfseries new\+\_\+zero\+\_\+state\+\_\+constraint} (Validated\+Scalar\+Multivariate\+Function h)
+\begin{DoxyCompactList}\small\item\em Introduces the constraint $h(\xi(s)) = 0$. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Enclosure_ace19bd29047026c47fe115c636f8c6bb}\label{classAriadne_1_1Enclosure_ace19bd29047026c47fe115c636f8c6bb} 
+\mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} {\bfseries new\+\_\+negative\+\_\+parameter\+\_\+constraint} (Validated\+Scalar\+Multivariate\+Function g)
+\begin{DoxyCompactList}\small\item\em Introduces the constraint $g(s) \leq 0$. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Enclosure_abf5f31d020180c3875defe94c0618357}\label{classAriadne_1_1Enclosure_abf5f31d020180c3875defe94c0618357} 
+\mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} {\bfseries new\+\_\+zero\+\_\+parameter\+\_\+constraint} (Validated\+Scalar\+Multivariate\+Function h)
+\begin{DoxyCompactList}\small\item\em Introduces the constraint $h(s) = 0$. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Enclosure_a4ee2c18be0864ad8e866ccc167b2a63a}\label{classAriadne_1_1Enclosure_a4ee2c18be0864ad8e866ccc167b2a63a} 
+\mbox{\hyperlink{namespaceAriadne_acd8b5f68421eb22a84277ef7c9c0ee2a}{Size\+Type}} {\bfseries number\+\_\+of\+\_\+constraints} () const
+\begin{DoxyCompactList}\small\item\em The number of negative constraints. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Enclosure_a338918f5b41e601acd29a6cc8659cb45}\label{classAriadne_1_1Enclosure_a338918f5b41e601acd29a6cc8659cb45} 
+\mbox{\hyperlink{classAriadne_1_1List}{List}}$<$ \mbox{\hyperlink{classAriadne_1_1Constraint}{Validated\+Constraint\+Model}} $>$ const \& {\bfseries constraint\+\_\+models} () const
+\begin{DoxyCompactList}\small\item\em All equality and inequality constraints. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Enclosure_a5d80baa16433f633e9a545344dce14fa}\label{classAriadne_1_1Enclosure_a5d80baa16433f633e9a545344dce14fa} 
+\mbox{\hyperlink{classAriadne_1_1List}{List}}$<$ \mbox{\hyperlink{classAriadne_1_1Constraint}{Validated\+Constraint}} $>$ const {\bfseries constraints} () const
+\begin{DoxyCompactList}\small\item\em All equality and inequality constraints. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Enclosure_a7e5b0910840ec0b93179d7f5681040da}\label{classAriadne_1_1Enclosure_a7e5b0910840ec0b93179d7f5681040da} 
+\mbox{\hyperlink{classAriadne_1_1Constraint}{Validated\+Constraint\+Model}} const \& {\bfseries constraint} (\mbox{\hyperlink{namespaceAriadne_acd8b5f68421eb22a84277ef7c9c0ee2a}{Size\+Type}} i) const
+\begin{DoxyCompactList}\small\item\em The {\itshape i\textsuperscript{th}} constraint. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Enclosure_aed179b2fa1b8bf5bacc487714301df74}\label{classAriadne_1_1Enclosure_aed179b2fa1b8bf5bacc487714301df74} 
+\mbox{\hyperlink{classAriadne_1_1ValidatedKleenean}{Validated\+Kleenean}} {\bfseries satisfies} (Validated\+Scalar\+Multivariate\+Function g) const
+\begin{DoxyCompactList}\small\item\em Returns true if $g(x)>0$ over the whole set, false $g(x)<0$ over the whole set, and indeterminate otherwise. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Enclosure_af02be94a65698462c14cb8c8979abbee}\label{classAriadne_1_1Enclosure_af02be94a65698462c14cb8c8979abbee} 
+\mbox{\hyperlink{classAriadne_1_1ValidatedKleenean}{Validated\+Kleenean}} {\bfseries satisfies} (\mbox{\hyperlink{classAriadne_1_1Constraint}{Validated\+Constraint}} c) const
+\begin{DoxyCompactList}\small\item\em Tests if the set satisfies the constraint {\itshape c}. Returns {\ttfamily true} if all points in the set satisfy the constraint, and {\ttfamily false} if no points in the set satisfy the constraint. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Enclosure_a92c497b6e7ed3bafb7f483c87a8bf85b}\label{classAriadne_1_1Enclosure_a92c497b6e7ed3bafb7f483c87a8bf85b} 
+virtual \mbox{\hyperlink{namespaceAriadne_a4b06015a4986ef014fb6643680cb04d2}{Dimension\+Type}} {\bfseries dimension} () const override
+\begin{DoxyCompactList}\small\item\em The dimension of the set. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Enclosure_abd0ff58221c9b05384d0ff4a6afe5ffb}\label{classAriadne_1_1Enclosure_abd0ff58221c9b05384d0ff4a6afe5ffb} 
+\mbox{\hyperlink{namespaceAriadne_a4b06015a4986ef014fb6643680cb04d2}{Dimension\+Type}} {\bfseries state\+\_\+dimension} () const
+\begin{DoxyCompactList}\small\item\em The state dimension of the set. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Enclosure_a08b1a3c03c0b92b2acfed61a49f2e726}\label{classAriadne_1_1Enclosure_a08b1a3c03c0b92b2acfed61a49f2e726} 
+\mbox{\hyperlink{namespaceAriadne_acd8b5f68421eb22a84277ef7c9c0ee2a}{Size\+Type}} {\bfseries number\+\_\+of\+\_\+parameters} () const
+\begin{DoxyCompactList}\small\item\em The number of parameters i.\+e. the dimension of the parameter domain. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Enclosure_ab67536daaa7bd9a9c1879ffda8362343}\label{classAriadne_1_1Enclosure_ab67536daaa7bd9a9c1879ffda8362343} 
+\mbox{\hyperlink{group__FunctionModule_gadb510bd9aa076e5ae44245b498901ca6}{Upper\+Box\+Type}} {\bfseries bounding\+\_\+box} () const
+\begin{DoxyCompactList}\small\item\em A bounding box for the set. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Enclosure_a85340e7ad89df009910d38db9930bf0a}\label{classAriadne_1_1Enclosure_a85340e7ad89df009910d38db9930bf0a} 
+\mbox{\hyperlink{classAriadne_1_1Point}{Point}}$<$ \mbox{\hyperlink{namespaceAriadne_af915b9f1459c9691328efa71c6f39c6e}{Float\+DP}} $>$ {\bfseries centre} () const
+\begin{DoxyCompactList}\small\item\em A point in the image of the {\itshape unconstrained} parameter domain. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Enclosure_a177bf004adc14aab3fbbf98182c8207f}\label{classAriadne_1_1Enclosure_a177bf004adc14aab3fbbf98182c8207f} 
+Float\+DPError {\bfseries radius} () const
+\begin{DoxyCompactList}\small\item\em An over-\/approximation to the radius of the set. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Enclosure_a2b881bec01d8e27b591dbe0098d4e42c}\label{classAriadne_1_1Enclosure_a2b881bec01d8e27b591dbe0098d4e42c} 
+\mbox{\hyperlink{classAriadne_1_1ValidatedLowerKleenean}{Validated\+Lower\+Kleenean}} {\bfseries is\+\_\+bounded} () const
+\begin{DoxyCompactList}\small\item\em Returns {\ttfamily true} if the set is definitely bounded. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Enclosure_a105852630cf0748babb83881e3ce3a01}\label{classAriadne_1_1Enclosure_a105852630cf0748babb83881e3ce3a01} 
+\mbox{\hyperlink{classAriadne_1_1ValidatedLowerKleenean}{Validated\+Lower\+Kleenean}} {\bfseries is\+\_\+empty} () const
+\begin{DoxyCompactList}\small\item\em Returns {\ttfamily true} if the set is provably empty. May return {\ttfamily false} if the set can (easily) be proved to be nonempty. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Enclosure_aeed9edfbf3711cd11cae4462806ef4cd}\label{classAriadne_1_1Enclosure_aeed9edfbf3711cd11cae4462806ef4cd} 
+\mbox{\hyperlink{classAriadne_1_1ValidatedLowerKleenean}{Validated\+Lower\+Kleenean}} {\bfseries separated} (const \mbox{\hyperlink{group__FunctionModule_gafdd31b4d01081cd09aad2ce11117f867}{Exact\+Box\+Type}} \&bx) const
+\begin{DoxyCompactList}\small\item\em Returns {\ttfamily true} if the set can be shown to be disjoint from {\itshape bx}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Enclosure_a95dbe2ddd7ff4a004b8eb0205a843b0b}\label{classAriadne_1_1Enclosure_a95dbe2ddd7ff4a004b8eb0205a843b0b} 
+\mbox{\hyperlink{classAriadne_1_1ValidatedLowerKleenean}{Validated\+Lower\+Kleenean}} {\bfseries inside} (const \mbox{\hyperlink{group__FunctionModule_gafdd31b4d01081cd09aad2ce11117f867}{Exact\+Box\+Type}} \&bx) const
+\begin{DoxyCompactList}\small\item\em Returns {\ttfamily true} if the set can be shown to be a subset of {\itshape bx}.. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Enclosure_a79ada54b56f20d0cda8e3ab1ad23886d}\label{classAriadne_1_1Enclosure_a79ada54b56f20d0cda8e3ab1ad23886d} 
+\mbox{\hyperlink{classAriadne_1_1ValidatedLowerKleenean}{Validated\+Lower\+Kleenean}} {\bfseries subset} (const \mbox{\hyperlink{group__FunctionModule_gafdd31b4d01081cd09aad2ce11117f867}{Exact\+Box\+Type}} \&bx) const
+\begin{DoxyCompactList}\small\item\em Returns {\ttfamily true} if the set can be shown to be a subset of {\itshape bx}.. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Enclosure_affe37dbdc29e27f4a0bc6a71f9f66e77}\label{classAriadne_1_1Enclosure_affe37dbdc29e27f4a0bc6a71f9f66e77} 
+\mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} {\bfseries reduce} () const
+\begin{DoxyCompactList}\small\item\em Reduces the size of the effective parameter domain by pruning away infeasible points. Does not affect the set as a mathematical entity. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Enclosure_a69ab738397cc41776eb760b9b01587db}\label{classAriadne_1_1Enclosure_a69ab738397cc41776eb760b9b01587db} 
+\mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} {\bfseries recondition} ()
+\begin{DoxyCompactList}\small\item\em Reconditions the set to give an over-\/approximation with a simpler representation. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Enclosure_a9a873ea71e6a838c410be7e51027546b}\label{classAriadne_1_1Enclosure_a9a873ea71e6a838c410be7e51027546b} 
+\mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} {\bfseries uniform\+\_\+error\+\_\+recondition} ()
+\begin{DoxyCompactList}\small\item\em Simplifies the representation by changing all uniform errors into independent variables. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Enclosure_a99344c2f19357fad440be8e1ae328645}\label{classAriadne_1_1Enclosure_a99344c2f19357fad440be8e1ae328645} 
+\mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} {\bfseries kuhn\+\_\+recondition} ()
+\begin{DoxyCompactList}\small\item\em Simplifies the representation by choosing most significant independent variables to keep, and merging the rest into a single error for each component. \end{DoxyCompactList}\item 
+\mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} \mbox{\hyperlink{classAriadne_1_1Enclosure_a20a6b647a04831cd8cf4c2364e2210a8}{restrict}} (const \mbox{\hyperlink{group__FunctionModule_gafdd31b4d01081cd09aad2ce11117f867}{Exact\+Box\+Type}} \&subdomain)
+\begin{DoxyCompactList}\small\item\em Restrict the parameter domain to {\itshape subdomain}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Enclosure_a30c669fd024a490f6b02b971f4295a74}\label{classAriadne_1_1Enclosure_a30c669fd024a490f6b02b971f4295a74} 
+\mbox{\hyperlink{classAriadne_1_1Storage}{Storage}} {\bfseries outer\+\_\+approximation} (const \mbox{\hyperlink{classAriadne_1_1Grid}{Grid}} \&grid, \mbox{\hyperlink{namespaceAriadne_aae901a69a841b1a085a0dfe218e38fe9}{Nat}} fineness) const
+\begin{DoxyCompactList}\small\item\em Compute an outer approximation on the {\itshape grid} to the given {\itshape fineness}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Enclosure_a0e43bd11abfac399adf6c1f071d6f67a}\label{classAriadne_1_1Enclosure_a0e43bd11abfac399adf6c1f071d6f67a} 
+\mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} {\bfseries adjoin\+\_\+outer\+\_\+approximation\+\_\+to} (\mbox{\hyperlink{classAriadne_1_1Storage}{Storage}} \&paving, \mbox{\hyperlink{namespaceAriadne_aae901a69a841b1a085a0dfe218e38fe9}{Nat}} fineness) const
+\begin{DoxyCompactList}\small\item\em Adjoin an outer approximation to the given {\itshape fineness} to the {\itshape paving}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Enclosure_a0f8758178b144f635d17637c8f19035a}\label{classAriadne_1_1Enclosure_a0f8758178b144f635d17637c8f19035a} 
+\mbox{\hyperlink{classAriadne_1_1List}{List}}$<$ \mbox{\hyperlink{group__FunctionModule_gafdd31b4d01081cd09aad2ce11117f867}{Exact\+Box\+Type}} $>$ {\bfseries splitting\+\_\+subdomains\+\_\+zeroth\+\_\+order} () const
+\begin{DoxyCompactList}\small\item\em A collection of parameter subdomains chosen to make the bounding boxes as small as possible. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Enclosure_a355a04a8e735e8100be010fb4f6ad124}\label{classAriadne_1_1Enclosure_a355a04a8e735e8100be010fb4f6ad124} 
+\mbox{\hyperlink{classAriadne_1_1List}{List}}$<$ \mbox{\hyperlink{classAriadne_1_1Enclosure}{Enclosure}} $>$ {\bfseries split} (const \mbox{\hyperlink{classAriadne_1_1List}{List}}$<$ \mbox{\hyperlink{group__FunctionModule_gafdd31b4d01081cd09aad2ce11117f867}{Exact\+Box\+Type}} $>$ \&subdomains)
+\begin{DoxyCompactList}\small\item\em Split into subsets based on the given subdomains. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Enclosure_a2f82e60a1bfbdee42be074b6d136fb9a}\label{classAriadne_1_1Enclosure_a2f82e60a1bfbdee42be074b6d136fb9a} 
+\mbox{\hyperlink{namespaceAriadne_acd8b5f68421eb22a84277ef7c9c0ee2a}{Size\+Type}} {\bfseries splitting\+\_\+index\+\_\+zeroth\+\_\+order} () const
+\begin{DoxyCompactList}\small\item\em The direction along which the set should be split to reduce the bounding box. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Enclosure_a48550b87158802fc6bb3fdff0f0915cb}\label{classAriadne_1_1Enclosure_a48550b87158802fc6bb3fdff0f0915cb} 
+\mbox{\hyperlink{namespaceAriadne_abbe0884d033ed6289d1f654576d7bb07}{Pair}}$<$ \mbox{\hyperlink{classAriadne_1_1Enclosure}{Enclosure}}, \mbox{\hyperlink{classAriadne_1_1Enclosure}{Enclosure}} $>$ {\bfseries split\+\_\+zeroth\+\_\+order} () const
+\begin{DoxyCompactList}\small\item\em Split into two by splitting the parameter domain along the direction which reduces the size of the bounding box. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Enclosure_a281864e221a518c486441d96d6be27dd}\label{classAriadne_1_1Enclosure_a281864e221a518c486441d96d6be27dd} 
+\mbox{\hyperlink{namespaceAriadne_abbe0884d033ed6289d1f654576d7bb07}{Pair}}$<$ \mbox{\hyperlink{classAriadne_1_1Enclosure}{Enclosure}}, \mbox{\hyperlink{classAriadne_1_1Enclosure}{Enclosure}} $>$ {\bfseries split\+\_\+first\+\_\+order} () const
+\begin{DoxyCompactList}\small\item\em Split into two by splitting the parameter domain along the direction which reduces the nonlinearity of the set. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Enclosure_ac9f893fbfec8b77b72d7b86c3255d6fa}\label{classAriadne_1_1Enclosure_ac9f893fbfec8b77b72d7b86c3255d6fa} 
+\mbox{\hyperlink{namespaceAriadne_abbe0884d033ed6289d1f654576d7bb07}{Pair}}$<$ \mbox{\hyperlink{classAriadne_1_1Enclosure}{Enclosure}}, \mbox{\hyperlink{classAriadne_1_1Enclosure}{Enclosure}} $>$ {\bfseries split} () const
+\begin{DoxyCompactList}\small\item\em Split into two by splitting the parameter domain along a suitably-\/chosed direction. Currently defaults to \doxylink{classAriadne_1_1Enclosure_a48550b87158802fc6bb3fdff0f0915cb}{split\+\_\+zeroth\+\_\+order()}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Enclosure_ae4f59213291e74c2382553a776cb7d10}\label{classAriadne_1_1Enclosure_ae4f59213291e74c2382553a776cb7d10} 
+\mbox{\hyperlink{namespaceAriadne_abbe0884d033ed6289d1f654576d7bb07}{Pair}}$<$ \mbox{\hyperlink{classAriadne_1_1Enclosure}{Enclosure}}, \mbox{\hyperlink{classAriadne_1_1Enclosure}{Enclosure}} $>$ {\bfseries split} (\mbox{\hyperlink{namespaceAriadne_acd8b5f68421eb22a84277ef7c9c0ee2a}{Size\+Type}} k) const
+\begin{DoxyCompactList}\small\item\em Split into two by splitting the parameter domain along the {\itshape k\textsuperscript{th}} direction. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Enclosure_a364efa9872a31c43fd476dd8e1f6f7cf}\label{classAriadne_1_1Enclosure_a364efa9872a31c43fd476dd8e1f6f7cf} 
+virtual \mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} {\bfseries draw} (\mbox{\hyperlink{classAriadne_1_1CanvasInterface}{Canvas\+Interface}} \&c, const Projection2d \&p) const override
+\begin{DoxyCompactList}\small\item\em Draw to a canvas. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Enclosure_a484d2410199c1f84ab5699482fda93ec}\label{classAriadne_1_1Enclosure_a484d2410199c1f84ab5699482fda93ec} 
+\mbox{\hyperlink{namespaceAriadne_acbb98ddc4385af4599070e65a1a47ec1}{Output\+Stream}} \& {\bfseries \+\_\+write} (\mbox{\hyperlink{namespaceAriadne_acbb98ddc4385af4599070e65a1a47ec1}{Output\+Stream}} \&) const
+\begin{DoxyCompactList}\small\item\em Write to an output stream. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxyparagraph*{Public Member Functions inherited from \mbox{\hyperlink{classAriadne_1_1Drawable2dInterface}{Drawable2d\+Interface}}}
+\begin{DoxyCompactItemize}
+\item 
+virtual {\bfseries \texorpdfstring{$\sim$}{\string~}\+Drawable2d\+Interface} ()=default
+\begin{DoxyCompactList}\small\item\em brief Virtual destructor. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsubsection*{Friends}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1Enclosure_a99b4205dcdf25ed4739074e431730b1a}\label{classAriadne_1_1Enclosure_a99b4205dcdf25ed4739074e431730b1a} 
+\mbox{\hyperlink{classAriadne_1_1Enclosure}{Enclosure}} {\bfseries restriction} (\mbox{\hyperlink{classAriadne_1_1Enclosure}{Enclosure}} const \&encl, const \mbox{\hyperlink{group__FunctionModule_gafdd31b4d01081cd09aad2ce11117f867}{Exact\+Box\+Type}} \&subdomain)
+\begin{DoxyCompactList}\small\item\em The set obtained by restricting to the {\itshape subdomain}. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsubsection*{Related Types and Functions}
+(Note that these are not member symbols.) \begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1Enclosure_a2fb4c202089a23d6285da3848a9c775a}\label{classAriadne_1_1Enclosure_a2fb4c202089a23d6285da3848a9c775a} 
+\mbox{\hyperlink{namespaceAriadne_acbb98ddc4385af4599070e65a1a47ec1}{Output\+Stream}} \& {\bfseries operator$<$$<$} (\mbox{\hyperlink{namespaceAriadne_acbb98ddc4385af4599070e65a1a47ec1}{Output\+Stream}} \&os, const \mbox{\hyperlink{classAriadne_1_1Enclosure}{Enclosure}} \&s)
+\begin{DoxyCompactList}\small\item\em Stream output operator. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Enclosure_a1e8199d8c8610182e3b8d1cca7ca1621}\label{classAriadne_1_1Enclosure_a1e8199d8c8610182e3b8d1cca7ca1621} 
+\mbox{\hyperlink{classAriadne_1_1Enclosure}{Enclosure}} {\bfseries product} (const \mbox{\hyperlink{classAriadne_1_1Enclosure}{Enclosure}} \&set, const \mbox{\hyperlink{group__FunctionModule_gab4f81d909c87bd33486c446890723bb1}{Exact\+Interval\+Type}} \&ivl)
+\begin{DoxyCompactList}\small\item\em The Cartesian product of a constrained image set with an interval in one dimension. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Enclosure_a2cb8c96e5c31cd0237c071bb0fb33866}\label{classAriadne_1_1Enclosure_a2cb8c96e5c31cd0237c071bb0fb33866} 
+\mbox{\hyperlink{classAriadne_1_1Enclosure}{Enclosure}} {\bfseries product} (const \mbox{\hyperlink{classAriadne_1_1Enclosure}{Enclosure}} \&set, const \mbox{\hyperlink{group__FunctionModule_gafdd31b4d01081cd09aad2ce11117f867}{Exact\+Box\+Type}} \&bx)
+\begin{DoxyCompactList}\small\item\em The Cartesian product of a constrained image set with a box. \end{DoxyCompactList}\item 
+\mbox{\hyperlink{classAriadne_1_1Enclosure}{Enclosure}} \mbox{\hyperlink{classAriadne_1_1Enclosure_abd395e55987500ed13bd2b768752aa5e}{product}} (const \mbox{\hyperlink{classAriadne_1_1Enclosure}{Enclosure}} \&set1, const \mbox{\hyperlink{classAriadne_1_1Enclosure}{Enclosure}} \&set2)
+\begin{DoxyCompactList}\small\item\em The Cartesian product of two constrained image sets. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Enclosure_afda542061ce48fa32ff659a9272ad0e9}\label{classAriadne_1_1Enclosure_afda542061ce48fa32ff659a9272ad0e9} 
+\mbox{\hyperlink{classAriadne_1_1Enclosure}{Enclosure}} {\bfseries apply} (const Validated\+Vector\+Multivariate\+Function \&function, const \mbox{\hyperlink{classAriadne_1_1Enclosure}{Enclosure}} \&set)
+\begin{DoxyCompactList}\small\item\em The image of the {\itshape set} under the {\itshape function}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Enclosure_a3f6aa71c9a7bb31dcc0e7e0b10fa87ad}\label{classAriadne_1_1Enclosure_a3f6aa71c9a7bb31dcc0e7e0b10fa87ad} 
+\mbox{\hyperlink{classAriadne_1_1Enclosure}{Enclosure}} {\bfseries unchecked\+\_\+apply} (const \mbox{\hyperlink{classAriadne_1_1FunctionPatch}{Validated\+Vector\+Multivariate\+Function\+Patch}} \&function, const \mbox{\hyperlink{classAriadne_1_1Enclosure}{Enclosure}} \&set)
+\begin{DoxyCompactList}\small\item\em The image of the {\itshape set} under the {\itshape function}. Does not perform domain-\/checking. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Enclosure_ab9b71bdb409d596cdbfd112a6f426462}\label{classAriadne_1_1Enclosure_ab9b71bdb409d596cdbfd112a6f426462} 
+\mbox{\hyperlink{namespaceAriadne_acbb98ddc4385af4599070e65a1a47ec1}{Output\+Stream}} \& {\bfseries operator$<$$<$} (\mbox{\hyperlink{namespaceAriadne_acbb98ddc4385af4599070e65a1a47ec1}{Output\+Stream}} \&os, const Labelled\+Enclosure \&s)
+\begin{DoxyCompactList}\small\item\em Stream output operator. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\label{doc-func-members}
+\Hypertarget{classAriadne_1_1Enclosure_doc-func-members}
+\doxysubsubsection{Member Function Documentation}
+\Hypertarget{classAriadne_1_1Enclosure_a20a6b647a04831cd8cf4c2364e2210a8}\index{Enclosure@{Enclosure}!restrict@{restrict}}
+\index{restrict@{restrict}!Enclosure@{Enclosure}}
+\doxyparagraph{\texorpdfstring{restrict()}{restrict()}}
+{\footnotesize\ttfamily \label{classAriadne_1_1Enclosure_a20a6b647a04831cd8cf4c2364e2210a8} 
+\mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} restrict (\begin{DoxyParamCaption}\item[{const \mbox{\hyperlink{group__FunctionModule_gafdd31b4d01081cd09aad2ce11117f867}{Exact\+Box\+Type}} \&}]{subdomain}{}\end{DoxyParamCaption})}
+
+
+
+Restrict the parameter domain to {\itshape subdomain}. 
+
+May also restrict the domain of the defining function models, resulting in more accurate computations. 
+
+References \mbox{\hyperlink{classAriadne_1_1Enclosure_ab388ad4902d29b26ebd22c77101ad469}{constraint\+\_\+function()}}, \mbox{\hyperlink{classAriadne_1_1Enclosure_a8f3684d77742d9ad67747887be57f7e0}{domain()}}, \mbox{\hyperlink{classAriadne_1_1Enclosure_a3149b7516ca99453a3cf66ee736c853d}{Enclosure()}}, \mbox{\hyperlink{classAriadne_1_1Enclosure_affe37dbdc29e27f4a0bc6a71f9f66e77}{reduce()}}, and \mbox{\hyperlink{classAriadne_1_1Enclosure_a99b4205dcdf25ed4739074e431730b1a}{restriction}}.
+
+
+
+Referenced by \mbox{\hyperlink{classAriadne_1_1Enclosure_a99b4205dcdf25ed4739074e431730b1a}{restriction}}.
+
+
+
+\label{doc-related-members}
+\Hypertarget{classAriadne_1_1Enclosure_doc-related-members}
+\doxysubsubsection{Friends And Related Symbol Documentation}
+\Hypertarget{classAriadne_1_1Enclosure_abd395e55987500ed13bd2b768752aa5e}\index{Enclosure@{Enclosure}!product@{product}}
+\index{product@{product}!Enclosure@{Enclosure}}
+\doxyparagraph{\texorpdfstring{product()}{product()}}
+{\footnotesize\ttfamily \label{classAriadne_1_1Enclosure_abd395e55987500ed13bd2b768752aa5e} 
+\mbox{\hyperlink{classAriadne_1_1Enclosure}{Enclosure}} product (\begin{DoxyParamCaption}\item[{const \mbox{\hyperlink{classAriadne_1_1Enclosure}{Enclosure}} \&}]{set1}{, }\item[{const \mbox{\hyperlink{classAriadne_1_1Enclosure}{Enclosure}} \&}]{set2}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [related]}}
+
+
+
+The Cartesian product of two constrained image sets. 
+
+\begin{DoxyPrecond}{Precondition}
+The time function of each set is constant with the same value. 
+\end{DoxyPrecond}
+
+
+References \mbox{\hyperlink{classAriadne_1_1Enclosure_a1baf865debf406a2e3bd12bdb5c0e7bd}{configuration()}}, \mbox{\hyperlink{classAriadne_1_1Enclosure_a8f3684d77742d9ad67747887be57f7e0}{domain()}}, \mbox{\hyperlink{classAriadne_1_1Enclosure_a0ad81a09988b7308efadd0dab499cc1c}{dwell\+\_\+time\+\_\+function()}}, \mbox{\hyperlink{classAriadne_1_1Enclosure_a3149b7516ca99453a3cf66ee736c853d}{Enclosure()}}, \mbox{\hyperlink{classAriadne_1_1Enclosure_a5e8644dabf697036d7329f9eb6509693}{state\+\_\+function()}}, and \mbox{\hyperlink{classAriadne_1_1Enclosure_aba8ac3b9e445e7e74f925eef60a0d462}{time\+\_\+function()}}.
+
+
+
+The documentation for this class was generated from the following files\+:\begin{DoxyCompactItemize}
+\item 
+source/dynamics/\mbox{\hyperlink{enclosure_8hpp}{enclosure.\+hpp}}\item 
+source/dynamics/enclosure.\+cpp\end{DoxyCompactItemize}

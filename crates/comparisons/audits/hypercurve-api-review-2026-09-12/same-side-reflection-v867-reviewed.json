@@ -1,0 +1,21 @@
+{
+  "qualification": "same-side-reflection-v867-terminal.json",
+  "source_manifest": "same-side-reflection-v867-sources.json",
+  "outer_session_reaped": 43983,
+  "validated_files": 2048,
+  "tests": 335,
+  "checks": 7,
+  "repos": {
+    "hypercurve": {
+      "parent": "fca8c73f35d535828b46b90ab132e1ba0250d2cb",
+      "paths": {
+        "src/bezier_arrangement.rs": "a5a3c8e7c8da1f5a82c6e14411ec06bafb430a34368c740aa104e7222b51a33e",
+        "src/bezier_tangent_order.rs": "a08b3515e518119cf3a6f5cce417b260ac5042a82ff5c52a5973b24ad84b0d54",
+        "tests/hypercurve_bezier_arrangement.rs": "14645316b6e38e3569494afed5b8c19bbe81fbad6d7fdfa887265e861d7c2528",
+        "tests/hypercurve_bezier_tangent_order.rs": "160941d80eed69ec048445f19a7848bfe1edcc6a6b6e35c80e95e870b15e23f2"
+      }
+    }
+  },
+  "scope": "Restore reflection-equivariant same-side second/third-order comparison by reversing the final magnitude order for two certified negative side witnesses. Native and represented arithmetic/evidence kernels remain unchanged. Sixteen unchanged public probe cases repair eight baseline mismatches, with exact native/represented graph oracles and swapped inputs under both policies.",
+  "unresolved": "The full exact-geometry implementation goal remains active; this migration does not establish universal composition closure or a measured speedup."
+}

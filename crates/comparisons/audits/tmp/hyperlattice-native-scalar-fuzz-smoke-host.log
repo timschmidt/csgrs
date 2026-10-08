@@ -1,0 +1,102 @@
+    Finished `release` profile [optimized + debuginfo] target(s) in 0.07s
+    Finished `release` profile [optimized + debuginfo] target(s) in 0.01s
+     Running `fuzz/target/x86_64-unknown-linux-gnu/release/scalar_ops -artifact_prefix=/home/tim/Documents/GitHub/workspace/hyperlattice/fuzz/artifacts/scalar_ops/ -runs=256 -max_len=64 -max_total_time=20 -timeout=10 -rss_limit_mb=2048 -artifact_prefix=/tmp/hyperlattice-native-scalar-fuzz.nvP94n/ /tmp/hyperlattice-native-scalar-fuzz.nvP94n`
+INFO: Running with entropic power schedule (0xFF, 100).
+INFO: Seed: 1522132217
+INFO: Loaded 1 modules   (76500 inline 8-bit counters): 76500 [0x562e2dabd9e0, 0x562e2dad04b4), 
+INFO: Loaded 1 PC tables (76500 PCs): 76500 [0x562e2dad04b8,0x562e2dbfb1f8), 
+INFO:        3 files found in /tmp/hyperlattice-native-scalar-fuzz.nvP94n
+INFO: seed corpus: files: 3 min: 2b max: 3b total: 7b rss: 38Mb
+#6	INITED cov: 2921 ft: 3121 corp: 3/7b exec/s: 0 rss: 50Mb
+#7	NEW    cov: 2921 ft: 3122 corp: 4/9b lim: 4 exec/s: 0 rss: 52Mb L: 2/3 MS: 1 ShuffleBytes-
+#11	NEW    cov: 2921 ft: 3123 corp: 5/12b lim: 4 exec/s: 0 rss: 54Mb L: 3/3 MS: 4 CopyPart-ShuffleBytes-ChangeByte-InsertByte-
+#12	NEW    cov: 2932 ft: 3157 corp: 6/15b lim: 4 exec/s: 0 rss: 55Mb L: 3/3 MS: 1 InsertByte-
+	NEW_FUNC[1/3]: 0x562e2d70d760 in core::ptr::drop_in_place::<hyperreal::real::arithmetic::Real> /rustc/ad3a598ca4bc7c68bcbbce3e0d3be9a7618df190/library/core/src/ptr/mod.rs:809
+	NEW_FUNC[2/3]: 0x562e2d70dac0 in core::ptr::drop_in_place::<hyperreal::real::arithmetic::Class> /rustc/ad3a598ca4bc7c68bcbbce3e0d3be9a7618df190/library/core/src/ptr/mod.rs:809
+#16	NEW    cov: 3054 ft: 3407 corp: 7/16b lim: 4 exec/s: 0 rss: 56Mb L: 1/3 MS: 4 ShuffleBytes-ShuffleBytes-CopyPart-EraseBytes-
+#17	NEW    cov: 3067 ft: 3430 corp: 8/20b lim: 4 exec/s: 0 rss: 56Mb L: 4/4 MS: 1 CMP- DE: "\001\000"-
+	NEW_FUNC[1/77]: 0x562e2d722c10 in <hyperreal::real::arithmetic::Real>::make_computable::<<hyperreal::computable::node::Computable>::acosh_direct_deferred> /home/tim/Documents/GitHub/workspace/hyperreal/src/real/arithmetic/inversion.rs:92
+	NEW_FUNC[2/77]: 0x562e2d723b00 in <hyperreal::real::arithmetic::Real>::make_computable::<<hyperreal::computable::node::Computable>::asinh_direct_deferred> /home/tim/Documents/GitHub/workspace/hyperreal/src/real/arithmetic/inversion.rs:92
+#19	NEW    cov: 4328 ft: 5536 corp: 9/24b lim: 4 exec/s: 0 rss: 58Mb L: 4/4 MS: 1 PersAutoDict- DE: "\001\000"-
+#21	NEW    cov: 4331 ft: 5539 corp: 10/28b lim: 4 exec/s: 0 rss: 59Mb L: 4/4 MS: 2 CrossOver-PersAutoDict- DE: "\001\000"-
+#23	NEW    cov: 4331 ft: 5541 corp: 11/30b lim: 4 exec/s: 0 rss: 60Mb L: 2/4 MS: 2 ChangeByte-ChangeBinInt-
+#25	NEW    cov: 4334 ft: 5548 corp: 12/32b lim: 4 exec/s: 0 rss: 60Mb L: 2/4 MS: 2 EraseBytes-InsertByte-
+#26	NEW    cov: 4334 ft: 5555 corp: 13/36b lim: 4 exec/s: 0 rss: 61Mb L: 4/4 MS: 1 InsertByte-
+	NEW_FUNC[1/3]: 0x562e2d9cc630 in num_bigint::biguint::shift::biguint_shl::<usize> /home/tim/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/num-bigint-0.4.6/src/biguint/shift.rs:12
+	NEW_FUNC[2/3]: 0x562e2d9cd510 in num_bigint::biguint::shift::biguint_shr::<usize> /home/tim/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/num-bigint-0.4.6/src/biguint/shift.rs:54
+#27	NEW    cov: 4369 ft: 5621 corp: 14/40b lim: 4 exec/s: 0 rss: 61Mb L: 4/4 MS: 1 ChangeBit-
+#28	NEW    cov: 4369 ft: 5624 corp: 15/44b lim: 4 exec/s: 0 rss: 61Mb L: 4/4 MS: 1 InsertByte-
+#30	NEW    cov: 4370 ft: 5625 corp: 16/48b lim: 4 exec/s: 0 rss: 62Mb L: 4/4 MS: 2 ChangeBinInt-ChangeBinInt-
+#31	NEW    cov: 4381 ft: 5671 corp: 17/51b lim: 4 exec/s: 0 rss: 62Mb L: 3/4 MS: 1 ChangeBit-
+#38	NEW    cov: 4381 ft: 5674 corp: 18/55b lim: 4 exec/s: 0 rss: 65Mb L: 4/4 MS: 2 ChangeBinInt-ChangeByte-
+#39	NEW    cov: 4385 ft: 5790 corp: 19/59b lim: 4 exec/s: 0 rss: 65Mb L: 4/4 MS: 1 ChangeByte-
+	NEW_FUNC[1/3]: 0x562e2d710cc9 in <std::sync::once_lock::OnceLock<hyperreal::rational::arithmetic::Rational>>::initialize::<<std::sync::once_lock::OnceLock<hyperreal::rational::arithmetic::Rational>>::get_or_init<<hyperreal::rational::arithmetic::Rational>::small_reduced_general_fraction::{closure#0}>::{closure#0}, !> /rustc/ad3a598ca4bc7c68bcbbce3e0d3be9a7618df190/library/std/src/sync/once_lock.rs:533
+	NEW_FUNC[2/3]: 0x562e2d7511b0 in <std::sync::once::Once>::call_once_force::<<std::sync::once_lock::OnceLock<hyperreal::rational::arithmetic::Rational>>::initialize<<std::sync::once_lock::OnceLock<hyperreal::rational::arithmetic::Rational>>::get_or_init<<hyperreal::rational::arithmetic::Rational>::small_reduced_general_fraction::{closure#0}>::{closure#0}, !>::{closure#0}>::{closure#0} /rustc/ad3a598ca4bc7c68bcbbce3e0d3be9a7618df190/library/std/src/sync/once.rs:226
+#48	NEW    cov: 4436 ft: 6400 corp: 20/62b lim: 4 exec/s: 0 rss: 68Mb L: 3/4 MS: 3 ShuffleBytes-ChangeBit-ChangeBinInt-
+#49	NEW    cov: 4436 ft: 6403 corp: 21/66b lim: 4 exec/s: 0 rss: 68Mb L: 4/4 MS: 1 CopyPart-
+#50	NEW    cov: 4443 ft: 6431 corp: 22/69b lim: 4 exec/s: 0 rss: 68Mb L: 3/4 MS: 1 CopyPart-
+#52	NEW    cov: 4444 ft: 6432 corp: 23/72b lim: 4 exec/s: 0 rss: 69Mb L: 3/4 MS: 2 CopyPart-ChangeBit-
+#55	NEW    cov: 4444 ft: 6434 corp: 24/75b lim: 4 exec/s: 0 rss: 70Mb L: 3/4 MS: 3 ChangeByte-ChangeBinInt-ChangeByte-
+#60	NEW    cov: 4448 ft: 6626 corp: 25/78b lim: 4 exec/s: 0 rss: 72Mb L: 3/4 MS: 4 ShuffleBytes-ChangeBinInt-ChangeByte-PersAutoDict- DE: "\001\000"-
+#62	NEW    cov: 4449 ft: 6627 corp: 26/82b lim: 4 exec/s: 0 rss: 72Mb L: 4/4 MS: 2 ChangeBinInt-ChangeBit-
+#63	NEW    cov: 4449 ft: 6628 corp: 27/86b lim: 4 exec/s: 0 rss: 73Mb L: 4/4 MS: 1 PersAutoDict- DE: "\001\000"-
+#65	NEW    cov: 4449 ft: 6631 corp: 28/90b lim: 4 exec/s: 0 rss: 74Mb L: 4/4 MS: 2 ChangeBit-CopyPart-
+	NEW_FUNC[1/3]: 0x562e2d71ce40 in <std::sys::thread_local::native::lazy::Storage<hyperreal::real::arithmetic::Real, ()>>::get_or_init_slow::<hyperreal::real::arithmetic::constants::LN10::__rust_std_internal_init_fn> /rustc/ad3a598ca4bc7c68bcbbce3e0d3be9a7618df190/library/std/src/sys/thread_local/native/lazy.rs:69
+	NEW_FUNC[2/3]: 0x562e2d88be10 in <hyperreal::computable::node::Computable>::square /home/tim/Documents/GitHub/workspace/hyperreal/src/computable/node/algebra.rs:1251
+#67	NEW    cov: 4512 ft: 6961 corp: 29/92b lim: 4 exec/s: 0 rss: 74Mb L: 2/4 MS: 1 ChangeByte-
+#71	NEW    cov: 4512 ft: 6962 corp: 30/96b lim: 4 exec/s: 0 rss: 75Mb L: 4/4 MS: 4 EraseBytes-CopyPart-ChangeBit-InsertByte-
+#73	NEW    cov: 4512 ft: 6964 corp: 31/100b lim: 4 exec/s: 0 rss: 76Mb L: 4/4 MS: 2 InsertByte-ChangeBit-
+#75	NEW    cov: 4513 ft: 6966 corp: 32/104b lim: 4 exec/s: 0 rss: 76Mb L: 4/4 MS: 2 ChangeBit-CrossOver-
+#76	NEW    cov: 4514 ft: 6969 corp: 33/108b lim: 4 exec/s: 0 rss: 77Mb L: 4/4 MS: 1 ChangeBit-
+#78	NEW    cov: 4522 ft: 7022 corp: 34/110b lim: 4 exec/s: 0 rss: 77Mb L: 2/4 MS: 2 ShuffleBytes-ShuffleBytes-
+#80	NEW    cov: 4523 ft: 7023 corp: 35/114b lim: 4 exec/s: 0 rss: 78Mb L: 4/4 MS: 2 InsertByte-ChangeBit-
+#82	NEW    cov: 4524 ft: 7035 corp: 36/117b lim: 4 exec/s: 0 rss: 79Mb L: 3/4 MS: 2 CopyPart-ShuffleBytes-
+#86	NEW    cov: 4524 ft: 7036 corp: 37/121b lim: 4 exec/s: 0 rss: 80Mb L: 4/4 MS: 4 CrossOver-CopyPart-ChangeBit-PersAutoDict- DE: "\001\000"-
+	NEW_FUNC[1/1]: 0x562e2d711720 in <std::sys::thread_local::native::lazy::Storage<hyperreal::real::arithmetic::Real, ()>>::get_or_init_slow::<hyperreal::real::arithmetic::constants::SQRT_THREE::__rust_std_internal_init_fn> /rustc/ad3a598ca4bc7c68bcbbce3e0d3be9a7618df190/library/std/src/sys/thread_local/native/lazy.rs:69
+#88	NEW    cov: 4541 ft: 7056 corp: 38/124b lim: 4 exec/s: 0 rss: 81Mb L: 3/4 MS: 1 PersAutoDict- DE: "\001\000"-
+#91	NEW    cov: 4541 ft: 7309 corp: 39/126b lim: 4 exec/s: 0 rss: 82Mb L: 2/4 MS: 3 ShuffleBytes-ChangeByte-EraseBytes-
+#92	NEW    cov: 4541 ft: 7604 corp: 40/130b lim: 4 exec/s: 0 rss: 83Mb L: 4/4 MS: 1 ShuffleBytes-
+#98	NEW    cov: 4541 ft: 7611 corp: 41/134b lim: 4 exec/s: 0 rss: 85Mb L: 4/4 MS: 1 CopyPart-
+#103	NEW    cov: 4548 ft: 7665 corp: 42/136b lim: 4 exec/s: 0 rss: 86Mb L: 2/4 MS: 5 EraseBytes-ShuffleBytes-ChangeBit-ChangeBinInt-ChangeByte-
+#106	NEW    cov: 4548 ft: 7673 corp: 43/138b lim: 4 exec/s: 0 rss: 87Mb L: 2/4 MS: 3 CopyPart-CopyPart-EraseBytes-
+#110	NEW    cov: 4548 ft: 7674 corp: 44/142b lim: 4 exec/s: 0 rss: 89Mb L: 4/4 MS: 4 CopyPart-ShuffleBytes-ChangeBinInt-ChangeByte-
+#111	NEW    cov: 4549 ft: 7675 corp: 45/146b lim: 4 exec/s: 0 rss: 89Mb L: 4/4 MS: 1 ChangeBinInt-
+	NEW_FUNC[1/5]: 0x562e2d719610 in <std::sys::thread_local::native::lazy::Storage<hyperreal::real::arithmetic::Real, ()>>::get_or_init_slow::<hyperreal::real::arithmetic::constants::LN2::__rust_std_internal_init_fn> /rustc/ad3a598ca4bc7c68bcbbce3e0d3be9a7618df190/library/std/src/sys/thread_local/native/lazy.rs:69
+	NEW_FUNC[2/5]: 0x562e2d734d20 in core::ptr::drop_in_place::<alloc::vec::Vec<num_bigint::biguint::BigUint>> /rustc/ad3a598ca4bc7c68bcbbce3e0d3be9a7618df190/library/core/src/ptr/mod.rs:809
+#113	NEW    cov: 4741 ft: 8336 corp: 46/150b lim: 4 exec/s: 0 rss: 89Mb L: 4/4 MS: 1 ShuffleBytes-
+#114	NEW    cov: 4741 ft: 8337 corp: 47/152b lim: 4 exec/s: 0 rss: 90Mb L: 2/4 MS: 1 CMP- DE: "\000\024"-
+#116	NEW    cov: 4743 ft: 8342 corp: 48/154b lim: 4 exec/s: 0 rss: 90Mb L: 2/4 MS: 2 EraseBytes-CrossOver-
+#118	NEW    cov: 4743 ft: 8343 corp: 49/158b lim: 4 exec/s: 0 rss: 91Mb L: 4/4 MS: 2 ChangeBit-ChangeBit-
+#127	NEW    cov: 4743 ft: 8372 corp: 50/162b lim: 4 exec/s: 0 rss: 93Mb L: 4/4 MS: 4 EraseBytes-ChangeBit-ChangeByte-CrossOver-
+#131	NEW    cov: 4743 ft: 8423 corp: 51/165b lim: 4 exec/s: 0 rss: 93Mb L: 3/4 MS: 3 ShuffleBytes-ChangeBinInt-InsertByte-
+	NEW_FUNC[1/9]: 0x562e2d714910 in <std::sys::thread_local::native::lazy::Storage<hyperreal::real::arithmetic::Real, ()>>::get_or_init_slow::<hyperreal::real::arithmetic::constants::PI_OVER_FOUR::__rust_std_internal_init_fn> /rustc/ad3a598ca4bc7c68bcbbce3e0d3be9a7618df190/library/std/src/sys/thread_local/native/lazy.rs:69
+	NEW_FUNC[2/9]: 0x562e2d726810 in <hyperreal::real::arithmetic::Real>::make_computable::<<hyperreal::computable::node::Computable>::asinh_near_zero_deferred> /home/tim/Documents/GitHub/workspace/hyperreal/src/real/arithmetic/inversion.rs:92
+#136	NEW    cov: 4893 ft: 8881 corp: 52/167b lim: 4 exec/s: 0 rss: 94Mb L: 2/4 MS: 4 CopyPart-EraseBytes-ChangeBinInt-EraseBytes-
+#137	NEW    cov: 4894 ft: 8885 corp: 53/170b lim: 4 exec/s: 0 rss: 95Mb L: 3/4 MS: 1 CopyPart-
+#139	NEW    cov: 4895 ft: 8887 corp: 54/173b lim: 4 exec/s: 0 rss: 95Mb L: 3/4 MS: 1 CopyPart-
+#141	NEW    cov: 4904 ft: 8905 corp: 55/176b lim: 4 exec/s: 0 rss: 96Mb L: 3/4 MS: 1 InsertByte-
+#142	NEW    cov: 4904 ft: 8907 corp: 56/180b lim: 4 exec/s: 0 rss: 96Mb L: 4/4 MS: 1 ChangeByte-
+#152	NEW    cov: 4904 ft: 8978 corp: 57/182b lim: 4 exec/s: 0 rss: 98Mb L: 2/4 MS: 4 EraseBytes-ChangeByte-ChangeBit-ChangeBit-
+#153	NEW    cov: 4908 ft: 8983 corp: 58/186b lim: 4 exec/s: 0 rss: 98Mb L: 4/4 MS: 1 InsertByte-
+#154	NEW    cov: 4914 ft: 8989 corp: 59/190b lim: 4 exec/s: 0 rss: 99Mb L: 4/4 MS: 1 ChangeByte-
+#160	NEW    cov: 4915 ft: 9048 corp: 60/193b lim: 4 exec/s: 0 rss: 101Mb L: 3/4 MS: 5 ChangeBit-CrossOver-ShuffleBytes-PersAutoDict-ChangeByte- DE: "\000\024"-
+	NEW_FUNC[1/27]: 0x562e2d711240 in <std::sync::once::Once>::call_once_force::<<std::sync::lazy_lock::LazyLock<num_bigint::biguint::BigUint>>::force::{closure#0}> /rustc/ad3a598ca4bc7c68bcbbce3e0d3be9a7618df190/library/std/src/sync/once.rs:216
+	NEW_FUNC[2/27]: 0x562e2d7538e0 in <hyperreal::computable::node::Computable>::cos::{closure#0} /home/tim/Documents/GitHub/workspace/hyperreal/src/computable/node/exp_trig.rs:628
+#169	NEW    cov: 5268 ft: 10012 corp: 61/195b lim: 4 exec/s: 0 rss: 102Mb L: 2/4 MS: 3 ChangeBinInt-ShuffleBytes-ChangeBinInt-
+#175	NEW    cov: 5268 ft: 10036 corp: 62/199b lim: 4 exec/s: 0 rss: 104Mb L: 4/4 MS: 1 ChangeBinInt-
+#181	NEW    cov: 5269 ft: 10037 corp: 63/203b lim: 4 exec/s: 0 rss: 106Mb L: 4/4 MS: 1 ChangeBit-
+#182	NEW    cov: 5270 ft: 10042 corp: 64/206b lim: 4 exec/s: 0 rss: 107Mb L: 3/4 MS: 1 ChangeByte-
+#194	NEW    cov: 5270 ft: 10044 corp: 65/210b lim: 4 exec/s: 0 rss: 109Mb L: 4/4 MS: 1 ChangeBit-
+#208	NEW    cov: 5270 ft: 10046 corp: 66/214b lim: 4 exec/s: 0 rss: 114Mb L: 4/4 MS: 2 ChangeBinInt-ShuffleBytes-
+#210	NEW    cov: 5271 ft: 10048 corp: 67/218b lim: 4 exec/s: 0 rss: 114Mb L: 4/4 MS: 2 ShuffleBytes-ChangeBinInt-
+#219	NEW    cov: 5271 ft: 10049 corp: 68/222b lim: 4 exec/s: 0 rss: 117Mb L: 4/4 MS: 4 CrossOver-PersAutoDict-ChangeBinInt-ChangeByte- DE: "\000\024"-
+#236	NEW    cov: 5271 ft: 10050 corp: 69/226b lim: 4 exec/s: 236 rss: 122Mb L: 4/4 MS: 2 ChangeByte-InsertByte-
+#240	NEW    cov: 5271 ft: 10073 corp: 70/230b lim: 4 exec/s: 240 rss: 123Mb L: 4/4 MS: 3 EraseBytes-ChangeBit-CrossOver-
+#245	NEW    cov: 5272 ft: 10104 corp: 71/232b lim: 4 exec/s: 245 rss: 123Mb L: 2/4 MS: 5 CrossOver-ShuffleBytes-ChangeByte-ChangeBit-InsertByte-
+#250	NEW    cov: 5272 ft: 10652 corp: 72/236b lim: 4 exec/s: 250 rss: 124Mb L: 4/4 MS: 4 ChangeByte-CopyPart-ChangeBinInt-ChangeByte-
+#256	DONE   cov: 5272 ft: 10652 corp: 72/236b lim: 4 exec/s: 256 rss: 126Mb
+###### Recommended dictionary. ######
+"\001\000" # Uses: 8
+"\000\024" # Uses: 5
+###### End of recommended dictionary. ######
+Done 256 runs in 1 second(s)

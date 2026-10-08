@@ -1,0 +1,40 @@
+{
+  "baseline": "mixed-endpoint-order-v877-sources.json",
+  "rlib": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypercurve-85a9105cd1c82df7.rlib",
+  "rlib_sha256": "a090511f594f019b0b650facf14d6bb0ada374300fa97663879f4b3e647878fd",
+  "source_sha256": "c2dffe142a0df20f4356e9c72358b5a305bbdf4938b2bd9ec9bdca1d360bae1a",
+  "processes": [
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustc",
+        "--edition=2024",
+        "--crate-name",
+        "mixed_endpoint_order_probe",
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/mixed-endpoint-order-probe-v876.rs",
+        "--extern",
+        "hypercurve=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypercurve-85a9105cd1c82df7.rlib",
+        "-L",
+        "dependency=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps",
+        "-C",
+        "opt-level=3",
+        "-o",
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/mixed-endpoint-order-replay-v878-binary"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.464444245910272,
+      "log": "mixed-endpoint-order-replay-v878-compile.log"
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/mixed-endpoint-order-replay-v878-binary"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.007629187079146504,
+      "log": "mixed-endpoint-order-replay-v878-cases.log"
+    }
+  ],
+  "all_processes_reaped": true,
+  "binary_sha256": "0045acb00f4239e7e69be9663e1f988cbcec7ded80fe860a39bdc3e46f18a6c5",
+  "output": "policy=0 family=0 order=2 selected_first=false swapped=false decided=true\npolicy=0 family=0 order=2 selected_first=false swapped=true decided=true\npolicy=0 family=0 order=2 selected_first=true swapped=false decided=true\npolicy=0 family=0 order=2 selected_first=true swapped=true decided=true\npolicy=0 family=0 order=3 selected_first=false swapped=false decided=true\npolicy=0 family=0 order=3 selected_first=false swapped=true decided=true\npolicy=0 family=0 order=3 selected_first=true swapped=false decided=true\npolicy=0 family=0 order=3 selected_first=true swapped=true decided=true\npolicy=0 family=1 order=2 selected_first=false swapped=false decided=true\npolicy=0 family=1 order=2 selected_first=false swapped=true decided=true\npolicy=0 family=1 order=2 selected_first=true swapped=false decided=true\npolicy=0 family=1 order=2 selected_first=true swapped=true decided=true\npolicy=0 family=1 order=3 selected_first=false swapped=false decided=true\npolicy=0 family=1 order=3 selected_first=false swapped=true decided=true\npolicy=0 family=1 order=3 selected_first=true swapped=false decided=true\npolicy=0 family=1 order=3 selected_first=true swapped=true decided=true\npolicy=0 family=2 order=2 selected_first=false swapped=false decided=true\npolicy=0 family=2 order=2 selected_first=false swapped=true decided=true\npolicy=0 family=2 order=2 selected_first=true swapped=false decided=true\npolicy=0 family=2 order=2 selected_first=true swapped=true decided=true\npolicy=0 family=2 order=3 selected_first=false swapped=false decided=true\npolicy=0 family=2 order=3 selected_first=false swapped=true decided=true\npolicy=0 family=2 order=3 selected_first=true swapped=false decided=true\npolicy=0 family=2 order=3 selected_first=true swapped=true decided=true\npolicy=1 family=0 order=2 selected_first=false swapped=false decided=true\npolicy=1 family=0 order=2 selected_first=false swapped=true decided=true\npolicy=1 family=0 order=2 selected_first=true swapped=false decided=true\npolicy=1 family=0 order=2 selected_first=true swapped=true decided=true\npolicy=1 family=0 order=3 selected_first=false swapped=false decided=true\npolicy=1 family=0 order=3 selected_first=false swapped=true decided=true\npolicy=1 family=0 order=3 selected_first=true swapped=false decided=true\npolicy=1 family=0 order=3 selected_first=true swapped=true decided=true\npolicy=1 family=1 order=2 selected_first=false swapped=false decided=true\npolicy=1 family=1 order=2 selected_first=false swapped=true decided=true\npolicy=1 family=1 order=2 selected_first=true swapped=false decided=true\npolicy=1 family=1 order=2 selected_first=true swapped=true decided=true\npolicy=1 family=1 order=3 selected_first=false swapped=false decided=true\npolicy=1 family=1 order=3 selected_first=false swapped=true decided=true\npolicy=1 family=1 order=3 selected_first=true swapped=false decided=true\npolicy=1 family=1 order=3 selected_first=true swapped=true decided=true\npolicy=1 family=2 order=2 selected_first=false swapped=false decided=true\npolicy=1 family=2 order=2 selected_first=false swapped=true decided=true\npolicy=1 family=2 order=2 selected_first=true swapped=false decided=true\npolicy=1 family=2 order=2 selected_first=true swapped=true decided=true\npolicy=1 family=2 order=3 selected_first=false swapped=false decided=true\npolicy=1 family=2 order=3 selected_first=false swapped=true decided=true\npolicy=1 family=2 order=3 selected_first=true swapped=false decided=true\npolicy=1 family=2 order=3 selected_first=true swapped=true decided=true\ncomplete requests=48 blocked=0\n",
+  "probe_complete": true
+}

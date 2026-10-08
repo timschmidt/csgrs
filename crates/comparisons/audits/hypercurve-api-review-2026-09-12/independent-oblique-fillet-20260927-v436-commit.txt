@@ -1,0 +1,26 @@
+Replay independent oblique chord fillet families through exact charts
+
+Mixed chord/parallel coincidence discarded its regular sample and rejected
+retained chords without a represented affine support. Retain that witness
+and reuse the existing component solver through an exact source chart,
+then restore original chord locations and recheck all supplied constraints.
+Radius-only requests for a surviving family require an exact center/contact.
+
+Reuse domain-certified rational PH images with original parameter charts
+and normal constraints before constructing radical pair equations. Unresolved
+tangent forms and displaced coordinates reuse existing projective predicates;
+certified native interval decisions remain first. Angular ordering reuses
+reference collinearity rather than recomputing candidate determinants.
+Admit regular incident bridges outside [0,1] using the existing ordered-interval constructor, with
+unchanged source-pole and normal-regularity checks. No public curve variant
+or compatibility interface is added.
+
+Validation: 323 selected release tests across seven binaries and six checks:
+Clippy in both feature modes, formatting, editing fuzz compilation,
+denied-warning documentation and Hyperbrep compilation. New regressions
+cover 80 constrained fillet edits with Boolean/offset reentry, exact signs
+below 2^-512, swapped normal constraints and exterior retained endpoints.
+The nonlinear selected-corner chamfer passes in 4.82 seconds (4.72 prior).
+The quartic parallel chamfer passes in 81.02 seconds (111.46 prior).
+Two previously recorded extended-fillet re-offset performance failures
+remain open and excluded from this passing scope.

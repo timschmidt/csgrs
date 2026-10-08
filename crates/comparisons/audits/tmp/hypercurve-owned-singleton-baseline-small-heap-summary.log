@@ -1,0 +1,10 @@
+reading file "/tmp/hypercurve-owned-singleton-baseline-small.heap.zst" - please wait, this might take some time...
+Debuggee command was: /tmp/hypercurve-local-refinement-frozen-baseline-test bezier_offset::conversion_tests::specialized_common_fiber_counts_even_multiplicity_in_a_coupled_system --exact --nocapture --test-threads=1
+finished reading file, now analyzing data:
+
+total runtime: 0.054000s.
+calls to allocation functions: 11671 (216129/s)
+temporary memory allocations: 471 (8722/s)
+peak heap memory consumption: 243.57K
+peak RSS (including heaptrack overhead): 14.18M
+total memory leaked: 90.14K

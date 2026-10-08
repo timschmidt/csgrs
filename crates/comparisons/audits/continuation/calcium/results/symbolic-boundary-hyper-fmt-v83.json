@@ -1,0 +1,20 @@
+{
+  "tag": "symbolic-boundary-hyper-fmt-v83",
+  "started": "2026-09-12T03:54:50.283Z",
+  "finished": "2026-09-12T03:54:50.337Z",
+  "elapsedSeconds": 0.05146888299999999,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/symbolic-boundary-hyper-v83",
+  "command": "env",
+  "args": [
+    "CARGO_TARGET_DIR=/tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse",
+    "CARGO_INCREMENTAL=0",
+    "CARGO_PROFILE_DEV_DEBUG=0",
+    "CARGO_BUILD_JOBS=2",
+    "cargo",
+    "fmt",
+    "--",
+    "--check"
+  ],
+  "code": 0,
+  "signal": null
+}

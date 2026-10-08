@@ -1,0 +1,26 @@
+ToNearest
+rational conversions: 2178; unsound enclosures: 598; exceptions: 0
+((-16,1,1022),Just (-Infinity),Just (-Infinity))
+((-16,1,1023),Just (-Infinity),Just (-Infinity))
+((-16,1,1024),Just (-Infinity),Just (-Infinity))
+((-16,1,1100),Just (-Infinity),Just (-Infinity))
+((-16,3,-1077),Just (-5.0e-324),Just (-5.0e-324))
+((-16,3,-1076),Just (-5.0e-324),Just (-5.0e-324))
+((-16,3,-1075),Just (-1.5e-323),Just (-1.5e-323))
+((-16,3,-1074),Just (-2.5e-323),Just (-2.5e-323))
+((-16,3,-1073),Just (-5.4e-323),Just (-5.4e-323))
+((-16,3,-1072),Just (-1.04e-322),Just (-1.04e-322))
+((-16,3,1022),Just (-Infinity),Just (-Infinity))
+((-16,3,1023),Just (-Infinity),Just (-Infinity))
+out-of-range Int conversions (directional bounds, not exact casts):
+(-1208925819614629174706176,Nothing,Just 0,True,True)
+(-18446744073709551616,Nothing,Just 0,True,True)
+(-9223372036854777856,Nothing,Just 9223372036854773760,True,True)
+(9223372036854775808,Just (-9223372036854775808),Nothing,True,True)
+(18446744073709551616,Just 0,Nothing,True,True)
+(1208925819614629174706176,Just 0,Nothing,True,True)
+bisection boundary samples:
+(<1.7976931348623157e308>,([_1.7976931348623157e308,Infinity^],[^Infinity,1.7976931348623157e308_]))
+([_-1.7976931348623157e308,1.7976931348623157e308^],([_-1.7976931348623157e308,0.0^],[_0.0,1.7976931348623157e308^]))
+([_0.0,5.0e-324^],(<0.0>,[_0.0,5.0e-324^]))
+Probe completed; counts are observations, not library qualification.

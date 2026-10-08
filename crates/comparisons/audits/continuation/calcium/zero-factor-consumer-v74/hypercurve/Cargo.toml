@@ -1,0 +1,149 @@
+[package]
+name = "hypercurve"
+version = "0.3.1"
+edition = "2024"
+description = "Hyperreal-backed planar curves, contours, and regions for CAD topology"
+authors = ["Timothy Schmidt <timschmidt@gmail.com>"]
+license = "Apache-2.0"
+repository = "https://github.com/timschmidt/hypercurve"
+readme = "README.md"
+keywords = ["cad", "curves", "geometry", "hyperreal", "topology"]
+categories = ["mathematics", "graphics", "algorithms"]
+
+[package.metadata.docs.rs]
+all-features = true
+
+[dependencies]
+hyperreal = { version = "0.13.1", path = "../../e-plan-qualified-candidate/hyperreal", default-features = false }
+hypersolve = { version = "0.3.1", path = "../../zero-factor-candidate-v70/hypersolve", default-features = false }
+hyperlimit = { version = "0.4.1", path = "../../e-plan-qualified-candidate/hyperlimit", default-features = false, features = ["std"] }
+hypertri = { version = "0.4.1", path = "../../e-plan-qualified-candidate/hypertri", default-features = false, features = ["earcut"], optional = true }
+num = { version = "0.4.3", features = ["num-bigint"] }
+cavalier_contours = { version = "0.7.0", optional = true }
+curvo = { version = "0.1.91", optional = true }
+i_overlay = { version = "7.0.2", default-features = false, optional = true }
+nalgebra = { version = "0.35", optional = true }
+svg = { version = "0.18", optional = true }
+svgtypes = { version = "0.16.1", optional = true }
+[dev-dependencies]
+geo = "0.33.1"
+proptest = "1"
+
+[features]
+default = []
+dispatch-trace = ["hyperreal/dispatch-trace", "hyperlimit/dispatch-trace"]
+triangulation = ["dep:hypertri"]
+svg = ["dep:svg", "dep:svgtypes", "hyperreal/serde"]
+hershey = []
+comparative-benchmarks = [
+    "dep:cavalier_contours",
+    "dep:curvo",
+    "dep:i_overlay",
+    "dep:nalgebra",
+]
+
+[[bench]]
+name = "containment"
+harness = false
+
+[[bench]]
+name = "intersection"
+harness = false
+
+[[bench]]
+name = "intersection_sweep"
+harness = false
+
+[[bench]]
+name = "bezier_algebraic_parameter"
+harness = false
+
+[[bench]]
+name = "bezier_arrangement"
+harness = false
+
+[[bench]]
+name = "bezier_rational_overlap"
+harness = false
+
+[[bench]]
+name = "bezier_region"
+harness = false
+
+[[bench]]
+name = "curve_region_boolean_batch"
+harness = false
+
+[[bench]]
+name = "bezier_split_materialization"
+harness = false
+
+[[bench]]
+name = "bezier_evaluation"
+harness = false
+
+[[bench]]
+name = "bezier_tangent_order"
+harness = false
+
+[[bench]]
+name = "bspline"
+harness = false
+
+[[bench]]
+name = "rational_bezier"
+harness = false
+
+[[bench]]
+name = "arc"
+harness = false
+
+[[bench]]
+name = "curve_path"
+harness = false
+
+[[bench]]
+name = "straight_skeleton"
+harness = false
+
+[[bench]]
+name = "offset"
+harness = false
+
+[[bench]]
+name = "editing"
+harness = false
+
+[[bench]]
+name = "reconstruction"
+harness = false
+
+[[bench]]
+name = "dispatch_trace"
+harness = false
+required-features = ["dispatch-trace"]
+
+[[bench]]
+name = "api_surface"
+harness = false
+required-features = ["triangulation"]
+
+[[bench]]
+name = "finite_projection"
+harness = false
+
+[[bench]]
+name = "comparative"
+harness = false
+required-features = ["comparative-benchmarks"]
+
+[[bench]]
+name = "pathological_regions"
+harness = false
+
+[patch.crates-io]
+hyperreal = { path = "../../e-plan-qualified-candidate/hyperreal" }
+hyperlattice = { path = "../../e-plan-qualified-candidate/hyperlattice" }
+hyperlimit = { path = "../../e-plan-qualified-candidate/hyperlimit" }
+hypersolve = { path = "../../zero-factor-candidate-v70/hypersolve" }
+hypertri = { path = "../../e-plan-qualified-candidate/hypertri" }

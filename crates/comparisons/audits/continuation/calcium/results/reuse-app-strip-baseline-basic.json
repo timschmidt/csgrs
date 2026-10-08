@@ -1,0 +1,16 @@
+{
+  "tag": "reuse-app-strip-baseline-basic",
+  "started": "2026-09-08T22:27:28.168Z",
+  "finished": "2026-09-08T22:27:28.203Z",
+  "elapsedSeconds": 0.033107649999999995,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "strip",
+  "args": [
+    "--strip-all",
+    "-o",
+    "/tmp/calcium-reuse-costs.73SR1w/app-baseline-basic.stripped",
+    "/tmp/calcium-reuse-costs.73SR1w/app-baseline-basic"
+  ],
+  "code": 0,
+  "signal": null
+}

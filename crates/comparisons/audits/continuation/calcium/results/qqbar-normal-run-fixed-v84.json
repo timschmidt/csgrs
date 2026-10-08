@@ -1,0 +1,13 @@
+{
+  "tag": "qqbar-normal-run-fixed-v84",
+  "started": "2026-09-12T04:48:12.959Z",
+  "finished": "2026-09-12T04:48:18.745Z",
+  "elapsedSeconds": 5.7843643810000005,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "node",
+  "args": [
+    "run-qqbar-normal-fixed-v84.mjs"
+  ],
+  "code": 0,
+  "signal": null
+}

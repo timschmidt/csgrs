@@ -1,0 +1,90 @@
+{
+  "hypercurve/benches/bezier_algebraic_parameter.rs": {
+    "before": "6cac0534c8b3787357948f9d1182b1b698af2292144edc0b043f45d44294ea36",
+    "candidate": "193c964818bc0c53390c095e2e5cc09e92b14a1bd9dc5b89c7f9ff45c014644b"
+  },
+  "hypercurve/benches/bezier_arrangement.rs": {
+    "before": "0a1932fd58a8982334608f3032787069c0e87a49b29950ca52032e671e92903a",
+    "candidate": "c593a34083a77bcbf45d0f53e7f8014a8de4c42c2dbe0baed088797df07c8dcb"
+  },
+  "hypercurve/benches/bezier_region.rs": {
+    "before": "3a1f7c948dff1c8fa4457b3aeffe66bf86924826cac56ccdced2961a49d8f1e3",
+    "candidate": "1e9760f6ad77d4355ac8afc8eb4380a0b0839b02993118fa85d84f9be47bbd46"
+  },
+  "hypercurve/benches/bezier_split_materialization.rs": {
+    "before": "e707f6d03ba7316ed8be5c68adff6d6d7320807b98e75fd05f508cb31885288f",
+    "candidate": "fe78f75f02513f51d97d39611ec8bb4af700d43529670ca03f1d804f4d6ac196"
+  },
+  "hypercurve/benches/curve_region_boolean_batch.rs": {
+    "before": "d289e19ea7a8a18d02642562455d161f81581cb430293f693a553784107a7c59",
+    "candidate": "29cc0c773954abbb24f1c29f96eb9282e8cbbbe3ffac3e5c8c1e5cd5d5f167c3"
+  },
+  "hypercurve/benches/offset.rs": {
+    "before": "085279136e68b5d626710a0c661bfcfceabc0b1c635ffce2c9b02764231bde85",
+    "candidate": "e1455d495f8dfa161dd331731a0063a85dbae1167b27f55c6cfe705b846412f5"
+  },
+  "hypercurve/fuzz/fuzz_targets/bezier_arrangement.rs": {
+    "before": "5b8d8bc433994a49f89a693108cfbd1b27f439d92d770486044567b06fd66f83",
+    "candidate": "affa7ce164b7261fb4a8c68161e8c316e13ce9ce6d9af15e2b82f375c46773f1"
+  },
+  "hypercurve/fuzz/fuzz_targets/bezier_region.rs": {
+    "before": "27233ffa7c4f1693eb0cf4ad4fa2580c9b78b765c6e90809225363757f1113cb",
+    "candidate": "a3181e87862f10d8305daa78ebcef6dadebc47ce570530ee29e4a15df8b71855"
+  },
+  "hypercurve/fuzz/fuzz_targets/bezier_split_materialization.rs": {
+    "before": "6f08c82e2dd4f4079bd341cc555e44823c6f4352859f43e3eb643c910c3d2e21",
+    "candidate": "271f9f558863a1cde866ec9f3fa388a7a6452749bee23efb20b57b36cdd0c960"
+  },
+  "hypercurve/src/bezier_offset.rs": {
+    "before": "cc2fbe4c176ddc78cd030fc72157af5d0dcc660c8fa0cd34fd540ab41c303628",
+    "candidate": "0198f44abc2c9e2ae922254e66a8aa67bb574cd2d43c2db864ca5adb086bfef1"
+  },
+  "hypercurve/src/bezier_parameter.rs": {
+    "before": "92234189774245692b44bb4053942856eb13acc21c8d9b79d9d577425e30a6ac",
+    "candidate": "4cc33e12ff83ef2faea6c2e4d303b898e6d2fb1aae96d27a3b3546c908eacb84"
+  },
+  "hypercurve/src/bezier_region.rs": {
+    "before": "8666ba5681ee10d8d959ae500744933354a3a30b8d7f8a1164302962fa936ed6",
+    "candidate": "1e3615825e353fd71c3ff271da824186d7c40db8ba6852ade1f4c7afbffa1046"
+  },
+  "hypercurve/src/curve_region_trim.rs": {
+    "before": "9f5c38aa39c8042a1b4567761329223d8b824dc14a91218f06ca5c3ab5ce010b",
+    "candidate": "1c675a02f39b889c8cef215bea6a14c833bf12881119097a5686f1b217cdbbdd"
+  },
+  "hypercurve/src/curve_subdivision.rs": {
+    "before": "d8263c47ce8f36536e844e602d09a78a4ea5390be32bf5ecf2ee669b28d713b9",
+    "candidate": "b8ce7487b17b7ad96c09c60d85753408d968ed74b85b0adb9629c5d3afc87ff9"
+  },
+  "hypercurve/src/curve_support_intersection.rs": {
+    "before": "8120fd32bd1a63cb57712357e0a256d4e0e64bec3beedd31ab9f804ade587140",
+    "candidate": "b647474f6aa7e7c76b067d010f91b22f3ede6904e4dc926e5d3079d79946ee95"
+  },
+  "hypercurve/src/rational_bezier_general.rs": {
+    "before": "3f930b2da321c7ed8a1928263a7152a85188816f89f039a50dbcb09566ec1c8a",
+    "candidate": "26cbbd748ea97a4e9b72933fb79cd4a09965382a8738c68108b1515b1991853f"
+  },
+  "hypercurve/tests/hypercurve_analytic_parallel_region.rs": {
+    "before": "586bf40a127f7a4164374acda5b8d278fe48a959744e0b2176bfc98cc9b95eb2",
+    "candidate": "ff47b3a22f1b2b241bdb82d91f21a81469868e6bf3cf79d5be1334bee84535f7"
+  },
+  "hypercurve/tests/hypercurve_bezier_algebraic_parameter.rs": {
+    "before": "6630b62c304463e6460e7ceda3b0b3d707dd012c74a69a48e0be9b7b70450632",
+    "candidate": "5cb10bfa8c9796ee12ec6ac67b8f7c3bdf6f1b78ecc0e5ec54015856a27d67d5"
+  },
+  "hypercurve/tests/hypercurve_bezier_arrangement.rs": {
+    "before": "808db9d453bdc182cde88ef51d93610341f11ebf837a5f005016c99763218e2b",
+    "candidate": "3d0e1743b4c2f2afa65e87e87b6f6312bf9b9648c52b791d2b46914addc39b80"
+  },
+  "hypercurve/tests/hypercurve_bezier_region.rs": {
+    "before": "1edb314ff68d86ac2adfa0ad85d1c6b560a4c518ac6aa389531d6ae117a3246b",
+    "candidate": "501fb7aee466f7d106378be4a669771de0318c973143e640ca3b109cd87d737f"
+  },
+  "hypercurve/tests/hypercurve_bezier_split_materialization.rs": {
+    "before": "ff9c86e1a3524afc52b49302dff41fde45ab6a7648b2dd524acae73ffcba36fd",
+    "candidate": "d58fa0a8e5af201134ee6ea9a27a0c8b3ad0f08bb6a14befa287aac16d8a00bb"
+  },
+  "hypersolve/src/algebraic.rs": {
+    "before": "a0dd49687595b6668a890c0265bfa79ea4f28831151c8b17e92babb06210cde7",
+    "candidate": "2747a1fd09fd56c6a5e1c8aa75a462ea725c97c30e42c60c857b3081d87bfa0c"
+  }
+}

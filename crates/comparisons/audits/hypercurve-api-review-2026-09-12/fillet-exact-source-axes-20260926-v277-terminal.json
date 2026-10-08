@@ -1,0 +1,35 @@
+{
+  "source_manifest": "fillet-exact-source-axes-20260926-v277-sources.json",
+  "source_directory": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/source-archives/fillet-exact-source-axes-20260926-v277",
+  "workspace_guard": "compact-image-coefficients-20260926-v275-sources.json",
+  "parent_commit": "d8f9614cc943b33dd40836aa6d86a138a25be029",
+  "hypersolve_commit": "72691085d1f4d4079741a3030ae369b90440edba",
+  "cases": [
+    {
+      "name": "approximate_512_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions",
+      "returncode": 124,
+      "log": "fillet-exact-source-axes-20260926-v277-approximate_512_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions.log",
+      "elapsed_seconds": 90.03253034199588
+    }
+  ],
+  "all_processes_reaped": true,
+  "command": [
+    "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+    "test",
+    "--test",
+    "hypercurve_curve_region_promotion",
+    "--release",
+    "--all-features",
+    "--no-run",
+    "--message-format=json",
+    "--locked",
+    "--offline"
+  ],
+  "build_returncode": 0,
+  "build_elapsed_seconds": 89.33460281102452,
+  "binary": {
+    "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/fillet-exact-source-axes-20260926-v277-hypercurve_curve_region_promotion",
+    "sha256": "37f0fa60c5100a0579e0708172d61ca90e5cf3fce0f4440f1e55d461f4ea9b5e"
+  },
+  "all_sources_unchanged": true
+}

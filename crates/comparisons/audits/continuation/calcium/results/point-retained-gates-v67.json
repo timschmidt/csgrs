@@ -1,0 +1,13 @@
+{
+  "tag": "point-retained-gates-v67",
+  "started": "2026-09-11T03:26:15.670Z",
+  "finished": "2026-09-11T03:28:55.616Z",
+  "elapsedSeconds": 159.944298272,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "node",
+  "args": [
+    "run-point-retained-v67.mjs"
+  ],
+  "code": 0,
+  "signal": null
+}

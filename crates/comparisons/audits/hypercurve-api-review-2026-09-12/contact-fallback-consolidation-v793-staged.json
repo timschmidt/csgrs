@@ -1,0 +1,12 @@
+{
+  "repos": {
+    "hypercurve": {
+      "parent": "e3b97452c514d346bf7844e0e7451ee849774d0c",
+      "paths": {
+        "src/bezier_offset.rs": "5eb38301fb0d1e5d0ae5ea9f61b10547948335eb643f1e4f2c170fcc410b5b2c"
+      }
+    }
+  },
+  "qualification": "contact-fallback-consolidation-v793-terminal.json",
+  "verified_source_files": 2048
+}

@@ -1,0 +1,16 @@
+diff --git a/audits/continuation/calcium/baseline-hyperreal/src/computable/node/roots_inverse_hyperbolic.rs b/audits/continuation/calcium/root-exp-trial-hyperreal/src/computable/node/roots_inverse_hyperbolic.rs
+index c03e525..fc0f260 100644
+--- a/audits/continuation/calcium/baseline-hyperreal/src/computable/node/roots_inverse_hyperbolic.rs
++++ b/audits/continuation/calcium/root-exp-trial-hyperreal/src/computable/node/roots_inverse_hyperbolic.rs
+@@ -30,6 +30,11 @@ impl Computable {
+ 
+     /// Square root of this number.
+     pub fn sqrt(self) -> Computable {
++        if let Approximation::PrescaledExp(exponent) = &self.internal.approximation {
++            // For every finite real exponent, exp(exponent / 2) is the
++            // positive square root. No approximate sign decision is needed.
++            return exponent.clone().shift_right(1).exp();
++        }
+         if let Approximation::Square(child) = &self.internal.approximation {
+             // sqrt(x^2) can collapse to abs(x) when the sign is structurally known.
+             match child.exact_sign() {

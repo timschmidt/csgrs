@@ -1,0 +1,26 @@
+{
+  "repo": "/home/tim/Documents/GitHub/workspace/hypercurve",
+  "base": "d52d725650e642f50edea33bd493ace993b74f70",
+  "files": {
+    "README.md": "a03328c97fca775779bd6ac72735673236cad78058bc56cd3818e8d5c0cf8218",
+    "benches/api_surface.rs": "9900544ea2991b2ae5b0a6e29fc017ec58e89d8d885086e9399ca57b753a1f84",
+    "benches/bspline.rs": "132b7aa48528e7bef7cd1bdff19810c264108cc875cb059c89df6be7b17f8458",
+    "benches/comparative.rs": "0a9ba6d238280deba314e5f68b94ab61928662363f0c33d0d1f0d47cb8094da5",
+    "fuzz/fuzz_targets/bspline.rs": "d211b59ef44d7693bbb0ab8149588eb759695087bbe4dfa67dd09ee3a2c8aef5",
+    "fuzz/fuzz_targets/svg.rs": "0f1627ac3bb3bd2cfbf88b45f212de45daf435f40661e7190fb171769a21fd29",
+    "src/bspline.rs": "f5fdd0d3075fb65d82a3d0cb7b1d6ed424d5469250855c7bd1c1a8f6f212a2ca",
+    "src/lib.rs": "3f1c88fa04e3283c364c501fa825a35372101535d9287ea9df45ac39727e97ed",
+    "src/nurbs.rs": "f913278873a1d7c842e9d7eb14e97644ebcab980bc8f237c7b75c3a64da730c4",
+    "src/polynomial_spline.rs": "7013b382e4ee355ff09bb37cbce26ae03a95dfd982a593d8b5866613caf91ba4",
+    "src/rational_bezier_general.rs": "a15c926b643013dc923da4ea73c7d1d11ff4d94f7bde009bef0730b1666834ec",
+    "src/straight_skeleton.rs": "b83727aa93f5aed5a2b2a642931e0c16c254086fcc64691125d2b55b830cad0a",
+    "src/svg.rs": "5b69ada741080716913b2b665890cefe38699d94eb4f337eb5678ab19480ce12",
+    "src/svg/exact.rs": "f25f1ece9ea0d2fcdb5e38972e3518b927e12e5064b027f6da36988d6359bdbd",
+    "tests/hypercurve_bspline.rs": "11b79a740cab3be4de1e1747e2bdfc51af35c4b6a3e43645cd36063ece6e2e19",
+    "tests/hypercurve_nurbs.rs": "99bea919ca20d181d669fe3da946c949b942ba75c906ac52bcc9a7b653a609a1",
+    "tests/hypercurve_nurbs_interpolation.rs": "b0949a0e095edff7a988db2ff077657555e3cdd485a0b68fb699ad974233e520",
+    "tests/hypercurve_path_closure.rs": "7185576b3421fd09fc529575e2d7b7b537e5ab415fb0092958f1054039f02811",
+    "tests/hypercurve_svg.rs": "22f68ba14ccc1571a65cb4433638e9a6ce2f64fa067e58e7c3a2e25eebf6b279"
+  },
+  "commit": "b1f07b35d8a43ba6d5ce85b11a11ea18582ef51e"
+}

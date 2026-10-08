@@ -1,0 +1,22 @@
+{
+  "tag": "monic-cost-baseline-build",
+  "started": "2026-09-09T00:33:16.655Z",
+  "finished": "2026-09-09T00:33:17.392Z",
+  "elapsedSeconds": 0.734391264,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison",
+  "command": "env",
+  "args": [
+    "CARGO_TARGET_DIR=/tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse",
+    "CARGO_INCREMENTAL=0",
+    "CARGO_BUILD_JOBS=2",
+    "cargo",
+    "build",
+    "--offline",
+    "--release",
+    "--bins",
+    "--manifest-path",
+    "audits/continuation/calcium/monic-cost-baseline/Cargo.toml"
+  ],
+  "code": 0,
+  "signal": null
+}

@@ -1,0 +1,14 @@
+{
+  "tag": "point-retained-verify-v67",
+  "started": "2026-09-11T03:36:45.925Z",
+  "finished": "2026-09-11T03:36:46.453Z",
+  "elapsedSeconds": 0.525126997,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "node",
+  "args": [
+    "verify-point-retained-v67.mjs",
+    "--point-live"
+  ],
+  "code": 0,
+  "signal": null
+}

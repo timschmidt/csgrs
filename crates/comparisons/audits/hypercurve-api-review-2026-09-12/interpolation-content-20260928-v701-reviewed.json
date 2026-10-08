@@ -1,0 +1,34 @@
+{
+  "qualification": "interpolation-content-20260928-v701-terminal.json",
+  "source_manifest": "interpolation-content-20260928-v701-sources.json",
+  "outer_session_reaped": 36953,
+  "validated_files": 2047,
+  "selected_geometry_tests": 174,
+  "selected_algebraic_tests": 219,
+  "checks": 9,
+  "repos": {
+    "hypersolve": {
+      "parent": "840eb679c5a9abee799aaef3971d8a988660b48b",
+      "paths": {
+        "src/curve_resultant.rs": "e1ed254682daf44b1737bd6f09e2df17f6f2d465ad8cf1a0ac095503739dfc94"
+      }
+    }
+  },
+  "scope": "Remove common rational ordinate content once before exact Newton interpolation and restore complete coefficient values afterward; arbitrary exact fallback unchanged",
+  "performance_changes": [],
+  "matched_comparison": "interpolation-content-comparison-20260928-v699-terminal.json",
+  "matched_median_change_percent": -4.269706139743324,
+  "actual_build_artifacts": {
+    "hypersolve": [
+      "hypersolve"
+    ],
+    "hypercurve": [
+      "hypercurve",
+      "hypercurve_analytic_parallel_region",
+      "hypercurve_curve",
+      "hypercurve_curve_intersection",
+      "hypercurve_stationary_fillets"
+    ]
+  },
+  "unresolved": "This small common-scale normalization does not establish all arbitrary operation compositions; full goal remains active."
+}

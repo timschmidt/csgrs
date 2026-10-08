@@ -1,0 +1,72 @@
+{
+  "status": "native sign replay and subsequent shared-field/enclosure repairs qualify the stationary PH inward fixture; original implementation goal active",
+  "binary": "stationary-ph-offset-retained-constant-coordinate",
+  "binary_sha256": "8f959b245e83160dbfe69591c40684d6856baeea4d09ab49148c8b1e98d65ee6",
+  "stack": "stationary-ph-retained-constant-coordinate-stack.log",
+  "disassembly": "retained-field-sign-callsite-disassembly.log",
+  "sampled_frame_pc": "0x555555c74dda",
+  "elf_return_address": "0x720dda",
+  "ordered_field_function_start": "0x720620",
+  "field_sign_call_return_addresses": [
+    "0x7208f5 (defining lower)",
+    "0x72092a (defining upper)",
+    "0x720dda (chain lower)",
+    "0x720e27 (chain upper)"
+  ],
+  "finding": "The sampled PC is the return address of the lower-endpoint call inside the chain loop, after its trim_polynomial call. The two defining endpoint signs precede this loop. Reusing their existing certificates would not eliminate this sampled cost.",
+  "unknown": "Equal coefficient counts do not prove that the two queries have identical polynomials, fields, selected roots or predicates. The exact iteration of the earlier 20-second sign sample was not recorded. No expression-size or timing bound has yet been established for a reduced arithmetic fixture.",
+  "next_work": "Audit interval-arithmetic-policy-followup.json; retain selected root/field evidence and continue remaining original closure/API scope.",
+  "hypercurve_commit": "6c6fdad97a46d5f6efcd653c631b058b6db29ae9",
+  "hypersolve_commit": "9fa774c843b32f7a9f423e2784f0e3376df16e5a",
+  "targeted_trace": "stationary-ph-field-chain-trace.log",
+  "trace_script": "profile-field-chain.py (binary SHA guarded, source unchanged)",
+  "trace_result": "gdb exit 0; interrupted only the owned probe after 25 seconds; all processes ended",
+  "loaded_binary_base": "0x555555554000",
+  "trace_finding": "Two native ordered-field queries each have eight defining coefficients and seven predicate coefficients. The first evaluates chain coefficient counts 13,8,7,6,5,4,3,2,1 at both endpoints. The second reaches both endpoints of its two-coefficient member; the final stack is in field multiplication and dense selected-tuple reduction while constructing the next remainder.",
+  "latest_stack_phase": "ordered_field_polynomial_sign_remainder -> RecursiveQuadraticValue2.multiply/from_base -> dense_reduce_selected_tuple_relations -> DenseTensorPolynomial.reduce_axis_modulo -> CertifiedPolynomialDivisor.remainder_in_place -> rational_polynomial_remainder_modulo -> primitive integer coefficient content",
+  "completed_primitive_preparation": "e5139b46c707768bdcb40164cefc990753a70f6e",
+  "primitive_preparation_qualification": "primitive-coefficient-reduction-qualification.json",
+  "completed_polynomial_content_normalization": {
+    "hypercurve": "f49145e59d52ef65b13c4d24c44317de5e1cd5e8",
+    "hypersolve": "ed9a599c75b6add0ed80722b868972f64c8629ca",
+    "hyperbrep": "8a84ee7db02fd2720ac89a1a6a227ee4ec2a8171"
+  },
+  "polynomial_content_qualification": "ordered-field-content-qualification.json",
+  "current_stack": "stationary-ph-ordered-field-content-stack.log",
+  "current_stack_finding": "The current native coefficient-sign sample belongs to analytic axis-coordinate ordering during chord-parameter comparison. It reaches an integer primitive pseudo-remainder. The prior joined-incidence sample is not the current sampled caller.",
+  "normalized_field_witness_stage": {
+    "commit": "6a69c9c71d96ac13a77c32aa7bf0281718ec7514",
+    "qualification": "normalized-field-witness-qualification.json",
+    "runtime": "first inward Certified in 3.755785438s; total timeout60 exit124; second result absent",
+    "scalar_inputs": "stationary-ph-scalar-query-followup.json",
+    "next": "Investigate shared integer GCD scheduling on captured exact scalar inputs."
+  },
+  "shared_integer_gcd_stage": {
+    "commits": {
+      "hyperreal": "a2da8e2b5de9a1a4653d3662f2f05cb6533fd7ef",
+      "hypersolve": "3ac2e7510936a11c7bf2eac5dfbe3f9f851afe55",
+      "hypercurve": "6a69c9c71d96ac13a77c32aa7bf0281718ec7514",
+      "hyperbrep": "8a84ee7db02fd2720ac89a1a6a227ee4ec2a8171"
+    },
+    "qualification": "shared-integer-gcd-qualification.json",
+    "change": "All six integer GCD consumers share Hyperreal; duplicated Euclidean loop removed.",
+    "comparison": "shared-integer-gcd-query-comparison.json",
+    "runtime": "First inward Certified in 3.935060758s; total60s timeout exit124; second result absent.",
+    "next": "conservative-chord-bound-union-followup.json"
+  },
+  "refined_chord_envelope_stage": {
+    "commit": "025dcd123335ace6426c2ed4903607d2cc33a6ea",
+    "qualification": "refined-chord-envelope-qualification.json",
+    "runtime": "first inward Certified in 3.755811659s; total60s timeout exit124; second result absent",
+    "next": "mixed-point-axis-order-followup.json"
+  },
+  "mixed_point_axis_order_stage": {
+    "commit": "8006617e8605eacf20969b5c11fb19df1590a8f8",
+    "qualification": "mixed-point-axis-order-qualification.json"
+  },
+  "certified_chord_pair_enclosure_stage": {
+    "commit": "2025587c91b4af5a1eeccae97a7412ef114a0dd1",
+    "qualification": "certified-chord-pair-enclosure-qualification.json"
+  },
+  "current_validation": "certified-chord-pair-enclosure-qualification.json: four public inward cases Certified, both final unloaded probes complete, four held-out cases still time out."
+}

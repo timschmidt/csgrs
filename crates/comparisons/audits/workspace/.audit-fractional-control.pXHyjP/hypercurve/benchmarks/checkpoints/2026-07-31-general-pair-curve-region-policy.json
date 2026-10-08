@@ -1,0 +1,174 @@
+{
+  "schema": 1,
+  "captured_on": "2026-07-31",
+  "checkpoint": "general-pair-curve-region-policy",
+  "source_revision": "8f42dfe3f0850144fbc491fb0fe6bb3606dec5c5",
+  "matched_behavior_control_revision": "4756e761eb16560d441cdbb4349e747c2f2b66b2",
+  "frozen_baseline": "../baselines/2026-07-31/baseline.json",
+  "scope": {
+    "authoritative_batch": "every nonempty, nonidentical CurveRegion2::boolean_regions call continues through one arrangement",
+    "closed_policy_gaps": [
+      "policy-certified line images represented as general rational Beziers no longer fall into a degenerate resultant replay",
+      "rational-quadratic promotion preserves retained implicit-conic and circular-support provenance",
+      "CurvePath2 exposes policy-aware connectivity construction with an explicit certainty outcome"
+    ],
+    "unchanged": [
+      "empty and structurally identical set identities bypass topology",
+      "the single-operation native line/arc fast path",
+      "returned geometry remains exact under both policies"
+    ]
+  },
+  "pair_matrix": {
+    "families": [
+      "line",
+      "circular arc",
+      "quadratic Bezier",
+      "cubic Bezier",
+      "rational quadratic Bezier",
+      "general rational Bezier",
+      "polynomial B-spline",
+      "NURBS"
+    ],
+    "ordered_transverse_pairs": "64/64 pass",
+    "ordered_shared_endpoint_pairs": "64/64 pass",
+    "ordered_tangent_or_overlap_pairs": "64/64 pass",
+    "same_family_coincident_images": "8/8 pass",
+    "degree_equivalent_coincident_images": "8/8 pass",
+    "selected_carrier_contact_asserted": true,
+    "all_four_regularized_operations_checked": true,
+    "structural_difference_fallback": "an exact XOR differential rejects any nonempty disagreement"
+  },
+  "policy_evidence": {
+    "general_general_symbolic_quadratic_caps": "STRICT blocks; APPROXIMATE_512 completes and reports Approximate512Consumed",
+    "line_general_symbolic_degree_elevated_line": "STRICT blocks; APPROXIMATE_512 completes and reports Approximate512Consumed",
+    "conic_general_symbolic_degree_elevated_circle": "STRICT blocks; APPROXIMATE_512 completes and reports Approximate512Consumed",
+    "curve_path_symbolic_connectivity": "STRICT blocks; APPROXIMATE_512 constructs the exact path and reports Approximate512Consumed",
+    "finite_coordinate_replacement": false,
+    "approximate_fact_reused_by_later_strict_operation": false
+  },
+  "semantic_evidence": {
+    "certified_general_line_images_use_exact_line_line_contacts": true,
+    "line_contact_parameters_recovered_exactly": true,
+    "coincident_line_images_reuse_exact_overlap_evidence": true,
+    "promoted_rational_quadratics_retain_implicit_conic": true,
+    "promoted_circular_conics_retain_circle_support": true,
+    "generated_all_family_corpus": "11/11 pass",
+    "retired_blocker_corpus": "20/20 pass",
+    "pathological_operations": "268/268 decided with unchanged 603 candidate pairs, 3248 fragments, 134 point classifications, and checksum 6"
+  },
+  "paired_release_pathological_benchmark": {
+    "command": "taskset -c 9 HYPERCURVE_PATHOLOGICAL_MODE=boolean {control,candidate pathological_regions binary}",
+    "method": "eleven alternating-order process pairs; complete 67-cell all-family workload; same dependency state and toolchain",
+    "cells_per_process": 67,
+    "control_boolean_milliseconds": [
+      493.025777,
+      489.535038,
+      495.834015,
+      516.800017,
+      491.552538,
+      523.221817,
+      495.837115,
+      499.141058,
+      493.572560,
+      483.311764,
+      483.262377
+    ],
+    "candidate_boolean_milliseconds": [
+      489.219748,
+      487.353496,
+      489.057739,
+      494.471508,
+      517.139424,
+      500.714070,
+      492.765515,
+      505.746935,
+      497.800961,
+      497.226660,
+      486.724890
+    ],
+    "control_median_milliseconds": 493.572560,
+    "candidate_median_milliseconds": 494.471508,
+    "median_change_percent": 0.182131,
+    "paired_geometric_mean_change_percent": -0.112503,
+    "interpretation": "the median and paired geometric mean move in opposite directions by less than two tenths of one percent; throughput is neutral"
+  },
+  "heaptrack": {
+    "command": "HYPERCURVE_PATHOLOGICAL_MODE=boolean heaptrack --record-only {control,candidate pathological_regions binary}",
+    "control_allocation_calls": 8229442,
+    "candidate_allocation_calls": 8227030,
+    "allocation_call_delta": -2412,
+    "control_temporary_allocations": 1380405,
+    "candidate_temporary_allocations": 1380405,
+    "temporary_allocation_delta": 0,
+    "control_peak_heap": "34.70M",
+    "candidate_peak_heap": "34.70M",
+    "control_peak_rss": "65.13M",
+    "candidate_peak_rss": "65.05M",
+    "control_total_leaked": "476.82K",
+    "candidate_total_leaked": "476.82K",
+    "artifacts": [
+      "/tmp/hypercurve-policy-parent.zst",
+      "/tmp/hypercurve-policy-candidate.zst"
+    ],
+    "interpretation": "preserved conic/line provenance removes 2412 allocation calls from the full workload; temporary allocations, peak heap, and leaks are unchanged"
+  },
+  "matched_release_pathological_binary": {
+    "command": "cargo bench --bench pathological_regions --no-run; size; strip --strip-all",
+    "control_debug_file_bytes": 7202944,
+    "candidate_debug_file_bytes": 7205736,
+    "debug_file_delta_bytes": 2792,
+    "control_stripped_file_bytes": 5732152,
+    "candidate_stripped_file_bytes": 5734488,
+    "stripped_file_delta_bytes": 2336,
+    "control_size": {
+      "text": 5461866,
+      "data": 266408,
+      "bss": 3936,
+      "total_loadable": 5732210
+    },
+    "candidate_size": {
+      "text": 5464214,
+      "data": 266408,
+      "bss": 5696,
+      "total_loadable": 5736318
+    },
+    "text_delta_bytes": 2348,
+    "total_loadable_delta_bytes": 4108,
+    "total_loadable_delta_percent": 0.071665,
+    "interpretation": "the small linked-size increase buys policy-complete general-pair handling; most added source is integration-test coverage and does not enter the library"
+  },
+  "static_callgraph": {
+    "command": "tools/hyper-callgraph/target/release/hyper-callgraph --root {isolated source root} --out-dir /tmp/hypercurve-general-pair-policy-{parent,candidate}-callgraph --crate-name hypercurve --include-examples --include-tests --include-bench --include-fuzz --format json",
+    "control_nodes": 22915,
+    "candidate_nodes": 22960,
+    "node_delta": 45,
+    "control_edges": 39445,
+    "candidate_edges": 39609,
+    "edge_delta": 164,
+    "candidate_workspace_graph_nodes": 22963,
+    "candidate_workspace_graph_edges": 39634,
+    "artifacts": [
+      "/tmp/hypercurve-general-pair-policy-parent-callgraph/callgraph.json",
+      "/tmp/hypercurve-general-pair-policy-candidate-isolated-callgraph/callgraph.json",
+      "/tmp/hypercurve-general-pair-policy-callgraph/callgraph.json"
+    ],
+    "interpretation": "the growth is dominated by the exhaustive test matrix; production adds one compact certified-line-image contact path and one provenance-preserving conversion"
+  },
+  "verification": {
+    "unit_tests": "266/266 pass",
+    "focused_curve_region_boolean_tests": "19/19 pass",
+    "generated_curve_region_boolean_tests": "11/11 pass in 83.12 seconds",
+    "post_format_policy_terminal_tests": "6/6 pass",
+    "pathological_operations": "268/268 decided with no blockers",
+    "cargo_clippy_all_features_all_targets_deny_warnings": "pass",
+    "cargo_clippy_no_default_features_all_targets_deny_warnings": "pass",
+    "cargo_fmt": "pass",
+    "git_diff_check": "pass",
+    "hypermesh_modified": false
+  },
+  "next_boundary": {
+    "phase": "unified CurveRegion2 arrangement",
+    "next_work": "reduce general resultant/replay cost and complete lower-dimensional contact ownership before folding the single-operation native line/arc lane",
+    "offset_fillet_chamfer": "pending on pair-kernel completion and the exact parallel-curve substrate"
+  }
+}

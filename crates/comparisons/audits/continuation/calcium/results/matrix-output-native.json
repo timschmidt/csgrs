@@ -1,0 +1,11 @@
+{
+  "tag": "matrix-output-native",
+  "started": "2026-09-09T02:12:13.166Z",
+  "finished": "2026-09-09T02:12:13.190Z",
+  "elapsedSeconds": 0.021785477,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison",
+  "command": "/tmp/calcium-matrix-solves.Pl5RBm/flint-matrix-output",
+  "args": [],
+  "code": 1,
+  "signal": null
+}

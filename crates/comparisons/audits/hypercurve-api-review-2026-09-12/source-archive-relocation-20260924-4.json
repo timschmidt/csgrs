@@ -1,0 +1,30 @@
+[
+  {
+    "source": "/tmp/hypercurve-local-chord-complete-replay-v14-20260924",
+    "target": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/source-archives/hypercurve-local-chord-complete-replay-v14-20260924",
+    "files": 2044,
+    "all_hashes_match": true,
+    "manifest": "local-chord-complete-replay-20260924-v14-sources.json"
+  },
+  {
+    "source": "/tmp/hypercurve-local-chord-complete-replay-v15-20260924",
+    "target": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/source-archives/hypercurve-local-chord-complete-replay-v15-20260924",
+    "files": 2044,
+    "all_hashes_match": true,
+    "manifest": "local-chord-complete-replay-20260924-v15-sources.json"
+  },
+  {
+    "source": "/tmp/hypercurve-local-chord-complete-replay-v16-20260924",
+    "target": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/source-archives/hypercurve-local-chord-complete-replay-v16-20260924",
+    "files": 2044,
+    "all_hashes_match": true,
+    "manifest": "local-chord-complete-replay-20260924-v16-sources.json"
+  },
+  {
+    "source": "/tmp/hypercurve-local-chord-complete-replay-v17-20260924",
+    "target": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/source-archives/hypercurve-local-chord-complete-replay-v17-20260924",
+    "files": 3510,
+    "all_hashes_match": true,
+    "manifest": "rational-enclosure-api-20260924-v17-sources.json"
+  }
+]

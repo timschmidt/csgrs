@@ -1,0 +1,6 @@
+wrong_one input=2/2 canonical=1
+wrong_one input=6/6 canonical=1
+wrong_one input=7/7 canonical=1
+wrong_one input=3/3 canonical=1
+wrong_one input=3/3 canonical=1
+cases=10000 canonical_controls=10000 noncanonical=2221 wrong_one=107

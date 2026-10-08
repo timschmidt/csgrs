@@ -1,0 +1,27 @@
+\doxysection{Linear Algebra }
+\hypertarget{linear_algebra_page}{}\label{linear_algebra_page}\index{Linear Algebra@{Linear Algebra}}
+This page describes the basic data structures and mathematical algorithms of computational linear algebra. For details on how this is implemented in Ariadne, see the \doxylink{group__LinearAlgebraSubModule}{Linear Algebra Submodule} documentation.
+
+{\bfseries{References}} 
+\begin{DoxyItemize}
+\item David C. Lay, {\itshape Linear Algebra and its Applicatons}, Addison-\/\+Wesley, 2002. ISBN 0-\/20170-\/970-\/8
+\item Gene H. Golub and Charles F. Van Loan, {\itshape Matrix Computations}, Johns Hopkins University Press, 1996. ISBN 0-\/80185-\/414-\/8
+\end{DoxyItemize}\hypertarget{linear_algebra_page_pivoting}{}\doxysubsection{\texorpdfstring{Pivoting and Permutations}{Pivoting and Permutations}}\label{linear_algebra_page_pivoting}
+Re-\/ordering of matrix rows/columns and vector elements can be described by {\itshape permutations} and {\itshape pivoting}. Essentially, a permutation gives the re-\/ordering directly, and is most useful if the re-\/ordered elements are to be used in-\/place or copied, whereas pivoting describes the re-\/ordering as a product of transpositions, and is most useful if the elements are to be re-\/ordered in place.
+
+We write a permuation \[ \pi=\left(\begin{array}{cccccc}0&1&\cdots&n\!-\!1\\\pi_0&\pi_1&\cdots&\pi_{n-1}\end{array}\right); \quad \pi_i\neq\pi_j \text{ if } i\neq j \] and a pivot \[ p = (0\;p_0)\ (1\;p_1)\ \cdots\ (n\!-\!1,p_{n-1}); \quad p_i\geq i . \] where the transpositions are applied from left to right.
+
+For example, the permutation \[ \pi=\left(\begin{array}{ccccc}0&1&2&3&4\\1&3&4&2&0\end{array}\right)  \] can be writing in pivot form \[ p=(0\;1)\ (1\;3)\ (2\;4)\ (3\;4)\ (4\;4) . \] The inverses are  \[ \pi^{-1}=\left(\begin{array}{ccccc}0&1&2&3&4\\4&0&3&1&2\end{array}\right); \qquad
+     p^{-1}=(4\;4)\ (3\;4)\ (2\;4)\ (1\;3)\ (0\;1) \]
+
+Applying the permuation to the vector $v=(v_0,v_1,v_2,v_3,v_4)^T$ yields the vector $\pi v=(v_1,v_3,v_4,v_2,v_0)^T$. Applying the pivots to the vector yield successively $(v_1,v_0,v_2,v_3,v_4)^T$, $(v_1,v_3,v_2,v_0,v_4)^T$, $(v_1,v_3,v_4,v_0,v_2)^T$ and $Pv=(v_1,v_3,v_4,v_2,v_0)^T$.
+
+The pivot form is used by linear algebra packages such as LAPACK. For the triangular factorization of a matrix $A$ with partial pivoting yields matrices $P,L,U$ such that $PA=LU$, where $P$ is a pivot matrix. The matrix \[ A=\left(\begin{matrix}0&0&0&0&1\\1&x&x&x&x\\0&0&0&1&x\\0&1&x&x&x\\0&0&1&x&x\end{matrix}\right)\] yields a pivot matrix $P$ described by the pivot $p=(0\;1)\ (1\;3)\ (2\;4)\ (3\;4)\ (4\;4)$. In other words, during the factorisation, we first interchange row 0 and row 1, then row 1 (which corresponds to the old row 0) with row 3, and so on.
+
+The permuation form is mostly used by linear programming packages to select basis variables. ~\newline
+ Consider the $m\times n$ matrix $\mathrm{A}$ with $n>m$, and suppose $\mathrm{A}$ has full row rank. Let $B=\{ j_0,j_1,\ldots,j_{m-1}\}$ be a set of $m$ values from $\{0,\ldots,n\!-\!1\}$, and define the matrix $\mathrm{B}=\mathrm{A}_B=\bigl( a_{i_0}\ a_{i_1}\ \cdots\ a_{i_{n-1}}\bigr)$. Here, a (partial) permutation is used to select the pivot elements. ~\newline
+ In the reduced simplex algorithm, we store an intermediate form of the problem as $x_B+\mathrm{A}x_N=b$ We now store both $B=(j_0,j_1,\ldots,j_{m-1})$ giving the columns of the basic variables, and $N=(j_{m},j_{m+1},\ldots,j_{n-1})$ giving the columns of the non-\/basic variables.\hypertarget{linear_algebra_page_matrix_inverse}{}\doxysubsection{\texorpdfstring{Inverting Matrices}{Inverting Matrices}}\label{linear_algebra_page_matrix_inverse}
+\hypertarget{linear_algebra_page_schulz_matrix_inverse}{}\doxysubsubsection{\texorpdfstring{Schulz\textquotesingle{}s method}{Schulz\textquotesingle{}s method}}\label{linear_algebra_page_schulz_matrix_inverse}
+Schulz\textquotesingle{}s method is an iterative method for computing matrix inverses\+: \[ B_{k+1} = B_k \sum_{i=0}^{n} (I-AB_k)^i .  \] The interval version is given by\+: \[ [B_{k+1}] = m[B_k] \,  \Bigl( \sum_{i=0}^{n-1} \bigl(I-A\,m[B_k]\bigr)^i \Bigr) \, + \, [B_k]\,\bigl(1-A\,m[B_k]\bigr)^n .  \]\hypertarget{linear_algebra_page_matrix_inverse_derivative}{}\doxysubsection{\texorpdfstring{Derivative of Matrix Inverse}{Derivative of Matrix Inverse}}\label{linear_algebra_page_matrix_inverse_derivative}
+If $B=A^{-1}$, then \[ \fbox{$ \dot{B} = B\dot{A}B $} \]\hypertarget{linear_algebra_page_gauss_seidell_matrix_inverse}{}\doxysubsubsection{\texorpdfstring{Gauss-\/\+Seidel Iteration}{Gauss-\/\+Seidel Iteration}}\label{linear_algebra_page_gauss_seidell_matrix_inverse}
+Gauss-\/\+Seidel iteration is a method for solving linear equations $Ax=b$, which can also be used to compute inverses using $AB=I$. The scheme is \[   x^{(k+1)} = \left( {D + L} \right)^{ - 1} \left( {b-U x^{(k)} } \right) \] where $A=L+D+U$; the matrices $D$, $L$ and $U$ represent the diagonal, negative strictly lower triangular, and negative strictly upper triangular parts of $A$. When implementing Gauss Seidel, an explicit entry-\/by-\/entry approach is commonly used\+: \[  x^{(k+1)}_i = \frac{1}{a_{ii}} \left(b_i - \sum_{j<i}a_{ij}x^{(k+1)}_j-\sum_{j>i}a_{ij}x^{(k)}_j\right),\, i=1,2,\ldots,n. \] 

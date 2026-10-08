@@ -1,0 +1,20 @@
+{
+  "qualification": "restricted-fiber-sign-20260927-v474-terminal.json",
+  "source_manifest": "restricted-fiber-sign-20260927-v474-sources.json",
+  "outer_session_reaped": 40182,
+  "validated_files": 2046,
+  "selected_geometry_tests": 325,
+  "checks": 6,
+  "integration_tests": {},
+  "repos": {
+    "hypercurve": {
+      "parent": "0d5a2c0ff0f80833fd37d9fc31eec9ffd4f923d0",
+      "paths": {
+        "src/bezier_offset.rs": "5d0c940155709699740e97fe713730c14c9a009abd8bcd2efecf7c6031649367"
+      }
+    }
+  },
+  "known_unresolved": [],
+  "captured_fiber_oracle": "restricted-fiber-final-oracle-20260927-v475-terminal.json",
+  "captured_oracle_outer_session_reaped": 45111
+}

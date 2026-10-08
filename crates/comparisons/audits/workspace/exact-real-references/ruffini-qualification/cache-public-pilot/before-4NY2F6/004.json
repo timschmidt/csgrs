@@ -1,0 +1,17 @@
+{
+  "command": "cargo",
+  "args": [
+    "build",
+    "--offline",
+    "--release",
+    "--features",
+    "live-allocations"
+  ],
+  "begin": "2026-09-07T05:46:05.477Z",
+  "end": "2026-09-07T05:46:05.803Z",
+  "status": 0,
+  "signal": null,
+  "error": null,
+  "stdout": "",
+  "stderr": "   Compiling ruffini_cache_public_pilot v0.0.0 (/home/tim/Documents/GitHub/workspace/exact-real-references/ruffini-qualification/cache-public-pilot)\n    Finished `release` profile [optimized] target(s) in 0.31s\n"
+}

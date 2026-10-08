@@ -1,0 +1,7 @@
+{
+  "all_processes_reaped": true,
+  "exit_code": 0,
+  "binary_sha256": "df98b5a79c151c3300ef5b4e941ba115b1036f12b100c3d8d37d272ff2de2b4e",
+  "log": "circle-line-normalization-20260923-stack2.log",
+  "main_changed": false
+}

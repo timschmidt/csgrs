@@ -1,0 +1,14 @@
+{
+  "tag": "monic-state-verify-final",
+  "started": "2026-09-09T01:23:04.922Z",
+  "finished": "2026-09-09T01:23:12.918Z",
+  "elapsedSeconds": 7.993173925,
+  "cwd": "/home/tim/Documents/GitHub/workspace",
+  "command": "node",
+  "args": [
+    "exactcore-hyper-comparison/audits/continuation/calcium/verify-monic-state.mjs",
+    "--retained-live"
+  ],
+  "code": 0,
+  "signal": null
+}

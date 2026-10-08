@@ -1,0 +1,33 @@
+{
+  "tag": "symbolic-cleanup-control-compile-v83",
+  "started": "2026-09-12T03:44:09.230Z",
+  "finished": "2026-09-12T03:44:09.688Z",
+  "elapsedSeconds": 0.45614784399999997,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "gcc",
+  "args": [
+    "-O2",
+    "-g0",
+    "-Wall",
+    "-Wextra",
+    "-Werror",
+    "-Wno-unused-parameter",
+    "-Dqqbar_set_fexpr=qqbar_set_fexpr_cleanup_control",
+    "-isystem",
+    "/home/tim/Documents/GitHub/workspace/exact-real-references/flint/src",
+    "flint-symbolic-boundary-fixed-v83.c",
+    "flint-set-fexpr-cleanup-control-v83.c",
+    "-L",
+    "/home/tim/Documents/GitHub/workspace/exact-real-references/flint",
+    "-Wl,-rpath,/home/tim/Documents/GitHub/workspace/exact-real-references/flint",
+    "-lflint",
+    "-lmpfr",
+    "-lgmp",
+    "-lm",
+    "-lpthread",
+    "-o",
+    "/tmp/calcium-symbolic-boundary-v83.JuGH8X/cleanup-control"
+  ],
+  "code": 0,
+  "signal": null
+}

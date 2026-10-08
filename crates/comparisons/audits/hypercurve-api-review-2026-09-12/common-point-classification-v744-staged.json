@@ -1,0 +1,61 @@
+{
+  "repos": {
+    "csgrs": {
+      "parent": "d029e51b5d7324f0df785c5cd3cf2f6c7a3a2cca",
+      "paths": {
+        "src/curve/native.rs": "c8a277a11cb8aeeb021df19fb9df495a2f1630b742838cd248acb3527e281039"
+      }
+    },
+    "hyperbrep": {
+      "parent": "12e6a35edbe5bf3a23432e50f71730a3103705f0",
+      "paths": {
+        "src/boolean.rs": "2c282f3a2f621031da52237afaee28cee878c9daad894d363116bb5cb63c4235",
+        "src/builder.rs": "a81dbb299e9db04660fd1cfa77f1bd3ca463f566e434cc0a5a410ca9ee7373d6",
+        "src/model.rs": "0abb50ccdbbea53306d720ecfd71506a52ada1e2d519c69e815b7f6b22509d8b"
+      }
+    },
+    "hypercurve": {
+      "parent": "1ddd0195181c0fdb0cc29f3b97074693a0f35bd6",
+      "paths": {
+        "README.md": "e2653eb4b33fb2c850084d1efaa415bf8a6b83daade41c232177838c703a2c5e",
+        "benches/arc.rs": "7b1d315b1e781aedb8fbc6bf09950a8d4d2e1129447e9c626025719e12dd5569",
+        "benches/bezier_region.rs": "8f4c7c852b5591512ee9e913359bfdbaac0a9c9abd93b5a3f09bc8a11683392e",
+        "benches/containment.rs": "941494e14c3edfdb832f4893dc8c3a5dcff73253d88b53514c5c3d2727b55e26",
+        "benches/curve_path.rs": "2a2d16bbe5656f0be4f7f1f12d7d0b073d48b9cd37e93a28f0cf3a0a495eb89c",
+        "benches/dispatch_trace.rs": "9c675ea894a6cbff2c501d5cdbdc3a312df69975c9eb57d9431251a0a19a074d",
+        "examples/arrangement.rs": "d7c32d668f66c467e75752c463a22868ad4312ae72051b56c874a0fdd3f2b3a5",
+        "examples/basic.rs": "95dca5bd50da87b07397e47cd595162be615fb560c69df8e18eaa43c23f487eb",
+        "fuzz/fuzz_targets/region_boolean.rs": "c4d2ec6c8879a115653f2056ad956020c91d76d1261cd95be08c43e42950f092",
+        "src/bezier_offset.rs": "4ae1e14470cccde9341fcc9841c007ced083e31b69c24bf9b5b0acd4f56ee2f5",
+        "src/bezier_region.rs": "ceeb02e4b4d82a4003687232c41ff23287051c2ad0ced648f3a0da4c343628cb",
+        "src/curve.rs": "fb751717d74af0c1b50db3947669ad8cc3fd4f013de4b0cebbca47d83cc3d5e4",
+        "src/curve_corner_chain.rs": "0969503138e5544d4e59b6c311eb763c08c8d9f1a2198e15cf933e4a9a1750b9",
+        "src/curve_fillet.rs": "eece099dda523548429cd27eedc2ced8d7900ee85cb2cdf8a4c9d6ea9ae9a19c",
+        "src/curve_region_boolean.rs": "317e2b4134e11fb00ef7b200dfe71d70510a2c12525a95afffcf7da855750eb6",
+        "src/curve_region_trim.rs": "b24e3c78a62a1f1acbfc58d4587eb082aa3afdbefae37b3af1d61c4d45e8048e",
+        "src/curve_subdivision.rs": "5d744d1bfd849ba02a4fa07e63a7e4d7f5456b0aff4df4f93e67922e1ab9f56f",
+        "src/curve_support_intersection.rs": "ecc7f870ab0d6e09d34b47dbad313ab908677d46c1c5c8ef2a4bb3a2f12c0dda",
+        "src/native_region_tests.rs": "03ef0b13dbc09d546df84738f6423145698019d360eb9a7e51a87178eb189c0c",
+        "src/region.rs": "9e6f682bc1b098823ff26560c8805896d60a76d145ebb7843e760497f01c455c",
+        "tests/exact_structural_facts.rs": "5209b5a6affaeaf9920880db5d89223a08c07e27679b9872877ea80d6aad3d2c",
+        "tests/hypercurve_analytic_parallel_region.rs": "0c0a13149e4ff7f19e526de37f6a12d4141e64fa0110e13dd1b6c8e3ae9d3286",
+        "tests/hypercurve_bbox.rs": "adea8ac0829391e767158a38717764960be78f9c5008b53ef3e3dc8b5fd05457",
+        "tests/hypercurve_bezier_fit_offset.rs": "f760813cfecff927c90ab3eabc641554fc114cb98b3192f99ee0043ee16da970",
+        "tests/hypercurve_bezier_region.rs": "0a0e36fbd752c760c6920da6481924b05d79c8959b0322e0cc083e810c394db5",
+        "tests/hypercurve_curve.rs": "f6f2ed1103c6022d075ecff27c57007340505c2812089c547bf546967c6ba5a1",
+        "tests/hypercurve_curve_intersection.rs": "1a84dccfefdce58cbd90e47689e71567a85e8def469d07b2892da35d832b26b4",
+        "tests/hypercurve_curve_region_boolean.rs": "7a8d30d8ab464673f9a450baa82580212cd0f0dd36c7ab7bee26694fe334dbca",
+        "tests/hypercurve_curve_region_promotion.rs": "d113483352ced6621bf286c37d0238866bac7365f654ee831f0b76fd46bec317",
+        "tests/hypercurve_curve_region_stroke.rs": "ce692459d2df6af8090b4b1616b4f486c2cad9e40dd6c425c4f2ca9bb9262a8a",
+        "tests/hypercurve_exact_closure.rs": "13297dcaa1c78f01aaceabac88d59e91c1eef7914a7ad753966c413e6966a793",
+        "tests/hypercurve_geo_regressions.rs": "49f1d607875d881590ab7791cb725447195fa68a23a653d6c3271538e5cec896",
+        "tests/hypercurve_path_closure.rs": "f2c2fb4cdc6cdf3a5c1cfebcb2f138b4ac8f2d91e85f9248721df7c36ec715ee",
+        "tests/hypercurve_pcb_boolean_regressions.rs": "95cd02a7be0f7269cf05484f697af70f2782983430623efc97d2e25234b59a70",
+        "tests/hypercurve_pr59_shape_regressions.rs": "e450d85cc948cb84472ca3c97ae31671da3c7c8e4465faeaaf4a19c0437bc275",
+        "tests/hypercurve_svg.rs": "1b5ff640196fd400799a230d95f0146fd59d8efef561f4e567bc28e96ad20645"
+      }
+    }
+  },
+  "qualification": "common-point-classification-v744-terminal.json",
+  "verified_source_files": 2048
+}

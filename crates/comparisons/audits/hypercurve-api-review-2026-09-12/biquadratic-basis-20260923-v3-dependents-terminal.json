@@ -1,0 +1,121 @@
+{
+  "crates": [
+    {
+      "crate": "hyperlimit",
+      "checks": [
+        {
+          "feature": "--all-features",
+          "returncode": 0,
+          "log": "biquadratic-basis-20260923-v3-dependents-hyperlimit-check-0.log"
+        },
+        {
+          "feature": "--no-default-features",
+          "returncode": 0,
+          "log": "biquadratic-basis-20260923-v3-dependents-hyperlimit-check-1.log"
+        }
+      ],
+      "hyperreal_artifacts": [
+        {
+          "reason": "compiler-artifact",
+          "package_id": "path+file:///tmp/hypercurve-biquadratic-basis-v3-2026-09-23/hyperreal#0.13.1",
+          "manifest_path": "/tmp/hypercurve-biquadratic-basis-v3-2026-09-23/hyperreal/Cargo.toml",
+          "target": {
+            "kind": [
+              "lib"
+            ],
+            "crate_types": [
+              "lib"
+            ],
+            "name": "hyperreal",
+            "src_path": "/tmp/hypercurve-biquadratic-basis-v3-2026-09-23/hyperreal/src/lib.rs",
+            "edition": "2024",
+            "doc": true,
+            "doctest": true,
+            "test": true
+          },
+          "profile": {
+            "opt_level": "3",
+            "debuginfo": 0,
+            "debug_assertions": false,
+            "overflow_checks": false,
+            "test": false
+          },
+          "features": [
+            "default",
+            "dispatch-trace",
+            "serde"
+          ],
+          "filenames": [
+            "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperreal-9698b7539640a052.rlib",
+            "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperreal-9698b7539640a052.rmeta"
+          ],
+          "executable": null,
+          "fresh": false
+        }
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.3522820899961516,
+      "log": "biquadratic-basis-20260923-v3-dependents-hyperlimit-tests.log",
+      "binary_sha256": "a3b8d83cd8e9407e9793fef069abcf07ee0b3d252e87e20d5e718d71b951411b"
+    },
+    {
+      "crate": "hypersolve",
+      "checks": [
+        {
+          "feature": "--all-features",
+          "returncode": 0,
+          "log": "biquadratic-basis-20260923-v3-dependents-hypersolve-check-0.log"
+        },
+        {
+          "feature": "--no-default-features",
+          "returncode": 0,
+          "log": "biquadratic-basis-20260923-v3-dependents-hypersolve-check-1.log"
+        }
+      ],
+      "hyperreal_artifacts": [
+        {
+          "reason": "compiler-artifact",
+          "package_id": "path+file:///tmp/hypercurve-biquadratic-basis-v3-2026-09-23/hyperreal#0.13.1",
+          "manifest_path": "/tmp/hypercurve-biquadratic-basis-v3-2026-09-23/hyperreal/Cargo.toml",
+          "target": {
+            "kind": [
+              "lib"
+            ],
+            "crate_types": [
+              "lib"
+            ],
+            "name": "hyperreal",
+            "src_path": "/tmp/hypercurve-biquadratic-basis-v3-2026-09-23/hyperreal/src/lib.rs",
+            "edition": "2024",
+            "doc": true,
+            "doctest": true,
+            "test": true
+          },
+          "profile": {
+            "opt_level": "3",
+            "debuginfo": 0,
+            "debug_assertions": false,
+            "overflow_checks": false,
+            "test": false
+          },
+          "features": [
+            "default",
+            "dispatch-trace"
+          ],
+          "filenames": [
+            "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperreal-96c32f5f2a8a8f1e.rlib",
+            "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperreal-96c32f5f2a8a8f1e.rmeta"
+          ],
+          "executable": null,
+          "fresh": false
+        }
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 3.4075491530820727,
+      "log": "biquadratic-basis-20260923-v3-dependents-hypersolve-tests.log",
+      "binary_sha256": "e06ecaa88f53d2fdd66ac17488ff473802169140e8c5c2e18c44d6a27485ae3d"
+    }
+  ],
+  "all_processes_reaped": true,
+  "all_sources_unchanged": true
+}

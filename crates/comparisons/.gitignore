@@ -1,0 +1,32 @@
+# Rust and native build output
+/target/
+/audits/**/target/
+/audits/**/__pycache__/
+/audits/**/.stack-work/
+/scripts/__pycache__/
+# Frozen workflow evidence is retained through the explicit import inventory.
+# These definitions are not executable CI for this repository. Keep Git-aware
+# workflow collectors focused on the monorepo's active .github directory.
+/audits/**/.github/
+*.profraw
+*.profdata
+*.gcda
+*.gcno
+
+# Local environment and credentials
+.env
+.env.*
+!.env.example
+
+# Editors and operating systems
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Patch and merge leftovers
+*.orig
+*.rej

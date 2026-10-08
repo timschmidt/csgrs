@@ -1,0 +1,80 @@
+name: Unix
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+env:
+  BUILD_TYPE: Release
+
+jobs:
+  build:
+
+    name: ${{ matrix.config.name }}
+    runs-on: ${{ matrix.config.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        config:
+          - {
+            name: "macOS 14 AppleClang [Release]",
+            os: macos-14,
+            cxx-cmd: "clang++",
+            pyld: "DY"
+          }
+          - {
+            name: "Ubuntu 24.04 Clang 16 [Release]",
+            os: ubuntu-24.04,
+            cxx-pkg: "clang-16",
+            cxx-cmd: "clang++-16"
+          }
+          - {
+            name: "Ubuntu 24.04 GCC 13 [Release]",
+            os: ubuntu-24.04,
+            cxx-pkg: "g++-13",
+            cxx-cmd: "g++-13"
+          }
+
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        submodules: recursive
+
+    - name: Get macOS Concurrency
+      if: runner.os == 'macOS'
+      run: |
+        echo NPROC="sysctl -n hw.ncpu" >> $GITHUB_ENV
+        echo "Running on $(sysctl -n hw.ncpu) threads ..."
+
+    - name: Get Linux Concurrency
+      if: runner.os == 'Linux'
+      run: |
+        echo NPROC="nproc" >> $GITHUB_ENV
+        echo "Running on $(nproc) threads ..."
+
+    - name: Set Up macOS Dependencies
+      if: runner.os == 'macOS'
+      run: |
+        brew install ninja ${{matrix.config.cxx-pkg}}
+        export PKG_CONFIG_PATH=/usr/local/opt/libffi/lib/pkgconfig
+
+    - name: Set Up Linux Dependencies
+      if: runner.os == 'Linux'
+      run: sudo apt install -y cmake ninja-build pkg-config ${{matrix.config.cxx-pkg}}
+
+    - name: Create Build Environment
+      run: cmake -E make_directory ${{runner.workspace}}/build
+
+    - name: Configure CMake
+      working-directory: ${{runner.workspace}}/build
+      run: cmake ${{runner.workspace}}/helper -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DCMAKE_CXX_COMPILER=${{matrix.config.cxx-cmd}} -G Ninja
+
+    - name: Build
+      working-directory: ${{runner.workspace}}/build
+      run: cmake --build . --parallel $($NPROC)
+
+    - name: Test
+      working-directory: ${{runner.workspace}}/build
+      run: ctest -j $($NPROC) --output-on-failure

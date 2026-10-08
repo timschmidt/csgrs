@@ -1,0 +1,47 @@
+\doxysubsection{Timing\+Data Struct Reference}
+\hypertarget{structAriadne_1_1TimingData}{}\label{structAriadne_1_1TimingData}\index{TimingData@{TimingData}}
+
+
+{\ttfamily \#include $<$hybrid\+\_\+evolver.\+hpp$>$}
+
+
+
+\doxysubsubsection{Description}
+A data type used to store information about the kind of time step taken during hybrid evolution. \doxysubsubsubsection*{Public Attributes}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{structAriadne_1_1TimingData_aa7f69b5b159b3fba68275d24810fc0a8}\label{structAriadne_1_1TimingData_aa7f69b5b159b3fba68275d24810fc0a8} 
+\mbox{\hyperlink{group__HybridDynamicsSubModule_ga79c7231766d05a92d72e027f2a7e9e46}{Step\+Kind}} {\bfseries step\+\_\+kind}
+\begin{DoxyCompactList}\small\item\em The kind of step taken in the evolution. \end{DoxyCompactList}\item 
+\Hypertarget{structAriadne_1_1TimingData_a81a062ade4f946edc7470ed1c7b056e0}\label{structAriadne_1_1TimingData_a81a062ade4f946edc7470ed1c7b056e0} 
+\mbox{\hyperlink{group__HybridDynamicsSubModule_gaab38dcc1842690eb2fb23b9ef2930954}{Finishing\+Kind}} {\bfseries finishing\+\_\+kind}
+\begin{DoxyCompactList}\small\item\em The relationship between the finishing time of the step, and the final time of the evolution trace. \end{DoxyCompactList}\item 
+\Hypertarget{structAriadne_1_1TimingData_a0e2366c3a3468b897af00e2c43b171e1}\label{structAriadne_1_1TimingData_a0e2366c3a3468b897af00e2c43b171e1} 
+\mbox{\hyperlink{classAriadne_1_1Real}{Real}} {\bfseries final\+\_\+time}
+\begin{DoxyCompactList}\small\item\em The time $t_{\max}$ specified as the final time of the evolution trace. \end{DoxyCompactList}\item 
+\Hypertarget{structAriadne_1_1TimingData_afc3407ae5f19d20f239465ca3d98025d}\label{structAriadne_1_1TimingData_afc3407ae5f19d20f239465ca3d98025d} 
+\mbox{\hyperlink{classAriadne_1_1Dyadic}{Dyadic}} {\bfseries step\+\_\+size}
+\begin{DoxyCompactList}\small\item\em The maximum step size $h$ allowed by the computed flow function. \end{DoxyCompactList}\item 
+\Hypertarget{structAriadne_1_1TimingData_aa9900b376dfca3a2abc3b7673ca6dd9b}\label{structAriadne_1_1TimingData_aa9900b376dfca3a2abc3b7673ca6dd9b} 
+\mbox{\hyperlink{classAriadne_1_1FunctionPatch}{Validated\+Scalar\+Multivariate\+Function\+Patch}} {\bfseries spacetime\+\_\+dependent\+\_\+evolution\+\_\+time}
+\begin{DoxyCompactList}\small\item\em The evolution time $\varepsilon(x,t)$ used in a {\itshape SPACETIME\+\_\+\+DEPENDENT\+\_\+\+EVOLUTION\+\_\+\+TIME} step. \end{DoxyCompactList}\item 
+\Hypertarget{structAriadne_1_1TimingData_a57cdbdc7b46e049645cabaed6c5af784}\label{structAriadne_1_1TimingData_a57cdbdc7b46e049645cabaed6c5af784} 
+\mbox{\hyperlink{classAriadne_1_1FunctionPatch}{Validated\+Scalar\+Multivariate\+Function\+Patch}} {\bfseries spacetime\+\_\+dependent\+\_\+finishing\+\_\+time}
+\begin{DoxyCompactList}\small\item\em The final time $\omega(x,t)$ used in a {\itshape SPACETIME\+\_\+\+DEPENDENT\+\_\+\+FINISHING\+\_\+\+TIME} step. \end{DoxyCompactList}\item 
+\Hypertarget{structAriadne_1_1TimingData_abfeb69b0c8f5da9ddaf2a5c5123f3b90}\label{structAriadne_1_1TimingData_abfeb69b0c8f5da9ddaf2a5c5123f3b90} 
+\mbox{\hyperlink{classAriadne_1_1FunctionPatch}{Validated\+Scalar\+Multivariate\+Function\+Patch}} {\bfseries parameter\+\_\+dependent\+\_\+finishing\+\_\+time}
+\begin{DoxyCompactList}\small\item\em The time $\omega(s)$ reached after an {\itshape PARAMETER\+\_\+\+DEPENDENT\+\_\+\+FINISHING\+\_\+\+TIME} as a function of the parameters. \end{DoxyCompactList}\item 
+\Hypertarget{structAriadne_1_1TimingData_a6929c98b1c62c15dbdb9eda93df07ddb}\label{structAriadne_1_1TimingData_a6929c98b1c62c15dbdb9eda93df07ddb} 
+\mbox{\hyperlink{classAriadne_1_1FunctionPatch}{Validated\+Scalar\+Multivariate\+Function\+Patch}} {\bfseries parameter\+\_\+dependent\+\_\+evolution\+\_\+time}
+\begin{DoxyCompactList}\small\item\em The time $\delta(s)$ used in a {\itshape PARAMETER\+\_\+\+DEPENDENT\+\_\+\+EVOLUTION\+\_\+\+TIME} step. \doxylink{classAriadne_1_1Set}{Set} equal to $\varepsilon(\xi(s))$ for a {\itshape SPACE\+\_\+\+DEPENDENT\+\_\+\+EVOLUTION\+\_\+\+TIME} and $\omega(s)-\varepsilon(s)$ for an {\itshape PARAMETER\+\_\+\+DEPENDENT\+\_\+\+FINISHING\+\_\+\+TIME}. \end{DoxyCompactList}\item 
+\Hypertarget{structAriadne_1_1TimingData_a33e563cefbdf4f40a562952603c08f86}\label{structAriadne_1_1TimingData_a33e563cefbdf4f40a562952603c08f86} 
+\mbox{\hyperlink{group__FunctionModule_gab4f81d909c87bd33486c446890723bb1}{Exact\+Interval\+Type}} {\bfseries evolution\+\_\+time\+\_\+domain}
+\begin{DoxyCompactList}\small\item\em The time domain of the flow function, equal to $[0,h]$. \end{DoxyCompactList}\item 
+\Hypertarget{structAriadne_1_1TimingData_aac9f0a6b86f61350ff662ce4c4b059f5}\label{structAriadne_1_1TimingData_aac9f0a6b86f61350ff662ce4c4b059f5} 
+\mbox{\hyperlink{classAriadne_1_1FunctionPatch}{Validated\+Scalar\+Multivariate\+Function\+Patch}} {\bfseries evolution\+\_\+time\+\_\+coordinate}
+\begin{DoxyCompactList}\small\item\em The time coordinate of the flow function, equal to the identity on $[0,h]$. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+The documentation for this struct was generated from the following file\+:\begin{DoxyCompactItemize}
+\item 
+source/hybrid/\mbox{\hyperlink{hybrid__evolver_8hpp}{hybrid\+\_\+evolver.\+hpp}}\end{DoxyCompactItemize}

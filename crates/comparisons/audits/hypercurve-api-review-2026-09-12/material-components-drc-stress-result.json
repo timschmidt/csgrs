@@ -1,0 +1,12 @@
+{
+  "test": "geometry::tests::circle_polygon_normalizes_invalid_segment_counts",
+  "initial_test_timeout_seconds": 300,
+  "initial_partial_passes": 58,
+  "initial_failed_tests": [],
+  "parent_probe": "million-edge-circle-admission-parent.json",
+  "candidate_probe": "million-edge-circle-admission-candidate.json",
+  "probe_timeout_seconds": 90,
+  "last_stage": "contour constructed; exact region admission incomplete",
+  "source_path": "HyperDRC circle_polygon -> Polygon::new -> region_from_rings -> CurveRegion2::try_from_native_contours; material_components is not called",
+  "status": "unresolved stress case, not a passing test"
+}

@@ -1,0 +1,5 @@
+Reuse exact primitive tangent proofs across source cells
+
+Retain successful strict source-hodograph GCD and quotient evidence on the shared source owner. Offsets, reversed ranges and repeated constraints reuse the same primitive field, with a separately retained opposite orientation selected by the exact factor sign. Unavailable proofs remain retryable through the existing arbitrary-exact rank-one fallback.
+
+Validation: 452 release regressions across eight binaries and six static/downstream checks, with 16 identical-input/binary focused receipts reused. The new cusp test checks shared field identity across policy, distance and range reversal while independently verifying opposite one-sided offset limits.

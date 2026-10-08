@@ -1,0 +1,76 @@
+\doxysubsection{source/function/formula.hpp File Reference}
+\hypertarget{formula_8hpp}{}\label{formula_8hpp}\index{source/function/formula.hpp@{source/function/formula.hpp}}
+
+
+\doxysubsubsection{Description}
+Formulae over variables. 
+
+{\ttfamily \#include $<$cstdarg$>$}\newline
+{\ttfamily \#include $<$iostream$>$}\newline
+{\ttfamily \#include $<$iomanip$>$}\newline
+{\ttfamily \#include $<$string$>$}\newline
+{\ttfamily \#include "{}utility/macros.\+hpp"{}}\newline
+{\ttfamily \#include "{}utility/pointer.\+hpp"{}}\newline
+{\ttfamily \#include "{}utility/container.\+hpp"{}}\newline
+{\ttfamily \#include "{}helper/stlio.\+hpp"{}}\newline
+{\ttfamily \#include "{}numeric/operators.\+hpp"{}}\newline
+{\ttfamily \#include "{}numeric/numeric.\+hpp"{}}\newline
+{\ttfamily \#include "{}algebra/vector.\+hpp"{}}\newline
+{\ttfamily \#include "{}algebra/expansion.\+hpp"{}}\newline
+{\ttfamily \#include "{}algebra/operations.\+hpp"{}}\newline
+{\ttfamily \#include "{}symbolic/templates.\+hpp"{}}\newline
+{\ttfamily \#include "{}symbolic/constant.\+hpp"{}}\newline
+\doxysubsubsubsection*{Classes}
+\begin{DoxyCompactItemize}
+\item 
+class \mbox{\hyperlink{classAriadne_1_1Formula}{Formula$<$ Y $>$}}
+\begin{DoxyCompactList}\small\item\em A formula defining a real function. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsubsection*{Namespaces}
+\begin{DoxyCompactItemize}
+\item 
+namespace \mbox{\hyperlink{namespaceAriadne}{Ariadne}}
+\begin{DoxyCompactList}\small\item\em Top-\/level Ariadne namespace. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsubsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{namespaceAriadne_a8dd27b8b5cc2c10a4d4781733340d71d}\label{namespaceAriadne_a8dd27b8b5cc2c10a4d4781733340d71d} 
+{\footnotesize template$<$class Y$>$ }\\\mbox{\hyperlink{classAriadne_1_1Formula}{Formula}}$<$ Y $>$ {\bfseries substitute} (const \mbox{\hyperlink{classAriadne_1_1Formula}{Formula}}$<$ Y $>$ \&a, const \mbox{\hyperlink{namespaceAriadne_aae901a69a841b1a085a0dfe218e38fe9}{Nat}} \&i, const Y \&c)
+\begin{DoxyCompactList}\small\item\em Substitute all occurrences of index {\itshape i} with constant value {\itshape c}. \end{DoxyCompactList}\item 
+\Hypertarget{namespaceAriadne_ae074eb3c3545bd81bee78b414a9aa124}\label{namespaceAriadne_ae074eb3c3545bd81bee78b414a9aa124} 
+{\footnotesize template$<$class Y$>$ }\\\mbox{\hyperlink{classAriadne_1_1Formula}{Formula}}$<$ Y $>$ {\bfseries substitute} (const \mbox{\hyperlink{classAriadne_1_1Formula}{Formula}}$<$ Y $>$ \&a, const \mbox{\hyperlink{classAriadne_1_1List}{List}}$<$ \mbox{\hyperlink{namespaceAriadne_abbe0884d033ed6289d1f654576d7bb07}{Pair}}$<$ \mbox{\hyperlink{namespaceAriadne_aae901a69a841b1a085a0dfe218e38fe9}{Nat}}, \mbox{\hyperlink{classAriadne_1_1Formula}{Formula}}$<$ Y $>$ $>$ $>$ \&as)
+\begin{DoxyCompactList}\small\item\em Substitute all occurrences of indices with formulae {\itshape as} into {\itshape a}. \end{DoxyCompactList}\item 
+\Hypertarget{namespaceAriadne_a2ef654840db4a699ec25da0870fc6bc5}\label{namespaceAriadne_a2ef654840db4a699ec25da0870fc6bc5} 
+{\footnotesize template$<$class Y$>$ }\\\mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ \mbox{\hyperlink{classAriadne_1_1Formula}{Formula}}$<$ Y $>$ $>$ {\bfseries substitute} (const \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ \mbox{\hyperlink{classAriadne_1_1Formula}{Formula}}$<$ Y $>$ $>$ \&av, const \mbox{\hyperlink{classAriadne_1_1List}{List}}$<$ \mbox{\hyperlink{namespaceAriadne_abbe0884d033ed6289d1f654576d7bb07}{Pair}}$<$ \mbox{\hyperlink{namespaceAriadne_aae901a69a841b1a085a0dfe218e38fe9}{Nat}}, \mbox{\hyperlink{classAriadne_1_1Formula}{Formula}}$<$ Y $>$ $>$ $>$ \&as)
+\begin{DoxyCompactList}\small\item\em Substitute all occurrences of indices with formulae {\itshape as} into {\itshape av}. \end{DoxyCompactList}\item 
+\Hypertarget{namespaceAriadne_ac687cba72a7cdd051d7a82d5bb2df56c}\label{namespaceAriadne_ac687cba72a7cdd051d7a82d5bb2df56c} 
+{\footnotesize template$<$class Y$>$ }\\\mbox{\hyperlink{classAriadne_1_1Formula}{Formula}}$<$ Y $>$ {\bfseries simplify} (const \mbox{\hyperlink{classAriadne_1_1Formula}{Formula}}$<$ Y $>$ \&a)
+\begin{DoxyCompactList}\small\item\em Simplify the formula to reduce the number of nodes. \end{DoxyCompactList}\item 
+\Hypertarget{namespaceAriadne_a0f35cf854b8830bb391c3e7f346f3247}\label{namespaceAriadne_a0f35cf854b8830bb391c3e7f346f3247} 
+{\footnotesize template$<$class Y$>$ }\\\mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ \mbox{\hyperlink{classAriadne_1_1Formula}{Formula}}$<$ Y $>$ $>$ {\bfseries simplify} (const \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ \mbox{\hyperlink{classAriadne_1_1Formula}{Formula}}$<$ Y $>$ $>$ \&a)
+\begin{DoxyCompactList}\small\item\em Simplify the formulae to reduce the number of nodes. \end{DoxyCompactList}\item 
+\Hypertarget{namespaceAriadne_aab092eaf1dc22d84d86cfbc40bb58420}\label{namespaceAriadne_aab092eaf1dc22d84d86cfbc40bb58420} 
+{\footnotesize template$<$class Y$>$ }\\\mbox{\hyperlink{namespaceAriadne_a76a8b016e5ad61faf9062cc387df5016}{Bool}} {\bfseries identical} (const \mbox{\hyperlink{classAriadne_1_1Formula}{Formula}}$<$ Y $>$ \&a1, const \mbox{\hyperlink{classAriadne_1_1Formula}{Formula}}$<$ Y $>$ \&a2)
+\begin{DoxyCompactList}\small\item\em Tests whether two formulas are identical. \end{DoxyCompactList}\item 
+\Hypertarget{namespaceAriadne_aaed2d98910c54429274a3421d21bdd3b}\label{namespaceAriadne_aaed2d98910c54429274a3421d21bdd3b} 
+{\footnotesize template$<$class Y$>$ }\\\mbox{\hyperlink{namespaceAriadne_a76a8b016e5ad61faf9062cc387df5016}{Bool}} {\bfseries identical} (const \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ \mbox{\hyperlink{classAriadne_1_1Formula}{Formula}}$<$ Y $>$ $>$ \&a1, const \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ \mbox{\hyperlink{classAriadne_1_1Formula}{Formula}}$<$ Y $>$ $>$ \&a2)
+\begin{DoxyCompactList}\small\item\em Tests whether two vector formulas are identical. \end{DoxyCompactList}\item 
+\Hypertarget{namespaceAriadne_ab08ca9a766180880f7016057852a526d}\label{namespaceAriadne_ab08ca9a766180880f7016057852a526d} 
+{\footnotesize template$<$class Y$>$ }\\\mbox{\hyperlink{namespaceAriadne_a76a8b016e5ad61faf9062cc387df5016}{Bool}} {\bfseries is\+\_\+constant} (\mbox{\hyperlink{classAriadne_1_1Formula}{Formula}}$<$ Y $>$ const \&f)
+\begin{DoxyCompactList}\small\item\em Returns {\itshape true} if the formula {\itshape a} is syntactically equal to a constant. \end{DoxyCompactList}\item 
+\Hypertarget{namespaceAriadne_a95a97ad88d9f824ecfac4e325daab321}\label{namespaceAriadne_a95a97ad88d9f824ecfac4e325daab321} 
+{\footnotesize template$<$class Y$>$ }\\\mbox{\hyperlink{namespaceAriadne_a76a8b016e5ad61faf9062cc387df5016}{Bool}} {\bfseries is\+\_\+constant} (const \mbox{\hyperlink{classAriadne_1_1Formula}{Formula}}$<$ Y $>$ \&f, const Self\+Type$<$ Y $>$ \&c)
+\begin{DoxyCompactList}\small\item\em Returns {\itshape true} if the formula {\itshape a} is syntactically equal to the constant {\itshape c}. \end{DoxyCompactList}\item 
+\Hypertarget{namespaceAriadne_a8aa91fa409b1c7025e401070c15ba059}\label{namespaceAriadne_a8aa91fa409b1c7025e401070c15ba059} 
+{\footnotesize template$<$class Y$>$ }\\\mbox{\hyperlink{namespaceAriadne_a76a8b016e5ad61faf9062cc387df5016}{Bool}} {\bfseries is\+\_\+constant\+\_\+in} (const \mbox{\hyperlink{classAriadne_1_1Formula}{Formula}}$<$ Y $>$ \&a, const \mbox{\hyperlink{classAriadne_1_1Set}{Set}}$<$ \mbox{\hyperlink{namespaceAriadne_aae901a69a841b1a085a0dfe218e38fe9}{Nat}} $>$ \&is)
+\begin{DoxyCompactList}\small\item\em Returns {\itshape true} if the formula {\itshape a} is syntactically constant in the indices {\itshape is}. \end{DoxyCompactList}\item 
+\Hypertarget{namespaceAriadne_ab82cd5a39c73bfe8f73906ee95ccc15c}\label{namespaceAriadne_ab82cd5a39c73bfe8f73906ee95ccc15c} 
+{\footnotesize template$<$class Y$>$ }\\\mbox{\hyperlink{namespaceAriadne_a76a8b016e5ad61faf9062cc387df5016}{Bool}} {\bfseries is\+\_\+affine\+\_\+in} (const \mbox{\hyperlink{classAriadne_1_1Formula}{Formula}}$<$ Y $>$ \&a, const \mbox{\hyperlink{classAriadne_1_1Set}{Set}}$<$ \mbox{\hyperlink{namespaceAriadne_aae901a69a841b1a085a0dfe218e38fe9}{Nat}} $>$ \&is)
+\begin{DoxyCompactList}\small\item\em Returns {\itshape true} if the formula {\itshape a} is syntactically affine in the indices {\itshape is}. \end{DoxyCompactList}\item 
+\Hypertarget{namespaceAriadne_a7291ce753821de237b17da136f5290bd}\label{namespaceAriadne_a7291ce753821de237b17da136f5290bd} 
+{\footnotesize template$<$class Y$>$ }\\\mbox{\hyperlink{namespaceAriadne_a76a8b016e5ad61faf9062cc387df5016}{Bool}} {\bfseries is\+\_\+affine\+\_\+in} (const \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ \mbox{\hyperlink{classAriadne_1_1Formula}{Formula}}$<$ Y $>$ $>$ \&a, const \mbox{\hyperlink{classAriadne_1_1Set}{Set}}$<$ \mbox{\hyperlink{namespaceAriadne_aae901a69a841b1a085a0dfe218e38fe9}{Nat}} $>$ \&is)
+\begin{DoxyCompactList}\small\item\em Returns {\itshape true} if the vector formula {\itshape e} is syntactically affine in the indices {\itshape is}. \end{DoxyCompactList}\item 
+\Hypertarget{namespaceAriadne_a38e42b78da0172759fb6d1c8fb77ce41}\label{namespaceAriadne_a38e42b78da0172759fb6d1c8fb77ce41} 
+{\footnotesize template$<$class Y$>$ }\\\mbox{\hyperlink{namespaceAriadne_a76a8b016e5ad61faf9062cc387df5016}{Bool}} {\bfseries is\+\_\+additive\+\_\+in} (const \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ \mbox{\hyperlink{classAriadne_1_1Formula}{Formula}}$<$ Y $>$ $>$ \&a, const \mbox{\hyperlink{classAriadne_1_1Set}{Set}}$<$ \mbox{\hyperlink{namespaceAriadne_aae901a69a841b1a085a0dfe218e38fe9}{Nat}} $>$ \&is)
+\begin{DoxyCompactList}\small\item\em Returns {\itshape true} if the vector formula {\itshape a} is syntactically additive (possibly with multipliers) in the indices {\itshape is}. \end{DoxyCompactList}\item 
+{\footnotesize template$<$class X$>$ }\\\mbox{\hyperlink{classAriadne_1_1Formula}{Formula}}$<$ X $>$ {\bfseries formula} (const \mbox{\hyperlink{classAriadne_1_1Expansion}{Expansion}}$<$ Multi\+Index, X $>$ \&e)
+\begin{DoxyCompactList}\small\item\em Convert a power-\/series expansion into a formula using a version of Horner\textquotesingle{}s rule. See J. M. Pena and T. Sauer, "{}\+On the multivariate Horner scheme"{}, SIAM J. Numer. Anal. 37(4) 1186-\/1197, 2000. \end{DoxyCompactList}\end{DoxyCompactItemize}

@@ -1,0 +1,15 @@
+{
+  "returncode": 0,
+  "elapsed_seconds": 1.1149987940152641,
+  "command": [
+    "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve-6e6572a45c5b177b",
+    "--exact",
+    "bezier_offset::conversion_tests::analytic_parallel_self_intersection_removes_the_parameter_diagonal",
+    "--nocapture",
+    "--color",
+    "never"
+  ],
+  "binary": "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve-6e6572a45c5b177b",
+  "sha256": "72ae4e35303bcb2decfab231258c151c508d920bcfa285ffba407c4f8230fbde",
+  "source_patch_sha256": "3d86a7cd6962032e9c9305f0473d547b869cbe7cb85feeb6ea5ac9da7956ac5f"
+}

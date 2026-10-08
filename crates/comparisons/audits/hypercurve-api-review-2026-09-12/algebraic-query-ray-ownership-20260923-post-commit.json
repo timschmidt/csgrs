@@ -1,0 +1,8 @@
+{
+  "head": "3b8fc9f7e77624d5946cbefe2c441216064b310f",
+  "clean": true,
+  "region_sha256": "bcaf66ff5f5ca7b19dea219413469f8adae5fdc39e64f0307d320bdd62bf6e1b",
+  "offset_sha256": "87b952575117b35cf8ffd3435824c5024b8f8c00f27cbe04c42752fedef46588",
+  "all_owned_processes_reaped": true,
+  "full_goal_complete": false
+}

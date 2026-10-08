@@ -1,0 +1,31 @@
+{
+  "src/bezier_retained_measure.rs": [
+    "include_endpoint"
+  ],
+  "src/bezier_topology.rs": [
+    "control_box"
+  ],
+  "src/contour.rs": [
+    "decided_segment_boxes",
+    "structural_facts"
+  ],
+  "src/prepared.rs": [
+    "decided_segment_boxes",
+    "union_all_decided_boxes",
+    "curve_string_facts",
+    "contour_facts",
+    "region_view_facts"
+  ],
+  "src/rational_bezier.rs": [
+    "control_box"
+  ],
+  "src/svg.rs": [
+    "merge_bounds"
+  ],
+  "src/region.rs": [
+    "structural_facts"
+  ],
+  "src/curve_string.rs": [
+    "structural_facts"
+  ]
+}

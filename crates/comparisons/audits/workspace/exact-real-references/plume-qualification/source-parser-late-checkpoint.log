@@ -1,0 +1,15 @@
+{
+  "originalFiles": 174,
+  "textFilesRead": 170,
+  "textLinesRead": 24049,
+  "binaryFilesIdentifiedNotExecuted": 4,
+  "cgiFilesOnlyAlexBridged": 57,
+  "parserProbeSha256": "bebcb06c959fca82e06743fdb09639646d3fa2709f8eb0206d4f8172f8b11e77",
+  "parserPerBuild": {
+    "lexerChecks": 33938,
+    "parserChecks": 88,
+    "failures": 0
+  },
+  "O0O2Identical": true,
+  "scope": "Source-container coverage and offline syntax checks only; report/functional audit remains open."
+}

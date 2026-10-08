@@ -1,0 +1,13 @@
+[package]
+name = "calcium-monic-fractionfree-probe"
+version = "0.1.0"
+edition = "2024"
+publish = false
+[workspace]
+[dependencies]
+hyperreal = { path = "../polynomial-facts-trial/hyperreal" }
+hyperlimit = { path = "../polynomial-facts-trial/hyperlimit" }
+hypersolve = { path = "../polynomial-facts-trial/hypersolve" }
+[[bin]]
+name = "calcium-monic-fractionfree-probe"
+path = "../monic-fractionfree-probe.rs"

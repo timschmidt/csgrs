@@ -1,0 +1,151 @@
+\doxysubsection{Decimal Class Reference}
+\hypertarget{classAriadne_1_1Decimal}{}\label{classAriadne_1_1Decimal}\index{Decimal@{Decimal}}
+
+
+{\ttfamily \#include $<$decimal.\+hpp$>$}
+
+
+
+\doxysubsubsection{Description}
+A decimal number. 
+
+\begin{DoxySeeAlso}{See also}
+\doxylink{classAriadne_1_1Integer}{Integer}, \doxylink{classAriadne_1_1Dyadic}{Dyadic}, \doxylink{classAriadne_1_1Rational}{Rational}, \doxylink{classAriadne_1_1Real}{Real} 
+\end{DoxySeeAlso}
+\doxysubsubsubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1Decimal_ad3b6b3dc64416cc44cf91c8bc44f1450}\label{classAriadne_1_1Decimal_ad3b6b3dc64416cc44cf91c8bc44f1450} 
+{\bfseries Decimal} ()
+\begin{DoxyCompactList}\small\item\em Default constructor creates the number 0 (zero). \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Decimal_a1abfa9e650529852f8cc66b8aa8c2c6d}\label{classAriadne_1_1Decimal_a1abfa9e650529852f8cc66b8aa8c2c6d} 
+{\bfseries Decimal} (\mbox{\hyperlink{classAriadne_1_1Integer}{Integer}} p, \mbox{\hyperlink{namespaceAriadne_aae901a69a841b1a085a0dfe218e38fe9}{Nat}} q)
+\begin{DoxyCompactList}\small\item\em Construct the number p/10\texorpdfstring{$^\wedge$}{\string^}q. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Decimal_a654083dd8f81fdcafebcf2febfad4d0d}\label{classAriadne_1_1Decimal_a654083dd8f81fdcafebcf2febfad4d0d} 
+{\footnotesize template$<$Builtin\+Integral N$>$ }\\{\bfseries Decimal} (N n)
+\begin{DoxyCompactList}\small\item\em Construct from a builtin integral type. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Decimal_a1bfea48ab96974633a0928269707476f}\label{classAriadne_1_1Decimal_a1bfea48ab96974633a0928269707476f} 
+{\bfseries Decimal} (double d)
+\begin{DoxyCompactList}\small\item\em Construct from a double-\/precision floating-\/point number representation. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Decimal_a99991410816f9cc6f478ea9f7ae2d10c}\label{classAriadne_1_1Decimal_a99991410816f9cc6f478ea9f7ae2d10c} 
+{\bfseries Decimal} (\mbox{\hyperlink{classAriadne_1_1String}{String}} const \&)
+\begin{DoxyCompactList}\small\item\em Construct from a string representation. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Decimal_a78fd56b1479ec2367ded6bb4770fbb48}\label{classAriadne_1_1Decimal_a78fd56b1479ec2367ded6bb4770fbb48} 
+{\bfseries Decimal} (\mbox{\hyperlink{classAriadne_1_1Dyadic}{Dyadic}} const \&)
+\begin{DoxyCompactList}\small\item\em Convert from a dyadic. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Decimal_a8e8463f434fb0338b930173bc670bd92}\label{classAriadne_1_1Decimal_a8e8463f434fb0338b930173bc670bd92} 
+{\bfseries operator Rational} () const
+\begin{DoxyCompactList}\small\item\em Convert to a rational number. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Decimal_a199a243df73e92a4c48c97f35ab6ae7b}\label{classAriadne_1_1Decimal_a199a243df73e92a4c48c97f35ab6ae7b} 
+{\bfseries operator Exact\+Number} () const
+\begin{DoxyCompactList}\small\item\em Convert to an generic number. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Decimal_abe52483f91da873e8369c9775465ae67}\label{classAriadne_1_1Decimal_abe52483f91da873e8369c9775465ae67} 
+\mbox{\hyperlink{classAriadne_1_1String}{String}} {\bfseries literal} () const
+\begin{DoxyCompactList}\small\item\em A string literal. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsubsection*{Friends}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1Decimal_a77ae7ee2283a23d4117e4e1818952b1c}\label{classAriadne_1_1Decimal_a77ae7ee2283a23d4117e4e1818952b1c} 
+\mbox{\hyperlink{namespaceAriadne_acbb98ddc4385af4599070e65a1a47ec1}{Output\+Stream}} \& {\bfseries operator$<$$<$} (\mbox{\hyperlink{namespaceAriadne_acbb98ddc4385af4599070e65a1a47ec1}{Output\+Stream}} \&os, \mbox{\hyperlink{classAriadne_1_1Decimal}{Decimal}} const \&d)
+\begin{DoxyCompactList}\small\item\em Write to an output stream. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Decimal_a8d781116a8b04bdf6af3ce17a70dabe6}\label{classAriadne_1_1Decimal_a8d781116a8b04bdf6af3ce17a70dabe6} 
+\mbox{\hyperlink{classAriadne_1_1Decimal}{Decimal}} {\bfseries operator"{}"{}\+\_\+decimal} (unsigned long long int n)
+\begin{DoxyCompactList}\small\item\em Construct from an integer literal. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Decimal_aeb7a5a480c4644971ae2ee08555fa601}\label{classAriadne_1_1Decimal_aeb7a5a480c4644971ae2ee08555fa601} 
+\mbox{\hyperlink{classAriadne_1_1Decimal}{Decimal}} {\bfseries operator"{}"{}\+\_\+decimal} (long double dbl)
+\begin{DoxyCompactList}\small\item\em Construct from a floating-\/point literal. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Decimal_a3c703fd3e8e5f79340413e039fc2972b}\label{classAriadne_1_1Decimal_a3c703fd3e8e5f79340413e039fc2972b} 
+\mbox{\hyperlink{classAriadne_1_1Decimal}{Decimal}} {\bfseries operator"{}"{}\+\_\+decimal} (const char \texorpdfstring{$\ast$}{*}str, std\+::size\+\_\+t)
+\begin{DoxyCompactList}\small\item\em Construct from a string literal. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Decimal_a71df44c7fb3dfda00e3c4b4a4e91d7b2}\label{classAriadne_1_1Decimal_a71df44c7fb3dfda00e3c4b4a4e91d7b2} 
+\mbox{\hyperlink{classAriadne_1_1Decimal}{Decimal}} {\bfseries operator"{}"{}\+\_\+dec} (long double dbl)
+\begin{DoxyCompactList}\small\item\em Shorthand for operator"{}"{}\+\_\+decimal. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Decimal_a697c1c2a499acb83928711938d3619ea}\label{classAriadne_1_1Decimal_a697c1c2a499acb83928711938d3619ea} 
+\mbox{\hyperlink{classAriadne_1_1Decimal}{Decimal}} {\bfseries dec\+\_\+} (long double dbl)
+\begin{DoxyCompactList}\small\item\em Alternative for operator"{}"{}\+\_\+decimal for use in Python interface. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\begin{Indent}\textbf{ Arithmetic operators}\par
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1Decimal_a2883e378bd2700703bb56fa4bef1c511}\label{classAriadne_1_1Decimal_a2883e378bd2700703bb56fa4bef1c511} 
+\mbox{\hyperlink{classAriadne_1_1Decimal}{Decimal}} {\bfseries operator+} (\mbox{\hyperlink{classAriadne_1_1Decimal}{Decimal}} const \&d)
+\begin{DoxyCompactList}\small\item\em Unary plus {\itshape +d}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Decimal_a1f1f540cfa70f0b3ceff2ef2a65a8bd5}\label{classAriadne_1_1Decimal_a1f1f540cfa70f0b3ceff2ef2a65a8bd5} 
+\mbox{\hyperlink{classAriadne_1_1Decimal}{Decimal}} {\bfseries operator-\/} (\mbox{\hyperlink{classAriadne_1_1Decimal}{Decimal}} const \&d)
+\begin{DoxyCompactList}\small\item\em Unary minus {\itshape -\/d}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Decimal_ab6bb742075c345630d59b31672f9c01e}\label{classAriadne_1_1Decimal_ab6bb742075c345630d59b31672f9c01e} 
+\mbox{\hyperlink{classAriadne_1_1Decimal}{Decimal}} {\bfseries operator+} (\mbox{\hyperlink{classAriadne_1_1Decimal}{Decimal}} const \&d1, \mbox{\hyperlink{classAriadne_1_1Decimal}{Decimal}} const \&d2)
+\begin{DoxyCompactList}\small\item\em Plus {\itshape d1+d2}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Decimal_a05ee2d1390166023808909745b05d2f8}\label{classAriadne_1_1Decimal_a05ee2d1390166023808909745b05d2f8} 
+\mbox{\hyperlink{classAriadne_1_1Decimal}{Decimal}} {\bfseries operator-\/} (\mbox{\hyperlink{classAriadne_1_1Decimal}{Decimal}} const \&d1, \mbox{\hyperlink{classAriadne_1_1Decimal}{Decimal}} const \&d2)
+\begin{DoxyCompactList}\small\item\em Minus {\itshape d1-\/d2}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Decimal_aac360d9c183c5e3406d9e729756ec5fd}\label{classAriadne_1_1Decimal_aac360d9c183c5e3406d9e729756ec5fd} 
+\mbox{\hyperlink{classAriadne_1_1Decimal}{Decimal}} {\bfseries operator\texorpdfstring{$\ast$}{*}} (\mbox{\hyperlink{classAriadne_1_1Decimal}{Decimal}} const \&d1, \mbox{\hyperlink{classAriadne_1_1Decimal}{Decimal}} const \&d2)
+\begin{DoxyCompactList}\small\item\em Times {\itshape d1\texorpdfstring{$\ast$}{*}d2}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Decimal_a88356c87c439e75ae156d40379410997}\label{classAriadne_1_1Decimal_a88356c87c439e75ae156d40379410997} 
+\mbox{\hyperlink{classAriadne_1_1Rational}{Rational}} {\bfseries operator/} (\mbox{\hyperlink{classAriadne_1_1Decimal}{Decimal}} const \&d1, \mbox{\hyperlink{classAriadne_1_1Decimal}{Decimal}} const \&d2)
+\begin{DoxyCompactList}\small\item\em Divides {\itshape d1/d2}, yielding a rational. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Decimal_a0799ec7913eb1bdecc673d4d2882bdfa}\label{classAriadne_1_1Decimal_a0799ec7913eb1bdecc673d4d2882bdfa} 
+\mbox{\hyperlink{classAriadne_1_1Decimal}{Decimal}} \& {\bfseries operator+=} (\mbox{\hyperlink{classAriadne_1_1Decimal}{Decimal}} \&d1, \mbox{\hyperlink{classAriadne_1_1Decimal}{Decimal}} const \&d2)
+\begin{DoxyCompactList}\small\item\em Inplace plus {\itshape d1\+:=d1+d2}. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\end{Indent}
+\begin{Indent}\textbf{ Comparison operators}\par
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1Decimal_acf69559b563288d67b8c2a217236fe62}\label{classAriadne_1_1Decimal_acf69559b563288d67b8c2a217236fe62} 
+\mbox{\hyperlink{classAriadne_1_1Boolean}{Boolean}} {\bfseries operator==} (\mbox{\hyperlink{classAriadne_1_1Decimal}{Decimal}} const \&d1, \mbox{\hyperlink{classAriadne_1_1Decimal}{Decimal}} const \&d2)
+\item 
+\Hypertarget{classAriadne_1_1Decimal_a2c8befd43f32da0cb104719cbdbd234d}\label{classAriadne_1_1Decimal_a2c8befd43f32da0cb104719cbdbd234d} 
+\mbox{\hyperlink{classAriadne_1_1Boolean}{Boolean}} {\bfseries operator!=} (\mbox{\hyperlink{classAriadne_1_1Decimal}{Decimal}} const \&d1, \mbox{\hyperlink{classAriadne_1_1Decimal}{Decimal}} const \&d2)
+\item 
+\Hypertarget{classAriadne_1_1Decimal_a7d3e3d7f859a729c8452d55be4ee132a}\label{classAriadne_1_1Decimal_a7d3e3d7f859a729c8452d55be4ee132a} 
+\mbox{\hyperlink{classAriadne_1_1Boolean}{Boolean}} {\bfseries operator$<$=} (\mbox{\hyperlink{classAriadne_1_1Decimal}{Decimal}} const \&d1, \mbox{\hyperlink{classAriadne_1_1Decimal}{Decimal}} const \&d2)
+\item 
+\Hypertarget{classAriadne_1_1Decimal_a07e397d3a9d6bf2f51232b3a290bcb52}\label{classAriadne_1_1Decimal_a07e397d3a9d6bf2f51232b3a290bcb52} 
+\mbox{\hyperlink{classAriadne_1_1Boolean}{Boolean}} {\bfseries operator$>$=} (\mbox{\hyperlink{classAriadne_1_1Decimal}{Decimal}} const \&d1, \mbox{\hyperlink{classAriadne_1_1Decimal}{Decimal}} const \&d2)
+\item 
+\Hypertarget{classAriadne_1_1Decimal_ac5d19442d43a7bab5cd27844a63493fb}\label{classAriadne_1_1Decimal_ac5d19442d43a7bab5cd27844a63493fb} 
+\mbox{\hyperlink{classAriadne_1_1Boolean}{Boolean}} {\bfseries operator$<$} (\mbox{\hyperlink{classAriadne_1_1Decimal}{Decimal}} const \&d1, \mbox{\hyperlink{classAriadne_1_1Decimal}{Decimal}} const \&d2)
+\item 
+\Hypertarget{classAriadne_1_1Decimal_adf5f0d8056105da567bc57991ede32e3}\label{classAriadne_1_1Decimal_adf5f0d8056105da567bc57991ede32e3} 
+\mbox{\hyperlink{classAriadne_1_1Boolean}{Boolean}} {\bfseries operator$>$} (\mbox{\hyperlink{classAriadne_1_1Decimal}{Decimal}} const \&d1, \mbox{\hyperlink{classAriadne_1_1Decimal}{Decimal}} const \&d2)
+\end{DoxyCompactItemize}
+\end{Indent}
+\begin{Indent}\textbf{ Arithmetic operations}\par
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1Decimal_aab514a89539292529e0a27b00e67f80f}\label{classAriadne_1_1Decimal_aab514a89539292529e0a27b00e67f80f} 
+\mbox{\hyperlink{classAriadne_1_1Decimal}{Decimal}} {\bfseries nul} (\mbox{\hyperlink{classAriadne_1_1Decimal}{Decimal}} const \&d)
+\begin{DoxyCompactList}\small\item\em Zero {\itshape 0}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Decimal_aa61507027f18944a3636e5b02a16a091}\label{classAriadne_1_1Decimal_aa61507027f18944a3636e5b02a16a091} 
+\mbox{\hyperlink{classAriadne_1_1Decimal}{Decimal}} {\bfseries sqr} (\mbox{\hyperlink{classAriadne_1_1Decimal}{Decimal}} const \&d)
+\begin{DoxyCompactList}\small\item\em Square {\itshape d\textsuperscript{2}}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Decimal_ad49e68441d2c64a8cd0d5c86ba20151c}\label{classAriadne_1_1Decimal_ad49e68441d2c64a8cd0d5c86ba20151c} 
+\mbox{\hyperlink{classAriadne_1_1Decimal}{Decimal}} {\bfseries hlf} (\mbox{\hyperlink{classAriadne_1_1Decimal}{Decimal}} const \&d)
+\begin{DoxyCompactList}\small\item\em Half {\itshape d/2}. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\end{Indent}
+\begin{Indent}\textbf{ Lattice operations}\par
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1Decimal_a508f8ce4dd92d08bb8d9037725a52b71}\label{classAriadne_1_1Decimal_a508f8ce4dd92d08bb8d9037725a52b71} 
+\mbox{\hyperlink{classAriadne_1_1Decimal}{Decimal}} {\bfseries abs} (\mbox{\hyperlink{classAriadne_1_1Decimal}{Decimal}} const \&d)
+\begin{DoxyCompactList}\small\item\em Absolute value {\itshape \texorpdfstring{$\vert$}{|}d\texorpdfstring{$\vert$}{|}}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Decimal_aa0c6b6dc70e5c01e610db2900727f49c}\label{classAriadne_1_1Decimal_aa0c6b6dc70e5c01e610db2900727f49c} 
+\mbox{\hyperlink{classAriadne_1_1Decimal}{Decimal}} {\bfseries min} (\mbox{\hyperlink{classAriadne_1_1Decimal}{Decimal}} const \&d1, \mbox{\hyperlink{classAriadne_1_1Decimal}{Decimal}} const \&d2)
+\begin{DoxyCompactList}\small\item\em Minimum {\itshape d1∧d2}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Decimal_a38ba4caba9c48c617a2cd62daefe5087}\label{classAriadne_1_1Decimal_a38ba4caba9c48c617a2cd62daefe5087} 
+\mbox{\hyperlink{classAriadne_1_1Decimal}{Decimal}} {\bfseries max} (\mbox{\hyperlink{classAriadne_1_1Decimal}{Decimal}} const \&d1, \mbox{\hyperlink{classAriadne_1_1Decimal}{Decimal}} const \&d2)
+\begin{DoxyCompactList}\small\item\em Maximum {\itshape d1∨d2}. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\end{Indent}
+\begin{Indent}\textbf{ Comparison operations}\par
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1Decimal_a7d3fcd4dd48eb6f0e45c4f61236d7efd}\label{classAriadne_1_1Decimal_a7d3fcd4dd48eb6f0e45c4f61236d7efd} 
+\mbox{\hyperlink{namespaceAriadne_a0e36a4c4b857737f71444bff61a9edb6}{Comparison}} {\bfseries cmp} (\mbox{\hyperlink{classAriadne_1_1Decimal}{Decimal}} const \&d1, \mbox{\hyperlink{classAriadne_1_1Decimal}{Decimal}} const \&d2)
+\begin{DoxyCompactList}\small\item\em \doxylink{namespaceAriadne_a0e36a4c4b857737f71444bff61a9edb6}{Comparison} of two decimal values. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\end{Indent}
+
+
+The documentation for this class was generated from the following files\+:\begin{DoxyCompactItemize}
+\item 
+source/numeric/\mbox{\hyperlink{decimal_8hpp}{decimal.\+hpp}}\item 
+source/numeric/decimal.\+cpp\end{DoxyCompactItemize}

@@ -1,0 +1,28 @@
+[
+  {
+    "target": "hypercurve_curve_range",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-bezier-curves-candidate1-libraries/hypercurve_curve_range-d8949596fe59b528",
+      "--test-threads=2",
+      "--color",
+      "never"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.16417295800056309,
+    "sha256": "cf1a83437efb40b3b6c0ecb7ccbbabe93f2c265d5b3431adccb11892f459dca0",
+    "log": "finite-bezier-curves-candidate1-hypercurve_curve_range-test.log"
+  },
+  {
+    "target": "hypercurve_curve_region_boolean",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-bezier-curves-candidate1-libraries/hypercurve_curve_region_boolean-c2cb10d17834015e",
+      "--test-threads=2",
+      "--color",
+      "never"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 6.223537876008777,
+    "sha256": "3946f5c203113b16cb17185ed87af90823b6ccff39d85c86321f6c61dce6b59e",
+    "log": "finite-bezier-curves-candidate1-hypercurve_curve_region_boolean-test.log"
+  }
+]

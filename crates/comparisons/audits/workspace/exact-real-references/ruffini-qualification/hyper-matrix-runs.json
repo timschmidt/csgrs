@@ -1,0 +1,24 @@
+[
+  {
+    "mode": "debug",
+    "binary": "/home/tim/Documents/GitHub/workspace/.audit-targets/ireal-derivative-18555/debug/ruffini_matrix_hyper",
+    "binarySha256": "16c2f4effc7f9181dedec4095dcb52e5c432a57b2f4372c02763d12497f72be4",
+    "sourceSha256": "760f13e078c4cdeaf06d7002e0bf1b2c79abc32e4642d1fc191785354b18c03f",
+    "status": 0,
+    "error": null,
+    "signal": null,
+    "file": "hyper-matrix-debug.log",
+    "sha256": "5c5a483cae419f795cec39766d419bb866b615a901955c3964eeab28d91a4a89"
+  },
+  {
+    "mode": "release",
+    "binary": "/home/tim/Documents/GitHub/workspace/.audit-targets/ireal-derivative-18555/release/ruffini_matrix_hyper",
+    "binarySha256": "d2c7eab9c68ec72704071825cacbd6ea39f75df4bbc1e06b74e3dbba4a96cc4c",
+    "sourceSha256": "760f13e078c4cdeaf06d7002e0bf1b2c79abc32e4642d1fc191785354b18c03f",
+    "status": 0,
+    "error": null,
+    "signal": null,
+    "file": "hyper-matrix-release.log",
+    "sha256": "5c5a483cae419f795cec39766d419bb866b615a901955c3964eeab28d91a4a89"
+  }
+]

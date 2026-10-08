@@ -1,0 +1,7 @@
+Reuse selected circles for constrained fillets
+
+Accept exact point and parameter contacts when circular offsets collapse to a selected center. Preserve source-domain ownership and reconstruct the fillet from the original circle's half charts, retaining its center and contact evidence.
+
+Replay certified chord endpoints through the common point authority, recover scalar circle parameters from retained frame displacements, and try certified local bounds before materializing chord coordinates. Consolidate duplicated selected-point reconstruction branches without adding another public carrier or compatibility API.
+
+Validation: 210 selected release tests across seven binaries; all-target Clippy with all features and without defaults; formatting; editing fuzz compilation; denied-warning documentation; Hyperbrep all-target/all-feature check. Includes exact constrained fillet, Boolean, chamfer and offset composition under both policies and orientations. Three previously recorded performance cases remain explicitly outside this qualification.

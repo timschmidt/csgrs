@@ -1,0 +1,164 @@
+[ 1 of 13] Compiling CGISystem        ( /home/tim/Documents/GitHub/workspace/exact-real-references/Plume/cgi/CGISystem.hs, nothing )
+
+/home/tim/Documents/GitHub/workspace/exact-real-references/Plume/cgi/CGISystem.hs:8:1: error:
+    Could not find module ‘System’
+    Use -v (or `:set -v` in ghci) to see a list of the files searched for.
+  |
+8 | import qualified System
+  | ^^^^^^^^^^^^^^^^^^^^^^^
+[ 2 of 13] Compiling HTML             ( /home/tim/Documents/GitHub/workspace/exact-real-references/Plume/cgi/HTML.hs, nothing )
+[ 3 of 13] Compiling Parsing          ( /home/tim/Documents/GitHub/workspace/exact-real-references/Plume/cgi/Parsing.hs, nothing )
+
+/home/tim/Documents/GitHub/workspace/exact-real-references/Plume/cgi/Parsing.hs:10:1: error:
+    Could not find module ‘Char’
+    Use -v (or `:set -v` in ghci) to see a list of the files searched for.
+   |
+10 | import Char
+   | ^^^^^^^^^^^
+[ 4 of 13] Compiling Pretty           ( /home/tim/Documents/GitHub/workspace/exact-real-references/Plume/cgi/Pretty.hs, nothing )
+
+/home/tim/Documents/GitHub/workspace/exact-real-references/Plume/cgi/Pretty.hs:144:61: error:
+    Ambiguous occurrence ‘<>’
+    It could refer to
+       either ‘Prelude.<>’,
+              imported from ‘Prelude’ at /home/tim/Documents/GitHub/workspace/exact-real-references/Plume/cgi/Pretty.hs:1:8-13
+              (and originally defined in ‘GHC.Base’)
+           or ‘Pretty.<>’,
+              defined at /home/tim/Documents/GitHub/workspace/exact-real-references/Plume/cgi/Pretty.hs:154:4
+    |
+144 |       s `TextBeside` d -> (s `TextBeside`) . aboveNest (Nil <> d)
+    |                                                             ^^
+
+/home/tim/Documents/GitHub/workspace/exact-real-references/Plume/cgi/Pretty.hs:152:16: error:
+    Ambiguous occurrence ‘<>’
+    It could refer to
+       either ‘Prelude.<>’,
+              imported from ‘Prelude’ at /home/tim/Documents/GitHub/workspace/exact-real-references/Plume/cgi/Pretty.hs:1:8-13
+              (and originally defined in ‘GHC.Base’)
+           or ‘Pretty.<>’,
+              defined at /home/tim/Documents/GitHub/workspace/exact-real-references/Plume/cgi/Pretty.hs:154:4
+    |
+152 | d1 <+> d2 = d1 <> text " " <> d2
+    |                ^^
+
+/home/tim/Documents/GitHub/workspace/exact-real-references/Plume/cgi/Pretty.hs:152:28: error:
+    Ambiguous occurrence ‘<>’
+    It could refer to
+       either ‘Prelude.<>’,
+              imported from ‘Prelude’ at /home/tim/Documents/GitHub/workspace/exact-real-references/Plume/cgi/Pretty.hs:1:8-13
+              (and originally defined in ‘GHC.Base’)
+           or ‘Pretty.<>’,
+              defined at /home/tim/Documents/GitHub/workspace/exact-real-references/Plume/cgi/Pretty.hs:154:4
+    |
+152 | d1 <+> d2 = d1 <> text " " <> d2
+    |                            ^^
+
+/home/tim/Documents/GitHub/workspace/exact-real-references/Plume/cgi/Pretty.hs:157:49: error:
+    Ambiguous occurrence ‘<>’
+    It could refer to
+       either ‘Prelude.<>’,
+              imported from ‘Prelude’ at /home/tim/Documents/GitHub/workspace/exact-real-references/Plume/cgi/Pretty.hs:1:8-13
+              (and originally defined in ‘GHC.Base’)
+           or ‘Pretty.<>’,
+              defined at /home/tim/Documents/GitHub/workspace/exact-real-references/Plume/cgi/Pretty.hs:154:4
+    |
+157 |                               (Nest k d) -> Nil <> d
+    |                                                 ^^
+
+/home/tim/Documents/GitHub/workspace/exact-real-references/Plume/cgi/Pretty.hs:159:43: error:
+    Ambiguous occurrence ‘<>’
+    It could refer to
+       either ‘Prelude.<>’,
+              imported from ‘Prelude’ at /home/tim/Documents/GitHub/workspace/exact-real-references/Plume/cgi/Pretty.hs:1:8-13
+              (and originally defined in ‘GHC.Base’)
+           or ‘Pretty.<>’,
+              defined at /home/tim/Documents/GitHub/workspace/exact-real-references/Plume/cgi/Pretty.hs:154:4
+    |
+159 |       NilAbove d1         -> NilAbove (d1 <> d2)
+    |                                           ^^
+
+/home/tim/Documents/GitHub/workspace/exact-real-references/Plume/cgi/Pretty.hs:160:49: error:
+    Ambiguous occurrence ‘<>’
+    It could refer to
+       either ‘Prelude.<>’,
+              imported from ‘Prelude’ at /home/tim/Documents/GitHub/workspace/exact-real-references/Plume/cgi/Pretty.hs:1:8-13
+              (and originally defined in ‘GHC.Base’)
+           or ‘Pretty.<>’,
+              defined at /home/tim/Documents/GitHub/workspace/exact-real-references/Plume/cgi/Pretty.hs:154:4
+    |
+160 |       (s `TextBeside` d1) -> s `TextBeside` (d1 <> d2)
+    |                                                 ^^
+
+/home/tim/Documents/GitHub/workspace/exact-real-references/Plume/cgi/Pretty.hs:161:41: error:
+    Ambiguous occurrence ‘<>’
+    It could refer to
+       either ‘Prelude.<>’,
+              imported from ‘Prelude’ at /home/tim/Documents/GitHub/workspace/exact-real-references/Plume/cgi/Pretty.hs:1:8-13
+              (and originally defined in ‘GHC.Base’)
+           or ‘Pretty.<>’,
+              defined at /home/tim/Documents/GitHub/workspace/exact-real-references/Plume/cgi/Pretty.hs:154:4
+    |
+161 |       Nest k d1           -> Nest k (d1 <> d2)
+    |                                         ^^
+
+/home/tim/Documents/GitHub/workspace/exact-real-references/Plume/cgi/Pretty.hs:163:34: error:
+    Ambiguous occurrence ‘<>’
+    It could refer to
+       either ‘Prelude.<>’,
+              imported from ‘Prelude’ at /home/tim/Documents/GitHub/workspace/exact-real-references/Plume/cgi/Pretty.hs:1:8-13
+              (and originally defined in ‘GHC.Base’)
+           or ‘Pretty.<>’,
+              defined at /home/tim/Documents/GitHub/workspace/exact-real-references/Plume/cgi/Pretty.hs:154:4
+    |
+163 |       (d0 `Union` d1)     -> (d0 <> d2) `Union` (d1 <> d2)
+    |                                  ^^
+
+/home/tim/Documents/GitHub/workspace/exact-real-references/Plume/cgi/Pretty.hs:163:53: error:
+    Ambiguous occurrence ‘<>’
+    It could refer to
+       either ‘Prelude.<>’,
+              imported from ‘Prelude’ at /home/tim/Documents/GitHub/workspace/exact-real-references/Plume/cgi/Pretty.hs:1:8-13
+              (and originally defined in ‘GHC.Base’)
+           or ‘Pretty.<>’,
+              defined at /home/tim/Documents/GitHub/workspace/exact-real-references/Plume/cgi/Pretty.hs:154:4
+    |
+163 |       (d0 `Union` d1)     -> (d0 <> d2) `Union` (d1 <> d2)
+    |                                                     ^^
+
+/home/tim/Documents/GitHub/workspace/exact-real-references/Plume/cgi/Pretty.hs:179:63: error:
+    Ambiguous occurrence ‘<>’
+    It could refer to
+       either ‘Prelude.<>’,
+              imported from ‘Prelude’ at /home/tim/Documents/GitHub/workspace/exact-real-references/Plume/cgi/Pretty.hs:1:8-13
+              (and originally defined in ‘GHC.Base’)
+           or ‘Pretty.<>’,
+              defined at /home/tim/Documents/GitHub/workspace/exact-real-references/Plume/cgi/Pretty.hs:154:4
+    |
+179 |              s `TextBeside` d -> (s `TextBeside`) . sep' (Nil <> d)
+    |                                                               ^^
+
+/home/tim/Documents/GitHub/workspace/exact-real-references/Plume/cgi/Pretty.hs:186:40: error:
+    Ambiguous occurrence ‘<>’
+    It could refer to
+       either ‘Prelude.<>’,
+              imported from ‘Prelude’ at /home/tim/Documents/GitHub/workspace/exact-real-references/Plume/cgi/Pretty.hs:1:8-13
+              (and originally defined in ‘GHC.Base’)
+           or ‘Pretty.<>’,
+              defined at /home/tim/Documents/GitHub/workspace/exact-real-references/Plume/cgi/Pretty.hs:154:4
+    |
+186 |                   d1 <+> d2       = d1 <> text s <> d2
+    |                                        ^^
+
+/home/tim/Documents/GitHub/workspace/exact-real-references/Plume/cgi/Pretty.hs:186:50: error:
+    Ambiguous occurrence ‘<>’
+    It could refer to
+       either ‘Prelude.<>’,
+              imported from ‘Prelude’ at /home/tim/Documents/GitHub/workspace/exact-real-references/Plume/cgi/Pretty.hs:1:8-13
+              (and originally defined in ‘GHC.Base’)
+           or ‘Pretty.<>’,
+              defined at /home/tim/Documents/GitHub/workspace/exact-real-references/Plume/cgi/Pretty.hs:154:4
+    |
+186 |                   d1 <+> d2       = d1 <> text s <> d2
+    |                                                  ^^
+[ 6 of 13] Compiling URL              ( /home/tim/Documents/GitHub/workspace/exact-real-references/Plume/cgi/URL.hs, nothing )
+[ 7 of 13] Compiling HTMLWizard       ( /home/tim/Documents/GitHub/workspace/exact-real-references/Plume/cgi/HTMLWizard.hs, nothing )

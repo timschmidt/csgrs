@@ -1,0 +1,24 @@
+Replay constrained straight fillet families through retained chord charts
+
+A retained chord coincident with a nonlinear straight parallel was rejected
+although its native-line counterpart admitted an exact constrained fillet.
+Reuse the shared component solver with an affine chart over the chord's
+actual endpoints. Preserve the nonlinear source's parameters and publish
+cuts in the original chord's location representation. Transport a requested
+chord parameter through its exact point and recheck all original constraints.
+
+Empty polynomial coefficient rows are valid zeros. Handle their products
+before computing coefficient dimensions, including the allocation-fallible
+and one-parameter multiplication paths; zero times zero no longer underflows
+into a capacity-overflow panic.
+
+Extend the independent semicircle regression across native lines, retained
+chords, and offset-returned chords with non-Cartesian endpoints. Cover exact
+rotation, reversal, both policies and trim modes, center/point/parameter
+selection, connectivity and Boolean equality. Radius alone still requires
+an additional exact constraint for a continuous family.
+
+Validation: 239 selected release tests across seven binaries; Clippy with
+and without default features, formatting, editing fuzz compilation,
+denied-warning docs and Hyperbrep compilation. The two previously recorded
+extended-fillet re-offset performance failures remain open and excluded.

@@ -1,0 +1,14 @@
+{
+  "tag": "scalar-boundary-seal-v81",
+  "started": "2026-09-12T02:59:28.257Z",
+  "finished": "2026-09-12T02:59:39.530Z",
+  "elapsedSeconds": 11.270779937,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "node",
+  "args": [
+    "verify-scalar-boundary-v81.mjs",
+    "--record"
+  ],
+  "code": 0,
+  "signal": null
+}

@@ -1,0 +1,32 @@
+{
+  "source_manifest": "collapsed-selected-circle-contact-20260927-v343-sources.json",
+  "qualification": "collapsed-selected-circle-contact-20260927-v343-terminal.json",
+  "outer_session_reaped": 13817,
+  "validated_files": 2046,
+  "passed_tests": 210,
+  "static_checks": 6,
+  "repos": {
+    "hypercurve": {
+      "parent": "ff5f6e8ce3c30a928ab26a94064176f50f372df1",
+      "paths": {
+        "src/bezier_offset.rs": "b324adce17fd02a86ae018179350567460bae72ab8a340b5dfb0d86d3f846ced",
+        "src/curve.rs": "94619e994357ed604c179418ca5659f2c3ebca892d994250a029daad1e418334",
+        "src/curve_corner_chain.rs": "12c38b6ef1fa3000ee3409102a4839a89b24d18822532667a1e32523ad66d2f4",
+        "src/curve_fillet.rs": "a358413958a6433a7371afc8fb97a4f78916a3b232285cb14d1041a093ca9458"
+      },
+      "commit": "68e1f2b01bc9741dd77e410e9f9ba6b4099c9499"
+    }
+  },
+  "known_unresolved_not_requalified": [
+    "bezier_region::tests::one_fragment_nonzero_parallel_loop_extends_chamfer_cuts_on_one_finite_envelope",
+    "strict_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions",
+    "approximate_512_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions"
+  ],
+  "known_unresolved_evidence": {
+    "bezier_region::tests::one_fragment_nonzero_parallel_loop_extends_chamfer_cuts_on_one_finite_envelope": [
+      "retained-native-circle-contact-20260927-v327-terminal.json",
+      "retained-native-circle-contact-20260927-v328-terminal.json"
+    ]
+  },
+  "repositories_clean": 30
+}

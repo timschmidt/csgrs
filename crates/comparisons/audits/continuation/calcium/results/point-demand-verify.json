@@ -1,0 +1,13 @@
+{
+  "tag": "point-demand-verify",
+  "started": "2026-09-10T22:52:17.993Z",
+  "finished": "2026-09-10T22:52:56.395Z",
+  "elapsedSeconds": 38.400080113,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "node",
+  "args": [
+    "verify-point-demand.mjs"
+  ],
+  "code": 0,
+  "signal": null
+}

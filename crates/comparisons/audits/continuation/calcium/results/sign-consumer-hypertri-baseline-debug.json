@@ -1,0 +1,27 @@
+{
+  "tag": "sign-consumer-hypertri-baseline-debug",
+  "started": "2026-09-08T19:46:53.200Z",
+  "finished": "2026-09-08T19:47:07.219Z",
+  "elapsedSeconds": 14.016816665,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison",
+  "command": "env",
+  "args": [
+    "TMPDIR=/home/tim/Documents/GitHub/workspace/calcium-build-tmp.gVX5v4",
+    "CARGO_INCREMENTAL=0",
+    "CARGO_PROFILE_DEV_DEBUG=0",
+    "CARGO_BUILD_JOBS=2",
+    "cargo",
+    "test",
+    "--lib",
+    "--tests",
+    "--all-features",
+    "--offline",
+    "--locked",
+    "--manifest-path",
+    "audits/continuation/calcium/sign-consumers/baseline/hypertri/Cargo.toml",
+    "--target-dir",
+    "/home/tim/Documents/GitHub/workspace/.audit-builds/calcium-baseline"
+  ],
+  "code": 0,
+  "signal": null
+}

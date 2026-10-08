@@ -1,0 +1,49 @@
+\doxysubsection{Declare\+Ring\+Operations\texorpdfstring{$<$}{<} X, R, PR \texorpdfstring{$>$}{>} Struct Template Reference}
+\hypertarget{structAriadne_1_1DeclareRingOperations}{}\label{structAriadne_1_1DeclareRingOperations}\index{DeclareRingOperations$<$ X, R, PR $>$@{DeclareRingOperations$<$ X, R, PR $>$}}
+
+
+{\ttfamily \#include $<$arithmetic.\+hpp$>$}
+
+
+
+\doxysubsubsection{Description}
+\subsubsection*{template$<$class X, class R = X, class PR = R$>$\newline
+struct Ariadne\+::\+Declare\+Ring\+Operations$<$ X, R, PR $>$}
+Declare operators corresponding to {\itshape X} being a (mathematical) ring. 
+
+\begin{DoxySeeAlso}{See also}
+Declare\+Ordered\+Operations, Declare\+Comparisons
+\end{DoxySeeAlso}
+Inheriting from this class declares operators which are found by argument-\/dependent lookup. Inheritance diagram for Declare\+Ring\+Operations\texorpdfstring{$<$}{<} X, R, PR \texorpdfstring{$>$}{>}\+:\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[height=3.000000cm]{structAriadne_1_1DeclareRingOperations}
+\end{center}
+\end{figure}
+\doxysubsubsubsection*{Friends}
+\begin{Indent}\textbf{ Named operations.}\par
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{structAriadne_1_1DeclareRingOperations_ab1cf576a100357b9d15b8342eee706f6}\label{structAriadne_1_1DeclareRingOperations_ab1cf576a100357b9d15b8342eee706f6} 
+PR {\bfseries sqr} (X const \&x)
+\begin{DoxyCompactList}\small\item\em Square {\itshape x\texorpdfstring{$^\wedge$}{\string^}2}. \end{DoxyCompactList}\item 
+\Hypertarget{structAriadne_1_1DeclareRingOperations_a95431ce7dcbb047fe9d0dde166857533}\label{structAriadne_1_1DeclareRingOperations_a95431ce7dcbb047fe9d0dde166857533} 
+R {\bfseries mul} (X const \&x1, X const \&x2)
+\begin{DoxyCompactList}\small\item\em Product {\itshape x1\texorpdfstring{$\ast$}{*}x2}. \end{DoxyCompactList}\item 
+\Hypertarget{structAriadne_1_1DeclareRingOperations_ab1ba9556139576bcb54acb8b2088f001}\label{structAriadne_1_1DeclareRingOperations_ab1ba9556139576bcb54acb8b2088f001} 
+R {\bfseries pow} (X const \&x, \mbox{\hyperlink{namespaceAriadne_aae901a69a841b1a085a0dfe218e38fe9}{Nat}} m)
+\begin{DoxyCompactList}\small\item\em Power {\itshape x\textsuperscript{m}}. May be implemented in terms of \doxylink{structAriadne_1_1DeclareRingOperations_a95431ce7dcbb047fe9d0dde166857533}{mul()} and/or \doxylink{structAriadne_1_1DeclareRingOperations_ab1cf576a100357b9d15b8342eee706f6}{sqr()}. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\end{Indent}
+\begin{Indent}\textbf{ Standard overloadable operators.}\par
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{structAriadne_1_1DeclareRingOperations_a014cbca543d11f0852f3b52f452762a3}\label{structAriadne_1_1DeclareRingOperations_a014cbca543d11f0852f3b52f452762a3} 
+R {\bfseries operator\texorpdfstring{$\ast$}{*}} (X const \&x1, X const \&x2)
+\begin{DoxyCompactList}\small\item\em Product {\itshape x1\texorpdfstring{$\ast$}{*}x2}. Usually dispatches to {\ttfamily mul(x1,x2)} \end{DoxyCompactList}\end{DoxyCompactItemize}
+\end{Indent}
+\doxyparagraph*{Friends inherited from \mbox{\hyperlink{structAriadne_1_1DeclareDirectedGroupOperations}{Declare\+Directed\+Group\+Operations$<$ X, X, X $>$}}}
+
+
+The documentation for this struct was generated from the following file\+:\begin{DoxyCompactItemize}
+\item 
+source/numeric/\mbox{\hyperlink{arithmetic_8hpp}{arithmetic.\+hpp}}\end{DoxyCompactItemize}

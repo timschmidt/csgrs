@@ -1,0 +1,25 @@
+{
+  "command": [
+    "gdb",
+    "-nx",
+    "-q",
+    "--batch",
+    "-ex",
+    "set debuginfod enabled off",
+    "-ex",
+    "set pagination off",
+    "-ex",
+    "set confirm off",
+    "-ex",
+    "run",
+    "-ex",
+    "thread apply all bt 55",
+    "-ex",
+    "kill",
+    "--args",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/nonph-order-retain-chart-20260923-probe"
+  ],
+  "returncode": 0,
+  "elapsed_seconds": 20.03190046804957,
+  "binary_sha256": "72ee4daf4a5406c6fd56124883a73c275ea14e8bff3e9d3db7eecff705eac88e"
+}

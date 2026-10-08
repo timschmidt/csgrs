@@ -1,0 +1,19 @@
+{
+  "tag": "matrix-support-memcheck",
+  "started": "2026-09-09T02:44:00.350Z",
+  "finished": "2026-09-09T02:44:05.420Z",
+  "elapsedSeconds": 5.067892444,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison",
+  "command": "valgrind",
+  "args": [
+    "--vgdb=no",
+    "--tool=memcheck",
+    "--error-exitcode=97",
+    "--leak-check=full",
+    "--show-leak-kinds=all",
+    "--errors-for-leak-kinds=definite,indirect,possible",
+    "/tmp/calcium-rank-costs.lbsszv/flint-matrix-support"
+  ],
+  "code": 0,
+  "signal": null
+}

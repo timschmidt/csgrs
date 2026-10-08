@@ -1,0 +1,694 @@
+\doxysubsection{Float\texorpdfstring{$<$}{<} DP \texorpdfstring{$>$}{>} Class Reference}
+\hypertarget{classAriadne_1_1Float_3_01DP_01_4}{}\label{classAriadne_1_1Float_3_01DP_01_4}\index{Float$<$ DP $>$@{Float$<$ DP $>$}}
+
+
+{\ttfamily \#include $<$floatdp.\+hpp$>$}
+
+
+
+\doxysubsubsection{Description}
+Floating point numbers (double precision) using rounded arithmetic. Abbreviation Flobber\+::Float\+DP. 
+
+The {\ttfamily Float\+DP} class represents floating-\/point numbers. Unless otherwise mentioned, operations on floating-\/point numbers are performed approximately, with no guarantees on the output.
+
+To implement {\itshape rounded arithmetic}, arithmetical operations of {\ttfamily Float\+DP} can be performed with guaranteed rounding by specifying {\ttfamily \+\_\+up} and {\ttfamily \+\_\+down} suffixes to arithmetical functions {\ttfamily add}, {\ttfamily sub}, {\ttfamily mul} and {\ttfamily div}. Additionally, operations can be performed in the current {\itshape rounding mode} by using the {\ttfamily \+\_\+rnd} suffix, or with rounding reversed using the {\ttfamily \+\_\+opp} suffix. The {\ttfamily \+\_\+approx} suffix is provided to specifically indicate that the operation is computed approximately.
+
+Ariadne floating-\/point numbers can be constructed by conversion from built-\/in C++ types. Note that the value of a built-\/in floating-\/point value may differ from the mathematical value of the literal. For example, while {\ttfamily Float\+DP(3.\+25)} is represented exactly, {\ttfamily Float\+DP(3.\+3)} has a value of $3.2999999999999998224\ldots$. \begin{DoxyNote}{Note}
+In the future, the construction of a {\ttfamily Float\+DP} from a string literal may be supported. 
+\end{DoxyNote}
+\begin{DoxySeeAlso}{See also}
+\doxylink{classAriadne_1_1Float_3_01MP_01_4}{Float$<$\+MP$>$}, \doxylink{classAriadne_1_1Real}{Real}, \doxylink{group__NumericModule_ga49fc5a890aaa0ef24118a0b964bbd076}{Float\+Ball}, \doxylink{group__NumericModule_ga1e049524e162af01e451c9183315a982}{Float\+Bounds}, \doxylink{group__NumericModule_gab30197a2ca1ee1affaa99bc5a96be024}{Float\+Upper\+Bound}, \doxylink{group__NumericModule_ga8bd8b01d0fc30b704584b0b69f35de7b}{Float\+Lower\+Bound}, \doxylink{group__NumericModule_gad8d641e86f517dc6189876d9d1a6345a}{Float\+Approximation}, \doxylink{group__NumericModule_ga2d7b4d661aad7a5326e75e0f5e380de4}{Float\+Error} 
+\end{DoxySeeAlso}
+\doxysubsubsubsection*{Public Types}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1Float_3_01DP_01_4_a7ac358ff610a553fbd8a07b3ddd656c6}\label{classAriadne_1_1Float_3_01DP_01_4_a7ac358ff610a553fbd8a07b3ddd656c6} 
+typedef \mbox{\hyperlink{namespaceAriadne_1_1Numeric_ab0e8de419e55b58a1f7cc1f4a129f34a}{Exact\+Number}} {\bfseries Generic\+Type}
+\begin{DoxyCompactList}\small\item\em The abstract number class providing the same kind of information. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Float_3_01DP_01_4_a65baaf63c96ad79d42ac73b034812d9d}\label{classAriadne_1_1Float_3_01DP_01_4_a65baaf63c96ad79d42ac73b034812d9d} 
+typedef \mbox{\hyperlink{classAriadne_1_1DoublePrecision}{Double\+Precision}} {\bfseries Precision\+Type}
+\begin{DoxyCompactList}\small\item\em The type representing the precision of the number. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Float_3_01DP_01_4_a1819a7e645baa1b6f990a3465935f493}\label{classAriadne_1_1Float_3_01DP_01_4_a1819a7e645baa1b6f990a3465935f493} 
+typedef \mbox{\hyperlink{group__NumericModule_ga9ef803f7cbcf4c5678b44c56cbc31319}{Builtin\+Rounding\+Mode\+Type}} {\bfseries Rounding\+Mode\+Type}
+\begin{DoxyCompactList}\small\item\em The type representing the rounding modes available for arithmetic. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1Float_3_01DP_01_4_a4642d98e6916eafa651298303bf3997d}\label{classAriadne_1_1Float_3_01DP_01_4_a4642d98e6916eafa651298303bf3997d} 
+\mbox{\hyperlink{classAriadne_1_1DoublePrecision}{Double\+Precision}} {\bfseries precision} () const
+\item 
+\Hypertarget{classAriadne_1_1Float_3_01DP_01_4_a7b2be897f292097faaf5590d70d7662f}\label{classAriadne_1_1Float_3_01DP_01_4_a7b2be897f292097faaf5590d70d7662f} 
+\mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} {\bfseries set\+\_\+precision} (\mbox{\hyperlink{classAriadne_1_1DoublePrecision}{Double\+Precision}})
+\item 
+\Hypertarget{classAriadne_1_1Float_3_01DP_01_4_a89bb631a7993d177b7c721e1d94c1ebd}\label{classAriadne_1_1Float_3_01DP_01_4_a89bb631a7993d177b7c721e1d94c1ebd} 
+{\footnotesize template$<$Builtin\+Integral N$>$ }\\{\bfseries Float} (N n, \mbox{\hyperlink{classAriadne_1_1DoublePrecision}{Double\+Precision}})
+\begin{DoxyCompactList}\small\item\em Convert from a built-\/in double-\/precision floating-\/point number. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Float_3_01DP_01_4_aec11e0aaec91b8746c5434516aab37ab}\label{classAriadne_1_1Float_3_01DP_01_4_aec11e0aaec91b8746c5434516aab37ab} 
+{\bfseries Float} (const Float\+DP \&x)
+\begin{DoxyCompactList}\small\item\em Copy constructor. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Float_3_01DP_01_4_a0c4662205c1109ad4dfbce8c4b8b010a}\label{classAriadne_1_1Float_3_01DP_01_4_a0c4662205c1109ad4dfbce8c4b8b010a} 
+{\bfseries Float} (\mbox{\hyperlink{classAriadne_1_1String}{String}} const \&str, \mbox{\hyperlink{classAriadne_1_1DoublePrecision}{Double\+Precision}})
+\begin{DoxyCompactList}\small\item\em Construct from an exact string literal. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Float_3_01DP_01_4_aec8b5ef909e928e34f43532de051b1c0}\label{classAriadne_1_1Float_3_01DP_01_4_aec8b5ef909e928e34f43532de051b1c0} 
+Float\+DP \& {\bfseries operator=} (const \mbox{\hyperlink{classAriadne_1_1Dyadic}{Dyadic}} \&w)
+\begin{DoxyCompactList}\small\item\em \doxylink{classAriadne_1_1Assignment}{Assignment} from a dyadic number {\itshape w}. Requires {\itshape w} to be exactly representable as a double-\/precision floating-\/point number. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Float_3_01DP_01_4_a1309ff3a9dcec7526a14802c8bea56d3}\label{classAriadne_1_1Float_3_01DP_01_4_a1309ff3a9dcec7526a14802c8bea56d3} 
+Float\+DP \& {\bfseries operator=} (const Float\+DP \&x)
+\begin{DoxyCompactList}\small\item\em Copy assignment. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Float_3_01DP_01_4_a0e800e7daf1490ec95df41dc185a7791}\label{classAriadne_1_1Float_3_01DP_01_4_a0e800e7daf1490ec95df41dc185a7791} 
+{\bfseries Float} (Float\+DP const \&d, \mbox{\hyperlink{classAriadne_1_1Float_3_01DP_01_4_a1819a7e645baa1b6f990a3465935f493}{Rounding\+Mode\+Type}} rnd, \mbox{\hyperlink{classAriadne_1_1Float_3_01DP_01_4_a65baaf63c96ad79d42ac73b034812d9d}{Precision\+Type}} pr)
+\begin{DoxyCompactList}\small\item\em Construct from another Float\+DP using given rounding. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Float_3_01DP_01_4_a82e1fafaaff2b9d0ac8bd7a1683c2ea6}\label{classAriadne_1_1Float_3_01DP_01_4_a82e1fafaaff2b9d0ac8bd7a1683c2ea6} 
+{\footnotesize template$<$Builtin\+Integral N$>$ }\\{\bfseries Float} (N n, \mbox{\hyperlink{classAriadne_1_1Float_3_01DP_01_4_a1819a7e645baa1b6f990a3465935f493}{Rounding\+Mode\+Type}} rnd, \mbox{\hyperlink{classAriadne_1_1Float_3_01DP_01_4_a65baaf63c96ad79d42ac73b034812d9d}{Precision\+Type}} pr)
+\begin{DoxyCompactList}\small\item\em Construct from an integer using given rounding. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Float_3_01DP_01_4_a660ed8d3cf6dc85fb5436115969cf188}\label{classAriadne_1_1Float_3_01DP_01_4_a660ed8d3cf6dc85fb5436115969cf188} 
+{\bfseries Float} (\mbox{\hyperlink{classAriadne_1_1ExactDouble}{Exact\+Double}} x, \mbox{\hyperlink{classAriadne_1_1Float_3_01DP_01_4_a1819a7e645baa1b6f990a3465935f493}{Rounding\+Mode\+Type}} rnd, \mbox{\hyperlink{classAriadne_1_1Float_3_01DP_01_4_a65baaf63c96ad79d42ac73b034812d9d}{Precision\+Type}} pr)
+\begin{DoxyCompactList}\small\item\em Construct from an integer using given rounding. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Float_3_01DP_01_4_ae737f5671610ee5ccfb342881fd97c6c}\label{classAriadne_1_1Float_3_01DP_01_4_ae737f5671610ee5ccfb342881fd97c6c} 
+{\bfseries Float} (\mbox{\hyperlink{classAriadne_1_1Integer}{Integer}} const \&, \mbox{\hyperlink{classAriadne_1_1Float_3_01DP_01_4_a1819a7e645baa1b6f990a3465935f493}{Rounding\+Mode\+Type}} rnd, \mbox{\hyperlink{classAriadne_1_1Float_3_01DP_01_4_a65baaf63c96ad79d42ac73b034812d9d}{Precision\+Type}} pr)
+\begin{DoxyCompactList}\small\item\em Construct from an integer number using given rounding. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Float_3_01DP_01_4_aae3885424500934158a0ffec95ffb3ed}\label{classAriadne_1_1Float_3_01DP_01_4_aae3885424500934158a0ffec95ffb3ed} 
+{\bfseries Float} (\mbox{\hyperlink{classAriadne_1_1Dyadic}{Dyadic}} const \&w, \mbox{\hyperlink{classAriadne_1_1Float_3_01DP_01_4_a1819a7e645baa1b6f990a3465935f493}{Rounding\+Mode\+Type}} rnd, \mbox{\hyperlink{classAriadne_1_1Float_3_01DP_01_4_a65baaf63c96ad79d42ac73b034812d9d}{Precision\+Type}} pr)
+\begin{DoxyCompactList}\small\item\em Construct from a dyadic number with given rounding. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Float_3_01DP_01_4_ac4881e88aa9f1492d3ec27f215cdc21b}\label{classAriadne_1_1Float_3_01DP_01_4_ac4881e88aa9f1492d3ec27f215cdc21b} 
+{\bfseries Float} (\mbox{\hyperlink{classAriadne_1_1Decimal}{Decimal}} const \&d, \mbox{\hyperlink{classAriadne_1_1Float_3_01DP_01_4_a1819a7e645baa1b6f990a3465935f493}{Rounding\+Mode\+Type}} rnd, \mbox{\hyperlink{classAriadne_1_1Float_3_01DP_01_4_a65baaf63c96ad79d42ac73b034812d9d}{Precision\+Type}} pr)
+\begin{DoxyCompactList}\small\item\em Construct from a decimal number with given rounding. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Float_3_01DP_01_4_a28ee131cba409e89128eee458c6d128f}\label{classAriadne_1_1Float_3_01DP_01_4_a28ee131cba409e89128eee458c6d128f} 
+{\bfseries Float} (Float\+MP const \&d, \mbox{\hyperlink{classAriadne_1_1Float_3_01DP_01_4_a1819a7e645baa1b6f990a3465935f493}{Rounding\+Mode\+Type}} rnd, \mbox{\hyperlink{classAriadne_1_1Float_3_01DP_01_4_a65baaf63c96ad79d42ac73b034812d9d}{Precision\+Type}} pr)
+\begin{DoxyCompactList}\small\item\em Construct from a Float\+MP using given rounding. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Float_3_01DP_01_4_a057c314c451169992d776f205317f9a1}\label{classAriadne_1_1Float_3_01DP_01_4_a057c314c451169992d776f205317f9a1} 
+{\bfseries Float} (\mbox{\hyperlink{classAriadne_1_1Rational}{Rational}} const \&q, \mbox{\hyperlink{classAriadne_1_1Float_3_01DP_01_4_a1819a7e645baa1b6f990a3465935f493}{Rounding\+Mode\+Type}} rnd, \mbox{\hyperlink{classAriadne_1_1Float_3_01DP_01_4_a65baaf63c96ad79d42ac73b034812d9d}{Precision\+Type}} pr)
+\begin{DoxyCompactList}\small\item\em Construct from a rational number with given rounding. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Float_3_01DP_01_4_a20a487752a24378f2a18b7eff068099f}\label{classAriadne_1_1Float_3_01DP_01_4_a20a487752a24378f2a18b7eff068099f} 
+{\bfseries operator Dyadic} () const
+\begin{DoxyCompactList}\small\item\em Convert to a dyadic number. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Float_3_01DP_01_4_a8e8463f434fb0338b930173bc670bd92}\label{classAriadne_1_1Float_3_01DP_01_4_a8e8463f434fb0338b930173bc670bd92} 
+{\bfseries operator Rational} () const
+\begin{DoxyCompactList}\small\item\em Convert to a rational number. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Float_3_01DP_01_4_a199a243df73e92a4c48c97f35ab6ae7b}\label{classAriadne_1_1Float_3_01DP_01_4_a199a243df73e92a4c48c97f35ab6ae7b} 
+{\bfseries operator Exact\+Number} () const
+\begin{DoxyCompactList}\small\item\em Convert to a generic number. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Float_3_01DP_01_4_aace71479996e4f91fa69cb896597f865}\label{classAriadne_1_1Float_3_01DP_01_4_aace71479996e4f91fa69cb896597f865} 
+\mbox{\hyperlink{classAriadne_1_1Ball}{Ball}}$<$ Float\+DP $>$ {\bfseries pm} (\mbox{\hyperlink{classAriadne_1_1Error}{Error}}$<$ Float\+DP $>$ const \&e) const
+\begin{DoxyCompactList}\small\item\em Construct a ball with radius {\itshape e}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Float_3_01DP_01_4_a4c0fda7346d15cc92f1aa5b2d3769e88}\label{classAriadne_1_1Float_3_01DP_01_4_a4c0fda7346d15cc92f1aa5b2d3769e88} 
+double {\bfseries get\+\_\+d} () const
+\begin{DoxyCompactList}\small\item\em An approximation by a built-\/in double-\/precision floating-\/point number. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Float_3_01DP_01_4_abe52483f91da873e8369c9775465ae67}\label{classAriadne_1_1Float_3_01DP_01_4_abe52483f91da873e8369c9775465ae67} 
+\mbox{\hyperlink{classAriadne_1_1String}{String}} {\bfseries literal} () const
+\begin{DoxyCompactList}\small\item\em The exact value as a decimal string. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Float_3_01DP_01_4_a9e7f38efc1b628b9966cd7bf83a84602}\label{classAriadne_1_1Float_3_01DP_01_4_a9e7f38efc1b628b9966cd7bf83a84602} 
+\mbox{\hyperlink{classAriadne_1_1String}{String}} {\bfseries literal} (\mbox{\hyperlink{classAriadne_1_1Float_3_01DP_01_4_a1819a7e645baa1b6f990a3465935f493}{Rounding\+Mode\+Type}} rnd) const
+\begin{DoxyCompactList}\small\item\em An approximate value as a decimal string, rounded by {\itshape rnd}. The exact value is guaranteed to be the nearest value to the value\textquotesingle{}s precision. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsubsection*{Static Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1Float_3_01DP_01_4_a57d19ebcfba6492efec7b8bb740a41db}\label{classAriadne_1_1Float_3_01DP_01_4_a57d19ebcfba6492efec7b8bb740a41db} 
+static \mbox{\hyperlink{classAriadne_1_1Float_3_01DP_01_4_a1819a7e645baa1b6f990a3465935f493}{Rounding\+Mode\+Type}} {\bfseries get\+\_\+rounding\+\_\+mode} ()
+\item 
+\Hypertarget{classAriadne_1_1Float_3_01DP_01_4_a67a645373f833e198d05af53b2dc66ed}\label{classAriadne_1_1Float_3_01DP_01_4_a67a645373f833e198d05af53b2dc66ed} 
+static \mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} {\bfseries set\+\_\+rounding\+\_\+mode} (\mbox{\hyperlink{classAriadne_1_1Float_3_01DP_01_4_a1819a7e645baa1b6f990a3465935f493}{Rounding\+Mode\+Type}})
+\item 
+\Hypertarget{classAriadne_1_1Float_3_01DP_01_4_a1d8d643cfbcdc019dd111ade82acff0f}\label{classAriadne_1_1Float_3_01DP_01_4_a1d8d643cfbcdc019dd111ade82acff0f} 
+static \mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} {\bfseries set\+\_\+rounding\+\_\+downward} ()
+\item 
+\Hypertarget{classAriadne_1_1Float_3_01DP_01_4_a7a0557fa7e8f2d8a0187bbb843b74039}\label{classAriadne_1_1Float_3_01DP_01_4_a7a0557fa7e8f2d8a0187bbb843b74039} 
+static \mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} {\bfseries set\+\_\+rounding\+\_\+upward} ()
+\item 
+\Hypertarget{classAriadne_1_1Float_3_01DP_01_4_acc460f5b240a14e83429aa43c959d111}\label{classAriadne_1_1Float_3_01DP_01_4_acc460f5b240a14e83429aa43c959d111} 
+static \mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} {\bfseries set\+\_\+rounding\+\_\+to\+\_\+nearest} ()
+\item 
+\Hypertarget{classAriadne_1_1Float_3_01DP_01_4_a3ea69408ea6fea0bc87aa68cb8f2b168}\label{classAriadne_1_1Float_3_01DP_01_4_a3ea69408ea6fea0bc87aa68cb8f2b168} 
+static \mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} {\bfseries set\+\_\+rounding\+\_\+toward\+\_\+zero} ()
+\item 
+\Hypertarget{classAriadne_1_1Float_3_01DP_01_4_a1d000b64c00e12cc693675b84349a68a}\label{classAriadne_1_1Float_3_01DP_01_4_a1d000b64c00e12cc693675b84349a68a} 
+static \mbox{\hyperlink{classAriadne_1_1DoublePrecision}{Double\+Precision}} {\bfseries get\+\_\+default\+\_\+precision} ()
+\item 
+\Hypertarget{classAriadne_1_1Float_3_01DP_01_4_aea877f053de26791d534941ad9143b1a}\label{classAriadne_1_1Float_3_01DP_01_4_aea877f053de26791d534941ad9143b1a} 
+static Float\+DP {\bfseries nan} (\mbox{\hyperlink{classAriadne_1_1DoublePrecision}{Double\+Precision}} pr)
+\item 
+\Hypertarget{classAriadne_1_1Float_3_01DP_01_4_a08cf4ef8d988fc5aed7a3904169d805c}\label{classAriadne_1_1Float_3_01DP_01_4_a08cf4ef8d988fc5aed7a3904169d805c} 
+static Float\+DP {\bfseries inf} (\mbox{\hyperlink{namespaceAriadne_aaed75bcf4435a6d8be243fbf9f2e375b}{Sign}} sgn, \mbox{\hyperlink{classAriadne_1_1DoublePrecision}{Double\+Precision}} pr)
+\item 
+\Hypertarget{classAriadne_1_1Float_3_01DP_01_4_a2d4708556e23f8b78e47652f3e99e46d}\label{classAriadne_1_1Float_3_01DP_01_4_a2d4708556e23f8b78e47652f3e99e46d} 
+static Float\+DP {\bfseries inf} (\mbox{\hyperlink{classAriadne_1_1DoublePrecision}{Double\+Precision}} pr)
+\item 
+\Hypertarget{classAriadne_1_1Float_3_01DP_01_4_a272329cc6845d210bd9adb4293a96863}\label{classAriadne_1_1Float_3_01DP_01_4_a272329cc6845d210bd9adb4293a96863} 
+static Float\+DP {\bfseries max} (\mbox{\hyperlink{classAriadne_1_1DoublePrecision}{Double\+Precision}} pr)
+\item 
+\Hypertarget{classAriadne_1_1Float_3_01DP_01_4_acce33d0b8e77544121aa4341d3494980}\label{classAriadne_1_1Float_3_01DP_01_4_acce33d0b8e77544121aa4341d3494980} 
+static Float\+DP {\bfseries eps} (\mbox{\hyperlink{classAriadne_1_1DoublePrecision}{Double\+Precision}} pr)
+\item 
+\Hypertarget{classAriadne_1_1Float_3_01DP_01_4_a6e2f5977bbaac515e848da7bd9ecee56}\label{classAriadne_1_1Float_3_01DP_01_4_a6e2f5977bbaac515e848da7bd9ecee56} 
+static Float\+DP {\bfseries min} (\mbox{\hyperlink{classAriadne_1_1DoublePrecision}{Double\+Precision}} pr)
+\end{DoxyCompactItemize}
+\doxysubsubsubsection*{Friends}
+\begin{Indent}\textbf{ Special value tests}\par
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1Float_3_01DP_01_4_a4adfe5b34e262163f345efb84272ad4a}\label{classAriadne_1_1Float_3_01DP_01_4_a4adfe5b34e262163f345efb84272ad4a} 
+\mbox{\hyperlink{namespaceAriadne_a76a8b016e5ad61faf9062cc387df5016}{Bool}} {\bfseries is\+\_\+nan} (Float\+DP x)
+\item 
+\Hypertarget{classAriadne_1_1Float_3_01DP_01_4_a086e009cbdc22f0653cd206a22a6c469}\label{classAriadne_1_1Float_3_01DP_01_4_a086e009cbdc22f0653cd206a22a6c469} 
+\mbox{\hyperlink{namespaceAriadne_a76a8b016e5ad61faf9062cc387df5016}{Bool}} {\bfseries is\+\_\+inf} (Float\+DP x)
+\item 
+\Hypertarget{classAriadne_1_1Float_3_01DP_01_4_a9babb73ff800b4a884bfe0e51324b8ad}\label{classAriadne_1_1Float_3_01DP_01_4_a9babb73ff800b4a884bfe0e51324b8ad} 
+\mbox{\hyperlink{namespaceAriadne_a76a8b016e5ad61faf9062cc387df5016}{Bool}} {\bfseries is\+\_\+finite} (Float\+DP x)
+\item 
+\Hypertarget{classAriadne_1_1Float_3_01DP_01_4_ab4b140c3281fe6062b023125dae8b406}\label{classAriadne_1_1Float_3_01DP_01_4_ab4b140c3281fe6062b023125dae8b406} 
+\mbox{\hyperlink{namespaceAriadne_a76a8b016e5ad61faf9062cc387df5016}{Bool}} {\bfseries is\+\_\+zero} (Float\+DP x)
+\end{DoxyCompactItemize}
+\end{Indent}
+\begin{Indent}\textbf{ Rounding operations}\par
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1Float_3_01DP_01_4_afdcee2f3dd1c547fb8af7e339656ab25}\label{classAriadne_1_1Float_3_01DP_01_4_afdcee2f3dd1c547fb8af7e339656ab25} 
+Float\+DP {\bfseries next} (\mbox{\hyperlink{structAriadne_1_1RoundUpward}{Round\+Upward}} rnd, Float\+DP x)
+\begin{DoxyCompactList}\small\item\em Round {\itshape x} up by 1 ulp. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Float_3_01DP_01_4_adec5185840b049afc3ae42b126e0576f}\label{classAriadne_1_1Float_3_01DP_01_4_adec5185840b049afc3ae42b126e0576f} 
+Float\+DP {\bfseries next} (\mbox{\hyperlink{structAriadne_1_1RoundDownward}{Round\+Downward}} rnd, Float\+DP x)
+\begin{DoxyCompactList}\small\item\em Round {\itshape x} up by 1 ulp. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Float_3_01DP_01_4_a27d7c4bb05a78d4ff67ceed955c52b59}\label{classAriadne_1_1Float_3_01DP_01_4_a27d7c4bb05a78d4ff67ceed955c52b59} 
+Float\+DP {\bfseries floor} (Float\+DP x)
+\begin{DoxyCompactList}\small\item\em Round {\itshape x} down to the nearest lower integer. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Float_3_01DP_01_4_a43e5510049e202e015d0b511c34ecd71}\label{classAriadne_1_1Float_3_01DP_01_4_a43e5510049e202e015d0b511c34ecd71} 
+Float\+DP {\bfseries ceil} (Float\+DP x)
+\begin{DoxyCompactList}\small\item\em Round {\itshape x} to the nearest integer. Rounding of halves is implementation-\/dependent. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Float_3_01DP_01_4_aab66e8c29f9bec59e2bc0194d90b9851}\label{classAriadne_1_1Float_3_01DP_01_4_aab66e8c29f9bec59e2bc0194d90b9851} 
+Float\+DP {\bfseries round} (Float\+DP x)
+\begin{DoxyCompactList}\small\item\em Round {\itshape x} up to the nearest higher integer. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Float_3_01DP_01_4_a477f42214fa1b76b0c65e71e24e6047b}\label{classAriadne_1_1Float_3_01DP_01_4_a477f42214fa1b76b0c65e71e24e6047b} 
+\mbox{\hyperlink{classAriadne_1_1Integer}{Integer}} {\bfseries cast\+\_\+integer} (Float\+DP x)
+\begin{DoxyCompactList}\small\item\em Round {\itshape x} to the nearest integer. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\end{Indent}
+\begin{Indent}\textbf{ Arithmetic operators}\par
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1Float_3_01DP_01_4_a4082fbbec31ccb694ef5437b1115e051}\label{classAriadne_1_1Float_3_01DP_01_4_a4082fbbec31ccb694ef5437b1115e051} 
+Float\+DP {\bfseries operator+} (Float\+DP x)
+\item 
+\Hypertarget{classAriadne_1_1Float_3_01DP_01_4_a4de53477bd125d0da278069d3bf20bd8}\label{classAriadne_1_1Float_3_01DP_01_4_a4de53477bd125d0da278069d3bf20bd8} 
+Float\+DP {\bfseries operator-\/} (Float\+DP x)
+\item 
+\Hypertarget{classAriadne_1_1Float_3_01DP_01_4_a1a29ab6c0352218dc561ddb83851cfb2}\label{classAriadne_1_1Float_3_01DP_01_4_a1a29ab6c0352218dc561ddb83851cfb2} 
+\mbox{\hyperlink{classAriadne_1_1Bounds}{Bounds}}$<$ Float\+DP $>$ {\bfseries operator+} (Float\+DP const \&x1, Float\+DP const \&x2)
+\item 
+\Hypertarget{classAriadne_1_1Float_3_01DP_01_4_a04b6ba7967a388f1b4dc6328901877b8}\label{classAriadne_1_1Float_3_01DP_01_4_a04b6ba7967a388f1b4dc6328901877b8} 
+\mbox{\hyperlink{classAriadne_1_1Bounds}{Bounds}}$<$ Float\+DP $>$ {\bfseries operator-\/} (Float\+DP const \&x1, Float\+DP const \&x2)
+\item 
+\Hypertarget{classAriadne_1_1Float_3_01DP_01_4_a8ddc9bbd009f8254fafc474d0116184e}\label{classAriadne_1_1Float_3_01DP_01_4_a8ddc9bbd009f8254fafc474d0116184e} 
+\mbox{\hyperlink{classAriadne_1_1Bounds}{Bounds}}$<$ Float\+DP $>$ {\bfseries operator\texorpdfstring{$\ast$}{*}} (Float\+DP const \&x1, Float\+DP const \&x2)
+\item 
+\Hypertarget{classAriadne_1_1Float_3_01DP_01_4_adb97cedca13e170c6592285a85092526}\label{classAriadne_1_1Float_3_01DP_01_4_adb97cedca13e170c6592285a85092526} 
+\mbox{\hyperlink{classAriadne_1_1Bounds}{Bounds}}$<$ Float\+DP $>$ {\bfseries operator/} (Float\+DP const \&x1, Float\+DP const \&x2)
+\item 
+\Hypertarget{classAriadne_1_1Float_3_01DP_01_4_a47c7ed33004d2da67aa76bd47eb8d5bb}\label{classAriadne_1_1Float_3_01DP_01_4_a47c7ed33004d2da67aa76bd47eb8d5bb} 
+Float\+DP {\bfseries operator\texorpdfstring{$\ast$}{*}} (\mbox{\hyperlink{classAriadne_1_1TwoExp}{Two\+Exp}} e1, Float\+DP x2)
+\item 
+\Hypertarget{classAriadne_1_1Float_3_01DP_01_4_ad88c92f21bd02e80a58b5da1cfcf0b09}\label{classAriadne_1_1Float_3_01DP_01_4_ad88c92f21bd02e80a58b5da1cfcf0b09} 
+Float\+DP {\bfseries operator\texorpdfstring{$\ast$}{*}} (Float\+DP x1, \mbox{\hyperlink{classAriadne_1_1TwoExp}{Two\+Exp}} e2)
+\item 
+\Hypertarget{classAriadne_1_1Float_3_01DP_01_4_abc26571bafac6ad89b3b34ea6e81b32b}\label{classAriadne_1_1Float_3_01DP_01_4_abc26571bafac6ad89b3b34ea6e81b32b} 
+Float\+DP {\bfseries operator/} (Float\+DP x1, \mbox{\hyperlink{classAriadne_1_1TwoExp}{Two\+Exp}} e2)
+\item 
+\Hypertarget{classAriadne_1_1Float_3_01DP_01_4_a3762d3c0cd6dcf1a894de655f1e5c259}\label{classAriadne_1_1Float_3_01DP_01_4_a3762d3c0cd6dcf1a894de655f1e5c259} 
+Float\+DP \& {\bfseries operator\texorpdfstring{$\ast$}{*}=} (Float\+DP \&v1, \mbox{\hyperlink{classAriadne_1_1TwoExp}{Two\+Exp}} e2)
+\item 
+\Hypertarget{classAriadne_1_1Float_3_01DP_01_4_a0e8740ef4c4d2e03e56666283817f886}\label{classAriadne_1_1Float_3_01DP_01_4_a0e8740ef4c4d2e03e56666283817f886} 
+Float\+DP \& {\bfseries operator/=} (Float\+DP \&v1, \mbox{\hyperlink{classAriadne_1_1TwoExp}{Two\+Exp}} e2)
+\end{DoxyCompactItemize}
+\end{Indent}
+\begin{Indent}\textbf{ Comparison operators}\par
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1Float_3_01DP_01_4_a4ff5395525aefa69e9c3286c213d333d}\label{classAriadne_1_1Float_3_01DP_01_4_a4ff5395525aefa69e9c3286c213d333d} 
+\mbox{\hyperlink{classAriadne_1_1Boolean}{Boolean}} {\bfseries operator==} (Float\+DP x1, Float\+DP x2)
+\item 
+\Hypertarget{classAriadne_1_1Float_3_01DP_01_4_a04d6da73ab87430c93edc29fffc89d72}\label{classAriadne_1_1Float_3_01DP_01_4_a04d6da73ab87430c93edc29fffc89d72} 
+\mbox{\hyperlink{classAriadne_1_1Boolean}{Boolean}} {\bfseries operator!=} (Float\+DP x1, Float\+DP x2)
+\item 
+\Hypertarget{classAriadne_1_1Float_3_01DP_01_4_acff4e392866d5cbb98646b5815513e42}\label{classAriadne_1_1Float_3_01DP_01_4_acff4e392866d5cbb98646b5815513e42} 
+\mbox{\hyperlink{classAriadne_1_1Boolean}{Boolean}} {\bfseries operator$<$} (Float\+DP x1, Float\+DP x2)
+\item 
+\Hypertarget{classAriadne_1_1Float_3_01DP_01_4_a973e6493b530d3cbda813d13b6fa3bd3}\label{classAriadne_1_1Float_3_01DP_01_4_a973e6493b530d3cbda813d13b6fa3bd3} 
+\mbox{\hyperlink{classAriadne_1_1Boolean}{Boolean}} {\bfseries operator$>$} (Float\+DP x1, Float\+DP x2)
+\item 
+\Hypertarget{classAriadne_1_1Float_3_01DP_01_4_acaaef861b087d8bf0323de7371c8da58}\label{classAriadne_1_1Float_3_01DP_01_4_acaaef861b087d8bf0323de7371c8da58} 
+\mbox{\hyperlink{classAriadne_1_1Boolean}{Boolean}} {\bfseries operator$<$=} (Float\+DP x1, Float\+DP x2)
+\item 
+\Hypertarget{classAriadne_1_1Float_3_01DP_01_4_a3eb969e0e5387225e41ded475239004e}\label{classAriadne_1_1Float_3_01DP_01_4_a3eb969e0e5387225e41ded475239004e} 
+\mbox{\hyperlink{classAriadne_1_1Boolean}{Boolean}} {\bfseries operator$>$=} (Float\+DP x1, Float\+DP x2)
+\end{DoxyCompactItemize}
+\end{Indent}
+\begin{Indent}\textbf{ Exact arithmetical functions}\par
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1Float_3_01DP_01_4_a37925d5447ca5aea5096870b1ccf695b}\label{classAriadne_1_1Float_3_01DP_01_4_a37925d5447ca5aea5096870b1ccf695b} 
+Float\+DP {\bfseries nul} (Float\+DP x)
+\begin{DoxyCompactList}\small\item\em Zero {\itshape 0}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Float_3_01DP_01_4_adde8c4ebeaf8db5e6f9313a5498e6a14}\label{classAriadne_1_1Float_3_01DP_01_4_adde8c4ebeaf8db5e6f9313a5498e6a14} 
+Float\+DP {\bfseries pos} (Float\+DP x)
+\begin{DoxyCompactList}\small\item\em Identity {\itshape +x}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Float_3_01DP_01_4_ab44de5badb3ee9ef5bf411e7a6a71cbb}\label{classAriadne_1_1Float_3_01DP_01_4_ab44de5badb3ee9ef5bf411e7a6a71cbb} 
+Float\+DP {\bfseries neg} (Float\+DP x)
+\begin{DoxyCompactList}\small\item\em Negation {\itshape -\/x}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Float_3_01DP_01_4_a4adcb89adebbd993fb7db5be91e17d9d}\label{classAriadne_1_1Float_3_01DP_01_4_a4adcb89adebbd993fb7db5be91e17d9d} 
+Float\+DP {\bfseries hlf} (Float\+DP x)
+\begin{DoxyCompactList}\small\item\em Half {\itshape x÷2}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Float_3_01DP_01_4_a3d86d77e100edcbd11e605d9252f957c}\label{classAriadne_1_1Float_3_01DP_01_4_a3d86d77e100edcbd11e605d9252f957c} 
+Float\+DP {\bfseries shft} (Float\+DP x, \mbox{\hyperlink{namespaceAriadne_a008e7f6ae8f621fbb1d876061812b9b2}{Int}} n)
+\begin{DoxyCompactList}\small\item\em Bit-\/shift {\itshape x×2\textsuperscript{n}}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Float_3_01DP_01_4_a50a56bb6d3df47a386647935080d74b5}\label{classAriadne_1_1Float_3_01DP_01_4_a50a56bb6d3df47a386647935080d74b5} 
+Float\+DP {\bfseries mul} (Float\+DP x1, \mbox{\hyperlink{classAriadne_1_1TwoExp}{Two\+Exp}} e2)
+\begin{DoxyCompactList}\small\item\em Multiplication by a power of two. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Float_3_01DP_01_4_a33371dfc93f51b67c6661c27251056e7}\label{classAriadne_1_1Float_3_01DP_01_4_a33371dfc93f51b67c6661c27251056e7} 
+Float\+DP {\bfseries div} (Float\+DP x1, \mbox{\hyperlink{classAriadne_1_1TwoExp}{Two\+Exp}} e2)
+\begin{DoxyCompactList}\small\item\em Division by a power of two. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\end{Indent}
+\begin{Indent}\textbf{ Outward-\/rounded arithmetical functions}\par
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1Float_3_01DP_01_4_a80d07fa9ca0758fe366594b27c39313c}\label{classAriadne_1_1Float_3_01DP_01_4_a80d07fa9ca0758fe366594b27c39313c} 
+\mbox{\hyperlink{classAriadne_1_1Bounds}{Bounds}}$<$ Float\+DP $>$ {\bfseries sqr} (Float\+DP const \&x)
+\begin{DoxyCompactList}\small\item\em Square {\itshape x\textsuperscript{2}}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Float_3_01DP_01_4_a5fb91f0f7d51d4e02e237d1cdd185f27}\label{classAriadne_1_1Float_3_01DP_01_4_a5fb91f0f7d51d4e02e237d1cdd185f27} 
+\mbox{\hyperlink{classAriadne_1_1Bounds}{Bounds}}$<$ Float\+DP $>$ {\bfseries rec} (Float\+DP const \&x)
+\begin{DoxyCompactList}\small\item\em Reciprocal {\itshape 1/x}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Float_3_01DP_01_4_aaa25687bdd49895c73c3973ce70b8d36}\label{classAriadne_1_1Float_3_01DP_01_4_aaa25687bdd49895c73c3973ce70b8d36} 
+\mbox{\hyperlink{classAriadne_1_1Bounds}{Bounds}}$<$ Float\+DP $>$ {\bfseries add} (Float\+DP const \&x1, Float\+DP const \&x2)
+\begin{DoxyCompactList}\small\item\em Add {\itshape x1+x2}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Float_3_01DP_01_4_aa220abf682fa95718e242a8e9bb61061}\label{classAriadne_1_1Float_3_01DP_01_4_aa220abf682fa95718e242a8e9bb61061} 
+\mbox{\hyperlink{classAriadne_1_1Bounds}{Bounds}}$<$ Float\+DP $>$ {\bfseries sub} (Float\+DP const \&x1, Float\+DP const \&x2)
+\begin{DoxyCompactList}\small\item\em Subtract {\itshape x1-\/x2}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Float_3_01DP_01_4_aed2325057555961b7e8ea8c030b77014}\label{classAriadne_1_1Float_3_01DP_01_4_aed2325057555961b7e8ea8c030b77014} 
+\mbox{\hyperlink{classAriadne_1_1Bounds}{Bounds}}$<$ Float\+DP $>$ {\bfseries mul} (Float\+DP const \&x1, Float\+DP const \&x2)
+\begin{DoxyCompactList}\small\item\em Multiply {\itshape x1×x2}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Float_3_01DP_01_4_a3f085da91f5e5b2151fa1b4a036aec9a}\label{classAriadne_1_1Float_3_01DP_01_4_a3f085da91f5e5b2151fa1b4a036aec9a} 
+\mbox{\hyperlink{classAriadne_1_1Bounds}{Bounds}}$<$ Float\+DP $>$ {\bfseries div} (Float\+DP const \&x1, Float\+DP const \&x2)
+\begin{DoxyCompactList}\small\item\em Divide {\itshape x1÷x2}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Float_3_01DP_01_4_a0c7f5d6a87df2744dbcbfdb2b7ed3c86}\label{classAriadne_1_1Float_3_01DP_01_4_a0c7f5d6a87df2744dbcbfdb2b7ed3c86} 
+\mbox{\hyperlink{classAriadne_1_1Bounds}{Bounds}}$<$ Float\+DP $>$ {\bfseries fma} (Float\+DP const \&x1, Float\+DP const \&x2, Float\+DP const \&x3)
+\begin{DoxyCompactList}\small\item\em Fused multiply-\/and-\/add {\itshape x1×x2+x3}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Float_3_01DP_01_4_a148bd49b1218dd4e4df25279221cf0da}\label{classAriadne_1_1Float_3_01DP_01_4_a148bd49b1218dd4e4df25279221cf0da} 
+\mbox{\hyperlink{classAriadne_1_1Bounds}{Bounds}}$<$ Float\+DP $>$ {\bfseries pow} (Float\+DP const \&x, \mbox{\hyperlink{namespaceAriadne_aae901a69a841b1a085a0dfe218e38fe9}{Nat}} m)
+\begin{DoxyCompactList}\small\item\em Power {\itshape x\textsuperscript{m}}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Float_3_01DP_01_4_a0382ac7791f8677eb301fdfd28334d9b}\label{classAriadne_1_1Float_3_01DP_01_4_a0382ac7791f8677eb301fdfd28334d9b} 
+\mbox{\hyperlink{classAriadne_1_1Bounds}{Bounds}}$<$ Float\+DP $>$ {\bfseries pow} (Float\+DP const \&x, \mbox{\hyperlink{namespaceAriadne_a008e7f6ae8f621fbb1d876061812b9b2}{Int}} n)
+\begin{DoxyCompactList}\small\item\em Power {\itshape x\textsuperscript{n}}. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\end{Indent}
+\begin{Indent}\textbf{ Algebraic and transcendental functions}\par
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1Float_3_01DP_01_4_a395efdd7e011c3a4468f5c94544f85b2}\label{classAriadne_1_1Float_3_01DP_01_4_a395efdd7e011c3a4468f5c94544f85b2} 
+\mbox{\hyperlink{classAriadne_1_1Bounds}{Bounds}}$<$ Float\+DP $>$ {\bfseries sqrt} (Float\+DP const \&x)
+\begin{DoxyCompactList}\small\item\em The square root of {\itshape x}, √{\itshape x}. Requires {\itshape x} ≥ 0. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Float_3_01DP_01_4_a510f3c17c42a55f1bea20827732053bf}\label{classAriadne_1_1Float_3_01DP_01_4_a510f3c17c42a55f1bea20827732053bf} 
+\mbox{\hyperlink{classAriadne_1_1Bounds}{Bounds}}$<$ Float\+DP $>$ {\bfseries exp} (Float\+DP const \&x)
+\begin{DoxyCompactList}\small\item\em The natural exponent of {\itshape x}, {\itshape e\textsuperscript{x}}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Float_3_01DP_01_4_a29a749cf70762a6232ad3644014a3bbc}\label{classAriadne_1_1Float_3_01DP_01_4_a29a749cf70762a6232ad3644014a3bbc} 
+\mbox{\hyperlink{classAriadne_1_1Bounds}{Bounds}}$<$ Float\+DP $>$ {\bfseries log} (Float\+DP const \&x)
+\begin{DoxyCompactList}\small\item\em The natural logarithm of {\itshape x}, log{\itshape \textsubscript{e} x} or ln {\itshape x}. Requires {\itshape x} ≥ 0. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Float_3_01DP_01_4_a1220c83f112b281638dd20e59f8d51bf}\label{classAriadne_1_1Float_3_01DP_01_4_a1220c83f112b281638dd20e59f8d51bf} 
+\mbox{\hyperlink{classAriadne_1_1Bounds}{Bounds}}$<$ Float\+DP $>$ {\bfseries sin} (Float\+DP const \&x)
+\begin{DoxyCompactList}\small\item\em The sine of {\itshape x}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Float_3_01DP_01_4_ae3fe9b3a370b1484729b5bdde779b5f1}\label{classAriadne_1_1Float_3_01DP_01_4_ae3fe9b3a370b1484729b5bdde779b5f1} 
+\mbox{\hyperlink{classAriadne_1_1Bounds}{Bounds}}$<$ Float\+DP $>$ {\bfseries cos} (Float\+DP const \&x)
+\begin{DoxyCompactList}\small\item\em The cosine of {\itshape x}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Float_3_01DP_01_4_a25dfd0a3e49874cd65ba10f0355be2c8}\label{classAriadne_1_1Float_3_01DP_01_4_a25dfd0a3e49874cd65ba10f0355be2c8} 
+\mbox{\hyperlink{classAriadne_1_1Bounds}{Bounds}}$<$ Float\+DP $>$ {\bfseries tan} (Float\+DP const \&x)
+\begin{DoxyCompactList}\small\item\em The tangent of {\itshape x}, sin({\itshape x})/cos({\itshape x}). \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Float_3_01DP_01_4_a7c11d5a776bd8c19b4f47733ea4cde45}\label{classAriadne_1_1Float_3_01DP_01_4_a7c11d5a776bd8c19b4f47733ea4cde45} 
+\mbox{\hyperlink{classAriadne_1_1Bounds}{Bounds}}$<$ Float\+DP $>$ {\bfseries asin} (Float\+DP const \&x)
+\begin{DoxyCompactList}\small\item\em The arc-\/sine of {\itshape x}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Float_3_01DP_01_4_afb14ecc915332ec8f089a7e05eaef7c8}\label{classAriadne_1_1Float_3_01DP_01_4_afb14ecc915332ec8f089a7e05eaef7c8} 
+\mbox{\hyperlink{classAriadne_1_1Bounds}{Bounds}}$<$ Float\+DP $>$ {\bfseries acos} (Float\+DP const \&x)
+\begin{DoxyCompactList}\small\item\em The arc-\/cosine of {\itshape x}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Float_3_01DP_01_4_ae4be34a269767a270653256d801bf9c9}\label{classAriadne_1_1Float_3_01DP_01_4_ae4be34a269767a270653256d801bf9c9} 
+\mbox{\hyperlink{classAriadne_1_1Bounds}{Bounds}}$<$ Float\+DP $>$ {\bfseries atan} (Float\+DP const \&x)
+\begin{DoxyCompactList}\small\item\em The arc-\/tangent of {\itshape x}. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\end{Indent}
+\begin{Indent}\textbf{ Lattice operations}\par
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1Float_3_01DP_01_4_a29466753dbc68eb6ea5d1791dee83fab}\label{classAriadne_1_1Float_3_01DP_01_4_a29466753dbc68eb6ea5d1791dee83fab} 
+\mbox{\hyperlink{classAriadne_1_1Positive}{Positive}}$<$ Float\+DP $>$ {\bfseries abs} (Float\+DP x)
+\begin{DoxyCompactList}\small\item\em Absolute value {\itshape \texorpdfstring{$\vert$}{|}x\texorpdfstring{$\vert$}{|}}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Float_3_01DP_01_4_ad05f3b0e735cb0480cfb91179eef5a68}\label{classAriadne_1_1Float_3_01DP_01_4_ad05f3b0e735cb0480cfb91179eef5a68} 
+Float\+DP {\bfseries max} (Float\+DP x1, Float\+DP x2)
+\begin{DoxyCompactList}\small\item\em Maximum {\itshape x1∨x2}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Float_3_01DP_01_4_a7bd1ccc25847a0a3591516588e2d9f76}\label{classAriadne_1_1Float_3_01DP_01_4_a7bd1ccc25847a0a3591516588e2d9f76} 
+Float\+DP {\bfseries min} (Float\+DP x1, Float\+DP x2)
+\begin{DoxyCompactList}\small\item\em Mimimum {\itshape x1∧x2}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Float_3_01DP_01_4_a9188dfce6db1766ba18012c8659e3ad1}\label{classAriadne_1_1Float_3_01DP_01_4_a9188dfce6db1766ba18012c8659e3ad1} 
+Positive\+Upper\+Bound$<$ Float\+DP $>$ {\bfseries mag} (Float\+DP x)
+\begin{DoxyCompactList}\small\item\em An upper bound for the absolute value {\itshape \texorpdfstring{$\vert$}{|}x\texorpdfstring{$\vert$}{|}}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Float_3_01DP_01_4_a239d56531e810b793b8c5877fe24e8c2}\label{classAriadne_1_1Float_3_01DP_01_4_a239d56531e810b793b8c5877fe24e8c2} 
+Positive\+Lower\+Bound$<$ Float\+DP $>$ {\bfseries mig} (Float\+DP x)
+\begin{DoxyCompactList}\small\item\em A lower bound for the absolute value {\itshape \texorpdfstring{$\vert$}{|}x\texorpdfstring{$\vert$}{|}}. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\end{Indent}
+\begin{Indent}\textbf{ Comparison operations}\par
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1Float_3_01DP_01_4_a07d1590ec2a3808af05ad393a819df41}\label{classAriadne_1_1Float_3_01DP_01_4_a07d1590ec2a3808af05ad393a819df41} 
+\mbox{\hyperlink{classAriadne_1_1Boolean}{Boolean}} {\bfseries eq} (Float\+DP const \&x1, Float\+DP const \&x2)
+\item 
+\Hypertarget{classAriadne_1_1Float_3_01DP_01_4_a9bd1154a573066d033f931b6d921c750}\label{classAriadne_1_1Float_3_01DP_01_4_a9bd1154a573066d033f931b6d921c750} 
+\mbox{\hyperlink{classAriadne_1_1Boolean}{Boolean}} {\bfseries lt} (Float\+DP const \&x1, Float\+DP const \&x2)
+\item 
+\Hypertarget{classAriadne_1_1Float_3_01DP_01_4_a0e461de75e4b75a855a55fa15442d70b}\label{classAriadne_1_1Float_3_01DP_01_4_a0e461de75e4b75a855a55fa15442d70b} 
+\mbox{\hyperlink{namespaceAriadne_a0e36a4c4b857737f71444bff61a9edb6}{Comparison}} {\bfseries cmp} (Float\+DP x1, Float\+DP x2)
+\item 
+\Hypertarget{classAriadne_1_1Float_3_01DP_01_4_a7f9cebe93db7569b841fa10b20079769}\label{classAriadne_1_1Float_3_01DP_01_4_a7f9cebe93db7569b841fa10b20079769} 
+\mbox{\hyperlink{namespaceAriadne_a0e36a4c4b857737f71444bff61a9edb6}{Comparison}} {\bfseries cmp} (Float\+DP const \&x1, \mbox{\hyperlink{namespaceAriadne_aae901a69a841b1a085a0dfe218e38fe9}{Nat}} m2)
+\item 
+\Hypertarget{classAriadne_1_1Float_3_01DP_01_4_af3b8b5b66a84f53c90e2f861037f4e4d}\label{classAriadne_1_1Float_3_01DP_01_4_af3b8b5b66a84f53c90e2f861037f4e4d} 
+\mbox{\hyperlink{namespaceAriadne_a0e36a4c4b857737f71444bff61a9edb6}{Comparison}} {\bfseries cmp} (\mbox{\hyperlink{namespaceAriadne_aae901a69a841b1a085a0dfe218e38fe9}{Nat}} m1, Float\+DP const \&x2)
+\item 
+\Hypertarget{classAriadne_1_1Float_3_01DP_01_4_a2a2e441eda97db4a570c6619d7483f12}\label{classAriadne_1_1Float_3_01DP_01_4_a2a2e441eda97db4a570c6619d7483f12} 
+\mbox{\hyperlink{namespaceAriadne_a0e36a4c4b857737f71444bff61a9edb6}{Comparison}} {\bfseries cmp} (Float\+DP const \&x1, \mbox{\hyperlink{namespaceAriadne_a008e7f6ae8f621fbb1d876061812b9b2}{Int}} n2)
+\item 
+\Hypertarget{classAriadne_1_1Float_3_01DP_01_4_ad391ab9b85b8fa781a23da108eac7da0}\label{classAriadne_1_1Float_3_01DP_01_4_ad391ab9b85b8fa781a23da108eac7da0} 
+\mbox{\hyperlink{namespaceAriadne_a0e36a4c4b857737f71444bff61a9edb6}{Comparison}} {\bfseries cmp} (\mbox{\hyperlink{namespaceAriadne_a008e7f6ae8f621fbb1d876061812b9b2}{Int}} n1, Float\+DP const \&x2)
+\item 
+\Hypertarget{classAriadne_1_1Float_3_01DP_01_4_a8889b724e1b76e6a9c81b55639029eb3}\label{classAriadne_1_1Float_3_01DP_01_4_a8889b724e1b76e6a9c81b55639029eb3} 
+\mbox{\hyperlink{namespaceAriadne_a0e36a4c4b857737f71444bff61a9edb6}{Comparison}} {\bfseries cmp} (Float\+DP x1, \mbox{\hyperlink{classAriadne_1_1ExactDouble}{Exact\+Double}} x2)
+\item 
+\Hypertarget{classAriadne_1_1Float_3_01DP_01_4_a94a5c00f3e7705e0249ef69de8ec70db}\label{classAriadne_1_1Float_3_01DP_01_4_a94a5c00f3e7705e0249ef69de8ec70db} 
+\mbox{\hyperlink{namespaceAriadne_a0e36a4c4b857737f71444bff61a9edb6}{Comparison}} {\bfseries cmp} (\mbox{\hyperlink{classAriadne_1_1ExactDouble}{Exact\+Double}} x1, Float\+DP x2)
+\item 
+\Hypertarget{classAriadne_1_1Float_3_01DP_01_4_a39eb2878092f6bc9ce80cd0291696c00}\label{classAriadne_1_1Float_3_01DP_01_4_a39eb2878092f6bc9ce80cd0291696c00} 
+\mbox{\hyperlink{namespaceAriadne_a0e36a4c4b857737f71444bff61a9edb6}{Comparison}} {\bfseries cmp} (Float\+DP x1, \mbox{\hyperlink{classAriadne_1_1Rational}{Rational}} const \&x2)
+\item 
+\Hypertarget{classAriadne_1_1Float_3_01DP_01_4_a2110f18a0f52bde7e9d75bfbea3df204}\label{classAriadne_1_1Float_3_01DP_01_4_a2110f18a0f52bde7e9d75bfbea3df204} 
+\mbox{\hyperlink{namespaceAriadne_a0e36a4c4b857737f71444bff61a9edb6}{Comparison}} {\bfseries cmp} (\mbox{\hyperlink{classAriadne_1_1Rational}{Rational}} const \&x1, Float\+DP x2)
+\end{DoxyCompactItemize}
+\end{Indent}
+\begin{Indent}\textbf{ Exact information tests}\par
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1Float_3_01DP_01_4_a4684f8d4e2bf95a2c6f1175b14a0161b}\label{classAriadne_1_1Float_3_01DP_01_4_a4684f8d4e2bf95a2c6f1175b14a0161b} 
+\mbox{\hyperlink{namespaceAriadne_a76a8b016e5ad61faf9062cc387df5016}{Bool}} {\bfseries same} (Float\+DP const \&x1, Float\+DP const \&x2)
+\begin{DoxyCompactList}\small\item\em Test equality of {\itshape x1} and x2. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\end{Indent}
+\begin{Indent}\textbf{ Input/output operations}\par
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1Float_3_01DP_01_4_a435ea0963cf62fe8b5fbe305d2c538de}\label{classAriadne_1_1Float_3_01DP_01_4_a435ea0963cf62fe8b5fbe305d2c538de} 
+\mbox{\hyperlink{namespaceAriadne_acbb98ddc4385af4599070e65a1a47ec1}{Output\+Stream}} \& {\bfseries operator$<$$<$} (\mbox{\hyperlink{namespaceAriadne_acbb98ddc4385af4599070e65a1a47ec1}{Output\+Stream}} \&os, Float\+DP const \&x)
+\begin{DoxyCompactList}\small\item\em Write to an output stream. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Float_3_01DP_01_4_a090ee6cd6b933b346575205d44674de6}\label{classAriadne_1_1Float_3_01DP_01_4_a090ee6cd6b933b346575205d44674de6} 
+\mbox{\hyperlink{namespaceAriadne_a3c42889d7ee562011f1dc63874e51d0e}{Input\+Stream}} \& {\bfseries operator$>$$>$} (\mbox{\hyperlink{namespaceAriadne_a3c42889d7ee562011f1dc63874e51d0e}{Input\+Stream}} \&os, Float\+DP \&x)
+\begin{DoxyCompactList}\small\item\em Read from an input stream. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\end{Indent}
+\doxysubsubsubsection*{Related Types and Functions}
+(Note that these are not member symbols.) \begin{Indent}\textbf{ Type synonyms for Float\+DP based numbers.}\par
+{\em $<$\+DP$>$ }\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1Float_a471a094d1d03d0b7d19ce5ebd7bac734}\label{classAriadne_1_1Float_a471a094d1d03d0b7d19ce5ebd7bac734} 
+using {\bfseries Float\+DP}
+\item 
+\Hypertarget{classAriadne_1_1Float_a9cc241f891037bc58b6fd8fe70c55322}\label{classAriadne_1_1Float_a9cc241f891037bc58b6fd8fe70c55322} 
+using {\bfseries Float\+DPBall}
+\item 
+\Hypertarget{classAriadne_1_1Float_a468e28158e02ade4e3e0abf417314723}\label{classAriadne_1_1Float_a468e28158e02ade4e3e0abf417314723} 
+using {\bfseries Float\+DPBounds}
+\item 
+\Hypertarget{classAriadne_1_1Float_a9b37c4be432995acc5e99f6fdd001b29}\label{classAriadne_1_1Float_a9b37c4be432995acc5e99f6fdd001b29} 
+using {\bfseries Float\+DPUpper\+Bound}
+\item 
+\Hypertarget{classAriadne_1_1Float_a253ffaf44e9be1cb1c85cae59c9cb684}\label{classAriadne_1_1Float_a253ffaf44e9be1cb1c85cae59c9cb684} 
+using {\bfseries Float\+DPLower\+Bound}
+\item 
+\Hypertarget{classAriadne_1_1Float_a76533ecc42fba04e1f64b22bcb907479}\label{classAriadne_1_1Float_a76533ecc42fba04e1f64b22bcb907479} 
+using {\bfseries Float\+DPApproximation}
+\item 
+\Hypertarget{classAriadne_1_1Float_a2eedfd01d18e52b596c58cf8cdf0aa84}\label{classAriadne_1_1Float_a2eedfd01d18e52b596c58cf8cdf0aa84} 
+using {\bfseries Float\+DPError}
+\item 
+\Hypertarget{classAriadne_1_1Float_a11553f74f871f59c4180fcb290633344}\label{classAriadne_1_1Float_a11553f74f871f59c4180fcb290633344} 
+using {\bfseries Positive\+Float\+DP}
+\item 
+\Hypertarget{classAriadne_1_1Float_ad0df124e0de357fcd60861562c3ece33}\label{classAriadne_1_1Float_ad0df124e0de357fcd60861562c3ece33} 
+using {\bfseries Positive\+Float\+DPBall}
+\item 
+\Hypertarget{classAriadne_1_1Float_a4f10e4573d0461f492269f82da370d75}\label{classAriadne_1_1Float_a4f10e4573d0461f492269f82da370d75} 
+using {\bfseries Positive\+Float\+DPBounds}
+\item 
+\Hypertarget{classAriadne_1_1Float_afa755c108ea6e9d8494da13d4c8bb59d}\label{classAriadne_1_1Float_afa755c108ea6e9d8494da13d4c8bb59d} 
+using {\bfseries Positive\+Float\+DPUpper\+Bound}
+\item 
+\Hypertarget{classAriadne_1_1Float_a6b2b35bb74fd9354bd1542e4288fb6d0}\label{classAriadne_1_1Float_a6b2b35bb74fd9354bd1542e4288fb6d0} 
+using {\bfseries Positive\+Float\+DPLower\+Bound}
+\item 
+\Hypertarget{classAriadne_1_1Float_a0da8d728fb5658a6ddd9d1e769ea55c7}\label{classAriadne_1_1Float_a0da8d728fb5658a6ddd9d1e769ea55c7} 
+using {\bfseries Positive\+Float\+DPApproximation}
+\item 
+\Hypertarget{classAriadne_1_1Float_ab3760abad5905cc63809ebff00a62f57}\label{classAriadne_1_1Float_ab3760abad5905cc63809ebff00a62f57} 
+using {\bfseries Float\+MPDPBall}
+\end{DoxyCompactItemize}
+\end{Indent}
+\begin{Indent}\textbf{ Type synonyms for Float\+MP based numbers.}\par
+{\em $<$\+MP$>$ }\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1Float_af16eb7a40868cc5319108eb650e6583c}\label{classAriadne_1_1Float_af16eb7a40868cc5319108eb650e6583c} 
+using {\bfseries Float\+MP}
+\item 
+\Hypertarget{classAriadne_1_1Float_a24e4059ab8425195dc4adbbffd18cfc5}\label{classAriadne_1_1Float_a24e4059ab8425195dc4adbbffd18cfc5} 
+using {\bfseries Float\+MPBall}
+\item 
+\Hypertarget{classAriadne_1_1Float_a6275d18313ce23056f278e16e1093e34}\label{classAriadne_1_1Float_a6275d18313ce23056f278e16e1093e34} 
+using {\bfseries Float\+MPBounds}
+\item 
+\Hypertarget{classAriadne_1_1Float_a63be83c0d7f9fcbeb624aa109d0f45db}\label{classAriadne_1_1Float_a63be83c0d7f9fcbeb624aa109d0f45db} 
+using {\bfseries Float\+MPUpper\+Bound}
+\item 
+\Hypertarget{classAriadne_1_1Float_a83cfe4cd641631d0e14cee1a6093683e}\label{classAriadne_1_1Float_a83cfe4cd641631d0e14cee1a6093683e} 
+using {\bfseries Float\+MPLower\+Bound}
+\item 
+\Hypertarget{classAriadne_1_1Float_a1c8327d1ba8f8193bc8727448ba48755}\label{classAriadne_1_1Float_a1c8327d1ba8f8193bc8727448ba48755} 
+using {\bfseries Float\+MPApproximation}
+\item 
+\Hypertarget{classAriadne_1_1Float_a53319594d530512915f1dca609482276}\label{classAriadne_1_1Float_a53319594d530512915f1dca609482276} 
+using {\bfseries Float\+MPError}
+\item 
+\Hypertarget{classAriadne_1_1Float_a1cfb8e2ae241fce62a0c08e63f8ff600}\label{classAriadne_1_1Float_a1cfb8e2ae241fce62a0c08e63f8ff600} 
+using {\bfseries Positive\+Float\+MP}
+\item 
+\Hypertarget{classAriadne_1_1Float_a91653fa6c84381333f2bd30447bba1b0}\label{classAriadne_1_1Float_a91653fa6c84381333f2bd30447bba1b0} 
+using {\bfseries Positive\+Float\+MPBall}
+\item 
+\Hypertarget{classAriadne_1_1Float_a4f36bfa61d672df30c3a5cb5c135f866}\label{classAriadne_1_1Float_a4f36bfa61d672df30c3a5cb5c135f866} 
+using {\bfseries Positive\+Float\+MPBounds}
+\item 
+\Hypertarget{classAriadne_1_1Float_a95faaec88186380cfde1ffb4d02ad1b2}\label{classAriadne_1_1Float_a95faaec88186380cfde1ffb4d02ad1b2} 
+using {\bfseries Positive\+Float\+MPUpper\+Bound}
+\item 
+\Hypertarget{classAriadne_1_1Float_afa9b8d9e934382f7faa0aba1143705c4}\label{classAriadne_1_1Float_afa9b8d9e934382f7faa0aba1143705c4} 
+using {\bfseries Positive\+Float\+MPLower\+Bound}
+\item 
+\Hypertarget{classAriadne_1_1Float_ab18aaa622b8c12772d4aa3e54f58c086}\label{classAriadne_1_1Float_ab18aaa622b8c12772d4aa3e54f58c086} 
+using {\bfseries Positive\+Float\+MPApproximation}
+\item 
+\Hypertarget{classAriadne_1_1Float_a8719c290b9042b1e117f0ef3e43862d5}\label{classAriadne_1_1Float_a8719c290b9042b1e117f0ef3e43862d5} 
+using {\bfseries Float\+MDPBall}
+\end{DoxyCompactItemize}
+\end{Indent}
+\doxysubsubsubsection*{Correctly rounded operations}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1Float_3_01DP_01_4_a53a8ad90b3a019ca60f052dfa13d5de7}\label{classAriadne_1_1Float_3_01DP_01_4_a53a8ad90b3a019ca60f052dfa13d5de7} 
+Float\+DP {\bfseries sqr} (Current\+Rounding\+Mode, Float\+DP x)
+\item 
+\Hypertarget{classAriadne_1_1Float_3_01DP_01_4_ad9b6626eb21c93b3d8a9f930b4f59e8a}\label{classAriadne_1_1Float_3_01DP_01_4_ad9b6626eb21c93b3d8a9f930b4f59e8a} 
+Float\+DP {\bfseries rec} (Current\+Rounding\+Mode, Float\+DP x)
+\item 
+\Hypertarget{classAriadne_1_1Float_3_01DP_01_4_a89b46e32d6f6ac45872e7e38d314829b}\label{classAriadne_1_1Float_3_01DP_01_4_a89b46e32d6f6ac45872e7e38d314829b} 
+Float\+DP {\bfseries add} (Current\+Rounding\+Mode, Float\+DP x1, Float\+DP x2)
+\item 
+\Hypertarget{classAriadne_1_1Float_3_01DP_01_4_a31c7d9f961467f2ffefcb85cdf01ef22}\label{classAriadne_1_1Float_3_01DP_01_4_a31c7d9f961467f2ffefcb85cdf01ef22} 
+Float\+DP {\bfseries sub} (Current\+Rounding\+Mode, Float\+DP x1, Float\+DP x2)
+\item 
+\Hypertarget{classAriadne_1_1Float_3_01DP_01_4_ab260008f423b9ab5385b9217e08772f9}\label{classAriadne_1_1Float_3_01DP_01_4_ab260008f423b9ab5385b9217e08772f9} 
+Float\+DP {\bfseries mul} (Current\+Rounding\+Mode, Float\+DP x1, Float\+DP x2)
+\item 
+\Hypertarget{classAriadne_1_1Float_3_01DP_01_4_a278b021615191d65f93b743767c40dbe}\label{classAriadne_1_1Float_3_01DP_01_4_a278b021615191d65f93b743767c40dbe} 
+Float\+DP {\bfseries div} (Current\+Rounding\+Mode, Float\+DP x1, Float\+DP x2)
+\item 
+\Hypertarget{classAriadne_1_1Float_3_01DP_01_4_ae91d85c26b8a4416be8ea1e5289db516}\label{classAriadne_1_1Float_3_01DP_01_4_ae91d85c26b8a4416be8ea1e5289db516} 
+Float\+DP {\bfseries fma} (Current\+Rounding\+Mode, Float\+DP x1, Float\+DP x2, Float\+DP x3)
+\item 
+\Hypertarget{classAriadne_1_1Float_3_01DP_01_4_a93afaca26ff8d83bdfdca44344c7c58d}\label{classAriadne_1_1Float_3_01DP_01_4_a93afaca26ff8d83bdfdca44344c7c58d} 
+Float\+DP {\bfseries pow} (Current\+Rounding\+Mode, Float\+DP x, \mbox{\hyperlink{namespaceAriadne_aae901a69a841b1a085a0dfe218e38fe9}{Nat}} m)
+\item 
+\Hypertarget{classAriadne_1_1Float_3_01DP_01_4_a45cd9d23848f78b7a8e78acc14b4a21b}\label{classAriadne_1_1Float_3_01DP_01_4_a45cd9d23848f78b7a8e78acc14b4a21b} 
+Float\+DP {\bfseries pow} (Current\+Rounding\+Mode, Float\+DP x, \mbox{\hyperlink{namespaceAriadne_a008e7f6ae8f621fbb1d876061812b9b2}{Int}} n)
+\item 
+\Hypertarget{classAriadne_1_1Float_3_01DP_01_4_a803a04d4521aedd75b94cbc38116fe5d}\label{classAriadne_1_1Float_3_01DP_01_4_a803a04d4521aedd75b94cbc38116fe5d} 
+Float\+DP {\bfseries sqrt} (Current\+Rounding\+Mode, Float\+DP x)
+\item 
+\Hypertarget{classAriadne_1_1Float_3_01DP_01_4_af3d82c33e2b1786af47eacc00a200f1c}\label{classAriadne_1_1Float_3_01DP_01_4_af3d82c33e2b1786af47eacc00a200f1c} 
+Float\+DP {\bfseries exp} (Current\+Rounding\+Mode, Float\+DP x)
+\item 
+\Hypertarget{classAriadne_1_1Float_3_01DP_01_4_a9cec8956be9b371767be7bc7cab99860}\label{classAriadne_1_1Float_3_01DP_01_4_a9cec8956be9b371767be7bc7cab99860} 
+Float\+DP {\bfseries log} (Current\+Rounding\+Mode, Float\+DP x)
+\item 
+\Hypertarget{classAriadne_1_1Float_3_01DP_01_4_a06030df2c64678aca21c1e2b888d83c1}\label{classAriadne_1_1Float_3_01DP_01_4_a06030df2c64678aca21c1e2b888d83c1} 
+Float\+DP {\bfseries sin} (Current\+Rounding\+Mode, Float\+DP x)
+\item 
+\Hypertarget{classAriadne_1_1Float_3_01DP_01_4_ab3a3873a0c356f35f015980da7e98169}\label{classAriadne_1_1Float_3_01DP_01_4_ab3a3873a0c356f35f015980da7e98169} 
+Float\+DP {\bfseries cos} (Current\+Rounding\+Mode, Float\+DP x)
+\item 
+\Hypertarget{classAriadne_1_1Float_3_01DP_01_4_a0ffb6f74fb640016e4a1e6a1a1ab381b}\label{classAriadne_1_1Float_3_01DP_01_4_a0ffb6f74fb640016e4a1e6a1a1ab381b} 
+Float\+DP {\bfseries tan} (Current\+Rounding\+Mode, Float\+DP x)
+\item 
+\Hypertarget{classAriadne_1_1Float_3_01DP_01_4_a1fd81d66981b9cd8c4588f45bc33600e}\label{classAriadne_1_1Float_3_01DP_01_4_a1fd81d66981b9cd8c4588f45bc33600e} 
+Float\+DP {\bfseries asin} (Current\+Rounding\+Mode, Float\+DP x)
+\item 
+\Hypertarget{classAriadne_1_1Float_3_01DP_01_4_afd0dc89dd53ed6f3cfb823786323524c}\label{classAriadne_1_1Float_3_01DP_01_4_afd0dc89dd53ed6f3cfb823786323524c} 
+Float\+DP {\bfseries acos} (Current\+Rounding\+Mode, Float\+DP x)
+\item 
+\Hypertarget{classAriadne_1_1Float_3_01DP_01_4_aab406b207059bc52e35458d6a1cf680c}\label{classAriadne_1_1Float_3_01DP_01_4_aab406b207059bc52e35458d6a1cf680c} 
+Float\+DP {\bfseries atan} (Current\+Rounding\+Mode, Float\+DP x)
+\item 
+\Hypertarget{classAriadne_1_1Float_3_01DP_01_4_a5b488b72085bb244bc28bfb0def6cf23}\label{classAriadne_1_1Float_3_01DP_01_4_a5b488b72085bb244bc28bfb0def6cf23} 
+static Float\+DP {\bfseries pi} (Current\+Rounding\+Mode, \mbox{\hyperlink{classAriadne_1_1Float_3_01DP_01_4_a65baaf63c96ad79d42ac73b034812d9d}{Precision\+Type}} pr)
+\end{DoxyCompactItemize}
+\doxysubsubsubsection*{Explicitly rounded operations}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1Float_3_01DP_01_4_a73d756e8bf8fb50878a4de8225300428}\label{classAriadne_1_1Float_3_01DP_01_4_a73d756e8bf8fb50878a4de8225300428} 
+Float\+DP {\bfseries max} (\mbox{\hyperlink{classAriadne_1_1Float_3_01DP_01_4_a1819a7e645baa1b6f990a3465935f493}{Rounding\+Mode\+Type}} rnd, Float\+DP x1, Float\+DP x2)
+\item 
+\Hypertarget{classAriadne_1_1Float_3_01DP_01_4_a16553c62770b903e7e3ce6f79cf349e7}\label{classAriadne_1_1Float_3_01DP_01_4_a16553c62770b903e7e3ce6f79cf349e7} 
+Float\+DP {\bfseries min} (\mbox{\hyperlink{classAriadne_1_1Float_3_01DP_01_4_a1819a7e645baa1b6f990a3465935f493}{Rounding\+Mode\+Type}} rnd, Float\+DP x1, Float\+DP x2)
+\item 
+\Hypertarget{classAriadne_1_1Float_3_01DP_01_4_ae34a3d9a0f2ba7a43e757ea05ea2e2ea}\label{classAriadne_1_1Float_3_01DP_01_4_ae34a3d9a0f2ba7a43e757ea05ea2e2ea} 
+Float\+DP {\bfseries abs} (\mbox{\hyperlink{classAriadne_1_1Float_3_01DP_01_4_a1819a7e645baa1b6f990a3465935f493}{Rounding\+Mode\+Type}} rnd, Float\+DP x)
+\item 
+\Hypertarget{classAriadne_1_1Float_3_01DP_01_4_a8bcfa0f6d430840b3fae55bdbd2773f6}\label{classAriadne_1_1Float_3_01DP_01_4_a8bcfa0f6d430840b3fae55bdbd2773f6} 
+Float\+DP {\bfseries mag} (\mbox{\hyperlink{classAriadne_1_1Float_3_01DP_01_4_a1819a7e645baa1b6f990a3465935f493}{Rounding\+Mode\+Type}} rnd, Float\+DP x)
+\item 
+\Hypertarget{classAriadne_1_1Float_3_01DP_01_4_a0412178b852cfac837b5442f9fc715d9}\label{classAriadne_1_1Float_3_01DP_01_4_a0412178b852cfac837b5442f9fc715d9} 
+Float\+DP \& {\bfseries iadd} (\mbox{\hyperlink{classAriadne_1_1Float_3_01DP_01_4_a1819a7e645baa1b6f990a3465935f493}{Rounding\+Mode\+Type}} rnd, Float\+DP \&x1, Float\+DP x2)
+\item 
+\Hypertarget{classAriadne_1_1Float_3_01DP_01_4_a3ae4f785fabafc986de4481f440c7a95}\label{classAriadne_1_1Float_3_01DP_01_4_a3ae4f785fabafc986de4481f440c7a95} 
+Float\+DP \& {\bfseries isub} (\mbox{\hyperlink{classAriadne_1_1Float_3_01DP_01_4_a1819a7e645baa1b6f990a3465935f493}{Rounding\+Mode\+Type}} rnd, Float\+DP \&x1, Float\+DP x2)
+\item 
+\Hypertarget{classAriadne_1_1Float_3_01DP_01_4_a1511e388c7fe2b12ae927a23c094cfc6}\label{classAriadne_1_1Float_3_01DP_01_4_a1511e388c7fe2b12ae927a23c094cfc6} 
+Float\+DP \& {\bfseries imul} (\mbox{\hyperlink{classAriadne_1_1Float_3_01DP_01_4_a1819a7e645baa1b6f990a3465935f493}{Rounding\+Mode\+Type}} rnd, Float\+DP \&x1, Float\+DP x2)
+\item 
+\Hypertarget{classAriadne_1_1Float_3_01DP_01_4_a2b434c5dd9dae49bdd7d4a2758fd563f}\label{classAriadne_1_1Float_3_01DP_01_4_a2b434c5dd9dae49bdd7d4a2758fd563f} 
+Float\+DP \& {\bfseries idiv} (\mbox{\hyperlink{classAriadne_1_1Float_3_01DP_01_4_a1819a7e645baa1b6f990a3465935f493}{Rounding\+Mode\+Type}} rnd, Float\+DP \&x1, Float\+DP x2)
+\item 
+\Hypertarget{classAriadne_1_1Float_3_01DP_01_4_af1e23c35df302602e8fe7c6898bfa111}\label{classAriadne_1_1Float_3_01DP_01_4_af1e23c35df302602e8fe7c6898bfa111} 
+Float\+DP {\bfseries nul} (\mbox{\hyperlink{classAriadne_1_1Float_3_01DP_01_4_a1819a7e645baa1b6f990a3465935f493}{Rounding\+Mode\+Type}} rnd, Float\+DP x)
+\item 
+\Hypertarget{classAriadne_1_1Float_3_01DP_01_4_a50bb0959c5e0b1471abcfac8b76bf1d8}\label{classAriadne_1_1Float_3_01DP_01_4_a50bb0959c5e0b1471abcfac8b76bf1d8} 
+Float\+DP {\bfseries pos} (\mbox{\hyperlink{classAriadne_1_1Float_3_01DP_01_4_a1819a7e645baa1b6f990a3465935f493}{Rounding\+Mode\+Type}} rnd, Float\+DP x)
+\item 
+\Hypertarget{classAriadne_1_1Float_3_01DP_01_4_ad48974de4a63d2837176576636dfc6f9}\label{classAriadne_1_1Float_3_01DP_01_4_ad48974de4a63d2837176576636dfc6f9} 
+Float\+DP {\bfseries neg} (\mbox{\hyperlink{classAriadne_1_1Float_3_01DP_01_4_a1819a7e645baa1b6f990a3465935f493}{Rounding\+Mode\+Type}} rnd, Float\+DP x)
+\item 
+\Hypertarget{classAriadne_1_1Float_3_01DP_01_4_a0aca59e2b1548dd8c86846f415275575}\label{classAriadne_1_1Float_3_01DP_01_4_a0aca59e2b1548dd8c86846f415275575} 
+Float\+DP {\bfseries hlf} (\mbox{\hyperlink{classAriadne_1_1Float_3_01DP_01_4_a1819a7e645baa1b6f990a3465935f493}{Rounding\+Mode\+Type}} rnd, Float\+DP x)
+\item 
+\Hypertarget{classAriadne_1_1Float_3_01DP_01_4_a92a3f662b6e44cffa6d323b551ef1b7f}\label{classAriadne_1_1Float_3_01DP_01_4_a92a3f662b6e44cffa6d323b551ef1b7f} 
+Float\+DP {\bfseries add} (\mbox{\hyperlink{classAriadne_1_1Float_3_01DP_01_4_a1819a7e645baa1b6f990a3465935f493}{Rounding\+Mode\+Type}} rnd, Float\+DP x1, Float\+DP x2)
+\item 
+\Hypertarget{classAriadne_1_1Float_3_01DP_01_4_aae4fdfa0d7ffe9f573017e8c90e4c1d3}\label{classAriadne_1_1Float_3_01DP_01_4_aae4fdfa0d7ffe9f573017e8c90e4c1d3} 
+Float\+DP {\bfseries sub} (\mbox{\hyperlink{classAriadne_1_1Float_3_01DP_01_4_a1819a7e645baa1b6f990a3465935f493}{Rounding\+Mode\+Type}} rnd, Float\+DP x1, Float\+DP x2)
+\item 
+\Hypertarget{classAriadne_1_1Float_3_01DP_01_4_a32ed7d9a2d314bc6a68aac2122642d5f}\label{classAriadne_1_1Float_3_01DP_01_4_a32ed7d9a2d314bc6a68aac2122642d5f} 
+Float\+DP {\bfseries mul} (\mbox{\hyperlink{classAriadne_1_1Float_3_01DP_01_4_a1819a7e645baa1b6f990a3465935f493}{Rounding\+Mode\+Type}} rnd, Float\+DP x1, Float\+DP x2)
+\item 
+\Hypertarget{classAriadne_1_1Float_3_01DP_01_4_a56af57a5fe8bccf8d48a65f4a08ad0f2}\label{classAriadne_1_1Float_3_01DP_01_4_a56af57a5fe8bccf8d48a65f4a08ad0f2} 
+Float\+DP {\bfseries div} (\mbox{\hyperlink{classAriadne_1_1Float_3_01DP_01_4_a1819a7e645baa1b6f990a3465935f493}{Rounding\+Mode\+Type}} rnd, Float\+DP x1, Float\+DP x2)
+\item 
+\Hypertarget{classAriadne_1_1Float_3_01DP_01_4_aea2398e1556e890462bc74592287e2e2}\label{classAriadne_1_1Float_3_01DP_01_4_aea2398e1556e890462bc74592287e2e2} 
+Float\+DP {\bfseries fma} (\mbox{\hyperlink{classAriadne_1_1Float_3_01DP_01_4_a1819a7e645baa1b6f990a3465935f493}{Rounding\+Mode\+Type}} rnd, Float\+DP x1, Float\+DP x2, Float\+DP x3)
+\item 
+\Hypertarget{classAriadne_1_1Float_3_01DP_01_4_a19414cd09fba8e87a8999c7b729bb977}\label{classAriadne_1_1Float_3_01DP_01_4_a19414cd09fba8e87a8999c7b729bb977} 
+Float\+DP {\bfseries pow} (\mbox{\hyperlink{classAriadne_1_1Float_3_01DP_01_4_a1819a7e645baa1b6f990a3465935f493}{Rounding\+Mode\+Type}} rnd, Float\+DP x, \mbox{\hyperlink{namespaceAriadne_aae901a69a841b1a085a0dfe218e38fe9}{Nat}} m)
+\item 
+\Hypertarget{classAriadne_1_1Float_3_01DP_01_4_af9852f4a684f0232d410a5d120b49fea}\label{classAriadne_1_1Float_3_01DP_01_4_af9852f4a684f0232d410a5d120b49fea} 
+Float\+DP {\bfseries pow} (\mbox{\hyperlink{classAriadne_1_1Float_3_01DP_01_4_a1819a7e645baa1b6f990a3465935f493}{Rounding\+Mode\+Type}} rnd, Float\+DP x, \mbox{\hyperlink{namespaceAriadne_a008e7f6ae8f621fbb1d876061812b9b2}{Int}} n)
+\item 
+\Hypertarget{classAriadne_1_1Float_3_01DP_01_4_a6ff92fe28556d5ef5f8cab0d2fd3c0f6}\label{classAriadne_1_1Float_3_01DP_01_4_a6ff92fe28556d5ef5f8cab0d2fd3c0f6} 
+Float\+DP {\bfseries sqr} (\mbox{\hyperlink{classAriadne_1_1Float_3_01DP_01_4_a1819a7e645baa1b6f990a3465935f493}{Rounding\+Mode\+Type}} rnd, Float\+DP x)
+\item 
+\Hypertarget{classAriadne_1_1Float_3_01DP_01_4_ab3f8ef36ba73c34a19572ef780483031}\label{classAriadne_1_1Float_3_01DP_01_4_ab3f8ef36ba73c34a19572ef780483031} 
+Float\+DP {\bfseries rec} (\mbox{\hyperlink{classAriadne_1_1Float_3_01DP_01_4_a1819a7e645baa1b6f990a3465935f493}{Rounding\+Mode\+Type}} rnd, Float\+DP x)
+\item 
+\Hypertarget{classAriadne_1_1Float_3_01DP_01_4_a236c60ca537234a8221982199814a151}\label{classAriadne_1_1Float_3_01DP_01_4_a236c60ca537234a8221982199814a151} 
+Float\+DP {\bfseries sqrt} (\mbox{\hyperlink{classAriadne_1_1Float_3_01DP_01_4_a1819a7e645baa1b6f990a3465935f493}{Rounding\+Mode\+Type}} rnd, Float\+DP x)
+\item 
+\Hypertarget{classAriadne_1_1Float_3_01DP_01_4_ad9e7957b05e3f23cfc3f0a2a37b0658b}\label{classAriadne_1_1Float_3_01DP_01_4_ad9e7957b05e3f23cfc3f0a2a37b0658b} 
+Float\+DP {\bfseries exp} (\mbox{\hyperlink{classAriadne_1_1Float_3_01DP_01_4_a1819a7e645baa1b6f990a3465935f493}{Rounding\+Mode\+Type}} rnd, Float\+DP x)
+\item 
+\Hypertarget{classAriadne_1_1Float_3_01DP_01_4_a40003394b81c1edd1d700eafec2cf7a5}\label{classAriadne_1_1Float_3_01DP_01_4_a40003394b81c1edd1d700eafec2cf7a5} 
+Float\+DP {\bfseries log} (\mbox{\hyperlink{classAriadne_1_1Float_3_01DP_01_4_a1819a7e645baa1b6f990a3465935f493}{Rounding\+Mode\+Type}} rnd, Float\+DP x)
+\item 
+\Hypertarget{classAriadne_1_1Float_3_01DP_01_4_ac47f254a9a1f77315e7667dba0b32686}\label{classAriadne_1_1Float_3_01DP_01_4_ac47f254a9a1f77315e7667dba0b32686} 
+Float\+DP {\bfseries sin} (\mbox{\hyperlink{classAriadne_1_1Float_3_01DP_01_4_a1819a7e645baa1b6f990a3465935f493}{Rounding\+Mode\+Type}} rnd, Float\+DP x)
+\item 
+\Hypertarget{classAriadne_1_1Float_3_01DP_01_4_a0b001605e8805a3da154045f9f702b59}\label{classAriadne_1_1Float_3_01DP_01_4_a0b001605e8805a3da154045f9f702b59} 
+Float\+DP {\bfseries cos} (\mbox{\hyperlink{classAriadne_1_1Float_3_01DP_01_4_a1819a7e645baa1b6f990a3465935f493}{Rounding\+Mode\+Type}} rnd, Float\+DP x)
+\item 
+\Hypertarget{classAriadne_1_1Float_3_01DP_01_4_a3797b6c4e0165240854e2f41af7abbfd}\label{classAriadne_1_1Float_3_01DP_01_4_a3797b6c4e0165240854e2f41af7abbfd} 
+Float\+DP {\bfseries tan} (\mbox{\hyperlink{classAriadne_1_1Float_3_01DP_01_4_a1819a7e645baa1b6f990a3465935f493}{Rounding\+Mode\+Type}} rnd, Float\+DP x)
+\item 
+\Hypertarget{classAriadne_1_1Float_3_01DP_01_4_a72b6072ad534b0550cf2fb362286bd86}\label{classAriadne_1_1Float_3_01DP_01_4_a72b6072ad534b0550cf2fb362286bd86} 
+Float\+DP {\bfseries asin} (\mbox{\hyperlink{classAriadne_1_1Float_3_01DP_01_4_a1819a7e645baa1b6f990a3465935f493}{Rounding\+Mode\+Type}} rnd, Float\+DP x)
+\item 
+\Hypertarget{classAriadne_1_1Float_3_01DP_01_4_a110f4c478ba8afb66ef6e61c6ce9537e}\label{classAriadne_1_1Float_3_01DP_01_4_a110f4c478ba8afb66ef6e61c6ce9537e} 
+Float\+DP {\bfseries acos} (\mbox{\hyperlink{classAriadne_1_1Float_3_01DP_01_4_a1819a7e645baa1b6f990a3465935f493}{Rounding\+Mode\+Type}} rnd, Float\+DP x)
+\item 
+\Hypertarget{classAriadne_1_1Float_3_01DP_01_4_aa7c9ae6e0064481932b7ca6aa3d517dc}\label{classAriadne_1_1Float_3_01DP_01_4_aa7c9ae6e0064481932b7ca6aa3d517dc} 
+Float\+DP {\bfseries atan} (\mbox{\hyperlink{classAriadne_1_1Float_3_01DP_01_4_a1819a7e645baa1b6f990a3465935f493}{Rounding\+Mode\+Type}} rnd, Float\+DP x)
+\item 
+Float\+DP \mbox{\hyperlink{classAriadne_1_1Float_3_01DP_01_4_a9484627c7226409ab3e2384e6f7178b1}{med}} (\mbox{\hyperlink{classAriadne_1_1Float_3_01DP_01_4_a1819a7e645baa1b6f990a3465935f493}{Rounding\+Mode\+Type}} rnd, Float\+DP x1, Float\+DP x2)
+\item 
+Float\+DP \mbox{\hyperlink{classAriadne_1_1Float_3_01DP_01_4_ae998c98512580616daf45bf6ff4e41db}{rad}} (\mbox{\hyperlink{classAriadne_1_1Float_3_01DP_01_4_a1819a7e645baa1b6f990a3465935f493}{Rounding\+Mode\+Type}} rnd, Float\+DP x1, Float\+DP x2)
+\item 
+\Hypertarget{classAriadne_1_1Float_3_01DP_01_4_aded0500c697172b3eb082b5284dec081}\label{classAriadne_1_1Float_3_01DP_01_4_aded0500c697172b3eb082b5284dec081} 
+static Float\+DP {\bfseries pi} (\mbox{\hyperlink{classAriadne_1_1Float_3_01DP_01_4_a1819a7e645baa1b6f990a3465935f493}{Rounding\+Mode\+Type}} rnd, \mbox{\hyperlink{classAriadne_1_1Float_3_01DP_01_4_a65baaf63c96ad79d42ac73b034812d9d}{Precision\+Type}} pr)
+\end{DoxyCompactItemize}
+
+
+\label{doc-related-members}
+\Hypertarget{classAriadne_1_1Float_3_01DP_01_4_doc-related-members}
+\doxysubsubsection{Friends And Related Symbol Documentation}
+\Hypertarget{classAriadne_1_1Float_3_01DP_01_4_a9484627c7226409ab3e2384e6f7178b1}\index{Float$<$ DP $>$@{Float$<$ DP $>$}!med@{med}}
+\index{med@{med}!Float$<$ DP $>$@{Float$<$ DP $>$}}
+\doxyparagraph{\texorpdfstring{med}{med}}
+{\footnotesize\ttfamily \label{classAriadne_1_1Float_3_01DP_01_4_a9484627c7226409ab3e2384e6f7178b1} 
+Float\+DP med (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{classAriadne_1_1Float_3_01DP_01_4_a1819a7e645baa1b6f990a3465935f493}{Rounding\+Mode\+Type}}}]{rnd}{, }\item[{Float\+DP}]{x1}{, }\item[{Float\+DP}]{x2}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [friend]}}
+
+
+
+
+
+\texorpdfstring{$<$}{<} 
+
+References \mbox{\hyperlink{classAriadne_1_1Float_3_01DP_01_4_aaa25687bdd49895c73c3973ce70b8d36}{add}}, \mbox{\hyperlink{classAriadne_1_1Float_3_01DP_01_4_a57d19ebcfba6492efec7b8bb740a41db}{get\+\_\+rounding\+\_\+mode()}}, \mbox{\hyperlink{classAriadne_1_1Float_3_01DP_01_4_a4adcb89adebbd993fb7db5be91e17d9d}{hlf}}, and \mbox{\hyperlink{classAriadne_1_1Float_3_01DP_01_4_a67a645373f833e198d05af53b2dc66ed}{set\+\_\+rounding\+\_\+mode()}}.
+
+\Hypertarget{classAriadne_1_1Float_3_01DP_01_4_ae998c98512580616daf45bf6ff4e41db}\index{Float$<$ DP $>$@{Float$<$ DP $>$}!rad@{rad}}
+\index{rad@{rad}!Float$<$ DP $>$@{Float$<$ DP $>$}}
+\doxyparagraph{\texorpdfstring{rad}{rad}}
+{\footnotesize\ttfamily \label{classAriadne_1_1Float_3_01DP_01_4_ae998c98512580616daf45bf6ff4e41db} 
+Float\+DP rad (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{classAriadne_1_1Float_3_01DP_01_4_a1819a7e645baa1b6f990a3465935f493}{Rounding\+Mode\+Type}}}]{rnd}{, }\item[{Float\+DP}]{x1}{, }\item[{Float\+DP}]{x2}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [friend]}}
+
+
+
+
+
+\texorpdfstring{$<$}{<} 
+
+References \mbox{\hyperlink{classAriadne_1_1Float_3_01DP_01_4_a57d19ebcfba6492efec7b8bb740a41db}{get\+\_\+rounding\+\_\+mode()}}, \mbox{\hyperlink{classAriadne_1_1Float_3_01DP_01_4_a4adcb89adebbd993fb7db5be91e17d9d}{hlf}}, \mbox{\hyperlink{classAriadne_1_1Float_3_01DP_01_4_a67a645373f833e198d05af53b2dc66ed}{set\+\_\+rounding\+\_\+mode()}}, and \mbox{\hyperlink{classAriadne_1_1Float_3_01DP_01_4_aa220abf682fa95718e242a8e9bb61061}{sub}}.
+
+
+
+The documentation for this class was generated from the following files\+:\begin{DoxyCompactItemize}
+\item 
+source/numeric/\mbox{\hyperlink{floatdp_8hpp}{floatdp.\+hpp}}\item 
+source/numeric/\mbox{\hyperlink{rational_8cpp}{rational.\+cpp}}\end{DoxyCompactItemize}

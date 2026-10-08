@@ -1,0 +1,312 @@
+{
+  "normal_production_build": true,
+  "source_manifest": "ordered-field-gcd-20260928-v581-sources.json",
+  "source_directory": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/source-archives/ordered-field-gcd-20260928-v581",
+  "builds": [
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "test",
+        "--lib",
+        "--release",
+        "--all-features",
+        "--locked",
+        "--offline",
+        "--no-run",
+        "--message-format=json"
+      ],
+      "returncode": 0,
+      "log": "ordered-field-gcd-20260928-v581-build.log",
+      "elapsed_seconds": 57.15375253511593,
+      "binaries": {
+        "hypersolve": {
+          "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/ordered-field-gcd-20260928-v581-hypersolve-tests",
+          "sha256": "b1b0e14bc55ccf6564bff65dc68493222a9c5b8935c3ba8b2dce3c640621964f"
+        }
+      }
+    }
+  ],
+  "cases": [
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/ordered-field-gcd-20260928-v581-hypersolve-tests",
+        "--exact",
+        "ordered_field_roots::tests::clustered_simple_roots_survive_periodic_coefficient_recomposition",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "ordered-field-gcd-20260928-v581-clustered_simple_roots_survive_periodic_coefficient_recomposition.log",
+      "elapsed_seconds": 0.0034809608478099108,
+      "target": "hypersolve",
+      "name": "ordered_field_roots::tests::clustered_simple_roots_survive_periodic_coefficient_recomposition",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/ordered-field-gcd-20260928-v581-hypersolve-tests",
+        "--exact",
+        "ordered_field_roots::tests::excluding_a_deflated_boundary_can_find_another_exact_root",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "ordered-field-gcd-20260928-v581-excluding_a_deflated_boundary_can_find_another_exact_root.log",
+      "elapsed_seconds": 0.0035635659005492926,
+      "target": "hypersolve",
+      "name": "ordered_field_roots::tests::excluding_a_deflated_boundary_can_find_another_exact_root",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/ordered-field-gcd-20260928-v581-hypersolve-tests",
+        "--exact",
+        "ordered_field_roots::tests::gcd_keeps_zero_and_coprime_equations_distinct",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "ordered-field-gcd-20260928-v581-gcd_keeps_zero_and_coprime_equations_distinct.log",
+      "elapsed_seconds": 0.003522399114444852,
+      "target": "hypersolve",
+      "name": "ordered_field_roots::tests::gcd_keeps_zero_and_coprime_equations_distinct",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/ordered-field-gcd-20260928-v581-hypersolve-tests",
+        "--exact",
+        "ordered_field_roots::tests::gcd_preserves_repeated_roots_in_the_selected_coefficient_field",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "ordered-field-gcd-20260928-v581-gcd_preserves_repeated_roots_in_the_selected_coefficient_field.log",
+      "elapsed_seconds": 0.0035252380184829235,
+      "target": "hypersolve",
+      "name": "ordered_field_roots::tests::gcd_preserves_repeated_roots_in_the_selected_coefficient_field",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/ordered-field-gcd-20260928-v581-hypersolve-tests",
+        "--exact",
+        "ordered_field_roots::tests::linear_quotient_retains_a_root_in_its_coefficient_field",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "ordered-field-gcd-20260928-v581-linear_quotient_retains_a_root_in_its_coefficient_field.log",
+      "elapsed_seconds": 0.0034987200051546097,
+      "target": "hypersolve",
+      "name": "ordered_field_roots::tests::linear_quotient_retains_a_root_in_its_coefficient_field",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/ordered-field-gcd-20260928-v581-hypersolve-tests",
+        "--exact",
+        "ordered_field_roots::tests::linear_quotient_reuses_certified_nonrational_roots_without_predicates",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "ordered-field-gcd-20260928-v581-linear_quotient_reuses_certified_nonrational_roots_without_predicates.log",
+      "elapsed_seconds": 0.003601742908358574,
+      "target": "hypersolve",
+      "name": "ordered_field_roots::tests::linear_quotient_reuses_certified_nonrational_roots_without_predicates",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/ordered-field-gcd-20260928-v581-hypersolve-tests",
+        "--exact",
+        "ordered_field_roots::tests::midpoint_subdivision_preserves_coefficients_with_linear_field_scaling",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "ordered-field-gcd-20260928-v581-midpoint_subdivision_preserves_coefficients_with_linear_field_scaling.log",
+      "elapsed_seconds": 0.0035233080852776766,
+      "target": "hypersolve",
+      "name": "ordered_field_roots::tests::midpoint_subdivision_preserves_coefficients_with_linear_field_scaling",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/ordered-field-gcd-20260928-v581-hypersolve-tests",
+        "--exact",
+        "ordered_field_roots::tests::midpoint_tableau_matches_authored_polynomial_on_both_children",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "ordered-field-gcd-20260928-v581-midpoint_tableau_matches_authored_polynomial_on_both_children.log",
+      "elapsed_seconds": 0.007580040022730827,
+      "target": "hypersolve",
+      "name": "ordered_field_roots::tests::midpoint_tableau_matches_authored_polynomial_on_both_children",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/ordered-field-gcd-20260928-v581-hypersolve-tests",
+        "--exact",
+        "ordered_field_roots::tests::rational_endpoint_and_midpoint_roots_deflate_to_distinct_witnesses",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "ordered-field-gcd-20260928-v581-rational_endpoint_and_midpoint_roots_deflate_to_distinct_witnesses.log",
+      "elapsed_seconds": 0.003532248083502054,
+      "target": "hypersolve",
+      "name": "ordered_field_roots::tests::rational_endpoint_and_midpoint_roots_deflate_to_distinct_witnesses",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/ordered-field-gcd-20260928-v581-hypersolve-tests",
+        "--exact",
+        "ordered_field_roots::tests::repeated_irrational_root_requests_the_complete_fallback",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "ordered-field-gcd-20260928-v581-repeated_irrational_root_requests_the_complete_fallback.log",
+      "elapsed_seconds": 0.0035309381783008575,
+      "target": "hypersolve",
+      "name": "ordered_field_roots::tests::repeated_irrational_root_requests_the_complete_fallback",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/ordered-field-gcd-20260928-v581-hypersolve-tests",
+        "--exact",
+        "ordered_field_roots::tests::repeated_root_subdivision_keeps_coefficient_expression_depth_bounded",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "ordered-field-gcd-20260928-v581-repeated_root_subdivision_keeps_coefficient_expression_depth_bounded.log",
+      "elapsed_seconds": 0.0035346071235835552,
+      "target": "hypersolve",
+      "name": "ordered_field_roots::tests::repeated_root_subdivision_keeps_coefficient_expression_depth_bounded",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/ordered-field-gcd-20260928-v581-hypersolve-tests",
+        "--exact",
+        "ordered_field_roots::tests::retained_intervals_exclude_previously_deflated_endpoint_and_interior_roots",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "ordered-field-gcd-20260928-v581-retained_intervals_exclude_previously_deflated_endpoint_and_interior_roots.log",
+      "elapsed_seconds": 0.003535096999257803,
+      "target": "hypersolve",
+      "name": "ordered_field_roots::tests::retained_intervals_exclude_previously_deflated_endpoint_and_interior_roots",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/ordered-field-gcd-20260928-v581-hypersolve-tests",
+        "--exact",
+        "ordered_field_roots::tests::sign_remainder_keeps_distinct_roots_and_degenerate_relations_separate",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "ordered-field-gcd-20260928-v581-sign_remainder_keeps_distinct_roots_and_degenerate_relations_separate.log",
+      "elapsed_seconds": 0.003571645123884082,
+      "target": "hypersolve",
+      "name": "ordered_field_roots::tests::sign_remainder_keeps_distinct_roots_and_degenerate_relations_separate",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/ordered-field-gcd-20260928-v581-hypersolve-tests",
+        "--exact",
+        "ordered_field_roots::tests::sign_remainder_preserves_nonmonic_relations_without_division",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "ordered-field-gcd-20260928-v581-sign_remainder_preserves_nonmonic_relations_without_division.log",
+      "elapsed_seconds": 0.0034875900018960238,
+      "target": "hypersolve",
+      "name": "ordered_field_roots::tests::sign_remainder_preserves_nonmonic_relations_without_division",
+      "passed": true
+    }
+  ],
+  "checks": [
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "clippy",
+        "--lib",
+        "--all-features",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "returncode": 0,
+      "log": "ordered-field-gcd-20260928-v581-hypersolve-clippy-all-features.log",
+      "elapsed_seconds": 5.622523674974218,
+      "label": "hypersolve-clippy-all-features"
+    },
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "clippy",
+        "--lib",
+        "--no-default-features",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "returncode": 0,
+      "log": "ordered-field-gcd-20260928-v581-hypersolve-clippy-no-default.log",
+      "elapsed_seconds": 5.572467178106308,
+      "label": "hypersolve-clippy-no-default"
+    },
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "fmt",
+        "--package",
+        "hypersolve",
+        "--",
+        "--check"
+      ],
+      "returncode": 0,
+      "log": "ordered-field-gcd-20260928-v581-hypersolve-format.log",
+      "elapsed_seconds": 0.8149534398689866,
+      "label": "hypersolve-format"
+    }
+  ],
+  "expected_cases": {
+    "hypersolve": [
+      "ordered_field_roots::tests::clustered_simple_roots_survive_periodic_coefficient_recomposition",
+      "ordered_field_roots::tests::excluding_a_deflated_boundary_can_find_another_exact_root",
+      "ordered_field_roots::tests::gcd_keeps_zero_and_coprime_equations_distinct",
+      "ordered_field_roots::tests::gcd_preserves_repeated_roots_in_the_selected_coefficient_field",
+      "ordered_field_roots::tests::linear_quotient_retains_a_root_in_its_coefficient_field",
+      "ordered_field_roots::tests::linear_quotient_reuses_certified_nonrational_roots_without_predicates",
+      "ordered_field_roots::tests::midpoint_subdivision_preserves_coefficients_with_linear_field_scaling",
+      "ordered_field_roots::tests::midpoint_tableau_matches_authored_polynomial_on_both_children",
+      "ordered_field_roots::tests::rational_endpoint_and_midpoint_roots_deflate_to_distinct_witnesses",
+      "ordered_field_roots::tests::repeated_irrational_root_requests_the_complete_fallback",
+      "ordered_field_roots::tests::repeated_root_subdivision_keeps_coefficient_expression_depth_bounded",
+      "ordered_field_roots::tests::retained_intervals_exclude_previously_deflated_endpoint_and_interior_roots",
+      "ordered_field_roots::tests::sign_remainder_keeps_distinct_roots_and_degenerate_relations_separate",
+      "ordered_field_roots::tests::sign_remainder_preserves_nonmonic_relations_without_division"
+    ]
+  },
+  "all_processes_reaped": true,
+  "probe_complete": true,
+  "qualification_complete": true
+}

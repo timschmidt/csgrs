@@ -1,0 +1,19 @@
+{
+  "tag": "nfixed-controls-memcheck",
+  "started": "2026-09-09T16:35:23.756Z",
+  "finished": "2026-09-09T16:37:25.429Z",
+  "elapsedSeconds": 121.670810083,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison",
+  "command": "valgrind",
+  "args": [
+    "--vgdb=no",
+    "--tool=memcheck",
+    "--error-exitcode=97",
+    "--leak-check=full",
+    "--show-leak-kinds=all",
+    "--errors-for-leak-kinds=definite,indirect,possible",
+    "/tmp/calcium-nfixed-controls.qZn5o6/nfixed-controls"
+  ],
+  "code": 1,
+  "signal": null
+}

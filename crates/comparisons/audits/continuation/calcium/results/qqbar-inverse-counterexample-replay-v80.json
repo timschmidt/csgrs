@@ -1,0 +1,13 @@
+{
+  "tag": "qqbar-inverse-counterexample-replay-v80",
+  "started": "2026-09-12T01:50:13.436Z",
+  "finished": "2026-09-12T01:50:14.018Z",
+  "elapsedSeconds": 0.5802798269999999,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "node",
+  "args": [
+    "qqbar-inverse-counterexample-replay-v80.mjs"
+  ],
+  "code": 0,
+  "signal": null
+}

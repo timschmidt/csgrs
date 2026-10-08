@@ -1,0 +1,23 @@
+{
+  "tag": "zero-factor-wasm-cost-cpu-3-persistent-baseline-v73",
+  "started": "2026-09-11T21:15:36.983Z",
+  "finished": "2026-09-11T21:15:40.988Z",
+  "elapsedSeconds": 4.002456653,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "taskset",
+  "args": [
+    "-c",
+    "2",
+    "node",
+    "--expose-gc",
+    "--no-liftoff",
+    "--no-wasm-tier-up",
+    "--no-wasm-lazy-compilation",
+    "zero-factor-wasm-cost-worker-v73.mjs",
+    "baseline",
+    "persistent",
+    "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/zero-factor-wasm-cost-cpu-persistent-3-plan-v73.json"
+  ],
+  "code": 0,
+  "signal": null
+}

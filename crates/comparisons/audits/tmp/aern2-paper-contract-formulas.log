@@ -1,0 +1,9 @@
+ERC valid real names: raw Kleenean prefix [0, 1, 0, 1, 1, 1, 1, 1]
+ERC latched prefix satisfying stated delta_K shape: [0, 1, 1, 1, 1, 1, 1, 1]
+Kond(true,{0},{bottom})={0}: total selected output does not imply both branches are defined
+Newton inverse absolute errors: 1/20 -> 1/100 ; raw error squared: 1/400 ; residual identity holds
+Printed Heron at x=4,p=-4: choose [0] returns 1 ; expected sqrt=2 within 1/16
+Lemma 6.4 finite composition cases: 343 ; printed existential formula mismatches: 24 ; universally guarded formula mismatches: 0
+Printed continuity predicate: delta=b-a+1 makes its antecedent vacuous
+Trisection p=0,width=5/8: decrease 5/24 is less than printed L=1/4; L=1/8 works
+Lemma A.1 after two unfoldings of while x>0: x:=max(0,x-1): printed escaped set empty; current-state recurrence gives {0}

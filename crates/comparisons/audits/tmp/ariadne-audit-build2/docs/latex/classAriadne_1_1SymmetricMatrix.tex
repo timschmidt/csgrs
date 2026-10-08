@@ -1,0 +1,89 @@
+\doxysubsection{Symmetric\+Matrix\texorpdfstring{$<$}{<} X \texorpdfstring{$>$}{>} Class Template Reference}
+\hypertarget{classAriadne_1_1SymmetricMatrix}{}\label{classAriadne_1_1SymmetricMatrix}\index{SymmetricMatrix$<$ X $>$@{SymmetricMatrix$<$ X $>$}}
+
+
+{\ttfamily \#include $<$symmetric\+\_\+matrix.\+hpp$>$}
+
+
+
+\doxysubsubsection{Description}
+\subsubsection*{template$<$class X$>$\newline
+class Ariadne\+::\+Symmetric\+Matrix$<$ X $>$}
+Symmetric matrices over some type {\itshape X}. \doxysubsubsubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1SymmetricMatrix_abbd16326691d1882fb6ca9dcaee5cf7a}\label{classAriadne_1_1SymmetricMatrix_abbd16326691d1882fb6ca9dcaee5cf7a} 
+{\bfseries Symmetric\+Matrix} (const \mbox{\hyperlink{classAriadne_1_1Matrix}{Matrix}}$<$ X $>$ \&A)
+\begin{DoxyCompactList}\small\item\em Explicit conversion of a normal matrix to a symmetric matrix. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1SymmetricMatrix_a8589eaea580a16637a04ca892e727fc7}\label{classAriadne_1_1SymmetricMatrix_a8589eaea580a16637a04ca892e727fc7} 
+{\bfseries operator Matrix$<$ X $>$} () const
+\begin{DoxyCompactList}\small\item\em Conversion of a symmetric matrix to a dense matrix. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1SymmetricMatrix_a0472c48c2838a924eac36b19cbe017d0}\label{classAriadne_1_1SymmetricMatrix_a0472c48c2838a924eac36b19cbe017d0} 
+\mbox{\hyperlink{namespaceAriadne_acd8b5f68421eb22a84277ef7c9c0ee2a}{Size\+Type}} {\bfseries size} () const
+\begin{DoxyCompactList}\small\item\em The number of rows (equivalently, columns) of the matrix. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1SymmetricMatrix_ac71bddcd77c390e63532962074c8aba3}\label{classAriadne_1_1SymmetricMatrix_ac71bddcd77c390e63532962074c8aba3} 
+\mbox{\hyperlink{namespaceAriadne_acd8b5f68421eb22a84277ef7c9c0ee2a}{Size\+Type}} {\bfseries row\+\_\+size} () const
+\begin{DoxyCompactList}\small\item\em The number of rows of the matrix. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1SymmetricMatrix_aeb02d75dfd8d9fe97bebb33e3536b697}\label{classAriadne_1_1SymmetricMatrix_aeb02d75dfd8d9fe97bebb33e3536b697} 
+\mbox{\hyperlink{namespaceAriadne_acd8b5f68421eb22a84277ef7c9c0ee2a}{Size\+Type}} {\bfseries column\+\_\+size} () const
+\begin{DoxyCompactList}\small\item\em The number of columns of the matrix. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1SymmetricMatrix_a2454c1db68ca51935e4c5a3829632dec}\label{classAriadne_1_1SymmetricMatrix_a2454c1db68ca51935e4c5a3829632dec} 
+\mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} {\bfseries resize} (\mbox{\hyperlink{namespaceAriadne_acd8b5f68421eb22a84277ef7c9c0ee2a}{Size\+Type}} n)
+\begin{DoxyCompactList}\small\item\em Resize to an {\itshape m} by {\itshape n} matrix. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1SymmetricMatrix_a80283b05c09261b5f70b82cf3f5d6cbb}\label{classAriadne_1_1SymmetricMatrix_a80283b05c09261b5f70b82cf3f5d6cbb} 
+X \& {\bfseries at} (\mbox{\hyperlink{namespaceAriadne_acd8b5f68421eb22a84277ef7c9c0ee2a}{Size\+Type}} i, \mbox{\hyperlink{namespaceAriadne_acd8b5f68421eb22a84277ef7c9c0ee2a}{Size\+Type}} j)
+\begin{DoxyCompactList}\small\item\em Get the value stored in the {\itshape i\textsuperscript{th}} row and {\itshape j\textsuperscript{th}} column. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1SymmetricMatrix_a530803522a00373f1b53a91956d28738}\label{classAriadne_1_1SymmetricMatrix_a530803522a00373f1b53a91956d28738} 
+const X \& {\bfseries get} (\mbox{\hyperlink{namespaceAriadne_acd8b5f68421eb22a84277ef7c9c0ee2a}{Size\+Type}} i, \mbox{\hyperlink{namespaceAriadne_acd8b5f68421eb22a84277ef7c9c0ee2a}{Size\+Type}} j) const
+\begin{DoxyCompactList}\small\item\em Get the value stored in the {\itshape i\textsuperscript{th}} row and {\itshape j\textsuperscript{th}} column. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1SymmetricMatrix_aaf4b5503dd2429e111f5ba3205e04ced}\label{classAriadne_1_1SymmetricMatrix_aaf4b5503dd2429e111f5ba3205e04ced} 
+\mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} {\bfseries set} (\mbox{\hyperlink{namespaceAriadne_acd8b5f68421eb22a84277ef7c9c0ee2a}{Size\+Type}} i, \mbox{\hyperlink{namespaceAriadne_acd8b5f68421eb22a84277ef7c9c0ee2a}{Size\+Type}} j, const X \&x)
+\begin{DoxyCompactList}\small\item\em \doxylink{classAriadne_1_1Set}{Set} the value stored in the {\itshape i\textsuperscript{th}} row and {\itshape j\textsuperscript{th}} column to {\itshape x}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1SymmetricMatrix_a7e9f7dfa485a272275138eec0b3b8c4b}\label{classAriadne_1_1SymmetricMatrix_a7e9f7dfa485a272275138eec0b3b8c4b} 
+const X \texorpdfstring{$\ast$}{*} {\bfseries begin} () const
+\begin{DoxyCompactList}\small\item\em A pointer to the first element of the data storage. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1SymmetricMatrix_ad0091f950e7b479c05092c56d0d6110e}\label{classAriadne_1_1SymmetricMatrix_ad0091f950e7b479c05092c56d0d6110e} 
+X \& {\bfseries operator\mbox{[}$\,$\mbox{]}\mbox{[}$\,$\mbox{]}} (\mbox{\hyperlink{namespaceAriadne_acd8b5f68421eb22a84277ef7c9c0ee2a}{Size\+Type}} i, \mbox{\hyperlink{namespaceAriadne_acd8b5f68421eb22a84277ef7c9c0ee2a}{Size\+Type}} j)
+\begin{DoxyCompactList}\small\item\em C-\/style subscripting operator. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1SymmetricMatrix_a422fd80caa45a195f79af00d43d01571}\label{classAriadne_1_1SymmetricMatrix_a422fd80caa45a195f79af00d43d01571} 
+const X \& {\bfseries operator\mbox{[}$\,$\mbox{]}\mbox{[}$\,$\mbox{]}} (\mbox{\hyperlink{namespaceAriadne_acd8b5f68421eb22a84277ef7c9c0ee2a}{Size\+Type}} i, \mbox{\hyperlink{namespaceAriadne_acd8b5f68421eb22a84277ef7c9c0ee2a}{Size\+Type}} j) const
+\begin{DoxyCompactList}\small\item\em C-\/style constant subscripting operator. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1SymmetricMatrix_a52ce8a61010cd04b6fb93d5de3e01477}\label{classAriadne_1_1SymmetricMatrix_a52ce8a61010cd04b6fb93d5de3e01477} 
+X {\bfseries zero\+\_\+element} () const
+\begin{DoxyCompactList}\small\item\em The zero element of the field/algebra of the matrix. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\begin{Indent}\textbf{ Constructors}\par
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1SymmetricMatrix_ab9c82bc6caf8607d538ef60181079b1e}\label{classAriadne_1_1SymmetricMatrix_ab9c82bc6caf8607d538ef60181079b1e} 
+{\bfseries \texorpdfstring{$\sim$}{\string~}\+Symmetric\+Matrix} ()
+\begin{DoxyCompactList}\small\item\em Destructor. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1SymmetricMatrix_a040439e617d74bd8715670b2b2e9d015}\label{classAriadne_1_1SymmetricMatrix_a040439e617d74bd8715670b2b2e9d015} 
+{\bfseries Symmetric\+Matrix} (\mbox{\hyperlink{namespaceAriadne_acd8b5f68421eb22a84277ef7c9c0ee2a}{Size\+Type}} n, X const \&z)
+\begin{DoxyCompactList}\small\item\em Construct a symmetric matrix with {\itshape n} rows and {\itshape n} columns with values initialised to {\itshape z}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1SymmetricMatrix_adbf505253a94283866c29baf8bf79870}\label{classAriadne_1_1SymmetricMatrix_adbf505253a94283866c29baf8bf79870} 
+{\footnotesize template$<$class... PRS$>$ \newline
+requires Constructible$<$X,\mbox{\hyperlink{namespaceAriadne_aae901a69a841b1a085a0dfe218e38fe9}{Nat}},PRS...$>$}\\{\bfseries Symmetric\+Matrix} (\mbox{\hyperlink{namespaceAriadne_acd8b5f68421eb22a84277ef7c9c0ee2a}{Size\+Type}} n, PRS... prs)
+\begin{DoxyCompactList}\small\item\em Construct a symmetric matrix with {\itshape n} rows and {\itshape n} columns with values initialised to zero. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1SymmetricMatrix_aabb880804ff855f81e0e4b74436045d4}\label{classAriadne_1_1SymmetricMatrix_aabb880804ff855f81e0e4b74436045d4} 
+{\bfseries Symmetric\+Matrix} (\mbox{\hyperlink{namespaceAriadne_a8d51a34ecd8621e992f2470124281c93}{Initializer\+List}}$<$ \mbox{\hyperlink{namespaceAriadne_a8d51a34ecd8621e992f2470124281c93}{Initializer\+List}}$<$ X $>$ $>$ lst)
+\begin{DoxyCompactList}\small\item\em Construct a matrix using initializer lists. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\end{Indent}
+\doxysubsubsubsection*{Static Public Member Functions}
+\begin{Indent}\textbf{ Static constructors}\par
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1SymmetricMatrix_aa42035d3749bfca67ae8872f18071501}\label{classAriadne_1_1SymmetricMatrix_aa42035d3749bfca67ae8872f18071501} 
+{\footnotesize template$<$class... PRS$>$ \newline
+requires Constructible$<$X,\mbox{\hyperlink{namespaceAriadne_aae901a69a841b1a085a0dfe218e38fe9}{Nat}},PRS...$>$}\\static \mbox{\hyperlink{classAriadne_1_1SymmetricMatrix}{Symmetric\+Matrix}}$<$ X $>$ {\bfseries zero} (\mbox{\hyperlink{namespaceAriadne_acd8b5f68421eb22a84277ef7c9c0ee2a}{Size\+Type}} n, PRS... prs)
+\begin{DoxyCompactList}\small\item\em The zero matrix with {\itshape n} rows and {\itshape n} columns. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1SymmetricMatrix_a0653f46d803815c2ec59b34b68fe7ac6}\label{classAriadne_1_1SymmetricMatrix_a0653f46d803815c2ec59b34b68fe7ac6} 
+{\footnotesize template$<$class... PRS$>$ \newline
+requires Constructible$<$X,\mbox{\hyperlink{namespaceAriadne_aae901a69a841b1a085a0dfe218e38fe9}{Nat}},PRS...$>$}\\static \mbox{\hyperlink{classAriadne_1_1SymmetricMatrix}{Symmetric\+Matrix}}$<$ X $>$ {\bfseries identity} (\mbox{\hyperlink{namespaceAriadne_acd8b5f68421eb22a84277ef7c9c0ee2a}{Size\+Type}} n, PRS... prs)
+\begin{DoxyCompactList}\small\item\em The itentity matrix with {\itshape n} rows and {\itshape n} columns. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\end{Indent}
+
+
+The documentation for this class was generated from the following files\+:\begin{DoxyCompactItemize}
+\item 
+source/algebra/\mbox{\hyperlink{diagonal__matrix_8hpp}{diagonal\+\_\+matrix.\+hpp}}\item 
+source/algebra/\mbox{\hyperlink{symmetric__matrix_8hpp}{symmetric\+\_\+matrix.\+hpp}}\end{DoxyCompactItemize}

@@ -1,0 +1,11 @@
+{
+  "tag": "power-rebased-fixed-extended-v68",
+  "started": "2026-09-11T16:56:38.624Z",
+  "finished": "2026-09-11T16:56:38.730Z",
+  "elapsedSeconds": 0.10340734899999998,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "/tmp/calcium-power-rebased.xUuvlb/fixed-extended",
+  "args": [],
+  "code": 0,
+  "signal": null
+}

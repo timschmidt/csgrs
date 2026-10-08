@@ -1,0 +1,13 @@
+{
+  "tag": "complex-product-machine",
+  "started": "2026-09-09T21:42:04.895Z",
+  "finished": "2026-09-09T21:42:04.914Z",
+  "elapsedSeconds": 0.016547556,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "lscpu",
+  "args": [
+    "--json"
+  ],
+  "code": 0,
+  "signal": null
+}

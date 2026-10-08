@@ -1,0 +1,9 @@
+Linux 7.1.8-100.fc43.x86_64 (fedora) 	09/04/26 	_x86_64_	(16 CPU)
+
+23:42:19     CPU    %usr   %nice    %sys %iowait    %irq   %soft  %steal  %guest  %gnice   %idle
+23:42:20       7    1.98    0.00    2.97    0.00    0.00    1.98    0.00    0.00    0.00   93.07
+23:42:20      15    3.00    0.00    2.00    0.00    0.00    0.00    0.00    0.00    0.00   95.00
+
+Average:     CPU    %usr   %nice    %sys %iowait    %irq   %soft  %steal  %guest  %gnice   %idle
+Average:       7    1.98    0.00    2.97    0.00    0.00    1.98    0.00    0.00    0.00   93.07
+Average:      15    3.00    0.00    2.00    0.00    0.00    0.00    0.00    0.00    0.00   95.00

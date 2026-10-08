@@ -1,0 +1,23 @@
+{
+  "cases": [
+    {
+      "name": "bezier_region::tests::major_retained_rational_arc_and_general_chord_share_the_fillet_kernel",
+      "returncode": 101,
+      "passed": false,
+      "limit_seconds": 45,
+      "elapsed_seconds": 0.6065132179064676,
+      "log": "corner-publication-decision-sites-20260923-trace2-case-0.log"
+    },
+    {
+      "name": "bezier_region::tests::selected_circle_chamfer_crosses_one_sided_smooth_run_seam",
+      "returncode": 101,
+      "passed": false,
+      "limit_seconds": 45,
+      "elapsed_seconds": 0.8063240109477192,
+      "log": "corner-publication-decision-sites-20260923-trace2-case-1.log"
+    }
+  ],
+  "binary_sha256": "cd79b3956ac003b550268d5942c1a251bc11cdb071d485735f8759c1f5ceadb3",
+  "all_sources_unchanged": true,
+  "all_processes_reaped": true
+}

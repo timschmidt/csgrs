@@ -1,0 +1,4 @@
+     Locking 13 packages to latest Rust 1.97.0 compatible versions
+   Compiling hypersolve v0.3.1 (/home/tim/Documents/GitHub/workspace/exact-real-references/ruffini-qualification/square-root-pilot/snapshot/hypersolve)
+   Compiling ruffini_hyper_square_root_public v0.0.0 (/home/tim/Documents/GitHub/workspace/exact-real-references/ruffini-qualification/square-root-pilot/public)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 4.50s

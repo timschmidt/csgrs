@@ -1,0 +1,2 @@
+monomial generic=0 exponent=256 terms=1 packed_bits=320
+timeout: the monitored command dumped core

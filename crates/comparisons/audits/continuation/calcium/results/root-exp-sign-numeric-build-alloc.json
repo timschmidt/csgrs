@@ -1,0 +1,25 @@
+{
+  "tag": "root-exp-sign-numeric-build-alloc",
+  "started": "2026-09-08T13:39:21.862Z",
+  "finished": "2026-09-08T13:39:22.083Z",
+  "elapsedSeconds": 0.21824330200000003,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison",
+  "command": "env",
+  "args": [
+    "TMPDIR=/home/tim/Documents/GitHub/workspace/calcium-build-tmp.gVX5v4",
+    "CARGO_INCREMENTAL=0",
+    "CARGO_PROFILE_DEV_DEBUG=0",
+    "cargo",
+    "build",
+    "--release",
+    "--offline",
+    "--features",
+    "allocation-count",
+    "--manifest-path",
+    "audits/continuation/calcium/root-exp-sign-bench/Cargo.toml",
+    "--target-dir",
+    "/home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype"
+  ],
+  "code": 0,
+  "signal": null
+}

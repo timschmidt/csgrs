@@ -1,0 +1,77 @@
+{
+  "goal_status": "active",
+  "baseline_commit": "8b3573224c5b13fcf2a953e0f8cdae5c70d322a0",
+  "status": "common analytic dispatch, native point-image/preimage corrections and shared public region overlap authority committed",
+  "missing_common_pairs": [],
+  "shared_entry": "hypercurve/src/curve_support_intersection.rs: Pair and intersections support match",
+  "current_kernels": {
+    "parallel_rational": "BezierParallel2::intersections and intersections_on_regular_range; RegionCarrierPairContext::ParallelRational already consumes contacts, positive-length overlaps, point-image parameter components and incomplete replay evidence.",
+    "parallel_chord": "BezierAlgebraicChord2::parallel_intersections_on_regular_range preserves the regularized frame and selected normal sheet. Region dispatch additionally publishes branch-local rational components, supporting-line evidence and monotone contacts. CoincidentSupportComponent alone is not finite overlap correspondence.",
+    "parallel_parallel": "BezierParallel2::parallel_intersections_on_regular_ranges / parallel_intersections_in_domain retain selected component maps and residual contacts."
+  },
+  "qualification": "analytic-point-field-replay-qualification.json",
+  "remaining": [
+    "finite exterior and retraced parameter domains",
+    "normalized public CurveRegion2 construction",
+    "five known promotion failures",
+    "eight previously unqualified expensive cases",
+    "broader shared algebraic authority extraction and computational-closure measurement"
+  ],
+  "completed_consolidation": {
+    "finding": "BezierParameterComponentOverlap2 already owns nonlinear bivariate support, selected fiber ranks and a branch witness. RegionPairOverlapSource::ParameterComponent repeats swap/range-clipping dispatch outside CurveOverlapCorrespondence2.",
+    "direction": "Move parameter-component transport into the shared private CurveOverlapCorrespondence2 and remove the region-only variant and clipping branch. Then common analytic intersection adapters and region operations can consume one selected correspondence authority.",
+    "preserve": [
+      "original parameter charts and corresponding endpoint order",
+      "selected-fiber and recursive-projective parameters without global promotion",
+      "strict branch/rank selection, endpoint inclusion and one-sided source-cusp frames",
+      "singleton contacts for open paths versus regularized region boundaries",
+      "complete constant-image parameter components and residual contacts",
+      "incomplete replay evidence rather than silently publishing partial results"
+    ],
+    "existing_regressions": [
+      "curve_region_boolean selected nonlinear component clipping (including swapped operands)",
+      "selected_projective_overlap_clips_without_global_parameter_projection",
+      "bezier_offset nonlinear_parameter_component_overlap_for_test and its selected field replay tests"
+    ],
+    "publication_caveat": "Resolved by dfc8ff21c6f86f4feb8e75f90da010cd5c0f3bf2: public region reports retain the mandatory common correspondence; finite chord/rational inverse restriction is shared.",
+    "status": "implemented and committed",
+    "commit": "8b3573224c5b13fcf2a953e0f8cdae5c70d322a0",
+    "qualification": "shared-parameter-component-overlap-qualification.json",
+    "evidence_audit": "shared-parameter-component-overlap-evidence-audit.md"
+  },
+  "next_work": [
+    "Audit and extend exact common intersection discovery over finite exterior and retraced domains without weakening residual-contact completeness.",
+    "Normalize public CurveRegion2 construction and resolve the recorded failing/unqualified closure cases."
+  ],
+  "candidate_evidence_consolidation": {
+    "commit": "d5e1b6afb8a95c9dfbf753529fcaa0f2431c12d8",
+    "type": "CurveIntersectionCandidates2",
+    "qualification": "common-intersection-candidates-qualification.json",
+    "removed": [
+      "RationalBezierIntersectionCandidates2",
+      "BezierParallelIntersectionCandidates2",
+      "BezierParallelPairIntersectionCandidates2",
+      "parallel_candidates_from_rational",
+      "parallel_pair_candidates_from_parallel_rational"
+    ]
+  },
+  "common_dispatch": {
+    "commit": "6b05bf1fcebfe49442e47c5aff55facca5ba4f38",
+    "qualification": "analytic-common-dispatch-qualification.json",
+    "completed_public_queries": 12
+  },
+  "native_point_components": {
+    "commit": "ddf739955d5586ac5257888433d35c8e09614538",
+    "qualification": "native-point-components-qualification.json",
+    "preserved_baselines": [
+      "native-point-component-baseline.json",
+      "singleton-endpoint-parameter-baseline.json"
+    ]
+  },
+  "publication_followup": "finite-domain-common-dispatch-next.md",
+  "public_overlap_correspondence": {
+    "commit": "dfc8ff21c6f86f4feb8e75f90da010cd5c0f3bf2",
+    "qualification": "region-overlap-correspondence-qualification.json",
+    "evidence_audit": "region-overlap-correspondence-evidence-audit.md"
+  }
+}

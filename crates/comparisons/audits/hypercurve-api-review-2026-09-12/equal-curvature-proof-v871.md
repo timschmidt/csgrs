@@ -1,0 +1,13 @@
+# Equal nonzero curvature and the graph third derivative
+
+At a regular endpoint let v=C^(1), a=C^(2), j=C^(3), S=v dot v>0. With the common unit tangent as graph x-direction, the normal graph derivatives are cross(v,a)/S^(3/2) and J/S^3, where J=S*cross(v,j)-3*cross(v,a)*(v dot a). The acceleration correction comes from differentiating y as a function of x. Under an increasing source chart with derivative lambda, S scales by lambda^2 and J by lambda^6; tangential acceleration terms cancel. Thus the normal third graph derivative is parameter-invariant.
+
+Only a certified equality of the signed curvatures justifies comparing these next coefficients. Both nonzero curvatures also fix the common angular half. The sign of J1*S2^3-J2*S1^3 then orders the branches directly, without squaring J or classifying the signs of the two cubic terms as departure sides. That differs from zero-curvature departure, where the angular cut still matters. The existing zero-curvature implementation is preserved.
+
+The retained caller admits the new path only when its second-order report has SameDirection and a certified zero normalized curvature difference; the old zero-curvature path retains its two zero side-sign proofs. It requests both third derivatives only at that point. The native caller uses the same zero result of its signed-curvature magnitude comparison. Missing higher evidence remains unresolved. Neither path infers same-curve identity from a finite jet tie.
+
+The new native and represented tests take x=s*u+a*u^2 and y=c*x^2+k*x^3, with positive source speeds, different tangential accelerations, c=+/-1 or +/-pi, and equal or different k. Independently, each exact graph has the same second coefficient c and third coefficient k. The source jet is v=(s,0), a=(2a,2c*s^2), j=(0,12c*s*a+6k*s^3), so J=6k*s^6 and J/S^3=6k. All scalar input payloads remain arbitrary exact Reals.
+
+V870 proves four blocked public native/retained arrangement requests on cubic graphs y=x^2+x^3 and y=x^2+2x^3, under both policies. All eight region Booleans already pass 24 exact membership checks. V872 replays that unchanged source, requiring all four traversals and all eight Booleans to succeed. No public region failure or universal closure claim follows from the baseline. Known zero higher derivatives of native quadratics still need separate representation review.
+
+Public evidence fields now name side witnesses and a normalized difference instead of suggesting that every witness is a curvature cross product. The payload types and root/arithmetic certificates are retained; active field callers migrate directly. Existing projection, sign, root arithmetic, finite-domain and zero-curvature kernels stay unchanged.

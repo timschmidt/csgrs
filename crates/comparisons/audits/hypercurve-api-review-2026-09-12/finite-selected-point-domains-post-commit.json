@@ -1,0 +1,18 @@
+{
+  "commit": "537070d1615695af7dbdb8357f0906fb7d6e20bd",
+  "hyperbrep_head": "878fcb441b281ab1b44051ca4420b28092c3c2ed",
+  "source_files_verified": {
+    "working": 396,
+    "isolated": 1005
+  },
+  "tracked_repositories_clean": [
+    "hypercurve",
+    "hyperbrep"
+  ],
+  "workspace_clean_claim": false,
+  "other_session_owns": "Hyperreal verified/ and verification/ changes; left untouched",
+  "normal_library_sha256": "5ab0beb19caab2b6ecaf12007a8f07af332a198e59837ce063f5b418f4003187",
+  "libtest_sha256": "bdab4c08389cbc7823d88e4b25a766bca1e8225f530645dbbe81b6158ba64a9b",
+  "qualification": "finite-selected-point-domains-qualification.json",
+  "goal_status": "active"
+}

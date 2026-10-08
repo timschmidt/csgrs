@@ -1,0 +1,15 @@
+{
+  "tag": "derivative-cost-cpu",
+  "started": "2026-09-09T04:17:17.023Z",
+  "finished": "2026-09-09T04:19:18.063Z",
+  "elapsedSeconds": 121.038748541,
+  "cwd": "/home/tim/Documents/GitHub/workspace",
+  "command": "node",
+  "args": [
+    "exactcore-hyper-comparison/audits/continuation/calcium/run-derivative-costs.mjs",
+    "cpu",
+    "/tmp/calcium-derivative-costs.FA5c2M"
+  ],
+  "code": 0,
+  "signal": null
+}

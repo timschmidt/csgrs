@@ -1,0 +1,113 @@
+Name:           aern-temp
+Version:        0.5.0
+Cabal-Version:  >= 1.8
+Build-Type:     Simple
+License:        BSD3
+License-File:   LICENCE
+Author:         Michal Konecny, Eike Neumann (Aston University)
+Copyright:      (c) 2015 Michal Konecny, Eike Neumann
+Maintainer:     mikkonecny@gmail.com
+Homepage:       http://code.google.com/p/aern/
+Stability:      experimental
+Category:       Data, Math
+Synopsis:       work in progress, not for release
+Tested-with:    GHC==7.8.3
+Description:    work in progress, not for release
+
+executable P01-IRRAMStyle-hmpfr
+  build-depends:   
+        base >= 4.4,
+--        containers >= 0.3,
+--        random >= 1.0,
+--        directory >= 1.0,
+--        gtk >= 0.12.0,
+--        cairo >= 0.12.0,
+--        stm >= 2.1.2.1,
+        aern-order == 0.5.*,
+        aern-real == 0.5.*,
+        aern-interval == 0.5.*,
+--        aern-double == 0.5.*,
+        aern-mpfr == 0.5.*
+--        aern-realfn == 0.5.*,
+--        aern-realfn-plot-gtk == 0.5.*,
+--        aern-poly == 0.5.*,
+--        aern-poly-plot-gtk == 0.5.*,
+--        aern-ivp == 0.5.*
+  ghc-options:     -Wall -rtsopts
+  hs-source-dirs:  benchmarks/MoreDigits2006
+  main-is:         P01-IRRAMStyle-hmpfr.hs
+
+executable P01-IRRAMStyle-rounded
+  build-depends:   
+        base >= 4.4,
+--        containers >= 0.3,
+--        random >= 1.0,
+--        directory >= 1.0,
+--        gtk >= 0.12.0,
+--        cairo >= 0.12.0,
+--        stm >= 2.1.2.1,
+        aern-order == 0.5.*,
+        aern-real == 0.5.*,
+        aern-interval == 0.5.*,
+--        aern-double == 0.5.*,
+        aern-mpfr-rounded == 0.5.*
+--        aern-realfn == 0.5.*,
+--        aern-realfn-plot-gtk == 0.5.*,
+--        aern-poly == 0.5.*,
+--        aern-poly-plot-gtk == 0.5.*,
+--        aern-ivp == 0.5.*
+  ghc-options:     -Wall -rtsopts
+  hs-source-dirs:  benchmarks/MoreDigits2006
+  main-is:         P01-IRRAMStyle-rounded.hs
+
+executable P01-SimpleExactReal
+  build-depends:   
+        base >= 4.4,
+--        containers >= 0.3,
+--        random >= 1.0,
+--        directory >= 1.0,
+--        gtk >= 0.12.0,
+--        cairo >= 0.12.0,
+--        stm >= 2.1.2.1,
+        aern-order == 0.5.*,
+        aern-real == 0.5.*,
+        aern-interval == 0.5.*,
+--        aern-double == 0.5.*,
+        aern-mpfr == 0.5.*
+--        aern-realfn == 0.5.*,
+--        aern-realfn-plot-gtk == 0.5.*,
+--        aern-poly == 0.5.*,
+--        aern-poly-plot-gtk == 0.5.*,
+--        aern-ivp == 0.5.*
+  ghc-options:     -Wall -rtsopts
+  hs-source-dirs:  benchmarks/MoreDigits2006
+  main-is:         P01-SimpleExactReal.hs
+
+
+executable runFnRepComparison
+  build-depends:   
+        base >= 4.4,
+--        containers >= 0.3,
+--        random >= 1.0,
+--        directory >= 1.0,
+--        gtk >= 0.12.0,
+--        cairo >= 0.12.0,
+--        stm >= 2.1.2.1,
+        aern-order == 0.5.*,
+        aern-real == 0.5.*,
+        aern-interval == 0.5.*,
+--        aern-double == 0.5.*,
+        aern-mpfr-rounded == 0.5.*,
+        aern-realfn == 0.5.*,
+--        aern-realfn-plot-gtk == 0.5.*,
+        aern-poly == 0.5.*
+--        aern-poly-plot-gtk == 0.5.*,
+--        aern-ivp == 0.5.*
+  ghc-options:     -Wall -rtsopts
+  hs-source-dirs:  benchmarks/FnRepComparison
+  main-is:         runFnRepComparison.hs
+  other-modules: 
+                 FunctionAbstraction,
+                 PolynomialApproximation
+
+

@@ -1,0 +1,776 @@
+{
+  "schema": 1,
+  "checkpoint": 61,
+  "recorded": "2026-09-11T01:06:41.827Z",
+  "previousManifest": "point-statistics-v60-manifest.json",
+  "files": {
+    "retained-statistics-v61-findings.md": "de1b4bbda76567d70dd9337aef12a7ebb6b1b3b6dc9320aaac1400a54d30c2e9",
+    "retained-statistics-v61-analysis.json": "c538a052c10081208a5228166966bca95c837c469232581dc57a1f190eee4869",
+    "reanalyse-retained-statistics-v61.mjs": "3662dfd888b8e682485a082aa76e813e697f5108e62a1b02d43cdaac01c98eb1",
+    "check-retained-statistics-v61.mjs": "95f0adb2197e25d9f8f5a9b719e5b7f13abe9eb4add557a40d1e6c70683d109e",
+    "retained-statistics-evidence-v61.mjs": "a0668e1c7c0de5caffac9ddc7a50cc158752f74e2e0604519ffcedc2864ddeab",
+    "record-retained-statistics-v61.mjs": "b954acbeb2fad6002d9cc1add650dab4bf7b8d308ef4d939b9195bc8891e3a9d",
+    "verify-retained-statistics-v61.mjs": "8063f30592c800c2579dbbc7c8337c3b305698d1ff2d43872c9f1d9fea5b23de",
+    "paired-statistics-v60.mjs": "b40e8b928b866a0298a06520ac415ec09013fc8c5f704e2eda8df02d770bbc5d",
+    "point-statistics-v60-manifest.json": "23de4a1048e6cea0f6cc2c2fc5b3bcee0e1ac22a2d325fe415766382d3ee81a1",
+    "point-demand-sources.mjs": "6c10d4c9a336971b3018373508999cd1fe37635d8a336d8b337f2c1997f37700",
+    "e-plan-qualified-sources.mjs": "47e4fa274943d9facd457ae500f540b7e3ba53821f1c51a61741cbc0586300f6",
+    "derivative-demand-sources.mjs": "e9152f321cb19a96f42968259691650363dee53adbf9c3abe0c4da5cada60b88",
+    "capture.mjs": "aaf6df6bbd73025a8541617ce83731ae5ea3fd2272bd98c15e3c4c12b713ce23",
+    "e-plan-experiment.json": "ca16330ef662bf2fd8ed1bef062106098b7798aece241d5ce1ebb13abf48ee75",
+    "e-qualified-experiment.json": "6623cea811daa688802ea847a515ffe4e9a382d465d9554a27a996da9a719066",
+    "derivative-demand-experiment.json": "468fe0f7b98b6598661c6fc82b92bc1985f398d82c2a9a69b963fa6ceab6d7ef",
+    "derivative-qualification-experiment.json": "9f71e19b91da43fb07cfdb6fea7da0ad3d5e727a26f3401254e84a6bb61f6fb1",
+    "run-e-plan-costs.mjs": "14627c6a5f18eeb660f9af36c9891ec15d46fbc1012af4223aa3d25f48013829",
+    "check-e-plan.mjs": "88679a7f348b05d20684b969efdffae9864f8bfe35d890e7fdd48345a1901939",
+    "run-e-qualified-controls.mjs": "5266ede2604ea4a2784838889d86f434bfd82a231c4e6244a7a062e1b16569b8",
+    "run-e-qualified-wasm-costs.mjs": "2aa2920288c7c6cc9bb968c1440f66d109ff914b9a70d5765aee10ad12c04e13",
+    "check-e-qualified.mjs": "dbb9897c2a665ffa76331975cc5a38e47d40f55192bdfd53e81f7f8cda46290c",
+    "run-derivative-costs.mjs": "3438165691cfdec6826715adc5eb3a2aaf46cac8582e26bd51dac26a85d92eb5",
+    "check-derivative-costs.mjs": "dffdf144c6e9df04151d3cb7d56e9f76c76497d1234d6ef04ce7e0b4757df7be",
+    "run-derivative-endpoint.mjs": "7240156d1282db4ecd794356924b603e8bf4318ca23030cf3d5922aa429cb0c6",
+    "check-derivative-qualification-costs.mjs": "9c3ba23e8f15482c4de5ff684ec14f852defd55f5415fe5ee9c319828cc9d5d2",
+    "e-plan-cpu-summary.json": "fa87bd6b746411bd416467ba85b9ee2eca5f0b191a866e380b6742729867acbb",
+    "results/e-plan-cpu.jsonl": "34bc5f53fe7bcfa98be8de4d6212b2cd6c62a94453a4c2e95e19cdeb28bfaa8a",
+    "e-qualified-controls-summary.json": "0c920380d0fc420a8bb4ac84ffdc2abb99eefa9a7f53292e2277e591571d4926",
+    "results/e-qualified-controls.jsonl": "edf04f2f362767d59889484aeb2fafb5936f6b4a36922720f769424e964f9eed",
+    "e-qualified-wasm-cpu-summary.json": "4e76a66962c2b36981785f0e58ccc1f4bcf5162c8c463c1a3db6089c4d248509",
+    "results/e-qualified-wasm-cpu.jsonl": "2e43139e5e6c1750e69a396fc073f560b2f6561dcf308481f1466031eed39dc6",
+    "derivative-cost-cpu-summary.json": "2b04a48664e19d4b328f92719c45d560d5fd9aac3c38000b59de8e518f0b5655",
+    "results/derivative-cost-cpu.jsonl": "f5fafb64e9fdc660069726ce728b988b87a4dbc71bddb5297ac8f0f20375b88e",
+    "derivative-endpoint-cpu-summary.json": "099f1650713ca45fc73bfa23462f4ef13abcbbbf7b07e1cbdab95d7475890f97",
+    "results/derivative-endpoint-cpu.jsonl": "8214fc4d118d05ad05f633e7843a8651dd1860697ff44605e178515a11f3fecb",
+    "results/point-statistics-verify.json": "e541ecdc48bd516a8624f520bd82af313f78cc1b2ba8536017bca1122dbeab51",
+    "results/point-statistics-verify.stdout": "9cca0b2acc78de5ebe51367f7e60306c9b08f08dd98b7f63b49420562ae47867",
+    "results/point-statistics-verify.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/retained-statistics-reanalysis.json": "f218a87c091665631297892101836abbd056e2e7a1b13a965f15c2f851cb2aa4",
+    "results/retained-statistics-reanalysis.stdout": "0eaf08b7c186309fc3da4c32e29ab39c6e68625187a7ca17867acac7af4d9ce9",
+    "results/retained-statistics-reanalysis.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/retained-statistics-check.json": "a534ebb12c9fa0d664bd118f29b6b70cdb666d9f392154f3c030afc6afb3c18d",
+    "results/retained-statistics-check.stdout": "6c1a74ed331336f8826aa95fe3203d741e8e220272437106687cc465961a113f",
+    "results/retained-statistics-check.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/retained-statistics-capacity.json": "2c49fb196fb77b8f8c6e15e5ba12e4953e3f6d97980720236d48e74b46939534",
+    "results/retained-statistics-capacity.stdout": "783759f9d013bf5d47105f0234fe4efecd8b02d856713c9bda07978dbd59c254",
+    "results/retained-statistics-capacity.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "sources": {
+    "previousManifestSha256": "23de4a1048e6cea0f6cc2c2fc5b3bcee0e1ac22a2d325fe415766382d3ee81a1",
+    "previousArtifacts": 83,
+    "priorVerificationFinished": "2026-09-11T00:46:19.463Z",
+    "liveFiles": 956,
+    "demandFiles": 175,
+    "plannerSourceFiles": [
+      955,
+      956
+    ],
+    "derivativeSourceFiles": {
+      "baseline": 955,
+      "candidate": 955
+    },
+    "historical": [
+      {
+        "path": "e-plan-experiment.json",
+        "sha256": "ca16330ef662bf2fd8ed1bef062106098b7798aece241d5ce1ebb13abf48ee75",
+        "artifacts": 94
+      },
+      {
+        "path": "e-qualified-experiment.json",
+        "sha256": "6623cea811daa688802ea847a515ffe4e9a382d465d9554a27a996da9a719066",
+        "artifacts": 211
+      },
+      {
+        "path": "derivative-demand-experiment.json",
+        "sha256": "468fe0f7b98b6598661c6fc82b92bc1985f398d82c2a9a69b963fa6ceab6d7ef",
+        "artifacts": 70
+      },
+      {
+        "path": "derivative-qualification-experiment.json",
+        "sha256": "9f71e19b91da43fb07cfdb6fea7da0ad3d5e727a26f3401254e84a6bb61f6fb1",
+        "artifacts": 150
+      }
+    ],
+    "reads": [
+      {
+        "path": "run-e-plan-costs.mjs",
+        "sha256": "14627c6a5f18eeb660f9af36c9891ec15d46fbc1012af4223aa3d25f48013829",
+        "lines": 74,
+        "ranges": [
+          [
+            1,
+            74
+          ]
+        ]
+      },
+      {
+        "path": "check-e-plan.mjs",
+        "sha256": "88679a7f348b05d20684b969efdffae9864f8bfe35d890e7fdd48345a1901939",
+        "lines": 125,
+        "ranges": [
+          [
+            1,
+            125
+          ]
+        ]
+      },
+      {
+        "path": "run-e-qualified-controls.mjs",
+        "sha256": "5266ede2604ea4a2784838889d86f434bfd82a231c4e6244a7a062e1b16569b8",
+        "lines": 42,
+        "ranges": [
+          [
+            1,
+            42
+          ]
+        ]
+      },
+      {
+        "path": "run-e-qualified-wasm-costs.mjs",
+        "sha256": "2aa2920288c7c6cc9bb968c1440f66d109ff914b9a70d5765aee10ad12c04e13",
+        "lines": 56,
+        "ranges": [
+          [
+            1,
+            56
+          ]
+        ]
+      },
+      {
+        "path": "check-e-qualified.mjs",
+        "sha256": "dbb9897c2a665ffa76331975cc5a38e47d40f55192bdfd53e81f7f8cda46290c",
+        "lines": 122,
+        "ranges": [
+          [
+            1,
+            122
+          ]
+        ]
+      },
+      {
+        "path": "run-derivative-costs.mjs",
+        "sha256": "3438165691cfdec6826715adc5eb3a2aaf46cac8582e26bd51dac26a85d92eb5",
+        "lines": 69,
+        "ranges": [
+          [
+            1,
+            69
+          ]
+        ]
+      },
+      {
+        "path": "check-derivative-costs.mjs",
+        "sha256": "dffdf144c6e9df04151d3cb7d56e9f76c76497d1234d6ef04ce7e0b4757df7be",
+        "lines": 78,
+        "ranges": [
+          [
+            1,
+            78
+          ]
+        ]
+      },
+      {
+        "path": "run-derivative-endpoint.mjs",
+        "sha256": "7240156d1282db4ecd794356924b603e8bf4318ca23030cf3d5922aa429cb0c6",
+        "lines": 68,
+        "ranges": [
+          [
+            1,
+            68
+          ]
+        ]
+      },
+      {
+        "path": "check-derivative-qualification-costs.mjs",
+        "sha256": "9c3ba23e8f15482c4de5ff684ec14f852defd55f5415fe5ee9c319828cc9d5d2",
+        "lines": 90,
+        "ranges": [
+          [
+            1,
+            90
+          ]
+        ]
+      }
+    ],
+    "reviewedScriptLines": 724,
+    "inventoryMatches": 45
+  },
+  "config": {
+    "replicates": 20000,
+    "percentileIndices": [
+      500,
+      19500
+    ],
+    "sampler": "AES-256-CTR deterministic pseudorandom words, rejection to unbiased integer range",
+    "keyDomain": "hyper-audit-paired-bootstrap-v60",
+    "medianConfidence": [
+      95,
+      100
+    ]
+  },
+  "rawRows": 10672,
+  "comparisons": 199,
+  "totals": {
+    "lostDirectionalClaims": 7,
+    "gainedDirectionalClaims": 0,
+    "reversedDirectionalClaims": 0,
+    "changedBootstrapIntervals": 187
+  },
+  "campaigns": [
+    {
+      "id": "plannerOriginal",
+      "rawRows": 3408,
+      "counts": {
+        "groups": 71,
+        "intervals": {
+          "legacy": {
+            "below": 37,
+            "above": 3,
+            "includes": 31
+          },
+          "correctedBootstrap": {
+            "below": 36,
+            "above": 3,
+            "includes": 32
+          },
+          "orderStatistic": {
+            "below": 35,
+            "above": 2,
+            "includes": 34
+          }
+        },
+        "lostDirectionalClaims": 1,
+        "gainedDirectionalClaims": 0,
+        "reversedDirectionalClaims": 0,
+        "changedBootstrapIntervals": 63
+      }
+    },
+    {
+      "id": "plannerNativeFollowup",
+      "rawRows": 1600,
+      "counts": {
+        "groups": 10,
+        "intervals": {
+          "legacy": {
+            "below": 6,
+            "above": 1,
+            "includes": 3
+          },
+          "correctedBootstrap": {
+            "below": 5,
+            "above": 1,
+            "includes": 4
+          },
+          "orderStatistic": {
+            "below": 4,
+            "above": 1,
+            "includes": 5
+          }
+        },
+        "lostDirectionalClaims": 1,
+        "gainedDirectionalClaims": 0,
+        "reversedDirectionalClaims": 0,
+        "changedBootstrapIntervals": 10
+      }
+    },
+    {
+      "id": "plannerWasm",
+      "rawRows": 1056,
+      "counts": {
+        "groups": 22,
+        "intervals": {
+          "legacy": {
+            "below": 12,
+            "above": 1,
+            "includes": 9
+          },
+          "correctedBootstrap": {
+            "below": 11,
+            "above": 1,
+            "includes": 10
+          },
+          "orderStatistic": {
+            "below": 11,
+            "above": 1,
+            "includes": 10
+          }
+        },
+        "lostDirectionalClaims": 1,
+        "gainedDirectionalClaims": 0,
+        "reversedDirectionalClaims": 0,
+        "changedBootstrapIntervals": 21
+      }
+    },
+    {
+      "id": "derivativeMain",
+      "rawRows": 3840,
+      "counts": {
+        "groups": 80,
+        "intervals": {
+          "legacy": {
+            "below": 55,
+            "above": 1,
+            "includes": 24
+          },
+          "correctedBootstrap": {
+            "below": 52,
+            "above": 0,
+            "includes": 28
+          },
+          "orderStatistic": {
+            "below": 48,
+            "above": 0,
+            "includes": 32
+          }
+        },
+        "lostDirectionalClaims": 4,
+        "gainedDirectionalClaims": 0,
+        "reversedDirectionalClaims": 0,
+        "changedBootstrapIntervals": 77
+      }
+    },
+    {
+      "id": "derivativeEndpoint",
+      "rawRows": 768,
+      "counts": {
+        "groups": 16,
+        "intervals": {
+          "legacy": {
+            "below": 5,
+            "above": 0,
+            "includes": 11
+          },
+          "correctedBootstrap": {
+            "below": 5,
+            "above": 0,
+            "includes": 11
+          },
+          "orderStatistic": {
+            "below": 3,
+            "above": 0,
+            "includes": 13
+          }
+        },
+        "lostDirectionalClaims": 0,
+        "gainedDirectionalClaims": 0,
+        "reversedDirectionalClaims": 0,
+        "changedBootstrapIntervals": 16
+      }
+    }
+  ],
+  "controls": {
+    "status": "pass",
+    "orderChecks": [
+      {
+        "n": 6,
+        "interval": [
+          1,
+          6
+        ],
+        "lowerRank": 1,
+        "upperRank": 6,
+        "coverageNumerator": "62",
+        "coverageDenominator": "64",
+        "nominalCoverage": 0.96875
+      },
+      {
+        "n": 12,
+        "interval": [
+          3,
+          10
+        ],
+        "lowerRank": 3,
+        "upperRank": 10,
+        "coverageNumerator": "3938",
+        "coverageDenominator": "4096",
+        "nominalCoverage": 0.96142578125
+      },
+      {
+        "n": 40,
+        "interval": [
+          14,
+          27
+        ],
+        "lowerRank": 14,
+        "upperRank": 27,
+        "coverageNumerator": "1057205379912",
+        "coverageDenominator": "1099511627776",
+        "nominalCoverage": 0.9615226917157997
+      }
+    ],
+    "rejectedMutations": [
+      "block",
+      "variant",
+      "iterations",
+      "descriptor",
+      "clock-zero",
+      "clock-not-integer",
+      "fingerprint",
+      "timestamp",
+      "marginal-median",
+      "paired-median",
+      "summary-count",
+      "missing-row",
+      "extra-row",
+      "pilot-count"
+    ],
+    "scope": "Independent binomial-convolution controls for ranks at n=6/12/40 and fail-closed reconstruction checks. Not a proof that measured timing blocks are IID."
+  },
+  "recordedEvidence": {
+    "scope": "Rechecks existing outputs and exact oracles, not new Rust tests/benchmarks or memory executions.",
+    "planner": {
+      "planChecks": 8302,
+      "enclosures": 600,
+      "allocationRows": 426,
+      "allocationGroups": 71,
+      "memory": {
+        "baseline-plans": {
+          "reachableBytes": 544,
+          "reachableBlocks": 1,
+          "allocations": 1505899,
+          "frees": 1505898,
+          "cumulativeBytes": 2265607446
+        },
+        "baseline-numeric": {
+          "reachableBytes": 35656,
+          "reachableBlocks": 15,
+          "allocations": 207613,
+          "frees": 207598,
+          "cumulativeBytes": 1311547868
+        },
+        "candidate-plans": {
+          "reachableBytes": 544,
+          "reachableBlocks": 1,
+          "allocations": 50813,
+          "frees": 50812,
+          "cumulativeBytes": 458730719
+        },
+        "candidate-numeric": {
+          "reachableBytes": 35656,
+          "reachableBlocks": 15,
+          "allocations": 104083,
+          "frees": 104068,
+          "cumulativeBytes": 127731229
+        }
+      }
+    },
+    "qualifiedPlanner": {
+      "rust": [
+        {
+          "tag": "e-qualified-baseline-default-debug",
+          "suites": 13,
+          "totals": [
+            752,
+            0,
+            0,
+            0,
+            0
+          ],
+          "membershipSha256": "a9c31fb4a333c632667c0fe517a4028e9c02b285db1ae5bcdd4ced99ebbc2f8c"
+        },
+        {
+          "tag": "e-qualified-candidate-default-debug",
+          "suites": 13,
+          "totals": [
+            756,
+            0,
+            0,
+            0,
+            0
+          ],
+          "membershipSha256": "54f9d283328c24d6dd5f86998c4f1e231bca3a1d001b6e98188595fb750f9fe3"
+        },
+        {
+          "tag": "e-qualified-baseline-default-release",
+          "suites": 13,
+          "totals": [
+            752,
+            0,
+            0,
+            0,
+            0
+          ],
+          "membershipSha256": "a9c31fb4a333c632667c0fe517a4028e9c02b285db1ae5bcdd4ced99ebbc2f8c"
+        },
+        {
+          "tag": "e-qualified-candidate-default-release",
+          "suites": 13,
+          "totals": [
+            756,
+            0,
+            0,
+            0,
+            0
+          ],
+          "membershipSha256": "54f9d283328c24d6dd5f86998c4f1e231bca3a1d001b6e98188595fb750f9fe3"
+        },
+        {
+          "tag": "e-plan-tests-baseline-debug",
+          "suites": 14,
+          "totals": [
+            855,
+            0,
+            0,
+            0,
+            0
+          ],
+          "membershipSha256": "e33889cb30815c267011ec4b619dd9f54d1e176ea9aacd194c73046da5ee608b"
+        },
+        {
+          "tag": "e-qualified-candidate-all-debug",
+          "suites": 14,
+          "totals": [
+            859,
+            0,
+            0,
+            0,
+            0
+          ],
+          "membershipSha256": "64ee281e47e10b9ec59d65e0504b7e3222165aafdf9c6dafb64e9f9828c3371c"
+        },
+        {
+          "tag": "e-plan-tests-baseline-release",
+          "suites": 14,
+          "totals": [
+            855,
+            0,
+            0,
+            0,
+            0
+          ],
+          "membershipSha256": "e33889cb30815c267011ec4b619dd9f54d1e176ea9aacd194c73046da5ee608b"
+        },
+        {
+          "tag": "e-qualified-candidate-all-release",
+          "suites": 14,
+          "totals": [
+            859,
+            0,
+            0,
+            0,
+            0
+          ],
+          "membershipSha256": "64ee281e47e10b9ec59d65e0504b7e3222165aafdf9c6dafb64e9f9828c3371c"
+        },
+        {
+          "tag": "e-qualified-baseline-hypersolve-release",
+          "suites": 8,
+          "totals": [
+            803,
+            0,
+            0,
+            0,
+            0
+          ],
+          "membershipSha256": "b4f4cffe485dd97ab33d65d50351d27860ec16c716cd57e98bca3708db7e99d4"
+        },
+        {
+          "tag": "e-qualified-candidate-hypersolve-release",
+          "suites": 8,
+          "totals": [
+            803,
+            0,
+            0,
+            0,
+            0
+          ],
+          "membershipSha256": "b4f4cffe485dd97ab33d65d50351d27860ec16c716cd57e98bca3708db7e99d4"
+        },
+        {
+          "tag": "e-qualified-baseline-hypercurve-release",
+          "suites": 46,
+          "totals": [
+            1764,
+            0,
+            9,
+            0,
+            0
+          ],
+          "membershipSha256": "e16fa69db9390bad066702e28ad5d7f4d02ec16ce928c59157732c650daaa1c3"
+        },
+        {
+          "tag": "e-qualified-candidate-hypercurve-release",
+          "suites": 46,
+          "totals": [
+            1764,
+            0,
+            9,
+            0,
+            0
+          ],
+          "membershipSha256": "e16fa69db9390bad066702e28ad5d7f4d02ec16ce928c59157732c650daaa1c3"
+        },
+        {
+          "tag": "e-qualified-candidate-doc",
+          "suites": 1,
+          "totals": [
+            24,
+            0,
+            0,
+            0,
+            0
+          ],
+          "membershipSha256": "4180126474bb916e4a3e76d4699b8576558b1ae9da5ecc9da1952bf1014eeb23"
+        }
+      ],
+      "wasm": {
+        "exactPlanChecks": 8302,
+        "exactEnclosures": 600,
+        "rows": 8902,
+        "bitIdenticalVariants": true,
+        "kernelBitIdenticalToNative": true,
+        "node": "v22.22.2",
+        "v8": "12.4.254.21-node.39"
+      },
+      "appSizes": [
+        {
+          "crate": "hyperreal",
+          "example": "readme_quickstart",
+          "baselineBytes": [
+            1701968,
+            1415896
+          ],
+          "candidateBytes": [
+            1701968,
+            1415896
+          ],
+          "delta": [
+            0,
+            0
+          ]
+        },
+        {
+          "crate": "hypercurve",
+          "example": "basic",
+          "baselineBytes": [
+            13494760,
+            11013800
+          ],
+          "candidateBytes": [
+            13494488,
+            11012856
+          ],
+          "delta": [
+            -272,
+            -944
+          ]
+        },
+        {
+          "crate": "hypercurve",
+          "example": "arrangement",
+          "baselineBytes": [
+            14181504,
+            11588120
+          ],
+          "candidateBytes": [
+            14181296,
+            11587192
+          ],
+          "delta": [
+            -208,
+            -928
+          ]
+        }
+      ]
+    },
+    "derivative": {
+      "allocationRows": 480,
+      "allocation": {
+        "requests": {
+          "lower": 16,
+          "equal": 64,
+          "higher": 0
+        },
+        "requested_bytes": {
+          "lower": 16,
+          "equal": 64,
+          "higher": 0
+        },
+        "peak_delta": {
+          "lower": 0,
+          "equal": 80,
+          "higher": 0
+        }
+      },
+      "nonzeroLiveGroups": 14,
+      "maxSharedLiveDelta": 126728
+    },
+    "endpoint": {
+      "retentionRows": 320,
+      "plateauGroups": 16,
+      "maxLiveAt32": 196376,
+      "allocationRows": 96,
+      "allocationEqualGroups": 16,
+      "allocationNonzeroLiveGroups": 1
+    }
+  },
+  "gates": [
+    "retained-statistics-reanalysis",
+    "retained-statistics-check",
+    "retained-statistics-capacity"
+  ],
+  "analysisBytes": 353998,
+  "campaignBindings": [
+    {
+      "id": "plannerOriginal",
+      "summarySha256": "fa87bd6b746411bd416467ba85b9ee2eca5f0b191a866e380b6742729867acbb",
+      "rawSha256": "34bc5f53fe7bcfa98be8de4d6212b2cd6c62a94453a4c2e95e19cdeb28bfaa8a"
+    },
+    {
+      "id": "plannerNativeFollowup",
+      "summarySha256": "0c920380d0fc420a8bb4ac84ffdc2abb99eefa9a7f53292e2277e591571d4926",
+      "rawSha256": "edf04f2f362767d59889484aeb2fafb5936f6b4a36922720f769424e964f9eed"
+    },
+    {
+      "id": "plannerWasm",
+      "summarySha256": "4e76a66962c2b36981785f0e58ccc1f4bcf5162c8c463c1a3db6089c4d248509",
+      "rawSha256": "2e43139e5e6c1750e69a396fc073f560b2f6561dcf308481f1466031eed39dc6"
+    },
+    {
+      "id": "derivativeMain",
+      "summarySha256": "2b04a48664e19d4b328f92719c45d560d5fd9aac3c38000b59de8e518f0b5655",
+      "rawSha256": "f5fafb64e9fdc660069726ce728b988b87a4dbc71bddb5297ac8f0f20375b88e"
+    },
+    {
+      "id": "derivativeEndpoint",
+      "summarySha256": "099f1650713ca45fc73bfa23462f4ef13abcbbbf7b07e1cbdab95d7475890f97",
+      "rawSha256": "8214fc4d118d05ad05f633e7843a8651dd1860697ff44605e178515a11f3fecb"
+    }
+  ],
+  "newTemporaryBytes": 0,
+  "next": "Correct the retained exponential-proof/reuse, polynomial-facts and monic timing campaigns, then other historical experiments. Point-candidate runtime attribution and final consumer/size gates, separate power sums, donor/support reads and the entire original inventory remain open.",
+  "coverageBefore": [
+    {
+      "repo": "calcium",
+      "reviewed": 552,
+      "complete": 552,
+      "partial": 0,
+      "readLines": 60286
+    },
+    {
+      "repo": "flint",
+      "reviewed": 883,
+      "complete": 863,
+      "partial": 20,
+      "readLines": 123367
+    }
+  ],
+  "coverageAtBinding": [
+    {
+      "repo": "calcium",
+      "reviewed": 552,
+      "complete": 552,
+      "partial": 0,
+      "readLines": 60286
+    },
+    {
+      "repo": "flint",
+      "reviewed": 883,
+      "complete": 863,
+      "partial": 20,
+      "readLines": 123367
+    }
+  ],
+  "newDonorLines": 0,
+  "liveFiles": 956,
+  "production": "No live production/donor edit, new retained transfer, benchmark, binary, source-tree copy, temporary file, cleanup/deletion, commit or push. Five retained changes unchanged; intended-path planner/derivative benefits survive corrected individual intervals with known costs disclosed.",
+  "scope": "Five planner/derivative timing campaigns corrected and historical numerical/allocation/test outputs rechecked offline. No fresh Rust regression, benchmark, memory, consumer or size execution. Other retained/historical statistics and the complete original ecosystem audit remain incomplete."
+}

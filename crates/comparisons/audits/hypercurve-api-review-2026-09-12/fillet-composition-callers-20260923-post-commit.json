@@ -1,0 +1,7 @@
+{
+  "commit": "fc0197e60fbe79b37a8d144a338828f76d531b03",
+  "file": "tests/hypercurve_curve_region_promotion.rs",
+  "sha256": "1e365844e9c2651408c8d707b2c933b118507c40e64d6e735901f12a4f38895f",
+  "qualified_bytes_match": true,
+  "excluded_region_unchanged": true
+}

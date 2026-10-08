@@ -1,0 +1,44 @@
+[
+  {
+    "name": "curve_intersection::curve_support_intersection::circle_dispatch_tests::selected_circle_and_analytic_parallel_keep_contact_authority",
+    "returncode": 0,
+    "elapsed_seconds": 0.3641381639899919,
+    "log": "circle-common-dispatch-reduced-norm-selected_circle_and_analytic_parallel_keep_contact_authority.log"
+  },
+  {
+    "name": "curve_intersection::curve_support_intersection::circle_dispatch_tests::selected_circle_and_non_ph_parallel_keep_both_crossings",
+    "returncode": 0,
+    "elapsed_seconds": 1.015014810996945,
+    "log": "circle-common-dispatch-reduced-norm-selected_circle_and_non_ph_parallel_keep_both_crossings.log"
+  },
+  {
+    "name": "curve_intersection::curve_support_intersection::circle_dispatch_tests::selected_circle_intersects_rational_curves_and_retained_chords",
+    "returncode": 0,
+    "elapsed_seconds": 0.5643562099867268,
+    "log": "circle-common-dispatch-reduced-norm-selected_circle_intersects_rational_curves_and_retained_chords.log"
+  },
+  {
+    "name": "curve_intersection::curve_support_intersection::circle_dispatch_tests::selected_circle_normal_requires_a_regular_selected_source_point",
+    "returncode": 0,
+    "elapsed_seconds": 0.0034068969980580732,
+    "log": "circle-common-dispatch-reduced-norm-selected_circle_normal_requires_a_regular_selected_source_point.log"
+  },
+  {
+    "name": "curve_intersection::curve_support_intersection::circle_dispatch_tests::selected_circle_overlaps_preserve_oriented_ranges_and_singleton_contacts",
+    "returncode": 0,
+    "elapsed_seconds": 0.16373961200588383,
+    "log": "circle-common-dispatch-reduced-norm-selected_circle_overlaps_preserve_oriented_ranges_and_singleton_contacts.log"
+  },
+  {
+    "name": "curve_intersection::curve_support_intersection::circle_dispatch_tests::selected_circle_pairs_replay_crossings_tangencies_and_disjointness",
+    "returncode": 0,
+    "elapsed_seconds": 0.1137294250074774,
+    "log": "circle-common-dispatch-reduced-norm-selected_circle_pairs_replay_crossings_tangencies_and_disjointness.log"
+  },
+  {
+    "name": "curve_intersection::curve_support_intersection::circle_dispatch_tests::selected_circle_split_results_reenter_intersections",
+    "returncode": 0,
+    "elapsed_seconds": 0.007480657994165085,
+    "log": "circle-common-dispatch-reduced-norm-selected_circle_split_results_reenter_intersections.log"
+  }
+]

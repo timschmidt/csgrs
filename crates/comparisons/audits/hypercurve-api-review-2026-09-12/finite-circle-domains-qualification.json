@@ -1,0 +1,158 @@
+{
+  "status": "passed within the recorded broad qualification scope",
+  "goal_status": "active",
+  "previous_commit": "72d831c46241929d0621969c372262c78a4cd88f",
+  "commit": "3eabc047e4e826385aa6ab7720cdc966dc06f1a1",
+  "targets": 49,
+  "passed": 2299,
+  "passed_by_repo": {
+    "hypercurve": 2067,
+    "hyperbrep": 232
+  },
+  "known_failed": [
+    "approximate_512_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions",
+    "non_ph_bezier_pair_projective_fillet_retains_algebraic_extensions",
+    "nonconvex_algebraic_chord_expansion_is_exact_and_local_collapse_is_explicit",
+    "strict_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions",
+    "unified_mixed_line_arc_erosion_splits_after_a_curved_neck_collapse"
+  ],
+  "new_failures": [],
+  "ignored": 9,
+  "expensive_previously_unqualified_exclusions": 8,
+  "timeouts_in_broad_run": 0,
+  "builds": [
+    {
+      "repository": "hypercurve",
+      "kind": "check",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "check",
+        "--all-targets",
+        "--no-default-features",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 10.831299968005624,
+      "log": "finite-circle-domains-check.log"
+    },
+    {
+      "repository": "hypercurve",
+      "kind": "test-build",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "test",
+        "--release",
+        "--all-features",
+        "--locked",
+        "--offline",
+        "--lib",
+        "--tests",
+        "--no-run",
+        "--message-format=json"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 228.81691569299437,
+      "log": "finite-circle-domains-test-build.log"
+    },
+    {
+      "repository": "hyperbrep",
+      "kind": "check",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "check",
+        "--all-targets",
+        "--no-default-features",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 7.675675077975029,
+      "log": "finite-circle-domains-hyperbrep-check.log"
+    },
+    {
+      "repository": "hyperbrep",
+      "kind": "test-build",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "test",
+        "--release",
+        "--all-features",
+        "--locked",
+        "--offline",
+        "--lib",
+        "--tests",
+        "--no-run",
+        "--message-format=json"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 115.23583412202424,
+      "log": "finite-circle-domains-hyperbrep-test-build.log"
+    }
+  ],
+  "focused_checks": 14,
+  "public_matrices_and_probes": [
+    "finite-circle-domains-admission-region-entry.json",
+    "finite-circle-domains-affine-parallel-replay.json",
+    "finite-circle-domains-affine-public.json",
+    "finite-circle-domains-analytic-probe.json",
+    "finite-circle-domains-analytic-public.json",
+    "finite-circle-domains-baseline-recheck.json",
+    "finite-circle-domains-bounds-public.json",
+    "finite-circle-domains-circle-matrix.json",
+    "finite-circle-domains-completed-probe.json",
+    "finite-circle-domains-completed.json",
+    "finite-circle-domains-constant-image-trim-matrix.json",
+    "finite-circle-domains-constructor-public.json",
+    "finite-circle-domains-cubic-replay.json",
+    "finite-circle-domains-endpoint-probe.json",
+    "finite-circle-domains-exterior-completed.json",
+    "finite-circle-domains-family-matrix.json",
+    "finite-circle-domains-finite-circle-probe.json",
+    "finite-circle-domains-finite-matrix.json",
+    "finite-circle-domains-general-trim-matrix.json",
+    "finite-circle-domains-native-poles-public.json",
+    "finite-circle-domains-previous-pairs.json",
+    "finite-circle-domains-probe-final.json",
+    "finite-circle-domains-public-replay.json",
+    "finite-circle-domains-region-carrier-matrix.json",
+    "finite-circle-domains-region-entry.json",
+    "finite-circle-domains-region-explicit.json",
+    "finite-circle-domains-region-public.json",
+    "finite-circle-domains-replay-matrix-run.json",
+    "finite-circle-domains-retained-chord-matrix.json",
+    "finite-circle-domains-retrace-public.json",
+    "finite-circle-domains-self-public.json",
+    "finite-circle-domains-tangent-matrix.json",
+    "finite-circle-domains-trim-public.json",
+    "finite-circle-domains-unit-replay.json",
+    "finite-circle-domains-winding-public.json"
+  ],
+  "parent_public_baseline": "finite-circle-analytic-domains-projection-check.json",
+  "public_circle_finite_domain_cases": 32,
+  "public_circle_point_replays": 64,
+  "selected_overlap_cases": 12,
+  "selected_overlap_endpoint_map_replays": 48,
+  "attempts": [
+    "finite-circle-domains-check-attempt1/",
+    "finite-circle-domains-check-attempt2/",
+    "finite-circle-domains-initial-attempt1/",
+    "finite-circle-domains-replay-attempt2/"
+  ],
+  "computational_scope": "Restored compact analytic dispatch after two timeout candidates; no general throughput or memory improvement claim.",
+  "source_files_verified": {
+    "working": 396,
+    "isolated": 1005
+  },
+  "dependency_commits": "finite-parallel-pruning-isolated-sources.json",
+  "isolated_dependency_sources": true,
+  "workspace_clean_claim": false,
+  "other_session_owns": "Hyperreal verified/ and verification/ changes; left untouched",
+  "normal_library": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypercurve-ee303709bdb4cb6a.rlib",
+  "normal_library_sha256": "8eb7cd1fbaa241bf01e599e07ca251959c800c77c62a8091232bad9d52006638",
+  "archived_library": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-circle-domains-libraries/libhypercurve-ee303709bdb4cb6a.rlib",
+  "libtest_sha256": "16887002f46969544cb2afaef9362762df6d645e98651f5bc9cd08b46f042de5",
+  "toolchain": "finite-parallel-pruning-toolchain.json",
+  "evidence_audit": "finite-circle-domains-worklog.md",
+  "remaining": "Lower circle-equation native finiteness premises for unused native poles, selected-point finite incidence, one-sided source-cusp frames, normalized public-region construction, independent inverse replay, known failures/exclusions and broader algebraic/computational consolidation."
+}

@@ -1,0 +1,13 @@
+{
+  "command": "/home/tim/Documents/GitHub/workspace/exact-real-references/ruffini-qualification/cache-rescale-pilot/evidence-v2/debug",
+  "args": [
+    "verify"
+  ],
+  "begin": "2026-09-07T04:59:39.213Z",
+  "end": "2026-09-07T04:59:39.980Z",
+  "status": 0,
+  "signal": null,
+  "error": null,
+  "stdout": "{\"mode\":\"verify\",\"counts\":[149504, 149784, 149784, 149784],\"wide_cases\":2310,\"baseline_overflow_skips\":280}\n",
+  "stderr": ""
+}

@@ -1,0 +1,13 @@
+{
+  "tag": "point-extended-public-baseline",
+  "started": "2026-09-10T21:08:22.466Z",
+  "finished": "2026-09-10T21:08:22.566Z",
+  "elapsedSeconds": 0.09811206700000001,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "/tmp/calcium-point-extended.ejZUdW/baseline-cpu",
+  "args": [
+    "check"
+  ],
+  "code": 0,
+  "signal": null
+}

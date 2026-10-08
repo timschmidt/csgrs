@@ -1,0 +1,13 @@
+{
+  "tag": "quadratic-extraction-hyper-environment-v82",
+  "started": "2026-09-12T03:16:11.570Z",
+  "finished": "2026-09-12T03:16:11.727Z",
+  "elapsedSeconds": 0.15394301400000002,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "node",
+  "args": [
+    "point-qualified-environment.mjs"
+  ],
+  "code": 0,
+  "signal": null
+}

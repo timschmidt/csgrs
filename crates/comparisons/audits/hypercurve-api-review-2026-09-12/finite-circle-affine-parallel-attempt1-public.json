@@ -1,0 +1,21 @@
+{
+  "returncode": 101,
+  "elapsed_seconds": 8.825346216995968,
+  "normal_library_sha256": "76b7c768884431685b6e224cce298a6ff00926dfb5ab6e837a90bdd2a64ef792",
+  "log": "finite-circle-affine-parallel-public-replay.log",
+  "source": "finite-circle-affine-parallel-public.rs",
+  "command": [
+    "rustc",
+    "--edition=2024",
+    "-O",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-circle-affine-parallel-public.rs",
+    "--extern",
+    "hypercurve=/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/libhypercurve-2c7ff6f3fbe07653.rlib",
+    "-L",
+    "dependency=/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps",
+    "-o",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-circle-affine-parallel-public-replay"
+  ],
+  "source_sha256": "e8edcbaa22fae40f130a617e793526b30d54f665215e359a47afc553e1a416b6",
+  "executable_sha256": "d6ffe5a2d0b98cbae8a794771ce2fd53243dae86de806b03a18e2bb14f385c33"
+}

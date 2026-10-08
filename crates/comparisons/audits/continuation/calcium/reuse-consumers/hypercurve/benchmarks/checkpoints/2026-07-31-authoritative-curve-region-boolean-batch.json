@@ -1,0 +1,149 @@
+{
+  "schema": 1,
+  "captured_on": "2026-07-31",
+  "checkpoint": "authoritative-curve-region-boolean-batch",
+  "source_revision": "8be35c8a288181b76d71d52657d14fccb132c99a",
+  "matched_behavior_control_revision": "3d1b6811f58a323b2f407a9bb4a2b51d315a00aa",
+  "frozen_baseline": "../baselines/2026-07-31/baseline.json",
+  "scope": {
+    "canonical_batch": "every nonempty, nonidentical CurveRegion2::boolean_regions call",
+    "trivial_path": "empty and structurally identical operands return exact set identities without constructing topology",
+    "single_operation_contract": "unchanged native line/arc fast path where applicable; otherwise the same general arrangement",
+    "removed": "curve-family batch gate, four repeated native eligibility probes for general operands, and partial immediate-result plumbing"
+  },
+  "semantic_evidence": {
+    "one_candidate_schedule_for_every_nontrivial_batch": true,
+    "one_split_graph_for_every_nontrivial_batch": true,
+    "one_fragment_classification_pass_for_every_nontrivial_batch": true,
+    "affine_pair_specialization_retained": true,
+    "circular_conic_support_specialization_retained": true,
+    "line_general_conic_general_and_general_general_dispatch_retained": true,
+    "empty_and_identical_results_have_zero_candidate_pairs": true,
+    "empty_and_identical_results_have_zero_topology_fragments": true,
+    "generated_all_family_corpus": "7/7 pass",
+    "retired_blocker_corpus": "20/20 pass",
+    "pathological_operations": "268/268 decided with unchanged 603 candidate pairs, 3248 fragments, 134 point classifications, and checksum 6"
+  },
+  "policy_evidence": {
+    "strict_and_approximate_512_focused_matrix": "pass",
+    "terminal_observed_once_by_outer_batch": true,
+    "finite_coordinate_replacement": false,
+    "trivial_identity_requires_no_predicate_terminal": true
+  },
+  "paired_release_pathological_benchmark": {
+    "command": "taskset -c 9 HYPERCURVE_PATHOLOGICAL_MODE=boolean {control,candidate pathological_regions binary}",
+    "method": "eleven alternating-order process pairs; complete 67-cell all-family workload; same dependency state and toolchain",
+    "cells_per_process": 67,
+    "control_boolean_milliseconds": [
+      471.514036,
+      467.969979,
+      469.947634,
+      471.020970,
+      476.406081,
+      473.681218,
+      468.091801,
+      469.896367,
+      489.498003,
+      483.178597,
+      500.034251
+    ],
+    "candidate_boolean_milliseconds": [
+      470.833693,
+      470.042037,
+      472.644379,
+      470.872531,
+      476.432629,
+      469.895287,
+      473.658789,
+      471.176519,
+      496.852069,
+      489.402330,
+      492.554404
+    ],
+    "control_median_milliseconds": 471.514036,
+    "candidate_median_milliseconds": 472.644379,
+    "median_change_percent": 0.239726,
+    "paired_geometric_mean_change_percent": 0.251171,
+    "interpretation": "the quarter-percent difference is within run noise; universal batch authority removes code without changing all-family topology cost"
+  },
+  "release_smoke_sentinels_ns_per_batch": {
+    "affine_four_independent": 79969,
+    "affine_shared": 75633,
+    "circles_four_independent": 1085704,
+    "circles_shared": 1129263,
+    "capsules_four_independent": 1559544,
+    "capsules_shared": 529711,
+    "one_cell_all_family_shared": 2262505,
+    "interpretation": "single-process smoke values remain consistent with the formal affine, conic, mixed, and all-family checkpoints"
+  },
+  "heaptrack": {
+    "command": "HYPERCURVE_PATHOLOGICAL_MODE=boolean heaptrack --record-only {control,candidate pathological_regions binary}",
+    "control_allocation_calls": 8229440,
+    "candidate_allocation_calls": 8229440,
+    "control_temporary_allocations": 1380404,
+    "candidate_temporary_allocations": 1380404,
+    "control_peak_heap": "34.70M",
+    "candidate_peak_heap": "34.70M",
+    "control_peak_rss": "64.89M",
+    "candidate_peak_rss": "65.03M",
+    "control_total_leaked": "476.82K",
+    "candidate_total_leaked": "476.82K",
+    "interpretation": "allocator behavior is byte-for-byte/count-for-count unchanged except profiler/process RSS noise"
+  },
+  "matched_release_pathological_binary": {
+    "command": "cargo bench --bench pathological_regions --no-run; size; strip --strip-all",
+    "control_debug_file_bytes": 6994416,
+    "candidate_debug_file_bytes": 6986944,
+    "debug_file_delta_bytes": -7472,
+    "control_stripped_file_bytes": 5561744,
+    "candidate_stripped_file_bytes": 5550176,
+    "stripped_file_delta_bytes": -11568,
+    "control_size": {
+      "text": 5291825,
+      "data": 266032,
+      "bss": 2144,
+      "total_loadable": 5560001
+    },
+    "candidate_size": {
+      "text": 5280837,
+      "data": 265472,
+      "bss": 5520,
+      "total_loadable": 5551829
+    },
+    "total_loadable_delta_bytes": -8172,
+    "total_loadable_delta_percent": -0.146978,
+    "interpretation": "removing the family selector and partial native batch plumbing repays 11.6 KiB of stripped code at neutral throughput and allocation behavior"
+  },
+  "static_callgraph": {
+    "command": "tools/hyper-callgraph/target/release/hyper-callgraph --root /home/tim/Documents/GitHub/workspace --out-dir /tmp/hypercurve-authoritative-boolean-batch-callgraph --crate-name hypercurve --include-examples --include-tests --include-bench --include-fuzz --format json",
+    "nodes": 22915,
+    "edges": 39445,
+    "previous_checkpoint_nodes": 22918,
+    "previous_checkpoint_edges": 39450,
+    "node_delta": -3,
+    "edge_delta": -5,
+    "artifact": "/tmp/hypercurve-authoritative-boolean-batch-callgraph/callgraph.json",
+    "single_nontrivial_batch_route_present": true,
+    "family_gate_absent": true,
+    "partial_immediate_result_plumbing_absent": true
+  },
+  "verification": {
+    "unit_tests": "266/266 pass",
+    "focused_curve_region_boolean_tests": "15/15 pass",
+    "generated_curve_region_boolean_tests": "7/7 pass",
+    "pathological_operations": "268/268 decided with no blockers",
+    "cargo_clippy_all_features_all_targets_deny_warnings": "pass",
+    "cargo_clippy_no_default_features_all_targets_deny_warnings": "pass",
+    "cargo_check_no_default_features": "pass",
+    "cargo_fmt_check": "pass",
+    "git_diff_check": "pass",
+    "hypermesh_modified": false
+  },
+  "next_boundary": {
+    "phase": "unified CurveRegion2 arrangement",
+    "next_work": "complete and tune the line/general, conic/general, and general/general pair kernels and degeneracy matrices",
+    "single_operation": "fold the native line/arc operation into the same authority only after its current performance is preserved",
+    "legacy_deletion": "batch-level historical selection is removed; single-operation native region machinery remains",
+    "offset_fillet_chamfer": "pending on pair-kernel completion and the exact parallel-curve substrate"
+  }
+}

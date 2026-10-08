@@ -1,0 +1,72 @@
+{
+  "diagnostic_only": true,
+  "frozen_input": "stationary-boundary-copy-20260927-v478-terminal.json",
+  "checks": [
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustc",
+        "--edition=2024",
+        "--test",
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/source-archives/stationary-boundary-copy-20260927-v478/stationary-corner-contract.rs",
+        "-C",
+        "opt-level=3",
+        "-L",
+        "dependency=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps",
+        "--extern",
+        "hypercurve=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/libhypercurve.rlib",
+        "-o",
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/stationary-boundary-copy-20260927-v479-tests"
+      ],
+      "returncode": 0,
+      "log": "stationary-boundary-copy-20260927-v479-build.log",
+      "elapsed_seconds": 0.4644247111864388
+    }
+  ],
+  "cases": [
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/stationary-boundary-copy-20260927-v479-tests",
+        "--exact",
+        "stationary_reparameterization_strict",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 101,
+      "log": "stationary-boundary-copy-20260927-v479-stationary_reparameterization_strict.log",
+      "elapsed_seconds": 0.01564871589653194,
+      "name": "stationary_reparameterization_strict",
+      "stack_captured": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/stationary-boundary-copy-20260927-v479-tests",
+        "--exact",
+        "one_sided_cusp_strict",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 101,
+      "log": "stationary-boundary-copy-20260927-v479-one_sided_cusp_strict.log",
+      "elapsed_seconds": 0.01563325710594654,
+      "name": "one_sided_cusp_strict",
+      "stack_captured": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/stationary-boundary-copy-20260927-v479-tests",
+        "--exact",
+        "interior_stationary_contact_strict",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 101,
+      "log": "stationary-boundary-copy-20260927-v479-interior_stationary_contact_strict.log",
+      "elapsed_seconds": 0.015623337123543024,
+      "name": "interior_stationary_contact_strict",
+      "stack_captured": true
+    }
+  ],
+  "all_processes_reaped": true,
+  "capture_complete": true,
+  "binary_sha256": "f0beda0af4a3284f3fcbda7f5fed5024c6bc03acfc14644e5f54cd97710f14ac"
+}

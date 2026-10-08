@@ -1,0 +1,20 @@
+{
+  "tag": "log-baseline-runner-memcheck",
+  "started": "2026-09-08T09:40:19.999Z",
+  "finished": "2026-09-08T09:40:20.501Z",
+  "elapsedSeconds": 0.499113345,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison",
+  "command": "valgrind",
+  "args": [
+    "--error-exitcode=97",
+    "--leak-check=full",
+    "--show-leak-kinds=definite,indirect,possible",
+    "--errors-for-leak-kinds=definite,indirect,possible",
+    "/home/tim/Documents/GitHub/workspace/.audit-builds/calcium-baseline/release/deps/hyperreal-1cc0b97c8fd55e9c",
+    "computable::node::tests::sqrt_square_round_trip",
+    "--exact",
+    "--test-threads=1"
+  ],
+  "code": 97,
+  "signal": null
+}

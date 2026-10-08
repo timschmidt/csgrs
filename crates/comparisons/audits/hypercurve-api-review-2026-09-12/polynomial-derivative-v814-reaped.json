@@ -1,0 +1,6 @@
+{
+  "outer_session": 93591,
+  "outer_exit_code": 1,
+  "terminal": "polynomial-derivative-v814-terminal.json",
+  "failure": "321 release cases passed; first Clippy check rejected two redundant tangent field initializers."
+}

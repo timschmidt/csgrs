@@ -1,0 +1,2031 @@
+{
+  "checkpoint": 69,
+  "status": "wide-qualified-completeness-opportunity-open",
+  "recorded": "2026-09-11T18:17:07.645Z",
+  "files": {
+    "capture.mjs": "aaf6df6bbd73025a8541617ce83731ae5ea3fd2272bd98c15e3c4c12b713ce23",
+    "check-power-sums-public.mjs": "bd2ae22f557c929c0760d87939e42e32a555bc9ca2d03b78740447a66e71083e",
+    "check-power-wide-v69.mjs": "ecf399f0dd5f914041954932f605c400a368dd967f75745fbebaa5f6276b2b38",
+    "point-qualified-capture.mjs": "8b574f18a85c470ef47f9eafc780c462a93e811ebe15695f0950cfef17ada66e",
+    "point-qualified-environment.mjs": "51947315ab10dc3618c03e296e3c64ceed5ead142691ae9553460a016352efbb",
+    "power-rational-oracle-v69.mjs": "54b42d8af861f589b2c399c7b3d3d555d6dc69e6df98c4eca3c8007a1ed5c645",
+    "power-rebased-fixed-binding-v68.json": "1e5832954a57db722b6c3f23104369446d136637053005656bd9c773ced37b00",
+    "power-rebased-fixed-sources-v68.mjs": "ed2d5e2049f72172f48911d121786568d406b58baa52a4c9faa4a4d5b97823a5",
+    "power-rebased-v68-manifest.json": "e3d431863f4790b2acbbf358e20670718f9ba052c42d3158757c2b65f095e140",
+    "power-sums-polynomial-oracle.mjs": "91a277ede6c566a0d6e74e368ef989a3f9fe842f10a495347efc1b4f8a73efb7",
+    "power-sums-public.rs": "68abb7309ae0a23ffa4e53a48e91002a1e047cff3b4dcc78a71dcc7340e7643e",
+    "power-wide-baseline-app-v69/Cargo.lock": "31229077cc19d3587dd5ec356910618f154df61c886eb02aefbdb7194c5153eb",
+    "power-wide-baseline-app-v69/Cargo.toml": "7f15b04f5a90518bc3f37d4f605d13dd6010c4d834bfad7b19a8808c5b499a02",
+    "power-wide-binaries-v69.json": "c9af55fd82e32c846c655201293204253c280a24525d7b9bdd491320564d6af8",
+    "power-wide-candidate-app-v69/Cargo.lock": "31229077cc19d3587dd5ec356910618f154df61c886eb02aefbdb7194c5153eb",
+    "power-wide-candidate-app-v69/Cargo.toml": "f0b7e3f2419b227f9cb0f602d75b2504bd09dc718a7959551b1ee813e4ec5244",
+    "power-wide-cases-v69.mjs": "87e0ff4443dfb9390681c3f4ccd5f50ed1810f385eb221930b9fc9fc37ef5905",
+    "power-wide-evidence-initial-v69.mjs": "ea6bceba47fe4f40a1835597ffa857771aa6d3ce190d783a1348991c0edc8f5a",
+    "power-wide-evidence-v69.mjs": "d3afcfd81cb5c2afbf34359b7f34530e4c8aae5cc53633da0ce51e6a2eec84a5",
+    "power-wide-input-v69.json": "3fe69641fcee2e2822d027113fc541888ed9fc03e02fc6fae8c2e8ec96597700",
+    "power-wide-origin-v69.json": "e5f493e180c2a73ea0d2b8d7d86a4a60ec57547aee0fa253ecd1ad238a8e209a",
+    "power-wide-v69-findings.md": "d0e3029201a1f050dff8bc45fa2504dffe7feec981396959615d915d173a37ee",
+    "power-wide-v69.rs": "57c6f7dc8e333d6649d3b5d4ebfd9a906da3b7660c57ed10e2e538fdf51c659e",
+    "probe-zero-deflation-initial-v69.mjs": "f701643f4fcf13cd3da8c1c2bf3aa74232b62cc470bfe1fce35c50517b073fc5",
+    "probe-zero-deflation-v69.mjs": "9a5cc331176937b961a68a6fa1f88ff67872460dcf8139ab6f916f88778729d0",
+    "results/power-rebased-verify-v68.json": "91a028d073136174c3bb2e49d4d01e63d7ca4931eaabe7e8d41058d705cbff31",
+    "results/power-rebased-verify-v68.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/power-rebased-verify-v68.stdout": "5e4a9fcf3a4ba956a529c01f0bc66050fdaf3a5fbd8e3c27a91b359e4d310449",
+    "results/power-wide-baseline-build-v69.json": "6da909782313844e7abf8ad589c4d8f143fe5c7f8b5db2e6e333a6d73fa6a590",
+    "results/power-wide-baseline-build-v69.stderr": "7b23ec1fd8c9faaccfba62186b445fe8bc18de361992015f232f195df5620f6a",
+    "results/power-wide-baseline-build-v69.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/power-wide-baseline-clippy-v69.json": "af180f699beb6de828fcd74ebd3065e9e7a278cd7d55f56b04b2c704d7cbf7bc",
+    "results/power-wide-baseline-clippy-v69.stderr": "920a7a0f76d149099d240007253825da84c42d0e9a8140338ac1e4ce121c2b9b",
+    "results/power-wide-baseline-clippy-v69.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/power-wide-baseline-lock-v69.json": "cab228a61a43d0a0429942838833dc34e4da92623c2ef4f00dd516a5981e3c7d",
+    "results/power-wide-baseline-lock-v69.stderr": "e6be2fc21f61ee2ca9174470fbbef09ec82d1768d4642489a358e3e3a667848a",
+    "results/power-wide-baseline-lock-v69.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/power-wide-baseline-metadata-v69.json": "1106939e6fc13135e1d20a2689e2a869b686d9ee7f604a5d115d09235b4ca2d4",
+    "results/power-wide-baseline-metadata-v69.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/power-wide-baseline-metadata-v69.stdout": "680f208adafa15fe8ae8dd8d11186d64dfacf3bcc892ee3a7b8e87070663489c",
+    "results/power-wide-baseline-run-v69.json": "a02f246af0ff4a721387dae01c9501d8f77eec401110ffb1d77e4695cfd60e9a",
+    "results/power-wide-baseline-run-v69.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/power-wide-baseline-run-v69.stdout": "e4787cc908c2d16f68e8d27fffed8d37716743f058defdd3ba57559007048396",
+    "results/power-wide-candidate-build-v69.json": "b955d2d57a8eea9a0864830837b8e7a263882568920a1d232a747161d1c2864d",
+    "results/power-wide-candidate-build-v69.stderr": "86c78f47b55cd058c7ad2cd0a9eb546039826882a7343dfa8500842dc4074c3d",
+    "results/power-wide-candidate-build-v69.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/power-wide-candidate-clippy-v69.json": "eebe0e6bfde05e09e966c7a676265cbd87f9c4e24f5f1167faca15bcb1200679",
+    "results/power-wide-candidate-clippy-v69.stderr": "d6822a981e311a157a156991907785956d979211398977fbea003677680174a7",
+    "results/power-wide-candidate-clippy-v69.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/power-wide-candidate-lock-v69.json": "1bdfabfc70605935eed0b7df47a53083115c166f810c243d3a1b03450f35ceea",
+    "results/power-wide-candidate-lock-v69.stderr": "e6be2fc21f61ee2ca9174470fbbef09ec82d1768d4642489a358e3e3a667848a",
+    "results/power-wide-candidate-lock-v69.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/power-wide-candidate-metadata-v69.json": "7fce46d8413bd6f29a8eab87e2d2f4471360fc93ab081898ed7297cd24cd0e42",
+    "results/power-wide-candidate-metadata-v69.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/power-wide-candidate-metadata-v69.stdout": "b3a4730afb72d44f014a261542044e0487e406cc627107aa474b9a8e2c4c0962",
+    "results/power-wide-candidate-run-v69.json": "57004ec9589fcda9fc48a268c44a54114ec9209f241c81d426a5a93df0cbf1b7",
+    "results/power-wide-candidate-run-v69.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/power-wide-candidate-run-v69.stdout": "e4787cc908c2d16f68e8d27fffed8d37716743f058defdd3ba57559007048396",
+    "results/power-wide-check-v69.json": "7f52505fb495c85cc776fdf145548130f9097be8317c1b58428246993dd33181",
+    "results/power-wide-check-v69.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/power-wide-check-v69.stdout": "ce398c73b00107cc974269b4c92ed60167c4a259f901783ec457dfd1f19ed628",
+    "results/power-wide-environment-v69.json": "aa07e9efd4b1407a42eda0411bdcfca2ff31e763a0b511a323cc28a50398f645",
+    "results/power-wide-environment-v69.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/power-wide-environment-v69.stdout": "af89de48a284d410ed2130be09a8d4aa1b3f4bf61105a87652bae4aa59520b13",
+    "results/power-wide-evidence-canonical-v69.json": "20e03d5b83b9c06f9dc3d0a17d563a83ebfda1840da66c0e3602dd7bfb27fb41",
+    "results/power-wide-evidence-canonical-v69.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/power-wide-evidence-canonical-v69.stdout": "d5547ff77440e0bfd74286e4a740ba9e713a14e8c2873875c6d62ad49bf57252",
+    "results/power-wide-evidence-v69.json": "6180b4801af84fee0d61df4087a7be8b5af21a04cbb7ce7a83004770e6c787bb",
+    "results/power-wide-evidence-v69.stderr": "88dbc0970da97265d4cbb29fa0c660c09a1922727a5744b2faf1ff054962686e",
+    "results/power-wide-evidence-v69.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/power-wide-gates-v69.json": "51d358aee4b7c5607fe6f930d25859be503e8e58e436903bc3cccc68725d8159",
+    "results/power-wide-gates-v69.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/power-wide-gates-v69.stdout": "4bde5dfd0b81736e182b45180e746647e21bbf78e7cb4d1283f756b64e3e7577",
+    "results/power-wide-verify-v69.json": "1c56c57b0e5d3c72d9e507ef3718dd29a430e182e21640bc1271866c70c474e8",
+    "results/power-wide-verify-v69.stderr": "1bb894bda8c8681d3ac5f0e79d0a543265d62cdd19c82e066f9b5c1ea54c17c9",
+    "results/power-wide-verify-v69.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/power-zero-deflation-canonical-v69.json": "14d9fa28e99352e6fe0df007fd8eda02f434f9e19b0455cd80699ba2c9866e05",
+    "results/power-zero-deflation-canonical-v69.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/power-zero-deflation-canonical-v69.stdout": "83d9401f7f0da958b61285dc05d2acc27ecd25a06caf26d00e61bd7266fa283f",
+    "results/power-zero-deflation-v69.json": "8666472ac5a39ad69811897d66cd0efe45d9dd5e441253be426c5e5540860376",
+    "results/power-zero-deflation-v69.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/power-zero-deflation-v69.stdout": "83d9401f7f0da958b61285dc05d2acc27ecd25a06caf26d00e61bd7266fa283f",
+    "run-power-wide-v69.mjs": "a470da60954b753e161d4321b57b569015358b90b86a8d5f4c210b7222a039ce",
+    "verify-power-wide-initial-v69.mjs": "1cb022f5e9200681f1567bef7144222833f27cf774adb739f78e404faa1c2b2f",
+    "verify-power-wide-v69.mjs": "1228648c0121e689460997547a0bdcb8fe97d5c6df4ae8b54cc9b6d8eaafb004"
+  },
+  "gates": [
+    "power-wide-baseline-lock-v69",
+    "power-wide-baseline-metadata-v69",
+    "power-wide-baseline-build-v69",
+    "power-wide-baseline-run-v69",
+    "power-wide-baseline-clippy-v69",
+    "power-wide-candidate-lock-v69",
+    "power-wide-candidate-metadata-v69",
+    "power-wide-candidate-build-v69",
+    "power-wide-candidate-run-v69",
+    "power-wide-candidate-clippy-v69",
+    "power-wide-gates-v69",
+    "power-wide-check-v69",
+    "power-zero-deflation-v69",
+    "power-wide-environment-v69",
+    "power-zero-deflation-canonical-v69",
+    "power-wide-evidence-v69",
+    "power-wide-verify-v69",
+    "power-wide-evidence-canonical-v69"
+  ],
+  "evidence": {
+    "checkpoint": 69,
+    "status": "wide-numerical-qualified-deflation-opportunity",
+    "sourceSha256": "1e5832954a57db722b6c3f23104369446d136637053005656bd9c773ced37b00",
+    "currentLiveFiles": 956,
+    "candidateFiles": 176,
+    "gates": [
+      "power-wide-baseline-lock-v69",
+      "power-wide-baseline-metadata-v69",
+      "power-wide-baseline-build-v69",
+      "power-wide-baseline-run-v69",
+      "power-wide-baseline-clippy-v69",
+      "power-wide-candidate-lock-v69",
+      "power-wide-candidate-metadata-v69",
+      "power-wide-candidate-build-v69",
+      "power-wide-candidate-run-v69",
+      "power-wide-candidate-clippy-v69",
+      "power-wide-gates-v69",
+      "power-wide-check-v69",
+      "power-zero-deflation-v69",
+      "power-wide-environment-v69",
+      "power-zero-deflation-canonical-v69",
+      "power-wide-evidence-v69",
+      "power-wide-verify-v69"
+    ],
+    "wide": {
+      "checkpoint": 69,
+      "status": "pass",
+      "cases": 1840,
+      "recordsPerVariant": 3681,
+      "policies": 2,
+      "independentDeterminants": 1791,
+      "counts": {
+        "authored-source-root": 3680,
+        "oracle-selected-root": 1770,
+        "paired-full-record": 3680,
+        "source-wire": 14720,
+        "source-metadata": 14720,
+        "operation": 7360,
+        "certified-point-result": 7080,
+        "complete-signed-polynomial": 7080,
+        "selected-point-and-witness": 7080,
+        "returned-polynomial-vanishes": 7080,
+        "result-metadata": 7080,
+        "zero-divisor-guard": 160,
+        "zero-resultant-control": 120
+      },
+      "totalChecks": 81610,
+      "statuses": {
+        "baseline": {
+          "Transformed": 3540,
+          "DenominatorMayContainZero": 80,
+          "Undecided": 60
+        },
+        "candidate": {
+          "Transformed": 3540,
+          "DenominatorMayContainZero": 80,
+          "Undecided": 60
+        }
+      },
+      "families": {
+        "distinct": 460,
+        "repeated": 460,
+        "unused-zero": 460,
+        "complex-conjugates": 460
+      },
+      "heightParameters": {
+        "1": 368,
+        "31": 368,
+        "65": 368,
+        "129": 368,
+        "257": 368
+      },
+      "degreePairs": {
+        "1,1": 80,
+        "1,2": 80,
+        "1,3": 80,
+        "1,4": 80,
+        "1,5": 80,
+        "1,6": 80,
+        "1,7": 80,
+        "1,8": 80,
+        "1,9": 80,
+        "2,1": 80,
+        "2,2": 80,
+        "2,3": 80,
+        "2,4": 80,
+        "3,1": 80,
+        "3,2": 80,
+        "3,3": 80,
+        "4,1": 80,
+        "4,2": 80,
+        "5,1": 80,
+        "6,1": 80,
+        "7,1": 80,
+        "8,1": 80,
+        "9,1": 80
+      },
+      "maxInputNumeratorBits": 2577,
+      "maxInputDenominatorBits": 258,
+      "maxPrimitiveCoefficientBits": 2320,
+      "maxResultCoefficientBits": 4639,
+      "failures": [],
+      "limits": "Authored rational point witnesses, all admitted ordered degree pairs and selected coefficient heights/carrier shapes; not exhaustive over rationals or arbitrary isolating intervals. Complete signed polynomial equality includes multiplicities, not merely roots/overlap. Zero-resultant controls preserve a separately open completeness gap. No timing/allocation/WASM/consumer/size qualification or new retention."
+    },
+    "opportunity": {
+      "checkpoint": 69,
+      "status": "certified-corpus-opportunity",
+      "records": 70,
+      "earlier": 40,
+      "wide": 30,
+      "distinctNormalizedCarrierPairs": 40,
+      "totalChecks": 810,
+      "proposals": [
+        {
+          "corpus": "earlier",
+          "key": [
+            "public",
+            2,
+            6,
+            3,
+            0,
+            null
+          ],
+          "leftDegree": 1,
+          "rightDegree": 2,
+          "leftZeroOrder": 1,
+          "rightZeroOrder": 1,
+          "deflatedRightDegree": 1,
+          "quotientImage": [
+            "0/1",
+            "0/1"
+          ],
+          "imageRoots": 1,
+          "polynomial": [
+            "0",
+            "-1"
+          ]
+        },
+        {
+          "corpus": "earlier",
+          "key": [
+            "public",
+            2,
+            6,
+            3,
+            1,
+            null
+          ],
+          "leftDegree": 1,
+          "rightDegree": 2,
+          "leftZeroOrder": 1,
+          "rightZeroOrder": 1,
+          "deflatedRightDegree": 1,
+          "quotientImage": [
+            "0/1",
+            "0/1"
+          ],
+          "imageRoots": 1,
+          "polynomial": [
+            "0",
+            "-1"
+          ]
+        },
+        {
+          "corpus": "earlier",
+          "key": [
+            "public",
+            2,
+            6,
+            3,
+            2,
+            null
+          ],
+          "leftDegree": 1,
+          "rightDegree": 2,
+          "leftZeroOrder": 1,
+          "rightZeroOrder": 1,
+          "deflatedRightDegree": 1,
+          "quotientImage": [
+            "0/1",
+            "0/1"
+          ],
+          "imageRoots": 1,
+          "polynomial": [
+            "0",
+            "-1"
+          ]
+        },
+        {
+          "corpus": "earlier",
+          "key": [
+            "public",
+            2,
+            6,
+            3,
+            3,
+            null
+          ],
+          "leftDegree": 1,
+          "rightDegree": 2,
+          "leftZeroOrder": 1,
+          "rightZeroOrder": 1,
+          "deflatedRightDegree": 1,
+          "quotientImage": [
+            "0/1",
+            "0/1"
+          ],
+          "imageRoots": 1,
+          "polynomial": [
+            "0",
+            "-1"
+          ]
+        },
+        {
+          "corpus": "earlier",
+          "key": [
+            "public",
+            2,
+            11,
+            3,
+            0,
+            null
+          ],
+          "leftDegree": 1,
+          "rightDegree": 3,
+          "leftZeroOrder": 1,
+          "rightZeroOrder": 1,
+          "deflatedRightDegree": 2,
+          "quotientImage": [
+            "0/1",
+            "0/1"
+          ],
+          "imageRoots": 1,
+          "polynomial": [
+            "0",
+            "0",
+            "-1"
+          ]
+        },
+        {
+          "corpus": "earlier",
+          "key": [
+            "public",
+            2,
+            11,
+            3,
+            1,
+            null
+          ],
+          "leftDegree": 1,
+          "rightDegree": 3,
+          "leftZeroOrder": 1,
+          "rightZeroOrder": 1,
+          "deflatedRightDegree": 2,
+          "quotientImage": [
+            "0/1",
+            "0/1"
+          ],
+          "imageRoots": 1,
+          "polynomial": [
+            "0",
+            "0",
+            "-1"
+          ]
+        },
+        {
+          "corpus": "earlier",
+          "key": [
+            "public",
+            2,
+            11,
+            3,
+            2,
+            null
+          ],
+          "leftDegree": 1,
+          "rightDegree": 3,
+          "leftZeroOrder": 1,
+          "rightZeroOrder": 1,
+          "deflatedRightDegree": 2,
+          "quotientImage": [
+            "0/1",
+            "0/1"
+          ],
+          "imageRoots": 1,
+          "polynomial": [
+            "0",
+            "0",
+            "-1"
+          ]
+        },
+        {
+          "corpus": "earlier",
+          "key": [
+            "public",
+            2,
+            11,
+            3,
+            3,
+            null
+          ],
+          "leftDegree": 1,
+          "rightDegree": 3,
+          "leftZeroOrder": 1,
+          "rightZeroOrder": 1,
+          "deflatedRightDegree": 2,
+          "quotientImage": [
+            "0/1",
+            "0/1"
+          ],
+          "imageRoots": 1,
+          "polynomial": [
+            "0",
+            "0",
+            "-1"
+          ]
+        },
+        {
+          "corpus": "earlier",
+          "key": [
+            "public",
+            6,
+            6,
+            3,
+            0,
+            null
+          ],
+          "leftDegree": 2,
+          "rightDegree": 2,
+          "leftZeroOrder": 1,
+          "rightZeroOrder": 1,
+          "deflatedRightDegree": 1,
+          "quotientImage": [
+            "3/5",
+            "5/3"
+          ],
+          "imageRoots": 1,
+          "polynomial": [
+            "0",
+            "-1",
+            "1"
+          ]
+        },
+        {
+          "corpus": "earlier",
+          "key": [
+            "public",
+            6,
+            6,
+            3,
+            1,
+            null
+          ],
+          "leftDegree": 2,
+          "rightDegree": 2,
+          "leftZeroOrder": 1,
+          "rightZeroOrder": 1,
+          "deflatedRightDegree": 1,
+          "quotientImage": [
+            "3/5",
+            "5/3"
+          ],
+          "imageRoots": 1,
+          "polynomial": [
+            "0",
+            "-1",
+            "1"
+          ]
+        },
+        {
+          "corpus": "earlier",
+          "key": [
+            "public",
+            6,
+            6,
+            3,
+            2,
+            null
+          ],
+          "leftDegree": 2,
+          "rightDegree": 2,
+          "leftZeroOrder": 1,
+          "rightZeroOrder": 1,
+          "deflatedRightDegree": 1,
+          "quotientImage": [
+            "3/5",
+            "5/3"
+          ],
+          "imageRoots": 1,
+          "polynomial": [
+            "0",
+            "-1",
+            "1"
+          ]
+        },
+        {
+          "corpus": "earlier",
+          "key": [
+            "public",
+            6,
+            6,
+            3,
+            3,
+            null
+          ],
+          "leftDegree": 2,
+          "rightDegree": 2,
+          "leftZeroOrder": 1,
+          "rightZeroOrder": 1,
+          "deflatedRightDegree": 1,
+          "quotientImage": [
+            "3/5",
+            "5/3"
+          ],
+          "imageRoots": 1,
+          "polynomial": [
+            "0",
+            "-1",
+            "1"
+          ]
+        },
+        {
+          "corpus": "earlier",
+          "key": [
+            "public",
+            6,
+            11,
+            3,
+            0,
+            null
+          ],
+          "leftDegree": 2,
+          "rightDegree": 3,
+          "leftZeroOrder": 1,
+          "rightZeroOrder": 1,
+          "deflatedRightDegree": 2,
+          "quotientImage": [
+            "1/2",
+            "25/28"
+          ],
+          "imageRoots": 1,
+          "polynomial": [
+            "0",
+            "0",
+            "-1",
+            "0",
+            "2"
+          ]
+        },
+        {
+          "corpus": "earlier",
+          "key": [
+            "public",
+            6,
+            11,
+            3,
+            1,
+            null
+          ],
+          "leftDegree": 2,
+          "rightDegree": 3,
+          "leftZeroOrder": 1,
+          "rightZeroOrder": 1,
+          "deflatedRightDegree": 2,
+          "quotientImage": [
+            "1/2",
+            "25/28"
+          ],
+          "imageRoots": 1,
+          "polynomial": [
+            "0",
+            "0",
+            "-1",
+            "0",
+            "2"
+          ]
+        },
+        {
+          "corpus": "earlier",
+          "key": [
+            "public",
+            6,
+            11,
+            3,
+            2,
+            null
+          ],
+          "leftDegree": 2,
+          "rightDegree": 3,
+          "leftZeroOrder": 1,
+          "rightZeroOrder": 1,
+          "deflatedRightDegree": 2,
+          "quotientImage": [
+            "1/2",
+            "25/28"
+          ],
+          "imageRoots": 1,
+          "polynomial": [
+            "0",
+            "0",
+            "-1",
+            "0",
+            "2"
+          ]
+        },
+        {
+          "corpus": "earlier",
+          "key": [
+            "public",
+            6,
+            11,
+            3,
+            3,
+            null
+          ],
+          "leftDegree": 2,
+          "rightDegree": 3,
+          "leftZeroOrder": 1,
+          "rightZeroOrder": 1,
+          "deflatedRightDegree": 2,
+          "quotientImage": [
+            "1/2",
+            "25/28"
+          ],
+          "imageRoots": 1,
+          "polynomial": [
+            "0",
+            "0",
+            "-1",
+            "0",
+            "2"
+          ]
+        },
+        {
+          "corpus": "earlier",
+          "key": [
+            "public",
+            11,
+            6,
+            3,
+            0,
+            null
+          ],
+          "leftDegree": 3,
+          "rightDegree": 2,
+          "leftZeroOrder": 1,
+          "rightZeroOrder": 1,
+          "deflatedRightDegree": 1,
+          "quotientImage": [
+            "28/25",
+            "2/1"
+          ],
+          "imageRoots": 1,
+          "polynomial": [
+            "0",
+            "2",
+            "0",
+            "-1"
+          ]
+        },
+        {
+          "corpus": "earlier",
+          "key": [
+            "public",
+            11,
+            6,
+            3,
+            1,
+            null
+          ],
+          "leftDegree": 3,
+          "rightDegree": 2,
+          "leftZeroOrder": 1,
+          "rightZeroOrder": 1,
+          "deflatedRightDegree": 1,
+          "quotientImage": [
+            "28/25",
+            "2/1"
+          ],
+          "imageRoots": 1,
+          "polynomial": [
+            "0",
+            "2",
+            "0",
+            "-1"
+          ]
+        },
+        {
+          "corpus": "earlier",
+          "key": [
+            "public",
+            11,
+            6,
+            3,
+            2,
+            null
+          ],
+          "leftDegree": 3,
+          "rightDegree": 2,
+          "leftZeroOrder": 1,
+          "rightZeroOrder": 1,
+          "deflatedRightDegree": 1,
+          "quotientImage": [
+            "28/25",
+            "2/1"
+          ],
+          "imageRoots": 1,
+          "polynomial": [
+            "0",
+            "2",
+            "0",
+            "-1"
+          ]
+        },
+        {
+          "corpus": "earlier",
+          "key": [
+            "public",
+            11,
+            6,
+            3,
+            3,
+            null
+          ],
+          "leftDegree": 3,
+          "rightDegree": 2,
+          "leftZeroOrder": 1,
+          "rightZeroOrder": 1,
+          "deflatedRightDegree": 1,
+          "quotientImage": [
+            "28/25",
+            "2/1"
+          ],
+          "imageRoots": 1,
+          "polynomial": [
+            "0",
+            "2",
+            "0",
+            "-1"
+          ]
+        },
+        {
+          "corpus": "earlier",
+          "key": [
+            "public",
+            11,
+            11,
+            3,
+            0,
+            null
+          ],
+          "leftDegree": 3,
+          "rightDegree": 3,
+          "leftZeroOrder": 1,
+          "rightZeroOrder": 1,
+          "deflatedRightDegree": 2,
+          "quotientImage": [
+            "14/15",
+            "15/14"
+          ],
+          "imageRoots": 1,
+          "polynomial": [
+            "0",
+            "0",
+            "-1",
+            "0",
+            "2",
+            "0",
+            "-1"
+          ]
+        },
+        {
+          "corpus": "earlier",
+          "key": [
+            "public",
+            11,
+            11,
+            3,
+            1,
+            null
+          ],
+          "leftDegree": 3,
+          "rightDegree": 3,
+          "leftZeroOrder": 1,
+          "rightZeroOrder": 1,
+          "deflatedRightDegree": 2,
+          "quotientImage": [
+            "14/15",
+            "15/14"
+          ],
+          "imageRoots": 1,
+          "polynomial": [
+            "0",
+            "0",
+            "-1",
+            "0",
+            "2",
+            "0",
+            "-1"
+          ]
+        },
+        {
+          "corpus": "earlier",
+          "key": [
+            "public",
+            11,
+            11,
+            3,
+            2,
+            null
+          ],
+          "leftDegree": 3,
+          "rightDegree": 3,
+          "leftZeroOrder": 1,
+          "rightZeroOrder": 1,
+          "deflatedRightDegree": 2,
+          "quotientImage": [
+            "14/15",
+            "15/14"
+          ],
+          "imageRoots": 1,
+          "polynomial": [
+            "0",
+            "0",
+            "-1",
+            "0",
+            "2",
+            "0",
+            "-1"
+          ]
+        },
+        {
+          "corpus": "earlier",
+          "key": [
+            "public",
+            11,
+            11,
+            3,
+            3,
+            null
+          ],
+          "leftDegree": 3,
+          "rightDegree": 3,
+          "leftZeroOrder": 1,
+          "rightZeroOrder": 1,
+          "deflatedRightDegree": 2,
+          "quotientImage": [
+            "14/15",
+            "15/14"
+          ],
+          "imageRoots": 1,
+          "polynomial": [
+            "0",
+            "0",
+            "-1",
+            "0",
+            "2",
+            "0",
+            "-1"
+          ]
+        },
+        {
+          "corpus": "earlier",
+          "key": [
+            "public",
+            15,
+            6,
+            3,
+            0,
+            null
+          ],
+          "leftDegree": 2,
+          "rightDegree": 2,
+          "leftZeroOrder": 2,
+          "rightZeroOrder": 1,
+          "deflatedRightDegree": 1,
+          "quotientImage": [
+            "0/1",
+            "0/1"
+          ],
+          "imageRoots": 1,
+          "polynomial": [
+            "0",
+            "0",
+            "1"
+          ]
+        },
+        {
+          "corpus": "earlier",
+          "key": [
+            "public",
+            15,
+            6,
+            3,
+            1,
+            null
+          ],
+          "leftDegree": 2,
+          "rightDegree": 2,
+          "leftZeroOrder": 2,
+          "rightZeroOrder": 1,
+          "deflatedRightDegree": 1,
+          "quotientImage": [
+            "0/1",
+            "0/1"
+          ],
+          "imageRoots": 1,
+          "polynomial": [
+            "0",
+            "0",
+            "1"
+          ]
+        },
+        {
+          "corpus": "earlier",
+          "key": [
+            "public",
+            15,
+            6,
+            3,
+            2,
+            null
+          ],
+          "leftDegree": 2,
+          "rightDegree": 2,
+          "leftZeroOrder": 2,
+          "rightZeroOrder": 1,
+          "deflatedRightDegree": 1,
+          "quotientImage": [
+            "0/1",
+            "0/1"
+          ],
+          "imageRoots": 1,
+          "polynomial": [
+            "0",
+            "0",
+            "1"
+          ]
+        },
+        {
+          "corpus": "earlier",
+          "key": [
+            "public",
+            15,
+            6,
+            3,
+            3,
+            null
+          ],
+          "leftDegree": 2,
+          "rightDegree": 2,
+          "leftZeroOrder": 2,
+          "rightZeroOrder": 1,
+          "deflatedRightDegree": 1,
+          "quotientImage": [
+            "0/1",
+            "0/1"
+          ],
+          "imageRoots": 1,
+          "polynomial": [
+            "0",
+            "0",
+            "1"
+          ]
+        },
+        {
+          "corpus": "earlier",
+          "key": [
+            "public",
+            15,
+            11,
+            3,
+            0,
+            null
+          ],
+          "leftDegree": 2,
+          "rightDegree": 3,
+          "leftZeroOrder": 2,
+          "rightZeroOrder": 1,
+          "deflatedRightDegree": 2,
+          "quotientImage": [
+            "0/1",
+            "0/1"
+          ],
+          "imageRoots": 1,
+          "polynomial": [
+            "0",
+            "0",
+            "0",
+            "0",
+            "1"
+          ]
+        },
+        {
+          "corpus": "earlier",
+          "key": [
+            "public",
+            15,
+            11,
+            3,
+            1,
+            null
+          ],
+          "leftDegree": 2,
+          "rightDegree": 3,
+          "leftZeroOrder": 2,
+          "rightZeroOrder": 1,
+          "deflatedRightDegree": 2,
+          "quotientImage": [
+            "0/1",
+            "0/1"
+          ],
+          "imageRoots": 1,
+          "polynomial": [
+            "0",
+            "0",
+            "0",
+            "0",
+            "1"
+          ]
+        },
+        {
+          "corpus": "earlier",
+          "key": [
+            "public",
+            15,
+            11,
+            3,
+            2,
+            null
+          ],
+          "leftDegree": 2,
+          "rightDegree": 3,
+          "leftZeroOrder": 2,
+          "rightZeroOrder": 1,
+          "deflatedRightDegree": 2,
+          "quotientImage": [
+            "0/1",
+            "0/1"
+          ],
+          "imageRoots": 1,
+          "polynomial": [
+            "0",
+            "0",
+            "0",
+            "0",
+            "1"
+          ]
+        },
+        {
+          "corpus": "earlier",
+          "key": [
+            "public",
+            15,
+            11,
+            3,
+            3,
+            null
+          ],
+          "leftDegree": 2,
+          "rightDegree": 3,
+          "leftZeroOrder": 2,
+          "rightZeroOrder": 1,
+          "deflatedRightDegree": 2,
+          "quotientImage": [
+            "0/1",
+            "0/1"
+          ],
+          "imageRoots": 1,
+          "polynomial": [
+            "0",
+            "0",
+            "0",
+            "0",
+            "1"
+          ]
+        },
+        {
+          "corpus": "earlier",
+          "key": [
+            "public",
+            19,
+            6,
+            3,
+            0,
+            null
+          ],
+          "leftDegree": 3,
+          "rightDegree": 2,
+          "leftZeroOrder": 1,
+          "rightZeroOrder": 1,
+          "deflatedRightDegree": 1,
+          "quotientImage": [
+            "0/1",
+            "0/1"
+          ],
+          "imageRoots": 1,
+          "polynomial": [
+            "0",
+            "-1",
+            "0",
+            "-1"
+          ]
+        },
+        {
+          "corpus": "earlier",
+          "key": [
+            "public",
+            19,
+            6,
+            3,
+            1,
+            null
+          ],
+          "leftDegree": 3,
+          "rightDegree": 2,
+          "leftZeroOrder": 1,
+          "rightZeroOrder": 1,
+          "deflatedRightDegree": 1,
+          "quotientImage": [
+            "0/1",
+            "0/1"
+          ],
+          "imageRoots": 1,
+          "polynomial": [
+            "0",
+            "-1",
+            "0",
+            "-1"
+          ]
+        },
+        {
+          "corpus": "earlier",
+          "key": [
+            "public",
+            19,
+            6,
+            3,
+            2,
+            null
+          ],
+          "leftDegree": 3,
+          "rightDegree": 2,
+          "leftZeroOrder": 1,
+          "rightZeroOrder": 1,
+          "deflatedRightDegree": 1,
+          "quotientImage": [
+            "0/1",
+            "0/1"
+          ],
+          "imageRoots": 1,
+          "polynomial": [
+            "0",
+            "-1",
+            "0",
+            "-1"
+          ]
+        },
+        {
+          "corpus": "earlier",
+          "key": [
+            "public",
+            19,
+            6,
+            3,
+            3,
+            null
+          ],
+          "leftDegree": 3,
+          "rightDegree": 2,
+          "leftZeroOrder": 1,
+          "rightZeroOrder": 1,
+          "deflatedRightDegree": 1,
+          "quotientImage": [
+            "0/1",
+            "0/1"
+          ],
+          "imageRoots": 1,
+          "polynomial": [
+            "0",
+            "-1",
+            "0",
+            "-1"
+          ]
+        },
+        {
+          "corpus": "earlier",
+          "key": [
+            "public",
+            19,
+            11,
+            3,
+            0,
+            null
+          ],
+          "leftDegree": 3,
+          "rightDegree": 3,
+          "leftZeroOrder": 1,
+          "rightZeroOrder": 1,
+          "deflatedRightDegree": 2,
+          "quotientImage": [
+            "0/1",
+            "0/1"
+          ],
+          "imageRoots": 1,
+          "polynomial": [
+            "0",
+            "0",
+            "-1",
+            "0",
+            "-4",
+            "0",
+            "-4"
+          ]
+        },
+        {
+          "corpus": "earlier",
+          "key": [
+            "public",
+            19,
+            11,
+            3,
+            1,
+            null
+          ],
+          "leftDegree": 3,
+          "rightDegree": 3,
+          "leftZeroOrder": 1,
+          "rightZeroOrder": 1,
+          "deflatedRightDegree": 2,
+          "quotientImage": [
+            "0/1",
+            "0/1"
+          ],
+          "imageRoots": 1,
+          "polynomial": [
+            "0",
+            "0",
+            "-1",
+            "0",
+            "-4",
+            "0",
+            "-4"
+          ]
+        },
+        {
+          "corpus": "earlier",
+          "key": [
+            "public",
+            19,
+            11,
+            3,
+            2,
+            null
+          ],
+          "leftDegree": 3,
+          "rightDegree": 3,
+          "leftZeroOrder": 1,
+          "rightZeroOrder": 1,
+          "deflatedRightDegree": 2,
+          "quotientImage": [
+            "0/1",
+            "0/1"
+          ],
+          "imageRoots": 1,
+          "polynomial": [
+            "0",
+            "0",
+            "-1",
+            "0",
+            "-4",
+            "0",
+            "-4"
+          ]
+        },
+        {
+          "corpus": "earlier",
+          "key": [
+            "public",
+            19,
+            11,
+            3,
+            3,
+            null
+          ],
+          "leftDegree": 3,
+          "rightDegree": 3,
+          "leftZeroOrder": 1,
+          "rightZeroOrder": 1,
+          "deflatedRightDegree": 2,
+          "quotientImage": [
+            "0/1",
+            "0/1"
+          ],
+          "imageRoots": 1,
+          "polynomial": [
+            "0",
+            "0",
+            "-1",
+            "0",
+            "-4",
+            "0",
+            "-4"
+          ]
+        },
+        {
+          "corpus": "wide",
+          "key": 811,
+          "leftDegree": 2,
+          "rightDegree": 2,
+          "leftZeroOrder": 1,
+          "rightZeroOrder": 1,
+          "deflatedRightDegree": 1,
+          "quotientImage": [
+            "-9/5",
+            "-9/5"
+          ],
+          "imageRoots": 1,
+          "polynomial": [
+            "0",
+            "9",
+            "5"
+          ]
+        },
+        {
+          "corpus": "wide",
+          "key": 827,
+          "leftDegree": 2,
+          "rightDegree": 2,
+          "leftZeroOrder": 1,
+          "rightZeroOrder": 1,
+          "deflatedRightDegree": 1,
+          "quotientImage": [
+            "-4611686022722355201/4611686022722355197",
+            "-4611686022722355201/4611686022722355197"
+          ],
+          "imageRoots": 1,
+          "polynomial": [
+            "0",
+            "4611686022722355201",
+            "4611686022722355197"
+          ]
+        },
+        {
+          "corpus": "wide",
+          "key": 843,
+          "leftDegree": 2,
+          "rightDegree": 2,
+          "leftZeroOrder": 1,
+          "rightZeroOrder": 1,
+          "deflatedRightDegree": 1,
+          "quotientImage": [
+            "-1361129467683753853927285406021911052289/1361129467683753853927285406021911052285",
+            "-1361129467683753853927285406021911052289/1361129467683753853927285406021911052285"
+          ],
+          "imageRoots": 1,
+          "polynomial": [
+            "0",
+            "1361129467683753853927285406021911052289",
+            "1361129467683753853927285406021911052285"
+          ]
+        },
+        {
+          "corpus": "wide",
+          "key": 859,
+          "leftDegree": 2,
+          "rightDegree": 2,
+          "leftZeroOrder": 1,
+          "rightZeroOrder": 1,
+          "deflatedRightDegree": 1,
+          "quotientImage": [
+            "-463168356949264781694283940034751631414441068130246010011683834461379591405569/463168356949264781694283940034751631414441068130246010011683834461379591405565",
+            "-463168356949264781694283940034751631414441068130246010011683834461379591405569/463168356949264781694283940034751631414441068130246010011683834461379591405565"
+          ],
+          "imageRoots": 1,
+          "polynomial": [
+            "0",
+            "463168356949264781694283940034751631414441068130246010011683834461379591405569",
+            "463168356949264781694283940034751631414441068130246010011683834461379591405565"
+          ]
+        },
+        {
+          "corpus": "wide",
+          "key": 875,
+          "leftDegree": 2,
+          "rightDegree": 2,
+          "leftZeroOrder": 1,
+          "rightZeroOrder": 1,
+          "deflatedRightDegree": 1,
+          "quotientImage": [
+            "-53631231719770388398296099992823384509917463282369573510894245774887056120294651075564446457449307994700162184377357283353678093503944110121766248542896129/53631231719770388398296099992823384509917463282369573510894245774887056120294651075564446457449307994700162184377357283353678093503944110121766248542896125",
+            "-53631231719770388398296099992823384509917463282369573510894245774887056120294651075564446457449307994700162184377357283353678093503944110121766248542896129/53631231719770388398296099992823384509917463282369573510894245774887056120294651075564446457449307994700162184377357283353678093503944110121766248542896125"
+          ],
+          "imageRoots": 1,
+          "polynomial": [
+            "0",
+            "53631231719770388398296099992823384509917463282369573510894245774887056120294651075564446457449307994700162184377357283353678093503944110121766248542896129",
+            "53631231719770388398296099992823384509917463282369573510894245774887056120294651075564446457449307994700162184377357283353678093503944110121766248542896125"
+          ]
+        },
+        {
+          "corpus": "wide",
+          "key": 891,
+          "leftDegree": 2,
+          "rightDegree": 3,
+          "leftZeroOrder": 1,
+          "rightZeroOrder": 1,
+          "deflatedRightDegree": 2,
+          "quotientImage": [
+            "-9/5",
+            "-9/5"
+          ],
+          "imageRoots": 1,
+          "polynomial": [
+            "0",
+            "0",
+            "63",
+            "62",
+            "15"
+          ]
+        },
+        {
+          "corpus": "wide",
+          "key": 907,
+          "leftDegree": 2,
+          "rightDegree": 3,
+          "leftZeroOrder": 1,
+          "rightZeroOrder": 1,
+          "deflatedRightDegree": 2,
+          "quotientImage": [
+            "-4611686022722355201/4611686022722355197",
+            "-4611686022722355201/4611686022722355197"
+          ],
+          "imageRoots": 1,
+          "polynomial": [
+            "0",
+            "0",
+            "7089216003928938854578532974694061399",
+            "14178432007857877684561407150082315598",
+            "7089216003928938829982874175388254215"
+          ]
+        },
+        {
+          "corpus": "wide",
+          "key": 923,
+          "leftDegree": 2,
+          "rightDegree": 3,
+          "leftZeroOrder": 1,
+          "rightZeroOrder": 1,
+          "deflatedRightDegree": 2,
+          "quotientImage": [
+            "-1361129467683753853927285406021911052289/1361129467683753853927285406021911052285",
+            "-1361129467683753853927285406021911052289/1361129467683753853927285406021911052285"
+          ],
+          "imageRoots": 1,
+          "polynomial": [
+            "0",
+            "0",
+            "617557809265686375726290090401251364854103536051282414877275120039251433313623",
+            "1235115618531372751452580180802502729700947714941584809200074619309599772464462",
+            "617557809265686375726290090401251364846844178890302394322799499270348339150855"
+          ]
+        },
+        {
+          "corpus": "wide",
+          "key": 939,
+          "leftDegree": 2,
+          "rightDegree": 3,
+          "leftZeroOrder": 1,
+          "rightZeroOrder": 1,
+          "deflatedRightDegree": 2,
+          "quotientImage": [
+            "-463168356949264781694283940034751631414441068130246010011683834461379591405569/463168356949264781694283940034751631414441068130246010011683834461379591405565",
+            "-463168356949264781694283940034751631414441068130246010011683834461379591405569/463168356949264781694283940034751631414441068130246010011683834461379591405565"
+          ],
+          "imageRoots": 1,
+          "polynomial": [
+            "0",
+            "0",
+            "71508308959693851197728133323764512680730527175349180237720947221985805254903397324188288041163214243944287151241681540240747585315150498063523379131274583",
+            "143016617919387702395456266647529025361461054350698360475441894443971610509804324417139513336824058973541722293782482431772886701899961739680773461580797262",
+            "71508308959693851197728133323764512680730527175349180237720947221985805254900927092951225295660844729597435142540800891532139116584811241617250082449522695"
+          ]
+        },
+        {
+          "corpus": "wide",
+          "key": 955,
+          "leftDegree": 2,
+          "rightDegree": 3,
+          "leftZeroOrder": 1,
+          "rightZeroOrder": 1,
+          "deflatedRightDegree": 2,
+          "quotientImage": [
+            "-53631231719770388398296099992823384509917463282369573510894245774887056120294651075564446457449307994700162184377357283353678093503944110121766248542896129/53631231719770388398296099992823384509917463282369573510894245774887056120294651075564446457449307994700162184377357283353678093503944110121766248542896125",
+            "-53631231719770388398296099992823384509917463282369573510894245774887056120294651075564446457449307994700162184377357283353678093503944110121766248542896129/53631231719770388398296099992823384509917463282369573510894245774887056120294651075564446457449307994700162184377357283353678093503944110121766248542896125"
+          ],
+          "imageRoots": 1,
+          "polynomial": [
+            "0",
+            "0",
+            "958769671926568484122296101754146524596254388769230172124960432841240937629371590427080960843456703675061140747159578142545368294714521763439742050401171692043877822943290769446488866401825024370261130336168878839628931090030735665193123825887385486389963450601868516869424582181377941431033891649526800143703",
+            "1917539343853136968244592203508293049192508777538460344249920865682481875258743180854161921686913407350122281494319156285090736589429043526879484100802343098054519807111176747980444437745599329180718088034612366243280396115762163091012062356195625158619197993579416004065124774979424512072599571127987988682062",
+            "958769671926568484122296101754146524596254388769230172124960432841240937629371590427080960843456703675061140747159578142545368294714521763439742050401171406010641984167885978533955571343774304810456957698443487403651465025731427425818938530308239672229234542977547487195700192798046570641565679478461188538375"
+          ]
+        },
+        {
+          "corpus": "wide",
+          "key": 971,
+          "leftDegree": 2,
+          "rightDegree": 4,
+          "leftZeroOrder": 1,
+          "rightZeroOrder": 1,
+          "deflatedRightDegree": 3,
+          "quotientImage": [
+            "-9/5",
+            "-9/5"
+          ],
+          "imageRoots": 1,
+          "polynomial": [
+            "0",
+            "0",
+            "0",
+            "1701",
+            "2367",
+            "1087",
+            "165"
+          ]
+        },
+        {
+          "corpus": "wide",
+          "key": 987,
+          "leftDegree": 2,
+          "rightDegree": 4,
+          "leftZeroOrder": 1,
+          "rightZeroOrder": 1,
+          "deflatedRightDegree": 3,
+          "quotientImage": [
+            "-4611686022722355201/4611686022722355197",
+            "-4611686022722355201/4611686022722355197"
+          ],
+          "imageRoots": 1,
+          "polynomial": [
+            "0",
+            "0",
+            "0",
+            "32693238448722569164402112325447598734775287203908375905",
+            "98079715346167707266351424692160427460349249519718061331",
+            "98079715346167707039496512407978059183690154786320023667",
+            "32693238448722568937547200041265230458116192470510337985"
+          ]
+        },
+        {
+          "corpus": "wide",
+          "key": 1003,
+          "leftDegree": 2,
+          "rightDegree": 4,
+          "leftZeroOrder": 1,
+          "rightZeroOrder": 1,
+          "deflatedRightDegree": 3,
+          "quotientImage": [
+            "-1361129467683753853927285406021911052289/1361129467683753853927285406021911052285",
+            "-1361129467683753853927285406021911052289/1361129467683753853927285406021911052285"
+          ],
+          "imageRoots": 1,
+          "polynomial": [
+            "0",
+            "0",
+            "0",
+            "840576132189748890226494642933565748625414120647512510573095802589817392244008005718264880973229565454060215902492001",
+            "2521728396569246670679483928800697245856480512046035567695242655854482637918812832597568324034042379078982528656561427",
+            "2521728396569246670679483928800697245836718662149533603671197903939513099105739575826400625538934050069445361922998387",
+            "840576132189748890226494642933565748605652270751010546549051050674847853430934748947097182478121236444523049168928705"
+          ]
+        },
+        {
+          "corpus": "wide",
+          "key": 1019,
+          "leftDegree": 2,
+          "rightDegree": 4,
+          "leftZeroOrder": 1,
+          "rightZeroOrder": 1,
+          "deflatedRightDegree": 3,
+          "quotientImage": [
+            "-463168356949264781694283940034751631414441068130246010011683834461379591405569/463168356949264781694283940034751631414441068130246010011683834461379591405565",
+            "-463168356949264781694283940034751631414441068130246010011683834461379591405569/463168356949264781694283940034751631414441068130246010011683834461379591405565"
+          ],
+          "imageRoots": 1,
+          "polynomial": [
+            "0",
+            "0",
+            "0",
+            "33120385969081790616511562420533387846258891563897049021614536765261936710097515479793239702586571523197696258370943403560413140015933149138750696082598652699062472811562987387298650616690437846901358583490866825084507337228748674401",
+            "99361157907245371849534687261600163538776674691691147064843610295785810130290258173493008904521387269326728310707041790354835107786853205388015724097071962122718217699015706381818788428714314965839767606391181947890671418253721818387",
+            "99361157907245371849534687261600163538776674691691147064843610295785810130287969907606298701283059969060367846301253370028430795525906963359779359946348013082642521155506995622514215195522633177746101730565794020540237206541064732787",
+            "33120385969081790616511562420533387846258891563897049021614536765261936710095227213906529499348244222931335793965154983234008827754986907110514331931874703658986776268054276627994077383498756058807692707665478897734073125516091588545"
+          ]
+        },
+        {
+          "corpus": "wide",
+          "key": 1035,
+          "leftDegree": 2,
+          "rightDegree": 4,
+          "leftZeroOrder": 1,
+          "rightZeroOrder": 1,
+          "deflatedRightDegree": 3,
+          "quotientImage": [
+            "-53631231719770388398296099992823384509917463282369573510894245774887056120294651075564446457449307994700162184377357283353678093503944110121766248542896129/53631231719770388398296099992823384509917463282369573510894245774887056120294651075564446457449307994700162184377357283353678093503944110121766248542896125",
+            "-53631231719770388398296099992823384509917463282369573510894245774887056120294651075564446457449307994700162184377357283353678093503944110121766248542896129/53631231719770388398296099992823384509917463282369573510894245774887056120294651075564446457449307994700162184377357283353678093503944110121766248542896125"
+          ],
+          "imageRoots": 1,
+          "polynomial": [
+            "0",
+            "0",
+            "0",
+            "51419998440982028556375820928604034408791322622841364295673067500058824353962020855129592629176679541518647288522791444988131930787841367948289508626038451543266863767514391667889287025514288977072764305695687025395911336866818318507005108266438406554220857300443352424003649626315628520862650781031554066429882544887131552613836938900075748387389885550091467384955674656119166574056273069792463508078229905466649414344915518194923402443577171275584586319175964001",
+            "154259995322946085669127462785812103226373967868524092887019202500176473061886062565388777887530038624555941865568374334964395792363524103844868525878115323949171089652351683090192604943854079851077852301721553077453883090890450815431399342394077485349075595421625821092628977236224288472092861404014527417934970281681042511398275663394646986767819040841551833223176374075702883043732786241240136262989153350374120281686571126614710160454729979746260036588481631507",
+            "154259995322946085669127462785812103226373967868524092887019202500176473061886062565388777887530038624555941865568374334964395792363524103844868525878115293268541588002160191176717348811165292770937411686356045078720032171180446675341783359988839751035488618941921584913247005593501691381597770464934392636585727560181627097646067848221672831337140061312109381073923007754903488052153319909357775976105353809555138572503216022605594899365019758775238830566798262387",
+            "51419998440982028556375820928604034408791322622841364295673067500058824353962020855129592629176679541518647288522791444988131930787841367948289508626038420862637362117322899754414030892825501896932323690330179026662060417156814178417389125861200672240633880820739116244621677983593031430367559841951419285080639823387716138861629123727101592956710906020649015235702308335319771582476806737910103221194430364647667705161560414185808141353866950304563380297492594625"
+          ]
+        },
+        {
+          "corpus": "wide",
+          "key": 1131,
+          "leftDegree": 3,
+          "rightDegree": 2,
+          "leftZeroOrder": 1,
+          "rightZeroOrder": 1,
+          "deflatedRightDegree": 1,
+          "quotientImage": [
+            "-9/5",
+            "-9/5"
+          ],
+          "imageRoots": 1,
+          "polynomial": [
+            "0",
+            "243",
+            "450",
+            "175"
+          ]
+        },
+        {
+          "corpus": "wide",
+          "key": 1147,
+          "leftDegree": 3,
+          "rightDegree": 2,
+          "leftZeroOrder": 1,
+          "rightZeroOrder": 1,
+          "deflatedRightDegree": 1,
+          "quotientImage": [
+            "-4611686022722355201/4611686022722355197",
+            "-4611686022722355201/4611686022722355197"
+          ],
+          "imageRoots": 1,
+          "polynomial": [
+            "0",
+            "21267648031593857219971799445917401095",
+            "42535296063187714458390342931184615418",
+            "21267648031593857238418543485267214291"
+          ]
+        },
+        {
+          "corpus": "wide",
+          "key": 1163,
+          "leftDegree": 3,
+          "rightDegree": 2,
+          "leftZeroOrder": 1,
+          "rightZeroOrder": 1,
+          "deflatedRightDegree": 1,
+          "quotientImage": [
+            "-1361129467683753853927285406021911052289/1361129467683753853927285406021911052285",
+            "-1361129467683753853927285406021911052289/1361129467683753853927285406021911052285"
+          ],
+          "imageRoots": 1,
+          "polynomial": [
+            "0",
+            "1852673427797059127279303898969940986791850015731272430412805398736425803841543",
+            "3705346855594118254558607797939881973589144549333279876240434495381401193414650",
+            "1852673427797059127279303898969940986797294533602007445827629096644975389573075"
+          ]
+        },
+        {
+          "corpus": "wide",
+          "key": 1179,
+          "leftDegree": 3,
+          "rightDegree": 2,
+          "leftZeroOrder": 1,
+          "rightZeroOrder": 1,
+          "deflatedRightDegree": 1,
+          "quotientImage": [
+            "-463168356949264781694283940034751631414441068130246010011683834461379591405569/463168356949264781694283940034751631414441068130246010011683834461379591405565",
+            "-463168356949264781694283940034751631414441068130246010011683834461379591405569/463168356949264781694283940034751631414441068130246010011683834461379591405565"
+          ],
+          "imageRoots": 1,
+          "polynomial": [
+            "0",
+            "214524926879081553593184399971293538042822013625189852380559306307559713585594246811034006858866981129941001511857482553525249440822118686954955281568628743",
+            "429049853758163107186368799942587076085644027250379704761118612615119427171190346295495810776860739395642142030240606537769407660638037867266599356628729850",
+            "214524926879081553593184399971293538042822013625189852380559306307559713585596099484461803917993758265701140518383123984244158219815919180311644075060101075"
+          ]
+        },
+        {
+          "corpus": "wide",
+          "key": 1195,
+          "leftDegree": 3,
+          "rightDegree": 2,
+          "leftZeroOrder": 1,
+          "rightZeroOrder": 1,
+          "deflatedRightDegree": 1,
+          "quotientImage": [
+            "-53631231719770388398296099992823384509917463282369573510894245774887056120294651075564446457449307994700162184377357283353678093503944110121766248542896129/53631231719770388398296099992823384509917463282369573510894245774887056120294651075564446457449307994700162184377357283353678093503944110121766248542896125",
+            "-53631231719770388398296099992823384509917463282369573510894245774887056120294651075564446457449307994700162184377357283353678093503944110121766248542896129/53631231719770388398296099992823384509917463282369573510894245774887056120294651075564446457449307994700162184377357283353678093503944110121766248542896125"
+          ],
+          "imageRoots": 1,
+          "polynomial": [
+            "0",
+            "2876309015779705452366888305262439573788763166307690516374881298523722812888139611570719693873332494696998822282362844603909972029921790122927642966446497428100317841993461041763274359836936229786861830506653538914624551188829587660323591073109440408423810977244562495629938260612107542984285683000775159054343",
+            "5752618031559410904733776610524879147577526332615381032749762597047445625776279223141439387746664989393997644564725689207819944059843580245855285932892995070725562563068475676710948690967410499243576790491601121406232201925883656493693464120613533233748193474720842923732050671985842027851047820686714266976250",
+            "2876309015779705452366888305262439573788763166307690516374881298523722812888139611570719693873332494696998822282362844603909972029921790122927642966446497642625244721075014634947674331130474269456714959984947582491607650737054068833369873047504092825324382497476280428102112411373734484866762137685939107921875"
+          ]
+        },
+        {
+          "corpus": "wide",
+          "key": 1211,
+          "leftDegree": 3,
+          "rightDegree": 3,
+          "leftZeroOrder": 1,
+          "rightZeroOrder": 1,
+          "deflatedRightDegree": 2,
+          "quotientImage": [
+            "-9/5",
+            "-9/5"
+          ],
+          "imageRoots": 1,
+          "polynomial": [
+            "0",
+            "0",
+            "1701",
+            "5580",
+            "6454",
+            "3100",
+            "525"
+          ]
+        },
+        {
+          "corpus": "wide",
+          "key": 1227,
+          "leftDegree": 3,
+          "rightDegree": 3,
+          "leftZeroOrder": 1,
+          "rightZeroOrder": 1,
+          "deflatedRightDegree": 2,
+          "quotientImage": [
+            "-4611686022722355201/4611686022722355197",
+            "-4611686022722355201/4611686022722355197"
+          ],
+          "imageRoots": 1,
+          "polynomial": [
+            "0",
+            "0",
+            "32693238448722569164402112325447598734775287203908375905",
+            "130772953794890276600894721111902558705009328116283910812",
+            "196159430692335414816271489383022083583397967300671132926",
+            "130772953794890276487467264732126885990869099068124037164",
+            "32693238448722569107688384135559762377705172679828439145"
+          ]
+        },
+        {
+          "corpus": "wide",
+          "key": 1243,
+          "leftDegree": 3,
+          "rightDegree": 3,
+          "leftZeroOrder": 1,
+          "rightZeroOrder": 1,
+          "deflatedRightDegree": 2,
+          "quotientImage": [
+            "-1361129467683753853927285406021911052289/1361129467683753853927285406021911052285",
+            "-1361129467683753853927285406021911052289/1361129467683753853927285406021911052285"
+          ],
+          "imageRoots": 1,
+          "polynomial": [
+            "0",
+            "0",
+            "840576132189748890226494642933565748625414120647512510573095802589817392244008005718264880973229565454060215902492001",
+            "3362304528758995560905978571734262994496716020115924551285769420613930062919319323181063982964326547413984778958580380",
+            "5043456793138493341358967857601394491737663336462698590418733446302885835293873638447797762950832822892800319518233854",
+            "3362304528758995560905978571734262994486835095167673569272541841123251050805821330225463100901604265359887165770694700",
+            "840576132189748890226494642933565748620473658173387019566482012844477886187259009240464439941868424427011409308549225"
+          ]
+        },
+        {
+          "corpus": "wide",
+          "key": 1259,
+          "leftDegree": 3,
+          "rightDegree": 3,
+          "leftZeroOrder": 1,
+          "rightZeroOrder": 1,
+          "deflatedRightDegree": 2,
+          "quotientImage": [
+            "-463168356949264781694283940034751631414441068130246010011683834461379591405569/463168356949264781694283940034751631414441068130246010011683834461379591405565",
+            "-463168356949264781694283940034751631414441068130246010011683834461379591405569/463168356949264781694283940034751631414441068130246010011683834461379591405565"
+          ],
+          "imageRoots": 1,
+          "polynomial": [
+            "0",
+            "0",
+            "33120385969081790616511562420533387846258891563897049021614536765261936710097515479793239702586571523197696258370943403560413140015933149138750696082598652699062472811562987387298650616690437846901358583490866825084507337228748674401",
+            "132481543876327162466046249682133551385035566255588196086458147061047746840389489852701281259536704267724194917382322726567456628128491657260094079505788296357561209423566610910972101937034553169706904131929612384928703316581621082780",
+            "198722315814490743699069374523200327077553349383382294129687220591571620260583376679344405563090683663986407201921307758339891044289876076947778062021772960527152606087594396561552667850917528078914196559850138662136771748971876275454",
+            "132481543876327162466046249682133551385035566255588196086458147061047746840388345719757926157917540617591014685179420951219064764258009778670276669856575642777871475150740909939383632357493148036313115057874907469825462897113884000300",
+            "33120385969081790616511562420533387846258891563897049021614536765261936710096943413321562151776989698131106142269492515886217208080692209843841991257992325909217605675150136901504415826919735280204464046463514367532887127494880133225"
+          ]
+        },
+        {
+          "corpus": "wide",
+          "key": 1275,
+          "leftDegree": 3,
+          "rightDegree": 3,
+          "leftZeroOrder": 1,
+          "rightZeroOrder": 1,
+          "deflatedRightDegree": 2,
+          "quotientImage": [
+            "-53631231719770388398296099992823384509917463282369573510894245774887056120294651075564446457449307994700162184377357283353678093503944110121766248542896129/53631231719770388398296099992823384509917463282369573510894245774887056120294651075564446457449307994700162184377357283353678093503944110121766248542896125",
+            "-53631231719770388398296099992823384509917463282369573510894245774887056120294651075564446457449307994700162184377357283353678093503944110121766248542896129/53631231719770388398296099992823384509917463282369573510894245774887056120294651075564446457449307994700162184377357283353678093503944110121766248542896125"
+          ],
+          "imageRoots": 1,
+          "polynomial": [
+            "0",
+            "0",
+            "51419998440982028556375820928604034408791322622841364295673067500058824353962020855129592629176679541518647288522791444988131930787841367948289508626038451543266863767514391667889287025514288977072764305695687025395911336866818318507005108266438406554220857300443352424003649626315628520862650781031554066429882544887131552613836938900075748387389885550091467384955674656119166574056273069792463508078229905466649414344915518194923402443577171275584586319175964001",
+            "205679993763928114225503283714416137635165290491365457182692270000235297415848083420518370516706718166074589154091165779952527723151365471793158034504153798502910079657509693693188334068884959138255947068941371101900182617539772238856574700603576134864184654189447105346508047951378990141477834738855291112485461879635924702990579318027516378955793812658771368661224199826168210355445023946004421068319056614963584140875891510999605915968901495835244211550861044380",
+            "308519990645892171338254925571624206452747935737048185774038405000352946123772125130777555775060077249111883731136748669928791584727048207689737051756230686249129056367442731072229280053569143552331255372649991153325079831418406805527693452212097965267228818765681201495502246096243199299257599530376548938875660203405790916264761758015619356289444325654902113046981371654459310125456255075066282231349987379803919205018289578404876919078633825724605527510211712254",
+            "205679993763928114225503283714416137635165290491365457182692270000235297415848083420518370516706718166074589154091165779952527723151365471793158034504153783162595328832413947736450706002540565598185726761258617102533257157684770168513683235679221152158787104164794496647494946843611942257532297968313440806014464947452333934013133317548992569261066755533855989650112842454890655480802530591289155290055724536583683644788566696590629700024871849045816765644544147500",
+            "51419998440982028556375820928604034408791322622841364295673067500058824353962020855129592629176679541518647288522791444988131930787841367948289508626038443873109488354966518689520472992342092207037654151854310025712448606939317283335559375804260915201522082288117048074497099072432104578889882395760628913194384078795336168125113938660813843540026356987633777879399995970480389136735026392434830618946563866276699166301253110990435294471562347880870863366017515625"
+          ]
+        },
+        {
+          "corpus": "wide",
+          "key": 1371,
+          "leftDegree": 4,
+          "rightDegree": 2,
+          "leftZeroOrder": 1,
+          "rightZeroOrder": 1,
+          "deflatedRightDegree": 1,
+          "quotientImage": [
+            "-9/5",
+            "-9/5"
+          ],
+          "imageRoots": 1,
+          "polynomial": [
+            "0",
+            "2673",
+            "8595",
+            "8675",
+            "2625"
+          ]
+        },
+        {
+          "corpus": "wide",
+          "key": 1387,
+          "leftDegree": 4,
+          "rightDegree": 2,
+          "leftZeroOrder": 1,
+          "rightZeroOrder": 1,
+          "deflatedRightDegree": 1,
+          "quotientImage": [
+            "-4611686022722355201/4611686022722355197",
+            "-4611686022722355201/4611686022722355197"
+          ],
+          "imageRoots": 1,
+          "polynomial": [
+            "0",
+            "32693238509618471031781904043754312803061792078691303445",
+            "98079715528855413208773168246944734870590533101842071583",
+            "98079715528855413322200624362626531356591348366052425551",
+            "32693238509618471145209360159436109289062607342901657285"
+          ]
+        },
+        {
+          "corpus": "wide",
+          "key": 1403,
+          "leftDegree": 4,
+          "rightDegree": 2,
+          "leftZeroOrder": 1,
+          "rightZeroOrder": 1,
+          "deflatedRightDegree": 1,
+          "quotientImage": [
+            "-1361129467683753853927285406021911052289/1361129467683753853927285406021911052285",
+            "-1361129467683753853927285406021911052289/1361129467683753853927285406021911052285"
+          ],
+          "imageRoots": 1,
+          "polynomial": [
+            "0",
+            "840576132189748890317630089799524578834774257051770267991152348921773575695083732958384492224407170661987463223836693",
+            "2521728396569246670952890269398573736514203696103561785985345511219117247302108514919582035560022514410254800974250015",
+            "2521728396569246670952890269398573736524084621051812767997233975672913767518973090321171574467371105670861930471882575",
+            "840576132189748890317630089799524578844655182000021250003040813375570095911948308359974031131755761922594592721469125"
+          ]
+        },
+        {
+          "corpus": "wide",
+          "key": 1419,
+          "leftDegree": 4,
+          "rightDegree": 2,
+          "leftZeroOrder": 1,
+          "rightZeroOrder": 1,
+          "deflatedRightDegree": 1,
+          "quotientImage": [
+            "-463168356949264781694283940034751631414441068130246010011683834461379591405569/463168356949264781694283940034751631414441068130246010011683834461379591405565",
+            "-463168356949264781694283940034751631414441068130246010011683834461379591405569/463168356949264781694283940034751631414441068130246010011683834461379591405565"
+          ],
+          "imageRoots": 1,
+          "polynomial": [
+            "0",
+            "33120385969081790616511562420533387846453555696915596017609893420438482473296106261696738122410650441827644304063109753024811660675907777813309127334069277094642679071876359243411620222248870729133605187029498708869451852227062792213",
+            "99361157907245371849534687261600163539360667090746788052829680261315447419889462918033569468851114975616113144392222628661504948409306592501190094347141946811242789451969333626360762077217088402303781871201902232659338096171238293535",
+            "99361157907245371849534687261600163539360667090746788052829680261315447419890607050976924570470278625749293376595115998248574914790889851562452806692076064808788778751055091892001010339696265370816706472633678984973580134431171018575",
+            "33120385969081790616511562420533387846453555696915596017609893420438482473297250394640093224029814091960824536266003122611881627057491036874571839679003395092188668370962117509051868484728047697646529788461275461183693890486995517125"
+          ]
+        },
+        {
+          "corpus": "wide",
+          "key": 1435,
+          "leftDegree": 4,
+          "rightDegree": 2,
+          "leftZeroOrder": 1,
+          "rightZeroOrder": 1,
+          "deflatedRightDegree": 1,
+          "quotientImage": [
+            "-53631231719770388398296099992823384509917463282369573510894245774887056120294651075564446457449307994700162184377357283353678093503944110121766248542896129/53631231719770388398296099992823384509917463282369573510894245774887056120294651075564446457449307994700162184377357283353678093503944110121766248542896125",
+            "-53631231719770388398296099992823384509917463282369573510894245774887056120294651075564446457449307994700162184377357283353678093503944110121766248542896129/53631231719770388398296099992823384509917463282369573510894245774887056120294651075564446457449307994700162184377357283353678093503944110121766248542896125"
+          ],
+          "imageRoots": 1,
+          "polynomial": [
+            "0",
+            "51419998440982028556375820928604034408791322622841364295673067500058824353962908998676870657898337162026582357155419947366565356264561932202190616513797287141229472968888851379357650852352136524930734882809784125993784290165091808001169671048308385472876352948739210747115934967190084140949666087126347107483690819414976171603494435768932226937656015941691664318881812899121905866749821067409703897161787981527200686481027973473170590007186972343664817629646815253",
+            "154259995322946085669127462785812103226373967868524092887019202500176473061888726996030611973695011486079747071466259842099696068793685796606571849541391876764003169731762300094810580623400803114862424956112106377348278330350277494015196618378462232958910984665536362485558555691108689930463433586363355055814318011285025405508592630883146763967807723895594047345749362998024836466669687941293122509133588482791002480091056356183562122014287900349489277930353721375",
+            "154259995322946085669127462785812103226373967868524092887019202500176473061888726996030611973695011486079747071466259842099696068793685796606571849541391892104317920556858046051548208689745196654932645263794860376715203790205279564026884223611999309499192910484855092729769306480647127438077868911347668789177849597560961071611492866992791905173366959770285739460244723276150019632398108825495780307881335715228240614907793244877726684861144275638166653135646359375",
+            "51419998440982028556375820928604034408791322622841364295673067500058824353962908998676870657898337162026582357155419947366565356264561932202190616513797302481544223793984597336095278918696530065000955190492538125360709750020093878012857276281845462013158278768057940991326685756728521648564101412110660840847222405690911837706394671878577368143215251816383356433377173177247089032478241951612361695909535213964438821297764862167335152854043347632342192834939453125"
+          ]
+        }
+      ],
+      "proof": "For a selected nonzero divisor beta, Q(beta)=beta^k R(beta)=0 implies R(beta)=0. Both authored divisor intervals exclude zero exactly; removing this unused carrier factor preserves their selected roots. Independent nonzero deflated resultants have exactly one root in every tested quotient image.",
+      "limits": "Independent mathematical opportunity, not an implemented or retained Hyper change, a general completeness theorem, or a performance result. Repeated scales/carriers are not independent bugs. Preserve STRICT nonzero evidence, original source validation and proof replay; audit degree admission and shared-carrier square-free shortcuts before implementing."
+    },
+    "metadataCorrection": {
+      "explicitNullKeys": 40,
+      "serializedOutputUnchanged": true,
+      "preservedFailedCaptures": 2,
+      "scope": "Absent optional case metadata was undefined in memory but null after JSON array serialization. Only that representation changes; no polynomial, root, input, source or mathematical assertion is weakened."
+    },
+    "dependencyGraph": {
+      "packages": 33,
+      "nodes": 33,
+      "locksEqual": true,
+      "pathOnlyNormalization": true
+    },
+    "artifacts": {
+      "binaries": 2,
+      "binaryBytes": 5616216,
+      "inputBytes": 2838932,
+      "pairedOutputBytes": 28016100
+    },
+    "environment": {
+      "recorded": "2026-09-11T18:02:29.660Z",
+      "node": "v22.22.2",
+      "v8": "12.4.254.21-node.39",
+      "platform": "linux",
+      "arch": "x64",
+      "kernel": "7.1.8-100.fc43.x86_64",
+      "versions": [
+        {
+          "command": "rustc",
+          "args": [
+            "-vV"
+          ],
+          "stdout": "rustc 1.97.0 (2d8144b78 2026-07-07)\nbinary: rustc\ncommit-hash: 2d8144b7880597b6e6d3dfd63a9a9efae3f533d3\ncommit-date: 2026-07-07\nhost: x86_64-unknown-linux-gnu\nrelease: 1.97.0\nLLVM version: 22.1.6\n"
+        },
+        {
+          "command": "cargo",
+          "args": [
+            "-vV"
+          ],
+          "stdout": "cargo 1.97.0 (c980f4866 2026-06-30)\nrelease: 1.97.0\ncommit-hash: c980f4866141969fab6254a680546a277789d6f0\ncommit-date: 2026-06-30\nhost: x86_64-unknown-linux-gnu\nlibgit2: 1.9.2 (sys:0.20.4 vendored)\nlibcurl: 8.20.0-DEV (sys:0.4.88+curl-8.20.0 vendored ssl:OpenSSL/3.6.2)\nssl: OpenSSL 3.6.2 7 Apr 2026\nos: Fedora 43.0.0 (FortyThree) [64-bit]\n"
+        },
+        {
+          "command": "strip",
+          "args": [
+            "--version"
+          ],
+          "stdout": "GNU strip version 2.45.1-5.fc43\nCopyright (C) 2025 Free Software Foundation, Inc.\nThis program is free software; you may redistribute it under the terms of\nthe GNU General Public License version 3 or (at your option) any later version.\nThis program has absolutely no warranty.\n"
+        },
+        {
+          "command": "size",
+          "args": [
+            "--version"
+          ],
+          "stdout": "GNU size version 2.45.1-5.fc43\nCopyright (C) 2025 Free Software Foundation, Inc.\nThis program is free software; you may redistribute it under the terms of\nthe GNU General Public License version 3 or (at your option) any later version.\nThis program has absolutely no warranty.\n"
+        }
+      ],
+      "volumes": [
+        {
+          "path": "/tmp",
+          "totalBytes": 67488174080,
+          "availableBytes": 15254159360
+        },
+        {
+          "path": "/home/tim/Documents/GitHub/workspace",
+          "totalBytes": 1966167244800,
+          "availableBytes": 122603139072
+        }
+      ],
+      "limits": "Build/runtime identity and a post-build filesystem-capacity snapshot. No timing, allocator, peak-memory, fixed-frequency or idle-machine claim."
+    },
+    "next": "Investigate certified divisor zero-factor removal as a separate completeness transfer before timing. Preserve strict nonzero evidence, source validation, interval/polynomial replay, signed primitive orientation and correct post-transformation carrier sharing/degree admission. Power-sum benchmarks/consumer/size and the whole ecosystem audit remain open."
+  },
+  "retainedContinuationTransfers": 6,
+  "newDonorLines": 0,
+  "scope": "Wide corpus and independent factor-removal opportunity, not a retained change, performance campaign or full ecosystem completion."
+}

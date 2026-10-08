@@ -1,0 +1,14 @@
+{
+  "repos": {
+    "hypercurve": {
+      "commit": "c6046fa2f26132e909edfc07e119fa2ff069d1e2",
+      "parent": "5d98e008f27b8f7e57c21e6c70fb7e25f9b837b4",
+      "paths": {
+        "src/bezier_algebraic_image.rs": "df0fa7888565586faba15f96e180ef6d58330dc05b303149f578e8558f651c13"
+      }
+    }
+  },
+  "qualification": "point-definition-v790-terminal.json",
+  "verified_source_files": 2048,
+  "clean_repositories": 30
+}

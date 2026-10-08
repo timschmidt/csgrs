@@ -1,0 +1,8 @@
+Independent rational fixture derivation (not a kernel execution):
+P(t)=(t^2-1,t^3-t), -2<=t<=2.
+Off-diagonal equations after dividing t-u: t+u=0 and t^2+tu+u^2-1=0.
+Substitution u=-t gives t^2-1=0; the only ordered off-diagonal pairs are (-1,1) and (1,-1), both mapping to (0,0).
+Tangent cross signs are -8 and +8. The derivative never vanishes simultaneously: x prime=2t=0 implies y prime=-1.
+Equivalent native-unit Q(s)=P(4s-2) has cubic Bernstein controls (3,-6),(-7/3,26/3),(-7/3,-26/3),(3,6).
+Python Fraction evaluation checked equality at 17 rational samples; the stated coefficients follow by exact polynomial composition. Native double-point parameters are 1/4 and 3/4.
+Close either chart by the line (3,6)->(3,-6) using Material/NonZero semantics without an authored global interior side. Compare raw and regularized point queries and Boolean clipping against the equivalent unit chart.

@@ -1,0 +1,18 @@
+[
+  {
+    "filter": "finite_chord_rational",
+    "returncode": 0,
+    "seconds": 0.03159218699147459,
+    "log": "finite-domain-chord-attempt4-finite_chord_rational.log",
+    "binary": "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve-6e6572a45c5b177b",
+    "sha256": "ce68db549720fc1a0c4ddc201208eaa0b610ac185634244d785ce2a40a60b5c1"
+  },
+  {
+    "filter": "algebraic_chord_parallel_boolean_keeps_exterior_and_selected_ranges",
+    "returncode": 0,
+    "seconds": 0.015557184000499547,
+    "log": "finite-domain-chord-attempt4-algebraic_chord_parallel_boolean_keeps_exterior_and_selected_ranges.log",
+    "binary": "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve-6e6572a45c5b177b",
+    "sha256": "ce68db549720fc1a0c4ddc201208eaa0b610ac185634244d785ce2a40a60b5c1"
+  }
+]

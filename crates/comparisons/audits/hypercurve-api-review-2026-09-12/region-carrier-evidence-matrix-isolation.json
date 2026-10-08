@@ -1,0 +1,8 @@
+{
+  "returncode": 124,
+  "timeout_seconds": 60,
+  "elapsed_seconds": 60.00264808299835,
+  "normal_library_sha256": "371f625d336951da93ef66266487505e3f0ff60c88cdc0355a161f1386acf677",
+  "source": "region-carrier-evidence-matrix-isolation.rs",
+  "log": "region-carrier-evidence-matrix-isolation.log"
+}

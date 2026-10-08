@@ -1,0 +1,1425 @@
+{
+  "normal_production_build": true,
+  "source_manifest": "nesting-result-removal-v755-sources.json",
+  "source_directory": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/source-archives/nesting-result-removal-v755",
+  "builds": [
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "test",
+        "--lib",
+        "--test",
+        "hypercurve_bezier_region",
+        "--release",
+        "--all-features",
+        "--locked",
+        "--offline",
+        "--no-run",
+        "--message-format=json"
+      ],
+      "returncode": 0,
+      "log": "nesting-result-removal-v755-hypercurve-build.log",
+      "elapsed_seconds": 186.83171602105722,
+      "binaries": {
+        "hypercurve_bezier_region": {
+          "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/nesting-result-removal-v755-hypercurve_bezier_region-tests",
+          "sha256": "dd0b365d120a3e23e548d023e9af5859b3fa7645152952dc22c86cf833804e60"
+        },
+        "hypercurve": {
+          "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/nesting-result-removal-v755-hypercurve-tests",
+          "sha256": "f46589ffe85a73dff0b5e176417a9152498d8ed181ef9d377dc9e939862a8425"
+        }
+      }
+    }
+  ],
+  "cases": [
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/nesting-result-removal-v755-hypercurve-tests",
+        "--exact",
+        "native_region_tests::batched_classifier_and_structural_facts_use_the_unified_surface",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "nesting-result-removal-v755-batched_classifier_and_structural_facts_use_the_unified_surface-0054d680c5.log",
+      "elapsed_seconds": 0.003552217036485672,
+      "target": "hypercurve",
+      "name": "native_region_tests::batched_classifier_and_structural_facts_use_the_unified_surface",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/nesting-result-removal-v755-hypercurve-tests",
+        "--exact",
+        "native_region_tests::boundary_contour_nesting_assigns_disjoint_nested_roles",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "nesting-result-removal-v755-boundary_contour_nesting_assigns_disjoint_nested_roles-63d2ef143d.log",
+      "elapsed_seconds": 0.0034797219559550285,
+      "target": "hypercurve",
+      "name": "native_region_tests::boundary_contour_nesting_assigns_disjoint_nested_roles",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/nesting-result-removal-v755-hypercurve-tests",
+        "--exact",
+        "native_region_tests::boundary_contour_nesting_rejects_crossing_or_touching_loops",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "nesting-result-removal-v755-boundary_contour_nesting_rejects_crossing_or_touching_loops-3fe502a3d1.log",
+      "elapsed_seconds": 0.003528578905388713,
+      "target": "hypercurve",
+      "name": "native_region_tests::boundary_contour_nesting_rejects_crossing_or_touching_loops",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/nesting-result-removal-v755-hypercurve-tests",
+        "--exact",
+        "native_region_tests::contour_profiles_group_holes_with_their_exact_material_owner",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "nesting-result-removal-v755-contour_profiles_group_holes_with_their_exact_material_owner-0baa7e72a2.log",
+      "elapsed_seconds": 0.0036039131227880716,
+      "target": "hypercurve",
+      "name": "native_region_tests::contour_profiles_group_holes_with_their_exact_material_owner",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/nesting-result-removal-v755-hypercurve-tests",
+        "--exact",
+        "native_region_tests::contour_profiles_remove_holes_without_a_material_owner",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "nesting-result-removal-v755-contour_profiles_remove_holes_without_a_material_owner-a62a51781c.log",
+      "elapsed_seconds": 0.0035272480454295874,
+      "target": "hypercurve",
+      "name": "native_region_tests::contour_profiles_remove_holes_without_a_material_owner",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/nesting-result-removal-v755-hypercurve-tests",
+        "--exact",
+        "native_region_tests::contour_projection_closes_finite_ring_without_owning_topology",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "nesting-result-removal-v755-contour_projection_closes_finite_ring_without_owning_topology-5c15c45f80.log",
+      "elapsed_seconds": 0.003499111160635948,
+      "target": "hypercurve",
+      "name": "native_region_tests::contour_projection_closes_finite_ring_without_owning_topology",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/nesting-result-removal-v755-hypercurve-tests",
+        "--exact",
+        "native_region_tests::curve_string_projection_rejects_nonfinite_arc_samples",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "nesting-result-removal-v755-curve_string_projection_rejects_nonfinite_arc_samples-13816819a2.log",
+      "elapsed_seconds": 0.0035139790270477533,
+      "target": "hypercurve",
+      "name": "native_region_tests::curve_string_projection_rejects_nonfinite_arc_samples",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/nesting-result-removal-v755-hypercurve-tests",
+        "--exact",
+        "native_region_tests::curve_string_projection_subdivides_arcs_and_keeps_exact_endpoints",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "nesting-result-removal-v755-curve_string_projection_subdivides_arcs_and_keeps_exact_endpoints-7691948cdd.log",
+      "elapsed_seconds": 0.0035706660710275173,
+      "target": "hypercurve",
+      "name": "native_region_tests::curve_string_projection_subdivides_arcs_and_keeps_exact_endpoints",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/nesting-result-removal-v755-hypercurve-tests",
+        "--exact",
+        "native_region_tests::empty_region_classifies_everything_outside",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "nesting-result-removal-v755-empty_region_classifies_everything_outside-aa6d8d55b8.log",
+      "elapsed_seconds": 0.003576034912839532,
+      "target": "hypercurve",
+      "name": "native_region_tests::empty_region_classifies_everything_outside",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/nesting-result-removal-v755-hypercurve-tests",
+        "--exact",
+        "native_region_tests::filled_area_is_exact_for_center_defined_circle",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "nesting-result-removal-v755-filled_area_is_exact_for_center_defined_circle-f23e71e798.log",
+      "elapsed_seconds": 0.0035439571365714073,
+      "target": "hypercurve",
+      "name": "native_region_tests::filled_area_is_exact_for_center_defined_circle",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/nesting-result-removal-v755-hypercurve-tests",
+        "--exact",
+        "native_region_tests::filled_area_uses_roles_not_orientation_and_counts_nested_islands",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "nesting-result-removal-v755-filled_area_uses_roles_not_orientation_and_counts_nested_islands-555c9921e0.log",
+      "elapsed_seconds": 0.003493370022624731,
+      "target": "hypercurve",
+      "name": "native_region_tests::filled_area_uses_roles_not_orientation_and_counts_nested_islands",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/nesting-result-removal-v755-hypercurve-tests",
+        "--exact",
+        "native_region_tests::finite_projection_checked_measurements_reject_nonfinite_or_overflow",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "nesting-result-removal-v755-finite_projection_checked_measurements_reject_nonfinite_or_overflow-77e84c63eb.log",
+      "elapsed_seconds": 0.0034803510643541813,
+      "target": "hypercurve",
+      "name": "native_region_tests::finite_projection_checked_measurements_reject_nonfinite_or_overflow",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/nesting-result-removal-v755-hypercurve-tests",
+        "--exact",
+        "native_region_tests::generated_rectangle_hole_area_uses_roles_not_orientation",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "nesting-result-removal-v755-generated_rectangle_hole_area_uses_roles_not_orientation-fb2893175d.log",
+      "elapsed_seconds": 0.06377608212642372,
+      "target": "hypercurve",
+      "name": "native_region_tests::generated_rectangle_hole_area_uses_roles_not_orientation",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/nesting-result-removal-v755-hypercurve-tests",
+        "--exact",
+        "native_region_tests::generated_unordered_line_arc_semicircles_build_unified_regions",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "nesting-result-removal-v755-generated_unordered_line_arc_semicircles_build_unified_regions-bdfa76829b.log",
+      "elapsed_seconds": 0.06377246184274554,
+      "target": "hypercurve",
+      "name": "native_region_tests::generated_unordered_line_arc_semicircles_build_unified_regions",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/nesting-result-removal-v755-hypercurve-tests",
+        "--exact",
+        "native_region_tests::generated_unordered_line_rectangles_build_unified_regions",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "nesting-result-removal-v755-generated_unordered_line_rectangles_build_unified_regions-ed39b01206.log",
+      "elapsed_seconds": 0.031713179079815745,
+      "target": "hypercurve",
+      "name": "native_region_tests::generated_unordered_line_rectangles_build_unified_regions",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/nesting-result-removal-v755-hypercurve-tests",
+        "--exact",
+        "native_region_tests::material_contour_classifies_inside_outside_and_boundary",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "nesting-result-removal-v755-material_contour_classifies_inside_outside_and_boundary-3292e13e4f.log",
+      "elapsed_seconds": 0.003529207780957222,
+      "target": "hypercurve",
+      "name": "native_region_tests::material_contour_classifies_inside_outside_and_boundary",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/nesting-result-removal-v755-hypercurve-tests",
+        "--exact",
+        "native_region_tests::material_island_inside_hole_restores_membership",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "nesting-result-removal-v755-material_island_inside_hole_restores_membership-5c404e4543.log",
+      "elapsed_seconds": 0.0035570659674704075,
+      "target": "hypercurve",
+      "name": "native_region_tests::material_island_inside_hole_restores_membership",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/nesting-result-removal-v755-hypercurve-tests",
+        "--exact",
+        "native_region_tests::native_overlap_regularizes_empty_and_open_crossings_remain_blocked",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "nesting-result-removal-v755-native_overlap_regularizes_empty_and_open_crossings_remain_blocked-5474e53aba.log",
+      "elapsed_seconds": 0.0035199089907109737,
+      "target": "hypercurve",
+      "name": "native_region_tests::native_overlap_regularizes_empty_and_open_crossings_remain_blocked",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/nesting-result-removal-v755-hypercurve-tests",
+        "--exact",
+        "native_region_tests::similarity_transform_preserves_arcs_and_reflection_flips_orientation",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "nesting-result-removal-v755-similarity_transform_preserves_arcs_and_reflection_flips_orientation-542e74a3d7.log",
+      "elapsed_seconds": 0.0035394178703427315,
+      "target": "hypercurve",
+      "name": "native_region_tests::similarity_transform_preserves_arcs_and_reflection_flips_orientation",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/nesting-result-removal-v755-hypercurve-tests",
+        "--exact",
+        "native_region_tests::sparse_region_and_hole_classification_are_exact",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "nesting-result-removal-v755-sparse_region_and_hole_classification_are_exact-e0ee337fdb.log",
+      "elapsed_seconds": 0.0035025100223720074,
+      "target": "hypercurve",
+      "name": "native_region_tests::sparse_region_and_hole_classification_are_exact",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/nesting-result-removal-v755-hypercurve-tests",
+        "--exact",
+        "native_region_tests::strict_and_approximate_512_share_the_unified_policy_terminal",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "nesting-result-removal-v755-strict_and_approximate_512_share_the_unified_policy_terminal-8c1860adaf.log",
+      "elapsed_seconds": 0.0034486239310353994,
+      "target": "hypercurve",
+      "name": "native_region_tests::strict_and_approximate_512_share_the_unified_policy_terminal",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/nesting-result-removal-v755-hypercurve-tests",
+        "--exact",
+        "native_region_tests::unified_finite_profiles_preserve_material_hole_bins_and_ownership",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "nesting-result-removal-v755-unified_finite_profiles_preserve_material_hole_bins_and_ownership-bd11689ed8.log",
+      "elapsed_seconds": 0.003462393069639802,
+      "target": "hypercurve",
+      "name": "native_region_tests::unified_finite_profiles_preserve_material_hole_bins_and_ownership",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/nesting-result-removal-v755-hypercurve-tests",
+        "--exact",
+        "native_region_tests::unordered_crossing_and_overlapping_lines_remain_explicit_blockers",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "nesting-result-removal-v755-unordered_crossing_and_overlapping_lines_remain_explicit_blockers-85516fdeb0.log",
+      "elapsed_seconds": 0.0035327179357409477,
+      "target": "hypercurve",
+      "name": "native_region_tests::unordered_crossing_and_overlapping_lines_remain_explicit_blockers",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/nesting-result-removal-v755-hypercurve-tests",
+        "--exact",
+        "native_region_tests::unordered_crossing_walks_are_regularized_by_global_parity",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "nesting-result-removal-v755-unordered_crossing_walks_are_regularized_by_global_parity-06492e8201.log",
+      "elapsed_seconds": 0.003505400149151683,
+      "target": "hypercurve",
+      "name": "native_region_tests::unordered_crossing_walks_are_regularized_by_global_parity",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/nesting-result-removal-v755-hypercurve-tests",
+        "--exact",
+        "native_region_tests::unordered_line_arc_segments_recover_the_exact_native_view",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "nesting-result-removal-v755-unordered_line_arc_segments_recover_the_exact_native_view-062c8b74a2.log",
+      "elapsed_seconds": 0.0035299179144203663,
+      "target": "hypercurve",
+      "name": "native_region_tests::unordered_line_arc_segments_recover_the_exact_native_view",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/nesting-result-removal-v755-hypercurve-tests",
+        "--exact",
+        "native_region_tests::unordered_lines_materialize_one_authoritative_region",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "nesting-result-removal-v755-unordered_lines_materialize_one_authoritative_region-152d322edf.log",
+      "elapsed_seconds": 0.003473582910373807,
+      "target": "hypercurve",
+      "name": "native_region_tests::unordered_lines_materialize_one_authoritative_region",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/nesting-result-removal-v755-hypercurve-tests",
+        "--exact",
+        "native_region_tests::unordered_native_arrangement_obeys_the_approximate_512_terminal",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "nesting-result-removal-v755-unordered_native_arrangement_obeys_the_approximate_512_terminal-c5b00a5e37.log",
+      "elapsed_seconds": 0.003496021032333374,
+      "target": "hypercurve",
+      "name": "native_region_tests::unordered_native_arrangement_obeys_the_approximate_512_terminal",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/nesting-result-removal-v755-hypercurve-tests",
+        "--exact",
+        "native_region_tests::unordered_open_lines_retain_a_boundary_blocker",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "nesting-result-removal-v755-unordered_open_lines_retain_a_boundary_blocker-9beec3fb78.log",
+      "elapsed_seconds": 0.00352638796903193,
+      "target": "hypercurve",
+      "name": "native_region_tests::unordered_open_lines_retain_a_boundary_blocker",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/nesting-result-removal-v755-hypercurve-tests",
+        "--exact",
+        "native_region_tests::unordered_self_crossing_walk_uses_the_authoritative_curve_arrangement",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "nesting-result-removal-v755-unordered_self_crossing_walk_uses_the_authoritative_curve_arrangement-66092b7aa0.log",
+      "elapsed_seconds": 0.0034802218433469534,
+      "target": "hypercurve",
+      "name": "native_region_tests::unordered_self_crossing_walk_uses_the_authoritative_curve_arrangement",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/nesting-result-removal-v755-hypercurve-tests",
+        "--exact",
+        "native_region_tests::unordered_single_full_circle_is_a_closed_walk",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "nesting-result-removal-v755-unordered_single_full_circle_is_a_closed_walk-04ac05c8fd.log",
+      "elapsed_seconds": 0.0035110891330987215,
+      "target": "hypercurve",
+      "name": "native_region_tests::unordered_single_full_circle_is_a_closed_walk",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/nesting-result-removal-v755-hypercurve-tests",
+        "--exact",
+        "bezier_region::retained_point_classification_tests::analytic_parallel_points_classify_on_exact_rectangle_oracles",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "nesting-result-removal-v755-analytic_parallel_points_classify_on_exact_rectangle_oracles-7fa252d40a.log",
+      "elapsed_seconds": 0.06374331517145038,
+      "target": "hypercurve",
+      "name": "bezier_region::retained_point_classification_tests::analytic_parallel_points_classify_on_exact_rectangle_oracles",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/nesting-result-removal-v755-hypercurve-tests",
+        "--exact",
+        "bezier_region::retained_point_classification_tests::chord_normal_points_classify_on_exact_rectangle_oracles",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "nesting-result-removal-v755-chord_normal_points_classify_on_exact_rectangle_oracles-d8d1d1c7ef.log",
+      "elapsed_seconds": 0.06378159113228321,
+      "target": "hypercurve",
+      "name": "bezier_region::retained_point_classification_tests::chord_normal_points_classify_on_exact_rectangle_oracles",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/nesting-result-removal-v755-hypercurve-tests",
+        "--exact",
+        "bezier_region::retained_point_classification_tests::generated_point_queries_preserve_the_boundary_of_a_retraced_path",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "nesting-result-removal-v755-generated_point_queries_preserve_the_boundary_of_a_retraced_path-83d21798bb.log",
+      "elapsed_seconds": 0.007551842834800482,
+      "target": "hypercurve",
+      "name": "bezier_region::retained_point_classification_tests::generated_point_queries_preserve_the_boundary_of_a_retraced_path",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/nesting-result-removal-v755-hypercurve-tests",
+        "--exact",
+        "bezier_region::retained_point_classification_tests::generated_point_queries_reenter_an_exact_parabolic_offset",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "nesting-result-removal-v755-generated_point_queries_reenter_an_exact_parabolic_offset-9c05d43ea4.log",
+      "elapsed_seconds": 0.03168030991218984,
+      "target": "hypercurve",
+      "name": "bezier_region::retained_point_classification_tests::generated_point_queries_reenter_an_exact_parabolic_offset",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/nesting-result-removal-v755-hypercurve-tests",
+        "--exact",
+        "bezier_region::retained_point_classification_tests::lazy_endpoint_points_classify_on_exact_rectangle_oracles",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "nesting-result-removal-v755-lazy_endpoint_points_classify_on_exact_rectangle_oracles-61620bc0fc.log",
+      "elapsed_seconds": 0.06377310305833817,
+      "target": "hypercurve",
+      "name": "bezier_region::retained_point_classification_tests::lazy_endpoint_points_classify_on_exact_rectangle_oracles",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/nesting-result-removal-v755-hypercurve-tests",
+        "--exact",
+        "bezier_region::retained_point_classification_tests::public_point_queries_preserve_nested_islands_holes_and_empty_regions",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "nesting-result-removal-v755-public_point_queries_preserve_nested_islands_holes_and_empty_regions-6bbcef3853.log",
+      "elapsed_seconds": 0.06371615594252944,
+      "target": "hypercurve",
+      "name": "bezier_region::retained_point_classification_tests::public_point_queries_preserve_nested_islands_holes_and_empty_regions",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/nesting-result-removal-v755-hypercurve-tests",
+        "--exact",
+        "bezier_region::retained_point_classification_tests::similarity_points_classify_on_exact_rectangle_oracles",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "nesting-result-removal-v755-similarity_points_classify_on_exact_rectangle_oracles-08f67b2723.log",
+      "elapsed_seconds": 0.11382391396909952,
+      "target": "hypercurve",
+      "name": "bezier_region::retained_point_classification_tests::similarity_points_classify_on_exact_rectangle_oracles",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/nesting-result-removal-v755-hypercurve-tests",
+        "--exact",
+        "native_region_tests::empty_native_boundary_input_constructs_an_exact_empty_region",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "nesting-result-removal-v755-empty_native_boundary_input_constructs_an_exact_empty_region-79a15a8e48.log",
+      "elapsed_seconds": 0.003521278966218233,
+      "target": "hypercurve",
+      "name": "native_region_tests::empty_native_boundary_input_constructs_an_exact_empty_region",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/nesting-result-removal-v755-hypercurve-tests",
+        "--exact",
+        "bezier_region::tests::raw_crossing_loops_need_arrangement_before_nesting",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "nesting-result-removal-v755-raw_crossing_loops_need_arrangement_before_nesting-a754d1a868.log",
+      "elapsed_seconds": 0.007602168945595622,
+      "target": "hypercurve",
+      "name": "bezier_region::tests::raw_crossing_loops_need_arrangement_before_nesting",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/nesting-result-removal-v755-hypercurve-tests",
+        "--exact",
+        "bezier_region::tests::boundary_path_construction_obeys_selected_terminal_policy",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "nesting-result-removal-v755-boundary_path_construction_obeys_selected_terminal_policy-27e99e9e73.log",
+      "elapsed_seconds": 0.0035424879752099514,
+      "target": "hypercurve",
+      "name": "bezier_region::tests::boundary_path_construction_obeys_selected_terminal_policy",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/nesting-result-removal-v755-hypercurve_bezier_region-tests",
+        "--exact",
+        "arrangement_admission_regularizes_crossings_and_canceled_seams",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "nesting-result-removal-v755-arrangement_admission_regularizes_crossings_and_canceled_seams-0a6a718811.log",
+      "elapsed_seconds": 0.00754385394975543,
+      "target": "hypercurve_bezier_region",
+      "name": "arrangement_admission_regularizes_crossings_and_canceled_seams",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/nesting-result-removal-v755-hypercurve_bezier_region-tests",
+        "--exact",
+        "arrangement_admission_retains_selected_curve_evidence_for_reentry",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "nesting-result-removal-v755-arrangement_admission_retains_selected_curve_evidence_for_reentry-928a4449f4.log",
+      "elapsed_seconds": 0.00760641903616488,
+      "target": "hypercurve_bezier_region",
+      "name": "arrangement_admission_retains_selected_curve_evidence_for_reentry",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/nesting-result-removal-v755-hypercurve_bezier_region-tests",
+        "--exact",
+        "closed_polynomial_arrangement_materializes_retained_region_with_exact_area",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "nesting-result-removal-v755-closed_polynomial_arrangement_materializes_retained_region_with_exact_area-732c79c434.log",
+      "elapsed_seconds": 0.0035698350984603167,
+      "target": "hypercurve_bezier_region",
+      "name": "closed_polynomial_arrangement_materializes_retained_region_with_exact_area",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/nesting-result-removal-v755-hypercurve_bezier_region-tests",
+        "--exact",
+        "conic_area_rejects_uncertified_projective_denominator",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "nesting-result-removal-v755-conic_area_rejects_uncertified_projective_denominator-3750b78e3e.log",
+      "elapsed_seconds": 0.0035062998067587614,
+      "target": "hypercurve_bezier_region",
+      "name": "conic_area_rejects_uncertified_projective_denominator",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/nesting-result-removal-v755-hypercurve_bezier_region-tests",
+        "--exact",
+        "conic_region_boundary_materializes_with_exact_area",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "nesting-result-removal-v755-conic_region_boundary_materializes_with_exact_area-8c8052d55e.log",
+      "elapsed_seconds": 0.0034922210033982992,
+      "target": "hypercurve_bezier_region",
+      "name": "conic_region_boundary_materializes_with_exact_area",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/nesting-result-removal-v755-hypercurve_bezier_region-tests",
+        "--exact",
+        "empty_boundary_loops_do_not_certify_signed_area",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "nesting-result-removal-v755-empty_boundary_loops_do_not_certify_signed_area-08a8ac62b6.log",
+      "elapsed_seconds": 0.0035289879888296127,
+      "target": "hypercurve_bezier_region",
+      "name": "empty_boundary_loops_do_not_certify_signed_area",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/nesting-result-removal-v755-hypercurve_bezier_region-tests",
+        "--exact",
+        "equal_weight_rational_quadratic_area_matches_polynomial_exactly",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "nesting-result-removal-v755-equal_weight_rational_quadratic_area_matches_polynomial_exactly-ba363c191a.log",
+      "elapsed_seconds": 0.003533578012138605,
+      "target": "hypercurve_bezier_region",
+      "name": "equal_weight_rational_quadratic_area_matches_polynomial_exactly",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/nesting-result-removal-v755-hypercurve_bezier_region-tests",
+        "--exact",
+        "exact_conic_splits_and_reversal_retain_denominator_and_area_facts",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "nesting-result-removal-v755-exact_conic_splits_and_reversal_retain_denominator_and_area_facts-5096aa5600.log",
+      "elapsed_seconds": 0.007599189877510071,
+      "target": "hypercurve_bezier_region",
+      "name": "exact_conic_splits_and_reversal_retain_denominator_and_area_facts",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/nesting-result-removal-v755-hypercurve_bezier_region-tests",
+        "--exact",
+        "material_components_keep_recursive_hole_ownership_and_recompose_exactly",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "nesting-result-removal-v755-material_components_keep_recursive_hole_ownership_and_recompose_exactly-39e02f6cad.log",
+      "elapsed_seconds": 0.015619060024619102,
+      "target": "hypercurve_bezier_region",
+      "name": "material_components_keep_recursive_hole_ownership_and_recompose_exactly",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/nesting-result-removal-v755-hypercurve_bezier_region-tests",
+        "--exact",
+        "native_boundary_loop_constructor_rejects_open_fragment_cycle",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "nesting-result-removal-v755-native_boundary_loop_constructor_rejects_open_fragment_cycle-54d6430f60.log",
+      "elapsed_seconds": 0.003536558011546731,
+      "target": "hypercurve_bezier_region",
+      "name": "native_boundary_loop_constructor_rejects_open_fragment_cycle",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/nesting-result-removal-v755-hypercurve_bezier_region-tests",
+        "--exact",
+        "open_arrangement_chain_does_not_materialize_region",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "nesting-result-removal-v755-open_arrangement_chain_does_not_materialize_region-69b8b967de.log",
+      "elapsed_seconds": 0.0014291920233517885,
+      "target": "hypercurve_bezier_region",
+      "name": "open_arrangement_chain_does_not_materialize_region",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/nesting-result-removal-v755-hypercurve_bezier_region-tests",
+        "--exact",
+        "quarter_circle_rational_conic_area_is_exact_symbolic_sector",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "nesting-result-removal-v755-quarter_circle_rational_conic_area_is_exact_symbolic_sector-0fd997855c.log",
+      "elapsed_seconds": 0.0035238279961049557,
+      "target": "hypercurve_bezier_region",
+      "name": "quarter_circle_rational_conic_area_is_exact_symbolic_sector",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/nesting-result-removal-v755-hypercurve_bezier_region-tests",
+        "--exact",
+        "rational_quadratic_area_is_invariant_under_negative_projective_scale",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "nesting-result-removal-v755-rational_quadratic_area_is_invariant_under_negative_projective_scale-b5ddbf680c.log",
+      "elapsed_seconds": 0.0035015898756682873,
+      "target": "hypercurve_bezier_region",
+      "name": "rational_quadratic_area_is_invariant_under_negative_projective_scale",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/nesting-result-removal-v755-hypercurve_bezier_region-tests",
+        "--exact",
+        "resolved_linear_overlap_traversal_materializes_unified_region",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "nesting-result-removal-v755-resolved_linear_overlap_traversal_materializes_unified_region-6f6c7b95ea.log",
+      "elapsed_seconds": 0.0034966410603374243,
+      "target": "hypercurve_bezier_region",
+      "name": "resolved_linear_overlap_traversal_materializes_unified_region",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/nesting-result-removal-v755-hypercurve_bezier_region-tests",
+        "--exact",
+        "resolved_rational_overlap_traversal_materializes_unified_region",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "nesting-result-removal-v755-resolved_rational_overlap_traversal_materializes_unified_region-b64ab71b81.log",
+      "elapsed_seconds": 0.003485721070319414,
+      "target": "hypercurve_bezier_region",
+      "name": "resolved_rational_overlap_traversal_materializes_unified_region",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/nesting-result-removal-v755-hypercurve_bezier_region-tests",
+        "--exact",
+        "retained_algebraic_line_images_normalize_crossing_loops_under_both_policies",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "nesting-result-removal-v755-retained_algebraic_line_images_normalize_crossing_loops_under_both_policies-7de828d2eb.log",
+      "elapsed_seconds": 0.007595229893922806,
+      "target": "hypercurve_bezier_region",
+      "name": "retained_algebraic_line_images_normalize_crossing_loops_under_both_policies",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/nesting-result-removal-v755-hypercurve_bezier_region-tests",
+        "--exact",
+        "retained_boundary_loop_constructor_rejects_duplicate_arrangement_sources",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "nesting-result-removal-v755-retained_boundary_loop_constructor_rejects_duplicate_arrangement_sources-021df50f82.log",
+      "elapsed_seconds": 0.00347991194576025,
+      "target": "hypercurve_bezier_region",
+      "name": "retained_boundary_loop_constructor_rejects_duplicate_arrangement_sources",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/nesting-result-removal-v755-hypercurve_bezier_region-tests",
+        "--exact",
+        "retained_boundary_loop_constructor_rejects_forged_materialized_range_order",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "nesting-result-removal-v755-retained_boundary_loop_constructor_rejects_forged_materialized_range_order-2347314b72.log",
+      "elapsed_seconds": 0.003492380026727915,
+      "target": "hypercurve_bezier_region",
+      "name": "retained_boundary_loop_constructor_rejects_forged_materialized_range_order",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/nesting-result-removal-v755-hypercurve_bezier_region-tests",
+        "--exact",
+        "retained_boundary_loop_constructor_rejects_forged_source_endpoint_image",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "nesting-result-removal-v755-retained_boundary_loop_constructor_rejects_forged_source_endpoint_image-6792dc8229.log",
+      "elapsed_seconds": 0.003491280833259225,
+      "target": "hypercurve_bezier_region",
+      "name": "retained_boundary_loop_constructor_rejects_forged_source_endpoint_image",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/nesting-result-removal-v755-hypercurve_bezier_region-tests",
+        "--exact",
+        "retained_boundary_loop_constructor_rejects_incomplete_algebraic_endpoint_evidence",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "nesting-result-removal-v755-retained_boundary_loop_constructor_rejects_incomplete_algebraic_endpoint_evidence-870ec2395b.log",
+      "elapsed_seconds": 0.003514999058097601,
+      "target": "hypercurve_bezier_region",
+      "name": "retained_boundary_loop_constructor_rejects_incomplete_algebraic_endpoint_evidence",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/nesting-result-removal-v755-hypercurve_bezier_region-tests",
+        "--exact",
+        "retained_boundary_loop_constructor_rejects_open_fragment_cycle",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "nesting-result-removal-v755-retained_boundary_loop_constructor_rejects_open_fragment_cycle-b20929b973.log",
+      "elapsed_seconds": 0.0035462670493870974,
+      "target": "hypercurve_bezier_region",
+      "name": "retained_boundary_loop_constructor_rejects_open_fragment_cycle",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/nesting-result-removal-v755-hypercurve_bezier_region-tests",
+        "--exact",
+        "retained_boundary_loop_constructor_rejects_source_only_algebraic_endpoint_evidence",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "nesting-result-removal-v755-retained_boundary_loop_constructor_rejects_source_only_algebraic_endpoint_evidence-a02def7ed5.log",
+      "elapsed_seconds": 0.003522539045661688,
+      "target": "hypercurve_bezier_region",
+      "name": "retained_boundary_loop_constructor_rejects_source_only_algebraic_endpoint_evidence",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/nesting-result-removal-v755-hypercurve_bezier_region-tests",
+        "--exact",
+        "retained_certified_nonlinear_line_image_uses_authoritative_roles",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "nesting-result-removal-v755-retained_certified_nonlinear_line_image_uses_authoritative_roles-45365092d8.log",
+      "elapsed_seconds": 0.0035387969110161066,
+      "target": "hypercurve_bezier_region",
+      "name": "retained_certified_nonlinear_line_image_uses_authoritative_roles",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/nesting-result-removal-v755-hypercurve_bezier_region-tests",
+        "--exact",
+        "retained_curve_envelope_includes_native_bezier_interior_extrema",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "nesting-result-removal-v755-retained_curve_envelope_includes_native_bezier_interior_extrema-ee3c79f3d1.log",
+      "elapsed_seconds": 0.003512999042868614,
+      "target": "hypercurve_bezier_region",
+      "name": "retained_curve_envelope_includes_native_bezier_interior_extrema",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/nesting-result-removal-v755-hypercurve_bezier_region-tests",
+        "--exact",
+        "retained_curve_envelope_uses_algebraic_endpoint_image_before_interval_hull",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "nesting-result-removal-v755-retained_curve_envelope_uses_algebraic_endpoint_image_before_interval_hull-9483512065.log",
+      "elapsed_seconds": 0.003491619834676385,
+      "target": "hypercurve_bezier_region",
+      "name": "retained_curve_envelope_uses_algebraic_endpoint_image_before_interval_hull",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/nesting-result-removal-v755-hypercurve_bezier_region-tests",
+        "--exact",
+        "retained_curve_envelope_uses_algebraic_parameter_interval_hull",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "nesting-result-removal-v755-retained_curve_envelope_uses_algebraic_parameter_interval_hull-c69df19e3a.log",
+      "elapsed_seconds": 0.003514440031722188,
+      "target": "hypercurve_bezier_region",
+      "name": "retained_curve_envelope_uses_algebraic_parameter_interval_hull",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/nesting-result-removal-v755-hypercurve_bezier_region-tests",
+        "--exact",
+        "retained_curve_envelope_uses_source_bounds_for_algebraic_split_fragments",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "nesting-result-removal-v755-retained_curve_envelope_uses_source_bounds_for_algebraic_split_fragments-045c490e23.log",
+      "elapsed_seconds": 0.00352650904096663,
+      "target": "hypercurve_bezier_region",
+      "name": "retained_curve_envelope_uses_source_bounds_for_algebraic_split_fragments",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/nesting-result-removal-v755-hypercurve_bezier_region-tests",
+        "--exact",
+        "regularized_nonlinear_boundary_retains_roles_area_and_provenance",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "nesting-result-removal-v755-regularized_nonlinear_boundary_retains_roles_area_and_provenance-fa2277abd5.log",
+      "elapsed_seconds": 0.0035180391278117895,
+      "target": "hypercurve_bezier_region",
+      "name": "regularized_nonlinear_boundary_retains_roles_area_and_provenance",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/nesting-result-removal-v755-hypercurve_bezier_region-tests",
+        "--exact",
+        "retained_exact_algebraic_endpoint_line_images_assign_roles",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "nesting-result-removal-v755-retained_exact_algebraic_endpoint_line_images_assign_roles-b333026976.log",
+      "elapsed_seconds": 0.0035149198956787586,
+      "target": "hypercurve_bezier_region",
+      "name": "retained_exact_algebraic_endpoint_line_images_assign_roles",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/nesting-result-removal-v755-hypercurve_bezier_region-tests",
+        "--exact",
+        "retained_exact_line_images_assign_nested_material_and_hole",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "nesting-result-removal-v755-retained_exact_line_images_assign_nested_material_and_hole-141e3d7158.log",
+      "elapsed_seconds": 0.0034988699480891228,
+      "target": "hypercurve_bezier_region",
+      "name": "retained_exact_line_images_assign_nested_material_and_hole",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/nesting-result-removal-v755-hypercurve_bezier_region-tests",
+        "--exact",
+        "retained_nonlinear_algebraic_carriers_classify_without_materialization",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "nesting-result-removal-v755-retained_nonlinear_algebraic_carriers_classify_without_materialization-c9fcc38559.log",
+      "elapsed_seconds": 0.0035073792096227407,
+      "target": "hypercurve_bezier_region",
+      "name": "retained_nonlinear_algebraic_carriers_classify_without_materialization",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/nesting-result-removal-v755-hypercurve_bezier_region-tests",
+        "--exact",
+        "reversed_internal_overlap_traversal_materializes_union_boundary",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "nesting-result-removal-v755-reversed_internal_overlap_traversal_materializes_union_boundary-136424b4a6.log",
+      "elapsed_seconds": 0.003542597172781825,
+      "target": "hypercurve_bezier_region",
+      "name": "reversed_internal_overlap_traversal_materializes_union_boundary",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/nesting-result-removal-v755-hypercurve_bezier_region-tests",
+        "--exact",
+        "symmetric_quadratic_lens_area_scales_exactly",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "nesting-result-removal-v755-symmetric_quadratic_lens_area_scales_exactly-51bbaa707c.log",
+      "elapsed_seconds": 0.11385819199495018,
+      "target": "hypercurve_bezier_region",
+      "name": "symmetric_quadratic_lens_area_scales_exactly",
+      "passed": true
+    }
+  ],
+  "checks": [
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "clippy",
+        "--all-targets",
+        "--all-features",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "returncode": 0,
+      "log": "nesting-result-removal-v755-hypercurve-clippy-all-features.log",
+      "elapsed_seconds": 20.994889218127355,
+      "label": "hypercurve-clippy-all-features"
+    },
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "clippy",
+        "--all-targets",
+        "--no-default-features",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "returncode": 0,
+      "log": "nesting-result-removal-v755-hypercurve-clippy-no-default.log",
+      "elapsed_seconds": 20.043746580835432,
+      "label": "hypercurve-clippy-no-default"
+    },
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustfmt",
+        "--edition",
+        "2024",
+        "--config",
+        "skip_children=true",
+        "--check",
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/build-workspace-20260925/hypercurve/fuzz/fuzz_targets/bezier_region.rs",
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/build-workspace-20260925/hypercurve/src/bezier_region.rs",
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/build-workspace-20260925/hypercurve/src/lib.rs",
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/build-workspace-20260925/hypercurve/src/native_region_tests.rs",
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/build-workspace-20260925/hypercurve/tests/hypercurve_bezier_region.rs"
+      ],
+      "returncode": 0,
+      "log": "nesting-result-removal-v755-format.log",
+      "elapsed_seconds": 0.4142875650431961,
+      "label": "format"
+    },
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "check",
+        "--manifest-path",
+        "fuzz/Cargo.toml",
+        "--bin",
+        "region_boolean",
+        "--bin",
+        "bezier_region",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "log": "nesting-result-removal-v755-fuzz-check.log",
+      "elapsed_seconds": 11.12875213008374,
+      "label": "fuzz-check"
+    },
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "doc",
+        "--no-deps",
+        "--all-features",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "log": "nesting-result-removal-v755-hypercurve-documentation.log",
+      "elapsed_seconds": 10.628136327955872,
+      "label": "hypercurve-documentation"
+    },
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "clippy",
+        "--all-targets",
+        "--all-features",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "returncode": 0,
+      "log": "nesting-result-removal-v755-hyperbrep-clippy.log",
+      "elapsed_seconds": 15.335236048093066,
+      "label": "hyperbrep-clippy"
+    },
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "check",
+        "--all-targets",
+        "--all-features",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "log": "nesting-result-removal-v755-csgrs-check.log",
+      "elapsed_seconds": 14.333602990955114,
+      "label": "csgrs-check"
+    }
+  ],
+  "test_listings": {
+    "hypercurve_bezier_region": {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/nesting-result-removal-v755-hypercurve_bezier_region-tests",
+        "--list"
+      ],
+      "returncode": 0,
+      "log": "nesting-result-removal-v755-hypercurve_bezier_region-list.log",
+      "elapsed_seconds": 0.003561466932296753
+    },
+    "hypercurve": {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/nesting-result-removal-v755-hypercurve-tests",
+        "--list"
+      ],
+      "returncode": 0,
+      "log": "nesting-result-removal-v755-hypercurve-list.log",
+      "elapsed_seconds": 0.007663095137104392
+    }
+  },
+  "expected_cases": {
+    "hypercurve": [
+      "native_region_tests::batched_classifier_and_structural_facts_use_the_unified_surface",
+      "native_region_tests::boundary_contour_nesting_assigns_disjoint_nested_roles",
+      "native_region_tests::boundary_contour_nesting_rejects_crossing_or_touching_loops",
+      "native_region_tests::contour_profiles_group_holes_with_their_exact_material_owner",
+      "native_region_tests::contour_profiles_remove_holes_without_a_material_owner",
+      "native_region_tests::contour_projection_closes_finite_ring_without_owning_topology",
+      "native_region_tests::curve_string_projection_rejects_nonfinite_arc_samples",
+      "native_region_tests::curve_string_projection_subdivides_arcs_and_keeps_exact_endpoints",
+      "native_region_tests::empty_region_classifies_everything_outside",
+      "native_region_tests::filled_area_is_exact_for_center_defined_circle",
+      "native_region_tests::filled_area_uses_roles_not_orientation_and_counts_nested_islands",
+      "native_region_tests::finite_projection_checked_measurements_reject_nonfinite_or_overflow",
+      "native_region_tests::generated_rectangle_hole_area_uses_roles_not_orientation",
+      "native_region_tests::generated_unordered_line_arc_semicircles_build_unified_regions",
+      "native_region_tests::generated_unordered_line_rectangles_build_unified_regions",
+      "native_region_tests::material_contour_classifies_inside_outside_and_boundary",
+      "native_region_tests::material_island_inside_hole_restores_membership",
+      "native_region_tests::native_overlap_regularizes_empty_and_open_crossings_remain_blocked",
+      "native_region_tests::similarity_transform_preserves_arcs_and_reflection_flips_orientation",
+      "native_region_tests::sparse_region_and_hole_classification_are_exact",
+      "native_region_tests::strict_and_approximate_512_share_the_unified_policy_terminal",
+      "native_region_tests::unified_finite_profiles_preserve_material_hole_bins_and_ownership",
+      "native_region_tests::unordered_crossing_and_overlapping_lines_remain_explicit_blockers",
+      "native_region_tests::unordered_crossing_walks_are_regularized_by_global_parity",
+      "native_region_tests::unordered_line_arc_segments_recover_the_exact_native_view",
+      "native_region_tests::unordered_lines_materialize_one_authoritative_region",
+      "native_region_tests::unordered_native_arrangement_obeys_the_approximate_512_terminal",
+      "native_region_tests::unordered_open_lines_retain_a_boundary_blocker",
+      "native_region_tests::unordered_self_crossing_walk_uses_the_authoritative_curve_arrangement",
+      "native_region_tests::unordered_single_full_circle_is_a_closed_walk",
+      "bezier_region::retained_point_classification_tests::analytic_parallel_points_classify_on_exact_rectangle_oracles",
+      "bezier_region::retained_point_classification_tests::chord_normal_points_classify_on_exact_rectangle_oracles",
+      "bezier_region::retained_point_classification_tests::generated_point_queries_preserve_the_boundary_of_a_retraced_path",
+      "bezier_region::retained_point_classification_tests::generated_point_queries_reenter_an_exact_parabolic_offset",
+      "bezier_region::retained_point_classification_tests::lazy_endpoint_points_classify_on_exact_rectangle_oracles",
+      "bezier_region::retained_point_classification_tests::public_point_queries_preserve_nested_islands_holes_and_empty_regions",
+      "bezier_region::retained_point_classification_tests::similarity_points_classify_on_exact_rectangle_oracles",
+      "native_region_tests::empty_native_boundary_input_constructs_an_exact_empty_region",
+      "bezier_region::tests::raw_crossing_loops_need_arrangement_before_nesting",
+      "bezier_region::tests::boundary_path_construction_obeys_selected_terminal_policy"
+    ],
+    "hypercurve_bezier_region": [
+      "arrangement_admission_regularizes_crossings_and_canceled_seams",
+      "arrangement_admission_retains_selected_curve_evidence_for_reentry",
+      "closed_polynomial_arrangement_materializes_retained_region_with_exact_area",
+      "conic_area_rejects_uncertified_projective_denominator",
+      "conic_region_boundary_materializes_with_exact_area",
+      "empty_boundary_loops_do_not_certify_signed_area",
+      "equal_weight_rational_quadratic_area_matches_polynomial_exactly",
+      "exact_conic_splits_and_reversal_retain_denominator_and_area_facts",
+      "material_components_keep_recursive_hole_ownership_and_recompose_exactly",
+      "native_boundary_loop_constructor_rejects_open_fragment_cycle",
+      "open_arrangement_chain_does_not_materialize_region",
+      "quarter_circle_rational_conic_area_is_exact_symbolic_sector",
+      "rational_quadratic_area_is_invariant_under_negative_projective_scale",
+      "resolved_linear_overlap_traversal_materializes_unified_region",
+      "resolved_rational_overlap_traversal_materializes_unified_region",
+      "retained_algebraic_line_images_normalize_crossing_loops_under_both_policies",
+      "retained_boundary_loop_constructor_rejects_duplicate_arrangement_sources",
+      "retained_boundary_loop_constructor_rejects_forged_materialized_range_order",
+      "retained_boundary_loop_constructor_rejects_forged_source_endpoint_image",
+      "retained_boundary_loop_constructor_rejects_incomplete_algebraic_endpoint_evidence",
+      "retained_boundary_loop_constructor_rejects_open_fragment_cycle",
+      "retained_boundary_loop_constructor_rejects_source_only_algebraic_endpoint_evidence",
+      "retained_certified_nonlinear_line_image_uses_authoritative_roles",
+      "retained_curve_envelope_includes_native_bezier_interior_extrema",
+      "retained_curve_envelope_uses_algebraic_endpoint_image_before_interval_hull",
+      "retained_curve_envelope_uses_algebraic_parameter_interval_hull",
+      "retained_curve_envelope_uses_source_bounds_for_algebraic_split_fragments",
+      "regularized_nonlinear_boundary_retains_roles_area_and_provenance",
+      "retained_exact_algebraic_endpoint_line_images_assign_roles",
+      "retained_exact_line_images_assign_nested_material_and_hole",
+      "retained_nonlinear_algebraic_carriers_classify_without_materialization",
+      "reversed_internal_overlap_traversal_materializes_union_boundary",
+      "symmetric_quadratic_lens_area_scales_exactly"
+    ]
+  },
+  "all_processes_reaped": true,
+  "probe_complete": true,
+  "qualification_complete": true
+}

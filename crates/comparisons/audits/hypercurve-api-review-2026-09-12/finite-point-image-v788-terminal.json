@@ -1,0 +1,2892 @@
+{
+  "normal_production_build": true,
+  "source_manifest": "finite-point-image-v788-sources.json",
+  "source_directory": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/source-archives/finite-point-image-v788",
+  "builds": [
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "test",
+        "--lib",
+        "--test",
+        "hypercurve_bezier_algebraic_image",
+        "--test",
+        "hypercurve_curve_point",
+        "--test",
+        "hypercurve_bezier_algebraic_parameter",
+        "--test",
+        "hypercurve_bezier_split_materialization",
+        "--test",
+        "hypercurve_bezier_tangent_order",
+        "--test",
+        "hypercurve_bezier_arrangement",
+        "--test",
+        "hypercurve_curve_region_promotion",
+        "--release",
+        "--all-features",
+        "--locked",
+        "--offline",
+        "--no-run",
+        "--message-format=json"
+      ],
+      "returncode": 0,
+      "log": "finite-point-image-v788-hypercurve-build.log",
+      "elapsed_seconds": 203.76764727314003,
+      "binaries": {
+        "hypercurve_bezier_algebraic_image": {
+          "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-point-image-v788-hypercurve_bezier_algebraic_image-tests",
+          "sha256": "78d473267b4933265b7df12da181a0c8d15fcf60bf14aae0f782d53a3d91cb54"
+        },
+        "hypercurve_bezier_split_materialization": {
+          "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-point-image-v788-hypercurve_bezier_split_materialization-tests",
+          "sha256": "527f28525bb5a3e067ba5feee30a87f41c31cb01fd83435e8df00c919bd135b5"
+        },
+        "hypercurve_curve_region_promotion": {
+          "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-point-image-v788-hypercurve_curve_region_promotion-tests",
+          "sha256": "c8d10ec2e5d41008747be147c6d9134a177f6ddd0a484192d679781b4d5dd16c"
+        },
+        "hypercurve_curve_point": {
+          "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-point-image-v788-hypercurve_curve_point-tests",
+          "sha256": "2e0428cd2b6c87eaf0ff26ce17c182884018d888d50e7935b36e1bd669d63759"
+        },
+        "hypercurve_bezier_arrangement": {
+          "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-point-image-v788-hypercurve_bezier_arrangement-tests",
+          "sha256": "70a9cfbf35dd06622737cfb16b58909fec883e0b819be2fba49210e7811db714"
+        },
+        "hypercurve_bezier_tangent_order": {
+          "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-point-image-v788-hypercurve_bezier_tangent_order-tests",
+          "sha256": "7466369e85cb011ba6611ae4ff5f13239d342d6f65ef6b6e7ead6a60675866bb"
+        },
+        "hypercurve_bezier_algebraic_parameter": {
+          "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-point-image-v788-hypercurve_bezier_algebraic_parameter-tests",
+          "sha256": "062b8fe000451784458c7206ba1ae23d3f84e1dd8a4b2e9c38effafd025c5297"
+        },
+        "hypercurve": {
+          "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-point-image-v788-hypercurve-tests",
+          "sha256": "b7e28d7808c5d27852340036ea7e30d4506869c6d63e15c8548dea9412c82983"
+        }
+      }
+    }
+  ],
+  "cases": [
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-point-image-v788-hypercurve-tests",
+        "--exact",
+        "bezier_algebraic_image::policy_tests::arithmetic_adapter_replays_close_nonrational_bounds_strictly",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "finite-point-image-v788-arithmetic_adapter_replays_close_nonrational_bounds_strictly-77b582c446.log",
+      "elapsed_seconds": 0.0035139990504831076,
+      "target": "hypercurve",
+      "name": "bezier_algebraic_image::policy_tests::arithmetic_adapter_replays_close_nonrational_bounds_strictly",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-point-image-v788-hypercurve-tests",
+        "--exact",
+        "bezier_algebraic_image::policy_tests::coordinate_images_preserve_native_polynomial_point_values",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "finite-point-image-v788-coordinate_images_preserve_native_polynomial_point_values-3de5a26e30.log",
+      "elapsed_seconds": 0.003499999875202775,
+      "target": "hypercurve",
+      "name": "bezier_algebraic_image::policy_tests::coordinate_images_preserve_native_polynomial_point_values",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-point-image-v788-hypercurve-tests",
+        "--exact",
+        "bezier_algebraic_image::policy_tests::exact_real_representation_preserves_native_point_payloads",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "finite-point-image-v788-exact_real_representation_preserves_native_point_payloads-ab6f226742.log",
+      "elapsed_seconds": 0.003546187188476324,
+      "target": "hypercurve",
+      "name": "bezier_algebraic_image::policy_tests::exact_real_representation_preserves_native_point_payloads",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-point-image-v788-hypercurve-tests",
+        "--exact",
+        "bezier_algebraic_image::policy_tests::retained_constant_coordinates_do_not_require_scalar_parameter_images",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "finite-point-image-v788-retained_constant_coordinates_do_not_require_scalar_parameter_images-46b89500d1.log",
+      "elapsed_seconds": 0.003490669885650277,
+      "target": "hypercurve",
+      "name": "bezier_algebraic_image::policy_tests::retained_constant_coordinates_do_not_require_scalar_parameter_images",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-point-image-v788-hypercurve-tests",
+        "--exact",
+        "bezier_offset::conversion_tests::algebraic_chord_retains_independent_endpoint_fields_under_both_policies",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "finite-point-image-v788-algebraic_chord_retains_independent_endpoint_fields_under_both_policies-9bd29ea45b.log",
+      "elapsed_seconds": 0.01564371702261269,
+      "target": "hypercurve",
+      "name": "bezier_offset::conversion_tests::algebraic_chord_retains_independent_endpoint_fields_under_both_policies",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-point-image-v788-hypercurve-tests",
+        "--exact",
+        "bezier_offset::conversion_tests::algebraic_cusp_semicircle_intersects_independent_field_oblique_chords_exactly",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "finite-point-image-v788-algebraic_cusp_semicircle_intersects_independent_field_oblique_chords_exactly-c938886036.log",
+      "elapsed_seconds": 0.031693845987319946,
+      "target": "hypercurve",
+      "name": "bezier_offset::conversion_tests::algebraic_cusp_semicircle_intersects_independent_field_oblique_chords_exactly",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-point-image-v788-hypercurve-tests",
+        "--exact",
+        "bezier_offset::conversion_tests::genuine_parallel_algebraic_ray_replays_the_unsquared_branch",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "finite-point-image-v788-genuine_parallel_algebraic_ray_replays_the_unsquared_branch-b451ec61b4.log",
+      "elapsed_seconds": 0.015632527181878686,
+      "target": "hypercurve",
+      "name": "bezier_offset::conversion_tests::genuine_parallel_algebraic_ray_replays_the_unsquared_branch",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-point-image-v788-hypercurve-tests",
+        "--exact",
+        "bezier_offset::conversion_tests::independent_field_algebraic_chord_intersects_rational_curve_under_both_policies",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "finite-point-image-v788-independent_field_algebraic_chord_intersects_rational_curve_under_both_policies-d8f570c302.log",
+      "elapsed_seconds": 0.03169369604438543,
+      "target": "hypercurve",
+      "name": "bezier_offset::conversion_tests::independent_field_algebraic_chord_intersects_rational_curve_under_both_policies",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-point-image-v788-hypercurve-tests",
+        "--exact",
+        "bezier_offset::conversion_tests::represented_circle_incidence_replays_retained_similarity_points",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "finite-point-image-v788-represented_circle_incidence_replays_retained_similarity_points-5b52f53990.log",
+      "elapsed_seconds": 0.0035105689894407988,
+      "target": "hypercurve",
+      "name": "bezier_offset::conversion_tests::represented_circle_incidence_replays_retained_similarity_points",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-point-image-v788-hypercurve-tests",
+        "--exact",
+        "bezier_offset::conversion_tests::weighted_selected_center_tangent_line_stays_recursive",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "finite-point-image-v788-weighted_selected_center_tangent_line_stays_recursive-43de8c34ed.log",
+      "elapsed_seconds": 0.015662865014746785,
+      "target": "hypercurve",
+      "name": "bezier_offset::conversion_tests::weighted_selected_center_tangent_line_stays_recursive",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-point-image-v788-hypercurve-tests",
+        "--exact",
+        "bezier_region::tests::algebraic_query_winding_mixes_genuine_parallel_and_native_fragments",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "finite-point-image-v788-algebraic_query_winding_mixes_genuine_parallel_and_native_fragments-ece31b5831.log",
+      "elapsed_seconds": 0.01566103589721024,
+      "target": "hypercurve",
+      "name": "bezier_region::tests::algebraic_query_winding_mixes_genuine_parallel_and_native_fragments",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-point-image-v788-hypercurve-tests",
+        "--exact",
+        "bezier_region::tests::algebraic_retained_range_ray_winding_handles_crossing_multiplicity",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "finite-point-image-v788-algebraic_retained_range_ray_winding_handles_crossing_multiplicity-00e4e5af18.log",
+      "elapsed_seconds": 0.0076010378543287516,
+      "target": "hypercurve",
+      "name": "bezier_region::tests::algebraic_retained_range_ray_winding_handles_crossing_multiplicity",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-point-image-v788-hypercurve-tests",
+        "--exact",
+        "curve::curve_evaluation::tests::repeated_unit_chart_evaluation_reuses_selected_root_images",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "finite-point-image-v788-repeated_unit_chart_evaluation_reuses_selected_root_images-e0cfaf3e47.log",
+      "elapsed_seconds": 0.003498380072414875,
+      "target": "hypercurve",
+      "name": "curve::curve_evaluation::tests::repeated_unit_chart_evaluation_reuses_selected_root_images",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-point-image-v788-hypercurve-tests",
+        "--exact",
+        "curve_region_trim::tests::generated_chord_trim_preserves_holes_and_exact_endpoint_replay",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "finite-point-image-v788-generated_chord_trim_preserves_holes_and_exact_endpoint_replay-ca77ed69d9.log",
+      "elapsed_seconds": 0.5142955200280994,
+      "target": "hypercurve",
+      "name": "curve_region_trim::tests::generated_chord_trim_preserves_holes_and_exact_endpoint_replay",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-point-image-v788-hypercurve-tests",
+        "--exact",
+        "rational_bezier_general::tests::deferred_parametric_point_reuses_source_polynomials_for_exact_equality",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "finite-point-image-v788-deferred_parametric_point_reuses_source_polynomials_for_exact_equality-e5e288f01e.log",
+      "elapsed_seconds": 0.0035690050572156906,
+      "target": "hypercurve",
+      "name": "rational_bezier_general::tests::deferred_parametric_point_reuses_source_polynomials_for_exact_equality",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-point-image-v788-hypercurve-tests",
+        "--exact",
+        "rational_bezier_general::tests::exact_contact_evidence_reuses_a_retained_high_degree_image",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "finite-point-image-v788-exact_contact_evidence_reuses_a_retained_high_degree_image-ab454bdf07.log",
+      "elapsed_seconds": 0.003519678022712469,
+      "target": "hypercurve",
+      "name": "rational_bezier_general::tests::exact_contact_evidence_reuses_a_retained_high_degree_image",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-point-image-v788-hypercurve-tests",
+        "--exact",
+        "bezier_split_endpoint::tests::lazy_endpoint_points_preserve_affine_domain_blockers",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "finite-point-image-v788-lazy_endpoint_points_preserve_affine_domain_blockers-6c280c0d1a.log",
+      "elapsed_seconds": 0.003516287775710225,
+      "target": "hypercurve",
+      "name": "bezier_split_endpoint::tests::lazy_endpoint_points_preserve_affine_domain_blockers",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-point-image-v788-hypercurve-tests",
+        "--exact",
+        "bezier_offset::conversion_tests::independent_oblique_chords_support_constrained_fillet_families",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "finite-point-image-v788-independent_oblique_chords_support_constrained_fillet_families-2e618b8f21.log",
+      "elapsed_seconds": 21.8413249081932,
+      "target": "hypercurve",
+      "name": "bezier_offset::conversion_tests::independent_oblique_chords_support_constrained_fillet_families",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-point-image-v788-hypercurve-tests",
+        "--exact",
+        "curve::curve_fillet::stationary_continuous_family_regression::continuous_fillets_preserve_stationary_reparameterization",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "finite-point-image-v788-continuous_fillets_preserve_stationary_reparameterization-29d6a94148.log",
+      "elapsed_seconds": 9.525893882848322,
+      "target": "hypercurve",
+      "name": "curve::curve_fillet::stationary_continuous_family_regression::continuous_fillets_preserve_stationary_reparameterization",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-point-image-v788-hypercurve-tests",
+        "--exact",
+        "curve::curve_fillet::tests::continuous_fillet_constraints_accept_arbitrary_exact_real_contacts",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "finite-point-image-v788-continuous_fillet_constraints_accept_arbitrary_exact_real_contacts-5a2623c2e3.log",
+      "elapsed_seconds": 0.03175864112563431,
+      "target": "hypercurve",
+      "name": "curve::curve_fillet::tests::continuous_fillet_constraints_accept_arbitrary_exact_real_contacts",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-point-image-v788-hypercurve-tests",
+        "--exact",
+        "curve::curve_fillet::tests::joined_path_selects_and_replays_a_continuous_fillet_family",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "finite-point-image-v788-joined_path_selects_and_replays_a_continuous_fillet_family-917c82aef4.log",
+      "elapsed_seconds": 0.31405328609980643,
+      "target": "hypercurve",
+      "name": "curve::curve_fillet::tests::joined_path_selects_and_replays_a_continuous_fillet_family",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-point-image-v788-hypercurve-tests",
+        "--exact",
+        "curve::curve_fillet::tests::normalized_region_selects_and_reuses_a_continuous_fillet_family",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "finite-point-image-v788-normalized_region_selects_and_reuses_a_continuous_fillet_family-48c0d2fec3.log",
+      "elapsed_seconds": 0.11390771600417793,
+      "target": "hypercurve",
+      "name": "curve::curve_fillet::tests::normalized_region_selects_and_reuses_a_continuous_fillet_family",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-point-image-v788-hypercurve_bezier_algebraic_image-tests",
+        "--exact",
+        "conic_point_images_reuse_exact_evaluation_across_weight_charts",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "finite-point-image-v788-conic_point_images_reuse_exact_evaluation_across_weight_charts-b847cdb475.log",
+      "elapsed_seconds": 0.06378892506472766,
+      "target": "hypercurve_bezier_algebraic_image",
+      "name": "conic_point_images_reuse_exact_evaluation_across_weight_charts",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-point-image-v788-hypercurve_bezier_algebraic_image-tests",
+        "--exact",
+        "cubic_point_and_tangent_images_use_power_basis_resultants",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "finite-point-image-v788-cubic_point_and_tangent_images_use_power_basis_resultants-4d8c76e17f.log",
+      "elapsed_seconds": 0.003521558130159974,
+      "target": "hypercurve_bezier_algebraic_image",
+      "name": "cubic_point_and_tangent_images_use_power_basis_resultants",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-point-image-v788-hypercurve_bezier_algebraic_image-tests",
+        "--exact",
+        "linear_coordinate_images_match_exact_midpoint_values",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "finite-point-image-v788-linear_coordinate_images_match_exact_midpoint_values-0cbb508fbf.log",
+      "elapsed_seconds": 0.007571749854832888,
+      "target": "hypercurve_bezier_algebraic_image",
+      "name": "linear_coordinate_images_match_exact_midpoint_values",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-point-image-v788-hypercurve_bezier_algebraic_image-tests",
+        "--exact",
+        "nonmonotone_coordinate_image_is_certified_without_sampling",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "finite-point-image-v788-nonmonotone_coordinate_image_is_certified_without_sampling-7da1b3868d.log",
+      "elapsed_seconds": 0.003509778995066881,
+      "target": "hypercurve_bezier_algebraic_image",
+      "name": "nonmonotone_coordinate_image_is_certified_without_sampling",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-point-image-v788-hypercurve_bezier_algebraic_image-tests",
+        "--exact",
+        "quadratic_point_and_tangent_images_retain_algebraic_coordinate_evidence",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "finite-point-image-v788-quadratic_point_and_tangent_images_retain_algebraic_coordinate_evidence-08bfbd2075.log",
+      "elapsed_seconds": 0.003564366139471531,
+      "target": "hypercurve_bezier_algebraic_image",
+      "name": "quadratic_point_and_tangent_images_retain_algebraic_coordinate_evidence",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-point-image-v788-hypercurve_bezier_algebraic_image-tests",
+        "--exact",
+        "rational_image_cache_keeps_curve_family_certificate_shapes_distinct",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "finite-point-image-v788-rational_image_cache_keeps_curve_family_certificate_shapes_distinct-e368437c3a.log",
+      "elapsed_seconds": 0.003537727054208517,
+      "target": "hypercurve_bezier_algebraic_image",
+      "name": "rational_image_cache_keeps_curve_family_certificate_shapes_distinct",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-point-image-v788-hypercurve_bezier_algebraic_image-tests",
+        "--exact",
+        "rational_line_image_matches_exact_midpoint_values",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "finite-point-image-v788-rational_line_image_matches_exact_midpoint_values-0b4102f5fd.log",
+      "elapsed_seconds": 0.015621628845110536,
+      "target": "hypercurve_bezier_algebraic_image",
+      "name": "rational_line_image_matches_exact_midpoint_values",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-point-image-v788-hypercurve_bezier_algebraic_image-tests",
+        "--exact",
+        "rational_point_image_transforms_exact_real_linear_root",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "finite-point-image-v788-rational_point_image_transforms_exact_real_linear_root-4ac303e22a.log",
+      "elapsed_seconds": 0.0035061798989772797,
+      "target": "hypercurve_bezier_algebraic_image",
+      "name": "rational_point_image_transforms_exact_real_linear_root",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-point-image-v788-hypercurve_bezier_algebraic_image-tests",
+        "--exact",
+        "rational_point_images_require_finite_affine_coordinates",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "finite-point-image-v788-rational_point_images_require_finite_affine_coordinates-6af02cce96.log",
+      "elapsed_seconds": 0.0034940908662974834,
+      "target": "hypercurve_bezier_algebraic_image",
+      "name": "rational_point_images_require_finite_affine_coordinates",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-point-image-v788-hypercurve_bezier_algebraic_image-tests",
+        "--exact",
+        "rational_quadratic_point_and_tangent_images_retain_quotient_evidence",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "finite-point-image-v788-rational_quadratic_point_and_tangent_images_retain_quotient_evidence-7e9923945a.log",
+      "elapsed_seconds": 0.0035331780090928078,
+      "target": "hypercurve_bezier_algebraic_image",
+      "name": "rational_quadratic_point_and_tangent_images_retain_quotient_evidence",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-point-image-v788-hypercurve_curve_point-tests",
+        "--exact",
+        "coordinate_view_accepts_arbitrary_exact_reals_and_preserves_certainty",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "finite-point-image-v788-coordinate_view_accepts_arbitrary_exact_reals_and_preserves_certainty-81b8eb2819.log",
+      "elapsed_seconds": 0.003461242886260152,
+      "target": "hypercurve_curve_point",
+      "name": "coordinate_view_accepts_arbitrary_exact_reals_and_preserves_certainty",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-point-image-v788-hypercurve_curve_point-tests",
+        "--exact",
+        "independent_selected_charts_share_the_general_point_queries",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "finite-point-image-v788-independent_selected_charts_share_the_general_point_queries-a36ca06d74.log",
+      "elapsed_seconds": 0.0034983400255441666,
+      "target": "hypercurve_curve_point",
+      "name": "independent_selected_charts_share_the_general_point_queries",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-point-image-v788-hypercurve_bezier_algebraic_parameter-tests",
+        "--exact",
+        "algebraic_parameter_is_a_clone_shared_handle",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "finite-point-image-v788-algebraic_parameter_is_a_clone_shared_handle-394cef691d.log",
+      "elapsed_seconds": 0.003507099812850356,
+      "target": "hypercurve_bezier_algebraic_parameter",
+      "name": "algebraic_parameter_is_a_clone_shared_handle",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-point-image-v788-hypercurve_bezier_algebraic_parameter-tests",
+        "--exact",
+        "algebraic_parameter_recovers_represented_linear_root",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "finite-point-image-v788-algebraic_parameter_recovers_represented_linear_root-66f6f24d72.log",
+      "elapsed_seconds": 0.0034875208511948586,
+      "target": "hypercurve_bezier_algebraic_parameter",
+      "name": "algebraic_parameter_recovers_represented_linear_root",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-point-image-v788-hypercurve_bezier_algebraic_parameter-tests",
+        "--exact",
+        "algebraic_root_sign_change_tracks_multiplicity_parity",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "finite-point-image-v788-algebraic_root_sign_change_tracks_multiplicity_parity-618fc05871.log",
+      "elapsed_seconds": 0.0035309481900185347,
+      "target": "hypercurve_bezier_algebraic_parameter",
+      "name": "algebraic_root_sign_change_tracks_multiplicity_parity",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-point-image-v788-hypercurve_bezier_algebraic_parameter-tests",
+        "--exact",
+        "bernstein_conversion_preserves_high_degree_constant_identity",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "finite-point-image-v788-bernstein_conversion_preserves_high_degree_constant_identity-ff1a3d5437.log",
+      "elapsed_seconds": 0.0035153089556843042,
+      "target": "hypercurve_bezier_algebraic_parameter",
+      "name": "bernstein_conversion_preserves_high_degree_constant_identity",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-point-image-v788-hypercurve_bezier_algebraic_parameter-tests",
+        "--exact",
+        "cubic_distance_stationary_quintic_isolates_all_five_candidates",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "finite-point-image-v788-cubic_distance_stationary_quintic_isolates_all_five_candidates-a8c87ef64a.log",
+      "elapsed_seconds": 0.003511108923703432,
+      "target": "hypercurve_bezier_algebraic_parameter",
+      "name": "cubic_distance_stationary_quintic_isolates_all_five_candidates",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-point-image-v788-hypercurve_bezier_algebraic_parameter-tests",
+        "--exact",
+        "endpoint_root_is_rejected_for_algebraic_isolators",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "finite-point-image-v788-endpoint_root_is_rejected_for_algebraic_isolators-6d65e7bf38.log",
+      "elapsed_seconds": 0.0014502010308206081,
+      "target": "hypercurve_bezier_algebraic_parameter",
+      "name": "endpoint_root_is_rejected_for_algebraic_isolators",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-point-image-v788-hypercurve_bezier_algebraic_parameter-tests",
+        "--exact",
+        "endpoint_touching_singleton_isolators_have_strict_order",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "finite-point-image-v788-endpoint_touching_singleton_isolators_have_strict_order-1771649009.log",
+      "elapsed_seconds": 0.0014428310096263885,
+      "target": "hypercurve_bezier_algebraic_parameter",
+      "name": "endpoint_touching_singleton_isolators_have_strict_order",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-point-image-v788-hypercurve_bezier_algebraic_parameter-tests",
+        "--exact",
+        "equivalent_irrational_roots_compare_equal_across_polynomials_and_isolators",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "finite-point-image-v788-equivalent_irrational_roots_compare_equal_across_polynomials_and_isolators-f882f754e2.log",
+      "elapsed_seconds": 0.0034822910092771053,
+      "target": "hypercurve_bezier_algebraic_parameter",
+      "name": "equivalent_irrational_roots_compare_equal_across_polynomials_and_isolators",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-point-image-v788-hypercurve_bezier_algebraic_parameter-tests",
+        "--exact",
+        "exact_and_algebraic_parameters_compare_only_when_certified",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "finite-point-image-v788-exact_and_algebraic_parameters_compare_only_when_certified-dba958d7ee.log",
+      "elapsed_seconds": 0.003542375983670354,
+      "target": "hypercurve_bezier_algebraic_parameter",
+      "name": "exact_and_algebraic_parameters_compare_only_when_certified",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-point-image-v788-hypercurve_bezier_algebraic_parameter-tests",
+        "--exact",
+        "finite_parameter_interval_contract::exterior_root_images_preserve_equations_and_native_curve_domains",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "finite-point-image-v788-exterior_root_images_preserve_equations_and_native_curve_domains-8d901e0f1a.log",
+      "elapsed_seconds": 0.0035046800039708614,
+      "target": "hypercurve_bezier_algebraic_parameter",
+      "name": "finite_parameter_interval_contract::exterior_root_images_preserve_equations_and_native_curve_domains",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-point-image-v788-hypercurve_bezier_algebraic_parameter-tests",
+        "--exact",
+        "finite_parameter_interval_contract::positive_unit_weights_do_not_admit_exterior_algebraic_poles",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "finite-point-image-v788-positive_unit_weights_do_not_admit_exterior_algebraic_poles-ffcf6c4f0b.log",
+      "elapsed_seconds": 0.0035326879005879164,
+      "target": "hypercurve_bezier_algebraic_parameter",
+      "name": "finite_parameter_interval_contract::positive_unit_weights_do_not_admit_exterior_algebraic_poles",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-point-image-v788-hypercurve_bezier_algebraic_parameter-tests",
+        "--exact",
+        "irrational_nonlinear_parameter_remains_algebraic",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "finite-point-image-v788-irrational_nonlinear_parameter_remains_algebraic-a46b2d77ae.log",
+      "elapsed_seconds": 0.001480418024584651,
+      "target": "hypercurve_bezier_algebraic_parameter",
+      "name": "irrational_nonlinear_parameter_remains_algebraic",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-point-image-v788-hypercurve_bezier_algebraic_parameter-tests",
+        "--exact",
+        "irrational_root_isolation_skips_rational_reconstruction_refinement",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "finite-point-image-v788-irrational_root_isolation_skips_rational_reconstruction_refinement-4eeef821f7.log",
+      "elapsed_seconds": 0.003471521893516183,
+      "target": "hypercurve_bezier_algebraic_parameter",
+      "name": "irrational_root_isolation_skips_rational_reconstruction_refinement",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-point-image-v788-hypercurve_bezier_algebraic_parameter-tests",
+        "--exact",
+        "linear_integer_polynomials_count_at_most_one_root",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "finite-point-image-v788-linear_integer_polynomials_count_at_most_one_root-cf56ad9e69.log",
+      "elapsed_seconds": 0.0035043000243604183,
+      "target": "hypercurve_bezier_algebraic_parameter",
+      "name": "linear_integer_polynomials_count_at_most_one_root",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-point-image-v788-hypercurve_bezier_algebraic_parameter-tests",
+        "--exact",
+        "linear_midpoint_root_is_a_valid_algebraic_parameter",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "finite-point-image-v788-linear_midpoint_root_is_a_valid_algebraic_parameter-59bffec25f.log",
+      "elapsed_seconds": 0.0034914109855890274,
+      "target": "hypercurve_bezier_algebraic_parameter",
+      "name": "linear_midpoint_root_is_a_valid_algebraic_parameter",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-point-image-v788-hypercurve_bezier_algebraic_parameter-tests",
+        "--exact",
+        "multi_root_bracket_is_rejected_as_not_an_isolator",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "finite-point-image-v788-multi_root_bracket_is_rejected_as_not_an_isolator-8284b5c8b6.log",
+      "elapsed_seconds": 0.0034972301218658686,
+      "target": "hypercurve_bezier_algebraic_parameter",
+      "name": "multi_root_bracket_is_rejected_as_not_an_isolator",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-point-image-v788-hypercurve_bezier_algebraic_parameter-tests",
+        "--exact",
+        "nonlinear_algebraic_parameter_reconstructs_exact_rational_root",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "finite-point-image-v788-nonlinear_algebraic_parameter_reconstructs_exact_rational_root-ca993f2af5.log",
+      "elapsed_seconds": 0.0035019901115447283,
+      "target": "hypercurve_bezier_algebraic_parameter",
+      "name": "nonlinear_algebraic_parameter_reconstructs_exact_rational_root",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-point-image-v788-hypercurve_bezier_algebraic_parameter-tests",
+        "--exact",
+        "nonrational_linear_parameter_uses_exact_point_api",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "finite-point-image-v788-nonrational_linear_parameter_uses_exact_point_api-b490676029.log",
+      "elapsed_seconds": 0.00350164994597435,
+      "target": "hypercurve_bezier_algebraic_parameter",
+      "name": "nonrational_linear_parameter_uses_exact_point_api",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-point-image-v788-hypercurve_bezier_algebraic_parameter-tests",
+        "--exact",
+        "nonrational_quartic_uses_exact_bernstein_root_certificates",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "finite-point-image-v788-nonrational_quartic_uses_exact_bernstein_root_certificates-0fef72ff3d.log",
+      "elapsed_seconds": 0.003521038917824626,
+      "target": "hypercurve_bezier_algebraic_parameter",
+      "name": "nonrational_quartic_uses_exact_bernstein_root_certificates",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-point-image-v788-hypercurve_bezier_algebraic_parameter-tests",
+        "--exact",
+        "oriented_parameter_range_retains_irrational_boundary",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "finite-point-image-v788-oriented_parameter_range_retains_irrational_boundary-3031b90934.log",
+      "elapsed_seconds": 0.003549925982952118,
+      "target": "hypercurve_bezier_algebraic_parameter",
+      "name": "oriented_parameter_range_retains_irrational_boundary",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-point-image-v788-hypercurve_bezier_algebraic_parameter-tests",
+        "--exact",
+        "overlapping_distinct_parameters_compare_by_certified_refinement",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "finite-point-image-v788-overlapping_distinct_parameters_compare_by_certified_refinement-a58905e79a.log",
+      "elapsed_seconds": 0.0035652059596031904,
+      "target": "hypercurve_bezier_algebraic_parameter",
+      "name": "overlapping_distinct_parameters_compare_by_certified_refinement",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-point-image-v788-hypercurve_bezier_algebraic_parameter-tests",
+        "--exact",
+        "parameter_range_promotes_represented_rational_boundary",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "finite-point-image-v788-parameter_range_promotes_represented_rational_boundary-f47b1a91af.log",
+      "elapsed_seconds": 0.0014209020882844925,
+      "target": "hypercurve_bezier_algebraic_parameter",
+      "name": "parameter_range_promotes_represented_rational_boundary",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-point-image-v788-hypercurve_bezier_algebraic_parameter-tests",
+        "--exact",
+        "parameter_range_rejects_equal_and_accepts_affine_extension_boundaries",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "finite-point-image-v788-parameter_range_rejects_equal_and_accepts_affine_extension_boundaries-965888eef8.log",
+      "elapsed_seconds": 0.0014335508458316326,
+      "target": "hypercurve_bezier_algebraic_parameter",
+      "name": "parameter_range_rejects_equal_and_accepts_affine_extension_boundaries",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-point-image-v788-hypercurve_bezier_algebraic_parameter-tests",
+        "--exact",
+        "quadratic_singleton_isolator_is_validated_by_sturm_count",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "finite-point-image-v788-quadratic_singleton_isolator_is_validated_by_sturm_count-95614a9e8e.log",
+      "elapsed_seconds": 0.0013860051985830069,
+      "target": "hypercurve_bezier_algebraic_parameter",
+      "name": "quadratic_singleton_isolator_is_validated_by_sturm_count",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-point-image-v788-hypercurve_bezier_algebraic_parameter-tests",
+        "--exact",
+        "quintic_root_isolation_trace_reuses_sturm_certificates",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "finite-point-image-v788-quintic_root_isolation_trace_reuses_sturm_certificates-3b5dba7907.log",
+      "elapsed_seconds": 0.003484060987830162,
+      "target": "hypercurve_bezier_algebraic_parameter",
+      "name": "quintic_root_isolation_trace_reuses_sturm_certificates",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-point-image-v788-hypercurve_bezier_algebraic_parameter-tests",
+        "--exact",
+        "repeated_nonrational_quartic_falls_back_to_complete_sturm_isolation",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "finite-point-image-v788-repeated_nonrational_quartic_falls_back_to_complete_sturm_isolation-fc1ada2927.log",
+      "elapsed_seconds": 0.003495201002806425,
+      "target": "hypercurve_bezier_algebraic_parameter",
+      "name": "repeated_nonrational_quartic_falls_back_to_complete_sturm_isolation",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-point-image-v788-hypercurve_bezier_algebraic_parameter-tests",
+        "--exact",
+        "represented_root_sign_change_tracks_high_multiplicity_parity",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "finite-point-image-v788-represented_root_sign_change_tracks_high_multiplicity_parity-040454e7c4.log",
+      "elapsed_seconds": 0.0014490301255136728,
+      "target": "hypercurve_bezier_algebraic_parameter",
+      "name": "represented_root_sign_change_tracks_high_multiplicity_parity",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-point-image-v788-hypercurve_bezier_algebraic_parameter-tests",
+        "--exact",
+        "reversed_parameter_intervals_are_rejected",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "finite-point-image-v788-reversed_parameter_intervals_are_rejected-e296e0df37.log",
+      "elapsed_seconds": 0.001464789966121316,
+      "target": "hypercurve_bezier_algebraic_parameter",
+      "name": "reversed_parameter_intervals_are_rejected",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-point-image-v788-hypercurve_bezier_algebraic_parameter-tests",
+        "--exact",
+        "unit_root_isolation_has_no_fixed_dyadic_depth_limit",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "finite-point-image-v788-unit_root_isolation_has_no_fixed_dyadic_depth_limit-4d5ca59776.log",
+      "elapsed_seconds": 0.03165330784395337,
+      "target": "hypercurve_bezier_algebraic_parameter",
+      "name": "unit_root_isolation_has_no_fixed_dyadic_depth_limit",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-point-image-v788-hypercurve_bezier_algebraic_parameter-tests",
+        "--exact",
+        "unit_root_isolation_orders_represented_and_algebraic_roots",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "finite-point-image-v788-unit_root_isolation_orders_represented_and_algebraic_roots-3411fd0e00.log",
+      "elapsed_seconds": 0.003479371080175042,
+      "target": "hypercurve_bezier_algebraic_parameter",
+      "name": "unit_root_isolation_orders_represented_and_algebraic_roots",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-point-image-v788-hypercurve_bezier_split_materialization-tests",
+        "--exact",
+        "algebraic_boundary_carries_endpoint_images_without_approximate_materialization",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "finite-point-image-v788-algebraic_boundary_carries_endpoint_images_without_approximate_materialization-4f51bda165.log",
+      "elapsed_seconds": 0.0035399470943957567,
+      "target": "hypercurve_bezier_split_materialization",
+      "name": "algebraic_boundary_carries_endpoint_images_without_approximate_materialization",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-point-image-v788-hypercurve_bezier_split_materialization-tests",
+        "--exact",
+        "algebraic_endpoint_image_is_a_clone_shared_handle",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "finite-point-image-v788-algebraic_endpoint_image_is_a_clone_shared_handle-bda63a0d5d.log",
+      "elapsed_seconds": 0.0014339820481836796,
+      "target": "hypercurve_bezier_split_materialization",
+      "name": "algebraic_endpoint_image_is_a_clone_shared_handle",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-point-image-v788-hypercurve_bezier_split_materialization-tests",
+        "--exact",
+        "algebraic_fragment_reversal_retains_source_evidence_and_toggles_traversal",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "finite-point-image-v788-algebraic_fragment_reversal_retains_source_evidence_and_toggles_traversal-6b1592591a.log",
+      "elapsed_seconds": 0.00353487697429955,
+      "target": "hypercurve_bezier_split_materialization",
+      "name": "algebraic_fragment_reversal_retains_source_evidence_and_toggles_traversal",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-point-image-v788-hypercurve_bezier_split_materialization-tests",
+        "--exact",
+        "broad_singleton_isolator_materializes_exact_endpoint_images",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "finite-point-image-v788-broad_singleton_isolator_materializes_exact_endpoint_images-b5e5c72c0e.log",
+      "elapsed_seconds": 0.0034988599363714457,
+      "target": "hypercurve_bezier_split_materialization",
+      "name": "broad_singleton_isolator_materializes_exact_endpoint_images",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-point-image-v788-hypercurve_bezier_split_materialization-tests",
+        "--exact",
+        "exact_cubic_subcurve_matches_original_endpoints_at_range_bounds",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "finite-point-image-v788-exact_cubic_subcurve_matches_original_endpoints_at_range_bounds-d37372df1b.log",
+      "elapsed_seconds": 0.0014977781102061272,
+      "target": "hypercurve_bezier_split_materialization",
+      "name": "exact_cubic_subcurve_matches_original_endpoints_at_range_bounds",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-point-image-v788-hypercurve_bezier_split_materialization-tests",
+        "--exact",
+        "exact_quadratic_split_endpoints_match_original",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "finite-point-image-v788-exact_quadratic_split_endpoints_match_original-db9b5ed2f0.log",
+      "elapsed_seconds": 0.003466312075033784,
+      "target": "hypercurve_bezier_split_materialization",
+      "name": "exact_quadratic_split_endpoints_match_original",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-point-image-v788-hypercurve_bezier_split_materialization-tests",
+        "--exact",
+        "exact_quadratic_split_materializes_native_subcurves",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "finite-point-image-v788-exact_quadratic_split_materializes_native_subcurves-472729719d.log",
+      "elapsed_seconds": 0.0015388140454888344,
+      "target": "hypercurve_bezier_split_materialization",
+      "name": "exact_quadratic_split_materializes_native_subcurves",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-point-image-v788-hypercurve_bezier_split_materialization-tests",
+        "--exact",
+        "exact_rational_quadratic_split_preserves_conic_endpoint_evaluation",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "finite-point-image-v788-exact_rational_quadratic_split_preserves_conic_endpoint_evaluation-1cd9a65b4c.log",
+      "elapsed_seconds": 0.003533267183229327,
+      "target": "hypercurve_bezier_split_materialization",
+      "name": "exact_rational_quadratic_split_preserves_conic_endpoint_evaluation",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-point-image-v788-hypercurve_bezier_split_materialization-tests",
+        "--exact",
+        "linear_algebraic_boundary_materializes_native_subcurves",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "finite-point-image-v788-linear_algebraic_boundary_materializes_native_subcurves-f2241d23d2.log",
+      "elapsed_seconds": 0.003530347952619195,
+      "target": "hypercurve_bezier_split_materialization",
+      "name": "linear_algebraic_boundary_materializes_native_subcurves",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-point-image-v788-hypercurve_bezier_split_materialization-tests",
+        "--exact",
+        "rational_algebraic_boundary_carries_conic_endpoint_images",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "finite-point-image-v788-rational_algebraic_boundary_carries_conic_endpoint_images-baf15b7113.log",
+      "elapsed_seconds": 0.003564646001905203,
+      "target": "hypercurve_bezier_split_materialization",
+      "name": "rational_algebraic_boundary_carries_conic_endpoint_images",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-point-image-v788-hypercurve_bezier_split_materialization-tests",
+        "--exact",
+        "rational_algebraic_boundary_with_zero_denominator_returns_explicit_uncertainty",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "finite-point-image-v788-rational_algebraic_boundary_with_zero_denominator_returns_explicit_uncertainty-19ea781c90.log",
+      "elapsed_seconds": 0.003518858924508095,
+      "target": "hypercurve_bezier_split_materialization",
+      "name": "rational_algebraic_boundary_with_zero_denominator_returns_explicit_uncertainty",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-point-image-v788-hypercurve_bezier_split_materialization-tests",
+        "--exact",
+        "rational_algebraic_endpoint_retains_second_derivative_when_constructed",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "finite-point-image-v788-rational_algebraic_endpoint_retains_second_derivative_when_constructed-bc5a108128.log",
+      "elapsed_seconds": 0.0035527360159903765,
+      "target": "hypercurve_bezier_split_materialization",
+      "name": "rational_algebraic_endpoint_retains_second_derivative_when_constructed",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-point-image-v788-hypercurve_bezier_split_materialization-tests",
+        "--exact",
+        "split_materialization_constructor_rejects_disconnected_materialized_fragments",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "finite-point-image-v788-split_materialization_constructor_rejects_disconnected_materialized_fragments-6ad44b63bc.log",
+      "elapsed_seconds": 0.003508548950776458,
+      "target": "hypercurve_bezier_split_materialization",
+      "name": "split_materialization_constructor_rejects_disconnected_materialized_fragments",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-point-image-v788-hypercurve_bezier_split_materialization-tests",
+        "--exact",
+        "split_materialization_constructor_rejects_duplicate_fragments",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "finite-point-image-v788-split_materialization_constructor_rejects_duplicate_fragments-357bb31955.log",
+      "elapsed_seconds": 0.003499629907310009,
+      "target": "hypercurve_bezier_split_materialization",
+      "name": "split_materialization_constructor_rejects_duplicate_fragments",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-point-image-v788-hypercurve_bezier_split_materialization-tests",
+        "--exact",
+        "split_materialization_constructor_rejects_forged_algebraic_endpoint_evidence",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "finite-point-image-v788-split_materialization_constructor_rejects_forged_algebraic_endpoint_evidence-f00c868fd4.log",
+      "elapsed_seconds": 0.0035435159225016832,
+      "target": "hypercurve_bezier_split_materialization",
+      "name": "split_materialization_constructor_rejects_forged_algebraic_endpoint_evidence",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-point-image-v788-hypercurve_bezier_split_materialization-tests",
+        "--exact",
+        "split_materialization_constructor_rejects_incomplete_source_coverage",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "finite-point-image-v788-split_materialization_constructor_rejects_incomplete_source_coverage-be013d83c2.log",
+      "elapsed_seconds": 0.003546766936779022,
+      "target": "hypercurve_bezier_split_materialization",
+      "name": "split_materialization_constructor_rejects_incomplete_source_coverage",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-point-image-v788-hypercurve_bezier_split_materialization-tests",
+        "--exact",
+        "split_materialization_constructor_rejects_materialized_algebraic_range",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "finite-point-image-v788-split_materialization_constructor_rejects_materialized_algebraic_range-42e2f225bd.log",
+      "elapsed_seconds": 0.003532657865434885,
+      "target": "hypercurve_bezier_split_materialization",
+      "name": "split_materialization_constructor_rejects_materialized_algebraic_range",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-point-image-v788-hypercurve_bezier_split_materialization-tests",
+        "--exact",
+        "split_materialization_constructor_rejects_noncontiguous_fragments",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "finite-point-image-v788-split_materialization_constructor_rejects_noncontiguous_fragments-0be5b7b5f7.log",
+      "elapsed_seconds": 0.0034806611947715282,
+      "target": "hypercurve_bezier_split_materialization",
+      "name": "split_materialization_constructor_rejects_noncontiguous_fragments",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-point-image-v788-hypercurve_bezier_tangent_order-tests",
+        "--exact",
+        "algebraic_same_tangent_order_rejects_equal_second_order_evidence",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "finite-point-image-v788-algebraic_same_tangent_order_rejects_equal_second_order_evidence-24541d31a1.log",
+      "elapsed_seconds": 0.00349396001547575,
+      "target": "hypercurve_bezier_tangent_order",
+      "name": "algebraic_same_tangent_order_rejects_equal_second_order_evidence",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-point-image-v788-hypercurve_bezier_tangent_order-tests",
+        "--exact",
+        "algebraic_same_tangent_order_uses_second_derivative_side_witness",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "finite-point-image-v788-algebraic_same_tangent_order_uses_second_derivative_side_witness-ff77a6824b.log",
+      "elapsed_seconds": 0.003517749020829797,
+      "target": "hypercurve_bezier_tangent_order",
+      "name": "algebraic_same_tangent_order_uses_second_derivative_side_witness",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-point-image-v788-hypercurve_bezier_tangent_order-tests",
+        "--exact",
+        "algebraic_same_tangent_order_uses_third_derivative_after_zero_curvature",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "finite-point-image-v788-algebraic_same_tangent_order_uses_third_derivative_after_zero_curvature-40348d7292.log",
+      "elapsed_seconds": 0.003566314931958914,
+      "target": "hypercurve_bezier_tangent_order",
+      "name": "algebraic_same_tangent_order_uses_third_derivative_after_zero_curvature",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-point-image-v788-hypercurve_bezier_tangent_order-tests",
+        "--exact",
+        "algebraic_tangent_order_evidence_same_direction_without_guessing",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "finite-point-image-v788-algebraic_tangent_order_evidence_same_direction_without_guessing-e55ba74c6a.log",
+      "elapsed_seconds": 0.003573514986783266,
+      "target": "hypercurve_bezier_tangent_order",
+      "name": "algebraic_tangent_order_evidence_same_direction_without_guessing",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-point-image-v788-hypercurve_bezier_tangent_order-tests",
+        "--exact",
+        "algebraic_tangent_order_handles_distinct_generators_with_disjoint_enclosures",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "finite-point-image-v788-algebraic_tangent_order_handles_distinct_generators_with_disjoint_enclosures-b3d65c736b.log",
+      "elapsed_seconds": 0.0015245659742504358,
+      "target": "hypercurve_bezier_tangent_order",
+      "name": "algebraic_tangent_order_handles_distinct_generators_with_disjoint_enclosures",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-point-image-v788-hypercurve_bezier_tangent_order-tests",
+        "--exact",
+        "algebraic_tangent_order_rejects_zero_tangent",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "finite-point-image-v788-algebraic_tangent_order_rejects_zero_tangent-61064155bf.log",
+      "elapsed_seconds": 0.003511859104037285,
+      "target": "hypercurve_bezier_tangent_order",
+      "name": "algebraic_tangent_order_rejects_zero_tangent",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-point-image-v788-hypercurve_bezier_tangent_order-tests",
+        "--exact",
+        "algebraic_tangent_order_separates_opposite_half_turns",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "finite-point-image-v788-algebraic_tangent_order_separates_opposite_half_turns-8afbba93a4.log",
+      "elapsed_seconds": 0.0034978999756276608,
+      "target": "hypercurve_bezier_tangent_order",
+      "name": "algebraic_tangent_order_separates_opposite_half_turns",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-point-image-v788-hypercurve_bezier_tangent_order-tests",
+        "--exact",
+        "algebraic_tangent_order_uses_represented_cross_product_for_same_half",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "finite-point-image-v788-algebraic_tangent_order_uses_represented_cross_product_for_same_half-f2b97b729f.log",
+      "elapsed_seconds": 0.0035111589822918177,
+      "target": "hypercurve_bezier_tangent_order",
+      "name": "algebraic_tangent_order_uses_represented_cross_product_for_same_half",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-point-image-v788-hypercurve_bezier_tangent_order-tests",
+        "--exact",
+        "rational_algebraic_same_tangent_order_uses_second_derivative_side_witness",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "finite-point-image-v788-rational_algebraic_same_tangent_order_uses_second_derivative_side_witness-e2c4cf8c29.log",
+      "elapsed_seconds": 0.0035408770199865103,
+      "target": "hypercurve_bezier_tangent_order",
+      "name": "rational_algebraic_same_tangent_order_uses_second_derivative_side_witness",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-point-image-v788-hypercurve_bezier_arrangement-tests",
+        "--exact",
+        "algebraic_split_boundary_blocks_graph_traversal",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "finite-point-image-v788-algebraic_split_boundary_blocks_graph_traversal-6d56565e53.log",
+      "elapsed_seconds": 0.0035037300549447536,
+      "target": "hypercurve_bezier_arrangement",
+      "name": "algebraic_split_boundary_blocks_graph_traversal",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-point-image-v788-hypercurve_bezier_arrangement-tests",
+        "--exact",
+        "arrangement_graph_accepts_adjacent_reused_source_fragment_ranges",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "finite-point-image-v788-arrangement_graph_accepts_adjacent_reused_source_fragment_ranges-45d853dd9b.log",
+      "elapsed_seconds": 0.0034936510492116213,
+      "target": "hypercurve_bezier_arrangement",
+      "name": "arrangement_graph_accepts_adjacent_reused_source_fragment_ranges",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-point-image-v788-hypercurve_bezier_arrangement-tests",
+        "--exact",
+        "arrangement_graph_rejects_duplicate_source_fragment_evidence",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "finite-point-image-v788-arrangement_graph_rejects_duplicate_source_fragment_evidence-19cf3efa9a.log",
+      "elapsed_seconds": 0.0035028390120714903,
+      "target": "hypercurve_bezier_arrangement",
+      "name": "arrangement_graph_rejects_duplicate_source_fragment_evidence",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-point-image-v788-hypercurve_bezier_arrangement-tests",
+        "--exact",
+        "arrangement_graph_rejects_forged_algebraic_endpoint_image_evidence",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "finite-point-image-v788-arrangement_graph_rejects_forged_algebraic_endpoint_image_evidence-046a807184.log",
+      "elapsed_seconds": 0.00352396909147501,
+      "target": "hypercurve_bezier_arrangement",
+      "name": "arrangement_graph_rejects_forged_algebraic_endpoint_image_evidence",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-point-image-v788-hypercurve_bezier_arrangement-tests",
+        "--exact",
+        "arrangement_graph_rejects_invalid_unique_source_fragment_ranges",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "finite-point-image-v788-arrangement_graph_rejects_invalid_unique_source_fragment_ranges-3f967e74b3.log",
+      "elapsed_seconds": 0.0035131690092384815,
+      "target": "hypercurve_bezier_arrangement",
+      "name": "arrangement_graph_rejects_invalid_unique_source_fragment_ranges",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-point-image-v788-hypercurve_bezier_arrangement-tests",
+        "--exact",
+        "arrangement_graph_rejects_overlapping_reused_source_fragment_ranges",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "finite-point-image-v788-arrangement_graph_rejects_overlapping_reused_source_fragment_ranges-e4b0de3ca7.log",
+      "elapsed_seconds": 0.003508659079670906,
+      "target": "hypercurve_bezier_arrangement",
+      "name": "arrangement_graph_rejects_overlapping_reused_source_fragment_ranges",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-point-image-v788-hypercurve_bezier_arrangement-tests",
+        "--exact",
+        "branch_vertex_is_explicit_uncertainty_not_arbitrary_successor",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "finite-point-image-v788-branch_vertex_is_explicit_uncertainty_not_arbitrary_successor-419d7949cf.log",
+      "elapsed_seconds": 0.0035255379043519497,
+      "target": "hypercurve_bezier_arrangement",
+      "name": "branch_vertex_is_explicit_uncertainty_not_arbitrary_successor",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-point-image-v788-hypercurve_bezier_arrangement-tests",
+        "--exact",
+        "certified_overlap_evidence_replays_across_graph_clones",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "finite-point-image-v788-certified_overlap_evidence_replays_across_graph_clones-887edcb9a6.log",
+      "elapsed_seconds": 0.0034942899364978075,
+      "target": "hypercurve_bezier_arrangement",
+      "name": "certified_overlap_evidence_replays_across_graph_clones",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-point-image-v788-hypercurve_bezier_arrangement-tests",
+        "--exact",
+        "contact_parameters_follow_their_carrier_domains",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "finite-point-image-v788-contact_parameters_follow_their_carrier_domains-8c6fd7e7c1.log",
+      "elapsed_seconds": 0.0035201278515160084,
+      "target": "hypercurve_bezier_arrangement",
+      "name": "contact_parameters_follow_their_carrier_domains",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-point-image-v788-hypercurve_bezier_arrangement-tests",
+        "--exact",
+        "empty_overlap_refinement_preserves_exact_unit_fragment",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "finite-point-image-v788-empty_overlap_refinement_preserves_exact_unit_fragment-be8de4dbb3.log",
+      "elapsed_seconds": 0.0034990310668945312,
+      "target": "hypercurve_bezier_arrangement",
+      "name": "empty_overlap_refinement_preserves_exact_unit_fragment",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-point-image-v788-hypercurve_bezier_arrangement-tests",
+        "--exact",
+        "exact_endpoint_buckets_retain_symbolic_matches",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "finite-point-image-v788-exact_endpoint_buckets_retain_symbolic_matches-b3c24411a1.log",
+      "elapsed_seconds": 0.003511338960379362,
+      "target": "hypercurve_bezier_arrangement",
+      "name": "exact_endpoint_buckets_retain_symbolic_matches",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-point-image-v788-hypercurve_bezier_arrangement-tests",
+        "--exact",
+        "exact_split_fragments_traverse_as_one_closed_bezier_chain",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "finite-point-image-v788-exact_split_fragments_traverse_as_one_closed_bezier_chain-191f37d720.log",
+      "elapsed_seconds": 0.003534747054800391,
+      "target": "hypercurve_bezier_arrangement",
+      "name": "exact_split_fragments_traverse_as_one_closed_bezier_chain",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-point-image-v788-hypercurve_bezier_arrangement-tests",
+        "--exact",
+        "monotone_span_rejects_reversed_parameter_evidence",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "finite-point-image-v788-monotone_span_rejects_reversed_parameter_evidence-d088768ac0.log",
+      "elapsed_seconds": 0.0035324280615895987,
+      "target": "hypercurve_bezier_arrangement",
+      "name": "monotone_span_rejects_reversed_parameter_evidence",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-point-image-v788-hypercurve_bezier_arrangement-tests",
+        "--exact",
+        "open_quadratic_chain_stays_one_nonclosed_chain",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "finite-point-image-v788-open_quadratic_chain_stays_one_nonclosed_chain-f4bd9f5164.log",
+      "elapsed_seconds": 0.0035258790012449026,
+      "target": "hypercurve_bezier_arrangement",
+      "name": "open_quadratic_chain_stays_one_nonclosed_chain",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-point-image-v788-hypercurve_bezier_arrangement-tests",
+        "--exact",
+        "retained_arrangement_traversal_constructors_validate_fragment_ownership",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "finite-point-image-v788-retained_arrangement_traversal_constructors_validate_fragment_ownership-7504c4d04f.log",
+      "elapsed_seconds": 0.003529318142682314,
+      "target": "hypercurve_bezier_arrangement",
+      "name": "retained_arrangement_traversal_constructors_validate_fragment_ownership",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-point-image-v788-hypercurve_bezier_arrangement-tests",
+        "--exact",
+        "retained_linear_overlap_refinement_evidence_reversed_span_orientation",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "finite-point-image-v788-retained_linear_overlap_refinement_evidence_reversed_span_orientation-93956bd549.log",
+      "elapsed_seconds": 0.0035177189856767654,
+      "target": "hypercurve_bezier_arrangement",
+      "name": "retained_linear_overlap_refinement_evidence_reversed_span_orientation",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-point-image-v788-hypercurve_bezier_arrangement-tests",
+        "--exact",
+        "retained_linear_overlap_split_graph_rejects_forged_orientation",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "finite-point-image-v788-retained_linear_overlap_split_graph_rejects_forged_orientation-bfc7a69a81.log",
+      "elapsed_seconds": 0.003514318959787488,
+      "target": "hypercurve_bezier_arrangement",
+      "name": "retained_linear_overlap_split_graph_rejects_forged_orientation",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-point-image-v788-hypercurve_bezier_arrangement-tests",
+        "--exact",
+        "retained_linear_overlap_split_graph_rejects_forged_resolved_provenance",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "finite-point-image-v788-retained_linear_overlap_split_graph_rejects_forged_resolved_provenance-300304249c.log",
+      "elapsed_seconds": 0.0035007300321012735,
+      "target": "hypercurve_bezier_arrangement",
+      "name": "retained_linear_overlap_split_graph_rejects_forged_resolved_provenance",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-point-image-v788-hypercurve_bezier_arrangement-tests",
+        "--exact",
+        "retained_linear_overlap_split_graph_rejects_forged_split_evidence_geometry",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "finite-point-image-v788-retained_linear_overlap_split_graph_rejects_forged_split_evidence_geometry-1c8b6f414d.log",
+      "elapsed_seconds": 0.003500808961689472,
+      "target": "hypercurve_bezier_arrangement",
+      "name": "retained_linear_overlap_split_graph_rejects_forged_split_evidence_geometry",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-point-image-v788-hypercurve_bezier_arrangement-tests",
+        "--exact",
+        "retained_linear_overlap_split_graph_rejects_missing_refined_provenance",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "finite-point-image-v788-retained_linear_overlap_split_graph_rejects_missing_refined_provenance-13962e5bc1.log",
+      "elapsed_seconds": 0.0035274778492748737,
+      "target": "hypercurve_bezier_arrangement",
+      "name": "retained_linear_overlap_split_graph_rejects_missing_refined_provenance",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-point-image-v788-hypercurve_bezier_arrangement-tests",
+        "--exact",
+        "retained_linear_overlap_split_graph_rejects_missing_split_evidence_evidence",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "finite-point-image-v788-retained_linear_overlap_split_graph_rejects_missing_split_evidence_evidence-208ee31777.log",
+      "elapsed_seconds": 0.003526088083162904,
+      "target": "hypercurve_bezier_arrangement",
+      "name": "retained_linear_overlap_split_graph_rejects_missing_split_evidence_evidence",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-point-image-v788-hypercurve_bezier_arrangement-tests",
+        "--exact",
+        "retained_linear_overlap_traversal_cancels_reversed_internal_span_in_loop",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "finite-point-image-v788-retained_linear_overlap_traversal_cancels_reversed_internal_span_in_loop-fcbdcdbf7b.log",
+      "elapsed_seconds": 0.0036179320886731148,
+      "target": "hypercurve_bezier_arrangement",
+      "name": "retained_linear_overlap_traversal_cancels_reversed_internal_span_in_loop",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-point-image-v788-hypercurve_bezier_arrangement-tests",
+        "--exact",
+        "retained_linear_overlap_traversal_rejects_incomplete_refined_partition",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "finite-point-image-v788-retained_linear_overlap_traversal_rejects_incomplete_refined_partition-93b67724c9.log",
+      "elapsed_seconds": 0.0035145189613103867,
+      "target": "hypercurve_bezier_arrangement",
+      "name": "retained_linear_overlap_traversal_rejects_incomplete_refined_partition",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-point-image-v788-hypercurve_bezier_arrangement-tests",
+        "--exact",
+        "retained_linear_overlap_traversal_rejects_indices_outside_refinement",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "finite-point-image-v788-retained_linear_overlap_traversal_rejects_indices_outside_refinement-2a3f65bf3a.log",
+      "elapsed_seconds": 0.003529938170686364,
+      "target": "hypercurve_bezier_arrangement",
+      "name": "retained_linear_overlap_traversal_rejects_indices_outside_refinement",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-point-image-v788-hypercurve_bezier_arrangement-tests",
+        "--exact",
+        "retained_linear_overlap_traversal_splits_and_consumes_duplicate_span_in_loop",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "finite-point-image-v788-retained_linear_overlap_traversal_splits_and_consumes_duplicate_span_in_loop-bd3935513c.log",
+      "elapsed_seconds": 0.0035206289030611515,
+      "target": "hypercurve_bezier_arrangement",
+      "name": "retained_linear_overlap_traversal_splits_and_consumes_duplicate_span_in_loop",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-point-image-v788-hypercurve_bezier_arrangement-tests",
+        "--exact",
+        "retained_overlap_evidence_constructor_rejects_unsorted_or_duplicate_pairs",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "finite-point-image-v788-retained_overlap_evidence_constructor_rejects_unsorted_or_duplicate_pairs-e844179d3d.log",
+      "elapsed_seconds": 0.003508468857035041,
+      "target": "hypercurve_bezier_arrangement",
+      "name": "retained_overlap_evidence_constructor_rejects_unsorted_or_duplicate_pairs",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-point-image-v788-hypercurve_bezier_arrangement-tests",
+        "--exact",
+        "retained_overlap_evidence_does_not_call_same_curve_image_a_line_split",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "finite-point-image-v788-retained_overlap_evidence_does_not_call_same_curve_image_a_line_split-b8bb462f34.log",
+      "elapsed_seconds": 0.0035025188699364662,
+      "target": "hypercurve_bezier_arrangement",
+      "name": "retained_overlap_evidence_does_not_call_same_curve_image_a_line_split",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-point-image-v788-hypercurve_bezier_arrangement-tests",
+        "--exact",
+        "retained_overlap_evidence_extracts_partial_line_image_split_ranges",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "finite-point-image-v788-retained_overlap_evidence_extracts_partial_line_image_split_ranges-22c9bcab56.log",
+      "elapsed_seconds": 0.00354609708301723,
+      "target": "hypercurve_bezier_arrangement",
+      "name": "retained_overlap_evidence_extracts_partial_line_image_split_ranges",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-point-image-v788-hypercurve_bezier_arrangement-tests",
+        "--exact",
+        "retained_overlap_evidence_finds_identical_materialized_fragments",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "finite-point-image-v788-retained_overlap_evidence_finds_identical_materialized_fragments-62465af7da.log",
+      "elapsed_seconds": 0.0035274378024041653,
+      "target": "hypercurve_bezier_arrangement",
+      "name": "retained_overlap_evidence_finds_identical_materialized_fragments",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-point-image-v788-hypercurve_bezier_arrangement-tests",
+        "--exact",
+        "retained_overlap_evidence_finds_reversed_degree_elevated_same_image",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "finite-point-image-v788-retained_overlap_evidence_finds_reversed_degree_elevated_same_image-8297a5549f.log",
+      "elapsed_seconds": 0.0035653950180858374,
+      "target": "hypercurve_bezier_arrangement",
+      "name": "retained_overlap_evidence_finds_reversed_degree_elevated_same_image",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-point-image-v788-hypercurve_bezier_arrangement-tests",
+        "--exact",
+        "retained_overlap_evidence_preserves_strict_rational_overlap_ranges",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "finite-point-image-v788-retained_overlap_evidence_preserves_strict_rational_overlap_ranges-de70503488.log",
+      "elapsed_seconds": 0.003551265923306346,
+      "target": "hypercurve_bezier_arrangement",
+      "name": "retained_overlap_evidence_preserves_strict_rational_overlap_ranges",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-point-image-v788-hypercurve_bezier_arrangement-tests",
+        "--exact",
+        "retained_overlap_evidence_recognizes_projectively_reversed_rational_fragments",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "finite-point-image-v788-retained_overlap_evidence_recognizes_projectively_reversed_rational_fragments-6919973718.log",
+      "elapsed_seconds": 0.0036321210209280252,
+      "target": "hypercurve_bezier_arrangement",
+      "name": "retained_overlap_evidence_recognizes_projectively_reversed_rational_fragments",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-point-image-v788-hypercurve_bezier_arrangement-tests",
+        "--exact",
+        "retained_overlap_evidence_rejects_nonlinear_line_image_bezier_ranges",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "finite-point-image-v788-retained_overlap_evidence_rejects_nonlinear_line_image_bezier_ranges-940a2bf57d.log",
+      "elapsed_seconds": 0.003596553113311529,
+      "target": "hypercurve_bezier_arrangement",
+      "name": "retained_overlap_evidence_rejects_nonlinear_line_image_bezier_ranges",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-point-image-v788-hypercurve_bezier_arrangement-tests",
+        "--exact",
+        "retained_overlap_evidence_separates_endpoint_touch_from_overlap",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "finite-point-image-v788-retained_overlap_evidence_separates_endpoint_touch_from_overlap-34743cdf40.log",
+      "elapsed_seconds": 0.0034646219573915005,
+      "target": "hypercurve_bezier_arrangement",
+      "name": "retained_overlap_evidence_separates_endpoint_touch_from_overlap",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-point-image-v788-hypercurve_bezier_arrangement-tests",
+        "--exact",
+        "retained_overlap_pair_constructor_rejects_non_overlap_line_evidence",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "finite-point-image-v788-retained_overlap_pair_constructor_rejects_non_overlap_line_evidence-5df5f81732.log",
+      "elapsed_seconds": 0.0035116090439260006,
+      "target": "hypercurve_bezier_arrangement",
+      "name": "retained_overlap_pair_constructor_rejects_non_overlap_line_evidence",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-point-image-v788-hypercurve_bezier_arrangement-tests",
+        "--exact",
+        "retained_overlap_pair_constructor_rejects_unordered_indices",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "finite-point-image-v788-retained_overlap_pair_constructor_rejects_unordered_indices-4acffff4e4.log",
+      "elapsed_seconds": 0.0035354478750377893,
+      "target": "hypercurve_bezier_arrangement",
+      "name": "retained_overlap_pair_constructor_rejects_unordered_indices",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-point-image-v788-hypercurve_bezier_arrangement-tests",
+        "--exact",
+        "retained_overlap_refined_fragment_constructor_validates_local_range",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "finite-point-image-v788-retained_overlap_refined_fragment_constructor_validates_local_range-3699cb4752.log",
+      "elapsed_seconds": 0.0035531159956008196,
+      "target": "hypercurve_bezier_arrangement",
+      "name": "retained_overlap_refined_fragment_constructor_validates_local_range",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-point-image-v788-hypercurve_bezier_arrangement-tests",
+        "--exact",
+        "retained_overlap_split_constructors_reject_unordered_indices",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "finite-point-image-v788-retained_overlap_split_constructors_reject_unordered_indices-034dc7763a.log",
+      "elapsed_seconds": 0.0035310068633407354,
+      "target": "hypercurve_bezier_arrangement",
+      "name": "retained_overlap_split_constructors_reject_unordered_indices",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-point-image-v788-hypercurve_bezier_arrangement-tests",
+        "--exact",
+        "retained_overlap_split_constructors_validate_range_evidence",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "finite-point-image-v788-retained_overlap_split_constructors_validate_range_evidence-7b162ed050.log",
+      "elapsed_seconds": 0.0034931600093841553,
+      "target": "hypercurve_bezier_arrangement",
+      "name": "retained_overlap_split_constructors_validate_range_evidence",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-point-image-v788-hypercurve_bezier_arrangement-tests",
+        "--exact",
+        "retained_overlap_traversal_deduplicates_oriented_duplicate_loop_edges",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "finite-point-image-v788-retained_overlap_traversal_deduplicates_oriented_duplicate_loop_edges-7d96e5d881.log",
+      "elapsed_seconds": 0.003538787830621004,
+      "target": "hypercurve_bezier_arrangement",
+      "name": "retained_overlap_traversal_deduplicates_oriented_duplicate_loop_edges",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-point-image-v788-hypercurve_bezier_arrangement-tests",
+        "--exact",
+        "retained_overlap_traversal_rejects_reversed_duplicate_as_ownership_boundary",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "finite-point-image-v788-retained_overlap_traversal_rejects_reversed_duplicate_as_ownership_boundary-79d3ca9bf7.log",
+      "elapsed_seconds": 0.0035156281664967537,
+      "target": "hypercurve_bezier_arrangement",
+      "name": "retained_overlap_traversal_rejects_reversed_duplicate_as_ownership_boundary",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-point-image-v788-hypercurve_bezier_arrangement-tests",
+        "--exact",
+        "retained_rational_overlap_promotes_represented_incidence_root",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "finite-point-image-v788-retained_rational_overlap_promotes_represented_incidence_root-76e691e0a5.log",
+      "elapsed_seconds": 0.0035393880680203438,
+      "target": "hypercurve_bezier_arrangement",
+      "name": "retained_rational_overlap_promotes_represented_incidence_root",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-point-image-v788-hypercurve_bezier_arrangement-tests",
+        "--exact",
+        "retained_rational_overlap_refinement_cancels_reversed_span",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "finite-point-image-v788-retained_rational_overlap_refinement_cancels_reversed_span-5b06fef4bd.log",
+      "elapsed_seconds": 0.0035056599881500006,
+      "target": "hypercurve_bezier_arrangement",
+      "name": "retained_rational_overlap_refinement_cancels_reversed_span",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-point-image-v788-hypercurve_bezier_arrangement-tests",
+        "--exact",
+        "retained_resolved_overlap_constructor_rejects_unordered_indices",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "finite-point-image-v788-retained_resolved_overlap_constructor_rejects_unordered_indices-2dac64a8a9.log",
+      "elapsed_seconds": 0.003520647995173931,
+      "target": "hypercurve_bezier_arrangement",
+      "name": "retained_resolved_overlap_constructor_rejects_unordered_indices",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-point-image-v788-hypercurve_bezier_arrangement-tests",
+        "--exact",
+        "retained_tangent_order_rejects_equal_algebraic_successors",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "finite-point-image-v788-retained_tangent_order_rejects_equal_algebraic_successors-8c3c11c234.log",
+      "elapsed_seconds": 0.003498679958283901,
+      "target": "hypercurve_bezier_arrangement",
+      "name": "retained_tangent_order_rejects_equal_algebraic_successors",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-point-image-v788-hypercurve_bezier_arrangement-tests",
+        "--exact",
+        "retained_tangent_order_transforms_reversed_algebraic_endpoints_and_tangents",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "finite-point-image-v788-retained_tangent_order_transforms_reversed_algebraic_endpoints_and_tangents-b2389077dd.log",
+      "elapsed_seconds": 0.0035565360449254513,
+      "target": "hypercurve_bezier_arrangement",
+      "name": "retained_tangent_order_transforms_reversed_algebraic_endpoints_and_tangents",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-point-image-v788-hypercurve_bezier_arrangement-tests",
+        "--exact",
+        "retained_tangent_order_traverses_algebraic_branch_vertex",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "finite-point-image-v788-retained_tangent_order_traverses_algebraic_branch_vertex-c586eae87c.log",
+      "elapsed_seconds": 0.0035037188790738583,
+      "target": "hypercurve_bezier_arrangement",
+      "name": "retained_tangent_order_traverses_algebraic_branch_vertex",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-point-image-v788-hypercurve_bezier_arrangement-tests",
+        "--exact",
+        "retained_tangent_order_uses_algebraic_second_order_for_equal_successors",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "finite-point-image-v788-retained_tangent_order_uses_algebraic_second_order_for_equal_successors-6d3636e46c.log",
+      "elapsed_seconds": 0.0035023901145905256,
+      "target": "hypercurve_bezier_arrangement",
+      "name": "retained_tangent_order_uses_algebraic_second_order_for_equal_successors",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-point-image-v788-hypercurve_bezier_arrangement-tests",
+        "--exact",
+        "retained_tangent_order_uses_algebraic_third_order_for_cubic_same_tangent_inflections",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "finite-point-image-v788-retained_tangent_order_uses_algebraic_third_order_for_cubic_same_tangent_inflections-f49cc1d6e3.log",
+      "elapsed_seconds": 0.0035138691309839487,
+      "target": "hypercurve_bezier_arrangement",
+      "name": "retained_tangent_order_uses_algebraic_third_order_for_cubic_same_tangent_inflections",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-point-image-v788-hypercurve_bezier_arrangement-tests",
+        "--exact",
+        "retained_tangent_order_uses_rational_algebraic_second_order_for_equal_successors",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "finite-point-image-v788-retained_tangent_order_uses_rational_algebraic_second_order_for_equal_successors-8387797c43.log",
+      "elapsed_seconds": 0.0034975300077348948,
+      "target": "hypercurve_bezier_arrangement",
+      "name": "retained_tangent_order_uses_rational_algebraic_second_order_for_equal_successors",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-point-image-v788-hypercurve_bezier_arrangement-tests",
+        "--exact",
+        "tangent_ordered_traversal_rejects_equal_rational_second_order_successors",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "finite-point-image-v788-tangent_ordered_traversal_rejects_equal_rational_second_order_successors-2012d7b81e.log",
+      "elapsed_seconds": 0.0035056201741099358,
+      "target": "hypercurve_bezier_arrangement",
+      "name": "tangent_ordered_traversal_rejects_equal_rational_second_order_successors",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-point-image-v788-hypercurve_bezier_arrangement-tests",
+        "--exact",
+        "tangent_ordered_traversal_rejects_equal_second_order_outgoing_tangents",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "finite-point-image-v788-tangent_ordered_traversal_rejects_equal_second_order_outgoing_tangents-b6e04f2a38.log",
+      "elapsed_seconds": 0.0034679220989346504,
+      "target": "hypercurve_bezier_arrangement",
+      "name": "tangent_ordered_traversal_rejects_equal_second_order_outgoing_tangents",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-point-image-v788-hypercurve_bezier_arrangement-tests",
+        "--exact",
+        "tangent_ordered_traversal_rejects_equal_third_order_cubic_successors",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "finite-point-image-v788-tangent_ordered_traversal_rejects_equal_third_order_cubic_successors-b64e063e08.log",
+      "elapsed_seconds": 0.0014079329557716846,
+      "target": "hypercurve_bezier_arrangement",
+      "name": "tangent_ordered_traversal_rejects_equal_third_order_cubic_successors",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-point-image-v788-hypercurve_bezier_arrangement-tests",
+        "--exact",
+        "tangent_ordered_traversal_resolves_simple_branch_vertex",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "finite-point-image-v788-tangent_ordered_traversal_resolves_simple_branch_vertex-4009e78e5b.log",
+      "elapsed_seconds": 0.0034672420006245375,
+      "target": "hypercurve_bezier_arrangement",
+      "name": "tangent_ordered_traversal_resolves_simple_branch_vertex",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-point-image-v788-hypercurve_bezier_arrangement-tests",
+        "--exact",
+        "tangent_ordered_traversal_uses_rational_second_order_for_equal_outgoing_tangents",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "finite-point-image-v788-tangent_ordered_traversal_uses_rational_second_order_for_equal_outgoing_tangents-765e6c978b.log",
+      "elapsed_seconds": 0.0034685221035033464,
+      "target": "hypercurve_bezier_arrangement",
+      "name": "tangent_ordered_traversal_uses_rational_second_order_for_equal_outgoing_tangents",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-point-image-v788-hypercurve_bezier_arrangement-tests",
+        "--exact",
+        "tangent_ordered_traversal_uses_second_order_for_equal_outgoing_tangents",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "finite-point-image-v788-tangent_ordered_traversal_uses_second_order_for_equal_outgoing_tangents-25dc63d1d8.log",
+      "elapsed_seconds": 0.0035450670402497053,
+      "target": "hypercurve_bezier_arrangement",
+      "name": "tangent_ordered_traversal_uses_second_order_for_equal_outgoing_tangents",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-point-image-v788-hypercurve_bezier_arrangement-tests",
+        "--exact",
+        "tangent_ordered_traversal_uses_third_order_for_cubic_same_tangent_inflections",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "finite-point-image-v788-tangent_ordered_traversal_uses_third_order_for_cubic_same_tangent_inflections-76ab9ce43e.log",
+      "elapsed_seconds": 0.003504039952531457,
+      "target": "hypercurve_bezier_arrangement",
+      "name": "tangent_ordered_traversal_uses_third_order_for_cubic_same_tangent_inflections",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-point-image-v788-hypercurve_curve_region_promotion-tests",
+        "--exact",
+        "selected_algebraic_round_join_retains_a_general_minor_cut",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "finite-point-image-v788-selected_algebraic_round_join_retains_a_general_minor_cut-f5e06b7ec4.log",
+      "elapsed_seconds": 0.007570731220766902,
+      "target": "hypercurve_curve_region_promotion",
+      "name": "selected_algebraic_round_join_retains_a_general_minor_cut",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-point-image-v788-hypercurve_curve_region_promotion-tests",
+        "--exact",
+        "selected_endpoint_chord_pairs_share_the_linear_fillet_kernel",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "finite-point-image-v788-selected_endpoint_chord_pairs_share_the_linear_fillet_kernel-acfa99ab46.log",
+      "elapsed_seconds": 0.007570240879431367,
+      "target": "hypercurve_curve_region_promotion",
+      "name": "selected_endpoint_chord_pairs_share_the_linear_fillet_kernel",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-point-image-v788-hypercurve_curve_region_promotion-tests",
+        "--exact",
+        "selected_endpoint_chords_share_linear_arc_fillet_incidence",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "finite-point-image-v788-selected_endpoint_chords_share_linear_arc_fillet_incidence-bc4f376324.log",
+      "elapsed_seconds": 0.007672934094443917,
+      "target": "hypercurve_curve_region_promotion",
+      "name": "selected_endpoint_chords_share_linear_arc_fillet_incidence",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-point-image-v788-hypercurve_curve_region_promotion-tests",
+        "--exact",
+        "selected_endpoint_chords_share_linear_bezier_fillet_incidence",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "finite-point-image-v788-selected_endpoint_chords_share_linear_bezier_fillet_incidence-69b355ecfb.log",
+      "elapsed_seconds": 0.007569011067971587,
+      "target": "hypercurve_curve_region_promotion",
+      "name": "selected_endpoint_chords_share_linear_bezier_fillet_incidence",
+      "passed": true
+    }
+  ],
+  "checks": [
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "clippy",
+        "--all-targets",
+        "--all-features",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "returncode": 0,
+      "log": "finite-point-image-v788-hypercurve-clippy-all-features.log",
+      "elapsed_seconds": 21.044901518151164,
+      "label": "hypercurve-clippy-all-features"
+    },
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "clippy",
+        "--all-targets",
+        "--no-default-features",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "returncode": 0,
+      "log": "finite-point-image-v788-hypercurve-clippy-no-default.log",
+      "elapsed_seconds": 20.243714557029307,
+      "label": "hypercurve-clippy-no-default"
+    },
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustfmt",
+        "--edition",
+        "2024",
+        "--config",
+        "skip_children=true",
+        "--check",
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/build-workspace-20260925/hypercurve/benches/bezier_algebraic_parameter.rs",
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/build-workspace-20260925/hypercurve/benches/comparative.rs",
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/build-workspace-20260925/hypercurve/benches/editing.rs",
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/build-workspace-20260925/hypercurve/fuzz/fuzz_targets/bezier_algebraic_image.rs",
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/build-workspace-20260925/hypercurve/src/bezier_algebraic_image.rs",
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/build-workspace-20260925/hypercurve/src/bezier_arrangement.rs",
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/build-workspace-20260925/hypercurve/src/bezier_offset.rs",
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/build-workspace-20260925/hypercurve/src/bezier_region.rs",
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/build-workspace-20260925/hypercurve/src/bezier_retained_measure.rs",
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/build-workspace-20260925/hypercurve/src/bezier_split.rs",
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/build-workspace-20260925/hypercurve/src/bezier_split_endpoint.rs",
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/build-workspace-20260925/hypercurve/src/curve.rs",
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/build-workspace-20260925/hypercurve/src/curve_evaluation.rs",
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/build-workspace-20260925/hypercurve/src/curve_region_boolean.rs",
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/build-workspace-20260925/hypercurve/src/curve_region_trim.rs",
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/build-workspace-20260925/hypercurve/src/lib.rs",
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/build-workspace-20260925/hypercurve/src/rational_bezier_general.rs",
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/build-workspace-20260925/hypercurve/tests/hypercurve_bezier_algebraic_image.rs",
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/build-workspace-20260925/hypercurve/tests/hypercurve_bezier_algebraic_parameter.rs",
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/build-workspace-20260925/hypercurve/tests/hypercurve_bezier_arrangement.rs",
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/build-workspace-20260925/hypercurve/tests/hypercurve_bezier_split_materialization.rs",
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/build-workspace-20260925/hypercurve/tests/hypercurve_bezier_tangent_order.rs",
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/build-workspace-20260925/hypercurve/tests/hypercurve_curve_point.rs",
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/build-workspace-20260925/hypercurve/tests/hypercurve_curve_region_promotion.rs",
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/build-workspace-20260925/hypercurve/tests/hypercurve_rational_bezier.rs"
+      ],
+      "returncode": 0,
+      "log": "finite-point-image-v788-format.log",
+      "elapsed_seconds": 3.3181873250287026,
+      "label": "format"
+    },
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "check",
+        "--manifest-path",
+        "fuzz/Cargo.toml",
+        "--bin",
+        "bezier_algebraic_image",
+        "--bin",
+        "region_boolean",
+        "--bin",
+        "bezier_region",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "log": "finite-point-image-v788-fuzz-check.log",
+      "elapsed_seconds": 11.179139793850482,
+      "label": "fuzz-check"
+    },
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "doc",
+        "--no-deps",
+        "--all-features",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "log": "finite-point-image-v788-hypercurve-documentation.log",
+      "elapsed_seconds": 10.928576157893986,
+      "label": "hypercurve-documentation"
+    },
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "clippy",
+        "--all-targets",
+        "--all-features",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "returncode": 0,
+      "log": "finite-point-image-v788-hyperbrep-clippy.log",
+      "elapsed_seconds": 15.334918766049668,
+      "label": "hyperbrep-clippy"
+    },
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "check",
+        "--all-targets",
+        "--all-features",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "log": "finite-point-image-v788-csgrs-check.log",
+      "elapsed_seconds": 14.484040270093828,
+      "label": "csgrs-check"
+    }
+  ],
+  "test_listings": {
+    "hypercurve_bezier_algebraic_image": {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-point-image-v788-hypercurve_bezier_algebraic_image-tests",
+        "--list"
+      ],
+      "returncode": 0,
+      "log": "finite-point-image-v788-hypercurve_bezier_algebraic_image-list.log",
+      "elapsed_seconds": 0.003640440059825778
+    },
+    "hypercurve_bezier_split_materialization": {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-point-image-v788-hypercurve_bezier_split_materialization-tests",
+        "--list"
+      ],
+      "returncode": 0,
+      "log": "finite-point-image-v788-hypercurve_bezier_split_materialization-list.log",
+      "elapsed_seconds": 0.0014333110302686691
+    },
+    "hypercurve_curve_region_promotion": {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-point-image-v788-hypercurve_curve_region_promotion-tests",
+        "--list"
+      ],
+      "returncode": 0,
+      "log": "finite-point-image-v788-hypercurve_curve_region_promotion-list.log",
+      "elapsed_seconds": 0.003504169872030616
+    },
+    "hypercurve_curve_point": {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-point-image-v788-hypercurve_curve_point-tests",
+        "--list"
+      ],
+      "returncode": 0,
+      "log": "finite-point-image-v788-hypercurve_curve_point-list.log",
+      "elapsed_seconds": 0.0014586488250643015
+    },
+    "hypercurve_bezier_arrangement": {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-point-image-v788-hypercurve_bezier_arrangement-tests",
+        "--list"
+      ],
+      "returncode": 0,
+      "log": "finite-point-image-v788-hypercurve_bezier_arrangement-list.log",
+      "elapsed_seconds": 0.0014026639983057976
+    },
+    "hypercurve_bezier_tangent_order": {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-point-image-v788-hypercurve_bezier_tangent_order-tests",
+        "--list"
+      ],
+      "returncode": 0,
+      "log": "finite-point-image-v788-hypercurve_bezier_tangent_order-list.log",
+      "elapsed_seconds": 0.0013929139822721481
+    },
+    "hypercurve_bezier_algebraic_parameter": {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-point-image-v788-hypercurve_bezier_algebraic_parameter-tests",
+        "--list"
+      ],
+      "returncode": 0,
+      "log": "finite-point-image-v788-hypercurve_bezier_algebraic_parameter-list.log",
+      "elapsed_seconds": 0.001399714034050703
+    },
+    "hypercurve": {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-point-image-v788-hypercurve-tests",
+        "--list"
+      ],
+      "returncode": 0,
+      "log": "finite-point-image-v788-hypercurve-list.log",
+      "elapsed_seconds": 0.007569761015474796
+    }
+  },
+  "expected_cases": {
+    "hypercurve": [
+      "bezier_algebraic_image::policy_tests::arithmetic_adapter_replays_close_nonrational_bounds_strictly",
+      "bezier_algebraic_image::policy_tests::coordinate_images_preserve_native_polynomial_point_values",
+      "bezier_algebraic_image::policy_tests::exact_real_representation_preserves_native_point_payloads",
+      "bezier_algebraic_image::policy_tests::retained_constant_coordinates_do_not_require_scalar_parameter_images",
+      "bezier_offset::conversion_tests::algebraic_chord_retains_independent_endpoint_fields_under_both_policies",
+      "bezier_offset::conversion_tests::algebraic_cusp_semicircle_intersects_independent_field_oblique_chords_exactly",
+      "bezier_offset::conversion_tests::genuine_parallel_algebraic_ray_replays_the_unsquared_branch",
+      "bezier_offset::conversion_tests::independent_field_algebraic_chord_intersects_rational_curve_under_both_policies",
+      "bezier_offset::conversion_tests::represented_circle_incidence_replays_retained_similarity_points",
+      "bezier_offset::conversion_tests::weighted_selected_center_tangent_line_stays_recursive",
+      "bezier_region::tests::algebraic_query_winding_mixes_genuine_parallel_and_native_fragments",
+      "bezier_region::tests::algebraic_retained_range_ray_winding_handles_crossing_multiplicity",
+      "curve::curve_evaluation::tests::repeated_unit_chart_evaluation_reuses_selected_root_images",
+      "curve_region_trim::tests::generated_chord_trim_preserves_holes_and_exact_endpoint_replay",
+      "rational_bezier_general::tests::deferred_parametric_point_reuses_source_polynomials_for_exact_equality",
+      "rational_bezier_general::tests::exact_contact_evidence_reuses_a_retained_high_degree_image",
+      "bezier_split_endpoint::tests::lazy_endpoint_points_preserve_affine_domain_blockers",
+      "bezier_offset::conversion_tests::independent_oblique_chords_support_constrained_fillet_families",
+      "curve::curve_fillet::stationary_continuous_family_regression::continuous_fillets_preserve_stationary_reparameterization",
+      "curve::curve_fillet::tests::continuous_fillet_constraints_accept_arbitrary_exact_real_contacts",
+      "curve::curve_fillet::tests::joined_path_selects_and_replays_a_continuous_fillet_family",
+      "curve::curve_fillet::tests::normalized_region_selects_and_reuses_a_continuous_fillet_family"
+    ],
+    "hypercurve_bezier_algebraic_image": [
+      "conic_point_images_reuse_exact_evaluation_across_weight_charts",
+      "cubic_point_and_tangent_images_use_power_basis_resultants",
+      "linear_coordinate_images_match_exact_midpoint_values",
+      "nonmonotone_coordinate_image_is_certified_without_sampling",
+      "quadratic_point_and_tangent_images_retain_algebraic_coordinate_evidence",
+      "rational_image_cache_keeps_curve_family_certificate_shapes_distinct",
+      "rational_line_image_matches_exact_midpoint_values",
+      "rational_point_image_transforms_exact_real_linear_root",
+      "rational_point_images_require_finite_affine_coordinates",
+      "rational_quadratic_point_and_tangent_images_retain_quotient_evidence"
+    ],
+    "hypercurve_curve_point": [
+      "coordinate_view_accepts_arbitrary_exact_reals_and_preserves_certainty",
+      "independent_selected_charts_share_the_general_point_queries"
+    ],
+    "hypercurve_bezier_algebraic_parameter": [
+      "algebraic_parameter_is_a_clone_shared_handle",
+      "algebraic_parameter_recovers_represented_linear_root",
+      "algebraic_root_sign_change_tracks_multiplicity_parity",
+      "bernstein_conversion_preserves_high_degree_constant_identity",
+      "cubic_distance_stationary_quintic_isolates_all_five_candidates",
+      "endpoint_root_is_rejected_for_algebraic_isolators",
+      "endpoint_touching_singleton_isolators_have_strict_order",
+      "equivalent_irrational_roots_compare_equal_across_polynomials_and_isolators",
+      "exact_and_algebraic_parameters_compare_only_when_certified",
+      "finite_parameter_interval_contract::exterior_root_images_preserve_equations_and_native_curve_domains",
+      "finite_parameter_interval_contract::positive_unit_weights_do_not_admit_exterior_algebraic_poles",
+      "irrational_nonlinear_parameter_remains_algebraic",
+      "irrational_root_isolation_skips_rational_reconstruction_refinement",
+      "linear_integer_polynomials_count_at_most_one_root",
+      "linear_midpoint_root_is_a_valid_algebraic_parameter",
+      "multi_root_bracket_is_rejected_as_not_an_isolator",
+      "nonlinear_algebraic_parameter_reconstructs_exact_rational_root",
+      "nonrational_linear_parameter_uses_exact_point_api",
+      "nonrational_quartic_uses_exact_bernstein_root_certificates",
+      "oriented_parameter_range_retains_irrational_boundary",
+      "overlapping_distinct_parameters_compare_by_certified_refinement",
+      "parameter_range_promotes_represented_rational_boundary",
+      "parameter_range_rejects_equal_and_accepts_affine_extension_boundaries",
+      "quadratic_singleton_isolator_is_validated_by_sturm_count",
+      "quintic_root_isolation_trace_reuses_sturm_certificates",
+      "repeated_nonrational_quartic_falls_back_to_complete_sturm_isolation",
+      "represented_root_sign_change_tracks_high_multiplicity_parity",
+      "reversed_parameter_intervals_are_rejected",
+      "unit_root_isolation_has_no_fixed_dyadic_depth_limit",
+      "unit_root_isolation_orders_represented_and_algebraic_roots"
+    ],
+    "hypercurve_bezier_split_materialization": [
+      "algebraic_boundary_carries_endpoint_images_without_approximate_materialization",
+      "algebraic_endpoint_image_is_a_clone_shared_handle",
+      "algebraic_fragment_reversal_retains_source_evidence_and_toggles_traversal",
+      "broad_singleton_isolator_materializes_exact_endpoint_images",
+      "exact_cubic_subcurve_matches_original_endpoints_at_range_bounds",
+      "exact_quadratic_split_endpoints_match_original",
+      "exact_quadratic_split_materializes_native_subcurves",
+      "exact_rational_quadratic_split_preserves_conic_endpoint_evaluation",
+      "linear_algebraic_boundary_materializes_native_subcurves",
+      "rational_algebraic_boundary_carries_conic_endpoint_images",
+      "rational_algebraic_boundary_with_zero_denominator_returns_explicit_uncertainty",
+      "rational_algebraic_endpoint_retains_second_derivative_when_constructed",
+      "split_materialization_constructor_rejects_disconnected_materialized_fragments",
+      "split_materialization_constructor_rejects_duplicate_fragments",
+      "split_materialization_constructor_rejects_forged_algebraic_endpoint_evidence",
+      "split_materialization_constructor_rejects_incomplete_source_coverage",
+      "split_materialization_constructor_rejects_materialized_algebraic_range",
+      "split_materialization_constructor_rejects_noncontiguous_fragments"
+    ],
+    "hypercurve_bezier_tangent_order": [
+      "algebraic_same_tangent_order_rejects_equal_second_order_evidence",
+      "algebraic_same_tangent_order_uses_second_derivative_side_witness",
+      "algebraic_same_tangent_order_uses_third_derivative_after_zero_curvature",
+      "algebraic_tangent_order_evidence_same_direction_without_guessing",
+      "algebraic_tangent_order_handles_distinct_generators_with_disjoint_enclosures",
+      "algebraic_tangent_order_rejects_zero_tangent",
+      "algebraic_tangent_order_separates_opposite_half_turns",
+      "algebraic_tangent_order_uses_represented_cross_product_for_same_half",
+      "rational_algebraic_same_tangent_order_uses_second_derivative_side_witness"
+    ],
+    "hypercurve_bezier_arrangement": [
+      "algebraic_split_boundary_blocks_graph_traversal",
+      "arrangement_graph_accepts_adjacent_reused_source_fragment_ranges",
+      "arrangement_graph_rejects_duplicate_source_fragment_evidence",
+      "arrangement_graph_rejects_forged_algebraic_endpoint_image_evidence",
+      "arrangement_graph_rejects_invalid_unique_source_fragment_ranges",
+      "arrangement_graph_rejects_overlapping_reused_source_fragment_ranges",
+      "branch_vertex_is_explicit_uncertainty_not_arbitrary_successor",
+      "certified_overlap_evidence_replays_across_graph_clones",
+      "contact_parameters_follow_their_carrier_domains",
+      "empty_overlap_refinement_preserves_exact_unit_fragment",
+      "exact_endpoint_buckets_retain_symbolic_matches",
+      "exact_split_fragments_traverse_as_one_closed_bezier_chain",
+      "monotone_span_rejects_reversed_parameter_evidence",
+      "open_quadratic_chain_stays_one_nonclosed_chain",
+      "retained_arrangement_traversal_constructors_validate_fragment_ownership",
+      "retained_linear_overlap_refinement_evidence_reversed_span_orientation",
+      "retained_linear_overlap_split_graph_rejects_forged_orientation",
+      "retained_linear_overlap_split_graph_rejects_forged_resolved_provenance",
+      "retained_linear_overlap_split_graph_rejects_forged_split_evidence_geometry",
+      "retained_linear_overlap_split_graph_rejects_missing_refined_provenance",
+      "retained_linear_overlap_split_graph_rejects_missing_split_evidence_evidence",
+      "retained_linear_overlap_traversal_cancels_reversed_internal_span_in_loop",
+      "retained_linear_overlap_traversal_rejects_incomplete_refined_partition",
+      "retained_linear_overlap_traversal_rejects_indices_outside_refinement",
+      "retained_linear_overlap_traversal_splits_and_consumes_duplicate_span_in_loop",
+      "retained_overlap_evidence_constructor_rejects_unsorted_or_duplicate_pairs",
+      "retained_overlap_evidence_does_not_call_same_curve_image_a_line_split",
+      "retained_overlap_evidence_extracts_partial_line_image_split_ranges",
+      "retained_overlap_evidence_finds_identical_materialized_fragments",
+      "retained_overlap_evidence_finds_reversed_degree_elevated_same_image",
+      "retained_overlap_evidence_preserves_strict_rational_overlap_ranges",
+      "retained_overlap_evidence_recognizes_projectively_reversed_rational_fragments",
+      "retained_overlap_evidence_rejects_nonlinear_line_image_bezier_ranges",
+      "retained_overlap_evidence_separates_endpoint_touch_from_overlap",
+      "retained_overlap_pair_constructor_rejects_non_overlap_line_evidence",
+      "retained_overlap_pair_constructor_rejects_unordered_indices",
+      "retained_overlap_refined_fragment_constructor_validates_local_range",
+      "retained_overlap_split_constructors_reject_unordered_indices",
+      "retained_overlap_split_constructors_validate_range_evidence",
+      "retained_overlap_traversal_deduplicates_oriented_duplicate_loop_edges",
+      "retained_overlap_traversal_rejects_reversed_duplicate_as_ownership_boundary",
+      "retained_rational_overlap_promotes_represented_incidence_root",
+      "retained_rational_overlap_refinement_cancels_reversed_span",
+      "retained_resolved_overlap_constructor_rejects_unordered_indices",
+      "retained_tangent_order_rejects_equal_algebraic_successors",
+      "retained_tangent_order_transforms_reversed_algebraic_endpoints_and_tangents",
+      "retained_tangent_order_traverses_algebraic_branch_vertex",
+      "retained_tangent_order_uses_algebraic_second_order_for_equal_successors",
+      "retained_tangent_order_uses_algebraic_third_order_for_cubic_same_tangent_inflections",
+      "retained_tangent_order_uses_rational_algebraic_second_order_for_equal_successors",
+      "tangent_ordered_traversal_rejects_equal_rational_second_order_successors",
+      "tangent_ordered_traversal_rejects_equal_second_order_outgoing_tangents",
+      "tangent_ordered_traversal_rejects_equal_third_order_cubic_successors",
+      "tangent_ordered_traversal_resolves_simple_branch_vertex",
+      "tangent_ordered_traversal_uses_rational_second_order_for_equal_outgoing_tangents",
+      "tangent_ordered_traversal_uses_second_order_for_equal_outgoing_tangents",
+      "tangent_ordered_traversal_uses_third_order_for_cubic_same_tangent_inflections"
+    ],
+    "hypercurve_curve_region_promotion": [
+      "selected_algebraic_round_join_retains_a_general_minor_cut",
+      "selected_endpoint_chord_pairs_share_the_linear_fillet_kernel",
+      "selected_endpoint_chords_share_linear_arc_fillet_incidence",
+      "selected_endpoint_chords_share_linear_bezier_fillet_incidence"
+    ]
+  },
+  "all_processes_reaped": true,
+  "probe_complete": true,
+  "qualification_complete": true
+}

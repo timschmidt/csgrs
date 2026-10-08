@@ -1,0 +1,22 @@
+[package]
+name = "hyper-bernstein-scale"
+version = "0.0.0"
+edition = "2024"
+
+[dependencies]
+hyperreal = { path = "../hyperreal", default-features = false }
+hyperlimit = { path = "../hyperlimit", default-features = false }
+hypersolve = { path = "../hypersolve", default-features = false }
+num = "0.4.3"
+serde_json = "=1.0.149"
+
+[profile.release]
+debug = 1
+
+[[bin]]
+name = "hyper-bernstein-public"
+path = "src/public.rs"
+
+[[bin]]
+name = "hyper-bernstein-batch"
+path = "src/batch.rs"

@@ -1,0 +1,28 @@
+
+running 23 tests
+test computable::node::tests::sqrt_of_exact_rational_square_is_exact ... ok
+test computable::node::tests::sqrt_of_exactly_scaled_square_collapses_at_construction ... ok
+test computable::node::tests::sqrt_of_scaled_square_tracks_structural_msd ... ok
+test computable::node::tests::sqrt_of_square_of_negative_value_returns_absolute_value ... ok
+test computable::node::tests::sqrt_square_round_trip ... ok
+test computable::node::tests::sqrt_squarefree_two_three_reuses_shared_constants ... ok
+test computable::node::tests::square_of_sqrt_of_positive_value_collapses_at_construction ... ok
+test computable::node::tests::sqrt_square_unresolved_sign_reuses_one_child_and_does_not_cache_aborts ... ok
+test computable::node::tests::ln_sqrt_pi ... ok
+test rational::arithmetic::tests::sqrt_trouble ... ok
+test real::tests::tests::log2_of_sqrt_two_is_half ... ok
+test real::tests::tests::atan2_sqrt_three_anchor_matches_pi_third ... ok
+test real::tests::tests::oversized_rational_sqrt_retains_exact_computable_without_recursive_reconstruction ... ok
+test real::tests::tests::sqrt_3045512 ... ok
+test real::tests::tests::sqrt_exact ... ok
+test real::tests::tests::sqrt_rational_denominator_uses_the_canonical_quadratic_surd ... ok
+test real::tests::tests::sqrt_scaled_squarefree_reuses_symbolic_residual ... ok
+test real::tests::tests::square_sqrt ... ok
+test real::tests::tests::unlike_sqrts ... ok
+test real::tests::tests::sqrt_recovers_quadratic_surds_with_perfect_square_norms ... ok
+test computable::node::tests::sqrt_square_raw_nodes_preserve_exact_prefix_bounds_and_history ... ok
+test computable::node::tests::demand_sized_sqrt_seeds_match_directed_mpfr ... ok
+test real::tests::tests::sqrt_sum_and_difference_identity_is_certified_for_rational_pairs ... ok
+
+test result: ok. 23 passed; 0 failed; 0 ignored; 0 measured; 675 filtered out; finished in 0.01s
+

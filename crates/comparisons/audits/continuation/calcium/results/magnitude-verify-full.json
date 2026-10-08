@@ -1,0 +1,14 @@
+{
+  "tag": "magnitude-verify-full",
+  "started": "2026-09-09T23:11:24.189Z",
+  "finished": "2026-09-09T23:12:01.924Z",
+  "elapsedSeconds": 37.732102837999996,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "node",
+  "args": [
+    "verify-magnitude.mjs",
+    "--derivative-live"
+  ],
+  "code": 0,
+  "signal": null
+}

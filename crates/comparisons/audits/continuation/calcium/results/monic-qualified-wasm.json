@@ -1,0 +1,24 @@
+{
+  "tag": "monic-qualified-wasm",
+  "started": "2026-09-09T01:12:38.831Z",
+  "finished": "2026-09-09T01:12:43.606Z",
+  "elapsedSeconds": 4.772265029,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/polynomial-monic-qualified-trial/hypersolve",
+  "command": "env",
+  "args": [
+    "CARGO_TARGET_DIR=/tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse",
+    "CARGO_INCREMENTAL=0",
+    "CARGO_PROFILE_DEV_DEBUG=0",
+    "CARGO_BUILD_JOBS=2",
+    "cargo",
+    "check",
+    "--offline",
+    "--locked",
+    "--all-features",
+    "--lib",
+    "--target",
+    "wasm32-unknown-unknown"
+  ],
+  "code": 0,
+  "signal": null
+}

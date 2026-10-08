@@ -1,0 +1,60 @@
+
+This GDB supports auto-downloading debuginfo from the following URLs:
+  <ima:enforcing>
+  <https://debuginfod.fedoraproject.org/>
+  <ima:ignore>
+Enable debuginfod for this session? (y or [n]) [answered N; input not from terminal]
+Debuginfod has been disabled.
+To make this setting permanent, add 'set debuginfod enabled off' to .gdbinit.
+[New LWP 3568915]
+Error while mapping shared library sections:
+Could not open `target:/lib64/libgcc_s.so.1' as an executable file: Input/output error
+Error while mapping shared library sections:
+Could not open `target:/lib64/libm.so.6' as an executable file: Input/output error
+Error while mapping shared library sections:
+Could not open `target:/lib64/libc.so.6' as an executable file: Input/output error
+Error while mapping shared library sections:
+Could not open `target:/lib64/ld-linux-x86-64.so.2' as an executable file: Input/output error
+
+warning: Unable to find dynamic linker breakpoint function.
+GDB will be unable to debug shared library initializers
+and track explicitly loaded dynamic code.
+
+warning: Target and debugger are in different PID namespaces; thread lists and other data are likely unreliable.  Connect to gdbserver inside the container.
+0x00007fe01853624d in ?? ()
+[Thread debugging using libthread_db enabled]
+Using host libthread_db library "/lib64/libthread_db.so.1".
+
+Thread 2 (Thread 0x7fe0184416c0 (LWP 3568915) "rational_bezier"):
+#0  0x000055c659d06f74 in <hyperreal::rational::arithmetic::Rational>::gcd_wide_magnitudes ()
+#1  0x000055c659d12ba3 in <hyperreal::rational::arithmetic::Rational>::gcd_magnitudes_with_mixed_width_fast_path ()
+#2  0x000055c659d0167f in <hyperreal::rational::arithmetic::Rational>::reduce ()
+#3  0x000055c659d1923b in <&hyperreal::rational::arithmetic::Rational as core::ops::arith::Mul>::mul ()
+#4  0x000055c659d43a53 in <hyperreal::real::arithmetic::Real>::eval_poly ()
+#5  0x000055c6594f9e62 in hypercurve::bezier_parameter::refine_algebraic_sign_change ()
+#6  0x000055c6594cbaf9 in <hypercurve::bezier_parameter::BezierParameter2>::refined_isolating_interval ()
+#7  0x000055c6594cc8f1 in <hypercurve::bezier_parameter::BezierParameterRefinement2>::refine_to ()
+#8  0x000055c65926c7a4 in hypercurve::rational_bezier_general::real_coefficient_rational_image_parameter ()
+#9  0x000055c6593a5a01 in hyperreal::dispatch_trace::with_recording::<hypercurve::policy::CurveOutcome<hypercurve::classify::Classification<core::option::Option<hypercurve::bezier_parameter::BezierParameter2>>>, hypercurve::rational_bezier_general::tests::conic_rational_image_separation_refines_past_the_old_limit::{closure#0}> ()
+#10 0x000055c65955e19d in hypercurve::rational_bezier_general::tests::conic_rational_image_separation_refines_past_the_old_limit ()
+#11 0x000055c6594181a9 in <hypercurve::rational_bezier_general::tests::conic_rational_image_separation_refines_past_the_old_limit::{closure#0} as core::ops::function::FnOnce<()>>::call_once ()
+#12 0x000055c659b486fb in test::__rust_begin_short_backtrace::<core::result::Result<(), alloc::string::String>, fn() -> core::result::Result<(), alloc::string::String>> ()
+#13 0x000055c659b55d45 in test::run_test::{closure#0} ()
+#14 0x000055c659b4f6f4 in std::sys::backtrace::__rust_begin_short_backtrace::<test::run_test::{closure#1}, ()> ()
+#15 0x000055c659b58e92 in <std::thread::lifecycle::spawn_unchecked<test::run_test::{closure#1}, ()>::{closure#1} as core::ops::function::FnOnce<()>>::call_once::{shim:vtable#0} ()
+#16 0x000055c659e299ff in <std::sys::thread::unix::Thread>::new::thread_start ()
+#17 0x00007fe0184b5ac4 in start_thread () from /proc/3568914/root/lib64/libc.so.6
+#18 0x00007fe0185384ac in __clone3 () from /proc/3568914/root/lib64/libc.so.6
+
+Thread 1 (Thread 0x7fe018443340 (LWP 3568914) "common-point-in"):
+#0  0x00007fe01853624d in syscall () from /proc/3568914/root/lib64/libc.so.6
+#1  0x000055c659e14fb6 in <std::thread::thread::Thread>::park ()
+#2  0x000055c659b56b35 in <std::sync::mpmc::list::Channel<test::event::CompletedTest>>::recv::{closure#1} ()
+#3  0x000055c659b61c7a in <std::sync::mpmc::list::Channel<test::event::CompletedTest>>::recv ()
+#4  0x000055c659b6e746 in test::console::run_tests_console ()
+#5  0x000055c659b5a7ab in test::test_main_static ()
+#6  0x000055c6591e5473 in std::sys::backtrace::__rust_begin_short_backtrace::<fn(), ()> ()
+#7  0x000055c659857279 in std::rt::lang_start::<()>::{closure#0} ()
+#8  0x000055c659e20ce7 in std::rt::lang_start_internal ()
+#9  0x000055c659495505 in main ()
+[Inferior 1 (process 3568914) detached]

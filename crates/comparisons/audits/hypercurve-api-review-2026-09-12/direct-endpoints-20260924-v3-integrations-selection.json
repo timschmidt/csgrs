@@ -1,0 +1,105 @@
+{
+  "selected": [
+    [
+      "hypercurve_curve_point",
+      "coordinate_view_accepts_arbitrary_exact_reals_and_preserves_certainty"
+    ],
+    [
+      "hypercurve_curve_point",
+      "independent_selected_charts_share_the_general_point_queries"
+    ],
+    [
+      "hypercurve_analytic_parallel_region",
+      "analytic_parallel_fragments_retain_exact_region_evidence_under_both_policies"
+    ],
+    [
+      "hypercurve_analytic_parallel_region",
+      "cusp_split_analytic_self_crossing_normalizes_at_admission"
+    ],
+    [
+      "hypercurve_analytic_parallel_region",
+      "general_boundary_paths_preserve_analytic_carriers_and_boolean_reentry"
+    ],
+    [
+      "hypercurve_analytic_parallel_region",
+      "radical_parallel_cusp_spans_connect_under_both_policies"
+    ],
+    [
+      "hypercurve_path_closure",
+      "boundary_admission_rejects_disconnected_spline_spans"
+    ],
+    [
+      "hypercurve_path_closure",
+      "finite_fixed_distance_domains::finite_chamfers_preserve_equivalent_source_charts"
+    ],
+    [
+      "hypercurve_path_closure",
+      "finite_fixed_distance_domains::repeated_finite_chamfers_preserve_selected_cuts"
+    ],
+    [
+      "hypercurve_path_closure",
+      "finite_selected_point_domains::collapsed_circle_fillet_preserves_finite_parallel_domains"
+    ],
+    [
+      "hypercurve_path_closure",
+      "selected_chamfers_preserve_all_major_arc_contacts"
+    ],
+    [
+      "hypercurve_path_closure",
+      "selected_major_arc_fillets_keep_the_complete_authored_sweep"
+    ],
+    [
+      "hypercurve_path_closure",
+      "selected_open_chamfers_reenter_the_public_path_api"
+    ],
+    [
+      "hypercurve_path_closure",
+      "selected_open_fillets_accept_a_subsequent_chamfer"
+    ],
+    [
+      "hypercurve_path_closure",
+      "selected_path_chamfers_close_through_all_region_booleans"
+    ],
+    [
+      "hypercurve_path_closure",
+      "selected_spline_chamfers_keep_every_untrimmed_span"
+    ],
+    [
+      "hypercurve_path_closure",
+      "selected_spline_fillets_preserve_knot_charts_and_other_spans"
+    ],
+    [
+      "hypercurve_curve_region_promotion",
+      "boundary_paths_obey_terminal_policy_once"
+    ],
+    [
+      "hypercurve_curve_region_promotion",
+      "selected_boundary_paths_retain_domains_through_repeated_region_roundtrips"
+    ]
+  ],
+  "binaries": {
+    "hypercurve_curve_point": {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/direct-endpoints-20260924-v3-integrations-hypercurve_curve_point",
+      "sha256": "3c7cd3bf18984fa9cc7b25728b1c91cff9a3f76b33083e07e5132335af23e945"
+    },
+    "hypercurve_analytic_parallel_region": {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/direct-endpoints-20260924-v3-integrations-hypercurve_analytic_parallel_region",
+      "sha256": "2cdcf3464a149a6851fc9babc95c87e472ac84662483c14ce566f8ea851141be"
+    },
+    "hypercurve_path_closure": {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/direct-endpoints-20260924-v3-integrations-hypercurve_path_closure",
+      "sha256": "b0167604f5463f0ea685c33937979774571b235c9ea4f43cd48236a11aa0f168"
+    },
+    "hypercurve_curve_region_promotion": {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/direct-endpoints-20260924-v3-integrations-hypercurve_curve_region_promotion",
+      "sha256": "f1c69c7c2fe30a45ed2b98aec123ccd0607d928025449566576d71345a70a9e0"
+    }
+  },
+  "existing_nonpasses_not_repeated": [
+    {
+      "target": "hypercurve_path_closure",
+      "name": "homogeneous_boundary_closes_through_boolean_corners_and_offset",
+      "evidence": "direct-endpoints-20260924-parent-path-terminal.json"
+    }
+  ]
+}

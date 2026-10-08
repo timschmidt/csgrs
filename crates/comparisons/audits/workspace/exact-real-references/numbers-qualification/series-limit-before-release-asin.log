@@ -1,0 +1,2 @@
+START asin(1/16) bits=192000 oracle_bits=192256
+FAIL asin(1/16) bits=192000 elapsed_ns=328677128

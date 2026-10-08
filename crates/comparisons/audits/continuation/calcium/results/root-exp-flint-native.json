@@ -1,0 +1,11 @@
+{
+  "tag": "root-exp-flint-native",
+  "started": "2026-09-08T11:13:49.638Z",
+  "finished": "2026-09-08T11:13:49.665Z",
+  "elapsedSeconds": 0.024454583,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison",
+  "command": "/home/tim/Documents/GitHub/workspace/.audit-builds/calcium-flint-root-exp-probe",
+  "args": [],
+  "code": 0,
+  "signal": null
+}

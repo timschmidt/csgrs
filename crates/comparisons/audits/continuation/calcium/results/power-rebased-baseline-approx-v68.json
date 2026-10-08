@@ -1,0 +1,11 @@
+{
+  "tag": "power-rebased-baseline-approx-v68",
+  "started": "2026-09-11T03:52:06.549Z",
+  "finished": "2026-09-11T03:52:06.899Z",
+  "elapsedSeconds": 0.347425972,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "/tmp/calcium-power-rebased.xUuvlb/baseline-approx",
+  "args": [],
+  "code": 0,
+  "signal": null
+}

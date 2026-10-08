@@ -1,0 +1,12 @@
+   Compiling hyperreal v0.13.1 (/home/tim/Documents/GitHub/workspace/hyperreal)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1.74s
+     Running unittests src/lib.rs (.audit-targets/ireal-derivative-18555/debug/deps/hyperreal-a346315a45113d5d)
+
+running 4 tests
+test computable::node::tests::atanh_series_domain_rechecks_prescaled_nodes ... ok
+test computable::node::tests::atanh_series_domain_rejects_estimated_magnitudes ... ok
+test computable::node::tests::asin_series_domain_rejects_estimated_magnitudes ... ok
+test computable::node::tests::asin_series_domain_rechecks_prescaled_nodes ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 651 filtered out; finished in 0.04s
+

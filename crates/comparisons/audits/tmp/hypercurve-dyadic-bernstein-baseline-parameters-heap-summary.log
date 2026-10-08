@@ -1,0 +1,10 @@
+reading file "/tmp/hypercurve-dyadic-bernstein-baseline-parameters.heap.zst" - please wait, this might take some time...
+Debuggee command was: /tmp/hypercurve-recursive-radial-baseline-test bezier_parameter::conversion_tests --nocapture --test-threads=1
+finished reading file, now analyzing data:
+
+total runtime: 0.471000s.
+calls to allocation functions: 758460 (1610318/s)
+temporary memory allocations: 43104 (91515/s)
+peak heap memory consumption: 1.15M
+peak RSS (including heaptrack overhead): 15.38M
+total memory leaked: 897.90K

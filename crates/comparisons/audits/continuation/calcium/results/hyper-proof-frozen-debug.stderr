@@ -1,0 +1,4 @@
+error: failed to parse manifest at `/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/baseline-hyperreal/Cargo.toml`
+
+Caused by:
+  can't find `adversarial_library` bench at `benches/adversarial_library.rs` or `benches/adversarial_library/main.rs`. Please specify bench.path if you want to use a non-default path.

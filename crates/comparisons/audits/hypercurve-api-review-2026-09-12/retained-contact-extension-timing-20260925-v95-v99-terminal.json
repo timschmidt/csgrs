@@ -1,0 +1,254 @@
+{
+  "binary_bindings": {
+    "v95": {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/selected-frame-integrated-20260925-v95-hypercurve_curve",
+      "sha256": "ae164d90b06dbcba42cbb167d75796911aadeb853fe915775ba89ed7a1962b07"
+    },
+    "v99": {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-contact-integrated-20260925-v99-hypercurve_curve",
+      "sha256": "c783c20dbe384d4ca028f477b21f3048f83f7ebb2784d08c1e19253d873667f8"
+    }
+  },
+  "changed_inputs": [
+    "hypercurve/src/bezier_offset.rs",
+    "hypersolve/src/root_sign.rs",
+    "hypersolve/src/ordered_field_roots.rs",
+    "hypersolve/src/algebraic_fiber.rs"
+  ],
+  "repetitions": 3,
+  "matched_public_test_sources": true,
+  "cases": [
+    {
+      "case": "polynomial_chamfer_materializes_represented_incident_extension",
+      "version": "v95",
+      "repetition": 0,
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/selected-frame-integrated-20260925-v95-hypercurve_curve",
+        "--exact",
+        "polynomial_chamfer_materializes_represented_incident_extension",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.0035507259890437126,
+      "libtest_seconds": 0.0,
+      "log": "retained-contact-extension-timing-20260925-v95-v99-polynomial_chamfer_materializes_represented_incident_extension-v95-0.log"
+    },
+    {
+      "case": "polynomial_chamfer_materializes_represented_incident_extension",
+      "version": "v99",
+      "repetition": 0,
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-contact-integrated-20260925-v99-hypercurve_curve",
+        "--exact",
+        "polynomial_chamfer_materializes_represented_incident_extension",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.0034052859991788864,
+      "libtest_seconds": 0.0,
+      "log": "retained-contact-extension-timing-20260925-v95-v99-polynomial_chamfer_materializes_represented_incident_extension-v99-0.log"
+    },
+    {
+      "case": "polynomial_chamfer_materializes_represented_incident_extension",
+      "version": "v95",
+      "repetition": 1,
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/selected-frame-integrated-20260925-v95-hypercurve_curve",
+        "--exact",
+        "polynomial_chamfer_materializes_represented_incident_extension",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.003370399004779756,
+      "libtest_seconds": 0.0,
+      "log": "retained-contact-extension-timing-20260925-v95-v99-polynomial_chamfer_materializes_represented_incident_extension-v95-1.log"
+    },
+    {
+      "case": "polynomial_chamfer_materializes_represented_incident_extension",
+      "version": "v99",
+      "repetition": 1,
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-contact-integrated-20260925-v99-hypercurve_curve",
+        "--exact",
+        "polynomial_chamfer_materializes_represented_incident_extension",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.0034127660328522325,
+      "libtest_seconds": 0.0,
+      "log": "retained-contact-extension-timing-20260925-v95-v99-polynomial_chamfer_materializes_represented_incident_extension-v99-1.log"
+    },
+    {
+      "case": "polynomial_chamfer_materializes_represented_incident_extension",
+      "version": "v95",
+      "repetition": 2,
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/selected-frame-integrated-20260925-v95-hypercurve_curve",
+        "--exact",
+        "polynomial_chamfer_materializes_represented_incident_extension",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.0034009770024567842,
+      "libtest_seconds": 0.0,
+      "log": "retained-contact-extension-timing-20260925-v95-v99-polynomial_chamfer_materializes_represented_incident_extension-v95-2.log"
+    },
+    {
+      "case": "polynomial_chamfer_materializes_represented_incident_extension",
+      "version": "v99",
+      "repetition": 2,
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-contact-integrated-20260925-v99-hypercurve_curve",
+        "--exact",
+        "polynomial_chamfer_materializes_represented_incident_extension",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.003403825918212533,
+      "libtest_seconds": 0.0,
+      "log": "retained-contact-extension-timing-20260925-v95-v99-polynomial_chamfer_materializes_represented_incident_extension-v99-2.log"
+    },
+    {
+      "case": "rational_chamfer_materializes_the_incident_projective_cell",
+      "version": "v95",
+      "repetition": 0,
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/selected-frame-integrated-20260925-v95-hypercurve_curve",
+        "--exact",
+        "rational_chamfer_materializes_the_incident_projective_cell",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.0034175249747931957,
+      "libtest_seconds": 0.0,
+      "log": "retained-contact-extension-timing-20260925-v95-v99-rational_chamfer_materializes_the_incident_projective_cell-v95-0.log"
+    },
+    {
+      "case": "rational_chamfer_materializes_the_incident_projective_cell",
+      "version": "v99",
+      "repetition": 0,
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-contact-integrated-20260925-v99-hypercurve_curve",
+        "--exact",
+        "rational_chamfer_materializes_the_incident_projective_cell",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.0034090669360011816,
+      "libtest_seconds": 0.0,
+      "log": "retained-contact-extension-timing-20260925-v95-v99-rational_chamfer_materializes_the_incident_projective_cell-v99-0.log"
+    },
+    {
+      "case": "rational_chamfer_materializes_the_incident_projective_cell",
+      "version": "v95",
+      "repetition": 1,
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/selected-frame-integrated-20260925-v95-hypercurve_curve",
+        "--exact",
+        "rational_chamfer_materializes_the_incident_projective_cell",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.003408286953344941,
+      "libtest_seconds": 0.0,
+      "log": "retained-contact-extension-timing-20260925-v95-v99-rational_chamfer_materializes_the_incident_projective_cell-v95-1.log"
+    },
+    {
+      "case": "rational_chamfer_materializes_the_incident_projective_cell",
+      "version": "v99",
+      "repetition": 1,
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-contact-integrated-20260925-v99-hypercurve_curve",
+        "--exact",
+        "rational_chamfer_materializes_the_incident_projective_cell",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.003426744951866567,
+      "libtest_seconds": 0.0,
+      "log": "retained-contact-extension-timing-20260925-v95-v99-rational_chamfer_materializes_the_incident_projective_cell-v99-1.log"
+    },
+    {
+      "case": "rational_chamfer_materializes_the_incident_projective_cell",
+      "version": "v95",
+      "repetition": 2,
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/selected-frame-integrated-20260925-v95-hypercurve_curve",
+        "--exact",
+        "rational_chamfer_materializes_the_incident_projective_cell",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.0034087260719388723,
+      "libtest_seconds": 0.0,
+      "log": "retained-contact-extension-timing-20260925-v95-v99-rational_chamfer_materializes_the_incident_projective_cell-v95-2.log"
+    },
+    {
+      "case": "rational_chamfer_materializes_the_incident_projective_cell",
+      "version": "v99",
+      "repetition": 2,
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-contact-integrated-20260925-v99-hypercurve_curve",
+        "--exact",
+        "rational_chamfer_materializes_the_incident_projective_cell",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.003421855974011123,
+      "libtest_seconds": 0.0,
+      "log": "retained-contact-extension-timing-20260925-v95-v99-rational_chamfer_materializes_the_incident_projective_cell-v99-2.log"
+    }
+  ],
+  "all_processes_reaped": true,
+  "summary": {
+    "polynomial_chamfer_materializes_represented_incident_extension": {
+      "v95": {
+        "median_seconds": 0.0034009770024567842,
+        "minimum_seconds": 0.003370399004779756,
+        "maximum_seconds": 0.0035507259890437126
+      },
+      "v99": {
+        "median_seconds": 0.0034052859991788864,
+        "minimum_seconds": 0.003403825918212533,
+        "maximum_seconds": 0.0034127660328522325
+      }
+    },
+    "rational_chamfer_materializes_the_incident_projective_cell": {
+      "v95": {
+        "median_seconds": 0.0034087260719388723,
+        "minimum_seconds": 0.003408286953344941,
+        "maximum_seconds": 0.0034175249747931957
+      },
+      "v99": {
+        "median_seconds": 0.003421855974011123,
+        "minimum_seconds": 0.0034090669360011816,
+        "maximum_seconds": 0.003426744951866567
+      }
+    }
+  },
+  "all_sources_and_executables_unchanged": true
+}

@@ -1,0 +1,127 @@
+{
+  "mode": "parent",
+  "parent": "7697d69959f9505b1b0efc09802e155b6029f738",
+  "selected_files": [
+    "src/bezier_offset.rs",
+    "src/bezier_region.rs",
+    "src/curve_region_boolean.rs"
+  ],
+  "workspace_changed": [
+    "src/bezier_offset.rs",
+    "src/bezier_parameter.rs",
+    "src/bezier_region.rs",
+    "src/curve.rs",
+    "src/curve_corner_chain.rs",
+    "src/curve_region_boolean.rs",
+    "tests/hypercurve_curve.rs"
+  ],
+  "workspace_guard": "local-chord-complete-replay-20260924-v62-sources.json",
+  "source_manifest": "finite-range-rays-20260925-v62-parent-sources.json",
+  "patch": "finite-range-rays-20260925-v62.patch",
+  "checks": [],
+  "binaries": {
+    "hypercurve": {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-range-rays-20260925-v62-parent-hypercurve",
+      "sha256": "90b4ca95eba8e89d89ce8600aa769ec9d4fbb7b7184c39f04a581df6e0ce6810"
+    }
+  },
+  "cases": [
+    {
+      "label": "case-000",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-range-rays-20260925-v62-parent-hypercurve",
+        "--exact",
+        "bezier_region::tests::algebraic_ray_queries_keep_exterior_roots_and_denominator_orientation",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 101,
+      "elapsed_seconds": 0.27212332701310515,
+      "limit_seconds": 75,
+      "log": "finite-range-rays-20260925-v62-parent-case-000.log",
+      "ignored": false,
+      "target": "hypercurve",
+      "name": "bezier_region::tests::algebraic_ray_queries_keep_exterior_roots_and_denominator_orientation"
+    },
+    {
+      "label": "case-001",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-range-rays-20260925-v62-parent-hypercurve",
+        "--exact",
+        "curve_region_boolean::certified_successor_tests::regularization_orders_all_branches_at_a_pinched_algebraic_corner",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 101,
+      "elapsed_seconds": 0.2737428160617128,
+      "limit_seconds": 75,
+      "log": "finite-range-rays-20260925-v62-parent-case-001.log",
+      "ignored": false,
+      "target": "hypercurve",
+      "name": "curve_region_boolean::certified_successor_tests::regularization_orders_all_branches_at_a_pinched_algebraic_corner"
+    },
+    {
+      "label": "case-002",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-range-rays-20260925-v62-parent-hypercurve",
+        "--exact",
+        "curve_region_boolean::certified_successor_tests::independent_field_collinear_chord_overlap_enters_all_boolean_topology",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 101,
+      "elapsed_seconds": 0.2889063350157812,
+      "limit_seconds": 75,
+      "log": "finite-range-rays-20260925-v62-parent-case-002.log",
+      "ignored": false,
+      "target": "hypercurve",
+      "name": "curve_region_boolean::certified_successor_tests::independent_field_collinear_chord_overlap_enters_all_boolean_topology"
+    },
+    {
+      "label": "case-003",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-range-rays-20260925-v62-parent-hypercurve",
+        "--exact",
+        "curve_region_boolean::certified_successor_tests::source_related_algebraic_chord_contact_enters_split_topology",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 101,
+      "elapsed_seconds": 0.2717127950163558,
+      "limit_seconds": 75,
+      "log": "finite-range-rays-20260925-v62-parent-case-003.log",
+      "ignored": false,
+      "target": "hypercurve",
+      "name": "curve_region_boolean::certified_successor_tests::source_related_algebraic_chord_contact_enters_split_topology"
+    }
+  ],
+  "all_processes_reaped": true,
+  "build_returncode": 0,
+  "selection": [
+    [
+      "hypercurve",
+      "bezier_region::tests::algebraic_ray_queries_keep_exterior_roots_and_denominator_orientation"
+    ],
+    [
+      "hypercurve",
+      "curve_region_boolean::certified_successor_tests::regularization_orders_all_branches_at_a_pinched_algebraic_corner"
+    ],
+    [
+      "hypercurve",
+      "curve_region_boolean::certified_successor_tests::independent_field_collinear_chord_overlap_enters_all_boolean_topology"
+    ],
+    [
+      "hypercurve",
+      "curve_region_boolean::certified_successor_tests::source_related_algebraic_chord_contact_enters_split_topology"
+    ]
+  ],
+  "all_sources_unchanged": true
+}

@@ -1,0 +1,14 @@
+{
+  "tag": "quadratic-extraction-seal-v82",
+  "started": "2026-09-12T03:25:14.122Z",
+  "finished": "2026-09-12T03:25:32.560Z",
+  "elapsedSeconds": 18.435900981000003,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "node",
+  "args": [
+    "verify-quadratic-extraction-v82.mjs",
+    "--record"
+  ],
+  "code": 0,
+  "signal": null
+}

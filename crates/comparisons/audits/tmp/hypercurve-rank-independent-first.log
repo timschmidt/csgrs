@@ -1,0 +1,6 @@
+
+running 1 test
+test bezier_offset::conversion_tests::rank_independent_public_booleans_strict_first_quarter_cusp_first ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 875 filtered out; finished in 0.52s
+

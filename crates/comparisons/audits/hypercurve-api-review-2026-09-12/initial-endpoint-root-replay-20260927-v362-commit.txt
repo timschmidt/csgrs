@@ -1,0 +1,13 @@
+Preserve exact root-sign replay for narrow isolators
+
+An undecided initial endpoint sign no longer bypasses the existing certified
+coarser-singleton replay. Build the signed query chain once and reuse it only
+after proving an enclosing bracket owns the same root. Exact endpoint roots
+still decline explicitly and the retained equation and isolator are unchanged.
+
+Cover 600- and 1200-bit isolators over pi and exp(1/3), both defining gauges,
+positive/negative queries, exact equality and the zero query. Existing foreign
+root exclusion and endpoint ownership tests remain passing.
+
+Validation: 528 solver unit tests, 368 solver integration tests, 63 selected
+geometry tests, all-target Clippy, formatting and denied-warning solver docs.

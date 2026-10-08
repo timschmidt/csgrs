@@ -1,0 +1,6 @@
+{
+  "commit": "2d26b0ae4d6178700d5c26ccdab5f8ac25a1f787",
+  "file": "src/intersect.rs",
+  "sha256": "b58bcc351e7941e9bd1d57201220eeb5f9d6d208c95fb52b93f753a1bb763bbf",
+  "remaining_changes": " M src/bezier_offset.rs\n"
+}

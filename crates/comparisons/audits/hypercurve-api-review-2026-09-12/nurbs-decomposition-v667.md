@@ -1,0 +1,5 @@
+# NURBS extraction result consolidation qualification (UNRUN)
+
+Requires V671 known-center fillet changes to be reaped, reviewed and committed, then V660 two-file candidate to be formatted and promoted after base hash verification. No caller aliases: remove the redundant NurbsBezierDecomposition2 struct and return/cache the existing RationalBSplineBezierExtraction2 directly. V666 caller audit checked 30 repositories / 116 source directories: only the NURBS module and export name the wrapper.
+
+Planned validation: library spline/NURBS cases discovered from the exact V671 executable inventory, complete hypercurve_nurbs/hypercurve_bspline/hypercurve_curve integration inventories, both all-target Clippy configurations, formatting, bspline/editing/region/split fuzz compile, docs, and hyperbrep downstream compile. Cases retain actual poles vs infinite homogeneous controls, periodic seams, chart discontinuities, policy separation, exact knot edits, clone-shared caches and span evidence. No new implementation-mirroring tests.

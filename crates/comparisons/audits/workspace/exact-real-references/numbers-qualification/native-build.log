@@ -1,0 +1,31 @@
+[ 1 of 10] Compiling Data.Number.Abstract ( exact-real-references/numbers/Data/Number/Abstract.hs, nothing )
+[ 2 of 10] Compiling Data.Number.CReal ( exact-real-references/numbers/Data/Number/CReal.hs, nothing )
+[ 3 of 10] Compiling Data.Number.Dif  ( exact-real-references/numbers/Data/Number/Dif.hs, nothing )
+[ 4 of 10] Compiling Data.Number.FixedFunctions ( exact-real-references/numbers/Data/Number/FixedFunctions.hs, nothing )
+[ 5 of 10] Compiling Data.Number.Fixed ( exact-real-references/numbers/Data/Number/Fixed.hs, nothing )
+
+exact-real-references/numbers/Data/Number/Fixed.hs:59:55: error: [GHC-39999]
+    • No instance for ‘Num (Fixed e)’
+        arising from the 'deriving' clause of a data type declaration
+      Possible fix:
+        use a standalone 'deriving instance' declaration,
+          so you can specify the instance context yourself
+    • When deriving the instance for (Real (Fixed e))
+   |
+59 | newtype Fixed e = F Rational deriving (Eq, Ord, Enum, Real, RealFrac)
+   |                                                       ^^^^
+
+exact-real-references/numbers/Data/Number/Fixed.hs:59:61: error: [GHC-39999]
+    • No instance for ‘Fractional (Fixed e)’
+        arising from the 'deriving' clause of a data type declaration
+      Possible fix:
+        use a standalone 'deriving instance' declaration,
+          so you can specify the instance context yourself
+    • When deriving the instance for (RealFrac (Fixed e))
+   |
+59 | newtype Fixed e = F Rational deriving (Eq, Ord, Enum, Real, RealFrac)
+   |                                                             ^^^^^^^^
+[ 7 of 10] Compiling Data.Number.Interval ( exact-real-references/numbers/Data/Number/Interval.hs, nothing )
+[ 8 of 10] Compiling Data.Number.Natural ( exact-real-references/numbers/Data/Number/Natural.hs, nothing )
+[ 9 of 10] Compiling Data.Number.Symbolic ( exact-real-references/numbers/Data/Number/Symbolic.hs, nothing )
+[10 of 10] Compiling Data.Number.Vectorspace ( exact-real-references/numbers/Data/Number/Vectorspace.hs, nothing )

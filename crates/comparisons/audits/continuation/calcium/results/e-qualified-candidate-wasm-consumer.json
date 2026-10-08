@@ -1,0 +1,26 @@
+{
+  "tag": "e-qualified-candidate-wasm-consumer",
+  "started": "2026-09-10T01:15:58.521Z",
+  "finished": "2026-09-10T01:17:17.680Z",
+  "elapsedSeconds": 79.15731615199999,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/e-plan-qualified-candidate/hypercurve",
+  "command": "env",
+  "args": [
+    "CARGO_TARGET_DIR=/tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse",
+    "CARGO_INCREMENTAL=0",
+    "CARGO_PROFILE_DEV_DEBUG=0",
+    "CARGO_BUILD_JOBS=2",
+    "cargo",
+    "build",
+    "--locked",
+    "--offline",
+    "--release",
+    "--lib",
+    "--features",
+    "triangulation,svg,hershey",
+    "--target",
+    "wasm32-unknown-unknown"
+  ],
+  "code": 0,
+  "signal": null
+}

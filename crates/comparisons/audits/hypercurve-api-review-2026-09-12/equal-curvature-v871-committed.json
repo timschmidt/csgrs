@@ -1,0 +1,17 @@
+{
+  "repos": {
+    "hypercurve": {
+      "commit": "dadd0ade7aefe1a060aad81c15edd4e3244977e3",
+      "parent": "b2e29a7a4901952f2027c6bd6d60454072586c87",
+      "paths": {
+        "src/bezier_arrangement.rs": "18c51b0c1241981e6832d63dccff281e58b15d81dc27d7cc8d7bb2b66e64e6f6",
+        "src/bezier_tangent_order.rs": "2d840486e42254e27ac3be8a6007cd0dfb3784e66f8b012bae98c11f6bc2fa6b",
+        "tests/hypercurve_bezier_arrangement.rs": "3bbc1962f1c15cb78615d3a626b5e9a39494a7ab43295f76ad241aa74db919cd",
+        "tests/hypercurve_bezier_tangent_order.rs": "5f5ca9a9852add54e7029b7bed76f2a8086deccad597f090a097ab7fd682d10a"
+      }
+    }
+  },
+  "qualification": "equal-curvature-v871-terminal.json",
+  "verified_source_files": 2048,
+  "clean_repositories": 30
+}

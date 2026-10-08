@@ -1,0 +1,5 @@
+Unify exact point membership without losing collapsed domains
+
+An independently retained algebraic image of a circle center previously returned Boundary when the inward parallel collapsed to that center. Route algebraic-image and winding membership through the shared retained-field incidence solver and remove the duplicated bivariate point enumerator. Preserve deferred-image and denominator admission, selected root evidence, and winding's separate crossing order and endpoint ownership.
+
+Validation: 489 release regressions across nine binaries and six static/downstream checks, including an independent collapsed-circle point oracle under both policies and normal sheets. Thirty-three focused results are reused only after matching every source hash and the exact library executable hash. The common path preserves generated point constraints, selected quadratic/quintic fields, stationary contacts and pole barriers.

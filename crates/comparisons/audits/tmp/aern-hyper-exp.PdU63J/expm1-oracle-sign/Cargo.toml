@@ -1,0 +1,11 @@
+[package]
+name = "aern-expm1-bench-oracle"
+version = "0.0.0"
+edition = "2024"
+[dependencies]
+hyperreal = { path = "../hyperreal-expm1" }
+num-bigint = "=0.4.6"
+rug = { version = "1.30.0", default-features = false, features = ["float", "rational", "std"] }
+[[bin]]
+name = "aern-expm1-bench-oracle"
+path = "../expm1-bench-oracle.rs"

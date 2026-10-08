@@ -1,0 +1,60 @@
+{
+  "baseline": "affine-field-v898-sources.json",
+  "source_sha256": "4040019aee60d70ef59102db4cd9d49881de345b4a6bcc40db1be88218e79344",
+  "processes": [
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "build",
+        "--release",
+        "--all-features",
+        "--locked",
+        "--offline",
+        "--message-format=json"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.06388997216708958,
+      "log": "affine-inference-probe-v900-normal-build.log"
+    },
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustc",
+        "--edition=2024",
+        "--crate-name",
+        "affine_inference_probe",
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/affine-inference-probe-v899.rs",
+        "--extern",
+        "hyperreal=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperreal-225c5ceb5150a3b3.rlib",
+        "--extern",
+        "hypersolve=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/libhypersolve.rlib",
+        "-L",
+        "dependency=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release",
+        "-L",
+        "dependency=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps",
+        "-C",
+        "opt-level=3",
+        "-o",
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/affine-inference-probe-v900-binary"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.5143747951369733,
+      "log": "affine-inference-probe-v900-compile.log"
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/affine-inference-probe-v900-binary"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.03170612687245011,
+      "log": "affine-inference-probe-v900-cases.log"
+    }
+  ],
+  "all_processes_reaped": true,
+  "rlibs": {
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperreal-225c5ceb5150a3b3.rlib": "e4c5d2c2dc8dfcf53a277abc30bfb3dd6f62cbbbf966aabf820540da80d96c46",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/libhypersolve.rlib": "c15258238e1cdd4a96ca7ef304174ccc3777c310d32589c728b11667619e39e2"
+  },
+  "binary_sha256": "3358daae43d8c485fcd52335f4bf73327ca89a220c340ffa27666c7b8d493255",
+  "output": "case=0:0 mapped=Transformed\ncase=0:0 relation_present=true\ncase=0:0 mean_matches=Some(Equal)\ncase=0:0 center_status=Transformed:Transformed\ncase=0:0 coefficient=1 signs=Some(Equal):Some(Equal) rational=true:true\ncase=0:0 coefficient=0 signs=Some(Less):Some(Less) rational=false:false\ncase=0:0 ratio_rational=true ratio_normal_form=true ratio_expected=Some(Equal)\ncase=0:0 candidate_rational=true candidate_normal_form=true candidate_matches=Some(Equal)\ncase=0:0 proposed=Transformed\ncase=0:0 selected_equality=SameRepresentation:Some(Equal)\ncase=0:1 mapped=Transformed\ncase=0:1 relation_present=false\ncase=0:1 mean_matches=Some(Equal)\ncase=0:1 center_status=Transformed:Transformed\ncase=0:1 coefficient=1 signs=Some(Equal):Some(Equal) rational=true:true\ncase=0:1 coefficient=0 signs=Some(Less):Some(Less) rational=false:false\ncase=0:1 ratio_rational=false ratio_normal_form=true ratio_expected=Some(Equal)\ncase=0:1 candidate_rational=false candidate_normal_form=false candidate_matches=None\ncase=0:1 proposed=Transformed\ncase=0:1 selected_equality=Undecided:None\ncase=1:0 mapped=Transformed\ncase=1:0 relation_present=true\ncase=1:0 mean_matches=Some(Equal)\ncase=1:0 center_status=Transformed:Transformed\ncase=1:0 coefficient=1 signs=Some(Equal):Some(Equal) rational=true:true\ncase=1:0 coefficient=0 signs=Some(Less):Some(Greater) rational=false:false\ncase=1:0 ratio_rational=true ratio_normal_form=true ratio_expected=Some(Equal)\ncase=1:0 candidate_rational=true candidate_normal_form=true candidate_matches=Some(Equal)\ncase=1:0 proposed=Transformed\ncase=1:0 selected_equality=SameRepresentation:Some(Equal)\ncase=1:1 mapped=Transformed\ncase=1:1 relation_present=false\ncase=1:1 mean_matches=Some(Equal)\ncase=1:1 center_status=Transformed:Transformed\ncase=1:1 coefficient=1 signs=Some(Equal):Some(Equal) rational=true:true\ncase=1:1 coefficient=0 signs=Some(Less):Some(Greater) rational=false:false\ncase=1:1 ratio_rational=false ratio_normal_form=true ratio_expected=Some(Equal)\ncase=1:1 candidate_rational=false candidate_normal_form=false candidate_matches=None\ncase=1:1 proposed=Transformed\ncase=1:1 selected_equality=Undecided:None\ncomplete cases=4\n",
+  "probe_complete": true
+}

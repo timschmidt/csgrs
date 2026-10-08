@@ -1,0 +1,40 @@
+\doxysubsection{source/numeric/builtin.hpp File Reference}
+\hypertarget{numeric_2builtin_8hpp}{}\label{numeric_2builtin_8hpp}\index{source/numeric/builtin.hpp@{source/numeric/builtin.hpp}}
+
+
+\doxysubsubsection{Description}
+Inclusion header for wrapper for builtin numbers. 
+
+{\ttfamily \#include $<$cassert$>$}\newline
+{\ttfamily \#include $<$cmath$>$}\newline
+{\ttfamily \#include $<$iostream$>$}\newline
+{\ttfamily \#include $<$iomanip$>$}\newline
+{\ttfamily \#include $<$limits$>$}\newline
+{\ttfamily \#include "{}utility/metaprogramming.\+hpp"{}}\newline
+{\ttfamily \#include "{}utility/macros.\+hpp"{}}\newline
+{\ttfamily \#include "{}numeric/number.\+decl.\+hpp"{}}\newline
+{\ttfamily \#include "{}foundations/logical.\+hpp"{}}\newline
+{\ttfamily \#include "{}twoexp.\+hpp"{}}\newline
+\doxysubsubsubsection*{Classes}
+\begin{DoxyCompactItemize}
+\item 
+class \mbox{\hyperlink{classAriadne_1_1ApproximateDouble}{Approximate\+Double}}
+\begin{DoxyCompactList}\small\item\em A wrapper around a builtin double-\/precision floating-\/point number, indicating that the stored value is an {\itshape approximation} to the value of a real quantity. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1ExactDouble}{Exact\+Double}}
+\begin{DoxyCompactList}\small\item\em A wrapper around a builtin double-\/precision floating-\/point number, indicating that the stored value is the {\itshape exact} value of a real quantity. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsubsection*{Namespaces}
+\begin{DoxyCompactItemize}
+\item 
+namespace \mbox{\hyperlink{namespaceAriadne}{Ariadne}}
+\begin{DoxyCompactList}\small\item\em Top-\/level Ariadne namespace. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsubsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\hyperlink{classAriadne_1_1ApproximateDouble}{Approximate\+Double}} {\bfseries operator"{}"{}\+\_\+a} (long double lx)
+\begin{DoxyCompactList}\small\item\em Indicate that a floating-\/point literal only represents an double-\/precision approximation to a number. \end{DoxyCompactList}\item 
+\mbox{\hyperlink{classAriadne_1_1ExactDouble}{Exact\+Double}} \mbox{\hyperlink{group__ExtendedLiteralsSubModule_gac570de32fd257bd0dfb686f134ad621e}{operator"{}"{}\+\_\+x}} (long double lx)
+\begin{DoxyCompactList}\small\item\em Indicate that a floating-\/point literal is the exact value of a number in double-\/precision. \end{DoxyCompactList}\item 
+\mbox{\hyperlink{classAriadne_1_1ExactDouble}{Exact\+Double}} {\bfseries exact} (long double lx)
+\begin{DoxyCompactList}\small\item\em Indicate that a floating-\/point literal is sufficiently precise that it can safely be taken to represent the closest double-\/precision floating-\/point number. \end{DoxyCompactList}\item 
+\mbox{\hyperlink{classAriadne_1_1ExactDouble}{Exact\+Double}} \mbox{\hyperlink{group__ExtendedLiteralsSubModule_gabd313746e70a0e828a8a9d12483ada8d}{operator"{}"{}\+\_\+pr}} (long double lx)
+\begin{DoxyCompactList}\small\item\em Indicate that a floating-\/point literal is sufficiently precise that it can safely be taken to represent the closest double-\/precision floating-\/point number. \end{DoxyCompactList}\end{DoxyCompactItemize}

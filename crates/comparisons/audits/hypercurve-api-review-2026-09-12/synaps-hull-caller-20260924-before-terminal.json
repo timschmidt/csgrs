@@ -1,0 +1,17 @@
+{
+  "command": [
+    "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+    "clippy",
+    "--lib",
+    "--all-features",
+    "--locked",
+    "--offline",
+    "--",
+    "-D",
+    "warnings"
+  ],
+  "returncode": 101,
+  "log": "synaps-hull-caller-20260924-before-clippy.log",
+  "sources_unchanged": true,
+  "all_processes_reaped": true
+}

@@ -1,0 +1,30 @@
+{
+  "tag": "flint-proof-compile-corrected",
+  "started": "2026-09-08T08:31:16.434Z",
+  "finished": "2026-09-08T08:31:16.565Z",
+  "elapsedSeconds": 0.128578401,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison",
+  "command": "/usr/bin/gcc",
+  "args": [
+    "-O2",
+    "-g",
+    "-Wall",
+    "-Wextra",
+    "-Werror",
+    "-isystem",
+    "../exact-real-references/flint/src",
+    "audits/continuation/calcium/flint-proof-probe.c",
+    "-L",
+    "../exact-real-references/flint",
+    "-Wl,-rpath,/home/tim/Documents/GitHub/workspace/exact-real-references/flint",
+    "-lflint",
+    "-lmpfr",
+    "-lgmp",
+    "-lm",
+    "-lpthread",
+    "-o",
+    "/tmp/calcium-flint-proof-probe"
+  ],
+  "code": 0,
+  "signal": null
+}

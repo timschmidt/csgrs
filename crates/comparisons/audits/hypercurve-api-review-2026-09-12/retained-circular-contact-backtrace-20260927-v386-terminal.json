@@ -1,0 +1,10 @@
+{
+  "returncode": 101,
+  "elapsed_seconds": 0.2501485329121351,
+  "binary": {
+    "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/coincident-circular-constraints-20260927-v385-hypercurve",
+    "sha256": "b07783f2b5ed649df6975ca53edb060c92c2413530bb3bc6e3b4c35c5536281d"
+  },
+  "log": "retained-circular-contact-backtrace-20260927-v386.log",
+  "all_processes_reaped": true
+}

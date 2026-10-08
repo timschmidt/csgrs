@@ -1,0 +1,37 @@
+{
+  "qualification": "stationary-pair-cells-broad-20260927-v536-terminal.json",
+  "source_manifest": "stationary-pair-cells-broad-20260927-v536-sources.json",
+  "outer_session_reaped": 35300,
+  "validated_files": 2047,
+  "selected_geometry_tests": 394,
+  "checks": 6,
+  "repos": {
+    "hypercurve": {
+      "parent": "a0492bd048b629cbaf64400310573bb83fd5fea7",
+      "paths": {
+        "src/bezier_offset.rs": "230d7e00d4b38a685ac5e19bf1dd3fb4cf7321d5c76aadae345935000172eca1",
+        "src/curve.rs": "a854a0c7740de6a0d0799c42c8eb8d7b054cb7d6b2d4d1b204ec657bc0e853ed",
+        "src/curve_fillet.rs": "8c1beddd093d6b07bd4285e9b85f56686108d28aab6d3d4dcec2bca0b087a316",
+        "src/curve_parameter_component.rs": "4464d9765c4f579da496ce6ea79a731056bd2df6201f46eb2d256ef0afe6aa70",
+        "src/curve_support_intersection.rs": "8b881563e7a5450ef82a9911d257e3f06c4bac4ad44c3b97139946354c092226",
+        "tests/hypercurve_stationary_fillets.rs": "10411df970a4e5bb0d73d2b647dc8506f7cf4c7a017afdd343b33700fff69acd"
+      }
+    }
+  },
+  "scope": "Owned regular source cells for stationary pair fillets, shared isolated/family frame replay, branch-aware represented constraints, and finite-cell normal proof reuse; full implementation goal and additional generic/ray closure cases remain open",
+  "performance_changes": [
+    {
+      "name": "curve::curve_fillet::tests::joined_path_selects_and_replays_a_continuous_fillet_family",
+      "before": 3.017497517168522,
+      "after": 5.3707263469696045
+    }
+  ],
+  "workload_changes": [
+    {
+      "name": "bezier_offset::conversion_tests::finite_domain_admits_one_sided_source_cusp_contacts",
+      "before": 0.21403905795887113,
+      "after": 0.6145178847946227,
+      "change": "also verifies two pointwise family branches and exclusion of their undefined cusp parameter"
+    }
+  ]
+}

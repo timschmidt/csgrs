@@ -1,0 +1,20 @@
+{
+  "tag": "quadratic-extraction-hyper-fmt-v82",
+  "started": "2026-09-12T03:16:08.478Z",
+  "finished": "2026-09-12T03:16:08.530Z",
+  "elapsedSeconds": 0.04952054799999999,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/quadratic-extraction-hyper-v82",
+  "command": "env",
+  "args": [
+    "CARGO_TARGET_DIR=/tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse",
+    "CARGO_INCREMENTAL=0",
+    "CARGO_PROFILE_DEV_DEBUG=0",
+    "CARGO_BUILD_JOBS=2",
+    "cargo",
+    "fmt",
+    "--",
+    "--check"
+  ],
+  "code": 0,
+  "signal": null
+}

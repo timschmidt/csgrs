@@ -1,0 +1,132 @@
+{
+  "probes": 3206,
+  "families": {
+    "inverse": {
+      "DOMAIN_REJECT": 34,
+      "EXCEPTION/NotInvertibleException": 164,
+      "PASS": 468,
+      "WRONG": 546
+    },
+    "binary": {
+      "PASS": 16,
+      "WRONG": 494
+    },
+    "unsupported-constructor": {
+      "CONSTRUCTOR_UNSUPPORTED": 2
+    },
+    "big-small": {
+      "REJECTED_SQUARE": 24,
+      "PASS": 636
+    },
+    "odd": {
+      "PASS": 549
+    },
+    "berlekamp": {
+      "PASS": 133,
+      "UNRESOLVED": 110,
+      "EXCEPTION/NullPointerException": 6
+    },
+    "high": {
+      "PASS": 15,
+      "EXCEPTION/StackOverflowError": 9
+    }
+  },
+  "inverseGroups": {
+    "int/zero/monic": {
+      "DOMAIN_REJECT": 5
+    },
+    "int/trailing-zero/monic": {
+      "EXCEPTION/NotInvertibleException": 16
+    },
+    "int/canonical/monic": {
+      "PASS": 22,
+      "WRONG": 52
+    },
+    "int/zero/nonmonic": {
+      "DOMAIN_REJECT": 9
+    },
+    "int/trailing-zero/nonmonic": {
+      "EXCEPTION/NotInvertibleException": 44
+    },
+    "int/canonical/nonmonic": {
+      "PASS": 52,
+      "WRONG": 224
+    },
+    "big/zero/monic": {
+      "DOMAIN_REJECT": 2
+    },
+    "normalized/zero/monic": {
+      "DOMAIN_REJECT": 2
+    },
+    "big/trailing-zero/monic": {
+      "EXCEPTION/NotInvertibleException": 10
+    },
+    "normalized/trailing-zero/monic": {
+      "EXCEPTION/NotInvertibleException": 10
+    },
+    "big/canonical/monic": {
+      "WRONG": 48,
+      "PASS": 14
+    },
+    "normalized/canonical/monic": {
+      "PASS": 62
+    },
+    "big/zero/nonmonic": {
+      "DOMAIN_REJECT": 8
+    },
+    "normalized/zero/nonmonic": {
+      "DOMAIN_REJECT": 8
+    },
+    "big/trailing-zero/nonmonic": {
+      "EXCEPTION/NotInvertibleException": 42
+    },
+    "normalized/trailing-zero/nonmonic": {
+      "EXCEPTION/NotInvertibleException": 42
+    },
+    "big/canonical/nonmonic": {
+      "WRONG": 222,
+      "PASS": 48
+    },
+    "normalized/canonical/nonmonic": {
+      "PASS": 270
+    }
+  },
+  "berlekampGroups": {
+    "has-root": {
+      "PASS": 133,
+      "UNRESOLVED": 8,
+      "EXCEPTION/NullPointerException": 6
+    },
+    "no-root": {
+      "UNRESOLVED": 102
+    }
+  },
+  "processes": 34,
+  "identicalModeOutputs": true,
+  "highPrimes": [
+    {
+      "s": 30,
+      "p": "3221225473",
+      "oddPart": 3
+    },
+    {
+      "s": 31,
+      "p": "75161927681",
+      "oddPart": 35
+    },
+    {
+      "s": 32,
+      "p": "184683593729",
+      "oddPart": 43
+    },
+    {
+      "s": 35,
+      "p": "2027224563713",
+      "oddPart": 59
+    }
+  ],
+  "sourceSha256": "8b6fd6b841551644368fea8d1ec9c5620a5019ed5406324037c9955de8e2aa56",
+  "independentOracle": "BigInt carry-free packed multiplication, polynomial reduction and q-2 unit checks; independent exact trial-division primality; direct square/residual replay",
+  "scope": "finite-field arithmetic only; unsupported constructors, trailing-zero storage and finite randomized budgets distinguished; no cryptographic, Maven lifecycle, performance or Hyper-equivalence claim",
+  "newProductionChanges": 0
+}

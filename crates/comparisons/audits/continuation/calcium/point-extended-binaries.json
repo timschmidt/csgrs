@@ -1,0 +1,21 @@
+{
+  "root": "/tmp/calcium-point-extended.ejZUdW",
+  "artifacts": [
+    {
+      "variant": "baseline",
+      "path": "/tmp/calcium-point-extended.ejZUdW/baseline-cpu",
+      "bytes": 3189288,
+      "sha256": "4f5971bb9f3d6cadf5b1a4c44438236d51b8cc58fd639712ba901ddd20af8ea9"
+    },
+    {
+      "variant": "candidate",
+      "path": "/tmp/calcium-point-extended.ejZUdW/candidate-cpu",
+      "bytes": 3190560,
+      "sha256": "2f0c5cd019118dfa0f16fcce52587da3c382614a966b4582ec8b0024e982e5d6"
+    }
+  ],
+  "sourceOriginSha256": "36e6ede1b9857e1680add0c4d7697261bca063c422cc316fb539fa1bc26a3c71",
+  "harnessSha256": "1e884bd64d0c9cf744d7fac8a2af8eff0a995f34f5124c8e7f87ba177eb3b152",
+  "wrapperSha256": "56b0b5b9bbe539054ee5b286b499e8242457e03cd798c10860f6575ff99a85cc",
+  "recorded": "2026-09-10T21:08:17.504Z"
+}

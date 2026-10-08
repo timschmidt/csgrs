@@ -1,0 +1,83 @@
+{
+  "source_manifest": "independent-oblique-fillet-20260927-v426-sources.json",
+  "source_directory": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/source-archives/independent-oblique-fillet-20260927-v426",
+  "cases": [
+    {
+      "binary": "independent-oblique-fillet-20260927-v426-hypercurve",
+      "name": "bezier_offset::conversion_tests::independent_oblique_offset_coordinates_replay_exact_equalities_and_separation",
+      "returncode": 0,
+      "log": "independent-oblique-fillet-20260927-v426-case-000.log",
+      "elapsed_seconds": 0.015691122971475124
+    },
+    {
+      "binary": "independent-oblique-fillet-20260927-v426-hypercurve",
+      "name": "bezier_offset::conversion_tests::independent_chord_linear_forms_replay_exact_coefficient_relations",
+      "returncode": 0,
+      "log": "independent-oblique-fillet-20260927-v426-case-001.log",
+      "elapsed_seconds": 0.015632647089660168
+    },
+    {
+      "binary": "independent-oblique-fillet-20260927-v426-hypercurve",
+      "name": "bezier_offset::conversion_tests::independent_oblique_chords_support_constrained_fillet_families",
+      "returncode": 101,
+      "log": "independent-oblique-fillet-20260927-v426-case-002.log",
+      "elapsed_seconds": 8.774796700803563
+    }
+  ],
+  "builds": [
+    {
+      "crate": "hypercurve",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "test",
+        "--lib",
+        "--release",
+        "--all-features",
+        "--no-run",
+        "--message-format=json",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "log": "independent-oblique-fillet-20260927-v426-hypercurve-build.log",
+      "elapsed_seconds": 130.297149437014,
+      "binary": {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/independent-oblique-fillet-20260927-v426-hypercurve",
+        "sha256": "54b32d9d46598d0735f030b2edd8cd720163021ee03c3f8057e97a7f425c87d0"
+      }
+    }
+  ],
+  "all_processes_reaped": true,
+  "checks": [],
+  "qualification_scope": "Independent selected endpoint fields must preserve continuous fillet constraint behavior",
+  "expected_cases": {
+    "hypercurve": [
+      "bezier_offset::conversion_tests::independent_oblique_offset_coordinates_replay_exact_equalities_and_separation",
+      "bezier_offset::conversion_tests::independent_chord_linear_forms_replay_exact_coefficient_relations",
+      "bezier_offset::conversion_tests::independent_oblique_chords_support_constrained_fillet_families",
+      "curve::curve_fillet::tests::nonlinear_linear_fillet_components_retain_unique_contacts_and_tangents",
+      "curve::curve_fillet::tests::coincident_retained_line_fillet_keeps_independent_endpoint_fields",
+      "bezier_offset::conversion_tests::recursive_projective_chord_replays_identically_zero_norm_sheet",
+      "bezier_offset::conversion_tests::regular_rational_parallel_components_select_exterior_speed_sheets",
+      "bezier_offset::conversion_tests::domain_component_normal_constraints_follow_swapped_operands",
+      "bezier_offset::conversion_tests::original_parallel_normal_constraints_clip_finite_and_incident_components",
+      "bezier_offset::conversion_tests::finite_parallel_pair_components_obey_exact_domain_boundaries",
+      "bezier_offset::conversion_tests::mixed_zero_parallel_pairs_replay_both_exterior_domain_roles",
+      "bezier_offset::conversion_tests::ordered_ph_parallel_domains_retain_same_sheet_exterior_contacts",
+      "bezier_offset::conversion_tests::ordered_ph_parallel_domains_reject_a_cached_opposite_normal_contact",
+      "bezier_offset::conversion_tests::ordered_ph_parallel_domains_do_not_reuse_the_wrong_speed_sheet",
+      "bezier_offset::conversion_tests::nonzero_parallel_domains_exclude_undefined_normals_and_poles",
+      "bezier_offset::conversion_tests::nonzero_parallel_domains_partition_poles_on_components",
+      "bezier_offset::conversion_tests::finite_component_charts_accept_nonrational_exact_scalar_bounds",
+      "bezier_offset::conversion_tests::non_source_parallel_overlap_replays_the_radical_component",
+      "bezier_offset::conversion_tests::split_chord_linear_tangents_reuse_the_oriented_support",
+      "bezier_offset::conversion_tests::nested_procedural_chord_reversals_match_exact_side_and_winding"
+    ]
+  },
+  "known_unresolved": [
+    "strict_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions",
+    "approximate_512_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions"
+  ],
+  "failure": "case failure or missing exact test",
+  "qualification_complete": false
+}

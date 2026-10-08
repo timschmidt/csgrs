@@ -1,0 +1,15 @@
+{
+  "repos": {
+    "hypercurve": {
+      "commit": "7386110870ec4bece15241887e098eff74f1b3c6",
+      "parent": "e873a2732c153c31bb60afdbbb12c0c8502c2c98",
+      "paths": {
+        "src/bezier_offset.rs": "8521124cb15da5f25e524e61306dbcb954657ca04738cd9044710319dd950178",
+        "src/curve_fillet.rs": "b4e42c534e5894671793d758eb874db6572453507a44a1e63234605e8058b6be"
+      }
+    }
+  },
+  "qualification": "recursive-point-incidence-broad-20260928-v587-terminal.json",
+  "verified_source_files": 2047,
+  "clean_repositories": 30
+}

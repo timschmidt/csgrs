@@ -1,0 +1,54 @@
+name: Bump command
+
+on: issue_comment
+
+jobs:
+  bump:
+    runs-on: ubuntu-20.04
+
+    # Only run if we're invoked with a new command comment on a pull request.
+    if: |
+      github.event_name == 'issue_comment' && github.event.action == 'created'
+      && github.event.issue.pull_request != null
+      && startsWith(github.event.comment.body, '/bump')
+
+    steps:
+    - name: Check for Command
+      id: command
+      uses: xt0rted/slash-command-action@v1
+      continue-on-error: true
+      with:
+        repo-token: ${{ secrets.GITHUB_TOKEN }}
+        command: bump
+        reaction: 'true'
+        reaction-type: eyes
+        allow-edits: 'true'
+        permission-level: write
+
+    - name: Get PR Branch
+      id: comment-branch
+      uses: xt0rted/pull-request-comment-branch@v1
+      with:
+        repo_token: ${{ secrets.GITHUB_TOKEN }}
+
+    - uses: cachix/install-nix-action@v12
+      with:
+        nix_path: nixpkgs=channel:nixos-unstable
+
+    # Checkout the pull request branch
+    - uses: actions/checkout@v2
+      with:
+        ssh-key: ${{ secrets.DEPLOY_KEY }}
+        repository: ${{ github.event.client_payload.pull_request.head.repo.full_name
+          }}
+        ref: ${{ steps.comment-branch.outputs.ref }}
+
+    - uses: expipiplus1/action-automation/bump-version@HEAD
+      with:
+        packageInfos: |
+          exact-real v .
+        packageVersions: |
+          { "exact-real": "${{ steps.command.outputs.command-arguments }}" }
+
+    - run: |
+        git push origin HEAD:"${{ steps.comment-branch.outputs.ref }}"

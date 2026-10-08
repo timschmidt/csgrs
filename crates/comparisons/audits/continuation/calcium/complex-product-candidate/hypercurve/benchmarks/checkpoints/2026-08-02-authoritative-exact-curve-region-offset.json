@@ -1,0 +1,210 @@
+{
+  "schema": "hypercurve.performance-checkpoint.v1",
+  "captured_on": "2026-08-02",
+  "checkpoint": "authoritative exact CurveRegion2 offset lowering",
+  "source_revision": "bb8ebe80117d6b97d76a1168807658e2284aceed",
+  "semantic_revisions": [
+    "bb8ebe8"
+  ],
+  "historical_revision": "9740a9535adc2a94899ddacbaa1d4ac2b0d6a0ba",
+  "previous_checkpoint_revision": "9740a95",
+  "dependency_revisions": {
+    "hyperreal": "33e7e4d620c0c95620c1045d09d0089ded105030",
+    "hyperlattice": "d11ca2f0e825d8e26048cfda5d1101df21dcfef0",
+    "hyperlimit": "3e5d8816cd32bba46f48e0c6c13ab7a9da227784",
+    "hypertri": "c47601266e0b9b17d0c5a0764fa22b18168ada73",
+    "hypersolve": "339d4d8b6109da2c814febce3da9f725c44d8e56"
+  },
+  "scope": {
+    "included": [
+      "one explicit CurveRegion2::offset entry point with round, bevel, and bounded-miter corner styles",
+      "exact raw lowering of materialized polynomial and general-rational spans to retained BezierParallel2 fragments",
+      "exact cusp partition and exact PH offset materialization",
+      "exact conic round joins, affine bevel joins, and bounded affine miter joins",
+      "native line/arc fast paths with identical public corner semantics",
+      "one authoritative CurveRegion2 unary regularizer for expansion, erosion, offset self-contact, and face selection",
+      "exact analytic-parallel/line and analytic-parallel/circular-arc pair fast paths with general-resultant fallback",
+      "STRICT and APPROXIMATE_512 execution through one exact proof graph",
+      "historical capability, competitive throughput, allocation, peak-memory, linked-size, and static-callgraph evidence"
+    ],
+    "excluded": [
+      "offsetting a region whose retained boundary is already an AnalyticParallel fragment",
+      "coefficient towers beyond the exact parallel replay substrate",
+      "finite projection or export of general analytic offsets",
+      "positive-dimensional retracing correspondences still reported explicitly as degenerate",
+      "radius-driven fillet and setback-driven chamfer solving",
+      "hypermesh"
+    ]
+  },
+  "mathematical_contract": {
+    "parallel": "For every cusp-free oriented materialized source span C(t), the emitted carrier is exactly C(t)+d*N_left(t). General polynomial and rational offsets remain analytic algebraic carriers; no chord or fitted curve replaces the authoritative result.",
+    "cusp_partition": "Every exactly isolated stationary source parameter partitions the source before the normal branch is selected, so a retained fragment has one continuous exact normal orientation.",
+    "ph_specialization": "When the homogeneous derivative norm has an exact polynomial square root, the same exact offset is materialized as a rational Bezier curve and then enters the same arrangement.",
+    "joins": "Round joins are exact circular conics, bevel joins are exact affine segments, and miter joins use the exact intersection of adjacent tangent lines only when its exact length satisfies the caller's nonnegative limit; otherwise they fall back to bevel.",
+    "regularization": "Raw offset spans and joins are not published directly. The sole CurveRegion2 unary arrangement splits all exact contacts and overlaps, selects the material-side faces, removes collapsed components, and returns a regularized two-dimensional region.",
+    "fast_path_rule": "Analytic-parallel/line and analytic-parallel/circle solvers are optimizations only. Any undecidable fast-path certificate falls through to the complete general resultant authority instead of becoming a new blocker.",
+    "policy": "STRICT and APPROXIMATE_512 construct the same exact carriers, contacts, split graph, and output geometry. APPROXIMATE_512 may terminate only a final undecidable equality or sign at 512 bits and records Approximate512Consumed when it does so.",
+    "failure_semantics": "Unsupported retained-carrier families, unresolved positive-dimensional correspondences, and exhausted exact proofs remain explicit CurveError or Classification blockers; they are never chordized or silently treated as empty."
+  },
+  "implementation": {
+    "public_surface": [
+      "CurveRegion2::offset(distance, corner_style, policy)",
+      "OffsetCornerStyle2::Round",
+      "OffsetCornerStyle2::Bevel",
+      "OffsetCornerStyle2::Miter { limit }",
+      "CurveError::InvalidOffsetOptions"
+    ],
+    "exact_general_path": [
+      "CurveRegion2::offset_raw -> CurveRegion2::offset_exact_general_raw",
+      "offset_exact_general_raw -> exact_offset_span_from_materialized_curve -> BezierParallel2::from_source",
+      "offset_exact_general_raw -> append_exact_offset_join",
+      "offset_exact_general_raw -> CurveRegion2::regularized_region_raw -> CurveRegionBooleanContext"
+    ],
+    "pair_specializations": [
+      "CurveRegionBooleanContext::pair_result -> parallel_line_pair_result",
+      "CurveRegionBooleanContext::pair_result -> parallel_arc_pair_result -> BezierParallel2::circle_incidence",
+      "uncertain specialization -> existing complete general intersection/resultant route"
+    ],
+    "adapter_cutover": "The certified-Bezier and certified-segmentation CurveRegion adapters short-circuit to the authoritative exact result and expose used_exact_authoritative_path evidence; they no longer produce the authoritative boundary from fitting or chordization.",
+    "compatibility_shims_added": false,
+    "hypermesh_modified": false
+  },
+  "historical_capability": {
+    "revision": "9740a9535adc2a94899ddacbaa1d4ac2b0d6a0ba",
+    "state": "CurveRegion2::offset returns Unsupported for the four-quadratic closed curved region used by this checkpoint. Historical certified and segmentation adapters can return fitted or chordized finite approximations, but there is no successful exact historical operation to time.",
+    "timing_rule": "Failed historical exact calls are not presented as successful-operation timings. Historical adapter numbers are throughput controls under weaker geometric and topology contracts.",
+    "temporary_benchmark_change": "Only the detached historical worktree's benchmark dispatcher was given a curve-region-historical selector; production source and the measured offset implementations were unchanged."
+  },
+  "benchmark": {
+    "host": "AMD Ryzen 7 5800X3D",
+    "toolchain": "rustc 1.97.0, LLVM 22.1.6, x86_64-unknown-linux-gnu",
+    "method": "release executables pinned to CPU 11; seven independent process samples; ten operations per process sample; fixture construction excluded",
+    "current_command": "taskset -c 11 env HYPERCURVE_OFFSET_BENCH_GROUP=curve-region-exact target/release/deps/offset-ea116fee283cd918",
+    "fixture": "Even-odd material region composed of four authored quadratic Bezier spans, offset outward by 1/10 with exact round joins under STRICT.",
+    "current_exact": {
+      "direct": {
+        "samples_ms": [293.296783, 288.646359, 291.545000, 295.633339, 290.025898, 291.431420, 296.504045],
+        "median_ms": 291.545000,
+        "min_ms": 288.646359,
+        "max_ms": 296.504045
+      },
+      "via_certified_adapter": {
+        "samples_ms": [290.924719, 292.948880, 293.224074, 291.491494, 293.310671, 294.793499, 298.645705],
+        "median_ms": 293.224074,
+        "overhead_vs_direct_percent": 0.5759
+      },
+      "via_segmentation_adapter": {
+        "samples_ms": [290.704970, 291.978684, 294.728861, 292.494169, 291.937716, 293.647557, 291.492048],
+        "median_ms": 291.978684,
+        "overhead_vs_direct_percent": 0.1488
+      }
+    },
+    "historical_weaker_adapters": {
+      "command": "taskset -c 11 env HYPERCURVE_OFFSET_BENCH_GROUP=curve-region-historical target/release/deps/offset-ea116fee283cd918",
+      "certified_fitted": {
+        "samples_ms": [4.016543, 3.212170, 3.222736, 3.278045, 3.234833, 3.235874, 3.272250],
+        "median_ms": 3.235874,
+        "new_exact_to_historical_ratio": 90.098
+      },
+      "chord_fallback": {
+        "samples_ms": [5.465244, 5.286949, 5.344630, 5.407297, 5.367962, 5.411709, 5.427775],
+        "median_ms": 5.407297,
+        "new_exact_to_historical_ratio": 53.916
+      },
+      "interpretation": "The ratios expose urgent exact-resultant performance debt, but are not like-for-like regressions because the old exact operation had no result and both timed historical lanes changed the geometry contract."
+    },
+    "competitive_controls": {
+      "method": "release comparative binary pinned to CPU 11; eleven calibrated samples with a 100 ms target; fixture construction and one warm execution excluded",
+      "line_arc_capsule_inward": {
+        "hypercurve_median_ns": 19760.2,
+        "cavalier_contours_median_ns": 956.6,
+        "contract_note": "Cavalier is an f64 line/arc throughput peer and not a canonical-Real exactness oracle."
+      },
+      "open_cubic_offset": {
+        "hypercurve_certified_median_ns": 29650296.2,
+        "hypercurve_chord_fallback_median_ns": 981952.2,
+        "curvo_heuristic_median_ns": 8366.9,
+        "contract_note": "These are open-path finite approximation controls. Curvo's heuristic f64 result is not an exact closed-region topology peer for the new analytic offset operation."
+      },
+      "exact_closed_region_peer": "No measured competitor in the checked-in harness preserves canonical hyperreal::Real exact carriers and exact closed-region regularization for this general curved offset."
+    }
+  },
+  "memory": {
+    "application_peak_rss": {
+      "tool": "/usr/bin/time -v",
+      "current_exact_three_lane_kib": 10012,
+      "historical_two_weaker_lane_kib": 6992,
+      "change_kib": 3020,
+      "contract_note": "Peak RSS is process-wide and the lane sets are not contract-equivalent."
+    },
+    "allocation_profile": {
+      "tool": "Heaptrack direct application traces",
+      "current_workload": "30 exact operations: ten direct, ten through the certified adapter, and ten through the segmentation adapter",
+      "current_profile": "/tmp/hypercurve-exact-bb8ebe8-direct.gz.zst",
+      "current_runtime_seconds_under_recorder": 107.20,
+      "current_allocation_calls": 150674958,
+      "current_allocation_calls_per_operation": 5022498.6,
+      "current_temporary_allocations": 8381291,
+      "current_peak_heap_mib": 2.16,
+      "dominant_allocator": "80,809,280 num_bigint RawVec growth calls below Hypersolve determinant_polynomial_matrix/resultant_bivariate_polynomial_system in analytic parallel-pair arrangement",
+      "historical_workload": "ten certified-fitted and ten chord-fallback operations",
+      "historical_profile": "/tmp/hypercurve-offset-historical-9740a95.gz.zst",
+      "historical_allocation_calls": 1348430,
+      "historical_allocation_calls_per_operation": 67421.5,
+      "historical_peak_heap_kib": 748.41,
+      "interpretation": "Retained live memory is bounded, but exact adjacent parallel-pair resultants create roughly 74.5 times the allocation calls per operation of the mixed historical approximation controls. Structural adjacency and shared-source fast paths are the next performance and memory-churn target."
+    }
+  },
+  "release_size": {
+    "method": "byte-identical all-feature curve_region_boolean_batch benchmark source at 9740a95 and bb8ebe8 with identical shared dependency revisions",
+    "historical_file_bytes": 7647640,
+    "current_file_bytes": 7678488,
+    "file_change_bytes": 30848,
+    "file_change_percent": 0.4034,
+    "historical_text_bytes": 5783202,
+    "current_text_bytes": 5814034,
+    "text_change_bytes": 30832,
+    "text_change_percent": 0.5331,
+    "data_change_bytes": -176,
+    "bss_change_bytes": -1968,
+    "interpretation": "The new exact lowering, corner semantics, and pair specializations add about half a percent representative text; cold-resultant outlining and displaced adapter deletion remain Phase 7 size debt."
+  },
+  "static_callgraph": {
+    "tool": "tools/hyper-callgraph",
+    "command": "hyper-callgraph --root /home/tim/Documents/GitHub/workspace --out-dir /tmp/hypercurve-callgraph-bb8ebe8.v1UgX5 --crate-name hypercurve,hypersolve --include-examples --include-tests --include-bench --include-fuzz --format json",
+    "discovered_crates": 10,
+    "previous_checkpoint_nodes": 30938,
+    "current_nodes": 31083,
+    "node_change": 145,
+    "previous_checkpoint_edges": 56362,
+    "current_edges": 56824,
+    "edge_change": 462,
+    "artifact": "/tmp/hypercurve-callgraph-bb8ebe8.v1UgX5/callgraph.json",
+    "confirmed_authoritative_paths": [
+      "CurveRegion2::offset_raw -> CurveRegion2::offset_exact_general_raw",
+      "CurveRegion2::offset_exact_general_raw -> exact_offset_span_from_materialized_curve",
+      "CurveRegion2::offset_exact_general_raw -> append_exact_offset_join",
+      "CurveRegion2::offset_exact_general_raw -> CurveRegion2::regularized_region_raw -> CurveRegionBooleanContext",
+      "CurveRegionBooleanContext::pair_result -> parallel_line_pair_result",
+      "CurveRegionBooleanContext::pair_result -> parallel_arc_pair_result -> parallel::circle_incidence"
+    ],
+    "tool_limit": "The static utility represents aliased method calls approximately; source inspection confirms parallel::circle_incidence dispatches to the retained BezierParallel2 circle-incidence authority."
+  },
+  "verification": {
+    "focused_matrix": "passed: 339 all-feature library tests, 3 analytic-parallel region tests, 98 Bezier fit/offset tests, 29 curve-intersection tests, 29 CurveRegion Boolean tests, and 42 CurveRegion promotion/regularization tests",
+    "strict_and_approximate_cases": "passed: symbolic quadratic exact offsets, general-rational exact boundaries, exact round/bevel/bounded-miter joins and fallback, invalid miter options, cusp splitting, erosion/expansion classification, and policy-identical geometry with Approximate512Consumed only at the terminal",
+    "clippy_all_features": "passed with -D warnings",
+    "clippy_no_default_features": "passed with -D warnings",
+    "benchmark_builds": "passed: offset, comparative, and matched curve_region_boolean_batch release executables",
+    "format": "passed",
+    "diff_check": "passed"
+  },
+  "remaining": [
+    "compose repeated signed offsets of retained AnalyticParallel fragments without losing cusp-side orientation",
+    "reduce adjacent/shared-source parallel-pair resultant work and bigint allocation churn without weakening exact replay",
+    "complete remaining scalar towers and finite projection/export",
+    "retain explicit DegenerateResultant for unsupported positive-dimensional retracing until complete correspondence decomposition is implemented",
+    "implement radius-driven fillet and two-setback chamfer solvers",
+    "delete displaced historical offset machinery after exact differential coverage passes"
+  ]
+}

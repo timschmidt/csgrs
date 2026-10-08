@@ -1,0 +1,73 @@
+\doxysubsubsubsection{Optimisation solvers }
+\hypertarget{group__OptimisationSubModule}{}\label{group__OptimisationSubModule}\index{Optimisation solvers@{Optimisation solvers}}
+
+
+\doxysubsubsubsubsection{Description}
+Classes and functions for solving linear and nonlinear programming problems. 
+
+The Linear\+Program class supports construction and solution of linear programming problems. Tests for feasibility only are also possible. The computations are performed by a BLAS/\+LAPACK style lpslv() routing. \doxysubsubsubsubsubsection*{Classes}
+\begin{DoxyCompactItemize}
+\item 
+class \mbox{\hyperlink{classAriadne_1_1ConstraintSolverInterface}{Constraint\+Solver\+Interface}}
+\begin{DoxyCompactList}\small\item\em A class for finding solutions of systems of constraints of the form $g(y) \leq c$. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1ConstraintSolver}{Constraint\+Solver}}
+\begin{DoxyCompactList}\small\item\em A class for finding solutions of systems of constraints of the form $g(y) \leq c$. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1InteriorPointSolver}{Interior\+Point\+Solver}}
+\begin{DoxyCompactList}\small\item\em Solver for linear programming problems using interior point methods. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1SimplexSolver}{Simplex\+Solver$<$ X $>$}}
+\begin{DoxyCompactList}\small\item\em Solver for linear programming problems using the simplex algorithm. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1OptimiserInterface}{Optimiser\+Interface}}
+\begin{DoxyCompactList}\small\item\em Interface for nonlinear programming solvers. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1OptimiserBase}{Optimiser\+Base}}
+\begin{DoxyCompactList}\small\item\em Common routines for nonlinear minimisation. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1PenaltyFunctionOptimiser}{Penalty\+Function\+Optimiser}}
+\begin{DoxyCompactList}\small\item\em Solver for feasibility problems based on a penalty-\/function approach. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1NonlinearInfeasibleInteriorPointOptimiser}{Nonlinear\+Infeasible\+Interior\+Point\+Optimiser}}
+\begin{DoxyCompactList}\small\item\em Solver for linear programming problems using invalid interior point methods. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1NonlinearInteriorPointOptimiser}{Nonlinear\+Interior\+Point\+Optimiser}}
+\begin{DoxyCompactList}\small\item\em Solver for linear programming problems using interior point methods. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsubsubsubsection*{Enumerations}
+\begin{DoxyCompactItemize}
+\item 
+enum class \mbox{\hyperlink{group__OptimisationSubModule_gaba792cefe409c16dfa7a762b64997b5c}{Slackness}} \+: std\+::int8\+\_\+t \{ \mbox{\hyperlink{group__OptimisationSubModule_ggaba792cefe409c16dfa7a762b64997b5caa7c48ba367e019d004bfb0239b85f2b3}{LOWER}} =-\/1
+, \mbox{\hyperlink{group__OptimisationSubModule_ggaba792cefe409c16dfa7a762b64997b5caecd9016852718c6a5a9e5eed4021a89e}{BASIS}} =0
+, \mbox{\hyperlink{group__OptimisationSubModule_ggaba792cefe409c16dfa7a762b64997b5ca9e43f5291e6fcb2ad99c8e3f91acd179}{UPPER}} =+1
+, \mbox{\hyperlink{group__OptimisationSubModule_ggaba792cefe409c16dfa7a762b64997b5cac6e6dc18b53b4c2681394b9d8aefcec7}{FIXED}} =+2
+ \}
+\begin{DoxyCompactList}\small\item\em The type of variable; lower is\+\_\+bounded, upper is\+\_\+bounded, basic, or fixed (upper and lower bounded). \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\label{doc-enum-members}
+\Hypertarget{group__OptimisationSubModule_doc-enum-members}
+\doxysubsubsubsubsection{Enumeration Type Documentation}
+\Hypertarget{group__OptimisationSubModule_gaba792cefe409c16dfa7a762b64997b5c}\index{Optimisation solvers@{Optimisation solvers}!Slackness@{Slackness}}
+\index{Slackness@{Slackness}!Optimisation solvers@{Optimisation solvers}}
+\doxyparagraph{\texorpdfstring{Slackness}{Slackness}}
+{\footnotesize\ttfamily \label{group__OptimisationSubModule_gaba792cefe409c16dfa7a762b64997b5c} 
+enum class \mbox{\hyperlink{group__OptimisationSubModule_gaba792cefe409c16dfa7a762b64997b5c}{Slackness}} \+: std\+::int8\+\_\+t\hspace{0.3cm}{\ttfamily [strong]}}
+
+
+
+The type of variable; lower is\+\_\+bounded, upper is\+\_\+bounded, basic, or fixed (upper and lower bounded). 
+
+\begin{DoxySeeAlso}{See also}
+\doxylink{classAriadne_1_1SimplexSolver}{Simplex\+Solver} 
+\end{DoxySeeAlso}
+\begin{DoxyEnumFields}[2]{Enumerator}
+\raisebox{\heightof{T}}[0pt][0pt]{\index{LOWER@{LOWER}!Optimisation solvers@{Optimisation solvers}}\index{Optimisation solvers@{Optimisation solvers}!LOWER@{LOWER}}}\Hypertarget{group__OptimisationSubModule_ggaba792cefe409c16dfa7a762b64997b5caa7c48ba367e019d004bfb0239b85f2b3}\label{group__OptimisationSubModule_ggaba792cefe409c16dfa7a762b64997b5caa7c48ba367e019d004bfb0239b85f2b3} 
+LOWER&\\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{BASIS@{BASIS}!Optimisation solvers@{Optimisation solvers}}\index{Optimisation solvers@{Optimisation solvers}!BASIS@{BASIS}}}\Hypertarget{group__OptimisationSubModule_ggaba792cefe409c16dfa7a762b64997b5caecd9016852718c6a5a9e5eed4021a89e}\label{group__OptimisationSubModule_ggaba792cefe409c16dfa7a762b64997b5caecd9016852718c6a5a9e5eed4021a89e} 
+BASIS&\\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{UPPER@{UPPER}!Optimisation solvers@{Optimisation solvers}}\index{Optimisation solvers@{Optimisation solvers}!UPPER@{UPPER}}}\Hypertarget{group__OptimisationSubModule_ggaba792cefe409c16dfa7a762b64997b5ca9e43f5291e6fcb2ad99c8e3f91acd179}\label{group__OptimisationSubModule_ggaba792cefe409c16dfa7a762b64997b5ca9e43f5291e6fcb2ad99c8e3f91acd179} 
+UPPER&\\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{FIXED@{FIXED}!Optimisation solvers@{Optimisation solvers}}\index{Optimisation solvers@{Optimisation solvers}!FIXED@{FIXED}}}\Hypertarget{group__OptimisationSubModule_ggaba792cefe409c16dfa7a762b64997b5cac6e6dc18b53b4c2681394b9d8aefcec7}\label{group__OptimisationSubModule_ggaba792cefe409c16dfa7a762b64997b5cac6e6dc18b53b4c2681394b9d8aefcec7} 
+FIXED&\\
+\hline
+
+\end{DoxyEnumFields}

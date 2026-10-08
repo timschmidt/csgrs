@@ -1,0 +1,40 @@
+\doxysubsection{Declare\+Field\+Operations\texorpdfstring{$<$}{<} X, R \texorpdfstring{$>$}{>} Struct Template Reference}
+\hypertarget{structAriadne_1_1DeclareFieldOperations}{}\label{structAriadne_1_1DeclareFieldOperations}\index{DeclareFieldOperations$<$ X, R $>$@{DeclareFieldOperations$<$ X, R $>$}}
+
+
+{\ttfamily \#include $<$arithmetic.\+hpp$>$}
+
+
+
+\doxysubsubsection{Description}
+\subsubsection*{template$<$class X, class R = X$>$\newline
+struct Ariadne\+::\+Declare\+Field\+Operations$<$ X, R $>$}
+Declare operators corresponding to {\itshape X} being a (mathematical) field. Includes all operations supported in \doxylink{structAriadne_1_1DeclareRingOperations}{Declare\+Ring\+Operations$<$\+X$>$}, and those listed below. Inheritance diagram for Declare\+Field\+Operations\texorpdfstring{$<$}{<} X, R \texorpdfstring{$>$}{>}\+:\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[height=4.000000cm]{structAriadne_1_1DeclareFieldOperations}
+\end{center}
+\end{figure}
+\doxysubsubsubsection*{Friends}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{structAriadne_1_1DeclareFieldOperations_ab38ee15b4def3d3349d61d6d53b4c0ab}\label{structAriadne_1_1DeclareFieldOperations_ab38ee15b4def3d3349d61d6d53b4c0ab} 
+R {\bfseries hlf} (X const \&x)
+\begin{DoxyCompactList}\small\item\em Half {\itshape x/2}. \end{DoxyCompactList}\item 
+\Hypertarget{structAriadne_1_1DeclareFieldOperations_a9452960f31b637183e3cb350e608052d}\label{structAriadne_1_1DeclareFieldOperations_a9452960f31b637183e3cb350e608052d} 
+R {\bfseries rec} (X const \&x)
+\begin{DoxyCompactList}\small\item\em Reciprocal {\itshape 1/x}. \end{DoxyCompactList}\item 
+\Hypertarget{structAriadne_1_1DeclareFieldOperations_a1acc774bd87ac816e52bcbbdf2ca2e55}\label{structAriadne_1_1DeclareFieldOperations_a1acc774bd87ac816e52bcbbdf2ca2e55} 
+R {\bfseries div} (X const \&x1, X const \&x2)
+\begin{DoxyCompactList}\small\item\em Quotient {\itshape x1/x2}. May be implemented in terms of \doxylink{structAriadne_1_1DeclareRingOperations_a95431ce7dcbb047fe9d0dde166857533}{mul()} and \doxylink{structAriadne_1_1DeclareFieldOperations_a9452960f31b637183e3cb350e608052d}{rec()} as {\ttfamily mul(x1,rec(x2))}. \end{DoxyCompactList}\item 
+\Hypertarget{structAriadne_1_1DeclareFieldOperations_a1f9caa68c288bec15eff5d7689a479ae}\label{structAriadne_1_1DeclareFieldOperations_a1f9caa68c288bec15eff5d7689a479ae} 
+R {\bfseries pow} (X const \&x, \mbox{\hyperlink{namespaceAriadne_a008e7f6ae8f621fbb1d876061812b9b2}{Int}} n)
+\begin{DoxyCompactList}\small\item\em Power {\itshape x\textsuperscript{n}}. May be implemented using \doxylink{structAriadne_1_1DeclareFieldOperations_a9452960f31b637183e3cb350e608052d}{rec()} and pow(\+X,\+Nat) as {\ttfamily  n\texorpdfstring{$>$}{>}=0 ? pow(x,\+Nat(n)) \+: rec(pow(x,\doxylink{namespaceAriadne_aae901a69a841b1a085a0dfe218e38fe9}{Nat}(-\/n)))} \end{DoxyCompactList}\item 
+\Hypertarget{structAriadne_1_1DeclareFieldOperations_a6e39048bb703209cbf6842e23b528a47}\label{structAriadne_1_1DeclareFieldOperations_a6e39048bb703209cbf6842e23b528a47} 
+R {\bfseries operator/} (X const \&, X const \&)
+\begin{DoxyCompactList}\small\item\em Quotient {\itshape x1\texorpdfstring{$\ast$}{*}x2}. Usually dispatches to {\ttfamily div(x1,x2)} \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+The documentation for this struct was generated from the following file\+:\begin{DoxyCompactItemize}
+\item 
+source/numeric/\mbox{\hyperlink{arithmetic_8hpp}{arithmetic.\+hpp}}\end{DoxyCompactItemize}

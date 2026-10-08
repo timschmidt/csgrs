@@ -1,0 +1,25 @@
+[New LWP 3565454]
+
+warning: "target:/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/common-point-incidence-broad-20260928-v593-hypercurve-tests": could not open as an executable file: Input/output error.
+
+warning: `target:/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/common-point-incidence-broad-20260928-v593-hypercurve-tests': can't open to read symbols: Input/output error.
+
+warning: Could not load vsyscall page because no executable was specified
+
+warning: Target and debugger are in different PID namespaces; thread lists and other data are likely unreliable.  Connect to gdbserver inside the container.
+0x00007f3a3227b24d in ?? ()
+
+Thread 2 (LWP 3565454 "rational_bezier"):
+#0  0x0000560926d2c8ab in ?? ()
+#1  0x00007f3a32182ed0 in ?? ()
+#2  0x0000000000000002 in ?? ()
+#3  0x00007f3a2c017240 in ?? ()
+#4  0x0000000000000000 in ?? ()
+
+Thread 1 (LWP 3565453 "common-point-in"):
+#0  0x00007f3a3227b24d in ?? ()
+#1  0x0000560926d55fb6 in ?? ()
+#2  0x00007ffcffffffff in ?? ()
+#3  0x0000560926aa22bc in ?? ()
+#4  0x0000000000000000 in ?? ()
+[Inferior 1 (process 3565453) detached]

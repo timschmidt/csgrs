@@ -1,0 +1,5 @@
+[1 of 6] Compiling Data.Number.FixedFunctions ( exact-real-references/numbers/Data/Number/FixedFunctions.hs, .audit-numbers.rjcbha/upstream/Data/Number/FixedFunctions.o )
+ccache: error: Read-only file system
+
+<no location info>: error:
+    `gcc' failed in phase `Assembler'. (Exit code: 1)

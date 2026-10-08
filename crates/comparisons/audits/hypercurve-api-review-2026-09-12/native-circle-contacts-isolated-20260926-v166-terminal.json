@@ -1,0 +1,51 @@
+{
+  "parents": {
+    "hypercurve": "6fc6ed8e7e1eefc5cbc6a064dc4ec87342a5b656",
+    "hypersolve": "41855c3604cbd18605a020d60758c8e5c489b629",
+    "hyperreal": "0cb5f29aee065c73e234e0ebb0a9e106398515bb"
+  },
+  "workspace_guard": "local-chord-complete-replay-20260924-v164-sources.json",
+  "source_manifest": "native-circle-contacts-isolated-20260926-v166-sources.json",
+  "source_directory": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/source-archives/native-circle-contacts-isolated-20260926-v166",
+  "build_source_directory": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/build-workspace-20260925",
+  "patch": "native-circle-contacts-isolated-20260926-v166.patch",
+  "checks": [
+    {
+      "repo": "hypercurve",
+      "label": "hypercurve-fmt",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustfmt",
+        "--edition",
+        "2024",
+        "--check",
+        "src/bezier_offset.rs",
+        "src/curve_region_boolean.rs"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 2.4261799100786448,
+      "log": "native-circle-contacts-isolated-20260926-v166-hypercurve-fmt.log"
+    },
+    {
+      "repo": "hypercurve",
+      "label": "hypercurve-clippy-0",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "clippy",
+        "--all-targets",
+        "--all-features",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "returncode": 101,
+      "elapsed_seconds": 17.641671800985932,
+      "log": "native-circle-contacts-isolated-20260926-v166-hypercurve-clippy-0.log"
+    }
+  ],
+  "cases": [],
+  "binaries": {},
+  "all_processes_reaped": true,
+  "all_sources_unchanged": true
+}

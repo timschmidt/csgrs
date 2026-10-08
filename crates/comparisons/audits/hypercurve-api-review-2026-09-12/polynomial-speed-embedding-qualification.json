@@ -1,0 +1,64 @@
+{
+  "status": "implemented, qualified, committed; original goal active",
+  "commit": "b62c2fbf7ea92fe5dafca86491a36e93b5444e86",
+  "preceding_hypercurve_commit": "6d4d10f4932adfc7441300289d8ba85a8abf21cb",
+  "shared_hypersolve_commit": "9211d62fe0b2322e60110da19afb95fdbda3704b",
+  "implementation": "Field embedding reuses certified polynomial positive roots on an existing selected source axis. It preserves the unreduced polynomial square while matching existing generators first. Point embedding may replay already-selected axes but accepts only the original target field, without adjoining roots. One-source dense predicates reuse the existing univariate selected-parameter sign authority, allowing native positive-radical cancellation before independent refinement. No public API, compatibility interface, field variant, or cache was added.",
+  "regressions": [
+    "The same PH point at alpha^3=1/2 is retained through raw and reduced tangent fields. A later beta^3=x(alpha) comparison certifies equality and +/-2^-600 translations in bounded passes in both contexts, without global query-point coordinates or an additional coefficient field.",
+    "Polynomial root 1-2*alpha is selected on positive, zero and negative branches in a rank-two base containing an arbitrary exact pi axis; embedding preserves the nonnegative square-root sheet.",
+    "Existing independently reencoded and represented recursive-parent exact tangency tests pass after restoring generator reuse before polynomial conversion."
+  ],
+  "baseline": "polynomial-speed-embedding-baseline.log: PH regression fails because the original field cannot embed the reduced tangent point.",
+  "focused": "polynomial-speed-embedding-focused.log: all five new/related tests pass in 38.52 seconds.",
+  "tests": {
+    "hypercurve": {
+      "passed": 1447,
+      "ignored": 6,
+      "targets": 13,
+      "log": "polynomial-speed-embedding-hypercurve-tests.log"
+    },
+    "hyperbrep": {
+      "passed": 232,
+      "ignored": 0,
+      "targets": 1,
+      "log": "polynomial-speed-embedding-hyperbrep-tests.log"
+    },
+    "hypersolve": {
+      "passed": 487,
+      "ignored": 0,
+      "targets": 1,
+      "log": "local-polynomial-remainder-hypersolve-lib.log"
+    }
+  },
+  "freshly_run_total": 1679,
+  "unique_total_including_unchanged_qualified_hypersolve": 2166,
+  "established_expensive_hypercurve_exclusions": 4,
+  "checks": [
+    "polynomial-speed-embedding-hypercurve-check.log",
+    "polynomial-speed-embedding-hyperbrep-check.log",
+    "unchanged Hypersolve head qualified in local-polynomial-remainder-hypersolve-check.log",
+    "changed-file rustfmt --check and git diff --check"
+  ],
+  "source_sha256": {
+    "hypercurve/src/bezier_offset.rs": "6638310b686bb67e1bd328cd5952b19e15a2a6f0d724380e0ee40f3e360927ad"
+  },
+  "diagnostics": {
+    "binary": "stationary-ph-offset-polynomial-speed",
+    "binary_sha256": "56ba2b01ad5cf95343ec2e047613d4516ca5fa295424aeac8175e8fc3e1ee719",
+    "log": "stationary-ph-offset-polynomial-speed.log",
+    "timeout_seconds": 60,
+    "exit_code": 124,
+    "first_offset": "Certified, degree-five analytic source retained, about 3.74 seconds.",
+    "second_offset": "No result before total timeout; no inward closure repair or application speedup claimed.",
+    "stack": "stationary-ph-polynomial-speed-stack.log",
+    "finding": "The corrected-source sample is in bounded parameter_at_certified_point -> retained_procedural_point_side -> oriented_incidence_interval_sign -> polynomial_interval_on_real_interval. The sampled scalar work is rational arithmetic in retained coefficient intervals, rather than local-root global promotion. A sample does not prove the entire operation avoids later global promotion.",
+    "established_embedding_cause": "coefficient-field-diagnostic.patch and stationary-ph-field-diagnostic-stack.log show identical selected source tuples, with raw speed t^4*(1+t^2)^2 and reduced-frame speed (1+t^2)^2. Point import succeeds; literal field equivalence declined.",
+    "caught_intermediate_regression": "Moving polynomial root conversion ahead of existing generator matching enlarged recursive towers in two existing tangency workloads. The interrupted qualification is retained in polynomial-speed-before-generator-reuse-hypercurve-tests.log and the stack in polynomial-speed-tangency-stack.log. The corrected source retains reuse first; both tangency tests and the complete selected suite pass.",
+    "library_duration_seconds": 98.51,
+    "preceding_library_duration_seconds": 97.14
+  },
+  "clean_repository_count": 30,
+  "workspace_state": "polynomial-speed-embedding-workspace-after-commit.json",
+  "goal_status": "active"
+}

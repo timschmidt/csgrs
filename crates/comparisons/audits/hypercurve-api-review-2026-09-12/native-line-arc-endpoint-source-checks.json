@@ -1,0 +1,16 @@
+{
+  "source_files": 396,
+  "immutable_sources": true,
+  "checks": [
+    {
+      "check": "format",
+      "exit_code": 0,
+      "output": ""
+    },
+    {
+      "check": "whitespace",
+      "exit_code": 0,
+      "output": ""
+    }
+  ]
+}

@@ -1,0 +1,23 @@
+{
+  "returncode": 0,
+  "elapsed_seconds": 0.03173684497596696,
+  "source": "finite-region-self-domain-public.rs",
+  "source_sha256": "627b0019e3512d9c2f026b979494cc77bb09f05aa8c7c29eaf27955e161f1e9e",
+  "normal_library": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-region-preparation-libraries/libhypercurve-2c7ff6f3fbe07653.rlib",
+  "normal_library_sha256": "cfe74e6bb84e6907ba989a26023d587fb8d2fd4912961045b76c518bd98b1f39",
+  "executable_sha256": "c583787821c28f12048103c7fc8d800c6135469f84197a2defc7282ce3293a3c",
+  "log": "finite-region-self-domain-baseline.log",
+  "command": [
+    "rustc",
+    "--edition=2024",
+    "-O",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-region-self-domain-public.rs",
+    "--extern",
+    "hypercurve=/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-region-preparation-libraries/libhypercurve-2c7ff6f3fbe07653.rlib",
+    "-L",
+    "dependency=/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps",
+    "-o",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-region-self-domain-baseline"
+  ],
+  "commit": "84956dabadf9afcef4704f5b2dee880a282f1939"
+}

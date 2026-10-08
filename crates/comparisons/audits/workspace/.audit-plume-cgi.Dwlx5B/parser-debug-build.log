@@ -1,0 +1,58 @@
+[1 of 9] Compiling Alex             ( /home/tim/Documents/GitHub/workspace/.audit-plume-cgi.Dwlx5B/compat/Alex.hs, /home/tim/Documents/GitHub/workspace/.audit-plume-cgi.Dwlx5B/parser-debug-build/Alex.o )
+
+/home/tim/Documents/GitHub/workspace/.audit-plume-cgi.Dwlx5B/compat/Alex.hs:46:1: warning: [GHC-94817] [-Wtabs]
+    Tab character found here, and in 103 further locations.
+    Suggested fix: Please use spaces instead.
+   |
+46 |         deriving (Eq,Show)
+   | ^^^^^^^^
+[2 of 9] Compiling IParseTree       ( /home/tim/Documents/GitHub/workspace/.audit-plume-cgi.Dwlx5B/compat/IParseTree.hs, /home/tim/Documents/GitHub/workspace/.audit-plume-cgi.Dwlx5B/parser-debug-build/IParseTree.o )
+
+/home/tim/Documents/GitHub/workspace/.audit-plume-cgi.Dwlx5B/compat/IParseTree.hs:7:1: warning: [GHC-94817] [-Wtabs]
+    Tab character found here, and in 35 further locations.
+    Suggested fix: Please use spaces instead.
+  |
+7 |         Sqrt, Pi, Max, Min,
+  | ^^^^^^^^
+[3 of 9] Compiling ILexer           ( /home/tim/Documents/GitHub/workspace/.audit-plume-cgi.Dwlx5B/compat/ILexer.hs, /home/tim/Documents/GitHub/workspace/.audit-plume-cgi.Dwlx5B/parser-debug-build/ILexer.o )
+
+/home/tim/Documents/GitHub/workspace/.audit-plume-cgi.Dwlx5B/compat/ILexer.hs:63:1: warning: [GHC-94817] [-Wtabs]
+    Tab character found here, and in two further locations.
+    Suggested fix: Please use spaces instead.
+   |
+63 |         where
+   | ^^^^^^^^
+[4 of 9] Compiling IParser          ( /home/tim/Documents/GitHub/workspace/.audit-plume-cgi.Dwlx5B/compat/IParser.hs, /home/tim/Documents/GitHub/workspace/.audit-plume-cgi.Dwlx5B/parser-debug-build/IParser.o )
+
+/home/tim/Documents/GitHub/workspace/.audit-plume-cgi.Dwlx5B/compat/IParser.hs:19:1: warning: [GHC-94817] [-Wtabs]
+    Tab character found here, and in 227 further locations.
+    Suggested fix: Please use spaces instead.
+   |
+19 |         = HappyTerminal Token
+   | ^^^^^^^^
+[5 of 9] Compiling ParseTree        ( /home/tim/Documents/GitHub/workspace/.audit-plume-cgi.Dwlx5B/compat/ParseTree.hs, /home/tim/Documents/GitHub/workspace/.audit-plume-cgi.Dwlx5B/parser-debug-build/ParseTree.o )
+
+/home/tim/Documents/GitHub/workspace/.audit-plume-cgi.Dwlx5B/compat/ParseTree.hs:21:1: warning: [GHC-94817] [-Wtabs]
+    Tab character found here, and in 29 further locations.
+    Suggested fix: Please use spaces instead.
+   |
+21 |         = Digits String
+   | ^^^^^^^^
+[6 of 9] Compiling Lexer            ( /home/tim/Documents/GitHub/workspace/.audit-plume-cgi.Dwlx5B/compat/Lexer.hs, /home/tim/Documents/GitHub/workspace/.audit-plume-cgi.Dwlx5B/parser-debug-build/Lexer.o )
+
+/home/tim/Documents/GitHub/workspace/.audit-plume-cgi.Dwlx5B/compat/Lexer.hs:59:1: warning: [GHC-94817] [-Wtabs]
+    Tab character found here, and in two further locations.
+    Suggested fix: Please use spaces instead.
+   |
+59 |         where
+   | ^^^^^^^^
+[7 of 9] Compiling Parser           ( /home/tim/Documents/GitHub/workspace/.audit-plume-cgi.Dwlx5B/compat/Parser.hs, /home/tim/Documents/GitHub/workspace/.audit-plume-cgi.Dwlx5B/parser-debug-build/Parser.o )
+
+/home/tim/Documents/GitHub/workspace/.audit-plume-cgi.Dwlx5B/compat/Parser.hs:19:1: warning: [GHC-94817] [-Wtabs]
+    Tab character found here, and in 205 further locations.
+    Suggested fix: Please use spaces instead.
+   |
+19 |         = HappyTerminal Token
+   | ^^^^^^^^
+[8 of 9] Compiling Main             ( exact-real-references/plume-qualification/ParserProbe.hs, /home/tim/Documents/GitHub/workspace/.audit-plume-cgi.Dwlx5B/parser-debug-build/Main.o )
+[9 of 9] Linking .audit-plume-cgi.Dwlx5B/parser-probe-debug

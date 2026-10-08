@@ -1,0 +1,228 @@
+{
+  "hypercurve/benches/comparative.rs": [
+    {
+      "line": 1874,
+      "text": ".regularized_region(&policy)"
+    },
+    {
+      "line": 1898,
+      "text": ".regularized_region(black_box(&policy))"
+    }
+  ],
+  "hypercurve/benches/editing.rs": [
+    {
+      "line": 1101,
+      "text": ".regularized_region(&policy)"
+    },
+    {
+      "line": 1120,
+      "text": ".regularized_region(&policy)"
+    }
+  ],
+  "hypercurve/src/bezier_offset.rs": [
+    {
+      "line": 158900,
+      "text": ".regularized_region(&policy)"
+    },
+    {
+      "line": 159205,
+      "text": ".regularized_region(&policy)"
+    }
+  ],
+  "hypercurve/src/bezier_region.rs": [
+    {
+      "line": 22719,
+      "text": "let normalized = authored.regularized_region(&policy).unwrap();"
+    },
+    {
+      "line": 32087,
+      "text": "let regularize = || region.regularized_region(&policy);"
+    },
+    {
+      "line": 32278,
+      "text": "let normalized = authored.regularized_region(&first_policy).unwrap();"
+    },
+    {
+      "line": 32282,
+      "text": "let replay = cloned.regularized_region(&policy).unwrap();"
+    }
+  ],
+  "hypercurve/src/curve_fillet.rs": [
+    {
+      "line": 5288,
+      "text": "let source = source.value.regularized_region(&policy).unwrap();"
+    },
+    {
+      "line": 5328,
+      "text": "let normalized = region.regularized_region(&policy).unwrap();"
+    },
+    {
+      "line": 5798,
+      "text": "let source = source.value.regularized_region(&policy).unwrap();"
+    },
+    {
+      "line": 5838,
+      "text": "let normalized = region.regularized_region(&policy).unwrap();"
+    }
+  ],
+  "hypercurve/src/curve_region_boolean.rs": [
+    {
+      "line": 1293,
+      "text": "pub fn regularized_region("
+    },
+    {
+      "line": 20519,
+      "text": "let replay = result.regularized_region(&policy);"
+    },
+    {
+      "line": 20739,
+      "text": "let normalized = source_region.regularized_region(&policy).unwrap();"
+    },
+    {
+      "line": 20898,
+      "text": "region = certified(region.regularized_region(&policy).unwrap_or_else(|error| {"
+    },
+    {
+      "line": 21107,
+      "text": "let normalized = raw.regularized_region(&policy).unwrap();"
+    },
+    {
+      "line": 21303,
+      "text": "let normalized = region.regularized_region(&policy).unwrap();"
+    },
+    {
+      "line": 22569,
+      "text": "let normalized = region.regularized_region(&policy).unwrap();"
+    }
+  ],
+  "hypercurve/src/curve_region_trim.rs": [
+    {
+      "line": 1664,
+      "text": "let normalized = region.regularized_region(&policy).unwrap();"
+    }
+  ],
+  "hypercurve/src/curve_support_intersection.rs": [
+    {
+      "line": 4279,
+      "text": "let region = certified(region.regularized_region(&policy).unwrap());"
+    }
+  ],
+  "hypercurve/tests/hypercurve_analytic_parallel_region.rs": [
+    {
+      "line": 1211,
+      "text": "region.regularized_region(&policy).unwrap().into_value(),"
+    }
+  ],
+  "hypercurve/tests/hypercurve_bezier_region.rs": [
+    {
+      "line": 612,
+      "text": "retained.regularized_region(&policy).unwrap().into_value(),"
+    },
+    {
+      "line": 1250,
+      "text": "let replay = region.regularized_region(&policy).unwrap();"
+    },
+    {
+      "line": 1352,
+      "text": "let replay = component.regularized_region(&policy).unwrap();"
+    }
+  ],
+  "hypercurve/tests/hypercurve_curve_region_boolean.rs": [
+    {
+      "line": 784,
+      "text": ".regularized_region(&policy)"
+    },
+    {
+      "line": 1343,
+      "text": ".regularized_region(&CurveContext::APPROXIMATE_512)"
+    },
+    {
+      "line": 1347,
+      "text": ".regularized_region(&CurveContext::APPROXIMATE_512)"
+    },
+    {
+      "line": 1466,
+      "text": ".regularized_region(&CurveContext::APPROXIMATE_512)"
+    },
+    {
+      "line": 1499,
+      "text": ".regularized_region(&CurveContext::APPROXIMATE_512)"
+    },
+    {
+      "line": 1508,
+      "text": ".regularized_region(&CurveContext::STRICT)"
+    },
+    {
+      "line": 1528,
+      "text": ".regularized_region(&CurveContext::APPROXIMATE_512)"
+    },
+    {
+      "line": 1536,
+      "text": ".regularized_region(&CurveContext::STRICT)"
+    },
+    {
+      "line": 1581,
+      "text": ".regularized_region(&CurveContext::APPROXIMATE_512)"
+    },
+    {
+      "line": 1588,
+      "text": ".regularized_region(&policy)"
+    },
+    {
+      "line": 1610,
+      "text": ".regularized_region(&CurveContext::STRICT)"
+    }
+  ],
+  "hypercurve/tests/hypercurve_curve_region_promotion.rs": [
+    {
+      "line": 2319,
+      "text": "let regularized = chamfered.regularized_region(&policy).unwrap().into_value();"
+    },
+    {
+      "line": 4520,
+      "text": "let normalized = filleted.regularized_region(&policy).unwrap();"
+    },
+    {
+      "line": 7490,
+      "text": "let region = raw.regularized_region(&policy).unwrap().into_value();"
+    },
+    {
+      "line": 7528,
+      "text": "let region = raw.regularized_region(&policy).unwrap().into_value();"
+    },
+    {
+      "line": 7582,
+      "text": "raw.regularized_region(&policy).unwrap().into_value()"
+    },
+    {
+      "line": 7609,
+      "text": ".regularized_region(&policy)"
+    },
+    {
+      "line": 7629,
+      "text": ".regularized_region(&policy)"
+    },
+    {
+      "line": 7648,
+      "text": ".regularized_region(&policy)"
+    },
+    {
+      "line": 8210,
+      "text": "certified(edited.regularized_region(&policy).unwrap()),"
+    },
+    {
+      "line": 8609,
+      "text": "region.regularized_region(&policy).unwrap().into_value(),"
+    }
+  ],
+  "hypercurve/tests/hypercurve_exact_closure.rs": [
+    {
+      "line": 51,
+      "text": ".regularized_region(&CurveContext::STRICT)"
+    },
+    {
+      "line": 154,
+      "text": "result.value.regularized_region(&CurveContext::STRICT)"
+    }
+  ]
+}

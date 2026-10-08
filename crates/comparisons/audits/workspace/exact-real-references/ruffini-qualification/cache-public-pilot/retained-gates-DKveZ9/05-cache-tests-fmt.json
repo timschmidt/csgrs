@@ -1,0 +1,17 @@
+{
+  "name": "cache-tests-fmt",
+  "command": "rustfmt",
+  "args": [
+    "--edition",
+    "2024",
+    "--check",
+    "/home/tim/Documents/GitHub/workspace/hyperreal/src/computable/node/cache_rescale_tests.rs"
+  ],
+  "begin": "2026-09-07T06:14:35.941Z",
+  "end": "2026-09-07T06:14:35.956Z",
+  "status": 0,
+  "signal": null,
+  "error": null,
+  "stdout": "",
+  "stderr": ""
+}

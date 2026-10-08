@@ -1,0 +1,87 @@
+{
+  "status": "implemented, qualified, committed; original goal active",
+  "commits": {
+    "hypercurve": "4e2507f3bba5919a4572d8d83812e9ba21056ad4",
+    "hypersolve": "9fa774c843b32f7a9f423e2784f0e3376df16e5a",
+    "hyperbrep": "8a84ee7db02fd2720ac89a1a6a227ee4ec2a8171"
+  },
+  "preceding_hypercurve_commit": "82db719517c7283f68701e42820d30f5e6a4d913",
+  "implementation": [
+    "Replaced the implicit exact_axis_support_coordinate API with constant_axis_coordinate(axis, policy). Every nested contact-support lookup retains the requested axis; the monotone parameter axis declines. All eight production call sites migrate directly, without an alias or compatibility interface.",
+    "Fillet support preparation first obtains a certified cardinal direction, avoiding an unnecessary coordinate query for noncardinal chords. Arbitrary exact Real coordinate payloads remain accepted."
+  ],
+  "baselines": [
+    {
+      "log": "owned-axis-coordinate-baseline.log",
+      "exit_code": 0,
+      "finding": "The original algebraic-support fixture declines its optional coordinate lookup, so it does not reproduce the defect. Its missed constant-coordinate conversion is recorded separately."
+    },
+    {
+      "log": "owned-axis-coordinate-exact-support-baseline.log",
+      "exit_code": 101,
+      "finding": "The stronger exact-support fixture returns the horizontal contact coordinate y=1 as the new vertical support coordinate x, although the selected contact has x=sqrt(1/2)+sqrt(3)>2."
+    }
+  ],
+  "regression": "Selected-circle contacts on orthogonal supports, both axes, reversed support traversal and both contexts. Known horizontal y=1 remains available; the varying-axis query declines. Correct optional coordinate values are checked against exact bounds.",
+  "focused": "owned-axis-coordinate-focused.log: 10 library tests pass in 2.51 seconds; outward PH composition integration passes in 16.00 seconds.",
+  "tests": {
+    "hypercurve": {
+      "passed": 1458,
+      "targets": 13,
+      "ignored": 6,
+      "log": "owned-axis-coordinate-hypercurve-tests.log",
+      "exit_code": 0,
+      "fresh": true
+    },
+    "hyperbrep": {
+      "passed": 232,
+      "targets": 1,
+      "ignored": 0,
+      "log": "owned-axis-coordinate-hyperbrep-tests.log",
+      "exit_code": 0,
+      "fresh": true
+    },
+    "hypersolve": {
+      "passed": 491,
+      "targets": 1,
+      "ignored": 0,
+      "log": "ordered-field-selected-sign-hypersolve-tests.log",
+      "exit_code": 0,
+      "fresh": false,
+      "unchanged_commit": "9fa774c843b32f7a9f423e2784f0e3376df16e5a"
+    }
+  },
+  "freshly_run_total": 1690,
+  "qualified_total_including_unchanged_hypersolve": 2181,
+  "established_expensive_hypercurve_exclusions": 4,
+  "checks": [
+    "owned-axis-coordinate-hypercurve-check.log: exit 0",
+    "owned-axis-coordinate-hyperbrep-check.log: exit 0",
+    "changed-file rustfmt --check, git diff --check, source hashes and retired-name scan: pass"
+  ],
+  "source_sha256": {
+    "hypercurve/src/bezier_offset.rs": "baabd07b317c7e38878f0813f0756ba90925c07275c6d60192a0371a6e490d34",
+    "hypercurve/src/curve.rs": "cbf2e23b9bc0d03caaba86b1030d968249f5dd15057b75920818a744a9c97331"
+  },
+  "diagnostics": {
+    "binary": "stationary-ph-offset-owned-axis-coordinate",
+    "binary_sha256": "2487e5a4fde23913bf77da3fb5194c86f3e6dd282b0f61fc09f8458e492e6e42",
+    "log": "stationary-ph-offset-owned-axis-coordinate.log",
+    "timeout_seconds": 60,
+    "exit_code": 124,
+    "first_offset": "Certified with degree-five analytic source, 3.752426864s",
+    "second_offset": "No result before total timeout; full inward composition closure is not claimed.",
+    "timing_scope": "Final unloaded probe ran after qualification and held-out retry processes ended.",
+    "previous_stage_stack": "stationary-ph-support-axis-reduction-stack.log; no new profile in this stage."
+  },
+  "held_out_retry": {
+    "test": "bezier_region::tests::pair_native_boolean_algebraic_chord_corner_publishes_a_third_generation_fillet",
+    "log": "owned-axis-coordinate-third-generation-fillet.log",
+    "timeout_seconds": 60,
+    "result": "No result in the timeout-bounded retry; process has ended. Final exit code was not retained across context compaction. Still unqualified; the other three expensive exclusions were not rerun."
+  },
+  "next_work": "retained-constant-coordinate-followup.json, then distinguish defining-endpoint signs from later chain signs in native selected-root replay.",
+  "clean_repository_count": 30,
+  "workspace_state": "owned-axis-coordinate-workspace-after-commit.json",
+  "goal_status": "active"
+}

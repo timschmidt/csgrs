@@ -1,0 +1,68 @@
+{
+  "scope": "migration integrity, staged files and representative entry points",
+  "archive": {
+    "files": 38302,
+    "bytes": 789754456,
+    "kinds": {
+      "support": 25072,
+      "code": 13230
+    },
+    "existing_links": 26,
+    "excluded": 2717
+  },
+  "index": {
+    "artifacts": 38302,
+    "distinct_blobs": 23301,
+    "staged_bytes_match_original": true
+  },
+  "syntax": {
+    "checked": 274,
+    "by_extension": {
+      ".mjs": 172,
+      ".sh": 95,
+      ".py": 7
+    }
+  },
+  "rust_packages": [
+    {
+      "package": "realistic-audit",
+      "targets": 2
+    },
+    {
+      "package": "boehm-reals-audit",
+      "targets": 6
+    },
+    {
+      "package": "published-reals-audit",
+      "targets": 2
+    },
+    {
+      "package": "interval-computable-audit",
+      "targets": 2
+    },
+    {
+      "package": "escardo-qualification",
+      "targets": 1
+    }
+  ],
+  "dependency_archives": [
+    {
+      "package": "binary-search-0.0",
+      "files": 7,
+      "bytes": 13714,
+      "sourceBytesMatchArchive": true
+    },
+    {
+      "package": "complex-generic-0.1.1.1",
+      "files": 7,
+      "bytes": 22038,
+      "sourceBytesMatchArchive": true
+    },
+    {
+      "package": "integer-roots-1.0.4.0",
+      "files": 20,
+      "bytes": 174090,
+      "sourceBytesMatchArchive": true
+    }
+  ]
+}

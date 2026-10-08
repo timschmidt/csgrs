@@ -1,0 +1,25 @@
+   Compiling plume-qualification v0.0.0 (/home/tim/Documents/GitHub/workspace/exact-real-references/plume-qualification)
+error[E0624]: method `shift_left` is private
+    --> boundary_hyper_controls.rs:46:29
+     |
+  46 |             let x=z.clone().shift_left(shift).multiply(c(&Q::from((1,2))));
+     |                             ^^^^^^^^^^ private method
+     |
+    ::: /home/tim/Documents/GitHub/workspace/hyperreal/src/computable/node/algebra.rs:1217:5
+     |
+1217 |     pub(crate) fn shift_left(self, n: i32) -> Self {
+     |     ---------------------------------------------- private method defined here
+
+error[E0624]: method `shift_left` is private
+    --> boundary_hyper_controls.rs:52:38
+     |
+  52 |             let x=c(&Q::from((a,2))).shift_left(shift).multiply(c(&Q::from((1,2))));
+     |                                      ^^^^^^^^^^ private method
+     |
+    ::: /home/tim/Documents/GitHub/workspace/hyperreal/src/computable/node/algebra.rs:1217:5
+     |
+1217 |     pub(crate) fn shift_left(self, n: i32) -> Self {
+     |     ---------------------------------------------- private method defined here
+
+For more information about this error, try `rustc --explain E0624`.
+error: could not compile `plume-qualification` (bin "boundary_hyper_controls") due to 2 previous errors

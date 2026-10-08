@@ -1,0 +1,14 @@
+{
+  "repos": {
+    "hypercurve": {
+      "commit": "a35264c98ac8c027cb93c4e8a8ce14c008bde60f",
+      "parent": "7386110870ec4bece15241887e098eff74f1b3c6",
+      "paths": {
+        "src/bezier_offset.rs": "cc2fbe4c176ddc78cd030fc72157af5d0dcc660c8fa0cd34fd540ab41c303628"
+      }
+    }
+  },
+  "qualification": "common-point-incidence-broad-20260928-v593-terminal.json",
+  "verified_source_files": 2047,
+  "clean_repositories": 30
+}

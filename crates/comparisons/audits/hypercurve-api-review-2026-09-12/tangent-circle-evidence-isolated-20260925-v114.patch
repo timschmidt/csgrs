@@ -1,0 +1,134 @@
+--- a/src/bezier_offset.rs
++++ b/src/bezier_offset.rs
+@@ -37283,18 +37283,17 @@
+         })())
+     }
+ 
+-    /// The selected center lies on its retained parent circle. When the target
+-    /// has that parent's center, the parent radius is an exact center-distance
+-    /// certificate. The circle discriminant then uses only the three radii;
+-    /// it need not rediscover a double root in expanded coordinate expressions.
+-    pub(crate) fn has_certified_concentric_source_tangency(
++    /// Proves that the supporting circles have only one common point.
++    /// A retained tangency at their shared boundary endpoint suffices when
++    /// unequal radii prove distinct supports. Otherwise a concentric parent
++    /// may certify the center distance and the circle discriminant directly.
++    /// Neither proof needs to rediscover a double root in expanded coordinates.
++    pub(crate) fn certifies_unique_rational_circle_contact(
+         &self,
+         other: &RationalBezier2,
++        certified_endpoint_tangency: bool,
+         policy: &CurveContext,
+     ) -> CurveResult<bool> {
+-        let Some(frame) = self.data.frame.selected_radial() else {
+-            return Ok(false);
+-        };
+         // A proper quadratic circle chart visits each finite point at most
+         // once. Higher-degree parameterizations can revisit a tangent point
+         // away from their shared boundary endpoint and need full pair replay.
+@@ -37308,6 +37307,19 @@
+             crate::arc_bezier::rational_bezier_circular_arc(other, policy)
+         })?
+         else {
++            return Ok(false);
++        };
++        if certified_endpoint_tangency {
++            let radius_difference =
++                self.radial_distance() * self.radial_distance() - target.radius_squared();
++            if matches!(
++                policy.strict_predicate_pass(|| real_sign(&radius_difference, policy)),
++                Some(RealSign::Positive | RealSign::Negative)
++            ) {
++                return Ok(true);
++            }
++        }
++        let Some(frame) = self.data.frame.selected_radial() else {
+             return Ok(false);
+         };
+         let parent = frame.center_parameter.semicircle_carrier();
+diff --git a/src/curve_region_boolean.rs b/src/curve_region_boolean.rs
+index 5b96c21c..412b26f6 100644
+--- a/src/curve_region_boolean.rs
++++ b/src/curve_region_boolean.rs
+@@ -5323,7 +5323,14 @@ impl<'a> CurveRegionBooleanContext<'a> {
+                     self.authored_supporting_circle_endpoint(cusp_index, curve_index, |_, _| true)
+                     && cusp
+                         .semicircle()
+-                        .has_certified_concentric_source_tangency(&rational, &self.data.policy)
++                        .certifies_unique_rational_circle_contact(
++                            &rational,
++                            self.data.carriers[sibling_index]
++                                .geometry
++                                .circle()
++                                .certified_tangent_endpoint(sibling_at_start),
++                            &self.data.policy,
++                        )
+                         .map_err(|cause| self.invalid(curve_index, cause))?
+                 {
+                     // Distinct tangent supporting circles share exactly one
+@@ -16723,6 +16730,65 @@ mod certified_successor_tests {
+         .expect("valid selected-field region")
+     }
+ 
++    #[test]
++    fn rational_circle_contact_certificate_keeps_coincident_supports_in_general_replay() {
++        let half = (Real::one() / Real::from(2_i8)).unwrap();
++        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
++            // The selected circle has center (0,0) and radius one. Its center
++            // comes from a line, so there is no concentric-parent certificate.
++            let circle = decided(
++                BezierAlgebraicCuspSemicircle2::from_selected_parallel_normal(
++                    QuadraticBezier2::new(
++                        Point2::from_values(-1, 0),
++                        Point2::from_values(0, 0),
++                        Point2::from_values(1, 0),
++                    )
++                    .parallel_left(Real::zero())
++                    .unwrap(),
++                    BezierParameter2::Exact(half.clone()).into(),
++                    Real::one(),
++                    true,
++                    &policy,
++                )
++                .unwrap(),
++            )
++            .unwrap();
++            let quarter = |points| {
++                RationalBezier2::try_new(points, vec![Real::one(), Real::one(), Real::from(2)])
++                    .unwrap()
++            };
++            // This radius-two circle is tangent at (1,0). Radius inequality
++            // alone is insufficient: the caller must own the tangency proof.
++            let tangent = quarter(vec![
++                Point2::from_values(1, 0),
++                Point2::from_values(1, 2),
++                Point2::from_values(3, 2),
++            ]);
++            assert!(
++                circle
++                    .certifies_unique_rational_circle_contact(&tangent, true, &policy)
++                    .unwrap()
++            );
++            assert!(
++                !circle
++                    .certifies_unique_rational_circle_contact(&tangent, false, &policy)
++                    .unwrap()
++            );
++            // Coincident circles have parallel tangents at every common
++            // point. Their overlap must not become a singleton contact.
++            let coincident = quarter(vec![
++                Point2::from_values(1, 0),
++                Point2::from_values(1, 1),
++                Point2::from_values(0, 1),
++            ]);
++            assert!(
++                !circle
++                    .certifies_unique_rational_circle_contact(&coincident, true, &policy)
++                    .unwrap()
++            );
++        }
++    }
++
+     #[test]
+     fn sibling_circle_tangency_preserves_half_chart_and_finite_range_ownership() {
+         let half = (Real::one() / Real::from(2_i8)).unwrap();

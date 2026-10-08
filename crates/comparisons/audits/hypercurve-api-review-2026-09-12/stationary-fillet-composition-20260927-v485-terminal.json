@@ -1,0 +1,95 @@
+{
+  "source_manifest": "stationary-fillet-20260927-v484-sources.json",
+  "source_directory": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/source-archives/stationary-fillet-20260927-v484",
+  "fixture_sha256": "90fabeec6e2a022e88e4e5a3beb5db58b54179684bea46994726b167a3785d40",
+  "library": {
+    "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/libhypercurve.rlib",
+    "sha256": "8f0141d3f7d540cf82ccb02398af164641fd2eb0e7d27f6afbf7767667aef45a"
+  },
+  "expected_cases": [
+    "stationary_fillet_region_strict",
+    "stationary_fillet_region_approximate",
+    "stationary_fillet_offset_strict",
+    "stationary_fillet_offset_approximate"
+  ],
+  "cases": [
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/stationary-fillet-composition-20260927-v485-tests",
+        "--exact",
+        "stationary_fillet_region_strict",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "stationary-fillet-composition-20260927-v485-stationary_fillet_region_strict.log",
+      "elapsed_seconds": 0.0076091778464615345,
+      "name": "stationary_fillet_region_strict",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/stationary-fillet-composition-20260927-v485-tests",
+        "--exact",
+        "stationary_fillet_region_approximate",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "stationary-fillet-composition-20260927-v485-stationary_fillet_region_approximate.log",
+      "elapsed_seconds": 0.007603599224239588,
+      "name": "stationary_fillet_region_approximate",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/stationary-fillet-composition-20260927-v485-tests",
+        "--exact",
+        "stationary_fillet_offset_strict",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "stationary-fillet-composition-20260927-v485-stationary_fillet_offset_strict.log",
+      "elapsed_seconds": 18.48734126985073,
+      "name": "stationary_fillet_offset_strict",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/stationary-fillet-composition-20260927-v485-tests",
+        "--exact",
+        "stationary_fillet_offset_approximate",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "stationary-fillet-composition-20260927-v485-stationary_fillet_offset_approximate.log",
+      "elapsed_seconds": 18.237067480105907,
+      "name": "stationary_fillet_offset_approximate",
+      "passed": true
+    }
+  ],
+  "all_processes_reaped": true,
+  "probe_complete": true,
+  "build": {
+    "command": [
+      "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustc",
+      "--edition=2024",
+      "--test",
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/stationary-fillet-composition-v485.rs",
+      "-C",
+      "opt-level=3",
+      "-L",
+      "dependency=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps",
+      "--extern",
+      "hypercurve=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/libhypercurve.rlib",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/stationary-fillet-composition-20260927-v485-tests"
+    ],
+    "returncode": 0,
+    "log": "stationary-fillet-composition-20260927-v485-build.log",
+    "elapsed_seconds": 0.46451880084350705
+  },
+  "binary_sha256": "7f54115efc09a6552c9e392b7ae78bda872cc3b08f8925cf98b4fc46ecad052d"
+}

@@ -1,0 +1,14 @@
+{
+  "tag": "point-demand-cost-cpu",
+  "started": "2026-09-10T22:35:52.520Z",
+  "finished": "2026-09-10T22:44:48.336Z",
+  "elapsedSeconds": 535.8145161530001,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "node",
+  "args": [
+    "run-point-demand-costs.mjs",
+    "cpu"
+  ],
+  "code": 0,
+  "signal": null
+}

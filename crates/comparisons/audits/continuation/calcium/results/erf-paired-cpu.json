@@ -1,0 +1,14 @@
+{
+  "tag": "erf-paired-cpu",
+  "started": "2026-09-08T10:54:31.424Z",
+  "finished": "2026-09-08T10:54:54.310Z",
+  "elapsedSeconds": 22.884253492999996,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison",
+  "command": "node",
+  "args": [
+    "audits/continuation/calcium/run-erf-bench.mjs",
+    "cpu"
+  ],
+  "code": 0,
+  "signal": null
+}

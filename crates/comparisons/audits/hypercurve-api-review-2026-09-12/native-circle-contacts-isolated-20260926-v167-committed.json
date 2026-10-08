@@ -1,0 +1,51 @@
+{
+  "phase": "committed",
+  "heads": {
+    "hypercurve": "6989bdd4ba3d21cfededa8a72be5df8a0862e30b"
+  },
+  "selected": {
+    "hypercurve": [
+      "src/bezier_offset.rs",
+      "src/curve_region_boolean.rs"
+    ]
+  },
+  "source_manifest": "native-circle-contacts-isolated-20260926-v167-sources.json",
+  "workspace_guard": "local-chord-complete-replay-20260924-v164-sources.json",
+  "qualification": "native-circle-contacts-isolated-20260926-v167-terminal.json",
+  "hypercurve_passed": 290,
+  "ignored": 0,
+  "every_owned_process_reaped": true,
+  "all_bound_sources_and_binaries_unchanged": true,
+  "repository_statuses": {
+    "hypersdf": "",
+    "hyperbrep": "",
+    "hyperparts": "",
+    "alumina-interface": "",
+    "hyperlattice": "",
+    "citizen-builder": "",
+    "csgrs-ffi": "",
+    "alumina-firmware": "",
+    "videos": "",
+    "hypertri": "",
+    "hyperreal": "",
+    "hyperpath": "",
+    "hypervoxel": "",
+    "hypergraphics": "",
+    "hyperevolution": "",
+    "exactcore-hyper-comparison": "",
+    "hypersolve": "",
+    "hypercurve": " M src/bezier_offset.rs\n M src/bezier_region.rs\n M src/curve.rs\n M src/curve_corner_chain.rs\n M src/curve_region_boolean.rs\n",
+    "crcalc": "",
+    "openscad-rs": "",
+    "hypermesh": "",
+    "csgrs": "",
+    "synaps-cad": "",
+    "hyperdrc": "",
+    "hyperphysics": "",
+    "hyperlimit": "",
+    "hyperpack": "",
+    "NURBS_BREP_kernel": "",
+    "ExactCalculator": "",
+    "hypercircuit": ""
+  }
+}

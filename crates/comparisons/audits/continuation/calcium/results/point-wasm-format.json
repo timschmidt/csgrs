@@ -1,0 +1,17 @@
+{
+  "tag": "point-wasm-format",
+  "started": "2026-09-10T23:59:01.439Z",
+  "finished": "2026-09-10T23:59:01.470Z",
+  "elapsedSeconds": 0.029079408999999997,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "rustfmt",
+  "args": [
+    "--edition",
+    "2024",
+    "--check",
+    "point-wasm-work.rs",
+    "point-wasm-platform.rs"
+  ],
+  "code": 0,
+  "signal": null
+}

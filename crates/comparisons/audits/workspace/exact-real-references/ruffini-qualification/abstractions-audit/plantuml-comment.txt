@@ -1,0 +1,71 @@
+MD5=[ee3a831e9f3b279a7007fb6848d26b8f]
+@startuml
+interface dk.jonaslindstrom.math.algebra.abstractions.Group {
+~ E invert(E)
+}
+interface dk.jonaslindstrom.math.algebra.abstractions.Set {
+~ String toString(E)
+~ boolean equals(E,E)
+}
+interface dk.jonaslindstrom.math.algebra.abstractions.SemiRing {
+~ E integer(int)
+}
+interface dk.jonaslindstrom.math.algebra.abstractions.Module {
+~ V scale(S,V)
+~ R getScalars()
+}
+interface dk.jonaslindstrom.math.algebra.abstractions.Ring {
+}
+interface dk.jonaslindstrom.math.algebra.abstractions.AdditiveGroup {
+~ E negate(E)
+}
+interface dk.jonaslindstrom.math.algebra.abstractions.CommutativeMonoid {
+~ E add(E,E)
+~ E getZero()
+}
+interface dk.jonaslindstrom.math.algebra.abstractions.NormedVectorSpace {
+~ double norm(V)
+}
+interface dk.jonaslindstrom.math.algebra.abstractions.Monoid {
+~ E getIdentity()
+}
+interface dk.jonaslindstrom.math.algebra.abstractions.EuclideanDomain {
+~ Pair<E,E> divisionWithRemainder(E,E)
+~ Integer norm(E)
+}
+interface dk.jonaslindstrom.math.algebra.abstractions.Field {
+}
+interface dk.jonaslindstrom.math.algebra.abstractions.InnerProductSpace {
+~ S innerProduct(V,V)
+}
+interface dk.jonaslindstrom.math.algebra.abstractions.Semigroup {
+~ E multiply(E,E)
+}
+interface dk.jonaslindstrom.math.algebra.abstractions.VectorSpace {
+}
+
+
+dk.jonaslindstrom.math.algebra.abstractions.Monoid <|- - dk.jonaslindstrom.math.algebra.abstractions.Group
+dk.jonaslindstrom.math.algebra.abstractions.Monoid <|- - dk.jonaslindstrom.math.algebra.abstractions.SemiRing
+dk.jonaslindstrom.math.algebra.abstractions.CommutativeMonoid <|- - dk.jonaslindstrom.math.algebra.abstractions.SemiRing
+dk.jonaslindstrom.math.algebra.abstractions.AdditiveGroup <|- - dk.jonaslindstrom.math.algebra.abstractions.Module
+dk.jonaslindstrom.math.algebra.abstractions.SemiRing <|- - dk.jonaslindstrom.math.algebra.abstractions.Ring
+dk.jonaslindstrom.math.algebra.abstractions.AdditiveGroup <|- - dk.jonaslindstrom.math.algebra.abstractions.Ring
+dk.jonaslindstrom.math.algebra.abstractions.CommutativeMonoid <|- - dk.jonaslindstrom.math.algebra.abstractions.AdditiveGroup
+dk.jonaslindstrom.math.algebra.abstractions.Set <|- - dk.jonaslindstrom.math.algebra.abstractions.CommutativeMonoid
+dk.jonaslindstrom.math.algebra.abstractions.VectorSpace <|- - dk.jonaslindstrom.math.algebra.abstractions.NormedVectorSpace
+dk.jonaslindstrom.math.algebra.abstractions.Semigroup <|- - dk.jonaslindstrom.math.algebra.abstractions.Monoid
+dk.jonaslindstrom.math.algebra.abstractions.Ring <|- - dk.jonaslindstrom.math.algebra.abstractions.EuclideanDomain
+dk.jonaslindstrom.math.algebra.abstractions.Group <|- - dk.jonaslindstrom.math.algebra.abstractions.Field
+dk.jonaslindstrom.math.algebra.abstractions.Ring <|- - dk.jonaslindstrom.math.algebra.abstractions.Field
+dk.jonaslindstrom.math.algebra.abstractions.VectorSpace <|- - dk.jonaslindstrom.math.algebra.abstractions.InnerProductSpace
+dk.jonaslindstrom.math.algebra.abstractions.Set <|- - dk.jonaslindstrom.math.algebra.abstractions.Semigroup
+dk.jonaslindstrom.math.algebra.abstractions.Module <|- - dk.jonaslindstrom.math.algebra.abstractions.VectorSpace
+@enduml
+
+PlantUML version 1.2020.11(Sat May 30 10:13:43 UTC 2020)
+Java Runtime: OpenJDK Runtime Environment
+JVM: OpenJDK 64-Bit Server VM
+Default Encoding: UTF-8
+Language: en
+Country: US

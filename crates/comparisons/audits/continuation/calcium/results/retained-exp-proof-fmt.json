@@ -1,0 +1,16 @@
+{
+  "tag": "retained-exp-proof-fmt",
+  "started": "2026-09-08T22:35:41.633Z",
+  "finished": "2026-09-08T22:35:42.075Z",
+  "elapsedSeconds": 0.43956155,
+  "cwd": "/home/tim/Documents/GitHub/workspace/hyperreal",
+  "command": "cargo",
+  "args": [
+    "fmt",
+    "--all",
+    "--",
+    "--check"
+  ],
+  "code": 0,
+  "signal": null
+}

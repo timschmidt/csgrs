@@ -1,0 +1,13 @@
+{
+  "tag": "retained-statistics-verify",
+  "started": "2026-09-11T01:14:30.523Z",
+  "finished": "2026-09-11T01:14:54.853Z",
+  "elapsedSeconds": 24.32785733,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "node",
+  "args": [
+    "verify-retained-statistics-v61.mjs"
+  ],
+  "code": 0,
+  "signal": null
+}

@@ -1,0 +1,421 @@
+{
+  "files": {
+    "hypercurve/benches/bezier_algebraic_parameter.rs": {
+      "sha256": "6cac0534c8b3787357948f9d1182b1b698af2292144edc0b043f45d44294ea36",
+      "uses": [
+        {
+          "line": 114,
+          "spelling": "BezierParameter2::exact"
+        },
+        {
+          "line": 130,
+          "spelling": "BezierParameter2::algebraic"
+        }
+      ]
+    },
+    "hypercurve/benches/bezier_arrangement.rs": {
+      "sha256": "0a1932fd58a8982334608f3032787069c0e87a49b29950ca52032e671e92903a",
+      "uses": [
+        {
+          "line": 71,
+          "spelling": "BezierParameter2::exact"
+        },
+        {
+          "line": 317,
+          "spelling": "BezierParameter2::algebraic"
+        }
+      ]
+    },
+    "hypercurve/benches/bezier_region.rs": {
+      "sha256": "3a1f7c948dff1c8fa4457b3aeffe66bf86924826cac56ccdced2961a49d8f1e3",
+      "uses": [
+        {
+          "line": 143,
+          "spelling": "BezierParameter2::algebraic"
+        },
+        {
+          "line": 392,
+          "spelling": "BezierParameter2::exact"
+        }
+      ]
+    },
+    "hypercurve/benches/bezier_split_materialization.rs": {
+      "sha256": "e707f6d03ba7316ed8be5c68adff6d6d7320807b98e75fd05f508cb31885288f",
+      "uses": [
+        {
+          "line": 33,
+          "spelling": "BezierParameter2::exact"
+        },
+        {
+          "line": 34,
+          "spelling": "BezierParameter2::exact"
+        },
+        {
+          "line": 35,
+          "spelling": "BezierParameter2::exact"
+        },
+        {
+          "line": 87,
+          "spelling": "BezierParameter2::algebraic"
+        },
+        {
+          "line": 93,
+          "spelling": "BezierParameter2::exact"
+        },
+        {
+          "line": 95,
+          "spelling": "BezierParameter2::exact"
+        },
+        {
+          "line": 116,
+          "spelling": "BezierParameter2::algebraic"
+        },
+        {
+          "line": 122,
+          "spelling": "BezierParameter2::exact"
+        },
+        {
+          "line": 124,
+          "spelling": "BezierParameter2::exact"
+        }
+      ]
+    },
+    "hypercurve/benches/curve_region_boolean_batch.rs": {
+      "sha256": "d289e19ea7a8a18d02642562455d161f81581cb430293f693a553784107a7c59",
+      "uses": [
+        {
+          "line": 108,
+          "spelling": "BezierParameter2::exact"
+        }
+      ]
+    },
+    "hypercurve/benches/offset.rs": {
+      "sha256": "085279136e68b5d626710a0c661bfcfceabc0b1c635ffce2c9b02764231bde85",
+      "uses": [
+        {
+          "line": 829,
+          "spelling": "BezierParameter2::algebraic"
+        }
+      ]
+    },
+    "hypercurve/fuzz/fuzz_targets/bezier_arrangement.rs": {
+      "sha256": "5b8d8bc433994a49f89a693108cfbd1b27f439d92d770486044567b06fd66f83",
+      "uses": [
+        {
+          "line": 65,
+          "spelling": "BezierParameter2::exact"
+        }
+      ]
+    },
+    "hypercurve/fuzz/fuzz_targets/bezier_region.rs": {
+      "sha256": "27233ffa7c4f1693eb0cf4ad4fa2580c9b78b765c6e90809225363757f1113cb",
+      "uses": [
+        {
+          "line": 48,
+          "spelling": "BezierParameter2::algebraic"
+        },
+        {
+          "line": 71,
+          "spelling": "BezierParameter2::algebraic"
+        },
+        {
+          "line": 107,
+          "spelling": "BezierParameter2::exact"
+        }
+      ]
+    },
+    "hypercurve/fuzz/fuzz_targets/bezier_split_materialization.rs": {
+      "sha256": "6f08c82e2dd4f4079bd341cc555e44823c6f4352859f43e3eb643c910c3d2e21",
+      "uses": [
+        {
+          "line": 36,
+          "spelling": "BezierParameter2::exact"
+        },
+        {
+          "line": 54,
+          "spelling": "BezierParameter2::algebraic"
+        },
+        {
+          "line": 71,
+          "spelling": "BezierParameter2::algebraic"
+        }
+      ]
+    },
+    "hypercurve/src/bezier_offset.rs": {
+      "sha256": "8521124cb15da5f25e524e61306dbcb954657ca04738cd9044710319dd950178",
+      "uses": [
+        {
+          "line": 117148,
+          "spelling": "BezierParameter2::exact"
+        }
+      ]
+    },
+    "hypercurve/src/bezier_region.rs": {
+      "sha256": "8666ba5681ee10d8d959ae500744933354a3a30b8d7f8a1164302962fa936ed6",
+      "uses": [
+        {
+          "line": 18358,
+          "spelling": "BezierParameter2::algebraic"
+        },
+        {
+          "line": 22194,
+          "spelling": "BezierParameter2::algebraic"
+        },
+        {
+          "line": 22220,
+          "spelling": "BezierParameter2::algebraic"
+        },
+        {
+          "line": 32570,
+          "spelling": "BezierParameter2::algebraic"
+        }
+      ]
+    },
+    "hypercurve/src/curve_region_trim.rs": {
+      "sha256": "9f5c38aa39c8042a1b4567761329223d8b824dc14a91218f06ca5c3ab5ce010b",
+      "uses": [
+        {
+          "line": 1809,
+          "spelling": "BezierParameter2::algebraic"
+        }
+      ]
+    },
+    "hypercurve/src/curve_subdivision.rs": {
+      "sha256": "d8263c47ce8f36536e844e602d09a78a4ea5390be32bf5ecf2ee669b28d713b9",
+      "uses": [
+        {
+          "line": 3232,
+          "spelling": "BezierParameter2::algebraic"
+        },
+        {
+          "line": 3372,
+          "spelling": "BezierParameter2::algebraic"
+        }
+      ]
+    },
+    "hypercurve/src/curve_support_intersection.rs": {
+      "sha256": "8120fd32bd1a63cb57712357e0a256d4e0e64bec3beedd31ab9f804ade587140",
+      "uses": [
+        {
+          "line": 2398,
+          "spelling": "BezierParameter2::algebraic"
+        },
+        {
+          "line": 2634,
+          "spelling": "BezierParameter2::algebraic"
+        },
+        {
+          "line": 2759,
+          "spelling": "BezierParameter2::algebraic"
+        },
+        {
+          "line": 3321,
+          "spelling": "BezierParameter2::algebraic"
+        }
+      ]
+    },
+    "hypercurve/src/rational_bezier_general.rs": {
+      "sha256": "3f930b2da321c7ed8a1928263a7152a85188816f89f039a50dbcb09566ec1c8a",
+      "uses": [
+        {
+          "line": 8325,
+          "spelling": "BezierParameter2::exact"
+        },
+        {
+          "line": 8783,
+          "spelling": "BezierParameter2::exact"
+        }
+      ]
+    },
+    "hypercurve/tests/hypercurve_analytic_parallel_region.rs": {
+      "sha256": "586bf40a127f7a4164374acda5b8d278fe48a959744e0b2176bfc98cc9b95eb2",
+      "uses": [
+        {
+          "line": 19,
+          "spelling": "BezierParameter2::exact"
+        }
+      ]
+    },
+    "hypercurve/tests/hypercurve_bezier_algebraic_parameter.rs": {
+      "sha256": "6630b62c304463e6460e7ceda3b0b3d707dd012c74a69a48e0be9b7b70450632",
+      "uses": [
+        {
+          "line": 326,
+          "spelling": "BezierParameter2::algebraic"
+        },
+        {
+          "line": 346,
+          "spelling": "BezierParameter2::algebraic"
+        },
+        {
+          "line": 366,
+          "spelling": "BezierParameter2::algebraic"
+        },
+        {
+          "line": 375,
+          "spelling": "BezierParameter2::algebraic"
+        },
+        {
+          "line": 405,
+          "spelling": "BezierParameter2::algebraic"
+        },
+        {
+          "line": 459,
+          "spelling": "BezierParameter2::algebraic"
+        },
+        {
+          "line": 507,
+          "spelling": "BezierParameter2::exact"
+        },
+        {
+          "line": 518,
+          "spelling": "BezierParameter2::algebraic"
+        },
+        {
+          "line": 525,
+          "spelling": "BezierParameter2::exact"
+        },
+        {
+          "line": 543,
+          "spelling": "BezierParameter2::algebraic"
+        },
+        {
+          "line": 544,
+          "spelling": "BezierParameter2::algebraic"
+        },
+        {
+          "line": 558,
+          "spelling": "BezierParameter2::algebraic"
+        },
+        {
+          "line": 562,
+          "spelling": "BezierParameter2::algebraic"
+        },
+        {
+          "line": 579,
+          "spelling": "BezierParameter2::algebraic"
+        },
+        {
+          "line": 583,
+          "spelling": "BezierParameter2::exact"
+        },
+        {
+          "line": 611,
+          "spelling": "BezierParameter2::algebraic"
+        },
+        {
+          "line": 621,
+          "spelling": "BezierParameter2::algebraic"
+        }
+      ]
+    },
+    "hypercurve/tests/hypercurve_bezier_arrangement.rs": {
+      "sha256": "808db9d453bdc182cde88ef51d93610341f11ebf837a5f005016c99763218e2b",
+      "uses": [
+        {
+          "line": 109,
+          "spelling": "BezierParameter2::algebraic"
+        },
+        {
+          "line": 262,
+          "spelling": "BezierParameter2::exact"
+        },
+        {
+          "line": 270,
+          "spelling": "BezierParameter2::algebraic"
+        },
+        {
+          "line": 651,
+          "spelling": "BezierParameter2::algebraic"
+        },
+        {
+          "line": 699,
+          "spelling": "BezierParameter2::algebraic"
+        },
+        {
+          "line": 746,
+          "spelling": "BezierParameter2::algebraic"
+        },
+        {
+          "line": 789,
+          "spelling": "BezierParameter2::algebraic"
+        },
+        {
+          "line": 832,
+          "spelling": "BezierParameter2::algebraic"
+        },
+        {
+          "line": 878,
+          "spelling": "BezierParameter2::algebraic"
+        }
+      ]
+    },
+    "hypercurve/tests/hypercurve_bezier_region.rs": {
+      "sha256": "1edb314ff68d86ac2adfa0ad85d1c6b560a4c518ac6aa389531d6ae117a3246b",
+      "uses": [
+        {
+          "line": 85,
+          "spelling": "BezierParameter2::exact"
+        },
+        {
+          "line": 132,
+          "spelling": "BezierParameter2::algebraic"
+        },
+        {
+          "line": 737,
+          "spelling": "BezierParameter2::algebraic"
+        },
+        {
+          "line": 853,
+          "spelling": "BezierParameter2::algebraic"
+        },
+        {
+          "line": 1047,
+          "spelling": "BezierParameter2::algebraic"
+        },
+        {
+          "line": 1092,
+          "spelling": "BezierParameter2::algebraic"
+        },
+        {
+          "line": 1122,
+          "spelling": "BezierParameter2::algebraic"
+        },
+        {
+          "line": 1150,
+          "spelling": "BezierParameter2::algebraic"
+        },
+        {
+          "line": 1166,
+          "spelling": "BezierParameter2::algebraic"
+        },
+        {
+          "line": 1303,
+          "spelling": "BezierParameter2::algebraic"
+        }
+      ]
+    },
+    "hypercurve/tests/hypercurve_bezier_split_materialization.rs": {
+      "sha256": "ff9c86e1a3524afc52b49302dff41fde45ab6a7648b2dd524acae73ffcba36fd",
+      "uses": [
+        {
+          "line": 38,
+          "spelling": "BezierParameter2::exact"
+        },
+        {
+          "line": 60,
+          "spelling": "BezierParameter2::algebraic"
+        },
+        {
+          "line": 86,
+          "spelling": "BezierParameter2::algebraic"
+        },
+        {
+          "line": 110,
+          "spelling": "BezierParameter2::algebraic"
+        }
+      ]
+    }
+  },
+  "aliases": []
+}

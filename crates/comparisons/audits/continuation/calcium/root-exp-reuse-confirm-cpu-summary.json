@@ -1,0 +1,965 @@
+{
+  "mode": "cpu",
+  "cpu": 6,
+  "started": "2026-09-08T21:28:30.122Z",
+  "binaries": {
+    "baseline": {
+      "path": "/tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/release/calcium-root-exp-opaque-baseline-bench",
+      "bytes": 1880296,
+      "sha256": "247adbe964de205c3aafa16a8e72637bbaf1892f683a4f0c2c0f9bfd51a38537",
+      "size": "text\t   data\t    bss\t    dec\t    hex\tfilename\n1345877\t 218728\t   1168\t1565773\t 17e44d\t/tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/release/calcium-root-exp-opaque-baseline-bench"
+    },
+    "sign": {
+      "path": "/tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/release/calcium-root-exp-opaque-sign-bench",
+      "bytes": 1888992,
+      "sha256": "747ee28902743e8c06fa7115b4a2c5a72e7f3fc5f5bc9c45782be6dcf5c48c9b",
+      "size": "text\t   data\t    bss\t    dec\t    hex\tfilename\n1353081\t 218792\t   2096\t1573969\t 180451\t/tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/release/calcium-root-exp-opaque-sign-bench"
+    },
+    "reuse": {
+      "path": "/tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/release/calcium-root-exp-opaque-reuse-bench",
+      "bytes": 1892072,
+      "sha256": "5f6e9fca2c0c7dba16044ce022a38dd009ecefbdaf7a6422675b07f224c66a37",
+      "size": "text\t   data\t    bss\t    dec\t    hex\tfilename\n1355333\t 219192\t   3536\t1578061\t 18144d\t/tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/release/calcium-root-exp-opaque-reuse-bench"
+    }
+  },
+  "finished": "2026-09-08T21:32:35.761Z",
+  "summaries": [
+    {
+      "name": "identity-1",
+      "lifecycle": "fresh",
+      "iterations": 65,
+      "observations": 72,
+      "comparisons": {
+        "baseline": {
+          "pairedMedianRatio": 0.07794636850596885,
+          "pairedMedianBootstrap95": [
+            0.07505303598223446,
+            0.08075183251579007
+          ]
+        },
+        "sign": {
+          "pairedMedianRatio": 0.9969945927229422,
+          "pairedMedianBootstrap95": [
+            0.951810098929101,
+            1.0831625835987118
+          ]
+        }
+      },
+      "measurements": {
+        "baseline": {
+          "ns": 110299.74615384615,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        "sign": {
+          "ns": 8250.9,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        "reuse": {
+          "ns": 8245.815384615384,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        }
+      }
+    },
+    {
+      "name": "identity-1",
+      "lifecycle": "warm-pair",
+      "iterations": 3797,
+      "observations": 72,
+      "comparisons": {
+        "baseline": {
+          "pairedMedianRatio": 0.4056966246068635,
+          "pairedMedianBootstrap95": [
+            0.39352177854161774,
+            0.42308412521028654
+          ]
+        },
+        "sign": {
+          "pairedMedianRatio": 0.9619747381803716,
+          "pairedMedianBootstrap95": [
+            0.9253787094932416,
+            1.0175770486855262
+          ]
+        }
+      },
+      "measurements": {
+        "baseline": {
+          "ns": 2213.8355280484593,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        "sign": {
+          "ns": 906.5022386094284,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        "reuse": {
+          "ns": 873.571898867527,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        }
+      }
+    },
+    {
+      "name": "identity-1",
+      "lifecycle": "warm-difference",
+      "iterations": 18764,
+      "observations": 72,
+      "comparisons": {
+        "baseline": {
+          "pairedMedianRatio": 0.10202439625768246,
+          "pairedMedianBootstrap95": [
+            0.09151955127943957,
+            0.1076174808057455
+          ]
+        },
+        "sign": {
+          "pairedMedianRatio": 1.0104523476356853,
+          "pairedMedianBootstrap95": [
+            0.9264546177325544,
+            1.0974818684449064
+          ]
+        }
+      },
+      "measurements": {
+        "baseline": {
+          "ns": 218.05793007887445,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        "sign": {
+          "ns": 20.994883820081007,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        "reuse": {
+          "ns": 22.548283947985503,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        }
+      }
+    },
+    {
+      "name": "identity-8",
+      "lifecycle": "fresh",
+      "iterations": 24,
+      "observations": 72,
+      "comparisons": {
+        "baseline": {
+          "pairedMedianRatio": 0.13770138653472946,
+          "pairedMedianBootstrap95": [
+            0.1359113658949238,
+            0.1405532556605965
+          ]
+        },
+        "sign": {
+          "pairedMedianRatio": 0.9887906986821935,
+          "pairedMedianBootstrap95": [
+            0.9293124606953753,
+            1.0225366831127056
+          ]
+        }
+      },
+      "measurements": {
+        "baseline": {
+          "ns": 422776.625,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        "sign": {
+          "ns": 57545,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        "reuse": {
+          "ns": 57461.895833333336,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        }
+      }
+    },
+    {
+      "name": "identity-8",
+      "lifecycle": "warm-pair",
+      "iterations": 4456,
+      "observations": 72,
+      "comparisons": {
+        "baseline": {
+          "pairedMedianRatio": 0.29098391889017405,
+          "pairedMedianBootstrap95": [
+            0.2843720922136891,
+            0.31327264924651255
+          ]
+        },
+        "sign": {
+          "pairedMedianRatio": 0.9587982860505996,
+          "pairedMedianBootstrap95": [
+            0.9246172465268817,
+            0.9824305090807199
+          ]
+        }
+      },
+      "measurements": {
+        "baseline": {
+          "ns": 2204.293312387792,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        "sign": {
+          "ns": 672.6391382405745,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        "reuse": {
+          "ns": 645.1722396768403,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        }
+      }
+    },
+    {
+      "name": "identity-8",
+      "lifecycle": "warm-difference",
+      "iterations": 41754,
+      "observations": 72,
+      "comparisons": {
+        "baseline": {
+          "pairedMedianRatio": 0.09103856519736747,
+          "pairedMedianBootstrap95": [
+            0.08983334278764774,
+            0.0926852600190334
+          ]
+        },
+        "sign": {
+          "pairedMedianRatio": 0.9774164927498766,
+          "pairedMedianBootstrap95": [
+            0.9454290697654899,
+            1.00466618217412
+          ]
+        }
+      },
+      "measurements": {
+        "baseline": {
+          "ns": 216.5141064329166,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        "sign": {
+          "ns": 20.400596350050293,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        "reuse": {
+          "ns": 19.862839488432247,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        }
+      }
+    },
+    {
+      "name": "identity-32",
+      "lifecycle": "fresh",
+      "iterations": 20,
+      "observations": 72,
+      "comparisons": {
+        "baseline": {
+          "pairedMedianRatio": 0.3613964625188456,
+          "pairedMedianBootstrap95": [
+            0.3566518658678425,
+            0.36585659196919174
+          ]
+        },
+        "sign": {
+          "pairedMedianRatio": 1.0219004483967609,
+          "pairedMedianBootstrap95": [
+            1.007620908035375,
+            1.030378434500311
+          ]
+        }
+      },
+      "measurements": {
+        "baseline": {
+          "ns": 2061740.0499999998,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        "sign": {
+          "ns": 724890.2749999999,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        "reuse": {
+          "ns": 742108.85,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        }
+      }
+    },
+    {
+      "name": "identity-32",
+      "lifecycle": "warm-pair",
+      "iterations": 4439,
+      "observations": 72,
+      "comparisons": {
+        "baseline": {
+          "pairedMedianRatio": 0.2923381217811495,
+          "pairedMedianBootstrap95": [
+            0.2881166720194517,
+            0.344367060503252
+          ]
+        },
+        "sign": {
+          "pairedMedianRatio": 0.8622729615523224,
+          "pairedMedianBootstrap95": [
+            0.8547615563314023,
+            0.8777193366318538
+          ]
+        }
+      },
+      "measurements": {
+        "baseline": {
+          "ns": 2193.36945257941,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        "sign": {
+          "ns": 737.4556206352781,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        "reuse": {
+          "ns": 638.8781257039874,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        }
+      }
+    },
+    {
+      "name": "identity-32",
+      "lifecycle": "warm-difference",
+      "iterations": 37044,
+      "observations": 72,
+      "comparisons": {
+        "baseline": {
+          "pairedMedianRatio": 0.09236215329523217,
+          "pairedMedianBootstrap95": [
+            0.09055229319255034,
+            0.09667436713834156
+          ]
+        },
+        "sign": {
+          "pairedMedianRatio": 0.9900292773116789,
+          "pairedMedianBootstrap95": [
+            0.9857924087409169,
+            0.9956114825222228
+          ]
+        }
+      },
+      "measurements": {
+        "baseline": {
+          "ns": 215.45035633300938,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        "sign": {
+          "ns": 19.903614620451357,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        "reuse": {
+          "ns": 19.710479429867185,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        }
+      }
+    },
+    {
+      "name": "identity-128",
+      "lifecycle": "fresh",
+      "iterations": 20,
+      "observations": 72,
+      "comparisons": {
+        "baseline": {
+          "pairedMedianRatio": 0.75311928730202,
+          "pairedMedianBootstrap95": [
+            0.7460821607630816,
+            0.7583496956722205
+          ]
+        },
+        "sign": {
+          "pairedMedianRatio": 0.9972321963122601,
+          "pairedMedianBootstrap95": [
+            0.9822595527524693,
+            1.008289306073403
+          ]
+        }
+      },
+      "measurements": {
+        "baseline": {
+          "ns": 33226548.3,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        "sign": {
+          "ns": 25199923.9,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        "reuse": {
+          "ns": 25008334.825,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        }
+      }
+    },
+    {
+      "name": "identity-128",
+      "lifecycle": "warm-pair",
+      "iterations": 1271,
+      "observations": 72,
+      "comparisons": {
+        "baseline": {
+          "pairedMedianRatio": 0.28508366392207635,
+          "pairedMedianBootstrap95": [
+            0.27910586070995264,
+            0.2900271696365966
+          ]
+        },
+        "sign": {
+          "pairedMedianRatio": 0.08866242435541315,
+          "pairedMedianBootstrap95": [
+            0.08751147628215372,
+            0.09103451132561545
+          ]
+        }
+      },
+      "measurements": {
+        "baseline": {
+          "ns": 2203.5940204563335,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        "sign": {
+          "ns": 7099.123918174666,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        "reuse": {
+          "ns": 628.7411487018096,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        }
+      }
+    },
+    {
+      "name": "identity-128",
+      "lifecycle": "warm-difference",
+      "iterations": 33113,
+      "observations": 72,
+      "comparisons": {
+        "baseline": {
+          "pairedMedianRatio": 0.09245846531009885,
+          "pairedMedianBootstrap95": [
+            0.09078172426370963,
+            0.10672865331458231
+          ]
+        },
+        "sign": {
+          "pairedMedianRatio": 1.0002343603915818,
+          "pairedMedianBootstrap95": [
+            0.9828488482110049,
+            1.1453511425440794
+          ]
+        }
+      },
+      "measurements": {
+        "baseline": {
+          "ns": 215.20283574426963,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        "sign": {
+          "ns": 20.038353516745687,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        "reuse": {
+          "ns": 19.836771056684686,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        }
+      }
+    },
+    {
+      "name": "unresolved-1",
+      "lifecycle": "fresh",
+      "iterations": 79,
+      "observations": 72,
+      "comparisons": {
+        "baseline": {
+          "pairedMedianRatio": 1.006653133449446,
+          "pairedMedianBootstrap95": [
+            0.9971596388310673,
+            1.0169666598607232
+          ]
+        },
+        "sign": {
+          "pairedMedianRatio": 0.9936036065694482,
+          "pairedMedianBootstrap95": [
+            0.9840889106687554,
+            0.998929306455682
+          ]
+        }
+      },
+      "measurements": {
+        "baseline": {
+          "ns": 112589.62025316455,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        "sign": {
+          "ns": 114403.67088607595,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        "reuse": {
+          "ns": 113990.91139240506,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        }
+      }
+    },
+    {
+      "name": "unresolved-1",
+      "lifecycle": "warm-pair",
+      "iterations": 3331,
+      "observations": 72,
+      "comparisons": {
+        "baseline": {
+          "pairedMedianRatio": 1.359443076124875,
+          "pairedMedianBootstrap95": [
+            1.3311765131878852,
+            1.4503216966987624
+          ]
+        },
+        "sign": {
+          "pairedMedianRatio": 1.0013270657138011,
+          "pairedMedianBootstrap95": [
+            0.9744556195299771,
+            1.043401969741967
+          ]
+        }
+      },
+      "measurements": {
+        "baseline": {
+          "ns": 2180.793155208646,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        "sign": {
+          "ns": 2985.0744521164816,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        "reuse": {
+          "ns": 2964.783098168718,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        }
+      }
+    },
+    {
+      "name": "unresolved-1",
+      "lifecycle": "warm-difference",
+      "iterations": 32521,
+      "observations": 72,
+      "comparisons": {
+        "baseline": {
+          "pairedMedianRatio": 1.0490373018294035,
+          "pairedMedianBootstrap95": [
+            0.9773775637563833,
+            1.0555130603049419
+          ]
+        },
+        "sign": {
+          "pairedMedianRatio": 1.03307548786869,
+          "pairedMedianBootstrap95": [
+            1.028579673284662,
+            1.0455296248267805
+          ]
+        }
+      },
+      "measurements": {
+        "baseline": {
+          "ns": 220.4891454752314,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        "sign": {
+          "ns": 224.3631653393192,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        "reuse": {
+          "ns": 231.96665231696443,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        }
+      }
+    },
+    {
+      "name": "unresolved-8",
+      "lifecycle": "fresh",
+      "iterations": 23,
+      "observations": 72,
+      "comparisons": {
+        "baseline": {
+          "pairedMedianRatio": 0.9921977152632571,
+          "pairedMedianBootstrap95": [
+            0.9848852570765851,
+            1.0109764194330926
+          ]
+        },
+        "sign": {
+          "pairedMedianRatio": 1.004826326574502,
+          "pairedMedianBootstrap95": [
+            0.9993443151628079,
+            1.0261186967323959
+          ]
+        }
+      },
+      "measurements": {
+        "baseline": {
+          "ns": 422190.3913043478,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        "sign": {
+          "ns": 420793.95652173914,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        "reuse": {
+          "ns": 422641.652173913,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        }
+      }
+    },
+    {
+      "name": "unresolved-8",
+      "lifecycle": "warm-pair",
+      "iterations": 3731,
+      "observations": 72,
+      "comparisons": {
+        "baseline": {
+          "pairedMedianRatio": 1.181812857684632,
+          "pairedMedianBootstrap95": [
+            1.1557227074778476,
+            1.1839288394138483
+          ]
+        },
+        "sign": {
+          "pairedMedianRatio": 0.9695815859868342,
+          "pairedMedianBootstrap95": [
+            0.9587810948865005,
+            0.9748309603997258
+          ]
+        }
+      },
+      "measurements": {
+        "baseline": {
+          "ns": 2184.804610024122,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        "sign": {
+          "ns": 2654.009916912356,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        "reuse": {
+          "ns": 2571.7252747252746,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        }
+      }
+    },
+    {
+      "name": "unresolved-8",
+      "lifecycle": "warm-difference",
+      "iterations": 37175,
+      "observations": 72,
+      "comparisons": {
+        "baseline": {
+          "pairedMedianRatio": 1.0730779530639523,
+          "pairedMedianBootstrap95": [
+            1.0656251376916355,
+            1.0752624458079079
+          ]
+        },
+        "sign": {
+          "pairedMedianRatio": 1.0544830696255496,
+          "pairedMedianBootstrap95": [
+            1.0506421539435926,
+            1.0832694382480246
+          ]
+        }
+      },
+      "measurements": {
+        "baseline": {
+          "ns": 216.30675184936115,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        "sign": {
+          "ns": 219.92950907868192,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        "reuse": {
+          "ns": 231.8341358439812,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        }
+      }
+    },
+    {
+      "name": "unresolved-32",
+      "lifecycle": "fresh",
+      "iterations": 20,
+      "observations": 72,
+      "comparisons": {
+        "baseline": {
+          "pairedMedianRatio": 1.0101306039391031,
+          "pairedMedianBootstrap95": [
+            1.0038099710445751,
+            1.0150515844190622
+          ]
+        },
+        "sign": {
+          "pairedMedianRatio": 1.0034827921001914,
+          "pairedMedianBootstrap95": [
+            1.002321138778282,
+            1.0157687018481854
+          ]
+        }
+      },
+      "measurements": {
+        "baseline": {
+          "ns": 2054552.5750000002,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        "sign": {
+          "ns": 2055344.025,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        "reuse": {
+          "ns": 2074773.925,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        }
+      }
+    },
+    {
+      "name": "unresolved-32",
+      "lifecycle": "warm-pair",
+      "iterations": 3489,
+      "observations": 72,
+      "comparisons": {
+        "baseline": {
+          "pairedMedianRatio": 1.200490449581878,
+          "pairedMedianBootstrap95": [
+            1.1687050614260759,
+            1.2184970194328768
+          ]
+        },
+        "sign": {
+          "pairedMedianRatio": 0.9448535070530996,
+          "pairedMedianBootstrap95": [
+            0.9102829413470497,
+            0.9568000677243125
+          ]
+        }
+      },
+      "measurements": {
+        "baseline": {
+          "ns": 2199.968042419031,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        "sign": {
+          "ns": 2752.0166236744053,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        "reuse": {
+          "ns": 2610.4959873889366,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        }
+      }
+    },
+    {
+      "name": "unresolved-32",
+      "lifecycle": "warm-difference",
+      "iterations": 36239,
+      "observations": 72,
+      "comparisons": {
+        "baseline": {
+          "pairedMedianRatio": 1.069586187531447,
+          "pairedMedianBootstrap95": [
+            1.0525370352332544,
+            1.0766520725486475
+          ]
+        },
+        "sign": {
+          "pairedMedianRatio": 1.0671105787557214,
+          "pairedMedianBootstrap95": [
+            1.0584059657286582,
+            1.0821390779408322
+          ]
+        }
+      },
+      "measurements": {
+        "baseline": {
+          "ns": 215.6362896327161,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        "sign": {
+          "ns": 216.1066392560501,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        "reuse": {
+          "ns": 229.45016418775353,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        }
+      }
+    },
+    {
+      "name": "unresolved-128",
+      "lifecycle": "fresh",
+      "iterations": 20,
+      "observations": 72,
+      "comparisons": {
+        "baseline": {
+          "pairedMedianRatio": 0.9968625909412437,
+          "pairedMedianBootstrap95": [
+            0.9917436759095879,
+            1.0012934912664861
+          ]
+        },
+        "sign": {
+          "pairedMedianRatio": 1.0007026283086522,
+          "pairedMedianBootstrap95": [
+            0.9846927914631911,
+            1.0110083558054053
+          ]
+        }
+      },
+      "measurements": {
+        "baseline": {
+          "ns": 33234232.3,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        "sign": {
+          "ns": 32963906.075,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        "reuse": {
+          "ns": 33121908.5,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        }
+      }
+    },
+    {
+      "name": "unresolved-128",
+      "lifecycle": "warm-pair",
+      "iterations": 776,
+      "observations": 72,
+      "comparisons": {
+        "baseline": {
+          "pairedMedianRatio": 1.1944149212136748,
+          "pairedMedianBootstrap95": [
+            1.1573547508226898,
+            1.2413863990698077
+          ]
+        },
+        "sign": {
+          "pairedMedianRatio": 0.28541118411251887,
+          "pairedMedianBootstrap95": [
+            0.2723188238018939,
+            0.28615759773131233
+          ]
+        }
+      },
+      "measurements": {
+        "baseline": {
+          "ns": 2214.2680412371133,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        "sign": {
+          "ns": 9271.05219072165,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        "reuse": {
+          "ns": 2639.845360824742,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        }
+      }
+    },
+    {
+      "name": "unresolved-128",
+      "lifecycle": "warm-difference",
+      "iterations": 30912,
+      "observations": 72,
+      "comparisons": {
+        "baseline": {
+          "pairedMedianRatio": 1.094838691143712,
+          "pairedMedianBootstrap95": [
+            1.0425189434598412,
+            1.1097415390979457
+          ]
+        },
+        "sign": {
+          "pairedMedianRatio": 1.0466140320340354,
+          "pairedMedianBootstrap95": [
+            1.0068213840373819,
+            1.1059571821430096
+          ]
+        }
+      },
+      "measurements": {
+        "baseline": {
+          "ns": 214.17997864906832,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        "sign": {
+          "ns": 219.78419384057972,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        },
+        "reuse": {
+          "ns": 228.2078480848861,
+          "alloc_calls": 0,
+          "allocated_bytes": 0
+        }
+      }
+    }
+  ],
+  "limits": "Identity rows compare additional decisions with baseline Unknown; sign versus reuse has matching outcomes. CPU and allocation binaries differ; requested bytes are not peak live memory. TLS cache has bounded weak retention per thread, not a whole-query work bound. Fixed process preconditioning and independent nested-sine atoms at depths 1/8/32/128; not all graph sharing patterns. Host/session bootstrap intervals only."
+}

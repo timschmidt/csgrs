@@ -1,0 +1,20 @@
+\doxysubsubsubsection{Exact sets }
+\hypertarget{group__ExactSetSubModule}{}\label{group__ExactSetSubModule}\index{Exact sets@{Exact sets}}
+
+
+\doxysubsubsubsubsection{Description}
+Sets which can be defined exactly. 
+
+Any set can be uniquely specified by the results geometric predicates involving rectangles. Exact sets are defined by an interface in which these predicates are defined. \doxysubsubsubsubsubsection*{Classes}
+\begin{DoxyCompactItemize}
+\item 
+class \mbox{\hyperlink{classAriadne_1_1ImageSet}{Image\+Set}}
+\begin{DoxyCompactList}\small\item\em A set defined as the image of a box $D$ under a function $f$. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1ConstraintSet}{Constraint\+Set}}
+\begin{DoxyCompactList}\small\item\em A set defined as the intersection of an exact box with preimage of an exact box (the {\itshape codomain}) under a continuous function. The set is described as $S=D\cap g^{-1}(C) = \{ x\in D \mid g(x)\in C\}$ where $D$ is the domain, $C$ is the codomain and $g$ the function. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1BoundedConstraintSet}{Bounded\+Constraint\+Set}}
+\begin{DoxyCompactList}\small\item\em A set defined as the intersection of an exact box with preimage of an exact box (the {\itshape codomain}) under a continuous function. The set is described as $S=D\cap g^{-1}(C) = \{ x\in D \mid g(x)\in C\}$ where $D$ is the domain, $C$ is the codomain and $g$ the function. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1ConstrainedImageSet}{Constrained\+Image\+Set}}
+\begin{DoxyCompactList}\small\item\em A set defined as the image of the intersection of a box $D$ and a constraint set $g^{-1}(C)$ under a function $f$. In other words, $S=f(D\cap g^{-1}(C))$. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1ValidatedConstrainedImageSet}{Validated\+Constrained\+Image\+Set}}
+\begin{DoxyCompactList}\small\item\em A set defined as the image of the intersection of a box $D$ and a constraint set $g^{-1}(C)$ under a function $f$. In other words, $S=f(D\cap g^{-1}(C))$. \end{DoxyCompactList}\end{DoxyCompactItemize}

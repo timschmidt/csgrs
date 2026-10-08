@@ -1,0 +1,53 @@
+{
+  "source_manifest": "trace-independent-oblique-fillet-20260927-v419-sources.json",
+  "source_directory": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/source-archives/trace-independent-oblique-fillet-20260927-v419",
+  "cases": [
+    {
+      "binary": "trace-independent-oblique-fillet-20260927-v419-hypercurve",
+      "name": "bezier_offset::conversion_tests::independent_oblique_chords_support_constrained_fillet_families",
+      "returncode": 101,
+      "log": "trace-independent-oblique-fillet-20260927-v419-case-000.log",
+      "elapsed_seconds": 5.671362885041162
+    }
+  ],
+  "builds": [
+    {
+      "crate": "hypercurve",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "test",
+        "--lib",
+        "--release",
+        "--all-features",
+        "--no-run",
+        "--message-format=json",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "log": "trace-independent-oblique-fillet-20260927-v419-hypercurve-build.log",
+      "elapsed_seconds": 131.55273535707965,
+      "binary": {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/trace-independent-oblique-fillet-20260927-v419-hypercurve",
+        "sha256": "539eb140d527773972c859895623368f9d73da0de97385da8466e40f3dae9dc6"
+      }
+    }
+  ],
+  "trial": {
+    "hypercurve/src/error.rs": "5be51eaf83039d74ea77cba5ffa5cd9af04dcb09dc7b54b9a42f62c2d32f76a3"
+  },
+  "all_processes_reaped": true,
+  "checks": [],
+  "qualification_scope": "Independent selected endpoint fields must preserve continuous fillet constraint behavior",
+  "expected_cases": {
+    "hypercurve": [
+      "bezier_offset::conversion_tests::independent_oblique_chords_support_constrained_fillet_families"
+    ]
+  },
+  "known_unresolved": [
+    "strict_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions",
+    "approximate_512_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions"
+  ],
+  "failure": "case failure or missing exact test",
+  "qualification_complete": false
+}

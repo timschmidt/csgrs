@@ -1,0 +1,110 @@
+[package]
+name = "hypercurve-fuzz"
+version = "0.0.0"
+publish = false
+edition = "2024"
+
+[package.metadata]
+cargo-fuzz = true
+
+[dependencies]
+libfuzzer-sys = "0.4"
+hypercurve = { path = "..", features = ["svg"] }
+hyperreal = { path = "../../hyperreal" }
+
+[[bin]]
+name = "bezier_algebraic_parameter"
+path = "fuzz_targets/bezier_algebraic_parameter.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "bezier_algebraic_image"
+path = "fuzz_targets/bezier_algebraic_image.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "bezier_split_materialization"
+path = "fuzz_targets/bezier_split_materialization.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "bezier_tangent_order"
+path = "fuzz_targets/bezier_tangent_order.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "bezier_arrangement"
+path = "fuzz_targets/bezier_arrangement.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "bezier_region"
+path = "fuzz_targets/bezier_region.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "bspline"
+path = "fuzz_targets/bspline.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "retained_import"
+path = "fuzz_targets/retained_import.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "curve_string_editing"
+path = "fuzz_targets/curve_string_editing.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "region_boolean"
+path = "fuzz_targets/region_boolean.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "straight_skeleton"
+path = "fuzz_targets/straight_skeleton.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "svg"
+path = "fuzz_targets/svg.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "hyperreal_representations"
+path = "fuzz_targets/hyperreal_representations.rs"
+test = false
+doc = false
+bench = false
+
+[patch.crates-io]
+hyperreal = { path = "../../hyperreal" }
+hyperlattice = { path = "../../hyperlattice" }
+hyperlimit = { path = "../../hyperlimit" }
+hypersolve = { path = "../../hypersolve" }

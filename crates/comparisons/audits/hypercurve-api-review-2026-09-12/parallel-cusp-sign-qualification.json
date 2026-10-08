@@ -1,0 +1,19 @@
+{
+  "commit": "9f688be6447eadf933e1cfd8b3e9fce605a810f0",
+  "change": "Remove redundant cusp/source root-list equality; one exact curvature sign proves the intended cusp sheet and nonzero source speed.",
+  "regression": "Public degree-five PH source with stationary parameter sqrt(1/2), both contexts, both traversals, distances -1/20, 0, 1/20, unit and negative irrational projective gauges.",
+  "verification": {
+    "integration_target": "hypercurve_bezier_fit_offset",
+    "passed": 102,
+    "log": "stationary-ph-fit-offset-test.log",
+    "formatting": "passed",
+    "git_diff_check": "passed"
+  },
+  "source_sha256": {
+    "src/bezier_offset.rs": "b60e80e1d4c9eefb38c538a75464cae9d6f6ca262836b0f140ef9a6424170895",
+    "tests/hypercurve_bezier_fit_offset.rs": "b2cd2c65a69ca4a8eef27ad7c77721e7f53d891ddde1cd0a53c2e435af923dea"
+  },
+  "baseline": "stationary-ph-singularity-parent.log records all eight algebraic stationary-source analyses failing before the repair.",
+  "qualification_scope": "The working tree also contains an uncommitted source-singular PH fragment specialization. Its rational-range test passes; region composition is still being investigated. Full geometry qualification is pending.",
+  "goal_status": "active"
+}

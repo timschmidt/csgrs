@@ -1,0 +1,16 @@
+[
+  {
+    "label": "0-before-ln-rational",
+    "args": [
+      "ln-rational",
+      "256"
+    ],
+    "status": 0,
+    "error": "EPERM",
+    "signal": null,
+    "stdout": "ln-rational\t256\t334613\t336936\t4086\t221056\t13728409197463182528\n",
+    "stderr": "",
+    "sha256": "de78b99d1b52b2beed3c310f1591ccc8c6a57a1d36671af8e643866a8fba34f2",
+    "source": "e28729898ed85f06f45c72440ce1a8bf3b4908faa3aa04a00a81ef7d1b480ca9"
+  }
+]

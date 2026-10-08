@@ -1,0 +1,17 @@
+{
+  "tag": "root-exp-trial-direct-source-diff",
+  "started": "2026-09-08T11:18:27.154Z",
+  "finished": "2026-09-08T11:18:27.172Z",
+  "elapsedSeconds": 0.016559095,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison",
+  "command": "git",
+  "args": [
+    "diff",
+    "--no-index",
+    "--",
+    "audits/continuation/calcium/baseline-hyperreal/src",
+    "audits/continuation/calcium/root-exp-trial-hyperreal/src"
+  ],
+  "code": 1,
+  "signal": null
+}

@@ -1,0 +1,18 @@
+[
+  {
+    "kind": "check",
+    "command": [
+      "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+      "check",
+      "--all-targets",
+      "--no-default-features",
+      "--features",
+      "geometry",
+      "--locked",
+      "--offline"
+    ],
+    "returncode": 101,
+    "elapsed_seconds": 4.671450932015432,
+    "log": "normalized-path-admission-hypercircuit-candidate2-check.log"
+  }
+]

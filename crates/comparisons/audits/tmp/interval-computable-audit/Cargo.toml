@@ -1,0 +1,21 @@
+[package]
+name = "interval-computable-audit"
+version = "0.0.0"
+edition = "2024"
+
+[dependencies]
+computable = { path = "/home/tim/Documents/GitHub/workspace/exact-real-references/computable-0.1.0" }
+hyperreal = { path = "/home/tim/Documents/GitHub/workspace/hyperreal" }
+num = "0.4.3"
+num-bigint = "=0.4.8"
+num-integer = "=0.1.47"
+num-iter = "=0.1.46"
+rug = { version = "1.30.0", default-features = false, features = ["float", "rational", "std"] }
+
+[[bin]]
+name = "numerical"
+path = "numerical.rs"
+
+[[bin]]
+name = "performance"
+path = "performance.rs"

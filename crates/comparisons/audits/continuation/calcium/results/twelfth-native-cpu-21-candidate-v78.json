@@ -1,0 +1,18 @@
+{
+  "tag": "twelfth-native-cpu-21-candidate-v78",
+  "started": "2026-09-11T23:50:54.795Z",
+  "finished": "2026-09-11T23:50:55.627Z",
+  "elapsedSeconds": 0.8290212020000001,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "taskset",
+  "args": [
+    "-c",
+    "2",
+    "/tmp/calcium-twelfth-cost-v78.5Fhn5H/candidate-cpu",
+    "cpu",
+    "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/twelfth-cost-input-v78.json",
+    "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/twelfth-native-cpu-21-candidate-v78-plan.json"
+  ],
+  "code": 0,
+  "signal": null
+}

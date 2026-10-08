@@ -386,9 +386,12 @@
         "tests/solid_cache.rs",
         "tests/wasm_certainty.rs",
         "tests/wasm/geometry_certainty.cjs",
-        "scripts/test-wasm-bindings.sh"
+        "scripts/test-wasm-bindings.sh",
+        "crates/comparisons/INTEGRATION.md",
+        "crates/comparisons/integration/provenance.json",
+        "crates/comparisons/integration/validation/manifest.json"
       ],
-      "remaining": "The exhaustive representation/coverage/ASan/lexicase/Verus program and complete comparison archive import/revalidation remain open. Current added tests are focused regressions, not 100% stack coverage."
+      "remaining": "The comparison repository is imported at its pinned revision with all 74,865 tracked paths and five verified LFS payloads. Current native comparisons pass (78 tests, 19 existing ignored) and all 480 Criterion fixtures execute. Full historical campaign and paper-claim revalidation, instrumented 100% coverage, exhaustive representations, ASan/fuzz/lexicase, matched timing/memory campaigns, and Verus coverage remain open."
     },
     {
       "id": "T7",
@@ -462,9 +465,10 @@
       "status": "in-progress",
       "evidence": [
         "src/solid/cache.rs",
-        "src/solid/cache/storage.rs"
+        "src/solid/cache/storage.rs",
+        "crates/comparisons/INTEGRATION.md"
       ],
-      "remaining": "Cache policy and storage have been separated from solid modeling code. Semantic file-organization review of the rest of the stack remains open."
+      "remaining": "Cache policy/storage and the comparison harness/archive are organized with documented entry points. The remaining semantic file-organization review across the stack is open."
     },
     {
       "id": "T14",
@@ -513,7 +517,7 @@
   "next_actions": [
     "Finish and retain the pending broad Hypercurve test and Clippy results; all other checks in the current focused evidence manifest passed.",
     "Implement explicit per-operation curve work budgets and typed exhaustion across the actual refinement/promotion paths; do not equate one bounded dispatch flag with a total work bound.",
-    "Import and revalidate the pinned comparison repository under crates/comparisons, preserving historical evidence and licensing.",
+    "Revalidate the historical comparison campaigns and reconcile every paper claim using the imported pinned archive; retain original evidence and publish new source/oracle/command/result records.",
     "Complete the crate-specific future-work, CI, release, representation/coverage, and formal-proof inventories and execute their remaining requirements."
   ],
   "path_base": "repository root",
@@ -530,15 +534,23 @@
         "Cargo.toml",
         "README.md (opening 150 lines)",
         "audits/README.md",
-        "tracked file/size inventory"
+        "tracked file/size inventory",
+        "THIRD_PARTY.md",
+        "build.rs",
+        "active harness manifest, curve tests/benchmarks and memory operations",
+        "migration and verification scripts",
+        "all imported path/content hashes; this is integrity verification, not full source reading"
       ],
-      "not_done": "Import into crates/comparisons, archive/license/source-path audit, dependency relocation, compatibility fixes, numerical revalidation, and paper-ready claim evidence.",
+      "not_done": "Claim-by-claim historical numerical and performance revalidation, missing historical dependency/toolchain restoration, and complete paper evidence.",
       "constraints": [
         "Preserve historical archived bytes, licenses, and manifest hashes; inventory is not evidence of numerical correctness.",
         "The native exactCore test oracle must run with --test-threads=1, per its README.",
         "EXACTCORE_ROOT must identify a separately obtained dependency; do not silently vendor unreviewed external source.",
-        "Historical audit scripts may write absolute original locations; inspect and adapt execution destinations before rerunning."
-      ]
+        "Historical audit scripts may write absolute original locations; inspect and adapt execution destinations before rerunning.",
+        "The older migration manifest disagrees with the pinned tree for one progress ledger. Both records and their digests are preserved; no historical numerical claim is upgraded by import integrity checks."
+      ],
+      "imported_to": "crates/comparisons",
+      "integrity_evidence": "crates/comparisons/integration/validation/import-integrity.json"
     }
   ]
 }

@@ -1,0 +1,25 @@
+{
+  "qualification": "fillet-component-witnesses-20260927-v401-terminal.json",
+  "source_manifest": "fillet-component-witnesses-20260927-v401-sources.json",
+  "outer_session_reaped": 43598,
+  "validated_files": 2046,
+  "selected_geometry_tests": 238,
+  "checks": 6,
+  "reused_runs": [
+    "fillet-component-witnesses-20260927-v399-terminal.json",
+    "fillet-component-witnesses-20260927-v400-terminal.json"
+  ],
+  "repos": {
+    "hypercurve": {
+      "parent": "1f29f69df38496b7941d3b1a897dcf609f78418d",
+      "paths": {
+        "src/bezier_offset.rs": "37fb30352b9e63efd29e5bbe05878f86e9f612f2dad2a257d5e80aadf06f1ba9",
+        "src/curve_fillet.rs": "665fcc2c3b23f6419a27a22fa4ea2f45dfd27bd0e9d7fae47f6e73ce71670fba"
+      }
+    }
+  },
+  "known_unresolved": [
+    "strict_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions",
+    "approximate_512_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions"
+  ]
+}

@@ -1,0 +1,11 @@
+{
+  "parent": "8de08b874db388e25b2dae69cf93622cded79006",
+  "files": {
+    "src/bezier_offset.rs": "c4420c853e143446ff7684d9d38a0e76f65b5e5b8b13a830855f77a3ce0d7fcf",
+    "src/bezier_region.rs": "a3571bd331f9e0e8b64aa41b759efe6e6784d9d3e780a06f02546e0f358aee9e",
+    "src/curve.rs": "ed8dc9adcee06030503e50b943b1ff1a8700d3435457bdf22cb690d6319cf324",
+    "src/curve_corner_chain.rs": "65e08b565cc59c03915ccbf20af05e8fd04a03488a5b8be1c9e870ba12630997",
+    "src/curve_region_boolean.rs": "29775e1fe8dacdf0a5e7f0854772eaf0954c707ccf2859a5bb9bb405014253d5"
+  },
+  "all_index_bytes_match_qualification": true
+}

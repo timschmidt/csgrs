@@ -1,0 +1,251 @@
+{
+  "schema": "hypercurve.performance-checkpoint.v1",
+  "captured_on": "2026-08-03",
+  "checkpoint": "distinct-field mapped algebraic cusp winding and policy-terminal chord equality",
+  "source_revision": "7378d718713716bd35c997c10b34c144ac9f4097",
+  "semantic_revisions": [
+    "15590a8",
+    "1c17dfc",
+    "0b9a081",
+    "7378d71"
+  ],
+  "comparison_revision": "1c17dfc9b2e4947e2b4ef0c72bd2163ce24b1968",
+  "dependency_revisions": {
+    "hyperreal": "6c7b8325382135e424dfdb1d7442d454c9665d75",
+    "hyperlattice": "d11ca2f0e825d8e26048cfda5d1101df21dcfef0",
+    "hyperlimit": "bb1c5e7c418bb8af25701c8201f833fa485b9e9a",
+    "hypersolve": "514160ac02c2aaf98d1ff0a7975c1901d7428a11",
+    "hypertri": "d6014be5cc3ee4961929430d40b5cba83efc4813",
+    "hyperbrep": "6336697cd124ef6ef8384166b1f90ef2fceb6663"
+  },
+  "scope": {
+    "included": [
+      "mapped cusp cuts whose retained correspondence proves an exact rational cusp parameter",
+      "exact endpoint-point replay on the smallest already-retained rational, cusp-pair-overlap, or exact analytic-parallel carrier field",
+      "rational companion endpoint embedding into an existing nonrational local field without a primitive element",
+      "CurveRegion2 boundary incidence and winding for circular cusp fragments whose endpoints occupy two distinct selected algebraic fields",
+      "one exact trivariate oriented-chord determinant for independently selected start, end, and query fields",
+      "exact projective denominator clearing and sign restoration",
+      "strict tensor-Bernstein nonzero sign certification over successively refined selected-root boxes",
+      "pairwise exact endpoint equality, structurally zero determinants, and explicit general correlated-zero policy behavior",
+      "APPROXIMATE_512 termination only after the shared 512-bit refinement boundary",
+      "a 16384-control dense-tensor allocation ceiling and one-allocation determinant construction",
+      "matched historical work, competitive sentinels, allocation, release-size, and static-callgraph evidence"
+    ],
+    "excluded": [
+      "a general STRICT proof of nonstructural zero identities involving three independently represented algebraic fields",
+      "algebraic analytic-parallel endpoint images whose geometric point still contains the analytic radical",
+      "standalone mapped pair contacts that expose neither a rational carrier nor a pair-overlap endpoint image",
+      "dense trivariate determinants above the 16384-control resource ceiling",
+      "general noncircular independent-field shared-component correspondence",
+      "finite projection and export of algebraic cusp carriers",
+      "fillet, chamfer, historical-engine deletion, and caller cutover work",
+      "hypermesh"
+    ]
+  },
+  "mathematical_contract": {
+    "endpoint_carrier_reuse": "A mapped endpoint replays on an exact carrier that already owns the same point. An exactly rational companion point may be embedded as a constant expression in that selected field. No field compositum, approximate coordinate projection, or uncorrelated root matching is introduced.",
+    "distinct_field_chord": "For start A(a), end B(b), and query C(c), Hypercurve constructs det(B-A,C-A) directly as one trivariate polynomial after clearing every projective denominator. The start denominator is squared; the physical sign therefore requires only the certified end and query denominator signs.",
+    "nonzero_sign": "Each selected parameter is refined through target steps 0, 2, 4, 8, 16, 32, 64, 128, 256, and 512. Restriction to the resulting parameter box followed by tensor power-to-Bernstein conversion proves a sign only when every control is strictly positive or every control is strictly negative.",
+    "zero_sign": "Pairwise x/y endpoint equality is decided by the existing bivariate authorities before constructing a trivariate determinant, and an identically zero coefficient tensor is exact zero. A nonstructural three-field zero not proved by those authorities remains Predicate uncertainty in STRICT.",
+    "policy": "STRICT accepts only exact structural, pairwise, or strict-sign proof. APPROXIMATE_512 traverses the identical graph, records the shared terminal, and may return zero/On only after the 512-bit box remains unresolved. Exact nonzero answers are policy-identical.",
+    "memory_bound": "The chord determinant is populated directly into one dense coefficient tensor. More than 16384 controls returns explicit Unsupported. Each restricted refinement tensor is consumed in place by Bernstein conversion, avoiding a second full control-tensor clone.",
+    "failure": "An unsupported endpoint carrier, tensor resource overflow, unresolved STRICT three-field equality, contradictory topology, or unsupported coefficient tower remains explicit. No f64 tolerance, chordized boundary, guessed equality, or silent policy fallback is used."
+  },
+  "capability": {
+    "comparison_revision": "A mapped nonrational endpoint could classify only when both arc endpoints were representable in one selected local field, commonly by embedding an exactly rational companion. A fragment with two genuinely distinct endpoint fields remained Unsupported in its algebraic ray evaluator.",
+    "source_revision": "A disk split at sqrt(1/3) and sqrt(1/2) on a rational quarter-circle carrier now classifies independent algebraic inside, outside, and boundary queries through one authoritative CurveRegion2 winding path under STRICT and APPROXIMATE_512.",
+    "policy_terminal": "For independently represented alpha=sqrt(1/2), beta=1-alpha, and gamma=alpha-1/2, the points (alpha,0), (0,beta), and (gamma,gamma) are mathematically collinear but no pair carries the full identity. STRICT returns explicit Predicate uncertainty; APPROXIMATE_512 returns On only after consuming its 512-bit terminal.",
+    "bounded_failure": "General correlated three-field zero proof remains the next exactness boundary; values separated from zero are now certified exactly, while resource or carrier limits remain explicit.",
+    "historical_exact_peer": false,
+    "competitive_exact_peer": false
+  },
+  "benchmark": {
+    "host": "AMD Ryzen 7 5800X3D",
+    "toolchain": "rustc 1.97.0, LLVM 22.1.6, x86_64-unknown-linux-gnu",
+    "primary_method": "default-feature release unit-test or comparative executables pinned to CPU 11; seven perf-stat repetitions; retired instructions and branches are primary because elapsed time varies with host load",
+    "distinct_endpoint_field_classification": {
+      "workload": "construct one four-fragment cusp disk split at two nonrational rational-carrier cuts, admit all three upper fragments, then classify independent inside, outside, and middle-arc boundary points under STRICT and APPROXIMATE_512",
+      "classifications": 6,
+      "task_clock_ms": 5.84,
+      "cycles": 17303911,
+      "instructions": 30953890,
+      "branches": 6241198,
+      "branch_misses": 115384,
+      "historical_exact_peer": false
+    },
+    "three_field_zero_policy_terminal": {
+      "workload": "evaluate the exactly collinear but independently represented three-field chord under STRICT and APPROXIMATE_512",
+      "policy_evaluations": 2,
+      "task_clock_ms": 4.31,
+      "cycles": 13483782,
+      "instructions": 35678608,
+      "branches": 6879945,
+      "branch_misses": 46134,
+      "historical_exact_peer": false
+    },
+    "matched_same_field_classification_guard": {
+      "workload": "algebraic_cusp_disk_classifies_an_independent_selected_root_directly",
+      "comparison_instructions": 11292321,
+      "current_instructions": 11286474,
+      "instruction_change_percent": -0.051778,
+      "comparison_branches": 2206059,
+      "current_branches": 2205180,
+      "branch_change_percent": -0.039845,
+      "comparison_allocation_calls": 18391,
+      "current_allocation_calls": 18391,
+      "interpretation": "The established shared-endpoint-field route remains instruction-neutral and allocation-identical; the new trivariate route is cold."
+    },
+    "matched_analytic_contact_guard": {
+      "workload": "algebraic_cusp_semicircle_intersects_a_general_analytic_parallel_exactly",
+      "comparison_instructions": 27859766,
+      "current_instructions": 27856740,
+      "instruction_change_percent": -0.010862,
+      "comparison_branches": 5239782,
+      "current_branches": 5236793,
+      "branch_change_percent": -0.057044,
+      "interpretation": "Existing analytic contact replay remains neutral to measurement resolution."
+    },
+    "fixed_work_historical_controls": {
+      "line_arc_capsule_inward": {
+        "iterations": 10000,
+        "comparison_instructions": 1984180053,
+        "current_instructions": 1984183182,
+        "instruction_change_percent": 0.000158,
+        "comparison_branches": 402483409,
+        "current_branches": 402483469,
+        "branch_change_percent": 0.000015
+      },
+      "certified_open_cubic_offset": {
+        "iterations": 10,
+        "comparison_instructions": 3447268146,
+        "current_instructions": 3447267663,
+        "instruction_change_percent": -0.000014,
+        "comparison_branches": 649578671,
+        "current_branches": 649578591,
+        "branch_change_percent": -0.000012
+      },
+      "interpretation": "The line/arc and general certified cubic historical lanes are fixed-work neutral; the new machinery is absent from their executed paths."
+    },
+    "competitive_context": {
+      "method": "current release comparative executable pinned to CPU 11; 11 complete samples at a 100 ms target; fixture construction excluded",
+      "direct_guarantee_equivalent": false,
+      "line_arc_capsule_inward_ns": {
+        "hypercurve_exact": 17922.2,
+        "cavalier_contours": 931.6,
+        "hypercurve_to_cavalier_ratio": 19.238085
+      },
+      "open_cubic_offset_ns": {
+        "hypercurve_certified": 29865409.0,
+        "hypercurve_chord_fallback": 986924.5,
+        "curvo_heuristic": 8298.4,
+        "certified_to_curvo_ratio": 3598.935819,
+        "chord_fallback_to_curvo_ratio": 118.929492
+      },
+      "interpretation": "The finite competitors remain important throughput targets but do not retain algebraic parameter fields or expose STRICT/APPROXIMATE_512-equivalent topology guarantees. The exact certified cubic gap remains the largest measured optimization debt."
+    }
+  },
+  "memory": {
+    "tool": "Heaptrack direct default-feature release-unit-test traces; heaptrack_print summaries are authoritative",
+    "dense_tensor_control_limit": 16384,
+    "distinct_endpoint_field_classification": {
+      "allocation_calls": 61071,
+      "temporary_allocations": 3672,
+      "peak_heap_kib": 393.63,
+      "recorder_peak_rss_mib": 14.61
+    },
+    "three_field_zero_policy_terminal": {
+      "allocation_calls": 83521,
+      "temporary_allocations": 2953,
+      "peak_heap_kib": 154.35,
+      "recorder_peak_rss_mib": 11.31
+    },
+    "matched_same_field_classification_guard": {
+      "comparison_allocation_calls": 18391,
+      "current_allocation_calls": 18391,
+      "comparison_temporary_allocations": 1410,
+      "current_temporary_allocations": 1410,
+      "comparison_peak_heap_kib": 170.41,
+      "current_peak_heap_kib": 170.41
+    },
+    "in_place_bernstein_optimization": {
+      "semantic_revision": "7378d71",
+      "distinct_classification_before_allocation_calls": 61141,
+      "distinct_classification_after_allocation_calls": 61071,
+      "distinct_classification_allocation_change_percent": -0.114489,
+      "distinct_classification_before_peak_heap_kib": 394.40,
+      "distinct_classification_after_peak_heap_kib": 393.63,
+      "terminal_before_allocation_calls": 83661,
+      "terminal_after_allocation_calls": 83521,
+      "terminal_allocation_change_percent": -0.167342,
+      "terminal_before_peak_heap_kib": 155.40,
+      "terminal_after_peak_heap_kib": 154.35,
+      "terminal_instruction_change_percent": -0.149069,
+      "interpretation": "Consuming each restricted tensor during Bernstein conversion removes one full tensor clone per refinement without changing topology or policy behavior."
+    },
+    "profiles_retained": false
+  },
+  "release_size": {
+    "method": "matched representative curve_region_boolean_batch release benchmark executables at 1c17dfc and 7378d71 with identical dependency revisions",
+    "default_features": {
+      "comparison_file_bytes": 8247136,
+      "current_file_bytes": 8278440,
+      "file_change_bytes": 31304,
+      "file_change_percent": 0.379574,
+      "comparison_size_text_bytes": 6284117,
+      "current_size_text_bytes": 6310433,
+      "size_text_change_bytes": 26316,
+      "size_text_change_percent": 0.418770,
+      "comparison_actual_text_section_bytes": 4747111,
+      "current_actual_text_section_bytes": 4770247,
+      "actual_text_change_bytes": 23136,
+      "actual_text_change_percent": 0.487370
+    },
+    "no_default_features": {
+      "comparison_file_bytes": 7973216,
+      "current_file_bytes": 7973216,
+      "comparison_size_text_bytes": 6066389,
+      "current_size_text_bytes": 6066389,
+      "comparison_actual_text_section_bytes": 4564919,
+      "current_actual_text_section_bytes": 4564919,
+      "section_sizes_identical": true
+    },
+    "interpretation": "The predicate-enabled representative adds 23,136 linked .text bytes for exact three-field chord signs and policy-terminal equality. The minimal artifact has identical allocated section sizes because the machinery is feature-gated; no compatibility layer or second region engine was added."
+  },
+  "static_callgraph": {
+    "tool": "tools/hyper-callgraph",
+    "matched_hypercurve_with_tests": {
+      "comparison_command": "hyper-callgraph --root .hypercurve-bench-1c17dfc --out-dir target/callgraph-distinct-field-cusp-1c17dfc --crate-name hypercurve --include-tests --format json --per-library",
+      "current_command": "hyper-callgraph --root hypercurve --out-dir target/callgraph-distinct-field-cusp-7378d71 --crate-name hypercurve --include-tests --format json --per-library",
+      "comparison_nodes": 23696,
+      "current_nodes": 23742,
+      "node_change_percent": 0.194126,
+      "comparison_edges": 44476,
+      "current_edges": 44605,
+      "edge_change_percent": 0.290044
+    },
+    "confirmed_paths": [
+      "CurveRegion2::classify_algebraic_point_raw -> classify_algebraic_point_against_retained_loop_with_cusps -> prepare_algebraic_ray_retained_fragments",
+      "prepare_algebraic_ray_retained_fragments -> BezierAlgebraicCuspSemicircleFragment2::algebraic_ray_evaluator",
+      "BezierAlgebraicCuspSemicircleFragment2::algebraic_ray_evaluator -> BezierAlgebraicCuspSemicircleParameter2::coincident_point_image",
+      "algebraic_ray_retained_fragments_winding -> BezierAlgebraicCuspSemicircleAlgebraicRay2::forward_ray_winding_delta",
+      "forward_ray_winding_delta -> algebraic_point_oriented_line_side -> algebraic_point_oriented_line_side_distinct_fields",
+      "algebraic_point_oriented_line_side_distinct_fields -> TrivariatePolynomial2::ab_ac_determinant -> trivariate_parameter_triple_sign_by_refinement",
+      "trivariate_parameter_triple_sign_by_refinement -> trivariate_restrict_to_parameter_box -> trivariate_unit_cube_strict_bernstein_sign"
+    ]
+  },
+  "verification": {
+    "hypercurve_all_features_library": "passed: 388 tests",
+    "hypercurve_default_features_library": "passed: 384 tests",
+    "hypercurve_no_default_features_library": "passed: 320 tests",
+    "hypercurve_default_curve_region_boolean_integration": "passed: 29 tests",
+    "hypercurve_no_default_features_curve_region_boolean_integration": "passed: 12 tests",
+    "hypercurve_clippy_all_features_all_targets": "passed with -D warnings",
+    "hypercurve_clippy_default_features_all_targets": "passed with -D warnings",
+    "hypercurve_clippy_no_default_features_all_targets": "passed with -D warnings",
+    "release_builds": "passed matched default-feature release unit-test, comparative, and default/minimal representative benchmark artifacts",
+    "strict_and_approximate": "passed mapped rational-value admission, one-field endpoint reuse, distinct-field inside/outside/boundary classification, structurally exact signs, STRICT unresolved equality, and APPROXIMATE_512 terminal equality",
+    "format": "passed",
+    "diff_check": "passed"
+  }
+}

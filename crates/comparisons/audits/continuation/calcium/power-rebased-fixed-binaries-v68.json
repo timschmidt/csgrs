@@ -1,0 +1,63 @@
+{
+  "dir": "/tmp/calcium-power-rebased.xUuvlb",
+  "artifacts": [
+    {
+      "variant": "candidate",
+      "mode": "cpu",
+      "path": "/tmp/calcium-power-rebased.xUuvlb/fixed-cpu",
+      "bytes": 2725544,
+      "sha256": "f87c4988bc481341f5f0127381ab9ae3714b31ecf86010b21ee3aa192b61aea6"
+    },
+    {
+      "variant": "candidate",
+      "mode": "allocation",
+      "path": "/tmp/calcium-power-rebased.xUuvlb/fixed-allocation",
+      "bytes": 2734456,
+      "sha256": "62819f7bdd2e1650c40a927c362db36701006e2d5e23de655d439995f5a4ba69"
+    },
+    {
+      "variant": "candidate",
+      "mode": "approx",
+      "path": "/tmp/calcium-power-rebased.xUuvlb/fixed-approx",
+      "bytes": 2705504,
+      "sha256": "a5febea3a80a8b5a0ed4e0bcfb360065e7c25cd3dbed46dbf8b9089589712504"
+    },
+    {
+      "variant": "candidate",
+      "mode": "extended",
+      "path": "/tmp/calcium-power-rebased.xUuvlb/fixed-extended",
+      "bytes": 3190312,
+      "sha256": "05852186a90e728da7d2eaed86c6a30fef63ad2838311719cd4c189f8a11997f"
+    },
+    {
+      "variant": "baseline",
+      "mode": "cpu",
+      "path": "/tmp/calcium-power-rebased.xUuvlb/baseline-cpu",
+      "bytes": 2711688,
+      "sha256": "c375b188a0d0a4bab82ad965cc74ddfeaf2a05266ce00bdf6429f82968cfdf10"
+    },
+    {
+      "variant": "baseline",
+      "mode": "allocation",
+      "path": "/tmp/calcium-power-rebased.xUuvlb/baseline-allocation",
+      "bytes": 2720592,
+      "sha256": "95fb7c4df0ee1266a958512167ffe9ea8f77fb500de4689afe26d960278f5a80"
+    },
+    {
+      "variant": "baseline",
+      "mode": "approx",
+      "path": "/tmp/calcium-power-rebased.xUuvlb/baseline-approx",
+      "bytes": 2691768,
+      "sha256": "205f6c99043e9699d1484f016125900ff582a3795a76bc32f78b37e153069c27"
+    },
+    {
+      "variant": "baseline",
+      "mode": "extended",
+      "path": "/tmp/calcium-power-rebased.xUuvlb/baseline-extended",
+      "bytes": 3176504,
+      "sha256": "3c6f975673245d074bd437ef482d55a1d549d3cab736743d0756f368c997a610"
+    }
+  ],
+  "bindingSha256": "1e5832954a57db722b6c3f23104369446d136637053005656bd9c773ced37b00",
+  "recorded": "2026-09-11T16:54:56.309Z"
+}

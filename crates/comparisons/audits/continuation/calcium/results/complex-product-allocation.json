@@ -1,0 +1,14 @@
+{
+  "tag": "complex-product-allocation",
+  "started": "2026-09-09T21:40:44.174Z",
+  "finished": "2026-09-09T21:40:54.790Z",
+  "elapsedSeconds": 10.613716145,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "node",
+  "args": [
+    "run-complex-product-costs.mjs",
+    "allocation"
+  ],
+  "code": 0,
+  "signal": null
+}

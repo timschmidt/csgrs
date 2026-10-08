@@ -1,0 +1,10 @@
+[
+  {
+    "name": "bezier_offset::conversion_tests::selected_fiber_transverse_mapped_cut_inverts_by_point",
+    "returncode": 101,
+    "passed": false,
+    "limit_seconds": 120,
+    "elapsed_seconds": 4.210428697988391,
+    "log": "tower-reuse-20260924-probe1-case-0.log"
+  }
+]

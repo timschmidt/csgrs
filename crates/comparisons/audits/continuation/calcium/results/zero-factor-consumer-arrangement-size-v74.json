@@ -1,0 +1,16 @@
+{
+  "tag": "zero-factor-consumer-arrangement-size-v74",
+  "started": "2026-09-11T21:47:57.240Z",
+  "finished": "2026-09-11T21:47:57.255Z",
+  "elapsedSeconds": 0.012638712999999996,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "size",
+  "args": [
+    "/tmp/calcium-point-consumer.qyV59b/demand-arrangement",
+    "/tmp/calcium-point-consumer.qyV59b/demand-arrangement.stripped",
+    "/tmp/calcium-zero-consumer.LrNEZu/candidate-arrangement",
+    "/tmp/calcium-zero-consumer.LrNEZu/candidate-arrangement.stripped"
+  ],
+  "code": 0,
+  "signal": null
+}

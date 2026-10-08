@@ -1,0 +1,32 @@
+   Compiling num-bigint v0.4.6
+   Compiling num-complex v0.4.6
+   Compiling serde_core v1.0.228
+   Compiling num-rational v0.4.2
+   Compiling serde v1.0.228
+   Compiling num v0.4.3
+   Compiling bytemuck v1.25.2
+   Compiling safe_arch v1.2.0
+   Compiling hyperreal v0.13.1 (/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/sign-consumers/baseline/hyperreal)
+   Compiling matrixmultiply v0.3.11
+   Compiling serde_json v1.0.149
+   Compiling wide v1.7.0
+   Compiling hyperlattice v0.6.1 (/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/sign-consumers/baseline/hyperlattice)
+   Compiling approx v0.5.1
+   Compiling rawpointer v0.2.1
+   Compiling simba v0.10.2
+   Compiling hyperlimit v0.4.1 (/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/sign-consumers/baseline/hyperlimit)
+   Compiling ciborium v0.2.2
+   Compiling tinytemplate v1.2.1
+   Compiling typenum v1.20.1
+   Compiling criterion v0.5.1
+   Compiling nalgebra v0.35.0
+   Compiling roots v0.0.8
+   Compiling hypersolve v0.3.1 (/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/sign-consumers/baseline/hypersolve)
+    Finished `test` profile [unoptimized] target(s) in 24.10s
+     Running unittests src/lib.rs (.audit-builds/calcium-baseline/debug/deps/hypersolve-9b2bfab758467fec)
+     Running tests/exactcore_root_families.rs (.audit-builds/calcium-baseline/debug/deps/exactcore_root_families-d8c106c64a3b4c45)
+     Running tests/quadratic_extraction.rs (.audit-builds/calcium-baseline/debug/deps/quadratic_extraction-60f820f2620201e9)
+     Running tests/readme.rs (.audit-builds/calcium-baseline/debug/deps/readme-05ec3934ad72ac13)
+     Running tests/real_representations.rs (.audit-builds/calcium-baseline/debug/deps/real_representations-cd1e2db2d7b79d09)
+     Running tests/residual_props.rs (.audit-builds/calcium-baseline/debug/deps/residual_props-6efb1b25fdeb6cd3)
+     Running tests/smoke.rs (.audit-builds/calcium-baseline/debug/deps/smoke-c71903d52c161156)

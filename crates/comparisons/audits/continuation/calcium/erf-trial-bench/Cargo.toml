@@ -1,0 +1,18 @@
+[package]
+name = "calcium-erf-trial-bench"
+version = "0.1.0"
+edition = "2024"
+publish = false
+
+[workspace]
+
+[features]
+allocation-count = []
+
+[dependencies]
+hyperreal = { path = "../erf-trial-hyperreal" }
+num = "0.4.3"
+
+[[bin]]
+name = "calcium-erf-trial-bench"
+path = "../erf-bench.rs"

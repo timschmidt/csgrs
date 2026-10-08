@@ -1,0 +1,9 @@
+{
+  "first_setup_exit_code": 1,
+  "reaped": true,
+  "source_changed": false,
+  "production_changed": false,
+  "reason": "HS-first qualification stopped before HC compilation, so cargo test --lib had produced a test binary but no normal Hypersolve rlib. The diagnostic now builds the normal release library with the frozen V898 source before linking it.",
+  "old_driver_sha256": "b7dce40f64ebac38bdbaf20fedd98eb2f06de638954a5098c33cfe9bf6db6e7c",
+  "new_driver_sha256": "69d168c04716a4e528b4ab2060eec83c5e7693c7ec6ed70a845c5209abf9d907"
+}

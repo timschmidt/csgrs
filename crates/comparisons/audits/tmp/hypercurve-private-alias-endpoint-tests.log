@@ -1,0 +1,7 @@
+
+running 2 tests
+test bezier_arrangement::rational_quadratic_endpoint_derivative_tests::polynomial_endpoint_tangent_keeps_its_structural_zero_evidence ... ok
+test bezier_arrangement::rational_quadratic_endpoint_derivative_tests::specialized_endpoint_jets_match_general_rational_quotient_derivatives ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 883 filtered out; finished in 0.00s
+

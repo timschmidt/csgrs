@@ -1,0 +1,90 @@
+[
+  {
+    "name": "dy-norm-zero",
+    "status": 0,
+    "signal": null,
+    "error": "EPERM",
+    "stdout": "dy-norm-zero\tJust (Left heap overflow)\n",
+    "stderr": ""
+  },
+  {
+    "name": "dy-norm-cap",
+    "status": 0,
+    "signal": null,
+    "error": "EPERM",
+    "stdout": "dy-norm-cap\tJust (Right 20)\n",
+    "stderr": ""
+  },
+  {
+    "name": "mul-zero-500",
+    "status": 0,
+    "signal": null,
+    "error": "EPERM",
+    "stdout": "mul-zero-500\tJust (Left heap overflow)\n",
+    "stderr": ""
+  },
+  {
+    "name": "mul-zero-499",
+    "status": 0,
+    "signal": null,
+    "error": "EPERM",
+    "stdout": "mul-zero-499\tJust (Right 0)\n",
+    "stderr": ""
+  },
+  {
+    "name": "sin-zero",
+    "status": 0,
+    "signal": null,
+    "error": "EPERM",
+    "stdout": "sin-zero\tJust (Left heap overflow)\n",
+    "stderr": ""
+  },
+  {
+    "name": "cos-zero",
+    "status": 0,
+    "signal": null,
+    "error": "EPERM",
+    "stdout": "cos-zero\tJust (Right 1)\n",
+    "stderr": ""
+  },
+  {
+    "name": "atan-zero",
+    "status": 0,
+    "signal": null,
+    "error": "EPERM",
+    "stdout": "atan-zero\tJust (Left heap overflow)\n",
+    "stderr": ""
+  },
+  {
+    "name": "sqrt-zero",
+    "status": 0,
+    "signal": null,
+    "error": "EPERM",
+    "stdout": "sqrt-zero\tJust (Left heap overflow)\n",
+    "stderr": ""
+  },
+  {
+    "name": "exp-zero",
+    "status": 0,
+    "signal": null,
+    "error": "EPERM",
+    "stdout": "exp-zero\tJust (Right 1)\n",
+    "stderr": ""
+  },
+  {
+    "name": "between-zero",
+    "status": 0,
+    "signal": null,
+    "error": "EPERM",
+    "stdout": "between-zero\tJust (Left heap overflow)\n",
+    "stderr": ""
+  },
+  {
+    "name": "gte-equal",
+    "status": null,
+    "signal": "SIGKILL",
+    "error": "ETIMEDOUT",
+    "stdout": "",
+    "stderr": ""
+  }
+]

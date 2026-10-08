@@ -1,0 +1,52 @@
+Name:           aern-realfn
+Version:        0.5.0
+Cabal-Version:  >= 1.8
+Build-Type:     Simple
+License:        BSD3
+License-File:   LICENCE
+Author:         Michal Konecny
+Copyright:      (c) 2012 Michal Konecny
+Maintainer:     mikkonecny@gmail.com
+Homepage:       http://code.google.com/p/aern/
+Stability:      experimental
+Category:       Data, Math
+Synopsis:       arbitrary precision real function arithmetic
+Tested-with:    GHC==7.6.3
+Description:
+    Type classes abstracting typical operations for m-ary continuous real functions
+    such as evaluation, composition, integration and automatic differentiation.  
+    The operations work on some approxmations of the exact entities which induce rounding.
+    Two kinds of rounding are supported: rounding up-down in the numerical order
+    or rounding in-out in a refinement order.
+    .
+    A concrete arithmetic of approximants of m-ary real functions
+    is provided in the package aern-poly, using polynomials with interval coefficients.
+
+Library
+  hs-source-dirs: src
+  Build-Depends:
+        base >= 4.4,
+        containers >= 0.3,
+        QuickCheck >= 2.4,
+        test-framework >= 0.3.3, 
+        test-framework-quickcheck2 >= 0.2,
+        random >= 1.0.0.2,
+        aern-order == 0.5.*,
+        aern-real == 0.5.*,
+        aern-interval == 0.5.*
+  exposed-modules:
+                  Numeric.AERN.RmToRn,
+                  Numeric.AERN.RmToRn.Differentiation,
+                  Numeric.AERN.RmToRn.Domain,
+                  Numeric.AERN.RmToRn.Evaluation,
+                  Numeric.AERN.RmToRn.Integration,
+                  Numeric.AERN.RmToRn.Interval,
+                  Numeric.AERN.RmToRn.Laws,
+                  Numeric.AERN.RmToRn.New,
+                  Numeric.AERN.RmToRn.NumericOrder.FromInOutRingOps.Arbitrary,
+                  Numeric.AERN.RmToRn.NumericOrder.FromInOutRingOps.Comparison,
+                  Numeric.AERN.RmToRn.NumericOrder.FromInOutRingOps.Minmax,
+                  Numeric.AERN.RmToRn.RefinementOrderRounding.BernsteinPoly,
+                  Numeric.AERN.RmToRn.RefinementOrderRounding.ChebyshevPoly,
+                  Numeric.AERN.RmToRn.RefinementOrderRounding.Reciprocal
+  ghc-options:    -Wall

@@ -1,0 +1,7 @@
+   Compiling plume-qualification v0.0.0 (/home/tim/Documents/GitHub/workspace/exact-real-references/plume-qualification)
+    Finished `release` profile [optimized] target(s) in 0.17s
+     Running `.audit-targets/ireal-derivative-18555/release/instrumented_hyper_controls`
+
+thread 'main' (9) panicked at instrumented_hyper_controls.rs:23:21:
+a=-32 d=10 places=1 warmed=false output=-3.2
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace

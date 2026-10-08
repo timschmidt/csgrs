@@ -1,0 +1,50 @@
+{
+  "source_controls": [
+    [
+      "-3/5",
+      "4/5"
+    ],
+    [
+      "0",
+      "5/4"
+    ],
+    [
+      "3/5",
+      "4/5"
+    ]
+  ],
+  "weights": [
+    "1",
+    "4/5",
+    "1"
+  ],
+  "X": [
+    "-3/5",
+    "6/5"
+  ],
+  "Y": [
+    "4/5",
+    "2/5",
+    "-2/5"
+  ],
+  "W": [
+    "1",
+    "-2/5",
+    "2/5"
+  ],
+  "unit_circle_identity": true,
+  "clockwise_normal_is_outward": true,
+  "positive_speed": "(6/5)*W",
+  "offset_one_image": "2*(X/W,Y/W)",
+  "vertical_chord": [
+    "(0,0)",
+    "(0,3)"
+  ],
+  "norm_identically_zero": true,
+  "midpoint_incidence_zero": true,
+  "actual_contact_count": 1,
+  "actual_contact_parameter": "1/2",
+  "actual_contact_point": "(0,2)",
+  "actual_tangent_cross": "negative",
+  "actual_tangent_dot": "zero"
+}

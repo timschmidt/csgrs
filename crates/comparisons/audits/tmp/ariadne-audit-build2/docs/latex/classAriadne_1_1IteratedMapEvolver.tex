@@ -1,0 +1,71 @@
+\doxysubsection{Iterated\+Map\+Evolver Class Reference}
+\hypertarget{classAriadne_1_1IteratedMapEvolver}{}\label{classAriadne_1_1IteratedMapEvolver}\index{IteratedMapEvolver@{IteratedMapEvolver}}
+
+
+{\ttfamily \#include $<$iterated\+\_\+map\+\_\+evolver.\+hpp$>$}
+
+
+
+\doxysubsubsection{Description}
+A class for computing the evolution of an iterated map. Inheritance diagram for Iterated\+Map\+Evolver\+:\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[height=2.000000cm]{classAriadne_1_1IteratedMapEvolver}
+\end{center}
+\end{figure}
+\doxysubsubsubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1IteratedMapEvolver_aabbe1eeef4d3682dd8b48e97e5bb2bd4}\label{classAriadne_1_1IteratedMapEvolver_aabbe1eeef4d3682dd8b48e97e5bb2bd4} 
+{\bfseries Iterated\+Map\+Evolver} (const \mbox{\hyperlink{classAriadne_1_1IteratedMap}{System\+Type}} \&\mbox{\hyperlink{classAriadne_1_1IteratedMapEvolver_a65ae282d92cc2693505d894043c8ffad}{system}})
+\begin{DoxyCompactList}\small\item\em Default constructor. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1IteratedMapEvolver_ac172bf1ee65f5837945afd2d96e2f58d}\label{classAriadne_1_1IteratedMapEvolver_ac172bf1ee65f5837945afd2d96e2f58d} 
+\mbox{\hyperlink{classAriadne_1_1IteratedMapEvolver}{Iterated\+Map\+Evolver}} \texorpdfstring{$\ast$}{*} {\bfseries clone} () const
+\begin{DoxyCompactList}\small\item\em Make a dynamically-\/allocated copy. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1IteratedMapEvolver_a65ae282d92cc2693505d894043c8ffad}\label{classAriadne_1_1IteratedMapEvolver_a65ae282d92cc2693505d894043c8ffad} 
+virtual const \mbox{\hyperlink{classAriadne_1_1IteratedMap}{System\+Type}} \& {\bfseries system} () const
+\begin{DoxyCompactList}\small\item\em Gets the system associated with the evolver. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1IteratedMapEvolver_a40bbebd53dce762cea53392763faddae}\label{classAriadne_1_1IteratedMapEvolver_a40bbebd53dce762cea53392763faddae} 
+\mbox{\hyperlink{classAriadne_1_1EvolverInterface_a3eee62b15617b80a9cd7a2f4ba905cff}{Enclosure\+Type}} {\bfseries enclosure} (\mbox{\hyperlink{group__FunctionModule_gafdd31b4d01081cd09aad2ce11117f867}{Exact\+Box\+Type}} const \&) const
+\begin{DoxyCompactList}\small\item\em Make an enclosure from a computed box set. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\begin{Indent}\textbf{ Configuration for the class.}\par
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1IteratedMapEvolver_a3364226a75d6b8d740b4be782215b355}\label{classAriadne_1_1IteratedMapEvolver_a3364226a75d6b8d740b4be782215b355} 
+\mbox{\hyperlink{classAriadne_1_1IteratedMapEvolverConfiguration}{Configuration\+Type}} \& {\bfseries configuration} ()
+\begin{DoxyCompactList}\small\item\em A reference to the configuration. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1IteratedMapEvolver_a156269f3bcc412b153b1cc7a1f5e25d2}\label{classAriadne_1_1IteratedMapEvolver_a156269f3bcc412b153b1cc7a1f5e25d2} 
+const Function\+Factory\+Type {\bfseries function\+\_\+factory} () const
+\begin{DoxyCompactList}\small\item\em The class which constructs functions for the enclosures. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\end{Indent}
+\doxyparagraph*{Public Member Functions inherited from \mbox{\hyperlink{classAriadne_1_1EvolverInterface}{Evolver\+Interface$<$ Iterated\+Map, Labelled\+Enclosure, Integer $>$}}}
+\begin{DoxyCompactItemize}
+\item 
+virtual {\bfseries \texorpdfstring{$\sim$}{\string~}\+Evolver\+Interface} ()=default
+\begin{DoxyCompactList}\small\item\em Virtual destructor. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsubsection*{Evolution using abstract sets.}
+Compute an approximation to the orbit set using upper semantics. \begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1IteratedMapEvolver_ac89840795dee6067d74a50e515b18586}\label{classAriadne_1_1IteratedMapEvolver_ac89840795dee6067d74a50e515b18586} 
+\mbox{\hyperlink{classAriadne_1_1Orbit}{Orbit}}$<$ \mbox{\hyperlink{classAriadne_1_1EvolverInterface_a3eee62b15617b80a9cd7a2f4ba905cff}{Enclosure\+Type}} $>$ {\bfseries orbit} (const \mbox{\hyperlink{classAriadne_1_1EvolverInterface_a3eee62b15617b80a9cd7a2f4ba905cff}{Enclosure\+Type}} \&initial\+\_\+set, const \mbox{\hyperlink{classAriadne_1_1Integer}{Termination\+Type}} \&termination, \mbox{\hyperlink{group__DynamicsModule_gafd43cf1b14dd42f7ac8ca23dcc3837b3}{Semantics}} semantics) const
+\begin{DoxyCompactList}\small\item\em Compute an approximation to the evolved set under the given semantics. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsubsection*{Additional Inherited Members}
+\doxyparagraph*{Public Types inherited from \mbox{\hyperlink{classAriadne_1_1EvolverInterface}{Evolver\+Interface$<$ Iterated\+Map, Labelled\+Enclosure, Integer $>$}}}
+\begin{DoxyCompactItemize}
+\item 
+typedef \mbox{\hyperlink{classAriadne_1_1IteratedMap}{Iterated\+Map}} {\bfseries System\+Type}
+\begin{DoxyCompactList}\small\item\em The type of system the evolver can compute the behaviour of. \end{DoxyCompactList}\item 
+typedef \mbox{\hyperlink{classAriadne_1_1IteratedMap_af3135de1d1447a6018e797ee5681ab27}{System\+Type\+::\+Time\+Type}} {\bfseries Time\+Type}
+\begin{DoxyCompactList}\small\item\em The type used to represent the evolution time of the system. \end{DoxyCompactList}\item 
+typedef \mbox{\hyperlink{classAriadne_1_1Integer}{Integer}} {\bfseries Termination\+Type}
+\begin{DoxyCompactList}\small\item\em The type used to represent conditions under which system evolution may be terminated. \end{DoxyCompactList}\item 
+typedef Labelled\+Enclosure {\bfseries Enclosure\+Type}
+\begin{DoxyCompactList}\small\item\em The type of set used to enclose the flow tubes. \end{DoxyCompactList}\item 
+typedef \mbox{\hyperlink{classAriadne_1_1ListSet}{List\+Set}}$<$ \mbox{\hyperlink{classAriadne_1_1EvolverInterface_a3eee62b15617b80a9cd7a2f4ba905cff}{Enclosure\+Type}} $>$ {\bfseries Enclosure\+List\+Type}
+\begin{DoxyCompactList}\small\item\em The type of a list of enclosure sets. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+The documentation for this class was generated from the following files\+:\begin{DoxyCompactItemize}
+\item 
+source/dynamics/\mbox{\hyperlink{iterated__map__evolver_8hpp}{iterated\+\_\+map\+\_\+evolver.\+hpp}}\item 
+source/dynamics/iterated\+\_\+map\+\_\+evolver.\+cpp\end{DoxyCompactItemize}

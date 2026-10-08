@@ -1,0 +1,45 @@
+{
+  "curve_power_coefficients": {
+    "x": [
+      "0",
+      "1"
+    ],
+    "y": [
+      "0",
+      "15/4",
+      "-2",
+      "1/3"
+    ]
+  },
+  "chord_direction": [
+    "1",
+    "0"
+  ],
+  "tangent_cross_power": [
+    "15/4",
+    "-4",
+    "1"
+  ],
+  "unit_bernstein": [
+    "15/4",
+    "7/4",
+    "3/4"
+  ],
+  "extended_range": [
+    "1",
+    "3"
+  ],
+  "extended_bernstein": [
+    "3/4",
+    "-5/4",
+    "3/4"
+  ],
+  "values": {
+    "1": "3/4",
+    "3/2": "0",
+    "2": "-1/4",
+    "5/2": "0",
+    "3": "3/4"
+  },
+  "exact_rational_checks_passed": true
+}

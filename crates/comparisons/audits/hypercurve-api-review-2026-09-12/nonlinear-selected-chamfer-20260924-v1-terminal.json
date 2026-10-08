@@ -1,0 +1,98 @@
+{
+  "checks": [
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "clippy",
+        "--all-targets",
+        "--all-features",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "returncode": 0,
+      "log": "nonlinear-selected-chamfer-20260924-v1-check-0.log"
+    },
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "clippy",
+        "--all-targets",
+        "--no-default-features",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "returncode": 0,
+      "log": "nonlinear-selected-chamfer-20260924-v1-check-1.log"
+    }
+  ],
+  "command": [
+    "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+    "test",
+    "--lib",
+    "--release",
+    "--all-features",
+    "--no-run",
+    "--message-format=json",
+    "--locked",
+    "--offline"
+  ],
+  "cases": [
+    {
+      "name": "bezier_offset::conversion_tests::chord_parallel_monotonicity_rejects_opposed_endpoint_signs",
+      "returncode": 0,
+      "passed": true,
+      "elapsed_seconds": 0.27428985701408237,
+      "limit_seconds": 60,
+      "log": "nonlinear-selected-chamfer-20260924-v1-case-0.log"
+    },
+    {
+      "name": "curve_region_boolean::certified_successor_tests::monotone_parallel_ranges_remove_only_proven_unary_pairs",
+      "returncode": 0,
+      "passed": true,
+      "elapsed_seconds": 1.7947533369297162,
+      "limit_seconds": 60,
+      "log": "nonlinear-selected-chamfer-20260924-v1-case-1.log"
+    },
+    {
+      "name": "bezier_offset::conversion_tests::analytic_scalar_predicates_distinguish_stationary_points_from_source_poles",
+      "returncode": 0,
+      "passed": true,
+      "elapsed_seconds": 0.2843665259424597,
+      "limit_seconds": 60,
+      "log": "nonlinear-selected-chamfer-20260924-v1-case-2.log"
+    },
+    {
+      "name": "bezier_region::tests::retained_stationary_endpoint_composition_keeps_source_and_tangent_anchor",
+      "returncode": 0,
+      "passed": true,
+      "elapsed_seconds": 0.27962987101636827,
+      "limit_seconds": 60,
+      "log": "nonlinear-selected-chamfer-20260924-v1-case-3.log"
+    },
+    {
+      "name": "bezier_region::tests::nonlinear_selected_corner_chamfers_through_retained_fixed_distance_image",
+      "returncode": "timeout",
+      "passed": false,
+      "elapsed_seconds": 76.22572651610244,
+      "limit_seconds": 75,
+      "log": "nonlinear-selected-chamfer-20260924-v1-case-4.log"
+    },
+    {
+      "name": "bezier_region::curve_corner_chain::tests::extended_fillet_region_classifies_both_sides_of_its_companion",
+      "returncode": "timeout",
+      "passed": false,
+      "elapsed_seconds": 75.2804362711031,
+      "limit_seconds": 75,
+      "log": "nonlinear-selected-chamfer-20260924-v1-case-5.log"
+    }
+  ],
+  "binary_sha256": "ee6e84eb3d6482dba5e080b8b4cf8366eca8d3fe38a7db52ac56fc659604c51b",
+  "all_sources_unchanged": true,
+  "all_processes_reaped": true
+}

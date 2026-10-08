@@ -1,0 +1,11 @@
+{
+  "tag": "reuse-app-run-baseline-arrangement",
+  "started": "2026-09-08T22:27:28.767Z",
+  "finished": "2026-09-08T22:27:28.779Z",
+  "elapsedSeconds": 0.009973395999999994,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "/tmp/calcium-reuse-costs.73SR1w/app-baseline-arrangement.stripped",
+  "args": [],
+  "code": 0,
+  "signal": null
+}

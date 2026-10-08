@@ -1,0 +1,13 @@
+{
+  "tag": "high-product-linked-libraries",
+  "started": "2026-09-09T19:31:07.590Z",
+  "finished": "2026-09-09T19:31:07.616Z",
+  "elapsedSeconds": 0.024246668,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison",
+  "command": "ldd",
+  "args": [
+    "/tmp/calcium-high-product.03dkHN/high-product-controls"
+  ],
+  "code": 0,
+  "signal": null
+}

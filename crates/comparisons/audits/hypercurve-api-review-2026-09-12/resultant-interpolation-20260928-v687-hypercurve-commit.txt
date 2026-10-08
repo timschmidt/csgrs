@@ -1,0 +1,5 @@
+Cover offset crossings through exact polynomial reparameterization
+
+Retain independent same/reversed degree-six representations of the S-cubic composed with (t+t^2)/2. Its chart derivative is positive on the unit span, so both source-normal selection and the two offset crossing contacts must survive. Check complete intersections under STRICT and APPROXIMATE_512.
+
+The shared Hypersolve resultant simplification makes all four cases complete in 47-48 seconds after the previous 180-second timeouts. Validation: 174 geometry and 218 algebraic release tests, six pinned binaries, and nine checks. Existing source-domain, component, pole, fillet/chamfer and Boolean caller regressions remain passing.

@@ -1,0 +1,145 @@
+{
+  "baseline": "classified-derivative-v820-sources.json",
+  "hits": {
+    "hypercurve/benches/bezier_tangent_order.rs": [
+      {
+        "line": 40,
+        "text": "BezierAlgebraicTangentVector2::from_image(&tangent)"
+      },
+      {
+        "line": 55,
+        "text": "BezierAlgebraicTangentVector2::from_image(&tangent)"
+      },
+      {
+        "line": 70,
+        "text": "BezierAlgebraicTangentVector2::from_image(&tangent)"
+      },
+      {
+        "line": 85,
+        "text": "BezierAlgebraicTangentVector2::from_image(&tangent)"
+      }
+    ],
+    "hypercurve/fuzz/fuzz_targets/bezier_tangent_order.rs": [
+      {
+        "line": 30,
+        "text": "BezierAlgebraicTangentVector2::from_image(&tangent).vector"
+      },
+      {
+        "line": 44,
+        "text": "BezierAlgebraicTangentVector2::from_image(&tangent).vector"
+      },
+      {
+        "line": 58,
+        "text": "BezierAlgebraicTangentVector2::from_image(&tangent).vector"
+      }
+    ],
+    "hypercurve/src/bezier_arrangement.rs": [
+      {
+        "line": 1585,
+        "text": "BezierAlgebraicTangentVector2::from_image(tangent)"
+      }
+    ],
+    "hypercurve/src/bezier_tangent_order.rs": [
+      {
+        "line": 45,
+        "text": ") -> BezierAlgebraicTangentVectorEvidence {"
+      },
+      {
+        "line": 47,
+        "text": "return BezierAlgebraicTangentVectorEvidence {"
+      },
+      {
+        "line": 48,
+        "text": "status: BezierAlgebraicTangentVectorStatus::ImageNotTransformed,"
+      },
+      {
+        "line": 61,
+        "text": "return BezierAlgebraicTangentVectorEvidence {"
+      },
+      {
+        "line": 62,
+        "text": "status: BezierAlgebraicTangentVectorStatus::MissingCoordinateImage,"
+      },
+      {
+        "line": 68,
+        "text": "BezierAlgebraicTangentVectorEvidence {"
+      },
+      {
+        "line": 69,
+        "text": "status: BezierAlgebraicTangentVectorStatus::Extracted,"
+      },
+      {
+        "line": 88,
+        "text": "pub enum BezierAlgebraicTangentVectorStatus {"
+      },
+      {
+        "line": 99,
+        "text": "pub struct BezierAlgebraicTangentVectorEvidence {"
+      },
+      {
+        "line": 101,
+        "text": "pub status: BezierAlgebraicTangentVectorStatus,"
+      },
+      {
+        "line": 234,
+        "text": "let first = BezierAlgebraicTangentVector2::from_image(first);"
+      },
+      {
+        "line": 235,
+        "text": "let second = BezierAlgebraicTangentVector2::from_image(second);"
+      }
+    ],
+    "hypercurve/src/lib.rs": [
+      {
+        "line": 157,
+        "text": "BezierAlgebraicTangentVectorEvidence, BezierAlgebraicTangentVectorStatus,"
+      }
+    ],
+    "hypercurve/tests/hypercurve_bezier_tangent_order.rs": [
+      {
+        "line": 4,
+        "text": "BezierAlgebraicTangentVector2, BezierAlgebraicTangentVectorEvidence,"
+      },
+      {
+        "line": 5,
+        "text": "BezierAlgebraicTangentVectorStatus, BezierParameterInterval, BezierParameterPolynomial,"
+      },
+      {
+        "line": 92,
+        "text": "let BezierAlgebraicTangentVectorEvidence { status, vector, .. } ="
+      },
+      {
+        "line": 93,
+        "text": "BezierAlgebraicTangentVector2::from_image(&tangent);"
+      },
+      {
+        "line": 94,
+        "text": "assert_eq!(status, BezierAlgebraicTangentVectorStatus::Extracted);"
+      },
+      {
+        "line": 113,
+        "text": "let tangent = BezierAlgebraicTangentVector2::from_image(decided(image.tangent().unwrap()));"
+      },
+      {
+        "line": 116,
+        "text": "BezierAlgebraicTangentVectorStatus::Extracted"
+      },
+      {
+        "line": 118,
+        "text": "let second_derivative = BezierAlgebraicTangentVector2::from_image("
+      },
+      {
+        "line": 125,
+        "text": "BezierAlgebraicTangentVectorStatus::Extracted"
+      }
+    ],
+    "hyperlimit/STACK_RETAINED_FACT_AUDIT.md": [
+      {
+        "line": 405,
+        "text": "- `bezier_tangent_order.rs`: `AlgebraicPowerEvidence`, `BezierAlgebraicSameTangentOrderEvidence`, `BezierAlgebraicSameTangentOrderStatus`, `BezierAlgebraicScalarSignEvidence`, `BezierAlgebraicTangentOrderEvidence`, `BezierAlgebraicTangentOrderStatus`, `BezierAlgebraicTangentVectorEvidence`, `BezierAlgebraicTangentVectorStatus`, `ScalarSignStatus`"
+      }
+    ]
+  },
+  "scope": "Public represented-vector extraction still duplicates status, optional vector, and a diagnostic message. Inspect all consumers before replacing this with one optional represented vector; retain scalar/root proof ownership and do not infer that exact retained expressions are unavailable geometry.",
+  "candidate_prepared": false
+}

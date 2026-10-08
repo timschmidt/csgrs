@@ -1,0 +1,59 @@
+\doxysubsection{Hybrid\+Bounded\+Constraint\+Set Class Reference}
+\hypertarget{classAriadne_1_1HybridBoundedConstraintSet}{}\label{classAriadne_1_1HybridBoundedConstraintSet}\index{HybridBoundedConstraintSet@{HybridBoundedConstraintSet}}
+
+
+{\ttfamily \#include $<$hybrid\+\_\+expression\+\_\+set.\+hpp$>$}
+
+
+
+\doxysubsubsection{Description}
+A hybrid set defined by the intersection of a box and a constraint system in each location. \begin{Desc}
+\item[Examples]\par
+\mbox{\hyperlink{tutorials_2hybrid_evolution_2hybrid_evolution_tutorial_8cpp-example}{tutorials/hybrid\+\_\+evolution/hybrid\+\_\+evolution\+\_\+tutorial.\+cpp}}.\end{Desc}
+Inheritance diagram for Hybrid\+Bounded\+Constraint\+Set\+:\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[height=2.000000cm]{classAriadne_1_1HybridBoundedConstraintSet}
+\end{center}
+\end{figure}
+\doxysubsubsubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1HybridBoundedConstraintSet_a9ea61df567462c886ecd8e47e1da883a}\label{classAriadne_1_1HybridBoundedConstraintSet_a9ea61df567462c886ecd8e47e1da883a} 
+{\bfseries Hybrid\+Bounded\+Constraint\+Set} (const \mbox{\hyperlink{classAriadne_1_1DiscreteLocation}{Discrete\+Location}} \&\mbox{\hyperlink{classAriadne_1_1HybridBoundedConstraintSet_afb940b96822a4a737c56471808380ed6}{location}}, const \mbox{\hyperlink{namespaceAriadne_a8d51a34ecd8621e992f2470124281c93}{Initializer\+List}}$<$ \mbox{\hyperlink{classAriadne_1_1VariableInterval}{Real\+Variable\+Interval}} $>$ \&bounds, const \mbox{\hyperlink{namespaceAriadne_a8d51a34ecd8621e992f2470124281c93}{Initializer\+List}}$<$ \mbox{\hyperlink{classAriadne_1_1Expression}{Continuous\+Predicate}} $>$ \&constraints)
+\begin{DoxyCompactList}\small\item\em Construct a set in a single {\itshape location} with a list of {\itshape bounds} on the variables and nonlinear {\itshape constraints}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1HybridBoundedConstraintSet_afb940b96822a4a737c56471808380ed6}\label{classAriadne_1_1HybridBoundedConstraintSet_afb940b96822a4a737c56471808380ed6} 
+\mbox{\hyperlink{classAriadne_1_1DiscreteLocation}{Discrete\+Location}} {\bfseries location} () const
+\begin{DoxyCompactList}\small\item\em If the set only has a single location, returns this, otherwise fails. DEPRECATED. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1HybridBoundedConstraintSet_a9d7e0e569b7115a012b5946ce8c46c04}\label{classAriadne_1_1HybridBoundedConstraintSet_a9d7e0e569b7115a012b5946ce8c46c04} 
+virtual \mbox{\hyperlink{classAriadne_1_1Set}{Set}}$<$ \mbox{\hyperlink{classAriadne_1_1DiscreteLocation}{Discrete\+Location}} $>$ {\bfseries locations} () const override
+\begin{DoxyCompactList}\small\item\em The set of discrete locations in which the set is nontrivial. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1HybridBoundedConstraintSet_a651af073cd8356f9ab54f8b8179878c6}\label{classAriadne_1_1HybridBoundedConstraintSet_a651af073cd8356f9ab54f8b8179878c6} 
+virtual \mbox{\hyperlink{classAriadne_1_1Set}{Set}}$<$ \mbox{\hyperlink{classAriadne_1_1Variable}{Real\+Variable}} $>$ {\bfseries variables} (\mbox{\hyperlink{classAriadne_1_1DiscreteLocation}{Discrete\+Location}} loc) const override
+\begin{DoxyCompactList}\small\item\em The active variables in the location {\itshape loc}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1HybridBoundedConstraintSet_ab091ed2e5fe5e381daef9210a2d08741}\label{classAriadne_1_1HybridBoundedConstraintSet_ab091ed2e5fe5e381daef9210a2d08741} 
+\mbox{\hyperlink{classAriadne_1_1RealExpressionBoundedConstraintSet}{Real\+Expression\+Bounded\+Constraint\+Set}} const \& {\bfseries continuous\+\_\+set} (\mbox{\hyperlink{classAriadne_1_1DiscreteLocation}{Discrete\+Location}} loc) const
+\begin{DoxyCompactList}\small\item\em The subset of $\mathbb{R}^V$ obtained by restricting to location {\itshape loc}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1HybridBoundedConstraintSet_a5298dae2e392d982b97c02b53ec2cc6f}\label{classAriadne_1_1HybridBoundedConstraintSet_a5298dae2e392d982b97c02b53ec2cc6f} 
+\mbox{\hyperlink{classAriadne_1_1BoundedConstraintSet}{Bounded\+Constraint\+Set}} const {\bfseries euclidean\+\_\+set} (\mbox{\hyperlink{classAriadne_1_1DiscreteLocation}{Discrete\+Location}} loc, \mbox{\hyperlink{classAriadne_1_1Space}{Real\+Space}} spc) const
+\begin{DoxyCompactList}\small\item\em The subset of $\mathbb{R}^n$ obtained by restricting to location {\itshape loc} and ordering the variables as defined by {\itshape spc}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1HybridBoundedConstraintSet_a1ef80de0412203741b9394243b9b8df9}\label{classAriadne_1_1HybridBoundedConstraintSet_a1ef80de0412203741b9394243b9b8df9} 
+virtual \mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} {\bfseries draw} (\mbox{\hyperlink{classAriadne_1_1CanvasInterface}{Canvas\+Interface}} \&, const \mbox{\hyperlink{classAriadne_1_1Set}{Set}}$<$ \mbox{\hyperlink{classAriadne_1_1DiscreteLocation}{Discrete\+Location}} $>$ \&, const Variables2d \&) const override
+\begin{DoxyCompactList}\small\item\em brief Draw the object on the canvas {\itshape c} using line segments and fill/stroke commands. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxyparagraph*{Public Member Functions inherited from \mbox{\hyperlink{classAriadne_1_1HybridDrawableInterface}{Hybrid\+Drawable\+Interface}}}
+\begin{DoxyCompactItemize}
+\item 
+virtual {\bfseries \texorpdfstring{$\sim$}{\string~}\+Hybrid\+Drawable\+Interface} ()=default
+\begin{DoxyCompactList}\small\item\em brief Virtual destructor. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsubsection*{Additional Inherited Members}
+\doxyparagraph*{Public Types inherited from \mbox{\hyperlink{classAriadne_1_1HybridDrawableInterface}{Hybrid\+Drawable\+Interface}}}
+\begin{DoxyCompactItemize}
+\item 
+typedef Variables2d {\bfseries Projection\+Type}
+\begin{DoxyCompactList}\small\item\em brief The type of data needed to project to a 2d image. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+The documentation for this class was generated from the following files\+:\begin{DoxyCompactItemize}
+\item 
+source/hybrid/\mbox{\hyperlink{hybrid__expression__set_8hpp}{hybrid\+\_\+expression\+\_\+set.\+hpp}}\item 
+source/hybrid/hybrid\+\_\+set.\+cpp\end{DoxyCompactItemize}

@@ -1,0 +1,14 @@
+{
+  "tag": "point-qualified-approx-public-candidate-wasm",
+  "started": "2026-09-10T20:49:42.976Z",
+  "finished": "2026-09-10T20:49:43.691Z",
+  "elapsedSeconds": 0.71215842,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "node",
+  "args": [
+    "run-point-qualified-approx-wasm.mjs",
+    "candidate"
+  ],
+  "code": 0,
+  "signal": null
+}

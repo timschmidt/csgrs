@@ -1,0 +1,452 @@
+% first draft by DB on Mar 24th, 2009
+
+\documentclass[english,a4paper]{article}
+\usepackage{latexsym}
+\usepackage{graphicx}
+\usepackage{xspace}
+\usepackage{amsmath,amsfonts,amssymb,amsthm}
+\usepackage{paralist}
+\setlength{\plitemsep}{2pt}
+\setlength{\pltopsep}{6pt}
+
+\newcommand{\Z}{\mathbb{Z}}
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\ARIADNE}{\textsc{Ariadne}\xspace}
+\newcommand{\dt}[1]{\texttt{#1}}
+
+
+\theoremstyle{theorem}
+\newtheorem*{theorem*}{Theorem}
+\newtheorem*{condition*}{Condition}
+\theoremstyle{definition}
+\newtheorem*{definition*}{Definition}
+\theoremstyle{remark}
+\newtheorem*{remark*}{Remark}
+\newtheorem*{rationale*}{Rationale}
+\newtheorem*{algorithm*}{Algorithm}
+
+\title{\ARIADNE: computing a single evolution step}
+\author{Davide Bresolin and Pieter Collins}
+\date{Draft \today}
+\pagestyle{headings}
+
+
+
+\begin{document}
+
+\maketitle
+
+\noindent In this paper I describe the changes I made in the \texttt{\_evolution\_step} method of \texttt{HybridEvolver} class. This methods is the core method of the evolution routines for hybrid automata, and it takes the following inputs:
+
+\section{Mathematical System Description and Semantics}
+
+\subsection*{System Description}
+
+A location of a hybrid system is described by the following data:
+\begin{itemize}
+\item A \texttt{VectorFunction} $f:\R^n \rightarrow \R^n$ giving the system \emph{dynamic} $\dot{x}=f(x)$.
+\item A collections of \texttt{ScalarFunction}s $g_e:\R^n\rightarrow \R$ which define \emph{predicates} $g(x)\lessgtr 0$ on the state space.
+There are five kinds of behaviour associated with predicates:
+ \begin{itemize}
+  \item Invariant Constraint: The state must satisfy $g(x)\lesssim 0$ at all times, including immediately after an event.
+  \item Progress Constraint: Continuous dynamics is only possible if $g(x)\lesssim 0$.
+  \item Non-Urgent Transition: A discrete event $e$ may occur if $g(x)\gtrsim0$.
+  \item Urgent Transition: A discrete event must occur as soon as $g(x)\gtrsim 0$.
+  \item Impact Transition: A discrete event must occur as soon as $g(x)$ crosses from $g(x)<0$ to $g(x)>0$. Further, the constraint $g(x)\leq 0$ is guaranteed always to be satisfied, including in the initial conditions and immediately after a jump.
+ \end{itemize}
+Note that an urgent transition can be (and often is) considered as a combination of an invariant $g(x)\leq0$ and guard $g(x)\geq0$.
+\item For each event $e$, a \texttt{VectorFunction} $r:\R^n\rightarrow\R^m$ giving the \emph{reset map} to another continuous state.
+
+We say an event is \emph{blocking}\footnote{Is this a good name for this kind of event?} if it prohibits continuous evolution, and \emph{activating} if it allows a discrete transition.\end{itemize}
+\begin{remark*}
+In this version, we only consider single-valued functions defining predicates.
+\end{remark*}
+
+\begin{rationale*}
+The rationale for taking invariants $g(x)\leq 0$ and guards/activations $g(x)\geq0$ is that an urgent transition effectively defines an invariant $g(x)\leq0$ and an activation $g(x)\geq0$.
+\end{rationale*}
+
+We can define the \emph{blocking function}
+$$g_B(x) = \min\{g_e(x) \mid e \text{ is a blocking event} \} .$$
+
+
+\subsection*{Formal semantics}
+
+We define three semantics, a \emph{standard} semantics which is usual in hybrid systems theory, but is uncomputable, and two computable semantics, namely \emph{lower semantics} and upper semantics.
+
+\begin{definition*}
+A \emph{hybrid time domain} $\mathcal{T}$ is a subset of $\R^+\times\Z^+$ defined by an increasing sequence of times $(t_n)_{n=0}^{\infty}$ with $t_n\in \R^+\cup\{\infty\}$ as
+$\mathcal{T} = \{(t,n) \mid t_n\leq t\leq t_{n+1} \}$. A \emph{hybrid trajectory} in a space $X$ is a continuous function from a hybrid time domain $\mathcal{T}=\mathrm{dom}(\xi)$ to $X$.
+\end{definition*}
+
+\begin{definition*}[Standard semantics]
+A hybrid trajectory $\xi:\mathcal{T}\rightarrow X$ is an \emph{execution} of the hybrid automaton $H$ if
+\begin{enumerate}
+\item For almost all $t\in (t_n,t_n+1)$, $\dot{\xi}(t,n) = f(\xi(t,n))$.
+\item For all $n>0$ with $t_n<\infty$, there exists an event $e_n$ such that $\xi(t_n,n)=r_{e_n}(\xi(t_n,n\!-\!1))$.
+\item For all $t\in[t_n,t_{n+1})$ and every invariant function or guard function of an urgent transition $g$, $g(\xi(t,n)) < 0$.
+\item For all $n>0$ with $t_n<\infty$, $g_{e_n}(\xi(t_n,n\!-\!1))\geq0$.
+\end{enumerate}
+\end{definition*}
+
+\begin{definition*}[Upper semantics]
+A hybrid trajectory $\xi:\mathcal{T}\rightarrow X$ is an \emph{execution} of the hybrid automaton $H$ with \emph{upper semantics} if
+\begin{enumerate}\addtocounter{enumi}{2}
+\item For all $t\in[t_n,t_{n+1}]$ and every invariant function or guard function of an urgent transition, $g(\xi(t,n)) \leq 0$.
+\item For all $n>0$ with $t_n<\infty$, $g_{e_n}(\xi(t_n,n\!-\!1))\geq0$.
+\end{enumerate}
+\end{definition*}
+
+\begin{definition*}[Lower semantics]
+A hybrid trajectory $\xi:\mathcal{T}\rightarrow X$ is an \emph{execution} of the hybrid automaton $H$ with \emph{lower semantics (with transverse crossings)} if
+\begin{enumerate}\addtocounter{enumi}{2}
+\item For all $t\in[t_n,t_{n+1}]$ and every invariant function or guard function of an urgent transition $g$, $g(\xi(t,n)) \leq 0$, and $g(\xi(t_n))<0$ unless $t=t_{n+1}$ and $g=g_{e_{n+1}}$.
+\item For all $n>0$ with $t_n<\infty$, either $g_{e_n}(\xi(t_n,n\!-\!1))>0$, or $e_n$ is an urgent transition, $g_{e_n}(\xi(t_n,n\!-\!1))=0$ and $(\nabla g_{e_n}\cdot f)(\xi(t_n,n\!-\!1))>0$.
+\end{enumerate}
+\end{definition*}
+
+\begin{definition*}[Crossing time set]
+Consider a curve $\xi:\R\rightarrow X$, and suppose $g(\xi(0))<0$ and $g(\xi(T))>0$. We define the \emph{possible crossing time set} $$\tau_\chi(g,\xi) := \{ t\in [0,T] \mid g(\xi(t))=0 \wedge \forall \tau\in[0,t],\ g(\xi(\tau))\leq 0\}.$$
+The crossing is \emph{detectible} if $\tau_\chi$ is a singleton.
+\end{definition*}
+
+
+
+
+\section{Ariadne Data Types and Algorithms}
+
+\subsection{Set and Function Classes}
+
+The basic data type for defining system dynamics is the \texttt{VectorFunction} type, which defines a (sufficiently smooth) function $f:\R^n\rightarrow\R^m$. We also have an \texttt{ScalarFunction} type, which defines a function $f:\R^n\rightarrow \R$.
+
+An \texttt{ImageSet} is the image of a bounded box $D$ under a function $f$. We write $S=\{ f(s) \mid s\in D\}$, so that $f$ is a \emph{parameterisation} of $S$. Similarly, a \texttt{ConstraintSet} is the preimage of a codomain $C$ under a function, $S=\{ x \mid f(x)\in C \}$. We can always take $D=[-1,+1]^n$ and $C=[0,\infty)^n$.
+
+Note that the image of an \texttt{ImageSet} $(D,h)$ under a function $f$ is the image set $(D,f\circ h)$, and the preimage of a \texttt{ConstraintSet} $(C,g)$ under $f$ is the constraint set $(C,g\circ f)$.
+
+A \texttt{ConstrainedImageSet} is the image of the intersection of a bounded box $D$ with the preimage of a box $C$.
+\[ \langle f,D,g,C\rangle = f(D\cap g^{-1}(C)) . \]
+Without loss of generality, a \texttt{ConstrainedImageSet} can also be represented as
+\[ \langle f,D,g,h\rangle = \{ f(s) \mid s\in D \mid g(s) \geq 0 \wedge h(s)=0 \} . \]
+
+\subsection{SetModel and FunctionModel Classes}
+
+The basic data type for working with system dynamics are the \texttt{Scalar}- and \texttt{VectorFunctionModel} types, which defines a collection of functions $[f]:D\rightarrow \R^n$, where $D$ is a subset of $\R^n$ (usually a compact box). The \texttt{TaylorFunctionModel} type, for example, defines a collection of functions $[f]$ as $\{ f:D\rightarrow\R^m \mid \forall i=1,\ldots,m,\ x\in D:\ |f_i(x)-p_i(x)| \leq \epsilon_i\}$ for some polynomials $p_i:\R^n\rightarrow\R$ and error bounds $\epsilon_i\geq0$. The semantics of operations of \texttt{FunctionModel}s is that
+$$ f\in[f],\ g\in[g]  \text{ and } h=\mathrm{op}(f,g) \implies \mathrm{op}([f],[g])\ni h . $$
+
+Similarly, a \texttt{ConstrainedImageSetModel} is defined by a tuple $\langle [f],[D],[g],[C]\rangle$ where $[D]$ and $[C]$ are boxes with floating-point ranges, and $[f]$ and $[g]$ are function models with domain $[D]$.
+
+We abstract away the set used in the hybrid system evolution as a \emph{timed enclosure}.
+A concrete implementation of a timed enclosure is given by a tuple 
+
+$$ \langle \xi, \tau ; D ; \rho, C \rangle $$
+A timed enclosure represents the pairs $(x,t) \in X\times \R^+$ given by $$\{ (\xi(s),\tau(x)) \mid s\in D \mid \rho(s)\in C \}.$$
+
+
+\subsection{Core algorithms}
+
+The main algorithms for computing with functions are as follows
+\begin{description}
+\item \texttt{evaluate(VectorFunctionModel f, Box D):Box}\\ Compute an over-approximation to $\{ f(x) \mid x\in D\}$.
+\item \texttt{compose(VectorFunctionModel f, VectorFunctionModel g):VectorFunctionModel}\\ Compute the composition $(f\circ g)(x)=f(g(x))$.
+\item \texttt{compose(ScalarFunctionModel f, VectorFunctionModel g):ScalarFunctionModel}\\ Compute the composition $(f\circ g)(x)=f(g(x))$.
+\item \texttt{flow(VectorFunctionModel f, Box D, Real h):VectorFunctionModel}\\ Compute the flow $\phi:D\times[0,h]\rightarrow \R^n$ such that $\dot{\phi}(x_0,t)=f(\phi(x_0,t))$ for all $(x_0,t)\in D\times[0,h]$.
+\item \texttt{implicit(ScalarFunctionModel f):ScalarFunctionModel}\\ For $f:\R^{m+1}\rightarrow\R$, compute a function $h:\R^{m}\rightarrow\R$ such that $f(x,h(x))=0$.
+\end{description}
+Other algorithms which may be useful are
+\begin{description}
+\item \texttt{antiderivative(ScalarFunctionModel f, Nat k):ScalarFunctionModel}\\ For $f:\R^{m}\rightarrow\R$, compute a function $h:\R^{m}\rightarrow\R$ such that $dh/dx_k=f=0$.
+\item \texttt{derivative(ScalarFunction f, Nat i):ScalarFunction}
+\end{description}
+
+\section{Evolution Steps}
+
+An \emph{evolution step} is an update rule for a hybrid system. It takes a set $I$ to a \emph{reach set} $R=r(I)$ and an \emph{evolve set} $E=e(I)$ such that any reachable point is obtained as $r(e^m(x))$ for some $x\in I$. Ideally, points should only be reachable by one "route". For timed reachability analysis, we also need to consider the currently \emph{evolved time}.
+
+Our basic representation of the initial set $I$ is as an image set (we could also use a constrained image set). For simplicity, we only consider image sets which are boxes, parameterised by $s$. The sets $R$ and $E$ are represented as unions of image sets.
+
+\subsubsection*{Reach-evolve pairs}
+
+In this section we denote a finite collection of sets using calligraphic type $\mathcal{S}$.
+\begin{condition*}[Upper semantics]
+Given an initial set $I$, a pair $(\mathcal{R},\mathcal{E})$ is a valid reach-evolve pair for $H$ if for every hybrid solution $\xi$ starting in $I$ there exists a hybrid time $t$ such that $\xi(t)\in \bigcup\mathcal{E}$ and $\xi([0,t))\subset \bigcup\mathcal{E}$.
+\end{condition*}
+
+\begin{condition*}[Lower semantics]
+A pair $(\mathcal{R},\mathcal{E})$ is a valid reach-evolve pair for an initial set $I$ under \emph{lower semantics} if for any $x\in I$, and any $E\in\mathcal{E}$, there is a solution $\xi_i$ starting at $x$ and entering $E$, and for any $R\in\mathcal{R}$, there is a solution $\xi$ starting at $x$ and entering $R$.
+\end{condition*}
+We can generalise to the case that the sets are infinite collections parameterised by a parameter $\lambda$. This is useful for computing flow tubes, where $\lambda$ is the time $t$.
+
+The most convenient computable reach-evolve pair over a time interval $[0,h]$ is given by
+\[ R=\{ \phi(s,t) \mid s\in I \wedge t\in[0,h] \wedge g_B(\phi(s,[0,t]))\leq 0\} \]
+and $\mathcal{E}=E_C \bigcup_e E_e$ where
+\[ E_C=\{ \phi(s,h) \mid s\in I \wedge g_B(\phi(s,[0,h]))\leq 0\} \]
+and
+\[ E_e=\{ r_e(\phi(s,t)) \mid s\in I \wedge t\in[0,h] \wedge g_e(\phi(s,t))\geq 0 \wedge g_B(\phi(s,[0,t]))\leq 0 \} \]
+In other words, the reach set contains continuous evolution up to the time step or blocking time, and the evolve set contains continuous evolution up to the time step, and continuous evolution up to an activation point followed by a single discrete transition, with no further continuous evolution.
+
+
+\subsubsection*{Basic algorithm for the robust case}
+The basic algorithm is to first compute a \emph{flow model} $\phi(s,t)$ for the vector field over the initial domain $S$ (or a bounding box) for a time interval $[0,h]$. Given the flow model, we then compute the \emph{crossing times} $\tau_i(s)$ with the guard sets $g_i(x)=0$. The crossing times satisfy the equation $g_i(\phi(s,\tau_i(s)))=0$. From this, we compute the \emph{blocking time} $\tau_B$, which is the minimum of the crossing times of guards corresponding to invariants or urgent transitions, and the \emph{blocking guard}, which is the minimising guard. If no blocking event is active, then the flow may continue for the whole time step $h$. Any non-urgent events which become active before the blocking time may occur over this time interval. If the blocking guard corresponds to an urgent transition, then this occurs at the blocking time.
+
+The reachable set is then given by $\phi(S_I,[0,\tau_B])$. If we take $t=(s_t+1)\tau_B/2$, then the reachable set is $\phi(s_x,(s_t+1)\tau_B(s_x)/2)$ with $s_x\in S_I$ and $s_t\in[-1,+1]$. For each non-urgent transition active on $[\tau_i,\tau_B]$, we similarly take an evolved set with an extra parameter, $t=\tau_i(s_x)(s_t+1)/2+\tau_B(s_x)$, and $S_{E,i}=r(\phi(s_x,[\tau_i(s_x),\tau_B(s_x)]))$. For an urgent transition, we take $S_{E,i}=r(\phi(s_x,\tau_i(s_x)))$. If there is no blocking event, then we can take $S_{E,C}=\phi(s_x,h)$.
+If there is a blocking transition which is active at the initial state, then no continuous evolution can take place.
+
+\subsubsection*{Causes of non-robustness}
+The above algorithm works for both lower and upper semantics. Complications arise in any one of the following situations:
+\begin{enumerate}
+\item We cannot determine the time at which an event occurs, or even whether the event occurs. This may be due to to non-transverse crossing of the guard set, or at tangencies.
+\item Two events occur, and it cannot be determined which occurs first. This always happens if the first-occurring event depends on the initial state, but may also occur due to numerical error.
+ \begin{itemize}
+  \item We can consider the ``start'' and ``finish'' of the step as special events.
+ \end{itemize}
+\end{enumerate}
+
+In both cases, we may be able to improve the situation by splitting the initial set into smaller pieces, or performing a smaller flow step to get closer to the problematic zone. However, there will be cases when these difficulties are inherent in the system, and need to be handled explicitly. We may expect a loss of accuracy.
+
+For a non-transverse touching or crossing, we can use a single interval to represent the crossing time over the whole set. This can be considered as a function model with a constant value and (probably large) error.
+
+The \emph{tangency set} is defined by the equations $g(\phi(s,t))=0$ and $\nabla g(\phi(s,t)) \cdot f(\phi(s,t)))=0$, giving $2$ equations in $m+1$ unknowns. It may be possible to solve these and hence obtain an image-constraint set for the solution. Across the tangency jump, we still probably need to use raw intervals.
+
+\subsubsection*{Handling tangencies}
+
+\begin{algorithm*}[Transverse crossing]\mbox{}
+\begin{enumerate}
+\item Compute an over-approximating \emph{touching time interval} by bisection.
+\item For upper-semantics, the continuous evolution does not block, and the discrete transition is active over the entire touching time interval. This is guaranteed to give an over-approximation.
+\item For lower-semantics, the continuous evolution blocks at the lower bound of the touching time interval, as we cannot be sure that either continuous evolution or discrete evolution is possible.
+\end{enumerate}
+\end{algorithm*}
+
+If the implicit function theorem does not solve $g(\phi(x_0,\tau(x_0)))=0$, then we can compute approximations to the first hitting time as follows:
+
+For under-approximation to $\tau(x_0)$, assume $g(x_0)<0$. Consider the differential equation $d\tau(x_0,s)/ds = -g(\phi(x_0,\tau(x_0,s)))$ with $\tau(x_0,0)<0$. As $s\to\infty$, $\tau(x_0,s)\to \tau(x_0)$ from below.
+If $g(x_0)>0$, then $\tau(x_0,s)<0$ for $s>0$.
+
+For over-approximation to $\tau(x_0)$, we can solve $d\tau(x_0,s)/ds=-g(\phi(x_0,\tau(x_0,s)))$ with $\tau(\phi(x_0,h),0)=h$.
+Then if $g(\phi(x_0,h))<0$, we have $g\tau(x_0,s)>h$ for all $s>0$.
+
+A better over-approximation can be obtained by first considering $d\tau/ds=\nabla g\cdot f$. As $s\to\infty$, $\tau$ approached a time at which $g(\phi(x_0,t))$ has a maximum/minimum. If $g(x_1)>0$, then we do not go past any crossings. However, if $g(x_1)<0$, we may go to a region in which $g(x_1)>0$. This can improve the crossing time near a tangency.
+
+
+
+
+
+\subsubsection*{Handling transition ordering}
+
+Given a collection of events $E$ with crossing times $\tau_e$, we need to compute which events occur before We can handle transitions using \texttt{max} and \texttt{min} functions on the crossing times.
+
+
+\begin{algorithm*}\mbox{}
+ \begin{enumerate}
+ \item Compute definitely initially active blocking transitions. If there is at least one initially active blocking transitions, apply all such transitions and exit.
+ \item Compute the flow $\phi:\R^n\times\R\rightarrow\R$ over a spacial domain $D$ and time domain $[-h,+h]$.
+ \item For each blocking guard (invariant or urgent action)
+  \begin{enumerate}
+   \item If the transition is possibly active, compute the crossing time model as a function $D\rightarrow\R$.
+  \end{enumerate}
+ \item Add the special blocking transitions of final evolution time and final step time
+ \item Compute the blocking transitions with minimal crossing time, and the minimum of the crossing times.
+ \item If there are multiple blocking transitions, and the time at which they occur is small, make the blocking transition a time evolution.
+ \item Compute the minimum and maximum activation times of the non-urgent transitions.
+
+\end{enumerate}
+\end{algorithm*}
+
+
+\section{Evolution Steps Algorithm}
+
+\texttt{initialise\_evolution\_in\_mode(system,set)}
+  # 
+  \for [e:Event,c:Constraint] in systems.events(set.mode()):
+    if system.type(e) == INVARIANT:
+      set.new_invariant(e,c)
+
+
+
+\appendix
+
+\section{Evolution Steps in Previous Versions}
+
+\subsection*{Evolution Step in Version 0.4.1}
+
+\noindent In this section I describe the \texttt{\_evolution\_step} method of \texttt{HybridEvolver} class in \texttt{version-0.4.1} of \ARIADNE. This methods is the core method of the evolution routines for hybrid automata, and it takes the following inputs:
+
+\begin{compactitem}
+	\item the \texttt{current\_set}, a small set representing the initial set of the computation;
+	\item a \texttt{semantics} for the evolution to be computed, that can be either upper or lower semantics;
+	\item the hybrid \texttt{system} to evolve;
+	\item four list where intermediate results will be stored, that are, \texttt{working\_sets}, \texttt{intermediate\_sets}, \texttt{reach\_sets}, and \texttt{final\_sets}.
+\end{compactitem}
+
+The computation of the evolution of the system is performed through the following steps:
+
+\begin{enumerate}
+	\item The continuous evolution of the \texttt{current\_set} is computed for a small \texttt{step\_size}. At the end of this stage, we obtain a \texttt{final\_set} and a \texttt{reach\_set}.
+
+	\item All possible blocking events (invariants and urgent transitions) are analyzed to determine if we have \emph{blocking} or not, that is, if the continuous evolution should be stopped or if it can proceed for another \texttt{step\_size}. Checking for blocking depends on the \texttt{semantics}:
+		\begin{itemize}
+			\item for \emph{upper semantics}, we have blocking if and only if there exists one blocking event that is \emph{definitely finally active} (that is, that is definitely active on \texttt{final\_set});
+			\item for \emph{lower semantics} a \texttt{lower\_blocking\_time} is computed, that is, the smallest time instant in $[0, \mathtt{time\_step}]$ such that there exists one blocking event that is \emph{possibly active}.
+	\end{itemize}
+
+	\item All transitions (both urgent and not urgent) are analyzed to determine if they must be activated or not. For every transition that is possibly active, we compute the following data:
+		\begin{itemize}
+			\item a \texttt{tribool initially\_active}, that determines if the transition is active on the \texttt{current\_set};
+			\item a \texttt{tribool finally\_active}, that determines if the transition is active at time \texttt{step\_size}, for upper semantics, or at time \texttt{lower\_blocking\_time} for lower semantics;
+			\item an \texttt{Interval crossing\_time}, that contains the point in which the guard became equal to zero (and thus the guard is crossed or touched by the evolution).
+			\end{itemize}
+
+	\item Activation of a transition depends on the values of \texttt{initially\_active}, \texttt{finally\_active}, and \texttt{crossing\_time}, on the \texttt{semantics} and on the type of transition (forced/unforced) as follows:
+
+	\begin{itemize}
+		\item for upper semantics, we have the following cases:
+			\begin{enumerate}
+				\item if the transition is both \emph{possibly} initially and finally active, then it is activated for the whole interval $[0, \mathtt{step\_size}]$ if it is unforced, and in the interval $[0, \mathtt{crossing\_time}]$ if it is forced;
+				\item if the transition is \emph{possibly} initially active but not finally active, then it is activated on the interval $[0, \mathtt{crossing\_time}]$;
+
+				\item if the transition is not initially active but it is \emph{possibly} finally active, then it is activated on the interval $[\mathtt{crossing\_time},\mathtt{step\_size}]$ if it is unforced, and on the interval \texttt{crossing\_time} if it is forced;
+
+				\item otherwise, if the transition is neither initially nor finally active, then it is activated on \texttt{crossing\_time}.
+	\end{enumerate}
+
+	\item for lower semantics, we have the following cases:
+			\begin{enumerate}
+				\item if the transition is \emph{definitely} both initially and finally active, then it is activated for the whole interval $[0, \mathtt{lower\_blocking\_time}]$;
+
+				\item if the transition is \emph{definitely} initially active but not finally active, then it is activated on the interval $[0, \mathtt{crossing\_time}]$;
+
+				\item if the transition is not initially active but it is \emph{definitely} finally active, then it is activated on the interval $[\mathtt{crossing\_time},\mathtt{lower\_blocking\_time}]$;
+
+				\item otherwise, if the transition is neither initially nor finally active, then it is activated on \texttt{crossing\_time}.
+	\end{enumerate}
+
+		\noindent Note that, by the particular blocking condition we have for lower semantics, urgent transitions can be only finally active at this stage.
+\end{itemize}
+
+	\item When a transition is activated, the corresponding \texttt{jump\_set} is computed and added to the \texttt{working\_sets}.
+
+	\item After all transitions have been processed, we put \texttt{reach\_set} in \texttt{reach\_sets}, and \texttt{final\_set} in \texttt{intermediate\_sets}. If blocking have been detected, then \texttt{final\_set} is put also in \texttt{final\_sets}, otherwise it is put in \texttt{working\_sets}, so that the evolution can start again from the final set.
+\end{enumerate}
+
+The above general schema works correctly under the assumption that
+\begin{inparaenum}[\it (i)]
+	\item every guard is crossed at most \emph{once} in $[0, \mathtt{step\_size}]$, and
+	\item \texttt{crossing\_time} is contained in $[0, \mathtt{step\_size}]$.
+\end{inparaenum}
+%
+It is not clear to me what happens if the above assumptions are not respected, that is:
+
+\begin{itemize}
+	\item if a guard is crossed in more than once in $[0, \mathtt{step\_size}]$, what is the result of computing \texttt{crossing\_time}? Will a \texttt{DegenerateCrossing} exception be raised? Or an interval sufficiently large to contain all crossing points is computed?
+
+	\item for some particular examples, usally when the guard is almost tangent to the evolution, namely the \texttt{rectifier} and the \texttt{cmos\_inverter} examples, it happens that \texttt{crossing\_time} can be negative or even bigger than \texttt{step\_size}. How do I have to interpret these results? Does it means that the transition is not active in $[0, \mathtt{step\_size}]$, or that something wrong is happening and \ARIADNE cannot detect the exact crossing time?
+\end{itemize}
+
+\noindent Currently, the code follows the most conservative approach: if something goes wrong in the computation of the \texttt{crossing\_time}, the transition is activated on the whole interval $[0, \mathtt{step\_size}]$ for upper semantics, and it is not activated at all for lower semantics. Is this the best we ca do, or there is a clever approach to solve these situations?
+
+
+
+\subsection*{Evolution Step in Version 0.4.3}
+
+\begin{enumerate}
+\item Extract data about working set and location
+
+\item Find all blocking events (invariants and urgent transitions) which are
+active at the starting time. If any events are definitely active,
+the corresponding reset occurs, and there is no continuous evolution.
+If there are possibly active events, these occur along with continuous
+evolution for upper semantics, and evolution terminates with lower
+semantics.
+
+\begin{tabbing}
+Input: \= \texttt{Set starting\_set},\\
+       \> \texttt{map<Event,ScalarFunction> guards}\\
+Output: \= \texttt{map<Event,Tribool> initially\_active}\\
+     \> \qquad (includes special "blocking event")
+\end{tabbing}
+
+\item Compute the continuous evolution for a fixed step size h, over the
+time interval [-h,+h]
+
+\begin{tabbing}
+Input: \=\texttt{VectorFunction:\ dynamic},\\
+       \>\texttt{Box:\ domain} or  \texttt{SetModel\ initial\_set},\\
+       \>\texttt{Time:\ maximum\_step\_size}\\
+Output: \=
+        \texttt{VectorFunctionModel:\ flow\_model}
+           or \texttt{SetModel:\ flow\_set\_model}\\
+        \> \texttt{Box:\ flow\_bounds}\\
+\end{tabbing}
+
+
+\item For each blocking event, compute the crossing time with the guard set.
+The computed crossing time may lie outside the flow time interval;
+any such crossings will be ignored. Non-transverse crossings may have
+large crossing time intervals.
+
+If the transition is definitely not initially active and the crossing
+is transverse, then there are no problems. If the transition is
+possibly initially active, then the crossing may be in the "wrong"
+direction, i.e. the transition may become inactive. In this case, we
+have upper semantics (otherwise we would already have terminated the
+evolution) and the transition is considered inactive for evolution
+purposes.
+
+If the crossing is not transverse, then lower evolution is blocking
+and upper evolution considers the transition as non-urgent. However,
+we should probably evolve close to the transition, and maybe split
+the evolution across the transversality boundary.
+
+\begin{tabbing}
+Input: \= \texttt{map<Event,ScalarFunction>:\ resets}, \\
+       \> \texttt{Box:\ flow\_bounds} \\
+       \> \quad or \texttt{VectorFunctionModel:\ flow\_model} \\
+       \> \quad or \texttt{SetModel:\ flow\_set\_model} \\
+Output: \= \texttt{map<Event,ScalarFunctionModel>\ crossing\_times}, \\
+        \> \texttt{set<Event>\ tangential\_events}
+\end{tabbing}
+
+\item Compute the blocking time and blocking events. The blocking time is
+the minimum of the computed crossing times.
+
+If there is a single  blocking event, the crossing is tranverse, and
+occurs between the starting and finishing times, then evolution
+proceeds according to this event.
+
+If there are multiple blocking events, and the upper bound of the
+crossing time range is large, then we set the finishing time to
+just below the crossing time. This means that in the next step
+we may be better able to resolve the crossing.
+
+If there are multiple blocking events and the upper bound of the
+blocking time range is small, then lower evolution terminates, and
+upper evolution proceeds according to the crossing time of each
+blocking event.
+
+\begin{tabbing}
+Input: \= \texttt{map<Event,ScalarFunctionModel>:\ crossing\_times} \\
+Output: \= \texttt{set<Event>\ blocking\_events}, \\
+        \> \texttt{ScalarFunctionModel:\ blocking\_time}
+\end{tabbing}
+
+\item Compute the initial and final activation times of the non-blocking
+events. Tangential crossings are included in this computation,
+as they are treated as non-urgent.
+
+Compute the maximum of the initial activation time and starting time,
+and the minimum of the final activation time and finishing/blocking
+time.
+
+\begin{tabbing}
+Input: \= \texttt{map<Event,ScalarFunction>:\ guards}, \\
+       \> \texttt{Box:\ domain} \\
+       \> \quad or \texttt{VectorFunctionModel:\ flow\_model} \\
+       \> \quad or \texttt{SetModel:\ flow\_set\_model} \\
+Output: \= \texttt{map<Event,pair<ScalarFunctionModel,ScalarFunctionModel>>:\ initial/final\_times}
+\end{tabbing}
+
+\item Apply the flows, guards and resets according to the computed
+event times.
+\end{enumerate}
+
+\end{document}

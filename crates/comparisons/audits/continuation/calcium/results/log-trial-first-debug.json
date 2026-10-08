@@ -1,0 +1,18 @@
+{
+  "tag": "log-trial-first-debug",
+  "started": "2026-09-08T08:48:26.207Z",
+  "finished": "2026-09-08T08:48:29.522Z",
+  "elapsedSeconds": 3.312219522,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison",
+  "command": "cargo",
+  "args": [
+    "run",
+    "--offline",
+    "--manifest-path",
+    "audits/continuation/calcium/trial-probe/Cargo.toml",
+    "--target-dir",
+    "/tmp/calcium-prototype-target"
+  ],
+  "code": 101,
+  "signal": null
+}

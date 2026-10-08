@@ -1,0 +1,81 @@
+{
+  "checkpoint": 74,
+  "status": "consumer-qualification-terminal",
+  "root": "/tmp/calcium-zero-consumer.LrNEZu",
+  "artifacts": [
+    {
+      "variant": "baseline",
+      "crate": "hypercurve",
+      "example": "basic",
+      "files": [
+        {
+          "path": "/tmp/calcium-point-consumer.qyV59b/demand-basic",
+          "bytes": 13495088,
+          "sha256": "4e2ae4baad0f776e0a6f34d103177527030eb8806fd012b532912d3adbffe7a5"
+        },
+        {
+          "path": "/tmp/calcium-point-consumer.qyV59b/demand-basic.stripped",
+          "bytes": 11014424,
+          "sha256": "55768aee0ef245254e9fed9b1e9a55389c8d136a9028fb9a4bdbe49434437b10"
+        }
+      ],
+      "reusedFrom": "point-consumer-apps-v66.json"
+    },
+    {
+      "variant": "candidate",
+      "crate": "hypercurve",
+      "example": "basic",
+      "files": [
+        {
+          "path": "/tmp/calcium-zero-consumer.LrNEZu/candidate-basic",
+          "bytes": 13504768,
+          "sha256": "1a39744f2ae47b072a0a4378fd6090a38ebb94419f0319c855d6bf7194c2ffa3"
+        },
+        {
+          "path": "/tmp/calcium-zero-consumer.LrNEZu/candidate-basic.stripped",
+          "bytes": 11020168,
+          "sha256": "8340ec1e8574258fec43fe2aa758303744214e4ee9d59e897a5b9a00bcebef19"
+        }
+      ]
+    },
+    {
+      "variant": "baseline",
+      "crate": "hypercurve",
+      "example": "arrangement",
+      "files": [
+        {
+          "path": "/tmp/calcium-point-consumer.qyV59b/demand-arrangement",
+          "bytes": 14181744,
+          "sha256": "5a7a7f263667955956eb0143fa20487020cbebdc450666e541fb06d193644b2f"
+        },
+        {
+          "path": "/tmp/calcium-point-consumer.qyV59b/demand-arrangement.stripped",
+          "bytes": 11588728,
+          "sha256": "37c69ddb36ca0699f85faabec05a83b02956e31ee3c54db7b84d99948610402d"
+        }
+      ],
+      "reusedFrom": "point-consumer-apps-v66.json"
+    },
+    {
+      "variant": "candidate",
+      "crate": "hypercurve",
+      "example": "arrangement",
+      "files": [
+        {
+          "path": "/tmp/calcium-zero-consumer.LrNEZu/candidate-arrangement",
+          "bytes": 14191496,
+          "sha256": "1e036260abe7c23b5ea14b644f1ae1f5449c6ef79a6c4561529254835f0825cf"
+        },
+        {
+          "path": "/tmp/calcium-zero-consumer.LrNEZu/candidate-arrangement.stripped",
+          "bytes": 11594472,
+          "sha256": "c5ba63f0767f189460c9b0007aa4bd33160d36f8a01425c8b002686c904d064b"
+        }
+      ]
+    }
+  ],
+  "sourceBindingSha256": "940f44180edb35410b967d07f839f7e39afcdc8018631a250d527192642215a0",
+  "baselineAppsSha256": "98700d21ba7dc390c19b28952db4b48dc570cbe0fdd93c067e601d93c2bc1c61",
+  "dedicatedBytes": 50310904,
+  "limits": "Full consumer regression and representative default-feature examples; not a timing campaign or proof that these simple examples execute divisor deflation. Build paths/layout/dead-code selection affect sizes. No live adoption."
+}

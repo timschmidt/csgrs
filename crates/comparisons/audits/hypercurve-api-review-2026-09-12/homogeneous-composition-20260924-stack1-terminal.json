@@ -1,0 +1,31 @@
+{
+  "command": [
+    "/usr/bin/gdb",
+    "-nx",
+    "-nh",
+    "--batch",
+    "-ex",
+    "set pagination off",
+    "-ex",
+    "set confirm off",
+    "-ex",
+    "set print frame-arguments none",
+    "-ex",
+    "set print entry-values no",
+    "-ex",
+    "run",
+    "-ex",
+    "thread apply all bt 40",
+    "-ex",
+    "kill",
+    "-ex",
+    "quit",
+    "--args",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/homogeneous-composition-20260924-probe1"
+  ],
+  "returncode": 0,
+  "interrupted": false,
+  "elapsed_seconds": 0.10096076398622245,
+  "binary_sha256": "491b2ea6e33634cf80f814e51cf11c5f876056b37049f0954fc6adcde34e97d8",
+  "debugger_reaped": true
+}

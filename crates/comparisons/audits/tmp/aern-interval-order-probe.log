@@ -1,0 +1,4 @@
+refinement order: 625 exact checks passed
+interval approximation inclusion: 1006 unsound certificates among 4900 pairs
+[(((-2,-1),(-2,-2)),((-2,-2),(-2,-2)),False),(((-2,-1),(-1,-1)),((-1,-1),(-1,-1)),False),(((-2,-1),(-1,-1)),((-1,0),(-1,-1)),False)]
+loose outer [0,10], inner [1,2], compared with exact [0,5]: falsely refuted

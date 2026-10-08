@@ -1,0 +1,14 @@
+   Compiling hyperreal v0.13.1 (/home/tim/Documents/GitHub/workspace/hyperreal)
+   Compiling hyperlattice v0.6.1 (/home/tim/Documents/GitHub/workspace/hyperlattice)
+   Compiling hyperlimit v0.4.1 (/home/tim/Documents/GitHub/workspace/hyperlimit)
+   Compiling hypertri v0.4.1 (/home/tim/Documents/GitHub/workspace/hypertri)
+    Finished `release` profile [optimized] target(s) in 20.65s
+     Running unittests src/lib.rs (hypertri/target/release/deps/hypertri-5021cc29422d2380)
+
+running 3 tests
+test context::tests::policy_context_and_certainty_remain_one_byte ... ok
+test types::tests::polygon_input_facts_carry_exact_coordinate_summary ... ok
+test types::tests::polygon_input_facts_carry_symbolic_dependencies_without_exact_claims ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+

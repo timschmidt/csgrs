@@ -1,0 +1,252 @@
+Implementing real numbers with RZ
+
+      Andrej Bauer       Iztok Kavkler
+
+       Faculty of mathematics and physics
+             University of Ljubljana
+                    Slovenia
+
+
+              18 June 2007
+
+
+
+
+                                            1 / 14
+Introduction
+
+ Currently, there are two kinds of computable real number
+ implementations.
+   1   The implementations strictly adhering to the theory, e.g.
+       extracted from formalizations of reals in Coq. They tend to be
+       rather inefficient.
+   2   Fast implementations based on interval arithmetic, but with
+       only informal theoretical background.
+ Our goal is to get the best of both: provide real arithmetic that is
+ both efficient and easily formalizable.
+   1   Extract specification from the theory—automatically, if
+       possible.
+   2   Leave the programmer some freedom to produce fast
+       implementation.
+
+
+                                                                        2 / 14
+RZ
+
+
+
+
+     Converts theories of constructive mathematics to OCaml
+     module type specifications.
+     Based on the realizability implementation of logic.
+         The computational content is identified and translated to types
+         and function prototypes.
+         The code is annotated with assertions (that can be proved in
+         classical logic).
+         Allows any implementation, as long as it follows the produced
+         specification—it is possible to use OCaml to its full potential.
+
+
+
+
+                                                                            3 / 14
+RZ example
+
+
+
+ The statement that every complex number has a square root can
+ be expressed in RZ as
+ Axiom sqrt:     ∀z:complex, ∃w:complex, z = mul w w.
+
+ It produces the following OCaml specification.
+ val sqrt : complex → complex
+ (** assertion sqrt : ∀(z:kcomplexk),
+   let p=sqrt z in p:kcomplexk ∧ z ≈complex mul p p *)
+
+ There is no requirement for extensionality—a multi-valued
+ function realizes the above specification.
+
+
+
+
+                                                                 4 / 14
+Constructive and computable reals
+
+ Usually, real numbers are represented by sequences {rn } with
+ rapid Cauchy convergence property
+
+                         |rn − rn+1 | < 2−n .                    (1)
+
+
+     The corresponding OCaml implementation is a function
+     r: nat -> rational with property (1).
+     The problem: every operation has to preserve rapid
+     convergence which usually results in estimates that
+     overshoot the precision. We end up computing much more
+     than is needed.
+     Our implementation via the interval domain does not have
+     this drawback.
+
+
+                                                                       5 / 14
+Overview of the implementation
+
+
+
+ We formally axiomatized the following theories:
+  1   the ring of integers (with natural numbers as subset),
+  2   the ring of dyadic rationals,
+  3   the poset of intervals with dyadic endpoints,
+  4   the interval domain,
+  5   the field of reals.
+ These were translated by RZ to OCaml specifications which were
+ implemented by hand.
+
+
+
+
+                                                                  6 / 14
+Integers
+
+
+
+
+    Integers are defined as a decidable ordered ring with unit
+    whose nonnegative elements are isomorphic to natural
+    numbers (satisfy the axiom of induction).
+    For implementation, we use fast integer library Numerix (or
+    GMP).
+
+
+
+
+                                                                  7 / 14
+Dyadic rationals
+
+
+     Precise rational operations are costly: the numerator and the
+     denominator grow rapidly with every operation.
+     As most other implementations, we use dyadic rationals
+
+                     D = m · 2−k m ∈ Z, k ∈ N .
+                        
+
+
+
+     Axiomatization. A dyadic ring is a decidable Archimedean
+     ordered ring in which 2 is invertible.
+     Every dyadic ring admits approximate division.
+     In a dyadic ring, every element can be approximated by an
+     element of the form n · 2−k with the error at most 2−k .
+
+
+
+                                                                     8 / 14
+Dyadic intervals
+
+
+
+
+ Axiomatization. A dyadic interval is an interval [p, q] with p, q
+ dyadic rationals.
+     Define order [p, q] v [p0 , q 0 ] as [p, q] ⊇ [p0 , q 0 ].
+     We also adjoin the bottom element undefined.
+     Dyadic intervals form a conditional upper semilattice.
+     We axiomatize approximate interval arithmetic, which allows
+     us to trade precision for efficiency.
+
+
+
+
+                                                                     9 / 14
+The interval domain
+
+
+ Axiomatization. The interval domain IR is the ω-chain completion
+ of the poset ID of dyadic intervals.
+     An element x ∈ IR is represented by a chain of dyadic
+     intervals
+                   [p1 , q1 ] v [p2 , q2 ] v [p3 , q3 ] v · · ·
+
+
+     x can be thought of as the interval [a, b] where
+         a = sup pi is a lower real
+         b = inf qi is an upper real
+     Interval arithmetic operations on IR are defined as
+     continuous extensions of the corresponding approximate
+     operations on dyadic intervals.
+
+
+
+                                                                    10 / 14
+Real numbers
+
+
+ Axiomatization. Real numbers form a Cauchy complete
+ Archimedean ordered field.
+ Implementation. Real numbers are the maximal elements of IR.
+     A real x ∈ IR is represented as a chain of dyadic intervals.
+     Crucial: no requirement on the speed of convergence.
+     Arithmetic operations are inherited from the interval domain.
+     Archimedean property is realized by a function
+     val approx_to: real → nat → dyadic
+     that finds approximations of order 2−n . Correctness depends
+     on Markov principle.
+
+
+
+
+                                                                     11 / 14
+Limits
+ The completeness of the reals is witnessed by the function lim:
+ val lim: (nat → real) → (nat → real) → real
+
+ The parameters are the sequence of real numbers (an )n and the
+ sequence of Cauchy error bounds (rn )n .
+
+                        rn ≥ ai − aj       ∀i, j ≥ n
+
+ This formulation is equivalent but easier to use than the strict
+ Cauchy sequence version.
+ Lemma
+ Assume that rn & 0 monotonously. Then the sequence (cn )n
+                          ∞ 
+                          _   (k )      (k )   (k )    (k ) 
+                   cn =          an − r n , an + r n                (2)
+                          k =0
+
+ is a chain in IR and the limit of (an )n is its supremum.
+                                                                          12 / 14
+The Markov principle
+
+
+
+ Markov principle. A loop which does not diverge terminates.
+     A real number is represented as a chain of dyadic intervals
+     whose widths are not bounded away from 0.
+     We can always find arbitrarily good approximation by
+     unbounded search (equivalent to MP).
+     The unbounded search is costly as it makes the time
+     complexity of the program unpredictable. Therefore it is only
+     used in approx_to which we (so far) avoid in the
+     implementation of other functions.
+
+
+
+
+                                                                     13 / 14
+Future directions
+
+
+
+
+     Improve performance and extend current implementation to a
+     useful library.
+     Axiomatize and implement other structures in analysis and
+     topology.
+
+
+
+
+                                                                  14 / 14
+

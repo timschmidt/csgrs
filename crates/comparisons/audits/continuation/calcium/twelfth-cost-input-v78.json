@@ -1,0 +1,678 @@
+[
+  {
+    "id": 0,
+    "family": "twelfth",
+    "k": 1,
+    "op": "sin",
+    "truth": "equal"
+  },
+  {
+    "id": 1,
+    "family": "twelfth",
+    "k": 1,
+    "op": "cos",
+    "truth": "equal"
+  },
+  {
+    "id": 2,
+    "family": "twelfth",
+    "k": 1,
+    "op": "tan",
+    "truth": "equal"
+  },
+  {
+    "id": 3,
+    "family": "twelfth",
+    "k": 1,
+    "op": "cot",
+    "truth": "equal"
+  },
+  {
+    "id": 4,
+    "family": "twelfth",
+    "k": 5,
+    "op": "sin",
+    "truth": "equal"
+  },
+  {
+    "id": 5,
+    "family": "twelfth",
+    "k": 5,
+    "op": "cos",
+    "truth": "equal"
+  },
+  {
+    "id": 6,
+    "family": "twelfth",
+    "k": 5,
+    "op": "tan",
+    "truth": "equal"
+  },
+  {
+    "id": 7,
+    "family": "twelfth",
+    "k": 5,
+    "op": "cot",
+    "truth": "equal"
+  },
+  {
+    "id": 8,
+    "family": "twelfth",
+    "k": 7,
+    "op": "sin",
+    "truth": "equal"
+  },
+  {
+    "id": 9,
+    "family": "twelfth",
+    "k": 7,
+    "op": "cos",
+    "truth": "equal"
+  },
+  {
+    "id": 10,
+    "family": "twelfth",
+    "k": 7,
+    "op": "tan",
+    "truth": "equal"
+  },
+  {
+    "id": 11,
+    "family": "twelfth",
+    "k": 7,
+    "op": "cot",
+    "truth": "equal"
+  },
+  {
+    "id": 12,
+    "family": "twelfth",
+    "k": 11,
+    "op": "sin",
+    "truth": "equal"
+  },
+  {
+    "id": 13,
+    "family": "twelfth",
+    "k": 11,
+    "op": "cos",
+    "truth": "equal"
+  },
+  {
+    "id": 14,
+    "family": "twelfth",
+    "k": 11,
+    "op": "tan",
+    "truth": "equal"
+  },
+  {
+    "id": 15,
+    "family": "twelfth",
+    "k": 11,
+    "op": "cot",
+    "truth": "equal"
+  },
+  {
+    "id": 16,
+    "family": "twelfth",
+    "k": 13,
+    "op": "sin",
+    "truth": "equal"
+  },
+  {
+    "id": 17,
+    "family": "twelfth",
+    "k": 13,
+    "op": "cos",
+    "truth": "equal"
+  },
+  {
+    "id": 18,
+    "family": "twelfth",
+    "k": 13,
+    "op": "tan",
+    "truth": "equal"
+  },
+  {
+    "id": 19,
+    "family": "twelfth",
+    "k": 13,
+    "op": "cot",
+    "truth": "equal"
+  },
+  {
+    "id": 20,
+    "family": "twelfth",
+    "k": 17,
+    "op": "sin",
+    "truth": "equal"
+  },
+  {
+    "id": 21,
+    "family": "twelfth",
+    "k": 17,
+    "op": "cos",
+    "truth": "equal"
+  },
+  {
+    "id": 22,
+    "family": "twelfth",
+    "k": 17,
+    "op": "tan",
+    "truth": "equal"
+  },
+  {
+    "id": 23,
+    "family": "twelfth",
+    "k": 17,
+    "op": "cot",
+    "truth": "equal"
+  },
+  {
+    "id": 24,
+    "family": "twelfth",
+    "k": 19,
+    "op": "sin",
+    "truth": "equal"
+  },
+  {
+    "id": 25,
+    "family": "twelfth",
+    "k": 19,
+    "op": "cos",
+    "truth": "equal"
+  },
+  {
+    "id": 26,
+    "family": "twelfth",
+    "k": 19,
+    "op": "tan",
+    "truth": "equal"
+  },
+  {
+    "id": 27,
+    "family": "twelfth",
+    "k": 19,
+    "op": "cot",
+    "truth": "equal"
+  },
+  {
+    "id": 28,
+    "family": "twelfth",
+    "k": 23,
+    "op": "sin",
+    "truth": "equal"
+  },
+  {
+    "id": 29,
+    "family": "twelfth",
+    "k": 23,
+    "op": "cos",
+    "truth": "equal"
+  },
+  {
+    "id": 30,
+    "family": "twelfth",
+    "k": 23,
+    "op": "tan",
+    "truth": "equal"
+  },
+  {
+    "id": 31,
+    "family": "twelfth",
+    "k": 23,
+    "op": "cot",
+    "truth": "equal"
+  },
+  {
+    "id": 32,
+    "family": "perturbed",
+    "k": 1,
+    "op": "sin",
+    "truth": "not-equal"
+  },
+  {
+    "id": 33,
+    "family": "perturbed",
+    "k": 1,
+    "op": "cos",
+    "truth": "not-equal"
+  },
+  {
+    "id": 34,
+    "family": "perturbed",
+    "k": 1,
+    "op": "tan",
+    "truth": "not-equal"
+  },
+  {
+    "id": 35,
+    "family": "perturbed",
+    "k": 1,
+    "op": "cot",
+    "truth": "not-equal"
+  },
+  {
+    "id": 36,
+    "family": "perturbed",
+    "k": 5,
+    "op": "sin",
+    "truth": "not-equal"
+  },
+  {
+    "id": 37,
+    "family": "perturbed",
+    "k": 5,
+    "op": "cos",
+    "truth": "not-equal"
+  },
+  {
+    "id": 38,
+    "family": "perturbed",
+    "k": 5,
+    "op": "tan",
+    "truth": "not-equal"
+  },
+  {
+    "id": 39,
+    "family": "perturbed",
+    "k": 5,
+    "op": "cot",
+    "truth": "not-equal"
+  },
+  {
+    "id": 40,
+    "family": "perturbed",
+    "k": 7,
+    "op": "sin",
+    "truth": "not-equal"
+  },
+  {
+    "id": 41,
+    "family": "perturbed",
+    "k": 7,
+    "op": "cos",
+    "truth": "not-equal"
+  },
+  {
+    "id": 42,
+    "family": "perturbed",
+    "k": 7,
+    "op": "tan",
+    "truth": "not-equal"
+  },
+  {
+    "id": 43,
+    "family": "perturbed",
+    "k": 7,
+    "op": "cot",
+    "truth": "not-equal"
+  },
+  {
+    "id": 44,
+    "family": "perturbed",
+    "k": 11,
+    "op": "sin",
+    "truth": "not-equal"
+  },
+  {
+    "id": 45,
+    "family": "perturbed",
+    "k": 11,
+    "op": "cos",
+    "truth": "not-equal"
+  },
+  {
+    "id": 46,
+    "family": "perturbed",
+    "k": 11,
+    "op": "tan",
+    "truth": "not-equal"
+  },
+  {
+    "id": 47,
+    "family": "perturbed",
+    "k": 11,
+    "op": "cot",
+    "truth": "not-equal"
+  },
+  {
+    "id": 48,
+    "family": "perturbed",
+    "k": 13,
+    "op": "sin",
+    "truth": "not-equal"
+  },
+  {
+    "id": 49,
+    "family": "perturbed",
+    "k": 13,
+    "op": "cos",
+    "truth": "not-equal"
+  },
+  {
+    "id": 50,
+    "family": "perturbed",
+    "k": 13,
+    "op": "tan",
+    "truth": "not-equal"
+  },
+  {
+    "id": 51,
+    "family": "perturbed",
+    "k": 13,
+    "op": "cot",
+    "truth": "not-equal"
+  },
+  {
+    "id": 52,
+    "family": "perturbed",
+    "k": 17,
+    "op": "sin",
+    "truth": "not-equal"
+  },
+  {
+    "id": 53,
+    "family": "perturbed",
+    "k": 17,
+    "op": "cos",
+    "truth": "not-equal"
+  },
+  {
+    "id": 54,
+    "family": "perturbed",
+    "k": 17,
+    "op": "tan",
+    "truth": "not-equal"
+  },
+  {
+    "id": 55,
+    "family": "perturbed",
+    "k": 17,
+    "op": "cot",
+    "truth": "not-equal"
+  },
+  {
+    "id": 56,
+    "family": "perturbed",
+    "k": 19,
+    "op": "sin",
+    "truth": "not-equal"
+  },
+  {
+    "id": 57,
+    "family": "perturbed",
+    "k": 19,
+    "op": "cos",
+    "truth": "not-equal"
+  },
+  {
+    "id": 58,
+    "family": "perturbed",
+    "k": 19,
+    "op": "tan",
+    "truth": "not-equal"
+  },
+  {
+    "id": 59,
+    "family": "perturbed",
+    "k": 19,
+    "op": "cot",
+    "truth": "not-equal"
+  },
+  {
+    "id": 60,
+    "family": "perturbed",
+    "k": 23,
+    "op": "sin",
+    "truth": "not-equal"
+  },
+  {
+    "id": 61,
+    "family": "perturbed",
+    "k": 23,
+    "op": "cos",
+    "truth": "not-equal"
+  },
+  {
+    "id": 62,
+    "family": "perturbed",
+    "k": 23,
+    "op": "tan",
+    "truth": "not-equal"
+  },
+  {
+    "id": 63,
+    "family": "perturbed",
+    "k": 23,
+    "op": "cot",
+    "truth": "not-equal"
+  },
+  {
+    "id": 64,
+    "family": "known-angle",
+    "k": 2,
+    "op": "sin",
+    "truth": "equal"
+  },
+  {
+    "id": 65,
+    "family": "known-angle",
+    "k": 2,
+    "op": "cos",
+    "truth": "equal"
+  },
+  {
+    "id": 66,
+    "family": "known-angle",
+    "k": 2,
+    "op": "tan",
+    "truth": "equal"
+  },
+  {
+    "id": 67,
+    "family": "known-angle",
+    "k": 2,
+    "op": "cot",
+    "truth": "equal"
+  },
+  {
+    "id": 68,
+    "family": "known-angle",
+    "k": 3,
+    "op": "sin",
+    "truth": "equal"
+  },
+  {
+    "id": 69,
+    "family": "known-angle",
+    "k": 3,
+    "op": "cos",
+    "truth": "equal"
+  },
+  {
+    "id": 70,
+    "family": "known-angle",
+    "k": 3,
+    "op": "tan",
+    "truth": "equal"
+  },
+  {
+    "id": 71,
+    "family": "known-angle",
+    "k": 3,
+    "op": "cot",
+    "truth": "equal"
+  },
+  {
+    "id": 72,
+    "family": "known-angle",
+    "k": 4,
+    "op": "sin",
+    "truth": "equal"
+  },
+  {
+    "id": 73,
+    "family": "known-angle",
+    "k": 4,
+    "op": "cos",
+    "truth": "equal"
+  },
+  {
+    "id": 74,
+    "family": "known-angle",
+    "k": 4,
+    "op": "tan",
+    "truth": "equal"
+  },
+  {
+    "id": 75,
+    "family": "known-angle",
+    "k": 4,
+    "op": "cot",
+    "truth": "equal"
+  },
+  {
+    "id": 76,
+    "family": "periodic",
+    "k": 1,
+    "op": "sin",
+    "truth": "equal"
+  },
+  {
+    "id": 77,
+    "family": "periodic",
+    "k": 1,
+    "op": "cos",
+    "truth": "equal"
+  },
+  {
+    "id": 78,
+    "family": "periodic",
+    "k": 1,
+    "op": "tan",
+    "truth": "equal"
+  },
+  {
+    "id": 79,
+    "family": "periodic",
+    "k": 1,
+    "op": "cot",
+    "truth": "equal"
+  },
+  {
+    "id": 80,
+    "family": "periodic",
+    "k": 13,
+    "op": "sin",
+    "truth": "equal"
+  },
+  {
+    "id": 81,
+    "family": "periodic",
+    "k": 13,
+    "op": "cos",
+    "truth": "equal"
+  },
+  {
+    "id": 82,
+    "family": "periodic",
+    "k": 13,
+    "op": "tan",
+    "truth": "equal"
+  },
+  {
+    "id": 83,
+    "family": "periodic",
+    "k": 13,
+    "op": "cot",
+    "truth": "equal"
+  },
+  {
+    "id": 84,
+    "family": "seventh-identity",
+    "k": 0,
+    "op": "control",
+    "truth": "equal"
+  },
+  {
+    "id": 85,
+    "family": "rational-trig-identity",
+    "k": 0,
+    "op": "control",
+    "truth": "equal"
+  },
+  {
+    "id": 86,
+    "family": "surd-trig-identity",
+    "k": 0,
+    "op": "control",
+    "truth": "equal"
+  },
+  {
+    "id": 87,
+    "family": "exp-identity",
+    "k": 0,
+    "op": "control",
+    "truth": "equal"
+  },
+  {
+    "id": 88,
+    "family": "rational-equal",
+    "k": 0,
+    "op": "control",
+    "truth": "equal"
+  },
+  {
+    "id": 89,
+    "family": "rational-unequal",
+    "k": 0,
+    "op": "control",
+    "truth": "not-equal"
+  },
+  {
+    "id": 90,
+    "family": "quadratic-identity",
+    "k": 0,
+    "op": "control",
+    "truth": "equal"
+  },
+  {
+    "id": 91,
+    "family": "nested-surd-identity",
+    "k": 0,
+    "op": "control",
+    "truth": "equal"
+  },
+  {
+    "id": 92,
+    "family": "deep-seventh-identity",
+    "k": 0,
+    "op": "control",
+    "truth": "equal",
+    "count": 8
+  },
+  {
+    "id": 93,
+    "family": "deep-seventh-identity",
+    "k": 0,
+    "op": "control",
+    "truth": "equal",
+    "count": 64
+  },
+  {
+    "id": 94,
+    "family": "scaled-twelfth",
+    "k": 1,
+    "op": "sin",
+    "truth": "equal",
+    "bits": 1000
+  },
+  {
+    "id": 95,
+    "family": "scaled-twelfth",
+    "k": 1,
+    "op": "sin",
+    "truth": "equal",
+    "bits": 1030
+  }
+]

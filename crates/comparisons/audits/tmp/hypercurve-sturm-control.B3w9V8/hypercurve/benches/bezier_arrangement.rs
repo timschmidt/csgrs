@@ -1,0 +1,342 @@
+use std::hint::black_box;
+use std::time::Instant;
+
+use hypercurve::{
+    BezierAlgebraicParameter2, BezierArrangementFragment2, BezierArrangementGraph2,
+    BezierParameter2, BezierParameterInterval, BezierParameterPolynomial,
+    BezierRetainedOverlapEvidence2, BezierSplitFragment2, BezierSubcurve2, Classification,
+    CubicBezier2, CurveContext, CurveResult, Point2, QuadraticBezier2, RationalQuadraticBezier2,
+    Real,
+};
+
+fn r(value: i32) -> Real {
+    value.into()
+}
+
+fn q(numerator: i32, denominator: i32) -> Real {
+    (Real::from(numerator) / Real::from(denominator)).unwrap()
+}
+
+fn p(x: i32, y: i32) -> Point2 {
+    Point2::new(r(x), r(y))
+}
+
+fn benchmark_iterations() -> u32 {
+    std::env::var("HYPERCURVE_BENCH_ARRANGEMENT_ITERATIONS")
+        .ok()
+        .and_then(|value| value.parse().ok())
+        .unwrap_or(100_u32)
+        .max(1)
+}
+
+fn benchmark_curve_count() -> i32 {
+    std::env::var("HYPERCURVE_BENCH_ARRANGEMENT_CURVES")
+        .ok()
+        .and_then(|value| value.parse().ok())
+        .unwrap_or(64_i32)
+        .clamp(1, i32::MAX / 2)
+}
+
+fn benchmark_group() -> Option<String> {
+    std::env::var("HYPERCURVE_BENCH_ARRANGEMENT_GROUP").ok()
+}
+
+fn decided<T>(classification: Classification<T>) -> T {
+    match classification {
+        Classification::Decided(value) => value,
+        Classification::Uncertain(reason) => panic!("benchmark unexpectedly uncertain: {reason:?}"),
+    }
+}
+
+fn line_fragment(
+    source: usize,
+    segment: usize,
+    start: Point2,
+    control: Point2,
+    end: Point2,
+) -> BezierArrangementFragment2 {
+    BezierArrangementFragment2::new(
+        source,
+        segment,
+        BezierSplitFragment2::Materialized {
+            start: BezierParameter2::Exact(r(0)),
+            end: BezierParameter2::Exact(r(1)),
+            curve: BezierSubcurve2::Quadratic(QuadraticBezier2::new(start, control, end)),
+        },
+    )
+}
+
+fn main() -> CurveResult<()> {
+    let policy = CurveContext::STRICT;
+    let split = [decided(BezierParameter2::exact(q(1, 2), &policy)?)];
+    let mut materializations = Vec::new();
+    let curve_count = benchmark_curve_count();
+    for index in 0..curve_count {
+        let curve = QuadraticBezier2::new(
+            p(index * 2, 0),
+            p(index * 2 + 1, if index % 2 == 0 { 2 } else { -2 }),
+            p(index * 2 + 2, 0),
+        );
+        materializations.push(decided(curve.split_at_parameters(&split, &policy)?));
+    }
+    let graph = BezierArrangementGraph2::from_split_materializations(&materializations)?;
+
+    let iterations = benchmark_iterations();
+    let group = benchmark_group();
+    if group.as_deref() == Some("overlap-scan") {
+        let started = Instant::now();
+        let cold_scan = BezierRetainedOverlapEvidence2::from_graph(&graph, &policy);
+        let cold_scan_elapsed = started.elapsed();
+        let cold_scan_count = match cold_scan {
+            Classification::Decided(evidence) => evidence.len(),
+            Classification::Uncertain(_) => 0,
+        };
+        let started = Instant::now();
+        let retained_scan = BezierRetainedOverlapEvidence2::from_graph(&graph, &policy);
+        let retained_scan_elapsed = started.elapsed();
+        let retained_scan_count = match retained_scan {
+            Classification::Decided(evidence) => evidence.len(),
+            Classification::Uncertain(_) => 0,
+        };
+        println!(
+            "bezier_arrangement_cold_overlap_scan_{curve_count}_curves: one iteration in {cold_scan_elapsed:?}, total={cold_scan_count}"
+        );
+        println!(
+            "bezier_arrangement_retained_overlap_scan_{curve_count}_curves: one iteration in {retained_scan_elapsed:?}, total={retained_scan_count}"
+        );
+        return Ok(());
+    }
+
+    if group.as_deref() == Some("cold-splitting-overlap") {
+        let started = Instant::now();
+        let cold_workflow = decided(graph.traverse_retained_splitting_linear_overlaps(&policy));
+        let cold_workflow_total = black_box(
+            cold_workflow.traversal().len()
+                + cold_workflow
+                    .refined_traversal()
+                    .shadowed_fragment_indices()
+                    .len(),
+        );
+        let cold_workflow_elapsed = started.elapsed();
+        println!(
+            "bezier_arrangement_cold_splitting_overlap_workflow_{curve_count}_curves: one iteration in {cold_workflow_elapsed:?}, total={cold_workflow_total}"
+        );
+        return Ok(());
+    }
+
+    if group
+        .as_deref()
+        .is_none_or(|value| value == "tangent-order")
+    {
+        let started = Instant::now();
+        let mut traversal_total = 0_usize;
+        for _ in 0..iterations {
+            let traversal = decided(graph.traverse_with_tangent_order(&policy));
+            traversal_total += black_box(traversal.len());
+        }
+        let elapsed = started.elapsed();
+        println!(
+            "bezier_arrangement_materialized_tangent_order_{curve_count}_curves: {iterations} iterations in {elapsed:?} ({:?}/iter), total={traversal_total}",
+            elapsed / iterations
+        );
+    }
+
+    if group.as_deref().is_none_or(|value| value == "full-overlap") {
+        let started = Instant::now();
+        let mut total = 0_usize;
+        for _ in 0..iterations {
+            let traversal = decided(graph.traverse_with_tangent_order(&policy));
+            total += black_box(traversal.len());
+            total += black_box(
+                match BezierRetainedOverlapEvidence2::from_graph(&graph, &policy) {
+                    Classification::Decided(evidence) => {
+                        let split_count = match evidence.line_overlap_splits(&policy) {
+                            Classification::Decided(splits) => splits.len(),
+                            Classification::Uncertain(_) => 0,
+                        };
+                        let bezier_split_count =
+                            match evidence.linear_bezier_overlap_splits(&graph, &policy) {
+                                Classification::Decided(splits) => splits.len(),
+                                Classification::Uncertain(_) => 0,
+                            };
+                        evidence.len() + split_count + bezier_split_count
+                    }
+                    Classification::Uncertain(_) => 0,
+                },
+            );
+            total += black_box(
+                match graph.traverse_retained_deduplicating_materialized_overlaps(&policy) {
+                    Classification::Decided(evidence) => evidence.shadowed_fragment_indices().len(),
+                    Classification::Uncertain(_) => 0,
+                },
+            );
+            total += black_box(match graph.split_retained_linear_overlaps(&policy) {
+                Classification::Decided(refinement) => {
+                    refinement.graph().len()
+                        + refinement.refined_fragments().len()
+                        + refinement.resolved_overlaps().len()
+                }
+                Classification::Uncertain(_) => 0,
+            });
+            total += black_box(
+                match graph.traverse_retained_splitting_linear_overlaps(&policy) {
+                    Classification::Decided(traversal) => {
+                        traversal.traversal().len()
+                            + traversal
+                                .refined_traversal()
+                                .shadowed_fragment_indices()
+                                .len()
+                    }
+                    Classification::Uncertain(_) => 0,
+                },
+            );
+        }
+        let elapsed = started.elapsed();
+        println!(
+            "bezier_arrangement_full_overlap_workflow_{curve_count}_curves: {iterations} iterations in {elapsed:?} ({:?}/iter), total={total}",
+            elapsed / iterations
+        );
+    }
+
+    if group.is_some() {
+        return Ok(());
+    }
+
+    let reversed_internal_overlap_graph = BezierArrangementGraph2::new(vec![
+        line_fragment(0, 0, p(0, 0), p(1, 0), p(2, 0)),
+        line_fragment(0, 1, p(2, 0), p(2, 1), p(2, 2)),
+        line_fragment(0, 2, p(2, 2), p(1, 2), p(0, 2)),
+        line_fragment(0, 3, p(0, 2), p(0, 1), p(0, 0)),
+        line_fragment(1, 0, p(2, 0), p(3, 0), p(4, 0)),
+        line_fragment(1, 1, p(4, 0), p(4, 1), p(4, 2)),
+        line_fragment(1, 2, p(4, 2), p(3, 2), p(2, 2)),
+        line_fragment(1, 3, p(2, 2), p(2, 1), p(2, 0)),
+    ])?;
+    let started = Instant::now();
+    let mut reversed_overlap_total = 0_usize;
+    for _ in 0..iterations {
+        let traversal = decided(
+            reversed_internal_overlap_graph.traverse_retained_splitting_linear_overlaps(&policy),
+        );
+        reversed_overlap_total += black_box(
+            traversal.traversal().len()
+                + traversal.traversal().closed_count()
+                + traversal
+                    .refined_traversal()
+                    .shadowed_fragment_indices()
+                    .len(),
+        );
+    }
+    let elapsed = started.elapsed();
+    println!(
+        "bezier_arrangement_reversed_linear_overlap_cancellation: {iterations} iterations in {elapsed:?} ({:?}/iter), total={reversed_overlap_total}",
+        elapsed / iterations
+    );
+
+    let mut same_tangent_materializations = Vec::new();
+    for curve in [
+        QuadraticBezier2::new(p(0, 0), p(1, 0), p(2, 0)),
+        QuadraticBezier2::new(p(2, 0), p(3, 1), p(4, 0)),
+        QuadraticBezier2::new(p(2, 0), p(4, 2), p(5, 0)),
+    ] {
+        same_tangent_materializations.push(decided(curve.split_at_parameters(&[], &policy)?));
+    }
+    let same_tangent_graph =
+        BezierArrangementGraph2::from_split_materializations(&same_tangent_materializations)?;
+    let started = Instant::now();
+    let mut same_tangent_total = 0_usize;
+    for _ in 0..iterations {
+        let traversal = decided(same_tangent_graph.traverse_with_tangent_order(&policy));
+        same_tangent_total += black_box(traversal.len());
+        let retained = decided(same_tangent_graph.traverse_retained_with_tangent_order(&policy));
+        same_tangent_total += black_box(retained.len());
+    }
+    let elapsed = started.elapsed();
+    println!(
+        "bezier_arrangement_same_tangent_order: {iterations} iterations in {elapsed:?} ({:?}/iter), total={same_tangent_total}",
+        elapsed / iterations
+    );
+
+    let mut cubic_same_tangent_materializations = Vec::new();
+    cubic_same_tangent_materializations.push(decided(
+        QuadraticBezier2::new(p(0, 0), p(1, 0), p(2, 0)).split_at_parameters(&[], &policy)?,
+    ));
+    for curve in [
+        CubicBezier2::new(p(2, 0), p(3, 0), p(4, 0), p(5, 1)),
+        CubicBezier2::new(p(2, 0), p(3, 0), p(4, 0), p(5, -1)),
+    ] {
+        cubic_same_tangent_materializations.push(decided(curve.split_at_parameters(&[], &policy)?));
+    }
+    let cubic_same_tangent_graph =
+        BezierArrangementGraph2::from_split_materializations(&cubic_same_tangent_materializations)?;
+    let started = Instant::now();
+    let mut cubic_same_tangent_total = 0_usize;
+    for _ in 0..iterations {
+        let traversal = decided(cubic_same_tangent_graph.traverse_with_tangent_order(&policy));
+        cubic_same_tangent_total += black_box(traversal.len());
+        let retained =
+            decided(cubic_same_tangent_graph.traverse_retained_with_tangent_order(&policy));
+        cubic_same_tangent_total += black_box(retained.len());
+    }
+    let elapsed = started.elapsed();
+    println!(
+        "bezier_arrangement_cubic_same_tangent_order: {iterations} iterations in {elapsed:?} ({:?}/iter), total={cubic_same_tangent_total}",
+        elapsed / iterations
+    );
+
+    let mut rational_same_tangent_materializations = Vec::new();
+    rational_same_tangent_materializations.push(decided(
+        QuadraticBezier2::new(p(0, 0), p(1, 0), p(2, 0)).split_at_parameters(&[], &policy)?,
+    ));
+    for curve in [
+        RationalQuadraticBezier2::try_new(p(2, 0), p(3, 0), p(4, 1), r(1), r(2), r(3))?,
+        RationalQuadraticBezier2::try_new(p(2, 0), p(3, 0), p(4, -1), r(1), r(2), r(3))?,
+    ] {
+        rational_same_tangent_materializations
+            .push(decided(curve.split_at_parameters(&[], &policy)?));
+    }
+    let rational_same_tangent_graph = BezierArrangementGraph2::from_split_materializations(
+        &rational_same_tangent_materializations,
+    )?;
+    let started = Instant::now();
+    let mut rational_same_tangent_total = 0_usize;
+    for _ in 0..iterations {
+        let traversal = decided(rational_same_tangent_graph.traverse_with_tangent_order(&policy));
+        rational_same_tangent_total += black_box(traversal.len());
+        let retained =
+            decided(rational_same_tangent_graph.traverse_retained_with_tangent_order(&policy));
+        rational_same_tangent_total += black_box(retained.len());
+    }
+    let elapsed = started.elapsed();
+    println!(
+        "bezier_arrangement_rational_same_tangent_order: {iterations} iterations in {elapsed:?} ({:?}/iter), total={rational_same_tangent_total}",
+        elapsed / iterations
+    );
+
+    let algebraic_parameter =
+        BezierParameter2::algebraic(decided(BezierAlgebraicParameter2::try_isolate(
+            decided(BezierParameterPolynomial::try_new_power_basis(
+                vec![r(-1), r(2)],
+                &policy,
+            )?),
+            decided(BezierParameterInterval::try_new(q(2, 5), q(3, 5), &policy)?),
+            &policy,
+        )?));
+    let algebraic_curve = QuadraticBezier2::new(p(-1, 0), p(0, 0), p(1, 0));
+    let algebraic_split =
+        decided(algebraic_curve.split_at_parameters(&[algebraic_parameter], &policy)?);
+    let retained_graph = BezierArrangementGraph2::from_split_materializations(&[algebraic_split])?;
+    let started = Instant::now();
+    let mut retained_total = 0_usize;
+    for _ in 0..iterations {
+        let traversal = decided(retained_graph.traverse_retained_with_tangent_order(&policy));
+        retained_total += black_box(traversal.len());
+    }
+    let elapsed = started.elapsed();
+    println!(
+        "bezier_arrangement_retained_tangent_order: {iterations} iterations in {elapsed:?} ({:?}/iter), total={retained_total}",
+        elapsed / iterations
+    );
+
+    Ok(())
+}

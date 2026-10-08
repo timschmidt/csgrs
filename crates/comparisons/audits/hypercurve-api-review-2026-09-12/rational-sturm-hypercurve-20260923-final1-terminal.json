@@ -1,0 +1,348 @@
+{
+  "passed": 1188,
+  "ignored": 6,
+  "failed": [
+    {
+      "label": "candidate",
+      "name": "bezier_offset::conversion_tests::independently_encoded_nonrepresented_analytic_circle_publishes_overlap",
+      "returncode": 101,
+      "elapsed_seconds": 0.11415808403398842,
+      "passed": false,
+      "ignored": false,
+      "log": "rational-sturm-hypercurve-20260923-final1-candidate-case-0216.log"
+    },
+    {
+      "label": "candidate",
+      "name": "bezier_offset::conversion_tests::nonrepresented_center_nonrational_chamfer_inverts_with_retained_authority",
+      "returncode": 101,
+      "elapsed_seconds": 0.16445362905506045,
+      "passed": false,
+      "ignored": false,
+      "log": "rational-sturm-hypercurve-20260923-final1-candidate-case-0258.log"
+    },
+    {
+      "label": "candidate",
+      "name": "bezier_offset::conversion_tests::selected_fiber_transverse_mapped_cut_inverts_by_point",
+      "returncode": 101,
+      "elapsed_seconds": 0.008357547922059894,
+      "passed": false,
+      "ignored": false,
+      "log": "rational-sturm-hypercurve-20260923-final1-candidate-case-0530.log"
+    },
+    {
+      "label": "candidate",
+      "name": "bezier_region::tests::algebraic_endpoint_images_reenter_shared_corner_carriers",
+      "returncode": 101,
+      "elapsed_seconds": 0.064953752909787,
+      "passed": false,
+      "ignored": false,
+      "log": "rational-sturm-hypercurve-20260923-final1-candidate-case-0622.log"
+    },
+    {
+      "label": "candidate",
+      "name": "bezier_region::tests::independent_oblique_chord_pair_fillets_extend_on_infinite_supports",
+      "returncode": 101,
+      "elapsed_seconds": 0.21533834596630186,
+      "passed": false,
+      "ignored": false,
+      "log": "rational-sturm-hypercurve-20260923-final1-candidate-case-0659.log"
+    },
+    {
+      "label": "candidate",
+      "name": "bezier_offset::conversion_tests::selected_parallel_normal_circle_intersects_genuinely_analytic_parallel_in_one_fiber",
+      "returncode": "timeout",
+      "elapsed_seconds": 75.01209402701352,
+      "passed": false,
+      "ignored": false,
+      "log": "rational-sturm-hypercurve-20260923-final1-candidate-case-0534.log"
+    },
+    {
+      "label": "candidate",
+      "name": "bezier_region::tests::nonrepresented_chord_and_retained_rational_arc_share_the_fillet_kernel",
+      "returncode": 101,
+      "elapsed_seconds": 0.11488350399304181,
+      "passed": false,
+      "ignored": false,
+      "log": "rational-sturm-hypercurve-20260923-final1-candidate-case-0677.log"
+    },
+    {
+      "label": "candidate",
+      "name": "bezier_region::tests::nonlinear_selected_corner_chamfers_through_retained_fixed_distance_image",
+      "returncode": "timeout",
+      "elapsed_seconds": 75.90378259099089,
+      "passed": false,
+      "ignored": false,
+      "log": "rational-sturm-hypercurve-20260923-final1-candidate-case-0675.log"
+    },
+    {
+      "label": "candidate",
+      "name": "bezier_region::tests::one_fragment_materialized_loop_chamfers_to_one_middle_interval",
+      "returncode": "timeout",
+      "elapsed_seconds": 75.03830741299316,
+      "passed": false,
+      "ignored": false,
+      "log": "rational-sturm-hypercurve-20260923-final1-candidate-case-0682.log"
+    },
+    {
+      "label": "candidate",
+      "name": "bezier_region::tests::one_fragment_materialized_loop_extends_algebraic_chamfer_cuts_once",
+      "returncode": "timeout",
+      "elapsed_seconds": 75.03761610900983,
+      "passed": false,
+      "ignored": false,
+      "log": "rational-sturm-hypercurve-20260923-final1-candidate-case-0683.log"
+    },
+    {
+      "label": "candidate",
+      "name": "bezier_region::tests::one_fragment_ph_loop_projective_corners_retain_one_extended_interval",
+      "returncode": 101,
+      "elapsed_seconds": 0.03309834294486791,
+      "passed": false,
+      "ignored": false,
+      "log": "rational-sturm-hypercurve-20260923-final1-candidate-case-0686.log"
+    },
+    {
+      "label": "candidate",
+      "name": "bezier_region::tests::one_fragment_nonzero_parallel_loop_extends_chamfer_cuts_on_one_finite_envelope",
+      "returncode": "timeout",
+      "elapsed_seconds": 75.02120656205807,
+      "passed": false,
+      "ignored": false,
+      "log": "rational-sturm-hypercurve-20260923-final1-candidate-case-0684.log"
+    },
+    {
+      "label": "candidate",
+      "name": "bezier_region::tests::one_fragment_selected_loop_chamfers_from_one_interval",
+      "returncode": "timeout",
+      "elapsed_seconds": 75.03782421501819,
+      "passed": false,
+      "ignored": false,
+      "log": "rational-sturm-hypercurve-20260923-final1-candidate-case-0688.log"
+    },
+    {
+      "label": "candidate",
+      "name": "bezier_region::tests::one_fragment_selected_loop_extends_chamfer_cuts_on_its_analytic_carrier",
+      "returncode": "timeout",
+      "elapsed_seconds": 75.03900222398806,
+      "passed": false,
+      "ignored": false,
+      "log": "rational-sturm-hypercurve-20260923-final1-candidate-case-0689.log"
+    },
+    {
+      "label": "candidate",
+      "name": "bezier_region::tests::pair_native_boolean_algebraic_chord_corner_publishes_a_third_generation_fillet",
+      "returncode": "timeout",
+      "elapsed_seconds": 75.00291266606655,
+      "passed": false,
+      "ignored": false,
+      "log": "rational-sturm-hypercurve-20260923-final1-candidate-case-0694.log"
+    },
+    {
+      "label": "candidate",
+      "name": "bezier_region::tests::retained_algebraic_straights_trim_or_extend_chamfer_and_fillet",
+      "returncode": 101,
+      "elapsed_seconds": 0.008763379999436438,
+      "passed": false,
+      "ignored": false,
+      "log": "rational-sturm-hypercurve-20260923-final1-candidate-case-0718.log"
+    },
+    {
+      "label": "candidate",
+      "name": "bezier_region::tests::retained_analytic_multifragment_corner_extends_chamfer_and_fillet",
+      "returncode": 101,
+      "elapsed_seconds": 0.008824806078337133,
+      "passed": false,
+      "ignored": false,
+      "log": "rational-sturm-hypercurve-20260923-final1-candidate-case-0719.log"
+    },
+    {
+      "label": "candidate",
+      "name": "bezier_region::tests::selected_circle_and_analytic_parallel_extend_on_full_supports",
+      "returncode": "timeout",
+      "elapsed_seconds": 75.00606434000656,
+      "passed": false,
+      "ignored": false,
+      "log": "rational-sturm-hypercurve-20260923-final1-candidate-case-0734.log"
+    }
+  ],
+  "parent_replays": [
+    {
+      "label": "parent",
+      "name": "bezier_offset::conversion_tests::independently_encoded_nonrepresented_analytic_circle_publishes_overlap",
+      "returncode": 101,
+      "elapsed_seconds": 0.16441251197829843,
+      "passed": false,
+      "ignored": false,
+      "log": "rational-sturm-hypercurve-20260923-final1-parent-case-0000.log"
+    },
+    {
+      "label": "parent",
+      "name": "bezier_offset::conversion_tests::nonrepresented_center_nonrational_chamfer_inverts_with_retained_authority",
+      "returncode": 101,
+      "elapsed_seconds": 0.1644611890660599,
+      "passed": false,
+      "ignored": false,
+      "log": "rational-sturm-hypercurve-20260923-final1-parent-case-0001.log"
+    },
+    {
+      "label": "parent",
+      "name": "bezier_offset::conversion_tests::selected_fiber_transverse_mapped_cut_inverts_by_point",
+      "returncode": 101,
+      "elapsed_seconds": 0.007855572970584035,
+      "passed": false,
+      "ignored": false,
+      "log": "rational-sturm-hypercurve-20260923-final1-parent-case-0002.log"
+    },
+    {
+      "label": "parent",
+      "name": "bezier_region::tests::algebraic_endpoint_images_reenter_shared_corner_carriers",
+      "returncode": 101,
+      "elapsed_seconds": 0.06407792202662677,
+      "passed": false,
+      "ignored": false,
+      "log": "rational-sturm-hypercurve-20260923-final1-parent-case-0003.log"
+    },
+    {
+      "label": "parent",
+      "name": "bezier_region::tests::independent_oblique_chord_pair_fillets_extend_on_infinite_supports",
+      "returncode": 101,
+      "elapsed_seconds": 0.21430695604067296,
+      "passed": false,
+      "ignored": false,
+      "log": "rational-sturm-hypercurve-20260923-final1-parent-case-0004.log"
+    },
+    {
+      "label": "parent",
+      "name": "bezier_offset::conversion_tests::selected_parallel_normal_circle_intersects_genuinely_analytic_parallel_in_one_fiber",
+      "returncode": "timeout",
+      "elapsed_seconds": 75.01174291910138,
+      "passed": false,
+      "ignored": false,
+      "log": "rational-sturm-hypercurve-20260923-final1-parent-case-0005.log"
+    },
+    {
+      "label": "parent",
+      "name": "bezier_region::tests::nonrepresented_chord_and_retained_rational_arc_share_the_fillet_kernel",
+      "returncode": 101,
+      "elapsed_seconds": 0.1640070000430569,
+      "passed": false,
+      "ignored": false,
+      "log": "rational-sturm-hypercurve-20260923-final1-parent-case-0006.log"
+    },
+    {
+      "label": "parent",
+      "name": "bezier_region::tests::nonlinear_selected_corner_chamfers_through_retained_fixed_distance_image",
+      "returncode": "timeout",
+      "elapsed_seconds": 75.0209918479668,
+      "passed": false,
+      "ignored": false,
+      "log": "rational-sturm-hypercurve-20260923-final1-parent-case-0007.log"
+    },
+    {
+      "label": "parent",
+      "name": "bezier_region::tests::one_fragment_materialized_loop_chamfers_to_one_middle_interval",
+      "returncode": "timeout",
+      "elapsed_seconds": 75.03340208996087,
+      "passed": false,
+      "ignored": false,
+      "log": "rational-sturm-hypercurve-20260923-final1-parent-case-0008.log"
+    },
+    {
+      "label": "parent",
+      "name": "bezier_region::tests::one_fragment_materialized_loop_extends_algebraic_chamfer_cuts_once",
+      "returncode": "timeout",
+      "elapsed_seconds": 75.03492179594468,
+      "passed": false,
+      "ignored": false,
+      "log": "rational-sturm-hypercurve-20260923-final1-parent-case-0009.log"
+    },
+    {
+      "label": "parent",
+      "name": "bezier_region::tests::one_fragment_ph_loop_projective_corners_retain_one_extended_interval",
+      "returncode": 101,
+      "elapsed_seconds": 0.06391941395122558,
+      "passed": false,
+      "ignored": false,
+      "log": "rational-sturm-hypercurve-20260923-final1-parent-case-0010.log"
+    },
+    {
+      "label": "parent",
+      "name": "bezier_region::tests::one_fragment_nonzero_parallel_loop_extends_chamfer_cuts_on_one_finite_envelope",
+      "returncode": "timeout",
+      "elapsed_seconds": 75.02076589409262,
+      "passed": false,
+      "ignored": false,
+      "log": "rational-sturm-hypercurve-20260923-final1-parent-case-0011.log"
+    },
+    {
+      "label": "parent",
+      "name": "bezier_region::tests::one_fragment_selected_loop_chamfers_from_one_interval",
+      "returncode": "timeout",
+      "elapsed_seconds": 75.03832855098881,
+      "passed": false,
+      "ignored": false,
+      "log": "rational-sturm-hypercurve-20260923-final1-parent-case-0012.log"
+    },
+    {
+      "label": "parent",
+      "name": "bezier_region::tests::one_fragment_selected_loop_extends_chamfer_cuts_on_its_analytic_carrier",
+      "returncode": "timeout",
+      "elapsed_seconds": 75.04080701200292,
+      "passed": false,
+      "ignored": false,
+      "log": "rational-sturm-hypercurve-20260923-final1-parent-case-0013.log"
+    },
+    {
+      "label": "parent",
+      "name": "bezier_region::tests::pair_native_boolean_algebraic_chord_corner_publishes_a_third_generation_fillet",
+      "returncode": "timeout",
+      "elapsed_seconds": 75.00170920894016,
+      "passed": false,
+      "ignored": false,
+      "log": "rational-sturm-hypercurve-20260923-final1-parent-case-0014.log"
+    },
+    {
+      "label": "parent",
+      "name": "bezier_region::tests::retained_algebraic_straights_trim_or_extend_chamfer_and_fillet",
+      "returncode": 101,
+      "elapsed_seconds": 0.007822853978723288,
+      "passed": false,
+      "ignored": false,
+      "log": "rational-sturm-hypercurve-20260923-final1-parent-case-0015.log"
+    },
+    {
+      "label": "parent",
+      "name": "bezier_region::tests::retained_analytic_multifragment_corner_extends_chamfer_and_fillet",
+      "returncode": 101,
+      "elapsed_seconds": 0.007835052907466888,
+      "passed": false,
+      "ignored": false,
+      "log": "rational-sturm-hypercurve-20260923-final1-parent-case-0016.log"
+    },
+    {
+      "label": "parent",
+      "name": "bezier_region::tests::selected_circle_and_analytic_parallel_extend_on_full_supports",
+      "returncode": "timeout",
+      "elapsed_seconds": 75.00479232799262,
+      "passed": false,
+      "ignored": false,
+      "log": "rational-sturm-hypercurve-20260923-final1-parent-case-0017.log"
+    }
+  ],
+  "new_failures": [],
+  "check": {
+    "command": [
+      "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+      "check",
+      "--all-targets",
+      "--all-features",
+      "--locked",
+      "--offline"
+    ],
+    "returncode": 0
+  },
+  "binary_sha256": "30e5c493d3b4aac3972982cf4b8b53009d8415147ed283058c76c5eda1deb560",
+  "parent_binary_sha256": "c47f0501a4cf7bd9d7304b672c6e3157954220beadec01a67175c39bad8f64c1",
+  "all_sources_unchanged": true,
+  "all_processes_reaped": true
+}

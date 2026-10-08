@@ -1,0 +1,59 @@
+\doxysubsection{Overt\+Set\+Interface\texorpdfstring{$<$}{<} P, T \texorpdfstring{$>$}{>} Class Template Reference}
+\hypertarget{classAriadne_1_1OvertSetInterface}{}\label{classAriadne_1_1OvertSetInterface}\index{OvertSetInterface$<$ P, T $>$@{OvertSetInterface$<$ P, T $>$}}
+
+
+{\ttfamily \#include $<$set\+\_\+interface.\+hpp$>$}
+
+
+
+\doxysubsubsection{Description}
+\subsubsection*{template$<$class P, class T$>$\newline
+class Ariadne\+::\+Overt\+Set\+Interface$<$ P, T $>$}
+Interface for overt sets, for which intersection with an open box is verifiable. Inheritance diagram for Overt\+Set\+Interface\texorpdfstring{$<$}{<} P, T \texorpdfstring{$>$}{>}\+:\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[height=3.111111cm]{classAriadne_1_1OvertSetInterface}
+\end{center}
+\end{figure}
+\doxysubsubsubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1OvertSetInterface_a957c673a03c2e4bfd9a69d3e32856eae}\label{classAriadne_1_1OvertSetInterface_a957c673a03c2e4bfd9a69d3e32856eae} 
+virtual \mbox{\hyperlink{classAriadne_1_1OvertSetInterface}{Overt\+Set\+Interface}}$<$ P, T $>$ \texorpdfstring{$\ast$}{*} {\bfseries clone} () const =0
+\begin{DoxyCompactList}\small\item\em Construct a dynamically-\/allocated copy. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1OvertSetInterface_ae24646db791b14964d78aa2ffb384840}\label{classAriadne_1_1OvertSetInterface_ae24646db791b14964d78aa2ffb384840} 
+virtual Lower\+Kleenean\+Type$<$ P $>$ {\bfseries overlaps} (const \mbox{\hyperlink{classAriadne_1_1SetInterfaceBase_a621a6488ff988ea56df9398b55b4241f}{Basic\+Set\+Type}} \&bx) const =0
+\begin{DoxyCompactList}\small\item\em Tests if the set overlaps {\itshape bx}. Sets {\itshape A} and {\itshape B} {\itshape overlap} if the interiors of {\itshape A} and {\itshape B} intersect. Sets $A$ and $B$ {\itshape overlap} if $A^\circ \cap B^\circ \neq \emptyset$. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxyparagraph*{Public Member Functions inherited from \mbox{\hyperlink{classAriadne_1_1SetInterfaceBase}{Set\+Interface\+Base$<$ T $>$}}}
+\begin{DoxyCompactItemize}
+\item 
+virtual {\bfseries \texorpdfstring{$\sim$}{\string~}\+Set\+Interface\+Base} ()=default
+\begin{DoxyCompactList}\small\item\em Virtual destructor. \end{DoxyCompactList}\item 
+virtual \mbox{\hyperlink{classAriadne_1_1SetInterfaceBase_aa7182f86fbdcb1b29488c09b3340918d}{Dimension\+Type}} {\bfseries dimension} () const =0
+\begin{DoxyCompactList}\small\item\em The dimension of the set. \end{DoxyCompactList}\item 
+virtual \mbox{\hyperlink{namespaceAriadne_acbb98ddc4385af4599070e65a1a47ec1}{Output\+Stream}} \& {\bfseries \+\_\+write} (\mbox{\hyperlink{namespaceAriadne_acbb98ddc4385af4599070e65a1a47ec1}{Output\+Stream}} \&os) const =0
+\begin{DoxyCompactList}\small\item\em Write to an output stream. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsubsection*{Friends}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1OvertSetInterface_a05e5e0796ca8ce03509a9e9aca4decce}\label{classAriadne_1_1OvertSetInterface_a05e5e0796ca8ce03509a9e9aca4decce} 
+Lower\+Kleenean\+Type$<$ P $>$ {\bfseries overlap} (const \mbox{\hyperlink{classAriadne_1_1OvertSetInterface}{Overt\+Set\+Interface}}$<$ P, T $>$ \&ovs, const \mbox{\hyperlink{classAriadne_1_1OpenSetInterface}{Open\+Set\+Interface}}$<$ P, T $>$ \&ops)
+\begin{DoxyCompactList}\small\item\em Tests if {\itshape ovs} overlaps {\itshape ops}, to a tolerance of {\itshape eps}. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsubsection*{Additional Inherited Members}
+\doxyparagraph*{Public Types inherited from \mbox{\hyperlink{classAriadne_1_1SetInterfaceBase}{Set\+Interface\+Base$<$ T $>$}}}
+\begin{DoxyCompactItemize}
+\item 
+typedef T {\bfseries Element\+Type}
+\begin{DoxyCompactList}\small\item\em The type of element of the set. \end{DoxyCompactList}\item 
+typedef Set\+Traits$<$ T $>$\+::\+Dimension\+Type {\bfseries Dimension\+Type}
+\begin{DoxyCompactList}\small\item\em The type representing the dimension of the set. \end{DoxyCompactList}\item 
+typedef Set\+Traits$<$ T $>$\+::\+Basic\+Set\+Type {\bfseries Basic\+Set\+Type}
+\begin{DoxyCompactList}\small\item\em The type of basic set in the space. \end{DoxyCompactList}\item 
+typedef Set\+Traits$<$ T $>$\+::\+Bounding\+Set\+Type {\bfseries Bounding\+Set\+Type}
+\begin{DoxyCompactList}\small\item\em The type of basic set in the space. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+The documentation for this class was generated from the following files\+:\begin{DoxyCompactItemize}
+\item 
+source/geometry/set.\+decl.\+hpp\item 
+source/geometry/\mbox{\hyperlink{set__interface_8hpp}{set\+\_\+interface.\+hpp}}\end{DoxyCompactItemize}

@@ -1,0 +1,13 @@
+{
+  "tag": "root-exp-trial-state-release",
+  "started": "2026-09-08T11:36:42.406Z",
+  "finished": "2026-09-08T11:36:42.421Z",
+  "elapsedSeconds": 0.012664482000000006,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison",
+  "command": "/home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype/release/calcium-root-exp-trial-qualification",
+  "args": [
+    "state"
+  ],
+  "code": 0,
+  "signal": null
+}

@@ -1,0 +1,138 @@
+aern-interval> build (lib) with ghc-9.6.7
+Preprocessing library for aern-interval-0.5.0..
+Building library for aern-interval-0.5.0..
+[ 8 of 18] Compiling Numeric.AERN.RealArithmetic.Interval.Effort
+
+/tmp/aern-audit.zp9Mzz/source/aern-interval/src/Numeric/AERN/RealArithmetic/Interval/Effort.hs:31:1: warning: [GHC-99623] [-Wdodgy-imports]
+    The import item ‘MixedFieldOpsEffortIndicator(..)’ suggests that
+    ‘MixedFieldOpsEffortIndicator’ has (in-scope) constructors or class methods,
+    but it has none
+   |
+31 | import qualified 
+   | ^^^^^^^^^^^^^^^^^...
+
+/tmp/aern-audit.zp9Mzz/source/aern-interval/src/Numeric/AERN/RealArithmetic/Interval/Effort.hs:34:9: warning: [-Wunused-imports]
+    The qualified import of ‘RoundedMixedField’
+    from module ‘Numeric.AERN.RealArithmetic.NumericOrderRounding’ is redundant
+   |
+34 |         RoundedMixedField, RoundedMixedFieldEffort, MixedFieldOpsEffortIndicator(..), mixedFieldOpsDefaultEffort)
+   |         ^^^^^^^^^^^^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-interval/src/Numeric/AERN/RealArithmetic/Interval/Effort.hs:43:1: warning: [-Wunused-imports]
+    The import of ‘Control.Applicative’ is redundant
+      except perhaps to import instances from ‘Control.Applicative’
+    To import instances alone, use: import Control.Applicative()
+   |
+43 | import Control.Applicative
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^
+[11 of 18] Compiling Numeric.AERN.RealArithmetic.Interval.FieldOps
+
+/tmp/aern-audit.zp9Mzz/source/aern-interval/src/Numeric/AERN/RealArithmetic/Interval/FieldOps.hs:287:9: warning: [GHC-62161] [-Wincomplete-uni-patterns]
+    Pattern match(es) are non-exhaustive
+    In a pattern binding:
+        Patterns of type ‘[Bool]’ not matched:
+            []
+            [_]
+            [_, _]
+            [_, _, _]
+            ...
+    |
+287 |         [l1Nonneg,  l1Nonpos,  r1Nonneg,  r1Nonpos,  l2Nonneg,  l2Nonpos,  r2Nonneg,  r2Nonpos] =
+    |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^...
+
+/tmp/aern-audit.zp9Mzz/source/aern-interval/src/Numeric/AERN/RealArithmetic/Interval/FieldOps.hs:296:9: warning: [GHC-62161] [-Wincomplete-uni-patterns]
+    Pattern match(es) are non-exhaustive
+    In a pattern binding:
+        Patterns of type ‘[Bool]’ not matched:
+            []
+            [_]
+            [_, _]
+            [_, _, _]
+            ...
+    |
+296 |         [i1Consistent,  i1Anticonsistent, i2Consistent,  i2Anticonsistent] =
+    |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^...
+
+/tmp/aern-audit.zp9Mzz/source/aern-interval/src/Numeric/AERN/RealArithmetic/Interval/FieldOps.hs:296:25: warning: [-Wunused-local-binds]
+    Defined but not used: ‘i1Anticonsistent’
+    |
+296 |         [i1Consistent,  i1Anticonsistent, i2Consistent,  i2Anticonsistent] =
+    |                         ^^^^^^^^^^^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-interval/src/Numeric/AERN/RealArithmetic/Interval/FieldOps.hs:296:58: warning: [-Wunused-local-binds]
+    Defined but not used: ‘i2Anticonsistent’
+    |
+296 |         [i1Consistent,  i1Anticonsistent, i2Consistent,  i2Anticonsistent] =
+    |                                                          ^^^^^^^^^^^^^^^^
+[12 of 18] Compiling Numeric.AERN.RealArithmetic.Interval.Measures
+[13 of 18] Compiling Numeric.AERN.RealArithmetic.Interval.MixedFieldOps
+[15 of 18] Compiling Numeric.AERN.RealArithmetic.Interval.Floating
+
+/tmp/aern-audit.zp9Mzz/source/aern-interval/src/Numeric/AERN/RealArithmetic/Interval/Floating.hs:123:11: error:
+    Ambiguous occurrence ‘<*>’
+    It could refer to
+       either ‘Prelude.<*>’,
+              imported from ‘Prelude’ at src/Numeric/AERN/RealArithmetic/Interval/Floating.hs:23:1-34
+              (and originally defined in ‘GHC.Base’)
+           or ‘Numeric.AERN.RealArithmetic.RefinementOrderRounding.Operators.<*>’,
+              imported from ‘Numeric.AERN.RealArithmetic.RefinementOrderRounding.Operators’ at src/Numeric/AERN/RealArithmetic/Interval/Floating.hs:36:1-68
+              (and originally defined in ‘aern-real-0.5.0:Numeric.AERN.RealArithmetic.RefinementOrderRounding.FieldOps’)
+    |
+123 |     (*) = (<*>)
+    |           ^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-interval/src/Numeric/AERN/RealArithmetic/Interval/Floating.hs:151:28: error:
+    Ambiguous occurrence ‘<*>’
+    It could refer to
+       either ‘Prelude.<*>’,
+              imported from ‘Prelude’ at src/Numeric/AERN/RealArithmetic/Interval/Floating.hs:23:1-34
+              (and originally defined in ‘GHC.Base’)
+           or ‘Numeric.AERN.RealArithmetic.RefinementOrderRounding.Operators.<*>’,
+              imported from ‘Numeric.AERN.RealArithmetic.RefinementOrderRounding.Operators’ at src/Numeric/AERN/RealArithmetic/Interval/Floating.hs:36:1-68
+              (and originally defined in ‘aern-real-0.5.0:Numeric.AERN.RealArithmetic.RefinementOrderRounding.FieldOps’)
+    |
+151 |         IntervalApprox (o1 <*> o2) (i1 >*< i2)
+    |                            ^^^
+[16 of 18] Compiling Numeric.AERN.RealArithmetic.Interval.ElementaryFromFieldOps
+
+/tmp/aern-audit.zp9Mzz/source/aern-interval/src/Numeric/AERN/RealArithmetic/Interval/ElementaryFromFieldOps.hs:43:1: warning: [-Wunused-imports]
+    The import of ‘Numeric.AERN.NumericOrder.Operators’ is redundant
+      except perhaps to import instances from ‘Numeric.AERN.NumericOrder.Operators’
+    To import instances alone, use: import Numeric.AERN.NumericOrder.Operators()
+   |
+43 | import  Numeric.AERN.NumericOrder.Operators
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-interval/src/Numeric/AERN/RealArithmetic/Interval/ElementaryFromFieldOps.hs:234:14: warning: [-Wunused-matches]
+    Defined but not used: ‘eff’
+    |
+234 |     sinInEff eff i =
+    |              ^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-interval/src/Numeric/AERN/RealArithmetic/Interval/ElementaryFromFieldOps.hs:234:18: warning: [-Wunused-matches]
+    Defined but not used: ‘i’
+    |
+234 |     sinInEff eff i =
+    |                  ^
+
+/tmp/aern-audit.zp9Mzz/source/aern-interval/src/Numeric/AERN/RealArithmetic/Interval/ElementaryFromFieldOps.hs:238:14: warning: [-Wunused-matches]
+    Defined but not used: ‘eff’
+    |
+238 |     cosInEff eff i =
+    |              ^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-interval/src/Numeric/AERN/RealArithmetic/Interval/ElementaryFromFieldOps.hs:238:18: warning: [-Wunused-matches]
+    Defined but not used: ‘i’
+    |
+238 |     cosInEff eff i =
+    |                  ^
+
+Error: [S-7282]
+       Stack failed to execute the build plan.
+       
+       While executing the build plan, Stack encountered the error:
+       
+       [S-7011]
+       While building package aern-interval-0.5.0 (scroll up to its section to see the error) using:
+       /tmp/aern2-stack.ryVCFK/setup-exe-cache/x86_64-linux-tinfo6/Cabal-simple_O_vy6YIf_3.10.3.0_ghc-9.6.7 --verbose=1 --builddir=.stack-work/dist/x86_64-linux-tinfo6/ghc-9.6.7 build lib:aern-interval --ghc-options ""
+       Process exited with code: ExitFailure 1 

@@ -1,0 +1,39 @@
+{
+  "baseline": "derivative-denominator-v836-sources.json",
+  "rlib": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypercurve-85a9105cd1c82df7.rlib",
+  "rlib_sha256": "095b763c2c15d940b476779a4e9dafcb29252a7a85e45aa066e6c0592044cc34",
+  "source_sha256": "3b862431c0ab294a542c4be8e34feb26a4d51a9292920e18d7b0e35a290e7ed6",
+  "processes": [
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustc",
+        "--edition=2024",
+        "--crate-name",
+        "derivative_domain_probe",
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/derivative-domain-probe-v830.rs",
+        "--extern",
+        "hypercurve=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypercurve-85a9105cd1c82df7.rlib",
+        "-L",
+        "dependency=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps",
+        "-C",
+        "opt-level=3",
+        "-o",
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/derivative-domain-replay-v838-binary"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.614580619847402,
+      "log": "derivative-domain-replay-v838-compile.log"
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/derivative-domain-replay-v838-binary"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.01565265702083707,
+      "log": "derivative-domain-replay-v838-run.log"
+    }
+  ],
+  "all_processes_reaped": true,
+  "binary_sha256": "0b1935e044f87364ce33a648879d263c797505649fcf27d2ea15eb5d3f51711c",
+  "probe_complete": true
+}

@@ -1,0 +1,13 @@
+{
+  "tag": "quadratic-extraction-linkage-v82",
+  "started": "2026-09-12T03:11:34.506Z",
+  "finished": "2026-09-12T03:11:34.525Z",
+  "elapsedSeconds": 0.016662678999999996,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "ldd",
+  "args": [
+    "/tmp/calcium-quadratic-extraction-v82.oqquqM/controls"
+  ],
+  "code": 0,
+  "signal": null
+}

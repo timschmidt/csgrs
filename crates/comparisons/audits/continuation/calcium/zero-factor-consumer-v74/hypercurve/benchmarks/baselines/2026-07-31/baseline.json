@@ -1,0 +1,123 @@
+{
+  "schema": 1,
+  "captured_on": "2026-07-31",
+  "host": {
+    "cpu": "AMD Ryzen 7 5800X3D 8-Core Processor",
+    "physical_cores": 8,
+    "hardware_threads": 16,
+    "kernel": "Linux 7.0.4-100.fc43.x86_64",
+    "rustc": "1.97.0 (2d8144b78 2026-07-07)",
+    "llvm": "22.1.6",
+    "target": "x86_64-unknown-linux-gnu"
+  },
+  "source_revisions": {
+    "hyperreal": "56dc8414e9b279ef2e34804579895d2971b89f41",
+    "hyperlattice": "91d300239500116efbef0fe9da9e1b564d37adfb",
+    "hyperlimit": "5b0318f55c6dbe23e15abdc13fd703be2dbfb79c",
+    "hypersolve": "00a3c4704dd4be973f5e9b90891073334f717ce5",
+    "hypertri": "3a4f7a19ea5194c4e992b55dda2ddf76439297e8",
+    "hypercurve": "d2eac03ee5bd01e5cc2efc85ca3d53f7c5374712",
+    "hyperbrep": "6336697cd124ef6ef8384166b1f90ef2fceb6663",
+    "hypermesh": "c1ed956c635a4d6ceb7499a919b23bffba9e93e9",
+    "csgrs": "c42233b13c7a6721ff5c99000eebfe1de11d339c",
+    "hypercircuit": "17c914f85c684d737d9ac601366714ff5fff2d6f",
+    "hyperdrc": "b8184afad1a67585c0a112ced8b4053ae404c09a",
+    "hyperpack": "c42a2c3dab420d035be61450a79d4962f5ee92c8",
+    "synaps-cad": "c5010e90fbc1c7acb5c20f4bbce53de6299075ba"
+  },
+  "comparative_release_medians_ns": {
+    "rectangle_union": {
+      "hypercurve": 4782,
+      "cavalier_contours": 919,
+      "i_overlay": 1001
+    },
+    "star64_intersection": {
+      "hypercurve": 35643,
+      "cavalier_contours": 27483,
+      "i_overlay": 34006
+    },
+    "star256_intersection": {
+      "hypercurve": 420631,
+      "cavalier_contours": 483689,
+      "i_overlay": 505483
+    },
+    "star1024_intersection": {
+      "hypercurve": 5092000,
+      "cavalier_contours": 19583000,
+      "i_overlay": 10216000
+    },
+    "inward_capsule_offset": {
+      "hypercurve": 19293,
+      "cavalier_contours": 945
+    },
+    "certified_open_cubic_offset": {
+      "hypercurve": 29485000,
+      "curvo_heuristic": 8071
+    },
+    "source_chord_cubic_fallback": {
+      "hypercurve": 979135
+    },
+    "rational_cubic_nurbs_evaluation": {
+      "hypercurve": 1568,
+      "curvo": 58
+    }
+  },
+  "pathological_curve_region2": {
+    "cells": 67,
+    "operations": 268,
+    "completed_operations": 268,
+    "blockers": 0,
+    "checksum": 6,
+    "estimated_native_input_bytes": 105381888,
+    "observed_build_rss_delta_bytes": 37748736,
+    "deep_copy_rotate_ns": 6956000,
+    "all_four_native_booleans_ns": 471450000,
+    "exact_polyline_control_ns": 16642000,
+    "candidate_pairs": 603,
+    "retained_fragments": 3248,
+    "point_classifications": 134,
+    "one_cell_callgrind_instruction_references": 23643857,
+    "heaptrack_allocation_calls": 8311850,
+    "heaptrack_temporary_allocations": 1383376,
+    "heaptrack_peak_heap_bytes": 37979423,
+    "heaptrack_peak_rss_bytes": 69845647
+  },
+  "native_release_artifact_bytes": {
+    "text": 5261805,
+    "data": 266824,
+    "bss": 2664,
+    "total_loadable": 5531293,
+    "debug_file": 6966560,
+    "stripped_file": 5532504
+  },
+  "static_layout_bytes": {
+    "CurvePolicy": 32,
+    "CurveCertainty": 1,
+    "Curve2": 8,
+    "CurveData2": 544,
+    "CurveGeometry2": 192,
+    "CurvePath2": 8,
+    "CurvePathData2": 176,
+    "CurveRegion2": 112,
+    "CurveRegionBoundaryLoop2": 48,
+    "LineArcRegion2": 48
+  },
+  "call_graph": {
+    "scope": "workspace audit graph",
+    "nodes": 67597,
+    "edges": 117041,
+    "artifact": "/tmp/hypercurve-audit-callgraph/callgraph.json"
+  },
+  "historical_target": {
+    "commit": "1cbcbd70cab95ac26302bce5a4534656a6424c13",
+    "description": "Use topology-only Boolean connectivity",
+    "pathological_all_four_native_booleans_ns": 433937000,
+    "cells": 67,
+    "operations": 268,
+    "blockers": 0,
+    "checksum": 6,
+    "candidate_pairs": 603,
+    "retained_fragments": 3248,
+    "point_classifications": 134
+  }
+}

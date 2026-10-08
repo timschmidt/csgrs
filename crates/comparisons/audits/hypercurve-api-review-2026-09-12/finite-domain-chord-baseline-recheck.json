@@ -1,0 +1,25 @@
+{
+  "returncode": 0,
+  "elapsed_seconds": 0.003667358003440313,
+  "normal_library_sha256": "b31e267304078990dc38fc5317e3aa398a08854447338a9a676dc537a5956d8e",
+  "log": "finite-domain-chord-baseline-recheck.log",
+  "source": "finite-domain-baseline.rs",
+  "command": [
+    "rustc",
+    "--edition=2024",
+    "-O",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-domain-baseline.rs",
+    "--extern",
+    "hypercurve=/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/libhypercurve-2c7ff6f3fbe07653.rlib",
+    "-L",
+    "dependency=/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps",
+    "-o",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-domain-chord-baseline-recheck"
+  ],
+  "source_sha256": "c032cc63c161d14b576b2264b3df28e4a78b35d9210200aaf51b829f64806e59",
+  "executable_sha256": "a7251e7232d458aca71e3ecfb6440003471ad1f206e6479ef155dc4aff2e0a0b",
+  "counts": {
+    "complete": 4,
+    "incomplete": 8
+  }
+}

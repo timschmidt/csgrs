@@ -1,0 +1,27 @@
+{
+  "build": [
+    "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+    "test",
+    "--lib",
+    "--all-features",
+    "--no-run",
+    "--message-format=json",
+    "--locked",
+    "--offline"
+  ],
+  "command": [
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/independent-field-corners-20260924-v4-debug-libtest",
+    "--exact",
+    "bezier_region::tests::independent_field_corner_edits_preserve_normalized_sets",
+    "--nocapture",
+    "--test-threads=1",
+    "--color",
+    "never"
+  ],
+  "returncode": 101,
+  "elapsed_seconds": 5.054491650080308,
+  "diagnostic_only": true,
+  "binary_sha256": "9054501c25e94f2eaab1d2ebddc4aab68516e1d264656bb86b5e712a8241efa8",
+  "all_sources_unchanged": true,
+  "all_processes_reaped": true
+}

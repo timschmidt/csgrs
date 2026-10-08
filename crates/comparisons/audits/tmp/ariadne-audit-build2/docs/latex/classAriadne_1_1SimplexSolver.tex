@@ -1,0 +1,121 @@
+\doxysubsection{Simplex\+Solver\texorpdfstring{$<$}{<} X \texorpdfstring{$>$}{>} Class Template Reference}
+\hypertarget{classAriadne_1_1SimplexSolver}{}\label{classAriadne_1_1SimplexSolver}\index{SimplexSolver$<$ X $>$@{SimplexSolver$<$ X $>$}}
+
+
+{\ttfamily \#include $<$linear\+\_\+programming.\+hpp$>$}
+
+
+
+\doxysubsubsection{Description}
+\subsubsection*{template$<$class X$>$\newline
+class Ariadne\+::\+Simplex\+Solver$<$ X $>$}
+Solver for linear programming problems using the simplex algorithm. \doxysubsubsubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1SimplexSolver_a8b23f38b3ee6427275d7032f930d66d2}\label{classAriadne_1_1SimplexSolver_a8b23f38b3ee6427275d7032f930d66d2} 
+\mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ XX $>$ {\bfseries minimise} (const \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ X $>$ \&c, const \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ X $>$ \&xl, const \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ X $>$ \&xu, const \mbox{\hyperlink{classAriadne_1_1Matrix}{Matrix}}$<$ X $>$ \&A, const \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ X $>$ \&b) const
+\begin{DoxyCompactList}\small\item\em Solve the linear programming problem $\min cx \text{ s.t. } Ax=b;\ l\leq x\leq u$. Returns the optimal vector. Throws an error if the problem is infeasible. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1SimplexSolver_a02a0577a91f210675bc49eb5be0f4226}\label{classAriadne_1_1SimplexSolver_a02a0577a91f210675bc49eb5be0f4226} 
+\mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ XX $>$ {\bfseries hotstarted\+\_\+minimise} (const \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ X $>$ \&c, const \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ X $>$ \&xl, const \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ X $>$ \&xu, const \mbox{\hyperlink{classAriadne_1_1Matrix}{Matrix}}$<$ X $>$ \&A, const \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ X $>$ \&b, \mbox{\hyperlink{classAriadne_1_1Array}{Array}}$<$ \mbox{\hyperlink{group__OptimisationSubModule_gaba792cefe409c16dfa7a762b64997b5c}{Slackness}} $>$ \&vt) const
+\begin{DoxyCompactList}\small\item\em Solve the linear programming problem $\min cx \text{ s.t. } Ax=b;\ l\leq x\leq u$. Returns the optimal vector. Throws an error if the problem is infeasible. Uses starting variable types {\itshape vt}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1SimplexSolver_ad640a0114a6549dd542c322f8ddf5d59}\label{classAriadne_1_1SimplexSolver_ad640a0114a6549dd542c322f8ddf5d59} 
+\mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ XX $>$ {\bfseries hotstarted\+\_\+minimise} (const \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ X $>$ \&c, const \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ X $>$ \&xl, const \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ X $>$ \&xu, const \mbox{\hyperlink{classAriadne_1_1Matrix}{Matrix}}$<$ X $>$ \&A, const \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ X $>$ \&b, \mbox{\hyperlink{classAriadne_1_1Array}{Array}}$<$ \mbox{\hyperlink{group__OptimisationSubModule_gaba792cefe409c16dfa7a762b64997b5c}{Slackness}} $>$ \&vt, \mbox{\hyperlink{classAriadne_1_1Array}{Array}}$<$ \mbox{\hyperlink{namespaceAriadne_acd8b5f68421eb22a84277ef7c9c0ee2a}{Size\+Type}} $>$ \&p, \mbox{\hyperlink{classAriadne_1_1Matrix}{Matrix}}$<$ XX $>$ \&B) const
+\begin{DoxyCompactList}\small\item\em Solve the linear programming problem $\min cx \text{ s.t. } Ax=b;\ l\leq x\leq u$. Returns the optimal vector. Throws an error if the problem is infeasible. Uses starting variable types vt, permutation p and inverse basic matrix B. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1SimplexSolver_ad43f4f501fd3e972455301f2d7405f9a}\label{classAriadne_1_1SimplexSolver_ad43f4f501fd3e972455301f2d7405f9a} 
+\mbox{\hyperlink{classAriadne_1_1ValidatedKleenean}{Validated\+Kleenean}} {\bfseries primal\+\_\+feasible} (const \mbox{\hyperlink{classAriadne_1_1Matrix}{Matrix}}$<$ X $>$ \&A, const \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ X $>$ \&b) const
+\begin{DoxyCompactList}\small\item\em Test if there exists a point $x$ with $0 \leq x$ and $Ax=b$. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1SimplexSolver_a22e1d3cdf2b4f1819dff30bcbd944f3f}\label{classAriadne_1_1SimplexSolver_a22e1d3cdf2b4f1819dff30bcbd944f3f} 
+\mbox{\hyperlink{classAriadne_1_1ValidatedKleenean}{Validated\+Kleenean}} {\bfseries dual\+\_\+feasible} (const \mbox{\hyperlink{classAriadne_1_1Matrix}{Matrix}}$<$ X $>$ \&A, const \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ X $>$ \&c) const
+\begin{DoxyCompactList}\small\item\em Test if there exists a point $y$ with $yA\leq c$. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1SimplexSolver_a959c72541489d0c6764a94faebf51b9b}\label{classAriadne_1_1SimplexSolver_a959c72541489d0c6764a94faebf51b9b} 
+\mbox{\hyperlink{classAriadne_1_1ValidatedKleenean}{Validated\+Kleenean}} {\bfseries feasible} (const \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ X $>$ \&xl, const \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ X $>$ \&xu, const \mbox{\hyperlink{classAriadne_1_1Matrix}{Matrix}}$<$ X $>$ \&A, const \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ X $>$ \&b) const
+\begin{DoxyCompactList}\small\item\em Test if there exists a point $x$ with $l \leq x \leq u$ and $Ax=b$. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1SimplexSolver_aced52c88358547f1d084965df385c03e}\label{classAriadne_1_1SimplexSolver_aced52c88358547f1d084965df385c03e} 
+\mbox{\hyperlink{classAriadne_1_1ValidatedKleenean}{Validated\+Kleenean}} {\bfseries hotstarted\+\_\+feasible} (const \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ X $>$ \&xl, const \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ X $>$ \&xu, const \mbox{\hyperlink{classAriadne_1_1Matrix}{Matrix}}$<$ X $>$ \&A, const \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ X $>$ \&b, \mbox{\hyperlink{classAriadne_1_1Array}{Array}}$<$ \mbox{\hyperlink{group__OptimisationSubModule_gaba792cefe409c16dfa7a762b64997b5c}{Slackness}} $>$ \&vt) const
+\begin{DoxyCompactList}\small\item\em Test if there exists a point $x$ with $l \leq x \leq u$ and $Ax=b$. The initial \doxylink{classAriadne_1_1Array}{Array} {\itshape vt} is used to define the initial basic point. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1SimplexSolver_a17484ffccf9f0a9028343662ce1ba26b}\label{classAriadne_1_1SimplexSolver_a17484ffccf9f0a9028343662ce1ba26b} 
+\mbox{\hyperlink{classAriadne_1_1ValidatedKleenean}{Validated\+Kleenean}} {\bfseries hotstarted\+\_\+feasible} (const \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ X $>$ \&xl, const \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ X $>$ \&xu, const \mbox{\hyperlink{classAriadne_1_1Matrix}{Matrix}}$<$ X $>$ \&A, const \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ X $>$ \&b, \mbox{\hyperlink{classAriadne_1_1Array}{Array}}$<$ \mbox{\hyperlink{group__OptimisationSubModule_gaba792cefe409c16dfa7a762b64997b5c}{Slackness}} $>$ \&vt, \mbox{\hyperlink{classAriadne_1_1Array}{Array}}$<$ \mbox{\hyperlink{namespaceAriadne_acd8b5f68421eb22a84277ef7c9c0ee2a}{Size\+Type}} $>$ \&p, \mbox{\hyperlink{classAriadne_1_1Matrix}{Matrix}}$<$ XX $>$ \&B, \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ XX $>$ \&x, \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ XX $>$ \&y) const
+\begin{DoxyCompactList}\small\item\em Test if there exists a point $x$ with $l \leq x \leq u$ and $Ax=b$. If the initial \doxylink{classAriadne_1_1Array}{Array} {\itshape vt} has size zero, then an initial basis is computed, otherwise the given variable types are assumed. The values of {\itshape p} and {\itshape B} corresponding to {\itshape vt} may be given. The values of {\itshape x} and {\itshape y} are output parameters, giving access to the final primal and dual variables. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1SimplexSolver_a6afcedcf2540a07d67d2d98bb6d929df}\label{classAriadne_1_1SimplexSolver_a6afcedcf2540a07d67d2d98bb6d929df} 
+\mbox{\hyperlink{classAriadne_1_1ValidatedKleenean}{Validated\+Kleenean}} {\bfseries verify\+\_\+primal\+\_\+feasibility} (const \mbox{\hyperlink{classAriadne_1_1Matrix}{Matrix}}$<$ X $>$ \&A, const \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ X $>$ \&b, const \mbox{\hyperlink{classAriadne_1_1Array}{Array}}$<$ \mbox{\hyperlink{group__OptimisationSubModule_gaba792cefe409c16dfa7a762b64997b5c}{Slackness}} $>$ \&vt) const
+\begin{DoxyCompactList}\small\item\em Check whether the assignment of basis, lower and upper variables yields a certificate of feasibility or infeasibility. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1SimplexSolver_a8c8428852745e1b086e5e49f9d6fda01}\label{classAriadne_1_1SimplexSolver_a8c8428852745e1b086e5e49f9d6fda01} 
+\mbox{\hyperlink{classAriadne_1_1ValidatedKleenean}{Validated\+Kleenean}} {\bfseries verify\+\_\+dual\+\_\+feasibility} (const \mbox{\hyperlink{classAriadne_1_1Matrix}{Matrix}}$<$ X $>$ \&A, const \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ X $>$ \&c, const \mbox{\hyperlink{classAriadne_1_1Array}{Array}}$<$ \mbox{\hyperlink{group__OptimisationSubModule_gaba792cefe409c16dfa7a762b64997b5c}{Slackness}} $>$ \&vt) const
+\begin{DoxyCompactList}\small\item\em Check whether the assignment of basis, lower and upper variables yields a certificate of feasibility or infeasibility. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1SimplexSolver_a2841d48a937739cdbc830b208d08890f}\label{classAriadne_1_1SimplexSolver_a2841d48a937739cdbc830b208d08890f} 
+\mbox{\hyperlink{classAriadne_1_1ValidatedKleenean}{Validated\+Kleenean}} {\bfseries verify\+\_\+feasibility} (const \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ X $>$ \&xl, const \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ X $>$ \&xu, const \mbox{\hyperlink{classAriadne_1_1Matrix}{Matrix}}$<$ X $>$ \&A, const \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ X $>$ \&b, const \mbox{\hyperlink{classAriadne_1_1Array}{Array}}$<$ \mbox{\hyperlink{group__OptimisationSubModule_gaba792cefe409c16dfa7a762b64997b5c}{Slackness}} $>$ \&vt) const
+\begin{DoxyCompactList}\small\item\em Check whether the assignment of basis, lower and upper variables yields a certificate of feasibility or infeasibility. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1SimplexSolver_ae1b66211bfc716be7d9ae1fb566ed637}\label{classAriadne_1_1SimplexSolver_ae1b66211bfc716be7d9ae1fb566ed637} 
+\mbox{\hyperlink{namespaceAriadne_abbe0884d033ed6289d1f654576d7bb07}{Pair}}$<$ \mbox{\hyperlink{classAriadne_1_1Array}{Array}}$<$ \mbox{\hyperlink{namespaceAriadne_acd8b5f68421eb22a84277ef7c9c0ee2a}{Size\+Type}} $>$, \mbox{\hyperlink{classAriadne_1_1Matrix}{Matrix}}$<$ XX $>$ $>$ {\bfseries compute\+\_\+basis} (const \mbox{\hyperlink{classAriadne_1_1Matrix}{Matrix}}$<$ X $>$ \&A) const
+\begin{DoxyCompactList}\small\item\em Compute a permutation $p$ such that $p_{0},\ldots,p_{m-1}$ are the basis variables of $A$, and the inverse matrix $A_B^{-1}$. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1SimplexSolver_a665a61e20649a669b59648e596c39c7b}\label{classAriadne_1_1SimplexSolver_a665a61e20649a669b59648e596c39c7b} 
+\mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ XX $>$ {\bfseries compute\+\_\+x} (const \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ X $>$ \&xl, const \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ X $>$ \&xu, const \mbox{\hyperlink{classAriadne_1_1Matrix}{Matrix}}$<$ X $>$ \&A, const \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ X $>$ \&b, const \mbox{\hyperlink{classAriadne_1_1Array}{Array}}$<$ \mbox{\hyperlink{group__OptimisationSubModule_gaba792cefe409c16dfa7a762b64997b5c}{Slackness}} $>$ \&vt) const
+\begin{DoxyCompactList}\small\item\em Compute the point corresponding to the given \doxylink{classAriadne_1_1Array}{Array} of variable types. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1SimplexSolver_af9d8c4228f540a00f588dea57596189e}\label{classAriadne_1_1SimplexSolver_af9d8c4228f540a00f588dea57596189e} 
+\mbox{\hyperlink{namespaceAriadne_a76a8b016e5ad61faf9062cc387df5016}{Bool}} {\bfseries lpstep} (const \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ X $>$ \&c, const \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ X $>$ \&xl, const \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ X $>$ \&xu, const \mbox{\hyperlink{classAriadne_1_1Matrix}{Matrix}}$<$ X $>$ \&A, const \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ X $>$ \&b, \mbox{\hyperlink{classAriadne_1_1Array}{Array}}$<$ \mbox{\hyperlink{group__OptimisationSubModule_gaba792cefe409c16dfa7a762b64997b5c}{Slackness}} $>$ \&vt, \mbox{\hyperlink{classAriadne_1_1Array}{Array}}$<$ \mbox{\hyperlink{namespaceAriadne_acd8b5f68421eb22a84277ef7c9c0ee2a}{Size\+Type}} $>$ \&p, \mbox{\hyperlink{classAriadne_1_1Matrix}{Matrix}}$<$ XX $>$ \&B, \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ XX $>$ \&x) const
+\begin{DoxyCompactList}\small\item\em Perform a single step of the standard linear programming problem, updating the variable type \doxylink{classAriadne_1_1Array}{Array} {\itshape vt}, the ordered variable \doxylink{classAriadne_1_1Array}{Array} {\itshape p}, the inverse basis matrix {\itshape B} and the variables {\itshape x}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1SimplexSolver_acd274353736eb2baae7e3ab4f2746ccd}\label{classAriadne_1_1SimplexSolver_acd274353736eb2baae7e3ab4f2746ccd} 
+\mbox{\hyperlink{namespaceAriadne_acd8b5f68421eb22a84277ef7c9c0ee2a}{Size\+Type}} {\bfseries lpstep} (const \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ X $>$ \&xl, const \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ X $>$ \&xu, const \mbox{\hyperlink{classAriadne_1_1Matrix}{Matrix}}$<$ X $>$ \&A, const \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ X $>$ \&b, \mbox{\hyperlink{classAriadne_1_1Array}{Array}}$<$ \mbox{\hyperlink{group__OptimisationSubModule_gaba792cefe409c16dfa7a762b64997b5c}{Slackness}} $>$ \&vt, \mbox{\hyperlink{classAriadne_1_1Array}{Array}}$<$ \mbox{\hyperlink{namespaceAriadne_acd8b5f68421eb22a84277ef7c9c0ee2a}{Size\+Type}} $>$ \&p, \mbox{\hyperlink{classAriadne_1_1Matrix}{Matrix}}$<$ XX $>$ \&B, \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ XX $>$ \&x, \mbox{\hyperlink{namespaceAriadne_acd8b5f68421eb22a84277ef7c9c0ee2a}{Size\+Type}} s) const
+\begin{DoxyCompactList}\small\item\em Perform a step of the simplex algorithm, choosing basic variable {\itshape s} to exit the basis. The index s is with respect to the list of basic variables, and not the original variable list. The function to optimize is not needed for this procedure. The variable which left the basis is the new p\mbox{[}s\mbox{]} Returns {\itshape r} where x\mbox{[}p\mbox{[}r\mbox{]}\mbox{]} was the variable entering the basis. If r=m, then no step performed. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1SimplexSolver_acfd390644d40a83fcdce7c43f036bc0d}\label{classAriadne_1_1SimplexSolver_acfd390644d40a83fcdce7c43f036bc0d} 
+\mbox{\hyperlink{classAriadne_1_1ValidatedKleenean}{Validated\+Kleenean}} {\bfseries validated\+\_\+feasible} (const \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ X $>$ \&xl, const \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ X $>$ \&xu, const \mbox{\hyperlink{classAriadne_1_1Matrix}{Matrix}}$<$ X $>$ \&A, const \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ X $>$ \&b) const
+\begin{DoxyCompactList}\small\item\em Perform a step of the simplex algorithm for a feasibility computation using validated (interval) arithmetic. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1SimplexSolver_add2040d40fb921241253b9ef1825e01a}\label{classAriadne_1_1SimplexSolver_add2040d40fb921241253b9ef1825e01a} 
+\mbox{\hyperlink{namespaceAriadne_a76a8b016e5ad61faf9062cc387df5016}{Bool}} {\bfseries validated\+\_\+feasibility\+\_\+step} (const \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ X $>$ \&xl, const \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ X $>$ \&xu, const \mbox{\hyperlink{classAriadne_1_1Matrix}{Matrix}}$<$ X $>$ \&A, const \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ X $>$ \&b, \mbox{\hyperlink{classAriadne_1_1Array}{Array}}$<$ \mbox{\hyperlink{group__OptimisationSubModule_gaba792cefe409c16dfa7a762b64997b5c}{Slackness}} $>$ \&vt, \mbox{\hyperlink{classAriadne_1_1Array}{Array}}$<$ \mbox{\hyperlink{namespaceAriadne_acd8b5f68421eb22a84277ef7c9c0ee2a}{Size\+Type}} $>$ \&p) const
+\begin{DoxyCompactList}\small\item\em Perform a step of the simplex algorithm for a feasibility computation using validated (interval) arithmetic. \end{DoxyCompactList}\item 
+\mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} \mbox{\hyperlink{classAriadne_1_1SimplexSolver_a9363922ed6ee244ebd5591a19629c29d}{consistency\+\_\+check}} (const \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ X $>$ \&xl, const \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ X $>$ \&xu, const \mbox{\hyperlink{classAriadne_1_1Matrix}{Matrix}}$<$ X $>$ \&A, const \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ X $>$ \&b, const \mbox{\hyperlink{classAriadne_1_1Array}{Array}}$<$ \mbox{\hyperlink{group__OptimisationSubModule_gaba792cefe409c16dfa7a762b64997b5c}{Slackness}} $>$ \&vt, const \mbox{\hyperlink{classAriadne_1_1Array}{Array}}$<$ \mbox{\hyperlink{namespaceAriadne_acd8b5f68421eb22a84277ef7c9c0ee2a}{Size\+Type}} $>$ \&p, const \mbox{\hyperlink{classAriadne_1_1Matrix}{Matrix}}$<$ XX $>$ \&B, const \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ XX $>$ \&x) const
+\begin{DoxyCompactList}\small\item\em Check that the feasibility problem data is consistent. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1SimplexSolver_a2af4496e835cd6c780e50d0b3ac8a6ef}\label{classAriadne_1_1SimplexSolver_a2af4496e835cd6c780e50d0b3ac8a6ef} 
+\mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} {\bfseries consistency\+\_\+check} (const \mbox{\hyperlink{classAriadne_1_1Matrix}{Matrix}}$<$ X $>$ \&A, const \mbox{\hyperlink{classAriadne_1_1Array}{Array}}$<$ \mbox{\hyperlink{namespaceAriadne_acd8b5f68421eb22a84277ef7c9c0ee2a}{Size\+Type}} $>$ \&p, const \mbox{\hyperlink{classAriadne_1_1Matrix}{Matrix}}$<$ XX $>$ \&B) const
+\begin{DoxyCompactList}\small\item\em Check that B is the inverse of the matrix with columns A\mbox{[}p\mbox{[}0\mbox{]},...,A\mbox{[}p\mbox{[}m-\/1\mbox{]}\mbox{]}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1SimplexSolver_abd74339c75d061dc0d4ebbcc9e7fe1d3}\label{classAriadne_1_1SimplexSolver_abd74339c75d061dc0d4ebbcc9e7fe1d3} 
+\mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} {\bfseries consistency\+\_\+check} (const \mbox{\hyperlink{classAriadne_1_1Matrix}{Matrix}}$<$ X $>$ \&A, const \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ X $>$ \&b, const \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ XX $>$ \&x) const
+\begin{DoxyCompactList}\small\item\em Check that Ax=b. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1SimplexSolver_aa83fd91c48b23681d8db70274cd67155}\label{classAriadne_1_1SimplexSolver_aa83fd91c48b23681d8db70274cd67155} 
+\mbox{\hyperlink{namespaceAriadne_acd8b5f68421eb22a84277ef7c9c0ee2a}{Size\+Type}} {\bfseries consistency\+\_\+check} (const \mbox{\hyperlink{classAriadne_1_1Array}{Array}}$<$ \mbox{\hyperlink{group__OptimisationSubModule_gaba792cefe409c16dfa7a762b64997b5c}{Slackness}} $>$ \&vt, const \mbox{\hyperlink{classAriadne_1_1Array}{Array}}$<$ \mbox{\hyperlink{namespaceAriadne_acd8b5f68421eb22a84277ef7c9c0ee2a}{Size\+Type}} $>$ \&p) const
+\begin{DoxyCompactList}\small\item\em Check that the basic variable \doxylink{classAriadne_1_1Array}{Array} p is consistent with the variable type \doxylink{classAriadne_1_1Array}{Array} vt. Returns the number of basic variables. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsubsection*{Related Types and Functions}
+(Note that these are not member symbols.) \begin{Indent}\textbf{ Type synonyms}\par
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1SimplexSolver_a569e01bbfff09d8a95abdcb21f4bb77d}\label{classAriadne_1_1SimplexSolver_a569e01bbfff09d8a95abdcb21f4bb77d} 
+using {\bfseries Rational\+Simplex\+Solver} = \mbox{\hyperlink{classAriadne_1_1SimplexSolver}{Simplex\+Solver}}$<$\mbox{\hyperlink{classAriadne_1_1Rational}{Rational}}$>$
+\end{DoxyCompactItemize}
+\end{Indent}
+
+
+\label{doc-func-members}
+\Hypertarget{classAriadne_1_1SimplexSolver_doc-func-members}
+\doxysubsubsection{Member Function Documentation}
+\Hypertarget{classAriadne_1_1SimplexSolver_a9363922ed6ee244ebd5591a19629c29d}\index{SimplexSolver$<$ X $>$@{SimplexSolver$<$ X $>$}!consistency\_check@{consistency\_check}}
+\index{consistency\_check@{consistency\_check}!SimplexSolver$<$ X $>$@{SimplexSolver$<$ X $>$}}
+\doxyparagraph{\texorpdfstring{consistency\_check()}{consistency\_check()}}
+{\footnotesize\ttfamily \label{classAriadne_1_1SimplexSolver_a9363922ed6ee244ebd5591a19629c29d} 
+template$<$class X$>$ \\
+\mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} consistency\+\_\+check (\begin{DoxyParamCaption}\item[{const \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ X $>$ \&}]{xl}{, }\item[{const \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ X $>$ \&}]{xu}{, }\item[{const \mbox{\hyperlink{classAriadne_1_1Matrix}{Matrix}}$<$ X $>$ \&}]{A}{, }\item[{const \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ X $>$ \&}]{b}{, }\item[{const \mbox{\hyperlink{classAriadne_1_1Array}{Array}}$<$ \mbox{\hyperlink{group__OptimisationSubModule_gaba792cefe409c16dfa7a762b64997b5c}{Slackness}} $>$ \&}]{vt}{, }\item[{const \mbox{\hyperlink{classAriadne_1_1Array}{Array}}$<$ \mbox{\hyperlink{namespaceAriadne_acd8b5f68421eb22a84277ef7c9c0ee2a}{Size\+Type}} $>$ \&}]{p}{, }\item[{const \mbox{\hyperlink{classAriadne_1_1Matrix}{Matrix}}$<$ XX $>$ \&}]{B}{, }\item[{const \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ XX $>$ \&}]{x}{}\end{DoxyParamCaption}) const}
+
+
+
+Check that the feasibility problem data is consistent. 
+
+For an m-\/by-\/n matrix {\itshape A}, checks the following\+:
+\begin{DoxyItemize}
+\item b has size m, B has size m-\/by-\/m, l,u,vt,p,x have size n
+\item vt\mbox{[}p\mbox{[}i\mbox{]}\mbox{]}==BASIC if, and only if, i\texorpdfstring{$<$}{<}m
+\item B = inverse(\+A\+\_\+\+B), where A\+\_\+B is the mxm submatrix of A formed by columns for which vt\mbox{[}j\mbox{]}==BASIC
+\item x\mbox{[}j\mbox{]}=l\mbox{[}j\mbox{]} if j==LOWER and x\mbox{[}j\mbox{]}=u\mbox{[}j\mbox{]} if j==UPPER
+\item Ax=b 
+\end{DoxyItemize}
+
+References \mbox{\hyperlink{classAriadne_1_1Array_a2387033802383edbdc95f9bbb12a707e}{Array$<$ T $>$\+::begin()}}, \mbox{\hyperlink{namespaceAriadne_ad8d78b8db431545e9c2782516e0e954e}{Ariadne\+::decide()}}, \mbox{\hyperlink{group__OptimisationSubModule_ggaba792cefe409c16dfa7a762b64997b5caa7c48ba367e019d004bfb0239b85f2b3}{Ariadne\+::\+LOWER}}, and \mbox{\hyperlink{group__OptimisationSubModule_ggaba792cefe409c16dfa7a762b64997b5ca9e43f5291e6fcb2ad99c8e3f91acd179}{Ariadne\+::\+UPPER}}.
+
+
+
+Referenced by \mbox{\hyperlink{classAriadne_1_1SimplexSolver_a17484ffccf9f0a9028343662ce1ba26b}{hotstarted\+\_\+feasible()}}, \mbox{\hyperlink{classAriadne_1_1SimplexSolver_ad640a0114a6549dd542c322f8ddf5d59}{hotstarted\+\_\+minimise()}}, and \mbox{\hyperlink{classAriadne_1_1SimplexSolver_acd274353736eb2baae7e3ab4f2746ccd}{lpstep()}}.
+
+
+
+The documentation for this class was generated from the following files\+:\begin{DoxyCompactItemize}
+\item 
+source/solvers/\mbox{\hyperlink{linear__programming_8hpp}{linear\+\_\+programming.\+hpp}}\item 
+source/solvers/simplex\+\_\+algorithm.\+cpp\end{DoxyCompactItemize}

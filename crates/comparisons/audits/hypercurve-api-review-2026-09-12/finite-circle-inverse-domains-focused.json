@@ -1,0 +1,184 @@
+[
+  {
+    "command": [
+      "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve-c4eddcbaa01416db",
+      "--exact",
+      "bezier_offset::conversion_tests::finite_circle_tangent_inverse_replays_independent_cuts",
+      "--test-threads=1",
+      "--nocapture"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.06415190800908022,
+    "binary": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve-c4eddcbaa01416db",
+    "sha256": "b9d1633a9dae572e695da865791e8ed3a83d31d14d92aeb17bb04a6c78b78769",
+    "log": "finite-circle-inverse-domains-focused-finite_circle_tangent_inverse_replays_independent_cuts.log"
+  },
+  {
+    "command": [
+      "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve-c4eddcbaa01416db",
+      "--exact",
+      "bezier_offset::conversion_tests::tangent_inverse_retains_exterior_selected_domain_evidence",
+      "--test-threads=1",
+      "--nocapture"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 1.8163416750030592,
+    "binary": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve-c4eddcbaa01416db",
+    "sha256": "b9d1633a9dae572e695da865791e8ed3a83d31d14d92aeb17bb04a6c78b78769",
+    "log": "finite-circle-inverse-domains-focused-tangent_inverse_retains_exterior_selected_domain_evidence.log"
+  },
+  {
+    "command": [
+      "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve-c4eddcbaa01416db",
+      "--exact",
+      "bezier_offset::conversion_tests::selected_fiber_tangent_correspondence_retains_local_image",
+      "--test-threads=1",
+      "--nocapture"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.31420409100246616,
+    "binary": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve-c4eddcbaa01416db",
+    "sha256": "b9d1633a9dae572e695da865791e8ed3a83d31d14d92aeb17bb04a6c78b78769",
+    "log": "finite-circle-inverse-domains-focused-selected_fiber_tangent_correspondence_retains_local_image.log"
+  },
+  {
+    "command": [
+      "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve-c4eddcbaa01416db",
+      "--exact",
+      "bezier_offset::conversion_tests::chamfer_transported_mapped_cusp_cut_inverts_on_analytic_overlap",
+      "--test-threads=1",
+      "--nocapture"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.514568306010915,
+    "binary": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve-c4eddcbaa01416db",
+    "sha256": "b9d1633a9dae572e695da865791e8ed3a83d31d14d92aeb17bb04a6c78b78769",
+    "log": "finite-circle-inverse-domains-focused-chamfer_transported_mapped_cusp_cut_inverts_on_analytic_overlap.log"
+  },
+  {
+    "command": [
+      "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve-c4eddcbaa01416db",
+      "--exact",
+      "bezier_offset::conversion_tests::transverse_chamfer_cut_inverts_by_radial_incidence",
+      "--test-threads=1",
+      "--nocapture"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.11398844700306654,
+    "binary": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve-c4eddcbaa01416db",
+    "sha256": "b9d1633a9dae572e695da865791e8ed3a83d31d14d92aeb17bb04a6c78b78769",
+    "log": "finite-circle-inverse-domains-focused-transverse_chamfer_cut_inverts_by_radial_incidence.log"
+  },
+  {
+    "command": [
+      "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve-c4eddcbaa01416db",
+      "--exact",
+      "bezier_offset::conversion_tests::nonrepresented_center_transverse_chamfer_inverts_by_correlated_point",
+      "--test-threads=1",
+      "--nocapture"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.06376509499386884,
+    "binary": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve-c4eddcbaa01416db",
+    "sha256": "b9d1633a9dae572e695da865791e8ed3a83d31d14d92aeb17bb04a6c78b78769",
+    "log": "finite-circle-inverse-domains-focused-nonrepresented_center_transverse_chamfer_inverts_by_correlated_point.log"
+  },
+  {
+    "command": [
+      "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve-c4eddcbaa01416db",
+      "--exact",
+      "bezier_offset::conversion_tests::nonrepresented_center_nonrational_chamfer_inverts_with_retained_authority",
+      "--test-threads=1",
+      "--nocapture"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.16394813801161945,
+    "binary": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve-c4eddcbaa01416db",
+    "sha256": "b9d1633a9dae572e695da865791e8ed3a83d31d14d92aeb17bb04a6c78b78769",
+    "log": "finite-circle-inverse-domains-focused-nonrepresented_center_nonrational_chamfer_inverts_with_retained_authority.log"
+  },
+  {
+    "command": [
+      "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve-c4eddcbaa01416db",
+      "--exact",
+      "bezier_offset::conversion_tests::selected_fiber_overlap_inverts_transported_mapped_cusp_cut",
+      "--test-threads=1",
+      "--nocapture"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.06376231499598362,
+    "binary": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve-c4eddcbaa01416db",
+    "sha256": "b9d1633a9dae572e695da865791e8ed3a83d31d14d92aeb17bb04a6c78b78769",
+    "log": "finite-circle-inverse-domains-focused-selected_fiber_overlap_inverts_transported_mapped_cusp_cut.log"
+  },
+  {
+    "command": [
+      "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve-c4eddcbaa01416db",
+      "--exact",
+      "bezier_offset::conversion_tests::mapped_overlap_retains_distinct_selected_inverse_keys_and_rebuilds_expired_values",
+      "--test-threads=1",
+      "--nocapture"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.015694214991526678,
+    "binary": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve-c4eddcbaa01416db",
+    "sha256": "b9d1633a9dae572e695da865791e8ed3a83d31d14d92aeb17bb04a6c78b78769",
+    "log": "finite-circle-inverse-domains-focused-mapped_overlap_retains_distinct_selected_inverse_keys_and_rebuilds_expired_values.log"
+  },
+  {
+    "command": [
+      "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve-c4eddcbaa01416db",
+      "--exact",
+      "bezier_offset::conversion_tests::nonlinear_parameter_component_maps_and_clips_its_exact_branch",
+      "--test-threads=1",
+      "--nocapture"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.0075783210049849,
+    "binary": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve-c4eddcbaa01416db",
+    "sha256": "b9d1633a9dae572e695da865791e8ed3a83d31d14d92aeb17bb04a6c78b78769",
+    "log": "finite-circle-inverse-domains-focused-nonlinear_parameter_component_maps_and_clips_its_exact_branch.log"
+  },
+  {
+    "command": [
+      "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve-c4eddcbaa01416db",
+      "--exact",
+      "bezier_offset::conversion_tests::selected_fiber_mapped_cut_inverts_on_analytic_overlap",
+      "--test-threads=1",
+      "--nocapture"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.03167808198486455,
+    "binary": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve-c4eddcbaa01416db",
+    "sha256": "b9d1633a9dae572e695da865791e8ed3a83d31d14d92aeb17bb04a6c78b78769",
+    "log": "finite-circle-inverse-domains-focused-selected_fiber_mapped_cut_inverts_on_analytic_overlap.log"
+  },
+  {
+    "command": [
+      "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve-c4eddcbaa01416db",
+      "--exact",
+      "bezier_offset::conversion_tests::selected_fiber_rational_circle_overlaps_complete_region_booleans",
+      "--test-threads=1",
+      "--nocapture"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.06380345197976567,
+    "binary": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve-c4eddcbaa01416db",
+    "sha256": "b9d1633a9dae572e695da865791e8ed3a83d31d14d92aeb17bb04a6c78b78769",
+    "log": "finite-circle-inverse-domains-focused-selected_fiber_rational_circle_overlaps_complete_region_booleans.log"
+  },
+  {
+    "command": [
+      "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve-c4eddcbaa01416db",
+      "--exact",
+      "bezier_offset::conversion_tests::selected_fiber_analytic_circle_overlaps_complete_region_booleans",
+      "--test-threads=1",
+      "--nocapture"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.06383058099891059,
+    "binary": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve-c4eddcbaa01416db",
+    "sha256": "b9d1633a9dae572e695da865791e8ed3a83d31d14d92aeb17bb04a6c78b78769",
+    "log": "finite-circle-inverse-domains-focused-selected_fiber_analytic_circle_overlaps_complete_region_booleans.log"
+  }
+]

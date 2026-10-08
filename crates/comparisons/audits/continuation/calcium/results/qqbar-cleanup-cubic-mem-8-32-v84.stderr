@@ -1,0 +1,14 @@
+==532058== Memcheck, a memory error detector
+==532058== Copyright (C) 2002-2026, and GNU GPL'd, by Julian Seward et al.
+==532058== Using Valgrind-3.27.1 and LibVEX; rerun with -h for copyright info
+==532058== Command: /tmp/calcium-qqbar-remainder-v84.1aubRO/cleanup-cubic cleanup 8 32
+==532058== 
+==532058== 
+==532058== HEAP SUMMARY:
+==532058==     in use at exit: 0 bytes in 0 blocks
+==532058==   total heap usage: 26,936 allocs, 26,936 frees, 1,778,000 bytes allocated
+==532058== 
+==532058== All heap blocks were freed -- no leaks are possible
+==532058== 
+==532058== For lists of detected and suppressed errors, rerun with: -s
+==532058== ERROR SUMMARY: 0 errors from 0 contexts (suppressed: 0 from 0)

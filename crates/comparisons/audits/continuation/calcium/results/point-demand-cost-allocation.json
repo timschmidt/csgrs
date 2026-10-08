@@ -1,0 +1,14 @@
+{
+  "tag": "point-demand-cost-allocation",
+  "started": "2026-09-10T22:44:48.437Z",
+  "finished": "2026-09-10T22:45:35.341Z",
+  "elapsedSeconds": 46.902306438,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "node",
+  "args": [
+    "run-point-demand-costs.mjs",
+    "allocation"
+  ],
+  "code": 0,
+  "signal": null
+}

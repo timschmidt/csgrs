@@ -1,0 +1,12 @@
+{
+  "repos": {
+    "hypercurve": {
+      "parent": "689250e0bbb144fa68b3d22d124a68103b190d06",
+      "paths": {
+        "src/bezier_offset.rs": "4dc9d0e74e482a6f179a56a639359b02ce9dc1f4faca6c590887342f86f91448"
+      }
+    }
+  },
+  "qualification": "retained-rational-domain-20260927-v511-terminal.json",
+  "verified_source_files": 2047
+}

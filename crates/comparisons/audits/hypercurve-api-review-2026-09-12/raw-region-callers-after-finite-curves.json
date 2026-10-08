@@ -1,0 +1,191 @@
+{
+  "hypercurve": "06733b0c86b10d9bdba81e1b8b4609b742b8dde1",
+  "remaining_call_sites": 37,
+  "call_sites": [
+    {
+      "file": "benches/editing.rs",
+      "line": 771,
+      "text": "CurveRegion2::try_new_with_loop_topology("
+    },
+    {
+      "file": "benches/editing.rs",
+      "line": 823,
+      "text": "let chord_region = CurveRegion2::try_new_with_loop_topology("
+    },
+    {
+      "file": "benches/editing.rs",
+      "line": 845,
+      "text": "let source_region = CurveRegion2::try_new_with_loop_topology("
+    },
+    {
+      "file": "benches/editing.rs",
+      "line": 877,
+      "text": "let chord_region = CurveRegion2::try_new_with_loop_topology("
+    },
+    {
+      "file": "benches/editing.rs",
+      "line": 892,
+      "text": "let source_region = CurveRegion2::try_new_with_loop_topology("
+    },
+    {
+      "file": "benches/editing.rs",
+      "line": 946,
+      "text": "CurveRegion2::try_new_with_loop_topology("
+    },
+    {
+      "file": "benches/editing.rs",
+      "line": 993,
+      "text": "CurveRegion2::try_new_with_loop_topology("
+    },
+    {
+      "file": "benches/editing.rs",
+      "line": 1046,
+      "text": "CurveRegion2::try_new_with_loop_topology("
+    },
+    {
+      "file": "benches/offset.rs",
+      "line": 867,
+      "text": "Ok(CurveRegion2::try_new_with_loop_topology("
+    },
+    {
+      "file": "benches/comparative.rs",
+      "line": 640,
+      "text": "let hypercurve = CurveRegion2::try_new_with_loop_topology("
+    },
+    {
+      "file": "benches/curve_region_boolean_batch.rs",
+      "line": 151,
+      "text": "CurveRegion2::try_new_with_loop_topology("
+    },
+    {
+      "file": "benches/curve_region_boolean_batch.rs",
+      "line": 190,
+      "text": "CurveRegion2::try_new_with_loop_topology("
+    },
+    {
+      "file": "tests/hypercurve_curve_region_promotion.rs",
+      "line": 414,
+      "text": "CurveRegion2::try_new_with_loop_topology("
+    },
+    {
+      "file": "tests/hypercurve_curve_region_promotion.rs",
+      "line": 630,
+      "text": "CurveRegion2::try_new_with_loop_topology("
+    },
+    {
+      "file": "tests/hypercurve_curve_region_promotion.rs",
+      "line": 789,
+      "text": "CurveRegion2::try_new_with_loop_topology("
+    },
+    {
+      "file": "tests/hypercurve_curve_region_promotion.rs",
+      "line": 865,
+      "text": "CurveRegion2::try_new_with_loop_topology("
+    },
+    {
+      "file": "tests/hypercurve_curve_region_promotion.rs",
+      "line": 2796,
+      "text": "let source = CurveRegion2::try_new_with_loop_topology("
+    },
+    {
+      "file": "tests/hypercurve_curve_region_promotion.rs",
+      "line": 3796,
+      "text": "let seam = CurveRegion2::try_new_with_loop_topology("
+    },
+    {
+      "file": "tests/hypercurve_curve_region_promotion.rs",
+      "line": 3822,
+      "text": "let reversed = CurveRegion2::try_new_with_loop_topology("
+    },
+    {
+      "file": "tests/hypercurve_curve_region_promotion.rs",
+      "line": 3883,
+      "text": "CurveRegion2::try_new_with_loop_topology("
+    },
+    {
+      "file": "tests/hypercurve_curve_region_promotion.rs",
+      "line": 3903,
+      "text": "CurveRegion2::try_new_with_loop_topology("
+    },
+    {
+      "file": "tests/hypercurve_curve_region_promotion.rs",
+      "line": 4053,
+      "text": "CurveRegion2::try_new_with_loop_topology("
+    },
+    {
+      "file": "tests/hypercurve_curve_region_promotion.rs",
+      "line": 4200,
+      "text": "CurveRegion2::try_new_with_loop_topology("
+    },
+    {
+      "file": "tests/hypercurve_curve_region_promotion.rs",
+      "line": 4645,
+      "text": "CurveRegion2::try_new_with_loop_topology("
+    },
+    {
+      "file": "tests/hypercurve_curve_region_promotion.rs",
+      "line": 5631,
+      "text": "let retained_region = CurveRegion2::try_new_with_loop_topology("
+    },
+    {
+      "file": "tests/hypercurve_curve_region_promotion.rs",
+      "line": 6381,
+      "text": "let source = CurveRegion2::try_new_with_loop_topology("
+    },
+    {
+      "file": "tests/hypercurve_analytic_parallel_region.rs",
+      "line": 85,
+      "text": "CurveRegion2::try_new_with_loop_topology("
+    },
+    {
+      "file": "tests/hypercurve_analytic_parallel_region.rs",
+      "line": 135,
+      "text": "CurveRegion2::try_new_with_loop_topology("
+    },
+    {
+      "file": "tests/hypercurve_analytic_parallel_region.rs",
+      "line": 197,
+      "text": "let region = CurveRegion2::try_new_with_loop_topology("
+    },
+    {
+      "file": "tests/hypercurve_analytic_parallel_region.rs",
+      "line": 537,
+      "text": "CurveRegion2::try_new_with_loop_topology("
+    },
+    {
+      "file": "tests/hypercurve_analytic_parallel_region.rs",
+      "line": 768,
+      "text": "CurveRegion2::try_new_with_loop_topology("
+    },
+    {
+      "file": "tests/hypercurve_analytic_parallel_region.rs",
+      "line": 827,
+      "text": "CurveRegion2::try_new_with_loop_topology("
+    },
+    {
+      "file": "tests/hypercurve_bezier_region.rs",
+      "line": 85,
+      "text": "CurveRegion2::new(boundary_loops).unwrap()"
+    },
+    {
+      "file": "tests/hypercurve_bezier_region.rs",
+      "line": 795,
+      "text": "assert_topology_error(CurveRegion2::new(vec![outer, inner]));"
+    },
+    {
+      "file": "tests/hypercurve_bezier_region.rs",
+      "line": 818,
+      "text": "assert_topology_error(CurveRegion2::new(vec![loop_.clone(), loop_]));"
+    },
+    {
+      "file": "tests/hypercurve_bezier_region.rs",
+      "line": 828,
+      "text": "assert_topology_error(CurveRegion2::new(vec![loop_.clone(), loop_]));"
+    },
+    {
+      "file": "tests/hypercurve_bezier_region.rs",
+      "line": 1617,
+      "text": "let authored = CurveRegion2::try_new_with_loop_topology("
+    }
+  ]
+}

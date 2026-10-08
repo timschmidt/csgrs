@@ -1,0 +1,64 @@
+{
+  "recorded": "2026-09-12T04:47:24.870Z",
+  "files": {
+    "flint-qqbar-normal-v84.c": "05e5f6d67b4f8e454c6eb9d9c826587ebbffb8eaa233c3f987e00c2f5518e5ca",
+    "run-qqbar-normal-v84.mjs": "0b2e3d9c15c710472cb9f999b75c0d8a8aff22ff6b649297f29c2a8f699d1287"
+  },
+  "binary": "/tmp/calcium-qqbar-remainder-v84.1aubRO/normal",
+  "current": {
+    "checkpoint": 75,
+    "originSha256": "f14634eec550e7d166e63ba28852460782668e42a288c2356e8541680e5b0191",
+    "changed": [
+      "hypersolve/src/algebraic_binary.rs",
+      "hypersolve/src/algebraic_binary/zero_factor_tests.rs"
+    ],
+    "previousLiveFiles": 956,
+    "liveFiles": 957,
+    "unchangedPreviousFiles": 955,
+    "qualifiedSolverFiles": 176,
+    "qualifiedConsumerFiles": 355,
+    "mainSha256": "63b08c8d7523d3e3410d3d6e84a04088fa9f4f7c3b66ab586bfe9af37fa1b002",
+    "testSha256": "8f8e2b7617f9c9b993f1190139bbbe960a723309bf09989b5001d061f2c49961",
+    "previousMainSha256": "e97877da6029f26e256943ca70f4005576574689f33288b71874165b4c8e87e6",
+    "historicalArtifacts": 1279,
+    "previousFinished": "2026-09-11T21:51:02.880Z",
+    "scope": "Exact promotion of the fully qualified zero-factor candidate; no other recorded live source/support change. Historical live flags describe older states. Source identity is separate from successful live regression/retention gates."
+  },
+  "hyperRereadRanges": {
+    "hypersolve/src/algebraic_binary.rs": [
+      [
+        125,
+        245
+      ]
+    ],
+    "hypersolve/src/resultant.rs": [
+      [
+        240,
+        355
+      ]
+    ],
+    "hypersolve/src/polynomial.rs": [
+      [
+        95,
+        155
+      ],
+      [
+        210,
+        260
+      ]
+    ]
+  },
+  "hyperRereadHashes": {
+    "hypersolve/src/algebraic_binary.rs": "63b08c8d7523d3e3410d3d6e84a04088fa9f4f7c3b66ab586bfe9af37fa1b002",
+    "hypersolve/src/resultant.rs": "528ace3160b4799c311268ae12578a303160b0edcec9b1f13b59df3ca84044af",
+    "hypersolve/src/polynomial.rs": "263840d2556d62c5b95a5f954bc9720bbf3c8798b640e474f5157b0a99688035"
+  },
+  "donorDocReread": {
+    "path": "flint:doc/source/qqbar.rst",
+    "range": [
+      500,
+      610
+    ],
+    "sha256": "2fcf9149baad1e687150f24d695073063fd54022d8e4c295d75372348be1e5c2"
+  }
+}

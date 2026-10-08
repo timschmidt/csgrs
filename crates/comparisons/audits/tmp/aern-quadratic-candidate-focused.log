@@ -1,0 +1,14 @@
+   Compiling hypersolve v0.3.1 (/tmp/aern-quadratic-fix.fsxgfP/hypersolve-candidate)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.66s
+     Running tests/quadratic_extraction.rs (target/debug/deps/quadratic_extraction-69da5f5b17390a2f)
+
+running 6 tests
+test cancellation_does_not_erase_unbound_symbols_or_domain_obligations ... ok
+test distinct_high_degrees_and_monomials_cannot_cancel ... ok
+test genuine_higher_degree_cancellation_preserves_the_quadratic ... ok
+test bounded_cancellation_exhaustion_is_unknown_not_zero ... ok
+test univariate_extraction_matches_independent_rational_coefficients ... ok
+test multivariate_extraction_matches_independent_rational_coefficients ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.44s
+

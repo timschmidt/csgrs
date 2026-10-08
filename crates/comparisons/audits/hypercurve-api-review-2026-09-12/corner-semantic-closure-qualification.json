@@ -1,0 +1,48 @@
+{
+  "status": "committed direct test/caller migration; stronger independent semantic checks pass; original goal remains active",
+  "commit": "281368bacaa0f11586d895e84e1af4da5703f3e5",
+  "base_commit": "1dc591efe7f3dca0ac5b0dce60ed1603caf0ecb1",
+  "production_changes": false,
+  "migrated_tests": [
+    "unified_region_native_chamfer_uses_arc_sweep_evidence",
+    "unified_region_native_fillet_retains_certified_arc_contacts",
+    "unified_region_corners_preserve_circular_geometry_across_representations",
+    "retained_circular_regions_chamfer_over_the_full_support"
+  ],
+  "removed_assumptions": [
+    "A successful corner operation must re-export as native line/arc contours.",
+    "A circular result must use the RationalQuadraticBezier storage variant.",
+    "A support extension must remove the original corner from all boundary span endpoints; it can remain a smooth boundary point."
+  ],
+  "replacement_oracles": [
+    "Independent exact chamfer contacts derived from circle/chord equations.",
+    "Independent fillet circle and contacts derived from center distance and tangency.",
+    "Certified point-location probes on generated and readmitted regions.",
+    "Certified empty symmetric difference against the independent expected region, both before and after lossless boundary-path readmission.",
+    "Full-support candidates select independently known line/circle setback contacts through Curve2 endpoints, including reversed traversal and degree-elevated input."
+  ],
+  "fresh_qualification": {
+    "results": "corner-semantic-closure-final-results.json",
+    "passed": 90,
+    "failed": 11,
+    "new_failures": [],
+    "full_target_tests": 101,
+    "check": "corner-semantic-closure-check.exit",
+    "source_hashes": "corner-semantic-closure-final-source.json",
+    "immutable_sources": true,
+    "format_and_diff_checks": true
+  },
+  "unchanged_qualification": {
+    "results": "analytic-circle-inverse-full-results.json",
+    "passing_cases_in_other_targets": 2060,
+    "not_rerun": "No production or other test-source changes in this stage."
+  },
+  "combined_qualification": {
+    "passing_cases": 2150,
+    "remaining_failures": 11,
+    "ignored": 9,
+    "previously_unqualified_expensive_cases": 8,
+    "full_suite_passing": false
+  },
+  "next": "Resume the independent exact-Real coordinate equality gap documented in exact-real-image-witness-equality-followup.json, and retain the remaining promotion/closure work."
+}

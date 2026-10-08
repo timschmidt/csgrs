@@ -1,0 +1,23 @@
+heaptrack output will be written to "/tmp/hypercurve-normal-form-facts-baseline-final.heap.zst"
+starting application, this might take some time...
+NOTE: heaptrack detected DEBUGINFOD_URLS but will disable it to prevent 
+unintended network delays during recording
+If you really want to use DEBUGINFOD, export HEAPTRACK_ENABLE_DEBUGINFOD=1
+bezier_parameter_normal_form_zero_cold: 20000 iterations in 1.233610384s (61.68µs/iter), equal=20000
+bezier_parameter_normal_form_zero_reused: 20000 iterations in 294.906471ms (14.745µs/iter), equal=20000
+bezier_parameter_bernstein_32_to_power: 20000 iterations in 1.977802681s (98.89µs/iter), degree_checksum=640000
+bezier_algebraic_parameter_sturm: 20000 iterations in 743.923155ms (37.196µs/iter), total=40000
+bezier_algebraic_parameter_refined_ordering: 10000 iterations in 785.698524ms (78.569µs/iter), ordered=10000
+bezier_algebraic_parameter_refined_even_root_ordering: 10000 iterations in 3.069030187s (306.903µs/iter), ordered=10000
+bezier_parameter_quintic_unit_isolation: 2000 iterations in 582.279647ms (291.139µs/iter), isolated=10000, sturm_builds=1, interval_counts=19, bisections=9, rational_refinements=0, max_depth=5
+bezier_parameter_boundary_root_isolation: 2000 iterations in 668.449014ms (334.224µs/iter), isolated=2000, interval_counts=263, bisections=130, max_depth=130
+bezier_algebraic_parameter_exact_rational_reconstruction: 500000 iterations in 17.435645ms (34ns/iter), reconstructed=500000
+bezier_algebraic_point_tangent_image: 20000 iterations in 117.358071ms (5.867µs/iter), transformed=40000
+rational_bezier_algebraic_point_tangent_image: 20000 iterations in 5.527911ms (276ns/iter), transformed=40000
+heaptrack stats:
+	allocations:          	34455169
+	leaked allocations:   	1558
+	temporary allocations:	1962449
+Heaptrack finished! Now run the following to investigate the data:
+
+  heaptrack --analyze "/tmp/hypercurve-normal-form-facts-baseline-final.heap.zst"

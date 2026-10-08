@@ -1,0 +1,105 @@
+[
+  {
+    "name": "debug",
+    "command": "cargo",
+    "args": [
+      "build",
+      "--offline",
+      "--manifest-path",
+      "/home/tim/Documents/GitHub/workspace/exact-real-references/ruffini-qualification/square-root-pilot/v2/Cargo.toml",
+      "--target-dir",
+      "/home/tim/Documents/GitHub/workspace/.audit-square-root.C42NO5BC/target"
+    ],
+    "capMs": 240000,
+    "started": "2026-09-07T02:36:19.085Z",
+    "finished": "2026-09-07T02:36:22.902Z",
+    "status": 0,
+    "signal": null,
+    "error": null,
+    "file": "build-debug.log",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderrSha256": "e88136082e62bc31500f575d7777999463272d1833c1fe939ae4264ce8a29748",
+    "sources": [
+      [
+        "main.rs",
+        "8c1d88393e00a99d07df5ae50cea454b5d108d0a5b8563e89791938a26495be2"
+      ],
+      [
+        "Cargo.toml",
+        "a7dfcf7a0d76e98ae1bdf29e48b6521ac3530daa9eb0f7e2a3d7b702f954e686"
+      ],
+      [
+        "../main.rs",
+        "d6b3b28c73bdc1c16452a98f55d827e7695d5344db679dcabff09dd8015a6f6f"
+      ],
+      [
+        "../diagonal.rs",
+        "fe7e844196357e900969c6a919d5aafca192839f6f42a34814845e8f5fbf5fd8"
+      ],
+      [
+        "../baseline.rs",
+        "f09fb430259ecd9ca39a7821e738ea9c881cbe0e6f65cf410d62f6a5f9c5b2f4"
+      ],
+      [
+        "../shared.rs",
+        "5ea43f1efafd86c8977314e75045e072fb9c5fe54711a8b34eb474cf663f9971"
+      ]
+    ],
+    "runnerSha256": "b5dc037c385e9bc3af23e83d6dbd65fcca81b623fdf379c1939f87f676536daa",
+    "lockSha256": "f70105bad87a26414538c55b77ceb032fe401d17bd9fe1f9d04b02357b457b87",
+    "binary": "/home/tim/Documents/GitHub/workspace/.audit-square-root.C42NO5BC/v2-binaries/debug",
+    "binarySha256": "24ff70aafa4e2b697378f63b3c59b9c46e2969ab4c6d42ef2d5f9c96f7c0adb8"
+  },
+  {
+    "name": "release",
+    "command": "cargo",
+    "args": [
+      "build",
+      "--offline",
+      "--manifest-path",
+      "/home/tim/Documents/GitHub/workspace/exact-real-references/ruffini-qualification/square-root-pilot/v2/Cargo.toml",
+      "--target-dir",
+      "/home/tim/Documents/GitHub/workspace/.audit-square-root.C42NO5BC/target",
+      "--release"
+    ],
+    "capMs": 240000,
+    "started": "2026-09-07T02:36:23.173Z",
+    "finished": "2026-09-07T02:36:31.331Z",
+    "status": 0,
+    "signal": null,
+    "error": null,
+    "file": "build-release.log",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderrSha256": "00f21fcfb2d49677a0efc328112840cc55f910b2e96c04582a0c38a2c8e95b20",
+    "sources": [
+      [
+        "main.rs",
+        "8c1d88393e00a99d07df5ae50cea454b5d108d0a5b8563e89791938a26495be2"
+      ],
+      [
+        "Cargo.toml",
+        "a7dfcf7a0d76e98ae1bdf29e48b6521ac3530daa9eb0f7e2a3d7b702f954e686"
+      ],
+      [
+        "../main.rs",
+        "d6b3b28c73bdc1c16452a98f55d827e7695d5344db679dcabff09dd8015a6f6f"
+      ],
+      [
+        "../diagonal.rs",
+        "fe7e844196357e900969c6a919d5aafca192839f6f42a34814845e8f5fbf5fd8"
+      ],
+      [
+        "../baseline.rs",
+        "f09fb430259ecd9ca39a7821e738ea9c881cbe0e6f65cf410d62f6a5f9c5b2f4"
+      ],
+      [
+        "../shared.rs",
+        "5ea43f1efafd86c8977314e75045e072fb9c5fe54711a8b34eb474cf663f9971"
+      ]
+    ],
+    "runnerSha256": "b5dc037c385e9bc3af23e83d6dbd65fcca81b623fdf379c1939f87f676536daa",
+    "lockSha256": "f70105bad87a26414538c55b77ceb032fe401d17bd9fe1f9d04b02357b457b87",
+    "binary": "/home/tim/Documents/GitHub/workspace/.audit-square-root.C42NO5BC/v2-binaries/release",
+    "binarySha256": "2a0d7f5ad43f3ef143776b29acb8db9acbcec77651e6e248d808e379b87d8ff9"
+  }
+]

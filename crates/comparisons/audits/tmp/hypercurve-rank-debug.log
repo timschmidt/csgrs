@@ -1,0 +1,21 @@
+   Compiling hyperreal v0.13.1 (/home/tim/Documents/GitHub/workspace/hyperreal)
+   Compiling hyperlattice v0.6.1 (/home/tim/Documents/GitHub/workspace/hyperlattice)
+   Compiling hyperlimit v0.4.1 (/home/tim/Documents/GitHub/workspace/hyperlimit)
+   Compiling hypersolve v0.3.1 (/home/tim/Documents/GitHub/workspace/hypersolve)
+   Compiling hypertri v0.4.1 (/home/tim/Documents/GitHub/workspace/hypertri)
+   Compiling hypercurve v0.3.1 (/home/tim/Documents/GitHub/workspace/hypercurve)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 33.61s
+     Running unittests src/lib.rs (target/debug/deps/hypercurve-504e20b4b2cf05d2)
+
+running 8 tests
+test bezier_offset::conversion_tests::rank_independent_public_booleans_approximate_first_quarter_cusp_first ... ok
+test bezier_offset::conversion_tests::rank_independent_public_booleans_strict_first_quarter_cusp_second ... ok
+test bezier_offset::conversion_tests::rank_independent_public_booleans_approximate_first_quarter_cusp_second ... ok
+test bezier_offset::conversion_tests::rank_independent_public_booleans_strict_first_quarter_cusp_first ... ok
+test bezier_offset::conversion_tests::rank_independent_public_booleans_strict_second_quarter_cusp_second ... ok
+test bezier_offset::conversion_tests::rank_independent_public_booleans_approximate_second_quarter_cusp_second ... ok
+test bezier_offset::conversion_tests::rank_independent_public_booleans_approximate_second_quarter_cusp_first ... ok
+test bezier_offset::conversion_tests::rank_independent_public_booleans_strict_second_quarter_cusp_first ... ok
+
+test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 868 filtered out; finished in 27.13s
+

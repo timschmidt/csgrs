@@ -1,0 +1,32 @@
+{
+  "checks": [
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "check",
+        "--all-targets",
+        "--all-features",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "log": "algebraic-query-ray-ownership-20260923-clean1-check-0.log"
+    },
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "check",
+        "--all-targets",
+        "--no-default-features",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "log": "algebraic-query-ray-ownership-20260923-clean1-check-1.log"
+    }
+  ],
+  "only_change_from_broad_is_unused_import_removal": true,
+  "all_sources_unchanged": true,
+  "all_processes_reaped": true,
+  "region_sha256": "bcaf66ff5f5ca7b19dea219413469f8adae5fdc39e64f0307d320bdd62bf6e1b"
+}

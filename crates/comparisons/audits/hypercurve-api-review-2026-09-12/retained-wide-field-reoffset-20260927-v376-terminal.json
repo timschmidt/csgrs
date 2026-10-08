@@ -1,0 +1,25 @@
+{
+  "source_manifest": "retained-wide-field-proofs-20260927-v374-sources.json",
+  "source_directory": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/source-archives/retained-wide-field-proofs-20260927-v374",
+  "binary": {
+    "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-wide-field-proofs-20260927-v374-hypercurve_curve_region_promotion",
+    "sha256": "badc1af670471e4f2d4c164212dbeeecc6dcab1292265794a3f57ec80d44f20e"
+  },
+  "cases": [
+    {
+      "name": "strict_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions",
+      "returncode": 124,
+      "elapsed_seconds": 240.0326868481934,
+      "log": "retained-wide-field-reoffset-20260927-v376-strict_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions.log"
+    },
+    {
+      "name": "approximate_512_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions",
+      "returncode": 124,
+      "elapsed_seconds": 240.0333425218705,
+      "log": "retained-wide-field-reoffset-20260927-v376-approximate_512_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions.log"
+    }
+  ],
+  "all_processes_reaped": true,
+  "all_sources_unchanged": true,
+  "all_cases_passed": false
+}

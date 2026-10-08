@@ -1,0 +1,12 @@
+Preserve finite self-contact domains and boundary ownership
+
+Use the common intersection context for Bezier self-incidence, retain finite
+contact/component evidence, and remove the separate region self cache and
+adapter. Keep the native symmetric solver under its certified unit-domain
+premise. Require active ranges and genuine nondegenerate quadratic charts
+for injectivity shortcuts.
+
+Respect traversal when matching self-topology branch endpoints and evaluate
+support derivatives on their finite affine domains. Cover exterior nodal
+curves, selected bounds, circular retracing, reversed re-entry, and canceled
+asymmetric retracing.

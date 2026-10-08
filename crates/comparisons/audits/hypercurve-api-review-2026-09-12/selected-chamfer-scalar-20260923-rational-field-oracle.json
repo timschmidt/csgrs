@@ -1,0 +1,18 @@
+{
+  "fixture_sha256": "70bb4440470b5b09b09ba1f472a48bcb5bb4fa79ed60af6cd77c97133a4f3991",
+  "field_basis": [
+    "1",
+    "sqrt(3)",
+    "sqrt(7)",
+    "sqrt(21)"
+  ],
+  "coefficients": [
+    "0",
+    "0",
+    "0",
+    "0"
+  ],
+  "unique_nodes": 365,
+  "maximum_coefficient_bits": 28,
+  "exact_zero": true
+}

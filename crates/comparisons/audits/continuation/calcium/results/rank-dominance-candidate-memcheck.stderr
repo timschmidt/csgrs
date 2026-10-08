@@ -1,0 +1,222 @@
+==46== Memcheck, a memory error detector
+==46== Copyright (C) 2002-2026, and GNU GPL'd, by Julian Seward et al.
+==46== Using Valgrind-3.27.1 and LibVEX; rerun with -h for copyright info
+==46== Command: /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/debug/calcium-rank-dominance-candidate
+==46== 
+==46== 
+==46== HEAP SUMMARY:
+==46==     in use at exit: 2,272 bytes in 16 blocks
+==46==   total heap usage: 177,561 allocs, 177,545 frees, 16,619,278 bytes allocated
+==46== 
+==46== 56 bytes in 1 blocks are still reachable in loss record 1 of 15
+==46==    at 0x4B2BAE6: malloc (vg_replace_malloc.c:447)
+==46==    by 0x4228731: <alloc::alloc::Global>::alloc_impl_runtime (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/debug/calcium-rank-dominance-candidate)
+==46==    by 0x4215474: alloc::boxed::box_new_uninit (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/debug/calcium-rank-dominance-candidate)
+==46==    by 0x41CAA7B: <hyperreal::computable::node::ApproximationCache>::cell_or_init (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/debug/calcium-rank-dominance-candidate)
+==46==    by 0x41CAEAC: <hyperreal::computable::node::ApproximationCache>::store (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/debug/calcium-rank-dominance-candidate)
+==46==    by 0x41A0376: <hyperreal::computable::node::Computable>::store_shared_constant_cache_value (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/debug/calcium-rank-dominance-candidate)
+==46==    by 0x419C8B8: <hyperreal::computable::node::Computable>::store_cache_value (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/debug/calcium-rank-dominance-candidate)
+==46==    by 0x4196F41: <hyperreal::computable::node::Computable>::approx_signal (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/debug/calcium-rank-dominance-candidate)
+==46==    by 0x41988E6: <hyperreal::computable::node::Computable>::approx (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/debug/calcium-rank-dominance-candidate)
+==46==    by 0x4149012: <hyperreal::real::arithmetic::Real>::certified_dyadic_interval (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/debug/calcium-rank-dominance-candidate)
+==46==    by 0x40E3CEF: calcium_rank_dominance_candidate::scalar (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/debug/calcium-rank-dominance-candidate)
+==46==    by 0x40E0E44: calcium_rank_dominance_candidate::main (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/debug/calcium-rank-dominance-candidate)
+==46== 
+==46== 104 bytes in 1 blocks are still reachable in loss record 2 of 15
+==46==    at 0x4B2BAE6: malloc (vg_replace_malloc.c:447)
+==46==    by 0x4228731: <alloc::alloc::Global>::alloc_impl_runtime (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/debug/calcium-rank-dominance-candidate)
+==46==    by 0x4215474: alloc::boxed::box_new_uninit (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/debug/calcium-rank-dominance-candidate)
+==46==    by 0x42408C7: <alloc::sync::Arc<hyperreal::rational::arithmetic::RationalData>>::new (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/debug/calcium-rank-dominance-candidate)
+==46==    by 0x4180A66: <hyperreal::rational::arithmetic::Rational>::from_parts_raw (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/debug/calcium-rank-dominance-candidate)
+==46==    by 0x416C0A5: hyperreal::rational::arithmetic::RATIONAL_ONE::{closure#0} (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/debug/calcium-rank-dominance-candidate)
+==46==    by 0x42331D1: <hyperreal::rational::arithmetic::RATIONAL_ONE::{closure#0} as core::ops::function::FnOnce<()>>::call_once (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/debug/calcium-rank-dominance-candidate)
+==46==    by 0x4231F52: <fn() -> hyperreal::rational::arithmetic::Rational as core::ops::function::FnOnce<()>>::call_once (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/debug/calcium-rank-dominance-candidate)
+==46==    by 0x421D0C7: <std::sync::lazy_lock::LazyLock<hyperreal::rational::arithmetic::Rational>>::force::{closure#0} (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/debug/calcium-rank-dominance-candidate)
+==46==    by 0x42376F6: <std::sync::once::Once>::call_once_force::<<std::sync::lazy_lock::LazyLock<hyperreal::rational::arithmetic::Rational>>::force::{closure#0}>::{closure#0} (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/debug/calcium-rank-dominance-candidate)
+==46==    by 0x427A3E8: <std::sys::sync::once::futex::Once>::call (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/debug/calcium-rank-dominance-candidate)
+==46==    by 0x423703D: <std::sync::once::Once>::call_once_force::<<std::sync::lazy_lock::LazyLock<hyperreal::rational::arithmetic::Rational>>::force::{closure#0}> (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/debug/calcium-rank-dominance-candidate)
+==46== 
+==46== 104 bytes in 1 blocks are still reachable in loss record 3 of 15
+==46==    at 0x4B2BAE6: malloc (vg_replace_malloc.c:447)
+==46==    by 0x4228731: <alloc::alloc::Global>::alloc_impl_runtime (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/debug/calcium-rank-dominance-candidate)
+==46==    by 0x4215474: alloc::boxed::box_new_uninit (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/debug/calcium-rank-dominance-candidate)
+==46==    by 0x42408C7: <alloc::sync::Arc<hyperreal::rational::arithmetic::RationalData>>::new (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/debug/calcium-rank-dominance-candidate)
+==46==    by 0x4180A66: <hyperreal::rational::arithmetic::Rational>::from_parts_raw (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/debug/calcium-rank-dominance-candidate)
+==46==    by 0x416C140: hyperreal::rational::arithmetic::RATIONAL_ZERO::{closure#0} (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/debug/calcium-rank-dominance-candidate)
+==46==    by 0x423320D: <hyperreal::rational::arithmetic::RATIONAL_ZERO::{closure#0} as core::ops::function::FnOnce<()>>::call_once (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/debug/calcium-rank-dominance-candidate)
+==46==    by 0x4231F52: <fn() -> hyperreal::rational::arithmetic::Rational as core::ops::function::FnOnce<()>>::call_once (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/debug/calcium-rank-dominance-candidate)
+==46==    by 0x421D0C7: <std::sync::lazy_lock::LazyLock<hyperreal::rational::arithmetic::Rational>>::force::{closure#0} (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/debug/calcium-rank-dominance-candidate)
+==46==    by 0x42376F6: <std::sync::once::Once>::call_once_force::<<std::sync::lazy_lock::LazyLock<hyperreal::rational::arithmetic::Rational>>::force::{closure#0}>::{closure#0} (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/debug/calcium-rank-dominance-candidate)
+==46==    by 0x427A3E8: <std::sys::sync::once::futex::Once>::call (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/debug/calcium-rank-dominance-candidate)
+==46==    by 0x423703D: <std::sync::once::Once>::call_once_force::<<std::sync::lazy_lock::LazyLock<hyperreal::rational::arithmetic::Rational>>::force::{closure#0}> (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/debug/calcium-rank-dominance-candidate)
+==46== 
+==46== 104 bytes in 1 blocks are still reachable in loss record 4 of 15
+==46==    at 0x4B2BAE6: malloc (vg_replace_malloc.c:447)
+==46==    by 0x4291F02: <alloc::raw_vec::RawVecInner>::try_allocate_in (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/debug/calcium-rank-dominance-candidate)
+==46==    by 0x424C733: <alloc::raw_vec::RawVecInner>::with_capacity_in (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/debug/calcium-rank-dominance-candidate)
+==46==    by 0x424B1ED: <u64 as <[_]>::to_vec_in::ConvertVec>::to_vec::<alloc::alloc::Global> (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/debug/calcium-rank-dominance-candidate)
+==46==    by 0x424B77D: <[u64]>::to_vec (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/debug/calcium-rank-dominance-candidate)
+==46==    by 0x4228B53: <num_bigint::big_digit::BigDigits>::from_slice (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/debug/calcium-rank-dominance-candidate)
+==46==    by 0x4229EDF: <num_bigint::big_digit::BigDigits as core::clone::Clone>::clone (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/debug/calcium-rank-dominance-candidate)
+==46==    by 0x4221C66: <num_bigint::biguint::BigUint as core::clone::Clone>::clone (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/debug/calcium-rank-dominance-candidate)
+==46==    by 0x421924E: <num_bigint::bigint::BigInt as core::clone::Clone>::clone (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/debug/calcium-rank-dominance-candidate)
+==46==    by 0x4196ED0: <hyperreal::computable::node::Computable>::approx_signal (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/debug/calcium-rank-dominance-candidate)
+==46==    by 0x41988E6: <hyperreal::computable::node::Computable>::approx (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/debug/calcium-rank-dominance-candidate)
+==46==    by 0x4149012: <hyperreal::real::arithmetic::Real>::certified_dyadic_interval (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/debug/calcium-rank-dominance-candidate)
+==46== 
+==46== 104 bytes in 1 blocks are still reachable in loss record 5 of 15
+==46==    at 0x4B2BAE6: malloc (vg_replace_malloc.c:447)
+==46==    by 0x4228731: <alloc::alloc::Global>::alloc_impl_runtime (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/debug/calcium-rank-dominance-candidate)
+==46==    by 0x4215474: alloc::boxed::box_new_uninit (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/debug/calcium-rank-dominance-candidate)
+==46==    by 0x42408C7: <alloc::sync::Arc<hyperreal::rational::arithmetic::RationalData>>::new (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/debug/calcium-rank-dominance-candidate)
+==46==    by 0x4180A66: <hyperreal::rational::arithmetic::Rational>::from_parts_raw (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/debug/calcium-rank-dominance-candidate)
+==46==    by 0x416C1D2: hyperreal::rational::arithmetic::RATIONAL_MINUS_ONE::{closure#0} (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/debug/calcium-rank-dominance-candidate)
+==46==    by 0x423324D: <hyperreal::rational::arithmetic::RATIONAL_MINUS_ONE::{closure#0} as core::ops::function::FnOnce<()>>::call_once (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/debug/calcium-rank-dominance-candidate)
+==46==    by 0x4231F52: <fn() -> hyperreal::rational::arithmetic::Rational as core::ops::function::FnOnce<()>>::call_once (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/debug/calcium-rank-dominance-candidate)
+==46==    by 0x421D0C7: <std::sync::lazy_lock::LazyLock<hyperreal::rational::arithmetic::Rational>>::force::{closure#0} (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/debug/calcium-rank-dominance-candidate)
+==46==    by 0x42376F6: <std::sync::once::Once>::call_once_force::<<std::sync::lazy_lock::LazyLock<hyperreal::rational::arithmetic::Rational>>::force::{closure#0}>::{closure#0} (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/debug/calcium-rank-dominance-candidate)
+==46==    by 0x427A3E8: <std::sys::sync::once::futex::Once>::call (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/debug/calcium-rank-dominance-candidate)
+==46==    by 0x423703D: <std::sync::once::Once>::call_once_force::<<std::sync::lazy_lock::LazyLock<hyperreal::rational::arithmetic::Rational>>::force::{closure#0}> (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/debug/calcium-rank-dominance-candidate)
+==46== 
+==46== 104 bytes in 1 blocks are still reachable in loss record 6 of 15
+==46==    at 0x4B2BAE6: malloc (vg_replace_malloc.c:447)
+==46==    by 0x4228731: <alloc::alloc::Global>::alloc_impl_runtime (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/debug/calcium-rank-dominance-candidate)
+==46==    by 0x4215474: alloc::boxed::box_new_uninit (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/debug/calcium-rank-dominance-candidate)
+==46==    by 0x42408C7: <alloc::sync::Arc<hyperreal::rational::arithmetic::RationalData>>::new (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/debug/calcium-rank-dominance-candidate)
+==46==    by 0x4180A66: <hyperreal::rational::arithmetic::Rational>::from_parts_raw (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/debug/calcium-rank-dominance-candidate)
+==46==    by 0x416BBA0: <hyperreal::rational::arithmetic::Rational>::small_reduced_general_fraction::{closure#0} (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/debug/calcium-rank-dominance-candidate)
+==46==    by 0x423EE54: <std::sync::once_lock::OnceLock<hyperreal::rational::arithmetic::Rational>>::get_or_init::<<hyperreal::rational::arithmetic::Rational>::small_reduced_general_fraction::{closure#0}>::{closure#0} (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/debug/calcium-rank-dominance-candidate)
+==46==    by 0x423EDCC: <std::sync::once_lock::OnceLock<hyperreal::rational::arithmetic::Rational>>::initialize::<<std::sync::once_lock::OnceLock<hyperreal::rational::arithmetic::Rational>>::get_or_init<<hyperreal::rational::arithmetic::Rational>::small_reduced_general_fraction::{closure#0}>::{closure#0}, !>::{closure#0} (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/debug/calcium-rank-dominance-candidate)
+==46==    by 0x423756D: <std::sync::once::Once>::call_once_force::<<std::sync::once_lock::OnceLock<hyperreal::rational::arithmetic::Rational>>::initialize<<std::sync::once_lock::OnceLock<hyperreal::rational::arithmetic::Rational>>::get_or_init<<hyperreal::rational::arithmetic::Rational>::small_reduced_general_fraction::{closure#0}>::{closure#0}, !>::{closure#0}>::{closure#0} (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/debug/calcium-rank-dominance-candidate)
+==46==    by 0x427A3E8: <std::sys::sync::once::futex::Once>::call (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/debug/calcium-rank-dominance-candidate)
+==46==    by 0x4236D35: <std::sync::once::Once>::call_once_force::<<std::sync::once_lock::OnceLock<hyperreal::rational::arithmetic::Rational>>::initialize<<std::sync::once_lock::OnceLock<hyperreal::rational::arithmetic::Rational>>::get_or_init<<hyperreal::rational::arithmetic::Rational>::small_reduced_general_fraction::{closure#0}>::{closure#0}, !>::{closure#0}> (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/debug/calcium-rank-dominance-candidate)
+==46==    by 0x423C7DF: <std::sync::once_lock::OnceLock<hyperreal::rational::arithmetic::Rational>>::initialize::<<std::sync::once_lock::OnceLock<hyperreal::rational::arithmetic::Rational>>::get_or_init<<hyperreal::rational::arithmetic::Rational>::small_reduced_general_fraction::{closure#0}>::{closure#0}, !> (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/debug/calcium-rank-dominance-candidate)
+==46== 
+==46== 104 bytes in 1 blocks are still reachable in loss record 7 of 15
+==46==    at 0x4B2BAE6: malloc (vg_replace_malloc.c:447)
+==46==    by 0x4228731: <alloc::alloc::Global>::alloc_impl_runtime (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/debug/calcium-rank-dominance-candidate)
+==46==    by 0x4215474: alloc::boxed::box_new_uninit (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/debug/calcium-rank-dominance-candidate)
+==46==    by 0x42408C7: <alloc::sync::Arc<hyperreal::rational::arithmetic::RationalData>>::new (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/debug/calcium-rank-dominance-candidate)
+==46==    by 0x41114C6: <hyperreal::rational::arithmetic::Rational>::from_parts_raw (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/debug/calcium-rank-dominance-candidate)
+==46==    by 0x4111BC5: <&hyperreal::rational::arithmetic::Rational as core::ops::arith::Neg>::neg (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/debug/calcium-rank-dominance-candidate)
+==46==    by 0x4111E7E: <hyperreal::rational::arithmetic::Rational as core::ops::arith::Neg>::neg (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/debug/calcium-rank-dominance-candidate)
+==46==    by 0x41206E9: <hyperreal::real::arithmetic::Real as core::ops::arith::Neg>::neg (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/debug/calcium-rank-dominance-candidate)
+==46==    by 0x41172D1: hypersolve::bareiss::pivot_free_determinant (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/debug/calcium-rank-dominance-candidate)
+==46==    by 0x411668E: hypersolve::bareiss::determinant_bareiss (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/debug/calcium-rank-dominance-candidate)
+==46==    by 0x40F367D: hypersolve::rank::exact_matrix_rank (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/debug/calcium-rank-dominance-candidate)
+==46==    by 0x40F3E9B: hypersolve::rank::analyze_exact_affine_rank (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/debug/calcium-rank-dominance-candidate)
+==46== 
+==46== 104 bytes in 1 blocks are still reachable in loss record 8 of 15
+==46==    at 0x4B2BAE6: malloc (vg_replace_malloc.c:447)
+==46==    by 0x4228731: <alloc::alloc::Global>::alloc_impl_runtime (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/debug/calcium-rank-dominance-candidate)
+==46==    by 0x4215474: alloc::boxed::box_new_uninit (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/debug/calcium-rank-dominance-candidate)
+==46==    by 0x42408C7: <alloc::sync::Arc<hyperreal::rational::arithmetic::RationalData>>::new (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/debug/calcium-rank-dominance-candidate)
+==46==    by 0x4180A66: <hyperreal::rational::arithmetic::Rational>::from_parts_raw (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/debug/calcium-rank-dominance-candidate)
+==46==    by 0x418283A: <hyperreal::rational::arithmetic::Rational>::from_fraction_parts_reduced (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/debug/calcium-rank-dominance-candidate)
+==46==    by 0x418472C: <hyperreal::rational::arithmetic::Rational>::fraction (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/debug/calcium-rank-dominance-candidate)
+==46==    by 0x41951A6: hyperreal::computable::node::HALF_PI_SHORTCUT_RATIONAL_LIMIT::{closure#0} (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/debug/calcium-rank-dominance-candidate)
+==46==    by 0x423314D: <hyperreal::computable::node::HALF_PI_SHORTCUT_RATIONAL_LIMIT::{closure#0} as core::ops::function::FnOnce<()>>::call_once (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/debug/calcium-rank-dominance-candidate)
+==46==    by 0x4231F52: <fn() -> hyperreal::rational::arithmetic::Rational as core::ops::function::FnOnce<()>>::call_once (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/debug/calcium-rank-dominance-candidate)
+==46==    by 0x421D0C7: <std::sync::lazy_lock::LazyLock<hyperreal::rational::arithmetic::Rational>>::force::{closure#0} (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/debug/calcium-rank-dominance-candidate)
+==46==    by 0x42376F6: <std::sync::once::Once>::call_once_force::<<std::sync::lazy_lock::LazyLock<hyperreal::rational::arithmetic::Rational>>::force::{closure#0}>::{closure#0} (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/debug/calcium-rank-dominance-candidate)
+==46== 
+==46== 104 bytes in 1 blocks are still reachable in loss record 9 of 15
+==46==    at 0x4B2BAE6: malloc (vg_replace_malloc.c:447)
+==46==    by 0x4228731: <alloc::alloc::Global>::alloc_impl_runtime (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/debug/calcium-rank-dominance-candidate)
+==46==    by 0x4215474: alloc::boxed::box_new_uninit (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/debug/calcium-rank-dominance-candidate)
+==46==    by 0x42408C7: <alloc::sync::Arc<hyperreal::rational::arithmetic::RationalData>>::new (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/debug/calcium-rank-dominance-candidate)
+==46==    by 0x4180A66: <hyperreal::rational::arithmetic::Rational>::from_parts_raw (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/debug/calcium-rank-dominance-candidate)
+==46==    by 0x4170FD0: <hyperreal::rational::arithmetic::Rational>::extract_square_reduced (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/debug/calcium-rank-dominance-candidate)
+==46==    by 0x4172211: <hyperreal::rational::arithmetic::Rational>::extract_square_reduced_retained (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/debug/calcium-rank-dominance-candidate)
+==46==    by 0x413CCC5: <hyperreal::real::arithmetic::Real>::sqrt (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/debug/calcium-rank-dominance-candidate)
+==46==    by 0x40E3B6B: calcium_rank_dominance_candidate::scalar (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/debug/calcium-rank-dominance-candidate)
+==46==    by 0x40E0E44: calcium_rank_dominance_candidate::main (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/debug/calcium-rank-dominance-candidate)
+==46==    by 0x40E6EF2: <fn() as core::ops::function::FnOnce<()>>::call_once (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/debug/calcium-rank-dominance-candidate)
+==46==    by 0x40E05C5: std::sys::backtrace::__rust_begin_short_backtrace::<fn(), ()> (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/debug/calcium-rank-dominance-candidate)
+==46== 
+==46== 104 bytes in 1 blocks are still reachable in loss record 10 of 15
+==46==    at 0x4B2BAE6: malloc (vg_replace_malloc.c:447)
+==46==    by 0x4228731: <alloc::alloc::Global>::alloc_impl_runtime (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/debug/calcium-rank-dominance-candidate)
+==46==    by 0x4215474: alloc::boxed::box_new_uninit (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/debug/calcium-rank-dominance-candidate)
+==46==    by 0x42408C7: <alloc::sync::Arc<hyperreal::rational::arithmetic::RationalData>>::new (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/debug/calcium-rank-dominance-candidate)
+==46==    by 0x4180A66: <hyperreal::rational::arithmetic::Rational>::from_parts_raw (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/debug/calcium-rank-dominance-candidate)
+==46==    by 0x41710E8: <hyperreal::rational::arithmetic::Rational>::extract_square_reduced (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/debug/calcium-rank-dominance-candidate)
+==46==    by 0x4172211: <hyperreal::rational::arithmetic::Rational>::extract_square_reduced_retained (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/debug/calcium-rank-dominance-candidate)
+==46==    by 0x413CCC5: <hyperreal::real::arithmetic::Real>::sqrt (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/debug/calcium-rank-dominance-candidate)
+==46==    by 0x40E3B6B: calcium_rank_dominance_candidate::scalar (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/debug/calcium-rank-dominance-candidate)
+==46==    by 0x40E0E44: calcium_rank_dominance_candidate::main (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/debug/calcium-rank-dominance-candidate)
+==46==    by 0x40E6EF2: <fn() as core::ops::function::FnOnce<()>>::call_once (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/debug/calcium-rank-dominance-candidate)
+==46==    by 0x40E05C5: std::sys::backtrace::__rust_begin_short_backtrace::<fn(), ()> (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/debug/calcium-rank-dominance-candidate)
+==46== 
+==46== 176 bytes in 1 blocks are still reachable in loss record 11 of 15
+==46==    at 0x4B2BAE6: malloc (vg_replace_malloc.c:447)
+==46==    by 0x4228731: <alloc::alloc::Global>::alloc_impl_runtime (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/debug/calcium-rank-dominance-candidate)
+==46==    by 0x4215474: alloc::boxed::box_new_uninit (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/debug/calcium-rank-dominance-candidate)
+==46==    by 0x417C344: <hyperreal::rational::arithmetic::Rational>::retain_negation_entry (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/debug/calcium-rank-dominance-candidate)
+==46==    by 0x417B975: <hyperreal::rational::arithmetic::Rational>::retain_negation_pair (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/debug/calcium-rank-dominance-candidate)
+==46==    by 0x4111BF1: <&hyperreal::rational::arithmetic::Rational as core::ops::arith::Neg>::neg (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/debug/calcium-rank-dominance-candidate)
+==46==    by 0x4111E7E: <hyperreal::rational::arithmetic::Rational as core::ops::arith::Neg>::neg (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/debug/calcium-rank-dominance-candidate)
+==46==    by 0x41206E9: <hyperreal::real::arithmetic::Real as core::ops::arith::Neg>::neg (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/debug/calcium-rank-dominance-candidate)
+==46==    by 0x41172D1: hypersolve::bareiss::pivot_free_determinant (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/debug/calcium-rank-dominance-candidate)
+==46==    by 0x411668E: hypersolve::bareiss::determinant_bareiss (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/debug/calcium-rank-dominance-candidate)
+==46==    by 0x40F367D: hypersolve::rank::exact_matrix_rank (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/debug/calcium-rank-dominance-candidate)
+==46==    by 0x40F3E9B: hypersolve::rank::analyze_exact_affine_rank (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/debug/calcium-rank-dominance-candidate)
+==46== 
+==46== 176 bytes in 1 blocks are still reachable in loss record 12 of 15
+==46==    at 0x4B2BAE6: malloc (vg_replace_malloc.c:447)
+==46==    by 0x4228731: <alloc::alloc::Global>::alloc_impl_runtime (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/debug/calcium-rank-dominance-candidate)
+==46==    by 0x4215474: alloc::boxed::box_new_uninit (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/debug/calcium-rank-dominance-candidate)
+==46==    by 0x417C344: <hyperreal::rational::arithmetic::Rational>::retain_negation_entry (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/debug/calcium-rank-dominance-candidate)
+==46==    by 0x417B990: <hyperreal::rational::arithmetic::Rational>::retain_negation_pair (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/debug/calcium-rank-dominance-candidate)
+==46==    by 0x4111BF1: <&hyperreal::rational::arithmetic::Rational as core::ops::arith::Neg>::neg (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/debug/calcium-rank-dominance-candidate)
+==46==    by 0x4111E7E: <hyperreal::rational::arithmetic::Rational as core::ops::arith::Neg>::neg (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/debug/calcium-rank-dominance-candidate)
+==46==    by 0x41206E9: <hyperreal::real::arithmetic::Real as core::ops::arith::Neg>::neg (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/debug/calcium-rank-dominance-candidate)
+==46==    by 0x41172D1: hypersolve::bareiss::pivot_free_determinant (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/debug/calcium-rank-dominance-candidate)
+==46==    by 0x411668E: hypersolve::bareiss::determinant_bareiss (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/debug/calcium-rank-dominance-candidate)
+==46==    by 0x40F367D: hypersolve::rank::exact_matrix_rank (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/debug/calcium-rank-dominance-candidate)
+==46==    by 0x40F3E9B: hypersolve::rank::analyze_exact_affine_rank (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/debug/calcium-rank-dominance-candidate)
+==46== 
+==46== 176 bytes in 1 blocks are still reachable in loss record 13 of 15
+==46==    at 0x4B2BAE6: malloc (vg_replace_malloc.c:447)
+==46==    by 0x4228731: <alloc::alloc::Global>::alloc_impl_runtime (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/debug/calcium-rank-dominance-candidate)
+==46==    by 0x4215474: alloc::boxed::box_new_uninit (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/debug/calcium-rank-dominance-candidate)
+==46==    by 0x4171BA3: <hyperreal::rational::arithmetic::Rational>::retain_square_reduction (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/debug/calcium-rank-dominance-candidate)
+==46==    by 0x4172245: <hyperreal::rational::arithmetic::Rational>::extract_square_reduced_retained (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/debug/calcium-rank-dominance-candidate)
+==46==    by 0x413CCC5: <hyperreal::real::arithmetic::Real>::sqrt (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/debug/calcium-rank-dominance-candidate)
+==46==    by 0x40E3B6B: calcium_rank_dominance_candidate::scalar (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/debug/calcium-rank-dominance-candidate)
+==46==    by 0x40E0E44: calcium_rank_dominance_candidate::main (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/debug/calcium-rank-dominance-candidate)
+==46==    by 0x40E6EF2: <fn() as core::ops::function::FnOnce<()>>::call_once (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/debug/calcium-rank-dominance-candidate)
+==46==    by 0x40E05C5: std::sys::backtrace::__rust_begin_short_backtrace::<fn(), ()> (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/debug/calcium-rank-dominance-candidate)
+==46==    by 0x40E0858: std::rt::lang_start::<()>::{closure#0} (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/debug/calcium-rank-dominance-candidate)
+==46==    by 0x4287B66: std::rt::lang_start_internal (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/debug/calcium-rank-dominance-candidate)
+==46== 
+==46== 208 bytes in 2 blocks are still reachable in loss record 14 of 15
+==46==    at 0x4B2BAE6: malloc (vg_replace_malloc.c:447)
+==46==    by 0x4228731: <alloc::alloc::Global>::alloc_impl_runtime (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/debug/calcium-rank-dominance-candidate)
+==46==    by 0x4215474: alloc::boxed::box_new_uninit (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/debug/calcium-rank-dominance-candidate)
+==46==    by 0x42408C7: <alloc::sync::Arc<hyperreal::rational::arithmetic::RationalData>>::new (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/debug/calcium-rank-dominance-candidate)
+==46==    by 0x4180A66: <hyperreal::rational::arithmetic::Rational>::from_parts_raw (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/debug/calcium-rank-dominance-candidate)
+==46==    by 0x416B795: <hyperreal::rational::arithmetic::Rational>::small_integer::{closure#0} (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/debug/calcium-rank-dominance-candidate)
+==46==    by 0x423EDF5: <std::sync::once_lock::OnceLock<hyperreal::rational::arithmetic::Rational>>::get_or_init::<<hyperreal::rational::arithmetic::Rational>::small_integer::{closure#0}>::{closure#0} (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/debug/calcium-rank-dominance-candidate)
+==46==    by 0x423ED28: <std::sync::once_lock::OnceLock<hyperreal::rational::arithmetic::Rational>>::initialize::<<std::sync::once_lock::OnceLock<hyperreal::rational::arithmetic::Rational>>::get_or_init<<hyperreal::rational::arithmetic::Rational>::small_integer::{closure#0}>::{closure#0}, !>::{closure#0} (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/debug/calcium-rank-dominance-candidate)
+==46==    by 0x4237433: <std::sync::once::Once>::call_once_force::<<std::sync::once_lock::OnceLock<hyperreal::rational::arithmetic::Rational>>::initialize<<std::sync::once_lock::OnceLock<hyperreal::rational::arithmetic::Rational>>::get_or_init<<hyperreal::rational::arithmetic::Rational>::small_integer::{closure#0}>::{closure#0}, !>::{closure#0}>::{closure#0} (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/debug/calcium-rank-dominance-candidate)
+==46==    by 0x427A3E8: <std::sys::sync::once::futex::Once>::call (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/debug/calcium-rank-dominance-candidate)
+==46==    by 0x4236B16: <std::sync::once::Once>::call_once_force::<<std::sync::once_lock::OnceLock<hyperreal::rational::arithmetic::Rational>>::initialize<<std::sync::once_lock::OnceLock<hyperreal::rational::arithmetic::Rational>>::get_or_init<<hyperreal::rational::arithmetic::Rational>::small_integer::{closure#0}>::{closure#0}, !>::{closure#0}> (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/debug/calcium-rank-dominance-candidate)
+==46==    by 0x423C725: <std::sync::once_lock::OnceLock<hyperreal::rational::arithmetic::Rational>>::initialize::<<std::sync::once_lock::OnceLock<hyperreal::rational::arithmetic::Rational>>::get_or_init<<hyperreal::rational::arithmetic::Rational>::small_integer::{closure#0}>::{closure#0}, !> (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/debug/calcium-rank-dominance-candidate)
+==46== 
+==46== 544 bytes in 1 blocks are still reachable in loss record 15 of 15
+==46==    at 0x4B2BAE6: malloc (vg_replace_malloc.c:447)
+==46==    by 0x428A9D9: std::sys::pal::unix::stack_overflow::thread_info::set_current_info (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/debug/calcium-rank-dominance-candidate)
+==46==    by 0x4287A9F: std::rt::lang_start_internal (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/debug/calcium-rank-dominance-candidate)
+==46==    by 0x40E05B0: std::rt::lang_start::<()> (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/debug/calcium-rank-dominance-candidate)
+==46==    by 0x40E6F54: main (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/debug/calcium-rank-dominance-candidate)
+==46== 
+==46== LEAK SUMMARY:
+==46==    definitely lost: 0 bytes in 0 blocks
+==46==    indirectly lost: 0 bytes in 0 blocks
+==46==      possibly lost: 0 bytes in 0 blocks
+==46==    still reachable: 2,272 bytes in 16 blocks
+==46==         suppressed: 0 bytes in 0 blocks
+==46== 
+==46== For lists of detected and suppressed errors, rerun with: -s
+==46== ERROR SUMMARY: 0 errors from 0 contexts (suppressed: 0 from 0)

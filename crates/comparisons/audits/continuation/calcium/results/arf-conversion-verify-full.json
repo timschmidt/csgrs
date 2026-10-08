@@ -1,0 +1,14 @@
+{
+  "tag": "arf-conversion-verify-full",
+  "started": "2026-09-10T03:16:17.903Z",
+  "finished": "2026-09-10T03:17:12.671Z",
+  "elapsedSeconds": 54.765645414,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "node",
+  "args": [
+    "verify-arf-conversion.mjs",
+    "--e-plan-live"
+  ],
+  "code": 0,
+  "signal": null
+}

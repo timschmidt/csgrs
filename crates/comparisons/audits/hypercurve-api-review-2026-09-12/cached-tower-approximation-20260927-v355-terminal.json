@@ -1,0 +1,128 @@
+{
+  "source_manifest": "cached-tower-approximation-20260927-v355-sources.json",
+  "source_directory": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/source-archives/cached-tower-approximation-20260927-v355",
+  "cases": [],
+  "builds": [
+    {
+      "crate": "hyperreal",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "test",
+        "--lib",
+        "--release",
+        "--all-features",
+        "--no-run",
+        "--message-format=json",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v355-hyperreal-build.log",
+      "elapsed_seconds": 31.1140759390546,
+      "binary": {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/cached-tower-approximation-20260927-v355-hyperreal",
+        "sha256": "d8cae87f824c808d164ed37e7d95939a82d420c32d17576da3168eed30533406"
+      }
+    },
+    {
+      "crate": "hypersolve",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "test",
+        "--lib",
+        "--release",
+        "--all-features",
+        "--no-run",
+        "--message-format=json",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v355-hypersolve-build.log",
+      "elapsed_seconds": 56.50443807989359,
+      "binary": {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/cached-tower-approximation-20260927-v355-hypersolve",
+        "sha256": "b6ef8755a5c17581b5c870bed5f3dc46eafd18daadd800efe0601d9bb929d62f"
+      }
+    }
+  ],
+  "all_processes_reaped": true,
+  "checks": [
+    {
+      "label": "hyperreal-clippy",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "clippy",
+        "--all-targets",
+        "--all-features",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v355-hyperreal-clippy.log",
+      "elapsed_seconds": 5.272532555973157
+    },
+    {
+      "label": "hyperreal-full-lib",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/cached-tower-approximation-20260927-v355-hyperreal",
+        "--nocapture",
+        "--test-threads=2"
+      ],
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v355-hyperreal-full-lib.log",
+      "elapsed_seconds": 3.3685933859087527
+    },
+    {
+      "label": "hypersolve-clippy",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "clippy",
+        "--all-targets",
+        "--all-features",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v355-hypersolve-clippy.log",
+      "elapsed_seconds": 9.328754246002063
+    },
+    {
+      "label": "hypersolve-full-lib",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/cached-tower-approximation-20260927-v355-hypersolve",
+        "--nocapture",
+        "--test-threads=2"
+      ],
+      "returncode": 0,
+      "log": "cached-tower-approximation-20260927-v355-hypersolve-full-lib.log",
+      "elapsed_seconds": 2.4172021499834955
+    },
+    {
+      "label": "hyperreal-integration",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "test",
+        "--tests",
+        "--release",
+        "--all-features",
+        "--locked",
+        "--offline",
+        "--",
+        "--test-threads=2"
+      ],
+      "returncode": 101,
+      "log": "cached-tower-approximation-20260927-v355-hyperreal-integration.log",
+      "elapsed_seconds": 27.95854629203677
+    }
+  ],
+  "qualification_scope": "Retained scalar reduction approximation across scalar, solver, and selected geometry compositions",
+  "failure": "hyperreal-integration failed",
+  "qualification_complete": false
+}

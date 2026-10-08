@@ -1,0 +1,48 @@
+{
+  "builds": [
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "check",
+        "--all-targets",
+        "--no-default-features",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 27.12679766101064
+    },
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "test",
+        "--release",
+        "--all-features",
+        "--locked",
+        "--offline",
+        "--lib",
+        "--test",
+        "hypercurve_curve_region_promotion",
+        "--test",
+        "hypercurve_exact_closure",
+        "--test",
+        "hypercurve_curve_region_boolean",
+        "--test",
+        "hypercurve_curve_region_boolean_fuzz",
+        "--no-run",
+        "--message-format=json"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 256.3858792860119
+    }
+  ],
+  "source_files": {
+    "src/bezier_region.rs": "a9a45960f62231540c2620218281005bc66f22349b0206b4645cc5dbc47a3f6e",
+    "tests/hypercurve_curve_region_boolean.rs": "423c4eef94b8c8b9859f6b92447b8271b12d1eb6971daec7029f1eaf4a7a452a",
+    "tests/hypercurve_curve_region_boolean_fuzz.rs": "18b9961bcab64ecffe94796a906a2db83629f96e3e362a7d7dbad522d2b082bb",
+    "tests/hypercurve_curve_region_promotion.rs": "26792b9e45aac140324ee7b2e41e90fe55cf954bd6f118e2a5ddb84702c3badf",
+    "tests/hypercurve_exact_closure.rs": "73e044088dac8f81d856fdabc3bfb31b1895d8886e180d51f5c86e6e91dd339f"
+  },
+  "excluded_working_source": "src/bezier_offset.rs",
+  "excluded_scope": "Unfinished mapped-point consolidation; this snapshot uses the committed offset implementation."
+}

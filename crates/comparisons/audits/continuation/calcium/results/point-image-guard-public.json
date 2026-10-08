@@ -1,0 +1,13 @@
+{
+  "tag": "point-image-guard-public",
+  "started": "2026-09-10T19:49:08.668Z",
+  "finished": "2026-09-10T19:49:09.047Z",
+  "elapsedSeconds": 0.376009392,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "/tmp/calcium-point-image.4f6mja/guard-cpu",
+  "args": [
+    "check"
+  ],
+  "code": 0,
+  "signal": null
+}

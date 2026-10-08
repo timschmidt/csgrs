@@ -1,0 +1,19 @@
+[package]
+name = "calcium-derivative-state-candidate"
+version = "0.1.0"
+edition = "2024"
+publish = false
+[workspace]
+[dependencies]
+hypercurve = { path = "../derivative-demand-candidate/hypercurve" }
+hyperreal = { path = "../derivative-demand-candidate/hyperreal", features = ["serde"] }
+num = "0.4.3"
+serde_json = "1.0.149"
+[patch.crates-io]
+hyperreal = { path = "../derivative-demand-candidate/hyperreal" }
+hyperlattice = { path = "../derivative-demand-candidate/hyperlattice" }
+hyperlimit = { path = "../derivative-demand-candidate/hyperlimit" }
+hypersolve = { path = "../derivative-demand-candidate/hypersolve" }
+[[bin]]
+name = "calcium-derivative-state-candidate"
+path = "../derivative-state-probe.rs"

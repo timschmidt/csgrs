@@ -1,0 +1,56 @@
+{
+  "parent_commit": "69f75cf5349fa938c2f5b35532c036ac13fee0c0",
+  "source_manifest": "shared-source-refinement-20260926-v270-sources.json",
+  "changed_files": [
+    "src/bezier_offset.rs",
+    "src/bezier_parameter.rs"
+  ],
+  "source_count": 2046,
+  "qualified_cases": 158,
+  "known_limitations": [
+    {
+      "name": "approximate_512_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions",
+      "returncode": 124,
+      "log": "shared-source-refinement-20260926-v270-reoffset.log",
+      "elapsed_seconds": 90.01594932598528
+    }
+  ],
+  "repositories": {
+    "hypersdf": "",
+    "hyperbrep": "",
+    "hyperparts": "",
+    "alumina-interface": "",
+    "hyperlattice": "",
+    "citizen-builder": "",
+    "csgrs-ffi": "",
+    "alumina-firmware": "",
+    "videos": "",
+    "hypertri": "",
+    "hyperreal": "",
+    "hyperpath": "",
+    "hypervoxel": "",
+    "hypergraphics": "",
+    "hyperevolution": "",
+    "exactcore-hyper-comparison": "",
+    "hypersolve": "",
+    "hypercurve": " M src/bezier_offset.rs\n M src/bezier_parameter.rs\n",
+    "crcalc": "",
+    "openscad-rs": "",
+    "hypermesh": "",
+    "csgrs": "",
+    "synaps-cad": "",
+    "hyperdrc": "",
+    "hyperphysics": "",
+    "hyperlimit": "",
+    "hyperpack": "",
+    "NURBS_BREP_kernel": "",
+    "ExactCalculator": "",
+    "hypercircuit": ""
+  },
+  "all_owned_sessions_reaped": [
+    18504,
+    35081,
+    20500,
+    3175
+  ]
+}

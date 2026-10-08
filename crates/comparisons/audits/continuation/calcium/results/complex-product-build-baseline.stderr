@@ -1,0 +1,5 @@
+     Locking 17 packages to latest Rust 1.97.0 compatible versions
+   Compiling gmp-mpfr-sys v1.7.1
+   Compiling rug v1.30.0
+   Compiling calcium-complex-product-baseline v0.0.0 (/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/complex-product-app-baseline)
+    Finished `release` profile [optimized] target(s) in 3.79s

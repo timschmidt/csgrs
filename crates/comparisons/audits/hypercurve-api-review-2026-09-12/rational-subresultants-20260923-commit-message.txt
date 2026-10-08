@@ -1,0 +1,14 @@
+Share certified subresultants across selected-field operations
+
+Reuse one streamed integer PRS for rational Sturm rows and common factors.
+Certify leading coefficients on the retained root before specialization,
+handle initial and abnormal degree gaps, and stop at selected termination.
+Keep arbitrary exact coefficients and nonzero specialization degree drops
+on the general field path. GCD consumers retain factors up to nonzero scale
+without expanding a monic inverse at every remainder.
+
+Extend the real fillet contact regression and cover degree gaps, negative
+scales, multiplicity, reducible presentations, and general exact payloads.
+All 501 solver tests and both all-target feature checks pass. All 1212
+Hypercurve cases were attempted: 1188 pass, six ignored, with the same
+nine assertion failures and nine 75-second limits as the parent.

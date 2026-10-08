@@ -1,0 +1,22 @@
+{
+  "command": "cargo",
+  "args": [
+    "clippy",
+    "--offline",
+    "--locked",
+    "--manifest-path",
+    "source/hyperreal/Cargo.toml",
+    "--all-features",
+    "--all-targets",
+    "--",
+    "-D",
+    "warnings"
+  ],
+  "begin": "2026-09-07T05:54:00.602Z",
+  "end": "2026-09-07T05:54:10.203Z",
+  "status": 0,
+  "signal": null,
+  "error": null,
+  "stdout": "",
+  "stderr": "    Checking cfg-if v1.0.4\n   Compiling serde_core v1.0.228\n   Compiling serde v1.0.228\n    Checking memchr v2.8.0\n    Checking itoa v1.0.18\n    Checking ciborium-io v0.2.2\n    Checking libc v0.2.186\n    Checking crossbeam-utils v0.8.21\n    Checking zmij v1.0.21\n    Checking either v1.15.0\n    Checking once_cell v1.21.4\n    Checking bitflags v2.11.1\n    Checking num-traits v0.2.19\n    Checking linux-raw-sys v0.12.1\n    Checking regex-syntax v0.8.10\n    Checking zerocopy v0.8.48\n    Checking fastrand v2.4.1\n    Checking clap_lex v1.1.0\n    Checking plotters-backend v0.3.7\n    Checking anstyle v1.0.14\n    Checking same-file v1.0.6\n    Checking bit-vec v0.8.0\n    Checking cast v0.3.0\n    Checking itertools v0.10.5\n    Checking quick-error v1.2.3\n    Checking fnv v1.0.7\n    Checking walkdir v2.5.0\n    Checking plotters-svg v0.3.7\n    Checking libm v0.2.16\n    Checking clap_builder v4.6.0\n    Checking az v1.3.0\n    Checking bit-set v0.8.0\n    Checking unarray v0.1.4\n    Checking crossbeam-epoch v0.9.18\n    Checking oorandom v11.1.5\n    Checking anes v0.1.6\n    Checking rustix v1.1.4\n    Checking crossbeam-deque v0.8.6\n    Checking num-integer v0.1.46\n    Checking plotters v0.3.7\n    Checking rayon-core v1.13.0\n    Checking num-iter v0.1.45\n    Checking getrandom v0.3.4\n    Checking getrandom v0.4.2\n    Checking wait-timeout v0.2.1\n    Checking is-terminal v0.4.17\n    Checking gmp-mpfr-sys v1.7.1\n    Checking rayon v1.12.0\n    Checking rand_core v0.9.5\n    Checking rug v1.30.0\n    Checking rand_xorshift v0.4.0\n    Checking rand v0.9.4\n    Checking criterion-plot v0.5.0\n    Checking clap v4.6.1\n    Checking tempfile v3.27.0\n    Checking regex-automata v0.4.14\n    Checking rusty-fork v0.3.1\n    Checking serde_json v1.0.149\n    Checking num-bigint v0.4.6\n    Checking num-complex v0.4.6\n    Checking regex v1.12.3\n    Checking tinytemplate v1.2.1\n    Checking num-rational v0.4.2\n    Checking half v2.7.1\n    Checking ppv-lite86 v0.2.21\n    Checking num v0.4.3\n    Checking ciborium-ll v0.2.2\n    Checking rand_chacha v0.9.0\n    Checking ciborium v0.2.2\n    Checking proptest v1.11.0\n    Checking hyperreal v0.13.1 (/home/tim/Documents/GitHub/workspace/exact-real-references/ruffini-qualification/cache-public-pilot/source/hyperreal)\n    Checking criterion v0.5.1\n    Finished `dev` profile [unoptimized] target(s) in 9.55s\n"
+}

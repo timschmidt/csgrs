@@ -1,0 +1,14 @@
+{
+  "hyperbrep/src/builder.rs": {
+    "base": "a9bc668dbfdd12b93c08eb152168ddc42244749bf86f61191a942057a77760a6",
+    "updated": "e90e05e16d4760bd98d45f78421603b7fd338132decc6674db6282360682b952"
+  },
+  "hyperbrep/src/tessellation.rs": {
+    "base": "bd786e78950b853231d69a6b69164a608ea86494ba264f272849ab7d1c6c7343",
+    "updated": "d2fa75c4db06906a6a42930dd9248aa2af7029f0b1976694079ef3a655a5913b"
+  },
+  "hyperbrep/src/model.rs": {
+    "base": "7ade6913a3a06cf04304730217c2795551a471db759d46559d3265dfe34bb821",
+    "updated": "b9e04d825132026b854de298fb079739ce4965e8c232b0b306be6eae0f19cdb9"
+  }
+}

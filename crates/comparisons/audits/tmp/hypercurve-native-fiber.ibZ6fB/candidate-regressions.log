@@ -1,0 +1,10 @@
+   Compiling hypercurve v0.3.1 (/home/tim/Documents/GitHub/workspace/hypercurve)
+    Finished `release` profile [optimized] target(s) in 1m 06s
+     Running unittests src/lib.rs (target/release/deps/hypercurve-6e6572a45c5b177b)
+
+running 2 tests
+test bezier_offset::conversion_tests::fiber_specialization_preserves_axis_order_and_ragged_zero_rows ... ok
+test bezier_offset::conversion_tests::fiber_specialization_retains_native_quadratic_root_certificates ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 897 filtered out; finished in 0.00s
+

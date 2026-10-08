@@ -1,0 +1,192 @@
+[ 1 of 21] Compiling Alex             ( /home/tim/Documents/GitHub/workspace/.audit-plume.SZHOs8/compat/Alex.hs, .audit-plume.SZHOs8/ui-build/Alex.o )
+
+/home/tim/Documents/GitHub/workspace/.audit-plume.SZHOs8/compat/Alex.hs:46:1: warning: [GHC-94817] [-Wtabs]
+    Tab character found here, and in 103 further locations.
+    Suggested fix: Please use spaces instead.
+   |
+46 |         deriving (Eq,Show)
+   | ^^^^^^^^
+[ 2 of 21] Compiling DyDigit          ( /home/tim/Documents/GitHub/workspace/.audit-plume.SZHOs8/compat/DyDigit.hs, .audit-plume.SZHOs8/ui-build/DyDigit.o )
+
+/home/tim/Documents/GitHub/workspace/.audit-plume.SZHOs8/compat/DyDigit.hs:79:1: warning: [GHC-94817] [-Wtabs]
+    Tab character found here, and in 33 further locations.
+    Suggested fix: Please use spaces instead.
+   |
+79 |                    | otherwise = dydNormalise (a `div` 2, b - 1)
+   | ^^^^^^^^
+[ 3 of 21] Compiling DyStream         ( /home/tim/Documents/GitHub/workspace/.audit-plume.SZHOs8/compat/DyStream.hs, .audit-plume.SZHOs8/ui-build/DyStream.o )
+
+/home/tim/Documents/GitHub/workspace/.audit-plume.SZHOs8/compat/DyStream.hs:51:1: warning: [GHC-53633] [-Woverlapping-patterns]
+    Pattern match is redundant
+    In an equation for ‘dysDigAdd’: dysDigAdd d (h : x) = ...
+   |
+51 | dysDigAdd d    (h:x) = (a:dysDigAdd b x)
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^...
+
+/home/tim/Documents/GitHub/workspace/.audit-plume.SZHOs8/compat/DyStream.hs:77:1: warning: [GHC-94817] [-Wtabs]
+    Tab character found here, and in 8 further locations.
+    Suggested fix: Please use spaces instead.
+   |
+77 |                           else (n,x)
+   | ^^^^^^^^
+[ 4 of 21] Compiling DyFloat          ( /home/tim/Documents/GitHub/workspace/.audit-plume.SZHOs8/compat/DyFloat.hs, .audit-plume.SZHOs8/ui-build/DyFloat.o )
+
+/home/tim/Documents/GitHub/workspace/.audit-plume.SZHOs8/compat/DyFloat.hs:43:35: warning: [GHC-94817] [-Wtabs]
+    Tab character found here, and in 11 further locations.
+    Suggested fix: Please use spaces instead.
+   |
+43 | dyf_Half           = (0, dys_Half)         :: DyFloat
+   |                                   ^^^^^^
+[ 5 of 21] Compiling Interact         ( /home/tim/Documents/GitHub/workspace/.audit-plume.SZHOs8/compat/Interact.hs, .audit-plume.SZHOs8/ui-build/Interact.o )
+
+/home/tim/Documents/GitHub/workspace/.audit-plume.SZHOs8/compat/Interact.hs:8:1: warning: [GHC-94817] [-Wtabs]
+    Tab character found here, and in six further locations.
+    Suggested fix: Please use spaces instead.
+  |
+8 |         Interact(..),
+  | ^^^^^^^^
+[ 6 of 21] Compiling ParseTree        ( /home/tim/Documents/GitHub/workspace/.audit-plume.SZHOs8/compat/ParseTree.hs, .audit-plume.SZHOs8/ui-build/ParseTree.o )
+
+/home/tim/Documents/GitHub/workspace/.audit-plume.SZHOs8/compat/ParseTree.hs:21:1: warning: [GHC-94817] [-Wtabs]
+    Tab character found here, and in 29 further locations.
+    Suggested fix: Please use spaces instead.
+   |
+21 |         = Digits String
+   | ^^^^^^^^
+[ 7 of 21] Compiling Lexer            ( /home/tim/Documents/GitHub/workspace/.audit-plume.SZHOs8/compat/Lexer.hs, .audit-plume.SZHOs8/ui-build/Lexer.o )
+
+/home/tim/Documents/GitHub/workspace/.audit-plume.SZHOs8/compat/Lexer.hs:59:1: warning: [GHC-94817] [-Wtabs]
+    Tab character found here, and in two further locations.
+    Suggested fix: Please use spaces instead.
+   |
+59 |         where
+   | ^^^^^^^^
+[ 8 of 21] Compiling Database         ( /home/tim/Documents/GitHub/workspace/.audit-plume.SZHOs8/compat/Database.hs, .audit-plume.SZHOs8/ui-build/Database.o )
+
+/home/tim/Documents/GitHub/workspace/.audit-plume.SZHOs8/compat/Database.hs:13:1: warning: [GHC-94817] [-Wtabs]
+    Tab character found here.
+    Suggested fix: Please use spaces instead.
+   |
+13 |         ) where
+   | ^^^^^^^^
+[ 9 of 21] Compiling Parser           ( /home/tim/Documents/GitHub/workspace/.audit-plume.SZHOs8/compat/Parser.hs, .audit-plume.SZHOs8/ui-build/Parser.o )
+
+/home/tim/Documents/GitHub/workspace/.audit-plume.SZHOs8/compat/Parser.hs:19:1: warning: [GHC-94817] [-Wtabs]
+    Tab character found here, and in 205 further locations.
+    Suggested fix: Please use spaces instead.
+   |
+19 |         = HappyTerminal Token
+   | ^^^^^^^^
+[10 of 21] Compiling Utils            ( /home/tim/Documents/GitHub/workspace/.audit-plume.SZHOs8/compat/Utils.hs, .audit-plume.SZHOs8/ui-build/Utils.o )
+
+/home/tim/Documents/GitHub/workspace/.audit-plume.SZHOs8/compat/Utils.hs:7:1: warning: [GHC-94817] [-Wtabs]
+    Tab character found here.
+    Suggested fix: Please use spaces instead.
+  |
+7 |          where
+  | ^^^^^^^^
+[11 of 21] Compiling SBinStream       ( /home/tim/Documents/GitHub/workspace/.audit-plume.SZHOs8/compat/SBinStream.hs, .audit-plume.SZHOs8/ui-build/SBinStream.o )
+
+/home/tim/Documents/GitHub/workspace/.audit-plume.SZHOs8/compat/SBinStream.hs:38:1: warning: [GHC-94817] [-Wtabs]
+    Tab character found here, and in 59 further locations.
+    Suggested fix: Please use spaces instead.
+   |
+38 |         where
+   | ^^^^^^^^
+[12 of 21] Compiling SBinFloat        ( /home/tim/Documents/GitHub/workspace/.audit-plume.SZHOs8/compat/SBinFloat.hs, .audit-plume.SZHOs8/ui-build/SBinFloat.o )
+
+/home/tim/Documents/GitHub/workspace/.audit-plume.SZHOs8/compat/SBinFloat.hs:24:2: warning: [GHC-94817] [-Wtabs]
+    Tab character found here, and in three further locations.
+    Suggested fix: Please use spaces instead.
+   |
+24 | )       where
+   |  ^^^^^^^
+[13 of 21] Compiling Convert          ( /home/tim/Documents/GitHub/workspace/.audit-plume.SZHOs8/compat/Convert.hs, .audit-plume.SZHOs8/ui-build/Convert.o )
+
+/home/tim/Documents/GitHub/workspace/.audit-plume.SZHOs8/compat/Convert.hs:27:1: warning: [GHC-94817] [-Wtabs]
+    Tab character found here, and in 7 further locations.
+    Suggested fix: Please use spaces instead.
+   |
+27 |         | dydGTE c dyd_Quarter      =
+   | ^^^^^^^^
+[14 of 21] Compiling SBinDec          ( /home/tim/Documents/GitHub/workspace/.audit-plume.SZHOs8/compat/SBinDec.hs, .audit-plume.SZHOs8/ui-build/SBinDec.o )
+
+/home/tim/Documents/GitHub/workspace/.audit-plume.SZHOs8/compat/SBinDec.hs:20:1: warning: [GHC-94817] [-Wtabs]
+    Tab character found here, and in 87 further locations.
+    Suggested fix: Please use spaces instead.
+   |
+20 |             if (two_r <= -1.0) then (-1:(sbGen (two_r+1.0))) else
+   | ^^^^^^^^
+[15 of 21] Compiling IReal            ( /home/tim/Documents/GitHub/workspace/.audit-plume.SZHOs8/compat/IReal.hs, .audit-plume.SZHOs8/ui-build/IReal.o )
+
+/home/tim/Documents/GitHub/workspace/.audit-plume.SZHOs8/compat/IReal.hs:31:1: warning: [GHC-94817] [-Wtabs]
+    Tab character found here, and in 15 further locations.
+    Suggested fix: Please use spaces instead.
+   |
+31 |                  = ( 0: sbBB (p 0 x) (p 0 y) (p 0 z))
+   | ^^^^^^^^
+[16 of 21] Compiling X_Repn           ( /home/tim/Documents/GitHub/workspace/.audit-plume.SZHOs8/compat/X_Repn.hs, .audit-plume.SZHOs8/ui-build/X_Repn.o )
+
+/home/tim/Documents/GitHub/workspace/.audit-plume.SZHOs8/compat/X_Repn.hs:31:1: warning: [GHC-53633] [-Woverlapping-patterns]
+    Pattern match is redundant
+    In an equation for ‘sbDiv’: sbDiv _ (1 : -1 : _) = ...
+   |
+31 | sbDiv _ ( 1: -1: _) = undefined
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+/home/tim/Documents/GitHub/workspace/.audit-plume.SZHOs8/compat/X_Repn.hs:32:1: warning: [GHC-53633] [-Woverlapping-patterns]
+    Pattern match is redundant
+    In an equation for ‘sbDiv’: sbDiv _ (-1 : 1 : _) = ...
+   |
+32 | sbDiv _ (-1:  1: _) = undefined
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+/home/tim/Documents/GitHub/workspace/.audit-plume.SZHOs8/compat/X_Repn.hs:57:1: warning: [GHC-94817] [-Wtabs]
+    Tab character found here, and in 19 further locations.
+    Suggested fix: Please use spaces instead.
+   |
+57 |         (-1) -> if (a'==1) then  (sbDiv_emit 2 (-1:r'') y) else
+   | ^^^^^^^^
+[17 of 21] Compiling Integr           ( /home/tim/Documents/GitHub/workspace/.audit-plume.SZHOs8/compat/Integr.hs, .audit-plume.SZHOs8/ui-build/Integr.o )
+
+/home/tim/Documents/GitHub/workspace/.audit-plume.SZHOs8/compat/Integr.hs:30:1: warning: [GHC-64088] [-Wforall-identifier]
+    The use of ‘forall’ as an identifier
+    will become an error in a future GHC release.
+    Suggested fix:
+      Consider using another name, such as
+      ‘forAll’, ‘for_all’, or ‘forall_’.
+   |
+30 | forall predicate  =  predicate (notwitness predicate)
+   | ^^^^^^
+
+/home/tim/Documents/GitHub/workspace/.audit-plume.SZHOs8/compat/Integr.hs:39:1: warning: [GHC-94817] [-Wtabs]
+    Tab character found here, and in 22 further locations.
+    Suggested fix: Please use spaces instead.
+   |
+39 |                                      else  notwit1
+   | ^^^^^^^^
+[18 of 21] Compiling Functions        ( /home/tim/Documents/GitHub/workspace/.audit-plume.SZHOs8/compat/Functions.hs, .audit-plume.SZHOs8/ui-build/Functions.o )
+
+/home/tim/Documents/GitHub/workspace/.audit-plume.SZHOs8/compat/Functions.hs:2:1: warning: [GHC-94817] [-Wtabs]
+    Tab character found here, and in 106 further locations.
+    Suggested fix: Please use spaces instead.
+  |
+2 |                   sbfLn, sbfExpon) 
+  | ^^^^^^^^
+[19 of 21] Compiling Calc             ( /home/tim/Documents/GitHub/workspace/.audit-plume.SZHOs8/compat/Calc.hs, .audit-plume.SZHOs8/ui-build/Calc.o )
+
+/home/tim/Documents/GitHub/workspace/.audit-plume.SZHOs8/compat/Calc.hs:16:1: warning: [GHC-94817] [-Wtabs]
+    Tab character found here, and in 106 further locations.
+    Suggested fix: Please use spaces instead.
+   |
+16 |                                        -- possibility that db lookup 
+   | ^^^^^^^^
+[20 of 21] Compiling Main             ( .audit-plume.SZHOs8/compat/Main.hs, .audit-plume.SZHOs8/ui-build/Main.o )
+
+.audit-plume.SZHOs8/compat/Main.hs:10:1: warning: [GHC-94817] [-Wtabs]
+    Tab character found here, and in 9 further locations.
+    Suggested fix: Please use spaces instead.
+   |
+10 |              (evalexpr emptyDB 10)
+   | ^^^^^^^^
+[21 of 21] Linking .audit-plume.SZHOs8/plume-calc

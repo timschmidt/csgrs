@@ -1,0 +1,64 @@
+{
+  "date": "2026-09-14",
+  "status": "qualified_circular_authored_domains_goal_active",
+  "commits": {
+    "hypercurve": [
+      "6b74f63",
+      "bb5362a"
+    ],
+    "hyperbrep": "d82bc14"
+  },
+  "scope": "Reuse strict Bernstein denominator proofs for selected rational evaluation; preserve actual exterior finite ranges; retain circle/setback point evidence across native spline chart inversion and shared corner reconstruction; exclude circular extension contacts owned by closed authored sweeps on the same support. Reuse the existing rational corner source carrier and remove obsolete forwarding helpers. No compatibility interfaces.",
+  "tests": {
+    "broad_library_passed": 984,
+    "broad_integration_passed": 229,
+    "hyperbrep_path_passed": 19,
+    "total_unique_passed": 1232,
+    "final_focused_passed": 24,
+    "final_focused_profile": "debug",
+    "new_library_tests": 3,
+    "migrated_integration_tests": 1,
+    "qualification_failed": 0,
+    "existing_ignored_drivers": 6,
+    "existing_costly_exclusions": [
+      "selected_parallel_normal_circle_intersects_genuinely_analytic_parallel_in_one_fiber",
+      "independent_oblique_chord_pair_fillets_extend_on_infinite_supports",
+      "selected_circle_and_analytic_parallel_extend_on_full_supports",
+      "pair_native_boolean_algebraic_chord_corner_publishes_a_third_generation_fillet"
+    ],
+    "snapshot_note": "The broad library and first two integration suites passed before an integration assertion requiring the old output variants stopped that run. The migrated test strengthens exact contacts, radius, connectivity and extension cardinality. All six remaining integration suites then passed (189 tests), for 229 unique integration passes. Final production changes only removed an identity error map and inlined a one-use forwarding helper; all 24 affected focused tests, both all-target checks, UI, docs and formatting passed afterward."
+  },
+  "checks": {
+    "hypercurve_all_targets_all_features": "passed",
+    "hyperbrep_all_targets_all_features": "passed",
+    "hypercurve_ui_offline_all_targets": "passed",
+    "hypercurve_docs_broken_links_denied": "passed",
+    "changed_rust_files_formatting": "passed",
+    "staged_whitespace": "passed"
+  },
+  "regression_coverage": [
+    "Selected major-arc chamfers return four exact candidates instead of republishing two authored contacts as extensions",
+    "Unmarked circular NURBS with irrational weights preserve exact circle contacts under both orientations and policies",
+    "Closed authored endpoints remain owned; a selected trim can release the removed endpoint into the complementary extension",
+    "Retained circle contacts survive source parameter recovery and shared path reconstruction with certified equality",
+    "The existing quadratic and degree-elevated circle test checks exact geometry and all extension pairings instead of requiring source-family or native-arc output variants",
+    "Strict common-sign weight proof is limited to the unit span; exterior rational poles remain rejected",
+    "Public evaluation accepts regular points in an exterior retained interval with a selected endpoint, under reversal and both policies"
+  ],
+  "logs": [
+    "circle-domain-ownership-before.log",
+    "circle-domain-ownership-slow-stack-symbols.log",
+    "circle-domain-ownership-blocker-stack.log",
+    "circle-domain-ownership-final-focused.log",
+    "circle-domain-ownership-broad.log",
+    "circle-domain-ownership-integrations-final.log",
+    "circle-domain-ownership-brep.log",
+    "circle-domain-ownership-check.log",
+    "circle-domain-ownership-brep-check.log",
+    "circle-domain-ownership-ui.log",
+    "circle-domain-ownership-docs.log"
+  ],
+  "performance_claim": "No matched runtime benchmark. A live stack trace localized a long selected NURBS restriction setup to redundant denominator replay in a degree-135 selected field. The strict Bernstein/domain proof avoids that replay; circular contact recovery reuses the original point evidence and a fixed two-slot relation result.",
+  "remaining": "Full authored-domain fillet TrimOrExtend needs independent per-side extension domains, complete finite chart-pair enumeration and circular ownership at resolved contact publication. Exterior representative/bounds machinery and the broader region/API/representation/operation closure obligations remain active.",
+  "pushed": false
+}

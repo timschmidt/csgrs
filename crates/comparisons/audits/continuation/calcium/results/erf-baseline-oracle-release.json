@@ -1,0 +1,24 @@
+{
+  "tag": "erf-baseline-oracle-release",
+  "started": "2026-09-08T10:55:58.897Z",
+  "finished": "2026-09-08T10:56:17.984Z",
+  "elapsedSeconds": 19.084807756000004,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison",
+  "command": "env",
+  "args": [
+    "TMPDIR=/home/tim/Documents/GitHub/workspace/calcium-build-tmp.gVX5v4",
+    "CARGO_INCREMENTAL=0",
+    "cargo",
+    "run",
+    "--offline",
+    "--release",
+    "--manifest-path",
+    "audits/continuation/calcium/erf-baseline-qualification/Cargo.toml",
+    "--target-dir",
+    "/home/tim/Documents/GitHub/workspace/.audit-builds/calcium-baseline",
+    "--",
+    "oracle"
+  ],
+  "code": 0,
+  "signal": null
+}

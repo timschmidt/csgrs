@@ -1,0 +1,107 @@
+[
+  {
+    "kind": "hypercurve-check",
+    "repo": "hypercurve",
+    "command": [
+      "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+      "check",
+      "--all-targets",
+      "--no-default-features",
+      "--locked",
+      "--offline"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 17.393329971004277
+  },
+  {
+    "kind": "test-build",
+    "repo": "hypercurve",
+    "command": [
+      "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+      "test",
+      "--release",
+      "--all-features",
+      "--lib",
+      "--test",
+      "hypercurve_bezier_region",
+      "--no-run",
+      "--message-format=json",
+      "--locked",
+      "--offline"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 190.42680091699003
+  },
+  {
+    "kind": "hyperbrep-check",
+    "repo": "hyperbrep",
+    "command": [
+      "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+      "check",
+      "--all-targets",
+      "--no-default-features",
+      "--locked",
+      "--offline"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 15.538649460009765
+  },
+  {
+    "kind": "hyperdrc-check",
+    "repo": "hyperdrc",
+    "command": [
+      "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+      "check",
+      "--all-targets",
+      "--no-default-features",
+      "--locked",
+      "--offline"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 17.94203479299904
+  },
+  {
+    "kind": "hypercircuit-check",
+    "repo": "hypercircuit",
+    "command": [
+      "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+      "check",
+      "--all-targets",
+      "--no-default-features",
+      "--locked",
+      "--offline"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 7.927255959977629
+  },
+  {
+    "kind": "csgrs-check",
+    "repo": "csgrs",
+    "command": [
+      "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+      "check",
+      "--all-targets",
+      "--no-default-features",
+      "--locked",
+      "--offline"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 25.461402371991426
+  },
+  {
+    "kind": "fuzz-check",
+    "repo": "hypercurve",
+    "command": [
+      "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+      "check",
+      "--manifest-path",
+      "fuzz/Cargo.toml",
+      "--bin",
+      "bezier_region",
+      "--locked",
+      "--offline"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 12.33542872601538
+  }
+]

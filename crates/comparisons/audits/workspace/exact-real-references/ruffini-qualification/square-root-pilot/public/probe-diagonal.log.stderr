@@ -1,0 +1,3 @@
+warning: Missing auto-load script at offset 0 in section .debug_gdb_scripts
+of file /home/tim/Documents/GitHub/workspace/.audit-square-root.C42NO5BC/public-binaries/debug-diagonal.
+Use `info auto-load python-scripts [REGEXP]' to list them.

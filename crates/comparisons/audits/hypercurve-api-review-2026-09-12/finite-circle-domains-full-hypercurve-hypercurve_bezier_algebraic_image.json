@@ -1,0 +1,35 @@
+{
+  "repo": "hypercurve",
+  "target": "hypercurve_bezier_algebraic_image",
+  "binary": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve_bezier_algebraic_image-63b142047fcbe8b3",
+  "command": [
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve_bezier_algebraic_image-63b142047fcbe8b3",
+    "--test-threads=4",
+    "--color",
+    "never"
+  ],
+  "sha256": "d2125274eff7539bbdb47c3e1d9d0b6da75fc68767fd298afc816ca6d513bf5b",
+  "returncode": 0,
+  "timed_out": false,
+  "elapsed_seconds": 0.06367251300252974,
+  "log": "finite-circle-domains-full-hypercurve-hypercurve_bezier_algebraic_image.log",
+  "passed": [
+    "cubic_point_and_tangent_images_use_power_basis_resultants",
+    "nonmonotone_coordinate_image_is_certified_without_sampling",
+    "quadratic_point_and_tangent_images_retain_algebraic_coordinate_evidence",
+    "rational_image_cache_keeps_curve_family_certificate_shapes_distinct",
+    "rational_point_image_transforms_exact_real_linear_root",
+    "rational_quadratic_denominator_boundary_is_reported",
+    "rational_quadratic_point_and_tangent_images_retain_quotient_evidence",
+    "linear_coordinate_images_match_exact_midpoint_values",
+    "rational_line_image_matches_exact_midpoint_values",
+    "conic_point_images_reuse_exact_evaluation_across_weight_charts"
+  ],
+  "failed": [],
+  "ignored": [],
+  "summaries": [
+    "test result: ok. 10 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.05s"
+  ],
+  "new_failures": [],
+  "known_failures": []
+}

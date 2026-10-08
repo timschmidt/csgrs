@@ -1,0 +1,2483 @@
+{
+  "mode": "cpu",
+  "started": "2026-09-09T17:32:44.033Z",
+  "finished": "2026-09-09T17:33:04.993Z",
+  "cpu": 6,
+  "binaries": {
+    "baseline-cpu": {
+      "path": "/tmp/calcium-sign-filter.TCGoGs/baseline-cpu",
+      "sha256": "87b00bf9c1b8206dd9fb9ab2668b8527b3ee0c06e17212cef9c36fcece0cb61d",
+      "bytes": 2063408,
+      "size": "text\t   data\t    bss\t    dec\t    hex\tfilename\n1458722\t 219640\t   1472\t1679834\t 19a1da\t/tmp/calcium-sign-filter.TCGoGs/baseline-cpu"
+    },
+    "baseline-allocation": {
+      "path": "/tmp/calcium-sign-filter.TCGoGs/baseline-allocation",
+      "sha256": "7548b4521df8aad43f3cab6bac710f352b17a77075fc414aa2faeab6deab0d9a",
+      "bytes": 2067568,
+      "size": "text\t   data\t    bss\t    dec\t    hex\tfilename\n1462530\t 219648\t   1816\t1683994\t 19b21a\t/tmp/calcium-sign-filter.TCGoGs/baseline-allocation"
+    },
+    "candidate-cpu": {
+      "path": "/tmp/calcium-sign-filter.TCGoGs/candidate-cpu",
+      "sha256": "7d644b1d379e3e98b79792027a278eed3fd55a5b35ff3897d72404a76aa385ac",
+      "bytes": 2065944,
+      "size": "text\t   data\t    bss\t    dec\t    hex\tfilename\n1460642\t 219632\t   3704\t1683978\t 19b20a\t/tmp/calcium-sign-filter.TCGoGs/candidate-cpu"
+    },
+    "candidate-allocation": {
+      "path": "/tmp/calcium-sign-filter.TCGoGs/candidate-allocation",
+      "sha256": "44253a0c5db8257184659d8592a990826fdf36141c3e79229abfb45da52b8b34",
+      "bytes": 2070120,
+      "size": "text\t   data\t    bss\t    dec\t    hex\tfilename\n1464442\t 219640\t   3984\t1688066\t 19c202\t/tmp/calcium-sign-filter.TCGoGs/candidate-allocation"
+    }
+  },
+  "summaries": [
+    {
+      "fixture": "rational",
+      "vertices": 3,
+      "lifecycle": "retained",
+      "iterations": 20000,
+      "observations": 48,
+      "pilots": [
+        {
+          "started": "2026-09-09T17:32:44.034Z",
+          "finished": "2026-09-09T17:32:44.038Z",
+          "elapsed_ns": 440,
+          "fixture": "rational",
+          "iterations": 2,
+          "lifecycle": "retained",
+          "live_delta": 0,
+          "mode": "cpu",
+          "outcome": "Decided { value: Positive, certainty: Exact, stage: Exact }",
+          "peak_delta": 0,
+          "requested_bytes": 0,
+          "requests": 0,
+          "variant": "baseline",
+          "vertices": 3
+        },
+        {
+          "started": "2026-09-09T17:32:44.038Z",
+          "finished": "2026-09-09T17:32:44.042Z",
+          "elapsed_ns": 470,
+          "fixture": "rational",
+          "iterations": 2,
+          "lifecycle": "retained",
+          "live_delta": 0,
+          "mode": "cpu",
+          "outcome": "Decided { value: Positive, certainty: Exact, stage: Exact }",
+          "peak_delta": 0,
+          "requested_bytes": 0,
+          "requests": 0,
+          "variant": "candidate",
+          "vertices": 3
+        }
+      ],
+      "outcome": "Decided { value: Positive, certainty: Exact, stage: Exact }",
+      "pairedMedianRatio": 1.0362454279208333,
+      "pairedMedianBootstrap95": [
+        1.013492608147554,
+        1.0550057682021918
+      ],
+      "nsPerQuery": {
+        "baseline": 94.8735,
+        "candidate": 98.632475
+      }
+    },
+    {
+      "fixture": "rational",
+      "vertices": 3,
+      "lifecycle": "cloned-ring",
+      "iterations": 19673,
+      "observations": 48,
+      "pilots": [
+        {
+          "started": "2026-09-09T17:32:44.338Z",
+          "finished": "2026-09-09T17:32:44.343Z",
+          "elapsed_ns": 610,
+          "fixture": "rational",
+          "iterations": 2,
+          "lifecycle": "cloned-ring",
+          "live_delta": 0,
+          "mode": "cpu",
+          "outcome": "Decided { value: Positive, certainty: Exact, stage: Exact }",
+          "peak_delta": 0,
+          "requested_bytes": 0,
+          "requests": 0,
+          "variant": "baseline",
+          "vertices": 3
+        },
+        {
+          "started": "2026-09-09T17:32:44.343Z",
+          "finished": "2026-09-09T17:32:44.346Z",
+          "elapsed_ns": 600,
+          "fixture": "rational",
+          "iterations": 2,
+          "lifecycle": "cloned-ring",
+          "live_delta": 0,
+          "mode": "cpu",
+          "outcome": "Decided { value: Positive, certainty: Exact, stage: Exact }",
+          "peak_delta": 0,
+          "requested_bytes": 0,
+          "requests": 0,
+          "variant": "candidate",
+          "vertices": 3
+        }
+      ],
+      "outcome": "Decided { value: Positive, certainty: Exact, stage: Exact }",
+      "pairedMedianRatio": 1.0146262979198508,
+      "pairedMedianBootstrap95": [
+        0.9909547986449954,
+        1.0248699782935298
+      ],
+      "nsPerQuery": {
+        "baseline": 154.17028414578357,
+        "candidate": 157.1338128399329
+      }
+    },
+    {
+      "fixture": "rational",
+      "vertices": 4,
+      "lifecycle": "retained",
+      "iterations": 20000,
+      "observations": 48,
+      "pilots": [
+        {
+          "started": "2026-09-09T17:32:44.699Z",
+          "finished": "2026-09-09T17:32:44.704Z",
+          "elapsed_ns": 560,
+          "fixture": "rational",
+          "iterations": 2,
+          "lifecycle": "retained",
+          "live_delta": 0,
+          "mode": "cpu",
+          "outcome": "Decided { value: Positive, certainty: Exact, stage: Exact }",
+          "peak_delta": 0,
+          "requested_bytes": 0,
+          "requests": 0,
+          "variant": "baseline",
+          "vertices": 4
+        },
+        {
+          "started": "2026-09-09T17:32:44.704Z",
+          "finished": "2026-09-09T17:32:44.708Z",
+          "elapsed_ns": 590,
+          "fixture": "rational",
+          "iterations": 2,
+          "lifecycle": "retained",
+          "live_delta": 0,
+          "mode": "cpu",
+          "outcome": "Decided { value: Positive, certainty: Exact, stage: Exact }",
+          "peak_delta": 0,
+          "requested_bytes": 0,
+          "requests": 0,
+          "variant": "candidate",
+          "vertices": 4
+        }
+      ],
+      "outcome": "Decided { value: Positive, certainty: Exact, stage: Exact }",
+      "pairedMedianRatio": 1.0711504899160165,
+      "pairedMedianBootstrap95": [
+        0.9044493999435455,
+        1.1043072416394695
+      ],
+      "nsPerQuery": {
+        "baseline": 168.636925,
+        "candidate": 162.939325
+      }
+    },
+    {
+      "fixture": "rational",
+      "vertices": 4,
+      "lifecycle": "cloned-ring",
+      "iterations": 11539,
+      "observations": 48,
+      "pilots": [
+        {
+          "started": "2026-09-09T17:32:45.103Z",
+          "finished": "2026-09-09T17:32:45.107Z",
+          "elapsed_ns": 990,
+          "fixture": "rational",
+          "iterations": 2,
+          "lifecycle": "cloned-ring",
+          "live_delta": 0,
+          "mode": "cpu",
+          "outcome": "Decided { value: Positive, certainty: Exact, stage: Exact }",
+          "peak_delta": 0,
+          "requested_bytes": 0,
+          "requests": 0,
+          "variant": "baseline",
+          "vertices": 4
+        },
+        {
+          "started": "2026-09-09T17:32:45.107Z",
+          "finished": "2026-09-09T17:32:45.111Z",
+          "elapsed_ns": 1040,
+          "fixture": "rational",
+          "iterations": 2,
+          "lifecycle": "cloned-ring",
+          "live_delta": 0,
+          "mode": "cpu",
+          "outcome": "Decided { value: Positive, certainty: Exact, stage: Exact }",
+          "peak_delta": 0,
+          "requested_bytes": 0,
+          "requests": 0,
+          "variant": "candidate",
+          "vertices": 4
+        }
+      ],
+      "outcome": "Decided { value: Positive, certainty: Exact, stage: Exact }",
+      "pairedMedianRatio": 1.0180805183703496,
+      "pairedMedianBootstrap95": [
+        1.0001829231708048,
+        1.0443148445202939
+      ],
+      "nsPerQuery": {
+        "baseline": 237.45099228702662,
+        "candidate": 239.85878325678135
+      }
+    },
+    {
+      "fixture": "rational",
+      "vertices": 8,
+      "lifecycle": "retained",
+      "iterations": 11893,
+      "observations": 48,
+      "pilots": [
+        {
+          "started": "2026-09-09T17:32:45.459Z",
+          "finished": "2026-09-09T17:32:45.463Z",
+          "elapsed_ns": 980,
+          "fixture": "rational",
+          "iterations": 2,
+          "lifecycle": "retained",
+          "live_delta": 0,
+          "mode": "cpu",
+          "outcome": "Decided { value: Positive, certainty: Exact, stage: Exact }",
+          "peak_delta": 0,
+          "requested_bytes": 0,
+          "requests": 0,
+          "variant": "baseline",
+          "vertices": 8
+        },
+        {
+          "started": "2026-09-09T17:32:45.463Z",
+          "finished": "2026-09-09T17:32:45.467Z",
+          "elapsed_ns": 1009,
+          "fixture": "rational",
+          "iterations": 2,
+          "lifecycle": "retained",
+          "live_delta": 0,
+          "mode": "cpu",
+          "outcome": "Decided { value: Positive, certainty: Exact, stage: Exact }",
+          "peak_delta": 0,
+          "requested_bytes": 0,
+          "requests": 0,
+          "variant": "candidate",
+          "vertices": 8
+        }
+      ],
+      "outcome": "Decided { value: Positive, certainty: Exact, stage: Exact }",
+      "pairedMedianRatio": 0.9794044955181525,
+      "pairedMedianBootstrap95": [
+        0.945659317817152,
+        1.0193830957410062
+      ],
+      "nsPerQuery": {
+        "baseline": 324.23194315984193,
+        "candidate": 319.4382830236274
+      }
+    },
+    {
+      "fixture": "rational",
+      "vertices": 8,
+      "lifecycle": "cloned-ring",
+      "iterations": 8634,
+      "observations": 48,
+      "pilots": [
+        {
+          "started": "2026-09-09T17:32:45.871Z",
+          "finished": "2026-09-09T17:32:45.875Z",
+          "elapsed_ns": 1130,
+          "fixture": "rational",
+          "iterations": 2,
+          "lifecycle": "cloned-ring",
+          "live_delta": 0,
+          "mode": "cpu",
+          "outcome": "Decided { value: Positive, certainty: Exact, stage: Exact }",
+          "peak_delta": 0,
+          "requested_bytes": 0,
+          "requests": 0,
+          "variant": "baseline",
+          "vertices": 8
+        },
+        {
+          "started": "2026-09-09T17:32:45.875Z",
+          "finished": "2026-09-09T17:32:45.879Z",
+          "elapsed_ns": 1390,
+          "fixture": "rational",
+          "iterations": 2,
+          "lifecycle": "cloned-ring",
+          "live_delta": 0,
+          "mode": "cpu",
+          "outcome": "Decided { value: Positive, certainty: Exact, stage: Exact }",
+          "peak_delta": 0,
+          "requested_bytes": 0,
+          "requests": 0,
+          "variant": "candidate",
+          "vertices": 8
+        }
+      ],
+      "outcome": "Decided { value: Positive, certainty: Exact, stage: Exact }",
+      "pairedMedianRatio": 1.013999371638441,
+      "pairedMedianBootstrap95": [
+        0.9977479340577671,
+        1.0413595140869585
+      ],
+      "nsPerQuery": {
+        "baseline": 464.9767778549919,
+        "candidate": 474.89500810748206
+      }
+    },
+    {
+      "fixture": "rational",
+      "vertices": 16,
+      "lifecycle": "retained",
+      "iterations": 4271,
+      "observations": 48,
+      "pilots": [
+        {
+          "started": "2026-09-09T17:32:46.267Z",
+          "finished": "2026-09-09T17:32:46.271Z",
+          "elapsed_ns": 2810,
+          "fixture": "rational",
+          "iterations": 2,
+          "lifecycle": "retained",
+          "live_delta": 0,
+          "mode": "cpu",
+          "outcome": "Decided { value: Positive, certainty: Exact, stage: Exact }",
+          "peak_delta": 0,
+          "requested_bytes": 0,
+          "requests": 0,
+          "variant": "baseline",
+          "vertices": 16
+        },
+        {
+          "started": "2026-09-09T17:32:46.271Z",
+          "finished": "2026-09-09T17:32:46.275Z",
+          "elapsed_ns": 2110,
+          "fixture": "rational",
+          "iterations": 2,
+          "lifecycle": "retained",
+          "live_delta": 0,
+          "mode": "cpu",
+          "outcome": "Decided { value: Positive, certainty: Exact, stage: Exact }",
+          "peak_delta": 0,
+          "requested_bytes": 0,
+          "requests": 0,
+          "variant": "candidate",
+          "vertices": 16
+        }
+      ],
+      "outcome": "Decided { value: Positive, certainty: Exact, stage: Exact }",
+      "pairedMedianRatio": 1.0165954601835523,
+      "pairedMedianBootstrap95": [
+        1.004991624890202,
+        1.084650322566754
+      ],
+      "nsPerQuery": {
+        "baseline": 716.2116600327793,
+        "candidate": 732.6341606181222
+      }
+    },
+    {
+      "fixture": "rational",
+      "vertices": 16,
+      "lifecycle": "cloned-ring",
+      "iterations": 3648,
+      "observations": 48,
+      "pilots": [
+        {
+          "started": "2026-09-09T17:32:46.660Z",
+          "finished": "2026-09-09T17:32:46.664Z",
+          "elapsed_ns": 3290,
+          "fixture": "rational",
+          "iterations": 2,
+          "lifecycle": "cloned-ring",
+          "live_delta": 0,
+          "mode": "cpu",
+          "outcome": "Decided { value: Positive, certainty: Exact, stage: Exact }",
+          "peak_delta": 0,
+          "requested_bytes": 0,
+          "requests": 0,
+          "variant": "baseline",
+          "vertices": 16
+        },
+        {
+          "started": "2026-09-09T17:32:46.664Z",
+          "finished": "2026-09-09T17:32:46.669Z",
+          "elapsed_ns": 3270,
+          "fixture": "rational",
+          "iterations": 2,
+          "lifecycle": "cloned-ring",
+          "live_delta": 0,
+          "mode": "cpu",
+          "outcome": "Decided { value: Positive, certainty: Exact, stage: Exact }",
+          "peak_delta": 0,
+          "requested_bytes": 0,
+          "requests": 0,
+          "variant": "candidate",
+          "vertices": 16
+        }
+      ],
+      "outcome": "Decided { value: Positive, certainty: Exact, stage: Exact }",
+      "pairedMedianRatio": 1.0011685062839053,
+      "pairedMedianBootstrap95": [
+        0.9733170021439896,
+        1.0527135518437158
+      ],
+      "nsPerQuery": {
+        "baseline": 1007.8475877192982,
+        "candidate": 1011.4671052631579
+      }
+    },
+    {
+      "fixture": "rational",
+      "vertices": 32,
+      "lifecycle": "retained",
+      "iterations": 3479,
+      "observations": 48,
+      "pilots": [
+        {
+          "started": "2026-09-09T17:32:47.056Z",
+          "finished": "2026-09-09T17:32:47.060Z",
+          "elapsed_ns": 3450,
+          "fixture": "rational",
+          "iterations": 2,
+          "lifecycle": "retained",
+          "live_delta": 0,
+          "mode": "cpu",
+          "outcome": "Decided { value: Positive, certainty: Exact, stage: Exact }",
+          "peak_delta": 0,
+          "requested_bytes": 0,
+          "requests": 0,
+          "variant": "baseline",
+          "vertices": 32
+        },
+        {
+          "started": "2026-09-09T17:32:47.060Z",
+          "finished": "2026-09-09T17:32:47.064Z",
+          "elapsed_ns": 3440,
+          "fixture": "rational",
+          "iterations": 2,
+          "lifecycle": "retained",
+          "live_delta": 0,
+          "mode": "cpu",
+          "outcome": "Decided { value: Positive, certainty: Exact, stage: Exact }",
+          "peak_delta": 0,
+          "requested_bytes": 0,
+          "requests": 0,
+          "variant": "candidate",
+          "vertices": 32
+        }
+      ],
+      "outcome": "Decided { value: Positive, certainty: Exact, stage: Exact }",
+      "pairedMedianRatio": 0.992701515440163,
+      "pairedMedianBootstrap95": [
+        0.9772013606660632,
+        0.9980225134785041
+      ],
+      "nsPerQuery": {
+        "baseline": 1513.8068410462777,
+        "candidate": 1493.650043115838
+      }
+    },
+    {
+      "fixture": "rational",
+      "vertices": 32,
+      "lifecycle": "cloned-ring",
+      "iterations": 2018,
+      "observations": 48,
+      "pilots": [
+        {
+          "started": "2026-09-09T17:32:47.532Z",
+          "finished": "2026-09-09T17:32:47.536Z",
+          "elapsed_ns": 5599,
+          "fixture": "rational",
+          "iterations": 2,
+          "lifecycle": "cloned-ring",
+          "live_delta": 0,
+          "mode": "cpu",
+          "outcome": "Decided { value: Positive, certainty: Exact, stage: Exact }",
+          "peak_delta": 0,
+          "requested_bytes": 0,
+          "requests": 0,
+          "variant": "baseline",
+          "vertices": 32
+        },
+        {
+          "started": "2026-09-09T17:32:47.536Z",
+          "finished": "2026-09-09T17:32:47.540Z",
+          "elapsed_ns": 5949,
+          "fixture": "rational",
+          "iterations": 2,
+          "lifecycle": "cloned-ring",
+          "live_delta": 0,
+          "mode": "cpu",
+          "outcome": "Decided { value: Positive, certainty: Exact, stage: Exact }",
+          "peak_delta": 0,
+          "requested_bytes": 0,
+          "requests": 0,
+          "variant": "candidate",
+          "vertices": 32
+        }
+      ],
+      "outcome": "Decided { value: Positive, certainty: Exact, stage: Exact }",
+      "pairedMedianRatio": 0.9813759770171161,
+      "pairedMedianBootstrap95": [
+        0.977335911036327,
+        0.9947499590927897
+      ],
+      "nsPerQuery": {
+        "baseline": 2117.768582755203,
+        "candidate": 2081.4603567889
+      }
+    },
+    {
+      "fixture": "rational",
+      "vertices": 128,
+      "lifecycle": "retained",
+      "iterations": 742,
+      "observations": 48,
+      "pilots": [
+        {
+          "started": "2026-09-09T17:32:47.957Z",
+          "finished": "2026-09-09T17:32:47.962Z",
+          "elapsed_ns": 15619,
+          "fixture": "rational",
+          "iterations": 2,
+          "lifecycle": "retained",
+          "live_delta": 0,
+          "mode": "cpu",
+          "outcome": "Decided { value: Positive, certainty: Exact, stage: Exact }",
+          "peak_delta": 0,
+          "requested_bytes": 0,
+          "requests": 0,
+          "variant": "baseline",
+          "vertices": 128
+        },
+        {
+          "started": "2026-09-09T17:32:47.962Z",
+          "finished": "2026-09-09T17:32:47.966Z",
+          "elapsed_ns": 16189,
+          "fixture": "rational",
+          "iterations": 2,
+          "lifecycle": "retained",
+          "live_delta": 0,
+          "mode": "cpu",
+          "outcome": "Decided { value: Positive, certainty: Exact, stage: Exact }",
+          "peak_delta": 0,
+          "requested_bytes": 0,
+          "requests": 0,
+          "variant": "candidate",
+          "vertices": 128
+        }
+      ],
+      "outcome": "Decided { value: Positive, certainty: Exact, stage: Exact }",
+      "pairedMedianRatio": 1.020350063870554,
+      "pairedMedianBootstrap95": [
+        0.9737019187346098,
+        1.067505115620217
+      ],
+      "nsPerQuery": {
+        "baseline": 6174.158355795148,
+        "candidate": 6143.095687331536
+      }
+    },
+    {
+      "fixture": "rational",
+      "vertices": 128,
+      "lifecycle": "cloned-ring",
+      "iterations": 527,
+      "observations": 48,
+      "pilots": [
+        {
+          "started": "2026-09-09T17:32:48.406Z",
+          "finished": "2026-09-09T17:32:48.410Z",
+          "elapsed_ns": 20138,
+          "fixture": "rational",
+          "iterations": 2,
+          "lifecycle": "cloned-ring",
+          "live_delta": 0,
+          "mode": "cpu",
+          "outcome": "Decided { value: Positive, certainty: Exact, stage: Exact }",
+          "peak_delta": 0,
+          "requested_bytes": 0,
+          "requests": 0,
+          "variant": "baseline",
+          "vertices": 128
+        },
+        {
+          "started": "2026-09-09T17:32:48.410Z",
+          "finished": "2026-09-09T17:32:48.415Z",
+          "elapsed_ns": 22779,
+          "fixture": "rational",
+          "iterations": 2,
+          "lifecycle": "cloned-ring",
+          "live_delta": 0,
+          "mode": "cpu",
+          "outcome": "Decided { value: Positive, certainty: Exact, stage: Exact }",
+          "peak_delta": 0,
+          "requested_bytes": 0,
+          "requests": 0,
+          "variant": "candidate",
+          "vertices": 128
+        }
+      ],
+      "outcome": "Decided { value: Positive, certainty: Exact, stage: Exact }",
+      "pairedMedianRatio": 0.9989975692367026,
+      "pairedMedianBootstrap95": [
+        0.9903004831481078,
+        1.0129842618434537
+      ],
+      "nsPerQuery": {
+        "baseline": 9063.781783681214,
+        "candidate": 8955.107210626185
+      }
+    },
+    {
+      "fixture": "pi-far",
+      "vertices": 3,
+      "lifecycle": "retained",
+      "iterations": 14458,
+      "observations": 48,
+      "pilots": [
+        {
+          "started": "2026-09-09T17:32:48.860Z",
+          "finished": "2026-09-09T17:32:48.864Z",
+          "elapsed_ns": 830,
+          "fixture": "pi-far",
+          "iterations": 2,
+          "lifecycle": "retained",
+          "live_delta": 0,
+          "mode": "cpu",
+          "outcome": "Decided { value: Positive, certainty: Exact, stage: Structural }",
+          "peak_delta": 0,
+          "requested_bytes": 0,
+          "requests": 0,
+          "variant": "baseline",
+          "vertices": 3
+        },
+        {
+          "started": "2026-09-09T17:32:48.864Z",
+          "finished": "2026-09-09T17:32:48.868Z",
+          "elapsed_ns": 800,
+          "fixture": "pi-far",
+          "iterations": 2,
+          "lifecycle": "retained",
+          "live_delta": 0,
+          "mode": "cpu",
+          "outcome": "Decided { value: Positive, certainty: Exact, stage: Structural }",
+          "peak_delta": 0,
+          "requested_bytes": 0,
+          "requests": 0,
+          "variant": "candidate",
+          "vertices": 3
+        }
+      ],
+      "outcome": "Decided { value: Positive, certainty: Exact, stage: Structural }",
+      "pairedMedianRatio": 1.0218506862955818,
+      "pairedMedianBootstrap95": [
+        0.9395464257944237,
+        1.0443370434641333
+      ],
+      "nsPerQuery": {
+        "baseline": 298.36969152026563,
+        "candidate": 307.4651058237654
+      }
+    },
+    {
+      "fixture": "pi-far",
+      "vertices": 3,
+      "lifecycle": "cloned-ring",
+      "iterations": 9161,
+      "observations": 48,
+      "pilots": [
+        {
+          "started": "2026-09-09T17:32:49.285Z",
+          "finished": "2026-09-09T17:32:49.289Z",
+          "elapsed_ns": 1310,
+          "fixture": "pi-far",
+          "iterations": 2,
+          "lifecycle": "cloned-ring",
+          "live_delta": 0,
+          "mode": "cpu",
+          "outcome": "Decided { value: Positive, certainty: Exact, stage: Structural }",
+          "peak_delta": 0,
+          "requested_bytes": 0,
+          "requests": 0,
+          "variant": "baseline",
+          "vertices": 3
+        },
+        {
+          "started": "2026-09-09T17:32:49.289Z",
+          "finished": "2026-09-09T17:32:49.293Z",
+          "elapsed_ns": 1060,
+          "fixture": "pi-far",
+          "iterations": 2,
+          "lifecycle": "cloned-ring",
+          "live_delta": 0,
+          "mode": "cpu",
+          "outcome": "Decided { value: Positive, certainty: Exact, stage: Structural }",
+          "peak_delta": 0,
+          "requested_bytes": 0,
+          "requests": 0,
+          "variant": "candidate",
+          "vertices": 3
+        }
+      ],
+      "outcome": "Decided { value: Positive, certainty: Exact, stage: Structural }",
+      "pairedMedianRatio": 0.9919030848634337,
+      "pairedMedianBootstrap95": [
+        0.9702608741425252,
+        1.0398345251578704
+      ],
+      "nsPerQuery": {
+        "baseline": 378.0005457919441,
+        "candidate": 390.8427027617072
+      }
+    },
+    {
+      "fixture": "pi-far",
+      "vertices": 4,
+      "lifecycle": "retained",
+      "iterations": 8572,
+      "observations": 48,
+      "pilots": [
+        {
+          "started": "2026-09-09T17:32:49.669Z",
+          "finished": "2026-09-09T17:32:49.673Z",
+          "elapsed_ns": 1400,
+          "fixture": "pi-far",
+          "iterations": 2,
+          "lifecycle": "retained",
+          "live_delta": 0,
+          "mode": "cpu",
+          "outcome": "Decided { value: Positive, certainty: Exact, stage: Structural }",
+          "peak_delta": 0,
+          "requested_bytes": 0,
+          "requests": 0,
+          "variant": "baseline",
+          "vertices": 4
+        },
+        {
+          "started": "2026-09-09T17:32:49.673Z",
+          "finished": "2026-09-09T17:32:49.677Z",
+          "elapsed_ns": 1150,
+          "fixture": "pi-far",
+          "iterations": 2,
+          "lifecycle": "retained",
+          "live_delta": 0,
+          "mode": "cpu",
+          "outcome": "Decided { value: Positive, certainty: Exact, stage: Structural }",
+          "peak_delta": 0,
+          "requested_bytes": 0,
+          "requests": 0,
+          "variant": "candidate",
+          "vertices": 4
+        }
+      ],
+      "outcome": "Decided { value: Positive, certainty: Exact, stage: Structural }",
+      "pairedMedianRatio": 0.9462688670874477,
+      "pairedMedianBootstrap95": [
+        0.8796732782764545,
+        1.037516421558264
+      ],
+      "nsPerQuery": {
+        "baseline": 499.227951469902,
+        "candidate": 476.98664255716284
+      }
+    },
+    {
+      "fixture": "pi-far",
+      "vertices": 4,
+      "lifecycle": "cloned-ring",
+      "iterations": 5912,
+      "observations": 48,
+      "pilots": [
+        {
+          "started": "2026-09-09T17:32:50.107Z",
+          "finished": "2026-09-09T17:32:50.111Z",
+          "elapsed_ns": 1990,
+          "fixture": "pi-far",
+          "iterations": 2,
+          "lifecycle": "cloned-ring",
+          "live_delta": 0,
+          "mode": "cpu",
+          "outcome": "Decided { value: Positive, certainty: Exact, stage: Structural }",
+          "peak_delta": 0,
+          "requested_bytes": 0,
+          "requests": 0,
+          "variant": "baseline",
+          "vertices": 4
+        },
+        {
+          "started": "2026-09-09T17:32:50.111Z",
+          "finished": "2026-09-09T17:32:50.115Z",
+          "elapsed_ns": 2030,
+          "fixture": "pi-far",
+          "iterations": 2,
+          "lifecycle": "cloned-ring",
+          "live_delta": 0,
+          "mode": "cpu",
+          "outcome": "Decided { value: Positive, certainty: Exact, stage: Structural }",
+          "peak_delta": 0,
+          "requested_bytes": 0,
+          "requests": 0,
+          "variant": "candidate",
+          "vertices": 4
+        }
+      ],
+      "outcome": "Decided { value: Positive, certainty: Exact, stage: Structural }",
+      "pairedMedianRatio": 1.075573394979203,
+      "pairedMedianBootstrap95": [
+        1.0347179790218728,
+        1.1674585126847496
+      ],
+      "nsPerQuery": {
+        "baseline": 552.5263870094723,
+        "candidate": 601.9748815967523
+      }
+    },
+    {
+      "fixture": "pi-far",
+      "vertices": 8,
+      "lifecycle": "retained",
+      "iterations": 3362,
+      "observations": 48,
+      "pilots": [
+        {
+          "started": "2026-09-09T17:32:50.518Z",
+          "finished": "2026-09-09T17:32:50.522Z",
+          "elapsed_ns": 3570,
+          "fixture": "pi-far",
+          "iterations": 2,
+          "lifecycle": "retained",
+          "live_delta": 0,
+          "mode": "cpu",
+          "outcome": "Decided { value: Positive, certainty: Exact, stage: Structural }",
+          "peak_delta": 0,
+          "requested_bytes": 0,
+          "requests": 0,
+          "variant": "baseline",
+          "vertices": 8
+        },
+        {
+          "started": "2026-09-09T17:32:50.522Z",
+          "finished": "2026-09-09T17:32:50.526Z",
+          "elapsed_ns": 2750,
+          "fixture": "pi-far",
+          "iterations": 2,
+          "lifecycle": "retained",
+          "live_delta": 0,
+          "mode": "cpu",
+          "outcome": "Decided { value: Positive, certainty: Exact, stage: Structural }",
+          "peak_delta": 0,
+          "requested_bytes": 0,
+          "requests": 0,
+          "variant": "candidate",
+          "vertices": 8
+        }
+      ],
+      "outcome": "Decided { value: Positive, certainty: Exact, stage: Structural }",
+      "pairedMedianRatio": 1.0535204067412962,
+      "pairedMedianBootstrap95": [
+        0.9854075516174852,
+        1.057612057215525
+      ],
+      "nsPerQuery": {
+        "baseline": 955.5382212968472,
+        "candidate": 985.8814693634741
+      }
+    },
+    {
+      "fixture": "pi-far",
+      "vertices": 8,
+      "lifecycle": "cloned-ring",
+      "iterations": 4154,
+      "observations": 48,
+      "pilots": [
+        {
+          "started": "2026-09-09T17:32:50.910Z",
+          "finished": "2026-09-09T17:32:50.915Z",
+          "elapsed_ns": 2660,
+          "fixture": "pi-far",
+          "iterations": 2,
+          "lifecycle": "cloned-ring",
+          "live_delta": 0,
+          "mode": "cpu",
+          "outcome": "Decided { value: Positive, certainty: Exact, stage: Structural }",
+          "peak_delta": 0,
+          "requested_bytes": 0,
+          "requests": 0,
+          "variant": "baseline",
+          "vertices": 8
+        },
+        {
+          "started": "2026-09-09T17:32:50.915Z",
+          "finished": "2026-09-09T17:32:50.919Z",
+          "elapsed_ns": 2889,
+          "fixture": "pi-far",
+          "iterations": 2,
+          "lifecycle": "cloned-ring",
+          "live_delta": 0,
+          "mode": "cpu",
+          "outcome": "Decided { value: Positive, certainty: Exact, stage: Structural }",
+          "peak_delta": 0,
+          "requested_bytes": 0,
+          "requests": 0,
+          "variant": "candidate",
+          "vertices": 8
+        }
+      ],
+      "outcome": "Decided { value: Positive, certainty: Exact, stage: Structural }",
+      "pairedMedianRatio": 1.0059724210321892,
+      "pairedMedianBootstrap95": [
+        0.9566197655219669,
+        1.0460140457173939
+      ],
+      "nsPerQuery": {
+        "baseline": 1444.9346413095811,
+        "candidate": 1341.7976649012999
+      }
+    },
+    {
+      "fixture": "pi-far",
+      "vertices": 16,
+      "lifecycle": "retained",
+      "iterations": 2934,
+      "observations": 48,
+      "pilots": [
+        {
+          "started": "2026-09-09T17:32:51.452Z",
+          "finished": "2026-09-09T17:32:51.458Z",
+          "elapsed_ns": 3910,
+          "fixture": "pi-far",
+          "iterations": 2,
+          "lifecycle": "retained",
+          "live_delta": 0,
+          "mode": "cpu",
+          "outcome": "Decided { value: Positive, certainty: Exact, stage: Structural }",
+          "peak_delta": 0,
+          "requested_bytes": 0,
+          "requests": 0,
+          "variant": "baseline",
+          "vertices": 16
+        },
+        {
+          "started": "2026-09-09T17:32:51.458Z",
+          "finished": "2026-09-09T17:32:51.462Z",
+          "elapsed_ns": 4090,
+          "fixture": "pi-far",
+          "iterations": 2,
+          "lifecycle": "retained",
+          "live_delta": 0,
+          "mode": "cpu",
+          "outcome": "Decided { value: Positive, certainty: Exact, stage: Structural }",
+          "peak_delta": 0,
+          "requested_bytes": 0,
+          "requests": 0,
+          "variant": "candidate",
+          "vertices": 16
+        }
+      ],
+      "outcome": "Decided { value: Positive, certainty: Exact, stage: Structural }",
+      "pairedMedianRatio": 1.0094607761456813,
+      "pairedMedianBootstrap95": [
+        0.9839161810987583,
+        1.0277723638868372
+      ],
+      "nsPerQuery": {
+        "baseline": 1891.5881049761417,
+        "candidate": 1920.5995228357192
+      }
+    },
+    {
+      "fixture": "pi-far",
+      "vertices": 16,
+      "lifecycle": "cloned-ring",
+      "iterations": 1693,
+      "observations": 48,
+      "pilots": [
+        {
+          "started": "2026-09-09T17:32:51.943Z",
+          "finished": "2026-09-09T17:32:51.947Z",
+          "elapsed_ns": 7059,
+          "fixture": "pi-far",
+          "iterations": 2,
+          "lifecycle": "cloned-ring",
+          "live_delta": 0,
+          "mode": "cpu",
+          "outcome": "Decided { value: Positive, certainty: Exact, stage: Structural }",
+          "peak_delta": 0,
+          "requested_bytes": 0,
+          "requests": 0,
+          "variant": "baseline",
+          "vertices": 16
+        },
+        {
+          "started": "2026-09-09T17:32:51.947Z",
+          "finished": "2026-09-09T17:32:51.951Z",
+          "elapsed_ns": 7089,
+          "fixture": "pi-far",
+          "iterations": 2,
+          "lifecycle": "cloned-ring",
+          "live_delta": 0,
+          "mode": "cpu",
+          "outcome": "Decided { value: Positive, certainty: Exact, stage: Structural }",
+          "peak_delta": 0,
+          "requested_bytes": 0,
+          "requests": 0,
+          "variant": "candidate",
+          "vertices": 16
+        }
+      ],
+      "outcome": "Decided { value: Positive, certainty: Exact, stage: Structural }",
+      "pairedMedianRatio": 1.0120103049157745,
+      "pairedMedianBootstrap95": [
+        1.0045653761534128,
+        1.0293879262486927
+      ],
+      "nsPerQuery": {
+        "baseline": 2751.4887773183696,
+        "candidate": 2759.2965150620203
+      }
+    },
+    {
+      "fixture": "pi-far",
+      "vertices": 32,
+      "lifecycle": "retained",
+      "iterations": 1241,
+      "observations": 48,
+      "pilots": [
+        {
+          "started": "2026-09-09T17:32:52.397Z",
+          "finished": "2026-09-09T17:32:52.401Z",
+          "elapsed_ns": 9670,
+          "fixture": "pi-far",
+          "iterations": 2,
+          "lifecycle": "retained",
+          "live_delta": 0,
+          "mode": "cpu",
+          "outcome": "Decided { value: Positive, certainty: Exact, stage: Structural }",
+          "peak_delta": 0,
+          "requested_bytes": 0,
+          "requests": 0,
+          "variant": "baseline",
+          "vertices": 32
+        },
+        {
+          "started": "2026-09-09T17:32:52.401Z",
+          "finished": "2026-09-09T17:32:52.405Z",
+          "elapsed_ns": 8500,
+          "fixture": "pi-far",
+          "iterations": 2,
+          "lifecycle": "retained",
+          "live_delta": 0,
+          "mode": "cpu",
+          "outcome": "Decided { value: Positive, certainty: Exact, stage: Structural }",
+          "peak_delta": 0,
+          "requested_bytes": 0,
+          "requests": 0,
+          "variant": "candidate",
+          "vertices": 32
+        }
+      ],
+      "outcome": "Decided { value: Positive, certainty: Exact, stage: Structural }",
+      "pairedMedianRatio": 1.0150823372651065,
+      "pairedMedianBootstrap95": [
+        0.9804820945862387,
+        1.0378061076607645
+      ],
+      "nsPerQuery": {
+        "baseline": 3888.4480257856567,
+        "candidate": 3979.066478646253
+      }
+    },
+    {
+      "fixture": "pi-far",
+      "vertices": 32,
+      "lifecycle": "cloned-ring",
+      "iterations": 846,
+      "observations": 48,
+      "pilots": [
+        {
+          "started": "2026-09-09T17:32:52.858Z",
+          "finished": "2026-09-09T17:32:52.863Z",
+          "elapsed_ns": 14159,
+          "fixture": "pi-far",
+          "iterations": 2,
+          "lifecycle": "cloned-ring",
+          "live_delta": 0,
+          "mode": "cpu",
+          "outcome": "Decided { value: Positive, certainty: Exact, stage: Structural }",
+          "peak_delta": 0,
+          "requested_bytes": 0,
+          "requests": 0,
+          "variant": "baseline",
+          "vertices": 32
+        },
+        {
+          "started": "2026-09-09T17:32:52.863Z",
+          "finished": "2026-09-09T17:32:52.867Z",
+          "elapsed_ns": 14199,
+          "fixture": "pi-far",
+          "iterations": 2,
+          "lifecycle": "cloned-ring",
+          "live_delta": 0,
+          "mode": "cpu",
+          "outcome": "Decided { value: Positive, certainty: Exact, stage: Structural }",
+          "peak_delta": 0,
+          "requested_bytes": 0,
+          "requests": 0,
+          "variant": "candidate",
+          "vertices": 32
+        }
+      ],
+      "outcome": "Decided { value: Positive, certainty: Exact, stage: Structural }",
+      "pairedMedianRatio": 0.9927999852506555,
+      "pairedMedianBootstrap95": [
+        0.9580386835732629,
+        1.002625372650003
+      ],
+      "nsPerQuery": {
+        "baseline": 5629.513002364067,
+        "candidate": 5634.0874704491725
+      }
+    },
+    {
+      "fixture": "pi-far",
+      "vertices": 128,
+      "lifecycle": "retained",
+      "iterations": 306,
+      "observations": 48,
+      "pilots": [
+        {
+          "started": "2026-09-09T17:32:53.316Z",
+          "finished": "2026-09-09T17:32:53.320Z",
+          "elapsed_ns": 39287,
+          "fixture": "pi-far",
+          "iterations": 2,
+          "lifecycle": "retained",
+          "live_delta": 0,
+          "mode": "cpu",
+          "outcome": "Decided { value: Positive, certainty: Exact, stage: Structural }",
+          "peak_delta": 0,
+          "requested_bytes": 0,
+          "requests": 0,
+          "variant": "baseline",
+          "vertices": 128
+        },
+        {
+          "started": "2026-09-09T17:32:53.320Z",
+          "finished": "2026-09-09T17:32:53.325Z",
+          "elapsed_ns": 33708,
+          "fixture": "pi-far",
+          "iterations": 2,
+          "lifecycle": "retained",
+          "live_delta": 0,
+          "mode": "cpu",
+          "outcome": "Decided { value: Positive, certainty: Exact, stage: Structural }",
+          "peak_delta": 0,
+          "requested_bytes": 0,
+          "requests": 0,
+          "variant": "candidate",
+          "vertices": 128
+        }
+      ],
+      "outcome": "Decided { value: Positive, certainty: Exact, stage: Structural }",
+      "pairedMedianRatio": 1.0215117287903774,
+      "pairedMedianBootstrap95": [
+        1.0144404241486749,
+        1.0254005160668254
+      ],
+      "nsPerQuery": {
+        "baseline": 15273.838235294117,
+        "candidate": 15632.245098039217
+      }
+    },
+    {
+      "fixture": "pi-far",
+      "vertices": 128,
+      "lifecycle": "cloned-ring",
+      "iterations": 217,
+      "observations": 48,
+      "pilots": [
+        {
+          "started": "2026-09-09T17:32:53.779Z",
+          "finished": "2026-09-09T17:32:53.784Z",
+          "elapsed_ns": 55437,
+          "fixture": "pi-far",
+          "iterations": 2,
+          "lifecycle": "cloned-ring",
+          "live_delta": 0,
+          "mode": "cpu",
+          "outcome": "Decided { value: Positive, certainty: Exact, stage: Structural }",
+          "peak_delta": 0,
+          "requested_bytes": 0,
+          "requests": 0,
+          "variant": "baseline",
+          "vertices": 128
+        },
+        {
+          "started": "2026-09-09T17:32:53.784Z",
+          "finished": "2026-09-09T17:32:53.788Z",
+          "elapsed_ns": 55086,
+          "fixture": "pi-far",
+          "iterations": 2,
+          "lifecycle": "cloned-ring",
+          "live_delta": 0,
+          "mode": "cpu",
+          "outcome": "Decided { value: Positive, certainty: Exact, stage: Structural }",
+          "peak_delta": 0,
+          "requested_bytes": 0,
+          "requests": 0,
+          "variant": "candidate",
+          "vertices": 128
+        }
+      ],
+      "outcome": "Decided { value: Positive, certainty: Exact, stage: Structural }",
+      "pairedMedianRatio": 1.0137399601064945,
+      "pairedMedianBootstrap95": [
+        0.9929994660422242,
+        1.0475475222238855
+      ],
+      "nsPerQuery": {
+        "baseline": 22510.299539170504,
+        "candidate": 22881.541474654376
+      }
+    },
+    {
+      "fixture": "pi-near",
+      "vertices": 3,
+      "lifecycle": "retained",
+      "iterations": 2391,
+      "observations": 48,
+      "pilots": [
+        {
+          "started": "2026-09-09T17:32:54.260Z",
+          "finished": "2026-09-09T17:32:54.264Z",
+          "elapsed_ns": 4760,
+          "fixture": "pi-near",
+          "iterations": 2,
+          "lifecycle": "retained",
+          "live_delta": 0,
+          "mode": "cpu",
+          "outcome": "Decided { value: Positive, certainty: Exact, stage: Refined }",
+          "peak_delta": 0,
+          "requested_bytes": 0,
+          "requests": 0,
+          "variant": "baseline",
+          "vertices": 3
+        },
+        {
+          "started": "2026-09-09T17:32:54.264Z",
+          "finished": "2026-09-09T17:32:54.269Z",
+          "elapsed_ns": 5020,
+          "fixture": "pi-near",
+          "iterations": 2,
+          "lifecycle": "retained",
+          "live_delta": 0,
+          "mode": "cpu",
+          "outcome": "Decided { value: Positive, certainty: Exact, stage: Refined }",
+          "peak_delta": 0,
+          "requested_bytes": 0,
+          "requests": 0,
+          "variant": "candidate",
+          "vertices": 3
+        }
+      ],
+      "outcome": "Decided { value: Positive, certainty: Exact, stage: Refined }",
+      "pairedMedianRatio": 1.0438241137868984,
+      "pairedMedianBootstrap95": [
+        0.9935178014916943,
+        1.047060529740706
+      ],
+      "nsPerQuery": {
+        "baseline": 1896.3860309493934,
+        "candidate": 1978.0010455876204
+      }
+    },
+    {
+      "fixture": "pi-near",
+      "vertices": 3,
+      "lifecycle": "cloned-ring",
+      "iterations": 2396,
+      "observations": 48,
+      "pilots": [
+        {
+          "started": "2026-09-09T17:32:54.720Z",
+          "finished": "2026-09-09T17:32:54.724Z",
+          "elapsed_ns": 4919,
+          "fixture": "pi-near",
+          "iterations": 2,
+          "lifecycle": "cloned-ring",
+          "live_delta": 0,
+          "mode": "cpu",
+          "outcome": "Decided { value: Positive, certainty: Exact, stage: Refined }",
+          "peak_delta": 0,
+          "requested_bytes": 0,
+          "requests": 0,
+          "variant": "baseline",
+          "vertices": 3
+        },
+        {
+          "started": "2026-09-09T17:32:54.724Z",
+          "finished": "2026-09-09T17:32:54.728Z",
+          "elapsed_ns": 5009,
+          "fixture": "pi-near",
+          "iterations": 2,
+          "lifecycle": "cloned-ring",
+          "live_delta": 0,
+          "mode": "cpu",
+          "outcome": "Decided { value: Positive, certainty: Exact, stage: Refined }",
+          "peak_delta": 0,
+          "requested_bytes": 0,
+          "requests": 0,
+          "variant": "candidate",
+          "vertices": 3
+        }
+      ],
+      "outcome": "Decided { value: Positive, certainty: Exact, stage: Refined }",
+      "pairedMedianRatio": 1.0152478751212841,
+      "pairedMedianBootstrap95": [
+        1.0075678041405567,
+        1.03885154436562
+      ],
+      "nsPerQuery": {
+        "baseline": 1898.650876460768,
+        "candidate": 1923.2696160267112
+      }
+    },
+    {
+      "fixture": "pi-near",
+      "vertices": 4,
+      "lifecycle": "retained",
+      "iterations": 2035,
+      "observations": 48,
+      "pilots": [
+        {
+          "started": "2026-09-09T17:32:55.151Z",
+          "finished": "2026-09-09T17:32:55.155Z",
+          "elapsed_ns": 5899,
+          "fixture": "pi-near",
+          "iterations": 2,
+          "lifecycle": "retained",
+          "live_delta": 0,
+          "mode": "cpu",
+          "outcome": "Decided { value: Positive, certainty: Exact, stage: Refined }",
+          "peak_delta": 0,
+          "requested_bytes": 0,
+          "requests": 0,
+          "variant": "baseline",
+          "vertices": 4
+        },
+        {
+          "started": "2026-09-09T17:32:55.155Z",
+          "finished": "2026-09-09T17:32:55.159Z",
+          "elapsed_ns": 4689,
+          "fixture": "pi-near",
+          "iterations": 2,
+          "lifecycle": "retained",
+          "live_delta": 0,
+          "mode": "cpu",
+          "outcome": "Decided { value: Positive, certainty: Exact, stage: Refined }",
+          "peak_delta": 0,
+          "requested_bytes": 0,
+          "requests": 0,
+          "variant": "candidate",
+          "vertices": 4
+        }
+      ],
+      "outcome": "Decided { value: Positive, certainty: Exact, stage: Refined }",
+      "pairedMedianRatio": 0.99604934285599,
+      "pairedMedianBootstrap95": [
+        0.9871582713286574,
+        1.00463960537604
+      ],
+      "nsPerQuery": {
+        "baseline": 2085.618427518428,
+        "candidate": 2087.8176904176908
+      }
+    },
+    {
+      "fixture": "pi-near",
+      "vertices": 4,
+      "lifecycle": "cloned-ring",
+      "iterations": 1968,
+      "observations": 48,
+      "pilots": [
+        {
+          "started": "2026-09-09T17:32:55.606Z",
+          "finished": "2026-09-09T17:32:55.610Z",
+          "elapsed_ns": 6099,
+          "fixture": "pi-near",
+          "iterations": 2,
+          "lifecycle": "cloned-ring",
+          "live_delta": 0,
+          "mode": "cpu",
+          "outcome": "Decided { value: Positive, certainty: Exact, stage: Refined }",
+          "peak_delta": 0,
+          "requested_bytes": 0,
+          "requests": 0,
+          "variant": "baseline",
+          "vertices": 4
+        },
+        {
+          "started": "2026-09-09T17:32:55.610Z",
+          "finished": "2026-09-09T17:32:55.614Z",
+          "elapsed_ns": 4950,
+          "fixture": "pi-near",
+          "iterations": 2,
+          "lifecycle": "cloned-ring",
+          "live_delta": 0,
+          "mode": "cpu",
+          "outcome": "Decided { value: Positive, certainty: Exact, stage: Refined }",
+          "peak_delta": 0,
+          "requested_bytes": 0,
+          "requests": 0,
+          "variant": "candidate",
+          "vertices": 4
+        }
+      ],
+      "outcome": "Decided { value: Positive, certainty: Exact, stage: Refined }",
+      "pairedMedianRatio": 0.997954798462101,
+      "pairedMedianBootstrap95": [
+        0.9517216024469495,
+        1.0262546312990566
+      ],
+      "nsPerQuery": {
+        "baseline": 2229.371697154472,
+        "candidate": 2193.521087398374
+      }
+    },
+    {
+      "fixture": "pi-near",
+      "vertices": 8,
+      "lifecycle": "retained",
+      "iterations": 2077,
+      "observations": 48,
+      "pilots": [
+        {
+          "started": "2026-09-09T17:32:56.055Z",
+          "finished": "2026-09-09T17:32:56.059Z",
+          "elapsed_ns": 5780,
+          "fixture": "pi-near",
+          "iterations": 2,
+          "lifecycle": "retained",
+          "live_delta": 0,
+          "mode": "cpu",
+          "outcome": "Decided { value: Positive, certainty: Exact, stage: Refined }",
+          "peak_delta": 0,
+          "requested_bytes": 0,
+          "requests": 0,
+          "variant": "baseline",
+          "vertices": 8
+        },
+        {
+          "started": "2026-09-09T17:32:56.059Z",
+          "finished": "2026-09-09T17:32:56.063Z",
+          "elapsed_ns": 5700,
+          "fixture": "pi-near",
+          "iterations": 2,
+          "lifecycle": "retained",
+          "live_delta": 0,
+          "mode": "cpu",
+          "outcome": "Decided { value: Positive, certainty: Exact, stage: Refined }",
+          "peak_delta": 0,
+          "requested_bytes": 0,
+          "requests": 0,
+          "variant": "candidate",
+          "vertices": 8
+        }
+      ],
+      "outcome": "Decided { value: Positive, certainty: Exact, stage: Refined }",
+      "pairedMedianRatio": 0.9753410625979403,
+      "pairedMedianBootstrap95": [
+        0.9142668611009843,
+        0.9892620357027272
+      ],
+      "nsPerQuery": {
+        "baseline": 2915.1827154549833,
+        "candidate": 2844.8603755416466
+      }
+    },
+    {
+      "fixture": "pi-near",
+      "vertices": 8,
+      "lifecycle": "cloned-ring",
+      "iterations": 1355,
+      "observations": 48,
+      "pilots": [
+        {
+          "started": "2026-09-09T17:32:56.570Z",
+          "finished": "2026-09-09T17:32:56.574Z",
+          "elapsed_ns": 8859,
+          "fixture": "pi-near",
+          "iterations": 2,
+          "lifecycle": "cloned-ring",
+          "live_delta": 0,
+          "mode": "cpu",
+          "outcome": "Decided { value: Positive, certainty: Exact, stage: Refined }",
+          "peak_delta": 0,
+          "requested_bytes": 0,
+          "requests": 0,
+          "variant": "baseline",
+          "vertices": 8
+        },
+        {
+          "started": "2026-09-09T17:32:56.574Z",
+          "finished": "2026-09-09T17:32:56.578Z",
+          "elapsed_ns": 6779,
+          "fixture": "pi-near",
+          "iterations": 2,
+          "lifecycle": "cloned-ring",
+          "live_delta": 0,
+          "mode": "cpu",
+          "outcome": "Decided { value: Positive, certainty: Exact, stage: Refined }",
+          "peak_delta": 0,
+          "requested_bytes": 0,
+          "requests": 0,
+          "variant": "candidate",
+          "vertices": 8
+        }
+      ],
+      "outcome": "Decided { value: Positive, certainty: Exact, stage: Refined }",
+      "pairedMedianRatio": 0.9739548140255718,
+      "pairedMedianBootstrap95": [
+        0.9630232699394031,
+        1.0127228970698896
+      ],
+      "nsPerQuery": {
+        "baseline": 3277.819557195572,
+        "candidate": 3192.360885608856
+      }
+    },
+    {
+      "fixture": "pi-near",
+      "vertices": 16,
+      "lifecycle": "retained",
+      "iterations": 649,
+      "observations": 48,
+      "pilots": [
+        {
+          "started": "2026-09-09T17:32:57.004Z",
+          "finished": "2026-09-09T17:32:57.009Z",
+          "elapsed_ns": 18518,
+          "fixture": "pi-near",
+          "iterations": 2,
+          "lifecycle": "retained",
+          "live_delta": 0,
+          "mode": "cpu",
+          "outcome": "Decided { value: Positive, certainty: Exact, stage: Refined }",
+          "peak_delta": 0,
+          "requested_bytes": 0,
+          "requests": 0,
+          "variant": "baseline",
+          "vertices": 16
+        },
+        {
+          "started": "2026-09-09T17:32:57.009Z",
+          "finished": "2026-09-09T17:32:57.014Z",
+          "elapsed_ns": 10659,
+          "fixture": "pi-near",
+          "iterations": 2,
+          "lifecycle": "retained",
+          "live_delta": 0,
+          "mode": "cpu",
+          "outcome": "Decided { value: Positive, certainty: Exact, stage: Refined }",
+          "peak_delta": 0,
+          "requested_bytes": 0,
+          "requests": 0,
+          "variant": "candidate",
+          "vertices": 16
+        }
+      ],
+      "outcome": "Decided { value: Positive, certainty: Exact, stage: Refined }",
+      "pairedMedianRatio": 0.9818281433193965,
+      "pairedMedianBootstrap95": [
+        0.9188248387914872,
+        0.9892316423880436
+      ],
+      "nsPerQuery": {
+        "baseline": 4308.27966101695,
+        "candidate": 4221.882896764253
+      }
+    },
+    {
+      "fixture": "pi-near",
+      "vertices": 16,
+      "lifecycle": "cloned-ring",
+      "iterations": 838,
+      "observations": 48,
+      "pilots": [
+        {
+          "started": "2026-09-09T17:32:57.365Z",
+          "finished": "2026-09-09T17:32:57.369Z",
+          "elapsed_ns": 14329,
+          "fixture": "pi-near",
+          "iterations": 2,
+          "lifecycle": "cloned-ring",
+          "live_delta": 0,
+          "mode": "cpu",
+          "outcome": "Decided { value: Positive, certainty: Exact, stage: Refined }",
+          "peak_delta": 0,
+          "requested_bytes": 0,
+          "requests": 0,
+          "variant": "baseline",
+          "vertices": 16
+        },
+        {
+          "started": "2026-09-09T17:32:57.369Z",
+          "finished": "2026-09-09T17:32:57.373Z",
+          "elapsed_ns": 10669,
+          "fixture": "pi-near",
+          "iterations": 2,
+          "lifecycle": "cloned-ring",
+          "live_delta": 0,
+          "mode": "cpu",
+          "outcome": "Decided { value: Positive, certainty: Exact, stage: Refined }",
+          "peak_delta": 0,
+          "requested_bytes": 0,
+          "requests": 0,
+          "variant": "candidate",
+          "vertices": 16
+        }
+      ],
+      "outcome": "Decided { value: Positive, certainty: Exact, stage: Refined }",
+      "pairedMedianRatio": 0.9933283423346873,
+      "pairedMedianBootstrap95": [
+        0.976131062392546,
+        1.0270493564469543
+      ],
+      "nsPerQuery": {
+        "baseline": 5178.916467780429,
+        "candidate": 5249.8723150358
+      }
+    },
+    {
+      "fixture": "pi-near",
+      "vertices": 32,
+      "lifecycle": "retained",
+      "iterations": 670,
+      "observations": 48,
+      "pilots": [
+        {
+          "started": "2026-09-09T17:32:57.798Z",
+          "finished": "2026-09-09T17:32:57.803Z",
+          "elapsed_ns": 17559,
+          "fixture": "pi-near",
+          "iterations": 2,
+          "lifecycle": "retained",
+          "live_delta": 0,
+          "mode": "cpu",
+          "outcome": "Decided { value: Positive, certainty: Exact, stage: Refined }",
+          "peak_delta": 0,
+          "requested_bytes": 0,
+          "requests": 0,
+          "variant": "baseline",
+          "vertices": 32
+        },
+        {
+          "started": "2026-09-09T17:32:57.803Z",
+          "finished": "2026-09-09T17:32:57.808Z",
+          "elapsed_ns": 17918,
+          "fixture": "pi-near",
+          "iterations": 2,
+          "lifecycle": "retained",
+          "live_delta": 0,
+          "mode": "cpu",
+          "outcome": "Decided { value: Positive, certainty: Exact, stage: Refined }",
+          "peak_delta": 0,
+          "requested_bytes": 0,
+          "requests": 0,
+          "variant": "candidate",
+          "vertices": 32
+        }
+      ],
+      "outcome": "Decided { value: Positive, certainty: Exact, stage: Refined }",
+      "pairedMedianRatio": 0.9833977503598134,
+      "pairedMedianBootstrap95": [
+        0.958767715710062,
+        1.0232625422281605
+      ],
+      "nsPerQuery": {
+        "baseline": 7276.441044776119,
+        "candidate": 7264.099253731343
+      }
+    },
+    {
+      "fixture": "pi-near",
+      "vertices": 32,
+      "lifecycle": "cloned-ring",
+      "iterations": 488,
+      "observations": 48,
+      "pilots": [
+        {
+          "started": "2026-09-09T17:32:58.273Z",
+          "finished": "2026-09-09T17:32:58.277Z",
+          "elapsed_ns": 24618,
+          "fixture": "pi-near",
+          "iterations": 2,
+          "lifecycle": "cloned-ring",
+          "live_delta": 0,
+          "mode": "cpu",
+          "outcome": "Decided { value: Positive, certainty: Exact, stage: Refined }",
+          "peak_delta": 0,
+          "requested_bytes": 0,
+          "requests": 0,
+          "variant": "baseline",
+          "vertices": 32
+        },
+        {
+          "started": "2026-09-09T17:32:58.277Z",
+          "finished": "2026-09-09T17:32:58.282Z",
+          "elapsed_ns": 18889,
+          "fixture": "pi-near",
+          "iterations": 2,
+          "lifecycle": "cloned-ring",
+          "live_delta": 0,
+          "mode": "cpu",
+          "outcome": "Decided { value: Positive, certainty: Exact, stage: Refined }",
+          "peak_delta": 0,
+          "requested_bytes": 0,
+          "requests": 0,
+          "variant": "candidate",
+          "vertices": 32
+        }
+      ],
+      "outcome": "Decided { value: Positive, certainty: Exact, stage: Refined }",
+      "pairedMedianRatio": 1.017460415281432,
+      "pairedMedianBootstrap95": [
+        0.9730734192210884,
+        1.0652289760860598
+      ],
+      "nsPerQuery": {
+        "baseline": 9021.328893442624,
+        "candidate": 9248.247950819672
+      }
+    },
+    {
+      "fixture": "pi-near",
+      "vertices": 128,
+      "lifecycle": "retained",
+      "iterations": 209,
+      "observations": 48,
+      "pilots": [
+        {
+          "started": "2026-09-09T17:32:58.719Z",
+          "finished": "2026-09-09T17:32:58.723Z",
+          "elapsed_ns": 49447,
+          "fixture": "pi-near",
+          "iterations": 2,
+          "lifecycle": "retained",
+          "live_delta": 0,
+          "mode": "cpu",
+          "outcome": "Decided { value: Positive, certainty: Exact, stage: Refined }",
+          "peak_delta": 0,
+          "requested_bytes": 0,
+          "requests": 0,
+          "variant": "baseline",
+          "vertices": 128
+        },
+        {
+          "started": "2026-09-09T17:32:58.723Z",
+          "finished": "2026-09-09T17:32:58.728Z",
+          "elapsed_ns": 57526,
+          "fixture": "pi-near",
+          "iterations": 2,
+          "lifecycle": "retained",
+          "live_delta": 0,
+          "mode": "cpu",
+          "outcome": "Decided { value: Positive, certainty: Exact, stage: Refined }",
+          "peak_delta": 0,
+          "requested_bytes": 0,
+          "requests": 0,
+          "variant": "candidate",
+          "vertices": 128
+        }
+      ],
+      "outcome": "Decided { value: Positive, certainty: Exact, stage: Refined }",
+      "pairedMedianRatio": 1.0271637748107953,
+      "pairedMedianBootstrap95": [
+        1.0137615700579636,
+        1.0467597780298288
+      ],
+      "nsPerQuery": {
+        "baseline": 23603.215311004784,
+        "candidate": 24030.337320574163
+      }
+    },
+    {
+      "fixture": "pi-near",
+      "vertices": 128,
+      "lifecycle": "cloned-ring",
+      "iterations": 184,
+      "observations": 48,
+      "pilots": [
+        {
+          "started": "2026-09-09T17:32:59.208Z",
+          "finished": "2026-09-09T17:32:59.212Z",
+          "elapsed_ns": 65255,
+          "fixture": "pi-near",
+          "iterations": 2,
+          "lifecycle": "cloned-ring",
+          "live_delta": 0,
+          "mode": "cpu",
+          "outcome": "Decided { value: Positive, certainty: Exact, stage: Refined }",
+          "peak_delta": 0,
+          "requested_bytes": 0,
+          "requests": 0,
+          "variant": "baseline",
+          "vertices": 128
+        },
+        {
+          "started": "2026-09-09T17:32:59.212Z",
+          "finished": "2026-09-09T17:32:59.217Z",
+          "elapsed_ns": 61096,
+          "fixture": "pi-near",
+          "iterations": 2,
+          "lifecycle": "cloned-ring",
+          "live_delta": 0,
+          "mode": "cpu",
+          "outcome": "Decided { value: Positive, certainty: Exact, stage: Refined }",
+          "peak_delta": 0,
+          "requested_bytes": 0,
+          "requests": 0,
+          "variant": "candidate",
+          "vertices": 128
+        }
+      ],
+      "outcome": "Decided { value: Positive, certainty: Exact, stage: Refined }",
+      "pairedMedianRatio": 1.0406100705204757,
+      "pairedMedianBootstrap95": [
+        0.944489642780023,
+        1.0715849729011824
+      ],
+      "nsPerQuery": {
+        "baseline": 31228.755434782608,
+        "candidate": 31561.940217391304
+      }
+    },
+    {
+      "fixture": "pi-reversed",
+      "vertices": 3,
+      "lifecycle": "retained",
+      "iterations": 1981,
+      "observations": 48,
+      "pilots": [
+        {
+          "started": "2026-09-09T17:32:59.755Z",
+          "finished": "2026-09-09T17:32:59.759Z",
+          "elapsed_ns": 6060,
+          "fixture": "pi-reversed",
+          "iterations": 2,
+          "lifecycle": "retained",
+          "live_delta": 0,
+          "mode": "cpu",
+          "outcome": "Decided { value: Negative, certainty: Exact, stage: Refined }",
+          "peak_delta": 0,
+          "requested_bytes": 0,
+          "requests": 0,
+          "variant": "baseline",
+          "vertices": 3
+        },
+        {
+          "started": "2026-09-09T17:32:59.759Z",
+          "finished": "2026-09-09T17:32:59.763Z",
+          "elapsed_ns": 5259,
+          "fixture": "pi-reversed",
+          "iterations": 2,
+          "lifecycle": "retained",
+          "live_delta": 0,
+          "mode": "cpu",
+          "outcome": "Decided { value: Negative, certainty: Exact, stage: Refined }",
+          "peak_delta": 0,
+          "requested_bytes": 0,
+          "requests": 0,
+          "variant": "candidate",
+          "vertices": 3
+        }
+      ],
+      "outcome": "Decided { value: Negative, certainty: Exact, stage: Refined }",
+      "pairedMedianRatio": 1.0804946100196515,
+      "pairedMedianBootstrap95": [
+        1.016929260733015,
+        1.0885977124747441
+      ],
+      "nsPerQuery": {
+        "baseline": 2346.7773851590105,
+        "candidate": 2452.8806158505804
+      }
+    },
+    {
+      "fixture": "pi-reversed",
+      "vertices": 3,
+      "lifecycle": "cloned-ring",
+      "iterations": 1810,
+      "observations": 48,
+      "pilots": [
+        {
+          "started": "2026-09-09T17:33:00.209Z",
+          "finished": "2026-09-09T17:33:00.213Z",
+          "elapsed_ns": 6530,
+          "fixture": "pi-reversed",
+          "iterations": 2,
+          "lifecycle": "cloned-ring",
+          "live_delta": 0,
+          "mode": "cpu",
+          "outcome": "Decided { value: Negative, certainty: Exact, stage: Refined }",
+          "peak_delta": 0,
+          "requested_bytes": 0,
+          "requests": 0,
+          "variant": "baseline",
+          "vertices": 3
+        },
+        {
+          "started": "2026-09-09T17:33:00.213Z",
+          "finished": "2026-09-09T17:33:00.217Z",
+          "elapsed_ns": 6630,
+          "fixture": "pi-reversed",
+          "iterations": 2,
+          "lifecycle": "cloned-ring",
+          "live_delta": 0,
+          "mode": "cpu",
+          "outcome": "Decided { value: Negative, certainty: Exact, stage: Refined }",
+          "peak_delta": 0,
+          "requested_bytes": 0,
+          "requests": 0,
+          "variant": "candidate",
+          "vertices": 3
+        }
+      ],
+      "outcome": "Decided { value: Negative, certainty: Exact, stage: Refined }",
+      "pairedMedianRatio": 1.0487590669234022,
+      "pairedMedianBootstrap95": [
+        0.9972496992534272,
+        1.1072864204192896
+      ],
+      "nsPerQuery": {
+        "baseline": 2461.049447513812,
+        "candidate": 2525.4674033149167
+      }
+    },
+    {
+      "fixture": "pi-reversed",
+      "vertices": 4,
+      "lifecycle": "retained",
+      "iterations": 1117,
+      "observations": 48,
+      "pilots": [
+        {
+          "started": "2026-09-09T17:33:00.655Z",
+          "finished": "2026-09-09T17:33:00.660Z",
+          "elapsed_ns": 6659,
+          "fixture": "pi-reversed",
+          "iterations": 2,
+          "lifecycle": "retained",
+          "live_delta": 0,
+          "mode": "cpu",
+          "outcome": "Decided { value: Negative, certainty: Exact, stage: Refined }",
+          "peak_delta": 0,
+          "requested_bytes": 0,
+          "requests": 0,
+          "variant": "baseline",
+          "vertices": 4
+        },
+        {
+          "started": "2026-09-09T17:33:00.660Z",
+          "finished": "2026-09-09T17:33:00.664Z",
+          "elapsed_ns": 10749,
+          "fixture": "pi-reversed",
+          "iterations": 2,
+          "lifecycle": "retained",
+          "live_delta": 0,
+          "mode": "cpu",
+          "outcome": "Decided { value: Negative, certainty: Exact, stage: Refined }",
+          "peak_delta": 0,
+          "requested_bytes": 0,
+          "requests": 0,
+          "variant": "candidate",
+          "vertices": 4
+        }
+      ],
+      "outcome": "Decided { value: Negative, certainty: Exact, stage: Refined }",
+      "pairedMedianRatio": 1.0173653881950018,
+      "pairedMedianBootstrap95": [
+        0.9885163448622334,
+        1.0368694160763814
+      ],
+      "nsPerQuery": {
+        "baseline": 2676.4409131602506,
+        "candidate": 2695.5940017905104
+      }
+    },
+    {
+      "fixture": "pi-reversed",
+      "vertices": 4,
+      "lifecycle": "cloned-ring",
+      "iterations": 235,
+      "observations": 48,
+      "pilots": [
+        {
+          "started": "2026-09-09T17:33:01.023Z",
+          "finished": "2026-09-09T17:33:01.027Z",
+          "elapsed_ns": 51257,
+          "fixture": "pi-reversed",
+          "iterations": 2,
+          "lifecycle": "cloned-ring",
+          "live_delta": 0,
+          "mode": "cpu",
+          "outcome": "Decided { value: Negative, certainty: Exact, stage: Refined }",
+          "peak_delta": 0,
+          "requested_bytes": 0,
+          "requests": 0,
+          "variant": "baseline",
+          "vertices": 4
+        },
+        {
+          "started": "2026-09-09T17:33:01.027Z",
+          "finished": "2026-09-09T17:33:01.031Z",
+          "elapsed_ns": 8159,
+          "fixture": "pi-reversed",
+          "iterations": 2,
+          "lifecycle": "cloned-ring",
+          "live_delta": 0,
+          "mode": "cpu",
+          "outcome": "Decided { value: Negative, certainty: Exact, stage: Refined }",
+          "peak_delta": 0,
+          "requested_bytes": 0,
+          "requests": 0,
+          "variant": "candidate",
+          "vertices": 4
+        }
+      ],
+      "outcome": "Decided { value: Negative, certainty: Exact, stage: Refined }",
+      "pairedMedianRatio": 1.026542219521898,
+      "pairedMedianBootstrap95": [
+        0.9382139844534687,
+        1.0341878138462488
+      ],
+      "nsPerQuery": {
+        "baseline": 2952.563829787234,
+        "candidate": 3022.7063829787235
+      }
+    },
+    {
+      "fixture": "pi-reversed",
+      "vertices": 8,
+      "lifecycle": "retained",
+      "iterations": 1406,
+      "observations": 48,
+      "pilots": [
+        {
+          "started": "2026-09-09T17:33:01.274Z",
+          "finished": "2026-09-09T17:33:01.278Z",
+          "elapsed_ns": 8540,
+          "fixture": "pi-reversed",
+          "iterations": 2,
+          "lifecycle": "retained",
+          "live_delta": 0,
+          "mode": "cpu",
+          "outcome": "Decided { value: Negative, certainty: Exact, stage: Refined }",
+          "peak_delta": 0,
+          "requested_bytes": 0,
+          "requests": 0,
+          "variant": "baseline",
+          "vertices": 8
+        },
+        {
+          "started": "2026-09-09T17:33:01.278Z",
+          "finished": "2026-09-09T17:33:01.282Z",
+          "elapsed_ns": 7500,
+          "fixture": "pi-reversed",
+          "iterations": 2,
+          "lifecycle": "retained",
+          "live_delta": 0,
+          "mode": "cpu",
+          "outcome": "Decided { value: Negative, certainty: Exact, stage: Refined }",
+          "peak_delta": 0,
+          "requested_bytes": 0,
+          "requests": 0,
+          "variant": "candidate",
+          "vertices": 8
+        }
+      ],
+      "outcome": "Decided { value: Negative, certainty: Exact, stage: Refined }",
+      "pairedMedianRatio": 1.0198179496159643,
+      "pairedMedianBootstrap95": [
+        1.0038699638278654,
+        1.0349260540555552
+      ],
+      "nsPerQuery": {
+        "baseline": 3368.069345661451,
+        "candidate": 3430.98079658606
+      }
+    },
+    {
+      "fixture": "pi-reversed",
+      "vertices": 8,
+      "lifecycle": "cloned-ring",
+      "iterations": 1238,
+      "observations": 48,
+      "pilots": [
+        {
+          "started": "2026-09-09T17:33:01.725Z",
+          "finished": "2026-09-09T17:33:01.729Z",
+          "elapsed_ns": 9699,
+          "fixture": "pi-reversed",
+          "iterations": 2,
+          "lifecycle": "cloned-ring",
+          "live_delta": 0,
+          "mode": "cpu",
+          "outcome": "Decided { value: Negative, certainty: Exact, stage: Refined }",
+          "peak_delta": 0,
+          "requested_bytes": 0,
+          "requests": 0,
+          "variant": "baseline",
+          "vertices": 8
+        },
+        {
+          "started": "2026-09-09T17:33:01.729Z",
+          "finished": "2026-09-09T17:33:01.733Z",
+          "elapsed_ns": 7740,
+          "fixture": "pi-reversed",
+          "iterations": 2,
+          "lifecycle": "cloned-ring",
+          "live_delta": 0,
+          "mode": "cpu",
+          "outcome": "Decided { value: Negative, certainty: Exact, stage: Refined }",
+          "peak_delta": 0,
+          "requested_bytes": 0,
+          "requests": 0,
+          "variant": "candidate",
+          "vertices": 8
+        }
+      ],
+      "outcome": "Decided { value: Negative, certainty: Exact, stage: Refined }",
+      "pairedMedianRatio": 1.010818653703533,
+      "pairedMedianBootstrap95": [
+        0.9905386686862503,
+        1.025592478949609
+      ],
+      "nsPerQuery": {
+        "baseline": 3737.0177705977385,
+        "candidate": 3787.7245557350566
+      }
+    },
+    {
+      "fixture": "pi-reversed",
+      "vertices": 16,
+      "lifecycle": "retained",
+      "iterations": 244,
+      "observations": 48,
+      "pilots": [
+        {
+          "started": "2026-09-09T17:33:02.170Z",
+          "finished": "2026-09-09T17:33:02.174Z",
+          "elapsed_ns": 9849,
+          "fixture": "pi-reversed",
+          "iterations": 2,
+          "lifecycle": "retained",
+          "live_delta": 0,
+          "mode": "cpu",
+          "outcome": "Decided { value: Negative, certainty: Exact, stage: Refined }",
+          "peak_delta": 0,
+          "requested_bytes": 0,
+          "requests": 0,
+          "variant": "baseline",
+          "vertices": 16
+        },
+        {
+          "started": "2026-09-09T17:33:02.174Z",
+          "finished": "2026-09-09T17:33:02.179Z",
+          "elapsed_ns": 49227,
+          "fixture": "pi-reversed",
+          "iterations": 2,
+          "lifecycle": "retained",
+          "live_delta": 0,
+          "mode": "cpu",
+          "outcome": "Decided { value: Negative, certainty: Exact, stage: Refined }",
+          "peak_delta": 0,
+          "requested_bytes": 0,
+          "requests": 0,
+          "variant": "candidate",
+          "vertices": 16
+        }
+      ],
+      "outcome": "Decided { value: Negative, certainty: Exact, stage: Refined }",
+      "pairedMedianRatio": 1.0232566127565583,
+      "pairedMedianBootstrap95": [
+        0.992369457197068,
+        1.10737313741427
+      ],
+      "nsPerQuery": {
+        "baseline": 5094.2827868852455,
+        "candidate": 5105.225409836065
+      }
+    },
+    {
+      "fixture": "pi-reversed",
+      "vertices": 16,
+      "lifecycle": "cloned-ring",
+      "iterations": 933,
+      "observations": 48,
+      "pilots": [
+        {
+          "started": "2026-09-09T17:33:02.460Z",
+          "finished": "2026-09-09T17:33:02.464Z",
+          "elapsed_ns": 12539,
+          "fixture": "pi-reversed",
+          "iterations": 2,
+          "lifecycle": "cloned-ring",
+          "live_delta": 0,
+          "mode": "cpu",
+          "outcome": "Decided { value: Negative, certainty: Exact, stage: Refined }",
+          "peak_delta": 0,
+          "requested_bytes": 0,
+          "requests": 0,
+          "variant": "baseline",
+          "vertices": 16
+        },
+        {
+          "started": "2026-09-09T17:33:02.464Z",
+          "finished": "2026-09-09T17:33:02.468Z",
+          "elapsed_ns": 12869,
+          "fixture": "pi-reversed",
+          "iterations": 2,
+          "lifecycle": "cloned-ring",
+          "live_delta": 0,
+          "mode": "cpu",
+          "outcome": "Decided { value: Negative, certainty: Exact, stage: Refined }",
+          "peak_delta": 0,
+          "requested_bytes": 0,
+          "requests": 0,
+          "variant": "candidate",
+          "vertices": 16
+        }
+      ],
+      "outcome": "Decided { value: Negative, certainty: Exact, stage: Refined }",
+      "pairedMedianRatio": 1.0072685786403195,
+      "pairedMedianBootstrap95": [
+        0.9549033078211386,
+        1.0301514241761363
+      ],
+      "nsPerQuery": {
+        "baseline": 5820.978027867095,
+        "candidate": 5908.132368703109
+      }
+    },
+    {
+      "fixture": "pi-reversed",
+      "vertices": 32,
+      "lifecycle": "retained",
+      "iterations": 593,
+      "observations": 48,
+      "pilots": [
+        {
+          "started": "2026-09-09T17:33:02.957Z",
+          "finished": "2026-09-09T17:33:02.961Z",
+          "elapsed_ns": 20259,
+          "fixture": "pi-reversed",
+          "iterations": 2,
+          "lifecycle": "retained",
+          "live_delta": 0,
+          "mode": "cpu",
+          "outcome": "Decided { value: Negative, certainty: Exact, stage: Refined }",
+          "peak_delta": 0,
+          "requested_bytes": 0,
+          "requests": 0,
+          "variant": "baseline",
+          "vertices": 32
+        },
+        {
+          "started": "2026-09-09T17:33:02.961Z",
+          "finished": "2026-09-09T17:33:02.965Z",
+          "elapsed_ns": 19528,
+          "fixture": "pi-reversed",
+          "iterations": 2,
+          "lifecycle": "retained",
+          "live_delta": 0,
+          "mode": "cpu",
+          "outcome": "Decided { value: Negative, certainty: Exact, stage: Refined }",
+          "peak_delta": 0,
+          "requested_bytes": 0,
+          "requests": 0,
+          "variant": "candidate",
+          "vertices": 32
+        }
+      ],
+      "outcome": "Decided { value: Negative, certainty: Exact, stage: Refined }",
+      "pairedMedianRatio": 1.006506875150896,
+      "pairedMedianBootstrap95": [
+        0.989188652874806,
+        1.0383818610075428
+      ],
+      "nsPerQuery": {
+        "baseline": 7736.60202360877,
+        "candidate": 7835.845699831366
+      }
+    },
+    {
+      "fixture": "pi-reversed",
+      "vertices": 32,
+      "lifecycle": "cloned-ring",
+      "iterations": 594,
+      "observations": 48,
+      "pilots": [
+        {
+          "started": "2026-09-09T17:33:03.405Z",
+          "finished": "2026-09-09T17:33:03.409Z",
+          "elapsed_ns": 20208,
+          "fixture": "pi-reversed",
+          "iterations": 2,
+          "lifecycle": "cloned-ring",
+          "live_delta": 0,
+          "mode": "cpu",
+          "outcome": "Decided { value: Negative, certainty: Exact, stage: Refined }",
+          "peak_delta": 0,
+          "requested_bytes": 0,
+          "requests": 0,
+          "variant": "baseline",
+          "vertices": 32
+        },
+        {
+          "started": "2026-09-09T17:33:03.409Z",
+          "finished": "2026-09-09T17:33:03.413Z",
+          "elapsed_ns": 19939,
+          "fixture": "pi-reversed",
+          "iterations": 2,
+          "lifecycle": "cloned-ring",
+          "live_delta": 0,
+          "mode": "cpu",
+          "outcome": "Decided { value: Negative, certainty: Exact, stage: Refined }",
+          "peak_delta": 0,
+          "requested_bytes": 0,
+          "requests": 0,
+          "variant": "candidate",
+          "vertices": 32
+        }
+      ],
+      "outcome": "Decided { value: Negative, certainty: Exact, stage: Refined }",
+      "pairedMedianRatio": 0.9892977066712217,
+      "pairedMedianBootstrap95": [
+        0.9406363830245167,
+        0.9933118286900142
+      ],
+      "nsPerQuery": {
+        "baseline": 10070.328282828283,
+        "candidate": 9978.902356902356
+      }
+    },
+    {
+      "fixture": "pi-reversed",
+      "vertices": 128,
+      "lifecycle": "retained",
+      "iterations": 228,
+      "observations": 48,
+      "pilots": [
+        {
+          "started": "2026-09-09T17:33:03.932Z",
+          "finished": "2026-09-09T17:33:03.936Z",
+          "elapsed_ns": 51626,
+          "fixture": "pi-reversed",
+          "iterations": 2,
+          "lifecycle": "retained",
+          "live_delta": 0,
+          "mode": "cpu",
+          "outcome": "Decided { value: Negative, certainty: Exact, stage: Refined }",
+          "peak_delta": 0,
+          "requested_bytes": 0,
+          "requests": 0,
+          "variant": "baseline",
+          "vertices": 128
+        },
+        {
+          "started": "2026-09-09T17:33:03.936Z",
+          "finished": "2026-09-09T17:33:03.941Z",
+          "elapsed_ns": 52846,
+          "fixture": "pi-reversed",
+          "iterations": 2,
+          "lifecycle": "retained",
+          "live_delta": 0,
+          "mode": "cpu",
+          "outcome": "Decided { value: Negative, certainty: Exact, stage: Refined }",
+          "peak_delta": 0,
+          "requested_bytes": 0,
+          "requests": 0,
+          "variant": "candidate",
+          "vertices": 128
+        }
+      ],
+      "outcome": "Decided { value: Negative, certainty: Exact, stage: Refined }",
+      "pairedMedianRatio": 1.0172027662117982,
+      "pairedMedianBootstrap95": [
+        1.0036009785703195,
+        1.062316146949653
+      ],
+      "nsPerQuery": {
+        "baseline": 24849.041666666668,
+        "candidate": 25483.493421052633
+      }
+    },
+    {
+      "fixture": "pi-reversed",
+      "vertices": 128,
+      "lifecycle": "cloned-ring",
+      "iterations": 171,
+      "observations": 48,
+      "pilots": [
+        {
+          "started": "2026-09-09T17:33:04.459Z",
+          "finished": "2026-09-09T17:33:04.463Z",
+          "elapsed_ns": 70256,
+          "fixture": "pi-reversed",
+          "iterations": 2,
+          "lifecycle": "cloned-ring",
+          "live_delta": 0,
+          "mode": "cpu",
+          "outcome": "Decided { value: Negative, certainty: Exact, stage: Refined }",
+          "peak_delta": 0,
+          "requested_bytes": 0,
+          "requests": 0,
+          "variant": "baseline",
+          "vertices": 128
+        },
+        {
+          "started": "2026-09-09T17:33:04.463Z",
+          "finished": "2026-09-09T17:33:04.468Z",
+          "elapsed_ns": 68605,
+          "fixture": "pi-reversed",
+          "iterations": 2,
+          "lifecycle": "cloned-ring",
+          "live_delta": 0,
+          "mode": "cpu",
+          "outcome": "Decided { value: Negative, certainty: Exact, stage: Refined }",
+          "peak_delta": 0,
+          "requested_bytes": 0,
+          "requests": 0,
+          "variant": "candidate",
+          "vertices": 128
+        }
+      ],
+      "outcome": "Decided { value: Negative, certainty: Exact, stage: Refined }",
+      "pairedMedianRatio": 1.013903316365957,
+      "pairedMedianBootstrap95": [
+        0.9816407674167249,
+        1.0885320151723894
+      ],
+      "nsPerQuery": {
+        "baseline": 32915.37426900585,
+        "candidate": 33079.5730994152
+      }
+    }
+  ],
+  "limits": "48 public ring-area groups, four fixtures, six vertex counts, retained or cloned-ring inputs. Independent exact rational shoelace and Machin alternating-series sign oracle recorded separately. Sixteen prewarm queries; cloned-ring timing includes cloning and dropping points but does not rebuild cold scalar values. Each timed query asserts the complete expected PredicateOutcome including certainty/stage. Uninstrumented CPU, separate Rust allocation requests/bytes/live/peak. Per-group paired bootstrap estimates are not multiplicity-adjusted; no universal timing, memory bound, RSS, concurrent or production-retention claim."
+}

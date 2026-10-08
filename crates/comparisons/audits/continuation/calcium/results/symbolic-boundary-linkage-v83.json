@@ -1,0 +1,13 @@
+{
+  "tag": "symbolic-boundary-linkage-v83",
+  "started": "2026-09-12T03:38:06.387Z",
+  "finished": "2026-09-12T03:38:06.414Z",
+  "elapsedSeconds": 0.02478367200000001,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "ldd",
+  "args": [
+    "/tmp/calcium-symbolic-boundary-v83.JuGH8X/controls"
+  ],
+  "code": 0,
+  "signal": null
+}

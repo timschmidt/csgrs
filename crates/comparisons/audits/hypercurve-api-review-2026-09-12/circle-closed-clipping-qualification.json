@@ -1,0 +1,122 @@
+{
+  "status": "committed and qualified against the documented baseline",
+  "goal_status": "active",
+  "previous_commit": "e99dfbd6902caf5b1bee89617d36ceeca4165082",
+  "commit": "5c47fb199ddcd687ef030811221acdf76db8a624",
+  "targets": 49,
+  "reused_identical_executables": 0,
+  "passed": 2254,
+  "passed_by_repo": {
+    "hypercurve": 2022,
+    "hyperbrep": 232
+  },
+  "known_failed": [
+    "approximate_512_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions",
+    "non_ph_bezier_pair_projective_fillet_retains_algebraic_extensions",
+    "nonconvex_algebraic_chord_expansion_is_exact_and_local_collapse_is_explicit",
+    "strict_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions",
+    "unified_mixed_line_arc_erosion_splits_after_a_curved_neck_collapse"
+  ],
+  "new_failures": [],
+  "ignored": 9,
+  "expensive_previously_unqualified_exclusions": 8,
+  "timeouts": 0,
+  "builds_and_checks": {
+    "-check": 0,
+    "-test-build": 0,
+    "-hyperbrep-check": 0,
+    "-hyperbrep-test-build": 0
+  },
+  "formatting_and_whitespace": "passed on final frozen qualification sources",
+  "formatted_files": {
+    "hypercurve": [
+      "src/bezier_offset.rs",
+      "src/curve.rs",
+      "src/curve_intersection.rs",
+      "src/curve_region_boolean.rs",
+      "src/curve_support_intersection.rs"
+    ],
+    "hyperbrep": []
+  },
+  "additional_caller_checks": [
+    {
+      "target": "fuzz",
+      "command": [
+        "cargo",
+        "check",
+        "--manifest-path",
+        "fuzz/Cargo.toml",
+        "--all-targets",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 12.08302829801687,
+      "log": "circle-closed-clipping-fuzz-check.log"
+    },
+    {
+      "target": "ui",
+      "command": [
+        "cargo",
+        "check",
+        "--manifest-path",
+        "examples/hypercurve_ui/Cargo.toml",
+        "--all-targets",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 12.433529222005745,
+      "log": "circle-closed-clipping-ui-check.log"
+    },
+    {
+      "target": "hyperbrep-fuzz",
+      "command": [
+        "cargo",
+        "check",
+        "--manifest-path",
+        "fuzz/Cargo.toml",
+        "--all-targets",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 14.185294036986306,
+      "log": "circle-closed-clipping-hyperbrep-fuzz-check.log"
+    }
+  ],
+  "source_verification": "circle-closed-clipping-source-verification.json",
+  "focused_regression_checks": "circle-closed-clipping-final-focused.json",
+  "discovery_probe": "circle-closed-clipping-baseline.json",
+  "normal_library_sha256": "4779a85387505cbd6fa56b42f114e107bae20c72d4f054201e3101fc89dadc48",
+  "independent_probes_and_matrices": [
+    "circle-closed-clipping-public-replay.json",
+    "circle-closed-clipping-affine-parallel-replay.json",
+    "circle-closed-clipping-exterior-completed.json",
+    "circle-closed-clipping-tangent-matrix.json",
+    "circle-closed-clipping-finite-circle-probe.json",
+    "circle-closed-clipping-family-matrix.json",
+    "circle-closed-clipping-completed.json",
+    "circle-closed-clipping-unit-replay.json",
+    "circle-closed-clipping-retained-chord-matrix.json",
+    "circle-closed-clipping-finite-matrix.json",
+    "circle-closed-clipping-cubic-replay.json",
+    "circle-closed-clipping-baseline-recheck.json",
+    "circle-closed-clipping-replay-matrix-run.json",
+    "circle-closed-clipping-analytic-probe.json",
+    "circle-closed-clipping-endpoint-probe.json",
+    "circle-closed-clipping-completed-probe.json",
+    "circle-closed-clipping-probe-final.json",
+    "circle-closed-clipping-circle-matrix.json",
+    "circle-closed-clipping-region-carrier-matrix.json",
+    "circle-closed-clipping-general-trim-matrix.json",
+    "circle-closed-clipping-constant-image-trim-matrix.json"
+  ],
+  "regression_baseline": "mixed-circle-components-qualification.json",
+  "affected_regression_results": "circle-closed-clipping-full-hypercurve-lib.json",
+  "evidence_audit": "circle-closed-clipping-evidence-audit.md",
+  "performance_claim": null,
+  "remaining": "Nonlinear finite circle/rational, circle/parallel, parallel/rational and parallel/parallel discovery; normalized public region construction; five promotion failures; eight unqualified expensive tests; broader algebraic consolidation, computational measurements, and original architecture goal.",
+  "post_commit_source_verification": "circle-closed-clipping-source-verification-post-commit.json",
+  "post_commit_repositories": "circle-closed-clipping-repos-after.json"
+}

@@ -1,0 +1,41 @@
+[
+  {
+    "repo": "hypercurve",
+    "fresh": true,
+    "file": "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/libhyperreal-05331ef8b04eb8fa.rlib",
+    "mtime": "2026-09-15T20:47:44.409593+00:00",
+    "sha256": "bc9949bab4e78e0660f8a81b492382005c1988b2c5caf70cf7cb38a8dd40122f"
+  },
+  {
+    "repo": "hyperbrep",
+    "fresh": false,
+    "file": "/home/tim/Documents/GitHub/workspace/hyperbrep/target/release/deps/libhyperreal-a124d51469224cd5.rlib",
+    "mtime": "2026-09-17T03:05:55.920673+00:00",
+    "sha256": "03cea423930b7417b85bbe9ba41127a9d1e23a3e1806614887e3ed8ddf7ee256"
+  },
+  {
+    "source": "Cargo.toml",
+    "mtime": "2026-09-17T03:02:23.001534+00:00",
+    "sha256": "dd0ec5a91e14470125c9b58425e1f9af0ea3e297ca48f98a83f4e2d4ce701306"
+  },
+  {
+    "source": "src/lib.rs",
+    "mtime": "2026-09-17T03:08:07.631617+00:00",
+    "sha256": "f1af2439d8aa378158232aed89263d5816021bf65e1f306fe2469e209b32a542"
+  },
+  {
+    "source": "src/rational/arithmetic/aggregate_products.rs",
+    "mtime": "2026-09-17T03:08:07.104609+00:00",
+    "sha256": "adb2bb2e15b78031743748da26a27681097002be20c0e6d50b61398d44869f8a"
+  },
+  {
+    "source": "src/rational/arithmetic/comparison.rs",
+    "mtime": "2026-09-17T03:04:30.476414+00:00",
+    "sha256": "f783483141e4762e9f487597440bf8433bb37609007b623aa5591cd413ca725c"
+  },
+  {
+    "source": "src/rational/convert.rs",
+    "mtime": "2026-09-17T03:08:07.633617+00:00",
+    "sha256": "c84f46852ff44db898eaa09dfcec75c878063d986e916855a2de0ccfb08e96b2"
+  }
+]

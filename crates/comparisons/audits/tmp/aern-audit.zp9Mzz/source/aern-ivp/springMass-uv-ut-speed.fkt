@@ -1,0 +1,116 @@
+<!DOCTYPE kmpdoc>
+<kmpdoc version="4">
+    <axes width="0.1" color="#808080" tic-legth="0.5" tic-width="0.1">
+        <show-axes>1</show-axes>
+        <show-arrows>1</show-arrows>
+        <show-label>1</show-label>
+        <xmin>-2.012</xmin>
+        <xmax>2.012</xmax>
+        <ymin>-1.99624765478424</ymin>
+        <ymax>1.990243902439025</ymax>
+    </axes>
+    <grid width="0.1" color="#c0c0c0">
+        <mode>2</mode>
+    </grid>
+    <scale>
+        <tic-x-mode>0</tic-x-mode>
+        <tic-y-mode>0</tic-y-mode>
+        <tic-x>1</tic-x>
+        <tic-y>1</tic-y>
+    </scale>
+    <function f2-use-gradient="0" f1-use-gradient="0" f0-width="0.3" type="cartesian" use-parameter-slider="0" f1-show-plot-name="0" f1-gradient="0;#000000,1;#ffffff," f1-width="0.3" integral-color="#191970" integral-style="SolidLine" f0-show-tangent-field="0" f0-style="SolidLine" f1-visible="0" f1-show-tangent-field="0" f0-show-plot-name="0" integral-show-plot-name="0" f0-gradient="0;#000000,1;#ffffff," integral-use-gradient="0" f2-show-tangent-field="0" f2-width="0.3" integral-visible="0" f1-style="SolidLine" integral-show-tangent-field="0" f0-color="#191970" f1-show-extrema="0" f2-show-plot-name="0" f2-show-extrema="0" integral-show-extrema="0" f2-style="SolidLine" f0-show-extrema="0" integral-gradient="0;#000000,1;#ffffff," f1-color="#191970" f0-visible="1" parameter-slider="0" f2-gradient="0;#000000,1;#ffffff," f0-use-gradient="0" integral-width="0.3" use-parameter-list="0" f2-color="#191970" f2-visible="0">
+        <equation-0 step="0.05">f(x) = 1+x+0.125<differential x="0" y="1"/>
+        </equation-0>
+        <arg-min use="0">0</arg-min>
+        <arg-max use="0">2π</arg-max>
+    </function>
+    <function f2-use-gradient="0" f1-use-gradient="0" f0-width="0.3" type="cartesian" use-parameter-slider="0" f1-show-plot-name="0" f1-gradient="0;#000000,1;#ffffff," f1-width="0.3" integral-color="#191970" integral-style="SolidLine" f0-show-tangent-field="0" f0-style="SolidLine" f1-visible="0" f1-show-tangent-field="0" f0-show-plot-name="0" integral-show-plot-name="0" f0-gradient="0;#000000,1;#ffffff," integral-use-gradient="0" f2-show-tangent-field="0" f2-width="0.3" integral-visible="0" f1-style="SolidLine" integral-show-tangent-field="0" f0-color="#191970" f1-show-extrema="0" f2-show-plot-name="0" f2-show-extrema="0" integral-show-extrema="0" f2-style="SolidLine" f0-show-extrema="0" integral-gradient="0;#000000,1;#ffffff," f1-color="#191970" f0-visible="1" parameter-slider="0" f2-gradient="0;#000000,1;#ffffff," f0-use-gradient="0" integral-width="0.3" use-parameter-list="0" f2-color="#191970" f2-visible="0">
+        <equation-0 step="0.05">g(x) = 1+x−0.125<differential x="0" y="1"/>
+        </equation-0>
+        <arg-min use="0">0</arg-min>
+        <arg-max use="0">2π</arg-max>
+    </function>
+    <function f2-use-gradient="0" f1-use-gradient="0" f0-width="0.3" type="cartesian" use-parameter-slider="0" f1-show-plot-name="0" f1-gradient="0;#000000,1;#ffffff," f1-width="0.3" integral-color="#ff4500" integral-style="SolidLine" f0-show-tangent-field="0" f0-style="SolidLine" f1-visible="0" f1-show-tangent-field="0" f0-show-plot-name="0" integral-show-plot-name="0" f0-gradient="0;#000000,1;#ffffff," integral-use-gradient="0" f2-show-tangent-field="0" f2-width="0.3" integral-visible="0" f1-style="SolidLine" integral-show-tangent-field="0" f0-color="#ff4500" f1-show-extrema="0" f2-show-plot-name="0" f2-show-extrema="0" integral-show-extrema="0" f2-style="SolidLine" f0-show-extrema="0" integral-gradient="0;#000000,1;#ffffff," f1-color="#ff4500" f0-visible="1" parameter-slider="0" f2-gradient="0;#000000,1;#ffffff," f0-use-gradient="0" integral-width="0.3" use-parameter-list="0" f2-color="#ff4500" f2-visible="0">
+        <equation-0 step="0.05">h(x) = −sin(x+0.125)−0.125∙cos(x+0.125)<differential x="0" y="1"/>
+        </equation-0>
+        <arg-min use="0">0</arg-min>
+        <arg-max use="0">2π</arg-max>
+    </function>
+    <function f2-use-gradient="0" f1-use-gradient="0" f0-width="0.3" type="cartesian" use-parameter-slider="0" f1-show-plot-name="0" f1-gradient="0;#000000,1;#ffffff," f1-width="0.3" integral-color="#ff4500" integral-style="SolidLine" f0-show-tangent-field="0" f0-style="SolidLine" f1-visible="0" f1-show-tangent-field="0" f0-show-plot-name="0" integral-show-plot-name="0" f0-gradient="0;#000000,1;#ffffff," integral-use-gradient="0" f2-show-tangent-field="0" f2-width="0.3" integral-visible="0" f1-style="SolidLine" integral-show-tangent-field="0" f0-color="#ff4500" f1-show-extrema="0" f2-show-plot-name="0" f2-show-extrema="0" integral-show-extrema="0" f2-style="SolidLine" f0-show-extrema="0" integral-gradient="0;#000000,1;#ffffff," f1-color="#ff4500" f0-visible="1" parameter-slider="0" f2-gradient="0;#000000,1;#ffffff," f0-use-gradient="0" integral-width="0.3" use-parameter-list="0" f2-color="#ff4500" f2-visible="0">
+        <equation-0 step="0.05">i(x) = −sin(x−0.125)+0.125∙cos(x−0.125)<differential x="0" y="1"/>
+        </equation-0>
+        <arg-min use="0">0</arg-min>
+        <arg-max use="0">2π</arg-max>
+    </function>
+    <function f2-use-gradient="0" f1-use-gradient="0" f0-width="0.3" type="cartesian" use-parameter-slider="0" f1-show-plot-name="0" f1-gradient="0;#000000,1;#ffffff," f1-width="0.3" integral-color="#ff4500" integral-style="SolidLine" f0-show-tangent-field="0" f0-style="SolidLine" f1-visible="0" f1-show-tangent-field="0" f0-show-plot-name="0" integral-show-plot-name="0" f0-gradient="0;#000000,1;#ffffff," integral-use-gradient="0" f2-show-tangent-field="0" f2-width="0.3" integral-visible="0" f1-style="SolidLine" integral-show-tangent-field="0" f0-color="#c000c0" f1-show-extrema="0" f2-show-plot-name="0" f2-show-extrema="0" integral-show-extrema="0" f2-style="SolidLine" f0-show-extrema="0" integral-gradient="0;#000000,1;#ffffff," f1-color="#ff4500" f0-visible="1" parameter-slider="0" f2-gradient="0;#000000,1;#ffffff," f0-use-gradient="0" integral-width="0.3" use-parameter-list="0" f2-color="#ff4500" f2-visible="0">
+        <equation-0 step="0.05">j(x) = −1.25sin(x−0.125)+0.125∙cos(x−0.125)<differential x="0" y="1"/>
+        </equation-0>
+        <arg-min use="0">0</arg-min>
+        <arg-max use="0">2π</arg-max>
+    </function>
+    <function f2-use-gradient="0" f1-use-gradient="0" f0-width="0.3" type="cartesian" use-parameter-slider="0" f1-show-plot-name="0" f1-gradient="0;#000000,1;#ffffff," f1-width="0.3" integral-color="#ff4500" integral-style="SolidLine" f0-show-tangent-field="0" f0-style="SolidLine" f1-visible="0" f1-show-tangent-field="0" f0-show-plot-name="0" integral-show-plot-name="0" f0-gradient="0;#000000,1;#ffffff," integral-use-gradient="0" f2-show-tangent-field="0" f2-width="0.3" integral-visible="0" f1-style="SolidLine" integral-show-tangent-field="0" f0-color="#c000c0" f1-show-extrema="0" f2-show-plot-name="0" f2-show-extrema="0" integral-show-extrema="0" f2-style="SolidLine" f0-show-extrema="0" integral-gradient="0;#000000,1;#ffffff," f1-color="#ff4500" f0-visible="1" parameter-slider="0" f2-gradient="0;#000000,1;#ffffff," f0-use-gradient="0" integral-width="0.3" use-parameter-list="0" f2-color="#ff4500" f2-visible="0">
+        <equation-0 step="0.05">k(x) = −0.75sin(x+0.125)−0.125∙cos(x+0.125)<differential x="0" y="1"/>
+        </equation-0>
+        <arg-min use="0">0</arg-min>
+        <arg-max use="0">2π</arg-max>
+    </function>
+    <function f2-use-gradient="0" f1-use-gradient="0" f0-width="0.3" type="cartesian" use-parameter-slider="0" f1-show-plot-name="0" f1-gradient="0;#000000,1;#ffffff," f1-width="0.3" integral-color="#0000cd" integral-style="SolidLine" f0-show-tangent-field="0" f0-style="SolidLine" f1-visible="0" f1-show-tangent-field="0" f0-show-plot-name="0" integral-show-plot-name="0" f0-gradient="0;#000000,1;#ffffff," integral-use-gradient="0" f2-show-tangent-field="0" f2-width="0.3" integral-visible="0" f1-style="SolidLine" integral-show-tangent-field="0" f0-color="#0000cd" f1-show-extrema="0" f2-show-plot-name="0" f2-show-extrema="0" integral-show-extrema="0" f2-style="SolidLine" f0-show-extrema="0" integral-gradient="0;#000000,1;#ffffff," f1-color="#0000cd" f0-visible="1" parameter-slider="0" f2-gradient="0;#000000,1;#ffffff," f0-use-gradient="0" integral-width="0.3" use-parameter-list="0" f2-color="#0000cd" f2-visible="0">
+        <equation-0 step="0.05">l(x) = 0.125<differential x="0" y="1"/>
+        </equation-0>
+        <arg-min use="0">0</arg-min>
+        <arg-max use="0">2π</arg-max>
+    </function>
+    <function f2-use-gradient="0" f1-use-gradient="0" f0-width="0.3" type="cartesian" use-parameter-slider="0" f1-show-plot-name="0" f1-gradient="0;#000000,1;#ffffff," f1-width="0.3" integral-color="#0000cd" integral-style="SolidLine" f0-show-tangent-field="0" f0-style="SolidLine" f1-visible="0" f1-show-tangent-field="0" f0-show-plot-name="0" integral-show-plot-name="0" f0-gradient="0;#000000,1;#ffffff," integral-use-gradient="0" f2-show-tangent-field="0" f2-width="0.3" integral-visible="0" f1-style="SolidLine" integral-show-tangent-field="0" f0-color="#0000cd" f1-show-extrema="0" f2-show-plot-name="0" f2-show-extrema="0" integral-show-extrema="0" f2-style="SolidLine" f0-show-extrema="0" integral-gradient="0;#000000,1;#ffffff," f1-color="#0000cd" f0-visible="1" parameter-slider="0" f2-gradient="0;#000000,1;#ffffff," f0-use-gradient="0" integral-width="0.3" use-parameter-list="0" f2-color="#0000cd" f2-visible="0">
+        <equation-0 step="0.05">m(x) = −0.125<differential x="0" y="1"/>
+        </equation-0>
+        <arg-min use="0">0</arg-min>
+        <arg-max use="0">2π</arg-max>
+    </function>
+    <function f2-use-gradient="0" f1-use-gradient="0" f0-width="0.3" type="cartesian" use-parameter-slider="0" f1-show-plot-name="0" f1-gradient="0;#000000,1;#ffffff," f1-width="0.3" integral-color="#3cb400" integral-style="SolidLine" f0-show-tangent-field="0" f0-style="SolidLine" f1-visible="0" f1-show-tangent-field="0" f0-show-plot-name="0" integral-show-plot-name="0" f0-gradient="0;#000000,1;#ffffff," integral-use-gradient="0" f2-show-tangent-field="0" f2-width="0.3" integral-visible="0" f1-style="SolidLine" integral-show-tangent-field="0" f0-color="#3cb400" f1-show-extrema="0" f2-show-plot-name="0" f2-show-extrema="0" integral-show-extrema="0" f2-style="SolidLine" f0-show-extrema="0" integral-gradient="0;#000000,1;#ffffff," f1-color="#3cb400" f0-visible="1" parameter-slider="0" f2-gradient="0;#000000,1;#ffffff," f0-use-gradient="0" integral-width="0.3" use-parameter-list="0" f2-color="#3cb400" f2-visible="0">
+        <equation-0 step="0.05">n(x) = x<differential x="0" y="1"/>
+        </equation-0>
+        <arg-min use="0">0</arg-min>
+        <arg-max use="0">2π</arg-max>
+    </function>
+    <function f2-use-gradient="0" f1-use-gradient="0" f0-width="0.3" type="cartesian" use-parameter-slider="0" f1-show-plot-name="0" f1-gradient="0;#000000,1;#ffffff," f1-width="0.3" integral-color="#ff4500" integral-style="SolidLine" f0-show-tangent-field="0" f0-style="SolidLine" f1-visible="0" f1-show-tangent-field="0" f0-show-plot-name="0" integral-show-plot-name="0" f0-gradient="0;#000000,1;#ffffff," integral-use-gradient="0" f2-show-tangent-field="0" f2-width="0.3" integral-visible="0" f1-style="SolidLine" integral-show-tangent-field="0" f0-color="#c05800" f1-show-extrema="0" f2-show-plot-name="0" f2-show-extrema="0" integral-show-extrema="0" f2-style="SolidLine" f0-show-extrema="0" integral-gradient="0;#000000,1;#ffffff," f1-color="#ff4500" f0-visible="1" parameter-slider="0" f2-gradient="0;#000000,1;#ffffff," f0-use-gradient="0" integral-width="0.3" use-parameter-list="0" f2-color="#ff4500" f2-visible="0">
+        <equation-0 step="0.05">o(x) = −sin(x+0.125)+0.125∙cos(x+0.125)<differential x="0" y="1"/>
+        </equation-0>
+        <arg-min use="0">0</arg-min>
+        <arg-max use="0">2π</arg-max>
+    </function>
+    <function f2-use-gradient="0" f1-use-gradient="0" f0-width="0.3" type="cartesian" use-parameter-slider="0" f1-show-plot-name="0" f1-gradient="0;#000000,1;#ffffff," f1-width="0.3" integral-color="#ff4500" integral-style="SolidLine" f0-show-tangent-field="0" f0-style="SolidLine" f1-visible="0" f1-show-tangent-field="0" f0-show-plot-name="0" integral-show-plot-name="0" f0-gradient="0;#000000,1;#ffffff," integral-use-gradient="0" f2-show-tangent-field="0" f2-width="0.3" integral-visible="0" f1-style="SolidLine" integral-show-tangent-field="0" f0-color="#c05800" f1-show-extrema="0" f2-show-plot-name="0" f2-show-extrema="0" integral-show-extrema="0" f2-style="SolidLine" f0-show-extrema="0" integral-gradient="0;#000000,1;#ffffff," f1-color="#ff4500" f0-visible="1" parameter-slider="0" f2-gradient="0;#000000,1;#ffffff," f0-use-gradient="0" integral-width="0.3" use-parameter-list="0" f2-color="#ff4500" f2-visible="0">
+        <equation-0 step="0.05">p(x) = −sin(x−0.125)−0.125∙cos(x−0.125)<differential x="0" y="1"/>
+        </equation-0>
+        <arg-min use="0">0</arg-min>
+        <arg-max use="0">2π</arg-max>
+    </function>
+    <function f2-use-gradient="0" f1-use-gradient="0" f0-width="0.3" type="cartesian" use-parameter-slider="0" f1-show-plot-name="0" f1-gradient="0;#000000,1;#ffffff," f1-width="0.3" integral-color="#ff4500" integral-style="SolidLine" f0-show-tangent-field="0" f0-style="SolidLine" f1-visible="0" f1-show-tangent-field="0" f0-show-plot-name="0" integral-show-plot-name="0" f0-gradient="0;#000000,1;#ffffff," integral-use-gradient="0" f2-show-tangent-field="0" f2-width="0.3" integral-visible="0" f1-style="SolidLine" integral-show-tangent-field="0" f0-color="#00c0c0" f1-show-extrema="0" f2-show-plot-name="0" f2-show-extrema="0" integral-show-extrema="0" f2-style="SolidLine" f0-show-extrema="0" integral-gradient="0;#000000,1;#ffffff," f1-color="#ff4500" f0-visible="1" parameter-slider="0" f2-gradient="0;#000000,1;#ffffff," f0-use-gradient="0" integral-width="0.3" use-parameter-list="0" f2-color="#ff4500" f2-visible="0">
+        <equation-0 step="0.05">q(x) = −1.25sin(x−0.125)−0.125∙cos(x−0.125)<differential x="0" y="1"/>
+        </equation-0>
+        <arg-min use="0">0</arg-min>
+        <arg-max use="0">2π</arg-max>
+    </function>
+    <function f2-use-gradient="0" f1-use-gradient="0" f0-width="0.3" type="cartesian" use-parameter-slider="0" f1-show-plot-name="0" f1-gradient="0;#000000,1;#ffffff," f1-width="0.3" integral-color="#ff4500" integral-style="SolidLine" f0-show-tangent-field="0" f0-style="SolidLine" f1-visible="0" f1-show-tangent-field="0" f0-show-plot-name="0" integral-show-plot-name="0" f0-gradient="0;#000000,1;#ffffff," integral-use-gradient="0" f2-show-tangent-field="0" f2-width="0.3" integral-visible="0" f1-style="SolidLine" integral-show-tangent-field="0" f0-color="#00ffff" f1-show-extrema="0" f2-show-plot-name="0" f2-show-extrema="0" integral-show-extrema="0" f2-style="SolidLine" f0-show-extrema="0" integral-gradient="0;#000000,1;#ffffff," f1-color="#ff4500" f0-visible="1" parameter-slider="0" f2-gradient="0;#000000,1;#ffffff," f0-use-gradient="0" integral-width="0.3" use-parameter-list="0" f2-color="#ff4500" f2-visible="0">
+        <equation-0 step="0.05">r(x) = −0.75sin(x+0.125)+0.125∙cos(x+0.125)<differential x="0" y="1"/>
+        </equation-0>
+        <arg-min use="0">0</arg-min>
+        <arg-max use="0">2π</arg-max>
+    </function>
+    <function f2-use-gradient="0" f1-use-gradient="0" f0-width="0.3" type="cartesian" use-parameter-slider="0" f1-show-plot-name="0" f1-gradient="0;#000000,1;#ffffff," f1-width="0.3" integral-color="#ff4500" integral-style="SolidLine" f0-show-tangent-field="0" f0-style="SolidLine" f1-visible="0" f1-show-tangent-field="0" f0-show-plot-name="0" integral-show-plot-name="0" f0-gradient="0;#000000,1;#ffffff," integral-use-gradient="0" f2-show-tangent-field="0" f2-width="0.3" integral-visible="0" f1-style="SolidLine" integral-show-tangent-field="0" f0-color="#008080" f1-show-extrema="0" f2-show-plot-name="0" f2-show-extrema="0" integral-show-extrema="0" f2-style="SolidLine" f0-show-extrema="0" integral-gradient="0;#000000,1;#ffffff," f1-color="#ff4500" f0-visible="1" parameter-slider="0" f2-gradient="0;#000000,1;#ffffff," f0-use-gradient="0" integral-width="0.3" use-parameter-list="0" f2-color="#ff4500" f2-visible="0">
+        <equation-0 step="0.05">s(x) = −0.875sin(x)+0.125∙cos(x)<differential x="0" y="1"/>
+        </equation-0>
+        <arg-min use="0">0</arg-min>
+        <arg-max use="0">2π</arg-max>
+    </function>
+    <function f2-use-gradient="0" f1-use-gradient="0" f0-width="0.3" type="cartesian" use-parameter-slider="0" f1-show-plot-name="0" f1-gradient="0;#000000,1;#ffffff," f1-width="0.3" integral-color="#ff4500" integral-style="SolidLine" f0-show-tangent-field="0" f0-style="SolidLine" f1-visible="0" f1-show-tangent-field="0" f0-show-plot-name="0" integral-show-plot-name="0" f0-gradient="0;#000000,1;#ffffff," integral-use-gradient="0" f2-show-tangent-field="0" f2-width="0.3" integral-visible="0" f1-style="SolidLine" integral-show-tangent-field="0" f0-color="#008080" f1-show-extrema="0" f2-show-plot-name="0" f2-show-extrema="0" integral-show-extrema="0" f2-style="SolidLine" f0-show-extrema="0" integral-gradient="0;#000000,1;#ffffff," f1-color="#ff4500" f0-visible="1" parameter-slider="0" f2-gradient="0;#000000,1;#ffffff," f0-use-gradient="0" integral-width="0.3" use-parameter-list="0" f2-color="#ff4500" f2-visible="0">
+        <equation-0 step="0.05">t(x) = −1.125sin(x)−0.125∙cos(x)<differential x="0" y="1"/>
+        </equation-0>
+        <arg-min use="0">0</arg-min>
+        <arg-max use="0">2π</arg-max>
+    </function>
+    <fonts>
+        <axes-font>Comic Sans MS</axes-font>
+        <label-font>Comic Sans MS</label-font>
+        <header-table-font>Comic Sans MS</header-table-font>
+    </fonts>
+</kmpdoc>

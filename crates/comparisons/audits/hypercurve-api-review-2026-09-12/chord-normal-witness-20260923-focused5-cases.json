@@ -1,0 +1,10 @@
+[
+  {
+    "name": "bezier_offset::conversion_tests::chord_normal_recursive_frame_retains_center_and_oriented_unit_normal",
+    "returncode": 101,
+    "passed": false,
+    "limit_seconds": 75,
+    "elapsed_seconds": 0.21021874900907278,
+    "log": "chord-normal-witness-20260923-focused5-case-0.log"
+  }
+]

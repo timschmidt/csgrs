@@ -1,0 +1,14 @@
+{
+  "command": [
+    "cargo",
+    "test",
+    "--release",
+    "--all-features",
+    "--offline",
+    "--lib",
+    "--no-run",
+    "--message-format=json"
+  ],
+  "returncode": 0,
+  "elapsed_seconds": 116.54113689399674
+}

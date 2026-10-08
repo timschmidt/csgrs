@@ -1,0 +1,11 @@
+Unify finite-chord containment over exact point evidence
+
+Use one CurvePoint2 predicate for represented and retained finite-chord
+queries. Validate retained policy before dispatch, preserve strict native
+accelerators, and fall through to shared support and finite-parameter proofs.
+Migrate all callers and remove the duplicate evidence entry point.
+
+Cover independent endpoint fields, collinear extrapolation, off-line interior
+points, and repeated strict/approximate terminal replay. Formatting and both
+all-target Clippy configurations pass. Qualification: 1,451 passes, six ignored,
+eight unchanged timeouts across 1,465 cases; all 225 public cases pass.

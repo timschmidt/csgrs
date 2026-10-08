@@ -1,0 +1,7 @@
+{
+  "commit": "b4a0d02d5b2237bb6168eb1fe0e5849f3df82f06",
+  "source": "/tmp/hypercurve-box-policy-baseline-b4a0d02/hypercurve",
+  "target": "/tmp/hypercurve-box-policy-baseline-b4a0d02/target",
+  "dependencies": "unchanged workspace repositories; isolated build output",
+  "purpose": "determine whether expanded analytic-circle integration failures predate the box migration"
+}

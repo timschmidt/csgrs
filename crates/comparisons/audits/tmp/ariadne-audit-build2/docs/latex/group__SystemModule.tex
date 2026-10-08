@@ -1,0 +1,26 @@
+\doxysubsubsection{System Module }
+\hypertarget{group__SystemModule}{}\label{group__SystemModule}\index{System Module@{System Module}}
+
+
+\doxysubsubsubsection{Description}
+\doxylink{classAriadne_1_1Concepts_1_1Abstract}{Abstract} base classes for system interface, and some commonly used systems. 
+
+Systems fall into three basic classes, namely {\itshape discrete-\/time systems}, {\itshape continuous-\/time systems}, and {\itshape hybrid-\/time systems}, which are a combination of dicrete-\/time and hybrid-\/time systems. There is a further subdivision into {\itshape dynamical systems}, which are deterministic, {\itshape multivalued systems}, which are nondeterministic, and {\itshape control systems} in which control inputs and noise may be present.
+
+A system is defined by an algorithm to approximate the image of a basic set, and possibly to approximate the derivative over a basic set. It is {\itshape not} the purpose of the classes in the system module to compute the image of denotable sets; this is the purpose of the Evaluation module.
+
+See the page on \doxysectlink{function_evaluation_page}{Function Evaluation}{0} for more information. \doxysubsubsubsubsection*{Classes}
+\begin{DoxyCompactItemize}
+\item 
+class \mbox{\hyperlink{classAriadne_1_1DiscreteEvent}{Discrete\+Event}}
+\begin{DoxyCompactList}\small\item\em Type of a discrete event of a hybrid system. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1DiscreteLocation}{Discrete\+Location}}
+\begin{DoxyCompactList}\small\item\em Type of a discrete location of a hybrid system. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1CompositeHybridAutomaton}{Composite\+Hybrid\+Automaton}}
+\begin{DoxyCompactList}\small\item\em A hybrid automaton, formed by running a finite number of \doxylink{classAriadne_1_1HybridAutomaton}{Hybrid\+Automaton} classes in parallel. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1HybridAutomaton}{Hybrid\+Automaton}}
+\begin{DoxyCompactList}\small\item\em A hybrid automaton, comprising continuous-\/time behaviour at each discrete mode, coupled by instantaneous discrete transitions. The state space is given by a hybrid set. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1SystemSpecificationError}{System\+Specification\+Error}}
+\begin{DoxyCompactList}\small\item\em Base class for an error in system specification. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1HybridAutomatonInterface}{Hybrid\+Automaton\+Interface}}
+\begin{DoxyCompactList}\small\item\em Interface for hybrid systems required to perform analysis. \end{DoxyCompactList}\end{DoxyCompactItemize}

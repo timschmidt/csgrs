@@ -1,0 +1,14 @@
+{
+  "tag": "power-sums-kernel-check",
+  "started": "2026-09-10T18:24:22.190Z",
+  "finished": "2026-09-10T18:24:22.383Z",
+  "elapsedSeconds": 0.191153381,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "node",
+  "args": [
+    "check-power-sums-kernel.mjs",
+    "results/power-sums-kernel-debug.stdout"
+  ],
+  "code": 0,
+  "signal": null
+}

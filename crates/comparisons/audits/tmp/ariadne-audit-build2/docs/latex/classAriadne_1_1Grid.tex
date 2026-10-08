@@ -1,0 +1,66 @@
+\doxysubsection{Grid Class Reference}
+\hypertarget{classAriadne_1_1Grid}{}\label{classAriadne_1_1Grid}\index{Grid@{Grid}}
+
+
+{\ttfamily \#include $<$grid.\+hpp$>$}
+
+
+
+\doxysubsubsection{Description}
+An infinite, uniform grid of rectangles in Euclidean space. \doxysubsubsubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1Grid_a16d42516a2abe71deb47c2f4b2796074}\label{classAriadne_1_1Grid_a16d42516a2abe71deb47c2f4b2796074} 
+{\bfseries \texorpdfstring{$\sim$}{\string~}\+Grid} ()
+\begin{DoxyCompactList}\small\item\em Destructor. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Grid_a0a335d0339fe70071fcdf4cd5b1c7b5f}\label{classAriadne_1_1Grid_a0a335d0339fe70071fcdf4cd5b1c7b5f} 
+{\bfseries Grid} ()
+\begin{DoxyCompactList}\small\item\em Default constructor constructs a grid from a null pointer. Needed for some iterators. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Grid_a344c09386cf310729eb2a7ac97f440ef}\label{classAriadne_1_1Grid_a344c09386cf310729eb2a7ac97f440ef} 
+{\bfseries Grid} (Dimension\+Type d)
+\begin{DoxyCompactList}\small\item\em Construct from a dimension. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Grid_a3044fe91be4c4e407833b433f880ed55}\label{classAriadne_1_1Grid_a3044fe91be4c4e407833b433f880ed55} 
+{\bfseries Grid} (Dimension\+Type d, Raw\+Float\+DP l)
+\begin{DoxyCompactList}\small\item\em Construct from a dimension and a spacing in each direction. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Grid_a20a4ee2c599a9f32d22adc6c384426ff}\label{classAriadne_1_1Grid_a20a4ee2c599a9f32d22adc6c384426ff} 
+{\bfseries Grid} (const \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ Raw\+Float\+DP $>$ \&\mbox{\hyperlink{classAriadne_1_1Grid_a541518fc68f9f1dcfdeafb25cf2b8dc7}{lengths}})
+\begin{DoxyCompactList}\small\item\em Construct from a vector of lengths. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Grid_a8fec9a1470638890564799e107fb2145}\label{classAriadne_1_1Grid_a8fec9a1470638890564799e107fb2145} 
+{\bfseries Grid} (const \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ Raw\+Float\+DP $>$ \&\mbox{\hyperlink{classAriadne_1_1Grid_aee8f0f3a3491f1e8df85dba5aa26f97c}{origin}}, const \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ Raw\+Float\+DP $>$ \&\mbox{\hyperlink{classAriadne_1_1Grid_a541518fc68f9f1dcfdeafb25cf2b8dc7}{lengths}})
+\begin{DoxyCompactList}\small\item\em Construct from a centre point and a vector of lengths. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Grid_a41839addddd4230c6d979b65a5d58b9f}\label{classAriadne_1_1Grid_a41839addddd4230c6d979b65a5d58b9f} 
+{\bfseries Grid} (const \mbox{\hyperlink{classAriadne_1_1Grid}{Grid}} \&g)
+\begin{DoxyCompactList}\small\item\em Copy constructor. Copies a reference to the grid data. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Grid_a7d792b4371c2e228fb6cc3bac416255c}\label{classAriadne_1_1Grid_a7d792b4371c2e228fb6cc3bac416255c} 
+\mbox{\hyperlink{classAriadne_1_1Grid}{Grid}} \& {\bfseries operator=} (const \mbox{\hyperlink{classAriadne_1_1Grid}{Grid}} \&g)
+\begin{DoxyCompactList}\small\item\em Copy assignment. Copies a reference to the grid data. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Grid_a3c1a15a3831a647991a6a2c5bbe1e029}\label{classAriadne_1_1Grid_a3c1a15a3831a647991a6a2c5bbe1e029} 
+Dimension\+Type {\bfseries dimension} () const
+\begin{DoxyCompactList}\small\item\em The underlying dimension of the grid. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Grid_a537e93b7c667032196a353d490f2be0c}\label{classAriadne_1_1Grid_a537e93b7c667032196a353d490f2be0c} 
+\mbox{\hyperlink{namespaceAriadne_a76a8b016e5ad61faf9062cc387df5016}{Bool}} {\bfseries operator==} (const \mbox{\hyperlink{classAriadne_1_1Grid}{Grid}} \&g) const
+\begin{DoxyCompactList}\small\item\em Tests equality of two grids. Tests equality of references first. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Grid_ae6b9a4740051e9f9ab0c626449445989}\label{classAriadne_1_1Grid_ae6b9a4740051e9f9ab0c626449445989} 
+\mbox{\hyperlink{namespaceAriadne_a76a8b016e5ad61faf9062cc387df5016}{Bool}} {\bfseries operator!=} (const \mbox{\hyperlink{classAriadne_1_1Grid}{Grid}} \&g) const
+\begin{DoxyCompactList}\small\item\em Tests inequality of two grids. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Grid_aee8f0f3a3491f1e8df85dba5aa26f97c}\label{classAriadne_1_1Grid_aee8f0f3a3491f1e8df85dba5aa26f97c} 
+const \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ Raw\+Float\+DP $>$ \& {\bfseries origin} () const
+\begin{DoxyCompactList}\small\item\em The origin of the grid. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Grid_a541518fc68f9f1dcfdeafb25cf2b8dc7}\label{classAriadne_1_1Grid_a541518fc68f9f1dcfdeafb25cf2b8dc7} 
+const \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ Raw\+Float\+DP $>$ \& {\bfseries lengths} () const
+\begin{DoxyCompactList}\small\item\em The strides between successive integer points. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsubsection*{Friends}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1Grid_ac1b23be0adfa3dd4507a9b80395cdba5}\label{classAriadne_1_1Grid_ac1b23be0adfa3dd4507a9b80395cdba5} 
+\mbox{\hyperlink{classAriadne_1_1Grid}{Grid}} {\bfseries join} (\mbox{\hyperlink{classAriadne_1_1Grid}{Grid}} const \&g1, \mbox{\hyperlink{classAriadne_1_1Grid}{Grid}} const \&g2)
+\begin{DoxyCompactList}\small\item\em Construct a grid for the product space, comprising subdivisions of {\itshape g1} for the first, then those of {\itshape g2}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Grid_a1c55776d4bf8dda537e52017c82d15eb}\label{classAriadne_1_1Grid_a1c55776d4bf8dda537e52017c82d15eb} 
+\mbox{\hyperlink{namespaceAriadne_acbb98ddc4385af4599070e65a1a47ec1}{Output\+Stream}} \& {\bfseries operator$<$$<$} (\mbox{\hyperlink{namespaceAriadne_acbb98ddc4385af4599070e65a1a47ec1}{Output\+Stream}} \&os, const \mbox{\hyperlink{classAriadne_1_1Grid}{Grid}} \&g)
+\begin{DoxyCompactList}\small\item\em Write to an output stream. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+The documentation for this class was generated from the following files\+:\begin{DoxyCompactItemize}
+\item 
+source/geometry/\mbox{\hyperlink{grid_8hpp}{grid.\+hpp}}\item 
+source/geometry/grid.\+cpp\end{DoxyCompactItemize}

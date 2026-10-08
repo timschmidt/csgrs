@@ -1,0 +1,8 @@
+partial-info records total/consistent/over-approximated: (729,223,40)
+([Nothing,Nothing,Nothing,Nothing,Just True,Just False],[EQ],[EQ,GT])
+([Nothing,Nothing,Nothing,Just False,Just True,Just False],[EQ],[EQ,GT])
+([Nothing,Nothing,Just False,Nothing,Just True,Nothing],[GT],[EQ,GT])
+([Nothing,Nothing,Just False,Just False,Just True,Nothing],[GT],[EQ,GT])
+powerset oracle triples / relation pairs: (29,16)
+four-element preorders / directed constraint tests: (355,192)
+partial-info conjunction drops False AND Unknown; Misc.Maybe preserves it

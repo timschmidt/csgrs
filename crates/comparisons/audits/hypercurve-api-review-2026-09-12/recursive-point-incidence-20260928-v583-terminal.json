@@ -1,0 +1,424 @@
+{
+  "normal_production_build": true,
+  "source_manifest": "recursive-point-incidence-20260928-v583-sources.json",
+  "source_directory": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/source-archives/recursive-point-incidence-20260928-v583",
+  "builds": [
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "test",
+        "--lib",
+        "--release",
+        "--all-features",
+        "--locked",
+        "--offline",
+        "--no-run",
+        "--message-format=json"
+      ],
+      "returncode": 0,
+      "log": "recursive-point-incidence-20260928-v583-build.log",
+      "elapsed_seconds": 152.58561133383773,
+      "binaries": {
+        "hypercurve": {
+          "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/recursive-point-incidence-20260928-v583-hypercurve-tests",
+          "sha256": "cda9b169b43b2186248681fa4c3234fb9667d272f4c511025ea9d3c94b44f26f"
+        }
+      }
+    }
+  ],
+  "cases": [
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/recursive-point-incidence-20260928-v583-hypercurve-tests",
+        "--exact",
+        "curve::curve_fillet::stationary_recursive_point_constraint_regression::stationary_fillet_family_accepts_independent_recursive_point_constraints",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "recursive-point-incidence-20260928-v583-stationary_fillet_family_accepts_independent_recursive_point_constraints.log",
+      "elapsed_seconds": 18.038041685009375,
+      "target": "hypercurve",
+      "name": "curve::curve_fillet::stationary_recursive_point_constraint_regression::stationary_fillet_family_accepts_independent_recursive_point_constraints",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/recursive-point-incidence-20260928-v583-hypercurve-tests",
+        "--exact",
+        "bezier_offset::regular_parallel_contact_tests::recursive_incidence_preserves_selected_point_fields",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "recursive-point-incidence-20260928-v583-recursive_incidence_preserves_selected_point_fields.log",
+      "elapsed_seconds": 0.0035934040788561106,
+      "target": "hypercurve",
+      "name": "bezier_offset::regular_parallel_contact_tests::recursive_incidence_preserves_selected_point_fields",
+      "passed": false
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/recursive-point-incidence-20260928-v583-hypercurve-tests",
+        "--exact",
+        "bezier_offset::regular_parallel_contact_tests::recursive_incidence_keeps_stationary_and_collapsed_semantics",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "recursive-point-incidence-20260928-v583-recursive_incidence_keeps_stationary_and_collapsed_semantics.log",
+      "elapsed_seconds": 0.0035290278028696775,
+      "target": "hypercurve",
+      "name": "bezier_offset::regular_parallel_contact_tests::recursive_incidence_keeps_stationary_and_collapsed_semantics",
+      "passed": false
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/recursive-point-incidence-20260928-v583-hypercurve-tests",
+        "--exact",
+        "bezier_offset::regular_parallel_contact_tests::recursive_incidence_preserves_exterior_domains_and_pole_barriers",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "recursive-point-incidence-20260928-v583-recursive_incidence_preserves_exterior_domains_and_pole_barriers.log",
+      "elapsed_seconds": 0.0035441669169813395,
+      "target": "hypercurve",
+      "name": "bezier_offset::regular_parallel_contact_tests::recursive_incidence_preserves_exterior_domains_and_pole_barriers",
+      "passed": false
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/recursive-point-incidence-20260928-v583-hypercurve-tests",
+        "--exact",
+        "bezier_parameter::finite_interval_import_regression::unit_import_keeps_its_domain_after_generic_interval_construction",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "recursive-point-incidence-20260928-v583-unit_import_keeps_its_domain_after_generic_interval_construction.log",
+      "elapsed_seconds": 0.003528278088197112,
+      "target": "hypercurve",
+      "name": "bezier_parameter::finite_interval_import_regression::unit_import_keeps_its_domain_after_generic_interval_construction",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/recursive-point-incidence-20260928-v583-hypercurve-tests",
+        "--exact",
+        "bezier_offset::regular_parallel_contact_tests::primitive_source_frames_share_factorization_across_distances_and_branches",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "recursive-point-incidence-20260928-v583-primitive_source_frames_share_factorization_across_distances_and_branches.log",
+      "elapsed_seconds": 0.00355078699067235,
+      "target": "hypercurve",
+      "name": "bezier_offset::regular_parallel_contact_tests::primitive_source_frames_share_factorization_across_distances_and_branches",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/recursive-point-incidence-20260928-v583-hypercurve-tests",
+        "--exact",
+        "curve::curve_fillet::stationary_retained_point_constraint_regression::stationary_fillet_family_accepts_independent_retained_point_constraints",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "recursive-point-incidence-20260928-v583-stationary_fillet_family_accepts_independent_retained_point_constraints.log",
+      "elapsed_seconds": 18.640145051991567,
+      "target": "hypercurve",
+      "name": "curve::curve_fillet::stationary_retained_point_constraint_regression::stationary_fillet_family_accepts_independent_retained_point_constraints",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/recursive-point-incidence-20260928-v583-hypercurve-tests",
+        "--exact",
+        "bezier_parameter::finite_field_bernstein_regression::finite_field_isolation_preserves_represented_contacts_near_domain_boundaries",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "recursive-point-incidence-20260928-v583-finite_field_isolation_preserves_represented_contacts_near_domain_boundaries.log",
+      "elapsed_seconds": 0.00766113493591547,
+      "target": "hypercurve",
+      "name": "bezier_parameter::finite_field_bernstein_regression::finite_field_isolation_preserves_represented_contacts_near_domain_boundaries",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/recursive-point-incidence-20260928-v583-hypercurve-tests",
+        "--exact",
+        "bezier_parameter::finite_field_bernstein_regression::finite_field_isolation_reuses_original_polynomial_and_simple_root_proof",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "recursive-point-incidence-20260928-v583-finite_field_isolation_reuses_original_polynomial_and_simple_root_proof.log",
+      "elapsed_seconds": 0.007593119982630014,
+      "target": "hypercurve",
+      "name": "bezier_parameter::finite_field_bernstein_regression::finite_field_isolation_reuses_original_polynomial_and_simple_root_proof",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/recursive-point-incidence-20260928-v583-hypercurve-tests",
+        "--exact",
+        "bezier_parameter::finite_field_bernstein_regression::finite_field_isolation_keeps_repeated_roots_and_closed_boundaries",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "recursive-point-incidence-20260928-v583-finite_field_isolation_keeps_repeated_roots_and_closed_boundaries.log",
+      "elapsed_seconds": 0.007650434970855713,
+      "target": "hypercurve",
+      "name": "bezier_parameter::finite_field_bernstein_regression::finite_field_isolation_keeps_repeated_roots_and_closed_boundaries",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/recursive-point-incidence-20260928-v583-hypercurve-tests",
+        "--exact",
+        "curve::curve_fillet::stationary_family_composition_regression::normalized_region_selects_and_reuses_a_stationary_fillet_family",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "recursive-point-incidence-20260928-v583-normalized_region_selects_and_reuses_a_stationary_fillet_family.log",
+      "elapsed_seconds": 1.9664419509936124,
+      "target": "hypercurve",
+      "name": "curve::curve_fillet::stationary_family_composition_regression::normalized_region_selects_and_reuses_a_stationary_fillet_family",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/recursive-point-incidence-20260928-v583-hypercurve-tests",
+        "--exact",
+        "bezier_offset::conversion_tests::point_incidence_checks_regular_frames_at_each_isolated_contact",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "recursive-point-incidence-20260928-v583-point_incidence_checks_regular_frames_at_each_isolated_contact.log",
+      "elapsed_seconds": 0.0035993829369544983,
+      "target": "hypercurve",
+      "name": "bezier_offset::conversion_tests::point_incidence_checks_regular_frames_at_each_isolated_contact",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/recursive-point-incidence-20260928-v583-hypercurve-tests",
+        "--exact",
+        "bezier_offset::conversion_tests::algebraic_cusp_semicircle_point_incidence_selects_exactly_one_half",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "recursive-point-incidence-20260928-v583-algebraic_cusp_semicircle_point_incidence_selects_exactly_one_half.log",
+      "elapsed_seconds": 0.007612388115376234,
+      "target": "hypercurve",
+      "name": "bezier_offset::conversion_tests::algebraic_cusp_semicircle_point_incidence_selects_exactly_one_half",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/recursive-point-incidence-20260928-v583-hypercurve-tests",
+        "--exact",
+        "bezier_offset::conversion_tests::correlated_point_incidence_retains_exterior_contact_parameters",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "recursive-point-incidence-20260928-v583-correlated_point_incidence_retains_exterior_contact_parameters.log",
+      "elapsed_seconds": 0.015660566044971347,
+      "target": "hypercurve",
+      "name": "bezier_offset::conversion_tests::correlated_point_incidence_retains_exterior_contact_parameters",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/recursive-point-incidence-20260928-v583-hypercurve-tests",
+        "--exact",
+        "bezier_offset::conversion_tests::nonrepresented_center_transverse_chamfer_inverts_by_correlated_point",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "recursive-point-incidence-20260928-v583-nonrepresented_center_transverse_chamfer_inverts_by_correlated_point.log",
+      "elapsed_seconds": 0.06386532005853951,
+      "target": "hypercurve",
+      "name": "bezier_offset::conversion_tests::nonrepresented_center_transverse_chamfer_inverts_by_correlated_point",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/recursive-point-incidence-20260928-v583-hypercurve-tests",
+        "--exact",
+        "bezier_offset::conversion_tests::point_incidence_visits_a_collapsed_circle_as_a_complete_domain",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "recursive-point-incidence-20260928-v583-point_incidence_visits_a_collapsed_circle_as_a_complete_domain.log",
+      "elapsed_seconds": 0.01577468798495829,
+      "target": "hypercurve",
+      "name": "bezier_offset::conversion_tests::point_incidence_visits_a_collapsed_circle_as_a_complete_domain",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/recursive-point-incidence-20260928-v583-hypercurve-tests",
+        "--exact",
+        "bezier_offset::conversion_tests::represented_circle_retained_point_incidence_observes_requested_policy",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "recursive-point-incidence-20260928-v583-represented_circle_retained_point_incidence_observes_requested_policy.log",
+      "elapsed_seconds": 0.007578680058941245,
+      "target": "hypercurve",
+      "name": "bezier_offset::conversion_tests::represented_circle_retained_point_incidence_observes_requested_policy",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/recursive-point-incidence-20260928-v583-hypercurve-tests",
+        "--exact",
+        "bezier_offset::conversion_tests::retained_point_incidence_visits_all_preimages_and_can_stop_at_one",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "recursive-point-incidence-20260928-v583-retained_point_incidence_visits_all_preimages_and_can_stop_at_one.log",
+      "elapsed_seconds": 0.007619966985657811,
+      "target": "hypercurve",
+      "name": "bezier_offset::conversion_tests::retained_point_incidence_visits_all_preimages_and_can_stop_at_one",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/recursive-point-incidence-20260928-v583-hypercurve-tests",
+        "--exact",
+        "curve::curve_fillet::tests::joined_path_selects_and_replays_a_continuous_fillet_family",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "recursive-point-incidence-20260928-v583-joined_path_selects_and_replays_a_continuous_fillet_family.log",
+      "elapsed_seconds": 5.4709737580269575,
+      "target": "hypercurve",
+      "name": "curve::curve_fillet::tests::joined_path_selects_and_replays_a_continuous_fillet_family",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/recursive-point-incidence-20260928-v583-hypercurve-tests",
+        "--exact",
+        "curve::curve_fillet::tests::normalized_region_selects_and_reuses_a_continuous_fillet_family",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "recursive-point-incidence-20260928-v583-normalized_region_selects_and_reuses_a_continuous_fillet_family.log",
+      "elapsed_seconds": 0.11397326388396323,
+      "target": "hypercurve",
+      "name": "curve::curve_fillet::tests::normalized_region_selects_and_reuses_a_continuous_fillet_family",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/recursive-point-incidence-20260928-v583-hypercurve-tests",
+        "--exact",
+        "curve_region_boolean::certified_successor_tests::boundary_probe_reuses_endpoint_incidence_and_keeps_residual_contacts",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "recursive-point-incidence-20260928-v583-boundary_probe_reuses_endpoint_incidence_and_keeps_residual_contacts.log",
+      "elapsed_seconds": 0.015672645065933466,
+      "target": "hypercurve",
+      "name": "curve_region_boolean::certified_successor_tests::boundary_probe_reuses_endpoint_incidence_and_keeps_residual_contacts",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/recursive-point-incidence-20260928-v583-hypercurve-tests",
+        "--exact",
+        "bezier_offset::conversion_tests::correlated_point_membership_replays_exterior_rational_domains",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "recursive-point-incidence-20260928-v583-correlated_point_membership_replays_exterior_rational_domains.log",
+      "elapsed_seconds": 0.03169060708023608,
+      "target": "hypercurve",
+      "name": "bezier_offset::conversion_tests::correlated_point_membership_replays_exterior_rational_domains",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/recursive-point-incidence-20260928-v583-hypercurve-tests",
+        "--exact",
+        "bezier_offset::conversion_tests::retained_point_membership_preserves_domains_and_regular_barriers",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "recursive-point-incidence-20260928-v583-retained_point_membership_preserves_domains_and_regular_barriers.log",
+      "elapsed_seconds": 0.01562178903259337,
+      "target": "hypercurve",
+      "name": "bezier_offset::conversion_tests::retained_point_membership_preserves_domains_and_regular_barriers",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/recursive-point-incidence-20260928-v583-hypercurve-tests",
+        "--exact",
+        "curve::curve_fillet::stationary_continuous_family_regression::continuous_fillets_preserve_stationary_reparameterization",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "recursive-point-incidence-20260928-v583-continuous_fillets_preserve_stationary_reparameterization.log",
+      "elapsed_seconds": 33.80795867810957,
+      "target": "hypercurve",
+      "name": "curve::curve_fillet::stationary_continuous_family_regression::continuous_fillets_preserve_stationary_reparameterization",
+      "passed": true
+    }
+  ],
+  "checks": [],
+  "expected_cases": {
+    "hypercurve": [
+      "curve::curve_fillet::stationary_recursive_point_constraint_regression::stationary_fillet_family_accepts_independent_recursive_point_constraints",
+      "bezier_offset::regular_parallel_contact_tests::recursive_incidence_preserves_selected_point_fields",
+      "bezier_offset::regular_parallel_contact_tests::recursive_incidence_keeps_stationary_and_collapsed_semantics",
+      "bezier_offset::regular_parallel_contact_tests::recursive_incidence_preserves_exterior_domains_and_pole_barriers",
+      "bezier_parameter::finite_interval_import_regression::unit_import_keeps_its_domain_after_generic_interval_construction",
+      "bezier_offset::regular_parallel_contact_tests::primitive_source_frames_share_factorization_across_distances_and_branches",
+      "curve::curve_fillet::stationary_retained_point_constraint_regression::stationary_fillet_family_accepts_independent_retained_point_constraints",
+      "bezier_parameter::finite_field_bernstein_regression::finite_field_isolation_preserves_represented_contacts_near_domain_boundaries",
+      "bezier_parameter::finite_field_bernstein_regression::finite_field_isolation_reuses_original_polynomial_and_simple_root_proof",
+      "bezier_parameter::finite_field_bernstein_regression::finite_field_isolation_keeps_repeated_roots_and_closed_boundaries",
+      "curve::curve_fillet::stationary_family_composition_regression::normalized_region_selects_and_reuses_a_stationary_fillet_family",
+      "bezier_offset::conversion_tests::point_incidence_checks_regular_frames_at_each_isolated_contact",
+      "bezier_offset::conversion_tests::algebraic_cusp_semicircle_point_incidence_selects_exactly_one_half",
+      "bezier_offset::conversion_tests::correlated_point_incidence_retains_exterior_contact_parameters",
+      "bezier_offset::conversion_tests::nonrepresented_center_transverse_chamfer_inverts_by_correlated_point",
+      "bezier_offset::conversion_tests::point_incidence_visits_a_collapsed_circle_as_a_complete_domain",
+      "bezier_offset::conversion_tests::represented_circle_retained_point_incidence_observes_requested_policy",
+      "bezier_offset::conversion_tests::retained_point_incidence_visits_all_preimages_and_can_stop_at_one",
+      "curve::curve_fillet::tests::joined_path_selects_and_replays_a_continuous_fillet_family",
+      "curve::curve_fillet::tests::normalized_region_selects_and_reuses_a_continuous_fillet_family",
+      "curve_region_boolean::certified_successor_tests::boundary_probe_reuses_endpoint_incidence_and_keeps_residual_contacts",
+      "bezier_offset::conversion_tests::correlated_point_membership_replays_exterior_rational_domains",
+      "bezier_offset::conversion_tests::retained_point_membership_preserves_domains_and_regular_barriers",
+      "curve::curve_fillet::stationary_continuous_family_regression::continuous_fillets_preserve_stationary_reparameterization"
+    ]
+  },
+  "all_processes_reaped": true,
+  "probe_complete": true,
+  "qualification_complete": false,
+  "failure": "focused regression failure"
+}

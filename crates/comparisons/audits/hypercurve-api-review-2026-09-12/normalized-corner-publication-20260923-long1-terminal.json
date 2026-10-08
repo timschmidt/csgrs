@@ -1,0 +1,55 @@
+{
+  "cases": [
+    {
+      "name": "bezier_region::curve_corner_chain::tests::extended_fillet_region_classifies_both_sides_of_its_companion",
+      "returncode": 0,
+      "passed": true,
+      "limit_seconds": 300,
+      "elapsed_seconds": 262.87158384593204,
+      "log": "normalized-corner-publication-20260923-long1-case-0.log"
+    },
+    {
+      "name": "bezier_region::tests::nonlinear_algebraic_endpoint_fillet_uses_complete_incident_domain",
+      "returncode": "timeout",
+      "passed": false,
+      "limit_seconds": 300,
+      "elapsed_seconds": 300.0015389251057,
+      "log": "normalized-corner-publication-20260923-long1-case-1.log"
+    },
+    {
+      "name": "bezier_region::tests::nonrepresented_chord_and_selected_circle_complete_the_fillet_kernel",
+      "returncode": "timeout",
+      "passed": false,
+      "limit_seconds": 300,
+      "elapsed_seconds": 300.00328429904766,
+      "log": "normalized-corner-publication-20260923-long1-case-2.log"
+    },
+    {
+      "name": "bezier_region::tests::one_fragment_ph_loop_fillets_through_rational_self_contact",
+      "returncode": "timeout",
+      "passed": false,
+      "limit_seconds": 300,
+      "elapsed_seconds": 300.00448871206027,
+      "log": "normalized-corner-publication-20260923-long1-case-3.log"
+    },
+    {
+      "name": "bezier_region::tests::selected_circle_and_promoted_line_extend_through_the_chord_support_cell",
+      "returncode": "timeout",
+      "passed": false,
+      "limit_seconds": 300,
+      "elapsed_seconds": 300.02317286108155,
+      "log": "normalized-corner-publication-20260923-long1-case-4.log"
+    },
+    {
+      "name": "bezier_region::tests::selected_parallel_companion_fillets_without_range_promotion",
+      "returncode": "timeout",
+      "passed": false,
+      "limit_seconds": 300,
+      "elapsed_seconds": 300.00319472304545,
+      "log": "normalized-corner-publication-20260923-long1-case-5.log"
+    }
+  ],
+  "binary_sha256": "df98b5a79c151c3300ef5b4e941ba115b1036f12b100c3d8d37d272ff2de2b4e",
+  "all_sources_unchanged": true,
+  "all_processes_reaped": true
+}

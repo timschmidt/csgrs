@@ -1,0 +1,28 @@
+     Locking 22 packages to latest Rust 1.97.0 compatible versions
+    Blocking waiting for file lock on build directory
+   Compiling serde_core v1.0.229
+   Compiling hyperreal v0.13.1 (/home/tim/Documents/GitHub/workspace/hyperreal)
+   Compiling serde_json v1.0.151
+   Compiling hyperlattice v0.6.1 (/home/tim/Documents/GitHub/workspace/hyperlattice)
+   Compiling hyperlimit v0.4.1 (/home/tim/Documents/GitHub/workspace/hyperlimit)
+   Compiling audit-sign-filter-probe v0.0.0 (/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/sign-filter-probe)
+error[E0308]: mismatched types
+   --> src/main.rs:17:64
+    |
+ 17 |                 let t = Real::new(Rational::fraction(i as i64, (n-2) as i64).unwrap());
+    |                                   ------------------           ^^^^^^^^^^^^ expected `u64`, found `i64`
+    |                                   |
+    |                                   arguments to this function are incorrect
+    |
+note: associated function defined here
+   --> /home/tim/Documents/GitHub/workspace/hyperreal/src/rational/arithmetic/construction.rs:322:12
+    |
+322 |     pub fn fraction(n: i64, d: u64) -> Result<Self, Problem> {
+    |            ^^^^^^^^
+help: you can convert an `i64` to a `u64` and panic if the converted value doesn't fit
+    |
+ 17 |                 let t = Real::new(Rational::fraction(i as i64, ((n-2) as i64).try_into().unwrap()).unwrap());
+    |                                                                +            +++++++++++++++++++++
+
+For more information about this error, try `rustc --explain E0308`.
+error: could not compile `audit-sign-filter-probe` (bin "audit-sign-filter-probe") due to 1 previous error

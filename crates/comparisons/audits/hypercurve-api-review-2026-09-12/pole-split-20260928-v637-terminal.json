@@ -1,0 +1,515 @@
+{
+  "normal_production_build": true,
+  "source_manifest": "pole-split-20260928-v637-sources.json",
+  "source_directory": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/source-archives/pole-split-20260928-v637",
+  "builds": [
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "test",
+        "--lib",
+        "--test",
+        "hypercurve_bezier_split_materialization",
+        "--release",
+        "--all-features",
+        "--locked",
+        "--offline",
+        "--no-run",
+        "--message-format=json"
+      ],
+      "returncode": 0,
+      "log": "pole-split-20260928-v637-hypercurve-build.log",
+      "elapsed_seconds": 188.98633123398758,
+      "binaries": {
+        "hypercurve_bezier_split_materialization": {
+          "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/pole-split-20260928-v637-hypercurve_bezier_split_materialization-tests",
+          "sha256": "92de4ccfa24800d8b8e7f00bde5ec0339482534110a5b62d3b0fd660e80ddeec"
+        },
+        "hypercurve": {
+          "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/pole-split-20260928-v637-hypercurve-tests",
+          "sha256": "1c4da74ef0ec17856756e5752b983dbd051c66348c8c9767b06e842c686983de"
+        }
+      }
+    }
+  ],
+  "cases": [
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/pole-split-20260928-v637-hypercurve_bezier_split_materialization-tests",
+        "--exact",
+        "rational_algebraic_boundary_with_zero_denominator_returns_explicit_uncertainty",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "pole-split-20260928-v637-rational_algebraic_boundary_with_zero_denominator_returns_explicit_uncertainty-5a54167f53.log",
+      "elapsed_seconds": 0.0035086588468402624,
+      "target": "hypercurve_bezier_split_materialization",
+      "name": "rational_algebraic_boundary_with_zero_denominator_returns_explicit_uncertainty",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/pole-split-20260928-v637-hypercurve_bezier_split_materialization-tests",
+        "--exact",
+        "algebraic_boundary_carries_endpoint_images_without_approximate_materialization",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "pole-split-20260928-v637-algebraic_boundary_carries_endpoint_images_without_approximate_materialization-ea6704f7cc.log",
+      "elapsed_seconds": 0.003528288099914789,
+      "target": "hypercurve_bezier_split_materialization",
+      "name": "algebraic_boundary_carries_endpoint_images_without_approximate_materialization",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/pole-split-20260928-v637-hypercurve_bezier_split_materialization-tests",
+        "--exact",
+        "algebraic_endpoint_image_is_a_clone_shared_handle",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "pole-split-20260928-v637-algebraic_endpoint_image_is_a_clone_shared_handle-3b10f3c949.log",
+      "elapsed_seconds": 0.0014556210953742266,
+      "target": "hypercurve_bezier_split_materialization",
+      "name": "algebraic_endpoint_image_is_a_clone_shared_handle",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/pole-split-20260928-v637-hypercurve_bezier_split_materialization-tests",
+        "--exact",
+        "algebraic_fragment_reversal_retains_source_evidence_and_toggles_traversal",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "pole-split-20260928-v637-algebraic_fragment_reversal_retains_source_evidence_and_toggles_traversal-591d0c586b.log",
+      "elapsed_seconds": 0.003448203904554248,
+      "target": "hypercurve_bezier_split_materialization",
+      "name": "algebraic_fragment_reversal_retains_source_evidence_and_toggles_traversal",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/pole-split-20260928-v637-hypercurve_bezier_split_materialization-tests",
+        "--exact",
+        "broad_singleton_isolator_materializes_exact_endpoint_images",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "pole-split-20260928-v637-broad_singleton_isolator_materializes_exact_endpoint_images-9e64ca66bf.log",
+      "elapsed_seconds": 0.0034967900719493628,
+      "target": "hypercurve_bezier_split_materialization",
+      "name": "broad_singleton_isolator_materializes_exact_endpoint_images",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/pole-split-20260928-v637-hypercurve_bezier_split_materialization-tests",
+        "--exact",
+        "exact_cubic_subcurve_matches_original_endpoints_at_range_bounds",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "pole-split-20260928-v637-exact_cubic_subcurve_matches_original_endpoints_at_range_bounds-ceb4e7d873.log",
+      "elapsed_seconds": 0.003539757104590535,
+      "target": "hypercurve_bezier_split_materialization",
+      "name": "exact_cubic_subcurve_matches_original_endpoints_at_range_bounds",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/pole-split-20260928-v637-hypercurve_bezier_split_materialization-tests",
+        "--exact",
+        "exact_quadratic_split_endpoints_match_original",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "pole-split-20260928-v637-exact_quadratic_split_endpoints_match_original-5221b84df7.log",
+      "elapsed_seconds": 0.0034884409978985786,
+      "target": "hypercurve_bezier_split_materialization",
+      "name": "exact_quadratic_split_endpoints_match_original",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/pole-split-20260928-v637-hypercurve_bezier_split_materialization-tests",
+        "--exact",
+        "exact_quadratic_split_materializes_native_subcurves",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "pole-split-20260928-v637-exact_quadratic_split_materializes_native_subcurves-f9d6bcf589.log",
+      "elapsed_seconds": 0.0035090588498860598,
+      "target": "hypercurve_bezier_split_materialization",
+      "name": "exact_quadratic_split_materializes_native_subcurves",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/pole-split-20260928-v637-hypercurve_bezier_split_materialization-tests",
+        "--exact",
+        "exact_rational_quadratic_split_preserves_conic_endpoint_evaluation",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "pole-split-20260928-v637-exact_rational_quadratic_split_preserves_conic_endpoint_evaluation-397af8f5ef.log",
+      "elapsed_seconds": 0.0035842438228428364,
+      "target": "hypercurve_bezier_split_materialization",
+      "name": "exact_rational_quadratic_split_preserves_conic_endpoint_evaluation",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/pole-split-20260928-v637-hypercurve_bezier_split_materialization-tests",
+        "--exact",
+        "linear_algebraic_boundary_materializes_native_subcurves",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "pole-split-20260928-v637-linear_algebraic_boundary_materializes_native_subcurves-4ea6c9f79e.log",
+      "elapsed_seconds": 0.0035926438868045807,
+      "target": "hypercurve_bezier_split_materialization",
+      "name": "linear_algebraic_boundary_materializes_native_subcurves",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/pole-split-20260928-v637-hypercurve_bezier_split_materialization-tests",
+        "--exact",
+        "rational_algebraic_boundary_carries_conic_endpoint_images",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "pole-split-20260928-v637-rational_algebraic_boundary_carries_conic_endpoint_images-c05892c20f.log",
+      "elapsed_seconds": 0.003486740868538618,
+      "target": "hypercurve_bezier_split_materialization",
+      "name": "rational_algebraic_boundary_carries_conic_endpoint_images",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/pole-split-20260928-v637-hypercurve_bezier_split_materialization-tests",
+        "--exact",
+        "rational_algebraic_endpoint_retains_second_derivative_when_constructed",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "pole-split-20260928-v637-rational_algebraic_endpoint_retains_second_derivative_when_constructed-97e12fe981.log",
+      "elapsed_seconds": 0.0034850111696869135,
+      "target": "hypercurve_bezier_split_materialization",
+      "name": "rational_algebraic_endpoint_retains_second_derivative_when_constructed",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/pole-split-20260928-v637-hypercurve_bezier_split_materialization-tests",
+        "--exact",
+        "split_materialization_constructor_rejects_disconnected_materialized_fragments",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "pole-split-20260928-v637-split_materialization_constructor_rejects_disconnected_materialized_fragments-a846ca1b6a.log",
+      "elapsed_seconds": 0.0035112500190734863,
+      "target": "hypercurve_bezier_split_materialization",
+      "name": "split_materialization_constructor_rejects_disconnected_materialized_fragments",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/pole-split-20260928-v637-hypercurve_bezier_split_materialization-tests",
+        "--exact",
+        "split_materialization_constructor_rejects_duplicate_fragments",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "pole-split-20260928-v637-split_materialization_constructor_rejects_duplicate_fragments-9e3d7fcce6.log",
+      "elapsed_seconds": 0.0014615000691264868,
+      "target": "hypercurve_bezier_split_materialization",
+      "name": "split_materialization_constructor_rejects_duplicate_fragments",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/pole-split-20260928-v637-hypercurve_bezier_split_materialization-tests",
+        "--exact",
+        "split_materialization_constructor_rejects_forged_algebraic_endpoint_evidence",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "pole-split-20260928-v637-split_materialization_constructor_rejects_forged_algebraic_endpoint_evidence-dce212a534.log",
+      "elapsed_seconds": 0.003528288099914789,
+      "target": "hypercurve_bezier_split_materialization",
+      "name": "split_materialization_constructor_rejects_forged_algebraic_endpoint_evidence",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/pole-split-20260928-v637-hypercurve_bezier_split_materialization-tests",
+        "--exact",
+        "split_materialization_constructor_rejects_incomplete_source_coverage",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "pole-split-20260928-v637-split_materialization_constructor_rejects_incomplete_source_coverage-e66a04df3c.log",
+      "elapsed_seconds": 0.003510689130052924,
+      "target": "hypercurve_bezier_split_materialization",
+      "name": "split_materialization_constructor_rejects_incomplete_source_coverage",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/pole-split-20260928-v637-hypercurve_bezier_split_materialization-tests",
+        "--exact",
+        "split_materialization_constructor_rejects_materialized_algebraic_range",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "pole-split-20260928-v637-split_materialization_constructor_rejects_materialized_algebraic_range-b7c2d50011.log",
+      "elapsed_seconds": 0.0014293419662863016,
+      "target": "hypercurve_bezier_split_materialization",
+      "name": "split_materialization_constructor_rejects_materialized_algebraic_range",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/pole-split-20260928-v637-hypercurve_bezier_split_materialization-tests",
+        "--exact",
+        "split_materialization_constructor_rejects_noncontiguous_fragments",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "pole-split-20260928-v637-split_materialization_constructor_rejects_noncontiguous_fragments-6a1f16743a.log",
+      "elapsed_seconds": 0.001413032878190279,
+      "target": "hypercurve_bezier_split_materialization",
+      "name": "split_materialization_constructor_rejects_noncontiguous_fragments",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/pole-split-20260928-v637-hypercurve-tests",
+        "--exact",
+        "bezier_offset::conversion_tests::denominator_sign_excludes_a_pole_outside_selected_bounds",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "pole-split-20260928-v637-denominator_sign_excludes_a_pole_outside_selected_bounds-f65b346fea.log",
+      "elapsed_seconds": 0.007544711930677295,
+      "target": "hypercurve",
+      "name": "bezier_offset::conversion_tests::denominator_sign_excludes_a_pole_outside_selected_bounds",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/pole-split-20260928-v637-hypercurve-tests",
+        "--exact",
+        "bezier_offset::conversion_tests::exterior_rational_analytic_points_use_the_selected_denominator_sign",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "pole-split-20260928-v637-exterior_rational_analytic_points_use_the_selected_denominator_sign-3e1f1c64a2.log",
+      "elapsed_seconds": 0.003493370022624731,
+      "target": "hypercurve",
+      "name": "bezier_offset::conversion_tests::exterior_rational_analytic_points_use_the_selected_denominator_sign",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/pole-split-20260928-v637-hypercurve-tests",
+        "--exact",
+        "rational_bezier_general::tests::denominator_sign_tracks_the_requested_range_and_keeps_unit_cache_scope",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "pole-split-20260928-v637-denominator_sign_tracks_the_requested_range_and_keeps_unit_cache_scope-471ff418d2.log",
+      "elapsed_seconds": 0.0035381868947297335,
+      "target": "hypercurve",
+      "name": "rational_bezier_general::tests::denominator_sign_tracks_the_requested_range_and_keeps_unit_cache_scope",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/pole-split-20260928-v637-hypercurve-tests",
+        "--exact",
+        "rational_bezier_general::tests::affine_subcurve_materializes_a_finite_rational_parabola_extension",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "pole-split-20260928-v637-affine_subcurve_materializes_a_finite_rational_parabola_extension-ddba967f6e.log",
+      "elapsed_seconds": 0.0034943611826747656,
+      "target": "hypercurve",
+      "name": "rational_bezier_general::tests::affine_subcurve_materializes_a_finite_rational_parabola_extension",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/pole-split-20260928-v637-hypercurve-tests",
+        "--exact",
+        "rational_bezier_general::tests::affine_subcurve_rejects_a_crossed_projective_pole",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "pole-split-20260928-v637-affine_subcurve_rejects_a_crossed_projective_pole-4f7d3d77b1.log",
+      "elapsed_seconds": 0.0034754518419504166,
+      "target": "hypercurve",
+      "name": "rational_bezier_general::tests::affine_subcurve_rejects_a_crossed_projective_pole",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/pole-split-20260928-v637-hypercurve-tests",
+        "--exact",
+        "rational_bezier_general::tests::affine_subcurve_retains_zero_intermediate_weight_without_a_pole",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "pole-split-20260928-v637-affine_subcurve_retains_zero_intermediate_weight_without_a_pole-0cb1e47351.log",
+      "elapsed_seconds": 0.003510429058223963,
+      "target": "hypercurve",
+      "name": "rational_bezier_general::tests::affine_subcurve_retains_zero_intermediate_weight_without_a_pole",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/pole-split-20260928-v637-hypercurve-tests",
+        "--exact",
+        "bezier_offset::regular_parallel_contact_tests::regular_source_frames_reject_poles_in_every_parameter_authority",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "pole-split-20260928-v637-regular_source_frames_reject_poles_in_every_parameter_authority-26bfd7896f.log",
+      "elapsed_seconds": 0.003496970050036907,
+      "target": "hypercurve",
+      "name": "bezier_offset::regular_parallel_contact_tests::regular_source_frames_reject_poles_in_every_parameter_authority",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/pole-split-20260928-v637-hypercurve-tests",
+        "--exact",
+        "bezier_offset::conversion_tests::retained_incident_domains_admit_exterior_affine_endpoints",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "pole-split-20260928-v637-retained_incident_domains_admit_exterior_affine_endpoints-81b72b6d6b.log",
+      "elapsed_seconds": 0.007535182870924473,
+      "target": "hypercurve",
+      "name": "bezier_offset::conversion_tests::retained_incident_domains_admit_exterior_affine_endpoints",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/pole-split-20260928-v637-hypercurve-tests",
+        "--exact",
+        "bezier_parameter::conversion_tests::projective_images_preserve_exterior_singletons_across_unused_poles",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "pole-split-20260928-v637-projective_images_preserve_exterior_singletons_across_unused_poles-dd74fd5410.log",
+      "elapsed_seconds": 0.007568731205537915,
+      "target": "hypercurve",
+      "name": "bezier_parameter::conversion_tests::projective_images_preserve_exterior_singletons_across_unused_poles",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/pole-split-20260928-v637-hypercurve-tests",
+        "--exact",
+        "bezier_region::tests::retained_rational_chamfer_extends_exact_and_algebraic_pre_pole_roots",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "pole-split-20260928-v637-retained_rational_chamfer_extends_exact_and_algebraic_pre_pole_roots-c3017431dc.log",
+      "elapsed_seconds": 0.06368907308205962,
+      "target": "hypercurve",
+      "name": "bezier_region::tests::retained_rational_chamfer_extends_exact_and_algebraic_pre_pole_roots",
+      "passed": true
+    }
+  ],
+  "checks": [],
+  "test_listings": {
+    "hypercurve_bezier_split_materialization": {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/pole-split-20260928-v637-hypercurve_bezier_split_materialization-tests",
+        "--list"
+      ],
+      "returncode": 0,
+      "log": "pole-split-20260928-v637-hypercurve_bezier_split_materialization-test-list.log",
+      "elapsed_seconds": 0.003810908878222108
+    },
+    "hypercurve": {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/pole-split-20260928-v637-hypercurve-tests",
+        "--list"
+      ],
+      "returncode": 0,
+      "log": "pole-split-20260928-v637-hypercurve-test-list.log",
+      "elapsed_seconds": 0.00756300101056695
+    }
+  },
+  "expected_cases": {
+    "hypercurve_bezier_split_materialization": [
+      "algebraic_boundary_carries_endpoint_images_without_approximate_materialization",
+      "algebraic_endpoint_image_is_a_clone_shared_handle",
+      "algebraic_fragment_reversal_retains_source_evidence_and_toggles_traversal",
+      "broad_singleton_isolator_materializes_exact_endpoint_images",
+      "exact_cubic_subcurve_matches_original_endpoints_at_range_bounds",
+      "exact_quadratic_split_endpoints_match_original",
+      "exact_quadratic_split_materializes_native_subcurves",
+      "exact_rational_quadratic_split_preserves_conic_endpoint_evaluation",
+      "linear_algebraic_boundary_materializes_native_subcurves",
+      "rational_algebraic_boundary_carries_conic_endpoint_images",
+      "rational_algebraic_boundary_with_zero_denominator_returns_explicit_uncertainty",
+      "rational_algebraic_endpoint_retains_second_derivative_when_constructed",
+      "split_materialization_constructor_rejects_disconnected_materialized_fragments",
+      "split_materialization_constructor_rejects_duplicate_fragments",
+      "split_materialization_constructor_rejects_forged_algebraic_endpoint_evidence",
+      "split_materialization_constructor_rejects_incomplete_source_coverage",
+      "split_materialization_constructor_rejects_materialized_algebraic_range",
+      "split_materialization_constructor_rejects_noncontiguous_fragments"
+    ],
+    "hypercurve": [
+      "bezier_offset::conversion_tests::denominator_sign_excludes_a_pole_outside_selected_bounds",
+      "bezier_offset::conversion_tests::exterior_rational_analytic_points_use_the_selected_denominator_sign",
+      "rational_bezier_general::tests::denominator_sign_tracks_the_requested_range_and_keeps_unit_cache_scope",
+      "rational_bezier_general::tests::affine_subcurve_materializes_a_finite_rational_parabola_extension",
+      "rational_bezier_general::tests::affine_subcurve_rejects_a_crossed_projective_pole",
+      "rational_bezier_general::tests::affine_subcurve_retains_zero_intermediate_weight_without_a_pole",
+      "bezier_offset::regular_parallel_contact_tests::regular_source_frames_reject_poles_in_every_parameter_authority",
+      "bezier_offset::conversion_tests::retained_incident_domains_admit_exterior_affine_endpoints",
+      "bezier_parameter::conversion_tests::projective_images_preserve_exterior_singletons_across_unused_poles",
+      "bezier_region::tests::retained_rational_chamfer_extends_exact_and_algebraic_pre_pole_roots"
+    ]
+  },
+  "all_processes_reaped": true,
+  "probe_complete": true,
+  "qualification_complete": false
+}

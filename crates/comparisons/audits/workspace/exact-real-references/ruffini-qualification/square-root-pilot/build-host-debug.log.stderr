@@ -1,0 +1,4 @@
+   Compiling num-traits v0.2.19
+error: failed to write /tmp/hyper-square-root-audit.hob6KqKx/target/debug/build/num-traits-6b40fcb5d560d753/rustcHcqomX/symbols.o: Disk quota exceeded (os error 122)
+
+error: could not compile `num-traits` (build script) due to 1 previous error

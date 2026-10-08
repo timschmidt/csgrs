@@ -1,0 +1,44 @@
+\doxysubsection{Transition\+Data Struct Reference}
+\hypertarget{structAriadne_1_1TransitionData}{}\label{structAriadne_1_1TransitionData}\index{TransitionData@{TransitionData}}
+
+
+{\ttfamily \#include $<$hybrid\+\_\+evolver.\+hpp$>$}
+
+
+
+\doxysubsubsection{Description}
+A data type used to store information about a transition of a hybrid system. \doxysubsubsubsection*{Public Attributes}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{structAriadne_1_1TransitionData_ae0389491957e643b4215449503a15327}\label{structAriadne_1_1TransitionData_ae0389491957e643b4215449503a15327} 
+\mbox{\hyperlink{classAriadne_1_1DiscreteEvent}{Discrete\+Event}} {\bfseries event}
+\begin{DoxyCompactList}\small\item\em The event label. \end{DoxyCompactList}\item 
+\Hypertarget{structAriadne_1_1TransitionData_adfb2faf70fed2914ee7d71bd5e1d8cfe}\label{structAriadne_1_1TransitionData_adfb2faf70fed2914ee7d71bd5e1d8cfe} 
+Event\+Kind {\bfseries event\+\_\+kind}
+\begin{DoxyCompactList}\small\item\em The kind of event (invariant, urgent, etc) determining what happens when the event is active. \end{DoxyCompactList}\item 
+\Hypertarget{structAriadne_1_1TransitionData_a860c6a9a295a4379569f0e8e4bce1226}\label{structAriadne_1_1TransitionData_a860c6a9a295a4379569f0e8e4bce1226} 
+Effective\+Scalar\+Multivariate\+Function {\bfseries guard\+\_\+function}
+\begin{DoxyCompactList}\small\item\em The guard function of the event, the event being active when $g(x)\geq0$. \end{DoxyCompactList}\item 
+\Hypertarget{structAriadne_1_1TransitionData_ab1fb89681bc739662bc4baf5c03372b2}\label{structAriadne_1_1TransitionData_ab1fb89681bc739662bc4baf5c03372b2} 
+Effective\+Scalar\+Multivariate\+Function {\bfseries guard\+\_\+flow\+\_\+derivative\+\_\+function}
+\begin{DoxyCompactList}\small\item\em The Lie derivative of the guard function along the flow. \end{DoxyCompactList}\item 
+\Hypertarget{structAriadne_1_1TransitionData_a106c486e7f0c4a01841082edcfa670d6}\label{structAriadne_1_1TransitionData_a106c486e7f0c4a01841082edcfa670d6} 
+\mbox{\hyperlink{classAriadne_1_1DiscreteLocation}{Discrete\+Location}} {\bfseries target}
+\begin{DoxyCompactList}\small\item\em The target location of the transition. \end{DoxyCompactList}\item 
+\Hypertarget{structAriadne_1_1TransitionData_ad67cd44badd76622a1a1bc1c17ee9bf9}\label{structAriadne_1_1TransitionData_ad67cd44badd76622a1a1bc1c17ee9bf9} 
+Effective\+Vector\+Multivariate\+Function {\bfseries reset\+\_\+function}
+\begin{DoxyCompactList}\small\item\em The reset function $x\textnormal{\textquotesingle}=r(x)$ of the transition. \end{DoxyCompactList}\item 
+\Hypertarget{structAriadne_1_1TransitionData_a91da2972647fcb318be22f8cb0c3d3bf}\label{structAriadne_1_1TransitionData_a91da2972647fcb318be22f8cb0c3d3bf} 
+\mbox{\hyperlink{classAriadne_1_1Space}{Real\+Space}} {\bfseries target\+\_\+space}
+\begin{DoxyCompactList}\small\item\em The state space in the target location. \end{DoxyCompactList}\item 
+\Hypertarget{structAriadne_1_1TransitionData_a8152cb335767d510297b22e3a1227cf2}\label{structAriadne_1_1TransitionData_a8152cb335767d510297b22e3a1227cf2} 
+Effective\+Vector\+Multivariate\+Function {\bfseries target\+\_\+auxiliary\+\_\+function}
+\begin{DoxyCompactList}\small\item\em The auxliary mapping in the target location. \end{DoxyCompactList}\item 
+\Hypertarget{structAriadne_1_1TransitionData_a8b9fdddb6d00ce5abea5c718bfce9359}\label{structAriadne_1_1TransitionData_a8b9fdddb6d00ce5abea5c718bfce9359} 
+\mbox{\hyperlink{classAriadne_1_1Space}{Real\+Space}} {\bfseries target\+\_\+auxiliary\+\_\+space}
+\begin{DoxyCompactList}\small\item\em The auxliary space in the target location. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+The documentation for this struct was generated from the following file\+:\begin{DoxyCompactItemize}
+\item 
+source/hybrid/\mbox{\hyperlink{hybrid__evolver_8hpp}{hybrid\+\_\+evolver.\+hpp}}\end{DoxyCompactItemize}

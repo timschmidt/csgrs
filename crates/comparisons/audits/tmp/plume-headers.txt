@@ -1,0 +1,11 @@
+HTTP/1.1 200 OK
+Date: Sun, 06 Sep 2026 03:48:20 GMT
+Server: Apache
+X-Frame-Options: SAMEORIGIN
+Vary: User-Agent,Accept-Encoding
+Last-Modified: Thu, 11 May 2000 10:14:34 GMT
+ETag: "4ce4-36755164a9680"
+Accept-Ranges: bytes
+Content-Length: 19684
+Content-Type: text/html; charset=UTF-8
+

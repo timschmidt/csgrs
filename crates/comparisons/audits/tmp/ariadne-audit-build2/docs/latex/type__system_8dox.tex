@@ -1,0 +1,71 @@
+\doxysubsection{doc/type\+\_\+system.dox File Reference}
+\hypertarget{type__system_8dox}{}\label{type__system_8dox}\index{doc/type\_system.dox@{doc/type\_system.dox}}
+
+
+\doxysubsubsection{Description}
+Overview of Ariadne\textquotesingle{}s type system. 
+
+\doxysubsubsubsection*{Classes}
+\begin{DoxyCompactItemize}
+\item 
+class \mbox{\hyperlink{classAriadne_1_1Concepts_1_1Traits}{Traits$<$ T $>$}}
+\begin{DoxyCompactList}\small\item\em Associated types for an object. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1Concepts_1_1Effort}{Effort}}
+\begin{DoxyCompactList}\small\item\em The amount of work suggested in computing a \doxylink{classAriadne_1_1Concepts_1_1Validated}{Validated} object from an \doxylink{classAriadne_1_1Concepts_1_1Effective}{Effective} one. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1Concepts_1_1Abstract}{Abstract$<$ T $>$}}
+\begin{DoxyCompactList}\small\item\em An abstract version of T. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1Concepts_1_1Effective}{Effective$<$ T $>$}}
+\begin{DoxyCompactList}\small\item\em The effective version of T. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1Concepts_1_1Validated}{Validated$<$ T $>$}}
+\begin{DoxyCompactList}\small\item\em The validated version of T. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1Concepts_1_1Symbolic}{Symbolic}}
+\begin{DoxyCompactList}\small\item\em Symbolic information \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1Concepts_1_1Elementary}{Elementary}}
+\begin{DoxyCompactList}\small\item\em Defined in terms of elementary operations. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1Numeric_1_1Dyadic}{Dyadic}}
+\begin{DoxyCompactList}\small\item\em A dyadic number. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1Concepts_1_1Validated_3_01Real_01_4}{Validated$<$ Real $>$}}
+\begin{DoxyCompactList}\small\item\em A validated real number. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1Concepts_1_1GenericConcept}{Generic\+Concept}}
+\begin{DoxyCompactList}\small\item\em The generic concept. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1Concepts_1_1ConcreteConcept}{Concrete\+Concept}}
+\begin{DoxyCompactList}\small\item\em The concrete concept. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1Concepts_1_1FunctionConcept_3_01R_07AS_8_8_8_08_4}{Function\+Concept$<$ R(\+AS...)$>$}}
+\begin{DoxyCompactList}\small\item\em A function taking arguments {\itshape AS}... and returning a result of type {\itshape R}. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1Concepts_1_1VectorAlgebra}{Vector\+Algebra$<$ A $>$}}
+\begin{DoxyCompactList}\small\item\em A vector whose scalar components are an algebra over some number type. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsubsection*{Namespaces}
+\begin{DoxyCompactItemize}
+\item 
+namespace \mbox{\hyperlink{namespaceAriadne}{Ariadne}}
+\begin{DoxyCompactList}\small\item\em Top-\/level Ariadne namespace. \end{DoxyCompactList}\item 
+namespace \mbox{\hyperlink{namespaceAriadne_1_1Concepts}{Ariadne\+::\+Concepts}}
+\begin{DoxyCompactList}\small\item\em Namespace for concepts. \end{DoxyCompactList}\item 
+namespace \mbox{\hyperlink{namespaceAriadne_1_1Numeric}{Ariadne\+::\+Numeric}}
+\begin{DoxyCompactList}\small\item\em Namespace for numbers. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsubsection*{Typedefs}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{namespaceAriadne_1_1Concepts_a6af75924672fc0f6ed1b6e87185dbed3}\label{namespaceAriadne_1_1Concepts_a6af75924672fc0f6ed1b6e87185dbed3} 
+{\footnotesize template$<$class T$>$ }\\using {\bfseries Completion\+Type} = typename \mbox{\hyperlink{classAriadne_1_1Concepts_1_1Traits}{Traits}}$<$T$>$\+::\+Completion\+Type
+\begin{DoxyCompactList}\small\item\em The type of the completion of an object. \end{DoxyCompactList}\item 
+\Hypertarget{namespaceAriadne_1_1Concepts_ab0e219279e6150966915e0c9bc4cd067}\label{namespaceAriadne_1_1Concepts_ab0e219279e6150966915e0c9bc4cd067} 
+{\footnotesize template$<$class T$>$ }\\using {\bfseries Generic\+Type} = typename \mbox{\hyperlink{classAriadne_1_1Concepts_1_1Traits}{Traits}}$<$T$>$\+::\+Generic\+Type
+\begin{DoxyCompactList}\small\item\em The generic type of an object. \end{DoxyCompactList}\item 
+\Hypertarget{namespaceAriadne_1_1Concepts_a40d0fa2d6085c3aa7314aff0d295c25f}\label{namespaceAriadne_1_1Concepts_a40d0fa2d6085c3aa7314aff0d295c25f} 
+{\footnotesize template$<$class T$>$ }\\using {\bfseries Properties\+Type} = typename \mbox{\hyperlink{classAriadne_1_1Concepts_1_1Traits}{Traits}}$<$T$>$\+::\+Properties\+Type
+\begin{DoxyCompactList}\small\item\em The properties type of an object. \end{DoxyCompactList}\item 
+\Hypertarget{namespaceAriadne_1_1Concepts_aae0f5dd66d75876c86726082390ec301}\label{namespaceAriadne_1_1Concepts_aae0f5dd66d75876c86726082390ec301} 
+{\footnotesize template$<$class T$>$ }\\using {\bfseries Classical\+Type} = typename \mbox{\hyperlink{classAriadne_1_1Concepts_1_1Traits}{Traits}}$<$T$>$\+::\+Classical\+Type
+\begin{DoxyCompactList}\small\item\em The mathematical type of an object. \end{DoxyCompactList}\item 
+\Hypertarget{namespaceAriadne_1_1Numeric_ab0e8de419e55b58a1f7cc1f4a129f34a}\label{namespaceAriadne_1_1Numeric_ab0e8de419e55b58a1f7cc1f4a129f34a} 
+typedef \mbox{\hyperlink{namespaceAriadne_1_1Concepts_ab0e219279e6150966915e0c9bc4cd067}{Generic\+Type}}$<$ \mbox{\hyperlink{classAriadne_1_1Numeric_1_1Dyadic}{Dyadic}} $>$ {\bfseries Exact\+Number}
+\begin{DoxyCompactList}\small\item\em The type of \doxylink{classAriadne_1_1Numeric_1_1Dyadic}{Dyadic}. \end{DoxyCompactList}\item 
+\Hypertarget{namespaceAriadne_1_1Numeric_ae50b9b3abc4cf0f171da2652a2c5b8e1}\label{namespaceAriadne_1_1Numeric_ae50b9b3abc4cf0f171da2652a2c5b8e1} 
+typedef \mbox{\hyperlink{classAriadne_1_1Numeric_1_1Bounds}{Bounds}}$<$ \mbox{\hyperlink{classAriadne_1_1Numeric_1_1Dyadic}{Dyadic}} $>$ {\bfseries Dyadic\+Bounds}
+\begin{DoxyCompactList}\small\item\em Bounds on a dyadic number \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsubsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+{\footnotesize template$<$class T$>$ }\\\mbox{\hyperlink{classAriadne_1_1Concepts_1_1Validated}{Validated}}$<$ T $>$ \mbox{\hyperlink{namespaceAriadne_1_1Concepts_ab75902ce140ddb1b7f194ef5d25dd259}{compute}} (\mbox{\hyperlink{classAriadne_1_1Concepts_1_1Effective}{Effective}}$<$ T $>$, \mbox{\hyperlink{classAriadne_1_1Concepts_1_1Effort}{Effort}})
+\begin{DoxyCompactList}\small\item\em Compute an approximation to a certain amount of information. \end{DoxyCompactList}\end{DoxyCompactItemize}

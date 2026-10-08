@@ -1,0 +1,263 @@
+[
+  {
+    "mode": "jit",
+    "test": "corpus",
+    "args": [
+      "-Xmx256m",
+      "-Xss512k",
+      "-ea",
+      "-cp",
+      "/home/tim/Documents/GitHub/workspace/.audit-ruffini-build.LmZgYM/classes:/home/tim/Documents/GitHub/workspace/.audit-ruffini-build.LmZgYM/deps/*",
+      "RuffiniBoundary",
+      "corpus",
+      "/home/tim/Documents/GitHub/workspace/exact-real-references/ruffini-qualification/rational-corpus.tsv"
+    ],
+    "status": 0,
+    "signal": null,
+    "error": null,
+    "elapsedMs": 145.79630500000002,
+    "stdoutSha256": "c5140bdab3202c18c896be5de1733debdaf7653d2eb61a66ca672f1f1ddc6c16"
+  },
+  {
+    "mode": "jit",
+    "test": "signed-search",
+    "args": [
+      "-Xmx256m",
+      "-Xss512k",
+      "-ea",
+      "-cp",
+      "/home/tim/Documents/GitHub/workspace/.audit-ruffini-build.LmZgYM/classes:/home/tim/Documents/GitHub/workspace/.audit-ruffini-build.LmZgYM/deps/*",
+      "RuffiniBoundary",
+      "signed-search"
+    ],
+    "status": 0,
+    "signal": null,
+    "error": null,
+    "elapsedMs": 41.004749000000004,
+    "stdoutSha256": "f5bdb1e55d63216685677c6ffc3327e18956d03356603665d4c14a758b5ce11b"
+  },
+  {
+    "mode": "jit",
+    "test": "integer-boundaries",
+    "args": [
+      "-Xmx256m",
+      "-Xss512k",
+      "-ea",
+      "-cp",
+      "/home/tim/Documents/GitHub/workspace/.audit-ruffini-build.LmZgYM/classes:/home/tim/Documents/GitHub/workspace/.audit-ruffini-build.LmZgYM/deps/*",
+      "RuffiniBoundary",
+      "integer-boundaries"
+    ],
+    "status": 0,
+    "signal": null,
+    "error": null,
+    "elapsedMs": 46.675009999999986,
+    "stdoutSha256": "cba93edb3076fc820115bc75f90f16b480287043b6968eb5ac966a4aabd120d4"
+  },
+  {
+    "mode": "jit",
+    "test": "equality",
+    "args": [
+      "-Xmx256m",
+      "-Xss512k",
+      "-ea",
+      "-cp",
+      "/home/tim/Documents/GitHub/workspace/.audit-ruffini-build.LmZgYM/classes:/home/tim/Documents/GitHub/workspace/.audit-ruffini-build.LmZgYM/deps/*",
+      "RuffiniBoundary",
+      "equality"
+    ],
+    "status": 0,
+    "signal": null,
+    "error": null,
+    "elapsedMs": 43.16872999999998,
+    "stdoutSha256": "133991265dbfa0bb450efe13eb8b6d66873d9100c23014ac1cafa510584b1d3b"
+  },
+  {
+    "mode": "jit",
+    "test": "format",
+    "args": [
+      "-Xmx256m",
+      "-Xss512k",
+      "-ea",
+      "-cp",
+      "/home/tim/Documents/GitHub/workspace/.audit-ruffini-build.LmZgYM/classes:/home/tim/Documents/GitHub/workspace/.audit-ruffini-build.LmZgYM/deps/*",
+      "RuffiniBoundary",
+      "format"
+    ],
+    "status": 0,
+    "signal": null,
+    "error": null,
+    "elapsedMs": 57.74069099999997,
+    "stdoutSha256": "ad493c55519c315173a20dbd303366ccb9a35f350cec2fae1b4e02f86a5a2cc2"
+  },
+  {
+    "mode": "jit",
+    "test": "cache",
+    "args": [
+      "-Xmx256m",
+      "-Xss512k",
+      "-ea",
+      "-cp",
+      "/home/tim/Documents/GitHub/workspace/.audit-ruffini-build.LmZgYM/classes:/home/tim/Documents/GitHub/workspace/.audit-ruffini-build.LmZgYM/deps/*",
+      "RuffiniBoundary",
+      "cache"
+    ],
+    "status": 0,
+    "signal": null,
+    "error": null,
+    "elapsedMs": 53.117728,
+    "stdoutSha256": "b97d2e8b1701c04abc4c2bf12e96b755cf907f6a0a8ec25edc10594374d87bc8"
+  },
+  {
+    "mode": "jit",
+    "test": "negative-reciprocal",
+    "args": [
+      "-Xmx256m",
+      "-Xss512k",
+      "-ea",
+      "-cp",
+      "/home/tim/Documents/GitHub/workspace/.audit-ruffini-build.LmZgYM/classes:/home/tim/Documents/GitHub/workspace/.audit-ruffini-build.LmZgYM/deps/*",
+      "RuffiniBoundary",
+      "negative-reciprocal"
+    ],
+    "status": null,
+    "signal": "SIGKILL",
+    "error": "ETIMEDOUT",
+    "elapsedMs": 2023.074697,
+    "stdoutSha256": "22d995d03e264a32e54139197336456b2eba76540f929e3948f3981594d71db9"
+  },
+  {
+    "mode": "interpreter",
+    "test": "corpus",
+    "args": [
+      "-Xmx256m",
+      "-Xss512k",
+      "-ea",
+      "-Xint",
+      "-cp",
+      "/home/tim/Documents/GitHub/workspace/.audit-ruffini-build.LmZgYM/classes:/home/tim/Documents/GitHub/workspace/.audit-ruffini-build.LmZgYM/deps/*",
+      "RuffiniBoundary",
+      "corpus",
+      "/home/tim/Documents/GitHub/workspace/exact-real-references/ruffini-qualification/rational-corpus.tsv"
+    ],
+    "status": 0,
+    "signal": null,
+    "error": null,
+    "elapsedMs": 368.98701200000005,
+    "stdoutSha256": "c5140bdab3202c18c896be5de1733debdaf7653d2eb61a66ca672f1f1ddc6c16"
+  },
+  {
+    "mode": "interpreter",
+    "test": "signed-search",
+    "args": [
+      "-Xmx256m",
+      "-Xss512k",
+      "-ea",
+      "-Xint",
+      "-cp",
+      "/home/tim/Documents/GitHub/workspace/.audit-ruffini-build.LmZgYM/classes:/home/tim/Documents/GitHub/workspace/.audit-ruffini-build.LmZgYM/deps/*",
+      "RuffiniBoundary",
+      "signed-search"
+    ],
+    "status": 0,
+    "signal": null,
+    "error": null,
+    "elapsedMs": 41.04925500000036,
+    "stdoutSha256": "f5bdb1e55d63216685677c6ffc3327e18956d03356603665d4c14a758b5ce11b"
+  },
+  {
+    "mode": "interpreter",
+    "test": "integer-boundaries",
+    "args": [
+      "-Xmx256m",
+      "-Xss512k",
+      "-ea",
+      "-Xint",
+      "-cp",
+      "/home/tim/Documents/GitHub/workspace/.audit-ruffini-build.LmZgYM/classes:/home/tim/Documents/GitHub/workspace/.audit-ruffini-build.LmZgYM/deps/*",
+      "RuffiniBoundary",
+      "integer-boundaries"
+    ],
+    "status": 0,
+    "signal": null,
+    "error": null,
+    "elapsedMs": 74.0022570000001,
+    "stdoutSha256": "cba93edb3076fc820115bc75f90f16b480287043b6968eb5ac966a4aabd120d4"
+  },
+  {
+    "mode": "interpreter",
+    "test": "equality",
+    "args": [
+      "-Xmx256m",
+      "-Xss512k",
+      "-ea",
+      "-Xint",
+      "-cp",
+      "/home/tim/Documents/GitHub/workspace/.audit-ruffini-build.LmZgYM/classes:/home/tim/Documents/GitHub/workspace/.audit-ruffini-build.LmZgYM/deps/*",
+      "RuffiniBoundary",
+      "equality"
+    ],
+    "status": 0,
+    "signal": null,
+    "error": null,
+    "elapsedMs": 50.811045999999806,
+    "stdoutSha256": "133991265dbfa0bb450efe13eb8b6d66873d9100c23014ac1cafa510584b1d3b"
+  },
+  {
+    "mode": "interpreter",
+    "test": "format",
+    "args": [
+      "-Xmx256m",
+      "-Xss512k",
+      "-ea",
+      "-Xint",
+      "-cp",
+      "/home/tim/Documents/GitHub/workspace/.audit-ruffini-build.LmZgYM/classes:/home/tim/Documents/GitHub/workspace/.audit-ruffini-build.LmZgYM/deps/*",
+      "RuffiniBoundary",
+      "format"
+    ],
+    "status": 0,
+    "signal": null,
+    "error": null,
+    "elapsedMs": 95.5024529999996,
+    "stdoutSha256": "ad493c55519c315173a20dbd303366ccb9a35f350cec2fae1b4e02f86a5a2cc2"
+  },
+  {
+    "mode": "interpreter",
+    "test": "cache",
+    "args": [
+      "-Xmx256m",
+      "-Xss512k",
+      "-ea",
+      "-Xint",
+      "-cp",
+      "/home/tim/Documents/GitHub/workspace/.audit-ruffini-build.LmZgYM/classes:/home/tim/Documents/GitHub/workspace/.audit-ruffini-build.LmZgYM/deps/*",
+      "RuffiniBoundary",
+      "cache"
+    ],
+    "status": 0,
+    "signal": null,
+    "error": null,
+    "elapsedMs": 56.879961000000094,
+    "stdoutSha256": "b97d2e8b1701c04abc4c2bf12e96b755cf907f6a0a8ec25edc10594374d87bc8"
+  },
+  {
+    "mode": "interpreter",
+    "test": "negative-reciprocal",
+    "args": [
+      "-Xmx256m",
+      "-Xss512k",
+      "-ea",
+      "-Xint",
+      "-cp",
+      "/home/tim/Documents/GitHub/workspace/.audit-ruffini-build.LmZgYM/classes:/home/tim/Documents/GitHub/workspace/.audit-ruffini-build.LmZgYM/deps/*",
+      "RuffiniBoundary",
+      "negative-reciprocal"
+    ],
+    "status": null,
+    "signal": "SIGKILL",
+    "error": "ETIMEDOUT",
+    "elapsedMs": 2021.8320319999998,
+    "stdoutSha256": "22d995d03e264a32e54139197336456b2eba76540f929e3948f3981594d71db9"
+  }
+]

@@ -1,0 +1,92 @@
+Name:           aern-mpfr-rounded
+Version:        0.5.0
+Cabal-Version:  >= 1.8
+Build-Type:     Simple
+License:        BSD3
+License-File:   LICENCE
+Author:         Michal Konecny
+Copyright:      (c) 2015 Michal Konecny
+Maintainer:     mikkonecny@gmail.com
+Homepage:       http://code.google.com/p/aern/
+Stability:      experimental
+Category:       Data, Math
+Synopsis:       arbitrary precision real interval arithmetic
+Tested-with:
+                GHC==7.8.3
+Description:
+    This package provides bindings and tests for using arbitrary precision floating-point numbers 
+    provided by the library MPFR (via the Haskell library hmpfr)
+    as endpoints for the /interval arithmetic/ defined in the package 
+    aern-interval, which implements the real number approximation abstractions
+    provided by packages aern-order and aern-real.
+    .
+    Most users of this package will only need to import one end-user API module.
+    At present one such module is available:
+    .
+    * "Numeric.AERN.MPFRBasis.Interval" gives full access to the interval type,
+      including its MPFR endpoints.
+
+Library
+  hs-source-dirs: src
+  Build-Depends:
+        base >= 4.4,
+        QuickCheck >= 2.4,
+        rounded >= 0.1,
+        aern-order == 0.5.*,
+        aern-real == 0.5.*,
+        aern-interval == 0.5.*
+  Exposed-modules:
+                  Numeric.AERN.MPFRBasis.Interval,
+                  Numeric.AERN.RealArithmetic.Basis.MPFR,
+                  Numeric.AERN.RealArithmetic.Interval.MPFR
+
+  Other-modules:
+    Numeric.AERN.RealArithmetic.Basis.MPFR.Conversion,
+    Numeric.AERN.RealArithmetic.Basis.MPFR.Elementary,
+    Numeric.AERN.RealArithmetic.Basis.MPFR.ExactOps,
+    Numeric.AERN.RealArithmetic.Basis.MPFR.FieldOps,
+    Numeric.AERN.RealArithmetic.Basis.MPFR.Measures,
+    Numeric.AERN.RealArithmetic.Basis.MPFR.MixedFieldOps,
+    Numeric.AERN.RealArithmetic.Basis.MPFR.NumericOrder,
+    Numeric.AERN.RealArithmetic.Basis.MPFR.ShowInternals,
+    Numeric.AERN.RealArithmetic.Basis.MPFR.SpecialConst,
+    Numeric.AERN.RealArithmetic.Basis.MPFR.Utilities,
+    Numeric.AERN.RealArithmetic.Basis.MPFR.Basics
+
+Executable testAERN-mpfr-rounded
+  hs-source-dirs: src, tests
+  main-is: Main.hs
+  Build-Depends:
+        base >= 4.4,
+        QuickCheck >= 2.4,
+        test-framework >= 0.3.3, 
+        test-framework-quickcheck2 >= 0.2,
+        rounded >= 0.1,
+        aern-order == 0.5.*,
+        aern-real == 0.5.*,
+        aern-interval == 0.5.*
+
+Executable demoAERN-mpfr-rounded-Minimal
+  hs-source-dirs: src, demos
+  main-is: Minimal.hs
+  Build-Depends:
+        base >= 4.4,
+        QuickCheck >= 2.4,
+        rounded >= 0.1,
+        aern-order == 0.5.*,
+        aern-real == 0.5.*,
+        aern-interval == 0.5.*
+
+Executable demoAERN-mpfr-rounded-LogisticMap
+  hs-source-dirs: src, demos
+  main-is: LogisticMap.hs
+  Build-Depends:
+        base >= 4.4,
+        QuickCheck >= 2.4,
+        rounded >= 0.1,
+        aern-order == 0.5.*,
+        aern-real == 0.5.*,
+        aern-interval == 0.5.*
+
+      
+    

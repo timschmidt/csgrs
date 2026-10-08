@@ -1,0 +1,25 @@
+# Selected-field scalar normalization, V893
+
+Committed Hypercurve 68e72280b1200871d0f539d90bdb3d1450958b99 and Hypersolve 0befc6a22ee866cd0364cd8aac7127f703bce453.
+
+Hypersolve exposes one owned finite field value and a scoped arithmetic context over its existing LocalFieldElement/LocalAlgebraicField. The value owns shared immutable numerator/denominator coefficients, original selected-root identity, and a retained refined root presentation. A missing denominator means one; denominators are proved nonzero strictly before zero-numerator shortcuts. Foreign values must prove selected-root equality unless already independent exact Real constants. Public construction replays the existing root payload contract; upstream singleton isolation remains the uniqueness authority. No second polynomial arithmetic implementation was introduced.
+
+The context contains temporary inverse/sign caches. Values contain no context, history, or recursive scalar expression. Finishing retains the latest selected-root certificate, drops the caches, and reduces older values after foreign modulus factors have been removed. Operations also normalize imported coefficients that exceed the current modulus degree. Values cloned from earlier batches remain unchanged. This controls representation degree and retained history; it is not a bound on intrinsic coefficient bit growth or a measured speedup.
+
+Hypercurve scalar evidence now has one private exact definition: a represented root, an owned selected-field value, or retained bilinear vector operands. The public optional scalar field was removed; explicit borrowed represented_scalar/selected_scalar views replace it. Callers migrated directly. Source bilinear sign decisions remain lazy. Scalar normalization enters a strict field context only when needed, and no independent coordinate projection is required. Exact constant root payloads replay strictly before entering source arithmetic.
+
+The unchanged normalization formulas are:
+
+- Curvature: compare cross(v,a)^2 / S^3 after side signs are known, S=v dot v>0.
+- Third order after certified zero curvature: compare cross(v,j)^2 / S^4.
+- Third order after certified equal nonzero curvature: compare J/S^3, J=S cross(v,j)-3 cross(v,a) dot(v,a).
+
+Native/represented arithmetic, high-level theorem guards, angular cuts, selected-parameter sign authority, denominator signs, and arrangement algorithms are unchanged. A byte/format-aware reviewer checks the old normalization remainders and all existing private field machinery. Only construction was factored to allow trusted owned certificates to start a fresh context without redundant admission.
+
+For the unchanged V889 public oracle, P(t)=4t^3-pi, A(t)=(P,tP), B(t)=(P,tP+P^2), alpha is selected in (0,1), and both curves are trimmed alpha..1. Both endpoints are exactly zero, v=(P',alpha P') is nonzero, and at matched x=P(t)>0 the exact ordinate difference is x^2>0. A must precede B counter-clockwise from the incoming positive horizontal. V889 blocked both policies. V894 reuses identical probe source bytes; both requests now decide and all four tangents remain unprojected source expressions. Compile 0.615s, cases 0.008s, outer96601 reaped0. These timings are observations, not a benchmark speedup claim.
+
+Qualification: 346 Hypercurve and 63 Hypersolve selected release cases, 13 pinned binaries, nine checks. Tests include reflected/swapped public traversals, unequal speeds and tangential acceleration, all three normalization formulas, scalar replay, independent exact constants, selected-root/conjugate separation, strict stale-evidence rejection, 0/0 poles, reducible modulus domains, older-value reduction, and 32 reuse batches with reduced coefficient degrees and no retained context caches. Existing continuous-fillet source/path/region regressions preserve the user's exact center/contact constraint. Final qualifier77028, public replay96601, reviewer15858 all reaped0. 2048 source files, six committed blobs, and 30 clean repositories were sealed.
+
+V892's initial candidate also passed 407 cases and nine checks, outer23434 reaped0. V893 adds the degree-drop/independent-constant cleanup and unambiguous coefficients getter. The final review's first substring assertion also matched unchanged private helper/test names; it was narrowed to the removed public method signature after synchronous exit1. No production source changed for that reviewer correction.
+
+The full goal remains active. V895 changes only B's parameter chart to u=t/2: B(u)=(P(2u),2u P(2u)+P(2u)^2), trimmed alpha/2..1/2. The same x^2 oracle applies. Both points and tangents retain the required exact representations, but both public requests block RealSign. This requires certified parameter transport or field embeddings, not identifying two numerically different source roots. Existing affine-root inference's rational coefficient precondition is a candidate restriction to examine; no transport implementation or new Boolean failure is claimed. Independent fields, stationary/arbitrary higher jets, and the earlier monotone-overlap computational workload remain open.

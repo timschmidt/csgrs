@@ -1,0 +1,49 @@
+\doxysubsection{Lower\+Kleenean Class Reference}
+\hypertarget{classAriadne_1_1LowerKleenean}{}\label{classAriadne_1_1LowerKleenean}\index{LowerKleenean@{LowerKleenean}}
+
+
+{\ttfamily \#include $<$logical.\+hpp$>$}
+
+
+
+\doxysubsubsection{Description}
+A logical class representing the result of a verifyable predicate over a continuous (uncountable) data type. 
+
+A canonical example is strict positivity of a real number given only lower bounds to its value, since sufficient accurate lower bounds for a strictly positive number are themselves strictly positive, but negativity cannot be deduced given only lower bounds to a negative number. \doxysubsubsubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1LowerKleenean_a7c84cd3d106407c67af4a88716c34934}\label{classAriadne_1_1LowerKleenean_a7c84cd3d106407c67af4a88716c34934} 
+{\bfseries Lower\+Kleenean} (\mbox{\hyperlink{classAriadne_1_1Kleenean}{Kleenean}} k)
+\begin{DoxyCompactList}\small\item\em Convert from a Kleenean predicate. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1LowerKleenean_a1e9ef334e2471fff67cfaf2feecf5f0a}\label{classAriadne_1_1LowerKleenean_a1e9ef334e2471fff67cfaf2feecf5f0a} 
+\mbox{\hyperlink{classAriadne_1_1ValidatedLowerKleenean}{Validated\+Lower\+Kleenean}} {\bfseries check} (\mbox{\hyperlink{classAriadne_1_1Effort}{Effort}} e) const
+\begin{DoxyCompactList}\small\item\em Check the value using effort {\itshape e}. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsubsection*{Friends}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1LowerKleenean_a57f5c8f9e195bc0e332bb05f17f04463}\label{classAriadne_1_1LowerKleenean_a57f5c8f9e195bc0e332bb05f17f04463} 
+\mbox{\hyperlink{classAriadne_1_1ValidatedLowerKleenean}{Validated\+Lower\+Kleenean}} {\bfseries check} (\mbox{\hyperlink{classAriadne_1_1LowerKleenean}{Lower\+Kleenean}} const \&lk, \mbox{\hyperlink{classAriadne_1_1Effort}{Effort}} e)
+\begin{DoxyCompactList}\small\item\em Check the value of {\itshape lk} using effort {\itshape e}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1LowerKleenean_ae0ed0147a7ec00c63f6da0e5119c5dc9}\label{classAriadne_1_1LowerKleenean_ae0ed0147a7ec00c63f6da0e5119c5dc9} 
+\mbox{\hyperlink{classAriadne_1_1UpperKleenean}{Upper\+Kleenean}} {\bfseries operator!} (\mbox{\hyperlink{classAriadne_1_1LowerKleenean}{Lower\+Kleenean}} const \&l)
+\begin{DoxyCompactList}\small\item\em Logical negation. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1LowerKleenean_ac307dec5f069685522f93a7f352942e3}\label{classAriadne_1_1LowerKleenean_ac307dec5f069685522f93a7f352942e3} 
+\mbox{\hyperlink{classAriadne_1_1LowerKleenean}{Lower\+Kleenean}} {\bfseries operator\&\&} (\mbox{\hyperlink{classAriadne_1_1LowerKleenean}{Lower\+Kleenean}} const \&l1, \mbox{\hyperlink{classAriadne_1_1LowerKleenean}{Lower\+Kleenean}} const \&l2)
+\begin{DoxyCompactList}\small\item\em Logical conjunction. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1LowerKleenean_ae817bbfaf484b598f93ae11993535a43}\label{classAriadne_1_1LowerKleenean_ae817bbfaf484b598f93ae11993535a43} 
+\mbox{\hyperlink{classAriadne_1_1LowerKleenean}{Lower\+Kleenean}} {\bfseries operator\texorpdfstring{$\vert$}{|}\texorpdfstring{$\vert$}{|}} (\mbox{\hyperlink{classAriadne_1_1LowerKleenean}{Lower\+Kleenean}} const \&l1, \mbox{\hyperlink{classAriadne_1_1LowerKleenean}{Lower\+Kleenean}} const \&l2)
+\begin{DoxyCompactList}\small\item\em Logical disjunction. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1LowerKleenean_a848a335ded7a1a32fe0f67cf43fab725}\label{classAriadne_1_1LowerKleenean_a848a335ded7a1a32fe0f67cf43fab725} 
+\mbox{\hyperlink{classAriadne_1_1LowerKleenean}{Lower\+Kleenean}} {\bfseries disjunction} (\mbox{\hyperlink{classAriadne_1_1Sequence}{Sequence}}$<$ \mbox{\hyperlink{classAriadne_1_1LowerKleenean}{Lower\+Kleenean}} $>$ const \&k)
+\begin{DoxyCompactList}\small\item\em Disjunction of an infinte sequence of logical values. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsubsection*{Related Types and Functions}
+(Note that these are not member symbols.) \begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1LowerKleenean_a3b529e32f3d17df525069f4b3ecb1e5b}\label{classAriadne_1_1LowerKleenean_a3b529e32f3d17df525069f4b3ecb1e5b} 
+\mbox{\hyperlink{namespaceAriadne_acd8b5f68421eb22a84277ef7c9c0ee2a}{Size\+Type}} {\bfseries nondeterministic\+\_\+choose\+\_\+index} (\mbox{\hyperlink{classAriadne_1_1Array}{Array}}$<$ \mbox{\hyperlink{classAriadne_1_1LowerKleenean}{Lower\+Kleenean}} $>$ const \&p)
+\begin{DoxyCompactList}\small\item\em Returns an index {\itshape i} such that {\ttfamily p}\mbox{[}i\mbox{]} is definitely {\ttfamily true}, if one exists. Loops infinitely if no {\ttfamily p}\mbox{[}i\mbox{]} can be shown to be definitely {\ttfamily true}. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+The documentation for this class was generated from the following file\+:\begin{DoxyCompactItemize}
+\item 
+source/foundations/\mbox{\hyperlink{logical_8hpp}{logical.\+hpp}}\end{DoxyCompactItemize}

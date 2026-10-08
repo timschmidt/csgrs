@@ -1,0 +1,24 @@
+{
+  "round": 0,
+  "variant": "sb-float",
+  "input": "0.1",
+  "iterations": 4,
+  "args": [
+    "-c",
+    "6",
+    "/home/tim/Documents/GitHub/workspace/.audit-plume-late.4Yth3g/late-benchmark",
+    "sb-float",
+    "0.1",
+    "4",
+    "32",
+    "+RTS",
+    "-T",
+    "-M512m",
+    "-RTS"
+  ],
+  "status": 0,
+  "signal": null,
+  "error": "EPERM",
+  "stdout": "sb-float 0.1 4 32 367490000 327976 40 PASS\n",
+  "stderr": ""
+}

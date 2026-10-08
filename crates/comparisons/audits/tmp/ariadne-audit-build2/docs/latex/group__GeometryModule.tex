@@ -1,0 +1,138 @@
+\doxysubsubsection{Geometry Module }
+\hypertarget{group__GeometryModule}{}\label{group__GeometryModule}\index{Geometry Module@{Geometry Module}}
+
+
+\doxysubsubsubsection{Description}
+Geometric calculus module. 
+
+{\itshape For the mathematical theory of computable geometry, see the \doxysectlink{geometry_page}{Geometric Representation}{0} Page.}
+
+In this module are the classes used to represent sets and approximations to sets. Sets fall into two classes, {\itshape basic sets} which are typically simple sets which form a base for the topology, and {\itshape denotable sets} which are unions of basic sets.
+
+The fundamental geometric operations are {\ttfamily contains(\+Set,\+State)}, {\itshape disjoint(\+Set,\+Set)} and subset(\+Set,\+Set). All these return {\itshape tribool} values, where the indeterminate value is used to indicate a result which is either not robust (e.\+g. the boundaries of two sets intersect but their interiors do not) or which cannot be computed to the given precision.
+
+Ariadne uses {\itshape fuzzy basic sets}, which are sets of sets defined using interval data, to store intermediate results if these cannot be computed exactly. These sets can be converted to ordinary basic sets by over-\/ or under-\/approximation. Alternatively, the fundamental binary predicates can be computed directed for the fuzzy set types. Denotable sets are never fuzzy.
+
+We use the following abbreviations for template parameters for classes in this module\+:
+\begin{DoxyItemize}
+\item {\bfseries{S\+:}} Set\+Interface
+\item {\bfseries{BS\+:}} Basic\+Set
+\item {\bfseries{DS\+:}} Denotable\+Set
+\item {\bfseries{LS\+:}} \doxylink{classAriadne_1_1ListSet}{List\+Set}
+\item {\bfseries{GS\+:}} Grid\+Set
+\item {\bfseries{PTS\+:}} Partition\+Tree\+Set
+\end{DoxyItemize}
+
+See \doxysectlink{geometry_page}{Geometric Representation}{0} for more information. \doxysubsubsubsubsection*{Topics}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\hyperlink{group__SetInterfaceSubModule}{Set interfaces}}
+\begin{DoxyCompactList}\small\item\em Interfaces for various classes of sets. \end{DoxyCompactList}\item 
+\mbox{\hyperlink{group__ExactSetSubModule}{Exact sets}}
+\begin{DoxyCompactList}\small\item\em Sets which can be defined exactly. \end{DoxyCompactList}\item 
+\mbox{\hyperlink{group__BasicSetSubModule}{Basic sets}}
+\begin{DoxyCompactList}\small\item\em Basic set classes. \end{DoxyCompactList}\item 
+\mbox{\hyperlink{group__ListSetSubModule}{List sets}}
+\begin{DoxyCompactList}\small\item\em Denotable sets based on arbitrary lists of elements. \end{DoxyCompactList}\item 
+\mbox{\hyperlink{group__DiscretisedSetSubModule}{Discretised sets}}
+\begin{DoxyCompactList}\small\item\em Classes for representing discretised sets. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsubsubsection*{Classes}
+\begin{DoxyCompactItemize}
+\item 
+class \mbox{\hyperlink{classAriadne_1_1Constraint}{Constraint$<$ F, R $>$}}
+\begin{DoxyCompactList}\small\item\em A constraint defined by requiring values of a function $f$ to lie in a range $R$. i.\+e. restricts point $x$ to satsify $f(x)\in R$. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1Box}{Box$<$ I $>$}}
+\begin{DoxyCompactList}\small\item\em A box in Euclidean space. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1ImageSet}{Image\+Set}}
+\begin{DoxyCompactList}\small\item\em A set defined as the image of a box $D$ under a function $f$. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1ConstraintSet}{Constraint\+Set}}
+\begin{DoxyCompactList}\small\item\em A set defined as the intersection of an exact box with preimage of an exact box (the {\itshape codomain}) under a continuous function. The set is described as $S=D\cap g^{-1}(C) = \{ x\in D \mid g(x)\in C\}$ where $D$ is the domain, $C$ is the codomain and $g$ the function. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1BoundedConstraintSet}{Bounded\+Constraint\+Set}}
+\begin{DoxyCompactList}\small\item\em A set defined as the intersection of an exact box with preimage of an exact box (the {\itshape codomain}) under a continuous function. The set is described as $S=D\cap g^{-1}(C) = \{ x\in D \mid g(x)\in C\}$ where $D$ is the domain, $C$ is the codomain and $g$ the function. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1ConstrainedImageSet}{Constrained\+Image\+Set}}
+\begin{DoxyCompactList}\small\item\em A set defined as the image of the intersection of a box $D$ and a constraint set $g^{-1}(C)$ under a function $f$. In other words, $S=f(D\cap g^{-1}(C))$. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1ValidatedConstrainedImageSet}{Validated\+Constrained\+Image\+Set}}
+\begin{DoxyCompactList}\small\item\em A set defined as the image of the intersection of a box $D$ and a constraint set $g^{-1}(C)$ under a function $f$. In other words, $S=f(D\cap g^{-1}(C))$. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1Interval}{Interval$<$ U $>$}}
+\begin{DoxyCompactList}\small\item\em Intervals with upper endoint of type {\itshape U}. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1BoundedSet}{Bounded\+Set$<$ P, T $>$}}
+\begin{DoxyCompactList}\small\item\em Bounded sets. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1OpenSet}{Open\+Set$<$ P, T $>$}}
+\begin{DoxyCompactList}\small\item\em Open sets, defined by a verifyable membership predicate. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1ClosedSet}{Closed\+Set$<$ P, T $>$}}
+\begin{DoxyCompactList}\small\item\em Closed sets, defined by a falsifyable membership predicate. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1OvertSet}{Overt\+Set$<$ P, T $>$}}
+\begin{DoxyCompactList}\small\item\em Overt sets, defined by a verifyable intersection with open sets. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1CompactSet}{Compact\+Set$<$ P, T $>$}}
+\begin{DoxyCompactList}\small\item\em Compact sets, defined by a verifyable disjointness with closed sets. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1RegularSet}{Regular\+Set$<$ P, T $>$}}
+\begin{DoxyCompactList}\small\item\em Regular (open and closed) sets. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1LocatedSet}{Located\+Set$<$ P, T $>$}}
+\begin{DoxyCompactList}\small\item\em Located (overt and compact) sets. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1RegularLocatedSet}{Regular\+Located\+Set$<$ P, T $>$}}
+\begin{DoxyCompactList}\small\item\em Regular located sets; equivalently bounded regular or open located. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1SetBase}{Set\+Base$<$ T $>$}}
+\begin{DoxyCompactList}\small\item\em Base handle class for sets. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1BoundedSetInterface}{Bounded\+Set\+Interface$<$ P, T $>$}}
+\begin{DoxyCompactList}\small\item\em Interface for bounded sets. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1OvertSetInterface}{Overt\+Set\+Interface$<$ P, T $>$}}
+\begin{DoxyCompactList}\small\item\em Interface for overt sets, for which intersection with an open box is verifiable. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1OpenSetInterface}{Open\+Set\+Interface$<$ P, T $>$}}
+\begin{DoxyCompactList}\small\item\em Interface for open sets. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1ClosedSetInterface}{Closed\+Set\+Interface$<$ P, T $>$}}
+\begin{DoxyCompactList}\small\item\em Interface for closed sets. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1CompactSetInterface}{Compact\+Set\+Interface$<$ P, T $>$}}
+\begin{DoxyCompactList}\small\item\em Interface for compact (closed and bounded) sets. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1RegularSetInterface}{Regular\+Set\+Interface$<$ P, T $>$}}
+\begin{DoxyCompactList}\small\item\em Interface for regular sets, whose closure is the closure of the interior, and whose interior is the interior of the closure. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1LocatedSetInterface}{Located\+Set\+Interface$<$ P, T $>$}}
+\begin{DoxyCompactList}\small\item\em Interface for located (overt and compact) sets. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1RegularLocatedSetInterface}{Regular\+Located\+Set\+Interface$<$ P, T $>$}}
+\begin{DoxyCompactList}\small\item\em Complete set interface for bounded regular sets. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsubsubsection*{Type definitions}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{group__FunctionModule_ga52b42d6c2f267c5ad994d248feec0752}\label{group__FunctionModule_ga52b42d6c2f267c5ad994d248feec0752} 
+typedef Float\+DPUpper\+Box {\bfseries Box\+Validated\+Range\+Type}
+\begin{DoxyCompactList}\small\item\em The type used for an over-\/approximation to the range of a validated vector function. \end{DoxyCompactList}\item 
+\Hypertarget{group__FunctionModule_ga88ba74fe777b687b0bc0580dedf6226b}\label{group__FunctionModule_ga88ba74fe777b687b0bc0580dedf6226b} 
+typedef Float\+DPApproximate\+Box {\bfseries Box\+Approximate\+Range\+Type}
+\begin{DoxyCompactList}\small\item\em The type used for an approximation to the range of an approximate vector function. \end{DoxyCompactList}\item 
+\Hypertarget{group__FunctionModule_ga5637ef3c92e4737b48f17613999a129f}\label{group__FunctionModule_ga5637ef3c92e4737b48f17613999a129f} 
+typedef Float\+DPUpper\+Box {\bfseries Bounding\+Box\+Type}
+\begin{DoxyCompactList}\small\item\em The type used for the bounding box of validated sets in Euclidean space. \end{DoxyCompactList}\item 
+\Hypertarget{group__FunctionModule_gafdd31b4d01081cd09aad2ce11117f867}\label{group__FunctionModule_gafdd31b4d01081cd09aad2ce11117f867} 
+typedef Float\+DPExact\+Box {\bfseries Exact\+Box\+Type}
+\begin{DoxyCompactList}\small\item\em The type used for testing properties of sets in Euclidean space. \end{DoxyCompactList}\item 
+\Hypertarget{group__FunctionModule_gadb510bd9aa076e5ae44245b498901ca6}\label{group__FunctionModule_gadb510bd9aa076e5ae44245b498901ca6} 
+typedef Float\+DPUpper\+Box {\bfseries Upper\+Box\+Type}
+\begin{DoxyCompactList}\small\item\em The type used for the bounding box of validated sets in Euclidean space. \end{DoxyCompactList}\item 
+\Hypertarget{group__FunctionModule_ga9a6737a249dc42b68c810c1e2ea90a2e}\label{group__FunctionModule_ga9a6737a249dc42b68c810c1e2ea90a2e} 
+typedef Float\+DPLower\+Box {\bfseries Lower\+Box\+Type}
+\begin{DoxyCompactList}\small\item\em The type used for testing boundedness of sets in Euclidean space. \end{DoxyCompactList}\item 
+\Hypertarget{group__FunctionModule_gac26293ef26d158369e62afb319a71474}\label{group__FunctionModule_gac26293ef26d158369e62afb319a71474} 
+typedef Float\+DPApproximate\+Box {\bfseries Approximate\+Box\+Type}
+\begin{DoxyCompactList}\small\item\em The type used for the bounding box of approximate sets in Euclidean space. \end{DoxyCompactList}\item 
+\Hypertarget{group__FunctionModule_ga47abd65103dbe05c5bbbc16f5cf3bec2}\label{group__FunctionModule_ga47abd65103dbe05c5bbbc16f5cf3bec2} 
+typedef Float\+DPUpper\+Interval {\bfseries Interval\+Validated\+Range\+Type}
+\begin{DoxyCompactList}\small\item\em The type used for an over-\/approximation to the range of a validated scalar function. \end{DoxyCompactList}\item 
+\Hypertarget{group__FunctionModule_ga724bbe12a97b90ee4833ced44d1897ac}\label{group__FunctionModule_ga724bbe12a97b90ee4833ced44d1897ac} 
+typedef Float\+DPApproximate\+Interval {\bfseries Interval\+Approximate\+Range\+Type}
+\begin{DoxyCompactList}\small\item\em The type used for an approximation to the range of an approximate scalar function. \end{DoxyCompactList}\item 
+\Hypertarget{group__FunctionModule_gab4f81d909c87bd33486c446890723bb1}\label{group__FunctionModule_gab4f81d909c87bd33486c446890723bb1} 
+typedef Float\+DPExact\+Interval {\bfseries Exact\+Interval\+Type}
+\begin{DoxyCompactList}\small\item\em The type used for testing characteristics of one-\/dimensional sets. \end{DoxyCompactList}\item 
+\Hypertarget{group__FunctionModule_ga7b38f183a458f335ba2f31e0bcdbadc9}\label{group__FunctionModule_ga7b38f183a458f335ba2f31e0bcdbadc9} 
+typedef \mbox{\hyperlink{classAriadne_1_1Interval}{Interval}}$<$ Float\+DPUpper\+Bound $>$ {\bfseries Upper\+Interval\+Type}
+\begin{DoxyCompactList}\small\item\em The type used for the bounding interval of validated one-\/dimensional sets. \end{DoxyCompactList}\item 
+\Hypertarget{group__FunctionModule_gaa98f540fb61799f0297aa101fba99adf}\label{group__FunctionModule_gaa98f540fb61799f0297aa101fba99adf} 
+typedef Float\+DPLower\+Interval {\bfseries Lower\+Interval\+Type}
+\begin{DoxyCompactList}\small\item\em The type used for testing boundedness of validated one-\/dimensional sets. \end{DoxyCompactList}\item 
+\Hypertarget{group__FunctionModule_gaeed2fa6bad70be5b93a70d09f590e531}\label{group__FunctionModule_gaeed2fa6bad70be5b93a70d09f590e531} 
+typedef Float\+DPApproximate\+Interval {\bfseries Approximate\+Interval\+Type}
+\begin{DoxyCompactList}\small\item\em The type used for the bounding interval of approximate one-\/dimensional sets. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\input{group__SetInterfaceSubModule}
+\input{group__ExactSetSubModule}
+\input{group__BasicSetSubModule}
+\input{group__ListSetSubModule}
+\input{group__DiscretisedSetSubModule}

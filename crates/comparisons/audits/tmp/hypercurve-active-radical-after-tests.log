@@ -1,0 +1,12 @@
+   Compiling hypercurve v0.3.1 (/home/tim/Documents/GitHub/workspace/hypercurve)
+    Finished `release` profile [optimized] target(s) in 1m 05s
+     Running unittests src/lib.rs (target/release/deps/hypercurve-6e6572a45c5b177b)
+
+running 4 tests
+test bezier_offset::conversion_tests::dense_projection_keeps_roots_of_vanishing_radicands ... ok
+test bezier_offset::conversion_tests::dense_projection_does_not_square_an_absent_radical ... ok
+test bezier_offset::conversion_tests::dense_projection_single_radical_replays_the_authored_sheet ... ok
+test bezier_offset::conversion_tests::dense_projection_zero_set_matches_all_four_conjugates ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 887 filtered out; finished in 0.00s
+

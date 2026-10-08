@@ -1,0 +1,232 @@
+[
+  {
+    "repo": "flint",
+    "path": "src/arb/dot.c",
+    "newRanges": [
+      [
+        1,
+        985
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "src/arb/dot_precise.c",
+    "newRanges": [
+      [
+        1,
+        79
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "src/arb/dot_simple.c",
+    "newRanges": [
+      [
+        1,
+        47
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "src/arb/dot_fmpz.c",
+    "newRanges": [
+      [
+        1,
+        149
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "src/arb/dot_si.c",
+    "newRanges": [
+      [
+        1,
+        80
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "src/arb/dot_ui.c",
+    "newRanges": [
+      [
+        1,
+        78
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "src/arb/dot_siui.c",
+    "newRanges": [
+      [
+        1,
+        117
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "src/arb/dot_uiui.c",
+    "newRanges": [
+      [
+        1,
+        108
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "src/arb/add_error.c",
+    "newRanges": [
+      [
+        1,
+        83
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "src/arb/addmul.c",
+    "newRanges": [
+      [
+        1,
+        159
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "src/arb/fma.c",
+    "newRanges": [
+      [
+        1,
+        172
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "src/arb/impl.h",
+    "newRanges": [
+      [
+        1,
+        40
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "src/arb/test/t-dot.c",
+    "newRanges": [
+      [
+        1,
+        188
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "src/arb/test/t-dot_fmpz.c",
+    "newRanges": [
+      [
+        1,
+        94
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "src/arb/test/t-dot_si.c",
+    "newRanges": [
+      [
+        1,
+        93
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "src/arb/test/t-dot_ui.c",
+    "newRanges": [
+      [
+        1,
+        93
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "src/arb/test/t-dot_siui.c",
+    "newRanges": [
+      [
+        1,
+        98
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "src/arb/test/t-dot_uiui.c",
+    "newRanges": [
+      [
+        1,
+        98
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "src/arb/test/t-fma.c",
+    "newRanges": [
+      [
+        1,
+        117
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "src/arb/test/t-add_error.c",
+    "newRanges": [
+      [
+        1,
+        266
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "src/arb.h",
+    "newRanges": [
+      [
+        395,
+        440
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "src/mag.h",
+    "newRanges": [
+      [
+        95,
+        145
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "doc/source/arb.rst",
+    "newRanges": [
+      [
+        900,
+        985
+      ]
+    ]
+  }
+]

@@ -1,0 +1,26 @@
+    Blocking waiting for file lock on build directory
+    Checking num-bigint v0.4.6
+    Checking num-complex v0.4.6
+    Checking serde_core v1.0.228
+    Checking num-rational v0.4.2
+    Checking num v0.4.3
+    Checking bytemuck v1.25.2
+    Checking safe_arch v1.2.0
+    Checking hyperreal v0.13.1 (/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/polynomial-decision-trial/hyperreal)
+    Checking serde v1.0.228
+    Checking serde_json v1.0.149
+    Checking wide v1.7.0
+    Checking hyperlattice v0.6.1 (/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/polynomial-decision-trial/hyperlattice)
+    Checking approx v0.5.1
+    Checking rawpointer v0.2.1
+    Checking matrixmultiply v0.3.11
+    Checking hyperlimit v0.4.1 (/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/polynomial-decision-trial/hyperlimit)
+    Checking ciborium v0.2.2
+    Checking tinytemplate v1.2.1
+    Checking typenum v1.20.1
+    Checking criterion v0.5.1
+    Checking simba v0.10.2
+    Checking roots v0.0.8
+    Checking hypersolve v0.3.1 (/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/polynomial-decision-trial/hypersolve)
+    Checking nalgebra v0.35.0
+    Finished `dev` profile [unoptimized] target(s) in 1m 00s

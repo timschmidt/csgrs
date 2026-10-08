@@ -1,0 +1,100 @@
+{
+  "diagnostic_only": true,
+  "source_sha256": "abd7af6502bad5d9169e68dacd71d4fa75c7e03462b4570c57fd5676ac0db45b",
+  "source_manifest": "restricted-fiber-sign-20260927-v474-sources.json",
+  "library": {
+    "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypercurve-85a9105cd1c82df7.rlib",
+    "sha256": "510021aca58d092b35c712e5c49081fd2dc92fafe60e5b0f95bdcbe42c364f50"
+  },
+  "cases": [
+    {
+      "name": "regular_parabola_strict",
+      "returncode": 0,
+      "passed": true,
+      "elapsed_seconds": 0.003645360004156828,
+      "log": "stationary-corner-contract-20260927-v476-regular_parabola_strict.log"
+    },
+    {
+      "name": "stationary_reparameterization_strict",
+      "returncode": 101,
+      "passed": false,
+      "elapsed_seconds": 0.003495560958981514,
+      "log": "stationary-corner-contract-20260927-v476-stationary_reparameterization_strict.log"
+    },
+    {
+      "name": "one_sided_cusp_strict",
+      "returncode": 101,
+      "passed": false,
+      "elapsed_seconds": 0.003568034851923585,
+      "log": "stationary-corner-contract-20260927-v476-one_sided_cusp_strict.log"
+    },
+    {
+      "name": "regular_parabola_approximate",
+      "returncode": 0,
+      "passed": true,
+      "elapsed_seconds": 0.003565846011042595,
+      "log": "stationary-corner-contract-20260927-v476-regular_parabola_approximate.log"
+    },
+    {
+      "name": "stationary_reparameterization_approximate",
+      "returncode": 101,
+      "passed": false,
+      "elapsed_seconds": 0.0034879310987889767,
+      "log": "stationary-corner-contract-20260927-v476-stationary_reparameterization_approximate.log"
+    },
+    {
+      "name": "one_sided_cusp_approximate",
+      "returncode": 101,
+      "passed": false,
+      "elapsed_seconds": 0.003524548141285777,
+      "log": "stationary-corner-contract-20260927-v476-one_sided_cusp_approximate.log"
+    },
+    {
+      "name": "interior_stationary_contact_strict",
+      "returncode": 101,
+      "passed": false,
+      "elapsed_seconds": 0.0035120691172778606,
+      "log": "stationary-corner-contract-20260927-v476-interior_stationary_contact_strict.log"
+    },
+    {
+      "name": "interior_stationary_contact_approximate",
+      "returncode": 101,
+      "passed": false,
+      "elapsed_seconds": 0.0035122788976877928,
+      "log": "stationary-corner-contract-20260927-v476-interior_stationary_contact_approximate.log"
+    }
+  ],
+  "all_processes_reaped": true,
+  "probe_complete": true,
+  "interior_contact_oriented_one_sided_frame": true,
+  "independent_rational_contacts_and_tangents": true,
+  "expected_cases": [
+    "regular_parabola_strict",
+    "stationary_reparameterization_strict",
+    "one_sided_cusp_strict",
+    "regular_parabola_approximate",
+    "stationary_reparameterization_approximate",
+    "one_sided_cusp_approximate",
+    "interior_stationary_contact_strict",
+    "interior_stationary_contact_approximate"
+  ],
+  "build": {
+    "command": [
+      "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustc",
+      "--edition=2024",
+      "--test",
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/stationary-corner-contract-v476.rs",
+      "-C",
+      "opt-level=3",
+      "-L",
+      "dependency=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps",
+      "--extern",
+      "hypercurve=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypercurve-85a9105cd1c82df7.rlib",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/stationary-corner-contract-20260927-v476-tests"
+    ],
+    "returncode": 0,
+    "log": "stationary-corner-contract-20260927-v476-build.log"
+  },
+  "binary_sha256": "cc066f9cfdaa3eceac73f97771fe2aef8021706a4434739c4cb134db47ad2374"
+}

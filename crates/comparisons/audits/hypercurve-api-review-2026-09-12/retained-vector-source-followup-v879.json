@@ -1,0 +1,37 @@
+{
+  "kind": "read-only follow-up, not an implemented change or new public runtime counterexample",
+  "source_hashes": {
+    "hypercurve/src/bezier_arrangement.rs": "42f6eab5173cf1e822d048ef82a3fce4c9869eaa817c9def2ff4908559dd7d8f",
+    "hypercurve/src/bezier_algebraic_image.rs": "9dc74b6377bd83d38c9dba6681d0b59e6c730d2ef0b2890dd29dc3a00e88f066",
+    "hypercurve/src/bezier_tangent_order.rs": "2d840486e42254e27ac3be8a6007cd0dfb3784e66f8b012bae98c11f6bc2fa6b",
+    "hypersolve/src/algebraic.rs": "2747a1fd09fd56c6a5e1c8aa75a462ea725c97c30e42c60c857b3081d87bfa0c"
+  },
+  "confirmed_source_boundaries": [
+    "RetainedAlgebraicDerivativeSource preserves selected parameter and original Bezier source, but retained_algebraic_tangent still extracts only already materialized coordinate roots through BezierAlgebraicTangentVector2::from_image. Exact retained-expression images are therefore unavailable to general arrangement angular comparison.",
+    "RationalBezierAlgebraicTangentImage2 already owns one valid Arc-backed Coordinates-or-Expression definition, denominator domain and source parameter; coordinate_sign handles source expressions. shared_parameter_cross_sign reduces a determinant in a proved common selected root and signs denominator parity; it deliberately declines absent common-root evidence.",
+    "Native exact endpoint derivative factors are correct: quadratic endpoint_tangent multiplies control difference by 2 and cubic by 3. No derivative scaling defect was found there.",
+    "The V877 candidate removes mixed Native/Algebraic rejection and the optional carrier filter; the native-only fast path remains and represented-root views are borrowed."
+  ],
+  "next_bounded_experiment": [
+    "Construct a public retained arrangement whose endpoint points are already represented while its exact tangent remains a source expression; compare with a mathematically equivalent native/source chart using an independent graph-order oracle. Do not infer a CurveRegion2 failure from private missing evidence.",
+    "If confirmed, retain the existing exact tangent image in endpoint state rather than introduce a new parallel expression grammar. Derive cross/dot/zero decisions in its source domain; native vectors can be constant polynomials in that domain without losing their exact meaning.",
+    "Share determinant/dot product source arithmetic while retaining the strict common selected-root proof and separately certified denominator signs. Equality of a defining polynomial is not equality of its selected root.",
+    "Preserve the existing independent-root arithmetic fallback. Different selected fields need joint selected-fiber evidence, not forced coordinate projection or unproved root merging. Keep native and interval sign fast paths.",
+    "Handle reversal through exact source orientation; preserve higher-derivative demand and the certified zero/nonzero curvature distinction. A sign-only angular extension alone does not solve stationary or arbitrary equal-jet branch ordering."
+  ],
+  "not_claimed": [
+    "No new region counterexample or universal closure proof.",
+    "No measured uniform speedup.",
+    "No new candidate, driver or API migration from this read-only audit."
+  ],
+  "proposed_public_source_fixture": {
+    "status": "Derived symbolically; not constructed or run yet. Verify represented point and unprojected tangent premises before claiming a failure.",
+    "parameter": "alpha is the positive selected root of 4*t^3-pi in (0,1).",
+    "curve": "C(t)=(P(t),t*P(t)), P(t)=4*t^3-pi; trim at alpha.",
+    "degree_four_bernstein_controls": "x=[-pi,-pi,-pi,1-pi,4-pi], y=[0,-pi/4,-pi/2,-3*pi/4,4-pi], all weights 1.",
+    "point_and_jet": "C(alpha)=(0,0); Cprime(alpha)=(12*alpha^2,3*pi). Both endpoint coordinates reduce to zero modulo P, while the derivative x image may need the retained selected expression.",
+    "angular_oracle": "The derivative slope is alpha, strictly between 0 and 1. From an incoming positive horizontal tangent, C precedes an outgoing native diagonal (1,1). This uses the certified selected interval, not a sampled coordinate.",
+    "possible_arrangement": "Incoming horizontal ends at origin. Candidate 1 is C trimmed alpha..1. Candidate 2 is the native diagonal from origin to (4-pi,4-pi). Both candidate ends coincide. Expected chains [0,1] and [2] if current traversal convention applies.",
+    "scope": "This would test only first-order angular source-expression retention; it would not prove higher-jet or region-operation closure."
+  }
+}

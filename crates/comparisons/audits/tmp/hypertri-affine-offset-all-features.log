@@ -1,0 +1,251 @@
+   Compiling hyperreal v0.13.1 (/home/tim/Documents/GitHub/workspace/hyperreal)
+   Compiling hyperlattice v0.6.1 (/home/tim/Documents/GitHub/workspace/hyperlattice)
+   Compiling hyperlimit v0.4.1 (/home/tim/Documents/GitHub/workspace/hyperlimit)
+   Compiling hypertri v0.4.1 (/home/tim/Documents/GitHub/workspace/hypertri)
+    Finished `release` profile [optimized] target(s) in 14.23s
+     Running unittests src/lib.rs (target/release/deps/hypertri-923f425f9d0039c9)
+
+running 119 tests
+test cdt::tests::constrained_closed_ring_uses_exact_polygon_path ... ok
+test cdt::tests::brio_order_is_deterministic_permutation ... ok
+test cdt::tests::constrained_edges_already_present_in_delaunay_are_accepted ... ok
+test cdt::tests::constrained_closed_rings_with_hole_use_exact_polygon_path ... ok
+test cdt::tests::constrained_non_delaunay_diagonal_is_recovered_by_edge_flips ... ok
+test cdt::tests::constrained_segment_through_existing_vertex_is_split_and_recovered ... ok
+test cdt::tests::convex_hull_pslg_rejects_constraints_that_still_require_planarization ... ok
+test cdt::tests::delaunay_rejects_collinear_triangle ... ok
+test cdt::tests::convex_hull_pslg_keeps_both_sides_of_an_interior_ring ... ok
+test cdt::tests::delaunay_rejects_duplicate_points ... ok
+test cdt::tests::delaunay_returns_single_exact_triangle ... ok
+test cdt::tests::delaunay_rejects_numeric_duplicates_with_distinct_representations ... ok
+test cdt::tests::delaunay_triangulates_convex_quad_with_one_diagonal ... ok
+test cdt::tests::delaunay_triangulates_larger_non_cocircular_set ... ok
+test cdt::tests::delaunay_triangulates_every_asymmetric_quad_permutation ... ok
+test cdt::tests::delaunay_triangulates_square_with_center_point ... ok
+test cdt::tests::empty_constraint_set_accepts_collinear_points ... ok
+test cdt::tests::general_constraint_recovers_across_nonconvex_flip_strip ... ok
+test cdt::tests::nearly_collinear_hull_expands_super_triangle_until_complete ... ok
+test cdt::tests::overlapping_collinear_constraints_are_split_to_shared_subsegments ... ok
+test cdt::tests::properly_crossing_constraints_insert_exact_intersection_vertex ... ok
+test cdt::tests::rejects_all_collinear_overlapping_constraints_without_area ... ok
+test cdt::tests::rejects_constraint_index_out_of_bounds ... ok
+test cdt::tests::separated_closed_rings_use_general_cdt_recovery ... ok
+test cdt::tests::sparse_triangle_adjacency_matches_shared_half_edges ... ok
+test cdt::tests::sparse_triangle_adjacency_rejects_non_manifold_edges ... ok
+test cdt::tests::spatial_delaunay_preserves_indices_and_unique_topology ... ok
+test cdt::tests::topology_only_convex_hull_pslg_preserves_every_point_and_constraint ... ok
+test cdt::tests::validation_allows_constrained_interior_edge_to_be_non_delaunay ... ok
+test cdt::tests::validation_rejects_illegal_unconstrained_interior_edge ... ok
+test cdt::tests::validation_rejects_locally_legal_incomplete_convex_hull ... ok
+test cdt::tests::validation_rejects_missing_constraint_edge ... ok
+test cdt::topology::tests::degenerate_prefix_declines_to_general_hull_discovery ... ok
+test cdt::topology::tests::enclosing_prefix_triangle_is_a_complete_exact_schedule ... ok
+test cdt::topology::tests::nonenclosing_prefix_declines_to_general_hull_discovery ... ok
+test cdt::topology::tests::retained_adjacency_matches_complete_rebuild_for_every_point_split ... ok
+test cdt::topology::tests::retained_point_set_topology_matches_complete_adjacency ... ok
+test cdt_constraints::tests::closed_ring_extraction_rejects_noncycles_and_keeps_all_cycles ... ok
+test cdt_constraints::tests::private_hole_helpers_cover_prepend_and_nested_detection ... ok
+test cdt_constraints::tests::public_recognizer_distinguishes_cycle_graphs_from_general_pslgs ... ok
+test cdt_constraints::tests::ring_ordering_finds_exterior_and_sorts_holes_lexicographically ... ok
+test cdt_constraints::tests::ring_ordering_rejects_disjoint_nested_and_ambiguous_exteriors ... ok
+test cdt_insert::tests::cavity_retriangulation_reinserts_collinear_boundary_vertex ... ok
+test cdt_insert::tests::cavity_side_prunes_straight_chains_before_emitting_ears ... ok
+test cdt_insert::tests::crossing_planarization_reuses_the_evaluator_nonzero_policy ... ok
+test cdt_insert::tests::exact_corridor_absorbs_an_unprotected_enclosed_face ... ok
+test cdt_insert::tests::exact_corridor_preserves_a_non_crossed_protected_chord ... ok
+test cdt_insert::tests::lexicographic_topology_is_independent_of_the_initial_convex_fan ... ok
+test cdt_insert::tests::retained_topology_detects_corrupted_split_and_boundary_adjacency ... ok
+test cdt_insert::tests::retained_topology_rejects_a_changed_boundary_atomically ... ok
+test cdt_insert::tests::retained_topology_rejects_malformed_local_replacements_before_mutation ... ok
+test cdt_insert::tests::retained_topology_rejects_nonmanifold_replacement_and_bad_lookup_slots ... ok
+test cdt_insert::tests::retained_topology_updates_reciprocal_neighbors_after_a_flip ... ok
+test cdt_insert::tests::sorted_topology_edges_retain_owners_and_reject_malformed_incidence ... ok
+test cdt_insert::tests::steiner_point_deduplication_uses_numeric_equality ... ok
+test cdt_validate::tests::constrained_convex_hull_validators_reject_incomplete_coverage ... ok
+test cdt_validate::tests::convex_hull_certificate_rejects_missing_invalid_disconnected_and_nonmanifold_meshes ... ok
+test cdt_validate::tests::convex_hull_topology_contract_rejects_consistent_negative_winding ... ok
+test cdt_validate::tests::local_delaunay_helpers_cover_same_side_collinear_and_strictly_opposite_cases ... ok
+test cdt_validate::tests::strict_triangle_validation_propagates_an_undecided_orientation ... ok
+test cdt::tests::located_cavity_triangulates_and_validates_large_exact_set ... ok
+test context::tests::policy_context_and_certainty_remain_one_byte ... ok
+test earcut::tests::conformity_certificate_accepts_complete_mesh_and_repairs_skipped_boundary_vertices ... ok
+test earcut::tests::bridge_visibility_rejects_coincident_outside_blocked_and_crossing_segments ... ok
+test earcut::tests::conformity_pass_rejects_malformed_triangle_indices ... ok
+test earcut::tests::conformity_pass_splits_a_diagonal_at_source_vertices ... ok
+test earcut::tests::drops_duplicate_closing_vertex ... ok
+test earcut::tests::earcut_report_matches_plain_triangulation_and_counts_hot_loop ... ok
+test earcut::tests::duplicate_closing_vertex_uses_numeric_equality ... ok
+test earcut::tests::empty_zero_area_and_degenerate_hole_inputs_take_defined_paths ... ok
+test earcut::tests::filters_collinear_chain_without_losing_area ... ok
+test earcut::tests::handles_near_collinear_exact_rational_not_epsilon_collapsed ... ok
+test earcut::tests::local_intersection_cure_removes_twisted_pair ... ok
+test earcut::tests::private_fallback_helpers_cover_short_malformed_and_wraparound_inputs ... ok
+test earcut::tests::rectangle_classifier_rejects_every_non_rectangle_shape_class ... ok
+test earcut::tests::rectangular_annulus_dispatch_handles_rotated_winding_and_preserves_authored_edges ... ok
+test earcut::tests::rectangular_annulus_dispatch_falls_back_for_authored_collinear_boundary ... ok
+test earcut::tests::rejects_unsorted_hole_indices_before_algorithm_dispatch ... ok
+test earcut::tests::split_fallback_triangulates_forced_valid_diagonal ... ok
+test earcut::tests::triangulates_exact_concave_polygon ... ok
+test earcut::tests::triangulates_exact_square ... ok
+test earcut::tests::triangulates_hole_with_duplicate_closing_vertex ... ok
+test earcut::tests::triangulates_multiple_holes_with_mixed_winding ... ok
+test earcut::tests::triangulates_square_with_square_hole ... ok
+test f64::tests::direct_scalar_lift_maps_nonfinite_conversion_errors ... ok
+test earcut::tests::vertically_aligned_holes_have_conforming_internal_edges ... ok
+test f64::tests::f64_earcut_accepts_plain_runtime_points ... ok
+test f64::tests::f64_rejects_nan ... ok
+test nd::tests::duplicate_nd_points_are_rejected ... ok
+test nd::tests::flip_validation_rejects_affinely_dependent_inserted_side ... ok
+test nd::tests::four_dimensional_simplex_forms_one_cell ... ok
+test nd::tests::geometric_reports_cover_negative_degenerate_cospherical_and_inside_cells ... ok
+test nd::tests::malformed_tds_snapshots_report_every_structural_contract ... ok
+test nd::tests::manifold_reports_infinite_same_orientation_and_overfull_facets ... ok
+test nd::tests::mixed_dimension_points_are_rejected ... ok
+test nd::tests::numeric_duplicate_nd_points_with_distinct_representations_are_rejected ... ok
+test nd::tests::private_validation_utilities_cover_dimension_and_reason_boundaries ... ok
+test nd::tests::reciprocal_neighbor_validation_distinguishes_all_malformed_links ... ok
+test nd::tests::tetrahedron_forms_one_exact_3d_cell ... ok
+test nd::tests::strict_geometric_report_retains_undecided_predicate_identity ... ok
+test nd::tests::tetrahedron_with_exact_interior_point_forms_four_star_cells ... ok
+test polygon::tests::open_ring_handles_short_and_explicitly_closed_ranges ... ok
+test predicate_evaluator::tests::predicate_evaluator_compares_rationals_without_materializing_a_difference ... ok
+test predicate_evaluator::tests::predicate_evaluator_maps_real_division_failure ... ok
+test predicate_evaluator::tests::predicate_evaluator_routes_incircle_through_predicate_layer ... ok
+test predicate_evaluator::tests::predicate_evaluator_routes_orientation_through_predicate_layer ... ok
+test predicate_evaluator::tests::retained_triangle_orientation_matches_immediate_classification ... ok
+test predicate_evaluator::tests::retained_triangle_orientation_omits_the_fixed_determinant ... ok
+test predicate_evaluator::tests::triangle_vertex_classification_uses_exact_edge_incidence ... ok
+test predicate_evaluator::tests::predicate_evaluator_uses_central_terminal_equality_policy ... ok
+test predicates::tests::point_equality_short_circuits_identical_opaque_representations ... ok
+test predicates::tests::point_equality_uses_numeric_not_representation_equality ... ok
+test predicates::tests::point_on_segment_delegates_degenerate_segments_to_hyperlimit ... ok
+test predicates::tests::segment_intersection_delegates_identical_segments_to_hyperlimit ... ok
+test runtime::tests::cdt_ring_constraint_builder_rejects_a_collapsed_closed_ring ... ok
+test runtime::tests::prefer_delaunay_keeps_boundary_cleanup_on_earcut ... ok
+test runtime::tests::unresolved_auto_cannot_reach_an_algorithm_executor ... ok
+test types::tests::polygon_input_facts_carry_exact_coordinate_summary ... ok
+test types::tests::polygon_input_facts_carry_symbolic_dependencies_without_exact_claims ... ok
+
+test result: ok. 119 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+     Running tests/adversarial.rs (target/release/deps/adversarial-0705ac3cabce23b7)
+
+running 30 tests
+test cdt_closed_ring_accepts_reversed_constraint_edge ... ok
+test exact_earcut_hole_bridge_uses_exact_visibility ... ok
+test exact_earcut_keeps_tiny_rational_spike ... ok
+test exact_earcut_rectangles_keep_valid_index_topology ... ok
+test exact_earcut_rectangular_holes_keep_valid_index_topology ... ok
+test exact_nd_bistellar_flip_report_validates_circuit_and_delaunay_legality ... ok
+test cdt_splits_tiny_exact_rational_constraint_crossing ... ok
+test exact_nd_delaunay_oracle_insertion_reports_conflict_boundary ... ok
+test exact_nd_delaunay_preserves_cospherical_cells_as_complex ... ok
+test exact_nd_tds_geometric_report_rejects_affinely_dependent_cell ... ok
+test exact_nd_delaunay_stars_3d_simplex_around_rational_interior_point ... ok
+test exact_nd_tds_manifold_report_rejects_same_induced_facet_orientation ... ok
+test exact_nd_tds_rejects_nonreciprocal_neighbor_links ... ok
+test exact_nd_tds_rejects_repeated_vertices_and_bad_infinite_status ... ok
+test exact_nd_tds_validates_reciprocal_neighbor_facets ... ok
+test exactcore_face_interior_site_subdivides_boundary_tetrahedron ... ok
+test exactcore_cocircular_rings_produce_complete_valid_delaunay_topology ... ok
+test exactcore_sub_ulp_decimal_quadrilateral_retains_all_sites ... ok
+test exactcore_three_by_three_lattices_produce_complete_valid_delaunay_topology ... ok
+test f64_boundary_rejects_infinity_before_exact_lift ... ok
+test f64_cdt_returns_inserted_intersection_point ... ok
+test f64_delaunay_lifts_larger_point_set_to_exact_path ... ok
+test f64_spatial_delaunay_lifts_and_preserves_input_indices ... ok
+test polygon_input_retains_ring_structural_facts ... ok
+test runtime_auto_uses_compiled_boundary_preserving_path ... ok
+test runtime_auto_uses_polygon_facts_to_avoid_cdt_on_degenerate_ring_edges ... ok
+test runtime_can_choose_cdt_polygon_path_explicitly ... ok
+test runtime_cdt_polygon_path_supports_holes ... ok
+test serde_roundtrips_public_topology_and_rebuilds_polygon_facts ... ok
+test exactcore_pythagorean_circle_prefix_produces_complete_valid_delaunay_topology ... ok
+
+test result: ok. 30 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s
+
+     Running tests/api_surface_coverage.rs (target/release/deps/api_surface_coverage-d579e5965c3abf00)
+
+running 7 tests
+test exact_rational_constructor_still_accepts_nontrivial_storage ... ok
+test cdt_records_and_validator_rejection_surfaces_are_covered ... ok
+test f64_boundary_validates_constraint_contracts_for_every_entrypoint ... ok
+test nd_public_value_tds_and_report_surfaces_are_executable ... ok
+test nd_complex_invalid_records_and_flip_reports_cover_contracts ... ok
+test public_error_polygon_and_value_surfaces_are_executable ... ok
+test runtime_selection_executes_borrowed_explicit_and_degenerate_paths ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/earcutr_differential.rs (target/release/deps/earcutr_differential-89e5e0ea1b3b02b1)
+
+running 6 tests
+test ordinary_concave_polygons_match_earcutr_topology_and_area ... ok
+test ordinary_convex_polygons_match_earcutr_topology_and_area ... ok
+test ordinary_holed_polygons_match_earcutr_topology_and_area ... ok
+test ordinary_axis_aligned_rectangles_match_earcutr ... ok
+test ordinary_reversed_outer_ring_matches_earcutr_topology_and_area ... ok
+test ordinary_rectangular_holes_match_earcutr ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/fuzz_properties.rs (target/release/deps/fuzz_properties-1bcce141d7f24763)
+
+running 10 tests
+test fuzz_cdt_accepts_constraints_that_are_already_delaunay_edges ... ok
+test fuzz_cdt_recovers_opposite_rectangle_diagonal_by_flips ... ok
+test fuzz_cdt_recovers_separated_closed_cycles_as_general_pslg ... ok
+test fuzz_cdt_recovers_three_edge_fans ... ok
+test fuzz_cdt_splits_constraint_through_existing_vertex ... ok
+test fuzz_cdt_splits_crossing_constraints_at_inserted_vertex ... ok
+test fuzz_exact_earcut_l_shapes_keep_index_topology ... ok
+test fuzz_cdt_recovers_two_finite_constraints ... ok
+test fuzz_nd_bistellar_flip_round_trips_on_cospherical_rectangles ... ok
+test fuzz_spatial_delaunay_remains_exact_and_index_preserving ... ok
+
+test result: ok. 10 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.05s
+
+     Running tests/predicate_policy.rs (target/release/deps/predicate_policy-80b267fcc7f9ff05)
+
+running 5 tests
+test delaunay_reports_terminal_policy_consumption ... ok
+test constrained_topology_reports_terminal_policy_consumption ... ok
+test exact_rational_work_stays_certified_under_both_policies ... ok
+test earcut_reports_terminal_policy_consumption ... ok
+test nd_oracle_reports_terminal_policy_consumption ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/readme.rs (target/release/deps/readme-47bd221428afc97a)
+
+running 2 tests
+test readme_quickstart_matches_the_runnable_example ... ok
+test readme_release_metadata_matches_the_manifest ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/real_representations.rs (target/release/deps/real_representations-3e1815823fe43aa0)
+
+running 8 tests
+test every_ordered_pair_of_real_certificates_crosses_planar_topology ... ok
+test every_real_certificate_crosses_earcut_and_diagnostics ... ok
+test every_real_certificate_crosses_nd_delaunay_and_validation ... ok
+test every_real_certificate_crosses_runtime_selection ... ok
+test finite_real_certificate_inventory_is_current ... ok
+test serialized_certificate_tags_make_the_private_inventory_drift_detecting ... ok
+test unresolved_opaque_terminal_form_still_crosses_policy_boundary ... ok
+test every_real_certificate_crosses_delaunay_and_cdt_surfaces ... ok
+
+test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.08s
+
+   Doc-tests hypertri
+
+running 4 tests
+test src/nd.rs - nd (line 17) ... ok
+test src/nd.rs - nd (line 41) ... ok
+test src/nd.rs - nd (line 94) ... ok
+test src/nd.rs - nd (line 64) ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+all doctests ran in 0.21s; merged doctests compilation took 0.21s

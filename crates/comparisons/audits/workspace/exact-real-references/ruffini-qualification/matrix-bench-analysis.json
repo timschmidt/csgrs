@@ -1,0 +1,187 @@
+{
+  "observations": 216,
+  "measured": 162,
+  "verifiedMeasuredProducts": 170136,
+  "families": [
+    {
+      "n": 4,
+      "bits": 32,
+      "cpuNsPerProduct": {
+        "naive": 29296.875,
+        "strassen1": 175781.25,
+        "strassen8": 26855.46875
+      },
+      "comparisons": {
+        "strassen1": {
+          "cpuRatioMedian": 6,
+          "cpuRatioBootstrap95": [
+            5.333333333333333,
+            7.2
+          ],
+          "wallRatioMedian": 6.105116640799398,
+          "pairs": 9
+        },
+        "strassen8": {
+          "cpuRatioMedian": 0.9166666666666666,
+          "cpuRatioBootstrap95": [
+            0.9166666666666666,
+            1.0909090909090908
+          ],
+          "wallRatioMedian": 0.9969270004413965,
+          "pairs": 9
+        }
+      }
+    },
+    {
+      "n": 4,
+      "bits": 256,
+      "cpuNsPerProduct": {
+        "naive": 34179.6875,
+        "strassen1": 195312.5,
+        "strassen8": 31738.28125
+      },
+      "comparisons": {
+        "strassen1": {
+          "cpuRatioMedian": 5.714285714285714,
+          "cpuRatioBootstrap95": [
+            4.571428571428571,
+            6.666666666666667
+          ],
+          "wallRatioMedian": 5.7942905058790375,
+          "pairs": 9
+        },
+        "strassen8": {
+          "cpuRatioMedian": 1,
+          "cpuRatioBootstrap95": [
+            0.9285714285714286,
+            1.1666666666666667
+          ],
+          "wallRatioMedian": 1.014490512464597,
+          "pairs": 9
+        }
+      }
+    },
+    {
+      "n": 8,
+      "bits": 32,
+      "cpuNsPerProduct": {
+        "naive": 107421.875,
+        "strassen1": 1406250,
+        "strassen8": 107421.875
+      },
+      "comparisons": {
+        "strassen1": {
+          "cpuRatioMedian": 13.090909090909092,
+          "cpuRatioBootstrap95": [
+            12,
+            14.545454545454545
+          ],
+          "wallRatioMedian": 13.08182141954666,
+          "pairs": 9
+        },
+        "strassen8": {
+          "cpuRatioMedian": 1,
+          "cpuRatioBootstrap95": [
+            0.9166666666666666,
+            1.0909090909090908
+          ],
+          "wallRatioMedian": 1.0170187460375397,
+          "pairs": 9
+        }
+      }
+    },
+    {
+      "n": 8,
+      "bits": 256,
+      "cpuNsPerProduct": {
+        "naive": 156250,
+        "strassen1": 1875000,
+        "strassen8": 146484.375
+      },
+      "comparisons": {
+        "strassen1": {
+          "cpuRatioMedian": 8,
+          "cpuRatioBootstrap95": [
+            8,
+            24
+          ],
+          "wallRatioMedian": 12.022961996810446,
+          "pairs": 9
+        },
+        "strassen8": {
+          "cpuRatioMedian": 0.9375,
+          "cpuRatioBootstrap95": [
+            0.6666666666666666,
+            1.75
+          ],
+          "wallRatioMedian": 1.0446911699271126,
+          "pairs": 9
+        }
+      }
+    },
+    {
+      "n": 16,
+      "bits": 32,
+      "cpuNsPerProduct": {
+        "naive": 468750,
+        "strassen1": 10000000,
+        "strassen8": 1171875
+      },
+      "comparisons": {
+        "strassen1": {
+          "cpuRatioMedian": 21.333333333333332,
+          "cpuRatioBootstrap95": [
+            16,
+            26.666666666666668
+          ],
+          "wallRatioMedian": 21.623967978520813,
+          "pairs": 9
+        },
+        "strassen8": {
+          "cpuRatioMedian": 2.5,
+          "cpuRatioBootstrap95": [
+            2.142857142857143,
+            2.6666666666666665
+          ],
+          "wallRatioMedian": 2.42790268447831,
+          "pairs": 9
+        }
+      }
+    },
+    {
+      "n": 16,
+      "bits": 256,
+      "cpuNsPerProduct": {
+        "naive": 703125,
+        "strassen1": 10000000,
+        "strassen8": 1484375
+      },
+      "comparisons": {
+        "strassen1": {
+          "cpuRatioMedian": 14.222222222222221,
+          "cpuRatioBootstrap95": [
+            12.8,
+            21.333333333333332
+          ],
+          "wallRatioMedian": 16.354612829231876,
+          "pairs": 9
+        },
+        "strassen8": {
+          "cpuRatioMedian": 2,
+          "cpuRatioBootstrap95": [
+            2,
+            2.375
+          ],
+          "wallRatioMedian": 2.1314022484078756,
+          "pairs": 9
+        }
+      }
+    }
+  ],
+  "cpuAffinity": 6,
+  "commonPoolParallelism": 1,
+  "warmupRoundsPerFamily": 3,
+  "measuredRoundsPerFamily": 9,
+  "scope": "donor-only prepared exact BigInteger matrix products plus full result verification; not Hyper speedups",
+  "newProductionChanges": 0
+}

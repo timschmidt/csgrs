@@ -1,0 +1,114 @@
+[
+  {
+    "command": [
+      "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve-b80ec207dbf62f0b",
+      "--exact",
+      "bezier_offset::conversion_tests::selected_axis_projection_owns_finite_ranges_and_incident_roots",
+      "--test-threads=1",
+      "--nocapture"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.03513099500560202,
+    "binary": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve-b80ec207dbf62f0b",
+    "sha256": "358b2e855b707f281aa5e3c96ba8b064a48533085c94c1d77709e99b8bfa2cff",
+    "log": "finite-circle-projection-focused-selected_axis_projection_owns_finite_ranges_and_incident_roots.log"
+  },
+  {
+    "command": [
+      "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve-b80ec207dbf62f0b",
+      "--exact",
+      "bezier_offset::conversion_tests::selected_projection_replays_selected_boundaries_under_the_original_policy",
+      "--test-threads=1",
+      "--nocapture"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.03216364802210592,
+    "binary": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve-b80ec207dbf62f0b",
+    "sha256": "358b2e855b707f281aa5e3c96ba8b064a48533085c94c1d77709e99b8bfa2cff",
+    "log": "finite-circle-projection-focused-selected_projection_replays_selected_boundaries_under_the_original_policy.log"
+  },
+  {
+    "command": [
+      "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve-b80ec207dbf62f0b",
+      "--exact",
+      "bezier_offset::conversion_tests::finite_fiber_roots_keep_selected_boundary_ownership",
+      "--test-threads=1",
+      "--nocapture"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.01588681200519204,
+    "binary": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve-b80ec207dbf62f0b",
+    "sha256": "358b2e855b707f281aa5e3c96ba8b064a48533085c94c1d77709e99b8bfa2cff",
+    "log": "finite-circle-projection-focused-finite_fiber_roots_keep_selected_boundary_ownership.log"
+  },
+  {
+    "command": [
+      "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve-b80ec207dbf62f0b",
+      "--exact",
+      "bezier_offset::conversion_tests::selected_fiber_interval_supports_exact_and_nonexact_exterior_roots",
+      "--test-threads=1",
+      "--nocapture"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.007750738994218409,
+    "binary": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve-b80ec207dbf62f0b",
+    "sha256": "358b2e855b707f281aa5e3c96ba8b064a48533085c94c1d77709e99b8bfa2cff",
+    "log": "finite-circle-projection-focused-selected_fiber_interval_supports_exact_and_nonexact_exterior_roots.log"
+  },
+  {
+    "command": [
+      "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve-b80ec207dbf62f0b",
+      "--exact",
+      "bezier_offset::conversion_tests::selected_circle_parallel_incident_coincidence_is_positive_dimensional",
+      "--test-threads=1",
+      "--nocapture"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.007738190004602075,
+    "binary": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve-b80ec207dbf62f0b",
+    "sha256": "358b2e855b707f281aa5e3c96ba8b064a48533085c94c1d77709e99b8bfa2cff",
+    "log": "finite-circle-projection-focused-selected_circle_parallel_incident_coincidence_is_positive_dimensional.log"
+  },
+  {
+    "command": [
+      "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve-b80ec207dbf62f0b",
+      "--exact",
+      "bezier_offset::conversion_tests::selected_affine_tangent_source_retains_incident_endpoint_and_contacts_locally",
+      "--test-threads=1",
+      "--nocapture"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.007628788007423282,
+    "binary": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve-b80ec207dbf62f0b",
+    "sha256": "358b2e855b707f281aa5e3c96ba8b064a48533085c94c1d77709e99b8bfa2cff",
+    "log": "finite-circle-projection-focused-selected_affine_tangent_source_retains_incident_endpoint_and_contacts_locally.log"
+  },
+  {
+    "command": [
+      "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve-b80ec207dbf62f0b",
+      "--exact",
+      "bezier_offset::conversion_tests::selected_parallel_normal_positive_dimensional_projection_rejects_conjugate_components",
+      "--test-threads=1",
+      "--nocapture"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.0075796009914483875,
+    "binary": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve-b80ec207dbf62f0b",
+    "sha256": "358b2e855b707f281aa5e3c96ba8b064a48533085c94c1d77709e99b8bfa2cff",
+    "log": "finite-circle-projection-focused-selected_parallel_normal_positive_dimensional_projection_rejects_conjugate_components.log"
+  },
+  {
+    "command": [
+      "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve-b80ec207dbf62f0b",
+      "--exact",
+      "bezier_offset::conversion_tests::incident_selected_fiber_projection_honors_the_requested_resultant_schedule",
+      "--test-threads=1",
+      "--nocapture"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.0035121290129609406,
+    "binary": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve-b80ec207dbf62f0b",
+    "sha256": "358b2e855b707f281aa5e3c96ba8b064a48533085c94c1d77709e99b8bfa2cff",
+    "log": "finite-circle-projection-focused-incident_selected_fiber_projection_honors_the_requested_resultant_schedule.log"
+  }
+]

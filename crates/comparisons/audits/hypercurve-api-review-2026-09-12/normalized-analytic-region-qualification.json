@@ -1,0 +1,109 @@
+{
+  "parent_hypercurve": "e62b786e86212403eee59cf18cd6bca13a4cdd7d",
+  "scope": "Migrate six analytic-parallel region fixtures to normalized CurvePath2 admission; locate edit corners by exact incidence and assert self-crossing normalization at admission.",
+  "builds": [
+    {
+      "kind": "check",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "check",
+        "--all-targets",
+        "--no-default-features",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.21403600502526388
+    },
+    {
+      "kind": "candidate-build",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "test",
+        "--release",
+        "--all-features",
+        "--test",
+        "hypercurve_analytic_parallel_region",
+        "--no-run",
+        "--message-format=json",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 2.0181866310012992
+    }
+  ],
+  "passed_tests": [
+    "algebraic_endpoint_analytic_parallel_chamfers_replay_selected_distance",
+    "analytic_parallel_chamfers_retain_normalized_cut_points",
+    "analytic_parallel_circle_fast_path_excludes_other_support_contacts",
+    "analytic_parallel_circle_tangency_retains_zero_cross_evidence",
+    "analytic_parallel_fragments_retain_exact_region_evidence_under_both_policies",
+    "analytic_parallel_intersects_independently_parameterized_circles_exactly",
+    "curve_trim_intersects_analytic_parallel_region_boundaries",
+    "curve_trim_retains_an_analytic_parallel_boundary_overlap",
+    "cusp_split_analytic_self_crossing_normalizes_at_admission",
+    "general_boundary_paths_preserve_analytic_carriers_and_boolean_reentry",
+    "radical_parallel_cusp_spans_connect_under_both_policies",
+    "retained_arc_fillet_preserves_past_center_tangent_orientation",
+    "retained_rational_arc_and_analytic_parallel_fillet_extends_exactly"
+  ],
+  "unresolved_tests": [
+    {
+      "variant": "candidate",
+      "name": "radical_parallel_cusp_offsets_exactly_under_both_policies",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/normalized-analytic-region-candidate3-libraries/candidate-build",
+        "--exact",
+        "radical_parallel_cusp_offsets_exactly_under_both_policies",
+        "--test-threads=1",
+        "--nocapture",
+        "--color",
+        "never"
+      ],
+      "returncode": "timeout",
+      "passed": false,
+      "elapsed_seconds": 300.00142645600135,
+      "sha256": "ffed2653c18ac281dfc68939af895bd58b0a4b89f2fb64946d869f2a3c451dbb",
+      "log": "normalized-analytic-region-candidate3-candidate-radical_parallel_cusp_offsets_exactly_under_both_policies.log"
+    },
+    {
+      "variant": "candidate",
+      "name": "retained_rational_arc_and_analytic_parallel_fillet_exactly",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/normalized-analytic-region-candidate3-libraries/candidate-build",
+        "--exact",
+        "retained_rational_arc_and_analytic_parallel_fillet_exactly",
+        "--test-threads=1",
+        "--nocapture",
+        "--color",
+        "never"
+      ],
+      "returncode": "timeout",
+      "passed": false,
+      "elapsed_seconds": 300.0101106899965,
+      "sha256": "ffed2653c18ac281dfc68939af895bd58b0a4b89f2fb64946d869f2a3c451dbb",
+      "log": "normalized-analytic-region-candidate3-candidate-retained_rational_arc_and_analytic_parallel_fillet_exactly.log"
+    }
+  ],
+  "baseline": "normalized-analytic-region-candidate2-runs.json",
+  "comparison": {
+    "failed": [
+      "radical_parallel_cusp_offsets_exactly_under_both_policies",
+      "retained_rational_arc_and_analytic_parallel_fillet_exactly"
+    ],
+    "baseline_failures": [
+      "radical_parallel_cusp_offsets_exactly_under_both_policies",
+      "retained_rational_arc_and_analytic_parallel_fillet_exactly"
+    ],
+    "new_failures": []
+  },
+  "isolated_sources": "normalized-analytic-region-candidate3-isolated-sources.json",
+  "working_sources": "normalized-analytic-region-candidate3-working-sources.json",
+  "candidate_binary_sha256": "ffed2653c18ac281dfc68939af895bd58b0a4b89f2fb64946d869f2a3c451dbb",
+  "limitations": [
+    "Two tests timed out at 300 seconds on both committed parent and changed candidate; they remain required unfinished closure work.",
+    "Candidate2 runtime evidence rejected because Cargo reused the parent executable; see normalized-analytic-region-candidate2-rejection.json. Candidate3 requires a fresh Cargo compilation, a distinct executable hash, and the renamed test in its listing.",
+    "Pinned Hyperreal used; other-session working changes untouched. Unqualified mapped-point inverse changes in src/bezier_offset.rs excluded."
+  ]
+}

@@ -1,0 +1,345 @@
+Start testing: Sep 04 13:34 EDT
+----------------------------------------------------------
+1/19 Testing: real_algorithm_iterator_unit_test
+1/19 Test: real_algorithm_iterator_unit_test
+Command: "/tmp/boost-real-2018-compat2/real_algorithm_iterator_unit_test"
+Directory: /tmp/boost-real-2018-compat2
+"real_algorithm_iterator_unit_test" start time: Sep 04 13:34 EDT
+Output:
+----------------------------------------------------------
+===============================================================================
+All tests passed (135 assertions in 2 test cases)
+
+<end of output>
+Test time =   0.00 sec
+----------------------------------------------------------
+Test Passed.
+"real_algorithm_iterator_unit_test" end time: Sep 04 13:34 EDT
+"real_algorithm_iterator_unit_test" time elapsed: 00:00:00
+----------------------------------------------------------
+
+3/19 Testing: real_explicit_constructors_unit_test
+3/19 Test: real_explicit_constructors_unit_test
+Command: "/tmp/boost-real-2018-compat2/real_explicit_constructors_unit_test"
+Directory: /tmp/boost-real-2018-compat2
+"real_explicit_constructors_unit_test" start time: Sep 04 13:34 EDT
+Output:
+----------------------------------------------------------
+===============================================================================
+All tests passed (1296 assertions in 1 test case)
+
+<end of output>
+Test time =   0.00 sec
+----------------------------------------------------------
+Test Passed.
+"real_explicit_constructors_unit_test" end time: Sep 04 13:34 EDT
+"real_explicit_constructors_unit_test" time elapsed: 00:00:00
+----------------------------------------------------------
+
+2/19 Testing: real_eq_operator_test
+2/19 Test: real_eq_operator_test
+Command: "/tmp/boost-real-2018-compat2/real_eq_operator_test"
+Directory: /tmp/boost-real-2018-compat2
+"real_eq_operator_test" start time: Sep 04 13:34 EDT
+Output:
+----------------------------------------------------------
+===============================================================================
+All tests passed (97 assertions in 1 test case)
+
+<end of output>
+Test time =   0.00 sec
+----------------------------------------------------------
+Test Passed.
+"real_eq_operator_test" end time: Sep 04 13:34 EDT
+"real_eq_operator_test" time elapsed: 00:00:00
+----------------------------------------------------------
+
+4/19 Testing: real_explicit_iterator_unit_test
+4/19 Test: real_explicit_iterator_unit_test
+Command: "/tmp/boost-real-2018-compat2/real_explicit_iterator_unit_test"
+Directory: /tmp/boost-real-2018-compat2
+"real_explicit_iterator_unit_test" start time: Sep 04 13:34 EDT
+Output:
+----------------------------------------------------------
+===============================================================================
+All tests passed (144 assertions in 2 test cases)
+
+<end of output>
+Test time =   0.00 sec
+----------------------------------------------------------
+Test Passed.
+"real_explicit_iterator_unit_test" end time: Sep 04 13:34 EDT
+"real_explicit_iterator_unit_test" time elapsed: 00:00:00
+----------------------------------------------------------
+
+6/19 Testing: real_iterator_addition_addition_test
+6/19 Test: real_iterator_addition_addition_test
+Command: "/tmp/boost-real-2018-compat2/real_iterator_addition_addition_test"
+Directory: /tmp/boost-real-2018-compat2
+"real_iterator_addition_addition_test" start time: Sep 04 13:34 EDT
+Output:
+----------------------------------------------------------
+===============================================================================
+All tests passed (16 assertions in 1 test case)
+
+<end of output>
+Test time =   0.00 sec
+----------------------------------------------------------
+Test Passed.
+"real_iterator_addition_addition_test" end time: Sep 04 13:34 EDT
+"real_iterator_addition_addition_test" time elapsed: 00:00:00
+----------------------------------------------------------
+
+5/19 Testing: real_greater_than_operator_test
+5/19 Test: real_greater_than_operator_test
+Command: "/tmp/boost-real-2018-compat2/real_greater_than_operator_test"
+Directory: /tmp/boost-real-2018-compat2
+"real_greater_than_operator_test" start time: Sep 04 13:34 EDT
+Output:
+----------------------------------------------------------
+===============================================================================
+All tests passed (97 assertions in 1 test case)
+
+<end of output>
+Test time =   0.00 sec
+----------------------------------------------------------
+Test Passed.
+"real_greater_than_operator_test" end time: Sep 04 13:34 EDT
+"real_greater_than_operator_test" time elapsed: 00:00:00
+----------------------------------------------------------
+
+7/19 Testing: real_iterator_addition_multiplication_test
+7/19 Test: real_iterator_addition_multiplication_test
+Command: "/tmp/boost-real-2018-compat2/real_iterator_addition_multiplication_test"
+Directory: /tmp/boost-real-2018-compat2
+"real_iterator_addition_multiplication_test" start time: Sep 04 13:34 EDT
+Output:
+----------------------------------------------------------
+===============================================================================
+All tests passed (16 assertions in 1 test case)
+
+<end of output>
+Test time =   0.00 sec
+----------------------------------------------------------
+Test Passed.
+"real_iterator_addition_multiplication_test" end time: Sep 04 13:34 EDT
+"real_iterator_addition_multiplication_test" time elapsed: 00:00:00
+----------------------------------------------------------
+
+8/19 Testing: real_iterator_addition_subtraction_test
+8/19 Test: real_iterator_addition_subtraction_test
+Command: "/tmp/boost-real-2018-compat2/real_iterator_addition_subtraction_test"
+Directory: /tmp/boost-real-2018-compat2
+"real_iterator_addition_subtraction_test" start time: Sep 04 13:34 EDT
+Output:
+----------------------------------------------------------
+===============================================================================
+All tests passed (16 assertions in 1 test case)
+
+<end of output>
+Test time =   0.00 sec
+----------------------------------------------------------
+Test Passed.
+"real_iterator_addition_subtraction_test" end time: Sep 04 13:34 EDT
+"real_iterator_addition_subtraction_test" time elapsed: 00:00:00
+----------------------------------------------------------
+
+9/19 Testing: real_iterator_addition_test
+9/19 Test: real_iterator_addition_test
+Command: "/tmp/boost-real-2018-compat2/real_iterator_addition_test"
+Directory: /tmp/boost-real-2018-compat2
+"real_iterator_addition_test" start time: Sep 04 13:34 EDT
+Output:
+----------------------------------------------------------
+===============================================================================
+All tests passed (144 assertions in 1 test case)
+
+<end of output>
+Test time =   0.00 sec
+----------------------------------------------------------
+Test Passed.
+"real_iterator_addition_test" end time: Sep 04 13:34 EDT
+"real_iterator_addition_test" time elapsed: 00:00:00
+----------------------------------------------------------
+
+10/19 Testing: real_iterator_multiplication_addition_test
+10/19 Test: real_iterator_multiplication_addition_test
+Command: "/tmp/boost-real-2018-compat2/real_iterator_multiplication_addition_test"
+Directory: /tmp/boost-real-2018-compat2
+"real_iterator_multiplication_addition_test" start time: Sep 04 13:34 EDT
+Output:
+----------------------------------------------------------
+===============================================================================
+All tests passed (16 assertions in 1 test case)
+
+<end of output>
+Test time =   0.00 sec
+----------------------------------------------------------
+Test Passed.
+"real_iterator_multiplication_addition_test" end time: Sep 04 13:34 EDT
+"real_iterator_multiplication_addition_test" time elapsed: 00:00:00
+----------------------------------------------------------
+
+11/19 Testing: real_iterator_multiplication_multiplication_test
+11/19 Test: real_iterator_multiplication_multiplication_test
+Command: "/tmp/boost-real-2018-compat2/real_iterator_multiplication_multiplication_test"
+Directory: /tmp/boost-real-2018-compat2
+"real_iterator_multiplication_multiplication_test" start time: Sep 04 13:34 EDT
+Output:
+----------------------------------------------------------
+===============================================================================
+All tests passed (16 assertions in 1 test case)
+
+<end of output>
+Test time =   0.00 sec
+----------------------------------------------------------
+Test Passed.
+"real_iterator_multiplication_multiplication_test" end time: Sep 04 13:34 EDT
+"real_iterator_multiplication_multiplication_test" time elapsed: 00:00:00
+----------------------------------------------------------
+
+12/19 Testing: real_iterator_multiplication_subtraction_test
+12/19 Test: real_iterator_multiplication_subtraction_test
+Command: "/tmp/boost-real-2018-compat2/real_iterator_multiplication_subtraction_test"
+Directory: /tmp/boost-real-2018-compat2
+"real_iterator_multiplication_subtraction_test" start time: Sep 04 13:34 EDT
+Output:
+----------------------------------------------------------
+===============================================================================
+All tests passed (16 assertions in 1 test case)
+
+<end of output>
+Test time =   0.00 sec
+----------------------------------------------------------
+Test Passed.
+"real_iterator_multiplication_subtraction_test" end time: Sep 04 13:34 EDT
+"real_iterator_multiplication_subtraction_test" time elapsed: 00:00:00
+----------------------------------------------------------
+
+13/19 Testing: real_iterator_multiplication_test
+13/19 Test: real_iterator_multiplication_test
+Command: "/tmp/boost-real-2018-compat2/real_iterator_multiplication_test"
+Directory: /tmp/boost-real-2018-compat2
+"real_iterator_multiplication_test" start time: Sep 04 13:34 EDT
+Output:
+----------------------------------------------------------
+===============================================================================
+All tests passed (144 assertions in 1 test case)
+
+<end of output>
+Test time =   0.00 sec
+----------------------------------------------------------
+Test Passed.
+"real_iterator_multiplication_test" end time: Sep 04 13:34 EDT
+"real_iterator_multiplication_test" time elapsed: 00:00:00
+----------------------------------------------------------
+
+14/19 Testing: real_iterator_subtraction_addition_test
+14/19 Test: real_iterator_subtraction_addition_test
+Command: "/tmp/boost-real-2018-compat2/real_iterator_subtraction_addition_test"
+Directory: /tmp/boost-real-2018-compat2
+"real_iterator_subtraction_addition_test" start time: Sep 04 13:34 EDT
+Output:
+----------------------------------------------------------
+===============================================================================
+All tests passed (16 assertions in 1 test case)
+
+<end of output>
+Test time =   0.00 sec
+----------------------------------------------------------
+Test Passed.
+"real_iterator_subtraction_addition_test" end time: Sep 04 13:34 EDT
+"real_iterator_subtraction_addition_test" time elapsed: 00:00:00
+----------------------------------------------------------
+
+15/19 Testing: real_iterator_subtraction_multiplication_test
+15/19 Test: real_iterator_subtraction_multiplication_test
+Command: "/tmp/boost-real-2018-compat2/real_iterator_subtraction_multiplication_test"
+Directory: /tmp/boost-real-2018-compat2
+"real_iterator_subtraction_multiplication_test" start time: Sep 04 13:34 EDT
+Output:
+----------------------------------------------------------
+===============================================================================
+All tests passed (16 assertions in 1 test case)
+
+<end of output>
+Test time =   0.00 sec
+----------------------------------------------------------
+Test Passed.
+"real_iterator_subtraction_multiplication_test" end time: Sep 04 13:34 EDT
+"real_iterator_subtraction_multiplication_test" time elapsed: 00:00:00
+----------------------------------------------------------
+
+16/19 Testing: real_iterator_subtraction_subtraction_test
+16/19 Test: real_iterator_subtraction_subtraction_test
+Command: "/tmp/boost-real-2018-compat2/real_iterator_subtraction_subtraction_test"
+Directory: /tmp/boost-real-2018-compat2
+"real_iterator_subtraction_subtraction_test" start time: Sep 04 13:34 EDT
+Output:
+----------------------------------------------------------
+===============================================================================
+All tests passed (16 assertions in 1 test case)
+
+<end of output>
+Test time =   0.00 sec
+----------------------------------------------------------
+Test Passed.
+"real_iterator_subtraction_subtraction_test" end time: Sep 04 13:34 EDT
+"real_iterator_subtraction_subtraction_test" time elapsed: 00:00:00
+----------------------------------------------------------
+
+17/19 Testing: real_iterator_subtraction_test
+17/19 Test: real_iterator_subtraction_test
+Command: "/tmp/boost-real-2018-compat2/real_iterator_subtraction_test"
+Directory: /tmp/boost-real-2018-compat2
+"real_iterator_subtraction_test" start time: Sep 04 13:34 EDT
+Output:
+----------------------------------------------------------
+===============================================================================
+All tests passed (144 assertions in 1 test case)
+
+<end of output>
+Test time =   0.00 sec
+----------------------------------------------------------
+Test Passed.
+"real_iterator_subtraction_test" end time: Sep 04 13:34 EDT
+"real_iterator_subtraction_test" time elapsed: 00:00:00
+----------------------------------------------------------
+
+19/19 Testing: vector_helpers_test
+19/19 Test: vector_helpers_test
+Command: "/tmp/boost-real-2018-compat2/vector_helpers_test"
+Directory: /tmp/boost-real-2018-compat2
+"vector_helpers_test" start time: Sep 04 13:34 EDT
+Output:
+----------------------------------------------------------
+===============================================================================
+All tests passed (180 assertions in 1 test case)
+
+<end of output>
+Test time =   0.00 sec
+----------------------------------------------------------
+Test Passed.
+"vector_helpers_test" end time: Sep 04 13:34 EDT
+"vector_helpers_test" time elapsed: 00:00:00
+----------------------------------------------------------
+
+18/19 Testing: real_lower_than_operator_test
+18/19 Test: real_lower_than_operator_test
+Command: "/tmp/boost-real-2018-compat2/real_lower_than_operator_test"
+Directory: /tmp/boost-real-2018-compat2
+"real_lower_than_operator_test" start time: Sep 04 13:34 EDT
+Output:
+----------------------------------------------------------
+===============================================================================
+All tests passed (97 assertions in 1 test case)
+
+<end of output>
+Test time =   0.00 sec
+----------------------------------------------------------
+Test Passed.
+"real_lower_than_operator_test" end time: Sep 04 13:34 EDT
+"real_lower_than_operator_test" time elapsed: 00:00:00
+----------------------------------------------------------
+
+End testing: Sep 04 13:34 EDT

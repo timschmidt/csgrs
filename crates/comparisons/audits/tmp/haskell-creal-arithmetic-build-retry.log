@@ -1,0 +1,4 @@
+[1 of 4] Compiling Data.CReal.Internal ( /home/tim/Documents/GitHub/workspace/exact-real-references/haskell-exact-real/src/Data/CReal/Internal.hs, /tmp/haskell-creal-audit.rafb8h/arithmetic-build/Data/CReal/Internal.o ) [Missing object file]
+[2 of 4] Compiling Data.CReal.Converge ( /home/tim/Documents/GitHub/workspace/exact-real-references/haskell-exact-real/src/Data/CReal/Converge.hs, /tmp/haskell-creal-audit.rafb8h/arithmetic-build/Data/CReal/Converge.o )
+[3 of 4] Compiling Main             ( /tmp/haskell-creal-audit.rafb8h/ArithmeticProbe.hs, /tmp/haskell-creal-audit.rafb8h/arithmetic-build/Main.o )
+[4 of 4] Linking /tmp/haskell-creal-audit.rafb8h/arithmetic-probe

@@ -1,0 +1,7 @@
+Retain finite conic cuts through the common exact Bezier carrier
+
+A finite conic can acquire an infinite intermediate control during exact subdivision. Native rational-quadratic cuts now return the existing classified BezierSubcurve2 carrier, preserving homogeneous quadratic results when that affine control does not exist. Finite-control results retain the compact conic representation and supporting circle/tangent evidence.
+
+Construct subranges directly with the quadratic blossom. Reuse HomogeneousControl2 and exact projection, remove the private de Casteljau control/net implementation, duplicate overlap/measure dispatchers and redundant constructor forwarding layer. Shared split materialization propagates uncertainty, including endpoint poles. Update all callers directly.
+
+Validation: 122 release cases across four pinned binaries, with byte-identical sources verified on promotion, plus six caller/lint/format/fuzz/docs/downstream checks. New guards cover public Curve2 cuts, reversal, negative projective scale, subsequent cuts, retained circle/tangent identity and exterior pole exclusion. Existing conic areas, first moments and arrangement semantics pass.

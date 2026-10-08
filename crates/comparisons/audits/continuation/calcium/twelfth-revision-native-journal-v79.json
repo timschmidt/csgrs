@@ -1,0 +1,965 @@
+{
+  "checkpoint": 79,
+  "runs": [
+    {
+      "phase": "pilot",
+      "round": 0,
+      "variant": "baseline",
+      "mode": "cpu",
+      "tag": "twelfth-revision-pilot-0-baseline-v79",
+      "plan": "twelfth-revision-pilot-0-baseline-v79-plan.json",
+      "planSha256": "5d4c8551ff4e59c4ca8cbbbfd888f4c9581ed1367222d72887319dc6e84c36ae",
+      "groups": 576
+    },
+    {
+      "phase": "pilot",
+      "round": 0,
+      "variant": "prior",
+      "mode": "cpu",
+      "tag": "twelfth-revision-pilot-0-prior-v79",
+      "plan": "twelfth-revision-pilot-0-prior-v79-plan.json",
+      "planSha256": "5d4c8551ff4e59c4ca8cbbbfd888f4c9581ed1367222d72887319dc6e84c36ae",
+      "groups": 576
+    },
+    {
+      "phase": "pilot",
+      "round": 0,
+      "variant": "candidate",
+      "mode": "cpu",
+      "tag": "twelfth-revision-pilot-0-candidate-v79",
+      "plan": "twelfth-revision-pilot-0-candidate-v79-plan.json",
+      "planSha256": "5d4c8551ff4e59c4ca8cbbbfd888f4c9581ed1367222d72887319dc6e84c36ae",
+      "groups": 576
+    },
+    {
+      "phase": "pilot",
+      "round": 1,
+      "variant": "candidate",
+      "mode": "cpu",
+      "tag": "twelfth-revision-pilot-1-candidate-v79",
+      "plan": "twelfth-revision-pilot-1-candidate-v79-plan.json",
+      "planSha256": "9dbab81a41b50d47f6d634cfec96231da7ae7aa4e516de090b52e8d401decd03",
+      "groups": 576
+    },
+    {
+      "phase": "pilot",
+      "round": 1,
+      "variant": "prior",
+      "mode": "cpu",
+      "tag": "twelfth-revision-pilot-1-prior-v79",
+      "plan": "twelfth-revision-pilot-1-prior-v79-plan.json",
+      "planSha256": "9dbab81a41b50d47f6d634cfec96231da7ae7aa4e516de090b52e8d401decd03",
+      "groups": 576
+    },
+    {
+      "phase": "pilot",
+      "round": 1,
+      "variant": "baseline",
+      "mode": "cpu",
+      "tag": "twelfth-revision-pilot-1-baseline-v79",
+      "plan": "twelfth-revision-pilot-1-baseline-v79-plan.json",
+      "planSha256": "9dbab81a41b50d47f6d634cfec96231da7ae7aa4e516de090b52e8d401decd03",
+      "groups": 576
+    },
+    {
+      "phase": "cpu",
+      "round": 0,
+      "variant": "baseline",
+      "mode": "cpu",
+      "tag": "twelfth-revision-cpu-0-baseline-v79",
+      "plan": "twelfth-revision-cpu-0-baseline-v79-plan.json",
+      "planSha256": "16dea606095df8a57dc5353db2b7d666a854772143eeacab0bd8725e26c01798",
+      "groups": 576
+    },
+    {
+      "phase": "cpu",
+      "round": 0,
+      "variant": "candidate",
+      "mode": "cpu",
+      "tag": "twelfth-revision-cpu-0-candidate-v79",
+      "plan": "twelfth-revision-cpu-0-candidate-v79-plan.json",
+      "planSha256": "16dea606095df8a57dc5353db2b7d666a854772143eeacab0bd8725e26c01798",
+      "groups": 576
+    },
+    {
+      "phase": "cpu",
+      "round": 0,
+      "variant": "prior",
+      "mode": "cpu",
+      "tag": "twelfth-revision-cpu-0-prior-v79",
+      "plan": "twelfth-revision-cpu-0-prior-v79-plan.json",
+      "planSha256": "16dea606095df8a57dc5353db2b7d666a854772143eeacab0bd8725e26c01798",
+      "groups": 576
+    },
+    {
+      "phase": "cpu",
+      "round": 1,
+      "variant": "baseline",
+      "mode": "cpu",
+      "tag": "twelfth-revision-cpu-1-baseline-v79",
+      "plan": "twelfth-revision-cpu-1-baseline-v79-plan.json",
+      "planSha256": "de68876ca78d06e0d8931f12e2c64088c34f6136e389fbabefa9d823d156b416",
+      "groups": 576
+    },
+    {
+      "phase": "cpu",
+      "round": 1,
+      "variant": "candidate",
+      "mode": "cpu",
+      "tag": "twelfth-revision-cpu-1-candidate-v79",
+      "plan": "twelfth-revision-cpu-1-candidate-v79-plan.json",
+      "planSha256": "de68876ca78d06e0d8931f12e2c64088c34f6136e389fbabefa9d823d156b416",
+      "groups": 576
+    },
+    {
+      "phase": "cpu",
+      "round": 1,
+      "variant": "prior",
+      "mode": "cpu",
+      "tag": "twelfth-revision-cpu-1-prior-v79",
+      "plan": "twelfth-revision-cpu-1-prior-v79-plan.json",
+      "planSha256": "de68876ca78d06e0d8931f12e2c64088c34f6136e389fbabefa9d823d156b416",
+      "groups": 576
+    },
+    {
+      "phase": "cpu",
+      "round": 2,
+      "variant": "candidate",
+      "mode": "cpu",
+      "tag": "twelfth-revision-cpu-2-candidate-v79",
+      "plan": "twelfth-revision-cpu-2-candidate-v79-plan.json",
+      "planSha256": "f9562f0995e0c8ba379395273d096a939b729ea64d30e9978b6d838ec0c5e501",
+      "groups": 576
+    },
+    {
+      "phase": "cpu",
+      "round": 2,
+      "variant": "prior",
+      "mode": "cpu",
+      "tag": "twelfth-revision-cpu-2-prior-v79",
+      "plan": "twelfth-revision-cpu-2-prior-v79-plan.json",
+      "planSha256": "f9562f0995e0c8ba379395273d096a939b729ea64d30e9978b6d838ec0c5e501",
+      "groups": 576
+    },
+    {
+      "phase": "cpu",
+      "round": 2,
+      "variant": "baseline",
+      "mode": "cpu",
+      "tag": "twelfth-revision-cpu-2-baseline-v79",
+      "plan": "twelfth-revision-cpu-2-baseline-v79-plan.json",
+      "planSha256": "f9562f0995e0c8ba379395273d096a939b729ea64d30e9978b6d838ec0c5e501",
+      "groups": 576
+    },
+    {
+      "phase": "cpu",
+      "round": 3,
+      "variant": "prior",
+      "mode": "cpu",
+      "tag": "twelfth-revision-cpu-3-prior-v79",
+      "plan": "twelfth-revision-cpu-3-prior-v79-plan.json",
+      "planSha256": "3649c9406d662dd6a3995b30b16ff11ba648ae025a77f1b3a8b531e9a40857b6",
+      "groups": 576
+    },
+    {
+      "phase": "cpu",
+      "round": 3,
+      "variant": "candidate",
+      "mode": "cpu",
+      "tag": "twelfth-revision-cpu-3-candidate-v79",
+      "plan": "twelfth-revision-cpu-3-candidate-v79-plan.json",
+      "planSha256": "3649c9406d662dd6a3995b30b16ff11ba648ae025a77f1b3a8b531e9a40857b6",
+      "groups": 576
+    },
+    {
+      "phase": "cpu",
+      "round": 3,
+      "variant": "baseline",
+      "mode": "cpu",
+      "tag": "twelfth-revision-cpu-3-baseline-v79",
+      "plan": "twelfth-revision-cpu-3-baseline-v79-plan.json",
+      "planSha256": "3649c9406d662dd6a3995b30b16ff11ba648ae025a77f1b3a8b531e9a40857b6",
+      "groups": 576
+    },
+    {
+      "phase": "cpu",
+      "round": 4,
+      "variant": "candidate",
+      "mode": "cpu",
+      "tag": "twelfth-revision-cpu-4-candidate-v79",
+      "plan": "twelfth-revision-cpu-4-candidate-v79-plan.json",
+      "planSha256": "1b93a5a1caefb36c6d5efebc6374833491f87b6036a32059b08f51f994a2ec01",
+      "groups": 576
+    },
+    {
+      "phase": "cpu",
+      "round": 4,
+      "variant": "baseline",
+      "mode": "cpu",
+      "tag": "twelfth-revision-cpu-4-baseline-v79",
+      "plan": "twelfth-revision-cpu-4-baseline-v79-plan.json",
+      "planSha256": "1b93a5a1caefb36c6d5efebc6374833491f87b6036a32059b08f51f994a2ec01",
+      "groups": 576
+    },
+    {
+      "phase": "cpu",
+      "round": 4,
+      "variant": "prior",
+      "mode": "cpu",
+      "tag": "twelfth-revision-cpu-4-prior-v79",
+      "plan": "twelfth-revision-cpu-4-prior-v79-plan.json",
+      "planSha256": "1b93a5a1caefb36c6d5efebc6374833491f87b6036a32059b08f51f994a2ec01",
+      "groups": 576
+    },
+    {
+      "phase": "cpu",
+      "round": 5,
+      "variant": "baseline",
+      "mode": "cpu",
+      "tag": "twelfth-revision-cpu-5-baseline-v79",
+      "plan": "twelfth-revision-cpu-5-baseline-v79-plan.json",
+      "planSha256": "00e95d384442a2f7427f65976ab5d9b42d7dfe1c366ef55f8628e4e15188e52c",
+      "groups": 576
+    },
+    {
+      "phase": "cpu",
+      "round": 5,
+      "variant": "candidate",
+      "mode": "cpu",
+      "tag": "twelfth-revision-cpu-5-candidate-v79",
+      "plan": "twelfth-revision-cpu-5-candidate-v79-plan.json",
+      "planSha256": "00e95d384442a2f7427f65976ab5d9b42d7dfe1c366ef55f8628e4e15188e52c",
+      "groups": 576
+    },
+    {
+      "phase": "cpu",
+      "round": 5,
+      "variant": "prior",
+      "mode": "cpu",
+      "tag": "twelfth-revision-cpu-5-prior-v79",
+      "plan": "twelfth-revision-cpu-5-prior-v79-plan.json",
+      "planSha256": "00e95d384442a2f7427f65976ab5d9b42d7dfe1c366ef55f8628e4e15188e52c",
+      "groups": 576
+    },
+    {
+      "phase": "cpu",
+      "round": 6,
+      "variant": "prior",
+      "mode": "cpu",
+      "tag": "twelfth-revision-cpu-6-prior-v79",
+      "plan": "twelfth-revision-cpu-6-prior-v79-plan.json",
+      "planSha256": "63e8fcae8ccbcbce28f5413d5d50b52bab749ac60f013576c736fd8c34cf94d6",
+      "groups": 576
+    },
+    {
+      "phase": "cpu",
+      "round": 6,
+      "variant": "candidate",
+      "mode": "cpu",
+      "tag": "twelfth-revision-cpu-6-candidate-v79",
+      "plan": "twelfth-revision-cpu-6-candidate-v79-plan.json",
+      "planSha256": "63e8fcae8ccbcbce28f5413d5d50b52bab749ac60f013576c736fd8c34cf94d6",
+      "groups": 576
+    },
+    {
+      "phase": "cpu",
+      "round": 6,
+      "variant": "baseline",
+      "mode": "cpu",
+      "tag": "twelfth-revision-cpu-6-baseline-v79",
+      "plan": "twelfth-revision-cpu-6-baseline-v79-plan.json",
+      "planSha256": "63e8fcae8ccbcbce28f5413d5d50b52bab749ac60f013576c736fd8c34cf94d6",
+      "groups": 576
+    },
+    {
+      "phase": "cpu",
+      "round": 7,
+      "variant": "candidate",
+      "mode": "cpu",
+      "tag": "twelfth-revision-cpu-7-candidate-v79",
+      "plan": "twelfth-revision-cpu-7-candidate-v79-plan.json",
+      "planSha256": "c581d6bb616c414d2afd63db021009c249a3c726e49ede781337dda30071f751",
+      "groups": 576
+    },
+    {
+      "phase": "cpu",
+      "round": 7,
+      "variant": "prior",
+      "mode": "cpu",
+      "tag": "twelfth-revision-cpu-7-prior-v79",
+      "plan": "twelfth-revision-cpu-7-prior-v79-plan.json",
+      "planSha256": "c581d6bb616c414d2afd63db021009c249a3c726e49ede781337dda30071f751",
+      "groups": 576
+    },
+    {
+      "phase": "cpu",
+      "round": 7,
+      "variant": "baseline",
+      "mode": "cpu",
+      "tag": "twelfth-revision-cpu-7-baseline-v79",
+      "plan": "twelfth-revision-cpu-7-baseline-v79-plan.json",
+      "planSha256": "c581d6bb616c414d2afd63db021009c249a3c726e49ede781337dda30071f751",
+      "groups": 576
+    },
+    {
+      "phase": "cpu",
+      "round": 8,
+      "variant": "candidate",
+      "mode": "cpu",
+      "tag": "twelfth-revision-cpu-8-candidate-v79",
+      "plan": "twelfth-revision-cpu-8-candidate-v79-plan.json",
+      "planSha256": "d9c77fc8b1b08bdc85bed96268c825c8caeaba0a796c80ba9576fb81b693403b",
+      "groups": 576
+    },
+    {
+      "phase": "cpu",
+      "round": 8,
+      "variant": "baseline",
+      "mode": "cpu",
+      "tag": "twelfth-revision-cpu-8-baseline-v79",
+      "plan": "twelfth-revision-cpu-8-baseline-v79-plan.json",
+      "planSha256": "d9c77fc8b1b08bdc85bed96268c825c8caeaba0a796c80ba9576fb81b693403b",
+      "groups": 576
+    },
+    {
+      "phase": "cpu",
+      "round": 8,
+      "variant": "prior",
+      "mode": "cpu",
+      "tag": "twelfth-revision-cpu-8-prior-v79",
+      "plan": "twelfth-revision-cpu-8-prior-v79-plan.json",
+      "planSha256": "d9c77fc8b1b08bdc85bed96268c825c8caeaba0a796c80ba9576fb81b693403b",
+      "groups": 576
+    },
+    {
+      "phase": "cpu",
+      "round": 9,
+      "variant": "prior",
+      "mode": "cpu",
+      "tag": "twelfth-revision-cpu-9-prior-v79",
+      "plan": "twelfth-revision-cpu-9-prior-v79-plan.json",
+      "planSha256": "a8a845f9dff6a19ba95c9bb1e622ef4ee46edd37d8b18353ee6150f376668570",
+      "groups": 576
+    },
+    {
+      "phase": "cpu",
+      "round": 9,
+      "variant": "baseline",
+      "mode": "cpu",
+      "tag": "twelfth-revision-cpu-9-baseline-v79",
+      "plan": "twelfth-revision-cpu-9-baseline-v79-plan.json",
+      "planSha256": "a8a845f9dff6a19ba95c9bb1e622ef4ee46edd37d8b18353ee6150f376668570",
+      "groups": 576
+    },
+    {
+      "phase": "cpu",
+      "round": 9,
+      "variant": "candidate",
+      "mode": "cpu",
+      "tag": "twelfth-revision-cpu-9-candidate-v79",
+      "plan": "twelfth-revision-cpu-9-candidate-v79-plan.json",
+      "planSha256": "a8a845f9dff6a19ba95c9bb1e622ef4ee46edd37d8b18353ee6150f376668570",
+      "groups": 576
+    },
+    {
+      "phase": "cpu",
+      "round": 10,
+      "variant": "candidate",
+      "mode": "cpu",
+      "tag": "twelfth-revision-cpu-10-candidate-v79",
+      "plan": "twelfth-revision-cpu-10-candidate-v79-plan.json",
+      "planSha256": "9e54787b960b43673d775d7dfe54ddc5dad2a5d0d6bf1d6000c66864a16197e9",
+      "groups": 576
+    },
+    {
+      "phase": "cpu",
+      "round": 10,
+      "variant": "prior",
+      "mode": "cpu",
+      "tag": "twelfth-revision-cpu-10-prior-v79",
+      "plan": "twelfth-revision-cpu-10-prior-v79-plan.json",
+      "planSha256": "9e54787b960b43673d775d7dfe54ddc5dad2a5d0d6bf1d6000c66864a16197e9",
+      "groups": 576
+    },
+    {
+      "phase": "cpu",
+      "round": 10,
+      "variant": "baseline",
+      "mode": "cpu",
+      "tag": "twelfth-revision-cpu-10-baseline-v79",
+      "plan": "twelfth-revision-cpu-10-baseline-v79-plan.json",
+      "planSha256": "9e54787b960b43673d775d7dfe54ddc5dad2a5d0d6bf1d6000c66864a16197e9",
+      "groups": 576
+    },
+    {
+      "phase": "cpu",
+      "round": 11,
+      "variant": "baseline",
+      "mode": "cpu",
+      "tag": "twelfth-revision-cpu-11-baseline-v79",
+      "plan": "twelfth-revision-cpu-11-baseline-v79-plan.json",
+      "planSha256": "d326710207e4a0af40f0e0cdbca72b39098318cd195c935fa9f53ce164473d44",
+      "groups": 576
+    },
+    {
+      "phase": "cpu",
+      "round": 11,
+      "variant": "candidate",
+      "mode": "cpu",
+      "tag": "twelfth-revision-cpu-11-candidate-v79",
+      "plan": "twelfth-revision-cpu-11-candidate-v79-plan.json",
+      "planSha256": "d326710207e4a0af40f0e0cdbca72b39098318cd195c935fa9f53ce164473d44",
+      "groups": 576
+    },
+    {
+      "phase": "cpu",
+      "round": 11,
+      "variant": "prior",
+      "mode": "cpu",
+      "tag": "twelfth-revision-cpu-11-prior-v79",
+      "plan": "twelfth-revision-cpu-11-prior-v79-plan.json",
+      "planSha256": "d326710207e4a0af40f0e0cdbca72b39098318cd195c935fa9f53ce164473d44",
+      "groups": 576
+    },
+    {
+      "phase": "cpu",
+      "round": 12,
+      "variant": "candidate",
+      "mode": "cpu",
+      "tag": "twelfth-revision-cpu-12-candidate-v79",
+      "plan": "twelfth-revision-cpu-12-candidate-v79-plan.json",
+      "planSha256": "e6ae634cc8f81febbbf34d211d366534449b6cf8ed8adb2c79a1aa60c1d2cd4a",
+      "groups": 576
+    },
+    {
+      "phase": "cpu",
+      "round": 12,
+      "variant": "baseline",
+      "mode": "cpu",
+      "tag": "twelfth-revision-cpu-12-baseline-v79",
+      "plan": "twelfth-revision-cpu-12-baseline-v79-plan.json",
+      "planSha256": "e6ae634cc8f81febbbf34d211d366534449b6cf8ed8adb2c79a1aa60c1d2cd4a",
+      "groups": 576
+    },
+    {
+      "phase": "cpu",
+      "round": 12,
+      "variant": "prior",
+      "mode": "cpu",
+      "tag": "twelfth-revision-cpu-12-prior-v79",
+      "plan": "twelfth-revision-cpu-12-prior-v79-plan.json",
+      "planSha256": "e6ae634cc8f81febbbf34d211d366534449b6cf8ed8adb2c79a1aa60c1d2cd4a",
+      "groups": 576
+    },
+    {
+      "phase": "cpu",
+      "round": 13,
+      "variant": "prior",
+      "mode": "cpu",
+      "tag": "twelfth-revision-cpu-13-prior-v79",
+      "plan": "twelfth-revision-cpu-13-prior-v79-plan.json",
+      "planSha256": "58527b0201e980f3cc0b58e6bc131e790af389f848384d8bfbd41864441e05bf",
+      "groups": 576
+    },
+    {
+      "phase": "cpu",
+      "round": 13,
+      "variant": "baseline",
+      "mode": "cpu",
+      "tag": "twelfth-revision-cpu-13-baseline-v79",
+      "plan": "twelfth-revision-cpu-13-baseline-v79-plan.json",
+      "planSha256": "58527b0201e980f3cc0b58e6bc131e790af389f848384d8bfbd41864441e05bf",
+      "groups": 576
+    },
+    {
+      "phase": "cpu",
+      "round": 13,
+      "variant": "candidate",
+      "mode": "cpu",
+      "tag": "twelfth-revision-cpu-13-candidate-v79",
+      "plan": "twelfth-revision-cpu-13-candidate-v79-plan.json",
+      "planSha256": "58527b0201e980f3cc0b58e6bc131e790af389f848384d8bfbd41864441e05bf",
+      "groups": 576
+    },
+    {
+      "phase": "cpu",
+      "round": 14,
+      "variant": "prior",
+      "mode": "cpu",
+      "tag": "twelfth-revision-cpu-14-prior-v79",
+      "plan": "twelfth-revision-cpu-14-prior-v79-plan.json",
+      "planSha256": "6e5781293958ef1f3fd63d699d286b24bb40ae6e272b23a221ff990c9c9305cd",
+      "groups": 576
+    },
+    {
+      "phase": "cpu",
+      "round": 14,
+      "variant": "candidate",
+      "mode": "cpu",
+      "tag": "twelfth-revision-cpu-14-candidate-v79",
+      "plan": "twelfth-revision-cpu-14-candidate-v79-plan.json",
+      "planSha256": "6e5781293958ef1f3fd63d699d286b24bb40ae6e272b23a221ff990c9c9305cd",
+      "groups": 576
+    },
+    {
+      "phase": "cpu",
+      "round": 14,
+      "variant": "baseline",
+      "mode": "cpu",
+      "tag": "twelfth-revision-cpu-14-baseline-v79",
+      "plan": "twelfth-revision-cpu-14-baseline-v79-plan.json",
+      "planSha256": "6e5781293958ef1f3fd63d699d286b24bb40ae6e272b23a221ff990c9c9305cd",
+      "groups": 576
+    },
+    {
+      "phase": "cpu",
+      "round": 15,
+      "variant": "baseline",
+      "mode": "cpu",
+      "tag": "twelfth-revision-cpu-15-baseline-v79",
+      "plan": "twelfth-revision-cpu-15-baseline-v79-plan.json",
+      "planSha256": "68fd28490099ce2fbe090d03fb657ca515419554e29f8c6c7c72c5e37b5a6f90",
+      "groups": 576
+    },
+    {
+      "phase": "cpu",
+      "round": 15,
+      "variant": "prior",
+      "mode": "cpu",
+      "tag": "twelfth-revision-cpu-15-prior-v79",
+      "plan": "twelfth-revision-cpu-15-prior-v79-plan.json",
+      "planSha256": "68fd28490099ce2fbe090d03fb657ca515419554e29f8c6c7c72c5e37b5a6f90",
+      "groups": 576
+    },
+    {
+      "phase": "cpu",
+      "round": 15,
+      "variant": "candidate",
+      "mode": "cpu",
+      "tag": "twelfth-revision-cpu-15-candidate-v79",
+      "plan": "twelfth-revision-cpu-15-candidate-v79-plan.json",
+      "planSha256": "68fd28490099ce2fbe090d03fb657ca515419554e29f8c6c7c72c5e37b5a6f90",
+      "groups": 576
+    },
+    {
+      "phase": "cpu",
+      "round": 16,
+      "variant": "prior",
+      "mode": "cpu",
+      "tag": "twelfth-revision-cpu-16-prior-v79",
+      "plan": "twelfth-revision-cpu-16-prior-v79-plan.json",
+      "planSha256": "42bda7abed9bf8f0ba5929f99b5832c9eb298e50be31e14e3258be1164510f09",
+      "groups": 576
+    },
+    {
+      "phase": "cpu",
+      "round": 16,
+      "variant": "baseline",
+      "mode": "cpu",
+      "tag": "twelfth-revision-cpu-16-baseline-v79",
+      "plan": "twelfth-revision-cpu-16-baseline-v79-plan.json",
+      "planSha256": "42bda7abed9bf8f0ba5929f99b5832c9eb298e50be31e14e3258be1164510f09",
+      "groups": 576
+    },
+    {
+      "phase": "cpu",
+      "round": 16,
+      "variant": "candidate",
+      "mode": "cpu",
+      "tag": "twelfth-revision-cpu-16-candidate-v79",
+      "plan": "twelfth-revision-cpu-16-candidate-v79-plan.json",
+      "planSha256": "42bda7abed9bf8f0ba5929f99b5832c9eb298e50be31e14e3258be1164510f09",
+      "groups": 576
+    },
+    {
+      "phase": "cpu",
+      "round": 17,
+      "variant": "prior",
+      "mode": "cpu",
+      "tag": "twelfth-revision-cpu-17-prior-v79",
+      "plan": "twelfth-revision-cpu-17-prior-v79-plan.json",
+      "planSha256": "c3ea14062bd61fc47f08e8988b05e40786620da28564d7819d382c21cfb10bdb",
+      "groups": 576
+    },
+    {
+      "phase": "cpu",
+      "round": 17,
+      "variant": "baseline",
+      "mode": "cpu",
+      "tag": "twelfth-revision-cpu-17-baseline-v79",
+      "plan": "twelfth-revision-cpu-17-baseline-v79-plan.json",
+      "planSha256": "c3ea14062bd61fc47f08e8988b05e40786620da28564d7819d382c21cfb10bdb",
+      "groups": 576
+    },
+    {
+      "phase": "cpu",
+      "round": 17,
+      "variant": "candidate",
+      "mode": "cpu",
+      "tag": "twelfth-revision-cpu-17-candidate-v79",
+      "plan": "twelfth-revision-cpu-17-candidate-v79-plan.json",
+      "planSha256": "c3ea14062bd61fc47f08e8988b05e40786620da28564d7819d382c21cfb10bdb",
+      "groups": 576
+    },
+    {
+      "phase": "cpu",
+      "round": 18,
+      "variant": "candidate",
+      "mode": "cpu",
+      "tag": "twelfth-revision-cpu-18-candidate-v79",
+      "plan": "twelfth-revision-cpu-18-candidate-v79-plan.json",
+      "planSha256": "e68f7eb96da5ea0d6ddb43a2ffecfc081e52215bf93a03c827c3cc7d4565c7e2",
+      "groups": 576
+    },
+    {
+      "phase": "cpu",
+      "round": 18,
+      "variant": "prior",
+      "mode": "cpu",
+      "tag": "twelfth-revision-cpu-18-prior-v79",
+      "plan": "twelfth-revision-cpu-18-prior-v79-plan.json",
+      "planSha256": "e68f7eb96da5ea0d6ddb43a2ffecfc081e52215bf93a03c827c3cc7d4565c7e2",
+      "groups": 576
+    },
+    {
+      "phase": "cpu",
+      "round": 18,
+      "variant": "baseline",
+      "mode": "cpu",
+      "tag": "twelfth-revision-cpu-18-baseline-v79",
+      "plan": "twelfth-revision-cpu-18-baseline-v79-plan.json",
+      "planSha256": "e68f7eb96da5ea0d6ddb43a2ffecfc081e52215bf93a03c827c3cc7d4565c7e2",
+      "groups": 576
+    },
+    {
+      "phase": "cpu",
+      "round": 19,
+      "variant": "candidate",
+      "mode": "cpu",
+      "tag": "twelfth-revision-cpu-19-candidate-v79",
+      "plan": "twelfth-revision-cpu-19-candidate-v79-plan.json",
+      "planSha256": "da158db28c553e8eb52431d4fb1736c73b31201d95c51ae7c1b039979370318d",
+      "groups": 576
+    },
+    {
+      "phase": "cpu",
+      "round": 19,
+      "variant": "baseline",
+      "mode": "cpu",
+      "tag": "twelfth-revision-cpu-19-baseline-v79",
+      "plan": "twelfth-revision-cpu-19-baseline-v79-plan.json",
+      "planSha256": "da158db28c553e8eb52431d4fb1736c73b31201d95c51ae7c1b039979370318d",
+      "groups": 576
+    },
+    {
+      "phase": "cpu",
+      "round": 19,
+      "variant": "prior",
+      "mode": "cpu",
+      "tag": "twelfth-revision-cpu-19-prior-v79",
+      "plan": "twelfth-revision-cpu-19-prior-v79-plan.json",
+      "planSha256": "da158db28c553e8eb52431d4fb1736c73b31201d95c51ae7c1b039979370318d",
+      "groups": 576
+    },
+    {
+      "phase": "cpu",
+      "round": 20,
+      "variant": "baseline",
+      "mode": "cpu",
+      "tag": "twelfth-revision-cpu-20-baseline-v79",
+      "plan": "twelfth-revision-cpu-20-baseline-v79-plan.json",
+      "planSha256": "62c9eef8c3105ce2c2b005821adc6f44f2d6a6ab05347113eed7a8c6dcd1d818",
+      "groups": 576
+    },
+    {
+      "phase": "cpu",
+      "round": 20,
+      "variant": "prior",
+      "mode": "cpu",
+      "tag": "twelfth-revision-cpu-20-prior-v79",
+      "plan": "twelfth-revision-cpu-20-prior-v79-plan.json",
+      "planSha256": "62c9eef8c3105ce2c2b005821adc6f44f2d6a6ab05347113eed7a8c6dcd1d818",
+      "groups": 576
+    },
+    {
+      "phase": "cpu",
+      "round": 20,
+      "variant": "candidate",
+      "mode": "cpu",
+      "tag": "twelfth-revision-cpu-20-candidate-v79",
+      "plan": "twelfth-revision-cpu-20-candidate-v79-plan.json",
+      "planSha256": "62c9eef8c3105ce2c2b005821adc6f44f2d6a6ab05347113eed7a8c6dcd1d818",
+      "groups": 576
+    },
+    {
+      "phase": "cpu",
+      "round": 21,
+      "variant": "prior",
+      "mode": "cpu",
+      "tag": "twelfth-revision-cpu-21-prior-v79",
+      "plan": "twelfth-revision-cpu-21-prior-v79-plan.json",
+      "planSha256": "81d7a62a564722d5cf247a4e9ea6464af1eee919bde99608bbfd180c2d1aa58f",
+      "groups": 576
+    },
+    {
+      "phase": "cpu",
+      "round": 21,
+      "variant": "candidate",
+      "mode": "cpu",
+      "tag": "twelfth-revision-cpu-21-candidate-v79",
+      "plan": "twelfth-revision-cpu-21-candidate-v79-plan.json",
+      "planSha256": "81d7a62a564722d5cf247a4e9ea6464af1eee919bde99608bbfd180c2d1aa58f",
+      "groups": 576
+    },
+    {
+      "phase": "cpu",
+      "round": 21,
+      "variant": "baseline",
+      "mode": "cpu",
+      "tag": "twelfth-revision-cpu-21-baseline-v79",
+      "plan": "twelfth-revision-cpu-21-baseline-v79-plan.json",
+      "planSha256": "81d7a62a564722d5cf247a4e9ea6464af1eee919bde99608bbfd180c2d1aa58f",
+      "groups": 576
+    },
+    {
+      "phase": "cpu",
+      "round": 22,
+      "variant": "baseline",
+      "mode": "cpu",
+      "tag": "twelfth-revision-cpu-22-baseline-v79",
+      "plan": "twelfth-revision-cpu-22-baseline-v79-plan.json",
+      "planSha256": "9f1a8e9b2f2e70f2e80d1eb04398dc77e18cc42d1d507f7c7d88286b549c31cc",
+      "groups": 576
+    },
+    {
+      "phase": "cpu",
+      "round": 22,
+      "variant": "prior",
+      "mode": "cpu",
+      "tag": "twelfth-revision-cpu-22-prior-v79",
+      "plan": "twelfth-revision-cpu-22-prior-v79-plan.json",
+      "planSha256": "9f1a8e9b2f2e70f2e80d1eb04398dc77e18cc42d1d507f7c7d88286b549c31cc",
+      "groups": 576
+    },
+    {
+      "phase": "cpu",
+      "round": 22,
+      "variant": "candidate",
+      "mode": "cpu",
+      "tag": "twelfth-revision-cpu-22-candidate-v79",
+      "plan": "twelfth-revision-cpu-22-candidate-v79-plan.json",
+      "planSha256": "9f1a8e9b2f2e70f2e80d1eb04398dc77e18cc42d1d507f7c7d88286b549c31cc",
+      "groups": 576
+    },
+    {
+      "phase": "cpu",
+      "round": 23,
+      "variant": "baseline",
+      "mode": "cpu",
+      "tag": "twelfth-revision-cpu-23-baseline-v79",
+      "plan": "twelfth-revision-cpu-23-baseline-v79-plan.json",
+      "planSha256": "3d46747574d354de235ea844651d97116cbb3f7c2569d15b99fb0a6775c865c8",
+      "groups": 576
+    },
+    {
+      "phase": "cpu",
+      "round": 23,
+      "variant": "prior",
+      "mode": "cpu",
+      "tag": "twelfth-revision-cpu-23-prior-v79",
+      "plan": "twelfth-revision-cpu-23-prior-v79-plan.json",
+      "planSha256": "3d46747574d354de235ea844651d97116cbb3f7c2569d15b99fb0a6775c865c8",
+      "groups": 576
+    },
+    {
+      "phase": "cpu",
+      "round": 23,
+      "variant": "candidate",
+      "mode": "cpu",
+      "tag": "twelfth-revision-cpu-23-candidate-v79",
+      "plan": "twelfth-revision-cpu-23-candidate-v79-plan.json",
+      "planSha256": "3d46747574d354de235ea844651d97116cbb3f7c2569d15b99fb0a6775c865c8",
+      "groups": 576
+    },
+    {
+      "phase": "allocation",
+      "round": 0,
+      "variant": "prior",
+      "mode": "allocation",
+      "tag": "twelfth-revision-allocation-0-prior-v79",
+      "plan": "twelfth-revision-allocation-0-prior-v79-plan.json",
+      "planSha256": "608b0d9c116092318f50ac97524a5b0872669ff220f8e6cd8c1d849fde0bb3f4",
+      "groups": 1152
+    },
+    {
+      "phase": "allocation",
+      "round": 0,
+      "variant": "candidate",
+      "mode": "allocation",
+      "tag": "twelfth-revision-allocation-0-candidate-v79",
+      "plan": "twelfth-revision-allocation-0-candidate-v79-plan.json",
+      "planSha256": "608b0d9c116092318f50ac97524a5b0872669ff220f8e6cd8c1d849fde0bb3f4",
+      "groups": 1152
+    },
+    {
+      "phase": "allocation",
+      "round": 0,
+      "variant": "baseline",
+      "mode": "allocation",
+      "tag": "twelfth-revision-allocation-0-baseline-v79",
+      "plan": "twelfth-revision-allocation-0-baseline-v79-plan.json",
+      "planSha256": "608b0d9c116092318f50ac97524a5b0872669ff220f8e6cd8c1d849fde0bb3f4",
+      "groups": 1152
+    },
+    {
+      "phase": "allocation",
+      "round": 1,
+      "variant": "baseline",
+      "mode": "allocation",
+      "tag": "twelfth-revision-allocation-1-baseline-v79",
+      "plan": "twelfth-revision-allocation-1-baseline-v79-plan.json",
+      "planSha256": "b3fdb3bdca9e725cf9139a33241c621e2587600fa9c016255b6f4dad519512c3",
+      "groups": 1152
+    },
+    {
+      "phase": "allocation",
+      "round": 1,
+      "variant": "prior",
+      "mode": "allocation",
+      "tag": "twelfth-revision-allocation-1-prior-v79",
+      "plan": "twelfth-revision-allocation-1-prior-v79-plan.json",
+      "planSha256": "b3fdb3bdca9e725cf9139a33241c621e2587600fa9c016255b6f4dad519512c3",
+      "groups": 1152
+    },
+    {
+      "phase": "allocation",
+      "round": 1,
+      "variant": "candidate",
+      "mode": "allocation",
+      "tag": "twelfth-revision-allocation-1-candidate-v79",
+      "plan": "twelfth-revision-allocation-1-candidate-v79-plan.json",
+      "planSha256": "b3fdb3bdca9e725cf9139a33241c621e2587600fa9c016255b6f4dad519512c3",
+      "groups": 1152
+    },
+    {
+      "phase": "allocation",
+      "round": 2,
+      "variant": "prior",
+      "mode": "allocation",
+      "tag": "twelfth-revision-allocation-2-prior-v79",
+      "plan": "twelfth-revision-allocation-2-prior-v79-plan.json",
+      "planSha256": "6ca861044cf4541b94cb7d1776bfe092f9c612915799ec12a17273e19ac2876b",
+      "groups": 1152
+    },
+    {
+      "phase": "allocation",
+      "round": 2,
+      "variant": "baseline",
+      "mode": "allocation",
+      "tag": "twelfth-revision-allocation-2-baseline-v79",
+      "plan": "twelfth-revision-allocation-2-baseline-v79-plan.json",
+      "planSha256": "6ca861044cf4541b94cb7d1776bfe092f9c612915799ec12a17273e19ac2876b",
+      "groups": 1152
+    },
+    {
+      "phase": "allocation",
+      "round": 2,
+      "variant": "candidate",
+      "mode": "allocation",
+      "tag": "twelfth-revision-allocation-2-candidate-v79",
+      "plan": "twelfth-revision-allocation-2-candidate-v79-plan.json",
+      "planSha256": "6ca861044cf4541b94cb7d1776bfe092f9c612915799ec12a17273e19ac2876b",
+      "groups": 1152
+    },
+    {
+      "phase": "allocation",
+      "round": 3,
+      "variant": "candidate",
+      "mode": "allocation",
+      "tag": "twelfth-revision-allocation-3-candidate-v79",
+      "plan": "twelfth-revision-allocation-3-candidate-v79-plan.json",
+      "planSha256": "96cc9029f3beeacadc89a37ed0eac6afc0ca41c7bc79db9eeee629d2c0ac1ec5",
+      "groups": 1152
+    },
+    {
+      "phase": "allocation",
+      "round": 3,
+      "variant": "prior",
+      "mode": "allocation",
+      "tag": "twelfth-revision-allocation-3-prior-v79",
+      "plan": "twelfth-revision-allocation-3-prior-v79-plan.json",
+      "planSha256": "96cc9029f3beeacadc89a37ed0eac6afc0ca41c7bc79db9eeee629d2c0ac1ec5",
+      "groups": 1152
+    },
+    {
+      "phase": "allocation",
+      "round": 3,
+      "variant": "baseline",
+      "mode": "allocation",
+      "tag": "twelfth-revision-allocation-3-baseline-v79",
+      "plan": "twelfth-revision-allocation-3-baseline-v79-plan.json",
+      "planSha256": "96cc9029f3beeacadc89a37ed0eac6afc0ca41c7bc79db9eeee629d2c0ac1ec5",
+      "groups": 1152
+    },
+    {
+      "phase": "allocation",
+      "round": 4,
+      "variant": "baseline",
+      "mode": "allocation",
+      "tag": "twelfth-revision-allocation-4-baseline-v79",
+      "plan": "twelfth-revision-allocation-4-baseline-v79-plan.json",
+      "planSha256": "ad81e4cf1092a1e8312e3b00e54d584bb4fc0f106ab1d28f9dc210f727bd4ba2",
+      "groups": 1152
+    },
+    {
+      "phase": "allocation",
+      "round": 4,
+      "variant": "candidate",
+      "mode": "allocation",
+      "tag": "twelfth-revision-allocation-4-candidate-v79",
+      "plan": "twelfth-revision-allocation-4-candidate-v79-plan.json",
+      "planSha256": "ad81e4cf1092a1e8312e3b00e54d584bb4fc0f106ab1d28f9dc210f727bd4ba2",
+      "groups": 1152
+    },
+    {
+      "phase": "allocation",
+      "round": 4,
+      "variant": "prior",
+      "mode": "allocation",
+      "tag": "twelfth-revision-allocation-4-prior-v79",
+      "plan": "twelfth-revision-allocation-4-prior-v79-plan.json",
+      "planSha256": "ad81e4cf1092a1e8312e3b00e54d584bb4fc0f106ab1d28f9dc210f727bd4ba2",
+      "groups": 1152
+    },
+    {
+      "phase": "allocation",
+      "round": 5,
+      "variant": "candidate",
+      "mode": "allocation",
+      "tag": "twelfth-revision-allocation-5-candidate-v79",
+      "plan": "twelfth-revision-allocation-5-candidate-v79-plan.json",
+      "planSha256": "d272aa86c19947a111f7336974608a58800fb7ced83e4b932168d9975a3d217e",
+      "groups": 1152
+    },
+    {
+      "phase": "allocation",
+      "round": 5,
+      "variant": "baseline",
+      "mode": "allocation",
+      "tag": "twelfth-revision-allocation-5-baseline-v79",
+      "plan": "twelfth-revision-allocation-5-baseline-v79-plan.json",
+      "planSha256": "d272aa86c19947a111f7336974608a58800fb7ced83e4b932168d9975a3d217e",
+      "groups": 1152
+    },
+    {
+      "phase": "allocation",
+      "round": 5,
+      "variant": "prior",
+      "mode": "allocation",
+      "tag": "twelfth-revision-allocation-5-prior-v79",
+      "plan": "twelfth-revision-allocation-5-prior-v79-plan.json",
+      "planSha256": "d272aa86c19947a111f7336974608a58800fb7ced83e4b932168d9975a3d217e",
+      "groups": 1152
+    }
+  ]
+}

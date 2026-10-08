@@ -1,0 +1,12 @@
+{
+  "commit": "320bfe90edb8c0902f0f8b8985f7223c6a31afb7",
+  "parent": "b1beafe77ca073324770e95634df1ce09b00f2af",
+  "paths": {
+    "src/computable/node/quadratic_tower.rs": "7f4332ce62653f15e96d1035c44b02c50f5123fa7ae61f7745d60f7a20eff056",
+    "src/computable/node/representation.rs": "302999006e25e48e1201e23400b215002a6692b016d5fdfabb7dd67d60c4f017",
+    "src/real/arithmetic/quadratic_tower_sign.rs": "854d46043c49a02536503851677ee2d6e3a811e4a89d7632c2d8ee3e41eeb3a3"
+  },
+  "qualification": "retained-wide-field-proofs-20260927-v374-terminal.json",
+  "verified_source_files": 2046,
+  "clean_repositories": 30
+}

@@ -1,0 +1,333 @@
+{
+  "hypersolve_head": "60a4e609d382c681ee98a1de6b4bdb7673487d37",
+  "diagnostic_only": true,
+  "parent": "190adc7a1d3a94263f87a9ade8a68b588f54527a",
+  "source_manifest": "local-chord-complete-replay-20260924-v111-sources.json",
+  "source_directory": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/source-archives/hypercurve-local-chord-complete-replay-v111-20260924",
+  "build_source_directory": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/build-workspace-20260925",
+  "checks": [],
+  "binaries": {
+    "hyperreal": {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/compact-quadratic-arithmetic-20260925-v111-hyperreal",
+      "sha256": "c66a045a0046f36526e94b8a0df743836b2f0cf9a84d11f4f8b1b39a48acc397"
+    },
+    "hypersolve": {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/compact-quadratic-arithmetic-20260925-v111-hypersolve",
+      "sha256": "6bcbeecdca518728924bd7dd7b0c5cdd2e3944c632b87128b56503e394938e15"
+    },
+    "hypercurve_curve": {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/compact-quadratic-arithmetic-20260925-v111-hypercurve_curve",
+      "sha256": "380f3b08b82bdc3004565d71307d00b525afb0149d3da3e378537f1791c76f41"
+    },
+    "hypercurve_analytic_parallel_region": {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/compact-quadratic-arithmetic-20260925-v111-hypercurve_analytic_parallel_region",
+      "sha256": "7166dec8b8e324f923b08a1b5693a0fddc807c5cfb65080af6714af9089adf56"
+    }
+  },
+  "cases": [
+    {
+      "label": "hyperreal-quadratic-arithmetic",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/compact-quadratic-arithmetic-20260925-v111-hyperreal",
+        "--test-threads=1",
+        "--nocapture"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.4103650889592245,
+      "log": "compact-quadratic-arithmetic-20260925-v111-hyperreal-quadratic-arithmetic.log",
+      "target": "hyperreal",
+      "name": "exact_quadratic_normal_form"
+    },
+    {
+      "label": "nonrational_local_coefficients_preserve_repeated_fiber_roots",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/compact-quadratic-arithmetic-20260925-v111-hypersolve",
+        "--exact",
+        "algebraic_fiber::tests::nonrational_local_coefficients_preserve_repeated_fiber_roots",
+        "--test-threads=1",
+        "--nocapture"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.43677324906457216,
+      "log": "compact-quadratic-arithmetic-20260925-v111-nonrational_local_coefficients_preserve_repeated_fiber_roots.log",
+      "target": "hypersolve",
+      "name": "algebraic_fiber::tests::nonrational_local_coefficients_preserve_repeated_fiber_roots"
+    },
+    {
+      "label": "local_division_preserves_arbitrary_exact_base_coefficients",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/compact-quadratic-arithmetic-20260925-v111-hypersolve",
+        "--exact",
+        "algebraic_fiber::tests::local_division_preserves_arbitrary_exact_base_coefficients",
+        "--test-threads=1",
+        "--nocapture"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.4024185739690438,
+      "log": "compact-quadratic-arithmetic-20260925-v111-local_division_preserves_arbitrary_exact_base_coefficients.log",
+      "target": "hypersolve",
+      "name": "algebraic_fiber::tests::local_division_preserves_arbitrary_exact_base_coefficients"
+    },
+    {
+      "label": "local_division_preserves_wide_exact_quotients_beyond_modular_reconstruction",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/compact-quadratic-arithmetic-20260925-v111-hypersolve",
+        "--exact",
+        "algebraic_fiber::tests::local_division_preserves_wide_exact_quotients_beyond_modular_reconstruction",
+        "--test-threads=1",
+        "--nocapture"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.5830410679336637,
+      "log": "compact-quadratic-arithmetic-20260925-v111-local_division_preserves_wide_exact_quotients_beyond_modular_reconstruction.log",
+      "target": "hypersolve",
+      "name": "algebraic_fiber::tests::local_division_preserves_wide_exact_quotients_beyond_modular_reconstruction"
+    },
+    {
+      "label": "local_division_removes_only_foreign_factors_and_reuses_older_values",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/compact-quadratic-arithmetic-20260925-v111-hypersolve",
+        "--exact",
+        "algebraic_fiber::tests::local_division_removes_only_foreign_factors_and_reuses_older_values",
+        "--test-threads=1",
+        "--nocapture"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.4005659919930622,
+      "log": "compact-quadratic-arithmetic-20260925-v111-local_division_removes_only_foreign_factors_and_reuses_older_values.log",
+      "target": "hypersolve",
+      "name": "algebraic_fiber::tests::local_division_removes_only_foreign_factors_and_reuses_older_values"
+    },
+    {
+      "label": "hypersolve-full",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/compact-quadratic-arithmetic-20260925-v111-hypersolve",
+        "--test-threads=2",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 2.828820194932632,
+      "log": "compact-quadratic-arithmetic-20260925-v111-hypersolve-full.log",
+      "target": "hypersolve",
+      "name": "full-library"
+    },
+    {
+      "label": "direct_bezier_pair_fillet_retains_both_incident_extensions",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/compact-quadratic-arithmetic-20260925-v111-hypercurve_curve",
+        "--exact",
+        "direct_bezier_pair_fillet_retains_both_incident_extensions",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 8.723581593949348,
+      "log": "compact-quadratic-arithmetic-20260925-v111-direct_bezier_pair_fillet_retains_both_incident_extensions.log",
+      "target": "hypercurve_curve",
+      "name": "direct_bezier_pair_fillet_retains_both_incident_extensions"
+    },
+    {
+      "label": "line_parabola_mixed_exact_algebraic_fillet_is_an_exact_open_path",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/compact-quadratic-arithmetic-20260925-v111-hypercurve_curve",
+        "--exact",
+        "line_parabola_mixed_exact_algebraic_fillet_is_an_exact_open_path",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.8114841131027788,
+      "log": "compact-quadratic-arithmetic-20260925-v111-line_parabola_mixed_exact_algebraic_fillet_is_an_exact_open_path.log",
+      "target": "hypercurve_curve",
+      "name": "line_parabola_mixed_exact_algebraic_fillet_is_an_exact_open_path"
+    },
+    {
+      "label": "one_curve_closed_spline_extensions_materialize_each_cell_once",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/compact-quadratic-arithmetic-20260925-v111-hypercurve_curve",
+        "--exact",
+        "one_curve_closed_spline_extensions_materialize_each_cell_once",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.4441766010131687,
+      "log": "compact-quadratic-arithmetic-20260925-v111-one_curve_closed_spline_extensions_materialize_each_cell_once.log",
+      "target": "hypercurve_curve",
+      "name": "one_curve_closed_spline_extensions_materialize_each_cell_once"
+    },
+    {
+      "label": "polynomial_chamfer_materializes_represented_incident_extension",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/compact-quadratic-arithmetic-20260925-v111-hypercurve_curve",
+        "--exact",
+        "polynomial_chamfer_materializes_represented_incident_extension",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.4024115849751979,
+      "log": "compact-quadratic-arithmetic-20260925-v111-polynomial_chamfer_materializes_represented_incident_extension.log",
+      "target": "hypercurve_curve",
+      "name": "polynomial_chamfer_materializes_represented_incident_extension"
+    },
+    {
+      "label": "rational_chamfer_materializes_the_incident_projective_cell",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/compact-quadratic-arithmetic-20260925-v111-hypercurve_curve",
+        "--exact",
+        "rational_chamfer_materializes_the_incident_projective_cell",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.40540402894839644,
+      "log": "compact-quadratic-arithmetic-20260925-v111-rational_chamfer_materializes_the_incident_projective_cell.log",
+      "target": "hypercurve_curve",
+      "name": "rational_chamfer_materializes_the_incident_projective_cell"
+    },
+    {
+      "label": "spline_chamfer_materializes_only_the_incident_extension_cell",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/compact-quadratic-arithmetic-20260925-v111-hypercurve_curve",
+        "--exact",
+        "spline_chamfer_materializes_only_the_incident_extension_cell",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.40871375205460936,
+      "log": "compact-quadratic-arithmetic-20260925-v111-spline_chamfer_materializes_only_the_incident_extension_cell.log",
+      "target": "hypercurve_curve",
+      "name": "spline_chamfer_materializes_only_the_incident_extension_cell"
+    },
+    {
+      "label": "spline_line_fillet_preserves_the_authored_spline_and_adds_its_incident_cell",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/compact-quadratic-arithmetic-20260925-v111-hypercurve_curve",
+        "--exact",
+        "spline_line_fillet_preserves_the_authored_spline_and_adds_its_incident_cell",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.40920422901399434,
+      "log": "compact-quadratic-arithmetic-20260925-v111-spline_line_fillet_preserves_the_authored_spline_and_adds_its_incident_cell.log",
+      "target": "hypercurve_curve",
+      "name": "spline_line_fillet_preserves_the_authored_spline_and_adds_its_incident_cell"
+    },
+    {
+      "label": "retained_arc_fillet_preserves_past_center_tangent_orientation",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/compact-quadratic-arithmetic-20260925-v111-hypercurve_analytic_parallel_region",
+        "--exact",
+        "retained_arc_fillet_preserves_past_center_tangent_orientation",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": "timeout",
+      "elapsed_seconds": 75.41889223910403,
+      "log": "compact-quadratic-arithmetic-20260925-v111-retained_arc_fillet_preserves_past_center_tangent_orientation.log",
+      "target": "hypercurve_analytic_parallel_region",
+      "name": "retained_arc_fillet_preserves_past_center_tangent_orientation"
+    },
+    {
+      "label": "retained_rational_arc_and_analytic_parallel_fillet_exactly",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/compact-quadratic-arithmetic-20260925-v111-hypercurve_analytic_parallel_region",
+        "--exact",
+        "retained_rational_arc_and_analytic_parallel_fillet_exactly",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": "timeout",
+      "elapsed_seconds": 75.42599997203797,
+      "log": "compact-quadratic-arithmetic-20260925-v111-retained_rational_arc_and_analytic_parallel_fillet_exactly.log",
+      "target": "hypercurve_analytic_parallel_region",
+      "name": "retained_rational_arc_and_analytic_parallel_fillet_exactly"
+    },
+    {
+      "label": "retained_rational_arc_and_analytic_parallel_fillet_extends_exactly",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/compact-quadratic-arithmetic-20260925-v111-hypercurve_analytic_parallel_region",
+        "--exact",
+        "retained_rational_arc_and_analytic_parallel_fillet_extends_exactly",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": "timeout",
+      "elapsed_seconds": 75.42890140193049,
+      "log": "compact-quadratic-arithmetic-20260925-v111-retained_rational_arc_and_analytic_parallel_fillet_extends_exactly.log",
+      "target": "hypercurve_analytic_parallel_region",
+      "name": "retained_rational_arc_and_analytic_parallel_fillet_extends_exactly"
+    }
+  ],
+  "all_processes_reaped": true,
+  "hyperreal_build_returncode": 0,
+  "all_sources_unchanged": true,
+  "hypersolve_build_returncode": 0,
+  "build_returncode": 0,
+  "selection": [
+    [
+      "hypercurve_curve",
+      "direct_bezier_pair_fillet_retains_both_incident_extensions"
+    ],
+    [
+      "hypercurve_curve",
+      "line_parabola_mixed_exact_algebraic_fillet_is_an_exact_open_path"
+    ],
+    [
+      "hypercurve_curve",
+      "one_curve_closed_spline_extensions_materialize_each_cell_once"
+    ],
+    [
+      "hypercurve_curve",
+      "polynomial_chamfer_materializes_represented_incident_extension"
+    ],
+    [
+      "hypercurve_curve",
+      "rational_chamfer_materializes_the_incident_projective_cell"
+    ],
+    [
+      "hypercurve_curve",
+      "spline_chamfer_materializes_only_the_incident_extension_cell"
+    ],
+    [
+      "hypercurve_curve",
+      "spline_line_fillet_preserves_the_authored_spline_and_adds_its_incident_cell"
+    ],
+    [
+      "hypercurve_analytic_parallel_region",
+      "retained_arc_fillet_preserves_past_center_tangent_orientation"
+    ],
+    [
+      "hypercurve_analytic_parallel_region",
+      "retained_rational_arc_and_analytic_parallel_fillet_exactly"
+    ],
+    [
+      "hypercurve_analytic_parallel_region",
+      "retained_rational_arc_and_analytic_parallel_fillet_extends_exactly"
+    ]
+  ]
+}

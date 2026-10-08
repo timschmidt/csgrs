@@ -1,0 +1,14 @@
+{
+  "tag": "mpoly-bridge-verify-full",
+  "started": "2026-09-10T04:55:37.481Z",
+  "finished": "2026-09-10T04:56:34.285Z",
+  "elapsedSeconds": 56.802392371,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "node",
+  "args": [
+    "verify-mpoly-bridge.mjs",
+    "--e-plan-live"
+  ],
+  "code": 0,
+  "signal": null
+}

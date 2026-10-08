@@ -1,0 +1,57 @@
+{
+  "cases": [
+    {
+      "trial": 0,
+      "label": "parent",
+      "returncode": 0,
+      "log": "fiber-unit-pivots-identity-parent-trial0.log",
+      "binary_sha256": "2c9e98e294cae894e945ca34c6de16e112fde8289acecc974fec1c14e3f879f1",
+      "construction_ms": 12.050225
+    },
+    {
+      "trial": 0,
+      "label": "candidate",
+      "returncode": 0,
+      "log": "fiber-unit-pivots-identity-candidate-trial0.log",
+      "binary_sha256": "3df724cf0b84d1296a851df46eccda3502ce551790a502e20c04b28babeb3d69",
+      "construction_ms": 0.7321
+    },
+    {
+      "trial": 1,
+      "label": "parent",
+      "returncode": 0,
+      "log": "fiber-unit-pivots-identity-parent-trial1.log",
+      "binary_sha256": "2c9e98e294cae894e945ca34c6de16e112fde8289acecc974fec1c14e3f879f1",
+      "construction_ms": 11.121058
+    },
+    {
+      "trial": 1,
+      "label": "candidate",
+      "returncode": 0,
+      "log": "fiber-unit-pivots-identity-candidate-trial1.log",
+      "binary_sha256": "3df724cf0b84d1296a851df46eccda3502ce551790a502e20c04b28babeb3d69",
+      "construction_ms": 0.720051
+    },
+    {
+      "trial": 2,
+      "label": "parent",
+      "returncode": 0,
+      "log": "fiber-unit-pivots-identity-parent-trial2.log",
+      "binary_sha256": "2c9e98e294cae894e945ca34c6de16e112fde8289acecc974fec1c14e3f879f1",
+      "construction_ms": 11.552548
+    },
+    {
+      "trial": 2,
+      "label": "candidate",
+      "returncode": 0,
+      "log": "fiber-unit-pivots-identity-candidate-trial2.log",
+      "binary_sha256": "3df724cf0b84d1296a851df46eccda3502ce551790a502e20c04b28babeb3d69",
+      "construction_ms": 0.843082
+    }
+  ],
+  "medians_ms": {
+    "parent": 11.552548,
+    "candidate": 0.7321
+  },
+  "scope": "One retained-field resultant fixture, three fresh-process samples each; scalar equality still undecided. No general throughput claim."
+}

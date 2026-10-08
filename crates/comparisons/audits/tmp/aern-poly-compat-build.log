@@ -1,0 +1,42 @@
+aern-poly> build (lib) with ghc-9.6.7
+Preprocessing library for aern-poly-0.5.0..
+Building library for aern-poly-0.5.0..
+[ 2 of 21] Compiling Numeric.AERN.Poly.IntPoly.IntPoly
+
+/tmp/aern-audit.zp9Mzz/source/aern-poly/src/Numeric/AERN/Poly/IntPoly/IntPoly.hs:26:1: warning: [-Wunused-imports]
+    The import of ‘Numeric.AERN.RealArithmetic.Measures’ is redundant
+      except perhaps to import instances from ‘Numeric.AERN.RealArithmetic.Measures’
+    To import instances alone, use: import Numeric.AERN.RealArithmetic.Measures()
+   |
+26 | import Numeric.AERN.RealArithmetic.Measures (HasImprecision(..), HasDistance(..))
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-poly/src/Numeric/AERN/Poly/IntPoly/IntPoly.hs:34:1: warning: [-Wunused-imports]
+    The import of ‘Numeric.AERN.Basics.SizeLimits’ is redundant
+      except perhaps to import instances from ‘Numeric.AERN.Basics.SizeLimits’
+    To import instances alone, use: import Numeric.AERN.Basics.SizeLimits()
+   |
+34 | import Numeric.AERN.Basics.SizeLimits
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[ 3 of 21] Compiling Numeric.AERN.Poly.IntPoly.Show
+[ 4 of 21] Compiling Numeric.AERN.Poly.IntPoly.New
+
+/tmp/aern-audit.zp9Mzz/source/aern-poly/src/Numeric/AERN/Poly/IntPoly/New.hs:280:5: error:
+    • Illegal use of type family ‘SizeLimits’
+        in the constraint ‘Show (SizeLimits cf)’
+      (Use UndecidableInstances to permit this)
+    • In the instance declaration for
+        ‘CanRenameVariables (IntPoly var cf)’
+    |
+280 |     (Ord var, Show var, Show cf, Show (SizeLimits cf),
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^...
+
+Error: [S-7282]
+       Stack failed to execute the build plan.
+       
+       While executing the build plan, Stack encountered the error:
+       
+       [S-7011]
+       While building package aern-poly-0.5.0 (scroll up to its section to see the error) using:
+       /tmp/aern2-stack.ryVCFK/setup-exe-cache/x86_64-linux-tinfo6/Cabal-simple_O_vy6YIf_3.10.3.0_ghc-9.6.7 --verbose=1 --builddir=.stack-work/dist/x86_64-linux-tinfo6/ghc-9.6.7 build lib:aern-poly --ghc-options ""
+       Process exited with code: ExitFailure 1 

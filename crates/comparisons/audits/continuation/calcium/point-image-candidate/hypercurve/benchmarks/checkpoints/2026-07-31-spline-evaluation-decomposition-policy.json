@@ -1,0 +1,848 @@
+{
+  "schema": 1,
+  "captured_on": "2026-07-31",
+  "checkpoint": "spline-evaluation-decomposition-policy",
+  "source_revision": "f5bc191b945768a5084a2a3210cf811d2a69350a",
+  "parent_revision": "9b17853f71cd7239b98a59e0b016921b67ee47cf",
+  "implementation_revisions": [
+    "67a8ef046316f543781a0cba66c9d04c7fc63acb",
+    "f5bc191b945768a5084a2a3210cf811d2a69350a"
+  ],
+  "frozen_baseline_revision": "dfc4ec5f9546560765bd33d4a88292581869adb8",
+  "baseline": "../baselines/2026-07-31/baseline.json",
+  "semantic_evidence": {
+    "policy_explicit_public_decomposition": [
+      "NurbsCurve2::{bezier_decomposition,bezier_spans,native_subcurves,native_spans}",
+      "PolynomialSplineCurve2::{bezier_decomposition,bezier_spans}"
+    ],
+    "policy_explicit_public_evaluation": [
+      "NurbsCurve2::{point_at,point_at_side,point_at_wrapped,point_at_wrapped_side,derivative_at,derivative_at_side,derivative_at_wrapped,derivative_at_wrapped_side,derivatives_at,derivatives_at_side,derivatives_at_wrapped,derivatives_at_wrapped_side}",
+      "PolynomialSplineCurve2::{point_at,point_at_side,point_at_wrapped,point_at_wrapped_side,derivative_at,derivative_at_side,derivative_at_wrapped,derivative_at_wrapped_side,derivatives_at,derivatives_at_side,derivatives_at_wrapped,derivatives_at_wrapped_side}",
+      "Curve2 and CurveView2 expose the same point, sided, wrapped, first-derivative, and higher-derivative policy surfaces"
+    ],
+    "return_contract": "ExactCurveResult<CurveOutcome<T>>",
+    "complete_public_operation_observes_terminal_consumption_once": true,
+    "internal_composition_uses_raw_policy_kernels": true,
+    "knot_ordering_and_binary_partition_uncertainty_is_propagated": true,
+    "decided_decreasing_knot_vector_is_invalid_not_uncertain": true,
+    "span_extraction_never_skips_an_uncertain_interval": true,
+    "retained_span_fact_and_topology_validation_uses_active_policy": true,
+    "terminal_expression": "(pi + e) - (e + pi)",
+    "symbolic_repeated_interior_knot": "1/2 + terminal_expression",
+    "strict_symbolic_repeated_knot_result": "typed BezierDecomposition or Evaluation/Ordering blocker",
+    "approximate_512_symbolic_repeated_knot_result": "exact decomposition, borrowed spans, NURBS native topology, points, and derivatives with Approximate512Consumed",
+    "symbolic_knot_is_retained_without_replacement": true,
+    "periodic_symbolic_seam": "4 + terminal_expression",
+    "strict_periodic_seam_result": "typed Evaluation/Ordering blocker",
+    "approximate_512_periodic_seam_result": "exact wrapped point and first/higher derivatives with Approximate512Consumed",
+    "periodic_remainder_terminal_path": "selects between two exact adjacent integer quotients and retains the authored symbolic displacement and period",
+    "returned_geometry_is_not_sampled_or_rounded": true,
+    "later_strict_request_preserves_the_original_blocker": true,
+    "curve2_and_curveview2_preserve_certainty": true,
+    "plain_strict_resolution_is_specialized_without_changing_preview_or_approximate_contexts": true,
+    "compatibility_overload_deref_or_implicit_value_shim_added": false,
+    "hypermesh_modified": false
+  },
+  "hypersolve_boundary": {
+    "evaluation_and_decomposition_require_no_linear_solver_change": true,
+    "interpolation_solver": "Hypersolve Bareiss exact dense solve with exact residual replay",
+    "supportable_approximate_512_endpoint_ordering_and_evaluation_cases_covered": true,
+    "supportable_approximate_512_undecided_pivot_continuation_covered": false,
+    "remaining_requirement": "add a caller-authorized pivot proposal/certification bridge without letting Hypersolve silently own Hyperlimit geometry policy"
+  },
+  "layout_and_memory_evidence": {
+    "NurbsCurve2_bytes": 8,
+    "NurbsData2_bytes": 512,
+    "PolynomialSplineCurve2_bytes": 8,
+    "PolynomialSplineData2_bytes": 288,
+    "CurveContext_bytes": 1,
+    "CurveCertainty_bytes": 1,
+    "touched_carrier_layout_change": "none",
+    "heap_cache_or_buffer_added": false,
+    "pathological_parent_median_rss_mib": 34.45,
+    "pathological_candidate_median_rss_mib": 34.5,
+    "pathological_rss_median_delta_mib": 0.04999999999999716
+  },
+  "matched_bspline_benchmarks": {
+    "command": "one warm-up process per artifact followed by eleven alternating-order parent/candidate executions of matched default-feature release bspline artifacts pinned to CPU 9",
+    "benchmark_harness": "benches/bspline.rs",
+    "parent_revision": "9b17853f71cd7239b98a59e0b016921b67ee47cf",
+    "candidate_revision": "f5bc191b945768a5084a2a3210cf811d2a69350a",
+    "polynomial_bezier_extraction": {
+      "iterations_per_process": 20000,
+      "parent_ns_per_iteration": [
+        6084.26755,
+        5825.74035,
+        5857.08015,
+        5639.4846,
+        6214.74865,
+        6509.93435,
+        5877.82975,
+        6194.794,
+        5691.9755,
+        5720.42805,
+        5824.31695
+      ],
+      "candidate_ns_per_iteration": [
+        5659.7867,
+        6181.8294,
+        5970.2244,
+        7149.3375,
+        5623.3172,
+        5626.011,
+        5647.94305,
+        6579.064649999999,
+        6282.70295,
+        6353.87405,
+        6454.61215
+      ],
+      "parent_median_ns_per_iteration": 5857.08015,
+      "candidate_median_ns_per_iteration": 6181.8294,
+      "median_change_percent": 5.544558750830819,
+      "paired_geomean_change_percent": 2.9915131236129433,
+      "parent_range_ns": [
+        5639.4846,
+        6509.93435
+      ],
+      "candidate_range_ns": [
+        5623.3172,
+        7149.3375
+      ]
+    },
+    "cached_polynomial_decomposition_query": {
+      "iterations_per_process": 20000,
+      "parent_ns_per_iteration": [
+        2.8138,
+        2.9663,
+        2.9438,
+        2.9618,
+        2.7013,
+        3.11975,
+        2.8003,
+        3.02025,
+        2.9773,
+        3.47225,
+        3.91825
+      ],
+      "candidate_ns_per_iteration": [
+        3.68225,
+        2.7903,
+        2.9108,
+        3.38425,
+        2.9468,
+        3.46575,
+        2.9468,
+        2.7098,
+        3.2238,
+        3.95375,
+        2.7453
+      ],
+      "parent_median_ns_per_iteration": 2.9663,
+      "candidate_median_ns_per_iteration": 2.9468,
+      "median_change_percent": -0.6573846205710776,
+      "paired_geomean_change_percent": 2.9352153954638416,
+      "parent_range_ns": [
+        2.7013,
+        3.91825
+      ],
+      "candidate_range_ns": [
+        2.7098,
+        3.95375
+      ]
+    },
+    "rational_cubic_bezier_extraction": {
+      "iterations_per_process": 20000,
+      "parent_ns_per_iteration": [
+        7015.82865,
+        6867.0219,
+        6797.16465,
+        6835.55705,
+        6998.86985,
+        6903.2344,
+        6918.7068,
+        6906.1012,
+        6850.912,
+        6942.6767,
+        6973.3661
+      ],
+      "candidate_ns_per_iteration": [
+        7000.6467,
+        6834.97555,
+        6740.1416,
+        7019.15745,
+        6818.02525,
+        6846.2938,
+        6807.1885,
+        6924.36545,
+        6779.2304,
+        6833.06275,
+        6715.55925
+      ],
+      "parent_median_ns_per_iteration": 6906.1012,
+      "candidate_median_ns_per_iteration": 6833.06275,
+      "median_change_percent": -1.0575931033272479,
+      "paired_geomean_change_percent": -0.9134100604780926,
+      "parent_range_ns": [
+        6797.16465,
+        7015.82865
+      ],
+      "candidate_range_ns": [
+        6715.55925,
+        7019.15745
+      ]
+    },
+    "cached_nurbs_decomposition_and_native_queries": {
+      "iterations_per_process": 20000,
+      "parent_ns_per_iteration": [
+        6.05655,
+        5.7951,
+        5.81265,
+        5.7516,
+        5.7546,
+        5.7946,
+        6.36205,
+        5.8121,
+        5.7936,
+        6.36255,
+        6.1006
+      ],
+      "candidate_ns_per_iteration": [
+        9.18235,
+        9.23985,
+        10.02885,
+        10.2853,
+        9.41785,
+        9.0359,
+        8.8059,
+        9.65535,
+        8.97435,
+        9.61085,
+        9.28635
+      ],
+      "parent_median_ns_per_iteration": 5.8121,
+      "candidate_median_ns_per_iteration": 9.28635,
+      "median_change_percent": 59.77615663873643,
+      "paired_geomean_change_percent": 58.250352716859055,
+      "parent_range_ns": [
+        5.7516,
+        6.36255
+      ],
+      "candidate_range_ns": [
+        8.8059,
+        10.2853
+      ]
+    },
+    "cached_general_rational_point": {
+      "iterations_per_process": 20000,
+      "parent_ns_per_iteration": [
+        1037.5608,
+        881.40805,
+        893.4057,
+        880.7846,
+        890.4259,
+        892.4093,
+        867.0875,
+        885.29975,
+        884.7363,
+        898.1929,
+        928.5308
+      ],
+      "candidate_ns_per_iteration": [
+        871.5382,
+        890.82435,
+        866.58355,
+        852.648,
+        888.53855,
+        863.40275,
+        872.9486,
+        898.92885,
+        844.55855,
+        877.4718,
+        905.82935
+      ],
+      "parent_median_ns_per_iteration": 890.4259,
+      "candidate_median_ns_per_iteration": 872.9486,
+      "median_change_percent": -1.9628022949467083,
+      "paired_geomean_change_percent": -2.9943400202742554,
+      "parent_range_ns": [
+        867.0875,
+        1037.5608
+      ],
+      "candidate_range_ns": [
+        844.55855,
+        905.82935
+      ]
+    },
+    "cached_general_rational_first_derivative": {
+      "iterations_per_process": 20000,
+      "parent_ns_per_iteration": [
+        2796.9536,
+        2809.0258,
+        2680.4751,
+        2725.7665,
+        3005.94225,
+        2751.60425,
+        2678.44275,
+        2723.16565,
+        2775.58755,
+        2746.3931,
+        2738.44965
+      ],
+      "candidate_ns_per_iteration": [
+        2806.33445,
+        2784.034,
+        2757.8988,
+        2689.065,
+        2838.61425,
+        2774.30465,
+        2777.24695,
+        2794.87775,
+        2712.11095,
+        2879.12695,
+        2785.21995
+      ],
+      "parent_median_ns_per_iteration": 2746.3931,
+      "candidate_median_ns_per_iteration": 2784.034,
+      "median_change_percent": 1.370557623378832,
+      "paired_geomean_change_percent": 0.5788296566489715,
+      "parent_range_ns": [
+        2678.44275,
+        3005.94225
+      ],
+      "candidate_range_ns": [
+        2689.065,
+        2879.12695
+      ]
+    },
+    "cached_general_rational_derivatives_one_through_three": {
+      "iterations_per_process": 20000,
+      "parent_ns_per_iteration": [
+        10223.3561,
+        9959.16275,
+        9673.52985,
+        9978.09445,
+        10059.3959,
+        9728.33805,
+        9543.37125,
+        10164.07615,
+        10055.48815,
+        10033.46615,
+        9875.0495
+      ],
+      "candidate_ns_per_iteration": [
+        9728.91655,
+        9968.82805,
+        9518.5205,
+        9598.00155,
+        9823.0946,
+        9731.1989,
+        9724.9993,
+        9745.5084,
+        9456.33125,
+        10377.41205,
+        9835.49575
+      ],
+      "parent_median_ns_per_iteration": 9978.09445,
+      "candidate_median_ns_per_iteration": 9731.1989,
+      "median_change_percent": -2.474375756184599,
+      "paired_geomean_change_percent": -1.6410447257588445,
+      "parent_range_ns": [
+        9543.37125,
+        10223.3561
+      ],
+      "candidate_range_ns": [
+        9456.33125,
+        10377.41205
+      ]
+    },
+    "cached_large_periodic_point": {
+      "iterations_per_process": 20000,
+      "parent_ns_per_iteration": [
+        1234.6203,
+        1199.5317,
+        1158.767,
+        1148.5797,
+        1136.972,
+        1174.10145,
+        1177.7947,
+        1183.3403,
+        1152.80145,
+        1135.2466,
+        1162.82175
+      ],
+      "candidate_ns_per_iteration": [
+        1146.1914,
+        1159.50945,
+        1144.7,
+        1163.88915,
+        1197.7038,
+        1153.81235,
+        1135.7431,
+        1191.1203,
+        1166.053,
+        1154.7923,
+        1202.01105
+      ],
+      "parent_median_ns_per_iteration": 1162.82175,
+      "candidate_median_ns_per_iteration": 1159.50945,
+      "median_change_percent": -0.2848501930756031,
+      "paired_geomean_change_percent": -0.3700131806183893,
+      "parent_range_ns": [
+        1135.2466,
+        1234.6203
+      ],
+      "candidate_range_ns": [
+        1135.7431,
+        1202.01105
+      ]
+    },
+    "cold_256_control_decomposition": {
+      "iterations_per_process": 50,
+      "parent_ns_per_iteration": [
+        2017852.18,
+        1898796.32,
+        1891291.24,
+        1910488.14,
+        1898993.72,
+        1924549.38,
+        1904971.5,
+        1931262.12,
+        1919302.12,
+        1904971.72,
+        1916042.56
+      ],
+      "candidate_ns_per_iteration": [
+        1915519,
+        1886945.56,
+        1892969.32,
+        1901593.56,
+        1920902.8,
+        1908680.06,
+        1883662.78,
+        1899338.08,
+        1898772.34,
+        1954103.92,
+        1918625.76
+      ],
+      "parent_median_ns_per_iteration": 1910488.14,
+      "candidate_median_ns_per_iteration": 1901593.56,
+      "median_change_percent": -0.46556583177741473,
+      "paired_geomean_change_percent": -0.6411507356542834,
+      "parent_range_ns": [
+        1891291.24,
+        2017852.18
+      ],
+      "candidate_range_ns": [
+        1883662.78,
+        1954103.92
+      ]
+    },
+    "cached_256_control_point": {
+      "iterations_per_process": 50,
+      "parent_ns_per_iteration": [
+        9203.38,
+        9151.98,
+        8976.18,
+        9130.18,
+        9608.34,
+        8982.78,
+        9398.56,
+        9454.34,
+        9204.78,
+        9473.34,
+        8993.38
+      ],
+      "candidate_ns_per_iteration": [
+        9336.96,
+        9071.38,
+        8799.8,
+        8945.2,
+        9146.76,
+        8923,
+        8933.58,
+        8960.8,
+        8951.6,
+        9051.18,
+        9395.74
+      ],
+      "parent_median_ns_per_iteration": 9203.38,
+      "candidate_median_ns_per_iteration": 8960.8,
+      "median_change_percent": -2.635770771173196,
+      "paired_geomean_change_percent": -2.022198027399069,
+      "parent_range_ns": [
+        8976.18,
+        9608.34
+      ],
+      "candidate_range_ns": [
+        8799.8,
+        9395.74
+      ]
+    },
+    "interpretation": "The strict specialization recovers dynamic-policy costs in mathematical kernels. Point, higher-derivative, periodic, large cold-decomposition, and large cached-evaluation lanes improve; first derivative is within one percent by paired mean. The certainty-bearing pair of cached NURBS queries adds about 3.47 ns total. Low-level polynomial extraction carries a visible roughly three-percent paired-mean cost from complete uncertainty propagation and active-policy evidence validation."
+  },
+  "competitive_nurbs_snapshot": {
+    "command": "one warm-up process per artifact followed by eleven alternating-order one-sample comparative NURBS process pairs with 50000 fixed iterations pinned to CPU 9",
+    "group": "nurbs_evaluation/rational_cubic_three_parameters",
+    "parent_hypercurve_ns_per_iteration": [
+      1138.6,
+      1133.6,
+      1227.4,
+      1147.3,
+      1189.2,
+      1209.9,
+      1267.3,
+      1172.7,
+      1180.1,
+      1246,
+      1131.7
+    ],
+    "candidate_hypercurve_ns_per_iteration": [
+      1178.3,
+      1114.9,
+      1159,
+      1160.9,
+      1149.5,
+      1149.4,
+      1379,
+      1193.5,
+      1200.4,
+      1124,
+      1149.9
+    ],
+    "candidate_curvo_ns_per_iteration": [
+      57.3,
+      57,
+      57.2,
+      56.7,
+      57.2,
+      57.3,
+      57.6,
+      57.1,
+      56.8,
+      58.4,
+      57.4
+    ],
+    "parent_hypercurve_median_ns": 1180.1,
+    "candidate_hypercurve_median_ns": 1159,
+    "candidate_curvo_median_ns": 57.2,
+    "candidate_vs_parent_median_delta_percent": -1.7879840691466753,
+    "candidate_vs_parent_paired_geomean_delta_percent": -0.7350286966168573,
+    "candidate_vs_curvo_ratio": 20.26223776223776,
+    "parent_range_ns": [
+      1131.7,
+      1267.3
+    ],
+    "candidate_range_ns": [
+      1114.9,
+      1379
+    ],
+    "curvo_range_ns": [
+      56.7,
+      58.4
+    ],
+    "interpretation": "The exact Hypercurve lane improves against its matched parent. Curvo remains much faster under a finite f64 contract; the ratio is an optimization target, not an exactness-parity claim."
+  },
+  "matched_pathological_curve_region2": {
+    "command": "one warm-up pair followed by eight alternating-order measured parent/candidate executions of matched default-feature release pathological_regions artifacts pinned to CPU 9 with HYPERCURVE_PATHOLOGICAL_MODE=boolean and HYPERCURVE_PATHOLOGICAL_CELL_LIMIT=67",
+    "cells": 67,
+    "operations": 268,
+    "completed_operations": 268,
+    "blockers": 0,
+    "checksum": 6,
+    "candidate_pairs": 603,
+    "retained_fragments": 3248,
+    "point_classifications": 134,
+    "parent_build_ms": [
+      142.840991,
+      74.933239,
+      74.443693,
+      74.901161,
+      74.291373,
+      74.361898,
+      107.923056,
+      155.561837
+    ],
+    "candidate_build_ms": [
+      83.545679,
+      126.603154,
+      77.568418,
+      77.076142,
+      73.194828,
+      73.60268,
+      142.11933,
+      115.230535
+    ],
+    "parent_boolean_ms": [
+      782.025709,
+      486.98985,
+      484.935561,
+      467.296302,
+      469.999116,
+      576.572324,
+      776.598512,
+      815.285297
+    ],
+    "candidate_boolean_ms": [
+      528.37884,
+      519.136934,
+      479.366363,
+      479.808023,
+      472.059065,
+      474.694634,
+      729.065492,
+      704.377776
+    ],
+    "parent_rss_mib": [
+      34.5,
+      34.4,
+      34.4,
+      34.5,
+      34.4,
+      34.5,
+      34.4,
+      34.6
+    ],
+    "candidate_rss_mib": [
+      34.6,
+      34.6,
+      34.5,
+      34.5,
+      34.4,
+      34.5,
+      34.5,
+      34.5
+    ],
+    "build_summary": {
+      "parent_median": 74.91720000000001,
+      "candidate_median": 80.55704850000001,
+      "median_delta_percent": 7.528109032371733,
+      "paired_geomean_delta_percent": 0.09843227373529384,
+      "parent_range": [
+        74.291373,
+        155.561837
+      ],
+      "candidate_range": [
+        73.194828,
+        142.11933
+      ]
+    },
+    "boolean_summary": {
+      "parent_median": 531.781087,
+      "candidate_median": 499.47247849999997,
+      "median_delta_percent": -6.075546740909199,
+      "paired_geomean_delta_percent": -8.523641454407581,
+      "parent_range": [
+        467.296302,
+        815.285297
+      ],
+      "candidate_range": [
+        472.059065,
+        729.065492
+      ]
+    },
+    "rss_summary": {
+      "parent_median": 34.45,
+      "candidate_median": 34.5,
+      "median_delta_percent": 0.14513788098693414,
+      "paired_geomean_delta_percent": 0.14513818616768148,
+      "parent_range": [
+        34.4,
+        34.6
+      ],
+      "candidate_range": [
+        34.4,
+        34.6
+      ]
+    },
+    "interpretation": "Topology, decision counts, and checksum are identical. Build time is neutral by paired geometric mean, exact Boolean time improves 8.52%, and process-scale RSS is unchanged within 0.05 MiB."
+  },
+  "release_artifact_size": {
+    "measurement": "matched default-feature release bspline and pathological_regions executables plus comparative-feature release artifacts measured with GNU size and strip",
+    "bspline": {
+      "parent": {
+        "file_bytes": 4129584,
+        "stripped_file_bytes": 3189280,
+        "text_bytes": 2940726,
+        "data_bytes": 244672,
+        "bss_bytes": 2026,
+        "total_loaded_bytes": 3187424
+      },
+      "candidate": {
+        "file_bytes": 4141720,
+        "stripped_file_bytes": 3199112,
+        "text_bytes": 2950578,
+        "data_bytes": 244648,
+        "bss_bytes": 4482,
+        "total_loaded_bytes": 3199708
+      },
+      "delta": {
+        "file_bytes": {
+          "bytes": 12136,
+          "percent": 0.293879480354442
+        },
+        "stripped_file_bytes": {
+          "bytes": 9832,
+          "percent": 0.30828274720313686
+        },
+        "text_bytes": {
+          "bytes": 9852,
+          "percent": 0.33501931155774933
+        },
+        "data_bytes": {
+          "bytes": -24,
+          "percent": -0.009809050483911008
+        },
+        "bss_bytes": {
+          "bytes": 2456,
+          "percent": 121.22408687068113
+        },
+        "total_loaded_bytes": {
+          "bytes": 12284,
+          "percent": 0.38538958105354126
+        }
+      }
+    },
+    "comparative": {
+      "parent": {
+        "file_bytes": 7956616,
+        "stripped_file_bytes": 6046664,
+        "text_bytes": 5768014,
+        "data_bytes": 274776,
+        "bss_bytes": 4760,
+        "total_loaded_bytes": 6047550
+      },
+      "candidate": {
+        "file_bytes": 7967352,
+        "stripped_file_bytes": 6056112,
+        "text_bytes": 5777446,
+        "data_bytes": 274784,
+        "bss_bytes": 3504,
+        "total_loaded_bytes": 6055734
+      },
+      "delta": {
+        "file_bytes": {
+          "bytes": 10736,
+          "percent": 0.13493173479781628
+        },
+        "stripped_file_bytes": {
+          "bytes": 9448,
+          "percent": 0.15625144707891447
+        },
+        "text_bytes": {
+          "bytes": 9432,
+          "percent": 0.16352248798285896
+        },
+        "data_bytes": {
+          "bytes": 8,
+          "percent": 0.0029114624275683454
+        },
+        "bss_bytes": {
+          "bytes": -1256,
+          "percent": -26.386554621848735
+        },
+        "total_loaded_bytes": {
+          "bytes": 8184,
+          "percent": 0.13532752933005376
+        }
+      }
+    },
+    "pathological": {
+      "parent": {
+        "file_bytes": 6942768,
+        "stripped_file_bytes": 5514296,
+        "text_bytes": 5245429,
+        "data_bytes": 264984,
+        "bss_bytes": 4536,
+        "total_loaded_bytes": 5514949
+      },
+      "candidate": {
+        "file_bytes": 6954488,
+        "stripped_file_bytes": 5524072,
+        "text_bytes": 5255117,
+        "data_bytes": 265080,
+        "bss_bytes": 2952,
+        "total_loaded_bytes": 5523149
+      },
+      "delta": {
+        "file_bytes": {
+          "bytes": 11720,
+          "percent": 0.16880875178315602
+        },
+        "stripped_file_bytes": {
+          "bytes": 9776,
+          "percent": 0.177284643406872
+        },
+        "text_bytes": {
+          "bytes": 9688,
+          "percent": 0.18469414036488274
+        },
+        "data_bytes": {
+          "bytes": 96,
+          "percent": 0.03622860248166937
+        },
+        "bss_bytes": {
+          "bytes": -1584,
+          "percent": -34.92063492063492
+        },
+        "total_loaded_bytes": {
+          "bytes": 8200,
+          "percent": 0.14868677842714284
+        }
+      }
+    },
+    "frozen_baseline_total_loadable_bytes": 5531293,
+    "pathological_delta_from_frozen_baseline_total_loadable_bytes": -8144,
+    "pathological_delta_from_frozen_baseline_total_loadable_percent": -0.1472350135854339,
+    "frozen_baseline_stripped_bytes": 5532504,
+    "pathological_delta_from_frozen_baseline_stripped_bytes": -8432,
+    "pathological_delta_from_frozen_baseline_stripped_percent": -0.15240838506397347,
+    "interpretation": "Representative text grows 0.16-0.34% for the explicit policy/outcome surface and complete knot-evidence propagation. The pathological artifact remains below the frozen consolidation baseline."
+  },
+  "caller_audit": {
+    "hypercurve_source_tests_benches_fuzz_and_ui_example": "all migrated and warning-clean",
+    "external_caller_cutover_deferred_until_remaining_phase_1_public_policy_surfaces_stabilize": true,
+    "compatibility_shim_added": false,
+    "hypermesh_modified": false
+  },
+  "remaining_policy_audit": {
+    "public_spline_evaluation_is_a_strict_wrapper": false,
+    "public_spline_decomposition_is_a_strict_wrapper": false,
+    "public_spline_exact_edit_strict_surfaces_remain": true,
+    "approximate_512_hypersolve_pivot_continuation_remains": true,
+    "next_action": "make knot insertion/removal, degree elevation, reversal/similarity reconstruction, and retained exact-edit evidence policy-explicit; then implement and audit the caller-authorized Hypersolve pivot proposal boundary"
+  },
+  "static_callgraph": {
+    "command": "/home/tim/Documents/GitHub/workspace/tools/hyper-callgraph/target/release/hyper-callgraph --root /home/tim/Documents/GitHub/workspace --out-dir /tmp/hypercurve-spline-evaluation-policy-callgraph --crate-name hypercurve --include-examples --include-tests --include-bench --include-fuzz --format json",
+    "nodes": 22700,
+    "edges": 39003,
+    "artifact": "/tmp/hypercurve-spline-evaluation-policy-callgraph/callgraph.json",
+    "evaluation_and_decomposition_public_nodes": 54,
+    "raw_policy_kernel_nodes": 32,
+    "public_nodes_calling_module_resolver": 38,
+    "terminal_periodic_remainder_callers": [
+      "hypercurve::spline_periodic::wrap_periodic_parameter"
+    ],
+    "single_policy_observation_node_present": true
+  },
+  "verification": {
+    "cargo_test_all_features": "pass",
+    "unit_tests": 262,
+    "all_integration_tests": "pass except two explicitly ignored release-scale PCB performance corpora",
+    "generated_curve_region_boolean_tests": 7,
+    "pathological_operations": "268/268 decided with no blockers",
+    "terminal_nurbs_decomposition_evaluation_policy_test": "pass",
+    "terminal_polynomial_decomposition_evaluation_policy_test": "pass",
+    "terminal_nurbs_periodic_wrap_policy_test": "pass",
+    "terminal_polynomial_periodic_wrap_policy_test": "pass",
+    "decreasing_knot_vector_regression_test": "pass",
+    "cargo_clippy_all_features_all_targets_deny_warnings": "pass",
+    "cargo_clippy_no_default_features_all_targets_deny_warnings": "pass",
+    "cargo_check_no_default_features_all_targets": "pass",
+    "cargo_check_fuzz_all_targets": "pass",
+    "cargo_doc_all_features_deny_warnings": "pass",
+    "hypercurve_ui_cargo_check_all_targets": "pass",
+    "hypercurve_ui_cargo_clippy_all_targets_deny_warnings": "pass",
+    "cargo_fmt_check": "pass",
+    "git_diff_check": "pass"
+  }
+}

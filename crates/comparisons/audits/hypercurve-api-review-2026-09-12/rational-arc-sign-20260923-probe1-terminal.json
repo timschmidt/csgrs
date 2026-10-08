@@ -1,0 +1,15 @@
+{
+  "cases": [
+    {
+      "name": "bezier_region::tests::nonrepresented_chord_and_retained_rational_arc_share_the_fillet_kernel",
+      "returncode": 101,
+      "passed": false,
+      "limit_seconds": 90,
+      "elapsed_seconds": 0.2517352730501443,
+      "log": "rational-arc-sign-20260923-probe1-case-0.log"
+    }
+  ],
+  "binary_sha256": "ba593ed01afb03a89dfc4c01873dd45b508b1b921baf6bbe4da81daf6e146307",
+  "all_sources_unchanged": true,
+  "all_processes_reaped": true
+}

@@ -1,0 +1,17 @@
+[package]
+name = "calcium-root-exp-proof-qualification"
+version = "0.1.0"
+edition = "2024"
+publish = false
+
+[workspace]
+
+[dependencies]
+hyperreal = { path = "../root-exp-proof-trial-hyperreal", features = ["serde"] }
+num = "0.4.3"
+serde_json = "1.0.149"
+rug = { version = "1.30.0", default-features = false, features = ["float", "rational", "std"] }
+
+[[bin]]
+name = "calcium-root-exp-proof-qualification"
+path = "../root-exp-qualification.rs"

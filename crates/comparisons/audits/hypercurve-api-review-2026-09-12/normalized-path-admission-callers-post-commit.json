@@ -1,0 +1,32 @@
+{
+  "commits": {
+    "hypercircuit": "ad421497ce6e88fe936818ec198c8a1b779776c7",
+    "csgrs": "4e5b9ebb59127a559ecda9779d1b8af05ed40fcb"
+  },
+  "files": [
+    {
+      "repository": "hypercircuit",
+      "file": "src/layout.rs",
+      "sha256": "a6b46f41f11aeba1eea3aa34617ce478af6d6c579d5b17c2b222732422683379"
+    },
+    {
+      "repository": "hypercircuit",
+      "file": "src/materialize.rs",
+      "sha256": "936931b8f4c927f74e85d8b438bf2e830d192cdc525b8b37732e826b54f3af78"
+    },
+    {
+      "repository": "hypercircuit",
+      "file": "tests/curved_outline.rs",
+      "sha256": "13c1fdf8e37e6625392499948e55274db70da6eb28e8500a2081e127548a0eab"
+    },
+    {
+      "repository": "csgrs",
+      "file": "src/curve/native.rs",
+      "sha256": "64348a9f70275987d5fa98b527faa0713dc93ec8c75b55315e83c7c0d2f652fd"
+    }
+  ],
+  "worktrees_clean": [
+    "hypercircuit",
+    "csgrs"
+  ]
+}

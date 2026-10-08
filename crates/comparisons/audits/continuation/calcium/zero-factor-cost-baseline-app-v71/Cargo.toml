@@ -1,0 +1,16 @@
+[package]
+name = "calcium-zero-factor-cost-v71"
+version = "0.0.0"
+edition = "2024"
+[workspace]
+[dependencies]
+hyperreal = { path = "../e-plan-qualified-candidate/hyperreal", features = ["serde"] }
+hyperlimit = { path = "../e-plan-qualified-candidate/hyperlimit" }
+hypersolve = { path = "../point-demand-candidate/hypersolve" }
+serde_json = "1.0"
+[[bin]]
+name = "zero-factor-cpu-v71"
+path = "../zero-factor-cpu-v71.rs"
+[[bin]]
+name = "zero-factor-allocation-v71"
+path = "../zero-factor-allocation-v71.rs"

@@ -1,0 +1,15 @@
+{
+  "tag": "run-reuse-cost-first-touch-cpu",
+  "started": "2026-09-08T22:19:14.878Z",
+  "finished": "2026-09-08T22:19:37.032Z",
+  "elapsedSeconds": 22.152258280999998,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "/usr/bin/node-22",
+  "args": [
+    "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/run-reuse-cost-bench.mjs",
+    "first-touch",
+    "cpu"
+  ],
+  "code": 0,
+  "signal": null
+}

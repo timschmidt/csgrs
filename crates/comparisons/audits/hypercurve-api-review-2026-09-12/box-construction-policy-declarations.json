@@ -1,0 +1,27 @@
+{
+  "bbox_methods_and_helpers": [
+    "from_points",
+    "from_line",
+    "from_arc",
+    "from_segment",
+    "from_curve_string",
+    "from_contour",
+    "from_region",
+    "from_region_view",
+    "has_valid_ordering",
+    "include_point",
+    "union",
+    "singleton_intersection",
+    "singleton_interval_intersection",
+    "decided_segment_aabb",
+    "decided_contour_aabb",
+    "include_coordinate"
+  ],
+  "bezier_control_hull_methods": 2,
+  "semantic_changes": [
+    "certified scalar comparisons",
+    "certified native arc sweep membership",
+    "rounded preview cardinal branch removed"
+  ],
+  "baseline_tests_failed": 4
+}

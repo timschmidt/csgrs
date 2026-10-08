@@ -1,0 +1,9 @@
+{
+  "prior_location_bytes": 152,
+  "general_location_bytes": 160,
+  "bezier_parameter_bytes": 48,
+  "general_parameter_bytes": 56,
+  "rlib_sha256": "e1de6af8f9104297e792ad94ec42e7590ecad78e948eca9aaf0023133dcc80a9",
+  "prior_layout": "private baseline field types mirrored on the same compiler and target; not a Rust ABI guarantee",
+  "scope": "stack layout only; no throughput or allocation claim"
+}

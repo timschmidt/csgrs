@@ -1,0 +1,11 @@
+{
+  "parent": "8ee3c9f2a58a12c283cb63ccd27e46f2578ac5fa",
+  "files": [
+    "src/bareiss.rs",
+    "src/curve_resultant.rs",
+    "src/integer_interpolation.rs",
+    "src/resultant.rs"
+  ],
+  "source_manifest": "local-chord-complete-replay-20260924-v32-sources.json",
+  "hypercurve_uncommitted": true
+}

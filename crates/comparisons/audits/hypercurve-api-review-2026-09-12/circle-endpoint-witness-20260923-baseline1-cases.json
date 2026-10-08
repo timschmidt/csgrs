@@ -1,0 +1,10 @@
+[
+  {
+    "name": "bezier_offset::conversion_tests::probe_constructed_circle_endpoint_retains_its_known_parameter",
+    "returncode": 0,
+    "passed": true,
+    "limit_seconds": 60,
+    "elapsed_seconds": 0.14594775496516377,
+    "log": "circle-endpoint-witness-20260923-baseline1-case-0.log"
+  }
+]

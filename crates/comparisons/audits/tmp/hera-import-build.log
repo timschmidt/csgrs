@@ -1,0 +1,26 @@
+
+compat/Data/Number/MPFR.hs:2:12: warning: [-Wdeprecated-flags]
+    -#include is deprecated: -#include and INCLUDE pragmas are deprecated: They no longer have any effect
+  |
+2 | {-# INCLUDE <mpfr.h> #-}
+  |            ^^^^^^^^^^
+
+compat/Data/Number/MPFR.hs:3:12: warning: [-Wdeprecated-flags]
+    -#include is deprecated: -#include and INCLUDE pragmas are deprecated: They no longer have any effect
+  |
+3 | {-# INCLUDE <hsmpfr.h> #-}
+  |            ^^^^^^^^^^^^
+
+compat/Data/Number/Ball.hs:1:12: warning: [-Wdeprecated-flags]
+    -#include is deprecated: -#include and INCLUDE pragmas are deprecated: They no longer have any effect
+  |
+1 | {-# INCLUDE <mpfr.h> #-}
+  |            ^^^^^^^^^^
+
+compat/Data/Number/Ball.hs:2:12: warning: [-Wdeprecated-flags]
+    -#include is deprecated: -#include and INCLUDE pragmas are deprecated: They no longer have any effect
+  |
+2 | {-# INCLUDE <hsmpfr.h> #-}
+  |            ^^^^^^^^^^^^
+[8 of 9] Compiling Main             ( HeraImportProbe.hs, probe-build/Main.o ) [Source file changed]
+[9 of 9] Linking hera-import-probe

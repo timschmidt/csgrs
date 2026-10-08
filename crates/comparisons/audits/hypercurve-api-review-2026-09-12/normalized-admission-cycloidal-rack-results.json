@@ -1,0 +1,42 @@
+[
+  {
+    "label": "parent",
+    "teeth": 1,
+    "returncode": 0,
+    "elapsed_seconds": 0.03093763001379557,
+    "source_sha256": "aeb1550b9ab56dc0874e06e57465e27a57d97d8b72f80353835bd52b3440f291",
+    "library_sha256": "5cc578428c0ecd41b54f2dca195f416779e365698dcb4ad46588dd84bd0ef96a",
+    "executable_sha256": "3367da1a6624ec87232c5213f645f45de0fbee5074e48a5d55c9dd6a9cb47052",
+    "log": "normalized-admission-cycloidal-rack-parent-1.log"
+  },
+  {
+    "label": "parent",
+    "teeth": 4,
+    "returncode": 0,
+    "elapsed_seconds": 0.27502139101852663,
+    "source_sha256": "aeb1550b9ab56dc0874e06e57465e27a57d97d8b72f80353835bd52b3440f291",
+    "library_sha256": "5cc578428c0ecd41b54f2dca195f416779e365698dcb4ad46588dd84bd0ef96a",
+    "executable_sha256": "3367da1a6624ec87232c5213f645f45de0fbee5074e48a5d55c9dd6a9cb47052",
+    "log": "normalized-admission-cycloidal-rack-parent-4.log"
+  },
+  {
+    "label": "completed",
+    "teeth": 1,
+    "returncode": 0,
+    "elapsed_seconds": 0.025550878985086456,
+    "source_sha256": "aeb1550b9ab56dc0874e06e57465e27a57d97d8b72f80353835bd52b3440f291",
+    "library_sha256": "fd1203e4eb3e6fa064be46977d35d871e0185d2eed992d795a23ca191d56afdf",
+    "executable_sha256": "1e5940f6c8487b81a0a773bb518549eeb03de20d6fac21b55b001be8cbd5b513",
+    "log": "normalized-admission-cycloidal-rack-completed-1.log"
+  },
+  {
+    "label": "completed",
+    "teeth": 4,
+    "returncode": 0,
+    "elapsed_seconds": 0.1928681710269302,
+    "source_sha256": "aeb1550b9ab56dc0874e06e57465e27a57d97d8b72f80353835bd52b3440f291",
+    "library_sha256": "fd1203e4eb3e6fa064be46977d35d871e0185d2eed992d795a23ca191d56afdf",
+    "executable_sha256": "1e5940f6c8487b81a0a773bb518549eeb03de20d6fac21b55b001be8cbd5b513",
+    "log": "normalized-admission-cycloidal-rack-completed-4.log"
+  }
+]

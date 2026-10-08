@@ -1,0 +1,4146 @@
+[
+  {
+    "args": [
+      "elementary",
+      "sqrt",
+      "0",
+      "1",
+      "8"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "sqrt 0 1 8 0\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "sqrt",
+      "0",
+      "1",
+      "32"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "sqrt 0 1 32 0\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "sqrt",
+      "0",
+      "1",
+      "80"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "sqrt 0 1 80 0\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "sqrt",
+      "0",
+      "1",
+      "160"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "sqrt 0 1 160 0\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "sqrt",
+      "1",
+      "16",
+      "8"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "sqrt 1 16 8 64\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "sqrt",
+      "1",
+      "16",
+      "32"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "sqrt 1 16 32 1073741824\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "sqrt",
+      "1",
+      "16",
+      "80"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "sqrt 1 16 80 302231454903657293676544\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "sqrt",
+      "1",
+      "16",
+      "160"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "sqrt 1 16 160 365375409332725729550921208179070754913983135744\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "sqrt",
+      "2",
+      "1",
+      "8"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "sqrt 2 1 8 362\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "sqrt",
+      "2",
+      "1",
+      "32"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "sqrt 2 1 32 6074000999\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "sqrt",
+      "2",
+      "1",
+      "80"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "sqrt 2 1 80 1709679290002018430137083\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "sqrt",
+      "2",
+      "1",
+      "160"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "sqrt 2 1 160 2066875436943847413332748968013809022504194195829\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "sqrt",
+      "9",
+      "4",
+      "8"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "sqrt 9 4 8 384\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "sqrt",
+      "9",
+      "4",
+      "32"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "sqrt 9 4 32 6442450944\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "sqrt",
+      "9",
+      "4",
+      "80"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "sqrt 9 4 80 1813388729421943762059264\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "sqrt",
+      "9",
+      "4",
+      "160"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "sqrt 9 4 160 2192252455996354377305527249074424529483898814464\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "sqrt",
+      "1000",
+      "1",
+      "8"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "sqrt 1000 1 8 8095\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "sqrt",
+      "1000",
+      "1",
+      "32"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "sqrt 1000 1 32 135818791312\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "sqrt",
+      "1000",
+      "1",
+      "80"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "sqrt 1000 1 80 38229591121680897703005035\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "sqrt",
+      "1000",
+      "1",
+      "160"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "sqrt 1000 1 160 46216739780310229952733864858803102473818892317915\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "exp",
+      "-16",
+      "1",
+      "8"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "exp -16 1 8 0\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "exp",
+      "-16",
+      "1",
+      "32"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "exp -16 1 32 483\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "exp",
+      "-16",
+      "1",
+      "80"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "exp -16 1 80 136046678332955822\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "exp",
+      "-16",
+      "1",
+      "160"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "exp -16 1 160 164470342109516429004217263274438344623658\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "exp",
+      "-2",
+      "1",
+      "8"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "exp -2 1 8 35\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "exp",
+      "-2",
+      "1",
+      "32"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "exp -2 1 32 581260615\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "exp",
+      "-2",
+      "1",
+      "80"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "exp -2 1 80 163610318209599982778094\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "exp",
+      "-2",
+      "1",
+      "160"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "exp -2 1 160 197792738038950947696974261089678842854352197150\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "exp",
+      "-1",
+      "4",
+      "8"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "exp -1 4 8 199\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "exp",
+      "-1",
+      "4",
+      "32"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "exp -1 4 32 3344923893\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "exp",
+      "-1",
+      "4",
+      "80"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "exp -1 4 80 941512374991113148383581\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "exp",
+      "-1",
+      "4",
+      "160"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "exp -1 4 160 1138218619613447554647728443013484371486388062555\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "exp",
+      "0",
+      "1",
+      "8"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "exp 0 1 8 256\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "exp",
+      "0",
+      "1",
+      "32"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "exp 0 1 32 4294967296\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "exp",
+      "0",
+      "1",
+      "80"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "exp 0 1 80 1208925819614629174706176\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "exp",
+      "0",
+      "1",
+      "160"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "exp 0 1 160 1461501637330902918203684832716283019655932542976\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "exp",
+      "1",
+      "2",
+      "8"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "exp 1 2 8 422\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "exp",
+      "1",
+      "2",
+      "32"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "exp 1 2 32 7081203938\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "exp",
+      "1",
+      "2",
+      "80"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "exp 1 2 80 1993181713497225317264895\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "exp",
+      "1",
+      "2",
+      "160"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "exp 1 2 160 2409608836630524102508239340616223936125858869612\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "exp",
+      "2",
+      "1",
+      "8"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "exp 2 1 8 1892\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "exp",
+      "2",
+      "1",
+      "32"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "exp 2 1 32 31735754293\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "exp",
+      "2",
+      "1",
+      "80"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "exp 2 1 80 8932820700578210802100463\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "exp",
+      "2",
+      "1",
+      "160"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "exp 2 1 160 10799117586917039482478579205109958671475744041945\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "exp",
+      "16",
+      "1",
+      "8"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "exp 16 1 8 2274844293\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "exp",
+      "16",
+      "1",
+      "32"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "exp 16 1 32 38165554074222850\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "exp",
+      "16",
+      "1",
+      "80"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "exp 16 1 80 10742648444191158998914049786902\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "exp",
+      "16",
+      "1",
+      "160"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "exp 16 1 160 12987065075225617832733185410567240646582459815912275869\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "log",
+      "1",
+      "1024",
+      "8"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "log 1 1024 8 -1775\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "log",
+      "1",
+      "1024",
+      "32"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "log 1 1024 32 -29770444718\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "log",
+      "1",
+      "1024",
+      "80"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "log 1 1024 80 -8379635233720012413199077\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "log",
+      "1",
+      "1024",
+      "160"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "log 1 1024 160 -10130357392996590711356986058467985515865368993665\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "log",
+      "1",
+      "2",
+      "8"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "log 1 2 8 -178\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "log",
+      "1",
+      "2",
+      "32"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "log 1 2 32 -2977044472\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "log",
+      "1",
+      "2",
+      "80"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "log 1 2 80 -837963523372001241319908\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "log",
+      "1",
+      "2",
+      "160"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "log 1 2 160 -1013035739299659071135698605846798551586536899367\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "log",
+      "7",
+      "8",
+      "8"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "log 7 8 8 -34\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "log",
+      "7",
+      "8",
+      "32"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "log 7 8 32 -573512964\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "log",
+      "7",
+      "8",
+      "80"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "log 7 8 80 -161429548272883861317399\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "log",
+      "7",
+      "8",
+      "160"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "log 7 8 160 -195156348955815467563171826280913096382926289679\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "log",
+      "1",
+      "1",
+      "8"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "log 1 1 8 0\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "log",
+      "1",
+      "1",
+      "32"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "log 1 1 32 0\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "log",
+      "1",
+      "1",
+      "80"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "log 1 1 80 0\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "log",
+      "1",
+      "1",
+      "160"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "log 1 1 160 0\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "log",
+      "9",
+      "8",
+      "8"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "log 9 8 8 30\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "log",
+      "9",
+      "8",
+      "32"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "log 9 8 32 505874286\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "log",
+      "9",
+      "8",
+      "80"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "log 9 8 80 142390952917592460356232\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "log",
+      "9",
+      "8",
+      "160"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "log 9 8 160 172140099461608538521748619345418452336133454912\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "log",
+      "2",
+      "1",
+      "8"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "log 2 1 8 178\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "log",
+      "2",
+      "1",
+      "32"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "log 2 1 32 2977044472\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "log",
+      "2",
+      "1",
+      "80"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "log 2 1 80 837963523372001241319908\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "log",
+      "2",
+      "1",
+      "160"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "log 2 1 160 1013035739299659071135698605846798551586536899367\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "log",
+      "1000",
+      "1",
+      "8"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "log 1000 1 8 1769\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "log",
+      "1000",
+      "1",
+      "32"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "log 1000 1 32 29668583012\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "log",
+      "1000",
+      "1",
+      "80"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "log 1000 1 80 8350963712340761448217618\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "log",
+      "1000",
+      "1",
+      "160"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "log 1000 1 160 10095695650513581375387335944264704360424138546102\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "sin",
+      "-1000",
+      "1",
+      "8"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "sin -1000 1 8 -212\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "sin",
+      "-1000",
+      "1",
+      "32"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "sin -1000 1 32 -3551420584\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "sin",
+      "-1000",
+      "1",
+      "80"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "sin -1000 1 80 -999636026260219180446052\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "sin",
+      "-1000",
+      "1",
+      "160"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "sin -1000 1 160 -1208485802362946445667132356992765648437516297107\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "sin",
+      "-2",
+      "1",
+      "8"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "sin -2 1 8 -233\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "sin",
+      "-2",
+      "1",
+      "32"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "sin -2 1 32 -3905402711\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "sin",
+      "-2",
+      "1",
+      "80"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "sin -2 1 80 -1099273136998710540852260\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "sin",
+      "-2",
+      "1",
+      "160"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "sin -2 1 160 -1328939678126510683513938041932601300416100368152\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "sin",
+      "-1",
+      "2",
+      "8"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "sin -1 2 8 -123\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "sin",
+      "-1",
+      "2",
+      "32"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "sin -1 2 32 -2059117009\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "sin",
+      "-1",
+      "2",
+      "80"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "sin -1 2 80 -579589912201271152073007\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "sin",
+      "-1",
+      "2",
+      "160"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "sin -1 2 160 -700681209648292689765225895175204281885096434512\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "sin",
+      "0",
+      "1",
+      "8"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "sin 0 1 8 0\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "sin",
+      "0",
+      "1",
+      "32"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "sin 0 1 32 0\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "sin",
+      "0",
+      "1",
+      "80"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "sin 0 1 80 0\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "sin",
+      "0",
+      "1",
+      "160"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "sin 0 1 160 0\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "sin",
+      "1",
+      "2",
+      "8"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "sin 1 2 8 123\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "sin",
+      "1",
+      "2",
+      "32"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "sin 1 2 32 2059117009\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "sin",
+      "1",
+      "2",
+      "80"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "sin 1 2 80 579589912201271152073007\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "sin",
+      "1",
+      "2",
+      "160"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "sin 1 2 160 700681209648292689765225895175204281885096434512\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "sin",
+      "2",
+      "1",
+      "8"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "sin 2 1 8 233\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "sin",
+      "2",
+      "1",
+      "32"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "sin 2 1 32 3905402711\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "sin",
+      "2",
+      "1",
+      "80"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "sin 2 1 80 1099273136998710540852260\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "sin",
+      "2",
+      "1",
+      "160"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "sin 2 1 160 1328939678126510683513938041932601300416100368152\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "sin",
+      "1000",
+      "1",
+      "8"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "sin 1000 1 8 212\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "sin",
+      "1000",
+      "1",
+      "32"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "sin 1000 1 32 3551420584\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "sin",
+      "1000",
+      "1",
+      "80"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "sin 1000 1 80 999636026260219180446052\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "sin",
+      "1000",
+      "1",
+      "160"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "sin 1000 1 160 1208485802362946445667132356992765648437516297107\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "cos",
+      "-1000",
+      "1",
+      "8"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "cos -1000 1 8 144\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "cos",
+      "-1000",
+      "1",
+      "32"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "cos -1000 1 32 2415399741\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "cos",
+      "-1000",
+      "1",
+      "80"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "cos -1000 1 80 679874585738856183107598\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "cos",
+      "-1000",
+      "1",
+      "160"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "cos -1000 1 160 821917940799503186822943963874300401641278081626\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "cos",
+      "-2",
+      "1",
+      "8"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "cos -2 1 8 -107\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "cos",
+      "-2",
+      "1",
+      "32"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "cos -2 1 32 -1787337053\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "cos",
+      "-2",
+      "1",
+      "80"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "cos -2 1 80 -503090655452789229014206\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "cos",
+      "-2",
+      "1",
+      "160"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "cos -2 1 160 -608199282983724228883714741641051289014540272451\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "cos",
+      "-1",
+      "2",
+      "8"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "cos -1 2 8 225\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "cos",
+      "-1",
+      "2",
+      "32"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "cos -1 2 32 3769188403\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "cos",
+      "-1",
+      "2",
+      "80"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "cos -1 2 80 1060932217912824869797342\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "cos",
+      "-1",
+      "2",
+      "160"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "cos -1 2 160 1282588351095828169838272000512278618375949019963\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "cos",
+      "0",
+      "1",
+      "8"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "cos 0 1 8 256\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "cos",
+      "0",
+      "1",
+      "32"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "cos 0 1 32 4294967296\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "cos",
+      "0",
+      "1",
+      "80"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "cos 0 1 80 1208925819614629174706176\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "cos",
+      "0",
+      "1",
+      "160"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "cos 0 1 160 1461501637330902918203684832716283019655932542976\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "cos",
+      "1",
+      "2",
+      "8"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "cos 1 2 8 225\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "cos",
+      "1",
+      "2",
+      "32"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "cos 1 2 32 3769188403\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "cos",
+      "1",
+      "2",
+      "80"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "cos 1 2 80 1060932217912824869797342\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "cos",
+      "1",
+      "2",
+      "160"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "cos 1 2 160 1282588351095828169838272000512278618375949019963\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "cos",
+      "2",
+      "1",
+      "8"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "cos 2 1 8 -107\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "cos",
+      "2",
+      "1",
+      "32"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "cos 2 1 32 -1787337053\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "cos",
+      "2",
+      "1",
+      "80"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "cos 2 1 80 -503090655452789229014206\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "cos",
+      "2",
+      "1",
+      "160"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "cos 2 1 160 -608199282983724228883714741641051289014540272451\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "cos",
+      "1000",
+      "1",
+      "8"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "cos 1000 1 8 144\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "cos",
+      "1000",
+      "1",
+      "32"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "cos 1000 1 32 2415399741\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "cos",
+      "1000",
+      "1",
+      "80"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "cos 1000 1 80 679874585738856183107598\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "cos",
+      "1000",
+      "1",
+      "160"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "cos 1000 1 160 821917940799503186822943963874300401641278081626\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "atan",
+      "-10",
+      "1",
+      "8"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "atan -10 1 8 -377\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "atan",
+      "-10",
+      "1",
+      "32"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "atan -10 1 32 -6318445249\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "atan",
+      "-10",
+      "1",
+      "80"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "atan -10 1 80 -1778484229415405584559089\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "atan",
+      "-10",
+      "1",
+      "160"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "atan -10 1 160 -2150055504717711381683810300273586837490639679426\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "atan",
+      "-11",
+      "8",
+      "8"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "atan -11 8 8 -241\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "atan",
+      "-11",
+      "8",
+      "32"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "atan -11 8 32 -4045859285\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "atan",
+      "-11",
+      "8",
+      "80"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "atan -11 8 80 -1138808170892756867323047\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "atan",
+      "-11",
+      "8",
+      "160"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "atan -11 8 160 -1376734601380362809506067825319602901231931569050\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "atan",
+      "-21",
+      "16",
+      "8"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "atan -21 16 8 -235\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "atan",
+      "-21",
+      "16",
+      "32"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "atan -21 16 32 -3950165605\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "atan",
+      "-21",
+      "16",
+      "80"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "atan -21 16 80 -1111872777713895933559147\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "atan",
+      "-21",
+      "16",
+      "160"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "atan -21 16 160 -1344171709104966038351528023743780650144924840802\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "atan",
+      "-5",
+      "4",
+      "8"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "atan -5 4 8 -229\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "atan",
+      "-5",
+      "4",
+      "32"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "atan -5 4 32 -3848528567\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "atan",
+      "-5",
+      "4",
+      "80"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "atan -5 4 80 -1083264490213013737611859\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "atan",
+      "-5",
+      "4",
+      "160"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "atan -5 4 160 -1309586411690191076866310292940374066966162894927\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "atan",
+      "-19",
+      "16",
+      "8"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "atan -19 16 8 -223\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "atan",
+      "-19",
+      "16",
+      "32"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "atan -19 16 32 -3740501865\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "atan",
+      "-19",
+      "16",
+      "80"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "atan -19 16 80 -1052857675650397764404619\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "atan",
+      "-19",
+      "16",
+      "160"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "atan -19 16 160 -1272826828473210519278258428440978108143526691606\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "atan",
+      "-9",
+      "8",
+      "8"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "atan -9 8 8 -216\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "atan",
+      "-9",
+      "8",
+      "32"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "atan -9 8 32 -3625613763\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "atan",
+      "-9",
+      "8",
+      "80"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "atan -9 8 80 -1020519549542821548715603\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "atan",
+      "-9",
+      "8",
+      "160"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "atan -9 8 160 -1233732432863807704858881470824268262069799289360\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "atan",
+      "-1",
+      "1",
+      "8"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "atan -1 1 8 -201\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "atan",
+      "-1",
+      "1",
+      "32"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "atan -1 1 32 -3373259426\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "atan",
+      "-1",
+      "1",
+      "80"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "atan -1 1 80 -949488118409084645196998\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "atan",
+      "-1",
+      "1",
+      "160"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "atan -1 1 160 -1147860701762054730346201299935827782113538756104\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "atan",
+      "-1",
+      "2",
+      "8"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "atan -1 2 8 -119\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "atan",
+      "-1",
+      "2",
+      "32"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "atan -1 2 32 -1991351318\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "atan",
+      "-1",
+      "2",
+      "80"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "atan -1 2 80 -560515565723662652979186\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "atan",
+      "-1",
+      "2",
+      "160"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "atan -1 2 160 -677621739699236420003275518904194041839906065092\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "atan",
+      "0",
+      "1",
+      "8"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "atan 0 1 8 0\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "atan",
+      "0",
+      "1",
+      "32"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "atan 0 1 32 0\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "atan",
+      "0",
+      "1",
+      "80"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "atan 0 1 80 0\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "atan",
+      "0",
+      "1",
+      "160"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "atan 0 1 160 0\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "atan",
+      "1",
+      "2",
+      "8"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "atan 1 2 8 119\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "atan",
+      "1",
+      "2",
+      "32"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "atan 1 2 32 1991351318\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "atan",
+      "1",
+      "2",
+      "80"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "atan 1 2 80 560515565723662652979186\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "atan",
+      "1",
+      "2",
+      "160"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "atan 1 2 160 677621739699236420003275518904194041839906065092\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "atan",
+      "1",
+      "1",
+      "8"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "atan 1 1 8 201\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "atan",
+      "1",
+      "1",
+      "32"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "atan 1 1 32 3373259426\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "atan",
+      "1",
+      "1",
+      "80"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "atan 1 1 80 949488118409084645196999\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "atan",
+      "1",
+      "1",
+      "160"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "atan 1 1 160 1147860701762054730346201299935827782113538756105\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "atan",
+      "5",
+      "4",
+      "8"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "atan 5 4 8 230\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "atan",
+      "5",
+      "4",
+      "32"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "atan 5 4 32 3848528572\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "atan",
+      "5",
+      "4",
+      "80"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "atan 5 4 80 1083264490213013737659431\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "atan",
+      "5",
+      "4",
+      "160"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "atan 5 4 160 1309586411690191076866310292940374067236645678451\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "atan",
+      "10",
+      "1",
+      "8"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "atan 10 1 8 377\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "atan",
+      "10",
+      "1",
+      "32"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "atan 10 1 32 6318445249\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "atan",
+      "10",
+      "1",
+      "80"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "atan 10 1 80 1778484229415405584559089\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "atan",
+      "10",
+      "1",
+      "160"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "atan 10 1 160 2150055504717711381683810300273586837490639679426\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "asin",
+      "-1",
+      "1",
+      "8"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "asin -1 1 8 -402\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "asin",
+      "-1",
+      "1",
+      "32"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "asin -1 1 32 -6746518852\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "asin",
+      "-1",
+      "1",
+      "80"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "asin -1 1 80 -1898976236818169290393997\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "asin",
+      "-1",
+      "1",
+      "160"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "asin -1 1 160 -2295721403524109460692402599871655564227077512209\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "asin",
+      "-7",
+      "8",
+      "8"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "asin -7 8 8 -273\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "asin",
+      "-7",
+      "8",
+      "32"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "asin -7 8 32 -4576011988\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "asin",
+      "-7",
+      "8",
+      "80"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "asin -7 8 80 -1288032867722027181973822\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "asin",
+      "-7",
+      "8",
+      "160"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "asin -7 8 160 -1557136190301432953790383466450115835171728012685\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "asin",
+      "-1",
+      "2",
+      "8"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "asin -1 2 8 -134\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "asin",
+      "-1",
+      "2",
+      "32"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "asin -1 2 32 -2248839617\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "asin",
+      "-1",
+      "2",
+      "80"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "asin -1 2 80 -632992078939389763464666\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "asin",
+      "-1",
+      "2",
+      "160"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "asin -1 2 160 -765240467841369820230800866623885188075692504070\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "asin",
+      "0",
+      "1",
+      "8"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "asin 0 1 8 0\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "asin",
+      "0",
+      "1",
+      "32"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "asin 0 1 32 0\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "asin",
+      "0",
+      "1",
+      "80"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "asin 0 1 80 0\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "asin",
+      "0",
+      "1",
+      "160"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "asin 0 1 160 0\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "asin",
+      "1",
+      "2",
+      "8"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "asin 1 2 8 134\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "asin",
+      "1",
+      "2",
+      "32"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "asin 1 2 32 2248839618\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "asin",
+      "1",
+      "2",
+      "80"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "asin 1 2 80 632992078939389763464666\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "asin",
+      "1",
+      "2",
+      "160"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "asin 1 2 160 765240467841369820230800866623885188075692504070\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "asin",
+      "7",
+      "8",
+      "8"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "asin 7 8 8 273\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "asin",
+      "7",
+      "8",
+      "32"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "asin 7 8 32 4576011988\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "asin",
+      "7",
+      "8",
+      "80"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "asin 7 8 80 1288032867722027181973822\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "asin",
+      "7",
+      "8",
+      "160"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "asin 7 8 160 1557136190301432953790383466450115835171728012685\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "asin",
+      "1",
+      "1",
+      "8"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "asin 1 1 8 402\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "asin",
+      "1",
+      "1",
+      "32"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "asin 1 1 32 6746518852\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "asin",
+      "1",
+      "1",
+      "80"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "asin 1 1 80 1898976236818169290393997\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "asin",
+      "1",
+      "1",
+      "160"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "asin 1 1 160 2295721403524109460692402599871655564227077512209\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "acos",
+      "-1",
+      "1",
+      "8"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "acos -1 1 8 804\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "acos",
+      "-1",
+      "1",
+      "32"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "acos -1 1 32 13493037705\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "acos",
+      "-1",
+      "1",
+      "80"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "acos -1 1 80 3797952473636338580787994\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "acos",
+      "-1",
+      "1",
+      "160"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "acos -1 1 160 4591442807048218921384805199743311128454155024418\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "acos",
+      "-7",
+      "8",
+      "8"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "acos -7 8 8 675\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "acos",
+      "-7",
+      "8",
+      "32"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "acos -7 8 32 11322530840\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "acos",
+      "-7",
+      "8",
+      "80"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "acos -7 8 80 3187009104540196472367819\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "acos",
+      "-7",
+      "8",
+      "160"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "acos -7 8 160 3852857593825542414482786066321771399398805524894\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "acos",
+      "-1",
+      "2",
+      "8"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "acos -1 2 8 536\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "acos",
+      "-1",
+      "2",
+      "32"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "acos -1 2 32 8995358470\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "acos",
+      "-1",
+      "2",
+      "80"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "acos -1 2 80 2531968315757559053858662\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "acos",
+      "-1",
+      "2",
+      "160"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "acos -1 2 160 3060961871365479280923203466495540752302770016279\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "acos",
+      "0",
+      "1",
+      "8"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "acos 0 1 8 402\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "acos",
+      "0",
+      "1",
+      "32"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "acos 0 1 32 6746518852\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "acos",
+      "0",
+      "1",
+      "80"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "acos 0 1 80 1898976236818169290393997\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "acos",
+      "0",
+      "1",
+      "160"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "acos 0 1 160 2295721403524109460692402599871655564227077512209\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "acos",
+      "1",
+      "2",
+      "8"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "acos 1 2 8 268\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "acos",
+      "1",
+      "2",
+      "32"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "acos 1 2 32 4497679235\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "acos",
+      "1",
+      "2",
+      "80"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "acos 1 2 80 1265984157878779526929331\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "acos",
+      "1",
+      "2",
+      "160"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "acos 1 2 160 1530480935682739640461601733247770376151385008139\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "acos",
+      "7",
+      "8",
+      "8"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "acos 7 8 8 130\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "acos",
+      "7",
+      "8",
+      "32"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "acos 7 8 32 2170506864\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "acos",
+      "7",
+      "8",
+      "80"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "acos 7 8 80 610943369096142108420175\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "acos",
+      "7",
+      "8",
+      "160"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "acos 7 8 160 738585213222676506902019133421539729055349499524\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "acos",
+      "1",
+      "1",
+      "8"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "acos 1 1 8 0\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "acos",
+      "1",
+      "1",
+      "32"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "acos 1 1 32 0\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "acos",
+      "1",
+      "1",
+      "80"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "acos 1 1 80 0\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "acos",
+      "1",
+      "1",
+      "160"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "acos 1 1 160 0\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "asinh",
+      "-10",
+      "1",
+      "8"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "asinh -10 1 8 -768\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "asinh",
+      "-10",
+      "1",
+      "32"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "asinh -10 1 32 -12877269518\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "asinh",
+      "-10",
+      "1",
+      "80"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "asinh -10 1 80 -3624629137576364658099094\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "asinh",
+      "-10",
+      "1",
+      "160"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "asinh -10 1 160 -4381907750943573134779621566211710723851203118975\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "asinh",
+      "-1",
+      "1",
+      "8"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "asinh -1 1 8 -226\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "asinh",
+      "-1",
+      "1",
+      "32"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "asinh -1 1 32 -3785470732\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "asinh",
+      "-1",
+      "1",
+      "80"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "asinh -1 1 80 -1065515286074286741182714\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "asinh",
+      "-1",
+      "1",
+      "160"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "asinh -1 1 160 -1288128940529273174341806975948075442121104664584\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "asinh",
+      "0",
+      "1",
+      "8"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "asinh 0 1 8 0\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "asinh",
+      "0",
+      "1",
+      "32"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "asinh 0 1 32 0\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "asinh",
+      "0",
+      "1",
+      "80"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "asinh 0 1 80 0\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "asinh",
+      "0",
+      "1",
+      "160"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "asinh 0 1 160 0\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "asinh",
+      "1",
+      "1",
+      "8"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "asinh 1 1 8 226\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "asinh",
+      "1",
+      "1",
+      "32"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "asinh 1 1 32 3785470732\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "asinh",
+      "1",
+      "1",
+      "80"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "asinh 1 1 80 1065515286074286741182714\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "asinh",
+      "1",
+      "1",
+      "160"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "asinh 1 1 160 1288128940529273174341806975948075442121104664584\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "asinh",
+      "10",
+      "1",
+      "8"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "asinh 10 1 8 768\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "asinh",
+      "10",
+      "1",
+      "32"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "asinh 10 1 32 12877269518\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "asinh",
+      "10",
+      "1",
+      "80"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "asinh 10 1 80 3624629137576364658099094\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "asinh",
+      "10",
+      "1",
+      "160"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "asinh 10 1 160 4381907750943573134779621566211710723851203118975\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "acosh",
+      "1",
+      "1",
+      "8"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "acosh 1 1 8 0\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "acosh",
+      "1",
+      "1",
+      "32"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "acosh 1 1 32 0\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "acosh",
+      "1",
+      "1",
+      "80"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "acosh 1 1 80 0\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "acosh",
+      "1",
+      "1",
+      "160"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "acosh 1 1 160 0\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "acosh",
+      "9",
+      "8",
+      "8"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "acosh 9 8 8 127\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "acosh",
+      "9",
+      "8",
+      "32"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "acosh 9 8 32 2125720718\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "acosh",
+      "9",
+      "8",
+      "80"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "acosh 9 8 80 598337189706315168176580\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "acosh",
+      "9",
+      "8",
+      "160"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "acosh 9 8 160 723345277471620927265200283880825706599015052949\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "acosh",
+      "2",
+      "1",
+      "8"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "acosh 2 1 8 337\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "acosh",
+      "2",
+      "1",
+      "32"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "acosh 2 1 32 5656291098\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "acosh",
+      "2",
+      "1",
+      "80"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "acosh 2 1 80 1592104404937792366209100\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "acosh",
+      "2",
+      "1",
+      "160"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "acosh 2 1 160 1924736122651482096824266680220169215395344812891\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "acosh",
+      "100",
+      "1",
+      "8"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "acosh 100 1 8 1356\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "acosh",
+      "100",
+      "1",
+      "32"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "acosh 100 1 32 22755992435\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "acosh",
+      "100",
+      "1",
+      "80"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "acosh 100 1 80 6405242440653587582828098\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "acosh",
+      "100",
+      "1",
+      "160"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "acosh 100 1 160 7743462967397546138950575054526712748599063866969\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "atanh",
+      "-7",
+      "8",
+      "8"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "atanh -7 8 8 -347\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "atanh",
+      "-7",
+      "8",
+      "32"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "atanh -7 8 32 -5815493525\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "atanh",
+      "-7",
+      "8",
+      "80"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "atanh -7 8 80 -1636915904462525333455305\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "atanh",
+      "-7",
+      "8",
+      "160"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "atanh -7 8 160 -1978909901442580464978917797008838311051357346253\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "atanh",
+      "-1",
+      "2",
+      "8"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "atanh -1 2 8 -141\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "atanh",
+      "-1",
+      "2",
+      "32"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "atanh -1 2 32 -2359251925\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "atanh",
+      "-1",
+      "2",
+      "80"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "atanh -1 2 80 -664070380758399046078989\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "atanh",
+      "-1",
+      "2",
+      "160"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "atanh -1 2 160 -802811829340146437982211109221453526773936038253\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "atanh",
+      "0",
+      "1",
+      "8"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "atanh 0 1 8 0\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "atanh",
+      "0",
+      "1",
+      "32"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "atanh 0 1 32 0\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "atanh",
+      "0",
+      "1",
+      "80"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "atanh 0 1 80 0\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "atanh",
+      "0",
+      "1",
+      "160"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "atanh 0 1 160 0\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "atanh",
+      "1",
+      "2",
+      "8"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "atanh 1 2 8 141\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "atanh",
+      "1",
+      "2",
+      "32"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "atanh 1 2 32 2359251925\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "atanh",
+      "1",
+      "2",
+      "80"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "atanh 1 2 80 664070380758399046078989\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "atanh",
+      "1",
+      "2",
+      "160"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "atanh 1 2 160 802811829340146437982211109221453526773936038253\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "atanh",
+      "7",
+      "8",
+      "8"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "atanh 7 8 8 347\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "atanh",
+      "7",
+      "8",
+      "32"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "atanh 7 8 32 5815493525\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "atanh",
+      "7",
+      "8",
+      "80"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "atanh 7 8 80 1636915904462525333455305\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "elementary",
+      "atanh",
+      "7",
+      "8",
+      "160"
+    ],
+    "timeout": 1500,
+    "status": 0,
+    "signal": null,
+    "stdout": "atanh 7 8 160 1978909901442580464978917797008838311051357346253\n",
+    "stderr": ""
+  }
+]

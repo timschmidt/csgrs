@@ -1,0 +1,40 @@
+{
+  "candidate": {
+    "returncode": 0,
+    "binary_sha256": "37e9a89338fb21ad9ef30791a1d290f26091471c8444fab3f45d49fda10a3326",
+    "log": "witness-ownership-20260923-candidate-tests.log",
+    "checks": [
+      {
+        "command": [
+          "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+          "check",
+          "--all-targets",
+          "--all-features",
+          "--locked",
+          "--offline"
+        ],
+        "returncode": 0,
+        "log": "witness-ownership-20260923-candidate-check-0.log"
+      },
+      {
+        "command": [
+          "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+          "check",
+          "--all-targets",
+          "--no-default-features",
+          "--locked",
+          "--offline"
+        ],
+        "returncode": 0,
+        "log": "witness-ownership-20260923-candidate-check-1.log"
+      }
+    ]
+  },
+  "parent": {
+    "returncode": 101,
+    "binary_sha256": "59f3bcbf4f649f5c8469a29e54bcb334ac98dac4473a235f7a3223383acce282",
+    "log": "witness-ownership-20260923-parent-tests.log"
+  },
+  "all_processes_reaped": true,
+  "all_sources_unchanged": true
+}

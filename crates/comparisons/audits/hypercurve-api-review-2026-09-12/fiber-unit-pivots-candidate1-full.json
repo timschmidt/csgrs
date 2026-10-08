@@ -1,0 +1,11 @@
+{
+  "command": [
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypersolve-2e681fec2f29f4bd",
+    "--test-threads=4"
+  ],
+  "returncode": 0,
+  "elapsed_seconds": 0.4141589660139289,
+  "binary": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypersolve-2e681fec2f29f4bd",
+  "sha256": "feca90810819f4e657abb289071a46263f3cde1c42a0577628a68503dd6aa360",
+  "archived_binary": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/fiber-unit-pivots-candidate1-sources/hypersolve-2e681fec2f29f4bd"
+}

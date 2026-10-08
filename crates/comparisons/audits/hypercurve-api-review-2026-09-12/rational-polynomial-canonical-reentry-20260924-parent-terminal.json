@@ -1,0 +1,10 @@
+{
+  "returncode": 101,
+  "stdout": "numeric_equal=true, canonical_parts=false, equal_hashes=false\n",
+  "stderr": "\nthread 'main' (67) panicked at /home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/rational-polynomial-canonical-reentry-20260924.rs:29:5:\nassertion failed: equal && canonical_parts && equal_hashes\nnote: run with `RUST_BACKTRACE=1` environment variable to display a backtrace\n",
+  "source_sha256": "a26a24895e682d32ce21eb1d00acb115afcbb9cd571f8e140a45c3edf6d81d49",
+  "binary_sha256": "1d4289f031465aa40d5b1b78eb27b141a5ebd2b0baa73f97275f6eb6c4810a70",
+  "library": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperreal-11b4f38b724fc4f1.rlib",
+  "library_sha256": "0a931eec5b978693b1c6c62dadddd3f618876656a9707326fec2401c0b9c81aa",
+  "all_processes_reaped": true
+}

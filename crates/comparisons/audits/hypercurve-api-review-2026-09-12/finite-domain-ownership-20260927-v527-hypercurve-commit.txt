@@ -1,0 +1,5 @@
+Retain finite endpoint ownership through exact domain replay
+
+Carry lower and upper endpoint inclusion in the shared parameter domain, independent of traversal order. Root and selected-fiber enumeration, regular pair queries, and component charts preserve that ownership; incident charts subtract exactly the owned finite endpoints while keeping anchors and barriers open. Reuse domain membership for one-sided line/parallel fillet cuts.
+
+Validation: 68 release regressions covering independent algebraic endpoint certificates, finite/incident seam ownership in both directions and operand roles, stationary rational and nonrational families with exact contact constraints, and public fillet/region/offset composition. Six static/downstream checks passed. Interior pair fillet source-cell integration remains follow-up work.

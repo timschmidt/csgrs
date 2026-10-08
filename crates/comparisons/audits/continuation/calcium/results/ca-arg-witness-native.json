@@ -1,0 +1,11 @@
+{
+  "tag": "ca-arg-witness-native",
+  "started": "2026-09-09T03:04:42.295Z",
+  "finished": "2026-09-09T03:04:42.309Z",
+  "elapsedSeconds": 0.011008256000000003,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison",
+  "command": "/tmp/calcium-charpoly-solves.lbZlN8/flint-ca-arg-witness",
+  "args": [],
+  "code": 1,
+  "signal": null
+}

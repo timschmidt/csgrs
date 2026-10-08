@@ -1,0 +1,96 @@
+\doxysubsection{python/tutorials/computing\+\_\+pi.\+py}
+\hypertarget{python_2tutorials_2computing_pi_8py-example}{}\label{python_2tutorials_2computing_pi_8py-example}An example illustrating the use of Ariadne to compute $\pi$ to different precisions.
+
+
+\begin{DoxyCodeInclude}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{\#!/usr/bin/python3}}
+\DoxyCodeLine{00002\ }
+\DoxyCodeLine{00003\ }
+\DoxyCodeLine{00008\ }
+\DoxyCodeLine{00009\ \textcolor{comment}{\#\ This\ file\ is\ part\ of\ Ariadne.}}
+\DoxyCodeLine{00010\ }
+\DoxyCodeLine{00011\ \textcolor{comment}{\#\ Ariadne\ is\ free\ software:\ you\ can\ redistribute\ it\ and/or\ modify}}
+\DoxyCodeLine{00012\ \textcolor{comment}{\#\ it\ under\ the\ terms\ of\ the\ GNU\ General\ Public\ License\ as\ published\ by}}
+\DoxyCodeLine{00013\ \textcolor{comment}{\#\ the\ Free\ Software\ Foundation,\ either\ version\ 3\ of\ the\ License,\ or}}
+\DoxyCodeLine{00014\ \textcolor{comment}{\#\ (at\ your\ option)\ any\ later\ version.}}
+\DoxyCodeLine{00015\ }
+\DoxyCodeLine{00016\ \textcolor{comment}{\#\ Ariadne\ is\ distributed\ in\ the\ hope\ that\ it\ will\ be\ useful,}}
+\DoxyCodeLine{00017\ \textcolor{comment}{\#\ but\ WITHOUT\ ANY\ WARRANTY;\ without\ even\ the\ implied\ warranty\ of}}
+\DoxyCodeLine{00018\ \textcolor{comment}{\#\ MERCHANTABILITY\ or\ FITNESS\ FOR\ A\ PARTICULAR\ PURPOSE.\ \ See\ the}}
+\DoxyCodeLine{00019\ \textcolor{comment}{\#\ GNU\ General\ Public\ License\ for\ more\ details.}}
+\DoxyCodeLine{00020\ }
+\DoxyCodeLine{00021\ \textcolor{comment}{\#\ You\ should\ have\ received\ a\ copy\ of\ the\ GNU\ General\ Public\ License}}
+\DoxyCodeLine{00022\ \textcolor{comment}{\#\ along\ with\ Ariadne.\ If\ not,\ see\ <https://www.gnu.org/licenses/>.}}
+\DoxyCodeLine{00023\ }
+\DoxyCodeLine{00024\ \textcolor{comment}{\#\ Import\ all\ classes\ in\ the\ ariadne\ module}}
+\DoxyCodeLine{00025\ \textcolor{keyword}{from}\ pyariadne\ \textcolor{keyword}{import}\ *}
+\DoxyCodeLine{00026\ }
+\DoxyCodeLine{00027\ }
+\DoxyCodeLine{00028\ \textcolor{keyword}{def\ }compute\_pi():}
+\DoxyCodeLine{00029\ \ \ \ \ \textcolor{comment}{\#\ There\ are\ many\ formulae\ for\ pi.}}
+\DoxyCodeLine{00030\ \ \ \ \ \textcolor{comment}{\#\ We\ will\ use\ the\ identity\ tan(pi/6)=1/sqrt(3),}}
+\DoxyCodeLine{00031\ \ \ \ \ \textcolor{comment}{\#\ yielding\ pi=6*atan(1/sqrt(3))}}
+\DoxyCodeLine{00032\ }
+\DoxyCodeLine{00033\ \ \ \ \ r\ =\ 6*atan(rec(sqrt(3)))\ \textcolor{comment}{\#\ rec(x)\ is\ the\ reciprocal\ 1/x}}
+\DoxyCodeLine{00034\ }
+\DoxyCodeLine{00035\ \ \ \ \ print(\textcolor{stringliteral}{"{}r:"{}},r,type(r))\ \ \ \ \textcolor{comment}{\#\ r\ has\ type\ Real,\ and\ is\ represented\ by\ a\ symbolic\ formula}}
+\DoxyCodeLine{00036\ }
+\DoxyCodeLine{00037\ \ \ \ \ \textcolor{comment}{\#\ Compute\ r\ to\ an\ accuracy\ of\ 20\ binary\ digits\ of\ precision\ (approximately\ 6\ decimal\ places)}}
+\DoxyCodeLine{00038\ \ \ \ \ acc\ =\ Accuracy(1/two**20)}
+\DoxyCodeLine{00039\ \ \ \ \ print(\textcolor{stringliteral}{"{}acc:"{}},acc)}
+\DoxyCodeLine{00040\ \ \ \ \ v=r.compute(acc)}
+\DoxyCodeLine{00041\ \ \ \ \ print(\textcolor{stringliteral}{"{}v:"{}},v,type(v))}
+\DoxyCodeLine{00042\ }
+\DoxyCodeLine{00043\ \ \ \ \ \textcolor{comment}{\#\ The\ result\ is\ stored\ as\ a\ Dyadic\ lower\ and\ upper\ bound\ for\ r.}}
+\DoxyCodeLine{00044\ \ \ \ \ \textcolor{comment}{\#\ To\ output\ \ a\ double-\/precision\ approversion}}
+\DoxyCodeLine{00045\ \ \ \ \ pr=double\_precision}
+\DoxyCodeLine{00046\ \ \ \ \ pr=DoublePrecision()\ \textcolor{comment}{\#\ Alternative\ syntax\ using\ constructor}}
+\DoxyCodeLine{00047\ \ \ \ \ pr=dp\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{\#\ Alternative\ syntax\ using\ abbreviation}}
+\DoxyCodeLine{00048\ \ \ \ \ x=v.get(pr)}
+\DoxyCodeLine{00049\ \ \ \ \ print(\textcolor{stringliteral}{"{}x:"{}},x,type(x))}
+\DoxyCodeLine{00050\ }
+\DoxyCodeLine{00051\ \ \ \ \ print(\textcolor{stringliteral}{"{}sin(x/6):"{}},sin(x/6),type(sin(x/6)))}
+\DoxyCodeLine{00052\ \ \ \ \ print(\textcolor{stringliteral}{"{}sin(x/4):"{}},sin(x/4))}
+\DoxyCodeLine{00053\ }
+\DoxyCodeLine{00054\ \ \ \ \ print()}
+\DoxyCodeLine{00055\ }
+\DoxyCodeLine{00056\ \ \ \ \ \textcolor{comment}{\#\ Compute\ r\ to\ an\ accuracy\ of\ 1/2\string^120\ binary\ digits\ of\ precision\ (approximately\ 40\ decimal\ places)}}
+\DoxyCodeLine{00057\ \ \ \ \ acc=Accuracy(Dyadic(1,120))}
+\DoxyCodeLine{00058\ \ \ \ \ print(\textcolor{stringliteral}{"{}acc:"{}},acc)}
+\DoxyCodeLine{00059\ \ \ \ \ v=r.compute(acc)}
+\DoxyCodeLine{00060\ \ \ \ \ print(\textcolor{stringliteral}{"{}v:"{}},v,type(v))}
+\DoxyCodeLine{00061\ }
+\DoxyCodeLine{00062\ \ \ \ \ \textcolor{comment}{\#\ To\ output\ double-\/precision\ approximation}}
+\DoxyCodeLine{00063\ \ \ \ \ pr=double\_precision}
+\DoxyCodeLine{00064\ \ \ \ \ x=v.get(pr)}
+\DoxyCodeLine{00065\ \ \ \ \ print(\textcolor{stringliteral}{"{}x:"{}},x,type(x))}
+\DoxyCodeLine{00066\ }
+\DoxyCodeLine{00067\ \ \ \ \ \textcolor{comment}{\#\ To\ output\ multiple-\/precision\ approversion\ with\ 128bits}}
+\DoxyCodeLine{00068\ \ \ \ \ pr=precision(128)}
+\DoxyCodeLine{00069\ \ \ \ \ pr=multiple\_precision(128)}
+\DoxyCodeLine{00070\ \ \ \ \ pr=MultiplePrecision(128)}
+\DoxyCodeLine{00071\ \ \ \ \ pr=MP(128)}
+\DoxyCodeLine{00072\ \ \ \ \ x=v.get(pr)}
+\DoxyCodeLine{00073\ \ \ \ \ print(\textcolor{stringliteral}{"{}x:"{}},x,type(x))}
+\DoxyCodeLine{00074\ \ \ \ \ print(\textcolor{stringliteral}{"{}repr(x):"{}},repr(x),type(x))}
+\DoxyCodeLine{00075\ \ \ \ \ print(\textcolor{stringliteral}{"{}x.precision():"{}},x.precision())}
+\DoxyCodeLine{00076\ \ \ \ \ print(\textcolor{stringliteral}{"{}sin(x/6):"{}},sin(x/6))}
+\DoxyCodeLine{00077\ \ \ \ \ print(\textcolor{stringliteral}{"{}sin(x/4):"{}},sin(x/4))}
+\DoxyCodeLine{00078\ }
+\DoxyCodeLine{00079\ \ \ \ \ print()}
+\DoxyCodeLine{00080\ }
+\DoxyCodeLine{00081\ \ \ \ \ three=Bounds[FloatMP](3,precision(128))}
+\DoxyCodeLine{00082\ \ \ \ \ x=6*atan(1/sqrt(three))}
+\DoxyCodeLine{00083\ \ \ \ \ print(\textcolor{stringliteral}{"{}x:"{}},x,type(x))}
+\DoxyCodeLine{00084\ }
+\DoxyCodeLine{00085\ \ \ \ \ print()}
+\DoxyCodeLine{00086\ }
+\DoxyCodeLine{00087\ \ \ \ \ acc=Accuracy(1/two**20)}
+\DoxyCodeLine{00088\ \ \ \ \ print(\textcolor{stringliteral}{"{}pi:"{}},pi,type(pi))}
+\DoxyCodeLine{00089\ \ \ \ \ print(\textcolor{stringliteral}{"{}pi.compute(acc):"{}},pi.compute(acc))}
+\DoxyCodeLine{00090\ }
+\DoxyCodeLine{00091\ \textcolor{keywordflow}{if}\ \_\_name\_\_==\textcolor{stringliteral}{'\_\_main\_\_'}:}
+\DoxyCodeLine{00092\ \ \ \ \ compute\_pi()}
+
+\end{DoxyCodeInclude}
+ 

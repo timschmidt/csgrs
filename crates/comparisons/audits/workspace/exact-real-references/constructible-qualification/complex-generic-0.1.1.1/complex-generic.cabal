@@ -1,0 +1,38 @@
+name:                complex-generic
+version:             0.1.1.1
+synopsis:            complex numbers with non-mandatory RealFloat
+description:
+  The base package's 'Data.Complex' has a 'RealFloat' requirement for
+  almost all operations, which rules out uses such as 'Complex Rational'
+  or 'Complex Integer'.  This package provides an alternative, putting
+  most operations into additional type classes.  Generating instances
+  with template haskell helps reduce excessive boilerplate and avoids
+  instance overlap.
+
+homepage:            https://code.mathr.co.uk/complex-generic
+license:             BSD3
+license-file:        LICENSE
+author:              Claude Heiland-Allen
+maintainer:          claude@mathr.co.uk
+category:            Math
+build-type:          Simple
+cabal-version:       >=1.8
+
+library
+  exposed-modules:
+    Data.Complex.Generic,
+    Data.Complex.Generic.Default,
+    Data.Complex.Generic.TH,
+    Data.Complex.Generic.Class
+  build-depends:
+    base < 4.10,
+    template-haskell < 2.12
+
+source-repository head
+  type:     git
+  location: https://code.mathr.co.uk/complex-generic.git
+
+source-repository this
+  type:     git
+  location: https://code.mathr.co.uk/complex-generic.git
+  tag:      v0.1.1.1

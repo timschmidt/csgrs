@@ -1,0 +1,384 @@
+EXCEPTION fft-real (2,1) 1 % 1 Left Prelude.undefined
+CallStack (from HasCallStack):
+  undefined, called at ./Data/Number/IReal/IRealOperations.hs:208:18 in ireal-0.2.3-1adEs5TQUyIfzTsanQTr7:Data.Number.IReal.IRealOperations
+EXCEPTION fft-imag (2,1) (-2) % 1 Left Prelude.undefined
+CallStack (from HasCallStack):
+  undefined, called at ./Data/Number/IReal/IRealOperations.hs:208:18 in ireal-0.2.3-1adEs5TQUyIfzTsanQTr7:Data.Number.IReal.IRealOperations
+EXCEPTION fft-real (2,2) 2 % 1 Left Prelude.undefined
+CallStack (from HasCallStack):
+  undefined, called at ./Data/Number/IReal/IRealOperations.hs:208:18 in ireal-0.2.3-1adEs5TQUyIfzTsanQTr7:Data.Number.IReal.IRealOperations
+EXCEPTION fft-imag (2,2) 1 % 1 Left Prelude.undefined
+CallStack (from HasCallStack):
+  undefined, called at ./Data/Number/IReal/IRealOperations.hs:208:18 in ireal-0.2.3-1adEs5TQUyIfzTsanQTr7:Data.Number.IReal.IRealOperations
+EXCEPTION fft-real (4,1) 1 % 1 Left Prelude.undefined
+CallStack (from HasCallStack):
+  undefined, called at ./Data/Number/IReal/IRealOperations.hs:208:18 in ireal-0.2.3-1adEs5TQUyIfzTsanQTr7:Data.Number.IReal.IRealOperations
+EXCEPTION fft-imag (4,1) (-2) % 1 Left Prelude.undefined
+CallStack (from HasCallStack):
+  undefined, called at ./Data/Number/IReal/IRealOperations.hs:208:18 in ireal-0.2.3-1adEs5TQUyIfzTsanQTr7:Data.Number.IReal.IRealOperations
+EXCEPTION fft-real (4,2) 2 % 1 Left Prelude.undefined
+CallStack (from HasCallStack):
+  undefined, called at ./Data/Number/IReal/IRealOperations.hs:208:18 in ireal-0.2.3-1adEs5TQUyIfzTsanQTr7:Data.Number.IReal.IRealOperations
+EXCEPTION fft-imag (4,2) 1 % 1 Left Prelude.undefined
+CallStack (from HasCallStack):
+  undefined, called at ./Data/Number/IReal/IRealOperations.hs:208:18 in ireal-0.2.3-1adEs5TQUyIfzTsanQTr7:Data.Number.IReal.IRealOperations
+EXCEPTION fft-real (4,3) 3 % 1 Left Prelude.undefined
+CallStack (from HasCallStack):
+  undefined, called at ./Data/Number/IReal/IRealOperations.hs:208:18 in ireal-0.2.3-1adEs5TQUyIfzTsanQTr7:Data.Number.IReal.IRealOperations
+EXCEPTION fft-imag (4,3) 6 % 1 Left Prelude.undefined
+CallStack (from HasCallStack):
+  undefined, called at ./Data/Number/IReal/IRealOperations.hs:208:18 in ireal-0.2.3-1adEs5TQUyIfzTsanQTr7:Data.Number.IReal.IRealOperations
+EXCEPTION fft-real (4,4) 4 % 1 Left Prelude.undefined
+CallStack (from HasCallStack):
+  undefined, called at ./Data/Number/IReal/IRealOperations.hs:208:18 in ireal-0.2.3-1adEs5TQUyIfzTsanQTr7:Data.Number.IReal.IRealOperations
+EXCEPTION fft-imag (4,4) 13 % 1 Left Prelude.undefined
+CallStack (from HasCallStack):
+  undefined, called at ./Data/Number/IReal/IRealOperations.hs:208:18 in ireal-0.2.3-1adEs5TQUyIfzTsanQTr7:Data.Number.IReal.IRealOperations
+EXCEPTION fft-real (8,1) 1 % 1 Left Prelude.undefined
+CallStack (from HasCallStack):
+  undefined, called at ./Data/Number/IReal/IRealOperations.hs:208:18 in ireal-0.2.3-1adEs5TQUyIfzTsanQTr7:Data.Number.IReal.IRealOperations
+EXCEPTION fft-imag (8,1) (-2) % 1 Left Prelude.undefined
+CallStack (from HasCallStack):
+  undefined, called at ./Data/Number/IReal/IRealOperations.hs:208:18 in ireal-0.2.3-1adEs5TQUyIfzTsanQTr7:Data.Number.IReal.IRealOperations
+EXCEPTION fft-real (8,2) 2 % 1 Left Prelude.undefined
+CallStack (from HasCallStack):
+  undefined, called at ./Data/Number/IReal/IRealOperations.hs:208:18 in ireal-0.2.3-1adEs5TQUyIfzTsanQTr7:Data.Number.IReal.IRealOperations
+EXCEPTION fft-imag (8,2) 1 % 1 Left Prelude.undefined
+CallStack (from HasCallStack):
+  undefined, called at ./Data/Number/IReal/IRealOperations.hs:208:18 in ireal-0.2.3-1adEs5TQUyIfzTsanQTr7:Data.Number.IReal.IRealOperations
+EXCEPTION fft-real (8,3) 3 % 1 Left Prelude.undefined
+CallStack (from HasCallStack):
+  undefined, called at ./Data/Number/IReal/IRealOperations.hs:208:18 in ireal-0.2.3-1adEs5TQUyIfzTsanQTr7:Data.Number.IReal.IRealOperations
+EXCEPTION fft-imag (8,3) 6 % 1 Left Prelude.undefined
+CallStack (from HasCallStack):
+  undefined, called at ./Data/Number/IReal/IRealOperations.hs:208:18 in ireal-0.2.3-1adEs5TQUyIfzTsanQTr7:Data.Number.IReal.IRealOperations
+EXCEPTION fft-real (8,4) 4 % 1 Left Prelude.undefined
+CallStack (from HasCallStack):
+  undefined, called at ./Data/Number/IReal/IRealOperations.hs:208:18 in ireal-0.2.3-1adEs5TQUyIfzTsanQTr7:Data.Number.IReal.IRealOperations
+EXCEPTION fft-imag (8,4) 13 % 1 Left Prelude.undefined
+CallStack (from HasCallStack):
+  undefined, called at ./Data/Number/IReal/IRealOperations.hs:208:18 in ireal-0.2.3-1adEs5TQUyIfzTsanQTr7:Data.Number.IReal.IRealOperations
+EXCEPTION fft-real (8,5) 5 % 1 Left Prelude.undefined
+CallStack (from HasCallStack):
+  undefined, called at ./Data/Number/IReal/IRealOperations.hs:208:18 in ireal-0.2.3-1adEs5TQUyIfzTsanQTr7:Data.Number.IReal.IRealOperations
+EXCEPTION fft-imag (8,5) 22 % 1 Left Prelude.undefined
+CallStack (from HasCallStack):
+  undefined, called at ./Data/Number/IReal/IRealOperations.hs:208:18 in ireal-0.2.3-1adEs5TQUyIfzTsanQTr7:Data.Number.IReal.IRealOperations
+EXCEPTION fft-real (8,6) 6 % 1 Left Prelude.undefined
+CallStack (from HasCallStack):
+  undefined, called at ./Data/Number/IReal/IRealOperations.hs:208:18 in ireal-0.2.3-1adEs5TQUyIfzTsanQTr7:Data.Number.IReal.IRealOperations
+EXCEPTION fft-imag (8,6) 33 % 1 Left Prelude.undefined
+CallStack (from HasCallStack):
+  undefined, called at ./Data/Number/IReal/IRealOperations.hs:208:18 in ireal-0.2.3-1adEs5TQUyIfzTsanQTr7:Data.Number.IReal.IRealOperations
+EXCEPTION fft-real (8,7) 7 % 1 Left Prelude.undefined
+CallStack (from HasCallStack):
+  undefined, called at ./Data/Number/IReal/IRealOperations.hs:208:18 in ireal-0.2.3-1adEs5TQUyIfzTsanQTr7:Data.Number.IReal.IRealOperations
+EXCEPTION fft-imag (8,7) 46 % 1 Left Prelude.undefined
+CallStack (from HasCallStack):
+  undefined, called at ./Data/Number/IReal/IRealOperations.hs:208:18 in ireal-0.2.3-1adEs5TQUyIfzTsanQTr7:Data.Number.IReal.IRealOperations
+EXCEPTION fft-real (8,8) 8 % 1 Left Prelude.undefined
+CallStack (from HasCallStack):
+  undefined, called at ./Data/Number/IReal/IRealOperations.hs:208:18 in ireal-0.2.3-1adEs5TQUyIfzTsanQTr7:Data.Number.IReal.IRealOperations
+EXCEPTION fft-imag (8,8) 61 % 1 Left Prelude.undefined
+CallStack (from HasCallStack):
+  undefined, called at ./Data/Number/IReal/IRealOperations.hs:208:18 in ireal-0.2.3-1adEs5TQUyIfzTsanQTr7:Data.Number.IReal.IRealOperations
+EXCEPTION fft-real (16,1) 1 % 1 Left Prelude.undefined
+CallStack (from HasCallStack):
+  undefined, called at ./Data/Number/IReal/IRealOperations.hs:208:18 in ireal-0.2.3-1adEs5TQUyIfzTsanQTr7:Data.Number.IReal.IRealOperations
+EXCEPTION fft-imag (16,1) (-2) % 1 Left Prelude.undefined
+CallStack (from HasCallStack):
+  undefined, called at ./Data/Number/IReal/IRealOperations.hs:208:18 in ireal-0.2.3-1adEs5TQUyIfzTsanQTr7:Data.Number.IReal.IRealOperations
+EXCEPTION fft-real (16,2) 2 % 1 Left Prelude.undefined
+CallStack (from HasCallStack):
+  undefined, called at ./Data/Number/IReal/IRealOperations.hs:208:18 in ireal-0.2.3-1adEs5TQUyIfzTsanQTr7:Data.Number.IReal.IRealOperations
+EXCEPTION fft-imag (16,2) 1 % 1 Left Prelude.undefined
+CallStack (from HasCallStack):
+  undefined, called at ./Data/Number/IReal/IRealOperations.hs:208:18 in ireal-0.2.3-1adEs5TQUyIfzTsanQTr7:Data.Number.IReal.IRealOperations
+EXCEPTION fft-real (16,3) 3 % 1 Left Prelude.undefined
+CallStack (from HasCallStack):
+  undefined, called at ./Data/Number/IReal/IRealOperations.hs:208:18 in ireal-0.2.3-1adEs5TQUyIfzTsanQTr7:Data.Number.IReal.IRealOperations
+EXCEPTION fft-imag (16,3) 6 % 1 Left Prelude.undefined
+CallStack (from HasCallStack):
+  undefined, called at ./Data/Number/IReal/IRealOperations.hs:208:18 in ireal-0.2.3-1adEs5TQUyIfzTsanQTr7:Data.Number.IReal.IRealOperations
+EXCEPTION fft-real (16,4) 4 % 1 Left Prelude.undefined
+CallStack (from HasCallStack):
+  undefined, called at ./Data/Number/IReal/IRealOperations.hs:208:18 in ireal-0.2.3-1adEs5TQUyIfzTsanQTr7:Data.Number.IReal.IRealOperations
+EXCEPTION fft-imag (16,4) 13 % 1 Left Prelude.undefined
+CallStack (from HasCallStack):
+  undefined, called at ./Data/Number/IReal/IRealOperations.hs:208:18 in ireal-0.2.3-1adEs5TQUyIfzTsanQTr7:Data.Number.IReal.IRealOperations
+EXCEPTION fft-real (16,5) 5 % 1 Left Prelude.undefined
+CallStack (from HasCallStack):
+  undefined, called at ./Data/Number/IReal/IRealOperations.hs:208:18 in ireal-0.2.3-1adEs5TQUyIfzTsanQTr7:Data.Number.IReal.IRealOperations
+EXCEPTION fft-imag (16,5) 22 % 1 Left Prelude.undefined
+CallStack (from HasCallStack):
+  undefined, called at ./Data/Number/IReal/IRealOperations.hs:208:18 in ireal-0.2.3-1adEs5TQUyIfzTsanQTr7:Data.Number.IReal.IRealOperations
+EXCEPTION fft-real (16,6) 6 % 1 Left Prelude.undefined
+CallStack (from HasCallStack):
+  undefined, called at ./Data/Number/IReal/IRealOperations.hs:208:18 in ireal-0.2.3-1adEs5TQUyIfzTsanQTr7:Data.Number.IReal.IRealOperations
+EXCEPTION fft-imag (16,6) 33 % 1 Left Prelude.undefined
+CallStack (from HasCallStack):
+  undefined, called at ./Data/Number/IReal/IRealOperations.hs:208:18 in ireal-0.2.3-1adEs5TQUyIfzTsanQTr7:Data.Number.IReal.IRealOperations
+EXCEPTION fft-real (16,7) 7 % 1 Left Prelude.undefined
+CallStack (from HasCallStack):
+  undefined, called at ./Data/Number/IReal/IRealOperations.hs:208:18 in ireal-0.2.3-1adEs5TQUyIfzTsanQTr7:Data.Number.IReal.IRealOperations
+EXCEPTION fft-imag (16,7) 46 % 1 Left Prelude.undefined
+CallStack (from HasCallStack):
+  undefined, called at ./Data/Number/IReal/IRealOperations.hs:208:18 in ireal-0.2.3-1adEs5TQUyIfzTsanQTr7:Data.Number.IReal.IRealOperations
+EXCEPTION fft-real (16,8) 8 % 1 Left Prelude.undefined
+CallStack (from HasCallStack):
+  undefined, called at ./Data/Number/IReal/IRealOperations.hs:208:18 in ireal-0.2.3-1adEs5TQUyIfzTsanQTr7:Data.Number.IReal.IRealOperations
+EXCEPTION fft-imag (16,8) 61 % 1 Left Prelude.undefined
+CallStack (from HasCallStack):
+  undefined, called at ./Data/Number/IReal/IRealOperations.hs:208:18 in ireal-0.2.3-1adEs5TQUyIfzTsanQTr7:Data.Number.IReal.IRealOperations
+EXCEPTION fft-real (16,9) 9 % 1 Left Prelude.undefined
+CallStack (from HasCallStack):
+  undefined, called at ./Data/Number/IReal/IRealOperations.hs:208:18 in ireal-0.2.3-1adEs5TQUyIfzTsanQTr7:Data.Number.IReal.IRealOperations
+EXCEPTION fft-imag (16,9) 78 % 1 Left Prelude.undefined
+CallStack (from HasCallStack):
+  undefined, called at ./Data/Number/IReal/IRealOperations.hs:208:18 in ireal-0.2.3-1adEs5TQUyIfzTsanQTr7:Data.Number.IReal.IRealOperations
+EXCEPTION fft-real (16,10) 10 % 1 Left Prelude.undefined
+CallStack (from HasCallStack):
+  undefined, called at ./Data/Number/IReal/IRealOperations.hs:208:18 in ireal-0.2.3-1adEs5TQUyIfzTsanQTr7:Data.Number.IReal.IRealOperations
+EXCEPTION fft-imag (16,10) 97 % 1 Left Prelude.undefined
+CallStack (from HasCallStack):
+  undefined, called at ./Data/Number/IReal/IRealOperations.hs:208:18 in ireal-0.2.3-1adEs5TQUyIfzTsanQTr7:Data.Number.IReal.IRealOperations
+EXCEPTION fft-real (16,11) 11 % 1 Left Prelude.undefined
+CallStack (from HasCallStack):
+  undefined, called at ./Data/Number/IReal/IRealOperations.hs:208:18 in ireal-0.2.3-1adEs5TQUyIfzTsanQTr7:Data.Number.IReal.IRealOperations
+EXCEPTION fft-imag (16,11) 118 % 1 Left Prelude.undefined
+CallStack (from HasCallStack):
+  undefined, called at ./Data/Number/IReal/IRealOperations.hs:208:18 in ireal-0.2.3-1adEs5TQUyIfzTsanQTr7:Data.Number.IReal.IRealOperations
+EXCEPTION fft-real (16,12) 12 % 1 Left Prelude.undefined
+CallStack (from HasCallStack):
+  undefined, called at ./Data/Number/IReal/IRealOperations.hs:208:18 in ireal-0.2.3-1adEs5TQUyIfzTsanQTr7:Data.Number.IReal.IRealOperations
+EXCEPTION fft-imag (16,12) 141 % 1 Left Prelude.undefined
+CallStack (from HasCallStack):
+  undefined, called at ./Data/Number/IReal/IRealOperations.hs:208:18 in ireal-0.2.3-1adEs5TQUyIfzTsanQTr7:Data.Number.IReal.IRealOperations
+EXCEPTION fft-real (16,13) 13 % 1 Left Prelude.undefined
+CallStack (from HasCallStack):
+  undefined, called at ./Data/Number/IReal/IRealOperations.hs:208:18 in ireal-0.2.3-1adEs5TQUyIfzTsanQTr7:Data.Number.IReal.IRealOperations
+EXCEPTION fft-imag (16,13) 166 % 1 Left Prelude.undefined
+CallStack (from HasCallStack):
+  undefined, called at ./Data/Number/IReal/IRealOperations.hs:208:18 in ireal-0.2.3-1adEs5TQUyIfzTsanQTr7:Data.Number.IReal.IRealOperations
+EXCEPTION fft-real (16,14) 14 % 1 Left Prelude.undefined
+CallStack (from HasCallStack):
+  undefined, called at ./Data/Number/IReal/IRealOperations.hs:208:18 in ireal-0.2.3-1adEs5TQUyIfzTsanQTr7:Data.Number.IReal.IRealOperations
+EXCEPTION fft-imag (16,14) 193 % 1 Left Prelude.undefined
+CallStack (from HasCallStack):
+  undefined, called at ./Data/Number/IReal/IRealOperations.hs:208:18 in ireal-0.2.3-1adEs5TQUyIfzTsanQTr7:Data.Number.IReal.IRealOperations
+EXCEPTION fft-real (16,15) 15 % 1 Left Prelude.undefined
+CallStack (from HasCallStack):
+  undefined, called at ./Data/Number/IReal/IRealOperations.hs:208:18 in ireal-0.2.3-1adEs5TQUyIfzTsanQTr7:Data.Number.IReal.IRealOperations
+EXCEPTION fft-imag (16,15) 222 % 1 Left Prelude.undefined
+CallStack (from HasCallStack):
+  undefined, called at ./Data/Number/IReal/IRealOperations.hs:208:18 in ireal-0.2.3-1adEs5TQUyIfzTsanQTr7:Data.Number.IReal.IRealOperations
+EXCEPTION fft-real (16,16) 16 % 1 Left Prelude.undefined
+CallStack (from HasCallStack):
+  undefined, called at ./Data/Number/IReal/IRealOperations.hs:208:18 in ireal-0.2.3-1adEs5TQUyIfzTsanQTr7:Data.Number.IReal.IRealOperations
+EXCEPTION fft-imag (16,16) 253 % 1 Left Prelude.undefined
+CallStack (from HasCallStack):
+  undefined, called at ./Data/Number/IReal/IRealOperations.hs:208:18 in ireal-0.2.3-1adEs5TQUyIfzTsanQTr7:Data.Number.IReal.IRealOperations
+EXCEPTION fft-real (32,1) 1 % 1 Left Prelude.undefined
+CallStack (from HasCallStack):
+  undefined, called at ./Data/Number/IReal/IRealOperations.hs:208:18 in ireal-0.2.3-1adEs5TQUyIfzTsanQTr7:Data.Number.IReal.IRealOperations
+EXCEPTION fft-imag (32,1) (-2) % 1 Left Prelude.undefined
+CallStack (from HasCallStack):
+  undefined, called at ./Data/Number/IReal/IRealOperations.hs:208:18 in ireal-0.2.3-1adEs5TQUyIfzTsanQTr7:Data.Number.IReal.IRealOperations
+EXCEPTION fft-real (32,2) 2 % 1 Left Prelude.undefined
+CallStack (from HasCallStack):
+  undefined, called at ./Data/Number/IReal/IRealOperations.hs:208:18 in ireal-0.2.3-1adEs5TQUyIfzTsanQTr7:Data.Number.IReal.IRealOperations
+EXCEPTION fft-imag (32,2) 1 % 1 Left Prelude.undefined
+CallStack (from HasCallStack):
+  undefined, called at ./Data/Number/IReal/IRealOperations.hs:208:18 in ireal-0.2.3-1adEs5TQUyIfzTsanQTr7:Data.Number.IReal.IRealOperations
+EXCEPTION fft-real (32,3) 3 % 1 Left Prelude.undefined
+CallStack (from HasCallStack):
+  undefined, called at ./Data/Number/IReal/IRealOperations.hs:208:18 in ireal-0.2.3-1adEs5TQUyIfzTsanQTr7:Data.Number.IReal.IRealOperations
+EXCEPTION fft-imag (32,3) 6 % 1 Left Prelude.undefined
+CallStack (from HasCallStack):
+  undefined, called at ./Data/Number/IReal/IRealOperations.hs:208:18 in ireal-0.2.3-1adEs5TQUyIfzTsanQTr7:Data.Number.IReal.IRealOperations
+EXCEPTION fft-real (32,4) 4 % 1 Left Prelude.undefined
+CallStack (from HasCallStack):
+  undefined, called at ./Data/Number/IReal/IRealOperations.hs:208:18 in ireal-0.2.3-1adEs5TQUyIfzTsanQTr7:Data.Number.IReal.IRealOperations
+EXCEPTION fft-imag (32,4) 13 % 1 Left Prelude.undefined
+CallStack (from HasCallStack):
+  undefined, called at ./Data/Number/IReal/IRealOperations.hs:208:18 in ireal-0.2.3-1adEs5TQUyIfzTsanQTr7:Data.Number.IReal.IRealOperations
+EXCEPTION fft-real (32,5) 5 % 1 Left Prelude.undefined
+CallStack (from HasCallStack):
+  undefined, called at ./Data/Number/IReal/IRealOperations.hs:208:18 in ireal-0.2.3-1adEs5TQUyIfzTsanQTr7:Data.Number.IReal.IRealOperations
+EXCEPTION fft-imag (32,5) 22 % 1 Left Prelude.undefined
+CallStack (from HasCallStack):
+  undefined, called at ./Data/Number/IReal/IRealOperations.hs:208:18 in ireal-0.2.3-1adEs5TQUyIfzTsanQTr7:Data.Number.IReal.IRealOperations
+EXCEPTION fft-real (32,6) 6 % 1 Left Prelude.undefined
+CallStack (from HasCallStack):
+  undefined, called at ./Data/Number/IReal/IRealOperations.hs:208:18 in ireal-0.2.3-1adEs5TQUyIfzTsanQTr7:Data.Number.IReal.IRealOperations
+EXCEPTION fft-imag (32,6) 33 % 1 Left Prelude.undefined
+CallStack (from HasCallStack):
+  undefined, called at ./Data/Number/IReal/IRealOperations.hs:208:18 in ireal-0.2.3-1adEs5TQUyIfzTsanQTr7:Data.Number.IReal.IRealOperations
+EXCEPTION fft-real (32,7) 7 % 1 Left Prelude.undefined
+CallStack (from HasCallStack):
+  undefined, called at ./Data/Number/IReal/IRealOperations.hs:208:18 in ireal-0.2.3-1adEs5TQUyIfzTsanQTr7:Data.Number.IReal.IRealOperations
+EXCEPTION fft-imag (32,7) 46 % 1 Left Prelude.undefined
+CallStack (from HasCallStack):
+  undefined, called at ./Data/Number/IReal/IRealOperations.hs:208:18 in ireal-0.2.3-1adEs5TQUyIfzTsanQTr7:Data.Number.IReal.IRealOperations
+EXCEPTION fft-real (32,8) 8 % 1 Left Prelude.undefined
+CallStack (from HasCallStack):
+  undefined, called at ./Data/Number/IReal/IRealOperations.hs:208:18 in ireal-0.2.3-1adEs5TQUyIfzTsanQTr7:Data.Number.IReal.IRealOperations
+EXCEPTION fft-imag (32,8) 61 % 1 Left Prelude.undefined
+CallStack (from HasCallStack):
+  undefined, called at ./Data/Number/IReal/IRealOperations.hs:208:18 in ireal-0.2.3-1adEs5TQUyIfzTsanQTr7:Data.Number.IReal.IRealOperations
+EXCEPTION fft-real (32,9) 9 % 1 Left Prelude.undefined
+CallStack (from HasCallStack):
+  undefined, called at ./Data/Number/IReal/IRealOperations.hs:208:18 in ireal-0.2.3-1adEs5TQUyIfzTsanQTr7:Data.Number.IReal.IRealOperations
+EXCEPTION fft-imag (32,9) 78 % 1 Left Prelude.undefined
+CallStack (from HasCallStack):
+  undefined, called at ./Data/Number/IReal/IRealOperations.hs:208:18 in ireal-0.2.3-1adEs5TQUyIfzTsanQTr7:Data.Number.IReal.IRealOperations
+EXCEPTION fft-real (32,10) 10 % 1 Left Prelude.undefined
+CallStack (from HasCallStack):
+  undefined, called at ./Data/Number/IReal/IRealOperations.hs:208:18 in ireal-0.2.3-1adEs5TQUyIfzTsanQTr7:Data.Number.IReal.IRealOperations
+EXCEPTION fft-imag (32,10) 97 % 1 Left Prelude.undefined
+CallStack (from HasCallStack):
+  undefined, called at ./Data/Number/IReal/IRealOperations.hs:208:18 in ireal-0.2.3-1adEs5TQUyIfzTsanQTr7:Data.Number.IReal.IRealOperations
+EXCEPTION fft-real (32,11) 11 % 1 Left Prelude.undefined
+CallStack (from HasCallStack):
+  undefined, called at ./Data/Number/IReal/IRealOperations.hs:208:18 in ireal-0.2.3-1adEs5TQUyIfzTsanQTr7:Data.Number.IReal.IRealOperations
+EXCEPTION fft-imag (32,11) 118 % 1 Left Prelude.undefined
+CallStack (from HasCallStack):
+  undefined, called at ./Data/Number/IReal/IRealOperations.hs:208:18 in ireal-0.2.3-1adEs5TQUyIfzTsanQTr7:Data.Number.IReal.IRealOperations
+EXCEPTION fft-real (32,12) 12 % 1 Left Prelude.undefined
+CallStack (from HasCallStack):
+  undefined, called at ./Data/Number/IReal/IRealOperations.hs:208:18 in ireal-0.2.3-1adEs5TQUyIfzTsanQTr7:Data.Number.IReal.IRealOperations
+EXCEPTION fft-imag (32,12) 141 % 1 Left Prelude.undefined
+CallStack (from HasCallStack):
+  undefined, called at ./Data/Number/IReal/IRealOperations.hs:208:18 in ireal-0.2.3-1adEs5TQUyIfzTsanQTr7:Data.Number.IReal.IRealOperations
+EXCEPTION fft-real (32,13) 13 % 1 Left Prelude.undefined
+CallStack (from HasCallStack):
+  undefined, called at ./Data/Number/IReal/IRealOperations.hs:208:18 in ireal-0.2.3-1adEs5TQUyIfzTsanQTr7:Data.Number.IReal.IRealOperations
+EXCEPTION fft-imag (32,13) 166 % 1 Left Prelude.undefined
+CallStack (from HasCallStack):
+  undefined, called at ./Data/Number/IReal/IRealOperations.hs:208:18 in ireal-0.2.3-1adEs5TQUyIfzTsanQTr7:Data.Number.IReal.IRealOperations
+EXCEPTION fft-real (32,14) 14 % 1 Left Prelude.undefined
+CallStack (from HasCallStack):
+  undefined, called at ./Data/Number/IReal/IRealOperations.hs:208:18 in ireal-0.2.3-1adEs5TQUyIfzTsanQTr7:Data.Number.IReal.IRealOperations
+EXCEPTION fft-imag (32,14) 193 % 1 Left Prelude.undefined
+CallStack (from HasCallStack):
+  undefined, called at ./Data/Number/IReal/IRealOperations.hs:208:18 in ireal-0.2.3-1adEs5TQUyIfzTsanQTr7:Data.Number.IReal.IRealOperations
+EXCEPTION fft-real (32,15) 15 % 1 Left Prelude.undefined
+CallStack (from HasCallStack):
+  undefined, called at ./Data/Number/IReal/IRealOperations.hs:208:18 in ireal-0.2.3-1adEs5TQUyIfzTsanQTr7:Data.Number.IReal.IRealOperations
+EXCEPTION fft-imag (32,15) 222 % 1 Left Prelude.undefined
+CallStack (from HasCallStack):
+  undefined, called at ./Data/Number/IReal/IRealOperations.hs:208:18 in ireal-0.2.3-1adEs5TQUyIfzTsanQTr7:Data.Number.IReal.IRealOperations
+EXCEPTION fft-real (32,16) 16 % 1 Left Prelude.undefined
+CallStack (from HasCallStack):
+  undefined, called at ./Data/Number/IReal/IRealOperations.hs:208:18 in ireal-0.2.3-1adEs5TQUyIfzTsanQTr7:Data.Number.IReal.IRealOperations
+EXCEPTION fft-imag (32,16) 253 % 1 Left Prelude.undefined
+CallStack (from HasCallStack):
+  undefined, called at ./Data/Number/IReal/IRealOperations.hs:208:18 in ireal-0.2.3-1adEs5TQUyIfzTsanQTr7:Data.Number.IReal.IRealOperations
+EXCEPTION fft-real (32,17) 17 % 1 Left Prelude.undefined
+CallStack (from HasCallStack):
+  undefined, called at ./Data/Number/IReal/IRealOperations.hs:208:18 in ireal-0.2.3-1adEs5TQUyIfzTsanQTr7:Data.Number.IReal.IRealOperations
+EXCEPTION fft-imag (32,17) 286 % 1 Left Prelude.undefined
+CallStack (from HasCallStack):
+  undefined, called at ./Data/Number/IReal/IRealOperations.hs:208:18 in ireal-0.2.3-1adEs5TQUyIfzTsanQTr7:Data.Number.IReal.IRealOperations
+EXCEPTION fft-real (32,18) 18 % 1 Left Prelude.undefined
+CallStack (from HasCallStack):
+  undefined, called at ./Data/Number/IReal/IRealOperations.hs:208:18 in ireal-0.2.3-1adEs5TQUyIfzTsanQTr7:Data.Number.IReal.IRealOperations
+EXCEPTION fft-imag (32,18) 321 % 1 Left Prelude.undefined
+CallStack (from HasCallStack):
+  undefined, called at ./Data/Number/IReal/IRealOperations.hs:208:18 in ireal-0.2.3-1adEs5TQUyIfzTsanQTr7:Data.Number.IReal.IRealOperations
+EXCEPTION fft-real (32,19) 19 % 1 Left Prelude.undefined
+CallStack (from HasCallStack):
+  undefined, called at ./Data/Number/IReal/IRealOperations.hs:208:18 in ireal-0.2.3-1adEs5TQUyIfzTsanQTr7:Data.Number.IReal.IRealOperations
+EXCEPTION fft-imag (32,19) 358 % 1 Left Prelude.undefined
+CallStack (from HasCallStack):
+  undefined, called at ./Data/Number/IReal/IRealOperations.hs:208:18 in ireal-0.2.3-1adEs5TQUyIfzTsanQTr7:Data.Number.IReal.IRealOperations
+EXCEPTION fft-real (32,20) 20 % 1 Left Prelude.undefined
+CallStack (from HasCallStack):
+  undefined, called at ./Data/Number/IReal/IRealOperations.hs:208:18 in ireal-0.2.3-1adEs5TQUyIfzTsanQTr7:Data.Number.IReal.IRealOperations
+EXCEPTION fft-imag (32,20) 397 % 1 Left Prelude.undefined
+CallStack (from HasCallStack):
+  undefined, called at ./Data/Number/IReal/IRealOperations.hs:208:18 in ireal-0.2.3-1adEs5TQUyIfzTsanQTr7:Data.Number.IReal.IRealOperations
+EXCEPTION fft-real (32,21) 21 % 1 Left Prelude.undefined
+CallStack (from HasCallStack):
+  undefined, called at ./Data/Number/IReal/IRealOperations.hs:208:18 in ireal-0.2.3-1adEs5TQUyIfzTsanQTr7:Data.Number.IReal.IRealOperations
+EXCEPTION fft-imag (32,21) 438 % 1 Left Prelude.undefined
+CallStack (from HasCallStack):
+  undefined, called at ./Data/Number/IReal/IRealOperations.hs:208:18 in ireal-0.2.3-1adEs5TQUyIfzTsanQTr7:Data.Number.IReal.IRealOperations
+EXCEPTION fft-real (32,22) 22 % 1 Left Prelude.undefined
+CallStack (from HasCallStack):
+  undefined, called at ./Data/Number/IReal/IRealOperations.hs:208:18 in ireal-0.2.3-1adEs5TQUyIfzTsanQTr7:Data.Number.IReal.IRealOperations
+EXCEPTION fft-imag (32,22) 481 % 1 Left Prelude.undefined
+CallStack (from HasCallStack):
+  undefined, called at ./Data/Number/IReal/IRealOperations.hs:208:18 in ireal-0.2.3-1adEs5TQUyIfzTsanQTr7:Data.Number.IReal.IRealOperations
+EXCEPTION fft-real (32,23) 23 % 1 Left Prelude.undefined
+CallStack (from HasCallStack):
+  undefined, called at ./Data/Number/IReal/IRealOperations.hs:208:18 in ireal-0.2.3-1adEs5TQUyIfzTsanQTr7:Data.Number.IReal.IRealOperations
+EXCEPTION fft-imag (32,23) 526 % 1 Left Prelude.undefined
+CallStack (from HasCallStack):
+  undefined, called at ./Data/Number/IReal/IRealOperations.hs:208:18 in ireal-0.2.3-1adEs5TQUyIfzTsanQTr7:Data.Number.IReal.IRealOperations
+EXCEPTION fft-real (32,24) 24 % 1 Left Prelude.undefined
+CallStack (from HasCallStack):
+  undefined, called at ./Data/Number/IReal/IRealOperations.hs:208:18 in ireal-0.2.3-1adEs5TQUyIfzTsanQTr7:Data.Number.IReal.IRealOperations
+EXCEPTION fft-imag (32,24) 573 % 1 Left Prelude.undefined
+CallStack (from HasCallStack):
+  undefined, called at ./Data/Number/IReal/IRealOperations.hs:208:18 in ireal-0.2.3-1adEs5TQUyIfzTsanQTr7:Data.Number.IReal.IRealOperations
+EXCEPTION fft-real (32,25) 25 % 1 Left Prelude.undefined
+CallStack (from HasCallStack):
+  undefined, called at ./Data/Number/IReal/IRealOperations.hs:208:18 in ireal-0.2.3-1adEs5TQUyIfzTsanQTr7:Data.Number.IReal.IRealOperations
+EXCEPTION fft-imag (32,25) 622 % 1 Left Prelude.undefined
+CallStack (from HasCallStack):
+  undefined, called at ./Data/Number/IReal/IRealOperations.hs:208:18 in ireal-0.2.3-1adEs5TQUyIfzTsanQTr7:Data.Number.IReal.IRealOperations
+EXCEPTION fft-real (32,26) 26 % 1 Left Prelude.undefined
+CallStack (from HasCallStack):
+  undefined, called at ./Data/Number/IReal/IRealOperations.hs:208:18 in ireal-0.2.3-1adEs5TQUyIfzTsanQTr7:Data.Number.IReal.IRealOperations
+EXCEPTION fft-imag (32,26) 673 % 1 Left Prelude.undefined
+CallStack (from HasCallStack):
+  undefined, called at ./Data/Number/IReal/IRealOperations.hs:208:18 in ireal-0.2.3-1adEs5TQUyIfzTsanQTr7:Data.Number.IReal.IRealOperations
+EXCEPTION fft-real (32,27) 27 % 1 Left Prelude.undefined
+CallStack (from HasCallStack):
+  undefined, called at ./Data/Number/IReal/IRealOperations.hs:208:18 in ireal-0.2.3-1adEs5TQUyIfzTsanQTr7:Data.Number.IReal.IRealOperations
+EXCEPTION fft-imag (32,27) 726 % 1 Left Prelude.undefined
+CallStack (from HasCallStack):
+  undefined, called at ./Data/Number/IReal/IRealOperations.hs:208:18 in ireal-0.2.3-1adEs5TQUyIfzTsanQTr7:Data.Number.IReal.IRealOperations
+EXCEPTION fft-real (32,28) 28 % 1 Left Prelude.undefined
+CallStack (from HasCallStack):
+  undefined, called at ./Data/Number/IReal/IRealOperations.hs:208:18 in ireal-0.2.3-1adEs5TQUyIfzTsanQTr7:Data.Number.IReal.IRealOperations
+EXCEPTION fft-imag (32,28) 781 % 1 Left Prelude.undefined
+CallStack (from HasCallStack):
+  undefined, called at ./Data/Number/IReal/IRealOperations.hs:208:18 in ireal-0.2.3-1adEs5TQUyIfzTsanQTr7:Data.Number.IReal.IRealOperations
+EXCEPTION fft-real (32,29) 29 % 1 Left Prelude.undefined
+CallStack (from HasCallStack):
+  undefined, called at ./Data/Number/IReal/IRealOperations.hs:208:18 in ireal-0.2.3-1adEs5TQUyIfzTsanQTr7:Data.Number.IReal.IRealOperations
+EXCEPTION fft-imag (32,29) 838 % 1 Left Prelude.undefined
+CallStack (from HasCallStack):
+  undefined, called at ./Data/Number/IReal/IRealOperations.hs:208:18 in ireal-0.2.3-1adEs5TQUyIfzTsanQTr7:Data.Number.IReal.IRealOperations
+EXCEPTION fft-real (32,30) 30 % 1 Left Prelude.undefined
+CallStack (from HasCallStack):
+  undefined, called at ./Data/Number/IReal/IRealOperations.hs:208:18 in ireal-0.2.3-1adEs5TQUyIfzTsanQTr7:Data.Number.IReal.IRealOperations
+EXCEPTION fft-imag (32,30) 897 % 1 Left Prelude.undefined
+CallStack (from HasCallStack):
+  undefined, called at ./Data/Number/IReal/IRealOperations.hs:208:18 in ireal-0.2.3-1adEs5TQUyIfzTsanQTr7:Data.Number.IReal.IRealOperations
+EXCEPTION fft-real (32,31) 31 % 1 Left Prelude.undefined
+CallStack (from HasCallStack):
+  undefined, called at ./Data/Number/IReal/IRealOperations.hs:208:18 in ireal-0.2.3-1adEs5TQUyIfzTsanQTr7:Data.Number.IReal.IRealOperations
+EXCEPTION fft-imag (32,31) 958 % 1 Left Prelude.undefined
+CallStack (from HasCallStack):
+  undefined, called at ./Data/Number/IReal/IRealOperations.hs:208:18 in ireal-0.2.3-1adEs5TQUyIfzTsanQTr7:Data.Number.IReal.IRealOperations
+EXCEPTION fft-real (32,32) 32 % 1 Left Prelude.undefined
+CallStack (from HasCallStack):
+  undefined, called at ./Data/Number/IReal/IRealOperations.hs:208:18 in ireal-0.2.3-1adEs5TQUyIfzTsanQTr7:Data.Number.IReal.IRealOperations
+EXCEPTION fft-imag (32,32) 1021 % 1 Left Prelude.undefined
+CallStack (from HasCallStack):
+  undefined, called at ./Data/Number/IReal/IRealOperations.hs:208:18 in ireal-0.2.3-1adEs5TQUyIfzTsanQTr7:Data.Number.IReal.IRealOperations
+DONE FFT round trips
+FAIL quadrature (0,1) 0 % 1 Right (Just (False,680564733841876926926749214863536422911 % 340282366920938463463374607431768211456,680564733841876926926749214863536422913 % 340282366920938463463374607431768211456))
+DONE quadrature monomials
+DONE polynomial integrals
+Rounded integral constant 2 over [-1,1], expected 4: 1
+DCT length2 Double round trip [Infinity,Infinity]
+rounded DCT length2 Double round trip [Infinity,Infinity]
+DONE linear systems
+TOTAL PASS 66
+TOTAL FAIL 1
+TOTAL TIMEOUT 0
+TOTAL EXCEPTION 124

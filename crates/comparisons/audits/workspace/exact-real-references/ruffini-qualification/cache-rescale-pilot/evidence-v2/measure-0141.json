@@ -1,0 +1,21 @@
+{
+  "command": "taskset",
+  "args": [
+    "-c",
+    "6",
+    "/home/tim/Documents/GitHub/workspace/exact-real-references/ruffini-qualification/cache-rescale-pilot/evidence-v2/release",
+    "bench",
+    "original",
+    "64",
+    "65",
+    "negative",
+    "300000"
+  ],
+  "begin": "2026-09-07T05:00:36.982Z",
+  "end": "2026-09-07T05:00:36.999Z",
+  "status": 0,
+  "signal": null,
+  "error": null,
+  "stdout": "{\"mode\":\"bench\",\"method\":\"original\",\"bits\":64,\"gap\":65,\"negative\":true,\"reps\":300000,\"cpu_ns\":13749285,\"wall_ns\":13827331,\"checksum\":0,\"memory\":null}\n",
+  "stderr": ""
+}

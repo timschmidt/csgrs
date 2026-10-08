@@ -1,0 +1,11 @@
+{
+  "tag": "reuse-consumer-probe-release",
+  "started": "2026-09-08T21:48:04.348Z",
+  "finished": "2026-09-08T21:48:04.387Z",
+  "elapsedSeconds": 0.034659292999999994,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison",
+  "command": "/tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/release/calcium-sign-consumer-probe-reuse",
+  "args": [],
+  "code": 0,
+  "signal": null
+}

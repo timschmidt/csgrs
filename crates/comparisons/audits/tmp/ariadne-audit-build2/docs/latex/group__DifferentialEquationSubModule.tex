@@ -1,0 +1,32 @@
+\doxysubsubsubsection{Differential equation solvers }
+\hypertarget{group__DifferentialEquationSubModule}{}\label{group__DifferentialEquationSubModule}\index{Differential equation solvers@{Differential equation solvers}}
+
+
+\doxysubsubsubsubsection{Description}
+Classes and functions for solving linear and nonlinear differential equations equations. 
+
+An {\itshape Integrator} class provides functionality for solving differential equations, as defined in the Integrator\+Interface. Concrete solvers include \doxylink{classAriadne_1_1TaylorPicardIntegrator}{Taylor\+Picard\+Integrator} and \doxylink{classAriadne_1_1TaylorSeriesIntegrator}{Taylor\+Series\+Integrator}. \doxysubsubsubsubsubsection*{Classes}
+\begin{DoxyCompactItemize}
+\item 
+class \mbox{\hyperlink{classAriadne_1_1BounderInterface}{Bounder\+Interface}}
+\begin{DoxyCompactList}\small\item\em Interface for classes calculating the bounds of a flow. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1EulerBounder}{Euler\+Bounder}}
+\begin{DoxyCompactList}\small\item\em Compute bounds on the flow of a differential equation using a set-\/based Euler method. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1TaylorPicardIntegrator}{Taylor\+Picard\+Integrator}}
+\begin{DoxyCompactList}\small\item\em An integrator which uses a validated Picard iteration on Taylor models. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1TaylorSeriesIntegrator}{Taylor\+Series\+Integrator}}
+\begin{DoxyCompactList}\small\item\em An integrator which computes the Taylor series of the flow function with remainder term. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1TaylorSeriesBounderIntegrator}{Taylor\+Series\+Bounder\+Integrator}}
+\begin{DoxyCompactList}\small\item\em An integrator which computes the Taylor series of the flow function with remainder term. \end{DoxyCompactList}\item 
+struct \mbox{\hyperlink{structAriadne_1_1IncompleteFlowException}{Incomplete\+Flow\+Exception}}
+\begin{DoxyCompactList}\small\item\em A solution to the differential equation could not be computed over the requested time interval. \end{DoxyCompactList}\item 
+struct \mbox{\hyperlink{structAriadne_1_1FlowTimeStepException}{Flow\+Time\+Step\+Exception}}
+\begin{DoxyCompactList}\small\item\em A solution to a differential equation could not be computed within the requested tolerances. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1IntegratorInterface}{Integrator\+Interface}}
+\begin{DoxyCompactList}\small\item\em Interface for integrating differential equations of the form $\dt{x}=f(x)$. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsubsubsubsection*{Typedefs}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{group__DifferentialEquationSubModule_ga6f1c6f216a042c31906593cafeb126fa}\label{group__DifferentialEquationSubModule_ga6f1c6f216a042c31906593cafeb126fa} 
+typedef \mbox{\hyperlink{classAriadne_1_1Dyadic}{Dyadic}} {\bfseries Step\+Size\+Type}
+\begin{DoxyCompactList}\small\item\em The type to use for the size of a step of a continuous (or hybrid) system. \end{DoxyCompactList}\end{DoxyCompactItemize}

@@ -1,0 +1,67 @@
+[
+  {
+    "repository": "alumina-firmware",
+    "commit": "bdee397 Checkpoint network provisioning and exact graph runtime work",
+    "remaining_entries": 0
+  },
+  {
+    "repository": "alumina-interface",
+    "commit": "59a1825 Checkpoint typed graph controls and network provisioning",
+    "remaining_entries": 0
+  },
+  {
+    "repository": "csgrs-ffi",
+    "commit": "6057435 Update the pinned checkout action",
+    "remaining_entries": 0
+  },
+  {
+    "repository": "exactcore-hyper-comparison",
+    "commit": "74b90b3 Checkpoint the consolidated exact-real audits and continuation evidence",
+    "remaining_entries": 0
+  },
+  {
+    "repository": "hyperbrep",
+    "commit": "c575a3d Checkpoint analytic pcurve and topology construction work",
+    "remaining_entries": 0
+  },
+  {
+    "repository": "hypercircuit",
+    "commit": "c9cea15 Checkpoint exact board geometry and routing integration",
+    "remaining_entries": 0
+  },
+  {
+    "repository": "hypercurve",
+    "commit": "1f26e4c Bound polynomial derivative work by the processed degree",
+    "remaining_entries": 0
+  },
+  {
+    "repository": "hyperdrc",
+    "commit": "5c9d3a5 Parse source scalars through Hyperreal",
+    "remaining_entries": 0
+  },
+  {
+    "repository": "hyperpack",
+    "commit": "3485786 Use the exact curve execution context for irregular packing",
+    "remaining_entries": 0
+  },
+  {
+    "repository": "hyperreal",
+    "commit": "047e206 Checkpoint retained scalar relations and approximation reuse",
+    "remaining_entries": 0
+  },
+  {
+    "repository": "hypersolve",
+    "commit": "294e339 Checkpoint exact binary root images and polynomial normalization",
+    "remaining_entries": 0
+  },
+  {
+    "repository": "openscad-rs",
+    "commit": "f21b394 Use Hyperreal for exact numeric token parsing",
+    "remaining_entries": 0
+  },
+  {
+    "repository": "synaps-cad",
+    "commit": "355abf1 Migrate exact region consumers to the current curve API",
+    "remaining_entries": 0
+  }
+]

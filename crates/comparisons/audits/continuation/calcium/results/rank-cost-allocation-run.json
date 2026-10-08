@@ -1,0 +1,14 @@
+{
+  "tag": "rank-cost-allocation-run",
+  "started": "2026-09-09T02:32:57.521Z",
+  "finished": "2026-09-09T02:33:01.120Z",
+  "elapsedSeconds": 3.596122247,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "node",
+  "args": [
+    "run-rank-costs.mjs",
+    "allocation"
+  ],
+  "code": 0,
+  "signal": null
+}

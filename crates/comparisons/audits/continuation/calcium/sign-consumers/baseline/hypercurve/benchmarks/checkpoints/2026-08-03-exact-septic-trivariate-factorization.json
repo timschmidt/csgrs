@@ -1,0 +1,230 @@
+{
+  "schema": "hypercurve.performance-checkpoint.v1",
+  "checkpoint": "exact rational septic trivariate factorization for selected-root winding",
+  "captured_on": "2026-08-03",
+  "source_revision": "faa9e4294713454e686e808df2f3e79fe7d1365d",
+  "semantic_revisions": [
+    "faa9e42"
+  ],
+  "comparison_revision": "64b0f0b",
+  "comparison_semantic_revision": "d8a7aaa",
+  "dependency_revisions": {
+    "hyperreal": "c2217bae132b725e29faeb89495b8cd51012e1bc",
+    "hyperlattice": "a475bb752c1e0fb0cfdb80f4db74a56caa6962c0",
+    "hyperlimit": "6e4d68c835dbdcb487ef8e43cf57138ed13894b5",
+    "hypersolve": "c99eeb6007dfaface1240b212e21e544893494aa",
+    "hypertri": "41631f652233e1337521822abc63bc29a6c0ce55",
+    "hyperbrep": "6336697cd124ef6ef8384166b1f90ef2fceb6663"
+  },
+  "scope": {
+    "included": [
+      "bounded exact recovery of a rational multi-affine linear factor from a trivariate tensor that is septic in one axis",
+      "reuse of the cubic-through-sextic specialization, rational-root, bilinear-slice, lift, normalization, and complete-tensor division authority without another factor engine",
+      "six bounded recursive splits so a verified linear factor and every supported sextic quotient reuse the same authorities",
+      "exact leading-slice-density scheduling and the exact first-proved-slice-factor fast pass from the sextic checkpoint",
+      "seven distinct rational multi-affine factors, septic multiplicity, one rational factor with a sextic cofactor, unfactored rejection, and all-axis reconstruction coverage",
+      "identical Certified STRICT and APPROXIMATE_512 results for the formerly terminal dense septic rational three-field zero",
+      "a sparse but genuinely octic all-axis coupled control that retains the shared selected terminal policy without dominating the test matrix",
+      "consolidated test-only factor-product construction to offset the added proof coverage",
+      "matched-dependency allocation, linked-size, historical, competitive, policy, and static-callgraph evidence"
+    ],
+    "excluded": [
+      "general factorization of octic or higher tensors",
+      "non-rational septic factors not exposed by the bounded exact specializations",
+      "unbounded multivariate factorization or primitive-element compositum construction",
+      "dense intermediate tensors above the existing 16384-control resource ceiling",
+      "algebraic analytic-parallel endpoint images, broader noncircular fields, and distinct-carrier joins",
+      "fillet, chamfer, historical-engine deletion, and caller cutover work",
+      "hypermesh"
+    ]
+  },
+  "mathematical_contract": {
+    "degree_extension": "The one rational multi-affine factor package accepts axis coefficient counts four through eight. A septic split produces one proved linear-axis factor and an exact sextic quotient; no degree-specific positive assertion is added.",
+    "slice_authority": "Exact rational specializations and signed maximal minors only propose bilinear slice factors. Exact Hypersolve division remains the authority for accepting each slice divisor.",
+    "bounded_fast_pass": "The first proved top and anchor slice divisors receive one lift attempt. Failure makes no claim and replays exhaustive first-Taylor and two-anchor passes. Success still requires normalized exact division of the complete trivariate tensor.",
+    "fourth_sample_rejection": "A factor reconstructed from any three exact roots predicts the fourth specialized root whenever its specialized axis coefficient is nonzero. Absence from a nonempty exact root set rejects the proposal; an empty or undecidable root set makes no negative claim.",
+    "lift": "Both retained-coordinate orientations use the translated first-Taylor/highest-slice proof, with exact two-anchor projective alignment retained for repeated factors. Every candidate must divide the complete tensor exactly.",
+    "axis_scheduling": "For quintic through septic axes, exact nonzero counts in the leading slice order equally sized axes from denser to sparser. This is scheduling evidence only: unknown signs score zero and the selected axis supplies no mathematical claim.",
+    "selected_sign": "The verified linear factor and exact sextic quotient enter the same bounded recursive sign authority. A selected zero factor proves the product zero; decided nonzero signs multiply exactly.",
+    "resource_bound": "Dimensions are checked and all bivariate products and reconstructed tensors retain the 16384-control ceiling. The recursive split budget is six, sufficient for the supported septic decomposition and no higher.",
+    "policy": "A supportable rational septic factorization is Certified under STRICT and APPROXIMATE_512 without terminal consumption. The octic control remains Predicate uncertainty in STRICT and returns Zero only after APPROXIMATE_512 records Approximate512Consumed.",
+    "octic_control": "The selected-zero cubic is multiplied by five exact positive factors k+x+y+z with k from four through eight. The result is octic in every axis but substantially sparser than a product of dense multi-affine factors. Sparsity changes cost only: the full tensor, selected identity, and policy terminal remain exact.",
+    "failure": "Missing exact rational roots, unresolved exact signs, failed slice or complete-tensor division, degenerate lift relations, unsupported coefficient towers, resource overflow, or exhaustion of the six-split budget makes no exact claim and falls through to the shared policy terminal. No tolerance, sampled positive assertion, compatibility shim, or second Boolean engine is introduced."
+  },
+  "capability": {
+    "comparison_revision": "The product of the selected-zero exact sextic fixture and one positive coupled multi-affine factor was unsupported. STRICT returned Predicate uncertainty and APPROXIMATE_512 consumed its terminal.",
+    "source_revision": "One rational multi-affine septic factor is reconstructed from exact slice divisors, lifted and proved by exact complete-tensor division, and recursively signed with its sextic quotient.",
+    "certified_fixture": "The formerly terminal dense septic rational three-field fixture returns Certified Zero under STRICT and APPROXIMATE_512; neither policy consumes the approximate terminal.",
+    "differential_factor_coverage": "Seven distinct dense multi-affine factors reconstruct on every axis; F^3*G^2*H^2 multiplicity reconstructs on every axis; one rational factor is recovered with a sextic cofactor; an unfactored septic is rejected.",
+    "remaining_policy_control": "Multiplying the selected-zero cubic by five positive sparse multi-affine factors makes every axis octic. The bounded package deliberately declines it; STRICT remains explicitly uncertain and APPROXIMATE_512 returns Zero only with Approximate512Consumed.",
+    "remaining_exactness_boundary": "Recover bounded octic factors or construct another exact selected-root relation only after axis content, linear resultant, binary selected-root, quadratic, repeated-cubic, and rational multi-affine cubic-through-septic paths fail.",
+    "historical_exact_peer": false,
+    "competitive_exact_peer": false
+  },
+  "benchmark": {
+    "host": "AMD Ryzen 7 5800X3D",
+    "toolchain": "rustc 1.97.0, LLVM 22.1.6, x86_64-unknown-linux-gnu",
+    "primary_method": "all-feature release unit-test and comparative executables pinned to CPU 11; exact fully-qualified filters; seven perf-stat repetitions for the focused exact fixture and three repetitions for the policy terminal and fixed-work controls; median retired instructions and branches are primary",
+    "matched_dependency_control": "64b0f0b and faa9e42 use the listed live dependency revisions. The comparison source differs from its semantic revision only by committed sextic benchmark evidence, which is not linked into production or test executables.",
+    "septic_coupled_rational_zero": {
+      "policy_evaluations": 2,
+      "explicit_structural_preflight_checks": 1,
+      "median_task_clock_ms": 86.84,
+      "median_cycles": 351907297,
+      "median_instructions": 860320371,
+      "median_branches": 160606142,
+      "median_branch_misses": 1928552,
+      "comparison_terminal_task_clock_ms": 6447.82,
+      "comparison_terminal_cycles": 27244166596,
+      "comparison_terminal_instructions": 91093062215,
+      "comparison_terminal_branches": 11758157873,
+      "comparison_terminal_branch_misses": 108845772,
+      "task_clock_change_percent": -98.653188,
+      "cycle_change_percent": -98.708321,
+      "instruction_change_percent": -99.055559,
+      "branch_change_percent": -98.634088,
+      "branch_miss_change_percent": -98.228179,
+      "certainty": "Certified under STRICT and APPROXIMATE_512",
+      "approximate_terminal_consumed": false
+    },
+    "octic_coupled_terminal": {
+      "policy_evaluations": 2,
+      "explicit_structural_preflight_checks": 1,
+      "median_task_clock_ms": 2429.52,
+      "median_cycles": 10255382221,
+      "median_instructions": 33638228380,
+      "median_branches": 4821309494,
+      "median_branch_misses": 40933697,
+      "strict_result": "Predicate uncertainty with no approximate consumption",
+      "approximate_result": "Zero with Approximate512Consumed",
+      "interpretation": "The sparse octic coupled tensor is the next exactness boundary. It proves the shared terminal remains selected by policy while avoiding a several-minute dense debug control."
+    },
+    "fixed_work_historical_controls": {
+      "method": "matched 64b0f0b and faa9e42 all-feature release comparative executables against identical dependency revisions, pinned to CPU 11; three complete perf-stat repetitions; fixture construction excluded from timed loops",
+      "line_arc_capsule_inward": {
+        "iterations": 10000,
+        "comparison_instructions": 2137790991,
+        "current_instructions": 2137784291,
+        "instruction_change": -6700,
+        "instruction_change_percent": -0.000313,
+        "comparison_branches": 439272465,
+        "current_branches": 439272447,
+        "branch_change": -18,
+        "branch_change_percent": -0.000004
+      },
+      "certified_open_cubic_offset": {
+        "iterations": 10,
+        "comparison_instructions": 3484929563,
+        "current_instructions": 3484930287,
+        "instruction_change": 724,
+        "instruction_change_percent": 0.000021,
+        "comparison_branches": 658581624,
+        "current_branches": 658581785,
+        "branch_change": 161,
+        "branch_change_percent": 0.000024
+      },
+      "interpretation": "Both ordinary production lanes are instruction- and branch-neutral. The cold septic package consumes no measurable hot-path regression budget."
+    },
+    "competitive_context": {
+      "method": "final all-feature release comparative executable pinned to CPU 11; 11 complete samples at a 100 ms target; fixture construction excluded; deterministic fixed-work controls remain primary",
+      "direct_guarantee_equivalent": false,
+      "line_arc_capsule_inward_ns": {
+        "hypercurve_exact": 19445.7,
+        "cavalier_contours": 903.9,
+        "hypercurve_to_cavalier_ratio": 21.513110
+      },
+      "open_cubic_offset_ns": {
+        "hypercurve_certified": 29839508.0,
+        "hypercurve_chord_fallback": 980939.3,
+        "curvo_heuristic": 8405.4,
+        "certified_to_curvo_ratio": 3550.040212,
+        "chord_to_curvo_ratio": 116.703464
+      },
+      "interpretation": "Cavalier and Curvo remain throughput targets rather than exactness peers. The septic cut is cold relative to both measured production lanes."
+    }
+  },
+  "memory": {
+    "tool": "matched Heaptrack record-only direct all-feature release-unit-test traces with exact fully-qualified filters; heaptrack_print summary is authoritative",
+    "septic_coupled_rational_zero": {
+      "allocation_calls": 1316271,
+      "temporary_allocations": 74638,
+      "peak_heap_mib": 2.69,
+      "recorder_peak_rss_mib": 16.48,
+      "comparison_terminal_allocation_calls": 97152676,
+      "comparison_terminal_temporary_allocations": 25612947,
+      "comparison_terminal_peak_heap_mib": 4.66,
+      "comparison_terminal_recorder_peak_rss_mib": 18.27,
+      "allocation_change_percent": -98.645152,
+      "temporary_change_percent": -99.708593,
+      "peak_heap_change_percent": -42.274678,
+      "recorder_peak_rss_change_percent": -9.797482,
+      "interpretation": "Certification eliminates 95,836,405 allocation calls and 25,538,309 temporary allocations while lowering peak live heap by 1.97 MiB and recorder RSS by 1.79 MiB."
+    },
+    "profiles_retained": false
+  },
+  "release_size": {
+    "method": "matched representative curve_region_boolean_batch release benchmark executables at 64b0f0b and faa9e42 against identical dependency revisions",
+    "default_features": {
+      "comparison_file_bytes": 8442600,
+      "current_file_bytes": 8442496,
+      "file_change_bytes": -104,
+      "file_change_percent": -0.001232,
+      "comparison_size_text_bytes": 6444217,
+      "current_size_text_bytes": 6444073,
+      "size_text_change_bytes": -144,
+      "size_text_change_percent": -0.002235,
+      "comparison_actual_text_section_bytes": 4884215,
+      "current_actual_text_section_bytes": 4884071,
+      "actual_text_change_bytes": -144,
+      "actual_text_change_percent": -0.002948
+    },
+    "no_default_features": {
+      "comparison_file_bytes": 7969720,
+      "current_file_bytes": 7969720,
+      "file_change_bytes": 0,
+      "file_change_percent": 0.0,
+      "comparison_size_text_bytes": 6055221,
+      "current_size_text_bytes": 6055221,
+      "size_text_change_bytes": 0,
+      "size_text_change_percent": 0.0,
+      "comparison_actual_text_section_bytes": 4552055,
+      "current_actual_text_section_bytes": 4552055,
+      "actual_text_change_bytes": 0,
+      "actual_text_change_percent": 0.0
+    },
+    "interpretation": "The predicate-enabled septic extension reduces actual production .text by 144 bytes in the matched representative artifact. Minimal production code remains section-for-section identical."
+  },
+  "static_callgraph": {
+    "tool": "tools/hyper-callgraph",
+    "command": "tools/hyper-callgraph/target/release/hyper-callgraph --root hypercurve --out-dir target/callgraph-hypercurve-septic-factor-final --crate-name hypercurve --include-tests --format json --per-library",
+    "current_output": "target/callgraph-hypercurve-septic-factor-final/callgraph.json",
+    "matched_hypercurve_with_tests": {
+      "comparison_nodes": 24034,
+      "current_nodes": 24044,
+      "node_change_percent": 0.041608,
+      "comparison_edges": 45556,
+      "current_edges": 45566,
+      "edge_change_percent": 0.021951
+    },
+    "confirmed_paths": [
+      "trivariate_parameter_triple_sign_by_refinement -> original septic trivariate_content_and_bounded_factor_sign before defining-polynomial quotient expansion",
+      "trivariate_bounded_factor_sign_with_budget -> exact high-degree leading-slice scheduling -> rational multi-affine axis factorization",
+      "septic factorization -> bounded first slice-factor attempt -> exact rational roots -> three-root bilinear proposal -> unused fourth-root rejection -> Hypersolve exact slice division",
+      "a failed bounded attempt -> exhaustive original slice-factor enumeration rather than a negative claim",
+      "proved slice factors -> first-Taylor scale or two-anchor projective alignment -> normalized complete-tensor division",
+      "verified sextic quotient -> bounded recursive rational sextic-through-quadratic authorities -> existing selected-root signs"
+    ]
+  },
+  "verification": {
+    "hypersolve_library": "previously passed at dependency revision: 215 tests",
+    "hypercurve_all_features_library": "passed at source revision: 436 tests",
+    "hypercurve_default_features_library": "passed at source revision: 432 tests",
+    "hypercurve_no_default_features_library": "passed at source revision: 320 tests",
+    "hypercurve_clippy_all_features_all_targets": "passed with -D warnings",
+    "hypercurve_clippy_no_default_features_all_targets": "passed with -D warnings",
+    "strict_and_approximate": "passed the septic coupled identity as Certified under both policies, seven-factor and multiplicity reconstruction on all axes, rational-factor plus sextic-cofactor reconstruction, exact rejection of an unfactored septic, and octic STRICT uncertainty plus APPROXIMATE_512 terminal consumption",
+    "release_builds": "passed all-feature release unit-test, comparative, and default/minimal representative benchmark artifacts",
+    "format": "passed",
+    "diff_check": "passed"
+  }
+}

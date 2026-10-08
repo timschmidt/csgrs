@@ -1,0 +1,27 @@
+var searchData=
+[
+  ['language_0',['C++ Language',['../references_page.html#cplusplus_programming',1,'']]],
+  ['lattices_1',['Lattices',['../topology_page.html#lattice_subsection',1,'Lattices'],['../topology_page.html#partial_order_lattice_section',1,'Partial Orders and Lattices']]],
+  ['lattices_2',['lattices',['../topology_page.html#complete_lattice_subsection',1,'Complete partial orders / lattices'],['../topology_page.html#lattice_examples',1,'Examples of lattices']]],
+  ['lawson_20topology_3',['The Lawson topology',['../topology_page.html#lawsontopology',1,'']]],
+  ['lemma_4',['Certificates of infeasibility / Farka&apos;s Lemma',['../linear_programming_page.html#dualcertificate',1,'']]],
+  ['libtool_5',['Using GDB with libtool',['../coding_guidelines_page.html#gdblibtoolusage',1,'']]],
+  ['like_20methods_6',['Solving the Karush conditions by Newton-like methods',['../nonlinear_programming_page.html#nonlinear_optimisation_newton',1,'']]],
+  ['linear_20algebra_7',['Linear Algebra',['../linear_algebra_page.html',1,'Linear Algebra'],['../python_module_demonstrations_page.html#python_linear_algebra_demonstration',1,'Linear Algebra'],['../references_page.html#linear_algebra_references',1,'Linear Algebra']]],
+  ['linear_20algebra_8',['Linear algebra',['../rigorous_numerics_tutorial_page.html#tutorial_algebraic',1,'']]],
+  ['linear_20case_9',['The linear case',['../nonlinear_programming_page.html#nonlinear_optimisation_as_linear',1,'']]],
+  ['linear_20programming_10',['Linear Programming',['../linear_programming_page.html',1,'Linear Programming'],['../references_page.html#linear_programming_references',1,'Linear Programming']]],
+  ['list_11',['List',['../deprecated.html',1,'Deprecated List'],['../todo.html',1,'Todo List']]],
+  ['lists_12',['Initializer Lists',['../coding_guidelines_page.html#initializerlists',1,'']]],
+  ['locally_20compact_20second_20countable_20hausdorff_20spaces_13',['Standard representation of locally-compact second-countable Hausdorff spaces',['../geometry_page.html#state',1,'']]],
+  ['logic_14',['Undecidable Logic',['../logic_page.html#undecidablelogic',1,'']]],
+  ['logical_20foundations_15',['Logical Foundations',['../logic_page.html',1,'']]],
+  ['logical_20operations_16',['Logical Operations',['../logic_page.html#logical_operations',1,'']]],
+  ['logical_20types_17',['Logical types',['../logic_page.html#logical_types',1,'']]],
+  ['lohner_20integrator_18',['Lohner Integrator',['../integration_methods_page.html#c1lohnerintegrator',1,'C1 Lohner Integrator'],['../integration_methods_page.html#lohnerintegrator',1,'Lohner Integrator']]],
+  ['lower_20and_20upper_20bounds_20on_20variables_19',['Lower and upper bounds on variables',['../linear_programming_page.html#boundedoptimisation',1,'']]],
+  ['lower_20and_20upper_20bounds_20on_20variables_20and_20constraints_20',['Lower and upper bounds on variables and constraints',['../linear_programming_page.html#constraintboundedoptimisation',1,'']]],
+  ['lower_20and_20upper_20spaces_21',['Lower and upper spaces',['../topology_page.html#lowerupperspaces',1,'']]],
+  ['lower_20bounds_22',['Upper and lower bounds',['../topology_page.html#upperlowerbounds',1,'']]],
+  ['lower_20sets_23',['Upper and lower sets',['../topology_page.html#upperlowersets',1,'']]]
+];

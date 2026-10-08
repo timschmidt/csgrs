@@ -1,0 +1,85 @@
+{
+  "status": "bounded scale-growth case repaired, qualified and committed",
+  "hypersolve_commit": "e5139b46c707768bdcb40164cefc990753a70f6e",
+  "hypercurve_commit": "6c6fdad97a46d5f6efcd653c631b058b6db29ae9",
+  "source": "ordered-field-chain-growth.rs",
+  "log": "ordered-field-chain-growth-baseline.log",
+  "binary_sha256": "d1244f97648f5734ccd9293776ea661ccd21a8dbe09ad34ae440846b1b7fcee2",
+  "fixture": {
+    "defining": "P(t)=(t-1)(t^2+1)(t^2+2)(t^2+3)",
+    "coefficients": [
+      -6,
+      6,
+      -11,
+      11,
+      -6,
+      6,
+      -1,
+      1
+    ],
+    "predicate_coefficients": [
+      2,
+      -3,
+      4,
+      -2,
+      5,
+      -6,
+      1
+    ],
+    "interval": [
+      0,
+      2
+    ],
+    "selection": "Exactly one real root, t=1; every quadratic factor is positive. Q(1)=1, so the intended sign is positive under every nonzero defining scale.",
+    "field": "Existing public OrderedFieldPolynomialContext<Real>, with exact integer operations and signs. Record coefficient magnitudes and decline after a constructed coefficient exceeds 16,384 bits."
+  },
+  "observations": [
+    {
+      "defining_scale": 1,
+      "result": "Some(Greater)",
+      "max_coefficient_bits": 1187,
+      "field_products": 238
+    },
+    {
+      "defining_scale": -1,
+      "result": "Some(Greater)",
+      "max_coefficient_bits": 1187,
+      "field_products": 238
+    },
+    {
+      "defining_scale": 65536,
+      "result": "coefficient budget exceeded",
+      "max_coefficient_bits": 21235,
+      "field_products": 237
+    }
+  ],
+  "direction": "Normalize positive common scale across polynomial coefficients in their existing coefficient field before it compounds through later signed remainders. Use one shared field-owned operation rather than another root or point carrier; retain all selected-field/root identities.",
+  "existing_hypercurve_machinery": "BezierRecursiveQuadraticValue2::primitive_projective_ratio already removes positive common rational content across a retained recursive tuple, memoizes shared nodes while rebuilding, preserves every generator field, and declines nonrational payloads. It currently accepts a fixed-size array and has one production caller. Consider generalizing this same machinery to polynomial coefficient slices and migrating that caller directly.",
+  "api_constraint": "OrderedFieldPolynomialContext currently owns arithmetic and sign operations but no projective polynomial normalization. Establish the bounded regression and exact scaling contract before extending this shared interface. Update every context implementation directly; do not add a compatibility interface. Unavailable content normalization must retain the original exact coefficients, never reject the supported scalar family.",
+  "proof_obligations": [
+    "Only a certified positive common scale may be removed: every polynomial sign and Sturm variation must be unchanged. Negative defining gauges, repeated roots and selected proper factors must remain correct.",
+    "No coordinatewise or independent per-coefficient scale changes. Preserve the field generators, raw support domains, poles and selected-root evidence.",
+    "Retain actual-value scale in ordinary quotient-ring arithmetic; projective normalization applies only where sign or zero-set semantics make that scale irrelevant.",
+    "Use existing arbitrary exact Real guards explicitly. A nonrational coefficient is not an invalid point or an unavailable geometric representation.",
+    "Avoid partially mutating coefficient slices if optional normalization declines; no repeated full scalar/root reconstruction."
+  ],
+  "goal_status": "active",
+  "commits": {
+    "hypercurve": "f49145e59d52ef65b13c4d24c44317de5e1cd5e8",
+    "hypersolve": "ed9a599c75b6add0ed80722b868972f64c8629ca",
+    "hyperbrep": "8a84ee7db02fd2720ac89a1a6a227ee4ec2a8171"
+  },
+  "qualification": "ordered-field-content-qualification.json",
+  "regression": "P=(t-1)(t^2+1)(t^2+2)(t^2+3) selects t=1 in (0,2). Eighteen combinations of defining gauges (positive, negative, large, fractional) and independently scaled positive, negative and vanishing predicates all complete below the 256-bit coefficient budget.",
+  "result": {
+    "source": "ordered-field-chain-growth.rs",
+    "original_source": "ordered-field-chain-growth-baseline.rs",
+    "baseline_log": "ordered-field-chain-growth-baseline.log",
+    "normalized_log": "ordered-field-chain-growth-normalized.log",
+    "binary_sha256": "e82fe2341adb9dc17d56488cf490f6f12065aeeca120bff7741b2536a5979be8",
+    "baseline": "Defining scales +1 and -1 peak at 1,187 bits; 65,536 exceeds the 16,384-bit budget with a 21,235-bit coefficient.",
+    "normalized": "All three scales decide Greater with peak 87-bit coefficients and 238 field products.",
+    "scope": "This demonstrates controlled irrelevant-scale growth. The small fixture does not establish an application speedup."
+  },
+  "remaining": "Full inward closure and broader repeated-operation computational closure remain in the original goal."
+}

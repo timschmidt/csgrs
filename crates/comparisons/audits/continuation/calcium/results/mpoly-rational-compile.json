@@ -1,0 +1,30 @@
+{
+  "tag": "mpoly-rational-compile",
+  "started": "2026-09-10T03:32:23.857Z",
+  "finished": "2026-09-10T03:32:23.898Z",
+  "elapsedSeconds": 0.03842737899999999,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison",
+  "command": "gcc",
+  "args": [
+    "-O2",
+    "-g0",
+    "-Wall",
+    "-Wextra",
+    "-Werror",
+    "-isystem",
+    "../exact-real-references/flint/src",
+    "audits/continuation/calcium/flint-mpoly-rational-controls.c",
+    "-L",
+    "../exact-real-references/flint",
+    "-Wl,-rpath,/home/tim/Documents/GitHub/workspace/exact-real-references/flint",
+    "-lflint",
+    "-lmpfr",
+    "-lgmp",
+    "-lm",
+    "-lpthread",
+    "-o",
+    "/tmp/calcium-mpoly-rational.Hmk8Is/controls"
+  ],
+  "code": 1,
+  "signal": null
+}

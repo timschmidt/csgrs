@@ -1,0 +1,27 @@
+FAIL decimal-output ((-32) % 1,1) Right False
+FAIL decimal-output ((-32) % 1,4) Right False
+FAIL decimal-output ((-32) % 1,9) Right False
+FAIL logistic-dyadic-stream (1,1,8) Right False
+FAIL logistic-dyadic-missing-four-control (1,1,8) Right False
+FAIL logistic-dyadic-stream (1,1,24) Right False
+FAIL logistic-dyadic-missing-four-control (1,1,24) Right False
+FAIL logistic-dyadic-stream (1,2,8) Right False
+FAIL logistic-dyadic-missing-four-control (1,2,8) Right False
+FAIL old-nested-limit (-3,1,4) Right False
+FAIL old-nested-limit (-3,1,16) Right False
+FAIL old-nested-limit (-3,1,32) Right False
+FAIL lookint-order-overflow (-9223372036854775808,9223372036854775807) Right False
+FAIL lookint-order-overflow (9223372036854775807,-9223372036854775808) Right False
+FAIL lookint-order-overflow (0,-9223372036854775808) Right False
+operation checks failures exceptions
+decimal-import 195 0 0
+decimal-output 585 96 0
+logistic-dyadic-float 102 0 0
+logistic-dyadic-missing-four-control 102 74 0
+logistic-dyadic-stream 102 90 0
+logistic-signed-float 102 0 0
+logistic-signed-stream 102 0 0
+logistic-signed-testing 102 0 0
+lookint-order-overflow 4 3 0
+old-nested-limit 102 3 0
+TOTAL (1498,266,0)

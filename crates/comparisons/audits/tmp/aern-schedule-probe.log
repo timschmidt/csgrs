@@ -1,0 +1,4 @@
+fixed-effort result count: 0
+simple iterator, already accurate initial effort 0: [(1,Result 1,1),(2,Result 2,2),(3,Result 3,3)]
+coordinate iterator imprecision increases despite no improvement: [(0,Result 0,0),(1,Result 1,1),(2,Result 2,2)]
+all deterministic scheduling observations reproduced

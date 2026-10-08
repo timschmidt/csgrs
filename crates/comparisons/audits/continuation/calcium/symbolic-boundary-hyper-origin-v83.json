@@ -1,0 +1,56 @@
+{
+  "checkpoint": 83,
+  "recorded": "2026-09-12T03:54:50.191Z",
+  "current": {
+    "checkpoint": 75,
+    "originSha256": "f14634eec550e7d166e63ba28852460782668e42a288c2356e8541680e5b0191",
+    "changed": [
+      "hypersolve/src/algebraic_binary.rs",
+      "hypersolve/src/algebraic_binary/zero_factor_tests.rs"
+    ],
+    "previousLiveFiles": 956,
+    "liveFiles": 957,
+    "unchangedPreviousFiles": 955,
+    "qualifiedSolverFiles": 176,
+    "qualifiedConsumerFiles": 355,
+    "mainSha256": "63b08c8d7523d3e3410d3d6e84a04088fa9f4f7c3b66ab586bfe9af37fa1b002",
+    "testSha256": "8f8e2b7617f9c9b993f1190139bbbe960a723309bf09989b5001d061f2c49961",
+    "previousMainSha256": "e97877da6029f26e256943ca70f4005576574689f33288b71874165b4c8e87e6",
+    "historicalArtifacts": 1279,
+    "previousFinished": "2026-09-11T21:51:02.880Z",
+    "scope": "Exact promotion of the fully qualified zero-factor candidate; no other recorded live source/support change. Historical live flags describe older states. Source identity is separate from successful live regression/retention gates."
+  },
+  "files": {
+    "run-symbolic-boundary-hyper-v83.mjs": "c85229cdddab98577e7be4e5ac3aaaa4006f221b692c9a89f653fa05d7310ff4",
+    "symbolic-boundary-hyper-protocol-v83.md": "21ded2e52e9701ad825b48fca79a05c7ade117803297192d2e0d7c3c2f7b3ca3",
+    "symbolic-boundary-hyper-v83/src/main.rs": "664ca3680a8210684c3f3df67bde8d5ab727cf64673b36babe7115b5a99f7aad",
+    "symbolic-boundary-hyper-v83/Cargo.toml": "01682a83002303219bc28988063c457766446e879250d3fd952138b4e0950de4",
+    "symbolic-boundary-hyper-v83/Cargo.lock": "02642103eae93226d5c1a60a1598a1b40372ab0a07f27d06e1c220a743f1ccfc",
+    "point-qualified-capture.mjs": "8b574f18a85c470ef47f9eafc780c462a93e811ebe15695f0950cfef17ada66e",
+    "capture.mjs": "aaf6df6bbd73025a8541617ce83731ae5ea3fd2272bd98c15e3c4c12b713ce23"
+  },
+  "cargoEnv": [
+    "CARGO_TARGET_DIR=/tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse",
+    "CARGO_INCREMENTAL=0",
+    "CARGO_PROFILE_DEV_DEBUG=0",
+    "CARGO_BUILD_JOBS=2"
+  ],
+  "extraHyperReads": {
+    "hyperreal/src/real/arithmetic/elementary_functions.rs": [
+      [
+        2370,
+        2670
+      ]
+    ],
+    "hyperreal/src/real/arithmetic/facts.rs": [
+      [
+        1370,
+        1435
+      ]
+    ]
+  },
+  "extraHyperHashes": {
+    "hyperreal/src/real/arithmetic/elementary_functions.rs": "46e3e19125a205306982e3a054fdcf39bdbe8beb8cefc1a91194058490bf88db",
+    "hyperreal/src/real/arithmetic/facts.rs": "6cf82475a883525f1ba7e3b9309cd3060399ef1f8426c454cad23b5a4e5913b5"
+  }
+}

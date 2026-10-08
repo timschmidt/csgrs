@@ -1,0 +1,27 @@
+{
+  "target": "lib",
+  "command": [
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/normalized-path-admission-hypercircuit-candidate4-binaries/hypercircuit-29d9c953492f564f",
+    "--test-threads=2",
+    "--color",
+    "never",
+    "materialize::tests::"
+  ],
+  "binary_sha256": "41b238aacd2e560da4fe9a941539f7937b0e471e0c336b209fb886e86fc9558a",
+  "returncode": 0,
+  "elapsed_seconds": 0.23289966798620299,
+  "log": "normalized-path-admission-hypercircuit-candidate4-lib.log",
+  "passed": [
+    "materialize::tests::approximate_materialization_marks_consumed_terminal_pad_ordering",
+    "materialize::tests::cubic_projection_handles_finite_coordinates_whose_raw_chord_overflows",
+    "materialize::tests::disjoint_additive_compound_does_not_invent_coincident_holes",
+    "materialize::tests::additive_composition_preserves_holes_islands_and_duplicate_profiles",
+    "materialize::tests::overlapping_additive_union_does_not_reclassify_material_as_a_hole",
+    "materialize::tests::pad_local_rotation_precedes_translation_and_board_placement",
+    "materialize::tests::rounded_pads_retain_exact_arcs_and_union_without_boolean_blockers",
+    "materialize::tests::exact_compound_regions_replay_positive_and_negative_curve_loops",
+    "materialize::tests::short_translated_line_stroke_remains_strictly_certified"
+  ],
+  "failed": [],
+  "ignored": []
+}

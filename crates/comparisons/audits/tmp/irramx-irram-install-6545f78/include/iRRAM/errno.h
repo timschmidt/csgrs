@@ -1,0 +1,5 @@
+ERRORDEFINE(iRRAM_success,                 "iRRAM_success")
+ERRORDEFINE(iRRAM_underflow_error,         "iRRAM_underflow_error")
+ERRORDEFINE(iRRAM_interval_divide_by_zero, "iRRAM_interval_divide_by_zero")
+ERRORDEFINE(iRRAM_conversion_from_infinite,"iRRAM_conversion_from_infinite")
+ERRORDEFINE(iRRAM_domain_error,            "iRRAM_domain_error")

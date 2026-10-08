@@ -1,0 +1,26 @@
+{
+  "repo": "hypercurve",
+  "target": "hypercurve_fuzz_regressions",
+  "binary": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve_fuzz_regressions-95225cc435a1ba7d",
+  "command": [
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve_fuzz_regressions-95225cc435a1ba7d",
+    "--test-threads=4",
+    "--color",
+    "never"
+  ],
+  "sha256": "3d0cd98af53b3a0c53b75ab8b56fe0e14293af60e9561577b0211018492d8cbd",
+  "returncode": 0,
+  "timed_out": false,
+  "elapsed_seconds": 0.003447333991061896,
+  "log": "finite-circle-projection-full-hypercurve-hypercurve_fuzz_regressions.log",
+  "passed": [
+    "fuzz_line_arc_candidate_outside_finite_line_is_rejected"
+  ],
+  "failed": [],
+  "ignored": [],
+  "summaries": [
+    "test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s"
+  ],
+  "new_failures": [],
+  "known_failures": []
+}

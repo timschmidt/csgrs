@@ -1,0 +1,24 @@
+{
+  "cases": 15,
+  "names": {
+    "hypercurve_analytic_parallel_region": [
+      "radical_parallel_cusp_spans_connect_under_both_policies",
+      "radical_parallel_cusp_offsets_exactly_under_both_policies",
+      "cusp_split_analytic_self_crossing_normalizes_at_admission"
+    ],
+    "hypercurve": [
+      "bezier_offset::conversion_tests::selected_structural_parallel_overlap_replays_off_diagonal_contacts",
+      "bezier_offset::regular_parallel_contact_tests::mixed_regular_pairs_keep_both_exterior_parameter_domains",
+      "bezier_offset::regular_parallel_contact_tests::native_rational_pair_evidence_clips_both_retained_domains",
+      "bezier_offset::regular_parallel_contact_tests::retained_native_overlap_correspondences_clip_as_exact_curve_results",
+      "bezier_offset::regular_parallel_contact_tests::regular_source_cells_preserve_reversed_and_algebraic_range_boundaries",
+      "bezier_offset::regular_parallel_contact_tests::rational_pair_endpoint_tangents_preserve_both_operand_roles",
+      "bezier_offset::regular_parallel_contact_tests::regular_source_frames_reject_poles_in_every_parameter_authority",
+      "bezier_offset::regular_parallel_contact_tests::regular_source_frames_accept_every_retained_parameter_authority",
+      "bezier_offset::conversion_tests::parameter_domains_retain_finite_residuals_without_unowned_components",
+      "bezier_offset::conversion_tests::parameter_domains_retain_chart_events_and_closed_finite_boundaries",
+      "bezier_offset::conversion_tests::original_parallel_normal_constraints_clip_finite_and_incident_components",
+      "bezier_offset::regular_parallel_contact_tests::stationary_component_queries_keep_one_sided_endpoints_and_exact_constraints"
+    ]
+  }
+}

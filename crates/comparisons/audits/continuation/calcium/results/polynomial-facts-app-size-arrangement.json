@@ -1,0 +1,14 @@
+{
+  "tag": "polynomial-facts-app-size-arrangement",
+  "started": "2026-09-08T23:33:59.148Z",
+  "finished": "2026-09-08T23:33:59.161Z",
+  "elapsedSeconds": 0.010859036000000002,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "size",
+  "args": [
+    "/tmp/calcium-polynomial-facts.ZX8NqH/app-facts-arrangement",
+    "/tmp/calcium-polynomial-facts.ZX8NqH/app-facts-arrangement.stripped"
+  ],
+  "code": 0,
+  "signal": null
+}

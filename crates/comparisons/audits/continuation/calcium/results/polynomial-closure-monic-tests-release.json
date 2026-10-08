@@ -1,0 +1,23 @@
+{
+  "tag": "polynomial-closure-monic-tests-release",
+  "started": "2026-09-09T00:19:15.335Z",
+  "finished": "2026-09-09T00:20:40.134Z",
+  "elapsedSeconds": 84.79719783099999,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/polynomial-monic-trial/hypersolve",
+  "command": "env",
+  "args": [
+    "CARGO_TARGET_DIR=/tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse",
+    "CARGO_INCREMENTAL=0",
+    "CARGO_BUILD_JOBS=2",
+    "cargo",
+    "test",
+    "--offline",
+    "--locked",
+    "--release",
+    "--all-features",
+    "--lib",
+    "--tests"
+  ],
+  "code": 0,
+  "signal": null
+}

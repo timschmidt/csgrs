@@ -1,0 +1,88 @@
+Sept 200
+  - fixed bug in handling of rationals (found by Marko)
+  - set DEFAULT_FORCE_COUNT=1
+  - added cotangent family of functions.
+  - corrected math-lib/Makefile to include neg_R
+  - corrected asin_R and acos_R to give correct sign for negative arguments
+  - moved to gmp-3.1
+  - now version 6.2
+  
+Jul 2000
+  - fixed pi bug (found by Marko and Reinhold)
+  - fixed bug in reduction code which meant that most functions failed
+    for rational arguments (found by Marko and Reinhold)
+  - added Marko's corrected force_R_Dec
+  - cleaned up stack structure
+  - added environment variables ICR_STACK_SIZE, ICR_FORCE_DEC_UPPER_BOUND and
+    ICR_DEFAULT_FORCE_COUNT. See the manual for details.
+  - a number of corrections to the manual.
+  - added secant and cosecant family of functions.
+  
+Apr, May, Jun 2000
+  - extensive modifications. Implemented lazy conditional (on the heap)
+    and in-place reduction. All eager reduction abandoned. Most of the
+    math-lib involving explicit tensors re-written.
+  - added Marko's force_R_Dec.
+  - added a couple of functions suggested by Reinhold.
+  - made atan_R work on the whole real line.
+  - extensive changes to the user manual by Reinhold.
+
+Mar 15,16
+  - abandoned automatic guards on matrices and vectors. This represents
+    a fairly drastic change in the structure of the implementation and
+    advances us to version 6.0
+  - extended predicates to operate on matrices and vectors directly rather
+    than only on streams.
+
+Mar 14
+  - adjusted many math-lib functions (eg tan_R) to work with the more
+    eager reduction strategy. Also tan_R now uses stdTensorCont rather than
+    custom continuations.
+  - fixed the handling of strsep(3) in base/davinciInterface.c and borrowed
+    a copy of strsep from the GNU glibc library as strsep is not available
+    in Solaris 2.5.
+  - when running daVinci, the child process (which execls daVinci) now
+    sets the DAVINCI_ICONDIR environment variable. This requires that
+    REALDIR be set to the root of the real library tree in Makefile.
+  - rewrote the i/o routines which talk to daVinci since Linux version
+    would not work reliably with Solaris 2.5 and the interface to daVinci
+    was needed for debugging.
+
+Mar 13
+  - extended (and simplified) the reduction of digit streams and lfts in
+    base/reduce.c. Reduction is now much more eager. This may be a mixed 
+    blessing. Earlier it was the case that, in some circumstances, the arguments
+    to matrices and tensors would not be reduced. Hence, eventually, computation    would be done as streams, even when the arguments are rational. For small
+    rationals, this is less efficient, but for large rationals, treating them
+    as streams is much more efficient. It could be there needs to be a test
+    introduced in reduce.c whereby reduction of lfts is inhibited when
+    the entries in the lft get too large (or some other criteria).
+
+Mar 12 
+  - fixed bug in forceInfo which caused unfair forcing of the arguments of
+    a tensor. Thanks to Reinhold Heckman for pointing out the problem.
+
+Mar 8 
+  - added static to qualify local variable `doneInit' in sqrt_R
+  - reverted to old version numbering sequence. Version 1.03 is now
+    version 5.03.
+
+Feb 18, 2000
+  - fixed typos in sinh_R, cosh_R, tanh_R which meant they were useless
+  - fixed bug in tan_Q which caused it to diverge for 0.
+  - release version 1.03
+
+Oct 22, 1999
+  - A little tidying up prior to first public release
+  - fixed some compatability problems between the Solaris and Linux environments
+    and for different versions of gcc.
+  - release version 1.02
+
+Sept 5, 1999
+  - Added the file base/digitHandling.c and adjusted real.h and base/Makefile
+  - removed reference to error.h in math-lib files
+  - changed B_ constants for lazy booleans to avoid clash
+    with Solaris types.h file
+  - release version 1.01
+
+June 1999 initial release verison (1.00), fifth version overall.

@@ -1,0 +1,16 @@
+{
+  "tag": "point-qualified-app-hyperreal-readme-quickstart-strip",
+  "started": "2026-09-10T20:40:06.170Z",
+  "finished": "2026-09-10T20:40:06.193Z",
+  "elapsedSeconds": 0.020341015999999996,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "strip",
+  "args": [
+    "--strip-all",
+    "-o",
+    "/tmp/calcium-point-qualified-apps.QIBZlE/candidate-hyperreal-readme_quickstart.stripped",
+    "/tmp/calcium-point-qualified-apps.QIBZlE/candidate-hyperreal-readme_quickstart"
+  ],
+  "code": 0,
+  "signal": null
+}

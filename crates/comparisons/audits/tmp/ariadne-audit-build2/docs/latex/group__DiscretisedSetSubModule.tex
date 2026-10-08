@@ -1,0 +1,24 @@
+\doxysubsubsubsection{Discretised sets }
+\hypertarget{group__DiscretisedSetSubModule}{}\label{group__DiscretisedSetSubModule}\index{Discretised sets@{Discretised sets}}
+
+
+\doxysubsubsubsubsection{Description}
+Classes for representing discretised sets. 
+
+A {\itshape subdivision tree} is a binary tree describing a subdivision of a rectangle ({\itshape unit cell}) into smaller cells. The subdivision is described by a Subdivision\+Sequence giving the coordinate of the ith subdivision, and a Binary\+Tree giving the subdivisions.
+
+e.\+g. The cell described by the Subdivision\+Sequence \textquotesingle{}\mbox{[}0,0,1,...\mbox{]}\textquotesingle{} and the \doxylink{classAriadne_1_1BinaryWord}{Binary\+Word} \textquotesingle{}\mbox{[}0,1,1\mbox{]}\textquotesingle{} is given by subdividing the unit interval twice in the $x_0$ direction, first taking the lower half, and then the upper half, and by subdividing once in the $x_1$ direction, taking the upper half. This gives the dyadic rectangle \textquotesingle{}\mbox{[}0.\+25,0.\+5\mbox{]}x\mbox{[}0.\+5,1.\+0\mbox{]}\textquotesingle{}.
+
+Denotable sets are unions of basic sets of a simple kind, typically boxes. In addition to the fundamental geometric predicates, denotable sets must also support iteration through their elements, and union (join) with basic sets and denotable sets of the same kind. \doxysubsubsubsubsubsection*{Classes}
+\begin{DoxyCompactItemize}
+\item 
+class \mbox{\hyperlink{classAriadne_1_1GridCell}{Grid\+Cell}}
+\begin{DoxyCompactList}\small\item\em A cell of a grid paving. Note that this class represents the closed cell. It is uniquely defined by the path from the primary cell and is exactly on cell in a grid. This is different from the \doxylink{classAriadne_1_1GridOpenCell}{Grid\+Open\+Cell} which is open and the path from the root cell defines its lower left sub cell wheres the complete open cell is a union of 4 cells. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1GridTreePaving}{Grid\+Tree\+Paving}}
+\begin{DoxyCompactList}\small\item\em The Grid\+Tree\+Paving class represents a set of cells with mixed integer and dyadic coordinates. The cells can be enabled or disabled (on/off), indicating whether they belong to the paving or not. It is possible to have cells that are neither on nor off, indicating that they have enabled and disabled sub cells. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1SubPavingInterface}{Sub\+Paving\+Interface}}
+\begin{DoxyCompactList}\small\item\em A prototype interface for subpavings. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1SubPavingHandle}{Sub\+Paving\+Handle}}
+\begin{DoxyCompactList}\small\item\em A generic forward \doxylink{classAriadne_1_1Expansion}{Iterator} through constant data. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1PavingInterface}{Paving\+Interface}}
+\begin{DoxyCompactList}\small\item\em A paving, which is a set constructed as a finite union of non-\/overlapping cells, where the possible cells are obtained by successive subdivision. \end{DoxyCompactList}\end{DoxyCompactItemize}

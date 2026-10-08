@@ -1,0 +1,7 @@
+{
+  "head": "53259e487bb3988937f4699d4c5af916efc5c961",
+  "region_sha256": "ba17be2a5c3e2111045b8f223c3646034ec6d7e76266d4915db08379bba95543",
+  "remaining_worktree_status": " M src/bezier_offset.rs\n",
+  "all_owned_processes_reaped": true,
+  "full_goal_complete": false
+}

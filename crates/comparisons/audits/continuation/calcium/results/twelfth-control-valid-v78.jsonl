@@ -1,0 +1,2 @@
+{"case":0,"certificate":"Unknown { min_precision: -64 }","counts":[0,0,1],"elapsed_ns":18259,"end_live":0,"final_matches":true,"iterations":1,"lifecycle":"fresh","live_delta":0,"mode":"cpu","outcome":2,"peak_delta":0,"precision":-64,"requested_bytes":0,"requests":0,"start_live":0,"wall_after":"1789170484991431461","wall_before":"1789170484991408392"}
+{"terminal":true,"mode":"cpu","groups":1}

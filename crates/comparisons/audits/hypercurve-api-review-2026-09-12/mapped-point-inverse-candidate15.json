@@ -1,0 +1,27 @@
+{
+  "command": [
+    "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+    "test",
+    "--release",
+    "--all-features",
+    "--locked",
+    "--offline",
+    "--lib",
+    "--no-run",
+    "--message-format=json"
+  ],
+  "source_sha256": "3297b5740d2e63c8fc5cb8acb27121054bc160d3f233a898a0f78f5103664875",
+  "hypersolve_source_files": {
+    "algebraic_fiber.rs": "b2ba652d2ada5c133f8297a01914c2056aeba442635a027f5f6fe4cbee913f22",
+    "lib.rs": "b95673bc3f9bcefc8b74cc21de43006e6755dcb58e813c047b3e3b7f2f6f2b4a",
+    "algebraic_fiber/subresultant.rs": "dc8b6ae4d3e5557ed5d5b53c2b86d9ab3e61d52389dbf43104509baf05dcc1ea"
+  },
+  "source_files": {
+    "bezier_offset.rs": "3297b5740d2e63c8fc5cb8acb27121054bc160d3f233a898a0f78f5103664875",
+    "rational_bezier_general.rs": "57786fea7f32704759ee5b5287244f1acce9593c8ee67e0c24e2fbb602520929",
+    "bezier_parameter.rs": "9951bbbbaf6dae486b67be3f70dd1e4ecccdeaea99c0466ce6e36a9f8635e2ba",
+    "bezier_split.rs": "4f506ac9258500da4f0255a389556914259d90a0b6f641c4467df3784c940cd5"
+  },
+  "returncode": 0,
+  "elapsed_seconds": 138.85920914800954
+}

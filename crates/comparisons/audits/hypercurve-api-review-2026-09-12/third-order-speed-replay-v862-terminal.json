@@ -1,0 +1,40 @@
+{
+  "baseline": "third-order-speed-v861-sources.json",
+  "rlib": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypercurve-85a9105cd1c82df7.rlib",
+  "rlib_sha256": "e8ba46b28184da250724f252fc187d8199d3dc4f6728307e215bf1ea0006428f",
+  "source_sha256": "3f42b4c56f1cef3afda5b93646e8f4906268a53b50c6c0dc8c4ebc2e04ef407b",
+  "processes": [
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustc",
+        "--edition=2024",
+        "--crate-name",
+        "third_order_speed_probe",
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/third-order-speed-probe-v860.rs",
+        "--extern",
+        "hypercurve=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypercurve-85a9105cd1c82df7.rlib",
+        "-L",
+        "dependency=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps",
+        "-C",
+        "opt-level=3",
+        "-o",
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/third-order-speed-replay-v862-binary"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.4644317210186273,
+      "log": "third-order-speed-replay-v862-compile.log"
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/third-order-speed-replay-v862-binary"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.0035888641141355038,
+      "log": "third-order-speed-replay-v862-cases.log"
+    }
+  ],
+  "all_processes_reaped": true,
+  "binary_sha256": "f568740ba492cb029ef0bfd58457959d33156ead69854e1db4484ff6a3cfea31",
+  "output": "case=same_graph policy=0 status=SameDirection ordering=None expected_status=SameDirection expected_order=None matches=true\ncase=lower_graph policy=0 status=Ordered ordering=Some(SecondBeforeFirst) expected_status=Ordered expected_order=Some(SecondBeforeFirst) matches=true\ncase=higher_graph policy=0 status=Ordered ordering=Some(FirstBeforeSecond) expected_status=Ordered expected_order=Some(FirstBeforeSecond) matches=true\ncase=same_graph policy=1 status=SameDirection ordering=None expected_status=SameDirection expected_order=None matches=true\ncase=lower_graph policy=1 status=Ordered ordering=Some(SecondBeforeFirst) expected_status=Ordered expected_order=Some(SecondBeforeFirst) matches=true\ncase=higher_graph policy=1 status=Ordered ordering=Some(FirstBeforeSecond) expected_status=Ordered expected_order=Some(FirstBeforeSecond) matches=true\ncomplete cases=6 mismatches=0\n",
+  "probe_complete": true
+}

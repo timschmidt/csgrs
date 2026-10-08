@@ -1,0 +1,226 @@
+[
+  {
+    "repo": "flint",
+    "path": "src/arf/add.c",
+    "newRanges": [
+      [
+        1,
+        255
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "src/arf/sub.c",
+    "newRanges": [
+      [
+        1,
+        215
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "src/arf/add_mpn.c",
+    "newRanges": [
+      [
+        1,
+        412
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "src/arf/fma.c",
+    "newRanges": [
+      [
+        1,
+        78
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "src/arf/sosq.c",
+    "newRanges": [
+      [
+        1,
+        82
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "src/arf/sum.c",
+    "newRanges": [
+      [
+        1,
+        194
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "src/arf/dot.c",
+    "newRanges": [
+      [
+        1,
+        50
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "src/arf/approx_dot.c",
+    "newRanges": [
+      [
+        1,
+        450
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "src/arf/clear.c",
+    "newRanges": [
+      [
+        1,
+        43
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "src/arf/test/t-complex_mul.c",
+    "newRanges": [
+      [
+        1,
+        162
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "src/arf/test/t-complex_sqr.c",
+    "newRanges": [
+      [
+        1,
+        103
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "src/arf/test/t-addmul.c",
+    "newRanges": [
+      [
+        1,
+        158
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "src/arf/test/t-submul.c",
+    "newRanges": [
+      [
+        1,
+        158
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "src/arf/test/t-fma.c",
+    "newRanges": [
+      [
+        1,
+        133
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "src/arf/test/t-sosq.c",
+    "newRanges": [
+      [
+        1,
+        154
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "src/arf/test/t-sum.c",
+    "newRanges": [
+      [
+        1,
+        112
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "src/fmpzi/sqr.c",
+    "newRanges": [
+      [
+        1,
+        109
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "src/fmpz_extras/lshift_mpn.c",
+    "newRanges": [
+      [
+        1,
+        45
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "src/arf/memory_manager.c",
+    "newRanges": [
+      [
+        1,
+        97
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "src/mpn_extras/mul_complex.c",
+    "newRanges": [
+      [
+        1,
+        1014
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "src/arf.h",
+    "newRanges": [
+      [
+        565,
+        599
+      ],
+      [
+        821,
+        862
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "doc/source/arf.rst",
+    "newRanges": [
+      [
+        641,
+        670
+      ]
+    ]
+  }
+]

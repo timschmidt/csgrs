@@ -1,0 +1,13 @@
+Return unordered arrangement regions through the common exact result
+
+Remove the arrangement report and stage types, duplicated status/count
+storage, blocked-result factory and eager native-summary conversion.
+Return the normalized CurveRegion2 directly and preserve unresolved
+assembly and topology as contextual ExactCurveError blockers. Retain the
+same endpoint assembly, per-walk fill, global parity and regularization.
+
+Migrate every caller without compatibility interfaces. Query structural
+facts when needed; remove the obsolete report-field replay benchmark and
+retain historical timing evidence. Add direct offset/Boolean reentry
+before any summary query. Validation:40 targeted release regressions,
+seven lint/format/fuzz/documentation/downstream checks, source audit.

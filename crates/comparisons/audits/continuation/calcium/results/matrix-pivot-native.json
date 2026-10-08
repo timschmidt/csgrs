@@ -1,0 +1,11 @@
+{
+  "tag": "matrix-pivot-native",
+  "started": "2026-09-09T01:35:52.816Z",
+  "finished": "2026-09-09T01:35:52.837Z",
+  "elapsedSeconds": 0.019265749999999998,
+  "cwd": "/home/tim/Documents/GitHub/workspace",
+  "command": "/tmp/calcium-matrix-pivots.X3ulwj/flint-matrix-pivots",
+  "args": [],
+  "code": 0,
+  "signal": null
+}

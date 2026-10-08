@@ -1,0 +1,13 @@
+{
+  "tag": "qqbar-trig-linked-v76",
+  "started": "2026-09-11T22:22:06.005Z",
+  "finished": "2026-09-11T22:22:06.030Z",
+  "elapsedSeconds": 0.023135624000000007,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "ldd",
+  "args": [
+    "/tmp/calcium-qqbar-trig-v76.xvGytz/controls"
+  ],
+  "code": 0,
+  "signal": null
+}

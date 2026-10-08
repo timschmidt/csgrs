@@ -1,0 +1,18 @@
+Preserve selected roots when importing solver intervals
+
+Normalize the solver's half-open singleton certificate at the native parameter
+boundary. Retain an owned upper-endpoint root as an exact scalar and exactly
+deflate factors at an excluded lower endpoint. Remaining native isolators have
+no endpoint roots, preserving their comparison, sign and chart contracts.
+Certified linear roots publish their exact Real quotient, including roots
+with nonrational coefficients.
+
+Independent regressions cover owned and excluded endpoints, repeated factors,
+arbitrary exact Real coefficients, comparisons, signs, and decreasing affine
+and projective charts. Both regressions fail on the preserved pre-change
+workspace; its import and equality code match the parent revision.
+
+Validation: formatting, both all-target Clippy configurations with warnings
+denied, and all 226 selected release cases pass, including 109 public Boolean
+and arrangement cases. Source, executable, index and workspace audit receipts
+bind this isolated one-file patch; the broader pending migration is separate.

@@ -1,0 +1,86 @@
+{
+  "status": "implemented, qualified, committed; original goal active",
+  "commits": {
+    "hypercurve": "6a69c9c71d96ac13a77c32aa7bf0281718ec7514",
+    "hypersolve": "ed9a599c75b6add0ed80722b868972f64c8629ca",
+    "hyperbrep": "8a84ee7db02fd2720ac89a1a6a227ee4ec2a8171"
+  },
+  "implementation": [
+    "The shared positive-scale normalizer transforms already cached exact Real witnesses by the same certified positive rational factor as all leaf coefficients.",
+    "Cached scalar access is shared with ordinary witness evaluation. The existing Hyperreal rational scale retains the scalar expression and its refinements; uncached values remain lazy.",
+    "Memoized rebuilding retains shared node and selected-field identity. Unavailable normalization remains atomic. No new cache or public interface is introduced."
+  ],
+  "regression": {
+    "initial_empty_selection": "normalized-field-witness-initial-empty-selection.log; wrong exact module filter selected zero tests; not counted as verification",
+    "baseline": "normalized-field-witness-baseline.log",
+    "baseline_exit_code": 101,
+    "finding": "A populated nested-radical witness becomes absent after normalization.",
+    "coverage": "Existing normalization regression now verifies cached and uncached nodes, including descendants, through tuple sizes 1,3,8,17, 1024-bit, reciprocal and negative gauges. Shared identity, selected fields, idempotence and late nonrational atomic decline remain covered.",
+    "focused": "normalized-field-witness-focused.log: 5 library tests and outward PH integration pass"
+  },
+  "tests": {
+    "hypercurve": {
+      "passed": 1459,
+      "ignored": 6,
+      "targets": 13,
+      "exit_code": 0,
+      "fresh": true,
+      "log": "normalized-field-witness-hypercurve-tests.log"
+    },
+    "hyperbrep": {
+      "passed": 232,
+      "ignored": 0,
+      "targets": 1,
+      "exit_code": 0,
+      "fresh": true,
+      "log": "normalized-field-witness-hyperbrep-tests.log"
+    },
+    "hypersolve": {
+      "passed": 492,
+      "fresh": false,
+      "qualification": "ordered-field-content-qualification.json",
+      "reason": "unchanged source and upstream dependencies"
+    }
+  },
+  "freshly_run_total": 1691,
+  "qualified_total_including_unchanged_hypersolve": 2183,
+  "established_expensive_exclusions": 4,
+  "checks": {
+    "hypercurve": {
+      "command": "cargo check --all-features --all-targets",
+      "log": "normalized-field-witness-hypercurve-check.log",
+      "exit_code": 0
+    },
+    "hyperbrep": {
+      "command": "cargo check --all-features --all-targets",
+      "log": "normalized-field-witness-hyperbrep-check.log",
+      "exit_code": 0
+    },
+    "source": "Changed-file rustfmt --check, git diff --check and unchanged source hashes pass."
+  },
+  "source_sha256": {
+    "hypercurve/src/bezier_offset.rs": "953ebec74a61a2e33f7cd4030bae377c41864075560a66a4a86527eed082f2b8"
+  },
+  "diagnostics": {
+    "binary": "stationary-ph-offset-normalized-field-witness",
+    "binary_sha256": "84fe00aeb2ef3a25a52d70409b7e588e12a05d47f23e12f5060391a60e0c75e4",
+    "log": "stationary-ph-offset-normalized-field-witness.log",
+    "timeout_seconds": 60,
+    "exit_code": 124,
+    "first_offset_seconds": 3.755785438,
+    "second_offset": "No result before total timeout.",
+    "timing_scope": "Final unloaded probe ran after all qualification and diagnostic-trace processes ended.",
+    "stack": "stationary-ph-normalized-field-witness-stack.log",
+    "finding": "Native analytic coordinate order still reaches integer polynomial-content GCD inside a scalar signed remainder sequence."
+  },
+  "held_out_retry": {
+    "log": "normalized-field-witness-third-generation-fillet.log",
+    "timeout_seconds": 60,
+    "exit_code": 124,
+    "result": "No result; still unqualified."
+  },
+  "scalar_trace": "stationary-ph-scalar-query-followup.json",
+  "clean_repository_count": 30,
+  "workspace_state": "normalized-field-witness-workspace-after-commit.json",
+  "goal_status": "active"
+}

@@ -1,0 +1,9 @@
+{
+  "parent": "714138215f94bfbe19f8a5555be28aa9e7f37714",
+  "files": {
+    "src/bezier_offset.rs": "5fd437021880bec4054adb7ec4a29cbb626c97103d83323ee6a3cc6249815773"
+  },
+  "all_2044_inputs_match": true,
+  "index_matches_qualified_sources": true,
+  "all_owned_processes_reaped": true
+}

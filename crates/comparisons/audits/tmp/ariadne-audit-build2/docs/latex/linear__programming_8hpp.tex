@@ -1,0 +1,33 @@
+\doxysubsection{source/solvers/linear\+\_\+programming.hpp File Reference}
+\hypertarget{linear__programming_8hpp}{}\label{linear__programming_8hpp}\index{source/solvers/linear\_programming.hpp@{source/solvers/linear\_programming.hpp}}
+
+
+\doxysubsubsection{Description}
+Linear programming. 
+
+{\ttfamily \#include "{}conclog/logging.\+hpp"{}}\newline
+{\ttfamily \#include "{}algebra/vector.\+hpp"{}}\newline
+{\ttfamily \#include "{}algebra/matrix.\+hpp"{}}\newline
+{\ttfamily \#include "{}numeric/numeric.\+hpp"{}}\newline
+{\ttfamily \#include "{}utility/tuple.\+hpp"{}}\newline
+\doxysubsubsubsection*{Classes}
+\begin{DoxyCompactItemize}
+\item 
+class \mbox{\hyperlink{classAriadne_1_1InteriorPointSolver}{Interior\+Point\+Solver}}
+\begin{DoxyCompactList}\small\item\em Solver for linear programming problems using interior point methods. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1SimplexSolver}{Simplex\+Solver$<$ X $>$}}
+\begin{DoxyCompactList}\small\item\em Solver for linear programming problems using the simplex algorithm. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsubsection*{Namespaces}
+\begin{DoxyCompactItemize}
+\item 
+namespace \mbox{\hyperlink{namespaceAriadne}{Ariadne}}
+\begin{DoxyCompactList}\small\item\em Top-\/level Ariadne namespace. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsubsection*{Enumerations}
+\begin{DoxyCompactItemize}
+\item 
+enum class \mbox{\hyperlink{group__OptimisationSubModule_gaba792cefe409c16dfa7a762b64997b5c}{Slackness}} \+: std\+::int8\+\_\+t \{ \mbox{\hyperlink{group__OptimisationSubModule_ggaba792cefe409c16dfa7a762b64997b5caa7c48ba367e019d004bfb0239b85f2b3}{LOWER}} =-\/1
+, \mbox{\hyperlink{group__OptimisationSubModule_ggaba792cefe409c16dfa7a762b64997b5caecd9016852718c6a5a9e5eed4021a89e}{BASIS}} =0
+, \mbox{\hyperlink{group__OptimisationSubModule_ggaba792cefe409c16dfa7a762b64997b5ca9e43f5291e6fcb2ad99c8e3f91acd179}{UPPER}} =+1
+, \mbox{\hyperlink{group__OptimisationSubModule_ggaba792cefe409c16dfa7a762b64997b5cac6e6dc18b53b4c2681394b9d8aefcec7}{FIXED}} =+2
+ \}
+\begin{DoxyCompactList}\small\item\em The type of variable; lower is\+\_\+bounded, upper is\+\_\+bounded, basic, or fixed (upper and lower bounded). \end{DoxyCompactList}\end{DoxyCompactItemize}

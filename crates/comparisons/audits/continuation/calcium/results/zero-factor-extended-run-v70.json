@@ -1,0 +1,13 @@
+{
+  "tag": "zero-factor-extended-run-v70",
+  "started": "2026-09-11T19:07:38.023Z",
+  "finished": "2026-09-11T19:07:38.132Z",
+  "elapsedSeconds": 0.10540870199999999,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "/tmp/calcium-zero-factor.1YCn5a/extended",
+  "args": [
+    "check"
+  ],
+  "code": 0,
+  "signal": null
+}

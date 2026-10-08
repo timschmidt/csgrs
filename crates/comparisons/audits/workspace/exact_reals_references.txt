@@ -1,0 +1,545 @@
+Below is the broadest inventory of **publicly accessible exact-real implementations I could verify**. I cannot guarantee literally every private, abandoned, unpublished, or unindexed codebase. I am excluding Hyper, exactCore, and Boehm’s `CR`/`UnifiedReal` family from the main list because we just covered those.
+
+I am also keeping three categories separate:
+
+1. **General computable/constructive-real systems** retain a procedure or representation from which arbitrarily accurate approximations can be requested.
+2. **Exact algebraic or symbolic-real systems** are exact over a smaller field—typically algebraic, constructible, or explicitly generated numbers.
+3. **Formal and research implementations** may be more valuable for semantics and proofs than for immediate production performance.
+
+Plain GMP, MPFR, Arb, MPFI, ordinary arbitrary-precision floats, rationals, and interval-only libraries are not included as exact-real object systems.
+
+# General exact/computable-real implementations
+
+## C and C++
+
+### iRRAM
+
+* [iRRAM source](https://github.com/norbert-mueller/iRRAM)
+* [iRRAM project site](https://irram.uni-trier.de/)
+
+One of the principal mature C++ implementations of exact real arithmetic. This is probably the most important next audit target after RealLib. ([GitHub][1])
+
+Related extensions:
+
+* [iRRAM-bigsteps](https://github.com/fbrausse/iRRAM-bigsteps)
+* [iRRAM+](https://github.com/realcomputation/irramplus)
+* [iRRAMx](https://github.com/realcomputation/iRRAMx)
+* [Real Computation GitHub organization](https://github.com/realcomputation)
+
+These explore alternative evaluation strategies, higher-order operations, and additional exact-real tooling around iRRAM. ([GitHub][2])
+
+### RealLib
+
+* [RealLib source](https://github.com/blambov/RealLib)
+* [RealLib paper](https://dl.acm.org/doi/10.1017/S0960129506005822)
+
+RealLib is especially relevant to Hyperreal because it was explicitly designed around making exact-real computation practical and fast. It separates higher-level expression handling from lower-level approximation machinery and was benchmarked against several prior exact-real systems. ([GitHub][3])
+
+### IC-Reals
+
+* [Imperial College Exact Real Arithmetic Library](https://www.doc.ic.ac.uk/exact-computation/)
+
+A C implementation from Imperial College, with software and supporting documentation available from the project page. It is old enough to be historically useful and compact enough that a comprehensive audit may be tractable. ([Imperial College London Documentation][4])
+
+### XRC
+
+* [XRC exact real arithmetic in C](https://keithbriggs.info/xrc.html)
+* [Keith Briggs’s software index](https://keithbriggs.info/software.html)
+
+Keith Briggs’s lazy exact-real implementation in C. The project page also points toward the older XR line of work. XRC is the better surviving audit target. ([Keith Briggs][5])
+
+### Spigot
+
+* [Spigot exact-real calculator](https://www.chiark.greenend.org.uk/~sgtatham/spigot/)
+
+The page provides the implementation and its Git source:
+
+```text
+git clone https://git.tartarus.org/simon/spigot.git
+```
+
+It is more calculator/runtime than general-purpose systems library, but it contains a distinct streaming representation of exact real computation. ([Chiark][6])
+
+### Ariadne
+
+* [Ariadne source](https://github.com/ariadne-cps/ariadne)
+* [Ariadne project site](https://www.ariadne-cps.org/)
+
+A broader rigorous-computation framework for cyber-physical systems. It carefully distinguishes exact, effective, validated, and approximate numerical objects. It is not solely an exact-real scalar package, but its type architecture and validated function machinery make it relevant. ([GitHub][7])
+
+### Boost.Real prototypes
+
+* [Boost.Real, 2018 GSoC version](https://github.com/BoostGSoC18/Real)
+* [Boost.Real, 2021 GSoC version](https://github.com/BoostGSoC21/Real)
+
+These are exact-real prototype projects associated with Boost Google Summer of Code efforts. They should not be mistaken for an accepted, maintained component of the official Boost distribution. ([universenox.github.io][8])
+
+### flatsurf exact-real
+
+* [flatsurf/exact-real source](https://github.com/flatsurf/exact-real)
+* [exact-real documentation](https://flatsurf.github.io/exact-real/)
+
+This contains `libexactreal` and Python bindings for lazy exact computations involving explicitly represented real generators. It is highly relevant to exact symbolic geometry, although its contract is not identical to a general elementary computable-real tower such as Hyperreal. ([GitHub][9])
+
+# Rust implementations
+
+### realistic
+
+* [realistic source](https://github.com/tialaramex/realistic)
+
+A Rust interpretation of the architecture from *Towards an API for the Real Numbers*, including analogues of Boehm’s bounded-rational, unified-real, and computable-real layers. This was included in my prior answer, but it belongs in the complete inventory. ([GitHub][10])
+
+### computable-real
+
+* [computable-real documentation](https://docs.rs/computable-real/latest/computable_real/)
+* [computable-real on crates.io](https://crates.io/crates/computable-real)
+
+A Boehm/AOSP-inspired computable-real implementation whose values provide approximations at requested precisions. ([Docs.rs][11])
+
+### reals
+
+* [reals documentation](https://docs.rs/reals/latest/reals/)
+* [reals on crates.io](https://crates.io/crates/reals)
+
+A higher-level real representation combining a rational factor with a computable factor and additional symbolic-property information. Architecturally, this is close to the `UnifiedReal` family. ([Docs.rs][12])
+
+### computable
+
+* [computable documentation](https://docs.rs/computable/latest/computable/)
+* [computable on crates.io](https://crates.io/crates/computable)
+
+Represents computations through successively refined exact binary intervals. It is worth examining as a substantially different Rust API and evaluation model. ([Docs.rs][13])
+
+### exact-real-rs
+
+* [exact-real-rs source](https://github.com/tczajka/exact-real-rs)
+* [exact-real on crates.io](https://crates.io/crates/exact-real)
+
+A small infinite-precision real arithmetic implementation in Rust. ([GitHub][14])
+
+### boehm_reals
+
+* [boehm_reals source](https://github.com/Madhura-mb/boehm_reals)
+
+A smaller Rust prototype based on Boehm-style constructive reals. ([GitHub][15])
+
+# Haskell implementations
+
+Haskell has probably the densest publicly accessible collection of exact-real representation experiments.
+
+### AERN2
+
+* [AERN2 source](https://github.com/michalkonecny/aern2)
+
+A broad exact-real and validated-numerics stack based on Cauchy approximations and enclosures. The repository also contains work related to the ERC exact-real language. ([GitHub][16])
+
+### Original AERN
+
+* [AERN source](https://github.com/michalkonecny/aern)
+
+The predecessor to AERN2. It remains useful for studying the evolution of its representation and evaluation architecture. ([GitHub][17])
+
+### CDAR
+
+* [CDAR source](https://github.com/jensblanck/cdar)
+
+Exact reals represented through centered dyadic approximations and nested interval information. ([GitHub][18])
+
+A bounded-mantissa branch is also retained:
+
+* [CDAR `mBound` branch](https://github.com/michalkonecny/cdar/tree/mBound) ([GitHub][19])
+
+### ireal
+
+* [ireal source](https://github.com/sydow/ireal)
+
+A Haskell exact-real implementation with its own evaluation and representation choices. ([GitHub][20])
+
+### exact-real / Data.CReal
+
+* [exact-real source](https://github.com/expipiplus1/exact-real)
+* [exact-real package on Hackage](https://hackage.haskell.org/package/exact-real)
+
+A binary Cauchy-sequence implementation intended to make exact-real arithmetic reasonably fast. ([GitHub][21])
+
+### haskell-fast-reals
+
+* [haskell-fast-reals source](https://github.com/comius/haskell-fast-reals)
+
+An exact-real package using MPFR-backed approximations beneath the high-level exact representation. ([GitHub][22])
+
+### HERA
+
+* [HERA project page](https://www2.arnes.si/~abizja4/hera/)
+
+A Haskell exact-real arithmetic implementation using MPFR as part of its approximation machinery. ([math.andrej.com][23])
+
+### Few Digits
+
+* [Few Digits project page](https://r6.ca/FewDigits/)
+
+A compact historic Haskell exact-real implementation. Its author presents it as an experiment rather than a performance-leading production implementation. ([r6.ca][24])
+
+### Escardó’s signed-binary exact reals
+
+* [Exact Real Number Computation in Haskell](https://github.com/martinescardo/ExactRealNumberComputationInHaskell)
+
+Represents exact values through infinite signed-binary sequences and implements arithmetic directly over that representation. This is conceptually useful even where the execution model is not a practical replacement for Hyperreal. ([GitHub][25])
+
+### Plume
+
+* [Plume exact-real calculator](https://www.dcs.ed.ac.uk/home/mhe/plume/index.html)
+
+A historical exact-real calculator using signed-binary and dyadic-stream representations. It includes arithmetic, transcendental functions, integration, and optimization-like operations. ([dcs.ed.ac.uk][26])
+
+### numbers / Data.Number.CReal
+
+* [numbers package on Hackage](https://hackage.haskell.org/package/numbers)
+
+An older Haskell constructive-real package containing `Data.Number.CReal`. ([GitHub][27])
+
+### haskell-constructible
+
+* [haskell-constructible source](https://github.com/andersk/haskell-constructible)
+
+This is narrower than arbitrary computable reals: it targets exact constructible/algebraic values. It is nevertheless relevant to radicals and exact geometry. ([GitHub][28])
+
+### Haskell comparison harness
+
+* [haskell-reals-comparison](https://github.com/michalkonecny/haskell-reals-comparison)
+
+Not itself a library, but a valuable map and benchmark framework covering AERN2, ireal, CDAR, CDAR-mBound, and related implementations. It may save substantial inventory work. ([GitHub][19])
+
+# Other language implementations
+
+### Ruffini — Java
+
+* [Ruffini source](https://github.com/jonas-lj/Ruffini)
+
+A broad Java algebra library whose `Reals` module uses a constructive representation for arbitrary-precision real computation. ([GitHub][29])
+
+### computable-reals — Common Lisp
+
+* [Common Lisp computable-reals source](https://github.com/stylewarning/computable-reals)
+* [Original Michael Stoll project page](https://www.haible.de/bruno/MichaelStoll/reals.html)
+
+Represents a real through a precision-dependent approximation function and automatically recomputes at greater precision. Its treatment of comparison is intentionally external or partial rather than pretending arbitrary exact equality is decidable. ([GitHub][30])
+
+### Creal — OCaml
+
+* [Creal source](https://github.com/backtracking/creal)
+
+An OCaml constructive-real implementation based on work by Ménissier-Morain. ([GitHub][31])
+
+### Spire `Real` — Scala
+
+* [Spire source](https://github.com/typelevel/spire)
+* [Spire documentation](https://typelevel.org/spire/)
+
+Spire is a broad numerical library, not an exact-real-only package, but it includes `spire.math.Real` and a separate algebraic-number representation. ([GitHub][32])
+
+### CRCalc.js — JavaScript
+
+* [CRCalc.js site](https://crcalc.js.org/)
+* [CRCalc.js source](https://github.com/lll69/crcalc.js)
+
+A JavaScript port/descendant of the Boehm and Android Calculator constructive-real implementation. ([CRCalc.js][33])
+
+### Numbas constructive-real extension — JavaScript
+
+* [Numbas constructive-real extension](https://github.com/numbas/numbas-extension-constructive-real-numbers)
+
+An educational-system extension adding constructive-real arithmetic to Numbas. ([GitHub][34])
+
+### Tcllib `math::exact` — Tcl
+
+* [Tcllib source](https://github.com/tcltk/tcllib)
+* [`math::exact` documentation](https://core.tcl-lang.org/tcllib/doc/tcllib-1-20/embedded/md/tcllib/files/modules/math/exact.md)
+
+A Tcl exact-real arithmetic module. ([GitHub][35])
+
+### ExactReals.jl — Julia
+
+* [ExactReals.jl source](https://github.com/dpsanders/ExactReals.jl)
+
+A compact implementation based on rapidly converging Cauchy approximations. It currently has a much narrower operation set than Hyperreal. ([GitHub][36])
+
+### DedekindCutArithmetic.jl — Julia
+
+* [DedekindCutArithmetic.jl source](https://github.com/lucaferranti/DedekindCutArithmetic.jl)
+* [Documentation](https://www.lucaferranti.com/DedekindCutArithmetic.jl/stable/)
+
+Uses Dedekind cuts and ideas from abstract Stone duality to implement exact real arithmetic. ([GitHub][37])
+
+### Edalat prototype — Python
+
+* [edalat source](https://github.com/thalesians/edalat)
+
+A domain-theoretic exact-real research prototype. It is more useful as an architectural specimen than as a mature scalar library. ([GitHub][38])
+
+# Formal and verified exact-real systems
+
+These are particularly relevant to the semantics of partial comparison, nondeterministic choice, limits, and extraction.
+
+### CoRN
+
+* [CoRN source](https://github.com/rocq-community/corn)
+
+A substantial constructive analysis and exact-real development in Rocq/Coq, covering real functions and broader analysis rather than only scalar arithmetic. ([GitHub][39])
+
+### exact-real-arithmetic for Rocq/Coq
+
+* [exact-real-arithmetic source](https://github.com/rocq-community/exact-real-arithmetic)
+
+A smaller basis-parametric verified implementation covering arithmetic, inverse, and square root. ([GitHub][40])
+
+### coq-aern
+
+* [coq-aern source](https://github.com/holgerthies/coq-aern)
+
+Formalizes exact-real algorithms and supports extraction toward Haskell/AERN infrastructure. ([GitHub][41])
+
+### Marshall
+
+* [Marshall source](https://github.com/andrejbauer/marshall)
+
+An OCaml implementation of an exact-real language based on Dedekind cuts and abstract Stone duality. A small Haskell implementation is included as well. ([GitHub][42])
+
+### RZ
+
+* [RZ source](https://github.com/andrejbauer/rz)
+
+A specification and program-generation system used to derive exact-real implementations from constructive descriptions. It is not a conventional production scalar API, but it is highly relevant to exact-real program synthesis. ([GitHub][43])
+
+### Ternary Boehm reals
+
+* [Ternary Boehm Reals artifact](https://github.com/anon-pldi-ternary-reals/anon-pldi-ternary-real)
+
+Contains Java, Haskell, and Agda implementations associated with searchable and parallelizable ternary exact-real representations. ([GitHub][44])
+
+### Clerical
+
+* [Clerical paper](https://arxiv.org/abs/2409.11946)
+* [Clerical Coq formalization](https://github.com/park-sewon/coq-clerical)
+
+A proof-of-concept imperative language for exact real computation that explicitly models partial and nondeterministic computations. ([arXiv][45])
+
+### ERC
+
+* [ERC language paper](https://arxiv.org/abs/1608.05787)
+* [AERN2 implementation repository](https://github.com/michalkonecny/aern2)
+
+A language and semantic framework for exact real computation; implementation work appears in the AERN2 ecosystem. ([arXiv][46])
+
+### TypeTopology
+
+* [TypeTopology source](https://github.com/martinescardo/TypeTopology)
+
+A large formal development containing exact-real, searchable-type, compactness, and constructive-topology work. It is a source of semantic and algorithmic ideas rather than a normal systems library. ([GitHub][47])
+
+### Bishop
+
+* [Bishop source](https://github.com/viktorcsimma/bishop)
+
+An Agda formalization of constructive analysis and exact-real concepts. ([GitHub][48])
+
+### Lean ComputableReal
+
+* [ComputableReal for Lean](https://github.com/Timeroot/ComputableReal)
+
+Implements computable-real calculations within Lean. ([GitHub][49])
+
+### Acorn
+
+* [Acorn source](https://github.com/viktorcsimma/acorn)
+
+Agda-oriented work on exact reals and extraction of executable implementations. ([GitHub][50])
+
+### ROSCoq
+
+* [ROSCoq source](https://github.com/aa755/ROSCoq)
+
+A formal robotics framework using constructive real numbers. It is an application and verification framework rather than an independent scalar library, but its physical-computation boundary may be relevant to Alumina. ([GitHub][51])
+
+# Exact algebraic and symbolic-real systems
+
+These are exact, but they do **not** generally provide the full computable-real closure and demand-driven elementary-function model Hyperreal targets.
+
+### FLINT Calcium
+
+* [Calcium documentation](https://flintlib.org/doc/introduction_calcium.html)
+* [FLINT source](https://github.com/flintlib/flint)
+* [Original standalone Calcium repository](https://github.com/flintlib/calcium)
+
+Calcium represents real and complex values through exact extension fields, tracks algebraic and selected transcendental relations, and can return an explicit unknown result where it cannot prove a relation. This is a major audit target for symbolic reduction and relation discovery. ([flintlib.org][52])
+
+### LEDA `real`
+
+* [LEDA `real` documentation](https://leda.uni-trier.de/leda/guide/number_types/real.html)
+
+An exact algebraic-real type closed under arithmetic, roots, and polynomial-root constructions. It is especially relevant historically to exact computational geometry. ([leda.uni-trier.de][53])
+
+### CGAL exact and lazy number types
+
+* [CGAL number-types manual](https://doc.cgal.org/latest/Number_types/index.html)
+* [`CGAL::Lazy_exact_nt`](https://doc.cgal.org/latest/Number_types/classCGAL_1_1Lazy__exact__nt.html)
+* [CGAL CORE interface](https://doc.cgal.org/latest/Number_types/group__nt__core.html)
+
+CGAL provides lazy wrappers and exact-number concepts over several underlying representations. This is exact-geometry numerical infrastructure rather than one complete standalone real-number tower. ([CGAL][54])
+
+### e-antic
+
+* [e-antic source](https://github.com/flatsurf/e-antic)
+
+Exact embedded real algebraic number fields, used in parts of the flatsurf ecosystem. ([GitHub][55])
+
+### Sage AA and QQbar
+
+* [Sage algebraic real and complex fields](https://doc.sagemath.org/html/en/reference/number_fields/sage/rings/qqbar.html)
+* [Sage source](https://github.com/sagemath/sage)
+
+Sage’s `AA` and `QQbar` types provide exact real and complex algebraic numbers. ([SageMath][56])
+
+### SRI LibPoly
+
+* [LibPoly source](https://github.com/SRI-CSL/libpoly)
+
+A library for exact polynomial reasoning and real algebraic numbers, developed primarily for SMT and symbolic reasoning. ([GitHub][57])
+
+### Z3 real-closed-field subsystem
+
+* [Z3 source](https://github.com/Z3Prover/z3)
+
+Z3 contains exact real-closed-field and algebraic-root machinery. It is not designed as a general numerical exact-real API, but its algebraic representation, sign determination, and root isolation are audit-worthy. ([GitHub][58])
+
+### AlgebraicNumbers.jl
+
+* [AlgebraicNumbers.jl source](https://github.com/anj1/AlgebraicNumbers.jl)
+
+Exact real and complex algebraic numbers for Julia. ([Julia Packages][59])
+
+### Nemo and Oscar exact-number layers
+
+* [Nemo.jl source](https://github.com/Nemocas/Nemo.jl)
+* [Oscar/Nemo exact-field documentation](https://docs.oscar-system.org/stable/Nemo/exact/)
+
+Julia interfaces over FLINT and related exact arithmetic, including Calcium-backed exact real and complex fields. ([docs.oscar-system.org][60])
+
+### Rust algebraic-number implementations
+
+* [algebraics on crates.io](https://crates.io/crates/algebraics)
+* [puremp source](https://github.com/KarpelesLab/puremp)
+* [neco-algnum documentation](https://docs.rs/neco-algnum/)
+
+These provide narrower exact algebraic or constructible-number functionality rather than arbitrary computable reals. ([Crates][61])
+
+# Historical systems for which public source is incomplete or difficult to locate
+
+### Manchester ERA
+
+* [Exact Real Arithmetic competition paper](https://link.springer.com/chapter/10.1007/3-540-45335-0_24)
+* [Haskell exact-real overview](https://www.haskell.org/haskellwiki/Exact_real_arithmetic)
+
+Manchester’s ERA system appears extensively in the historical comparison literature. I did not find a maintained public source repository corresponding to the original implementation. ([Springer][62])
+
+### ExactLib
+
+* [ExactLib project report](https://www.doc.ic.ac.uk/teaching/distinguished-projects/2011/t.spratt.pdf)
+
+A C++ exact-real student project. I found the report, but not a durable public source repository. ([Imperial College London Documentation][63])
+
+### XR
+
+* [Keith Briggs’s software page](https://keithbriggs.info/software.html)
+
+XR was an earlier predecessor or relative of XRC. XRC is the more useful surviving implementation target.
+
+# Surveys and inventories
+
+These are useful for checking that no major historic line has been overlooked:
+
+* [Exact Real Arithmetic competition](https://link.springer.com/chapter/10.1007/3-540-45335-0_24)
+* [Gowland and Lester exact-real survey](https://dl.acm.org/doi/10.5555/647772.734450)
+* [RealLib paper and comparisons](https://dl.acm.org/doi/10.1017/S0960129506005822)
+* [Haskell exact-real arithmetic inventory](https://www.haskell.org/haskellwiki/Exact_real_arithmetic)
+* [Haskell real-number comparison harness](https://github.com/michalkonecny/haskell-reals-comparison) ([Springer][62])
+
+# Best audit order for Hyperreal
+
+Under your standard—where “complete” means every source line has actually been read and its ideas compared against current Hyper—the highest-yield order would be: 
+
+1. **RealLib** — closest performance-oriented philosophical competitor.
+2. **iRRAM** — broadest mature native exact-real runtime.
+3. **IC-Reals and XRC** — compact C systems that should expose representation and scheduling ideas cleanly.
+4. **AERN2, CDAR, ireal, and the Haskell comparison harness** — a concentrated survey of alternative approximation representations.
+5. **FLINT Calcium** — strongest adjacent source for symbolic relation detection, field construction, and explicit unknown outcomes.
+6. **LEDA and CGAL number types** — exact-geometry-specific lazy dispatch and algebraic number machinery.
+7. **Spire, Ruffini, realistic, and the other Rust crates** — API-shape and rich-type comparisons.
+8. **Marshall, RZ, Clerical, CoRN, and ternary Boehm reals** — partiality, nondeterminism, exact decisions, and formally justified evaluation.
+
+For likely implementation payoff, I would start with **RealLib → iRRAM → IC-Reals → XRC → AERN2/CDAR → Calcium**. That sequence moves from the closest performance competitors toward progressively broader semantic and symbolic machinery.
+
+[1]: https://github.com/norbert-mueller/iRRAM "https://github.com/norbert-mueller/iRRAM"
+[2]: https://github.com/realcomputation/irramplus "https://github.com/realcomputation/irramplus"
+[3]: https://github.com/blambov/RealLib "https://github.com/blambov/RealLib"
+[4]: https://www.doc.ic.ac.uk/exact-computation/ "https://www.doc.ic.ac.uk/exact-computation/"
+[5]: https://keithbriggs.info/xrc.html "https://keithbriggs.info/xrc.html"
+[6]: https://www.chiark.greenend.org.uk/~sgtatham/spigot/ "https://www.chiark.greenend.org.uk/~sgtatham/spigot/"
+[7]: https://github.com/ariadne-cps/ariadne "https://github.com/ariadne-cps/ariadne"
+[8]: https://universenox.github.io/gsoc19_Final_Eval "https://universenox.github.io/gsoc19_Final_Eval"
+[9]: https://github.com/flatsurf/exact-real "https://github.com/flatsurf/exact-real"
+[10]: https://github.com/tialaramex/realistic/ "https://github.com/tialaramex/realistic/"
+[11]: https://docs.rs/computable-real/latest/computable_real/ "https://docs.rs/computable-real/latest/computable_real/"
+[12]: https://docs.rs/reals/latest/reals/ "https://docs.rs/reals/latest/reals/"
+[13]: https://docs.rs/computable/latest/computable/ "https://docs.rs/computable/latest/computable/"
+[14]: https://github.com/tczajka/exact-real-rs "https://github.com/tczajka/exact-real-rs"
+[15]: https://github.com/Madhura-mb/boehm_reals/blob/main/README.md "https://github.com/Madhura-mb/boehm_reals/blob/main/README.md"
+[16]: https://github.com/michalkonecny/aern2 "https://github.com/michalkonecny/aern2"
+[17]: https://github.com/michalkonecny/aern "https://github.com/michalkonecny/aern"
+[18]: https://github.com/jensblanck/cdar "https://github.com/jensblanck/cdar"
+[19]: https://github.com/michalkonecny/haskell-reals-comparison "https://github.com/michalkonecny/haskell-reals-comparison"
+[20]: https://github.com/sydow/ireal "https://github.com/sydow/ireal"
+[21]: https://github.com/expipiplus1/exact-real "https://github.com/expipiplus1/exact-real"
+[22]: https://github.com/comius/haskell-fast-reals "https://github.com/comius/haskell-fast-reals"
+[23]: https://math.andrej.com/2008/09/03/exact-real-arithmetic-in-haskell/ "https://math.andrej.com/2008/09/03/exact-real-arithmetic-in-haskell/"
+[24]: https://r6.ca/FewDigits/ "https://r6.ca/FewDigits/"
+[25]: https://github.com/martinescardo/ExactRealNumberComputationInHaskell "https://github.com/martinescardo/ExactRealNumberComputationInHaskell"
+[26]: https://www.dcs.ed.ac.uk/home/mhe/plume/index.html "https://www.dcs.ed.ac.uk/home/mhe/plume/index.html"
+[27]: https://github.com/haskellcats/haskell-numbers "https://github.com/haskellcats/haskell-numbers"
+[28]: https://github.com/andersk/haskell-constructible "https://github.com/andersk/haskell-constructible"
+[29]: https://github.com/jonas-lj/Ruffini "https://github.com/jonas-lj/Ruffini"
+[30]: https://github.com/stylewarning/computable-reals "https://github.com/stylewarning/computable-reals"
+[31]: https://github.com/backtracking/creal "https://github.com/backtracking/creal"
+[32]: https://github.com/typelevel/spire "https://github.com/typelevel/spire"
+[33]: https://crcalc.js.org/ "https://crcalc.js.org/"
+[34]: https://github.com/numbas/numbas-extension-constructive-real-numbers "https://github.com/numbas/numbas-extension-constructive-real-numbers"
+[35]: https://github.com/tcltk/tcllib/blob/main/embedded/md/toc0.md "https://github.com/tcltk/tcllib/blob/main/embedded/md/toc0.md"
+[36]: https://github.com/dpsanders/ExactReals.jl "https://github.com/dpsanders/ExactReals.jl"
+[37]: https://github.com/lucaferranti/DedekindCutArithmetic.jl "https://github.com/lucaferranti/DedekindCutArithmetic.jl"
+[38]: https://github.com/thalesians/edalat "https://github.com/thalesians/edalat"
+[39]: https://github.com/rocq-community/corn "https://github.com/rocq-community/corn"
+[40]: https://github.com/rocq-community/exact-real-arithmetic "https://github.com/rocq-community/exact-real-arithmetic"
+[41]: https://github.com/holgerthies/coq-aern "https://github.com/holgerthies/coq-aern"
+[42]: https://github.com/andrejbauer/marshall "https://github.com/andrejbauer/marshall"
+[43]: https://github.com/andrejbauer/rz "https://github.com/andrejbauer/rz"
+[44]: https://github.com/anon-pldi-ternary-reals/anon-pldi-ternary-real "https://github.com/anon-pldi-ternary-reals/anon-pldi-ternary-real"
+[45]: https://arxiv.org/abs/2409.11946 "https://arxiv.org/abs/2409.11946"
+[46]: https://arxiv.org/abs/1608.05787 "https://arxiv.org/abs/1608.05787"
+[47]: https://github.com/martinescardo/TypeTopology "https://github.com/martinescardo/TypeTopology"
+[48]: https://github.com/viktorcsimma/bishop "https://github.com/viktorcsimma/bishop"
+[49]: https://github.com/Timeroot/ComputableReal "https://github.com/Timeroot/ComputableReal"
+[50]: https://github.com/viktorcsimma/acorn "https://github.com/viktorcsimma/acorn"
+[51]: https://github.com/aa755/ROSCoq "https://github.com/aa755/ROSCoq"
+[52]: https://flintlib.org/doc/introduction_calcium.html "https://flintlib.org/doc/introduction_calcium.html"
+[53]: https://leda.uni-trier.de/leda/guide/number_types/real.html "https://leda.uni-trier.de/leda/guide/number_types/real.html"
+[54]: https://doc.cgal.org/latest/Number_types/index.html "https://doc.cgal.org/latest/Number_types/index.html"
+[55]: https://github.com/flatsurf/e-antic "https://github.com/flatsurf/e-antic"
+[56]: https://doc.sagemath.org/html/en/reference/number_fields/sage/rings/qqbar.html "https://doc.sagemath.org/html/en/reference/number_fields/sage/rings/qqbar.html"
+[57]: https://github.com/SRI-CSL/libpoly "https://github.com/SRI-CSL/libpoly"
+[58]: https://github.com/Z3Prover/z3/blob/master/RELEASE_NOTES.md "https://github.com/Z3Prover/z3/blob/master/RELEASE_NOTES.md"
+[59]: https://juliapackages.com/p/algebraicnumbers "https://juliapackages.com/p/algebraicnumbers"
+[60]: https://docs.oscar-system.org/stable/Nemo/exact/ "https://docs.oscar-system.org/stable/Nemo/exact/"
+[61]: https://crates.io/crates/algebraics "https://crates.io/crates/algebraics"
+[62]: https://link.springer.com/chapter/10.1007/3-540-45335-0_24 "https://link.springer.com/chapter/10.1007/3-540-45335-0_24"
+[63]: https://www.doc.ic.ac.uk/teaching/distinguished-projects/2011/t.spratt.pdf "https://www.doc.ic.ac.uk/teaching/distinguished-projects/2011/t.spratt.pdf"
+

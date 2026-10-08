@@ -1,0 +1,1325 @@
+START	unsupported-constructor/2
+RESULT	unsupported-constructor/2	CONSTRUCTOR_UNSUPPORTED	IllegalArgumentException	modulus-greater-than-3
+START	unsupported-constructor/3
+RESULT	unsupported-constructor/3	CONSTRUCTOR_UNSUPPORTED	IllegalArgumentException	modulus-greater-than-3
+START	big-small/5/-5
+RESULT	big-small/5/-5	REJECTED_SQUARE	NotASquareException	SQUARE
+START	big-small/5/0
+RESULT	big-small/5/0	REJECTED_SQUARE	NotASquareException	SQUARE
+START	big-small/5/5
+RESULT	big-small/5/5	REJECTED_SQUARE	NotASquareException	SQUARE
+START	big-small/5/-4
+RESULT	big-small/5/-4	PASS	1	SQUARE
+START	big-small/5/1
+RESULT	big-small/5/1	PASS	1	SQUARE
+START	big-small/5/6
+RESULT	big-small/5/6	PASS	1	SQUARE
+START	big-small/5/-3
+RESULT	big-small/5/-3	PASS	NotASquareException	NONSQUARE
+START	big-small/5/2
+RESULT	big-small/5/2	PASS	NotASquareException	NONSQUARE
+START	big-small/5/7
+RESULT	big-small/5/7	PASS	NotASquareException	NONSQUARE
+START	big-small/5/-2
+RESULT	big-small/5/-2	PASS	NotASquareException	NONSQUARE
+START	big-small/5/3
+RESULT	big-small/5/3	PASS	NotASquareException	NONSQUARE
+START	big-small/5/8
+RESULT	big-small/5/8	PASS	NotASquareException	NONSQUARE
+START	big-small/5/-1
+RESULT	big-small/5/-1	PASS	3	SQUARE
+START	big-small/5/4
+RESULT	big-small/5/4	PASS	3	SQUARE
+START	big-small/5/9
+RESULT	big-small/5/9	PASS	3	SQUARE
+START	big-small/7/-7
+RESULT	big-small/7/-7	REJECTED_SQUARE	NotASquareException	SQUARE
+START	big-small/7/0
+RESULT	big-small/7/0	REJECTED_SQUARE	NotASquareException	SQUARE
+START	big-small/7/7
+RESULT	big-small/7/7	REJECTED_SQUARE	NotASquareException	SQUARE
+START	big-small/7/-6
+RESULT	big-small/7/-6	PASS	1	SQUARE
+START	big-small/7/1
+RESULT	big-small/7/1	PASS	1	SQUARE
+START	big-small/7/8
+RESULT	big-small/7/8	PASS	1	SQUARE
+START	big-small/7/-5
+RESULT	big-small/7/-5	PASS	4	SQUARE
+START	big-small/7/2
+RESULT	big-small/7/2	PASS	4	SQUARE
+START	big-small/7/9
+RESULT	big-small/7/9	PASS	4	SQUARE
+START	big-small/7/-4
+RESULT	big-small/7/-4	PASS	NotASquareException	NONSQUARE
+START	big-small/7/3
+RESULT	big-small/7/3	PASS	NotASquareException	NONSQUARE
+START	big-small/7/10
+RESULT	big-small/7/10	PASS	NotASquareException	NONSQUARE
+START	big-small/7/-3
+RESULT	big-small/7/-3	PASS	2	SQUARE
+START	big-small/7/4
+RESULT	big-small/7/4	PASS	2	SQUARE
+START	big-small/7/11
+RESULT	big-small/7/11	PASS	2	SQUARE
+START	big-small/7/-2
+RESULT	big-small/7/-2	PASS	NotASquareException	NONSQUARE
+START	big-small/7/5
+RESULT	big-small/7/5	PASS	NotASquareException	NONSQUARE
+START	big-small/7/12
+RESULT	big-small/7/12	PASS	NotASquareException	NONSQUARE
+START	big-small/7/-1
+RESULT	big-small/7/-1	PASS	NotASquareException	NONSQUARE
+START	big-small/7/6
+RESULT	big-small/7/6	PASS	NotASquareException	NONSQUARE
+START	big-small/7/13
+RESULT	big-small/7/13	PASS	NotASquareException	NONSQUARE
+START	big-small/11/-11
+RESULT	big-small/11/-11	REJECTED_SQUARE	NotASquareException	SQUARE
+START	big-small/11/0
+RESULT	big-small/11/0	REJECTED_SQUARE	NotASquareException	SQUARE
+START	big-small/11/11
+RESULT	big-small/11/11	REJECTED_SQUARE	NotASquareException	SQUARE
+START	big-small/11/-10
+RESULT	big-small/11/-10	PASS	1	SQUARE
+START	big-small/11/1
+RESULT	big-small/11/1	PASS	1	SQUARE
+START	big-small/11/12
+RESULT	big-small/11/12	PASS	1	SQUARE
+START	big-small/11/-9
+RESULT	big-small/11/-9	PASS	NotASquareException	NONSQUARE
+START	big-small/11/2
+RESULT	big-small/11/2	PASS	NotASquareException	NONSQUARE
+START	big-small/11/13
+RESULT	big-small/11/13	PASS	NotASquareException	NONSQUARE
+START	big-small/11/-8
+RESULT	big-small/11/-8	PASS	5	SQUARE
+START	big-small/11/3
+RESULT	big-small/11/3	PASS	5	SQUARE
+START	big-small/11/14
+RESULT	big-small/11/14	PASS	5	SQUARE
+START	big-small/11/-7
+RESULT	big-small/11/-7	PASS	9	SQUARE
+START	big-small/11/4
+RESULT	big-small/11/4	PASS	9	SQUARE
+START	big-small/11/15
+RESULT	big-small/11/15	PASS	9	SQUARE
+START	big-small/11/-6
+RESULT	big-small/11/-6	PASS	4	SQUARE
+START	big-small/11/5
+RESULT	big-small/11/5	PASS	4	SQUARE
+START	big-small/11/16
+RESULT	big-small/11/16	PASS	4	SQUARE
+START	big-small/11/-5
+RESULT	big-small/11/-5	PASS	NotASquareException	NONSQUARE
+START	big-small/11/6
+RESULT	big-small/11/6	PASS	NotASquareException	NONSQUARE
+START	big-small/11/17
+RESULT	big-small/11/17	PASS	NotASquareException	NONSQUARE
+START	big-small/11/-4
+RESULT	big-small/11/-4	PASS	NotASquareException	NONSQUARE
+START	big-small/11/7
+RESULT	big-small/11/7	PASS	NotASquareException	NONSQUARE
+START	big-small/11/18
+RESULT	big-small/11/18	PASS	NotASquareException	NONSQUARE
+START	big-small/11/-3
+RESULT	big-small/11/-3	PASS	NotASquareException	NONSQUARE
+START	big-small/11/8
+RESULT	big-small/11/8	PASS	NotASquareException	NONSQUARE
+START	big-small/11/19
+RESULT	big-small/11/19	PASS	NotASquareException	NONSQUARE
+START	big-small/11/-2
+RESULT	big-small/11/-2	PASS	3	SQUARE
+START	big-small/11/9
+RESULT	big-small/11/9	PASS	3	SQUARE
+START	big-small/11/20
+RESULT	big-small/11/20	PASS	3	SQUARE
+START	big-small/11/-1
+RESULT	big-small/11/-1	PASS	NotASquareException	NONSQUARE
+START	big-small/11/10
+RESULT	big-small/11/10	PASS	NotASquareException	NONSQUARE
+START	big-small/11/21
+RESULT	big-small/11/21	PASS	NotASquareException	NONSQUARE
+START	big-small/13/-13
+RESULT	big-small/13/-13	REJECTED_SQUARE	NotASquareException	SQUARE
+START	big-small/13/0
+RESULT	big-small/13/0	REJECTED_SQUARE	NotASquareException	SQUARE
+START	big-small/13/13
+RESULT	big-small/13/13	REJECTED_SQUARE	NotASquareException	SQUARE
+START	big-small/13/-12
+RESULT	big-small/13/-12	PASS	1	SQUARE
+START	big-small/13/1
+RESULT	big-small/13/1	PASS	1	SQUARE
+START	big-small/13/14
+RESULT	big-small/13/14	PASS	1	SQUARE
+START	big-small/13/-11
+RESULT	big-small/13/-11	PASS	NotASquareException	NONSQUARE
+START	big-small/13/2
+RESULT	big-small/13/2	PASS	NotASquareException	NONSQUARE
+START	big-small/13/15
+RESULT	big-small/13/15	PASS	NotASquareException	NONSQUARE
+START	big-small/13/-10
+RESULT	big-small/13/-10	PASS	9	SQUARE
+START	big-small/13/3
+RESULT	big-small/13/3	PASS	9	SQUARE
+START	big-small/13/16
+RESULT	big-small/13/16	PASS	9	SQUARE
+START	big-small/13/-9
+RESULT	big-small/13/-9	PASS	11	SQUARE
+START	big-small/13/4
+RESULT	big-small/13/4	PASS	11	SQUARE
+START	big-small/13/17
+RESULT	big-small/13/17	PASS	11	SQUARE
+START	big-small/13/-8
+RESULT	big-small/13/-8	PASS	NotASquareException	NONSQUARE
+START	big-small/13/5
+RESULT	big-small/13/5	PASS	NotASquareException	NONSQUARE
+START	big-small/13/18
+RESULT	big-small/13/18	PASS	NotASquareException	NONSQUARE
+START	big-small/13/-7
+RESULT	big-small/13/-7	PASS	NotASquareException	NONSQUARE
+START	big-small/13/6
+RESULT	big-small/13/6	PASS	NotASquareException	NONSQUARE
+START	big-small/13/19
+RESULT	big-small/13/19	PASS	NotASquareException	NONSQUARE
+START	big-small/13/-6
+RESULT	big-small/13/-6	PASS	NotASquareException	NONSQUARE
+START	big-small/13/7
+RESULT	big-small/13/7	PASS	NotASquareException	NONSQUARE
+START	big-small/13/20
+RESULT	big-small/13/20	PASS	NotASquareException	NONSQUARE
+START	big-small/13/-5
+RESULT	big-small/13/-5	PASS	NotASquareException	NONSQUARE
+START	big-small/13/8
+RESULT	big-small/13/8	PASS	NotASquareException	NONSQUARE
+START	big-small/13/21
+RESULT	big-small/13/21	PASS	NotASquareException	NONSQUARE
+START	big-small/13/-4
+RESULT	big-small/13/-4	PASS	3	SQUARE
+START	big-small/13/9
+RESULT	big-small/13/9	PASS	3	SQUARE
+START	big-small/13/22
+RESULT	big-small/13/22	PASS	16	SQUARE
+START	big-small/13/-3
+RESULT	big-small/13/-3	PASS	7	SQUARE
+START	big-small/13/10
+RESULT	big-small/13/10	PASS	7	SQUARE
+START	big-small/13/23
+RESULT	big-small/13/23	PASS	7	SQUARE
+START	big-small/13/-2
+RESULT	big-small/13/-2	PASS	NotASquareException	NONSQUARE
+START	big-small/13/11
+RESULT	big-small/13/11	PASS	NotASquareException	NONSQUARE
+START	big-small/13/24
+RESULT	big-small/13/24	PASS	NotASquareException	NONSQUARE
+START	big-small/13/-1
+RESULT	big-small/13/-1	PASS	8	SQUARE
+START	big-small/13/12
+RESULT	big-small/13/12	PASS	8	SQUARE
+START	big-small/13/25
+RESULT	big-small/13/25	PASS	8	SQUARE
+START	big-small/17/-17
+RESULT	big-small/17/-17	REJECTED_SQUARE	NotASquareException	SQUARE
+START	big-small/17/0
+RESULT	big-small/17/0	REJECTED_SQUARE	NotASquareException	SQUARE
+START	big-small/17/17
+RESULT	big-small/17/17	REJECTED_SQUARE	NotASquareException	SQUARE
+START	big-small/17/-16
+RESULT	big-small/17/-16	PASS	1	SQUARE
+START	big-small/17/1
+RESULT	big-small/17/1	PASS	1	SQUARE
+START	big-small/17/18
+RESULT	big-small/17/18	PASS	1	SQUARE
+START	big-small/17/-15
+RESULT	big-small/17/-15	PASS	6	SQUARE
+START	big-small/17/2
+RESULT	big-small/17/2	PASS	6	SQUARE
+START	big-small/17/19
+RESULT	big-small/17/19	PASS	6	SQUARE
+START	big-small/17/-14
+RESULT	big-small/17/-14	PASS	NotASquareException	NONSQUARE
+START	big-small/17/3
+RESULT	big-small/17/3	PASS	NotASquareException	NONSQUARE
+START	big-small/17/20
+RESULT	big-small/17/20	PASS	NotASquareException	NONSQUARE
+START	big-small/17/-13
+RESULT	big-small/17/-13	PASS	2	SQUARE
+START	big-small/17/4
+RESULT	big-small/17/4	PASS	2	SQUARE
+START	big-small/17/21
+RESULT	big-small/17/21	PASS	2	SQUARE
+START	big-small/17/-12
+RESULT	big-small/17/-12	PASS	NotASquareException	NONSQUARE
+START	big-small/17/5
+RESULT	big-small/17/5	PASS	NotASquareException	NONSQUARE
+START	big-small/17/22
+RESULT	big-small/17/22	PASS	NotASquareException	NONSQUARE
+START	big-small/17/-11
+RESULT	big-small/17/-11	PASS	NotASquareException	NONSQUARE
+START	big-small/17/6
+RESULT	big-small/17/6	PASS	NotASquareException	NONSQUARE
+START	big-small/17/23
+RESULT	big-small/17/23	PASS	NotASquareException	NONSQUARE
+START	big-small/17/-10
+RESULT	big-small/17/-10	PASS	NotASquareException	NONSQUARE
+START	big-small/17/7
+RESULT	big-small/17/7	PASS	NotASquareException	NONSQUARE
+START	big-small/17/24
+RESULT	big-small/17/24	PASS	NotASquareException	NONSQUARE
+START	big-small/17/-9
+RESULT	big-small/17/-9	PASS	12	SQUARE
+START	big-small/17/8
+RESULT	big-small/17/8	PASS	12	SQUARE
+START	big-small/17/25
+RESULT	big-small/17/25	PASS	12	SQUARE
+START	big-small/17/-8
+RESULT	big-small/17/-8	PASS	14	SQUARE
+START	big-small/17/9
+RESULT	big-small/17/9	PASS	14	SQUARE
+START	big-small/17/26
+RESULT	big-small/17/26	PASS	14	SQUARE
+START	big-small/17/-7
+RESULT	big-small/17/-7	PASS	NotASquareException	NONSQUARE
+START	big-small/17/10
+RESULT	big-small/17/10	PASS	NotASquareException	NONSQUARE
+START	big-small/17/27
+RESULT	big-small/17/27	PASS	NotASquareException	NONSQUARE
+START	big-small/17/-6
+RESULT	big-small/17/-6	PASS	NotASquareException	NONSQUARE
+START	big-small/17/11
+RESULT	big-small/17/11	PASS	NotASquareException	NONSQUARE
+START	big-small/17/28
+RESULT	big-small/17/28	PASS	NotASquareException	NONSQUARE
+START	big-small/17/-5
+RESULT	big-small/17/-5	PASS	NotASquareException	NONSQUARE
+START	big-small/17/12
+RESULT	big-small/17/12	PASS	NotASquareException	NONSQUARE
+START	big-small/17/29
+RESULT	big-small/17/29	PASS	NotASquareException	NONSQUARE
+START	big-small/17/-4
+RESULT	big-small/17/-4	PASS	8	SQUARE
+START	big-small/17/13
+RESULT	big-small/17/13	PASS	8	SQUARE
+START	big-small/17/30
+RESULT	big-small/17/30	PASS	8	SQUARE
+START	big-small/17/-3
+RESULT	big-small/17/-3	PASS	NotASquareException	NONSQUARE
+START	big-small/17/14
+RESULT	big-small/17/14	PASS	NotASquareException	NONSQUARE
+START	big-small/17/31
+RESULT	big-small/17/31	PASS	NotASquareException	NONSQUARE
+START	big-small/17/-2
+RESULT	big-small/17/-2	PASS	7	SQUARE
+START	big-small/17/15
+RESULT	big-small/17/15	PASS	7	SQUARE
+START	big-small/17/32
+RESULT	big-small/17/32	PASS	7	SQUARE
+START	big-small/17/-1
+RESULT	big-small/17/-1	PASS	4	SQUARE
+START	big-small/17/16
+RESULT	big-small/17/16	PASS	4	SQUARE
+START	big-small/17/33
+RESULT	big-small/17/33	PASS	4	SQUARE
+START	big-small/29/-29
+RESULT	big-small/29/-29	REJECTED_SQUARE	NotASquareException	SQUARE
+START	big-small/29/0
+RESULT	big-small/29/0	REJECTED_SQUARE	NotASquareException	SQUARE
+START	big-small/29/29
+RESULT	big-small/29/29	REJECTED_SQUARE	NotASquareException	SQUARE
+START	big-small/29/-28
+RESULT	big-small/29/-28	PASS	1	SQUARE
+START	big-small/29/1
+RESULT	big-small/29/1	PASS	1	SQUARE
+START	big-small/29/30
+RESULT	big-small/29/30	PASS	1	SQUARE
+START	big-small/29/-27
+RESULT	big-small/29/-27	PASS	NotASquareException	NONSQUARE
+START	big-small/29/2
+RESULT	big-small/29/2	PASS	NotASquareException	NONSQUARE
+START	big-small/29/31
+RESULT	big-small/29/31	PASS	NotASquareException	NONSQUARE
+START	big-small/29/-26
+RESULT	big-small/29/-26	PASS	NotASquareException	NONSQUARE
+START	big-small/29/3
+RESULT	big-small/29/3	PASS	NotASquareException	NONSQUARE
+START	big-small/29/32
+RESULT	big-small/29/32	PASS	NotASquareException	NONSQUARE
+START	big-small/29/-25
+RESULT	big-small/29/-25	PASS	27	SQUARE
+START	big-small/29/4
+RESULT	big-small/29/4	PASS	27	SQUARE
+START	big-small/29/33
+RESULT	big-small/29/33	PASS	27	SQUARE
+START	big-small/29/-24
+RESULT	big-small/29/-24	PASS	18	SQUARE
+START	big-small/29/5
+RESULT	big-small/29/5	PASS	18	SQUARE
+START	big-small/29/34
+RESULT	big-small/29/34	PASS	18	SQUARE
+START	big-small/29/-23
+RESULT	big-small/29/-23	PASS	8	SQUARE
+START	big-small/29/6
+RESULT	big-small/29/6	PASS	8	SQUARE
+START	big-small/29/35
+RESULT	big-small/29/35	PASS	8	SQUARE
+START	big-small/29/-22
+RESULT	big-small/29/-22	PASS	23	SQUARE
+START	big-small/29/7
+RESULT	big-small/29/7	PASS	23	SQUARE
+START	big-small/29/36
+RESULT	big-small/29/36	PASS	23	SQUARE
+START	big-small/29/-21
+RESULT	big-small/29/-21	PASS	NotASquareException	NONSQUARE
+START	big-small/29/8
+RESULT	big-small/29/8	PASS	NotASquareException	NONSQUARE
+START	big-small/29/37
+RESULT	big-small/29/37	PASS	NotASquareException	NONSQUARE
+START	big-small/29/-20
+RESULT	big-small/29/-20	PASS	26	SQUARE
+START	big-small/29/9
+RESULT	big-small/29/9	PASS	26	SQUARE
+START	big-small/29/38
+RESULT	big-small/29/38	PASS	26	SQUARE
+START	big-small/29/-19
+RESULT	big-small/29/-19	PASS	NotASquareException	NONSQUARE
+START	big-small/29/10
+RESULT	big-small/29/10	PASS	NotASquareException	NONSQUARE
+START	big-small/29/39
+RESULT	big-small/29/39	PASS	NotASquareException	NONSQUARE
+START	big-small/29/-18
+RESULT	big-small/29/-18	PASS	NotASquareException	NONSQUARE
+START	big-small/29/11
+RESULT	big-small/29/11	PASS	NotASquareException	NONSQUARE
+START	big-small/29/40
+RESULT	big-small/29/40	PASS	NotASquareException	NONSQUARE
+START	big-small/29/-17
+RESULT	big-small/29/-17	PASS	NotASquareException	NONSQUARE
+START	big-small/29/12
+RESULT	big-small/29/12	PASS	NotASquareException	NONSQUARE
+START	big-small/29/41
+RESULT	big-small/29/41	PASS	NotASquareException	NONSQUARE
+START	big-small/29/-16
+RESULT	big-small/29/-16	PASS	10	SQUARE
+START	big-small/29/13
+RESULT	big-small/29/13	PASS	10	SQUARE
+START	big-small/29/42
+RESULT	big-small/29/42	PASS	10	SQUARE
+START	big-small/29/-15
+RESULT	big-small/29/-15	PASS	NotASquareException	NONSQUARE
+START	big-small/29/14
+RESULT	big-small/29/14	PASS	NotASquareException	NONSQUARE
+START	big-small/29/43
+RESULT	big-small/29/43	PASS	NotASquareException	NONSQUARE
+START	big-small/29/-14
+RESULT	big-small/29/-14	PASS	NotASquareException	NONSQUARE
+START	big-small/29/15
+RESULT	big-small/29/15	PASS	NotASquareException	NONSQUARE
+START	big-small/29/44
+RESULT	big-small/29/44	PASS	NotASquareException	NONSQUARE
+START	big-small/29/-13
+RESULT	big-small/29/-13	PASS	25	SQUARE
+START	big-small/29/16
+RESULT	big-small/29/16	PASS	25	SQUARE
+START	big-small/29/45
+RESULT	big-small/29/45	PASS	25	SQUARE
+START	big-small/29/-12
+RESULT	big-small/29/-12	PASS	NotASquareException	NONSQUARE
+START	big-small/29/17
+RESULT	big-small/29/17	PASS	NotASquareException	NONSQUARE
+START	big-small/29/46
+RESULT	big-small/29/46	PASS	NotASquareException	NONSQUARE
+START	big-small/29/-11
+RESULT	big-small/29/-11	PASS	NotASquareException	NONSQUARE
+START	big-small/29/18
+RESULT	big-small/29/18	PASS	NotASquareException	NONSQUARE
+START	big-small/29/47
+RESULT	big-small/29/47	PASS	NotASquareException	NONSQUARE
+START	big-small/29/-10
+RESULT	big-small/29/-10	PASS	NotASquareException	NONSQUARE
+START	big-small/29/19
+RESULT	big-small/29/19	PASS	NotASquareException	NONSQUARE
+START	big-small/29/48
+RESULT	big-small/29/48	PASS	NotASquareException	NONSQUARE
+START	big-small/29/-9
+RESULT	big-small/29/-9	PASS	7	SQUARE
+START	big-small/29/20
+RESULT	big-small/29/20	PASS	7	SQUARE
+START	big-small/29/49
+RESULT	big-small/29/49	PASS	7	SQUARE
+START	big-small/29/-8
+RESULT	big-small/29/-8	PASS	NotASquareException	NONSQUARE
+START	big-small/29/21
+RESULT	big-small/29/21	PASS	NotASquareException	NONSQUARE
+START	big-small/29/50
+RESULT	big-small/29/50	PASS	NotASquareException	NONSQUARE
+START	big-small/29/-7
+RESULT	big-small/29/-7	PASS	15	SQUARE
+START	big-small/29/22
+RESULT	big-small/29/22	PASS	15	SQUARE
+START	big-small/29/51
+RESULT	big-small/29/51	PASS	15	SQUARE
+START	big-small/29/-6
+RESULT	big-small/29/-6	PASS	20	SQUARE
+START	big-small/29/23
+RESULT	big-small/29/23	PASS	20	SQUARE
+START	big-small/29/52
+RESULT	big-small/29/52	PASS	20	SQUARE
+START	big-small/29/-5
+RESULT	big-small/29/-5	PASS	16	SQUARE
+START	big-small/29/24
+RESULT	big-small/29/24	PASS	16	SQUARE
+START	big-small/29/53
+RESULT	big-small/29/53	PASS	16	SQUARE
+START	big-small/29/-4
+RESULT	big-small/29/-4	PASS	24	SQUARE
+START	big-small/29/25
+RESULT	big-small/29/25	PASS	24	SQUARE
+START	big-small/29/54
+RESULT	big-small/29/54	PASS	24	SQUARE
+START	big-small/29/-3
+RESULT	big-small/29/-3	PASS	NotASquareException	NONSQUARE
+START	big-small/29/26
+RESULT	big-small/29/26	PASS	NotASquareException	NONSQUARE
+START	big-small/29/55
+RESULT	big-small/29/55	PASS	NotASquareException	NONSQUARE
+START	big-small/29/-2
+RESULT	big-small/29/-2	PASS	NotASquareException	NONSQUARE
+START	big-small/29/27
+RESULT	big-small/29/27	PASS	NotASquareException	NONSQUARE
+START	big-small/29/56
+RESULT	big-small/29/56	PASS	NotASquareException	NONSQUARE
+START	big-small/29/-1
+RESULT	big-small/29/-1	PASS	12	SQUARE
+START	big-small/29/28
+RESULT	big-small/29/28	PASS	12	SQUARE
+START	big-small/29/57
+RESULT	big-small/29/57	PASS	12	SQUARE
+START	big-small/41/-41
+RESULT	big-small/41/-41	REJECTED_SQUARE	NotASquareException	SQUARE
+START	big-small/41/0
+RESULT	big-small/41/0	REJECTED_SQUARE	NotASquareException	SQUARE
+START	big-small/41/41
+RESULT	big-small/41/41	REJECTED_SQUARE	NotASquareException	SQUARE
+START	big-small/41/-40
+RESULT	big-small/41/-40	PASS	1	SQUARE
+START	big-small/41/1
+RESULT	big-small/41/1	PASS	1	SQUARE
+START	big-small/41/42
+RESULT	big-small/41/42	PASS	1	SQUARE
+START	big-small/41/-39
+RESULT	big-small/41/-39	PASS	17	SQUARE
+START	big-small/41/2
+RESULT	big-small/41/2	PASS	17	SQUARE
+START	big-small/41/43
+RESULT	big-small/41/43	PASS	17	SQUARE
+START	big-small/41/-38
+RESULT	big-small/41/-38	PASS	NotASquareException	NONSQUARE
+START	big-small/41/3
+RESULT	big-small/41/3	PASS	NotASquareException	NONSQUARE
+START	big-small/41/44
+RESULT	big-small/41/44	PASS	NotASquareException	NONSQUARE
+START	big-small/41/-37
+RESULT	big-small/41/-37	PASS	2	SQUARE
+START	big-small/41/4
+RESULT	big-small/41/4	PASS	2	SQUARE
+START	big-small/41/45
+RESULT	big-small/41/45	PASS	2	SQUARE
+START	big-small/41/-36
+RESULT	big-small/41/-36	PASS	28	SQUARE
+START	big-small/41/5
+RESULT	big-small/41/5	PASS	28	SQUARE
+START	big-small/41/46
+RESULT	big-small/41/46	PASS	28	SQUARE
+START	big-small/41/-35
+RESULT	big-small/41/-35	PASS	NotASquareException	NONSQUARE
+START	big-small/41/6
+RESULT	big-small/41/6	PASS	NotASquareException	NONSQUARE
+START	big-small/41/47
+RESULT	big-small/41/47	PASS	NotASquareException	NONSQUARE
+START	big-small/41/-34
+RESULT	big-small/41/-34	PASS	NotASquareException	NONSQUARE
+START	big-small/41/7
+RESULT	big-small/41/7	PASS	NotASquareException	NONSQUARE
+START	big-small/41/48
+RESULT	big-small/41/48	PASS	NotASquareException	NONSQUARE
+START	big-small/41/-33
+RESULT	big-small/41/-33	PASS	34	SQUARE
+START	big-small/41/8
+RESULT	big-small/41/8	PASS	34	SQUARE
+START	big-small/41/49
+RESULT	big-small/41/49	PASS	34	SQUARE
+START	big-small/41/-32
+RESULT	big-small/41/-32	PASS	38	SQUARE
+START	big-small/41/9
+RESULT	big-small/41/9	PASS	38	SQUARE
+START	big-small/41/50
+RESULT	big-small/41/50	PASS	38	SQUARE
+START	big-small/41/-31
+RESULT	big-small/41/-31	PASS	16	SQUARE
+START	big-small/41/10
+RESULT	big-small/41/10	PASS	16	SQUARE
+START	big-small/41/51
+RESULT	big-small/41/51	PASS	16	SQUARE
+START	big-small/41/-30
+RESULT	big-small/41/-30	PASS	NotASquareException	NONSQUARE
+START	big-small/41/11
+RESULT	big-small/41/11	PASS	NotASquareException	NONSQUARE
+START	big-small/41/52
+RESULT	big-small/41/52	PASS	NotASquareException	NONSQUARE
+START	big-small/41/-29
+RESULT	big-small/41/-29	PASS	NotASquareException	NONSQUARE
+START	big-small/41/12
+RESULT	big-small/41/12	PASS	NotASquareException	NONSQUARE
+START	big-small/41/53
+RESULT	big-small/41/53	PASS	NotASquareException	NONSQUARE
+START	big-small/41/-28
+RESULT	big-small/41/-28	PASS	NotASquareException	NONSQUARE
+START	big-small/41/13
+RESULT	big-small/41/13	PASS	NotASquareException	NONSQUARE
+START	big-small/41/54
+RESULT	big-small/41/54	PASS	NotASquareException	NONSQUARE
+START	big-small/41/-27
+RESULT	big-small/41/-27	PASS	NotASquareException	NONSQUARE
+START	big-small/41/14
+RESULT	big-small/41/14	PASS	NotASquareException	NONSQUARE
+START	big-small/41/55
+RESULT	big-small/41/55	PASS	NotASquareException	NONSQUARE
+START	big-small/41/-26
+RESULT	big-small/41/-26	PASS	NotASquareException	NONSQUARE
+START	big-small/41/15
+RESULT	big-small/41/15	PASS	NotASquareException	NONSQUARE
+START	big-small/41/56
+RESULT	big-small/41/56	PASS	NotASquareException	NONSQUARE
+START	big-small/41/-25
+RESULT	big-small/41/-25	PASS	37	SQUARE
+START	big-small/41/16
+RESULT	big-small/41/16	PASS	37	SQUARE
+START	big-small/41/57
+RESULT	big-small/41/57	PASS	37	SQUARE
+START	big-small/41/-24
+RESULT	big-small/41/-24	PASS	NotASquareException	NONSQUARE
+START	big-small/41/17
+RESULT	big-small/41/17	PASS	NotASquareException	NONSQUARE
+START	big-small/41/58
+RESULT	big-small/41/58	PASS	NotASquareException	NONSQUARE
+START	big-small/41/-23
+RESULT	big-small/41/-23	PASS	10	SQUARE
+START	big-small/41/18
+RESULT	big-small/41/18	PASS	10	SQUARE
+START	big-small/41/59
+RESULT	big-small/41/59	PASS	10	SQUARE
+START	big-small/41/-22
+RESULT	big-small/41/-22	PASS	NotASquareException	NONSQUARE
+START	big-small/41/19
+RESULT	big-small/41/19	PASS	NotASquareException	NONSQUARE
+START	big-small/41/60
+RESULT	big-small/41/60	PASS	NotASquareException	NONSQUARE
+START	big-small/41/-21
+RESULT	big-small/41/-21	PASS	26	SQUARE
+START	big-small/41/20
+RESULT	big-small/41/20	PASS	26	SQUARE
+START	big-small/41/61
+RESULT	big-small/41/61	PASS	26	SQUARE
+START	big-small/41/-20
+RESULT	big-small/41/-20	PASS	12	SQUARE
+START	big-small/41/21
+RESULT	big-small/41/21	PASS	12	SQUARE
+START	big-small/41/62
+RESULT	big-small/41/62	PASS	12	SQUARE
+START	big-small/41/-19
+RESULT	big-small/41/-19	PASS	NotASquareException	NONSQUARE
+START	big-small/41/22
+RESULT	big-small/41/22	PASS	NotASquareException	NONSQUARE
+START	big-small/41/63
+RESULT	big-small/41/63	PASS	NotASquareException	NONSQUARE
+START	big-small/41/-18
+RESULT	big-small/41/-18	PASS	33	SQUARE
+START	big-small/41/23
+RESULT	big-small/41/23	PASS	33	SQUARE
+START	big-small/41/64
+RESULT	big-small/41/64	PASS	33	SQUARE
+START	big-small/41/-17
+RESULT	big-small/41/-17	PASS	NotASquareException	NONSQUARE
+START	big-small/41/24
+RESULT	big-small/41/24	PASS	NotASquareException	NONSQUARE
+START	big-small/41/65
+RESULT	big-small/41/65	PASS	NotASquareException	NONSQUARE
+START	big-small/41/-16
+RESULT	big-small/41/-16	PASS	36	SQUARE
+START	big-small/41/25
+RESULT	big-small/41/25	PASS	36	SQUARE
+START	big-small/41/66
+RESULT	big-small/41/66	PASS	36	SQUARE
+START	big-small/41/-15
+RESULT	big-small/41/-15	PASS	NotASquareException	NONSQUARE
+START	big-small/41/26
+RESULT	big-small/41/26	PASS	NotASquareException	NONSQUARE
+START	big-small/41/67
+RESULT	big-small/41/67	PASS	NotASquareException	NONSQUARE
+START	big-small/41/-14
+RESULT	big-small/41/-14	PASS	NotASquareException	NONSQUARE
+START	big-small/41/27
+RESULT	big-small/41/27	PASS	NotASquareException	NONSQUARE
+START	big-small/41/68
+RESULT	big-small/41/68	PASS	NotASquareException	NONSQUARE
+START	big-small/41/-13
+RESULT	big-small/41/-13	PASS	NotASquareException	NONSQUARE
+START	big-small/41/28
+RESULT	big-small/41/28	PASS	NotASquareException	NONSQUARE
+START	big-small/41/69
+RESULT	big-small/41/69	PASS	NotASquareException	NONSQUARE
+START	big-small/41/-12
+RESULT	big-small/41/-12	PASS	NotASquareException	NONSQUARE
+START	big-small/41/29
+RESULT	big-small/41/29	PASS	NotASquareException	NONSQUARE
+START	big-small/41/70
+RESULT	big-small/41/70	PASS	NotASquareException	NONSQUARE
+START	big-small/41/-11
+RESULT	big-small/41/-11	PASS	NotASquareException	NONSQUARE
+START	big-small/41/30
+RESULT	big-small/41/30	PASS	NotASquareException	NONSQUARE
+START	big-small/41/71
+RESULT	big-small/41/71	PASS	NotASquareException	NONSQUARE
+START	big-small/41/-10
+RESULT	big-small/41/-10	PASS	20	SQUARE
+START	big-small/41/31
+RESULT	big-small/41/31	PASS	20	SQUARE
+START	big-small/41/72
+RESULT	big-small/41/72	PASS	20	SQUARE
+START	big-small/41/-9
+RESULT	big-small/41/-9	PASS	14	SQUARE
+START	big-small/41/32
+RESULT	big-small/41/32	PASS	14	SQUARE
+START	big-small/41/73
+RESULT	big-small/41/73	PASS	14	SQUARE
+START	big-small/41/-8
+RESULT	big-small/41/-8	PASS	19	SQUARE
+START	big-small/41/33
+RESULT	big-small/41/33	PASS	19	SQUARE
+START	big-small/41/74
+RESULT	big-small/41/74	PASS	19	SQUARE
+START	big-small/41/-7
+RESULT	big-small/41/-7	PASS	NotASquareException	NONSQUARE
+START	big-small/41/34
+RESULT	big-small/41/34	PASS	NotASquareException	NONSQUARE
+START	big-small/41/75
+RESULT	big-small/41/75	PASS	NotASquareException	NONSQUARE
+START	big-small/41/-6
+RESULT	big-small/41/-6	PASS	NotASquareException	NONSQUARE
+START	big-small/41/35
+RESULT	big-small/41/35	PASS	NotASquareException	NONSQUARE
+START	big-small/41/76
+RESULT	big-small/41/76	PASS	NotASquareException	NONSQUARE
+START	big-small/41/-5
+RESULT	big-small/41/-5	PASS	6	SQUARE
+START	big-small/41/36
+RESULT	big-small/41/36	PASS	6	SQUARE
+START	big-small/41/77
+RESULT	big-small/41/77	PASS	6	SQUARE
+START	big-small/41/-4
+RESULT	big-small/41/-4	PASS	18	SQUARE
+START	big-small/41/37
+RESULT	big-small/41/37	PASS	18	SQUARE
+START	big-small/41/78
+RESULT	big-small/41/78	PASS	18	SQUARE
+START	big-small/41/-3
+RESULT	big-small/41/-3	PASS	NotASquareException	NONSQUARE
+START	big-small/41/38
+RESULT	big-small/41/38	PASS	NotASquareException	NONSQUARE
+START	big-small/41/79
+RESULT	big-small/41/79	PASS	NotASquareException	NONSQUARE
+START	big-small/41/-2
+RESULT	big-small/41/-2	PASS	11	SQUARE
+START	big-small/41/39
+RESULT	big-small/41/39	PASS	11	SQUARE
+START	big-small/41/80
+RESULT	big-small/41/80	PASS	11	SQUARE
+START	big-small/41/-1
+RESULT	big-small/41/-1	PASS	32	SQUARE
+START	big-small/41/40
+RESULT	big-small/41/40	PASS	32	SQUARE
+START	big-small/41/81
+RESULT	big-small/41/81	PASS	32	SQUARE
+START	big-small/97/-97
+RESULT	big-small/97/-97	REJECTED_SQUARE	NotASquareException	SQUARE
+START	big-small/97/0
+RESULT	big-small/97/0	REJECTED_SQUARE	NotASquareException	SQUARE
+START	big-small/97/97
+RESULT	big-small/97/97	REJECTED_SQUARE	NotASquareException	SQUARE
+START	big-small/97/-96
+RESULT	big-small/97/-96	PASS	1	SQUARE
+START	big-small/97/1
+RESULT	big-small/97/1	PASS	1	SQUARE
+START	big-small/97/98
+RESULT	big-small/97/98	PASS	1	SQUARE
+START	big-small/97/-95
+RESULT	big-small/97/-95	PASS	83	SQUARE
+START	big-small/97/2
+RESULT	big-small/97/2	PASS	83	SQUARE
+START	big-small/97/99
+RESULT	big-small/97/99	PASS	83	SQUARE
+START	big-small/97/-94
+RESULT	big-small/97/-94	PASS	87	SQUARE
+START	big-small/97/3
+RESULT	big-small/97/3	PASS	87	SQUARE
+START	big-small/97/100
+RESULT	big-small/97/100	PASS	87	SQUARE
+START	big-small/97/-93
+RESULT	big-small/97/-93	PASS	95	SQUARE
+START	big-small/97/4
+RESULT	big-small/97/4	PASS	95	SQUARE
+START	big-small/97/101
+RESULT	big-small/97/101	PASS	95	SQUARE
+START	big-small/97/-92
+RESULT	big-small/97/-92	PASS	NotASquareException	NONSQUARE
+START	big-small/97/5
+RESULT	big-small/97/5	PASS	NotASquareException	NONSQUARE
+START	big-small/97/102
+RESULT	big-small/97/102	PASS	NotASquareException	NONSQUARE
+START	big-small/97/-91
+RESULT	big-small/97/-91	PASS	54	SQUARE
+START	big-small/97/6
+RESULT	big-small/97/6	PASS	54	SQUARE
+START	big-small/97/103
+RESULT	big-small/97/103	PASS	54	SQUARE
+START	big-small/97/-90
+RESULT	big-small/97/-90	PASS	NotASquareException	NONSQUARE
+START	big-small/97/7
+RESULT	big-small/97/7	PASS	NotASquareException	NONSQUARE
+START	big-small/97/104
+RESULT	big-small/97/104	PASS	NotASquareException	NONSQUARE
+START	big-small/97/-89
+RESULT	big-small/97/-89	PASS	69	SQUARE
+START	big-small/97/8
+RESULT	big-small/97/8	PASS	69	SQUARE
+START	big-small/97/105
+RESULT	big-small/97/105	PASS	69	SQUARE
+START	big-small/97/-88
+RESULT	big-small/97/-88	PASS	94	SQUARE
+START	big-small/97/9
+RESULT	big-small/97/9	PASS	94	SQUARE
+START	big-small/97/106
+RESULT	big-small/97/106	PASS	94	SQUARE
+START	big-small/97/-87
+RESULT	big-small/97/-87	PASS	NotASquareException	NONSQUARE
+START	big-small/97/10
+RESULT	big-small/97/10	PASS	NotASquareException	NONSQUARE
+START	big-small/97/107
+RESULT	big-small/97/107	PASS	NotASquareException	NONSQUARE
+START	big-small/97/-86
+RESULT	big-small/97/-86	PASS	37	SQUARE
+START	big-small/97/11
+RESULT	big-small/97/11	PASS	37	SQUARE
+START	big-small/97/108
+RESULT	big-small/97/108	PASS	37	SQUARE
+START	big-small/97/-85
+RESULT	big-small/97/-85	PASS	77	SQUARE
+START	big-small/97/12
+RESULT	big-small/97/12	PASS	77	SQUARE
+START	big-small/97/109
+RESULT	big-small/97/109	PASS	77	SQUARE
+START	big-small/97/-84
+RESULT	big-small/97/-84	PASS	NotASquareException	NONSQUARE
+START	big-small/97/13
+RESULT	big-small/97/13	PASS	NotASquareException	NONSQUARE
+START	big-small/97/110
+RESULT	big-small/97/110	PASS	NotASquareException	NONSQUARE
+START	big-small/97/-83
+RESULT	big-small/97/-83	PASS	NotASquareException	NONSQUARE
+START	big-small/97/14
+RESULT	big-small/97/14	PASS	NotASquareException	NONSQUARE
+START	big-small/97/111
+RESULT	big-small/97/111	PASS	NotASquareException	NONSQUARE
+START	big-small/97/-82
+RESULT	big-small/97/-82	PASS	NotASquareException	NONSQUARE
+START	big-small/97/15
+RESULT	big-small/97/15	PASS	NotASquareException	NONSQUARE
+START	big-small/97/112
+RESULT	big-small/97/112	PASS	NotASquareException	NONSQUARE
+START	big-small/97/-81
+RESULT	big-small/97/-81	PASS	93	SQUARE
+START	big-small/97/16
+RESULT	big-small/97/16	PASS	93	SQUARE
+START	big-small/97/113
+RESULT	big-small/97/113	PASS	93	SQUARE
+START	big-small/97/-80
+RESULT	big-small/97/-80	PASS	NotASquareException	NONSQUARE
+START	big-small/97/17
+RESULT	big-small/97/17	PASS	NotASquareException	NONSQUARE
+START	big-small/97/114
+RESULT	big-small/97/114	PASS	NotASquareException	NONSQUARE
+START	big-small/97/-79
+RESULT	big-small/97/-79	PASS	55	SQUARE
+START	big-small/97/18
+RESULT	big-small/97/18	PASS	55	SQUARE
+START	big-small/97/115
+RESULT	big-small/97/115	PASS	55	SQUARE
+START	big-small/97/-78
+RESULT	big-small/97/-78	PASS	NotASquareException	NONSQUARE
+START	big-small/97/19
+RESULT	big-small/97/19	PASS	NotASquareException	NONSQUARE
+START	big-small/97/116
+RESULT	big-small/97/116	PASS	NotASquareException	NONSQUARE
+START	big-small/97/-77
+RESULT	big-small/97/-77	PASS	NotASquareException	NONSQUARE
+START	big-small/97/20
+RESULT	big-small/97/20	PASS	NotASquareException	NONSQUARE
+START	big-small/97/117
+RESULT	big-small/97/117	PASS	NotASquareException	NONSQUARE
+START	big-small/97/-76
+RESULT	big-small/97/-76	PASS	NotASquareException	NONSQUARE
+START	big-small/97/21
+RESULT	big-small/97/21	PASS	NotASquareException	NONSQUARE
+START	big-small/97/118
+RESULT	big-small/97/118	PASS	NotASquareException	NONSQUARE
+START	big-small/97/-75
+RESULT	big-small/97/-75	PASS	33	SQUARE
+START	big-small/97/22
+RESULT	big-small/97/22	PASS	33	SQUARE
+START	big-small/97/119
+RESULT	big-small/97/119	PASS	33	SQUARE
+START	big-small/97/-74
+RESULT	big-small/97/-74	PASS	NotASquareException	NONSQUARE
+START	big-small/97/23
+RESULT	big-small/97/23	PASS	NotASquareException	NONSQUARE
+START	big-small/97/120
+RESULT	big-small/97/120	PASS	NotASquareException	NONSQUARE
+START	big-small/97/-73
+RESULT	big-small/97/-73	PASS	11	SQUARE
+START	big-small/97/24
+RESULT	big-small/97/24	PASS	11	SQUARE
+START	big-small/97/121
+RESULT	big-small/97/121	PASS	11	SQUARE
+START	big-small/97/-72
+RESULT	big-small/97/-72	PASS	92	SQUARE
+START	big-small/97/25
+RESULT	big-small/97/25	PASS	92	SQUARE
+START	big-small/97/122
+RESULT	big-small/97/122	PASS	92	SQUARE
+START	big-small/97/-71
+RESULT	big-small/97/-71	PASS	NotASquareException	NONSQUARE
+START	big-small/97/26
+RESULT	big-small/97/26	PASS	NotASquareException	NONSQUARE
+START	big-small/97/123
+RESULT	big-small/97/123	PASS	NotASquareException	NONSQUARE
+START	big-small/97/-70
+RESULT	big-small/97/-70	PASS	67	SQUARE
+START	big-small/97/27
+RESULT	big-small/97/27	PASS	67	SQUARE
+START	big-small/97/124
+RESULT	big-small/97/124	PASS	67	SQUARE
+START	big-small/97/-69
+RESULT	big-small/97/-69	PASS	NotASquareException	NONSQUARE
+START	big-small/97/28
+RESULT	big-small/97/28	PASS	NotASquareException	NONSQUARE
+START	big-small/97/125
+RESULT	big-small/97/125	PASS	NotASquareException	NONSQUARE
+START	big-small/97/-68
+RESULT	big-small/97/-68	PASS	NotASquareException	NONSQUARE
+START	big-small/97/29
+RESULT	big-small/97/29	PASS	NotASquareException	NONSQUARE
+START	big-small/97/126
+RESULT	big-small/97/126	PASS	NotASquareException	NONSQUARE
+START	big-small/97/-67
+RESULT	big-small/97/-67	PASS	NotASquareException	NONSQUARE
+START	big-small/97/30
+RESULT	big-small/97/30	PASS	NotASquareException	NONSQUARE
+START	big-small/97/127
+RESULT	big-small/97/127	PASS	NotASquareException	NONSQUARE
+START	big-small/97/-66
+RESULT	big-small/97/-66	PASS	82	SQUARE
+START	big-small/97/31
+RESULT	big-small/97/31	PASS	82	SQUARE
+START	big-small/97/128
+RESULT	big-small/97/128	PASS	82	SQUARE
+START	big-small/97/-65
+RESULT	big-small/97/-65	PASS	41	SQUARE
+START	big-small/97/32
+RESULT	big-small/97/32	PASS	41	SQUARE
+START	big-small/97/129
+RESULT	big-small/97/129	PASS	41	SQUARE
+START	big-small/97/-64
+RESULT	big-small/97/-64	PASS	79	SQUARE
+START	big-small/97/33
+RESULT	big-small/97/33	PASS	79	SQUARE
+START	big-small/97/130
+RESULT	big-small/97/130	PASS	79	SQUARE
+START	big-small/97/-63
+RESULT	big-small/97/-63	PASS	NotASquareException	NONSQUARE
+START	big-small/97/34
+RESULT	big-small/97/34	PASS	NotASquareException	NONSQUARE
+START	big-small/97/131
+RESULT	big-small/97/131	PASS	NotASquareException	NONSQUARE
+START	big-small/97/-62
+RESULT	big-small/97/-62	PASS	61	SQUARE
+START	big-small/97/35
+RESULT	big-small/97/35	PASS	61	SQUARE
+START	big-small/97/132
+RESULT	big-small/97/132	PASS	61	SQUARE
+START	big-small/97/-61
+RESULT	big-small/97/-61	PASS	91	SQUARE
+START	big-small/97/36
+RESULT	big-small/97/36	PASS	91	SQUARE
+START	big-small/97/133
+RESULT	big-small/97/133	PASS	91	SQUARE
+START	big-small/97/-60
+RESULT	big-small/97/-60	PASS	NotASquareException	NONSQUARE
+START	big-small/97/37
+RESULT	big-small/97/37	PASS	NotASquareException	NONSQUARE
+START	big-small/97/134
+RESULT	big-small/97/134	PASS	NotASquareException	NONSQUARE
+START	big-small/97/-59
+RESULT	big-small/97/-59	PASS	NotASquareException	NONSQUARE
+START	big-small/97/38
+RESULT	big-small/97/38	PASS	NotASquareException	NONSQUARE
+START	big-small/97/135
+RESULT	big-small/97/135	PASS	NotASquareException	NONSQUARE
+START	big-small/97/-58
+RESULT	big-small/97/-58	PASS	NotASquareException	NONSQUARE
+START	big-small/97/39
+RESULT	big-small/97/39	PASS	NotASquareException	NONSQUARE
+START	big-small/97/136
+RESULT	big-small/97/136	PASS	NotASquareException	NONSQUARE
+START	big-small/97/-57
+RESULT	big-small/97/-57	PASS	NotASquareException	NONSQUARE
+START	big-small/97/40
+RESULT	big-small/97/40	PASS	NotASquareException	NONSQUARE
+START	big-small/97/137
+RESULT	big-small/97/137	PASS	NotASquareException	NONSQUARE
+START	big-small/97/-56
+RESULT	big-small/97/-56	PASS	NotASquareException	NONSQUARE
+START	big-small/97/41
+RESULT	big-small/97/41	PASS	NotASquareException	NONSQUARE
+START	big-small/97/138
+RESULT	big-small/97/138	PASS	NotASquareException	NONSQUARE
+START	big-small/97/-55
+RESULT	big-small/97/-55	PASS	NotASquareException	NONSQUARE
+START	big-small/97/42
+RESULT	big-small/97/42	PASS	NotASquareException	NONSQUARE
+START	big-small/97/139
+RESULT	big-small/97/139	PASS	NotASquareException	NONSQUARE
+START	big-small/97/-54
+RESULT	big-small/97/-54	PASS	72	SQUARE
+START	big-small/97/43
+RESULT	big-small/97/43	PASS	72	SQUARE
+START	big-small/97/140
+RESULT	big-small/97/140	PASS	72	SQUARE
+START	big-small/97/-53
+RESULT	big-small/97/-53	PASS	74	SQUARE
+START	big-small/97/44
+RESULT	big-small/97/44	PASS	74	SQUARE
+START	big-small/97/141
+RESULT	big-small/97/141	PASS	74	SQUARE
+START	big-small/97/-52
+RESULT	big-small/97/-52	PASS	NotASquareException	NONSQUARE
+START	big-small/97/45
+RESULT	big-small/97/45	PASS	NotASquareException	NONSQUARE
+START	big-small/97/142
+RESULT	big-small/97/142	PASS	NotASquareException	NONSQUARE
+START	big-small/97/-51
+RESULT	big-small/97/-51	PASS	NotASquareException	NONSQUARE
+START	big-small/97/46
+RESULT	big-small/97/46	PASS	NotASquareException	NONSQUARE
+START	big-small/97/143
+RESULT	big-small/97/143	PASS	NotASquareException	NONSQUARE
+START	big-small/97/-50
+RESULT	big-small/97/-50	PASS	85	SQUARE
+START	big-small/97/47
+RESULT	big-small/97/47	PASS	85	SQUARE
+START	big-small/97/144
+RESULT	big-small/97/144	PASS	85	SQUARE
+START	big-small/97/-49
+RESULT	big-small/97/-49	PASS	57	SQUARE
+START	big-small/97/48
+RESULT	big-small/97/48	PASS	57	SQUARE
+START	big-small/97/145
+RESULT	big-small/97/145	PASS	57	SQUARE
+START	big-small/97/-48
+RESULT	big-small/97/-48	PASS	7	SQUARE
+START	big-small/97/49
+RESULT	big-small/97/49	PASS	7	SQUARE
+START	big-small/97/146
+RESULT	big-small/97/146	PASS	7	SQUARE
+START	big-small/97/-47
+RESULT	big-small/97/-47	PASS	27	SQUARE
+START	big-small/97/50
+RESULT	big-small/97/50	PASS	27	SQUARE
+START	big-small/97/147
+RESULT	big-small/97/147	PASS	27	SQUARE
+START	big-small/97/-46
+RESULT	big-small/97/-46	PASS	NotASquareException	NONSQUARE
+START	big-small/97/51
+RESULT	big-small/97/51	PASS	NotASquareException	NONSQUARE
+START	big-small/97/148
+RESULT	big-small/97/148	PASS	NotASquareException	NONSQUARE
+START	big-small/97/-45
+RESULT	big-small/97/-45	PASS	NotASquareException	NONSQUARE
+START	big-small/97/52
+RESULT	big-small/97/52	PASS	NotASquareException	NONSQUARE
+START	big-small/97/149
+RESULT	big-small/97/149	PASS	NotASquareException	NONSQUARE
+START	big-small/97/-44
+RESULT	big-small/97/-44	PASS	76	SQUARE
+START	big-small/97/53
+RESULT	big-small/97/53	PASS	76	SQUARE
+START	big-small/97/150
+RESULT	big-small/97/150	PASS	76	SQUARE
+START	big-small/97/-43
+RESULT	big-small/97/-43	PASS	65	SQUARE
+START	big-small/97/54
+RESULT	big-small/97/54	PASS	65	SQUARE
+START	big-small/97/151
+RESULT	big-small/97/151	PASS	65	SQUARE
+START	big-small/97/-42
+RESULT	big-small/97/-42	PASS	NotASquareException	NONSQUARE
+START	big-small/97/55
+RESULT	big-small/97/55	PASS	NotASquareException	NONSQUARE
+START	big-small/97/152
+RESULT	big-small/97/152	PASS	NotASquareException	NONSQUARE
+START	big-small/97/-41
+RESULT	big-small/97/-41	PASS	NotASquareException	NONSQUARE
+START	big-small/97/56
+RESULT	big-small/97/56	PASS	NotASquareException	NONSQUARE
+START	big-small/97/153
+RESULT	big-small/97/153	PASS	NotASquareException	NONSQUARE
+START	big-small/97/-40
+RESULT	big-small/97/-40	PASS	NotASquareException	NONSQUARE
+START	big-small/97/57
+RESULT	big-small/97/57	PASS	NotASquareException	NONSQUARE
+START	big-small/97/154
+RESULT	big-small/97/154	PASS	NotASquareException	NONSQUARE
+START	big-small/97/-39
+RESULT	big-small/97/-39	PASS	NotASquareException	NONSQUARE
+START	big-small/97/58
+RESULT	big-small/97/58	PASS	NotASquareException	NONSQUARE
+START	big-small/97/155
+RESULT	big-small/97/155	PASS	NotASquareException	NONSQUARE
+START	big-small/97/-38
+RESULT	big-small/97/-38	PASS	NotASquareException	NONSQUARE
+START	big-small/97/59
+RESULT	big-small/97/59	PASS	NotASquareException	NONSQUARE
+START	big-small/97/156
+RESULT	big-small/97/156	PASS	NotASquareException	NONSQUARE
+START	big-small/97/-37
+RESULT	big-small/97/-37	PASS	NotASquareException	NONSQUARE
+START	big-small/97/60
+RESULT	big-small/97/60	PASS	NotASquareException	NONSQUARE
+START	big-small/97/157
+RESULT	big-small/97/157	PASS	NotASquareException	NONSQUARE
+START	big-small/97/-36
+RESULT	big-small/97/-36	PASS	35	SQUARE
+START	big-small/97/61
+RESULT	big-small/97/61	PASS	35	SQUARE
+START	big-small/97/158
+RESULT	big-small/97/158	PASS	132	SQUARE
+START	big-small/97/-35
+RESULT	big-small/97/-35	PASS	81	SQUARE
+START	big-small/97/62
+RESULT	big-small/97/62	PASS	81	SQUARE
+START	big-small/97/159
+RESULT	big-small/97/159	PASS	81	SQUARE
+START	big-small/97/-34
+RESULT	big-small/97/-34	PASS	NotASquareException	NONSQUARE
+START	big-small/97/63
+RESULT	big-small/97/63	PASS	NotASquareException	NONSQUARE
+START	big-small/97/160
+RESULT	big-small/97/160	PASS	NotASquareException	NONSQUARE
+START	big-small/97/-33
+RESULT	big-small/97/-33	PASS	89	SQUARE
+START	big-small/97/64
+RESULT	big-small/97/64	PASS	89	SQUARE
+START	big-small/97/161
+RESULT	big-small/97/161	PASS	89	SQUARE
+START	big-small/97/-32
+RESULT	big-small/97/-32	PASS	68	SQUARE
+START	big-small/97/65
+RESULT	big-small/97/65	PASS	68	SQUARE
+START	big-small/97/162
+RESULT	big-small/97/162	PASS	68	SQUARE
+START	big-small/97/-31
+RESULT	big-small/97/-31	PASS	39	SQUARE
+START	big-small/97/66
+RESULT	big-small/97/66	PASS	39	SQUARE
+START	big-small/97/163
+RESULT	big-small/97/163	PASS	39	SQUARE
+START	big-small/97/-30
+RESULT	big-small/97/-30	PASS	NotASquareException	NONSQUARE
+START	big-small/97/67
+RESULT	big-small/97/67	PASS	NotASquareException	NONSQUARE
+START	big-small/97/164
+RESULT	big-small/97/164	PASS	NotASquareException	NONSQUARE
+START	big-small/97/-29
+RESULT	big-small/97/-29	PASS	NotASquareException	NONSQUARE
+START	big-small/97/68
+RESULT	big-small/97/68	PASS	NotASquareException	NONSQUARE
+START	big-small/97/165
+RESULT	big-small/97/165	PASS	NotASquareException	NONSQUARE
+START	big-small/97/-28
+RESULT	big-small/97/-28	PASS	NotASquareException	NONSQUARE
+START	big-small/97/69
+RESULT	big-small/97/69	PASS	NotASquareException	NONSQUARE
+START	big-small/97/166
+RESULT	big-small/97/166	PASS	NotASquareException	NONSQUARE
+START	big-small/97/-27
+RESULT	big-small/97/-27	PASS	19	SQUARE
+START	big-small/97/70
+RESULT	big-small/97/70	PASS	19	SQUARE
+START	big-small/97/167
+RESULT	big-small/97/167	PASS	19	SQUARE
+START	big-small/97/-26
+RESULT	big-small/97/-26	PASS	NotASquareException	NONSQUARE
+START	big-small/97/71
+RESULT	big-small/97/71	PASS	NotASquareException	NONSQUARE
+START	big-small/97/168
+RESULT	big-small/97/168	PASS	NotASquareException	NONSQUARE
+START	big-small/97/-25
+RESULT	big-small/97/-25	PASS	13	SQUARE
+START	big-small/97/72
+RESULT	big-small/97/72	PASS	13	SQUARE
+START	big-small/97/169
+RESULT	big-small/97/169	PASS	13	SQUARE
+START	big-small/97/-24
+RESULT	big-small/97/-24	PASS	49	SQUARE
+START	big-small/97/73
+RESULT	big-small/97/73	PASS	49	SQUARE
+START	big-small/97/170
+RESULT	big-small/97/170	PASS	49	SQUARE
+START	big-small/97/-23
+RESULT	big-small/97/-23	PASS	NotASquareException	NONSQUARE
+START	big-small/97/74
+RESULT	big-small/97/74	PASS	NotASquareException	NONSQUARE
+START	big-small/97/171
+RESULT	big-small/97/171	PASS	NotASquareException	NONSQUARE
+START	big-small/97/-22
+RESULT	big-small/97/-22	PASS	47	SQUARE
+START	big-small/97/75
+RESULT	big-small/97/75	PASS	47	SQUARE
+START	big-small/97/172
+RESULT	big-small/97/172	PASS	47	SQUARE
+START	big-small/97/-21
+RESULT	big-small/97/-21	PASS	NotASquareException	NONSQUARE
+START	big-small/97/76
+RESULT	big-small/97/76	PASS	NotASquareException	NONSQUARE
+START	big-small/97/173
+RESULT	big-small/97/173	PASS	NotASquareException	NONSQUARE
+START	big-small/97/-20
+RESULT	big-small/97/-20	PASS	NotASquareException	NONSQUARE
+START	big-small/97/77
+RESULT	big-small/97/77	PASS	NotASquareException	NONSQUARE
+START	big-small/97/174
+RESULT	big-small/97/174	PASS	NotASquareException	NONSQUARE
+START	big-small/97/-19
+RESULT	big-small/97/-19	PASS	NotASquareException	NONSQUARE
+START	big-small/97/78
+RESULT	big-small/97/78	PASS	NotASquareException	NONSQUARE
+START	big-small/97/175
+RESULT	big-small/97/175	PASS	NotASquareException	NONSQUARE
+START	big-small/97/-18
+RESULT	big-small/97/-18	PASS	51	SQUARE
+START	big-small/97/79
+RESULT	big-small/97/79	PASS	51	SQUARE
+START	big-small/97/176
+RESULT	big-small/97/176	PASS	51	SQUARE
+START	big-small/97/-17
+RESULT	big-small/97/-17	PASS	NotASquareException	NONSQUARE
+START	big-small/97/80
+RESULT	big-small/97/80	PASS	NotASquareException	NONSQUARE
+START	big-small/97/177
+RESULT	big-small/97/177	PASS	NotASquareException	NONSQUARE
+START	big-small/97/-16
+RESULT	big-small/97/-16	PASS	88	SQUARE
+START	big-small/97/81
+RESULT	big-small/97/81	PASS	88	SQUARE
+START	big-small/97/178
+RESULT	big-small/97/178	PASS	88	SQUARE
+START	big-small/97/-15
+RESULT	big-small/97/-15	PASS	NotASquareException	NONSQUARE
+START	big-small/97/82
+RESULT	big-small/97/82	PASS	NotASquareException	NONSQUARE
+START	big-small/97/179
+RESULT	big-small/97/179	PASS	NotASquareException	NONSQUARE
+START	big-small/97/-14
+RESULT	big-small/97/-14	PASS	NotASquareException	NONSQUARE
+START	big-small/97/83
+RESULT	big-small/97/83	PASS	NotASquareException	NONSQUARE
+START	big-small/97/180
+RESULT	big-small/97/180	PASS	NotASquareException	NONSQUARE
+START	big-small/97/-13
+RESULT	big-small/97/-13	PASS	NotASquareException	NONSQUARE
+START	big-small/97/84
+RESULT	big-small/97/84	PASS	NotASquareException	NONSQUARE
+START	big-small/97/181
+RESULT	big-small/97/181	PASS	NotASquareException	NONSQUARE
+START	big-small/97/-12
+RESULT	big-small/97/-12	PASS	52	SQUARE
+START	big-small/97/85
+RESULT	big-small/97/85	PASS	52	SQUARE
+START	big-small/97/182
+RESULT	big-small/97/182	PASS	52	SQUARE
+START	big-small/97/-11
+RESULT	big-small/97/-11	PASS	38	SQUARE
+START	big-small/97/86
+RESULT	big-small/97/86	PASS	38	SQUARE
+START	big-small/97/183
+RESULT	big-small/97/183	PASS	38	SQUARE
+START	big-small/97/-10
+RESULT	big-small/97/-10	PASS	NotASquareException	NONSQUARE
+START	big-small/97/87
+RESULT	big-small/97/87	PASS	NotASquareException	NONSQUARE
+START	big-small/97/184
+RESULT	big-small/97/184	PASS	NotASquareException	NONSQUARE
+START	big-small/97/-9
+RESULT	big-small/97/-9	PASS	66	SQUARE
+START	big-small/97/88
+RESULT	big-small/97/88	PASS	66	SQUARE
+START	big-small/97/185
+RESULT	big-small/97/185	PASS	66	SQUARE
+START	big-small/97/-8
+RESULT	big-small/97/-8	PASS	34	SQUARE
+START	big-small/97/89
+RESULT	big-small/97/89	PASS	34	SQUARE
+START	big-small/97/186
+RESULT	big-small/97/186	PASS	34	SQUARE
+START	big-small/97/-7
+RESULT	big-small/97/-7	PASS	NotASquareException	NONSQUARE
+START	big-small/97/90
+RESULT	big-small/97/90	PASS	NotASquareException	NONSQUARE
+START	big-small/97/187
+RESULT	big-small/97/187	PASS	NotASquareException	NONSQUARE
+START	big-small/97/-6
+RESULT	big-small/97/-6	PASS	73	SQUARE
+START	big-small/97/91
+RESULT	big-small/97/91	PASS	73	SQUARE
+START	big-small/97/188
+RESULT	big-small/97/188	PASS	73	SQUARE
+START	big-small/97/-5
+RESULT	big-small/97/-5	PASS	NotASquareException	NONSQUARE
+START	big-small/97/92
+RESULT	big-small/97/92	PASS	NotASquareException	NONSQUARE
+START	big-small/97/189
+RESULT	big-small/97/189	PASS	NotASquareException	NONSQUARE
+START	big-small/97/-4
+RESULT	big-small/97/-4	PASS	44	SQUARE
+START	big-small/97/93
+RESULT	big-small/97/93	PASS	44	SQUARE
+START	big-small/97/190
+RESULT	big-small/97/190	PASS	44	SQUARE
+START	big-small/97/-3
+RESULT	big-small/97/-3	PASS	26	SQUARE
+START	big-small/97/94
+RESULT	big-small/97/94	PASS	26	SQUARE
+START	big-small/97/191
+RESULT	big-small/97/191	PASS	26	SQUARE
+START	big-small/97/-2
+RESULT	big-small/97/-2	PASS	17	SQUARE
+START	big-small/97/95
+RESULT	big-small/97/95	PASS	17	SQUARE
+START	big-small/97/192
+RESULT	big-small/97/192	PASS	17	SQUARE
+START	big-small/97/-1
+RESULT	big-small/97/-1	PASS	22	SQUARE
+START	big-small/97/96
+RESULT	big-small/97/96	PASS	22	SQUARE
+START	big-small/97/193
+RESULT	big-small/97/193	PASS	22	SQUARE
+SUMMARY	662

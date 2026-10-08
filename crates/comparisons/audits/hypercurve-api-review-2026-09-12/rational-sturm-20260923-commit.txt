@@ -1,0 +1,7 @@
+Retain compact polynomial Sturm evidence over selected roots
+
+Build regular rational Sturm rows over the integer polynomial ring and replay their selected leading coefficients strictly. This avoids expanded field inverses during contact isolation while preserving the existing exact field path for degree changes, general Real coefficients, and retained quotients. Keep the original source polynomial and previously acquired inverse and sign evidence.
+
+Cover the retained degree-41 fillet contact in both orientations and policies, repeated roots on reducible presentations, negative scales, and fallback degree changes and exact nonrational coefficients. Replace the former unit-leading storage assertion with its existing root-count contract.
+
+Validation: all 499 Hypersolve library tests and all-target checks with all features and no default features pass. Hypercurve has 1,188 library passes and six ignored cases; all nine assertion failures and nine 75-second timeouts reproduce on the pinned parent. The degree-41 isolation fixture completes in about half a second; its parent exceeded 45 seconds. Full fillet/Boolean closure still reaches a later expensive GCD replay.

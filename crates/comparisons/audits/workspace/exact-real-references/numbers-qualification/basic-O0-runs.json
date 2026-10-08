@@ -1,0 +1,42 @@
+[
+  {
+    "args": [
+      "grid"
+    ],
+    "timeout": 60000,
+    "status": 0,
+    "signal": null,
+    "stdout": "TOTAL add checks=19208 failures=0\nTOTAL sub checks=19208 failures=0\nTOTAL mul checks=19208 failures=0\nTOTAL min checks=19208 failures=0\nTOTAL max checks=19208 failures=0\nTOTAL division checks=18816 failures=0\nTOTAL unary checks=392 failures=0\nTOTAL sqrt checks=2056 failures=0\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "decisions"
+    ],
+    "timeout": 60000,
+    "status": 0,
+    "signal": null,
+    "stdout": "FAIL public-decisions ((-1) % 348449143727040986586495598010130648530944,\"eq\")\nFAIL public-decisions ((-1) % 348449143727040986586495598010130648530944,\"lt\")\nFAIL public-decisions ((-1) % 348449143727040986586495598010130648530944,\"sign\")\nFAIL public-decisions ((-1) % 1393796574908163946345982392040522594123776,\"eq\")\nFAIL public-decisions ((-1) % 1393796574908163946345982392040522594123776,\"lt\")\nFAIL public-decisions ((-1) % 1393796574908163946345982392040522594123776,\"sign\")\nFAIL public-decisions (1 % 1393796574908163946345982392040522594123776,\"eq\")\nFAIL public-decisions (1 % 1393796574908163946345982392040522594123776,\"gt\")\nFAIL public-decisions (1 % 1393796574908163946345982392040522594123776,\"sign\")\nFAIL public-decisions ((-1) % 1461501637330902918203684832716283019655932542976,\"eq\")\nFAIL public-decisions ((-1) % 1461501637330902918203684832716283019655932542976,\"lt\")\nFAIL public-decisions ((-1) % 1461501637330902918203684832716283019655932542976,\"sign\")\nTOTAL public-decisions checks=64 failures=21\nFAIL properFraction-integer ((-63) % 8,-8,\"0.125\")\nFAIL properFraction-integer ((-31) % 4,-8,\"0.25\")\nFAIL properFraction-integer ((-61) % 8,-8,\"0.375\")\nFAIL properFraction-integer ((-55) % 8,-7,\"0.125\")\nFAIL properFraction-integer ((-27) % 4,-7,\"0.25\")\nFAIL properFraction-integer ((-53) % 8,-7,\"0.375\")\nFAIL properFraction-integer ((-47) % 8,-6,\"0.125\")\nFAIL properFraction-integer ((-23) % 4,-6,\"0.25\")\nFAIL properFraction-integer ((-45) % 8,-6,\"0.375\")\nFAIL properFraction-integer ((-39) % 8,-5,\"0.125\")\nFAIL properFraction-integer ((-19) % 4,-5,\"0.25\")\nFAIL properFraction-integer ((-37) % 8,-5,\"0.375\")\nTOTAL properFraction-integer checks=129 failures=56\nTOTAL public-bridge checks=20 failures=0\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "derivatives"
+    ],
+    "timeout": 60000,
+    "status": 0,
+    "signal": null,
+    "stdout": "TOTAL polynomial-derivatives checks=297 failures=0\nFAIL atan-derivatives ((-2) % 1,443075998594971957634602353426781525)\nFAIL atan-derivatives ((-1) % 2,-1772303994379887830538409413707126101)\nFAIL atan-derivatives (0 % 1,-1329227995784915872903807060280344576)\nFAIL atan-derivatives (1 % 2,-1772303994379887830538409413707126101)\nFAIL atan-derivatives (2 % 1,443075998594971957634602353426781525)\nTOTAL atan-derivatives checks=5 failures=5\nFAIL approximate-zero-pruning 0\nTOTAL approximate-zero-pruning checks=1 failures=1\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "boundary"
+    ],
+    "timeout": 60000,
+    "status": 0,
+    "signal": null,
+    "stdout": "FAIL BigFloat-scaled-zero -8\nFAIL BigFloat-scaled-zero -7\nFAIL BigFloat-scaled-zero -6\nFAIL BigFloat-scaled-zero -5\nFAIL BigFloat-scaled-zero -4\nFAIL BigFloat-scaled-zero -3\nFAIL BigFloat-scaled-zero -2\nFAIL BigFloat-scaled-zero -1\nFAIL BigFloat-scaled-zero 1\nFAIL BigFloat-scaled-zero 2\nFAIL BigFloat-scaled-zero 3\nFAIL BigFloat-scaled-zero 4\nTOTAL BigFloat-scaled-zero checks=17 failures=16\nOBS symbolic zero-substitution x/x=1 % 1\nOBS interval self Eq=False self Ne=False\n",
+    "stderr": ""
+  }
+]

@@ -1,0 +1,34 @@
+{
+  "source_manifest": "fillet-reoffset-compact-20260926-v243-sources.json",
+  "source_directory": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/source-archives/fillet-reoffset-compact-20260926-v243",
+  "workspace_guard": "public-fillet-families-full-20260926-v236-sources.json",
+  "parent_commit": "13691647247ae191903c76160c760174cd28e4f0",
+  "cases": [
+    {
+      "name": "approximate_512_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions",
+      "returncode": 101,
+      "log": "fillet-reoffset-compact-20260926-v243-approximate_512_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions.log",
+      "elapsed_seconds": 56.035333056002855
+    }
+  ],
+  "all_processes_reaped": true,
+  "command": [
+    "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+    "test",
+    "--test",
+    "hypercurve_curve_region_promotion",
+    "--release",
+    "--all-features",
+    "--no-run",
+    "--message-format=json",
+    "--locked",
+    "--offline"
+  ],
+  "build_returncode": 0,
+  "build_elapsed_seconds": 111.66541265405249,
+  "binary": {
+    "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/fillet-reoffset-compact-20260926-v243-hypercurve_curve_region_promotion",
+    "sha256": "dcff8a85859b091108f4b7643acd8cc333ba2e1c5f16adf7880f7c7b12112994"
+  },
+  "all_sources_unchanged": true
+}

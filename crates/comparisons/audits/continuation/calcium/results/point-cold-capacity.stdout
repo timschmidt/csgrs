@@ -1,0 +1,3 @@
+Filesystem                                                1B-blocks          Used    Available Use% Mounted on
+tmpfs                                                   67488174080   51240321024  16247853056  76% /tmp
+/dev/mapper/luks-b51cd712-ca4d-4a4b-9a41-f4a9b2d7d54e 1966167244800 1843132850176 123017617408  94% /

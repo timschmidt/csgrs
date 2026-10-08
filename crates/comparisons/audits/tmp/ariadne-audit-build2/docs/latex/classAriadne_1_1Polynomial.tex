@@ -1,0 +1,201 @@
+\doxysubsection{Polynomial\texorpdfstring{$<$}{<} I, X \texorpdfstring{$>$}{>} Class Template Reference}
+\hypertarget{classAriadne_1_1Polynomial}{}\label{classAriadne_1_1Polynomial}\index{Polynomial$<$ I, X $>$@{Polynomial$<$ I, X $>$}}
+
+
+{\ttfamily \#include $<$polynomial.\+hpp$>$}
+
+
+
+\doxysubsubsection{Description}
+\subsubsection*{template$<$class I, class X$>$\newline
+class Ariadne\+::\+Polynomial$<$ I, X $>$}
+A polynomial with coefficients of some type {\itshape X}. \doxysubsubsubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1Polynomial_ace28cc1c00d3a87a48d0826c322a0667}\label{classAriadne_1_1Polynomial_ace28cc1c00d3a87a48d0826c322a0667} 
+Characteristics\+Type {\bfseries characteristics} () const
+\begin{DoxyCompactList}\small\item\em Characteristics needed to construct a compatible null polynomial. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Polynomial_ac653a8a0752c5a933cb3088b46523dc7}\label{classAriadne_1_1Polynomial_ac653a8a0752c5a933cb3088b46523dc7} 
+\mbox{\hyperlink{classAriadne_1_1Polynomial}{Polynomial}}$<$ I, X $>$ {\bfseries create\+\_\+zero} () const
+\begin{DoxyCompactList}\small\item\em Create the null polynomial in the same number of variables. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Polynomial_ae8ef970aedce7facf6b1cbe28acefda3}\label{classAriadne_1_1Polynomial_ae8ef970aedce7facf6b1cbe28acefda3} 
+\mbox{\hyperlink{classAriadne_1_1Polynomial}{Polynomial}}$<$ I, X $>$ \& {\bfseries operator=} (const X \&x)
+\begin{DoxyCompactList}\small\item\em Set equal to a constant. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\begin{Indent}\textbf{ Constructors}\par
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1Polynomial_aca1f1534ed34398051bee640394d0af3}\label{classAriadne_1_1Polynomial_aca1f1534ed34398051bee640394d0af3} 
+{\bfseries Polynomial} (Argument\+Size\+Type as, Coefficient\+Characteristics\+Type pr)
+\begin{DoxyCompactList}\small\item\em The zero polynomial in {\itshape as} variables, with characteristics from {\itshape z}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Polynomial_ad66c2d7d0b6ebb3cc1fd16912cdc3c5b}\label{classAriadne_1_1Polynomial_ad66c2d7d0b6ebb3cc1fd16912cdc3c5b} 
+{\bfseries Polynomial} (Argument\+Size\+Type as, X const \&z)
+\begin{DoxyCompactList}\small\item\em The zero polynomial in {\itshape as} variables, with zero taking characteristics from {\itshape z}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Polynomial_a62a172307262df86dc848bbfd5222152}\label{classAriadne_1_1Polynomial_a62a172307262df86dc848bbfd5222152} 
+{\footnotesize template$<$class... PRS$>$ \newline
+requires Constructible$<$X,PRS...$>$}\\{\bfseries Polynomial} (Argument\+Size\+Type as, PRS... prs)
+\begin{DoxyCompactList}\small\item\em The zero polynomial in {\itshape as} variables. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Polynomial_a2dd31381fb89380e8eb240399004f94e}\label{classAriadne_1_1Polynomial_a2dd31381fb89380e8eb240399004f94e} 
+{\footnotesize template$<$Convertible\+To$<$ X $>$ XX$>$ }\\{\bfseries Polynomial} (const \mbox{\hyperlink{classAriadne_1_1Polynomial}{Polynomial}}$<$ I, XX $>$ \&p)
+\begin{DoxyCompactList}\small\item\em Copy/conversion constructor. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Polynomial_ad6c2c2a975358ec458682eded997cdd2}\label{classAriadne_1_1Polynomial_ad6c2c2a975358ec458682eded997cdd2} 
+{\footnotesize template$<$Convertible\+To$<$ X $>$ XX$>$ }\\{\bfseries Polynomial} (const \mbox{\hyperlink{classAriadne_1_1Expansion}{Expansion}}$<$ I, XX $>$ \&e)
+\begin{DoxyCompactList}\small\item\em Copy/conversion constructor. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Polynomial_a02725c2dfdf52f4d717e16c36e0a32c0}\label{classAriadne_1_1Polynomial_a02725c2dfdf52f4d717e16c36e0a32c0} 
+{\bfseries Polynomial} (\mbox{\hyperlink{namespaceAriadne_a8d51a34ecd8621e992f2470124281c93}{Initializer\+List}}$<$ \mbox{\hyperlink{namespaceAriadne_abbe0884d033ed6289d1f654576d7bb07}{Pair}}$<$ Index\+Initializer\+Type, X $>$ $>$ lst)
+\begin{DoxyCompactList}\small\item\em A sparse polynomial with coefficients given by an initializer list of indices and coefficients. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Polynomial_acaa22500a87246ee813b90a255425225}\label{classAriadne_1_1Polynomial_acaa22500a87246ee813b90a255425225} 
+{\footnotesize template$<$class... PRS$>$ \newline
+requires Constructible$<$X,\mbox{\hyperlink{classAriadne_1_1ExactDouble}{Exact\+Double}},PRS...$>$}\\{\bfseries Polynomial} (\mbox{\hyperlink{namespaceAriadne_a8d51a34ecd8621e992f2470124281c93}{Initializer\+List}}$<$ \mbox{\hyperlink{namespaceAriadne_abbe0884d033ed6289d1f654576d7bb07}{Pair}}$<$ Index\+Initializer\+Type, \mbox{\hyperlink{classAriadne_1_1ExactDouble}{Exact\+Double}} $>$ $>$ lst, PRS... prs)
+\begin{DoxyCompactList}\small\item\em Construct a differential of degree {\itshape deg} from an initializer list of (index,coefficient) pairs. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\end{Indent}
+\begin{Indent}\textbf{ Comparisons}\par
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1Polynomial_aa7c1b0e4559f9765358deae811f283e2}\label{classAriadne_1_1Polynomial_aa7c1b0e4559f9765358deae811f283e2} 
+{\footnotesize template$<$class XX$>$ }\\Equality\+Type$<$ X, XX $>$ {\bfseries operator==} (const \mbox{\hyperlink{classAriadne_1_1Polynomial}{Polynomial}}$<$ I, XX $>$ \&p) const
+\begin{DoxyCompactList}\small\item\em Equality operator. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Polynomial_a8e5f7ec0c00c9f3c662d0988cf6554d9}\label{classAriadne_1_1Polynomial_a8e5f7ec0c00c9f3c662d0988cf6554d9} 
+{\footnotesize template$<$class XX$>$ }\\Inequality\+Type$<$ X, XX $>$ {\bfseries operator!=} (const \mbox{\hyperlink{classAriadne_1_1Polynomial}{Polynomial}}$<$ I, XX $>$ \&p) const
+\begin{DoxyCompactList}\small\item\em Inequality operator. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\end{Indent}
+\begin{Indent}\textbf{ Data access}\par
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1Polynomial_a00d78b97f08cff85d8b8a02bbe176d52}\label{classAriadne_1_1Polynomial_a00d78b97f08cff85d8b8a02bbe176d52} 
+Argument\+Size\+Type {\bfseries argument\+\_\+size} () const
+\begin{DoxyCompactList}\small\item\em The number of variables in the argument of the polynomial. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Polynomial_af412fac0e95dcbf177d786ea8d5d0689}\label{classAriadne_1_1Polynomial_af412fac0e95dcbf177d786ea8d5d0689} 
+Size\+Type {\bfseries number\+\_\+of\+\_\+terms} () const
+\begin{DoxyCompactList}\small\item\em The number of structural nonzero terms. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Polynomial_a84847fadf9927f5cafdc5d68331bb74c}\label{classAriadne_1_1Polynomial_a84847fadf9927f5cafdc5d68331bb74c} 
+\mbox{\hyperlink{namespaceAriadne_a80311bc831cfc870fd65158180330a77}{Degree\+Type}} {\bfseries degree} () const
+\begin{DoxyCompactList}\small\item\em The order of the highest term. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Polynomial_a3bf892ca4d5c0b4498db4bf3cf965542}\label{classAriadne_1_1Polynomial_a3bf892ca4d5c0b4498db4bf3cf965542} 
+const X \& {\bfseries value} () const
+\begin{DoxyCompactList}\small\item\em The value of the polynomial at zero. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Polynomial_ab9012d3db44f4807284f8cc33684e4e4}\label{classAriadne_1_1Polynomial_ab9012d3db44f4807284f8cc33684e4e4} 
+X \& {\bfseries operator\mbox{[}$\,$\mbox{]}} (const Index\+Type \&a)
+\begin{DoxyCompactList}\small\item\em A reference to the coefficient of the term in $x^{a_1}\cdots x^{a_n}$. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Polynomial_aa3ab6adc64d61396d5c34eae602b348d}\label{classAriadne_1_1Polynomial_aa3ab6adc64d61396d5c34eae602b348d} 
+const X \& {\bfseries operator\mbox{[}$\,$\mbox{]}} (const Index\+Type \&a) const
+\begin{DoxyCompactList}\small\item\em A constant referent to the coefficient of the term in $x^{a_1}\cdots x^{a_n}$. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Polynomial_a10d7c1004327cc25c204151c0308a68d}\label{classAriadne_1_1Polynomial_a10d7c1004327cc25c204151c0308a68d} 
+const \mbox{\hyperlink{classAriadne_1_1Expansion}{Expansion}}$<$ I, X $>$ \& {\bfseries expansion} () const
+\begin{DoxyCompactList}\small\item\em A constant reference to the raw data expansion. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Polynomial_ab6405033aade1b01261d9998fec49b34}\label{classAriadne_1_1Polynomial_ab6405033aade1b01261d9998fec49b34} 
+\mbox{\hyperlink{classAriadne_1_1Expansion}{Expansion}}$<$ I, X $>$ \& {\bfseries expansion} ()
+\begin{DoxyCompactList}\small\item\em A reference to the raw data expansion. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Polynomial_a7b69f847e9e1b6f515970761cd637d84}\label{classAriadne_1_1Polynomial_a7b69f847e9e1b6f515970761cd637d84} 
+X const \& {\bfseries zero\+\_\+coefficient} () const
+\begin{DoxyCompactList}\small\item\em A zero value usable as a coefficient. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\end{Indent}
+\begin{Indent}\textbf{ Iterators}\par
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1Polynomial_a367d95cf753cf6e991da62c3a6dfae85}\label{classAriadne_1_1Polynomial_a367d95cf753cf6e991da62c3a6dfae85} 
+Iterator {\bfseries begin} ()
+\begin{DoxyCompactList}\small\item\em An Iterator to the beginning of the list of terms. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Polynomial_a0c87aec52ca86f5beb2e9fc39c6b274c}\label{classAriadne_1_1Polynomial_a0c87aec52ca86f5beb2e9fc39c6b274c} 
+Iterator {\bfseries end} ()
+\begin{DoxyCompactList}\small\item\em An Iterator to the end of the list of terms.. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Polynomial_a7b988e083fad04e1fb077beb4e1e8dee}\label{classAriadne_1_1Polynomial_a7b988e083fad04e1fb077beb4e1e8dee} 
+Iterator {\bfseries find} (const I \&a)
+\begin{DoxyCompactList}\small\item\em An Iterator to the term in $x^a$. Returns {\ttfamily \doxylink{classAriadne_1_1Polynomial_a0c87aec52ca86f5beb2e9fc39c6b274c}{end()}} if there is no term in {\itshape a}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Polynomial_af95c2479a696d73d0834e32b1d609442}\label{classAriadne_1_1Polynomial_af95c2479a696d73d0834e32b1d609442} 
+Const\+Iterator {\bfseries begin} () const
+\begin{DoxyCompactList}\small\item\em A constant Iterator to the beginning of the list of terms. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Polynomial_aec49c139244a6a24c0d24be598dd2d51}\label{classAriadne_1_1Polynomial_aec49c139244a6a24c0d24be598dd2d51} 
+Const\+Iterator {\bfseries end} () const
+\begin{DoxyCompactList}\small\item\em A constant Iterator to the end of the list of terms. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Polynomial_a4b1c7d1897a296e1938a9c0f3d1ef2c0}\label{classAriadne_1_1Polynomial_a4b1c7d1897a296e1938a9c0f3d1ef2c0} 
+Const\+Iterator {\bfseries find} (const I \&a) const
+\begin{DoxyCompactList}\small\item\em An Iterator to the term in $x^a$. Returns {\ttfamily \doxylink{classAriadne_1_1Polynomial_a0c87aec52ca86f5beb2e9fc39c6b274c}{end()}} if there is no term in {\itshape a}. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\end{Indent}
+\begin{Indent}\textbf{ Modifying operations}\par
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1Polynomial_a05c8c4252c19e900c4f418e50e92f514}\label{classAriadne_1_1Polynomial_a05c8c4252c19e900c4f418e50e92f514} 
+\mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} {\bfseries insert} (const Index\+Type \&a, const X \&c)
+\begin{DoxyCompactList}\small\item\em Insert the term $c x^{a_1}$ into a sorted list of terms. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Polynomial_a8223f9f46fdfd891a4f6033c03c2e167}\label{classAriadne_1_1Polynomial_a8223f9f46fdfd891a4f6033c03c2e167} 
+\mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} {\bfseries reserve} (Size\+Type n)
+\begin{DoxyCompactList}\small\item\em Reserve space for a total of {\itshape n} terms. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Polynomial_a393aa28dd947306d363be2eacc1ae2d2}\label{classAriadne_1_1Polynomial_a393aa28dd947306d363be2eacc1ae2d2} 
+\mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} {\bfseries erase} (Iterator iter)
+\begin{DoxyCompactList}\small\item\em Remove the term pointed to by {\itshape iter}. May be expensive if the term is near the beginning of the list of terms. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Polynomial_aaecc226b7db6b8669e75e64e09285de4}\label{classAriadne_1_1Polynomial_aaecc226b7db6b8669e75e64e09285de4} 
+\mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} {\bfseries clear} ()
+\begin{DoxyCompactList}\small\item\em Set the polynomial to zero. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Polynomial_a9f018229c13a1713eeaa39dcb577a6f2}\label{classAriadne_1_1Polynomial_a9f018229c13a1713eeaa39dcb577a6f2} 
+\mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} {\bfseries cleanup} ()
+\begin{DoxyCompactList}\small\item\em Remove all zero terms from the expansion, and order the expansion reverse lexicographically by term. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\end{Indent}
+\begin{Indent}\textbf{ Evaluation}\par
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1Polynomial_afa2f509f84bdcf2de1b48209c847efc1}\label{classAriadne_1_1Polynomial_afa2f509f84bdcf2de1b48209c847efc1} 
+{\footnotesize template$<$class A$>$ }\\A {\bfseries operator()} (\mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ A $>$ const \&) const
+\begin{DoxyCompactList}\small\item\em Evaluate on a vector of algebra elements. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\end{Indent}
+\begin{Indent}\textbf{ Modifying operators}\par
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1Polynomial_a97f5988e790c82e7462e98e020db2552}\label{classAriadne_1_1Polynomial_a97f5988e790c82e7462e98e020db2552} 
+\mbox{\hyperlink{classAriadne_1_1Polynomial}{Polynomial}}$<$ I, X $>$ \& {\bfseries truncate} (\mbox{\hyperlink{namespaceAriadne_a80311bc831cfc870fd65158180330a77}{Degree\+Type}} d)
+\begin{DoxyCompactList}\small\item\em Truncate to degree {\itshape d}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Polynomial_afd735cc16db6f9b6e76f7e0adc85677b}\label{classAriadne_1_1Polynomial_afd735cc16db6f9b6e76f7e0adc85677b} 
+\mbox{\hyperlink{classAriadne_1_1Polynomial}{Polynomial}}$<$ I, X $>$ \& {\bfseries differentiate} (Variable\+Index\+Type j)
+\begin{DoxyCompactList}\small\item\em Differentiate with respect to the {\itshape j\textsuperscript{th}} variable. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Polynomial_a5b5f22cf69c56cf223a5095448d84eaa}\label{classAriadne_1_1Polynomial_a5b5f22cf69c56cf223a5095448d84eaa} 
+\mbox{\hyperlink{classAriadne_1_1Polynomial}{Polynomial}}$<$ I, X $>$ \& {\bfseries antidifferentiate} (Variable\+Index\+Type j)
+\begin{DoxyCompactList}\small\item\em Antidifferentiate (integrate) with respect to the {\itshape j\textsuperscript{th}} variable. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\end{Indent}
+\doxysubsubsubsection*{Static Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1Polynomial_ac155e29af6c925b77c07573b8307df38}\label{classAriadne_1_1Polynomial_ac155e29af6c925b77c07573b8307df38} 
+static Argument$<$ \mbox{\hyperlink{classAriadne_1_1Polynomial}{Polynomial}}$<$ I, X $>$ $>$ {\bfseries coordinates} (Argument\+Size\+Type as, X const \&z)
+\begin{DoxyCompactList}\small\item\em Create an \doxylink{classAriadne_1_1Array}{Array} of polynomials in {\itshape as} variables, the i\textsuperscript{th} of which returns the value of the i\textsuperscript{th} variable. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsubsection*{Related Types and Functions}
+(Note that these are not member symbols.) \begin{Indent}\textbf{ Type shorthands and synonyms for Polynomial classes}\par
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1Polynomial_a5b42007c535ba71114c28d2a8d0e019e}\label{classAriadne_1_1Polynomial_a5b42007c535ba71114c28d2a8d0e019e} 
+{\footnotesize template$<$class X$>$ }\\using {\bfseries Univariate\+Polynomial} = \mbox{\hyperlink{classAriadne_1_1Polynomial}{Polynomial}}$<$Uni\+Index,X$>$
+\item 
+\Hypertarget{classAriadne_1_1Polynomial_adce522e2df36f57c0b95fda8e42c7483}\label{classAriadne_1_1Polynomial_adce522e2df36f57c0b95fda8e42c7483} 
+{\footnotesize template$<$class X$>$ }\\using {\bfseries Multivariate\+Polynomial} = \mbox{\hyperlink{classAriadne_1_1Polynomial}{Polynomial}}$<$Multi\+Index,X$>$
+\item 
+\Hypertarget{classAriadne_1_1Polynomial_a3da3b15eba68ef9bf548b1c2f0a16879}\label{classAriadne_1_1Polynomial_a3da3b15eba68ef9bf548b1c2f0a16879} 
+using {\bfseries Float\+DPApproximation\+Multivariate\+Polynomial} = \mbox{\hyperlink{classAriadne_1_1Polynomial_adce522e2df36f57c0b95fda8e42c7483}{Multivariate\+Polynomial}}$<$Float\+DPApproximation$>$
+\item 
+\Hypertarget{classAriadne_1_1Polynomial_a176a498bae634c4fccfc38d1312cdd74}\label{classAriadne_1_1Polynomial_a176a498bae634c4fccfc38d1312cdd74} 
+using {\bfseries Float\+DPBounds\+Multivariate\+Polynomial} = \mbox{\hyperlink{classAriadne_1_1Polynomial_adce522e2df36f57c0b95fda8e42c7483}{Multivariate\+Polynomial}}$<$Float\+DPBounds$>$
+\item 
+\Hypertarget{classAriadne_1_1Polynomial_aece8ba8ba36f6c814afbe6b234ee53eb}\label{classAriadne_1_1Polynomial_aece8ba8ba36f6c814afbe6b234ee53eb} 
+using {\bfseries Float\+MPApproximation\+Multivariate\+Polynomial} = \mbox{\hyperlink{classAriadne_1_1Polynomial_adce522e2df36f57c0b95fda8e42c7483}{Multivariate\+Polynomial}}$<$Float\+MPApproximation$>$
+\item 
+\Hypertarget{classAriadne_1_1Polynomial_a6f49c247c38cb0d91a7bf3f17519b689}\label{classAriadne_1_1Polynomial_a6f49c247c38cb0d91a7bf3f17519b689} 
+using {\bfseries Float\+MPBounds\+Multivariate\+Polynomial} = \mbox{\hyperlink{classAriadne_1_1Polynomial_adce522e2df36f57c0b95fda8e42c7483}{Multivariate\+Polynomial}}$<$\mbox{\hyperlink{classAriadne_1_1Bounds}{Float\+MPBounds}}$>$
+\item 
+\Hypertarget{classAriadne_1_1Polynomial_ac1fd12dd77d46b8d97aab4f28a70a531}\label{classAriadne_1_1Polynomial_ac1fd12dd77d46b8d97aab4f28a70a531} 
+using {\bfseries Float\+DPApproximation\+Multivariate\+Polynomial\+Vector} = \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$\mbox{\hyperlink{classAriadne_1_1Polynomial_adce522e2df36f57c0b95fda8e42c7483}{Multivariate\+Polynomial}}$<$Float\+DPApproximation$>$$>$
+\item 
+\Hypertarget{classAriadne_1_1Polynomial_aafc1d186cc22297e622ebccb7f9ae076}\label{classAriadne_1_1Polynomial_aafc1d186cc22297e622ebccb7f9ae076} 
+using {\bfseries Float\+DPBounds\+Multivariate\+Polynomial\+Vector} = \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$\mbox{\hyperlink{classAriadne_1_1Polynomial_adce522e2df36f57c0b95fda8e42c7483}{Multivariate\+Polynomial}}$<$Float\+DPBounds$>$$>$
+\item 
+\Hypertarget{classAriadne_1_1Polynomial_ad27767318f3bbc60fb2d8c65892bd34e}\label{classAriadne_1_1Polynomial_ad27767318f3bbc60fb2d8c65892bd34e} 
+using {\bfseries Float\+MPApproximation\+Multivariate\+Polynomial\+Vector} = \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$\mbox{\hyperlink{classAriadne_1_1Polynomial_adce522e2df36f57c0b95fda8e42c7483}{Multivariate\+Polynomial}}$<$Float\+MPApproximation$>$$>$
+\item 
+\Hypertarget{classAriadne_1_1Polynomial_ac28c76b590ffd7882293933bb1f79a6f}\label{classAriadne_1_1Polynomial_ac28c76b590ffd7882293933bb1f79a6f} 
+using {\bfseries Float\+MPBounds\+Multivariate\+Polynomial\+Vector} = \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$\mbox{\hyperlink{classAriadne_1_1Polynomial_adce522e2df36f57c0b95fda8e42c7483}{Multivariate\+Polynomial}}$<$\mbox{\hyperlink{classAriadne_1_1Bounds}{Float\+MPBounds}}$>$$>$
+\end{DoxyCompactItemize}
+\end{Indent}
+
+
+The documentation for this class was generated from the following files\+:\begin{DoxyCompactItemize}
+\item 
+source/function/\mbox{\hyperlink{function_8decl_8hpp}{function.\+decl.\+hpp}}\item 
+source/function/\mbox{\hyperlink{polynomial_8hpp}{polynomial.\+hpp}}\item 
+source/function/polynomial.\+cpp\item 
+source/function/polynomial.\+tpl.\+hpp\end{DoxyCompactItemize}

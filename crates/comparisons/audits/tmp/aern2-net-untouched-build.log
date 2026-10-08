@@ -1,0 +1,17 @@
+Specified file "README.md" for extra-source-files does not exist
+
+Error: [S-4804]
+       Stack failed to construct a build plan.
+       
+       While constructing the build plan, Stack encountered the following errors. The 'Stack
+       configuration' refers to the set of package versions specified by the snapshot (after any
+       dropped packages, or pruned GHC boot packages; if a boot package is replaced, Stack prunes
+       all other such packages that depend on it) and any extra-deps:
+       
+       In the dependencies for aern2-net-0.2.0.0:
+         * cdar needed, but no version is in the Stack configuration (no matching package and
+           version found. Perhaps there is an error in the specification of a package's dependencies
+           or build-tools (Hpack) or build-depends, build-tools or build-tool-depends (Cabal file)
+           or an omission from the packages list in /tmp/aern2-audit/net-stack.yaml (project-level
+           configuration).)
+       The above is/are needed since aern2-net is a build target.

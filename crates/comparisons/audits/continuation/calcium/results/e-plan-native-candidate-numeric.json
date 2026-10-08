@@ -1,0 +1,13 @@
+{
+  "tag": "e-plan-native-candidate-numeric",
+  "started": "2026-09-10T00:37:18.573Z",
+  "finished": "2026-09-10T00:37:18.783Z",
+  "elapsedSeconds": 0.20756427699999996,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "/tmp/calcium-e-plan.mOIsBs/candidate-check",
+  "args": [
+    "numeric"
+  ],
+  "code": 0,
+  "signal": null
+}

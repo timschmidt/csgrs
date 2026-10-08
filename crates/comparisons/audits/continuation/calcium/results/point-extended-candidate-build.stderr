@@ -1,0 +1,17 @@
+   Compiling hyperreal v0.13.1 (/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/point-image-qualified-candidate/hyperreal)
+   Compiling hyperlattice v0.6.1 (/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/point-image-qualified-candidate/hyperlattice)
+   Compiling hyperlimit v0.4.1 (/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/point-image-qualified-candidate/hyperlimit)
+   Compiling hypersolve v0.3.1 (/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/point-image-qualified-candidate/hypersolve)
+   Compiling calcium-point-extended-candidate v0.0.0 (/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/point-extended-candidate)
+warning: variable does not need to be mutable
+   --> ../point-extended.rs:112:9
+    |
+112 |     let mut visit = |r: &mut Real| match mode {
+    |         ----^^^^^
+    |         |
+    |         help: remove this `mut`
+    |
+    = note: `#[warn(unused_mut)]` (part of `#[warn(unused)]`) on by default
+
+warning: `calcium-point-extended-candidate` (bin "point-extended-candidate-cpu") generated 1 warning (run `cargo fix --bin "point-extended-candidate-cpu" -p calcium-point-extended-candidate` to apply 1 suggestion)
+    Finished `release` profile [optimized] target(s) in 35.52s

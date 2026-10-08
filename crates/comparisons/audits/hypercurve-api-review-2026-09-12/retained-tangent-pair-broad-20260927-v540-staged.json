@@ -1,0 +1,13 @@
+{
+  "repos": {
+    "hypercurve": {
+      "parent": "f546552162c64e8a14cd28733ff23417bf003666",
+      "paths": {
+        "src/bezier_offset.rs": "e29e35c16dcb23e8f620e64e8696252a67f5691dcb97f7916b6ffd197149c84d",
+        "src/curve_fillet.rs": "b612b761d069de5ebea93ff777cfabc4cec100383d132d959a9e49a78941513a"
+      }
+    }
+  },
+  "qualification": "retained-tangent-pair-broad-20260927-v540-terminal.json",
+  "verified_source_files": 2047
+}

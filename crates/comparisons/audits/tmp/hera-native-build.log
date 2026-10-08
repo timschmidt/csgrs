@@ -1,0 +1,19 @@
+Preprocessing library for HERA-0.2..
+compiling dist/build/Data/Number/FFIhelper_hsc_make.c failed (exit code 1)
+rsp file was: "dist/build/Data/Number/hsc2hscall76-0.rsp"
+command was: /usr/bin/gcc -c dist/build/Data/Number/FFIhelper_hsc_make.c -o dist/build/Data/Number/FFIhelper_hsc_make.o -fuse-ld=lld -D__GLASGOW_HASKELL__=906 -Dlinux_BUILD_OS=1 -Dx86_64_BUILD_ARCH=1 -Dlinux_HOST_OS=1 -Dx86_64_HOST_ARCH=1 -IC -Idist/build/C -Idist/build/autogen -Idist/build/global-autogen -include dist/build/autogen/cabal_macros.h -I/tmp/aern2-stack.ryVCFK/programs/x86_64-linux/ghc-tinfo6-9.6.7/lib/ghc-9.6.7/lib/../lib/x86_64-linux-ghc-9.6.7/base-4.18.3.0/include -I/tmp/aern2-stack.ryVCFK/programs/x86_64-linux/ghc-tinfo6-9.6.7/lib/ghc-9.6.7/lib/../lib/x86_64-linux-ghc-9.6.7/ghc-bignum-1.3/include -I/tmp/aern2-stack.ryVCFK/programs/x86_64-linux/ghc-tinfo6-9.6.7/lib/ghc-9.6.7/lib/../lib/x86_64-linux-ghc-9.6.7/rts-1.0.2/include -I/tmp/aern2-stack.ryVCFK/programs/x86_64-linux/ghc-tinfo6-9.6.7/include/include/
+error: In file included from dist/build/Data/Number/FFIhelper_hsc_make.c:1:
+FFIhelper.hsc: In function ‘main’:
+FFIhelper.hsc:26:16: error: ‘GMP_RND_MAX’ undeclared (first use in this function); did you mean ‘GMP_RNDD’?
+/tmp/aern2-stack.ryVCFK/programs/x86_64-linux/ghc-tinfo6-9.6.7/lib/ghc-9.6.7/lib/template-hsc.h:45:10: note: in definition of macro ‘hsc_const’
+   45 |     if ((x) < 0)                                      \
+      |          ^
+FFIhelper.hsc:26:16: note: each undeclared identifier is reported only once for each function it appears in
+/tmp/aern2-stack.ryVCFK/programs/x86_64-linux/ghc-tinfo6-9.6.7/lib/ghc-9.6.7/lib/template-hsc.h:45:10: note: in definition of macro ‘hsc_const’
+   45 |     if ((x) < 0)                                      \
+      |          ^
+FFIhelper.hsc:27:16: error: ‘GMP_RNDNA’ undeclared (first use in this function); did you mean ‘GMP_RNDN’?
+/tmp/aern2-stack.ryVCFK/programs/x86_64-linux/ghc-tinfo6-9.6.7/lib/ghc-9.6.7/lib/template-hsc.h:45:10: note: in definition of macro ‘hsc_const’
+   45 |     if ((x) < 0)                                      \
+      |          ^
+

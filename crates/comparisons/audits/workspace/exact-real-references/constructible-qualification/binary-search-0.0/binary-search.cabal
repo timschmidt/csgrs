@@ -1,0 +1,21 @@
+Name:           binary-search
+Version:        0.0
+Build-Depends:  base
+Build-Type:     Simple
+License:        BSD3
+license-file:   LICENSE
+Author:         Ross Paterson <ross@soi.city.ac.uk>
+Maintainer:     Ross Paterson <ross@soi.city.ac.uk>
+Category:       Algorithms
+Synopsis:       Binary and exponential searches
+Description:    These modules address the problem of finding the boundary
+                of an upward-closed set of integers, using a combination
+                of exponential and binary searches.  Variants are provided
+                for searching within bounded and unbounded intervals of
+                both 'Integer' and bounded integral types.
+Exposed-Modules:
+                Numeric.Search.Bounded
+                Numeric.Search.Integer
+                Numeric.Search.Range
+Extra-Source-Files:
+                search-test.hs

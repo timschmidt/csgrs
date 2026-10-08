@@ -1,0 +1,29 @@
+[1 of 1] Compiling Data.Real.Constructible ( exact-real-references/haskell-constructible/Data/Real/Constructible.hs, nothing )
+
+exact-real-references/haskell-constructible/Data/Real/Constructible.hs:54:1: error:
+    Could not find module ‘Data.Complex.Generic’
+    Use -v (or `:set -v` in ghci) to see a list of the files searched for.
+   |
+54 | import Data.Complex.Generic (Complex (..))
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+exact-real-references/haskell-constructible/Data/Real/Constructible.hs:55:1: error:
+    Could not find module ‘Data.Complex.Generic.TH’
+    Use -v (or `:set -v` in ghci) to see a list of the files searched for.
+   |
+55 | import Data.Complex.Generic.TH (deriveComplexF)
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+exact-real-references/haskell-constructible/Data/Real/Constructible.hs:58:1: error:
+    Could not find module ‘Math.NumberTheory.Roots’
+    Use -v (or `:set -v` in ghci) to see a list of the files searched for.
+   |
+58 | import Math.NumberTheory.Roots (exactSquareRoot)
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+exact-real-references/haskell-constructible/Data/Real/Constructible.hs:59:1: error:
+    Could not find module ‘Numeric.Search.Integer’
+    Use -v (or `:set -v` in ghci) to see a list of the files searched for.
+   |
+59 | import Numeric.Search.Integer (search)
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

@@ -1,0 +1,130 @@
+{
+  "diagnostic_only": true,
+  "parent": "804b2ba2e619c5bb5b496ebe035164e43746f407",
+  "source_manifest": "local-chord-complete-replay-20260924-v88-sources.json",
+  "source_directory": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/source-archives/hypercurve-local-chord-complete-replay-v88-20260924",
+  "build_source_directory": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/build-workspace-20260925",
+  "checks": [],
+  "binaries": {
+    "hypercurve": {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/translated-selected-contact-20260925-v88-hypercurve",
+      "sha256": "f1dffe1fe536a77691043a68da6b4fecd4bca1190a28b7538b058fb27d3e391d"
+    },
+    "hypercurve_curve": {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/translated-selected-contact-20260925-v88-hypercurve_curve",
+      "sha256": "9c9ee95021f6746ebabb788ec16b8d9fc2815f84efba6758d2679778407fb20b"
+    }
+  },
+  "cases": [
+    {
+      "label": "translated_selected_contact_import_omits_the_unused_center",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/translated-selected-contact-20260925-v88-hypercurve",
+        "--exact",
+        "bezier_offset::conversion_tests::translated_selected_contact_import_omits_the_unused_center",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 101,
+      "elapsed_seconds": 0.42111028998624533,
+      "log": "translated-selected-contact-20260925-v88-translated_selected_contact_import_omits_the_unused_center.log",
+      "target": "hypercurve",
+      "name": "bezier_offset::conversion_tests::translated_selected_contact_import_omits_the_unused_center"
+    },
+    {
+      "label": "bounded_point_import_preserves_a_cached_local_field",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/translated-selected-contact-20260925-v88-hypercurve",
+        "--exact",
+        "bezier_offset::conversion_tests::bounded_point_import_preserves_a_cached_local_field",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.4217247280757874,
+      "log": "translated-selected-contact-20260925-v88-bounded_point_import_preserves_a_cached_local_field.log",
+      "target": "hypercurve",
+      "name": "bezier_offset::conversion_tests::bounded_point_import_preserves_a_cached_local_field"
+    },
+    {
+      "label": "bounded_point_import_reuses_certified_native_fiber_parameters",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/translated-selected-contact-20260925-v88-hypercurve",
+        "--exact",
+        "bezier_offset::conversion_tests::bounded_point_import_reuses_certified_native_fiber_parameters",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.42781055998057127,
+      "log": "translated-selected-contact-20260925-v88-bounded_point_import_reuses_certified_native_fiber_parameters.log",
+      "target": "hypercurve",
+      "name": "bezier_offset::conversion_tests::bounded_point_import_reuses_certified_native_fiber_parameters"
+    },
+    {
+      "label": "selected_fiber_points_reuse_projective_roots_without_global_promotion",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/translated-selected-contact-20260925-v88-hypercurve",
+        "--exact",
+        "bezier_offset::conversion_tests::selected_fiber_points_reuse_projective_roots_without_global_promotion",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.49855689995456487,
+      "log": "translated-selected-contact-20260925-v88-selected_fiber_points_reuse_projective_roots_without_global_promotion.log",
+      "target": "hypercurve",
+      "name": "bezier_offset::conversion_tests::selected_fiber_points_reuse_projective_roots_without_global_promotion"
+    },
+    {
+      "label": "direct_bezier_pair_fillet_retains_both_incident_extensions",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/translated-selected-contact-20260925-v88-hypercurve_curve",
+        "--exact",
+        "direct_bezier_pair_fillet_retains_both_incident_extensions",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 101,
+      "elapsed_seconds": 3.9545335069997236,
+      "log": "translated-selected-contact-20260925-v88-direct_bezier_pair_fillet_retains_both_incident_extensions.log",
+      "target": "hypercurve_curve",
+      "name": "direct_bezier_pair_fillet_retains_both_incident_extensions"
+    }
+  ],
+  "all_processes_reaped": true,
+  "build_returncode": 0,
+  "selection": [
+    [
+      "hypercurve",
+      "bezier_offset::conversion_tests::translated_selected_contact_import_omits_the_unused_center"
+    ],
+    [
+      "hypercurve",
+      "bezier_offset::conversion_tests::bounded_point_import_preserves_a_cached_local_field"
+    ],
+    [
+      "hypercurve",
+      "bezier_offset::conversion_tests::bounded_point_import_reuses_certified_native_fiber_parameters"
+    ],
+    [
+      "hypercurve",
+      "bezier_offset::conversion_tests::selected_fiber_points_reuse_projective_roots_without_global_promotion"
+    ],
+    [
+      "hypercurve_curve",
+      "direct_bezier_pair_fillet_retains_both_incident_extensions"
+    ]
+  ],
+  "all_sources_unchanged": true
+}

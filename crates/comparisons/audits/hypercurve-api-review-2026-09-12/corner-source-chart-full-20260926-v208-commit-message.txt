@@ -1,0 +1,16 @@
+Preserve source charts and proofs through exact curve edits
+
+Keep original supports, parameters and endpoints through corner trims and
+extensions. Remove replacement-carrier reconstruction and its tangent
+adapters; share native root, norm and positive-speed evidence during replay.
+
+Reuse correlated scalar views and retained normal/crossing certificates for
+circle contacts. Keep optional orientation and sweep hints bounded exact so
+they cannot consume approximation and disable later strict identity proofs.
+Use one contact vector for retained circle/chord intersections, updating all
+callers without a compatibility enum or alias.
+
+Validate 524 release regressions across eight targets, changed-file
+formatting, both all-target Clippy configurations and Hyperbrep all-target,
+all-feature checking. This includes the full cusp round-offset and repeated
+corner compositions on retained source charts.

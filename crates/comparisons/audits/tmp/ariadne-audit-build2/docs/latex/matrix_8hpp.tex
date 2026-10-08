@@ -1,0 +1,27 @@
+\doxysubsection{source/algebra/matrix.hpp File Reference}
+\hypertarget{matrix_8hpp}{}\label{matrix_8hpp}\index{source/algebra/matrix.hpp@{source/algebra/matrix.hpp}}
+{\ttfamily \#include $<$initializer\+\_\+list$>$}\newline
+{\ttfamily \#include "{}vector.\+hpp"{}}\newline
+{\ttfamily \#include "{}covector.\+hpp"{}}\newline
+\doxysubsubsubsection*{Classes}
+\begin{DoxyCompactItemize}
+\item 
+class \mbox{\hyperlink{classAriadne_1_1Matrix}{Matrix$<$ X $>$}}
+\begin{DoxyCompactList}\small\item\em Matrices over some type {\itshape X}. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1PivotMatrix}{Pivot\+Matrix}}
+\begin{DoxyCompactList}\small\item\em Permutation matrices defined as a sequence of transpositions. \end{DoxyCompactList}\item 
+struct \mbox{\hyperlink{structAriadne_1_1PLUMatrix}{PLUMatrix$<$ X $>$}}
+\begin{DoxyCompactList}\small\item\em The decomposition $PA=LU$ of a matrix $A$, where $P$ is a permutation matrix, $L$ is a unit lower-\/triangular matrix, and $U$ is an upper-\/triangular matrix. \end{DoxyCompactList}\item 
+struct \mbox{\hyperlink{structAriadne_1_1MatrixRange}{Matrix\+Range$<$ M $>$}}
+\begin{DoxyCompactList}\small\item\em A view into a submatrix of a matrix of class {\itshape M}. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsubsection*{Namespaces}
+\begin{DoxyCompactItemize}
+\item 
+namespace \mbox{\hyperlink{namespaceAriadne}{Ariadne}}
+\begin{DoxyCompactList}\small\item\em Top-\/level Ariadne namespace. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsubsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{namespaceAriadne_a005b7626610477e1d2bee37ff48725e5}\label{namespaceAriadne_a005b7626610477e1d2bee37ff48725e5} 
+{\footnotesize template$<$class X$>$ }\\\mbox{\hyperlink{namespaceAriadne_a9ba6bbf66028bc5b9a5bcee1c9f7a2ca}{Tuple}}$<$ \mbox{\hyperlink{classAriadne_1_1Matrix}{Matrix}}$<$ X $>$, \mbox{\hyperlink{classAriadne_1_1Matrix}{Matrix}}$<$ X $>$ $>$ {\bfseries orthogonal\+\_\+decomposition} (const \mbox{\hyperlink{classAriadne_1_1Matrix}{Matrix}}$<$ X $>$ \&A)
+\begin{DoxyCompactList}\small\item\em Compute matrices O and R such that A=OR, O has orthogonal columns, R is such that the absolute values of the elements in each row sums to a value at most 1. If A is m×n with m≤n, then O is m×m and R is m×n, while if m≥n, then O is m×n and R is n×n. \end{DoxyCompactList}\end{DoxyCompactItemize}

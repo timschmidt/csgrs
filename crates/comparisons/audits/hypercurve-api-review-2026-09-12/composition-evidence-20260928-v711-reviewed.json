@@ -1,0 +1,15 @@
+{
+  "qualification": "composition-evidence-20260928-v711-terminal.json",
+  "source_manifest": "composition-evidence-20260928-v711-sources.json",
+  "validated_files": 2048,
+  "repos": {
+    "hypercurve": {
+      "parent": "73858c2b32e23bfa45bbf69f2724da62d65c032b",
+      "paths": {
+        "PERFORMANCE.md": "bb3de5715da39e13888c4764c078a36b5763636ba7ce00937ee0d35fcf13ced3",
+        "benchmarks/checkpoints/2026-09-28-exact-composition-replay.json": "82469f4c982efcd8454fe55390d9930c5ac3519c9082381c8dfa4d9d8ca46fe1"
+      }
+    }
+  },
+  "scope": "Record matched exact-composition performance measurements and resolve the historical joined-fillet timing debt for this unchanged workload"
+}

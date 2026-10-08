@@ -1,0 +1,40 @@
+{
+  "base_head": "905e2bc74e2ba01a4dcf0b3e7fbee8d854383949",
+  "files": {
+    "src/bezier_offset.rs": "cbdb8cfc30d03362c3e3b723a57bad3bdd322ec3e7b019f959eb4866ca92e871"
+  },
+  "preserved_unqualified_region_sha256": "1bc26463270fbe520873708bc6909db19a7af36356367f8bbc366b92696ed720",
+  "library_cases": 1216,
+  "passed": 1192,
+  "ignored": 6,
+  "existing_nonpasses": 18,
+  "new_nonpasses": 0,
+  "changed_existing_nonpasses": 0,
+  "all_target_checks": [
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "check",
+        "--all-targets",
+        "--all-features",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0
+    },
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "check",
+        "--all-targets",
+        "--no-default-features",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0
+    }
+  ],
+  "qualified_binary_sha256": "97756af7df908515bf2620c17453a45c33e68bac8490e2ec706c5c051a29715f",
+  "all_owned_processes_reaped": true,
+  "hyperreal_inputs": "Pinned immutable snapshots; other-session worktree untouched and unused"
+}

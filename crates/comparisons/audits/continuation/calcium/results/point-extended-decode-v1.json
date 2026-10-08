@@ -1,0 +1,14 @@
+{
+  "tag": "point-extended-decode-v1",
+  "started": "2026-09-10T21:13:35.543Z",
+  "finished": "2026-09-10T21:13:35.722Z",
+  "elapsedSeconds": 0.177478539,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "node",
+  "args": [
+    "probe-point-extended-field.mjs",
+    "point-extended-field-v1.mjs"
+  ],
+  "code": 1,
+  "signal": null
+}

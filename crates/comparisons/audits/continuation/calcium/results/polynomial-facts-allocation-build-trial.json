@@ -1,0 +1,21 @@
+{
+  "tag": "polynomial-facts-allocation-build-trial",
+  "started": "2026-09-08T23:23:43.855Z",
+  "finished": "2026-09-08T23:23:44.294Z",
+  "elapsedSeconds": 0.4365360709999999,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "env",
+  "args": [
+    "CARGO_TARGET_DIR=/tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse",
+    "CARGO_INCREMENTAL=0",
+    "CARGO_BUILD_JOBS=2",
+    "cargo",
+    "build",
+    "--offline",
+    "--release",
+    "--manifest-path",
+    "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/polynomial-allocation-trial/Cargo.toml"
+  ],
+  "code": 0,
+  "signal": null
+}

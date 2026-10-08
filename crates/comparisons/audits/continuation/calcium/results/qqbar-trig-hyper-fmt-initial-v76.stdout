@@ -1,0 +1,43 @@
+Diff in /home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/qqbar-trig-hyper-v76/src/main.rs:12:
+     }
+     let value = match k {
+         0 => Real::zero(),
+-        1 => ((Real::from(6).sqrt().unwrap() - Real::from(2).sqrt().unwrap())
+-            / Real::from(4))
+-        .unwrap(),
++        1 => ((Real::from(6).sqrt().unwrap() - Real::from(2).sqrt().unwrap()) / Real::from(4))
++            .unwrap(),
+         2 => Real::from(Rational::fraction(1, 2).unwrap()),
+         3 => (Real::from(2).sqrt().unwrap() / Real::from(2)).unwrap(),
+         4 => (Real::from(3).sqrt().unwrap() / Real::from(2)).unwrap(),
+Diff in /home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/qqbar-trig-hyper-v76/src/main.rs:21:
+-        5 => ((Real::from(6).sqrt().unwrap() + Real::from(2).sqrt().unwrap())
+-            / Real::from(4))
+-        .unwrap(),
++        5 => ((Real::from(6).sqrt().unwrap() + Real::from(2).sqrt().unwrap()) / Real::from(4))
++            .unwrap(),
+         6 => Real::one(),
+         _ => unreachable!(),
+     };
+Diff in /home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/qqbar-trig-hyper-v76/src/main.rs:46:
+         2 => BigInt::from(1) << 1024_usize,
+         _ => unreachable!(),
+     };
+-    let x = Real::from(
+-        Rational::fraction(k, 12).unwrap() + Rational::from_bigint(turns * 2),
+-    );
++    let x = Real::from(Rational::fraction(k, 12).unwrap() + Rational::from_bigint(turns * 2));
+     match op {
+         "sin" => Ok(x.sin_pi()),
+         "cos" => Ok(x.cos_pi()),
+Diff in /home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/qqbar-trig-hyper-v76/src/main.rs:63:
+     for k in 0..24 {
+         for shift in 0..3 {
+             for op in ["sin", "cos", "tan", "cot"] {
+-                let pole = (op == "tan" && (k == 6 || k == 18))
+-                    || (op == "cot" && (k == 0 || k == 12));
++                let pole =
++                    (op == "tan" && (k == 6 || k == 18)) || (op == "cot" && (k == 0 || k == 12));
+                 for precision in [-64, -256] {
+                     for control in ["radical", "periodic", "perturbed"] {
+                         let left = actual(k, shift, op);

@@ -1,0 +1,83 @@
+{
+  "alumina-interface": {
+    "parent": "59a18251cdfe2312e40b194e857d85cd59b6087f",
+    "staged_files": {
+      "crates/alumina-interface-core/src/direct_motion.rs": "b71cc56fbe6f66fb1ccb03e0934ef953b67174317547b5358df7328030165a6d",
+      "crates/alumina-interface-core/src/machine_profile.rs": "06040d42d10d110e5ea2490ecdc2921e95af3c0718df77c87774a6f2955d0bf7",
+      "crates/alumina-interface-core/src/servo_motion.rs": "05eace7c1566110dfdb072ee4949849dd9cae0e8fd24813c4e81e52c16ea8601"
+    }
+  },
+  "hypercurve": {
+    "parent": "bfa31c3370dee1cb9d57c246964cbb48d80d0424",
+    "staged_files": {
+      "benches/bezier_evaluation.rs": "532fbe4928da71454e05135a06e85768b7b69bbf7f600f92665cc61a767f75b2",
+      "fuzz/fuzz_targets/hyperreal_representations.rs": "38b1d6099ead6210748e1245854aa3769b51bd5db8ad40c321dc06a81ca3ecb2",
+      "src/bbox.rs": "125e59a81cd53ac59e207ca037e71a2b03ecce7e32a01833c0c0d6ca3a16e8ce",
+      "src/bezier_offset.rs": "8ab62f6498a8b9c51f7b89184be572fa9df606db6eb2a3206baff490877f57da",
+      "src/bezier_parameter.rs": "c395abe45df79568de90edec63e370c215ff4386c205947f48e9a4e77df30a18",
+      "src/curve_string.rs": "a605e146ec4251ec2e87aa442555d45f77aa1b386df8c609a72c8695d82ff2a4",
+      "src/rational_bezier_general.rs": "745c386ba51a5aec1e5353fc0a147b1fd6651f949ce41a2b28ed1f79d4d32a46",
+      "src/self_intersect.rs": "3ec920f6c6c962b3af5944c139d256d576c9483a8e47ece9b1b95c1808ca42ff"
+    }
+  },
+  "hyperlattice": {
+    "parent": "53427ce89f8c82c016e69a04e035787e2753adc8",
+    "staged_files": {
+      "benches/retained_fuzz.rs": "8e209c507797e1da5bf25240e6875b543c5195edad3707d0c9130a3bd1f64796",
+      "fuzz/fuzz_targets/hyperreal_representations.rs": "bfd16e181a0c80f6f8da9781c418b2533c0b586551938b8390f29c7c8ede91b8",
+      "tests/real_representations.rs": "e7cf2ade969bbe408290273e52a2187ad0f975cf87d979b3100517fce6386e59"
+    }
+  },
+  "hyperlimit": {
+    "parent": "0b3226320a7ad6756c923d0d12cd52eb701f36ee",
+    "staged_files": {
+      "scripts/generate_stack_exactness_file_audit.sh": "5e6938879113ecd52915bb9ad3a251349cdd07aced5fa7c4ae1598d969eb9fba",
+      "src/resolve.rs": "4d2b4ea1c9a896c28f131b33853ae88cffedcb1d2fe4063c39cfc8f8dbe1051b",
+      "tests/adversarial_predicates.rs": "b902d3188ce0f145f9cb97da77925ac360d540f16bc27fea55b38b84091669b4",
+      "tests/real_representations.rs": "e118aad86dc1f06d21a8f53f7d9aec9fbe6f610d46f8f0e376efe7a380caafda"
+    }
+  },
+  "hypermesh": {
+    "parent": "d9db5c45a0cecc2307aa66a6f7f1b0396350e4ee",
+    "staged_files": {
+      "fuzz/fuzz_targets/boolean_hyperreal_representations.rs": "9d75e6f7d0ba6b219979213adc9a78f5a085697c16b8d75617e5537f6f3f5d08",
+      "src/point_interner.rs": "3cf6dd2b4323c448f590afca6ec239927807f2822d209df6c06caa76ef191fdb"
+    }
+  },
+  "hyperpath": {
+    "parent": "cfe50de3e370ea75a49b916eb70a7b19d31a58fa",
+    "staged_files": {
+      "fuzz/fuzz_targets/hyperreal_representations.rs": "0a5534bb7c772ba2099ae98e6905f52702f3fc9537d7fae7d96bf9fd6ba11519"
+    }
+  },
+  "hyperreal": {
+    "parent": "a1a8637b59bf036d9d68dbd34a0279df4626ab49",
+    "staged_files": {
+      "README.md": "a6f989b465839204fa562946fe061503f7d38f99d81410e22e426360fb6e406f",
+      "benches/numerical_micro.rs": "b10791f233264e6d54c929040b323f34a40105d564a214f74b96c500b648cec4",
+      "benches/real_representations.rs": "63b0aca441ecce08ae5f89c6c08a5a974306dea1f3097c72f6cbe0df1b711b61",
+      "benches/scalar_micro.rs": "4d5ddca23dcee261b98825a1909675e83fcaca065f3d5543035b966ceac7e6d1",
+      "examples/allocation_profile.rs": "48f06e077bcd34c8ee42aae72a633f0922ec807ba496af85f2f830481cd6d209",
+      "fuzz/fuzz_targets/real_exact.rs": "69a1d01209a7ea78cb459e8a333d0daef3ed3f9318e436a7a0264cb92a5ad0c1",
+      "fuzz/fuzz_targets/structural_representations.rs": "757eab3e28e4ec072f77371f5d4f40035a669eaed00e6f89f7b74bf1b651e8c9",
+      "src/computable/node/linear_demand_tests.rs": "4a45fbfadb57c852fdfacd41fb8560357cf44d1aa22febb1b80c46679c9d1bf1",
+      "src/rational/arithmetic/queries_conversion.rs": "efd5258b2111325451ad2b396a03e5f0e0c180351a11d501fe85f78a4a62aab6",
+      "src/rational/arithmetic/tests.rs": "65eea399fcff01abe6674c74d9fc7ee59ec531a5512b3c5928a2d7aed3dae77b",
+      "src/real/arithmetic/facts.rs": "b77ff57449e0956bc1e7dc0f7657b77cb2b40fceccac61c0ddb3275f156782f1",
+      "src/real/arithmetic/tests.rs": "e6cacc8971ee1248b0352ee04146f99af30fc9a37841ef85cb1ef37edc412278",
+      "src/real/tests.rs": "197c19134ae3af1e346492aa0f7f1ceaa3d9600e1c66c31a47fca70072982b27",
+      "tests/gmp_api_coverage.rs": "af1cf6377af274d0d76183ebf34d10ba436c40aed4920bc7df00b72a2b637a81",
+      "tests/real_representations.rs": "718d4ef496fb8a846ae45b38323d704de2924bf281726dc0977c36de58b49af6"
+    }
+  },
+  "hypersolve": {
+    "parent": "e6d6cf56f7c8d27aaa75699bf095feeadcca6aa0",
+    "staged_files": {
+      "fuzz/fuzz_targets/hyperreal_representations.rs": "8ca1d3c0d97f0f79488c8c00a93e6921feff77ef333c40bcfb8daf2931ae66a7",
+      "src/algebraic_sqrt.rs": "e8fd856bc51aeb7ee2644b78b19b5eec933a385379db122f5c1555547717bd53",
+      "src/bareiss.rs": "916605ed23685ab0ba2f5930dc7428edd02a7306ddb1c99047cea5d12979b1d2",
+      "src/tensor_resultant.rs": "292dbadcbd37fd632342914560d1bc6050f0893183b39b109f4c0ff4740f13ed",
+      "tests/real_representations.rs": "21a4d5d3f97e11c4d8c7eb8f3abfe4817703992f505458a895e25ee68898496a"
+    }
+  }
+}

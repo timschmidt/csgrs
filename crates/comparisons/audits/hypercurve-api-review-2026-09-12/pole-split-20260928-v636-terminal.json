@@ -1,0 +1,66 @@
+{
+  "normal_production_build": true,
+  "source_manifest": "pole-split-20260928-v636-sources.json",
+  "source_directory": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/source-archives/pole-split-20260928-v636",
+  "builds": [
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "test",
+        "--lib",
+        "--test",
+        "hypercurve_bezier_split_materialization",
+        "--release",
+        "--all-features",
+        "--locked",
+        "--offline",
+        "--no-run",
+        "--message-format=json"
+      ],
+      "returncode": 101,
+      "log": "pole-split-20260928-v636-hypercurve-build.log",
+      "elapsed_seconds": 19.041704091941938
+    }
+  ],
+  "cases": [],
+  "checks": [],
+  "test_listings": {},
+  "expected_cases": {
+    "hypercurve_bezier_split_materialization": [
+      "algebraic_boundary_carries_endpoint_images_without_approximate_materialization",
+      "algebraic_endpoint_image_is_a_clone_shared_handle",
+      "algebraic_fragment_reversal_retains_source_evidence_and_toggles_traversal",
+      "broad_singleton_isolator_materializes_exact_endpoint_images",
+      "exact_cubic_subcurve_matches_original_endpoints_at_range_bounds",
+      "exact_quadratic_split_endpoints_match_original",
+      "exact_quadratic_split_materializes_native_subcurves",
+      "exact_rational_quadratic_split_preserves_conic_endpoint_evaluation",
+      "linear_algebraic_boundary_materializes_native_subcurves",
+      "rational_algebraic_boundary_carries_conic_endpoint_images",
+      "rational_algebraic_boundary_with_zero_denominator_returns_explicit_uncertainty",
+      "rational_algebraic_endpoint_retains_second_derivative_when_constructed",
+      "split_materialization_constructor_rejects_disconnected_materialized_fragments",
+      "split_materialization_constructor_rejects_duplicate_fragments",
+      "split_materialization_constructor_rejects_forged_algebraic_endpoint_evidence",
+      "split_materialization_constructor_rejects_incomplete_source_coverage",
+      "split_materialization_constructor_rejects_materialized_algebraic_range",
+      "split_materialization_constructor_rejects_noncontiguous_fragments"
+    ],
+    "hypercurve": [
+      "bezier_offset::conversion_tests::denominator_sign_excludes_a_pole_outside_selected_bounds",
+      "bezier_offset::conversion_tests::exterior_rational_analytic_points_use_the_selected_denominator_sign",
+      "rational_bezier_general::tests::denominator_sign_tracks_the_requested_range_and_keeps_unit_cache_scope",
+      "rational_bezier_general::tests::affine_subcurve_materializes_a_finite_rational_parabola_extension",
+      "rational_bezier_general::tests::affine_subcurve_rejects_a_crossed_projective_pole",
+      "rational_bezier_general::tests::affine_subcurve_retains_zero_intermediate_weight_without_a_pole",
+      "bezier_offset::regular_parallel_contact_tests::regular_source_frames_reject_poles_in_every_parameter_authority",
+      "bezier_offset::conversion_tests::retained_incident_domains_admit_exterior_affine_endpoints",
+      "bezier_parameter::conversion_tests::projective_images_preserve_exterior_singletons_across_unused_poles",
+      "bezier_region::tests::retained_rational_chamfer_extends_exact_and_algebraic_pre_pole_roots"
+    ]
+  },
+  "all_processes_reaped": true,
+  "probe_complete": false,
+  "qualification_complete": false,
+  "failure": "hypercurve release build failed"
+}

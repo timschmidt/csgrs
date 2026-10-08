@@ -1,0 +1,12 @@
+Exclude foreign endpoint roots from selected norm carriers
+
+Remove certified endpoint factors before native root counting and retention,
+sharing exact deflation with the solver import path. Publish a linear
+carrier's exact scalar quotient and preserve repeated interior roots.
+
+Cover foreign roots at either bound, repeated endpoint factors, reversal,
+sign replay, and continued refinement past an additional interior root.
+
+Validation: 230 selected release tests (109 public), formatting, and both
+all-target Clippy configurations with warnings denied. Source, executable,
+and staged-file hashes are bound to the isolated qualification.

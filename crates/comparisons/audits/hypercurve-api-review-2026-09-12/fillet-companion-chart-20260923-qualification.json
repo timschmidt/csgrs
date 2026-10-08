@@ -1,0 +1,92 @@
+{
+  "parent": "a34c0feffa0d7dba5d5e99f1c7e20882a5fd6ff4",
+  "files": {
+    "src/curve_corner_chain.rs": "6ca2f00e00d09f06de7b221ea8f4da8dc9b8c1c498f4e17fbc79a4f47fbebe04"
+  },
+  "library_passed": 1190,
+  "library_ignored": 6,
+  "known_nonpasses": 18,
+  "new_failures": [],
+  "changed_failures": [],
+  "focused": [
+    {
+      "name": "bezier_region::curve_corner_chain::tests::extended_fillet_circle_endpoints_obey_the_exact_radius_bound",
+      "returncode": 0,
+      "passed": true,
+      "limit_seconds": 75,
+      "elapsed_seconds": 22.73586985003203,
+      "log": "fillet-companion-chart-20260923-focused3-candidate-case-0.log"
+    },
+    {
+      "name": "bezier_region::curve_corner_chain::tests::extended_fillet_region_classifies_both_sides_of_its_companion",
+      "returncode": 0,
+      "passed": true,
+      "limit_seconds": 75,
+      "elapsed_seconds": 21.68761063797865,
+      "log": "fillet-companion-chart-20260923-focused3-candidate-case-1.log"
+    },
+    {
+      "name": "bezier_region::tests::selected_circle_and_promoted_line_extend_through_the_chord_support_cell",
+      "returncode": 0,
+      "passed": true,
+      "limit_seconds": 75,
+      "elapsed_seconds": 0.20372817700263113,
+      "log": "fillet-companion-chart-20260923-focused3-candidate-case-2.log"
+    }
+  ],
+  "public": [
+    {
+      "case": 0,
+      "returncode": 0,
+      "elapsed_seconds": 65.89783163298853,
+      "log": "fillet-companion-chart-20260923-public2-case-0.log"
+    },
+    {
+      "case": 1,
+      "returncode": 0,
+      "elapsed_seconds": 65.90047077194322,
+      "log": "fillet-companion-chart-20260923-public2-case-1.log"
+    },
+    {
+      "case": 2,
+      "returncode": 0,
+      "elapsed_seconds": 66.04531335795764,
+      "log": "fillet-companion-chart-20260923-public2-case-2.log"
+    },
+    {
+      "case": 3,
+      "returncode": 0,
+      "elapsed_seconds": 65.89715850900393,
+      "log": "fillet-companion-chart-20260923-public2-case-3.log"
+    }
+  ],
+  "checks": [
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "check",
+        "--all-targets",
+        "--all-features",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0
+    },
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "check",
+        "--all-targets",
+        "--no-default-features",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0
+    }
+  ],
+  "library_binary_sha256": "f1a86e025301d31d5d052fc2d77a2205fd8b0ed12100094e28624877f4c7e570",
+  "public_binary_sha256": "dc4f7524be20efa94ff006d026e40558462c8abcfdb51764e1053a619c63875a",
+  "excluded_region_sha256": "1bc26463270fbe520873708bc6909db19a7af36356367f8bbc366b92696ed720",
+  "all_sources_unchanged": true,
+  "all_processes_reaped": true
+}

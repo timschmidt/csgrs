@@ -1,0 +1,3 @@
+   Compiling hyperreal v0.13.1 (/home/tim/Documents/GitHub/workspace/hyperreal)
+    Finished `release` profile [optimized] target(s) in 19.76s
+     Running unittests src/lib.rs (/tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/release/deps/hyperreal-f3a6d4fcdbc4d626)

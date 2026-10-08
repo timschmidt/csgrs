@@ -1,0 +1,11 @@
+{
+  "returncode": 124,
+  "elapsed_seconds": 10.007573431998026,
+  "command": [
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve-9d306237de41e1bc",
+    "--exact",
+    "bezier_offset::conversion_tests::finite_one_field_point_inverse_preserves_analytic_domain_and_sheet",
+    "--nocapture",
+    "--test-threads=1"
+  ]
+}

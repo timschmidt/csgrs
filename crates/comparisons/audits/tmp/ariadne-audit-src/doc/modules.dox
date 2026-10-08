@@ -1,0 +1,591 @@
+/***************************************************************************
+ *            modules.dox
+ *
+ *  Copyright  2006-24  Pieter Collins
+ *
+ ****************************************************************************/
+
+/*
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; either version 2 of the License, or
+ *  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Library General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program; if not, write to the Free Software
+ *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+ */
+
+#ifndef _ARIADNE_MODULES_H
+#define _ARIADNE_MODULES_H
+
+/*! \file modules.dox
+ * \brief Documentation for %Ariadne modules.
+ * \anchor modules
+ */
+
+/*! \brief The main %Ariadne namespace.
+ */
+namespace Ariadne {
+
+/*!\defgroup UserModules User Modules
+ */
+
+/*! \defgroup SymbolicModule Symbolic Module
+ *  \ingroup UserModules
+ *  \brief Symbolic expressions in named variables.
+ *
+ * In this module, expressions in named variables can defined. These form the
+ * building blocks for defining hybrid systems.
+ */
+
+/*!\defgroup SystemModule System Module
+ * \ingroup UserModules
+ * \brief Abstract base classes for system interface, and some commonly used systems.
+ *
+ * Systems fall into three basic classes, namely <em>discrete-time
+ * systems</em>, <em>continuous-time systems</em>, and <em>hybrid-time
+ * systems</em>, which are a combination of dicrete-time and hybrid-time
+ * systems. There is a further subdivision into
+ * <em>dynamical systems</em>, which are deterministic, <em>multivalued
+ * systems</em>, which are nondeterministic, and
+ * <em>control systems</em> in which control inputs and noise may be present.
+ *
+ * A system is defined by an algorithm to approximate the image of a basic set,
+ * and possibly to approximate the derivative over a basic set.
+ * It is <em>not</em> the purpose of the classes in the system module to
+ * compute the image of denotable sets; this is the purpose of the Evaluation
+ * module.
+ *
+ * See the page on \ref function_evaluation_page for more information.
+ */
+
+/*! \defgroup AnalysisModule Analysis Module
+ *  \ingroup UserModules
+ *  \brief Classes for computing the evolution and analysing the behaviour of a system.
+ */
+
+
+/*! \defgroup CoreModules Core Modules
+ *
+ *  \brief Core classes and functions used for both system specification and internal computation.
+ */
+
+
+
+
+
+
+/*! \defgroup FoundationsModule Foundations Module
+ * \ingroup CoreModules
+ *
+ *  \brief Foundational classes for information, logic, and general topology.
+ */
+
+
+
+/*!\defgroup InformationSubModule Information
+ * \ingroup FoundationsModule
+ * \brief Tag classes describing the information provided by a type, notably \ref ExactTag, as \ref EffectiveTag, \ref ValidatedTag and \ref ApproximateTag.
+ * \details <em>For the mathematical theory of computable analysis and kinds of information, see the \ref computable_analysis_page Page.</em>
+ *
+ * \anchor information_section
+ *
+ * In order to indicate the kind of guarantees on the approximation provided by a concrete object,
+ *   every type in %Ariadne has an associated <em>Paradigm</em> tag, denoted by the tempate parameter \c P.
+ * The \ref ExactTag indicates that the object represents a value exactly, and with decidable equality.
+ * The \ref EffectiveTag indicates that an object allows approximations to be computed to arbitrary, known accuracy.
+ * The \ref ValidatedTag indicates that the objects provides an approximation with guarantees on the error, such as lower- and upper-bounds, or an error bound.
+ * The \ref ApproximateTag indicates that the object is an approximation with no guarantees on the accuracy.
+ *
+ * Whenever the paradigm tag <tt>P</tt> occurs as a template parameter, a type alias is given in which the type is prefixed by the tag name. For example, \ref Number "Number<ValidatedTag>" has alias \ref Number::ValidatedNumber "ValidatedNumber", and \ref Function "Function<EffectiveTag,SIG>" has alias \ref EffectiveFunction "EffectiveFunction<SIG>".
+ *
+ * \remark In a future version of %Ariadne, it may be the case that information tags are replaced by template prefixes, so \ref Number "Number<ValidatedTag>" becomes <tt>Validated<Number></tt>.
+ *
+ * \subsection builtin_type_tag_section Builtin type tag
+ *
+ * %Ariadne also needs to handle built-in C++ types, notably \c Bool, \c Int and \c double (floating-point) classes.
+ * Since C++ internally allows unsafe and inexact conversions e.g
+ *     \code  Int n=1.5; // n is set to 1! \endcode
+ * and
+ *     \code  double x=1.3; // x not exactly equal to 1.3! \endcode
+ * care must be taken when using these objects. The \ref BuiltinTag tag is used to describe these objects.
+ * %BuiltinTag objects should be immediately converted to %Ariadne objects in user code.
+ */
+
+ /*!\defgroup LogicalSubModule Logic
+ * \ingroup FoundationsModule
+ * \brief Logical types, including \ref Boolean, \ref Sierpinskian and \ref Kleenean types.
+ * \details <em>For the mathematical theory of non-Boolean and constructive logic, see the \ref logic_page Page.</em>
+ *
+ * In this module, we define %Ariadne's base logical types.
+ * The main classes are \ref Ariadne::Boolean "Boolean",
+ * \ref Ariadne::Sierpinskian "Sierpinskian", and \ref Ariadne::Kleenean "Kleenean".
+ *
+ * The Boolean class is a standard two-valued logical type with values \c true and \c false,
+ * and represents the result of a decidable predicate.
+ * The Sierpinskian class has two values, \c true and \c indeterminate,
+ * and represents the result of a verifyable predicate.
+ * The Kleenean class has three values, \c true, \c indeterminate and \c false,
+ * and represents the result of a \em quasidecidable predicate.
+ *
+ * The Sierpinskian and Kleenean classes are "Effective" types, denoted by \ref Ariadne::EffectiveTag.
+ * They are used to represent the results of predicates on exactly-specified objects from continuous (i.e. uncountable) spaces.
+ * From the viewpoint of computable analysis, they can be considered as sequences of their values,
+ * which stabilise as soon as a decision  (\c true or \c false) is reached.
+ * In %Ariadne, this is realised by providing a method check(\ref Ariadne::Effort "Effort"),
+ * which returns a "Validated" version of the class (denoted by  \ref Ariadne::ValidatedTag) containing one of its concrete values.
+ * For example, if \c k is a Kleeanen object, then \c k.check(3) is a \ref Ariadne::ValidatedKleenean "ValidatedKleenean" object
+ * which may have value \c true, \c indeterminate or \c false. Further, if \c k.check(3) is \c true or \c false, then k.check(4) has the same value.
+ * Validated logical types are also used for the result of logical predicates on approximations to objects on continuous spaces with given error bounds.
+ *
+ * The \ref Ariadne::LowerKleenean "LowerKleenean" class also has the two values \c true and \c indeterminate.
+ * The difference between LowerKleenean and Sierpinskian is that Sierpinskian is used where falsification is impossible,
+ * which occurs when there are no robustly false values, such in the case of the inequality predicate,
+ * whereas LowerKleenean is used when information which could be used to falsify the predicate has been lost,
+ * such as testing positivity of a \ref Ariadne::LowerReal "LowerReal" number, for which only lower bounds are provided.
+ * Conversions are possible Sierpinskian to Kleenean to LowerKleenean.
+ * Similarly, a \ref Ariadne::UpperKleenean "UpperKleenean" class is provided with values \c false and \c indeterminate.
+ *
+ * The \ref Ariadne::NaiveKleenean "NaiveKleenean" class has values \c likely, \c indeterminate and \c unlikely,
+ * and is used where only approximate information is available, so a rigorous assessment of truth or falseness cannot be made.
+ * The corresponding finitary class is \ref Ariadne::ApproximateKleenean "ApproximateKleenean", which may represent a
+ * the result of a predicate on a floating-point approximation to a real number without error bounds.
+ * Note that ApproximateKleenean may be considered a \"\c ValidatedNaiveKleenean\" or as an \"\c Approximate\"\c Kleenean.
+ * Although NaiveKleenean and ApproximateKleenean do not provide mathematically rigorous information, they may be useful in
+ * scratch calculuations used to hot-start or precondition a rigorous calculuation.
+ *
+ * All logical classes support the standard operations of negation, conjunction (logical "and"), disjunction (logical "or") and exclusive-or.
+ *
+ * In order to obtain a built-in \c bool value from a \c Validated logical object,
+ * the tests \ref Ariadne::definitely "definitely", \ref Ariadne::possibly "possibly", and \ref Ariadne::probably "probably" can be used.
+ * Further, \ref Ariadne::decide "decide" can be used to convert any logical type to a boolean value,
+ * returning \c probably for concrete (validated) logical types,
+ * and checking abstract (effective) logical type with the default effort.
+ *
+ * An example of the use of logical predicates is given below:
+ * \code
+ * Real x = ...;
+ * Kleeanean k = (x>0);
+ *
+ * Effort eff(5);
+ * ValidatedKleenean vk = k.check(eff);
+ *
+ * MultiplePrecision pr(128);
+ * ValidatedFloatMP vx = x.get(pr);
+ * ValidatedKleenean vpx = (vx>0);
+ *
+ * // Check that if vk is false, then vpx cannot be true.
+ * assert(possibly(vk) or not definitely(vpx));
+ * \endcode
+ */
+
+
+/*!\defgroup TopologySubModule Topology
+ * \ingroup FoundationsModule
+ * \brief Topological constructs, including \ref Bounds "Bounds<Q>" and \ref Ball "Ball<Q,E>" types, and general constructions.
+ * \details <em>For the mathematical theory of computable topology, see the \ref topology_page Page.</em>
+ *
+ * In this module, we define %Ariadne's base topological types.
+ * The main classes are \ref Ariadne::Bounds "Bounds<Q>", with subtypes \ref LowerBound "LowerBound<Q>" and \ref UpperBound "UpperBound<Q>", and \ref Ariadne::Ball "Ball<Q,R>".
+ */
+
+
+/*!
+ * \defgroup NumericModule Numeric Module
+ * \ingroup CoreModules
+ * \brief Numerical types, including \ref Natural, \ref Integer, \ref Dyadic,  \ref Decimal, \ref Rational and \ref Real types,
+ * generic types \ref Number "Number<P>",
+ * double/multiple precision floating-point types \ref Float<DP> and \ref Float<MP> (with shorthands \ref FloatDP and \ref FloatMP),
+ * and correctly-rounded types \ref Ball "Ball<F,FE>", \ref Bounds "Bounds<F>"
+ * \ref UpperBound "UpperBound<F>", \ref LowerBound "LowerBound<F>" and \ref Approximation "Approximation<F>".
+ *
+ * \details <em>For the mathematical theory of computability on real numbers, see the \ref real_numbers_page Page.</em>
+ *
+ * In this module, we define %Ariadne's base numerical types,
+ * including support for interval arithmetic via balls and bounds.
+ * The main concrete algebraic number types are \ref Integer,
+ * \ref Dyadic, and \ref Rational.
+ * A \ref Decimal number class is provided for user input.
+ * The main real number type is \ref Real,
+ * with directed versions \ref LowerReal and \ref UpperReal.
+ * Generic numbers are defined using the \ref Number "Number<P>" templates,
+ * with typedefs e.g. \ref EffectiveNumber for \ref Number<\ref EffectiveTag>.
+ * Validated and approximate versions of real numbers are given by
+ * \ref ValidatedReal and \ref ApproximateReal, and convergent sequences without
+ * error bounds by \ref NaiveReal.
+ *
+ * Concrete numerical types are defined in terms of the \ref FloatDP and \ref FloatMP
+ * floating-point number classes.
+ * These support rounded arithmetic and elementary functions using the \ref down
+ * and \ref up tags (equivalantly, \ref downward and \ref upward).
+ * %Rounding to nearest is specified by the \ref near (equivalently, \ref to_nearest) tag.
+ * Approximate arithmetic without control of the
+ * rounding mode can be specified by the \ref approx rounding type.
+ * Comparisons are performed considering these numbers as exact values, and must be decidable.
+ * This means that these "raw" floating-point types should not be used directly, but
+ * wrapped in one of the validated concrete approximation classes listed below.
+ *
+ * Types supporting exact or rounded arithmetic may be used to define (validated)
+ * approximations to numbers via the classes \ref Value "Value<F>",
+ * \ref Ball "Ball<F,FE>", \ref Bounds "Bounds<F>"
+ * \ref UpperBound "UpperBound<F>", \ref LowerBound "LowerBound<F>"
+ * and \ref Approximation "Approximation<F>".
+ *
+ * Note that to prevent accidental calls to approximate functions, all
+ * non-exact operations (except explicitly-rounded operations on raw values)
+ * must yield an \ref Approximation value.
+ *
+ * %Positive numbers can be defined using the \ref Positive "Positive<X>" template.
+ * A \ref Natural is a \ref Positive<\ref Integer>.
+ *
+ * \anchor supported_operations_anchor
+ * The following aliases are used for arithmetical operations:
+ *  <dl><dt><dd><tt>nul(x)</tt> is equivalent to <tt>0*x</tt>
+ *      <dt><dd><tt>pos(x)</tt> is equivalent to <tt>+x</tt>
+ *      <dt><dd><tt>neg(x)</tt> is equivalent to <tt>-x</tt>
+ *      <dt><dd><tt>sqr(x)</tt> is equivalent to <tt>x^2</tt>, the <em>square</em> operation
+ *      <dt><dd><tt>hlf(x)</tt> is equivalent to <tt>x/2</tt>
+ *      <dt><dd><tt>rec(x)</tt> is equivalent to <tt>1/x</tt>, the <em>reciprocal</em> operation.
+ *      <dt><dd><tt>add(x,y)</tt> is equivalent to <tt>x+y</tt>
+ *      <dt><dd><tt>sub(x,y)</tt> is equivalent to <tt>x-y</tt>
+ *      <dt><dd><tt>mul(x,y)</tt> is equivalent to <tt>x*y</tt>
+ *      <dt><dd><tt>div(x,y)</tt> is equivalent to <tt>x/y</tt>
+ *      <dt><dd><tt>pow(x,n)</tt> is equivalent to <tt>x^n</tt>
+ *      <dt><dd><tt>fma(x,y,z)</tt> is equivalent to <tt>x*y+z</tt>, the <em>fused-multiply-and-add</em> operation.
+ *  </dl>
+ * Note that C++ does not support the power operator <tt>^</tt>. In Python, the power operator is denoted <tt>**</tt>.
+ * In %Ariadne, only integer exponents \a n are supported; for general powers
+ * use the identity \f$x^y=e^{x\log(y)}\f$ and write <code>exp(y*log(x))</code>.
+ *
+ * The following non-arithmetical elementary functions are provided:
+ *  <dl><dt><dd><tt>sqrt(x)</tt>, the square-root function \f$\sqrt{x}\f$
+ *      <dt><dd><tt>exp(x)</tt>, the natural exponent \f$e^x\f$
+ *      <dt><dd><tt>log(x)</tt>, the natural logarithm \f$\log(x)\f$ (sometimes written \f$\ln(x)\f$).
+ *      <dt><dd><tt>sin(x)</tt>, the sine function \f$\sin(x)\f$, with argument in <em>radians</em>.
+ *      <dt><dd><tt>cos(x)</tt>, the cosine function \f$\cos(x)\f$, with argument in <em>radians</em>.
+ *      <dt><dd><tt>tan(x)</tt>, the tangent function \f$\tan(x)\f$, with argument in <em>radians</em>.
+ *      <dt><dd><tt>atan(x)</tt>, the inverse tangent function \f$\arctan(x)\f$ or \f$\tan^{-1}(x)\f$, returning princial value in the open interval \f$(-\pi/2\!:\!+\pi/2)\f$
+ *  </dl>
+ *
+ * The following lattice operations are provided:
+ *  <dl><dt><dd><tt>abs(x)</tt>, the absolute-value \f$|x|\f$
+ *      <dt><dd><tt>max(x,y)</tt>, the maximum \f$\max(x,y)\f$
+ *      <dt><dd><tt>min(x,y)</tt>, the minimum \f$\min(x,y)\f$
+ *  </dl>
+ *
+ * We have the following operations on floating-point types
+ *  - Exact arithmetic where possible:
+ *    <dl><dt><dd><tt>%Float neg(Float);</tt>
+ *        <dt><dd><tt>%Float abs(Float);</tt>
+ *        <dt><dd><tt>%Float max(Float,Float);</tt>
+ *    </dl>
+ *
+ *  - Approximate and rounded arithmetic:
+ *    <dl><dt><dd><tt>%Float add(near,Float,Float);</tt>
+ *        <dt><dd><tt>%Float add(down,Float,Float);</tt>
+ *        <dt><dd><tt>%Float add(up,Float,Float);</tt>
+ *    </dl>
+ *
+ *  - Arithmetic in the <em>current rounding mode</em>, or <em>opposite</em> rounding mode:
+ *    <dl><dt><dd><tt>%Float add(rnd,Float,Float);</tt>
+ *        <dt><dd><tt>%Float add(opp,Float,Float);</tt>
+ *    </dl>
+ *
+ * We use the following abbreviations for template parameters
+ * for classes and concepts in this module:
+ *  - \b Z: %Integer
+ *  - \b W: %Dyadic
+ *  - \b Q: %Rational
+ *  - \b R: %Real
+ *  - \b Y: %Generic %Number
+ *
+ *  - \b PR: %Precision
+ *  - \b F: %Float
+ *  - \b X: %Concrete %Number
+ *
+ * See the page \ref real_numbers_page for more information.
+ *
+ * \internal The template names are currently not used consistently
+ */
+
+/*!
+ * \defgroup ExtendedLiteralsSubModule Extended numeric literals
+ * \ingroup NumericModule
+ * \brief Extended numeric literals
+ *
+ * \details In Python, the C++ operator is used as a function, e.g. \c 1.23_pr is replaced by \c pr_(1.23) .
+ */
+
+
+/*!
+ * \defgroup AlgebraModule Algebra Module
+ * \ingroup CoreModules
+ * \brief Algebraic data types, notably for linear algebra and differential algebra.
+ */
+
+/*!
+ * \defgroup LinearAlgebraSubModule Linear Algebra Submodule
+ * \ingroup AlgebraModule
+ * \brief \ref Vector "Vector<X>", \ref Matrix "Matrix<X>" and \ref Tensor "Tensor<N,X>" classes,
+ * solution of linear equations, LU and QR factorisation and singular value decomposition.
+ *
+ * \details <em>For the mathematical theory of computable linear algebra, see the \ref linear_algebra_page Page.</em>
+ *
+ * Basic types are represented by the classes \ref Ariadne::Vector "Vector"
+ * and \ref Ariadne::Matrix "Matrix".
+ * Specialist types include PermutationMatrix and DiagonalMatrix.
+ * Operations such as vector sums and matrix-vector products are
+ * accessed using operator overloading. %Expression templates and slices are
+ * used to improve efficiency.
+ *
+ * More complicated matrix operations, such as factorisation, are represented
+ * by sub-classes which contain the factorised data, from which the factors
+ * can easily be extracted.
+ *
+ * Currently sparse and structured (e.g. triangular, symmetric, banded)
+ * matrices are not directly supported, except to the extent needed for the
+ * matrix decomposition classes, or for derivative tensors.
+ *
+ * All classes support exact arithmetic and interval arithmetic.
+ *
+ * We use the following abbreviations for template parameters for classes
+ * in this module:
+ *  - \b SCA: \ref Scalar
+ *  - \b VEC: Vector
+ *  - \b MX: Matrix
+ *
+ */
+
+/*!\defgroup DifferentiationSubModule Differentiation Submodule
+ * \ingroup AlgebraModule
+ * \brief Support for automatic differentiation using Taylor expansions, including the general \ref Differential "Differential<X>" class, fixed-order \ref FirstDifferential "FirstDifferential<X>" and \ref SecondDifferential "SecondDifferential<X>", and \ref UnivariateDifferential "UnivariateDifferential<X>" classes.
+ *
+ * \details <em>For the mathematical theory of automatic differentiation, see the \ref differential_algebra_page Page.</em>
+ *
+ * In this core module are the classes used to compute derivatives
+ * of functions.
+ */
+
+/*! \defgroup FunctionModule Function Module
+ *  \ingroup CoreModules
+ *  \brief Functions on Euclidean space, including the \ref Function "Function<P,SIG>" generic template class
+ *  \details <em>For the mathematical theory of computable functional analysis, see the \ref functional_analysis_page Page.</em>
+ *
+ * In this module are the classes used to represent concrete functions in Euclidean space.
+ * These functions can be used as the building blocks for geometric objects and dynamic systems.
+ *
+ * The main \ref Function "Function<P,SIG>" class represents continuous functions.
+ * Since any continuous function \f$\R^n\to\R\f$ can be approximated arbitarily accurately be a polynomial function on a bounded domain, functions can compute polynomial approximations by application to a \ref TaylorModel.
+ *
+ * \subsubsection function_information_section Function information tag.
+ * The information tag (computational paradigm) \c P describes whether the function is exact, effective, validated or approximate.
+ * (See the \ref InformationModule for more information.)
+ * Type aliases are provided, so \ref EffectiveFunction "EffectiveFunction<SIG>" is an alias for \ref Function "Function"<\ref EffectiveTag,SIG>.
+ *
+ * An effective function can be evaluated arbitrarily accurately given arbitrarily accurate approximations to the input.
+ * Hence if \f$f\f$ is a \ref EffectiveFunction, then it can be automatically converted to a \ref ValidatedFunction.
+ *
+ *
+ * \subsection function_signature_section Function signatures
+ *
+ * The signature \c SIG takes the form <tt>RES(ARGS...)</tt> where \c RES describes the output and <tt>ARGS...</tt> the input.
+ * Hence a signature <tt>Real(Real)</tt> indicates a function \f$\R\to\R\f$,
+ * whereas <tt>RealVector(RealVector,Real)</tt> would indicate a function \f$\R^n\times\R\to\R^m\f$.
+ * \remark Currently, only \ref Real and \ref RealVector are supported types for use in \c RES and \c ARGS, with \ref RealScalar a synonym for \ref Real.
+ *
+ *  \defgroup SymbolicFunctionSubModule Symbolic functions
+ *  \ingroup FunctionModule
+ *  \brief Functions defined by symbolic formulae, such as \ref Formula "Formula<I,Y>" and \ref Procedure "Procedure<Y>".
+ *
+ *  \defgroup AlgebraicFunctionSubModule Algebraic functions
+ *  \ingroup FunctionModule
+ *  \brief Algebraic function classes such as \ref Affine "Affine<X>" and \ref Polynomial "Polynomial<I,X>".
+ *
+ *  \defgroup FunctionModelSubModule Function models
+ *  \ingroup FunctionModule
+ *  \brief Concrete \ref FunctionModel "FunctionModel<P,SIG,PR,PRE>" classes on bounded domains
+ *  such as \ref ScalarMultivariateTaylorFunctionModel "ScalarMultivariateTaylorFunctionModel<P,FLT>",
+ *  which is a \ref ScaledFunctionPatch <\ref TaylorModel "TaylorModel<P,FLT>">.
+ */
+
+
+/*!\defgroup GeometryModule Geometry Module
+ * \ingroup CoreModules
+ * \brief Geometric calculus module.
+ * \details <em>For the mathematical theory of computable geometry, see the \ref geometry_page Page.</em>
+ *
+ * In this module are the classes used to represent sets and approximations to
+ * sets. Sets fall into two classes, <em>basic sets</em> which are typically
+ * simple sets which form a base for the topology, and <em>denotable sets</em>
+ * which are unions of basic sets.
+ *
+ * The fundamental geometric operations are \c contains(Set,State),
+ * \a disjoint(Set,Set) and subset(Set,Set). All these return \a tribool values,
+ * where the indeterminate value is used to indicate a result which is either
+ * not robust (e.g. the boundaries of two sets intersect but their interiors do
+ * not) or which cannot be computed to the given precision.
+ *
+ * %Ariadne uses <em>fuzzy basic sets</em>, which are sets of sets defined using
+ * interval data, to store intermediate results if these cannot be computed
+ * exactly. These sets can be converted to ordinary basic sets by over- or
+ * under-approximation. Alternatively, the fundamental binary predicates can
+ * be computed directed for the fuzzy set types.
+ * Denotable sets are never fuzzy.
+ *
+ * We use the following abbreviations for template parameters for classes in this module:
+ *  - \b S: SetInterface
+ *  - \b BS: BasicSet
+ *  - \b DS: DenotableSet
+ *  - \b LS: ListSet
+ *  - \b GS: GridSet
+ *  - \b PTS: PartitionTreeSet
+ *
+ * See \ref geometry_page for more information.
+ *
+ * \defgroup SetInterfaceSubModule Set interfaces
+ * \ingroup GeometryModule
+ * \brief Interfaces for various classes of sets.
+ *
+ * \defgroup ExactSetSubModule Exact sets
+ * \ingroup GeometryModule
+ * \brief Sets which can be defined exactly.
+ *
+ * Any set can be uniquely specified by the results geometric predicates involving
+ * rectangles. Exact sets are defined by an interface in which these predicates are
+ * defined.
+ *
+ * \defgroup BasicSetSubModule Basic sets
+ * \ingroup GeometryModule
+ * \brief Basic set classes.
+ *
+ * Basic sets are so-called because they form a base for the topology of the
+ * space. Typically, basic sets are (a subclass of) convex polytopes or
+ * ellipsoids. Basic sets must support the fundamental geometric predicates,
+ * both within the class and with the Rectangle class. Additionally, basic sets
+ * may support the optional geometric operations, but only if the class of set
+ * under consideration is closed under that operation. The result may be
+ * exactly computable if it involves no arithmetic (e.g. intersection of two
+ * rectangles) or may need to be represented by a fuzzy set (e.g. Minkowski sum
+ * of two rectangles).
+ *
+ * \defgroup ListSetSubModule List sets
+ * \ingroup GeometryModule
+ * \brief Denotable sets based on arbitrary lists of elements.
+ *
+ * \defgroup DiscretisedSetSubModule Discretised sets
+ * \ingroup GeometryModule
+ * \brief Classes for representing discretised sets
+ *
+ * A <em>subdivision tree</em> is a binary tree describing a subdivision of
+ * a rectangle (<em>unit cell</em>) into smaller cells. The subdivision is
+ * described by a SubdivisionSequence giving the coordinate of the ith
+ * subdivision, and a BinaryTree giving the subdivisions.
+ *
+ * e.g. The cell described by the SubdivisionSequence '[0,0,1,...]' and the
+ * BinaryWord '[0,1,1]' is given by subdividing the unit interval twice in the
+ * \f$x_0\f$ direction, first taking the lower half, and then the upper half,
+ * and by subdividing once in the \f$x_1\f$ direction, taking the upper half.
+ * This gives the dyadic rectangle '[0.25,0.5]x[0.5,1.0]'.
+ *
+ * Denotable sets are unions of basic sets of a simple kind, typically boxes.
+ * In addition to the fundamental geometric predicates, denotable sets must also
+ * support iteration through their elements, and union (join) with basic sets
+ * and denotable sets of the same kind.
+ */
+
+
+/*!\defgroup SolverModule Solver Module
+ * \ingroup CoreModules
+ * \brief Classes and functions for solving algebraic equations, differential equations and optimisation problems (including constraint feasibility problems).
+ *
+ */
+
+/*!\defgroup AlgebraicEquationSubModule Algebraic equation solvers
+ * \ingroup SolverModule
+ * \brief Classes and functions for solving nonlinear algebraic equations.
+ *
+ * \details For the mathematical theory of algebraic equations, including implicit function problems, see the \ref algebraic_equations_page Page.
+ *
+ * A \a Solver class provides functionality for solving algebraic equations, as defined in the \ref SolverInterface.
+ * %Two basic kinds of problem are considered.
+ * The first is computing roots of a function \f$f:\R^n\to\R^n\f$, which are generically isolated points.
+ * The second kind of problem is solving parametrised equations, so for a function \f$ f:\R^m\times\R^n\to\R^n \f$,
+ * we find a function \f$ h:\R^m\to\R^n \f$ such that \f$ f(x,h(x))=0 \f$ for all \f$ x \f$ in some domain \f$ D \f$.
+ *
+ * Concrete solvers include \ref IntervalNewtonSolver and \ref KrawczykSolver.
+ */
+
+/*!\defgroup DifferentialEquationSubModule Differential equation solvers
+ * \ingroup SolverModule
+ * \brief Classes and functions for solving linear and nonlinear differential equations equations.
+ *
+ * An \a Integrator class provides functionality for solving differential equations, as defined in the \ref IntegratorInterface.
+ * Concrete solvers include \ref TaylorPicardIntegrator and \ref TaylorSeriesIntegrator.
+ */
+
+/*!\defgroup OptimisationSubModule Optimisation solvers
+ * \ingroup SolverModule
+ * \brief Classes and functions for solving linear and nonlinear programming problems.
+ *
+ * The LinearProgram class supports construction and solution of linear
+ * programming problems. Tests for feasibility only are also possible. The
+ * computations are performed by a BLAS/LAPACK style lpslv() routing.
+ */
+
+
+/*!\defgroup DynamicsModule Dynamics Module
+ * \ingroup CoreModules
+ * \brief Classes and functions for analysing dynamic systems.
+ */
+
+
+/*! \defgroup OutputModules Output Modules
+ *
+ *  \defgroup GraphicsModule Graphical Output
+ *  \ingroup OutputModules
+ *  \brief Graphical output.
+ *
+ *  \defgroup SerializationModule Serialization
+ *  \ingroup OutputModules
+ *  \brief Input/Output to a text or html archive.
+ *
+ *  \defgroup CHomPModule Homology Output
+ *  \ingroup OutputModules
+ *  \brief Homology Output.
+ */
+
+
+/*! \defgroup HybridModules Hybrid System Modules
+ */
+
+/*! \defgroup HybridAutomataSubModule Hybrid automata
+ *    \ingroup HybridModules
+ *  \brief Hybrid system classes.
+ */
+
+/*! \defgroup HybridSetSubModule Hybrid sets
+ *    \ingroup HybridModules
+ *  \brief Sets in spaces with many components.
+ *
+ *  The state space of a hybrid system consists of many disconnected components,
+ *  one for each discrete mode. Hybrid sets consist of a union of many different
+ *  sets, one for each component of the state space.
+ */
+
+/*! \defgroup HybridDynamicsSubModule Hybrid evolution
+ *    \ingroup HybridModules
+ *  \brief Classes and functions for analysing hybrid dynamic systems.
+ */
+
+/*!\defgroup ExternalModules External Modules
+ */
+
+} // namespace Ariadne
+
+#endif /* _ARIADNE_MODULES_H */

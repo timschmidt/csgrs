@@ -1,0 +1,39 @@
+[
+  {
+    "mode": "jit",
+    "args": [
+      "-ea",
+      "-Xmx256m",
+      "-cp",
+      "/home/tim/Documents/GitHub/workspace/.audit-ruffini-build.LmZgYM/elliptic-coordinates:/home/tim/Documents/GitHub/workspace/.audit-ruffini-build.LmZgYM/polynomial:/home/tim/Documents/GitHub/workspace/.audit-ruffini-build.LmZgYM/matrix:/home/tim/Documents/GitHub/workspace/.audit-ruffini-build.LmZgYM/classes:/home/tim/Documents/GitHub/workspace/.audit-ruffini-build.LmZgYM/deps/*",
+      "EllipticCoordinates"
+    ],
+    "started": "2026-09-07T00:51:48.050Z",
+    "finished": "2026-09-07T00:51:48.147Z",
+    "status": 0,
+    "error": null,
+    "signal": null,
+    "file": "jit-elliptic-coordinates.log",
+    "sha256": "98de6fd1ec79631bab344b090ab49defe71b85e78b10d9f4fc8be10858ad0711",
+    "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "mode": "interpreter",
+    "args": [
+      "-ea",
+      "-Xmx256m",
+      "-Xint",
+      "-cp",
+      "/home/tim/Documents/GitHub/workspace/.audit-ruffini-build.LmZgYM/elliptic-coordinates:/home/tim/Documents/GitHub/workspace/.audit-ruffini-build.LmZgYM/polynomial:/home/tim/Documents/GitHub/workspace/.audit-ruffini-build.LmZgYM/matrix:/home/tim/Documents/GitHub/workspace/.audit-ruffini-build.LmZgYM/classes:/home/tim/Documents/GitHub/workspace/.audit-ruffini-build.LmZgYM/deps/*",
+      "EllipticCoordinates"
+    ],
+    "started": "2026-09-07T00:51:48.150Z",
+    "finished": "2026-09-07T00:51:48.284Z",
+    "status": 0,
+    "error": null,
+    "signal": null,
+    "file": "interpreter-elliptic-coordinates.log",
+    "sha256": "98de6fd1ec79631bab344b090ab49defe71b85e78b10d9f4fc8be10858ad0711",
+    "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  }
+]

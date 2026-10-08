@@ -1,0 +1,165 @@
+\doxysubsection{Binary\+Tree\+Node Class Reference}
+\hypertarget{classAriadne_1_1BinaryTreeNode}{}\label{classAriadne_1_1BinaryTreeNode}\index{BinaryTreeNode@{BinaryTreeNode}}
+
+
+{\ttfamily \#include $<$binary\+\_\+tree.\+hpp$>$}
+
+
+
+\doxysubsubsection{Description}
+The binary tree node. 
+
+This node is to be used in a binary tree designed for subdividing the state space into enabled and disabled cells. This is required for representing subsets of the state space.
+
+{\bfseries{\doxylink{classAriadne_1_1Storage}{Storage}\+:}} We only store pointers to the left and right subtrees and the \doxylink{classAriadne_1_1ValidatedKleenean}{Validated\+Kleenean} value indicating whether this cell is enabled/disabled or we do not know. \doxysubsubsubsection*{Public Member Functions}
+\begin{Indent}\textbf{ Constructors}\par
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1BinaryTreeNode_ab3bf1347f7faa8931537f88324aa8e0d}\label{classAriadne_1_1BinaryTreeNode_ab3bf1347f7faa8931537f88324aa8e0d} 
+{\bfseries Binary\+Tree\+Node} (const \mbox{\hyperlink{classAriadne_1_1ValidatedKleenean}{Validated\+Kleenean}} \mbox{\hyperlink{classAriadne_1_1BinaryTreeNode_a4009a6fa34f897cddca99b971734c733}{\+\_\+is\+Enabled}}=false)
+\begin{DoxyCompactList}\small\item\em Construct a tree node. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1BinaryTreeNode_a4278767402dbea32fc94b350726440d2}\label{classAriadne_1_1BinaryTreeNode_a4278767402dbea32fc94b350726440d2} 
+{\bfseries Binary\+Tree\+Node} (const \mbox{\hyperlink{classAriadne_1_1BinaryTreeNode}{Binary\+Tree\+Node}} \&the\+Tree\+Node)
+\begin{DoxyCompactList}\small\item\em The copy constructor. The the node and all it\textquotesingle{}s sub nodes are copied. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1BinaryTreeNode_ad3eb277b63aa748fe1eb451609394028}\label{classAriadne_1_1BinaryTreeNode_ad3eb277b63aa748fe1eb451609394028} 
+{\bfseries Binary\+Tree\+Node} (const Boolean\+Array \&the\+Tree, const Boolean\+Array \&the\+Enabled\+Cells)
+\begin{DoxyCompactList}\small\item\em Constructs a binary tree from the boolean arrays. {\itshape the\+Tree} defines the tree structure, {\itshape the\+Enabled\+Cells} defines the tree nodes. IVAN S. ZAPREEV\+: WARNING\+: We assume that every node has either no children or both of them! NOTE\+: The dinary data of the tree is organized in the following way\+: 1 The {\itshape the\+Tree} contains Depth first search lay out of the tree, / \textbackslash{} where 1 stands for the non-\/leaf node and 0 for a leaf node, we / \textbackslash{} always visit the left su-\/node first, e.\+g. the tree on the left 2 5 is encodes the \doxylink{classAriadne_1_1Array}{Array}\+: \mbox{[}1, 1, 0, 0, 0\mbox{]} / \textbackslash{} where the corresponding \texorpdfstring{$^\wedge$}{\string^} \texorpdfstring{$^\wedge$}{\string^} \texorpdfstring{$^\wedge$}{\string^} \texorpdfstring{$^\wedge$}{\string^} \texorpdfstring{$^\wedge$}{\string^} / \textbackslash{} tree nodes are\+: 1 2 3 4 5 3 4 {\itshape the\+Enabled\+Cells} contains true/false values for the leaf nodes of the tree. Their order is the same as in {\itshape the\+Tree}, e.\+g. here it is\+: 3,4,5. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\end{Indent}
+\begin{Indent}\textbf{ Leaf Operations}\par
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1BinaryTreeNode_a947f40480131ad11aaf4b7d0f786a40e}\label{classAriadne_1_1BinaryTreeNode_a947f40480131ad11aaf4b7d0f786a40e} 
+\mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} {\bfseries make\+\_\+leaf} (\mbox{\hyperlink{classAriadne_1_1ValidatedKleenean}{Validated\+Kleenean}} \mbox{\hyperlink{classAriadne_1_1BinaryTreeNode_a46fcd70e6b6dd0fad6b18f96b0679972}{is\+\_\+enabled}})
+\begin{DoxyCompactList}\small\item\em This method makes the node to become a leaf node with the enabled value \+: {\itshape is\+\_\+enabled} NOTE\+: the leat and the right sub-\/trees (are deallocated. WARNING\+: this method MUST NOT be called on a non-\/leaf node!!! \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1BinaryTreeNode_a05e2c5b7d64706094787c1e818cdacea}\label{classAriadne_1_1BinaryTreeNode_a05e2c5b7d64706094787c1e818cdacea} 
+\mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} {\bfseries set\+\_\+enabled} ()
+\begin{DoxyCompactList}\small\item\em Marks the leaf node as enabled, otherwise they through {\itshape Not\+ALeaf\+Node\+Esception}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1BinaryTreeNode_a004b430049a3a3f0b841df76c2a2eb9f}\label{classAriadne_1_1BinaryTreeNode_a004b430049a3a3f0b841df76c2a2eb9f} 
+\mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} {\bfseries set\+\_\+disabled} ()
+\begin{DoxyCompactList}\small\item\em Marks the leaf node as disabled, otherwise they through {\itshape Not\+ALeaf\+Node\+Esception}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1BinaryTreeNode_a6048eaf387c8793e0bd0073da00c6484}\label{classAriadne_1_1BinaryTreeNode_a6048eaf387c8793e0bd0073da00c6484} 
+\mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} {\bfseries set\+\_\+unknown} ()
+\begin{DoxyCompactList}\small\item\em Marks the node as neither enabled nor disabled, is only applicable to non-\/leaf nodes. When applied to a leaf node, throws \doxylink{classAriadne_1_1IsALeafNodeException}{Is\+ALeaf\+Node\+Exception}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1BinaryTreeNode_a698cbaf6519289b6428af3423fa83f98}\label{classAriadne_1_1BinaryTreeNode_a698cbaf6519289b6428af3423fa83f98} 
+\mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} {\bfseries split} ()
+\begin{DoxyCompactList}\small\item\em Splits the leaf node, i.\+e. adds two subnodes with the \+\_\+is\+Enabled field value inherited from the parent node. The parent\textquotesingle{}s \+\_\+is\+Enabled is set to intermediate, because the subsequent operation on the subtree might enable/disable subnodes and we do not want to keep track of these changes. If the node is not a leaf then nothing is done. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1BinaryTreeNode_adfc805a84e3f1d6e6d1f3601eb8f2bf5}\label{classAriadne_1_1BinaryTreeNode_adfc805a84e3f1d6e6d1f3601eb8f2bf5} 
+\mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} {\bfseries mince} (const \mbox{\hyperlink{namespaceAriadne_aae901a69a841b1a085a0dfe218e38fe9}{Nat}} \mbox{\hyperlink{classAriadne_1_1BinaryTreeNode_ad745612a5f3df6eab14e36c4498e4cdc}{depth}})
+\begin{DoxyCompactList}\small\item\em This method splits the enabled subtrees of the tree rooted to this node in such a way that the tree depth becomes {\itshape depth}. If the initial tree depth is greater than {\itshape depth} then nothing is done. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\end{Indent}
+\doxysubsubsubsection*{Protected Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1BinaryTreeNode_af19cf77101312e0f2a275ca040a86ba7}\label{classAriadne_1_1BinaryTreeNode_af19cf77101312e0f2a275ca040a86ba7} 
+\mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} {\bfseries mince\+\_\+node} (\mbox{\hyperlink{classAriadne_1_1BinaryTreeNode}{Binary\+Tree\+Node}} \texorpdfstring{$\ast$}{*}p\+Current\+Node, const \mbox{\hyperlink{namespaceAriadne_aae901a69a841b1a085a0dfe218e38fe9}{Nat}} \mbox{\hyperlink{classAriadne_1_1BinaryTreeNode_ad745612a5f3df6eab14e36c4498e4cdc}{depth}})
+\begin{DoxyCompactList}\small\item\em This method splits the enabled subtrees of the tree rooted to {\itshape p\+Current\+Node} in such a way that the tree depth becomes {\itshape depth}. If the initial tree depth is greater than {\itshape depth} then nothing is done. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1BinaryTreeNode_ab2383f37268584e734bae6d51d49f936}\label{classAriadne_1_1BinaryTreeNode_ab2383f37268584e734bae6d51d49f936} 
+\mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} {\bfseries recombine\+\_\+node} (\mbox{\hyperlink{classAriadne_1_1BinaryTreeNode}{Binary\+Tree\+Node}} \texorpdfstring{$\ast$}{*}p\+Current\+Node)
+\begin{DoxyCompactList}\small\item\em This method recombined the sub tree nodes rooted to {\itshape p\+Current\+Node}. Note that, the two leaf nodes with the same parent are removed if they have the same value of is\+Enabled fields. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1BinaryTreeNode_a283f73e006886613abab907a89dcd66c}\label{classAriadne_1_1BinaryTreeNode_a283f73e006886613abab907a89dcd66c} 
+\mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} {\bfseries restore\+\_\+node} (\mbox{\hyperlink{classAriadne_1_1BinaryTreeNode}{Binary\+Tree\+Node}} \texorpdfstring{$\ast$}{*}p\+Current\+Node, \mbox{\hyperlink{namespaceAriadne_aae901a69a841b1a085a0dfe218e38fe9}{Nat}} \&arr\+\_\+index, \mbox{\hyperlink{namespaceAriadne_aae901a69a841b1a085a0dfe218e38fe9}{Nat}} \&leaf\+\_\+counter, const Boolean\+Array \&the\+Tree, const Boolean\+Array \&the\+Enabled\+Cells)
+\begin{DoxyCompactList}\small\item\em This method is used for recursive restoration of the binary tree from the used data, i.\+e. {\itshape the\+Tree} and {\itshape the\+Enabled\+Cells}. It is used in the constructor {\itshape \doxylink{classAriadne_1_1BinaryTreeNode_ad3eb277b63aa748fe1eb451609394028}{Binary\+Tree\+Node( const Boolean\+Array\& , const Boolean\+Array\& )}} \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1BinaryTreeNode_a97b29179f1b280b9559d35a97d9b5115}\label{classAriadne_1_1BinaryTreeNode_a97b29179f1b280b9559d35a97d9b5115} 
+\mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} {\bfseries init} (\mbox{\hyperlink{classAriadne_1_1ValidatedKleenean}{Validated\+Kleenean}} is\+Enabled, \mbox{\hyperlink{classAriadne_1_1BinaryTreeNode}{Binary\+Tree\+Node}} \texorpdfstring{$\ast$}{*}p\+Left\+Node, \mbox{\hyperlink{classAriadne_1_1BinaryTreeNode}{Binary\+Tree\+Node}} \texorpdfstring{$\ast$}{*}p\+Right\+Node)
+\begin{DoxyCompactList}\small\item\em This method is used in constructors for the node initialization. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsubsection*{Protected Attributes}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1BinaryTreeNode_a4009a6fa34f897cddca99b971734c733}\label{classAriadne_1_1BinaryTreeNode_a4009a6fa34f897cddca99b971734c733} 
+\mbox{\hyperlink{classAriadne_1_1ValidatedKleenean}{Validated\+Kleenean}} {\bfseries \+\_\+is\+Enabled}
+\begin{DoxyCompactList}\small\item\em Defines whether the given node of the tree is on/off or we do not know\texorpdfstring{$\ast$}{*}/. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1BinaryTreeNode_a239e27ce6f083caa110d826ccec80381}\label{classAriadne_1_1BinaryTreeNode_a239e27ce6f083caa110d826ccec80381} 
+\mbox{\hyperlink{classAriadne_1_1BinaryTreeNode}{Binary\+Tree\+Node}} \texorpdfstring{$\ast$}{*} {\bfseries \+\_\+p\+Left\+Node}
+\begin{DoxyCompactList}\small\item\em The left and right subnodes of the tree. Note that, {\itshape p\+Left\+Node} == {\itshape nullptr} iff {\itshape p\+Right\+Node} == {\itshape nullptr}. The latter is allowed iff {\itshape \+\_\+is\+Enabled} == {\itshape TRUE} or {\itshape \+\_\+is\+Enabled} == {\itshape FALSE}, i.\+e. the node can be a leaf. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsubsection*{Properties}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1BinaryTreeNode_a46fcd70e6b6dd0fad6b18f96b0679972}\label{classAriadne_1_1BinaryTreeNode_a46fcd70e6b6dd0fad6b18f96b0679972} 
+\mbox{\hyperlink{namespaceAriadne_a76a8b016e5ad61faf9062cc387df5016}{Bool}} {\bfseries is\+\_\+enabled} () const
+\begin{DoxyCompactList}\small\item\em Returns true if the node is marked as enabled, otherwise false. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1BinaryTreeNode_a870b3da938a3a2028c21bc69ba2a7b08}\label{classAriadne_1_1BinaryTreeNode_a870b3da938a3a2028c21bc69ba2a7b08} 
+\mbox{\hyperlink{namespaceAriadne_a76a8b016e5ad61faf9062cc387df5016}{Bool}} {\bfseries has\+\_\+enabled} () const
+\begin{DoxyCompactList}\small\item\em Returns true if some of the leaf nodes in the tree rooted to this node are enabled, otherwise false. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1BinaryTreeNode_aeb71a29c1f29506ae000c7587dbd193e}\label{classAriadne_1_1BinaryTreeNode_aeb71a29c1f29506ae000c7587dbd193e} 
+\mbox{\hyperlink{namespaceAriadne_a76a8b016e5ad61faf9062cc387df5016}{Bool}} {\bfseries all\+\_\+enabled} () const
+\begin{DoxyCompactList}\small\item\em Returns true if all leaf nodes in the tree rooted to this node are enabled, otherwise false. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1BinaryTreeNode_aac79353b335527ba009fa8a2cc115ffa}\label{classAriadne_1_1BinaryTreeNode_aac79353b335527ba009fa8a2cc115ffa} 
+\mbox{\hyperlink{namespaceAriadne_a76a8b016e5ad61faf9062cc387df5016}{Bool}} {\bfseries is\+\_\+enabled} (const \mbox{\hyperlink{classAriadne_1_1BinaryWord}{Binary\+Word}} \&path, const \mbox{\hyperlink{namespaceAriadne_aae901a69a841b1a085a0dfe218e38fe9}{Nat}} position=0) const
+\begin{DoxyCompactList}\small\item\em This method returns true if the given path defines a node in the tree that is either enabled or is in a "{}virtual"{} subtree of some enabled node (note that enabled nodes can only be leafs). Note that\+: {\itshape path} is treated as if it is rooted to this node, we assume that the path starts from position {\itshape position} of {\itshape path}. The parameter {\itshape position} is used for recursive calls only. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1BinaryTreeNode_aafebd22f1ea85ba56c3f8191ec85c3eb}\label{classAriadne_1_1BinaryTreeNode_aafebd22f1ea85ba56c3f8191ec85c3eb} 
+\mbox{\hyperlink{namespaceAriadne_a76a8b016e5ad61faf9062cc387df5016}{Bool}} {\bfseries is\+\_\+disabled} () const
+\begin{DoxyCompactList}\small\item\em Returns true if the node is marked as disabled, otherwise false. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1BinaryTreeNode_a8dee28a2ea145e9accd66d864c2fe5f9}\label{classAriadne_1_1BinaryTreeNode_a8dee28a2ea145e9accd66d864c2fe5f9} 
+\mbox{\hyperlink{namespaceAriadne_a76a8b016e5ad61faf9062cc387df5016}{Bool}} {\bfseries is\+\_\+leaf} () const
+\begin{DoxyCompactList}\small\item\em Returns true if the node is a leaf (p\+Left\+Node == nullptr \&\& p\+Right\+Node == nullptr) otherwise false. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1BinaryTreeNode_a30843beef9cd6590d3fc29a0479c9d73}\label{classAriadne_1_1BinaryTreeNode_a30843beef9cd6590d3fc29a0479c9d73} 
+\mbox{\hyperlink{classAriadne_1_1BinaryTreeNode}{Binary\+Tree\+Node}} \texorpdfstring{$\ast$}{*} {\bfseries child\+\_\+node} (\mbox{\hyperlink{namespaceAriadne_a76a8b016e5ad61faf9062cc387df5016}{Bool}} left\+\_\+or\+\_\+right) const
+\begin{DoxyCompactList}\small\item\em Return the left or right sub-\/node. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1BinaryTreeNode_ace287517fdc2b8db0d4e8bd4d66c919e}\label{classAriadne_1_1BinaryTreeNode_ace287517fdc2b8db0d4e8bd4d66c919e} 
+\mbox{\hyperlink{classAriadne_1_1BinaryTreeNode}{Binary\+Tree\+Node}} \texorpdfstring{$\ast$}{*} {\bfseries left\+\_\+node} () const
+\begin{DoxyCompactList}\small\item\em Return the left sub-\/node. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1BinaryTreeNode_a57a4ba49822dbc76fadb71ded37b10e9}\label{classAriadne_1_1BinaryTreeNode_a57a4ba49822dbc76fadb71ded37b10e9} 
+\mbox{\hyperlink{classAriadne_1_1BinaryTreeNode}{Binary\+Tree\+Node}} \texorpdfstring{$\ast$}{*} {\bfseries right\+\_\+node} () const
+\begin{DoxyCompactList}\small\item\em Return the right sub-\/node. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1BinaryTreeNode_ad745612a5f3df6eab14e36c4498e4cdc}\label{classAriadne_1_1BinaryTreeNode_ad745612a5f3df6eab14e36c4498e4cdc} 
+\mbox{\hyperlink{namespaceAriadne_aae901a69a841b1a085a0dfe218e38fe9}{Nat}} {\bfseries depth} () const
+\begin{DoxyCompactList}\small\item\em Returns the depth of the sub-\/tree rooted to the given node, i.\+e. the depth of it\textquotesingle{}s deepest node. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1BinaryTreeNode_ac5c72b8ac9dacc04134b827ef2a11778}\label{classAriadne_1_1BinaryTreeNode_ac5c72b8ac9dacc04134b827ef2a11778} 
+\mbox{\hyperlink{namespaceAriadne_a76a8b016e5ad61faf9062cc387df5016}{Bool}} {\bfseries operator==} (const \mbox{\hyperlink{classAriadne_1_1BinaryTreeNode}{Binary\+Tree\+Node}} \&other\+Node) const
+\begin{DoxyCompactList}\small\item\em Allows to compare to binaty tree nodes. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1BinaryTreeNode_a10f82f29a9d8f80f3c5b963cb47398fd}\label{classAriadne_1_1BinaryTreeNode_a10f82f29a9d8f80f3c5b963cb47398fd} 
+\mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} {\bfseries set} (\mbox{\hyperlink{namespaceAriadne_a76a8b016e5ad61faf9062cc387df5016}{Bool}} all\+\_\+enabled\+\_\+or\+\_\+all\+\_\+disabled)
+\begin{DoxyCompactList}\small\item\em Marks the node as enabled or disabled. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1BinaryTreeNode_aabe0b61cfb6e9ffc6f9e277f120494ba}\label{classAriadne_1_1BinaryTreeNode_aabe0b61cfb6e9ffc6f9e277f120494ba} 
+\mbox{\hyperlink{classAriadne_1_1BinaryTreeNode}{Binary\+Tree\+Node}} \& {\bfseries operator=} (const \mbox{\hyperlink{classAriadne_1_1BinaryTreeNode}{Binary\+Tree\+Node}} \&other\+Node)
+\begin{DoxyCompactList}\small\item\em Allows to assign one binary tree node to the other, this is done by copying the nodes value and the sub-\/trees. The sub-\/trees of this node are deallocated. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1BinaryTreeNode_a5e10ae0d28d99b91deb0077bdeff53f9}\label{classAriadne_1_1BinaryTreeNode_a5e10ae0d28d99b91deb0077bdeff53f9} 
+\mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} {\bfseries copy\+\_\+from} (const \mbox{\hyperlink{classAriadne_1_1BinaryTreeNode}{Binary\+Tree\+Node}} \texorpdfstring{$\ast$}{*}p\+Other\+Node)
+\begin{DoxyCompactList}\small\item\em Copy all the data (including the sub-\/nodes) from the node pointed by {\itshape p\+Other\+Node} into the given node. Note that here we will create copies of the sub nodes, and NOT just copy pointers to them! \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1BinaryTreeNode_a5a9e29d2305c16ddb0f0d11624a6abdd}\label{classAriadne_1_1BinaryTreeNode_a5a9e29d2305c16ddb0f0d11624a6abdd} 
+\mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} {\bfseries recombine} ()
+\begin{DoxyCompactList}\small\item\em This method recombined the sub tree nodes. Note that, the two leaf nodes with the same parent are removed if they have the same value of is\+Enabled fields. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1BinaryTreeNode_a5121ae153f9b32b69ea78f993a751ed2}\label{classAriadne_1_1BinaryTreeNode_a5121ae153f9b32b69ea78f993a751ed2} 
+\mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} {\bfseries tree\+\_\+to\+\_\+binary\+\_\+words} (\mbox{\hyperlink{classAriadne_1_1BinaryWord}{Binary\+Word}} \&tree, \mbox{\hyperlink{classAriadne_1_1BinaryWord}{Binary\+Word}} \&leaves) const
+\begin{DoxyCompactList}\small\item\em Stores the binary tree in a form of two arrays, their structure is the same as needed for the \doxylink{classAriadne_1_1BinaryTreeNode_ad3eb277b63aa748fe1eb451609394028}{Binary\+Tree\+Node( const Boolean\+Array\& , const Boolean\+Array\&  )} constructor. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1BinaryTreeNode_a3153ada51aad747d7b6870cf462cfc7f}\label{classAriadne_1_1BinaryTreeNode_a3153ada51aad747d7b6870cf462cfc7f} 
+\mbox{\hyperlink{classAriadne_1_1String}{String}} {\bfseries node\+\_\+to\+\_\+string} () const
+\begin{DoxyCompactList}\small\item\em Stores the binary tree node as a string\texorpdfstring{$\ast$}{*}/. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1BinaryTreeNode_a3ba36a53db0bac31ac14058d18217040}\label{classAriadne_1_1BinaryTreeNode_a3ba36a53db0bac31ac14058d18217040} 
+\mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} {\bfseries add\+\_\+enabled} (const \mbox{\hyperlink{classAriadne_1_1BinaryWord}{Binary\+Word}} \&path)
+\begin{DoxyCompactList}\small\item\em Finds(creates) the leaf node defined by the {\itshape path} and marks it as enabled. If some prefix of the {\itshape path} references an enabled node then nothing is done. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1BinaryTreeNode_aade64ea050058ff5efdb999b81b28e4f}\label{classAriadne_1_1BinaryTreeNode_aade64ea050058ff5efdb999b81b28e4f} 
+\mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} {\bfseries add\+\_\+enabled} (const \mbox{\hyperlink{classAriadne_1_1BinaryTreeNode}{Binary\+Tree\+Node}} \texorpdfstring{$\ast$}{*}p\+Other\+Sub\+Tree, const \mbox{\hyperlink{classAriadne_1_1BinaryWord}{Binary\+Word}} \&path)
+\begin{DoxyCompactList}\small\item\em This method adjoins the enabled nodes of {\itshape sub\+Tree} to this tree. Note that, the position of the root node of {\itshape sub\+Tree} within this tree is defined by path. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1BinaryTreeNode_adf649f174a9af55cca268178bc31f40a}\label{classAriadne_1_1BinaryTreeNode_adf649f174a9af55cca268178bc31f40a} 
+\mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} {\bfseries add\+\_\+enabled} (\mbox{\hyperlink{classAriadne_1_1BinaryTreeNode}{Binary\+Tree\+Node}} \texorpdfstring{$\ast$}{*}p\+To\+Tree\+Root, const \mbox{\hyperlink{classAriadne_1_1BinaryTreeNode}{Binary\+Tree\+Node}} \texorpdfstring{$\ast$}{*}p\+From\+Tree\+Root)
+\begin{DoxyCompactList}\small\item\em This method merges {\itshape p\+From\+Tree\+Root} into {\itshape p\+To\+Tree\+Root}. The enabled nodes of the former tree are added to the latter tree. If in the latter tree there is an enabled leaf node and in the former tree the corresponding node is not a leaf, then this node of the latter tree stays intact. If on the other hand we have a non-\/leaf node in {\itshape p\+To\+Tree\+Root} and we are adding to it an enabled node of {\itshape p\+From\+Tree\+Root} then we just "{}substitute"{} the former one with the latter. NOTE\+: 1. This function is recursive. 2. No pointers are copied between {\itshape p\+To\+Tree\+Root} and {\itshape p\+From\+Tree\+Root}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1BinaryTreeNode_ac3023f7363a3c006ab7d437735858947}\label{classAriadne_1_1BinaryTreeNode_ac3023f7363a3c006ab7d437735858947} 
+static Size\+Type {\bfseries count\+\_\+enabled\+\_\+leaf\+\_\+nodes} (const \mbox{\hyperlink{classAriadne_1_1BinaryTreeNode}{Binary\+Tree\+Node}} \texorpdfstring{$\ast$}{*}p\+Node)
+\begin{DoxyCompactList}\small\item\em Starting in the {\itshape p\+Node} node as at the root, this method counts the number of enabled leaf nodes in the subtree rooted at p\+Node. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1BinaryTreeNode_adc8a97146ae363cb709f9a5c2afb8241}\label{classAriadne_1_1BinaryTreeNode_adc8a97146ae363cb709f9a5c2afb8241} 
+static \mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} {\bfseries add\+\_\+enabled} (\mbox{\hyperlink{classAriadne_1_1BinaryTreeNode}{Binary\+Tree\+Node}} \texorpdfstring{$\ast$}{*}p\+Root\+Tree\+Node, const \mbox{\hyperlink{classAriadne_1_1BinaryWord}{Binary\+Word}} \&path, const \mbox{\hyperlink{namespaceAriadne_aae901a69a841b1a085a0dfe218e38fe9}{Nat}} position=0)
+\begin{DoxyCompactList}\small\item\em Starting in the {\itshape p\+Root\+Tree\+Node} node as at the root, this method finds(creates) the leaf node defined by the {\itshape path} and marks it as enabled. If some prefix of the {\itshape path} references an enabled node then nothing is done. NOTE\+: This is a recursive method on the position ({\itshape position}) in the binary path ({\itshape path}). Therefore, the initial evaluate of this method should be done with {\itshape position} == 0;. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1BinaryTreeNode_a0ffc7d428ff028907ea1ba7885862258}\label{classAriadne_1_1BinaryTreeNode_a0ffc7d428ff028907ea1ba7885862258} 
+static \mbox{\hyperlink{classAriadne_1_1BinaryTreeNode}{Binary\+Tree\+Node}} \texorpdfstring{$\ast$}{*} {\bfseries prepend\+\_\+tree} (const \mbox{\hyperlink{classAriadne_1_1BinaryWord}{Binary\+Word}} \&root\+Node\+Path, \mbox{\hyperlink{classAriadne_1_1BinaryTreeNode}{Binary\+Tree\+Node}} \texorpdfstring{$\ast$}{*}old\+Root\+Node)
+\begin{DoxyCompactList}\small\item\em Creates a binary tree of the height root\+Node\+Path.\+size(), puts the subtree old\+Root\+Node into the node defined by the path {\itshape root\+Node\+Path}, returns the root node of the extended tree. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1BinaryTreeNode_ae47c32ce510bbb3fb8408165b92d21c7}\label{classAriadne_1_1BinaryTreeNode_ae47c32ce510bbb3fb8408165b92d21c7} 
+static \mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} {\bfseries restrict} (\mbox{\hyperlink{classAriadne_1_1BinaryTreeNode}{Binary\+Tree\+Node}} \texorpdfstring{$\ast$}{*}p\+This\+Node, const \mbox{\hyperlink{classAriadne_1_1BinaryTreeNode}{Binary\+Tree\+Node}} \texorpdfstring{$\ast$}{*}p\+Other\+Node)
+\begin{DoxyCompactList}\small\item\em This method restricts {\itshape p\+This\+Node} to {\itshape p\+Other\+Node}. In essance we do the inplace AND on the tree node p\+This\+Node. Note that, this method is recursive. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1BinaryTreeNode_aefe6e0f2bd67b47f3084c0d1816db87c}\label{classAriadne_1_1BinaryTreeNode_aefe6e0f2bd67b47f3084c0d1816db87c} 
+static \mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} {\bfseries remove} (\mbox{\hyperlink{classAriadne_1_1BinaryTreeNode}{Binary\+Tree\+Node}} \texorpdfstring{$\ast$}{*}p\+This\+Node, const \mbox{\hyperlink{classAriadne_1_1BinaryTreeNode}{Binary\+Tree\+Node}} \texorpdfstring{$\ast$}{*}p\+Other\+Node)
+\begin{DoxyCompactList}\small\item\em This method removed enabled nodes of {\itshape p\+Other\+Node} from {\itshape p\+This\+Node}. Note that, this method is recursive. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1BinaryTreeNode_aa4467ba10fc053053bc64bf8bb8f4ad3}\label{classAriadne_1_1BinaryTreeNode_aa4467ba10fc053053bc64bf8bb8f4ad3} 
+static \mbox{\hyperlink{namespaceAriadne_a76a8b016e5ad61faf9062cc387df5016}{Bool}} {\bfseries intersect} (const \mbox{\hyperlink{classAriadne_1_1BinaryTreeNode}{Binary\+Tree\+Node}} \texorpdfstring{$\ast$}{*}p\+Root\+Node\+One, const \mbox{\hyperlink{classAriadne_1_1BinaryTreeNode}{Binary\+Tree\+Node}} \texorpdfstring{$\ast$}{*}p\+Root\+Node\+Two)
+\begin{DoxyCompactList}\small\item\em checks if two trees intersect in a set-\/theory sence. I.\+e. we assume that p\+Root\+Node\+One and p\+Root\+Node\+Two correspond to the same (virtual) root and then we see if the enabled leaf node of one tree contain enabled leaf nodes of another tree as their (virtual) children. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1BinaryTreeNode_a7b7ba04db4e1338f39be1f5d7a393949}\label{classAriadne_1_1BinaryTreeNode_a7b7ba04db4e1338f39be1f5d7a393949} 
+static \mbox{\hyperlink{namespaceAriadne_a76a8b016e5ad61faf9062cc387df5016}{Bool}} {\bfseries subset} (const \mbox{\hyperlink{classAriadne_1_1BinaryTreeNode}{Binary\+Tree\+Node}} \texorpdfstring{$\ast$}{*}p\+Root\+Node\+One, const \mbox{\hyperlink{classAriadne_1_1BinaryTreeNode}{Binary\+Tree\+Node}} \texorpdfstring{$\ast$}{*}p\+Root\+Node\+Two)
+\begin{DoxyCompactList}\small\item\em checks if the tree p\+Root\+Node\+One is a subset of the tree p\+Root\+Node\+Two, in a set-\/theory sence. I.\+e. we assume that p\+Root\+Node\+One and p\+Root\+Node\+Two correspond to the same (virtual) root and then we see if every enabled leaf node of p\+Root\+Node\+One is contained in the enabled leaf nodes of p\+Root\+Node\+Two, or it is covered by the enabled leaf nodes of p\+Root\+Node\+Two. When we \+\_\+write, contained and covered then we mean\+: is a subnode in the (virtual) tree and all it\textquotesingle{}s subnodes in the (virtual) tree. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+The documentation for this class was generated from the following files\+:\begin{DoxyCompactItemize}
+\item 
+source/geometry/binary\+\_\+tree.\+hpp\item 
+source/geometry/binary\+\_\+tree.\+cpp\end{DoxyCompactItemize}

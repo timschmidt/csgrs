@@ -1,0 +1,112 @@
+{
+  "status": "qualified within recorded core scope",
+  "goal_status": "active",
+  "previous_commit": "9f7a63686a9ee1a40fcedaba5e822234bd960f42",
+  "selected_source_files": [
+    "src/intersect.rs"
+  ],
+  "targets": 49,
+  "passed": 2317,
+  "known_failed": [
+    "approximate_512_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions",
+    "non_ph_bezier_pair_projective_fillet_retains_algebraic_extensions",
+    "nonconvex_algebraic_chord_expansion_is_exact_and_local_collapse_is_explicit",
+    "strict_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions",
+    "unified_mixed_line_arc_erosion_splits_after_a_curved_neck_collapse"
+  ],
+  "ignored": 9,
+  "prior_expensive_exclusions": 8,
+  "new_failures": [],
+  "timeouts": 0,
+  "builds": [
+    {
+      "repository": "hypercurve",
+      "kind": "check",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "check",
+        "--all-targets",
+        "--no-default-features",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 19.463111507997382,
+      "log": "opposed-endpoint-contact-full1-check.log"
+    },
+    {
+      "repository": "hypercurve",
+      "kind": "test-build",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "test",
+        "--release",
+        "--all-features",
+        "--locked",
+        "--offline",
+        "--lib",
+        "--tests",
+        "--no-run",
+        "--message-format=json"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 241.51373904800857,
+      "log": "opposed-endpoint-contact-full1-test-build.log"
+    },
+    {
+      "repository": "hyperbrep",
+      "kind": "check",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "check",
+        "--all-targets",
+        "--no-default-features",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 16.591499400004977,
+      "log": "opposed-endpoint-contact-full1-hyperbrep-check.log"
+    },
+    {
+      "repository": "hyperbrep",
+      "kind": "test-build",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "test",
+        "--release",
+        "--all-features",
+        "--locked",
+        "--offline",
+        "--lib",
+        "--tests",
+        "--no-run",
+        "--message-format=json"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 117.75822913899901,
+      "log": "opposed-endpoint-contact-full1-hyperbrep-test-build.log"
+    }
+  ],
+  "verified_source_files": {
+    "working": 396,
+    "isolated": 1007
+  },
+  "public_baseline": "normalized-admission-cycloidal-rack-results.json",
+  "public_pair_baseline": "normalized-admission-cycloidal-rack-pairs.json",
+  "public_completed": "opposed-endpoint-contact-public-results.json",
+  "focused": "opposed-endpoint-contact-focused.json",
+  "normal_library": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/opposed-endpoint-contact-full1-libraries/libhypercurve-bacb55d5ec235376.rlib",
+  "normal_library_sha256": "e314d2523910509b23aae886ead2a98aef68181343ec712968035bba2cd47032",
+  "test_results": "opposed-endpoint-contact-full1-full-results.json",
+  "excluded_working_file": "src/bezier_offset.rs",
+  "other_session": "Hyperreal working sources remain untouched and unused; pinned a2da8e2b5de9a1a4653d3662f2f05cb6533fd7ef supplies exact scalar operations",
+  "note": "Strict opposed-ray evidence avoids an unnecessary zero cross-product decision. APPROXIMATE_512 rack admission still records terminal consumption elsewhere; no claim that all optional approximate decisions were removed.",
+  "remaining": "The full implementation goal remains active, including retained public-region producers, global winding, mapped-point normal-sheet proof, source cusp frames, known failures/exclusions and broader evidence/representation consolidation.",
+  "public_assertions_checked": {
+    "strict_rack_fixtures": 2,
+    "strict_native_and_degree_elevated_segment_pairs": 1406,
+    "orientation_policy_primitive_cases": 16
+  },
+  "commit": "2d26b0ae4d6178700d5c26ccdab5f8ac25a1f787"
+}

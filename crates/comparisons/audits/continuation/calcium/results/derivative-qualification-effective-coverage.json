@@ -1,0 +1,14 @@
+{
+  "tag": "derivative-qualification-effective-coverage",
+  "started": "2026-09-09T15:53:53.021Z",
+  "finished": "2026-09-09T15:53:53.155Z",
+  "elapsedSeconds": 0.13230235299999998,
+  "cwd": "/home/tim/Documents/GitHub/workspace",
+  "command": "node",
+  "args": [
+    "exactcore-hyper-comparison/audits/continuation/calcium/effective-coverage.mjs",
+    "--effective-summary"
+  ],
+  "code": 0,
+  "signal": null
+}

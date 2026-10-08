@@ -1,0 +1,166 @@
+\doxysubsection{Vector\texorpdfstring{$<$}{<} Procedure\texorpdfstring{$<$}{<} Y \texorpdfstring{$>$}{>} \texorpdfstring{$>$}{>} Class Template Reference}
+\hypertarget{classAriadne_1_1Vector_3_01Procedure_3_01Y_01_4_01_4}{}\label{classAriadne_1_1Vector_3_01Procedure_3_01Y_01_4_01_4}\index{Vector$<$ Procedure$<$ Y $>$ $>$@{Vector$<$ Procedure$<$ Y $>$ $>$}}
+
+
+{\ttfamily \#include $<$procedure.\+hpp$>$}
+
+
+
+\doxysubsubsection{Description}
+\subsubsection*{template$<$class Y$>$\newline
+class Ariadne\+::\+Vector$<$ Procedure$<$ Y $>$ $>$}
+An algorithmic procedure for computing a function. 
+
+A \doxylink{classAriadne_1_1Procedure}{Procedure} is more efficient to compute than a \doxylink{classAriadne_1_1Formula}{Formula}, since common subexpressions have already been removed. However, it is also more difficult to manipulate, so it should usually only be used when no further manipulations of the function are possible. \doxysubsubsubsection*{Public Types}
+\begin{Indent}\textbf{ Type definitions}\par
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1Vector_af6ba041532ba63ad985c39c06cecd2ad}\label{classAriadne_1_1Vector_af6ba041532ba63ad985c39c06cecd2ad} 
+typedef Size\+Type {\bfseries Index\+Type}
+\begin{DoxyCompactList}\small\item\em The type used to index the elements. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Vector_afd74e58497862888d008e2ec6c8ee28e}\label{classAriadne_1_1Vector_afd74e58497862888d008e2ec6c8ee28e} 
+typedef \mbox{\hyperlink{classAriadne_1_1Procedure}{Procedure}}$<$ Y $>$ {\bfseries Scalar\+Type}
+\begin{DoxyCompactList}\small\item\em The type of the scalar element. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\end{Indent}
+\doxysubsubsubsection*{Public Member Functions}
+\begin{Indent}\textbf{ Constructors}\par
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1Vector_a795ddbfc8b8be9d7e9d4f91b85dcea65}\label{classAriadne_1_1Vector_a795ddbfc8b8be9d7e9d4f91b85dcea65} 
+\mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ \mbox{\hyperlink{classAriadne_1_1Procedure}{Procedure}}$<$ Y $>$ $>$ \& {\bfseries operator=} (const \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ \mbox{\hyperlink{classAriadne_1_1Procedure}{Procedure}}$<$ Y $>$ $>$ \&v)=default
+\begin{DoxyCompactList}\small\item\em Copy assignment. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\end{Indent}
+\begin{Indent}\textbf{ Data access}\par
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1Vector_a2454c1db68ca51935e4c5a3829632dec}\label{classAriadne_1_1Vector_a2454c1db68ca51935e4c5a3829632dec} 
+\mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} {\bfseries resize} (Size\+Type n)
+\begin{DoxyCompactList}\small\item\em Resize to hold {\itshape n} elements. The previous values need not be preserved, and the new values need not be initialised. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Vector_a0472c48c2838a924eac36b19cbe017d0}\label{classAriadne_1_1Vector_a0472c48c2838a924eac36b19cbe017d0} 
+Size\+Type {\bfseries size} () const
+\begin{DoxyCompactList}\small\item\em The number of elements of the vector. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Vector_af8779574910eca3665bc51fafa78bd6b}\label{classAriadne_1_1Vector_af8779574910eca3665bc51fafa78bd6b} 
+Element\+Reference$<$ \mbox{\hyperlink{classAriadne_1_1Procedure}{Procedure}}$<$ Y $>$ $>$ {\bfseries at} (Size\+Type i)
+\begin{DoxyCompactList}\small\item\em A reference to the value stored in the {\itshape i\textsuperscript{th}} element. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Vector_a0bc5af36c53c9e3697cda83b4a8caf5e}\label{classAriadne_1_1Vector_a0bc5af36c53c9e3697cda83b4a8caf5e} 
+const \mbox{\hyperlink{classAriadne_1_1Procedure}{Procedure}}$<$ Y $>$ \& {\bfseries get} (Size\+Type i) const
+\begin{DoxyCompactList}\small\item\em Get the value stored in the {\itshape i\textsuperscript{th}} element. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Vector_aee87786bdbba90d8bde094a75540697f}\label{classAriadne_1_1Vector_aee87786bdbba90d8bde094a75540697f} 
+\mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} {\bfseries set} (Size\+Type i, const \mbox{\hyperlink{classAriadne_1_1Procedure}{Procedure}}$<$ Y $>$ \&x)
+\begin{DoxyCompactList}\small\item\em \doxylink{classAriadne_1_1Set}{Set} the value stored in the {\itshape i\textsuperscript{th}} element to {\itshape x}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Vector_af325d7346172eef38061d88992f4cb1a}\label{classAriadne_1_1Vector_af325d7346172eef38061d88992f4cb1a} 
+Element\+Reference$<$ \mbox{\hyperlink{classAriadne_1_1Procedure}{Procedure}}$<$ Y $>$ $>$ \& {\bfseries operator\mbox{[}$\,$\mbox{]}} (Size\+Type i)
+\begin{DoxyCompactList}\small\item\em Subscripting operator. Unchecked access. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Vector_a31fe2a70cce9cf43c30af9efa92c9b45}\label{classAriadne_1_1Vector_a31fe2a70cce9cf43c30af9efa92c9b45} 
+Ariadne\+::\+Characteristics\+Type$<$ \mbox{\hyperlink{classAriadne_1_1Procedure}{Procedure}}$<$ Y $>$ $>$ {\bfseries element\+\_\+characteristics} () const
+\begin{DoxyCompactList}\small\item\em The class parameters of the ring containing the \doxylink{classAriadne_1_1Vector}{Vector}\textquotesingle{}s elements. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Vector_a8bf5254d29b739cf84b5694f7ccb7d96}\label{classAriadne_1_1Vector_a8bf5254d29b739cf84b5694f7ccb7d96} 
+const \mbox{\hyperlink{classAriadne_1_1Procedure}{Procedure}}$<$ Y $>$ {\bfseries zero\+\_\+element} () const
+\begin{DoxyCompactList}\small\item\em The zero of the ring containing the \doxylink{classAriadne_1_1Vector}{Vector}\textquotesingle{}s elements. This may be dependent on class parameters. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Vector_acf3efc6fbe47e8b8885937b6dab23a8b}\label{classAriadne_1_1Vector_acf3efc6fbe47e8b8885937b6dab23a8b} 
+Uniform\+Array$<$ \mbox{\hyperlink{classAriadne_1_1Procedure}{Procedure}}$<$ Y $>$ $>$ const \& {\bfseries array} () const
+\begin{DoxyCompactList}\small\item\em The raw data array. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\end{Indent}
+\doxysubsubsubsection*{Static Public Member Functions}
+\begin{Indent}\textbf{ Static constructors}\par
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1Vector_aba15b22c5fce5e5f91b4fa9e392c81b3}\label{classAriadne_1_1Vector_aba15b22c5fce5e5f91b4fa9e392c81b3} 
+static \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ \mbox{\hyperlink{classAriadne_1_1Procedure}{Procedure}}$<$ Y $>$ $>$ {\bfseries zero} (Size\+Type n, PRS... prs)
+\begin{DoxyCompactList}\small\item\em The zero vector of size {\itshape n}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Vector_aab657e1d83fface13334bb17800efe03}\label{classAriadne_1_1Vector_aab657e1d83fface13334bb17800efe03} 
+static \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ \mbox{\hyperlink{classAriadne_1_1Procedure}{Procedure}}$<$ Y $>$ $>$ {\bfseries one} (Size\+Type n, PRS... prs)
+\begin{DoxyCompactList}\small\item\em The vector of size {\itshape n} with all entries equal to one. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Vector_a78d309e88c64c994562bcf4037738901}\label{classAriadne_1_1Vector_a78d309e88c64c994562bcf4037738901} 
+static \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ \mbox{\hyperlink{classAriadne_1_1Procedure}{Procedure}}$<$ Y $>$ $>$ {\bfseries unit} (Size\+Type n, Size\+Type i, PRS... prs)
+\begin{DoxyCompactList}\small\item\em The unit vector $e_i$ with value one in the {\itshape i\textsuperscript{th}} entry, and zero otherwise. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Vector_a853bf5987659ce80eb23303e88e7a634}\label{classAriadne_1_1Vector_a853bf5987659ce80eb23303e88e7a634} 
+static \mbox{\hyperlink{classAriadne_1_1Array}{Array}}$<$ \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ \mbox{\hyperlink{classAriadne_1_1Procedure}{Procedure}}$<$ Y $>$ $>$ $>$ {\bfseries basis} (Size\+Type n, PRS... prs)
+\begin{DoxyCompactList}\small\item\em The unit vector $e_i$ with value one in the {\itshape i\textsuperscript{th}} entry, and zero otherwise. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\end{Indent}
+\doxysubsubsubsection*{Friends}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1Vector_ab6b0d19da2c629935ab876ec69fb809a}\label{classAriadne_1_1Vector_ab6b0d19da2c629935ab876ec69fb809a} 
+decltype(declval$<$ X1 $>$()==declval$<$ X2 $>$()) {\bfseries operator==} (const \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ X1 $>$ \&v1, const \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ X2 $>$ \&v2)
+\begin{DoxyCompactList}\small\item\em Equality operator. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Vector_a1e33077f650342b5d4f867575080f983}\label{classAriadne_1_1Vector_a1e33077f650342b5d4f867575080f983} 
+decltype(declval$<$ X1 $>$()!=declval$<$ X2 $>$()) {\bfseries operator!=} (const \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ X1 $>$ \&v1, const \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ X2 $>$ \&v2)
+\begin{DoxyCompactList}\small\item\em Inequality operator. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Vector_a3a1138041df2c0a68856a6325bcc3339}\label{classAriadne_1_1Vector_a3a1138041df2c0a68856a6325bcc3339} 
+\mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ \mbox{\hyperlink{classAriadne_1_1Procedure}{Procedure}}$<$ Y $>$ $>$ {\bfseries operator+} (const \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ \mbox{\hyperlink{classAriadne_1_1Procedure}{Procedure}}$<$ Y $>$ $>$ \&v)
+\begin{DoxyCompactList}\small\item\em Vector unary plus. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Vector_a015761db606f2db91737dc9ada3095c9}\label{classAriadne_1_1Vector_a015761db606f2db91737dc9ada3095c9} 
+\mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ Negation\+Type$<$ \mbox{\hyperlink{classAriadne_1_1Procedure}{Procedure}}$<$ Y $>$ $>$ $>$ {\bfseries operator-\/} (const \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ \mbox{\hyperlink{classAriadne_1_1Procedure}{Procedure}}$<$ Y $>$ $>$ \&v)
+\begin{DoxyCompactList}\small\item\em Vector negation. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Vector_a1c587d7a9f655857a8b280ee34040664}\label{classAriadne_1_1Vector_a1c587d7a9f655857a8b280ee34040664} 
+\mbox{\hyperlink{classAriadne_1_1Procedure}{Procedure}}$<$ Y $>$ {\bfseries norm} (const \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ \mbox{\hyperlink{classAriadne_1_1Procedure}{Procedure}}$<$ Y $>$ $>$ \&v)
+\begin{DoxyCompactList}\small\item\em The supremum norm. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Vector_abb9cd182ed61b3a7e20a4146d391054a}\label{classAriadne_1_1Vector_abb9cd182ed61b3a7e20a4146d391054a} 
+\mbox{\hyperlink{classAriadne_1_1Procedure}{Procedure}}$<$ Y $>$ {\bfseries dot} (const \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ \mbox{\hyperlink{classAriadne_1_1Procedure}{Procedure}}$<$ Y $>$ $>$ \&v1, const \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ \mbox{\hyperlink{classAriadne_1_1Procedure}{Procedure}}$<$ Y $>$ $>$ \&v2)
+\begin{DoxyCompactList}\small\item\em The inner product. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Vector_a1310b3dfa9a96d94d2f55c95a0b30f40}\label{classAriadne_1_1Vector_a1310b3dfa9a96d94d2f55c95a0b30f40} 
+\mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ \mbox{\hyperlink{classAriadne_1_1Procedure}{Procedure}}$<$ Y $>$ $>$ {\bfseries join} (const \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ \mbox{\hyperlink{classAriadne_1_1Procedure}{Procedure}}$<$ Y $>$ $>$ \&v1, const \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ \mbox{\hyperlink{classAriadne_1_1Procedure}{Procedure}}$<$ Y $>$ $>$ \&v2)
+\begin{DoxyCompactList}\small\item\em Join (catenate, make the direct sum of) two vectors. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Vector_a92e3708f169912ac95b458b3204f7caf}\label{classAriadne_1_1Vector_a92e3708f169912ac95b458b3204f7caf} 
+\mbox{\hyperlink{namespaceAriadne_a3c42889d7ee562011f1dc63874e51d0e}{Input\+Stream}} \& {\bfseries operator$>$$>$} (\mbox{\hyperlink{namespaceAriadne_a3c42889d7ee562011f1dc63874e51d0e}{Input\+Stream}} \&is, \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ \mbox{\hyperlink{classAriadne_1_1Procedure}{Procedure}}$<$ Y $>$ $>$ \&v)
+\begin{DoxyCompactList}\small\item\em Read from an output stream. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsubsection*{Related Types and Functions}
+(Note that these are not member symbols.) \begin{Indent}\textbf{ Type synonyms}\par
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1Vector_a8ed2d47a12f2d5154e85ffbab757dc12}\label{classAriadne_1_1Vector_a8ed2d47a12f2d5154e85ffbab757dc12} 
+using {\bfseries Dyadic\+Vector}
+\item 
+\Hypertarget{classAriadne_1_1Vector_ae1bbb29dec0c8defa27197c48ed86bfe}\label{classAriadne_1_1Vector_ae1bbb29dec0c8defa27197c48ed86bfe} 
+using {\bfseries Rational\+Vector}
+\item 
+\Hypertarget{classAriadne_1_1Vector_a44155599864a7f900633799925550f2c}\label{classAriadne_1_1Vector_a44155599864a7f900633799925550f2c} 
+using {\bfseries Real\+Vector}
+\item 
+\Hypertarget{classAriadne_1_1Vector_ad5be58b99702a2484c07b901cb0e3d17}\label{classAriadne_1_1Vector_ad5be58b99702a2484c07b901cb0e3d17} 
+using {\bfseries Float\+DPVector}
+\item 
+\Hypertarget{classAriadne_1_1Vector_accc922e9ffd5b92413b51bf73fc39372}\label{classAriadne_1_1Vector_accc922e9ffd5b92413b51bf73fc39372} 
+using {\bfseries Raw\+Float\+DPVector}
+\item 
+\Hypertarget{classAriadne_1_1Vector_abc41cfa72e917a55e3d77083b2ecb078}\label{classAriadne_1_1Vector_abc41cfa72e917a55e3d77083b2ecb078} 
+using {\bfseries Float\+DPApproximation\+Vector}
+\item 
+\Hypertarget{classAriadne_1_1Vector_aa5a925766c6beaf67eccd110b9e58bf1}\label{classAriadne_1_1Vector_aa5a925766c6beaf67eccd110b9e58bf1} 
+using {\bfseries Float\+DPBounds\+Vector}
+\item 
+\Hypertarget{classAriadne_1_1Vector_a3facc1d8dd82b213d29d902471d9473f}\label{classAriadne_1_1Vector_a3facc1d8dd82b213d29d902471d9473f} 
+using {\bfseries Float\+DPBall\+Vector}
+\item 
+\Hypertarget{classAriadne_1_1Vector_a5c9ddda856fc2cd90194c85d1d07bc5e}\label{classAriadne_1_1Vector_a5c9ddda856fc2cd90194c85d1d07bc5e} 
+using {\bfseries Float\+MPVector}
+\item 
+\Hypertarget{classAriadne_1_1Vector_a6072428b4afce3996c839225b7aceb6d}\label{classAriadne_1_1Vector_a6072428b4afce3996c839225b7aceb6d} 
+using {\bfseries Raw\+Float\+MPVector}
+\item 
+\Hypertarget{classAriadne_1_1Vector_a6c22f3fa56d5c42d06b10cd16e96510b}\label{classAriadne_1_1Vector_a6c22f3fa56d5c42d06b10cd16e96510b} 
+using {\bfseries Float\+MPApproximation\+Vector}
+\item 
+\Hypertarget{classAriadne_1_1Vector_acd319ca7d2cc97522f628bcac7f9de68}\label{classAriadne_1_1Vector_acd319ca7d2cc97522f628bcac7f9de68} 
+using {\bfseries Float\+MPBounds\+Vector}
+\item 
+\Hypertarget{classAriadne_1_1Vector_a674cf6f95db825320e2efd18fd2d0367}\label{classAriadne_1_1Vector_a674cf6f95db825320e2efd18fd2d0367} 
+using {\bfseries Float\+MPBall\+Vector}
+\item 
+\Hypertarget{classAriadne_1_1Vector_a233175da12ffb3fb304ec9071dd6713f}\label{classAriadne_1_1Vector_a233175da12ffb3fb304ec9071dd6713f} 
+using {\bfseries Float\+MPDPBall\+Vector}
+\item 
+\Hypertarget{classAriadne_1_1Vector_ae1374b908597fc539d8f4c8be769a23f}\label{classAriadne_1_1Vector_ae1374b908597fc539d8f4c8be769a23f} 
+using {\bfseries Approximation\+Vector}
+\end{DoxyCompactItemize}
+\end{Indent}
+
+
+The documentation for this class was generated from the following files\+:\begin{DoxyCompactItemize}
+\item 
+source/function/\mbox{\hyperlink{procedure_8hpp}{procedure.\+hpp}}\item 
+source/algebra/\mbox{\hyperlink{differential_8hpp}{differential.\+hpp}}\item 
+source/algebra/differential.\+tpl.\+hpp\item 
+source/algebra/\mbox{\hyperlink{vector_8hpp}{vector.\+hpp}}\item 
+source/function/procedure.\+tpl.\+hpp\end{DoxyCompactItemize}

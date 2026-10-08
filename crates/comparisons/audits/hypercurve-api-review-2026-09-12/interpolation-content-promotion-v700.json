@@ -1,0 +1,12 @@
+{
+  "candidate": "interpolation-content-candidate-v696",
+  "sources": {
+    "hypersolve/src/curve_resultant.rs": "35d2009270d8bfb2c5ec61ee2d88441c38a9098851738009ae078b1b9d174c68"
+  },
+  "promoted_sources": {
+    "hypersolve/src/curve_resultant.rs": "e1ed254682daf44b1737bd6f09e2df17f6f2d465ad8cf1a0ac095503739dfc94"
+  },
+  "comparison": "interpolation-content-comparison-20260928-v699-terminal.json",
+  "validated_source_files": 2047,
+  "baseline_repositories": "projection-overlap-20260928-v695-repositories-after.json"
+}

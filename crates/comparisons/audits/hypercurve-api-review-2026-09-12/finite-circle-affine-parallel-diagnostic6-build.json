@@ -1,0 +1,15 @@
+{
+  "command": [
+    "cargo",
+    "test",
+    "--release",
+    "--all-features",
+    "--offline",
+    "--test",
+    "hypercurve_curve_intersection",
+    "--no-run",
+    "--message-format=json"
+  ],
+  "returncode": 0,
+  "elapsed_seconds": 79.18155215699517
+}

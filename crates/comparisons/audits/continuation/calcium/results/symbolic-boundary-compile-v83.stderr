@@ -1,0 +1,27 @@
+flint-symbolic-boundary-v83.c: In function ‘angles’:
+flint-symbolic-boundary-v83.c:56:9: error: this ‘if’ clause does not guard... [-Werror=misleading-indentation]
+   56 |         if(ok)value(x); puts("}"); rows++;
+      |         ^~
+flint-symbolic-boundary-v83.c:56:25: note: ...this statement, but the latter is misleadingly indented as if it were guarded by the ‘if’
+   56 |         if(ok)value(x); puts("}"); rows++;
+      |                         ^~~~
+flint-symbolic-boundary-v83.c:63:9: error: this ‘if’ clause does not guard... [-Werror=misleading-indentation]
+   63 |         if(ok)value(x);puts("}");rows++;
+      |         ^~
+flint-symbolic-boundary-v83.c:63:24: note: ...this statement, but the latter is misleadingly indented as if it were guarded by the ‘if’
+   63 |         if(ok)value(x);puts("}");rows++;
+      |                        ^~~~
+flint-symbolic-boundary-v83.c:66:5: error: this ‘if’ clause does not guard... [-Werror=misleading-indentation]
+   66 |     if(rows!=308)abort();printf("{\"terminal\":true,\"rows\":%lu}\n",rows);
+      |     ^~
+flint-symbolic-boundary-v83.c:66:26: note: ...this statement, but the latter is misleadingly indented as if it were guarded by the ‘if’
+   66 |     if(rows!=308)abort();printf("{\"terminal\":true,\"rows\":%lu}\n",rows);
+      |                          ^~~~~~
+flint-symbolic-boundary-v83.c: In function ‘powers’:
+flint-symbolic-boundary-v83.c:80:9: error: this ‘if’ clause does not guard... [-Werror=misleading-indentation]
+   80 |         if(ok)value(x);puts("}");
+      |         ^~
+flint-symbolic-boundary-v83.c:80:24: note: ...this statement, but the latter is misleadingly indented as if it were guarded by the ‘if’
+   80 |         if(ok)value(x);puts("}");
+      |                        ^~~~
+cc1: all warnings being treated as errors

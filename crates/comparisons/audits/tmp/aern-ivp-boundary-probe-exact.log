@@ -1,0 +1,13 @@
+right trim at 2.0: PASS [Nothing]
+right trim at 2.5: PASS [Just (fromList [("x",[_2.0,2.5^])]),Nothing]
+right trim at 3.0: PASS [Just (fromList [("x",[_2.0,3.0^])]),Nothing]
+right trim at 3.25: PASS [Just (fromList [("x",[_2.0,3.0^])]),Just (fromList [("x",[_3.0,3.25^])])]
+right trim at 3.5: PASS [Just (fromList [("x",[_2.0,3.0^])]),Just (fromList [("x",[_3.0,3.5^])])]
+right trim at 4.0: PASS [Just (fromList [("x",[_2.0,3.0^])]),Just (fromList [("x",[_3.0,4.0^])])]
+no-events: LDResNone
+possible-event: LDResSome {ldresEventCertainty = LDResDipMaybe, ldresFirstEventLoc = (<0.0>,<1.0>), ldresFirstEventType = fromList [1]}
+certain-event: LDResSome {ldresEventCertainty = LDResDipCertain, ldresFirstEventLoc = (<0.0>,<6.25e-2>), ldresFirstEventType = fromList [1]}
+poor-enclosure: LDResSome {ldresEventCertainty = LDResDipPoorEnclosure, ldresFirstEventLoc = (<0.0>,<1.0>), ldresFirstEventType = fromList [1]}
+adjacent endpoints and midpoint: (1.0,1.0000000000000002,1.0,1.0000000000000002)
+adjacent-step control: LDResSome {ldresEventCertainty = LDResDipMaybe, ldresFirstEventLoc = (<1.0>,<1.0000000000000002>), ldresFirstEventType = fromList [1]}
+adjacent-binary64 positive-step: EXCEPTION heap overflow

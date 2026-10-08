@@ -1,0 +1,68 @@
+[
+  {
+    "target": "bezier-region",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/private-region-factories-candidate1-libraries/hypercurve_bezier_region-95990204ab2cc359",
+      "--test-threads=2",
+      "--color",
+      "never"
+    ],
+    "returncode": 101,
+    "passed": false,
+    "expected": "34 passed;",
+    "elapsed_seconds": 0.1137951209966559,
+    "sha256": "b29bd7a4bc397f88852dda4d032ed06e47486a669554f34825d1ea426eaefb7c",
+    "log": "private-region-factories-candidate1-bezier-region.log"
+  },
+  {
+    "target": "retained_region_constructor_rejects_reused_arrangement_sources_across_loops",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/private-region-factories-candidate1-libraries/hypercurve-0b4591d2a89c50f8",
+      "--exact",
+      "bezier_region::tests::retained_region_constructor_rejects_reused_arrangement_sources_across_loops",
+      "--test-threads=2",
+      "--color",
+      "never"
+    ],
+    "returncode": 0,
+    "passed": true,
+    "expected": "1 passed;",
+    "elapsed_seconds": 0.0035248679923824966,
+    "sha256": "fd5ee63b23af137cccb076dbf8d13d588f01078cf397312e33a6f0dd1429dbe2",
+    "log": "private-region-factories-candidate1-retained_region_constructor_rejects_reused_arrangement_sources_across_loops.log"
+  },
+  {
+    "target": "native_boundary_loops_convert_into_unified_region_validation",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/private-region-factories-candidate1-libraries/hypercurve-0b4591d2a89c50f8",
+      "--exact",
+      "bezier_region::tests::native_boundary_loops_convert_into_unified_region_validation",
+      "--test-threads=2",
+      "--color",
+      "never"
+    ],
+    "returncode": 0,
+    "passed": true,
+    "expected": "1 passed;",
+    "elapsed_seconds": 0.003536817996064201,
+    "sha256": "fd5ee63b23af137cccb076dbf8d13d588f01078cf397312e33a6f0dd1429dbe2",
+    "log": "private-region-factories-candidate1-native_boundary_loops_convert_into_unified_region_validation.log"
+  },
+  {
+    "target": "retained_region_constructor_rejects_duplicate_boundary_loops",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/private-region-factories-candidate1-libraries/hypercurve-0b4591d2a89c50f8",
+      "--exact",
+      "bezier_region::tests::retained_region_constructor_rejects_duplicate_boundary_loops",
+      "--test-threads=2",
+      "--color",
+      "never"
+    ],
+    "returncode": 0,
+    "passed": true,
+    "expected": "1 passed;",
+    "elapsed_seconds": 0.003535627998644486,
+    "sha256": "fd5ee63b23af137cccb076dbf8d13d588f01078cf397312e33a6f0dd1429dbe2",
+    "log": "private-region-factories-candidate1-retained_region_constructor_rejects_duplicate_boundary_loops.log"
+  }
+]

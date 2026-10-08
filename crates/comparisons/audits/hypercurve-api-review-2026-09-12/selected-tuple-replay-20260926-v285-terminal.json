@@ -1,0 +1,29 @@
+{
+  "source_manifest": "selected-tuple-replay-20260926-v285-sources.json",
+  "source_directory": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/source-archives/selected-tuple-replay-20260926-v285",
+  "cases": [],
+  "builds": [
+    {
+      "crate": "hypersolve",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "test",
+        "--lib",
+        "--release",
+        "--all-features",
+        "--no-run",
+        "--message-format=json",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 101,
+      "log": "selected-tuple-replay-20260926-v285-hypersolve-build.log",
+      "elapsed_seconds": 3.9691067909589037
+    }
+  ],
+  "all_processes_reaped": true,
+  "checks": [],
+  "qualification_scope": "Hypersolve selected-tuple sign replay and shared owned coefficient compaction, with Hypercurve retaining original equation fallback: full solver library and affected geometry controls, both feature Clippy checks; full composition diagnostics remain separate",
+  "failure": "build failure",
+  "qualification_complete": false
+}

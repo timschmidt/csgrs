@@ -1,0 +1,7 @@
+{
+  "build_returncode": 101,
+  "reason": "New test used ContourPointLocation instead of the public RegionPointLocation result type.",
+  "tests_executed": 0,
+  "all_sources_unchanged": true,
+  "all_processes_reaped": true
+}

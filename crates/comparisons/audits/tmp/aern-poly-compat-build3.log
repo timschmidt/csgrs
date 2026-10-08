@@ -1,0 +1,470 @@
+aern-poly> build (lib) with ghc-9.6.7
+Preprocessing library for aern-poly-0.5.0..
+Building library for aern-poly-0.5.0..
+[ 5 of 21] Compiling Numeric.AERN.Poly.IntPoly.Reduction
+
+/tmp/aern-audit.zp9Mzz/source/aern-poly/src/Numeric/AERN/Poly/IntPoly/Reduction.hs:132:5: warning: [GHC-63397] [-Wname-shadowing]
+    This binding for ‘<*>’ shadows the existing binding
+      imported from ‘Prelude’ at src/Numeric/AERN/Poly/IntPoly/Reduction.hs:28:1-35
+      (and originally defined in ‘GHC.Base’)
+    |
+132 |     (<*>) = ArithInOut.multOutEff effMult
+    |     ^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-poly/src/Numeric/AERN/Poly/IntPoly/Reduction.hs:170:5: warning: [GHC-63397] [-Wname-shadowing]
+    This binding for ‘<*>’ shadows the existing binding
+      imported from ‘Prelude’ at src/Numeric/AERN/Poly/IntPoly/Reduction.hs:28:1-35
+      (and originally defined in ‘GHC.Base’)
+    |
+170 |     (<*>) = ArithInOut.multOutEff effMult
+    |     ^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-poly/src/Numeric/AERN/Poly/IntPoly/Reduction.hs:316:17: warning: [GHC-62161] [-Wincomplete-patterns]
+    Pattern match(es) are non-exhaustive
+    In a case alternative:
+        Patterns of type ‘(Maybe (IntPolyTerms var (cf, Bool)),
+                           Maybe Int)’ not matched:
+            ((Just _), Nothing)
+    |
+316 |                 case (maybePrevOverflowTerms, maybePrevDegree) of
+    |                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^...
+
+/tmp/aern-audit.zp9Mzz/source/aern-poly/src/Numeric/AERN/Poly/IntPoly/Reduction.hs:327:9: warning: [GHC-62161] [-Wincomplete-patterns]
+    Pattern match(es) are non-exhaustive
+    In an equation for ‘add’:
+        Patterns of type ‘IntPolyTerms var (cf, Bool)’,
+                         ‘IntPolyTerms var (cf, Bool)’ not matched:
+            (IntPolyC (_, _)) (IntPolyV _ _)
+            (IntPolyV _ _) (IntPolyC _)
+    |
+327 |         add _poly1@(IntPolyC (val1, marked)) _poly2@(IntPolyC (val2, _)) 
+    |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^...
+[ 7 of 21] Compiling Numeric.AERN.Poly.IntPoly.Addition
+
+/tmp/aern-audit.zp9Mzz/source/aern-poly/src/Numeric/AERN/Poly/IntPoly/Addition.hs:268:9: warning: [GHC-58520] [-Wtype-equality-requires-operators]
+    The use of ‘~’ without TypeOperators
+    will become an error in a future GHC release.
+    Suggested fix: Perhaps you intended to use TypeOperators
+    |
+268 |      cf ~ Interval e,
+    |         ^
+[ 8 of 21] Compiling Numeric.AERN.Poly.IntPoly.Multiplication
+
+/tmp/aern-audit.zp9Mzz/source/aern-poly/src/Numeric/AERN/Poly/IntPoly/Multiplication.hs:58:1: warning: [-Wunused-imports]
+    The import of ‘Numeric.AERN.Basics.SizeLimits’ is redundant
+      except perhaps to import instances from ‘Numeric.AERN.Basics.SizeLimits’
+    To import instances alone, use: import Numeric.AERN.Basics.SizeLimits()
+   |
+58 | import Numeric.AERN.Basics.SizeLimits (SizeLimits)
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-poly/src/Numeric/AERN/Poly/IntPoly/Multiplication.hs:330:11: warning: [GHC-58520] [-Wtype-equality-requires-operators]
+    The use of ‘~’ without TypeOperators
+    will become an error in a future GHC release.
+    Suggested fix: Perhaps you intended to use TypeOperators
+    |
+330 |     (poly ~ IntPoly var cf, cf ~ Interval e,
+    |           ^
+
+/tmp/aern-audit.zp9Mzz/source/aern-poly/src/Numeric/AERN/Poly/IntPoly/Multiplication.hs:330:32: warning: [GHC-58520] [-Wtype-equality-requires-operators]
+    The use of ‘~’ without TypeOperators
+    will become an error in a future GHC release.
+    Suggested fix: Perhaps you intended to use TypeOperators
+    |
+330 |     (poly ~ IntPoly var cf, cf ~ Interval e,
+    |                                ^
+
+/tmp/aern-audit.zp9Mzz/source/aern-poly/src/Numeric/AERN/Poly/IntPoly/Multiplication.hs:504:9: warning: [GHC-58520] [-Wtype-equality-requires-operators]
+    The use of ‘~’ without TypeOperators
+    will become an error in a future GHC release.
+    Suggested fix: Perhaps you intended to use TypeOperators
+    |
+504 |     (cf ~ Interval e,
+    |         ^
+
+/tmp/aern-audit.zp9Mzz/source/aern-poly/src/Numeric/AERN/Poly/IntPoly/Multiplication.hs:533:9: warning: [GHC-58520] [-Wtype-equality-requires-operators]
+    The use of ‘~’ without TypeOperators
+    will become an error in a future GHC release.
+    Suggested fix: Perhaps you intended to use TypeOperators
+    |
+533 |     (cf ~ Interval e,
+    |         ^
+
+/tmp/aern-audit.zp9Mzz/source/aern-poly/src/Numeric/AERN/Poly/IntPoly/Multiplication.hs:784:9: warning: [GHC-58520] [-Wtype-equality-requires-operators]
+    The use of ‘~’ without TypeOperators
+    will become an error in a future GHC release.
+    Suggested fix: Perhaps you intended to use TypeOperators
+    |
+784 |     (cf ~ Interval e,
+    |         ^
+
+/tmp/aern-audit.zp9Mzz/source/aern-poly/src/Numeric/AERN/Poly/IntPoly/Multiplication.hs:799:9: warning: [GHC-58520] [-Wtype-equality-requires-operators]
+    The use of ‘~’ without TypeOperators
+    will become an error in a future GHC release.
+    Suggested fix: Perhaps you intended to use TypeOperators
+    |
+799 |     (cf ~ Interval e,
+    |         ^
+[ 9 of 21] Compiling Numeric.AERN.Poly.IntPoly.Integration
+
+/tmp/aern-audit.zp9Mzz/source/aern-poly/src/Numeric/AERN/Poly/IntPoly/Integration.hs:49:5: error:
+    • Illegal use of type family ‘Imprecision’
+        in the constraint ‘NumOrd.PartialComparison (Imprecision cf)’
+      (Use UndecidableInstances to permit this)
+    • In the instance declaration for
+        ‘RoundedIntegration (IntPoly var cf)’
+   |
+49 |     (Ord var, Show var, 
+   |     ^^^^^^^^^^^^^^^^^^^^...
+[10 of 21] Compiling Numeric.AERN.Poly.IntPoly.Evaluation
+
+/tmp/aern-audit.zp9Mzz/source/aern-poly/src/Numeric/AERN/Poly/IntPoly/Evaluation.hs:57:1: warning: [-Wunused-imports]
+    The import of ‘Numeric.AERN.Basics.Effort’ is redundant
+      except perhaps to import instances from ‘Numeric.AERN.Basics.Effort’
+    To import instances alone, use: import Numeric.AERN.Basics.Effort()
+   |
+57 | import Numeric.AERN.Basics.Effort
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-poly/src/Numeric/AERN/Poly/IntPoly/Evaluation.hs:271:9: warning: [GHC-62161] [-Wincomplete-uni-patterns]
+    Pattern match(es) are non-exhaustive
+    In a pattern binding:
+        Patterns of type ‘Maybe Double’ not matched: Nothing
+    |
+271 |         Just wD = ArithUpDn.convertUpEff (ArithUpDn.convertDefaultEffort val (0::Double)) 0 w
+    |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-poly/src/Numeric/AERN/Poly/IntPoly/Evaluation.hs:280:5: warning: [GHC-63397] [-Wname-shadowing]
+    This binding for ‘<*>’ shadows the existing binding
+      imported from ‘Prelude’ at src/Numeric/AERN/Poly/IntPoly/Evaluation.hs:23:8-43
+      (and originally defined in ‘GHC.Base’)
+    |
+280 |     (<*>) = ArithInOut.multOutEff effMult
+    |     ^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-poly/src/Numeric/AERN/Poly/IntPoly/Evaluation.hs:601:69: warning: [-Wunused-matches]
+    Defined but not used: ‘dm’
+    |
+601 |                     getPoints shouldAimDown prevValues (vdm@(value, dm@(detectedMono, isIncreasing)) : rest)
+    |                                                                     ^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-poly/src/Numeric/AERN/Poly/IntPoly/Evaluation.hs:621:17: warning: [GHC-62161] [-Wincomplete-uni-patterns]
+    Pattern match(es) are non-exhaustive
+    In a pattern binding:
+        Patterns of type ‘[(Double,
+                            ((val, [(val, (Bool, Bool))]),
+                             (val, [(val, (Bool, Bool))])))]’ not matched:
+            []
+    |
+621 |                 (bestSplitInfo : _) =
+    |                 ^^^^^^^^^^^^^^^^^^^^^...
+
+/tmp/aern-audit.zp9Mzz/source/aern-poly/src/Numeric/AERN/Poly/IntPoly/Evaluation.hs:801:1: warning: [GHC-38417] [-Wmissing-signatures]
+    Top-level binding with no type signature:
+      xor :: Bool -> Bool -> Bool
+    |
+801 | xor False b = b
+    | ^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-poly/src/Numeric/AERN/Poly/IntPoly/Evaluation.hs:813:1: warning: [-Wunused-top-binds]
+    Defined but not used: ‘emsCountNodes’
+    |
+813 | emsCountNodes (EMSSplit left right) =
+    | ^^^^^^^^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-poly/src/Numeric/AERN/Poly/IntPoly/Evaluation.hs:819:1: warning: [-Wunused-top-binds]
+    Defined but not used: ‘emsCountIgnoreNodes’
+    |
+819 | emsCountIgnoreNodes (EMSSplit left right) =
+    | ^^^^^^^^^^^^^^^^^^^
+[11 of 21] Compiling Numeric.AERN.Poly.IntPoly.NumericOrder
+[12 of 21] Compiling Numeric.AERN.Poly.IntPoly.RefinementOrder
+[13 of 21] Compiling Numeric.AERN.Poly.IntPoly.Conversion
+
+/tmp/aern-audit.zp9Mzz/source/aern-poly/src/Numeric/AERN/Poly/IntPoly/Conversion.hs:42:1: warning: [-Wunused-imports]
+    The import of ‘Numeric.AERN.RealArithmetic.ExactOps’ is redundant
+      except perhaps to import instances from ‘Numeric.AERN.RealArithmetic.ExactOps’
+    To import instances alone, use: import Numeric.AERN.RealArithmetic.ExactOps()
+   |
+42 | import           Numeric.AERN.RealArithmetic.ExactOps
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-poly/src/Numeric/AERN/Poly/IntPoly/Conversion.hs:125:9: warning: [GHC-58520] [-Wtype-equality-requires-operators]
+    The use of ‘~’ without TypeOperators
+    will become an error in a future GHC release.
+    Suggested fix: Perhaps you intended to use TypeOperators
+    |
+125 |      cf ~ Interval e,
+    |         ^
+
+/tmp/aern-audit.zp9Mzz/source/aern-poly/src/Numeric/AERN/Poly/IntPoly/Conversion.hs:141:9: warning: [GHC-58520] [-Wtype-equality-requires-operators]
+    The use of ‘~’ without TypeOperators
+    will become an error in a future GHC release.
+    Suggested fix: Perhaps you intended to use TypeOperators
+    |
+141 |      cf ~ Interval e,
+    |         ^
+
+/tmp/aern-audit.zp9Mzz/source/aern-poly/src/Numeric/AERN/Poly/IntPoly/Conversion.hs:209:5: warning: [-Wunused-local-binds]
+    Defined but not used: ‘sampleP’
+    |
+209 |     sampleP = p
+    |     ^^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-poly/src/Numeric/AERN/Poly/IntPoly/Conversion.hs:210:5: warning: [-Wunused-local-binds]
+    Defined but not used: ‘sampleCf’
+    |
+210 |     sampleCf = getSampleDomValue sampleP
+    |     ^^^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-poly/src/Numeric/AERN/Poly/IntPoly/Conversion.hs:218:5: warning: [-Wunused-local-binds]
+    Defined but not used: ‘sampleP’
+    |
+218 |     sampleP = p
+    |     ^^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-poly/src/Numeric/AERN/Poly/IntPoly/Conversion.hs:219:5: warning: [-Wunused-local-binds]
+    Defined but not used: ‘sampleCf’
+    |
+219 |     sampleCf = getSampleDomValue sampleP
+    |     ^^^^^^^^
+[14 of 21] Compiling Numeric.AERN.Poly.IntPoly.Division
+
+/tmp/aern-audit.zp9Mzz/source/aern-poly/src/Numeric/AERN/Poly/IntPoly/Division.hs:73:8: warning: [GHC-58520] [-Wtype-equality-requires-operators]
+    The use of ‘~’ without TypeOperators
+    will become an error in a future GHC release.
+    Suggested fix: Perhaps you intended to use TypeOperators
+   |
+73 |    (cf ~ Interval e, 
+   |        ^
+
+/tmp/aern-audit.zp9Mzz/source/aern-poly/src/Numeric/AERN/Poly/IntPoly/Division.hs:124:5: warning: [GHC-63397] [-Wname-shadowing]
+    This binding for ‘<*>’ shadows the existing binding
+      imported from ‘Prelude’ at src/Numeric/AERN/Poly/IntPoly/Division.hs:20:8-41
+      (and originally defined in ‘GHC.Base’)
+    |
+124 |     (<*>) = ArithInOut.multOutEff effMultF
+    |     ^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-poly/src/Numeric/AERN/Poly/IntPoly/Division.hs:164:8: warning: [GHC-58520] [-Wtype-equality-requires-operators]
+    The use of ‘~’ without TypeOperators
+    will become an error in a future GHC release.
+    Suggested fix: Perhaps you intended to use TypeOperators
+    |
+164 |    (cf ~ (Interval e),
+    |        ^
+
+/tmp/aern-audit.zp9Mzz/source/aern-poly/src/Numeric/AERN/Poly/IntPoly/Division.hs:192:8: warning: [GHC-58520] [-Wtype-equality-requires-operators]
+    The use of ‘~’ without TypeOperators
+    will become an error in a future GHC release.
+    Suggested fix: Perhaps you intended to use TypeOperators
+    |
+192 |    (cf ~ Interval e, 
+    |        ^
+
+/tmp/aern-audit.zp9Mzz/source/aern-poly/src/Numeric/AERN/Poly/IntPoly/Division.hs:229:8: warning: [GHC-58520] [-Wtype-equality-requires-operators]
+    The use of ‘~’ without TypeOperators
+    will become an error in a future GHC release.
+    Suggested fix: Perhaps you intended to use TypeOperators
+    |
+229 |    (cf ~ Interval e, 
+    |        ^
+[15 of 21] Compiling Numeric.AERN.Poly.IntPoly.Elementary
+
+/tmp/aern-audit.zp9Mzz/source/aern-poly/src/Numeric/AERN/Poly/IntPoly/Elementary.hs:24:1: warning: [-Wunused-imports]
+    The import of ‘Numeric.AERN.Poly.IntPoly.Conversion’ is redundant
+      except perhaps to import instances from ‘Numeric.AERN.Poly.IntPoly.Conversion’
+    To import instances alone, use: import Numeric.AERN.Poly.IntPoly.Conversion()
+   |
+24 | import Numeric.AERN.Poly.IntPoly.Conversion
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-poly/src/Numeric/AERN/Poly/IntPoly/Elementary.hs:25:1: warning: [-Wunused-imports]
+    The import of ‘Numeric.AERN.Poly.IntPoly.Addition’ is redundant
+      except perhaps to import instances from ‘Numeric.AERN.Poly.IntPoly.Addition’
+    To import instances alone, use: import Numeric.AERN.Poly.IntPoly.Addition()
+   |
+25 | import Numeric.AERN.Poly.IntPoly.Addition
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-poly/src/Numeric/AERN/Poly/IntPoly/Elementary.hs:26:1: warning: [-Wunused-imports]
+    The import of ‘Numeric.AERN.Poly.IntPoly.Multiplication’ is redundant
+      except perhaps to import instances from ‘Numeric.AERN.Poly.IntPoly.Multiplication’
+    To import instances alone, use: import Numeric.AERN.Poly.IntPoly.Multiplication()
+   |
+26 | import Numeric.AERN.Poly.IntPoly.Multiplication
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-poly/src/Numeric/AERN/Poly/IntPoly/Elementary.hs:30:1: warning: [-Wunused-imports]
+    The import of ‘Numeric.AERN.RmToRn.New’ is redundant
+      except perhaps to import instances from ‘Numeric.AERN.RmToRn.New’
+    To import instances alone, use: import Numeric.AERN.RmToRn.New()
+   |
+30 | import Numeric.AERN.RmToRn.New
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-poly/src/Numeric/AERN/Poly/IntPoly/Elementary.hs:45:1: warning: [-Wunused-imports]
+    The import of ‘Numeric.AERN.RealArithmetic.ExactOps’ is redundant
+      except perhaps to import instances from ‘Numeric.AERN.RealArithmetic.ExactOps’
+    To import instances alone, use: import Numeric.AERN.RealArithmetic.ExactOps()
+   |
+45 | import Numeric.AERN.RealArithmetic.ExactOps
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-poly/src/Numeric/AERN/Poly/IntPoly/Elementary.hs:53:1: warning: [-Wunused-imports]
+    The qualified import of ‘Numeric.AERN.RefinementOrder’ is redundant
+      except perhaps to import instances from ‘Numeric.AERN.RefinementOrder’
+    To import instances alone, use: import Numeric.AERN.RefinementOrder()
+   |
+53 | import qualified 
+   | ^^^^^^^^^^^^^^^^^...
+
+/tmp/aern-audit.zp9Mzz/source/aern-poly/src/Numeric/AERN/Poly/IntPoly/Elementary.hs:62:9: warning: [GHC-58520] [-Wtype-equality-requires-operators]
+    The use of ‘~’ without TypeOperators
+    will become an error in a future GHC release.
+    Suggested fix: Perhaps you intended to use TypeOperators
+   |
+62 |      cf ~ Interval e,
+   |         ^
+
+/tmp/aern-audit.zp9Mzz/source/aern-poly/src/Numeric/AERN/Poly/IntPoly/Elementary.hs:77:5: warning: [GHC-06201] [-Wmissing-methods]
+    • No explicit implementation for
+        ‘ArithInOut.sinInEff’ and ‘ArithInOut.cosInEff’
+    • In the instance declaration for
+        ‘ArithInOut.RoundedSineCosine (IntPoly var cf)’
+   |
+77 |     (Ord var, Show var,
+   |     ^^^^^^^^^^^^^^^^^^^...
+
+/tmp/aern-audit.zp9Mzz/source/aern-poly/src/Numeric/AERN/Poly/IntPoly/Elementary.hs:78:9: warning: [GHC-58520] [-Wtype-equality-requires-operators]
+    The use of ‘~’ without TypeOperators
+    will become an error in a future GHC release.
+    Suggested fix: Perhaps you intended to use TypeOperators
+   |
+78 |      cf ~ Interval e,
+   |         ^
+
+/tmp/aern-audit.zp9Mzz/source/aern-poly/src/Numeric/AERN/Poly/IntPoly/Elementary.hs:79:11: warning: [GHC-58520] [-Wtype-equality-requires-operators]
+    The use of ‘~’ without TypeOperators
+    will become an error in a future GHC release.
+    Suggested fix: Perhaps you intended to use TypeOperators
+   |
+79 |      real ~ IntPoly var cf,
+   |           ^
+
+/tmp/aern-audit.zp9Mzz/source/aern-poly/src/Numeric/AERN/Poly/IntPoly/Elementary.hs:98:9: warning: [GHC-58520] [-Wtype-equality-requires-operators]
+    The use of ‘~’ without TypeOperators
+    will become an error in a future GHC release.
+    Suggested fix: Perhaps you intended to use TypeOperators
+   |
+98 |      cf ~ Interval e,
+   |         ^
+
+/tmp/aern-audit.zp9Mzz/source/aern-poly/src/Numeric/AERN/Poly/IntPoly/Elementary.hs:99:11: warning: [GHC-58520] [-Wtype-equality-requires-operators]
+    The use of ‘~’ without TypeOperators
+    will become an error in a future GHC release.
+    Suggested fix: Perhaps you intended to use TypeOperators
+   |
+99 |      real ~ IntPoly var cf,
+   |           ^
+[16 of 21] Compiling Numeric.AERN.Poly.IntPoly.Composition
+
+/tmp/aern-audit.zp9Mzz/source/aern-poly/src/Numeric/AERN/Poly/IntPoly/Composition.hs:108:13: warning: [GHC-63397] [-Wname-shadowing]
+    This binding for ‘<*>’ shadows the existing binding
+      imported from ‘Prelude’ at src/Numeric/AERN/Poly/IntPoly/Composition.hs:22:8-44
+      (and originally defined in ‘GHC.Base’)
+    |
+108 |         let (<*>) = ArithInOut.multOutEff eff in
+    |             ^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-poly/src/Numeric/AERN/Poly/IntPoly/Composition.hs:256:8: warning: [GHC-58520] [-Wtype-equality-requires-operators]
+    The use of ‘~’ without TypeOperators
+    will become an error in a future GHC release.
+    Suggested fix: Perhaps you intended to use TypeOperators
+    |
+256 |      f ~ (IntPoly var cf))
+    |        ^
+
+/tmp/aern-audit.zp9Mzz/source/aern-poly/src/Numeric/AERN/Poly/IntPoly/Composition.hs:287:5: warning: [GHC-62161] [-Wincomplete-uni-patterns]
+    Pattern match(es) are non-exhaustive
+    In a pattern binding:
+        Patterns of type ‘[(var, IntPoly var cf)]’ not matched: []
+    |
+287 |     ((_,sampleP) : _) = toAscList substBox
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-poly/src/Numeric/AERN/Poly/IntPoly/Composition.hs:299:8: warning: [GHC-58520] [-Wtype-equality-requires-operators]
+    The use of ‘~’ without TypeOperators
+    will become an error in a future GHC release.
+    Suggested fix: Perhaps you intended to use TypeOperators
+    |
+299 |      f ~ (IntPoly var cf))
+    |        ^
+
+/tmp/aern-audit.zp9Mzz/source/aern-poly/src/Numeric/AERN/Poly/IntPoly/Composition.hs:330:5: warning: [GHC-62161] [-Wincomplete-uni-patterns]
+    Pattern match(es) are non-exhaustive
+    In a pattern binding:
+        Patterns of type ‘[(var, IntPoly var cf)]’ not matched: []
+    |
+330 |     ((_,sampleP) : _) = toAscList substBox
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[17 of 21] Compiling Numeric.AERN.Poly.IntPoly.Minmax
+
+/tmp/aern-audit.zp9Mzz/source/aern-poly/src/Numeric/AERN/Poly/IntPoly/Minmax.hs:351:9: warning: [GHC-58520] [-Wtype-equality-requires-operators]
+    The use of ‘~’ without TypeOperators
+    will become an error in a future GHC release.
+    Suggested fix: Perhaps you intended to use TypeOperators
+    |
+351 |      cf ~ Interval e,
+    |         ^
+[19 of 21] Compiling Numeric.AERN.Poly.IntPoly.UpDnField
+
+/tmp/aern-audit.zp9Mzz/source/aern-poly/src/Numeric/AERN/Poly/IntPoly/UpDnField.hs:260:8: warning: [GHC-58520] [-Wtype-equality-requires-operators]
+    The use of ‘~’ without TypeOperators
+    will become an error in a future GHC release.
+    Suggested fix: Perhaps you intended to use TypeOperators
+    |
+260 |    (cf ~ (Interval e),
+    |        ^
+
+/tmp/aern-audit.zp9Mzz/source/aern-poly/src/Numeric/AERN/Poly/IntPoly/UpDnField.hs:300:8: warning: [GHC-58520] [-Wtype-equality-requires-operators]
+    The use of ‘~’ without TypeOperators
+    will become an error in a future GHC release.
+    Suggested fix: Perhaps you intended to use TypeOperators
+    |
+300 |    (cf ~ (Interval e),
+    |        ^
+
+/tmp/aern-audit.zp9Mzz/source/aern-poly/src/Numeric/AERN/Poly/IntPoly/UpDnField.hs:710:9: warning: [GHC-58520] [-Wtype-equality-requires-operators]
+    The use of ‘~’ without TypeOperators
+    will become an error in a future GHC release.
+    Suggested fix: Perhaps you intended to use TypeOperators
+    |
+710 |     (cf ~ Interval e,
+    |         ^
+
+/tmp/aern-audit.zp9Mzz/source/aern-poly/src/Numeric/AERN/Poly/IntPoly/UpDnField.hs:869:8: warning: [GHC-58520] [-Wtype-equality-requires-operators]
+    The use of ‘~’ without TypeOperators
+    will become an error in a future GHC release.
+    Suggested fix: Perhaps you intended to use TypeOperators
+    |
+869 |    (cf ~ Interval e, 
+    |        ^
+
+/tmp/aern-audit.zp9Mzz/source/aern-poly/src/Numeric/AERN/Poly/IntPoly/UpDnField.hs:1061:8: warning: [GHC-58520] [-Wtype-equality-requires-operators]
+    The use of ‘~’ without TypeOperators
+    will become an error in a future GHC release.
+    Suggested fix: Perhaps you intended to use TypeOperators
+     |
+1061 |    (cf ~ Interval e, 
+     |        ^
+
+Error: [S-7282]
+       Stack failed to execute the build plan.
+       
+       While executing the build plan, Stack encountered the error:
+       
+       [S-7011]
+       While building package aern-poly-0.5.0 (scroll up to its section to see the error) using:
+       /tmp/aern2-stack.ryVCFK/setup-exe-cache/x86_64-linux-tinfo6/Cabal-simple_O_vy6YIf_3.10.3.0_ghc-9.6.7 --verbose=1 --builddir=.stack-work/dist/x86_64-linux-tinfo6/ghc-9.6.7 build lib:aern-poly --ghc-options ""
+       Process exited with code: ExitFailure 1 

@@ -1,0 +1,9 @@
+{
+  "returncode": 124,
+  "elapsed_seconds": 20.001259785989532,
+  "normal_library": "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/libhypercurve.rlib",
+  "normal_library_sha256": "829dfd378c126b35c853521cfc57900e6ac81563b3eb9872a599401f6d97489b",
+  "source": "finite-circle-domain-stages.rs",
+  "executable_sha256": "e78142b2073e2fd4c42ae2b76d44784355df623390060551e6175ae22598eb34",
+  "log": "selected-circle-tangent-identity-diagnostic-current.log"
+}

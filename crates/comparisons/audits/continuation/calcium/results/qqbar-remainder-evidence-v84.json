@@ -1,0 +1,13 @@
+{
+  "tag": "qqbar-remainder-evidence-v84",
+  "started": "2026-09-12T05:13:23.855Z",
+  "finished": "2026-09-12T05:13:26.237Z",
+  "elapsedSeconds": 2.379616346,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "node",
+  "args": [
+    "qqbar-remainder-evidence-v84.mjs"
+  ],
+  "code": 0,
+  "signal": null
+}

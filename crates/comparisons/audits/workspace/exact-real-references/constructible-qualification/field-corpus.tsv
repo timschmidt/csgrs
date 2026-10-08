@@ -1,0 +1,1325 @@
+group	label	order	lhs	rhs
+quadratic	root-2-1--3--3	EQ	s + + q 9 1 * q 9 1 q 2 1 * q 18 1 s q 2 1	n + q -3 1 * q -3 1 s q 2 1
+quadratic	sign-2-1--3--3	LT	+ q -3 1 * q -3 1 s q 2 1	q 0 1
+quadratic	inverse-2-1--3--3	EQ	/ q 1 1 + q -3 1 * q -3 1 s q 2 1	/ + q -3 1 * q 3 1 s q 2 1 q -9 1
+quadratic	root-2-1--3--2	EQ	s + + q 9 1 * q 4 1 q 2 1 * q 12 1 s q 2 1	n + q -3 1 * q -2 1 s q 2 1
+quadratic	sign-2-1--3--2	LT	+ q -3 1 * q -2 1 s q 2 1	q 0 1
+quadratic	inverse-2-1--3--2	EQ	/ q 1 1 + q -3 1 * q -2 1 s q 2 1	/ + q -3 1 * q 2 1 s q 2 1 q 1 1
+quadratic	root-2-1--3--1	EQ	s + + q 9 1 * q 1 1 q 2 1 * q 6 1 s q 2 1	n + q -3 1 * q -1 1 s q 2 1
+quadratic	sign-2-1--3--1	LT	+ q -3 1 * q -1 1 s q 2 1	q 0 1
+quadratic	inverse-2-1--3--1	EQ	/ q 1 1 + q -3 1 * q -1 1 s q 2 1	/ + q -3 1 * q 1 1 s q 2 1 q 7 1
+quadratic	root-2-1--3-0	EQ	s + + q 9 1 * q 0 1 q 2 1 * q 0 1 s q 2 1	n + q -3 1 * q 0 1 s q 2 1
+quadratic	sign-2-1--3-0	LT	+ q -3 1 * q 0 1 s q 2 1	q 0 1
+quadratic	inverse-2-1--3-0	EQ	/ q 1 1 + q -3 1 * q 0 1 s q 2 1	/ + q -3 1 * q 0 1 s q 2 1 q 9 1
+quadratic	root-2-1--3-1	EQ	s + + q 9 1 * q 1 1 q 2 1 * q -6 1 s q 2 1	n + q -3 1 * q 1 1 s q 2 1
+quadratic	sign-2-1--3-1	LT	+ q -3 1 * q 1 1 s q 2 1	q 0 1
+quadratic	inverse-2-1--3-1	EQ	/ q 1 1 + q -3 1 * q 1 1 s q 2 1	/ + q -3 1 * q -1 1 s q 2 1 q 7 1
+quadratic	root-2-1--3-2	EQ	s + + q 9 1 * q 4 1 q 2 1 * q -12 1 s q 2 1	n + q -3 1 * q 2 1 s q 2 1
+quadratic	sign-2-1--3-2	LT	+ q -3 1 * q 2 1 s q 2 1	q 0 1
+quadratic	inverse-2-1--3-2	EQ	/ q 1 1 + q -3 1 * q 2 1 s q 2 1	/ + q -3 1 * q -2 1 s q 2 1 q 1 1
+quadratic	root-2-1--3-3	EQ	s + + q 9 1 * q 9 1 q 2 1 * q -18 1 s q 2 1	+ q -3 1 * q 3 1 s q 2 1
+quadratic	sign-2-1--3-3	GT	+ q -3 1 * q 3 1 s q 2 1	q 0 1
+quadratic	inverse-2-1--3-3	EQ	/ q 1 1 + q -3 1 * q 3 1 s q 2 1	/ + q -3 1 * q -3 1 s q 2 1 q -9 1
+quadratic	root-2-1--2--3	EQ	s + + q 4 1 * q 9 1 q 2 1 * q 12 1 s q 2 1	n + q -2 1 * q -3 1 s q 2 1
+quadratic	sign-2-1--2--3	LT	+ q -2 1 * q -3 1 s q 2 1	q 0 1
+quadratic	inverse-2-1--2--3	EQ	/ q 1 1 + q -2 1 * q -3 1 s q 2 1	/ + q -2 1 * q 3 1 s q 2 1 q -14 1
+quadratic	root-2-1--2--2	EQ	s + + q 4 1 * q 4 1 q 2 1 * q 8 1 s q 2 1	n + q -2 1 * q -2 1 s q 2 1
+quadratic	sign-2-1--2--2	LT	+ q -2 1 * q -2 1 s q 2 1	q 0 1
+quadratic	inverse-2-1--2--2	EQ	/ q 1 1 + q -2 1 * q -2 1 s q 2 1	/ + q -2 1 * q 2 1 s q 2 1 q -4 1
+quadratic	root-2-1--2--1	EQ	s + + q 4 1 * q 1 1 q 2 1 * q 4 1 s q 2 1	n + q -2 1 * q -1 1 s q 2 1
+quadratic	sign-2-1--2--1	LT	+ q -2 1 * q -1 1 s q 2 1	q 0 1
+quadratic	inverse-2-1--2--1	EQ	/ q 1 1 + q -2 1 * q -1 1 s q 2 1	/ + q -2 1 * q 1 1 s q 2 1 q 2 1
+quadratic	root-2-1--2-0	EQ	s + + q 4 1 * q 0 1 q 2 1 * q 0 1 s q 2 1	n + q -2 1 * q 0 1 s q 2 1
+quadratic	sign-2-1--2-0	LT	+ q -2 1 * q 0 1 s q 2 1	q 0 1
+quadratic	inverse-2-1--2-0	EQ	/ q 1 1 + q -2 1 * q 0 1 s q 2 1	/ + q -2 1 * q 0 1 s q 2 1 q 4 1
+quadratic	root-2-1--2-1	EQ	s + + q 4 1 * q 1 1 q 2 1 * q -4 1 s q 2 1	n + q -2 1 * q 1 1 s q 2 1
+quadratic	sign-2-1--2-1	LT	+ q -2 1 * q 1 1 s q 2 1	q 0 1
+quadratic	inverse-2-1--2-1	EQ	/ q 1 1 + q -2 1 * q 1 1 s q 2 1	/ + q -2 1 * q -1 1 s q 2 1 q 2 1
+quadratic	root-2-1--2-2	EQ	s + + q 4 1 * q 4 1 q 2 1 * q -8 1 s q 2 1	+ q -2 1 * q 2 1 s q 2 1
+quadratic	sign-2-1--2-2	GT	+ q -2 1 * q 2 1 s q 2 1	q 0 1
+quadratic	inverse-2-1--2-2	EQ	/ q 1 1 + q -2 1 * q 2 1 s q 2 1	/ + q -2 1 * q -2 1 s q 2 1 q -4 1
+quadratic	root-2-1--2-3	EQ	s + + q 4 1 * q 9 1 q 2 1 * q -12 1 s q 2 1	+ q -2 1 * q 3 1 s q 2 1
+quadratic	sign-2-1--2-3	GT	+ q -2 1 * q 3 1 s q 2 1	q 0 1
+quadratic	inverse-2-1--2-3	EQ	/ q 1 1 + q -2 1 * q 3 1 s q 2 1	/ + q -2 1 * q -3 1 s q 2 1 q -14 1
+quadratic	root-2-1--1--3	EQ	s + + q 1 1 * q 9 1 q 2 1 * q 6 1 s q 2 1	n + q -1 1 * q -3 1 s q 2 1
+quadratic	sign-2-1--1--3	LT	+ q -1 1 * q -3 1 s q 2 1	q 0 1
+quadratic	inverse-2-1--1--3	EQ	/ q 1 1 + q -1 1 * q -3 1 s q 2 1	/ + q -1 1 * q 3 1 s q 2 1 q -17 1
+quadratic	root-2-1--1--2	EQ	s + + q 1 1 * q 4 1 q 2 1 * q 4 1 s q 2 1	n + q -1 1 * q -2 1 s q 2 1
+quadratic	sign-2-1--1--2	LT	+ q -1 1 * q -2 1 s q 2 1	q 0 1
+quadratic	inverse-2-1--1--2	EQ	/ q 1 1 + q -1 1 * q -2 1 s q 2 1	/ + q -1 1 * q 2 1 s q 2 1 q -7 1
+quadratic	root-2-1--1--1	EQ	s + + q 1 1 * q 1 1 q 2 1 * q 2 1 s q 2 1	n + q -1 1 * q -1 1 s q 2 1
+quadratic	sign-2-1--1--1	LT	+ q -1 1 * q -1 1 s q 2 1	q 0 1
+quadratic	inverse-2-1--1--1	EQ	/ q 1 1 + q -1 1 * q -1 1 s q 2 1	/ + q -1 1 * q 1 1 s q 2 1 q -1 1
+quadratic	root-2-1--1-0	EQ	s + + q 1 1 * q 0 1 q 2 1 * q 0 1 s q 2 1	n + q -1 1 * q 0 1 s q 2 1
+quadratic	sign-2-1--1-0	LT	+ q -1 1 * q 0 1 s q 2 1	q 0 1
+quadratic	inverse-2-1--1-0	EQ	/ q 1 1 + q -1 1 * q 0 1 s q 2 1	/ + q -1 1 * q 0 1 s q 2 1 q 1 1
+quadratic	root-2-1--1-1	EQ	s + + q 1 1 * q 1 1 q 2 1 * q -2 1 s q 2 1	+ q -1 1 * q 1 1 s q 2 1
+quadratic	sign-2-1--1-1	GT	+ q -1 1 * q 1 1 s q 2 1	q 0 1
+quadratic	inverse-2-1--1-1	EQ	/ q 1 1 + q -1 1 * q 1 1 s q 2 1	/ + q -1 1 * q -1 1 s q 2 1 q -1 1
+quadratic	root-2-1--1-2	EQ	s + + q 1 1 * q 4 1 q 2 1 * q -4 1 s q 2 1	+ q -1 1 * q 2 1 s q 2 1
+quadratic	sign-2-1--1-2	GT	+ q -1 1 * q 2 1 s q 2 1	q 0 1
+quadratic	inverse-2-1--1-2	EQ	/ q 1 1 + q -1 1 * q 2 1 s q 2 1	/ + q -1 1 * q -2 1 s q 2 1 q -7 1
+quadratic	root-2-1--1-3	EQ	s + + q 1 1 * q 9 1 q 2 1 * q -6 1 s q 2 1	+ q -1 1 * q 3 1 s q 2 1
+quadratic	sign-2-1--1-3	GT	+ q -1 1 * q 3 1 s q 2 1	q 0 1
+quadratic	inverse-2-1--1-3	EQ	/ q 1 1 + q -1 1 * q 3 1 s q 2 1	/ + q -1 1 * q -3 1 s q 2 1 q -17 1
+quadratic	root-2-1-0--3	EQ	s + + q 0 1 * q 9 1 q 2 1 * q 0 1 s q 2 1	n + q 0 1 * q -3 1 s q 2 1
+quadratic	sign-2-1-0--3	LT	+ q 0 1 * q -3 1 s q 2 1	q 0 1
+quadratic	inverse-2-1-0--3	EQ	/ q 1 1 + q 0 1 * q -3 1 s q 2 1	/ + q 0 1 * q 3 1 s q 2 1 q -18 1
+quadratic	root-2-1-0--2	EQ	s + + q 0 1 * q 4 1 q 2 1 * q 0 1 s q 2 1	n + q 0 1 * q -2 1 s q 2 1
+quadratic	sign-2-1-0--2	LT	+ q 0 1 * q -2 1 s q 2 1	q 0 1
+quadratic	inverse-2-1-0--2	EQ	/ q 1 1 + q 0 1 * q -2 1 s q 2 1	/ + q 0 1 * q 2 1 s q 2 1 q -8 1
+quadratic	root-2-1-0--1	EQ	s + + q 0 1 * q 1 1 q 2 1 * q 0 1 s q 2 1	n + q 0 1 * q -1 1 s q 2 1
+quadratic	sign-2-1-0--1	LT	+ q 0 1 * q -1 1 s q 2 1	q 0 1
+quadratic	inverse-2-1-0--1	EQ	/ q 1 1 + q 0 1 * q -1 1 s q 2 1	/ + q 0 1 * q 1 1 s q 2 1 q -2 1
+quadratic	root-2-1-0-0	EQ	s + + q 0 1 * q 0 1 q 2 1 * q 0 1 s q 2 1	+ q 0 1 * q 0 1 s q 2 1
+quadratic	sign-2-1-0-0	EQ	+ q 0 1 * q 0 1 s q 2 1	q 0 1
+quadratic	root-2-1-0-1	EQ	s + + q 0 1 * q 1 1 q 2 1 * q 0 1 s q 2 1	+ q 0 1 * q 1 1 s q 2 1
+quadratic	sign-2-1-0-1	GT	+ q 0 1 * q 1 1 s q 2 1	q 0 1
+quadratic	inverse-2-1-0-1	EQ	/ q 1 1 + q 0 1 * q 1 1 s q 2 1	/ + q 0 1 * q -1 1 s q 2 1 q -2 1
+quadratic	root-2-1-0-2	EQ	s + + q 0 1 * q 4 1 q 2 1 * q 0 1 s q 2 1	+ q 0 1 * q 2 1 s q 2 1
+quadratic	sign-2-1-0-2	GT	+ q 0 1 * q 2 1 s q 2 1	q 0 1
+quadratic	inverse-2-1-0-2	EQ	/ q 1 1 + q 0 1 * q 2 1 s q 2 1	/ + q 0 1 * q -2 1 s q 2 1 q -8 1
+quadratic	root-2-1-0-3	EQ	s + + q 0 1 * q 9 1 q 2 1 * q 0 1 s q 2 1	+ q 0 1 * q 3 1 s q 2 1
+quadratic	sign-2-1-0-3	GT	+ q 0 1 * q 3 1 s q 2 1	q 0 1
+quadratic	inverse-2-1-0-3	EQ	/ q 1 1 + q 0 1 * q 3 1 s q 2 1	/ + q 0 1 * q -3 1 s q 2 1 q -18 1
+quadratic	root-2-1-1--3	EQ	s + + q 1 1 * q 9 1 q 2 1 * q -6 1 s q 2 1	n + q 1 1 * q -3 1 s q 2 1
+quadratic	sign-2-1-1--3	LT	+ q 1 1 * q -3 1 s q 2 1	q 0 1
+quadratic	inverse-2-1-1--3	EQ	/ q 1 1 + q 1 1 * q -3 1 s q 2 1	/ + q 1 1 * q 3 1 s q 2 1 q -17 1
+quadratic	root-2-1-1--2	EQ	s + + q 1 1 * q 4 1 q 2 1 * q -4 1 s q 2 1	n + q 1 1 * q -2 1 s q 2 1
+quadratic	sign-2-1-1--2	LT	+ q 1 1 * q -2 1 s q 2 1	q 0 1
+quadratic	inverse-2-1-1--2	EQ	/ q 1 1 + q 1 1 * q -2 1 s q 2 1	/ + q 1 1 * q 2 1 s q 2 1 q -7 1
+quadratic	root-2-1-1--1	EQ	s + + q 1 1 * q 1 1 q 2 1 * q -2 1 s q 2 1	n + q 1 1 * q -1 1 s q 2 1
+quadratic	sign-2-1-1--1	LT	+ q 1 1 * q -1 1 s q 2 1	q 0 1
+quadratic	inverse-2-1-1--1	EQ	/ q 1 1 + q 1 1 * q -1 1 s q 2 1	/ + q 1 1 * q 1 1 s q 2 1 q -1 1
+quadratic	root-2-1-1-0	EQ	s + + q 1 1 * q 0 1 q 2 1 * q 0 1 s q 2 1	+ q 1 1 * q 0 1 s q 2 1
+quadratic	sign-2-1-1-0	GT	+ q 1 1 * q 0 1 s q 2 1	q 0 1
+quadratic	inverse-2-1-1-0	EQ	/ q 1 1 + q 1 1 * q 0 1 s q 2 1	/ + q 1 1 * q 0 1 s q 2 1 q 1 1
+quadratic	root-2-1-1-1	EQ	s + + q 1 1 * q 1 1 q 2 1 * q 2 1 s q 2 1	+ q 1 1 * q 1 1 s q 2 1
+quadratic	sign-2-1-1-1	GT	+ q 1 1 * q 1 1 s q 2 1	q 0 1
+quadratic	inverse-2-1-1-1	EQ	/ q 1 1 + q 1 1 * q 1 1 s q 2 1	/ + q 1 1 * q -1 1 s q 2 1 q -1 1
+quadratic	root-2-1-1-2	EQ	s + + q 1 1 * q 4 1 q 2 1 * q 4 1 s q 2 1	+ q 1 1 * q 2 1 s q 2 1
+quadratic	sign-2-1-1-2	GT	+ q 1 1 * q 2 1 s q 2 1	q 0 1
+quadratic	inverse-2-1-1-2	EQ	/ q 1 1 + q 1 1 * q 2 1 s q 2 1	/ + q 1 1 * q -2 1 s q 2 1 q -7 1
+quadratic	root-2-1-1-3	EQ	s + + q 1 1 * q 9 1 q 2 1 * q 6 1 s q 2 1	+ q 1 1 * q 3 1 s q 2 1
+quadratic	sign-2-1-1-3	GT	+ q 1 1 * q 3 1 s q 2 1	q 0 1
+quadratic	inverse-2-1-1-3	EQ	/ q 1 1 + q 1 1 * q 3 1 s q 2 1	/ + q 1 1 * q -3 1 s q 2 1 q -17 1
+quadratic	root-2-1-2--3	EQ	s + + q 4 1 * q 9 1 q 2 1 * q -12 1 s q 2 1	n + q 2 1 * q -3 1 s q 2 1
+quadratic	sign-2-1-2--3	LT	+ q 2 1 * q -3 1 s q 2 1	q 0 1
+quadratic	inverse-2-1-2--3	EQ	/ q 1 1 + q 2 1 * q -3 1 s q 2 1	/ + q 2 1 * q 3 1 s q 2 1 q -14 1
+quadratic	root-2-1-2--2	EQ	s + + q 4 1 * q 4 1 q 2 1 * q -8 1 s q 2 1	n + q 2 1 * q -2 1 s q 2 1
+quadratic	sign-2-1-2--2	LT	+ q 2 1 * q -2 1 s q 2 1	q 0 1
+quadratic	inverse-2-1-2--2	EQ	/ q 1 1 + q 2 1 * q -2 1 s q 2 1	/ + q 2 1 * q 2 1 s q 2 1 q -4 1
+quadratic	root-2-1-2--1	EQ	s + + q 4 1 * q 1 1 q 2 1 * q -4 1 s q 2 1	+ q 2 1 * q -1 1 s q 2 1
+quadratic	sign-2-1-2--1	GT	+ q 2 1 * q -1 1 s q 2 1	q 0 1
+quadratic	inverse-2-1-2--1	EQ	/ q 1 1 + q 2 1 * q -1 1 s q 2 1	/ + q 2 1 * q 1 1 s q 2 1 q 2 1
+quadratic	root-2-1-2-0	EQ	s + + q 4 1 * q 0 1 q 2 1 * q 0 1 s q 2 1	+ q 2 1 * q 0 1 s q 2 1
+quadratic	sign-2-1-2-0	GT	+ q 2 1 * q 0 1 s q 2 1	q 0 1
+quadratic	inverse-2-1-2-0	EQ	/ q 1 1 + q 2 1 * q 0 1 s q 2 1	/ + q 2 1 * q 0 1 s q 2 1 q 4 1
+quadratic	root-2-1-2-1	EQ	s + + q 4 1 * q 1 1 q 2 1 * q 4 1 s q 2 1	+ q 2 1 * q 1 1 s q 2 1
+quadratic	sign-2-1-2-1	GT	+ q 2 1 * q 1 1 s q 2 1	q 0 1
+quadratic	inverse-2-1-2-1	EQ	/ q 1 1 + q 2 1 * q 1 1 s q 2 1	/ + q 2 1 * q -1 1 s q 2 1 q 2 1
+quadratic	root-2-1-2-2	EQ	s + + q 4 1 * q 4 1 q 2 1 * q 8 1 s q 2 1	+ q 2 1 * q 2 1 s q 2 1
+quadratic	sign-2-1-2-2	GT	+ q 2 1 * q 2 1 s q 2 1	q 0 1
+quadratic	inverse-2-1-2-2	EQ	/ q 1 1 + q 2 1 * q 2 1 s q 2 1	/ + q 2 1 * q -2 1 s q 2 1 q -4 1
+quadratic	root-2-1-2-3	EQ	s + + q 4 1 * q 9 1 q 2 1 * q 12 1 s q 2 1	+ q 2 1 * q 3 1 s q 2 1
+quadratic	sign-2-1-2-3	GT	+ q 2 1 * q 3 1 s q 2 1	q 0 1
+quadratic	inverse-2-1-2-3	EQ	/ q 1 1 + q 2 1 * q 3 1 s q 2 1	/ + q 2 1 * q -3 1 s q 2 1 q -14 1
+quadratic	root-2-1-3--3	EQ	s + + q 9 1 * q 9 1 q 2 1 * q -18 1 s q 2 1	n + q 3 1 * q -3 1 s q 2 1
+quadratic	sign-2-1-3--3	LT	+ q 3 1 * q -3 1 s q 2 1	q 0 1
+quadratic	inverse-2-1-3--3	EQ	/ q 1 1 + q 3 1 * q -3 1 s q 2 1	/ + q 3 1 * q 3 1 s q 2 1 q -9 1
+quadratic	root-2-1-3--2	EQ	s + + q 9 1 * q 4 1 q 2 1 * q -12 1 s q 2 1	+ q 3 1 * q -2 1 s q 2 1
+quadratic	sign-2-1-3--2	GT	+ q 3 1 * q -2 1 s q 2 1	q 0 1
+quadratic	inverse-2-1-3--2	EQ	/ q 1 1 + q 3 1 * q -2 1 s q 2 1	/ + q 3 1 * q 2 1 s q 2 1 q 1 1
+quadratic	root-2-1-3--1	EQ	s + + q 9 1 * q 1 1 q 2 1 * q -6 1 s q 2 1	+ q 3 1 * q -1 1 s q 2 1
+quadratic	sign-2-1-3--1	GT	+ q 3 1 * q -1 1 s q 2 1	q 0 1
+quadratic	inverse-2-1-3--1	EQ	/ q 1 1 + q 3 1 * q -1 1 s q 2 1	/ + q 3 1 * q 1 1 s q 2 1 q 7 1
+quadratic	root-2-1-3-0	EQ	s + + q 9 1 * q 0 1 q 2 1 * q 0 1 s q 2 1	+ q 3 1 * q 0 1 s q 2 1
+quadratic	sign-2-1-3-0	GT	+ q 3 1 * q 0 1 s q 2 1	q 0 1
+quadratic	inverse-2-1-3-0	EQ	/ q 1 1 + q 3 1 * q 0 1 s q 2 1	/ + q 3 1 * q 0 1 s q 2 1 q 9 1
+quadratic	root-2-1-3-1	EQ	s + + q 9 1 * q 1 1 q 2 1 * q 6 1 s q 2 1	+ q 3 1 * q 1 1 s q 2 1
+quadratic	sign-2-1-3-1	GT	+ q 3 1 * q 1 1 s q 2 1	q 0 1
+quadratic	inverse-2-1-3-1	EQ	/ q 1 1 + q 3 1 * q 1 1 s q 2 1	/ + q 3 1 * q -1 1 s q 2 1 q 7 1
+quadratic	root-2-1-3-2	EQ	s + + q 9 1 * q 4 1 q 2 1 * q 12 1 s q 2 1	+ q 3 1 * q 2 1 s q 2 1
+quadratic	sign-2-1-3-2	GT	+ q 3 1 * q 2 1 s q 2 1	q 0 1
+quadratic	inverse-2-1-3-2	EQ	/ q 1 1 + q 3 1 * q 2 1 s q 2 1	/ + q 3 1 * q -2 1 s q 2 1 q 1 1
+quadratic	root-2-1-3-3	EQ	s + + q 9 1 * q 9 1 q 2 1 * q 18 1 s q 2 1	+ q 3 1 * q 3 1 s q 2 1
+quadratic	sign-2-1-3-3	GT	+ q 3 1 * q 3 1 s q 2 1	q 0 1
+quadratic	inverse-2-1-3-3	EQ	/ q 1 1 + q 3 1 * q 3 1 s q 2 1	/ + q 3 1 * q -3 1 s q 2 1 q -9 1
+quadratic	root-2-2--3--3	EQ	s + + q 9 4 * q 9 4 q 2 1 * q 18 4 s q 2 1	n + q -3 2 * q -3 2 s q 2 1
+quadratic	sign-2-2--3--3	LT	+ q -3 2 * q -3 2 s q 2 1	q 0 1
+quadratic	inverse-2-2--3--3	EQ	/ q 1 1 + q -3 2 * q -3 2 s q 2 1	/ + q -6 1 * q 6 1 s q 2 1 q -9 1
+quadratic	root-2-2--3--2	EQ	s + + q 9 4 * q 4 4 q 2 1 * q 12 4 s q 2 1	n + q -3 2 * q -2 2 s q 2 1
+quadratic	sign-2-2--3--2	LT	+ q -3 2 * q -2 2 s q 2 1	q 0 1
+quadratic	inverse-2-2--3--2	EQ	/ q 1 1 + q -3 2 * q -2 2 s q 2 1	/ + q -6 1 * q 4 1 s q 2 1 q 1 1
+quadratic	root-2-2--3--1	EQ	s + + q 9 4 * q 1 4 q 2 1 * q 6 4 s q 2 1	n + q -3 2 * q -1 2 s q 2 1
+quadratic	sign-2-2--3--1	LT	+ q -3 2 * q -1 2 s q 2 1	q 0 1
+quadratic	inverse-2-2--3--1	EQ	/ q 1 1 + q -3 2 * q -1 2 s q 2 1	/ + q -6 1 * q 2 1 s q 2 1 q 7 1
+quadratic	root-2-2--3-0	EQ	s + + q 9 4 * q 0 4 q 2 1 * q 0 4 s q 2 1	n + q -3 2 * q 0 2 s q 2 1
+quadratic	sign-2-2--3-0	LT	+ q -3 2 * q 0 2 s q 2 1	q 0 1
+quadratic	inverse-2-2--3-0	EQ	/ q 1 1 + q -3 2 * q 0 2 s q 2 1	/ + q -6 1 * q 0 1 s q 2 1 q 9 1
+quadratic	root-2-2--3-1	EQ	s + + q 9 4 * q 1 4 q 2 1 * q -6 4 s q 2 1	n + q -3 2 * q 1 2 s q 2 1
+quadratic	sign-2-2--3-1	LT	+ q -3 2 * q 1 2 s q 2 1	q 0 1
+quadratic	inverse-2-2--3-1	EQ	/ q 1 1 + q -3 2 * q 1 2 s q 2 1	/ + q -6 1 * q -2 1 s q 2 1 q 7 1
+quadratic	root-2-2--3-2	EQ	s + + q 9 4 * q 4 4 q 2 1 * q -12 4 s q 2 1	n + q -3 2 * q 2 2 s q 2 1
+quadratic	sign-2-2--3-2	LT	+ q -3 2 * q 2 2 s q 2 1	q 0 1
+quadratic	inverse-2-2--3-2	EQ	/ q 1 1 + q -3 2 * q 2 2 s q 2 1	/ + q -6 1 * q -4 1 s q 2 1 q 1 1
+quadratic	root-2-2--3-3	EQ	s + + q 9 4 * q 9 4 q 2 1 * q -18 4 s q 2 1	+ q -3 2 * q 3 2 s q 2 1
+quadratic	sign-2-2--3-3	GT	+ q -3 2 * q 3 2 s q 2 1	q 0 1
+quadratic	inverse-2-2--3-3	EQ	/ q 1 1 + q -3 2 * q 3 2 s q 2 1	/ + q -6 1 * q -6 1 s q 2 1 q -9 1
+quadratic	root-2-2--2--3	EQ	s + + q 4 4 * q 9 4 q 2 1 * q 12 4 s q 2 1	n + q -2 2 * q -3 2 s q 2 1
+quadratic	sign-2-2--2--3	LT	+ q -2 2 * q -3 2 s q 2 1	q 0 1
+quadratic	inverse-2-2--2--3	EQ	/ q 1 1 + q -2 2 * q -3 2 s q 2 1	/ + q -4 1 * q 6 1 s q 2 1 q -14 1
+quadratic	root-2-2--2--2	EQ	s + + q 4 4 * q 4 4 q 2 1 * q 8 4 s q 2 1	n + q -2 2 * q -2 2 s q 2 1
+quadratic	sign-2-2--2--2	LT	+ q -2 2 * q -2 2 s q 2 1	q 0 1
+quadratic	inverse-2-2--2--2	EQ	/ q 1 1 + q -2 2 * q -2 2 s q 2 1	/ + q -4 1 * q 4 1 s q 2 1 q -4 1
+quadratic	root-2-2--2--1	EQ	s + + q 4 4 * q 1 4 q 2 1 * q 4 4 s q 2 1	n + q -2 2 * q -1 2 s q 2 1
+quadratic	sign-2-2--2--1	LT	+ q -2 2 * q -1 2 s q 2 1	q 0 1
+quadratic	inverse-2-2--2--1	EQ	/ q 1 1 + q -2 2 * q -1 2 s q 2 1	/ + q -4 1 * q 2 1 s q 2 1 q 2 1
+quadratic	root-2-2--2-0	EQ	s + + q 4 4 * q 0 4 q 2 1 * q 0 4 s q 2 1	n + q -2 2 * q 0 2 s q 2 1
+quadratic	sign-2-2--2-0	LT	+ q -2 2 * q 0 2 s q 2 1	q 0 1
+quadratic	inverse-2-2--2-0	EQ	/ q 1 1 + q -2 2 * q 0 2 s q 2 1	/ + q -4 1 * q 0 1 s q 2 1 q 4 1
+quadratic	root-2-2--2-1	EQ	s + + q 4 4 * q 1 4 q 2 1 * q -4 4 s q 2 1	n + q -2 2 * q 1 2 s q 2 1
+quadratic	sign-2-2--2-1	LT	+ q -2 2 * q 1 2 s q 2 1	q 0 1
+quadratic	inverse-2-2--2-1	EQ	/ q 1 1 + q -2 2 * q 1 2 s q 2 1	/ + q -4 1 * q -2 1 s q 2 1 q 2 1
+quadratic	root-2-2--2-2	EQ	s + + q 4 4 * q 4 4 q 2 1 * q -8 4 s q 2 1	+ q -2 2 * q 2 2 s q 2 1
+quadratic	sign-2-2--2-2	GT	+ q -2 2 * q 2 2 s q 2 1	q 0 1
+quadratic	inverse-2-2--2-2	EQ	/ q 1 1 + q -2 2 * q 2 2 s q 2 1	/ + q -4 1 * q -4 1 s q 2 1 q -4 1
+quadratic	root-2-2--2-3	EQ	s + + q 4 4 * q 9 4 q 2 1 * q -12 4 s q 2 1	+ q -2 2 * q 3 2 s q 2 1
+quadratic	sign-2-2--2-3	GT	+ q -2 2 * q 3 2 s q 2 1	q 0 1
+quadratic	inverse-2-2--2-3	EQ	/ q 1 1 + q -2 2 * q 3 2 s q 2 1	/ + q -4 1 * q -6 1 s q 2 1 q -14 1
+quadratic	root-2-2--1--3	EQ	s + + q 1 4 * q 9 4 q 2 1 * q 6 4 s q 2 1	n + q -1 2 * q -3 2 s q 2 1
+quadratic	sign-2-2--1--3	LT	+ q -1 2 * q -3 2 s q 2 1	q 0 1
+quadratic	inverse-2-2--1--3	EQ	/ q 1 1 + q -1 2 * q -3 2 s q 2 1	/ + q -2 1 * q 6 1 s q 2 1 q -17 1
+quadratic	root-2-2--1--2	EQ	s + + q 1 4 * q 4 4 q 2 1 * q 4 4 s q 2 1	n + q -1 2 * q -2 2 s q 2 1
+quadratic	sign-2-2--1--2	LT	+ q -1 2 * q -2 2 s q 2 1	q 0 1
+quadratic	inverse-2-2--1--2	EQ	/ q 1 1 + q -1 2 * q -2 2 s q 2 1	/ + q -2 1 * q 4 1 s q 2 1 q -7 1
+quadratic	root-2-2--1--1	EQ	s + + q 1 4 * q 1 4 q 2 1 * q 2 4 s q 2 1	n + q -1 2 * q -1 2 s q 2 1
+quadratic	sign-2-2--1--1	LT	+ q -1 2 * q -1 2 s q 2 1	q 0 1
+quadratic	inverse-2-2--1--1	EQ	/ q 1 1 + q -1 2 * q -1 2 s q 2 1	/ + q -2 1 * q 2 1 s q 2 1 q -1 1
+quadratic	root-2-2--1-0	EQ	s + + q 1 4 * q 0 4 q 2 1 * q 0 4 s q 2 1	n + q -1 2 * q 0 2 s q 2 1
+quadratic	sign-2-2--1-0	LT	+ q -1 2 * q 0 2 s q 2 1	q 0 1
+quadratic	inverse-2-2--1-0	EQ	/ q 1 1 + q -1 2 * q 0 2 s q 2 1	/ + q -2 1 * q 0 1 s q 2 1 q 1 1
+quadratic	root-2-2--1-1	EQ	s + + q 1 4 * q 1 4 q 2 1 * q -2 4 s q 2 1	+ q -1 2 * q 1 2 s q 2 1
+quadratic	sign-2-2--1-1	GT	+ q -1 2 * q 1 2 s q 2 1	q 0 1
+quadratic	inverse-2-2--1-1	EQ	/ q 1 1 + q -1 2 * q 1 2 s q 2 1	/ + q -2 1 * q -2 1 s q 2 1 q -1 1
+quadratic	root-2-2--1-2	EQ	s + + q 1 4 * q 4 4 q 2 1 * q -4 4 s q 2 1	+ q -1 2 * q 2 2 s q 2 1
+quadratic	sign-2-2--1-2	GT	+ q -1 2 * q 2 2 s q 2 1	q 0 1
+quadratic	inverse-2-2--1-2	EQ	/ q 1 1 + q -1 2 * q 2 2 s q 2 1	/ + q -2 1 * q -4 1 s q 2 1 q -7 1
+quadratic	root-2-2--1-3	EQ	s + + q 1 4 * q 9 4 q 2 1 * q -6 4 s q 2 1	+ q -1 2 * q 3 2 s q 2 1
+quadratic	sign-2-2--1-3	GT	+ q -1 2 * q 3 2 s q 2 1	q 0 1
+quadratic	inverse-2-2--1-3	EQ	/ q 1 1 + q -1 2 * q 3 2 s q 2 1	/ + q -2 1 * q -6 1 s q 2 1 q -17 1
+quadratic	root-2-2-0--3	EQ	s + + q 0 4 * q 9 4 q 2 1 * q 0 4 s q 2 1	n + q 0 2 * q -3 2 s q 2 1
+quadratic	sign-2-2-0--3	LT	+ q 0 2 * q -3 2 s q 2 1	q 0 1
+quadratic	inverse-2-2-0--3	EQ	/ q 1 1 + q 0 2 * q -3 2 s q 2 1	/ + q 0 1 * q 6 1 s q 2 1 q -18 1
+quadratic	root-2-2-0--2	EQ	s + + q 0 4 * q 4 4 q 2 1 * q 0 4 s q 2 1	n + q 0 2 * q -2 2 s q 2 1
+quadratic	sign-2-2-0--2	LT	+ q 0 2 * q -2 2 s q 2 1	q 0 1
+quadratic	inverse-2-2-0--2	EQ	/ q 1 1 + q 0 2 * q -2 2 s q 2 1	/ + q 0 1 * q 4 1 s q 2 1 q -8 1
+quadratic	root-2-2-0--1	EQ	s + + q 0 4 * q 1 4 q 2 1 * q 0 4 s q 2 1	n + q 0 2 * q -1 2 s q 2 1
+quadratic	sign-2-2-0--1	LT	+ q 0 2 * q -1 2 s q 2 1	q 0 1
+quadratic	inverse-2-2-0--1	EQ	/ q 1 1 + q 0 2 * q -1 2 s q 2 1	/ + q 0 1 * q 2 1 s q 2 1 q -2 1
+quadratic	root-2-2-0-0	EQ	s + + q 0 4 * q 0 4 q 2 1 * q 0 4 s q 2 1	+ q 0 2 * q 0 2 s q 2 1
+quadratic	sign-2-2-0-0	EQ	+ q 0 2 * q 0 2 s q 2 1	q 0 1
+quadratic	root-2-2-0-1	EQ	s + + q 0 4 * q 1 4 q 2 1 * q 0 4 s q 2 1	+ q 0 2 * q 1 2 s q 2 1
+quadratic	sign-2-2-0-1	GT	+ q 0 2 * q 1 2 s q 2 1	q 0 1
+quadratic	inverse-2-2-0-1	EQ	/ q 1 1 + q 0 2 * q 1 2 s q 2 1	/ + q 0 1 * q -2 1 s q 2 1 q -2 1
+quadratic	root-2-2-0-2	EQ	s + + q 0 4 * q 4 4 q 2 1 * q 0 4 s q 2 1	+ q 0 2 * q 2 2 s q 2 1
+quadratic	sign-2-2-0-2	GT	+ q 0 2 * q 2 2 s q 2 1	q 0 1
+quadratic	inverse-2-2-0-2	EQ	/ q 1 1 + q 0 2 * q 2 2 s q 2 1	/ + q 0 1 * q -4 1 s q 2 1 q -8 1
+quadratic	root-2-2-0-3	EQ	s + + q 0 4 * q 9 4 q 2 1 * q 0 4 s q 2 1	+ q 0 2 * q 3 2 s q 2 1
+quadratic	sign-2-2-0-3	GT	+ q 0 2 * q 3 2 s q 2 1	q 0 1
+quadratic	inverse-2-2-0-3	EQ	/ q 1 1 + q 0 2 * q 3 2 s q 2 1	/ + q 0 1 * q -6 1 s q 2 1 q -18 1
+quadratic	root-2-2-1--3	EQ	s + + q 1 4 * q 9 4 q 2 1 * q -6 4 s q 2 1	n + q 1 2 * q -3 2 s q 2 1
+quadratic	sign-2-2-1--3	LT	+ q 1 2 * q -3 2 s q 2 1	q 0 1
+quadratic	inverse-2-2-1--3	EQ	/ q 1 1 + q 1 2 * q -3 2 s q 2 1	/ + q 2 1 * q 6 1 s q 2 1 q -17 1
+quadratic	root-2-2-1--2	EQ	s + + q 1 4 * q 4 4 q 2 1 * q -4 4 s q 2 1	n + q 1 2 * q -2 2 s q 2 1
+quadratic	sign-2-2-1--2	LT	+ q 1 2 * q -2 2 s q 2 1	q 0 1
+quadratic	inverse-2-2-1--2	EQ	/ q 1 1 + q 1 2 * q -2 2 s q 2 1	/ + q 2 1 * q 4 1 s q 2 1 q -7 1
+quadratic	root-2-2-1--1	EQ	s + + q 1 4 * q 1 4 q 2 1 * q -2 4 s q 2 1	n + q 1 2 * q -1 2 s q 2 1
+quadratic	sign-2-2-1--1	LT	+ q 1 2 * q -1 2 s q 2 1	q 0 1
+quadratic	inverse-2-2-1--1	EQ	/ q 1 1 + q 1 2 * q -1 2 s q 2 1	/ + q 2 1 * q 2 1 s q 2 1 q -1 1
+quadratic	root-2-2-1-0	EQ	s + + q 1 4 * q 0 4 q 2 1 * q 0 4 s q 2 1	+ q 1 2 * q 0 2 s q 2 1
+quadratic	sign-2-2-1-0	GT	+ q 1 2 * q 0 2 s q 2 1	q 0 1
+quadratic	inverse-2-2-1-0	EQ	/ q 1 1 + q 1 2 * q 0 2 s q 2 1	/ + q 2 1 * q 0 1 s q 2 1 q 1 1
+quadratic	root-2-2-1-1	EQ	s + + q 1 4 * q 1 4 q 2 1 * q 2 4 s q 2 1	+ q 1 2 * q 1 2 s q 2 1
+quadratic	sign-2-2-1-1	GT	+ q 1 2 * q 1 2 s q 2 1	q 0 1
+quadratic	inverse-2-2-1-1	EQ	/ q 1 1 + q 1 2 * q 1 2 s q 2 1	/ + q 2 1 * q -2 1 s q 2 1 q -1 1
+quadratic	root-2-2-1-2	EQ	s + + q 1 4 * q 4 4 q 2 1 * q 4 4 s q 2 1	+ q 1 2 * q 2 2 s q 2 1
+quadratic	sign-2-2-1-2	GT	+ q 1 2 * q 2 2 s q 2 1	q 0 1
+quadratic	inverse-2-2-1-2	EQ	/ q 1 1 + q 1 2 * q 2 2 s q 2 1	/ + q 2 1 * q -4 1 s q 2 1 q -7 1
+quadratic	root-2-2-1-3	EQ	s + + q 1 4 * q 9 4 q 2 1 * q 6 4 s q 2 1	+ q 1 2 * q 3 2 s q 2 1
+quadratic	sign-2-2-1-3	GT	+ q 1 2 * q 3 2 s q 2 1	q 0 1
+quadratic	inverse-2-2-1-3	EQ	/ q 1 1 + q 1 2 * q 3 2 s q 2 1	/ + q 2 1 * q -6 1 s q 2 1 q -17 1
+quadratic	root-2-2-2--3	EQ	s + + q 4 4 * q 9 4 q 2 1 * q -12 4 s q 2 1	n + q 2 2 * q -3 2 s q 2 1
+quadratic	sign-2-2-2--3	LT	+ q 2 2 * q -3 2 s q 2 1	q 0 1
+quadratic	inverse-2-2-2--3	EQ	/ q 1 1 + q 2 2 * q -3 2 s q 2 1	/ + q 4 1 * q 6 1 s q 2 1 q -14 1
+quadratic	root-2-2-2--2	EQ	s + + q 4 4 * q 4 4 q 2 1 * q -8 4 s q 2 1	n + q 2 2 * q -2 2 s q 2 1
+quadratic	sign-2-2-2--2	LT	+ q 2 2 * q -2 2 s q 2 1	q 0 1
+quadratic	inverse-2-2-2--2	EQ	/ q 1 1 + q 2 2 * q -2 2 s q 2 1	/ + q 4 1 * q 4 1 s q 2 1 q -4 1
+quadratic	root-2-2-2--1	EQ	s + + q 4 4 * q 1 4 q 2 1 * q -4 4 s q 2 1	+ q 2 2 * q -1 2 s q 2 1
+quadratic	sign-2-2-2--1	GT	+ q 2 2 * q -1 2 s q 2 1	q 0 1
+quadratic	inverse-2-2-2--1	EQ	/ q 1 1 + q 2 2 * q -1 2 s q 2 1	/ + q 4 1 * q 2 1 s q 2 1 q 2 1
+quadratic	root-2-2-2-0	EQ	s + + q 4 4 * q 0 4 q 2 1 * q 0 4 s q 2 1	+ q 2 2 * q 0 2 s q 2 1
+quadratic	sign-2-2-2-0	GT	+ q 2 2 * q 0 2 s q 2 1	q 0 1
+quadratic	inverse-2-2-2-0	EQ	/ q 1 1 + q 2 2 * q 0 2 s q 2 1	/ + q 4 1 * q 0 1 s q 2 1 q 4 1
+quadratic	root-2-2-2-1	EQ	s + + q 4 4 * q 1 4 q 2 1 * q 4 4 s q 2 1	+ q 2 2 * q 1 2 s q 2 1
+quadratic	sign-2-2-2-1	GT	+ q 2 2 * q 1 2 s q 2 1	q 0 1
+quadratic	inverse-2-2-2-1	EQ	/ q 1 1 + q 2 2 * q 1 2 s q 2 1	/ + q 4 1 * q -2 1 s q 2 1 q 2 1
+quadratic	root-2-2-2-2	EQ	s + + q 4 4 * q 4 4 q 2 1 * q 8 4 s q 2 1	+ q 2 2 * q 2 2 s q 2 1
+quadratic	sign-2-2-2-2	GT	+ q 2 2 * q 2 2 s q 2 1	q 0 1
+quadratic	inverse-2-2-2-2	EQ	/ q 1 1 + q 2 2 * q 2 2 s q 2 1	/ + q 4 1 * q -4 1 s q 2 1 q -4 1
+quadratic	root-2-2-2-3	EQ	s + + q 4 4 * q 9 4 q 2 1 * q 12 4 s q 2 1	+ q 2 2 * q 3 2 s q 2 1
+quadratic	sign-2-2-2-3	GT	+ q 2 2 * q 3 2 s q 2 1	q 0 1
+quadratic	inverse-2-2-2-3	EQ	/ q 1 1 + q 2 2 * q 3 2 s q 2 1	/ + q 4 1 * q -6 1 s q 2 1 q -14 1
+quadratic	root-2-2-3--3	EQ	s + + q 9 4 * q 9 4 q 2 1 * q -18 4 s q 2 1	n + q 3 2 * q -3 2 s q 2 1
+quadratic	sign-2-2-3--3	LT	+ q 3 2 * q -3 2 s q 2 1	q 0 1
+quadratic	inverse-2-2-3--3	EQ	/ q 1 1 + q 3 2 * q -3 2 s q 2 1	/ + q 6 1 * q 6 1 s q 2 1 q -9 1
+quadratic	root-2-2-3--2	EQ	s + + q 9 4 * q 4 4 q 2 1 * q -12 4 s q 2 1	+ q 3 2 * q -2 2 s q 2 1
+quadratic	sign-2-2-3--2	GT	+ q 3 2 * q -2 2 s q 2 1	q 0 1
+quadratic	inverse-2-2-3--2	EQ	/ q 1 1 + q 3 2 * q -2 2 s q 2 1	/ + q 6 1 * q 4 1 s q 2 1 q 1 1
+quadratic	root-2-2-3--1	EQ	s + + q 9 4 * q 1 4 q 2 1 * q -6 4 s q 2 1	+ q 3 2 * q -1 2 s q 2 1
+quadratic	sign-2-2-3--1	GT	+ q 3 2 * q -1 2 s q 2 1	q 0 1
+quadratic	inverse-2-2-3--1	EQ	/ q 1 1 + q 3 2 * q -1 2 s q 2 1	/ + q 6 1 * q 2 1 s q 2 1 q 7 1
+quadratic	root-2-2-3-0	EQ	s + + q 9 4 * q 0 4 q 2 1 * q 0 4 s q 2 1	+ q 3 2 * q 0 2 s q 2 1
+quadratic	sign-2-2-3-0	GT	+ q 3 2 * q 0 2 s q 2 1	q 0 1
+quadratic	inverse-2-2-3-0	EQ	/ q 1 1 + q 3 2 * q 0 2 s q 2 1	/ + q 6 1 * q 0 1 s q 2 1 q 9 1
+quadratic	root-2-2-3-1	EQ	s + + q 9 4 * q 1 4 q 2 1 * q 6 4 s q 2 1	+ q 3 2 * q 1 2 s q 2 1
+quadratic	sign-2-2-3-1	GT	+ q 3 2 * q 1 2 s q 2 1	q 0 1
+quadratic	inverse-2-2-3-1	EQ	/ q 1 1 + q 3 2 * q 1 2 s q 2 1	/ + q 6 1 * q -2 1 s q 2 1 q 7 1
+quadratic	root-2-2-3-2	EQ	s + + q 9 4 * q 4 4 q 2 1 * q 12 4 s q 2 1	+ q 3 2 * q 2 2 s q 2 1
+quadratic	sign-2-2-3-2	GT	+ q 3 2 * q 2 2 s q 2 1	q 0 1
+quadratic	inverse-2-2-3-2	EQ	/ q 1 1 + q 3 2 * q 2 2 s q 2 1	/ + q 6 1 * q -4 1 s q 2 1 q 1 1
+quadratic	root-2-2-3-3	EQ	s + + q 9 4 * q 9 4 q 2 1 * q 18 4 s q 2 1	+ q 3 2 * q 3 2 s q 2 1
+quadratic	sign-2-2-3-3	GT	+ q 3 2 * q 3 2 s q 2 1	q 0 1
+quadratic	inverse-2-2-3-3	EQ	/ q 1 1 + q 3 2 * q 3 2 s q 2 1	/ + q 6 1 * q -6 1 s q 2 1 q -9 1
+quadratic	root-3-1--3--3	EQ	s + + q 9 1 * q 9 1 q 3 1 * q 18 1 s q 3 1	n + q -3 1 * q -3 1 s q 3 1
+quadratic	sign-3-1--3--3	LT	+ q -3 1 * q -3 1 s q 3 1	q 0 1
+quadratic	inverse-3-1--3--3	EQ	/ q 1 1 + q -3 1 * q -3 1 s q 3 1	/ + q -3 1 * q 3 1 s q 3 1 q -18 1
+quadratic	root-3-1--3--2	EQ	s + + q 9 1 * q 4 1 q 3 1 * q 12 1 s q 3 1	n + q -3 1 * q -2 1 s q 3 1
+quadratic	sign-3-1--3--2	LT	+ q -3 1 * q -2 1 s q 3 1	q 0 1
+quadratic	inverse-3-1--3--2	EQ	/ q 1 1 + q -3 1 * q -2 1 s q 3 1	/ + q -3 1 * q 2 1 s q 3 1 q -3 1
+quadratic	root-3-1--3--1	EQ	s + + q 9 1 * q 1 1 q 3 1 * q 6 1 s q 3 1	n + q -3 1 * q -1 1 s q 3 1
+quadratic	sign-3-1--3--1	LT	+ q -3 1 * q -1 1 s q 3 1	q 0 1
+quadratic	inverse-3-1--3--1	EQ	/ q 1 1 + q -3 1 * q -1 1 s q 3 1	/ + q -3 1 * q 1 1 s q 3 1 q 6 1
+quadratic	root-3-1--3-0	EQ	s + + q 9 1 * q 0 1 q 3 1 * q 0 1 s q 3 1	n + q -3 1 * q 0 1 s q 3 1
+quadratic	sign-3-1--3-0	LT	+ q -3 1 * q 0 1 s q 3 1	q 0 1
+quadratic	inverse-3-1--3-0	EQ	/ q 1 1 + q -3 1 * q 0 1 s q 3 1	/ + q -3 1 * q 0 1 s q 3 1 q 9 1
+quadratic	root-3-1--3-1	EQ	s + + q 9 1 * q 1 1 q 3 1 * q -6 1 s q 3 1	n + q -3 1 * q 1 1 s q 3 1
+quadratic	sign-3-1--3-1	LT	+ q -3 1 * q 1 1 s q 3 1	q 0 1
+quadratic	inverse-3-1--3-1	EQ	/ q 1 1 + q -3 1 * q 1 1 s q 3 1	/ + q -3 1 * q -1 1 s q 3 1 q 6 1
+quadratic	root-3-1--3-2	EQ	s + + q 9 1 * q 4 1 q 3 1 * q -12 1 s q 3 1	+ q -3 1 * q 2 1 s q 3 1
+quadratic	sign-3-1--3-2	GT	+ q -3 1 * q 2 1 s q 3 1	q 0 1
+quadratic	inverse-3-1--3-2	EQ	/ q 1 1 + q -3 1 * q 2 1 s q 3 1	/ + q -3 1 * q -2 1 s q 3 1 q -3 1
+quadratic	root-3-1--3-3	EQ	s + + q 9 1 * q 9 1 q 3 1 * q -18 1 s q 3 1	+ q -3 1 * q 3 1 s q 3 1
+quadratic	sign-3-1--3-3	GT	+ q -3 1 * q 3 1 s q 3 1	q 0 1
+quadratic	inverse-3-1--3-3	EQ	/ q 1 1 + q -3 1 * q 3 1 s q 3 1	/ + q -3 1 * q -3 1 s q 3 1 q -18 1
+quadratic	root-3-1--2--3	EQ	s + + q 4 1 * q 9 1 q 3 1 * q 12 1 s q 3 1	n + q -2 1 * q -3 1 s q 3 1
+quadratic	sign-3-1--2--3	LT	+ q -2 1 * q -3 1 s q 3 1	q 0 1
+quadratic	inverse-3-1--2--3	EQ	/ q 1 1 + q -2 1 * q -3 1 s q 3 1	/ + q -2 1 * q 3 1 s q 3 1 q -23 1
+quadratic	root-3-1--2--2	EQ	s + + q 4 1 * q 4 1 q 3 1 * q 8 1 s q 3 1	n + q -2 1 * q -2 1 s q 3 1
+quadratic	sign-3-1--2--2	LT	+ q -2 1 * q -2 1 s q 3 1	q 0 1
+quadratic	inverse-3-1--2--2	EQ	/ q 1 1 + q -2 1 * q -2 1 s q 3 1	/ + q -2 1 * q 2 1 s q 3 1 q -8 1
+quadratic	root-3-1--2--1	EQ	s + + q 4 1 * q 1 1 q 3 1 * q 4 1 s q 3 1	n + q -2 1 * q -1 1 s q 3 1
+quadratic	sign-3-1--2--1	LT	+ q -2 1 * q -1 1 s q 3 1	q 0 1
+quadratic	inverse-3-1--2--1	EQ	/ q 1 1 + q -2 1 * q -1 1 s q 3 1	/ + q -2 1 * q 1 1 s q 3 1 q 1 1
+quadratic	root-3-1--2-0	EQ	s + + q 4 1 * q 0 1 q 3 1 * q 0 1 s q 3 1	n + q -2 1 * q 0 1 s q 3 1
+quadratic	sign-3-1--2-0	LT	+ q -2 1 * q 0 1 s q 3 1	q 0 1
+quadratic	inverse-3-1--2-0	EQ	/ q 1 1 + q -2 1 * q 0 1 s q 3 1	/ + q -2 1 * q 0 1 s q 3 1 q 4 1
+quadratic	root-3-1--2-1	EQ	s + + q 4 1 * q 1 1 q 3 1 * q -4 1 s q 3 1	n + q -2 1 * q 1 1 s q 3 1
+quadratic	sign-3-1--2-1	LT	+ q -2 1 * q 1 1 s q 3 1	q 0 1
+quadratic	inverse-3-1--2-1	EQ	/ q 1 1 + q -2 1 * q 1 1 s q 3 1	/ + q -2 1 * q -1 1 s q 3 1 q 1 1
+quadratic	root-3-1--2-2	EQ	s + + q 4 1 * q 4 1 q 3 1 * q -8 1 s q 3 1	+ q -2 1 * q 2 1 s q 3 1
+quadratic	sign-3-1--2-2	GT	+ q -2 1 * q 2 1 s q 3 1	q 0 1
+quadratic	inverse-3-1--2-2	EQ	/ q 1 1 + q -2 1 * q 2 1 s q 3 1	/ + q -2 1 * q -2 1 s q 3 1 q -8 1
+quadratic	root-3-1--2-3	EQ	s + + q 4 1 * q 9 1 q 3 1 * q -12 1 s q 3 1	+ q -2 1 * q 3 1 s q 3 1
+quadratic	sign-3-1--2-3	GT	+ q -2 1 * q 3 1 s q 3 1	q 0 1
+quadratic	inverse-3-1--2-3	EQ	/ q 1 1 + q -2 1 * q 3 1 s q 3 1	/ + q -2 1 * q -3 1 s q 3 1 q -23 1
+quadratic	root-3-1--1--3	EQ	s + + q 1 1 * q 9 1 q 3 1 * q 6 1 s q 3 1	n + q -1 1 * q -3 1 s q 3 1
+quadratic	sign-3-1--1--3	LT	+ q -1 1 * q -3 1 s q 3 1	q 0 1
+quadratic	inverse-3-1--1--3	EQ	/ q 1 1 + q -1 1 * q -3 1 s q 3 1	/ + q -1 1 * q 3 1 s q 3 1 q -26 1
+quadratic	root-3-1--1--2	EQ	s + + q 1 1 * q 4 1 q 3 1 * q 4 1 s q 3 1	n + q -1 1 * q -2 1 s q 3 1
+quadratic	sign-3-1--1--2	LT	+ q -1 1 * q -2 1 s q 3 1	q 0 1
+quadratic	inverse-3-1--1--2	EQ	/ q 1 1 + q -1 1 * q -2 1 s q 3 1	/ + q -1 1 * q 2 1 s q 3 1 q -11 1
+quadratic	root-3-1--1--1	EQ	s + + q 1 1 * q 1 1 q 3 1 * q 2 1 s q 3 1	n + q -1 1 * q -1 1 s q 3 1
+quadratic	sign-3-1--1--1	LT	+ q -1 1 * q -1 1 s q 3 1	q 0 1
+quadratic	inverse-3-1--1--1	EQ	/ q 1 1 + q -1 1 * q -1 1 s q 3 1	/ + q -1 1 * q 1 1 s q 3 1 q -2 1
+quadratic	root-3-1--1-0	EQ	s + + q 1 1 * q 0 1 q 3 1 * q 0 1 s q 3 1	n + q -1 1 * q 0 1 s q 3 1
+quadratic	sign-3-1--1-0	LT	+ q -1 1 * q 0 1 s q 3 1	q 0 1
+quadratic	inverse-3-1--1-0	EQ	/ q 1 1 + q -1 1 * q 0 1 s q 3 1	/ + q -1 1 * q 0 1 s q 3 1 q 1 1
+quadratic	root-3-1--1-1	EQ	s + + q 1 1 * q 1 1 q 3 1 * q -2 1 s q 3 1	+ q -1 1 * q 1 1 s q 3 1
+quadratic	sign-3-1--1-1	GT	+ q -1 1 * q 1 1 s q 3 1	q 0 1
+quadratic	inverse-3-1--1-1	EQ	/ q 1 1 + q -1 1 * q 1 1 s q 3 1	/ + q -1 1 * q -1 1 s q 3 1 q -2 1
+quadratic	root-3-1--1-2	EQ	s + + q 1 1 * q 4 1 q 3 1 * q -4 1 s q 3 1	+ q -1 1 * q 2 1 s q 3 1
+quadratic	sign-3-1--1-2	GT	+ q -1 1 * q 2 1 s q 3 1	q 0 1
+quadratic	inverse-3-1--1-2	EQ	/ q 1 1 + q -1 1 * q 2 1 s q 3 1	/ + q -1 1 * q -2 1 s q 3 1 q -11 1
+quadratic	root-3-1--1-3	EQ	s + + q 1 1 * q 9 1 q 3 1 * q -6 1 s q 3 1	+ q -1 1 * q 3 1 s q 3 1
+quadratic	sign-3-1--1-3	GT	+ q -1 1 * q 3 1 s q 3 1	q 0 1
+quadratic	inverse-3-1--1-3	EQ	/ q 1 1 + q -1 1 * q 3 1 s q 3 1	/ + q -1 1 * q -3 1 s q 3 1 q -26 1
+quadratic	root-3-1-0--3	EQ	s + + q 0 1 * q 9 1 q 3 1 * q 0 1 s q 3 1	n + q 0 1 * q -3 1 s q 3 1
+quadratic	sign-3-1-0--3	LT	+ q 0 1 * q -3 1 s q 3 1	q 0 1
+quadratic	inverse-3-1-0--3	EQ	/ q 1 1 + q 0 1 * q -3 1 s q 3 1	/ + q 0 1 * q 3 1 s q 3 1 q -27 1
+quadratic	root-3-1-0--2	EQ	s + + q 0 1 * q 4 1 q 3 1 * q 0 1 s q 3 1	n + q 0 1 * q -2 1 s q 3 1
+quadratic	sign-3-1-0--2	LT	+ q 0 1 * q -2 1 s q 3 1	q 0 1
+quadratic	inverse-3-1-0--2	EQ	/ q 1 1 + q 0 1 * q -2 1 s q 3 1	/ + q 0 1 * q 2 1 s q 3 1 q -12 1
+quadratic	root-3-1-0--1	EQ	s + + q 0 1 * q 1 1 q 3 1 * q 0 1 s q 3 1	n + q 0 1 * q -1 1 s q 3 1
+quadratic	sign-3-1-0--1	LT	+ q 0 1 * q -1 1 s q 3 1	q 0 1
+quadratic	inverse-3-1-0--1	EQ	/ q 1 1 + q 0 1 * q -1 1 s q 3 1	/ + q 0 1 * q 1 1 s q 3 1 q -3 1
+quadratic	root-3-1-0-0	EQ	s + + q 0 1 * q 0 1 q 3 1 * q 0 1 s q 3 1	+ q 0 1 * q 0 1 s q 3 1
+quadratic	sign-3-1-0-0	EQ	+ q 0 1 * q 0 1 s q 3 1	q 0 1
+quadratic	root-3-1-0-1	EQ	s + + q 0 1 * q 1 1 q 3 1 * q 0 1 s q 3 1	+ q 0 1 * q 1 1 s q 3 1
+quadratic	sign-3-1-0-1	GT	+ q 0 1 * q 1 1 s q 3 1	q 0 1
+quadratic	inverse-3-1-0-1	EQ	/ q 1 1 + q 0 1 * q 1 1 s q 3 1	/ + q 0 1 * q -1 1 s q 3 1 q -3 1
+quadratic	root-3-1-0-2	EQ	s + + q 0 1 * q 4 1 q 3 1 * q 0 1 s q 3 1	+ q 0 1 * q 2 1 s q 3 1
+quadratic	sign-3-1-0-2	GT	+ q 0 1 * q 2 1 s q 3 1	q 0 1
+quadratic	inverse-3-1-0-2	EQ	/ q 1 1 + q 0 1 * q 2 1 s q 3 1	/ + q 0 1 * q -2 1 s q 3 1 q -12 1
+quadratic	root-3-1-0-3	EQ	s + + q 0 1 * q 9 1 q 3 1 * q 0 1 s q 3 1	+ q 0 1 * q 3 1 s q 3 1
+quadratic	sign-3-1-0-3	GT	+ q 0 1 * q 3 1 s q 3 1	q 0 1
+quadratic	inverse-3-1-0-3	EQ	/ q 1 1 + q 0 1 * q 3 1 s q 3 1	/ + q 0 1 * q -3 1 s q 3 1 q -27 1
+quadratic	root-3-1-1--3	EQ	s + + q 1 1 * q 9 1 q 3 1 * q -6 1 s q 3 1	n + q 1 1 * q -3 1 s q 3 1
+quadratic	sign-3-1-1--3	LT	+ q 1 1 * q -3 1 s q 3 1	q 0 1
+quadratic	inverse-3-1-1--3	EQ	/ q 1 1 + q 1 1 * q -3 1 s q 3 1	/ + q 1 1 * q 3 1 s q 3 1 q -26 1
+quadratic	root-3-1-1--2	EQ	s + + q 1 1 * q 4 1 q 3 1 * q -4 1 s q 3 1	n + q 1 1 * q -2 1 s q 3 1
+quadratic	sign-3-1-1--2	LT	+ q 1 1 * q -2 1 s q 3 1	q 0 1
+quadratic	inverse-3-1-1--2	EQ	/ q 1 1 + q 1 1 * q -2 1 s q 3 1	/ + q 1 1 * q 2 1 s q 3 1 q -11 1
+quadratic	root-3-1-1--1	EQ	s + + q 1 1 * q 1 1 q 3 1 * q -2 1 s q 3 1	n + q 1 1 * q -1 1 s q 3 1
+quadratic	sign-3-1-1--1	LT	+ q 1 1 * q -1 1 s q 3 1	q 0 1
+quadratic	inverse-3-1-1--1	EQ	/ q 1 1 + q 1 1 * q -1 1 s q 3 1	/ + q 1 1 * q 1 1 s q 3 1 q -2 1
+quadratic	root-3-1-1-0	EQ	s + + q 1 1 * q 0 1 q 3 1 * q 0 1 s q 3 1	+ q 1 1 * q 0 1 s q 3 1
+quadratic	sign-3-1-1-0	GT	+ q 1 1 * q 0 1 s q 3 1	q 0 1
+quadratic	inverse-3-1-1-0	EQ	/ q 1 1 + q 1 1 * q 0 1 s q 3 1	/ + q 1 1 * q 0 1 s q 3 1 q 1 1
+quadratic	root-3-1-1-1	EQ	s + + q 1 1 * q 1 1 q 3 1 * q 2 1 s q 3 1	+ q 1 1 * q 1 1 s q 3 1
+quadratic	sign-3-1-1-1	GT	+ q 1 1 * q 1 1 s q 3 1	q 0 1
+quadratic	inverse-3-1-1-1	EQ	/ q 1 1 + q 1 1 * q 1 1 s q 3 1	/ + q 1 1 * q -1 1 s q 3 1 q -2 1
+quadratic	root-3-1-1-2	EQ	s + + q 1 1 * q 4 1 q 3 1 * q 4 1 s q 3 1	+ q 1 1 * q 2 1 s q 3 1
+quadratic	sign-3-1-1-2	GT	+ q 1 1 * q 2 1 s q 3 1	q 0 1
+quadratic	inverse-3-1-1-2	EQ	/ q 1 1 + q 1 1 * q 2 1 s q 3 1	/ + q 1 1 * q -2 1 s q 3 1 q -11 1
+quadratic	root-3-1-1-3	EQ	s + + q 1 1 * q 9 1 q 3 1 * q 6 1 s q 3 1	+ q 1 1 * q 3 1 s q 3 1
+quadratic	sign-3-1-1-3	GT	+ q 1 1 * q 3 1 s q 3 1	q 0 1
+quadratic	inverse-3-1-1-3	EQ	/ q 1 1 + q 1 1 * q 3 1 s q 3 1	/ + q 1 1 * q -3 1 s q 3 1 q -26 1
+quadratic	root-3-1-2--3	EQ	s + + q 4 1 * q 9 1 q 3 1 * q -12 1 s q 3 1	n + q 2 1 * q -3 1 s q 3 1
+quadratic	sign-3-1-2--3	LT	+ q 2 1 * q -3 1 s q 3 1	q 0 1
+quadratic	inverse-3-1-2--3	EQ	/ q 1 1 + q 2 1 * q -3 1 s q 3 1	/ + q 2 1 * q 3 1 s q 3 1 q -23 1
+quadratic	root-3-1-2--2	EQ	s + + q 4 1 * q 4 1 q 3 1 * q -8 1 s q 3 1	n + q 2 1 * q -2 1 s q 3 1
+quadratic	sign-3-1-2--2	LT	+ q 2 1 * q -2 1 s q 3 1	q 0 1
+quadratic	inverse-3-1-2--2	EQ	/ q 1 1 + q 2 1 * q -2 1 s q 3 1	/ + q 2 1 * q 2 1 s q 3 1 q -8 1
+quadratic	root-3-1-2--1	EQ	s + + q 4 1 * q 1 1 q 3 1 * q -4 1 s q 3 1	+ q 2 1 * q -1 1 s q 3 1
+quadratic	sign-3-1-2--1	GT	+ q 2 1 * q -1 1 s q 3 1	q 0 1
+quadratic	inverse-3-1-2--1	EQ	/ q 1 1 + q 2 1 * q -1 1 s q 3 1	/ + q 2 1 * q 1 1 s q 3 1 q 1 1
+quadratic	root-3-1-2-0	EQ	s + + q 4 1 * q 0 1 q 3 1 * q 0 1 s q 3 1	+ q 2 1 * q 0 1 s q 3 1
+quadratic	sign-3-1-2-0	GT	+ q 2 1 * q 0 1 s q 3 1	q 0 1
+quadratic	inverse-3-1-2-0	EQ	/ q 1 1 + q 2 1 * q 0 1 s q 3 1	/ + q 2 1 * q 0 1 s q 3 1 q 4 1
+quadratic	root-3-1-2-1	EQ	s + + q 4 1 * q 1 1 q 3 1 * q 4 1 s q 3 1	+ q 2 1 * q 1 1 s q 3 1
+quadratic	sign-3-1-2-1	GT	+ q 2 1 * q 1 1 s q 3 1	q 0 1
+quadratic	inverse-3-1-2-1	EQ	/ q 1 1 + q 2 1 * q 1 1 s q 3 1	/ + q 2 1 * q -1 1 s q 3 1 q 1 1
+quadratic	root-3-1-2-2	EQ	s + + q 4 1 * q 4 1 q 3 1 * q 8 1 s q 3 1	+ q 2 1 * q 2 1 s q 3 1
+quadratic	sign-3-1-2-2	GT	+ q 2 1 * q 2 1 s q 3 1	q 0 1
+quadratic	inverse-3-1-2-2	EQ	/ q 1 1 + q 2 1 * q 2 1 s q 3 1	/ + q 2 1 * q -2 1 s q 3 1 q -8 1
+quadratic	root-3-1-2-3	EQ	s + + q 4 1 * q 9 1 q 3 1 * q 12 1 s q 3 1	+ q 2 1 * q 3 1 s q 3 1
+quadratic	sign-3-1-2-3	GT	+ q 2 1 * q 3 1 s q 3 1	q 0 1
+quadratic	inverse-3-1-2-3	EQ	/ q 1 1 + q 2 1 * q 3 1 s q 3 1	/ + q 2 1 * q -3 1 s q 3 1 q -23 1
+quadratic	root-3-1-3--3	EQ	s + + q 9 1 * q 9 1 q 3 1 * q -18 1 s q 3 1	n + q 3 1 * q -3 1 s q 3 1
+quadratic	sign-3-1-3--3	LT	+ q 3 1 * q -3 1 s q 3 1	q 0 1
+quadratic	inverse-3-1-3--3	EQ	/ q 1 1 + q 3 1 * q -3 1 s q 3 1	/ + q 3 1 * q 3 1 s q 3 1 q -18 1
+quadratic	root-3-1-3--2	EQ	s + + q 9 1 * q 4 1 q 3 1 * q -12 1 s q 3 1	n + q 3 1 * q -2 1 s q 3 1
+quadratic	sign-3-1-3--2	LT	+ q 3 1 * q -2 1 s q 3 1	q 0 1
+quadratic	inverse-3-1-3--2	EQ	/ q 1 1 + q 3 1 * q -2 1 s q 3 1	/ + q 3 1 * q 2 1 s q 3 1 q -3 1
+quadratic	root-3-1-3--1	EQ	s + + q 9 1 * q 1 1 q 3 1 * q -6 1 s q 3 1	+ q 3 1 * q -1 1 s q 3 1
+quadratic	sign-3-1-3--1	GT	+ q 3 1 * q -1 1 s q 3 1	q 0 1
+quadratic	inverse-3-1-3--1	EQ	/ q 1 1 + q 3 1 * q -1 1 s q 3 1	/ + q 3 1 * q 1 1 s q 3 1 q 6 1
+quadratic	root-3-1-3-0	EQ	s + + q 9 1 * q 0 1 q 3 1 * q 0 1 s q 3 1	+ q 3 1 * q 0 1 s q 3 1
+quadratic	sign-3-1-3-0	GT	+ q 3 1 * q 0 1 s q 3 1	q 0 1
+quadratic	inverse-3-1-3-0	EQ	/ q 1 1 + q 3 1 * q 0 1 s q 3 1	/ + q 3 1 * q 0 1 s q 3 1 q 9 1
+quadratic	root-3-1-3-1	EQ	s + + q 9 1 * q 1 1 q 3 1 * q 6 1 s q 3 1	+ q 3 1 * q 1 1 s q 3 1
+quadratic	sign-3-1-3-1	GT	+ q 3 1 * q 1 1 s q 3 1	q 0 1
+quadratic	inverse-3-1-3-1	EQ	/ q 1 1 + q 3 1 * q 1 1 s q 3 1	/ + q 3 1 * q -1 1 s q 3 1 q 6 1
+quadratic	root-3-1-3-2	EQ	s + + q 9 1 * q 4 1 q 3 1 * q 12 1 s q 3 1	+ q 3 1 * q 2 1 s q 3 1
+quadratic	sign-3-1-3-2	GT	+ q 3 1 * q 2 1 s q 3 1	q 0 1
+quadratic	inverse-3-1-3-2	EQ	/ q 1 1 + q 3 1 * q 2 1 s q 3 1	/ + q 3 1 * q -2 1 s q 3 1 q -3 1
+quadratic	root-3-1-3-3	EQ	s + + q 9 1 * q 9 1 q 3 1 * q 18 1 s q 3 1	+ q 3 1 * q 3 1 s q 3 1
+quadratic	sign-3-1-3-3	GT	+ q 3 1 * q 3 1 s q 3 1	q 0 1
+quadratic	inverse-3-1-3-3	EQ	/ q 1 1 + q 3 1 * q 3 1 s q 3 1	/ + q 3 1 * q -3 1 s q 3 1 q -18 1
+quadratic	root-3-2--3--3	EQ	s + + q 9 4 * q 9 4 q 3 1 * q 18 4 s q 3 1	n + q -3 2 * q -3 2 s q 3 1
+quadratic	sign-3-2--3--3	LT	+ q -3 2 * q -3 2 s q 3 1	q 0 1
+quadratic	inverse-3-2--3--3	EQ	/ q 1 1 + q -3 2 * q -3 2 s q 3 1	/ + q -6 1 * q 6 1 s q 3 1 q -18 1
+quadratic	root-3-2--3--2	EQ	s + + q 9 4 * q 4 4 q 3 1 * q 12 4 s q 3 1	n + q -3 2 * q -2 2 s q 3 1
+quadratic	sign-3-2--3--2	LT	+ q -3 2 * q -2 2 s q 3 1	q 0 1
+quadratic	inverse-3-2--3--2	EQ	/ q 1 1 + q -3 2 * q -2 2 s q 3 1	/ + q -6 1 * q 4 1 s q 3 1 q -3 1
+quadratic	root-3-2--3--1	EQ	s + + q 9 4 * q 1 4 q 3 1 * q 6 4 s q 3 1	n + q -3 2 * q -1 2 s q 3 1
+quadratic	sign-3-2--3--1	LT	+ q -3 2 * q -1 2 s q 3 1	q 0 1
+quadratic	inverse-3-2--3--1	EQ	/ q 1 1 + q -3 2 * q -1 2 s q 3 1	/ + q -6 1 * q 2 1 s q 3 1 q 6 1
+quadratic	root-3-2--3-0	EQ	s + + q 9 4 * q 0 4 q 3 1 * q 0 4 s q 3 1	n + q -3 2 * q 0 2 s q 3 1
+quadratic	sign-3-2--3-0	LT	+ q -3 2 * q 0 2 s q 3 1	q 0 1
+quadratic	inverse-3-2--3-0	EQ	/ q 1 1 + q -3 2 * q 0 2 s q 3 1	/ + q -6 1 * q 0 1 s q 3 1 q 9 1
+quadratic	root-3-2--3-1	EQ	s + + q 9 4 * q 1 4 q 3 1 * q -6 4 s q 3 1	n + q -3 2 * q 1 2 s q 3 1
+quadratic	sign-3-2--3-1	LT	+ q -3 2 * q 1 2 s q 3 1	q 0 1
+quadratic	inverse-3-2--3-1	EQ	/ q 1 1 + q -3 2 * q 1 2 s q 3 1	/ + q -6 1 * q -2 1 s q 3 1 q 6 1
+quadratic	root-3-2--3-2	EQ	s + + q 9 4 * q 4 4 q 3 1 * q -12 4 s q 3 1	+ q -3 2 * q 2 2 s q 3 1
+quadratic	sign-3-2--3-2	GT	+ q -3 2 * q 2 2 s q 3 1	q 0 1
+quadratic	inverse-3-2--3-2	EQ	/ q 1 1 + q -3 2 * q 2 2 s q 3 1	/ + q -6 1 * q -4 1 s q 3 1 q -3 1
+quadratic	root-3-2--3-3	EQ	s + + q 9 4 * q 9 4 q 3 1 * q -18 4 s q 3 1	+ q -3 2 * q 3 2 s q 3 1
+quadratic	sign-3-2--3-3	GT	+ q -3 2 * q 3 2 s q 3 1	q 0 1
+quadratic	inverse-3-2--3-3	EQ	/ q 1 1 + q -3 2 * q 3 2 s q 3 1	/ + q -6 1 * q -6 1 s q 3 1 q -18 1
+quadratic	root-3-2--2--3	EQ	s + + q 4 4 * q 9 4 q 3 1 * q 12 4 s q 3 1	n + q -2 2 * q -3 2 s q 3 1
+quadratic	sign-3-2--2--3	LT	+ q -2 2 * q -3 2 s q 3 1	q 0 1
+quadratic	inverse-3-2--2--3	EQ	/ q 1 1 + q -2 2 * q -3 2 s q 3 1	/ + q -4 1 * q 6 1 s q 3 1 q -23 1
+quadratic	root-3-2--2--2	EQ	s + + q 4 4 * q 4 4 q 3 1 * q 8 4 s q 3 1	n + q -2 2 * q -2 2 s q 3 1
+quadratic	sign-3-2--2--2	LT	+ q -2 2 * q -2 2 s q 3 1	q 0 1
+quadratic	inverse-3-2--2--2	EQ	/ q 1 1 + q -2 2 * q -2 2 s q 3 1	/ + q -4 1 * q 4 1 s q 3 1 q -8 1
+quadratic	root-3-2--2--1	EQ	s + + q 4 4 * q 1 4 q 3 1 * q 4 4 s q 3 1	n + q -2 2 * q -1 2 s q 3 1
+quadratic	sign-3-2--2--1	LT	+ q -2 2 * q -1 2 s q 3 1	q 0 1
+quadratic	inverse-3-2--2--1	EQ	/ q 1 1 + q -2 2 * q -1 2 s q 3 1	/ + q -4 1 * q 2 1 s q 3 1 q 1 1
+quadratic	root-3-2--2-0	EQ	s + + q 4 4 * q 0 4 q 3 1 * q 0 4 s q 3 1	n + q -2 2 * q 0 2 s q 3 1
+quadratic	sign-3-2--2-0	LT	+ q -2 2 * q 0 2 s q 3 1	q 0 1
+quadratic	inverse-3-2--2-0	EQ	/ q 1 1 + q -2 2 * q 0 2 s q 3 1	/ + q -4 1 * q 0 1 s q 3 1 q 4 1
+quadratic	root-3-2--2-1	EQ	s + + q 4 4 * q 1 4 q 3 1 * q -4 4 s q 3 1	n + q -2 2 * q 1 2 s q 3 1
+quadratic	sign-3-2--2-1	LT	+ q -2 2 * q 1 2 s q 3 1	q 0 1
+quadratic	inverse-3-2--2-1	EQ	/ q 1 1 + q -2 2 * q 1 2 s q 3 1	/ + q -4 1 * q -2 1 s q 3 1 q 1 1
+quadratic	root-3-2--2-2	EQ	s + + q 4 4 * q 4 4 q 3 1 * q -8 4 s q 3 1	+ q -2 2 * q 2 2 s q 3 1
+quadratic	sign-3-2--2-2	GT	+ q -2 2 * q 2 2 s q 3 1	q 0 1
+quadratic	inverse-3-2--2-2	EQ	/ q 1 1 + q -2 2 * q 2 2 s q 3 1	/ + q -4 1 * q -4 1 s q 3 1 q -8 1
+quadratic	root-3-2--2-3	EQ	s + + q 4 4 * q 9 4 q 3 1 * q -12 4 s q 3 1	+ q -2 2 * q 3 2 s q 3 1
+quadratic	sign-3-2--2-3	GT	+ q -2 2 * q 3 2 s q 3 1	q 0 1
+quadratic	inverse-3-2--2-3	EQ	/ q 1 1 + q -2 2 * q 3 2 s q 3 1	/ + q -4 1 * q -6 1 s q 3 1 q -23 1
+quadratic	root-3-2--1--3	EQ	s + + q 1 4 * q 9 4 q 3 1 * q 6 4 s q 3 1	n + q -1 2 * q -3 2 s q 3 1
+quadratic	sign-3-2--1--3	LT	+ q -1 2 * q -3 2 s q 3 1	q 0 1
+quadratic	inverse-3-2--1--3	EQ	/ q 1 1 + q -1 2 * q -3 2 s q 3 1	/ + q -2 1 * q 6 1 s q 3 1 q -26 1
+quadratic	root-3-2--1--2	EQ	s + + q 1 4 * q 4 4 q 3 1 * q 4 4 s q 3 1	n + q -1 2 * q -2 2 s q 3 1
+quadratic	sign-3-2--1--2	LT	+ q -1 2 * q -2 2 s q 3 1	q 0 1
+quadratic	inverse-3-2--1--2	EQ	/ q 1 1 + q -1 2 * q -2 2 s q 3 1	/ + q -2 1 * q 4 1 s q 3 1 q -11 1
+quadratic	root-3-2--1--1	EQ	s + + q 1 4 * q 1 4 q 3 1 * q 2 4 s q 3 1	n + q -1 2 * q -1 2 s q 3 1
+quadratic	sign-3-2--1--1	LT	+ q -1 2 * q -1 2 s q 3 1	q 0 1
+quadratic	inverse-3-2--1--1	EQ	/ q 1 1 + q -1 2 * q -1 2 s q 3 1	/ + q -2 1 * q 2 1 s q 3 1 q -2 1
+quadratic	root-3-2--1-0	EQ	s + + q 1 4 * q 0 4 q 3 1 * q 0 4 s q 3 1	n + q -1 2 * q 0 2 s q 3 1
+quadratic	sign-3-2--1-0	LT	+ q -1 2 * q 0 2 s q 3 1	q 0 1
+quadratic	inverse-3-2--1-0	EQ	/ q 1 1 + q -1 2 * q 0 2 s q 3 1	/ + q -2 1 * q 0 1 s q 3 1 q 1 1
+quadratic	root-3-2--1-1	EQ	s + + q 1 4 * q 1 4 q 3 1 * q -2 4 s q 3 1	+ q -1 2 * q 1 2 s q 3 1
+quadratic	sign-3-2--1-1	GT	+ q -1 2 * q 1 2 s q 3 1	q 0 1
+quadratic	inverse-3-2--1-1	EQ	/ q 1 1 + q -1 2 * q 1 2 s q 3 1	/ + q -2 1 * q -2 1 s q 3 1 q -2 1
+quadratic	root-3-2--1-2	EQ	s + + q 1 4 * q 4 4 q 3 1 * q -4 4 s q 3 1	+ q -1 2 * q 2 2 s q 3 1
+quadratic	sign-3-2--1-2	GT	+ q -1 2 * q 2 2 s q 3 1	q 0 1
+quadratic	inverse-3-2--1-2	EQ	/ q 1 1 + q -1 2 * q 2 2 s q 3 1	/ + q -2 1 * q -4 1 s q 3 1 q -11 1
+quadratic	root-3-2--1-3	EQ	s + + q 1 4 * q 9 4 q 3 1 * q -6 4 s q 3 1	+ q -1 2 * q 3 2 s q 3 1
+quadratic	sign-3-2--1-3	GT	+ q -1 2 * q 3 2 s q 3 1	q 0 1
+quadratic	inverse-3-2--1-3	EQ	/ q 1 1 + q -1 2 * q 3 2 s q 3 1	/ + q -2 1 * q -6 1 s q 3 1 q -26 1
+quadratic	root-3-2-0--3	EQ	s + + q 0 4 * q 9 4 q 3 1 * q 0 4 s q 3 1	n + q 0 2 * q -3 2 s q 3 1
+quadratic	sign-3-2-0--3	LT	+ q 0 2 * q -3 2 s q 3 1	q 0 1
+quadratic	inverse-3-2-0--3	EQ	/ q 1 1 + q 0 2 * q -3 2 s q 3 1	/ + q 0 1 * q 6 1 s q 3 1 q -27 1
+quadratic	root-3-2-0--2	EQ	s + + q 0 4 * q 4 4 q 3 1 * q 0 4 s q 3 1	n + q 0 2 * q -2 2 s q 3 1
+quadratic	sign-3-2-0--2	LT	+ q 0 2 * q -2 2 s q 3 1	q 0 1
+quadratic	inverse-3-2-0--2	EQ	/ q 1 1 + q 0 2 * q -2 2 s q 3 1	/ + q 0 1 * q 4 1 s q 3 1 q -12 1
+quadratic	root-3-2-0--1	EQ	s + + q 0 4 * q 1 4 q 3 1 * q 0 4 s q 3 1	n + q 0 2 * q -1 2 s q 3 1
+quadratic	sign-3-2-0--1	LT	+ q 0 2 * q -1 2 s q 3 1	q 0 1
+quadratic	inverse-3-2-0--1	EQ	/ q 1 1 + q 0 2 * q -1 2 s q 3 1	/ + q 0 1 * q 2 1 s q 3 1 q -3 1
+quadratic	root-3-2-0-0	EQ	s + + q 0 4 * q 0 4 q 3 1 * q 0 4 s q 3 1	+ q 0 2 * q 0 2 s q 3 1
+quadratic	sign-3-2-0-0	EQ	+ q 0 2 * q 0 2 s q 3 1	q 0 1
+quadratic	root-3-2-0-1	EQ	s + + q 0 4 * q 1 4 q 3 1 * q 0 4 s q 3 1	+ q 0 2 * q 1 2 s q 3 1
+quadratic	sign-3-2-0-1	GT	+ q 0 2 * q 1 2 s q 3 1	q 0 1
+quadratic	inverse-3-2-0-1	EQ	/ q 1 1 + q 0 2 * q 1 2 s q 3 1	/ + q 0 1 * q -2 1 s q 3 1 q -3 1
+quadratic	root-3-2-0-2	EQ	s + + q 0 4 * q 4 4 q 3 1 * q 0 4 s q 3 1	+ q 0 2 * q 2 2 s q 3 1
+quadratic	sign-3-2-0-2	GT	+ q 0 2 * q 2 2 s q 3 1	q 0 1
+quadratic	inverse-3-2-0-2	EQ	/ q 1 1 + q 0 2 * q 2 2 s q 3 1	/ + q 0 1 * q -4 1 s q 3 1 q -12 1
+quadratic	root-3-2-0-3	EQ	s + + q 0 4 * q 9 4 q 3 1 * q 0 4 s q 3 1	+ q 0 2 * q 3 2 s q 3 1
+quadratic	sign-3-2-0-3	GT	+ q 0 2 * q 3 2 s q 3 1	q 0 1
+quadratic	inverse-3-2-0-3	EQ	/ q 1 1 + q 0 2 * q 3 2 s q 3 1	/ + q 0 1 * q -6 1 s q 3 1 q -27 1
+quadratic	root-3-2-1--3	EQ	s + + q 1 4 * q 9 4 q 3 1 * q -6 4 s q 3 1	n + q 1 2 * q -3 2 s q 3 1
+quadratic	sign-3-2-1--3	LT	+ q 1 2 * q -3 2 s q 3 1	q 0 1
+quadratic	inverse-3-2-1--3	EQ	/ q 1 1 + q 1 2 * q -3 2 s q 3 1	/ + q 2 1 * q 6 1 s q 3 1 q -26 1
+quadratic	root-3-2-1--2	EQ	s + + q 1 4 * q 4 4 q 3 1 * q -4 4 s q 3 1	n + q 1 2 * q -2 2 s q 3 1
+quadratic	sign-3-2-1--2	LT	+ q 1 2 * q -2 2 s q 3 1	q 0 1
+quadratic	inverse-3-2-1--2	EQ	/ q 1 1 + q 1 2 * q -2 2 s q 3 1	/ + q 2 1 * q 4 1 s q 3 1 q -11 1
+quadratic	root-3-2-1--1	EQ	s + + q 1 4 * q 1 4 q 3 1 * q -2 4 s q 3 1	n + q 1 2 * q -1 2 s q 3 1
+quadratic	sign-3-2-1--1	LT	+ q 1 2 * q -1 2 s q 3 1	q 0 1
+quadratic	inverse-3-2-1--1	EQ	/ q 1 1 + q 1 2 * q -1 2 s q 3 1	/ + q 2 1 * q 2 1 s q 3 1 q -2 1
+quadratic	root-3-2-1-0	EQ	s + + q 1 4 * q 0 4 q 3 1 * q 0 4 s q 3 1	+ q 1 2 * q 0 2 s q 3 1
+quadratic	sign-3-2-1-0	GT	+ q 1 2 * q 0 2 s q 3 1	q 0 1
+quadratic	inverse-3-2-1-0	EQ	/ q 1 1 + q 1 2 * q 0 2 s q 3 1	/ + q 2 1 * q 0 1 s q 3 1 q 1 1
+quadratic	root-3-2-1-1	EQ	s + + q 1 4 * q 1 4 q 3 1 * q 2 4 s q 3 1	+ q 1 2 * q 1 2 s q 3 1
+quadratic	sign-3-2-1-1	GT	+ q 1 2 * q 1 2 s q 3 1	q 0 1
+quadratic	inverse-3-2-1-1	EQ	/ q 1 1 + q 1 2 * q 1 2 s q 3 1	/ + q 2 1 * q -2 1 s q 3 1 q -2 1
+quadratic	root-3-2-1-2	EQ	s + + q 1 4 * q 4 4 q 3 1 * q 4 4 s q 3 1	+ q 1 2 * q 2 2 s q 3 1
+quadratic	sign-3-2-1-2	GT	+ q 1 2 * q 2 2 s q 3 1	q 0 1
+quadratic	inverse-3-2-1-2	EQ	/ q 1 1 + q 1 2 * q 2 2 s q 3 1	/ + q 2 1 * q -4 1 s q 3 1 q -11 1
+quadratic	root-3-2-1-3	EQ	s + + q 1 4 * q 9 4 q 3 1 * q 6 4 s q 3 1	+ q 1 2 * q 3 2 s q 3 1
+quadratic	sign-3-2-1-3	GT	+ q 1 2 * q 3 2 s q 3 1	q 0 1
+quadratic	inverse-3-2-1-3	EQ	/ q 1 1 + q 1 2 * q 3 2 s q 3 1	/ + q 2 1 * q -6 1 s q 3 1 q -26 1
+quadratic	root-3-2-2--3	EQ	s + + q 4 4 * q 9 4 q 3 1 * q -12 4 s q 3 1	n + q 2 2 * q -3 2 s q 3 1
+quadratic	sign-3-2-2--3	LT	+ q 2 2 * q -3 2 s q 3 1	q 0 1
+quadratic	inverse-3-2-2--3	EQ	/ q 1 1 + q 2 2 * q -3 2 s q 3 1	/ + q 4 1 * q 6 1 s q 3 1 q -23 1
+quadratic	root-3-2-2--2	EQ	s + + q 4 4 * q 4 4 q 3 1 * q -8 4 s q 3 1	n + q 2 2 * q -2 2 s q 3 1
+quadratic	sign-3-2-2--2	LT	+ q 2 2 * q -2 2 s q 3 1	q 0 1
+quadratic	inverse-3-2-2--2	EQ	/ q 1 1 + q 2 2 * q -2 2 s q 3 1	/ + q 4 1 * q 4 1 s q 3 1 q -8 1
+quadratic	root-3-2-2--1	EQ	s + + q 4 4 * q 1 4 q 3 1 * q -4 4 s q 3 1	+ q 2 2 * q -1 2 s q 3 1
+quadratic	sign-3-2-2--1	GT	+ q 2 2 * q -1 2 s q 3 1	q 0 1
+quadratic	inverse-3-2-2--1	EQ	/ q 1 1 + q 2 2 * q -1 2 s q 3 1	/ + q 4 1 * q 2 1 s q 3 1 q 1 1
+quadratic	root-3-2-2-0	EQ	s + + q 4 4 * q 0 4 q 3 1 * q 0 4 s q 3 1	+ q 2 2 * q 0 2 s q 3 1
+quadratic	sign-3-2-2-0	GT	+ q 2 2 * q 0 2 s q 3 1	q 0 1
+quadratic	inverse-3-2-2-0	EQ	/ q 1 1 + q 2 2 * q 0 2 s q 3 1	/ + q 4 1 * q 0 1 s q 3 1 q 4 1
+quadratic	root-3-2-2-1	EQ	s + + q 4 4 * q 1 4 q 3 1 * q 4 4 s q 3 1	+ q 2 2 * q 1 2 s q 3 1
+quadratic	sign-3-2-2-1	GT	+ q 2 2 * q 1 2 s q 3 1	q 0 1
+quadratic	inverse-3-2-2-1	EQ	/ q 1 1 + q 2 2 * q 1 2 s q 3 1	/ + q 4 1 * q -2 1 s q 3 1 q 1 1
+quadratic	root-3-2-2-2	EQ	s + + q 4 4 * q 4 4 q 3 1 * q 8 4 s q 3 1	+ q 2 2 * q 2 2 s q 3 1
+quadratic	sign-3-2-2-2	GT	+ q 2 2 * q 2 2 s q 3 1	q 0 1
+quadratic	inverse-3-2-2-2	EQ	/ q 1 1 + q 2 2 * q 2 2 s q 3 1	/ + q 4 1 * q -4 1 s q 3 1 q -8 1
+quadratic	root-3-2-2-3	EQ	s + + q 4 4 * q 9 4 q 3 1 * q 12 4 s q 3 1	+ q 2 2 * q 3 2 s q 3 1
+quadratic	sign-3-2-2-3	GT	+ q 2 2 * q 3 2 s q 3 1	q 0 1
+quadratic	inverse-3-2-2-3	EQ	/ q 1 1 + q 2 2 * q 3 2 s q 3 1	/ + q 4 1 * q -6 1 s q 3 1 q -23 1
+quadratic	root-3-2-3--3	EQ	s + + q 9 4 * q 9 4 q 3 1 * q -18 4 s q 3 1	n + q 3 2 * q -3 2 s q 3 1
+quadratic	sign-3-2-3--3	LT	+ q 3 2 * q -3 2 s q 3 1	q 0 1
+quadratic	inverse-3-2-3--3	EQ	/ q 1 1 + q 3 2 * q -3 2 s q 3 1	/ + q 6 1 * q 6 1 s q 3 1 q -18 1
+quadratic	root-3-2-3--2	EQ	s + + q 9 4 * q 4 4 q 3 1 * q -12 4 s q 3 1	n + q 3 2 * q -2 2 s q 3 1
+quadratic	sign-3-2-3--2	LT	+ q 3 2 * q -2 2 s q 3 1	q 0 1
+quadratic	inverse-3-2-3--2	EQ	/ q 1 1 + q 3 2 * q -2 2 s q 3 1	/ + q 6 1 * q 4 1 s q 3 1 q -3 1
+quadratic	root-3-2-3--1	EQ	s + + q 9 4 * q 1 4 q 3 1 * q -6 4 s q 3 1	+ q 3 2 * q -1 2 s q 3 1
+quadratic	sign-3-2-3--1	GT	+ q 3 2 * q -1 2 s q 3 1	q 0 1
+quadratic	inverse-3-2-3--1	EQ	/ q 1 1 + q 3 2 * q -1 2 s q 3 1	/ + q 6 1 * q 2 1 s q 3 1 q 6 1
+quadratic	root-3-2-3-0	EQ	s + + q 9 4 * q 0 4 q 3 1 * q 0 4 s q 3 1	+ q 3 2 * q 0 2 s q 3 1
+quadratic	sign-3-2-3-0	GT	+ q 3 2 * q 0 2 s q 3 1	q 0 1
+quadratic	inverse-3-2-3-0	EQ	/ q 1 1 + q 3 2 * q 0 2 s q 3 1	/ + q 6 1 * q 0 1 s q 3 1 q 9 1
+quadratic	root-3-2-3-1	EQ	s + + q 9 4 * q 1 4 q 3 1 * q 6 4 s q 3 1	+ q 3 2 * q 1 2 s q 3 1
+quadratic	sign-3-2-3-1	GT	+ q 3 2 * q 1 2 s q 3 1	q 0 1
+quadratic	inverse-3-2-3-1	EQ	/ q 1 1 + q 3 2 * q 1 2 s q 3 1	/ + q 6 1 * q -2 1 s q 3 1 q 6 1
+quadratic	root-3-2-3-2	EQ	s + + q 9 4 * q 4 4 q 3 1 * q 12 4 s q 3 1	+ q 3 2 * q 2 2 s q 3 1
+quadratic	sign-3-2-3-2	GT	+ q 3 2 * q 2 2 s q 3 1	q 0 1
+quadratic	inverse-3-2-3-2	EQ	/ q 1 1 + q 3 2 * q 2 2 s q 3 1	/ + q 6 1 * q -4 1 s q 3 1 q -3 1
+quadratic	root-3-2-3-3	EQ	s + + q 9 4 * q 9 4 q 3 1 * q 18 4 s q 3 1	+ q 3 2 * q 3 2 s q 3 1
+quadratic	sign-3-2-3-3	GT	+ q 3 2 * q 3 2 s q 3 1	q 0 1
+quadratic	inverse-3-2-3-3	EQ	/ q 1 1 + q 3 2 * q 3 2 s q 3 1	/ + q 6 1 * q -6 1 s q 3 1 q -18 1
+quadratic	root-5-1--3--3	EQ	s + + q 9 1 * q 9 1 q 5 1 * q 18 1 s q 5 1	n + q -3 1 * q -3 1 s q 5 1
+quadratic	sign-5-1--3--3	LT	+ q -3 1 * q -3 1 s q 5 1	q 0 1
+quadratic	inverse-5-1--3--3	EQ	/ q 1 1 + q -3 1 * q -3 1 s q 5 1	/ + q -3 1 * q 3 1 s q 5 1 q -36 1
+quadratic	root-5-1--3--2	EQ	s + + q 9 1 * q 4 1 q 5 1 * q 12 1 s q 5 1	n + q -3 1 * q -2 1 s q 5 1
+quadratic	sign-5-1--3--2	LT	+ q -3 1 * q -2 1 s q 5 1	q 0 1
+quadratic	inverse-5-1--3--2	EQ	/ q 1 1 + q -3 1 * q -2 1 s q 5 1	/ + q -3 1 * q 2 1 s q 5 1 q -11 1
+quadratic	root-5-1--3--1	EQ	s + + q 9 1 * q 1 1 q 5 1 * q 6 1 s q 5 1	n + q -3 1 * q -1 1 s q 5 1
+quadratic	sign-5-1--3--1	LT	+ q -3 1 * q -1 1 s q 5 1	q 0 1
+quadratic	inverse-5-1--3--1	EQ	/ q 1 1 + q -3 1 * q -1 1 s q 5 1	/ + q -3 1 * q 1 1 s q 5 1 q 4 1
+quadratic	root-5-1--3-0	EQ	s + + q 9 1 * q 0 1 q 5 1 * q 0 1 s q 5 1	n + q -3 1 * q 0 1 s q 5 1
+quadratic	sign-5-1--3-0	LT	+ q -3 1 * q 0 1 s q 5 1	q 0 1
+quadratic	inverse-5-1--3-0	EQ	/ q 1 1 + q -3 1 * q 0 1 s q 5 1	/ + q -3 1 * q 0 1 s q 5 1 q 9 1
+quadratic	root-5-1--3-1	EQ	s + + q 9 1 * q 1 1 q 5 1 * q -6 1 s q 5 1	n + q -3 1 * q 1 1 s q 5 1
+quadratic	sign-5-1--3-1	LT	+ q -3 1 * q 1 1 s q 5 1	q 0 1
+quadratic	inverse-5-1--3-1	EQ	/ q 1 1 + q -3 1 * q 1 1 s q 5 1	/ + q -3 1 * q -1 1 s q 5 1 q 4 1
+quadratic	root-5-1--3-2	EQ	s + + q 9 1 * q 4 1 q 5 1 * q -12 1 s q 5 1	+ q -3 1 * q 2 1 s q 5 1
+quadratic	sign-5-1--3-2	GT	+ q -3 1 * q 2 1 s q 5 1	q 0 1
+quadratic	inverse-5-1--3-2	EQ	/ q 1 1 + q -3 1 * q 2 1 s q 5 1	/ + q -3 1 * q -2 1 s q 5 1 q -11 1
+quadratic	root-5-1--3-3	EQ	s + + q 9 1 * q 9 1 q 5 1 * q -18 1 s q 5 1	+ q -3 1 * q 3 1 s q 5 1
+quadratic	sign-5-1--3-3	GT	+ q -3 1 * q 3 1 s q 5 1	q 0 1
+quadratic	inverse-5-1--3-3	EQ	/ q 1 1 + q -3 1 * q 3 1 s q 5 1	/ + q -3 1 * q -3 1 s q 5 1 q -36 1
+quadratic	root-5-1--2--3	EQ	s + + q 4 1 * q 9 1 q 5 1 * q 12 1 s q 5 1	n + q -2 1 * q -3 1 s q 5 1
+quadratic	sign-5-1--2--3	LT	+ q -2 1 * q -3 1 s q 5 1	q 0 1
+quadratic	inverse-5-1--2--3	EQ	/ q 1 1 + q -2 1 * q -3 1 s q 5 1	/ + q -2 1 * q 3 1 s q 5 1 q -41 1
+quadratic	root-5-1--2--2	EQ	s + + q 4 1 * q 4 1 q 5 1 * q 8 1 s q 5 1	n + q -2 1 * q -2 1 s q 5 1
+quadratic	sign-5-1--2--2	LT	+ q -2 1 * q -2 1 s q 5 1	q 0 1
+quadratic	inverse-5-1--2--2	EQ	/ q 1 1 + q -2 1 * q -2 1 s q 5 1	/ + q -2 1 * q 2 1 s q 5 1 q -16 1
+quadratic	root-5-1--2--1	EQ	s + + q 4 1 * q 1 1 q 5 1 * q 4 1 s q 5 1	n + q -2 1 * q -1 1 s q 5 1
+quadratic	sign-5-1--2--1	LT	+ q -2 1 * q -1 1 s q 5 1	q 0 1
+quadratic	inverse-5-1--2--1	EQ	/ q 1 1 + q -2 1 * q -1 1 s q 5 1	/ + q -2 1 * q 1 1 s q 5 1 q -1 1
+quadratic	root-5-1--2-0	EQ	s + + q 4 1 * q 0 1 q 5 1 * q 0 1 s q 5 1	n + q -2 1 * q 0 1 s q 5 1
+quadratic	sign-5-1--2-0	LT	+ q -2 1 * q 0 1 s q 5 1	q 0 1
+quadratic	inverse-5-1--2-0	EQ	/ q 1 1 + q -2 1 * q 0 1 s q 5 1	/ + q -2 1 * q 0 1 s q 5 1 q 4 1
+quadratic	root-5-1--2-1	EQ	s + + q 4 1 * q 1 1 q 5 1 * q -4 1 s q 5 1	+ q -2 1 * q 1 1 s q 5 1
+quadratic	sign-5-1--2-1	GT	+ q -2 1 * q 1 1 s q 5 1	q 0 1
+quadratic	inverse-5-1--2-1	EQ	/ q 1 1 + q -2 1 * q 1 1 s q 5 1	/ + q -2 1 * q -1 1 s q 5 1 q -1 1
+quadratic	root-5-1--2-2	EQ	s + + q 4 1 * q 4 1 q 5 1 * q -8 1 s q 5 1	+ q -2 1 * q 2 1 s q 5 1
+quadratic	sign-5-1--2-2	GT	+ q -2 1 * q 2 1 s q 5 1	q 0 1
+quadratic	inverse-5-1--2-2	EQ	/ q 1 1 + q -2 1 * q 2 1 s q 5 1	/ + q -2 1 * q -2 1 s q 5 1 q -16 1
+quadratic	root-5-1--2-3	EQ	s + + q 4 1 * q 9 1 q 5 1 * q -12 1 s q 5 1	+ q -2 1 * q 3 1 s q 5 1
+quadratic	sign-5-1--2-3	GT	+ q -2 1 * q 3 1 s q 5 1	q 0 1
+quadratic	inverse-5-1--2-3	EQ	/ q 1 1 + q -2 1 * q 3 1 s q 5 1	/ + q -2 1 * q -3 1 s q 5 1 q -41 1
+quadratic	root-5-1--1--3	EQ	s + + q 1 1 * q 9 1 q 5 1 * q 6 1 s q 5 1	n + q -1 1 * q -3 1 s q 5 1
+quadratic	sign-5-1--1--3	LT	+ q -1 1 * q -3 1 s q 5 1	q 0 1
+quadratic	inverse-5-1--1--3	EQ	/ q 1 1 + q -1 1 * q -3 1 s q 5 1	/ + q -1 1 * q 3 1 s q 5 1 q -44 1
+quadratic	root-5-1--1--2	EQ	s + + q 1 1 * q 4 1 q 5 1 * q 4 1 s q 5 1	n + q -1 1 * q -2 1 s q 5 1
+quadratic	sign-5-1--1--2	LT	+ q -1 1 * q -2 1 s q 5 1	q 0 1
+quadratic	inverse-5-1--1--2	EQ	/ q 1 1 + q -1 1 * q -2 1 s q 5 1	/ + q -1 1 * q 2 1 s q 5 1 q -19 1
+quadratic	root-5-1--1--1	EQ	s + + q 1 1 * q 1 1 q 5 1 * q 2 1 s q 5 1	n + q -1 1 * q -1 1 s q 5 1
+quadratic	sign-5-1--1--1	LT	+ q -1 1 * q -1 1 s q 5 1	q 0 1
+quadratic	inverse-5-1--1--1	EQ	/ q 1 1 + q -1 1 * q -1 1 s q 5 1	/ + q -1 1 * q 1 1 s q 5 1 q -4 1
+quadratic	root-5-1--1-0	EQ	s + + q 1 1 * q 0 1 q 5 1 * q 0 1 s q 5 1	n + q -1 1 * q 0 1 s q 5 1
+quadratic	sign-5-1--1-0	LT	+ q -1 1 * q 0 1 s q 5 1	q 0 1
+quadratic	inverse-5-1--1-0	EQ	/ q 1 1 + q -1 1 * q 0 1 s q 5 1	/ + q -1 1 * q 0 1 s q 5 1 q 1 1
+quadratic	root-5-1--1-1	EQ	s + + q 1 1 * q 1 1 q 5 1 * q -2 1 s q 5 1	+ q -1 1 * q 1 1 s q 5 1
+quadratic	sign-5-1--1-1	GT	+ q -1 1 * q 1 1 s q 5 1	q 0 1
+quadratic	inverse-5-1--1-1	EQ	/ q 1 1 + q -1 1 * q 1 1 s q 5 1	/ + q -1 1 * q -1 1 s q 5 1 q -4 1
+quadratic	root-5-1--1-2	EQ	s + + q 1 1 * q 4 1 q 5 1 * q -4 1 s q 5 1	+ q -1 1 * q 2 1 s q 5 1
+quadratic	sign-5-1--1-2	GT	+ q -1 1 * q 2 1 s q 5 1	q 0 1
+quadratic	inverse-5-1--1-2	EQ	/ q 1 1 + q -1 1 * q 2 1 s q 5 1	/ + q -1 1 * q -2 1 s q 5 1 q -19 1
+quadratic	root-5-1--1-3	EQ	s + + q 1 1 * q 9 1 q 5 1 * q -6 1 s q 5 1	+ q -1 1 * q 3 1 s q 5 1
+quadratic	sign-5-1--1-3	GT	+ q -1 1 * q 3 1 s q 5 1	q 0 1
+quadratic	inverse-5-1--1-3	EQ	/ q 1 1 + q -1 1 * q 3 1 s q 5 1	/ + q -1 1 * q -3 1 s q 5 1 q -44 1
+quadratic	root-5-1-0--3	EQ	s + + q 0 1 * q 9 1 q 5 1 * q 0 1 s q 5 1	n + q 0 1 * q -3 1 s q 5 1
+quadratic	sign-5-1-0--3	LT	+ q 0 1 * q -3 1 s q 5 1	q 0 1
+quadratic	inverse-5-1-0--3	EQ	/ q 1 1 + q 0 1 * q -3 1 s q 5 1	/ + q 0 1 * q 3 1 s q 5 1 q -45 1
+quadratic	root-5-1-0--2	EQ	s + + q 0 1 * q 4 1 q 5 1 * q 0 1 s q 5 1	n + q 0 1 * q -2 1 s q 5 1
+quadratic	sign-5-1-0--2	LT	+ q 0 1 * q -2 1 s q 5 1	q 0 1
+quadratic	inverse-5-1-0--2	EQ	/ q 1 1 + q 0 1 * q -2 1 s q 5 1	/ + q 0 1 * q 2 1 s q 5 1 q -20 1
+quadratic	root-5-1-0--1	EQ	s + + q 0 1 * q 1 1 q 5 1 * q 0 1 s q 5 1	n + q 0 1 * q -1 1 s q 5 1
+quadratic	sign-5-1-0--1	LT	+ q 0 1 * q -1 1 s q 5 1	q 0 1
+quadratic	inverse-5-1-0--1	EQ	/ q 1 1 + q 0 1 * q -1 1 s q 5 1	/ + q 0 1 * q 1 1 s q 5 1 q -5 1
+quadratic	root-5-1-0-0	EQ	s + + q 0 1 * q 0 1 q 5 1 * q 0 1 s q 5 1	+ q 0 1 * q 0 1 s q 5 1
+quadratic	sign-5-1-0-0	EQ	+ q 0 1 * q 0 1 s q 5 1	q 0 1
+quadratic	root-5-1-0-1	EQ	s + + q 0 1 * q 1 1 q 5 1 * q 0 1 s q 5 1	+ q 0 1 * q 1 1 s q 5 1
+quadratic	sign-5-1-0-1	GT	+ q 0 1 * q 1 1 s q 5 1	q 0 1
+quadratic	inverse-5-1-0-1	EQ	/ q 1 1 + q 0 1 * q 1 1 s q 5 1	/ + q 0 1 * q -1 1 s q 5 1 q -5 1
+quadratic	root-5-1-0-2	EQ	s + + q 0 1 * q 4 1 q 5 1 * q 0 1 s q 5 1	+ q 0 1 * q 2 1 s q 5 1
+quadratic	sign-5-1-0-2	GT	+ q 0 1 * q 2 1 s q 5 1	q 0 1
+quadratic	inverse-5-1-0-2	EQ	/ q 1 1 + q 0 1 * q 2 1 s q 5 1	/ + q 0 1 * q -2 1 s q 5 1 q -20 1
+quadratic	root-5-1-0-3	EQ	s + + q 0 1 * q 9 1 q 5 1 * q 0 1 s q 5 1	+ q 0 1 * q 3 1 s q 5 1
+quadratic	sign-5-1-0-3	GT	+ q 0 1 * q 3 1 s q 5 1	q 0 1
+quadratic	inverse-5-1-0-3	EQ	/ q 1 1 + q 0 1 * q 3 1 s q 5 1	/ + q 0 1 * q -3 1 s q 5 1 q -45 1
+quadratic	root-5-1-1--3	EQ	s + + q 1 1 * q 9 1 q 5 1 * q -6 1 s q 5 1	n + q 1 1 * q -3 1 s q 5 1
+quadratic	sign-5-1-1--3	LT	+ q 1 1 * q -3 1 s q 5 1	q 0 1
+quadratic	inverse-5-1-1--3	EQ	/ q 1 1 + q 1 1 * q -3 1 s q 5 1	/ + q 1 1 * q 3 1 s q 5 1 q -44 1
+quadratic	root-5-1-1--2	EQ	s + + q 1 1 * q 4 1 q 5 1 * q -4 1 s q 5 1	n + q 1 1 * q -2 1 s q 5 1
+quadratic	sign-5-1-1--2	LT	+ q 1 1 * q -2 1 s q 5 1	q 0 1
+quadratic	inverse-5-1-1--2	EQ	/ q 1 1 + q 1 1 * q -2 1 s q 5 1	/ + q 1 1 * q 2 1 s q 5 1 q -19 1
+quadratic	root-5-1-1--1	EQ	s + + q 1 1 * q 1 1 q 5 1 * q -2 1 s q 5 1	n + q 1 1 * q -1 1 s q 5 1
+quadratic	sign-5-1-1--1	LT	+ q 1 1 * q -1 1 s q 5 1	q 0 1
+quadratic	inverse-5-1-1--1	EQ	/ q 1 1 + q 1 1 * q -1 1 s q 5 1	/ + q 1 1 * q 1 1 s q 5 1 q -4 1
+quadratic	root-5-1-1-0	EQ	s + + q 1 1 * q 0 1 q 5 1 * q 0 1 s q 5 1	+ q 1 1 * q 0 1 s q 5 1
+quadratic	sign-5-1-1-0	GT	+ q 1 1 * q 0 1 s q 5 1	q 0 1
+quadratic	inverse-5-1-1-0	EQ	/ q 1 1 + q 1 1 * q 0 1 s q 5 1	/ + q 1 1 * q 0 1 s q 5 1 q 1 1
+quadratic	root-5-1-1-1	EQ	s + + q 1 1 * q 1 1 q 5 1 * q 2 1 s q 5 1	+ q 1 1 * q 1 1 s q 5 1
+quadratic	sign-5-1-1-1	GT	+ q 1 1 * q 1 1 s q 5 1	q 0 1
+quadratic	inverse-5-1-1-1	EQ	/ q 1 1 + q 1 1 * q 1 1 s q 5 1	/ + q 1 1 * q -1 1 s q 5 1 q -4 1
+quadratic	root-5-1-1-2	EQ	s + + q 1 1 * q 4 1 q 5 1 * q 4 1 s q 5 1	+ q 1 1 * q 2 1 s q 5 1
+quadratic	sign-5-1-1-2	GT	+ q 1 1 * q 2 1 s q 5 1	q 0 1
+quadratic	inverse-5-1-1-2	EQ	/ q 1 1 + q 1 1 * q 2 1 s q 5 1	/ + q 1 1 * q -2 1 s q 5 1 q -19 1
+quadratic	root-5-1-1-3	EQ	s + + q 1 1 * q 9 1 q 5 1 * q 6 1 s q 5 1	+ q 1 1 * q 3 1 s q 5 1
+quadratic	sign-5-1-1-3	GT	+ q 1 1 * q 3 1 s q 5 1	q 0 1
+quadratic	inverse-5-1-1-3	EQ	/ q 1 1 + q 1 1 * q 3 1 s q 5 1	/ + q 1 1 * q -3 1 s q 5 1 q -44 1
+quadratic	root-5-1-2--3	EQ	s + + q 4 1 * q 9 1 q 5 1 * q -12 1 s q 5 1	n + q 2 1 * q -3 1 s q 5 1
+quadratic	sign-5-1-2--3	LT	+ q 2 1 * q -3 1 s q 5 1	q 0 1
+quadratic	inverse-5-1-2--3	EQ	/ q 1 1 + q 2 1 * q -3 1 s q 5 1	/ + q 2 1 * q 3 1 s q 5 1 q -41 1
+quadratic	root-5-1-2--2	EQ	s + + q 4 1 * q 4 1 q 5 1 * q -8 1 s q 5 1	n + q 2 1 * q -2 1 s q 5 1
+quadratic	sign-5-1-2--2	LT	+ q 2 1 * q -2 1 s q 5 1	q 0 1
+quadratic	inverse-5-1-2--2	EQ	/ q 1 1 + q 2 1 * q -2 1 s q 5 1	/ + q 2 1 * q 2 1 s q 5 1 q -16 1
+quadratic	root-5-1-2--1	EQ	s + + q 4 1 * q 1 1 q 5 1 * q -4 1 s q 5 1	n + q 2 1 * q -1 1 s q 5 1
+quadratic	sign-5-1-2--1	LT	+ q 2 1 * q -1 1 s q 5 1	q 0 1
+quadratic	inverse-5-1-2--1	EQ	/ q 1 1 + q 2 1 * q -1 1 s q 5 1	/ + q 2 1 * q 1 1 s q 5 1 q -1 1
+quadratic	root-5-1-2-0	EQ	s + + q 4 1 * q 0 1 q 5 1 * q 0 1 s q 5 1	+ q 2 1 * q 0 1 s q 5 1
+quadratic	sign-5-1-2-0	GT	+ q 2 1 * q 0 1 s q 5 1	q 0 1
+quadratic	inverse-5-1-2-0	EQ	/ q 1 1 + q 2 1 * q 0 1 s q 5 1	/ + q 2 1 * q 0 1 s q 5 1 q 4 1
+quadratic	root-5-1-2-1	EQ	s + + q 4 1 * q 1 1 q 5 1 * q 4 1 s q 5 1	+ q 2 1 * q 1 1 s q 5 1
+quadratic	sign-5-1-2-1	GT	+ q 2 1 * q 1 1 s q 5 1	q 0 1
+quadratic	inverse-5-1-2-1	EQ	/ q 1 1 + q 2 1 * q 1 1 s q 5 1	/ + q 2 1 * q -1 1 s q 5 1 q -1 1
+quadratic	root-5-1-2-2	EQ	s + + q 4 1 * q 4 1 q 5 1 * q 8 1 s q 5 1	+ q 2 1 * q 2 1 s q 5 1
+quadratic	sign-5-1-2-2	GT	+ q 2 1 * q 2 1 s q 5 1	q 0 1
+quadratic	inverse-5-1-2-2	EQ	/ q 1 1 + q 2 1 * q 2 1 s q 5 1	/ + q 2 1 * q -2 1 s q 5 1 q -16 1
+quadratic	root-5-1-2-3	EQ	s + + q 4 1 * q 9 1 q 5 1 * q 12 1 s q 5 1	+ q 2 1 * q 3 1 s q 5 1
+quadratic	sign-5-1-2-3	GT	+ q 2 1 * q 3 1 s q 5 1	q 0 1
+quadratic	inverse-5-1-2-3	EQ	/ q 1 1 + q 2 1 * q 3 1 s q 5 1	/ + q 2 1 * q -3 1 s q 5 1 q -41 1
+quadratic	root-5-1-3--3	EQ	s + + q 9 1 * q 9 1 q 5 1 * q -18 1 s q 5 1	n + q 3 1 * q -3 1 s q 5 1
+quadratic	sign-5-1-3--3	LT	+ q 3 1 * q -3 1 s q 5 1	q 0 1
+quadratic	inverse-5-1-3--3	EQ	/ q 1 1 + q 3 1 * q -3 1 s q 5 1	/ + q 3 1 * q 3 1 s q 5 1 q -36 1
+quadratic	root-5-1-3--2	EQ	s + + q 9 1 * q 4 1 q 5 1 * q -12 1 s q 5 1	n + q 3 1 * q -2 1 s q 5 1
+quadratic	sign-5-1-3--2	LT	+ q 3 1 * q -2 1 s q 5 1	q 0 1
+quadratic	inverse-5-1-3--2	EQ	/ q 1 1 + q 3 1 * q -2 1 s q 5 1	/ + q 3 1 * q 2 1 s q 5 1 q -11 1
+quadratic	root-5-1-3--1	EQ	s + + q 9 1 * q 1 1 q 5 1 * q -6 1 s q 5 1	+ q 3 1 * q -1 1 s q 5 1
+quadratic	sign-5-1-3--1	GT	+ q 3 1 * q -1 1 s q 5 1	q 0 1
+quadratic	inverse-5-1-3--1	EQ	/ q 1 1 + q 3 1 * q -1 1 s q 5 1	/ + q 3 1 * q 1 1 s q 5 1 q 4 1
+quadratic	root-5-1-3-0	EQ	s + + q 9 1 * q 0 1 q 5 1 * q 0 1 s q 5 1	+ q 3 1 * q 0 1 s q 5 1
+quadratic	sign-5-1-3-0	GT	+ q 3 1 * q 0 1 s q 5 1	q 0 1
+quadratic	inverse-5-1-3-0	EQ	/ q 1 1 + q 3 1 * q 0 1 s q 5 1	/ + q 3 1 * q 0 1 s q 5 1 q 9 1
+quadratic	root-5-1-3-1	EQ	s + + q 9 1 * q 1 1 q 5 1 * q 6 1 s q 5 1	+ q 3 1 * q 1 1 s q 5 1
+quadratic	sign-5-1-3-1	GT	+ q 3 1 * q 1 1 s q 5 1	q 0 1
+quadratic	inverse-5-1-3-1	EQ	/ q 1 1 + q 3 1 * q 1 1 s q 5 1	/ + q 3 1 * q -1 1 s q 5 1 q 4 1
+quadratic	root-5-1-3-2	EQ	s + + q 9 1 * q 4 1 q 5 1 * q 12 1 s q 5 1	+ q 3 1 * q 2 1 s q 5 1
+quadratic	sign-5-1-3-2	GT	+ q 3 1 * q 2 1 s q 5 1	q 0 1
+quadratic	inverse-5-1-3-2	EQ	/ q 1 1 + q 3 1 * q 2 1 s q 5 1	/ + q 3 1 * q -2 1 s q 5 1 q -11 1
+quadratic	root-5-1-3-3	EQ	s + + q 9 1 * q 9 1 q 5 1 * q 18 1 s q 5 1	+ q 3 1 * q 3 1 s q 5 1
+quadratic	sign-5-1-3-3	GT	+ q 3 1 * q 3 1 s q 5 1	q 0 1
+quadratic	inverse-5-1-3-3	EQ	/ q 1 1 + q 3 1 * q 3 1 s q 5 1	/ + q 3 1 * q -3 1 s q 5 1 q -36 1
+quadratic	root-5-2--3--3	EQ	s + + q 9 4 * q 9 4 q 5 1 * q 18 4 s q 5 1	n + q -3 2 * q -3 2 s q 5 1
+quadratic	sign-5-2--3--3	LT	+ q -3 2 * q -3 2 s q 5 1	q 0 1
+quadratic	inverse-5-2--3--3	EQ	/ q 1 1 + q -3 2 * q -3 2 s q 5 1	/ + q -6 1 * q 6 1 s q 5 1 q -36 1
+quadratic	root-5-2--3--2	EQ	s + + q 9 4 * q 4 4 q 5 1 * q 12 4 s q 5 1	n + q -3 2 * q -2 2 s q 5 1
+quadratic	sign-5-2--3--2	LT	+ q -3 2 * q -2 2 s q 5 1	q 0 1
+quadratic	inverse-5-2--3--2	EQ	/ q 1 1 + q -3 2 * q -2 2 s q 5 1	/ + q -6 1 * q 4 1 s q 5 1 q -11 1
+quadratic	root-5-2--3--1	EQ	s + + q 9 4 * q 1 4 q 5 1 * q 6 4 s q 5 1	n + q -3 2 * q -1 2 s q 5 1
+quadratic	sign-5-2--3--1	LT	+ q -3 2 * q -1 2 s q 5 1	q 0 1
+quadratic	inverse-5-2--3--1	EQ	/ q 1 1 + q -3 2 * q -1 2 s q 5 1	/ + q -6 1 * q 2 1 s q 5 1 q 4 1
+quadratic	root-5-2--3-0	EQ	s + + q 9 4 * q 0 4 q 5 1 * q 0 4 s q 5 1	n + q -3 2 * q 0 2 s q 5 1
+quadratic	sign-5-2--3-0	LT	+ q -3 2 * q 0 2 s q 5 1	q 0 1
+quadratic	inverse-5-2--3-0	EQ	/ q 1 1 + q -3 2 * q 0 2 s q 5 1	/ + q -6 1 * q 0 1 s q 5 1 q 9 1
+quadratic	root-5-2--3-1	EQ	s + + q 9 4 * q 1 4 q 5 1 * q -6 4 s q 5 1	n + q -3 2 * q 1 2 s q 5 1
+quadratic	sign-5-2--3-1	LT	+ q -3 2 * q 1 2 s q 5 1	q 0 1
+quadratic	inverse-5-2--3-1	EQ	/ q 1 1 + q -3 2 * q 1 2 s q 5 1	/ + q -6 1 * q -2 1 s q 5 1 q 4 1
+quadratic	root-5-2--3-2	EQ	s + + q 9 4 * q 4 4 q 5 1 * q -12 4 s q 5 1	+ q -3 2 * q 2 2 s q 5 1
+quadratic	sign-5-2--3-2	GT	+ q -3 2 * q 2 2 s q 5 1	q 0 1
+quadratic	inverse-5-2--3-2	EQ	/ q 1 1 + q -3 2 * q 2 2 s q 5 1	/ + q -6 1 * q -4 1 s q 5 1 q -11 1
+quadratic	root-5-2--3-3	EQ	s + + q 9 4 * q 9 4 q 5 1 * q -18 4 s q 5 1	+ q -3 2 * q 3 2 s q 5 1
+quadratic	sign-5-2--3-3	GT	+ q -3 2 * q 3 2 s q 5 1	q 0 1
+quadratic	inverse-5-2--3-3	EQ	/ q 1 1 + q -3 2 * q 3 2 s q 5 1	/ + q -6 1 * q -6 1 s q 5 1 q -36 1
+quadratic	root-5-2--2--3	EQ	s + + q 4 4 * q 9 4 q 5 1 * q 12 4 s q 5 1	n + q -2 2 * q -3 2 s q 5 1
+quadratic	sign-5-2--2--3	LT	+ q -2 2 * q -3 2 s q 5 1	q 0 1
+quadratic	inverse-5-2--2--3	EQ	/ q 1 1 + q -2 2 * q -3 2 s q 5 1	/ + q -4 1 * q 6 1 s q 5 1 q -41 1
+quadratic	root-5-2--2--2	EQ	s + + q 4 4 * q 4 4 q 5 1 * q 8 4 s q 5 1	n + q -2 2 * q -2 2 s q 5 1
+quadratic	sign-5-2--2--2	LT	+ q -2 2 * q -2 2 s q 5 1	q 0 1
+quadratic	inverse-5-2--2--2	EQ	/ q 1 1 + q -2 2 * q -2 2 s q 5 1	/ + q -4 1 * q 4 1 s q 5 1 q -16 1
+quadratic	root-5-2--2--1	EQ	s + + q 4 4 * q 1 4 q 5 1 * q 4 4 s q 5 1	n + q -2 2 * q -1 2 s q 5 1
+quadratic	sign-5-2--2--1	LT	+ q -2 2 * q -1 2 s q 5 1	q 0 1
+quadratic	inverse-5-2--2--1	EQ	/ q 1 1 + q -2 2 * q -1 2 s q 5 1	/ + q -4 1 * q 2 1 s q 5 1 q -1 1
+quadratic	root-5-2--2-0	EQ	s + + q 4 4 * q 0 4 q 5 1 * q 0 4 s q 5 1	n + q -2 2 * q 0 2 s q 5 1
+quadratic	sign-5-2--2-0	LT	+ q -2 2 * q 0 2 s q 5 1	q 0 1
+quadratic	inverse-5-2--2-0	EQ	/ q 1 1 + q -2 2 * q 0 2 s q 5 1	/ + q -4 1 * q 0 1 s q 5 1 q 4 1
+quadratic	root-5-2--2-1	EQ	s + + q 4 4 * q 1 4 q 5 1 * q -4 4 s q 5 1	+ q -2 2 * q 1 2 s q 5 1
+quadratic	sign-5-2--2-1	GT	+ q -2 2 * q 1 2 s q 5 1	q 0 1
+quadratic	inverse-5-2--2-1	EQ	/ q 1 1 + q -2 2 * q 1 2 s q 5 1	/ + q -4 1 * q -2 1 s q 5 1 q -1 1
+quadratic	root-5-2--2-2	EQ	s + + q 4 4 * q 4 4 q 5 1 * q -8 4 s q 5 1	+ q -2 2 * q 2 2 s q 5 1
+quadratic	sign-5-2--2-2	GT	+ q -2 2 * q 2 2 s q 5 1	q 0 1
+quadratic	inverse-5-2--2-2	EQ	/ q 1 1 + q -2 2 * q 2 2 s q 5 1	/ + q -4 1 * q -4 1 s q 5 1 q -16 1
+quadratic	root-5-2--2-3	EQ	s + + q 4 4 * q 9 4 q 5 1 * q -12 4 s q 5 1	+ q -2 2 * q 3 2 s q 5 1
+quadratic	sign-5-2--2-3	GT	+ q -2 2 * q 3 2 s q 5 1	q 0 1
+quadratic	inverse-5-2--2-3	EQ	/ q 1 1 + q -2 2 * q 3 2 s q 5 1	/ + q -4 1 * q -6 1 s q 5 1 q -41 1
+quadratic	root-5-2--1--3	EQ	s + + q 1 4 * q 9 4 q 5 1 * q 6 4 s q 5 1	n + q -1 2 * q -3 2 s q 5 1
+quadratic	sign-5-2--1--3	LT	+ q -1 2 * q -3 2 s q 5 1	q 0 1
+quadratic	inverse-5-2--1--3	EQ	/ q 1 1 + q -1 2 * q -3 2 s q 5 1	/ + q -2 1 * q 6 1 s q 5 1 q -44 1
+quadratic	root-5-2--1--2	EQ	s + + q 1 4 * q 4 4 q 5 1 * q 4 4 s q 5 1	n + q -1 2 * q -2 2 s q 5 1
+quadratic	sign-5-2--1--2	LT	+ q -1 2 * q -2 2 s q 5 1	q 0 1
+quadratic	inverse-5-2--1--2	EQ	/ q 1 1 + q -1 2 * q -2 2 s q 5 1	/ + q -2 1 * q 4 1 s q 5 1 q -19 1
+quadratic	root-5-2--1--1	EQ	s + + q 1 4 * q 1 4 q 5 1 * q 2 4 s q 5 1	n + q -1 2 * q -1 2 s q 5 1
+quadratic	sign-5-2--1--1	LT	+ q -1 2 * q -1 2 s q 5 1	q 0 1
+quadratic	inverse-5-2--1--1	EQ	/ q 1 1 + q -1 2 * q -1 2 s q 5 1	/ + q -2 1 * q 2 1 s q 5 1 q -4 1
+quadratic	root-5-2--1-0	EQ	s + + q 1 4 * q 0 4 q 5 1 * q 0 4 s q 5 1	n + q -1 2 * q 0 2 s q 5 1
+quadratic	sign-5-2--1-0	LT	+ q -1 2 * q 0 2 s q 5 1	q 0 1
+quadratic	inverse-5-2--1-0	EQ	/ q 1 1 + q -1 2 * q 0 2 s q 5 1	/ + q -2 1 * q 0 1 s q 5 1 q 1 1
+quadratic	root-5-2--1-1	EQ	s + + q 1 4 * q 1 4 q 5 1 * q -2 4 s q 5 1	+ q -1 2 * q 1 2 s q 5 1
+quadratic	sign-5-2--1-1	GT	+ q -1 2 * q 1 2 s q 5 1	q 0 1
+quadratic	inverse-5-2--1-1	EQ	/ q 1 1 + q -1 2 * q 1 2 s q 5 1	/ + q -2 1 * q -2 1 s q 5 1 q -4 1
+quadratic	root-5-2--1-2	EQ	s + + q 1 4 * q 4 4 q 5 1 * q -4 4 s q 5 1	+ q -1 2 * q 2 2 s q 5 1
+quadratic	sign-5-2--1-2	GT	+ q -1 2 * q 2 2 s q 5 1	q 0 1
+quadratic	inverse-5-2--1-2	EQ	/ q 1 1 + q -1 2 * q 2 2 s q 5 1	/ + q -2 1 * q -4 1 s q 5 1 q -19 1
+quadratic	root-5-2--1-3	EQ	s + + q 1 4 * q 9 4 q 5 1 * q -6 4 s q 5 1	+ q -1 2 * q 3 2 s q 5 1
+quadratic	sign-5-2--1-3	GT	+ q -1 2 * q 3 2 s q 5 1	q 0 1
+quadratic	inverse-5-2--1-3	EQ	/ q 1 1 + q -1 2 * q 3 2 s q 5 1	/ + q -2 1 * q -6 1 s q 5 1 q -44 1
+quadratic	root-5-2-0--3	EQ	s + + q 0 4 * q 9 4 q 5 1 * q 0 4 s q 5 1	n + q 0 2 * q -3 2 s q 5 1
+quadratic	sign-5-2-0--3	LT	+ q 0 2 * q -3 2 s q 5 1	q 0 1
+quadratic	inverse-5-2-0--3	EQ	/ q 1 1 + q 0 2 * q -3 2 s q 5 1	/ + q 0 1 * q 6 1 s q 5 1 q -45 1
+quadratic	root-5-2-0--2	EQ	s + + q 0 4 * q 4 4 q 5 1 * q 0 4 s q 5 1	n + q 0 2 * q -2 2 s q 5 1
+quadratic	sign-5-2-0--2	LT	+ q 0 2 * q -2 2 s q 5 1	q 0 1
+quadratic	inverse-5-2-0--2	EQ	/ q 1 1 + q 0 2 * q -2 2 s q 5 1	/ + q 0 1 * q 4 1 s q 5 1 q -20 1
+quadratic	root-5-2-0--1	EQ	s + + q 0 4 * q 1 4 q 5 1 * q 0 4 s q 5 1	n + q 0 2 * q -1 2 s q 5 1
+quadratic	sign-5-2-0--1	LT	+ q 0 2 * q -1 2 s q 5 1	q 0 1
+quadratic	inverse-5-2-0--1	EQ	/ q 1 1 + q 0 2 * q -1 2 s q 5 1	/ + q 0 1 * q 2 1 s q 5 1 q -5 1
+quadratic	root-5-2-0-0	EQ	s + + q 0 4 * q 0 4 q 5 1 * q 0 4 s q 5 1	+ q 0 2 * q 0 2 s q 5 1
+quadratic	sign-5-2-0-0	EQ	+ q 0 2 * q 0 2 s q 5 1	q 0 1
+quadratic	root-5-2-0-1	EQ	s + + q 0 4 * q 1 4 q 5 1 * q 0 4 s q 5 1	+ q 0 2 * q 1 2 s q 5 1
+quadratic	sign-5-2-0-1	GT	+ q 0 2 * q 1 2 s q 5 1	q 0 1
+quadratic	inverse-5-2-0-1	EQ	/ q 1 1 + q 0 2 * q 1 2 s q 5 1	/ + q 0 1 * q -2 1 s q 5 1 q -5 1
+quadratic	root-5-2-0-2	EQ	s + + q 0 4 * q 4 4 q 5 1 * q 0 4 s q 5 1	+ q 0 2 * q 2 2 s q 5 1
+quadratic	sign-5-2-0-2	GT	+ q 0 2 * q 2 2 s q 5 1	q 0 1
+quadratic	inverse-5-2-0-2	EQ	/ q 1 1 + q 0 2 * q 2 2 s q 5 1	/ + q 0 1 * q -4 1 s q 5 1 q -20 1
+quadratic	root-5-2-0-3	EQ	s + + q 0 4 * q 9 4 q 5 1 * q 0 4 s q 5 1	+ q 0 2 * q 3 2 s q 5 1
+quadratic	sign-5-2-0-3	GT	+ q 0 2 * q 3 2 s q 5 1	q 0 1
+quadratic	inverse-5-2-0-3	EQ	/ q 1 1 + q 0 2 * q 3 2 s q 5 1	/ + q 0 1 * q -6 1 s q 5 1 q -45 1
+quadratic	root-5-2-1--3	EQ	s + + q 1 4 * q 9 4 q 5 1 * q -6 4 s q 5 1	n + q 1 2 * q -3 2 s q 5 1
+quadratic	sign-5-2-1--3	LT	+ q 1 2 * q -3 2 s q 5 1	q 0 1
+quadratic	inverse-5-2-1--3	EQ	/ q 1 1 + q 1 2 * q -3 2 s q 5 1	/ + q 2 1 * q 6 1 s q 5 1 q -44 1
+quadratic	root-5-2-1--2	EQ	s + + q 1 4 * q 4 4 q 5 1 * q -4 4 s q 5 1	n + q 1 2 * q -2 2 s q 5 1
+quadratic	sign-5-2-1--2	LT	+ q 1 2 * q -2 2 s q 5 1	q 0 1
+quadratic	inverse-5-2-1--2	EQ	/ q 1 1 + q 1 2 * q -2 2 s q 5 1	/ + q 2 1 * q 4 1 s q 5 1 q -19 1
+quadratic	root-5-2-1--1	EQ	s + + q 1 4 * q 1 4 q 5 1 * q -2 4 s q 5 1	n + q 1 2 * q -1 2 s q 5 1
+quadratic	sign-5-2-1--1	LT	+ q 1 2 * q -1 2 s q 5 1	q 0 1
+quadratic	inverse-5-2-1--1	EQ	/ q 1 1 + q 1 2 * q -1 2 s q 5 1	/ + q 2 1 * q 2 1 s q 5 1 q -4 1
+quadratic	root-5-2-1-0	EQ	s + + q 1 4 * q 0 4 q 5 1 * q 0 4 s q 5 1	+ q 1 2 * q 0 2 s q 5 1
+quadratic	sign-5-2-1-0	GT	+ q 1 2 * q 0 2 s q 5 1	q 0 1
+quadratic	inverse-5-2-1-0	EQ	/ q 1 1 + q 1 2 * q 0 2 s q 5 1	/ + q 2 1 * q 0 1 s q 5 1 q 1 1
+quadratic	root-5-2-1-1	EQ	s + + q 1 4 * q 1 4 q 5 1 * q 2 4 s q 5 1	+ q 1 2 * q 1 2 s q 5 1
+quadratic	sign-5-2-1-1	GT	+ q 1 2 * q 1 2 s q 5 1	q 0 1
+quadratic	inverse-5-2-1-1	EQ	/ q 1 1 + q 1 2 * q 1 2 s q 5 1	/ + q 2 1 * q -2 1 s q 5 1 q -4 1
+quadratic	root-5-2-1-2	EQ	s + + q 1 4 * q 4 4 q 5 1 * q 4 4 s q 5 1	+ q 1 2 * q 2 2 s q 5 1
+quadratic	sign-5-2-1-2	GT	+ q 1 2 * q 2 2 s q 5 1	q 0 1
+quadratic	inverse-5-2-1-2	EQ	/ q 1 1 + q 1 2 * q 2 2 s q 5 1	/ + q 2 1 * q -4 1 s q 5 1 q -19 1
+quadratic	root-5-2-1-3	EQ	s + + q 1 4 * q 9 4 q 5 1 * q 6 4 s q 5 1	+ q 1 2 * q 3 2 s q 5 1
+quadratic	sign-5-2-1-3	GT	+ q 1 2 * q 3 2 s q 5 1	q 0 1
+quadratic	inverse-5-2-1-3	EQ	/ q 1 1 + q 1 2 * q 3 2 s q 5 1	/ + q 2 1 * q -6 1 s q 5 1 q -44 1
+quadratic	root-5-2-2--3	EQ	s + + q 4 4 * q 9 4 q 5 1 * q -12 4 s q 5 1	n + q 2 2 * q -3 2 s q 5 1
+quadratic	sign-5-2-2--3	LT	+ q 2 2 * q -3 2 s q 5 1	q 0 1
+quadratic	inverse-5-2-2--3	EQ	/ q 1 1 + q 2 2 * q -3 2 s q 5 1	/ + q 4 1 * q 6 1 s q 5 1 q -41 1
+quadratic	root-5-2-2--2	EQ	s + + q 4 4 * q 4 4 q 5 1 * q -8 4 s q 5 1	n + q 2 2 * q -2 2 s q 5 1
+quadratic	sign-5-2-2--2	LT	+ q 2 2 * q -2 2 s q 5 1	q 0 1
+quadratic	inverse-5-2-2--2	EQ	/ q 1 1 + q 2 2 * q -2 2 s q 5 1	/ + q 4 1 * q 4 1 s q 5 1 q -16 1
+quadratic	root-5-2-2--1	EQ	s + + q 4 4 * q 1 4 q 5 1 * q -4 4 s q 5 1	n + q 2 2 * q -1 2 s q 5 1
+quadratic	sign-5-2-2--1	LT	+ q 2 2 * q -1 2 s q 5 1	q 0 1
+quadratic	inverse-5-2-2--1	EQ	/ q 1 1 + q 2 2 * q -1 2 s q 5 1	/ + q 4 1 * q 2 1 s q 5 1 q -1 1
+quadratic	root-5-2-2-0	EQ	s + + q 4 4 * q 0 4 q 5 1 * q 0 4 s q 5 1	+ q 2 2 * q 0 2 s q 5 1
+quadratic	sign-5-2-2-0	GT	+ q 2 2 * q 0 2 s q 5 1	q 0 1
+quadratic	inverse-5-2-2-0	EQ	/ q 1 1 + q 2 2 * q 0 2 s q 5 1	/ + q 4 1 * q 0 1 s q 5 1 q 4 1
+quadratic	root-5-2-2-1	EQ	s + + q 4 4 * q 1 4 q 5 1 * q 4 4 s q 5 1	+ q 2 2 * q 1 2 s q 5 1
+quadratic	sign-5-2-2-1	GT	+ q 2 2 * q 1 2 s q 5 1	q 0 1
+quadratic	inverse-5-2-2-1	EQ	/ q 1 1 + q 2 2 * q 1 2 s q 5 1	/ + q 4 1 * q -2 1 s q 5 1 q -1 1
+quadratic	root-5-2-2-2	EQ	s + + q 4 4 * q 4 4 q 5 1 * q 8 4 s q 5 1	+ q 2 2 * q 2 2 s q 5 1
+quadratic	sign-5-2-2-2	GT	+ q 2 2 * q 2 2 s q 5 1	q 0 1
+quadratic	inverse-5-2-2-2	EQ	/ q 1 1 + q 2 2 * q 2 2 s q 5 1	/ + q 4 1 * q -4 1 s q 5 1 q -16 1
+quadratic	root-5-2-2-3	EQ	s + + q 4 4 * q 9 4 q 5 1 * q 12 4 s q 5 1	+ q 2 2 * q 3 2 s q 5 1
+quadratic	sign-5-2-2-3	GT	+ q 2 2 * q 3 2 s q 5 1	q 0 1
+quadratic	inverse-5-2-2-3	EQ	/ q 1 1 + q 2 2 * q 3 2 s q 5 1	/ + q 4 1 * q -6 1 s q 5 1 q -41 1
+quadratic	root-5-2-3--3	EQ	s + + q 9 4 * q 9 4 q 5 1 * q -18 4 s q 5 1	n + q 3 2 * q -3 2 s q 5 1
+quadratic	sign-5-2-3--3	LT	+ q 3 2 * q -3 2 s q 5 1	q 0 1
+quadratic	inverse-5-2-3--3	EQ	/ q 1 1 + q 3 2 * q -3 2 s q 5 1	/ + q 6 1 * q 6 1 s q 5 1 q -36 1
+quadratic	root-5-2-3--2	EQ	s + + q 9 4 * q 4 4 q 5 1 * q -12 4 s q 5 1	n + q 3 2 * q -2 2 s q 5 1
+quadratic	sign-5-2-3--2	LT	+ q 3 2 * q -2 2 s q 5 1	q 0 1
+quadratic	inverse-5-2-3--2	EQ	/ q 1 1 + q 3 2 * q -2 2 s q 5 1	/ + q 6 1 * q 4 1 s q 5 1 q -11 1
+quadratic	root-5-2-3--1	EQ	s + + q 9 4 * q 1 4 q 5 1 * q -6 4 s q 5 1	+ q 3 2 * q -1 2 s q 5 1
+quadratic	sign-5-2-3--1	GT	+ q 3 2 * q -1 2 s q 5 1	q 0 1
+quadratic	inverse-5-2-3--1	EQ	/ q 1 1 + q 3 2 * q -1 2 s q 5 1	/ + q 6 1 * q 2 1 s q 5 1 q 4 1
+quadratic	root-5-2-3-0	EQ	s + + q 9 4 * q 0 4 q 5 1 * q 0 4 s q 5 1	+ q 3 2 * q 0 2 s q 5 1
+quadratic	sign-5-2-3-0	GT	+ q 3 2 * q 0 2 s q 5 1	q 0 1
+quadratic	inverse-5-2-3-0	EQ	/ q 1 1 + q 3 2 * q 0 2 s q 5 1	/ + q 6 1 * q 0 1 s q 5 1 q 9 1
+quadratic	root-5-2-3-1	EQ	s + + q 9 4 * q 1 4 q 5 1 * q 6 4 s q 5 1	+ q 3 2 * q 1 2 s q 5 1
+quadratic	sign-5-2-3-1	GT	+ q 3 2 * q 1 2 s q 5 1	q 0 1
+quadratic	inverse-5-2-3-1	EQ	/ q 1 1 + q 3 2 * q 1 2 s q 5 1	/ + q 6 1 * q -2 1 s q 5 1 q 4 1
+quadratic	root-5-2-3-2	EQ	s + + q 9 4 * q 4 4 q 5 1 * q 12 4 s q 5 1	+ q 3 2 * q 2 2 s q 5 1
+quadratic	sign-5-2-3-2	GT	+ q 3 2 * q 2 2 s q 5 1	q 0 1
+quadratic	inverse-5-2-3-2	EQ	/ q 1 1 + q 3 2 * q 2 2 s q 5 1	/ + q 6 1 * q -4 1 s q 5 1 q -11 1
+quadratic	root-5-2-3-3	EQ	s + + q 9 4 * q 9 4 q 5 1 * q 18 4 s q 5 1	+ q 3 2 * q 3 2 s q 5 1
+quadratic	sign-5-2-3-3	GT	+ q 3 2 * q 3 2 s q 5 1	q 0 1
+quadratic	inverse-5-2-3-3	EQ	/ q 1 1 + q 3 2 * q 3 2 s q 5 1	/ + q 6 1 * q -6 1 s q 5 1 q -36 1
+quadratic	root-7-1--3--3	EQ	s + + q 9 1 * q 9 1 q 7 1 * q 18 1 s q 7 1	n + q -3 1 * q -3 1 s q 7 1
+quadratic	sign-7-1--3--3	LT	+ q -3 1 * q -3 1 s q 7 1	q 0 1
+quadratic	inverse-7-1--3--3	EQ	/ q 1 1 + q -3 1 * q -3 1 s q 7 1	/ + q -3 1 * q 3 1 s q 7 1 q -54 1
+quadratic	root-7-1--3--2	EQ	s + + q 9 1 * q 4 1 q 7 1 * q 12 1 s q 7 1	n + q -3 1 * q -2 1 s q 7 1
+quadratic	sign-7-1--3--2	LT	+ q -3 1 * q -2 1 s q 7 1	q 0 1
+quadratic	inverse-7-1--3--2	EQ	/ q 1 1 + q -3 1 * q -2 1 s q 7 1	/ + q -3 1 * q 2 1 s q 7 1 q -19 1
+quadratic	root-7-1--3--1	EQ	s + + q 9 1 * q 1 1 q 7 1 * q 6 1 s q 7 1	n + q -3 1 * q -1 1 s q 7 1
+quadratic	sign-7-1--3--1	LT	+ q -3 1 * q -1 1 s q 7 1	q 0 1
+quadratic	inverse-7-1--3--1	EQ	/ q 1 1 + q -3 1 * q -1 1 s q 7 1	/ + q -3 1 * q 1 1 s q 7 1 q 2 1
+quadratic	root-7-1--3-0	EQ	s + + q 9 1 * q 0 1 q 7 1 * q 0 1 s q 7 1	n + q -3 1 * q 0 1 s q 7 1
+quadratic	sign-7-1--3-0	LT	+ q -3 1 * q 0 1 s q 7 1	q 0 1
+quadratic	inverse-7-1--3-0	EQ	/ q 1 1 + q -3 1 * q 0 1 s q 7 1	/ + q -3 1 * q 0 1 s q 7 1 q 9 1
+quadratic	root-7-1--3-1	EQ	s + + q 9 1 * q 1 1 q 7 1 * q -6 1 s q 7 1	n + q -3 1 * q 1 1 s q 7 1
+quadratic	sign-7-1--3-1	LT	+ q -3 1 * q 1 1 s q 7 1	q 0 1
+quadratic	inverse-7-1--3-1	EQ	/ q 1 1 + q -3 1 * q 1 1 s q 7 1	/ + q -3 1 * q -1 1 s q 7 1 q 2 1
+quadratic	root-7-1--3-2	EQ	s + + q 9 1 * q 4 1 q 7 1 * q -12 1 s q 7 1	+ q -3 1 * q 2 1 s q 7 1
+quadratic	sign-7-1--3-2	GT	+ q -3 1 * q 2 1 s q 7 1	q 0 1
+quadratic	inverse-7-1--3-2	EQ	/ q 1 1 + q -3 1 * q 2 1 s q 7 1	/ + q -3 1 * q -2 1 s q 7 1 q -19 1
+quadratic	root-7-1--3-3	EQ	s + + q 9 1 * q 9 1 q 7 1 * q -18 1 s q 7 1	+ q -3 1 * q 3 1 s q 7 1
+quadratic	sign-7-1--3-3	GT	+ q -3 1 * q 3 1 s q 7 1	q 0 1
+quadratic	inverse-7-1--3-3	EQ	/ q 1 1 + q -3 1 * q 3 1 s q 7 1	/ + q -3 1 * q -3 1 s q 7 1 q -54 1
+quadratic	root-7-1--2--3	EQ	s + + q 4 1 * q 9 1 q 7 1 * q 12 1 s q 7 1	n + q -2 1 * q -3 1 s q 7 1
+quadratic	sign-7-1--2--3	LT	+ q -2 1 * q -3 1 s q 7 1	q 0 1
+quadratic	inverse-7-1--2--3	EQ	/ q 1 1 + q -2 1 * q -3 1 s q 7 1	/ + q -2 1 * q 3 1 s q 7 1 q -59 1
+quadratic	root-7-1--2--2	EQ	s + + q 4 1 * q 4 1 q 7 1 * q 8 1 s q 7 1	n + q -2 1 * q -2 1 s q 7 1
+quadratic	sign-7-1--2--2	LT	+ q -2 1 * q -2 1 s q 7 1	q 0 1
+quadratic	inverse-7-1--2--2	EQ	/ q 1 1 + q -2 1 * q -2 1 s q 7 1	/ + q -2 1 * q 2 1 s q 7 1 q -24 1
+quadratic	root-7-1--2--1	EQ	s + + q 4 1 * q 1 1 q 7 1 * q 4 1 s q 7 1	n + q -2 1 * q -1 1 s q 7 1
+quadratic	sign-7-1--2--1	LT	+ q -2 1 * q -1 1 s q 7 1	q 0 1
+quadratic	inverse-7-1--2--1	EQ	/ q 1 1 + q -2 1 * q -1 1 s q 7 1	/ + q -2 1 * q 1 1 s q 7 1 q -3 1
+quadratic	root-7-1--2-0	EQ	s + + q 4 1 * q 0 1 q 7 1 * q 0 1 s q 7 1	n + q -2 1 * q 0 1 s q 7 1
+quadratic	sign-7-1--2-0	LT	+ q -2 1 * q 0 1 s q 7 1	q 0 1
+quadratic	inverse-7-1--2-0	EQ	/ q 1 1 + q -2 1 * q 0 1 s q 7 1	/ + q -2 1 * q 0 1 s q 7 1 q 4 1
+quadratic	root-7-1--2-1	EQ	s + + q 4 1 * q 1 1 q 7 1 * q -4 1 s q 7 1	+ q -2 1 * q 1 1 s q 7 1
+quadratic	sign-7-1--2-1	GT	+ q -2 1 * q 1 1 s q 7 1	q 0 1
+quadratic	inverse-7-1--2-1	EQ	/ q 1 1 + q -2 1 * q 1 1 s q 7 1	/ + q -2 1 * q -1 1 s q 7 1 q -3 1
+quadratic	root-7-1--2-2	EQ	s + + q 4 1 * q 4 1 q 7 1 * q -8 1 s q 7 1	+ q -2 1 * q 2 1 s q 7 1
+quadratic	sign-7-1--2-2	GT	+ q -2 1 * q 2 1 s q 7 1	q 0 1
+quadratic	inverse-7-1--2-2	EQ	/ q 1 1 + q -2 1 * q 2 1 s q 7 1	/ + q -2 1 * q -2 1 s q 7 1 q -24 1
+quadratic	root-7-1--2-3	EQ	s + + q 4 1 * q 9 1 q 7 1 * q -12 1 s q 7 1	+ q -2 1 * q 3 1 s q 7 1
+quadratic	sign-7-1--2-3	GT	+ q -2 1 * q 3 1 s q 7 1	q 0 1
+quadratic	inverse-7-1--2-3	EQ	/ q 1 1 + q -2 1 * q 3 1 s q 7 1	/ + q -2 1 * q -3 1 s q 7 1 q -59 1
+quadratic	root-7-1--1--3	EQ	s + + q 1 1 * q 9 1 q 7 1 * q 6 1 s q 7 1	n + q -1 1 * q -3 1 s q 7 1
+quadratic	sign-7-1--1--3	LT	+ q -1 1 * q -3 1 s q 7 1	q 0 1
+quadratic	inverse-7-1--1--3	EQ	/ q 1 1 + q -1 1 * q -3 1 s q 7 1	/ + q -1 1 * q 3 1 s q 7 1 q -62 1
+quadratic	root-7-1--1--2	EQ	s + + q 1 1 * q 4 1 q 7 1 * q 4 1 s q 7 1	n + q -1 1 * q -2 1 s q 7 1
+quadratic	sign-7-1--1--2	LT	+ q -1 1 * q -2 1 s q 7 1	q 0 1
+quadratic	inverse-7-1--1--2	EQ	/ q 1 1 + q -1 1 * q -2 1 s q 7 1	/ + q -1 1 * q 2 1 s q 7 1 q -27 1
+quadratic	root-7-1--1--1	EQ	s + + q 1 1 * q 1 1 q 7 1 * q 2 1 s q 7 1	n + q -1 1 * q -1 1 s q 7 1
+quadratic	sign-7-1--1--1	LT	+ q -1 1 * q -1 1 s q 7 1	q 0 1
+quadratic	inverse-7-1--1--1	EQ	/ q 1 1 + q -1 1 * q -1 1 s q 7 1	/ + q -1 1 * q 1 1 s q 7 1 q -6 1
+quadratic	root-7-1--1-0	EQ	s + + q 1 1 * q 0 1 q 7 1 * q 0 1 s q 7 1	n + q -1 1 * q 0 1 s q 7 1
+quadratic	sign-7-1--1-0	LT	+ q -1 1 * q 0 1 s q 7 1	q 0 1
+quadratic	inverse-7-1--1-0	EQ	/ q 1 1 + q -1 1 * q 0 1 s q 7 1	/ + q -1 1 * q 0 1 s q 7 1 q 1 1
+quadratic	root-7-1--1-1	EQ	s + + q 1 1 * q 1 1 q 7 1 * q -2 1 s q 7 1	+ q -1 1 * q 1 1 s q 7 1
+quadratic	sign-7-1--1-1	GT	+ q -1 1 * q 1 1 s q 7 1	q 0 1
+quadratic	inverse-7-1--1-1	EQ	/ q 1 1 + q -1 1 * q 1 1 s q 7 1	/ + q -1 1 * q -1 1 s q 7 1 q -6 1
+quadratic	root-7-1--1-2	EQ	s + + q 1 1 * q 4 1 q 7 1 * q -4 1 s q 7 1	+ q -1 1 * q 2 1 s q 7 1
+quadratic	sign-7-1--1-2	GT	+ q -1 1 * q 2 1 s q 7 1	q 0 1
+quadratic	inverse-7-1--1-2	EQ	/ q 1 1 + q -1 1 * q 2 1 s q 7 1	/ + q -1 1 * q -2 1 s q 7 1 q -27 1
+quadratic	root-7-1--1-3	EQ	s + + q 1 1 * q 9 1 q 7 1 * q -6 1 s q 7 1	+ q -1 1 * q 3 1 s q 7 1
+quadratic	sign-7-1--1-3	GT	+ q -1 1 * q 3 1 s q 7 1	q 0 1
+quadratic	inverse-7-1--1-3	EQ	/ q 1 1 + q -1 1 * q 3 1 s q 7 1	/ + q -1 1 * q -3 1 s q 7 1 q -62 1
+quadratic	root-7-1-0--3	EQ	s + + q 0 1 * q 9 1 q 7 1 * q 0 1 s q 7 1	n + q 0 1 * q -3 1 s q 7 1
+quadratic	sign-7-1-0--3	LT	+ q 0 1 * q -3 1 s q 7 1	q 0 1
+quadratic	inverse-7-1-0--3	EQ	/ q 1 1 + q 0 1 * q -3 1 s q 7 1	/ + q 0 1 * q 3 1 s q 7 1 q -63 1
+quadratic	root-7-1-0--2	EQ	s + + q 0 1 * q 4 1 q 7 1 * q 0 1 s q 7 1	n + q 0 1 * q -2 1 s q 7 1
+quadratic	sign-7-1-0--2	LT	+ q 0 1 * q -2 1 s q 7 1	q 0 1
+quadratic	inverse-7-1-0--2	EQ	/ q 1 1 + q 0 1 * q -2 1 s q 7 1	/ + q 0 1 * q 2 1 s q 7 1 q -28 1
+quadratic	root-7-1-0--1	EQ	s + + q 0 1 * q 1 1 q 7 1 * q 0 1 s q 7 1	n + q 0 1 * q -1 1 s q 7 1
+quadratic	sign-7-1-0--1	LT	+ q 0 1 * q -1 1 s q 7 1	q 0 1
+quadratic	inverse-7-1-0--1	EQ	/ q 1 1 + q 0 1 * q -1 1 s q 7 1	/ + q 0 1 * q 1 1 s q 7 1 q -7 1
+quadratic	root-7-1-0-0	EQ	s + + q 0 1 * q 0 1 q 7 1 * q 0 1 s q 7 1	+ q 0 1 * q 0 1 s q 7 1
+quadratic	sign-7-1-0-0	EQ	+ q 0 1 * q 0 1 s q 7 1	q 0 1
+quadratic	root-7-1-0-1	EQ	s + + q 0 1 * q 1 1 q 7 1 * q 0 1 s q 7 1	+ q 0 1 * q 1 1 s q 7 1
+quadratic	sign-7-1-0-1	GT	+ q 0 1 * q 1 1 s q 7 1	q 0 1
+quadratic	inverse-7-1-0-1	EQ	/ q 1 1 + q 0 1 * q 1 1 s q 7 1	/ + q 0 1 * q -1 1 s q 7 1 q -7 1
+quadratic	root-7-1-0-2	EQ	s + + q 0 1 * q 4 1 q 7 1 * q 0 1 s q 7 1	+ q 0 1 * q 2 1 s q 7 1
+quadratic	sign-7-1-0-2	GT	+ q 0 1 * q 2 1 s q 7 1	q 0 1
+quadratic	inverse-7-1-0-2	EQ	/ q 1 1 + q 0 1 * q 2 1 s q 7 1	/ + q 0 1 * q -2 1 s q 7 1 q -28 1
+quadratic	root-7-1-0-3	EQ	s + + q 0 1 * q 9 1 q 7 1 * q 0 1 s q 7 1	+ q 0 1 * q 3 1 s q 7 1
+quadratic	sign-7-1-0-3	GT	+ q 0 1 * q 3 1 s q 7 1	q 0 1
+quadratic	inverse-7-1-0-3	EQ	/ q 1 1 + q 0 1 * q 3 1 s q 7 1	/ + q 0 1 * q -3 1 s q 7 1 q -63 1
+quadratic	root-7-1-1--3	EQ	s + + q 1 1 * q 9 1 q 7 1 * q -6 1 s q 7 1	n + q 1 1 * q -3 1 s q 7 1
+quadratic	sign-7-1-1--3	LT	+ q 1 1 * q -3 1 s q 7 1	q 0 1
+quadratic	inverse-7-1-1--3	EQ	/ q 1 1 + q 1 1 * q -3 1 s q 7 1	/ + q 1 1 * q 3 1 s q 7 1 q -62 1
+quadratic	root-7-1-1--2	EQ	s + + q 1 1 * q 4 1 q 7 1 * q -4 1 s q 7 1	n + q 1 1 * q -2 1 s q 7 1
+quadratic	sign-7-1-1--2	LT	+ q 1 1 * q -2 1 s q 7 1	q 0 1
+quadratic	inverse-7-1-1--2	EQ	/ q 1 1 + q 1 1 * q -2 1 s q 7 1	/ + q 1 1 * q 2 1 s q 7 1 q -27 1
+quadratic	root-7-1-1--1	EQ	s + + q 1 1 * q 1 1 q 7 1 * q -2 1 s q 7 1	n + q 1 1 * q -1 1 s q 7 1
+quadratic	sign-7-1-1--1	LT	+ q 1 1 * q -1 1 s q 7 1	q 0 1
+quadratic	inverse-7-1-1--1	EQ	/ q 1 1 + q 1 1 * q -1 1 s q 7 1	/ + q 1 1 * q 1 1 s q 7 1 q -6 1
+quadratic	root-7-1-1-0	EQ	s + + q 1 1 * q 0 1 q 7 1 * q 0 1 s q 7 1	+ q 1 1 * q 0 1 s q 7 1
+quadratic	sign-7-1-1-0	GT	+ q 1 1 * q 0 1 s q 7 1	q 0 1
+quadratic	inverse-7-1-1-0	EQ	/ q 1 1 + q 1 1 * q 0 1 s q 7 1	/ + q 1 1 * q 0 1 s q 7 1 q 1 1
+quadratic	root-7-1-1-1	EQ	s + + q 1 1 * q 1 1 q 7 1 * q 2 1 s q 7 1	+ q 1 1 * q 1 1 s q 7 1
+quadratic	sign-7-1-1-1	GT	+ q 1 1 * q 1 1 s q 7 1	q 0 1
+quadratic	inverse-7-1-1-1	EQ	/ q 1 1 + q 1 1 * q 1 1 s q 7 1	/ + q 1 1 * q -1 1 s q 7 1 q -6 1
+quadratic	root-7-1-1-2	EQ	s + + q 1 1 * q 4 1 q 7 1 * q 4 1 s q 7 1	+ q 1 1 * q 2 1 s q 7 1
+quadratic	sign-7-1-1-2	GT	+ q 1 1 * q 2 1 s q 7 1	q 0 1
+quadratic	inverse-7-1-1-2	EQ	/ q 1 1 + q 1 1 * q 2 1 s q 7 1	/ + q 1 1 * q -2 1 s q 7 1 q -27 1
+quadratic	root-7-1-1-3	EQ	s + + q 1 1 * q 9 1 q 7 1 * q 6 1 s q 7 1	+ q 1 1 * q 3 1 s q 7 1
+quadratic	sign-7-1-1-3	GT	+ q 1 1 * q 3 1 s q 7 1	q 0 1
+quadratic	inverse-7-1-1-3	EQ	/ q 1 1 + q 1 1 * q 3 1 s q 7 1	/ + q 1 1 * q -3 1 s q 7 1 q -62 1
+quadratic	root-7-1-2--3	EQ	s + + q 4 1 * q 9 1 q 7 1 * q -12 1 s q 7 1	n + q 2 1 * q -3 1 s q 7 1
+quadratic	sign-7-1-2--3	LT	+ q 2 1 * q -3 1 s q 7 1	q 0 1
+quadratic	inverse-7-1-2--3	EQ	/ q 1 1 + q 2 1 * q -3 1 s q 7 1	/ + q 2 1 * q 3 1 s q 7 1 q -59 1
+quadratic	root-7-1-2--2	EQ	s + + q 4 1 * q 4 1 q 7 1 * q -8 1 s q 7 1	n + q 2 1 * q -2 1 s q 7 1
+quadratic	sign-7-1-2--2	LT	+ q 2 1 * q -2 1 s q 7 1	q 0 1
+quadratic	inverse-7-1-2--2	EQ	/ q 1 1 + q 2 1 * q -2 1 s q 7 1	/ + q 2 1 * q 2 1 s q 7 1 q -24 1
+quadratic	root-7-1-2--1	EQ	s + + q 4 1 * q 1 1 q 7 1 * q -4 1 s q 7 1	n + q 2 1 * q -1 1 s q 7 1
+quadratic	sign-7-1-2--1	LT	+ q 2 1 * q -1 1 s q 7 1	q 0 1
+quadratic	inverse-7-1-2--1	EQ	/ q 1 1 + q 2 1 * q -1 1 s q 7 1	/ + q 2 1 * q 1 1 s q 7 1 q -3 1
+quadratic	root-7-1-2-0	EQ	s + + q 4 1 * q 0 1 q 7 1 * q 0 1 s q 7 1	+ q 2 1 * q 0 1 s q 7 1
+quadratic	sign-7-1-2-0	GT	+ q 2 1 * q 0 1 s q 7 1	q 0 1
+quadratic	inverse-7-1-2-0	EQ	/ q 1 1 + q 2 1 * q 0 1 s q 7 1	/ + q 2 1 * q 0 1 s q 7 1 q 4 1
+quadratic	root-7-1-2-1	EQ	s + + q 4 1 * q 1 1 q 7 1 * q 4 1 s q 7 1	+ q 2 1 * q 1 1 s q 7 1
+quadratic	sign-7-1-2-1	GT	+ q 2 1 * q 1 1 s q 7 1	q 0 1
+quadratic	inverse-7-1-2-1	EQ	/ q 1 1 + q 2 1 * q 1 1 s q 7 1	/ + q 2 1 * q -1 1 s q 7 1 q -3 1
+quadratic	root-7-1-2-2	EQ	s + + q 4 1 * q 4 1 q 7 1 * q 8 1 s q 7 1	+ q 2 1 * q 2 1 s q 7 1
+quadratic	sign-7-1-2-2	GT	+ q 2 1 * q 2 1 s q 7 1	q 0 1
+quadratic	inverse-7-1-2-2	EQ	/ q 1 1 + q 2 1 * q 2 1 s q 7 1	/ + q 2 1 * q -2 1 s q 7 1 q -24 1
+quadratic	root-7-1-2-3	EQ	s + + q 4 1 * q 9 1 q 7 1 * q 12 1 s q 7 1	+ q 2 1 * q 3 1 s q 7 1
+quadratic	sign-7-1-2-3	GT	+ q 2 1 * q 3 1 s q 7 1	q 0 1
+quadratic	inverse-7-1-2-3	EQ	/ q 1 1 + q 2 1 * q 3 1 s q 7 1	/ + q 2 1 * q -3 1 s q 7 1 q -59 1
+quadratic	root-7-1-3--3	EQ	s + + q 9 1 * q 9 1 q 7 1 * q -18 1 s q 7 1	n + q 3 1 * q -3 1 s q 7 1
+quadratic	sign-7-1-3--3	LT	+ q 3 1 * q -3 1 s q 7 1	q 0 1
+quadratic	inverse-7-1-3--3	EQ	/ q 1 1 + q 3 1 * q -3 1 s q 7 1	/ + q 3 1 * q 3 1 s q 7 1 q -54 1
+quadratic	root-7-1-3--2	EQ	s + + q 9 1 * q 4 1 q 7 1 * q -12 1 s q 7 1	n + q 3 1 * q -2 1 s q 7 1
+quadratic	sign-7-1-3--2	LT	+ q 3 1 * q -2 1 s q 7 1	q 0 1
+quadratic	inverse-7-1-3--2	EQ	/ q 1 1 + q 3 1 * q -2 1 s q 7 1	/ + q 3 1 * q 2 1 s q 7 1 q -19 1
+quadratic	root-7-1-3--1	EQ	s + + q 9 1 * q 1 1 q 7 1 * q -6 1 s q 7 1	+ q 3 1 * q -1 1 s q 7 1
+quadratic	sign-7-1-3--1	GT	+ q 3 1 * q -1 1 s q 7 1	q 0 1
+quadratic	inverse-7-1-3--1	EQ	/ q 1 1 + q 3 1 * q -1 1 s q 7 1	/ + q 3 1 * q 1 1 s q 7 1 q 2 1
+quadratic	root-7-1-3-0	EQ	s + + q 9 1 * q 0 1 q 7 1 * q 0 1 s q 7 1	+ q 3 1 * q 0 1 s q 7 1
+quadratic	sign-7-1-3-0	GT	+ q 3 1 * q 0 1 s q 7 1	q 0 1
+quadratic	inverse-7-1-3-0	EQ	/ q 1 1 + q 3 1 * q 0 1 s q 7 1	/ + q 3 1 * q 0 1 s q 7 1 q 9 1
+quadratic	root-7-1-3-1	EQ	s + + q 9 1 * q 1 1 q 7 1 * q 6 1 s q 7 1	+ q 3 1 * q 1 1 s q 7 1
+quadratic	sign-7-1-3-1	GT	+ q 3 1 * q 1 1 s q 7 1	q 0 1
+quadratic	inverse-7-1-3-1	EQ	/ q 1 1 + q 3 1 * q 1 1 s q 7 1	/ + q 3 1 * q -1 1 s q 7 1 q 2 1
+quadratic	root-7-1-3-2	EQ	s + + q 9 1 * q 4 1 q 7 1 * q 12 1 s q 7 1	+ q 3 1 * q 2 1 s q 7 1
+quadratic	sign-7-1-3-2	GT	+ q 3 1 * q 2 1 s q 7 1	q 0 1
+quadratic	inverse-7-1-3-2	EQ	/ q 1 1 + q 3 1 * q 2 1 s q 7 1	/ + q 3 1 * q -2 1 s q 7 1 q -19 1
+quadratic	root-7-1-3-3	EQ	s + + q 9 1 * q 9 1 q 7 1 * q 18 1 s q 7 1	+ q 3 1 * q 3 1 s q 7 1
+quadratic	sign-7-1-3-3	GT	+ q 3 1 * q 3 1 s q 7 1	q 0 1
+quadratic	inverse-7-1-3-3	EQ	/ q 1 1 + q 3 1 * q 3 1 s q 7 1	/ + q 3 1 * q -3 1 s q 7 1 q -54 1
+quadratic	root-7-2--3--3	EQ	s + + q 9 4 * q 9 4 q 7 1 * q 18 4 s q 7 1	n + q -3 2 * q -3 2 s q 7 1
+quadratic	sign-7-2--3--3	LT	+ q -3 2 * q -3 2 s q 7 1	q 0 1
+quadratic	inverse-7-2--3--3	EQ	/ q 1 1 + q -3 2 * q -3 2 s q 7 1	/ + q -6 1 * q 6 1 s q 7 1 q -54 1
+quadratic	root-7-2--3--2	EQ	s + + q 9 4 * q 4 4 q 7 1 * q 12 4 s q 7 1	n + q -3 2 * q -2 2 s q 7 1
+quadratic	sign-7-2--3--2	LT	+ q -3 2 * q -2 2 s q 7 1	q 0 1
+quadratic	inverse-7-2--3--2	EQ	/ q 1 1 + q -3 2 * q -2 2 s q 7 1	/ + q -6 1 * q 4 1 s q 7 1 q -19 1
+quadratic	root-7-2--3--1	EQ	s + + q 9 4 * q 1 4 q 7 1 * q 6 4 s q 7 1	n + q -3 2 * q -1 2 s q 7 1
+quadratic	sign-7-2--3--1	LT	+ q -3 2 * q -1 2 s q 7 1	q 0 1
+quadratic	inverse-7-2--3--1	EQ	/ q 1 1 + q -3 2 * q -1 2 s q 7 1	/ + q -6 1 * q 2 1 s q 7 1 q 2 1
+quadratic	root-7-2--3-0	EQ	s + + q 9 4 * q 0 4 q 7 1 * q 0 4 s q 7 1	n + q -3 2 * q 0 2 s q 7 1
+quadratic	sign-7-2--3-0	LT	+ q -3 2 * q 0 2 s q 7 1	q 0 1
+quadratic	inverse-7-2--3-0	EQ	/ q 1 1 + q -3 2 * q 0 2 s q 7 1	/ + q -6 1 * q 0 1 s q 7 1 q 9 1
+quadratic	root-7-2--3-1	EQ	s + + q 9 4 * q 1 4 q 7 1 * q -6 4 s q 7 1	n + q -3 2 * q 1 2 s q 7 1
+quadratic	sign-7-2--3-1	LT	+ q -3 2 * q 1 2 s q 7 1	q 0 1
+quadratic	inverse-7-2--3-1	EQ	/ q 1 1 + q -3 2 * q 1 2 s q 7 1	/ + q -6 1 * q -2 1 s q 7 1 q 2 1
+quadratic	root-7-2--3-2	EQ	s + + q 9 4 * q 4 4 q 7 1 * q -12 4 s q 7 1	+ q -3 2 * q 2 2 s q 7 1
+quadratic	sign-7-2--3-2	GT	+ q -3 2 * q 2 2 s q 7 1	q 0 1
+quadratic	inverse-7-2--3-2	EQ	/ q 1 1 + q -3 2 * q 2 2 s q 7 1	/ + q -6 1 * q -4 1 s q 7 1 q -19 1
+quadratic	root-7-2--3-3	EQ	s + + q 9 4 * q 9 4 q 7 1 * q -18 4 s q 7 1	+ q -3 2 * q 3 2 s q 7 1
+quadratic	sign-7-2--3-3	GT	+ q -3 2 * q 3 2 s q 7 1	q 0 1
+quadratic	inverse-7-2--3-3	EQ	/ q 1 1 + q -3 2 * q 3 2 s q 7 1	/ + q -6 1 * q -6 1 s q 7 1 q -54 1
+quadratic	root-7-2--2--3	EQ	s + + q 4 4 * q 9 4 q 7 1 * q 12 4 s q 7 1	n + q -2 2 * q -3 2 s q 7 1
+quadratic	sign-7-2--2--3	LT	+ q -2 2 * q -3 2 s q 7 1	q 0 1
+quadratic	inverse-7-2--2--3	EQ	/ q 1 1 + q -2 2 * q -3 2 s q 7 1	/ + q -4 1 * q 6 1 s q 7 1 q -59 1
+quadratic	root-7-2--2--2	EQ	s + + q 4 4 * q 4 4 q 7 1 * q 8 4 s q 7 1	n + q -2 2 * q -2 2 s q 7 1
+quadratic	sign-7-2--2--2	LT	+ q -2 2 * q -2 2 s q 7 1	q 0 1
+quadratic	inverse-7-2--2--2	EQ	/ q 1 1 + q -2 2 * q -2 2 s q 7 1	/ + q -4 1 * q 4 1 s q 7 1 q -24 1
+quadratic	root-7-2--2--1	EQ	s + + q 4 4 * q 1 4 q 7 1 * q 4 4 s q 7 1	n + q -2 2 * q -1 2 s q 7 1
+quadratic	sign-7-2--2--1	LT	+ q -2 2 * q -1 2 s q 7 1	q 0 1
+quadratic	inverse-7-2--2--1	EQ	/ q 1 1 + q -2 2 * q -1 2 s q 7 1	/ + q -4 1 * q 2 1 s q 7 1 q -3 1
+quadratic	root-7-2--2-0	EQ	s + + q 4 4 * q 0 4 q 7 1 * q 0 4 s q 7 1	n + q -2 2 * q 0 2 s q 7 1
+quadratic	sign-7-2--2-0	LT	+ q -2 2 * q 0 2 s q 7 1	q 0 1
+quadratic	inverse-7-2--2-0	EQ	/ q 1 1 + q -2 2 * q 0 2 s q 7 1	/ + q -4 1 * q 0 1 s q 7 1 q 4 1
+quadratic	root-7-2--2-1	EQ	s + + q 4 4 * q 1 4 q 7 1 * q -4 4 s q 7 1	+ q -2 2 * q 1 2 s q 7 1
+quadratic	sign-7-2--2-1	GT	+ q -2 2 * q 1 2 s q 7 1	q 0 1
+quadratic	inverse-7-2--2-1	EQ	/ q 1 1 + q -2 2 * q 1 2 s q 7 1	/ + q -4 1 * q -2 1 s q 7 1 q -3 1
+quadratic	root-7-2--2-2	EQ	s + + q 4 4 * q 4 4 q 7 1 * q -8 4 s q 7 1	+ q -2 2 * q 2 2 s q 7 1
+quadratic	sign-7-2--2-2	GT	+ q -2 2 * q 2 2 s q 7 1	q 0 1
+quadratic	inverse-7-2--2-2	EQ	/ q 1 1 + q -2 2 * q 2 2 s q 7 1	/ + q -4 1 * q -4 1 s q 7 1 q -24 1
+quadratic	root-7-2--2-3	EQ	s + + q 4 4 * q 9 4 q 7 1 * q -12 4 s q 7 1	+ q -2 2 * q 3 2 s q 7 1
+quadratic	sign-7-2--2-3	GT	+ q -2 2 * q 3 2 s q 7 1	q 0 1
+quadratic	inverse-7-2--2-3	EQ	/ q 1 1 + q -2 2 * q 3 2 s q 7 1	/ + q -4 1 * q -6 1 s q 7 1 q -59 1
+quadratic	root-7-2--1--3	EQ	s + + q 1 4 * q 9 4 q 7 1 * q 6 4 s q 7 1	n + q -1 2 * q -3 2 s q 7 1
+quadratic	sign-7-2--1--3	LT	+ q -1 2 * q -3 2 s q 7 1	q 0 1
+quadratic	inverse-7-2--1--3	EQ	/ q 1 1 + q -1 2 * q -3 2 s q 7 1	/ + q -2 1 * q 6 1 s q 7 1 q -62 1
+quadratic	root-7-2--1--2	EQ	s + + q 1 4 * q 4 4 q 7 1 * q 4 4 s q 7 1	n + q -1 2 * q -2 2 s q 7 1
+quadratic	sign-7-2--1--2	LT	+ q -1 2 * q -2 2 s q 7 1	q 0 1
+quadratic	inverse-7-2--1--2	EQ	/ q 1 1 + q -1 2 * q -2 2 s q 7 1	/ + q -2 1 * q 4 1 s q 7 1 q -27 1
+quadratic	root-7-2--1--1	EQ	s + + q 1 4 * q 1 4 q 7 1 * q 2 4 s q 7 1	n + q -1 2 * q -1 2 s q 7 1
+quadratic	sign-7-2--1--1	LT	+ q -1 2 * q -1 2 s q 7 1	q 0 1
+quadratic	inverse-7-2--1--1	EQ	/ q 1 1 + q -1 2 * q -1 2 s q 7 1	/ + q -2 1 * q 2 1 s q 7 1 q -6 1
+quadratic	root-7-2--1-0	EQ	s + + q 1 4 * q 0 4 q 7 1 * q 0 4 s q 7 1	n + q -1 2 * q 0 2 s q 7 1
+quadratic	sign-7-2--1-0	LT	+ q -1 2 * q 0 2 s q 7 1	q 0 1
+quadratic	inverse-7-2--1-0	EQ	/ q 1 1 + q -1 2 * q 0 2 s q 7 1	/ + q -2 1 * q 0 1 s q 7 1 q 1 1
+quadratic	root-7-2--1-1	EQ	s + + q 1 4 * q 1 4 q 7 1 * q -2 4 s q 7 1	+ q -1 2 * q 1 2 s q 7 1
+quadratic	sign-7-2--1-1	GT	+ q -1 2 * q 1 2 s q 7 1	q 0 1
+quadratic	inverse-7-2--1-1	EQ	/ q 1 1 + q -1 2 * q 1 2 s q 7 1	/ + q -2 1 * q -2 1 s q 7 1 q -6 1
+quadratic	root-7-2--1-2	EQ	s + + q 1 4 * q 4 4 q 7 1 * q -4 4 s q 7 1	+ q -1 2 * q 2 2 s q 7 1
+quadratic	sign-7-2--1-2	GT	+ q -1 2 * q 2 2 s q 7 1	q 0 1
+quadratic	inverse-7-2--1-2	EQ	/ q 1 1 + q -1 2 * q 2 2 s q 7 1	/ + q -2 1 * q -4 1 s q 7 1 q -27 1
+quadratic	root-7-2--1-3	EQ	s + + q 1 4 * q 9 4 q 7 1 * q -6 4 s q 7 1	+ q -1 2 * q 3 2 s q 7 1
+quadratic	sign-7-2--1-3	GT	+ q -1 2 * q 3 2 s q 7 1	q 0 1
+quadratic	inverse-7-2--1-3	EQ	/ q 1 1 + q -1 2 * q 3 2 s q 7 1	/ + q -2 1 * q -6 1 s q 7 1 q -62 1
+quadratic	root-7-2-0--3	EQ	s + + q 0 4 * q 9 4 q 7 1 * q 0 4 s q 7 1	n + q 0 2 * q -3 2 s q 7 1
+quadratic	sign-7-2-0--3	LT	+ q 0 2 * q -3 2 s q 7 1	q 0 1
+quadratic	inverse-7-2-0--3	EQ	/ q 1 1 + q 0 2 * q -3 2 s q 7 1	/ + q 0 1 * q 6 1 s q 7 1 q -63 1
+quadratic	root-7-2-0--2	EQ	s + + q 0 4 * q 4 4 q 7 1 * q 0 4 s q 7 1	n + q 0 2 * q -2 2 s q 7 1
+quadratic	sign-7-2-0--2	LT	+ q 0 2 * q -2 2 s q 7 1	q 0 1
+quadratic	inverse-7-2-0--2	EQ	/ q 1 1 + q 0 2 * q -2 2 s q 7 1	/ + q 0 1 * q 4 1 s q 7 1 q -28 1
+quadratic	root-7-2-0--1	EQ	s + + q 0 4 * q 1 4 q 7 1 * q 0 4 s q 7 1	n + q 0 2 * q -1 2 s q 7 1
+quadratic	sign-7-2-0--1	LT	+ q 0 2 * q -1 2 s q 7 1	q 0 1
+quadratic	inverse-7-2-0--1	EQ	/ q 1 1 + q 0 2 * q -1 2 s q 7 1	/ + q 0 1 * q 2 1 s q 7 1 q -7 1
+quadratic	root-7-2-0-0	EQ	s + + q 0 4 * q 0 4 q 7 1 * q 0 4 s q 7 1	+ q 0 2 * q 0 2 s q 7 1
+quadratic	sign-7-2-0-0	EQ	+ q 0 2 * q 0 2 s q 7 1	q 0 1
+quadratic	root-7-2-0-1	EQ	s + + q 0 4 * q 1 4 q 7 1 * q 0 4 s q 7 1	+ q 0 2 * q 1 2 s q 7 1
+quadratic	sign-7-2-0-1	GT	+ q 0 2 * q 1 2 s q 7 1	q 0 1
+quadratic	inverse-7-2-0-1	EQ	/ q 1 1 + q 0 2 * q 1 2 s q 7 1	/ + q 0 1 * q -2 1 s q 7 1 q -7 1
+quadratic	root-7-2-0-2	EQ	s + + q 0 4 * q 4 4 q 7 1 * q 0 4 s q 7 1	+ q 0 2 * q 2 2 s q 7 1
+quadratic	sign-7-2-0-2	GT	+ q 0 2 * q 2 2 s q 7 1	q 0 1
+quadratic	inverse-7-2-0-2	EQ	/ q 1 1 + q 0 2 * q 2 2 s q 7 1	/ + q 0 1 * q -4 1 s q 7 1 q -28 1
+quadratic	root-7-2-0-3	EQ	s + + q 0 4 * q 9 4 q 7 1 * q 0 4 s q 7 1	+ q 0 2 * q 3 2 s q 7 1
+quadratic	sign-7-2-0-3	GT	+ q 0 2 * q 3 2 s q 7 1	q 0 1
+quadratic	inverse-7-2-0-3	EQ	/ q 1 1 + q 0 2 * q 3 2 s q 7 1	/ + q 0 1 * q -6 1 s q 7 1 q -63 1
+quadratic	root-7-2-1--3	EQ	s + + q 1 4 * q 9 4 q 7 1 * q -6 4 s q 7 1	n + q 1 2 * q -3 2 s q 7 1
+quadratic	sign-7-2-1--3	LT	+ q 1 2 * q -3 2 s q 7 1	q 0 1
+quadratic	inverse-7-2-1--3	EQ	/ q 1 1 + q 1 2 * q -3 2 s q 7 1	/ + q 2 1 * q 6 1 s q 7 1 q -62 1
+quadratic	root-7-2-1--2	EQ	s + + q 1 4 * q 4 4 q 7 1 * q -4 4 s q 7 1	n + q 1 2 * q -2 2 s q 7 1
+quadratic	sign-7-2-1--2	LT	+ q 1 2 * q -2 2 s q 7 1	q 0 1
+quadratic	inverse-7-2-1--2	EQ	/ q 1 1 + q 1 2 * q -2 2 s q 7 1	/ + q 2 1 * q 4 1 s q 7 1 q -27 1
+quadratic	root-7-2-1--1	EQ	s + + q 1 4 * q 1 4 q 7 1 * q -2 4 s q 7 1	n + q 1 2 * q -1 2 s q 7 1
+quadratic	sign-7-2-1--1	LT	+ q 1 2 * q -1 2 s q 7 1	q 0 1
+quadratic	inverse-7-2-1--1	EQ	/ q 1 1 + q 1 2 * q -1 2 s q 7 1	/ + q 2 1 * q 2 1 s q 7 1 q -6 1
+quadratic	root-7-2-1-0	EQ	s + + q 1 4 * q 0 4 q 7 1 * q 0 4 s q 7 1	+ q 1 2 * q 0 2 s q 7 1
+quadratic	sign-7-2-1-0	GT	+ q 1 2 * q 0 2 s q 7 1	q 0 1
+quadratic	inverse-7-2-1-0	EQ	/ q 1 1 + q 1 2 * q 0 2 s q 7 1	/ + q 2 1 * q 0 1 s q 7 1 q 1 1
+quadratic	root-7-2-1-1	EQ	s + + q 1 4 * q 1 4 q 7 1 * q 2 4 s q 7 1	+ q 1 2 * q 1 2 s q 7 1
+quadratic	sign-7-2-1-1	GT	+ q 1 2 * q 1 2 s q 7 1	q 0 1
+quadratic	inverse-7-2-1-1	EQ	/ q 1 1 + q 1 2 * q 1 2 s q 7 1	/ + q 2 1 * q -2 1 s q 7 1 q -6 1
+quadratic	root-7-2-1-2	EQ	s + + q 1 4 * q 4 4 q 7 1 * q 4 4 s q 7 1	+ q 1 2 * q 2 2 s q 7 1
+quadratic	sign-7-2-1-2	GT	+ q 1 2 * q 2 2 s q 7 1	q 0 1
+quadratic	inverse-7-2-1-2	EQ	/ q 1 1 + q 1 2 * q 2 2 s q 7 1	/ + q 2 1 * q -4 1 s q 7 1 q -27 1
+quadratic	root-7-2-1-3	EQ	s + + q 1 4 * q 9 4 q 7 1 * q 6 4 s q 7 1	+ q 1 2 * q 3 2 s q 7 1
+quadratic	sign-7-2-1-3	GT	+ q 1 2 * q 3 2 s q 7 1	q 0 1
+quadratic	inverse-7-2-1-3	EQ	/ q 1 1 + q 1 2 * q 3 2 s q 7 1	/ + q 2 1 * q -6 1 s q 7 1 q -62 1
+quadratic	root-7-2-2--3	EQ	s + + q 4 4 * q 9 4 q 7 1 * q -12 4 s q 7 1	n + q 2 2 * q -3 2 s q 7 1
+quadratic	sign-7-2-2--3	LT	+ q 2 2 * q -3 2 s q 7 1	q 0 1
+quadratic	inverse-7-2-2--3	EQ	/ q 1 1 + q 2 2 * q -3 2 s q 7 1	/ + q 4 1 * q 6 1 s q 7 1 q -59 1
+quadratic	root-7-2-2--2	EQ	s + + q 4 4 * q 4 4 q 7 1 * q -8 4 s q 7 1	n + q 2 2 * q -2 2 s q 7 1
+quadratic	sign-7-2-2--2	LT	+ q 2 2 * q -2 2 s q 7 1	q 0 1
+quadratic	inverse-7-2-2--2	EQ	/ q 1 1 + q 2 2 * q -2 2 s q 7 1	/ + q 4 1 * q 4 1 s q 7 1 q -24 1
+quadratic	root-7-2-2--1	EQ	s + + q 4 4 * q 1 4 q 7 1 * q -4 4 s q 7 1	n + q 2 2 * q -1 2 s q 7 1
+quadratic	sign-7-2-2--1	LT	+ q 2 2 * q -1 2 s q 7 1	q 0 1
+quadratic	inverse-7-2-2--1	EQ	/ q 1 1 + q 2 2 * q -1 2 s q 7 1	/ + q 4 1 * q 2 1 s q 7 1 q -3 1
+quadratic	root-7-2-2-0	EQ	s + + q 4 4 * q 0 4 q 7 1 * q 0 4 s q 7 1	+ q 2 2 * q 0 2 s q 7 1
+quadratic	sign-7-2-2-0	GT	+ q 2 2 * q 0 2 s q 7 1	q 0 1
+quadratic	inverse-7-2-2-0	EQ	/ q 1 1 + q 2 2 * q 0 2 s q 7 1	/ + q 4 1 * q 0 1 s q 7 1 q 4 1
+quadratic	root-7-2-2-1	EQ	s + + q 4 4 * q 1 4 q 7 1 * q 4 4 s q 7 1	+ q 2 2 * q 1 2 s q 7 1
+quadratic	sign-7-2-2-1	GT	+ q 2 2 * q 1 2 s q 7 1	q 0 1
+quadratic	inverse-7-2-2-1	EQ	/ q 1 1 + q 2 2 * q 1 2 s q 7 1	/ + q 4 1 * q -2 1 s q 7 1 q -3 1
+quadratic	root-7-2-2-2	EQ	s + + q 4 4 * q 4 4 q 7 1 * q 8 4 s q 7 1	+ q 2 2 * q 2 2 s q 7 1
+quadratic	sign-7-2-2-2	GT	+ q 2 2 * q 2 2 s q 7 1	q 0 1
+quadratic	inverse-7-2-2-2	EQ	/ q 1 1 + q 2 2 * q 2 2 s q 7 1	/ + q 4 1 * q -4 1 s q 7 1 q -24 1
+quadratic	root-7-2-2-3	EQ	s + + q 4 4 * q 9 4 q 7 1 * q 12 4 s q 7 1	+ q 2 2 * q 3 2 s q 7 1
+quadratic	sign-7-2-2-3	GT	+ q 2 2 * q 3 2 s q 7 1	q 0 1
+quadratic	inverse-7-2-2-3	EQ	/ q 1 1 + q 2 2 * q 3 2 s q 7 1	/ + q 4 1 * q -6 1 s q 7 1 q -59 1
+quadratic	root-7-2-3--3	EQ	s + + q 9 4 * q 9 4 q 7 1 * q -18 4 s q 7 1	n + q 3 2 * q -3 2 s q 7 1
+quadratic	sign-7-2-3--3	LT	+ q 3 2 * q -3 2 s q 7 1	q 0 1
+quadratic	inverse-7-2-3--3	EQ	/ q 1 1 + q 3 2 * q -3 2 s q 7 1	/ + q 6 1 * q 6 1 s q 7 1 q -54 1
+quadratic	root-7-2-3--2	EQ	s + + q 9 4 * q 4 4 q 7 1 * q -12 4 s q 7 1	n + q 3 2 * q -2 2 s q 7 1
+quadratic	sign-7-2-3--2	LT	+ q 3 2 * q -2 2 s q 7 1	q 0 1
+quadratic	inverse-7-2-3--2	EQ	/ q 1 1 + q 3 2 * q -2 2 s q 7 1	/ + q 6 1 * q 4 1 s q 7 1 q -19 1
+quadratic	root-7-2-3--1	EQ	s + + q 9 4 * q 1 4 q 7 1 * q -6 4 s q 7 1	+ q 3 2 * q -1 2 s q 7 1
+quadratic	sign-7-2-3--1	GT	+ q 3 2 * q -1 2 s q 7 1	q 0 1
+quadratic	inverse-7-2-3--1	EQ	/ q 1 1 + q 3 2 * q -1 2 s q 7 1	/ + q 6 1 * q 2 1 s q 7 1 q 2 1
+quadratic	root-7-2-3-0	EQ	s + + q 9 4 * q 0 4 q 7 1 * q 0 4 s q 7 1	+ q 3 2 * q 0 2 s q 7 1
+quadratic	sign-7-2-3-0	GT	+ q 3 2 * q 0 2 s q 7 1	q 0 1
+quadratic	inverse-7-2-3-0	EQ	/ q 1 1 + q 3 2 * q 0 2 s q 7 1	/ + q 6 1 * q 0 1 s q 7 1 q 9 1
+quadratic	root-7-2-3-1	EQ	s + + q 9 4 * q 1 4 q 7 1 * q 6 4 s q 7 1	+ q 3 2 * q 1 2 s q 7 1
+quadratic	sign-7-2-3-1	GT	+ q 3 2 * q 1 2 s q 7 1	q 0 1
+quadratic	inverse-7-2-3-1	EQ	/ q 1 1 + q 3 2 * q 1 2 s q 7 1	/ + q 6 1 * q -2 1 s q 7 1 q 2 1
+quadratic	root-7-2-3-2	EQ	s + + q 9 4 * q 4 4 q 7 1 * q 12 4 s q 7 1	+ q 3 2 * q 2 2 s q 7 1
+quadratic	sign-7-2-3-2	GT	+ q 3 2 * q 2 2 s q 7 1	q 0 1
+quadratic	inverse-7-2-3-2	EQ	/ q 1 1 + q 3 2 * q 2 2 s q 7 1	/ + q 6 1 * q -4 1 s q 7 1 q -19 1
+quadratic	root-7-2-3-3	EQ	s + + q 9 4 * q 9 4 q 7 1 * q 18 4 s q 7 1	+ q 3 2 * q 3 2 s q 7 1
+quadratic	sign-7-2-3-3	GT	+ q 3 2 * q 3 2 s q 7 1	q 0 1
+quadratic	inverse-7-2-3-3	EQ	/ q 1 1 + q 3 2 * q 3 2 s q 7 1	/ + q 6 1 * q -6 1 s q 7 1 q -54 1
+tower-1	expanded--3--1	EQ	s + + q 9 1 * q 1 1 q 2 1 * q 6 1 s q 2 1	n + q -3 1 * q -1 1 s q 2 1
+tower-1	inverse--3--1	EQ	/ q 1 1 + q -3 1 * q -1 1 s q 2 1	/ + q -3 1 * q 1 1 s q 2 1 + q 9 1 n * q 1 1 q 2 1
+tower-1	expanded--3-1	EQ	s + + q 9 1 * q 1 1 q 2 1 * q -6 1 s q 2 1	n + q -3 1 * q 1 1 s q 2 1
+tower-1	inverse--3-1	EQ	/ q 1 1 + q -3 1 * q 1 1 s q 2 1	/ + q -3 1 * q -1 1 s q 2 1 + q 9 1 n * q 1 1 q 2 1
+tower-1	expanded--2--1	EQ	s + + q 4 1 * q 1 1 q 2 1 * q 4 1 s q 2 1	n + q -2 1 * q -1 1 s q 2 1
+tower-1	inverse--2--1	EQ	/ q 1 1 + q -2 1 * q -1 1 s q 2 1	/ + q -2 1 * q 1 1 s q 2 1 + q 4 1 n * q 1 1 q 2 1
+tower-1	expanded--2-1	EQ	s + + q 4 1 * q 1 1 q 2 1 * q -4 1 s q 2 1	n + q -2 1 * q 1 1 s q 2 1
+tower-1	inverse--2-1	EQ	/ q 1 1 + q -2 1 * q 1 1 s q 2 1	/ + q -2 1 * q -1 1 s q 2 1 + q 4 1 n * q 1 1 q 2 1
+tower-1	expanded--1--1	EQ	s + + q 1 1 * q 1 1 q 2 1 * q 2 1 s q 2 1	n + q -1 1 * q -1 1 s q 2 1
+tower-1	inverse--1--1	EQ	/ q 1 1 + q -1 1 * q -1 1 s q 2 1	/ + q -1 1 * q 1 1 s q 2 1 + q 1 1 n * q 1 1 q 2 1
+tower-1	expanded--1-1	EQ	s + + q 1 1 * q 1 1 q 2 1 * q -2 1 s q 2 1	+ q -1 1 * q 1 1 s q 2 1
+tower-1	inverse--1-1	EQ	/ q 1 1 + q -1 1 * q 1 1 s q 2 1	/ + q -1 1 * q -1 1 s q 2 1 + q 1 1 n * q 1 1 q 2 1
+tower-1	expanded-0--1	EQ	s + + q 0 1 * q 1 1 q 2 1 * q 0 1 s q 2 1	n + q 0 1 * q -1 1 s q 2 1
+tower-1	inverse-0--1	EQ	/ q 1 1 + q 0 1 * q -1 1 s q 2 1	/ + q 0 1 * q 1 1 s q 2 1 + q 0 1 n * q 1 1 q 2 1
+tower-1	expanded-0-1	EQ	s + + q 0 1 * q 1 1 q 2 1 * q 0 1 s q 2 1	+ q 0 1 * q 1 1 s q 2 1
+tower-1	inverse-0-1	EQ	/ q 1 1 + q 0 1 * q 1 1 s q 2 1	/ + q 0 1 * q -1 1 s q 2 1 + q 0 1 n * q 1 1 q 2 1
+tower-1	expanded-1--1	EQ	s + + q 1 1 * q 1 1 q 2 1 * q -2 1 s q 2 1	n + q 1 1 * q -1 1 s q 2 1
+tower-1	inverse-1--1	EQ	/ q 1 1 + q 1 1 * q -1 1 s q 2 1	/ + q 1 1 * q 1 1 s q 2 1 + q 1 1 n * q 1 1 q 2 1
+tower-1	expanded-1-1	EQ	s + + q 1 1 * q 1 1 q 2 1 * q 2 1 s q 2 1	+ q 1 1 * q 1 1 s q 2 1
+tower-1	inverse-1-1	EQ	/ q 1 1 + q 1 1 * q 1 1 s q 2 1	/ + q 1 1 * q -1 1 s q 2 1 + q 1 1 n * q 1 1 q 2 1
+tower-1	expanded-2--1	EQ	s + + q 4 1 * q 1 1 q 2 1 * q -4 1 s q 2 1	+ q 2 1 * q -1 1 s q 2 1
+tower-1	inverse-2--1	EQ	/ q 1 1 + q 2 1 * q -1 1 s q 2 1	/ + q 2 1 * q 1 1 s q 2 1 + q 4 1 n * q 1 1 q 2 1
+tower-1	expanded-2-1	EQ	s + + q 4 1 * q 1 1 q 2 1 * q 4 1 s q 2 1	+ q 2 1 * q 1 1 s q 2 1
+tower-1	inverse-2-1	EQ	/ q 1 1 + q 2 1 * q 1 1 s q 2 1	/ + q 2 1 * q -1 1 s q 2 1 + q 4 1 n * q 1 1 q 2 1
+tower-1	expanded-3--1	EQ	s + + q 9 1 * q 1 1 q 2 1 * q -6 1 s q 2 1	+ q 3 1 * q -1 1 s q 2 1
+tower-1	inverse-3--1	EQ	/ q 1 1 + q 3 1 * q -1 1 s q 2 1	/ + q 3 1 * q 1 1 s q 2 1 + q 9 1 n * q 1 1 q 2 1
+tower-1	expanded-3-1	EQ	s + + q 9 1 * q 1 1 q 2 1 * q 6 1 s q 2 1	+ q 3 1 * q 1 1 s q 2 1
+tower-1	inverse-3-1	EQ	/ q 1 1 + q 3 1 * q 1 1 s q 2 1	/ + q 3 1 * q -1 1 s q 2 1 + q 9 1 n * q 1 1 q 2 1
+tower-2	expanded--3--1	EQ	s + + q 9 1 * q 1 1 + q 2 1 s q 2 1 * q 6 1 s + q 2 1 s q 2 1	n + q -3 1 * q -1 1 s + q 2 1 s q 2 1
+tower-2	inverse--3--1	EQ	/ q 1 1 + q -3 1 * q -1 1 s + q 2 1 s q 2 1	/ + q -3 1 * q 1 1 s + q 2 1 s q 2 1 + q 9 1 n * q 1 1 + q 2 1 s q 2 1
+tower-2	expanded--3-1	EQ	s + + q 9 1 * q 1 1 + q 2 1 s q 2 1 * q -6 1 s + q 2 1 s q 2 1	n + q -3 1 * q 1 1 s + q 2 1 s q 2 1
+tower-2	inverse--3-1	EQ	/ q 1 1 + q -3 1 * q 1 1 s + q 2 1 s q 2 1	/ + q -3 1 * q -1 1 s + q 2 1 s q 2 1 + q 9 1 n * q 1 1 + q 2 1 s q 2 1
+tower-2	expanded--2--1	EQ	s + + q 4 1 * q 1 1 + q 2 1 s q 2 1 * q 4 1 s + q 2 1 s q 2 1	n + q -2 1 * q -1 1 s + q 2 1 s q 2 1
+tower-2	inverse--2--1	EQ	/ q 1 1 + q -2 1 * q -1 1 s + q 2 1 s q 2 1	/ + q -2 1 * q 1 1 s + q 2 1 s q 2 1 + q 4 1 n * q 1 1 + q 2 1 s q 2 1
+tower-2	expanded--2-1	EQ	s + + q 4 1 * q 1 1 + q 2 1 s q 2 1 * q -4 1 s + q 2 1 s q 2 1	n + q -2 1 * q 1 1 s + q 2 1 s q 2 1
+tower-2	inverse--2-1	EQ	/ q 1 1 + q -2 1 * q 1 1 s + q 2 1 s q 2 1	/ + q -2 1 * q -1 1 s + q 2 1 s q 2 1 + q 4 1 n * q 1 1 + q 2 1 s q 2 1
+tower-2	expanded--1--1	EQ	s + + q 1 1 * q 1 1 + q 2 1 s q 2 1 * q 2 1 s + q 2 1 s q 2 1	n + q -1 1 * q -1 1 s + q 2 1 s q 2 1
+tower-2	inverse--1--1	EQ	/ q 1 1 + q -1 1 * q -1 1 s + q 2 1 s q 2 1	/ + q -1 1 * q 1 1 s + q 2 1 s q 2 1 + q 1 1 n * q 1 1 + q 2 1 s q 2 1
+tower-2	expanded--1-1	EQ	s + + q 1 1 * q 1 1 + q 2 1 s q 2 1 * q -2 1 s + q 2 1 s q 2 1	+ q -1 1 * q 1 1 s + q 2 1 s q 2 1
+tower-2	inverse--1-1	EQ	/ q 1 1 + q -1 1 * q 1 1 s + q 2 1 s q 2 1	/ + q -1 1 * q -1 1 s + q 2 1 s q 2 1 + q 1 1 n * q 1 1 + q 2 1 s q 2 1
+tower-2	expanded-0--1	EQ	s + + q 0 1 * q 1 1 + q 2 1 s q 2 1 * q 0 1 s + q 2 1 s q 2 1	n + q 0 1 * q -1 1 s + q 2 1 s q 2 1
+tower-2	inverse-0--1	EQ	/ q 1 1 + q 0 1 * q -1 1 s + q 2 1 s q 2 1	/ + q 0 1 * q 1 1 s + q 2 1 s q 2 1 + q 0 1 n * q 1 1 + q 2 1 s q 2 1
+tower-2	expanded-0-1	EQ	s + + q 0 1 * q 1 1 + q 2 1 s q 2 1 * q 0 1 s + q 2 1 s q 2 1	+ q 0 1 * q 1 1 s + q 2 1 s q 2 1
+tower-2	inverse-0-1	EQ	/ q 1 1 + q 0 1 * q 1 1 s + q 2 1 s q 2 1	/ + q 0 1 * q -1 1 s + q 2 1 s q 2 1 + q 0 1 n * q 1 1 + q 2 1 s q 2 1
+tower-2	expanded-1--1	EQ	s + + q 1 1 * q 1 1 + q 2 1 s q 2 1 * q -2 1 s + q 2 1 s q 2 1	n + q 1 1 * q -1 1 s + q 2 1 s q 2 1
+tower-2	inverse-1--1	EQ	/ q 1 1 + q 1 1 * q -1 1 s + q 2 1 s q 2 1	/ + q 1 1 * q 1 1 s + q 2 1 s q 2 1 + q 1 1 n * q 1 1 + q 2 1 s q 2 1
+tower-2	expanded-1-1	EQ	s + + q 1 1 * q 1 1 + q 2 1 s q 2 1 * q 2 1 s + q 2 1 s q 2 1	+ q 1 1 * q 1 1 s + q 2 1 s q 2 1
+tower-2	inverse-1-1	EQ	/ q 1 1 + q 1 1 * q 1 1 s + q 2 1 s q 2 1	/ + q 1 1 * q -1 1 s + q 2 1 s q 2 1 + q 1 1 n * q 1 1 + q 2 1 s q 2 1
+tower-2	expanded-2--1	EQ	s + + q 4 1 * q 1 1 + q 2 1 s q 2 1 * q -4 1 s + q 2 1 s q 2 1	+ q 2 1 * q -1 1 s + q 2 1 s q 2 1
+tower-2	inverse-2--1	EQ	/ q 1 1 + q 2 1 * q -1 1 s + q 2 1 s q 2 1	/ + q 2 1 * q 1 1 s + q 2 1 s q 2 1 + q 4 1 n * q 1 1 + q 2 1 s q 2 1
+tower-2	expanded-2-1	EQ	s + + q 4 1 * q 1 1 + q 2 1 s q 2 1 * q 4 1 s + q 2 1 s q 2 1	+ q 2 1 * q 1 1 s + q 2 1 s q 2 1
+tower-2	inverse-2-1	EQ	/ q 1 1 + q 2 1 * q 1 1 s + q 2 1 s q 2 1	/ + q 2 1 * q -1 1 s + q 2 1 s q 2 1 + q 4 1 n * q 1 1 + q 2 1 s q 2 1
+tower-2	expanded-3--1	EQ	s + + q 9 1 * q 1 1 + q 2 1 s q 2 1 * q -6 1 s + q 2 1 s q 2 1	+ q 3 1 * q -1 1 s + q 2 1 s q 2 1
+tower-2	inverse-3--1	EQ	/ q 1 1 + q 3 1 * q -1 1 s + q 2 1 s q 2 1	/ + q 3 1 * q 1 1 s + q 2 1 s q 2 1 + q 9 1 n * q 1 1 + q 2 1 s q 2 1
+tower-2	expanded-3-1	EQ	s + + q 9 1 * q 1 1 + q 2 1 s q 2 1 * q 6 1 s + q 2 1 s q 2 1	+ q 3 1 * q 1 1 s + q 2 1 s q 2 1
+tower-2	inverse-3-1	EQ	/ q 1 1 + q 3 1 * q 1 1 s + q 2 1 s q 2 1	/ + q 3 1 * q -1 1 s + q 2 1 s q 2 1 + q 9 1 n * q 1 1 + q 2 1 s q 2 1
+tower-3	expanded--3--1	EQ	s + + q 9 1 * q 1 1 + q 2 1 s + q 2 1 s q 2 1 * q 6 1 s + q 2 1 s + q 2 1 s q 2 1	n + q -3 1 * q -1 1 s + q 2 1 s + q 2 1 s q 2 1
+tower-3	inverse--3--1	EQ	/ q 1 1 + q -3 1 * q -1 1 s + q 2 1 s + q 2 1 s q 2 1	/ + q -3 1 * q 1 1 s + q 2 1 s + q 2 1 s q 2 1 + q 9 1 n * q 1 1 + q 2 1 s + q 2 1 s q 2 1
+tower-3	expanded--3-1	EQ	s + + q 9 1 * q 1 1 + q 2 1 s + q 2 1 s q 2 1 * q -6 1 s + q 2 1 s + q 2 1 s q 2 1	n + q -3 1 * q 1 1 s + q 2 1 s + q 2 1 s q 2 1
+tower-3	inverse--3-1	EQ	/ q 1 1 + q -3 1 * q 1 1 s + q 2 1 s + q 2 1 s q 2 1	/ + q -3 1 * q -1 1 s + q 2 1 s + q 2 1 s q 2 1 + q 9 1 n * q 1 1 + q 2 1 s + q 2 1 s q 2 1
+tower-3	expanded--2--1	EQ	s + + q 4 1 * q 1 1 + q 2 1 s + q 2 1 s q 2 1 * q 4 1 s + q 2 1 s + q 2 1 s q 2 1	n + q -2 1 * q -1 1 s + q 2 1 s + q 2 1 s q 2 1
+tower-3	inverse--2--1	EQ	/ q 1 1 + q -2 1 * q -1 1 s + q 2 1 s + q 2 1 s q 2 1	/ + q -2 1 * q 1 1 s + q 2 1 s + q 2 1 s q 2 1 + q 4 1 n * q 1 1 + q 2 1 s + q 2 1 s q 2 1
+tower-3	expanded--2-1	EQ	s + + q 4 1 * q 1 1 + q 2 1 s + q 2 1 s q 2 1 * q -4 1 s + q 2 1 s + q 2 1 s q 2 1	n + q -2 1 * q 1 1 s + q 2 1 s + q 2 1 s q 2 1
+tower-3	inverse--2-1	EQ	/ q 1 1 + q -2 1 * q 1 1 s + q 2 1 s + q 2 1 s q 2 1	/ + q -2 1 * q -1 1 s + q 2 1 s + q 2 1 s q 2 1 + q 4 1 n * q 1 1 + q 2 1 s + q 2 1 s q 2 1
+tower-3	expanded--1--1	EQ	s + + q 1 1 * q 1 1 + q 2 1 s + q 2 1 s q 2 1 * q 2 1 s + q 2 1 s + q 2 1 s q 2 1	n + q -1 1 * q -1 1 s + q 2 1 s + q 2 1 s q 2 1
+tower-3	inverse--1--1	EQ	/ q 1 1 + q -1 1 * q -1 1 s + q 2 1 s + q 2 1 s q 2 1	/ + q -1 1 * q 1 1 s + q 2 1 s + q 2 1 s q 2 1 + q 1 1 n * q 1 1 + q 2 1 s + q 2 1 s q 2 1
+tower-3	expanded--1-1	EQ	s + + q 1 1 * q 1 1 + q 2 1 s + q 2 1 s q 2 1 * q -2 1 s + q 2 1 s + q 2 1 s q 2 1	+ q -1 1 * q 1 1 s + q 2 1 s + q 2 1 s q 2 1
+tower-3	inverse--1-1	EQ	/ q 1 1 + q -1 1 * q 1 1 s + q 2 1 s + q 2 1 s q 2 1	/ + q -1 1 * q -1 1 s + q 2 1 s + q 2 1 s q 2 1 + q 1 1 n * q 1 1 + q 2 1 s + q 2 1 s q 2 1
+tower-3	expanded-0--1	EQ	s + + q 0 1 * q 1 1 + q 2 1 s + q 2 1 s q 2 1 * q 0 1 s + q 2 1 s + q 2 1 s q 2 1	n + q 0 1 * q -1 1 s + q 2 1 s + q 2 1 s q 2 1
+tower-3	inverse-0--1	EQ	/ q 1 1 + q 0 1 * q -1 1 s + q 2 1 s + q 2 1 s q 2 1	/ + q 0 1 * q 1 1 s + q 2 1 s + q 2 1 s q 2 1 + q 0 1 n * q 1 1 + q 2 1 s + q 2 1 s q 2 1
+tower-3	expanded-0-1	EQ	s + + q 0 1 * q 1 1 + q 2 1 s + q 2 1 s q 2 1 * q 0 1 s + q 2 1 s + q 2 1 s q 2 1	+ q 0 1 * q 1 1 s + q 2 1 s + q 2 1 s q 2 1
+tower-3	inverse-0-1	EQ	/ q 1 1 + q 0 1 * q 1 1 s + q 2 1 s + q 2 1 s q 2 1	/ + q 0 1 * q -1 1 s + q 2 1 s + q 2 1 s q 2 1 + q 0 1 n * q 1 1 + q 2 1 s + q 2 1 s q 2 1
+tower-3	expanded-1--1	EQ	s + + q 1 1 * q 1 1 + q 2 1 s + q 2 1 s q 2 1 * q -2 1 s + q 2 1 s + q 2 1 s q 2 1	n + q 1 1 * q -1 1 s + q 2 1 s + q 2 1 s q 2 1
+tower-3	inverse-1--1	EQ	/ q 1 1 + q 1 1 * q -1 1 s + q 2 1 s + q 2 1 s q 2 1	/ + q 1 1 * q 1 1 s + q 2 1 s + q 2 1 s q 2 1 + q 1 1 n * q 1 1 + q 2 1 s + q 2 1 s q 2 1
+tower-3	expanded-1-1	EQ	s + + q 1 1 * q 1 1 + q 2 1 s + q 2 1 s q 2 1 * q 2 1 s + q 2 1 s + q 2 1 s q 2 1	+ q 1 1 * q 1 1 s + q 2 1 s + q 2 1 s q 2 1
+tower-3	inverse-1-1	EQ	/ q 1 1 + q 1 1 * q 1 1 s + q 2 1 s + q 2 1 s q 2 1	/ + q 1 1 * q -1 1 s + q 2 1 s + q 2 1 s q 2 1 + q 1 1 n * q 1 1 + q 2 1 s + q 2 1 s q 2 1
+tower-3	expanded-2--1	EQ	s + + q 4 1 * q 1 1 + q 2 1 s + q 2 1 s q 2 1 * q -4 1 s + q 2 1 s + q 2 1 s q 2 1	+ q 2 1 * q -1 1 s + q 2 1 s + q 2 1 s q 2 1
+tower-3	inverse-2--1	EQ	/ q 1 1 + q 2 1 * q -1 1 s + q 2 1 s + q 2 1 s q 2 1	/ + q 2 1 * q 1 1 s + q 2 1 s + q 2 1 s q 2 1 + q 4 1 n * q 1 1 + q 2 1 s + q 2 1 s q 2 1
+tower-3	expanded-2-1	EQ	s + + q 4 1 * q 1 1 + q 2 1 s + q 2 1 s q 2 1 * q 4 1 s + q 2 1 s + q 2 1 s q 2 1	+ q 2 1 * q 1 1 s + q 2 1 s + q 2 1 s q 2 1
+tower-3	inverse-2-1	EQ	/ q 1 1 + q 2 1 * q 1 1 s + q 2 1 s + q 2 1 s q 2 1	/ + q 2 1 * q -1 1 s + q 2 1 s + q 2 1 s q 2 1 + q 4 1 n * q 1 1 + q 2 1 s + q 2 1 s q 2 1
+tower-3	expanded-3--1	EQ	s + + q 9 1 * q 1 1 + q 2 1 s + q 2 1 s q 2 1 * q -6 1 s + q 2 1 s + q 2 1 s q 2 1	+ q 3 1 * q -1 1 s + q 2 1 s + q 2 1 s q 2 1
+tower-3	inverse-3--1	EQ	/ q 1 1 + q 3 1 * q -1 1 s + q 2 1 s + q 2 1 s q 2 1	/ + q 3 1 * q 1 1 s + q 2 1 s + q 2 1 s q 2 1 + q 9 1 n * q 1 1 + q 2 1 s + q 2 1 s q 2 1
+tower-3	expanded-3-1	EQ	s + + q 9 1 * q 1 1 + q 2 1 s + q 2 1 s q 2 1 * q 6 1 s + q 2 1 s + q 2 1 s q 2 1	+ q 3 1 * q 1 1 s + q 2 1 s + q 2 1 s q 2 1
+tower-3	inverse-3-1	EQ	/ q 1 1 + q 3 1 * q 1 1 s + q 2 1 s + q 2 1 s q 2 1	/ + q 3 1 * q -1 1 s + q 2 1 s + q 2 1 s q 2 1 + q 9 1 n * q 1 1 + q 2 1 s + q 2 1 s q 2 1
+tower-4	expanded--3--1	EQ	s + + q 9 1 * q 1 1 + q 2 1 s + q 2 1 s + q 2 1 s q 2 1 * q 6 1 s + q 2 1 s + q 2 1 s + q 2 1 s q 2 1	n + q -3 1 * q -1 1 s + q 2 1 s + q 2 1 s + q 2 1 s q 2 1
+tower-4	inverse--3--1	EQ	/ q 1 1 + q -3 1 * q -1 1 s + q 2 1 s + q 2 1 s + q 2 1 s q 2 1	/ + q -3 1 * q 1 1 s + q 2 1 s + q 2 1 s + q 2 1 s q 2 1 + q 9 1 n * q 1 1 + q 2 1 s + q 2 1 s + q 2 1 s q 2 1
+tower-4	expanded--3-1	EQ	s + + q 9 1 * q 1 1 + q 2 1 s + q 2 1 s + q 2 1 s q 2 1 * q -6 1 s + q 2 1 s + q 2 1 s + q 2 1 s q 2 1	n + q -3 1 * q 1 1 s + q 2 1 s + q 2 1 s + q 2 1 s q 2 1
+tower-4	inverse--3-1	EQ	/ q 1 1 + q -3 1 * q 1 1 s + q 2 1 s + q 2 1 s + q 2 1 s q 2 1	/ + q -3 1 * q -1 1 s + q 2 1 s + q 2 1 s + q 2 1 s q 2 1 + q 9 1 n * q 1 1 + q 2 1 s + q 2 1 s + q 2 1 s q 2 1
+tower-4	expanded--2--1	EQ	s + + q 4 1 * q 1 1 + q 2 1 s + q 2 1 s + q 2 1 s q 2 1 * q 4 1 s + q 2 1 s + q 2 1 s + q 2 1 s q 2 1	n + q -2 1 * q -1 1 s + q 2 1 s + q 2 1 s + q 2 1 s q 2 1
+tower-4	inverse--2--1	EQ	/ q 1 1 + q -2 1 * q -1 1 s + q 2 1 s + q 2 1 s + q 2 1 s q 2 1	/ + q -2 1 * q 1 1 s + q 2 1 s + q 2 1 s + q 2 1 s q 2 1 + q 4 1 n * q 1 1 + q 2 1 s + q 2 1 s + q 2 1 s q 2 1
+tower-4	expanded--2-1	EQ	s + + q 4 1 * q 1 1 + q 2 1 s + q 2 1 s + q 2 1 s q 2 1 * q -4 1 s + q 2 1 s + q 2 1 s + q 2 1 s q 2 1	n + q -2 1 * q 1 1 s + q 2 1 s + q 2 1 s + q 2 1 s q 2 1
+tower-4	inverse--2-1	EQ	/ q 1 1 + q -2 1 * q 1 1 s + q 2 1 s + q 2 1 s + q 2 1 s q 2 1	/ + q -2 1 * q -1 1 s + q 2 1 s + q 2 1 s + q 2 1 s q 2 1 + q 4 1 n * q 1 1 + q 2 1 s + q 2 1 s + q 2 1 s q 2 1
+tower-4	expanded--1--1	EQ	s + + q 1 1 * q 1 1 + q 2 1 s + q 2 1 s + q 2 1 s q 2 1 * q 2 1 s + q 2 1 s + q 2 1 s + q 2 1 s q 2 1	n + q -1 1 * q -1 1 s + q 2 1 s + q 2 1 s + q 2 1 s q 2 1
+tower-4	inverse--1--1	EQ	/ q 1 1 + q -1 1 * q -1 1 s + q 2 1 s + q 2 1 s + q 2 1 s q 2 1	/ + q -1 1 * q 1 1 s + q 2 1 s + q 2 1 s + q 2 1 s q 2 1 + q 1 1 n * q 1 1 + q 2 1 s + q 2 1 s + q 2 1 s q 2 1
+tower-4	expanded--1-1	EQ	s + + q 1 1 * q 1 1 + q 2 1 s + q 2 1 s + q 2 1 s q 2 1 * q -2 1 s + q 2 1 s + q 2 1 s + q 2 1 s q 2 1	+ q -1 1 * q 1 1 s + q 2 1 s + q 2 1 s + q 2 1 s q 2 1
+tower-4	inverse--1-1	EQ	/ q 1 1 + q -1 1 * q 1 1 s + q 2 1 s + q 2 1 s + q 2 1 s q 2 1	/ + q -1 1 * q -1 1 s + q 2 1 s + q 2 1 s + q 2 1 s q 2 1 + q 1 1 n * q 1 1 + q 2 1 s + q 2 1 s + q 2 1 s q 2 1
+tower-4	expanded-0--1	EQ	s + + q 0 1 * q 1 1 + q 2 1 s + q 2 1 s + q 2 1 s q 2 1 * q 0 1 s + q 2 1 s + q 2 1 s + q 2 1 s q 2 1	n + q 0 1 * q -1 1 s + q 2 1 s + q 2 1 s + q 2 1 s q 2 1
+tower-4	inverse-0--1	EQ	/ q 1 1 + q 0 1 * q -1 1 s + q 2 1 s + q 2 1 s + q 2 1 s q 2 1	/ + q 0 1 * q 1 1 s + q 2 1 s + q 2 1 s + q 2 1 s q 2 1 + q 0 1 n * q 1 1 + q 2 1 s + q 2 1 s + q 2 1 s q 2 1
+tower-4	expanded-0-1	EQ	s + + q 0 1 * q 1 1 + q 2 1 s + q 2 1 s + q 2 1 s q 2 1 * q 0 1 s + q 2 1 s + q 2 1 s + q 2 1 s q 2 1	+ q 0 1 * q 1 1 s + q 2 1 s + q 2 1 s + q 2 1 s q 2 1
+tower-4	inverse-0-1	EQ	/ q 1 1 + q 0 1 * q 1 1 s + q 2 1 s + q 2 1 s + q 2 1 s q 2 1	/ + q 0 1 * q -1 1 s + q 2 1 s + q 2 1 s + q 2 1 s q 2 1 + q 0 1 n * q 1 1 + q 2 1 s + q 2 1 s + q 2 1 s q 2 1
+tower-4	expanded-1--1	EQ	s + + q 1 1 * q 1 1 + q 2 1 s + q 2 1 s + q 2 1 s q 2 1 * q -2 1 s + q 2 1 s + q 2 1 s + q 2 1 s q 2 1	n + q 1 1 * q -1 1 s + q 2 1 s + q 2 1 s + q 2 1 s q 2 1
+tower-4	inverse-1--1	EQ	/ q 1 1 + q 1 1 * q -1 1 s + q 2 1 s + q 2 1 s + q 2 1 s q 2 1	/ + q 1 1 * q 1 1 s + q 2 1 s + q 2 1 s + q 2 1 s q 2 1 + q 1 1 n * q 1 1 + q 2 1 s + q 2 1 s + q 2 1 s q 2 1
+tower-4	expanded-1-1	EQ	s + + q 1 1 * q 1 1 + q 2 1 s + q 2 1 s + q 2 1 s q 2 1 * q 2 1 s + q 2 1 s + q 2 1 s + q 2 1 s q 2 1	+ q 1 1 * q 1 1 s + q 2 1 s + q 2 1 s + q 2 1 s q 2 1
+tower-4	inverse-1-1	EQ	/ q 1 1 + q 1 1 * q 1 1 s + q 2 1 s + q 2 1 s + q 2 1 s q 2 1	/ + q 1 1 * q -1 1 s + q 2 1 s + q 2 1 s + q 2 1 s q 2 1 + q 1 1 n * q 1 1 + q 2 1 s + q 2 1 s + q 2 1 s q 2 1
+tower-4	expanded-2--1	EQ	s + + q 4 1 * q 1 1 + q 2 1 s + q 2 1 s + q 2 1 s q 2 1 * q -4 1 s + q 2 1 s + q 2 1 s + q 2 1 s q 2 1	+ q 2 1 * q -1 1 s + q 2 1 s + q 2 1 s + q 2 1 s q 2 1
+tower-4	inverse-2--1	EQ	/ q 1 1 + q 2 1 * q -1 1 s + q 2 1 s + q 2 1 s + q 2 1 s q 2 1	/ + q 2 1 * q 1 1 s + q 2 1 s + q 2 1 s + q 2 1 s q 2 1 + q 4 1 n * q 1 1 + q 2 1 s + q 2 1 s + q 2 1 s q 2 1
+tower-4	expanded-2-1	EQ	s + + q 4 1 * q 1 1 + q 2 1 s + q 2 1 s + q 2 1 s q 2 1 * q 4 1 s + q 2 1 s + q 2 1 s + q 2 1 s q 2 1	+ q 2 1 * q 1 1 s + q 2 1 s + q 2 1 s + q 2 1 s q 2 1
+tower-4	inverse-2-1	EQ	/ q 1 1 + q 2 1 * q 1 1 s + q 2 1 s + q 2 1 s + q 2 1 s q 2 1	/ + q 2 1 * q -1 1 s + q 2 1 s + q 2 1 s + q 2 1 s q 2 1 + q 4 1 n * q 1 1 + q 2 1 s + q 2 1 s + q 2 1 s q 2 1
+tower-4	expanded-3--1	EQ	s + + q 9 1 * q 1 1 + q 2 1 s + q 2 1 s + q 2 1 s q 2 1 * q -6 1 s + q 2 1 s + q 2 1 s + q 2 1 s q 2 1	+ q 3 1 * q -1 1 s + q 2 1 s + q 2 1 s + q 2 1 s q 2 1
+tower-4	inverse-3--1	EQ	/ q 1 1 + q 3 1 * q -1 1 s + q 2 1 s + q 2 1 s + q 2 1 s q 2 1	/ + q 3 1 * q 1 1 s + q 2 1 s + q 2 1 s + q 2 1 s q 2 1 + q 9 1 n * q 1 1 + q 2 1 s + q 2 1 s + q 2 1 s q 2 1
+tower-4	expanded-3-1	EQ	s + + q 9 1 * q 1 1 + q 2 1 s + q 2 1 s + q 2 1 s q 2 1 * q 6 1 s + q 2 1 s + q 2 1 s + q 2 1 s q 2 1	+ q 3 1 * q 1 1 s + q 2 1 s + q 2 1 s + q 2 1 s q 2 1
+tower-4	inverse-3-1	EQ	/ q 1 1 + q 3 1 * q 1 1 s + q 2 1 s + q 2 1 s + q 2 1 s q 2 1	/ + q 3 1 * q -1 1 s + q 2 1 s + q 2 1 s + q 2 1 s q 2 1 + q 9 1 n * q 1 1 + q 2 1 s + q 2 1 s + q 2 1 s q 2 1
+tower-5	expanded--3--1	EQ	s + + q 9 1 * q 1 1 + q 2 1 s + q 2 1 s + q 2 1 s + q 2 1 s q 2 1 * q 6 1 s + q 2 1 s + q 2 1 s + q 2 1 s + q 2 1 s q 2 1	n + q -3 1 * q -1 1 s + q 2 1 s + q 2 1 s + q 2 1 s + q 2 1 s q 2 1
+tower-5	inverse--3--1	EQ	/ q 1 1 + q -3 1 * q -1 1 s + q 2 1 s + q 2 1 s + q 2 1 s + q 2 1 s q 2 1	/ + q -3 1 * q 1 1 s + q 2 1 s + q 2 1 s + q 2 1 s + q 2 1 s q 2 1 + q 9 1 n * q 1 1 + q 2 1 s + q 2 1 s + q 2 1 s + q 2 1 s q 2 1
+tower-5	expanded--3-1	EQ	s + + q 9 1 * q 1 1 + q 2 1 s + q 2 1 s + q 2 1 s + q 2 1 s q 2 1 * q -6 1 s + q 2 1 s + q 2 1 s + q 2 1 s + q 2 1 s q 2 1	n + q -3 1 * q 1 1 s + q 2 1 s + q 2 1 s + q 2 1 s + q 2 1 s q 2 1
+tower-5	inverse--3-1	EQ	/ q 1 1 + q -3 1 * q 1 1 s + q 2 1 s + q 2 1 s + q 2 1 s + q 2 1 s q 2 1	/ + q -3 1 * q -1 1 s + q 2 1 s + q 2 1 s + q 2 1 s + q 2 1 s q 2 1 + q 9 1 n * q 1 1 + q 2 1 s + q 2 1 s + q 2 1 s + q 2 1 s q 2 1
+tower-5	expanded--2--1	EQ	s + + q 4 1 * q 1 1 + q 2 1 s + q 2 1 s + q 2 1 s + q 2 1 s q 2 1 * q 4 1 s + q 2 1 s + q 2 1 s + q 2 1 s + q 2 1 s q 2 1	n + q -2 1 * q -1 1 s + q 2 1 s + q 2 1 s + q 2 1 s + q 2 1 s q 2 1
+tower-5	inverse--2--1	EQ	/ q 1 1 + q -2 1 * q -1 1 s + q 2 1 s + q 2 1 s + q 2 1 s + q 2 1 s q 2 1	/ + q -2 1 * q 1 1 s + q 2 1 s + q 2 1 s + q 2 1 s + q 2 1 s q 2 1 + q 4 1 n * q 1 1 + q 2 1 s + q 2 1 s + q 2 1 s + q 2 1 s q 2 1
+tower-5	expanded--2-1	EQ	s + + q 4 1 * q 1 1 + q 2 1 s + q 2 1 s + q 2 1 s + q 2 1 s q 2 1 * q -4 1 s + q 2 1 s + q 2 1 s + q 2 1 s + q 2 1 s q 2 1	n + q -2 1 * q 1 1 s + q 2 1 s + q 2 1 s + q 2 1 s + q 2 1 s q 2 1
+tower-5	inverse--2-1	EQ	/ q 1 1 + q -2 1 * q 1 1 s + q 2 1 s + q 2 1 s + q 2 1 s + q 2 1 s q 2 1	/ + q -2 1 * q -1 1 s + q 2 1 s + q 2 1 s + q 2 1 s + q 2 1 s q 2 1 + q 4 1 n * q 1 1 + q 2 1 s + q 2 1 s + q 2 1 s + q 2 1 s q 2 1
+tower-5	expanded--1--1	EQ	s + + q 1 1 * q 1 1 + q 2 1 s + q 2 1 s + q 2 1 s + q 2 1 s q 2 1 * q 2 1 s + q 2 1 s + q 2 1 s + q 2 1 s + q 2 1 s q 2 1	n + q -1 1 * q -1 1 s + q 2 1 s + q 2 1 s + q 2 1 s + q 2 1 s q 2 1
+tower-5	inverse--1--1	EQ	/ q 1 1 + q -1 1 * q -1 1 s + q 2 1 s + q 2 1 s + q 2 1 s + q 2 1 s q 2 1	/ + q -1 1 * q 1 1 s + q 2 1 s + q 2 1 s + q 2 1 s + q 2 1 s q 2 1 + q 1 1 n * q 1 1 + q 2 1 s + q 2 1 s + q 2 1 s + q 2 1 s q 2 1
+tower-5	expanded--1-1	EQ	s + + q 1 1 * q 1 1 + q 2 1 s + q 2 1 s + q 2 1 s + q 2 1 s q 2 1 * q -2 1 s + q 2 1 s + q 2 1 s + q 2 1 s + q 2 1 s q 2 1	+ q -1 1 * q 1 1 s + q 2 1 s + q 2 1 s + q 2 1 s + q 2 1 s q 2 1
+tower-5	inverse--1-1	EQ	/ q 1 1 + q -1 1 * q 1 1 s + q 2 1 s + q 2 1 s + q 2 1 s + q 2 1 s q 2 1	/ + q -1 1 * q -1 1 s + q 2 1 s + q 2 1 s + q 2 1 s + q 2 1 s q 2 1 + q 1 1 n * q 1 1 + q 2 1 s + q 2 1 s + q 2 1 s + q 2 1 s q 2 1
+tower-5	expanded-0--1	EQ	s + + q 0 1 * q 1 1 + q 2 1 s + q 2 1 s + q 2 1 s + q 2 1 s q 2 1 * q 0 1 s + q 2 1 s + q 2 1 s + q 2 1 s + q 2 1 s q 2 1	n + q 0 1 * q -1 1 s + q 2 1 s + q 2 1 s + q 2 1 s + q 2 1 s q 2 1
+tower-5	inverse-0--1	EQ	/ q 1 1 + q 0 1 * q -1 1 s + q 2 1 s + q 2 1 s + q 2 1 s + q 2 1 s q 2 1	/ + q 0 1 * q 1 1 s + q 2 1 s + q 2 1 s + q 2 1 s + q 2 1 s q 2 1 + q 0 1 n * q 1 1 + q 2 1 s + q 2 1 s + q 2 1 s + q 2 1 s q 2 1
+tower-5	expanded-0-1	EQ	s + + q 0 1 * q 1 1 + q 2 1 s + q 2 1 s + q 2 1 s + q 2 1 s q 2 1 * q 0 1 s + q 2 1 s + q 2 1 s + q 2 1 s + q 2 1 s q 2 1	+ q 0 1 * q 1 1 s + q 2 1 s + q 2 1 s + q 2 1 s + q 2 1 s q 2 1
+tower-5	inverse-0-1	EQ	/ q 1 1 + q 0 1 * q 1 1 s + q 2 1 s + q 2 1 s + q 2 1 s + q 2 1 s q 2 1	/ + q 0 1 * q -1 1 s + q 2 1 s + q 2 1 s + q 2 1 s + q 2 1 s q 2 1 + q 0 1 n * q 1 1 + q 2 1 s + q 2 1 s + q 2 1 s + q 2 1 s q 2 1
+tower-5	expanded-1--1	EQ	s + + q 1 1 * q 1 1 + q 2 1 s + q 2 1 s + q 2 1 s + q 2 1 s q 2 1 * q -2 1 s + q 2 1 s + q 2 1 s + q 2 1 s + q 2 1 s q 2 1	n + q 1 1 * q -1 1 s + q 2 1 s + q 2 1 s + q 2 1 s + q 2 1 s q 2 1
+tower-5	inverse-1--1	EQ	/ q 1 1 + q 1 1 * q -1 1 s + q 2 1 s + q 2 1 s + q 2 1 s + q 2 1 s q 2 1	/ + q 1 1 * q 1 1 s + q 2 1 s + q 2 1 s + q 2 1 s + q 2 1 s q 2 1 + q 1 1 n * q 1 1 + q 2 1 s + q 2 1 s + q 2 1 s + q 2 1 s q 2 1
+tower-5	expanded-1-1	EQ	s + + q 1 1 * q 1 1 + q 2 1 s + q 2 1 s + q 2 1 s + q 2 1 s q 2 1 * q 2 1 s + q 2 1 s + q 2 1 s + q 2 1 s + q 2 1 s q 2 1	+ q 1 1 * q 1 1 s + q 2 1 s + q 2 1 s + q 2 1 s + q 2 1 s q 2 1
+tower-5	inverse-1-1	EQ	/ q 1 1 + q 1 1 * q 1 1 s + q 2 1 s + q 2 1 s + q 2 1 s + q 2 1 s q 2 1	/ + q 1 1 * q -1 1 s + q 2 1 s + q 2 1 s + q 2 1 s + q 2 1 s q 2 1 + q 1 1 n * q 1 1 + q 2 1 s + q 2 1 s + q 2 1 s + q 2 1 s q 2 1
+tower-5	expanded-2--1	EQ	s + + q 4 1 * q 1 1 + q 2 1 s + q 2 1 s + q 2 1 s + q 2 1 s q 2 1 * q -4 1 s + q 2 1 s + q 2 1 s + q 2 1 s + q 2 1 s q 2 1	+ q 2 1 * q -1 1 s + q 2 1 s + q 2 1 s + q 2 1 s + q 2 1 s q 2 1
+tower-5	inverse-2--1	EQ	/ q 1 1 + q 2 1 * q -1 1 s + q 2 1 s + q 2 1 s + q 2 1 s + q 2 1 s q 2 1	/ + q 2 1 * q 1 1 s + q 2 1 s + q 2 1 s + q 2 1 s + q 2 1 s q 2 1 + q 4 1 n * q 1 1 + q 2 1 s + q 2 1 s + q 2 1 s + q 2 1 s q 2 1
+tower-5	expanded-2-1	EQ	s + + q 4 1 * q 1 1 + q 2 1 s + q 2 1 s + q 2 1 s + q 2 1 s q 2 1 * q 4 1 s + q 2 1 s + q 2 1 s + q 2 1 s + q 2 1 s q 2 1	+ q 2 1 * q 1 1 s + q 2 1 s + q 2 1 s + q 2 1 s + q 2 1 s q 2 1
+tower-5	inverse-2-1	EQ	/ q 1 1 + q 2 1 * q 1 1 s + q 2 1 s + q 2 1 s + q 2 1 s + q 2 1 s q 2 1	/ + q 2 1 * q -1 1 s + q 2 1 s + q 2 1 s + q 2 1 s + q 2 1 s q 2 1 + q 4 1 n * q 1 1 + q 2 1 s + q 2 1 s + q 2 1 s + q 2 1 s q 2 1
+tower-5	expanded-3--1	EQ	s + + q 9 1 * q 1 1 + q 2 1 s + q 2 1 s + q 2 1 s + q 2 1 s q 2 1 * q -6 1 s + q 2 1 s + q 2 1 s + q 2 1 s + q 2 1 s q 2 1	+ q 3 1 * q -1 1 s + q 2 1 s + q 2 1 s + q 2 1 s + q 2 1 s q 2 1
+tower-5	inverse-3--1	EQ	/ q 1 1 + q 3 1 * q -1 1 s + q 2 1 s + q 2 1 s + q 2 1 s + q 2 1 s q 2 1	/ + q 3 1 * q 1 1 s + q 2 1 s + q 2 1 s + q 2 1 s + q 2 1 s q 2 1 + q 9 1 n * q 1 1 + q 2 1 s + q 2 1 s + q 2 1 s + q 2 1 s q 2 1
+tower-5	expanded-3-1	EQ	s + + q 9 1 * q 1 1 + q 2 1 s + q 2 1 s + q 2 1 s + q 2 1 s q 2 1 * q 6 1 s + q 2 1 s + q 2 1 s + q 2 1 s + q 2 1 s q 2 1	+ q 3 1 * q 1 1 s + q 2 1 s + q 2 1 s + q 2 1 s + q 2 1 s q 2 1
+tower-5	inverse-3-1	EQ	/ q 1 1 + q 3 1 * q 1 1 s + q 2 1 s + q 2 1 s + q 2 1 s + q 2 1 s q 2 1	/ + q 3 1 * q -1 1 s + q 2 1 s + q 2 1 s + q 2 1 s + q 2 1 s q 2 1 + q 9 1 n * q 1 1 + q 2 1 s + q 2 1 s + q 2 1 s + q 2 1 s q 2 1
+independent	surd-2-3--1--1	EQ	s + q 5 1 * q 2 1 s q 6 1	n + * q -1 1 s q 2 1 * q -1 1 s q 3 1
+independent	surd-2-3--1-1	EQ	s + q 5 1 * q -2 1 s q 6 1	+ * q -1 1 s q 2 1 * q 1 1 s q 3 1
+independent	surd-2-3-1--1	EQ	s + q 5 1 * q -2 1 s q 6 1	n + * q 1 1 s q 2 1 * q -1 1 s q 3 1
+independent	surd-2-3-1-1	EQ	s + q 5 1 * q 2 1 s q 6 1	+ * q 1 1 s q 2 1 * q 1 1 s q 3 1
+independent	surd-2-5--1--1	EQ	s + q 7 1 * q 2 1 s q 10 1	n + * q -1 1 s q 2 1 * q -1 1 s q 5 1
+independent	surd-2-5--1-1	EQ	s + q 7 1 * q -2 1 s q 10 1	+ * q -1 1 s q 2 1 * q 1 1 s q 5 1
+independent	surd-2-5-1--1	EQ	s + q 7 1 * q -2 1 s q 10 1	n + * q 1 1 s q 2 1 * q -1 1 s q 5 1
+independent	surd-2-5-1-1	EQ	s + q 7 1 * q 2 1 s q 10 1	+ * q 1 1 s q 2 1 * q 1 1 s q 5 1
+independent	surd-3-7--1--1	EQ	s + q 10 1 * q 2 1 s q 21 1	n + * q -1 1 s q 3 1 * q -1 1 s q 7 1
+independent	surd-3-7--1-1	EQ	s + q 10 1 * q -2 1 s q 21 1	+ * q -1 1 s q 3 1 * q 1 1 s q 7 1
+independent	surd-3-7-1--1	EQ	s + q 10 1 * q -2 1 s q 21 1	n + * q 1 1 s q 3 1 * q -1 1 s q 7 1
+independent	surd-3-7-1-1	EQ	s + q 10 1 * q 2 1 s q 21 1	+ * q 1 1 s q 3 1 * q 1 1 s q 7 1
+independent	surd-5-7--1--1	EQ	s + q 12 1 * q 2 1 s q 35 1	n + * q -1 1 s q 5 1 * q -1 1 s q 7 1
+independent	surd-5-7--1-1	EQ	s + q 12 1 * q -2 1 s q 35 1	+ * q -1 1 s q 5 1 * q 1 1 s q 7 1
+independent	surd-5-7-1--1	EQ	s + q 12 1 * q -2 1 s q 35 1	n + * q 1 1 s q 5 1 * q -1 1 s q 7 1
+independent	surd-5-7-1-1	EQ	s + q 12 1 * q 2 1 s q 35 1	+ * q 1 1 s q 5 1 * q 1 1 s q 7 1

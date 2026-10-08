@@ -1,0 +1,6 @@
+adding x>=5 to x>=0 retains Just 0
+adding x<=5 to x<=10 retains Just 10
+generator requested endpoints, strict/inclusive: ((0,5),(1,4))
+forbidden zero samples / 4096 fixed seeds: 1028
+feasible two-value LT tuples truncated / 4096 seeds: 129
+[(0,[1]),(22,[1]),(50,[0]),(79,[0])]

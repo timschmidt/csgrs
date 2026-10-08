@@ -1,0 +1,15 @@
+{
+  "pid": 3786518,
+  "argv": [
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/rational-resultant-samples-20260928-v680-hypercurve-tests",
+    "--exact",
+    "bezier_offset::structural_overlap_trace_regression::monotone_reparameterization_preserves_structural_pair_crossings_strict",
+    "--nocapture",
+    "--test-threads=1"
+  ],
+  "cwd": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/source-archives/rational-resultant-samples-20260928-v680/hypercurve",
+  "binary_sha256": "76a318ea1599bbd0536d4afe832480892fb34d4390d529b4167ddff98205be7d",
+  "original_executable": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve-aaccf7914fea7cbf",
+  "returncode": 0,
+  "log": "rational-resultant-samples-v682-gdb.log"
+}

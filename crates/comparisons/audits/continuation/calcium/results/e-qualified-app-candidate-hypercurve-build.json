@@ -1,0 +1,25 @@
+{
+  "tag": "e-qualified-app-candidate-hypercurve-build",
+  "started": "2026-09-10T01:40:06.940Z",
+  "finished": "2026-09-10T01:41:38.890Z",
+  "elapsedSeconds": 91.948281502,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/e-plan-qualified-candidate/hypercurve",
+  "command": "env",
+  "args": [
+    "CARGO_TARGET_DIR=/tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse",
+    "CARGO_INCREMENTAL=0",
+    "CARGO_PROFILE_DEV_DEBUG=0",
+    "CARGO_BUILD_JOBS=2",
+    "cargo",
+    "build",
+    "--locked",
+    "--offline",
+    "--release",
+    "--example",
+    "basic",
+    "--example",
+    "arrangement"
+  ],
+  "code": 0,
+  "signal": null
+}

@@ -1,0 +1,132 @@
+{
+  "source_manifest": "owned-root-newton-20260927-v460-sources.json",
+  "source_directory": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/source-archives/owned-root-newton-20260927-v460",
+  "cases": [
+    {
+      "binary": "owned-root-newton-20260927-v460-hypersolve",
+      "name": "root_sign::captured_quadratic_field_queries::selected_root_query_000",
+      "returncode": 0,
+      "log": "owned-root-newton-20260927-v460-case-000.log",
+      "elapsed_seconds": 0.031727543100714684
+    },
+    {
+      "binary": "owned-root-newton-20260927-v460-hypersolve",
+      "name": "root_sign::captured_quadratic_field_queries::selected_root_query_001",
+      "returncode": 0,
+      "log": "owned-root-newton-20260927-v460-case-001.log",
+      "elapsed_seconds": 0.03168524708598852
+    },
+    {
+      "binary": "owned-root-newton-20260927-v460-hypersolve",
+      "name": "root_sign::captured_quadratic_field_queries::selected_root_query_002",
+      "returncode": 0,
+      "log": "owned-root-newton-20260927-v460-case-002.log",
+      "elapsed_seconds": 0.06375573598779738
+    },
+    {
+      "binary": "owned-root-newton-20260927-v460-hypersolve",
+      "name": "root_sign::captured_quadratic_field_queries::selected_root_query_003",
+      "returncode": 0,
+      "log": "owned-root-newton-20260927-v460-case-003.log",
+      "elapsed_seconds": 0.031689906027168036
+    },
+    {
+      "binary": "owned-root-newton-20260927-v460-hypersolve",
+      "name": "root_sign::captured_quadratic_field_queries::selected_root_query_004",
+      "returncode": 0,
+      "log": "owned-root-newton-20260927-v460-case-004.log",
+      "elapsed_seconds": 0.031710084062069654
+    },
+    {
+      "binary": "owned-root-newton-20260927-v460-hypersolve",
+      "name": "root_sign::captured_quadratic_field_queries::selected_root_query_005",
+      "returncode": 0,
+      "log": "owned-root-newton-20260927-v460-case-005.log",
+      "elapsed_seconds": 0.06375271594151855
+    },
+    {
+      "binary": "owned-root-newton-20260927-v460-hypersolve",
+      "name": "root_sign::captured_quadratic_field_queries::selected_root_query_006",
+      "returncode": 0,
+      "log": "owned-root-newton-20260927-v460-case-006.log",
+      "elapsed_seconds": 0.03172005410306156
+    },
+    {
+      "binary": "owned-root-newton-20260927-v460-hypersolve",
+      "name": "root_sign::captured_quadratic_field_queries::selected_root_query_007",
+      "returncode": 0,
+      "log": "owned-root-newton-20260927-v460-case-007.log",
+      "elapsed_seconds": 0.06374572706408799
+    },
+    {
+      "binary": "owned-root-newton-20260927-v460-hypersolve",
+      "name": "root_sign::captured_quadratic_field_queries::selected_root_query_008",
+      "returncode": 0,
+      "log": "owned-root-newton-20260927-v460-case-008.log",
+      "elapsed_seconds": 0.031744532054290175
+    },
+    {
+      "binary": "owned-root-newton-20260927-v460-hypersolve",
+      "name": "root_sign::captured_quadratic_field_queries::selected_root_query_009",
+      "returncode": 0,
+      "log": "owned-root-newton-20260927-v460-case-009.log",
+      "elapsed_seconds": 0.03170065605081618
+    },
+    {
+      "binary": "owned-root-newton-20260927-v460-hypersolve",
+      "name": "root_sign::captured_quadratic_field_queries::selected_root_query_010",
+      "returncode": 0,
+      "log": "owned-root-newton-20260927-v460-case-010.log",
+      "elapsed_seconds": 0.06382736098021269
+    }
+  ],
+  "builds": [
+    {
+      "crate": "hypersolve",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "test",
+        "--lib",
+        "--release",
+        "--all-features",
+        "--no-run",
+        "--message-format=json",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "log": "owned-root-newton-20260927-v460-hypersolve-build.log",
+      "elapsed_seconds": 54.38672062312253,
+      "binary": {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/owned-root-newton-20260927-v460-hypersolve",
+        "sha256": "d3d537866057f5284998d31fee12a1f5bace611ab6331ebb1738cf4bd29b236d"
+      }
+    }
+  ],
+  "trial": {
+    "hypersolve/src/root_sign.rs": "72ccd4c822bc8c1e2a00d016d6d95f444a15ad55f148c63dbccecc00b9b703b6"
+  },
+  "all_processes_reaped": true,
+  "checks": [],
+  "qualification_scope": "Copy-only certified dyadic interval Newton against all eleven independent quartic-field signs; production unchanged",
+  "expected_cases": {
+    "hypersolve": [
+      "root_sign::captured_quadratic_field_queries::selected_root_query_000",
+      "root_sign::captured_quadratic_field_queries::selected_root_query_001",
+      "root_sign::captured_quadratic_field_queries::selected_root_query_002",
+      "root_sign::captured_quadratic_field_queries::selected_root_query_003",
+      "root_sign::captured_quadratic_field_queries::selected_root_query_004",
+      "root_sign::captured_quadratic_field_queries::selected_root_query_005",
+      "root_sign::captured_quadratic_field_queries::selected_root_query_006",
+      "root_sign::captured_quadratic_field_queries::selected_root_query_007",
+      "root_sign::captured_quadratic_field_queries::selected_root_query_008",
+      "root_sign::captured_quadratic_field_queries::selected_root_query_009",
+      "root_sign::captured_quadratic_field_queries::selected_root_query_010"
+    ]
+  },
+  "known_unresolved": [
+    "strict_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions",
+    "approximate_512_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions"
+  ],
+  "qualification_complete": true
+}

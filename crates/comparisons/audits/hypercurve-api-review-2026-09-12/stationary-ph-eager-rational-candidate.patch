@@ -1,0 +1,186 @@
+diff --git a/src/bezier_region.rs b/src/bezier_region.rs
+index cd585d5..87a7732 100644
+--- a/src/bezier_region.rs
++++ b/src/bezier_region.rs
+@@ -4981,24 +4981,39 @@ fn exact_offset_spans_from_source_singular_parallel(
+                 }
+             }
+         }
++        // The oriented primitive hodograph already certifies a rational PH
++        // branch, including its one-sided limits at stationary endpoints.
++        // Restrict that support to this source branch: its global extension
++        // can carry the wrong normal sheet beyond a source singularity.
++        let rational_component = match parallel.exact_rational_parallel_component_on_regular_range(
++            &CurveParameterRange2::from_bezier_range(source_range.clone()),
++            policy,
++        ) {
++            Ok(Classification::Decided(Some(component))) => Some(component),
++            Ok(Classification::Decided(None) | Classification::Uncertain(_)) | Err(_) => None,
++        };
+         let fragments = boundaries
+             .windows(2)
+             .zip(endpoint_points.windows(2))
+             .map(|(parameters, points)| {
+-                if parameters[0].1 || parameters[1].1 {
+-                    BezierSplitFragment2::SelectedFiber(
+-                        crate::bezier_split::BezierSelectedFiberFragment2::new(
+-                            BezierSelectedFiberSource2::AnalyticParallel(parallel.clone()),
+-                            CurveParameterRange2::new_validated(
+-                                CurveParameter2::from(parameters[0].0.clone()),
+-                                CurveParameter2::from(parameters[1].0.clone()),
+-                            ),
+-                            points[0].clone(),
+-                            points[1].clone(),
+-                        ),
+-                    )
++                let source = if let Some(component) = &rational_component {
++                    if let (Some(start), Some(end)) =
++                        (parameters[0].0.scalar(), parameters[1].0.scalar())
++                        && let Ok(Classification::Decided(curve)) = component
++                            .curve()
++                            .subcurve_between_exact(start, end, &policy.strict_counterpart())
++                    {
++                        return BezierSplitFragment2::Materialized {
++                            start: parameters[0].0.clone(),
++                            end: parameters[1].0.clone(),
++                            curve: BezierSubcurve2::Rational(curve),
++                        };
++                    }
++                    BezierSelectedFiberSource2::Rational(component.curve().clone())
++                } else if parameters[0].1 || parameters[1].1 {
++                    BezierSelectedFiberSource2::AnalyticParallel(parallel.clone())
+                 } else {
+-                    BezierSplitFragment2::AnalyticParallel(
++                    return BezierSplitFragment2::AnalyticParallel(
+                         crate::BezierParallelFragment2::from_certified_range(
+                             parallel.clone(),
+                             BezierParameterRange2::new_validated(
+@@ -5007,8 +5022,19 @@ fn exact_offset_spans_from_source_singular_parallel(
+                             ),
+                             false,
+                         ),
+-                    )
+-                }
++                    );
++                };
++                BezierSplitFragment2::SelectedFiber(
++                    crate::bezier_split::BezierSelectedFiberFragment2::new(
++                        source,
++                        CurveParameterRange2::new_validated(
++                            CurveParameter2::from(parameters[0].0.clone()),
++                            CurveParameter2::from(parameters[1].0.clone()),
++                        ),
++                        points[0].clone(),
++                        points[1].clone(),
++                    ),
++                )
+             })
+             .collect();
+         let source_end =
+@@ -18952,6 +18978,106 @@ mod tests {
+         }
+     }
+ 
++    #[test]
++    fn stationary_ph_offset_spans_preserve_rational_ranges_and_normal_sheets() {
++        // Each hodograph is g(t) (1-t^2, 2t), with primitive speed 1+t^2.
++        // The common factors t^2, 2t-1, and 2t^2-1 exercise an endpoint,
++        // a rational interior reversal, and an algebraic interior reversal.
++        let sources = [
++            (
++                vec![q(0, 1), q(0, 1), q(0, 1), q(1, 3), q(0, 1), q(-1, 5)],
++                vec![q(0, 1), q(0, 1), q(0, 1), q(0, 1), q(1, 2), q(0, 1)],
++                1,
++            ),
++            (
++                vec![q(0, 1), q(-1, 1), q(1, 1), q(1, 3), q(-1, 2)],
++                vec![q(0, 1), q(0, 1), q(-1, 1), q(4, 3), q(0, 1)],
++                2,
++            ),
++            (
++                vec![q(0, 1), q(-1, 1), q(0, 1), q(1, 1), q(0, 1), q(-2, 5)],
++                vec![q(0, 1), q(0, 1), q(-1, 1), q(0, 1), q(1, 1), q(0, 1)],
++                2,
++            ),
++        ];
++        for (x, y, span_count) in sources {
++            let degree = x.len() - 1;
++            let controls = crate::bezier_parameter::power_to_bernstein_coefficients(&x, degree)
++                .unwrap()
++                .into_iter()
++                .zip(crate::bezier_parameter::power_to_bernstein_coefficients(&y, degree).unwrap())
++                .map(|(x, y)| Point2::new(x, y))
++                .collect();
++            let source = RationalBezier2::try_new(controls, vec![Real::one(); degree + 1]).unwrap();
++            for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
++                for reversed in [false, true] {
++                    let source = if reversed {
++                        source.reversed()
++                    } else {
++                        source.clone()
++                    };
++                    for distance in [q(-1, 20), q(1, 20)] {
++                        let parallel = source.parallel_left(distance.clone()).unwrap();
++                        assert!(matches!(
++                            parallel
++                                .exact_pythagorean_hodograph_offset(&policy)
++                                .unwrap(),
++                            Classification::Decided(None)
++                        ));
++                        let Classification::Decided(spans) =
++                            exact_offset_spans_from_materialized_curve(
++                                &BezierSubcurve2::Rational(source.clone()),
++                                &distance,
++                                &policy,
++                            )
++                            .unwrap()
++                        else {
++                            panic!("stationary PH branches must offset exactly")
++                        };
++                        assert_eq!(spans.len(), span_count);
++                        for span in &spans {
++                            for fragment in &span.fragments {
++                                let range = fragment.curve_region_parameter_range();
++                                let Classification::Decided(parameter) =
++                                    range.strict_interior_scalar(&policy).unwrap()
++                                else {
++                                    panic!("the exact fragment must retain an interior parameter")
++                                };
++                                let actual = match fragment {
++                                    BezierSplitFragment2::Materialized { curve: BezierSubcurve2::Rational(curve), .. } => {
++                                        let (start, end) = range.scalar_endpoints().unwrap();
++                                        let local = ((&parameter - start) / (end - start)).unwrap();
++                                        curve.point_at_classified(&local, &policy)
++                                    }
++                                    BezierSplitFragment2::SelectedFiber(fragment) => fragment.rational_curve().expect("the selected PH branch must retain its exact rational support").point_at_classified(&parameter, &policy),
++                                    _ => panic!("a PH branch must expose its exact rational curve"),
++                                };
++                                let Classification::Decided(actual) = actual else {
++                                    panic!("the retained rational support must evaluate exactly")
++                                };
++                                let Classification::Decided(expected) =
++                                    parallel.point_at(&parameter, &policy).unwrap()
++                                else {
++                                    panic!("the source normal must be regular inside this fragment")
++                                };
++                                assert_eq!(
++                                    real_sign(&actual.distance_squared(&expected), &policy),
++                                    Some(RealSign::Zero)
++                                );
++                            }
++                        }
++                        if let [left, right] = spans.as_slice() {
++                            assert_eq!(
++                                left.offset_end.same_point(&right.offset_start, &policy),
++                                Classification::Decided(false)
++                            );
++                        }
++                    }
++                }
++            }
++        }
++    }
++
+     #[test]
+     fn even_multiplicity_stationary_source_coalesces_one_offset_span() {
+         // With s=2u-1, P(u)=(s^3,s^4) has P'(u)=s^2(6,8s).

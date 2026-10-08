@@ -1,0 +1,20 @@
+{
+  "parent": "8977b811b66efcaeee00c9d8005f97ca6d788e28",
+  "returncode": 0,
+  "elapsed_seconds": 0.0156884349999018,
+  "command": [
+    "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustc",
+    "--edition=2024",
+    "-O",
+    "normalized-region-admission-public.rs",
+    "--extern",
+    "hypercurve=/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-projective-parameter-libraries/libhypercurve-1201b30e361703ad.rlib",
+    "-L",
+    "dependency=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps",
+    "-o",
+    "normalized-region-admission-baseline"
+  ],
+  "source_sha256": "1ab79c21e2920b19bae9ab9ea73e10360750d2645b369d0d7ab7747227592cbd",
+  "binary_sha256": "2a81c61b75525ab8dc76a91c368e881437262cce892a6de0b89e3aa5bab61ad1",
+  "library_sha256": "5cc578428c0ecd41b54f2dca195f416779e365698dcb4ad46588dd84bd0ef96a"
+}

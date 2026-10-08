@@ -1,0 +1,27 @@
+{
+  "returncode": 0,
+  "elapsed_seconds": 6.522621125011938,
+  "normal_library_sha256": "cfe74e6bb84e6907ba989a26023d587fb8d2fd4912961045b76c518bd98b1f39",
+  "log": "finite-region-preparation-affine-parallel-replay.log",
+  "source": "finite-circle-affine-parallel-public.rs",
+  "command": [
+    "rustc",
+    "--edition=2024",
+    "-O",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-circle-affine-parallel-public.rs",
+    "--extern",
+    "hypercurve=/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/libhypercurve-2c7ff6f3fbe07653.rlib",
+    "-L",
+    "dependency=/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps",
+    "-o",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-region-preparation-affine-parallel-replay"
+  ],
+  "source_sha256": "e8edcbaa22fae40f130a617e793526b30d54f665215e359a47afc553e1a416b6",
+  "executable_sha256": "4df695109c9bc863d8709bc252340702b7fb0cf8b34b151911d7f0f6d0346cf6",
+  "counts": {
+    "tangent_queries": 144,
+    "opposite_tangent_exclusions": 48,
+    "point_replays": 288,
+    "topologies": 144
+  }
+}

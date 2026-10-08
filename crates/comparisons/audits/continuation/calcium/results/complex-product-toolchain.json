@@ -1,0 +1,14 @@
+{
+  "tag": "complex-product-toolchain",
+  "started": "2026-09-09T21:42:01.335Z",
+  "finished": "2026-09-09T21:42:01.359Z",
+  "elapsedSeconds": 0.022098326,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "rustc",
+  "args": [
+    "--version",
+    "--verbose"
+  ],
+  "code": 0,
+  "signal": null
+}

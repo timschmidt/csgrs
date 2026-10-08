@@ -1,0 +1,83 @@
+name: Debug
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+
+env:
+  BUILD_TYPE: Debug
+
+jobs:
+  build:
+
+    name: ${{ matrix.config.name }}
+    runs-on: ${{ matrix.config.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        config:
+          - {
+            name: "macOS 13 AppleClang 14 [Debug]",
+            os: macos-13,
+            cxx: "clang++"
+          }
+          - {
+            name: "Ubuntu 24.04 Clang 16 [Debug]",
+            os: ubuntu-24.04,
+            cxx: "clang++-16"
+          }
+          - {
+            name: "Ubuntu 24.04 GCC 12 [Debug]",
+            os: ubuntu-24.04,
+            cxx: "g++-12"
+          }
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Get macOS Concurrency
+      if: runner.os == 'macOS'
+      run: |
+        echo NPROC="sysctl -n hw.ncpu" >> $GITHUB_ENV
+        echo "Running on $(sysctl -n hw.ncpu) threads ..."
+
+    - name: Get Linux Concurrency
+      if: runner.os == 'Linux'
+      run: |
+        echo NPROC="nproc" >> $GITHUB_ENV
+        echo "Running on $(nproc) threads ..."
+
+    - name: Set Up macOS Dependencies
+      if: runner.os == 'macOS'
+      run: |
+        brew install ninja gcc@12 mpfr cairo gnuplot pkg-config
+        python3 -m pip install --upgrade pip
+        pip3 install --upgrade pip
+        pip3 install pytest
+
+    - name: Set Up Linux Dependencies
+      if: runner.os == 'Linux'
+      run: |
+        sudo apt install -y cmake ninja-build pkg-config clang-16 g++-12 libcairo2-dev gnuplot libmpfr-dev python3-pip python3-dev
+        sudo pip3 install pytest
+
+    - name: Create Build Environment
+      run: cmake -E make_directory ${{runner.workspace}}/build
+
+    - name: Configure CMake
+      working-directory: ${{runner.workspace}}/build
+      run: cmake $GITHUB_WORKSPACE -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DCMAKE_CXX_COMPILER=${{matrix.config.cxx}} -G "Ninja" -DWARNINGS_AS_ERRORS=ON -DPYTHON_ENFORCE_TESTS=ON
+
+    - name: Build Library and Bindings
+      working-directory: ${{runner.workspace}}/build
+      run: cmake --build . --parallel $($NPROC)
+
+    - name: Build Tests
+      working-directory: ${{runner.workspace}}/build
+      run: cmake --build . --parallel $($NPROC) --target tests
+
+    - name: Test
+      working-directory: ${{runner.workspace}}/build
+      run: ctest -j $($NPROC) --output-on-failure

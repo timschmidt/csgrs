@@ -1,0 +1,23 @@
+==508198== Nulgrind, the minimal Valgrind tool
+==508198== Copyright (C) 2002-2024, and GNU GPL'd, by Nicholas Nethercote et al.
+==508198== Using Valgrind-3.27.1 and LibVEX; rerun with -h for copyright info
+==508198== Command: /tmp/calcium-symbolic-boundary-v83.JuGH8X/isolated-abs
+==508198== 
+before abs
+isolated-abs: /home/tim/Documents/GitHub/workspace/exact-real-references/flint/src/fmpz_lll/is_reduced_d.c:813: fmpz_lll_is_reduced_d: Assertion `(fl->rt == Z_BASIS ? fmpz_mat_is_reduced(B, fl->delta, fl->eta) : fmpz_mat_is_reduced_gram(B, fl->delta, fl->eta))' failed.
+==508198== 
+==508198== Process terminating with default action of signal 6 (SIGABRT)
+==508198==    at 0x58ED32C: __pthread_kill_implementation (pthread_kill.c:44)
+==508198==    by 0x589315D: raise (raise.c:26)
+==508198==    by 0x587A6CF: abort (abort.c:77)
+==508198==    by 0x587A638: __assert_fail_base.cold (assert.c:118)
+==508198==    by 0x487589D: fmpz_lll_is_reduced_d.cold (in /home/tim/Documents/GitHub/workspace/exact-real-references/flint/libflint.so.25.0.0)
+==508198==    by 0x4BA819D: fmpz_lll_is_reduced (in /home/tim/Documents/GitHub/workspace/exact-real-references/flint/libflint.so.25.0.0)
+==508198==    by 0x4BC3E59: fmpz_lll_wrapper_with_removal_knapsack (in /home/tim/Documents/GitHub/workspace/exact-real-references/flint/libflint.so.25.0.0)
+==508198==    by 0x4BC1534: fmpz_lll_with_removal_ulll (in /home/tim/Documents/GitHub/workspace/exact-real-references/flint/libflint.so.25.0.0)
+==508198==    by 0x5189179: _qqbar_acb_lindep (in /home/tim/Documents/GitHub/workspace/exact-real-references/flint/libflint.so.25.0.0)
+==508198==    by 0x5194769: qqbar_guess (in /home/tim/Documents/GitHub/workspace/exact-real-references/flint/libflint.so.25.0.0)
+==508198==    by 0x518D37F: qqbar_binary_op (in /home/tim/Documents/GitHub/workspace/exact-real-references/flint/libflint.so.25.0.0)
+==508198==    by 0x518889C: qqbar_abs (in /home/tim/Documents/GitHub/workspace/exact-real-references/flint/libflint.so.25.0.0)
+==508198== 
+timeout: the monitored command dumped core

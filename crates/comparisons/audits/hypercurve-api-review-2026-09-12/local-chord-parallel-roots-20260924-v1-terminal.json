@@ -1,0 +1,37 @@
+{
+  "checks": [
+    {
+      "label": "fmt",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustfmt",
+        "--edition",
+        "2024",
+        "--check",
+        "src/bezier_offset.rs"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 2.3818488040706143,
+      "log": "local-chord-parallel-roots-20260924-v1-fmt.log"
+    }
+  ],
+  "cases": [
+    {
+      "label": "recursive_chord_parallel_local_roots_reject_conjugates_and_clip_exactly",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/local-chord-parallel-roots-20260924-v1-libtest",
+        "--exact",
+        "bezier_offset::conversion_tests::recursive_chord_parallel_local_roots_reject_conjugates_and_clip_exactly",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 101,
+      "elapsed_seconds": 0.26725872699171305,
+      "log": "local-chord-parallel-roots-20260924-v1-recursive_chord_parallel_local_roots_reject_conjugates_and_clip_exactly.log"
+    }
+  ],
+  "all_processes_reaped": true,
+  "binary_sha256": "9b1c391f3cae61af3458b16500dfbd1be435b1359140c4951a05a4d572b6dd6d",
+  "all_sources_unchanged": true
+}

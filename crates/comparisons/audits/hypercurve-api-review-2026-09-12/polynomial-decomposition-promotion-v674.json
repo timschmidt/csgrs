@@ -1,0 +1,21 @@
+{
+  "base_commit": "75acea1dadff277ad1ea83775ea6592b8c84f435",
+  "changed_files": {
+    "hypercurve/src/bspline.rs": {
+      "before": "6c691632bad9bca80d836293734dda37b9609dc912d1341061efe9c2c6f48919",
+      "after": "d43697e16db3f6319fb9e6bb81a4de50e1ba816e3491fd3d1e40a29b2bbc3ed5"
+    },
+    "hypercurve/src/polynomial_spline.rs": {
+      "before": "a57e77b85559383f7f88a6846570cf5c94199aca78dc7c46069e1ba99ab078ac",
+      "after": "1a497ce1b0099cf3aad209337cb9f8603e08c515f2c754ee523a1207f36f47f7"
+    },
+    "hypercurve/src/lib.rs": {
+      "before": "05738e6ebd1a406561371042b9c5fb8517761c892bed76908c813227f7eff191",
+      "after": "f73740cf66a18a7ef15ff34d73c3070664fd8e3123e0eabde68b96a46daf6b45"
+    }
+  },
+  "candidate": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/polynomial-decomposition-candidate-v673/hypercurve",
+  "formatted": true,
+  "formatter_reaped_exit": 0,
+  "standalone_knot_fact_replay_unchanged": true
+}

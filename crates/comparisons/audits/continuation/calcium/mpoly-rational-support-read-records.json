@@ -1,0 +1,24 @@
+[
+  {
+    "repo": "flint",
+    "path": "src/test_helpers.h",
+    "ranges": [
+      [
+        145,
+        210
+      ]
+    ],
+    "note": "Checkpoint46 partial driver read: TEST_MAIN with no test arguments iterates every registered test and aborts on a failing return. Also read adjacent failure formatting and named-test argument selection; no invalid argument branch exercised."
+  },
+  {
+    "repo": "flint",
+    "path": "src/generic_files/test_helpers.c",
+    "ranges": [
+      [
+        1,
+        37
+      ]
+    ],
+    "note": "Checkpoint46 complete multiplier helper: initialize once from FLINT_TEST_MULTIPLIER, default one, fallback on values outside the finite accepted comparison range. Upstream run explicitly supplies literal1, so the declared loop counts are not silently reduced. No environment parsing edge probes."
+  }
+]

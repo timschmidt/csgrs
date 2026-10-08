@@ -1,0 +1,26 @@
+heaptrack output will be written to "/tmp/hypercurve-normal-form-facts-baseline.heap.zst"
+starting application, this might take some time...
+NOTE: heaptrack detected DEBUGINFOD_URLS but will disable it to prevent 
+unintended network delays during recording
+If you really want to use DEBUGINFOD, export HEAPTRACK_ENABLE_DEBUGINFOD=1
+bezier_parameter_normal_form_zero_cold: 20000 iterations in 1.165898022s (58.294µs/iter), equal=20000
+bezier_parameter_normal_form_zero_reused: 20000 iterations in 278.027457ms (13.901µs/iter), equal=20000
+bezier_parameter_bernstein_32_to_power: 20000 iterations in 1.939954153s (96.997µs/iter), degree_checksum=640000
+bezier_algebraic_parameter_sturm: 20000 iterations in 722.157156ms (36.107µs/iter), total=40000
+bezier_algebraic_parameter_refined_ordering: 10000 iterations in 810.402552ms (81.04µs/iter), ordered=10000
+bezier_algebraic_parameter_refined_even_root_ordering: 10000 iterations in 3.150569052s (315.056µs/iter), ordered=10000
+bezier_parameter_quintic_unit_isolation: 2000 iterations in 588.50164ms (294.25µs/iter), isolated=10000, sturm_builds=1, interval_counts=19, bisections=9, rational_refinements=0, max_depth=5
+bezier_parameter_boundary_root_isolation: 2000 iterations in 665.198617ms (332.599µs/iter), isolated=2000, interval_counts=263, bisections=130, max_depth=130
+bezier_algebraic_parameter_exact_rational_reconstruction: 500000 iterations in 17.686559ms (35ns/iter), reconstructed=500000
+bezier_algebraic_point_tangent_image: 20000 iterations in 122.466662ms (6.123µs/iter), transformed=40000
+rational_bezier_algebraic_point_tangent_image: 20000 iterations in 4.927453ms (246ns/iter), transformed=40000
+heaptrack stats:
+	allocations:          	34455169
+	leaked allocations:   	1558
+	temporary allocations:	1962449
+Heaptrack finished! Now run the following to investigate the data:
+
+  heaptrack --analyze "/tmp/hypercurve-normal-form-facts-baseline.heap.zst"
+
+heaptrack_gui detected, automatically opening the file...
+/usr/bin/heaptrack: line 288:    48 Aborted                    (core dumped) exit $EXIT_CODE

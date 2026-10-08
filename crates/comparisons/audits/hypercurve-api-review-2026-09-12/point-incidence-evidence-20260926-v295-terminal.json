@@ -1,0 +1,229 @@
+{
+  "source_manifest": "point-incidence-evidence-20260926-v295-sources.json",
+  "source_directory": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/source-archives/point-incidence-evidence-20260926-v295",
+  "cases": [
+    {
+      "binary": "point-incidence-evidence-20260926-v295-hypercurve",
+      "name": "bezier_offset::conversion_tests::correlated_point_incidence_retains_exterior_contact_parameters",
+      "returncode": 0,
+      "log": "point-incidence-evidence-20260926-v295-case-000.log",
+      "elapsed_seconds": 0.015698613016866148
+    },
+    {
+      "binary": "point-incidence-evidence-20260926-v295-hypercurve",
+      "name": "bezier_offset::conversion_tests::point_incidence_visits_a_collapsed_circle_as_a_complete_domain",
+      "returncode": 0,
+      "log": "point-incidence-evidence-20260926-v295-case-001.log",
+      "elapsed_seconds": 0.01568582304753363
+    },
+    {
+      "binary": "point-incidence-evidence-20260926-v295-hypercurve",
+      "name": "bezier_offset::conversion_tests::retained_point_incidence_visits_all_preimages_and_can_stop_at_one",
+      "returncode": 0,
+      "log": "point-incidence-evidence-20260926-v295-case-002.log",
+      "elapsed_seconds": 0.007633995963260531
+    },
+    {
+      "binary": "point-incidence-evidence-20260926-v295-hypercurve",
+      "name": "bezier_offset::conversion_tests::algebraic_cusp_semicircle_forward_ray_obeys_half_open_winding",
+      "returncode": 0,
+      "log": "point-incidence-evidence-20260926-v295-case-003.log",
+      "elapsed_seconds": 0.003582663950510323
+    },
+    {
+      "binary": "point-incidence-evidence-20260926-v295-hypercurve",
+      "name": "bezier_offset::conversion_tests::analytic_parallel_classifies_correlated_chord_pair_points",
+      "returncode": 0,
+      "log": "point-incidence-evidence-20260926-v295-case-004.log",
+      "elapsed_seconds": 0.007646014913916588
+    },
+    {
+      "binary": "point-incidence-evidence-20260926-v295-hypercurve",
+      "name": "bezier_offset::conversion_tests::complete_component_queries_keep_split_cells_and_residual_contacts",
+      "returncode": 0,
+      "log": "point-incidence-evidence-20260926-v295-case-005.log",
+      "elapsed_seconds": 0.00763830600772053
+    },
+    {
+      "binary": "point-incidence-evidence-20260926-v295-hypercurve",
+      "name": "bezier_offset::conversion_tests::correlated_point_membership_replays_exterior_rational_domains",
+      "returncode": 0,
+      "log": "point-incidence-evidence-20260926-v295-case-006.log",
+      "elapsed_seconds": 0.03174683090765029
+    },
+    {
+      "binary": "point-incidence-evidence-20260926-v295-hypercurve",
+      "name": "bezier_offset::conversion_tests::retained_point_membership_preserves_domains_and_regular_barriers",
+      "returncode": 0,
+      "log": "point-incidence-evidence-20260926-v295-case-007.log",
+      "elapsed_seconds": 0.015664795064367354
+    },
+    {
+      "binary": "point-incidence-evidence-20260926-v295-hypercurve",
+      "name": "bezier_offset::conversion_tests::selected_parallel_normal_circle_uses_direct_exact_winding",
+      "returncode": 0,
+      "log": "point-incidence-evidence-20260926-v295-case-008.log",
+      "elapsed_seconds": 0.0036111120134592056
+    },
+    {
+      "binary": "point-incidence-evidence-20260926-v295-hypercurve",
+      "name": "bezier_offset::conversion_tests::zero_distance_retained_point_membership_keeps_stationary_sources",
+      "returncode": 0,
+      "log": "point-incidence-evidence-20260926-v295-case-009.log",
+      "elapsed_seconds": 0.007624437101185322
+    },
+    {
+      "binary": "point-incidence-evidence-20260926-v295-hypercurve",
+      "name": "bezier_offset::parameter_component::tests::contact_constraints_distinguish_free_axes_from_empty_components",
+      "returncode": 0,
+      "log": "point-incidence-evidence-20260926-v295-case-010.log",
+      "elapsed_seconds": 0.003555755945853889
+    },
+    {
+      "binary": "point-incidence-evidence-20260926-v295-hypercurve",
+      "name": "bezier_offset::parameter_component::tests::incident_charts_keep_poles_and_finite_ownership_excluded",
+      "returncode": 0,
+      "log": "point-incidence-evidence-20260926-v295-case-011.log",
+      "elapsed_seconds": 0.0035540860844776034
+    },
+    {
+      "binary": "point-incidence-evidence-20260926-v295-hypercurve",
+      "name": "bezier_offset::parameter_component::tests::one_contact_replays_correspondence_through_both_source_charts",
+      "returncode": 0,
+      "log": "point-incidence-evidence-20260926-v295-case-012.log",
+      "elapsed_seconds": 0.00762927602045238
+    },
+    {
+      "binary": "point-incidence-evidence-20260926-v295-hypercurve",
+      "name": "bezier_offset::parameter_component::tests::product_components_keep_fixed_axes_and_operand_roles",
+      "returncode": 0,
+      "log": "point-incidence-evidence-20260926-v295-case-013.log",
+      "elapsed_seconds": 0.003555536037310958
+    },
+    {
+      "binary": "point-incidence-evidence-20260926-v295-hypercurve",
+      "name": "curve::curve_fillet::tests::joined_path_selects_and_replays_a_continuous_fillet_family",
+      "returncode": 0,
+      "log": "point-incidence-evidence-20260926-v295-case-014.log",
+      "elapsed_seconds": 0.2139726571040228
+    },
+    {
+      "binary": "point-incidence-evidence-20260926-v295-hypercurve",
+      "name": "curve::curve_fillet::tests::normalized_region_selects_and_reuses_a_continuous_fillet_family",
+      "returncode": 0,
+      "log": "point-incidence-evidence-20260926-v295-case-015.log",
+      "elapsed_seconds": 0.11391101300250739
+    },
+    {
+      "binary": "point-incidence-evidence-20260926-v295-hypercurve",
+      "name": "curve::tests::distinct_parallel_sources_keep_a_shared_fillet_center_family",
+      "returncode": 0,
+      "log": "point-incidence-evidence-20260926-v295-case-016.log",
+      "elapsed_seconds": 0.031773959985002875
+    },
+    {
+      "binary": "point-incidence-evidence-20260926-v295-hypercurve",
+      "name": "intersect::tests::arc_endpoint_membership_survives_an_unresolved_other_endpoint",
+      "returncode": 0,
+      "log": "point-incidence-evidence-20260926-v295-case-017.log",
+      "elapsed_seconds": 0.0035354580031707883
+    }
+  ],
+  "builds": [
+    {
+      "crate": "hypercurve",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "test",
+        "--lib",
+        "--release",
+        "--all-features",
+        "--no-run",
+        "--message-format=json",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "log": "point-incidence-evidence-20260926-v295-hypercurve-build.log",
+      "elapsed_seconds": 133.5661009149626,
+      "binary": {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/point-incidence-evidence-20260926-v295-hypercurve",
+        "sha256": "b18449ec8bb66b911f1fa615ffe88bd92f4bcfaa653f35f00fe7e4e5cee78a72"
+      }
+    }
+  ],
+  "all_processes_reaped": true,
+  "checks": [
+    {
+      "label": "format",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustfmt",
+        "--edition",
+        "2024",
+        "--config",
+        "skip_children=true",
+        "--check",
+        "src/bezier_offset.rs"
+      ],
+      "returncode": 0,
+      "log": "point-incidence-evidence-20260926-v295-format.log",
+      "elapsed_seconds": 2.1668319719610736
+    },
+    {
+      "label": "clippy-all-features",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "clippy",
+        "--all-targets",
+        "--all-features",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "returncode": 0,
+      "log": "point-incidence-evidence-20260926-v295-clippy-all-features.log",
+      "elapsed_seconds": 21.39842843194492
+    },
+    {
+      "label": "clippy-no-default",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "clippy",
+        "--all-targets",
+        "--no-default-features",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "returncode": 0,
+      "log": "point-incidence-evidence-20260926-v295-clippy-no-default.log",
+      "elapsed_seconds": 20.44644031696953
+    }
+  ],
+  "qualification_scope": "Retained point-incidence parameter visitation and demand-driven existence checks; all-preimage, collapsed-circle, correlated exterior, membership, component and fillet controls; both feature Clippy checks",
+  "expected_cases": [
+    "bezier_offset::conversion_tests::correlated_point_incidence_retains_exterior_contact_parameters",
+    "bezier_offset::conversion_tests::point_incidence_visits_a_collapsed_circle_as_a_complete_domain",
+    "bezier_offset::conversion_tests::retained_point_incidence_visits_all_preimages_and_can_stop_at_one",
+    "bezier_offset::conversion_tests::algebraic_cusp_semicircle_forward_ray_obeys_half_open_winding",
+    "bezier_offset::conversion_tests::analytic_parallel_classifies_correlated_chord_pair_points",
+    "bezier_offset::conversion_tests::complete_component_queries_keep_split_cells_and_residual_contacts",
+    "bezier_offset::conversion_tests::correlated_point_membership_replays_exterior_rational_domains",
+    "bezier_offset::conversion_tests::retained_point_membership_preserves_domains_and_regular_barriers",
+    "bezier_offset::conversion_tests::selected_parallel_normal_circle_uses_direct_exact_winding",
+    "bezier_offset::conversion_tests::zero_distance_retained_point_membership_keeps_stationary_sources",
+    "bezier_offset::parameter_component::tests::contact_constraints_distinguish_free_axes_from_empty_components",
+    "bezier_offset::parameter_component::tests::incident_charts_keep_poles_and_finite_ownership_excluded",
+    "bezier_offset::parameter_component::tests::one_contact_replays_correspondence_through_both_source_charts",
+    "bezier_offset::parameter_component::tests::product_components_keep_fixed_axes_and_operand_roles",
+    "curve::curve_fillet::tests::joined_path_selects_and_replays_a_continuous_fillet_family",
+    "curve::curve_fillet::tests::normalized_region_selects_and_reuses_a_continuous_fillet_family",
+    "curve::tests::distinct_parallel_sources_keep_a_shared_fillet_center_family",
+    "intersect::tests::arc_endpoint_membership_survives_an_unresolved_other_endpoint"
+  ],
+  "qualification_complete": true
+}

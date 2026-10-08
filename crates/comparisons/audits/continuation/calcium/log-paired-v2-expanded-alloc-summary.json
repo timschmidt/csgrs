@@ -1,0 +1,640 @@
+{
+  "mode": "alloc",
+  "version": "v2-expanded",
+  "cpu": 6,
+  "started": "2026-09-08T09:33:43.016Z",
+  "binaries": {
+    "baseline": {
+      "path": "/home/tim/Documents/GitHub/workspace/.audit-builds/calcium-baseline/release/calcium-log-baseline-bench",
+      "bytes": 1791984,
+      "sha256": "52d47a29227aca1fbe293c0c3ea5b896d7e5aa2a48857540cea33e22bc134355",
+      "size": "text\t   data\t    bss\t    dec\t    hex\tfilename\n1266229\t 218072\t   3272\t1487573\t 16b2d5\t/home/tim/Documents/GitHub/workspace/.audit-builds/calcium-baseline/release/calcium-log-baseline-bench"
+    },
+    "trial": {
+      "path": "/home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype/release/calcium-log-trial-bench",
+      "bytes": 1800400,
+      "sha256": "f5e238d8256acac203a083e849ea058fdaa616782713fcf6e14898b15c81c8be",
+      "size": "text\t   data\t    bss\t    dec\t    hex\tfilename\n1274013\t 218096\t   3664\t1495773\t 16d2dd\t/home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype/release/calcium-log-trial-bench"
+    }
+  },
+  "finished": "2026-09-08T09:33:44.683Z",
+  "summaries": [
+    {
+      "name": "log-identity",
+      "lifecycle": "fresh",
+      "iterations": 100,
+      "observations": 12,
+      "matched": false,
+      "baselineOutcomes": [
+        0,
+        0,
+        1
+      ],
+      "trialOutcomes": [
+        1,
+        0,
+        0
+      ],
+      "baseline_ns": 150354.79499999998,
+      "trial_ns": 30473.864999999998,
+      "pairedMedianRatio": 0.20919830559051125,
+      "pairedMedianBootstrap95": [
+        0.18396070577411172,
+        0.23273474597161958
+      ],
+      "baseline_alloc_calls": 2103,
+      "trial_alloc_calls": 377,
+      "baseline_alloc_bytes": 104288,
+      "trial_alloc_bytes": 20144
+    },
+    {
+      "name": "log-identity",
+      "lifecycle": "warm",
+      "iterations": 100,
+      "observations": 12,
+      "matched": false,
+      "baselineOutcomes": [
+        0,
+        0,
+        1
+      ],
+      "trialOutcomes": [
+        1,
+        0,
+        0
+      ],
+      "baseline_ns": 3036.14,
+      "trial_ns": 6178.28,
+      "pairedMedianRatio": 1.6457790839786552,
+      "pairedMedianBootstrap95": [
+        1.3692587671153735,
+        2.1021482768695043
+      ],
+      "baseline_alloc_calls": 36,
+      "trial_alloc_calls": 98,
+      "baseline_alloc_bytes": 2448,
+      "trial_alloc_bytes": 11256
+    },
+    {
+      "name": "algebraic-identity",
+      "lifecycle": "fresh",
+      "iterations": 100,
+      "observations": 12,
+      "matched": true,
+      "baselineOutcomes": [
+        1,
+        0,
+        0
+      ],
+      "trialOutcomes": [
+        1,
+        0,
+        0
+      ],
+      "baseline_ns": 2755.26,
+      "trial_ns": 2298.895,
+      "pairedMedianRatio": 0.9353271742122062,
+      "pairedMedianBootstrap95": [
+        0.7110682786239294,
+        1.2465532851120997
+      ],
+      "baseline_alloc_calls": 33,
+      "trial_alloc_calls": 33,
+      "baseline_alloc_bytes": 3544,
+      "trial_alloc_bytes": 3544
+    },
+    {
+      "name": "algebraic-identity",
+      "lifecycle": "warm",
+      "iterations": 100,
+      "observations": 12,
+      "matched": true,
+      "baselineOutcomes": [
+        1,
+        0,
+        0
+      ],
+      "trialOutcomes": [
+        1,
+        0,
+        0
+      ],
+      "baseline_ns": 1346.96,
+      "trial_ns": 1534.1950000000002,
+      "pairedMedianRatio": 1.0526931521888294,
+      "pairedMedianBootstrap95": [
+        1.0374125180838798,
+        1.2304579866518783
+      ],
+      "baseline_alloc_calls": 21,
+      "trial_alloc_calls": 21,
+      "baseline_alloc_bytes": 2616,
+      "trial_alloc_bytes": 2616
+    },
+    {
+      "name": "log-near-nonzero",
+      "lifecycle": "fresh",
+      "iterations": 100,
+      "observations": 12,
+      "matched": true,
+      "baselineOutcomes": [
+        0,
+        1,
+        0
+      ],
+      "trialOutcomes": [
+        0,
+        1,
+        0
+      ],
+      "baseline_ns": 32472.325,
+      "trial_ns": 21994.940000000002,
+      "pairedMedianRatio": 0.665550141817421,
+      "pairedMedianBootstrap95": [
+        0.5236891254568339,
+        0.7640047311072155
+      ],
+      "baseline_alloc_calls": 473,
+      "trial_alloc_calls": 315,
+      "baseline_alloc_bytes": 16832,
+      "trial_alloc_bytes": 18624
+    },
+    {
+      "name": "log-near-nonzero",
+      "lifecycle": "warm",
+      "iterations": 100,
+      "observations": 12,
+      "matched": true,
+      "baselineOutcomes": [
+        0,
+        1,
+        0
+      ],
+      "trialOutcomes": [
+        0,
+        1,
+        0
+      ],
+      "baseline_ns": 6.795,
+      "trial_ns": 7.4,
+      "pairedMedianRatio": 1.381294964028777,
+      "pairedMedianBootstrap95": [
+        1.0841546626231995,
+        1.4391891891891893
+      ],
+      "baseline_alloc_calls": 0,
+      "trial_alloc_calls": 0,
+      "baseline_alloc_bytes": 0,
+      "trial_alloc_bytes": 0
+    },
+    {
+      "name": "log-near-unknown",
+      "lifecycle": "fresh",
+      "iterations": 100,
+      "observations": 12,
+      "matched": false,
+      "baselineOutcomes": [
+        0,
+        0,
+        1
+      ],
+      "trialOutcomes": [
+        0,
+        1,
+        0
+      ],
+      "baseline_ns": 39672.53,
+      "trial_ns": 38170.485,
+      "pairedMedianRatio": 0.9713394201003532,
+      "pairedMedianBootstrap95": [
+        0.9589796489560752,
+        0.9738491764809499
+      ],
+      "baseline_alloc_calls": 706,
+      "trial_alloc_calls": 699,
+      "baseline_alloc_bytes": 29440,
+      "trial_alloc_bytes": 38256
+    },
+    {
+      "name": "log-near-unknown",
+      "lifecycle": "warm",
+      "iterations": 100,
+      "observations": 12,
+      "matched": false,
+      "baselineOutcomes": [
+        0,
+        0,
+        1
+      ],
+      "trialOutcomes": [
+        0,
+        1,
+        0
+      ],
+      "baseline_ns": 136.99,
+      "trial_ns": 6.75,
+      "pairedMedianRatio": 0.048477449008905486,
+      "pairedMedianBootstrap95": [
+        0.047941342357586014,
+        0.05119772786725962
+      ],
+      "baseline_alloc_calls": 1,
+      "trial_alloc_calls": 0,
+      "baseline_alloc_bytes": 768,
+      "trial_alloc_bytes": 0
+    },
+    {
+      "name": "log-algebraic-near-unknown",
+      "lifecycle": "fresh",
+      "iterations": 100,
+      "observations": 12,
+      "matched": false,
+      "baselineOutcomes": [
+        0,
+        0,
+        1
+      ],
+      "trialOutcomes": [
+        0,
+        1,
+        0
+      ],
+      "baseline_ns": 41196.275,
+      "trial_ns": 32416.03,
+      "pairedMedianRatio": 0.8032781300890938,
+      "pairedMedianBootstrap95": [
+        0.6825052399535536,
+        0.816641515959841
+      ],
+      "baseline_alloc_calls": 558,
+      "trial_alloc_calls": 418,
+      "baseline_alloc_bytes": 19544,
+      "trial_alloc_bytes": 22776
+    },
+    {
+      "name": "log-algebraic-near-unknown",
+      "lifecycle": "warm",
+      "iterations": 100,
+      "observations": 12,
+      "matched": false,
+      "baselineOutcomes": [
+        0,
+        0,
+        1
+      ],
+      "trialOutcomes": [
+        0,
+        1,
+        0
+      ],
+      "baseline_ns": 148.64,
+      "trial_ns": 7.35,
+      "pairedMedianRatio": 0.0499707962878837,
+      "pairedMedianBootstrap95": [
+        0.0486848333220637,
+        0.062145625780824554
+      ],
+      "baseline_alloc_calls": 1,
+      "trial_alloc_calls": 0,
+      "baseline_alloc_bytes": 768,
+      "trial_alloc_bytes": 0
+    },
+    {
+      "name": "log-multiquadratic-unknown",
+      "lifecycle": "fresh",
+      "iterations": 100,
+      "observations": 12,
+      "matched": true,
+      "baselineOutcomes": [
+        0,
+        0,
+        1
+      ],
+      "trialOutcomes": [
+        0,
+        0,
+        1
+      ],
+      "baseline_ns": 52585.095,
+      "trial_ns": 77088.01000000001,
+      "pairedMedianRatio": 1.4655838313118954,
+      "pairedMedianBootstrap95": [
+        1.4028333680829805,
+        1.6052192399538567
+      ],
+      "baseline_alloc_calls": 578,
+      "trial_alloc_calls": 1005,
+      "baseline_alloc_bytes": 23376,
+      "trial_alloc_bytes": 57528
+    },
+    {
+      "name": "log-multiquadratic-unknown",
+      "lifecycle": "warm",
+      "iterations": 100,
+      "observations": 12,
+      "matched": true,
+      "baselineOutcomes": [
+        0,
+        0,
+        1
+      ],
+      "trialOutcomes": [
+        0,
+        0,
+        1
+      ],
+      "baseline_ns": 146.89,
+      "trial_ns": 39424.045,
+      "pairedMedianRatio": 230.49605355472403,
+      "pairedMedianBootstrap95": [
+        173.83819241982508,
+        296.8306946908694
+      ],
+      "baseline_alloc_calls": 1,
+      "trial_alloc_calls": 324,
+      "baseline_alloc_bytes": 768,
+      "trial_alloc_bytes": 32008
+    },
+    {
+      "name": "log-transcendental-unknown",
+      "lifecycle": "fresh",
+      "iterations": 100,
+      "observations": 12,
+      "matched": true,
+      "baselineOutcomes": [
+        0,
+        0,
+        1
+      ],
+      "trialOutcomes": [
+        0,
+        0,
+        1
+      ],
+      "baseline_ns": 49015.49,
+      "trial_ns": 47238.515,
+      "pairedMedianRatio": 1.0562338216583373,
+      "pairedMedianBootstrap95": [
+        0.9609128433914926,
+        1.063298530515053
+      ],
+      "baseline_alloc_calls": 437,
+      "trial_alloc_calls": 452,
+      "baseline_alloc_bytes": 14872,
+      "trial_alloc_bytes": 17040
+    },
+    {
+      "name": "log-transcendental-unknown",
+      "lifecycle": "warm",
+      "iterations": 100,
+      "observations": 12,
+      "matched": true,
+      "baselineOutcomes": [
+        0,
+        0,
+        1
+      ],
+      "trialOutcomes": [
+        0,
+        0,
+        1
+      ],
+      "baseline_ns": 177.035,
+      "trial_ns": 753.25,
+      "pairedMedianRatio": 4.553211158844961,
+      "pairedMedianBootstrap95": [
+        3.1721084438475744,
+        4.630250015509647
+      ],
+      "baseline_alloc_calls": 1,
+      "trial_alloc_calls": 16,
+      "baseline_alloc_bytes": 768,
+      "trial_alloc_bytes": 2936
+    },
+    {
+      "name": "nonlog-unknown",
+      "lifecycle": "fresh",
+      "iterations": 100,
+      "observations": 12,
+      "matched": true,
+      "baselineOutcomes": [
+        0,
+        0,
+        1
+      ],
+      "trialOutcomes": [
+        0,
+        0,
+        1
+      ],
+      "baseline_ns": 40795.605,
+      "trial_ns": 39578.99,
+      "pairedMedianRatio": 0.9460300761307182,
+      "pairedMedianBootstrap95": [
+        0.821490771872959,
+        1.042187205522087
+      ],
+      "baseline_alloc_calls": 532,
+      "trial_alloc_calls": 532,
+      "baseline_alloc_bytes": 23176,
+      "trial_alloc_bytes": 23176
+    },
+    {
+      "name": "nonlog-unknown",
+      "lifecycle": "warm",
+      "iterations": 100,
+      "observations": 12,
+      "matched": true,
+      "baselineOutcomes": [
+        0,
+        0,
+        1
+      ],
+      "trialOutcomes": [
+        0,
+        0,
+        1
+      ],
+      "baseline_ns": 186.94,
+      "trial_ns": 183.53,
+      "pairedMedianRatio": 0.942566170388751,
+      "pairedMedianBootstrap95": [
+        0.8991084113065203,
+        0.9807157376698405
+      ],
+      "baseline_alloc_calls": 1,
+      "trial_alloc_calls": 1,
+      "baseline_alloc_bytes": 768,
+      "trial_alloc_bytes": 768
+    },
+    {
+      "name": "ordinary-log",
+      "lifecycle": "fresh",
+      "iterations": 100,
+      "observations": 12,
+      "matched": true,
+      "baselineOutcomes": [
+        0,
+        1,
+        0
+      ],
+      "trialOutcomes": [
+        0,
+        1,
+        0
+      ],
+      "baseline_ns": 732,
+      "trial_ns": 711.35,
+      "pairedMedianRatio": 0.9432146229596654,
+      "pairedMedianBootstrap95": [
+        0.9279074302801794,
+        0.9817652360812591
+      ],
+      "baseline_alloc_calls": 12,
+      "trial_alloc_calls": 12,
+      "baseline_alloc_bytes": 976,
+      "trial_alloc_bytes": 976
+    },
+    {
+      "name": "ordinary-log",
+      "lifecycle": "warm",
+      "iterations": 100,
+      "observations": 12,
+      "matched": true,
+      "baselineOutcomes": [
+        0,
+        1,
+        0
+      ],
+      "trialOutcomes": [
+        0,
+        1,
+        0
+      ],
+      "baseline_ns": 66.95,
+      "trial_ns": 69.69,
+      "pairedMedianRatio": 1.0722363258712209,
+      "pairedMedianBootstrap95": [
+        0.9826253221381661,
+        1.4358823529411764
+      ],
+      "baseline_alloc_calls": 0,
+      "trial_alloc_calls": 0,
+      "baseline_alloc_bytes": 0,
+      "trial_alloc_bytes": 0
+    },
+    {
+      "name": "ordinary-rational",
+      "lifecycle": "fresh",
+      "iterations": 100,
+      "observations": 12,
+      "matched": true,
+      "baselineOutcomes": [
+        0,
+        1,
+        0
+      ],
+      "trialOutcomes": [
+        0,
+        1,
+        0
+      ],
+      "baseline_ns": 40.894999999999996,
+      "trial_ns": 42.845,
+      "pairedMedianRatio": 1.0441374251130946,
+      "pairedMedianBootstrap95": [
+        0.9330428313317037,
+        1.1242063492063492
+      ],
+      "baseline_alloc_calls": 0,
+      "trial_alloc_calls": 0,
+      "baseline_alloc_bytes": 0,
+      "trial_alloc_bytes": 0
+    },
+    {
+      "name": "ordinary-rational",
+      "lifecycle": "warm",
+      "iterations": 100,
+      "observations": 12,
+      "matched": true,
+      "baselineOutcomes": [
+        0,
+        1,
+        0
+      ],
+      "trialOutcomes": [
+        0,
+        1,
+        0
+      ],
+      "baseline_ns": 25.545,
+      "trial_ns": 26.2,
+      "pairedMedianRatio": 1.0157312099436784,
+      "pairedMedianBootstrap95": [
+        0.9800694825379411,
+        1.1094736842105264
+      ],
+      "baseline_alloc_calls": 0,
+      "trial_alloc_calls": 0,
+      "baseline_alloc_bytes": 0,
+      "trial_alloc_bytes": 0
+    },
+    {
+      "name": "exp-cancellation",
+      "lifecycle": "fresh",
+      "iterations": 100,
+      "observations": 12,
+      "matched": true,
+      "baselineOutcomes": [
+        0,
+        1,
+        0
+      ],
+      "trialOutcomes": [
+        0,
+        1,
+        0
+      ],
+      "baseline_ns": 4002.83,
+      "trial_ns": 4240.860000000001,
+      "pairedMedianRatio": 1.0465238614164687,
+      "pairedMedianBootstrap95": [
+        0.7866474950165129,
+        1.1083540432039762
+      ],
+      "baseline_alloc_calls": 36,
+      "trial_alloc_calls": 36,
+      "baseline_alloc_bytes": 2344,
+      "trial_alloc_bytes": 2344
+    },
+    {
+      "name": "exp-cancellation",
+      "lifecycle": "warm",
+      "iterations": 100,
+      "observations": 12,
+      "matched": true,
+      "baselineOutcomes": [
+        0,
+        1,
+        0
+      ],
+      "trialOutcomes": [
+        0,
+        1,
+        0
+      ],
+      "baseline_ns": 8.1,
+      "trial_ns": 8.55,
+      "pairedMedianRatio": 1.1644962302947224,
+      "pairedMedianBootstrap95": [
+        0.9221556886227545,
+        1.4119259766963674
+      ],
+      "baseline_alloc_calls": 0,
+      "trial_alloc_calls": 0,
+      "baseline_alloc_bytes": 0,
+      "trial_alloc_bytes": 0
+    }
+  ],
+  "limits": "Bootstrap intervals are descriptive of this host/session; unmatched rows compare Unknown to a proof, not equivalent successful work. Allocation-build clocks are not CPU performance evidence."
+}

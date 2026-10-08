@@ -1,0 +1,140 @@
+{
+  "candidates": {
+    "hypersolve/src/algebraic.rs": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/affine-field-candidate-v898/hypersolve/src/algebraic.rs",
+    "hypersolve/src/algebraic_fiber.rs": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/affine-field-candidate-v898/hypersolve/src/algebraic_fiber.rs",
+    "hypersolve/src/algebraic_tensor_image.rs": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/affine-field-candidate-v898/hypersolve/src/algebraic_tensor_image.rs",
+    "hypercurve/src/bezier_offset.rs": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/affine-field-candidate-v898/hypercurve/src/bezier_offset.rs",
+    "hypercurve/src/bezier_tangent_order.rs": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/affine-field-candidate-v898/hypercurve/src/bezier_tangent_order.rs",
+    "hypercurve/tests/hypercurve_bezier_arrangement.rs": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/affine-field-candidate-v898/hypercurve/tests/hypercurve_bezier_arrangement.rs"
+  },
+  "base": {
+    "hypersolve/src/algebraic.rs": "2747a1fd09fd56c6a5e1c8aa75a462ea725c97c30e42c60c857b3081d87bfa0c",
+    "hypersolve/src/algebraic_fiber.rs": "755730da380d95c3fd9de9de0a8ddb799d228c205ec6dd1cbfaaf39c581097ae",
+    "hypersolve/src/algebraic_tensor_image.rs": "034d7eece9f0568ea7251d399cf8611d39ea4f3e7d98058f1e6b09c7cf8d76a8",
+    "hypercurve/src/bezier_offset.rs": "6a01c036b7c49b5e704f96c419acab0d061d931e2aea556bc2e8dd481debfae1",
+    "hypercurve/src/bezier_tangent_order.rs": "237057a615ad662d6ae21dafb2298fbe9091e225f2e18fd3e8b530a5ea0e8aae",
+    "hypercurve/tests/hypercurve_bezier_arrangement.rs": "8311e7d024397eb03032abd216c462c7c29cc21b8ca75f8388a9887c21049317"
+  },
+  "parents": {
+    "ExactCalculator": {
+      "head": "7265aa3a922a7e7c0389dae4b26cca562aa777a6",
+      "status": ""
+    },
+    "NURBS_BREP_kernel": {
+      "head": "1aef37b12a92c993c2046f7886593bb0a555c414",
+      "status": ""
+    },
+    "alumina-firmware": {
+      "head": "bdee397d0b80841f16bf17e7bcd029b4feb2c212",
+      "status": ""
+    },
+    "alumina-interface": {
+      "head": "b21c9214c59d41e8272b8644dd436b44b7e15e89",
+      "status": ""
+    },
+    "citizen-builder": {
+      "head": "c4230238e28fd88fc8156fceb2c43698e67c27ca",
+      "status": ""
+    },
+    "crcalc": {
+      "head": "4f398d699c9d498deb45520ea7ebb020627bc640",
+      "status": ""
+    },
+    "csgrs": {
+      "head": "0346ab8d5b5093b5507535f7707982e4cd2918b2",
+      "status": ""
+    },
+    "csgrs-ffi": {
+      "head": "6057435ce4c0b37bac99aec29922b90e6652c575",
+      "status": ""
+    },
+    "exactcore-hyper-comparison": {
+      "head": "74b90b328f720997d38da80af5620f167b3b0619",
+      "status": ""
+    },
+    "hyperbrep": {
+      "head": "817593f3c17f4eb3f02d7174dc1691e2bf6ee0f3",
+      "status": ""
+    },
+    "hypercircuit": {
+      "head": "ad421497ce6e88fe936818ec198c8a1b779776c7",
+      "status": ""
+    },
+    "hypercurve": {
+      "head": "68e72280b1200871d0f539d90bdb3d1450958b99",
+      "status": ""
+    },
+    "hyperdrc": {
+      "head": "ce49bba5d16f78ae8559a0eabe3e4478b72fd4bf",
+      "status": ""
+    },
+    "hyperevolution": {
+      "head": "99645e3cefb7eea3af86abc15db68f7fcb31ca95",
+      "status": ""
+    },
+    "hypergraphics": {
+      "head": "75219dede7a2387ab30c84664b1293ec71d736d2",
+      "status": ""
+    },
+    "hyperlattice": {
+      "head": "035a8c822ca60e30daf0e3143843a65be0e6aedb",
+      "status": ""
+    },
+    "hyperlimit": {
+      "head": "d80f53329d7cab4130c62c2cbd4ec2d9f73c7c43",
+      "status": ""
+    },
+    "hypermesh": {
+      "head": "55cc20ada8bc502f1b3c1651b422f0a040239060",
+      "status": ""
+    },
+    "hyperpack": {
+      "head": "34857861561d643d7578753b8f8314d0fbca2c5b",
+      "status": ""
+    },
+    "hyperparts": {
+      "head": "d8626e9d36256afc4a8eb0380ae94c9ed5619107",
+      "status": ""
+    },
+    "hyperpath": {
+      "head": "96d03475ba4c5e971943a775898cbc697a132154",
+      "status": ""
+    },
+    "hyperphysics": {
+      "head": "dcbc7cf3489a1299de16a946fd7f5e5658b6f15f",
+      "status": ""
+    },
+    "hyperreal": {
+      "head": "a4b5a570155cb3bccbbe4679522b5cd3f962c174",
+      "status": ""
+    },
+    "hypersdf": {
+      "head": "b37825900457420cb64da385b8525acab33e31c5",
+      "status": ""
+    },
+    "hypersolve": {
+      "head": "0befc6a22ee866cd0364cd8aac7127f703bce453",
+      "status": ""
+    },
+    "hypertri": {
+      "head": "6a2092c066964f3b7528299a72ef0ed1af4b1ff0",
+      "status": ""
+    },
+    "hypervoxel": {
+      "head": "0486b1465a249a04973520a4138a39395ded2f23",
+      "status": ""
+    },
+    "openscad-rs": {
+      "head": "f21b39486a6b35403ee8af9e7fba7cb62a045a5a",
+      "status": ""
+    },
+    "synaps-cad": {
+      "head": "da8da78636e573c04f8a5c4cd8cc900162b781ba",
+      "status": ""
+    },
+    "videos": {
+      "head": "4209b983cc0d937981f22a6fa7df384303fcc8bd",
+      "status": ""
+    }
+  }
+}

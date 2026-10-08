@@ -1,0 +1,10 @@
+[
+  {
+    "name": "bezier_offset::conversion_tests::conic_owned_endpoint_reuses_local_evidence_on_finite_ranges",
+    "returncode": 101,
+    "passed": false,
+    "elapsed_seconds": 0.2706284709274769,
+    "limit_seconds": 60,
+    "log": "conic-owned-contact-20260924-v2-case-0.log"
+  }
+]

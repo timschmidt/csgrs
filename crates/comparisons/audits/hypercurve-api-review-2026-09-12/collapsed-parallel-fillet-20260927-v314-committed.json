@@ -1,0 +1,25 @@
+{
+  "source_manifest": "collapsed-parallel-fillet-20260927-v314-sources.json",
+  "qualification": "collapsed-parallel-fillet-20260927-v314-terminal.json",
+  "outer_session_reaped": 92008,
+  "validated_files": 2046,
+  "passed_tests": 131,
+  "static_checks": 6,
+  "repos": {
+    "hypercurve": {
+      "parent": "d4136f50483dbd9e840e03644004a0ff29d14794",
+      "paths": {
+        "src/bezier_offset.rs": "eee8066800633c5f72024748931a93c7ed4d5438ff29f084ef220fb921b66e18",
+        "src/curve.rs": "209c89058fc6b02b315435a7383e1be93245a0d94795453c93ddf2d63046aa07",
+        "src/curve_fillet.rs": "479b428d8808319d447b7c4f411d7472a4f1547a5167a2424d7e664da411b4b7"
+      },
+      "commit": "c986e23825bddef1b68cd822b5db53b41c4f406b"
+    }
+  },
+  "known_unresolved_not_requalified": [
+    "strict_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions",
+    "approximate_512_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions"
+  ],
+  "remaining_constraint_work": "General collapsed selected-circle contacts; native coincident supports; remove transient family results",
+  "repositories_clean": 30
+}

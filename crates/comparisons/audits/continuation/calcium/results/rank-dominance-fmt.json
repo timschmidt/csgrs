@@ -1,0 +1,15 @@
+{
+  "tag": "rank-dominance-fmt",
+  "started": "2026-09-09T02:15:46.066Z",
+  "finished": "2026-09-09T02:15:46.812Z",
+  "elapsedSeconds": 0.7439648680000001,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/rank-dominance-trial/hypersolve",
+  "command": "cargo",
+  "args": [
+    "fmt",
+    "--",
+    "--check"
+  ],
+  "code": 0,
+  "signal": null
+}

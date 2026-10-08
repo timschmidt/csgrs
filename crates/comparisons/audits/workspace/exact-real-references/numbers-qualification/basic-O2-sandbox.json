@@ -1,0 +1,11 @@
+{
+  "args": [
+    "grid"
+  ],
+  "timeout": 60000,
+  "status": 0,
+  "signal": null,
+  "error": "EPERM",
+  "stdout": "TOTAL add checks=19208 failures=0\nTOTAL sub checks=19208 failures=0\nTOTAL mul checks=19208 failures=0\nTOTAL min checks=19208 failures=0\nTOTAL max checks=19208 failures=0\nTOTAL division checks=18816 failures=0\nTOTAL unary checks=392 failures=0\nTOTAL sqrt checks=2056 failures=0\n",
+  "stderr": ""
+}

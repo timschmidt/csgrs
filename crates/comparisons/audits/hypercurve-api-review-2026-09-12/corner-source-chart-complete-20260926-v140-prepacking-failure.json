@@ -1,0 +1,14 @@
+{
+  "prior": "local-chord-complete-replay-20260924-v137-sources.json",
+  "candidate": "local-chord-complete-replay-20260924-v140-sources.json",
+  "binary": {
+    "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-support-tangent-20260926-v137-hypercurve",
+    "sha256": "02e97b7aff2578701507c29980561598cbbc0a877fbade4e48c1cd1966eff79c"
+  },
+  "test_body_identical": true,
+  "returncode": 101,
+  "elapsed_seconds": 0.3542557139880955,
+  "log": "corner-source-chart-complete-20260926-v140-prepacking-failure.log",
+  "all_processes_reaped": true,
+  "all_sources_unchanged": true
+}

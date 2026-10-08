@@ -1,0 +1,30 @@
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.05s
+     Running unittests src/lib.rs (.audit-targets/ireal-derivative-18555/debug/deps/hyperreal-99435bbe0ce6f1f3)
+
+running 23 tests
+test computable::format::tests::disp_too_small ... ok
+test computable::format::tests::digits_round_exp_false ... ok
+test computable::format::tests::digits_round_zero_true ... ok
+test computable::format::tests::actual_zero ... ok
+test computable::format::tests::disp_one ... ok
+test computable::format::tests::almost ... ok
+test computable::format::tests::disp_small ... ok
+test computable::format::tests::disp_tiny ... ok
+test computable::format::tests::disp_big ... ok
+test computable::format::tests::disp_one_third ... ok
+test computable::format::tests::disp_almost_one_exp ... ok
+test computable::format::tests::disp_almost_one ... ok
+test computable::format::tests::disp_two_thirds ... ok
+test computable::format::tests::exp_huge_neg ... ok
+test computable::format::tests::disp_sixty_pi ... ok
+test computable::format::tests::exp_smol ... ok
+test computable::format::tests::exp_two_thirds ... ok
+test computable::format::tests::pinch ... ok
+test computable::format::tests::exp_pi ... ok
+test computable::format::tests::exp_bigger ... ok
+test computable::format::tests::disp_threes ... ok
+test computable::format::tests::disp_pi ... ok
+test computable::format::tests::disp_ninth ... ok
+
+test result: ok. 23 passed; 0 failed; 0 ignored; 0 measured; 704 filtered out; finished in 0.07s
+

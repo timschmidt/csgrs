@@ -1,0 +1,14 @@
+{
+  "tag": "arf-rounding-inventory",
+  "started": "2026-09-09T20:28:38.484Z",
+  "finished": "2026-09-09T20:28:38.954Z",
+  "elapsedSeconds": 0.46747939699999996,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "node",
+  "args": [
+    "inventory.mjs",
+    "verify"
+  ],
+  "code": 0,
+  "signal": null
+}

@@ -1,0 +1,23 @@
+{
+  "hypercurve": [
+    "bezier_region::tests::certified_boundary_constructors_validate_arrangement_sources",
+    "bezier_region::tests::retained_region_constructor_rejects_reused_arrangement_sources_across_loops",
+    "bezier_region::tests::retained_region_constructor_rejects_duplicate_boundary_loops",
+    "bezier_region::tests::native_boundary_loops_convert_into_unified_region_validation",
+    "bezier_region::tests::regularized_analytic_loop_roles_follow_exact_nesting",
+    "bezier_region::tests::boundary_path_construction_obeys_selected_terminal_policy",
+    "bezier_region::tests::curve_region_mutations_report_selected_terminal_policy",
+    "bezier_region::tests::pair_native_boolean_boundary_offset_remains_certified_under_approximate_policy_forward",
+    "bezier_region::tests::pair_native_boolean_boundary_offset_remains_certified_under_approximate_policy_reversed",
+    "bezier_region::tests::retained_parallel_offset_coalesces_non_cusp_algebraic_arrangement_partitions",
+    "bezier_region::tests::raw_crossing_loops_need_arrangement_before_nesting",
+    "bezier_region::tests::retained_boundary_identity_requires_finite_affine_endpoints",
+    "bezier_region::tests::closed_ph_corner_edits_preserve_both_normalized_source_lobes"
+  ],
+  "hypercurve_bezier_region": null,
+  "hypercurve_curve_region_promotion": [
+    "selected_boundary_paths_retain_domains_through_repeated_region_roundtrips",
+    "region_corner_edits_publish_normalized_hole_openings",
+    "authored_region_sides_are_certified_before_offset_and_boolean_reentry"
+  ]
+}

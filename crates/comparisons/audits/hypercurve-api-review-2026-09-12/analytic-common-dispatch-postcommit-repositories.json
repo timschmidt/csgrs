@@ -1,0 +1,152 @@
+[
+  {
+    "repository": "ExactCalculator",
+    "status": "",
+    "clean": true
+  },
+  {
+    "repository": "NURBS_BREP_kernel",
+    "status": "",
+    "clean": true
+  },
+  {
+    "repository": "alumina-firmware",
+    "status": "",
+    "clean": true
+  },
+  {
+    "repository": "alumina-interface",
+    "status": "",
+    "clean": true
+  },
+  {
+    "repository": "citizen-builder",
+    "status": "",
+    "clean": true
+  },
+  {
+    "repository": "crcalc",
+    "status": "",
+    "clean": true
+  },
+  {
+    "repository": "csgrs",
+    "status": "",
+    "clean": true
+  },
+  {
+    "repository": "csgrs-ffi",
+    "status": "",
+    "clean": true
+  },
+  {
+    "repository": "exactcore-hyper-comparison",
+    "status": "",
+    "clean": true
+  },
+  {
+    "repository": "hyperbrep",
+    "status": "",
+    "clean": true
+  },
+  {
+    "repository": "hypercircuit",
+    "status": "",
+    "clean": true
+  },
+  {
+    "repository": "hypercurve",
+    "status": "",
+    "clean": true
+  },
+  {
+    "repository": "hyperdrc",
+    "status": "",
+    "clean": true
+  },
+  {
+    "repository": "hyperevolution",
+    "status": "",
+    "clean": true
+  },
+  {
+    "repository": "hypergraphics",
+    "status": "",
+    "clean": true
+  },
+  {
+    "repository": "hyperlattice",
+    "status": "",
+    "clean": true
+  },
+  {
+    "repository": "hyperlimit",
+    "status": "",
+    "clean": true
+  },
+  {
+    "repository": "hypermesh",
+    "status": "",
+    "clean": true
+  },
+  {
+    "repository": "hyperpack",
+    "status": "",
+    "clean": true
+  },
+  {
+    "repository": "hyperparts",
+    "status": "",
+    "clean": true
+  },
+  {
+    "repository": "hyperpath",
+    "status": "",
+    "clean": true
+  },
+  {
+    "repository": "hyperphysics",
+    "status": "",
+    "clean": true
+  },
+  {
+    "repository": "hyperreal",
+    "status": "",
+    "clean": true
+  },
+  {
+    "repository": "hypersdf",
+    "status": "",
+    "clean": true
+  },
+  {
+    "repository": "hypersolve",
+    "status": "",
+    "clean": true
+  },
+  {
+    "repository": "hypertri",
+    "status": "",
+    "clean": true
+  },
+  {
+    "repository": "hypervoxel",
+    "status": "",
+    "clean": true
+  },
+  {
+    "repository": "openscad-rs",
+    "status": "",
+    "clean": true
+  },
+  {
+    "repository": "synaps-cad",
+    "status": "",
+    "clean": true
+  },
+  {
+    "repository": "videos",
+    "status": "",
+    "clean": true
+  }
+]

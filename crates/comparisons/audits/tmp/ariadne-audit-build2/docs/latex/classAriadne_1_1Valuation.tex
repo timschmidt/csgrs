@@ -1,0 +1,78 @@
+\doxysubsection{Valuation\texorpdfstring{$<$}{<} T, X \texorpdfstring{$>$}{>} Class Template Reference}
+\hypertarget{classAriadne_1_1Valuation}{}\label{classAriadne_1_1Valuation}\index{Valuation$<$ T, X $>$@{Valuation$<$ T, X $>$}}
+
+
+{\ttfamily \#include $<$valuation.\+hpp$>$}
+
+
+
+\doxysubsubsection{Description}
+\subsubsection*{template$<$class T, class X$>$\newline
+class Ariadne\+::\+Valuation$<$ T, X $>$}
+A valuation of named variables of mathematical type {\itshape T}, with values represented by values of concrete type {\itshape X}, where X defaults to {\itshape T}. 
+
+\begin{DoxyParagraph}{{\bfseries{Example}} }
+
+\begin{DoxyCodeInclude}{0}
+
+\end{DoxyCodeInclude}
+ 
+\end{DoxyParagraph}
+\begin{DoxySeeAlso}{See also}
+\doxylink{classAriadne_1_1DiscreteValuation}{Discrete\+Valuation}, \doxylink{classAriadne_1_1ContinuousValuation}{Continuous\+Valuation}, \doxylink{classAriadne_1_1HybridValuation}{Hybrid\+Valuation}, \doxylink{classAriadne_1_1DiscreteLocation}{Discrete\+Location} 
+\end{DoxySeeAlso}
+\doxysubsubsubsection*{Public Types}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1Valuation_a685b7a70f0ae1f2881cf8937d951c3b1}\label{classAriadne_1_1Valuation_a685b7a70f0ae1f2881cf8937d951c3b1} 
+typedef T {\bfseries Type}
+\begin{DoxyCompactList}\small\item\em The abstract mathematical type represented by variables. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Valuation_a1ff6c6c30faa4733eea879f8fdcdf613}\label{classAriadne_1_1Valuation_a1ff6c6c30faa4733eea879f8fdcdf613} 
+typedef X {\bfseries Value\+Type}
+\begin{DoxyCompactList}\small\item\em The concrete class of the values of the variables. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1Valuation_ae39a3c9d9233a35c22214478df08e857}\label{classAriadne_1_1Valuation_ae39a3c9d9233a35c22214478df08e857} 
+{\bfseries Valuation} ()
+\begin{DoxyCompactList}\small\item\em Construct a valuation assigning values to no variables. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Valuation_a97b771a12f46de9528ef07044a5b4ba5}\label{classAriadne_1_1Valuation_a97b771a12f46de9528ef07044a5b4ba5} 
+{\bfseries Valuation} (const \mbox{\hyperlink{classAriadne_1_1Map}{Map}}$<$ \mbox{\hyperlink{classAriadne_1_1Identifier}{Identifier}}, \mbox{\hyperlink{classAriadne_1_1Valuation_a1ff6c6c30faa4733eea879f8fdcdf613}{Value\+Type}} $>$ \&m)
+\begin{DoxyCompactList}\small\item\em Construct from a mapping from {\itshape names} of variables to values. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Valuation_a3b4bf31846e775c1d0b45bdbedfe3993}\label{classAriadne_1_1Valuation_a3b4bf31846e775c1d0b45bdbedfe3993} 
+\mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} {\bfseries set} (const \mbox{\hyperlink{classAriadne_1_1Variable}{Variable}}$<$ \mbox{\hyperlink{classAriadne_1_1Valuation_a685b7a70f0ae1f2881cf8937d951c3b1}{Type}} $>$ \&v, const \mbox{\hyperlink{classAriadne_1_1Valuation_a1ff6c6c30faa4733eea879f8fdcdf613}{Value\+Type}} \&s)
+\begin{DoxyCompactList}\small\item\em Set the value associated with variable {\itshape v} to {\itshape s}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Valuation_a336639ab7280b75fbd86d6def725a9d0}\label{classAriadne_1_1Valuation_a336639ab7280b75fbd86d6def725a9d0} 
+const \mbox{\hyperlink{classAriadne_1_1Valuation_a1ff6c6c30faa4733eea879f8fdcdf613}{Value\+Type}} \& {\bfseries get} (const \mbox{\hyperlink{classAriadne_1_1Variable}{Variable}}$<$ \mbox{\hyperlink{classAriadne_1_1Valuation_a685b7a70f0ae1f2881cf8937d951c3b1}{Type}} $>$ \&v) const
+\begin{DoxyCompactList}\small\item\em Get the value associated with variable {\itshape v}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Valuation_a6d5a0aed9df4e543eab3f87ebd3a5bec}\label{classAriadne_1_1Valuation_a6d5a0aed9df4e543eab3f87ebd3a5bec} 
+const \mbox{\hyperlink{classAriadne_1_1Valuation_a1ff6c6c30faa4733eea879f8fdcdf613}{Value\+Type}} \& {\bfseries operator\mbox{[}$\,$\mbox{]}} (const \mbox{\hyperlink{classAriadne_1_1Variable}{Variable}}$<$ \mbox{\hyperlink{classAriadne_1_1Valuation_a685b7a70f0ae1f2881cf8937d951c3b1}{Type}} $>$ \&v) const
+\begin{DoxyCompactList}\small\item\em Extract the value associated with the variable {\itshape v}. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsubsection*{Related Types and Functions}
+(Note that these are not member symbols.) \begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1Valuation_a9012db9e55338a60ba421cd177c5dcbc}\label{classAriadne_1_1Valuation_a9012db9e55338a60ba421cd177c5dcbc} 
+typedef \mbox{\hyperlink{classAriadne_1_1Valuation}{Valuation}}$<$ \mbox{\hyperlink{classAriadne_1_1Integer}{Integer}} $>$ {\bfseries Integer\+Valuation}
+\begin{DoxyCompactList}\small\item\em A \doxylink{classAriadne_1_1Valuation}{Valuation} taking integer values. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Valuation_a8e9015f760b3bb1bc7edd94230beab7f}\label{classAriadne_1_1Valuation_a8e9015f760b3bb1bc7edd94230beab7f} 
+typedef \mbox{\hyperlink{classAriadne_1_1Valuation}{Valuation}}$<$ \mbox{\hyperlink{classAriadne_1_1String}{String}} $>$ {\bfseries String\+Valuation}
+\begin{DoxyCompactList}\small\item\em A \doxylink{classAriadne_1_1Valuation}{Valuation} taking string values. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Valuation_ab599f24f668573b5b0adf39e008d2709}\label{classAriadne_1_1Valuation_ab599f24f668573b5b0adf39e008d2709} 
+typedef \mbox{\hyperlink{classAriadne_1_1Valuation}{Valuation}}$<$ \mbox{\hyperlink{classAriadne_1_1Real}{Real}} $>$ {\bfseries Real\+Valuation}
+\begin{DoxyCompactList}\small\item\em A \doxylink{classAriadne_1_1Valuation}{Valuation} taking real values. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\begin{Indent}\textbf{ Type synonyms}\par
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1Valuation_a03e4b6ec1cf6d06928e4721ba9b94e8f}\label{classAriadne_1_1Valuation_a03e4b6ec1cf6d06928e4721ba9b94e8f} 
+using {\bfseries String\+Valuation} = \mbox{\hyperlink{classAriadne_1_1Valuation}{Valuation}}$<$\mbox{\hyperlink{classAriadne_1_1String}{String}}$>$
+\item 
+\Hypertarget{classAriadne_1_1Valuation_aa31075aff01845955b51edccf0c439e2}\label{classAriadne_1_1Valuation_aa31075aff01845955b51edccf0c439e2} 
+using {\bfseries Integer\+Valuation} = \mbox{\hyperlink{classAriadne_1_1Valuation}{Valuation}}$<$\mbox{\hyperlink{classAriadne_1_1Integer}{Integer}}$>$
+\end{DoxyCompactItemize}
+\end{Indent}
+
+
+The documentation for this class was generated from the following files\+:\begin{DoxyCompactItemize}
+\item 
+source/symbolic/\mbox{\hyperlink{expression_8decl_8hpp}{expression.\+decl.\+hpp}}\item 
+source/symbolic/\mbox{\hyperlink{valuation_8hpp}{valuation.\+hpp}}\end{DoxyCompactItemize}

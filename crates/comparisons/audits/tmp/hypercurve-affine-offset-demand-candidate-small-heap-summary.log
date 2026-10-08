@@ -1,0 +1,10 @@
+reading file "/tmp/hypercurve-affine-offset-demand-candidate-small.heap.zst" - please wait, this might take some time...
+Debuggee command was: /tmp/hypercurve-affine-offset-demand-frozen-candidate-test bezier_offset::conversion_tests::specialized_common_fiber_counts_even_multiplicity_in_a_coupled_system --exact --nocapture --test-threads=1
+finished reading file, now analyzing data:
+
+total runtime: 0.058000s.
+calls to allocation functions: 11963 (206258/s)
+temporary memory allocations: 473 (8155/s)
+peak heap memory consumption: 244.94K
+peak RSS (including heaptrack overhead): 14.29M
+total memory leaked: 92.47K

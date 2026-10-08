@@ -1,0 +1,21 @@
+[package]
+name = "calcium-derivative-endpoint-baseline"
+version = "0.1.0"
+edition = "2024"
+publish = false
+[workspace]
+[dependencies]
+hypercurve = { path = "../derivative-demand-baseline/hypercurve" }
+hyperreal = { path = "../derivative-demand-baseline/hyperreal", default-features = false }
+[patch.crates-io]
+hyperreal = { path = "../derivative-demand-baseline/hyperreal" }
+hyperlattice = { path = "../derivative-demand-baseline/hyperlattice" }
+hyperlimit = { path = "../derivative-demand-baseline/hyperlimit" }
+hypersolve = { path = "../derivative-demand-baseline/hypersolve" }
+hypertri = { path = "../derivative-demand-baseline/hypertri" }
+[[bin]]
+name = "calcium-derivative-endpoint-baseline-cpu"
+path = "../derivative-endpoint-cpu.rs"
+[[bin]]
+name = "calcium-derivative-endpoint-baseline-allocation"
+path = "../derivative-endpoint-allocation.rs"

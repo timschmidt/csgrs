@@ -1,0 +1,15 @@
+{
+  "tag": "monic-qualified-fmt",
+  "started": "2026-09-09T01:12:09.362Z",
+  "finished": "2026-09-09T01:12:10.111Z",
+  "elapsedSeconds": 0.74620542,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/polynomial-monic-qualified-trial/hypersolve",
+  "command": "cargo",
+  "args": [
+    "fmt",
+    "--",
+    "--check"
+  ],
+  "code": 0,
+  "signal": null
+}

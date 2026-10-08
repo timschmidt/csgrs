@@ -1,0 +1,22 @@
+{
+  "baseline": "endpoint-derivative-retention-v852-sources.json",
+  "owner": "hypercurve/src/bezier_tangent_order.rs:algebraic_endpoint_tangent_cross_sign",
+  "caller": "hypercurve/src/curve_region_boolean.rs:certified_transverse_contact_vertices",
+  "restriction": "The endpoint cross-product predicate first extracts two represented coordinate-root vectors. Retained exact expressions are rejected as Boundary before their shared source is considered.",
+  "potential_exact_identity": "For u=(X1(alpha),Y1(alpha))/D1(alpha), v=(X2(alpha),Y2(alpha))/D2(alpha), sign(cross(u,v)) is sign(X1*Y2-Y1*X2 at alpha) times the two nonzero denominator signs. This can be certified in the selected parameter without eliminating separate coordinate roots.",
+  "conditions": [
+    "Use selected-root identity including the isolator or an exact root-equivalence proof; equal defining polynomials alone do not prove that two vectors use the same root.",
+    "Preserve the denominator domain and both signs; do not assume positive weights or cancel a source pole.",
+    "Combine/reduce the polynomial products before sign evaluation so correlations and cancellation remain visible.",
+    "Preserve existing represented-coordinate arithmetic when selected sources differ. Keep original undecided reasons.",
+    "Exercise positive/negative/zero determinants, projective sign changes, mixed represented/retained inputs, and distinct roots of the same defining polynomial."
+  ],
+  "priority": "Retained-vector decisions address a representation-dependent predicate barrier. The V850 constructor wrapper cleanup remains a separate smaller simplification.",
+  "runtime_region_counterexample": false,
+  "candidate_prepared": false,
+  "source_sha256": {
+    "hypercurve/src/bezier_tangent_order.rs": "b1dc7c56833ab626e37d757de05de6097fa9d7620a20886e708a4ff1d91d59a3",
+    "hypercurve/src/curve_region_boolean.rs": "7540c8d1edb3bb514e52c06f2750c182c77b56eadcd5eabb22b962f3e87846c7",
+    "hypercurve/src/bezier_algebraic_image.rs": "8bb57e6540d66d233a0e6a4e5c8851dc49382fa33918724d11974f70742cc5f0"
+  }
+}

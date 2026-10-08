@@ -1,0 +1,11 @@
+{
+  "source_manifest": "constrained-collapsed-circle-20260926-v309-sources.json",
+  "source_sha256": "2736944eade896e734be696b43808e2a0852c7554e71816e982655e14ca977c7",
+  "library": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypercurve-85a9105cd1c82df7.rlib",
+  "library_sha256": "0b712c10252f9370c9a30ee9ecc49838f839db79634946f4b97d7f865e2f3abb",
+  "build_returncode": 0,
+  "binary_sha256": "216640fcaac17f863d7200ea90e72a3fea694941bf4c7cd53998e9bb3e764c0c",
+  "returncode": 0,
+  "elapsed_seconds": 0.003560894983820617,
+  "all_processes_reaped": true
+}

@@ -1,0 +1,19 @@
+{
+  "tag": "nfixed-fenv-memcheck",
+  "started": "2026-09-09T16:47:52.135Z",
+  "finished": "2026-09-09T16:47:53.536Z",
+  "elapsedSeconds": 1.398250542,
+  "cwd": "/home/tim/Documents/GitHub/workspace",
+  "command": "valgrind",
+  "args": [
+    "--vgdb=no",
+    "--tool=memcheck",
+    "--error-exitcode=97",
+    "--leak-check=full",
+    "--show-leak-kinds=all",
+    "--errors-for-leak-kinds=definite,indirect,possible",
+    "/tmp/calcium-nfixed-controls.qZn5o6/fenv-product-control"
+  ],
+  "code": 1,
+  "signal": null
+}

@@ -1,0 +1,13 @@
+
+running 8 tests
+test computable::node::log_relation_tests::log_relation_cancellation_does_not_publish_a_proof ... ok
+test computable::node::log_relation_tests::log_relations_coefficients_and_traversal_are_bounded ... ok
+test computable::node::log_relation_tests::log_relations_reject_zero_negative_and_non_algebraic_arguments ... ok
+test computable::node::log_relation_tests::log_relation_query_order_and_concurrent_sharing_are_consistent ... ok
+test computable::node::log_relation_tests::log_relation_serialization_reconstructs_the_proof_from_expression ... ok
+test computable::node::log_relation_tests::log_relations_preserve_both_signs_below_approximation_resolution ... ok
+test computable::node::log_relation_tests::log_relations_products_quotients_roots_and_rational_coefficients ... ok
+test computable::node::log_relation_tests::log_relations_require_exact_identity_even_below_numeric_resolution ... ok
+
+test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 764 filtered out; finished in 0.02s
+

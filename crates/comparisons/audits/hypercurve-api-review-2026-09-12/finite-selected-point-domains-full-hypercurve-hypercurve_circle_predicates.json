@@ -1,0 +1,29 @@
+{
+  "repo": "hypercurve",
+  "target": "hypercurve_circle_predicates",
+  "binary": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve_circle_predicates-e8cfe88f584e6288",
+  "command": [
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve_circle_predicates-e8cfe88f584e6288",
+    "--test-threads=4",
+    "--color",
+    "never"
+  ],
+  "sha256": "92374070e011fef4864661599afc029c5fb4dec102a5f1b266a10860bc7fbb91",
+  "returncode": 0,
+  "timed_out": false,
+  "elapsed_seconds": 0.003400866989977658,
+  "log": "finite-selected-point-domains-full-hypercurve-hypercurve_circle_predicates.log",
+  "passed": [
+    "circle_circle_relation_classifies_coincident_disjoint_tangent_and_secant_cases",
+    "arc_arc_intersection_reuses_circle_relation_witnesses_before_sweep_filtering",
+    "line_arc_intersection_reuses_supporting_circle_relation_roots",
+    "supporting_line_circle_relation_classifies_disjoint_tangent_and_secant_cases"
+  ],
+  "failed": [],
+  "ignored": [],
+  "summaries": [
+    "test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s"
+  ],
+  "new_failures": [],
+  "known_failures": []
+}

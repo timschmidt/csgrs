@@ -1,0 +1,16 @@
+{
+  "tag": "root-exp-trial-source-diff",
+  "started": "2026-09-08T11:40:27.928Z",
+  "finished": "2026-09-08T11:40:27.941Z",
+  "elapsedSeconds": 0.010913132000000004,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison",
+  "command": "git",
+  "args": [
+    "diff",
+    "--no-index",
+    "audits/continuation/calcium/baseline-hyperreal/src/computable/node/roots_inverse_hyperbolic.rs",
+    "audits/continuation/calcium/root-exp-trial-hyperreal/src/computable/node/roots_inverse_hyperbolic.rs"
+  ],
+  "code": 1,
+  "signal": null
+}

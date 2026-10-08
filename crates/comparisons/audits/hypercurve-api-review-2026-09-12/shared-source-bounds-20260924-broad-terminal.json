@@ -1,0 +1,127 @@
+{
+  "checks": [
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "clippy",
+        "--all-targets",
+        "--all-features",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "returncode": 0,
+      "log": "shared-source-bounds-20260924-v1-check-0.log"
+    },
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "clippy",
+        "--all-targets",
+        "--no-default-features",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "returncode": 0,
+      "log": "shared-source-bounds-20260924-v1-check-1.log"
+    }
+  ],
+  "command": [
+    "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+    "test",
+    "--release",
+    "--all-features",
+    "--no-run",
+    "--message-format=json",
+    "--locked",
+    "--offline",
+    "--test",
+    "hypercurve_path_closure",
+    "--test",
+    "hypercurve_curve_region_boolean",
+    "--test",
+    "hypercurve_bezier_arrangement",
+    "--test",
+    "hypercurve_curve_region_boolean_fuzz",
+    "--test",
+    "hypercurve_pcb_boolean_regressions"
+  ],
+  "binaries": {
+    "hypercurve": {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/shared-source-bounds-20260924-v1-libtest",
+      "sha256": "21cee711ab31851cb46ecccdf3ff438fe51699daee61fe190022c33dbf296dcd"
+    },
+    "hypercurve_pcb_boolean_regressions": {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/shared-source-bounds-20260924-broad-hypercurve_pcb_boolean_regressions",
+      "sha256": "857742809f24a743ad9c8248e7d3dc6515877822837cad3166681d99c4e57680"
+    },
+    "hypercurve_curve_region_boolean_fuzz": {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/shared-source-bounds-20260924-broad-hypercurve_curve_region_boolean_fuzz",
+      "sha256": "8e02c96cb6afe99bbbec614c34e72a1cebb91d5f866f6e088b7a42937a10035f"
+    },
+    "hypercurve_path_closure": {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/shared-source-bounds-20260924-broad-hypercurve_path_closure",
+      "sha256": "b202bca789e961eeb71d9efb30becb89ac2d5441d37c1d853de9dfaae73f088f"
+    },
+    "hypercurve_curve_region_boolean": {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/shared-source-bounds-20260924-broad-hypercurve_curve_region_boolean",
+      "sha256": "17d620861575800dbb3a17ef4e3457f3fd249d540ce863a2ddca48234cde231f"
+    },
+    "hypercurve_bezier_arrangement": {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/shared-source-bounds-20260924-broad-hypercurve_bezier_arrangement",
+      "sha256": "7ef557dbfbe843ffea4102365198792343c31be0865716060be3b46dae30850f"
+    }
+  },
+  "attempted": 437,
+  "passed": 430,
+  "ignored": 3,
+  "nonpasses": [
+    {
+      "target": "hypercurve",
+      "name": "bezier_region::tests::one_fragment_ph_loop_projective_corners_retain_one_extended_interval",
+      "returncode": 101,
+      "passed": false,
+      "ignored": false,
+      "elapsed_seconds": 0.06459519593045115,
+      "limit_seconds": 75,
+      "log": "shared-source-bounds-20260924-broad-case-0211.log"
+    },
+    {
+      "target": "hypercurve",
+      "name": "bezier_region::curve_corner_chain::tests::extended_fillet_region_classifies_both_sides_of_its_companion",
+      "returncode": "timeout",
+      "passed": false,
+      "ignored": false,
+      "elapsed_seconds": 75.00358173507266,
+      "limit_seconds": 75,
+      "log": "shared-source-bounds-20260924-broad-case-0191.log"
+    },
+    {
+      "target": "hypercurve",
+      "name": "bezier_region::tests::pair_native_boolean_algebraic_chord_corner_publishes_a_third_generation_fillet",
+      "returncode": "timeout",
+      "passed": false,
+      "ignored": false,
+      "elapsed_seconds": 75.00231699203141,
+      "limit_seconds": 75,
+      "log": "shared-source-bounds-20260924-broad-case-0213.log"
+    },
+    {
+      "target": "hypercurve",
+      "name": "bezier_region::tests::recursive_selected_radial_projective_chamfer_reenters_corner_kernel",
+      "returncode": "timeout",
+      "passed": false,
+      "ignored": false,
+      "elapsed_seconds": 75.00274440203793,
+      "limit_seconds": 75,
+      "log": "shared-source-bounds-20260924-broad-case-0216.log"
+    }
+  ],
+  "all_sources_unchanged": true,
+  "all_processes_reaped": true
+}

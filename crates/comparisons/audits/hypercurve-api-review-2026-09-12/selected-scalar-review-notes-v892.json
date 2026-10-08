@@ -1,0 +1,21 @@
+{
+  "status": "Read-only review while V892 qualifier outer session 23434 remains active; no source edits",
+  "invariants": [
+    "AlgebraicFieldValue owns immutable exact reduced coefficients and root evidence, never a context cache or expression tree.",
+    "Strict root payload replay admits contexts; selected-root equality, not polynomial equality or interval overlap, authorizes foreign operands.",
+    "Rational-function admission proves the denominator nonzero before returning a zero numerator.",
+    "All arithmetic delegates to the existing LocalFieldElement and LocalAlgebraicField implementations.",
+    "Hypercurve retains bilinear operands lazily for signs and requests field arithmetic only for scalar normalization.",
+    "Curvature uses cross squared / S cubed; zero-curvature third order uses cross squared / S to the fourth; equal-nonzero-curvature graph third order uses (S cross(v,j) - 3 cross(v,a) dot(v,a)) / S cubed.",
+    "Native/represented scalar paths, ordering guards and angular cuts remain in place."
+  ],
+  "required_followup": [
+    "Before commit, finish must reduce an older value against a smaller selected-root polynomial obtained during division. Add regression for older alpha squared reducing to 2 after removing alpha-3 from (alpha squared-2)(alpha-3).",
+    "Report invalid foreign selected-root evidence as InvalidEvidence rather than generic Undecided when the comparison authority classifies it as such."
+  ],
+  "limitations": [
+    "Distinct selected parameters that are related by a nonidentity reparameterization still require a certified transport or extension field; identity guards must not be relaxed.",
+    "Bounded coefficient-vector degree and absence of recursive scalar trees do not imply uniformly bounded coefficient bit size or prove a measured speedup.",
+    "Root payload admission trusts the upstream singleton isolation evidence as the existing Hypersolve contract does; it does not independently repeat a Sturm isolation for every value."
+  ]
+}

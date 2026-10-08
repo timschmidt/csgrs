@@ -1,0 +1,105 @@
+{
+  "schema": 1,
+  "captured_on": "2026-07-31",
+  "checkpoint": "regular-implicit-component-cells",
+  "source_revision": "443032091c67755bb184dde2a68a55854f5911a3",
+  "previous_checkpoint_revision": "bda14a8",
+  "hypersolve_revision": "2c7dcf21299dbc3e3900b4611d3d0e603e24c5f5",
+  "scope": {
+    "operation": "exact cell transport for regular implicit parameter components",
+    "completed_families": [
+      "one regular implicit graph with any finitely enumerated exact turning events",
+      "multiple disjoint regular monotone graphs paired by invariant fiber-root order",
+      "isolated lifted-domain boundary tangencies that coincide with exact turning events",
+      "coupled algebraic turning coordinates paired by exact two-equation replay",
+      "per-graph selected-normal branch filtering",
+      "STRICT and APPROXIMATE_512 through one construction graph"
+    ],
+    "compatibility_shims_added": false,
+    "hypermesh_modified": false
+  },
+  "mathematical_contract": {
+    "regularity": "H and its lifted-parameter derivative have no common unit-square solution, so each component branch is a graph over the retained parameter and distinct graphs cannot meet or exchange order",
+    "critical_events": "all unit-square solutions of H and its retained-parameter derivative are projected, paired, and replayed exactly; unresolved Cartesian candidates reject the certificate",
+    "closed_domain": "transverse roots through open lifted-domain edges reject the certificate; an interior edge root is retained only when the same exact pair is an enumerated turning event",
+    "one_graph": "ordered endpoint, turning-event, and endpoint pairs partition the graph into oriented monotone overlap cells",
+    "multiple_graphs": "when no turning event exists, equal root counts at retained fibers 0, 1/2, and 1 plus absence of lifted folds lets fiber order pair each disjoint monotone graph without Cartesian expansion",
+    "branch": "the selected-normal predicate is proved rootless on the whole component and signed independently at each ordered midpoint root",
+    "strict": "STRICT uses exact resultants, root isolation, bivariate replay, parameter refinement, and sign classification",
+    "approximate_512": "APPROXIMATE_512 follows the same proof graph; only inherited Hyperreal equality terminals may stop at 512 bits, and no approximate point, cell, orientation, or topology is synthesized",
+    "failure_semantics": "multiple graphs with turning events, projection folds, singular/shared-derivative components, transverse domain entry or exit, and boundary-coincident components remain explicit Boundary or predicate uncertainty"
+  },
+  "release_benchmark": {
+    "method": "five all-feature release processes pinned to CPU 11; 100 iterations per public implicit-component candidate/contact lane",
+    "machine": "AMD Ryzen 7 5800X3D, Linux 7.0.4-100.fc43.x86_64, rustc 1.97.0, cargo 1.97.0",
+    "implicit_candidates_microseconds": [
+      2638.865,
+      2653.627,
+      2667.239,
+      2677.964,
+      2695.904
+    ],
+    "implicit_contacts_microseconds": [
+      2722.422,
+      2650.950,
+      2661.344,
+      2667.433,
+      2689.825
+    ],
+    "candidate_median_microseconds": 2667.239,
+    "contact_median_microseconds": 2667.433,
+    "previous_candidate_median_microseconds": 2671.976,
+    "previous_contact_median_microseconds": 2661.377,
+    "candidate_change_percent": -0.177285,
+    "contact_change_percent": 0.227551,
+    "interpretation": "both changes are sub-percent steady-state noise; the widened topology does not regress the existing monotone public route"
+  },
+  "release_size": {
+    "binary": "target/release/deps/offset-ea116fee283cd918",
+    "file_bytes": 7456472,
+    "text_bytes": 5673795,
+    "loadable_bytes": 5940995,
+    "change_from_previous_checkpoint_percent": {
+      "file": 0.256542,
+      "text": 0.225613,
+      "loadable": 0.207330
+    },
+    "combined_change_from_pre_implicit_retention_percent": {
+      "file": 1.026790,
+      "text": 0.986262,
+      "loadable": 0.904455
+    }
+  },
+  "static_callgraph": {
+    "tool": "tools/hyper-callgraph",
+    "scope": "hypercurve and hypersolve with examples, tests, benchmarks, and fuzz targets",
+    "nodes": 29904,
+    "edges": 53787,
+    "change_from_previous_checkpoint": {
+      "nodes": 29,
+      "edges": 86
+    },
+    "artifact": "/tmp/hypercurve-implicit-component-cells-stack-callgraph/callgraph.json",
+    "interpretation": "this syntax graph is navigation and source-complexity evidence, not runtime reachability or binary-size evidence"
+  },
+  "verification": {
+    "all_features_library_tests": 303,
+    "no_default_features_library_tests": 269,
+    "full_all_features": "passed",
+    "full_no_default_features": "passed",
+    "quality": [
+      "cargo clippy --all-targets --all-features -- -D warnings",
+      "cargo clippy --all-targets --no-default-features -- -D warnings",
+      "cargo fmt --all -- --check",
+      "git diff --check"
+    ]
+  },
+  "remaining": [
+    "branch assignment for multiple regular graphs that also contain turning events",
+    "projection folds where H and its lifted-parameter derivative meet",
+    "transverse authored-domain entry and exit",
+    "singular/shared-derivative and boundary-coincident components",
+    "supported non-rational coefficient towers",
+    "remaining exact parallel carrier surfaces and authoritative CurveRegion2 offset regularization"
+  ]
+}

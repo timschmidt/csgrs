@@ -1,0 +1,11 @@
+{
+  "tag": "polynomial-closure-series-native",
+  "started": "2026-09-08T23:55:54.901Z",
+  "finished": "2026-09-08T23:55:55.099Z",
+  "elapsedSeconds": 0.196525532,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison",
+  "command": "/tmp/calcium-polynomial-closure.L3hLNa/flint-polynomial-series-probe",
+  "args": [],
+  "code": 0,
+  "signal": null
+}

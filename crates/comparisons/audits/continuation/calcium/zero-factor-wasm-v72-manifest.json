@@ -1,0 +1,461 @@
+{
+  "checkpoint": 72,
+  "status": "isolated-wasm-correctness-qualified",
+  "recorded": "2026-09-11T21:05:21.469Z",
+  "files": {
+    "build-zero-factor-wasm-v72.mjs": "5b57dfacc4568ad87204d38f72fcaf6b78e43069db52e015bf51e7714ee6d413",
+    "check-point-extended.mjs": "925384f7417d82a808907b34b7866bee5239559d42c08fb86daf284255cc09b1",
+    "check-zero-factor-v70.mjs": "54515bfcd5e21a970a678ad4b658459b5db0c887801a775ad62da5eb026bb7bb",
+    "check-zero-factor-wasm-abi-v72.mjs": "76e2f125effecf6bcc90dfabc4b8497e099e10893b24804559f7e2299d838221",
+    "check-zero-factor-wasm-corruptions-v72.mjs": "322fbd305111d97bf74bb4eba12a9d926b7ebfa4badd8258fdf2860f89b493e9",
+    "check-zero-factor-wasm-records-v72.mjs": "ff9cb66745b8754b47a2c2850404bdd1883aa216a6e82fb93c8ebe05b3098e16",
+    "point-extended-field.mjs": "795154da44b1502c04db4aaa880adb470eec16a4970e2d928410d44ffa6b6424",
+    "point-history-base.rs": "5db127b416d4cb39a2faed2426f883a3d2b3cb5d8e74ca014f3de28f4e4df9a6",
+    "point-history-work.rs": "194791cab390fd063aa57388e4b36bdc24e3d1cf0fc64e0e49c640f581ba6527",
+    "point-wasm-platform.rs": "3c87c984248513a8da7960377a794665af3f6bd93480b9392bde3271ac10d2f3",
+    "point-wasm-work.rs": "4b64c97b339c7e00dffb918df53daff71ffe5383f9f8e2dd794ed07874b4bc02",
+    "power-sums-public.rs": "68abb7309ae0a23ffa4e53a48e91002a1e047cff3b4dcc78a71dcc7340e7643e",
+    "qualify-zero-factor-wasm-v72.mjs": "3d406cf70646c40002887b4b93a4a306de7a627af215a0382f6383587d211019",
+    "results/zero-factor-cost-verify-v71.json": "88bd18595a324f42df1344694dfcc91d55a65eec0f9c54bdabe7b782febf12c4",
+    "results/zero-factor-cost-verify-v71.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/zero-factor-cost-verify-v71.stdout": "30a9e955d5ce93a75f13c8433b44d48f0c58700e42e742ed8c8ccbf8541a0e10",
+    "results/zero-factor-wasm-abi-v72.json": "9970ebb868eaafc75bb035497dff760d71bef0f680a546ded4c8bea04cc8f8f4",
+    "results/zero-factor-wasm-abi-v72.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/zero-factor-wasm-abi-v72.stdout": "b0fc8a4f6e998c04b76e39fb4fc1275ee2105ad88fc0b2108a16c2459051e96a",
+    "results/zero-factor-wasm-baseline-history-build-v72.json": "e48a1ef8880c6f145ee24a5ead6c1110a2655f342c73c3dd1694178f576f1b84",
+    "results/zero-factor-wasm-baseline-history-build-v72.stderr": "ff3744ca17868e013c2d5020ab648ab617c8a33e16783d7435c894f07cd6f5fe",
+    "results/zero-factor-wasm-baseline-history-build-v72.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/zero-factor-wasm-baseline-history-clippy-v72.json": "e8bd0ee3c2f2a4cb6689b87cf5dddcfbb09564a9e7eb98374808dcba4a8cedc4",
+    "results/zero-factor-wasm-baseline-history-clippy-v72.stderr": "bdda9354a155b8c094e9a02c69970e5756f21a1af0afd84de0acb192f75931d0",
+    "results/zero-factor-wasm-baseline-history-clippy-v72.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/zero-factor-wasm-baseline-history-lock-v72.json": "e53d6d2c6d3a9483cfafd3c50be278265a76e61f25eaf779d71ae178b5f21fac",
+    "results/zero-factor-wasm-baseline-history-lock-v72.stderr": "e6be2fc21f61ee2ca9174470fbbef09ec82d1768d4642489a358e3e3a667848a",
+    "results/zero-factor-wasm-baseline-history-lock-v72.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/zero-factor-wasm-baseline-history-metadata-v72.json": "0a67be03eda3c4cea19faa341345683254a1af15b204a2d8f3b7b0442bb632d2",
+    "results/zero-factor-wasm-baseline-history-metadata-v72.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/zero-factor-wasm-baseline-history-metadata-v72.stdout": "327d8282e7cc26b89ae8e392c12b2776a1c4d4bb1ca7f45025c1ce8dbeb2fec0",
+    "results/zero-factor-wasm-baseline-rational-build-v72.json": "ebcad5cd3434724e1c4dacaa47ef982e11196b1e00243cd5aa73e71362a369ac",
+    "results/zero-factor-wasm-baseline-rational-build-v72.stderr": "463c24ec466576d94734969eb0b00f9f3561de1f18b92f0b7392d186aac1b7bb",
+    "results/zero-factor-wasm-baseline-rational-build-v72.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/zero-factor-wasm-baseline-rational-clippy-v72.json": "99c1110d3fd8a4ed78719ae189b17bdc04f8cec07b2f921dae7096ca30a7aba2",
+    "results/zero-factor-wasm-baseline-rational-clippy-v72.stderr": "e0ad29fc7b4c0268b023b3b3cbda41166ca6a7b57b8e58560bb4cbe530e1cfdc",
+    "results/zero-factor-wasm-baseline-rational-clippy-v72.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/zero-factor-wasm-baseline-rational-lock-v72.json": "0640bc556b4985771f3c634d621f850fe6ff0f1c73117d935d05fdf4e1181dab",
+    "results/zero-factor-wasm-baseline-rational-lock-v72.stderr": "e6be2fc21f61ee2ca9174470fbbef09ec82d1768d4642489a358e3e3a667848a",
+    "results/zero-factor-wasm-baseline-rational-lock-v72.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/zero-factor-wasm-baseline-rational-metadata-v72.json": "5efbc3c41db44d72b2b996df91f889a1bf30aec6cd6f67971344a9c27d40d8bc",
+    "results/zero-factor-wasm-baseline-rational-metadata-v72.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/zero-factor-wasm-baseline-rational-metadata-v72.stdout": "94e362eb0bc09d01cef0a86225eed59b38e42199c508a4eb16ce6d1bdac29570",
+    "results/zero-factor-wasm-build-v72.json": "b46cb36612d713684e99b3f5285eae3217ada7bc884b2b0ead715f72dac591b7",
+    "results/zero-factor-wasm-build-v72.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/zero-factor-wasm-build-v72.stdout": "8a0cd34109030b59e676ae3ffe57ccbfc0154cc288e2323690e5e67b59357a04",
+    "results/zero-factor-wasm-candidate-history-build-v72.json": "47bd7a616c2ccceb8ef10a9688ee5816c2a8deac894f5b4a399f9030c5245411",
+    "results/zero-factor-wasm-candidate-history-build-v72.stderr": "948e12c55d9cac6fa915a3c246d2f42b863b0131ce94079bc8cd6c91f7ad2d02",
+    "results/zero-factor-wasm-candidate-history-build-v72.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/zero-factor-wasm-candidate-history-clippy-v72.json": "d024bd8db00503282cb4bfdbcb612aa0edb5df789816e62ae9eb7b74b93594b0",
+    "results/zero-factor-wasm-candidate-history-clippy-v72.stderr": "dffdd78d0ad9399508989e4de2fcf339a54a184a89aaa203a2a2ffe6054e82a0",
+    "results/zero-factor-wasm-candidate-history-clippy-v72.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/zero-factor-wasm-candidate-history-lock-v72.json": "b5ff83002d00728431aed96cb42935c1330f1e617831d5aa098af31bd2856989",
+    "results/zero-factor-wasm-candidate-history-lock-v72.stderr": "e6be2fc21f61ee2ca9174470fbbef09ec82d1768d4642489a358e3e3a667848a",
+    "results/zero-factor-wasm-candidate-history-lock-v72.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/zero-factor-wasm-candidate-history-metadata-v72.json": "e31872965279d67491c37ac4d3020209678eebab23fff33999c94175870c5421",
+    "results/zero-factor-wasm-candidate-history-metadata-v72.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/zero-factor-wasm-candidate-history-metadata-v72.stdout": "ee56b2d961800c8add473c80d002839b8fcac648d717ddc27f4016369f8df5c6",
+    "results/zero-factor-wasm-candidate-rational-build-v72.json": "6500c5effaa5b704717eb6154410730d80e2c732fdc02e63df6b2e3d57abe0cd",
+    "results/zero-factor-wasm-candidate-rational-build-v72.stderr": "64a064447a8fbad583fe84811058774de432d676c90e5422238c6971f9e086ff",
+    "results/zero-factor-wasm-candidate-rational-build-v72.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/zero-factor-wasm-candidate-rational-clippy-v72.json": "131afedee579739dd02f7b614ea8905b6dfe6b94b25f5e9be7290e173854a031",
+    "results/zero-factor-wasm-candidate-rational-clippy-v72.stderr": "60abe3ee4eb8857e8a3cdf4a02e607d763419307076234932492dd48bc957b1b",
+    "results/zero-factor-wasm-candidate-rational-clippy-v72.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/zero-factor-wasm-candidate-rational-lock-v72.json": "d1cd3adf1f73a3c4fe7a1c090a0f2ea321f5f1417683436a5e5eac73a4b8d6a1",
+    "results/zero-factor-wasm-candidate-rational-lock-v72.stderr": "e6be2fc21f61ee2ca9174470fbbef09ec82d1768d4642489a358e3e3a667848a",
+    "results/zero-factor-wasm-candidate-rational-lock-v72.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/zero-factor-wasm-candidate-rational-metadata-v72.json": "e9d3393adcefb3764d678ebfa0d460ff5d7b81c611ffbe835e8082bf997acac9",
+    "results/zero-factor-wasm-candidate-rational-metadata-v72.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/zero-factor-wasm-candidate-rational-metadata-v72.stdout": "de6c99289310cc7f72fb2bcec10cf6f7bf0de6fd9acbbc5e2ab7b27dd48584f8",
+    "results/zero-factor-wasm-corruptions-v72.json": "568c619c842f73af5f97d5b1beb98f08d5adf3a581c66ed6baa3f0740653407a",
+    "results/zero-factor-wasm-corruptions-v72.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/zero-factor-wasm-corruptions-v72.stdout": "90c59fc106d13b7b6e706915ab456c34ba8d75e9ef71bd48524117c732de7b4f",
+    "results/zero-factor-wasm-evidence-v72.json": "362c042c7ffe6db48f5741589aafca59e70fe9706a1365d47d1f4f7e2417e5b5",
+    "results/zero-factor-wasm-evidence-v72.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/zero-factor-wasm-evidence-v72.stdout": "469dded9b2b800afdef84e3a0f0d0de2d8efb79ff9338c3b11839320a46f9af4",
+    "results/zero-factor-wasm-failures-v72.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/zero-factor-wasm-fmt-v72.json": "f558f2f5a64be664aa341778009a64d6b0cb541fb16f058d60039ededdbbd318",
+    "results/zero-factor-wasm-fmt-v72.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/zero-factor-wasm-fmt-v72.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/zero-factor-wasm-qualification-v72.json": "dd80dac82f10e9b4726e9d5dbeecc9d7a92dd07fcaab380aac5d67e9ef4063d6",
+    "results/zero-factor-wasm-qualification-v72.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/zero-factor-wasm-qualification-v72.stdout": "745f014b4bdd39a7727c450542e249774ed6cf357d2a5871772ee16fade0a6f2",
+    "results/zero-factor-wasm-records-v72.json": "846440d1e66734c5ecdfde09983d2a7859c06237f76b55f792ad3f076b533355",
+    "results/zero-factor-wasm-records-v72.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/zero-factor-wasm-records-v72.stdout": "c9c481c15d3dee072d49364b39b234a52900f7b1c11c92e21c9ea6bc67271daa",
+    "verify-zero-factor-wasm-v72.mjs": "c5e0355c650917836ff989d457eac8eb3db839658f5c49d069b1a5b6c512f836",
+    "zero-factor-cost-input-v71.json": "ace3833519612e16a4cc3bfc5780fbb455fae742ef91db607bbc59b3a49d31d8",
+    "zero-factor-cost-protocol-v71.mjs": "5f007e0f44f0586ce0e7782ebd4b030625e6842ad7bf062b9208a6edbc3744e6",
+    "zero-factor-cost-sources-v71.mjs": "fe40129545ccda6d75a55e0cfdfb5da3d0ffb82bb05c59b59941202632630ccc",
+    "zero-factor-cost-v71-manifest.json": "4927036e97fa1a4930f3ea0fee6c49e6cab30d6dc8de05396e60c969aaaf8e8c",
+    "zero-factor-cost-v71.rs": "88de804b75c9cb4628ec2fda99a0986658eba7e6d5e4474c780ed3f3414a9fa3",
+    "zero-factor-final-binding-v70.json": "93a8b6de487f3a85f877e5f74a79e1cd118831c434c4fc08ce864c933f8817c3",
+    "zero-factor-final-sources-v70.mjs": "98163e8deb534c27a02af157c69708e74cca0936cbd7a90f17fdfc677d980c40",
+    "zero-factor-v70-manifest.json": "a27fbf9d62e873684c67d8547e75bc7b44385566c0792564cce45bc357f4bbf4",
+    "zero-factor-wasm-abi-origin-v72.json": "1dd7f0debd9081fe571c6b378c80b177db0a9e291cff94e76c14a872658282ed",
+    "zero-factor-wasm-abi-v72.json": "ad53489a3ce567bc7b210991a89ad0714dd6956f22f4224108d043f860ac8ebc",
+    "zero-factor-wasm-baseline-history-v72/Cargo.lock": "c42e4686e0937684e8ba9aac78364c72634fa9e9784c29deb7f569106ef21a54",
+    "zero-factor-wasm-baseline-history-v72/Cargo.toml": "a65ca5a306c397ab232f0e2a9778505602de9bb35b405eb6b17cf2433201bb37",
+    "zero-factor-wasm-baseline-rational-v72/Cargo.lock": "c42e4686e0937684e8ba9aac78364c72634fa9e9784c29deb7f569106ef21a54",
+    "zero-factor-wasm-baseline-rational-v72/Cargo.toml": "73ffb90ceb5f782070e4c2bd312fc21641b5e20f15deb1babd0d74c8d28ea212",
+    "zero-factor-wasm-binaries-v72.json": "8c069524d699f37a7cd9e9e065ded628ad2f1ab9581b1fe81cf47faa8fea478d",
+    "zero-factor-wasm-candidate-history-v72/Cargo.lock": "c42e4686e0937684e8ba9aac78364c72634fa9e9784c29deb7f569106ef21a54",
+    "zero-factor-wasm-candidate-history-v72/Cargo.toml": "a0826475c4fbb1cef65ad3c21e3e80515c4ac088df6bd53887b4bd6e13879830",
+    "zero-factor-wasm-candidate-rational-v72/Cargo.lock": "c42e4686e0937684e8ba9aac78364c72634fa9e9784c29deb7f569106ef21a54",
+    "zero-factor-wasm-candidate-rational-v72/Cargo.toml": "dd5548399f8a330f926422280b9f2b2e5fb0714a9340f01ba8b05cd0bd441a78",
+    "zero-factor-wasm-corruptions-v72.json": "6b587b855bf3d86bc9870adb789e71528baa8389b3b82d66c6c1aff6bd7e77cd",
+    "zero-factor-wasm-evidence-v72.mjs": "46ba559e2bb029a0d816b979068edf4ea81a82fee91ae16fad197c6a20df2a76",
+    "zero-factor-wasm-input-v72.json": "9952126ee7713a4801e8a1a968ef94be3dbc7090e138c736088bfd794b33c98e",
+    "zero-factor-wasm-input-v72.mjs": "081d3df84dd132fbdcb4f745b23317b694ec456af17b6fbc747fcc266ac15cec",
+    "zero-factor-wasm-origin-v72.json": "e5662a5cecde51f8bc8e72db25f8172e51a85cbfe656ecfe73e62eb0d619056f",
+    "zero-factor-wasm-protocol-v72.md": "d7704520cc15aee7421a825ddbbe748ecf09c08648476cf816c1020f2aed5b43",
+    "zero-factor-wasm-qualification-origin-v72.json": "f091d405949fc56477918dde083a027f1c9f0263b8c0559396bc2f97a658462b",
+    "zero-factor-wasm-qualification-v72.json": "2b0a0c0ccc4982b29d4aa6c7cba37eb3d9c14b9a5854f2ab9d5f0da23450cc31",
+    "zero-factor-wasm-runner-v72.mjs": "c2150c6e893331c6ed3a1539b9cd9eb3288620a76530c6f52fac673253993eb6",
+    "zero-factor-wasm-sources-v72.mjs": "5230eb01be136b50bf55fd95d673c03dfdd50146ec68b515e9367d9a09a0e02a",
+    "zero-factor-wasm-v72-findings.md": "5ede9bb36574c366c151f4572b2afe0edbdee6c512871c7f569d6ce721033090",
+    "zero-factor-wasm-v72.rs": "f8064918bdf162dadb440b454e126e37a580e33b34fba44716ec6d933653d44b"
+  },
+  "gates": [
+    "zero-factor-wasm-baseline-rational-lock-v72",
+    "zero-factor-wasm-baseline-rational-metadata-v72",
+    "zero-factor-wasm-baseline-rational-build-v72",
+    "zero-factor-wasm-baseline-rational-clippy-v72",
+    "zero-factor-wasm-baseline-history-lock-v72",
+    "zero-factor-wasm-baseline-history-metadata-v72",
+    "zero-factor-wasm-baseline-history-build-v72",
+    "zero-factor-wasm-baseline-history-clippy-v72",
+    "zero-factor-wasm-candidate-rational-lock-v72",
+    "zero-factor-wasm-candidate-rational-metadata-v72",
+    "zero-factor-wasm-candidate-rational-build-v72",
+    "zero-factor-wasm-candidate-rational-clippy-v72",
+    "zero-factor-wasm-candidate-history-lock-v72",
+    "zero-factor-wasm-candidate-history-metadata-v72",
+    "zero-factor-wasm-candidate-history-build-v72",
+    "zero-factor-wasm-candidate-history-clippy-v72",
+    "zero-factor-wasm-fmt-v72",
+    "zero-factor-wasm-build-v72",
+    "zero-factor-wasm-qualification-v72",
+    "zero-factor-wasm-abi-v72",
+    "zero-factor-wasm-records-v72",
+    "zero-factor-wasm-corruptions-v72",
+    "zero-factor-wasm-evidence-v72"
+  ],
+  "evidence": {
+    "checkpoint": 72,
+    "status": "isolated-wasm-correctness-qualified",
+    "sourceOriginSha256": "e5662a5cecde51f8bc8e72db25f8172e51a85cbfe656ecfe73e62eb0d619056f",
+    "liveFiles": 956,
+    "candidateFiles": 176,
+    "retainedContinuationTransfers": 6,
+    "newDonorLines": 0,
+    "gates": [
+      "zero-factor-wasm-baseline-rational-lock-v72",
+      "zero-factor-wasm-baseline-rational-metadata-v72",
+      "zero-factor-wasm-baseline-rational-build-v72",
+      "zero-factor-wasm-baseline-rational-clippy-v72",
+      "zero-factor-wasm-baseline-history-lock-v72",
+      "zero-factor-wasm-baseline-history-metadata-v72",
+      "zero-factor-wasm-baseline-history-build-v72",
+      "zero-factor-wasm-baseline-history-clippy-v72",
+      "zero-factor-wasm-candidate-rational-lock-v72",
+      "zero-factor-wasm-candidate-rational-metadata-v72",
+      "zero-factor-wasm-candidate-rational-build-v72",
+      "zero-factor-wasm-candidate-rational-clippy-v72",
+      "zero-factor-wasm-candidate-history-lock-v72",
+      "zero-factor-wasm-candidate-history-metadata-v72",
+      "zero-factor-wasm-candidate-history-build-v72",
+      "zero-factor-wasm-candidate-history-clippy-v72",
+      "zero-factor-wasm-fmt-v72",
+      "zero-factor-wasm-build-v72",
+      "zero-factor-wasm-qualification-v72",
+      "zero-factor-wasm-abi-v72",
+      "zero-factor-wasm-records-v72",
+      "zero-factor-wasm-corruptions-v72"
+    ],
+    "dependencyGraph": {
+      "packagesPerApp": 33,
+      "nodesPerApp": 33,
+      "fullMetadataEqualAfterPaths": true,
+      "allLocksEqual": true
+    },
+    "replay": {
+      "checkpoint": 72,
+      "status": "wasm-record-replay-pass",
+      "observations": 38280,
+      "counts": {
+        "full": 33384,
+        "cost": 1824,
+        "history": 3072
+      },
+      "extendedChecks": 89984,
+      "statuses": {
+        "baseline:Transformed": 13888,
+        "candidate:Transformed": 14072,
+        "baseline:DenominatorMayContainZero": 570,
+        "candidate:DenominatorMayContainZero": 570,
+        "baseline:Undecided": 152,
+        "baseline:NonIsolatingImageInterval": 130,
+        "candidate:NonIsolatingImageInterval": 130,
+        "baseline:UnsupportedDegree": 1952,
+        "candidate:UnsupportedDegree": 1920
+      },
+      "newAnswers": 184,
+      "equalAnswers": 16508,
+      "memory": {
+        "full:baseline": {
+          "observations": 16692,
+          "fields": {
+            "initialMemory": {
+              "min": 1245184,
+              "max": 1245184
+            },
+            "initializedMemory": {
+              "min": 33816576,
+              "max": 33816576
+            },
+            "memoryBeforePrepare": {
+              "min": 33816576,
+              "max": 33816576
+            },
+            "memoryAfterPrepare": {
+              "min": 33816576,
+              "max": 33816576
+            },
+            "memoryAfterBatch": {
+              "min": 33816576,
+              "max": 33816576
+            },
+            "memoryAfterFinish": {
+              "min": 33816576,
+              "max": 33816576
+            }
+          }
+        },
+        "full:candidate": {
+          "observations": 16692,
+          "fields": {
+            "initialMemory": {
+              "min": 1245184,
+              "max": 1245184
+            },
+            "initializedMemory": {
+              "min": 33816576,
+              "max": 33816576
+            },
+            "memoryBeforePrepare": {
+              "min": 33816576,
+              "max": 33816576
+            },
+            "memoryAfterPrepare": {
+              "min": 33816576,
+              "max": 33816576
+            },
+            "memoryAfterBatch": {
+              "min": 33816576,
+              "max": 33816576
+            },
+            "memoryAfterFinish": {
+              "min": 33816576,
+              "max": 33816576
+            }
+          }
+        },
+        "cost:baseline": {
+          "observations": 912,
+          "fields": {
+            "initialMemory": {
+              "min": 1245184,
+              "max": 1245184
+            },
+            "initializedMemory": {
+              "min": 1703936,
+              "max": 1703936
+            },
+            "memoryBeforePrepare": {
+              "min": 1703936,
+              "max": 1703936
+            },
+            "memoryAfterPrepare": {
+              "min": 1703936,
+              "max": 1703936
+            },
+            "memoryAfterBatch": {
+              "min": 1703936,
+              "max": 1703936
+            },
+            "memoryAfterFinish": {
+              "min": 1703936,
+              "max": 1703936
+            }
+          }
+        },
+        "cost:candidate": {
+          "observations": 912,
+          "fields": {
+            "initialMemory": {
+              "min": 1245184,
+              "max": 1245184
+            },
+            "initializedMemory": {
+              "min": 1703936,
+              "max": 1703936
+            },
+            "memoryBeforePrepare": {
+              "min": 1703936,
+              "max": 1703936
+            },
+            "memoryAfterPrepare": {
+              "min": 1703936,
+              "max": 1703936
+            },
+            "memoryAfterBatch": {
+              "min": 1703936,
+              "max": 1703936
+            },
+            "memoryAfterFinish": {
+              "min": 1703936,
+              "max": 1703936
+            }
+          }
+        },
+        "history:baseline": {
+          "observations": 1536,
+          "fields": {
+            "initialMemory": {
+              "min": 1245184,
+              "max": 1245184
+            },
+            "memoryAfterPrepare": {
+              "min": 1310720,
+              "max": 1441792
+            },
+            "memoryAfterBatch": {
+              "min": 1310720,
+              "max": 1441792
+            },
+            "memoryAfterFinish": {
+              "min": 1310720,
+              "max": 1572864
+            }
+          }
+        },
+        "history:candidate": {
+          "observations": 1536,
+          "fields": {
+            "initialMemory": {
+              "min": 1245184,
+              "max": 1245184
+            },
+            "memoryAfterPrepare": {
+              "min": 1310720,
+              "max": 1441792
+            },
+            "memoryAfterBatch": {
+              "min": 1310720,
+              "max": 1441792
+            },
+            "memoryAfterFinish": {
+              "min": 1310720,
+              "max": 1572864
+            }
+          }
+        }
+      },
+      "limits": "All saved full records and authored order replayed; memory values are WASM linear-memory capacity, not allocation, peak or RSS. No timing inference."
+    },
+    "abi": {
+      "negativeControls": 76,
+      "positiveSequences": 4,
+      "additionalExpectedTraps": 2
+    },
+    "recordControls": {
+      "accepted": 2,
+      "rejected": 21
+    },
+    "runtime": {
+      "node": "v22.22.2",
+      "v8": "12.4.254.21-node.39",
+      "flags": [
+        "--expose-gc",
+        "--no-liftoff",
+        "--no-wasm-tier-up",
+        "--no-wasm-lazy-compilation"
+      ],
+      "affinity": "2",
+      "importFreeModules": 4
+    },
+    "captures": {
+      "build": {
+        "tag": "zero-factor-wasm-build-v72",
+        "started": "2026-09-11T20:06:14.513Z",
+        "finished": "2026-09-11T20:06:35.933Z",
+        "elapsedSeconds": 21.417473001999998,
+        "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+        "command": "node",
+        "args": [
+          "build-zero-factor-wasm-v72.mjs"
+        ],
+        "code": 0,
+        "signal": null
+      },
+      "qualification": {
+        "tag": "zero-factor-wasm-qualification-v72",
+        "started": "2026-09-11T20:46:20.889Z",
+        "finished": "2026-09-11T20:50:12.611Z",
+        "elapsedSeconds": 231.71994095300002,
+        "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+        "command": "taskset",
+        "args": [
+          "-c",
+          "2",
+          "node",
+          "--expose-gc",
+          "--no-liftoff",
+          "--no-wasm-tier-up",
+          "--no-wasm-lazy-compilation",
+          "qualify-zero-factor-wasm-v72.mjs"
+        ],
+        "code": 0,
+        "signal": null
+      },
+      "abi": {
+        "tag": "zero-factor-wasm-abi-v72",
+        "started": "2026-09-11T20:59:05.616Z",
+        "finished": "2026-09-11T20:59:09.914Z",
+        "elapsedSeconds": 4.295517537,
+        "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+        "command": "taskset",
+        "args": [
+          "-c",
+          "2",
+          "node",
+          "--expose-gc",
+          "--no-liftoff",
+          "--no-wasm-tier-up",
+          "--no-wasm-lazy-compilation",
+          "check-zero-factor-wasm-abi-v72.mjs"
+        ],
+        "code": 0,
+        "signal": null
+      }
+    },
+    "storage": {
+      "moduleFiles": 4,
+      "moduleBytes": 5818881,
+      "moduleRoot": "/tmp/calcium-zero-wasm.ATQP07",
+      "rawObservationBytes": 53098727,
+      "noNewSolverCopy": true
+    },
+    "limits": "No WASM cost inference, allocation/peak/RSS measurement, live adoption or donor coverage credit. Native checkpoint-71 artifacts are hash-checked, not statistically recomputed here. WASM matched costs, consumer/size gates and remaining full inventory stay open."
+  },
+  "retainedContinuationTransfers": 6,
+  "newDonorLines": 0,
+  "scope": "Isolated WASM correctness qualification; no live edit. Matched WASM costs, representative consumer/size and complete remaining reference inventory stay open."
+}

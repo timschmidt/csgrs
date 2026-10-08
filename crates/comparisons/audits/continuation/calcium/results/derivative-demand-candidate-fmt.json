@@ -1,0 +1,16 @@
+{
+  "tag": "derivative-demand-candidate-fmt",
+  "started": "2026-09-09T04:16:34.016Z",
+  "finished": "2026-09-09T04:16:39.470Z",
+  "elapsedSeconds": 5.4520650889999995,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/derivative-demand-candidate/hypercurve",
+  "command": "cargo",
+  "args": [
+    "fmt",
+    "--all",
+    "--",
+    "--check"
+  ],
+  "code": 0,
+  "signal": null
+}

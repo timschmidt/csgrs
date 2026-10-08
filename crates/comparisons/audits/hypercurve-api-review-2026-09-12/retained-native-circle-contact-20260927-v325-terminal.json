@@ -1,0 +1,11 @@
+{
+  "source_manifest": "retained-native-circle-contact-20260927-v323-sources.json",
+  "binary": {
+    "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-native-circle-contact-20260927-v323-hypercurve",
+    "sha256": "9327dd443bb639e6822b07f48a38624228a24d854432c2e833f8b263a4c427a7"
+  },
+  "gdb_returncode": 0,
+  "all_processes_reaped": true,
+  "log_sha256": "9e9aa7ce6e741cf0f0ea60c12e9f86f217c5b3e14f07d6f3eedf2bea6ce65f46",
+  "finding": "Inlined observation breakpoint not reached"
+}

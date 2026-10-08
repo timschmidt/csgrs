@@ -1,0 +1,202 @@
+{
+  "diagnostic_only": true,
+  "mode": "candidate",
+  "parent": "1b9fffe7f9b8195918b7c64ce66f07192f8915fd",
+  "selected_files": [
+    "src/bezier_algebraic_image.rs",
+    "src/bezier_offset.rs",
+    "src/bezier_parameter.rs",
+    "src/bezier_split.rs",
+    "src/curve_region_boolean.rs"
+  ],
+  "workspace_changed": [
+    "src/bezier_algebraic_image.rs",
+    "src/bezier_offset.rs",
+    "src/bezier_parameter.rs",
+    "src/bezier_region.rs",
+    "src/bezier_split.rs",
+    "src/curve.rs",
+    "src/curve_corner_chain.rs",
+    "src/curve_region_boolean.rs",
+    "tests/hypercurve_curve.rs"
+  ],
+  "build_source_directory": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/build-workspace-20260925",
+  "workspace_guard": "local-chord-complete-replay-20260924-v80-sources.json",
+  "source_manifest": "native-evidence-reuse-diagnostic-20260925-v80-candidate-sources.json",
+  "patch": "native-evidence-reuse-20260925-v80.patch",
+  "checks": [],
+  "binaries": {
+    "hypercurve": {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/native-evidence-reuse-diagnostic-20260925-v80-candidate-hypercurve",
+      "sha256": "179d02fb202d8dafe95405df2a4863e5d077e2ad37ad81ee4a6edc7c35602ca9"
+    }
+  },
+  "cases": [
+    {
+      "label": "case-000",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/native-evidence-reuse-diagnostic-20260925-v80-candidate-hypercurve",
+        "--exact",
+        "bezier_offset::conversion_tests::bounded_point_import_preserves_a_cached_local_field",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.418525857036002,
+      "limit_seconds": 75,
+      "log": "native-evidence-reuse-diagnostic-20260925-v80-candidate-case-000.log",
+      "ignored": false,
+      "target": "hypercurve",
+      "name": "bezier_offset::conversion_tests::bounded_point_import_preserves_a_cached_local_field"
+    },
+    {
+      "label": "case-001",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/native-evidence-reuse-diagnostic-20260925-v80-candidate-hypercurve",
+        "--exact",
+        "bezier_offset::conversion_tests::bounded_point_import_reuses_certified_native_fiber_parameters",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.40717509400565177,
+      "limit_seconds": 75,
+      "log": "native-evidence-reuse-diagnostic-20260925-v80-candidate-case-001.log",
+      "ignored": false,
+      "target": "hypercurve",
+      "name": "bezier_offset::conversion_tests::bounded_point_import_reuses_certified_native_fiber_parameters"
+    },
+    {
+      "label": "case-002",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/native-evidence-reuse-diagnostic-20260925-v80-candidate-hypercurve",
+        "--exact",
+        "bezier_parameter::conversion_tests::cached_scalar_refinement_preserves_the_selected_root_authority",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.4015306599903852,
+      "limit_seconds": 75,
+      "log": "native-evidence-reuse-diagnostic-20260925-v80-candidate-case-002.log",
+      "ignored": false,
+      "target": "hypercurve",
+      "name": "bezier_parameter::conversion_tests::cached_scalar_refinement_preserves_the_selected_root_authority"
+    },
+    {
+      "label": "case-003",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/native-evidence-reuse-diagnostic-20260925-v80-candidate-hypercurve",
+        "--exact",
+        "bezier_parameter::conversion_tests::nonlinear_and_approximate_zeroes_do_not_create_scalar_witnesses",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.40709298907313496,
+      "limit_seconds": 75,
+      "log": "native-evidence-reuse-diagnostic-20260925-v80-candidate-case-003.log",
+      "ignored": false,
+      "target": "hypercurve",
+      "name": "bezier_parameter::conversion_tests::nonlinear_and_approximate_zeroes_do_not_create_scalar_witnesses"
+    },
+    {
+      "label": "case-004",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/native-evidence-reuse-diagnostic-20260925-v80-candidate-hypercurve",
+        "--exact",
+        "bezier_parameter::conversion_tests::strict_linear_queries_retain_witnesses_after_rational_reconstruction_declines",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.40735864103771746,
+      "limit_seconds": 75,
+      "log": "native-evidence-reuse-diagnostic-20260925-v80-candidate-case-004.log",
+      "ignored": false,
+      "target": "hypercurve",
+      "name": "bezier_parameter::conversion_tests::strict_linear_queries_retain_witnesses_after_rational_reconstruction_declines"
+    },
+    {
+      "label": "case-005",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/native-evidence-reuse-diagnostic-20260925-v80-candidate-hypercurve",
+        "--exact",
+        "bezier_parameter::conversion_tests::strict_scalar_equalities_retain_arbitrary_real_parameter_witnesses",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.41956668603233993,
+      "limit_seconds": 75,
+      "log": "native-evidence-reuse-diagnostic-20260925-v80-candidate-case-005.log",
+      "ignored": false,
+      "target": "hypercurve",
+      "name": "bezier_parameter::conversion_tests::strict_scalar_equalities_retain_arbitrary_real_parameter_witnesses"
+    },
+    {
+      "label": "case-006",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/native-evidence-reuse-diagnostic-20260925-v80-candidate-hypercurve",
+        "--exact",
+        "curve_region_boolean::certified_successor_tests::algebraic_chord_analytic_parallel_pair_replays_contacts_and_overlap",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": "timeout",
+      "elapsed_seconds": 20.426585265086032,
+      "limit_seconds": 20,
+      "log": "native-evidence-reuse-diagnostic-20260925-v80-candidate-case-006.log",
+      "ignored": false,
+      "target": "hypercurve",
+      "name": "curve_region_boolean::certified_successor_tests::algebraic_chord_analytic_parallel_pair_replays_contacts_and_overlap"
+    }
+  ],
+  "all_processes_reaped": true,
+  "build_returncode": 0,
+  "selection": [
+    [
+      "hypercurve",
+      "bezier_offset::conversion_tests::bounded_point_import_preserves_a_cached_local_field"
+    ],
+    [
+      "hypercurve",
+      "bezier_offset::conversion_tests::bounded_point_import_reuses_certified_native_fiber_parameters"
+    ],
+    [
+      "hypercurve",
+      "bezier_parameter::conversion_tests::cached_scalar_refinement_preserves_the_selected_root_authority"
+    ],
+    [
+      "hypercurve",
+      "bezier_parameter::conversion_tests::nonlinear_and_approximate_zeroes_do_not_create_scalar_witnesses"
+    ],
+    [
+      "hypercurve",
+      "bezier_parameter::conversion_tests::strict_linear_queries_retain_witnesses_after_rational_reconstruction_declines"
+    ],
+    [
+      "hypercurve",
+      "bezier_parameter::conversion_tests::strict_scalar_equalities_retain_arbitrary_real_parameter_witnesses"
+    ],
+    [
+      "hypercurve",
+      "curve_region_boolean::certified_successor_tests::algebraic_chord_analytic_parallel_pair_replays_contacts_and_overlap"
+    ]
+  ],
+  "all_sources_unchanged": true
+}

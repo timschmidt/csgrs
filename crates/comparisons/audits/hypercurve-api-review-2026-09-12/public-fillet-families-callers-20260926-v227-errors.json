@@ -1,0 +1,193 @@
+[
+  {
+    "rendered": "error: returning the result of a `let` binding from a block\n     --> src/bezier_region.rs:25049:9\n      |\n25042 | /         let filleted = {\n25043 | |             let solutions = result.value;\n25044 | |             assert!(solutions.families().is_empty(), \"expected isolated fillets\");\n25045 | |             let (mut candidates, _) = solutions.into_parts();\n25046 | |             assert_eq!(candidates.len(), 1, \"expected one isolated fillet\");\n25047 | |             candidates.pop().unwrap()\n25048 | |         };\n      | |__________- unnecessary `let` binding\n25049 |           filleted\n      |           ^^^^^^^^\n      |\n      = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.98.0/index.html#let_and_return\n      = note: `-D clippy::let-and-return` implied by `-D warnings`\n      = help: to override `-D warnings` add `#[allow(clippy::let_and_return)]`\nhelp: return the expression directly\n      |\n25042 ~         \n25043 ~         {\n25044 +             let solutions = result.value;\n25045 +             assert!(solutions.families().is_empty(), \"expected isolated fillets\");\n25046 +             let (mut candidates, _) = solutions.into_parts();\n25047 +             assert_eq!(candidates.len(), 1, \"expected one isolated fillet\");\n25048 +             candidates.pop().unwrap()\n25049 +         }\n      |\n\n",
+    "$message_type": "diagnostic",
+    "children": [
+      {
+        "children": [],
+        "code": null,
+        "level": "help",
+        "message": "for further information visit https://rust-lang.github.io/rust-clippy/rust-1.98.0/index.html#let_and_return",
+        "rendered": null,
+        "spans": []
+      },
+      {
+        "children": [],
+        "code": null,
+        "level": "note",
+        "message": "`-D clippy::let-and-return` implied by `-D warnings`",
+        "rendered": null,
+        "spans": []
+      },
+      {
+        "children": [],
+        "code": null,
+        "level": "help",
+        "message": "to override `-D warnings` add `#[allow(clippy::let_and_return)]`",
+        "rendered": null,
+        "spans": []
+      },
+      {
+        "children": [],
+        "code": null,
+        "level": "help",
+        "message": "return the expression directly",
+        "rendered": null,
+        "spans": [
+          {
+            "byte_end": 1061089,
+            "byte_start": 1060760,
+            "column_end": 11,
+            "column_start": 9,
+            "expansion": null,
+            "file_name": "src/bezier_region.rs",
+            "is_primary": true,
+            "label": null,
+            "line_end": 25048,
+            "line_start": 25042,
+            "suggested_replacement": "",
+            "suggestion_applicability": "MachineApplicable",
+            "text": [
+              {
+                "highlight_end": 25,
+                "highlight_start": 9,
+                "text": "        let filleted = {"
+              },
+              {
+                "highlight_end": 42,
+                "highlight_start": 1,
+                "text": "            let solutions = result.value;"
+              },
+              {
+                "highlight_end": 83,
+                "highlight_start": 1,
+                "text": "            assert!(solutions.families().is_empty(), \"expected isolated fillets\");"
+              },
+              {
+                "highlight_end": 62,
+                "highlight_start": 1,
+                "text": "            let (mut candidates, _) = solutions.into_parts();"
+              },
+              {
+                "highlight_end": 77,
+                "highlight_start": 1,
+                "text": "            assert_eq!(candidates.len(), 1, \"expected one isolated fillet\");"
+              },
+              {
+                "highlight_end": 38,
+                "highlight_start": 1,
+                "text": "            candidates.pop().unwrap()"
+              },
+              {
+                "highlight_end": 11,
+                "highlight_start": 1,
+                "text": "        };"
+              }
+            ]
+          },
+          {
+            "byte_end": 1061106,
+            "byte_start": 1061098,
+            "column_end": 17,
+            "column_start": 9,
+            "expansion": null,
+            "file_name": "src/bezier_region.rs",
+            "is_primary": true,
+            "label": null,
+            "line_end": 25049,
+            "line_start": 25049,
+            "suggested_replacement": "{\n            let solutions = result.value;\n            assert!(solutions.families().is_empty(), \"expected isolated fillets\");\n            let (mut candidates, _) = solutions.into_parts();\n            assert_eq!(candidates.len(), 1, \"expected one isolated fillet\");\n            candidates.pop().unwrap()\n        }",
+            "suggestion_applicability": "MachineApplicable",
+            "text": [
+              {
+                "highlight_end": 17,
+                "highlight_start": 9,
+                "text": "        filleted"
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "level": "error",
+    "message": "returning the result of a `let` binding from a block",
+    "spans": [
+      {
+        "byte_end": 1061089,
+        "byte_start": 1060760,
+        "column_end": 11,
+        "column_start": 9,
+        "expansion": null,
+        "file_name": "src/bezier_region.rs",
+        "is_primary": false,
+        "label": "unnecessary `let` binding",
+        "line_end": 25048,
+        "line_start": 25042,
+        "suggested_replacement": null,
+        "suggestion_applicability": null,
+        "text": [
+          {
+            "highlight_end": 25,
+            "highlight_start": 9,
+            "text": "        let filleted = {"
+          },
+          {
+            "highlight_end": 42,
+            "highlight_start": 1,
+            "text": "            let solutions = result.value;"
+          },
+          {
+            "highlight_end": 83,
+            "highlight_start": 1,
+            "text": "            assert!(solutions.families().is_empty(), \"expected isolated fillets\");"
+          },
+          {
+            "highlight_end": 62,
+            "highlight_start": 1,
+            "text": "            let (mut candidates, _) = solutions.into_parts();"
+          },
+          {
+            "highlight_end": 77,
+            "highlight_start": 1,
+            "text": "            assert_eq!(candidates.len(), 1, \"expected one isolated fillet\");"
+          },
+          {
+            "highlight_end": 38,
+            "highlight_start": 1,
+            "text": "            candidates.pop().unwrap()"
+          },
+          {
+            "highlight_end": 11,
+            "highlight_start": 1,
+            "text": "        };"
+          }
+        ]
+      },
+      {
+        "byte_end": 1061106,
+        "byte_start": 1061098,
+        "column_end": 17,
+        "column_start": 9,
+        "expansion": null,
+        "file_name": "src/bezier_region.rs",
+        "is_primary": true,
+        "label": null,
+        "line_end": 25049,
+        "line_start": 25049,
+        "suggested_replacement": null,
+        "suggestion_applicability": null,
+        "text": [
+          {
+            "highlight_end": 17,
+            "highlight_start": 9,
+            "text": "        filleted"
+          }
+        ]
+      }
+    ],
+    "code": {
+      "code": "clippy::let_and_return",
+      "explanation": null
+    }
+  }
+]

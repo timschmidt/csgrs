@@ -1,0 +1,23 @@
+{
+  "command": [
+    "gdb",
+    "--batch",
+    "-x",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/independent-field-corners-20260924-v1-panic2.gdb",
+    "--args",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/independent-field-corners-20260924-v1-libtest",
+    "--exact",
+    "bezier_region::tests::independent_field_corner_edits_preserve_normalized_sets",
+    "--nocapture",
+    "--test-threads=1",
+    "--color",
+    "never"
+  ],
+  "returncode": 0,
+  "elapsed_seconds": 0.7632568379631266,
+  "binary_sha256": "237a87451e044263b6364fa9506772e7867a5ab4f21f9e02fb0ec615d185afaf",
+  "script_sha256": "cc72d638e6b46d98436ad1b1c6187ac7ffbc85e459dedd58167ba511c57c06ee",
+  "all_sources_unchanged": true,
+  "driver_reaped": true,
+  "inferior_killed": true
+}

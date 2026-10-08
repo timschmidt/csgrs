@@ -1,0 +1,93 @@
+{
+  "status": "targeted conservative-enclosure repair and public inward regression committed and qualified; broader interval policy audit remains",
+  "observed_on": "working tree mixed-point-axis-order implementation before the final interval-trace migration",
+  "base_commits": {
+    "hypercurve": "025dcd123335ace6426c2ed4903607d2cc33a6ea",
+    "hypersolve": "3ac2e7510936a11c7bf2eac5dfbe3f9f851afe55",
+    "hyperreal": "a2da8e2b5de9a1a4653d3662f2f05cb6533fd7ef",
+    "hyperbrep": "8a84ee7db02fd2720ac89a1a6a227ee4ec2a8171"
+  },
+  "profile": "stationary-ph-mixed-point-axis-order-stack.log",
+  "binary": "stationary-ph-offset-mixed-point-axis-order-initial",
+  "binary_sha256": "511e1f085dcd16dd0d7e2e5638357dd204d89026b2fe113934fbcdcdaed80cc1",
+  "source_snapshot": "mixed-point-axis-order-initial-source-before-tests.json",
+  "runtime_finding": "After the first inward offset, the sample reaches Hyperreal pi-Laurent/exact-rational normalization while BezierAlgebraicChordRealInterval2::multiply compares an endpoint to zero. This runs inside ChordPairPoint2::intersection_bounds_refined, then chord conservative bounds, then chord_intersections_once.",
+  "evidence_limits": [
+    "The retained diagnostic profiles belong to their explicitly named pre-repair binaries.",
+    "The final public regression and both unloaded probes establish completion for this PH fixture, not every inward curve or operation composition.",
+    "The targeted fix does not prove every other conservative-bound producer suppresses approximate terminals."
+  ],
+  "source_findings": [
+    "ChordPairPoint2::intersection_bounds_refined reads four retained-support endpoint Aabb2 bounds, forms eight Real intervals, then performs determinant products and division. It does not obtain certified rational envelopes before the interval arithmetic.",
+    "Chord2::conservative_bounds_refined_impl now obtains rational endpoint envelopes, but only after each endpoint has already computed its own enclosure. This therefore cannot prevent the sampled expensive scalar decisions inside a ChordPair endpoint.",
+    "ChordPairPoint2::recursive_projective_point already retains an intersection field in data.recursive_point. The outer endpoint-bound dispatcher tries the construction bounds first and uses recursive bounds only after an unsuccessful nonlocal construction bound.",
+    "The interval multiply routine uses immediate sign, then compare_reals. Verify that conservative-bound callers suppress approximate terminals before relying on any uncertain scalar sign as an enclosure certificate."
+  ],
+  "next_actions": [
+    "Audit and simplify the private interval arithmetic policy surface described in interval-arithmetic-policy-followup.json.",
+    "Continue the four held-out curve-family/corner-composition cases and remaining original API/representation work."
+  ],
+  "source_locations": [
+    "hypercurve/src/bezier_offset.rs: BezierAlgebraicChordPairPoint2::intersection_bounds_refined",
+    "hypercurve/src/bezier_offset.rs: algebraic_chord_endpoint_bounds_refined_impl",
+    "hypercurve/src/bezier_offset.rs: BezierAlgebraicChordRealInterval2::multiply and compare_to_zero",
+    "hypercurve/src/bbox.rs: Aabb2::certified_rational_outer_envelope"
+  ],
+  "goal_status": "active",
+  "inward_completion_before_enclosure_change": {
+    "qualification": "mixed-point-axis-order-qualification.json",
+    "hypercurve_commit": "8006617e8605eacf20969b5c11fb19df1590a8f8",
+    "result": "STRICT standalone two inward offsets Certified, total 28.962882613 seconds. New public test passes both STRICT traversals including boundary path readmission and six independent containment probes on both regions."
+  },
+  "new_public_baseline": {
+    "log": "stationary-ph-inward-public-regression-baseline.log",
+    "exit_code": 101,
+    "finding": "APPROXIMATE_512 forward second offset consumes approximation. First offset and both STRICT complete cases pass.",
+    "test": "stationary_ph_inward_offsets_preserve_sets_through_boundary_paths"
+  },
+  "approximation_capture": {
+    "script": "profile-inward-approximation.py",
+    "log": "stationary-ph-inward-approximation-stack.log",
+    "binary": "stationary-ph-offset-mixed-axis-approximate-baseline",
+    "binary_sha256": "22855bae7b3f78031978e929788d546d20e922a7f17619aeb0fca0ff95959e7e",
+    "layout": "Verified APPROXIMATE_512_CONSUMED TLS Cell address from its call_once disassembly: fs_base-0x550. Hardware watchpoint stops at first false-to-true transition.",
+    "finding": "The first consumed approximation is compare_reals -> RealInterval::compare_to_zero -> multiply -> ChordPairPoint2::intersection_bounds_refined -> chord conservative_bounds -> CurveSupport2::certified_outer_bounds -> contacts_decided_distinct_from_carriers. This is optional bounding evidence, not a required terminal topology decision."
+  },
+  "implementation_under_test": [
+    "ChordPairPoint2::conservative_bounds_refined suppresses approximate terminals while retaining the original policy identity.",
+    "Four repeated endpoint reads share one local bounds closure; it obtains the existing refinement-aware certified rational envelope before determinant interval arithmetic.",
+    "Cardinal support bounds reuse that same endpoint acquisition. Unavailable rational conversion falls back to the original enclosure under strict predicates; no precision ceiling or new cache."
+  ],
+  "commit": "2025587c91b4af5a1eeccae97a7412ef114a0dd1",
+  "qualification": "certified-chord-pair-enclosure-qualification.json",
+  "final_validation": {
+    "tests": 1694,
+    "checks": 2,
+    "contexts_and_traversals": "Both contexts and both traversals Certified, including exact path readmission and all 48 independent membership decisions.",
+    "probes": [
+      {
+        "policy": "STRICT",
+        "binary": "stationary-ph-offset-certified-chord-pair-enclosure",
+        "binary_sha256": "dce536829b61ffeeb451eb21db90ca1308d578800b06e68e74caf001fa074e89",
+        "log": "stationary-ph-offset-certified-chord-pair-enclosure.log",
+        "exit_code": 0,
+        "first_offset_seconds": 3.739415705,
+        "second_offset_seconds": 21.058930111,
+        "total_seconds": 24.798793366,
+        "result": "Both offsets Certified; second result has one boundary loop."
+      },
+      {
+        "policy": "APPROXIMATE_512",
+        "binary": "stationary-ph-offset-certified-chord-pair-enclosure-approximate",
+        "binary_sha256": "5b8f6fcd0f10196c6768edc0180d0e8691b2d49bcda556826e77b56e041d9b86",
+        "log": "stationary-ph-offset-certified-chord-pair-enclosure-approximate.log",
+        "exit_code": 0,
+        "first_offset_seconds": 3.866455224,
+        "second_offset_seconds": 20.307812953,
+        "total_seconds": 24.174683148,
+        "result": "Both offsets Certified; second result has one boundary loop."
+      }
+    ],
+    "held_out_cases": "All four still exceed 60 seconds; original goal active."
+  }
+}

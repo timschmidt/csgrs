@@ -1,0 +1,14 @@
+division expected=-8 enclosure=((-268435455) % 16777216,1 % 16777216)
+capped-double expected=-3/4 prefix24=(-8388609) % 16777216
+negative-limit expected=-3/4 enclosure=((-8388607) % 16777216,1 % 16777216)
+decimal ((-32) % 1,"-30")
+decimal ((-2) % 1,"0")
+decimal ((-1) % 1,"-1")
+decimal (0 % 1,"0")
+decimal (1 % 1,"1")
+decimal (2 % 1,"1")
+decimal (32 % 1,"31")
+divisor-tag-1000 output=[Lookint (0,1),Lookint (1,2),Lookint (0,3),Lookint (0,4),Lookint (0,5),Lookint (0,6),Lookint (0,7),Lookint (0,8)] correct=True
+undefined-divisor-control Left divisor value forced
+CallStack (from HasCallStack):
+  error, called at exact-real-references/plume-qualification/InstrumentedProbe.hs:238:68 in main:Main

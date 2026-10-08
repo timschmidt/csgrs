@@ -1,0 +1,88 @@
+diff --git a/audits/continuation/calcium/baseline-hyperreal/src/computable/approximation/statistics.rs b/audits/continuation/calcium/erf-trial-hyperreal/src/computable/approximation/statistics.rs
+index ba38174..ce8bb63 100644
+--- a/audits/continuation/calcium/baseline-hyperreal/src/computable/approximation/statistics.rs
++++ b/audits/continuation/calcium/erf-trial-hyperreal/src/computable/approximation/statistics.rs
+@@ -53,7 +53,7 @@ fn erf_series(signal: &Option<Signal>, op: &Computable, p: Precision) -> BigInt
+ 
+ fn erfc(signal: &Option<Signal>, op: &Computable, p: Precision) -> BigInt {
+     Computable::one()
+-        .add(op.clone().erf().negate())
++        .add(op.clone().erf_expanded().negate())
+         .approx_signal(signal, p)
+ }
+ 
+diff --git a/audits/continuation/calcium/baseline-hyperreal/src/computable/node/algebra.rs b/audits/continuation/calcium/erf-trial-hyperreal/src/computable/node/algebra.rs
+index b668d60..3e567da 100644
+--- a/audits/continuation/calcium/baseline-hyperreal/src/computable/node/algebra.rs
++++ b/audits/continuation/calcium/erf-trial-hyperreal/src/computable/node/algebra.rs
+@@ -1676,6 +1676,30 @@ impl Computable {
+             }
+         }
+ 
++        // The existing nested rules cover (x + c) - x. Also recognize the
++        // equivalent x + (c - x), without expanding unrelated expressions.
++        fn cancel_inner_negative(value: &Computable, sum: &Computable) -> Option<Computable> {
++            let Approximation::Add(left, right) = &sum.internal.approximation else {
++                return None;
++            };
++            if let Approximation::Negate(cancelled) = &left.internal.approximation
++                && Computable::internal_structural_eq(value, cancelled)
++            {
++                return Some(right.clone());
++            }
++            if let Approximation::Negate(cancelled) = &right.internal.approximation
++                && Computable::internal_structural_eq(value, cancelled)
++            {
++                return Some(left.clone());
++            }
++            None
++        }
++        if let Some(rest) = cancel_inner_negative(&self, &other)
++            .or_else(|| cancel_inner_negative(&other, &self))
++        {
++            return rest;
++        }
++
+         let cancelled_pair = match (&self.internal.approximation, &other.internal.approximation) {
+             (_, Approximation::Negate(cancelled)) => Some((&self, cancelled)),
+             (Approximation::Negate(cancelled), _) => Some((&other, cancelled)),
+@@ -1783,6 +1807,25 @@ impl Computable {
+ 
+     /// Error function, erf(x).
+     pub fn erf(self) -> Computable {
++        if let Some(positive) = self.error_function_negative_operand() {
++            return positive.erf().negate();
++        }
++        // Preserve the exact complement relation at construction. The Erfc
++        // approximation calls the original expanded kernel below, never erf(),
++        // so the canonical representation cannot recurse into itself.
++        Self::one().add(self.erfc().negate())
++    }
++
++    fn error_function_negative_operand(&self) -> Option<Computable> {
++        match &self.internal.approximation {
++            Approximation::Negate(child) => Some(child.clone()),
++            _ => self.exact_rational()
++                .filter(|r| r.sign() == Sign::Minus)
++                .map(|r| Self::rational(-r)),
++        }
++    }
++
++    pub(crate) fn erf_expanded(self) -> Computable {
+         if let Some(rational) = self.exact_rational()
+             && rational.sign() == Sign::NoSign
+         {
+@@ -1804,6 +1847,13 @@ impl Computable {
+         {
+             return Self::one();
+         }
++        if let Some(positive) = self.error_function_negative_operand() {
++            let reflected = Self::rational(Rational::new(2)).add(positive.erfc().negate());
++            // erfc is strictly positive for every finite real argument, even
++            // when no sign decision is available for the reflected argument.
++            reflected.internal.facts.replace_exact_sign(ExactSignCache::Valid(Sign::Plus));
++            return reflected;
++        }
+         Self {
+             internal: Arc::new(Node::new(Approximation::Erfc(self), BoundCache::Invalid, ExactSignCache::Valid(Sign::Plus))),
+             signal: None,

@@ -1,0 +1,35 @@
+{
+  "source_manifest": "fillet-finite-endpoint-20260926-v263-sources.json",
+  "source_directory": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/source-archives/fillet-finite-endpoint-20260926-v263",
+  "workspace_guard": "center-locus-cusp-20260926-v260-sources.json",
+  "parent_commit": "69f75cf5349fa938c2f5b35532c036ac13fee0c0",
+  "hypersolve_commit": "8af4c7f48a4da6d61db8b49b74bb3370d6e89057",
+  "cases": [
+    {
+      "name": "approximate_512_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions",
+      "returncode": 124,
+      "log": "fillet-finite-endpoint-20260926-v263-approximate_512_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions.log",
+      "elapsed_seconds": 60.073854038957506
+    }
+  ],
+  "all_processes_reaped": true,
+  "command": [
+    "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+    "test",
+    "--test",
+    "hypercurve_curve_region_promotion",
+    "--release",
+    "--all-features",
+    "--no-run",
+    "--message-format=json",
+    "--locked",
+    "--offline"
+  ],
+  "build_returncode": 0,
+  "build_elapsed_seconds": 82.32558213896118,
+  "binary": {
+    "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/fillet-finite-endpoint-20260926-v263-hypercurve_curve_region_promotion",
+    "sha256": "e793e1e551188929507317021c399e4a55d1ee4cebcdbaf68239b4466c162ab3"
+  },
+  "all_sources_unchanged": true
+}

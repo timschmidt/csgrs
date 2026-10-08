@@ -1,0 +1,10 @@
+[
+  {
+    "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/incremental",
+    "bytes_removed": 2744317854
+  },
+  {
+    "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/debug/incremental",
+    "bytes_removed": 739394659
+  }
+]

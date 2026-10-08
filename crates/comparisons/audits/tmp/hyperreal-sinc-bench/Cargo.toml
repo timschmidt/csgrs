@@ -1,0 +1,8 @@
+[package]
+name = "hyperreal-sinc-bench"
+version = "0.0.0"
+edition = "2024"
+
+[dependencies]
+hyperreal_new = { package = "hyperreal", path = "/home/tim/Documents/GitHub/workspace/hyperreal" }
+hyperreal_old = { path = "/tmp/hyperreal-head.DYBYJs" }

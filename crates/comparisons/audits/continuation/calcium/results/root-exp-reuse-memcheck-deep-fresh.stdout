@@ -1,0 +1,1 @@
+{"case":"identity-128","lifecycle":"fresh","iterations":100,"elapsed_ns":121695296990,"alloc_calls":0,"allocated_bytes":0,"outcomes":[100, 0, 0]}

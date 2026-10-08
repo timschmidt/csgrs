@@ -1,0 +1,71 @@
+{
+  "turn_status": "progress",
+  "full_goal_status": "active",
+  "commits": {
+    "shared-tangent-cross-v858": "a71dc45d5dadf7486a565d6c1b986117ea7d8edc",
+    "deferred-endpoint-v859": "e4cf1735f3b2f6823e47d902182bc6bdd139c4a1",
+    "third-order-speed-v861": "fca8c73f35d535828b46b90ab132e1ba0250d2cb",
+    "same-side-reflection-v867": "b2e29a7a4901952f2027c6bd6d60454072586c87"
+  },
+  "latest_baseline": "same-side-reflection-v867",
+  "verified_source_files": 2048,
+  "clean_repositories": 30,
+  "release_cases": 335,
+  "pinned_test_binaries": 12,
+  "checks": 7,
+  "repaired_public_probe_decisions": {
+    "parameter_speed": 4,
+    "reflected_side": 8
+  },
+  "unchanged_public_replay_cases": {
+    "parameter_speed": 6,
+    "reflected_side": 16
+  },
+  "active_drivers": [],
+  "outstanding_production_edits": [],
+  "next_unused_version": 870,
+  "receipts": {
+    "shared-tangent-cross-v858-committed.json": "e7b5ae863540c03c0c1349aaf1d6a390401078d8e4ff35b8d3f1e2ea7ada989f",
+    "shared-tangent-cross-v858-reviewed.json": "b3debfbd30f6e512e5b43adc1f8f698fd7a3fc1fe1200559b41a9eeba743559c",
+    "shared-tangent-cross-v858-reaped.json": "3897a59a62b152cdc13fd44da65f1eec61eb7b583be1c0ce42c1a3c1b3be79db",
+    "shared-tangent-cross-v858-review-reaped.json": "8df2995c5a8c4674431a9d4ed86814b32092f5b65a301cfa2995dfd2b7145fc3",
+    "deferred-endpoint-v859-committed.json": "0be7ca535677db18b0e9a457b5c7b8c71870d3f9c086701eb7592612896c9179",
+    "deferred-endpoint-v859-reviewed.json": "c2527fca59372ac0d7fa374f3ccd07c4bb87ecc6d0374e3f61d39c25bd640e61",
+    "deferred-endpoint-v859-reaped.json": "c95b7ccf7d4d07419e37eab9c5d4c929350e92b58314589613d00408c24bd0c2",
+    "deferred-endpoint-v859-review-reaped.json": "845ad5577a87f3cd2b5b1b08815e5049a77ab089e131483042206a6388f5f36b",
+    "third-order-speed-v861-committed.json": "d9130c3258fa69cf37c6980235586cbd74ec14f455d7d6fee24ec9397b4b19bd",
+    "third-order-speed-v861-reviewed.json": "13cbcfae246300cfc7bc73aa5fd49f7e09412b6379608509a841866abff2b817",
+    "third-order-speed-v861-reaped.json": "028d062bdb69794140404fc98c9eb0d7806d68ef08799915382b93bc6cc5b919",
+    "third-order-speed-v861-review-reaped.json": "ef609c581336712aafb33232d7e60db90c2b0670e90dc65033d6ecf99c45f841",
+    "same-side-reflection-v867-committed.json": "19ffaa48a1f007eaeac25f06bc99e5bf97ffeec821570203e9a48c85243043c2",
+    "same-side-reflection-v867-reviewed.json": "17a519ba777b5f60518fae8f5bbad3d3ef3a67c6dc45de0d2d9ca18b24574298",
+    "same-side-reflection-v867-reaped.json": "ce21fd04826781babebfb2a8ae4a60ec72dbddcdd4ef6ab4e43db8892a3005e5",
+    "same-side-reflection-v867-review-reaped.json": "88c284e4569dbe208a0c08cd61b4561cebbe979c98f3b9df34994341ad57d975",
+    "third-order-speed-probe-v860-terminal.json": "fff76f0700d3246370d2cd172368a66ca98b6cd7402806f9efb80858d1ff917b",
+    "third-order-speed-probe-v860-reaped.json": "11d1fc5c6f00056287af0d453d86fda10c75d4c9e490a6cd3977aef3fc038297",
+    "third-order-speed-replay-v862-terminal.json": "e0195908e39301d585ba958ac9af76897e8bc09f8ca1480814a9d6f7f30e3f79",
+    "third-order-speed-replay-v862-reaped.json": "0ebac4d5df81d62e8725b567b42d480c6a5f6e05aac293d5295d06f5e12971c7",
+    "same-side-reflection-probe-v863-terminal.json": "aaf69a65b8e396ffbdddab3b2c1d556d66fd51a4b7b8209e0d36d43251c0a318",
+    "same-side-reflection-probe-v863-reaped.json": "38d631496394f6a5928e99c84a9b35da4db34195f6c4bdda8f39d7befe4da76a",
+    "same-side-reflection-v864-terminal.json": "128589ea92d4c259f331552bada2ff6fb9fe26e9096af775c8d8db986d8da857",
+    "same-side-reflection-v864-reaped.json": "803274120669ba5ab434b73156d1017377e8b274a023a47c829cc6f4e131f9d5",
+    "same-side-traversal-oracle-v867.json": "c837be22abd471e0ae02f85117f06a241cfa78f50766545b34c8b5d2ef3492ac",
+    "same-side-reflection-replay-v868-terminal.json": "4190476cee7afc8302ceea589f992a7dde0368b2ac55fef48de76c44df31a014",
+    "same-side-reflection-replay-v868-reaped.json": "5cd4464bdd69aec3f183f49144fe908c8bce880d9463d4c9b1a2ef8a6782989b",
+    "regular-branch-third-derivative-followup-v866.json": "b41f7eabd221e77b003feba0c7b1b6ff0ab33c2c78c3d2f3ff51bda181557c37"
+  },
+  "qualification_corrections": [
+    "V859 reviewer text normalization was corrected after a synchronous assertion failure; no production change or qualification replay needed.",
+    "V864 stopped at one historical traversal expectation after181passingcases. V867 preserves its production code and proves the corrected expectation by an independent matched-x rational polynomial calculation; fresh335-case qualification passes."
+  ],
+  "limits": [
+    "Full retained-expression vector/branch ordering and universal curve-operation composition closure remain open.",
+    "Equal nonzero curvature needs a general higher-order graph witness; the zero-curvature-only fallback is now explicitly guarded.",
+    "No measured uniform performance improvement is claimed."
+  ],
+  "next_work": [
+    "Use V866 regular graph derivative derivation to examine equal-curvature branch comparison, preserving theorem evidence, lazy derivative demand and stationary/higher-order branch distinctions.",
+    "Extend vector predicates to retained selected-source expressions without independent coordinate materialization.",
+    "Continue the earlier degree-six monotone-reparameterization overlap computational work."
+  ]
+}

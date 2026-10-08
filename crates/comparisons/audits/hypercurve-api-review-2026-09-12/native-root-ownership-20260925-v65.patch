@@ -1,0 +1,362 @@
+diff --git a/src/bezier_parameter.rs b/src/bezier_parameter.rs
+--- a/src/bezier_parameter.rs
++++ b/src/bezier_parameter.rs
+@@ -2065,15 +2065,50 @@
+                 Ok(Classification::Decided(Self::Exact(exact.clone())))
+             };
+         }
+-        let polynomial = match BezierParameterPolynomial::try_new_power_basis(
+-            representation.polynomial_coefficients.clone(),
+-            policy,
+-        )? {
+-            Classification::Decided(polynomial) => polynomial,
+-            Classification::Uncertain(reason) => {
+-                return Ok(Classification::Uncertain(reason));
+-            }
+-        };
++        // Solver intervals own (lower, upper], while native isolators keep
++        // endpoint roots separate from their defining polynomial. Preserve an
++        // owned upper endpoint directly; remove only certified factors at the
++        // excluded lower endpoint. The selected root and its coefficient
++        // field are unchanged, and decreasing charts can then transport the
++        // endpoint-free isolator without reversing an ownership convention.
++        let strict = policy.strict_counterpart();
++        let mut coefficients = representation.polynomial_coefficients.clone();
++        match real_sign(
++            &Real::eval_poly(&coefficients, &representation.interval.upper),
++            &strict,
++        ) {
++            Some(RealSign::Zero) => {
++                let exact = representation.interval.upper.clone();
++                return if unit_domain {
++                    Self::exact(exact, &strict)
++                } else {
++                    Ok(Classification::Decided(Self::Exact(exact)))
++                };
++            }
++            Some(RealSign::Positive | RealSign::Negative) => {}
++            None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
++        }
++        loop {
++            match real_sign(
++                &Real::eval_poly(&coefficients, &representation.interval.lower),
++                &strict,
++            ) {
++                Some(RealSign::Zero) if coefficients.len() > 1 => {
++                    coefficients =
++                        divide_by_linear_root(&coefficients, &representation.interval.lower);
++                }
++                Some(RealSign::Positive | RealSign::Negative) => break,
++                Some(RealSign::Zero) => return Err(CurveError::InvalidBezierAlgebraicParameter),
++                None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
++            }
++        }
++        let polynomial =
++            match BezierParameterPolynomial::try_new_power_basis(coefficients, &strict)? {
++                Classification::Decided(polynomial) => polynomial,
++                Classification::Uncertain(reason) => {
++                    return Ok(Classification::Uncertain(reason));
++                }
++            };
+         let interval = match if unit_domain {
+             BezierParameterInterval::try_new(
+                 representation.interval.lower.clone(),
+@@ -5677,6 +5712,298 @@
+         }
+     }
+ 
++    fn imported_parameters_with_excluded_endpoint_roots(
++        policy: &CurveContext,
++    ) -> Vec<(BezierParameter2, Real, Real)> {
++        let square_root = Real::from(2).sqrt().unwrap();
++        let pi = Real::pi();
++        let cases = [
++            (
++                vec![Real::zero(), -Real::one(), Real::one()],
++                Real::zero(),
++                Real::one(),
++                Real::one(),
++            ),
++            (
++                vec![Real::zero(), -Real::one(), Real::one()],
++                Real::zero(),
++                Real::from(2),
++                Real::one(),
++            ),
++            (
++                [2, -2, -1, 1].map(Real::from).to_vec(),
++                Real::one(),
++                Real::from(2),
++                square_root.clone(),
++            ),
++            (
++                [4, -8, 0, 8, -3, -2, 1].map(Real::from).to_vec(),
++                Real::one(),
++                Real::from(2),
++                square_root,
++            ),
++            (
++                vec![Real::zero(), -pi.clone(), Real::one()],
++                Real::zero(),
++                &pi + Real::one(),
++                pi,
++            ),
++        ];
++        cases
++            .into_iter()
++            .map(|(coefficients, lower, upper, selected)| {
++                let sequence = UnivariateSturmSequence::new(
++                    &coefficients,
++                    hypersolve::PredicatePolicy::STRICT,
++                )
++                .unwrap();
++                assert_eq!(
++                    sequence.count_distinct_roots(
++                        &lower,
++                        &upper,
++                        hypersolve::PredicatePolicy::STRICT,
++                    ),
++                    Some(1)
++                );
++                let mut representation = AlgebraicRootRepresentation {
++                    constraint_index: 0,
++                    symbol: hypersolve::SymbolId(0),
++                    interval_index: 0,
++                    polynomial_coefficients: coefficients,
++                    interval: hypersolve::IsolatedRootInterval {
++                        lower: lower.clone(),
++                        upper,
++                        exact_root: None,
++                        distinct_root_count: 1,
++                    },
++                    validation: hypersolve::AlgebraicRootValidationReport {
++                        status: hypersolve::AlgebraicRootValidationStatus::Valid,
++                        message: None,
++                    },
++                };
++                representation.validation = hypersolve::validate_algebraic_root_representation(
++                    &representation,
++                    hypersolve::PredicatePolicy::STRICT,
++                );
++                assert!(representation.is_valid());
++                let parameter = decided(
++                    BezierParameter2::from_algebraic_root_representation_unbounded(
++                        &representation,
++                        policy,
++                    )
++                    .unwrap(),
++                    "imported half-open singleton",
++                );
++                (parameter, selected, lower)
++            })
++            .collect()
++    }
++
++    #[test]
++    fn imported_root_comparisons_preserve_owned_and_excluded_endpoints() {
++        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
++            policy.strict_predicate_pass(|| {
++                let mut failures = Vec::new();
++                for (case, (parameter, selected, excluded)) in
++                    imported_parameters_with_excluded_endpoint_roots(&policy)
++                        .into_iter()
++                        .enumerate()
++                {
++                    let selected_parameter = BezierParameter2::Exact(selected.clone());
++                    let excluded_parameter = BezierParameter2::Exact(excluded.clone());
++                    for (label, correct) in [
++                        (
++                            "owned equality",
++                            matches!(
++                                parameter.same_value(&selected_parameter, &policy),
++                                Ok(Classification::Decided(true))
++                            ),
++                        ),
++                        (
++                            "excluded inequality",
++                            matches!(
++                                parameter.same_value(&excluded_parameter, &policy),
++                                Ok(Classification::Decided(false))
++                            ),
++                        ),
++                        (
++                            "owned interval order",
++                            matches!(
++                                parameter.cmp_by_interval(&selected_parameter, &policy),
++                                Ok(Classification::Decided(Ordering::Equal))
++                            ),
++                        ),
++                        (
++                            "owned refined order",
++                            matches!(
++                                parameter.cmp_by_refinement(&selected_parameter, &policy),
++                                Ok(Classification::Decided(Ordering::Equal))
++                            ),
++                        ),
++                        (
++                            "excluded order",
++                            matches!(
++                                parameter.cmp_by_refinement(&excluded_parameter, &policy),
++                                Ok(Classification::Decided(Ordering::Greater))
++                            ),
++                        ),
++                        (
++                            "selected residual",
++                            matches!(
++                                signed_coefficients_at_parameter(
++                                    &[-selected, Real::one()],
++                                    &parameter,
++                                    &policy
++                                ),
++                                Ok(Classification::Decided(RealSign::Zero))
++                            ),
++                        ),
++                        (
++                            "excluded residual",
++                            matches!(
++                                signed_coefficients_at_parameter(
++                                    &[-excluded, Real::one()],
++                                    &parameter,
++                                    &policy
++                                ),
++                                Ok(Classification::Decided(RealSign::Positive))
++                            ),
++                        ),
++                    ] {
++                        if !correct {
++                            failures.push((case, label));
++                        }
++                    }
++                }
++                assert!(
++                    failures.is_empty(),
++                    "imported root ownership under {policy:?}: {failures:?}"
++                );
++            });
++        }
++    }
++
++    #[test]
++    fn decreasing_root_charts_preserve_owned_and_excluded_endpoints() {
++        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
++            policy.strict_predicate_pass(|| {
++                let mut failures = Vec::new();
++                for (case, (parameter, selected, excluded)) in
++                    imported_parameters_with_excluded_endpoint_roots(&policy)
++                        .into_iter()
++                        .enumerate()
++                {
++                    let maps = [
++                        (
++                            "complement",
++                            Ok(Classification::Decided(parameter.unit_complement())),
++                            Real::one() - &selected,
++                            Real::one() - &excluded,
++                        ),
++                        (
++                            "affine",
++                            parameter.affine_image_unbounded(
++                                &Real::from(-2),
++                                &Real::from(3),
++                                &policy,
++                            ),
++                            Real::from(3) - Real::from(2) * &selected,
++                            Real::from(3) - Real::from(2) * &excluded,
++                        ),
++                        (
++                            "projective",
++                            parameter.projective_image_unbounded(
++                                &[Real::one(), Real::zero()],
++                                &[Real::one(), Real::one()],
++                                &policy,
++                            ),
++                            (Real::one() / (Real::one() + &selected)).unwrap(),
++                            (Real::one() / (Real::one() + &excluded)).unwrap(),
++                        ),
++                    ];
++                    for (chart, mapped, selected, excluded) in maps {
++                        let Ok(Classification::Decided(mapped)) = mapped else {
++                            failures.push((case, chart, "construction"));
++                            continue;
++                        };
++                        for (label, correct) in [
++                            (
++                                "owned equality",
++                                matches!(
++                                    mapped.same_value(
++                                        &BezierParameter2::Exact(selected.clone()),
++                                        &policy
++                                    ),
++                                    Ok(Classification::Decided(true))
++                                ),
++                            ),
++                            (
++                                "excluded inequality",
++                                matches!(
++                                    mapped.same_value(
++                                        &BezierParameter2::Exact(excluded.clone()),
++                                        &policy
++                                    ),
++                                    Ok(Classification::Decided(false))
++                                ),
++                            ),
++                            (
++                                "owned interval order",
++                                matches!(
++                                    mapped.cmp_by_interval(
++                                        &BezierParameter2::Exact(selected.clone()),
++                                        &policy
++                                    ),
++                                    Ok(Classification::Decided(Ordering::Equal))
++                                ),
++                            ),
++                            (
++                                "owned refined order",
++                                matches!(
++                                    mapped.cmp_by_refinement(
++                                        &BezierParameter2::Exact(selected.clone()),
++                                        &policy
++                                    ),
++                                    Ok(Classification::Decided(Ordering::Equal))
++                                ),
++                            ),
++                            (
++                                "selected residual",
++                                matches!(
++                                    signed_coefficients_at_parameter(
++                                        &[-selected, Real::one()],
++                                        &mapped,
++                                        &policy
++                                    ),
++                                    Ok(Classification::Decided(RealSign::Zero))
++                                ),
++                            ),
++                            (
++                                "excluded residual",
++                                matches!(
++                                    signed_coefficients_at_parameter(
++                                        &[-excluded, Real::one()],
++                                        &mapped,
++                                        &policy
++                                    ),
++                                    Ok(Classification::Decided(RealSign::Negative))
++                                ),
++                            ),
++                        ] {
++                            if !correct {
++                                failures.push((case, chart, label));
++                            }
++                        }
++                    }
++                }
++                assert!(
++                    failures.is_empty(),
++                    "decreasing chart ownership under {policy:?}: {failures:?}"
++                );
++            });
++        }
++    }
++
+     #[test]
+     fn retained_refinement_matches_square_free_reference_and_shares_sturm_work() {
+         let policy = CurveContext::STRICT;

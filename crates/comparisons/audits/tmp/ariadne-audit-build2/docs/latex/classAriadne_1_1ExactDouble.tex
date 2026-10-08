@@ -1,0 +1,49 @@
+\doxysubsection{Exact\+Double Class Reference}
+\hypertarget{classAriadne_1_1ExactDouble}{}\label{classAriadne_1_1ExactDouble}\index{ExactDouble@{ExactDouble}}
+
+
+{\ttfamily \#include $<$builtin.\+hpp$>$}
+
+
+
+\doxysubsubsection{Description}
+A wrapper around a builtin double-\/precision floating-\/point number, indicating that the stored value is the {\itshape exact} value of a real quantity. \doxysubsubsubsection*{Friends}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\hyperlink{classAriadne_1_1ExactDouble}{Exact\+Double}} \mbox{\hyperlink{classAriadne_1_1ExactDouble_a4a4156bff08f05f9ce32494c119b5372}{operator"{}"{}\+\_\+x}} (long double lx)
+\begin{DoxyCompactList}\small\item\em Indicate that a floating-\/point literal is the exact value of a number in double-\/precision. \end{DoxyCompactList}\item 
+\mbox{\hyperlink{classAriadne_1_1ExactDouble}{Exact\+Double}} \mbox{\hyperlink{classAriadne_1_1ExactDouble_abd313746e70a0e828a8a9d12483ada8d}{operator"{}"{}\+\_\+pr}} (long double lx)
+\begin{DoxyCompactList}\small\item\em Indicate that a floating-\/point literal is sufficiently precise that it can safely be taken to represent the closest double-\/precision floating-\/point number. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\label{doc-related-members}
+\Hypertarget{classAriadne_1_1ExactDouble_doc-related-members}
+\doxysubsubsection{Friends And Related Symbol Documentation}
+\Hypertarget{classAriadne_1_1ExactDouble_a4a4156bff08f05f9ce32494c119b5372}\index{ExactDouble@{ExactDouble}!operator"{}"{}\_x@{operator""""\_x}}
+\index{operator"{}"{}\_x@{operator""""\_x}!ExactDouble@{ExactDouble}}
+\doxyparagraph{\texorpdfstring{operator""""\_x}{operator""\_x}}
+{\footnotesize\ttfamily \label{classAriadne_1_1ExactDouble_a4a4156bff08f05f9ce32494c119b5372} 
+\mbox{\hyperlink{classAriadne_1_1ExactDouble}{Exact\+Double}} operator"{}"{}\+\_\+x (\begin{DoxyParamCaption}\item[{long double}]{lx}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [friend]}}
+
+
+
+Indicate that a floating-\/point literal is the exact value of a number in double-\/precision. 
+
+The input {\itshape lx} is converted first converted to a double-\/precision value {\itshape x}. If {\itshape lx} and {\itshape x} differ, then the decimal literal input to {\itshape lx} almost certainly does not represent a double-\/precision number exactly, and an assertion fails. 
+
+For example, {\ttfamily 0.\+625\+\_\+x} yields the exact double-\/precision value $5/2^3$, but {\ttfamily 0.\+6\+\_\+x} fails, since $3/5$ is not exactly representable as a double-\/precision number. \Hypertarget{classAriadne_1_1ExactDouble_abd313746e70a0e828a8a9d12483ada8d}\index{ExactDouble@{ExactDouble}!operator"{}"{}\_pr@{operator""""\_pr}}
+\index{operator"{}"{}\_pr@{operator""""\_pr}!ExactDouble@{ExactDouble}}
+\doxyparagraph{\texorpdfstring{operator""""\_pr}{operator""\_pr}}
+{\footnotesize\ttfamily \label{classAriadne_1_1ExactDouble_abd313746e70a0e828a8a9d12483ada8d} 
+\mbox{\hyperlink{classAriadne_1_1ExactDouble}{Exact\+Double}} operator"{}"{}\+\_\+pr (\begin{DoxyParamCaption}\item[{long double}]{lx}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [friend]}}
+
+
+
+Indicate that a floating-\/point literal is sufficiently precise that it can safely be taken to represent the closest double-\/precision floating-\/point number. 
+
+For example, writing {\ttfamily 0.\+14285714285714285\+\_\+pr} claims that the exact decimal "{}0.\+14285714285714285"{} should be interpreted as the closest double-\/precision floating-\/point number, which has exact value $0.142857142857142849212692681248881854116916656494140625$. 
+
+The documentation for this class was generated from the following files\+:\begin{DoxyCompactItemize}
+\item 
+source/numeric/\mbox{\hyperlink{numeric_2builtin_8hpp}{builtin.\+hpp}}\item 
+source/numeric/\mbox{\hyperlink{number_8cpp}{number.\+cpp}}\end{DoxyCompactItemize}

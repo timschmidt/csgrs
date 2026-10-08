@@ -1,0 +1,21 @@
+{
+  "args": [
+    "-c",
+    "6",
+    "/home/tim/Documents/GitHub/workspace/exact-real-references/ruffini-qualification/cache-public-pilot/after-UaEfGm/release",
+    "bench",
+    "root",
+    "negative",
+    "warm",
+    "64",
+    "0",
+    "1000000"
+  ],
+  "start": "2026-09-07T05:57:21.787Z",
+  "end": "2026-09-07T05:57:21.813Z",
+  "status": 0,
+  "signal": null,
+  "error": null,
+  "stdout": "{\"family\":\"root\",\"negative\":true,\"mode\":\"warm\",\"bits\":64,\"gap\":0,\"reps\":1000000,\"cpu_ns\":22353760,\"wall_ns\":22445993,\"checksum\":68000000,\"expected\":\"-76057874264641092971\",\"memory\":null}\n",
+  "stderr": ""
+}

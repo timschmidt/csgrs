@@ -1,0 +1,41 @@
+\doxysubsection{Effort Class Reference}
+\hypertarget{classAriadne_1_1Effort}{}\label{classAriadne_1_1Effort}\index{Effort@{Effort}}
+
+
+{\ttfamily \#include $<$logical.\+hpp$>$}
+
+
+
+\doxysubsubsection{Description}
+The amount of work used in performing a calculation or checking a quasidecidable predicate. 
+
+The \doxylink{classAriadne_1_1Effort}{Effort} should roughly reflect the time needed to perform a computation. \begin{DoxySeeAlso}{See also}
+\doxylink{classAriadne_1_1Accuracy}{Accuracy}. 
+\end{DoxySeeAlso}
+\begin{Desc}
+\item[Examples]\par
+\mbox{\hyperlink{tutorials_2rigorous_numerics_2rigorous_numerics_tutorial_8cpp-example}{tutorials/rigorous\+\_\+numerics/rigorous\+\_\+numerics\+\_\+tutorial.\+cpp}}.\end{Desc}
+\doxysubsubsubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1Effort_a2eb37adbb48e068f836fa9abdfbc0ed8}\label{classAriadne_1_1Effort_a2eb37adbb48e068f836fa9abdfbc0ed8} 
+{\bfseries Effort} (\mbox{\hyperlink{namespaceAriadne_aae901a69a841b1a085a0dfe218e38fe9}{Nat}} m)
+\begin{DoxyCompactList}\small\item\em Construct from a raw positive integer. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Effort_ab8d8834264ee1f57b1151bd9329ed57a}\label{classAriadne_1_1Effort_ab8d8834264ee1f57b1151bd9329ed57a} 
+{\bfseries operator Nat} () const
+\begin{DoxyCompactList}\small\item\em Convert to a raw positive integer. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsubsection*{Static Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1Effort_ad5484333f4a0890abef21e9a32430eae}\label{classAriadne_1_1Effort_ad5484333f4a0890abef21e9a32430eae} 
+static \mbox{\hyperlink{classAriadne_1_1Effort}{Effort}} {\bfseries get\+\_\+default} ()
+\begin{DoxyCompactList}\small\item\em Get the default effort. Initially set to the minimum possible effort 0. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Effort_aaabf0d7a78efd9046256c7c41c5e5837}\label{classAriadne_1_1Effort_aaabf0d7a78efd9046256c7c41c5e5837} 
+static \mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} {\bfseries set\+\_\+default} (\mbox{\hyperlink{namespaceAriadne_aae901a69a841b1a085a0dfe218e38fe9}{Nat}} m)
+\begin{DoxyCompactList}\small\item\em \doxylink{classAriadne_1_1Set}{Set} the default effort. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+The documentation for this class was generated from the following files\+:\begin{DoxyCompactItemize}
+\item 
+source/foundations/\mbox{\hyperlink{logical_8hpp}{logical.\+hpp}}\item 
+source/foundations/\mbox{\hyperlink{logical_8cpp}{logical.\+cpp}}\end{DoxyCompactItemize}

@@ -1,0 +1,17 @@
+{
+  "source_manifest": "retained-native-circle-contact-20260927-v321-sources.json",
+  "binary": {
+    "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-native-circle-contact-20260927-v321-hypercurve",
+    "sha256": "19bc614268d8bc7a6d71b423608ae18ce7449efb4d1818c7f703b8c12f3b4f25"
+  },
+  "command": [
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-native-circle-contact-20260927-v321-hypercurve",
+    "--exact",
+    "curve::curve_fillet::tests::native_circle_fillet_retains_selected_contacts_through_reconstruction",
+    "--nocapture",
+    "--test-threads=1"
+  ],
+  "returncode": 101,
+  "elapsed_seconds": 0.6575472539989278,
+  "all_processes_reaped": true
+}

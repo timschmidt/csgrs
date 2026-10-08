@@ -1,0 +1,3810 @@
+[
+  {
+    "rendered": "error[E0599]: no method named `candidate_count` found for struct `curve::curve_fillet::CurveFilletSolutions2<T, F>` in the current scope\n     --> src/bezier_region.rs:19554:30\n      |\n19554 |             assert!(extended.candidate_count() > trim.candidate_count());\n      |                              ^^^^^^^^^^^^^^^ method not found in `curve::curve_fillet::CurveFilletSolutions2<curve::FilletCorner2, FilletCornerFamily2>`\n      |\n     ::: src/curve_fillet.rs:11:1\n      |\n   11 | pub struct CurveFilletSolutions2<T, F> {\n      | -------------------------------------- method `candidate_count` not found for this struct\n\n",
+    "$message_type": "diagnostic",
+    "children": [],
+    "level": "error",
+    "message": "no method named `candidate_count` found for struct `curve::curve_fillet::CurveFilletSolutions2<T, F>` in the current scope",
+    "spans": [
+      {
+        "byte_end": 806018,
+        "byte_start": 806003,
+        "column_end": 45,
+        "column_start": 30,
+        "expansion": null,
+        "file_name": "src/bezier_region.rs",
+        "is_primary": true,
+        "label": "method not found in `curve::curve_fillet::CurveFilletSolutions2<curve::FilletCorner2, FilletCornerFamily2>`",
+        "line_end": 19554,
+        "line_start": 19554,
+        "suggested_replacement": null,
+        "suggestion_applicability": null,
+        "text": [
+          {
+            "highlight_end": 45,
+            "highlight_start": 30,
+            "text": "            assert!(extended.candidate_count() > trim.candidate_count());"
+          }
+        ]
+      },
+      {
+        "byte_end": 449,
+        "byte_start": 411,
+        "column_end": 39,
+        "column_start": 1,
+        "expansion": null,
+        "file_name": "src/curve_fillet.rs",
+        "is_primary": false,
+        "label": "method `candidate_count` not found for this struct",
+        "line_end": 11,
+        "line_start": 11,
+        "suggested_replacement": null,
+        "suggestion_applicability": null,
+        "text": [
+          {
+            "highlight_end": 39,
+            "highlight_start": 1,
+            "text": "pub struct CurveFilletSolutions2<T, F> {"
+          }
+        ]
+      }
+    ],
+    "code": {
+      "code": "E0599",
+      "explanation": "This error occurs when a method is used on a type which doesn't implement it:\n\nErroneous code example:\n\n```compile_fail,E0599\nstruct Mouth;\n\nlet x = Mouth;\nx.chocolate(); // error: no method named `chocolate` found for type `Mouth`\n               //        in the current scope\n```\n\nIn this case, you need to implement the `chocolate` method to fix the error:\n\n```\nstruct Mouth;\n\nimpl Mouth {\n    fn chocolate(&self) { // We implement the `chocolate` method here.\n        println!(\"Hmmm! I love chocolate!\");\n    }\n}\n\nlet x = Mouth;\nx.chocolate(); // ok!\n```\n"
+    }
+  },
+  {
+    "rendered": "error[E0599]: no method named `candidate_count` found for struct `curve::curve_fillet::CurveFilletSolutions2<T, F>` in the current scope\n     --> src/bezier_region.rs:19554:55\n      |\n19554 |             assert!(extended.candidate_count() > trim.candidate_count());\n      |                                                       ^^^^^^^^^^^^^^^ method not found in `curve::curve_fillet::CurveFilletSolutions2<curve::FilletCorner2, FilletCornerFamily2>`\n      |\n     ::: src/curve_fillet.rs:11:1\n      |\n   11 | pub struct CurveFilletSolutions2<T, F> {\n      | -------------------------------------- method `candidate_count` not found for this struct\n\n",
+    "$message_type": "diagnostic",
+    "children": [],
+    "level": "error",
+    "message": "no method named `candidate_count` found for struct `curve::curve_fillet::CurveFilletSolutions2<T, F>` in the current scope",
+    "spans": [
+      {
+        "byte_end": 806043,
+        "byte_start": 806028,
+        "column_end": 70,
+        "column_start": 55,
+        "expansion": null,
+        "file_name": "src/bezier_region.rs",
+        "is_primary": true,
+        "label": "method not found in `curve::curve_fillet::CurveFilletSolutions2<curve::FilletCorner2, FilletCornerFamily2>`",
+        "line_end": 19554,
+        "line_start": 19554,
+        "suggested_replacement": null,
+        "suggestion_applicability": null,
+        "text": [
+          {
+            "highlight_end": 70,
+            "highlight_start": 55,
+            "text": "            assert!(extended.candidate_count() > trim.candidate_count());"
+          }
+        ]
+      },
+      {
+        "byte_end": 449,
+        "byte_start": 411,
+        "column_end": 39,
+        "column_start": 1,
+        "expansion": null,
+        "file_name": "src/curve_fillet.rs",
+        "is_primary": false,
+        "label": "method `candidate_count` not found for this struct",
+        "line_end": 11,
+        "line_start": 11,
+        "suggested_replacement": null,
+        "suggestion_applicability": null,
+        "text": [
+          {
+            "highlight_end": 39,
+            "highlight_start": 1,
+            "text": "pub struct CurveFilletSolutions2<T, F> {"
+          }
+        ]
+      }
+    ],
+    "code": {
+      "code": "E0599",
+      "explanation": "This error occurs when a method is used on a type which doesn't implement it:\n\nErroneous code example:\n\n```compile_fail,E0599\nstruct Mouth;\n\nlet x = Mouth;\nx.chocolate(); // error: no method named `chocolate` found for type `Mouth`\n               //        in the current scope\n```\n\nIn this case, you need to implement the `chocolate` method to fix the error:\n\n```\nstruct Mouth;\n\nimpl Mouth {\n    fn chocolate(&self) { // We implement the `chocolate` method here.\n        println!(\"Hmmm! I love chocolate!\");\n    }\n}\n\nlet x = Mouth;\nx.chocolate(); // ok!\n```\n"
+    }
+  },
+  {
+    "rendered": "error[E0599]: no method named `candidate_count` found for struct `curve::curve_fillet::CurveFilletSolutions2<T, F>` in the current scope\n     --> src/bezier_region.rs:20530:35\n      |\n20530 |                 } > fillets.value.candidate_count(),\n      |                                   ^^^^^^^^^^^^^^^ method not found in `CurveFilletSolutions2<CurveRegion2, CurveRegionFilletFamily2>`\n      |\n     ::: src/curve_fillet.rs:11:1\n      |\n   11 | pub struct CurveFilletSolutions2<T, F> {\n      | -------------------------------------- method `candidate_count` not found for this struct\n      |\n      = note: the full name for the type has been written to '/tmp/hypercurve-pruning-qualification/hyperbrep/target/debug/deps/hypercurve-d6cf444c619f6d8e.long-type-18291028529890292599.txt'\n      = note: consider using `--verbose` to print the full type name to the console\n\n",
+    "$message_type": "diagnostic",
+    "children": [
+      {
+        "children": [],
+        "code": null,
+        "level": "note",
+        "message": "the full name for the type has been written to '/tmp/hypercurve-pruning-qualification/hyperbrep/target/debug/deps/hypercurve-d6cf444c619f6d8e.long-type-18291028529890292599.txt'",
+        "rendered": null,
+        "spans": []
+      },
+      {
+        "children": [],
+        "code": null,
+        "level": "note",
+        "message": "consider using `--verbose` to print the full type name to the console",
+        "rendered": null,
+        "spans": []
+      }
+    ],
+    "level": "error",
+    "message": "no method named `candidate_count` found for struct `curve::curve_fillet::CurveFilletSolutions2<T, F>` in the current scope",
+    "spans": [
+      {
+        "byte_end": 850372,
+        "byte_start": 850357,
+        "column_end": 50,
+        "column_start": 35,
+        "expansion": null,
+        "file_name": "src/bezier_region.rs",
+        "is_primary": true,
+        "label": "method not found in `CurveFilletSolutions2<CurveRegion2, CurveRegionFilletFamily2>`",
+        "line_end": 20530,
+        "line_start": 20530,
+        "suggested_replacement": null,
+        "suggestion_applicability": null,
+        "text": [
+          {
+            "highlight_end": 50,
+            "highlight_start": 35,
+            "text": "                } > fillets.value.candidate_count(),"
+          }
+        ]
+      },
+      {
+        "byte_end": 449,
+        "byte_start": 411,
+        "column_end": 39,
+        "column_start": 1,
+        "expansion": null,
+        "file_name": "src/curve_fillet.rs",
+        "is_primary": false,
+        "label": "method `candidate_count` not found for this struct",
+        "line_end": 11,
+        "line_start": 11,
+        "suggested_replacement": null,
+        "suggestion_applicability": null,
+        "text": [
+          {
+            "highlight_end": 39,
+            "highlight_start": 1,
+            "text": "pub struct CurveFilletSolutions2<T, F> {"
+          }
+        ]
+      }
+    ],
+    "code": {
+      "code": "E0599",
+      "explanation": "This error occurs when a method is used on a type which doesn't implement it:\n\nErroneous code example:\n\n```compile_fail,E0599\nstruct Mouth;\n\nlet x = Mouth;\nx.chocolate(); // error: no method named `chocolate` found for type `Mouth`\n               //        in the current scope\n```\n\nIn this case, you need to implement the `chocolate` method to fix the error:\n\n```\nstruct Mouth;\n\nimpl Mouth {\n    fn chocolate(&self) { // We implement the `chocolate` method here.\n        println!(\"Hmmm! I love chocolate!\");\n    }\n}\n\nlet x = Mouth;\nx.chocolate(); // ok!\n```\n"
+    }
+  },
+  {
+    "rendered": "error[E0308]: mismatched types\n     --> src/bezier_region.rs:20932:48\n      |\n20932 |                 assert_one_fragment_edit_shape(&result.value, 1, 1);\n      |                 ------------------------------ ^^^^^^^^^^^^^ expected `&[CurveRegion2]`, found `&CurveCornerSolutions2<CurveRegion2>`\n      |                 |\n      |                 arguments to this function are incorrect\n      |\n      = note: expected reference `&[bezier_region::CurveRegion2]`\n                 found reference `&curve::CurveCornerSolutions2<bezier_region::CurveRegion2>`\nnote: function defined here\n     --> src/bezier_region.rs:20884:8\n      |\n20884 |     fn assert_one_fragment_edit_shape(\n      |        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n20885 |         solutions: &[CurveRegion2],\n      |         --------------------------\n\n",
+    "$message_type": "diagnostic",
+    "children": [
+      {
+        "children": [],
+        "code": null,
+        "level": "note",
+        "message": "expected reference `&[bezier_region::CurveRegion2]`\n   found reference `&curve::CurveCornerSolutions2<bezier_region::CurveRegion2>`",
+        "rendered": null,
+        "spans": []
+      },
+      {
+        "children": [],
+        "code": null,
+        "level": "note",
+        "message": "function defined here",
+        "rendered": null,
+        "spans": [
+          {
+            "byte_end": 865311,
+            "byte_start": 865285,
+            "column_end": 35,
+            "column_start": 9,
+            "expansion": null,
+            "file_name": "src/bezier_region.rs",
+            "is_primary": false,
+            "label": "",
+            "line_end": 20885,
+            "line_start": 20885,
+            "suggested_replacement": null,
+            "suggestion_applicability": null,
+            "text": [
+              {
+                "highlight_end": 35,
+                "highlight_start": 9,
+                "text": "        solutions: &[CurveRegion2],"
+              }
+            ]
+          },
+          {
+            "byte_end": 865275,
+            "byte_start": 865245,
+            "column_end": 38,
+            "column_start": 8,
+            "expansion": null,
+            "file_name": "src/bezier_region.rs",
+            "is_primary": true,
+            "label": null,
+            "line_end": 20884,
+            "line_start": 20884,
+            "suggested_replacement": null,
+            "suggestion_applicability": null,
+            "text": [
+              {
+                "highlight_end": 38,
+                "highlight_start": 8,
+                "text": "    fn assert_one_fragment_edit_shape("
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "level": "error",
+    "message": "mismatched types",
+    "spans": [
+      {
+        "byte_end": 867422,
+        "byte_start": 867409,
+        "column_end": 61,
+        "column_start": 48,
+        "expansion": null,
+        "file_name": "src/bezier_region.rs",
+        "is_primary": true,
+        "label": "expected `&[CurveRegion2]`, found `&CurveCornerSolutions2<CurveRegion2>`",
+        "line_end": 20932,
+        "line_start": 20932,
+        "suggested_replacement": null,
+        "suggestion_applicability": null,
+        "text": [
+          {
+            "highlight_end": 61,
+            "highlight_start": 48,
+            "text": "                assert_one_fragment_edit_shape(&result.value, 1, 1);"
+          }
+        ]
+      },
+      {
+        "byte_end": 867408,
+        "byte_start": 867378,
+        "column_end": 47,
+        "column_start": 17,
+        "expansion": null,
+        "file_name": "src/bezier_region.rs",
+        "is_primary": false,
+        "label": "arguments to this function are incorrect",
+        "line_end": 20932,
+        "line_start": 20932,
+        "suggested_replacement": null,
+        "suggestion_applicability": null,
+        "text": [
+          {
+            "highlight_end": 47,
+            "highlight_start": 17,
+            "text": "                assert_one_fragment_edit_shape(&result.value, 1, 1);"
+          }
+        ]
+      }
+    ],
+    "code": {
+      "code": "E0308",
+      "explanation": "Expected type did not match the received type.\n\nErroneous code examples:\n\n```compile_fail,E0308\nfn plus_one(x: i32) -> i32 {\n    x + 1\n}\n\nplus_one(\"Not a number\");\n//       ^^^^^^^^^^^^^^ expected `i32`, found `&str`\n\nif \"Not a bool\" {\n// ^^^^^^^^^^^^ expected `bool`, found `&str`\n}\n\nlet x: f32 = \"Not a float\";\n//     ---   ^^^^^^^^^^^^^ expected `f32`, found `&str`\n//     |\n//     expected due to this\n```\n\nThis error occurs when an expression was used in a place where the compiler\nexpected an expression of a different type. It can occur in several cases, the\nmost common being when calling a function and passing an argument which has a\ndifferent type than the matching type in the function declaration.\n"
+    }
+  },
+  {
+    "rendered": "error[E0599]: no method named `candidate_count` found for struct `curve::curve_fillet::CurveFilletSolutions2<T, F>` in the current scope\n     --> src/bezier_region.rs:20998:38\n      |\n20998 |                     } > trim_fillets.candidate_count(),\n      |                                      ^^^^^^^^^^^^^^^ method not found in `CurveFilletSolutions2<CurveRegion2, CurveRegionFilletFamily2>`\n      |\n     ::: src/curve_fillet.rs:11:1\n      |\n   11 | pub struct CurveFilletSolutions2<T, F> {\n      | -------------------------------------- method `candidate_count` not found for this struct\n      |\n      = note: the full name for the type has been written to '/tmp/hypercurve-pruning-qualification/hyperbrep/target/debug/deps/hypercurve-d6cf444c619f6d8e.long-type-18291028529890292599.txt'\n      = note: consider using `--verbose` to print the full type name to the console\n\n",
+    "$message_type": "diagnostic",
+    "children": [
+      {
+        "children": [],
+        "code": null,
+        "level": "note",
+        "message": "the full name for the type has been written to '/tmp/hypercurve-pruning-qualification/hyperbrep/target/debug/deps/hypercurve-d6cf444c619f6d8e.long-type-18291028529890292599.txt'",
+        "rendered": null,
+        "spans": []
+      },
+      {
+        "children": [],
+        "code": null,
+        "level": "note",
+        "message": "consider using `--verbose` to print the full type name to the console",
+        "rendered": null,
+        "spans": []
+      }
+    ],
+    "level": "error",
+    "message": "no method named `candidate_count` found for struct `curve::curve_fillet::CurveFilletSolutions2<T, F>` in the current scope",
+    "spans": [
+      {
+        "byte_end": 870450,
+        "byte_start": 870435,
+        "column_end": 53,
+        "column_start": 38,
+        "expansion": null,
+        "file_name": "src/bezier_region.rs",
+        "is_primary": true,
+        "label": "method not found in `CurveFilletSolutions2<CurveRegion2, CurveRegionFilletFamily2>`",
+        "line_end": 20998,
+        "line_start": 20998,
+        "suggested_replacement": null,
+        "suggestion_applicability": null,
+        "text": [
+          {
+            "highlight_end": 53,
+            "highlight_start": 38,
+            "text": "                    } > trim_fillets.candidate_count(),"
+          }
+        ]
+      },
+      {
+        "byte_end": 449,
+        "byte_start": 411,
+        "column_end": 39,
+        "column_start": 1,
+        "expansion": null,
+        "file_name": "src/curve_fillet.rs",
+        "is_primary": false,
+        "label": "method `candidate_count` not found for this struct",
+        "line_end": 11,
+        "line_start": 11,
+        "suggested_replacement": null,
+        "suggestion_applicability": null,
+        "text": [
+          {
+            "highlight_end": 39,
+            "highlight_start": 1,
+            "text": "pub struct CurveFilletSolutions2<T, F> {"
+          }
+        ]
+      }
+    ],
+    "code": {
+      "code": "E0599",
+      "explanation": "This error occurs when a method is used on a type which doesn't implement it:\n\nErroneous code example:\n\n```compile_fail,E0599\nstruct Mouth;\n\nlet x = Mouth;\nx.chocolate(); // error: no method named `chocolate` found for type `Mouth`\n               //        in the current scope\n```\n\nIn this case, you need to implement the `chocolate` method to fix the error:\n\n```\nstruct Mouth;\n\nimpl Mouth {\n    fn chocolate(&self) { // We implement the `chocolate` method here.\n        println!(\"Hmmm! I love chocolate!\");\n    }\n}\n\nlet x = Mouth;\nx.chocolate(); // ok!\n```\n"
+    }
+  },
+  {
+    "rendered": "error[E0308]: mismatched types\n     --> src/bezier_region.rs:21387:41\n      |\n21387 |                     assert_extended_set(&chamfers.value, \"chamfer\", &chamfer_samples);\n      |                     ------------------- ^^^^^^^^^^^^^^^ expected `&[CurveRegion2]`, found `&CurveCornerSolutions2<CurveRegion2>`\n      |                     |\n      |                     arguments to this function are incorrect\n      |\n      = note: expected reference `&[bezier_region::CurveRegion2]`\n                 found reference `&curve::CurveCornerSolutions2<bezier_region::CurveRegion2>`\nnote: closure parameter defined here\n     --> src/bezier_region.rs:21320:48\n      |\n21320 |                     let assert_extended_set = |solutions: &[CurveRegion2],\n      |                                                ^^^^^^^^^^^^^^^^^^^^^^^^^^\n\n",
+    "$message_type": "diagnostic",
+    "children": [
+      {
+        "children": [],
+        "code": null,
+        "level": "note",
+        "message": "expected reference `&[bezier_region::CurveRegion2]`\n   found reference `&curve::CurveCornerSolutions2<bezier_region::CurveRegion2>`",
+        "rendered": null,
+        "spans": []
+      },
+      {
+        "children": [],
+        "code": null,
+        "level": "note",
+        "message": "closure parameter defined here",
+        "rendered": null,
+        "spans": [
+          {
+            "byte_end": 885773,
+            "byte_start": 885747,
+            "column_end": 74,
+            "column_start": 48,
+            "expansion": null,
+            "file_name": "src/bezier_region.rs",
+            "is_primary": true,
+            "label": null,
+            "line_end": 21320,
+            "line_start": 21320,
+            "suggested_replacement": null,
+            "suggestion_applicability": null,
+            "text": [
+              {
+                "highlight_end": 74,
+                "highlight_start": 48,
+                "text": "                    let assert_extended_set = |solutions: &[CurveRegion2],"
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "level": "error",
+    "message": "mismatched types",
+    "spans": [
+      {
+        "byte_end": 889550,
+        "byte_start": 889535,
+        "column_end": 56,
+        "column_start": 41,
+        "expansion": null,
+        "file_name": "src/bezier_region.rs",
+        "is_primary": true,
+        "label": "expected `&[CurveRegion2]`, found `&CurveCornerSolutions2<CurveRegion2>`",
+        "line_end": 21387,
+        "line_start": 21387,
+        "suggested_replacement": null,
+        "suggestion_applicability": null,
+        "text": [
+          {
+            "highlight_end": 56,
+            "highlight_start": 41,
+            "text": "                    assert_extended_set(&chamfers.value, \"chamfer\", &chamfer_samples);"
+          }
+        ]
+      },
+      {
+        "byte_end": 889534,
+        "byte_start": 889515,
+        "column_end": 40,
+        "column_start": 21,
+        "expansion": null,
+        "file_name": "src/bezier_region.rs",
+        "is_primary": false,
+        "label": "arguments to this function are incorrect",
+        "line_end": 21387,
+        "line_start": 21387,
+        "suggested_replacement": null,
+        "suggestion_applicability": null,
+        "text": [
+          {
+            "highlight_end": 40,
+            "highlight_start": 21,
+            "text": "                    assert_extended_set(&chamfers.value, \"chamfer\", &chamfer_samples);"
+          }
+        ]
+      }
+    ],
+    "code": {
+      "code": "E0308",
+      "explanation": "Expected type did not match the received type.\n\nErroneous code examples:\n\n```compile_fail,E0308\nfn plus_one(x: i32) -> i32 {\n    x + 1\n}\n\nplus_one(\"Not a number\");\n//       ^^^^^^^^^^^^^^ expected `i32`, found `&str`\n\nif \"Not a bool\" {\n// ^^^^^^^^^^^^ expected `bool`, found `&str`\n}\n\nlet x: f32 = \"Not a float\";\n//     ---   ^^^^^^^^^^^^^ expected `f32`, found `&str`\n//     |\n//     expected due to this\n```\n\nThis error occurs when an expression was used in a place where the compiler\nexpected an expression of a different type. It can occur in several cases, the\nmost common being when calling a function and passing an argument which has a\ndifferent type than the matching type in the function declaration.\n"
+    }
+  },
+  {
+    "rendered": "error[E0308]: mismatched types\n     --> src/bezier_region.rs:21403:41\n      |\n21403 |                     assert_extended_set(&fillets.value, \"exact fillet\", &exact_fillet_samples);\n      |                     ------------------- ^^^^^^^^^^^^^^ expected `&[CurveRegion2]`, found `&CurveFilletSolutions2<..., ...>`\n      |                     |\n      |                     arguments to this function are incorrect\n      |\n      = note: expected reference `&[bezier_region::CurveRegion2]`\n                 found reference `&curve::curve_fillet::CurveFilletSolutions2<bezier_region::CurveRegion2, bezier_region::CurveRegionFilletFamily2>`\nnote: closure parameter defined here\n     --> src/bezier_region.rs:21320:48\n      |\n21320 |                     let assert_extended_set = |solutions: &[CurveRegion2],\n      |                                                ^^^^^^^^^^^^^^^^^^^^^^^^^^\n\n",
+    "$message_type": "diagnostic",
+    "children": [
+      {
+        "children": [],
+        "code": null,
+        "level": "note",
+        "message": "expected reference `&[bezier_region::CurveRegion2]`\n   found reference `&curve::curve_fillet::CurveFilletSolutions2<bezier_region::CurveRegion2, bezier_region::CurveRegionFilletFamily2>`",
+        "rendered": null,
+        "spans": []
+      },
+      {
+        "children": [],
+        "code": null,
+        "level": "note",
+        "message": "closure parameter defined here",
+        "rendered": null,
+        "spans": [
+          {
+            "byte_end": 885773,
+            "byte_start": 885747,
+            "column_end": 74,
+            "column_start": 48,
+            "expansion": null,
+            "file_name": "src/bezier_region.rs",
+            "is_primary": true,
+            "label": null,
+            "line_end": 21320,
+            "line_start": 21320,
+            "suggested_replacement": null,
+            "suggestion_applicability": null,
+            "text": [
+              {
+                "highlight_end": 74,
+                "highlight_start": 48,
+                "text": "                    let assert_extended_set = |solutions: &[CurveRegion2],"
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "level": "error",
+    "message": "mismatched types",
+    "spans": [
+      {
+        "byte_end": 890339,
+        "byte_start": 890325,
+        "column_end": 55,
+        "column_start": 41,
+        "expansion": null,
+        "file_name": "src/bezier_region.rs",
+        "is_primary": true,
+        "label": "expected `&[CurveRegion2]`, found `&CurveFilletSolutions2<..., ...>`",
+        "line_end": 21403,
+        "line_start": 21403,
+        "suggested_replacement": null,
+        "suggestion_applicability": null,
+        "text": [
+          {
+            "highlight_end": 55,
+            "highlight_start": 41,
+            "text": "                    assert_extended_set(&fillets.value, \"exact fillet\", &exact_fillet_samples);"
+          }
+        ]
+      },
+      {
+        "byte_end": 890324,
+        "byte_start": 890305,
+        "column_end": 40,
+        "column_start": 21,
+        "expansion": null,
+        "file_name": "src/bezier_region.rs",
+        "is_primary": false,
+        "label": "arguments to this function are incorrect",
+        "line_end": 21403,
+        "line_start": 21403,
+        "suggested_replacement": null,
+        "suggestion_applicability": null,
+        "text": [
+          {
+            "highlight_end": 40,
+            "highlight_start": 21,
+            "text": "                    assert_extended_set(&fillets.value, \"exact fillet\", &exact_fillet_samples);"
+          }
+        ]
+      }
+    ],
+    "code": {
+      "code": "E0308",
+      "explanation": "Expected type did not match the received type.\n\nErroneous code examples:\n\n```compile_fail,E0308\nfn plus_one(x: i32) -> i32 {\n    x + 1\n}\n\nplus_one(\"Not a number\");\n//       ^^^^^^^^^^^^^^ expected `i32`, found `&str`\n\nif \"Not a bool\" {\n// ^^^^^^^^^^^^ expected `bool`, found `&str`\n}\n\nlet x: f32 = \"Not a float\";\n//     ---   ^^^^^^^^^^^^^ expected `f32`, found `&str`\n//     |\n//     expected due to this\n```\n\nThis error occurs when an expression was used in a place where the compiler\nexpected an expression of a different type. It can occur in several cases, the\nmost common being when calling a function and passing an argument which has a\ndifferent type than the matching type in the function declaration.\n"
+    }
+  },
+  {
+    "rendered": "error[E0308]: mismatched types\n     --> src/bezier_region.rs:21425:25\n      |\n21424 |                     assert_extended_set(\n      |                     ------------------- arguments to this function are incorrect\n21425 |                         &algebraic.value,\n      |                         ^^^^^^^^^^^^^^^^ expected `&[CurveRegion2]`, found `&CurveFilletSolutions2<..., ...>`\n      |\n      = note: expected reference `&[bezier_region::CurveRegion2]`\n                 found reference `&curve::curve_fillet::CurveFilletSolutions2<bezier_region::CurveRegion2, bezier_region::CurveRegionFilletFamily2>`\nnote: closure parameter defined here\n     --> src/bezier_region.rs:21320:48\n      |\n21320 |                     let assert_extended_set = |solutions: &[CurveRegion2],\n      |                                                ^^^^^^^^^^^^^^^^^^^^^^^^^^\n\n",
+    "$message_type": "diagnostic",
+    "children": [
+      {
+        "children": [],
+        "code": null,
+        "level": "note",
+        "message": "expected reference `&[bezier_region::CurveRegion2]`\n   found reference `&curve::curve_fillet::CurveFilletSolutions2<bezier_region::CurveRegion2, bezier_region::CurveRegionFilletFamily2>`",
+        "rendered": null,
+        "spans": []
+      },
+      {
+        "children": [],
+        "code": null,
+        "level": "note",
+        "message": "closure parameter defined here",
+        "rendered": null,
+        "spans": [
+          {
+            "byte_end": 885773,
+            "byte_start": 885747,
+            "column_end": 74,
+            "column_start": 48,
+            "expansion": null,
+            "file_name": "src/bezier_region.rs",
+            "is_primary": true,
+            "label": null,
+            "line_end": 21320,
+            "line_start": 21320,
+            "suggested_replacement": null,
+            "suggestion_applicability": null,
+            "text": [
+              {
+                "highlight_end": 74,
+                "highlight_start": 48,
+                "text": "                    let assert_extended_set = |solutions: &[CurveRegion2],"
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "level": "error",
+    "message": "mismatched types",
+    "spans": [
+      {
+        "byte_end": 891331,
+        "byte_start": 891315,
+        "column_end": 41,
+        "column_start": 25,
+        "expansion": null,
+        "file_name": "src/bezier_region.rs",
+        "is_primary": true,
+        "label": "expected `&[CurveRegion2]`, found `&CurveFilletSolutions2<..., ...>`",
+        "line_end": 21425,
+        "line_start": 21425,
+        "suggested_replacement": null,
+        "suggestion_applicability": null,
+        "text": [
+          {
+            "highlight_end": 41,
+            "highlight_start": 25,
+            "text": "                        &algebraic.value,"
+          }
+        ]
+      },
+      {
+        "byte_end": 891289,
+        "byte_start": 891270,
+        "column_end": 40,
+        "column_start": 21,
+        "expansion": null,
+        "file_name": "src/bezier_region.rs",
+        "is_primary": false,
+        "label": "arguments to this function are incorrect",
+        "line_end": 21424,
+        "line_start": 21424,
+        "suggested_replacement": null,
+        "suggestion_applicability": null,
+        "text": [
+          {
+            "highlight_end": 40,
+            "highlight_start": 21,
+            "text": "                    assert_extended_set("
+          }
+        ]
+      }
+    ],
+    "code": {
+      "code": "E0308",
+      "explanation": "Expected type did not match the received type.\n\nErroneous code examples:\n\n```compile_fail,E0308\nfn plus_one(x: i32) -> i32 {\n    x + 1\n}\n\nplus_one(\"Not a number\");\n//       ^^^^^^^^^^^^^^ expected `i32`, found `&str`\n\nif \"Not a bool\" {\n// ^^^^^^^^^^^^ expected `bool`, found `&str`\n}\n\nlet x: f32 = \"Not a float\";\n//     ---   ^^^^^^^^^^^^^ expected `f32`, found `&str`\n//     |\n//     expected due to this\n```\n\nThis error occurs when an expression was used in a place where the compiler\nexpected an expression of a different type. It can occur in several cases, the\nmost common being when calling a function and passing an argument which has a\ndifferent type than the matching type in the function declaration.\n"
+    }
+  },
+  {
+    "rendered": "error[E0308]: mismatched types\n     --> src/bezier_region.rs:21740:52\n      |\n21740 |                     assert_one_fragment_edit_shape(&result.value, 1, 1);\n      |                     ------------------------------ ^^^^^^^^^^^^^ expected `&[CurveRegion2]`, found `&CurveCornerSolutions2<CurveRegion2>`\n      |                     |\n      |                     arguments to this function are incorrect\n      |\n      = note: expected reference `&[bezier_region::CurveRegion2]`\n                 found reference `&curve::CurveCornerSolutions2<bezier_region::CurveRegion2>`\nnote: function defined here\n     --> src/bezier_region.rs:20884:8\n      |\n20884 |     fn assert_one_fragment_edit_shape(\n      |        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n20885 |         solutions: &[CurveRegion2],\n      |         --------------------------\n\n",
+    "$message_type": "diagnostic",
+    "children": [
+      {
+        "children": [],
+        "code": null,
+        "level": "note",
+        "message": "expected reference `&[bezier_region::CurveRegion2]`\n   found reference `&curve::CurveCornerSolutions2<bezier_region::CurveRegion2>`",
+        "rendered": null,
+        "spans": []
+      },
+      {
+        "children": [],
+        "code": null,
+        "level": "note",
+        "message": "function defined here",
+        "rendered": null,
+        "spans": [
+          {
+            "byte_end": 865311,
+            "byte_start": 865285,
+            "column_end": 35,
+            "column_start": 9,
+            "expansion": null,
+            "file_name": "src/bezier_region.rs",
+            "is_primary": false,
+            "label": "",
+            "line_end": 20885,
+            "line_start": 20885,
+            "suggested_replacement": null,
+            "suggestion_applicability": null,
+            "text": [
+              {
+                "highlight_end": 35,
+                "highlight_start": 9,
+                "text": "        solutions: &[CurveRegion2],"
+              }
+            ]
+          },
+          {
+            "byte_end": 865275,
+            "byte_start": 865245,
+            "column_end": 38,
+            "column_start": 8,
+            "expansion": null,
+            "file_name": "src/bezier_region.rs",
+            "is_primary": true,
+            "label": null,
+            "line_end": 20884,
+            "line_start": 20884,
+            "suggested_replacement": null,
+            "suggestion_applicability": null,
+            "text": [
+              {
+                "highlight_end": 38,
+                "highlight_start": 8,
+                "text": "    fn assert_one_fragment_edit_shape("
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "level": "error",
+    "message": "mismatched types",
+    "spans": [
+      {
+        "byte_end": 906449,
+        "byte_start": 906436,
+        "column_end": 65,
+        "column_start": 52,
+        "expansion": null,
+        "file_name": "src/bezier_region.rs",
+        "is_primary": true,
+        "label": "expected `&[CurveRegion2]`, found `&CurveCornerSolutions2<CurveRegion2>`",
+        "line_end": 21740,
+        "line_start": 21740,
+        "suggested_replacement": null,
+        "suggestion_applicability": null,
+        "text": [
+          {
+            "highlight_end": 65,
+            "highlight_start": 52,
+            "text": "                    assert_one_fragment_edit_shape(&result.value, 1, 1);"
+          }
+        ]
+      },
+      {
+        "byte_end": 906435,
+        "byte_start": 906405,
+        "column_end": 51,
+        "column_start": 21,
+        "expansion": null,
+        "file_name": "src/bezier_region.rs",
+        "is_primary": false,
+        "label": "arguments to this function are incorrect",
+        "line_end": 21740,
+        "line_start": 21740,
+        "suggested_replacement": null,
+        "suggestion_applicability": null,
+        "text": [
+          {
+            "highlight_end": 51,
+            "highlight_start": 21,
+            "text": "                    assert_one_fragment_edit_shape(&result.value, 1, 1);"
+          }
+        ]
+      }
+    ],
+    "code": {
+      "code": "E0308",
+      "explanation": "Expected type did not match the received type.\n\nErroneous code examples:\n\n```compile_fail,E0308\nfn plus_one(x: i32) -> i32 {\n    x + 1\n}\n\nplus_one(\"Not a number\");\n//       ^^^^^^^^^^^^^^ expected `i32`, found `&str`\n\nif \"Not a bool\" {\n// ^^^^^^^^^^^^ expected `bool`, found `&str`\n}\n\nlet x: f32 = \"Not a float\";\n//     ---   ^^^^^^^^^^^^^ expected `f32`, found `&str`\n//     |\n//     expected due to this\n```\n\nThis error occurs when an expression was used in a place where the compiler\nexpected an expression of a different type. It can occur in several cases, the\nmost common being when calling a function and passing an argument which has a\ndifferent type than the matching type in the function declaration.\n"
+    }
+  },
+  {
+    "rendered": "error[E0308]: mismatched types\n     --> src/bezier_region.rs:21781:48\n      |\n21781 |                 assert_one_fragment_edit_shape(&result.value, 1, 1);\n      |                 ------------------------------ ^^^^^^^^^^^^^ expected `&[CurveRegion2]`, found `&CurveFilletSolutions2<..., ...>`\n      |                 |\n      |                 arguments to this function are incorrect\n      |\n      = note: expected reference `&[bezier_region::CurveRegion2]`\n                 found reference `&curve::curve_fillet::CurveFilletSolutions2<bezier_region::CurveRegion2, bezier_region::CurveRegionFilletFamily2>`\nnote: function defined here\n     --> src/bezier_region.rs:20884:8\n      |\n20884 |     fn assert_one_fragment_edit_shape(\n      |        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n20885 |         solutions: &[CurveRegion2],\n      |         --------------------------\n\n",
+    "$message_type": "diagnostic",
+    "children": [
+      {
+        "children": [],
+        "code": null,
+        "level": "note",
+        "message": "expected reference `&[bezier_region::CurveRegion2]`\n   found reference `&curve::curve_fillet::CurveFilletSolutions2<bezier_region::CurveRegion2, bezier_region::CurveRegionFilletFamily2>`",
+        "rendered": null,
+        "spans": []
+      },
+      {
+        "children": [],
+        "code": null,
+        "level": "note",
+        "message": "function defined here",
+        "rendered": null,
+        "spans": [
+          {
+            "byte_end": 865311,
+            "byte_start": 865285,
+            "column_end": 35,
+            "column_start": 9,
+            "expansion": null,
+            "file_name": "src/bezier_region.rs",
+            "is_primary": false,
+            "label": "",
+            "line_end": 20885,
+            "line_start": 20885,
+            "suggested_replacement": null,
+            "suggestion_applicability": null,
+            "text": [
+              {
+                "highlight_end": 35,
+                "highlight_start": 9,
+                "text": "        solutions: &[CurveRegion2],"
+              }
+            ]
+          },
+          {
+            "byte_end": 865275,
+            "byte_start": 865245,
+            "column_end": 38,
+            "column_start": 8,
+            "expansion": null,
+            "file_name": "src/bezier_region.rs",
+            "is_primary": true,
+            "label": null,
+            "line_end": 20884,
+            "line_start": 20884,
+            "suggested_replacement": null,
+            "suggestion_applicability": null,
+            "text": [
+              {
+                "highlight_end": 38,
+                "highlight_start": 8,
+                "text": "    fn assert_one_fragment_edit_shape("
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "level": "error",
+    "message": "mismatched types",
+    "spans": [
+      {
+        "byte_end": 908296,
+        "byte_start": 908283,
+        "column_end": 61,
+        "column_start": 48,
+        "expansion": null,
+        "file_name": "src/bezier_region.rs",
+        "is_primary": true,
+        "label": "expected `&[CurveRegion2]`, found `&CurveFilletSolutions2<..., ...>`",
+        "line_end": 21781,
+        "line_start": 21781,
+        "suggested_replacement": null,
+        "suggestion_applicability": null,
+        "text": [
+          {
+            "highlight_end": 61,
+            "highlight_start": 48,
+            "text": "                assert_one_fragment_edit_shape(&result.value, 1, 1);"
+          }
+        ]
+      },
+      {
+        "byte_end": 908282,
+        "byte_start": 908252,
+        "column_end": 47,
+        "column_start": 17,
+        "expansion": null,
+        "file_name": "src/bezier_region.rs",
+        "is_primary": false,
+        "label": "arguments to this function are incorrect",
+        "line_end": 21781,
+        "line_start": 21781,
+        "suggested_replacement": null,
+        "suggestion_applicability": null,
+        "text": [
+          {
+            "highlight_end": 47,
+            "highlight_start": 17,
+            "text": "                assert_one_fragment_edit_shape(&result.value, 1, 1);"
+          }
+        ]
+      }
+    ],
+    "code": {
+      "code": "E0308",
+      "explanation": "Expected type did not match the received type.\n\nErroneous code examples:\n\n```compile_fail,E0308\nfn plus_one(x: i32) -> i32 {\n    x + 1\n}\n\nplus_one(\"Not a number\");\n//       ^^^^^^^^^^^^^^ expected `i32`, found `&str`\n\nif \"Not a bool\" {\n// ^^^^^^^^^^^^ expected `bool`, found `&str`\n}\n\nlet x: f32 = \"Not a float\";\n//     ---   ^^^^^^^^^^^^^ expected `f32`, found `&str`\n//     |\n//     expected due to this\n```\n\nThis error occurs when an expression was used in a place where the compiler\nexpected an expression of a different type. It can occur in several cases, the\nmost common being when calling a function and passing an argument which has a\ndifferent type than the matching type in the function declaration.\n"
+    }
+  },
+  {
+    "rendered": "error[E0308]: mismatched types\n     --> src/bezier_region.rs:21866:48\n      |\n21866 |                 assert_one_fragment_edit_shape(&result.value, 1, 1);\n      |                 ------------------------------ ^^^^^^^^^^^^^ expected `&[CurveRegion2]`, found `&CurveFilletSolutions2<..., ...>`\n      |                 |\n      |                 arguments to this function are incorrect\n      |\n      = note: expected reference `&[bezier_region::CurveRegion2]`\n                 found reference `&curve::curve_fillet::CurveFilletSolutions2<bezier_region::CurveRegion2, bezier_region::CurveRegionFilletFamily2>`\nnote: function defined here\n     --> src/bezier_region.rs:20884:8\n      |\n20884 |     fn assert_one_fragment_edit_shape(\n      |        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n20885 |         solutions: &[CurveRegion2],\n      |         --------------------------\n\n",
+    "$message_type": "diagnostic",
+    "children": [
+      {
+        "children": [],
+        "code": null,
+        "level": "note",
+        "message": "expected reference `&[bezier_region::CurveRegion2]`\n   found reference `&curve::curve_fillet::CurveFilletSolutions2<bezier_region::CurveRegion2, bezier_region::CurveRegionFilletFamily2>`",
+        "rendered": null,
+        "spans": []
+      },
+      {
+        "children": [],
+        "code": null,
+        "level": "note",
+        "message": "function defined here",
+        "rendered": null,
+        "spans": [
+          {
+            "byte_end": 865311,
+            "byte_start": 865285,
+            "column_end": 35,
+            "column_start": 9,
+            "expansion": null,
+            "file_name": "src/bezier_region.rs",
+            "is_primary": false,
+            "label": "",
+            "line_end": 20885,
+            "line_start": 20885,
+            "suggested_replacement": null,
+            "suggestion_applicability": null,
+            "text": [
+              {
+                "highlight_end": 35,
+                "highlight_start": 9,
+                "text": "        solutions: &[CurveRegion2],"
+              }
+            ]
+          },
+          {
+            "byte_end": 865275,
+            "byte_start": 865245,
+            "column_end": 38,
+            "column_start": 8,
+            "expansion": null,
+            "file_name": "src/bezier_region.rs",
+            "is_primary": true,
+            "label": null,
+            "line_end": 20884,
+            "line_start": 20884,
+            "suggested_replacement": null,
+            "suggestion_applicability": null,
+            "text": [
+              {
+                "highlight_end": 38,
+                "highlight_start": 8,
+                "text": "    fn assert_one_fragment_edit_shape("
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "level": "error",
+    "message": "mismatched types",
+    "spans": [
+      {
+        "byte_end": 912126,
+        "byte_start": 912113,
+        "column_end": 61,
+        "column_start": 48,
+        "expansion": null,
+        "file_name": "src/bezier_region.rs",
+        "is_primary": true,
+        "label": "expected `&[CurveRegion2]`, found `&CurveFilletSolutions2<..., ...>`",
+        "line_end": 21866,
+        "line_start": 21866,
+        "suggested_replacement": null,
+        "suggestion_applicability": null,
+        "text": [
+          {
+            "highlight_end": 61,
+            "highlight_start": 48,
+            "text": "                assert_one_fragment_edit_shape(&result.value, 1, 1);"
+          }
+        ]
+      },
+      {
+        "byte_end": 912112,
+        "byte_start": 912082,
+        "column_end": 47,
+        "column_start": 17,
+        "expansion": null,
+        "file_name": "src/bezier_region.rs",
+        "is_primary": false,
+        "label": "arguments to this function are incorrect",
+        "line_end": 21866,
+        "line_start": 21866,
+        "suggested_replacement": null,
+        "suggestion_applicability": null,
+        "text": [
+          {
+            "highlight_end": 47,
+            "highlight_start": 17,
+            "text": "                assert_one_fragment_edit_shape(&result.value, 1, 1);"
+          }
+        ]
+      }
+    ],
+    "code": {
+      "code": "E0308",
+      "explanation": "Expected type did not match the received type.\n\nErroneous code examples:\n\n```compile_fail,E0308\nfn plus_one(x: i32) -> i32 {\n    x + 1\n}\n\nplus_one(\"Not a number\");\n//       ^^^^^^^^^^^^^^ expected `i32`, found `&str`\n\nif \"Not a bool\" {\n// ^^^^^^^^^^^^ expected `bool`, found `&str`\n}\n\nlet x: f32 = \"Not a float\";\n//     ---   ^^^^^^^^^^^^^ expected `f32`, found `&str`\n//     |\n//     expected due to this\n```\n\nThis error occurs when an expression was used in a place where the compiler\nexpected an expression of a different type. It can occur in several cases, the\nmost common being when calling a function and passing an argument which has a\ndifferent type than the matching type in the function declaration.\n"
+    }
+  },
+  {
+    "rendered": "error[E0308]: mismatched types\n     --> src/bezier_region.rs:21991:37\n      |\n21991 |                 assert_extended_set(&fillets.value);\n      |                 ------------------- ^^^^^^^^^^^^^^ expected `&[CurveRegion2]`, found `&CurveFilletSolutions2<..., ...>`\n      |                 |\n      |                 arguments to this function are incorrect\n      |\n      = note: expected reference `&[bezier_region::CurveRegion2]`\n                 found reference `&curve::curve_fillet::CurveFilletSolutions2<bezier_region::CurveRegion2, bezier_region::CurveRegionFilletFamily2>`\nnote: closure parameter defined here\n     --> src/bezier_region.rs:21949:44\n      |\n21949 |                 let assert_extended_set = |solutions: &[CurveRegion2]| {\n      |                                            ^^^^^^^^^^^^^^^^^^^^^^^^^^\n\n",
+    "$message_type": "diagnostic",
+    "children": [
+      {
+        "children": [],
+        "code": null,
+        "level": "note",
+        "message": "expected reference `&[bezier_region::CurveRegion2]`\n   found reference `&curve::curve_fillet::CurveFilletSolutions2<bezier_region::CurveRegion2, bezier_region::CurveRegionFilletFamily2>`",
+        "rendered": null,
+        "spans": []
+      },
+      {
+        "children": [],
+        "code": null,
+        "level": "note",
+        "message": "closure parameter defined here",
+        "rendered": null,
+        "spans": [
+          {
+            "byte_end": 916234,
+            "byte_start": 916208,
+            "column_end": 70,
+            "column_start": 44,
+            "expansion": null,
+            "file_name": "src/bezier_region.rs",
+            "is_primary": true,
+            "label": null,
+            "line_end": 21949,
+            "line_start": 21949,
+            "suggested_replacement": null,
+            "suggestion_applicability": null,
+            "text": [
+              {
+                "highlight_end": 70,
+                "highlight_start": 44,
+                "text": "                let assert_extended_set = |solutions: &[CurveRegion2]| {"
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "level": "error",
+    "message": "mismatched types",
+    "spans": [
+      {
+        "byte_end": 918591,
+        "byte_start": 918577,
+        "column_end": 51,
+        "column_start": 37,
+        "expansion": null,
+        "file_name": "src/bezier_region.rs",
+        "is_primary": true,
+        "label": "expected `&[CurveRegion2]`, found `&CurveFilletSolutions2<..., ...>`",
+        "line_end": 21991,
+        "line_start": 21991,
+        "suggested_replacement": null,
+        "suggestion_applicability": null,
+        "text": [
+          {
+            "highlight_end": 51,
+            "highlight_start": 37,
+            "text": "                assert_extended_set(&fillets.value);"
+          }
+        ]
+      },
+      {
+        "byte_end": 918576,
+        "byte_start": 918557,
+        "column_end": 36,
+        "column_start": 17,
+        "expansion": null,
+        "file_name": "src/bezier_region.rs",
+        "is_primary": false,
+        "label": "arguments to this function are incorrect",
+        "line_end": 21991,
+        "line_start": 21991,
+        "suggested_replacement": null,
+        "suggestion_applicability": null,
+        "text": [
+          {
+            "highlight_end": 36,
+            "highlight_start": 17,
+            "text": "                assert_extended_set(&fillets.value);"
+          }
+        ]
+      }
+    ],
+    "code": {
+      "code": "E0308",
+      "explanation": "Expected type did not match the received type.\n\nErroneous code examples:\n\n```compile_fail,E0308\nfn plus_one(x: i32) -> i32 {\n    x + 1\n}\n\nplus_one(\"Not a number\");\n//       ^^^^^^^^^^^^^^ expected `i32`, found `&str`\n\nif \"Not a bool\" {\n// ^^^^^^^^^^^^ expected `bool`, found `&str`\n}\n\nlet x: f32 = \"Not a float\";\n//     ---   ^^^^^^^^^^^^^ expected `f32`, found `&str`\n//     |\n//     expected due to this\n```\n\nThis error occurs when an expression was used in a place where the compiler\nexpected an expression of a different type. It can occur in several cases, the\nmost common being when calling a function and passing an argument which has a\ndifferent type than the matching type in the function declaration.\n"
+    }
+  },
+  {
+    "rendered": "error[E0308]: mismatched types\n     --> src/bezier_region.rs:22008:37\n      |\n22008 |                 assert_extended_set(&chamfers.value);\n      |                 ------------------- ^^^^^^^^^^^^^^^ expected `&[CurveRegion2]`, found `&CurveCornerSolutions2<CurveRegion2>`\n      |                 |\n      |                 arguments to this function are incorrect\n      |\n      = note: expected reference `&[bezier_region::CurveRegion2]`\n                 found reference `&curve::CurveCornerSolutions2<bezier_region::CurveRegion2>`\nnote: closure parameter defined here\n     --> src/bezier_region.rs:21949:44\n      |\n21949 |                 let assert_extended_set = |solutions: &[CurveRegion2]| {\n      |                                            ^^^^^^^^^^^^^^^^^^^^^^^^^^\n\n",
+    "$message_type": "diagnostic",
+    "children": [
+      {
+        "children": [],
+        "code": null,
+        "level": "note",
+        "message": "expected reference `&[bezier_region::CurveRegion2]`\n   found reference `&curve::CurveCornerSolutions2<bezier_region::CurveRegion2>`",
+        "rendered": null,
+        "spans": []
+      },
+      {
+        "children": [],
+        "code": null,
+        "level": "note",
+        "message": "closure parameter defined here",
+        "rendered": null,
+        "spans": [
+          {
+            "byte_end": 916234,
+            "byte_start": 916208,
+            "column_end": 70,
+            "column_start": 44,
+            "expansion": null,
+            "file_name": "src/bezier_region.rs",
+            "is_primary": true,
+            "label": null,
+            "line_end": 21949,
+            "line_start": 21949,
+            "suggested_replacement": null,
+            "suggestion_applicability": null,
+            "text": [
+              {
+                "highlight_end": 70,
+                "highlight_start": 44,
+                "text": "                let assert_extended_set = |solutions: &[CurveRegion2]| {"
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "level": "error",
+    "message": "mismatched types",
+    "spans": [
+      {
+        "byte_end": 919324,
+        "byte_start": 919309,
+        "column_end": 52,
+        "column_start": 37,
+        "expansion": null,
+        "file_name": "src/bezier_region.rs",
+        "is_primary": true,
+        "label": "expected `&[CurveRegion2]`, found `&CurveCornerSolutions2<CurveRegion2>`",
+        "line_end": 22008,
+        "line_start": 22008,
+        "suggested_replacement": null,
+        "suggestion_applicability": null,
+        "text": [
+          {
+            "highlight_end": 52,
+            "highlight_start": 37,
+            "text": "                assert_extended_set(&chamfers.value);"
+          }
+        ]
+      },
+      {
+        "byte_end": 919308,
+        "byte_start": 919289,
+        "column_end": 36,
+        "column_start": 17,
+        "expansion": null,
+        "file_name": "src/bezier_region.rs",
+        "is_primary": false,
+        "label": "arguments to this function are incorrect",
+        "line_end": 22008,
+        "line_start": 22008,
+        "suggested_replacement": null,
+        "suggestion_applicability": null,
+        "text": [
+          {
+            "highlight_end": 36,
+            "highlight_start": 17,
+            "text": "                assert_extended_set(&chamfers.value);"
+          }
+        ]
+      }
+    ],
+    "code": {
+      "code": "E0308",
+      "explanation": "Expected type did not match the received type.\n\nErroneous code examples:\n\n```compile_fail,E0308\nfn plus_one(x: i32) -> i32 {\n    x + 1\n}\n\nplus_one(\"Not a number\");\n//       ^^^^^^^^^^^^^^ expected `i32`, found `&str`\n\nif \"Not a bool\" {\n// ^^^^^^^^^^^^ expected `bool`, found `&str`\n}\n\nlet x: f32 = \"Not a float\";\n//     ---   ^^^^^^^^^^^^^ expected `f32`, found `&str`\n//     |\n//     expected due to this\n```\n\nThis error occurs when an expression was used in a place where the compiler\nexpected an expression of a different type. It can occur in several cases, the\nmost common being when calling a function and passing an argument which has a\ndifferent type than the matching type in the function declaration.\n"
+    }
+  },
+  {
+    "rendered": "error[E0599]: no method named `candidate_count` found for struct `curve::curve_fillet::CurveFilletSolutions2<T, F>` in the current scope\n     --> src/bezier_region.rs:24206:44\n      |\n24206 | ...                   } > trim.value.candidate_count(),\n      |                                      ^^^^^^^^^^^^^^^ method not found in `CurveFilletSolutions2<CurveRegion2, CurveRegionFilletFamily2>`\n      |\n     ::: src/curve_fillet.rs:11:1\n      |\n   11 | pub struct CurveFilletSolutions2<T, F> {\n      | -------------------------------------- method `candidate_count` not found for this struct\n      |\n      = note: the full name for the type has been written to '/tmp/hypercurve-pruning-qualification/hyperbrep/target/debug/deps/hypercurve-d6cf444c619f6d8e.long-type-18291028529890292599.txt'\n      = note: consider using `--verbose` to print the full type name to the console\n\n",
+    "$message_type": "diagnostic",
+    "children": [
+      {
+        "children": [],
+        "code": null,
+        "level": "note",
+        "message": "the full name for the type has been written to '/tmp/hypercurve-pruning-qualification/hyperbrep/target/debug/deps/hypercurve-d6cf444c619f6d8e.long-type-18291028529890292599.txt'",
+        "rendered": null,
+        "spans": []
+      },
+      {
+        "children": [],
+        "code": null,
+        "level": "note",
+        "message": "consider using `--verbose` to print the full type name to the console",
+        "rendered": null,
+        "spans": []
+      }
+    ],
+    "level": "error",
+    "message": "no method named `candidate_count` found for struct `curve::curve_fillet::CurveFilletSolutions2<T, F>` in the current scope",
+    "spans": [
+      {
+        "byte_end": 1021865,
+        "byte_start": 1021850,
+        "column_end": 59,
+        "column_start": 44,
+        "expansion": null,
+        "file_name": "src/bezier_region.rs",
+        "is_primary": true,
+        "label": "method not found in `CurveFilletSolutions2<CurveRegion2, CurveRegionFilletFamily2>`",
+        "line_end": 24206,
+        "line_start": 24206,
+        "suggested_replacement": null,
+        "suggestion_applicability": null,
+        "text": [
+          {
+            "highlight_end": 59,
+            "highlight_start": 44,
+            "text": "                            } > trim.value.candidate_count(),"
+          }
+        ]
+      },
+      {
+        "byte_end": 449,
+        "byte_start": 411,
+        "column_end": 39,
+        "column_start": 1,
+        "expansion": null,
+        "file_name": "src/curve_fillet.rs",
+        "is_primary": false,
+        "label": "method `candidate_count` not found for this struct",
+        "line_end": 11,
+        "line_start": 11,
+        "suggested_replacement": null,
+        "suggestion_applicability": null,
+        "text": [
+          {
+            "highlight_end": 39,
+            "highlight_start": 1,
+            "text": "pub struct CurveFilletSolutions2<T, F> {"
+          }
+        ]
+      }
+    ],
+    "code": {
+      "code": "E0599",
+      "explanation": "This error occurs when a method is used on a type which doesn't implement it:\n\nErroneous code example:\n\n```compile_fail,E0599\nstruct Mouth;\n\nlet x = Mouth;\nx.chocolate(); // error: no method named `chocolate` found for type `Mouth`\n               //        in the current scope\n```\n\nIn this case, you need to implement the `chocolate` method to fix the error:\n\n```\nstruct Mouth;\n\nimpl Mouth {\n    fn chocolate(&self) { // We implement the `chocolate` method here.\n        println!(\"Hmmm! I love chocolate!\");\n    }\n}\n\nlet x = Mouth;\nx.chocolate(); // ok!\n```\n"
+    }
+  },
+  {
+    "rendered": "error[E0599]: no method named `candidate_count` found for struct `curve::curve_fillet::CurveFilletSolutions2<T, F>` in the current scope\n     --> src/bezier_region.rs:24279:46\n      |\n24279 |                     retained_extension.value.candidate_count(),\n      |                                              ^^^^^^^^^^^^^^^ method not found in `CurveFilletSolutions2<CurveRegion2, CurveRegionFilletFamily2>`\n      |\n     ::: src/curve_fillet.rs:11:1\n      |\n   11 | pub struct CurveFilletSolutions2<T, F> {\n      | -------------------------------------- method `candidate_count` not found for this struct\n      |\n      = note: the full name for the type has been written to '/tmp/hypercurve-pruning-qualification/hyperbrep/target/debug/deps/hypercurve-d6cf444c619f6d8e.long-type-18291028529890292599.txt'\n      = note: consider using `--verbose` to print the full type name to the console\n\n",
+    "$message_type": "diagnostic",
+    "children": [
+      {
+        "children": [],
+        "code": null,
+        "level": "note",
+        "message": "the full name for the type has been written to '/tmp/hypercurve-pruning-qualification/hyperbrep/target/debug/deps/hypercurve-d6cf444c619f6d8e.long-type-18291028529890292599.txt'",
+        "rendered": null,
+        "spans": []
+      },
+      {
+        "children": [],
+        "code": null,
+        "level": "note",
+        "message": "consider using `--verbose` to print the full type name to the console",
+        "rendered": null,
+        "spans": []
+      }
+    ],
+    "level": "error",
+    "message": "no method named `candidate_count` found for struct `curve::curve_fillet::CurveFilletSolutions2<T, F>` in the current scope",
+    "spans": [
+      {
+        "byte_end": 1025749,
+        "byte_start": 1025734,
+        "column_end": 61,
+        "column_start": 46,
+        "expansion": null,
+        "file_name": "src/bezier_region.rs",
+        "is_primary": true,
+        "label": "method not found in `CurveFilletSolutions2<CurveRegion2, CurveRegionFilletFamily2>`",
+        "line_end": 24279,
+        "line_start": 24279,
+        "suggested_replacement": null,
+        "suggestion_applicability": null,
+        "text": [
+          {
+            "highlight_end": 61,
+            "highlight_start": 46,
+            "text": "                    retained_extension.value.candidate_count(),"
+          }
+        ]
+      },
+      {
+        "byte_end": 449,
+        "byte_start": 411,
+        "column_end": 39,
+        "column_start": 1,
+        "expansion": null,
+        "file_name": "src/curve_fillet.rs",
+        "is_primary": false,
+        "label": "method `candidate_count` not found for this struct",
+        "line_end": 11,
+        "line_start": 11,
+        "suggested_replacement": null,
+        "suggestion_applicability": null,
+        "text": [
+          {
+            "highlight_end": 39,
+            "highlight_start": 1,
+            "text": "pub struct CurveFilletSolutions2<T, F> {"
+          }
+        ]
+      }
+    ],
+    "code": {
+      "code": "E0599",
+      "explanation": "This error occurs when a method is used on a type which doesn't implement it:\n\nErroneous code example:\n\n```compile_fail,E0599\nstruct Mouth;\n\nlet x = Mouth;\nx.chocolate(); // error: no method named `chocolate` found for type `Mouth`\n               //        in the current scope\n```\n\nIn this case, you need to implement the `chocolate` method to fix the error:\n\n```\nstruct Mouth;\n\nimpl Mouth {\n    fn chocolate(&self) { // We implement the `chocolate` method here.\n        println!(\"Hmmm! I love chocolate!\");\n    }\n}\n\nlet x = Mouth;\nx.chocolate(); // ok!\n```\n"
+    }
+  },
+  {
+    "rendered": "error[E0308]: mismatched types\n     --> src/bezier_region.rs:24626:29\n      |\n24625 |                         match &result.value {\n      |                               ------------- this expression has type `&CurveFilletSolutions2<CurveRegion2, CurveRegionFilletFamily2>`\n24626 |                             CurveCornerSolutions2::Unique(filleted) => {\n      |                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ expected `CurveFilletSolutions2<CurveRegion2, ...>`, found `CurveCornerSolutions2<_>`\n      |\n      = note: expected struct `curve::curve_fillet::CurveFilletSolutions2<bezier_region::CurveRegion2, bezier_region::CurveRegionFilletFamily2>`\n                   found enum `curve::CurveCornerSolutions2<_>`\n      = note: the full name for the type has been written to '/tmp/hypercurve-pruning-qualification/hyperbrep/target/debug/deps/hypercurve-d6cf444c619f6d8e.long-type-7754540727882419211.txt'\n      = note: consider using `--verbose` to print the full type name to the console\n\n",
+    "$message_type": "diagnostic",
+    "children": [
+      {
+        "children": [],
+        "code": null,
+        "level": "note",
+        "message": "expected struct `curve::curve_fillet::CurveFilletSolutions2<bezier_region::CurveRegion2, bezier_region::CurveRegionFilletFamily2>`\n     found enum `curve::CurveCornerSolutions2<_>`",
+        "rendered": null,
+        "spans": []
+      },
+      {
+        "children": [],
+        "code": null,
+        "level": "note",
+        "message": "the full name for the type has been written to '/tmp/hypercurve-pruning-qualification/hyperbrep/target/debug/deps/hypercurve-d6cf444c619f6d8e.long-type-7754540727882419211.txt'",
+        "rendered": null,
+        "spans": []
+      },
+      {
+        "children": [],
+        "code": null,
+        "level": "note",
+        "message": "consider using `--verbose` to print the full type name to the console",
+        "rendered": null,
+        "spans": []
+      }
+    ],
+    "level": "error",
+    "message": "mismatched types",
+    "spans": [
+      {
+        "byte_end": 1042262,
+        "byte_start": 1042223,
+        "column_end": 68,
+        "column_start": 29,
+        "expansion": null,
+        "file_name": "src/bezier_region.rs",
+        "is_primary": true,
+        "label": "expected `CurveFilletSolutions2<CurveRegion2, ...>`, found `CurveCornerSolutions2<_>`",
+        "line_end": 24626,
+        "line_start": 24626,
+        "suggested_replacement": null,
+        "suggestion_applicability": null,
+        "text": [
+          {
+            "highlight_end": 68,
+            "highlight_start": 29,
+            "text": "                            CurveCornerSolutions2::Unique(filleted) => {"
+          }
+        ]
+      },
+      {
+        "byte_end": 1042192,
+        "byte_start": 1042179,
+        "column_end": 44,
+        "column_start": 31,
+        "expansion": null,
+        "file_name": "src/bezier_region.rs",
+        "is_primary": false,
+        "label": "this expression has type `&CurveFilletSolutions2<CurveRegion2, CurveRegionFilletFamily2>`",
+        "line_end": 24625,
+        "line_start": 24625,
+        "suggested_replacement": null,
+        "suggestion_applicability": null,
+        "text": [
+          {
+            "highlight_end": 44,
+            "highlight_start": 31,
+            "text": "                        match &result.value {"
+          }
+        ]
+      }
+    ],
+    "code": {
+      "code": "E0308",
+      "explanation": "Expected type did not match the received type.\n\nErroneous code examples:\n\n```compile_fail,E0308\nfn plus_one(x: i32) -> i32 {\n    x + 1\n}\n\nplus_one(\"Not a number\");\n//       ^^^^^^^^^^^^^^ expected `i32`, found `&str`\n\nif \"Not a bool\" {\n// ^^^^^^^^^^^^ expected `bool`, found `&str`\n}\n\nlet x: f32 = \"Not a float\";\n//     ---   ^^^^^^^^^^^^^ expected `f32`, found `&str`\n//     |\n//     expected due to this\n```\n\nThis error occurs when an expression was used in a place where the compiler\nexpected an expression of a different type. It can occur in several cases, the\nmost common being when calling a function and passing an argument which has a\ndifferent type than the matching type in the function declaration.\n"
+    }
+  },
+  {
+    "rendered": "error[E0308]: mismatched types\n     --> src/bezier_region.rs:24629:29\n      |\n24625 |                         match &result.value {\n      |                               ------------- this expression has type `&CurveFilletSolutions2<CurveRegion2, CurveRegionFilletFamily2>`\n...\n24629 |                             CurveCornerSolutions2::Multiple(filleted) => {\n      |                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ expected `CurveFilletSolutions2<CurveRegion2, ...>`, found `CurveCornerSolutions2<_>`\n      |\n      = note: expected struct `curve::curve_fillet::CurveFilletSolutions2<bezier_region::CurveRegion2, bezier_region::CurveRegionFilletFamily2>`\n                   found enum `curve::CurveCornerSolutions2<_>`\n      = note: the full name for the type has been written to '/tmp/hypercurve-pruning-qualification/hyperbrep/target/debug/deps/hypercurve-d6cf444c619f6d8e.long-type-7754540727882419211.txt'\n      = note: consider using `--verbose` to print the full type name to the console\n\n",
+    "$message_type": "diagnostic",
+    "children": [
+      {
+        "children": [],
+        "code": null,
+        "level": "note",
+        "message": "expected struct `curve::curve_fillet::CurveFilletSolutions2<bezier_region::CurveRegion2, bezier_region::CurveRegionFilletFamily2>`\n     found enum `curve::CurveCornerSolutions2<_>`",
+        "rendered": null,
+        "spans": []
+      },
+      {
+        "children": [],
+        "code": null,
+        "level": "note",
+        "message": "the full name for the type has been written to '/tmp/hypercurve-pruning-qualification/hyperbrep/target/debug/deps/hypercurve-d6cf444c619f6d8e.long-type-7754540727882419211.txt'",
+        "rendered": null,
+        "spans": []
+      },
+      {
+        "children": [],
+        "code": null,
+        "level": "note",
+        "message": "consider using `--verbose` to print the full type name to the console",
+        "rendered": null,
+        "spans": []
+      }
+    ],
+    "level": "error",
+    "message": "mismatched types",
+    "spans": [
+      {
+        "byte_end": 1042431,
+        "byte_start": 1042390,
+        "column_end": 70,
+        "column_start": 29,
+        "expansion": null,
+        "file_name": "src/bezier_region.rs",
+        "is_primary": true,
+        "label": "expected `CurveFilletSolutions2<CurveRegion2, ...>`, found `CurveCornerSolutions2<_>`",
+        "line_end": 24629,
+        "line_start": 24629,
+        "suggested_replacement": null,
+        "suggestion_applicability": null,
+        "text": [
+          {
+            "highlight_end": 70,
+            "highlight_start": 29,
+            "text": "                            CurveCornerSolutions2::Multiple(filleted) => {"
+          }
+        ]
+      },
+      {
+        "byte_end": 1042192,
+        "byte_start": 1042179,
+        "column_end": 44,
+        "column_start": 31,
+        "expansion": null,
+        "file_name": "src/bezier_region.rs",
+        "is_primary": false,
+        "label": "this expression has type `&CurveFilletSolutions2<CurveRegion2, CurveRegionFilletFamily2>`",
+        "line_end": 24625,
+        "line_start": 24625,
+        "suggested_replacement": null,
+        "suggestion_applicability": null,
+        "text": [
+          {
+            "highlight_end": 44,
+            "highlight_start": 31,
+            "text": "                        match &result.value {"
+          }
+        ]
+      }
+    ],
+    "code": {
+      "code": "E0308",
+      "explanation": "Expected type did not match the received type.\n\nErroneous code examples:\n\n```compile_fail,E0308\nfn plus_one(x: i32) -> i32 {\n    x + 1\n}\n\nplus_one(\"Not a number\");\n//       ^^^^^^^^^^^^^^ expected `i32`, found `&str`\n\nif \"Not a bool\" {\n// ^^^^^^^^^^^^ expected `bool`, found `&str`\n}\n\nlet x: f32 = \"Not a float\";\n//     ---   ^^^^^^^^^^^^^ expected `f32`, found `&str`\n//     |\n//     expected due to this\n```\n\nThis error occurs when an expression was used in a place where the compiler\nexpected an expression of a different type. It can occur in several cases, the\nmost common being when calling a function and passing an argument which has a\ndifferent type than the matching type in the function declaration.\n"
+    }
+  },
+  {
+    "rendered": "error[E0308]: mismatched types\n     --> src/bezier_region.rs:24632:29\n      |\n24625 |                         match &result.value {\n      |                               ------------- this expression has type `&CurveFilletSolutions2<CurveRegion2, CurveRegionFilletFamily2>`\n...\n24632 |                             CurveCornerSolutions2::NoSolution(_) => false,\n      |                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ expected `CurveFilletSolutions2<CurveRegion2, ...>`, found `CurveCornerSolutions2<_>`\n      |\n      = note: expected struct `curve::curve_fillet::CurveFilletSolutions2<bezier_region::CurveRegion2, bezier_region::CurveRegionFilletFamily2>`\n                   found enum `curve::CurveCornerSolutions2<_>`\n      = note: the full name for the type has been written to '/tmp/hypercurve-pruning-qualification/hyperbrep/target/debug/deps/hypercurve-d6cf444c619f6d8e.long-type-7754540727882419211.txt'\n      = note: consider using `--verbose` to print the full type name to the console\n\n",
+    "$message_type": "diagnostic",
+    "children": [
+      {
+        "children": [],
+        "code": null,
+        "level": "note",
+        "message": "expected struct `curve::curve_fillet::CurveFilletSolutions2<bezier_region::CurveRegion2, bezier_region::CurveRegionFilletFamily2>`\n     found enum `curve::CurveCornerSolutions2<_>`",
+        "rendered": null,
+        "spans": []
+      },
+      {
+        "children": [],
+        "code": null,
+        "level": "note",
+        "message": "the full name for the type has been written to '/tmp/hypercurve-pruning-qualification/hyperbrep/target/debug/deps/hypercurve-d6cf444c619f6d8e.long-type-7754540727882419211.txt'",
+        "rendered": null,
+        "spans": []
+      },
+      {
+        "children": [],
+        "code": null,
+        "level": "note",
+        "message": "consider using `--verbose` to print the full type name to the console",
+        "rendered": null,
+        "spans": []
+      }
+    ],
+    "level": "error",
+    "message": "mismatched types",
+    "spans": [
+      {
+        "byte_end": 1042606,
+        "byte_start": 1042570,
+        "column_end": 65,
+        "column_start": 29,
+        "expansion": null,
+        "file_name": "src/bezier_region.rs",
+        "is_primary": true,
+        "label": "expected `CurveFilletSolutions2<CurveRegion2, ...>`, found `CurveCornerSolutions2<_>`",
+        "line_end": 24632,
+        "line_start": 24632,
+        "suggested_replacement": null,
+        "suggestion_applicability": null,
+        "text": [
+          {
+            "highlight_end": 65,
+            "highlight_start": 29,
+            "text": "                            CurveCornerSolutions2::NoSolution(_) => false,"
+          }
+        ]
+      },
+      {
+        "byte_end": 1042192,
+        "byte_start": 1042179,
+        "column_end": 44,
+        "column_start": 31,
+        "expansion": null,
+        "file_name": "src/bezier_region.rs",
+        "is_primary": false,
+        "label": "this expression has type `&CurveFilletSolutions2<CurveRegion2, CurveRegionFilletFamily2>`",
+        "line_end": 24625,
+        "line_start": 24625,
+        "suggested_replacement": null,
+        "suggestion_applicability": null,
+        "text": [
+          {
+            "highlight_end": 44,
+            "highlight_start": 31,
+            "text": "                        match &result.value {"
+          }
+        ]
+      }
+    ],
+    "code": {
+      "code": "E0308",
+      "explanation": "Expected type did not match the received type.\n\nErroneous code examples:\n\n```compile_fail,E0308\nfn plus_one(x: i32) -> i32 {\n    x + 1\n}\n\nplus_one(\"Not a number\");\n//       ^^^^^^^^^^^^^^ expected `i32`, found `&str`\n\nif \"Not a bool\" {\n// ^^^^^^^^^^^^ expected `bool`, found `&str`\n}\n\nlet x: f32 = \"Not a float\";\n//     ---   ^^^^^^^^^^^^^ expected `f32`, found `&str`\n//     |\n//     expected due to this\n```\n\nThis error occurs when an expression was used in a place where the compiler\nexpected an expression of a different type. It can occur in several cases, the\nmost common being when calling a function and passing an argument which has a\ndifferent type than the matching type in the function declaration.\n"
+    }
+  },
+  {
+    "rendered": "error[E0599]: no method named `candidate_count` found for struct `curve::curve_fillet::CurveFilletSolutions2<T, F>` in the current scope\n     --> src/bezier_region.rs:24749:36\n      |\n24749 |                     } > trim.value.candidate_count(),\n      |                                    ^^^^^^^^^^^^^^^ method not found in `CurveFilletSolutions2<CurveRegion2, CurveRegionFilletFamily2>`\n      |\n     ::: src/curve_fillet.rs:11:1\n      |\n   11 | pub struct CurveFilletSolutions2<T, F> {\n      | -------------------------------------- method `candidate_count` not found for this struct\n      |\n      = note: the full name for the type has been written to '/tmp/hypercurve-pruning-qualification/hyperbrep/target/debug/deps/hypercurve-d6cf444c619f6d8e.long-type-18291028529890292599.txt'\n      = note: consider using `--verbose` to print the full type name to the console\n\n",
+    "$message_type": "diagnostic",
+    "children": [
+      {
+        "children": [],
+        "code": null,
+        "level": "note",
+        "message": "the full name for the type has been written to '/tmp/hypercurve-pruning-qualification/hyperbrep/target/debug/deps/hypercurve-d6cf444c619f6d8e.long-type-18291028529890292599.txt'",
+        "rendered": null,
+        "spans": []
+      },
+      {
+        "children": [],
+        "code": null,
+        "level": "note",
+        "message": "consider using `--verbose` to print the full type name to the console",
+        "rendered": null,
+        "spans": []
+      }
+    ],
+    "level": "error",
+    "message": "no method named `candidate_count` found for struct `curve::curve_fillet::CurveFilletSolutions2<T, F>` in the current scope",
+    "spans": [
+      {
+        "byte_end": 1047915,
+        "byte_start": 1047900,
+        "column_end": 51,
+        "column_start": 36,
+        "expansion": null,
+        "file_name": "src/bezier_region.rs",
+        "is_primary": true,
+        "label": "method not found in `CurveFilletSolutions2<CurveRegion2, CurveRegionFilletFamily2>`",
+        "line_end": 24749,
+        "line_start": 24749,
+        "suggested_replacement": null,
+        "suggestion_applicability": null,
+        "text": [
+          {
+            "highlight_end": 51,
+            "highlight_start": 36,
+            "text": "                    } > trim.value.candidate_count(),"
+          }
+        ]
+      },
+      {
+        "byte_end": 449,
+        "byte_start": 411,
+        "column_end": 39,
+        "column_start": 1,
+        "expansion": null,
+        "file_name": "src/curve_fillet.rs",
+        "is_primary": false,
+        "label": "method `candidate_count` not found for this struct",
+        "line_end": 11,
+        "line_start": 11,
+        "suggested_replacement": null,
+        "suggestion_applicability": null,
+        "text": [
+          {
+            "highlight_end": 39,
+            "highlight_start": 1,
+            "text": "pub struct CurveFilletSolutions2<T, F> {"
+          }
+        ]
+      }
+    ],
+    "code": {
+      "code": "E0599",
+      "explanation": "This error occurs when a method is used on a type which doesn't implement it:\n\nErroneous code example:\n\n```compile_fail,E0599\nstruct Mouth;\n\nlet x = Mouth;\nx.chocolate(); // error: no method named `chocolate` found for type `Mouth`\n               //        in the current scope\n```\n\nIn this case, you need to implement the `chocolate` method to fix the error:\n\n```\nstruct Mouth;\n\nimpl Mouth {\n    fn chocolate(&self) { // We implement the `chocolate` method here.\n        println!(\"Hmmm! I love chocolate!\");\n    }\n}\n\nlet x = Mouth;\nx.chocolate(); // ok!\n```\n"
+    }
+  },
+  {
+    "rendered": "error[E0599]: no method named `candidate_count` found for struct `curve::curve_fillet::CurveFilletSolutions2<T, F>` in the current scope\n     --> src/bezier_region.rs:24961:36\n      |\n24961 |                     } > trim.value.candidate_count(),\n      |                                    ^^^^^^^^^^^^^^^ method not found in `CurveFilletSolutions2<CurveRegion2, CurveRegionFilletFamily2>`\n      |\n     ::: src/curve_fillet.rs:11:1\n      |\n   11 | pub struct CurveFilletSolutions2<T, F> {\n      | -------------------------------------- method `candidate_count` not found for this struct\n      |\n      = note: the full name for the type has been written to '/tmp/hypercurve-pruning-qualification/hyperbrep/target/debug/deps/hypercurve-d6cf444c619f6d8e.long-type-18291028529890292599.txt'\n      = note: consider using `--verbose` to print the full type name to the console\n\n",
+    "$message_type": "diagnostic",
+    "children": [
+      {
+        "children": [],
+        "code": null,
+        "level": "note",
+        "message": "the full name for the type has been written to '/tmp/hypercurve-pruning-qualification/hyperbrep/target/debug/deps/hypercurve-d6cf444c619f6d8e.long-type-18291028529890292599.txt'",
+        "rendered": null,
+        "spans": []
+      },
+      {
+        "children": [],
+        "code": null,
+        "level": "note",
+        "message": "consider using `--verbose` to print the full type name to the console",
+        "rendered": null,
+        "spans": []
+      }
+    ],
+    "level": "error",
+    "message": "no method named `candidate_count` found for struct `curve::curve_fillet::CurveFilletSolutions2<T, F>` in the current scope",
+    "spans": [
+      {
+        "byte_end": 1057416,
+        "byte_start": 1057401,
+        "column_end": 51,
+        "column_start": 36,
+        "expansion": null,
+        "file_name": "src/bezier_region.rs",
+        "is_primary": true,
+        "label": "method not found in `CurveFilletSolutions2<CurveRegion2, CurveRegionFilletFamily2>`",
+        "line_end": 24961,
+        "line_start": 24961,
+        "suggested_replacement": null,
+        "suggestion_applicability": null,
+        "text": [
+          {
+            "highlight_end": 51,
+            "highlight_start": 36,
+            "text": "                    } > trim.value.candidate_count(),"
+          }
+        ]
+      },
+      {
+        "byte_end": 449,
+        "byte_start": 411,
+        "column_end": 39,
+        "column_start": 1,
+        "expansion": null,
+        "file_name": "src/curve_fillet.rs",
+        "is_primary": false,
+        "label": "method `candidate_count` not found for this struct",
+        "line_end": 11,
+        "line_start": 11,
+        "suggested_replacement": null,
+        "suggestion_applicability": null,
+        "text": [
+          {
+            "highlight_end": 39,
+            "highlight_start": 1,
+            "text": "pub struct CurveFilletSolutions2<T, F> {"
+          }
+        ]
+      }
+    ],
+    "code": {
+      "code": "E0599",
+      "explanation": "This error occurs when a method is used on a type which doesn't implement it:\n\nErroneous code example:\n\n```compile_fail,E0599\nstruct Mouth;\n\nlet x = Mouth;\nx.chocolate(); // error: no method named `chocolate` found for type `Mouth`\n               //        in the current scope\n```\n\nIn this case, you need to implement the `chocolate` method to fix the error:\n\n```\nstruct Mouth;\n\nimpl Mouth {\n    fn chocolate(&self) { // We implement the `chocolate` method here.\n        println!(\"Hmmm! I love chocolate!\");\n    }\n}\n\nlet x = Mouth;\nx.chocolate(); // ok!\n```\n"
+    }
+  },
+  {
+    "rendered": "error[E0599]: no method named `candidate_count` found for struct `curve::curve_fillet::CurveFilletSolutions2<T, F>` in the current scope\n     --> src/bezier_region.rs:27565:40\n      |\n27565 |                         } > trim.value.candidate_count(),\n      |                                        ^^^^^^^^^^^^^^^ method not found in `CurveFilletSolutions2<CurveRegion2, CurveRegionFilletFamily2>`\n      |\n     ::: src/curve_fillet.rs:11:1\n      |\n   11 | pub struct CurveFilletSolutions2<T, F> {\n      | -------------------------------------- method `candidate_count` not found for this struct\n      |\n      = note: the full name for the type has been written to '/tmp/hypercurve-pruning-qualification/hyperbrep/target/debug/deps/hypercurve-d6cf444c619f6d8e.long-type-18291028529890292599.txt'\n      = note: consider using `--verbose` to print the full type name to the console\n\n",
+    "$message_type": "diagnostic",
+    "children": [
+      {
+        "children": [],
+        "code": null,
+        "level": "note",
+        "message": "the full name for the type has been written to '/tmp/hypercurve-pruning-qualification/hyperbrep/target/debug/deps/hypercurve-d6cf444c619f6d8e.long-type-18291028529890292599.txt'",
+        "rendered": null,
+        "spans": []
+      },
+      {
+        "children": [],
+        "code": null,
+        "level": "note",
+        "message": "consider using `--verbose` to print the full type name to the console",
+        "rendered": null,
+        "spans": []
+      }
+    ],
+    "level": "error",
+    "message": "no method named `candidate_count` found for struct `curve::curve_fillet::CurveFilletSolutions2<T, F>` in the current scope",
+    "spans": [
+      {
+        "byte_end": 1183620,
+        "byte_start": 1183605,
+        "column_end": 55,
+        "column_start": 40,
+        "expansion": null,
+        "file_name": "src/bezier_region.rs",
+        "is_primary": true,
+        "label": "method not found in `CurveFilletSolutions2<CurveRegion2, CurveRegionFilletFamily2>`",
+        "line_end": 27565,
+        "line_start": 27565,
+        "suggested_replacement": null,
+        "suggestion_applicability": null,
+        "text": [
+          {
+            "highlight_end": 55,
+            "highlight_start": 40,
+            "text": "                        } > trim.value.candidate_count(),"
+          }
+        ]
+      },
+      {
+        "byte_end": 449,
+        "byte_start": 411,
+        "column_end": 39,
+        "column_start": 1,
+        "expansion": null,
+        "file_name": "src/curve_fillet.rs",
+        "is_primary": false,
+        "label": "method `candidate_count` not found for this struct",
+        "line_end": 11,
+        "line_start": 11,
+        "suggested_replacement": null,
+        "suggestion_applicability": null,
+        "text": [
+          {
+            "highlight_end": 39,
+            "highlight_start": 1,
+            "text": "pub struct CurveFilletSolutions2<T, F> {"
+          }
+        ]
+      }
+    ],
+    "code": {
+      "code": "E0599",
+      "explanation": "This error occurs when a method is used on a type which doesn't implement it:\n\nErroneous code example:\n\n```compile_fail,E0599\nstruct Mouth;\n\nlet x = Mouth;\nx.chocolate(); // error: no method named `chocolate` found for type `Mouth`\n               //        in the current scope\n```\n\nIn this case, you need to implement the `chocolate` method to fix the error:\n\n```\nstruct Mouth;\n\nimpl Mouth {\n    fn chocolate(&self) { // We implement the `chocolate` method here.\n        println!(\"Hmmm! I love chocolate!\");\n    }\n}\n\nlet x = Mouth;\nx.chocolate(); // ok!\n```\n"
+    }
+  },
+  {
+    "rendered": "error[E0308]: mismatched types\n     --> src/bezier_region.rs:28830:21\n      |\n28829 |                 assert_extended_set(\n      |                 ------------------- arguments to this function are incorrect\n28830 |                     &extended_chamfers.value,\n      |                     ^^^^^^^^^^^^^^^^^^^^^^^^ expected `&[CurveRegion2]`, found `&CurveCornerSolutions2<CurveRegion2>`\n      |\n      = note: expected reference `&[bezier_region::CurveRegion2]`\n                 found reference `&curve::CurveCornerSolutions2<bezier_region::CurveRegion2>`\nnote: closure parameter defined here\n     --> src/bezier_region.rs:28731:22\n      |\n28731 |                     |solutions: &[CurveRegion2],\n      |                      ^^^^^^^^^^^^^^^^^^^^^^^^^^\n\n",
+    "$message_type": "diagnostic",
+    "children": [
+      {
+        "children": [],
+        "code": null,
+        "level": "note",
+        "message": "expected reference `&[bezier_region::CurveRegion2]`\n   found reference `&curve::CurveCornerSolutions2<bezier_region::CurveRegion2>`",
+        "rendered": null,
+        "spans": []
+      },
+      {
+        "children": [],
+        "code": null,
+        "level": "note",
+        "message": "closure parameter defined here",
+        "rendered": null,
+        "spans": [
+          {
+            "byte_end": 1233610,
+            "byte_start": 1233584,
+            "column_end": 48,
+            "column_start": 22,
+            "expansion": null,
+            "file_name": "src/bezier_region.rs",
+            "is_primary": true,
+            "label": null,
+            "line_end": 28731,
+            "line_start": 28731,
+            "suggested_replacement": null,
+            "suggestion_applicability": null,
+            "text": [
+              {
+                "highlight_end": 48,
+                "highlight_start": 22,
+                "text": "                    |solutions: &[CurveRegion2],"
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "level": "error",
+    "message": "mismatched types",
+    "spans": [
+      {
+        "byte_end": 1238939,
+        "byte_start": 1238915,
+        "column_end": 45,
+        "column_start": 21,
+        "expansion": null,
+        "file_name": "src/bezier_region.rs",
+        "is_primary": true,
+        "label": "expected `&[CurveRegion2]`, found `&CurveCornerSolutions2<CurveRegion2>`",
+        "line_end": 28830,
+        "line_start": 28830,
+        "suggested_replacement": null,
+        "suggestion_applicability": null,
+        "text": [
+          {
+            "highlight_end": 45,
+            "highlight_start": 21,
+            "text": "                    &extended_chamfers.value,"
+          }
+        ]
+      },
+      {
+        "byte_end": 1238893,
+        "byte_start": 1238874,
+        "column_end": 36,
+        "column_start": 17,
+        "expansion": null,
+        "file_name": "src/bezier_region.rs",
+        "is_primary": false,
+        "label": "arguments to this function are incorrect",
+        "line_end": 28829,
+        "line_start": 28829,
+        "suggested_replacement": null,
+        "suggestion_applicability": null,
+        "text": [
+          {
+            "highlight_end": 36,
+            "highlight_start": 17,
+            "text": "                assert_extended_set("
+          }
+        ]
+      }
+    ],
+    "code": {
+      "code": "E0308",
+      "explanation": "Expected type did not match the received type.\n\nErroneous code examples:\n\n```compile_fail,E0308\nfn plus_one(x: i32) -> i32 {\n    x + 1\n}\n\nplus_one(\"Not a number\");\n//       ^^^^^^^^^^^^^^ expected `i32`, found `&str`\n\nif \"Not a bool\" {\n// ^^^^^^^^^^^^ expected `bool`, found `&str`\n}\n\nlet x: f32 = \"Not a float\";\n//     ---   ^^^^^^^^^^^^^ expected `f32`, found `&str`\n//     |\n//     expected due to this\n```\n\nThis error occurs when an expression was used in a place where the compiler\nexpected an expression of a different type. It can occur in several cases, the\nmost common being when calling a function and passing an argument which has a\ndifferent type than the matching type in the function declaration.\n"
+    }
+  },
+  {
+    "rendered": "error[E0308]: mismatched types\n     --> src/bezier_region.rs:28860:21\n      |\n28859 |                 assert_extended_set(\n      |                 ------------------- arguments to this function are incorrect\n28860 |                     &fillets.value,\n      |                     ^^^^^^^^^^^^^^ expected `&[CurveRegion2]`, found `&CurveFilletSolutions2<..., ...>`\n      |\n      = note: expected reference `&[bezier_region::CurveRegion2]`\n                 found reference `&curve::curve_fillet::CurveFilletSolutions2<bezier_region::CurveRegion2, bezier_region::CurveRegionFilletFamily2>`\nnote: closure parameter defined here\n     --> src/bezier_region.rs:28731:22\n      |\n28731 |                     |solutions: &[CurveRegion2],\n      |                      ^^^^^^^^^^^^^^^^^^^^^^^^^^\n\n",
+    "$message_type": "diagnostic",
+    "children": [
+      {
+        "children": [],
+        "code": null,
+        "level": "note",
+        "message": "expected reference `&[bezier_region::CurveRegion2]`\n   found reference `&curve::curve_fillet::CurveFilletSolutions2<bezier_region::CurveRegion2, bezier_region::CurveRegionFilletFamily2>`",
+        "rendered": null,
+        "spans": []
+      },
+      {
+        "children": [],
+        "code": null,
+        "level": "note",
+        "message": "closure parameter defined here",
+        "rendered": null,
+        "spans": [
+          {
+            "byte_end": 1233610,
+            "byte_start": 1233584,
+            "column_end": 48,
+            "column_start": 22,
+            "expansion": null,
+            "file_name": "src/bezier_region.rs",
+            "is_primary": true,
+            "label": null,
+            "line_end": 28731,
+            "line_start": 28731,
+            "suggested_replacement": null,
+            "suggestion_applicability": null,
+            "text": [
+              {
+                "highlight_end": 48,
+                "highlight_start": 22,
+                "text": "                    |solutions: &[CurveRegion2],"
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "level": "error",
+    "message": "mismatched types",
+    "spans": [
+      {
+        "byte_end": 1240296,
+        "byte_start": 1240282,
+        "column_end": 35,
+        "column_start": 21,
+        "expansion": null,
+        "file_name": "src/bezier_region.rs",
+        "is_primary": true,
+        "label": "expected `&[CurveRegion2]`, found `&CurveFilletSolutions2<..., ...>`",
+        "line_end": 28860,
+        "line_start": 28860,
+        "suggested_replacement": null,
+        "suggestion_applicability": null,
+        "text": [
+          {
+            "highlight_end": 35,
+            "highlight_start": 21,
+            "text": "                    &fillets.value,"
+          }
+        ]
+      },
+      {
+        "byte_end": 1240260,
+        "byte_start": 1240241,
+        "column_end": 36,
+        "column_start": 17,
+        "expansion": null,
+        "file_name": "src/bezier_region.rs",
+        "is_primary": false,
+        "label": "arguments to this function are incorrect",
+        "line_end": 28859,
+        "line_start": 28859,
+        "suggested_replacement": null,
+        "suggestion_applicability": null,
+        "text": [
+          {
+            "highlight_end": 36,
+            "highlight_start": 17,
+            "text": "                assert_extended_set("
+          }
+        ]
+      }
+    ],
+    "code": {
+      "code": "E0308",
+      "explanation": "Expected type did not match the received type.\n\nErroneous code examples:\n\n```compile_fail,E0308\nfn plus_one(x: i32) -> i32 {\n    x + 1\n}\n\nplus_one(\"Not a number\");\n//       ^^^^^^^^^^^^^^ expected `i32`, found `&str`\n\nif \"Not a bool\" {\n// ^^^^^^^^^^^^ expected `bool`, found `&str`\n}\n\nlet x: f32 = \"Not a float\";\n//     ---   ^^^^^^^^^^^^^ expected `f32`, found `&str`\n//     |\n//     expected due to this\n```\n\nThis error occurs when an expression was used in a place where the compiler\nexpected an expression of a different type. It can occur in several cases, the\nmost common being when calling a function and passing an argument which has a\ndifferent type than the matching type in the function declaration.\n"
+    }
+  },
+  {
+    "rendered": "error[E0599]: no method named `candidate_count` found for struct `curve::curve_fillet::CurveFilletSolutions2<T, F>` in the current scope\n     --> src/bezier_region.rs:29067:30\n      |\n29067 |                     } > trim.candidate_count()\n      |                              ^^^^^^^^^^^^^^^ method not found in `CurveFilletSolutions2<CurveRegion2, CurveRegionFilletFamily2>`\n      |\n     ::: src/curve_fillet.rs:11:1\n      |\n   11 | pub struct CurveFilletSolutions2<T, F> {\n      | -------------------------------------- method `candidate_count` not found for this struct\n      |\n      = note: the full name for the type has been written to '/tmp/hypercurve-pruning-qualification/hyperbrep/target/debug/deps/hypercurve-d6cf444c619f6d8e.long-type-18291028529890292599.txt'\n      = note: consider using `--verbose` to print the full type name to the console\n\n",
+    "$message_type": "diagnostic",
+    "children": [
+      {
+        "children": [],
+        "code": null,
+        "level": "note",
+        "message": "the full name for the type has been written to '/tmp/hypercurve-pruning-qualification/hyperbrep/target/debug/deps/hypercurve-d6cf444c619f6d8e.long-type-18291028529890292599.txt'",
+        "rendered": null,
+        "spans": []
+      },
+      {
+        "children": [],
+        "code": null,
+        "level": "note",
+        "message": "consider using `--verbose` to print the full type name to the console",
+        "rendered": null,
+        "spans": []
+      }
+    ],
+    "level": "error",
+    "message": "no method named `candidate_count` found for struct `curve::curve_fillet::CurveFilletSolutions2<T, F>` in the current scope",
+    "spans": [
+      {
+        "byte_end": 1249410,
+        "byte_start": 1249395,
+        "column_end": 45,
+        "column_start": 30,
+        "expansion": null,
+        "file_name": "src/bezier_region.rs",
+        "is_primary": true,
+        "label": "method not found in `CurveFilletSolutions2<CurveRegion2, CurveRegionFilletFamily2>`",
+        "line_end": 29067,
+        "line_start": 29067,
+        "suggested_replacement": null,
+        "suggestion_applicability": null,
+        "text": [
+          {
+            "highlight_end": 45,
+            "highlight_start": 30,
+            "text": "                    } > trim.candidate_count()"
+          }
+        ]
+      },
+      {
+        "byte_end": 449,
+        "byte_start": 411,
+        "column_end": 39,
+        "column_start": 1,
+        "expansion": null,
+        "file_name": "src/curve_fillet.rs",
+        "is_primary": false,
+        "label": "method `candidate_count` not found for this struct",
+        "line_end": 11,
+        "line_start": 11,
+        "suggested_replacement": null,
+        "suggestion_applicability": null,
+        "text": [
+          {
+            "highlight_end": 39,
+            "highlight_start": 1,
+            "text": "pub struct CurveFilletSolutions2<T, F> {"
+          }
+        ]
+      }
+    ],
+    "code": {
+      "code": "E0599",
+      "explanation": "This error occurs when a method is used on a type which doesn't implement it:\n\nErroneous code example:\n\n```compile_fail,E0599\nstruct Mouth;\n\nlet x = Mouth;\nx.chocolate(); // error: no method named `chocolate` found for type `Mouth`\n               //        in the current scope\n```\n\nIn this case, you need to implement the `chocolate` method to fix the error:\n\n```\nstruct Mouth;\n\nimpl Mouth {\n    fn chocolate(&self) { // We implement the `chocolate` method here.\n        println!(\"Hmmm! I love chocolate!\");\n    }\n}\n\nlet x = Mouth;\nx.chocolate(); // ok!\n```\n"
+    }
+  },
+  {
+    "rendered": "error[E0599]: no method named `candidate_count` found for struct `curve::curve_fillet::CurveFilletSolutions2<T, F>` in the current scope\n     --> src/bezier_region.rs:30372:36\n      |\n30372 |                     } > trim.value.candidate_count(),\n      |                                    ^^^^^^^^^^^^^^^ method not found in `CurveFilletSolutions2<CurveRegion2, CurveRegionFilletFamily2>`\n      |\n     ::: src/curve_fillet.rs:11:1\n      |\n   11 | pub struct CurveFilletSolutions2<T, F> {\n      | -------------------------------------- method `candidate_count` not found for this struct\n      |\n      = note: the full name for the type has been written to '/tmp/hypercurve-pruning-qualification/hyperbrep/target/debug/deps/hypercurve-d6cf444c619f6d8e.long-type-18291028529890292599.txt'\n      = note: consider using `--verbose` to print the full type name to the console\n\n",
+    "$message_type": "diagnostic",
+    "children": [
+      {
+        "children": [],
+        "code": null,
+        "level": "note",
+        "message": "the full name for the type has been written to '/tmp/hypercurve-pruning-qualification/hyperbrep/target/debug/deps/hypercurve-d6cf444c619f6d8e.long-type-18291028529890292599.txt'",
+        "rendered": null,
+        "spans": []
+      },
+      {
+        "children": [],
+        "code": null,
+        "level": "note",
+        "message": "consider using `--verbose` to print the full type name to the console",
+        "rendered": null,
+        "spans": []
+      }
+    ],
+    "level": "error",
+    "message": "no method named `candidate_count` found for struct `curve::curve_fillet::CurveFilletSolutions2<T, F>` in the current scope",
+    "spans": [
+      {
+        "byte_end": 1307268,
+        "byte_start": 1307253,
+        "column_end": 51,
+        "column_start": 36,
+        "expansion": null,
+        "file_name": "src/bezier_region.rs",
+        "is_primary": true,
+        "label": "method not found in `CurveFilletSolutions2<CurveRegion2, CurveRegionFilletFamily2>`",
+        "line_end": 30372,
+        "line_start": 30372,
+        "suggested_replacement": null,
+        "suggestion_applicability": null,
+        "text": [
+          {
+            "highlight_end": 51,
+            "highlight_start": 36,
+            "text": "                    } > trim.value.candidate_count(),"
+          }
+        ]
+      },
+      {
+        "byte_end": 449,
+        "byte_start": 411,
+        "column_end": 39,
+        "column_start": 1,
+        "expansion": null,
+        "file_name": "src/curve_fillet.rs",
+        "is_primary": false,
+        "label": "method `candidate_count` not found for this struct",
+        "line_end": 11,
+        "line_start": 11,
+        "suggested_replacement": null,
+        "suggestion_applicability": null,
+        "text": [
+          {
+            "highlight_end": 39,
+            "highlight_start": 1,
+            "text": "pub struct CurveFilletSolutions2<T, F> {"
+          }
+        ]
+      }
+    ],
+    "code": {
+      "code": "E0599",
+      "explanation": "This error occurs when a method is used on a type which doesn't implement it:\n\nErroneous code example:\n\n```compile_fail,E0599\nstruct Mouth;\n\nlet x = Mouth;\nx.chocolate(); // error: no method named `chocolate` found for type `Mouth`\n               //        in the current scope\n```\n\nIn this case, you need to implement the `chocolate` method to fix the error:\n\n```\nstruct Mouth;\n\nimpl Mouth {\n    fn chocolate(&self) { // We implement the `chocolate` method here.\n        println!(\"Hmmm! I love chocolate!\");\n    }\n}\n\nlet x = Mouth;\nx.chocolate(); // ok!\n```\n"
+    }
+  },
+  {
+    "rendered": "error[E0308]: mismatched types\n    --> src/curve_subdivision.rs:1348:21\n     |\n1348 | /                     path.fillet_vertex_by_radius(\n1349 | |                         1,\n1350 | |                         Real::one(),\n1351 | |                         CurveCornerMode2::TrimOnly,\n1352 | |                         &policy,\n1353 | |                     ),\n     | |_____________________^ expected `CurveCornerSolutions2<CurvePath2>`, found `CurveFilletSolutions2<CurvePath2, ...>`\n     |\n     = note: expected enum `Result<policy::CurveOutcome<curve::CurveCornerSolutions2<curve::CurvePath2>>, _>`\n                found enum `Result<policy::CurveOutcome<curve::curve_fillet::CurveFilletSolutions2<curve::CurvePath2, curve::curve_fillet::CurvePathFilletFamily2>>, _>`\n\n",
+    "$message_type": "diagnostic",
+    "children": [
+      {
+        "children": [],
+        "code": null,
+        "level": "note",
+        "message": "expected enum `Result<policy::CurveOutcome<curve::CurveCornerSolutions2<curve::CurvePath2>>, _>`\n   found enum `Result<policy::CurveOutcome<curve::curve_fillet::CurveFilletSolutions2<curve::CurvePath2, curve::curve_fillet::CurvePathFilletFamily2>>, _>`",
+        "rendered": null,
+        "spans": []
+      }
+    ],
+    "level": "error",
+    "message": "mismatched types",
+    "spans": [
+      {
+        "byte_end": 57984,
+        "byte_start": 57784,
+        "column_end": 22,
+        "column_start": 21,
+        "expansion": null,
+        "file_name": "src/curve_subdivision.rs",
+        "is_primary": true,
+        "label": "expected `CurveCornerSolutions2<CurvePath2>`, found `CurveFilletSolutions2<CurvePath2, ...>`",
+        "line_end": 1353,
+        "line_start": 1348,
+        "suggested_replacement": null,
+        "suggestion_applicability": null,
+        "text": [
+          {
+            "highlight_end": 50,
+            "highlight_start": 21,
+            "text": "                    path.fillet_vertex_by_radius("
+          },
+          {
+            "highlight_end": 27,
+            "highlight_start": 1,
+            "text": "                        1,"
+          },
+          {
+            "highlight_end": 37,
+            "highlight_start": 1,
+            "text": "                        Real::one(),"
+          },
+          {
+            "highlight_end": 52,
+            "highlight_start": 1,
+            "text": "                        CurveCornerMode2::TrimOnly,"
+          },
+          {
+            "highlight_end": 33,
+            "highlight_start": 1,
+            "text": "                        &policy,"
+          },
+          {
+            "highlight_end": 22,
+            "highlight_start": 1,
+            "text": "                    ),"
+          }
+        ]
+      }
+    ],
+    "code": {
+      "code": "E0308",
+      "explanation": "Expected type did not match the received type.\n\nErroneous code examples:\n\n```compile_fail,E0308\nfn plus_one(x: i32) -> i32 {\n    x + 1\n}\n\nplus_one(\"Not a number\");\n//       ^^^^^^^^^^^^^^ expected `i32`, found `&str`\n\nif \"Not a bool\" {\n// ^^^^^^^^^^^^ expected `bool`, found `&str`\n}\n\nlet x: f32 = \"Not a float\";\n//     ---   ^^^^^^^^^^^^^ expected `f32`, found `&str`\n//     |\n//     expected due to this\n```\n\nThis error occurs when an expression was used in a place where the compiler\nexpected an expression of a different type. It can occur in several cases, the\nmost common being when calling a function and passing an argument which has a\ndifferent type than the matching type in the function declaration.\n"
+    }
+  },
+  {
+    "rendered": "error[E0599]: no method named `candidate_count` found for struct `curve::curve_fillet::CurveFilletSolutions2<T, F>` in the current scope\n     --> src/curve.rs:13433:34\n      |\n13433 |                 assert!(extended.candidate_count() > trim.candidate_count());\n      |                                  ^^^^^^^^^^^^^^^ method not found in `curve::curve_fillet::CurveFilletSolutions2<curve::FilletCorner2, FilletCornerFamily2>`\n      |\n     ::: src/curve_fillet.rs:11:1\n      |\n   11 | pub struct CurveFilletSolutions2<T, F> {\n      | -------------------------------------- method `candidate_count` not found for this struct\n\n",
+    "$message_type": "diagnostic",
+    "children": [],
+    "level": "error",
+    "message": "no method named `candidate_count` found for struct `curve::curve_fillet::CurveFilletSolutions2<T, F>` in the current scope",
+    "spans": [
+      {
+        "byte_end": 552441,
+        "byte_start": 552426,
+        "column_end": 49,
+        "column_start": 34,
+        "expansion": null,
+        "file_name": "src/curve.rs",
+        "is_primary": true,
+        "label": "method not found in `curve::curve_fillet::CurveFilletSolutions2<curve::FilletCorner2, FilletCornerFamily2>`",
+        "line_end": 13433,
+        "line_start": 13433,
+        "suggested_replacement": null,
+        "suggestion_applicability": null,
+        "text": [
+          {
+            "highlight_end": 49,
+            "highlight_start": 34,
+            "text": "                assert!(extended.candidate_count() > trim.candidate_count());"
+          }
+        ]
+      },
+      {
+        "byte_end": 449,
+        "byte_start": 411,
+        "column_end": 39,
+        "column_start": 1,
+        "expansion": null,
+        "file_name": "src/curve_fillet.rs",
+        "is_primary": false,
+        "label": "method `candidate_count` not found for this struct",
+        "line_end": 11,
+        "line_start": 11,
+        "suggested_replacement": null,
+        "suggestion_applicability": null,
+        "text": [
+          {
+            "highlight_end": 39,
+            "highlight_start": 1,
+            "text": "pub struct CurveFilletSolutions2<T, F> {"
+          }
+        ]
+      }
+    ],
+    "code": {
+      "code": "E0599",
+      "explanation": "This error occurs when a method is used on a type which doesn't implement it:\n\nErroneous code example:\n\n```compile_fail,E0599\nstruct Mouth;\n\nlet x = Mouth;\nx.chocolate(); // error: no method named `chocolate` found for type `Mouth`\n               //        in the current scope\n```\n\nIn this case, you need to implement the `chocolate` method to fix the error:\n\n```\nstruct Mouth;\n\nimpl Mouth {\n    fn chocolate(&self) { // We implement the `chocolate` method here.\n        println!(\"Hmmm! I love chocolate!\");\n    }\n}\n\nlet x = Mouth;\nx.chocolate(); // ok!\n```\n"
+    }
+  },
+  {
+    "rendered": "error[E0599]: no method named `candidate_count` found for struct `curve::curve_fillet::CurveFilletSolutions2<T, F>` in the current scope\n     --> src/curve.rs:13433:59\n      |\n13433 |                 assert!(extended.candidate_count() > trim.candidate_count());\n      |                                                           ^^^^^^^^^^^^^^^ method not found in `curve::curve_fillet::CurveFilletSolutions2<curve::FilletCorner2, FilletCornerFamily2>`\n      |\n     ::: src/curve_fillet.rs:11:1\n      |\n   11 | pub struct CurveFilletSolutions2<T, F> {\n      | -------------------------------------- method `candidate_count` not found for this struct\n\n",
+    "$message_type": "diagnostic",
+    "children": [],
+    "level": "error",
+    "message": "no method named `candidate_count` found for struct `curve::curve_fillet::CurveFilletSolutions2<T, F>` in the current scope",
+    "spans": [
+      {
+        "byte_end": 552466,
+        "byte_start": 552451,
+        "column_end": 74,
+        "column_start": 59,
+        "expansion": null,
+        "file_name": "src/curve.rs",
+        "is_primary": true,
+        "label": "method not found in `curve::curve_fillet::CurveFilletSolutions2<curve::FilletCorner2, FilletCornerFamily2>`",
+        "line_end": 13433,
+        "line_start": 13433,
+        "suggested_replacement": null,
+        "suggestion_applicability": null,
+        "text": [
+          {
+            "highlight_end": 74,
+            "highlight_start": 59,
+            "text": "                assert!(extended.candidate_count() > trim.candidate_count());"
+          }
+        ]
+      },
+      {
+        "byte_end": 449,
+        "byte_start": 411,
+        "column_end": 39,
+        "column_start": 1,
+        "expansion": null,
+        "file_name": "src/curve_fillet.rs",
+        "is_primary": false,
+        "label": "method `candidate_count` not found for this struct",
+        "line_end": 11,
+        "line_start": 11,
+        "suggested_replacement": null,
+        "suggestion_applicability": null,
+        "text": [
+          {
+            "highlight_end": 39,
+            "highlight_start": 1,
+            "text": "pub struct CurveFilletSolutions2<T, F> {"
+          }
+        ]
+      }
+    ],
+    "code": {
+      "code": "E0599",
+      "explanation": "This error occurs when a method is used on a type which doesn't implement it:\n\nErroneous code example:\n\n```compile_fail,E0599\nstruct Mouth;\n\nlet x = Mouth;\nx.chocolate(); // error: no method named `chocolate` found for type `Mouth`\n               //        in the current scope\n```\n\nIn this case, you need to implement the `chocolate` method to fix the error:\n\n```\nstruct Mouth;\n\nimpl Mouth {\n    fn chocolate(&self) { // We implement the `chocolate` method here.\n        println!(\"Hmmm! I love chocolate!\");\n    }\n}\n\nlet x = Mouth;\nx.chocolate(); // ok!\n```\n"
+    }
+  },
+  {
+    "rendered": "error[E0599]: no method named `candidate_count` found for struct `curve::curve_fillet::CurveFilletSolutions2<T, F>` in the current scope\n     --> src/curve.rs:14020:42\n      |\n14020 |                 assert!(direct_extension.candidate_count() > 0);\n      |                                          ^^^^^^^^^^^^^^^ method not found in `curve::curve_fillet::CurveFilletSolutions2<curve::FilletCorner2, FilletCornerFamily2>`\n      |\n     ::: src/curve_fillet.rs:11:1\n      |\n   11 | pub struct CurveFilletSolutions2<T, F> {\n      | -------------------------------------- method `candidate_count` not found for this struct\n\n",
+    "$message_type": "diagnostic",
+    "children": [],
+    "level": "error",
+    "message": "no method named `candidate_count` found for struct `curve::curve_fillet::CurveFilletSolutions2<T, F>` in the current scope",
+    "spans": [
+      {
+        "byte_end": 578282,
+        "byte_start": 578267,
+        "column_end": 57,
+        "column_start": 42,
+        "expansion": null,
+        "file_name": "src/curve.rs",
+        "is_primary": true,
+        "label": "method not found in `curve::curve_fillet::CurveFilletSolutions2<curve::FilletCorner2, FilletCornerFamily2>`",
+        "line_end": 14020,
+        "line_start": 14020,
+        "suggested_replacement": null,
+        "suggestion_applicability": null,
+        "text": [
+          {
+            "highlight_end": 57,
+            "highlight_start": 42,
+            "text": "                assert!(direct_extension.candidate_count() > 0);"
+          }
+        ]
+      },
+      {
+        "byte_end": 449,
+        "byte_start": 411,
+        "column_end": 39,
+        "column_start": 1,
+        "expansion": null,
+        "file_name": "src/curve_fillet.rs",
+        "is_primary": false,
+        "label": "method `candidate_count` not found for this struct",
+        "line_end": 11,
+        "line_start": 11,
+        "suggested_replacement": null,
+        "suggestion_applicability": null,
+        "text": [
+          {
+            "highlight_end": 39,
+            "highlight_start": 1,
+            "text": "pub struct CurveFilletSolutions2<T, F> {"
+          }
+        ]
+      }
+    ],
+    "code": {
+      "code": "E0599",
+      "explanation": "This error occurs when a method is used on a type which doesn't implement it:\n\nErroneous code example:\n\n```compile_fail,E0599\nstruct Mouth;\n\nlet x = Mouth;\nx.chocolate(); // error: no method named `chocolate` found for type `Mouth`\n               //        in the current scope\n```\n\nIn this case, you need to implement the `chocolate` method to fix the error:\n\n```\nstruct Mouth;\n\nimpl Mouth {\n    fn chocolate(&self) { // We implement the `chocolate` method here.\n        println!(\"Hmmm! I love chocolate!\");\n    }\n}\n\nlet x = Mouth;\nx.chocolate(); // ok!\n```\n"
+    }
+  },
+  {
+    "rendered": "error[E0599]: no method named `candidate_count` found for struct `curve::curve_fillet::CurveFilletSolutions2<T, F>` in the current scope\n     --> src/curve.rs:14128:42\n      |\n14128 |                 assert!(direct_extension.candidate_count() > 0);\n      |                                          ^^^^^^^^^^^^^^^ method not found in `curve::curve_fillet::CurveFilletSolutions2<curve::FilletCorner2, FilletCornerFamily2>`\n      |\n     ::: src/curve_fillet.rs:11:1\n      |\n   11 | pub struct CurveFilletSolutions2<T, F> {\n      | -------------------------------------- method `candidate_count` not found for this struct\n\n",
+    "$message_type": "diagnostic",
+    "children": [],
+    "level": "error",
+    "message": "no method named `candidate_count` found for struct `curve::curve_fillet::CurveFilletSolutions2<T, F>` in the current scope",
+    "spans": [
+      {
+        "byte_end": 583349,
+        "byte_start": 583334,
+        "column_end": 57,
+        "column_start": 42,
+        "expansion": null,
+        "file_name": "src/curve.rs",
+        "is_primary": true,
+        "label": "method not found in `curve::curve_fillet::CurveFilletSolutions2<curve::FilletCorner2, FilletCornerFamily2>`",
+        "line_end": 14128,
+        "line_start": 14128,
+        "suggested_replacement": null,
+        "suggestion_applicability": null,
+        "text": [
+          {
+            "highlight_end": 57,
+            "highlight_start": 42,
+            "text": "                assert!(direct_extension.candidate_count() > 0);"
+          }
+        ]
+      },
+      {
+        "byte_end": 449,
+        "byte_start": 411,
+        "column_end": 39,
+        "column_start": 1,
+        "expansion": null,
+        "file_name": "src/curve_fillet.rs",
+        "is_primary": false,
+        "label": "method `candidate_count` not found for this struct",
+        "line_end": 11,
+        "line_start": 11,
+        "suggested_replacement": null,
+        "suggestion_applicability": null,
+        "text": [
+          {
+            "highlight_end": 39,
+            "highlight_start": 1,
+            "text": "pub struct CurveFilletSolutions2<T, F> {"
+          }
+        ]
+      }
+    ],
+    "code": {
+      "code": "E0599",
+      "explanation": "This error occurs when a method is used on a type which doesn't implement it:\n\nErroneous code example:\n\n```compile_fail,E0599\nstruct Mouth;\n\nlet x = Mouth;\nx.chocolate(); // error: no method named `chocolate` found for type `Mouth`\n               //        in the current scope\n```\n\nIn this case, you need to implement the `chocolate` method to fix the error:\n\n```\nstruct Mouth;\n\nimpl Mouth {\n    fn chocolate(&self) { // We implement the `chocolate` method here.\n        println!(\"Hmmm! I love chocolate!\");\n    }\n}\n\nlet x = Mouth;\nx.chocolate(); // ok!\n```\n"
+    }
+  },
+  {
+    "rendered": "error[E0599]: no method named `candidate_count` found for struct `curve::curve_fillet::CurveFilletSolutions2<T, F>` in the current scope\n     --> src/curve.rs:14247:38\n      |\n14247 |                     direct_extension.candidate_count(),\n      |                                      ^^^^^^^^^^^^^^^ method not found in `curve::curve_fillet::CurveFilletSolutions2<curve::FilletCorner2, FilletCornerFamily2>`\n      |\n     ::: src/curve_fillet.rs:11:1\n      |\n   11 | pub struct CurveFilletSolutions2<T, F> {\n      | -------------------------------------- method `candidate_count` not found for this struct\n\n",
+    "$message_type": "diagnostic",
+    "children": [],
+    "level": "error",
+    "message": "no method named `candidate_count` found for struct `curve::curve_fillet::CurveFilletSolutions2<T, F>` in the current scope",
+    "spans": [
+      {
+        "byte_end": 588831,
+        "byte_start": 588816,
+        "column_end": 53,
+        "column_start": 38,
+        "expansion": null,
+        "file_name": "src/curve.rs",
+        "is_primary": true,
+        "label": "method not found in `curve::curve_fillet::CurveFilletSolutions2<curve::FilletCorner2, FilletCornerFamily2>`",
+        "line_end": 14247,
+        "line_start": 14247,
+        "suggested_replacement": null,
+        "suggestion_applicability": null,
+        "text": [
+          {
+            "highlight_end": 53,
+            "highlight_start": 38,
+            "text": "                    direct_extension.candidate_count(),"
+          }
+        ]
+      },
+      {
+        "byte_end": 449,
+        "byte_start": 411,
+        "column_end": 39,
+        "column_start": 1,
+        "expansion": null,
+        "file_name": "src/curve_fillet.rs",
+        "is_primary": false,
+        "label": "method `candidate_count` not found for this struct",
+        "line_end": 11,
+        "line_start": 11,
+        "suggested_replacement": null,
+        "suggestion_applicability": null,
+        "text": [
+          {
+            "highlight_end": 39,
+            "highlight_start": 1,
+            "text": "pub struct CurveFilletSolutions2<T, F> {"
+          }
+        ]
+      }
+    ],
+    "code": {
+      "code": "E0599",
+      "explanation": "This error occurs when a method is used on a type which doesn't implement it:\n\nErroneous code example:\n\n```compile_fail,E0599\nstruct Mouth;\n\nlet x = Mouth;\nx.chocolate(); // error: no method named `chocolate` found for type `Mouth`\n               //        in the current scope\n```\n\nIn this case, you need to implement the `chocolate` method to fix the error:\n\n```\nstruct Mouth;\n\nimpl Mouth {\n    fn chocolate(&self) { // We implement the `chocolate` method here.\n        println!(\"Hmmm! I love chocolate!\");\n    }\n}\n\nlet x = Mouth;\nx.chocolate(); // ok!\n```\n"
+    }
+  },
+  {
+    "rendered": "error[E0599]: no method named `candidate_count` found for struct `curve::curve_fillet::CurveFilletSolutions2<T, F>` in the current scope\n     --> src/curve.rs:14254:37\n      |\n14254 |                     } > native_trim.candidate_count()\n      |                                     ^^^^^^^^^^^^^^^ method not found in `curve::curve_fillet::CurveFilletSolutions2<curve::FilletCorner2, FilletCornerFamily2>`\n      |\n     ::: src/curve_fillet.rs:11:1\n      |\n   11 | pub struct CurveFilletSolutions2<T, F> {\n      | -------------------------------------- method `candidate_count` not found for this struct\n\n",
+    "$message_type": "diagnostic",
+    "children": [],
+    "level": "error",
+    "message": "no method named `candidate_count` found for struct `curve::curve_fillet::CurveFilletSolutions2<T, F>` in the current scope",
+    "spans": [
+      {
+        "byte_end": 589180,
+        "byte_start": 589165,
+        "column_end": 52,
+        "column_start": 37,
+        "expansion": null,
+        "file_name": "src/curve.rs",
+        "is_primary": true,
+        "label": "method not found in `curve::curve_fillet::CurveFilletSolutions2<curve::FilletCorner2, FilletCornerFamily2>`",
+        "line_end": 14254,
+        "line_start": 14254,
+        "suggested_replacement": null,
+        "suggestion_applicability": null,
+        "text": [
+          {
+            "highlight_end": 52,
+            "highlight_start": 37,
+            "text": "                    } > native_trim.candidate_count()"
+          }
+        ]
+      },
+      {
+        "byte_end": 449,
+        "byte_start": 411,
+        "column_end": 39,
+        "column_start": 1,
+        "expansion": null,
+        "file_name": "src/curve_fillet.rs",
+        "is_primary": false,
+        "label": "method `candidate_count` not found for this struct",
+        "line_end": 11,
+        "line_start": 11,
+        "suggested_replacement": null,
+        "suggestion_applicability": null,
+        "text": [
+          {
+            "highlight_end": 39,
+            "highlight_start": 1,
+            "text": "pub struct CurveFilletSolutions2<T, F> {"
+          }
+        ]
+      }
+    ],
+    "code": {
+      "code": "E0599",
+      "explanation": "This error occurs when a method is used on a type which doesn't implement it:\n\nErroneous code example:\n\n```compile_fail,E0599\nstruct Mouth;\n\nlet x = Mouth;\nx.chocolate(); // error: no method named `chocolate` found for type `Mouth`\n               //        in the current scope\n```\n\nIn this case, you need to implement the `chocolate` method to fix the error:\n\n```\nstruct Mouth;\n\nimpl Mouth {\n    fn chocolate(&self) { // We implement the `chocolate` method here.\n        println!(\"Hmmm! I love chocolate!\");\n    }\n}\n\nlet x = Mouth;\nx.chocolate(); // ok!\n```\n"
+    }
+  },
+  {
+    "rendered": "error[E0308]: mismatched types\n    --> tests/hypercurve_curve_region_promotion.rs:2388:17\n     |\n2387 |             match &fillets {\n     |                   -------- this expression has type `&CurveFilletSolutions2<CurveRegion2, CurveRegionFilletFamily2>`\n2388 |                 CurveCornerSolutions2::Unique(candidate) => assert!(has_expected(candidate)),\n     |                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ expected `CurveFilletSolutions2<CurveRegion2, ...>`, found `CurveCornerSolutions2<_>`\n     |\n     = note: expected struct `CurveFilletSolutions2<CurveRegion2, CurveRegionFilletFamily2>`\n                  found enum `CurveCornerSolutions2<_>`\n\n",
+    "$message_type": "diagnostic",
+    "children": [
+      {
+        "children": [],
+        "code": null,
+        "level": "note",
+        "message": "expected struct `CurveFilletSolutions2<CurveRegion2, CurveRegionFilletFamily2>`\n     found enum `CurveCornerSolutions2<_>`",
+        "rendered": null,
+        "spans": []
+      }
+    ],
+    "level": "error",
+    "message": "mismatched types",
+    "spans": [
+      {
+        "byte_end": 85970,
+        "byte_start": 85930,
+        "column_end": 57,
+        "column_start": 17,
+        "expansion": null,
+        "file_name": "tests/hypercurve_curve_region_promotion.rs",
+        "is_primary": true,
+        "label": "expected `CurveFilletSolutions2<CurveRegion2, ...>`, found `CurveCornerSolutions2<_>`",
+        "line_end": 2388,
+        "line_start": 2388,
+        "suggested_replacement": null,
+        "suggestion_applicability": null,
+        "text": [
+          {
+            "highlight_end": 57,
+            "highlight_start": 17,
+            "text": "                CurveCornerSolutions2::Unique(candidate) => assert!(has_expected(candidate)),"
+          }
+        ]
+      },
+      {
+        "byte_end": 85911,
+        "byte_start": 85903,
+        "column_end": 27,
+        "column_start": 19,
+        "expansion": null,
+        "file_name": "tests/hypercurve_curve_region_promotion.rs",
+        "is_primary": false,
+        "label": "this expression has type `&CurveFilletSolutions2<CurveRegion2, CurveRegionFilletFamily2>`",
+        "line_end": 2387,
+        "line_start": 2387,
+        "suggested_replacement": null,
+        "suggestion_applicability": null,
+        "text": [
+          {
+            "highlight_end": 27,
+            "highlight_start": 19,
+            "text": "            match &fillets {"
+          }
+        ]
+      }
+    ],
+    "code": {
+      "code": "E0308",
+      "explanation": "Expected type did not match the received type.\n\nErroneous code examples:\n\n```compile_fail,E0308\nfn plus_one(x: i32) -> i32 {\n    x + 1\n}\n\nplus_one(\"Not a number\");\n//       ^^^^^^^^^^^^^^ expected `i32`, found `&str`\n\nif \"Not a bool\" {\n// ^^^^^^^^^^^^ expected `bool`, found `&str`\n}\n\nlet x: f32 = \"Not a float\";\n//     ---   ^^^^^^^^^^^^^ expected `f32`, found `&str`\n//     |\n//     expected due to this\n```\n\nThis error occurs when an expression was used in a place where the compiler\nexpected an expression of a different type. It can occur in several cases, the\nmost common being when calling a function and passing an argument which has a\ndifferent type than the matching type in the function declaration.\n"
+    }
+  },
+  {
+    "rendered": "error[E0308]: mismatched types\n    --> tests/hypercurve_curve_region_promotion.rs:2389:17\n     |\n2387 |             match &fillets {\n     |                   -------- this expression has type `&CurveFilletSolutions2<CurveRegion2, CurveRegionFilletFamily2>`\n2388 |                 CurveCornerSolutions2::Unique(candidate) => assert!(has_expected(candidate)),\n2389 |                 CurveCornerSolutions2::Multiple(candidates) => {\n     |                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ expected `CurveFilletSolutions2<CurveRegion2, ...>`, found `CurveCornerSolutions2<_>`\n     |\n     = note: expected struct `CurveFilletSolutions2<CurveRegion2, CurveRegionFilletFamily2>`\n                  found enum `CurveCornerSolutions2<_>`\n\n",
+    "$message_type": "diagnostic",
+    "children": [
+      {
+        "children": [],
+        "code": null,
+        "level": "note",
+        "message": "expected struct `CurveFilletSolutions2<CurveRegion2, CurveRegionFilletFamily2>`\n     found enum `CurveCornerSolutions2<_>`",
+        "rendered": null,
+        "spans": []
+      }
+    ],
+    "level": "error",
+    "message": "mismatched types",
+    "spans": [
+      {
+        "byte_end": 86067,
+        "byte_start": 86024,
+        "column_end": 60,
+        "column_start": 17,
+        "expansion": null,
+        "file_name": "tests/hypercurve_curve_region_promotion.rs",
+        "is_primary": true,
+        "label": "expected `CurveFilletSolutions2<CurveRegion2, ...>`, found `CurveCornerSolutions2<_>`",
+        "line_end": 2389,
+        "line_start": 2389,
+        "suggested_replacement": null,
+        "suggestion_applicability": null,
+        "text": [
+          {
+            "highlight_end": 60,
+            "highlight_start": 17,
+            "text": "                CurveCornerSolutions2::Multiple(candidates) => {"
+          }
+        ]
+      },
+      {
+        "byte_end": 85911,
+        "byte_start": 85903,
+        "column_end": 27,
+        "column_start": 19,
+        "expansion": null,
+        "file_name": "tests/hypercurve_curve_region_promotion.rs",
+        "is_primary": false,
+        "label": "this expression has type `&CurveFilletSolutions2<CurveRegion2, CurveRegionFilletFamily2>`",
+        "line_end": 2387,
+        "line_start": 2387,
+        "suggested_replacement": null,
+        "suggestion_applicability": null,
+        "text": [
+          {
+            "highlight_end": 27,
+            "highlight_start": 19,
+            "text": "            match &fillets {"
+          }
+        ]
+      }
+    ],
+    "code": {
+      "code": "E0308",
+      "explanation": "Expected type did not match the received type.\n\nErroneous code examples:\n\n```compile_fail,E0308\nfn plus_one(x: i32) -> i32 {\n    x + 1\n}\n\nplus_one(\"Not a number\");\n//       ^^^^^^^^^^^^^^ expected `i32`, found `&str`\n\nif \"Not a bool\" {\n// ^^^^^^^^^^^^ expected `bool`, found `&str`\n}\n\nlet x: f32 = \"Not a float\";\n//     ---   ^^^^^^^^^^^^^ expected `f32`, found `&str`\n//     |\n//     expected due to this\n```\n\nThis error occurs when an expression was used in a place where the compiler\nexpected an expression of a different type. It can occur in several cases, the\nmost common being when calling a function and passing an argument which has a\ndifferent type than the matching type in the function declaration.\n"
+    }
+  },
+  {
+    "rendered": "error[E0308]: mismatched types\n    --> tests/hypercurve_curve_region_promotion.rs:2392:17\n     |\n2387 |             match &fillets {\n     |                   -------- this expression has type `&CurveFilletSolutions2<CurveRegion2, CurveRegionFilletFamily2>`\n...\n2392 |                 CurveCornerSolutions2::NoSolution(reason) => {\n     |                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ expected `CurveFilletSolutions2<CurveRegion2, ...>`, found `CurveCornerSolutions2<_>`\n     |\n     = note: expected struct `CurveFilletSolutions2<CurveRegion2, CurveRegionFilletFamily2>`\n                  found enum `CurveCornerSolutions2<_>`\n\n",
+    "$message_type": "diagnostic",
+    "children": [
+      {
+        "children": [],
+        "code": null,
+        "level": "note",
+        "message": "expected struct `CurveFilletSolutions2<CurveRegion2, CurveRegionFilletFamily2>`\n     found enum `CurveCornerSolutions2<_>`",
+        "rendered": null,
+        "spans": []
+      }
+    ],
+    "level": "error",
+    "message": "mismatched types",
+    "spans": [
+      {
+        "byte_end": 86214,
+        "byte_start": 86173,
+        "column_end": 58,
+        "column_start": 17,
+        "expansion": null,
+        "file_name": "tests/hypercurve_curve_region_promotion.rs",
+        "is_primary": true,
+        "label": "expected `CurveFilletSolutions2<CurveRegion2, ...>`, found `CurveCornerSolutions2<_>`",
+        "line_end": 2392,
+        "line_start": 2392,
+        "suggested_replacement": null,
+        "suggestion_applicability": null,
+        "text": [
+          {
+            "highlight_end": 58,
+            "highlight_start": 17,
+            "text": "                CurveCornerSolutions2::NoSolution(reason) => {"
+          }
+        ]
+      },
+      {
+        "byte_end": 85911,
+        "byte_start": 85903,
+        "column_end": 27,
+        "column_start": 19,
+        "expansion": null,
+        "file_name": "tests/hypercurve_curve_region_promotion.rs",
+        "is_primary": false,
+        "label": "this expression has type `&CurveFilletSolutions2<CurveRegion2, CurveRegionFilletFamily2>`",
+        "line_end": 2387,
+        "line_start": 2387,
+        "suggested_replacement": null,
+        "suggestion_applicability": null,
+        "text": [
+          {
+            "highlight_end": 27,
+            "highlight_start": 19,
+            "text": "            match &fillets {"
+          }
+        ]
+      }
+    ],
+    "code": {
+      "code": "E0308",
+      "explanation": "Expected type did not match the received type.\n\nErroneous code examples:\n\n```compile_fail,E0308\nfn plus_one(x: i32) -> i32 {\n    x + 1\n}\n\nplus_one(\"Not a number\");\n//       ^^^^^^^^^^^^^^ expected `i32`, found `&str`\n\nif \"Not a bool\" {\n// ^^^^^^^^^^^^ expected `bool`, found `&str`\n}\n\nlet x: f32 = \"Not a float\";\n//     ---   ^^^^^^^^^^^^^ expected `f32`, found `&str`\n//     |\n//     expected due to this\n```\n\nThis error occurs when an expression was used in a place where the compiler\nexpected an expression of a different type. It can occur in several cases, the\nmost common being when calling a function and passing an argument which has a\ndifferent type than the matching type in the function declaration.\n"
+    }
+  },
+  {
+    "rendered": "error[E0308]: mismatched types\n    --> tests/hypercurve_curve_region_promotion.rs:4061:13\n     |\n4061 |         let CurveCornerSolutions2::Unique(second) = second.value else {\n     |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^   ------------ this expression has type `CurveFilletSolutions2<CurveRegion2, CurveRegionFilletFamily2>`\n     |             |\n     |             expected `CurveFilletSolutions2<CurveRegion2, ...>`, found `CurveCornerSolutions2<_>`\n     |\n     = note: expected struct `CurveFilletSolutions2<CurveRegion2, CurveRegionFilletFamily2>`\n                  found enum `CurveCornerSolutions2<_>`\n\n",
+    "$message_type": "diagnostic",
+    "children": [
+      {
+        "children": [],
+        "code": null,
+        "level": "note",
+        "message": "expected struct `CurveFilletSolutions2<CurveRegion2, CurveRegionFilletFamily2>`\n     found enum `CurveCornerSolutions2<_>`",
+        "rendered": null,
+        "spans": []
+      }
+    ],
+    "level": "error",
+    "message": "mismatched types",
+    "spans": [
+      {
+        "byte_end": 152906,
+        "byte_start": 152869,
+        "column_end": 50,
+        "column_start": 13,
+        "expansion": null,
+        "file_name": "tests/hypercurve_curve_region_promotion.rs",
+        "is_primary": true,
+        "label": "expected `CurveFilletSolutions2<CurveRegion2, ...>`, found `CurveCornerSolutions2<_>`",
+        "line_end": 4061,
+        "line_start": 4061,
+        "suggested_replacement": null,
+        "suggestion_applicability": null,
+        "text": [
+          {
+            "highlight_end": 50,
+            "highlight_start": 13,
+            "text": "        let CurveCornerSolutions2::Unique(second) = second.value else {"
+          }
+        ]
+      },
+      {
+        "byte_end": 152921,
+        "byte_start": 152909,
+        "column_end": 65,
+        "column_start": 53,
+        "expansion": null,
+        "file_name": "tests/hypercurve_curve_region_promotion.rs",
+        "is_primary": false,
+        "label": "this expression has type `CurveFilletSolutions2<CurveRegion2, CurveRegionFilletFamily2>`",
+        "line_end": 4061,
+        "line_start": 4061,
+        "suggested_replacement": null,
+        "suggestion_applicability": null,
+        "text": [
+          {
+            "highlight_end": 65,
+            "highlight_start": 53,
+            "text": "        let CurveCornerSolutions2::Unique(second) = second.value else {"
+          }
+        ]
+      }
+    ],
+    "code": {
+      "code": "E0308",
+      "explanation": "Expected type did not match the received type.\n\nErroneous code examples:\n\n```compile_fail,E0308\nfn plus_one(x: i32) -> i32 {\n    x + 1\n}\n\nplus_one(\"Not a number\");\n//       ^^^^^^^^^^^^^^ expected `i32`, found `&str`\n\nif \"Not a bool\" {\n// ^^^^^^^^^^^^ expected `bool`, found `&str`\n}\n\nlet x: f32 = \"Not a float\";\n//     ---   ^^^^^^^^^^^^^ expected `f32`, found `&str`\n//     |\n//     expected due to this\n```\n\nThis error occurs when an expression was used in a place where the compiler\nexpected an expression of a different type. It can occur in several cases, the\nmost common being when calling a function and passing an argument which has a\ndifferent type than the matching type in the function declaration.\n"
+    }
+  },
+  {
+    "rendered": "error[E0308]: mismatched types\n    --> tests/hypercurve_curve_region_promotion.rs:4383:21\n     |\n4382 |                   candidates(certified(\n     |                              --------- arguments to this function are incorrect\n4383 | /                     region\n4384 | |                         .fillet_loop_vertex_by_radius(\n4385 | |                             0,\n4386 | |                             corner,\n...    |\n4395 | |                         }),\n     | |__________________________^ expected `CurveOutcome<CurveCornerSolutions2<...>>`, found `CurveOutcome<...>`\n     |\n     = note: expected struct `CurveOutcome<CurveCornerSolutions2<CurveRegion2>>`\n                found struct `CurveOutcome<CurveFilletSolutions2<CurveRegion2, CurveRegionFilletFamily2>>`\nnote: function defined here\n    --> tests/hypercurve_curve_region_promotion.rs:375:4\n     |\n 375 | fn certified<T>(outcome: CurveOutcome<T>) -> T {\n     |    ^^^^^^^^^    ------------------------\n\n",
+    "$message_type": "diagnostic",
+    "children": [
+      {
+        "children": [],
+        "code": null,
+        "level": "note",
+        "message": "expected struct `CurveOutcome<CurveCornerSolutions2<CurveRegion2>>`\n   found struct `CurveOutcome<CurveFilletSolutions2<CurveRegion2, CurveRegionFilletFamily2>>`",
+        "rendered": null,
+        "spans": []
+      },
+      {
+        "children": [],
+        "code": null,
+        "level": "note",
+        "message": "function defined here",
+        "rendered": null,
+        "spans": [
+          {
+            "byte_end": 11459,
+            "byte_start": 11435,
+            "column_end": 41,
+            "column_start": 17,
+            "expansion": null,
+            "file_name": "tests/hypercurve_curve_region_promotion.rs",
+            "is_primary": false,
+            "label": "",
+            "line_end": 375,
+            "line_start": 375,
+            "suggested_replacement": null,
+            "suggestion_applicability": null,
+            "text": [
+              {
+                "highlight_end": 41,
+                "highlight_start": 17,
+                "text": "fn certified<T>(outcome: CurveOutcome<T>) -> T {"
+              }
+            ]
+          },
+          {
+            "byte_end": 11431,
+            "byte_start": 11422,
+            "column_end": 13,
+            "column_start": 4,
+            "expansion": null,
+            "file_name": "tests/hypercurve_curve_region_promotion.rs",
+            "is_primary": true,
+            "label": null,
+            "line_end": 375,
+            "line_start": 375,
+            "suggested_replacement": null,
+            "suggestion_applicability": null,
+            "text": [
+              {
+                "highlight_end": 13,
+                "highlight_start": 4,
+                "text": "fn certified<T>(outcome: CurveOutcome<T>) -> T {"
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "level": "error",
+    "message": "mismatched types",
+    "spans": [
+      {
+        "byte_end": 166710,
+        "byte_start": 166151,
+        "column_end": 27,
+        "column_start": 21,
+        "expansion": null,
+        "file_name": "tests/hypercurve_curve_region_promotion.rs",
+        "is_primary": true,
+        "label": "expected `CurveOutcome<CurveCornerSolutions2<...>>`, found `CurveOutcome<...>`",
+        "line_end": 4395,
+        "line_start": 4383,
+        "suggested_replacement": null,
+        "suggestion_applicability": null,
+        "text": [
+          {
+            "highlight_end": 27,
+            "highlight_start": 21,
+            "text": "                    region"
+          },
+          {
+            "highlight_end": 55,
+            "highlight_start": 1,
+            "text": "                        .fillet_loop_vertex_by_radius("
+          },
+          {
+            "highlight_end": 31,
+            "highlight_start": 1,
+            "text": "                            0,"
+          },
+          {
+            "highlight_end": 36,
+            "highlight_start": 1,
+            "text": "                            corner,"
+          },
+          {
+            "highlight_end": 36,
+            "highlight_start": 1,
+            "text": "                            radius,"
+          },
+          {
+            "highlight_end": 60,
+            "highlight_start": 1,
+            "text": "                            CurveCornerMode2::TrimOrExtend,"
+          },
+          {
+            "highlight_end": 37,
+            "highlight_start": 1,
+            "text": "                            &policy,"
+          },
+          {
+            "highlight_end": 26,
+            "highlight_start": 1,
+            "text": "                        )"
+          },
+          {
+            "highlight_end": 50,
+            "highlight_start": 1,
+            "text": "                        .unwrap_or_else(|error| {"
+          },
+          {
+            "highlight_end": 36,
+            "highlight_start": 1,
+            "text": "                            panic!("
+          },
+          {
+            "highlight_end": 129,
+            "highlight_start": 1,
+            "text": "                                \"the regular incident cell must fillet: policy={policy:?}, reversed={reversed}, error={error:?}\""
+          },
+          {
+            "highlight_end": 30,
+            "highlight_start": 1,
+            "text": "                            )"
+          },
+          {
+            "highlight_end": 27,
+            "highlight_start": 1,
+            "text": "                        }),"
+          }
+        ]
+      },
+      {
+        "byte_end": 166129,
+        "byte_start": 166120,
+        "column_end": 37,
+        "column_start": 28,
+        "expansion": null,
+        "file_name": "tests/hypercurve_curve_region_promotion.rs",
+        "is_primary": false,
+        "label": "arguments to this function are incorrect",
+        "line_end": 4382,
+        "line_start": 4382,
+        "suggested_replacement": null,
+        "suggestion_applicability": null,
+        "text": [
+          {
+            "highlight_end": 37,
+            "highlight_start": 28,
+            "text": "                candidates(certified("
+          }
+        ]
+      }
+    ],
+    "code": {
+      "code": "E0308",
+      "explanation": "Expected type did not match the received type.\n\nErroneous code examples:\n\n```compile_fail,E0308\nfn plus_one(x: i32) -> i32 {\n    x + 1\n}\n\nplus_one(\"Not a number\");\n//       ^^^^^^^^^^^^^^ expected `i32`, found `&str`\n\nif \"Not a bool\" {\n// ^^^^^^^^^^^^ expected `bool`, found `&str`\n}\n\nlet x: f32 = \"Not a float\";\n//     ---   ^^^^^^^^^^^^^ expected `f32`, found `&str`\n//     |\n//     expected due to this\n```\n\nThis error occurs when an expression was used in a place where the compiler\nexpected an expression of a different type. It can occur in several cases, the\nmost common being when calling a function and passing an argument which has a\ndifferent type than the matching type in the function declaration.\n"
+    }
+  },
+  {
+    "rendered": "error[E0308]: mismatched types\n    --> tests/hypercurve_curve_region_promotion.rs:4543:17\n     |\n4542 |               let edited = candidates(\n     |                            ---------- arguments to this function are incorrect\n4543 | /                 region\n4544 | |                     .fillet_loop_vertex_by_radius(\n4545 | |                         0,\n4546 | |                         corner,\n...    |\n4555 | |                     })\n4556 | |                     .into_value(),\n     | |_________________________________^ expected `CurveCornerSolutions2<CurveRegion2>`, found `CurveFilletSolutions2<CurveRegion2, ...>`\n     |\n     = note: expected enum `CurveCornerSolutions2<CurveRegion2>`\n              found struct `CurveFilletSolutions2<CurveRegion2, CurveRegionFilletFamily2>`\nnote: function defined here\n    --> tests/hypercurve_curve_region_promotion.rs:4516:8\n     |\n4516 |     fn candidates(solutions: CurveCornerSolutions2<CurveRegion2>) -> Vec<CurveRegion2> {\n     |        ^^^^^^^^^^ ----------------------------------------------\n\n",
+    "$message_type": "diagnostic",
+    "children": [
+      {
+        "children": [],
+        "code": null,
+        "level": "note",
+        "message": "expected enum `CurveCornerSolutions2<CurveRegion2>`\n found struct `CurveFilletSolutions2<CurveRegion2, CurveRegionFilletFamily2>`",
+        "rendered": null,
+        "spans": []
+      },
+      {
+        "children": [],
+        "code": null,
+        "level": "note",
+        "message": "function defined here",
+        "rendered": null,
+        "spans": [
+          {
+            "byte_end": 172301,
+            "byte_start": 172255,
+            "column_end": 65,
+            "column_start": 19,
+            "expansion": null,
+            "file_name": "tests/hypercurve_curve_region_promotion.rs",
+            "is_primary": false,
+            "label": "",
+            "line_end": 4516,
+            "line_start": 4516,
+            "suggested_replacement": null,
+            "suggestion_applicability": null,
+            "text": [
+              {
+                "highlight_end": 65,
+                "highlight_start": 19,
+                "text": "    fn candidates(solutions: CurveCornerSolutions2<CurveRegion2>) -> Vec<CurveRegion2> {"
+              }
+            ]
+          },
+          {
+            "byte_end": 172254,
+            "byte_start": 172244,
+            "column_end": 18,
+            "column_start": 8,
+            "expansion": null,
+            "file_name": "tests/hypercurve_curve_region_promotion.rs",
+            "is_primary": true,
+            "label": null,
+            "line_end": 4516,
+            "line_start": 4516,
+            "suggested_replacement": null,
+            "suggestion_applicability": null,
+            "text": [
+              {
+                "highlight_end": 18,
+                "highlight_start": 8,
+                "text": "    fn candidates(solutions: CurveCornerSolutions2<CurveRegion2>) -> Vec<CurveRegion2> {"
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "level": "error",
+    "message": "mismatched types",
+    "spans": [
+      {
+        "byte_end": 173985,
+        "byte_start": 173434,
+        "column_end": 34,
+        "column_start": 17,
+        "expansion": null,
+        "file_name": "tests/hypercurve_curve_region_promotion.rs",
+        "is_primary": true,
+        "label": "expected `CurveCornerSolutions2<CurveRegion2>`, found `CurveFilletSolutions2<CurveRegion2, ...>`",
+        "line_end": 4556,
+        "line_start": 4543,
+        "suggested_replacement": null,
+        "suggestion_applicability": null,
+        "text": [
+          {
+            "highlight_end": 23,
+            "highlight_start": 17,
+            "text": "                region"
+          },
+          {
+            "highlight_end": 51,
+            "highlight_start": 1,
+            "text": "                    .fillet_loop_vertex_by_radius("
+          },
+          {
+            "highlight_end": 27,
+            "highlight_start": 1,
+            "text": "                        0,"
+          },
+          {
+            "highlight_end": 32,
+            "highlight_start": 1,
+            "text": "                        corner,"
+          },
+          {
+            "highlight_end": 33,
+            "highlight_start": 1,
+            "text": "                        q(1, 2),"
+          },
+          {
+            "highlight_end": 56,
+            "highlight_start": 1,
+            "text": "                        CurveCornerMode2::TrimOrExtend,"
+          },
+          {
+            "highlight_end": 33,
+            "highlight_start": 1,
+            "text": "                        &policy,"
+          },
+          {
+            "highlight_end": 22,
+            "highlight_start": 1,
+            "text": "                    )"
+          },
+          {
+            "highlight_end": 46,
+            "highlight_start": 1,
+            "text": "                    .unwrap_or_else(|error| {"
+          },
+          {
+            "highlight_end": 32,
+            "highlight_start": 1,
+            "text": "                        panic!("
+          },
+          {
+            "highlight_end": 130,
+            "highlight_start": 1,
+            "text": "                            \"the regular arc/parabola cells must fillet: policy={policy:?}, reversed={reversed}, error={error:?}\""
+          },
+          {
+            "highlight_end": 26,
+            "highlight_start": 1,
+            "text": "                        )"
+          },
+          {
+            "highlight_end": 23,
+            "highlight_start": 1,
+            "text": "                    })"
+          },
+          {
+            "highlight_end": 34,
+            "highlight_start": 1,
+            "text": "                    .into_value(),"
+          }
+        ]
+      },
+      {
+        "byte_end": 173416,
+        "byte_start": 173406,
+        "column_end": 36,
+        "column_start": 26,
+        "expansion": null,
+        "file_name": "tests/hypercurve_curve_region_promotion.rs",
+        "is_primary": false,
+        "label": "arguments to this function are incorrect",
+        "line_end": 4542,
+        "line_start": 4542,
+        "suggested_replacement": null,
+        "suggestion_applicability": null,
+        "text": [
+          {
+            "highlight_end": 36,
+            "highlight_start": 26,
+            "text": "            let edited = candidates("
+          }
+        ]
+      }
+    ],
+    "code": {
+      "code": "E0308",
+      "explanation": "Expected type did not match the received type.\n\nErroneous code examples:\n\n```compile_fail,E0308\nfn plus_one(x: i32) -> i32 {\n    x + 1\n}\n\nplus_one(\"Not a number\");\n//       ^^^^^^^^^^^^^^ expected `i32`, found `&str`\n\nif \"Not a bool\" {\n// ^^^^^^^^^^^^ expected `bool`, found `&str`\n}\n\nlet x: f32 = \"Not a float\";\n//     ---   ^^^^^^^^^^^^^ expected `f32`, found `&str`\n//     |\n//     expected due to this\n```\n\nThis error occurs when an expression was used in a place where the compiler\nexpected an expression of a different type. It can occur in several cases, the\nmost common being when calling a function and passing an argument which has a\ndifferent type than the matching type in the function declaration.\n"
+    }
+  },
+  {
+    "rendered": "error[E0308]: mismatched types\n    --> tests/hypercurve_curve_region_promotion.rs:4820:17\n     |\n4819 |             match result.value {\n     |                   ------------ this expression has type `CurveFilletSolutions2<CurveRegion2, CurveRegionFilletFamily2>`\n4820 |                 CurveCornerSolutions2::Unique(region) => {\n     |                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ expected `CurveFilletSolutions2<CurveRegion2, ...>`, found `CurveCornerSolutions2<_>`\n     |\n     = note: expected struct `CurveFilletSolutions2<CurveRegion2, CurveRegionFilletFamily2>`\n                  found enum `CurveCornerSolutions2<_>`\n\n",
+    "$message_type": "diagnostic",
+    "children": [
+      {
+        "children": [],
+        "code": null,
+        "level": "note",
+        "message": "expected struct `CurveFilletSolutions2<CurveRegion2, CurveRegionFilletFamily2>`\n     found enum `CurveCornerSolutions2<_>`",
+        "rendered": null,
+        "spans": []
+      }
+    ],
+    "level": "error",
+    "message": "mismatched types",
+    "spans": [
+      {
+        "byte_end": 185270,
+        "byte_start": 185233,
+        "column_end": 54,
+        "column_start": 17,
+        "expansion": null,
+        "file_name": "tests/hypercurve_curve_region_promotion.rs",
+        "is_primary": true,
+        "label": "expected `CurveFilletSolutions2<CurveRegion2, ...>`, found `CurveCornerSolutions2<_>`",
+        "line_end": 4820,
+        "line_start": 4820,
+        "suggested_replacement": null,
+        "suggestion_applicability": null,
+        "text": [
+          {
+            "highlight_end": 54,
+            "highlight_start": 17,
+            "text": "                CurveCornerSolutions2::Unique(region) => {"
+          }
+        ]
+      },
+      {
+        "byte_end": 185214,
+        "byte_start": 185202,
+        "column_end": 31,
+        "column_start": 19,
+        "expansion": null,
+        "file_name": "tests/hypercurve_curve_region_promotion.rs",
+        "is_primary": false,
+        "label": "this expression has type `CurveFilletSolutions2<CurveRegion2, CurveRegionFilletFamily2>`",
+        "line_end": 4819,
+        "line_start": 4819,
+        "suggested_replacement": null,
+        "suggestion_applicability": null,
+        "text": [
+          {
+            "highlight_end": 31,
+            "highlight_start": 19,
+            "text": "            match result.value {"
+          }
+        ]
+      }
+    ],
+    "code": {
+      "code": "E0308",
+      "explanation": "Expected type did not match the received type.\n\nErroneous code examples:\n\n```compile_fail,E0308\nfn plus_one(x: i32) -> i32 {\n    x + 1\n}\n\nplus_one(\"Not a number\");\n//       ^^^^^^^^^^^^^^ expected `i32`, found `&str`\n\nif \"Not a bool\" {\n// ^^^^^^^^^^^^ expected `bool`, found `&str`\n}\n\nlet x: f32 = \"Not a float\";\n//     ---   ^^^^^^^^^^^^^ expected `f32`, found `&str`\n//     |\n//     expected due to this\n```\n\nThis error occurs when an expression was used in a place where the compiler\nexpected an expression of a different type. It can occur in several cases, the\nmost common being when calling a function and passing an argument which has a\ndifferent type than the matching type in the function declaration.\n"
+    }
+  },
+  {
+    "rendered": "error[E0308]: mismatched types\n    --> tests/hypercurve_curve_region_promotion.rs:4823:17\n     |\n4819 |             match result.value {\n     |                   ------------ this expression has type `CurveFilletSolutions2<CurveRegion2, CurveRegionFilletFamily2>`\n...\n4823 |                 CurveCornerSolutions2::NoSolution(_) | CurveCornerSolutions2::Multiple(_) => {\n     |                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ expected `CurveFilletSolutions2<CurveRegion2, ...>`, found `CurveCornerSolutions2<_>`\n     |\n     = note: expected struct `CurveFilletSolutions2<CurveRegion2, CurveRegionFilletFamily2>`\n                  found enum `CurveCornerSolutions2<_>`\n\n",
+    "$message_type": "diagnostic",
+    "children": [
+      {
+        "children": [],
+        "code": null,
+        "level": "note",
+        "message": "expected struct `CurveFilletSolutions2<CurveRegion2, CurveRegionFilletFamily2>`\n     found enum `CurveCornerSolutions2<_>`",
+        "rendered": null,
+        "spans": []
+      }
+    ],
+    "level": "error",
+    "message": "mismatched types",
+    "spans": [
+      {
+        "byte_end": 185399,
+        "byte_start": 185363,
+        "column_end": 53,
+        "column_start": 17,
+        "expansion": null,
+        "file_name": "tests/hypercurve_curve_region_promotion.rs",
+        "is_primary": true,
+        "label": "expected `CurveFilletSolutions2<CurveRegion2, ...>`, found `CurveCornerSolutions2<_>`",
+        "line_end": 4823,
+        "line_start": 4823,
+        "suggested_replacement": null,
+        "suggestion_applicability": null,
+        "text": [
+          {
+            "highlight_end": 53,
+            "highlight_start": 17,
+            "text": "                CurveCornerSolutions2::NoSolution(_) | CurveCornerSolutions2::Multiple(_) => {"
+          }
+        ]
+      },
+      {
+        "byte_end": 185214,
+        "byte_start": 185202,
+        "column_end": 31,
+        "column_start": 19,
+        "expansion": null,
+        "file_name": "tests/hypercurve_curve_region_promotion.rs",
+        "is_primary": false,
+        "label": "this expression has type `CurveFilletSolutions2<CurveRegion2, CurveRegionFilletFamily2>`",
+        "line_end": 4819,
+        "line_start": 4819,
+        "suggested_replacement": null,
+        "suggestion_applicability": null,
+        "text": [
+          {
+            "highlight_end": 31,
+            "highlight_start": 19,
+            "text": "            match result.value {"
+          }
+        ]
+      }
+    ],
+    "code": {
+      "code": "E0308",
+      "explanation": "Expected type did not match the received type.\n\nErroneous code examples:\n\n```compile_fail,E0308\nfn plus_one(x: i32) -> i32 {\n    x + 1\n}\n\nplus_one(\"Not a number\");\n//       ^^^^^^^^^^^^^^ expected `i32`, found `&str`\n\nif \"Not a bool\" {\n// ^^^^^^^^^^^^ expected `bool`, found `&str`\n}\n\nlet x: f32 = \"Not a float\";\n//     ---   ^^^^^^^^^^^^^ expected `f32`, found `&str`\n//     |\n//     expected due to this\n```\n\nThis error occurs when an expression was used in a place where the compiler\nexpected an expression of a different type. It can occur in several cases, the\nmost common being when calling a function and passing an argument which has a\ndifferent type than the matching type in the function declaration.\n"
+    }
+  },
+  {
+    "rendered": "error[E0308]: mismatched types\n    --> tests/hypercurve_curve_region_promotion.rs:4823:56\n     |\n4819 |             match result.value {\n     |                   ------------ this expression has type `CurveFilletSolutions2<CurveRegion2, CurveRegionFilletFamily2>`\n...\n4823 |                 CurveCornerSolutions2::NoSolution(_) | CurveCornerSolutions2::Multiple(_) => {\n     |                                                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ expected `CurveFilletSolutions2<CurveRegion2, ...>`, found `CurveCornerSolutions2<_>`\n     |\n     = note: expected struct `CurveFilletSolutions2<CurveRegion2, CurveRegionFilletFamily2>`\n                  found enum `CurveCornerSolutions2<_>`\n\n",
+    "$message_type": "diagnostic",
+    "children": [
+      {
+        "children": [],
+        "code": null,
+        "level": "note",
+        "message": "expected struct `CurveFilletSolutions2<CurveRegion2, CurveRegionFilletFamily2>`\n     found enum `CurveCornerSolutions2<_>`",
+        "rendered": null,
+        "spans": []
+      }
+    ],
+    "level": "error",
+    "message": "mismatched types",
+    "spans": [
+      {
+        "byte_end": 185436,
+        "byte_start": 185402,
+        "column_end": 90,
+        "column_start": 56,
+        "expansion": null,
+        "file_name": "tests/hypercurve_curve_region_promotion.rs",
+        "is_primary": true,
+        "label": "expected `CurveFilletSolutions2<CurveRegion2, ...>`, found `CurveCornerSolutions2<_>`",
+        "line_end": 4823,
+        "line_start": 4823,
+        "suggested_replacement": null,
+        "suggestion_applicability": null,
+        "text": [
+          {
+            "highlight_end": 90,
+            "highlight_start": 56,
+            "text": "                CurveCornerSolutions2::NoSolution(_) | CurveCornerSolutions2::Multiple(_) => {"
+          }
+        ]
+      },
+      {
+        "byte_end": 185214,
+        "byte_start": 185202,
+        "column_end": 31,
+        "column_start": 19,
+        "expansion": null,
+        "file_name": "tests/hypercurve_curve_region_promotion.rs",
+        "is_primary": false,
+        "label": "this expression has type `CurveFilletSolutions2<CurveRegion2, CurveRegionFilletFamily2>`",
+        "line_end": 4819,
+        "line_start": 4819,
+        "suggested_replacement": null,
+        "suggestion_applicability": null,
+        "text": [
+          {
+            "highlight_end": 31,
+            "highlight_start": 19,
+            "text": "            match result.value {"
+          }
+        ]
+      }
+    ],
+    "code": {
+      "code": "E0308",
+      "explanation": "Expected type did not match the received type.\n\nErroneous code examples:\n\n```compile_fail,E0308\nfn plus_one(x: i32) -> i32 {\n    x + 1\n}\n\nplus_one(\"Not a number\");\n//       ^^^^^^^^^^^^^^ expected `i32`, found `&str`\n\nif \"Not a bool\" {\n// ^^^^^^^^^^^^ expected `bool`, found `&str`\n}\n\nlet x: f32 = \"Not a float\";\n//     ---   ^^^^^^^^^^^^^ expected `f32`, found `&str`\n//     |\n//     expected due to this\n```\n\nThis error occurs when an expression was used in a place where the compiler\nexpected an expression of a different type. It can occur in several cases, the\nmost common being when calling a function and passing an argument which has a\ndifferent type than the matching type in the function declaration.\n"
+    }
+  },
+  {
+    "rendered": "error[E0308]: mismatched types\n    --> tests/hypercurve_curve_region_promotion.rs:4951:13\n     |\n4950 |         match result.value {\n     |               ------------ this expression has type `CurveFilletSolutions2<CurveRegion2, CurveRegionFilletFamily2>`\n4951 |             CurveCornerSolutions2::Unique(candidate) => filleted.push((corner, 0, candidate)),\n     |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ expected `CurveFilletSolutions2<CurveRegion2, ...>`, found `CurveCornerSolutions2<_>`\n     |\n     = note: expected struct `CurveFilletSolutions2<CurveRegion2, CurveRegionFilletFamily2>`\n                  found enum `CurveCornerSolutions2<_>`\n\n",
+    "$message_type": "diagnostic",
+    "children": [
+      {
+        "children": [],
+        "code": null,
+        "level": "note",
+        "message": "expected struct `CurveFilletSolutions2<CurveRegion2, CurveRegionFilletFamily2>`\n     found enum `CurveCornerSolutions2<_>`",
+        "rendered": null,
+        "spans": []
+      }
+    ],
+    "level": "error",
+    "message": "mismatched types",
+    "spans": [
+      {
+        "byte_end": 190189,
+        "byte_start": 190149,
+        "column_end": 53,
+        "column_start": 13,
+        "expansion": null,
+        "file_name": "tests/hypercurve_curve_region_promotion.rs",
+        "is_primary": true,
+        "label": "expected `CurveFilletSolutions2<CurveRegion2, ...>`, found `CurveCornerSolutions2<_>`",
+        "line_end": 4951,
+        "line_start": 4951,
+        "suggested_replacement": null,
+        "suggestion_applicability": null,
+        "text": [
+          {
+            "highlight_end": 53,
+            "highlight_start": 13,
+            "text": "            CurveCornerSolutions2::Unique(candidate) => filleted.push((corner, 0, candidate)),"
+          }
+        ]
+      },
+      {
+        "byte_end": 190134,
+        "byte_start": 190122,
+        "column_end": 27,
+        "column_start": 15,
+        "expansion": null,
+        "file_name": "tests/hypercurve_curve_region_promotion.rs",
+        "is_primary": false,
+        "label": "this expression has type `CurveFilletSolutions2<CurveRegion2, CurveRegionFilletFamily2>`",
+        "line_end": 4950,
+        "line_start": 4950,
+        "suggested_replacement": null,
+        "suggestion_applicability": null,
+        "text": [
+          {
+            "highlight_end": 27,
+            "highlight_start": 15,
+            "text": "        match result.value {"
+          }
+        ]
+      }
+    ],
+    "code": {
+      "code": "E0308",
+      "explanation": "Expected type did not match the received type.\n\nErroneous code examples:\n\n```compile_fail,E0308\nfn plus_one(x: i32) -> i32 {\n    x + 1\n}\n\nplus_one(\"Not a number\");\n//       ^^^^^^^^^^^^^^ expected `i32`, found `&str`\n\nif \"Not a bool\" {\n// ^^^^^^^^^^^^ expected `bool`, found `&str`\n}\n\nlet x: f32 = \"Not a float\";\n//     ---   ^^^^^^^^^^^^^ expected `f32`, found `&str`\n//     |\n//     expected due to this\n```\n\nThis error occurs when an expression was used in a place where the compiler\nexpected an expression of a different type. It can occur in several cases, the\nmost common being when calling a function and passing an argument which has a\ndifferent type than the matching type in the function declaration.\n"
+    }
+  },
+  {
+    "rendered": "error[E0308]: mismatched types\n    --> tests/hypercurve_curve_region_promotion.rs:4952:13\n     |\n4950 |         match result.value {\n     |               ------------ this expression has type `CurveFilletSolutions2<CurveRegion2, CurveRegionFilletFamily2>`\n4951 |             CurveCornerSolutions2::Unique(candidate) => filleted.push((corner, 0, candidate)),\n4952 |             CurveCornerSolutions2::Multiple(candidates) => filleted.extend(\n     |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ expected `CurveFilletSolutions2<CurveRegion2, ...>`, found `CurveCornerSolutions2<_>`\n     |\n     = note: expected struct `CurveFilletSolutions2<CurveRegion2, CurveRegionFilletFamily2>`\n                  found enum `CurveCornerSolutions2<_>`\n\n",
+    "$message_type": "diagnostic",
+    "children": [
+      {
+        "children": [],
+        "code": null,
+        "level": "note",
+        "message": "expected struct `CurveFilletSolutions2<CurveRegion2, CurveRegionFilletFamily2>`\n     found enum `CurveCornerSolutions2<_>`",
+        "rendered": null,
+        "spans": []
+      }
+    ],
+    "level": "error",
+    "message": "mismatched types",
+    "spans": [
+      {
+        "byte_end": 190287,
+        "byte_start": 190244,
+        "column_end": 56,
+        "column_start": 13,
+        "expansion": null,
+        "file_name": "tests/hypercurve_curve_region_promotion.rs",
+        "is_primary": true,
+        "label": "expected `CurveFilletSolutions2<CurveRegion2, ...>`, found `CurveCornerSolutions2<_>`",
+        "line_end": 4952,
+        "line_start": 4952,
+        "suggested_replacement": null,
+        "suggestion_applicability": null,
+        "text": [
+          {
+            "highlight_end": 56,
+            "highlight_start": 13,
+            "text": "            CurveCornerSolutions2::Multiple(candidates) => filleted.extend("
+          }
+        ]
+      },
+      {
+        "byte_end": 190134,
+        "byte_start": 190122,
+        "column_end": 27,
+        "column_start": 15,
+        "expansion": null,
+        "file_name": "tests/hypercurve_curve_region_promotion.rs",
+        "is_primary": false,
+        "label": "this expression has type `CurveFilletSolutions2<CurveRegion2, CurveRegionFilletFamily2>`",
+        "line_end": 4950,
+        "line_start": 4950,
+        "suggested_replacement": null,
+        "suggestion_applicability": null,
+        "text": [
+          {
+            "highlight_end": 27,
+            "highlight_start": 15,
+            "text": "        match result.value {"
+          }
+        ]
+      }
+    ],
+    "code": {
+      "code": "E0308",
+      "explanation": "Expected type did not match the received type.\n\nErroneous code examples:\n\n```compile_fail,E0308\nfn plus_one(x: i32) -> i32 {\n    x + 1\n}\n\nplus_one(\"Not a number\");\n//       ^^^^^^^^^^^^^^ expected `i32`, found `&str`\n\nif \"Not a bool\" {\n// ^^^^^^^^^^^^ expected `bool`, found `&str`\n}\n\nlet x: f32 = \"Not a float\";\n//     ---   ^^^^^^^^^^^^^ expected `f32`, found `&str`\n//     |\n//     expected due to this\n```\n\nThis error occurs when an expression was used in a place where the compiler\nexpected an expression of a different type. It can occur in several cases, the\nmost common being when calling a function and passing an argument which has a\ndifferent type than the matching type in the function declaration.\n"
+    }
+  },
+  {
+    "rendered": "error[E0308]: mismatched types\n    --> tests/hypercurve_curve_region_promotion.rs:4958:13\n     |\n4950 |         match result.value {\n     |               ------------ this expression has type `CurveFilletSolutions2<CurveRegion2, CurveRegionFilletFamily2>`\n...\n4958 |             CurveCornerSolutions2::NoSolution(reason) => outcomes.push((corner, 0, Some(reason))),\n     |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ expected `CurveFilletSolutions2<CurveRegion2, ...>`, found `CurveCornerSolutions2<_>`\n     |\n     = note: expected struct `CurveFilletSolutions2<CurveRegion2, CurveRegionFilletFamily2>`\n                  found enum `CurveCornerSolutions2<_>`\n\n",
+    "$message_type": "diagnostic",
+    "children": [
+      {
+        "children": [],
+        "code": null,
+        "level": "note",
+        "message": "expected struct `CurveFilletSolutions2<CurveRegion2, CurveRegionFilletFamily2>`\n     found enum `CurveCornerSolutions2<_>`",
+        "rendered": null,
+        "spans": []
+      }
+    ],
+    "level": "error",
+    "message": "mismatched types",
+    "spans": [
+      {
+        "byte_end": 190546,
+        "byte_start": 190505,
+        "column_end": 54,
+        "column_start": 13,
+        "expansion": null,
+        "file_name": "tests/hypercurve_curve_region_promotion.rs",
+        "is_primary": true,
+        "label": "expected `CurveFilletSolutions2<CurveRegion2, ...>`, found `CurveCornerSolutions2<_>`",
+        "line_end": 4958,
+        "line_start": 4958,
+        "suggested_replacement": null,
+        "suggestion_applicability": null,
+        "text": [
+          {
+            "highlight_end": 54,
+            "highlight_start": 13,
+            "text": "            CurveCornerSolutions2::NoSolution(reason) => outcomes.push((corner, 0, Some(reason))),"
+          }
+        ]
+      },
+      {
+        "byte_end": 190134,
+        "byte_start": 190122,
+        "column_end": 27,
+        "column_start": 15,
+        "expansion": null,
+        "file_name": "tests/hypercurve_curve_region_promotion.rs",
+        "is_primary": false,
+        "label": "this expression has type `CurveFilletSolutions2<CurveRegion2, CurveRegionFilletFamily2>`",
+        "line_end": 4950,
+        "line_start": 4950,
+        "suggested_replacement": null,
+        "suggestion_applicability": null,
+        "text": [
+          {
+            "highlight_end": 27,
+            "highlight_start": 15,
+            "text": "        match result.value {"
+          }
+        ]
+      }
+    ],
+    "code": {
+      "code": "E0308",
+      "explanation": "Expected type did not match the received type.\n\nErroneous code examples:\n\n```compile_fail,E0308\nfn plus_one(x: i32) -> i32 {\n    x + 1\n}\n\nplus_one(\"Not a number\");\n//       ^^^^^^^^^^^^^^ expected `i32`, found `&str`\n\nif \"Not a bool\" {\n// ^^^^^^^^^^^^ expected `bool`, found `&str`\n}\n\nlet x: f32 = \"Not a float\";\n//     ---   ^^^^^^^^^^^^^ expected `f32`, found `&str`\n//     |\n//     expected due to this\n```\n\nThis error occurs when an expression was used in a place where the compiler\nexpected an expression of a different type. It can occur in several cases, the\nmost common being when calling a function and passing an argument which has a\ndifferent type than the matching type in the function declaration.\n"
+    }
+  },
+  {
+    "rendered": "error[E0308]: mismatched types\n    --> tests/hypercurve_curve_region_promotion.rs:5478:40\n     |\n5478 |                 matches!(result.value, CurveCornerSolutions2::Unique(_)),\n     |                          ------------  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ expected `CurveFilletSolutions2<CurveRegion2, ...>`, found `CurveCornerSolutions2<_>`\n     |                          |\n     |                          this expression has type `CurveFilletSolutions2<CurveRegion2, CurveRegionFilletFamily2>`\n     |\n     = note: expected struct `CurveFilletSolutions2<CurveRegion2, CurveRegionFilletFamily2>`\n                  found enum `CurveCornerSolutions2<_>`\n\n",
+    "$message_type": "diagnostic",
+    "children": [
+      {
+        "children": [],
+        "code": null,
+        "level": "note",
+        "message": "expected struct `CurveFilletSolutions2<CurveRegion2, CurveRegionFilletFamily2>`\n     found enum `CurveCornerSolutions2<_>`",
+        "rendered": null,
+        "spans": []
+      }
+    ],
+    "level": "error",
+    "message": "mismatched types",
+    "spans": [
+      {
+        "byte_end": 211817,
+        "byte_start": 211785,
+        "column_end": 72,
+        "column_start": 40,
+        "expansion": null,
+        "file_name": "tests/hypercurve_curve_region_promotion.rs",
+        "is_primary": true,
+        "label": "expected `CurveFilletSolutions2<CurveRegion2, ...>`, found `CurveCornerSolutions2<_>`",
+        "line_end": 5478,
+        "line_start": 5478,
+        "suggested_replacement": null,
+        "suggestion_applicability": null,
+        "text": [
+          {
+            "highlight_end": 72,
+            "highlight_start": 40,
+            "text": "                matches!(result.value, CurveCornerSolutions2::Unique(_)),"
+          }
+        ]
+      },
+      {
+        "byte_end": 211783,
+        "byte_start": 211771,
+        "column_end": 38,
+        "column_start": 26,
+        "expansion": null,
+        "file_name": "tests/hypercurve_curve_region_promotion.rs",
+        "is_primary": false,
+        "label": "this expression has type `CurveFilletSolutions2<CurveRegion2, CurveRegionFilletFamily2>`",
+        "line_end": 5478,
+        "line_start": 5478,
+        "suggested_replacement": null,
+        "suggestion_applicability": null,
+        "text": [
+          {
+            "highlight_end": 38,
+            "highlight_start": 26,
+            "text": "                matches!(result.value, CurveCornerSolutions2::Unique(_)),"
+          }
+        ]
+      }
+    ],
+    "code": {
+      "code": "E0308",
+      "explanation": "Expected type did not match the received type.\n\nErroneous code examples:\n\n```compile_fail,E0308\nfn plus_one(x: i32) -> i32 {\n    x + 1\n}\n\nplus_one(\"Not a number\");\n//       ^^^^^^^^^^^^^^ expected `i32`, found `&str`\n\nif \"Not a bool\" {\n// ^^^^^^^^^^^^ expected `bool`, found `&str`\n}\n\nlet x: f32 = \"Not a float\";\n//     ---   ^^^^^^^^^^^^^ expected `f32`, found `&str`\n//     |\n//     expected due to this\n```\n\nThis error occurs when an expression was used in a place where the compiler\nexpected an expression of a different type. It can occur in several cases, the\nmost common being when calling a function and passing an argument which has a\ndifferent type than the matching type in the function declaration.\n"
+    }
+  },
+  {
+    "rendered": "error[E0308]: `if` and `else` have incompatible types\n    --> tests/hypercurve_curve_region_promotion.rs:8319:17\n     |\n8310 |                 let outcome = if fillet {\n     |  _____________________________-\n8311 | | /                 source.fillet_loop_vertex_by_radius(\n8312 | | |                     loop_index,\n8313 | | |                     vertex,\n8314 | | |                     Real::from(5),\n8315 | | |                     CurveCornerMode2::TrimOnly,\n8316 | | |                     &policy,\n8317 | | |                 )\n     | | |_________________- expected because of this\n8318 | |               } else {\n8319 | | /                 source.chamfer_loop_vertex_by_setbacks(\n8320 | | |                     loop_index,\n8321 | | |                     vertex,\n8322 | | |                     Real::from(5),\n...    | |\n8325 | | |                     &policy,\n8326 | | |                 )\n     | | |_________________^ expected `CurveFilletSolutions2<CurveRegion2, ...>`, found `CurveCornerSolutions2<CurveRegion2>`\n8327 | |               }\n     | |_______________- `if` and `else` have incompatible types\n     |\n     = note: expected enum `Result<CurveOutcome<CurveFilletSolutions2<CurveRegion2, CurveRegionFilletFamily2>>, _>`\n                found enum `Result<CurveOutcome<CurveCornerSolutions2<CurveRegion2>>, _>`\n\n",
+    "$message_type": "diagnostic",
+    "children": [
+      {
+        "children": [],
+        "code": null,
+        "level": "note",
+        "message": "expected enum `Result<CurveOutcome<CurveFilletSolutions2<CurveRegion2, CurveRegionFilletFamily2>>, _>`\n   found enum `Result<CurveOutcome<CurveCornerSolutions2<CurveRegion2>>, _>`",
+        "rendered": null,
+        "spans": []
+      }
+    ],
+    "level": "error",
+    "message": "`if` and `else` have incompatible types",
+    "spans": [
+      {
+        "byte_end": 318465,
+        "byte_start": 318201,
+        "column_end": 18,
+        "column_start": 17,
+        "expansion": null,
+        "file_name": "tests/hypercurve_curve_region_promotion.rs",
+        "is_primary": true,
+        "label": "expected `CurveFilletSolutions2<CurveRegion2, ...>`, found `CurveCornerSolutions2<CurveRegion2>`",
+        "line_end": 8326,
+        "line_start": 8319,
+        "suggested_replacement": null,
+        "suggestion_applicability": null,
+        "text": [
+          {
+            "highlight_end": 56,
+            "highlight_start": 17,
+            "text": "                source.chamfer_loop_vertex_by_setbacks("
+          },
+          {
+            "highlight_end": 32,
+            "highlight_start": 1,
+            "text": "                    loop_index,"
+          },
+          {
+            "highlight_end": 28,
+            "highlight_start": 1,
+            "text": "                    vertex,"
+          },
+          {
+            "highlight_end": 35,
+            "highlight_start": 1,
+            "text": "                    Real::from(5),"
+          },
+          {
+            "highlight_end": 35,
+            "highlight_start": 1,
+            "text": "                    Real::from(5),"
+          },
+          {
+            "highlight_end": 48,
+            "highlight_start": 1,
+            "text": "                    CurveCornerMode2::TrimOnly,"
+          },
+          {
+            "highlight_end": 29,
+            "highlight_start": 1,
+            "text": "                    &policy,"
+          },
+          {
+            "highlight_end": 18,
+            "highlight_start": 1,
+            "text": "                )"
+          }
+        ]
+      },
+      {
+        "byte_end": 318163,
+        "byte_start": 317937,
+        "column_end": 18,
+        "column_start": 17,
+        "expansion": null,
+        "file_name": "tests/hypercurve_curve_region_promotion.rs",
+        "is_primary": false,
+        "label": "expected because of this",
+        "line_end": 8317,
+        "line_start": 8311,
+        "suggested_replacement": null,
+        "suggestion_applicability": null,
+        "text": [
+          {
+            "highlight_end": 53,
+            "highlight_start": 17,
+            "text": "                source.fillet_loop_vertex_by_radius("
+          },
+          {
+            "highlight_end": 32,
+            "highlight_start": 1,
+            "text": "                    loop_index,"
+          },
+          {
+            "highlight_end": 28,
+            "highlight_start": 1,
+            "text": "                    vertex,"
+          },
+          {
+            "highlight_end": 35,
+            "highlight_start": 1,
+            "text": "                    Real::from(5),"
+          },
+          {
+            "highlight_end": 48,
+            "highlight_start": 1,
+            "text": "                    CurveCornerMode2::TrimOnly,"
+          },
+          {
+            "highlight_end": 29,
+            "highlight_start": 1,
+            "text": "                    &policy,"
+          },
+          {
+            "highlight_end": 18,
+            "highlight_start": 1,
+            "text": "                )"
+          }
+        ]
+      },
+      {
+        "byte_end": 318479,
+        "byte_start": 317909,
+        "column_end": 14,
+        "column_start": 27,
+        "expansion": null,
+        "file_name": "tests/hypercurve_curve_region_promotion.rs",
+        "is_primary": false,
+        "label": "`if` and `else` have incompatible types",
+        "line_end": 8327,
+        "line_start": 8310,
+        "suggested_replacement": null,
+        "suggestion_applicability": null,
+        "text": [
+          {
+            "highlight_end": 38,
+            "highlight_start": 27,
+            "text": "            let outcome = if fillet {"
+          },
+          {
+            "highlight_end": 53,
+            "highlight_start": 1,
+            "text": "                source.fillet_loop_vertex_by_radius("
+          },
+          {
+            "highlight_end": 32,
+            "highlight_start": 1,
+            "text": "                    loop_index,"
+          },
+          {
+            "highlight_end": 28,
+            "highlight_start": 1,
+            "text": "                    vertex,"
+          },
+          {
+            "highlight_end": 35,
+            "highlight_start": 1,
+            "text": "                    Real::from(5),"
+          },
+          {
+            "highlight_end": 48,
+            "highlight_start": 1,
+            "text": "                    CurveCornerMode2::TrimOnly,"
+          },
+          {
+            "highlight_end": 29,
+            "highlight_start": 1,
+            "text": "                    &policy,"
+          },
+          {
+            "highlight_end": 18,
+            "highlight_start": 1,
+            "text": "                )"
+          },
+          {
+            "highlight_end": 21,
+            "highlight_start": 1,
+            "text": "            } else {"
+          },
+          {
+            "highlight_end": 56,
+            "highlight_start": 1,
+            "text": "                source.chamfer_loop_vertex_by_setbacks("
+          },
+          {
+            "highlight_end": 32,
+            "highlight_start": 1,
+            "text": "                    loop_index,"
+          },
+          {
+            "highlight_end": 28,
+            "highlight_start": 1,
+            "text": "                    vertex,"
+          },
+          {
+            "highlight_end": 35,
+            "highlight_start": 1,
+            "text": "                    Real::from(5),"
+          },
+          {
+            "highlight_end": 35,
+            "highlight_start": 1,
+            "text": "                    Real::from(5),"
+          },
+          {
+            "highlight_end": 48,
+            "highlight_start": 1,
+            "text": "                    CurveCornerMode2::TrimOnly,"
+          },
+          {
+            "highlight_end": 29,
+            "highlight_start": 1,
+            "text": "                    &policy,"
+          },
+          {
+            "highlight_end": 18,
+            "highlight_start": 1,
+            "text": "                )"
+          },
+          {
+            "highlight_end": 14,
+            "highlight_start": 1,
+            "text": "            }"
+          }
+        ]
+      }
+    ],
+    "code": {
+      "code": "E0308",
+      "explanation": "Expected type did not match the received type.\n\nErroneous code examples:\n\n```compile_fail,E0308\nfn plus_one(x: i32) -> i32 {\n    x + 1\n}\n\nplus_one(\"Not a number\");\n//       ^^^^^^^^^^^^^^ expected `i32`, found `&str`\n\nif \"Not a bool\" {\n// ^^^^^^^^^^^^ expected `bool`, found `&str`\n}\n\nlet x: f32 = \"Not a float\";\n//     ---   ^^^^^^^^^^^^^ expected `f32`, found `&str`\n//     |\n//     expected due to this\n```\n\nThis error occurs when an expression was used in a place where the compiler\nexpected an expression of a different type. It can occur in several cases, the\nmost common being when calling a function and passing an argument which has a\ndifferent type than the matching type in the function declaration.\n"
+    }
+  }
+]

@@ -1,0 +1,51 @@
+{
+  "source_manifest": "owned-root-newton-reoffset-20260927-v461-sources.json",
+  "source_directory": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/source-archives/owned-root-newton-reoffset-20260927-v461",
+  "cases": [
+    {
+      "binary": "owned-root-newton-reoffset-20260927-v461-hypercurve_curve_region_promotion",
+      "name": "strict_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions",
+      "returncode": 124,
+      "log": "owned-root-newton-reoffset-20260927-v461-case-000.log",
+      "elapsed_seconds": 360.0342128169723
+    }
+  ],
+  "builds": [
+    {
+      "crate": "hypercurve",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "test",
+        "--test",
+        "hypercurve_curve_region_promotion",
+        "--release",
+        "--all-features",
+        "--no-run",
+        "--message-format=json",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "log": "owned-root-newton-reoffset-20260927-v461-hypercurve_curve_region_promotion-build.log",
+      "elapsed_seconds": 113.27477118303068,
+      "binary": {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/owned-root-newton-reoffset-20260927-v461-hypercurve_curve_region_promotion",
+        "sha256": "bc9aef11854e8180295e0086734d7b1ded944284a109ff339912ce3aaef956cf"
+      }
+    }
+  ],
+  "trial": {
+    "hypersolve/src/root_sign.rs": "b4176f0cbd7dee5d0058d688c851b4352a55b836cffee67e83b711b85b045f1f"
+  },
+  "all_processes_reaped": true,
+  "checks": [],
+  "qualification_scope": "Complete STRICT and APPROXIMATE(512) extended analytic-parallel fillet / Boolean / re-offset compositions with copy-only interval Newton",
+  "expected_cases": {
+    "hypercurve_curve_region_promotion": [
+      "strict_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions",
+      "approximate_512_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions"
+    ]
+  },
+  "failure": "case failure or missing exact test",
+  "qualification_complete": false
+}

@@ -1,0 +1,4 @@
+   Compiling hyperreal v0.13.1 (/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/root-exp-proof-trial-hyperreal)
+   Compiling calcium-root-exp-proof-qualification v0.1.0 (/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/root-exp-proof-qualification)
+    Finished `release` profile [optimized] target(s) in 8.23s
+     Running `/home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype/release/calcium-root-exp-proof-qualification oracle`

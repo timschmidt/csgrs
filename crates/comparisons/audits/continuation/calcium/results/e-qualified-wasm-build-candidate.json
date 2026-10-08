@@ -1,0 +1,25 @@
+{
+  "tag": "e-qualified-wasm-build-candidate",
+  "started": "2026-09-10T01:14:26.315Z",
+  "finished": "2026-09-10T01:15:58.422Z",
+  "elapsedSeconds": 92.104499937,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "env",
+  "args": [
+    "CARGO_TARGET_DIR=/tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse",
+    "CARGO_INCREMENTAL=0",
+    "CARGO_PROFILE_DEV_DEBUG=0",
+    "CARGO_BUILD_JOBS=2",
+    "cargo",
+    "build",
+    "--offline",
+    "--release",
+    "--target",
+    "wasm32-unknown-unknown",
+    "--manifest-path",
+    "e-qualified-wasm-candidate/Cargo.toml",
+    "--lib"
+  ],
+  "code": 0,
+  "signal": null
+}

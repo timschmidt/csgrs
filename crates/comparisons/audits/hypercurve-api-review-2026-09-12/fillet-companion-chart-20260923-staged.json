@@ -1,0 +1,8 @@
+{
+  "files": {
+    "src/curve_corner_chain.rs": "6ca2f00e00d09f06de7b221ea8f4da8dc9b8c1c498f4e17fbc79a4f47fbebe04"
+  },
+  "qualified_bytes_match": true,
+  "other_staged_files": false,
+  "excluded_region_unchanged": true
+}

@@ -1,0 +1,11 @@
+{
+  "source_manifest": "retained-native-circle-contact-20260927-v331-sources.json",
+  "source_sha256": "38fead7552a0c8839656f2e0b80a7fadf1c028da8d938bf7b0de587e22c59ce4",
+  "library": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypercurve-85a9105cd1c82df7.rlib",
+  "library_sha256": "4c06f412c8b1caee7f938af37abf7b577c41cf3b0a3e66360fe8956a9e6e8e7f",
+  "all_processes_reaped": true,
+  "build_returncode": 0,
+  "binary_sha256": "4ab3788fa5e64cea3f5d294806976d43c9f0d1a25f85fbaa7c6cce48b2a7d30b",
+  "returncode": 101,
+  "elapsed_seconds": 0.003675328101962805
+}

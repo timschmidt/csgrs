@@ -1,0 +1,11 @@
+[
+  {
+    "target": "hypercurve_path_closure",
+    "name": "homogeneous_boundary_closes_through_boolean_corners_and_offset",
+    "returncode": "timeout",
+    "passed": false,
+    "elapsed_seconds": 90.12615513394121,
+    "limit_seconds": 90,
+    "log": "direct-endpoints-20260924-parent-path-case-00.log"
+  }
+]

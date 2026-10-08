@@ -1,0 +1,102 @@
+{
+  "status": "implemented_increment; full goal remains active",
+  "commits_this_turn": [
+    "110b1c8",
+    "a42b901",
+    "a700f65"
+  ],
+  "runtime": [
+    {
+      "log": "spline-clamping-library.log",
+      "suites": [
+        {
+          "passed": 946,
+          "failed": 0,
+          "ignored": 6,
+          "measured": 0,
+          "filtered": 4,
+          "seconds": 142.59
+        }
+      ]
+    },
+    {
+      "log": "spline-clamping-integration.log",
+      "suites": [
+        {
+          "passed": 28,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0,
+          "seconds": 0.0
+        },
+        {
+          "passed": 48,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0,
+          "seconds": 49.53
+        },
+        {
+          "passed": 38,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0,
+          "seconds": 0.0
+        },
+        {
+          "passed": 18,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0,
+          "seconds": 0.0
+        }
+      ]
+    },
+    {
+      "log": "spline-clamping-hyperbrep.log",
+      "suites": [
+        {
+          "passed": 15,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 214,
+          "seconds": 0.07
+        }
+      ]
+    }
+  ],
+  "excluded_library_cases": [
+    "selected_parallel_normal_circle_intersects_genuinely_analytic_parallel_in_one_fiber",
+    "independent_oblique_chord_pair_fillets_extend_on_infinite_supports",
+    "selected_circle_and_analytic_parallel_extend_on_full_supports",
+    "pair_native_boolean_algebraic_chord_corner_publishes_a_third_generation_fillet"
+  ],
+  "checks": {
+    "hypercurve_all_targets_all_features": "spline-clamping-check.log",
+    "hyperbrep_all_targets_all_features": "spline-clamping-hyperbrep-check.log",
+    "hypercurve_docs_broken_links_denied": "spline-clamping-docs.log",
+    "formatting": "rustfmt --check passed for all changed files",
+    "whitespace": "git diff --check passed"
+  },
+  "reproduction": {
+    "before": "spline-clamping-before.log: reproduced loss of the fully repeated discontinuous knot",
+    "after": "spline-clamping-after.log: both one-sided limits and interior images pass",
+    "complete_regression": "spline-clamping-integration.log additionally verifies region admission rejects the preserved discontinuity"
+  },
+  "performance": "NURBS clamping and degree elevation reuse the existing logarithmic exact knot multiplicity query; the duplicate linear scan was removed. Discontinuous spans keep independent homogeneous weights. No matched timing benchmark was performed.",
+  "remaining_goal_work": [
+    "General subdivision and differential interfaces for selected curves",
+    "Public path solving across selected-circle smooth runs",
+    "Normalized public CurveRegion2 admission invariant",
+    "Retained policy replay and uncertainty accounting audit",
+    "Smaller support grammar and algebra-layer extraction",
+    "Previously recorded promotion/composition failures and costly excluded cases"
+  ],
+  "pushed": false,
+  "final_included_passes": 1093
+}

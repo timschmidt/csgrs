@@ -1,0 +1,34 @@
+
+compat/Data/Multinomial.hs:1:17: warning: [-Wdeprecated-flags]
+    -fglasgow-exts is deprecated: Use individual extensions instead
+  |
+1 | {-# OPTIONS_GHC -fglasgow-exts #-}
+  |                 ^^^^^^^^^^^^^^
+
+compat/Data/Interval.hs:1:17: warning: [-Wdeprecated-flags]
+    -fglasgow-exts is deprecated: Use individual extensions instead
+  |
+1 | {-# OPTIONS_GHC -fglasgow-exts #-}
+  |                 ^^^^^^^^^^^^^^
+
+compat/Data/Real/CReal.hs:1:17: warning: [-Wdeprecated-flags]
+    -fglasgow-exts is deprecated: Use individual extensions instead
+  |
+1 | {-# OPTIONS_GHC -fglasgow-exts #-}
+  |                 ^^^^^^^^^^^^^^
+
+compat/Data/Real/Complete.hs:1:17: warning: [-Wdeprecated-flags]
+    -fglasgow-exts is deprecated: Use individual extensions instead
+  |
+1 | {-# OPTIONS_GHC -fglasgow-exts #-}
+  |                 ^^^^^^^^^^^^^^
+[ 1 of 10] Compiling Combinatorics    ( compat/Combinatorics.hs, mpfr-build/Combinatorics.o )
+[ 2 of 10] Compiling Data.Interval    ( compat/Data/Interval.hs, mpfr-build/Data/Interval.o )
+[ 3 of 10] Compiling Data.Multinomial ( compat/Data/Multinomial.hs, mpfr-build/Data/Multinomial.o )
+[ 4 of 10] Compiling Data.Real.Complete ( compat/Data/Real/Complete.hs, mpfr-build/Data/Real/Complete.o )
+[ 5 of 10] Compiling Data.Real.Gauge  ( compat/Data/Real/Gauge.hs, mpfr-build/Data/Real/Gauge.o )
+[ 6 of 10] Compiling Data.Real.Base   ( compat/Data/Real/Base.hs, mpfr-build/Data/Real/Base.o )
+[ 7 of 10] Compiling Data.Real.CReal  ( compat/Data/Real/CReal.hs, mpfr-build/Data/Real/CReal.o )
+[ 8 of 10] Compiling Data.Real.ICReal ( compat/Data/Real/ICReal.hs, mpfr-build/Data/Real/ICReal.o )
+[ 9 of 10] Compiling Main             ( FewMPFR.hs, mpfr-build/Main.o )
+[10 of 10] Linking few-mpfr

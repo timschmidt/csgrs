@@ -1,0 +1,34 @@
+\doxysubsection{source/solvers/solver.hpp File Reference}
+\hypertarget{solver_8hpp}{}\label{solver_8hpp}\index{source/solvers/solver.hpp@{source/solvers/solver.hpp}}
+
+
+\doxysubsubsection{Description}
+Solver classes for algebraic equations. 
+
+{\ttfamily \#include $<$exception$>$}\newline
+{\ttfamily \#include $<$stdexcept$>$}\newline
+{\ttfamily \#include $<$string$>$}\newline
+{\ttfamily \#include "{}solvers/solver\+\_\+interface.\+hpp"{}}\newline
+{\ttfamily \#include "{}function/function\+\_\+interface.\+hpp"{}}\newline
+{\ttfamily \#include "{}function/function\+\_\+patch\+\_\+interface.\+hpp"{}}\newline
+{\ttfamily \#include "{}conclog/logging.\+hpp"{}}\newline
+{\ttfamily \#include "{}utility/attribute.\+hpp"{}}\newline
+{\ttfamily \#include "{}utility/pointer.\+hpp"{}}\newline
+{\ttfamily \#include "{}utility/container.\+hpp"{}}\newline
+{\ttfamily \#include "{}numeric/numeric.\+hpp"{}}\newline
+\doxysubsubsubsection*{Classes}
+\begin{DoxyCompactItemize}
+\item 
+class \mbox{\hyperlink{classAriadne_1_1SolverBase}{Solver\+Base}}
+\begin{DoxyCompactList}\small\item\em Common functionality for solving (nonlinear) equations. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1IntervalNewtonSolver}{Interval\+Newton\+Solver}}
+\begin{DoxyCompactList}\small\item\em \doxylink{group__FunctionModule_gab4f81d909c87bd33486c446890723bb1}{Exact\+Interval\+Type} Newton solver. Uses the contractor $[x\textnormal{\textquotesingle}]=x_0-Df^{-1}([x])f(x_0)$. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1KrawczykSolver}{Krawczyk\+Solver}}
+\begin{DoxyCompactList}\small\item\em Krawczyk solver. Uses the contractor $[x\textnormal{\textquotesingle}]=x_0-Mf(x_0)+(I-MDf([x])([x]-x_0)$ where $M$ is typically $Df^{-1}(x_0)$. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1FactoredKrawczykSolver}{Factored\+Krawczyk\+Solver}}
+\begin{DoxyCompactList}\small\item\em Modified Krawczyk solver. Uses the contractor $[x\textnormal{\textquotesingle}]=x_0-J^{-1}(f(x_0)+(J-Df([x])([x]-x_0)$ where $J$ is typically $Df(x_0)$. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsubsection*{Namespaces}
+\begin{DoxyCompactItemize}
+\item 
+namespace \mbox{\hyperlink{namespaceAriadne}{Ariadne}}
+\begin{DoxyCompactList}\small\item\em Top-\/level Ariadne namespace. \end{DoxyCompactList}\end{DoxyCompactItemize}

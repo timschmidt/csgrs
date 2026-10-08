@@ -1,0 +1,16 @@
+Preserve finite domains and exact witnesses in region queries
+
+Project algebraic ray intersections over the actual retained curve range and
+prove denominator orientation on that range. Reuse the shared selected-fiber
+solver, remove the duplicate unit-only projector and weight-sign helper, and
+keep exterior spans in their original source chart.
+
+Construct chord representatives through the existing strict interior-scalar
+query. A certified root order need not leave a strict gap between stored outer
+intervals; preserve exact witnesses and refine when that gap is still needed.
+
+Validation: formatting, all-target Clippy with all features and no default
+features, and 185 release tests pass, including 109 public integration cases.
+A fresh parent control fails both new ray regressions and both repaired chord
+topology regressions. Source and executable hashes bind the isolated candidate
+to this staged patch; the larger corner-carrier migration remains separate.

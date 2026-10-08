@@ -1,0 +1,12 @@
+{
+  "status": "unqualified exploratory timeout; not compared against prior commit",
+  "returncode": 124,
+  "timed_out": true,
+  "timeout_seconds": 90,
+  "source": "finite-circle-domain-next.rs",
+  "source_sha256": "f427b563be65e95beaa9471b48ad919e3decaacc593810b7cb19910d91bad6dd",
+  "executable_sha256": "48fe82e85ee72685b9d6ad232f11ed004fde27020359c7dd451d4323c2efa2d6",
+  "normal_library_sha256": "7684d1d8d9b163dfd91c7cea3d696b720e330a58f20eb13607588cc82aa3dea9",
+  "log": "finite-circle-domain-next.log",
+  "candidate": "native-rational-publication"
+}

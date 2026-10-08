@@ -1,0 +1,14 @@
+[package]
+name = "calcium-sign-consumer-probe-baseline"
+version = "0.1.0"
+edition = "2024"
+publish = false
+[workspace]
+[dependencies]
+hyperreal = { path = "../sign-consumers/baseline/hyperreal" }
+hyperlimit = { path = "../sign-consumers/baseline/hyperlimit" }
+hypersolve = { path = "../sign-consumers/baseline/hypersolve" }
+num = "0.4.3"
+[[bin]]
+name = "calcium-sign-consumer-probe-baseline"
+path = "../sign-consumer-probe.rs"

@@ -1,0 +1,462 @@
+Edinburgh Research Explorer
+
+Lazy functional algorithms for exact real functionals
+23rd International Symposium, MFCS'98 Brno, Czech Republic, August 24–28, 1998
+Proceedings
+Citation for published version:
+Simpson, A 1998, Lazy functional algorithms for exact real functionals: 23rd International Symposium,
+MFCS'98 Brno, Czech Republic, August 24–28, 1998 Proceedings. in L Brim, J Gruska & J Zlatuska (eds),
+Mathematical Foundations of Computer Science 1998: 23rd International Symposium, MFCS'98 Brno,
+Czech Republic, August 24–28, 1998 Proceedings. vol. 1450, Lecture Notes in Computer Science, vol.
+1450, Springer, pp. 456-464. https://doi.org/10.1007/BFb0055795
+
+
+Digital Object Identifier (DOI):
+10.1007/BFb0055795
+
+
+Link:
+Link to publication record in Edinburgh Research Explorer
+
+
+Document Version:
+Peer reviewed version
+
+
+
+Published In:
+Mathematical Foundations of Computer Science 1998
+
+
+
+
+General rights
+Copyright for the publications made accessible via the Edinburgh Research Explorer is retained by the author(s)
+and / or other copyright owners and it is a condition of accessing these publications that users recognise and
+abide by the legal requirements associated with these rights.
+
+
+Take down policy
+The University of Edinburgh has made every reasonable effort to ensure that Edinburgh Research Explorer
+content complies with UK legislation. If you believe that the public display of this file breaches copyright please
+contact openaccess@ed.ac.uk providing details, and we will remove access to the work immediately and
+investigate your claim.
+
+
+
+
+Download date: 06. Sep. 2026
+Simpson, A. (1998). Lazy functional algorithms for exact real functionals. In Brim, L., Gruska,
+J., & Zlatuska, J. (Eds.), Mathematical Foundations of Computer Science 1998. (pp. 456-464).
+(Lecture Notes in Computer Science). Springer Berlin / Heidelberg. doi: 10.1007/BFb0055795
+
+
+
+
+                                   Lazy Functional Algorithms for
+                                       Exact Real Functionals
+                                                     Alex K. Simpson
+                              LFCS, Department of Computer Science, University of Edinburgh,
+                                 JCMB, King's Buildings, Edinburgh, EH9 3JZ, Scotland
+                                               <Alex.Simpson@dcs.ed.ac.uk>
+
+
+
+                           Abstract. We show how functional languages can be used to write pro-
+                           grams for real-valued functionals in exact real arithmetic. We concen-
+                           trate on two useful functionals: de nite integration, and the functional
+                           returning the maximum value of a continuous function over a closed in-
+                           terval. The algorithms are a practical application of a method, due to
+                           Berger, for computing quanti ers over streams. Correctness proofs for
+                           the algorithms make essential use of domain theory.
+
+                     1 Introduction
+                     In exact real number computation, in nite representations of reals are employed
+                     to avoid the usual rounding errors that are inherent in oating point compu-
+                     tation [4{6,17]. For certain real number computations that are highly sensitive
+                     to small variations in the input, such rounding errors become inordinately large
+                     and the use of oating-point algorithms can lead to completely erroneous results
+                     [1,14]. In such situations, exact real number computation provides guaranteed
+                     correctness, although at the (probably inevitable) price of a loss of eciency.
+                     How to improve eciency is a eld of active research [9].
+                         Lazy functional programming provides a natural implementational style for
+                     exact real algorithms. One reason is that lazy functional languages support lazy
+                     in nite data structures, such as streams, which can be coveniently used to repre-
+                     sent real numbers. The ecient management of such in nite data structures (for
+                     example, using call-by-need to avoid repeated computations) can be entrusted
+                     to the language implementer, leaving the programmer free to concentrate on
+                     the essentials of the algorithms being developed. Also, functional programming
+                     naturally supports the recursive de nition of functions, which is the most useful
+                     method of de ning exact functions on real numbers. Such considerations were
+                     important motivating factors in [4,5,17,6,7,10].
+                         One principal distinguishing feature of functional languages is their accep-
+                     tance of functions as rst-class values, and the associated possibility of passing
+                     functions as arguments to other function(al)s. In the context of exact real number
+                     computation, this raises the question of whether it is possible to write functional
+                     algorithms to implement useful functionals on real numbers. In [8], Edalat and
+                     Escardo show how to extend Real PCF [10] with primitive functionals for de -
+                     nite integration, and for the maximum value attained by a continuous function
+over a closed interval. However, their operational semantics is nondeterminis-
+tic, and requires a parallel evaluation strategy which is not readily supported
+within the context of the standard sequential functional languages. The problem
+of whether such algorithms are possible sequentially was originally posed in Di
+Gianantonio's PhD thesis [6], where it was conjectured that they are not.
+    In this paper we show that Di Gianantonio's conjecture is false. We provide
+sequential functional algorithms for the speci c and useful functionals of inte-
+gration and maximum. The algorithms rely on a clever, but little known, idea
+of Berger, who showed how to compute quanti ers over predicates on streams
+sequentially [2]. Berger's algorithms deserve to be better known, especially in
+the light of their possible applications.
+    The work of Berger, Di Gianantonio, Escardo and Edalat, referred to above,
+was carried out in the context of the minimal functional language PCF [15]
+(and extensions of it). It would be fully possible to write this paper in the same
+setting, but we prefer instead to adopt a less spartan approach. The goal of this
+paper is to describe and verify particular functional algorithms. We therefore
+use an easily readable, although not formally de ned, functional pseudocode
+for expressing algorithms (just as an informal imperative pseudocode is used to
+specify algorithms throughout computer science). We also make use of a simple
+type discipline to specify the domains and codomains of functions.
+    Not only does the type discipline improve the readability of the code, it
+also serves a more signi cant purpose. The statements of correctness of the
+algorithms and their veri cation make essential use of a denotational semantics
+de ned in terms of the type structure. Indeed it is a further bene t of using
+a functional language that a denotational semantics is easily obtained using
+standard constructions on complete partial orders. Because we have not formally
+de ned the language, we cannot formally de ne its semantics either. Nonetheless,
+the denotational semantics of functional programming languages is now well
+enough understood that it is possible to use such semantics in an informal way
+with full mathematical rigour. Our approach is to use denotational semantics
+as one more mathematical tool for verifying informally speci ed algorithms,
+alongside all the other tools available from the body of mathematics as a whole.
+    Perhaps what is most interesting about the use of denotational semantics in
+this paper is that it goes beyond the mere existence of xed-points and their ba-
+sic properties. Instead, the correctness proofs make use of topological properties
+(moduli of continuity) of the denotations of higher-order functions. Understand-
+ing the denotational semantics is helpful even to appreciate the correctness of
+the algorithms informally. In order to verify the algorithms rigorously, some use
+of domain theory appears to be essential.
+
+2 Types and their Denotations
+In our functional pseudocode, we assume basic datatypes like int, the type of
+integers, bool, the type of booleans, as well as some convenient nite types:
+  type two = {0,1}
+  type three = {-1,0,1}
+We assume that two is a subtype of three in the obvious way (so we shall
+not bother to include explicit coercions between them). The type constructors
+we use are A ! B, function space, A  B, cartesian product, and A stream.
+Function application is assumed to be lazy. Mainly for denotational simplicity,
+we interpret  as a lazy product (thus a pair may converge in one component but
+not the other). The behaviour of streams is best explained via the denotational
+semantics.
+    For the denotational semantics, we use directed-complete partial orders with
+least element (henceforth cpos) for interpreting datatypes, and continuous func-
+tions between them for interpreting programs (see e.g. [12]). In Sec. 3 we refer to
+cpos as topological spaces, understanding them as carrying the Scott topology.
+    Given a set X, we write X? for the at cpo with least element ? and with all
+other elements taken from the set X. Basic types are interpreted as at cpos by:
+[ int] = Z?; [ bool] = B ? where B = ftrue ; false g; [ two] = 2? where 2 = f0; 1g;
+and [ three] = 3? where 3 = f?1; 0; 1g. The function space is interpreted as the
+cpo, [ A ! B] , of all continuous functions from [ A] to [ B] ordered pointwise.The
+interpretation of the product type, [ A  B] , is the straightforward cartesian
+product of [ A] and [ B] (as partially ordered sets).
+    Streams will be denoted by possibly in nite sequences, so we develop some
+notation for these. For a set X we write: X  for the set of nite sequences
+of its elements; X ! for the set of in nite sequences; and X 1 for the set of all
+sequences, i.e. X 1 = X  [ X ! . For any sequence , we write j j for the (possibly
+in nite) length of and (i) (where 0  i < j j) for the (i + 1)-th element of .
+We use textual juxtaposition, , for the concatenation of a nite sequence
+with an arbitrary sequence . We write dn for the largest nite pre x, , of
+such that j j  n. For x 2 X we write ?!   x for the in nite constant sequence. In
+the paper, we shall only ever use streams formed from base types. These have a
+straightforward interpretation. If [ A] = X? then [ A stream] = X 1 with 
+if and only if is a pre x of . We write hd : X 1 ! X? and tl : X 1 ! X 1 for
+the evident head and tail functions. The \cons" operation on streams (written
+:: in our pseudocode) is the evident left-strict function from X?  X 1 to X 1 .
+
+
+3 Real Numbers: Representation and Semantics
+In order to write algorithms for functions and functionals on the reals, we rst
+need to choose a representation for real numbers. It is well known that the
+standard base n notation for reals does not provide an adequate representation,
+as many simple functions (e.g. addition) are not computable exactly. However,
+many alternative choices of adequate representation are available. There are
+discussions of these issues in e.g. [6,9].
+    We shall use one of the simplest possible representations: a modi cation of
+the standard binary representation using negative digits. We consider an in nite
+sequence 2 3! (recall that 3 = f?1; 0; 1g) as representing the real number
+                            q( ) = 1
+                                    P (i)  2?(i+1)
+                                       i=0
+This de nes a surjective function q from 3! to I, where we write Ifor the closed
+interval [?1; 1]. The whole real line can be represented using a mantissa from
+3! and an exponent from Z, thus (z; ) 2 Z 3! represents the real number
+2z  q( ). This representation will be used in the full version of the paper, but,
+for lack of space, is not considered further in this conference version.
+    We use the natural type de nition to implement the representation.
+  type interval = three stream
+
+There is, however, a mismatch between the datatype and the representation of
+reals. We have that [ interval] = 31 , whereas only elements in the subset 3!
+have been given interpretations as real numbers.
+     Just as not all values of type interval represent real numbers, neither do all
+functions of type interval ! interval represent functions on real numbers.
+We use the denotational semantics to distinguish those that do. For greater
+generality we work with n-ary functions.
+     An arbitrary function  : (31 )n ! 31 is said to be total if it restricts to a
+function  : (3! )n ! 3! . Clearly ,
+                                      when it exists, is unique. Similarly,a function
+ : (3 ) ! 3 is said to be real if there exists a function ~ : In ! Isuch that, for
+       ! n      !
+all 1; : : :; n 2 3! , it holds that q(( 1 ; : : :; n)) = ~(q( 1); : : :; q( n)). Again
+~ is uniquely determined (because q is surjective). Putting the two together, we
+say that  : (31 )n ! 31 is real-total if it is total and  is real, in which case
+we write ~ : In ! I for the unique induced function.
+     A functional program of type interval ! interval will always be denoted
+by a continuous  : 31 ! 31 . By topological trivialities, if we endow 3! with
+the subspace topology of the Scott topology on 31 , and we endow I with the
+quotient topology of 3! under q, then, for any continuous real-total , we have
+that  and ~ are continuous. The proposition below makes this observation more
+interesting.
+Proposition 1.
+1. The induced topologies on 3! and I are the product and Euclidean topologies
+   respectively.
+2. For any continuous f : In ! I, there exists a real  : (3! )n ! 3! such that
+   f = ~.
+3. For any continuous  : (3! )n ! 3! there exists a total  : (31 )n ! 31
+   such that  = .
+    In the full version of the paper the de nitions and results in this section
+will be related to work on totality in domain theory [2,3, 16], and to topological
+injectivity (and projectivity) results [11].
+
+4 Moduli of Continuity and Stream Quanti ers
+Consider any continuous function  : 21 ! X? where X is any set. We say that
+f is total if, for all 2 2! , it holds that ( ) 2 X.
+Proposition 2. For any total  : 21 ! X? there exists n 2 N such that, for
+all 2 21 , it holds that ( ) = ( dn ).
+We call the least n satisfying the property stated in the proposition the inten-
+sional modulus of continuity of , and we write imc() for it.
+Corollary 1. For any total  : 21 ! X? there exists n 2 N such that, for all
+  ; 2 2! , it holds that dn = dn implies ( ) = ( ).
+We call the smallest such n the extensional modulus of continuity of , and we
+write emc() for it. Obviously emc()  imc(). In the full version of the paper
+there will be a discussion of the relative bene ts of the two notions of modulus.
+    Our rst application, due to Berger [2], is to provide a universal quanti er
+for total predicates on two stream. The algorithm is presented in Fig. 1 below.
+
+witness-not: (two stream    !   bool)  ! two stream
+witness-not (P ) =
+  lazylet w = witness-not (v: P (0 :: v))
+    in if P (0 :: w) then 1 :: witness-not (v: P (1 :: v))
+                     else 0 :: w
+
+forall : (two stream    !
+                       bool)      !
+                                 bool
+forall (P ) = P (witness-not P )
+
+                    Fig. 1. Algorithms for the stream quanti er
+
+Proposition 3. For any total  : 21 ! B ? :
+                            
+             [ forall] () = true   if, for all 2 2! , ( ) = true
+                              false otherwise
+Proof. One proves, by induction on imc(), that, for all total  : 21 ! B ? : if
+there exists 2 2! such that ( ?)!= false then [ witness-not] () is one such
+ ; otherwise [ witness-not] () = 1 . The proposition follows easily.         ut
+5 Functional Algorithms for Maximum and Integration
+The denotation of every program of type interval ! interval will be a con-
+tinous function  from 31 to 31 . If  is real-total then there is a corresponding
+continuous ~ : I! I. Our goal in this paper is to show how Berger's algorithms
+can be applied to the practical problem of computing the values of functionals
+acting on continuous functions on I.
+    We shall concentrate on two basic and useful functionals: the functional that
+  nds the maximum value attained by a continuous function over the closed
+interval [0; 1], and the function that computes the de nite integral of a continuous
+function over [0; 1]. That such maximum values and de nite integrals exist for
+all continuous functions are very basic results in analysis. Observe that both
+operations return values in I.
+5.1 Maximum
+The algorithm for the functional max-fun is presented in Fig. 2. A rst lemma
+states the important properties of the main auxiliary function de ned there.
+
+sub-one: interval      ! interval
+sub-one (1 :: r) =    ?1 :: r
+sub-one (0 :: r) =    ??!1 :: sub-one(r)
+          ?
+sub-one ( 1 :: r) =    ?1
+max-real: interval        interval    ! interval
+max-real (d1 :: r1 ; d2 :: r2 ) =
+              ?
+  let d = d1 d2 in case d of           2 then d1 :: r1
+                                       1 then d1 :: max-real(r1 ; sub-one(r2 ))
+                                       0 then d1 :: max-real(r1 ; r2 )
+                                      ?1 then d2 :: max-real(sub-one(r1 ); r2 )
+                                      ?2 then d2 :: r2
+max-fun: (interval    ! interval)       !
+                                       interval
+max-fun (f ) =
+                    ?!
+ let d = head (f ( 1 )) in if forall (v: head(f (v)) = d)
+                             then d :: (max-fun(v: tail(f (v))))
+                             else max-real (max-fun (v: f (0 :: v));
+                                              max-fun (v: f (1 :: v)) )
+
+                           Fig.2. Maximum-value algorithm
+
+Lemma 1. [ max-real] is real-total with: [ max-real
+                                             ^ ] (x; y) = max(x; y) More-
+                   1
+over, for all ; 2 3 , j[ max-real] ( ; )j  min(j j; j j).
+Observe that the lemma includes the intensional information that max-real only
+examines n digits of the input streams in order to produce n digits of output.
+This is crucial in the proof of the proposition below, which states the correctness
+of max-fun.
+Proposition 4. For any real-total , it holds that [ max-fun] () 2 3! and
+                     q([ max-fun] ()) = maxf~(x) j 0  x  1g:
+    To prove Proposition 4, we prove, by induction on n 2 N, that, for all real-
+total  : 31 ! 31 , it holds that [ max-fun] ()dn = d1 : : :dn 2 3n such that:
+                                              Xn
+                   j maxf~(x) j 0  x  1g ? di:2?i j  2?n                    (1)
+                                                  i=1
+   The base case, n = 0, is trivial. When n > 0, consider h() : 21 ! 3? de ned
+by h()( ) = hd(( )). Because  is real-total, we have that h() is total. The
+required inequality (1) is now proved by an inner induction on emc(h()).
+   Brie y, if emc(h()) = 0 then (1) is proved using the outer induction hy-
+pothesis on n and the general equality, valid for any continuous f : I! I:
+            maxff(x) + c j 0  x  1g = maxff(x) j 0  x  1g + c:          (2)
+When emc(h()) > 0 then (1) is proved using the induction hypothesis on the
+extensional modulus of continuity (the intensional information of Lemma 1 is
+needed) together with the general equality, valid for any continuous f : I! I:
+        maxff(x) j 0  x  1g = max( maxff(x=2) j 0  x  1g;               (3)
+                                       maxff((x + 1)=2) j 0  x  1g ):
+5.2 Integration
+Integration can be performed by much the same method. Observe that integra-
+tion enjoys the following equalities, for any continuous f : I! I:
+            Z1                Z1
+                f(x) + c dx = f(x) dx + c
+             0
+                Z1            Z0 1               Z1
+                     f(x) dx = f(x=2) dx  f((x + 1)=2) dx;
+                  0              0                  0
+
+where  : I I ! I computes the average of two reals. The above equations
+are wholly analogous to (2) and (3) for maximum. Indeed we shall obtain an
+integration algorithm by replacing the binary max-real used in max-fun with
+a function computing the average of two reals. However, the translation is not
+completely straightforward. Recall that the intensional information of Lemma 1
+was crucial to the proof of Proposition 4. This contrasts with the easy:
+Proposition 5. There is no real-total  : 31 ! 31 such that, for all x; y 2 I,
+~(x; y) = x  y and, for all ; 2 21 , j( ; )j  min(j j; j j).
+    The observed problem is a quirk of the particular representation of real num-
+bers we are using. A neat way of solving it is to use a second representation.
+Recall that the set of dyadic rationals is Qd = fm=2n j m; n 2 Zg. We write D for
+the set Qd \ [?1; 1], which we call the set of dyadic digits. WePconsider an in nite
+sequence 2 D ! as representing the real number q0 ( ) = 1         i=0 (i)  2?(i+1) .
+                                      0
+This de nes a surjective function q : D ! [?1; 1] extending q : 3 ! [?1; 1].
+                                          !                           !
+    In order to write algorithms working with dyadic digits we assume an im-
+plemented datatype dyadic of dyadic digits, complete with the associated oper-
+ations for the basic arithmetic operations on dyadic rationals. Then we simply
+de ne a new datatype for the interval [?1; 1] in terms of dyadic streams:
+  type q-interval = dyadic stream
+Semantically we assume that [ dyadic] = D ? , so [ q-interval] = D 1 . The
+notions of a function  : D 1 ! D 1 being total and real-total are de ned entirely
+analogously to the cases for 31 .
+    The full algorithm for integration is presented in Fig. 3. For convenience we
+assume that three is a subtype of dyadic and (hence) interval is a subtype
+of q-interval.
+coerce: q-interval         !
+                           interval
+coerce (qd1 :: qd2 :: qr) =
+               
+ let qc = (2 qd1 ) + qd2 in case          qc < ?1   then    ?1::coerce((qc + 2) :: qr)
+                                          qc > 1    then     1::coerce((qc ? 2) :: qr)
+                                          otherwise then     0::coerce(qc :: qr)
+q-avg: q-interval        q-interval      !  q-interval
+q-avg (qd1 :: qr1 ; qd2 :: qr2 ) = (qd1 + qd2 )=2 :: q-avg (qr1 ; qr2 )
+
+q-int: (interval     !
+                    interval)
+                                    ?!!
+                                    q-interval
+q-int (f ) = let d = head (f ( 1 )) in if forall (v: head(f (v)) = d)
+                                         then d :: (q-int(v: tail(f (v))))
+                                         else q-avg ( q-int (v: f (0 :: v)),
+                                                        q-int (v: f (1 :: v)) )
+
+integrate: (interval       !
+                        interval)             ! interval
+integrate (f ) = coerce (q-int(f ))
+
+                               Fig. 3. Integration algorithm
+
+Lemma 2.
+1. For any 2 D ! , it holds that [ coerce] ( ) 2 3! and q([ coerce] ( )) = q0 ( ).
+2. The function [ q-avg] : D 1 ! D 1 is real-total with [ q-avg
+                                                          ^ ] (x; y) = x  y.
+   Moreover, for all ; 2 D , j[ q-avg] ( ; )j  min(j j; j 0j).
+                        0     1                0
+Proposition 6. For any real-total , it holds that [ integrate] () 2 3! and
+                                                    Z1
+                           q([ integrate] ()) =          ~(x) dx:
+                                                      0
+
+The proof structure closely follows that of Proposition 4.
+
+6 Further Developments
+In the full version of the paper an extension of the integration algorithm will
+be presented that integrates, over any closed interval, functions de ned from
+the interval to the whole real line. This makes use of the mantissa-exponent
+representation of the real line mentioned brie y in Sec. 3.
+    The algorithms in this extended abstract were implemented by Reinhold
+Heckmann in Gofer in summer 1997. The extensions to functions from an ar-
+bitrary closed interval to the full real line have recently been implemented in
+Haskell by David Plume. The integration algorithm performs abysmally on any
+interesting functions. The maximum algorithm performs a little better. A partial
+quantitative analysis of this situation will appear in the full version of the paper.
+The intrinsic intractibility of the operations of integration and nding maximum
+values is to be expected from the work of Ko [13].
+Acknowledgements
+I have bene ted from discussions with Pietro Di Gianantonio, Gordon Plotkin
+and, especially, Martn Escardo. I thank Ieke Moerdijk, Jaap van Oosten and
+Harold Schellinx for their hospitality in Utrecht, where the paper was written
+with nancial support from an NWO Pionier Project.
+
+References
+ 1. J.-C. Bajard, D. Michelucci, J.-M. Moreau, and J.-M. Muller. Introduction to
+    special issue: \Real Numbers and Computers". Journal of Universal Computer
+    Science, 1(7):436{438, 1995.
+ 2. U. Berger. Totale Objecte und Mengen in Bereichstheorie. PhD Thesis, University
+    of Munich, 1990.
+ 3. U. Berger. Total objects and sets in domain theory. Journal of Pure and Applied
+    Logic, 60:91{117, 1993.
+ 4. H.J. Boehm and R. Cartwright. Exact real arithmetic: Formulating real numbers
+    as functions. In D. Turner, editor, Research Topics in Functional Programming,
+    pages 43{64. Adison-Wesley, 1990.
+ 5. H.J. Boehm, R. Cartwright, M. Riggle, and M.J. O'Donnel. Exact real arithmetic:
+    a case study in higher order programming. In ACM Symposium on LISP and
+    Functional Programming, 1986.
+ 6. P. Di Gianantonio. A Functional Approach to Computability on Real Numbers.
+    PhD Thesis, University of Pisa, 1993.
+ 7. P. Di Gianantonio. An abstract data type for real numbers. In Proceedings of
+    ICALP-97, pages 121{131. Springer LNCS 1256, 1997.
+ 8. A. Edalat and M.H. Escardo. Integration in Real PCF. Information and Compu-
+    tation, To appear, 1998.
+ 9. A. Edalat and P.J. Potts. Exact Real Computer Arithmetic. Presented at workshop:
+    New Paradigms for Computation on Classical Spaces, Birmingham, 1997.
+10. M.H. Escardo. PCF extended with real numbers. Theoretical Computer Science,
+    162(1):79{115, 1996.
+11. M.H. Escardo. Properly injective spaces and function spaces. Topology and its
+    Applications, To appear, 1998.
+12. C.A. Gunter. Semantics of Programming. MIT Press, 1992.
+13. Ker-I Ko. Complexity Theory of Real Functions. Birkhauser, Boston, 1991.
+14. V. Menissier-Morain. Arbitrary precision real arithmetic: Design and algorithms.
+    Journal of Symbolic Computation, Submitted, 1996.
+15. G.D. Plotkin. LCF considered as a programming language. Theoretical Computer
+    Science, 5(1):223{255, 1977.
+16. G.D. Plotkin. Full abstraction, totality and PCF. Math. Struct. in Comp. Sci., To
+    appear, 1998.
+17. J. Vuillemin. Exact real arithmetic with continued fractions. IEEE Transactions
+    on Computers, 39(8):1087{1105, 1990.
+

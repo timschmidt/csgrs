@@ -1,0 +1,11 @@
+Require range-owned proofs for analytic contact pruning
+
+Two regular fragments of one parallel can visit the same point across
+intervening cusps. Prove regularity on the joining parameter range before using
+source monotonicity to declare their contacts distinct. Reuse the existing
+same-carrier cache and keep the additional optional proof in bounded exact
+predicate scope before contact replay.
+
+Pass actual ranges to native injectivity and rational control-hull certificates
+so exterior continuations cannot inherit a unit-chart exclusion. Add exact
+regressions for coincident cusp-separated contacts and exterior curve visits.

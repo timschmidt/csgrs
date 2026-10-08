@@ -1,0 +1,91 @@
+\doxysubsection{Assignment\texorpdfstring{$<$}{<} V, E \texorpdfstring{$>$}{>} Class Template Reference}
+\hypertarget{classAriadne_1_1Assignment}{}\label{classAriadne_1_1Assignment}\index{Assignment$<$ V, E $>$@{Assignment$<$ V, E $>$}}
+
+
+{\ttfamily \#include $<$assignment.\+hpp$>$}
+
+
+
+\doxysubsubsection{Description}
+\subsubsection*{template$<$class V, class E$>$\newline
+class Ariadne\+::\+Assignment$<$ V, E $>$}
+An assignment statement of the form $v:=e$. 
+
+
+\begin{DoxyTemplParams}{Template Parameters}
+{\em V} & The variable to be assigned to (left-\/hand-\/side). May be an extended variable (e.\+g. {\ttfamily dot(v)}) \\
+\hline
+{\em E} & The expression to be assigned (right-\/hand-\/side). \\
+\hline
+\end{DoxyTemplParams}
+\begin{DoxySeeAlso}{See also}
+\doxylink{classAriadne_1_1Variable}{Variable}, \doxylink{classAriadne_1_1Expression}{Expression} 
+\end{DoxySeeAlso}
+\doxysubsubsubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1Assignment_abe73ca9fa68debe1b1d3ccb0f03a9e37}\label{classAriadne_1_1Assignment_abe73ca9fa68debe1b1d3ccb0f03a9e37} 
+{\bfseries Assignment} (const V \&v, const E \&e)
+\begin{DoxyCompactList}\small\item\em Construct the assignment {\ttfamily v=e}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Assignment_a190bb10ff6a5b1c7965d9c2ae80bf32f}\label{classAriadne_1_1Assignment_a190bb10ff6a5b1c7965d9c2ae80bf32f} 
+const V \& {\bfseries variable} () const
+\begin{DoxyCompactList}\small\item\em The variable on the left-\/hand side. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Assignment_adbc33489a3e1e5874b5c89c4546b457e}\label{classAriadne_1_1Assignment_adbc33489a3e1e5874b5c89c4546b457e} 
+const E \& {\bfseries expression} () const
+\begin{DoxyCompactList}\small\item\em The expression on the right-\/hand side. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsubsection*{Related Types and Functions}
+(Note that these are not member symbols.) \begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1Assignment_a99be55ed61cf678b2541b5b34ae9ce63}\label{classAriadne_1_1Assignment_a99be55ed61cf678b2541b5b34ae9ce63} 
+\mbox{\hyperlink{classAriadne_1_1List}{List}}$<$ \mbox{\hyperlink{classAriadne_1_1Assignment_a14a906726bf3b5cfac66d142b9627f91}{Real\+Assignment}} $>$ {\bfseries algebraic\+\_\+sort} (const \mbox{\hyperlink{classAriadne_1_1List}{List}}$<$ \mbox{\hyperlink{classAriadne_1_1Assignment_a14a906726bf3b5cfac66d142b9627f91}{Real\+Assignment}} $>$ \&assignments)
+\begin{DoxyCompactList}\small\item\em Sort a list of assignments so that an assigned-\/to variable is only used after it is assigned. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Assignment_ae436c8f162c7f579f66cd99f7e25a4c0}\label{classAriadne_1_1Assignment_ae436c8f162c7f579f66cd99f7e25a4c0} 
+Effective\+Vector\+Multivariate\+Function {\bfseries make\+\_\+function} (const \mbox{\hyperlink{classAriadne_1_1List}{List}}$<$ \mbox{\hyperlink{classAriadne_1_1Assignment_a14a906726bf3b5cfac66d142b9627f91}{Real\+Assignment}} $>$ \&assignments, const \mbox{\hyperlink{classAriadne_1_1Space}{Real\+Space}} \&\mbox{\hyperlink{classAriadne_1_1Expression_a76e1ede281071c0f070c53f4e2f98a45}{arguments}})
+\begin{DoxyCompactList}\small\item\em Make a function on a Euclidean domain given an ordered list of assignments, so that assigned variables can be used in the definition of other variables. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\begin{Indent}\textbf{ Type synonyms}\par
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1Assignment_a97f23b87da3c363af816fd29c27d5445}\label{classAriadne_1_1Assignment_a97f23b87da3c363af816fd29c27d5445} 
+using {\bfseries String\+Assignment} = \mbox{\hyperlink{classAriadne_1_1Assignment}{Assignment}}$<$String\+Variable,\mbox{\hyperlink{classAriadne_1_1Expression}{String\+Expression}}$>$
+\item 
+\Hypertarget{classAriadne_1_1Assignment_a469c44e9c09677e792ef51e28d733c63}\label{classAriadne_1_1Assignment_a469c44e9c09677e792ef51e28d733c63} 
+using {\bfseries Primed\+String\+Assignment} = \mbox{\hyperlink{classAriadne_1_1Assignment}{Assignment}}$<$Primed\+String\+Variable,\mbox{\hyperlink{classAriadne_1_1Expression}{String\+Expression}}$>$
+\item 
+\Hypertarget{classAriadne_1_1Assignment_afe73a2f437f1a0f997f8ba992a00a7be}\label{classAriadne_1_1Assignment_afe73a2f437f1a0f997f8ba992a00a7be} 
+using {\bfseries Integer\+Assignment} = \mbox{\hyperlink{classAriadne_1_1Assignment}{Assignment}}$<$Integer\+Variable,\mbox{\hyperlink{classAriadne_1_1Expression}{Integer\+Expression}}$>$
+\item 
+\Hypertarget{classAriadne_1_1Assignment_a395f4783830269e7ea93d29ac5703644}\label{classAriadne_1_1Assignment_a395f4783830269e7ea93d29ac5703644} 
+using {\bfseries Primed\+Integer\+Assignment} = \mbox{\hyperlink{classAriadne_1_1Assignment}{Assignment}}$<$Primed\+Integer\+Variable,\mbox{\hyperlink{classAriadne_1_1Expression}{Integer\+Expression}}$>$
+\item 
+\Hypertarget{classAriadne_1_1Assignment_a14a906726bf3b5cfac66d142b9627f91}\label{classAriadne_1_1Assignment_a14a906726bf3b5cfac66d142b9627f91} 
+using {\bfseries Real\+Assignment} = \mbox{\hyperlink{classAriadne_1_1Assignment}{Assignment}}$<$\mbox{\hyperlink{classAriadne_1_1Variable}{Real\+Variable}},\mbox{\hyperlink{classAriadne_1_1Expression}{Real\+Expression}}$>$
+\item 
+\Hypertarget{classAriadne_1_1Assignment_a8d7e237e65c498b5abd0c2fd2a737caf}\label{classAriadne_1_1Assignment_a8d7e237e65c498b5abd0c2fd2a737caf} 
+using {\bfseries Primed\+Real\+Assignment} = \mbox{\hyperlink{classAriadne_1_1Assignment}{Assignment}}$<$Primed\+Real\+Variable,\mbox{\hyperlink{classAriadne_1_1Expression}{Real\+Expression}}$>$
+\item 
+\Hypertarget{classAriadne_1_1Assignment_a525a959560f9f5536e0a1754072ea31f}\label{classAriadne_1_1Assignment_a525a959560f9f5536e0a1754072ea31f} 
+using {\bfseries Dotted\+Real\+Assignment} = \mbox{\hyperlink{classAriadne_1_1Assignment}{Assignment}}$<$Dotted\+Real\+Variable,\mbox{\hyperlink{classAriadne_1_1Expression}{Real\+Expression}}$>$
+\item 
+\Hypertarget{classAriadne_1_1Assignment_a619f2756e64d0269b1a3945bb08a3b58}\label{classAriadne_1_1Assignment_a619f2756e64d0269b1a3945bb08a3b58} 
+using {\bfseries Primed\+String\+Assignments} = \mbox{\hyperlink{classAriadne_1_1List}{List}}$<$\mbox{\hyperlink{classAriadne_1_1Assignment_a469c44e9c09677e792ef51e28d733c63}{Primed\+String\+Assignment}}$>$
+\item 
+\Hypertarget{classAriadne_1_1Assignment_a0e007e718a5809dd178e4a4bdd5a2c65}\label{classAriadne_1_1Assignment_a0e007e718a5809dd178e4a4bdd5a2c65} 
+using {\bfseries Real\+Assignments} = \mbox{\hyperlink{classAriadne_1_1List}{List}}$<$\mbox{\hyperlink{classAriadne_1_1Assignment_a14a906726bf3b5cfac66d142b9627f91}{Real\+Assignment}}$>$
+\item 
+\Hypertarget{classAriadne_1_1Assignment_a37b4d4300e6cb9c84e49da37de4ad177}\label{classAriadne_1_1Assignment_a37b4d4300e6cb9c84e49da37de4ad177} 
+using {\bfseries Primed\+Real\+Assignments} = \mbox{\hyperlink{classAriadne_1_1List}{List}}$<$\mbox{\hyperlink{classAriadne_1_1Assignment_a8d7e237e65c498b5abd0c2fd2a737caf}{Primed\+Real\+Assignment}}$>$
+\item 
+\Hypertarget{classAriadne_1_1Assignment_a8db0c049732672030b047c0a95728ee1}\label{classAriadne_1_1Assignment_a8db0c049732672030b047c0a95728ee1} 
+using {\bfseries Dotted\+Real\+Assignments} = \mbox{\hyperlink{classAriadne_1_1List}{List}}$<$\mbox{\hyperlink{classAriadne_1_1Assignment_a525a959560f9f5536e0a1754072ea31f}{Dotted\+Real\+Assignment}}$>$
+\item 
+\Hypertarget{classAriadne_1_1Assignment_ae6d4fe32ca9c2c1060000fc0431e5650}\label{classAriadne_1_1Assignment_ae6d4fe32ca9c2c1060000fc0431e5650} 
+using {\bfseries Real\+Constant\+Assignment} = \mbox{\hyperlink{classAriadne_1_1Assignment}{Assignment}}$<$\mbox{\hyperlink{classAriadne_1_1Variable}{Real\+Variable}},\mbox{\hyperlink{classAriadne_1_1Real}{Real}}$>$
+\end{DoxyCompactItemize}
+\end{Indent}
+
+
+The documentation for this class was generated from the following files\+:\begin{DoxyCompactItemize}
+\item 
+source/geometry/\mbox{\hyperlink{point_8hpp}{point.\+hpp}}\item 
+source/symbolic/\mbox{\hyperlink{assignment_8hpp}{assignment.\+hpp}}\item 
+source/symbolic/\mbox{\hyperlink{expression_8decl_8hpp}{expression.\+decl.\+hpp}}\end{DoxyCompactItemize}

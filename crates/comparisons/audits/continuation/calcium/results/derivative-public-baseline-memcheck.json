@@ -1,0 +1,25 @@
+{
+  "tag": "derivative-public-baseline-memcheck",
+  "started": "2026-09-09T04:16:37.286Z",
+  "finished": "2026-09-09T04:16:45.542Z",
+  "elapsedSeconds": 8.254196663,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison",
+  "command": "valgrind",
+  "args": [
+    "--vgdb=no",
+    "--tool=memcheck",
+    "--error-exitcode=97",
+    "--leak-check=full",
+    "--show-leak-kinds=all",
+    "--errors-for-leak-kinds=definite,indirect,possible",
+    "/tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/release/calcium-derivative-baseline-cpu",
+    "baseline",
+    "1",
+    "24",
+    "128",
+    "fresh_curve",
+    "8"
+  ],
+  "code": 0,
+  "signal": null
+}

@@ -1,0 +1,24 @@
+{
+  "tag": "log-v2-trial-alloc-build",
+  "started": "2026-09-08T09:32:08.828Z",
+  "finished": "2026-09-08T09:32:09.179Z",
+  "elapsedSeconds": 0.348526668,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison",
+  "command": "env",
+  "args": [
+    "TMPDIR=/home/tim/Documents/GitHub/workspace/calcium-build-tmp.gVX5v4",
+    "CARGO_INCREMENTAL=0",
+    "cargo",
+    "build",
+    "--offline",
+    "--release",
+    "--features",
+    "allocation-count",
+    "--manifest-path",
+    "audits/continuation/calcium/trial-bench/Cargo.toml",
+    "--target-dir",
+    "/home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype"
+  ],
+  "code": 0,
+  "signal": null
+}

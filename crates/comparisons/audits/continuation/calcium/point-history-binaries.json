@@ -1,0 +1,41 @@
+{
+  "root": "/tmp/calcium-point-history.L38XCJ",
+  "artifacts": [
+    {
+      "variant": "baseline",
+      "mode": "cpu",
+      "path": "/tmp/calcium-point-history.L38XCJ/baseline-cpu",
+      "bytes": 3187264,
+      "sha256": "d0ea443b7f35b9a8f002580bf3ced5c2b340568d963701c1562106569a8fb524"
+    },
+    {
+      "variant": "baseline",
+      "mode": "allocation",
+      "path": "/tmp/calcium-point-history.L38XCJ/baseline-allocation",
+      "bytes": 3198016,
+      "sha256": "aab06473d7b752cc38057dc93f5919ac9623ccc77ae936a2af4f67927e968f6a"
+    },
+    {
+      "variant": "candidate",
+      "mode": "cpu",
+      "path": "/tmp/calcium-point-history.L38XCJ/candidate-cpu",
+      "bytes": 3188392,
+      "sha256": "54a29b0268f647ddac06dd7fee6f4dde8f046347f7e9ae870676f3cfcefba18e"
+    },
+    {
+      "variant": "candidate",
+      "mode": "allocation",
+      "path": "/tmp/calcium-point-history.L38XCJ/candidate-allocation",
+      "bytes": 3199192,
+      "sha256": "5ae4073ced3adfc9f9fd2a254c0cef529df54c32312f53e1162c3ff590ce96dd"
+    }
+  ],
+  "sourceOriginSha256": "36e6ede1b9857e1680add0c4d7697261bca063c422cc316fb539fa1bc26a3c71",
+  "harnessSources": {
+    "point-history-base.rs": "5db127b416d4cb39a2faed2426f883a3d2b3cb5d8e74ca014f3de28f4e4df9a6",
+    "point-history-work.rs": "194791cab390fd063aa57388e4b36bdc24e3d1cf0fc64e0e49c640f581ba6527",
+    "point-history-cpu.rs": "c54d77fad33a040e3939b30e3de34db4cea51546f4d8f3e3041f83b72ca031f1",
+    "point-history-allocation.rs": "23800d1dbdf137f8a899395a6893297b8551b7f4e4364a5984ad0b122a728288"
+  },
+  "recorded": "2026-09-10T21:41:00.614Z"
+}

@@ -1,0 +1,72 @@
+[
+  {
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve-6e6572a45c5b177b",
+      "--exact",
+      "bezier_offset::conversion_tests::finite_parallel_regularity_clips_against_selected_endpoint_authorities",
+      "--test-threads=1",
+      "--nocapture"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.0034852009848691523,
+    "binary": "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve-6e6572a45c5b177b",
+    "sha256": "2e35669386918133a2c969c85f3c6ad5f70254c318647db1001de076a0f4f2a5",
+    "log": "finite-parallel-regularity-focused-finite_parallel_regularity_clips_against_selected_endpoint_authorities.log"
+  },
+  {
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve_bezier_fit_offset-33e9c0824e281743",
+      "--exact",
+      "finite_parallel_singularity_ranges_preserve_charts_and_normal_sheets",
+      "--test-threads=1",
+      "--nocapture"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.015598002006299794,
+    "binary": "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve_bezier_fit_offset-33e9c0824e281743",
+    "sha256": "4f47b07dd8f25e80551f293a1e345274ead209f549e49a6c6e4a27cc0137de83",
+    "log": "finite-parallel-regularity-focused-finite_parallel_singularity_ranges_preserve_charts_and_normal_sheets.log"
+  },
+  {
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve_bezier_fit_offset-33e9c0824e281743",
+      "--exact",
+      "finite_parallel_singularity_ranges_separate_source_roots_and_poles",
+      "--test-threads=1",
+      "--nocapture"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.003457803017226979,
+    "binary": "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve_bezier_fit_offset-33e9c0824e281743",
+    "sha256": "4f47b07dd8f25e80551f293a1e345274ead209f549e49a6c6e4a27cc0137de83",
+    "log": "finite-parallel-regularity-focused-finite_parallel_singularity_ranges_separate_source_roots_and_poles.log"
+  },
+  {
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve_bezier_fit_offset-33e9c0824e281743",
+      "--exact",
+      "parallel_cusp_sign_excludes_shared_algebraic_source_singularities",
+      "--test-threads=1",
+      "--nocapture"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.03168364998418838,
+    "binary": "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve_bezier_fit_offset-33e9c0824e281743",
+    "sha256": "4f47b07dd8f25e80551f293a1e345274ead209f549e49a6c6e4a27cc0137de83",
+    "log": "finite-parallel-regularity-focused-parallel_cusp_sign_excludes_shared_algebraic_source_singularities.log"
+  },
+  {
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve-6e6572a45c5b177b",
+      "--exact",
+      "bezier_offset::conversion_tests::general_algebraic_cusp_points_are_exact_rational_images",
+      "--test-threads=1",
+      "--nocapture"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.0156147210218478,
+    "binary": "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve-6e6572a45c5b177b",
+    "sha256": "2e35669386918133a2c969c85f3c6ad5f70254c318647db1001de076a0f4f2a5",
+    "log": "finite-parallel-regularity-focused-general_algebraic_cusp_points_are_exact_rational_images.log"
+  }
+]

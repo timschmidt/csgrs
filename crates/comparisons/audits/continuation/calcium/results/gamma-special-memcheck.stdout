@@ -1,0 +1,12 @@
+truth_encoding,true=0,false=1,unknown=2
+case,expected,actual,passed
+positive_infinity,positive_infinity,undefined,0
+negative_infinity,undefined,positive_infinity,0
+unknown,unknown,positive_infinity,0
+undefined,undefined,positive_infinity,0
+unsigned_infinity,undefined,positive_infinity,0
+positive_imaginary_infinity,zero,positive_infinity,0
+negative_imaginary_infinity,zero,positive_infinity,0
+finite_control_0,Equal,Equal,1
+finite_control_1,Equal,Equal,1
+finite_control_2,Equal,Equal,1

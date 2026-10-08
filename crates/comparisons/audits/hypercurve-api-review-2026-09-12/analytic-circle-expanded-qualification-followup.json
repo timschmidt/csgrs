@@ -1,0 +1,66 @@
+{
+  "status": "two analytic-circle assertion failures fixed; expensive unfinished cases remain unqualified",
+  "failed_tests": [
+    "analytic_parallel_circle_tangency_retains_zero_cross_evidence",
+    "analytic_parallel_intersects_independently_parameterized_circles_exactly"
+  ],
+  "current_logs": [
+    "box-construction-policy-analytic-failure-1.log",
+    "box-construction-policy-analytic-failure-2.log"
+  ],
+  "baseline_commit": "b4a0d02d5b2237bb6168eb1fe0e5849f3df82f06",
+  "baseline_log": "box-policy-baseline-analytic-tests.log",
+  "baseline_exit_code": 101,
+  "finding": "Both fail with Unsupported in STRICT on the current migration and preceding committed source. They are not introduced by the box changes.",
+  "unfinished_tests": [
+    "radical_parallel_cusp_offsets_exactly_under_both_policies",
+    "retained_rational_arc_and_analytic_parallel_fillet_exactly"
+  ],
+  "current_target_termination": "box-policy-analytic-target-termination.json",
+  "baseline_long_status": "both selected cases exceeded their shared 300-second baseline target budget",
+  "qualification_rule": "Do not count failed, ignored, filtered or unfinished cases as passing; preserve the full-run log and baseline evidence.",
+  "next_exactness_priority": "bezier-certified-bounds-policy-followup.json",
+  "baseline_long_log": "box-policy-baseline-analytic-long.log",
+  "baseline_long_exit_code": 124,
+  "all_baseline_assertion_failures": {
+    "hypercurve_analytic_parallel_region": [
+      "analytic_parallel_circle_tangency_retains_zero_cross_evidence",
+      "analytic_parallel_intersects_independently_parameterized_circles_exactly"
+    ],
+    "hypercurve_bezier_algebraic_image": [
+      "rational_point_image_transforms_exact_real_linear_root"
+    ],
+    "hypercurve_curve_region_promotion": [
+      "approximate_512_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions",
+      "arc_parabola_fillet_recovers_exact_complement_contacts",
+      "axis_aligned_algebraic_chords_reenter_exact_region_offsets",
+      "line_parabola_fillet_extends_the_regular_incident_cell_exactly",
+      "nonconvex_algebraic_chord_expansion_is_exact_and_local_collapse_is_explicit",
+      "non_ph_bezier_pair_projective_fillet_retains_algebraic_extensions",
+      "retained_circular_regions_chamfer_over_the_full_support",
+      "strict_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions",
+      "unified_region_chamfer_joins_two_algebraic_bezier_cuts",
+      "unified_mixed_line_arc_erosion_splits_after_a_curved_neck_collapse",
+      "unified_region_chamfer_retains_algebraic_bezier_cut",
+      "unified_region_corners_use_rational_circular_carriers",
+      "unified_region_native_chamfer_uses_arc_sweep_evidence",
+      "unified_region_native_fillet_retains_certified_arc_contacts",
+      "unified_region_non_miter_erosions_split_after_neck_collapse"
+    ]
+  },
+  "promotion_baseline_comparison": "box-policy-promotion-baseline-comparison.json",
+  "promotion_baseline_failed": 15,
+  "pcb_baseline": {
+    "log": "box-policy-baseline-pcb-tests.log",
+    "exit_code": 124,
+    "limit_seconds": 300,
+    "unfinished_tests": [
+      "easyduino_scale_process_image_containment_corpus",
+      "easyduino_uno_scale_process_image_with_holes_corpus"
+    ]
+  },
+  "witness_test_migration": "exact-real-image-witness-equality-followup.json",
+  "fixed_by_commit": "1dc591efe7f3dca0ac5b0dce60ed1603caf0ecb1",
+  "qualification": "analytic-circle-inverse-qualification.json",
+  "next": "promotion-native-export-assumptions-followup.json"
+}

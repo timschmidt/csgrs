@@ -1,0 +1,7 @@
+Remove unchecked authored boundary-side hints
+
+Caller-supplied Left/Right flags could be treated as certified during simple-loop normalization. On an exact square, reversing only the flag produced false membership, negative oriented area and incorrect outward offsets. A pinned baseline probe reproduced this under both orientations and policies, with four correct controls.
+
+Remove the public hint-taking constructor and migrate all 55 callers directly to explicit material/hole semantics. The arrangement infers orientation from exact geometry. Drop the unused raw optional side vector and test/benchmark hint plumbing. Keep private side certificates from exact operations in their owning module; no compatibility API remains.
+
+The new regression covers 16 policy/family/orientation/fill combinations through area, membership, offset and Boolean reentry. Existing reversed, nonuniform rational and generated-boundary cases remain. Validation: 382 release cases across eight pinned executables and seven feature/lint, formatting, fuzz-target, documentation and downstream checks pass. Private intersection, offset and trimming algorithms are unchanged.

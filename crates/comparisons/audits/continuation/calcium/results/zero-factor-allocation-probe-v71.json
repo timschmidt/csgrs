@@ -1,0 +1,16 @@
+{
+  "tag": "zero-factor-allocation-probe-v71",
+  "started": "2026-09-11T19:37:29.522Z",
+  "finished": "2026-09-11T19:37:47.135Z",
+  "elapsedSeconds": 17.610201603999997,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "taskset",
+  "args": [
+    "-c",
+    "0",
+    "node",
+    "probe-zero-factor-allocation-v71.mjs"
+  ],
+  "code": 0,
+  "signal": null
+}

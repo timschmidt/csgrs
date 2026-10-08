@@ -1,0 +1,91 @@
+{
+  "commit": "34ae22f1ca9059356b2a6a1fcb3f9263b2c46577",
+  "source": "finite-selected-point-domains-public.rs",
+  "source_sha256": "c0268b16b9731d8ac7e8a36c8b5a09993d5a68015368d2c4f88ae067e9bb9a6b",
+  "executable": "finite-selected-point-baseline",
+  "executable_sha256": "8e5ceb2226212de6234b4a5aa81958a9029866112501ab2da75ce66928a42fbf",
+  "normal_library": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-fixed-distance-domains-libraries/libhypercurve-96140573e602b0b0.rlib",
+  "normal_library_sha256": "714b601f333b40798493e6ce128734b3d2364e200468ebb07c5e34bf947b443d",
+  "compile_command": [
+    "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustc",
+    "--edition=2024",
+    "-O",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-selected-point-domains-public.rs",
+    "--extern",
+    "hypercurve=/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-fixed-distance-domains-libraries/libhypercurve-96140573e602b0b0.rlib",
+    "-L",
+    "dependency=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps",
+    "-o",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-selected-point-baseline"
+  ],
+  "queries": [
+    {
+      "chart": 0,
+      "repeat": false,
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-selected-point-baseline",
+        "0"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.01569723800639622,
+      "log": "finite-selected-point-baseline-chart0-repeat0.log",
+      "counts": {
+        "cases": 4,
+        "successes": 4,
+        "point_replays": 16,
+        "failures": 0
+      }
+    },
+    {
+      "chart": 1,
+      "repeat": false,
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-selected-point-baseline",
+        "1"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.015563337015919387,
+      "log": "finite-selected-point-baseline-chart1-repeat0.log",
+      "counts": {
+        "cases": 4,
+        "successes": 4,
+        "point_replays": 16,
+        "failures": 0
+      }
+    },
+    {
+      "chart": 2,
+      "repeat": false,
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-selected-point-baseline",
+        "2"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.03155984400655143,
+      "log": "finite-selected-point-baseline-chart2-repeat0.log",
+      "counts": {
+        "cases": 4,
+        "successes": 4,
+        "point_replays": 16,
+        "failures": 0
+      }
+    },
+    {
+      "chart": 3,
+      "repeat": false,
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-selected-point-baseline",
+        "3"
+      ],
+      "returncode": 101,
+      "elapsed_seconds": 0.01552442999673076,
+      "log": "finite-selected-point-baseline-chart3-repeat0.log",
+      "counts": {
+        "cases": 4,
+        "successes": 0,
+        "point_replays": 0,
+        "failures": 4
+      }
+    }
+  ]
+}

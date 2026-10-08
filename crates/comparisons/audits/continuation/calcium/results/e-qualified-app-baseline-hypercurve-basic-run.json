@@ -1,0 +1,11 @@
+{
+  "tag": "e-qualified-app-baseline-hypercurve-basic-run",
+  "started": "2026-09-10T01:40:05.804Z",
+  "finished": "2026-09-10T01:40:05.819Z",
+  "elapsedSeconds": 0.011432067000000004,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "/tmp/calcium-e-qualified-apps.AHiwfn/baseline-hypercurve-basic.stripped",
+  "args": [],
+  "code": 0,
+  "signal": null
+}

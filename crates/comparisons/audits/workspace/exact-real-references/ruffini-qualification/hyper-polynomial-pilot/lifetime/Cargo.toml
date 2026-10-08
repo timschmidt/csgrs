@@ -1,0 +1,20 @@
+[package]
+name = "ruffini_hyper_polynomial_lifetime"
+version = "0.0.0"
+edition = "2024"
+publish = false
+
+[[bin]]
+name = "ruffini_hyper_polynomial_lifetime"
+path = "main.rs"
+
+[dependencies]
+hyperreal = { path = "../snapshot/hyperreal" }
+hyperlimit = { path = "../snapshot/hyperlimit" }
+num = "0.4.3"
+
+[features]
+allocation-profile = []
+live-allocations = []
+
+[workspace]

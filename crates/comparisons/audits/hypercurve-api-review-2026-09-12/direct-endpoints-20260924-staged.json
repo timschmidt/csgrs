@@ -1,0 +1,9 @@
+{
+  "parent": "7af48343b93c7f2110e60d26a94c316aad996795",
+  "files": {
+    "src/bezier_offset.rs": "bad80c50b39f43afbac74ffad80485d6e25c7b2ad82ac72ca7bf0eaa0727c9cc",
+    "src/bezier_region.rs": "6f8d8eb78e4f21b58130c213d1ef1f4ae4095f30aafa50190bcf60a5ea398d83",
+    "src/curve_point.rs": "6e0d7a77a3bd779b99bb0049ebaf676e41ad46695e6ac96237976a899998e57b"
+  },
+  "staged_matches_qualified_sources": true
+}

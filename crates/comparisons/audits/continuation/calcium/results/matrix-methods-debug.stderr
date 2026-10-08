@@ -1,0 +1,4 @@
+     Locking 12 packages to latest Rust 1.97.0 compatible versions
+   Compiling calcium-matrix-methods-probe v0.1.0 (/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/matrix-methods-probe)
+    Finished `dev` profile [unoptimized] target(s) in 0.18s
+     Running `/tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/debug/calcium-matrix-methods-probe`

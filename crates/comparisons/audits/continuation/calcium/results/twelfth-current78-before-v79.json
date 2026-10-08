@@ -1,0 +1,13 @@
+{
+  "tag": "twelfth-current78-before-v79",
+  "started": "2026-09-12T00:21:15.610Z",
+  "finished": "2026-09-12T00:21:50.252Z",
+  "elapsedSeconds": 34.640523890999994,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "node",
+  "args": [
+    "verify-twelfth-cost-v78.mjs"
+  ],
+  "code": 0,
+  "signal": null
+}

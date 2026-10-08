@@ -1,0 +1,79 @@
+\doxysubsection{Positive\+Real Class Reference}
+\hypertarget{classAriadne_1_1PositiveReal}{}\label{classAriadne_1_1PositiveReal}\index{PositiveReal@{PositiveReal}}
+
+
+{\ttfamily \#include $<$real.\+hpp$>$}
+
+
+
+\doxysubsubsection{Description}
+Computable lower real numbers defined by conversion to concrete floats. Inheritance diagram for Positive\+Real\+:\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[height=1.302326cm]{classAriadne_1_1PositiveReal}
+\end{center}
+\end{figure}
+\doxysubsubsubsection*{Additional Inherited Members}
+\doxyparagraph*{Public Member Functions inherited from \mbox{\hyperlink{classAriadne_1_1Real}{Real}}}
+\begin{DoxyCompactItemize}
+\item 
+{\bfseries Real} ()
+\begin{DoxyCompactList}\small\item\em Default constructor yields the integer {\ttfamily 0} as a real number. \end{DoxyCompactList}\item 
+{\bfseries Real} (\mbox{\hyperlink{namespaceAriadne_a536cc349b9d52657c9d01d3f09c4633e}{Shared\+Pointer}}$<$ const Interface $>$)
+\begin{DoxyCompactList}\small\item\em Construct from any class implementing the real number interface. \end{DoxyCompactList}\item 
+{\bfseries Real} (\mbox{\hyperlink{classAriadne_1_1ConvergentSequence}{Convergent\+Sequence}}$<$ Dyadic\+Bounds $>$ const \&)
+\begin{DoxyCompactList}\small\item\em Construct from a sequence of dyadic bounds converging to a singleton intersection. \end{DoxyCompactList}\item 
+{\bfseries Real} (\mbox{\hyperlink{classAriadne_1_1FastCauchySequence}{Fast\+Cauchy\+Sequence}}$<$ \mbox{\hyperlink{classAriadne_1_1Dyadic}{Dyadic}} $>$ const \&)
+\begin{DoxyCompactList}\small\item\em Construct from a fast convergent sequence of dyadic numbers i.\+e. $|w_m-w_n|\leq 2 ^\min(m,n)$. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\begin{DoxyCompactItemize}
+\item 
+{\bfseries Real} (double)=delete
+\begin{DoxyCompactList}\small\item\em Unsafe construction from a double is DEPRECATED. \end{DoxyCompactList}\item 
+{\bfseries Real} (\mbox{\hyperlink{namespaceAriadne_a008e7f6ae8f621fbb1d876061812b9b2}{Int}} n)
+\begin{DoxyCompactList}\small\item\em Convert from a builtin integer. \end{DoxyCompactList}\item 
+{\bfseries Real} (\mbox{\hyperlink{classAriadne_1_1ExactDouble}{Exact\+Double}} d)
+\begin{DoxyCompactList}\small\item\em Construct from a double-\/precision value representing a number exactly. \end{DoxyCompactList}\item 
+{\bfseries Real} (\mbox{\hyperlink{classAriadne_1_1Integer}{Integer}} const \&n)
+\begin{DoxyCompactList}\small\item\em Construct from an integer. \end{DoxyCompactList}\item 
+{\bfseries Real} (\mbox{\hyperlink{classAriadne_1_1Dyadic}{Dyadic}} const \&d)
+\begin{DoxyCompactList}\small\item\em Construct from a dyadic number {\itshape d=p/2\textsuperscript{q}} for integers {\itshape p}, {\itshape q}. \end{DoxyCompactList}\item 
+{\bfseries Real} (\mbox{\hyperlink{classAriadne_1_1Decimal}{Decimal}} const \&d)
+\begin{DoxyCompactList}\small\item\em Construct from a decimal number, given by its decimal expansion. \end{DoxyCompactList}\item 
+{\bfseries Real} (\mbox{\hyperlink{classAriadne_1_1Rational}{Rational}} const \&q)
+\begin{DoxyCompactList}\small\item\em Construct from a rational number. \end{DoxyCompactList}\item 
+{\bfseries Real} (Float\+DP x)
+\begin{DoxyCompactList}\small\item\em DEPRECATED. \end{DoxyCompactList}\item 
+{\bfseries Real} (Effective\+Number r)
+\begin{DoxyCompactList}\small\item\em DEPRECATED. \end{DoxyCompactList}\item 
+{\bfseries operator Effective\+Number} () const
+\begin{DoxyCompactList}\small\item\em Convert to an effective number for computations. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\hyperlink{classAriadne_1_1UpperReal}{Upper\+Real}} {\bfseries upper} () const
+\begin{DoxyCompactList}\small\item\em A real number allowing only computation of upper bounds. \end{DoxyCompactList}\item 
+\mbox{\hyperlink{classAriadne_1_1LowerReal}{Lower\+Real}} {\bfseries lower} () const
+\begin{DoxyCompactList}\small\item\em A real number allowing only computation of lower bounds. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\hyperlink{classAriadne_1_1ValidatedReal}{Validated\+Real}} {\bfseries compute} (\mbox{\hyperlink{classAriadne_1_1Effort}{Effort}} eff) const
+\begin{DoxyCompactList}\small\item\em Compute a concrete approximation with a bound on the error. The error bound converges to {\itshape 0} as {\itshape eff} approaches infinity. The time taken should be roughly polynomial in {\itshape eff}. \end{DoxyCompactList}\item 
+Dyadic\+Bounds {\bfseries compute\+\_\+get} (\mbox{\hyperlink{classAriadne_1_1Effort}{Effort}} eff) const
+\begin{DoxyCompactList}\small\item\em Compute a concrete approximation using dyadic bounds. \end{DoxyCompactList}\item 
+Float\+DPBounds {\bfseries compute\+\_\+get} (\mbox{\hyperlink{classAriadne_1_1Effort}{Effort}} eff, \mbox{\hyperlink{classAriadne_1_1DoublePrecision}{Double\+Precision}} pr) const
+\begin{DoxyCompactList}\small\item\em Compute a concrete approximation using double-\/precision. \end{DoxyCompactList}\item 
+\mbox{\hyperlink{classAriadne_1_1Bounds}{Float\+MPBounds}} {\bfseries compute\+\_\+get} (\mbox{\hyperlink{classAriadne_1_1Effort}{Effort}} eff, \mbox{\hyperlink{classAriadne_1_1MultiplePrecision}{Multiple\+Precision}} pr) const
+\begin{DoxyCompactList}\small\item\em Compute a concrete approximation using the given precision. \end{DoxyCompactList}\item 
+Float\+DPBounds {\bfseries get} (\mbox{\hyperlink{classAriadne_1_1DoublePrecision}{Double\+Precision}} pr) const
+\begin{DoxyCompactList}\small\item\em Compute a concrete approximation using double-\/precision. \end{DoxyCompactList}\item 
+\mbox{\hyperlink{classAriadne_1_1Bounds}{Float\+MPBounds}} {\bfseries get} (\mbox{\hyperlink{classAriadne_1_1MultiplePrecision}{Multiple\+Precision}} pr) const
+\begin{DoxyCompactList}\small\item\em Compute a concrete approximation using the given precision. \end{DoxyCompactList}\item 
+Float\+DPBounds {\bfseries compute\+\_\+using} (\mbox{\hyperlink{classAriadne_1_1DoublePrecision}{Double\+Precision}} pr) const
+\begin{DoxyCompactList}\small\item\em Compute a concrete approximation using double-\/precision. \end{DoxyCompactList}\item 
+\mbox{\hyperlink{classAriadne_1_1Bounds}{Float\+MPBounds}} {\bfseries compute\+\_\+using} (\mbox{\hyperlink{classAriadne_1_1MultiplePrecision}{Multiple\+Precision}} pr) const
+\begin{DoxyCompactList}\small\item\em Compute a concrete approximation using the given precision. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+The documentation for this class was generated from the following files\+:\begin{DoxyCompactItemize}
+\item 
+source/numeric/\mbox{\hyperlink{real_8hpp}{real.\+hpp}}\item 
+source/numeric/\mbox{\hyperlink{real_8cpp}{real.\+cpp}}\end{DoxyCompactItemize}

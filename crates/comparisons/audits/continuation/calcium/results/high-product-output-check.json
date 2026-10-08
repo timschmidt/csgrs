@@ -1,0 +1,14 @@
+{
+  "tag": "high-product-output-check",
+  "started": "2026-09-09T19:50:33.649Z",
+  "finished": "2026-09-09T19:50:40.514Z",
+  "elapsedSeconds": 6.862284807999999,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "node",
+  "args": [
+    "check-high-product-controls.mjs",
+    "--high-product-summary"
+  ],
+  "code": 0,
+  "signal": null
+}

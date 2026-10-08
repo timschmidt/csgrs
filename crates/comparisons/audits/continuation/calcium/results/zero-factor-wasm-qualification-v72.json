@@ -1,0 +1,20 @@
+{
+  "tag": "zero-factor-wasm-qualification-v72",
+  "started": "2026-09-11T20:46:20.889Z",
+  "finished": "2026-09-11T20:50:12.611Z",
+  "elapsedSeconds": 231.71994095300002,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "taskset",
+  "args": [
+    "-c",
+    "2",
+    "node",
+    "--expose-gc",
+    "--no-liftoff",
+    "--no-wasm-tier-up",
+    "--no-wasm-lazy-compilation",
+    "qualify-zero-factor-wasm-v72.mjs"
+  ],
+  "code": 0,
+  "signal": null
+}

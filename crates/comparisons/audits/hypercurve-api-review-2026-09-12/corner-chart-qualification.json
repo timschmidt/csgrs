@@ -1,0 +1,21 @@
+{
+  "commit": "f8eab5e",
+  "focused_library_tests": {
+    "passed": 2,
+    "failed": 0
+  },
+  "hypercurve_curve": {
+    "passed": 47,
+    "failed": 0
+  },
+  "hypercurve_nurbs": {
+    "passed": 38,
+    "failed": 0
+  },
+  "hypercurve_polynomial_spline": {
+    "passed": 18,
+    "failed": 0
+  },
+  "whitespace": "passed",
+  "goal": "active"
+}

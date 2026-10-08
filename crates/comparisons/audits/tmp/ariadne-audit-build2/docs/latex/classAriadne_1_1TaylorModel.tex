@@ -1,0 +1,460 @@
+\doxysubsection{Taylor\+Model\texorpdfstring{$<$}{<} P, F \texorpdfstring{$>$}{>} Class Template Reference}
+\hypertarget{classAriadne_1_1TaylorModel}{}\label{classAriadne_1_1TaylorModel}\index{TaylorModel$<$ P, F $>$@{TaylorModel$<$ P, F $>$}}
+
+
+{\ttfamily \#include $<$taylor\+\_\+model.\+hpp$>$}
+
+
+
+\doxysubsubsection{Description}
+\subsubsection*{template$<$class P, class F$>$\newline
+class Ariadne\+::\+Taylor\+Model$<$ P, F $>$}
+A class representing polynomial approximation to a function, scaled to the unit box, with a uniform error bound. 
+
+
+\begin{DoxyTemplParams}{Template Parameters}
+{\em P} & The information paradigm tag, which can be either \doxylink{structAriadne_1_1ValidatedTag}{Validated\+Tag}, indicating that the approximation has a known (uniform) error bound, or \doxylink{structAriadne_1_1ApproximateTag}{Approximate\+Tag}, indicating that no error bound is available. See the \doxylink{group__InformationSubModule}{Information} for more details. \\
+\hline
+{\em F} & The (floating-\/point) number type used internally for the coefficients of the polynomial, such as \doxylink{namespaceAriadne_af915b9f1459c9691328efa71c6f39c6e}{Float\+DP} or \doxylink{namespaceAriadne_a07966b67e613cc8779412beecb60651d}{Float\+MP}. \\
+\hline
+{\em FE} & The (floating-\/point) number type used internally for the error bound.\\
+\hline
+\end{DoxyTemplParams}
+\begin{DoxySeeAlso}{See also}
+\doxylink{classAriadne_1_1Expansion}{Expansion}, \doxylink{group__FunctionModelSubModule_ga05c1c7011f989b1ec0ba7f5d4e81580f}{Validated\+Scalar\+Multivariate\+Taylor\+Function\+Model\+DP}, \doxylink{group__FunctionModelSubModule_ga2c22c0befb7ccf11c80015eee7e7a78b}{Validated\+Vector\+Multivariate\+Taylor\+Function\+Model\+DP}, Taylor\+Constrained\+Image\+Set. 
+\end{DoxySeeAlso}
+\doxysubsubsubsection*{Public Types}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1TaylorModel_a53a710484d807eb74ea634b38e2c511d}\label{classAriadne_1_1TaylorModel_a53a710484d807eb74ea634b38e2c511d} 
+typedef \mbox{\hyperlink{structAriadne_1_1ValidatedTag}{Validated\+Tag}} {\bfseries Paradigm}
+\begin{DoxyCompactList}\small\item\em The computational paradigm. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1TaylorModel_af8216bffddd10d310f3f86354db20a3d}\label{classAriadne_1_1TaylorModel_af8216bffddd10d310f3f86354db20a3d} 
+typedef \mbox{\hyperlink{classAriadne_1_1Sweeper}{Sweeper}}$<$ Raw\+Float\+Type $>$ {\bfseries Properties\+Type}
+\begin{DoxyCompactList}\small\item\em The properties needed to define the \doxylink{classAriadne_1_1TaylorModel}{Taylor\+Model} calculus. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1TaylorModel_ac31b17ffbb8fbf1521e2ec34fb6aa8a3}\label{classAriadne_1_1TaylorModel_ac31b17ffbb8fbf1521e2ec34fb6aa8a3} 
+typedef \mbox{\hyperlink{namespaceAriadne_a9ba6bbf66028bc5b9a5bcee1c9f7a2ca}{Tuple}}$<$ Size\+Type, \mbox{\hyperlink{classAriadne_1_1Sweeper}{Sweeper}}$<$ Raw\+Float\+Type $>$ $>$ {\bfseries Characteristics\+Type}
+\begin{DoxyCompactList}\small\item\em The characteristics of a zero \doxylink{classAriadne_1_1TaylorModel}{Taylor\+Model}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1TaylorModel_a3c664255154d04883b9b124cbfd7c8f8}\label{classAriadne_1_1TaylorModel_a3c664255154d04883b9b124cbfd7c8f8} 
+typedef Model\+Numeric\+Traits$<$ P, F $>$\+::\+Numeric\+Type {\bfseries Numeric\+Type}
+\begin{DoxyCompactList}\small\item\em The type used for algebraic operations. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1TaylorModel_aae899053cf27bc52bd568313880bf0be}\label{classAriadne_1_1TaylorModel_aae899053cf27bc52bd568313880bf0be} 
+typedef Multi\+Index {\bfseries Index\+Type}
+\begin{DoxyCompactList}\small\item\em The type used to index the coefficients. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1TaylorModel_a7602737bfa39e2db65f20ec1ac92c53b}\label{classAriadne_1_1TaylorModel_a7602737bfa39e2db65f20ec1ac92c53b} 
+typedef Expansion\+Type\+::\+Iterator {\bfseries Iterator}
+\begin{DoxyCompactList}\small\item\em An \doxylink{classAriadne_1_1TaylorModel_a7602737bfa39e2db65f20ec1ac92c53b}{Iterator} through the (index,coefficient) pairs of the expansion. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1TaylorModel_afc18c098078d67ef779250522f056b42}\label{classAriadne_1_1TaylorModel_afc18c098078d67ef779250522f056b42} 
+typedef Expansion\+Type\+::\+Const\+Iterator {\bfseries Const\+Iterator}
+\begin{DoxyCompactList}\small\item\em A constant \doxylink{classAriadne_1_1TaylorModel_a7602737bfa39e2db65f20ec1ac92c53b}{Iterator} through the (index,coefficient) pairs of the expansion. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsubsection*{Public Member Functions}
+\begin{Indent}\textbf{ Constructors and destructors.}\par
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1TaylorModel_ad2b4f2ca2097f3c647a2f7889221e65c}\label{classAriadne_1_1TaylorModel_ad2b4f2ca2097f3c647a2f7889221e65c} 
+{\bfseries Taylor\+Model} (Size\+Type as, \mbox{\hyperlink{classAriadne_1_1Sweeper}{Sweeper\+Type}} swp)
+\begin{DoxyCompactList}\small\item\em Construct a \doxylink{classAriadne_1_1TaylorModel}{Taylor\+Model} in {\itshape as} arguments with the given accuracy control. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1TaylorModel_afc4eae6e13cedc59f3d1a8d291eca8bd}\label{classAriadne_1_1TaylorModel_afc4eae6e13cedc59f3d1a8d291eca8bd} 
+{\bfseries Taylor\+Model} (const \mbox{\hyperlink{classAriadne_1_1Expansion}{Expansion}}$<$ Multi\+Index, \mbox{\hyperlink{classAriadne_1_1ExactDouble}{Exact\+Double}} $>$ \&f, const \mbox{\hyperlink{classAriadne_1_1ExactDouble}{Exact\+Double}} \&e, \mbox{\hyperlink{classAriadne_1_1Sweeper}{Sweeper\+Type}} swp)
+\begin{DoxyCompactList}\small\item\em Construct from a map giving the expansion, a constant giving the error, and an accuracy parameter. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1TaylorModel_a67bc14a8a4d46519a80512f4e5b84e75}\label{classAriadne_1_1TaylorModel_a67bc14a8a4d46519a80512f4e5b84e75} 
+\mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} {\bfseries swap} (\mbox{\hyperlink{classAriadne_1_1TaylorModel}{Taylor\+Model}}$<$ P, F $>$ \&tm)
+\begin{DoxyCompactList}\small\item\em Fast swap with another Taylor model. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1TaylorModel_a0ab45a20e4d973e9acd9275fac0f1997}\label{classAriadne_1_1TaylorModel_a0ab45a20e4d973e9acd9275fac0f1997} 
+\mbox{\hyperlink{classAriadne_1_1TaylorModel}{Taylor\+Model}}$<$ P, F $>$ {\bfseries create} () const
+\begin{DoxyCompactList}\small\item\em The zero element of the algebra of Taylor models, with the same number of arguments and accuracy parameters. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1TaylorModel_a40900b3607d95e1f1dda3ce1a95a3211}\label{classAriadne_1_1TaylorModel_a40900b3607d95e1f1dda3ce1a95a3211} 
+\mbox{\hyperlink{classAriadne_1_1TaylorModel}{Taylor\+Model}}$<$ P, F $>$ {\bfseries create\+\_\+zero} () const
+\begin{DoxyCompactList}\small\item\em The zero element of the algebra of Taylor models, with the same number of arguments and accuracy parameters. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1TaylorModel_abf36018e6eb97daf52340393c1db8d93}\label{classAriadne_1_1TaylorModel_abf36018e6eb97daf52340393c1db8d93} 
+\mbox{\hyperlink{classAriadne_1_1TaylorModel}{Taylor\+Model}}$<$ P, F $>$ {\bfseries create\+\_\+constant} (\mbox{\hyperlink{classAriadne_1_1TaylorModel_a3c664255154d04883b9b124cbfd7c8f8}{Numeric\+Type}} c) const
+\begin{DoxyCompactList}\small\item\em A constant element of the algebra of Taylor models, with the same number of arguments and accuracy parameters. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1TaylorModel_aa132ecf98f191a01a119fb9a827a9e28}\label{classAriadne_1_1TaylorModel_aa132ecf98f191a01a119fb9a827a9e28} 
+\mbox{\hyperlink{classAriadne_1_1TaylorModel}{Taylor\+Model}}$<$ P, F $>$ {\bfseries create\+\_\+coordinate} (Size\+Type j) const
+\begin{DoxyCompactList}\small\item\em The {\itshape j\textsuperscript{th}} coordinate element of the algebra of Taylor models, with the same number of arguments and accuracy parameters. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1TaylorModel_a95facce9f05fa9067033e04e216b6802}\label{classAriadne_1_1TaylorModel_a95facce9f05fa9067033e04e216b6802} 
+\mbox{\hyperlink{classAriadne_1_1TaylorModel}{Taylor\+Model}}$<$ P, F $>$ {\bfseries create\+\_\+ball} (Error\+Type e) const
+\begin{DoxyCompactList}\small\item\em \doxylink{classAriadne_1_1Set}{Set} to zero. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1TaylorModel_aaecc226b7db6b8669e75e64e09285de4}\label{classAriadne_1_1TaylorModel_aaecc226b7db6b8669e75e64e09285de4} 
+\mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} {\bfseries clear} ()
+\begin{DoxyCompactList}\small\item\em \doxylink{classAriadne_1_1Set}{Set} to zero. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\end{Indent}
+\begin{Indent}\textbf{ Assignment to constant values.}\par
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1TaylorModel_abe577464d6f463f79c8379403e67f781}\label{classAriadne_1_1TaylorModel_abe577464d6f463f79c8379403e67f781} 
+\mbox{\hyperlink{classAriadne_1_1TaylorModel}{Taylor\+Model}}$<$ P, F $>$ \& {\bfseries operator=} (const \mbox{\hyperlink{classAriadne_1_1TaylorModel_a3c664255154d04883b9b124cbfd7c8f8}{Numeric\+Type}} \&c)
+\begin{DoxyCompactList}\small\item\em \doxylink{classAriadne_1_1Set}{Set} equal to an interval constant, keeping the same number of arguments. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\end{Indent}
+\begin{Indent}\textbf{ Accuracy parameters.}\par
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1TaylorModel_ae3c5c6bcc6aed9bcd67289395de7c4ae}\label{classAriadne_1_1TaylorModel_ae3c5c6bcc6aed9bcd67289395de7c4ae} 
+\mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} {\bfseries set\+\_\+sweeper} (\mbox{\hyperlink{classAriadne_1_1Sweeper}{Sweeper\+Type}} swp)
+\begin{DoxyCompactList}\small\item\em Specify a policy to use to remove low-\/impact terms. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1TaylorModel_a757c2f98ac5271f674ff4306645c9297}\label{classAriadne_1_1TaylorModel_a757c2f98ac5271f674ff4306645c9297} 
+\mbox{\hyperlink{classAriadne_1_1Sweeper}{Sweeper\+Type}} {\bfseries sweeper} () const
+\begin{DoxyCompactList}\small\item\em A shared pointer to an object using for removing low-\/impact terms. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1TaylorModel_a2ab0950ae7e02ce972000bfb7df6d8bf}\label{classAriadne_1_1TaylorModel_a2ab0950ae7e02ce972000bfb7df6d8bf} 
+\mbox{\hyperlink{classAriadne_1_1TaylorModel_af8216bffddd10d310f3f86354db20a3d}{Properties\+Type}} {\bfseries properties} () const
+\begin{DoxyCompactList}\small\item\em The numerical properties of the calculus. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1TaylorModel_a5d56faca91b250e16f0d60db804ded74}\label{classAriadne_1_1TaylorModel_a5d56faca91b250e16f0d60db804ded74} 
+\mbox{\hyperlink{classAriadne_1_1TaylorModel_ac31b17ffbb8fbf1521e2ec34fb6aa8a3}{Characteristics\+Type}} {\bfseries characteristics} () const
+\begin{DoxyCompactList}\small\item\em The characteristics of a zero value. \end{DoxyCompactList}\item 
+Precision\+Type \mbox{\hyperlink{classAriadne_1_1TaylorModel_ad6bf2be97424a4ac1b4d9f6ca1cc2324}{precision}} () const
+\begin{DoxyCompactList}\small\item\em The properties of the zero element. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\end{Indent}
+\doxysubsubsubsection*{Static Public Member Functions}
+\begin{Indent}\textbf{ Named constructors.}\par
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1TaylorModel_acaa3b7b2083a0e0f40a4323a78842dc5}\label{classAriadne_1_1TaylorModel_acaa3b7b2083a0e0f40a4323a78842dc5} 
+static \mbox{\hyperlink{classAriadne_1_1TaylorModel}{Taylor\+Model}}$<$ P, F $>$ {\bfseries zero} (Size\+Type as, \mbox{\hyperlink{classAriadne_1_1Sweeper}{Sweeper\+Type}} swp)
+\begin{DoxyCompactList}\small\item\em Construct the zero quantity in {\itshape as} independent variables. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1TaylorModel_af7e1430a16e61f630c3370f93b6cbbf4}\label{classAriadne_1_1TaylorModel_af7e1430a16e61f630c3370f93b6cbbf4} 
+static \mbox{\hyperlink{classAriadne_1_1TaylorModel}{Taylor\+Model}}$<$ P, F $>$ {\bfseries constant} (Size\+Type as, const \mbox{\hyperlink{classAriadne_1_1TaylorModel_a3c664255154d04883b9b124cbfd7c8f8}{Numeric\+Type}} \&c, \mbox{\hyperlink{classAriadne_1_1Sweeper}{Sweeper\+Type}} swp)
+\begin{DoxyCompactList}\small\item\em Construct a constant quantity in {\itshape as} independent variables. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1TaylorModel_ab78bf8a0f8e1fb3a19453093ffba71f0}\label{classAriadne_1_1TaylorModel_ab78bf8a0f8e1fb3a19453093ffba71f0} 
+static \mbox{\hyperlink{classAriadne_1_1TaylorModel}{Taylor\+Model}}$<$ P, F $>$ {\bfseries constant} (Size\+Type as, const \mbox{\hyperlink{classAriadne_1_1Number}{Generic\+Numeric\+Type}} \&c, \mbox{\hyperlink{classAriadne_1_1Sweeper}{Sweeper\+Type}} swp)
+\begin{DoxyCompactList}\small\item\em Construct a constant quantity in {\itshape as} independent variables. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1TaylorModel_ad79efc279a86692c69b31b692b66c52b}\label{classAriadne_1_1TaylorModel_ad79efc279a86692c69b31b692b66c52b} 
+static \mbox{\hyperlink{classAriadne_1_1TaylorModel}{Taylor\+Model}}$<$ P, F $>$ {\bfseries coordinate} (Size\+Type as, Size\+Type j, \mbox{\hyperlink{classAriadne_1_1Sweeper}{Sweeper\+Type}} swp)
+\begin{DoxyCompactList}\small\item\em Construct the quantity with expansion $x_j$ in {\itshape as} independent variables. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1TaylorModel_ae27557e145524ae41228133fb3c3fea1}\label{classAriadne_1_1TaylorModel_ae27557e145524ae41228133fb3c3fea1} 
+static \mbox{\hyperlink{classAriadne_1_1TaylorModel}{Taylor\+Model}}$<$ P, F $>$ {\bfseries error} (Size\+Type as, Error\+Type e, \mbox{\hyperlink{classAriadne_1_1Sweeper}{Sweeper\+Type}} swp)
+\begin{DoxyCompactList}\small\item\em Construct a constant quantity in {\itshape as} independent variables with value zero and uniform error {\itshape e}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1TaylorModel_ac9926f1ac2410faf4ee8fe2498e74e4b}\label{classAriadne_1_1TaylorModel_ac9926f1ac2410faf4ee8fe2498e74e4b} 
+static \mbox{\hyperlink{classAriadne_1_1TaylorModel}{Taylor\+Model}}$<$ P, F $>$ {\bfseries ball} (Size\+Type as, Error\+Type e, \mbox{\hyperlink{classAriadne_1_1Sweeper}{Sweeper\+Type}} swp)
+\begin{DoxyCompactList}\small\item\em Construct a constant quantity in {\itshape as} independent variables with value zero and uniform error {\itshape e}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1TaylorModel_ae61e83f6aef3a8d28f87aad34daa2feb}\label{classAriadne_1_1TaylorModel_ae61e83f6aef3a8d28f87aad34daa2feb} 
+static \mbox{\hyperlink{classAriadne_1_1TaylorModel}{Taylor\+Model}}$<$ P, F $>$ {\bfseries unit\+\_\+ball} (Size\+Type as, \mbox{\hyperlink{classAriadne_1_1Sweeper}{Sweeper\+Type}} swp)
+\begin{DoxyCompactList}\small\item\em Construct a constant quantity in {\itshape as} independent variables with value zero and uniform error {\itshape e}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1TaylorModel_a4beefbfca0c7d940e3e35ad341a1fb8f}\label{classAriadne_1_1TaylorModel_a4beefbfca0c7d940e3e35ad341a1fb8f} 
+static \mbox{\hyperlink{classAriadne_1_1TaylorModel}{Taylor\+Model}}$<$ P, F $>$ {\bfseries scaling} (Size\+Type as, Size\+Type j, const \mbox{\hyperlink{group__FunctionModule_ga5f13c1d70d7770b9aa4ff0dc2d515ffe}{Interval\+Domain\+Type}} \&codom, \mbox{\hyperlink{classAriadne_1_1Sweeper}{Sweeper\+Type}} swp)
+\begin{DoxyCompactList}\small\item\em Construct the quantity which scales the interval {\itshape codom} onto the unit interval. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1TaylorModel_a627c7fcf9c749d355dad6d72c1073f38}\label{classAriadne_1_1TaylorModel_a627c7fcf9c749d355dad6d72c1073f38} 
+static \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ \mbox{\hyperlink{classAriadne_1_1TaylorModel}{Taylor\+Model}}$<$ P, F $>$ $>$ {\bfseries zeros} (Size\+Type rs, Size\+Type as, \mbox{\hyperlink{classAriadne_1_1Sweeper}{Sweeper\+Type}} swp)
+\begin{DoxyCompactList}\small\item\em Return the vector of zero variables of size {\itshape rs} in {\itshape as} arguments. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1TaylorModel_ab23f6e3172c1d0e3b845f26133686f17}\label{classAriadne_1_1TaylorModel_ab23f6e3172c1d0e3b845f26133686f17} 
+static \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ \mbox{\hyperlink{classAriadne_1_1TaylorModel}{Taylor\+Model}}$<$ P, F $>$ $>$ {\bfseries constants} (Size\+Type as, const \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ \mbox{\hyperlink{classAriadne_1_1TaylorModel_a3c664255154d04883b9b124cbfd7c8f8}{Numeric\+Type}} $>$ \&c, \mbox{\hyperlink{classAriadne_1_1Sweeper}{Sweeper\+Type}} swp)
+\begin{DoxyCompactList}\small\item\em Return the vector of constants with values {\itshape c} in {\itshape as} arguments. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1TaylorModel_adbb918a64073f2fb4e4fb536e24664f0}\label{classAriadne_1_1TaylorModel_adbb918a64073f2fb4e4fb536e24664f0} 
+static \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ \mbox{\hyperlink{classAriadne_1_1TaylorModel}{Taylor\+Model}}$<$ P, F $>$ $>$ {\bfseries coordinates} (Size\+Type as, \mbox{\hyperlink{classAriadne_1_1Sweeper}{Sweeper\+Type}} swp)
+\begin{DoxyCompactList}\small\item\em Return the vector of variables on the unit domain. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1TaylorModel_a6065242f594202713502de9d0b6c2199}\label{classAriadne_1_1TaylorModel_a6065242f594202713502de9d0b6c2199} 
+static \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ \mbox{\hyperlink{classAriadne_1_1TaylorModel}{Taylor\+Model}}$<$ P, F $>$ $>$ {\bfseries scalings} (const \mbox{\hyperlink{group__FunctionModule_gaf5c0b733c80abb59b1c3d1eb58c20099}{Box\+Domain\+Type}} \&codom, \mbox{\hyperlink{classAriadne_1_1Sweeper}{Sweeper\+Type}} swp)
+\begin{DoxyCompactList}\small\item\em Return the vector scaling the box {\itshape codom} onto the unit box. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\end{Indent}
+\doxysubsubsubsection*{Friends}
+\begin{Indent}\textbf{ Paradigm-\/based operations.}\par
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1TaylorModel_a89cb76971521e5929fb45bc6c71b36bb}\label{classAriadne_1_1TaylorModel_a89cb76971521e5929fb45bc6c71b36bb} 
+\mbox{\hyperlink{namespaceAriadne_a76a8b016e5ad61faf9062cc387df5016}{Bool}} {\bfseries consistent} (const \mbox{\hyperlink{classAriadne_1_1TaylorModel}{Taylor\+Model}}$<$ P, F $>$ \&tm1, const \mbox{\hyperlink{classAriadne_1_1TaylorModel}{Taylor\+Model}}$<$ P, F $>$ \&tm2)
+\begin{DoxyCompactList}\small\item\em Test if two models are compatible with each other, in the sense that they could both represent the same function. Equivalent to checking that the two sets of possible functions intersect. If the result is {\itshape true}, then the models are definitely consistent; may return {\itshape false} even if the models are inconsistent. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1TaylorModel_a48b315d2144e81b3dfb8783da734b33e}\label{classAriadne_1_1TaylorModel_a48b315d2144e81b3dfb8783da734b33e} 
+\mbox{\hyperlink{namespaceAriadne_a76a8b016e5ad61faf9062cc387df5016}{Bool}} {\bfseries inconsistent} (const \mbox{\hyperlink{classAriadne_1_1TaylorModel}{Taylor\+Model}}$<$ P, F $>$ \&tm1, const \mbox{\hyperlink{classAriadne_1_1TaylorModel}{Taylor\+Model}}$<$ P, F $>$ \&tm2)
+\begin{DoxyCompactList}\small\item\em Test if one model is incompatible with another. Equivalent to checking that the two sets of possible functions are disjoint. If the result is {\itshape true}, then the models are definitely inconsistent; may return {\itshape false} even if the models are inconsistent. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1TaylorModel_a62a567e9b58c8ffb47806c176c2d18c0}\label{classAriadne_1_1TaylorModel_a62a567e9b58c8ffb47806c176c2d18c0} 
+\mbox{\hyperlink{namespaceAriadne_a76a8b016e5ad61faf9062cc387df5016}{Bool}} {\bfseries refines} (const \mbox{\hyperlink{classAriadne_1_1TaylorModel}{Taylor\+Model}}$<$ P, F $>$ \&tm1, const \mbox{\hyperlink{classAriadne_1_1TaylorModel}{Taylor\+Model}}$<$ P, F $>$ \&tm2)
+\begin{DoxyCompactList}\small\item\em Test if one model refines another, in the sense that it represents a subset of possible functions. If the result is {\itshape true}, then the first model definitely refines the second; may return {\itshape false} even if the first model actually does refine the second. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1TaylorModel_a5b3a15863077af952b55761317ed4a32}\label{classAriadne_1_1TaylorModel_a5b3a15863077af952b55761317ed4a32} 
+\mbox{\hyperlink{classAriadne_1_1TaylorModel}{Taylor\+Model}}$<$ P, F $>$ {\bfseries refinement} (const \mbox{\hyperlink{classAriadne_1_1TaylorModel}{Taylor\+Model}}$<$ P, F $>$ \&tm1, const \mbox{\hyperlink{classAriadne_1_1TaylorModel}{Taylor\+Model}}$<$ P, F $>$ \&tm2)
+\begin{DoxyCompactList}\small\item\em An over-\/approximation to the common refinement of two Taylor models. Since the intersection of represented sets of functions cannot be represented exactly in the class of Taylor\+Models, truncation errors as well as roundoff errors may be present. In the absence of roundoff errors, the result is a subset of both arguments, and is guaranteed to contain any function contained in both arguments. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\end{Indent}
+\begin{Indent}\textbf{ Order operators.}\par
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1TaylorModel_a7e028079c4acf91edc63307c51818114}\label{classAriadne_1_1TaylorModel_a7e028079c4acf91edc63307c51818114} 
+{\footnotesize template$<$class FF$>$ }\\\mbox{\hyperlink{classAriadne_1_1TaylorModel}{Taylor\+Model}}$<$ P, FF $>$ {\bfseries max} (const \mbox{\hyperlink{classAriadne_1_1TaylorModel}{Taylor\+Model}}$<$ P, FF $>$ \&x, const \mbox{\hyperlink{classAriadne_1_1TaylorModel}{Taylor\+Model}}$<$ P, FF $>$ \&y)
+\begin{DoxyCompactList}\small\item\em The pointwise maximum. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1TaylorModel_a5361923ccb92c8a2f766267ec8de7031}\label{classAriadne_1_1TaylorModel_a5361923ccb92c8a2f766267ec8de7031} 
+{\footnotesize template$<$class FF$>$ }\\\mbox{\hyperlink{classAriadne_1_1TaylorModel}{Taylor\+Model}}$<$ P, FF $>$ {\bfseries min} (const \mbox{\hyperlink{classAriadne_1_1TaylorModel}{Taylor\+Model}}$<$ P, FF $>$ \&x, const \mbox{\hyperlink{classAriadne_1_1TaylorModel}{Taylor\+Model}}$<$ P, FF $>$ \&y)
+\begin{DoxyCompactList}\small\item\em The pointwise minimum. \end{DoxyCompactList}\item 
+{\footnotesize template$<$class FF$>$ }\\\mbox{\hyperlink{classAriadne_1_1TaylorModel}{Taylor\+Model}}$<$ P, FF $>$ \mbox{\hyperlink{classAriadne_1_1TaylorModel_a1fb86169e69f398dbf3ddd1e6f4e6068}{abs}} (const \mbox{\hyperlink{classAriadne_1_1TaylorModel}{Taylor\+Model}}$<$ P, FF $>$ \&x)
+\begin{DoxyCompactList}\small\item\em The pointwise absolute value. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\end{Indent}
+\begin{Indent}\textbf{ Stream input/output operators.}\par
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1TaylorModel_a0405e3abfd9b41ee6723c6d220a1f0dc}\label{classAriadne_1_1TaylorModel_a0405e3abfd9b41ee6723c6d220a1f0dc} 
+\mbox{\hyperlink{namespaceAriadne_acbb98ddc4385af4599070e65a1a47ec1}{Output\+Stream}} \& {\bfseries operator$<$$<$} (\mbox{\hyperlink{namespaceAriadne_acbb98ddc4385af4599070e65a1a47ec1}{Output\+Stream}} \&os, const \mbox{\hyperlink{classAriadne_1_1TaylorModel}{Taylor\+Model}}$<$ P, F $>$ \&x)
+\begin{DoxyCompactList}\small\item\em Write to an output stream. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\end{Indent}
+\doxysubsubsubsection*{Related Types and Functions}
+(Note that these are not member symbols.) \begin{Indent}\textbf{ Template shorthands and type synonyms for Taylor models}\par
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1TaylorModel_a2b9341268568a075b2bc5d7c9c588447}\label{classAriadne_1_1TaylorModel_a2b9341268568a075b2bc5d7c9c588447} 
+{\footnotesize template$<$class F$>$ }\\using {\bfseries Validated\+Taylor\+Model} = \mbox{\hyperlink{classAriadne_1_1TaylorModel}{Taylor\+Model}}$<$\mbox{\hyperlink{structAriadne_1_1ValidatedTag}{Validated\+Tag}},F$>$
+\item 
+\Hypertarget{classAriadne_1_1TaylorModel_a2b81732049f5fbadda46593a27039e28}\label{classAriadne_1_1TaylorModel_a2b81732049f5fbadda46593a27039e28} 
+{\footnotesize template$<$class F$>$ }\\using {\bfseries Validated\+Bounds\+Taylor\+Model} = \mbox{\hyperlink{classAriadne_1_1TaylorModel}{Taylor\+Model}}$<$\mbox{\hyperlink{structAriadne_1_1ValidatedTag}{Validated\+Tag}},\mbox{\hyperlink{classAriadne_1_1Bounds}{Bounds}}$<$F$>$$>$
+\item 
+\Hypertarget{classAriadne_1_1TaylorModel_a21871e47102b9fc1c733e93afd0feb05}\label{classAriadne_1_1TaylorModel_a21871e47102b9fc1c733e93afd0feb05} 
+{\footnotesize template$<$class F$>$ }\\using {\bfseries Validated\+Interval\+Taylor\+Model} = \mbox{\hyperlink{classAriadne_1_1TaylorModel}{Taylor\+Model}}$<$\mbox{\hyperlink{structAriadne_1_1ValidatedTag}{Validated\+Tag}},Upper\+Interval$<$F$>$$>$
+\item 
+\Hypertarget{classAriadne_1_1TaylorModel_a807b9a404d3b20abb00774c97439e96f}\label{classAriadne_1_1TaylorModel_a807b9a404d3b20abb00774c97439e96f} 
+{\footnotesize template$<$class F$>$ }\\using {\bfseries Approximate\+Taylor\+Model} = \mbox{\hyperlink{classAriadne_1_1TaylorModel}{Taylor\+Model}}$<$\mbox{\hyperlink{structAriadne_1_1ApproximateTag}{Approximate\+Tag}},F$>$
+\item 
+\Hypertarget{classAriadne_1_1TaylorModel_a3e051d8057ec299645009c7dab02c3a9}\label{classAriadne_1_1TaylorModel_a3e051d8057ec299645009c7dab02c3a9} 
+using {\bfseries Validated\+Taylor\+Model\+DP} = \mbox{\hyperlink{classAriadne_1_1TaylorModel}{Taylor\+Model}}$<$\mbox{\hyperlink{structAriadne_1_1ValidatedTag}{Validated\+Tag}},\mbox{\hyperlink{namespaceAriadne_af915b9f1459c9691328efa71c6f39c6e}{Float\+DP}}$>$
+\item 
+\Hypertarget{classAriadne_1_1TaylorModel_a0dfc47fe23b3c79a4cef155971c8d0d7}\label{classAriadne_1_1TaylorModel_a0dfc47fe23b3c79a4cef155971c8d0d7} 
+using {\bfseries Validated\+Taylor\+Model\+MP} = \mbox{\hyperlink{classAriadne_1_1TaylorModel}{Taylor\+Model}}$<$\mbox{\hyperlink{structAriadne_1_1ValidatedTag}{Validated\+Tag}},\mbox{\hyperlink{namespaceAriadne_a07966b67e613cc8779412beecb60651d}{Float\+MP}}$>$
+\item 
+\Hypertarget{classAriadne_1_1TaylorModel_aad92b48dbfea308e34c50328de1aab29}\label{classAriadne_1_1TaylorModel_aad92b48dbfea308e34c50328de1aab29} 
+using {\bfseries Validated\+Bounds\+Taylor\+Model\+DP} = \mbox{\hyperlink{classAriadne_1_1TaylorModel}{Taylor\+Model}}$<$\mbox{\hyperlink{structAriadne_1_1ValidatedTag}{Validated\+Tag}},Float\+DPBounds$>$
+\item 
+\Hypertarget{classAriadne_1_1TaylorModel_a2fc85818efb9317e9abe69e2d5a21aeb}\label{classAriadne_1_1TaylorModel_a2fc85818efb9317e9abe69e2d5a21aeb} 
+using {\bfseries Validated\+Bounds\+Taylor\+Model\+MP} = \mbox{\hyperlink{classAriadne_1_1TaylorModel}{Taylor\+Model}}$<$\mbox{\hyperlink{structAriadne_1_1ValidatedTag}{Validated\+Tag}},\mbox{\hyperlink{classAriadne_1_1Bounds}{Float\+MPBounds}}$>$
+\item 
+\Hypertarget{classAriadne_1_1TaylorModel_a548c954c09c7dd12a94153aa582eea0b}\label{classAriadne_1_1TaylorModel_a548c954c09c7dd12a94153aa582eea0b} 
+using {\bfseries Validated\+Interval\+Taylor\+Model\+DP} = \mbox{\hyperlink{classAriadne_1_1TaylorModel}{Taylor\+Model}}$<$\mbox{\hyperlink{structAriadne_1_1ValidatedTag}{Validated\+Tag}},Float\+DPUpper\+Interval$>$
+\item 
+\Hypertarget{classAriadne_1_1TaylorModel_add8f56ac2145dafa28434690df4dd8c0}\label{classAriadne_1_1TaylorModel_add8f56ac2145dafa28434690df4dd8c0} 
+using {\bfseries Validated\+Interval\+Taylor\+Model\+MP} = \mbox{\hyperlink{classAriadne_1_1TaylorModel}{Taylor\+Model}}$<$\mbox{\hyperlink{structAriadne_1_1ValidatedTag}{Validated\+Tag}},Float\+MPUpper\+Interval$>$
+\item 
+\Hypertarget{classAriadne_1_1TaylorModel_afc0c40c5b8d6674e3618d693a7bf653b}\label{classAriadne_1_1TaylorModel_afc0c40c5b8d6674e3618d693a7bf653b} 
+using {\bfseries Approximate\+Taylor\+Model\+DP} = \mbox{\hyperlink{classAriadne_1_1TaylorModel}{Taylor\+Model}}$<$\mbox{\hyperlink{structAriadne_1_1ApproximateTag}{Approximate\+Tag}},\mbox{\hyperlink{namespaceAriadne_af915b9f1459c9691328efa71c6f39c6e}{Float\+DP}}$>$
+\item 
+\Hypertarget{classAriadne_1_1TaylorModel_a7db4df99e3068fbde1e27d2a8e72feac}\label{classAriadne_1_1TaylorModel_a7db4df99e3068fbde1e27d2a8e72feac} 
+using {\bfseries Approximate\+Taylor\+Model\+MP} = \mbox{\hyperlink{classAriadne_1_1TaylorModel}{Taylor\+Model}}$<$\mbox{\hyperlink{structAriadne_1_1ApproximateTag}{Approximate\+Tag}},\mbox{\hyperlink{namespaceAriadne_a07966b67e613cc8779412beecb60651d}{Float\+MP}}$>$
+\end{DoxyCompactItemize}
+\end{Indent}
+\doxysubsubsubsection*{Function evaluation.}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1TaylorModel_a53f3f941ff1dc49a8b8815ccba9bf6f6}\label{classAriadne_1_1TaylorModel_a53f3f941ff1dc49a8b8815ccba9bf6f6} 
+\mbox{\hyperlink{classAriadne_1_1TaylorModel}{Taylor\+Model}}$<$ P, F $>$ {\bfseries compose} (const Unscaling \&uf, const \mbox{\hyperlink{classAriadne_1_1TaylorModel}{Taylor\+Model}}$<$ P, F $>$ \&tg)
+\begin{DoxyCompactList}\small\item\em \texorpdfstring{$<$}{<}P,F Compose a vector of Taylor models with another. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1TaylorModel_a9484cf16b712b8b93ea0026e44eabe72}\label{classAriadne_1_1TaylorModel_a9484cf16b712b8b93ea0026e44eabe72} 
+\mbox{\hyperlink{classAriadne_1_1UnitBox}{Unit\+Box}} {\bfseries domain} () const
+\begin{DoxyCompactList}\small\item\em The domain of the quantity, always given by $[-1,1]^{\mathrm{as}}$. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1TaylorModel_afcebf20ec1e61ea6fc76a4c0da61565c}\label{classAriadne_1_1TaylorModel_afcebf20ec1e61ea6fc76a4c0da61565c} 
+\mbox{\hyperlink{group__FunctionModule_ga5f13c1d70d7770b9aa4ff0dc2d515ffe}{Interval\+Domain\+Type}} {\bfseries codomain} () const
+\begin{DoxyCompactList}\small\item\em The codomain of the quantity. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1TaylorModel_a19365032c5f856220c8be4c7a09a78dc}\label{classAriadne_1_1TaylorModel_a19365032c5f856220c8be4c7a09a78dc} 
+Range\+Type {\bfseries range} () const
+\begin{DoxyCompactList}\small\item\em An over-\/approximation to the range of the quantity. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1TaylorModel_a5b590b3d27211ccbe82ea86a0a6fe519}\label{classAriadne_1_1TaylorModel_a5b590b3d27211ccbe82ea86a0a6fe519} 
+Arithmetic\+Type$<$ Coefficient\+Type, \mbox{\hyperlink{classAriadne_1_1Approximation}{Approximate\+Numeric\+Type}} $>$ {\bfseries evaluate} (const \mbox{\hyperlink{classAriadne_1_1TaylorModel}{Taylor\+Model}}$<$ P, F $>$ \&f, const \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ \mbox{\hyperlink{classAriadne_1_1Approximation}{Approximate\+Numeric\+Type}} $>$ \&x)
+\begin{DoxyCompactList}\small\item\em Evaluate the quantity over the interval of points {\itshape x}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1TaylorModel_abf94f98bcce21dc93941c53608af8148}\label{classAriadne_1_1TaylorModel_abf94f98bcce21dc93941c53608af8148} 
+\mbox{\hyperlink{classAriadne_1_1Covector}{Covector}}$<$ \mbox{\hyperlink{classAriadne_1_1TaylorModel_a3c664255154d04883b9b124cbfd7c8f8}{Numeric\+Type}} $>$ {\bfseries gradient} (const \mbox{\hyperlink{classAriadne_1_1TaylorModel}{Taylor\+Model}}$<$ P, F $>$ \&f, const \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ \mbox{\hyperlink{classAriadne_1_1TaylorModel_a3c664255154d04883b9b124cbfd7c8f8}{Numeric\+Type}} $>$ \&x)
+\begin{DoxyCompactList}\small\item\em Evaluate the gradient over the interval of points {\itshape x}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1TaylorModel_a9804e4ccca5978d0ccab79786597f25e}\label{classAriadne_1_1TaylorModel_a9804e4ccca5978d0ccab79786597f25e} 
+\mbox{\hyperlink{classAriadne_1_1TaylorModel}{Taylor\+Model}}$<$ P, F $>$ {\bfseries partial\+\_\+evaluate} (const \mbox{\hyperlink{classAriadne_1_1TaylorModel}{Taylor\+Model}}$<$ P, F $>$ \&x, Size\+Type k, \mbox{\hyperlink{classAriadne_1_1TaylorModel_a3c664255154d04883b9b124cbfd7c8f8}{Numeric\+Type}} c)
+\begin{DoxyCompactList}\small\item\em Substite {\itshape c} for the {\itshape k} th variable. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1TaylorModel_a3dc8086f8a65dc2756d3ea377bba572b}\label{classAriadne_1_1TaylorModel_a3dc8086f8a65dc2756d3ea377bba572b} 
+\mbox{\hyperlink{classAriadne_1_1TaylorModel}{Taylor\+Model}}$<$ P, F $>$ {\bfseries compose} (const \mbox{\hyperlink{classAriadne_1_1TaylorModel}{Taylor\+Model}}$<$ P, F $>$ \&f, const \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ \mbox{\hyperlink{classAriadne_1_1TaylorModel}{Taylor\+Model}}$<$ P, F $>$ $>$ \&g)
+\begin{DoxyCompactList}\small\item\em Evaluate the quantity over the interval of points {\itshape x}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1TaylorModel_aec7cd77b844e188fab1bbe919101e58b}\label{classAriadne_1_1TaylorModel_aec7cd77b844e188fab1bbe919101e58b} 
+\mbox{\hyperlink{classAriadne_1_1TaylorModel}{Taylor\+Model}}$<$ P, F $>$ {\bfseries compose} (const \mbox{\hyperlink{classAriadne_1_1TaylorModel}{Taylor\+Model}}$<$ P, F $>$ \&tf, const Vector\+Unscaling \&u)
+\begin{DoxyCompactList}\small\item\em Scale the variable by post-\/composing with an affine map taking the interval ivl to the unit interval. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsubsection*{Operations on the domain.}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\hyperlink{classAriadne_1_1TaylorModel}{Taylor\+Model}}$<$ P, F $>$ \mbox{\hyperlink{classAriadne_1_1TaylorModel_acc70a678ef39d08ea894790cc5adef55}{embed}} (Size\+Type as1, const \mbox{\hyperlink{classAriadne_1_1TaylorModel}{Taylor\+Model}}$<$ P, F $>$ \&tm2, Size\+Type as3)
+\begin{DoxyCompactList}\small\item\em \texorpdfstring{$<$}{<}P,F\texorpdfstring{$>$}{>} \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1TaylorModel_ac1e7107a0d14df4581ccb8f9b893eb2b}\label{classAriadne_1_1TaylorModel_ac1e7107a0d14df4581ccb8f9b893eb2b} 
+\mbox{\hyperlink{classAriadne_1_1TaylorModel}{Taylor\+Model}}$<$ P, F $>$ {\bfseries split} (const \mbox{\hyperlink{classAriadne_1_1TaylorModel}{Taylor\+Model}}$<$ P, F $>$ \&tm, Size\+Type k, Split\+Part part)
+\begin{DoxyCompactList}\small\item\em Split the Taylor model {\itshape tm}, subdividing along the independent variable {\itshape k}, taking the lower/middle/upper {\itshape part}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1TaylorModel_ad257b260c7f0bd7b866b605e31e078bf}\label{classAriadne_1_1TaylorModel_ad257b260c7f0bd7b866b605e31e078bf} 
+\mbox{\hyperlink{namespaceAriadne_abbe0884d033ed6289d1f654576d7bb07}{Pair}}$<$ \mbox{\hyperlink{classAriadne_1_1TaylorModel}{Taylor\+Model}}$<$ P, F $>$, \mbox{\hyperlink{classAriadne_1_1TaylorModel}{Taylor\+Model}}$<$ P, F $>$ $>$ {\bfseries split} (const \mbox{\hyperlink{classAriadne_1_1TaylorModel}{Taylor\+Model}}$<$ P, F $>$ \&tm, Size\+Type k)
+\begin{DoxyCompactList}\small\item\em Split the Taylor model {\itshape tm}, subdividing along the independent variable {\itshape k}. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsubsection*{Simplification operations.}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\hyperlink{classAriadne_1_1TaylorModel}{Taylor\+Model}}$<$ P, F $>$ \mbox{\hyperlink{classAriadne_1_1TaylorModel_aa692d9c08a168423182eff77b0ee8cfc}{discard\+\_\+variables}} (const \mbox{\hyperlink{classAriadne_1_1TaylorModel}{Taylor\+Model}}$<$ P, F $>$ \&tm, const \mbox{\hyperlink{classAriadne_1_1Array}{Array}}$<$ Size\+Type $>$ \&variables)
+\begin{DoxyCompactList}\small\item\em \texorpdfstring{$<$}{<}P,F\texorpdfstring{$>$}{>} \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1TaylorModel_a9082f6b41e182a1f815d56a22158c1b1}\label{classAriadne_1_1TaylorModel_a9082f6b41e182a1f815d56a22158c1b1} 
+\mbox{\hyperlink{classAriadne_1_1TaylorModel}{Taylor\+Model}}$<$ P, F $>$ \& {\bfseries sweep} (const \mbox{\hyperlink{classAriadne_1_1Sweeper}{Sweeper\+Type}} \&swp)
+\begin{DoxyCompactList}\small\item\em Remove all terms based on the {\itshape swp} conditions. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1TaylorModel_a3f86156e7015ad4d8b6c6372c1a1d7a4}\label{classAriadne_1_1TaylorModel_a3f86156e7015ad4d8b6c6372c1a1d7a4} 
+\mbox{\hyperlink{classAriadne_1_1TaylorModel}{Taylor\+Model}}$<$ P, F $>$ \& {\bfseries sweep} ()
+\begin{DoxyCompactList}\small\item\em Remove all terms whose coefficient has magnitude lower than the cutoff threshold of the quantity. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1TaylorModel_aeabe18a89f2c44c85f39c07b953e17d0}\label{classAriadne_1_1TaylorModel_aeabe18a89f2c44c85f39c07b953e17d0} 
+\mbox{\hyperlink{classAriadne_1_1TaylorModel}{Taylor\+Model}}$<$ P, F $>$ \& {\bfseries sort} ()
+\begin{DoxyCompactList}\small\item\em Sorts keys. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1TaylorModel_a102098e010bb63b5f51d2a24f86d6ed4}\label{classAriadne_1_1TaylorModel_a102098e010bb63b5f51d2a24f86d6ed4} 
+\mbox{\hyperlink{classAriadne_1_1TaylorModel}{Taylor\+Model}}$<$ P, F $>$ \& {\bfseries unique} ()
+\begin{DoxyCompactList}\small\item\em Remove terms with the same keys. Assumes sorted. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1TaylorModel_ae5d9fc4543877df24d8d2ff67fa34477}\label{classAriadne_1_1TaylorModel_ae5d9fc4543877df24d8d2ff67fa34477} 
+\mbox{\hyperlink{classAriadne_1_1TaylorModel}{Taylor\+Model}}$<$ P, F $>$ \& {\bfseries cleanup} ()
+\begin{DoxyCompactList}\small\item\em Sort the terms in index order and combine terms with the same index. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1TaylorModel_acbcc22ccdce526d5e7acbf66a4415ece}\label{classAriadne_1_1TaylorModel_acbcc22ccdce526d5e7acbf66a4415ece} 
+\mbox{\hyperlink{classAriadne_1_1TaylorModel}{Taylor\+Model}}$<$ P, F $>$ \& {\bfseries clobber} ()
+\begin{DoxyCompactList}\small\item\em \doxylink{classAriadne_1_1Set}{Set} the error to zero. WARNING\+: This method does not preserve rigour of the model approximation. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1TaylorModel_a002f9851b72a57d87eb31077c2501403}\label{classAriadne_1_1TaylorModel_a002f9851b72a57d87eb31077c2501403} 
+\mbox{\hyperlink{classAriadne_1_1TaylorModel}{Taylor\+Model}}$<$ P, F $>$ {\bfseries embed\+\_\+error} (const \mbox{\hyperlink{classAriadne_1_1TaylorModel}{Taylor\+Model}}$<$ P, F $>$ \&tm)
+\begin{DoxyCompactList}\small\item\em Embed the model in a space of higher dimension, placing the error in the final variable. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsubsection*{Comparison operators.}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1TaylorModel_afd0ba7b70e228221b515b51e079bcbea}\label{classAriadne_1_1TaylorModel_afd0ba7b70e228221b515b51e079bcbea} 
+decltype(auto) {\bfseries operator$>$} (const \mbox{\hyperlink{classAriadne_1_1TaylorModel}{Taylor\+Model}}$<$ P, F $>$ \&sd) const
+\begin{DoxyCompactList}\small\item\em \doxylink{namespaceAriadne_a0e36a4c4b857737f71444bff61a9edb6}{Comparison} with another Taylor model. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1TaylorModel_ab3181d29422fc92bfb3f60159c2dd325}\label{classAriadne_1_1TaylorModel_ab3181d29422fc92bfb3f60159c2dd325} 
+decltype(auto) {\bfseries operator$<$} (\mbox{\hyperlink{namespaceAriadne_a008e7f6ae8f621fbb1d876061812b9b2}{Int}} c) const
+\begin{DoxyCompactList}\small\item\em \doxylink{namespaceAriadne_a0e36a4c4b857737f71444bff61a9edb6}{Comparison} with a scalar. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1TaylorModel_a011ec043f14497615546daef005ec49b}\label{classAriadne_1_1TaylorModel_a011ec043f14497615546daef005ec49b} 
+decltype(auto) {\bfseries operator$>$} (\mbox{\hyperlink{namespaceAriadne_a008e7f6ae8f621fbb1d876061812b9b2}{Int}} c) const
+\begin{DoxyCompactList}\small\item\em \doxylink{namespaceAriadne_a0e36a4c4b857737f71444bff61a9edb6}{Comparison} with a scalar. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1TaylorModel_acadf34f1b163626604bcf300b9528a7f}\label{classAriadne_1_1TaylorModel_acadf34f1b163626604bcf300b9528a7f} 
+\mbox{\hyperlink{namespaceAriadne_a76a8b016e5ad61faf9062cc387df5016}{Bool}} {\bfseries same} (const \mbox{\hyperlink{classAriadne_1_1TaylorModel}{Taylor\+Model}}$<$ P, F $>$ \&tm1, const \mbox{\hyperlink{classAriadne_1_1TaylorModel}{Taylor\+Model}}$<$ P, F $>$ \&tm2)
+\begin{DoxyCompactList}\small\item\em Equality operator. Tests equality of representation, including error term. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsubsection*{Data access}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1TaylorModel_a3024c6ae13e52ebb2eb4b04e77f8b351}\label{classAriadne_1_1TaylorModel_a3024c6ae13e52ebb2eb4b04e77f8b351} 
+const Expansion\+Type \& {\bfseries expansion} () const
+\begin{DoxyCompactList}\small\item\em The expansion. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1TaylorModel_a132a01d3bc359cabf7f8c4007246597d}\label{classAriadne_1_1TaylorModel_a132a01d3bc359cabf7f8c4007246597d} 
+Expansion\+Type \& {\bfseries expansion} ()
+\begin{DoxyCompactList}\small\item\em A reference to the expansion. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1TaylorModel_ae1a2fb9d8be975092b56680218b67a3b}\label{classAriadne_1_1TaylorModel_ae1a2fb9d8be975092b56680218b67a3b} 
+const Error\+Type \& {\bfseries error} () const
+\begin{DoxyCompactList}\small\item\em The error of the expansion over the domain. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1TaylorModel_a597e420955123af5396023ab111e01af}\label{classAriadne_1_1TaylorModel_a597e420955123af5396023ab111e01af} 
+Error\+Type \& {\bfseries error} ()
+\begin{DoxyCompactList}\small\item\em A reference to the error of the expansion over the domain. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1TaylorModel_a6015810868b61a560242ea857fa5f1e7}\label{classAriadne_1_1TaylorModel_a6015810868b61a560242ea857fa5f1e7} 
+const Value\+Type {\bfseries value} () const
+\begin{DoxyCompactList}\small\item\em The constant term in the expansion. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1TaylorModel_a3eed536be2059805718bc452eb42c615}\label{classAriadne_1_1TaylorModel_a3eed536be2059805718bc452eb42c615} 
+Value\+Type {\bfseries average} () const
+\begin{DoxyCompactList}\small\item\em The constant term in the expansion. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1TaylorModel_aa92d042fc5e3c6ec7d094c917a6561c7}\label{classAriadne_1_1TaylorModel_aa92d042fc5e3c6ec7d094c917a6561c7} 
+Norm\+Type {\bfseries radius} () const
+\begin{DoxyCompactList}\small\item\em The radius of the smallest ball about a constant function containing the model. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1TaylorModel_ad27050c4a6f81c616a0f4e47c8e0bd48}\label{classAriadne_1_1TaylorModel_ad27050c4a6f81c616a0f4e47c8e0bd48} 
+Norm\+Type {\bfseries norm} () const
+\begin{DoxyCompactList}\small\item\em An over-\/approximation to the supremum norm. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1TaylorModel_afc8a078d5f6da15299fce2afd23eae61}\label{classAriadne_1_1TaylorModel_afc8a078d5f6da15299fce2afd23eae61} 
+Raw\+Float\+Type {\bfseries tolerance} () const
+\begin{DoxyCompactList}\small\item\em A value {\ttfamily e} such that analytic functions are evaluated to a tolerance of {\ttfamily e}. Equal to the sweep threshold. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1TaylorModel_a688b80a70379cdce635ad0f7802df187}\label{classAriadne_1_1TaylorModel_a688b80a70379cdce635ad0f7802df187} 
+\mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} {\bfseries set\+\_\+value} (const Coefficient\+Type \&c)
+\begin{DoxyCompactList}\small\item\em \doxylink{classAriadne_1_1Set}{Set} the constant term in the expansion. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1TaylorModel_ac46e6e4aa4513e4b1525d8188b5b0e1e}\label{classAriadne_1_1TaylorModel_ac46e6e4aa4513e4b1525d8188b5b0e1e} 
+\mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} {\bfseries set\+\_\+gradient} (Size\+Type j, const Coefficient\+Type \&c)
+\begin{DoxyCompactList}\small\item\em \doxylink{classAriadne_1_1Set}{Set} the coefficient of the term $df/dx_j$. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1TaylorModel_afe72a0721132d23d476cc28d7bf5af6b}\label{classAriadne_1_1TaylorModel_afe72a0721132d23d476cc28d7bf5af6b} 
+\mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} {\bfseries set\+\_\+error} (const Error\+Type \&ne)
+\begin{DoxyCompactList}\small\item\em \doxylink{classAriadne_1_1Set}{Set} the error of the expansion. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1TaylorModel_af3b8aea563cd1c8997a3560d9ef416b2}\label{classAriadne_1_1TaylorModel_af3b8aea563cd1c8997a3560d9ef416b2} 
+const Coefficient\+Type \& {\bfseries operator\mbox{[}$\,$\mbox{]}} (const Multi\+Index \&a) const
+\begin{DoxyCompactList}\small\item\em The coefficient of the term in \$x\texorpdfstring{$^\wedge$}{\string^}a\$. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1TaylorModel_ad0b7e16d74da625d8353533641ba535f}\label{classAriadne_1_1TaylorModel_ad0b7e16d74da625d8353533641ba535f} 
+Coefficient\+Type \& {\bfseries operator\mbox{[}$\,$\mbox{]}} (const Multi\+Index \&a)
+\begin{DoxyCompactList}\small\item\em A read/write reference to the coefficient of the term in \$x\texorpdfstring{$^\wedge$}{\string^}a\$. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1TaylorModel_a2387033802383edbdc95f9bbb12a707e}\label{classAriadne_1_1TaylorModel_a2387033802383edbdc95f9bbb12a707e} 
+\mbox{\hyperlink{classAriadne_1_1TaylorModel_a7602737bfa39e2db65f20ec1ac92c53b}{Iterator}} {\bfseries begin} ()
+\begin{DoxyCompactList}\small\item\em An \doxylink{classAriadne_1_1TaylorModel_a7602737bfa39e2db65f20ec1ac92c53b}{Iterator} to the first term in the expansion. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1TaylorModel_ad5fee900c7aee90671038c79225bf8ec}\label{classAriadne_1_1TaylorModel_ad5fee900c7aee90671038c79225bf8ec} 
+\mbox{\hyperlink{classAriadne_1_1TaylorModel_afc18c098078d67ef779250522f056b42}{Const\+Iterator}} {\bfseries begin} () const
+\begin{DoxyCompactList}\small\item\em A constant \doxylink{classAriadne_1_1TaylorModel_a7602737bfa39e2db65f20ec1ac92c53b}{Iterator} to the first term in the expansion. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1TaylorModel_ab45dae688fc5d8983727abffa4389003}\label{classAriadne_1_1TaylorModel_ab45dae688fc5d8983727abffa4389003} 
+\mbox{\hyperlink{classAriadne_1_1TaylorModel_a7602737bfa39e2db65f20ec1ac92c53b}{Iterator}} {\bfseries end} ()
+\begin{DoxyCompactList}\small\item\em An \doxylink{classAriadne_1_1TaylorModel_a7602737bfa39e2db65f20ec1ac92c53b}{Iterator} to the end of the expansion. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1TaylorModel_a69b6e2a03c835ca5d658a1f16acbaa9c}\label{classAriadne_1_1TaylorModel_a69b6e2a03c835ca5d658a1f16acbaa9c} 
+\mbox{\hyperlink{classAriadne_1_1TaylorModel_afc18c098078d67ef779250522f056b42}{Const\+Iterator}} {\bfseries end} () const
+\begin{DoxyCompactList}\small\item\em A constant \doxylink{classAriadne_1_1TaylorModel_a7602737bfa39e2db65f20ec1ac92c53b}{Iterator} to the end of the expansion. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1TaylorModel_ac553426d3e8c493742606dbe03855b08}\label{classAriadne_1_1TaylorModel_ac553426d3e8c493742606dbe03855b08} 
+Size\+Type {\bfseries argument\+\_\+size} () const
+\begin{DoxyCompactList}\small\item\em The number of variables in the argument of the quantity. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1TaylorModel_a84847fadf9927f5cafdc5d68331bb74c}\label{classAriadne_1_1TaylorModel_a84847fadf9927f5cafdc5d68331bb74c} 
+\mbox{\hyperlink{namespaceAriadne_a80311bc831cfc870fd65158180330a77}{Degree\+Type}} {\bfseries degree} () const
+\begin{DoxyCompactList}\small\item\em The maximum degree of terms in the expansion. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1TaylorModel_af412fac0e95dcbf177d786ea8d5d0689}\label{classAriadne_1_1TaylorModel_af412fac0e95dcbf177d786ea8d5d0689} 
+Size\+Type {\bfseries number\+\_\+of\+\_\+terms} () const
+\begin{DoxyCompactList}\small\item\em The number of nonzero terms in the expansion. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1TaylorModel_a9abea5601d7a275498849839eca87abc}\label{classAriadne_1_1TaylorModel_a9abea5601d7a275498849839eca87abc} 
+\mbox{\hyperlink{classAriadne_1_1TaylorModel}{Taylor\+Model}}$<$ P, F $>$\+::\+Norm\+Type {\bfseries norm} (const \mbox{\hyperlink{classAriadne_1_1TaylorModel}{Taylor\+Model}}$<$ P, F $>$ \&tm)
+\begin{DoxyCompactList}\small\item\em An over-\/approximation to the supremum norm. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsubsection*{Inplace modifications.}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1TaylorModel_a71e68cdd774cad9e8c97a5a02551a77f}\label{classAriadne_1_1TaylorModel_a71e68cdd774cad9e8c97a5a02551a77f} 
+\mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} {\bfseries unscale} (\mbox{\hyperlink{group__FunctionModule_ga5f13c1d70d7770b9aa4ff0dc2d515ffe}{Interval\+Domain\+Type}} const \&dom)
+\begin{DoxyCompactList}\small\item\em Scales the model by a function mapping {\itshape dom} into the unit interval. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1TaylorModel_a4fa7113f9a37e625e5bf4f5f2117dd3d}\label{classAriadne_1_1TaylorModel_a4fa7113f9a37e625e5bf4f5f2117dd3d} 
+\mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} {\bfseries antidifferentiate} (Size\+Type k)
+\begin{DoxyCompactList}\small\item\em Compute the antiderivative (in place). \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1TaylorModel_aa99b1e46dd38a06cacbfcb8127a12b64}\label{classAriadne_1_1TaylorModel_aa99b1e46dd38a06cacbfcb8127a12b64} 
+\mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} {\bfseries differentiate} (Size\+Type k)
+\begin{DoxyCompactList}\small\item\em Compute the weak derivative (in place). \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1TaylorModel_a621570abe45be6e9d32a43265a407166}\label{classAriadne_1_1TaylorModel_a621570abe45be6e9d32a43265a407166} 
+\mbox{\hyperlink{classAriadne_1_1Covector}{Covector}}$<$ X $>$ {\bfseries gradient} (const \mbox{\hyperlink{classAriadne_1_1TaylorModel}{Taylor\+Model}}$<$ P, F $>$ \&x, const \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ X $>$ \&v)
+\begin{DoxyCompactList}\small\item\em Estimate the gradient at a point. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\label{doc-func-members}
+\Hypertarget{classAriadne_1_1TaylorModel_doc-func-members}
+\doxysubsubsection{Member Function Documentation}
+\Hypertarget{classAriadne_1_1TaylorModel_ad6bf2be97424a4ac1b4d9f6ca1cc2324}\index{TaylorModel$<$ P, F $>$@{TaylorModel$<$ P, F $>$}!precision@{precision}}
+\index{precision@{precision}!TaylorModel$<$ P, F $>$@{TaylorModel$<$ P, F $>$}}
+\doxyparagraph{\texorpdfstring{precision()}{precision()}}
+{\footnotesize\ttfamily \label{classAriadne_1_1TaylorModel_ad6bf2be97424a4ac1b4d9f6ca1cc2324} 
+template$<$class P, class F$>$ \\
+Precision\+Type precision (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption}) const\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+The properties of the zero element. 
+
+The precision of the coefficients. 
+
+Referenced by \mbox{\hyperlink{classAriadne_1_1TaylorModel_aa132ecf98f191a01a119fb9a827a9e28}{create\+\_\+coordinate()}}, \mbox{\hyperlink{classAriadne_1_1TaylorModel_ad27050c4a6f81c616a0f4e47c8e0bd48}{norm()}}, \mbox{\hyperlink{classAriadne_1_1TaylorModel_aa92d042fc5e3c6ec7d094c917a6561c7}{radius()}}, \mbox{\hyperlink{classAriadne_1_1TaylorModel_a19365032c5f856220c8be4c7a09a78dc}{range()}}, \mbox{\hyperlink{classAriadne_1_1TaylorModel_afc4eae6e13cedc59f3d1a8d291eca8bd}{Taylor\+Model()}}, \mbox{\hyperlink{classAriadne_1_1TaylorModel_ad2b4f2ca2097f3c647a2f7889221e65c}{Taylor\+Model()}}, \mbox{\hyperlink{classAriadne_1_1TaylorModel_afc8a078d5f6da15299fce2afd23eae61}{tolerance()}}, and \mbox{\hyperlink{classAriadne_1_1TaylorModel_a71e68cdd774cad9e8c97a5a02551a77f}{unscale()}}.
+
+
+
+\label{doc-related-members}
+\Hypertarget{classAriadne_1_1TaylorModel_doc-related-members}
+\doxysubsubsection{Friends And Related Symbol Documentation}
+\Hypertarget{classAriadne_1_1TaylorModel_acc70a678ef39d08ea894790cc5adef55}\index{TaylorModel$<$ P, F $>$@{TaylorModel$<$ P, F $>$}!embed@{embed}}
+\index{embed@{embed}!TaylorModel$<$ P, F $>$@{TaylorModel$<$ P, F $>$}}
+\doxyparagraph{\texorpdfstring{embed}{embed}}
+{\footnotesize\ttfamily \label{classAriadne_1_1TaylorModel_acc70a678ef39d08ea894790cc5adef55} 
+template$<$class P, class F$>$ \\
+\mbox{\hyperlink{classAriadne_1_1TaylorModel}{Taylor\+Model}}$<$ P, F $>$ embed (\begin{DoxyParamCaption}\item[{Size\+Type}]{as1}{, }\item[{const \mbox{\hyperlink{classAriadne_1_1TaylorModel}{Taylor\+Model}}$<$ P, F $>$ \&}]{tm2}{, }\item[{Size\+Type}]{as3}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [friend]}}
+
+
+
+\texorpdfstring{$<$}{<}P,F\texorpdfstring{$>$}{>} 
+
+Embed the model in a space of higher dimension \Hypertarget{classAriadne_1_1TaylorModel_aa692d9c08a168423182eff77b0ee8cfc}\index{TaylorModel$<$ P, F $>$@{TaylorModel$<$ P, F $>$}!discard\_variables@{discard\_variables}}
+\index{discard\_variables@{discard\_variables}!TaylorModel$<$ P, F $>$@{TaylorModel$<$ P, F $>$}}
+\doxyparagraph{\texorpdfstring{discard\_variables}{discard\_variables}}
+{\footnotesize\ttfamily \label{classAriadne_1_1TaylorModel_aa692d9c08a168423182eff77b0ee8cfc} 
+template$<$class P, class F$>$ \\
+\mbox{\hyperlink{classAriadne_1_1TaylorModel}{Taylor\+Model}}$<$ P, F $>$ discard\+\_\+variables (\begin{DoxyParamCaption}\item[{const \mbox{\hyperlink{classAriadne_1_1TaylorModel}{Taylor\+Model}}$<$ P, F $>$ \&}]{tm}{, }\item[{const \mbox{\hyperlink{classAriadne_1_1Array}{Array}}$<$ Size\+Type $>$ \&}]{variables}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [friend]}}
+
+
+
+\texorpdfstring{$<$}{<}P,F\texorpdfstring{$>$}{>} 
+
+\doxylink{classAriadne_1_1Concepts_1_1Abstract}{Abstract} away the given variables. For example, the model tm(x0,x1,x2,x3) becomes tm\textquotesingle{}(x0,x1)=tm(x0,\mbox{[}-\/1,+1\mbox{]},x1,\mbox{[}-\/1,+1\mbox{]}) on discarding x1 and x3. \Hypertarget{classAriadne_1_1TaylorModel_a1fb86169e69f398dbf3ddd1e6f4e6068}\index{TaylorModel$<$ P, F $>$@{TaylorModel$<$ P, F $>$}!abs@{abs}}
+\index{abs@{abs}!TaylorModel$<$ P, F $>$@{TaylorModel$<$ P, F $>$}}
+\doxyparagraph{\texorpdfstring{abs}{abs}}
+{\footnotesize\ttfamily \label{classAriadne_1_1TaylorModel_a1fb86169e69f398dbf3ddd1e6f4e6068} 
+template$<$class P, class F$>$ \\
+template$<$class FF$>$ \\
+\mbox{\hyperlink{classAriadne_1_1TaylorModel}{Taylor\+Model}}$<$ P, FF $>$ abs (\begin{DoxyParamCaption}\item[{const \mbox{\hyperlink{classAriadne_1_1TaylorModel}{Taylor\+Model}}$<$ P, FF $>$ \&}]{x}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [friend]}}
+
+
+
+The pointwise absolute value. 
+
+If the range of {\itshape x} definitely does not include 0, returns +x or -\/x. Otherwise, uses a uniform polynomial approximation to abs. 
+
+Referenced by \mbox{\hyperlink{classAriadne_1_1TaylorModel_a19365032c5f856220c8be4c7a09a78dc}{range()}}.
+
+
+
+The documentation for this class was generated from the following files\+:\begin{DoxyCompactItemize}
+\item 
+source/function/\mbox{\hyperlink{affine__model_8hpp}{affine\+\_\+model.\+hpp}}\item 
+source/function/\mbox{\hyperlink{taylor__model_8hpp}{taylor\+\_\+model.\+hpp}}\item 
+source/function/taylor\+\_\+model.\+tpl.\+hpp\end{DoxyCompactItemize}

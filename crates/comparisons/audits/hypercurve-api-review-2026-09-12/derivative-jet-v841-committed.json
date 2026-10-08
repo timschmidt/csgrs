@@ -1,0 +1,16 @@
+{
+  "repos": {
+    "hypercurve": {
+      "commit": "d81a9f7d1aae65360c94bce2d89e03bad691807a",
+      "parent": "d78a8b30fc4a07fb799e32495b759cbfa923d97b",
+      "paths": {
+        "src/bezier_algebraic_image.rs": "8bb57e6540d66d233a0e6a4e5c8851dc49382fa33918724d11974f70742cc5f0",
+        "src/rational_bezier_general.rs": "29b04fd3f0f6eb6af8fd6cfcc9a19cbecde5bc2a9436c130c20dbd38e5fe367f",
+        "tests/hypercurve_bezier_algebraic_image.rs": "2434bf2f98bc93e0dacf5570fb4bc3226af4451e02c16c1b2ab596b5517d13d4"
+      }
+    }
+  },
+  "qualification": "derivative-jet-v841-terminal.json",
+  "verified_source_files": 2048,
+  "clean_repositories": 30
+}

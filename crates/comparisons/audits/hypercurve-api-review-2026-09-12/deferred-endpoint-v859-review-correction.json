@@ -1,0 +1,7 @@
+{
+  "first_review_exit_code": 1,
+  "synchronous": true,
+  "failure": "Text normalization also removed the closing parenthesis of the nested Arc constructor.",
+  "correction": "Anchor the outer Ok closing brace to its full indentation and function end.",
+  "production_source_changed": false
+}

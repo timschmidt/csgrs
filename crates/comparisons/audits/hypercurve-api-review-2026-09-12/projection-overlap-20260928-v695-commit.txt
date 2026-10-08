@@ -1,0 +1,7 @@
+Derive parallel overlap intervals from retained certificates
+
+Remove the mirrored interval array from pair projections and its eager construction. Replay derives one list of structurally distinct interval records from the retained component evidence and moves it directly into the published result. Every component support, selected fiber, chart, witness and ownership flag remains retained; no uncertain comparison or geometric equivalence is used to merge records.
+
+The degree-six reparameterized S-cubic exposed duplicate raw interval entries that caused consumers to visit all matching correspondences repeatedly. Strengthen all four strict/approximate, same/reversed regressions to require one closed trace overlap and to reuse each retained map through public overlap clipping. Both isolated crossing contacts remain present.
+
+Validation: 174 release tests across five pinned binaries; six format, lint, fuzz, documentation and downstream checks. Source/transport certificate construction verified unchanged. Full implementation goal remains active.

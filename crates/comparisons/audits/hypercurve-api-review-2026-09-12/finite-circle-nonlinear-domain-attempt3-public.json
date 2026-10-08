@@ -1,0 +1,28 @@
+{
+  "returncode": 0,
+  "elapsed_seconds": 0.16397603499353863,
+  "command": [
+    "rustc",
+    "--edition=2024",
+    "-O",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-circle-nonlinear-domain-baseline.rs",
+    "--extern",
+    "hypercurve=/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/libhypercurve-2c7ff6f3fbe07653.rlib",
+    "--extern",
+    "hyperreal=/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/libhyperreal-05331ef8b04eb8fa.rlib",
+    "-L",
+    "dependency=/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps",
+    "-o",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-circle-nonlinear-domain-attempt3-public"
+  ],
+  "source_sha256": "a9fbade132a80b1ecb4e255af14f803997fd330a269ed5ac23802433bc36cbd1",
+  "executable_sha256": "d00b40367bf37289d329cb74b9d8eebb227b71b6d9f82890f402ae524e9b893e",
+  "normal_library_sha256": "a3cdba517e86ba437bacb70aa323058c85f18c0cc3903fa2e0b38954db569a15",
+  "counts": {
+    "complete": 8,
+    "incomplete": 0,
+    "point_replays": 16,
+    "unresolved_replays": 0,
+    "topologies": 8
+  }
+}

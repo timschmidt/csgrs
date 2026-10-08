@@ -1,0 +1,160 @@
+\doxysubsection{Grid\+Open\+Cell Class Reference}
+\hypertarget{classAriadne_1_1GridOpenCell}{}\label{classAriadne_1_1GridOpenCell}\index{GridOpenCell@{GridOpenCell}}
+
+
+{\ttfamily \#include $<$grid\+\_\+cell.\+hpp$>$}
+
+
+
+\doxysubsubsection{Description}
+An open cell of a grid paving. This cell is open and the path from the primary cell defines its lower left sub cell wheres the complete open cell is a union of 4 cells. 
+
+This class does not contain the tree structure, so cannot be used in cursors/iterators. NOTE\+: The open cell is defined by its base cell which is a simple \doxylink{classAriadne_1_1GridCell}{Grid\+Cell} corresponding to the left-\/most quadrant cell of the open cell. In this respect, height() and \doxylink{classAriadne_1_1GridAbstractCell_a75e29061fb3004a2912571edc2354a3f}{word()} return values defining the base cell and \doxylink{classAriadne_1_1GridAbstractCell_aeb1878e3de51b23a53d0573314ca52b1}{box()} returns the entire box related to the open cell. This box should be treated as an open set, i.\+e. its borders should be excluded. Inheritance diagram for Grid\+Open\+Cell\+:\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[height=2.000000cm]{classAriadne_1_1GridOpenCell}
+\end{center}
+\end{figure}
+\doxysubsubsubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1GridOpenCell_aea8065cbc3fc1d87fee57034e8052cf2}\label{classAriadne_1_1GridOpenCell_aea8065cbc3fc1d87fee57034e8052cf2} 
+{\bfseries Grid\+Open\+Cell} ()
+\begin{DoxyCompactList}\small\item\em Default constructor. Needed for some containers and iterators. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1GridOpenCell_a5da30e300be2102c132ebeb78b1ea857}\label{classAriadne_1_1GridOpenCell_a5da30e300be2102c132ebeb78b1ea857} 
+{\bfseries Grid\+Open\+Cell} (const \mbox{\hyperlink{classAriadne_1_1Grid}{Grid}} \&the\+Grid, const \mbox{\hyperlink{namespaceAriadne_aae901a69a841b1a085a0dfe218e38fe9}{Nat}} the\+Extent, const \mbox{\hyperlink{classAriadne_1_1BinaryWord}{Binary\+Word}} \&the\+Word)
+\begin{DoxyCompactList}\small\item\em Construct a cell based on {\itshape the\+Grid}, the primary cell of level {\itshape the\+Extent}, and the path to the Sub\+Paving\textquotesingle{}s root cell which is accessible from the primary cell via the path {\itshape \+\_\+the\+Word}. Note that, {\itshape the\+Extent} is the height level relative to the \doxylink{classAriadne_1_1Grid}{Grid}, but not to the original space! \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1GridOpenCell_ab16487b48dee6a9f6a2973aafeffcc67}\label{classAriadne_1_1GridOpenCell_ab16487b48dee6a9f6a2973aafeffcc67} 
+{\bfseries Grid\+Open\+Cell} (const \mbox{\hyperlink{classAriadne_1_1GridOpenCell}{Grid\+Open\+Cell}} \&other\+Cell)
+\begin{DoxyCompactList}\small\item\em Copy constructor. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1GridOpenCell_af5743004f13f1eb0e7723b2e4e71ab04}\label{classAriadne_1_1GridOpenCell_af5743004f13f1eb0e7723b2e4e71ab04} 
+\mbox{\hyperlink{classAriadne_1_1GridOpenCell}{Grid\+Open\+Cell}} {\bfseries split} (Ternary\+Child is\+Right) const
+\begin{DoxyCompactList}\small\item\em Allows to split the given cell into two sub-\/cells. When is\+Right == true then we return the right sub-\/cell, if false then the left one, otherwise the middle one \texorpdfstring{$\ast$}{*}/. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1GridOpenCell_acb7d612e8c319257bea1926e1411280b}\label{classAriadne_1_1GridOpenCell_acb7d612e8c319257bea1926e1411280b} 
+\mbox{\hyperlink{namespaceAriadne_a76a8b016e5ad61faf9062cc387df5016}{Bool}} {\bfseries operator==} (const \mbox{\hyperlink{classAriadne_1_1GridOpenCell}{Grid\+Open\+Cell}} \&other\+Cell) const
+\begin{DoxyCompactList}\small\item\em The equality operator. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1GridOpenCell_a076d8647d7ea6508dedc575053681a91}\label{classAriadne_1_1GridOpenCell_a076d8647d7ea6508dedc575053681a91} 
+\mbox{\hyperlink{classAriadne_1_1GridOpenCell}{Grid\+Open\+Cell}} \& {\bfseries operator=} (const \mbox{\hyperlink{classAriadne_1_1GridOpenCell}{Grid\+Open\+Cell}} \&other\+Cell)
+\begin{DoxyCompactList}\small\item\em Allows to assign one \doxylink{classAriadne_1_1GridCell}{Grid\+Cell} to another. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1GridOpenCell_abd03f65221a30de53b6b0628004d0090}\label{classAriadne_1_1GridOpenCell_abd03f65221a30de53b6b0628004d0090} 
+\mbox{\hyperlink{namespaceAriadne_a76a8b016e5ad61faf9062cc387df5016}{Bool}} {\bfseries operator$<$} (const \mbox{\hyperlink{classAriadne_1_1GridOpenCell}{Grid\+Open\+Cell}} \&other\+Cell) const
+\begin{DoxyCompactList}\small\item\em A total order on cells on the same grid, by height and word prefix. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1GridOpenCell_a121fc19ef88aca995bcf23315e257c22}\label{classAriadne_1_1GridOpenCell_a121fc19ef88aca995bcf23315e257c22} 
+\mbox{\hyperlink{classAriadne_1_1GridTreePaving}{Grid\+Tree\+Paving}} {\bfseries closure} () const
+\begin{DoxyCompactList}\small\item\em Computes all the cells that constitute the \doxylink{classAriadne_1_1GridOpenCell}{Grid\+Open\+Cell} in the form of the Grid\+Tree\+Set.\texorpdfstring{$\ast$}{*}/. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxyparagraph*{Public Member Functions inherited from \mbox{\hyperlink{classAriadne_1_1GridAbstractCell}{Grid\+Abstract\+Cell}}}
+\begin{DoxyCompactItemize}
+\item 
+const \mbox{\hyperlink{classAriadne_1_1Grid}{Grid}} \& {\bfseries grid} () const
+\begin{DoxyCompactList}\small\item\em The underlying grid. \end{DoxyCompactList}\item 
+\mbox{\hyperlink{namespaceAriadne_aae901a69a841b1a085a0dfe218e38fe9}{Nat}} {\bfseries root\+\_\+extent} () const
+\begin{DoxyCompactList}\small\item\em The extent (height in each coordinate) of the primary cell to which this cell is rooted. \end{DoxyCompactList}\item 
+\mbox{\hyperlink{namespaceAriadne_aae901a69a841b1a085a0dfe218e38fe9}{Nat}} {\bfseries root\+\_\+height} () const
+\begin{DoxyCompactList}\small\item\em The height in the tree of the primary cell to which this cell is rooted. \end{DoxyCompactList}\item 
+\mbox{\hyperlink{namespaceAriadne_a008e7f6ae8f621fbb1d876061812b9b2}{Int}} {\bfseries depth} () const
+\begin{DoxyCompactList}\small\item\em The depth in the lattice at which the cell lies. \end{DoxyCompactList}\item 
+const \mbox{\hyperlink{classAriadne_1_1BinaryWord}{Binary\+Word}} \& {\bfseries word} () const
+\begin{DoxyCompactList}\small\item\em The word describing the path in a binary tree from the primary cell of height (this.\+height()) to this cell. \end{DoxyCompactList}\item 
+const \mbox{\hyperlink{group__FunctionModule_gafdd31b4d01081cd09aad2ce11117f867}{Exact\+Box\+Type}} \& {\bfseries box} () const
+\begin{DoxyCompactList}\small\item\em The geometric box represented by the cell. \end{DoxyCompactList}\item 
+dimension\+\_\+type {\bfseries dimension} () const
+\begin{DoxyCompactList}\small\item\em The dimension of the cell. Needed by the Box\+Expression interface. \end{DoxyCompactList}\item 
+\mbox{\hyperlink{group__FunctionModule_gab4f81d909c87bd33486c446890723bb1}{Exact\+Interval\+Type}} {\bfseries operator\mbox{[}$\,$\mbox{]}} (dimension\+\_\+type i) const
+\begin{DoxyCompactList}\small\item\em The upper and lower bound in the {\itshape i\textsuperscript{th}} coordinate. \end{DoxyCompactList}\item 
+\mbox{\hyperlink{classAriadne_1_1GridAbstractCell}{Grid\+Abstract\+Cell}} \& {\bfseries operator=} (const \mbox{\hyperlink{classAriadne_1_1GridAbstractCell}{Grid\+Abstract\+Cell}} \&other\+Cell)
+\begin{DoxyCompactList}\small\item\em Allows to assign one \doxylink{classAriadne_1_1GridCell}{Grid\+Cell} to another. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsubsection*{Static Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1GridOpenCell_ac6354a86a491b378cd3fb06e9fcdc168}\label{classAriadne_1_1GridOpenCell_ac6354a86a491b378cd3fb06e9fcdc168} 
+static \mbox{\hyperlink{classAriadne_1_1List}{List}}$<$ \mbox{\hyperlink{classAriadne_1_1GridOpenCell}{Grid\+Open\+Cell}} $>$ {\bfseries intersection} (const \mbox{\hyperlink{classAriadne_1_1GridOpenCell}{Grid\+Open\+Cell}} \&the\+Left\+Open\+Cell, const \mbox{\hyperlink{classAriadne_1_1GridOpenCell}{Grid\+Open\+Cell}} \&the\+Right\+Open\+Cell)
+\begin{DoxyCompactList}\small\item\em Computes the intersection of two \doxylink{classAriadne_1_1GridOpenCell}{Grid\+Open\+Cell} as a list of open cells whoes union gives the intersection. This is done becase the intersection can no always be represented as one open cell. If the intersection is empty then it returns an empty vector. WARNING\+: This operation is expensive because we do not always get a single cell as a result. Moreover, currently intersecting an open cell with itself or a subcell sharing a common border with the cell will result in more that one open cell. Still the operation is robust, it always results in a set of open cells whoes union is the exact intersection of the given open cells. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1GridOpenCell_a3aac041f8ae4ac8f939a35b20ae05092}\label{classAriadne_1_1GridOpenCell_a3aac041f8ae4ac8f939a35b20ae05092} 
+static \mbox{\hyperlink{namespaceAriadne_a76a8b016e5ad61faf9062cc387df5016}{Bool}} {\bfseries intersect} (const \mbox{\hyperlink{classAriadne_1_1GridOpenCell}{Grid\+Open\+Cell}} \&the\+Left\+Open\+Cell, const \mbox{\hyperlink{classAriadne_1_1GridOpenCell}{Grid\+Open\+Cell}} \&the\+Right\+Open\+Cell)
+\begin{DoxyCompactList}\small\item\em Tests if the two open cells intersect. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1GridOpenCell_a59a5a0ccef774137f5e7ec3bf5753b13}\label{classAriadne_1_1GridOpenCell_a59a5a0ccef774137f5e7ec3bf5753b13} 
+static \mbox{\hyperlink{group__FunctionModule_gafdd31b4d01081cd09aad2ce11117f867}{Exact\+Box\+Type}} {\bfseries compute\+\_\+box} (const \mbox{\hyperlink{classAriadne_1_1Grid}{Grid}} \&the\+Grid, const \mbox{\hyperlink{namespaceAriadne_aae901a69a841b1a085a0dfe218e38fe9}{Nat}} the\+Extent, const \mbox{\hyperlink{classAriadne_1_1BinaryWord}{Binary\+Word}} \&the\+Word)
+\begin{DoxyCompactList}\small\item\em this method computes the box in the original space based on the {\itshape the\+Grid}. This box should be treated as an open set. I.\+e. the borders of the box must be excluded. Note tha, {\itshape the\+Extent} and {\itshape the\+Word} define the left bottom cell (base cell) of the open cell. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1GridOpenCell_a220ec022cf409d7b8bb3c4cb6f9f47c7}\label{classAriadne_1_1GridOpenCell_a220ec022cf409d7b8bb3c4cb6f9f47c7} 
+static \mbox{\hyperlink{namespaceAriadne_a76a8b016e5ad61faf9062cc387df5016}{Bool}} {\bfseries compare\+\_\+grid\+\_\+cells} (const \mbox{\hyperlink{classAriadne_1_1GridOpenCell}{Grid\+Open\+Cell}} \texorpdfstring{$\ast$}{*}p\+Cell\+Left, const \mbox{\hyperlink{classAriadne_1_1GridOpenCell}{Grid\+Open\+Cell}} \&cell\+Right, const \mbox{\hyperlink{namespaceAriadne_aae901a69a841b1a085a0dfe218e38fe9}{Nat}} comparator)
+\begin{DoxyCompactList}\small\item\em This function allows to compare to cells it is used by the operator== and operator\texorpdfstring{$<$}{<} methods of this class The value of {\itshape comparator} should be either {\itshape COMPARE\+\_\+\+EQUAL} or {\itshape COMPARE\+\_\+\+LESS} The function checks that both cells are on the same grid and then alignes their primary cells. The latter is done by extending the binary word of the cell with the lowest primary cell with the corresponding prefix. When the words are alligned, wi simply use the == and \texorpdfstring{$<$}{<} operators of the {\itshape \doxylink{classAriadne_1_1BinaryWord}{Binary\+Word}} class. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1GridOpenCell_a53194d5da7ae05a6b7ad29fe1eef52fa}\label{classAriadne_1_1GridOpenCell_a53194d5da7ae05a6b7ad29fe1eef52fa} 
+static \mbox{\hyperlink{classAriadne_1_1GridOpenCell}{Grid\+Open\+Cell}} {\bfseries outer\+\_\+approximation} (const \mbox{\hyperlink{group__FunctionModule_gafdd31b4d01081cd09aad2ce11117f867}{Exact\+Box\+Type}} \&the\+Box\+Type, const \mbox{\hyperlink{classAriadne_1_1Grid}{Grid}} \&the\+Grid)
+\begin{DoxyCompactList}\small\item\em This method computes the smallest open cell that contains the given box {\itshape the\+Box\+Type} (in the original space), taking into account the given grid {\itshape the\+Grid}. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxyparagraph*{Static Public Member Functions inherited from \mbox{\hyperlink{classAriadne_1_1GridAbstractCell}{Grid\+Abstract\+Cell}}}
+\begin{DoxyCompactItemize}
+\item 
+static \mbox{\hyperlink{classAriadne_1_1Box}{Lattice\+Box\+Type}} \mbox{\hyperlink{classAriadne_1_1GridAbstractCell_a67009fb12383f4caa483b6e1e96e7e16}{primary\+\_\+cell\+\_\+lattice\+\_\+box}} (const \mbox{\hyperlink{namespaceAriadne_aae901a69a841b1a085a0dfe218e38fe9}{Nat}} the\+Extent, const dimension\+\_\+type dimensions)
+\begin{DoxyCompactList}\small\item\em The primary-\/cell box on some grid is defined by the height above the zero level cells. The coordinates of the primary cells change uniformly. For example (3-\/D)\+: \end{DoxyCompactList}\item 
+static \mbox{\hyperlink{namespaceAriadne_aae901a69a841b1a085a0dfe218e38fe9}{Nat}} {\bfseries smallest\+\_\+enclosing\+\_\+primary\+\_\+cell\+\_\+extent} (const \mbox{\hyperlink{classAriadne_1_1Box}{Lattice\+Box\+Type}} \&the\+Lattice\+Box\+Type)
+\begin{DoxyCompactList}\small\item\em Takes the lattice box {\itshape the\+Lattice\+Box\+Type} related to some (unknown) grid and computes the smallest primary cell on that grid that will contain this box. The method returns the extent (height in each coordinate) of that primary cell. \end{DoxyCompactList}\item 
+static \mbox{\hyperlink{namespaceAriadne_aae901a69a841b1a085a0dfe218e38fe9}{Nat}} {\bfseries smallest\+\_\+enclosing\+\_\+primary\+\_\+cell\+\_\+extent} (const \mbox{\hyperlink{group__FunctionModule_gadb510bd9aa076e5ae44245b498901ca6}{Upper\+Box\+Type}} \&the\+Box\+Type, const \mbox{\hyperlink{classAriadne_1_1Grid}{Grid}} \&the\+Grid)
+\begin{DoxyCompactList}\small\item\em /brief Computes the extent (height in each coordinate) of the primary cell that encloses (may be exactly) the given box on the given grid. \end{DoxyCompactList}\item 
+static \mbox{\hyperlink{classAriadne_1_1BinaryWord}{Binary\+Word}} {\bfseries primary\+\_\+cell\+\_\+path} (const Dimension\+Type dimensions, const \mbox{\hyperlink{namespaceAriadne_aae901a69a841b1a085a0dfe218e38fe9}{Nat}} top\+PCell\+Height, const \mbox{\hyperlink{namespaceAriadne_aae901a69a841b1a085a0dfe218e38fe9}{Nat}} bottom\+PCell\+Height)
+\begin{DoxyCompactList}\small\item\em This method returns the path from the {\itshape top\+PCell\+Height} to the {\itshape bottom\+PCell\+Height} in the {\itshape dimensions} dimensional space. We assume that {\itshape top\+PCell\+Height} \texorpdfstring{$>$}{>}= {\itshape bottom\+PCell\+Height} if not, then we return an empty binary word. \end{DoxyCompactList}\item 
+static \mbox{\hyperlink{group__FunctionModule_gafdd31b4d01081cd09aad2ce11117f867}{Exact\+Box\+Type}} {\bfseries lattice\+\_\+box\+\_\+to\+\_\+space} (const \mbox{\hyperlink{classAriadne_1_1Box}{Lattice\+Box\+Type}} \&the\+Lattice\+Box\+Type, const \mbox{\hyperlink{classAriadne_1_1Grid}{Grid}} \&the\+Grid)
+\begin{DoxyCompactList}\small\item\em Apply grid data {\itshape the\+Grid} to {\itshape the\+Lattice\+Box\+Type} in order to compute the box dimensions in the original space. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsubsection*{Protected Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1GridOpenCell_abddcab44f7d231fcee6f1f25fc8d7e3a}\label{classAriadne_1_1GridOpenCell_abddcab44f7d231fcee6f1f25fc8d7e3a} 
+{\bfseries Grid\+Open\+Cell} (const \mbox{\hyperlink{classAriadne_1_1Grid}{Grid}} \&the\+Grid, const \mbox{\hyperlink{namespaceAriadne_aae901a69a841b1a085a0dfe218e38fe9}{Nat}} the\+Extent, const \mbox{\hyperlink{classAriadne_1_1BinaryWord}{Binary\+Word}} \&the\+Word, const \mbox{\hyperlink{group__FunctionModule_gafdd31b4d01081cd09aad2ce11117f867}{Exact\+Box\+Type}} \&the\+Box\+Type)
+\begin{DoxyCompactList}\small\item\em The box is given as an explicit parameter. This should only be used by friend classes which have already computed the box. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1GridOpenCell_a9c23c187ba492454d3e2665558e5ae24}\label{classAriadne_1_1GridOpenCell_a9c23c187ba492454d3e2665558e5ae24} 
+\mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} {\bfseries neighboring\+\_\+cells} (const \mbox{\hyperlink{namespaceAriadne_aae901a69a841b1a085a0dfe218e38fe9}{Nat}} the\+Extent, const \mbox{\hyperlink{classAriadne_1_1BinaryWord}{Binary\+Word}} \&the\+Base\+Cell\+Word, \mbox{\hyperlink{classAriadne_1_1BinaryWord}{Binary\+Word}} \&cell\+Position, \mbox{\hyperlink{classAriadne_1_1GridTreePaving}{Grid\+Tree\+Paving}} \&the\+Result\+Set) const
+\begin{DoxyCompactList}\small\item\em This method allows to enumerate the Grid\+Cells that are located in the positive axis direction from the base cell. The base cell is defined by {\itshape the\+Extent} and {\itshape the\+Base\+Cell\+Word}. When called {\itshape cell\+Position} should be an empty word. This is a technical parameter used in the method\textquotesingle{}s recursivce calls. {\itshape the\+Result\+Set} is the vector to which all the neighboring cell will be added, i.\+e. it is a return parameter. NOTE\+: The cell defined by {\itshape the\+Extent}, {\itshape the\+Base\+Cell\+Word} will also be in {\itshape the\+Result\+Set}. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxyparagraph*{Protected Member Functions inherited from \mbox{\hyperlink{classAriadne_1_1GridAbstractCell}{Grid\+Abstract\+Cell}}}
+\begin{DoxyCompactItemize}
+\item 
+{\bfseries Grid\+Abstract\+Cell} (const \mbox{\hyperlink{classAriadne_1_1Grid}{Grid}} \&the\+Grid, const \mbox{\hyperlink{namespaceAriadne_aae901a69a841b1a085a0dfe218e38fe9}{Nat}} the\+Extent, const \mbox{\hyperlink{classAriadne_1_1BinaryWord}{Binary\+Word}} \&the\+Word, const \mbox{\hyperlink{group__FunctionModule_gafdd31b4d01081cd09aad2ce11117f867}{Exact\+Box\+Type}} \&the\+Box\+Type)
+\begin{DoxyCompactList}\small\item\em The box is given as an explicit parameter. This should only be used by friend classes which have already computed the box. \end{DoxyCompactList}\item 
+{\bfseries Grid\+Abstract\+Cell} (const \mbox{\hyperlink{classAriadne_1_1GridAbstractCell}{Grid\+Abstract\+Cell}} \&the\+Grid\+Cell)
+\begin{DoxyCompactList}\small\item\em The copy constructor for the {\itshape \doxylink{classAriadne_1_1GridAbstractCell}{Grid\+Abstract\+Cell}}. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsubsection*{Static Protected Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1GridOpenCell_a6ebe969f104c97ce6cb785b8506f44a7}\label{classAriadne_1_1GridOpenCell_a6ebe969f104c97ce6cb785b8506f44a7} 
+static \mbox{\hyperlink{classAriadne_1_1GridCell}{Grid\+Cell}} {\bfseries neighboring\+\_\+cell} (const \mbox{\hyperlink{classAriadne_1_1Grid}{Grid}} \&the\+Grid, const \mbox{\hyperlink{namespaceAriadne_aae901a69a841b1a085a0dfe218e38fe9}{Nat}} the\+Extent, const \mbox{\hyperlink{classAriadne_1_1BinaryWord}{Binary\+Word}} \&the\+Base\+Cell\+Word, \mbox{\hyperlink{classAriadne_1_1BinaryWord}{Binary\+Word}} \&cell\+Position)
+\begin{DoxyCompactList}\small\item\em This method allows to compute the neighboring (to the right) cell of the base cell given by {\itshape the\+Extent} and {\itshape the\+Base\+Cell\+Word}. Here {\itshape cell\+Position} is the position of the neighboring cell with resect to the base cell in the the\+Grid.\+dimensions() dimensional space. Note that if {\itshape cell\+Position} consists of the\+Grid.\+dimensions() zeroes then we adjoin the base cell itself. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1GridOpenCell_a4f07919003aca3190cbf2932f6edaf10}\label{classAriadne_1_1GridOpenCell_a4f07919003aca3190cbf2932f6edaf10} 
+static \mbox{\hyperlink{classAriadne_1_1GridOpenCell}{Grid\+Open\+Cell}} \texorpdfstring{$\ast$}{*} {\bfseries smallest\+\_\+open\+\_\+subcell} (const \mbox{\hyperlink{classAriadne_1_1GridOpenCell}{Grid\+Open\+Cell}} \&the\+Open\+Cell, const \mbox{\hyperlink{group__FunctionModule_gafdd31b4d01081cd09aad2ce11117f867}{Exact\+Box\+Type}} \&the\+Box\+Type)
+\begin{DoxyCompactList}\small\item\em This method allows to find the smallest open cell that contains {\itshape the\+Box\+Type}. The search is started from {\itshape the\+Open\+Cell} that is an open cell covering {\itshape the\+Box\+Type}. Note\+: This method is recursive and it assumes that {\itshape the\+Open\+Cell} and {\itshape the\+Box\+Type} are on the same Grid! The latter is not checked, but only assumed. In the open cell based on {\itshape the\+Open\+Cell} does not cover {\itshape the\+Box\+Type} this method returns nullptr. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1GridOpenCell_af03342f611515e05ee48fb9a6866dad5}\label{classAriadne_1_1GridOpenCell_af03342f611515e05ee48fb9a6866dad5} 
+static \mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} {\bfseries cover\+\_\+cell\+\_\+and\+\_\+borders} (const \mbox{\hyperlink{classAriadne_1_1GridCell}{Grid\+Cell}} \&the\+Cell, const \mbox{\hyperlink{classAriadne_1_1GridTreePaving}{Grid\+Tree\+Paving}} \&the\+Set, \mbox{\hyperlink{classAriadne_1_1BinaryWord}{Binary\+Word}} \&cell\+Position, std\+::vector$<$ \mbox{\hyperlink{classAriadne_1_1GridOpenCell}{Grid\+Open\+Cell}} $>$ \&result)
+\begin{DoxyCompactList}\small\item\em Takes the cell {\itshape the\+Cell} of the set where it belongs, {\itshape the\+Set}, and see if it has neighbors in this set. If yes then it creates the open cell lying inside the\+Set such that it covers the borders. All such open cells are added to the vector {\itshape result}. {\itshape cell\+Position} is a technical parameter that has to be set to an empty word. Also, this method add the interior of the\+Cell to the vector {\itshape result}. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxyparagraph*{Static Protected Member Functions inherited from \mbox{\hyperlink{classAriadne_1_1GridAbstractCell}{Grid\+Abstract\+Cell}}}
+\begin{DoxyCompactItemize}
+\item 
+static \mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} {\bfseries primary\+\_\+cell\+\_\+at\+\_\+extent} (const \mbox{\hyperlink{namespaceAriadne_aae901a69a841b1a085a0dfe218e38fe9}{Nat}} the\+Extent, \mbox{\hyperlink{namespaceAriadne_a008e7f6ae8f621fbb1d876061812b9b2}{Int}} \&left\+Bottom\+Corner, \mbox{\hyperlink{namespaceAriadne_a008e7f6ae8f621fbb1d876061812b9b2}{Int}} \&right\+Top\+Corner)
+\begin{DoxyCompactList}\small\item\em having {\itshape the\+Extent} the height of the primary cell, with {\itshape left\+Bottom\+Corner} and {\itshape right\+Top\+Corner} defining the primary cell corners for {\itshape the\+Extent-\/1}, we recompute {\itshape left\+Bottom\+Corner} and {\itshape right\+Top\+Corner} for the current level {\itshape the\+Extent}. \end{DoxyCompactList}\item 
+static \mbox{\hyperlink{namespaceAriadne_a76a8b016e5ad61faf9062cc387df5016}{Bool}} {\bfseries compare\+\_\+abstract\+\_\+grid\+\_\+cells} (const \mbox{\hyperlink{classAriadne_1_1GridAbstractCell}{Grid\+Abstract\+Cell}} \texorpdfstring{$\ast$}{*}p\+Cell\+Left, const \mbox{\hyperlink{classAriadne_1_1GridAbstractCell}{Grid\+Abstract\+Cell}} \&cell\+Right, const \mbox{\hyperlink{namespaceAriadne_aae901a69a841b1a085a0dfe218e38fe9}{Nat}} comparator)
+\begin{DoxyCompactList}\small\item\em This function allows to compare to cells it is used by the operator== and operator\texorpdfstring{$<$}{<} methods of this class The value of {\itshape comparator} should be either {\itshape COMPARE\+\_\+\+EQUAL} or {\itshape COMPARE\+\_\+\+LESS} The function checks that both cells are on the same grid and then alignes their primary cells. The latter is done by extending the binary word of the cell with the lowest primary cell with the corresponding prefix. When the words are alligned, wi simply use the == and \texorpdfstring{$<$}{<} operators of the {\itshape \doxylink{classAriadne_1_1BinaryWord}{Binary\+Word}} class. NOTE\+: Since the function is only based on comparison of the Grids, the words definings the cells and the primary cell heights we can use it in sub-\/classes for comparing cells of the same types. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsubsection*{Friends}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1GridOpenCell_ac82db7b032846bf84919294373ba129a}\label{classAriadne_1_1GridOpenCell_ac82db7b032846bf84919294373ba129a} 
+\mbox{\hyperlink{namespaceAriadne_acbb98ddc4385af4599070e65a1a47ec1}{Output\+Stream}} \& {\bfseries operator$<$$<$} (\mbox{\hyperlink{namespaceAriadne_acbb98ddc4385af4599070e65a1a47ec1}{Output\+Stream}} \&os, const \mbox{\hyperlink{classAriadne_1_1GridOpenCell}{Grid\+Open\+Cell}} \&the\+Open\+Cell)
+\begin{DoxyCompactList}\small\item\em Stream insertion operator. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsubsection*{Additional Inherited Members}
+\doxyparagraph*{Static Public Attributes inherited from \mbox{\hyperlink{classAriadne_1_1GridAbstractCell}{Grid\+Abstract\+Cell}}}
+\begin{DoxyCompactItemize}
+\item 
+static const \mbox{\hyperlink{namespaceAriadne_aae901a69a841b1a085a0dfe218e38fe9}{Nat}} {\bfseries COMPARE\+\_\+\+EQUAL} = 0
+\begin{DoxyCompactList}\small\item\em The constant for the grid cells comparison. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxyparagraph*{Protected Attributes inherited from \mbox{\hyperlink{classAriadne_1_1GridAbstractCell}{Grid\+Abstract\+Cell}}}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\hyperlink{classAriadne_1_1Grid}{Grid}} {\bfseries \+\_\+the\+Grid}
+\begin{DoxyCompactList}\small\item\em The intrinsic grid of the cell. Note that grids are internally passed by reference. \end{DoxyCompactList}\item 
+\mbox{\hyperlink{namespaceAriadne_aae901a69a841b1a085a0dfe218e38fe9}{Nat}} {\bfseries \+\_\+the\+Extent}
+\begin{DoxyCompactList}\small\item\em The level of the primary root cell relative to the zero level. \end{DoxyCompactList}\item 
+\mbox{\hyperlink{classAriadne_1_1BinaryWord}{Binary\+Word}} {\bfseries \+\_\+the\+Word}
+\begin{DoxyCompactList}\small\item\em The word describing the path in a binary tree. This path defines the cell in the \doxylink{classAriadne_1_1Grid}{Grid}. \end{DoxyCompactList}\item 
+\mbox{\hyperlink{group__FunctionModule_gafdd31b4d01081cd09aad2ce11117f867}{Exact\+Box\+Type}} {\bfseries \+\_\+the\+Box\+Type}
+\begin{DoxyCompactList}\small\item\em The geometric box represented by the cell. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+The documentation for this class was generated from the following files\+:\begin{DoxyCompactItemize}
+\item 
+source/geometry/\mbox{\hyperlink{grid__cell_8hpp}{grid\+\_\+cell.\+hpp}}\item 
+source/geometry/grid\+\_\+paving.\+cpp\end{DoxyCompactItemize}

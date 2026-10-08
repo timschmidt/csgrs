@@ -1,0 +1,16 @@
+[
+  {
+    "library": "before",
+    "normal_library_sha256": "828ec27e79acf1eb337d865714bc665a9e2fc5906bad203f29dec74bf0891804",
+    "returncode": 0,
+    "elapsed_seconds": 0.007495707002817653,
+    "log": "region-carrier-evidence-trim-control-before.log"
+  },
+  {
+    "library": "after",
+    "normal_library_sha256": "f551a11d28cdb89c52b47a0bc2009066f78c99659ab275ce54adb47ff741f4b7",
+    "returncode": 0,
+    "elapsed_seconds": 0.007567082007881254,
+    "log": "region-carrier-evidence-trim-control-after.log"
+  }
+]

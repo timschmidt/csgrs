@@ -1,0 +1,49 @@
+\doxysubsection{source/function/function.decl.\+hpp File Reference}
+\hypertarget{function_8decl_8hpp}{}\label{function_8decl_8hpp}\index{source/function/function.decl.hpp@{source/function/function.decl.hpp}}
+
+
+\doxysubsubsection{Description}
+Declarations of function types. 
+
+{\ttfamily \#include "{}geometry/interval.\+decl.\+hpp"{}}\newline
+{\ttfamily \#include "{}geometry/box.\+decl.\+hpp"{}}\newline
+\doxysubsubsubsection*{Namespaces}
+\begin{DoxyCompactItemize}
+\item 
+namespace \mbox{\hyperlink{namespaceAriadne}{Ariadne}}
+\begin{DoxyCompactList}\small\item\em Top-\/level Ariadne namespace. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsubsection*{Typedefs}
+\begin{DoxyCompactItemize}
+\item 
+using {\bfseries Real\+Scalar} = \mbox{\hyperlink{group__LinearAlgebraSubModule_gae7361678c2db840945614997d06994b4}{Scalar}}$<$\mbox{\hyperlink{classAriadne_1_1Real}{Real}}$>$
+\begin{DoxyCompactList}\small\item\em A scalar real number. Defined as a synomym for \doxylink{classAriadne_1_1Real}{Real}. \end{DoxyCompactList}\item 
+using {\bfseries Real\+Vector} = \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$\mbox{\hyperlink{classAriadne_1_1Real}{Real}}$>$
+\begin{DoxyCompactList}\small\item\em A vector of real numbers. \end{DoxyCompactList}\item 
+using {\bfseries Real\+Matrix} = \mbox{\hyperlink{classAriadne_1_1Matrix}{Matrix}}$<$\mbox{\hyperlink{classAriadne_1_1Real}{Real}}$>$
+\begin{DoxyCompactList}\small\item\em A matrix of real numbers. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\begin{Indent}\textbf{ Type shorthands for function classes}\par
+\begin{DoxyCompactItemize}
+\item 
+{\footnotesize template$<$class P, class... ARGS$>$ }\\using {\bfseries Scalar\+Function} = \mbox{\hyperlink{classAriadne_1_1Function}{Function}}$<$P,\mbox{\hyperlink{group__LinearAlgebraSubModule_ga7a29a46d50b613534f91019281b45309}{Real\+Scalar}}(ARGS...)$>$
+\item 
+{\footnotesize template$<$class P, class... ARGS$>$ }\\using {\bfseries Vector\+Function} = \mbox{\hyperlink{classAriadne_1_1Function}{Function}}$<$P,\mbox{\hyperlink{group__LinearAlgebraSubModule_ga00e69bf76ffebd1f3ba573f4662134bc}{Real\+Vector}}(ARGS...)$>$
+\item 
+{\footnotesize template$<$class P, class RES$>$ }\\using {\bfseries Univariate\+Function} = \mbox{\hyperlink{classAriadne_1_1Function}{Function}}$<$P,RES(\mbox{\hyperlink{group__LinearAlgebraSubModule_ga7a29a46d50b613534f91019281b45309}{Real\+Scalar}})$>$
+\item 
+{\footnotesize template$<$class P, class RES$>$ }\\using {\bfseries Multivariate\+Function} = \mbox{\hyperlink{classAriadne_1_1Function}{Function}}$<$P,RES(\mbox{\hyperlink{group__LinearAlgebraSubModule_ga00e69bf76ffebd1f3ba573f4662134bc}{Real\+Vector}})$>$
+\item 
+{\footnotesize template$<$class P$>$ }\\using {\bfseries Scalar\+Univariate\+Function} = \mbox{\hyperlink{classAriadne_1_1Function}{Function}}$<$P,\mbox{\hyperlink{group__LinearAlgebraSubModule_ga7a29a46d50b613534f91019281b45309}{Real\+Scalar}}(\mbox{\hyperlink{group__LinearAlgebraSubModule_ga7a29a46d50b613534f91019281b45309}{Real\+Scalar}})$>$
+\item 
+{\footnotesize template$<$class P$>$ }\\using {\bfseries Vector\+Univariate\+Function} = \mbox{\hyperlink{classAriadne_1_1Function}{Function}}$<$P,\mbox{\hyperlink{group__LinearAlgebraSubModule_ga00e69bf76ffebd1f3ba573f4662134bc}{Real\+Vector}}(\mbox{\hyperlink{group__LinearAlgebraSubModule_ga7a29a46d50b613534f91019281b45309}{Real\+Scalar}})$>$
+\item 
+{\footnotesize template$<$class P$>$ }\\using {\bfseries Scalar\+Multivariate\+Function} = \mbox{\hyperlink{classAriadne_1_1Function}{Function}}$<$P,\mbox{\hyperlink{group__LinearAlgebraSubModule_ga7a29a46d50b613534f91019281b45309}{Real\+Scalar}}(\mbox{\hyperlink{group__LinearAlgebraSubModule_ga00e69bf76ffebd1f3ba573f4662134bc}{Real\+Vector}})$>$
+\item 
+{\footnotesize template$<$class P$>$ }\\using {\bfseries Vector\+Multivariate\+Function} = \mbox{\hyperlink{classAriadne_1_1Function}{Function}}$<$P,\mbox{\hyperlink{group__LinearAlgebraSubModule_ga00e69bf76ffebd1f3ba573f4662134bc}{Real\+Vector}}(\mbox{\hyperlink{group__LinearAlgebraSubModule_ga00e69bf76ffebd1f3ba573f4662134bc}{Real\+Vector}})$>$
+\item 
+{\footnotesize template$<$class SIG$>$ }\\using {\bfseries Approximate\+Function} = \mbox{\hyperlink{classAriadne_1_1Function}{Function}}$<$\mbox{\hyperlink{structAriadne_1_1ApproximateTag}{Approximate\+Tag}},SIG$>$
+\item 
+{\footnotesize template$<$class SIG$>$ }\\using {\bfseries Validated\+Function} = \mbox{\hyperlink{classAriadne_1_1Function}{Function}}$<$\mbox{\hyperlink{structAriadne_1_1ValidatedTag}{Validated\+Tag}},SIG$>$
+\item 
+{\footnotesize template$<$class SIG$>$ }\\using {\bfseries Effective\+Function} = \mbox{\hyperlink{classAriadne_1_1Function}{Function}}$<$\mbox{\hyperlink{structAriadne_1_1EffectiveTag}{Effective\+Tag}},SIG$>$
+\end{DoxyCompactItemize}
+\end{Indent}

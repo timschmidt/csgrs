@@ -1,0 +1,16 @@
+{
+  "tag": "twelfth-fmt-v77",
+  "started": "2026-09-11T22:58:17.904Z",
+  "finished": "2026-09-11T22:58:18.350Z",
+  "elapsedSeconds": 0.443214638,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/twelfth-relation-candidate-v77/hyperreal",
+  "command": "cargo",
+  "args": [
+    "fmt",
+    "--all",
+    "--",
+    "--check"
+  ],
+  "code": 0,
+  "signal": null
+}

@@ -1,0 +1,6 @@
+{
+  "name": "curve_intersection::curve_support_intersection::circle_dispatch_tests::selected_circle_and_non_ph_parallel_keep_both_crossings",
+  "returncode": 124,
+  "elapsed_seconds": 180.01323529999354,
+  "log": "circle-common-dispatch-initial-selected_circle_and_non_ph_parallel_keep_both_crossings.log"
+}

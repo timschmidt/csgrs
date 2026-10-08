@@ -1,0 +1,10 @@
+[
+  {
+    "name": "bezier_region::tests::selected_circle_fillet_crosses_an_independently_reframed_run",
+    "returncode": 101,
+    "passed": false,
+    "limit_seconds": 60,
+    "elapsed_seconds": 0.17183382797520608,
+    "log": "reframed-seam-20260923-trace4-case-0.log"
+  }
+]

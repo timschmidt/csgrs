@@ -1,0 +1,5 @@
+Replay parallel tangent orientation at each exact contact
+
+A regular source range can cross a cusp of its parallel. Reusing the derivative sign at its midpoint certified the wrong tangent orientation at an exact contact beyond that cusp. Remove the range-wide sign argument from rational and general pair replay, and share contact-local derivative evidence with vector tangent queries. At stationary range endpoints, replay the first nonzero polynomial Taylor coefficient toward the owned side without projecting another scalar image or isolating another root.
+
+Validation: 357 selected Hypercurve release tests across eight binaries, all-target Clippy with all and no default features, formatting, denied-warning documentation, editing fuzz compilation, and Hyperbrep compilation. Four new geometric regressions exercise stationary source contacts, a contact beyond a center-locus cusp, and owned endpoint limits from both sides under both policies. Both full extended-fillet re-offset regressions remain passing.

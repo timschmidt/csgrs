@@ -1,0 +1,12 @@
+{
+  "returncode": 0,
+  "elapsed_seconds": 0.06390575000841636,
+  "library": "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/libhypercurve-2c7ff6f3fbe07653.rlib",
+  "sha256": "e2d6f1301f07dcc321496c3be77c9da3a6629831bcc1d4fe65ece4c0c0879729",
+  "log": "constant-image-trim-matrix.log",
+  "empty_clips": 280,
+  "path_clips": 56,
+  "replayed_paths": 252,
+  "clipped_spline_paths": 32,
+  "spline_endpoint_replays": 128
+}

@@ -1,0 +1,15 @@
+{
+  "tag": "rank-cost-verify-draft",
+  "started": "2026-09-09T02:47:33.243Z",
+  "finished": "2026-09-09T02:47:41.718Z",
+  "elapsedSeconds": 8.473293063000002,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "node",
+  "args": [
+    "verify-rank-costs.mjs",
+    "--draft-rank-costs",
+    "--monic-live"
+  ],
+  "code": 0,
+  "signal": null
+}

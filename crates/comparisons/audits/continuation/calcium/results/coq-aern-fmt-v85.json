@@ -1,0 +1,17 @@
+{
+  "tag": "coq-aern-fmt-v85",
+  "started": "2026-09-12T05:38:34.358Z",
+  "finished": "2026-09-12T05:38:34.410Z",
+  "elapsedSeconds": 0.050532397,
+  "cwd": "/home/tim/Documents/GitHub/workspace",
+  "command": "cargo",
+  "args": [
+    "fmt",
+    "--manifest-path",
+    "exactcore-hyper-comparison/audits/continuation/coq-aern/hyper-v85/Cargo.toml",
+    "--",
+    "--check"
+  ],
+  "code": 0,
+  "signal": null
+}

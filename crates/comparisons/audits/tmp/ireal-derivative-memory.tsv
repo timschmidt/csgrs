@@ -1,0 +1,16 @@
+PASS	before	line	3	cold
+PASS	after	line	3	cold
+PASS	before	line	32	warm
+PASS	after	line	32	warm
+PASS	before	cubic	3	cold
+PASS	after	cubic	3	cold
+PASS	before	cubic	32	warm
+PASS	after	cubic	32	warm
+PASS	before	dense8	3	cold
+PASS	after	dense8	3	cold
+PASS	before	dense8	32	warm
+PASS	after	dense8	32	warm
+PASS	before	dense32	3	cold
+PASS	after	dense32	3	cold
+PASS	before	dense32	32	warm
+PASS	after	dense32	32	warm

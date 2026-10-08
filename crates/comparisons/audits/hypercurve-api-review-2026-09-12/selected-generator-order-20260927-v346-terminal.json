@@ -1,0 +1,62 @@
+{
+  "source_manifest": "selected-generator-order-20260927-v346-sources.json",
+  "source_directory": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/source-archives/selected-generator-order-20260927-v346",
+  "cases": [
+    {
+      "binary": "selected-generator-order-20260927-v346-hypercurve",
+      "name": "bezier_offset::conversion_tests::recursive_local_root_orders_against_close_coefficient_generators",
+      "returncode": 0,
+      "log": "selected-generator-order-20260927-v346-case-000.log",
+      "elapsed_seconds": 0.007628935971297324
+    },
+    {
+      "binary": "selected-generator-order-20260927-v346-hypercurve",
+      "name": "bezier_offset::conversion_tests::retained_parameter_import_keeps_original_axes_and_tower",
+      "returncode": 0,
+      "log": "selected-generator-order-20260927-v346-case-001.log",
+      "elapsed_seconds": 0.007636275026015937
+    },
+    {
+      "binary": "selected-generator-order-20260927-v346-hypercurve",
+      "name": "bezier_offset::conversion_tests::recursive_scalar_comparison_replays_exact_equality_before_approximation",
+      "returncode": 0,
+      "log": "selected-generator-order-20260927-v346-case-002.log",
+      "elapsed_seconds": 0.003539627999998629
+    },
+    {
+      "binary": "selected-generator-order-20260927-v346-hypercurve",
+      "name": "bezier_region::tests::one_fragment_nonzero_parallel_loop_extends_chamfer_cuts_on_one_finite_envelope",
+      "returncode": 124,
+      "log": "selected-generator-order-20260927-v346-case-003.log",
+      "elapsed_seconds": 240.00731974304654
+    }
+  ],
+  "builds": [
+    {
+      "crate": "hypercurve",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "test",
+        "--lib",
+        "--release",
+        "--all-features",
+        "--no-run",
+        "--message-format=json",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "log": "selected-generator-order-20260927-v346-hypercurve-build.log",
+      "elapsed_seconds": 130.85979884397238,
+      "binary": {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/selected-generator-order-20260927-v346-hypercurve",
+        "sha256": "4ec805b0547292523e39cd6f9e0059aaf9967066de1e84fe4f513d9e2f48ba6a"
+      }
+    }
+  ],
+  "all_processes_reaped": true,
+  "checks": [],
+  "qualification_scope": "Native coefficient generator order reuse and extended parallel-loop chamfer closure",
+  "failure": "case failure",
+  "qualification_complete": false
+}

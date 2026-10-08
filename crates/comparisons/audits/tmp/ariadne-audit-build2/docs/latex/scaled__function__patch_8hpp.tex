@@ -1,0 +1,58 @@
+\doxysubsection{source/function/scaled\+\_\+function\+\_\+patch.hpp File Reference}
+\hypertarget{scaled__function__patch_8hpp}{}\label{scaled__function__patch_8hpp}\index{source/function/scaled\_function\_patch.hpp@{source/function/scaled\_function\_patch.hpp}}
+
+
+\doxysubsubsection{Description}
+Over-\/approximations of functions on box domains. 
+
+{\ttfamily \#include $<$iosfwd$>$}\newline
+{\ttfamily \#include "{}utility/container.\+hpp"{}}\newline
+{\ttfamily \#include "{}utility/exceptions.\+hpp"{}}\newline
+{\ttfamily \#include "{}utility/declarations.\+hpp"{}}\newline
+{\ttfamily \#include "{}numeric/numeric.\+hpp"{}}\newline
+{\ttfamily \#include "{}algebra/vector.\+hpp"{}}\newline
+{\ttfamily \#include "{}function/taylor\+\_\+model.\+hpp"{}}\newline
+{\ttfamily \#include "{}algebra/operations.\+hpp"{}}\newline
+{\ttfamily \#include "{}function/function\+\_\+interface.\+hpp"{}}\newline
+{\ttfamily \#include "{}function/function\+\_\+mixin.\+hpp"{}}\newline
+{\ttfamily \#include "{}function/function\+\_\+patch.\+hpp"{}}\newline
+{\ttfamily \#include "{}function/function\+\_\+patch\+\_\+mixin.\+hpp"{}}\newline
+{\ttfamily \#include "{}function/function\+\_\+model.\+hpp"{}}\newline
+{\ttfamily \#include "{}function/function\+\_\+model\+\_\+mixin.\+hpp"{}}\newline
+{\ttfamily \#include "{}function/formula.\+hpp"{}}\newline
+\doxysubsubsubsection*{Classes}
+\begin{DoxyCompactItemize}
+\item 
+class \mbox{\hyperlink{classAriadne_1_1ScaledFunctionPatch}{Scaled\+Function\+Patch$<$ M $>$}}
+\begin{DoxyCompactList}\small\item\em A a type of function model in which a the restriction of a scalar function $f:\R^n\rightarrow\R$ on a domain $D$ is approximated by the composition of a scaling function $s^{-1}:D\fto\I^n=[-1\!:\!+1]^n$ with a scaled function model, such as a polynomial $p$ on $\I^n$ with uniform error $e$. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1VectorScaledFunctionPatch}{Vector\+Scaled\+Function\+Patch$<$ M $>$}}
+\begin{DoxyCompactList}\small\item\em A a type of function model in which a the restriction of a vector function $f:\R^n\rightarrow\R^m$ on a domain $D$ is approximated by the composition of a scaling function $s^{-1}:D\fto\I^n=[-1\!:\!+1]^n$ with a vector function $p$ (such as a polynomial) on $\I^n$ with uniform errors $e$. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsubsection*{Namespaces}
+\begin{DoxyCompactItemize}
+\item 
+namespace \mbox{\hyperlink{namespaceAriadne}{Ariadne}}
+\begin{DoxyCompactList}\small\item\em Top-\/level Ariadne namespace. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsubsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{namespaceAriadne_abf93b2986b20a007e8fd7bfa7bba0dbe}\label{namespaceAriadne_abf93b2986b20a007e8fd7bfa7bba0dbe} 
+{\footnotesize template$<$class M$>$ }\\\mbox{\hyperlink{namespaceAriadne_a76a8b016e5ad61faf9062cc387df5016}{Bool}} {\bfseries same} (const \mbox{\hyperlink{classAriadne_1_1ScaledFunctionPatch}{Scaled\+Function\+Patch}}$<$ M $>$ \&tv1, const \mbox{\hyperlink{classAriadne_1_1ScaledFunctionPatch}{Scaled\+Function\+Patch}}$<$ M $>$ \&tv2)
+\begin{DoxyCompactList}\small\item\em Test if the function models have the same representation. \end{DoxyCompactList}\item 
+\Hypertarget{namespaceAriadne_afae50b5e473716ee07cd96cddd6f49ab}\label{namespaceAriadne_afae50b5e473716ee07cd96cddd6f49ab} 
+{\footnotesize template$<$class M$>$ }\\\mbox{\hyperlink{namespaceAriadne_a76a8b016e5ad61faf9062cc387df5016}{Bool}} {\bfseries refines} (const \mbox{\hyperlink{classAriadne_1_1ScaledFunctionPatch}{Scaled\+Function\+Patch}}$<$ M $>$ \&tv1, const \mbox{\hyperlink{classAriadne_1_1ScaledFunctionPatch}{Scaled\+Function\+Patch}}$<$ M $>$ \&tv2)
+\begin{DoxyCompactList}\small\item\em Test if the quantity is a better approximation than {\itshape t} throughout the domain. If the result is {\itshape true}, then the first function model definitely refines the second; may return {\itshape false} even if the first function model actually does refine the second. \end{DoxyCompactList}\item 
+\Hypertarget{namespaceAriadne_aa93c2e3dc29a67231cbdc74c63c1eeb4}\label{namespaceAriadne_aa93c2e3dc29a67231cbdc74c63c1eeb4} 
+{\footnotesize template$<$class M$>$ }\\\mbox{\hyperlink{namespaceAriadne_a76a8b016e5ad61faf9062cc387df5016}{Bool}} {\bfseries inconsistent} (const \mbox{\hyperlink{classAriadne_1_1ScaledFunctionPatch}{Scaled\+Function\+Patch}}$<$ M $>$ \&tv1, const \mbox{\hyperlink{classAriadne_1_1ScaledFunctionPatch}{Scaled\+Function\+Patch}}$<$ M $>$ \&tv2)
+\begin{DoxyCompactList}\small\item\em Test if the function models are inconsistent with representing the same exact function. Equivalent to checking that the two sets of possible functions are disjoint. If the result is {\itshape true}, then the models are definitely inconsistent; may return {\itshape false} even if the models are inconsistent. \end{DoxyCompactList}\item 
+\Hypertarget{namespaceAriadne_aeb6216eecff5d5e7e54fa41e3ae1a912}\label{namespaceAriadne_aeb6216eecff5d5e7e54fa41e3ae1a912} 
+{\footnotesize template$<$class M$>$ }\\\mbox{\hyperlink{classAriadne_1_1ScaledFunctionPatch}{Scaled\+Function\+Patch}}$<$ M $>$ {\bfseries refinement} (const \mbox{\hyperlink{classAriadne_1_1ScaledFunctionPatch}{Scaled\+Function\+Patch}}$<$ M $>$ \&tv1, const \mbox{\hyperlink{classAriadne_1_1ScaledFunctionPatch}{Scaled\+Function\+Patch}}$<$ M $>$ \&tv2)
+\begin{DoxyCompactList}\small\item\em Compute an over-\/approximation to the common refinement of {\itshape x1} and {\itshape x2}. \end{DoxyCompactList}\item 
+\Hypertarget{namespaceAriadne_aca3037103410f89156ac83cea0adaac3}\label{namespaceAriadne_aca3037103410f89156ac83cea0adaac3} 
+{\footnotesize template$<$class M$>$ }\\\mbox{\hyperlink{classAriadne_1_1ScaledFunctionPatch}{Scaled\+Function\+Patch}}$<$ M $>$ {\bfseries midpoint} (const \mbox{\hyperlink{classAriadne_1_1ScaledFunctionPatch}{Scaled\+Function\+Patch}}$<$ M $>$ \&f)
+\begin{DoxyCompactList}\small\item\em Remove the error term. \end{DoxyCompactList}\item 
+\Hypertarget{namespaceAriadne_ad5a56a2e794868fffe574b82afd37726}\label{namespaceAriadne_ad5a56a2e794868fffe574b82afd37726} 
+{\footnotesize template$<$class M$>$ }\\\mbox{\hyperlink{namespaceAriadne_a76a8b016e5ad61faf9062cc387df5016}{Bool}} {\bfseries same} (const \mbox{\hyperlink{classAriadne_1_1VectorScaledFunctionPatch}{Vector\+Scaled\+Function\+Patch}}$<$ M $>$ \&f1, const \mbox{\hyperlink{classAriadne_1_1VectorScaledFunctionPatch}{Vector\+Scaled\+Function\+Patch}}$<$ M $>$ \&f2)
+\begin{DoxyCompactList}\small\item\em Test if the function models have the same representation. \end{DoxyCompactList}\item 
+\Hypertarget{namespaceAriadne_afe4f818ecd9d58b2b49cba2358a769cd}\label{namespaceAriadne_afe4f818ecd9d58b2b49cba2358a769cd} 
+{\footnotesize template$<$class M$>$ }\\\mbox{\hyperlink{namespaceAriadne_a76a8b016e5ad61faf9062cc387df5016}{Bool}} {\bfseries refines} (const \mbox{\hyperlink{classAriadne_1_1VectorScaledFunctionPatch}{Vector\+Scaled\+Function\+Patch}}$<$ M $>$ \&f1, const \mbox{\hyperlink{classAriadne_1_1VectorScaledFunctionPatch}{Vector\+Scaled\+Function\+Patch}}$<$ M $>$ \&f2)
+\begin{DoxyCompactList}\small\item\em Tests if a function {\itshape f} refines another function {\itshape g}. To be a refinement, the domain of {\itshape f} must contain the domain of {\itshape g}. \end{DoxyCompactList}\end{DoxyCompactItemize}

@@ -1,0 +1,15 @@
+{
+  "tag": "monic-cost-cpu-run",
+  "started": "2026-09-09T00:35:27.520Z",
+  "finished": "2026-09-09T00:36:56.853Z",
+  "elapsedSeconds": 89.330352659,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison",
+  "command": "node",
+  "args": [
+    "audits/continuation/calcium/run-monic-costs.mjs",
+    "cpu",
+    "/tmp/calcium-monic-costs.U6fpvm"
+  ],
+  "code": 0,
+  "signal": null
+}

@@ -1,0 +1,8 @@
+# Historical evidence is immutable and verified by its pinned byte/mode inventory.
+# Do not normalize, text-diff, or automatically merge frozen source snapshots.
+audits/** -text -whitespace -diff -merge linguist-vendored
+/audits/continuation/calcium/results/matrix-function-memcheck.vgcore filter=lfs diff=lfs merge=lfs -text
+/audits/continuation/calcium/results/point-demand-cost-cpu.jsonl filter=lfs diff=lfs merge=lfs -text
+/audits/continuation/calcium/results/point-history-cost-cpu.jsonl filter=lfs diff=lfs merge=lfs -text
+/audits/continuation/calcium/results/point-wasm-cost.jsonl filter=lfs diff=lfs merge=lfs -text
+/audits/continuation/calcium/results/zero-factor-wasm-qualification-v72.stdout filter=lfs diff=lfs merge=lfs -text

@@ -1,0 +1,216 @@
+{
+  "schema": 1,
+  "captured_on": "2026-08-05",
+  "checkpoint": "strict-interior-algebraic-chord-boolean-and-multi-affine-predicate-optimization",
+  "semantic_parent_revision": "abb19b8be19dba118479e37f2e449ef3f356cca0",
+  "implementation_revision": "2672fbd69adb9526b38c915a3c65fb1f0a3bd319",
+  "optimization_and_benchmark_revision": "c7fa45ffb657b8a1afb4de615b83d6d899d4343f",
+  "matched_performance_control_revision": "2672fbd69adb9526b38c915a3c65fb1f0a3bd319",
+  "preceding_checkpoint": "2026-08-05-noninjective-algebraic-chord-overlap.json",
+  "dependency_snapshot": {
+    "hyperreal": "e238dc1615e0c5945c8fc1f25c12fde6ef3eb756",
+    "hyperlattice": "a475bb752c1e0fb0cfdb80f4db74a56caa6962c0",
+    "hyperlimit": "d2dee8fb801e3255dbcef93eb054d897003c28cf",
+    "hypertri": "824bd3a4d0b144d64ec48358aac7e8d052362184",
+    "hypersolve": "f3cf7467219abdf5c6a27459e330ed158bbc590e",
+    "hyperbrep": "6336697cd124ef6ef8384166b1f90ef2fceb6663",
+    "hypermesh_modified_or_benchmarked": false,
+    "workspace_note": "Both matched release artifacts use these live path dependencies. Hypermesh remained untouched. Pre-existing untracked Hyperlimit fuzz artifacts were neither read as source nor modified."
+  },
+  "semantic_evidence": {
+    "authoritative_route": "CurveRegion2::boolean_regions continues through boolean_regions_raw, one CurveRegionBooleanContext, pair_result, build_split_topology, and build_boolean_regions. Algebraic chord pairs are another carrier pair in that arrangement, not a second Boolean engine.",
+    "pair_kernel": "BezierAlgebraicChord2::chord_intersections has exact endpoint, strict-interior, support-disjoint, collinear-touch, and Same/Reversed positive-length overlap paths. Supporting-line side predicates keep the selected endpoint fields and use exact bivariate/trivariate replay.",
+    "correlated_contact": "BezierAlgebraicChordPairPoint2 compactly retains the two chords and the exact support predicates needed to compare, classify, split, and later replay a contact without flattening independently selected roots into an opaque scalar.",
+    "strict_interior_split": "A transverse point strictly inside both algebraic chords enters public intersection evidence, creates exact local events on both carriers, splits both carriers, participates in winding and topology construction, and survives all four Boolean outputs.",
+    "output_closure": "Union, intersection, difference, and xor outputs containing correlated chord-pair points can each be regularized again and used in subsequent disjoint and containment Booleans without rebuilding approximate geometry.",
+    "strict_policy": "STRICT accepts only exact side, selected-root order, incidence, separation, and topology decisions. An independently represented oblique concurrency that cannot be certified remains Uncertain(Predicate).",
+    "approximate_512_policy": "APPROXIMATE_512 traverses the same exact graph and may consume only the shared 512-bit equality terminal. The oblique concurrency regression proves that this terminal is observed and reported; already exact chord crossings remain Certified under both policies.",
+    "optimization_equivalence": "For a tensor affine in every axis, restriction to an axis-aligned selected-parameter box has exactly eight Bernstein controls: the polynomial values at the eight box corners. The optimized evaluator computes those controls with exact staged affine arithmetic and applies the same policy-aware Real sign authority as the generic restriction plus power-to-Bernstein path.",
+    "degree_scope": "Only degree-zero, degree-one, and degree-two power-to-Bernstein transforms use exact closed forms. Every higher degree retains the existing arbitrary-degree BigUint binomial implementation, including the degree-80 regression.",
+    "certainty_cache_added": false,
+    "duplicate_region_or_corner_engine_added": false,
+    "compatibility_shim_added": false,
+    "lower_layer_fix_required": false
+  },
+  "mathematical_paths_covered": [
+    "independently selected algebraic chord endpoint contact",
+    "strict-interior transverse algebraic chord/chord contact",
+    "multiple strict-interior contacts ordered along a decreasing chord",
+    "support-disjoint algebraic chord pairs",
+    "collinear point touch with zero tangent cross sign",
+    "partial collinear overlap in Same and Reversed orientation",
+    "public intersection evidence and exact split topology",
+    "union, intersection, difference, and xor",
+    "unary regularization and later Boolean reuse of every correlated output",
+    "certified separation of distinct correlated contacts",
+    "STRICT unresolved independently represented oblique concurrency",
+    "APPROXIMATE_512 consumption of that same equality terminal",
+    "multi-affine box signs with positive, negative, mixed, and missing-axis coefficients under both policies",
+    "general arbitrary-degree power-to-Bernstein conversion unchanged"
+  ],
+  "explicit_remaining_boundaries": [
+    "finite projective transformation and export of correlated chord-pair points",
+    "offset re-entry for retained algebraic chord boundaries",
+    "general retained algebraic fillet-circle and fillet-arc arrangement participation",
+    "complete non-PH pair materialization beyond the retained exact carriers",
+    "irreducible selected-field relations that neither exact factor/relation replay nor APPROXIMATE_512 can support",
+    "remaining bivariate parameter-box allocation traffic"
+  ],
+  "historical_behavior": {
+    "semantic_parent": "At abb19b8 the pair kernel had contact/disjoint/collinear fast paths, but a strict-interior correlated contact was not retained through authoritative split topology and all four Booleans.",
+    "performance_parent": "2672fbd completes the same strict-interior Boolean fixture and is therefore the correctness-equivalent performance control.",
+    "matched_benchmark_patch": "The detached 2672fbd worktree contains only the candidate benchmark fixture/lane in benches/editing.rs. No control production source is changed."
+  },
+  "verification": {
+    "cargo_test_all_features_lib": "468 passed",
+    "cargo_test_all_features_hypercurve_curve_region_promotion": "54 passed",
+    "cargo_test_multi_affine_equivalence": "pass under STRICT and APPROXIMATE_512",
+    "cargo_check_no_default_features": "pass",
+    "cargo_clippy_all_features_all_targets_deny_warnings": "Hypercurve pass; external Hypertri emitted only its pre-existing ExactKernel::sub warning",
+    "cargo_fmt_check": "pass",
+    "git_diff_check": "pass"
+  },
+  "benchmark_method": {
+    "cpu": 11,
+    "primary_metric": "retired userspace instructions from taskset-pinned perf stat; wall time is secondary because the shared host is preemptible",
+    "target_command": "taskset -c 11 perf stat -r 5 -e instructions:u,cycles:u,branches:u,branch-misses:u -- env HYPERCURVE_EDIT_BENCH=represented-bezier-corner HYPERCURVE_EDIT_CORNER_LANE=curve_region_strict_interior_algebraic_chord_boolean HYPERCURVE_EDIT_ITERATIONS=100 target/release/deps/editing-1429e5261074e42b",
+    "control_command": "taskset -c 11 perf stat -r 3 -e instructions:u -- env HYPERCURVE_EDIT_BENCH=represented-bezier-corner HYPERCURVE_EDIT_CORNER_LANE=<control> HYPERCURVE_EDIT_ITERATIONS=<count> target/release/deps/editing-1429e5261074e42b",
+    "fixture": "Two exact algebraic-chord triangles. Their principal horizontal and vertical chords cross strictly inside both finite carriers; all endpoints are independently selected square-root images. Each Boolean operation publishes ten topology fragments.",
+    "fixture_construction": "outside the benchmark's internal timed loop; perf process totals include one identical fixed fixture construction",
+    "candidate_executable_sha256": "8ac24097e833c19a4038af8352c66e1f3b59eeb1be37a94fd978d1dce8055101",
+    "control_executable_sha256": "81056feac2426d8297756e641a6708dc82ed6f40b7b9ca7f8379eea8bc2fa17f"
+  },
+  "matched_performance": {
+    "curve_region_strict_interior_algebraic_chord_boolean": {
+      "iterations_per_process": 100,
+      "repetitions": 5,
+      "control_instructions": 4550273560,
+      "candidate_instructions": 2884415227,
+      "control_instructions_per_operation_including_fixed_setup": 45502735.6,
+      "candidate_instructions_per_operation_including_fixed_setup": 28844152.27,
+      "instruction_change_percent": -36.6101,
+      "control_cycles": 2039065279,
+      "candidate_cycles": 1246540716,
+      "cycle_change_percent": -38.8671,
+      "control_branches": 913109372,
+      "candidate_branches": 548604764,
+      "branch_change_percent": -39.9191,
+      "control_branch_misses": 7029538,
+      "candidate_branch_misses": 4479979,
+      "branch_miss_change_percent": -36.2692,
+      "control_wall_samples_ms_per_operation": [7.012528, 10.844821, 8.71634, 9.939473, 9.400493],
+      "candidate_wall_samples_ms_per_operation": [3.701909, 5.83797, 6.148753, 5.898618, 5.442405],
+      "control_wall_median_ms_per_operation": 9.400493,
+      "candidate_wall_median_ms_per_operation": 5.83797,
+      "wall_median_change_percent": -37.897193,
+      "interpretation": "Instruction and branch counts are stable across repetitions. Wall samples show shared-host preemption but retain the same directional improvement."
+    },
+    "related_and_unchanged_path_guards": {
+      "curve_region_source_related_algebraic_chord_regularize": {
+        "iterations": 100,
+        "control_instructions": 1950922402,
+        "candidate_instructions": 1887254514,
+        "instruction_change_percent": -3.2635
+      },
+      "curve_region_noninjective_collinear_algebraic_chord_intersection": {
+        "iterations": 100,
+        "control_instructions": 725530198,
+        "candidate_instructions": 724233861,
+        "instruction_change_percent": -0.1787
+      },
+      "curve_region_line_quadratic_algebraic_chamfer": {
+        "iterations": 1000,
+        "control_instructions": 4937509899,
+        "candidate_instructions": 4937493935,
+        "instruction_change_percent": -0.0003
+      }
+    }
+  },
+  "allocation_evidence": {
+    "method": "Heaptrack record-only release processes with ten target operations, paired with the same process and fixture harness using a disabled lane. Recorder temporary counts are used consistently; analyzer output supplies peak heap.",
+    "control_target_total": {
+      "allocation_calls": 687112,
+      "temporary_allocations": 39437,
+      "peak_heap_kib": 266.42
+    },
+    "candidate_target_total": {
+      "allocation_calls": 362156,
+      "temporary_allocations": 19046,
+      "peak_heap_kib": 271.17
+    },
+    "matched_disabled_process_control": {
+      "allocation_calls": 486,
+      "temporary_allocations": 29
+    },
+    "disabled_subtracted_per_operation": {
+      "control_allocation_calls": 68662.6,
+      "candidate_allocation_calls": 36167.0,
+      "allocation_change_percent": -47.326492,
+      "control_temporary_allocations": 3940.8,
+      "candidate_temporary_allocations": 1901.7,
+      "temporary_change_percent": -51.743301
+    },
+    "peak_heap_change_kib": 4.75,
+    "peak_heap_change_percent": 1.782899,
+    "interpretation": "The optimized exact proof removes nearly half the allocation traffic. The 4.75 KiB process-level peak increase is retained as visible debt; performance remains the higher priority. Remaining allocation density is led by the bivariate parameter-box strict-sign route rather than the eliminated generic trivariate Bernstein box conversion."
+  },
+  "representative_linked_size": {
+    "benchmark": "curve_region_boolean_batch",
+    "all_features": {
+      "artifact": "target/release/deps/curve_region_boolean_batch-873fdf750dbe978a",
+      "control_sha256": "c80179ad0286e4d71ab0292ef98ac99cbdea6b3f6c28c1e0015995989c2e8487",
+      "candidate_sha256": "306918b1ee3a264dbaa98a3718e330ec95136a36fcbe91931d84d49c4ace28d3",
+      "control_text_bytes": 6852910,
+      "candidate_text_bytes": 6866762,
+      "text_change_bytes": 13852,
+      "text_change_percent": 0.202133,
+      "control_file_bytes": 8952600,
+      "candidate_file_bytes": 8966360,
+      "file_change_bytes": 13760,
+      "file_change_percent": 0.153698,
+      "control_bss_bytes": 1704,
+      "candidate_bss_bytes": 4232
+    },
+    "no_default_features": {
+      "artifact": "target/release/deps/curve_region_boolean_batch-ec1852ae82ff67f7",
+      "control_sha256": "362dfeb66fa8640989bff617714ee253120f193096d933ced34a3de593d059b0",
+      "candidate_sha256": "f9d287468db9cf9ace231b535baa827b479e76ec9f515f7882fbf4543ee364cb",
+      "control_text_bytes": 6079241,
+      "candidate_text_bytes": 6081493,
+      "text_change_bytes": 2252,
+      "text_change_percent": 0.037044,
+      "control_file_bytes": 7994064,
+      "candidate_file_bytes": 7996320,
+      "file_change_bytes": 2256,
+      "file_change_percent": 0.028221,
+      "control_bss_bytes": 2864,
+      "candidate_bss_bytes": 4704
+    },
+    "interpretation": "The all-feature production-like text cost is 0.202% for a 36.61% instruction reduction on the target exact proof. The no-default text cost is 0.037%."
+  },
+  "static_callgraph": {
+    "command": "tools/hyper-callgraph/target/release/hyper-callgraph --root . --out-dir target/callgraph-hypercurve-strict-interior-c7fa45f --format json --crate-name hypercurve,hypersolve --include-tests --include-bench --per-library",
+    "artifact": "../target/callgraph-hypercurve-strict-interior-c7fa45f/callgraph.json",
+    "nodes": 33369,
+    "edges": 65298,
+    "hypercurve_nodes": 27276,
+    "hypercurve_edges": 53295,
+    "hypersolve_nodes": 6094,
+    "hypersolve_edges": 12000,
+    "cross_library_edges": 10,
+    "authoritative_route": "CurveRegion2::boolean_regions -> boolean_regions_raw -> CurveRegionBooleanContext::try_new -> build_split_topology/build_intersection_evidence -> pair_result -> BezierAlgebraicChord2::chord_intersections -> BezierAlgebraicChordSupportPredicate2::oriented_side -> algebraic_point_oriented_line_side_distinct_fields -> trivariate_parameter_triple_sign_by_refinement -> exact multi-affine box sign or the existing generic/factor/relation graph -> exact split and Boolean topology",
+    "policy_route": "Hypercurve real_sign/compare_reals -> Hypersolve classify_real_sign_predicate/compare_real_predicate; selected binary relations continue through the existing Hypersolve represented-root comparison APIs",
+    "duplicate_boolean_engine_added": false
+  },
+  "competitive_context": {
+    "correctness_equivalent_peer_available": false,
+    "finite_peer_control": "Cavalier Contours, Curvo, and iOverlay cannot retain two independently selected canonical-Real chord endpoint fields, correlated exact intersection evidence, reusable exact Boolean topology, or STRICT/APPROXIMATE_512 certainty. Demoting the fixture to binary64 would change the operation contract.",
+    "retained_contextual_sentinels": "The established comparative suite remains the appropriate finite-engine sentinel for native line/arc and approximation lanes. This checkpoint reports no fabricated speed ratio for a mathematically unequal operation.",
+    "interpretation": "2672fbd is the correctness-equivalent historical performance control; finite competitors remain optimization context, not peers for this retained exact carrier."
+  },
+  "next_priority": {
+    "correctness": "Route retained algebraic chords back through exact offset generation and then complete their general fillet-circle/arc arrangement participation without adding a second public engine.",
+    "performance_and_memory": "Stream or compact the remaining bivariate parameter-box proof work, guided by allocation profiles, while preserving the exact generic fallback and keeping policy-derived certainty operation-local.",
+    "size": "Recover the small all-feature text/BSS and 4.75 KiB peak-heap debts when profiling identifies a change that does not surrender the much larger instruction/allocation win."
+  }
+}

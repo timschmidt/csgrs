@@ -1,0 +1,99 @@
+{
+  "status": "implemented, qualified, committed; original goal active",
+  "commits": {
+    "hypercurve": "6c6fdad97a46d5f6efcd653c631b058b6db29ae9",
+    "hypersolve": "9fa774c843b32f7a9f423e2784f0e3376df16e5a",
+    "hyperbrep": "8a84ee7db02fd2720ac89a1a6a227ee4ec2a8171"
+  },
+  "preceding_hypercurve_commit": "4e2507f3bba5919a4572d8d83812e9ba21056ad4",
+  "implementation": [
+    "Extracted the existing exact coefficientwise rational-map proportionality proof from linear projection; retained coordinate conversion now shares it before attempting scalar-parameter reconstruction.",
+    "The selected denominator must be certified nonzero under STRICT before the optional scalar coordinate is published. Proportional coordinates do not cancel a pole; unresolved coefficients do not use approximate equality.",
+    "Whole-point conversion uses the same coordinate fallback while preserving its existing single denominator evaluation when the parameter is already represented. Lazy curve sources need not resolve both Cartesian images for one constant coordinate.",
+    "No additional carrier, cache or compatibility API was introduced. Arbitrary exact Real constants, including pi and sqrt(2), retain their scalar representation."
+  ],
+  "baseline": {
+    "log": "retained-constant-coordinate-baseline.log",
+    "exit_code": 101,
+    "finding": "The selected point (alpha,0), alpha=sqrt(1/2), returns None for its constant y coordinate."
+  },
+  "regression": "Both axes and contexts; zero, pi and sqrt(2); positive and negative constant gauges and nonconstant weights; two-constant whole points; lazy curve sources; poles; unresolved denominator signs; almost-constant numerators with 1-cos(2^-600). Scalar publication stays Certified and does not reconstruct the other coordinate.",
+  "initial_focused": {
+    "log": "retained-constant-coordinate-focused.log",
+    "exit_code": 101,
+    "finding": "The new test and three related tests pass. An existing circle/chord test assumes an Algebraic variant for its interior representative and fails now that a simpler Real representative is available. Its assertion was replaced by exact interior-coordinate and supporting-line checks."
+  },
+  "focused": {
+    "log": "retained-constant-coordinate-focused-final.log",
+    "exit_code": 0,
+    "library_passed": 5,
+    "library_seconds": 0.1,
+    "integration_passed": 1,
+    "integration_seconds": 19.75
+  },
+  "tests": {
+    "hypercurve": {
+      "passed": 1459,
+      "targets": 13,
+      "ignored": 6,
+      "log": "retained-constant-coordinate-hypercurve-tests.log",
+      "exit_code": 0,
+      "fresh": true
+    },
+    "hyperbrep": {
+      "passed": 232,
+      "targets": 1,
+      "ignored": 0,
+      "log": "retained-constant-coordinate-hyperbrep-tests.log",
+      "exit_code": 0,
+      "fresh": true
+    },
+    "hypersolve": {
+      "passed": 491,
+      "targets": 1,
+      "ignored": 0,
+      "log": "ordered-field-selected-sign-hypersolve-tests.log",
+      "exit_code": 0,
+      "fresh": false,
+      "unchanged_commit": "9fa774c843b32f7a9f423e2784f0e3376df16e5a"
+    }
+  },
+  "freshly_run_total": 1691,
+  "qualified_total_including_unchanged_hypersolve": 2182,
+  "established_expensive_hypercurve_exclusions": 4,
+  "checks": [
+    "retained-constant-coordinate-hypercurve-check.log: exit 0",
+    "retained-constant-coordinate-hyperbrep-check.log: exit 0",
+    "changed-file rustfmt --check, git diff --check and source hashes: pass"
+  ],
+  "source_sha256": {
+    "hypercurve/src/bezier_algebraic_image.rs": "82defbeebaf4a2debee7ca0b20c133c878d74f91c83825f47eb4a9d2f6728a1a",
+    "hypercurve/src/bezier_offset.rs": "459b6ee8ef4d3f70e6d88f2f72ad64f8a3b5e12c6a63ccf0351a98d9f5104c45"
+  },
+  "diagnostics": {
+    "binary": "stationary-ph-offset-retained-constant-coordinate",
+    "binary_sha256": "8f959b245e83160dbfe69591c40684d6856baeea4d09ab49148c8b1e98d65ee6",
+    "log": "stationary-ph-offset-retained-constant-coordinate.log",
+    "timeout_seconds": 60,
+    "exit_code": 124,
+    "first_offset": "Certified with degree-five analytic source, 3.73498402s",
+    "second_offset": "No result before total timeout; full inward composition closure is not claimed.",
+    "stack": "stationary-ph-retained-constant-coordinate-stack.log",
+    "finding": "The current native ordered-field root query spends the sample in an integer primitive pseudo-remainder while signing a chain-polynomial value. Its return address maps to the lower endpoint inside the Sturm-Tarski loop, after the two defining endpoint checks.",
+    "phase_evidence": "native-selected-sign-phase-followup.json; retained-field-sign-callsite-disassembly.log",
+    "timing_scope": "The final unloaded probe ran after all qualification, profiling and held-out retry processes ended. The profile overlapped qualification; no application speedup is claimed. A separate debugger trace ran after the unloaded probe and commit, without source changes; it supplies phase evidence only.",
+    "targeted_followup_trace": "stationary-ph-field-chain-trace.log",
+    "targeted_followup_finding": "Two native ordered-field queries each have eight defining coefficients and seven predicate coefficients. The first evaluates chain coefficient counts 13,8,7,6,5,4,3,2,1 at both endpoints. The second reaches both endpoints of its two-coefficient member; the final stack is in field multiplication and dense selected-tuple reduction while constructing the next remainder."
+  },
+  "held_out_retry": {
+    "test": "bezier_region::tests::pair_native_boolean_algebraic_chord_corner_publishes_a_third_generation_fillet",
+    "log": "retained-constant-coordinate-third-generation-fillet.log",
+    "timeout_seconds": 60,
+    "exit_code": 124,
+    "result": "Still unqualified; no result before timeout. The other three expensive exclusions were not rerun in this stage."
+  },
+  "next_work": "Construct a bounded coefficient-growth regression for later native-field remainders and selected-tuple reduction. Inspect existing normalization and field arithmetic before adding another mechanism. The shared sign-preserving remainder already multiplies by the absolute leading coefficient, without squaring it; do not propose that as a new optimization. Check query evidence identity before introducing memoization.",
+  "clean_repository_count": 30,
+  "workspace_state": "retained-constant-coordinate-workspace-after-commit.json",
+  "goal_status": "active"
+}

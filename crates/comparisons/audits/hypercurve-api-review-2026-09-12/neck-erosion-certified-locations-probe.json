@@ -1,0 +1,8 @@
+{
+  "exit_code": 0,
+  "seconds": 0.46448080700065475,
+  "rlib": "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/libhypercurve-2c7ff6f3fbe07653.rlib",
+  "rlib_sha256": "107125b7f6aa2ea06cdb1cd2954cfbcb9a473e11835352343c3c19e88a66e816",
+  "offset_queries": 6,
+  "location_queries": 18
+}

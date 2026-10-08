@@ -1,0 +1,13 @@
+{
+  "tag": "point-statistics-selftest",
+  "started": "2026-09-11T00:19:47.581Z",
+  "finished": "2026-09-11T00:19:47.747Z",
+  "elapsedSeconds": 0.16447337099999998,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "node",
+  "args": [
+    "test-paired-statistics-v60.mjs"
+  ],
+  "code": 0,
+  "signal": null
+}

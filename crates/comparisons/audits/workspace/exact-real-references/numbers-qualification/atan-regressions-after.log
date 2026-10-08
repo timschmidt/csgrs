@@ -1,0 +1,11 @@
+   Compiling hyperreal v0.13.1 (/home/tim/Documents/GitHub/workspace/hyperreal)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1.23s
+     Running unittests src/lib.rs (.audit-targets/ireal-derivative-18555/debug/deps/hyperreal-a346315a45113d5d)
+
+running 3 tests
+test computable::node::tests::atan_reduction_requires_a_positive_sign_for_large_reciprocal_shortcut ... ok
+test computable::node::tests::atan_reduction_rejects_large_negative_rough_inputs ... ok
+test computable::node::tests::atan_reduction_does_not_certify_domain_from_an_estimated_magnitude ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 646 filtered out; finished in 0.00s
+

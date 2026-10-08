@@ -1,0 +1,5 @@
+Pass common exact points to planar region classification
+
+Update the planar XY containment adapter to the unified CurvePoint2 query. Boundary and uncertainty handling remain unchanged.
+
+Validation: 730 release regressions across 20 executables, including all affected Hypercurve integration suites, stationary fillets, downstream nesting and native planar adapters. Eight feature/lint, formatting, documentation, doctest, fuzz and downstream checks pass.

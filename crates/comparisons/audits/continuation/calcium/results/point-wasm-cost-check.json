@@ -1,0 +1,13 @@
+{
+  "tag": "point-wasm-cost-check",
+  "started": "2026-09-10T23:58:57.893Z",
+  "finished": "2026-09-10T23:59:16.257Z",
+  "elapsedSeconds": 18.360342472,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "node",
+  "args": [
+    "check-point-wasm-costs.mjs"
+  ],
+  "code": 0,
+  "signal": null
+}

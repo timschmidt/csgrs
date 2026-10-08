@@ -1,0 +1,19 @@
+{
+  "tag": "matrix-pivot-native-memcheck",
+  "started": "2026-09-09T01:35:53.624Z",
+  "finished": "2026-09-09T01:35:54.745Z",
+  "elapsedSeconds": 1.118899598,
+  "cwd": "/home/tim/Documents/GitHub/workspace",
+  "command": "valgrind",
+  "args": [
+    "--vgdb=no",
+    "--tool=memcheck",
+    "--error-exitcode=97",
+    "--leak-check=full",
+    "--show-leak-kinds=all",
+    "--errors-for-leak-kinds=definite,indirect,possible",
+    "/tmp/calcium-matrix-pivots.X3ulwj/flint-matrix-pivots"
+  ],
+  "code": 0,
+  "signal": null
+}

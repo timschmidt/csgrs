@@ -1,0 +1,6 @@
+{
+  "reason": "Retaining recognition only in the corner evaluator did not reach the authored support used by later intersection.",
+  "main_curve_rs_restored_to_head": true,
+  "all_processes_reaped": true,
+  "diagnostic": "circle-closure-20260923-probe3-case-0.log"
+}

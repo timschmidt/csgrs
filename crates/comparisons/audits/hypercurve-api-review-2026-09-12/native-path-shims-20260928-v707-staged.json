@@ -1,0 +1,24 @@
+{
+  "repos": {
+    "hyperbrep": {
+      "parent": "7874790863d210646338182e548d7eef1aa05c7c",
+      "paths": {
+        "src/boolean.rs": "d7bfd2986bf56dc3c6a2c739b5543c2ac310586402617085e5fc5380fa2b3349",
+        "src/builder.rs": "e90e05e16d4760bd98d45f78421603b7fd338132decc6674db6282360682b952",
+        "src/model.rs": "b9e04d825132026b854de298fb079739ce4965e8c232b0b306be6eae0f19cdb9",
+        "src/tessellation.rs": "d2fa75c4db06906a6a42930dd9248aa2af7029f0b1976694079ef3a655a5913b"
+      }
+    },
+    "hypercurve": {
+      "parent": "609ee473dcf2edfa56c9a71c36e88ff9e2478d5a",
+      "paths": {
+        "benches/editing.rs": "d7a39130b9bfd6f443a929a202a9be2b3c4f10e00f60dcca8a7d078995348055",
+        "fuzz/fuzz_targets/curve_string_editing.rs": "7d4e93ebfebe847970620bbcdcd4a3fe545e7c8acecb9a6e617b422147e983d8",
+        "src/curve_string.rs": "c8613814c22a228e7c15743613b2e8a26ea2113685b6a90c51d230b204a0007a",
+        "tests/hypercurve_curve_string.rs": "23cf46b1717024b88b81bd2236ccd55ea974c6c68473b342184c27f255411798"
+      }
+    }
+  },
+  "qualification": "native-path-shims-20260928-v707-terminal.json",
+  "verified_source_files": 2047
+}

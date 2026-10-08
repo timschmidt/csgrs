@@ -1,0 +1,20 @@
+{
+  "qualification": "recursive-point-incidence-broad-20260928-v587-terminal.json",
+  "source_manifest": "recursive-point-incidence-broad-20260928-v587-sources.json",
+  "outer_session_reaped": 99449,
+  "validated_files": 2047,
+  "selected_geometry_tests": 488,
+  "checks": 6,
+  "repos": {
+    "hypercurve": {
+      "parent": "e873a2732c153c31bb60afdbbb12c0c8502c2c98",
+      "paths": {
+        "src/bezier_offset.rs": "8521124cb15da5f25e524e61306dbcb954657ca04738cd9044710319dd950178",
+        "src/curve_fillet.rs": "b4e42c534e5894671793d758eb874db6572453507a44a1e63234605e8058b6be"
+      }
+    }
+  },
+  "scope": "Retained recursive point incidence shares the radical-free Cartesian theorem and exact field GCD; selected parameter fields, normal orientation and source-domain ownership survive fillet constraints; full goal remains active",
+  "performance_changes": [],
+  "workload_changes": []
+}

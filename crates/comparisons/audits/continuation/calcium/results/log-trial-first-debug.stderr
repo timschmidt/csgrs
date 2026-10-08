@@ -1,0 +1,48 @@
+     Locking 9 packages to latest Rust 1.97.0 compatible versions
+   Compiling autocfg v1.5.1
+   Compiling num-traits v0.2.19
+   Compiling num-integer v0.1.47
+   Compiling num-complex v0.4.6
+   Compiling num-bigint v0.4.8
+   Compiling num-iter v0.1.46
+   Compiling num-rational v0.4.2
+   Compiling num v0.4.3
+   Compiling hyperreal v0.13.1 (/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/trial-hyperreal)
+error[E0308]: mismatched types
+   --> /home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/trial-hyperreal/src/computable/node/log_relation.rs:111:63
+    |
+111 |             let Some(exponent) = (coefficient * Rational::new(denominator)).to_integer_i64() else {
+    |                                                 ------------- ^^^^^^^^^^^ expected `i64`, found `u64`
+    |                                                 |
+    |                                                 arguments to this function are incorrect
+    |
+note: associated function defined here
+   --> /home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/trial-hyperreal/src/rational/arithmetic/construction.rs:290:12
+    |
+290 |     pub fn new(n: i64) -> Self {
+    |            ^^^ ------
+help: you can convert a `u64` to an `i64` and panic if the converted value doesn't fit
+    |
+111 |             let Some(exponent) = (coefficient * Rational::new(denominator.try_into().unwrap())).to_integer_i64() else {
+    |                                                                          ++++++++++++++++++++
+
+error[E0308]: mismatched types
+   --> /home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/trial-hyperreal/src/computable/node/log_relation.rs:49:82
+    |
+ 49 |                         collect(&Computable::ln2(), &coefficient * Rational::new(*shift), remaining, terms)?;
+    |                                                                    ------------- ^^^^^^ expected `i64`, found `i32`
+    |                                                                    |
+    |                                                                    arguments to this function are incorrect
+    |
+note: associated function defined here
+   --> /home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/trial-hyperreal/src/rational/arithmetic/construction.rs:290:12
+    |
+290 |     pub fn new(n: i64) -> Self {
+    |            ^^^ ------
+help: you can convert an `i32` to an `i64`
+    |
+ 49 |                         collect(&Computable::ln2(), &coefficient * Rational::new((*shift).into()), remaining, terms)?;
+    |                                                                                  +      ++++++++
+
+For more information about this error, try `rustc --explain E0308`.
+error: could not compile `hyperreal` (lib) due to 2 previous errors

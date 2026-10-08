@@ -1,0 +1,47 @@
+{
+  "cases": [
+    {
+      "name": "curve_region_boolean::certified_successor_tests::boundary_probe_reuses_endpoint_incidence_and_keeps_residual_contacts",
+      "returncode": 0,
+      "passed": true,
+      "limit_seconds": 60,
+      "elapsed_seconds": 0.15037134103477,
+      "log": "retained-fragment-witness-20260923-focused3-case-0.log"
+    },
+    {
+      "name": "bezier_region::tests::major_retained_rational_arc_and_general_chord_share_the_fillet_kernel",
+      "returncode": 0,
+      "passed": true,
+      "limit_seconds": 90,
+      "elapsed_seconds": 33.25172057899181,
+      "log": "retained-fragment-witness-20260923-focused3-case-1.log"
+    },
+    {
+      "name": "bezier_region::single_loop_corner_publication_tests::selected_circle_corner_candidates_publish_normalized_single_loops",
+      "returncode": 0,
+      "passed": true,
+      "limit_seconds": 75,
+      "elapsed_seconds": 0.17035455896984786,
+      "log": "retained-fragment-witness-20260923-focused3-case-2.log"
+    },
+    {
+      "name": "bezier_region::tests::selected_circle_chamfer_crosses_one_sided_smooth_run_seam",
+      "returncode": 0,
+      "passed": true,
+      "limit_seconds": 75,
+      "elapsed_seconds": 2.410559081006795,
+      "log": "retained-fragment-witness-20260923-focused3-case-3.log"
+    },
+    {
+      "name": "bezier_offset::conversion_tests::exact_radial_chord_replays_a_retained_circle_endpoint_contact",
+      "returncode": 0,
+      "passed": true,
+      "limit_seconds": 60,
+      "elapsed_seconds": 0.14148893009405583,
+      "log": "retained-fragment-witness-20260923-focused3-case-4.log"
+    }
+  ],
+  "binary_sha256": "857a3e724a5ad748e63a676d8935ce12e5e534abc416fcfe71e3d668d448bf9c",
+  "all_sources_unchanged": true,
+  "all_processes_reaped": true
+}

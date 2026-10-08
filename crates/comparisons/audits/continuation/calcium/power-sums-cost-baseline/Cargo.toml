@@ -1,0 +1,17 @@
+[package]
+name = "calcium-power-sums-cost-baseline"
+version = "0.1.0"
+edition = "2024"
+publish = false
+[workspace]
+[dependencies]
+hyperreal = { path = "../e-plan-qualified-candidate/hyperreal", default-features = false }
+hyperlimit = { path = "../e-plan-qualified-candidate/hyperlimit", default-features = false }
+hypersolve = { path = "../e-plan-qualified-candidate/hypersolve", default-features = false }
+serde_json = "1.0.149"
+[[bin]]
+name = "calcium-power-sums-baseline-cpu"
+path = "../power-sums-cpu.rs"
+[[bin]]
+name = "calcium-power-sums-baseline-allocation"
+path = "../power-sums-allocation.rs"

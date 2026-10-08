@@ -1,0 +1,21 @@
+{
+  "tag": "qqbar-trig-hyper-debug-v76",
+  "started": "2026-09-11T22:27:37.432Z",
+  "finished": "2026-09-11T22:27:39.899Z",
+  "elapsedSeconds": 2.464093734,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/qqbar-trig-hyper-v76",
+  "command": "env",
+  "args": [
+    "CARGO_TARGET_DIR=/tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse",
+    "CARGO_INCREMENTAL=0",
+    "CARGO_PROFILE_DEV_DEBUG=0",
+    "CARGO_BUILD_JOBS=2",
+    "cargo",
+    "run",
+    "--offline",
+    "--locked",
+    "--quiet"
+  ],
+  "code": 101,
+  "signal": null
+}

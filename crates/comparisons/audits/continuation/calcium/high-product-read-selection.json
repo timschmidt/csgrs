@@ -1,0 +1,146 @@
+[
+  {
+    "repo": "flint",
+    "path": "src/mpn_extras/mulhigh.c",
+    "newRanges": [
+      [
+        1,
+        274
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "src/mpn_extras/mulhigh_basecase.c",
+    "newRanges": [
+      [
+        1,
+        481
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "src/mpn_extras/mulhigh_naive.c",
+    "newRanges": [
+      [
+        1,
+        54
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "src/mpn_extras/mulhigh_recursive.c",
+    "newRanges": [
+      [
+        1,
+        87
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "src/mpn_extras/sqrhigh.c",
+    "newRanges": [
+      [
+        1,
+        230
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "src/mpn_extras/sqrhigh_basecase.c",
+    "newRanges": [
+      [
+        1,
+        88
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "src/mpn_extras/test/t-mulhigh_normalised.c",
+    "newRanges": [
+      [
+        1,
+        90
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "src/mpn_extras/test/t-mulhigh_n.c",
+    "newRanges": [
+      [
+        1,
+        159
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "src/mpn_extras/test/t-mulhigh_n_recursive.c",
+    "newRanges": [
+      [
+        1,
+        61
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "src/mpn_extras/test/t-mulhigh_n_tab.c",
+    "newRanges": [
+      [
+        1,
+        61
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "src/mpn_extras/test/t-sqrhigh_normalised.c",
+    "newRanges": [
+      [
+        1,
+        93
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "src/mpn_extras/test/t-sqrhigh.c",
+    "newRanges": [
+      [
+        1,
+        150
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "src/mpn_extras.h",
+    "newRanges": [
+      [
+        610,
+        680
+      ],
+      [
+        980,
+        1180
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "doc/source/mpn_extras.rst",
+    "newRanges": [
+      [
+        110,
+        205
+      ]
+    ]
+  }
+]

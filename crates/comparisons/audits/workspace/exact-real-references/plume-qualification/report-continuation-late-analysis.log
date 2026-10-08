@@ -1,0 +1,7 @@
+0.1	k=4	dy/signed CPU=15.56	allocation=17.04	paired95=12.29..17.05
+0.1	k=8	dy/signed CPU=25.83	allocation=39.33	paired95=25.47..34.86
+0.1	k=10	dy/signed CPU=147.27	allocation=90.65	paired95=122.23..161.11
+0.5467	k=4	dy/signed CPU=16.19	allocation=18.48	paired95=14.97..17.58
+0.5467	k=8	dy/signed CPU=26.89	allocation=44.50	paired95=25.90..38.64
+0.5467	k=10	dy/signed CPU=124.42	allocation=103.30	paired95=120.44..154.36
+PASS source/result/benchmark verification; details in late-summary.json

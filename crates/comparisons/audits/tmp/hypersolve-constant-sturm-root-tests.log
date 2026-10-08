@@ -1,0 +1,39 @@
+   Compiling hypersolve v0.3.1 (/home/tim/Documents/GitHub/workspace/hypersolve)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1.88s
+     Running unittests src/lib.rs (target/debug/deps/hypersolve-3006950ef9f7f419)
+
+running 31 tests
+test root_isolation::tests::dyadic_fujiwara_bound_is_exact_and_tightens_large_middle_coefficients ... ok
+test root_isolation::tests::algebraic_image_admission_uses_half_open_ownership_and_replays_exact_witnesses ... ok
+test root_isolation::tests::bernstein_counts_interval_roots_and_endpoint_witnesses ... ok
+test root_isolation::tests::bernstein_subdivision_keeps_an_interior_root_beside_an_endpoint_root ... ok
+test root_isolation::tests::descartes_counts_positive_negative_and_zero_root_bounds ... ok
+test root_isolation::tests::bernstein_subdivision_partitions_empty_endpoint_isolating_and_depth_limit ... ok
+test root_isolation::tests::isolated_interval_refinement_accepts_exact_real_coefficient_fields ... ok
+test root_isolation::tests::isolated_interval_refinement_rejects_bad_evidence_antagonistically ... ok
+test root_isolation::tests::isolated_interval_refinement_obeys_width_and_step_budgets_exactly ... ok
+test root_isolation::tests::isolated_interval_refinement_solves_trimmed_linear_carriers_exactly ... ok
+test root_isolation::tests::isolated_interval_refinement_separates_nested_quadratic_roots ... ok
+test root_isolation::tests::bounded_refinement_and_rational_witness_replay_are_explicit ... ok
+test root_isolation::tests::open_interval_one_root_excludes_endpoint_roots_without_discarding_interior_roots ... ok
+test root_isolation::tests::isolated_interval_refinement_strictly_replays_exact_witnesses ... ok
+test root_isolation::tests::square_free_part_preserves_rational_and_exact_real_gcd_paths ... ok
+test root_isolation::tests::quadratic_multiple_bernstein_variation_distinguishes_repeated_root ... ok
+test root_isolation::tests::open_interval_one_root_falls_back_after_inconclusive_bernstein_bound ... ok
+test root_isolation::tests::nonzero_constant_sturm_chains_need_no_derivative ... ok
+test root_isolation::tests::sturm_rejects_multivariate_rows_explicitly ... ok
+test root_isolation::tests::sturm_isolates_distinct_repeated_and_no_real_roots ... ok
+test root_isolation::tests::isolated_interval_refinement_uses_half_open_endpoint_ownership ... ok
+test root_isolation::tests::fixed_degree_remainder_does_not_predicate_on_unresolved_correlated_coefficients ... ok
+test root_isolation::tests::interval_presence_helpers_preserve_exact_real_and_undecided_boundaries ... ok
+test root_isolation::tests::dyadic_fujiwara_bound_contains_generated_rational_roots ... ok
+test root_isolation::tests::fraction_free_bernstein_exceeds_machine_binomial_range_exactly ... ok
+test root_isolation::tests::isolated_interval_refinement_matches_generated_half_open_quadratic_counts ... ok
+test root_isolation::tests::bernstein_generated_quadratic_interval_counts_one_interior_root ... ok
+test root_isolation::tests::polynomial_division_recovers_generated_exact_products ... ok
+test root_isolation::tests::midpoint_de_casteljau_matches_direct_exact_bernstein_conversion ... ok
+test root_isolation::tests::isolated_interval_refinement_preserves_generated_repeated_root_carriers ... ok
+test root_isolation::tests::generated_interval_presence_helpers_match_distinct_root_sets ... ok
+
+test result: ok. 31 passed; 0 failed; 0 ignored; 0 measured; 379 filtered out; finished in 0.08s
+

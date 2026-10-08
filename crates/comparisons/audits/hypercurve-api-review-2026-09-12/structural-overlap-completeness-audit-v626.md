@@ -1,0 +1,13 @@
+# Unit structural-overlap fallback audit (unimplemented)
+
+V625 copied-source root-envelope qualification is active; no frozen inputs are changed by this note. The pending parameter API/image-selection changes and the cusp closure candidate remain uncommitted.
+
+`project_unit_parallel_pair_intersection_system` contains two equivalent fallbacks that return `NoIntersection` plus a selected source overlap after `project_parallel_pair_without_components` returns `None`. The latter can return `None` because projection, component extraction, or selected replay was undecided. A source correspondence proves the diagonal (or another source map), not the absence of off-correspondence contacts. `replay_parallel_pair_projection_with_ranges` marks the overlap-only result complete when residual equations and component evidence are absent. Source inspection therefore identifies an unsupported completeness claim; no new independent failing fixture has been run yet.
+
+Do not copy this fallback into the finite-domain fix. V613/V625 explicitly fall through to the full domain path unless residual projection is enumerated successfully.
+
+Proposed independent probe: the existing S-cubic `(0,0),(1,4),(3,-4),(4,0)` offset by `1/2` has two ordered off-diagonal contacts (already confirmed by V623). Reparameterize its source by `u=(t+t^2)/2`, a strictly increasing bijection of the unit interval with nonzero derivative everywhere. Its degree-six polynomial Bézier source has exactly the same trace, normal direction, signed offset, and crossing count. This raises the raw elimination degree without introducing poles or stationary source endpoints. Use rational power coefficients and exact power-to-Bernstein conversion, never sampled fitting. A complete result must retain two off-diagonal contacts; an uncertain/incomplete result is a completeness limitation, while complete zero contacts is an exactness defect. Apply both policies and consider the structurally reversed operand separately.
+
+If the degree-six case stays within the algebraic fast path, a higher strictly monotone polynomial reparameterization is a principled follow-up; cap diagnostic execution, not mathematical correctness. Preserve the original source/normal theorem. Do not inject an arbitrary unrelated equation system merely to force the fallback.
+
+Removing the two unproved overlap-only fallbacks would reduce duplicated machinery. A complete replacement should reuse the finite-domain component/residual authority (with native unit optimizations preserved) or provide a separately certified proof that no off-correspondence branch exists. Exactness takes precedence over claiming completeness on failure.

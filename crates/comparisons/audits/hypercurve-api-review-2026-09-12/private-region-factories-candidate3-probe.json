@@ -1,0 +1,20 @@
+{
+  "command": [
+    "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustc",
+    "--edition=2024",
+    "-O",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/normalized-retained-admission-completed.rs",
+    "--extern",
+    "hypercurve=/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/private-region-factories-candidate3-libraries/libhypercurve-bacb55d5ec235376.rlib",
+    "-L",
+    "dependency=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps",
+    "-o",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/private-region-factories-candidate3-libraries/admission-public"
+  ],
+  "compile_returncode": 0,
+  "run_returncode": 0,
+  "source_sha256": "67e4454e799b2fa4561784a86a4e6eee44aeeeeede35a1cf33fd4f3310ea17c1",
+  "binary_sha256": "c94942fe56e74a6b83e7e0046dab8fc0131a67f248aa55596558b904f23df49e",
+  "library_sha256": "7ee45522b1f2248fc54a35bf4f0683f7c2282bee2f93c5cb6518b29bc0790379",
+  "elapsed_seconds": 0.5499935389962047
+}

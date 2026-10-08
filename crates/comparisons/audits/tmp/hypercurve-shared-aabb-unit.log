@@ -1,0 +1,20 @@
+   Compiling hypercurve v0.3.1 (/home/tim/Documents/GitHub/workspace/hypercurve)
+    Finished `release` profile [optimized] target(s) in 1m 08s
+     Running unittests src/lib.rs (target/release/deps/hypercurve-7b7bae739dc512f2)
+
+running 2 tests
+test events::tests::aabb_candidates_preserve_unknown_queries_and_visitor_errors ... ok
+
+thread 'curve_region_boolean::certified_successor_tests::retained_aabb_candidates_match_cartesian_pairs_in_authored_order' (108) panicked at src/curve_region_boolean.rs:21482:26:
+internal error: entered unreachable code: the fixture has only exact lines
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+test curve_region_boolean::certified_successor_tests::retained_aabb_candidates_match_cartesian_pairs_in_authored_order ... FAILED
+
+failures:
+
+failures:
+    curve_region_boolean::certified_successor_tests::retained_aabb_candidates_match_cartesian_pairs_in_authored_order
+
+test result: FAILED. 1 passed; 1 failed; 0 ignored; 0 measured; 868 filtered out; finished in 0.00s
+
+error: test failed, to rerun pass `--lib`

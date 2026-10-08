@@ -1,0 +1,8 @@
+To build the library with minimum effort you need to have MPFR installed 
+somewhere in your $PATH or you need to add the location to 
+extra-lib-dirs and include-dirs in HERA.cabal.
+You also need GHC and Cabal (usually comes with GHC).
+
+To build and install see 
+   
+   http://www.haskell.org/haskellwiki/Cabal/How_to_install_a_Cabal_package

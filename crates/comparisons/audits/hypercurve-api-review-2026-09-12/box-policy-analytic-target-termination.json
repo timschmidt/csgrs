@@ -1,0 +1,11 @@
+{
+  "source": "verified process capture returned by inspect-box-policy-tests.py 300 at the analytic target; preserved before later process captures replace the latest file",
+  "cargo_pid": 748966,
+  "cargo_start_ticks": "5654398",
+  "test_pid": 753558,
+  "test_start_ticks": "5672415",
+  "target": "hypercurve_analytic_parallel_region-68a34b9751e86ddf",
+  "elapsed_seconds": 329.83,
+  "signal": "SIGTERM",
+  "reason": "exceeded 300-second owned-target budget; parent cargo continued --no-fail-fast"
+}

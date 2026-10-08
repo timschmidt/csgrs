@@ -1,0 +1,204 @@
+{
+  "diagnostic_only": true,
+  "checks": [
+    {
+      "label": "fmt",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustfmt",
+        "--edition",
+        "2024",
+        "--check",
+        "src/bezier_offset.rs",
+        "src/bezier_parameter.rs",
+        "src/bezier_region.rs",
+        "src/curve.rs",
+        "src/curve_corner_chain.rs",
+        "src/curve_region_boolean.rs",
+        "tests/hypercurve_curve.rs"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 3.3356143629644066,
+      "log": "native-norm-ownership-20260925-v68-fmt.log"
+    },
+    {
+      "label": "clippy-0",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "clippy",
+        "--all-targets",
+        "--all-features",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 25.77533060393762,
+      "log": "native-norm-ownership-20260925-v68-clippy-0.log"
+    },
+    {
+      "label": "clippy-1",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "clippy",
+        "--all-targets",
+        "--no-default-features",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 24.765162077033892,
+      "log": "native-norm-ownership-20260925-v68-clippy-1.log"
+    }
+  ],
+  "binaries": {
+    "hypercurve": {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/native-norm-ownership-20260925-v68-hypercurve",
+      "sha256": "391a3e193f1090d9758f5a86f0706abdfe0debe0d465dfa7a2d047ccbb1bc2a3"
+    }
+  },
+  "cases": [
+    {
+      "label": "selected_norm_carriers_exclude_foreign_endpoint_roots",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/native-norm-ownership-20260925-v68-hypercurve",
+        "--exact",
+        "bezier_offset::conversion_tests::selected_norm_carriers_exclude_foreign_endpoint_roots",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 101,
+      "elapsed_seconds": 0.26632052194327116,
+      "log": "native-norm-ownership-20260925-v68-selected_norm_carriers_exclude_foreign_endpoint_roots.log"
+    },
+    {
+      "label": "selected_norm_isolation_preserves_exterior_exact_and_algebraic_roots",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/native-norm-ownership-20260925-v68-hypercurve",
+        "--exact",
+        "bezier_offset::conversion_tests::selected_norm_isolation_preserves_exterior_exact_and_algebraic_roots",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.2688565979478881,
+      "log": "native-norm-ownership-20260925-v68-selected_norm_isolation_preserves_exterior_exact_and_algebraic_roots.log"
+    },
+    {
+      "label": "selected_fiber_norm_isolation_refines_past_the_old_limit",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/native-norm-ownership-20260925-v68-hypercurve",
+        "--exact",
+        "bezier_offset::conversion_tests::selected_fiber_norm_isolation_refines_past_the_old_limit",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.28347095602657646,
+      "log": "native-norm-ownership-20260925-v68-selected_fiber_norm_isolation_refines_past_the_old_limit.log"
+    },
+    {
+      "label": "imported_root_comparisons_preserve_owned_and_excluded_endpoints",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/native-norm-ownership-20260925-v68-hypercurve",
+        "--exact",
+        "bezier_parameter::conversion_tests::imported_root_comparisons_preserve_owned_and_excluded_endpoints",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.269132609013468,
+      "log": "native-norm-ownership-20260925-v68-imported_root_comparisons_preserve_owned_and_excluded_endpoints.log"
+    },
+    {
+      "label": "decreasing_root_charts_preserve_owned_and_excluded_endpoints",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/native-norm-ownership-20260925-v68-hypercurve",
+        "--exact",
+        "bezier_parameter::conversion_tests::decreasing_root_charts_preserve_owned_and_excluded_endpoints",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.2720776969799772,
+      "log": "native-norm-ownership-20260925-v68-decreasing_root_charts_preserve_owned_and_excluded_endpoints.log"
+    },
+    {
+      "label": "regularization_orders_all_branches_at_a_pinched_algebraic_corner",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/native-norm-ownership-20260925-v68-hypercurve",
+        "--exact",
+        "curve_region_boolean::certified_successor_tests::regularization_orders_all_branches_at_a_pinched_algebraic_corner",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.5387646449962631,
+      "log": "native-norm-ownership-20260925-v68-regularization_orders_all_branches_at_a_pinched_algebraic_corner.log"
+    },
+    {
+      "label": "algebraic_ray_queries_keep_exterior_roots_and_denominator_orientation",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/native-norm-ownership-20260925-v68-hypercurve",
+        "--exact",
+        "bezier_region::tests::algebraic_ray_queries_keep_exterior_roots_and_denominator_orientation",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.27045632898807526,
+      "log": "native-norm-ownership-20260925-v68-algebraic_ray_queries_keep_exterior_roots_and_denominator_orientation.log"
+    },
+    {
+      "label": "independent_field_collinear_chord_overlap_enters_all_boolean_topology",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/native-norm-ownership-20260925-v68-hypercurve",
+        "--exact",
+        "curve_region_boolean::certified_successor_tests::independent_field_collinear_chord_overlap_enters_all_boolean_topology",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.307495568995364,
+      "log": "native-norm-ownership-20260925-v68-independent_field_collinear_chord_overlap_enters_all_boolean_topology.log"
+    },
+    {
+      "label": "source_related_algebraic_chord_contact_enters_split_topology",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/native-norm-ownership-20260925-v68-hypercurve",
+        "--exact",
+        "curve_region_boolean::certified_successor_tests::source_related_algebraic_chord_contact_enters_split_topology",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.292989194043912,
+      "log": "native-norm-ownership-20260925-v68-source_related_algebraic_chord_contact_enters_split_topology.log"
+    }
+  ],
+  "all_processes_reaped": true,
+  "build_returncode": 0,
+  "all_sources_unchanged": true
+}

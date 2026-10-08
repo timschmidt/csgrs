@@ -1,0 +1,42 @@
+{
+  "baseline": "retained-vector-order-v886-sources.json",
+  "rlib": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypercurve-85a9105cd1c82df7.rlib",
+  "rlib_sha256": "4d5c80f6f95aceb19eea318719457a0fe2430924a382c3d133d048fad2c01acb",
+  "source_sha256": "464298c242b690cdfb3f050a4b915a139dd28d48500b52d17482d24b86266658",
+  "processes": [
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustc",
+        "--edition=2024",
+        "--crate-name",
+        "selected_field_admission_probe",
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/selected-field-admission-probe-v891.rs",
+        "--extern",
+        "hypercurve=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypercurve-85a9105cd1c82df7.rlib",
+        "--extern",
+        "hypersolve=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypersolve-dab45c0236e67f19.rlib",
+        "-L",
+        "dependency=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps",
+        "-C",
+        "opt-level=3",
+        "-o",
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/selected-field-admission-probe-v891-binary"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.6146599538624287,
+      "log": "selected-field-admission-probe-v891-compile.log"
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/selected-field-admission-probe-v891-binary"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.007594580063596368,
+      "log": "selected-field-admission-probe-v891-cases.log"
+    }
+  ],
+  "all_processes_reaped": true,
+  "binary_sha256": "2d783705d96654e7e899a828368e05690269861ca9d7bf19efb2a6597dd6dedd",
+  "output": "policy=0 second=false point_represented=true retained_tangent=true vector_represented=false\npolicy=0 second=false root_valid=true field_status=Counted fiber_count=Some(1)\npolicy=0 second=true point_represented=true retained_tangent=true vector_represented=false\npolicy=0 second=true root_valid=true field_status=Counted fiber_count=Some(1)\npolicy=0 blocked=Unsupported\npolicy=1 second=false point_represented=true retained_tangent=true vector_represented=false\npolicy=1 second=false root_valid=true field_status=Counted fiber_count=Some(1)\npolicy=1 second=true point_represented=true retained_tangent=true vector_represented=false\npolicy=1 second=true root_valid=true field_status=Counted fiber_count=Some(1)\npolicy=1 blocked=Unsupported\ncomplete requests=2 blocked=2\n",
+  "probe_complete": true
+}

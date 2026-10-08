@@ -1,0 +1,32 @@
+{
+  "scriptSHA256": "782872189a8202472416c9f558788a845ea90de833eebaa4523928d509b7f48f",
+  "loaderSHA256": "e8d4dcbf37d53c451b0244dfe136ab5c0e0b7632148a2d71c511c80f23b829c8",
+  "files": [
+    {
+      "name": "constants07",
+      "sha256": "3d8e77d6355527d5f98c5336fe6db9b1e0e899c713d3fa6bfa8a4cbe83a26e52",
+      "bytes": 49541,
+      "physicalLines": 639,
+      "coordinates": 9,
+      "fullRounds": 8,
+      "partialRounds": 63,
+      "finalNewline": false,
+      "canonicalDecimalAndRange": true
+    },
+    {
+      "name": "constants08",
+      "sha256": "1d023b7bca575ccbdb528aec60df99bc9a19c31df80a6e88a4edb2b22efd18e8",
+      "bytes": 52694,
+      "physicalLines": 680,
+      "coordinates": 10,
+      "fullRounds": 8,
+      "partialRounds": 60,
+      "finalNewline": false,
+      "canonicalDecimalAndRange": true
+    }
+  ],
+  "totalEntries": 1319,
+  "predicateControls": 18,
+  "independentPredicatesAgree": true,
+  "scope": "Already-read constants07 and constants08 only. Shape, canonical decimal syntax and modulus range; no generating-procedure, cryptographic, performance or unread-file qualification."
+}

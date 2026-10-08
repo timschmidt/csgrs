@@ -1,0 +1,7487 @@
+{
+  "mode": "cpu",
+  "started": "2026-09-09T00:35:27.758Z",
+  "finished": "2026-09-09T00:36:56.837Z",
+  "cpu": 6,
+  "binaries": {
+    "baseline-cpu": {
+      "path": "/tmp/calcium-monic-costs.U6fpvm/baseline-cpu",
+      "sha256": "e4df35d116d5dce06300854882a45476bee10ae80550686284295f51e67799d4",
+      "bytes": 2392624,
+      "size": "text\t   data\t    bss\t    dec\t    hex\tfilename\n1697729\t 219360\t   4528\t1921617\t 1d5251\t/tmp/calcium-monic-costs.U6fpvm/baseline-cpu"
+    },
+    "baseline-allocation": {
+      "path": "/tmp/calcium-monic-costs.U6fpvm/baseline-allocation",
+      "sha256": "19bb5e6ff2adb44e8d8c2dcd6d8237e8e95657a5f403bf99e52caef5f022e751",
+      "bytes": 2396752,
+      "size": "text\t   data\t    bss\t    dec\t    hex\tfilename\n1701137\t 219368\t   1160\t1921665\t 1d5281\t/tmp/calcium-monic-costs.U6fpvm/baseline-allocation"
+    },
+    "trial-cpu": {
+      "path": "/tmp/calcium-monic-costs.U6fpvm/trial-cpu",
+      "sha256": "cd93c7472d3e433d91c15c2590d4f88933d32893d3d9e4ff5ba32185fbffe30c",
+      "bytes": 2394024,
+      "size": "text\t   data\t    bss\t    dec\t    hex\tfilename\n1697765\t 219360\t   4496\t1921621\t 1d5255\t/tmp/calcium-monic-costs.U6fpvm/trial-cpu"
+    },
+    "trial-allocation": {
+      "path": "/tmp/calcium-monic-costs.U6fpvm/trial-allocation",
+      "sha256": "bdb8a6aa989b3aef19f76b06c21d9c9d547695a47a20f6f315b31b4a4cc2fba3",
+      "bytes": 2398160,
+      "size": "text\t   data\t    bss\t    dec\t    hex\tfilename\n1701173\t 219368\t   1112\t1921653\t 1d5275\t/tmp/calcium-monic-costs.U6fpvm/trial-allocation"
+    }
+  },
+  "summaries": [
+    {
+      "kind": 0,
+      "code": 0,
+      "lifecycle": "fresh",
+      "iterations": 10000,
+      "observations": 48,
+      "pilots": [
+        {
+          "mode": "cpu",
+          "kind": 0,
+          "code": 0,
+          "lifecycle": "fresh",
+          "iterations": 10,
+          "known": 10,
+          "degree": 0,
+          "elapsed_ns": 7220,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "mode": "cpu",
+          "kind": 0,
+          "code": 0,
+          "lifecycle": "fresh",
+          "iterations": 10,
+          "known": 10,
+          "degree": 0,
+          "elapsed_ns": 5049,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 1.010031442965654,
+      "pairedMedianBootstrap95": [
+        0.9745929670541227,
+        1.038660362249503
+      ],
+      "nsPerQuery": {
+        "baseline": 364.408,
+        "trial": 374.06935
+      }
+    },
+    {
+      "kind": 0,
+      "code": 0,
+      "lifecycle": "retained",
+      "iterations": 10000,
+      "observations": 48,
+      "pilots": [
+        {
+          "mode": "cpu",
+          "kind": 0,
+          "code": 0,
+          "lifecycle": "retained",
+          "iterations": 10,
+          "known": 10,
+          "degree": 0,
+          "elapsed_ns": 4079,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "mode": "cpu",
+          "kind": 0,
+          "code": 0,
+          "lifecycle": "retained",
+          "iterations": 10,
+          "known": 10,
+          "degree": 0,
+          "elapsed_ns": 6510,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 0.9438584947451552,
+      "pairedMedianBootstrap95": [
+        0.918662108640358,
+        0.993968291560614
+      ],
+      "nsPerQuery": {
+        "baseline": 306.38554999999997,
+        "trial": 288.55625
+      }
+    },
+    {
+      "kind": 0,
+      "code": 1,
+      "lifecycle": "fresh",
+      "iterations": 3434,
+      "observations": 48,
+      "pilots": [
+        {
+          "mode": "cpu",
+          "kind": 0,
+          "code": 1,
+          "lifecycle": "fresh",
+          "iterations": 10,
+          "known": 10,
+          "degree": 1,
+          "elapsed_ns": 18648,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "mode": "cpu",
+          "kind": 0,
+          "code": 1,
+          "lifecycle": "fresh",
+          "iterations": 10,
+          "known": 10,
+          "degree": 1,
+          "elapsed_ns": 23298,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 0.9722268663450564,
+      "pairedMedianBootstrap95": [
+        0.9597325342155749,
+        0.9903027530042694
+      ],
+      "nsPerQuery": {
+        "baseline": 1774.368811881188,
+        "trial": 1723.840856144438
+      }
+    },
+    {
+      "kind": 0,
+      "code": 1,
+      "lifecycle": "retained",
+      "iterations": 4936,
+      "observations": 48,
+      "pilots": [
+        {
+          "mode": "cpu",
+          "kind": 0,
+          "code": 1,
+          "lifecycle": "retained",
+          "iterations": 10,
+          "known": 10,
+          "degree": 1,
+          "elapsed_ns": 16209,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "mode": "cpu",
+          "kind": 0,
+          "code": 1,
+          "lifecycle": "retained",
+          "iterations": 10,
+          "known": 10,
+          "degree": 1,
+          "elapsed_ns": 15979,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 0.9796171054116632,
+      "pairedMedianBootstrap95": [
+        0.969281716301248,
+        0.9844967045899538
+      ],
+      "nsPerQuery": {
+        "baseline": 1622.3058144246352,
+        "trial": 1610.9177471636954
+      }
+    },
+    {
+      "kind": 0,
+      "code": 2,
+      "lifecycle": "fresh",
+      "iterations": 853,
+      "observations": 48,
+      "pilots": [
+        {
+          "mode": "cpu",
+          "kind": 0,
+          "code": 2,
+          "lifecycle": "fresh",
+          "iterations": 10,
+          "known": 10,
+          "degree": 1,
+          "elapsed_ns": 87634,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "mode": "cpu",
+          "kind": 0,
+          "code": 2,
+          "lifecycle": "fresh",
+          "iterations": 10,
+          "known": 10,
+          "degree": 1,
+          "elapsed_ns": 93813,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 0.9851902112796413,
+      "pairedMedianBootstrap95": [
+        0.9530931466860063,
+        0.9912448820106213
+      ],
+      "nsPerQuery": {
+        "baseline": 9104.810668229777,
+        "trial": 8873.524618991794
+      }
+    },
+    {
+      "kind": 0,
+      "code": 2,
+      "lifecycle": "retained",
+      "iterations": 753,
+      "observations": 48,
+      "pilots": [
+        {
+          "mode": "cpu",
+          "kind": 0,
+          "code": 2,
+          "lifecycle": "retained",
+          "iterations": 10,
+          "known": 10,
+          "degree": 1,
+          "elapsed_ns": 106243,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "mode": "cpu",
+          "kind": 0,
+          "code": 2,
+          "lifecycle": "retained",
+          "iterations": 10,
+          "known": 10,
+          "degree": 1,
+          "elapsed_ns": 85044,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 0.9774063497052013,
+      "pairedMedianBootstrap95": [
+        0.9167680189846283,
+        1.0125680045007754
+      ],
+      "nsPerQuery": {
+        "baseline": 8913.353253652058,
+        "trial": 9015.438911022577
+      }
+    },
+    {
+      "kind": 0,
+      "code": 3,
+      "lifecycle": "fresh",
+      "iterations": 2169,
+      "observations": 48,
+      "pilots": [
+        {
+          "mode": "cpu",
+          "kind": 0,
+          "code": 3,
+          "lifecycle": "fresh",
+          "iterations": 10,
+          "known": 10,
+          "degree": 1,
+          "elapsed_ns": 36887,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "mode": "cpu",
+          "kind": 0,
+          "code": 3,
+          "lifecycle": "fresh",
+          "iterations": 10,
+          "known": 10,
+          "degree": 1,
+          "elapsed_ns": 27869,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 0.9843201944315834,
+      "pairedMedianBootstrap95": [
+        0.9592096481993692,
+        1.034147409244867
+      ],
+      "nsPerQuery": {
+        "baseline": 1880.4914707238358,
+        "trial": 1865.157906869525
+      }
+    },
+    {
+      "kind": 0,
+      "code": 3,
+      "lifecycle": "retained",
+      "iterations": 2949,
+      "observations": 48,
+      "pilots": [
+        {
+          "mode": "cpu",
+          "kind": 0,
+          "code": 3,
+          "lifecycle": "retained",
+          "iterations": 10,
+          "known": 10,
+          "degree": 1,
+          "elapsed_ns": 18709,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "mode": "cpu",
+          "kind": 0,
+          "code": 3,
+          "lifecycle": "retained",
+          "iterations": 10,
+          "known": 10,
+          "degree": 1,
+          "elapsed_ns": 27128,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 0.9817115271454107,
+      "pairedMedianBootstrap95": [
+        0.9748193538092838,
+        1.0021156333083785
+      ],
+      "nsPerQuery": {
+        "baseline": 1733.7400813835197,
+        "trial": 1704.2458460495084
+      }
+    },
+    {
+      "kind": 0,
+      "code": 4,
+      "lifecycle": "fresh",
+      "iterations": 2533,
+      "observations": 48,
+      "pilots": [
+        {
+          "mode": "cpu",
+          "kind": 0,
+          "code": 4,
+          "lifecycle": "fresh",
+          "iterations": 10,
+          "known": 10,
+          "degree": 2,
+          "elapsed_ns": 25548,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "mode": "cpu",
+          "kind": 0,
+          "code": 4,
+          "lifecycle": "fresh",
+          "iterations": 10,
+          "known": 10,
+          "degree": 2,
+          "elapsed_ns": 31588,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 0.9697244240044373,
+      "pairedMedianBootstrap95": [
+        0.9380978192066843,
+        0.9890566542067785
+      ],
+      "nsPerQuery": {
+        "baseline": 2386.5953414923015,
+        "trial": 2338.221279115673
+      }
+    },
+    {
+      "kind": 0,
+      "code": 4,
+      "lifecycle": "retained",
+      "iterations": 3032,
+      "observations": 48,
+      "pilots": [
+        {
+          "mode": "cpu",
+          "kind": 0,
+          "code": 4,
+          "lifecycle": "retained",
+          "iterations": 10,
+          "known": 10,
+          "degree": 2,
+          "elapsed_ns": 26388,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "mode": "cpu",
+          "kind": 0,
+          "code": 4,
+          "lifecycle": "retained",
+          "iterations": 10,
+          "known": 10,
+          "degree": 2,
+          "elapsed_ns": 22849,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 0.9902756454014428,
+      "pairedMedianBootstrap95": [
+        0.9849990453570423,
+        1.0055988516668106
+      ],
+      "nsPerQuery": {
+        "baseline": 2157.0390831134564,
+        "trial": 2123.4595976253295
+      }
+    },
+    {
+      "kind": 0,
+      "code": 5,
+      "lifecycle": "fresh",
+      "iterations": 704,
+      "observations": 48,
+      "pilots": [
+        {
+          "mode": "cpu",
+          "kind": 0,
+          "code": 5,
+          "lifecycle": "fresh",
+          "iterations": 10,
+          "known": 10,
+          "degree": 2,
+          "elapsed_ns": 113752,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "mode": "cpu",
+          "kind": 0,
+          "code": 5,
+          "lifecycle": "fresh",
+          "iterations": 10,
+          "known": 10,
+          "degree": 2,
+          "elapsed_ns": 112362,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 0.9803223072687771,
+      "pairedMedianBootstrap95": [
+        0.954624216543537,
+        0.9908795917925448
+      ],
+      "nsPerQuery": {
+        "baseline": 10837.078125,
+        "trial": 10566.108664772728
+      }
+    },
+    {
+      "kind": 0,
+      "code": 5,
+      "lifecycle": "retained",
+      "iterations": 627,
+      "observations": 48,
+      "pilots": [
+        {
+          "mode": "cpu",
+          "kind": 0,
+          "code": 5,
+          "lifecycle": "retained",
+          "iterations": 10,
+          "known": 10,
+          "degree": 2,
+          "elapsed_ns": 127711,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "mode": "cpu",
+          "kind": 0,
+          "code": 5,
+          "lifecycle": "retained",
+          "iterations": 10,
+          "known": 10,
+          "degree": 2,
+          "elapsed_ns": 102093,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 0.9822887035648197,
+      "pairedMedianBootstrap95": [
+        0.9791224846389259,
+        0.9897613708495144
+      ],
+      "nsPerQuery": {
+        "baseline": 10279.838915470495,
+        "trial": 10118.827751196171
+      }
+    },
+    {
+      "kind": 0,
+      "code": 6,
+      "lifecycle": "fresh",
+      "iterations": 757,
+      "observations": 48,
+      "pilots": [
+        {
+          "mode": "cpu",
+          "kind": 0,
+          "code": 6,
+          "lifecycle": "fresh",
+          "iterations": 10,
+          "known": 10,
+          "degree": 1,
+          "elapsed_ns": 105683,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "mode": "cpu",
+          "kind": 0,
+          "code": 6,
+          "lifecycle": "fresh",
+          "iterations": 10,
+          "known": 10,
+          "degree": 1,
+          "elapsed_ns": 99253,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 0.973805921014048,
+      "pairedMedianBootstrap95": [
+        0.9403822045091317,
+        0.997212341890922
+      ],
+      "nsPerQuery": {
+        "baseline": 10008.289960369882,
+        "trial": 9918.831571994717
+      }
+    },
+    {
+      "kind": 0,
+      "code": 6,
+      "lifecycle": "retained",
+      "iterations": 601,
+      "observations": 48,
+      "pilots": [
+        {
+          "mode": "cpu",
+          "kind": 0,
+          "code": 6,
+          "lifecycle": "retained",
+          "iterations": 10,
+          "known": 10,
+          "degree": 1,
+          "elapsed_ns": 128541,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "mode": "cpu",
+          "kind": 0,
+          "code": 6,
+          "lifecycle": "retained",
+          "iterations": 10,
+          "known": 10,
+          "degree": 1,
+          "elapsed_ns": 133301,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 0.969990947031204,
+      "pairedMedianBootstrap95": [
+        0.9553396063102652,
+        0.9910640830921911
+      ],
+      "nsPerQuery": {
+        "baseline": 9735.664725457571,
+        "trial": 9514.39101497504
+      }
+    },
+    {
+      "kind": 0,
+      "code": 7,
+      "lifecycle": "fresh",
+      "iterations": 518,
+      "observations": 48,
+      "pilots": [
+        {
+          "mode": "cpu",
+          "kind": 0,
+          "code": 7,
+          "lifecycle": "fresh",
+          "iterations": 10,
+          "known": 10,
+          "degree": 2,
+          "elapsed_ns": 154709,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "mode": "cpu",
+          "kind": 0,
+          "code": 7,
+          "lifecycle": "fresh",
+          "iterations": 10,
+          "known": 10,
+          "degree": 2,
+          "elapsed_ns": 139810,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 0.9899722935060202,
+      "pairedMedianBootstrap95": [
+        0.9866445752080342,
+        0.9949580091130497
+      ],
+      "nsPerQuery": {
+        "baseline": 11407.482625482626,
+        "trial": 11275.646718146718
+      }
+    },
+    {
+      "kind": 0,
+      "code": 7,
+      "lifecycle": "retained",
+      "iterations": 701,
+      "observations": 48,
+      "pilots": [
+        {
+          "mode": "cpu",
+          "kind": 0,
+          "code": 7,
+          "lifecycle": "retained",
+          "iterations": 10,
+          "known": 10,
+          "degree": 2,
+          "elapsed_ns": 109572,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "mode": "cpu",
+          "kind": 0,
+          "code": 7,
+          "lifecycle": "retained",
+          "iterations": 10,
+          "known": 10,
+          "degree": 2,
+          "elapsed_ns": 114272,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 0.9881954004130133,
+      "pairedMedianBootstrap95": [
+        0.9814375771379757,
+        0.9904943021407424
+      ],
+      "nsPerQuery": {
+        "baseline": 10937.717546362339,
+        "trial": 10825.528530670472
+      }
+    },
+    {
+      "kind": 0,
+      "code": 8,
+      "lifecycle": "fresh",
+      "iterations": 618,
+      "observations": 48,
+      "pilots": [
+        {
+          "mode": "cpu",
+          "kind": 0,
+          "code": 8,
+          "lifecycle": "fresh",
+          "iterations": 10,
+          "known": 10,
+          "degree": 2,
+          "elapsed_ns": 129651,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "mode": "cpu",
+          "kind": 0,
+          "code": 8,
+          "lifecycle": "fresh",
+          "iterations": 10,
+          "known": 10,
+          "degree": 2,
+          "elapsed_ns": 127991,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 0.9809991533939992,
+      "pairedMedianBootstrap95": [
+        0.9213067319646331,
+        0.9934604087330204
+      ],
+      "nsPerQuery": {
+        "baseline": 12303.02346278317,
+        "trial": 12008.109223300971
+      }
+    },
+    {
+      "kind": 0,
+      "code": 8,
+      "lifecycle": "retained",
+      "iterations": 651,
+      "observations": 48,
+      "pilots": [
+        {
+          "mode": "cpu",
+          "kind": 0,
+          "code": 8,
+          "lifecycle": "retained",
+          "iterations": 10,
+          "known": 10,
+          "degree": 2,
+          "elapsed_ns": 122912,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "mode": "cpu",
+          "kind": 0,
+          "code": 8,
+          "lifecycle": "retained",
+          "iterations": 10,
+          "known": 10,
+          "degree": 2,
+          "elapsed_ns": 120522,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 0.9811754637142709,
+      "pairedMedianBootstrap95": [
+        0.9753529523087328,
+        0.988527982245074
+      ],
+      "nsPerQuery": {
+        "baseline": 11520.79416282642,
+        "trial": 11295.278033794162
+      }
+    },
+    {
+      "kind": 0,
+      "code": 9,
+      "lifecycle": "fresh",
+      "iterations": 3137,
+      "observations": 48,
+      "pilots": [
+        {
+          "mode": "cpu",
+          "kind": 0,
+          "code": 9,
+          "lifecycle": "fresh",
+          "iterations": 10,
+          "known": 10,
+          "degree": 1,
+          "elapsed_ns": 25508,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "mode": "cpu",
+          "kind": 0,
+          "code": 9,
+          "lifecycle": "fresh",
+          "iterations": 10,
+          "known": 10,
+          "degree": 1,
+          "elapsed_ns": 23498,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 0.9883099161494677,
+      "pairedMedianBootstrap95": [
+        0.9743013392297509,
+        1.000876779979162
+      ],
+      "nsPerQuery": {
+        "baseline": 1867.7521517373289,
+        "trial": 1846.3814153649985
+      }
+    },
+    {
+      "kind": 0,
+      "code": 9,
+      "lifecycle": "retained",
+      "iterations": 4380,
+      "observations": 48,
+      "pilots": [
+        {
+          "mode": "cpu",
+          "kind": 0,
+          "code": 9,
+          "lifecycle": "retained",
+          "iterations": 10,
+          "known": 10,
+          "degree": 1,
+          "elapsed_ns": 17519,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "mode": "cpu",
+          "kind": 0,
+          "code": 9,
+          "lifecycle": "retained",
+          "iterations": 10,
+          "known": 10,
+          "degree": 1,
+          "elapsed_ns": 18269,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 0.9742995973014918,
+      "pairedMedianBootstrap95": [
+        0.9612802527955601,
+        0.9897363851417105
+      ],
+      "nsPerQuery": {
+        "baseline": 1729.7673515981735,
+        "trial": 1685.5511415525116
+      }
+    },
+    {
+      "kind": 0,
+      "code": 10,
+      "lifecycle": "fresh",
+      "iterations": 3122,
+      "observations": 48,
+      "pilots": [
+        {
+          "mode": "cpu",
+          "kind": 0,
+          "code": 10,
+          "lifecycle": "fresh",
+          "iterations": 10,
+          "known": 10,
+          "degree": 2,
+          "elapsed_ns": 25628,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "mode": "cpu",
+          "kind": 0,
+          "code": 10,
+          "lifecycle": "fresh",
+          "iterations": 10,
+          "known": 10,
+          "degree": 2,
+          "elapsed_ns": 25298,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 0.9867272648668819,
+      "pairedMedianBootstrap95": [
+        0.9584826747312516,
+        0.9963367587818309
+      ],
+      "nsPerQuery": {
+        "baseline": 2340.8374439461886,
+        "trial": 2306.70467648943
+      }
+    },
+    {
+      "kind": 0,
+      "code": 10,
+      "lifecycle": "retained",
+      "iterations": 1389,
+      "observations": 48,
+      "pilots": [
+        {
+          "mode": "cpu",
+          "kind": 0,
+          "code": 10,
+          "lifecycle": "retained",
+          "iterations": 10,
+          "known": 10,
+          "degree": 2,
+          "elapsed_ns": 26678,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "mode": "cpu",
+          "kind": 0,
+          "code": 10,
+          "lifecycle": "retained",
+          "iterations": 10,
+          "known": 10,
+          "degree": 2,
+          "elapsed_ns": 57596,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 0.9746519983863664,
+      "pairedMedianBootstrap95": [
+        0.9582901280958989,
+        0.9969080856947787
+      ],
+      "nsPerQuery": {
+        "baseline": 2120.0457163426927,
+        "trial": 2084.5979121670266
+      }
+    },
+    {
+      "kind": 0,
+      "code": 11,
+      "lifecycle": "fresh",
+      "iterations": 606,
+      "observations": 48,
+      "pilots": [
+        {
+          "mode": "cpu",
+          "kind": 0,
+          "code": 11,
+          "lifecycle": "fresh",
+          "iterations": 10,
+          "known": 10,
+          "degree": 2,
+          "elapsed_ns": 132161,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "mode": "cpu",
+          "kind": 0,
+          "code": 11,
+          "lifecycle": "fresh",
+          "iterations": 10,
+          "known": 10,
+          "degree": 2,
+          "elapsed_ns": 105262,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 0.9822415556582864,
+      "pairedMedianBootstrap95": [
+        0.9372360794579995,
+        0.9901704087147297
+      ],
+      "nsPerQuery": {
+        "baseline": 10850.518976897689,
+        "trial": 10779.97194719472
+      }
+    },
+    {
+      "kind": 0,
+      "code": 11,
+      "lifecycle": "retained",
+      "iterations": 786,
+      "observations": 48,
+      "pilots": [
+        {
+          "mode": "cpu",
+          "kind": 0,
+          "code": 11,
+          "lifecycle": "retained",
+          "iterations": 10,
+          "known": 10,
+          "degree": 2,
+          "elapsed_ns": 101873,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "mode": "cpu",
+          "kind": 0,
+          "code": 11,
+          "lifecycle": "retained",
+          "iterations": 10,
+          "known": 10,
+          "degree": 2,
+          "elapsed_ns": 100403,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 0.981908002065347,
+      "pairedMedianBootstrap95": [
+        0.9640269152642682,
+        0.9857377506282574
+      ],
+      "nsPerQuery": {
+        "baseline": 10464.51844783715,
+        "trial": 10245.793256997455
+      }
+    },
+    {
+      "kind": 0,
+      "code": 12,
+      "lifecycle": "fresh",
+      "iterations": 2569,
+      "observations": 48,
+      "pilots": [
+        {
+          "mode": "cpu",
+          "kind": 0,
+          "code": 12,
+          "lifecycle": "fresh",
+          "iterations": 10,
+          "known": 10,
+          "degree": 2,
+          "elapsed_ns": 31078,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "mode": "cpu",
+          "kind": 0,
+          "code": 12,
+          "lifecycle": "fresh",
+          "iterations": 10,
+          "known": 10,
+          "degree": 2,
+          "elapsed_ns": 31148,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 0.9950299351999788,
+      "pairedMedianBootstrap95": [
+        0.989328700733696,
+        1.0109310173925539
+      ],
+      "nsPerQuery": {
+        "baseline": 2471.432658622032,
+        "trial": 2465.0762942779293
+      }
+    },
+    {
+      "kind": 0,
+      "code": 12,
+      "lifecycle": "retained",
+      "iterations": 2853,
+      "observations": 48,
+      "pilots": [
+        {
+          "mode": "cpu",
+          "kind": 0,
+          "code": 12,
+          "lifecycle": "retained",
+          "iterations": 10,
+          "known": 10,
+          "degree": 2,
+          "elapsed_ns": 27518,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "mode": "cpu",
+          "kind": 0,
+          "code": 12,
+          "lifecycle": "retained",
+          "iterations": 10,
+          "known": 10,
+          "degree": 2,
+          "elapsed_ns": 28048,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 1.0145714281238667,
+      "pairedMedianBootstrap95": [
+        0.943260403629949,
+        1.0432482239330951
+      ],
+      "nsPerQuery": {
+        "baseline": 2313.083946722748,
+        "trial": 2322.014195583596
+      }
+    },
+    {
+      "kind": 0,
+      "code": 13,
+      "lifecycle": "fresh",
+      "iterations": 1776,
+      "observations": 48,
+      "pilots": [
+        {
+          "mode": "cpu",
+          "kind": 0,
+          "code": 13,
+          "lifecycle": "fresh",
+          "iterations": 10,
+          "known": 10,
+          "degree": 3,
+          "elapsed_ns": 45067,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "mode": "cpu",
+          "kind": 0,
+          "code": 13,
+          "lifecycle": "fresh",
+          "iterations": 10,
+          "known": 10,
+          "degree": 3,
+          "elapsed_ns": 37368,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 0.9717966168935838,
+      "pairedMedianBootstrap95": [
+        0.9586439134777249,
+        1.0290492153308224
+      ],
+      "nsPerQuery": {
+        "baseline": 3084.8986486486488,
+        "trial": 3046.646677927928
+      }
+    },
+    {
+      "kind": 0,
+      "code": 13,
+      "lifecycle": "retained",
+      "iterations": 1585,
+      "observations": 48,
+      "pilots": [
+        {
+          "mode": "cpu",
+          "kind": 0,
+          "code": 13,
+          "lifecycle": "retained",
+          "iterations": 10,
+          "known": 10,
+          "degree": 3,
+          "elapsed_ns": 50487,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "mode": "cpu",
+          "kind": 0,
+          "code": 13,
+          "lifecycle": "retained",
+          "iterations": 10,
+          "known": 10,
+          "degree": 3,
+          "elapsed_ns": 32058,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 0.959409765279492,
+      "pairedMedianBootstrap95": [
+        0.9266957727417888,
+        1.0048163943705792
+      ],
+      "nsPerQuery": {
+        "baseline": 2751.6350157728707,
+        "trial": 2618.716403785489
+      }
+    },
+    {
+      "kind": 0,
+      "code": 14,
+      "lifecycle": "fresh",
+      "iterations": 593,
+      "observations": 48,
+      "pilots": [
+        {
+          "mode": "cpu",
+          "kind": 0,
+          "code": 14,
+          "lifecycle": "fresh",
+          "iterations": 10,
+          "known": 10,
+          "degree": 3,
+          "elapsed_ns": 135051,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "mode": "cpu",
+          "kind": 0,
+          "code": 14,
+          "lifecycle": "fresh",
+          "iterations": 10,
+          "known": 10,
+          "degree": 3,
+          "elapsed_ns": 121741,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 0.9875564083157097,
+      "pairedMedianBootstrap95": [
+        0.9807584864676578,
+        1.0129866147534774
+      ],
+      "nsPerQuery": {
+        "baseline": 12545.877740303542,
+        "trial": 12356.338111298483
+      }
+    },
+    {
+      "kind": 0,
+      "code": 14,
+      "lifecycle": "retained",
+      "iterations": 563,
+      "observations": 48,
+      "pilots": [
+        {
+          "mode": "cpu",
+          "kind": 0,
+          "code": 14,
+          "lifecycle": "retained",
+          "iterations": 10,
+          "known": 10,
+          "degree": 3,
+          "elapsed_ns": 116412,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "mode": "cpu",
+          "kind": 0,
+          "code": 14,
+          "lifecycle": "retained",
+          "iterations": 10,
+          "known": 10,
+          "degree": 3,
+          "elapsed_ns": 142180,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 0.9859949342648537,
+      "pairedMedianBootstrap95": [
+        0.9741250019155563,
+        0.9964389564163529
+      ],
+      "nsPerQuery": {
+        "baseline": 11910.84458259325,
+        "trial": 11614.266429840141
+      }
+    },
+    {
+      "kind": 0,
+      "code": 15,
+      "lifecycle": "fresh",
+      "iterations": 537,
+      "observations": 48,
+      "pilots": [
+        {
+          "mode": "cpu",
+          "kind": 0,
+          "code": 15,
+          "lifecycle": "fresh",
+          "iterations": 10,
+          "known": 10,
+          "degree": 2,
+          "elapsed_ns": 124561,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "mode": "cpu",
+          "kind": 0,
+          "code": 15,
+          "lifecycle": "fresh",
+          "iterations": 10,
+          "known": 10,
+          "degree": 2,
+          "elapsed_ns": 149140,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 0.9865557708675523,
+      "pairedMedianBootstrap95": [
+        0.9782876035228124,
+        0.9886883368680847
+      ],
+      "nsPerQuery": {
+        "baseline": 11686.732774674116,
+        "trial": 11538.202979515829
+      }
+    },
+    {
+      "kind": 0,
+      "code": 15,
+      "lifecycle": "retained",
+      "iterations": 634,
+      "observations": 48,
+      "pilots": [
+        {
+          "mode": "cpu",
+          "kind": 0,
+          "code": 15,
+          "lifecycle": "retained",
+          "iterations": 10,
+          "known": 10,
+          "degree": 2,
+          "elapsed_ns": 126222,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "mode": "cpu",
+          "kind": 0,
+          "code": 15,
+          "lifecycle": "retained",
+          "iterations": 10,
+          "known": 10,
+          "degree": 2,
+          "elapsed_ns": 123921,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 0.9885113551221056,
+      "pairedMedianBootstrap95": [
+        0.9736876923531397,
+        1.0229220626816469
+      ],
+      "nsPerQuery": {
+        "baseline": 11327.245268138802,
+        "trial": 11115.847003154573
+      }
+    },
+    {
+      "kind": 0,
+      "code": 16,
+      "lifecycle": "fresh",
+      "iterations": 497,
+      "observations": 48,
+      "pilots": [
+        {
+          "mode": "cpu",
+          "kind": 0,
+          "code": 16,
+          "lifecycle": "fresh",
+          "iterations": 10,
+          "known": 10,
+          "degree": 3,
+          "elapsed_ns": 161239,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "mode": "cpu",
+          "kind": 0,
+          "code": 16,
+          "lifecycle": "fresh",
+          "iterations": 10,
+          "known": 10,
+          "degree": 3,
+          "elapsed_ns": 158710,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 0.9962596931423247,
+      "pairedMedianBootstrap95": [
+        0.99209457317682,
+        1.0044451277109534
+      ],
+      "nsPerQuery": {
+        "baseline": 13077.28370221328,
+        "trial": 12811.708249496982
+      }
+    },
+    {
+      "kind": 0,
+      "code": 16,
+      "lifecycle": "retained",
+      "iterations": 471,
+      "observations": 48,
+      "pilots": [
+        {
+          "mode": "cpu",
+          "kind": 0,
+          "code": 16,
+          "lifecycle": "retained",
+          "iterations": 10,
+          "known": 10,
+          "degree": 3,
+          "elapsed_ns": 169908,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "mode": "cpu",
+          "kind": 0,
+          "code": 16,
+          "lifecycle": "retained",
+          "iterations": 10,
+          "known": 10,
+          "degree": 3,
+          "elapsed_ns": 155100,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 0.9695016534834229,
+      "pairedMedianBootstrap95": [
+        0.9305855274501915,
+        0.9866334040928642
+      ],
+      "nsPerQuery": {
+        "baseline": 12753.819532908705,
+        "trial": 12169.624203821655
+      }
+    },
+    {
+      "kind": 0,
+      "code": 17,
+      "lifecycle": "fresh",
+      "iterations": 457,
+      "observations": 48,
+      "pilots": [
+        {
+          "mode": "cpu",
+          "kind": 0,
+          "code": 17,
+          "lifecycle": "fresh",
+          "iterations": 10,
+          "known": 10,
+          "degree": 3,
+          "elapsed_ns": 175428,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "mode": "cpu",
+          "kind": 0,
+          "code": 17,
+          "lifecycle": "fresh",
+          "iterations": 10,
+          "known": 10,
+          "degree": 3,
+          "elapsed_ns": 172238,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 0.9176856539583454,
+      "pairedMedianBootstrap95": [
+        0.8955845880463595,
+        0.9390784051933745
+      ],
+      "nsPerQuery": {
+        "baseline": 18998.53501094092,
+        "trial": 16464.889496717726
+      }
+    },
+    {
+      "kind": 0,
+      "code": 17,
+      "lifecycle": "retained",
+      "iterations": 585,
+      "observations": 48,
+      "pilots": [
+        {
+          "mode": "cpu",
+          "kind": 0,
+          "code": 17,
+          "lifecycle": "retained",
+          "iterations": 10,
+          "known": 10,
+          "degree": 3,
+          "elapsed_ns": 129481,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "mode": "cpu",
+          "kind": 0,
+          "code": 17,
+          "lifecycle": "retained",
+          "iterations": 10,
+          "known": 10,
+          "degree": 3,
+          "elapsed_ns": 136831,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 1.0006642659652056,
+      "pairedMedianBootstrap95": [
+        0.9785994433847424,
+        1.044901819920212
+      ],
+      "nsPerQuery": {
+        "baseline": 13147.552136752136,
+        "trial": 12948.233333333334
+      }
+    },
+    {
+      "kind": 0,
+      "code": 18,
+      "lifecycle": "fresh",
+      "iterations": 639,
+      "observations": 48,
+      "pilots": [
+        {
+          "mode": "cpu",
+          "kind": 0,
+          "code": 18,
+          "lifecycle": "fresh",
+          "iterations": 10,
+          "known": 10,
+          "degree": 1,
+          "elapsed_ns": 125371,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "mode": "cpu",
+          "kind": 0,
+          "code": 18,
+          "lifecycle": "fresh",
+          "iterations": 10,
+          "known": 10,
+          "degree": 1,
+          "elapsed_ns": 113192,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 0.9803634675622441,
+      "pairedMedianBootstrap95": [
+        0.9510335680743207,
+        1.0064165432159087
+      ],
+      "nsPerQuery": {
+        "baseline": 10170.039123630673,
+        "trial": 10034.77386541471
+      }
+    },
+    {
+      "kind": 0,
+      "code": 18,
+      "lifecycle": "retained",
+      "iterations": 764,
+      "observations": 48,
+      "pilots": [
+        {
+          "mode": "cpu",
+          "kind": 0,
+          "code": 18,
+          "lifecycle": "retained",
+          "iterations": 10,
+          "known": 10,
+          "degree": 1,
+          "elapsed_ns": 104733,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "mode": "cpu",
+          "kind": 0,
+          "code": 18,
+          "lifecycle": "retained",
+          "iterations": 10,
+          "known": 10,
+          "degree": 1,
+          "elapsed_ns": 103083,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 0.9886728463003192,
+      "pairedMedianBootstrap95": [
+        0.9159743003268493,
+        0.9930398254650096
+      ],
+      "nsPerQuery": {
+        "baseline": 9863.873036649215,
+        "trial": 9765.725785340313
+      }
+    },
+    {
+      "kind": 0,
+      "code": 19,
+      "lifecycle": "fresh",
+      "iterations": 647,
+      "observations": 48,
+      "pilots": [
+        {
+          "mode": "cpu",
+          "kind": 0,
+          "code": 19,
+          "lifecycle": "fresh",
+          "iterations": 10,
+          "known": 10,
+          "degree": 2,
+          "elapsed_ns": 123692,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "mode": "cpu",
+          "kind": 0,
+          "code": 19,
+          "lifecycle": "fresh",
+          "iterations": 10,
+          "known": 10,
+          "degree": 2,
+          "elapsed_ns": 122621,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 0.9953545668660686,
+      "pairedMedianBootstrap95": [
+        0.9854720204180519,
+        1.00652931206137
+      ],
+      "nsPerQuery": {
+        "baseline": 11658.738021638332,
+        "trial": 11545.646831530139
+      }
+    },
+    {
+      "kind": 0,
+      "code": 19,
+      "lifecycle": "retained",
+      "iterations": 545,
+      "observations": 48,
+      "pilots": [
+        {
+          "mode": "cpu",
+          "kind": 0,
+          "code": 19,
+          "lifecycle": "retained",
+          "iterations": 10,
+          "known": 10,
+          "degree": 2,
+          "elapsed_ns": 113962,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "mode": "cpu",
+          "kind": 0,
+          "code": 19,
+          "lifecycle": "retained",
+          "iterations": 10,
+          "known": 10,
+          "degree": 2,
+          "elapsed_ns": 146870,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 0.9863990634339133,
+      "pairedMedianBootstrap95": [
+        0.9831982531122248,
+        1.0068503388428685
+      ],
+      "nsPerQuery": {
+        "baseline": 11160.942201834863,
+        "trial": 11059.371559633028
+      }
+    },
+    {
+      "kind": 0,
+      "code": 20,
+      "lifecycle": "fresh",
+      "iterations": 482,
+      "observations": 48,
+      "pilots": [
+        {
+          "mode": "cpu",
+          "kind": 0,
+          "code": 20,
+          "lifecycle": "fresh",
+          "iterations": 10,
+          "known": 10,
+          "degree": 2,
+          "elapsed_ns": 166129,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "mode": "cpu",
+          "kind": 0,
+          "code": 20,
+          "lifecycle": "fresh",
+          "iterations": 10,
+          "known": 10,
+          "degree": 2,
+          "elapsed_ns": 125642,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 0.9846709401794713,
+      "pairedMedianBootstrap95": [
+        0.9798501017043113,
+        0.9913873139259483
+      ],
+      "nsPerQuery": {
+        "baseline": 12180.026970954357,
+        "trial": 11982.715767634854
+      }
+    },
+    {
+      "kind": 0,
+      "code": 20,
+      "lifecycle": "retained",
+      "iterations": 655,
+      "observations": 48,
+      "pilots": [
+        {
+          "mode": "cpu",
+          "kind": 0,
+          "code": 20,
+          "lifecycle": "retained",
+          "iterations": 10,
+          "known": 10,
+          "degree": 2,
+          "elapsed_ns": 122322,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "mode": "cpu",
+          "kind": 0,
+          "code": 20,
+          "lifecycle": "retained",
+          "iterations": 10,
+          "known": 10,
+          "degree": 2,
+          "elapsed_ns": 119292,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 0.9907315244128949,
+      "pairedMedianBootstrap95": [
+        0.9769875223272139,
+        0.9981259972882551
+      ],
+      "nsPerQuery": {
+        "baseline": 11590.77175572519,
+        "trial": 11416.829770992366
+      }
+    },
+    {
+      "kind": 0,
+      "code": 21,
+      "lifecycle": "fresh",
+      "iterations": 544,
+      "observations": 48,
+      "pilots": [
+        {
+          "mode": "cpu",
+          "kind": 0,
+          "code": 21,
+          "lifecycle": "fresh",
+          "iterations": 10,
+          "known": 10,
+          "degree": 2,
+          "elapsed_ns": 147150,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "mode": "cpu",
+          "kind": 0,
+          "code": 21,
+          "lifecycle": "fresh",
+          "iterations": 10,
+          "known": 10,
+          "degree": 2,
+          "elapsed_ns": 146010,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 0.9792106707365721,
+      "pairedMedianBootstrap95": [
+        0.9492678582046277,
+        0.9898073590088083
+      ],
+      "nsPerQuery": {
+        "baseline": 12200.930147058825,
+        "trial": 11972.130514705883
+      }
+    },
+    {
+      "kind": 0,
+      "code": 21,
+      "lifecycle": "retained",
+      "iterations": 603,
+      "observations": 48,
+      "pilots": [
+        {
+          "mode": "cpu",
+          "kind": 0,
+          "code": 21,
+          "lifecycle": "retained",
+          "iterations": 10,
+          "known": 10,
+          "degree": 2,
+          "elapsed_ns": 132711,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "mode": "cpu",
+          "kind": 0,
+          "code": 21,
+          "lifecycle": "retained",
+          "iterations": 10,
+          "known": 10,
+          "degree": 2,
+          "elapsed_ns": 121142,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 0.9864495902798438,
+      "pairedMedianBootstrap95": [
+        0.9737766185318008,
+        0.9892925454547145
+      ],
+      "nsPerQuery": {
+        "baseline": 11671.208126036483,
+        "trial": 11458.277777777777
+      }
+    },
+    {
+      "kind": 0,
+      "code": 22,
+      "lifecycle": "fresh",
+      "iterations": 478,
+      "observations": 48,
+      "pilots": [
+        {
+          "mode": "cpu",
+          "kind": 0,
+          "code": 22,
+          "lifecycle": "fresh",
+          "iterations": 10,
+          "known": 10,
+          "degree": 3,
+          "elapsed_ns": 161389,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "mode": "cpu",
+          "kind": 0,
+          "code": 22,
+          "lifecycle": "fresh",
+          "iterations": 10,
+          "known": 10,
+          "degree": 3,
+          "elapsed_ns": 167518,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 1.0072563732891324,
+      "pairedMedianBootstrap95": [
+        0.9790518924473369,
+        1.0454732739241135
+      ],
+      "nsPerQuery": {
+        "baseline": 13660.88389121339,
+        "trial": 13569.740585774058
+      }
+    },
+    {
+      "kind": 0,
+      "code": 22,
+      "lifecycle": "retained",
+      "iterations": 468,
+      "observations": 48,
+      "pilots": [
+        {
+          "mode": "cpu",
+          "kind": 0,
+          "code": 22,
+          "lifecycle": "retained",
+          "iterations": 10,
+          "known": 10,
+          "degree": 3,
+          "elapsed_ns": 158629,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "mode": "cpu",
+          "kind": 0,
+          "code": 22,
+          "lifecycle": "retained",
+          "iterations": 10,
+          "known": 10,
+          "degree": 3,
+          "elapsed_ns": 171199,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 0.9871798630760924,
+      "pairedMedianBootstrap95": [
+        0.8780875005018115,
+        1.0113506569037847
+      ],
+      "nsPerQuery": {
+        "baseline": 12831.075854700855,
+        "trial": 12712.441239316238
+      }
+    },
+    {
+      "kind": 0,
+      "code": 23,
+      "lifecycle": "fresh",
+      "iterations": 329,
+      "observations": 48,
+      "pilots": [
+        {
+          "mode": "cpu",
+          "kind": 0,
+          "code": 23,
+          "lifecycle": "fresh",
+          "iterations": 10,
+          "known": 10,
+          "degree": 3,
+          "elapsed_ns": 243803,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "mode": "cpu",
+          "kind": 0,
+          "code": 23,
+          "lifecycle": "fresh",
+          "iterations": 10,
+          "known": 10,
+          "degree": 3,
+          "elapsed_ns": 210556,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 0.9826275064704124,
+      "pairedMedianBootstrap95": [
+        0.9043435358690148,
+        1.0323752768604995
+      ],
+      "nsPerQuery": {
+        "baseline": 14292.592705167172,
+        "trial": 14005.879939209726
+      }
+    },
+    {
+      "kind": 0,
+      "code": 23,
+      "lifecycle": "retained",
+      "iterations": 448,
+      "observations": 48,
+      "pilots": [
+        {
+          "mode": "cpu",
+          "kind": 0,
+          "code": 23,
+          "lifecycle": "retained",
+          "iterations": 10,
+          "known": 10,
+          "degree": 3,
+          "elapsed_ns": 131221,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "mode": "cpu",
+          "kind": 0,
+          "code": 23,
+          "lifecycle": "retained",
+          "iterations": 10,
+          "known": 10,
+          "degree": 3,
+          "elapsed_ns": 178587,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 0.9915255785092596,
+      "pairedMedianBootstrap95": [
+        0.9544929773010118,
+        1.0201881315414134
+      ],
+      "nsPerQuery": {
+        "baseline": 13372.152901785714,
+        "trial": 13347.512276785714
+      }
+    },
+    {
+      "kind": 0,
+      "code": 24,
+      "lifecycle": "fresh",
+      "iterations": 524,
+      "observations": 48,
+      "pilots": [
+        {
+          "mode": "cpu",
+          "kind": 0,
+          "code": 24,
+          "lifecycle": "fresh",
+          "iterations": 10,
+          "known": 10,
+          "degree": 2,
+          "elapsed_ns": 152700,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "mode": "cpu",
+          "kind": 0,
+          "code": 24,
+          "lifecycle": "fresh",
+          "iterations": 10,
+          "known": 10,
+          "degree": 2,
+          "elapsed_ns": 141560,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 0.9857527191318096,
+      "pairedMedianBootstrap95": [
+        0.9752897942273867,
+        1.0185377456695017
+      ],
+      "nsPerQuery": {
+        "baseline": 13306.588740458015,
+        "trial": 13226.480916030534
+      }
+    },
+    {
+      "kind": 0,
+      "code": 24,
+      "lifecycle": "retained",
+      "iterations": 601,
+      "observations": 48,
+      "pilots": [
+        {
+          "mode": "cpu",
+          "kind": 0,
+          "code": 24,
+          "lifecycle": "retained",
+          "iterations": 10,
+          "known": 10,
+          "degree": 2,
+          "elapsed_ns": 133191,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "mode": "cpu",
+          "kind": 0,
+          "code": 24,
+          "lifecycle": "retained",
+          "iterations": 10,
+          "known": 10,
+          "degree": 2,
+          "elapsed_ns": 125251,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 0.9500255692398267,
+      "pairedMedianBootstrap95": [
+        0.9261873084510255,
+        0.9714206421279299
+      ],
+      "nsPerQuery": {
+        "baseline": 13585.442595673878,
+        "trial": 13041.370216306157
+      }
+    },
+    {
+      "kind": 0,
+      "code": 25,
+      "lifecycle": "fresh",
+      "iterations": 491,
+      "observations": 48,
+      "pilots": [
+        {
+          "mode": "cpu",
+          "kind": 0,
+          "code": 25,
+          "lifecycle": "fresh",
+          "iterations": 10,
+          "known": 10,
+          "degree": 3,
+          "elapsed_ns": 148360,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "mode": "cpu",
+          "kind": 0,
+          "code": 25,
+          "lifecycle": "fresh",
+          "iterations": 10,
+          "known": 10,
+          "degree": 3,
+          "elapsed_ns": 162999,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 0.9888864907086732,
+      "pairedMedianBootstrap95": [
+        0.878592662784428,
+        1.0094826656751823
+      ],
+      "nsPerQuery": {
+        "baseline": 15422.915478615072,
+        "trial": 14789.873727087577
+      }
+    },
+    {
+      "kind": 0,
+      "code": 25,
+      "lifecycle": "retained",
+      "iterations": 542,
+      "observations": 48,
+      "pilots": [
+        {
+          "mode": "cpu",
+          "kind": 0,
+          "code": 25,
+          "lifecycle": "retained",
+          "iterations": 10,
+          "known": 10,
+          "degree": 3,
+          "elapsed_ns": 147670,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "mode": "cpu",
+          "kind": 0,
+          "code": 25,
+          "lifecycle": "retained",
+          "iterations": 10,
+          "known": 10,
+          "degree": 3,
+          "elapsed_ns": 146600,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 0.9951520823140577,
+      "pairedMedianBootstrap95": [
+        0.9919660707317973,
+        1.0011313489468368
+      ],
+      "nsPerQuery": {
+        "baseline": 13863.137453874539,
+        "trial": 13817.14483394834
+      }
+    },
+    {
+      "kind": 0,
+      "code": 26,
+      "lifecycle": "fresh",
+      "iterations": 491,
+      "observations": 48,
+      "pilots": [
+        {
+          "mode": "cpu",
+          "kind": 0,
+          "code": 26,
+          "lifecycle": "fresh",
+          "iterations": 10,
+          "known": 10,
+          "degree": 3,
+          "elapsed_ns": 153540,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "mode": "cpu",
+          "kind": 0,
+          "code": 26,
+          "lifecycle": "fresh",
+          "iterations": 10,
+          "known": 10,
+          "degree": 3,
+          "elapsed_ns": 163229,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 0.9965969927120419,
+      "pairedMedianBootstrap95": [
+        0.9866943512074051,
+        1.0037692072270388
+      ],
+      "nsPerQuery": {
+        "baseline": 15486.882892057027,
+        "trial": 15409.474541751528
+      }
+    },
+    {
+      "kind": 0,
+      "code": 26,
+      "lifecycle": "retained",
+      "iterations": 529,
+      "observations": 48,
+      "pilots": [
+        {
+          "mode": "cpu",
+          "kind": 0,
+          "code": 26,
+          "lifecycle": "retained",
+          "iterations": 10,
+          "known": 10,
+          "degree": 3,
+          "elapsed_ns": 151289,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "mode": "cpu",
+          "kind": 0,
+          "code": 26,
+          "lifecycle": "retained",
+          "iterations": 10,
+          "known": 10,
+          "degree": 3,
+          "elapsed_ns": 145320,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 0.9842072884940065,
+      "pairedMedianBootstrap95": [
+        0.975533240463229,
+        0.9880470195104789
+      ],
+      "nsPerQuery": {
+        "baseline": 14339.443289224953,
+        "trial": 14104.553875236295
+      }
+    },
+    {
+      "kind": 1,
+      "code": 0,
+      "lifecycle": "fresh",
+      "iterations": 7287,
+      "observations": 48,
+      "pilots": [
+        {
+          "mode": "cpu",
+          "kind": 1,
+          "code": 0,
+          "lifecycle": "fresh",
+          "iterations": 10,
+          "known": 10,
+          "degree": 0,
+          "elapsed_ns": 10979,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "mode": "cpu",
+          "kind": 1,
+          "code": 0,
+          "lifecycle": "fresh",
+          "iterations": 10,
+          "known": 10,
+          "degree": 0,
+          "elapsed_ns": 10470,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 1.0073831075162016,
+      "pairedMedianBootstrap95": [
+        0.9845968263317642,
+        1.0103912966825281
+      ],
+      "nsPerQuery": {
+        "baseline": 699.4408535748594,
+        "trial": 701.5191436805269
+      }
+    },
+    {
+      "kind": 1,
+      "code": 0,
+      "lifecycle": "retained",
+      "iterations": 10000,
+      "observations": 48,
+      "pilots": [
+        {
+          "mode": "cpu",
+          "kind": 1,
+          "code": 0,
+          "lifecycle": "retained",
+          "iterations": 10,
+          "known": 10,
+          "degree": 0,
+          "elapsed_ns": 3499,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "mode": "cpu",
+          "kind": 1,
+          "code": 0,
+          "lifecycle": "retained",
+          "iterations": 10,
+          "known": 10,
+          "degree": 0,
+          "elapsed_ns": 3460,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 0.9340192525916886,
+      "pairedMedianBootstrap95": [
+        0.9203543500651812,
+        0.977160558036775
+      ],
+      "nsPerQuery": {
+        "baseline": 306.83394999999996,
+        "trial": 288.14175
+      }
+    },
+    {
+      "kind": 1,
+      "code": 1,
+      "lifecycle": "fresh",
+      "iterations": 2755,
+      "observations": 48,
+      "pilots": [
+        {
+          "mode": "cpu",
+          "kind": 1,
+          "code": 1,
+          "lifecycle": "fresh",
+          "iterations": 10,
+          "known": 10,
+          "degree": 1,
+          "elapsed_ns": 29048,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "mode": "cpu",
+          "kind": 1,
+          "code": 1,
+          "lifecycle": "fresh",
+          "iterations": 10,
+          "known": 10,
+          "degree": 1,
+          "elapsed_ns": 27708,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 1.014698594183134,
+      "pairedMedianBootstrap95": [
+        1.0045804681877013,
+        1.0307014253643048
+      ],
+      "nsPerQuery": {
+        "baseline": 2110.6994555353904,
+        "trial": 2128.656442831216
+      }
+    },
+    {
+      "kind": 1,
+      "code": 1,
+      "lifecycle": "retained",
+      "iterations": 4112,
+      "observations": 48,
+      "pilots": [
+        {
+          "mode": "cpu",
+          "kind": 1,
+          "code": 1,
+          "lifecycle": "retained",
+          "iterations": 10,
+          "known": 10,
+          "degree": 1,
+          "elapsed_ns": 18039,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "mode": "cpu",
+          "kind": 1,
+          "code": 1,
+          "lifecycle": "retained",
+          "iterations": 10,
+          "known": 10,
+          "degree": 1,
+          "elapsed_ns": 19459,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 0.9811413799936766,
+      "pairedMedianBootstrap95": [
+        0.9748597581113335,
+        0.9858954979505026
+      ],
+      "nsPerQuery": {
+        "baseline": 1605.5794017509727,
+        "trial": 1569.7563229571983
+      }
+    },
+    {
+      "kind": 1,
+      "code": 2,
+      "lifecycle": "fresh",
+      "iterations": 794,
+      "observations": 48,
+      "pilots": [
+        {
+          "mode": "cpu",
+          "kind": 1,
+          "code": 2,
+          "lifecycle": "fresh",
+          "iterations": 10,
+          "known": 10,
+          "degree": 1,
+          "elapsed_ns": 100773,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "mode": "cpu",
+          "kind": 1,
+          "code": 2,
+          "lifecycle": "fresh",
+          "iterations": 10,
+          "known": 10,
+          "degree": 1,
+          "elapsed_ns": 95633,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 0.9672048056352438,
+      "pairedMedianBootstrap95": [
+        0.9266180810677616,
+        1.0023959833504077
+      ],
+      "nsPerQuery": {
+        "baseline": 9451.115869017633,
+        "trial": 9306.484886649874
+      }
+    },
+    {
+      "kind": 1,
+      "code": 2,
+      "lifecycle": "retained",
+      "iterations": 580,
+      "observations": 48,
+      "pilots": [
+        {
+          "mode": "cpu",
+          "kind": 1,
+          "code": 2,
+          "lifecycle": "retained",
+          "iterations": 10,
+          "known": 10,
+          "degree": 1,
+          "elapsed_ns": 138110,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "mode": "cpu",
+          "kind": 1,
+          "code": 2,
+          "lifecycle": "retained",
+          "iterations": 10,
+          "known": 10,
+          "degree": 1,
+          "elapsed_ns": 84764,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 0.9820825105725097,
+      "pairedMedianBootstrap95": [
+        0.9623434437929994,
+        0.9887781760701246
+      ],
+      "nsPerQuery": {
+        "baseline": 8748.822413793103,
+        "trial": 8658.993103448276
+      }
+    },
+    {
+      "kind": 1,
+      "code": 3,
+      "lifecycle": "fresh",
+      "iterations": 5659,
+      "observations": 48,
+      "pilots": [
+        {
+          "mode": "cpu",
+          "kind": 1,
+          "code": 3,
+          "lifecycle": "fresh",
+          "iterations": 10,
+          "known": 10,
+          "degree": 1,
+          "elapsed_ns": 14039,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "mode": "cpu",
+          "kind": 1,
+          "code": 3,
+          "lifecycle": "fresh",
+          "iterations": 10,
+          "known": 10,
+          "degree": 1,
+          "elapsed_ns": 14139,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 1.0164955228547867,
+      "pairedMedianBootstrap95": [
+        1.0033663764407714,
+        1.0269927844395434
+      ],
+      "nsPerQuery": {
+        "baseline": 1236.537462449196,
+        "trial": 1250.7343170171407
+      }
+    },
+    {
+      "kind": 1,
+      "code": 3,
+      "lifecycle": "retained",
+      "iterations": 9144,
+      "observations": 48,
+      "pilots": [
+        {
+          "mode": "cpu",
+          "kind": 1,
+          "code": 3,
+          "lifecycle": "retained",
+          "iterations": 10,
+          "known": 10,
+          "degree": 1,
+          "elapsed_ns": 8749,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "mode": "cpu",
+          "kind": 1,
+          "code": 3,
+          "lifecycle": "retained",
+          "iterations": 10,
+          "known": 10,
+          "degree": 1,
+          "elapsed_ns": 8730,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 0.9894032973443352,
+      "pairedMedianBootstrap95": [
+        0.9710120818950578,
+        0.9928862523667423
+      ],
+      "nsPerQuery": {
+        "baseline": 709.2887139107611,
+        "trial": 700.5250984251968
+      }
+    },
+    {
+      "kind": 1,
+      "code": 4,
+      "lifecycle": "fresh",
+      "iterations": 2647,
+      "observations": 48,
+      "pilots": [
+        {
+          "mode": "cpu",
+          "kind": 1,
+          "code": 4,
+          "lifecycle": "fresh",
+          "iterations": 10,
+          "known": 10,
+          "degree": 2,
+          "elapsed_ns": 30228,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "mode": "cpu",
+          "kind": 1,
+          "code": 4,
+          "lifecycle": "fresh",
+          "iterations": 10,
+          "known": 10,
+          "degree": 2,
+          "elapsed_ns": 25959,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 1.0098196384760065,
+      "pairedMedianBootstrap95": [
+        0.9914132897417846,
+        1.0330390356563544
+      ],
+      "nsPerQuery": {
+        "baseline": 2106.799395542123,
+        "trial": 2128.887230827352
+      }
+    },
+    {
+      "kind": 1,
+      "code": 4,
+      "lifecycle": "retained",
+      "iterations": 4157,
+      "observations": 48,
+      "pilots": [
+        {
+          "mode": "cpu",
+          "kind": 1,
+          "code": 4,
+          "lifecycle": "retained",
+          "iterations": 10,
+          "known": 10,
+          "degree": 2,
+          "elapsed_ns": 14799,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "mode": "cpu",
+          "kind": 1,
+          "code": 4,
+          "lifecycle": "retained",
+          "iterations": 10,
+          "known": 10,
+          "degree": 2,
+          "elapsed_ns": 19249,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 0.9866019824302565,
+      "pairedMedianBootstrap95": [
+        0.9800793176367162,
+        1.0180588642633062
+      ],
+      "nsPerQuery": {
+        "baseline": 1449.6818619196536,
+        "trial": 1437.5273033437575
+      }
+    },
+    {
+      "kind": 1,
+      "code": 5,
+      "lifecycle": "fresh",
+      "iterations": 1311,
+      "observations": 48,
+      "pilots": [
+        {
+          "mode": "cpu",
+          "kind": 1,
+          "code": 5,
+          "lifecycle": "fresh",
+          "iterations": 10,
+          "known": 10,
+          "degree": 2,
+          "elapsed_ns": 61036,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "mode": "cpu",
+          "kind": 1,
+          "code": 5,
+          "lifecycle": "fresh",
+          "iterations": 10,
+          "known": 10,
+          "degree": 2,
+          "elapsed_ns": 48257,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 0.9792410391600399,
+      "pairedMedianBootstrap95": [
+        0.9542407574901212,
+        0.9958065386193122
+      ],
+      "nsPerQuery": {
+        "baseline": 2789.1647597254005,
+        "trial": 2716.450038138825
+      }
+    },
+    {
+      "kind": 1,
+      "code": 5,
+      "lifecycle": "retained",
+      "iterations": 1846,
+      "observations": 48,
+      "pilots": [
+        {
+          "mode": "cpu",
+          "kind": 1,
+          "code": 5,
+          "lifecycle": "retained",
+          "iterations": 10,
+          "known": 10,
+          "degree": 2,
+          "elapsed_ns": 43347,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "mode": "cpu",
+          "kind": 1,
+          "code": 5,
+          "lifecycle": "retained",
+          "iterations": 10,
+          "known": 10,
+          "degree": 2,
+          "elapsed_ns": 21379,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 0.9795973617131097,
+      "pairedMedianBootstrap95": [
+        0.8986506153332,
+        0.9970391565825636
+      ],
+      "nsPerQuery": {
+        "baseline": 1978.5861321776815,
+        "trial": 1932.6765980498376
+      }
+    },
+    {
+      "kind": 1,
+      "code": 6,
+      "lifecycle": "fresh",
+      "iterations": 2328,
+      "observations": 48,
+      "pilots": [
+        {
+          "mode": "cpu",
+          "kind": 1,
+          "code": 6,
+          "lifecycle": "fresh",
+          "iterations": 10,
+          "known": 10,
+          "degree": 1,
+          "elapsed_ns": 34378,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "mode": "cpu",
+          "kind": 1,
+          "code": 6,
+          "lifecycle": "fresh",
+          "iterations": 10,
+          "known": 10,
+          "degree": 1,
+          "elapsed_ns": 34277,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 0.994629270615445,
+      "pairedMedianBootstrap95": [
+        0.9849332590630303,
+        0.9974668096767361
+      ],
+      "nsPerQuery": {
+        "baseline": 2553.5880584192437,
+        "trial": 2541.928479381443
+      }
+    },
+    {
+      "kind": 1,
+      "code": 6,
+      "lifecycle": "retained",
+      "iterations": 4549,
+      "observations": 48,
+      "pilots": [
+        {
+          "mode": "cpu",
+          "kind": 1,
+          "code": 6,
+          "lifecycle": "retained",
+          "iterations": 10,
+          "known": 10,
+          "degree": 1,
+          "elapsed_ns": 17589,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "mode": "cpu",
+          "kind": 1,
+          "code": 6,
+          "lifecycle": "retained",
+          "iterations": 10,
+          "known": 10,
+          "degree": 1,
+          "elapsed_ns": 17539,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 0.9847809698271364,
+      "pairedMedianBootstrap95": [
+        0.959717621563146,
+        1.0198507473831961
+      ],
+      "nsPerQuery": {
+        "baseline": 1707.7816003517255,
+        "trial": 1680.7896240932073
+      }
+    },
+    {
+      "kind": 1,
+      "code": 7,
+      "lifecycle": "fresh",
+      "iterations": 1784,
+      "observations": 48,
+      "pilots": [
+        {
+          "mode": "cpu",
+          "kind": 1,
+          "code": 7,
+          "lifecycle": "fresh",
+          "iterations": 10,
+          "known": 10,
+          "degree": 2,
+          "elapsed_ns": 43847,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "mode": "cpu",
+          "kind": 1,
+          "code": 7,
+          "lifecycle": "fresh",
+          "iterations": 10,
+          "known": 10,
+          "degree": 2,
+          "elapsed_ns": 44857,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 1.0125183605364518,
+      "pairedMedianBootstrap95": [
+        1.0027922103079667,
+        1.022248460916451
+      ],
+      "nsPerQuery": {
+        "baseline": 3273.5426008968607,
+        "trial": 3320.0414798206275
+      }
+    },
+    {
+      "kind": 1,
+      "code": 7,
+      "lifecycle": "retained",
+      "iterations": 2760,
+      "observations": 48,
+      "pilots": [
+        {
+          "mode": "cpu",
+          "kind": 1,
+          "code": 7,
+          "lifecycle": "retained",
+          "iterations": 10,
+          "known": 10,
+          "degree": 2,
+          "elapsed_ns": 28588,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "mode": "cpu",
+          "kind": 1,
+          "code": 7,
+          "lifecycle": "retained",
+          "iterations": 10,
+          "known": 10,
+          "degree": 2,
+          "elapsed_ns": 28989,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 0.9997667709563611,
+      "pairedMedianBootstrap95": [
+        0.9763461682072816,
+        1.042725002991364
+      ],
+      "nsPerQuery": {
+        "baseline": 2297.746739130435,
+        "trial": 2313.3253623188407
+      }
+    },
+    {
+      "kind": 1,
+      "code": 8,
+      "lifecycle": "fresh",
+      "iterations": 1773,
+      "observations": 48,
+      "pilots": [
+        {
+          "mode": "cpu",
+          "kind": 1,
+          "code": 8,
+          "lifecycle": "fresh",
+          "iterations": 10,
+          "known": 10,
+          "degree": 2,
+          "elapsed_ns": 44237,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "mode": "cpu",
+          "kind": 1,
+          "code": 8,
+          "lifecycle": "fresh",
+          "iterations": 10,
+          "known": 10,
+          "degree": 2,
+          "elapsed_ns": 45137,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 0.9903932250572343,
+      "pairedMedianBootstrap95": [
+        0.9774244480188249,
+        0.9999945089290131
+      ],
+      "nsPerQuery": {
+        "baseline": 3888.4390862944165,
+        "trial": 3857.2261703327695
+      }
+    },
+    {
+      "kind": 1,
+      "code": 8,
+      "lifecycle": "retained",
+      "iterations": 2370,
+      "observations": 48,
+      "pilots": [
+        {
+          "mode": "cpu",
+          "kind": 1,
+          "code": 8,
+          "lifecycle": "retained",
+          "iterations": 10,
+          "known": 10,
+          "degree": 2,
+          "elapsed_ns": 33758,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "mode": "cpu",
+          "kind": 1,
+          "code": 8,
+          "lifecycle": "retained",
+          "iterations": 10,
+          "known": 10,
+          "degree": 2,
+          "elapsed_ns": 33457,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 0.9792439457997273,
+      "pairedMedianBootstrap95": [
+        0.9709357714654722,
+        0.9812467030294416
+      ],
+      "nsPerQuery": {
+        "baseline": 2735.905274261603,
+        "trial": 2664.110759493671
+      }
+    },
+    {
+      "kind": 1,
+      "code": 9,
+      "lifecycle": "fresh",
+      "iterations": 4559,
+      "observations": 48,
+      "pilots": [
+        {
+          "mode": "cpu",
+          "kind": 1,
+          "code": 9,
+          "lifecycle": "fresh",
+          "iterations": 10,
+          "known": 10,
+          "degree": 1,
+          "elapsed_ns": 17339,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "mode": "cpu",
+          "kind": 1,
+          "code": 9,
+          "lifecycle": "fresh",
+          "iterations": 10,
+          "known": 10,
+          "degree": 1,
+          "elapsed_ns": 17549,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 0.9982687982981138,
+      "pairedMedianBootstrap95": [
+        0.9723684777788519,
+        1.0143671642559033
+      ],
+      "nsPerQuery": {
+        "baseline": 1262.8473349418732,
+        "trial": 1260.68808949331
+      }
+    },
+    {
+      "kind": 1,
+      "code": 9,
+      "lifecycle": "retained",
+      "iterations": 8449,
+      "observations": 48,
+      "pilots": [
+        {
+          "mode": "cpu",
+          "kind": 1,
+          "code": 9,
+          "lifecycle": "retained",
+          "iterations": 10,
+          "known": 10,
+          "degree": 1,
+          "elapsed_ns": 9469,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "mode": "cpu",
+          "kind": 1,
+          "code": 9,
+          "lifecycle": "retained",
+          "iterations": 10,
+          "known": 10,
+          "degree": 1,
+          "elapsed_ns": 7189,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 0.9907427754152756,
+      "pairedMedianBootstrap95": [
+        0.9822783645048077,
+        0.998976128622705
+      ],
+      "nsPerQuery": {
+        "baseline": 706.195585276364,
+        "trial": 697.6217895608947
+      }
+    },
+    {
+      "kind": 1,
+      "code": 10,
+      "lifecycle": "fresh",
+      "iterations": 2605,
+      "observations": 48,
+      "pilots": [
+        {
+          "mode": "cpu",
+          "kind": 1,
+          "code": 10,
+          "lifecycle": "fresh",
+          "iterations": 10,
+          "known": 10,
+          "degree": 2,
+          "elapsed_ns": 29058,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "mode": "cpu",
+          "kind": 1,
+          "code": 10,
+          "lifecycle": "fresh",
+          "iterations": 10,
+          "known": 10,
+          "degree": 2,
+          "elapsed_ns": 30718,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 1.0349622843163004,
+      "pairedMedianBootstrap95": [
+        1.004632982266005,
+        1.0617736680449166
+      ],
+      "nsPerQuery": {
+        "baseline": 2164.636660268714,
+        "trial": 2214.6026871401154
+      }
+    },
+    {
+      "kind": 1,
+      "code": 10,
+      "lifecycle": "retained",
+      "iterations": 5292,
+      "observations": 48,
+      "pilots": [
+        {
+          "mode": "cpu",
+          "kind": 1,
+          "code": 10,
+          "lifecycle": "retained",
+          "iterations": 10,
+          "known": 10,
+          "degree": 2,
+          "elapsed_ns": 15119,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "mode": "cpu",
+          "kind": 1,
+          "code": 10,
+          "lifecycle": "retained",
+          "iterations": 10,
+          "known": 10,
+          "degree": 2,
+          "elapsed_ns": 14399,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 1.0031637820595252,
+      "pairedMedianBootstrap95": [
+        0.928340054470133,
+        1.0709501685130667
+      ],
+      "nsPerQuery": {
+        "baseline": 1489.7779667422524,
+        "trial": 1477.0199357520787
+      }
+    },
+    {
+      "kind": 1,
+      "code": 11,
+      "lifecycle": "fresh",
+      "iterations": 2017,
+      "observations": 48,
+      "pilots": [
+        {
+          "mode": "cpu",
+          "kind": 1,
+          "code": 11,
+          "lifecycle": "fresh",
+          "iterations": 10,
+          "known": 10,
+          "degree": 2,
+          "elapsed_ns": 39667,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "mode": "cpu",
+          "kind": 1,
+          "code": 11,
+          "lifecycle": "fresh",
+          "iterations": 10,
+          "known": 10,
+          "degree": 2,
+          "elapsed_ns": 37657,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 0.9776245389008551,
+      "pairedMedianBootstrap95": [
+        0.9660277847576336,
+        0.9943045968987672
+      ],
+      "nsPerQuery": {
+        "baseline": 2787.7069905800695,
+        "trial": 2727.0443728309374
+      }
+    },
+    {
+      "kind": 1,
+      "code": 11,
+      "lifecycle": "retained",
+      "iterations": 3178,
+      "observations": 48,
+      "pilots": [
+        {
+          "mode": "cpu",
+          "kind": 1,
+          "code": 11,
+          "lifecycle": "retained",
+          "iterations": 10,
+          "known": 10,
+          "degree": 2,
+          "elapsed_ns": 24179,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "mode": "cpu",
+          "kind": 1,
+          "code": 11,
+          "lifecycle": "retained",
+          "iterations": 10,
+          "known": 10,
+          "degree": 2,
+          "elapsed_ns": 25178,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 0.9697414050311393,
+      "pairedMedianBootstrap95": [
+        0.9068085169160178,
+        0.9798796342012783
+      ],
+      "nsPerQuery": {
+        "baseline": 1943.7923222152297,
+        "trial": 1895.8362177470108
+      }
+    },
+    {
+      "kind": 1,
+      "code": 12,
+      "lifecycle": "fresh",
+      "iterations": 2084,
+      "observations": 48,
+      "pilots": [
+        {
+          "mode": "cpu",
+          "kind": 1,
+          "code": 12,
+          "lifecycle": "fresh",
+          "iterations": 10,
+          "known": 10,
+          "degree": 2,
+          "elapsed_ns": 38397,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "mode": "cpu",
+          "kind": 1,
+          "code": 12,
+          "lifecycle": "fresh",
+          "iterations": 10,
+          "known": 10,
+          "degree": 2,
+          "elapsed_ns": 38308,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 0.9694766672561299,
+      "pairedMedianBootstrap95": [
+        0.9482258947626314,
+        1.0169403167982405
+      ],
+      "nsPerQuery": {
+        "baseline": 3180.027111324376,
+        "trial": 3045.4491362763915
+      }
+    },
+    {
+      "kind": 1,
+      "code": 12,
+      "lifecycle": "retained",
+      "iterations": 3955,
+      "observations": 48,
+      "pilots": [
+        {
+          "mode": "cpu",
+          "kind": 1,
+          "code": 12,
+          "lifecycle": "retained",
+          "iterations": 10,
+          "known": 10,
+          "degree": 2,
+          "elapsed_ns": 20229,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "mode": "cpu",
+          "kind": 1,
+          "code": 12,
+          "lifecycle": "retained",
+          "iterations": 10,
+          "known": 10,
+          "degree": 2,
+          "elapsed_ns": 19439,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 0.9924778483795834,
+      "pairedMedianBootstrap95": [
+        0.9090272276148414,
+        1.040556263559047
+      ],
+      "nsPerQuery": {
+        "baseline": 2053.606447534766,
+        "trial": 2023.762831858407
+      }
+    },
+    {
+      "kind": 1,
+      "code": 13,
+      "lifecycle": "fresh",
+      "iterations": 1739,
+      "observations": 48,
+      "pilots": [
+        {
+          "mode": "cpu",
+          "kind": 1,
+          "code": 13,
+          "lifecycle": "fresh",
+          "iterations": 10,
+          "known": 10,
+          "degree": 3,
+          "elapsed_ns": 37247,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "mode": "cpu",
+          "kind": 1,
+          "code": 13,
+          "lifecycle": "fresh",
+          "iterations": 10,
+          "known": 10,
+          "degree": 3,
+          "elapsed_ns": 46027,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 1.0187267351312947,
+      "pairedMedianBootstrap95": [
+        0.9940325151492505,
+        1.0379467455274685
+      ],
+      "nsPerQuery": {
+        "baseline": 3509.4580218516385,
+        "trial": 3607.875215641173
+      }
+    },
+    {
+      "kind": 1,
+      "code": 13,
+      "lifecycle": "retained",
+      "iterations": 2484,
+      "observations": 48,
+      "pilots": [
+        {
+          "mode": "cpu",
+          "kind": 1,
+          "code": 13,
+          "lifecycle": "retained",
+          "iterations": 10,
+          "known": 10,
+          "degree": 3,
+          "elapsed_ns": 30498,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "mode": "cpu",
+          "kind": 1,
+          "code": 13,
+          "lifecycle": "retained",
+          "iterations": 10,
+          "known": 10,
+          "degree": 3,
+          "elapsed_ns": 32208,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 1.0105147166155697,
+      "pairedMedianBootstrap95": [
+        0.9861850818139406,
+        1.0283496892534751
+      ],
+      "nsPerQuery": {
+        "baseline": 2441.25,
+        "trial": 2443.381239935588
+      }
+    },
+    {
+      "kind": 1,
+      "code": 14,
+      "lifecycle": "fresh",
+      "iterations": 517,
+      "observations": 48,
+      "pilots": [
+        {
+          "mode": "cpu",
+          "kind": 1,
+          "code": 14,
+          "lifecycle": "fresh",
+          "iterations": 10,
+          "known": 10,
+          "degree": 3,
+          "elapsed_ns": 154880,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "mode": "cpu",
+          "kind": 1,
+          "code": 14,
+          "lifecycle": "fresh",
+          "iterations": 10,
+          "known": 10,
+          "degree": 3,
+          "elapsed_ns": 123732,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 0.9774061669019897,
+      "pairedMedianBootstrap95": [
+        0.9432759497098842,
+        1.0096732758698947
+      ],
+      "nsPerQuery": {
+        "baseline": 12518.108317214701,
+        "trial": 12589.707930367505
+      }
+    },
+    {
+      "kind": 1,
+      "code": 14,
+      "lifecycle": "retained",
+      "iterations": 735,
+      "observations": 48,
+      "pilots": [
+        {
+          "mode": "cpu",
+          "kind": 1,
+          "code": 14,
+          "lifecycle": "retained",
+          "iterations": 10,
+          "known": 10,
+          "degree": 3,
+          "elapsed_ns": 108892,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "mode": "cpu",
+          "kind": 1,
+          "code": 14,
+          "lifecycle": "retained",
+          "iterations": 10,
+          "known": 10,
+          "degree": 3,
+          "elapsed_ns": 106883,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 0.939561155731075,
+      "pairedMedianBootstrap95": [
+        0.9022858809692265,
+        0.984711741719953
+      ],
+      "nsPerQuery": {
+        "baseline": 11506.742857142857,
+        "trial": 11055.385714285714
+      }
+    },
+    {
+      "kind": 1,
+      "code": 15,
+      "lifecycle": "fresh",
+      "iterations": 1001,
+      "observations": 48,
+      "pilots": [
+        {
+          "mode": "cpu",
+          "kind": 1,
+          "code": 15,
+          "lifecycle": "fresh",
+          "iterations": 10,
+          "known": 10,
+          "degree": 2,
+          "elapsed_ns": 79965,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "mode": "cpu",
+          "kind": 1,
+          "code": 15,
+          "lifecycle": "fresh",
+          "iterations": 10,
+          "known": 10,
+          "degree": 2,
+          "elapsed_ns": 67036,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 0.9563500959332563,
+      "pairedMedianBootstrap95": [
+        0.8892737014396302,
+        1.0235050700881068
+      ],
+      "nsPerQuery": {
+        "baseline": 3812.0509490509494,
+        "trial": 3645.17982017982
+      }
+    },
+    {
+      "kind": 1,
+      "code": 15,
+      "lifecycle": "retained",
+      "iterations": 2817,
+      "observations": 48,
+      "pilots": [
+        {
+          "mode": "cpu",
+          "kind": 1,
+          "code": 15,
+          "lifecycle": "retained",
+          "iterations": 10,
+          "known": 10,
+          "degree": 2,
+          "elapsed_ns": 28408,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "mode": "cpu",
+          "kind": 1,
+          "code": 15,
+          "lifecycle": "retained",
+          "iterations": 10,
+          "known": 10,
+          "degree": 2,
+          "elapsed_ns": 27358,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 0.9823365787081197,
+      "pairedMedianBootstrap95": [
+        0.9732367878102097,
+        0.9894859950719821
+      ],
+      "nsPerQuery": {
+        "baseline": 2299.6240681576146,
+        "trial": 2259.123003194888
+      }
+    },
+    {
+      "kind": 1,
+      "code": 16,
+      "lifecycle": "fresh",
+      "iterations": 1208,
+      "observations": 48,
+      "pilots": [
+        {
+          "mode": "cpu",
+          "kind": 1,
+          "code": 16,
+          "lifecycle": "fresh",
+          "iterations": 10,
+          "known": 10,
+          "degree": 3,
+          "elapsed_ns": 66245,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "mode": "cpu",
+          "kind": 1,
+          "code": 16,
+          "lifecycle": "fresh",
+          "iterations": 10,
+          "known": 10,
+          "degree": 3,
+          "elapsed_ns": 65526,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 1.0070034573517082,
+      "pairedMedianBootstrap95": [
+        0.9695156679601161,
+        1.0192149362986662
+      ],
+      "nsPerQuery": {
+        "baseline": 4774.420529801324,
+        "trial": 4797.129966887417
+      }
+    },
+    {
+      "kind": 1,
+      "code": 16,
+      "lifecycle": "retained",
+      "iterations": 1956,
+      "observations": 48,
+      "pilots": [
+        {
+          "mode": "cpu",
+          "kind": 1,
+          "code": 16,
+          "lifecycle": "retained",
+          "iterations": 10,
+          "known": 10,
+          "degree": 3,
+          "elapsed_ns": 40917,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "mode": "cpu",
+          "kind": 1,
+          "code": 16,
+          "lifecycle": "retained",
+          "iterations": 10,
+          "known": 10,
+          "degree": 3,
+          "elapsed_ns": 31718,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 0.9729930266453062,
+      "pairedMedianBootstrap95": [
+        0.950062646976243,
+        1.012020124843371
+      ],
+      "nsPerQuery": {
+        "baseline": 3415.4153885480573,
+        "trial": 3263.81518404908
+      }
+    },
+    {
+      "kind": 1,
+      "code": 17,
+      "lifecycle": "fresh",
+      "iterations": 1078,
+      "observations": 48,
+      "pilots": [
+        {
+          "mode": "cpu",
+          "kind": 1,
+          "code": 17,
+          "lifecycle": "fresh",
+          "iterations": 10,
+          "known": 10,
+          "degree": 3,
+          "elapsed_ns": 74235,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "mode": "cpu",
+          "kind": 1,
+          "code": 17,
+          "lifecycle": "fresh",
+          "iterations": 10,
+          "known": 10,
+          "degree": 3,
+          "elapsed_ns": 69385,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 0.9811073818594263,
+      "pairedMedianBootstrap95": [
+        0.9735952558768093,
+        1.019232366558638
+      ],
+      "nsPerQuery": {
+        "baseline": 5177.321428571428,
+        "trial": 5167.540352504639
+      }
+    },
+    {
+      "kind": 1,
+      "code": 17,
+      "lifecycle": "retained",
+      "iterations": 2353,
+      "observations": 48,
+      "pilots": [
+        {
+          "mode": "cpu",
+          "kind": 1,
+          "code": 17,
+          "lifecycle": "retained",
+          "iterations": 10,
+          "known": 10,
+          "degree": 3,
+          "elapsed_ns": 34008,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "mode": "cpu",
+          "kind": 1,
+          "code": 17,
+          "lifecycle": "retained",
+          "iterations": 10,
+          "known": 10,
+          "degree": 3,
+          "elapsed_ns": 32658,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 0.9820742331192482,
+      "pairedMedianBootstrap95": [
+        0.9669299968683531,
+        0.9980286580346278
+      ],
+      "nsPerQuery": {
+        "baseline": 3400.5512112197193,
+        "trial": 3367.9528261793457
+      }
+    },
+    {
+      "kind": 1,
+      "code": 18,
+      "lifecycle": "fresh",
+      "iterations": 2405,
+      "observations": 48,
+      "pilots": [
+        {
+          "mode": "cpu",
+          "kind": 1,
+          "code": 18,
+          "lifecycle": "fresh",
+          "iterations": 10,
+          "known": 10,
+          "degree": 1,
+          "elapsed_ns": 27038,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "mode": "cpu",
+          "kind": 1,
+          "code": 18,
+          "lifecycle": "fresh",
+          "iterations": 10,
+          "known": 10,
+          "degree": 1,
+          "elapsed_ns": 33268,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 1.0094023961865128,
+      "pairedMedianBootstrap95": [
+        0.9831952178927834,
+        1.0400289277307557
+      ],
+      "nsPerQuery": {
+        "baseline": 2627.366735966736,
+        "trial": 2594.3172557172556
+      }
+    },
+    {
+      "kind": 1,
+      "code": 18,
+      "lifecycle": "retained",
+      "iterations": 3593,
+      "observations": 48,
+      "pilots": [
+        {
+          "mode": "cpu",
+          "kind": 1,
+          "code": 18,
+          "lifecycle": "retained",
+          "iterations": 10,
+          "known": 10,
+          "degree": 1,
+          "elapsed_ns": 22269,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "mode": "cpu",
+          "kind": 1,
+          "code": 18,
+          "lifecycle": "retained",
+          "iterations": 10,
+          "known": 10,
+          "degree": 1,
+          "elapsed_ns": 21118,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 0.9641059414667272,
+      "pairedMedianBootstrap95": [
+        0.9525374931207838,
+        0.9834928210122684
+      ],
+      "nsPerQuery": {
+        "baseline": 1664.8846367937656,
+        "trial": 1611.1059003618147
+      }
+    },
+    {
+      "kind": 1,
+      "code": 19,
+      "lifecycle": "fresh",
+      "iterations": 1479,
+      "observations": 48,
+      "pilots": [
+        {
+          "mode": "cpu",
+          "kind": 1,
+          "code": 19,
+          "lifecycle": "fresh",
+          "iterations": 10,
+          "known": 10,
+          "degree": 2,
+          "elapsed_ns": 54106,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "mode": "cpu",
+          "kind": 1,
+          "code": 19,
+          "lifecycle": "fresh",
+          "iterations": 10,
+          "known": 10,
+          "degree": 2,
+          "elapsed_ns": 43407,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 0.9998280359634124,
+      "pairedMedianBootstrap95": [
+        0.9592667597594646,
+        1.0385683895373936
+      ],
+      "nsPerQuery": {
+        "baseline": 3276.7704530087894,
+        "trial": 3261.9942528735633
+      }
+    },
+    {
+      "kind": 1,
+      "code": 19,
+      "lifecycle": "retained",
+      "iterations": 2749,
+      "observations": 48,
+      "pilots": [
+        {
+          "mode": "cpu",
+          "kind": 1,
+          "code": 19,
+          "lifecycle": "retained",
+          "iterations": 10,
+          "known": 10,
+          "degree": 2,
+          "elapsed_ns": 23558,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "mode": "cpu",
+          "kind": 1,
+          "code": 19,
+          "lifecycle": "retained",
+          "iterations": 10,
+          "known": 10,
+          "degree": 2,
+          "elapsed_ns": 29108,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 0.9979027207668476,
+      "pairedMedianBootstrap95": [
+        0.9863361245191559,
+        1.0056257402043798
+      ],
+      "nsPerQuery": {
+        "baseline": 2209.488541287741,
+        "trial": 2203.755911240451
+      }
+    },
+    {
+      "kind": 1,
+      "code": 20,
+      "lifecycle": "fresh",
+      "iterations": 1091,
+      "observations": 48,
+      "pilots": [
+        {
+          "mode": "cpu",
+          "kind": 1,
+          "code": 20,
+          "lifecycle": "fresh",
+          "iterations": 10,
+          "known": 10,
+          "degree": 2,
+          "elapsed_ns": 73345,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "mode": "cpu",
+          "kind": 1,
+          "code": 20,
+          "lifecycle": "fresh",
+          "iterations": 10,
+          "known": 10,
+          "degree": 2,
+          "elapsed_ns": 55406,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 0.9922786378785267,
+      "pairedMedianBootstrap95": [
+        0.9794391157606616,
+        1.0128063532901939
+      ],
+      "nsPerQuery": {
+        "baseline": 3965.3102658111825,
+        "trial": 3889.275435380385
+      }
+    },
+    {
+      "kind": 1,
+      "code": 20,
+      "lifecycle": "retained",
+      "iterations": 2268,
+      "observations": 48,
+      "pilots": [
+        {
+          "mode": "cpu",
+          "kind": 1,
+          "code": 20,
+          "lifecycle": "retained",
+          "iterations": 10,
+          "known": 10,
+          "degree": 2,
+          "elapsed_ns": 35278,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "mode": "cpu",
+          "kind": 1,
+          "code": 20,
+          "lifecycle": "retained",
+          "iterations": 10,
+          "known": 10,
+          "degree": 2,
+          "elapsed_ns": 28848,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 0.9850053314133502,
+      "pairedMedianBootstrap95": [
+        0.9760552753416525,
+        0.9931082046039224
+      ],
+      "nsPerQuery": {
+        "baseline": 2732.3150352733687,
+        "trial": 2682.4111552028216
+      }
+    },
+    {
+      "kind": 1,
+      "code": 21,
+      "lifecycle": "fresh",
+      "iterations": 2046,
+      "observations": 48,
+      "pilots": [
+        {
+          "mode": "cpu",
+          "kind": 1,
+          "code": 21,
+          "lifecycle": "fresh",
+          "iterations": 10,
+          "known": 10,
+          "degree": 2,
+          "elapsed_ns": 39118,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "mode": "cpu",
+          "kind": 1,
+          "code": 21,
+          "lifecycle": "fresh",
+          "iterations": 10,
+          "known": 10,
+          "degree": 2,
+          "elapsed_ns": 37777,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 0.983650046280544,
+      "pairedMedianBootstrap95": [
+        0.9655290277043518,
+        1.0081750501750157
+      ],
+      "nsPerQuery": {
+        "baseline": 3368.366813294233,
+        "trial": 3286.4638318670577
+      }
+    },
+    {
+      "kind": 1,
+      "code": 21,
+      "lifecycle": "retained",
+      "iterations": 3516,
+      "observations": 48,
+      "pilots": [
+        {
+          "mode": "cpu",
+          "kind": 1,
+          "code": 21,
+          "lifecycle": "retained",
+          "iterations": 10,
+          "known": 10,
+          "degree": 2,
+          "elapsed_ns": 21668,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "mode": "cpu",
+          "kind": 1,
+          "code": 21,
+          "lifecycle": "retained",
+          "iterations": 10,
+          "known": 10,
+          "degree": 2,
+          "elapsed_ns": 22759,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 0.9899558671878204,
+      "pairedMedianBootstrap95": [
+        0.9667005659026722,
+        1.0095320129971763
+      ],
+      "nsPerQuery": {
+        "baseline": 2177.8899317406144,
+        "trial": 2176.820534698521
+      }
+    },
+    {
+      "kind": 1,
+      "code": 22,
+      "lifecycle": "fresh",
+      "iterations": 1248,
+      "observations": 48,
+      "pilots": [
+        {
+          "mode": "cpu",
+          "kind": 1,
+          "code": 22,
+          "lifecycle": "fresh",
+          "iterations": 10,
+          "known": 10,
+          "degree": 3,
+          "elapsed_ns": 64105,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "mode": "cpu",
+          "kind": 1,
+          "code": 22,
+          "lifecycle": "fresh",
+          "iterations": 10,
+          "known": 10,
+          "degree": 3,
+          "elapsed_ns": 63195,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 0.9863866511467289,
+      "pairedMedianBootstrap95": [
+        0.9174691375421644,
+        1.0738940141902118
+      ],
+      "nsPerQuery": {
+        "baseline": 4531.239983974359,
+        "trial": 4551.967948717949
+      }
+    },
+    {
+      "kind": 1,
+      "code": 22,
+      "lifecycle": "retained",
+      "iterations": 1414,
+      "observations": 48,
+      "pilots": [
+        {
+          "mode": "cpu",
+          "kind": 1,
+          "code": 22,
+          "lifecycle": "retained",
+          "iterations": 10,
+          "known": 10,
+          "degree": 3,
+          "elapsed_ns": 56616,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "mode": "cpu",
+          "kind": 1,
+          "code": 22,
+          "lifecycle": "retained",
+          "iterations": 10,
+          "known": 10,
+          "degree": 3,
+          "elapsed_ns": 32188,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 0.9913840887462837,
+      "pairedMedianBootstrap95": [
+        0.9873994735915081,
+        1.0171611358250607
+      ],
+      "nsPerQuery": {
+        "baseline": 3103.266973125884,
+        "trial": 3089.537128712871
+      }
+    },
+    {
+      "kind": 1,
+      "code": 23,
+      "lifecycle": "fresh",
+      "iterations": 1107,
+      "observations": 48,
+      "pilots": [
+        {
+          "mode": "cpu",
+          "kind": 1,
+          "code": 23,
+          "lifecycle": "fresh",
+          "iterations": 10,
+          "known": 10,
+          "degree": 3,
+          "elapsed_ns": 71116,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "mode": "cpu",
+          "kind": 1,
+          "code": 23,
+          "lifecycle": "fresh",
+          "iterations": 10,
+          "known": 10,
+          "degree": 3,
+          "elapsed_ns": 72325,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 1.0222097382518336,
+      "pairedMedianBootstrap95": [
+        1.0117429264948723,
+        1.0414470606184778
+      ],
+      "nsPerQuery": {
+        "baseline": 4896.250225835593,
+        "trial": 5034.135953026196
+      }
+    },
+    {
+      "kind": 1,
+      "code": 23,
+      "lifecycle": "retained",
+      "iterations": 1972,
+      "observations": 48,
+      "pilots": [
+        {
+          "mode": "cpu",
+          "kind": 1,
+          "code": 23,
+          "lifecycle": "retained",
+          "iterations": 10,
+          "known": 10,
+          "degree": 3,
+          "elapsed_ns": 40148,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "mode": "cpu",
+          "kind": 1,
+          "code": 23,
+          "lifecycle": "retained",
+          "iterations": 10,
+          "known": 10,
+          "degree": 3,
+          "elapsed_ns": 40577,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 0.9966481780413579,
+      "pairedMedianBootstrap95": [
+        0.993601924316994,
+        1.0100786844802183
+      ],
+      "nsPerQuery": {
+        "baseline": 3320.8121196754564,
+        "trial": 3298.2603955375253
+      }
+    },
+    {
+      "kind": 1,
+      "code": 24,
+      "lifecycle": "fresh",
+      "iterations": 450,
+      "observations": 48,
+      "pilots": [
+        {
+          "mode": "cpu",
+          "kind": 1,
+          "code": 24,
+          "lifecycle": "fresh",
+          "iterations": 10,
+          "known": 10,
+          "degree": 2,
+          "elapsed_ns": 170238,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "mode": "cpu",
+          "kind": 1,
+          "code": 24,
+          "lifecycle": "fresh",
+          "iterations": 10,
+          "known": 10,
+          "degree": 2,
+          "elapsed_ns": 177788,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 0.9738466818178737,
+      "pairedMedianBootstrap95": [
+        0.9680619854119757,
+        0.9918953248896493
+      ],
+      "nsPerQuery": {
+        "baseline": 13641.277777777777,
+        "trial": 13384.672222222223
+      }
+    },
+    {
+      "kind": 1,
+      "code": 24,
+      "lifecycle": "retained",
+      "iterations": 579,
+      "observations": 48,
+      "pilots": [
+        {
+          "mode": "cpu",
+          "kind": 1,
+          "code": 24,
+          "lifecycle": "retained",
+          "iterations": 10,
+          "known": 10,
+          "degree": 2,
+          "elapsed_ns": 138191,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "mode": "cpu",
+          "kind": 1,
+          "code": 24,
+          "lifecycle": "retained",
+          "iterations": 10,
+          "known": 10,
+          "degree": 2,
+          "elapsed_ns": 137031,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 0.9901932061441495,
+      "pairedMedianBootstrap95": [
+        0.9819374489295636,
+        0.9915321312555554
+      ],
+      "nsPerQuery": {
+        "baseline": 11260.368739205527,
+        "trial": 11124.402417962003
+      }
+    },
+    {
+      "kind": 1,
+      "code": 25,
+      "lifecycle": "fresh",
+      "iterations": 426,
+      "observations": 48,
+      "pilots": [
+        {
+          "mode": "cpu",
+          "kind": 1,
+          "code": 25,
+          "lifecycle": "fresh",
+          "iterations": 10,
+          "known": 10,
+          "degree": 3,
+          "elapsed_ns": 188027,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "mode": "cpu",
+          "kind": 1,
+          "code": 25,
+          "lifecycle": "fresh",
+          "iterations": 10,
+          "known": 10,
+          "degree": 3,
+          "elapsed_ns": 171458,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 0.9820046435753149,
+      "pairedMedianBootstrap95": [
+        0.9654010752365931,
+        0.9954073005660325
+      ],
+      "nsPerQuery": {
+        "baseline": 15210.976525821596,
+        "trial": 15070.152582159624
+      }
+    },
+    {
+      "kind": 1,
+      "code": 25,
+      "lifecycle": "retained",
+      "iterations": 497,
+      "observations": 48,
+      "pilots": [
+        {
+          "mode": "cpu",
+          "kind": 1,
+          "code": 25,
+          "lifecycle": "retained",
+          "iterations": 10,
+          "known": 10,
+          "degree": 3,
+          "elapsed_ns": 161149,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "mode": "cpu",
+          "kind": 1,
+          "code": 25,
+          "lifecycle": "retained",
+          "iterations": 10,
+          "known": 10,
+          "degree": 3,
+          "elapsed_ns": 132171,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 0.9795107138096852,
+      "pairedMedianBootstrap95": [
+        0.968468129771067,
+        0.9943786406117128
+      ],
+      "nsPerQuery": {
+        "baseline": 12702.057344064386,
+        "trial": 12508.390342052315
+      }
+    },
+    {
+      "kind": 1,
+      "code": 26,
+      "lifecycle": "fresh",
+      "iterations": 321,
+      "observations": 48,
+      "pilots": [
+        {
+          "mode": "cpu",
+          "kind": 1,
+          "code": 26,
+          "lifecycle": "fresh",
+          "iterations": 10,
+          "known": 10,
+          "degree": 3,
+          "elapsed_ns": 249413,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "mode": "cpu",
+          "kind": 1,
+          "code": 26,
+          "lifecycle": "fresh",
+          "iterations": 10,
+          "known": 10,
+          "degree": 3,
+          "elapsed_ns": 165119,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 0.9865964491910787,
+      "pairedMedianBootstrap95": [
+        0.951655582444183,
+        1.0981588250085426
+      ],
+      "nsPerQuery": {
+        "baseline": 15896.154205607476,
+        "trial": 15849.943925233645
+      }
+    },
+    {
+      "kind": 1,
+      "code": 26,
+      "lifecycle": "retained",
+      "iterations": 553,
+      "observations": 48,
+      "pilots": [
+        {
+          "mode": "cpu",
+          "kind": 1,
+          "code": 26,
+          "lifecycle": "retained",
+          "iterations": 10,
+          "known": 10,
+          "degree": 3,
+          "elapsed_ns": 144830,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "mode": "cpu",
+          "kind": 1,
+          "code": 26,
+          "lifecycle": "retained",
+          "iterations": 10,
+          "known": 10,
+          "degree": 3,
+          "elapsed_ns": 134761,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 1.0146051547921924,
+      "pairedMedianBootstrap95": [
+        0.9809265244017802,
+        1.038125883672676
+      ],
+      "nsPerQuery": {
+        "baseline": 13089.26672694394,
+        "trial": 12864.978300180832
+      }
+    },
+    {
+      "kind": 2,
+      "code": 0,
+      "lifecycle": "fresh",
+      "iterations": 6618,
+      "observations": 48,
+      "pilots": [
+        {
+          "mode": "cpu",
+          "kind": 2,
+          "code": 0,
+          "lifecycle": "fresh",
+          "iterations": 10,
+          "known": 10,
+          "degree": 0,
+          "elapsed_ns": 12089,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "mode": "cpu",
+          "kind": 2,
+          "code": 0,
+          "lifecycle": "fresh",
+          "iterations": 10,
+          "known": 10,
+          "degree": 0,
+          "elapsed_ns": 11429,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 0.900745834883725,
+      "pairedMedianBootstrap95": [
+        0.8818036647381998,
+        1.0901291611815647
+      ],
+      "nsPerQuery": {
+        "baseline": 1024.4100181323663,
+        "trial": 998.3368087035358
+      }
+    },
+    {
+      "kind": 2,
+      "code": 0,
+      "lifecycle": "retained",
+      "iterations": 10000,
+      "observations": 48,
+      "pilots": [
+        {
+          "mode": "cpu",
+          "kind": 2,
+          "code": 0,
+          "lifecycle": "retained",
+          "iterations": 10,
+          "known": 10,
+          "degree": 0,
+          "elapsed_ns": 4039,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "mode": "cpu",
+          "kind": 2,
+          "code": 0,
+          "lifecycle": "retained",
+          "iterations": 10,
+          "known": 10,
+          "degree": 0,
+          "elapsed_ns": 4330,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 0.9764508001552012,
+      "pairedMedianBootstrap95": [
+        0.9542013414895587,
+        0.9998107557703065
+      ],
+      "nsPerQuery": {
+        "baseline": 308.43685000000005,
+        "trial": 293.62739999999997
+      }
+    },
+    {
+      "kind": 2,
+      "code": 1,
+      "lifecycle": "fresh",
+      "iterations": 2493,
+      "observations": 48,
+      "pilots": [
+        {
+          "mode": "cpu",
+          "kind": 2,
+          "code": 1,
+          "lifecycle": "fresh",
+          "iterations": 10,
+          "known": 10,
+          "degree": 1,
+          "elapsed_ns": 26568,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "mode": "cpu",
+          "kind": 2,
+          "code": 1,
+          "lifecycle": "fresh",
+          "iterations": 10,
+          "known": 10,
+          "degree": 1,
+          "elapsed_ns": 32098,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 1.0102291919471316,
+      "pairedMedianBootstrap95": [
+        0.9908657583844367,
+        1.0585642413332597
+      ],
+      "nsPerQuery": {
+        "baseline": 2380.314279983955,
+        "trial": 2378.583634175692
+      }
+    },
+    {
+      "kind": 2,
+      "code": 1,
+      "lifecycle": "retained",
+      "iterations": 3869,
+      "observations": 48,
+      "pilots": [
+        {
+          "mode": "cpu",
+          "kind": 2,
+          "code": 1,
+          "lifecycle": "retained",
+          "iterations": 10,
+          "known": 10,
+          "degree": 1,
+          "elapsed_ns": 20679,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "mode": "cpu",
+          "kind": 2,
+          "code": 1,
+          "lifecycle": "retained",
+          "iterations": 10,
+          "known": 10,
+          "degree": 1,
+          "elapsed_ns": 17008,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 0.9148252534013608,
+      "pairedMedianBootstrap95": [
+        0.904177303557038,
+        0.9466655963153063
+      ],
+      "nsPerQuery": {
+        "baseline": 1674.8800723701215,
+        "trial": 1576.397647971052
+      }
+    },
+    {
+      "kind": 2,
+      "code": 2,
+      "lifecycle": "fresh",
+      "iterations": 622,
+      "observations": 48,
+      "pilots": [
+        {
+          "mode": "cpu",
+          "kind": 2,
+          "code": 2,
+          "lifecycle": "fresh",
+          "iterations": 10,
+          "known": 10,
+          "degree": 1,
+          "elapsed_ns": 121382,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "mode": "cpu",
+          "kind": 2,
+          "code": 2,
+          "lifecycle": "fresh",
+          "iterations": 10,
+          "known": 10,
+          "degree": 1,
+          "elapsed_ns": 128821,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 0.9796093781204758,
+      "pairedMedianBootstrap95": [
+        0.9619333859120105,
+        0.995256650266723
+      ],
+      "nsPerQuery": {
+        "baseline": 9869.790192926044,
+        "trial": 9580.951768488747
+      }
+    },
+    {
+      "kind": 2,
+      "code": 2,
+      "lifecycle": "retained",
+      "iterations": 691,
+      "observations": 48,
+      "pilots": [
+        {
+          "mode": "cpu",
+          "kind": 2,
+          "code": 2,
+          "lifecycle": "retained",
+          "iterations": 10,
+          "known": 10,
+          "degree": 1,
+          "elapsed_ns": 115812,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "mode": "cpu",
+          "kind": 2,
+          "code": 2,
+          "lifecycle": "retained",
+          "iterations": 10,
+          "known": 10,
+          "degree": 1,
+          "elapsed_ns": 113122,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 0.9885048893528882,
+      "pairedMedianBootstrap95": [
+        0.9723553551611501,
+        1.000639969393057
+      ],
+      "nsPerQuery": {
+        "baseline": 8755.68089725036,
+        "trial": 8649.921128798844
+      }
+    },
+    {
+      "kind": 2,
+      "code": 3,
+      "lifecycle": "fresh",
+      "iterations": 3751,
+      "observations": 48,
+      "pilots": [
+        {
+          "mode": "cpu",
+          "kind": 2,
+          "code": 3,
+          "lifecycle": "fresh",
+          "iterations": 10,
+          "known": 10,
+          "degree": 1,
+          "elapsed_ns": 21328,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "mode": "cpu",
+          "kind": 2,
+          "code": 3,
+          "lifecycle": "fresh",
+          "iterations": 10,
+          "known": 10,
+          "degree": 1,
+          "elapsed_ns": 20519,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 0.9891993513224775,
+      "pairedMedianBootstrap95": [
+        0.9136595219743618,
+        1.0258980141727987
+      ],
+      "nsPerQuery": {
+        "baseline": 1470.7816582244736,
+        "trial": 1475.6214342841909
+      }
+    },
+    {
+      "kind": 2,
+      "code": 3,
+      "lifecycle": "retained",
+      "iterations": 10000,
+      "observations": 48,
+      "pilots": [
+        {
+          "mode": "cpu",
+          "kind": 2,
+          "code": 3,
+          "lifecycle": "retained",
+          "iterations": 10,
+          "known": 10,
+          "degree": 1,
+          "elapsed_ns": 7879,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "mode": "cpu",
+          "kind": 2,
+          "code": 3,
+          "lifecycle": "retained",
+          "iterations": 10,
+          "known": 10,
+          "degree": 1,
+          "elapsed_ns": 7829,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 1.0081454697065613,
+      "pairedMedianBootstrap95": [
+        0.9845730237366598,
+        1.0259793461710778
+      ],
+      "nsPerQuery": {
+        "baseline": 603.6742,
+        "trial": 610.01875
+      }
+    },
+    {
+      "kind": 2,
+      "code": 4,
+      "lifecycle": "fresh",
+      "iterations": 1978,
+      "observations": 48,
+      "pilots": [
+        {
+          "mode": "cpu",
+          "kind": 2,
+          "code": 4,
+          "lifecycle": "fresh",
+          "iterations": 10,
+          "known": 10,
+          "degree": 2,
+          "elapsed_ns": 39228,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "mode": "cpu",
+          "kind": 2,
+          "code": 4,
+          "lifecycle": "fresh",
+          "iterations": 10,
+          "known": 10,
+          "degree": 2,
+          "elapsed_ns": 40447,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 1.0181833554182105,
+      "pairedMedianBootstrap95": [
+        0.9849160739635046,
+        1.0893165843069896
+      ],
+      "nsPerQuery": {
+        "baseline": 2686.0015166835187,
+        "trial": 2757.57406471183
+      }
+    },
+    {
+      "kind": 2,
+      "code": 4,
+      "lifecycle": "retained",
+      "iterations": 4423,
+      "observations": 48,
+      "pilots": [
+        {
+          "mode": "cpu",
+          "kind": 2,
+          "code": 4,
+          "lifecycle": "retained",
+          "iterations": 10,
+          "known": 10,
+          "degree": 2,
+          "elapsed_ns": 16689,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "mode": "cpu",
+          "kind": 2,
+          "code": 4,
+          "lifecycle": "retained",
+          "iterations": 10,
+          "known": 10,
+          "degree": 2,
+          "elapsed_ns": 18089,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 0.9768892908974356,
+      "pairedMedianBootstrap95": [
+        0.9442037950712656,
+        1.0139109167474916
+      ],
+      "nsPerQuery": {
+        "baseline": 1668.3042052905266,
+        "trial": 1684.121636898033
+      }
+    },
+    {
+      "kind": 2,
+      "code": 5,
+      "lifecycle": "fresh",
+      "iterations": 1546,
+      "observations": 48,
+      "pilots": [
+        {
+          "mode": "cpu",
+          "kind": 2,
+          "code": 5,
+          "lifecycle": "fresh",
+          "iterations": 10,
+          "known": 10,
+          "degree": 2,
+          "elapsed_ns": 51766,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "mode": "cpu",
+          "kind": 2,
+          "code": 5,
+          "lifecycle": "fresh",
+          "iterations": 10,
+          "known": 10,
+          "degree": 2,
+          "elapsed_ns": 37998,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 0.9257616429162614,
+      "pairedMedianBootstrap95": [
+        0.9207853885754188,
+        0.9387329562240924
+      ],
+      "nsPerQuery": {
+        "baseline": 3707.5601552393273,
+        "trial": 3430.6283958602844
+      }
+    },
+    {
+      "kind": 2,
+      "code": 5,
+      "lifecycle": "retained",
+      "iterations": 2400,
+      "observations": 48,
+      "pilots": [
+        {
+          "mode": "cpu",
+          "kind": 2,
+          "code": 5,
+          "lifecycle": "retained",
+          "iterations": 10,
+          "known": 10,
+          "degree": 2,
+          "elapsed_ns": 33338,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "mode": "cpu",
+          "kind": 2,
+          "code": 5,
+          "lifecycle": "retained",
+          "iterations": 10,
+          "known": 10,
+          "degree": 2,
+          "elapsed_ns": 24169,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 0.915256164245184,
+      "pairedMedianBootstrap95": [
+        0.9008918349756442,
+        0.9191076250559405
+      ],
+      "nsPerQuery": {
+        "baseline": 2530.3516666666665,
+        "trial": 2303.05875
+      }
+    },
+    {
+      "kind": 2,
+      "code": 6,
+      "lifecycle": "fresh",
+      "iterations": 1904,
+      "observations": 48,
+      "pilots": [
+        {
+          "mode": "cpu",
+          "kind": 2,
+          "code": 6,
+          "lifecycle": "fresh",
+          "iterations": 10,
+          "known": 10,
+          "degree": 1,
+          "elapsed_ns": 41107,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "mode": "cpu",
+          "kind": 2,
+          "code": 6,
+          "lifecycle": "fresh",
+          "iterations": 10,
+          "known": 10,
+          "degree": 1,
+          "elapsed_ns": 42017,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 0.9968544321499764,
+      "pairedMedianBootstrap95": [
+        0.9834422327655726,
+        1.015496555227971
+      ],
+      "nsPerQuery": {
+        "baseline": 3175.7016806722686,
+        "trial": 3190.908088235294
+      }
+    },
+    {
+      "kind": 2,
+      "code": 6,
+      "lifecycle": "retained",
+      "iterations": 3193,
+      "observations": 48,
+      "pilots": [
+        {
+          "mode": "cpu",
+          "kind": 2,
+          "code": 6,
+          "lifecycle": "retained",
+          "iterations": 10,
+          "known": 10,
+          "degree": 1,
+          "elapsed_ns": 25058,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "mode": "cpu",
+          "kind": 2,
+          "code": 6,
+          "lifecycle": "retained",
+          "iterations": 10,
+          "known": 10,
+          "degree": 1,
+          "elapsed_ns": 24898,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 1.0136912701927616,
+      "pairedMedianBootstrap95": [
+        0.9812727684240743,
+        1.0210622728574865
+      ],
+      "nsPerQuery": {
+        "baseline": 1877.9217037269027,
+        "trial": 1892.870654556843
+      }
+    },
+    {
+      "kind": 2,
+      "code": 7,
+      "lifecycle": "fresh",
+      "iterations": 161,
+      "observations": 48,
+      "pilots": [
+        {
+          "mode": "cpu",
+          "kind": 2,
+          "code": 7,
+          "lifecycle": "fresh",
+          "iterations": 10,
+          "known": 0,
+          "degree": 2,
+          "elapsed_ns": 379594,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "mode": "cpu",
+          "kind": 2,
+          "code": 7,
+          "lifecycle": "fresh",
+          "iterations": 10,
+          "known": 0,
+          "degree": 2,
+          "elapsed_ns": 498866,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 0.9767370277254447,
+      "pairedMedianBootstrap95": [
+        0.9563692631497775,
+        0.98892290009466
+      ],
+      "nsPerQuery": {
+        "baseline": 37922.40372670807,
+        "trial": 36737.17391304347
+      }
+    },
+    {
+      "kind": 2,
+      "code": 7,
+      "lifecycle": "retained",
+      "iterations": 226,
+      "observations": 48,
+      "pilots": [
+        {
+          "mode": "cpu",
+          "kind": 2,
+          "code": 7,
+          "lifecycle": "retained",
+          "iterations": 10,
+          "known": 0,
+          "degree": 2,
+          "elapsed_ns": 354905,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "mode": "cpu",
+          "kind": 2,
+          "code": 7,
+          "lifecycle": "retained",
+          "iterations": 10,
+          "known": 0,
+          "degree": 2,
+          "elapsed_ns": 335197,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 0.9993666411612518,
+      "pairedMedianBootstrap95": [
+        0.9800805384480611,
+        1.0148656114574277
+      ],
+      "nsPerQuery": {
+        "baseline": 35044.54867256637,
+        "trial": 35151.929203539825
+      }
+    },
+    {
+      "kind": 2,
+      "code": 8,
+      "lifecycle": "fresh",
+      "iterations": 127,
+      "observations": 48,
+      "pilots": [
+        {
+          "mode": "cpu",
+          "kind": 2,
+          "code": 8,
+          "lifecycle": "fresh",
+          "iterations": 10,
+          "known": 0,
+          "degree": 2,
+          "elapsed_ns": 632336,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "mode": "cpu",
+          "kind": 2,
+          "code": 8,
+          "lifecycle": "fresh",
+          "iterations": 10,
+          "known": 0,
+          "degree": 2,
+          "elapsed_ns": 368245,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 1.001427701093032,
+      "pairedMedianBootstrap95": [
+        0.9750702626788177,
+        1.0185822999677159
+      ],
+      "nsPerQuery": {
+        "baseline": 37462.55118110236,
+        "trial": 39077.72047244094
+      }
+    },
+    {
+      "kind": 2,
+      "code": 8,
+      "lifecycle": "retained",
+      "iterations": 225,
+      "observations": 48,
+      "pilots": [
+        {
+          "mode": "cpu",
+          "kind": 2,
+          "code": 8,
+          "lifecycle": "retained",
+          "iterations": 10,
+          "known": 0,
+          "degree": 2,
+          "elapsed_ns": 352626,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "mode": "cpu",
+          "kind": 2,
+          "code": 8,
+          "lifecycle": "retained",
+          "iterations": 10,
+          "known": 0,
+          "degree": 2,
+          "elapsed_ns": 356256,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 0.982828564187272,
+      "pairedMedianBootstrap95": [
+        0.8750423635702798,
+        1.1973264260055365
+      ],
+      "nsPerQuery": {
+        "baseline": 35042.2,
+        "trial": 34538.43555555555
+      }
+    },
+    {
+      "kind": 2,
+      "code": 9,
+      "lifecycle": "fresh",
+      "iterations": 3003,
+      "observations": 48,
+      "pilots": [
+        {
+          "mode": "cpu",
+          "kind": 2,
+          "code": 9,
+          "lifecycle": "fresh",
+          "iterations": 10,
+          "known": 10,
+          "degree": 1,
+          "elapsed_ns": 26648,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "mode": "cpu",
+          "kind": 2,
+          "code": 9,
+          "lifecycle": "fresh",
+          "iterations": 10,
+          "known": 10,
+          "degree": 1,
+          "elapsed_ns": 19229,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 1.0080660160760362,
+      "pairedMedianBootstrap95": [
+        0.9606050311759442,
+        1.0386762500392395
+      ],
+      "nsPerQuery": {
+        "baseline": 1449.1182151182152,
+        "trial": 1463.4014319014318
+      }
+    },
+    {
+      "kind": 2,
+      "code": 9,
+      "lifecycle": "retained",
+      "iterations": 10000,
+      "observations": 48,
+      "pilots": [
+        {
+          "mode": "cpu",
+          "kind": 2,
+          "code": 9,
+          "lifecycle": "retained",
+          "iterations": 10,
+          "known": 10,
+          "degree": 1,
+          "elapsed_ns": 5659,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "mode": "cpu",
+          "kind": 2,
+          "code": 9,
+          "lifecycle": "retained",
+          "iterations": 10,
+          "known": 10,
+          "degree": 1,
+          "elapsed_ns": 7529,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 1.0188447433858931,
+      "pairedMedianBootstrap95": [
+        0.9729800499619541,
+        1.0345758096329514
+      ],
+      "nsPerQuery": {
+        "baseline": 546.3426,
+        "trial": 542.79135
+      }
+    },
+    {
+      "kind": 2,
+      "code": 10,
+      "lifecycle": "fresh",
+      "iterations": 3064,
+      "observations": 48,
+      "pilots": [
+        {
+          "mode": "cpu",
+          "kind": 2,
+          "code": 10,
+          "lifecycle": "fresh",
+          "iterations": 10,
+          "known": 10,
+          "degree": 2,
+          "elapsed_ns": 25158,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "mode": "cpu",
+          "kind": 2,
+          "code": 10,
+          "lifecycle": "fresh",
+          "iterations": 10,
+          "known": 10,
+          "degree": 2,
+          "elapsed_ns": 26118,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 1.0406318622884476,
+      "pairedMedianBootstrap95": [
+        1.0312245575836294,
+        1.0588328805508267
+      ],
+      "nsPerQuery": {
+        "baseline": 2353.1026436031334,
+        "trial": 2461.4600195822454
+      }
+    },
+    {
+      "kind": 2,
+      "code": 10,
+      "lifecycle": "retained",
+      "iterations": 2447,
+      "observations": 48,
+      "pilots": [
+        {
+          "mode": "cpu",
+          "kind": 2,
+          "code": 10,
+          "lifecycle": "retained",
+          "iterations": 10,
+          "known": 10,
+          "degree": 2,
+          "elapsed_ns": 16048,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "mode": "cpu",
+          "kind": 2,
+          "code": 10,
+          "lifecycle": "retained",
+          "iterations": 10,
+          "known": 10,
+          "degree": 2,
+          "elapsed_ns": 32697,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 1.016458666822777,
+      "pairedMedianBootstrap95": [
+        1.0125063882260474,
+        1.0602814345534184
+      ],
+      "nsPerQuery": {
+        "baseline": 1357.2874948917042,
+        "trial": 1406.0666121781774
+      }
+    },
+    {
+      "kind": 2,
+      "code": 11,
+      "lifecycle": "fresh",
+      "iterations": 1708,
+      "observations": 48,
+      "pilots": [
+        {
+          "mode": "cpu",
+          "kind": 2,
+          "code": 11,
+          "lifecycle": "fresh",
+          "iterations": 10,
+          "known": 10,
+          "degree": 2,
+          "elapsed_ns": 46847,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "mode": "cpu",
+          "kind": 2,
+          "code": 11,
+          "lifecycle": "fresh",
+          "iterations": 10,
+          "known": 10,
+          "degree": 2,
+          "elapsed_ns": 32688,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 0.9497612296627871,
+      "pairedMedianBootstrap95": [
+        0.863330596702186,
+        1.0114161827150359
+      ],
+      "nsPerQuery": {
+        "baseline": 3300.057962529274,
+        "trial": 3047.6952576112412
+      }
+    },
+    {
+      "kind": 2,
+      "code": 11,
+      "lifecycle": "retained",
+      "iterations": 3534,
+      "observations": 48,
+      "pilots": [
+        {
+          "mode": "cpu",
+          "kind": 2,
+          "code": 11,
+          "lifecycle": "retained",
+          "iterations": 10,
+          "known": 10,
+          "degree": 2,
+          "elapsed_ns": 19468,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "mode": "cpu",
+          "kind": 2,
+          "code": 11,
+          "lifecycle": "retained",
+          "iterations": 10,
+          "known": 10,
+          "degree": 2,
+          "elapsed_ns": 22639,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 0.9077870528827685,
+      "pairedMedianBootstrap95": [
+        0.858646918270269,
+        0.9270107034530353
+      ],
+      "nsPerQuery": {
+        "baseline": 2068.9203452178836,
+        "trial": 1839.1185625353708
+      }
+    },
+    {
+      "kind": 2,
+      "code": 12,
+      "lifecycle": "fresh",
+      "iterations": 457,
+      "observations": 48,
+      "pilots": [
+        {
+          "mode": "cpu",
+          "kind": 2,
+          "code": 12,
+          "lifecycle": "fresh",
+          "iterations": 10,
+          "known": 10,
+          "degree": 2,
+          "elapsed_ns": 101423,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "mode": "cpu",
+          "kind": 2,
+          "code": 12,
+          "lifecycle": "fresh",
+          "iterations": 10,
+          "known": 10,
+          "degree": 2,
+          "elapsed_ns": 175218,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 1.0667285419515835,
+      "pairedMedianBootstrap95": [
+        1.0292517171941205,
+        1.1385450695903194
+      ],
+      "nsPerQuery": {
+        "baseline": 8134.310722100656,
+        "trial": 8596.938730853391
+      }
+    },
+    {
+      "kind": 2,
+      "code": 12,
+      "lifecycle": "retained",
+      "iterations": 1964,
+      "observations": 48,
+      "pilots": [
+        {
+          "mode": "cpu",
+          "kind": 2,
+          "code": 12,
+          "lifecycle": "retained",
+          "iterations": 10,
+          "known": 10,
+          "degree": 2,
+          "elapsed_ns": 32568,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "mode": "cpu",
+          "kind": 2,
+          "code": 12,
+          "lifecycle": "retained",
+          "iterations": 10,
+          "known": 10,
+          "degree": 2,
+          "elapsed_ns": 40747,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 1.054236676486549,
+      "pairedMedianBootstrap95": [
+        1.0010513158730003,
+        1.2936600454646137
+      ],
+      "nsPerQuery": {
+        "baseline": 3394.482179226069,
+        "trial": 3528.8925661914463
+      }
+    },
+    {
+      "kind": 2,
+      "code": 13,
+      "lifecycle": "fresh",
+      "iterations": 297,
+      "observations": 48,
+      "pilots": [
+        {
+          "mode": "cpu",
+          "kind": 2,
+          "code": 13,
+          "lifecycle": "fresh",
+          "iterations": 10,
+          "known": 10,
+          "degree": 3,
+          "elapsed_ns": 245263,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "mode": "cpu",
+          "kind": 2,
+          "code": 13,
+          "lifecycle": "fresh",
+          "iterations": 10,
+          "known": 10,
+          "degree": 3,
+          "elapsed_ns": 269391,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 0.9459278943227614,
+      "pairedMedianBootstrap95": [
+        0.8469788569253568,
+        0.9802706911488315
+      ],
+      "nsPerQuery": {
+        "baseline": 20732.436026936026,
+        "trial": 20026.171717171717
+      }
+    },
+    {
+      "kind": 2,
+      "code": 13,
+      "lifecycle": "retained",
+      "iterations": 489,
+      "observations": 48,
+      "pilots": [
+        {
+          "mode": "cpu",
+          "kind": 2,
+          "code": 13,
+          "lifecycle": "retained",
+          "iterations": 10,
+          "known": 10,
+          "degree": 3,
+          "elapsed_ns": 163909,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "mode": "cpu",
+          "kind": 2,
+          "code": 13,
+          "lifecycle": "retained",
+          "iterations": 10,
+          "known": 10,
+          "degree": 3,
+          "elapsed_ns": 135321,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 0.9601982482500999,
+      "pairedMedianBootstrap95": [
+        0.8623533329473414,
+        1.0066552094385148
+      ],
+      "nsPerQuery": {
+        "baseline": 13870.174846625767,
+        "trial": 13625.683026584868
+      }
+    },
+    {
+      "kind": 2,
+      "code": 14,
+      "lifecycle": "fresh",
+      "iterations": 255,
+      "observations": 48,
+      "pilots": [
+        {
+          "mode": "cpu",
+          "kind": 2,
+          "code": 14,
+          "lifecycle": "fresh",
+          "iterations": 10,
+          "known": 10,
+          "degree": 3,
+          "elapsed_ns": 303719,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "mode": "cpu",
+          "kind": 2,
+          "code": 14,
+          "lifecycle": "fresh",
+          "iterations": 10,
+          "known": 10,
+          "degree": 3,
+          "elapsed_ns": 313889,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 0.9916631630186302,
+      "pairedMedianBootstrap95": [
+        0.9605124881306897,
+        1.033203772198662
+      ],
+      "nsPerQuery": {
+        "baseline": 24864.41764705882,
+        "trial": 24971.682352941178
+      }
+    },
+    {
+      "kind": 2,
+      "code": 14,
+      "lifecycle": "retained",
+      "iterations": 422,
+      "observations": 48,
+      "pilots": [
+        {
+          "mode": "cpu",
+          "kind": 2,
+          "code": 14,
+          "lifecycle": "retained",
+          "iterations": 10,
+          "known": 10,
+          "degree": 3,
+          "elapsed_ns": 189737,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "mode": "cpu",
+          "kind": 2,
+          "code": 14,
+          "lifecycle": "retained",
+          "iterations": 10,
+          "known": 10,
+          "degree": 3,
+          "elapsed_ns": 186357,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 0.9363053372759298,
+      "pairedMedianBootstrap95": [
+        0.8428562879553236,
+        1.0019013629509392
+      ],
+      "nsPerQuery": {
+        "baseline": 15727.940758293838,
+        "trial": 14917.545023696683
+      }
+    },
+    {
+      "kind": 2,
+      "code": 15,
+      "lifecycle": "fresh",
+      "iterations": 56,
+      "observations": 48,
+      "pilots": [
+        {
+          "mode": "cpu",
+          "kind": 2,
+          "code": 15,
+          "lifecycle": "fresh",
+          "iterations": 10,
+          "known": 0,
+          "degree": 2,
+          "elapsed_ns": 1334079,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "mode": "cpu",
+          "kind": 2,
+          "code": 15,
+          "lifecycle": "fresh",
+          "iterations": 10,
+          "known": 0,
+          "degree": 2,
+          "elapsed_ns": 1451941,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 0.9798047732777315,
+      "pairedMedianBootstrap95": [
+        0.9664171962386282,
+        1.0137130863128856
+      ],
+      "nsPerQuery": {
+        "baseline": 122973.72321428571,
+        "trial": 120489.16071428571
+      }
+    },
+    {
+      "kind": 2,
+      "code": 15,
+      "lifecycle": "retained",
+      "iterations": 109,
+      "observations": 48,
+      "pilots": [
+        {
+          "mode": "cpu",
+          "kind": 2,
+          "code": 15,
+          "lifecycle": "retained",
+          "iterations": 10,
+          "known": 0,
+          "degree": 2,
+          "elapsed_ns": 736319,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "mode": "cpu",
+          "kind": 2,
+          "code": 15,
+          "lifecycle": "retained",
+          "iterations": 10,
+          "known": 0,
+          "degree": 2,
+          "elapsed_ns": 590660,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 1.0010919316054387,
+      "pairedMedianBootstrap95": [
+        0.9459191261802646,
+        1.0078358375411811
+      ],
+      "nsPerQuery": {
+        "baseline": 60213.8623853211,
+        "trial": 59743.66055045871
+      }
+    },
+    {
+      "kind": 2,
+      "code": 16,
+      "lifecycle": "fresh",
+      "iterations": 36,
+      "observations": 48,
+      "pilots": [
+        {
+          "mode": "cpu",
+          "kind": 2,
+          "code": 16,
+          "lifecycle": "fresh",
+          "iterations": 10,
+          "known": 0,
+          "degree": 3,
+          "elapsed_ns": 2282234,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "mode": "cpu",
+          "kind": 2,
+          "code": 16,
+          "lifecycle": "fresh",
+          "iterations": 10,
+          "known": 0,
+          "degree": 3,
+          "elapsed_ns": 2276624,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 0.9970764849587301,
+      "pairedMedianBootstrap95": [
+        0.9601036612056394,
+        1.0191317284246195
+      ],
+      "nsPerQuery": {
+        "baseline": 227830.51388888888,
+        "trial": 225109.58333333334
+      }
+    },
+    {
+      "kind": 2,
+      "code": 16,
+      "lifecycle": "retained",
+      "iterations": 60,
+      "observations": 48,
+      "pilots": [
+        {
+          "mode": "cpu",
+          "kind": 2,
+          "code": 16,
+          "lifecycle": "retained",
+          "iterations": 10,
+          "known": 0,
+          "degree": 3,
+          "elapsed_ns": 1328539,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "mode": "cpu",
+          "kind": 2,
+          "code": 16,
+          "lifecycle": "retained",
+          "iterations": 10,
+          "known": 0,
+          "degree": 3,
+          "elapsed_ns": 1347528,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 0.9902612819297664,
+      "pairedMedianBootstrap95": [
+        0.9732082427137259,
+        1.0365273492218616
+      ],
+      "nsPerQuery": {
+        "baseline": 132246.02500000002,
+        "trial": 131498.99166666667
+      }
+    },
+    {
+      "kind": 2,
+      "code": 17,
+      "lifecycle": "fresh",
+      "iterations": 21,
+      "observations": 48,
+      "pilots": [
+        {
+          "mode": "cpu",
+          "kind": 2,
+          "code": 17,
+          "lifecycle": "fresh",
+          "iterations": 10,
+          "known": 0,
+          "degree": 3,
+          "elapsed_ns": 2354639,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "mode": "cpu",
+          "kind": 2,
+          "code": 17,
+          "lifecycle": "fresh",
+          "iterations": 10,
+          "known": 0,
+          "degree": 3,
+          "elapsed_ns": 3823548,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 1.0195188837296887,
+      "pairedMedianBootstrap95": [
+        0.8898627703242831,
+        1.06102842501694
+      ],
+      "nsPerQuery": {
+        "baseline": 227672.5,
+        "trial": 227824.85714285716
+      }
+    },
+    {
+      "kind": 2,
+      "code": 17,
+      "lifecycle": "retained",
+      "iterations": 58,
+      "observations": 48,
+      "pilots": [
+        {
+          "mode": "cpu",
+          "kind": 2,
+          "code": 17,
+          "lifecycle": "retained",
+          "iterations": 10,
+          "known": 0,
+          "degree": 3,
+          "elapsed_ns": 1391065,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "mode": "cpu",
+          "kind": 2,
+          "code": 17,
+          "lifecycle": "retained",
+          "iterations": 10,
+          "known": 0,
+          "degree": 3,
+          "elapsed_ns": 1379575,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 1.0051347514734639,
+      "pairedMedianBootstrap95": [
+        0.9904790487631008,
+        1.0474573339349202
+      ],
+      "nsPerQuery": {
+        "baseline": 140677.9655172414,
+        "trial": 140537.7931034483
+      }
+    },
+    {
+      "kind": 2,
+      "code": 18,
+      "lifecycle": "fresh",
+      "iterations": 2154,
+      "observations": 48,
+      "pilots": [
+        {
+          "mode": "cpu",
+          "kind": 2,
+          "code": 18,
+          "lifecycle": "fresh",
+          "iterations": 10,
+          "known": 10,
+          "degree": 1,
+          "elapsed_ns": 37148,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "mode": "cpu",
+          "kind": 2,
+          "code": 18,
+          "lifecycle": "fresh",
+          "iterations": 10,
+          "known": 10,
+          "degree": 1,
+          "elapsed_ns": 36048,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 1.0261570541666825,
+      "pairedMedianBootstrap95": [
+        1.001102251042366,
+        1.1473471906486417
+      ],
+      "nsPerQuery": {
+        "baseline": 2630.2075208913648,
+        "trial": 2667.0434076137417
+      }
+    },
+    {
+      "kind": 2,
+      "code": 18,
+      "lifecycle": "retained",
+      "iterations": 4394,
+      "observations": 48,
+      "pilots": [
+        {
+          "mode": "cpu",
+          "kind": 2,
+          "code": 18,
+          "lifecycle": "retained",
+          "iterations": 10,
+          "known": 10,
+          "degree": 1,
+          "elapsed_ns": 18029,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "mode": "cpu",
+          "kind": 2,
+          "code": 18,
+          "lifecycle": "retained",
+          "iterations": 10,
+          "known": 10,
+          "degree": 1,
+          "elapsed_ns": 18209,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 0.9602140663635605,
+      "pairedMedianBootstrap95": [
+        0.8023811083835524,
+        1.1730074350726993
+      ],
+      "nsPerQuery": {
+        "baseline": 1483.4088529813382,
+        "trial": 1409.7281520254892
+      }
+    },
+    {
+      "kind": 2,
+      "code": 19,
+      "lifecycle": "fresh",
+      "iterations": 134,
+      "observations": 48,
+      "pilots": [
+        {
+          "mode": "cpu",
+          "kind": 2,
+          "code": 19,
+          "lifecycle": "fresh",
+          "iterations": 10,
+          "known": 0,
+          "degree": 2,
+          "elapsed_ns": 456698,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "mode": "cpu",
+          "kind": 2,
+          "code": 19,
+          "lifecycle": "fresh",
+          "iterations": 10,
+          "known": 0,
+          "degree": 2,
+          "elapsed_ns": 601399,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 0.9741298758552547,
+      "pairedMedianBootstrap95": [
+        0.8976633353416088,
+        1.093266488159381
+      ],
+      "nsPerQuery": {
+        "baseline": 41005.73880597015,
+        "trial": 40656.05970149254
+      }
+    },
+    {
+      "kind": 2,
+      "code": 19,
+      "lifecycle": "retained",
+      "iterations": 190,
+      "observations": 48,
+      "pilots": [
+        {
+          "mode": "cpu",
+          "kind": 2,
+          "code": 19,
+          "lifecycle": "retained",
+          "iterations": 10,
+          "known": 0,
+          "degree": 2,
+          "elapsed_ns": 281701,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "mode": "cpu",
+          "kind": 2,
+          "code": 19,
+          "lifecycle": "retained",
+          "iterations": 10,
+          "known": 0,
+          "degree": 2,
+          "elapsed_ns": 423251,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 0.9667093813546873,
+      "pairedMedianBootstrap95": [
+        0.9073957987088311,
+        1.012131083955477
+      ],
+      "nsPerQuery": {
+        "baseline": 28840.57894736842,
+        "trial": 28335.742105263158
+      }
+    },
+    {
+      "kind": 2,
+      "code": 20,
+      "lifecycle": "fresh",
+      "iterations": 163,
+      "observations": 48,
+      "pilots": [
+        {
+          "mode": "cpu",
+          "kind": 2,
+          "code": 20,
+          "lifecycle": "fresh",
+          "iterations": 10,
+          "known": 0,
+          "degree": 2,
+          "elapsed_ns": 492926,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "mode": "cpu",
+          "kind": 2,
+          "code": 20,
+          "lifecycle": "fresh",
+          "iterations": 10,
+          "known": 0,
+          "degree": 2,
+          "elapsed_ns": 484027,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 0.9845014717513009,
+      "pairedMedianBootstrap95": [
+        0.9377632555531055,
+        1.0238333658096341
+      ],
+      "nsPerQuery": {
+        "baseline": 37908.23006134969,
+        "trial": 37993.56441717791
+      }
+    },
+    {
+      "kind": 2,
+      "code": 20,
+      "lifecycle": "retained",
+      "iterations": 227,
+      "observations": 48,
+      "pilots": [
+        {
+          "mode": "cpu",
+          "kind": 2,
+          "code": 20,
+          "lifecycle": "retained",
+          "iterations": 10,
+          "known": 0,
+          "degree": 2,
+          "elapsed_ns": 266871,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "mode": "cpu",
+          "kind": 2,
+          "code": 20,
+          "lifecycle": "retained",
+          "iterations": 10,
+          "known": 0,
+          "degree": 2,
+          "elapsed_ns": 353776,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 0.9825517669875443,
+      "pairedMedianBootstrap95": [
+        0.8861491828201516,
+        1.010149558640474
+      ],
+      "nsPerQuery": {
+        "baseline": 27643.370044052863,
+        "trial": 27304.71585903084
+      }
+    },
+    {
+      "kind": 2,
+      "code": 21,
+      "lifecycle": "fresh",
+      "iterations": 41,
+      "observations": 48,
+      "pilots": [
+        {
+          "mode": "cpu",
+          "kind": 2,
+          "code": 21,
+          "lifecycle": "fresh",
+          "iterations": 10,
+          "known": 0,
+          "degree": 2,
+          "elapsed_ns": 1978235,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "mode": "cpu",
+          "kind": 2,
+          "code": 21,
+          "lifecycle": "fresh",
+          "iterations": 10,
+          "known": 0,
+          "degree": 2,
+          "elapsed_ns": 1202938,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 0.9772133019485493,
+      "pairedMedianBootstrap95": [
+        0.9692689275081832,
+        1.0021619063583893
+      ],
+      "nsPerQuery": {
+        "baseline": 121850.30487804877,
+        "trial": 120014.46341463414
+      }
+    },
+    {
+      "kind": 2,
+      "code": 21,
+      "lifecycle": "retained",
+      "iterations": 144,
+      "observations": 48,
+      "pilots": [
+        {
+          "mode": "cpu",
+          "kind": 2,
+          "code": 21,
+          "lifecycle": "retained",
+          "iterations": 10,
+          "known": 0,
+          "degree": 2,
+          "elapsed_ns": 551222,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "mode": "cpu",
+          "kind": 2,
+          "code": 21,
+          "lifecycle": "retained",
+          "iterations": 10,
+          "known": 0,
+          "degree": 2,
+          "elapsed_ns": 555631,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 1.000313469309795,
+      "pairedMedianBootstrap95": [
+        0.9784384945362934,
+        1.0185262515129656
+      ],
+      "nsPerQuery": {
+        "baseline": 56193.40972222222,
+        "trial": 55669.65972222222
+      }
+    },
+    {
+      "kind": 2,
+      "code": 22,
+      "lifecycle": "fresh",
+      "iterations": 33,
+      "observations": 48,
+      "pilots": [
+        {
+          "mode": "cpu",
+          "kind": 2,
+          "code": 22,
+          "lifecycle": "fresh",
+          "iterations": 10,
+          "known": 0,
+          "degree": 3,
+          "elapsed_ns": 2446213,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "mode": "cpu",
+          "kind": 2,
+          "code": 22,
+          "lifecycle": "fresh",
+          "iterations": 10,
+          "known": 0,
+          "degree": 3,
+          "elapsed_ns": 2433164,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 0.9916097819659182,
+      "pairedMedianBootstrap95": [
+        0.9733377043651996,
+        1.0154972012039478
+      ],
+      "nsPerQuery": {
+        "baseline": 245170.4696969697,
+        "trial": 243194.4090909091
+      }
+    },
+    {
+      "kind": 2,
+      "code": 22,
+      "lifecycle": "retained",
+      "iterations": 62,
+      "observations": 48,
+      "pilots": [
+        {
+          "mode": "cpu",
+          "kind": 2,
+          "code": 22,
+          "lifecycle": "retained",
+          "iterations": 10,
+          "known": 0,
+          "degree": 3,
+          "elapsed_ns": 1303711,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "mode": "cpu",
+          "kind": 2,
+          "code": 22,
+          "lifecycle": "retained",
+          "iterations": 10,
+          "known": 0,
+          "degree": 3,
+          "elapsed_ns": 1295731,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 1.018186412660299,
+      "pairedMedianBootstrap95": [
+        0.9333021422837184,
+        1.0599259201268263
+      ],
+      "nsPerQuery": {
+        "baseline": 132026.2741935484,
+        "trial": 131974.66935483873
+      }
+    },
+    {
+      "kind": 2,
+      "code": 23,
+      "lifecycle": "fresh",
+      "iterations": 29,
+      "observations": 48,
+      "pilots": [
+        {
+          "mode": "cpu",
+          "kind": 2,
+          "code": 23,
+          "lifecycle": "fresh",
+          "iterations": 10,
+          "known": 0,
+          "degree": 3,
+          "elapsed_ns": 2770751,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "mode": "cpu",
+          "kind": 2,
+          "code": 23,
+          "lifecycle": "fresh",
+          "iterations": 10,
+          "known": 0,
+          "degree": 3,
+          "elapsed_ns": 2821277,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 0.987789535460052,
+      "pairedMedianBootstrap95": [
+        0.9568816602181636,
+        1.0295450829191526
+      ],
+      "nsPerQuery": {
+        "baseline": 269520.6724137931,
+        "trial": 272038.275862069
+      }
+    },
+    {
+      "kind": 2,
+      "code": 23,
+      "lifecycle": "retained",
+      "iterations": 55,
+      "observations": 48,
+      "pilots": [
+        {
+          "mode": "cpu",
+          "kind": 2,
+          "code": 23,
+          "lifecycle": "retained",
+          "iterations": 10,
+          "known": 0,
+          "degree": 3,
+          "elapsed_ns": 1472179,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "mode": "cpu",
+          "kind": 2,
+          "code": 23,
+          "lifecycle": "retained",
+          "iterations": 10,
+          "known": 0,
+          "degree": 3,
+          "elapsed_ns": 1449501,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 0.9848009306083271,
+      "pairedMedianBootstrap95": [
+        0.9168721198980146,
+        1.010675996389598
+      ],
+      "nsPerQuery": {
+        "baseline": 148175.39090909093,
+        "trial": 149650.0181818182
+      }
+    },
+    {
+      "kind": 2,
+      "code": 24,
+      "lifecycle": "fresh",
+      "iterations": 41,
+      "observations": 48,
+      "pilots": [
+        {
+          "mode": "cpu",
+          "kind": 2,
+          "code": 24,
+          "lifecycle": "fresh",
+          "iterations": 10,
+          "known": 0,
+          "degree": 2,
+          "elapsed_ns": 1983584,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "mode": "cpu",
+          "kind": 2,
+          "code": 24,
+          "lifecycle": "fresh",
+          "iterations": 10,
+          "known": 0,
+          "degree": 2,
+          "elapsed_ns": 1931938,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 1.0088755795695867,
+      "pairedMedianBootstrap95": [
+        0.9833861013960308,
+        1.0459207784646927
+      ],
+      "nsPerQuery": {
+        "baseline": 193850.24390243902,
+        "trial": 194517.2926829268
+      }
+    },
+    {
+      "kind": 2,
+      "code": 24,
+      "lifecycle": "retained",
+      "iterations": 88,
+      "observations": 48,
+      "pilots": [
+        {
+          "mode": "cpu",
+          "kind": 2,
+          "code": 24,
+          "lifecycle": "retained",
+          "iterations": 10,
+          "known": 0,
+          "degree": 2,
+          "elapsed_ns": 916768,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "mode": "cpu",
+          "kind": 2,
+          "code": 24,
+          "lifecycle": "retained",
+          "iterations": 10,
+          "known": 0,
+          "degree": 2,
+          "elapsed_ns": 842362,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 0.9854832344061801,
+      "pairedMedianBootstrap95": [
+        0.9786625394771681,
+        0.9927435366939527
+      ],
+      "nsPerQuery": {
+        "baseline": 87014.89772727274,
+        "trial": 85993.71022727274
+      }
+    },
+    {
+      "kind": 2,
+      "code": 25,
+      "lifecycle": "fresh",
+      "iterations": 17,
+      "observations": 48,
+      "pilots": [
+        {
+          "mode": "cpu",
+          "kind": 2,
+          "code": 25,
+          "lifecycle": "fresh",
+          "iterations": 10,
+          "known": 0,
+          "degree": 3,
+          "elapsed_ns": 4628563,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "mode": "cpu",
+          "kind": 2,
+          "code": 25,
+          "lifecycle": "fresh",
+          "iterations": 10,
+          "known": 0,
+          "degree": 3,
+          "elapsed_ns": 4709338,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 0.9964809284701602,
+      "pairedMedianBootstrap95": [
+        0.979614209715804,
+        1.0043487204301624
+      ],
+      "nsPerQuery": {
+        "baseline": 473443.76470588235,
+        "trial": 472685.5588235294
+      }
+    },
+    {
+      "kind": 2,
+      "code": 25,
+      "lifecycle": "retained",
+      "iterations": 31,
+      "observations": 48,
+      "pilots": [
+        {
+          "mode": "cpu",
+          "kind": 2,
+          "code": 25,
+          "lifecycle": "retained",
+          "iterations": 10,
+          "known": 0,
+          "degree": 3,
+          "elapsed_ns": 2611851,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "mode": "cpu",
+          "kind": 2,
+          "code": 25,
+          "lifecycle": "retained",
+          "iterations": 10,
+          "known": 0,
+          "degree": 3,
+          "elapsed_ns": 2370438,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 0.9960845329458307,
+      "pairedMedianBootstrap95": [
+        0.977098941540187,
+        1.025788194798057
+      ],
+      "nsPerQuery": {
+        "baseline": 238643,
+        "trial": 237046.51612903224
+      }
+    },
+    {
+      "kind": 2,
+      "code": 26,
+      "lifecycle": "fresh",
+      "iterations": 15,
+      "observations": 48,
+      "pilots": [
+        {
+          "mode": "cpu",
+          "kind": 2,
+          "code": 26,
+          "lifecycle": "fresh",
+          "iterations": 10,
+          "known": 0,
+          "degree": 3,
+          "elapsed_ns": 5421419,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "mode": "cpu",
+          "kind": 2,
+          "code": 26,
+          "lifecycle": "fresh",
+          "iterations": 10,
+          "known": 0,
+          "degree": 3,
+          "elapsed_ns": 4988309,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 0.9833638954997672,
+      "pairedMedianBootstrap95": [
+        0.9308796436995558,
+        0.9940446349964918
+      ],
+      "nsPerQuery": {
+        "baseline": 509499.8,
+        "trial": 497503.93333333335
+      }
+    },
+    {
+      "kind": 2,
+      "code": 26,
+      "lifecycle": "retained",
+      "iterations": 33,
+      "observations": 48,
+      "pilots": [
+        {
+          "mode": "cpu",
+          "kind": 2,
+          "code": 26,
+          "lifecycle": "retained",
+          "iterations": 10,
+          "known": 0,
+          "degree": 3,
+          "elapsed_ns": 2409235,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "mode": "cpu",
+          "kind": 2,
+          "code": 26,
+          "lifecycle": "retained",
+          "iterations": 10,
+          "known": 0,
+          "degree": 3,
+          "elapsed_ns": 2440303,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 0.9986691201343998,
+      "pairedMedianBootstrap95": [
+        0.980055005912366,
+        1.015139398265581
+      ],
+      "nsPerQuery": {
+        "baseline": 246953.54545454547,
+        "trial": 245849.98484848486
+      }
+    }
+  ],
+  "limits": "81 known-factor recipes; retained includes required Vec cloning, fresh includes construction and teardown. Eight preconditioning queries, not cold-process timing. Same Some/None and degrees do not imply identical output representation or downstream proof availability. CPU clocks only from uninstrumented binaries. Requested heap/peak deltas exclude allocator overhead, native allocations, RSS and thread stacks. Paired bootstrap intervals are host/corpus observations, not universal guarantees."
+}

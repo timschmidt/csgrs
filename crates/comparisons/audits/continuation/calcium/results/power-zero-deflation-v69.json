@@ -1,0 +1,13 @@
+{
+  "tag": "power-zero-deflation-v69",
+  "started": "2026-09-11T17:55:15.574Z",
+  "finished": "2026-09-11T17:55:16.338Z",
+  "elapsedSeconds": 0.762003705,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "node",
+  "args": [
+    "probe-zero-deflation-v69.mjs"
+  ],
+  "code": 0,
+  "signal": null
+}

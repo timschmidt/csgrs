@@ -1,0 +1,31 @@
+{
+  "repo": "hypercurve",
+  "target": "hypercurve_nurbs_interpolation",
+  "binary": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve_nurbs_interpolation-aa1948b0d7f6eeb0",
+  "command": [
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve_nurbs_interpolation-aa1948b0d7f6eeb0",
+    "--test-threads=4",
+    "--color",
+    "never"
+  ],
+  "sha256": "07f220fa9ac96f8d0a656f092991f68a6666daa38d2cc4554f27f2672a71388e",
+  "returncode": 0,
+  "timed_out": false,
+  "elapsed_seconds": 0.0034065569925587624,
+  "log": "finite-point-inverse-domains-full-hypercurve-hypercurve_nurbs_interpolation.log",
+  "passed": [
+    "fixed_weight_rational_nurbs_interpolation_recovers_exact_control_net",
+    "chord_length_and_centripetal_interpolation_retain_exact_parameters",
+    "nonuniform_global_interpolation_derives_averaged_knots_and_replays_every_point",
+    "symbolic_interpolation_solve_and_replay_are_strictly_affine_exact",
+    "explicit_interpolation_obeys_terminal_policy_and_retains_symbolic_domain",
+    "generated_uniform_cubic_interpolation_recovers_exact_polynomial_controls"
+  ],
+  "failed": [],
+  "ignored": [],
+  "summaries": [
+    "test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s"
+  ],
+  "new_failures": [],
+  "known_failures": []
+}

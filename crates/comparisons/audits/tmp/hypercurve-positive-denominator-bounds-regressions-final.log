@@ -1,0 +1,11 @@
+   Compiling hypercurve v0.3.1 (/home/tim/Documents/GitHub/workspace/hypercurve)
+    Finished `release` profile [optimized] target(s) in 1m 04s
+     Running unittests src/lib.rs (target/release/deps/hypercurve-6e6572a45c5b177b)
+
+running 3 tests
+test bezier_offset::conversion_tests::recursive_projective_bounds_keep_unwitnessed_source_fallback ... ok
+test bezier_offset::conversion_tests::recursive_projective_bounds_enclose_scaled_nested_radicals ... ok
+test bezier_offset::conversion_tests::recursive_projective_bounds_reuse_positive_denominator_certificate ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 892 filtered out; finished in 0.00s
+

@@ -1,0 +1,138 @@
+Benchmarking bernstein_subdivision/outside/degree_1/depth_8
+Benchmarking bernstein_subdivision/outside/degree_1/depth_8: Warming up for 200.00 ms
+Benchmarking bernstein_subdivision/outside/degree_1/depth_8: Collecting 40 samples in estimated 500.20 ms (472k iterations)
+Benchmarking bernstein_subdivision/outside/degree_1/depth_8: Analyzing
+bernstein_subdivision/outside/degree_1/depth_8
+                        time:   [1.0658 µs 1.0696 µs 1.0735 µs]
+Found 3 outliers among 40 measurements (7.50%)
+  2 (5.00%) high mild
+  1 (2.50%) high severe
+Benchmarking bernstein_subdivision/spread/degree_2/depth_8
+Benchmarking bernstein_subdivision/spread/degree_2/depth_8: Warming up for 200.00 ms
+Benchmarking bernstein_subdivision/spread/degree_2/depth_8: Collecting 40 samples in estimated 501.36 ms (149k iterations)
+Benchmarking bernstein_subdivision/spread/degree_2/depth_8: Analyzing
+bernstein_subdivision/spread/degree_2/depth_8
+                        time:   [3.2436 µs 3.2703 µs 3.3103 µs]
+Found 4 outliers among 40 measurements (10.00%)
+  4 (10.00%) high severe
+Benchmarking bernstein_subdivision/spread/degree_4/depth_8
+Benchmarking bernstein_subdivision/spread/degree_4/depth_8: Warming up for 200.00 ms
+Benchmarking bernstein_subdivision/spread/degree_4/depth_8: Collecting 40 samples in estimated 501.95 ms (60k iterations)
+Benchmarking bernstein_subdivision/spread/degree_4/depth_8: Analyzing
+bernstein_subdivision/spread/degree_4/depth_8
+                        time:   [8.3986 µs 8.4143 µs 8.4298 µs]
+Benchmarking bernstein_subdivision/spread/degree_8/depth_16
+Benchmarking bernstein_subdivision/spread/degree_8/depth_16: Warming up for 200.00 ms
+Benchmarking bernstein_subdivision/spread/degree_8/depth_16: Collecting 40 samples in estimated 513.62 ms (16k iterations)
+Benchmarking bernstein_subdivision/spread/degree_8/depth_16: Analyzing
+bernstein_subdivision/spread/degree_8/depth_16
+                        time:   [33.141 µs 33.209 µs 33.305 µs]
+Found 4 outliers among 40 measurements (10.00%)
+  1 (2.50%) high mild
+  3 (7.50%) high severe
+Benchmarking bernstein_subdivision/spread/degree_16/depth_16
+Benchmarking bernstein_subdivision/spread/degree_16/depth_16: Warming up for 200.00 ms
+Benchmarking bernstein_subdivision/spread/degree_16/depth_16: Collecting 40 samples in estimated 649.33 ms (3280 iterations)
+Benchmarking bernstein_subdivision/spread/degree_16/depth_16: Analyzing
+bernstein_subdivision/spread/degree_16/depth_16
+                        time:   [197.56 µs 197.79 µs 198.07 µs]
+Found 3 outliers among 40 measurements (7.50%)
+  1 (2.50%) high mild
+  2 (5.00%) high severe
+Benchmarking bernstein_subdivision/cluster/degree_2/depth_32
+Benchmarking bernstein_subdivision/cluster/degree_2/depth_32: Warming up for 200.00 ms
+Benchmarking bernstein_subdivision/cluster/degree_2/depth_32: Collecting 40 samples in estimated 509.22 ms (37k iterations)
+Benchmarking bernstein_subdivision/cluster/degree_2/depth_32: Analyzing
+bernstein_subdivision/cluster/degree_2/depth_32
+                        time:   [13.851 µs 13.910 µs 13.990 µs]
+Found 5 outliers among 40 measurements (12.50%)
+  2 (5.00%) high mild
+  3 (7.50%) high severe
+Benchmarking bernstein_subdivision/cluster/degree_4/depth_32
+Benchmarking bernstein_subdivision/cluster/degree_4/depth_32: Warming up for 200.00 ms
+Benchmarking bernstein_subdivision/cluster/degree_4/depth_32: Collecting 40 samples in estimated 517.40 ms (20k iterations)
+Benchmarking bernstein_subdivision/cluster/degree_4/depth_32: Analyzing
+bernstein_subdivision/cluster/degree_4/depth_32
+                        time:   [26.380 µs 26.490 µs 26.614 µs]
+Found 4 outliers among 40 measurements (10.00%)
+  2 (5.00%) high mild
+  2 (5.00%) high severe
+Benchmarking bernstein_subdivision/cluster/degree_8/depth_32
+Benchmarking bernstein_subdivision/cluster/degree_8/depth_32: Warming up for 200.00 ms
+Benchmarking bernstein_subdivision/cluster/degree_8/depth_32: Collecting 40 samples in estimated 507.19 ms (4920 iterations)
+Benchmarking bernstein_subdivision/cluster/degree_8/depth_32: Analyzing
+bernstein_subdivision/cluster/degree_8/depth_32
+                        time:   [104.10 µs 104.81 µs 105.42 µs]
+Found 1 outliers among 40 measurements (2.50%)
+  1 (2.50%) high mild
+Benchmarking bernstein_subdivision/repeated/degree_2/depth_16
+Benchmarking bernstein_subdivision/repeated/degree_2/depth_16: Warming up for 200.00 ms
+Benchmarking bernstein_subdivision/repeated/degree_2/depth_16: Collecting 40 samples in estimated 504.67 ms (42k iterations)
+Benchmarking bernstein_subdivision/repeated/degree_2/depth_16: Analyzing
+bernstein_subdivision/repeated/degree_2/depth_16
+                        time:   [11.975 µs 12.044 µs 12.112 µs]
+Found 2 outliers among 40 measurements (5.00%)
+  2 (5.00%) high mild
+Benchmarking bernstein_subdivision/repeated/degree_4/depth_16
+Benchmarking bernstein_subdivision/repeated/degree_4/depth_16: Warming up for 200.00 ms
+Benchmarking bernstein_subdivision/repeated/degree_4/depth_16: Collecting 40 samples in estimated 510.04 ms (27k iterations)
+Benchmarking bernstein_subdivision/repeated/degree_4/depth_16: Analyzing
+bernstein_subdivision/repeated/degree_4/depth_16
+                        time:   [18.859 µs 18.933 µs 19.010 µs]
+Found 2 outliers among 40 measurements (5.00%)
+  1 (2.50%) high mild
+  1 (2.50%) high severe
+Benchmarking bernstein_subdivision/endpoint/degree_2/depth_8
+Benchmarking bernstein_subdivision/endpoint/degree_2/depth_8: Warming up for 200.00 ms
+Benchmarking bernstein_subdivision/endpoint/degree_2/depth_8: Collecting 40 samples in estimated 501.08 ms (242k iterations)
+Benchmarking bernstein_subdivision/endpoint/degree_2/depth_8: Analyzing
+bernstein_subdivision/endpoint/degree_2/depth_8
+                        time:   [2.0872 µs 2.0936 µs 2.1009 µs]
+Found 1 outliers among 40 measurements (2.50%)
+  1 (2.50%) high mild
+Benchmarking bernstein_subdivision/endpoint/degree_4/depth_8
+Benchmarking bernstein_subdivision/endpoint/degree_4/depth_8: Warming up for 200.00 ms
+Benchmarking bernstein_subdivision/endpoint/degree_4/depth_8: Collecting 40 samples in estimated 506.49 ms (62k iterations)
+Benchmarking bernstein_subdivision/endpoint/degree_4/depth_8: Analyzing
+bernstein_subdivision/endpoint/degree_4/depth_8
+                        time:   [8.2007 µs 8.2651 µs 8.3382 µs]
+Found 3 outliers among 40 measurements (7.50%)
+  2 (5.00%) high mild
+  1 (2.50%) high severe
+Benchmarking bernstein_subdivision/endpoint/degree_8/depth_16
+Benchmarking bernstein_subdivision/endpoint/degree_8/depth_16: Warming up for 200.00 ms
+Benchmarking bernstein_subdivision/endpoint/degree_8/depth_16: Collecting 40 samples in estimated 504.52 ms (17k iterations)
+Benchmarking bernstein_subdivision/endpoint/degree_8/depth_16: Analyzing
+bernstein_subdivision/endpoint/degree_8/depth_16
+                        time:   [28.975 µs 29.024 µs 29.086 µs]
+Found 6 outliers among 40 measurements (15.00%)
+  3 (7.50%) high mild
+  3 (7.50%) high severe
+Benchmarking bernstein_subdivision/positive/degree_2/depth_24
+Benchmarking bernstein_subdivision/positive/degree_2/depth_24: Warming up for 200.00 ms
+Benchmarking bernstein_subdivision/positive/degree_2/depth_24: Collecting 40 samples in estimated 501.47 ms (164k iterations)
+Benchmarking bernstein_subdivision/positive/degree_2/depth_24: Analyzing
+bernstein_subdivision/positive/degree_2/depth_24
+                        time:   [3.1036 µs 3.1093 µs 3.1155 µs]
+Found 4 outliers among 40 measurements (10.00%)
+  2 (5.00%) low mild
+  1 (2.50%) high mild
+  1 (2.50%) high severe
+Benchmarking bernstein_subdivision/positive/degree_4/depth_24
+Benchmarking bernstein_subdivision/positive/degree_4/depth_24: Warming up for 200.00 ms
+Benchmarking bernstein_subdivision/positive/degree_4/depth_24: Collecting 40 samples in estimated 501.21 ms (59k iterations)
+Benchmarking bernstein_subdivision/positive/degree_4/depth_24: Analyzing
+bernstein_subdivision/positive/degree_4/depth_24
+                        time:   [8.5637 µs 8.5852 µs 8.6075 µs]
+Found 1 outliers among 40 measurements (2.50%)
+  1 (2.50%) high mild
+Benchmarking bernstein_subdivision/cluster/degree_4/depth_0
+Benchmarking bernstein_subdivision/cluster/degree_4/depth_0: Warming up for 200.00 ms
+Benchmarking bernstein_subdivision/cluster/degree_4/depth_0: Collecting 40 samples in estimated 506.49 ms (62k iterations)
+Benchmarking bernstein_subdivision/cluster/degree_4/depth_0: Analyzing
+bernstein_subdivision/cluster/degree_4/depth_0
+                        time:   [8.1564 µs 8.1720 µs 8.1866 µs]
+Found 1 outliers among 40 measurements (2.50%)
+  1 (2.50%) high mild
+
+updated /home/tim/Documents/GitHub/workspace/hypersolve/benchmarks.md from 409 Criterion rows, 4 comparisons, and 6 benchmark suites

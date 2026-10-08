@@ -1,0 +1,21 @@
+   Compiling hyperreal v0.13.1 (/home/tim/Documents/GitHub/workspace/hyperreal)
+    Finished `release` profile [optimized] target(s) in 9.97s
+     Running unittests src/lib.rs (target/release/deps/hyperreal-f3a6d4fcdbc4d626)
+
+running 1 test
+
+thread 'real::arithmetic::tests::polynomial_evaluation_retains_nested_quadratic_root_certificates' (107) panicked at src/real/arithmetic/tests.rs:2260:17:
+assertion `left == right` failed: a represented nested-radical root must replay exactly
+  left: None
+ right: Some(Zero)
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+test real::arithmetic::tests::polynomial_evaluation_retains_nested_quadratic_root_certificates ... FAILED
+
+failures:
+
+failures:
+    real::arithmetic::tests::polynomial_evaluation_retains_nested_quadratic_root_certificates
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 621 filtered out; finished in 0.00s
+
+error: test failed, to rerun pass `--lib`

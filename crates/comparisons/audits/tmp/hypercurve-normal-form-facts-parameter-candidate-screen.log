@@ -1,0 +1,34 @@
+bezier_parameter_normal_form_zero_cold: 20000 iterations in 200.402605ms (10.02µs/iter), equal=20000
+bezier_parameter_normal_form_zero_reused: 20000 iterations in 992.213µs (49ns/iter), equal=20000
+bezier_parameter_bernstein_32_to_power: 20000 iterations in 382.519388ms (19.125µs/iter), degree_checksum=640000
+bezier_algebraic_parameter_sturm: 20000 iterations in 71.4572ms (3.572µs/iter), total=40000
+bezier_algebraic_parameter_refined_ordering: 10000 iterations in 118.984914ms (11.898µs/iter), ordered=10000
+bezier_algebraic_parameter_refined_even_root_ordering: 10000 iterations in 436.122567ms (43.612µs/iter), ordered=10000
+bezier_parameter_quintic_unit_isolation: 2000 iterations in 60.882622ms (30.441µs/iter), isolated=10000, sturm_builds=1, interval_counts=19, bisections=9, rational_refinements=0, max_depth=5
+bezier_parameter_boundary_root_isolation: 2000 iterations in 84.33851ms (42.169µs/iter), isolated=2000, interval_counts=263, bisections=130, max_depth=130
+bezier_algebraic_parameter_exact_rational_reconstruction: 500000 iterations in 17.169827ms (34ns/iter), reconstructed=500000
+bezier_algebraic_point_tangent_image: 20000 iterations in 46.788305ms (2.339µs/iter), transformed=40000
+rational_bezier_algebraic_point_tangent_image: 20000 iterations in 1.107584ms (55ns/iter), transformed=40000
+	Command being timed: "/tmp/hypercurve-normal-form-facts-parameter-candidate-benchmark"
+	User time (seconds): 1.41
+	System time (seconds): 0.00
+	Percent of CPU this job got: 99%
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:01.42
+	Average shared text size (kbytes): 0
+	Average unshared data size (kbytes): 0
+	Average stack size (kbytes): 0
+	Average total size (kbytes): 0
+	Maximum resident set size (kbytes): 4784
+	Average resident set size (kbytes): 0
+	Major (requiring I/O) page faults: 0
+	Minor (reclaiming a frame) page faults: 227
+	Voluntary context switches: 4
+	Involuntary context switches: 81
+	Swaps: 0
+	File system inputs: 0
+	File system outputs: 0
+	Socket messages sent: 0
+	Socket messages received: 0
+	Signals delivered: 0
+	Page size (bytes): 4096
+	Exit status: 0

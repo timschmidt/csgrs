@@ -1,0 +1,1062 @@
+aern2-affarith> test (suite: aern2-affarith-test, args: --seed=20260904)
+
+aern2-real    > test (suite: aern2-real-test, args: --seed=20260904)
+
+aern2-mp      > test (suite: aern2-mp-test, args: --seed=20260904)
+
+aern2-real    > 
+aern2-real    > AERN2.Real
+aern2-real    >   CReal
+aern2-real    >     min/max/abs
+aern2-affarith> 
+aern2-affarith> AERN2.MP.Affine
+aern2-affarith>   MPAffine
+aern2-affarith>     order
+aern2-affarith>       HasEq MPAffine MPAffine, HasEq MPAffine MPAffine
+aern2-mp      > 
+aern2-mp      > AERN2.MP.Ball
+aern2-mp      >   MPBall
+aern2-mp      >     CanSetPrecision MPBall
+aern2-affarith>         has reflexive == [✔]
+aern2-affarith>           +++ OK, passed 100 tests.
+aern2-mp      >       set then get [✔]
+aern2-mp      >         +++ OK, passed 100 tests.
+aern2-affarith>         has anti-reflexive /= [✔]
+aern2-affarith>           +++ OK, passed 100 tests.
+aern2-mp      >       setPrecision x ~ x [✔]
+aern2-mp      >         +++ OK, passed 100 tests.
+aern2-mp      >     conversion
+aern2-mp      >       Integer -> MPBall -> Integer [✔]
+aern2-mp      >         +++ OK, passed 100 tests.
+aern2-mp      >     order
+aern2-mp      >       HasEq MPBall MPBall, HasEq MPBall MPBall
+aern2-affarith>         has stronly commutative == [✔]
+aern2-affarith>           +++ OK, passed 100 tests.
+aern2-mp      >         has reflexive == [✔]
+aern2-mp      >           +++ OK, passed 100 tests.
+aern2-mp      >         has anti-reflexive /= [✔]
+aern2-mp      >           +++ OK, passed 100 tests.
+aern2-affarith>         has stronly commutative /= [✔]
+aern2-affarith>           +++ OK, passed 100 tests.
+aern2-real    >       abs respects accuracy requests [✔]
+aern2-real    >         +++ OK, passed 100 tests; 8 discarded.
+aern2-mp      >         has stronly commutative == [✔]
+aern2-mp      >           +++ OK, passed 100 tests.
+aern2-affarith>         has stronly transitive == [✔]
+aern2-affarith>           +++ OK, passed 100 tests.
+aern2-affarith>       HasEq Int MPAffine, HasEq MPAffine Rational
+aern2-affarith>         has reflexive == [✔]
+aern2-affarith>           +++ OK, passed 100 tests.
+aern2-affarith>         has anti-reflexive /= [✔]
+aern2-affarith>           +++ OK, passed 100 tests.
+aern2-mp      >         has stronly commutative /= [✔]
+aern2-mp      >           +++ OK, passed 100 tests.
+aern2-affarith>         has stronly commutative == [✔]
+aern2-affarith>           +++ OK, passed 100 tests.
+aern2-mp      >         has stronly transitive == [✔]
+aern2-mp      >           +++ OK, passed 100 tests.
+aern2-mp      >       HasEq Int MPBall, HasEq MPBall Rational
+aern2-mp      >         has reflexive == [✔]
+aern2-mp      >           +++ OK, passed 100 tests.
+aern2-mp      >         has anti-reflexive /= [✔]
+aern2-mp      >           +++ OK, passed 100 tests.
+aern2-affarith>         has stronly commutative /= [✔]
+aern2-affarith>           +++ OK, passed 100 tests.
+aern2-affarith>         has stronly transitive == [✔]
+aern2-affarith>           +++ OK, passed 100 tests.
+aern2-affarith>       CanTestZero MPAffine
+aern2-mp      >         has stronly commutative == [✔]
+aern2-mp      >           +++ OK, passed 100 tests.
+aern2-affarith>         converted non-zero Integer is not isCertainlyZero [✔]
+aern2-affarith>           +++ OK, passed 100 tests; 15 discarded.
+aern2-affarith>         converted non-zero Integer is isCertainlyNonZero [✔]
+aern2-affarith>           +++ OK, passed 100 tests; 15 discarded.
+aern2-affarith>         converted 0.0 is not isCertainlyNonZero [✔]
+aern2-affarith>           +++ OK, passed 100 tests.
+aern2-affarith>       HasOrd MPAffine MPAffine, HasOrd MPAffine MPAffine
+aern2-mp      >         has stronly commutative /= [✔]
+aern2-mp      >           +++ OK, passed 100 tests.
+aern2-affarith>         has reflexive >= [✔]
+aern2-affarith>           +++ OK, passed 100 tests.
+aern2-mp      >         has stronly transitive == [✔]
+aern2-mp      >           +++ OK, passed 100 tests.
+aern2-mp      >       CanTestZero MPBall
+aern2-mp      >         converted non-zero Integer is not isCertainlyZero [✔]
+aern2-mp      >           +++ OK, passed 100 tests; 15 discarded.
+aern2-mp      >         converted non-zero Integer is isCertainlyNonZero [✔]
+aern2-mp      >           +++ OK, passed 100 tests; 15 discarded.
+aern2-affarith>         has reflexive <= [✔]
+aern2-affarith>           +++ OK, passed 100 tests.
+aern2-mp      >         converted 0.0 is not isCertainlyNonZero [✔]
+aern2-mp      >           +++ OK, passed 100 tests.
+aern2-mp      >       HasOrd MPBall MPBall, HasOrd MPBall MPBall
+aern2-affarith>         has anti-reflexive > [✔]
+aern2-affarith>           +++ OK, passed 100 tests.
+aern2-mp      >         has reflexive >= [✔]
+aern2-mp      >           +++ OK, passed 100 tests.
+aern2-mp      >         has reflexive <= [✔]
+aern2-mp      >           +++ OK, passed 100 tests.
+aern2-affarith>         has anti-reflexive < [✔]
+aern2-affarith>           +++ OK, passed 100 tests.
+aern2-mp      >         has anti-reflexive > [✔]
+aern2-mp      >           +++ OK, passed 100 tests.
+aern2-mp      >         has anti-reflexive < [✔]
+aern2-mp      >           +++ OK, passed 100 tests.
+aern2-affarith>         > stronly implies >= [✔]
+aern2-affarith>           +++ OK, passed 100 tests.
+aern2-mp      >         > stronly implies >= [✔]
+aern2-mp      >           +++ OK, passed 100 tests.
+aern2-affarith>         < stronly implies <= [✔]
+aern2-affarith>           +++ OK, passed 100 tests.
+aern2-mp      >         < stronly implies <= [✔]
+aern2-mp      >           +++ OK, passed 100 tests.
+aern2-real    >       max respects accuracy requests [✔]
+aern2-real    >         +++ OK, passed 100 tests; 8 discarded.
+aern2-affarith>         has stronly equivalent > and < [✔]
+aern2-affarith>           +++ OK, passed 100 tests.
+aern2-mp      >         has stronly equivalent > and < [✔]
+aern2-mp      >           +++ OK, passed 100 tests.
+aern2-affarith>         has stronly equivalent >= and <= [✔]
+aern2-affarith>           +++ OK, passed 100 tests.
+aern2-mp      >         has stronly equivalent >= and <= [✔]
+aern2-mp      >           +++ OK, passed 100 tests.
+aern2-affarith>         has stronly transitive < [✔]
+aern2-affarith>           +++ OK, passed 100 tests.
+aern2-affarith>       HasOrd Int MPAffine, HasOrd MPAffine Rational
+aern2-affarith>         has reflexive >= [✔]
+aern2-affarith>           +++ OK, passed 100 tests.
+aern2-affarith>         has reflexive <= [✔]
+aern2-affarith>           +++ OK, passed 100 tests.
+aern2-affarith>         has anti-reflexive > [✔]
+aern2-affarith>           +++ OK, passed 100 tests.
+aern2-affarith>         has anti-reflexive < [✔]
+aern2-affarith>           +++ OK, passed 100 tests.
+aern2-mp      >         has stronly transitive < [✔]
+aern2-mp      >           +++ OK, passed 100 tests.
+aern2-mp      >       HasOrd Int MPBall, HasOrd MPBall Rational
+aern2-mp      >         has reflexive >= [✔]
+aern2-mp      >           +++ OK, passed 100 tests.
+aern2-mp      >         has reflexive <= [✔]
+aern2-mp      >           +++ OK, passed 100 tests.
+aern2-mp      >         has anti-reflexive > [✔]
+aern2-mp      >           +++ OK, passed 100 tests.
+aern2-mp      >         has anti-reflexive < [✔]
+aern2-mp      >           +++ OK, passed 100 tests.
+aern2-affarith>         > stronly implies >= [✔]
+aern2-affarith>           +++ OK, passed 100 tests.
+aern2-mp      >         > stronly implies >= [✔]
+aern2-mp      >           +++ OK, passed 100 tests.
+aern2-affarith>         < stronly implies <= [✔]
+aern2-affarith>           +++ OK, passed 100 tests.
+aern2-mp      >         < stronly implies <= [✔]
+aern2-mp      >           +++ OK, passed 100 tests.
+aern2-affarith>         has stronly equivalent > and < [✔]
+aern2-affarith>           +++ OK, passed 100 tests.
+aern2-affarith>         has stronly equivalent >= and <= [✔]
+aern2-affarith>           +++ OK, passed 100 tests.
+aern2-mp      >         has stronly equivalent > and < [✔]
+aern2-mp      >           +++ OK, passed 100 tests.
+aern2-mp      >         has stronly equivalent >= and <= [✔]
+aern2-mp      >           +++ OK, passed 100 tests.
+aern2-affarith>         has stronly transitive < [✔]
+aern2-affarith>           +++ OK, passed 100 tests.
+aern2-affarith>     min/max/abs
+aern2-affarith>       CanNeg MPAffine
+aern2-mp      >         has stronly transitive < [✔]
+aern2-mp      >           +++ OK, passed 100 tests.
+aern2-mp      >     min/max/abs
+aern2-mp      >       CanNeg MPBall
+aern2-affarith>         ignores double negation [✔]
+aern2-affarith>           +++ OK, passed 100 tests.
+aern2-affarith>         takes 0 to 0 [✔]
+aern2-affarith>           +++ OK, passed 100 tests.
+aern2-mp      >         ignores double negation [✔]
+aern2-mp      >           +++ OK, passed 100 tests.
+aern2-mp      >         takes 0 to 0 [✔]
+aern2-mp      >           +++ OK, passed 100 tests.
+aern2-affarith>         takes positive to negative [✔]
+aern2-affarith>           +++ OK, passed 100 tests; 232 discarded.
+aern2-mp      >         takes positive to negative [✔]
+aern2-mp      >           +++ OK, passed 100 tests; 177 discarded.
+aern2-affarith>         takes negative to positive [✔]
+aern2-affarith>           +++ OK, passed 100 tests; 196 discarded.
+aern2-mp      >         takes negative to positive [✔]
+aern2-mp      >           +++ OK, passed 100 tests; 173 discarded.
+aern2-affarith>       CanAbs MPAffine
+aern2-mp      >       Function abs returns a valid result for valid MPBall inputs [✔]
+aern2-mp      >         +++ OK, passed 100 tests.
+aern2-real    >       min respects accuracy requests [✔]
+aern2-real    >         +++ OK, passed 100 tests; 8 discarded.
+aern2-real    >     ring
+aern2-mp      >       CanAbs MPBall
+aern2-affarith>         is idempotent [✔]
+aern2-affarith>           +++ OK, passed 100 tests.
+aern2-mp      >         is idempotent [✔]
+aern2-mp      >           +++ OK, passed 100 tests.
+aern2-affarith>         is identity on non-negative arguments [✔]
+aern2-affarith>           +++ OK, passed 100 tests; 175 discarded.
+aern2-mp      >         is identity on non-negative arguments [✔]
+aern2-mp      >           +++ OK, passed 100 tests; 177 discarded.
+aern2-affarith>         is negation on non-positive arguments [✔]
+aern2-affarith>           +++ OK, passed 100 tests; 196 discarded.
+aern2-mp      >         is negation on non-positive arguments [✔]
+aern2-mp      >           +++ OK, passed 100 tests; 173 discarded.
+aern2-affarith>         does not give negative results [✔]
+aern2-affarith>           +++ OK, passed 100 tests.
+aern2-affarith>       CanMinMax MPAffine MPAffine, CanMinMax MPAffine MPAffine
+aern2-mp      >         does not give negative results [✔]
+aern2-mp      >           +++ OK, passed 100 tests.
+aern2-affarith>         `min` is not larger than its arguments [✔]
+aern2-affarith>           +++ OK, passed 100 tests.
+aern2-real    >       negate respects accuracy requests [✔]
+aern2-real    >         +++ OK, passed 100 tests; 8 discarded.
+aern2-mp      >       Function min returns a valid result for valid MPBall, MPBall inputs [✔]
+aern2-mp      >         +++ OK, passed 100 tests.
+aern2-mp      >       Function max returns a valid result for valid MPBall, MPBall inputs [✔]
+aern2-mp      >         +++ OK, passed 100 tests.
+aern2-mp      >       CanMinMax MPBall MPBall, CanMinMax MPBall MPBall
+aern2-affarith>         `max` is not smaller than its arguments [✔]
+aern2-affarith>           +++ OK, passed 100 tests.
+aern2-affarith>         has idempotent `min` [✔]
+aern2-affarith>           +++ OK, passed 100 tests.
+aern2-mp      >         `min` is not larger than its arguments [✔]
+aern2-mp      >           +++ OK, passed 100 tests.
+aern2-affarith>         has idempotent `max` [✔]
+aern2-affarith>           +++ OK, passed 100 tests.
+aern2-mp      >         `max` is not smaller than its arguments [✔]
+aern2-mp      >           +++ OK, passed 100 tests.
+aern2-affarith>         has commutative `min` [✔]
+aern2-affarith>           +++ OK, passed 100 tests.
+aern2-mp      >         has idempotent `min` [✔]
+aern2-mp      >           +++ OK, passed 100 tests.
+aern2-mp      >         has idempotent `max` [✔]
+aern2-mp      >           +++ OK, passed 100 tests.
+aern2-affarith>         has commutative `max` [✔]
+aern2-affarith>           +++ OK, passed 100 tests.
+aern2-mp      >         has commutative `min` [✔]
+aern2-mp      >           +++ OK, passed 100 tests.
+aern2-mp      >         has commutative `max` [✔]
+aern2-mp      >           +++ OK, passed 100 tests.
+aern2-mp      >         has associative `min` [✔]
+aern2-mp      >           +++ OK, passed 100 tests.
+aern2-affarith>         has associative `min` [✔]
+aern2-affarith>           +++ OK, passed 100 tests.
+aern2-real    >       + respects accuracy requests [✔]
+aern2-real    >         +++ OK, passed 100 tests; 8 discarded.
+aern2-mp      >         has associative `max` [✔]
+aern2-mp      >           +++ OK, passed 100 tests.
+aern2-mp      >       CanMinMax MPBall Integer, CanMinMax Integer MPBall
+aern2-mp      >         `min` is not larger than its arguments [✔]
+aern2-mp      >           +++ OK, passed 100 tests.
+aern2-affarith>         has associative `max` [✔]
+aern2-affarith>           +++ OK, passed 100 tests.
+aern2-affarith>       CanMinMax MPAffine Integer, CanMinMax Integer MPAffine
+aern2-mp      >         `max` is not smaller than its arguments [✔]
+aern2-mp      >           +++ OK, passed 100 tests.
+aern2-affarith>         `min` is not larger than its arguments [✔]
+aern2-affarith>           +++ OK, passed 100 tests.
+aern2-mp      >         has idempotent `min` [✔]
+aern2-mp      >           +++ OK, passed 100 tests.
+aern2-mp      >         has idempotent `max` [✔]
+aern2-mp      >           +++ OK, passed 100 tests.
+aern2-affarith>         `max` is not smaller than its arguments [✔]
+aern2-affarith>           +++ OK, passed 100 tests.
+aern2-affarith>         has idempotent `min` [✔]
+aern2-affarith>           +++ OK, passed 100 tests.
+aern2-mp      >         has commutative `min` [✔]
+aern2-mp      >           +++ OK, passed 100 tests.
+aern2-affarith>         has idempotent `max` [✔]
+aern2-affarith>           +++ OK, passed 100 tests.
+aern2-mp      >         has commutative `max` [✔]
+aern2-mp      >           +++ OK, passed 100 tests.
+aern2-affarith>         has commutative `min` [✔]
+aern2-affarith>           +++ OK, passed 100 tests.
+aern2-real    >       + with Integer respects accuracy requests [✔]
+aern2-real    >         +++ OK, passed 100 tests; 8 discarded.
+aern2-mp      >         has associative `min` [✔]
+aern2-mp      >           +++ OK, passed 100 tests.
+aern2-affarith>         has commutative `max` [✔]
+aern2-affarith>           +++ OK, passed 100 tests.
+aern2-mp      >         has associative `max` [✔]
+aern2-mp      >           +++ OK, passed 100 tests.
+aern2-mp      >     ring
+aern2-mp      >       Function add returns a valid result for valid MPBall, MPBall inputs [✔]
+aern2-mp      >         +++ OK, passed 100 tests.
+aern2-mp      >       CanAdd MPBall MPBall, CanAdd MPBall MPBall
+aern2-affarith>         has associative `min` [✔]
+aern2-affarith>           +++ OK, passed 100 tests.
+aern2-mp      >         absorbs 0 [✔]
+aern2-mp      >           +++ OK, passed 100 tests.
+aern2-mp      >         is commutative [✔]
+aern2-mp      >           +++ OK, passed 100 tests.
+aern2-affarith>         has associative `max` [✔]
+aern2-affarith>           +++ OK, passed 100 tests.
+aern2-affarith>     ring
+aern2-affarith>       CanAdd MPAffine MPAffine, CanAdd MPAffine MPAffine
+aern2-affarith>         absorbs 0 [✔]
+aern2-affarith>           +++ OK, passed 100 tests.
+aern2-mp      >         is associative [✔]
+aern2-mp      >           +++ OK, passed 100 tests.
+aern2-real    >       + with Rational respects accuracy requests [✔]
+aern2-real    >         +++ OK, passed 100 tests; 8 discarded.
+aern2-affarith>         is commutative [✔]
+aern2-affarith>           +++ OK, passed 100 tests.
+aern2-mp      >         increases when positive [✔]
+aern2-mp      >           +++ OK, passed 100 tests; 196 discarded.
+aern2-affarith>         is associative [✔]
+aern2-affarith>           +++ OK, passed 100 tests.
+aern2-mp      >         decreases when negative [✔]
+aern2-mp      >           +++ OK, passed 100 tests; 215 discarded.
+aern2-mp      >       CanAddSameType MPBall
+aern2-mp      >         has sum working over integers [✔]
+aern2-mp      >           +++ OK, passed 100 tests.
+aern2-mp      >         has sum [] = 0 [✔]
+aern2-mp      >           +++ OK, passed 100 tests.
+aern2-mp      >       CanAdd Int MPBall, CanAdd MPBall Rational
+aern2-mp      >         absorbs 0 [✔]
+aern2-mp      >           +++ OK, passed 100 tests.
+aern2-affarith>         increases when positive [✔]
+aern2-affarith>           +++ OK, passed 100 tests; 236 discarded.
+aern2-mp      >         is commutative [✔]
+aern2-mp      >           +++ OK, passed 100 tests.
+aern2-real    >       + with Dyadic respects accuracy requests [✔]
+aern2-real    >         +++ OK, passed 100 tests; 8 discarded.
+aern2-mp      >         is associative [✔]
+aern2-mp      >           +++ OK, passed 100 tests.
+aern2-mp      >         increases when positive [✔]
+aern2-mp      >           +++ OK, passed 100 tests; 128 discarded.
+aern2-affarith>         decreases when negative [✔]
+aern2-affarith>           +++ OK, passed 100 tests; 226 discarded.
+aern2-affarith>       CanAddSameType MPAffine
+aern2-mp      >         decreases when negative [✔]
+aern2-mp      >           +++ OK, passed 100 tests; 118 discarded.
+aern2-mp      >       CanAdd Integer MPBall, CanAdd MPBall Int
+aern2-mp      >         absorbs 0 [✔]
+aern2-mp      >           +++ OK, passed 100 tests.
+aern2-mp      >         is commutative [✔]
+aern2-mp      >           +++ OK, passed 100 tests.
+aern2-affarith>         has sum working over integers [✔]
+aern2-affarith>           +++ OK, passed 100 tests.
+aern2-affarith>         has sum [] = 0 [✔]
+aern2-affarith>           +++ OK, passed 100 tests.
+aern2-affarith>       CanAdd Int MPAffine, CanAdd MPAffine Rational
+aern2-affarith>         absorbs 0 [✔]
+aern2-affarith>           +++ OK, passed 100 tests.
+aern2-mp      >         is associative [✔]
+aern2-mp      >           +++ OK, passed 100 tests.
+aern2-mp      >         increases when positive [✔]
+aern2-mp      >           +++ OK, passed 100 tests; 128 discarded.
+aern2-affarith>         is commutative [✔]
+aern2-affarith>           +++ OK, passed 100 tests.
+aern2-mp      >         decreases when negative [✔]
+aern2-mp      >           +++ OK, passed 100 tests; 118 discarded.
+aern2-affarith>         is associative [✔]
+aern2-affarith>           +++ OK, passed 100 tests.
+aern2-mp      >       Function sub returns a valid result for valid MPBall, MPBall inputs [✔]
+aern2-mp      >         +++ OK, passed 100 tests.
+aern2-mp      >       CanSub MPBall MPBall
+aern2-affarith>         increases when positive [✔]
+aern2-affarith>           +++ OK, passed 100 tests; 128 discarded.
+aern2-mp      >         x-0 = x [✔]
+aern2-mp      >           +++ OK, passed 100 tests.
+aern2-affarith>         decreases when negative [✔]
+aern2-affarith>           +++ OK, passed 100 tests; 118 discarded.
+aern2-affarith>       CanAdd Integer MPAffine, CanAdd MPAffine Int
+aern2-mp      >         x-x = 0 [✔]
+aern2-mp      >           +++ OK, passed 100 tests.
+aern2-affarith>         absorbs 0 [✔]
+aern2-affarith>           +++ OK, passed 100 tests.
+aern2-affarith>         is commutative [✔]
+aern2-affarith>           +++ OK, passed 100 tests.
+aern2-mp      >         x-y = x+(-y) [✔]
+aern2-mp      >           +++ OK, passed 100 tests.
+aern2-mp      >       CanSub MPBall Integer
+aern2-mp      >         x-0 = x [✔]
+aern2-mp      >           +++ OK, passed 100 tests.
+aern2-affarith>         is associative [✔]
+aern2-affarith>           +++ OK, passed 100 tests.
+aern2-mp      >         x-x = 0 [✔]
+aern2-mp      >           +++ OK, passed 100 tests.
+aern2-affarith>         increases when positive [✔]
+aern2-affarith>           +++ OK, passed 100 tests; 128 discarded.
+aern2-mp      >         x-y = x+(-y) [✔]
+aern2-mp      >           +++ OK, passed 100 tests.
+aern2-mp      >       CanSub Integer MPBall
+aern2-mp      >         x-0 = x [✔]
+aern2-mp      >           +++ OK, passed 100 tests.
+aern2-mp      >         x-x = 0 [✔]
+aern2-mp      >           +++ OK, passed 100 tests.
+aern2-affarith>         decreases when negative [✔]
+aern2-affarith>           +++ OK, passed 100 tests; 118 discarded.
+aern2-affarith>       CanSub MPAffine MPAffine
+aern2-mp      >         x-y = x+(-y) [✔]
+aern2-mp      >           +++ OK, passed 100 tests.
+aern2-mp      >       CanSub MPBall Int
+aern2-real    >       a-b respects accuracy requests [✔]
+aern2-real    >         +++ OK, passed 100 tests; 8 discarded.
+aern2-affarith>         x-0 = x [✔]
+aern2-affarith>           +++ OK, passed 100 tests.
+aern2-mp      >         x-0 = x [✔]
+aern2-mp      >           +++ OK, passed 100 tests.
+aern2-affarith>         x-x = 0 [✔]
+aern2-affarith>           +++ OK, passed 100 tests.
+aern2-mp      >         x-x = 0 [✔]
+aern2-mp      >           +++ OK, passed 100 tests.
+aern2-mp      >         x-y = x+(-y) [✔]
+aern2-mp      >           +++ OK, passed 100 tests.
+aern2-mp      >       CanSub Int MPBall
+aern2-mp      >         x-0 = x [✔]
+aern2-mp      >           +++ OK, passed 100 tests.
+aern2-affarith>         x-y = x+(-y) [✔]
+aern2-affarith>           +++ OK, passed 100 tests.
+aern2-affarith>       CanSub MPAffine Integer
+aern2-mp      >         x-x = 0 [✔]
+aern2-mp      >           +++ OK, passed 100 tests.
+aern2-affarith>         x-0 = x [✔]
+aern2-affarith>           +++ OK, passed 100 tests.
+aern2-mp      >         x-y = x+(-y) [✔]
+aern2-mp      >           +++ OK, passed 100 tests.
+aern2-affarith>         x-x = 0 [✔]
+aern2-affarith>           +++ OK, passed 100 tests.
+aern2-mp      >       Function mul returns a valid result for valid MPBall, MPBall inputs [✔]
+aern2-mp      >         +++ OK, passed 100 tests.
+aern2-mp      >       CanMul MPBall MPBall, CanMul MPBall MPBall
+aern2-affarith>         x-y = x+(-y) [✔]
+aern2-affarith>           +++ OK, passed 100 tests.
+aern2-affarith>       CanSub Integer MPAffine
+aern2-affarith>         x-0 = x [✔]
+aern2-affarith>           +++ OK, passed 100 tests.
+aern2-mp      >         absorbs 1 [✔]
+aern2-mp      >           +++ OK, passed 100 tests.
+aern2-affarith>         x-x = 0 [✔]
+aern2-affarith>           +++ OK, passed 100 tests.
+aern2-affarith>         x-y = x+(-y) [✔]
+aern2-affarith>           +++ OK, passed 100 tests.
+aern2-affarith>       CanSub MPAffine Int
+aern2-mp      >         is commutative [✔]
+aern2-mp      >           +++ OK, passed 100 tests.
+aern2-real    >       a-b with Integer respects accuracy requests [✔]
+aern2-real    >         +++ OK, passed 100 tests; 8 discarded.
+aern2-affarith>         x-0 = x [✔]
+aern2-affarith>           +++ OK, passed 100 tests.
+aern2-affarith>         x-x = 0 [✔]
+aern2-affarith>           +++ OK, passed 100 tests.
+aern2-affarith>         x-y = x+(-y) [✔]
+aern2-affarith>           +++ OK, passed 100 tests.
+aern2-mp      >         is associative [✔]
+aern2-mp      >           +++ OK, passed 100 tests.
+aern2-affarith>       CanSub Int MPAffine
+aern2-affarith>         x-0 = x [✔]
+aern2-affarith>           +++ OK, passed 100 tests.
+aern2-affarith>         x-x = 0 [✔]
+aern2-affarith>           +++ OK, passed 100 tests.
+aern2-affarith>         x-y = x+(-y) [✔]
+aern2-affarith>           +++ OK, passed 100 tests.
+aern2-affarith>       CanMul MPAffine MPAffine, CanMul MPAffine MPAffine
+aern2-mp      >         distributes over addition [✔]
+aern2-mp      >           +++ OK, passed 100 tests.
+aern2-mp      >       CanMulSameType MPBall
+aern2-affarith>         absorbs 1 [✔]
+aern2-affarith>           +++ OK, passed 100 tests.
+aern2-mp      >         has product working over integers [✔]
+aern2-mp      >           +++ OK, passed 100 tests.
+aern2-mp      >         has product [] = 1 [✔]
+aern2-mp      >           +++ OK, passed 100 tests.
+aern2-mp      >       CanMul Int MPBall, CanMul MPBall Rational
+aern2-mp      >         absorbs 1 [✔]
+aern2-mp      >           +++ OK, passed 100 tests.
+aern2-affarith>         is commutative [✔]
+aern2-affarith>           +++ OK, passed 100 tests.
+aern2-mp      >         is commutative [✔]
+aern2-mp      >           +++ OK, passed 100 tests.
+aern2-real    >       a-b with Rational respects accuracy requests [✔]
+aern2-real    >         +++ OK, passed 100 tests; 8 discarded.
+aern2-mp      >         is associative [✔]
+aern2-mp      >           +++ OK, passed 100 tests.
+aern2-mp      >         distributes over addition [✔]
+aern2-mp      >           +++ OK, passed 100 tests.
+aern2-mp      >     field
+aern2-affarith>         is associative [✔]
+aern2-affarith>           +++ OK, passed 100 tests.
+aern2-mp      >       Function divide returns a valid result for valid MPBall, MPBall inputs [✔]
+aern2-mp      >         +++ OK, passed 100 tests; 52 discarded.
+aern2-mp      >       CanDiv MPBall MPBall
+aern2-mp      >         recip(recip x) = x [✔]
+aern2-mp      >           +++ OK, passed 100 tests; 50 discarded.
+aern2-mp      >         x/1 = x [✔]
+aern2-mp      >           +++ OK, passed 100 tests.
+aern2-real    >       a-b with Dyadic respects accuracy requests [✔]
+aern2-real    >         +++ OK, passed 100 tests; 8 discarded.
+aern2-affarith>         distributes over addition [✔]
+aern2-affarith>           +++ OK, passed 100 tests.
+aern2-affarith>       CanMulSameType MPAffine
+aern2-mp      >         x/x = 1 [✔]
+aern2-mp      >           +++ OK, passed 100 tests; 70 discarded.
+aern2-mp      >         x/y = x*(1/y) [✔]
+aern2-mp      >           +++ OK, passed 100 tests; 80 discarded.
+aern2-mp      >       CanDiv Integer MPBall
+aern2-mp      >         recip(recip x) = x [✔]
+aern2-mp      >           +++ OK, passed 100 tests; 11 discarded.
+aern2-mp      >         x/1 = x [✔]
+aern2-mp      >           +++ OK, passed 100 tests.
+aern2-mp      >         x/x = 1 [✔]
+aern2-mp      >           +++ OK, passed 100 tests; 15 discarded.
+aern2-affarith>         has product working over integers [✔]
+aern2-affarith>           +++ OK, passed 100 tests.
+aern2-affarith>         has product [] = 1 [✔]
+aern2-affarith>           +++ OK, passed 100 tests.
+aern2-affarith>       CanMul Int MPAffine, CanMul MPAffine Rational
+aern2-mp      >         x/y = x*(1/y) [✔]
+aern2-mp      >           +++ OK, passed 100 tests; 80 discarded.
+aern2-mp      >       CanDiv MPBall Int
+aern2-affarith>         absorbs 1 [✔]
+aern2-affarith>           +++ OK, passed 100 tests.
+aern2-affarith>         is commutative [✔]
+aern2-affarith>           +++ OK, passed 100 tests.
+aern2-mp      >         recip(recip x) = x [✔]
+aern2-mp      >           +++ OK, passed 100 tests; 50 discarded.
+aern2-mp      >         x/1 = x [✔]
+aern2-mp      >           +++ OK, passed 100 tests.
+aern2-affarith>         is associative [✔]
+aern2-affarith>           +++ OK, passed 100 tests.
+aern2-mp      >         x/x = 1 [✔]
+aern2-mp      >           +++ OK, passed 100 tests; 70 discarded.
+aern2-affarith>         distributes over addition [✔]
+aern2-affarith>           +++ OK, passed 100 tests.
+aern2-affarith>     field
+aern2-affarith>       CanDiv MPAffine MPAffine
+aern2-mp      >         x/y = x*(1/y) [✔]
+aern2-mp      >           +++ OK, passed 100 tests; 14 discarded.
+aern2-mp      >       CanDiv MPBall Rational
+aern2-real    >       * respects accuracy requests [✔]
+aern2-real    >         +++ OK, passed 100 tests; 8 discarded.
+aern2-mp      >         recip(recip x) = x [✔]
+aern2-mp      >           +++ OK, passed 100 tests; 50 discarded.
+aern2-mp      >         x/1 = x [✔]
+aern2-mp      >           +++ OK, passed 100 tests.
+aern2-mp      >         x/x = 1 [✔]
+aern2-mp      >           +++ OK, passed 100 tests; 70 discarded.
+aern2-mp      >         x/y = x*(1/y) [✔]
+aern2-mp      >           +++ OK, passed 100 tests; 13 discarded.
+aern2-mp      >     elementary
+aern2-mp      >       CanExp MPBall
+aern2-mp      >         exp(x) >= 0 [✔]
+aern2-mp      >           +++ OK, passed 100 tests.
+aern2-real    >       * with Integer respects accuracy requests [✔]
+aern2-real    >         +++ OK, passed 100 tests; 8 discarded.
+aern2-affarith>         recip(recip x) = x [✔]
+aern2-affarith>           +++ OK, passed 100 tests; 61 discarded.
+aern2-affarith>         x/1 = x [✔]
+aern2-affarith>           +++ OK, passed 100 tests.
+aern2-mp      >         exp(-x) == 1/(exp x) [✔]
+aern2-mp      >           +++ OK, passed 100 tests.
+aern2-real    >       * with Rational respects accuracy requests [✔]
+aern2-real    >         +++ OK, passed 100 tests; 8 discarded.
+aern2-affarith>         x/x = 1 [✔]
+aern2-affarith>           +++ OK, passed 100 tests; 78 discarded.
+aern2-mp      >         exp(x+y) = exp(x)*exp(y) [✔]
+aern2-mp      >           +++ OK, passed 100 tests.
+aern2-mp      >       CanLog MPBall
+aern2-real    >       * with Dyadic respects accuracy requests [✔]
+aern2-real    >         +++ OK, passed 100 tests; 8 discarded.
+aern2-real    >     field
+aern2-affarith>         x/y = x*(1/y) [✔]
+aern2-affarith>           +++ OK, passed 100 tests; 67 discarded.
+aern2-affarith>       CanDiv Integer MPAffine
+aern2-affarith>         recip(recip x) = x [✔]
+aern2-affarith>           +++ OK, passed 100 tests; 11 discarded.
+aern2-affarith>         x/1 = x [✔]
+aern2-affarith>           +++ OK, passed 100 tests.
+aern2-affarith>         x/x = 1 [✔]
+aern2-affarith>           +++ OK, passed 100 tests; 15 discarded.
+aern2-mp      >         log(1/x) == -(log x) [✔]
+aern2-mp      >           +++ OK, passed 100 tests; 2 discarded.
+aern2-affarith>         x/y = x*(1/y) [✔]
+aern2-affarith>           +++ OK, passed 100 tests; 67 discarded.
+aern2-affarith>       CanDiv MPAffine Int
+aern2-real    >       / respects accuracy requests [✔]
+aern2-real    >         +++ OK, passed 100 tests; 18 discarded.
+aern2-real    >       / with Integer respects accuracy requests [✔]
+aern2-real    >         +++ OK, passed 100 tests; 20 discarded.
+aern2-affarith>         recip(recip x) = x [✔]
+aern2-affarith>           +++ OK, passed 100 tests; 61 discarded.
+aern2-affarith>         x/1 = x [✔]
+aern2-affarith>           +++ OK, passed 100 tests.
+aern2-mp      >         log(x*y) = log(x)+log(y) [✔]
+aern2-mp      >           +++ OK, passed 100 tests; 5 discarded.
+aern2-real    >       / with Rational respects accuracy requests [✔]
+aern2-real    >         +++ OK, passed 100 tests; 20 discarded.
+aern2-affarith>         x/x = 1 [✔]
+aern2-affarith>           +++ OK, passed 100 tests; 78 discarded.
+aern2-real    >       / with Dyadic respects accuracy requests [✔]
+aern2-real    >         +++ OK, passed 100 tests; 22 discarded.
+aern2-real    >     elementary
+aern2-affarith>         x/y = x*(1/y) [✔]
+aern2-affarith>           +++ OK, passed 100 tests; 14 discarded.
+aern2-affarith>       CanDiv MPAffine Rational
+aern2-affarith>         recip(recip x) = x [✔]
+aern2-affarith>           +++ OK, passed 100 tests; 61 discarded.
+aern2-affarith>         x/1 = x [✔]
+aern2-affarith>           +++ OK, passed 100 tests.
+aern2-real    >       sqrt respects accuracy requests [✔]
+aern2-real    >         +++ OK, passed 100 tests; 165 discarded.
+aern2-affarith>         x/x = 1 [✔]
+aern2-affarith>           +++ OK, passed 100 tests; 78 discarded.
+aern2-affarith>         x/y = x*(1/y) [✔]
+aern2-affarith>           +++ OK, passed 100 tests; 13 discarded.
+aern2-affarith>     elementary
+aern2-affarith>       CanExp MPAffine
+aern2-real    >       exp respects accuracy requests [✔]
+aern2-real    >         +++ OK, passed 100 tests; 8 discarded.
+aern2-affarith>         exp(x) >= 0 [✔]
+aern2-affarith>           +++ OK, passed 100 tests.
+aern2-real    >       log respects accuracy requests [✔]
+aern2-real    >         +++ OK, passed 100 tests; 165 discarded.
+aern2-affarith>         exp(-x) == 1/(exp x) [✔]
+aern2-affarith>           +++ OK, passed 100 tests.
+aern2-real    >       pow respects accuracy requests [✔]
+aern2-real    >         +++ OK, passed 100 tests; 115 discarded.
+aern2-affarith>         exp(x+y) = exp(x)*exp(y) [✔]
+aern2-affarith>           +++ OK, passed 100 tests.
+aern2-affarith>       CanSqrt MPAffine
+aern2-affarith>         sqrt(x) >= 0 [✔]
+aern2-affarith>           +++ OK, passed 100 tests; 175 discarded.
+aern2-affarith>         sqrt(x)^2 = x [✔]
+aern2-affarith>           +++ OK, passed 100 tests; 175 discarded.
+aern2-affarith>       CanSinCos MPAffine
+aern2-real    >       pow with Integer respects accuracy requests [✔]
+aern2-real    >         +++ OK, passed 100 tests; 18 discarded.
+aern2-real    >       pow with Rational respects accuracy requests [✔]
+aern2-real    >         +++ OK, passed 100 tests; 115 discarded.
+aern2-real    >       cos respects accuracy requests [✔]
+aern2-real    >         +++ OK, passed 100 tests; 8 discarded.
+aern2-real    >       sine respects accuracy requests [✔]
+aern2-real    >         +++ OK, passed 100 tests; 8 discarded.
+aern2-real    >     select
+aern2-affarith>         -1 <= sin(x) <= 1 [✔]
+aern2-affarith>           +++ OK, passed 100 tests.
+aern2-real    >       soft abs via select [✔]
+aern2-real    >         +++ OK, passed 100 tests; 125 discarded.
+aern2-real    >     limit
+aern2-real    >       computing e as a limit of Taylor series [✔]
+aern2-real    >         +++ OK, passed 100 tests.
+aern2-real    > 
+aern2-real    > Finished in 1.3415 seconds
+aern2-real    > 30 examples, 0 failures
+aern2-real    > Test suite aern2-real-test passed
+aern2-affarith>         -1 <= cos(x) <= 1 [✔]
+aern2-affarith>           +++ OK, passed 100 tests.
+aern2-affarith>         cos(x)^2 + sin(x)^2 = 1 [✔]
+aern2-affarith>           +++ OK, passed 100 tests.
+aern2-affarith>         sin(x-y) = sin(x)cos(y) - cos(x)sin(y) [✔]
+aern2-affarith>           +++ OK, passed 100 tests.
+aern2-affarith>         cos(x-y) = cos(x)cos(y) + sin(x)sin(y) [✔]
+aern2-affarith>           +++ OK, passed 100 tests.
+aern2-affarith>         sin(x) < x < tan(x) for x in [0,pi/2] [✔]
+aern2-affarith>           +++ OK, passed 100 tests; 612 discarded.
+aern2-affarith> 
+aern2-affarith> Finished in 3.4334 seconds
+aern2-affarith> 124 examples, 0 failures
+aern2-affarith> Test suite aern2-affarith-test passed
+aern2-mp      >         log(exp x) == x [✔]
+aern2-mp      >           +++ OK, passed 100 tests.
+aern2-mp      >       CanSqrt MPBall
+aern2-mp      >         sqrt(x) >= 0 [✔]
+aern2-mp      >           +++ OK, passed 100 tests; 177 discarded.
+aern2-mp      >         sqrt(x)^2 = x [✔]
+aern2-mp      >           +++ OK, passed 100 tests; 177 discarded.
+aern2-mp      >       CanSinCos MPBall
+aern2-mp      >         -1 <= sin(x) <= 1 [✔]
+aern2-mp      >           +++ OK, passed 100 tests.
+aern2-mp      >         -1 <= cos(x) <= 1 [✔]
+aern2-mp      >           +++ OK, passed 100 tests.
+aern2-mp      >         cos(x)^2 + sin(x)^2 = 1 [✔]
+aern2-mp      >           +++ OK, passed 100 tests.
+aern2-mp      >         sin(x-y) = sin(x)cos(y) - cos(x)sin(y) [✔]
+aern2-mp      >           +++ OK, passed 100 tests.
+aern2-mp      >         cos(x-y) = cos(x)cos(y) + sin(x)sin(y) [✔]
+aern2-mp      >           +++ OK, passed 100 tests.
+aern2-mp      >         sin(x) < x < tan(x) for x in [0,pi/2] [✔]
+aern2-mp      >           +++ OK, passed 100 tests; 607 discarded.
+aern2-mp      > AERN2.MP.Dyadic
+aern2-mp      >   Dyadic
+aern2-mp      >     conversion
+aern2-mp      >       Integer -> Dyadic -> Integer [✔]
+aern2-mp      >         +++ OK, passed 100 tests.
+aern2-mp      >     conversion
+aern2-mp      >       Dyadic -> Rational -> Dyadic [✔]
+aern2-mp      >         +++ OK, passed 100 tests.
+aern2-mp      >     order
+aern2-mp      >       HasEq Dyadic Dyadic, HasEq Dyadic Dyadic
+aern2-mp      >         has reflexive == [✔]
+aern2-mp      >           +++ OK, passed 100 tests.
+aern2-mp      >         has anti-reflexive /= [✔]
+aern2-mp      >           +++ OK, passed 100 tests.
+aern2-mp      >         has stronly commutative == [✔]
+aern2-mp      >           +++ OK, passed 100 tests.
+aern2-mp      >         has stronly commutative /= [✔]
+aern2-mp      >           +++ OK, passed 100 tests.
+aern2-mp      >         has stronly transitive == [✔]
+aern2-mp      >           +++ OK, passed 100 tests.
+aern2-mp      >       HasEq Int Dyadic, HasEq Dyadic Rational
+aern2-mp      >         has reflexive == [✔]
+aern2-mp      >           +++ OK, passed 100 tests.
+aern2-mp      >         has anti-reflexive /= [✔]
+aern2-mp      >           +++ OK, passed 100 tests.
+aern2-mp      >         has stronly commutative == [✔]
+aern2-mp      >           +++ OK, passed 100 tests.
+aern2-mp      >         has stronly commutative /= [✔]
+aern2-mp      >           +++ OK, passed 100 tests.
+aern2-mp      >         has stronly transitive == [✔]
+aern2-mp      >           +++ OK, passed 100 tests.
+aern2-mp      >       CanTestZero Dyadic
+aern2-mp      >         converted non-zero Integer is not isCertainlyZero [✔]
+aern2-mp      >           +++ OK, passed 100 tests; 15 discarded.
+aern2-mp      >         converted non-zero Integer is isCertainlyNonZero [✔]
+aern2-mp      >           +++ OK, passed 100 tests; 15 discarded.
+aern2-mp      >         converted 0.0 is not isCertainlyNonZero [✔]
+aern2-mp      >           +++ OK, passed 100 tests.
+aern2-mp      >       HasOrd Dyadic Dyadic, HasOrd Dyadic Dyadic
+aern2-mp      >         has reflexive >= [✔]
+aern2-mp      >           +++ OK, passed 100 tests.
+aern2-mp      >         has reflexive <= [✔]
+aern2-mp      >           +++ OK, passed 100 tests.
+aern2-mp      >         has anti-reflexive > [✔]
+aern2-mp      >           +++ OK, passed 100 tests.
+aern2-mp      >         has anti-reflexive < [✔]
+aern2-mp      >           +++ OK, passed 100 tests.
+aern2-mp      >         > stronly implies >= [✔]
+aern2-mp      >           +++ OK, passed 100 tests.
+aern2-mp      >         < stronly implies <= [✔]
+aern2-mp      >           +++ OK, passed 100 tests.
+aern2-mp      >         has stronly equivalent > and < [✔]
+aern2-mp      >           +++ OK, passed 100 tests.
+aern2-mp      >         has stronly equivalent >= and <= [✔]
+aern2-mp      >           +++ OK, passed 100 tests.
+aern2-mp      >         has stronly transitive < [✔]
+aern2-mp      >           +++ OK, passed 100 tests.
+aern2-mp      >       HasOrd Int Dyadic, HasOrd Dyadic Rational
+aern2-mp      >         has reflexive >= [✔]
+aern2-mp      >           +++ OK, passed 100 tests.
+aern2-mp      >         has reflexive <= [✔]
+aern2-mp      >           +++ OK, passed 100 tests.
+aern2-mp      >         has anti-reflexive > [✔]
+aern2-mp      >           +++ OK, passed 100 tests.
+aern2-mp      >         has anti-reflexive < [✔]
+aern2-mp      >           +++ OK, passed 100 tests.
+aern2-mp      >         > stronly implies >= [✔]
+aern2-mp      >           +++ OK, passed 100 tests.
+aern2-mp      >         < stronly implies <= [✔]
+aern2-mp      >           +++ OK, passed 100 tests.
+aern2-mp      >         has stronly equivalent > and < [✔]
+aern2-mp      >           +++ OK, passed 100 tests.
+aern2-mp      >         has stronly equivalent >= and <= [✔]
+aern2-mp      >           +++ OK, passed 100 tests.
+aern2-mp      >         has stronly transitive < [✔]
+aern2-mp      >           +++ OK, passed 100 tests.
+aern2-mp      >     min/max/abs
+aern2-mp      >       CanNeg Dyadic
+aern2-mp      >         ignores double negation [✔]
+aern2-mp      >           +++ OK, passed 100 tests.
+aern2-mp      >         takes 0 to 0 [✔]
+aern2-mp      >           +++ OK, passed 100 tests.
+aern2-mp      >         takes positive to negative [✔]
+aern2-mp      >           +++ OK, passed 100 tests; 97 discarded.
+aern2-mp      >         takes negative to positive [✔]
+aern2-mp      >           +++ OK, passed 100 tests; 117 discarded.
+aern2-mp      >       CanAbs Dyadic
+aern2-mp      >         is idempotent [✔]
+aern2-mp      >           +++ OK, passed 100 tests.
+aern2-mp      >         is identity on non-negative arguments [✔]
+aern2-mp      >           +++ OK, passed 100 tests; 83 discarded.
+aern2-mp      >         is negation on non-positive arguments [✔]
+aern2-mp      >           +++ OK, passed 100 tests; 117 discarded.
+aern2-mp      >         does not give negative results [✔]
+aern2-mp      >           +++ OK, passed 100 tests.
+aern2-mp      >       CanMinMax Dyadic Dyadic, CanMinMax Dyadic Dyadic
+aern2-mp      >         `min` is not larger than its arguments [✔]
+aern2-mp      >           +++ OK, passed 100 tests.
+aern2-mp      >         `max` is not smaller than its arguments [✔]
+aern2-mp      >           +++ OK, passed 100 tests.
+aern2-mp      >         has idempotent `min` [✔]
+aern2-mp      >           +++ OK, passed 100 tests.
+aern2-mp      >         has idempotent `max` [✔]
+aern2-mp      >           +++ OK, passed 100 tests.
+aern2-mp      >         has commutative `min` [✔]
+aern2-mp      >           +++ OK, passed 100 tests.
+aern2-mp      >         has commutative `max` [✔]
+aern2-mp      >           +++ OK, passed 100 tests.
+aern2-mp      >         has associative `min` [✔]
+aern2-mp      >           +++ OK, passed 100 tests.
+aern2-mp      >         has associative `max` [✔]
+aern2-mp      >           +++ OK, passed 100 tests.
+aern2-mp      >       CanMinMax Dyadic Integer, CanMinMax Integer Dyadic
+aern2-mp      >         `min` is not larger than its arguments [✔]
+aern2-mp      >           +++ OK, passed 100 tests.
+aern2-mp      >         `max` is not smaller than its arguments [✔]
+aern2-mp      >           +++ OK, passed 100 tests.
+aern2-mp      >         has idempotent `min` [✔]
+aern2-mp      >           +++ OK, passed 100 tests.
+aern2-mp      >         has idempotent `max` [✔]
+aern2-mp      >           +++ OK, passed 100 tests.
+aern2-mp      >         has commutative `min` [✔]
+aern2-mp      >           +++ OK, passed 100 tests.
+aern2-mp      >         has commutative `max` [✔]
+aern2-mp      >           +++ OK, passed 100 tests.
+aern2-mp      >         has associative `min` [✔]
+aern2-mp      >           +++ OK, passed 100 tests.
+aern2-mp      >         has associative `max` [✔]
+aern2-mp      >           +++ OK, passed 100 tests.
+aern2-mp      >       min Dyadic Rational (dyadic only) [✔]
+aern2-mp      >         +++ OK, passed 100 tests.
+aern2-mp      >       max Dyadic Rational (dyadic only) [✔]
+aern2-mp      >         +++ OK, passed 100 tests.
+aern2-mp      >     ring
+aern2-mp      >       CanAdd Dyadic Dyadic, CanAdd Dyadic Dyadic
+aern2-mp      >         absorbs 0 [✔]
+aern2-mp      >           +++ OK, passed 100 tests.
+aern2-mp      >         is commutative [✔]
+aern2-mp      >           +++ OK, passed 100 tests.
+aern2-mp      >         is associative [✔]
+aern2-mp      >           +++ OK, passed 100 tests.
+aern2-mp      >         increases when positive [✔]
+aern2-mp      >           +++ OK, passed 100 tests; 111 discarded.
+aern2-mp      >         decreases when negative [✔]
+aern2-mp      >           +++ OK, passed 100 tests; 107 discarded.
+aern2-mp      >       CanAddSameType Dyadic
+aern2-mp      >         has sum working over integers [✔]
+aern2-mp      >           +++ OK, passed 100 tests.
+aern2-mp      >         has sum [] = 0 [✔]
+aern2-mp      >           +++ OK, passed 100 tests.
+aern2-mp      >       CanAdd Int Dyadic, CanAdd Dyadic Integer
+aern2-mp      >         absorbs 0 [✔]
+aern2-mp      >           +++ OK, passed 100 tests.
+aern2-mp      >         is commutative [✔]
+aern2-mp      >           +++ OK, passed 100 tests.
+aern2-mp      >         is associative [✔]
+aern2-mp      >           +++ OK, passed 100 tests.
+aern2-mp      >         increases when positive [✔]
+aern2-mp      >           +++ OK, passed 100 tests; 128 discarded.
+aern2-mp      >         decreases when negative [✔]
+aern2-mp      >           +++ OK, passed 100 tests; 118 discarded.
+aern2-mp      >       CanAdd Integer Dyadic, CanAdd Dyadic Int
+aern2-mp      >         absorbs 0 [✔]
+aern2-mp      >           +++ OK, passed 100 tests.
+aern2-mp      >         is commutative [✔]
+aern2-mp      >           +++ OK, passed 100 tests.
+aern2-mp      >         is associative [✔]
+aern2-mp      >           +++ OK, passed 100 tests.
+aern2-mp      >         increases when positive [✔]
+aern2-mp      >           +++ OK, passed 100 tests; 128 discarded.
+aern2-mp      >         decreases when negative [✔]
+aern2-mp      >           +++ OK, passed 100 tests; 118 discarded.
+aern2-mp      >       Dyadic + Rational (dyadic only) [✔]
+aern2-mp      >         +++ OK, passed 100 tests.
+aern2-mp      >       CanSub Dyadic Dyadic
+aern2-mp      >         x-0 = x [✔]
+aern2-mp      >           +++ OK, passed 100 tests.
+aern2-mp      >         x-x = 0 [✔]
+aern2-mp      >           +++ OK, passed 100 tests.
+aern2-mp      >         x-y = x+(-y) [✔]
+aern2-mp      >           +++ OK, passed 100 tests.
+aern2-mp      >       CanSub Dyadic Integer
+aern2-mp      >         x-0 = x [✔]
+aern2-mp      >           +++ OK, passed 100 tests.
+aern2-mp      >         x-x = 0 [✔]
+aern2-mp      >           +++ OK, passed 100 tests.
+aern2-mp      >         x-y = x+(-y) [✔]
+aern2-mp      >           +++ OK, passed 100 tests.
+aern2-mp      >       CanSub Integer Dyadic
+aern2-mp      >         x-0 = x [✔]
+aern2-mp      >           +++ OK, passed 100 tests.
+aern2-mp      >         x-x = 0 [✔]
+aern2-mp      >           +++ OK, passed 100 tests.
+aern2-mp      >         x-y = x+(-y) [✔]
+aern2-mp      >           +++ OK, passed 100 tests.
+aern2-mp      >       CanSub Dyadic Int
+aern2-mp      >         x-0 = x [✔]
+aern2-mp      >           +++ OK, passed 100 tests.
+aern2-mp      >         x-x = 0 [✔]
+aern2-mp      >           +++ OK, passed 100 tests.
+aern2-mp      >         x-y = x+(-y) [✔]
+aern2-mp      >           +++ OK, passed 100 tests.
+aern2-mp      >       CanSub Int Dyadic
+aern2-mp      >         x-0 = x [✔]
+aern2-mp      >           +++ OK, passed 100 tests.
+aern2-mp      >         x-x = 0 [✔]
+aern2-mp      >           +++ OK, passed 100 tests.
+aern2-mp      >         x-y = x+(-y) [✔]
+aern2-mp      >           +++ OK, passed 100 tests.
+aern2-mp      >       Dyadic - Rational (dyadic only) [✔]
+aern2-mp      >         +++ OK, passed 100 tests.
+aern2-mp      >       CanMul Dyadic Dyadic, CanMul Dyadic Dyadic
+aern2-mp      >         absorbs 1 [✔]
+aern2-mp      >           +++ OK, passed 100 tests.
+aern2-mp      >         is commutative [✔]
+aern2-mp      >           +++ OK, passed 100 tests.
+aern2-mp      >         is associative [✔]
+aern2-mp      >           +++ OK, passed 100 tests.
+aern2-mp      >         distributes over addition [✔]
+aern2-mp      >           +++ OK, passed 100 tests.
+aern2-mp      >       CanMulSameType Dyadic
+aern2-mp      >         has product working over integers [✔]
+aern2-mp      >           +++ OK, passed 100 tests.
+aern2-mp      >         has product [] = 1 [✔]
+aern2-mp      >           +++ OK, passed 100 tests.
+aern2-mp      >       CanMul Int Dyadic, CanMul Dyadic Integer
+aern2-mp      >         absorbs 1 [✔]
+aern2-mp      >           +++ OK, passed 100 tests.
+aern2-mp      >         is commutative [✔]
+aern2-mp      >           +++ OK, passed 100 tests.
+aern2-mp      >         is associative [✔]
+aern2-mp      >           +++ OK, passed 100 tests.
+aern2-mp      >         distributes over addition [✔]
+aern2-mp      >           +++ OK, passed 100 tests.
+aern2-mp      >       Dyadic * Rational (dyadic only) [✔]
+aern2-mp      >         +++ OK, passed 100 tests.
+aern2-mp      >       CanPow Dyadic Integer
+aern2-mp      >         x^0 = 1 [✔]
+aern2-mp      >           +++ OK, passed 100 tests.
+aern2-mp      >         x^1 = x [✔]
+aern2-mp      >           +++ OK, passed 100 tests.
+aern2-mp      >         x^(y+1) = x*x^y [✔]
+aern2-mp      >           +++ OK, passed 100 tests; 109 discarded.
+aern2-mp      > AERN2.MP.Float
+aern2-mp      >   MPFloat
+aern2-mp      >     CanSetPrecision MPFloat
+aern2-mp      >       set then get [✔]
+aern2-mp      >         +++ OK, passed 100 tests; 5 discarded.
+aern2-mp      >       setPrecision x ~ x [✔]
+aern2-mp      >         +++ OK, passed 100 tests.
+aern2-mp      >     CanRound MPFloat
+aern2-mp      >       holds floor x <= x <= ceiling x [✔]
+aern2-mp      >         +++ OK, passed 100 tests; 1 discarded.
+aern2-mp      >       holds floor x <= round x <= ceiling x [✔]
+aern2-mp      >         +++ OK, passed 100 tests; 1 discarded.
+aern2-mp      >       0 <= ceiling x - floor x <= 1 [✔]
+aern2-mp      >         +++ OK, passed 100 tests; 1 discarded.
+aern2-mp      >       holds floor x = round x = ceiling x for integers [✔]
+aern2-mp      >         +++ OK, passed 100 tests.
+aern2-mp      >     CanNeg MPFloat
+aern2-mp      >       ignores double negation [✔]
+aern2-mp      >         +++ OK, passed 100 tests.
+aern2-mp      >       takes 0 to 0 [✔]
+aern2-mp      >         +++ OK, passed 100 tests.
+aern2-mp      >       takes positive to negative [✔]
+aern2-mp      >         +++ OK, passed 100 tests; 125 discarded.
+aern2-mp      >       takes negative to positive [✔]
+aern2-mp      >         +++ OK, passed 100 tests; 116 discarded.
+aern2-mp      >     CanAbs MPFloat
+aern2-mp      >       is idempotent [✔]
+aern2-mp      >         +++ OK, passed 100 tests.
+aern2-mp      >       is identity on non-negative arguments [✔]
+aern2-mp      >         +++ OK, passed 100 tests; 92 discarded.
+aern2-mp      >       is negation on non-positive arguments [✔]
+aern2-mp      >         +++ OK, passed 100 tests; 104 discarded.
+aern2-mp      >       does not give negative results [✔]
+aern2-mp      >         +++ OK, passed 100 tests; 1 discarded.
+aern2-mp      >     CanMinMax MPFloat MPFloat, CanMinMax MPFloat MPFloat
+aern2-mp      >       `min` is not larger than its arguments [✔]
+aern2-mp      >         +++ OK, passed 100 tests; 10 discarded.
+aern2-mp      >       `max` is not smaller than its arguments [✔]
+aern2-mp      >         +++ OK, passed 100 tests; 10 discarded.
+aern2-mp      >       has idempotent `min` [✔]
+aern2-mp      >         +++ OK, passed 100 tests; 1 discarded.
+aern2-mp      >       has idempotent `max` [✔]
+aern2-mp      >         +++ OK, passed 100 tests; 1 discarded.
+aern2-mp      >       has commutative `min` [✔]
+aern2-mp      >         +++ OK, passed 100 tests; 10 discarded.
+aern2-mp      >       has commutative `max` [✔]
+aern2-mp      >         +++ OK, passed 100 tests; 10 discarded.
+aern2-mp      >       has associative `min` [✔]
+aern2-mp      >         +++ OK, passed 100 tests; 15 discarded.
+aern2-mp      >       has associative `max` [✔]
+aern2-mp      >         +++ OK, passed 100 tests; 15 discarded.
+aern2-mp      >     special values
+aern2-mp      >       0 * infinity = NaN [✔]
+aern2-mp      >       infinity / infinity = NaN [✔]
+aern2-mp      >       infinity - infinity = NaN [✔]
+aern2-mp      >     approximate addition
+aern2-mp      >       down <= up [✔]
+aern2-mp      >         +++ OK, passed 100 tests.
+aern2-mp      >       up ~ down [✔]
+aern2-mp      >         +++ OK, passed 100 tests.
+aern2-mp      >       absorbs 0 [✔]
+aern2-mp      >         +++ OK, passed 100 tests; 1 discarded.
+aern2-mp      >       approximately commutative [✔]
+aern2-mp      >         +++ OK, passed 100 tests.
+aern2-mp      >       approximately associative [✔]
+aern2-mp      >         +++ OK, passed 100 tests.
+aern2-mp      >     approximate subtraction
+aern2-mp      >       down <= up [✔]
+aern2-mp      >         +++ OK, passed 100 tests.
+aern2-mp      >       up ~ down [✔]
+aern2-mp      >         +++ OK, passed 100 tests.
+aern2-mp      >       same as negate and add [✔]
+aern2-mp      >         +++ OK, passed 100 tests.
+aern2-mp      >     approximate multiplication
+aern2-mp      >       down <= up [✔]
+aern2-mp      >         +++ OK, passed 100 tests.
+aern2-mp      >       up ~ down [✔]
+aern2-mp      >         +++ OK, passed 100 tests.
+aern2-mp      >       absorbs 1 [✔]
+aern2-mp      >         +++ OK, passed 100 tests.
+aern2-mp      >       approximately commutative [✔]
+aern2-mp      >         +++ OK, passed 100 tests.
+aern2-mp      >       approximately associative [✔]
+aern2-mp      >         +++ OK, passed 100 tests; 15 discarded.
+aern2-mp      >       approximately distributes over addition [✔]
+aern2-mp      >         +++ OK, passed 100 tests; 15 discarded.
+aern2-mp      >     approximate division
+aern2-mp      >       down <= up [✔]
+aern2-mp      >         +++ OK, passed 100 tests.
+aern2-mp      >       up ~ down [✔]
+aern2-mp      >         +++ OK, passed 100 tests; 21 discarded.
+aern2-mp      >       recip(recip x) = x [✔]
+aern2-mp      >         +++ OK, passed 100 tests; 18 discarded.
+aern2-mp      >       x/1 = x [✔]
+aern2-mp      >         +++ OK, passed 100 tests.
+aern2-mp      >       x/x = 1 [✔]
+aern2-mp      >         +++ OK, passed 100 tests.
+aern2-mp      >       x/y = x*(1/y) [✔]
+aern2-mp      >         +++ OK, passed 100 tests.
+aern2-mp      >     approximate sqrt
+aern2-mp      >       down <= up [✔]
+aern2-mp      >         +++ OK, passed 100 tests.
+aern2-mp      >       sqrt(x) >= 0 [✔]
+aern2-mp      >         +++ OK, passed 100 tests.
+aern2-mp      >       sqrt(x)^2 ~ x [✔]
+aern2-mp      >         +++ OK, passed 100 tests.
+aern2-mp      >     approximate exp
+aern2-mp      >       down <= up [✔]
+aern2-mp      >         +++ OK, passed 100 tests.
+aern2-mp      >       exp(-x) == 1/(exp x) [✔]
+aern2-mp      >         +++ OK, passed 100 tests.
+aern2-mp      >       exp(x+y) = exp(x)*exp(y) [✔]
+aern2-mp      >         +++ OK, passed 100 tests.
+aern2-mp      >     approximate log
+aern2-mp      >       down <= up [✔]
+aern2-mp      >         +++ OK, passed 100 tests.
+aern2-mp      >       log(1/x) == -(log x) [✔]
+aern2-mp      >         +++ OK, passed 100 tests.
+aern2-mp      >       log(x*y) = log(x)+log(y) [✔]
+aern2-mp      >         +++ OK, passed 100 tests.
+aern2-mp      >       log(exp x) == x [✔]
+aern2-mp      >         +++ OK, passed 100 tests.
+aern2-mp      >     approximate sine
+aern2-mp      >       down <= up [✔]
+aern2-mp      >         +++ OK, passed 100 tests.
+aern2-mp      >       in [-1,1] [✔]
+aern2-mp      >         +++ OK, passed 100 tests.
+aern2-mp      >     approximate cosine
+aern2-mp      >       down <= up [✔]
+aern2-mp      >         +++ OK, passed 100 tests.
+aern2-mp      >       in [-1,1] [✔]
+aern2-mp      >         +++ OK, passed 100 tests.
+aern2-mp      >       cos(x)^2 + sin(x)^2 = 1 [✔]
+aern2-mp      >         +++ OK, passed 100 tests; 1 discarded.
+aern2-mp      > 
+aern2-mp      > Finished in 8.7418 seconds
+aern2-mp      > 304 examples, 0 failures
+aern2-mp      > Test suite aern2-mp-test passed
+Completed 3 action(s).

@@ -1,0 +1,200 @@
+   Compiling hyperreal v0.13.1 (/home/tim/Documents/GitHub/workspace/hyperreal)
+   Compiling hyperlattice v0.6.1 (/home/tim/Documents/GitHub/workspace/hyperlattice)
+   Compiling hyperlimit v0.4.1 (/home/tim/Documents/GitHub/workspace/hyperlimit)
+   Compiling hypersolve v0.3.1 (/home/tim/Documents/GitHub/workspace/hypersolve)
+   Compiling hypertri v0.4.1 (/home/tim/Documents/GitHub/workspace/hypertri)
+   Compiling hypercurve v0.3.1 (/home/tim/Documents/GitHub/workspace/hypercurve)
+    Finished `release` profile [optimized] target(s) in 1m 40s
+     Running tests/hypercurve_bezier_algebraic_parameter.rs (target/release/deps/hypercurve_bezier_algebraic_parameter-061049773273981c)
+
+running 27 tests
+test algebraic_parameter_is_a_clone_shared_handle ... ok
+test algebraic_parameter_recovers_represented_linear_root ... ok
+test algebraic_root_sign_change_tracks_multiplicity_parity ... ok
+test bernstein_conversion_preserves_high_degree_constant_identity ... ok
+test endpoint_root_is_rejected_for_algebraic_isolators ... ok
+test cubic_distance_stationary_quintic_isolates_all_five_candidates ... ok
+test endpoint_touching_singleton_isolators_have_strict_order ... ok
+test exact_and_algebraic_parameters_compare_only_when_certified ... ok
+test equivalent_irrational_roots_compare_equal_across_polynomials_and_isolators ... ok
+test invalid_parameter_intervals_are_rejected ... ok
+test irrational_nonlinear_parameter_remains_algebraic ... ok
+test irrational_root_isolation_skips_rational_reconstruction_refinement ... ok
+test linear_midpoint_root_is_a_valid_algebraic_parameter ... ok
+test multi_root_bracket_is_rejected_as_not_an_isolator ... ok
+test nonlinear_algebraic_parameter_reconstructs_exact_rational_root ... ok
+test nonrational_linear_parameter_uses_exact_point_api ... ok
+test nonrational_quartic_uses_exact_bernstein_root_certificates ... ok
+test oriented_parameter_range_retains_irrational_boundary ... ok
+test linear_integer_polynomials_count_at_most_one_root ... ok
+test overlapping_distinct_parameters_compare_by_certified_refinement ... ok
+test parameter_range_promotes_represented_rational_boundary ... ok
+test parameter_range_rejects_equal_and_accepts_affine_extension_boundaries ... ok
+test quadratic_singleton_isolator_is_validated_by_sturm_count ... ok
+test repeated_nonrational_quartic_falls_back_to_complete_sturm_isolation ... ok
+test represented_root_sign_change_tracks_high_multiplicity_parity ... ok
+test unit_root_isolation_orders_represented_and_algebraic_roots ... ok
+test quintic_root_isolation_trace_reuses_sturm_certificates ... ok
+
+test result: ok. 27 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/hypercurve_curve_region_promotion.rs (target/release/deps/hypercurve_curve_region_promotion-2922d8dd6e249918)
+
+running 100 tests
+test affine_line_fast_path_preserves_nonzero_and_even_odd_fill_rules ... ok
+test algebraic_chamfer_participates_in_a_disjoint_boolean_batch ... ok
+test algebraic_chord_expansion_merges_coupled_material_loops_exactly ... ok
+test algebraic_chord_erosion_splits_a_collapsed_neck_exactly ... ok
+test algebraic_chord_material_hole_contact_and_hole_collapse_are_exact ... ok
+test algebraic_chords_and_round_centers_survive_exact_similarities ... ok
+test algebraic_chords_survive_nonsingular_exact_affine_transforms ... ok
+test all_family_nesting_rejects_crossing_loops_before_role_assignment ... ok
+test analytic_parallel_miter_tangent_legs_have_no_nondegenerate_fillet ... ok
+test analytic_parallel_rejected_miters_remain_transverse_fillet_candidates ... ok
+test approximate_512_trim_only_analytic_parallel_support_corners_retain_algebraic_fillet_centers ... ok
+test approximate_512_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions ... ok
+test arc_parabola_fillet_recovers_exact_complement_contacts ... ok
+test authored_line_arc_paths_use_the_unified_offset_engine ... ok
+test authored_loop_semantics_drive_nonzero_and_even_odd_classification ... ok
+test authored_nested_material_roles_certify_filled_sides_directly ... ok
+test authoritative_curve_region_arrangement_honors_coincident_winding_multiplicity ... ok
+test authoritative_curve_region_arrangement_regularizes_nonlinear_winding ... ok
+test authoritative_curve_region_arrangement_regularizes_self_crossing_walks ... ok
+test authoritative_curve_region_arrangement_regularizes_signed_loop_composition ... ok
+test authoritative_curve_region_regularizes_polynomial_and_rational_self_crossings ... ok
+test axis_aligned_algebraic_chords_reenter_exact_region_offsets ... ok
+test canonical_exact_chord_regions_fillet_without_line_demotion ... ok
+test correlated_chord_pair_endpoints_survive_transform_and_offset ... ok
+test cusp_chord_boolean_boundary_reoffsets_with_exact_bevels ... ok
+test empty_region_promotion_is_decided_and_reusable ... ok
+test exact_high_degree_elevations_reenter_the_quadratic_corner_kernel ... ok
+test exact_profiles_assign_holes_to_the_smallest_containing_material ... ok
+test exact_support_cutter_reenters_correlated_chord_collinearly ... ok
+test line_parabola_fillet_extends_the_regular_incident_cell_exactly ... ok
+test materialized_boundary_paths_obey_terminal_policy_once ... ok
+test native_contour_constructors_and_signed_depth_need_no_region_wrapper ... ok
+test native_self_crossing_walk_regularizes_with_both_fill_rules ... ok
+test native_self_overlap_regularization_honors_winding_multiplicity ... ok
+test algebraic_chord_non_miter_erosions_split_a_collapsed_neck_exactly ... ok
+test non_ph_bezier_pair_fillet_retains_general_selected_circle ... ok
+test nonconvex_algebraic_chord_expansion_is_exact_and_local_collapse_is_explicit ... ok
+test nonlinear_curved_winding_honors_authored_fill_rules_exactly ... ok
+test nonperiodic_self_contact_does_not_claim_a_green_integral_as_filled_area ... ok
+test one_chord_orders_contacts_from_two_selected_round_corners ... ok
+test one_field_algebraic_chamfer_regularizes_without_rebuilding_its_solver ... ok
+test region_promotion_retains_explicit_roles_and_line_fast_path ... ok
+test region_promotion_retains_hole_role_for_projection ... ok
+test repeated_region_offsets_compose_retained_exact_parallels_under_both_policies ... ok
+test retained_circular_regions_chamfer_over_the_full_support ... ok
+test non_ph_bezier_pair_projective_fillet_retains_algebraic_extensions ... ok
+test rotated_algebraic_round_regions_boolean_through_oblique_three_field_contacts ... ok
+test selected_algebraic_cusp_chamfers_use_the_unified_retained_kernel ... ok
+test selected_algebraic_round_join_retains_a_general_minor_cut ... ok
+test rotated_algebraic_chord_erosion_splits_a_collapsed_neck_exactly ... ok
+test selected_circle_support_chord_corners_retain_algebraic_fillet_centers ... ok
+test selected_endpoint_chord_pairs_share_the_linear_fillet_kernel ... ok
+test selected_endpoint_chords_share_linear_arc_fillet_incidence ... ok
+test selected_endpoint_chords_share_linear_bezier_fillet_incidence ... ok
+test selected_algebraic_round_joins_reenter_exact_region_offsets ... ok
+test similarity_rotation_preserves_unified_region_semantics_and_fast_path ... ok
+test strict_trim_only_analytic_parallel_support_corners_retain_algebraic_fillet_centers ... ok
+test strict_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions ... ok
+test transformed_promotion_retains_explicit_roles_without_the_source_fast_path ... ok
+test translated_algebraic_round_regions_boolean_through_cusp_chord_contacts ... ok
+test unified_curved_erosion_composes_merging_holes_and_material_crossings ... ok
+test unified_curved_erosion_opens_a_hole_through_the_material_boundary ... ok
+test unified_curved_erosion_resolves_simultaneous_hole_and_material_tangencies ... ok
+test unified_curved_erosion_retains_the_exact_hole_boundary_contact ... ok
+test unified_mixed_line_arc_erosion_splits_after_a_curved_neck_collapse ... ok
+test unified_native_arrangement_exposes_immediate_evidence ... ok
+test unified_native_constructor_retains_zero_signed_area_boundary_for_diagnostics ... ok
+test unified_region_bounds_cover_native_and_higher_order_carriers_exactly ... ok
+test unified_region_chamfer_and_fillet_edit_higher_order_loops ... ok
+test unified_region_chamfer_joins_two_algebraic_bezier_cuts ... ok
+test unified_region_chamfer_reenters_general_algebraic_chords ... ok
+test unified_region_chamfer_retains_algebraic_bezier_cut ... ok
+test unified_region_contraction_preserves_non_miter_corner_styles ... ok
+test unified_region_contracts_nonconvex_material_before_its_medial_collapse ... ok
+test unified_region_convex_contraction_decides_collapse_and_over_contraction ... ok
+test unified_region_convex_erosion_handles_orientation_and_redundant_edges ... ok
+test unified_region_convex_erosion_keeps_symbolic_diagonal_offsets_and_collapse_exact ... ok
+test unified_region_corner_solver_obeys_terminal_policy_once ... ok
+test unified_region_corners_use_canonical_spline_bezier_spans ... ok
+test unified_region_corners_use_rational_circular_carriers ... ok
+test unified_region_corners_use_represented_bezier_incidence ... ok
+test unified_region_discards_nonconvex_material_after_wavefront_collapse ... ok
+test unified_region_erosion_splits_when_a_hole_reaches_the_material_boundary ... ok
+test unified_region_exact_neck_event_uses_post_event_topology ... ok
+test unified_region_expansion_regularizes_a_closed_concavity ... ok
+test unified_region_native_chamfer_uses_arc_sweep_evidence ... ok
+test unified_region_native_fillet_retains_certified_arc_contacts ... ok
+test unified_region_non_miter_erosions_split_after_neck_collapse ... ok
+test unified_region_nonconvex_erosion_splits_at_a_collapsed_neck ... ok
+test sheared_algebraic_chord_erosion_splits_a_collapsed_neck_exactly ... ok
+test unified_region_offset_corner_options_obey_the_terminal_policy ... ok
+test unified_region_offset_corner_styles_have_exact_area_and_miter_fallback ... ok
+test unified_region_offset_expands_material_and_contracts_holes ... ok
+test unified_region_offset_regularizes_overlapping_expanded_components ... ok
+test unified_region_offset_regularizes_overlapping_expanded_voids ... ok
+test unified_region_offsets_general_rational_boundary_identically_under_both_policies ... ok
+test unified_region_offsets_quadratic_boundary_through_exact_parallel_arrangement ... ok
+test unified_region_positive_offset_removes_exactly_collapsed_convex_hole ... ok
+test unified_region_reuses_design_parameter_corner_solvers ... ok
+test unified_region_nonorthogonal_erosion_splits_through_the_exact_wavefront ... ok
+
+test result: ok. 100 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 58.22s
+
+     Running tests/hypercurve_rational_bezier.rs (target/release/deps/hypercurve_rational_bezier-5ff38460208f9543)
+
+running 48 tests
+test direct_disjoint_conic_cubic_reports_no_candidates_or_contacts ... ok
+test degree_40_rational_monotonicity_does_not_depend_on_u64_binomials ... ok
+test exact_line_contact_solver_distinguishes_hull_overlap_from_curve_contact ... ok
+test every_bezier_family_retains_irrational_line_contacts ... ok
+test general_rational_contacts_recognize_projective_scale_and_reversal ... ok
+test general_rational_contacts_reject_disjoint_control_hulls ... ok
+test general_rational_cubic_certifies_obvious_axis_monotonicity ... ok
+test general_rational_cubic_evaluates_exactly ... ok
+test general_rational_derivative_is_exact_and_reuses_power_basis ... ok
+test general_rational_derivatives_are_not_truncated_at_bezier_degree ... ok
+test general_rational_line_contact_retains_exact_parameter_and_kind ... ok
+test general_rational_line_contact_retains_irrational_crossing_parameter ... ok
+test general_rational_line_relation_certifies_hull_miss_and_coincidence ... ok
+test general_rational_point_incidence_retains_endpoint_and_entire_curve_cases ... ok
+test general_rational_point_incidence_rechecks_full_homogeneous_image ... ok
+test general_rational_split_preserves_join_and_degree ... ok
+test general_rational_point_incidence_retains_nonlinear_algebraic_parameter ... ok
+test high_degree_nonuniform_rational_weights_preserve_axis_monotonicity ... ok
+test implicit_conic_route_does_not_certify_a_tangent_root_as_transverse ... ok
+test implicit_conic_route_replays_degree_elevated_line_contact_in_both_orders ... ok
+test implicit_conic_route_retains_an_interior_rational_quadratic_cubic_contact ... ok
+test independently_constructed_partial_overlap_reconstructs_rational_endpoints ... ok
+test line_image_overlap_accepts_monotone_parameterization_with_stationary_point ... ok
+test line_image_overlap_retains_irrational_algebraic_parameter_boundary ... ok
+test mixed_derivative_controls_use_exact_root_multiplicity_for_monotonicity ... ok
+test independently_trimmed_projective_conics_retain_partial_overlap ... ok
+test polynomial_graph_overlap_retains_irrational_curved_boundary ... ok
+test polynomial_graph_replay_accepts_unequal_resultant_projection_counts ... ok
+test projectively_reparameterized_rational_quadratic_certifies_shared_conic ... ok
+test rational_bezier_clones_evaluate_identically ... ok
+test rational_bezier_clones_have_identical_point_incidence ... ok
+test rational_bezier_degree_elevation_evidence_invalid_target_and_zero_projective_weight ... ok
+test rational_bezier_degree_elevation_preserves_exact_parameterized_image_and_lineage ... ok
+test rational_contacts_replay_represented_resultant_candidates ... ok
+test rational_quadratic_monotone_root_preserves_unequal_weight_quotient_derivative ... ok
+test rational_quadratic_monotone_root_retains_exact_transcendental_endpoint ... ok
+test rational_quadratic_rational_parameter_uses_exact_power_quotient ... ok
+test rational_resultant_certifies_disjoint_and_represented_crossing_parameters ... ok
+test rational_resultant_certifies_exact_partial_nonlinear_overlap_ranges ... ok
+test rational_resultant_replays_identical_and_reversed_full_image_overlap ... ok
+test rational_resultant_retains_algebraic_parameter_projections ... ok
+test represented_multi_split_materializes_connected_rational_fragments ... ok
+test pi_weight_conic_replays_degree_elevated_horizontal_contact ... ok
+test shared_cancellation_resolves_disjoint_rational_contact_blocker ... ok
+test shared_cancellation_resolves_rational_evaluation_and_bounds_blockers ... ok
+test shared_cancellation_resolves_rational_weight_monotonicity_blocker ... ok
+test top_level_general_rational_curve_preserves_family_and_native_geometry ... ok
+test resultant_replay_retains_an_interior_nonuniform_rational_cubic_contact ... ok
+
+test result: ok. 48 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s
+

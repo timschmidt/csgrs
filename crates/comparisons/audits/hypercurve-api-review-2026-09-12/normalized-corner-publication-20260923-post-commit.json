@@ -1,0 +1,12 @@
+{
+  "commit": "e7d575be40d87445f1d936ecdef5946aa24839c5",
+  "parent": "4763c7ca97567a7fdfd14fac982019c390a248ce",
+  "files": {
+    "src/bezier_region.rs": "6c39a36ea7cdffd76b204954f16b9d87eae934fc4ce894cfa09090cbe467aa8a",
+    "src/curve_corner_chain.rs": "86e435369725721accd951c42a671fb818810033892ecb2aadb5173cb8958cc2"
+  },
+  "binary_sha256": "df98b5a79c151c3300ef5b4e941ba115b1036f12b100c3d8d37d272ff2de2b4e",
+  "worktree_clean": true,
+  "all_owned_processes_reaped": true,
+  "full_goal_complete": false
+}

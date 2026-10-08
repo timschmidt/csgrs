@@ -1,0 +1,26 @@
+[
+  {
+    "case": 0,
+    "returncode": 0,
+    "elapsed_seconds": 65.04501749202609,
+    "log": "fillet-companion-chart-20260923-public1-case-0.log"
+  },
+  {
+    "case": 1,
+    "returncode": 0,
+    "elapsed_seconds": 65.14530592202209,
+    "log": "fillet-companion-chart-20260923-public1-case-1.log"
+  },
+  {
+    "case": 2,
+    "returncode": 0,
+    "elapsed_seconds": 65.04991833597887,
+    "log": "fillet-companion-chart-20260923-public1-case-2.log"
+  },
+  {
+    "case": 3,
+    "returncode": 0,
+    "elapsed_seconds": 65.80201411305461,
+    "log": "fillet-companion-chart-20260923-public1-case-3.log"
+  }
+]

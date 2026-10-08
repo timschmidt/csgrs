@@ -1,0 +1,130 @@
+{
+  "checks": [
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "clippy",
+        "--all-targets",
+        "--all-features",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "returncode": 0,
+      "log": "shared-source-bounds-20260924-v1-check-0.log"
+    },
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "clippy",
+        "--all-targets",
+        "--no-default-features",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "returncode": 0,
+      "log": "shared-source-bounds-20260924-v1-check-1.log"
+    }
+  ],
+  "command": [
+    "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+    "test",
+    "--lib",
+    "--release",
+    "--all-features",
+    "--no-run",
+    "--message-format=json",
+    "--locked",
+    "--offline"
+  ],
+  "cases": [
+    {
+      "name": "bezier_offset::conversion_tests::recursive_bounds_refine_each_shared_source_once",
+      "returncode": 0,
+      "passed": true,
+      "elapsed_seconds": 0.3030661770608276,
+      "limit_seconds": 60,
+      "log": "shared-source-bounds-20260924-v1-case-0.log"
+    },
+    {
+      "name": "bezier_offset::conversion_tests::recursive_bounds_and_signs_reuse_correlated_real_witnesses",
+      "returncode": 0,
+      "passed": true,
+      "elapsed_seconds": 0.2669465390499681,
+      "limit_seconds": 60,
+      "log": "shared-source-bounds-20260924-v1-case-1.log"
+    },
+    {
+      "name": "bezier_offset::conversion_tests::recursive_projective_bounds_enclose_scaled_nested_radicals",
+      "returncode": 0,
+      "passed": true,
+      "elapsed_seconds": 0.2743555420311168,
+      "limit_seconds": 60,
+      "log": "shared-source-bounds-20260924-v1-case-2.log"
+    },
+    {
+      "name": "bezier_offset::conversion_tests::recursive_projective_bounds_reuse_positive_denominator_certificate",
+      "returncode": 0,
+      "passed": true,
+      "elapsed_seconds": 0.27651399397291243,
+      "limit_seconds": 60,
+      "log": "shared-source-bounds-20260924-v1-case-3.log"
+    },
+    {
+      "name": "bezier_offset::conversion_tests::recursive_real_witnesses_do_not_require_unused_selected_generators",
+      "returncode": 0,
+      "passed": true,
+      "elapsed_seconds": 0.2646786249242723,
+      "limit_seconds": 60,
+      "log": "shared-source-bounds-20260924-v1-case-4.log"
+    },
+    {
+      "name": "bezier_offset::conversion_tests::retained_real_witnesses_collapse_recursive_source_box_coefficients",
+      "returncode": 0,
+      "passed": true,
+      "elapsed_seconds": 0.2698462610132992,
+      "limit_seconds": 60,
+      "log": "shared-source-bounds-20260924-v1-case-5.log"
+    },
+    {
+      "name": "bezier_offset::conversion_tests::selected_fiber_points_reuse_projective_roots_without_global_promotion",
+      "returncode": 0,
+      "passed": true,
+      "elapsed_seconds": 0.3303011819953099,
+      "limit_seconds": 60,
+      "log": "shared-source-bounds-20260924-v1-case-6.log"
+    },
+    {
+      "name": "bezier_region::tests::nonlinear_selected_corner_chamfers_through_retained_fixed_distance_image",
+      "returncode": 0,
+      "passed": true,
+      "elapsed_seconds": 5.390875198063441,
+      "limit_seconds": 75,
+      "log": "shared-source-bounds-20260924-v1-case-7.log"
+    },
+    {
+      "name": "bezier_region::curve_corner_chain::tests::extended_fillet_region_classifies_both_sides_of_its_companion",
+      "returncode": "timeout",
+      "passed": false,
+      "elapsed_seconds": 75.27451883105095,
+      "limit_seconds": 75,
+      "log": "shared-source-bounds-20260924-v1-case-8.log"
+    },
+    {
+      "name": "bezier_region::tests::pair_native_boolean_algebraic_chord_corner_publishes_a_third_generation_fillet",
+      "returncode": "timeout",
+      "passed": false,
+      "elapsed_seconds": 75.280773722101,
+      "limit_seconds": 75,
+      "log": "shared-source-bounds-20260924-v1-case-9.log"
+    }
+  ],
+  "binary_sha256": "21cee711ab31851cb46ecccdf3ff438fe51699daee61fe190022c33dbf296dcd",
+  "all_sources_unchanged": true,
+  "all_processes_reaped": true
+}

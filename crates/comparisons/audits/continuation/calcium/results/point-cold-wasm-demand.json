@@ -1,0 +1,15 @@
+{
+  "tag": "point-cold-wasm-demand",
+  "started": "2026-09-10T23:11:13.010Z",
+  "finished": "2026-09-10T23:11:17.813Z",
+  "elapsedSeconds": 4.799982531,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "node",
+  "args": [
+    "--expose-gc",
+    "run-point-cold-wasm.mjs",
+    "demand"
+  ],
+  "code": 0,
+  "signal": null
+}

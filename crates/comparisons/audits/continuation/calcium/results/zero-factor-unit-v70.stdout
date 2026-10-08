@@ -1,0 +1,17 @@
+
+running 7 tests
+test algebraic_binary::zero_factor_tests::divisor_deflation_borrows_or_reuses_owned_storage ... ok
+test algebraic_binary::zero_factor_tests::division_keeps_zero_interval_and_invalid_payload_guards ... ok
+test algebraic_binary::zero_factor_tests::division_deflates_after_shared_oversized_square_free_reduction ... FAILED
+test algebraic_binary::zero_factor_tests::division_admits_only_the_reduced_degree_bound ... ok
+test algebraic_binary::zero_factor_tests::divisor_deflation_requires_strict_nonzero_and_nonconstant_residual ... ok
+test algebraic_binary::zero_factor_tests::division_recovers_unused_common_zero_roots ... ok
+test algebraic_binary::zero_factor_tests::division_preserves_signed_nonzero_resultants ... ok
+
+failures:
+
+failures:
+    algebraic_binary::zero_factor_tests::division_deflates_after_shared_oversized_square_free_reduction
+
+test result: FAILED. 6 passed; 1 failed; 0 ignored; 0 measured; 446 filtered out; finished in 0.01s
+

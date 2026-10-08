@@ -1,0 +1,19 @@
+{
+  "status": "Public probe completed against committed V893 normal release libraries; exact outer 51653 reaped 0",
+  "construction": "P(t)=4*t^3-pi. A(t)=(P(t),t P(t)); B(u)=(P(2u),2u P(2u)+P(2u)^2). A is trimmed from alpha to 1 and B from alpha/2 to 1/2, alpha selected in (0,1).",
+  "oracle": "At each common x=P(t)>0 the geometric ordinate difference remains x^2>0. Thus A must precede B in counter-clockwise traversal from the positive horizontal. The expected public chains remain [0,1] then [2].",
+  "hypothesis": "Distinct selected source parameters may still block source bilinear signs before normalization; a certified affine transport may be required. This is a source-based hypothesis until the public probe is run.",
+  "invariants": [
+    "Both source polynomials use exact Real coefficients, including pi.",
+    "No curve, point or parameter is sampled.",
+    "The relative geometric branch ordering and source trim are unchanged by the affine reparameterization."
+  ],
+  "result": {
+    "requests": 2,
+    "blocked": 2,
+    "classification": "RealSign under STRICT and APPROXIMATE_512",
+    "represented_points": 4,
+    "retained_unprojected_tangents": 4
+  },
+  "source_audit": "Hypersolve algebraic_root_affine_relation currently rejects any nonrational polynomial coefficient before candidate inference. Its transform_algebraic_root_affine already has an exact Real polynomial path. These are inspected-source facts; no explicit affine-transport replay has yet been run for this fixture."
+}

@@ -1,0 +1,113 @@
+audits/continuation/calcium/flint-magnitude-controls.c: In function ‘arithmetic_controls’:
+audits/continuation/calcium/flint-magnitude-controls.c:83:6: error: this ‘if’ clause does not guard... [-Werror=misleading-indentation]
+   83 |      if(alias==1)mag_set(z,x);if(alias==2)mag_set(z,y);
+      |      ^~
+audits/continuation/calcium/flint-magnitude-controls.c:83:31: note: ...this statement, but the latter is misleadingly indented as if it were guarded by the ‘if’
+   83 |      if(alias==1)mag_set(z,x);if(alias==2)mag_set(z,y);
+      |                               ^~
+audits/continuation/calcium/flint-magnitude-controls.c:93:7: error: this ‘if’ clause does not guard... [-Werror=misleading-indentation]
+   93 |       if(op==11)mag_rsqrt(z,xx);if(op==12)mag_rsqrt_lower(z,xx);
+      |       ^~
+audits/continuation/calcium/flint-magnitude-controls.c:93:33: note: ...this statement, but the latter is misleadingly indented as if it were guarded by the ‘if’
+   93 |       if(op==11)mag_rsqrt(z,xx);if(op==12)mag_rsqrt_lower(z,xx);
+      |                                 ^~
+audits/continuation/calcium/flint-magnitude-controls.c:94:7: error: this ‘if’ clause does not guard... [-Werror=misleading-indentation]
+   94 |       if(op==13)mag_inv(z,xx);if(op==14)mag_inv_lower(z,xx);}
+      |       ^~
+audits/continuation/calcium/flint-magnitude-controls.c:94:31: note: ...this statement, but the latter is misleadingly indented as if it were guarded by the ‘if’
+   94 |       if(op==13)mag_inv(z,xx);if(op==14)mag_inv_lower(z,xx);}
+      |                               ^~
+audits/continuation/calcium/flint-magnitude-controls.c:101:7: error: this ‘if’ clause does not guard... [-Werror=misleading-indentation]
+  101 |       if(op==21)mag_mul_2exp_si(z,xx,shift);if(op==22)mag_mul_2exp_fmpz(z,xx,e);if(op==23)mag_fast_mul_2exp_si(z,xx,shift);}
+      |       ^~
+audits/continuation/calcium/flint-magnitude-controls.c:101:45: note: ...this statement, but the latter is misleadingly indented as if it were guarded by the ‘if’
+  101 |       if(op==21)mag_mul_2exp_si(z,xx,shift);if(op==22)mag_mul_2exp_fmpz(z,xx,e);if(op==23)mag_fast_mul_2exp_si(z,xx,shift);}
+      |                                             ^~
+audits/continuation/calcium/flint-magnitude-controls.c: In function ‘conversion_controls’:
+audits/continuation/calcium/flint-magnitude-controls.c:130:3: error: this ‘if’ clause does not guard... [-Werror=misleading-indentation]
+  130 |   if(sign)mpz_neg(ztmp,ztmp);fmpz_set_mpz(f,ztmp);
+      |   ^~
+audits/continuation/calcium/flint-magnitude-controls.c:130:30: note: ...this statement, but the latter is misleadingly indented as if it were guarded by the ‘if’
+  130 |   if(sign)mpz_neg(ztmp,ztmp);fmpz_set_mpz(f,ztmp);
+      |                              ^~~~~~~~~~~~
+audits/continuation/calcium/flint-magnitude-controls.c:138:4: error: this ‘if’ clause does not guard... [-Werror=misleading-indentation]
+  138 |    if(op>=7&&!word)continue;if(op==14&&u==0)continue;
+      |    ^~
+audits/continuation/calcium/flint-magnitude-controls.c:138:29: note: ...this statement, but the latter is misleadingly indented as if it were guarded by the ‘if’
+  138 |    if(op>=7&&!word)continue;if(op==14&&u==0)continue;
+      |                             ^~
+audits/continuation/calcium/flint-magnitude-controls.c:140:4: error: this ‘if’ clause does not guard... [-Werror=misleading-indentation]
+  140 |    if(op==0)mag_set_fmpz(z,f);if(op==1)mag_set_fmpz_lower(z,f);
+      |    ^~
+audits/continuation/calcium/flint-magnitude-controls.c:140:31: note: ...this statement, but the latter is misleadingly indented as if it were guarded by the ‘if’
+  140 |    if(op==0)mag_set_fmpz(z,f);if(op==1)mag_set_fmpz_lower(z,f);
+      |                               ^~
+audits/continuation/calcium/flint-magnitude-controls.c:141:4: error: this ‘if’ clause does not guard... [-Werror=misleading-indentation]
+  141 |    if(op==2)mag_set_fmpz_2exp_fmpz(z,f,e);if(op==3)mag_set_fmpz_2exp_fmpz_lower(z,f,e);
+      |    ^~
+audits/continuation/calcium/flint-magnitude-controls.c:141:43: note: ...this statement, but the latter is misleadingly indented as if it were guarded by the ‘if’
+  141 |    if(op==2)mag_set_fmpz_2exp_fmpz(z,f,e);if(op==3)mag_set_fmpz_2exp_fmpz_lower(z,f,e);
+      |                                           ^~
+audits/continuation/calcium/flint-magnitude-controls.c:142:4: error: this ‘if’ clause does not guard... [-Werror=misleading-indentation]
+  142 |    if(op==4)arf_get_mag(z,a);if(op==5)arf_get_mag_lower(z,a);if(op==6)mag_fast_init_set_arf(z,a);
+      |    ^~
+audits/continuation/calcium/flint-magnitude-controls.c:142:30: note: ...this statement, but the latter is misleadingly indented as if it were guarded by the ‘if’
+  142 |    if(op==4)arf_get_mag(z,a);if(op==5)arf_get_mag_lower(z,a);if(op==6)mag_fast_init_set_arf(z,a);
+      |                              ^~
+audits/continuation/calcium/flint-magnitude-controls.c:143:4: error: this ‘if’ clause does not guard... [-Werror=misleading-indentation]
+  143 |    if(op==7)mag_set_ui(z,u);if(op==8)mag_set_ui_lower(z,u);if(op==9)mag_set_ui_2exp_si(z,u,ex);
+      |    ^~
+audits/continuation/calcium/flint-magnitude-controls.c:143:29: note: ...this statement, but the latter is misleadingly indented as if it were guarded by the ‘if’
+  143 |    if(op==7)mag_set_ui(z,u);if(op==8)mag_set_ui_lower(z,u);if(op==9)mag_set_ui_2exp_si(z,u,ex);
+      |                             ^~
+audits/continuation/calcium/flint-magnitude-controls.c: In function ‘ball_controls’:
+audits/continuation/calcium/flint-magnitude-controls.c:174:5: error: this ‘if’ clause does not guard... [-Werror=misleading-indentation]
+  174 |     if(op==0)arb_fma(z,x,y,c,ps[p]);if(op==1)arb_fma(z,z,y,c,ps[p]);
+      |     ^~
+audits/continuation/calcium/flint-magnitude-controls.c:174:37: note: ...this statement, but the latter is misleadingly indented as if it were guarded by the ‘if’
+  174 |     if(op==0)arb_fma(z,x,y,c,ps[p]);if(op==1)arb_fma(z,z,y,c,ps[p]);
+      |                                     ^~
+audits/continuation/calcium/flint-magnitude-controls.c:175:5: error: this ‘if’ clause does not guard... [-Werror=misleading-indentation]
+  175 |     if(op==2)arb_fma(z,x,z,c,ps[p]);if(op==3)arb_fma(z,x,y,z,ps[p]);
+      |     ^~
+audits/continuation/calcium/flint-magnitude-controls.c:175:37: note: ...this statement, but the latter is misleadingly indented as if it were guarded by the ‘if’
+  175 |     if(op==2)arb_fma(z,x,z,c,ps[p]);if(op==3)arb_fma(z,x,y,z,ps[p]);
+      |                                     ^~
+audits/continuation/calcium/flint-magnitude-controls.c:176:5: error: this ‘if’ clause does not guard... [-Werror=misleading-indentation]
+  176 |     if(op==4)arb_addmul(z,x,y,ps[p]);check(s+op,z,lower,upper);
+      |     ^~
+audits/continuation/calcium/flint-magnitude-controls.c:176:38: note: ...this statement, but the latter is misleadingly indented as if it were guarded by the ‘if’
+  176 |     if(op==4)arb_addmul(z,x,y,ps[p]);check(s+op,z,lower,upper);
+      |                                      ^~~~~
+audits/continuation/calcium/flint-magnitude-controls.c:181:5: error: this ‘if’ clause does not guard... [-Werror=misleading-indentation]
+  181 |     if(op==6)mpq_add(target,target,b.r);if(op==7)mpq_set(target,b.r);
+      |     ^~
+audits/continuation/calcium/flint-magnitude-controls.c:181:41: note: ...this statement, but the latter is misleadingly indented as if it were guarded by the ‘if’
+  181 |     if(op==6)mpq_add(target,target,b.r);if(op==7)mpq_set(target,b.r);
+      |                                         ^~
+audits/continuation/calcium/flint-magnitude-controls.c:186:5: error: this ‘if’ clause does not guard... [-Werror=misleading-indentation]
+  186 |     if(op==5)arb_add_error_arf(z,arb_midref(err));if(op==6)arb_add_error(z,err);
+      |     ^~
+audits/continuation/calcium/flint-magnitude-controls.c:186:51: note: ...this statement, but the latter is misleadingly indented as if it were guarded by the ‘if’
+  186 |     if(op==5)arb_add_error_arf(z,arb_midref(err));if(op==6)arb_add_error(z,err);
+      |                                                   ^~
+audits/continuation/calcium/flint-magnitude-controls.c:187:5: error: this ‘if’ clause does not guard... [-Werror=misleading-indentation]
+  187 |     if(op==7)arb_add_error_mag(z,arb_radref(err));if(op==8)arb_add_error_2exp_si(z,exponent);
+      |     ^~
+audits/continuation/calcium/flint-magnitude-controls.c:187:51: note: ...this statement, but the latter is misleadingly indented as if it were guarded by the ‘if’
+  187 |     if(op==7)arb_add_error_mag(z,arb_radref(err));if(op==8)arb_add_error_2exp_si(z,exponent);
+      |                                                   ^~
+audits/continuation/calcium/flint-magnitude-controls.c:188:5: error: this ‘if’ clause does not guard... [-Werror=misleading-indentation]
+  188 |     if(op==9)arb_add_error_2exp_fmpz(z,e);check(s+op,z,lower,upper);
+      |     ^~
+audits/continuation/calcium/flint-magnitude-controls.c:188:43: note: ...this statement, but the latter is misleadingly indented as if it were guarded by the ‘if’
+  188 |     if(op==9)arb_add_error_2exp_fmpz(z,e);check(s+op,z,lower,upper);
+      |                                           ^~~~~
+audits/continuation/calcium/flint-magnitude-controls.c: In function ‘main’:
+audits/continuation/calcium/flint-magnitude-controls.c:207:2: error: this ‘for’ clause does not guard... [-Werror=misleading-indentation]
+  207 |  for(int i=0;i<4;i++)mpq_clear(prod[i]);flint_cleanup_master();
+      |  ^~~
+audits/continuation/calcium/flint-magnitude-controls.c:207:41: note: ...this statement, but the latter is misleadingly indented as if it were guarded by the ‘for’
+  207 |  for(int i=0;i<4;i++)mpq_clear(prod[i]);flint_cleanup_master();
+      |                                         ^~~~~~~~~~~~~~~~~~~~
+cc1: all warnings being treated as errors

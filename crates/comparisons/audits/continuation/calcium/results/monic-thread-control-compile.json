@@ -1,0 +1,18 @@
+{
+  "tag": "monic-thread-control-compile",
+  "started": "2026-09-09T01:12:37.975Z",
+  "finished": "2026-09-09T01:12:38.080Z",
+  "elapsedSeconds": 0.102059265,
+  "cwd": "/home/tim/Documents/GitHub/workspace",
+  "command": "rustc",
+  "args": [
+    "--edition=2024",
+    "-C",
+    "debuginfo=0",
+    "exactcore-hyper-comparison/audits/continuation/calcium/monic-thread-control.rs",
+    "-o",
+    "/tmp/calcium-monic-state.rk70Kr/std-thread-control"
+  ],
+  "code": 0,
+  "signal": null
+}

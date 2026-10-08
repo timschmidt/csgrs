@@ -1,0 +1,48 @@
+{
+  "source_manifest": "coincident-circular-constraints-20260927-v390-sources.json",
+  "source_directory": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/source-archives/trace-coincident-line-parallel-20260927-v392",
+  "trial": {
+    "hypercurve/src/error.rs": "5be51eaf83039d74ea77cba5ffa5cd9af04dcb09dc7b54b9a42f62c2d32f76a3"
+  },
+  "probe_sha256": "66dd1e67c6539077fffeae347eed5fde6e32cf7014f1aa6ce7c9c11a0853aecd",
+  "records": [
+    {
+      "label": "probe-build",
+      "returncode": 0,
+      "elapsed_seconds": 0.3643866591155529,
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustc",
+        "--edition=2024",
+        "-C",
+        "opt-level=3",
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/inspect-line-parallel-candidates-20260927-v394.rs",
+        "--extern",
+        "hypercurve=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/libhypercurve.rlib",
+        "-L",
+        "dependency=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps",
+        "-o",
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/inspect-line-parallel-candidates-20260927-v394"
+      ],
+      "log": "inspect-line-parallel-candidates-20260927-v394-probe-build.log"
+    },
+    {
+      "label": "probe",
+      "returncode": 0,
+      "elapsed_seconds": 0.11405188799835742,
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/inspect-line-parallel-candidates-20260927-v394"
+      ],
+      "log": "inspect-line-parallel-candidates-20260927-v394-probe.log"
+    }
+  ],
+  "all_processes_reaped": true,
+  "library": {
+    "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/libhypercurve.rlib",
+    "sha256": "32925cb47cad856c7e028c24598b274ef9f0ad188d21c8b2675c7ee770f60e5f"
+  },
+  "binary": {
+    "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/inspect-line-parallel-candidates-20260927-v394",
+    "sha256": "774290de2cdaa5b44d2afa606d5c29087474ce3c0ab56bafc89824a0352fe91a"
+  },
+  "diagnostic_complete": true
+}

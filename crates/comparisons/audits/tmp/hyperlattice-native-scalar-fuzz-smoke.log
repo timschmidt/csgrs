@@ -1,0 +1,33 @@
+   Compiling hyperreal v0.13.1 (/home/tim/Documents/GitHub/workspace/hyperreal)
+   Compiling hyperlattice v0.6.1 (/home/tim/Documents/GitHub/workspace/hyperlattice)
+   Compiling hyperlattice-fuzz v0.1.0 (/home/tim/Documents/GitHub/workspace/hyperlattice/fuzz)
+    Finished `release` profile [optimized + debuginfo] target(s) in 26.72s
+    Finished `release` profile [optimized + debuginfo] target(s) in 0.01s
+     Running `fuzz/target/x86_64-unknown-linux-gnu/release/scalar_ops -artifact_prefix=/home/tim/Documents/GitHub/workspace/hyperlattice/fuzz/artifacts/scalar_ops/ -runs=256 -max_len=64 -max_total_time=20 -timeout=10 -rss_limit_mb=2048 -artifact_prefix=/tmp/hyperlattice-native-scalar-fuzz.nvP94n/ /tmp/hyperlattice-native-scalar-fuzz.nvP94n`
+INFO: Running with entropic power schedule (0xFF, 100).
+INFO: Seed: 3415098941
+INFO: Loaded 1 modules   (76500 inline 8-bit counters): 76500 [0x55f2f105b9e0, 0x55f2f106e4b4), 
+INFO: Loaded 1 PC tables (76500 PCs): 76500 [0x55f2f106e4b8,0x55f2f11991f8), 
+INFO:        0 files found in /tmp/hyperlattice-native-scalar-fuzz.nvP94n
+INFO: A corpus is not provided, starting from an empty corpus
+#2	INITED cov: 728 ft: 729 corp: 1/1b exec/s: 0 rss: 39Mb
+	NEW_FUNC[1/168]: 0x55f2f0bfcb00 in <hyperreal::rational::arithmetic::Rational>::is_minus_one /home/tim/Documents/GitHub/workspace/hyperreal/src/rational/arithmetic/queries_conversion.rs:89
+	NEW_FUNC[2/168]: 0x55f2f0c000d0 in <hyperreal::rational::arithmetic::Rational>::pow_up_u64 /home/tim/Documents/GitHub/workspace/hyperreal/src/rational/arithmetic/squares_powers.rs:458
+#9	NEW    cov: 2957 ft: 3086 corp: 2/3b lim: 4 exec/s: 0 rss: 48Mb L: 2/2 MS: 1 CopyPart-
+#14	NEW    cov: 2962 ft: 3120 corp: 3/5b lim: 4 exec/s: 0 rss: 50Mb L: 2/2 MS: 5 CopyPart-ChangeBit-ShuffleBytes-ChangeBit-CrossOver-
+	NEW_FUNC[1/8]: 0x55f2f0ceaac0 in num_bigint::biguint::shift::biguint_shr::<usize> /home/tim/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/num-bigint-0.4.6/src/biguint/shift.rs:54
+	NEW_FUNC[2/8]: 0x55f2f0cff4b0 in <hyperreal::rational::arithmetic::Rational>::divide_by_power_of_two /home/tim/Documents/GitHub/workspace/hyperreal/src/rational/arithmetic/queries_conversion.rs:218
+#16	NEW    cov: 3043 ft: 3371 corp: 4/8b lim: 4 exec/s: 0 rss: 52Mb L: 3/3 MS: 1 InsertByte-
+	NEW_FUNC[1/23]: 0x55f2f0cbae40 in <std::sys::thread_local::native::lazy::Storage<hyperreal::real::arithmetic::Real, ()>>::get_or_init_slow::<hyperreal::real::arithmetic::constants::LN10::__rust_std_internal_init_fn> /rustc/ad3a598ca4bc7c68bcbbce3e0d3be9a7618df190/library/std/src/sys/thread_local/native/lazy.rs:69
+	NEW_FUNC[2/23]: 0x55f2f0cc0c10 in <hyperreal::real::arithmetic::Real>::make_computable::<<hyperreal::computable::node::Computable>::acosh_direct_deferred> /home/tim/Documents/GitHub/workspace/hyperreal/src/real/arithmetic/inversion.rs:92
+==131==LeakSanitizer has encountered a fatal error.
+==131==HINT: For debugging, try setting environment variable LSAN_OPTIONS=verbosity=1:log_threads=1
+==131==HINT: LeakSanitizer does not work under ptrace (strace, gdb, etc)
+MS: 2 InsertByte-ChangeByte-; base unit: adc83b19e793491b1c6ea0fd8b46cd9f32e592fc
+
+
+artifact_prefix='/tmp/hyperlattice-native-scalar-fuzz.nvP94n/'; Test unit written to /tmp/hyperlattice-native-scalar-fuzz.nvP94n/crash-da39a3ee5e6b4b0d3255bfef95601890afd80709
+Base64: 
+────────────────────────────────────────────────────────────────────────────────
+
+Error: Fuzz target exited with exit status: 1

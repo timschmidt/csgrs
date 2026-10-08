@@ -1,0 +1,8 @@
+{
+  "parent": "2e13ca8308747e25728af3c35ae35f39609418e3",
+  "paths": {
+    "src/bezier_offset.rs": "d92282acea7582a54828b3d7eac96e84f492f5d2cf5a5cf25e3a87aa226912d1"
+  },
+  "qualified_manifest": "shared-source-bounds-20260924-v2-sources.json",
+  "all_owned_processes_reaped": true
+}

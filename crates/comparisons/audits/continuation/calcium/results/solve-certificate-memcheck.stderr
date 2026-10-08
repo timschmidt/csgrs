@@ -1,0 +1,14 @@
+==2688935== Memcheck, a memory error detector
+==2688935== Copyright (C) 2002-2026, and GNU GPL'd, by Julian Seward et al.
+==2688935== Using Valgrind-3.27.1 and LibVEX; rerun with -h for copyright info
+==2688935== Command: /tmp/calcium-charpoly-solves.lbZlN8/flint-solve-certificate
+==2688935== 
+==2688935== 
+==2688935== HEAP SUMMARY:
+==2688935==     in use at exit: 0 bytes in 0 blocks
+==2688935==   total heap usage: 2,499,970 allocs, 2,499,970 frees, 70,612,552 bytes allocated
+==2688935== 
+==2688935== All heap blocks were freed -- no leaks are possible
+==2688935== 
+==2688935== For lists of detected and suppressed errors, rerun with: -s
+==2688935== ERROR SUMMARY: 0 errors from 0 contexts (suppressed: 0 from 0)

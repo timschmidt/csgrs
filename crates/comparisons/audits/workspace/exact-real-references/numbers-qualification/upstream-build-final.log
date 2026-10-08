@@ -1,0 +1,6 @@
+[1 of 6] Compiling Data.Number.FixedFunctions ( exact-real-references/numbers/Data/Number/FixedFunctions.hs, .audit-numbers.rjcbha/upstream/Data/Number/FixedFunctions.o )
+[2 of 6] Compiling Data.Number.Fixed ( .audit-numbers.rjcbha/compat/Data/Number/Fixed.hs, .audit-numbers.rjcbha/upstream/Data/Number/Fixed.o )
+[3 of 6] Compiling Data.Number.BigFloat ( exact-real-references/numbers/Data/Number/BigFloat.hs, .audit-numbers.rjcbha/upstream/Data/Number/BigFloat.o )
+[4 of 6] Compiling Test.Data.Number.BigFloat ( exact-real-references/numbers/Test/Data/Number/BigFloat.hs, .audit-numbers.rjcbha/upstream/Test/Data/Number/BigFloat.o )
+[5 of 6] Compiling Main             ( exact-real-references/numbers/TestSuite.hs, .audit-numbers.rjcbha/upstream/Main.o )
+[6 of 6] Linking .audit-numbers.rjcbha/upstream-tests

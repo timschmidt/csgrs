@@ -1,0 +1,57 @@
+{
+  "source_manifest": "restricted-fiber-reoffset-20260927-v473-sources.json",
+  "source_directory": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/source-archives/restricted-fiber-reoffset-20260927-v473",
+  "cases": [
+    {
+      "binary": "restricted-fiber-reoffset-20260927-v473-hypercurve_curve_region_promotion",
+      "name": "strict_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions",
+      "returncode": 0,
+      "log": "restricted-fiber-reoffset-20260927-v473-case-000.log",
+      "elapsed_seconds": 114.96316229505464
+    },
+    {
+      "binary": "restricted-fiber-reoffset-20260927-v473-hypercurve_curve_region_promotion",
+      "name": "approximate_512_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions",
+      "returncode": 0,
+      "log": "restricted-fiber-reoffset-20260927-v473-case-001.log",
+      "elapsed_seconds": 114.81285604694858
+    }
+  ],
+  "builds": [
+    {
+      "crate": "hypercurve",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "test",
+        "--test",
+        "hypercurve_curve_region_promotion",
+        "--release",
+        "--all-features",
+        "--no-run",
+        "--message-format=json",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "log": "restricted-fiber-reoffset-20260927-v473-hypercurve_curve_region_promotion-build.log",
+      "elapsed_seconds": 83.87870045285672,
+      "binary": {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/restricted-fiber-reoffset-20260927-v473-hypercurve_curve_region_promotion",
+        "sha256": "ea964a3e10d2d71bb067b096585e4ad7ab6018fd7d4d3f9aa26728386799f191"
+      }
+    }
+  ],
+  "trial": {
+    "hypercurve/src/bezier_offset.rs": "89938aeb29fa2f7079772250027701c70459e2c3d1f9765d26bad43c3cfebd25"
+  },
+  "all_processes_reaped": true,
+  "checks": [],
+  "qualification_scope": "Both original complete algebraic-fillet re-offset compositions using the captured-box restriction repair; production unchanged",
+  "expected_cases": {
+    "hypercurve_curve_region_promotion": [
+      "strict_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions",
+      "approximate_512_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions"
+    ]
+  },
+  "qualification_complete": true
+}

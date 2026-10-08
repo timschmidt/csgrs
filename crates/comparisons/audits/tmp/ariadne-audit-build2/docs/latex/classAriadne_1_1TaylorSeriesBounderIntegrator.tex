@@ -1,0 +1,61 @@
+\doxysubsection{Taylor\+Series\+Bounder\+Integrator Class Reference}
+\hypertarget{classAriadne_1_1TaylorSeriesBounderIntegrator}{}\label{classAriadne_1_1TaylorSeriesBounderIntegrator}\index{TaylorSeriesBounderIntegrator@{TaylorSeriesBounderIntegrator}}
+
+
+{\ttfamily \#include $<$integrator.\+hpp$>$}
+
+
+
+\doxysubsubsection{Description}
+An integrator which computes the Taylor series of the flow function with remainder term. Inheritance diagram for Taylor\+Series\+Bounder\+Integrator\+:\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[height=2.000000cm]{classAriadne_1_1TaylorSeriesBounderIntegrator}
+\end{center}
+\end{figure}
+\doxysubsubsubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1TaylorSeriesBounderIntegrator_a0e34cdea14d87c824c0418da65f48eec}\label{classAriadne_1_1TaylorSeriesBounderIntegrator_a0e34cdea14d87c824c0418da65f48eec} 
+{\bfseries Taylor\+Series\+Bounder\+Integrator} (Step\+Maximum\+Error err, Order \mbox{\hyperlink{classAriadne_1_1TaylorSeriesIntegrator_ac0f431588b222e9a829343989537d58e}{order}})
+\begin{DoxyCompactList}\small\item\em Constructor. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1TaylorSeriesBounderIntegrator_a87254396762ec24cdf457485f07fe749}\label{classAriadne_1_1TaylorSeriesBounderIntegrator_a87254396762ec24cdf457485f07fe749} 
+{\bfseries Taylor\+Series\+Bounder\+Integrator} (Step\+Maximum\+Error err, \mbox{\hyperlink{classAriadne_1_1Sweeper}{Sweeper}}$<$ \mbox{\hyperlink{namespaceAriadne_af915b9f1459c9691328efa71c6f39c6e}{Float\+DP}} $>$ const \&\mbox{\hyperlink{classAriadne_1_1TaylorSeriesIntegrator_ad7a61d6da9e803b1f931cbd7e6cb2f3c}{sweeper}}, Lipschitz\+Tolerance lip, Order \mbox{\hyperlink{classAriadne_1_1TaylorSeriesIntegrator_ac0f431588b222e9a829343989537d58e}{order}})
+\begin{DoxyCompactList}\small\item\em Constructor. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1TaylorSeriesBounderIntegrator_a6dabd85722968d23a3f3ab7559c45361}\label{classAriadne_1_1TaylorSeriesBounderIntegrator_a6dabd85722968d23a3f3ab7559c45361} 
+virtual \mbox{\hyperlink{classAriadne_1_1TaylorSeriesBounderIntegrator}{Taylor\+Series\+Bounder\+Integrator}} \texorpdfstring{$\ast$}{*} {\bfseries clone} () const
+\begin{DoxyCompactList}\small\item\em Make a dynamically-\/allocated copy. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1TaylorSeriesBounderIntegrator_a459bcc3168b9961157fc01ed5023ebc1}\label{classAriadne_1_1TaylorSeriesBounderIntegrator_a459bcc3168b9961157fc01ed5023ebc1} 
+virtual \mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} {\bfseries \+\_\+write} (\mbox{\hyperlink{namespaceAriadne_acbb98ddc4385af4599070e65a1a47ec1}{Output\+Stream}} \&os) const
+\begin{DoxyCompactList}\small\item\em Write to an output stream. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1TaylorSeriesBounderIntegrator_a3d0dd666d91805d28b53e15dd1d983e2}\label{classAriadne_1_1TaylorSeriesBounderIntegrator_a3d0dd666d91805d28b53e15dd1d983e2} 
+virtual \mbox{\hyperlink{classAriadne_1_1FlowStepModelType}{Flow\+Step\+Model\+Type}} {\bfseries flow\+\_\+step} (const Validated\+Vector\+Multivariate\+Function \&vector\+\_\+field, const \mbox{\hyperlink{group__FunctionModule_gafdd31b4d01081cd09aad2ce11117f867}{Exact\+Box\+Type}} \&state\+\_\+domain, const \mbox{\hyperlink{classAriadne_1_1Suggestion}{Suggestion}}$<$ \mbox{\hyperlink{group__DifferentialEquationSubModule_ga6f1c6f216a042c31906593cafeb126fa}{Step\+Size\+Type}} $>$ \&suggested\+\_\+time\+\_\+step) const
+\begin{DoxyCompactList}\small\item\em Compute a validated version $\hat{\phi}$ of the flow $\phi(x,t)$ satisfying $\dt{\phi}(x,t)=f(\phi(x,t))$ for $x\in D$ and $t\in[0,h]$ where $h$ may differ (typically be smaller) than the suggested value $h_\mathrm{sug}$. Returns\+: A validated version $\hat{\phi}$ of the flow over a short step represented as a single function over a box. ~\newline
+ Arguments\+: $f$ is the {\itshape vector\+\_\+field}, $D$ is the {\itshape state\+\_\+domain}, and $h_\mathrm{sug}$ is the {\itshape suggested\+\_\+time\+\_\+step}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1TaylorSeriesBounderIntegrator_a22f69b3193e081c9350e9b51e7c87796}\label{classAriadne_1_1TaylorSeriesBounderIntegrator_a22f69b3193e081c9350e9b51e7c87796} 
+virtual \mbox{\hyperlink{classAriadne_1_1FlowStepModelType}{Flow\+Step\+Model\+Type}} {\bfseries flow\+\_\+step} (const Validated\+Vector\+Multivariate\+Function \&vector\+\_\+field, const \mbox{\hyperlink{group__FunctionModule_gafdd31b4d01081cd09aad2ce11117f867}{Exact\+Box\+Type}} \&state\+\_\+domain, const \mbox{\hyperlink{group__DifferentialEquationSubModule_ga6f1c6f216a042c31906593cafeb126fa}{Step\+Size\+Type}} \&time\+\_\+step, const \mbox{\hyperlink{group__FunctionModule_gadb510bd9aa076e5ae44245b498901ca6}{Upper\+Box\+Type}} \&bounding\+\_\+box) const
+\begin{DoxyCompactList}\small\item\em Solve $\dt{\phi}(x,t)=f(\phi(x,t))$ for $x\in D$ and $t\in[0,h]$, assuming that the flow remains in $B$. If the flow does not remain in $B$, then $\hat{\phi}(x,t)$ may not be a bound for $\phi(x,t)$ if $\exists \tau\in[0,t],\ \phi(x,\tau)\not\in B$. If $(h,B)$ have been computed using the flow\+\_\+bounds() method, then the flow is guarenteed to be correct for all $x\in D$ and $t\in[0,h]$. ~\newline
+ Returns\+: A validated version $\hat{\phi}$ of the flow over a short step represented as a single function over a box. ~\newline
+ Arguments\+: $f$ is the {\itshape vector\+\_\+field}, $D$ is the {\itshape state\+\_\+domain}, $h$ is the {\itshape time\+\_\+step}, and $B$ is the {\itshape state\+\_\+bounding\+\_\+box}. ~\newline
+ Throws\+: A \doxylink{structAriadne_1_1FlowTimeStepException}{Flow\+Time\+Step\+Exception} if the flow cannot be computed sufficiently accurately for the given time step. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1TaylorSeriesBounderIntegrator_a3d2647edf270f73f6cf19b1d1fc713b4}\label{classAriadne_1_1TaylorSeriesBounderIntegrator_a3d2647edf270f73f6cf19b1d1fc713b4} 
+virtual \mbox{\hyperlink{classAriadne_1_1FlowStepModelType}{Flow\+Step\+Model\+Type}} {\bfseries flow\+\_\+step} (const Validated\+Vector\+Multivariate\+Function \&differential\+\_\+equation, const \mbox{\hyperlink{group__FunctionModule_gafdd31b4d01081cd09aad2ce11117f867}{Exact\+Box\+Type}} \&state\+\_\+domain, const \mbox{\hyperlink{classAriadne_1_1Interval}{Interval}}$<$ \mbox{\hyperlink{group__DifferentialEquationSubModule_ga6f1c6f216a042c31906593cafeb126fa}{Step\+Size\+Type}} $>$ \&time\+\_\+domain, const \mbox{\hyperlink{group__FunctionModule_gafdd31b4d01081cd09aad2ce11117f867}{Exact\+Box\+Type}} \&parameter\+\_\+domain, const \mbox{\hyperlink{group__FunctionModule_gadb510bd9aa076e5ae44245b498901ca6}{Upper\+Box\+Type}} \&bounding\+\_\+box) const
+\begin{DoxyCompactList}\small\item\em Compute the flow of $\dt{x}=f(x,t,a)$ starting in $D$ over time interval $T$ over parameter domain $A$, assuming the flow remains in $B$. ~\newline
+ Arguments\+: $f$ is the {\itshape differential\+\_\+equation}, $D$ is the {\itshape state\+\_\+domain}, $T$ is the {\itshape time\+\_\+domain}, $A$ is the {\itshape parameter\+\_\+domain} and $B$ is the {\itshape maximum\+\_\+time\+\_\+step}. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxyparagraph*{Public Member Functions inherited from \mbox{\hyperlink{classAriadne_1_1TaylorSeriesIntegrator}{Taylor\+Series\+Integrator}}}
+\begin{DoxyCompactItemize}
+\item 
+{\bfseries Taylor\+Series\+Integrator} (Step\+Maximum\+Error err, Order \mbox{\hyperlink{classAriadne_1_1TaylorSeriesIntegrator_ac0f431588b222e9a829343989537d58e}{order}})
+\begin{DoxyCompactList}\small\item\em Constructor. \end{DoxyCompactList}\item 
+{\bfseries Taylor\+Series\+Integrator} (\mbox{\hyperlink{classAriadne_1_1Sweeper}{Sweeper}}$<$ \mbox{\hyperlink{namespaceAriadne_af915b9f1459c9691328efa71c6f39c6e}{Float\+DP}} $>$ const \&\mbox{\hyperlink{classAriadne_1_1TaylorSeriesIntegrator_ad7a61d6da9e803b1f931cbd7e6cb2f3c}{sweeper}}, Lipschitz\+Tolerance lip, Order \mbox{\hyperlink{classAriadne_1_1TaylorSeriesIntegrator_ac0f431588b222e9a829343989537d58e}{order}})
+\begin{DoxyCompactList}\small\item\em Constructor. \end{DoxyCompactList}\item 
+\mbox{\hyperlink{namespaceAriadne_a80311bc831cfc870fd65158180330a77}{Degree\+Type}} {\bfseries order} () const
+\begin{DoxyCompactList}\small\item\em The order of the method in space and time. \end{DoxyCompactList}\item 
+\mbox{\hyperlink{classAriadne_1_1Sweeper}{Sweeper}}$<$ \mbox{\hyperlink{namespaceAriadne_af915b9f1459c9691328efa71c6f39c6e}{Float\+DP}} $>$ const \& {\bfseries sweeper} () const
+\begin{DoxyCompactList}\small\item\em \doxylink{classAriadne_1_1Set}{Set} the sweep threshold of the Taylor model. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+The documentation for this class was generated from the following files\+:\begin{DoxyCompactItemize}
+\item 
+source/solvers/\mbox{\hyperlink{integrator_8hpp}{integrator.\+hpp}}\item 
+source/solvers/integrator.\+cpp\end{DoxyCompactItemize}

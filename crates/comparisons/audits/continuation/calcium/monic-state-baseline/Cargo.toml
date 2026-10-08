@@ -1,0 +1,14 @@
+[package]
+name = "calcium-monic-state-baseline"
+version = "0.1.0"
+edition = "2024"
+publish = false
+[workspace]
+[dependencies]
+hyperreal = { path = "../polynomial-facts-trial/hyperreal", features = ["serde"] }
+hyperlimit = { path = "../polynomial-facts-trial/hyperlimit" }
+hypersolve = { path = "../polynomial-facts-trial/hypersolve" }
+serde_json = "1.0.149"
+[[bin]]
+name = "calcium-monic-state-baseline"
+path = "../monic-state-probe.rs"

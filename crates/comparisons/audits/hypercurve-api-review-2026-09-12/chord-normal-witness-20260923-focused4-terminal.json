@@ -1,0 +1,15 @@
+{
+  "cases": [
+    {
+      "name": "bezier_offset::conversion_tests::chord_normal_recursive_frame_retains_center_and_oriented_unit_normal",
+      "returncode": 101,
+      "passed": false,
+      "limit_seconds": 75,
+      "elapsed_seconds": 0.19919199601281434,
+      "log": "chord-normal-witness-20260923-focused4-case-0.log"
+    }
+  ],
+  "binary_sha256": "11e54dc5f90d14ce5faca029c98ed2f596df96120bfcfc33d3a6c2ef751f3f51",
+  "all_sources_unchanged": true,
+  "all_processes_reaped": true
+}

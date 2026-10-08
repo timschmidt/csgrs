@@ -1,0 +1,260 @@
+{
+  "schema": 1,
+  "captured_on": "2026-08-04",
+  "checkpoint": "retained-rational-circle-corner-carriers",
+  "source_revision": "9b1ff393342b9ce0d091b96c9149427836c39faf",
+  "implementation_revision": "74382ae28ac9b9ed62475e08bcac4c894cc96830",
+  "carrier_revision": "eb8aa8cc8d6581a8c238aad31859f618112c2336",
+  "benchmark_revision": "3f1cea54247e7d8efd49902be1538290b442bbb47",
+  "policy_test_revision": "9b1ff393342b9ce0d091b96c9149427836c39faf",
+  "native_arc_control_revision": "435aaad7bed2e689c30e70fc908074cc96facc05",
+  "immediate_pre_capability_revision": "06607f03e93555cd91dac77df8d784a0d935f613",
+  "dependency_snapshot": {
+    "hyperreal": "3582c1e6061c8ae2aeca3e3d7f570fc3bc55eaf4",
+    "hyperlattice": "a475bb752c1e0fb0cfdb80f4db74a56caa6962c0",
+    "hyperlimit": "76281a340160f30ab86aa1f59b0fff4762d51dea",
+    "hypersolve": "c99eeb6007dfaface1240b212e21e544893494aa",
+    "hypertri": "de12f48ef4ffb3c655838fdcf024879da8c12e60",
+    "hyperbrep": "6336697cd124ef6ef8384166b1f90ef2fceb6663",
+    "hypermesh": "503646e41d8cadcaa5a3d7aba5c8e8d5fcaf7071",
+    "hypermesh_modified_by_checkpoint": false,
+    "hypermesh_note": "snapshot only; Hypermesh was under concurrent work and remained outside this checkpoint"
+  },
+  "semantic_evidence": {
+    "authoritative_chamfer_solver": "solve_exact_chamfer_corner",
+    "authoritative_fillet_solver": "solve_exact_fillet_corner",
+    "new_exact_carriers": [
+      "RationalQuadraticBezier2 whose retained projective conic is circular",
+      "degree-elevated RationalBezier2 whose retained projective conic is circular"
+    ],
+    "carrier_collapse": "recognized rational circular carriers enter the existing native line/circle solver without geometric approximation",
+    "curve_path_materialization": "source-family rational curves are retained and trimmed with exact recovered source parameters",
+    "curve_region_materialization": "certified contacts are canonicalized to rational-quadratic conic boundary spans",
+    "trim_only": "implemented for chamfer and fillet",
+    "trim_or_extend": "typed Unsupported for retained rational circles until projective extension semantics are authoritative",
+    "noncircular_conics": "typed Unsupported and never silently approximated",
+    "zero_design_values": "zero radius and double-zero setback retain canonical ZeroDesignValue classification before extension routing",
+    "carrier_layout_bytes_on_64_bit": 16,
+    "native_hot_path_carrier_allocation": false,
+    "retained_circle_storage": "boxed only on the retained-rational-circle route",
+    "source_parameter_recovery": "policy-aware shared rational evaluation cache plus retained projective-conic inverse",
+    "strict_policy": "all recognition, incidence, parameter, trim, equality, and degeneracy predicates remain exact-only; unresolved predicates return typed blockers",
+    "approximate_512_policy": "the same exact proof graph runs first and only Hyperlimit's shared terminal may consume a 512-bit equality decision",
+    "approximate_terminal_regression": "an algebraically zero but expression-undecidable conic perturbation blocks under STRICT and completes with Approximate512Consumed under APPROXIMATE_512",
+    "returned_geometry_remains_hyperreal_exact": true,
+    "compatibility_shim_added": false
+  },
+  "historical_behavior": {
+    "at_revision": "06607f03e93555cd91dac77df8d784a0d935f613",
+    "rational_quadratic_circle_corner_operations": "Unsupported",
+    "degree_elevated_rational_circle_corner_operations": "Unsupported"
+  },
+  "mathematical_paths_covered": [
+    "line/rational-quadratic-circle and reverse ordering",
+    "rational-quadratic-circle/rational-quadratic-circle",
+    "line/degree-five-retained-circle and reverse ordering",
+    "retained source-family CurvePath trimming",
+    "canonical rational-quadratic CurveRegion reconstruction",
+    "chamfer and radius fillet",
+    "clockwise and counterclockwise circular supports inherited from the native solver",
+    "unique, multiple, no-solution, degenerate, outside-domain, and policy-blocked outcomes inherited from the native solver",
+    "STRICT and APPROXIMATE_512 execution through one proof graph",
+    "actual 512-bit approximate terminal consumption"
+  ],
+  "verification": {
+    "cargo_test_all_features_lib_at_implementation_revision": "445 passed",
+    "cargo_test_default_lib_at_implementation_revision": "441 passed",
+    "cargo_test_no_default_features_lib_at_implementation_revision": "320 passed",
+    "cargo_test_all_features_hypercurve_curve": "30 passed",
+    "cargo_test_no_default_features_hypercurve_curve": "25 passed",
+    "cargo_test_all_features_hypercurve_curve_region_promotion_at_implementation_revision": "48 passed",
+    "cargo_test_no_default_features_hypercurve_curve_region_promotion_at_implementation_revision": "45 passed",
+    "cargo_test_all_features_curve_intersection_at_implementation_revision": "29 passed",
+    "cargo_test_all_features_curve_region_boolean_at_implementation_revision": "29 passed",
+    "cargo_test_all_features_rational_bezier_at_implementation_revision": "48 passed",
+    "cargo_clippy_all_features_all_targets_no_deps_deny_warnings": "Hypercurve pass; external Hypertri emitted its pre-existing ExactKernel::sub dead-code warning",
+    "cargo_fmt_all_check": "pass after formatting the policy regression",
+    "git_diff_check": "pass",
+    "hypercurve_worktree_before_checkpoint_file": "clean"
+  },
+  "benchmark_method": {
+    "cpu": 11,
+    "iterations_per_repeat": 50000,
+    "repeats": 3,
+    "selector": "HYPERCURVE_EDIT_BENCH=retained-circle-corner",
+    "counter_command": "taskset -c 11 perf stat -r 3 -x, -e instructions,branches env HYPERCURVE_EDIT_BENCH=retained-circle-corner HYPERCURVE_EDIT_CORNER_LANE=<lane> HYPERCURVE_EDIT_ITERATIONS=50000 <editing-binary>",
+    "primary_metric": "retired instructions",
+    "wall_time_note": "wall samples are contextual and include host-load noise; deterministic work counters are the acceptance metric",
+    "benchmark_executable": "target/release/deps/editing-1429e5261074e42b",
+    "benchmark_executable_sha256": "282ba02e0d6d610495ff2d4448cfc64e6c0b0c29454c05478f51f7011c452a13",
+    "benchmark_source_sha256": "77c5de7aed15d742b3fad3c89d588dc23167961a1a3b6be15886c706b0e24918",
+    "artifact_build_revision": "74382ae28ac9b9ed62475e08bcac4c894cc96830",
+    "artifact_note": "the later source revision adds only an integration test and does not alter the measured library or benchmark"
+  },
+  "current_performance": {
+    "curve_path_rational_quadratic_circle_design_chamfer": {
+      "instructions": 59926196785,
+      "instructions_per_operation": 1198523.93570,
+      "branches": 12221923637,
+      "branches_per_operation": 244438.47274,
+      "wall_us_samples": [135.948, 138.489, 138.288]
+    },
+    "curve_path_rational_quadratic_circle_design_fillet": {
+      "instructions": 37349871544,
+      "instructions_per_operation": 746997.43088,
+      "branches": 8025588472,
+      "branches_per_operation": 160511.76944,
+      "wall_us_samples": [91.940, 92.197, 91.446]
+    },
+    "curve_path_degree5_rational_circle_design_chamfer": {
+      "instructions": 78670208421,
+      "instructions_per_operation": 1573404.16842,
+      "branches": 16096013954,
+      "branches_per_operation": 321920.27908,
+      "wall_us_samples": [204.289, 174.800, 174.377],
+      "wall_time_note": "first repeat includes visible host noise"
+    },
+    "curve_path_degree5_rational_circle_design_fillet": {
+      "instructions": 64278597280,
+      "instructions_per_operation": 1285571.94560,
+      "branches": 13649934348,
+      "branches_per_operation": 272998.68696,
+      "wall_us_samples": [140.683, 140.425, 142.541]
+    }
+  },
+  "native_hot_path_regression_vs_435aaad": {
+    "curve_path_line_arc_design_fillet": {
+      "instructions": 25596694334,
+      "branches": 5403774368,
+      "instruction_change_percent": 0.044643,
+      "branch_change_percent": 0.037418
+    },
+    "curve_path_arc_arc_design_fillet": {
+      "instructions": 64952105656,
+      "branches": 13610245612,
+      "instruction_change_percent": 0.027106,
+      "branch_change_percent": 0.021073
+    },
+    "curve_region_line_arc_design_fillet": {
+      "instructions": 35956013290,
+      "branches": 7887406679,
+      "instruction_change_percent": 0.007635,
+      "branch_change_percent": 0.005115
+    },
+    "curve_region_arc_arc_design_fillet": {
+      "instructions": 61710830477,
+      "branches": 13400373839,
+      "instruction_change_percent": 0.016780,
+      "branch_change_percent": 0.010002,
+      "wall_time_note": "host load affected wall samples; counters remained stable"
+    },
+    "interpretation": "the native line/circle fast path is effectively instruction- and branch-neutral"
+  },
+  "rational_quadratic_fillet_vs_native_line_arc": {
+    "instruction_change_percent": 45.916778,
+    "branch_change_percent": 48.518201,
+    "interpretation": "the retained carrier pays for exact circle recognition, projective source-parameter recovery, and source-family reconstruction; no competitor lane provides matching guarantees"
+  },
+  "retained_projective_inverse_optimization": {
+    "rational_quadratic_chamfer_instruction_change_percent": -1.182715,
+    "rational_quadratic_chamfer_branch_change_percent": -1.200161,
+    "rational_quadratic_fillet_instruction_change_percent": -1.247832,
+    "rational_quadratic_fillet_branch_change_percent": -1.459889,
+    "degree5_chamfer_instruction_change_percent": -1.041498,
+    "degree5_chamfer_branch_change_percent": -1.021536,
+    "degree5_fillet_instruction_change_percent": -3.533196,
+    "degree5_fillet_branch_change_percent": -3.368851,
+    "semantic_guard": "the input point is already certified on the retained circular support; general rational curves retain their bounds proof"
+  },
+  "heaptrack_1000_operations": {
+    "rational_quadratic_chamfer": {
+      "allocation_calls": 2211528,
+      "temporary_allocations": 198038,
+      "peak_heap_kib": 114.67
+    },
+    "rational_quadratic_fillet": {
+      "allocation_calls": 1154549,
+      "temporary_allocations": 61020,
+      "peak_heap_kib": 117.61
+    },
+    "degree5_chamfer": {
+      "allocation_calls": 2397952,
+      "temporary_allocations": 141038,
+      "peak_heap_kib": 183.16
+    },
+    "degree5_fillet": {
+      "allocation_calls": 1293978,
+      "temporary_allocations": 9007,
+      "peak_heap_kib": 182.04
+    },
+    "matched_native_line_arc_fillet": {
+      "allocation_calls": 917723,
+      "temporary_allocations": 72330,
+      "peak_heap_kib": 138.08
+    },
+    "rational_quadratic_fillet_vs_native": {
+      "allocation_call_change_percent": 25.805826,
+      "temporary_allocation_change_percent": -15.636665,
+      "peak_heap_change_percent": -14.824739
+    },
+    "projective_inverse_optimization": {
+      "rational_quadratic_chamfer_allocation_change_percent": -1.250263,
+      "rational_quadratic_fillet_allocation_change_percent": -1.449220,
+      "degree5_chamfer_allocation_change_percent": -1.154186,
+      "degree5_fillet_allocation_change_percent": -7.442295,
+      "degree5_fillet_temporary_change_percent": -68.956366,
+      "degree5_fillet_peak_change_percent": -0.595206
+    }
+  },
+  "representative_linked_size": {
+    "benchmark": "curve_region_boolean_batch",
+    "baseline_revision": "435aaad7bed2e689c30e70fc908074cc96facc05",
+    "all_features": {
+      "artifact": "target/release/deps/curve_region_boolean_batch-873fdf750dbe978a",
+      "artifact_sha256": "6e7ddc986532b1dc2b35034f1d59cf5b275cb2ad688be5a1d32aecea81053651",
+      "candidate_text_bytes": 4992231,
+      "text_change_bytes": 736,
+      "text_change_percent": 0.014745,
+      "candidate_file_bytes": 8691312,
+      "file_change_bytes": 14296,
+      "file_change_percent": 0.164757
+    },
+    "no_default_features": {
+      "artifact": "target/release/deps/curve_region_boolean_batch-ec1852ae82ff67f7",
+      "artifact_sha256": "3a11b8813a2ee22ca2e4567fab0b7966d0a61983a8ea80ce49e36a154a9586a5",
+      "candidate_text_bytes": 4542071,
+      "text_change_bytes": -2624,
+      "text_change_percent": -0.057738,
+      "candidate_file_bytes": 7958544,
+      "file_change_bytes": -1584,
+      "file_change_percent": -0.019899
+    }
+  },
+  "static_callgraph": {
+    "command": "tools/hyper-callgraph/target/release/hyper-callgraph --root hypercurve --out-dir hypercurve/target/callgraph-hypercurve-retained-circle-9b1ff39 --crate-name hypercurve --include-tests --format json --per-library",
+    "artifact": "target/callgraph-hypercurve-retained-circle-9b1ff39/callgraph.json",
+    "nodes": 24374,
+    "edges": 46362,
+    "curve_path_route": "CurvePath chamfer/fillet -> exact_corner_carrier -> solve_exact_chamfer_corner/solve_exact_fillet_corner",
+    "curve_region_route": "CurveRegion chamfer/fillet -> the same imported shared solver authority",
+    "recognition_route": "exact_corner_carrier -> rational-quadratic/rational-bezier circular recognizer",
+    "parameter_route": "retained source parameter -> shared rational evaluators -> retained-circle projective inverse",
+    "parallel_conic_corner_engine_present": false
+  },
+  "competitive_context": {
+    "command": "taskset -c 11 env HYPERCURVE_COMPARE_SAMPLES=11 HYPERCURVE_COMPARE_SAMPLE_MS=100 HYPERCURVE_COMPARE_GROUP=line_arc_offset/capsule_inward target/release/deps/comparative-68819996ab3fdf67",
+    "exact_line_arc_capsule_offset_hypercurve_median_ns": 19167.7,
+    "floating_polyline_capsule_offset_cavalier_contours_median_ns": 912.8,
+    "hypercurve_to_cavalier_ratio": 20.998795,
+    "scope_note": "contextual round-corner/offset sentinel only; the competitor does not preserve canonical-Real exact rational-conic recognition, source-family trimming, or STRICT/APPROXIMATE_512 semantics"
+  },
+  "remaining_scope": [
+    "noncircular polynomial, rational, spline, and NURBS automatic corners through analytic parallel intersections and Hypersolve",
+    "projective extension semantics for retained conics",
+    "complete higher-carrier degeneracy and branch matrices under STRICT and APPROXIMATE_512",
+    "allocation reduction only when cycles and linked size do not regress materially",
+    "single authoritative CurveRegion2 offset engine",
+    "single authoritative CurveRegion2 Boolean engine and historical engine deletion",
+    "caller migration without compatibility shims"
+  ]
+}

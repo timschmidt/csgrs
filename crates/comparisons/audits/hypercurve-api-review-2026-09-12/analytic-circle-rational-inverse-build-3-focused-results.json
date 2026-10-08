@@ -1,0 +1,44 @@
+[
+  {
+    "target": "hypercurve_analytic_parallel_region",
+    "filter": "analytic_parallel_circle_tangency_retains_zero_cross_evidence",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve_analytic_parallel_region-68a34b9751e86ddf",
+      "analytic_parallel_circle_tangency_retains_zero_cross_evidence",
+      "--exact",
+      "--test-threads=1"
+    ],
+    "sha256": "cd084e352f33a47cf90f8242aeda00aad49462d179dfd3c23b12911708b3c613",
+    "returncode": 0,
+    "seconds": 0.02622880199487554,
+    "log": "analytic-circle-rational-inverse-build-3-analytic_parallel_circle_tangency_retains_zero_cross_evidence.log"
+  },
+  {
+    "target": "hypercurve_analytic_parallel_region",
+    "filter": "analytic_parallel_intersects_independently_parameterized_circles_exactly",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve_analytic_parallel_region-68a34b9751e86ddf",
+      "analytic_parallel_intersects_independently_parameterized_circles_exactly",
+      "--exact",
+      "--test-threads=1"
+    ],
+    "sha256": "cd084e352f33a47cf90f8242aeda00aad49462d179dfd3c23b12911708b3c613",
+    "returncode": 101,
+    "seconds": 0.049795646002166905,
+    "log": "analytic-circle-rational-inverse-build-3-analytic_parallel_intersects_independently_parameterized_circles_exactly.log"
+  },
+  {
+    "target": "hypercurve",
+    "filter": "bezier_offset::conversion_tests::parallel_circle_intersections_retain_exceptional_inverse_fibers",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve-6e6572a45c5b177b",
+      "bezier_offset::conversion_tests::parallel_circle_intersections_retain_exceptional_inverse_fibers",
+      "--exact",
+      "--test-threads=1"
+    ],
+    "sha256": "13a26694ca48010f7272e417aeff405bedbdf4e0d6e7206dc21f32291d3854bb",
+    "returncode": 0,
+    "seconds": 0.06486075300199445,
+    "log": "analytic-circle-rational-inverse-build-3-parallel_circle_intersections_retain_exceptional_inverse_fibers.log"
+  }
+]

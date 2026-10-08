@@ -1,0 +1,193 @@
+\doxysection{Geometric Representation }
+\hypertarget{geometry_page}{}\label{geometry_page}\index{Geometric Representation@{Geometric Representation}}
+This page describes the theory of computable Euclidean geometry. For details on how this is implemented in Ariadne, see the \doxylink{group__GeometryModule}{Geometry Module} documentation.\hypertarget{geometry_page_Introduction}{}\doxysubsection{\texorpdfstring{Introduction}{Introduction}}\label{geometry_page_Introduction}
+One of the main concerns of Ariadne is the computation of points and sets in Euclidean space. Unfortunately, the set of points in Euclidean space is uncountable (it has continuum cardinality) and so there is no way of modelling all points in Euclidean space using binary words. The set of subsets of Euclidean space is also uncountable, and has an even greater cardinality!
+
+To represent an uncountable set, we can use approximations. We take a set of elements which we model exactly, such as {\itshape Float} or {\itshape Rational} reals, which we call {\itshape denotable} elements. This denotable set may be finite or countably infinite, the former being denoted by words of a fixed length, and the latter by arbitrary length words. An {\itshape approximation} to an element is then a pair consisting of a denotable element and an {\itshape error}. Ideally, we wish to be able to approximate to arbitrary precision; this means that the set of denotable elements must be {\itshape dense} in the set of all elements. We can then represent arbitrary elements be a {\itshape convergent sequence} of approximations. In terms of a concrete representation on a computer, we can think of a such a sequence as a neverending {\itshape stream} of data.
+
+The material in this section is heavily influenced by the book "{}\+Computational Analysis"{} by Klaus Weihrauch.\hypertarget{geometry_page_state}{}\doxysubsection{\texorpdfstring{Standard representation of locally-\/compact second-\/countable Hausdorff spaces}{Standard representation of locally-\/compact second-\/countable Hausdorff spaces}}\label{geometry_page_state}
+Let $\beta=\{I_1,I_2,\ldots\}$ be a countable base of pre-\/compact sets for a locally-\/compact second-\/countable Hausdorff space $X$. A typical example is Euclidean space $\mathbb{R}^n$ with the base of open rational cuboids. We call the elements $I$ of $\beta$ {\itshape basic open sets} and their closures $\overline{I}$ {\itshape basic compact sets}. A {\itshape denotable set} is the finite union of basic sets, $A=\bigcup_{j=1}^{k} I_j$ or $A=\bigcup_{j=1}^{k} \overline{I}_j$.
+
+A {\itshape representation} of an object is a sequence of basic sets which specifies the object exactly.
+
+
+\begin{DoxyItemize}
+\item The standard representation $\rho$ of a point $x\in X$ or singleton set $\{x\}\subset X$ encodes all basic open sets $I\in\beta$ such that $x\in I$.
+\end{DoxyItemize}
+
+The standard representation of a point is equivalent to giving a monotone sequence of convergent approximations $(I_1,I_2,\ldots)$ to $x$ satisfying $\overline{I}_{j}\subset I_{j+1}^\circ$ for all $j$ and $\{x\}=\bigcap_{j=0}^{\infty} I_j$.
+
+
+\begin{DoxyItemize}
+\item The standard lower representation $\theta_<$ of an open set $U\in\mathcal{O}(X)$ encodes all basic open sets $I\in\beta$ such that $\overline{I}\subset U$.
+\item The standard lower representation $\psi_<$ of a closed set $B\in\mathcal{A}(X)$ encodes all basic open sets $I\in\beta$ such that $B\cap I\neq\emptyset$.
+\item The standard upper representation $\psi_>$ of a closed set $B\in\mathcal{A}(X)$ encodes all basic open sets $I\in\beta$ such that $B\cap \overline{I}=\emptyset$.
+\item The standard upper representation $\kappa_>$ of a compact set $C\in\mathcal{K}(X)$ encodes all basic open covers $(I_1,\ldots,I_k)\in\beta^*$ such that $C\subset\bigcup_{j=1}^{k}I_j$.
+\end{DoxyItemize}
+
+The standard representations $\theta_<$, $\psi_<$ and $\kappa_>$ correspond to the following {\itshape approximation concepts} by a sequence of denotable sets $A_n\rightarrow S$, where we have\+:
+\begin{DoxyItemize}
+\item inner-\/approximation $A_{i}\subset A_{i+1}$ and $A_n\subset U$ is equivalent to $\theta_<$ for $U\in\mathcal{O}(X)$.
+\item lower-\/approximation $A_{i}\subset N_{\epsilon_i}(A_{j})$ for $i<j$ and $A_n\subset N_{\epsilon_n}(B)$ is equivalent to $\psi_<$ for $B\in\mathcal{A}(X)$.
+\item outer-\/approximation $A_{i+1}\subset A_{i}$ and $C\subset A_n^\circ$ is equivalent to $\kappa_>$ for $C\in\mathcal{K}(X)$.
+\end{DoxyItemize}
+
+Combining lower-\/approximation and outer-\/approximation, we obtain an approximation corresponding to the standard representation $\kappa=\psi_<\vee\kappa_>$ of compact sets\+:
+\begin{DoxyItemize}
+\item effective-\/approximation $C\subset A^\circ_{n} \subset A_{n} \subset N_{\epsilon_n}(C)$ for $C\in\mathcal{K}(X)$.
+\end{DoxyItemize}\hypertarget{geometry_page_basicset}{}\doxysubsection{\texorpdfstring{Basic sets.}{Basic sets.}}\label{geometry_page_basicset}
+A Basic\+Set provides a building block for representing more complicated sets. Mathematically, a Basic\+Set type represents elements of a countable base of a topological space. More precisely, a Basic\+Set represents the {\itshape closure} of a basic set for the topology.
+
+Generic classes fulfilling the Basic\+Set concept are Box (\doxylink{classAriadne_1_1Box}{Ariadne\+::\+Box}), Polytope (\doxylink{classAriadne_1_1Polytope}{Ariadne\+::\+Polytope}), Polyhedron (\doxylink{classAriadne_1_1Polyhedron}{Ariadne\+::\+Polyhedron}), Zonotope (\doxylink{classAriadne_1_1Zonotope}{Ariadne\+::\+Zonotope}), Sphere (Ariadne\+::\+Sphere) and Ellipsoid (Ariadne\+::\+Ellipsoid). Subtypes are Simplex (Ariadne\+::\+Simplex) and Parallelotope (Ariadne\+::\+Parallelotope). At some point in the future, it is planned to support a Taylor\+Set type as a higher-\/order generalisation of Zonotope.\hypertarget{geometry_page_denotable_set}{}\doxysubsection{\texorpdfstring{Denotable Sets}{Denotable Sets}}\label{geometry_page_denotable_set}
+A Denotable\+Set implements a set as a union of basic sets. The specification of the Denotable Set concept is given by the class Ariadne\+::\+Denotable\+Set\+Concept.
+
+Generic classes fulfilling the Denotable Set concept are List\+Set$<$\+BS$>$ (\doxylink{classAriadne_1_1ListSet}{Ariadne\+::\+List\+Set}), Grid\+Cell\+List\+Set (Ariadne\+::\+Grid\+Cell\+List\+Set), Grid\+Mask\+Set (Ariadne\+::\+Grid\+Mask\+Set) and Partition\+Tree\+Set (Ariadne\+::\+Partition\+Tree\+Set).\hypertarget{geometry_page_GeometricOps}{}\doxysubsection{\texorpdfstring{Predicates and Operations on Sets}{Predicates and Operations on Sets}}\label{geometry_page_GeometricOps}
+\hypertarget{geometry_page_set_predicate}{}\doxysubsubsection{\texorpdfstring{Predicates on Sets}{Predicates on Sets}}\label{geometry_page_set_predicate}
+The fundamental geometric predicates are\+:
+\begin{DoxyItemize}
+\item contains()\+: test whether a set contains a point.
+\item disjoint()\+: test whether two sets are disjoint.
+\item subset()\+: test whether a set is a subset of another.
+\item intersects()\+: test whether two sets intersect
+\item superset()\+: Test whether the second set is a subset of the first.
+\end{DoxyItemize}
+
+All these predicates return a fuzzy logic value, since the result of the test may be impossible to determine at the given precision.\hypertarget{geometry_page_set_operations}{}\doxysubsubsection{\texorpdfstring{Operations on Sets}{Operations on Sets}}\label{geometry_page_set_operations}
+The fundamental geometric operations are\+:
+\begin{DoxyItemize}
+\item open\+\_\+intersection()\+: The intersection of the interiors of the sets.
+\item closed\+\_\+intersection()\+: The intersection of the closures of the sets.
+\item union()\+: The union of two sets. ("{}join"{} in C++ since "{}union"{} is a reserved keyword).
+\item difference()\+: The difference of the sets.
+\end{DoxyItemize}
+
+The union() and difference() functions always return denotable sets.
+
+Additionally, the following operations on basic sets of appropriate types are provided\+:
+\begin{DoxyItemize}
+\item convex\+\_\+hull()\+: The convex hull of two sets or a set of points.
+\item minkowski\+\_\+sum()\+: The pointwise sum of two subsets of Euclidean space.
+\item minkowski\+\_\+difference()\+: The pointwise difference of two subsets of Euclidean space.
+\end{DoxyItemize}\hypertarget{geometry_page_set_approximation}{}\doxysubsubsection{\texorpdfstring{Approximating Sets}{Approximating Sets}}\label{geometry_page_set_approximation}
+There are a number of ways a set $S$ can be approximated by a set $A$\+:
+\begin{DoxyItemize}
+\item lower\+\_\+approximation()\+: $A\subset N_\epsilon(S)$
+\item under\+\_\+approximation()\+: $A\subset S$
+\item inner\+\_\+approximation()\+: $\overline{A}\subset S^\circ$
+\item upper\+\_\+approximation()\+: ${\left(N_\epsilon(S^C)\right)}^C \subset A$
+\item over\+\_\+approximation()\+: $S\subset A$
+\item outer\+\_\+approximation()\+: $\overline{S}\subset A^\circ$
+\end{DoxyItemize}
+
+The approximations lower/upper, under/over and inner/outer are dual to each other. The lower/upper approximation concepts are the weakest, and inner/outer the strongest.
+
+The inner approximation is most natural for open sets, and the lower approximation is most natural for (unbounded) closed sets. For compact sets, both lower and outer approximations are natural.
+
+A set $S$ is {\itshape regular} if $S^\circ=\overline{S}^\circ$ and $\overline{S}=\overline{S^\circ}$. Both inner and under approximations are natural for regular sets, since a regular set can be considered as both open and closed.
+
+The over and under approximations are typically used for converting "{}fuzzy"{} sets (with interval data) to sets with floating-\/point data. For example, the over-\/approximation of the fuzzy rectangle $[\overline{\underline{a}}_1,\overline{\underline{b}}_1]\times[\overline{\underline{a}}_2,\overline{\underline{b}}_2]$ is the rectangle $[\underline{a}_1,\overline{b}_1]\times[\underline{a}_2,\overline{b}_2]$, and the under-\/approximation is $[\overline{a}_1,\underline{b}_1]\times[\overline{a}_2,\underline{b}_2]$.
+
+The error specification depends on the type of approximation used.
+\begin{DoxyItemize}
+\item When approximating by a Grid\+Set, the error is determined by the grid.
+\item When approximating by a Partition\+Tree\+Set, the error is determined by the partition scheme and the depth.
+\item When approximating by a List\+Set, the error is a metric error bound.
+\end{DoxyItemize}\hypertarget{geometry_page_GeometricImplementation}{}\doxysubsection{\texorpdfstring{Implementation of Geometric Types and Operations}{Implementation of Geometric Types and Operations}}\label{geometry_page_GeometricImplementation}
+The core geometric types used by Ariadne to represent are Rectangle, Zonotope, Polytope (described by generators) and Polyhedron (described by constraints). The core geometric operations are contains(\+A,p), subset(\+A,\+B) and disjoint(\+A,\+B) (equivalent to intersects(\+A,\+B) ) .\hypertarget{geometry_page_GeometricTypes}{}\doxysubsubsection{\texorpdfstring{Fundamental Geometric Types}{Fundamental Geometric Types}}\label{geometry_page_GeometricTypes}
+
+\begin{DoxyItemize}
+\item Rectangle representation\+: $l\leq x\leq u$.
+\item Zonotope representation\+: $x=c+Ge,\ -1\leq e\leq1$.
+\item Polytope representation\+: $x=Vs,\ \sum s_i=1,\ s\geq0$.
+\item Polyhedron representation\+: $Ax\leq b$.
+\end{DoxyItemize}
+
+Alternative representations for zonotopes, polytopes and polyhedron are given by taking $\hat{x}=(x,1)$.
+\begin{DoxyItemize}
+\item Zonotope representation\+: $x = \hat{G}\hat{e},\ e_0=1,\ -1\leq e\leq1$.
+\item Polytope representation\+: $\hat{x} = Rs$, $s\geq0$.
+\item Polyhedron representation\+: $C\hat{x}\geq0$.
+\end{DoxyItemize}
+
+Henceforth, we shall always assume $-1\leq e\leq1$ and $1\!\cdot\!s=1;\ s\geq0$.\hypertarget{geometry_page_conversion}{}\doxysubsubsection{\texorpdfstring{Converting between basic sets}{Converting between basic sets}}\label{geometry_page_conversion}
+A Rectangle can be directly converted to a Polytope or Polyhedron without using arithmetic. A Rectangle can be easily converted to a Zonotope, and a Zonotope to a Polytope, but these conversions require arithmetic. Conversion between a Polytope to a Polyhedron can be performed using the double description algorithm.
+
+In many cases, it is not possible to evaluate geometric predicates concerning two sets using a given real number type. For this reason, the results of a geometric predicate returns an object of type {\itshape tribool}, which may be {\itshape true}, {\itshape false} or {\itshape indeterminate} (unknown).
+
+The conversion from a Rectangle or Zonotope to a Polytope or conversion between Polytope and Polyhedron may be of exponential complexity.\hypertarget{geometry_page_contains}{}\doxysubsubsection{\texorpdfstring{Testing inclusion}{Testing inclusion}}\label{geometry_page_contains}
+
+\begin{DoxyItemize}
+\item contains(\+Rectangle,\+Point) \+: Check $l\leq x\leq u$.
+\item contains(\+Zonotope,\+Point) \+: Solve $x=c+Ge;\ -1\leq e\leq1$.
+\item contains(\+Polytope,\+Point) \+: Solve $x=Vs;\ 1\!\cdot\!s=1;\ s\geq 0$.
+\item contains(\+Polyhedron,\+Point) \+: Check $Ax\leq b$.
+\end{DoxyItemize}\hypertarget{geometry_page_Intersection}{}\doxysubsubsection{\texorpdfstring{Testing intersection/disjointness}{Testing intersection/disjointness}}\label{geometry_page_Intersection}
+
+\begin{DoxyItemize}
+\item intersects(\+Rectangle,\+Rectangle) \+: Check $l_1\leq u_2;\ l_2\leq u_1$.
+\item intersects(\+Rectangle,\+Zonotope) \+: Solve $x=c+Ge;\ l\leq x\leq u;\ -1\leq e\leq1$ or $l\leq c+Ge\leq u;\ -1\leq e\leq 1$.
+\item intersects(\+Zonotope,\+Zonotope) \+: Solve $c_1+G_1e_1 = c_2+G_2e_2;\ -1\leq e_1\leq1;\ -1\leq e_2\leq1$.
+\item intersects(\+Rectangle,\+Polytope) \+: Solve $x=Vs;\ 1\!\cdot\!s=1;\ l\leq x\leq u;\ s\geq 0$ or $l\leq Vs\leq u;\ 1\!\cdot\!s=1;\ s\leq 1$.
+\item intersects(\+Zonotope,\+Polytope) \+: Solve $c+Ge = Vx;\ \ 1\!\cdot\!s=1;\ -1\leq e\leq 1;\ s\geq0$.
+\item intersects(\+Polytope,\+Polytope) \+: Solve $V_1s_1=V_2s_2;\ 1\!\cdot\!s_1=1;\ 1\!\cdot\!s_2=1;\ \cdot s_1\geq0;\ s_2\geq0$.
+\item intersects(\+Rectangle,\+Polyhedron) \+: Solve $Ax\leq b;\ l\leq x\leq u$.
+\item intersects(\+Zonotope,\+Polyhedron) \+: Solve $Ac+AGe \leq b;\ -1\leq e\leq 1$.
+\item intersects(\+Polytope,\+Polyhedron) \+: Solve $AVs\leq b;\ 1\!\cdot\!s=1;\ s\geq0$.
+\item intersects(\+Polyhedron,\+Polyhedron) \+: Solve $A_1x\leq b_1;\ A_2x\leq b_2$.
+\end{DoxyItemize}
+
+All these problems can be solved using (a variant of) the simplex algorithm. When computing over-\/approximations of a set on a grid using disjoint(\+Rectangle R, Convex\+Set S), it may be useful to pre-\/process S to simplify computation of an initial vertex for the feasibility problem.\hypertarget{geometry_page_Subset}{}\doxysubsubsection{\texorpdfstring{Testing subset}{Testing subset}}\label{geometry_page_Subset}
+Testing whether a convex set is a subset of a polyhedron, or whether a polytope is a subset of a convex set are easy\+:
+\begin{DoxyItemize}
+\item subset(\+Convex\+Set S, Polyhedron P) \+: Check disjoint(\+S,\+H) for all complementary halfspaces H of P.
+\item subset(\+Polytope P, Convex\+Set S) \+: Check contains(\+S,v) for all vertices v of P.
+\end{DoxyItemize}
+
+Checking whether a Rectangle, Zonotope or Polytope is a subset of a Rectangle can be performed directly\+:
+\begin{DoxyItemize}
+\item subset(\+Rectangle, Rectangle) \+: Check $l_1\geq l_2\ \textrm{and}\ u_1\leq u_2$.
+\item subset(\+Zonotope, Rectangle) \+: Check $\sum_{j} |G_{ij}|\leq \min\{c_i-l_i,u_i-c_i\} \forall\,i$.
+\item subset(\+Polytope, Rectangle) \+: Check $l\leq v\leq u$ for all vertices $v$ of $P$.
+\end{DoxyItemize}
+
+The following operations cannot be performed efficiently, but can be easily implemented by testing the vertices of the Rectangle, and are provided for conformance to the Set\+Interface interface.
+\begin{DoxyItemize}
+\item subset(\+Rectangle, Zonotope)
+\item subset(\+Rectangle, Polytope)
+\end{DoxyItemize}
+
+The following operation is provided to help with checking zonotopic over-\/approximations.
+\begin{DoxyItemize}
+\item subset(\+Zonotope, Zonotope)
+\end{DoxyItemize}
+
+While a Rectangle can be directly converted to both a Polytope and a Polyhedron, the conversion to a Polytope yields $2^d$ vertices. Hence testing subset(\+Rectangle, Convex\+Set) is in general of exponential complexity, as is subset(\+Zonotope, Convex\+Set). When testing subset(\+Rectangle R, Convex\+Set S) for under-\/approximationg S on a grid, we need to check contains(\+S,v) for each grid vertex v once only, considerably reducing the amount of work.
+
+Note that for a single test of subset(\+Rectangle R, Polyhedron P), we prefer to use disjoint(R,H\textsubscript{i}), where H\textsubscript{i} denotes the complementary halfspaces of P, but for under-\/approximating a polyhedron P on a grid, we prefer to check contains(P,v\textsubscript{j}) for the grid vertices v\textsubscript{j}.\hypertarget{geometry_page_PolyhedralConversion}{}\doxysubsubsection{\texorpdfstring{Converting between a polyhedron and a polytope.}{Converting between a polyhedron and a polytope.}}\label{geometry_page_PolyhedralConversion}
+Augment the state by $\hat{x}=(x,1)$.
+
+
+\begin{DoxyItemize}
+\item Define a Polytope by generators $x=\lambda g$, given as columns of the augmented generator matrix $G\textnormal{\textquotesingle}$.
+\item Define a Polyhedron by constraints $a\cdot x\geq 0$, given as rows of the augmented constraints matric $A\textnormal{\textquotesingle}$.
+\end{DoxyItemize}
+
+Construct the {\itshape saturation matrix} by
+\begin{DoxyItemize}
+\item Generator $g$ {\itshape violates} constraint $a$ if $a\cdot g<0$,
+\item Generator $g$ {\itshape saturates} constraint $a$ if $a\cdot g=0$.
+\item Generator $g$ {\itshape satisfies} constraint $a$ if $a\cdot g=0$. Saturation matrix $S=\mathrm{sgn}(AG)$.
+\end{DoxyItemize}
+
+Generators are {\itshape adjacent} if the corresponding columns of the saturation matrix differ only in one row.\hypertarget{geometry_page_zonotope}{}\doxysubsubsection{\texorpdfstring{Zonotopic reduction methods}{Zonotopic reduction methods}}\label{geometry_page_zonotope}
+Throughout this sections, we use the supremum norm on $R^n$, and the corresponding operator norm on $\mathbb{R}^{m\times n}$.
+
+Given a zonotope $ Z=\{ c+Ae \mid ||e||\leq 1 \}\subset \mathbb{R}^n$, where $A\in \mathbb{R}^{n\times p}$, we wish to compute a zonotope $Z\textnormal{\textquotesingle} = \{ c + A\textnormal{\textquotesingle} e\textnormal{\textquotesingle} \mid ||e\textnormal{\textquotesingle}||\leq 1\}$ with fewer generators i.\+e. $A\textnormal{\textquotesingle}\in \mathbb{R}^{n\times p\textnormal{\textquotesingle}}$ with $p\textnormal{\textquotesingle}<p$. The general reduction method is to choose $ A\textnormal{\textquotesingle}$ such that $ A = A\textnormal{\textquotesingle} B$ with $||B||\leq 1$. The key to zonotopic reduction is to choose a method with good properties.
+
+A simple criterion to note is that if $\sum_{j=1}^{p} |b_{ij}|<1$ for some $i$, then we can improve the approximation by taking $D=\mathrm{diag}(d_{i})$ with $d_{i}=\sum_{j=1}^{p} |b_{ij}|$, and $B\textnormal{\textquotesingle}= D^{-1}B$ which has $b\textnormal{\textquotesingle}_{ij}=b_{ij}/\sum_{k=1}^{p} |b_{ik}|$.
+
+It is clear that if the rows of $B$ are close to a set of mutually orthogonal coordinate vectors, then the approximation is good, since the image of $B$ is close to the unit ball.
+
+An {\itshape interval zonotope} is a set of the form  $ \{ y = c + A e \mid c\in R,\ A\in\mathcal{A} \text{ and } ||e||\leq1 \}
+= R + \mathcal{A} B$. To reduce an interval zonotope, we first write $ R = \{ c + Be\mid ||e||\leq 1 \}$ and combine this in $\mathcal{A}$. To reduce $ \mathcal{A} $, write $ \mathcal{A} = A \mathcal{B} \mathcal{A} $ where $ A\in\mathcal{A}$ and $A\mathcal{B}\ni I$. Then take $ \mathcal{C} = \mathcal{B} \mathcal{A} $ and  $ || \mathcal{C} ||
+  = \sup_{i]1}^{n} \sum_{j=1}^{p} \max |\mathcal{C}_{ij}| $, where $ \max |\mathcal{C}_{ij}| = \max\{ |x| \mid x\in \mathcal{C}_{ij}$. 

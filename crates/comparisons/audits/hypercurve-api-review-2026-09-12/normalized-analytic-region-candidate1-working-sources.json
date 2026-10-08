@@ -1,0 +1,10 @@
+[
+  {
+    "file": "hypercurve/tests/hypercurve_analytic_parallel_region.rs",
+    "sha256": "608cd265a7abae771a1ece1e70beff481d4cac8831ba87c9779343de2167a461"
+  },
+  {
+    "file": "hypercurve/src/bezier_offset.rs",
+    "sha256": "3297b5740d2e63c8fc5cb8acb27121054bc160d3f233a898a0f78f5103664875"
+  }
+]

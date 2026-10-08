@@ -1,0 +1,464 @@
+[
+  {
+    "repo": "calcium",
+    "path": "qqbar/asec_pi.c",
+    "ranges": [
+      [
+        1,
+        33
+      ]
+    ],
+    "note": "Checkpoint81: Full zero guard and reciprocal-acos composition. Failure is not negative proof; p/q are not nullable here. Principal branch inherited from acos; failed outputs are not inspected."
+  },
+  {
+    "repo": "calcium",
+    "path": "qqbar/test/t-asec_pi.c",
+    "ranges": [
+      [
+        1,
+        68
+      ]
+    ],
+    "note": "Checkpoint81: Full random reciprocal forward/inverse tests, reduced fractions, exact reconstruction and principal bounds. Archived acsc progress label incorrectly says asec; cosmetic only. Source read, not newly executed."
+  },
+  {
+    "repo": "calcium",
+    "path": "qqbar/acsc_pi.c",
+    "ranges": [
+      [
+        1,
+        33
+      ]
+    ],
+    "note": "Checkpoint81: Full zero guard and reciprocal-asin composition. Failure is not negative proof; reciprocal poles are excluded and the principal asin range is inherited."
+  },
+  {
+    "repo": "calcium",
+    "path": "qqbar/test/t-acsc_pi.c",
+    "ranges": [
+      [
+        1,
+        68
+      ]
+    ],
+    "note": "Checkpoint81: Full random reciprocal forward/inverse tests, reduced fractions, exact reconstruction and principal bounds. Archived acsc progress label incorrectly says asec; cosmetic only. Source read, not newly executed."
+  },
+  {
+    "repo": "calcium",
+    "path": "qqbar/floor.c",
+    "ranges": [
+      [
+        1,
+        79
+      ]
+    ],
+    "note": "Checkpoint81: Full rational signed-division fast path, cached interval filter, magnitude-scaled refinement, half-offset integer proposal and authoritative exact real-part sign correction. Complex values use the real part. No unchecked approximate integer is accepted."
+  },
+  {
+    "repo": "calcium",
+    "path": "qqbar/test/t-floor.c",
+    "ranges": [
+      [
+        1,
+        88
+      ]
+    ],
+    "note": "Checkpoint81: Full randomized real-part integer inequalities, including complex values and large rational offsets. Source read, not newly executed."
+  },
+  {
+    "repo": "calcium",
+    "path": "qqbar/ceil.c",
+    "ranges": [
+      [
+        1,
+        79
+      ]
+    ],
+    "note": "Checkpoint81: Full dual floor architecture with negative half-offset proposal and positive exact real-part sign correction. Magnitude-aware precision avoids large-magnitude fractional uncertainty; numerical failure triggers archived abort/current throw."
+  },
+  {
+    "repo": "calcium",
+    "path": "qqbar/test/t-ceil.c",
+    "ranges": [
+      [
+        1,
+        88
+      ]
+    ],
+    "note": "Checkpoint81: Full randomized real-part integer inequalities, including complex values and large rational offsets. Source read, not newly executed."
+  },
+  {
+    "repo": "calcium",
+    "path": "qqbar/set_d.c",
+    "ranges": [
+      [
+        1,
+        39
+      ]
+    ],
+    "note": "Checkpoint81: Full ARF finite classification and exact dyadic-to-rational conversion. Signed zero is mathematical zero. Non-finite failure does not authorize consuming the destination; no decimal conversion."
+  },
+  {
+    "repo": "calcium",
+    "path": "qqbar/test/t-set_d.c",
+    "ranges": [
+      [
+        1,
+        76
+      ]
+    ],
+    "note": "Checkpoint81: Full randomized special-float import tests. Success checks exact 53-bit enclosure identity, failure requires non-finite source. These tests query the destination after failure but the new audit does not infer a failed-output value contract. Source read, not newly executed."
+  },
+  {
+    "repo": "calcium",
+    "path": "qqbar/set_re_im_d.c",
+    "ranges": [
+      [
+        1,
+        47
+      ]
+    ],
+    "note": "Checkpoint81: Full real-only zero-imaginary shortcut, imaginary-first import and exact real addition. Non-finite real component can leave a changed destination despite returning failure; no unchanged-output contract is inferred."
+  },
+  {
+    "repo": "calcium",
+    "path": "qqbar/test/t-set_re_im_d.c",
+    "ranges": [
+      [
+        1,
+        77
+      ]
+    ],
+    "note": "Checkpoint81: Full randomized special-float import tests. Success checks exact 53-bit enclosure identity, failure requires non-finite source. These tests query the destination after failure but the new audit does not infer a failed-output value contract. Source read, not newly executed."
+  },
+  {
+    "repo": "calcium",
+    "path": "qqbar/get_fmpq.c",
+    "ranges": [
+      [
+        1,
+        31
+      ]
+    ],
+    "note": "Checkpoint81: Full exact degree-one coefficient extraction, signed numerator and positive denominator. Degree mismatch aborts/throws; no rational guessing."
+  },
+  {
+    "repo": "calcium",
+    "path": "qqbar/get_fmpz.c",
+    "ranges": [
+      [
+        1,
+        24
+      ]
+    ],
+    "note": "Checkpoint81: Full degree-one and unit-leading-coefficient preconditions before exact signed coefficient extraction. No rounded conversion."
+  },
+  {
+    "repo": "calcium",
+    "path": "qqbar/numerator.c",
+    "ranges": [
+      [
+        1,
+        30
+      ]
+    ],
+    "note": "Checkpoint81: Full algebraic-integer copy shortcut and multiplication by polynomial-leading-coefficient denominator. In-place and separate output qualified independently; not a minimal denominator operation."
+  },
+  {
+    "repo": "calcium",
+    "path": "qqbar/denominator.c",
+    "ranges": [
+      [
+        1,
+        19
+      ]
+    ],
+    "note": "Checkpoint81: Full leading-coefficient extraction. This documented denominator need not be the smallest integer making the value integral; do not transfer rational-denominator semantics."
+  },
+  {
+    "repo": "calcium",
+    "path": "qqbar/height.c",
+    "ranges": [
+      [
+        1,
+        18
+      ]
+    ],
+    "note": "Checkpoint81: Full minimal-polynomial coefficient-height wrapper; declaration/call does not newly credit its polynomial implementation."
+  },
+  {
+    "repo": "calcium",
+    "path": "qqbar/height_bits.c",
+    "ranges": [
+      [
+        1,
+        21
+      ]
+    ],
+    "note": "Checkpoint81: Full maximum coefficient bit-length wrapper with sign-encoding absolute value; called polynomial implementation is not newly credited."
+  },
+  {
+    "repo": "calcium",
+    "path": "qqbar/swap.c",
+    "ranges": [
+      [
+        1,
+        20
+      ]
+    ],
+    "note": "Checkpoint81: Full ownership transfer: archived swaps polynomial/enclosure separately; current swaps the complete qqbar_struct. Both representation and root-selection enclosure must travel together."
+  },
+  {
+    "repo": "calcium",
+    "path": "qqbar/inlines.c",
+    "ranges": [
+      [
+        1,
+        14
+      ]
+    ],
+    "note": "Checkpoint81: Full inline-emission macro and public-header include. No completion credit for header bodies/callees from this shim."
+  },
+  {
+    "repo": "calcium",
+    "path": "qqbar/phi.c",
+    "ranges": [
+      [
+        1,
+        27
+      ]
+    ],
+    "note": "Checkpoint81: Full minimal polynomial X^2-X-1 and positive golden-root enclosure construction, zero imaginary part. Embedding matters as well as polynomial identity."
+  },
+  {
+    "repo": "flint",
+    "path": "src/qqbar/asec_pi.c",
+    "ranges": [
+      [
+        1,
+        33
+      ]
+    ],
+    "note": "Checkpoint81: Full zero guard and reciprocal-acos composition. Failure is not negative proof; p/q are not nullable here. Principal branch inherited from acos; failed outputs are not inspected."
+  },
+  {
+    "repo": "flint",
+    "path": "src/qqbar/test/t-asec_pi.c",
+    "ranges": [
+      [
+        1,
+        60
+      ]
+    ],
+    "note": "Checkpoint81: Full random reciprocal forward/inverse tests, reduced fractions, exact reconstruction and principal bounds. Archived acsc progress label incorrectly says asec; cosmetic only. Source read, not newly executed."
+  },
+  {
+    "repo": "flint",
+    "path": "src/qqbar/acsc_pi.c",
+    "ranges": [
+      [
+        1,
+        33
+      ]
+    ],
+    "note": "Checkpoint81: Full zero guard and reciprocal-asin composition. Failure is not negative proof; reciprocal poles are excluded and the principal asin range is inherited."
+  },
+  {
+    "repo": "flint",
+    "path": "src/qqbar/test/t-acsc_pi.c",
+    "ranges": [
+      [
+        1,
+        60
+      ]
+    ],
+    "note": "Checkpoint81: Full random reciprocal forward/inverse tests, reduced fractions, exact reconstruction and principal bounds. Archived acsc progress label incorrectly says asec; cosmetic only. Source read, not newly executed."
+  },
+  {
+    "repo": "flint",
+    "path": "src/qqbar/floor.c",
+    "ranges": [
+      [
+        1,
+        77
+      ]
+    ],
+    "note": "Checkpoint81: Full rational signed-division fast path, cached interval filter, magnitude-scaled refinement, half-offset integer proposal and authoritative exact real-part sign correction. Complex values use the real part. No unchecked approximate integer is accepted."
+  },
+  {
+    "repo": "flint",
+    "path": "src/qqbar/test/t-floor.c",
+    "ranges": [
+      [
+        1,
+        80
+      ]
+    ],
+    "note": "Checkpoint81: Full randomized real-part integer inequalities, including complex values and large rational offsets. Source read, not newly executed."
+  },
+  {
+    "repo": "flint",
+    "path": "src/qqbar/ceil.c",
+    "ranges": [
+      [
+        1,
+        77
+      ]
+    ],
+    "note": "Checkpoint81: Full dual floor architecture with negative half-offset proposal and positive exact real-part sign correction. Magnitude-aware precision avoids large-magnitude fractional uncertainty; numerical failure triggers archived abort/current throw."
+  },
+  {
+    "repo": "flint",
+    "path": "src/qqbar/test/t-ceil.c",
+    "ranges": [
+      [
+        1,
+        80
+      ]
+    ],
+    "note": "Checkpoint81: Full randomized real-part integer inequalities, including complex values and large rational offsets. Source read, not newly executed."
+  },
+  {
+    "repo": "flint",
+    "path": "src/qqbar/set_d.c",
+    "ranges": [
+      [
+        1,
+        40
+      ]
+    ],
+    "note": "Checkpoint81: Full ARF finite classification and exact dyadic-to-rational conversion. Signed zero is mathematical zero. Non-finite failure does not authorize consuming the destination; no decimal conversion."
+  },
+  {
+    "repo": "flint",
+    "path": "src/qqbar/test/t-set_d.c",
+    "ranges": [
+      [
+        1,
+        68
+      ]
+    ],
+    "note": "Checkpoint81: Full randomized special-float import tests. Success checks exact 53-bit enclosure identity, failure requires non-finite source. These tests query the destination after failure but the new audit does not infer a failed-output value contract. Source read, not newly executed."
+  },
+  {
+    "repo": "flint",
+    "path": "src/qqbar/set_re_im_d.c",
+    "ranges": [
+      [
+        1,
+        46
+      ]
+    ],
+    "note": "Checkpoint81: Full real-only zero-imaginary shortcut, imaginary-first import and exact real addition. Non-finite real component can leave a changed destination despite returning failure; no unchanged-output contract is inferred."
+  },
+  {
+    "repo": "flint",
+    "path": "src/qqbar/test/t-set_re_im_d.c",
+    "ranges": [
+      [
+        1,
+        69
+      ]
+    ],
+    "note": "Checkpoint81: Full randomized special-float import tests. Success checks exact 53-bit enclosure identity, failure requires non-finite source. These tests query the destination after failure but the new audit does not infer a failed-output value contract. Source read, not newly executed."
+  },
+  {
+    "repo": "flint",
+    "path": "src/qqbar/get_fmpq.c",
+    "ranges": [
+      [
+        1,
+        30
+      ]
+    ],
+    "note": "Checkpoint81: Full exact degree-one coefficient extraction, signed numerator and positive denominator. Degree mismatch aborts/throws; no rational guessing."
+  },
+  {
+    "repo": "flint",
+    "path": "src/qqbar/get_fmpz.c",
+    "ranges": [
+      [
+        1,
+        23
+      ]
+    ],
+    "note": "Checkpoint81: Full degree-one and unit-leading-coefficient preconditions before exact signed coefficient extraction. No rounded conversion."
+  },
+  {
+    "repo": "flint",
+    "path": "src/qqbar/numerator.c",
+    "ranges": [
+      [
+        1,
+        29
+      ]
+    ],
+    "note": "Checkpoint81: Full algebraic-integer copy shortcut and multiplication by polynomial-leading-coefficient denominator. In-place and separate output qualified independently; not a minimal denominator operation."
+  },
+  {
+    "repo": "flint",
+    "path": "src/qqbar/denominator.c",
+    "ranges": [
+      [
+        1,
+        18
+      ]
+    ],
+    "note": "Checkpoint81: Full leading-coefficient extraction. This documented denominator need not be the smallest integer making the value integral; do not transfer rational-denominator semantics."
+  },
+  {
+    "repo": "flint",
+    "path": "src/qqbar/height.c",
+    "ranges": [
+      [
+        1,
+        19
+      ]
+    ],
+    "note": "Checkpoint81: Full minimal-polynomial coefficient-height wrapper; declaration/call does not newly credit its polynomial implementation."
+  },
+  {
+    "repo": "flint",
+    "path": "src/qqbar/height_bits.c",
+    "ranges": [
+      [
+        1,
+        22
+      ]
+    ],
+    "note": "Checkpoint81: Full maximum coefficient bit-length wrapper with sign-encoding absolute value; called polynomial implementation is not newly credited."
+  },
+  {
+    "repo": "flint",
+    "path": "src/qqbar/swap.c",
+    "ranges": [
+      [
+        1,
+        19
+      ]
+    ],
+    "note": "Checkpoint81: Full ownership transfer: archived swaps polynomial/enclosure separately; current swaps the complete qqbar_struct. Both representation and root-selection enclosure must travel together."
+  },
+  {
+    "repo": "flint",
+    "path": "src/qqbar/inlines.c",
+    "ranges": [
+      [
+        1,
+        13
+      ]
+    ],
+    "note": "Checkpoint81: Full inline-emission macro and public-header include. No completion credit for header bodies/callees from this shim."
+  },
+  {
+    "repo": "flint",
+    "path": "src/qqbar/phi.c",
+    "ranges": [
+      [
+        1,
+        27
+      ]
+    ],
+    "note": "Checkpoint81: Full minimal polynomial X^2-X-1 and positive golden-root enclosure construction, zero imaginary part. Embedding matters as well as polynomial identity."
+  }
+]

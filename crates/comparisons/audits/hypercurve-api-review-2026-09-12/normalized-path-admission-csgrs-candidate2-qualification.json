@@ -1,0 +1,49 @@
+{
+  "build_command": [
+    "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+    "test",
+    "--release",
+    "--no-default-features",
+    "--features",
+    "attributed,curve,offset,obj-io,gltf-io,vrml-io,gerber-io,truetype-text",
+    "--locked",
+    "--offline",
+    "--lib",
+    "--no-run",
+    "--message-format=json"
+  ],
+  "build_returncode": 0,
+  "build_elapsed_seconds": 216.81827730301302,
+  "binary_sha256": "b64fecee3a40f6cccb120a133d4ef2a5ddf58e331e2ea3ca8d7dd23f5d755c46",
+  "source_sha256": "753e6edd40260d3454434649691dc991390059d83d65bed7beb8d45dc76f7214",
+  "queries": [
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/normalized-path-admission-csgrs-candidate2-libtest",
+        "higher_order_curve_constructors_and_flat_triangulation_are_usable",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.0035026300174649805,
+      "log": "normalized-path-admission-csgrs-candidate2-higher_order_curve_constructors_and_flat_triangulation_are_usable.log",
+      "passed": [
+        "curve::native::tests::higher_order_curve_constructors_and_flat_triangulation_are_usable"
+      ]
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/normalized-path-admission-csgrs-candidate2-libtest",
+        "cycloidal_rack_alternates_face_and_root_flanks",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 101,
+      "elapsed_seconds": 0.06385167400003411,
+      "log": "normalized-path-admission-csgrs-candidate2-cycloidal_rack_alternates_face_and_root_flanks.log",
+      "passed": []
+    }
+  ]
+}

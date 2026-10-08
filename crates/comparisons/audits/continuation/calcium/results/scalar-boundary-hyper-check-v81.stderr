@@ -1,0 +1,26 @@
+node:internal/modules/run_main:123
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
++ actual - expected
+
++ 'DivideByZero'
+- 'NotANumber'
+
+    at checkRow (file:///home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/check-scalar-boundary-hyper-v81.mjs:42:52)
+    at checkRows (file:///home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/check-scalar-boundary-hyper-v81.mjs:55:39)
+    at hyperBoundaryEvidence (file:///home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/check-scalar-boundary-hyper-v81.mjs:64:71)
+    at file:///home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/check-scalar-boundary-hyper-v81.mjs:83:106
+    at ModuleJob.run (node:internal/modules/esm/module_job:343:25)
+    at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:665:26)
+    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5) {
+  generatedMessage: true,
+  code: 'ERR_ASSERTION',
+  actual: 'DivideByZero',
+  expected: 'NotANumber',
+  operator: 'strictEqual',
+  diff: 'simple'
+}
+
+Node.js v22.22.2

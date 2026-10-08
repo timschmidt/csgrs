@@ -1,0 +1,13 @@
+{
+  "tag": "qqbar-decisions-linked",
+  "started": "2026-09-10T05:43:47.117Z",
+  "finished": "2026-09-10T05:43:47.143Z",
+  "elapsedSeconds": 0.024295555000000007,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison",
+  "command": "ldd",
+  "args": [
+    "/tmp/calcium-qqbar-decisions.xUeflv/controls"
+  ],
+  "code": 0,
+  "signal": null
+}

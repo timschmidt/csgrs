@@ -1,0 +1,10 @@
+[
+  {
+    "name": "bezier_offset::conversion_tests::chord_normal_recursive_frame_retains_center_and_oriented_unit_normal",
+    "returncode": 0,
+    "passed": true,
+    "limit_seconds": 75,
+    "elapsed_seconds": 0.25224736402742565,
+    "log": "chord-normal-products-20260923-hypercurve-debug1-case-0.log"
+  }
+]

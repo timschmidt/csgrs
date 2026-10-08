@@ -1,0 +1,138 @@
+[
+  {
+    "rep": "greedy",
+    "iterations": 0,
+    "args": [
+      "first-digit",
+      "greedy",
+      "0",
+      "+RTS",
+      "-M256m",
+      "-RTS"
+    ],
+    "timeout": 4000,
+    "status": 0,
+    "signal": null,
+    "stdout": "1 0\n",
+    "stderr": ""
+  },
+  {
+    "rep": "greedy",
+    "iterations": 1,
+    "args": [
+      "first-digit",
+      "greedy",
+      "1",
+      "+RTS",
+      "-M256m",
+      "-RTS"
+    ],
+    "timeout": 4000,
+    "status": 0,
+    "signal": null,
+    "stdout": "1 3\n",
+    "stderr": ""
+  },
+  {
+    "rep": "greedy",
+    "iterations": 2,
+    "args": [
+      "first-digit",
+      "greedy",
+      "2",
+      "+RTS",
+      "-M256m",
+      "-RTS"
+    ],
+    "timeout": 4000,
+    "status": 0,
+    "signal": null,
+    "stdout": "7 7\n",
+    "stderr": ""
+  },
+  {
+    "rep": "greedy",
+    "iterations": 10,
+    "args": [
+      "first-digit",
+      "greedy",
+      "10",
+      "+RTS",
+      "-M256m",
+      "-RTS"
+    ],
+    "timeout": 4000,
+    "status": 0,
+    "signal": null,
+    "stdout": "3101183514322028070379519482884279752465189800929173562675956981693050636810226357549274388194988947822869177476166355619729057815178752748057825979428206638562436435456919006864247670857090878103207370545430831886181826411034685547021499668418220531010945866079829867486748674422501370975392550244564813209676910731598045246192067559093586685262082982239786260998743094387082197564818296074057472641104953267882782029058692450739980602708888424005025350535959756619052420725698192097492312948892464397736259461023449181563087330488609551283204328017886084186187528680350473321299434512186376720420725009457604607 2047\n",
+    "stderr": ""
+  },
+  {
+    "rep": "delayed",
+    "iterations": 0,
+    "args": [
+      "first-digit",
+      "delayed",
+      "0",
+      "+RTS",
+      "-M256m",
+      "-RTS"
+    ],
+    "timeout": 4000,
+    "status": 0,
+    "signal": null,
+    "stdout": "0 0\n",
+    "stderr": ""
+  },
+  {
+    "rep": "delayed",
+    "iterations": 1,
+    "args": [
+      "first-digit",
+      "delayed",
+      "1",
+      "+RTS",
+      "-M256m",
+      "-RTS"
+    ],
+    "timeout": 4000,
+    "status": 0,
+    "signal": null,
+    "stdout": "0 0\n",
+    "stderr": ""
+  },
+  {
+    "rep": "delayed",
+    "iterations": 2,
+    "args": [
+      "first-digit",
+      "delayed",
+      "2",
+      "+RTS",
+      "-M256m",
+      "-RTS"
+    ],
+    "timeout": 4000,
+    "status": 0,
+    "signal": null,
+    "stdout": "0 0\n",
+    "stderr": ""
+  },
+  {
+    "rep": "delayed",
+    "iterations": 10,
+    "args": [
+      "first-digit",
+      "delayed",
+      "10",
+      "+RTS",
+      "-M256m",
+      "-RTS"
+    ],
+    "timeout": 4000,
+    "status": 0,
+    "signal": null,
+    "stdout": "0 0\n",
+    "stderr": ""
+  }
+]

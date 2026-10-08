@@ -1,0 +1,8 @@
+{
+  "name": "bezier_region::tests::nonrepresented_chord_and_retained_rational_arc_share_the_fillet_kernel",
+  "returncode": 101,
+  "elapsed_seconds": 0.16399663500487804,
+  "binary_sha256": "a946fdeb2656667a29986ed80954c4fb6862f752450a0333982db4b92e9dfa83",
+  "head": "de8578210745847a1a72761c9a68f429028c88fa",
+  "all_processes_reaped": true
+}

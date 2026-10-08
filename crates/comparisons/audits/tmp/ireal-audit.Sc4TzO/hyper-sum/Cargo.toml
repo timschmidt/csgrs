@@ -1,0 +1,12 @@
+[package]
+name = "ireal-hyper-sum-audit"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+hyperreal = { path = "/tmp/ireal-audit.Sc4TzO/hyperreal-5de9a5f" }
+
+[profile.release]
+debug = 0
+incremental = false
+codegen-units = 16

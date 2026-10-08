@@ -1,0 +1,55 @@
+\doxysubsubsection{MPFR Array }
+\hypertarget{group__mpfr__array}{}\label{group__mpfr__array}\index{MPFR Array@{MPFR Array}}
+
+
+\doxysubsubsubsection{Description}
+Arrays of mpfr objects of the same precision. 
+
+\doxysubsubsubsubsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{group__mpfr__array_gaa58fd07fe026c9e320be2049733b4f1a}\label{group__mpfr__array_gaa58fd07fe026c9e320be2049733b4f1a} 
+mpfr\+\_\+ptr {\bfseries mpfr\+\_\+array\+\_\+alloc\+\_\+init} (size\+\_\+t n)
+\begin{DoxyCompactList}\small\item\em Allocate an array of {\itshape n} mpfr objects and their limbs with default precision, and initialize to NaN. \end{DoxyCompactList}\item 
+\Hypertarget{group__mpfr__array_ga9b18ef1382bde6408156b6dc87aee6ea}\label{group__mpfr__array_ga9b18ef1382bde6408156b6dc87aee6ea} 
+mpfr\+\_\+ptr {\bfseries mpfr\+\_\+array\+\_\+alloc\+\_\+init2} (size\+\_\+t n, mpfr\+\_\+prec\+\_\+t p)
+\begin{DoxyCompactList}\small\item\em Allocate an array of {\itshape n} mpfr objects and their limbs with precision {\itshape p}, and initialize to NaN. Note that this function allocates array and limbs in a single memory block, so is more efficient (but less flexible) then mpfr\+\_\+array\+\_\+alloc(n) followed by mpfr\+\_\+array\+\_\+init2(a,n,p). \end{DoxyCompactList}\item 
+\Hypertarget{group__mpfr__array_gacbe76d886a102c9c67f8f351d709407f}\label{group__mpfr__array_gacbe76d886a102c9c67f8f351d709407f} 
+void {\bfseries mpfr\+\_\+array\+\_\+clear\+\_\+free} (mpfr\+\_\+ptr a, size\+\_\+t n)
+\begin{DoxyCompactList}\small\item\em Clear limbs and deallocate the array {\itshape a} of {\itshape n} mpfr objects created with {\ttfamily mpfr\+\_\+array\+\_\+alloc\+\_\+init}. \end{DoxyCompactList}\item 
+\Hypertarget{group__mpfr__array_ga0d8ed4e8724049ebd36b5ac271e89f5d}\label{group__mpfr__array_ga0d8ed4e8724049ebd36b5ac271e89f5d} 
+mpfr\+\_\+ptr {\bfseries mpfr\+\_\+array\+\_\+realloc\+\_\+set\+\_\+prec} (mpfr\+\_\+ptr a, size\+\_\+t n, mpfr\+\_\+prec\+\_\+t p)
+\begin{DoxyCompactList}\small\item\em Reallocate the array {\itshape a} of {\itshape n} mpfr objects to have precision {\itshape p}. \end{DoxyCompactList}\item 
+\Hypertarget{group__mpfr__array_ga734c3708b3ec2592256991dccd831a48}\label{group__mpfr__array_ga734c3708b3ec2592256991dccd831a48} 
+mpfr\+\_\+ptr {\bfseries mpfr\+\_\+array\+\_\+alloc} (size\+\_\+t n)
+\begin{DoxyCompactList}\small\item\em Allocate an array of {\itshape n} mpfr objects. \end{DoxyCompactList}\item 
+\Hypertarget{group__mpfr__array_ga1d5be25a495d8002f52294ac3f4f14a6}\label{group__mpfr__array_ga1d5be25a495d8002f52294ac3f4f14a6} 
+void {\bfseries mpfr\+\_\+array\+\_\+init} (mpfr\+\_\+ptr a, size\+\_\+t n)
+\begin{DoxyCompactList}\small\item\em Allocate the limbs of the array {\itshape a} of {\itshape n} mpfr objects with default precision and set to NaN. \end{DoxyCompactList}\item 
+\Hypertarget{group__mpfr__array_gae126695247ef96e7889a4246fa58ef17}\label{group__mpfr__array_gae126695247ef96e7889a4246fa58ef17} 
+void {\bfseries mpfr\+\_\+array\+\_\+init2} (mpfr\+\_\+ptr a, size\+\_\+t n, mp\+\_\+prec\+\_\+t p)
+\begin{DoxyCompactList}\small\item\em Allocate the limbs of the array {\itshape a} of {\itshape n} mpfr objectswith precision {\itshape p} and set to NaN. \end{DoxyCompactList}\item 
+\Hypertarget{group__mpfr__array_ga0506aea3ffbe549576cae2f77d10f95e}\label{group__mpfr__array_ga0506aea3ffbe549576cae2f77d10f95e} 
+void {\bfseries mpfr\+\_\+array\+\_\+init\+\_\+zero} (mpfr\+\_\+ptr a, size\+\_\+t n)
+\begin{DoxyCompactList}\small\item\em Allocate the limbs of the array {\itshape a} of {\itshape n} mpfr objects with default precision and set to 0. \end{DoxyCompactList}\item 
+\Hypertarget{group__mpfr__array_ga28c0e5fc018de6999d8549d9be956395}\label{group__mpfr__array_ga28c0e5fc018de6999d8549d9be956395} 
+void {\bfseries mpfr\+\_\+array\+\_\+init\+\_\+zero2} (mpfr\+\_\+ptr a, size\+\_\+t n, mpfr\+\_\+prec\+\_\+t p)
+\begin{DoxyCompactList}\small\item\em Allocate the limbs of the array {\itshape a} of {\itshape n} mpfr objectswith precision {\itshape p} and set to 0. \end{DoxyCompactList}\item 
+\Hypertarget{group__mpfr__array_ga158e7d7682d3308978ff3815cc986d45}\label{group__mpfr__array_ga158e7d7682d3308978ff3815cc986d45} 
+void {\bfseries mpfr\+\_\+array\+\_\+clear} (mpfr\+\_\+ptr a, size\+\_\+t n)
+\begin{DoxyCompactList}\small\item\em Deallocate the limbs of the array {\itshape a} of {\itshape n} mpfr objects. \end{DoxyCompactList}\item 
+\Hypertarget{group__mpfr__array_ga3db485648adfa4a79680e6d348ead047}\label{group__mpfr__array_ga3db485648adfa4a79680e6d348ead047} 
+void {\bfseries mpfr\+\_\+array\+\_\+free} (mpfr\+\_\+ptr a, size\+\_\+t n)
+\begin{DoxyCompactList}\small\item\em Free the array {\itshape a} of {\itshape n} mpfr objects, for which the limbs have already by deallocated. \end{DoxyCompactList}\item 
+\Hypertarget{group__mpfr__array_ga55529f8d66540a55b8369b9dee41ce7e}\label{group__mpfr__array_ga55529f8d66540a55b8369b9dee41ce7e} 
+mpfr\+\_\+prec\+\_\+t {\bfseries mpfr\+\_\+array\+\_\+get\+\_\+prec} (mpfr\+\_\+t a, size\+\_\+t n)
+\begin{DoxyCompactList}\small\item\em Get the precision of the mpfr array {\itshape a} of size {\itshape n}, which is equal to the precision of the first element. \end{DoxyCompactList}\item 
+\Hypertarget{group__mpfr__array_ga75cf5d19aa5a78302d16e9437c8f08ac}\label{group__mpfr__array_ga75cf5d19aa5a78302d16e9437c8f08ac} 
+void {\bfseries mpfr\+\_\+array\+\_\+set\+\_\+prec} (mpfr\+\_\+ptr a, size\+\_\+t n, mpfr\+\_\+prec\+\_\+t p)
+\begin{DoxyCompactList}\small\item\em Set the precision of the mpfr array {\itshape a} of size {\itshape n} to {\itshape p}, reallocating the array and destroying the original values if the precision changes. \end{DoxyCompactList}\item 
+\Hypertarget{group__mpfr__array_gaa8575c1f98782cc648bc198247aee672}\label{group__mpfr__array_gaa8575c1f98782cc648bc198247aee672} 
+void {\bfseries mpfr\+\_\+array\+\_\+copy} (mpfr\+\_\+ptr a, size\+\_\+t n, mpfr\+\_\+srcptr x, mp\+\_\+rnd\+\_\+t r)
+\begin{DoxyCompactList}\small\item\em Set the elements of the mpfr array {\itshape a} of size {\itshape n} to the values starting at {\itshape x} with rounding {\itshape r}. \end{DoxyCompactList}\item 
+\Hypertarget{group__mpfr__array_gab1c77dccb5299a6fe28aa8ff12226fea}\label{group__mpfr__array_gab1c77dccb5299a6fe28aa8ff12226fea} 
+void {\bfseries mpfr\+\_\+array\+\_\+set} (mpfr\+\_\+ptr a, size\+\_\+t n, mpfr\+\_\+t x, mp\+\_\+rnd\+\_\+t r)
+\begin{DoxyCompactList}\small\item\em Set the elements of the mpfr array {\itshape a} of size {\itshape n} to {\itshape x} with rounding {\itshape r}. \end{DoxyCompactList}\end{DoxyCompactItemize}

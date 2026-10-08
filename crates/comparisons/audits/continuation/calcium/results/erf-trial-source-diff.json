@@ -1,0 +1,17 @@
+{
+  "tag": "erf-trial-source-diff",
+  "started": "2026-09-08T11:00:24.625Z",
+  "finished": "2026-09-08T11:00:24.645Z",
+  "elapsedSeconds": 0.01754893700000001,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison",
+  "command": "git",
+  "args": [
+    "diff",
+    "--no-index",
+    "--",
+    "audits/continuation/calcium/baseline-hyperreal/src",
+    "audits/continuation/calcium/erf-trial-hyperreal/src"
+  ],
+  "code": 1,
+  "signal": null
+}

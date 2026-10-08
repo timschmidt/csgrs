@@ -1,0 +1,21 @@
+# General curve / region trim implementation
+
+Status: committed as Hypercurve `678414f0c2e2f18987f5fe682c3fafa4cdd27930` and HyperBREP `6d9a1a689ee35e7d60d037851f5748ade2cbb05e`. The architecture goal remains active.
+
+The former trim boundary required native Bézier spans, converted every selected source parameter into a Bézier parameter, and returned `BezierSplitFragment2`. The new boundary returns reusable `Curve2` values. Parameter-retaining records expose `CurveLocation2` for both traversal endpoints and replay an oriented `CurveParameterRange2`. Their optional `represented_parameter_range` remains a narrower query for consumers, such as spatial parameter transfer in HyperBREP, which actually require stored scalar payloads. The old `fragment`, `into_fragment` and `promoted_span_index` interfaces are removed and their live callers are updated.
+
+Prepared source spans and charts are shared across trimming, general support intersection and arrangement export. Native publication retains the existing parameter lineage, including reversed charts. Selected restrictions retain their root/fiber authority without global projection. Curve splitting publishes each original parameter window with its output curve, avoiding parameter reconstruction from a reparameterized control net.
+
+Curve / boundary preparation reuses the Boolean carrier pair kernel and face classifier. It preserves the source parameter chart instead of applying region-only line reparameterizations. Positive-length overlaps belong to the closed filled set; isolated tangency does not add a curve. Path grouping checks exact geometric connectivity at spline knots, and closed-seam merging requires the actual first and last source curves. Equal local domains on unrelated retained curves no longer justify a seam connection.
+
+The first 49-target qualification found one new failure in the existing synthetic selected-circle trim test. Eager filled-side preparation introduced an unnecessary orientation theorem before a represented interior point could be classified directly. The correction keeps filled-side computation demand driven in the retained-point exterior probe, using the existing region-owned policy cache. The first run, immutable-source verification and patches are preserved in `general-curve-region-trim-attempt-1/`.
+
+Tests cover unprojected degree-135 selected parameters, source-location replay, further splitting and trimming, generated algebraic chords, selected circles, genuinely analytic parallels, both traversal directions, both policies, boundary overlaps, isolated tangency, recursive islands/holes, discontinuous spline knots and closed path seams. The native span lineage regression covers all eight authored source fixtures. No internal storage variant is required as a substitute for exact geometric behavior.
+
+The independent public-API matrix computes expected intervals from integer rectangle bounds and signed nesting depth. It covers seven authored curve forms, nonuniform spline parameter charts, horizontal/vertical traces, reversal and both policies. The final matrix certifies 448 clipping queries, 2,208 endpoint replays and 1,008 repeated path trims against library SHA `0c0c677aec8bb0f04e3e3694aa275299386a546e3380885fb6eb0972e1797da8`.
+
+The five pre-existing promotion failures, eight previously unqualified expensive cases, full-family curve-pair dispatch and the broader normalized-region/representation architecture remain outside the completed scope of this migration. No performance improvement is claimed without a comparison measurement.
+
+Final qualification: 2,186 passes across 49 targets (1,954 Hypercurve + 232 HyperBREP), the same five known promotion failures, nine ignored, eight expensive previously unqualified cases excluded, no new failures and no timeouts. Both all-target checks, formatting, whitespace and 396 immutable source hashes pass. All 30 repositories are clean after commit. The complete suite and architecture goal are not finished.
+
+A separate probe also records the existing constant-image trim inconsistency in `general-trim-degeneracy-followup.json`: a constant quadratic is retained inside, blocked on the boundary and omitted outside. Consistent point-trace semantics and grouping across constant spans remain the next concrete trim work.

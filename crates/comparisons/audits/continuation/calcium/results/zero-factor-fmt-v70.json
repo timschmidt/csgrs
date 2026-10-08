@@ -1,0 +1,21 @@
+{
+  "tag": "zero-factor-fmt-v70",
+  "started": "2026-09-11T19:02:01.446Z",
+  "finished": "2026-09-11T19:02:02.993Z",
+  "elapsedSeconds": 1.544054108,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/zero-factor-candidate-v70/hypersolve",
+  "command": "env",
+  "args": [
+    "CARGO_TARGET_DIR=/tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse",
+    "CARGO_INCREMENTAL=0",
+    "CARGO_PROFILE_DEV_DEBUG=0",
+    "CARGO_BUILD_JOBS=2",
+    "cargo",
+    "fmt",
+    "--all",
+    "--",
+    "--check"
+  ],
+  "code": 1,
+  "signal": null
+}

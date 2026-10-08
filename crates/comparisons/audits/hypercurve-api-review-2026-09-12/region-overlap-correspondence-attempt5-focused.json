@@ -1,0 +1,80 @@
+[
+  {
+    "name": "overlap_restriction_tests",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve-6e6572a45c5b177b",
+      "overlap_restriction_tests",
+      "--test-threads=1",
+      "--nocapture"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.007560042999102734,
+    "log": "region-overlap-correspondence-attempt5-overlap_restriction_tests.log",
+    "binary_sha256": "3caed16dae69a9084cc87a153654d817a5cf3df5690da6444af4c99ee7087c09"
+  },
+  {
+    "name": "chord_overlap_transport_tests",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve-6e6572a45c5b177b",
+      "chord_overlap_transport_tests",
+      "--test-threads=1",
+      "--nocapture"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.007512395997764543,
+    "log": "region-overlap-correspondence-attempt5-chord_overlap_transport_tests.log",
+    "binary_sha256": "3caed16dae69a9084cc87a153654d817a5cf3df5690da6444af4c99ee7087c09"
+  },
+  {
+    "name": "algebraic_chord_pair_overlap_enters_region_intersection_evidence",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve-6e6572a45c5b177b",
+      "algebraic_chord_pair_overlap_enters_region_intersection_evidence",
+      "--test-threads=1",
+      "--nocapture"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.01556276400515344,
+    "log": "region-overlap-correspondence-attempt5-algebraic_chord_pair_overlap_enters_region_intersection_evidence.log",
+    "binary_sha256": "3caed16dae69a9084cc87a153654d817a5cf3df5690da6444af4c99ee7087c09"
+  },
+  {
+    "name": "common_nonlinear_overlap_keeps_selected_parameter_charts",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve-6e6572a45c5b177b",
+      "common_nonlinear_overlap_keeps_selected_parameter_charts",
+      "--test-threads=1",
+      "--nocapture"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.031663062996813096,
+    "log": "region-overlap-correspondence-attempt5-common_nonlinear_overlap_keeps_selected_parameter_charts.log",
+    "binary_sha256": "3caed16dae69a9084cc87a153654d817a5cf3df5690da6444af4c99ee7087c09"
+  },
+  {
+    "name": "selected_parameter_component_overlap_clips_in_both_boolean_orders",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve-6e6572a45c5b177b",
+      "selected_parameter_component_overlap_clips_in_both_boolean_orders",
+      "--test-threads=1",
+      "--nocapture"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.007503785993321799,
+    "log": "region-overlap-correspondence-attempt5-selected_parameter_component_overlap_clips_in_both_boolean_orders.log",
+    "binary_sha256": "3caed16dae69a9084cc87a153654d817a5cf3df5690da6444af4c99ee7087c09"
+  },
+  {
+    "name": "algebraic_chord_analytic_parallel_pair_replays_contacts_and_overlap",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve-6e6572a45c5b177b",
+      "algebraic_chord_analytic_parallel_pair_replays_contacts_and_overlap",
+      "--test-threads=1",
+      "--nocapture"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.11376390099758282,
+    "log": "region-overlap-correspondence-attempt5-algebraic_chord_analytic_parallel_pair_replays_contacts_and_overlap.log",
+    "binary_sha256": "3caed16dae69a9084cc87a153654d817a5cf3df5690da6444af4c99ee7087c09"
+  }
+]

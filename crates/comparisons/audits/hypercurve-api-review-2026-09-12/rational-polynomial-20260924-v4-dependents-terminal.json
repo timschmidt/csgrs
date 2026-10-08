@@ -1,0 +1,111 @@
+{
+  "crates": [
+    {
+      "crate": "hyperlimit",
+      "checks": [
+        {
+          "command": [
+            "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+            "clippy",
+            "--all-targets",
+            "--all-features",
+            "--locked",
+            "--offline",
+            "--",
+            "-D",
+            "warnings"
+          ],
+          "returncode": 0,
+          "log": "rational-polynomial-20260924-v4-dependents-hyperlimit-clippy-0.log"
+        },
+        {
+          "command": [
+            "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+            "clippy",
+            "--all-targets",
+            "--no-default-features",
+            "--locked",
+            "--offline",
+            "--",
+            "-D",
+            "warnings"
+          ],
+          "returncode": 0,
+          "log": "rational-polynomial-20260924-v4-dependents-hyperlimit-clippy-1.log"
+        }
+      ],
+      "cases": [
+        {
+          "name": "all",
+          "returncode": 0,
+          "elapsed_seconds": 0.47258939396124333,
+          "limit_seconds": 180,
+          "log": "rational-polynomial-20260924-v4-dependents-hyperlimit-case-0.log"
+        }
+      ],
+      "hyperreal_artifacts": [
+        {
+          "reason": "compiler-artifact",
+          "package_id": "path+file:///tmp/hypercurve-rational-polynomial-v4-20260924/hyperreal#0.13.1",
+          "manifest_path": "/tmp/hypercurve-rational-polynomial-v4-20260924/hyperreal/Cargo.toml",
+          "target": {
+            "kind": [
+              "lib"
+            ],
+            "crate_types": [
+              "lib"
+            ],
+            "name": "hyperreal",
+            "src_path": "/tmp/hypercurve-rational-polynomial-v4-20260924/hyperreal/src/lib.rs",
+            "edition": "2024",
+            "doc": true,
+            "doctest": true,
+            "test": true
+          },
+          "profile": {
+            "opt_level": "3",
+            "debuginfo": 0,
+            "debug_assertions": false,
+            "overflow_checks": false,
+            "test": false
+          },
+          "features": [
+            "default",
+            "dispatch-trace",
+            "serde"
+          ],
+          "filenames": [
+            "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperreal-c2a4019ae9da7df1.rlib",
+            "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperreal-c2a4019ae9da7df1.rmeta"
+          ],
+          "executable": null,
+          "fresh": false
+        }
+      ],
+      "binary_sha256": "ed8e03faed38196b4a1aaf127f03bbac515fc4d7b66f3217b0415fe22ab119cd"
+    },
+    {
+      "crate": "hypersolve",
+      "checks": [
+        {
+          "command": [
+            "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+            "clippy",
+            "--all-targets",
+            "--all-features",
+            "--locked",
+            "--offline",
+            "--",
+            "-D",
+            "warnings"
+          ],
+          "returncode": 101,
+          "log": "rational-polynomial-20260924-v4-dependents-hypersolve-clippy-0.log"
+        }
+      ],
+      "cases": []
+    }
+  ],
+  "all_processes_reaped": true,
+  "all_sources_unchanged": true
+}

@@ -1,0 +1,205 @@
+diff --git a/src/curve_intersection.rs b/src/curve_intersection.rs
+index dc25d74..00446c2 100644
+--- a/src/curve_intersection.rs
++++ b/src/curve_intersection.rs
+@@ -1859,65 +1859,36 @@ fn native_arc_span_parameter(
+     point: &Point2,
+     policy: &CurveContext,
+ ) -> ExactCurveResult<BezierParameter2> {
+-    if span.degree() != 2 {
+-        let mut parameters = match span
+-            .retained_circle_point_parameters(point, policy)
+-            .map_err(|cause| native_arc_parameter_error(curve, cause))?
+-        {
+-            Classification::Decided(parameters) => parameters,
+-            Classification::Uncertain(reason) => {
+-                return Err(ExactCurveError::blocked(
+-                    CurveOperation2::Intersection,
+-                    curve.family(),
+-                    reason,
+-                ));
+-            }
+-        };
+-        if parameters.len() == 1 {
+-            return Ok(parameters.pop().expect("one retained circle parameter"));
+-        }
+-        return Err(if parameters.is_empty() {
+-            native_arc_parameter_error(
+-                curve,
+-                CurveError::Topology(
+-                    "retained circular parameterization omitted a certified arc point".into(),
+-                ),
+-            )
+-        } else {
+-            ExactCurveError::blocked(
++    let mut parameters = match span
++        .retained_circle_point_parameters(point, policy)
++        .map_err(|cause| native_arc_parameter_error(curve, cause))?
++    {
++        Classification::Decided(parameters) => parameters,
++        Classification::Uncertain(reason) => {
++            return Err(ExactCurveError::blocked(
+                 CurveOperation2::Intersection,
+                 curve.family(),
+-                UncertaintyReason::Boundary,
+-            )
+-        });
+-    }
+-    if crate::classify::is_zero(&span.start().distance_squared(point), policy) == Some(true) {
+-        return Ok(BezierParameter2::Exact(Real::zero()));
+-    }
+-    if crate::classify::is_zero(&span.end().distance_squared(point), policy) == Some(true) {
+-        return Ok(BezierParameter2::Exact(Real::one()));
+-    }
+-
+-    let controls = span.homogeneous_controls();
+-    let relative = |control: &crate::HomogeneousControl2| {
+-        (
+-            control.x() - point.x() * control.weight(),
+-            control.y() - point.y() * control.weight(),
+-        )
++                reason,
++            ));
++        }
+     };
+-    let p0 = relative(&controls[0]);
+-    let p1 = relative(&controls[1]);
+-    let p2 = relative(&controls[2]);
+-    let beta2_scaled = &p0.0 * &p1.1 - &p0.1 * &p1.0;
+-    let beta0_scaled = &p1.0 * &p2.1 - &p1.1 * &p2.0;
+-    let ratio_squared = (beta2_scaled / beta0_scaled)
+-        .map_err(|cause| native_arc_parameter_error(curve, cause.into()))?;
+-    let ratio = ratio_squared
+-        .sqrt()
+-        .map_err(|cause| native_arc_parameter_error(curve, cause.into()))?;
+-    let parameter = (&ratio / (Real::one() + &ratio))
+-        .map_err(|cause| native_arc_parameter_error(curve, cause.into()))?;
+-    Ok(BezierParameter2::Exact(parameter))
++    if parameters.len() == 1 {
++        return Ok(parameters.pop().expect("one retained circle parameter"));
++    }
++    Err(if parameters.is_empty() {
++        native_arc_parameter_error(
++            curve,
++            CurveError::Topology(
++                "retained circular parameterization omitted a certified arc point".into(),
++            ),
++        )
++    } else {
++        ExactCurveError::blocked(
++            CurveOperation2::Intersection,
++            curve.family(),
++            UncertaintyReason::Boundary,
++        )
++    })
+ }
+ 
+ fn native_arc_parameter_error(curve: &Curve2, cause: CurveError) -> ExactCurveError {
+diff --git a/src/rational_bezier_general.rs b/src/rational_bezier_general.rs
+index afc73ef..856bcf9 100644
+--- a/src/rational_bezier_general.rs
++++ b/src/rational_bezier_general.rs
+@@ -1550,6 +1550,50 @@ impl RationalBezier2 {
+                 Real::one(),
+             )]));
+         }
++        // A regular quadratic circle chart is injective on its finite arc.
++        // Once the sweep owns the point, the positive projective square root
++        // recovers t/(1-t) without reconstructing Cartesian zero identities.
++        // Keep this authority shared with native arc intersection: retained
++        // cuts must not lose it by entering through a rational support.
++        if self.degree() == 2
++            && let Classification::Decided(Some(arc)) =
++                crate::arc_bezier::rational_bezier_circular_arc(self, policy)?
++        {
++            match arc.contains_sweep_point(point, policy) {
++                Classification::Decided(false) => {
++                    return Ok(Classification::Decided(Vec::new()));
++                }
++                Classification::Decided(true) => {
++                    for (endpoint, parameter) in
++                        [(self.start(), Real::zero()), (self.end(), Real::one())]
++                    {
++                        if is_zero(&endpoint.distance_squared(point), policy) == Some(true) {
++                            return Ok(Classification::Decided(vec![BezierParameter2::Exact(
++                                parameter,
++                            )]));
++                        }
++                    }
++                    let controls = self.homogeneous_controls();
++                    let relative = |control: &HomogeneousControl2| {
++                        (
++                            control.x() - point.x() * control.weight(),
++                            control.y() - point.y() * control.weight(),
++                        )
++                    };
++                    let p0 = relative(&controls[0]);
++                    let p1 = relative(&controls[1]);
++                    let p2 = relative(&controls[2]);
++                    let beta2 = &p0.0 * &p1.1 - &p0.1 * &p1.0;
++                    let beta0 = &p1.0 * &p2.1 - &p1.1 * &p2.0;
++                    let ratio = (beta2 / beta0)?.sqrt()?;
++                    let parameter = (&ratio / (Real::one() + &ratio))?;
++                    return Ok(Classification::Decided(vec![BezierParameter2::Exact(
++                        parameter,
++                    )]));
++                }
++                Classification::Uncertain(_) => {}
++            }
++        }
+         // Circle-relation callers have already certified support incidence.
+         // Recovering the retained projective parameter is therefore both the
+         // direct proof and the finite-domain test; a Cartesian bounds proof
+@@ -2890,7 +2934,7 @@ impl RationalBezier2 {
+             let contacts = match contacts {
+                 Classification::Decided(contacts) => contacts,
+                 Classification::Uncertain(reason) => {
+-                    return Ok(Classification::Uncertain(reason));
++                    eprintln!("PREP3 context branch 0 {reason:?}"); return Ok(Classification::Uncertain(reason));
+                 }
+             };
+             let candidates = intersection_candidates_from_contacts(&contacts);
+@@ -2916,7 +2960,7 @@ impl RationalBezier2 {
+             let contacts = match contacts {
+                 Classification::Decided(contacts) => contacts,
+                 Classification::Uncertain(reason) => {
+-                    return Ok(Classification::Uncertain(reason));
++                    eprintln!("PREP3 context branch 1 {reason:?}"); return Ok(Classification::Uncertain(reason));
+                 }
+             };
+             let candidates = intersection_candidates_from_contacts(&contacts);
+@@ -2936,7 +2980,7 @@ impl RationalBezier2 {
+             let contacts = match contacts {
+                 Classification::Decided(contacts) => contacts,
+                 Classification::Uncertain(reason) => {
+-                    return Ok(Classification::Uncertain(reason));
++                    eprintln!("PREP3 context branch 2 {reason:?}"); return Ok(Classification::Uncertain(reason));
+                 }
+             };
+             let candidates = intersection_candidates_from_contacts(&contacts);
+@@ -3052,7 +3096,7 @@ impl RationalBezier2 {
+                     }));
+                 }
+                 Classification::Uncertain(reason) => {
+-                    return Ok(Classification::Uncertain(reason));
++                    eprintln!("PREP3 context branch 3 {reason:?}"); return Ok(Classification::Uncertain(reason));
+                 }
+             }
+         }
+@@ -3093,7 +3137,7 @@ impl RationalBezier2 {
+                     },
+                 }))
+             }
+-            Classification::Uncertain(reason) => Ok(Classification::Uncertain(reason)),
++            Classification::Uncertain(reason) => { eprintln!("PREP3 context final {reason:?}"); Ok(Classification::Uncertain(reason)) },
+         }
+     }
+ 
+@@ -4170,6 +4214,7 @@ impl RationalBezier2 {
+                 &computed_relation
+             }
+         };
++        eprintln!("PREP3 circle relation {circle_relation:?}");
+         let (points, certified_transverse) = match circle_relation {
+             CircleCircleRelation::Coincident => return Ok(None),
+             CircleCircleRelation::Disjoint => {

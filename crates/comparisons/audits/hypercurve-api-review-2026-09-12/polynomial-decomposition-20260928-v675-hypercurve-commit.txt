@@ -1,0 +1,5 @@
+Retain polynomial spline intervals in the exact extraction
+
+Emit each source knot interval with its polynomial Bezier span and return the complete extraction from the working control net. PolynomialSplineCurve2 now caches and returns PolynomialBSplineBezierExtraction2 directly. Remove PolynomialSplineBezierDecomposition2, its forwarding methods and the second source-interval scan; no alias or compatibility interface remains. Standalone span-fact queries retain their full policy-dependent knot replay.
+
+Validation: 113 release cases across four pinned binaries, including full polynomial spline, B-spline and public Curve inventories, plus six lint/format/fuzz/docs/downstream checks. Existing coverage includes unclamped and discontinuous charts, repeated knots, periodicity, exact edits, policy isolation, shared caches, source provenance and span bounds/monotonicity.

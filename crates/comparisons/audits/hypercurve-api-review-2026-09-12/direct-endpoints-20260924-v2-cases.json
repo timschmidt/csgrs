@@ -1,0 +1,42 @@
+[
+  {
+    "name": "bezier_region::tests::retained_algebraic_straights_trim_or_extend_chamfer_and_fillet",
+    "returncode": 0,
+    "passed": true,
+    "limit_seconds": 120,
+    "elapsed_seconds": 0.15693265001755208,
+    "log": "direct-endpoints-20260924-v2-case-0.log"
+  },
+  {
+    "name": "bezier_offset::conversion_tests::selected_fiber_transverse_mapped_cut_inverts_by_point",
+    "returncode": 0,
+    "passed": true,
+    "limit_seconds": 120,
+    "elapsed_seconds": 4.863962930976413,
+    "log": "direct-endpoints-20260924-v2-case-1.log"
+  },
+  {
+    "name": "bezier_region::tests::boundary_curve_views_share_retained_domains_and_endpoint_evidence",
+    "returncode": 0,
+    "passed": true,
+    "limit_seconds": 120,
+    "elapsed_seconds": 0.14761291001923382,
+    "log": "direct-endpoints-20260924-v2-case-2.log"
+  },
+  {
+    "name": "bezier_region::tests::retained_polynomial_chamfer_extends_exact_and_algebraic_incident_roots",
+    "returncode": 0,
+    "passed": true,
+    "limit_seconds": 120,
+    "elapsed_seconds": 0.16816978005226701,
+    "log": "direct-endpoints-20260924-v2-case-3.log"
+  },
+  {
+    "name": "bezier_region::tests::retained_rational_chamfer_extends_exact_and_algebraic_pre_pole_roots",
+    "returncode": 0,
+    "passed": true,
+    "limit_seconds": 120,
+    "elapsed_seconds": 0.20116751501336694,
+    "log": "direct-endpoints-20260924-v2-case-4.log"
+  }
+]

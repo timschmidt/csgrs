@@ -1,0 +1,72 @@
+{
+  "normal_production_build": false,
+  "source_manifest": "stationary-family-incidence-diagnostic-20260927-v547-sources.json",
+  "source_directory": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/source-archives/stationary-family-incidence-diagnostic-20260927-v547",
+  "builds": [
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "test",
+        "--lib",
+        "--release",
+        "--all-features",
+        "--locked",
+        "--offline",
+        "--no-run",
+        "--message-format=json"
+      ],
+      "returncode": 0,
+      "log": "stationary-family-incidence-diagnostic-20260927-v547-build.log",
+      "elapsed_seconds": 134.29904961492866,
+      "binaries": {
+        "hypercurve": {
+          "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/stationary-family-incidence-diagnostic-20260927-v547-hypercurve-tests",
+          "sha256": "a56c84f02d8f80e273269144cae23ece7ed3f5b330dec4e4ded9146bbe4843d5"
+        }
+      }
+    }
+  ],
+  "cases": [
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/stationary-family-incidence-diagnostic-20260927-v547-hypercurve-tests",
+        "--exact",
+        "curve::curve_fillet::stationary_family_composition_regression::normalized_region_selects_and_reuses_a_stationary_fillet_family",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 101,
+      "log": "stationary-family-incidence-diagnostic-20260927-v547-normalized_region_selects_and_reuses_a_stationary_fillet_family.log",
+      "elapsed_seconds": 5.620939079904929,
+      "target": "hypercurve",
+      "name": "curve::curve_fillet::stationary_family_composition_regression::normalized_region_selects_and_reuses_a_stationary_fillet_family",
+      "passed": false
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/stationary-family-incidence-diagnostic-20260927-v547-hypercurve-tests",
+        "--exact",
+        "curve::curve_fillet::algebraic_bridge_fillet_regression::fillet_extension_owns_the_algebraic_endpoint_bridge",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 101,
+      "log": "stationary-family-incidence-diagnostic-20260927-v547-fillet_extension_owns_the_algebraic_endpoint_bridge.log",
+      "elapsed_seconds": 0.003591843880712986,
+      "target": "hypercurve",
+      "name": "curve::curve_fillet::algebraic_bridge_fillet_regression::fillet_extension_owns_the_algebraic_endpoint_bridge",
+      "passed": false
+    }
+  ],
+  "checks": [],
+  "expected_cases": {
+    "hypercurve": [
+      "curve::curve_fillet::stationary_family_composition_regression::normalized_region_selects_and_reuses_a_stationary_fillet_family",
+      "curve::curve_fillet::algebraic_bridge_fillet_regression::fillet_extension_owns_the_algebraic_endpoint_bridge"
+    ]
+  },
+  "all_processes_reaped": true,
+  "probe_complete": true,
+  "qualification_complete": false,
+  "failure": "focused regression failure"
+}

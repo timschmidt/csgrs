@@ -1,0 +1,37 @@
+\doxysubsubsubsection{Logic }
+\hypertarget{group__LogicalSubModule}{}\label{group__LogicalSubModule}\index{Logic@{Logic}}
+Logical types, including \doxylink{classAriadne_1_1Boolean}{Boolean}, \doxylink{classAriadne_1_1Sierpinskian}{Sierpinskian} and \doxylink{classAriadne_1_1Kleenean}{Kleenean} types. 
+
+{\itshape For the mathematical theory of non-\/\+Boolean and constructive logic, see the \doxysectlink{logic_page}{Logical Foundations}{0} Page.}
+
+In this module, we define Ariadne\textquotesingle{}s base logical types. The main classes are \doxylink{classAriadne_1_1Boolean}{Boolean}, \doxylink{classAriadne_1_1Sierpinskian}{Sierpinskian}, and \doxylink{classAriadne_1_1Kleenean}{Kleenean}.
+
+The \doxylink{classAriadne_1_1Boolean}{Boolean} class is a standard two-\/valued logical type with values {\ttfamily true} and {\ttfamily false}, and represents the result of a decidable predicate. The \doxylink{classAriadne_1_1Sierpinskian}{Sierpinskian} class has two values, {\ttfamily true} and {\ttfamily indeterminate}, and represents the result of a verifyable predicate. The \doxylink{classAriadne_1_1Kleenean}{Kleenean} class has three values, {\ttfamily true}, {\ttfamily indeterminate} and {\ttfamily false}, and represents the result of a {\itshape quasidecidable} predicate.
+
+The \doxylink{classAriadne_1_1Sierpinskian}{Sierpinskian} and \doxylink{classAriadne_1_1Kleenean}{Kleenean} classes are "{}\+Effective"{} types, denoted by \doxylink{structAriadne_1_1EffectiveTag}{Effective\+Tag}. They are used to represent the results of predicates on exactly-\/specified objects from continuous (i.\+e. uncountable) spaces. From the viewpoint of computable analysis, they can be considered as sequences of their values, which stabilise as soon as a decision ({\ttfamily true} or {\ttfamily false}) is reached. In Ariadne, this is realised by providing a method check(\doxylink{classAriadne_1_1Effort}{Effort}), which returns a "{}\+Validated"{} version of the class (denoted by \doxylink{structAriadne_1_1ValidatedTag}{Validated\+Tag}) containing one of its concrete values. For example, if {\ttfamily k} is a Kleeanen object, then {\ttfamily k.\+check(3)} is a \doxylink{classAriadne_1_1ValidatedKleenean}{Validated\+Kleenean} object which may have value {\ttfamily true}, {\ttfamily indeterminate} or {\ttfamily false}. Further, if {\ttfamily k.\+check(3)} is {\ttfamily true} or {\ttfamily false}, then k.\+check(4) has the same value. Validated logical types are also used for the result of logical predicates on approximations to objects on continuous spaces with given error bounds.
+
+The \doxylink{classAriadne_1_1LowerKleenean}{Lower\+Kleenean} class also has the two values {\ttfamily true} and {\ttfamily indeterminate}. The difference between \doxylink{classAriadne_1_1LowerKleenean}{Lower\+Kleenean} and \doxylink{classAriadne_1_1Sierpinskian}{Sierpinskian} is that \doxylink{classAriadne_1_1Sierpinskian}{Sierpinskian} is used where falsification is impossible, which occurs when there are no robustly false values, such in the case of the inequality predicate, whereas \doxylink{classAriadne_1_1LowerKleenean}{Lower\+Kleenean} is used when information which could be used to falsify the predicate has been lost, such as testing positivity of a \doxylink{classAriadne_1_1LowerReal}{Lower\+Real} number, for which only lower bounds are provided. Conversions are possible \doxylink{classAriadne_1_1Sierpinskian}{Sierpinskian} to \doxylink{classAriadne_1_1Kleenean}{Kleenean} to \doxylink{classAriadne_1_1LowerKleenean}{Lower\+Kleenean}. Similarly, a \doxylink{classAriadne_1_1UpperKleenean}{Upper\+Kleenean} class is provided with values {\ttfamily false} and {\ttfamily indeterminate}.
+
+The \doxylink{classAriadne_1_1NaiveKleenean}{Naive\+Kleenean} class has values {\ttfamily likely}, {\ttfamily indeterminate} and {\ttfamily unlikely}, and is used where only approximate information is available, so a rigorous assessment of truth or falseness cannot be made. The corresponding finitary class is \doxylink{classAriadne_1_1ApproximateKleenean}{Approximate\+Kleenean}, which may represent a the result of a predicate on a floating-\/point approximation to a real number without error bounds. Note that \doxylink{classAriadne_1_1ApproximateKleenean}{Approximate\+Kleenean} may be considered a "{}{\ttfamily Validated\+Naive\+Kleenean"{}} or as an "{}{\ttfamily Approximate"{}{\ttfamily \doxylink{classAriadne_1_1Kleenean}{Kleenean}}.} Although \doxylink{classAriadne_1_1NaiveKleenean}{Naive\+Kleenean} and \doxylink{classAriadne_1_1ApproximateKleenean}{Approximate\+Kleenean} do not provide mathematically rigorous information, they may be useful in scratch calculuations used to hot-\/start or precondition a rigorous calculuation.
+
+All logical classes support the standard operations of negation, conjunction (logical "{}and"{}), disjunction (logical "{}or"{}) and exclusive-\/or.
+
+In order to obtain a built-\/in {\ttfamily bool} value from a {\ttfamily Validated} logical object, the tests \doxylink{namespaceAriadne_aa44ba4f2d015e8143195445b46782c31}{definitely}, \doxylink{namespaceAriadne_a67004075d5a8db930365c150c0b8965a}{possibly}, and \doxylink{namespaceAriadne_af8475832f5c7e1244f1ca1bc0f24203d}{probably} can be used. Further, \doxylink{namespaceAriadne_ad8d78b8db431545e9c2782516e0e954e}{decide} can be used to convert any logical type to a boolean value, returning {\ttfamily probably} for concrete (validated) logical types, and checking abstract (effective) logical type with the default effort.
+
+An example of the use of logical predicates is given below\+: 
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\mbox{\hyperlink{classAriadne_1_1Real}{Real}}\ x\ =\ ...;}
+\DoxyCodeLine{Kleeanean\ k\ =\ (x>0);}
+\DoxyCodeLine{}
+\DoxyCodeLine{\mbox{\hyperlink{classAriadne_1_1Effort}{Effort}}\ eff(5);}
+\DoxyCodeLine{\mbox{\hyperlink{classAriadne_1_1ValidatedKleenean}{ValidatedKleenean}}\ vk\ =\ k.check(eff);}
+\DoxyCodeLine{}
+\DoxyCodeLine{\mbox{\hyperlink{classAriadne_1_1MultiplePrecision}{MultiplePrecision}}\ pr(128);}
+\DoxyCodeLine{ValidatedFloatMP\ vx\ =\ x.get(pr);}
+\DoxyCodeLine{\mbox{\hyperlink{classAriadne_1_1ValidatedKleenean}{ValidatedKleenean}}\ vpx\ =\ (vx>0);}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{comment}{//\ Check\ that\ if\ vk\ is\ false,\ then\ vpx\ cannot\ be\ true.}}
+\DoxyCodeLine{assert(\mbox{\hyperlink{namespaceAriadne_a67004075d5a8db930365c150c0b8965a}{possibly}}(vk)\ or\ not\ \mbox{\hyperlink{namespaceAriadne_aa44ba4f2d015e8143195445b46782c31}{definitely}}(vpx));}
+
+\end{DoxyCode}
+ 

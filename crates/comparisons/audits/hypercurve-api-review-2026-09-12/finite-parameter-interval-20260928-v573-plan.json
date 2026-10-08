@@ -1,0 +1,20 @@
+{
+  "prerequisite": "primitive-tangent-reuse-broad-20260928-v571",
+  "changed_paths": [
+    "src/bezier_offset.rs",
+    "src/bezier_parameter.rs",
+    "src/bezier_region.rs",
+    "src/curve_region_boolean.rs",
+    "src/curve_support_intersection.rs",
+    "tests/hypercurve_bezier_algebraic_parameter.rs"
+  ],
+  "new_case": "bezier_parameter::finite_interval_import_regression::unit_import_keeps_its_domain_after_generic_interval_construction",
+  "public_target": "hypercurve_bezier_algebraic_parameter",
+  "public_cases": [
+    "finite_parameter_interval_contract::exterior_root_images_preserve_equations_and_native_curve_domains",
+    "finite_parameter_interval_contract::positive_unit_weights_do_not_admit_exterior_algebraic_poles"
+  ],
+  "expected_prior_tests": 452,
+  "implementation": "implement-finite-parameter-interval-v572.py",
+  "status": "unrun"
+}

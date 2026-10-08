@@ -1,0 +1,14 @@
+{
+  "command": [
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/parameter-construction-20260928-v605-hypercurve_bezier_split_materialization-tests",
+    "--exact",
+    "rational_algebraic_boundary_with_zero_denominator_returns_explicit_uncertainty",
+    "--nocapture",
+    "--test-threads=1"
+  ],
+  "returncode": 101,
+  "log": "pole-split-baseline-20260928-v635.log",
+  "binary_sha256": "5155255df7dfb31b920b780141e6baced38bcd53156ce3836a8952adcfb88359",
+  "elapsed_seconds": 0.003559625009074807,
+  "all_processes_reaped": true
+}

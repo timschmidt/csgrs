@@ -1,0 +1,25 @@
+\doxysubsection{Euler\+Bounder Class Reference}
+\hypertarget{classAriadne_1_1EulerBounder}{}\label{classAriadne_1_1EulerBounder}\index{EulerBounder@{EulerBounder}}
+
+
+{\ttfamily \#include $<$bounder.\+hpp$>$}
+
+
+
+\doxysubsubsection{Description}
+Compute bounds on the flow of a differential equation using a set-\/based Euler method. \doxysubsubsubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1EulerBounder_a82405e3dc9beafe1a3639d0aab2b8821}\label{classAriadne_1_1EulerBounder_a82405e3dc9beafe1a3639d0aab2b8821} 
+virtual \mbox{\hyperlink{namespaceAriadne_abbe0884d033ed6289d1f654576d7bb07}{Pair}}$<$ \mbox{\hyperlink{group__DifferentialEquationSubModule_ga6f1c6f216a042c31906593cafeb126fa}{Step\+Size\+Type}}, \mbox{\hyperlink{group__FunctionModule_gadb510bd9aa076e5ae44245b498901ca6}{Upper\+Box\+Type}} $>$ {\bfseries compute} (Validated\+Vector\+Multivariate\+Function const \&f, \mbox{\hyperlink{group__FunctionModule_gaf5c0b733c80abb59b1c3d1eb58c20099}{Box\+Domain\+Type}} const \&D, \mbox{\hyperlink{group__FunctionModule_gaf5c0b733c80abb59b1c3d1eb58c20099}{Box\+Domain\+Type}} const \&A, \mbox{\hyperlink{classAriadne_1_1Suggestion}{Suggestion}}$<$ \mbox{\hyperlink{group__DifferentialEquationSubModule_ga6f1c6f216a042c31906593cafeb126fa}{Step\+Size\+Type}} $>$ const \&hsug) const override
+\begin{DoxyCompactList}\small\item\em Compute a pair $(h,B)$ consisting of a bound {\itshape B} for the flow of $\dt{x}=f(x,a)$ starting in $D$ with $a\in A$ for time step $h\leq h_{sug}$. ~\newline
+ Arguments\+: $f$ is the {\itshape vector\+\_\+field}, $D$ is the {\itshape state\+\_\+domain} and $h_{sug}$ is the suggested time step. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1EulerBounder_a94a966ebb928ee5580edfa03ca0314fc}\label{classAriadne_1_1EulerBounder_a94a966ebb928ee5580edfa03ca0314fc} 
+virtual \mbox{\hyperlink{namespaceAriadne_abbe0884d033ed6289d1f654576d7bb07}{Pair}}$<$ \mbox{\hyperlink{group__DifferentialEquationSubModule_ga6f1c6f216a042c31906593cafeb126fa}{Step\+Size\+Type}}, \mbox{\hyperlink{group__FunctionModule_gadb510bd9aa076e5ae44245b498901ca6}{Upper\+Box\+Type}} $>$ {\bfseries compute} (Validated\+Vector\+Multivariate\+Function const \&f, \mbox{\hyperlink{group__FunctionModule_gaf5c0b733c80abb59b1c3d1eb58c20099}{Box\+Domain\+Type}} const \&D, \mbox{\hyperlink{group__DifferentialEquationSubModule_ga6f1c6f216a042c31906593cafeb126fa}{Step\+Size\+Type}} const \&t, \mbox{\hyperlink{group__FunctionModule_gaf5c0b733c80abb59b1c3d1eb58c20099}{Box\+Domain\+Type}} const \&A, \mbox{\hyperlink{classAriadne_1_1Suggestion}{Suggestion}}$<$ \mbox{\hyperlink{group__DifferentialEquationSubModule_ga6f1c6f216a042c31906593cafeb126fa}{Step\+Size\+Type}} $>$ const \&hsug) const override
+\begin{DoxyCompactList}\small\item\em Compute a pair $(h,B)$ consisting of a bound {\itshape B} for the flow of $\dt{x}=f(x,t,a)$ starting in $D$ with $a\in A$ for time step $h\leq h_{sug}$. Arguments\+: $f$ is the {\itshape vector\+\_\+field}, $dom$ is the {\itshape state\+\_\+domain} and $h_{sug}$ is the suggested time step. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+The documentation for this class was generated from the following files\+:\begin{DoxyCompactItemize}
+\item 
+source/solvers/\mbox{\hyperlink{bounder_8hpp}{bounder.\+hpp}}\item 
+source/solvers/bounder.\+cpp\end{DoxyCompactItemize}

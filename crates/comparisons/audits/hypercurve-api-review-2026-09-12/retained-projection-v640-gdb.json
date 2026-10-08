@@ -1,0 +1,15 @@
+{
+  "pid": 3693992,
+  "argv": [
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-closure-probes-20260928-v639-hypercurve-tests",
+    "--exact",
+    "bezier_offset::structural_overlap_trace_regression::reversed_monotone_reparameterization_preserves_structural_pair_crossings_approximate",
+    "--nocapture",
+    "--test-threads=1"
+  ],
+  "cwd": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/source-archives/retained-closure-probes-20260928-v639/hypercurve",
+  "binary_sha256": "98031e20b516c9c0841c102a41ecadfac77baa0bb9e79272badf5c209df0ce59",
+  "original_executable": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve-aaccf7914fea7cbf",
+  "returncode": 0,
+  "log": "retained-projection-v640-gdb.log"
+}

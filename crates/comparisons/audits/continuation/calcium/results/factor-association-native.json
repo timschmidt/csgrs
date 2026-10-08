@@ -1,0 +1,11 @@
+{
+  "tag": "factor-association-native",
+  "started": "2026-09-08T20:09:44.576Z",
+  "finished": "2026-09-08T20:09:44.590Z",
+  "elapsedSeconds": 0.011932151000000005,
+  "cwd": "/home/tim/Documents/GitHub/workspace",
+  "command": ".audit-builds/calcium-factor-association-probe",
+  "args": [],
+  "code": 1,
+  "signal": null
+}

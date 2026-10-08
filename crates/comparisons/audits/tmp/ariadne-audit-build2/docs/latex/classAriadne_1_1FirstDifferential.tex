@@ -1,0 +1,114 @@
+\doxysubsection{First\+Differential\texorpdfstring{$<$}{<} X \texorpdfstring{$>$}{>} Class Template Reference}
+\hypertarget{classAriadne_1_1FirstDifferential}{}\label{classAriadne_1_1FirstDifferential}\index{FirstDifferential$<$ X $>$@{FirstDifferential$<$ X $>$}}
+
+
+{\ttfamily \#include $<$fixed\+\_\+differential.\+hpp$>$}
+
+
+
+\doxysubsubsection{Description}
+\subsubsection*{template$<$class X$>$\newline
+class Ariadne\+::\+First\+Differential$<$ X $>$}
+A class representing the partial derivatives of a scalar quantity depending on multiple arguments. 
+
+Based on a power series \doxylink{classAriadne_1_1Expansion}{Expansion}, centred on the point at which the partial derivatives are being evaluated.
+
+\begin{DoxyInvariant}{Invariant}
+The expansion is sorted using graded\+\_\+sort(). In particular, the total degree of the terms is increasing, and the linear terms appear in coordinate order. 
+\end{DoxyInvariant}
+\doxysubsubsubsection*{Public Types}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1FirstDifferential_af802285a44706269f2a6190f17286c2b}\label{classAriadne_1_1FirstDifferential_af802285a44706269f2a6190f17286c2b} 
+typedef X\+::\+Numeric\+Type {\bfseries Numeric\+Type}
+\begin{DoxyCompactList}\small\item\em The type of used to represent numbers in the coefficient. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1FirstDifferential_a1ff6c6c30faa4733eea879f8fdcdf613}\label{classAriadne_1_1FirstDifferential_a1ff6c6c30faa4733eea879f8fdcdf613} 
+typedef X {\bfseries Value\+Type}
+\begin{DoxyCompactList}\small\item\em The type of used to represent the coefficients. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1FirstDifferential_a8d798b964c2cb4672c4eb4ca446ac003}\label{classAriadne_1_1FirstDifferential_a8d798b964c2cb4672c4eb4ca446ac003} 
+{\footnotesize template$<$class... PRS$>$ \newline
+requires Constructible$<$X,\mbox{\hyperlink{namespaceAriadne_aae901a69a841b1a085a0dfe218e38fe9}{Nat}},PRS...$>$}\\{\bfseries First\+Differential} (\mbox{\hyperlink{namespaceAriadne_acd8b5f68421eb22a84277ef7c9c0ee2a}{Size\+Type}} as, PRS... prs)
+\begin{DoxyCompactList}\small\item\em Constructs a differential with degree one in {\itshape as} variables, and zero element based on {\itshape prs}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1FirstDifferential_ad1876e26ea268658901a646382b4a18b}\label{classAriadne_1_1FirstDifferential_ad1876e26ea268658901a646382b4a18b} 
+{\bfseries First\+Differential} (\mbox{\hyperlink{namespaceAriadne_acd8b5f68421eb22a84277ef7c9c0ee2a}{Size\+Type}} as, const X \&z)
+\begin{DoxyCompactList}\small\item\em Constructs a differential with degree one in {\itshape as} variables, initialising to the zero value z. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1FirstDifferential_a86e5252f9e181eab169f35f460a7e89a}\label{classAriadne_1_1FirstDifferential_a86e5252f9e181eab169f35f460a7e89a} 
+{\bfseries First\+Differential} (const X \&v, const \mbox{\hyperlink{classAriadne_1_1Covector}{Covector}}$<$ X $>$ \&g)
+\begin{DoxyCompactList}\small\item\em Constructs a differential with degree zero in {\itshape as} variables. (Deprecated) \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1FirstDifferential_ac22f5bb7665580c946d5c17f220d949a}\label{classAriadne_1_1FirstDifferential_ac22f5bb7665580c946d5c17f220d949a} 
+{\footnotesize template$<$class XX$>$ }\\{\bfseries First\+Differential} (const \mbox{\hyperlink{classAriadne_1_1FirstDifferential}{First\+Differential}}$<$ XX $>$ \&x)
+\begin{DoxyCompactList}\small\item\em Conversion constructor from a different numerical type. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1FirstDifferential_a91d05f1c961f2bd6a2c37773eeb07afa}\label{classAriadne_1_1FirstDifferential_a91d05f1c961f2bd6a2c37773eeb07afa} 
+\mbox{\hyperlink{classAriadne_1_1FirstDifferential}{First\+Differential}}$<$ X $>$ \& {\bfseries operator=} (const X \&c)
+\begin{DoxyCompactList}\small\item\em \doxylink{classAriadne_1_1Set}{Set} the differential equal to a constant, without changing the degree or number of arguments. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1FirstDifferential_ac553426d3e8c493742606dbe03855b08}\label{classAriadne_1_1FirstDifferential_ac553426d3e8c493742606dbe03855b08} 
+\mbox{\hyperlink{namespaceAriadne_acd8b5f68421eb22a84277ef7c9c0ee2a}{Size\+Type}} {\bfseries argument\+\_\+size} () const
+\begin{DoxyCompactList}\small\item\em The number of independent variables. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1FirstDifferential_a84847fadf9927f5cafdc5d68331bb74c}\label{classAriadne_1_1FirstDifferential_a84847fadf9927f5cafdc5d68331bb74c} 
+\mbox{\hyperlink{namespaceAriadne_a80311bc831cfc870fd65158180330a77}{Degree\+Type}} {\bfseries degree} () const
+\begin{DoxyCompactList}\small\item\em The maximum degree of the stored terms. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1FirstDifferential_a1e277167f487519cd2d6c32829e6ff16}\label{classAriadne_1_1FirstDifferential_a1e277167f487519cd2d6c32829e6ff16} 
+X {\bfseries zero\+\_\+coefficient} () const
+\begin{DoxyCompactList}\small\item\em A zero with the precision argument of the numbers. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1FirstDifferential_a3bf892ca4d5c0b4498db4bf3cf965542}\label{classAriadne_1_1FirstDifferential_a3bf892ca4d5c0b4498db4bf3cf965542} 
+const X \& {\bfseries value} () const
+\begin{DoxyCompactList}\small\item\em The value of the differential i.\+e. the coefficient of $1$. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1FirstDifferential_a8c15c3c0f2cbf1fae9e93817de98736e}\label{classAriadne_1_1FirstDifferential_a8c15c3c0f2cbf1fae9e93817de98736e} 
+const \mbox{\hyperlink{classAriadne_1_1Covector}{Covector}}$<$ X $>$ \& {\bfseries gradient} () const
+\begin{DoxyCompactList}\small\item\em The vector of coefficients of $x_j$. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1FirstDifferential_a7be09d8878928dfe4be626f6acddb84f}\label{classAriadne_1_1FirstDifferential_a7be09d8878928dfe4be626f6acddb84f} 
+const X \& {\bfseries gradient} (\mbox{\hyperlink{namespaceAriadne_acd8b5f68421eb22a84277ef7c9c0ee2a}{Size\+Type}} j) const
+\begin{DoxyCompactList}\small\item\em The vector of coefficients of $x_j$. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1FirstDifferential_a2bddce5cd1fc46841b1f1944e9af6bb8}\label{classAriadne_1_1FirstDifferential_a2bddce5cd1fc46841b1f1944e9af6bb8} 
+X \& {\bfseries operator\mbox{[}$\,$\mbox{]}} (const \mbox{\hyperlink{namespaceAriadne_acd8b5f68421eb22a84277ef7c9c0ee2a}{Size\+Type}} \&j)
+\begin{DoxyCompactList}\small\item\em A reference to the coefficient of $x_j$. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1FirstDifferential_afe820159a516943bcee5231d8ae97c71}\label{classAriadne_1_1FirstDifferential_afe820159a516943bcee5231d8ae97c71} 
+const X \& {\bfseries operator\mbox{[}$\,$\mbox{]}} (const \mbox{\hyperlink{namespaceAriadne_acd8b5f68421eb22a84277ef7c9c0ee2a}{Size\+Type}} \&j) const
+\begin{DoxyCompactList}\small\item\em The coefficient of $x_j$. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1FirstDifferential_abe84f59e0597523d39d90b78553d4458}\label{classAriadne_1_1FirstDifferential_abe84f59e0597523d39d90b78553d4458} 
+const X \& {\bfseries operator\mbox{[}$\,$\mbox{]}} (const Multi\+Index \&a) const
+\begin{DoxyCompactList}\small\item\em The coefficient of $x^a$ i.\+e. $\prod x_j^{a_j}$. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1FirstDifferential_a1f61ac4db9aeb7c3dc6e187b2b809829}\label{classAriadne_1_1FirstDifferential_a1f61ac4db9aeb7c3dc6e187b2b809829} 
+\mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} {\bfseries set\+\_\+value} (const X \&c)
+\begin{DoxyCompactList}\small\item\em \doxylink{classAriadne_1_1Set}{Set} the coefficient of the constant term to {\itshape c}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1FirstDifferential_aaecc226b7db6b8669e75e64e09285de4}\label{classAriadne_1_1FirstDifferential_aaecc226b7db6b8669e75e64e09285de4} 
+\mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} {\bfseries clear} ()
+\begin{DoxyCompactList}\small\item\em \doxylink{classAriadne_1_1Set}{Set} all coefficients to zero. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsubsection*{Static Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1FirstDifferential_af8584efe11db5f17a84ec9af15c33ecd}\label{classAriadne_1_1FirstDifferential_af8584efe11db5f17a84ec9af15c33ecd} 
+static \mbox{\hyperlink{classAriadne_1_1FirstDifferential}{First\+Differential}}$<$ X $>$ {\bfseries constant} (\mbox{\hyperlink{namespaceAriadne_acd8b5f68421eb22a84277ef7c9c0ee2a}{Size\+Type}} as, const X \&c)
+\begin{DoxyCompactList}\small\item\em A constant differential of degree {\itshape deg} in {\itshape as} arguments with value {\itshape c}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1FirstDifferential_aa149a58795455bbdace81b5f889a14be}\label{classAriadne_1_1FirstDifferential_aa149a58795455bbdace81b5f889a14be} 
+static \mbox{\hyperlink{classAriadne_1_1FirstDifferential}{First\+Differential}}$<$ X $>$ {\bfseries variable} (\mbox{\hyperlink{namespaceAriadne_acd8b5f68421eb22a84277ef7c9c0ee2a}{Size\+Type}} as, const X \&v, \mbox{\hyperlink{namespaceAriadne_acd8b5f68421eb22a84277ef7c9c0ee2a}{Size\+Type}} j)
+\begin{DoxyCompactList}\small\item\em A differential of degree {\itshape deg} in {\itshape as} arguments representing the quantity $v+x_j$. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1FirstDifferential_a36c8a96aeac620b67cb8ed90262c9ff5}\label{classAriadne_1_1FirstDifferential_a36c8a96aeac620b67cb8ed90262c9ff5} 
+static \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ \mbox{\hyperlink{classAriadne_1_1FirstDifferential}{First\+Differential}}$<$ X $>$ $>$ {\bfseries variables} (const \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ X $>$ \&x)
+\begin{DoxyCompactList}\small\item\em A vector of differentials of degree {\itshape deg} in {\itshape as} arguments with values $c_i+x_i$. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsubsection*{Friends}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1FirstDifferential_a611f1710469c15972f0b34e7e78eab25}\label{classAriadne_1_1FirstDifferential_a611f1710469c15972f0b34e7e78eab25} 
+Equality\+Type$<$ X $>$ {\bfseries operator==} (const \mbox{\hyperlink{classAriadne_1_1FirstDifferential}{First\+Differential}}$<$ X $>$ \&dx1, const \mbox{\hyperlink{classAriadne_1_1FirstDifferential}{First\+Differential}}$<$ X $>$ \&dx2)
+\begin{DoxyCompactList}\small\item\em Equality operator. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1FirstDifferential_a7889d512826677423b008414352359b7}\label{classAriadne_1_1FirstDifferential_a7889d512826677423b008414352359b7} 
+Inequality\+Type$<$ X $>$ {\bfseries operator!=} (const \mbox{\hyperlink{classAriadne_1_1FirstDifferential}{First\+Differential}}$<$ X $>$ \&dx1, const \mbox{\hyperlink{classAriadne_1_1FirstDifferential}{First\+Differential}}$<$ X $>$ \&dx2)
+\begin{DoxyCompactList}\small\item\em Inequality operator. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1FirstDifferential_ae27c8b0b669ad1b3716a0e2034c1c22e}\label{classAriadne_1_1FirstDifferential_ae27c8b0b669ad1b3716a0e2034c1c22e} 
+decltype(auto) {\bfseries operator$>$=} (const \mbox{\hyperlink{classAriadne_1_1FirstDifferential}{First\+Differential}}$<$ X $>$ \&dx1, const \mbox{\hyperlink{classAriadne_1_1FirstDifferential}{First\+Differential}}$<$ X $>$ \&dx2)
+\begin{DoxyCompactList}\small\item\em \doxylink{namespaceAriadne_a0e36a4c4b857737f71444bff61a9edb6}{Comparison} operator. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1FirstDifferential_ac8b20d2d8acb1c1eb2b1ebabaa30852a}\label{classAriadne_1_1FirstDifferential_ac8b20d2d8acb1c1eb2b1ebabaa30852a} 
+decltype(auto) {\bfseries operator$<$=} (const \mbox{\hyperlink{classAriadne_1_1FirstDifferential}{First\+Differential}}$<$ X $>$ \&dx1, const \mbox{\hyperlink{classAriadne_1_1FirstDifferential}{First\+Differential}}$<$ X $>$ \&dx2)
+\begin{DoxyCompactList}\small\item\em \doxylink{namespaceAriadne_a0e36a4c4b857737f71444bff61a9edb6}{Comparison} operator. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1FirstDifferential_a1b3e33b2e7733c2c8d9141b8d0cc19a8}\label{classAriadne_1_1FirstDifferential_a1b3e33b2e7733c2c8d9141b8d0cc19a8} 
+\mbox{\hyperlink{namespaceAriadne_abbe0884d033ed6289d1f654576d7bb07}{Pair}}$<$ \mbox{\hyperlink{namespaceAriadne_acd8b5f68421eb22a84277ef7c9c0ee2a}{Size\+Type}}, Characteristics\+Type$<$ X $>$ $>$ {\bfseries characteristics} (\mbox{\hyperlink{classAriadne_1_1FirstDifferential}{First\+Differential}}$<$ X $>$const \&dx)
+\begin{DoxyCompactList}\small\item\em Characteristics needed to construct a zero element. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+The documentation for this class was generated from the following file\+:\begin{DoxyCompactItemize}
+\item 
+source/algebra/\mbox{\hyperlink{fixed__differential_8hpp}{fixed\+\_\+differential.\+hpp}}\end{DoxyCompactItemize}

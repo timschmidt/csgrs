@@ -1,0 +1,53 @@
+{
+  "status": "committed",
+  "goal_status": "active",
+  "base_commit": "02b419555b7002ec3ea9c94f0f06ed376cc09443",
+  "changes": [
+    "Require certified fixture reversal, region construction and both represented/selected fillet solutions before composition.",
+    "Require certified inside/outside classification after bevel, round and limited-miter neck collapse under both policies; remove the obsolete mandatory-approximation expectation."
+  ],
+  "production_sources_unchanged": true,
+  "normal_library_sha256": "107125b7f6aa2ea06cdb1cd2954cfbcb9a473e11835352343c3c19e88a66e816",
+  "independent_probe": "neck-erosion-certified-locations-probe.json",
+  "independent_offset_queries": 6,
+  "independent_location_queries": 18,
+  "qualification": {
+    "target": "hypercurve_curve_region_promotion",
+    "passed": 96,
+    "failed": 5,
+    "remaining_failures": [
+      "approximate_512_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions",
+      "non_ph_bezier_pair_projective_fillet_retains_algebraic_extensions",
+      "nonconvex_algebraic_chord_expansion_is_exact_and_local_collapse_is_explicit",
+      "strict_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions",
+      "unified_mixed_line_arc_erosion_splits_after_a_curved_neck_collapse"
+    ],
+    "new_failures": [],
+    "all_target_check": true,
+    "immutable_sources": true,
+    "source_files": 396,
+    "formatting_and_whitespace": true,
+    "checks": [
+      {
+        "check": "format",
+        "exit_code": 0,
+        "output": ""
+      },
+      {
+        "check": "whitespace",
+        "exit_code": 0,
+        "output": ""
+      }
+    ],
+    "unchanged_production_qualification": "native-line-arc-endpoint-qualification.json",
+    "updated_total_passed": 2178,
+    "full_suite_passing": false,
+    "previously_unqualified_expensive_cases": 8,
+    "all_30_repositories_clean_after_commit": true
+  },
+  "remaining": [
+    "Five promotion failures and eight expensive previously unqualified cases.",
+    "General trimming, full-family common dispatch and the broader original architecture goal."
+  ],
+  "commit": "db88eb4e1f026bc6d64770f14a09a8a29380d9a8"
+}

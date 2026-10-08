@@ -1,0 +1,18 @@
+[
+  {
+    "name": "bezier_algebraic_image::policy_tests::arithmetic_adapter_replays_close_nonrational_bounds_strictly",
+    "returncode": 101,
+    "passed": false,
+    "limit_seconds": 120,
+    "elapsed_seconds": 0.14187210495583713,
+    "log": "biquadratic-basis-20260923-v4-hypercurve-case-0.log"
+  },
+  {
+    "name": "bezier_offset::conversion_tests::selected_fiber_transverse_mapped_cut_inverts_by_point",
+    "returncode": 101,
+    "passed": false,
+    "limit_seconds": 180,
+    "elapsed_seconds": 4.3089010959956795,
+    "log": "biquadratic-basis-20260923-v4-hypercurve-case-1.log"
+  }
+]

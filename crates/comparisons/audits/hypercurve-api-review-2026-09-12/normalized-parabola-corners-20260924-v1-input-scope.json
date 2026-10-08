@@ -1,0 +1,10 @@
+{
+  "hypercurve_parent": "91ddad8970b8ffda7053a38bce3e72a0400d7abe",
+  "changed_files": [
+    "src/bezier_region.rs"
+  ],
+  "only_one_test_and_its_obsolete_helpers_changed": true,
+  "all_production_bytes_unchanged": true,
+  "baseline_manifest": "independent-field-corners-20260924-v5-sources.json",
+  "baseline_full_qualification": "independent-field-corners-20260924-v5-qualification.json"
+}

@@ -1,0 +1,132 @@
+{
+  "parents": {
+    "hypercurve": "5b1d0785125e7eb260dd81343e8030182751b869",
+    "hypersolve": "42308d704df777b3e627aa344424afa3f215e456",
+    "hyperreal": "0cb5f29aee065c73e234e0ebb0a9e106398515bb"
+  },
+  "workspace_guard": "retained-fillet-components-20260926-v216-sources.json",
+  "source_manifest": "retained-fillet-components-20260926-v216-sources.json",
+  "source_directory": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/source-archives/retained-fillet-components-20260926-v216",
+  "build_source_directory": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/build-workspace-20260925",
+  "cases": [
+    {
+      "name": "bezier_offset::parameter_component::tests::incident_charts_keep_poles_and_finite_ownership_excluded",
+      "returncode": 0,
+      "elapsed_seconds": 0.003712525009177625,
+      "log": "retained-fillet-components-20260926-v216-case-000.log"
+    },
+    {
+      "name": "bezier_offset::parameter_component::tests::product_components_keep_fixed_axes_and_operand_roles",
+      "returncode": 0,
+      "elapsed_seconds": 0.0035584860015660524,
+      "log": "retained-fillet-components-20260926-v216-case-001.log"
+    },
+    {
+      "name": "bezier_offset::conversion_tests::complete_component_queries_keep_split_cells_and_residual_contacts",
+      "returncode": 101,
+      "elapsed_seconds": 0.0035274869296699762,
+      "log": "retained-fillet-components-20260926-v216-case-002.log"
+    },
+    {
+      "name": "bezier_offset::conversion_tests::axis_components_keep_exact_clipped_ends_and_open_selector_events",
+      "returncode": 0,
+      "elapsed_seconds": 0.0035550760803744197,
+      "log": "retained-fillet-components-20260926-v216-case-003.log"
+    },
+    {
+      "name": "bezier_offset::conversion_tests::original_parallel_normal_constraints_clip_finite_and_incident_components",
+      "returncode": 0,
+      "elapsed_seconds": 0.03174087102524936,
+      "log": "retained-fillet-components-20260926-v216-case-004.log"
+    },
+    {
+      "name": "curve::tests::selected_parallel_fillet_clips_a_positive_dimensional_center_component_locally",
+      "returncode": 101,
+      "elapsed_seconds": 0.03164687694516033,
+      "log": "retained-fillet-components-20260926-v216-case-005.log"
+    },
+    {
+      "name": "curve::tests::selected_parallel_fillet_keeps_contacts_beyond_interior_cusps",
+      "returncode": 0,
+      "elapsed_seconds": 0.007609417894855142,
+      "log": "retained-fillet-components-20260926-v216-case-006.log"
+    },
+    {
+      "name": "curve::tests::fillet_center_contacts_keep_source_orientation_across_support_cusps",
+      "returncode": 0,
+      "elapsed_seconds": 0.007586869061924517,
+      "log": "retained-fillet-components-20260926-v216-case-007.log"
+    },
+    {
+      "name": "curve::tests::distinct_parallel_sources_keep_a_shared_fillet_center_family",
+      "returncode": 0,
+      "elapsed_seconds": 0.03171377198304981,
+      "log": "retained-fillet-components-20260926-v216-case-008.log"
+    }
+  ],
+  "all_processes_reaped": true,
+  "checks": [
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustfmt",
+        "--edition",
+        "2024",
+        "--check",
+        "src/bezier_offset.rs",
+        "src/curve.rs",
+        "src/curve_intersection.rs",
+        "src/curve_support_intersection.rs",
+        "src/curve_parameter_component.rs"
+      ],
+      "returncode": 0,
+      "log": "retained-fillet-components-20260926-v216-check-0.log"
+    },
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "clippy",
+        "--all-targets",
+        "--all-features",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "returncode": 0,
+      "log": "retained-fillet-components-20260926-v216-check-1.log"
+    },
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "clippy",
+        "--all-targets",
+        "--no-default-features",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "returncode": 0,
+      "log": "retained-fillet-components-20260926-v216-check-2.log"
+    }
+  ],
+  "build_returncode": 0,
+  "binary": {
+    "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-fillet-components-20260926-v216-hypercurve",
+    "sha256": "6b78c5fe982caf620f726a7d4dd30804605b94cd93fd70f32877cbf94ec1e177"
+  },
+  "selection": [
+    "bezier_offset::parameter_component::tests::incident_charts_keep_poles_and_finite_ownership_excluded",
+    "bezier_offset::parameter_component::tests::product_components_keep_fixed_axes_and_operand_roles",
+    "bezier_offset::conversion_tests::complete_component_queries_keep_split_cells_and_residual_contacts",
+    "bezier_offset::conversion_tests::axis_components_keep_exact_clipped_ends_and_open_selector_events",
+    "bezier_offset::conversion_tests::original_parallel_normal_constraints_clip_finite_and_incident_components",
+    "curve::tests::selected_parallel_fillet_clips_a_positive_dimensional_center_component_locally",
+    "curve::tests::selected_parallel_fillet_keeps_contacts_beyond_interior_cusps",
+    "curve::tests::fillet_center_contacts_keep_source_orientation_across_support_cusps",
+    "curve::tests::distinct_parallel_sources_keep_a_shared_fillet_center_family"
+  ],
+  "all_sources_unchanged": true
+}

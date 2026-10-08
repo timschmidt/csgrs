@@ -1,0 +1,1247 @@
+{
+  "mode": "alloc",
+  "cpu": 6,
+  "started": "2026-09-08T11:34:35.290Z",
+  "binaries": {
+    "baseline": {
+      "path": "/home/tim/Documents/GitHub/workspace/.audit-builds/calcium-baseline/release/calcium-root-exp-baseline-bench",
+      "bytes": 1603720,
+      "sha256": "971e81d547d97aa2e2bd4c16b028fe0b6789be9c6e7803ad81dfac6becfc73d4",
+      "size": "text\t   data\t    bss\t    dec\t    hex\tfilename\n1119549\t 215856\t   4072\t1339477\t 147055\t/home/tim/Documents/GitHub/workspace/.audit-builds/calcium-baseline/release/calcium-root-exp-baseline-bench"
+    },
+    "trial": {
+      "path": "/home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype/release/calcium-root-exp-trial-bench",
+      "bytes": 1604776,
+      "sha256": "576a671889404bbadd385874e4c80cb953171c7cc39238446d05418245fcd41d",
+      "size": "text\t   data\t    bss\t    dec\t    hex\tfilename\n1120553\t 215856\t   3064\t1339473\t 147051\t/home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype/release/calcium-root-exp-trial-bench"
+    }
+  },
+  "finished": "2026-09-08T11:34:39.753Z",
+  "summaries": [
+    {
+      "name": "exp-third",
+      "lifecycle": "construct",
+      "iterations": 100,
+      "observations": 12,
+      "baseline_ns": 167.84,
+      "trial_ns": 193.035,
+      "pairedMedianRatio": 1.193508804221118,
+      "pairedMedianBootstrap95": [
+        0.9811919386770902,
+        1.2373534555346848
+      ],
+      "baseline_alloc_calls": 4,
+      "trial_alloc_calls": 5,
+      "baseline_alloc_bytes": 320,
+      "trial_alloc_bytes": 392
+    },
+    {
+      "name": "exp-third",
+      "lifecycle": "fresh",
+      "iterations": 100,
+      "observations": 12,
+      "baseline_ns": 19963.685,
+      "trial_ns": 7091.715,
+      "pairedMedianRatio": 0.35748255979849064,
+      "pairedMedianBootstrap95": [
+        0.3517067170718481,
+        0.35977094879957383
+      ],
+      "baseline_alloc_calls": 188,
+      "trial_alloc_calls": 85,
+      "baseline_alloc_bytes": 15096,
+      "trial_alloc_bytes": 4584
+    },
+    {
+      "name": "exp-third",
+      "lifecycle": "warm",
+      "iterations": 100,
+      "observations": 12,
+      "baseline_ns": 31.295,
+      "trial_ns": 32.045,
+      "pairedMedianRatio": 0.9830769230769231,
+      "pairedMedianBootstrap95": [
+        0.8685480333382073,
+        1.1841296928327645
+      ],
+      "baseline_alloc_calls": 1,
+      "trial_alloc_calls": 1,
+      "baseline_alloc_bytes": 40,
+      "trial_alloc_bytes": 40
+    },
+    {
+      "name": "exp-third",
+      "lifecycle": "refine",
+      "iterations": 100,
+      "observations": 12,
+      "baseline_ns": 45181.104999999996,
+      "trial_ns": 19825.64,
+      "pairedMedianRatio": 0.45021502003150143,
+      "pairedMedianBootstrap95": [
+        0.4315254702855746,
+        0.47802770649367693
+      ],
+      "baseline_alloc_calls": 494,
+      "trial_alloc_calls": 191,
+      "baseline_alloc_bytes": 27376,
+      "trial_alloc_bytes": 14080
+    },
+    {
+      "name": "exp-third",
+      "lifecycle": "hot-operand",
+      "iterations": 100,
+      "observations": 12,
+      "baseline_ns": 1306.46,
+      "trial_ns": 8191.49,
+      "pairedMedianRatio": 6.0572131902383735,
+      "pairedMedianBootstrap95": [
+        5.308787823881138,
+        6.730242814626908
+      ],
+      "baseline_alloc_calls": 26,
+      "trial_alloc_calls": 79,
+      "baseline_alloc_bytes": 1016,
+      "trial_alloc_bytes": 4192
+    },
+    {
+      "name": "exp-third",
+      "lifecycle": "construct-hot",
+      "iterations": 100,
+      "observations": 12,
+      "baseline_ns": 30.1,
+      "trial_ns": 70.245,
+      "pairedMedianRatio": 2.330810988649449,
+      "pairedMedianBootstrap95": [
+        2.2645220588235295,
+        2.602317880794702
+      ],
+      "baseline_alloc_calls": 1,
+      "trial_alloc_calls": 2,
+      "baseline_alloc_bytes": 72,
+      "trial_alloc_bytes": 144
+    },
+    {
+      "name": "exp-sqrt2",
+      "lifecycle": "construct",
+      "iterations": 100,
+      "observations": 12,
+      "baseline_ns": 275.03,
+      "trial_ns": 312.28,
+      "pairedMedianRatio": 1.1200094588736058,
+      "pairedMedianBootstrap95": [
+        0.8913754948103357,
+        1.2341235575790879
+      ],
+      "baseline_alloc_calls": 7,
+      "trial_alloc_calls": 8,
+      "baseline_alloc_bytes": 600,
+      "trial_alloc_bytes": 672
+    },
+    {
+      "name": "exp-sqrt2",
+      "lifecycle": "fresh",
+      "iterations": 100,
+      "observations": 12,
+      "baseline_ns": 18214.2,
+      "trial_ns": 7583.879999999999,
+      "pairedMedianRatio": 0.42137079355254703,
+      "pairedMedianBootstrap95": [
+        0.3827827880662252,
+        0.428159702239002
+      ],
+      "baseline_alloc_calls": 198,
+      "trial_alloc_calls": 105,
+      "baseline_alloc_bytes": 14392,
+      "trial_alloc_bytes": 5536
+    },
+    {
+      "name": "exp-sqrt2",
+      "lifecycle": "warm",
+      "iterations": 100,
+      "observations": 12,
+      "baseline_ns": 27.6,
+      "trial_ns": 28.494999999999997,
+      "pairedMedianRatio": 1.0371428571428571,
+      "pairedMedianBootstrap95": [
+        1.0252268602540835,
+        1.1610051993067592
+      ],
+      "baseline_alloc_calls": 1,
+      "trial_alloc_calls": 1,
+      "baseline_alloc_bytes": 40,
+      "trial_alloc_bytes": 40
+    },
+    {
+      "name": "exp-sqrt2",
+      "lifecycle": "refine",
+      "iterations": 100,
+      "observations": 12,
+      "baseline_ns": 46899.035,
+      "trial_ns": 21088.4,
+      "pairedMedianRatio": 0.46384275520494916,
+      "pairedMedianBootstrap95": [
+        0.43027705159391005,
+        0.5020128700971018
+      ],
+      "baseline_alloc_calls": 611,
+      "trial_alloc_calls": 239,
+      "baseline_alloc_bytes": 33144,
+      "trial_alloc_bytes": 15648
+    },
+    {
+      "name": "exp-sqrt2",
+      "lifecycle": "hot-operand",
+      "iterations": 100,
+      "observations": 12,
+      "baseline_ns": 1226.92,
+      "trial_ns": 6245.02,
+      "pairedMedianRatio": 4.948928784249109,
+      "pairedMedianBootstrap95": [
+        4.2798972765123855,
+        5.220846535191487
+      ],
+      "baseline_alloc_calls": 26,
+      "trial_alloc_calls": 75,
+      "baseline_alloc_bytes": 1016,
+      "trial_alloc_bytes": 4104
+    },
+    {
+      "name": "exp-sqrt2",
+      "lifecycle": "construct-hot",
+      "iterations": 100,
+      "observations": 12,
+      "baseline_ns": 26.55,
+      "trial_ns": 74.995,
+      "pairedMedianRatio": 3.003957546321281,
+      "pairedMedianBootstrap95": [
+        2.562121212121212,
+        3.22829158033528
+      ],
+      "baseline_alloc_calls": 1,
+      "trial_alloc_calls": 2,
+      "baseline_alloc_bytes": 72,
+      "trial_alloc_bytes": 144
+    },
+    {
+      "name": "exp-sine",
+      "lifecycle": "construct",
+      "iterations": 100,
+      "observations": 12,
+      "baseline_ns": 2115.955,
+      "trial_ns": 2429.98,
+      "pairedMedianRatio": 1.1494637377109063,
+      "pairedMedianBootstrap95": [
+        0.969590156798638,
+        1.5022016631564183
+      ],
+      "baseline_alloc_calls": 19,
+      "trial_alloc_calls": 26,
+      "baseline_alloc_bytes": 1272,
+      "trial_alloc_bytes": 1792
+    },
+    {
+      "name": "exp-sine",
+      "lifecycle": "fresh",
+      "iterations": 100,
+      "observations": 12,
+      "baseline_ns": 30958.48,
+      "trial_ns": 15529.64,
+      "pairedMedianRatio": 0.5086203640100148,
+      "pairedMedianBootstrap95": [
+        0.43695091078628,
+        0.5519960773159436
+      ],
+      "baseline_alloc_calls": 317,
+      "trial_alloc_calls": 189,
+      "baseline_alloc_bytes": 24320,
+      "trial_alloc_bytes": 9936
+    },
+    {
+      "name": "exp-sine",
+      "lifecycle": "warm",
+      "iterations": 100,
+      "observations": 12,
+      "baseline_ns": 34.345,
+      "trial_ns": 34.5,
+      "pairedMedianRatio": 1.0207359813084111,
+      "pairedMedianBootstrap95": [
+        0.9771306818181819,
+        1.0488715700600746
+      ],
+      "baseline_alloc_calls": 1,
+      "trial_alloc_calls": 1,
+      "baseline_alloc_bytes": 40,
+      "trial_alloc_bytes": 40
+    },
+    {
+      "name": "exp-sine",
+      "lifecycle": "refine",
+      "iterations": 100,
+      "observations": 12,
+      "baseline_ns": 74487.89,
+      "trial_ns": 39293.604999999996,
+      "pairedMedianRatio": 0.5260393712846606,
+      "pairedMedianBootstrap95": [
+        0.5172824550724867,
+        0.5538393681332855
+      ],
+      "baseline_alloc_calls": 850,
+      "trial_alloc_calls": 414,
+      "baseline_alloc_bytes": 44560,
+      "trial_alloc_bytes": 28664
+    },
+    {
+      "name": "exp-sine",
+      "lifecycle": "hot-operand",
+      "iterations": 100,
+      "observations": 12,
+      "baseline_ns": 1218.47,
+      "trial_ns": 8560.91,
+      "pairedMedianRatio": 6.465349483717236,
+      "pairedMedianBootstrap95": [
+        5.514729225173351,
+        7.514194030218224
+      ],
+      "baseline_alloc_calls": 26,
+      "trial_alloc_calls": 98,
+      "baseline_alloc_bytes": 1016,
+      "trial_alloc_bytes": 5360
+    },
+    {
+      "name": "exp-sine",
+      "lifecycle": "construct-hot",
+      "iterations": 100,
+      "observations": 12,
+      "baseline_ns": 24.9,
+      "trial_ns": 375.725,
+      "pairedMedianRatio": 13.17030647825289,
+      "pairedMedianBootstrap95": [
+        9.86353695874034,
+        17.23872950819672
+      ],
+      "baseline_alloc_calls": 1,
+      "trial_alloc_calls": 8,
+      "baseline_alloc_bytes": 72,
+      "trial_alloc_bytes": 592
+    },
+    {
+      "name": "exp-negative-sine",
+      "lifecycle": "construct",
+      "iterations": 100,
+      "observations": 12,
+      "baseline_ns": 2445.88,
+      "trial_ns": 2626.075,
+      "pairedMedianRatio": 1.1105390358546698,
+      "pairedMedianBootstrap95": [
+        0.9942001383453238,
+        1.3196102781791907
+      ],
+      "baseline_alloc_calls": 21,
+      "trial_alloc_calls": 29,
+      "baseline_alloc_bytes": 1304,
+      "trial_alloc_bytes": 1880
+    },
+    {
+      "name": "exp-negative-sine",
+      "lifecycle": "fresh",
+      "iterations": 100,
+      "observations": 12,
+      "baseline_ns": 30667.145,
+      "trial_ns": 15629.93,
+      "pairedMedianRatio": 0.49345827742339504,
+      "pairedMedianBootstrap95": [
+        0.49224923088871186,
+        0.5173317647917782
+      ],
+      "baseline_alloc_calls": 319,
+      "trial_alloc_calls": 193,
+      "baseline_alloc_bytes": 24320,
+      "trial_alloc_bytes": 10056
+    },
+    {
+      "name": "exp-negative-sine",
+      "lifecycle": "warm",
+      "iterations": 100,
+      "observations": 12,
+      "baseline_ns": 34.8,
+      "trial_ns": 35.295,
+      "pairedMedianRatio": 0.9942657342657343,
+      "pairedMedianBootstrap95": [
+        0.9769452449567724,
+        1.0357758620689654
+      ],
+      "baseline_alloc_calls": 1,
+      "trial_alloc_calls": 1,
+      "baseline_alloc_bytes": 32,
+      "trial_alloc_bytes": 32
+    },
+    {
+      "name": "exp-negative-sine",
+      "lifecycle": "refine",
+      "iterations": 100,
+      "observations": 12,
+      "baseline_ns": 120139.76000000001,
+      "trial_ns": 66018.625,
+      "pairedMedianRatio": 0.539391480984494,
+      "pairedMedianBootstrap95": [
+        0.5362865299547793,
+        0.566254077714534
+      ],
+      "baseline_alloc_calls": 844,
+      "trial_alloc_calls": 419,
+      "baseline_alloc_bytes": 44048,
+      "trial_alloc_bytes": 28832
+    },
+    {
+      "name": "exp-negative-sine",
+      "lifecycle": "hot-operand",
+      "iterations": 100,
+      "observations": 12,
+      "baseline_ns": 1217.815,
+      "trial_ns": 8628.465,
+      "pairedMedianRatio": 7.1602460143782105,
+      "pairedMedianBootstrap95": [
+        6.256084341498961,
+        7.331876689379729
+      ],
+      "baseline_alloc_calls": 24,
+      "trial_alloc_calls": 100,
+      "baseline_alloc_bytes": 824,
+      "trial_alloc_bytes": 5448
+    },
+    {
+      "name": "exp-negative-sine",
+      "lifecycle": "construct-hot",
+      "iterations": 100,
+      "observations": 12,
+      "baseline_ns": 25.15,
+      "trial_ns": 351.88,
+      "pairedMedianRatio": 14.391820040899795,
+      "pairedMedianBootstrap95": [
+        11.244749596122778,
+        16.12807481195365
+      ],
+      "baseline_alloc_calls": 1,
+      "trial_alloc_calls": 9,
+      "baseline_alloc_bytes": 72,
+      "trial_alloc_bytes": 648
+    },
+    {
+      "name": "exp-multiradical",
+      "lifecycle": "construct",
+      "iterations": 100,
+      "observations": 12,
+      "baseline_ns": 2038.255,
+      "trial_ns": 3182.48,
+      "pairedMedianRatio": 1.7312948655517357,
+      "pairedMedianBootstrap95": [
+        1.5581637233810293,
+        1.8109138935828837
+      ],
+      "baseline_alloc_calls": 27,
+      "trial_alloc_calls": 50,
+      "baseline_alloc_bytes": 2152,
+      "trial_alloc_bytes": 3968
+    },
+    {
+      "name": "exp-multiradical",
+      "lifecycle": "fresh",
+      "iterations": 100,
+      "observations": 12,
+      "baseline_ns": 26573.68,
+      "trial_ns": 17277.37,
+      "pairedMedianRatio": 0.517279492070036,
+      "pairedMedianBootstrap95": [
+        0.49800008880967933,
+        0.658830211991106
+      ],
+      "baseline_alloc_calls": 282,
+      "trial_alloc_calls": 181,
+      "baseline_alloc_bytes": 20920,
+      "trial_alloc_bytes": 10080
+    },
+    {
+      "name": "exp-multiradical",
+      "lifecycle": "warm",
+      "iterations": 100,
+      "observations": 12,
+      "baseline_ns": 36.04,
+      "trial_ns": 36.845,
+      "pairedMedianRatio": 1.0054134524292868,
+      "pairedMedianBootstrap95": [
+        0.9920688264551687,
+        1.0438920454545455
+      ],
+      "baseline_alloc_calls": 1,
+      "trial_alloc_calls": 1,
+      "baseline_alloc_bytes": 40,
+      "trial_alloc_bytes": 40
+    },
+    {
+      "name": "exp-multiradical",
+      "lifecycle": "refine",
+      "iterations": 100,
+      "observations": 12,
+      "baseline_ns": 106452.305,
+      "trial_ns": 49289.619999999995,
+      "pairedMedianRatio": 0.4589972568990822,
+      "pairedMedianBootstrap95": [
+        0.4576022417066985,
+        0.46947520678198085
+      ],
+      "baseline_alloc_calls": 776,
+      "trial_alloc_calls": 347,
+      "baseline_alloc_bytes": 38672,
+      "trial_alloc_bytes": 22600
+    },
+    {
+      "name": "exp-multiradical",
+      "lifecycle": "hot-operand",
+      "iterations": 100,
+      "observations": 12,
+      "baseline_ns": 2139.705,
+      "trial_ns": 13835.55,
+      "pairedMedianRatio": 6.618592099663404,
+      "pairedMedianBootstrap95": [
+        6.338129810453762,
+        6.801393236329295
+      ],
+      "baseline_alloc_calls": 26,
+      "trial_alloc_calls": 107,
+      "baseline_alloc_bytes": 1016,
+      "trial_alloc_bytes": 6224
+    },
+    {
+      "name": "exp-multiradical",
+      "lifecycle": "construct-hot",
+      "iterations": 100,
+      "observations": 12,
+      "baseline_ns": 30.75,
+      "trial_ns": 1512.895,
+      "pairedMedianRatio": 52.57868613138686,
+      "pairedMedianBootstrap95": [
+        30.710175054704596,
+        63.756712441073994
+      ],
+      "baseline_alloc_calls": 1,
+      "trial_alloc_calls": 24,
+      "baseline_alloc_bytes": 72,
+      "trial_alloc_bytes": 1888
+    },
+    {
+      "name": "exp-large",
+      "lifecycle": "construct",
+      "iterations": 100,
+      "observations": 12,
+      "baseline_ns": 2739.96,
+      "trial_ns": 4951.16,
+      "pairedMedianRatio": 1.7917685345885253,
+      "pairedMedianBootstrap95": [
+        1.7831826743348387,
+        1.822316708466471
+      ],
+      "baseline_alloc_calls": 23,
+      "trial_alloc_calls": 43,
+      "baseline_alloc_bytes": 1816,
+      "trial_alloc_bytes": 3400
+    },
+    {
+      "name": "exp-large",
+      "lifecycle": "fresh",
+      "iterations": 100,
+      "observations": 12,
+      "baseline_ns": 45741.41499999999,
+      "trial_ns": 21418.235,
+      "pairedMedianRatio": 0.46796366420382496,
+      "pairedMedianBootstrap95": [
+        0.36735281865177777,
+        0.4756764897781644
+      ],
+      "baseline_alloc_calls": 276,
+      "trial_alloc_calls": 167,
+      "baseline_alloc_bytes": 23064,
+      "trial_alloc_bytes": 9760
+    },
+    {
+      "name": "exp-large",
+      "lifecycle": "warm",
+      "iterations": 100,
+      "observations": 12,
+      "baseline_ns": 31.5,
+      "trial_ns": 36.195,
+      "pairedMedianRatio": 1.0251046025104602,
+      "pairedMedianBootstrap95": [
+        0.99644128113879,
+        1.1638263665594855
+      ],
+      "baseline_alloc_calls": 1,
+      "trial_alloc_calls": 1,
+      "baseline_alloc_bytes": 40,
+      "trial_alloc_bytes": 40
+    },
+    {
+      "name": "exp-large",
+      "lifecycle": "refine",
+      "iterations": 100,
+      "observations": 12,
+      "baseline_ns": 52996.315,
+      "trial_ns": 31751.925,
+      "pairedMedianRatio": 0.6032675102033037,
+      "pairedMedianBootstrap95": [
+        0.49204339357794374,
+        0.6090294692883944
+      ],
+      "baseline_alloc_calls": 598,
+      "trial_alloc_calls": 350,
+      "baseline_alloc_bytes": 35504,
+      "trial_alloc_bytes": 23016
+    },
+    {
+      "name": "exp-large",
+      "lifecycle": "hot-operand",
+      "iterations": 100,
+      "observations": 12,
+      "baseline_ns": 1261.6100000000001,
+      "trial_ns": 10576.675,
+      "pairedMedianRatio": 8.159624929320852,
+      "pairedMedianBootstrap95": [
+        7.847807105210558,
+        8.76149523228256
+      ],
+      "baseline_alloc_calls": 28,
+      "trial_alloc_calls": 122,
+      "baseline_alloc_bytes": 1088,
+      "trial_alloc_bytes": 7224
+    },
+    {
+      "name": "exp-large",
+      "lifecycle": "construct-hot",
+      "iterations": 100,
+      "observations": 12,
+      "baseline_ns": 35.795,
+      "trial_ns": 1356.5,
+      "pairedMedianRatio": 41.025,
+      "pairedMedianBootstrap95": [
+        36.82193645990923,
+        50.09580737497895
+      ],
+      "baseline_alloc_calls": 1,
+      "trial_alloc_calls": 21,
+      "baseline_alloc_bytes": 72,
+      "trial_alloc_bytes": 1656
+    },
+    {
+      "name": "exp-tiny",
+      "lifecycle": "construct",
+      "iterations": 100,
+      "observations": 12,
+      "baseline_ns": 171.69,
+      "trial_ns": 204.83499999999998,
+      "pairedMedianRatio": 1.1800791556728232,
+      "pairedMedianBootstrap95": [
+        1.0732748469147433,
+        1.869229877058687
+      ],
+      "baseline_alloc_calls": 5,
+      "trial_alloc_calls": 6,
+      "baseline_alloc_bytes": 400,
+      "trial_alloc_bytes": 472
+    },
+    {
+      "name": "exp-tiny",
+      "lifecycle": "fresh",
+      "iterations": 100,
+      "observations": 12,
+      "baseline_ns": 2509.425,
+      "trial_ns": 728.7,
+      "pairedMedianRatio": 0.29237380016909537,
+      "pairedMedianBootstrap95": [
+        0.24023936126965542,
+        0.29607468644240487
+      ],
+      "baseline_alloc_calls": 39,
+      "trial_alloc_calls": 14,
+      "baseline_alloc_bytes": 2080,
+      "trial_alloc_bytes": 856
+    },
+    {
+      "name": "exp-tiny",
+      "lifecycle": "warm",
+      "iterations": 100,
+      "observations": 12,
+      "baseline_ns": 34.445,
+      "trial_ns": 34.95,
+      "pairedMedianRatio": 0.9087398635603038,
+      "pairedMedianBootstrap95": [
+        0.7927677329624478,
+        1.2815871274456025
+      ],
+      "baseline_alloc_calls": 1,
+      "trial_alloc_calls": 1,
+      "baseline_alloc_bytes": 40,
+      "trial_alloc_bytes": 40
+    },
+    {
+      "name": "exp-tiny",
+      "lifecycle": "refine",
+      "iterations": 100,
+      "observations": 12,
+      "baseline_ns": 5715.16,
+      "trial_ns": 1885.4250000000002,
+      "pairedMedianRatio": 0.3504379350550517,
+      "pairedMedianBootstrap95": [
+        0.3089754066971954,
+        0.3623813388486007
+      ],
+      "baseline_alloc_calls": 87,
+      "trial_alloc_calls": 22,
+      "baseline_alloc_bytes": 3776,
+      "trial_alloc_bytes": 1384
+    },
+    {
+      "name": "exp-tiny",
+      "lifecycle": "hot-operand",
+      "iterations": 100,
+      "observations": 12,
+      "baseline_ns": 1339.555,
+      "trial_ns": 475.96500000000003,
+      "pairedMedianRatio": 0.33568092467645827,
+      "pairedMedianBootstrap95": [
+        0.2886762070251731,
+        0.42048089629894364
+      ],
+      "baseline_alloc_calls": 24,
+      "trial_alloc_calls": 7,
+      "baseline_alloc_bytes": 960,
+      "trial_alloc_bytes": 384
+    },
+    {
+      "name": "exp-tiny",
+      "lifecycle": "construct-hot",
+      "iterations": 100,
+      "observations": 12,
+      "baseline_ns": 30.8,
+      "trial_ns": 78.64,
+      "pairedMedianRatio": 2.5202125946207117,
+      "pairedMedianBootstrap95": [
+        2.4994308017563833,
+        5.146948356807512
+      ],
+      "baseline_alloc_calls": 1,
+      "trial_alloc_calls": 2,
+      "baseline_alloc_bytes": 72,
+      "trial_alloc_bytes": 144
+    },
+    {
+      "name": "exp-offset",
+      "lifecycle": "construct",
+      "iterations": 100,
+      "observations": 12,
+      "baseline_ns": 2718.5150000000003,
+      "trial_ns": 3141.2349999999997,
+      "pairedMedianRatio": 1.1505908932916231,
+      "pairedMedianBootstrap95": [
+        1.0922526315789474,
+        1.2148342430046515
+      ],
+      "baseline_alloc_calls": 20,
+      "trial_alloc_calls": 29,
+      "baseline_alloc_bytes": 1488,
+      "trial_alloc_bytes": 2200
+    },
+    {
+      "name": "exp-offset",
+      "lifecycle": "fresh",
+      "iterations": 100,
+      "observations": 12,
+      "baseline_ns": 31560.684999999998,
+      "trial_ns": 17522.644999999997,
+      "pairedMedianRatio": 0.5993572742452689,
+      "pairedMedianBootstrap95": [
+        0.5634001649127401,
+        0.6060391297407032
+      ],
+      "baseline_alloc_calls": 319,
+      "trial_alloc_calls": 209,
+      "baseline_alloc_bytes": 24744,
+      "trial_alloc_bytes": 11472
+    },
+    {
+      "name": "exp-offset",
+      "lifecycle": "warm",
+      "iterations": 100,
+      "observations": 12,
+      "baseline_ns": 30.9,
+      "trial_ns": 35.05,
+      "pairedMedianRatio": 1.121069182389937,
+      "pairedMedianBootstrap95": [
+        1.02442996742671,
+        1.1317965023847376
+      ],
+      "baseline_alloc_calls": 1,
+      "trial_alloc_calls": 1,
+      "baseline_alloc_bytes": 40,
+      "trial_alloc_bytes": 40
+    },
+    {
+      "name": "exp-offset",
+      "lifecycle": "refine",
+      "iterations": 100,
+      "observations": 12,
+      "baseline_ns": 72155.60500000001,
+      "trial_ns": 43989.229999999996,
+      "pairedMedianRatio": 0.6110784814093586,
+      "pairedMedianBootstrap95": [
+        0.5842308272777104,
+        0.618151611542721
+      ],
+      "baseline_alloc_calls": 855,
+      "trial_alloc_calls": 460,
+      "baseline_alloc_bytes": 45048,
+      "trial_alloc_bytes": 31264
+    },
+    {
+      "name": "exp-offset",
+      "lifecycle": "hot-operand",
+      "iterations": 100,
+      "observations": 12,
+      "baseline_ns": 1361.81,
+      "trial_ns": 8618.11,
+      "pairedMedianRatio": 5.8174594564384785,
+      "pairedMedianBootstrap95": [
+        5.770520581113802,
+        6.901664634235929
+      ],
+      "baseline_alloc_calls": 26,
+      "trial_alloc_calls": 109,
+      "baseline_alloc_bytes": 1016,
+      "trial_alloc_bytes": 6248
+    },
+    {
+      "name": "exp-offset",
+      "lifecycle": "construct-hot",
+      "iterations": 100,
+      "observations": 12,
+      "baseline_ns": 26.795,
+      "trial_ns": 382.97,
+      "pairedMedianRatio": 14.41407287210503,
+      "pairedMedianBootstrap95": [
+        13.78518652009371,
+        17.639705882352942
+      ],
+      "baseline_alloc_calls": 1,
+      "trial_alloc_calls": 10,
+      "baseline_alloc_bytes": 72,
+      "trial_alloc_bytes": 784
+    },
+    {
+      "name": "exp-opaque-zero",
+      "lifecycle": "construct",
+      "iterations": 100,
+      "observations": 12,
+      "baseline_ns": 6292.370000000001,
+      "trial_ns": 7284.75,
+      "pairedMedianRatio": 1.060696489490922,
+      "pairedMedianBootstrap95": [
+        1.0409181567177388,
+        1.163707284933
+      ],
+      "baseline_alloc_calls": 65,
+      "trial_alloc_calls": 67,
+      "baseline_alloc_bytes": 5808,
+      "trial_alloc_bytes": 5936
+    },
+    {
+      "name": "exp-opaque-zero",
+      "lifecycle": "fresh",
+      "iterations": 100,
+      "observations": 12,
+      "baseline_ns": 29305.39,
+      "trial_ns": 18434.79,
+      "pairedMedianRatio": 0.7385205468009562,
+      "pairedMedianBootstrap95": [
+        0.5273945767427929,
+        0.7658281788119186
+      ],
+      "baseline_alloc_calls": 349,
+      "trial_alloc_calls": 223,
+      "baseline_alloc_bytes": 25536,
+      "trial_alloc_bytes": 12880
+    },
+    {
+      "name": "exp-opaque-zero",
+      "lifecycle": "warm",
+      "iterations": 100,
+      "observations": 12,
+      "baseline_ns": 34.14,
+      "trial_ns": 35.2,
+      "pairedMedianRatio": 1.0351957765068192,
+      "pairedMedianBootstrap95": [
+        1.026388686397434,
+        1.1700879765395895
+      ],
+      "baseline_alloc_calls": 1,
+      "trial_alloc_calls": 1,
+      "baseline_alloc_bytes": 40,
+      "trial_alloc_bytes": 40
+    },
+    {
+      "name": "exp-opaque-zero",
+      "lifecycle": "refine",
+      "iterations": 100,
+      "observations": 12,
+      "baseline_ns": 68951.12,
+      "trial_ns": 38171.235,
+      "pairedMedianRatio": 0.5495708744562279,
+      "pairedMedianBootstrap95": [
+        0.5454108189549164,
+        0.5549694584032444
+      ],
+      "baseline_alloc_calls": 951,
+      "trial_alloc_calls": 436,
+      "baseline_alloc_bytes": 45520,
+      "trial_alloc_bytes": 27576
+    },
+    {
+      "name": "exp-opaque-zero",
+      "lifecycle": "hot-operand",
+      "iterations": 100,
+      "observations": 12,
+      "baseline_ns": 1227.87,
+      "trial_ns": 466.66999999999996,
+      "pairedMedianRatio": 0.3690006814162429,
+      "pairedMedianBootstrap95": [
+        0.354975767183356,
+        0.3759490161220612
+      ],
+      "baseline_alloc_calls": 24,
+      "trial_alloc_calls": 7,
+      "baseline_alloc_bytes": 960,
+      "trial_alloc_bytes": 384
+    },
+    {
+      "name": "exp-opaque-zero",
+      "lifecycle": "construct-hot",
+      "iterations": 100,
+      "observations": 12,
+      "baseline_ns": 31,
+      "trial_ns": 136.54500000000002,
+      "pairedMedianRatio": 4.848631239935588,
+      "pairedMedianBootstrap95": [
+        3.945506419400856,
+        6.922964169381108
+      ],
+      "baseline_alloc_calls": 1,
+      "trial_alloc_calls": 3,
+      "baseline_alloc_bytes": 72,
+      "trial_alloc_bytes": 200
+    },
+    {
+      "name": "ordinary-sqrt",
+      "lifecycle": "construct",
+      "iterations": 100,
+      "observations": 12,
+      "baseline_ns": 194.54000000000002,
+      "trial_ns": 201.28,
+      "pairedMedianRatio": 1.0520419411900428,
+      "pairedMedianBootstrap95": [
+        1.0272451549889476,
+        1.0653356586927663
+      ],
+      "baseline_alloc_calls": 5,
+      "trial_alloc_calls": 5,
+      "baseline_alloc_bytes": 456,
+      "trial_alloc_bytes": 456
+    },
+    {
+      "name": "ordinary-sqrt",
+      "lifecycle": "fresh",
+      "iterations": 100,
+      "observations": 12,
+      "baseline_ns": 1538.545,
+      "trial_ns": 1649.44,
+      "pairedMedianRatio": 1.4801958903804058,
+      "pairedMedianBootstrap95": [
+        0.9738463779497638,
+        1.5243444330905376
+      ],
+      "baseline_alloc_calls": 30,
+      "trial_alloc_calls": 30,
+      "baseline_alloc_bytes": 1400,
+      "trial_alloc_bytes": 1400
+    },
+    {
+      "name": "ordinary-sqrt",
+      "lifecycle": "warm",
+      "iterations": 100,
+      "observations": 12,
+      "baseline_ns": 34.099999999999994,
+      "trial_ns": 33.900000000000006,
+      "pairedMedianRatio": 1.005710102489019,
+      "pairedMedianBootstrap95": [
+        0.988388969521045,
+        1.022181146025878
+      ],
+      "baseline_alloc_calls": 1,
+      "trial_alloc_calls": 1,
+      "baseline_alloc_bytes": 40,
+      "trial_alloc_bytes": 40
+    },
+    {
+      "name": "ordinary-sqrt",
+      "lifecycle": "refine",
+      "iterations": 100,
+      "observations": 12,
+      "baseline_ns": 3405.765,
+      "trial_ns": 3365.92,
+      "pairedMedianRatio": 0.9422888361860289,
+      "pairedMedianBootstrap95": [
+        0.8854522538733065,
+        1.4372747385682805
+      ],
+      "baseline_alloc_calls": 56,
+      "trial_alloc_calls": 56,
+      "baseline_alloc_bytes": 2696,
+      "trial_alloc_bytes": 2696
+    },
+    {
+      "name": "ordinary-sqrt",
+      "lifecycle": "hot-operand",
+      "iterations": 100,
+      "observations": 12,
+      "baseline_ns": 1462.4,
+      "trial_ns": 1487.4450000000002,
+      "pairedMedianRatio": 1.0205256268944614,
+      "pairedMedianBootstrap95": [
+        0.9627960813259075,
+        1.187211524238756
+      ],
+      "baseline_alloc_calls": 29,
+      "trial_alloc_calls": 29,
+      "baseline_alloc_bytes": 1328,
+      "trial_alloc_bytes": 1328
+    },
+    {
+      "name": "ordinary-sqrt",
+      "lifecycle": "construct-hot",
+      "iterations": 100,
+      "observations": 12,
+      "baseline_ns": 150.89,
+      "trial_ns": 188.085,
+      "pairedMedianRatio": 1.1704835397348932,
+      "pairedMedianBootstrap95": [
+        1.0412547122839462,
+        1.2461149750054337
+      ],
+      "baseline_alloc_calls": 4,
+      "trial_alloc_calls": 4,
+      "baseline_alloc_bytes": 384,
+      "trial_alloc_bytes": 384
+    },
+    {
+      "name": "ordinary-sine-root",
+      "lifecycle": "construct",
+      "iterations": 100,
+      "observations": 12,
+      "baseline_ns": 280.38,
+      "trial_ns": 283.125,
+      "pairedMedianRatio": 0.9195364299226771,
+      "pairedMedianBootstrap95": [
+        0.7982525814138205,
+        1.055627851320021
+      ],
+      "baseline_alloc_calls": 6,
+      "trial_alloc_calls": 6,
+      "baseline_alloc_bytes": 464,
+      "trial_alloc_bytes": 464
+    },
+    {
+      "name": "ordinary-sine-root",
+      "lifecycle": "fresh",
+      "iterations": 100,
+      "observations": 12,
+      "baseline_ns": 13223.04,
+      "trial_ns": 12945.615,
+      "pairedMedianRatio": 0.9736695807357585,
+      "pairedMedianBootstrap95": [
+        0.755163055909743,
+        1.2544750237076951
+      ],
+      "baseline_alloc_calls": 175,
+      "trial_alloc_calls": 175,
+      "baseline_alloc_bytes": 12112,
+      "trial_alloc_bytes": 12112
+    },
+    {
+      "name": "ordinary-sine-root",
+      "lifecycle": "warm",
+      "iterations": 100,
+      "observations": 12,
+      "baseline_ns": 27.05,
+      "trial_ns": 28.045,
+      "pairedMedianRatio": 1.0291743119266055,
+      "pairedMedianBootstrap95": [
+        1.0187767242981967,
+        1.1307272727272728
+      ],
+      "baseline_alloc_calls": 1,
+      "trial_alloc_calls": 1,
+      "baseline_alloc_bytes": 40,
+      "trial_alloc_bytes": 40
+    },
+    {
+      "name": "ordinary-sine-root",
+      "lifecycle": "refine",
+      "iterations": 100,
+      "observations": 12,
+      "baseline_ns": 33934.380000000005,
+      "trial_ns": 31926.61,
+      "pairedMedianRatio": 0.9431012147562443,
+      "pairedMedianBootstrap95": [
+        0.924099020806958,
+        0.9643386294437202
+      ],
+      "baseline_alloc_calls": 473,
+      "trial_alloc_calls": 473,
+      "baseline_alloc_bytes": 22600,
+      "trial_alloc_bytes": 22600
+    },
+    {
+      "name": "ordinary-sine-root",
+      "lifecycle": "hot-operand",
+      "iterations": 100,
+      "observations": 12,
+      "baseline_ns": 1514.1950000000002,
+      "trial_ns": 1272.17,
+      "pairedMedianRatio": 0.9003369024984156,
+      "pairedMedianBootstrap95": [
+        0.7120863658966593,
+        0.96808385435822
+      ],
+      "baseline_alloc_calls": 26,
+      "trial_alloc_calls": 26,
+      "baseline_alloc_bytes": 1016,
+      "trial_alloc_bytes": 1016
+    },
+    {
+      "name": "ordinary-sine-root",
+      "lifecycle": "construct-hot",
+      "iterations": 100,
+      "observations": 12,
+      "baseline_ns": 27.05,
+      "trial_ns": 24.2,
+      "pairedMedianRatio": 0.7375828934903235,
+      "pairedMedianBootstrap95": [
+        0.6209635416666667,
+        1.004149377593361
+      ],
+      "baseline_alloc_calls": 1,
+      "trial_alloc_calls": 1,
+      "baseline_alloc_bytes": 72,
+      "trial_alloc_bytes": 72
+    },
+    {
+      "name": "perfect-square",
+      "lifecycle": "construct",
+      "iterations": 100,
+      "observations": 12,
+      "baseline_ns": 223.83999999999997,
+      "trial_ns": 218.57999999999998,
+      "pairedMedianRatio": 0.9198753172018302,
+      "pairedMedianBootstrap95": [
+        0.8603690135811294,
+        1.0104694510793133
+      ],
+      "baseline_alloc_calls": 5,
+      "trial_alloc_calls": 5,
+      "baseline_alloc_bytes": 456,
+      "trial_alloc_bytes": 456
+    },
+    {
+      "name": "perfect-square",
+      "lifecycle": "fresh",
+      "iterations": 100,
+      "observations": 12,
+      "baseline_ns": 294.78,
+      "trial_ns": 217.82999999999998,
+      "pairedMedianRatio": 0.9048538849772572,
+      "pairedMedianBootstrap95": [
+        0.7918302240099868,
+        0.9974488859523547
+      ],
+      "baseline_alloc_calls": 6,
+      "trial_alloc_calls": 6,
+      "baseline_alloc_bytes": 504,
+      "trial_alloc_bytes": 504
+    },
+    {
+      "name": "perfect-square",
+      "lifecycle": "warm",
+      "iterations": 100,
+      "observations": 12,
+      "baseline_ns": 46.8,
+      "trial_ns": 45.4,
+      "pairedMedianRatio": 0.991869918699187,
+      "pairedMedianBootstrap95": [
+        0.8760593220338984,
+        1.1189858490566038
+      ],
+      "baseline_alloc_calls": 1,
+      "trial_alloc_calls": 1,
+      "baseline_alloc_bytes": 48,
+      "trial_alloc_bytes": 48
+    },
+    {
+      "name": "perfect-square",
+      "lifecycle": "refine",
+      "iterations": 100,
+      "observations": 12,
+      "baseline_ns": 311.58000000000004,
+      "trial_ns": 314.78,
+      "pairedMedianRatio": 1.1423127656456105,
+      "pairedMedianBootstrap95": [
+        0.7620382904660608,
+        1.2371511171389822
+      ],
+      "baseline_alloc_calls": 7,
+      "trial_alloc_calls": 7,
+      "baseline_alloc_bytes": 568,
+      "trial_alloc_bytes": 568
+    },
+    {
+      "name": "perfect-square",
+      "lifecycle": "hot-operand",
+      "iterations": 100,
+      "observations": 12,
+      "baseline_ns": 216.235,
+      "trial_ns": 212.69,
+      "pairedMedianRatio": 0.9735566430031934,
+      "pairedMedianBootstrap95": [
+        0.7796493221852423,
+        1.0035324116312256
+      ],
+      "baseline_alloc_calls": 5,
+      "trial_alloc_calls": 5,
+      "baseline_alloc_bytes": 432,
+      "trial_alloc_bytes": 432
+    },
+    {
+      "name": "perfect-square",
+      "lifecycle": "construct-hot",
+      "iterations": 100,
+      "observations": 12,
+      "baseline_ns": 203.185,
+      "trial_ns": 169.39,
+      "pairedMedianRatio": 0.8426593246416714,
+      "pairedMedianBootstrap95": [
+        0.7342569579447302,
+        1.0470979684607633
+      ],
+      "baseline_alloc_calls": 4,
+      "trial_alloc_calls": 4,
+      "baseline_alloc_bytes": 384,
+      "trial_alloc_bytes": 384
+    }
+  ],
+  "limits": "Absolute approximation work, not certified equality. Independent directed-MPFR oracle checks accuracy. Warm constants preconditioned in every process. Hot-operand reuses an exp operand already approximated at -768, then constructs a fresh root on each iteration. Allocation clocks are not CPU evidence; bytes are cumulative requests, not peak heap. Bootstrap intervals describe this host/session only."
+}

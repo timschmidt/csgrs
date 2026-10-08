@@ -1,0 +1,13 @@
+{
+  "tag": "prototype-statistics-ring-oracle-qualified",
+  "started": "2026-09-11T01:56:04.740Z",
+  "finished": "2026-09-11T01:56:04.853Z",
+  "elapsedSeconds": 0.110693698,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "node",
+  "args": [
+    "sign-filter-ring-oracle.mjs"
+  ],
+  "code": 0,
+  "signal": null
+}

@@ -1,0 +1,180 @@
+{
+  "checks": [
+    {
+      "label": "fmt",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustfmt",
+        "--edition",
+        "2024",
+        "--check",
+        "src/bezier_offset.rs",
+        "src/bezier_region.rs",
+        "src/curve.rs",
+        "src/curve_corner_chain.rs",
+        "src/curve_region_boolean.rs"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 3.202210690942593,
+      "log": "general-vector-tangents-20260924-v1-fmt.log"
+    },
+    {
+      "label": "clippy-1",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "clippy",
+        "--all-targets",
+        "--all-features",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 25.937294299015775,
+      "log": "general-vector-tangents-20260924-v1-clippy-1.log"
+    },
+    {
+      "label": "clippy-2",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "clippy",
+        "--all-targets",
+        "--no-default-features",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 24.736690344987437,
+      "log": "general-vector-tangents-20260924-v1-clippy-2.log"
+    }
+  ],
+  "cases": [
+    {
+      "label": "vector_tangent_predicates_replay_general_parameter_authorities",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/general-vector-tangents-20260924-v1-libtest",
+        "--exact",
+        "bezier_offset::conversion_tests::vector_tangent_predicates_replay_general_parameter_authorities",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.2944442849839106,
+      "log": "general-vector-tangents-20260924-v1-vector_tangent_predicates_replay_general_parameter_authorities.log"
+    },
+    {
+      "label": "regularized_vector_tangent_owns_selected_stationary_endpoints",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/general-vector-tangents-20260924-v1-libtest",
+        "--exact",
+        "bezier_offset::conversion_tests::regularized_vector_tangent_owns_selected_stationary_endpoints",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.26683141896501184,
+      "log": "general-vector-tangents-20260924-v1-regularized_vector_tangent_owns_selected_stationary_endpoints.log"
+    },
+    {
+      "label": "selected_fiber_points_reuse_projective_roots_without_global_promotion",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/general-vector-tangents-20260924-v1-libtest",
+        "--exact",
+        "bezier_offset::conversion_tests::selected_fiber_points_reuse_projective_roots_without_global_promotion",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.32713576196692884,
+      "log": "general-vector-tangents-20260924-v1-selected_fiber_points_reuse_projective_roots_without_global_promotion.log"
+    },
+    {
+      "label": "closed_ph_corner_edits_preserve_both_normalized_source_lobes",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/general-vector-tangents-20260924-v1-libtest",
+        "--exact",
+        "bezier_region::tests::closed_ph_corner_edits_preserve_both_normalized_source_lobes",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.3734722340013832,
+      "log": "general-vector-tangents-20260924-v1-closed_ph_corner_edits_preserve_both_normalized_source_lobes.log"
+    },
+    {
+      "label": "ordered_ph_parallel_domains_retain_same_sheet_exterior_contacts",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/general-vector-tangents-20260924-v1-libtest",
+        "--exact",
+        "bezier_offset::conversion_tests::ordered_ph_parallel_domains_retain_same_sheet_exterior_contacts",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.5771996710682288,
+      "log": "general-vector-tangents-20260924-v1-ordered_ph_parallel_domains_retain_same_sheet_exterior_contacts.log"
+    },
+    {
+      "label": "ordered_ph_parallel_domains_reject_a_cached_opposite_normal_contact",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/general-vector-tangents-20260924-v1-libtest",
+        "--exact",
+        "bezier_offset::conversion_tests::ordered_ph_parallel_domains_reject_a_cached_opposite_normal_contact",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.4213987370021641,
+      "log": "general-vector-tangents-20260924-v1-ordered_ph_parallel_domains_reject_a_cached_opposite_normal_contact.log"
+    },
+    {
+      "label": "selected_parallel_companion_fillets_without_range_promotion",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/general-vector-tangents-20260924-v1-libtest",
+        "--exact",
+        "bezier_region::tests::selected_parallel_companion_fillets_without_range_promotion",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.6331758319865912,
+      "log": "general-vector-tangents-20260924-v1-selected_parallel_companion_fillets_without_range_promotion.log"
+    },
+    {
+      "label": "nonlinear_selected_corner_chamfers_through_retained_fixed_distance_image",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/general-vector-tangents-20260924-v1-libtest",
+        "--exact",
+        "bezier_region::tests::nonlinear_selected_corner_chamfers_through_retained_fixed_distance_image",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 5.259460470988415,
+      "log": "general-vector-tangents-20260924-v1-nonlinear_selected_corner_chamfers_through_retained_fixed_distance_image.log"
+    }
+  ],
+  "all_processes_reaped": true,
+  "binary_sha256": "eeb508354868d92833eda9975cbc20680245e69c78d75fa73f10f7790cfa1f5f",
+  "all_sources_unchanged": true
+}

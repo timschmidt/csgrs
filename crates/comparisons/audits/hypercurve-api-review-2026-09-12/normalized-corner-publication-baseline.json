@@ -1,0 +1,20 @@
+{
+  "parent": "07d6b300c109eaa304371ba61898b29cd262bc6d",
+  "command": [
+    "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustc",
+    "--edition=2024",
+    "-O",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/normalized-corner-publication-public.rs",
+    "--extern",
+    "hypercurve=/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/private-region-factories-candidate3-libraries/libhypercurve-bacb55d5ec235376.rlib",
+    "-L",
+    "dependency=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps",
+    "-o",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/normalized-corner-publication-baseline"
+  ],
+  "returncode": 0,
+  "elapsed_seconds": 0.6309289080090821,
+  "source_sha256": "6664d436e9a6e09f30b1e72391fe775605843644dd85762eab87d92fd291110b",
+  "binary_sha256": "e30d5726bb380d896cc8b310ebed8137174a32ac39cd1731a51a917b38618cb2",
+  "library_sha256": "7ee45522b1f2248fc54a35bf4f0683f7c2282bee2f93c5cb6518b29bc0790379"
+}

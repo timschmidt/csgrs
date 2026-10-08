@@ -1,0 +1,13 @@
+{
+  "tag": "arf-fused-linked-libraries",
+  "started": "2026-09-09T20:46:25.150Z",
+  "finished": "2026-09-09T20:46:25.175Z",
+  "elapsedSeconds": 0.022880291,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison",
+  "command": "ldd",
+  "args": [
+    "/tmp/calcium-arf-fused.rUeaCU/arf-fused-controls"
+  ],
+  "code": 0,
+  "signal": null
+}

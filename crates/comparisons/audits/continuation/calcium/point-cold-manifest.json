@@ -1,0 +1,2920 @@
+{
+  "schema": 1,
+  "checkpoint": 58,
+  "recorded": "2026-09-10T23:19:18.070Z",
+  "previousManifest": "point-demand-manifest.json",
+  "files": {
+    "point-cold-findings.md": "5df2256fa16ddefcd034dfbbe2e16537f236080e2688704420212bbbd2c5accf",
+    "point-cold-evidence.mjs": "fcaa7fc23bfe85efa29f0ca00bab9c286ffbf99651321728b3cd83bf52787600",
+    "record-point-cold.mjs": "78362bf4ba50494a1460b59a5518dc05c6c69fdd0ac5bcec881806128e24b796",
+    "verify-point-cold.mjs": "d9137d807c9d24adadf3c21880b37b93cab2da9daa67013265079d28fbd03369",
+    "point-cold-common.rs": "f127c3e2b82f6e8baf17b79d0881f1f3d930777b35fce383b0207d5f2ac7310a",
+    "point-cold-native.rs": "15de78fac624bce9ac95e153adef05419c041c0d9fef8dc65e72dc2a3993daac",
+    "point-cold-platform.rs": "fa3b2c10f2eea3e835a69f32e471434a05427404a01f715f591f82844f0f9279",
+    "point-cold-clippy-fix.patch": "12dd9a12ed5dbacf56c582a90c1700db0ddedea94596ba1be7be24812876a2fb",
+    "prepare-point-cold.mjs": "480350298c0122b4a038390c1017ebe39023439b16648b7ce9c8519259f97a13",
+    "build-point-cold.mjs": "cbeae70b3eeb79c7c65a1c21e1e6e1d0a26f941cdab7b889e7d30b34ca69de99",
+    "resume-point-cold-build.mjs": "94dfd67d5b7ada10306b4aaf385dbb38c3bc36f4db1c207d19b6d54705c6c6e3",
+    "point-cold-origin.json": "69f51b24952f0fad24763a4e4e728c65c814008d651eca522c58d6af0a3163e0",
+    "point-cold-binaries.json": "e6d1f16ca9e79bfe9700caf78f9b4d18f199edf9ce03ecae19fcec9fdab0220a",
+    "point-cold-protocol.mjs": "7bbf86ba4a21b368ae043260e58e1251819feb601fb43fff14a91f79290e77d7",
+    "run-point-cold-native.mjs": "f44014b836719bc0c6e5baf46cf0a10632f07dfa90c4ca66e09b968428622e10",
+    "run-point-cold-wasm.mjs": "abc915c350760983908a4b01757c3069dcb31a92588370de22c7b1480f853469",
+    "run-point-cold-campaign.mjs": "c5bab98ef79e86cc7307851a69f8956af9abc306f41f23322bc74c812e7c4399",
+    "check-point-cold.mjs": "a8dd516600d13eb6dcd41e5ad168eded3005e05dce37631040e772897fc2af37",
+    "point-demand-manifest.json": "5e4bb6798a735ea104e9d8dc311f30096371e2e093c92c05e57a5ee8dc5c45d0",
+    "point-demand-source-binding.json": "d5472beb99abd3f0526d978f4e27fb0446a1ac425dfd52fe3265bdccca4ba80f",
+    "point-demand-bindings.mjs": "877ad454293ff28af6ce354ff17976fba45a27cfaaa224bde916d04475c587ac",
+    "point-demand-sources.mjs": "6c10d4c9a336971b3018373508999cd1fe37635d8a336d8b337f2c1997f37700",
+    "point-history-base.rs": "5db127b416d4cb39a2faed2426f883a3d2b3cb5d8e74ca014f3de28f4e4df9a6",
+    "point-extended-field.mjs": "795154da44b1502c04db4aaa880adb470eec16a4970e2d928410d44ffa6b6424",
+    "check-point-extended.mjs": "925384f7417d82a808907b34b7866bee5239559d42c08fb86daf284255cc09b1",
+    "point-qualified-capture.mjs": "8b574f18a85c470ef47f9eafc780c462a93e811ebe15695f0950cfef17ada66e",
+    "capture.mjs": "aaf6df6bbd73025a8541617ce83731ae5ea3fd2272bd98c15e3c4c12b713ce23",
+    "point-cold-baseline/Cargo.toml": "fc1908f6da8f61e37ef15ce63f60d6f1a9b751f5926421b40e64c5966b6a15ba",
+    "point-cold-baseline/Cargo.lock": "76a252bcb3b6f99c201ece31883534f0c93f53146d649a4bab50886532b01066",
+    "point-cold-eager/Cargo.toml": "177037442dfc12f0356f1c9c80bcafc903b30d6c4a1c5ed95c7a2b36ee1035e9",
+    "point-cold-eager/Cargo.lock": "186b2665eaf68c30afcf69ed101400c9baa31ca020718a8af87f72f60f1cfa70",
+    "point-cold-demand/Cargo.toml": "20cf77782c1a23d8092e0bb77431314a90bb938c95d99a9ae8f18d138be1ce81",
+    "point-cold-demand/Cargo.lock": "8f802da135513ca7f608281d3be7f26b6a5423045257c4c1c66c0cf8109ee13c",
+    "results/point-cold-native-baseline-groups.jsonl": "746b49e9e7965c2b60a2fcab947f10a32c66bc4b9c39491f531ca060193f0649",
+    "results/point-cold-native-eager-groups.jsonl": "4b01be17e46e3d8369448c408da471307da8038a8a5a8f5abbb41df264a57a1b",
+    "results/point-cold-native-demand-groups.jsonl": "790cfec2e0028999988b1b3757a7fce3af564d1babe32588255f9cb3f94f6275",
+    "results/point-cold-wasm-baseline-groups.jsonl": "b74f1744cf362df82ff6a9a1f6cfb2ec3dd6c84db29251f6084aa4f870729552",
+    "results/point-cold-wasm-eager-groups.jsonl": "8d95e17a134bbad2a58b3cda7e1e2b68e00e3a9bd4a27734397925dbe865c253",
+    "results/point-cold-wasm-demand-groups.jsonl": "08264bc4eafd414232d33419c5c61f541e8dee1b7e26b099c0f5e8f6480044f6",
+    "results/point-demand-verify.json": "1a773ba11111811e132da49b9d53fa170972586b5ea72974518351de2cdb8a99",
+    "results/point-demand-verify.stdout": "03f113c5e915562da74049593c1d1a2fd45ad6aae03907e8bef27401495a6ee5",
+    "results/point-demand-verify.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/point-cold-build.json": "6011a54070c18736b38f030d429783fe148916983f7ccab2910492169ae89cef",
+    "results/point-cold-build.stdout": "bdb5c2190fde840fe89c8e9e97f3e615fd6c2ab29a5928ab7e458a5092cc52a6",
+    "results/point-cold-build.stderr": "c10eadb8dbeefc1c8f2499909c7daed5679e03ea546e58e481a25d90cfac2fb2",
+    "results/point-cold-build-resume.json": "c11e48e7c542b191aee56b0d44c2049e4657d60e22683c3b64727e587b652e3b",
+    "results/point-cold-build-resume.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/point-cold-build-resume.stderr": "b297115c417de05edfe1cf448d0790da80029bd18b3e3f8b52acd64b754c0bd7",
+    "results/point-cold-build-resume-v2.json": "2b641a134389f529d1008f1338208fb9b0c9fbc63dec37d3b7bd9f1faa4a0d69",
+    "results/point-cold-build-resume-v2.stdout": "a0db6bf572e966cc6d134b70657926a9ea9c51579066b05a9f649ee64e338b71",
+    "results/point-cold-build-resume-v2.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/point-cold-baseline-native-build.json": "2f3954fe47b8be9cc779670d42130d9f3d2bbf4f52272478911fd4d3b159b139",
+    "results/point-cold-baseline-native-build.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/point-cold-baseline-native-build.stderr": "a5de5a4676980d39373eac700107141f2884921ed6cf6c52c45ed8459dbf1554",
+    "results/point-cold-baseline-native-clippy.json": "ad4f8951a7e39c0160f5494535d3fd7518aadf3e7e93bc96a018fa700fc63361",
+    "results/point-cold-baseline-native-clippy.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/point-cold-baseline-native-clippy.stderr": "24c86725a846666f3c62babd689f99d9cf1b728c9cde2c7937cb64b8f5d2f186",
+    "results/point-cold-baseline-lock.json": "daf06d53f09367fc6fde7f9c25619d8163ceb176f25f27636e9c36c80215008c",
+    "results/point-cold-baseline-lock.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/point-cold-baseline-lock.stderr": "e6be2fc21f61ee2ca9174470fbbef09ec82d1768d4642489a358e3e3a667848a",
+    "results/point-cold-baseline-native-build-v1.json": "326888b159c6217d5ebbff2cabba8e16437b3aa95c4aeae4ef93939ba5e18299",
+    "results/point-cold-baseline-native-build-v1.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/point-cold-baseline-native-build-v1.stderr": "b0c9bb2d0835973af1e439bbba09ba6c23f20e35b86f55cb1b278609fdc74567",
+    "results/point-cold-baseline-native-clippy-v1.json": "4161dc91bb402d179da16a5a4ea80948bf9201b7d44aa6372378dcf8b41e65a7",
+    "results/point-cold-baseline-native-clippy-v1.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/point-cold-baseline-native-clippy-v1.stderr": "ffafd59b29e9c9856edfbc2e8ed5df305d78b1244123bdf9d911c546697c79f0",
+    "results/point-cold-baseline-wasm-build.json": "06cb6a6dc2a97ed7cc54a62dc1d9c0eab02f5cb32781991d4294089641f0094b",
+    "results/point-cold-baseline-wasm-build.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/point-cold-baseline-wasm-build.stderr": "73e63e32968ec033d196eb84139d9d8a6e00a9797044ead230b88f13aad38335",
+    "results/point-cold-baseline-wasm-clippy.json": "0df8b3ad053a8f7d8a9e6e113f2dc677212345651fe93a25f689c06f70999aae",
+    "results/point-cold-baseline-wasm-clippy.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/point-cold-baseline-wasm-clippy.stderr": "baf8aef62b63754646b2c3cf08faf2bc776b8a525e5a3609ef0cca1b05d9b909",
+    "results/point-cold-eager-lock.json": "c888129cb722b6bd1c6d5d39f133c03ec72dc229c6799c895467785471efc2ab",
+    "results/point-cold-eager-lock.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/point-cold-eager-lock.stderr": "e6be2fc21f61ee2ca9174470fbbef09ec82d1768d4642489a358e3e3a667848a",
+    "results/point-cold-eager-native-build-v1.json": "ad9b6bee33708a572279195ac6f9d191e0f1bd1db5038a2c3c8991055c842bca",
+    "results/point-cold-eager-native-build-v1.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/point-cold-eager-native-build-v1.stderr": "fbea0ecb8f83071833a64219002da678fd0db42d3d7a0c931f3b56689973e099",
+    "results/point-cold-eager-native-clippy-v1.json": "b1336df7f88b8b0d1720e710876f2ec0a4b09c8963366df73afebaa0518489f0",
+    "results/point-cold-eager-native-clippy-v1.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/point-cold-eager-native-clippy-v1.stderr": "f799ae0b51f7dc6908b9afe6384f648ff47e602b916993ba6cef9a9c2350151a",
+    "results/point-cold-eager-wasm-build.json": "272343195a80966f93cdbe255f45339bd5b7d2caed44ec6529f6ccb1654586b6",
+    "results/point-cold-eager-wasm-build.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/point-cold-eager-wasm-build.stderr": "307984cb3a3fbc31dff6f5bfff96ca7634279ca4230a0ce3941c06d93fe7aa4c",
+    "results/point-cold-eager-wasm-clippy.json": "719aa79a9a1cba6b1636c6b021cf364cf4e2369a6fed9624266d253b0b51bfe6",
+    "results/point-cold-eager-wasm-clippy.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/point-cold-eager-wasm-clippy.stderr": "1e663d8326b0e5d944a649a93509bb42cee85c44729e56e502ca7e4abbbc4e6a",
+    "results/point-cold-demand-lock.json": "3c4ae80c299f8125bd035c4bc9c735fdd3e338ba26849d11020bcdd0f447406b",
+    "results/point-cold-demand-lock.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/point-cold-demand-lock.stderr": "e6be2fc21f61ee2ca9174470fbbef09ec82d1768d4642489a358e3e3a667848a",
+    "results/point-cold-demand-native-build-v1.json": "f2a9f78065fc30cac53fef83509fc0638a170a9688fa98559287410c23947419",
+    "results/point-cold-demand-native-build-v1.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/point-cold-demand-native-build-v1.stderr": "8eee61fce478e81ecc9992abc18aa2fadbd6237b49d6d62166c7aa7ec6486ff6",
+    "results/point-cold-demand-native-clippy-v1.json": "5f171ebed18e1903077c4e3c7a4f33c1c78ee8c13be5af23e7b7f7b776e8d424",
+    "results/point-cold-demand-native-clippy-v1.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/point-cold-demand-native-clippy-v1.stderr": "f0cced44e2ea11986172529694efae128c90e92461e53bb5501a6ed415ec5f6f",
+    "results/point-cold-demand-wasm-build.json": "43aa1410b4b27769837d04f0e9a2093a86e74bca8ca0dc040e52e980faf101e2",
+    "results/point-cold-demand-wasm-build.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/point-cold-demand-wasm-build.stderr": "ba23666a7296fcd4b92dcad9bd38275311e92485d667dfd29527dc59eed28dc0",
+    "results/point-cold-demand-wasm-clippy.json": "53479ac226fa964ca2a73f93df3273a94ef022053cf9f8c72168dd9c084d3640",
+    "results/point-cold-demand-wasm-clippy.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/point-cold-demand-wasm-clippy.stderr": "06690554d255ac82ad761c66074995fa2f451bbae5b739d5be3798f8cc86d6c9",
+    "results/point-cold-campaign.json": "c8c0f91de2e65fa502c942363e4b783f723b9aeeb62a1d31673815868323db4e",
+    "results/point-cold-campaign.stdout": "8507e3c89043c8a8646a9c9018b53bc272d65a023caed1cb0d957f83d1b8fa86",
+    "results/point-cold-campaign.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/point-cold-native-baseline.json": "8b9463a00f8093aa6b1d17639f024a1d135a796b6d4a2f6853bbbc27c3136fa2",
+    "results/point-cold-native-baseline.stdout": "9d1c5198725d14e34831deb96478f886de02215341a1deab39446e25d6dcf0f2",
+    "results/point-cold-native-baseline.stderr": "3ad082d2f65c906a80c68ebefb66d678a7df7df34b54a19c6706165dce54e91b",
+    "results/point-cold-wasm-baseline.json": "ba12eff8388dbc9a67abcc8d1c458f66a3afd743b65c73a648d31a112b493927",
+    "results/point-cold-wasm-baseline.stdout": "9d1c5198725d14e34831deb96478f886de02215341a1deab39446e25d6dcf0f2",
+    "results/point-cold-wasm-baseline.stderr": "5333dc62cd4721831b34b3b9cbba7948607bced9fe7aa1d728d8959443522065",
+    "results/point-cold-native-eager.json": "b0d1ea670aa9e08adcf47b99aee32c7a4e675ab0401e98a61286973f95f9b8b1",
+    "results/point-cold-native-eager.stdout": "1e1fe0f6b0e38caedc0d83453a755b4fe98d85284806bdefc7452722a00c13c7",
+    "results/point-cold-native-eager.stderr": "4e25bef870ee87b9b3699601bfd1d4fc11ced575910c90d922651b75958f8877",
+    "results/point-cold-wasm-eager.json": "f1f4db81d1497c91dfb8a7f765a035bac7e5b0a3f660ca7a6a6fb317aea15637",
+    "results/point-cold-wasm-eager.stdout": "1e1fe0f6b0e38caedc0d83453a755b4fe98d85284806bdefc7452722a00c13c7",
+    "results/point-cold-wasm-eager.stderr": "bdae9fe2b4066ec5295e142f0fa586940c02d138f084e7cb3b779ae7dcefb52a",
+    "results/point-cold-native-demand.json": "f6bcf8b5e29ea2b36093a1a34e5a59f6aac9a78fe5546dab9d86de411a35da49",
+    "results/point-cold-native-demand.stdout": "1e1fe0f6b0e38caedc0d83453a755b4fe98d85284806bdefc7452722a00c13c7",
+    "results/point-cold-native-demand.stderr": "9eaa7f47c61b5c383c32d574b0f8551d359db4ab56b9580737a4067c41f96fa7",
+    "results/point-cold-wasm-demand.json": "fc31d6732f7c64b2cd7636b38a03feabea1e3dc6905eaab14cee33c8164744fd",
+    "results/point-cold-wasm-demand.stdout": "1e1fe0f6b0e38caedc0d83453a755b4fe98d85284806bdefc7452722a00c13c7",
+    "results/point-cold-wasm-demand.stderr": "ea8c34fdd35aeeee05398d53cb27e7b9a174aee00a9870a40a2ec79323a2d929",
+    "results/point-cold-capacity.json": "483667c1069f024a71d801f80e2de7b45c602a8eb3188d1e64d78bf8dd657c03",
+    "results/point-cold-capacity.stdout": "b1866a6efc90ea0b9cd93a7a808df9eb782836b10df8a6f5d04bd8538b9c6c3b",
+    "results/point-cold-capacity.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/point-cold-check.json": "fc62e6cd40c30e5c012548f004ba6ec95f8a28eb01b8e2a3ad6b63da2a8f9765",
+    "results/point-cold-check.stdout": "e0170f8bed5c425cd589df54ff84b842fc0c60d1f8212211a1bb9cf81f7104f4",
+    "results/point-cold-check.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/point-cold-format.json": "4a687abeef26502e1d2e31889ebd7fe178c0522a11ebf9f3165de4a337b1543b",
+    "results/point-cold-format.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/point-cold-format.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "gates": [
+    "point-cold-build",
+    "point-cold-build-resume",
+    "point-cold-build-resume-v2",
+    "point-cold-baseline-native-build",
+    "point-cold-baseline-native-clippy",
+    "point-cold-baseline-lock",
+    "point-cold-baseline-native-build-v1",
+    "point-cold-baseline-native-clippy-v1",
+    "point-cold-baseline-wasm-build",
+    "point-cold-baseline-wasm-clippy",
+    "point-cold-eager-lock",
+    "point-cold-eager-native-build-v1",
+    "point-cold-eager-native-clippy-v1",
+    "point-cold-eager-wasm-build",
+    "point-cold-eager-wasm-clippy",
+    "point-cold-demand-lock",
+    "point-cold-demand-native-build-v1",
+    "point-cold-demand-native-clippy-v1",
+    "point-cold-demand-wasm-build",
+    "point-cold-demand-wasm-clippy",
+    "point-cold-campaign",
+    "point-cold-native-baseline",
+    "point-cold-wasm-baseline",
+    "point-cold-native-eager",
+    "point-cold-wasm-eager",
+    "point-cold-native-demand",
+    "point-cold-wasm-demand",
+    "point-cold-capacity",
+    "point-cold-check",
+    "point-cold-format"
+  ],
+  "successfulGates": 27,
+  "preservedFailures": [
+    {
+      "tag": "point-cold-build",
+      "code": 1
+    },
+    {
+      "tag": "point-cold-build-resume",
+      "code": 1
+    },
+    {
+      "tag": "point-cold-baseline-native-clippy",
+      "code": 101
+    }
+  ],
+  "sourceBindingSha256": "d5472beb99abd3f0526d978f4e27fb0446a1ac425dfd52fe3265bdccca4ba80f",
+  "sourceFiles": 175,
+  "artifacts": [
+    {
+      "variant": "baseline",
+      "platform": "native",
+      "path": "/tmp/calcium-point-cold.3RcRIa/baseline",
+      "bytes": 3170352,
+      "sha256": "58a59d7b3579a7c1fd5f612c1fdf28237a3779ace5aa49e952830bf48a70310c"
+    },
+    {
+      "variant": "baseline",
+      "platform": "wasm",
+      "path": "/tmp/calcium-point-cold.3RcRIa/baseline.wasm",
+      "bytes": 1613729,
+      "sha256": "1b13db752566aa0d8fa80b9b3b4da8ceac3226af4d0a1c59188a49d5ccf20f50"
+    },
+    {
+      "variant": "eager",
+      "platform": "native",
+      "path": "/tmp/calcium-point-cold.3RcRIa/eager",
+      "bytes": 3170888,
+      "sha256": "42169aa548c7c8d5193dfab780d6ee0de0dc2d327d95e31f67cd365017dd6cb8"
+    },
+    {
+      "variant": "eager",
+      "platform": "wasm",
+      "path": "/tmp/calcium-point-cold.3RcRIa/eager.wasm",
+      "bytes": 1613955,
+      "sha256": "79058d78951fb7a5364347558d83a5d1b6026517261324b5fc8110ef7f1bf452"
+    },
+    {
+      "variant": "demand",
+      "platform": "native",
+      "path": "/tmp/calcium-point-cold.3RcRIa/demand",
+      "bytes": 3175064,
+      "sha256": "c15db10510906095aa7a3b64a30804d7758dd6e868a92aba224e4e33ea753706"
+    },
+    {
+      "variant": "demand",
+      "platform": "wasm",
+      "path": "/tmp/calcium-point-cold.3RcRIa/demand.wasm",
+      "bytes": 1614522,
+      "sha256": "5007dc2eb714f87ed34d13c2f3e1e8f8ccf0aa8d0333298a2b0637180c6b669e"
+    }
+  ],
+  "dedicatedBytes": 14358510,
+  "rawBytes": 201468576,
+  "semantic": {
+    "status": "pass",
+    "config": {
+      "cases": 48,
+      "policies": 2,
+      "histories": 4,
+      "lifecycles": [
+        "retained",
+        "fresh",
+        "roundtrip"
+      ],
+      "calls": 9,
+      "groups": 1152,
+      "queriesPerVariantPlatform": 10368,
+      "wasmGcEvery": 8
+    },
+    "summaries": {
+      "native": {
+        "baseline": {
+          "groups": 1152,
+          "queries": 10368,
+          "statuses": {
+            "InvalidTransformedEvidence": 3456,
+            "Transformed": 5044,
+            "DenominatorMayContainZero": 648,
+            "Undecided": 178,
+            "NonIsolatingImageInterval": 178,
+            "InvalidEvidence": 864
+          },
+          "witnesses": 3316,
+          "checks": {
+            "left-exact-rational-carrier": 10368,
+            "left-metadata": 10368,
+            "left-ordered": 10368,
+            "left-selected-value-contained": 10368,
+            "left-full-polynomial": 10368,
+            "left-polynomial-vanishing": 10368,
+            "left-exact-witness": 4320,
+            "left-witness-vanishing": 4320,
+            "left-distinct-root-count": 10368,
+            "right-exact-rational-carrier": 10368,
+            "right-metadata": 10368,
+            "right-ordered": 10368,
+            "right-selected-value-contained": 10368,
+            "right-full-polynomial": 10368,
+            "right-polynomial-vanishing": 10368,
+            "right-exact-witness": 7776,
+            "right-witness-vanishing": 7776,
+            "right-distinct-root-count": 10368,
+            "left-authored-interval": 10368,
+            "right-authored-interval": 10368,
+            "operation": 10368,
+            "no-result-on-failure": 5324,
+            "known-failure-status": 5324,
+            "successful-report": 5044,
+            "nonzero-divisor": 5044,
+            "output-exact-rational-carrier": 5044,
+            "output-metadata": 5044,
+            "output-ordered": 5044,
+            "output-selected-value-contained": 5044,
+            "output-full-polynomial": 5044,
+            "output-polynomial-vanishing": 5044,
+            "output-distinct-root-count": 5044,
+            "refined-image-contained": 5044,
+            "output-exact-witness": 3316,
+            "output-witness-vanishing": 3316,
+            "denominator-guard": 648
+          },
+          "totalChecks": 268816,
+          "outputBytes": 31229552,
+          "firstQueryStatuses": {
+            "InvalidTransformedEvidence": 384,
+            "Transformed": 564,
+            "DenominatorMayContainZero": 72,
+            "Undecided": 18,
+            "NonIsolatingImageInterval": 18,
+            "InvalidEvidence": 96
+          },
+          "firstQueryWitnesses": 372,
+          "perCall": [
+            {
+              "statuses": {
+                "InvalidTransformedEvidence": 384,
+                "Transformed": 564,
+                "DenominatorMayContainZero": 72,
+                "Undecided": 18,
+                "NonIsolatingImageInterval": 18,
+                "InvalidEvidence": 96
+              },
+              "witnesses": 372
+            },
+            {
+              "statuses": {
+                "InvalidTransformedEvidence": 384,
+                "Transformed": 560,
+                "DenominatorMayContainZero": 72,
+                "Undecided": 20,
+                "NonIsolatingImageInterval": 20,
+                "InvalidEvidence": 96
+              },
+              "witnesses": 368
+            },
+            {
+              "statuses": {
+                "InvalidTransformedEvidence": 384,
+                "Transformed": 560,
+                "DenominatorMayContainZero": 72,
+                "Undecided": 20,
+                "NonIsolatingImageInterval": 20,
+                "InvalidEvidence": 96
+              },
+              "witnesses": 368
+            },
+            {
+              "statuses": {
+                "InvalidTransformedEvidence": 384,
+                "Transformed": 560,
+                "DenominatorMayContainZero": 72,
+                "Undecided": 20,
+                "NonIsolatingImageInterval": 20,
+                "InvalidEvidence": 96
+              },
+              "witnesses": 368
+            },
+            {
+              "statuses": {
+                "InvalidTransformedEvidence": 384,
+                "Transformed": 560,
+                "DenominatorMayContainZero": 72,
+                "Undecided": 20,
+                "NonIsolatingImageInterval": 20,
+                "InvalidEvidence": 96
+              },
+              "witnesses": 368
+            },
+            {
+              "statuses": {
+                "InvalidTransformedEvidence": 384,
+                "Transformed": 560,
+                "DenominatorMayContainZero": 72,
+                "Undecided": 20,
+                "NonIsolatingImageInterval": 20,
+                "InvalidEvidence": 96
+              },
+              "witnesses": 368
+            },
+            {
+              "statuses": {
+                "InvalidTransformedEvidence": 384,
+                "Transformed": 560,
+                "DenominatorMayContainZero": 72,
+                "Undecided": 20,
+                "NonIsolatingImageInterval": 20,
+                "InvalidEvidence": 96
+              },
+              "witnesses": 368
+            },
+            {
+              "statuses": {
+                "InvalidTransformedEvidence": 384,
+                "Transformed": 560,
+                "DenominatorMayContainZero": 72,
+                "Undecided": 20,
+                "NonIsolatingImageInterval": 20,
+                "InvalidEvidence": 96
+              },
+              "witnesses": 368
+            },
+            {
+              "statuses": {
+                "InvalidTransformedEvidence": 384,
+                "Transformed": 560,
+                "DenominatorMayContainZero": 72,
+                "Undecided": 20,
+                "NonIsolatingImageInterval": 20,
+                "InvalidEvidence": 96
+              },
+              "witnesses": 368
+            }
+          ],
+          "stateChangedGroups": 4,
+          "statusOrWitnessChangedGroups": 4,
+          "rawSha256": "9d1c5198725d14e34831deb96478f886de02215341a1deab39446e25d6dcf0f2",
+          "runtime": {
+            "variant": "baseline",
+            "platform": "native",
+            "node": "v22.22.2",
+            "v8": "12.4.254.21-node.39",
+            "groups": 1152,
+            "freshProcesses": 1152,
+            "queries": 10368,
+            "outputBytes": 31229552,
+            "binarySha256": "58a59d7b3579a7c1fd5f612c1fdf28237a3779ace5aa49e952830bf48a70310c",
+            "limits": "One fresh child process per group. Nine fully recorded queries, no unrecorded query warmup. Constructors and selected initial refinement/serialization are setup. No timing or allocator claim."
+          }
+        },
+        "eager": {
+          "groups": 1152,
+          "queries": 10368,
+          "statuses": {
+            "Transformed": 8500,
+            "DenominatorMayContainZero": 648,
+            "Undecided": 178,
+            "NonIsolatingImageInterval": 178,
+            "InvalidEvidence": 864
+          },
+          "witnesses": 6772,
+          "checks": {
+            "left-exact-rational-carrier": 10368,
+            "left-metadata": 10368,
+            "left-ordered": 10368,
+            "left-selected-value-contained": 10368,
+            "left-full-polynomial": 10368,
+            "left-polynomial-vanishing": 10368,
+            "left-exact-witness": 4320,
+            "left-witness-vanishing": 4320,
+            "left-distinct-root-count": 10368,
+            "right-exact-rational-carrier": 10368,
+            "right-metadata": 10368,
+            "right-ordered": 10368,
+            "right-selected-value-contained": 10368,
+            "right-full-polynomial": 10368,
+            "right-polynomial-vanishing": 10368,
+            "right-exact-witness": 7776,
+            "right-witness-vanishing": 7776,
+            "right-distinct-root-count": 10368,
+            "left-authored-interval": 10368,
+            "right-authored-interval": 10368,
+            "operation": 10368,
+            "successful-report": 8500,
+            "nonzero-divisor": 8500,
+            "output-exact-rational-carrier": 8500,
+            "output-metadata": 8500,
+            "output-ordered": 8500,
+            "output-selected-value-contained": 8500,
+            "output-full-polynomial": 8500,
+            "output-polynomial-vanishing": 8500,
+            "output-exact-witness": 6772,
+            "output-witness-vanishing": 6772,
+            "output-distinct-root-count": 8500,
+            "refined-image-contained": 8500,
+            "no-result-on-failure": 1868,
+            "known-failure-status": 1868,
+            "denominator-guard": 648
+          },
+          "totalChecks": 303376,
+          "outputBytes": 34266944,
+          "firstQueryStatuses": {
+            "Transformed": 948,
+            "DenominatorMayContainZero": 72,
+            "Undecided": 18,
+            "NonIsolatingImageInterval": 18,
+            "InvalidEvidence": 96
+          },
+          "firstQueryWitnesses": 756,
+          "perCall": [
+            {
+              "statuses": {
+                "Transformed": 948,
+                "DenominatorMayContainZero": 72,
+                "Undecided": 18,
+                "NonIsolatingImageInterval": 18,
+                "InvalidEvidence": 96
+              },
+              "witnesses": 756
+            },
+            {
+              "statuses": {
+                "Transformed": 944,
+                "DenominatorMayContainZero": 72,
+                "Undecided": 20,
+                "NonIsolatingImageInterval": 20,
+                "InvalidEvidence": 96
+              },
+              "witnesses": 752
+            },
+            {
+              "statuses": {
+                "Transformed": 944,
+                "DenominatorMayContainZero": 72,
+                "Undecided": 20,
+                "NonIsolatingImageInterval": 20,
+                "InvalidEvidence": 96
+              },
+              "witnesses": 752
+            },
+            {
+              "statuses": {
+                "Transformed": 944,
+                "DenominatorMayContainZero": 72,
+                "Undecided": 20,
+                "NonIsolatingImageInterval": 20,
+                "InvalidEvidence": 96
+              },
+              "witnesses": 752
+            },
+            {
+              "statuses": {
+                "Transformed": 944,
+                "DenominatorMayContainZero": 72,
+                "Undecided": 20,
+                "NonIsolatingImageInterval": 20,
+                "InvalidEvidence": 96
+              },
+              "witnesses": 752
+            },
+            {
+              "statuses": {
+                "Transformed": 944,
+                "DenominatorMayContainZero": 72,
+                "Undecided": 20,
+                "NonIsolatingImageInterval": 20,
+                "InvalidEvidence": 96
+              },
+              "witnesses": 752
+            },
+            {
+              "statuses": {
+                "Transformed": 944,
+                "DenominatorMayContainZero": 72,
+                "Undecided": 20,
+                "NonIsolatingImageInterval": 20,
+                "InvalidEvidence": 96
+              },
+              "witnesses": 752
+            },
+            {
+              "statuses": {
+                "Transformed": 944,
+                "DenominatorMayContainZero": 72,
+                "Undecided": 20,
+                "NonIsolatingImageInterval": 20,
+                "InvalidEvidence": 96
+              },
+              "witnesses": 752
+            },
+            {
+              "statuses": {
+                "Transformed": 944,
+                "DenominatorMayContainZero": 72,
+                "Undecided": 20,
+                "NonIsolatingImageInterval": 20,
+                "InvalidEvidence": 96
+              },
+              "witnesses": 752
+            }
+          ],
+          "stateChangedGroups": 4,
+          "statusOrWitnessChangedGroups": 4,
+          "rawSha256": "1e1fe0f6b0e38caedc0d83453a755b4fe98d85284806bdefc7452722a00c13c7",
+          "runtime": {
+            "variant": "eager",
+            "platform": "native",
+            "node": "v22.22.2",
+            "v8": "12.4.254.21-node.39",
+            "groups": 1152,
+            "freshProcesses": 1152,
+            "queries": 10368,
+            "outputBytes": 34266944,
+            "binarySha256": "42169aa548c7c8d5193dfab780d6ee0de0dc2d327d95e31f67cd365017dd6cb8",
+            "limits": "One fresh child process per group. Nine fully recorded queries, no unrecorded query warmup. Constructors and selected initial refinement/serialization are setup. No timing or allocator claim."
+          }
+        },
+        "demand": {
+          "groups": 1152,
+          "queries": 10368,
+          "statuses": {
+            "Transformed": 8500,
+            "DenominatorMayContainZero": 648,
+            "Undecided": 178,
+            "NonIsolatingImageInterval": 178,
+            "InvalidEvidence": 864
+          },
+          "witnesses": 6772,
+          "checks": {
+            "left-exact-rational-carrier": 10368,
+            "left-metadata": 10368,
+            "left-ordered": 10368,
+            "left-selected-value-contained": 10368,
+            "left-full-polynomial": 10368,
+            "left-polynomial-vanishing": 10368,
+            "left-exact-witness": 4320,
+            "left-witness-vanishing": 4320,
+            "left-distinct-root-count": 10368,
+            "right-exact-rational-carrier": 10368,
+            "right-metadata": 10368,
+            "right-ordered": 10368,
+            "right-selected-value-contained": 10368,
+            "right-full-polynomial": 10368,
+            "right-polynomial-vanishing": 10368,
+            "right-exact-witness": 7776,
+            "right-witness-vanishing": 7776,
+            "right-distinct-root-count": 10368,
+            "left-authored-interval": 10368,
+            "right-authored-interval": 10368,
+            "operation": 10368,
+            "successful-report": 8500,
+            "nonzero-divisor": 8500,
+            "output-exact-rational-carrier": 8500,
+            "output-metadata": 8500,
+            "output-ordered": 8500,
+            "output-selected-value-contained": 8500,
+            "output-full-polynomial": 8500,
+            "output-polynomial-vanishing": 8500,
+            "output-exact-witness": 6772,
+            "output-witness-vanishing": 6772,
+            "output-distinct-root-count": 8500,
+            "refined-image-contained": 8500,
+            "no-result-on-failure": 1868,
+            "known-failure-status": 1868,
+            "denominator-guard": 648
+          },
+          "totalChecks": 303376,
+          "outputBytes": 34266944,
+          "firstQueryStatuses": {
+            "Transformed": 948,
+            "DenominatorMayContainZero": 72,
+            "Undecided": 18,
+            "NonIsolatingImageInterval": 18,
+            "InvalidEvidence": 96
+          },
+          "firstQueryWitnesses": 756,
+          "perCall": [
+            {
+              "statuses": {
+                "Transformed": 948,
+                "DenominatorMayContainZero": 72,
+                "Undecided": 18,
+                "NonIsolatingImageInterval": 18,
+                "InvalidEvidence": 96
+              },
+              "witnesses": 756
+            },
+            {
+              "statuses": {
+                "Transformed": 944,
+                "DenominatorMayContainZero": 72,
+                "Undecided": 20,
+                "NonIsolatingImageInterval": 20,
+                "InvalidEvidence": 96
+              },
+              "witnesses": 752
+            },
+            {
+              "statuses": {
+                "Transformed": 944,
+                "DenominatorMayContainZero": 72,
+                "Undecided": 20,
+                "NonIsolatingImageInterval": 20,
+                "InvalidEvidence": 96
+              },
+              "witnesses": 752
+            },
+            {
+              "statuses": {
+                "Transformed": 944,
+                "DenominatorMayContainZero": 72,
+                "Undecided": 20,
+                "NonIsolatingImageInterval": 20,
+                "InvalidEvidence": 96
+              },
+              "witnesses": 752
+            },
+            {
+              "statuses": {
+                "Transformed": 944,
+                "DenominatorMayContainZero": 72,
+                "Undecided": 20,
+                "NonIsolatingImageInterval": 20,
+                "InvalidEvidence": 96
+              },
+              "witnesses": 752
+            },
+            {
+              "statuses": {
+                "Transformed": 944,
+                "DenominatorMayContainZero": 72,
+                "Undecided": 20,
+                "NonIsolatingImageInterval": 20,
+                "InvalidEvidence": 96
+              },
+              "witnesses": 752
+            },
+            {
+              "statuses": {
+                "Transformed": 944,
+                "DenominatorMayContainZero": 72,
+                "Undecided": 20,
+                "NonIsolatingImageInterval": 20,
+                "InvalidEvidence": 96
+              },
+              "witnesses": 752
+            },
+            {
+              "statuses": {
+                "Transformed": 944,
+                "DenominatorMayContainZero": 72,
+                "Undecided": 20,
+                "NonIsolatingImageInterval": 20,
+                "InvalidEvidence": 96
+              },
+              "witnesses": 752
+            },
+            {
+              "statuses": {
+                "Transformed": 944,
+                "DenominatorMayContainZero": 72,
+                "Undecided": 20,
+                "NonIsolatingImageInterval": 20,
+                "InvalidEvidence": 96
+              },
+              "witnesses": 752
+            }
+          ],
+          "stateChangedGroups": 4,
+          "statusOrWitnessChangedGroups": 4,
+          "rawSha256": "1e1fe0f6b0e38caedc0d83453a755b4fe98d85284806bdefc7452722a00c13c7",
+          "runtime": {
+            "variant": "demand",
+            "platform": "native",
+            "node": "v22.22.2",
+            "v8": "12.4.254.21-node.39",
+            "groups": 1152,
+            "freshProcesses": 1152,
+            "queries": 10368,
+            "outputBytes": 34266944,
+            "binarySha256": "c15db10510906095aa7a3b64a30804d7758dd6e868a92aba224e4e33ea753706",
+            "limits": "One fresh child process per group. Nine fully recorded queries, no unrecorded query warmup. Constructors and selected initial refinement/serialization are setup. No timing or allocator claim."
+          }
+        }
+      },
+      "wasm": {
+        "baseline": {
+          "groups": 1152,
+          "queries": 10368,
+          "statuses": {
+            "InvalidTransformedEvidence": 3456,
+            "Transformed": 5044,
+            "DenominatorMayContainZero": 648,
+            "Undecided": 178,
+            "NonIsolatingImageInterval": 178,
+            "InvalidEvidence": 864
+          },
+          "witnesses": 3316,
+          "checks": {
+            "left-exact-rational-carrier": 10368,
+            "left-metadata": 10368,
+            "left-ordered": 10368,
+            "left-selected-value-contained": 10368,
+            "left-full-polynomial": 10368,
+            "left-polynomial-vanishing": 10368,
+            "left-exact-witness": 4320,
+            "left-witness-vanishing": 4320,
+            "left-distinct-root-count": 10368,
+            "right-exact-rational-carrier": 10368,
+            "right-metadata": 10368,
+            "right-ordered": 10368,
+            "right-selected-value-contained": 10368,
+            "right-full-polynomial": 10368,
+            "right-polynomial-vanishing": 10368,
+            "right-exact-witness": 7776,
+            "right-witness-vanishing": 7776,
+            "right-distinct-root-count": 10368,
+            "left-authored-interval": 10368,
+            "right-authored-interval": 10368,
+            "operation": 10368,
+            "no-result-on-failure": 5324,
+            "known-failure-status": 5324,
+            "successful-report": 5044,
+            "nonzero-divisor": 5044,
+            "output-exact-rational-carrier": 5044,
+            "output-metadata": 5044,
+            "output-ordered": 5044,
+            "output-selected-value-contained": 5044,
+            "output-full-polynomial": 5044,
+            "output-polynomial-vanishing": 5044,
+            "output-distinct-root-count": 5044,
+            "refined-image-contained": 5044,
+            "output-exact-witness": 3316,
+            "output-witness-vanishing": 3316,
+            "denominator-guard": 648
+          },
+          "totalChecks": 268816,
+          "outputBytes": 31229552,
+          "firstQueryStatuses": {
+            "InvalidTransformedEvidence": 384,
+            "Transformed": 564,
+            "DenominatorMayContainZero": 72,
+            "Undecided": 18,
+            "NonIsolatingImageInterval": 18,
+            "InvalidEvidence": 96
+          },
+          "firstQueryWitnesses": 372,
+          "perCall": [
+            {
+              "statuses": {
+                "InvalidTransformedEvidence": 384,
+                "Transformed": 564,
+                "DenominatorMayContainZero": 72,
+                "Undecided": 18,
+                "NonIsolatingImageInterval": 18,
+                "InvalidEvidence": 96
+              },
+              "witnesses": 372
+            },
+            {
+              "statuses": {
+                "InvalidTransformedEvidence": 384,
+                "Transformed": 560,
+                "DenominatorMayContainZero": 72,
+                "Undecided": 20,
+                "NonIsolatingImageInterval": 20,
+                "InvalidEvidence": 96
+              },
+              "witnesses": 368
+            },
+            {
+              "statuses": {
+                "InvalidTransformedEvidence": 384,
+                "Transformed": 560,
+                "DenominatorMayContainZero": 72,
+                "Undecided": 20,
+                "NonIsolatingImageInterval": 20,
+                "InvalidEvidence": 96
+              },
+              "witnesses": 368
+            },
+            {
+              "statuses": {
+                "InvalidTransformedEvidence": 384,
+                "Transformed": 560,
+                "DenominatorMayContainZero": 72,
+                "Undecided": 20,
+                "NonIsolatingImageInterval": 20,
+                "InvalidEvidence": 96
+              },
+              "witnesses": 368
+            },
+            {
+              "statuses": {
+                "InvalidTransformedEvidence": 384,
+                "Transformed": 560,
+                "DenominatorMayContainZero": 72,
+                "Undecided": 20,
+                "NonIsolatingImageInterval": 20,
+                "InvalidEvidence": 96
+              },
+              "witnesses": 368
+            },
+            {
+              "statuses": {
+                "InvalidTransformedEvidence": 384,
+                "Transformed": 560,
+                "DenominatorMayContainZero": 72,
+                "Undecided": 20,
+                "NonIsolatingImageInterval": 20,
+                "InvalidEvidence": 96
+              },
+              "witnesses": 368
+            },
+            {
+              "statuses": {
+                "InvalidTransformedEvidence": 384,
+                "Transformed": 560,
+                "DenominatorMayContainZero": 72,
+                "Undecided": 20,
+                "NonIsolatingImageInterval": 20,
+                "InvalidEvidence": 96
+              },
+              "witnesses": 368
+            },
+            {
+              "statuses": {
+                "InvalidTransformedEvidence": 384,
+                "Transformed": 560,
+                "DenominatorMayContainZero": 72,
+                "Undecided": 20,
+                "NonIsolatingImageInterval": 20,
+                "InvalidEvidence": 96
+              },
+              "witnesses": 368
+            },
+            {
+              "statuses": {
+                "InvalidTransformedEvidence": 384,
+                "Transformed": 560,
+                "DenominatorMayContainZero": 72,
+                "Undecided": 20,
+                "NonIsolatingImageInterval": 20,
+                "InvalidEvidence": 96
+              },
+              "witnesses": 368
+            }
+          ],
+          "stateChangedGroups": 4,
+          "statusOrWitnessChangedGroups": 4,
+          "rawSha256": "9d1c5198725d14e34831deb96478f886de02215341a1deab39446e25d6dcf0f2",
+          "runtime": {
+            "variant": "baseline",
+            "platform": "wasm",
+            "node": "v22.22.2",
+            "v8": "12.4.254.21-node.39",
+            "imports": [],
+            "exports": [
+              {
+                "name": "memory",
+                "kind": "memory"
+              },
+              {
+                "name": "cold_collect",
+                "kind": "function"
+              },
+              {
+                "name": "cold_output_ptr",
+                "kind": "function"
+              }
+            ],
+            "moduleBytes": 1613729,
+            "groups": 1152,
+            "freshInstances": 1152,
+            "queries": 10368,
+            "outputBytes": 31229552,
+            "minMemoryAfterCollection": 1310720,
+            "maxMemoryAfterCollection": 1638400,
+            "gcs": 144,
+            "gcEvery": 8,
+            "binarySha256": "1b13db752566aa0d8fa80b9b3b4da8ceac3226af4d0a1c59188a49d5ccf20f50",
+            "limits": "One compiled module and Node process per variant, fresh import-free instance/linear memory per group. Nine fully recorded queries, no unrecorded query warmup. Constructors and initial histories are setup. Linear memory after collection is not per-query peak, RSS, allocator demand or a CPU measurement."
+          }
+        },
+        "eager": {
+          "groups": 1152,
+          "queries": 10368,
+          "statuses": {
+            "Transformed": 8500,
+            "DenominatorMayContainZero": 648,
+            "Undecided": 178,
+            "NonIsolatingImageInterval": 178,
+            "InvalidEvidence": 864
+          },
+          "witnesses": 6772,
+          "checks": {
+            "left-exact-rational-carrier": 10368,
+            "left-metadata": 10368,
+            "left-ordered": 10368,
+            "left-selected-value-contained": 10368,
+            "left-full-polynomial": 10368,
+            "left-polynomial-vanishing": 10368,
+            "left-exact-witness": 4320,
+            "left-witness-vanishing": 4320,
+            "left-distinct-root-count": 10368,
+            "right-exact-rational-carrier": 10368,
+            "right-metadata": 10368,
+            "right-ordered": 10368,
+            "right-selected-value-contained": 10368,
+            "right-full-polynomial": 10368,
+            "right-polynomial-vanishing": 10368,
+            "right-exact-witness": 7776,
+            "right-witness-vanishing": 7776,
+            "right-distinct-root-count": 10368,
+            "left-authored-interval": 10368,
+            "right-authored-interval": 10368,
+            "operation": 10368,
+            "successful-report": 8500,
+            "nonzero-divisor": 8500,
+            "output-exact-rational-carrier": 8500,
+            "output-metadata": 8500,
+            "output-ordered": 8500,
+            "output-selected-value-contained": 8500,
+            "output-full-polynomial": 8500,
+            "output-polynomial-vanishing": 8500,
+            "output-exact-witness": 6772,
+            "output-witness-vanishing": 6772,
+            "output-distinct-root-count": 8500,
+            "refined-image-contained": 8500,
+            "no-result-on-failure": 1868,
+            "known-failure-status": 1868,
+            "denominator-guard": 648
+          },
+          "totalChecks": 303376,
+          "outputBytes": 34266944,
+          "firstQueryStatuses": {
+            "Transformed": 948,
+            "DenominatorMayContainZero": 72,
+            "Undecided": 18,
+            "NonIsolatingImageInterval": 18,
+            "InvalidEvidence": 96
+          },
+          "firstQueryWitnesses": 756,
+          "perCall": [
+            {
+              "statuses": {
+                "Transformed": 948,
+                "DenominatorMayContainZero": 72,
+                "Undecided": 18,
+                "NonIsolatingImageInterval": 18,
+                "InvalidEvidence": 96
+              },
+              "witnesses": 756
+            },
+            {
+              "statuses": {
+                "Transformed": 944,
+                "DenominatorMayContainZero": 72,
+                "Undecided": 20,
+                "NonIsolatingImageInterval": 20,
+                "InvalidEvidence": 96
+              },
+              "witnesses": 752
+            },
+            {
+              "statuses": {
+                "Transformed": 944,
+                "DenominatorMayContainZero": 72,
+                "Undecided": 20,
+                "NonIsolatingImageInterval": 20,
+                "InvalidEvidence": 96
+              },
+              "witnesses": 752
+            },
+            {
+              "statuses": {
+                "Transformed": 944,
+                "DenominatorMayContainZero": 72,
+                "Undecided": 20,
+                "NonIsolatingImageInterval": 20,
+                "InvalidEvidence": 96
+              },
+              "witnesses": 752
+            },
+            {
+              "statuses": {
+                "Transformed": 944,
+                "DenominatorMayContainZero": 72,
+                "Undecided": 20,
+                "NonIsolatingImageInterval": 20,
+                "InvalidEvidence": 96
+              },
+              "witnesses": 752
+            },
+            {
+              "statuses": {
+                "Transformed": 944,
+                "DenominatorMayContainZero": 72,
+                "Undecided": 20,
+                "NonIsolatingImageInterval": 20,
+                "InvalidEvidence": 96
+              },
+              "witnesses": 752
+            },
+            {
+              "statuses": {
+                "Transformed": 944,
+                "DenominatorMayContainZero": 72,
+                "Undecided": 20,
+                "NonIsolatingImageInterval": 20,
+                "InvalidEvidence": 96
+              },
+              "witnesses": 752
+            },
+            {
+              "statuses": {
+                "Transformed": 944,
+                "DenominatorMayContainZero": 72,
+                "Undecided": 20,
+                "NonIsolatingImageInterval": 20,
+                "InvalidEvidence": 96
+              },
+              "witnesses": 752
+            },
+            {
+              "statuses": {
+                "Transformed": 944,
+                "DenominatorMayContainZero": 72,
+                "Undecided": 20,
+                "NonIsolatingImageInterval": 20,
+                "InvalidEvidence": 96
+              },
+              "witnesses": 752
+            }
+          ],
+          "stateChangedGroups": 4,
+          "statusOrWitnessChangedGroups": 4,
+          "rawSha256": "1e1fe0f6b0e38caedc0d83453a755b4fe98d85284806bdefc7452722a00c13c7",
+          "runtime": {
+            "variant": "eager",
+            "platform": "wasm",
+            "node": "v22.22.2",
+            "v8": "12.4.254.21-node.39",
+            "imports": [],
+            "exports": [
+              {
+                "name": "memory",
+                "kind": "memory"
+              },
+              {
+                "name": "cold_collect",
+                "kind": "function"
+              },
+              {
+                "name": "cold_output_ptr",
+                "kind": "function"
+              }
+            ],
+            "moduleBytes": 1613955,
+            "groups": 1152,
+            "freshInstances": 1152,
+            "queries": 10368,
+            "outputBytes": 34266944,
+            "minMemoryAfterCollection": 1310720,
+            "maxMemoryAfterCollection": 1638400,
+            "gcs": 144,
+            "gcEvery": 8,
+            "binarySha256": "79058d78951fb7a5364347558d83a5d1b6026517261324b5fc8110ef7f1bf452",
+            "limits": "One compiled module and Node process per variant, fresh import-free instance/linear memory per group. Nine fully recorded queries, no unrecorded query warmup. Constructors and initial histories are setup. Linear memory after collection is not per-query peak, RSS, allocator demand or a CPU measurement."
+          }
+        },
+        "demand": {
+          "groups": 1152,
+          "queries": 10368,
+          "statuses": {
+            "Transformed": 8500,
+            "DenominatorMayContainZero": 648,
+            "Undecided": 178,
+            "NonIsolatingImageInterval": 178,
+            "InvalidEvidence": 864
+          },
+          "witnesses": 6772,
+          "checks": {
+            "left-exact-rational-carrier": 10368,
+            "left-metadata": 10368,
+            "left-ordered": 10368,
+            "left-selected-value-contained": 10368,
+            "left-full-polynomial": 10368,
+            "left-polynomial-vanishing": 10368,
+            "left-exact-witness": 4320,
+            "left-witness-vanishing": 4320,
+            "left-distinct-root-count": 10368,
+            "right-exact-rational-carrier": 10368,
+            "right-metadata": 10368,
+            "right-ordered": 10368,
+            "right-selected-value-contained": 10368,
+            "right-full-polynomial": 10368,
+            "right-polynomial-vanishing": 10368,
+            "right-exact-witness": 7776,
+            "right-witness-vanishing": 7776,
+            "right-distinct-root-count": 10368,
+            "left-authored-interval": 10368,
+            "right-authored-interval": 10368,
+            "operation": 10368,
+            "successful-report": 8500,
+            "nonzero-divisor": 8500,
+            "output-exact-rational-carrier": 8500,
+            "output-metadata": 8500,
+            "output-ordered": 8500,
+            "output-selected-value-contained": 8500,
+            "output-full-polynomial": 8500,
+            "output-polynomial-vanishing": 8500,
+            "output-exact-witness": 6772,
+            "output-witness-vanishing": 6772,
+            "output-distinct-root-count": 8500,
+            "refined-image-contained": 8500,
+            "no-result-on-failure": 1868,
+            "known-failure-status": 1868,
+            "denominator-guard": 648
+          },
+          "totalChecks": 303376,
+          "outputBytes": 34266944,
+          "firstQueryStatuses": {
+            "Transformed": 948,
+            "DenominatorMayContainZero": 72,
+            "Undecided": 18,
+            "NonIsolatingImageInterval": 18,
+            "InvalidEvidence": 96
+          },
+          "firstQueryWitnesses": 756,
+          "perCall": [
+            {
+              "statuses": {
+                "Transformed": 948,
+                "DenominatorMayContainZero": 72,
+                "Undecided": 18,
+                "NonIsolatingImageInterval": 18,
+                "InvalidEvidence": 96
+              },
+              "witnesses": 756
+            },
+            {
+              "statuses": {
+                "Transformed": 944,
+                "DenominatorMayContainZero": 72,
+                "Undecided": 20,
+                "NonIsolatingImageInterval": 20,
+                "InvalidEvidence": 96
+              },
+              "witnesses": 752
+            },
+            {
+              "statuses": {
+                "Transformed": 944,
+                "DenominatorMayContainZero": 72,
+                "Undecided": 20,
+                "NonIsolatingImageInterval": 20,
+                "InvalidEvidence": 96
+              },
+              "witnesses": 752
+            },
+            {
+              "statuses": {
+                "Transformed": 944,
+                "DenominatorMayContainZero": 72,
+                "Undecided": 20,
+                "NonIsolatingImageInterval": 20,
+                "InvalidEvidence": 96
+              },
+              "witnesses": 752
+            },
+            {
+              "statuses": {
+                "Transformed": 944,
+                "DenominatorMayContainZero": 72,
+                "Undecided": 20,
+                "NonIsolatingImageInterval": 20,
+                "InvalidEvidence": 96
+              },
+              "witnesses": 752
+            },
+            {
+              "statuses": {
+                "Transformed": 944,
+                "DenominatorMayContainZero": 72,
+                "Undecided": 20,
+                "NonIsolatingImageInterval": 20,
+                "InvalidEvidence": 96
+              },
+              "witnesses": 752
+            },
+            {
+              "statuses": {
+                "Transformed": 944,
+                "DenominatorMayContainZero": 72,
+                "Undecided": 20,
+                "NonIsolatingImageInterval": 20,
+                "InvalidEvidence": 96
+              },
+              "witnesses": 752
+            },
+            {
+              "statuses": {
+                "Transformed": 944,
+                "DenominatorMayContainZero": 72,
+                "Undecided": 20,
+                "NonIsolatingImageInterval": 20,
+                "InvalidEvidence": 96
+              },
+              "witnesses": 752
+            },
+            {
+              "statuses": {
+                "Transformed": 944,
+                "DenominatorMayContainZero": 72,
+                "Undecided": 20,
+                "NonIsolatingImageInterval": 20,
+                "InvalidEvidence": 96
+              },
+              "witnesses": 752
+            }
+          ],
+          "stateChangedGroups": 4,
+          "statusOrWitnessChangedGroups": 4,
+          "rawSha256": "1e1fe0f6b0e38caedc0d83453a755b4fe98d85284806bdefc7452722a00c13c7",
+          "runtime": {
+            "variant": "demand",
+            "platform": "wasm",
+            "node": "v22.22.2",
+            "v8": "12.4.254.21-node.39",
+            "imports": [],
+            "exports": [
+              {
+                "name": "memory",
+                "kind": "memory"
+              },
+              {
+                "name": "cold_collect",
+                "kind": "function"
+              },
+              {
+                "name": "cold_output_ptr",
+                "kind": "function"
+              }
+            ],
+            "moduleBytes": 1614522,
+            "groups": 1152,
+            "freshInstances": 1152,
+            "queries": 10368,
+            "outputBytes": 34266944,
+            "minMemoryAfterCollection": 1310720,
+            "maxMemoryAfterCollection": 1638400,
+            "gcs": 144,
+            "gcEvery": 8,
+            "binarySha256": "5007dc2eb714f87ed34d13c2f3e1e8f8ccf0aa8d0333298a2b0637180c6b669e",
+            "limits": "One compiled module and Node process per variant, fresh import-free instance/linear memory per group. Nine fully recorded queries, no unrecorded query warmup. Constructors and initial histories are setup. Linear memory after collection is not per-query peak, RSS, allocator demand or a CPU measurement."
+          }
+        }
+      }
+    },
+    "comparisons": {
+      "native": {
+        "baseline/eager": {
+          "equal": 6912,
+          "different": 3456,
+          "gainedAnswer": 3456,
+          "lostAnswer": 0,
+          "gainedWitness": 0,
+          "lostWitness": 0,
+          "otherChanges": 0,
+          "firstQueryDifferences": 384,
+          "distinctChangedGroups": 384,
+          "differences": {
+            "count": 3456,
+            "location": "results/point-cold-check.stdout",
+            "sha256": "e0170f8bed5c425cd589df54ff84b842fc0c60d1f8212211a1bb9cf81f7104f4"
+          }
+        },
+        "baseline/demand": {
+          "equal": 6912,
+          "different": 3456,
+          "gainedAnswer": 3456,
+          "lostAnswer": 0,
+          "gainedWitness": 0,
+          "lostWitness": 0,
+          "otherChanges": 0,
+          "firstQueryDifferences": 384,
+          "distinctChangedGroups": 384,
+          "differences": {
+            "count": 3456,
+            "location": "results/point-cold-check.stdout",
+            "sha256": "e0170f8bed5c425cd589df54ff84b842fc0c60d1f8212211a1bb9cf81f7104f4"
+          }
+        },
+        "eager/demand": {
+          "equal": 10368,
+          "different": 0,
+          "gainedAnswer": 0,
+          "lostAnswer": 0,
+          "gainedWitness": 0,
+          "lostWitness": 0,
+          "otherChanges": 0,
+          "firstQueryDifferences": 0,
+          "distinctChangedGroups": 0,
+          "differences": {
+            "count": 0,
+            "location": "results/point-cold-check.stdout",
+            "sha256": "e0170f8bed5c425cd589df54ff84b842fc0c60d1f8212211a1bb9cf81f7104f4"
+          }
+        }
+      },
+      "wasm": {
+        "baseline/eager": {
+          "equal": 6912,
+          "different": 3456,
+          "gainedAnswer": 3456,
+          "lostAnswer": 0,
+          "gainedWitness": 0,
+          "lostWitness": 0,
+          "otherChanges": 0,
+          "firstQueryDifferences": 384,
+          "distinctChangedGroups": 384,
+          "differences": {
+            "count": 3456,
+            "location": "results/point-cold-check.stdout",
+            "sha256": "e0170f8bed5c425cd589df54ff84b842fc0c60d1f8212211a1bb9cf81f7104f4"
+          }
+        },
+        "baseline/demand": {
+          "equal": 6912,
+          "different": 3456,
+          "gainedAnswer": 3456,
+          "lostAnswer": 0,
+          "gainedWitness": 0,
+          "lostWitness": 0,
+          "otherChanges": 0,
+          "firstQueryDifferences": 384,
+          "distinctChangedGroups": 384,
+          "differences": {
+            "count": 3456,
+            "location": "results/point-cold-check.stdout",
+            "sha256": "e0170f8bed5c425cd589df54ff84b842fc0c60d1f8212211a1bb9cf81f7104f4"
+          }
+        },
+        "eager/demand": {
+          "equal": 10368,
+          "different": 0,
+          "gainedAnswer": 0,
+          "lostAnswer": 0,
+          "gainedWitness": 0,
+          "lostWitness": 0,
+          "otherChanges": 0,
+          "firstQueryDifferences": 0,
+          "distinctChangedGroups": 0,
+          "differences": {
+            "count": 0,
+            "location": "results/point-cold-check.stdout",
+            "sha256": "e0170f8bed5c425cd589df54ff84b842fc0c60d1f8212211a1bb9cf81f7104f4"
+          }
+        }
+      }
+    },
+    "failures": [],
+    "negativeControls": [
+      {
+        "kind": "witness",
+        "rejectedBy": [
+          "output-exact-witness",
+          "output-witness-vanishing"
+        ]
+      },
+      {
+        "kind": "polynomial",
+        "rejectedBy": [
+          "output-full-polynomial",
+          "output-polynomial-vanishing",
+          "output-witness-vanishing"
+        ]
+      },
+      {
+        "kind": "endpoint",
+        "rejectedBy": [
+          "output-ordered",
+          "output-selected-value-contained",
+          "output-distinct-root-count"
+        ]
+      }
+    ],
+    "stateChanges": [
+      {
+        "platform": "native",
+        "variant": "baseline",
+        "group": "36:0:2:roundtrip",
+        "initial": {
+          "status": "Transformed",
+          "witness": true
+        },
+        "changedCalls": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8
+        ],
+        "sequence": [
+          {
+            "status": "Transformed",
+            "witness": true
+          },
+          {
+            "status": "Undecided",
+            "witness": false
+          },
+          {
+            "status": "Undecided",
+            "witness": false
+          },
+          {
+            "status": "Undecided",
+            "witness": false
+          },
+          {
+            "status": "Undecided",
+            "witness": false
+          },
+          {
+            "status": "Undecided",
+            "witness": false
+          },
+          {
+            "status": "Undecided",
+            "witness": false
+          },
+          {
+            "status": "Undecided",
+            "witness": false
+          },
+          {
+            "status": "Undecided",
+            "witness": false
+          }
+        ],
+        "inputChangedCalls": []
+      },
+      {
+        "platform": "native",
+        "variant": "eager",
+        "group": "36:0:2:roundtrip",
+        "initial": {
+          "status": "Transformed",
+          "witness": true
+        },
+        "changedCalls": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8
+        ],
+        "sequence": [
+          {
+            "status": "Transformed",
+            "witness": true
+          },
+          {
+            "status": "Undecided",
+            "witness": false
+          },
+          {
+            "status": "Undecided",
+            "witness": false
+          },
+          {
+            "status": "Undecided",
+            "witness": false
+          },
+          {
+            "status": "Undecided",
+            "witness": false
+          },
+          {
+            "status": "Undecided",
+            "witness": false
+          },
+          {
+            "status": "Undecided",
+            "witness": false
+          },
+          {
+            "status": "Undecided",
+            "witness": false
+          },
+          {
+            "status": "Undecided",
+            "witness": false
+          }
+        ],
+        "inputChangedCalls": []
+      },
+      {
+        "platform": "native",
+        "variant": "demand",
+        "group": "36:0:2:roundtrip",
+        "initial": {
+          "status": "Transformed",
+          "witness": true
+        },
+        "changedCalls": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8
+        ],
+        "sequence": [
+          {
+            "status": "Transformed",
+            "witness": true
+          },
+          {
+            "status": "Undecided",
+            "witness": false
+          },
+          {
+            "status": "Undecided",
+            "witness": false
+          },
+          {
+            "status": "Undecided",
+            "witness": false
+          },
+          {
+            "status": "Undecided",
+            "witness": false
+          },
+          {
+            "status": "Undecided",
+            "witness": false
+          },
+          {
+            "status": "Undecided",
+            "witness": false
+          },
+          {
+            "status": "Undecided",
+            "witness": false
+          },
+          {
+            "status": "Undecided",
+            "witness": false
+          }
+        ],
+        "inputChangedCalls": []
+      },
+      {
+        "platform": "native",
+        "variant": "baseline",
+        "group": "36:1:2:roundtrip",
+        "initial": {
+          "status": "Transformed",
+          "witness": true
+        },
+        "changedCalls": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8
+        ],
+        "sequence": [
+          {
+            "status": "Transformed",
+            "witness": true
+          },
+          {
+            "status": "NonIsolatingImageInterval",
+            "witness": false
+          },
+          {
+            "status": "NonIsolatingImageInterval",
+            "witness": false
+          },
+          {
+            "status": "NonIsolatingImageInterval",
+            "witness": false
+          },
+          {
+            "status": "NonIsolatingImageInterval",
+            "witness": false
+          },
+          {
+            "status": "NonIsolatingImageInterval",
+            "witness": false
+          },
+          {
+            "status": "NonIsolatingImageInterval",
+            "witness": false
+          },
+          {
+            "status": "NonIsolatingImageInterval",
+            "witness": false
+          },
+          {
+            "status": "NonIsolatingImageInterval",
+            "witness": false
+          }
+        ],
+        "inputChangedCalls": []
+      },
+      {
+        "platform": "native",
+        "variant": "eager",
+        "group": "36:1:2:roundtrip",
+        "initial": {
+          "status": "Transformed",
+          "witness": true
+        },
+        "changedCalls": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8
+        ],
+        "sequence": [
+          {
+            "status": "Transformed",
+            "witness": true
+          },
+          {
+            "status": "NonIsolatingImageInterval",
+            "witness": false
+          },
+          {
+            "status": "NonIsolatingImageInterval",
+            "witness": false
+          },
+          {
+            "status": "NonIsolatingImageInterval",
+            "witness": false
+          },
+          {
+            "status": "NonIsolatingImageInterval",
+            "witness": false
+          },
+          {
+            "status": "NonIsolatingImageInterval",
+            "witness": false
+          },
+          {
+            "status": "NonIsolatingImageInterval",
+            "witness": false
+          },
+          {
+            "status": "NonIsolatingImageInterval",
+            "witness": false
+          },
+          {
+            "status": "NonIsolatingImageInterval",
+            "witness": false
+          }
+        ],
+        "inputChangedCalls": []
+      },
+      {
+        "platform": "native",
+        "variant": "demand",
+        "group": "36:1:2:roundtrip",
+        "initial": {
+          "status": "Transformed",
+          "witness": true
+        },
+        "changedCalls": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8
+        ],
+        "sequence": [
+          {
+            "status": "Transformed",
+            "witness": true
+          },
+          {
+            "status": "NonIsolatingImageInterval",
+            "witness": false
+          },
+          {
+            "status": "NonIsolatingImageInterval",
+            "witness": false
+          },
+          {
+            "status": "NonIsolatingImageInterval",
+            "witness": false
+          },
+          {
+            "status": "NonIsolatingImageInterval",
+            "witness": false
+          },
+          {
+            "status": "NonIsolatingImageInterval",
+            "witness": false
+          },
+          {
+            "status": "NonIsolatingImageInterval",
+            "witness": false
+          },
+          {
+            "status": "NonIsolatingImageInterval",
+            "witness": false
+          },
+          {
+            "status": "NonIsolatingImageInterval",
+            "witness": false
+          }
+        ],
+        "inputChangedCalls": []
+      },
+      {
+        "platform": "native",
+        "variant": "baseline",
+        "group": "37:0:2:roundtrip",
+        "initial": {
+          "status": "Transformed",
+          "witness": true
+        },
+        "changedCalls": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8
+        ],
+        "sequence": [
+          {
+            "status": "Transformed",
+            "witness": true
+          },
+          {
+            "status": "Undecided",
+            "witness": false
+          },
+          {
+            "status": "Undecided",
+            "witness": false
+          },
+          {
+            "status": "Undecided",
+            "witness": false
+          },
+          {
+            "status": "Undecided",
+            "witness": false
+          },
+          {
+            "status": "Undecided",
+            "witness": false
+          },
+          {
+            "status": "Undecided",
+            "witness": false
+          },
+          {
+            "status": "Undecided",
+            "witness": false
+          },
+          {
+            "status": "Undecided",
+            "witness": false
+          }
+        ],
+        "inputChangedCalls": []
+      },
+      {
+        "platform": "native",
+        "variant": "eager",
+        "group": "37:0:2:roundtrip",
+        "initial": {
+          "status": "Transformed",
+          "witness": true
+        },
+        "changedCalls": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8
+        ],
+        "sequence": [
+          {
+            "status": "Transformed",
+            "witness": true
+          },
+          {
+            "status": "Undecided",
+            "witness": false
+          },
+          {
+            "status": "Undecided",
+            "witness": false
+          },
+          {
+            "status": "Undecided",
+            "witness": false
+          },
+          {
+            "status": "Undecided",
+            "witness": false
+          },
+          {
+            "status": "Undecided",
+            "witness": false
+          },
+          {
+            "status": "Undecided",
+            "witness": false
+          },
+          {
+            "status": "Undecided",
+            "witness": false
+          },
+          {
+            "status": "Undecided",
+            "witness": false
+          }
+        ],
+        "inputChangedCalls": []
+      },
+      {
+        "platform": "native",
+        "variant": "demand",
+        "group": "37:0:2:roundtrip",
+        "initial": {
+          "status": "Transformed",
+          "witness": true
+        },
+        "changedCalls": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8
+        ],
+        "sequence": [
+          {
+            "status": "Transformed",
+            "witness": true
+          },
+          {
+            "status": "Undecided",
+            "witness": false
+          },
+          {
+            "status": "Undecided",
+            "witness": false
+          },
+          {
+            "status": "Undecided",
+            "witness": false
+          },
+          {
+            "status": "Undecided",
+            "witness": false
+          },
+          {
+            "status": "Undecided",
+            "witness": false
+          },
+          {
+            "status": "Undecided",
+            "witness": false
+          },
+          {
+            "status": "Undecided",
+            "witness": false
+          },
+          {
+            "status": "Undecided",
+            "witness": false
+          }
+        ],
+        "inputChangedCalls": []
+      },
+      {
+        "platform": "native",
+        "variant": "baseline",
+        "group": "37:1:2:roundtrip",
+        "initial": {
+          "status": "Transformed",
+          "witness": true
+        },
+        "changedCalls": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8
+        ],
+        "sequence": [
+          {
+            "status": "Transformed",
+            "witness": true
+          },
+          {
+            "status": "NonIsolatingImageInterval",
+            "witness": false
+          },
+          {
+            "status": "NonIsolatingImageInterval",
+            "witness": false
+          },
+          {
+            "status": "NonIsolatingImageInterval",
+            "witness": false
+          },
+          {
+            "status": "NonIsolatingImageInterval",
+            "witness": false
+          },
+          {
+            "status": "NonIsolatingImageInterval",
+            "witness": false
+          },
+          {
+            "status": "NonIsolatingImageInterval",
+            "witness": false
+          },
+          {
+            "status": "NonIsolatingImageInterval",
+            "witness": false
+          },
+          {
+            "status": "NonIsolatingImageInterval",
+            "witness": false
+          }
+        ],
+        "inputChangedCalls": []
+      },
+      {
+        "platform": "native",
+        "variant": "eager",
+        "group": "37:1:2:roundtrip",
+        "initial": {
+          "status": "Transformed",
+          "witness": true
+        },
+        "changedCalls": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8
+        ],
+        "sequence": [
+          {
+            "status": "Transformed",
+            "witness": true
+          },
+          {
+            "status": "NonIsolatingImageInterval",
+            "witness": false
+          },
+          {
+            "status": "NonIsolatingImageInterval",
+            "witness": false
+          },
+          {
+            "status": "NonIsolatingImageInterval",
+            "witness": false
+          },
+          {
+            "status": "NonIsolatingImageInterval",
+            "witness": false
+          },
+          {
+            "status": "NonIsolatingImageInterval",
+            "witness": false
+          },
+          {
+            "status": "NonIsolatingImageInterval",
+            "witness": false
+          },
+          {
+            "status": "NonIsolatingImageInterval",
+            "witness": false
+          },
+          {
+            "status": "NonIsolatingImageInterval",
+            "witness": false
+          }
+        ],
+        "inputChangedCalls": []
+      },
+      {
+        "platform": "native",
+        "variant": "demand",
+        "group": "37:1:2:roundtrip",
+        "initial": {
+          "status": "Transformed",
+          "witness": true
+        },
+        "changedCalls": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8
+        ],
+        "sequence": [
+          {
+            "status": "Transformed",
+            "witness": true
+          },
+          {
+            "status": "NonIsolatingImageInterval",
+            "witness": false
+          },
+          {
+            "status": "NonIsolatingImageInterval",
+            "witness": false
+          },
+          {
+            "status": "NonIsolatingImageInterval",
+            "witness": false
+          },
+          {
+            "status": "NonIsolatingImageInterval",
+            "witness": false
+          },
+          {
+            "status": "NonIsolatingImageInterval",
+            "witness": false
+          },
+          {
+            "status": "NonIsolatingImageInterval",
+            "witness": false
+          },
+          {
+            "status": "NonIsolatingImageInterval",
+            "witness": false
+          },
+          {
+            "status": "NonIsolatingImageInterval",
+            "witness": false
+          }
+        ],
+        "inputChangedCalls": []
+      },
+      {
+        "platform": "wasm",
+        "variant": "baseline",
+        "group": "36:0:2:roundtrip",
+        "initial": {
+          "status": "Transformed",
+          "witness": true
+        },
+        "changedCalls": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8
+        ],
+        "sequence": [
+          {
+            "status": "Transformed",
+            "witness": true
+          },
+          {
+            "status": "Undecided",
+            "witness": false
+          },
+          {
+            "status": "Undecided",
+            "witness": false
+          },
+          {
+            "status": "Undecided",
+            "witness": false
+          },
+          {
+            "status": "Undecided",
+            "witness": false
+          },
+          {
+            "status": "Undecided",
+            "witness": false
+          },
+          {
+            "status": "Undecided",
+            "witness": false
+          },
+          {
+            "status": "Undecided",
+            "witness": false
+          },
+          {
+            "status": "Undecided",
+            "witness": false
+          }
+        ],
+        "inputChangedCalls": []
+      },
+      {
+        "platform": "wasm",
+        "variant": "eager",
+        "group": "36:0:2:roundtrip",
+        "initial": {
+          "status": "Transformed",
+          "witness": true
+        },
+        "changedCalls": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8
+        ],
+        "sequence": [
+          {
+            "status": "Transformed",
+            "witness": true
+          },
+          {
+            "status": "Undecided",
+            "witness": false
+          },
+          {
+            "status": "Undecided",
+            "witness": false
+          },
+          {
+            "status": "Undecided",
+            "witness": false
+          },
+          {
+            "status": "Undecided",
+            "witness": false
+          },
+          {
+            "status": "Undecided",
+            "witness": false
+          },
+          {
+            "status": "Undecided",
+            "witness": false
+          },
+          {
+            "status": "Undecided",
+            "witness": false
+          },
+          {
+            "status": "Undecided",
+            "witness": false
+          }
+        ],
+        "inputChangedCalls": []
+      },
+      {
+        "platform": "wasm",
+        "variant": "demand",
+        "group": "36:0:2:roundtrip",
+        "initial": {
+          "status": "Transformed",
+          "witness": true
+        },
+        "changedCalls": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8
+        ],
+        "sequence": [
+          {
+            "status": "Transformed",
+            "witness": true
+          },
+          {
+            "status": "Undecided",
+            "witness": false
+          },
+          {
+            "status": "Undecided",
+            "witness": false
+          },
+          {
+            "status": "Undecided",
+            "witness": false
+          },
+          {
+            "status": "Undecided",
+            "witness": false
+          },
+          {
+            "status": "Undecided",
+            "witness": false
+          },
+          {
+            "status": "Undecided",
+            "witness": false
+          },
+          {
+            "status": "Undecided",
+            "witness": false
+          },
+          {
+            "status": "Undecided",
+            "witness": false
+          }
+        ],
+        "inputChangedCalls": []
+      },
+      {
+        "platform": "wasm",
+        "variant": "baseline",
+        "group": "36:1:2:roundtrip",
+        "initial": {
+          "status": "Transformed",
+          "witness": true
+        },
+        "changedCalls": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8
+        ],
+        "sequence": [
+          {
+            "status": "Transformed",
+            "witness": true
+          },
+          {
+            "status": "NonIsolatingImageInterval",
+            "witness": false
+          },
+          {
+            "status": "NonIsolatingImageInterval",
+            "witness": false
+          },
+          {
+            "status": "NonIsolatingImageInterval",
+            "witness": false
+          },
+          {
+            "status": "NonIsolatingImageInterval",
+            "witness": false
+          },
+          {
+            "status": "NonIsolatingImageInterval",
+            "witness": false
+          },
+          {
+            "status": "NonIsolatingImageInterval",
+            "witness": false
+          },
+          {
+            "status": "NonIsolatingImageInterval",
+            "witness": false
+          },
+          {
+            "status": "NonIsolatingImageInterval",
+            "witness": false
+          }
+        ],
+        "inputChangedCalls": []
+      },
+      {
+        "platform": "wasm",
+        "variant": "eager",
+        "group": "36:1:2:roundtrip",
+        "initial": {
+          "status": "Transformed",
+          "witness": true
+        },
+        "changedCalls": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8
+        ],
+        "sequence": [
+          {
+            "status": "Transformed",
+            "witness": true
+          },
+          {
+            "status": "NonIsolatingImageInterval",
+            "witness": false
+          },
+          {
+            "status": "NonIsolatingImageInterval",
+            "witness": false
+          },
+          {
+            "status": "NonIsolatingImageInterval",
+            "witness": false
+          },
+          {
+            "status": "NonIsolatingImageInterval",
+            "witness": false
+          },
+          {
+            "status": "NonIsolatingImageInterval",
+            "witness": false
+          },
+          {
+            "status": "NonIsolatingImageInterval",
+            "witness": false
+          },
+          {
+            "status": "NonIsolatingImageInterval",
+            "witness": false
+          },
+          {
+            "status": "NonIsolatingImageInterval",
+            "witness": false
+          }
+        ],
+        "inputChangedCalls": []
+      },
+      {
+        "platform": "wasm",
+        "variant": "demand",
+        "group": "36:1:2:roundtrip",
+        "initial": {
+          "status": "Transformed",
+          "witness": true
+        },
+        "changedCalls": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8
+        ],
+        "sequence": [
+          {
+            "status": "Transformed",
+            "witness": true
+          },
+          {
+            "status": "NonIsolatingImageInterval",
+            "witness": false
+          },
+          {
+            "status": "NonIsolatingImageInterval",
+            "witness": false
+          },
+          {
+            "status": "NonIsolatingImageInterval",
+            "witness": false
+          },
+          {
+            "status": "NonIsolatingImageInterval",
+            "witness": false
+          },
+          {
+            "status": "NonIsolatingImageInterval",
+            "witness": false
+          },
+          {
+            "status": "NonIsolatingImageInterval",
+            "witness": false
+          },
+          {
+            "status": "NonIsolatingImageInterval",
+            "witness": false
+          },
+          {
+            "status": "NonIsolatingImageInterval",
+            "witness": false
+          }
+        ],
+        "inputChangedCalls": []
+      },
+      {
+        "platform": "wasm",
+        "variant": "baseline",
+        "group": "37:0:2:roundtrip",
+        "initial": {
+          "status": "Transformed",
+          "witness": true
+        },
+        "changedCalls": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8
+        ],
+        "sequence": [
+          {
+            "status": "Transformed",
+            "witness": true
+          },
+          {
+            "status": "Undecided",
+            "witness": false
+          },
+          {
+            "status": "Undecided",
+            "witness": false
+          },
+          {
+            "status": "Undecided",
+            "witness": false
+          },
+          {
+            "status": "Undecided",
+            "witness": false
+          },
+          {
+            "status": "Undecided",
+            "witness": false
+          },
+          {
+            "status": "Undecided",
+            "witness": false
+          },
+          {
+            "status": "Undecided",
+            "witness": false
+          },
+          {
+            "status": "Undecided",
+            "witness": false
+          }
+        ],
+        "inputChangedCalls": []
+      },
+      {
+        "platform": "wasm",
+        "variant": "eager",
+        "group": "37:0:2:roundtrip",
+        "initial": {
+          "status": "Transformed",
+          "witness": true
+        },
+        "changedCalls": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8
+        ],
+        "sequence": [
+          {
+            "status": "Transformed",
+            "witness": true
+          },
+          {
+            "status": "Undecided",
+            "witness": false
+          },
+          {
+            "status": "Undecided",
+            "witness": false
+          },
+          {
+            "status": "Undecided",
+            "witness": false
+          },
+          {
+            "status": "Undecided",
+            "witness": false
+          },
+          {
+            "status": "Undecided",
+            "witness": false
+          },
+          {
+            "status": "Undecided",
+            "witness": false
+          },
+          {
+            "status": "Undecided",
+            "witness": false
+          },
+          {
+            "status": "Undecided",
+            "witness": false
+          }
+        ],
+        "inputChangedCalls": []
+      },
+      {
+        "platform": "wasm",
+        "variant": "demand",
+        "group": "37:0:2:roundtrip",
+        "initial": {
+          "status": "Transformed",
+          "witness": true
+        },
+        "changedCalls": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8
+        ],
+        "sequence": [
+          {
+            "status": "Transformed",
+            "witness": true
+          },
+          {
+            "status": "Undecided",
+            "witness": false
+          },
+          {
+            "status": "Undecided",
+            "witness": false
+          },
+          {
+            "status": "Undecided",
+            "witness": false
+          },
+          {
+            "status": "Undecided",
+            "witness": false
+          },
+          {
+            "status": "Undecided",
+            "witness": false
+          },
+          {
+            "status": "Undecided",
+            "witness": false
+          },
+          {
+            "status": "Undecided",
+            "witness": false
+          },
+          {
+            "status": "Undecided",
+            "witness": false
+          }
+        ],
+        "inputChangedCalls": []
+      },
+      {
+        "platform": "wasm",
+        "variant": "baseline",
+        "group": "37:1:2:roundtrip",
+        "initial": {
+          "status": "Transformed",
+          "witness": true
+        },
+        "changedCalls": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8
+        ],
+        "sequence": [
+          {
+            "status": "Transformed",
+            "witness": true
+          },
+          {
+            "status": "NonIsolatingImageInterval",
+            "witness": false
+          },
+          {
+            "status": "NonIsolatingImageInterval",
+            "witness": false
+          },
+          {
+            "status": "NonIsolatingImageInterval",
+            "witness": false
+          },
+          {
+            "status": "NonIsolatingImageInterval",
+            "witness": false
+          },
+          {
+            "status": "NonIsolatingImageInterval",
+            "witness": false
+          },
+          {
+            "status": "NonIsolatingImageInterval",
+            "witness": false
+          },
+          {
+            "status": "NonIsolatingImageInterval",
+            "witness": false
+          },
+          {
+            "status": "NonIsolatingImageInterval",
+            "witness": false
+          }
+        ],
+        "inputChangedCalls": []
+      },
+      {
+        "platform": "wasm",
+        "variant": "eager",
+        "group": "37:1:2:roundtrip",
+        "initial": {
+          "status": "Transformed",
+          "witness": true
+        },
+        "changedCalls": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8
+        ],
+        "sequence": [
+          {
+            "status": "Transformed",
+            "witness": true
+          },
+          {
+            "status": "NonIsolatingImageInterval",
+            "witness": false
+          },
+          {
+            "status": "NonIsolatingImageInterval",
+            "witness": false
+          },
+          {
+            "status": "NonIsolatingImageInterval",
+            "witness": false
+          },
+          {
+            "status": "NonIsolatingImageInterval",
+            "witness": false
+          },
+          {
+            "status": "NonIsolatingImageInterval",
+            "witness": false
+          },
+          {
+            "status": "NonIsolatingImageInterval",
+            "witness": false
+          },
+          {
+            "status": "NonIsolatingImageInterval",
+            "witness": false
+          },
+          {
+            "status": "NonIsolatingImageInterval",
+            "witness": false
+          }
+        ],
+        "inputChangedCalls": []
+      },
+      {
+        "platform": "wasm",
+        "variant": "demand",
+        "group": "37:1:2:roundtrip",
+        "initial": {
+          "status": "Transformed",
+          "witness": true
+        },
+        "changedCalls": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8
+        ],
+        "sequence": [
+          {
+            "status": "Transformed",
+            "witness": true
+          },
+          {
+            "status": "NonIsolatingImageInterval",
+            "witness": false
+          },
+          {
+            "status": "NonIsolatingImageInterval",
+            "witness": false
+          },
+          {
+            "status": "NonIsolatingImageInterval",
+            "witness": false
+          },
+          {
+            "status": "NonIsolatingImageInterval",
+            "witness": false
+          },
+          {
+            "status": "NonIsolatingImageInterval",
+            "witness": false
+          },
+          {
+            "status": "NonIsolatingImageInterval",
+            "witness": false
+          },
+          {
+            "status": "NonIsolatingImageInterval",
+            "witness": false
+          },
+          {
+            "status": "NonIsolatingImageInterval",
+            "witness": false
+          }
+        ],
+        "inputChangedCalls": []
+      }
+    ],
+    "firstLifecycleDifferences": [],
+    "crossPlatform": [
+      {
+        "variant": "baseline",
+        "byteIdentical": true
+      },
+      {
+        "variant": "eager",
+        "byteIdentical": true
+      },
+      {
+        "variant": "demand",
+        "byteIdentical": true
+      }
+    ],
+    "sameResultRegressions": 0,
+    "totalQueries": 62208,
+    "totalChecks": 1751136,
+    "limits": "Authored 48-case corpus, two policies, four initial histories, three lifecycles, nine observed calls per fresh process/instance. Every full record independently checked with the previously qualified exact field/identity oracle. Initial constructors/refinements may seed caches. No CPU, allocator, RSS, lifetime-bound, arbitrary-expression, final-consumer, representative-size or retention claim."
+  },
+  "next": "The cold-first-query and extended native/WASM semantic gates pass for the unchanged demand candidate. Assess measured retry tradeoffs and run matched extended WASM costs plus final consumer/representative-size qualification before a retention decision. No algorithm revision is implied; separate power-sum work and the complete original reference inventory remain open.",
+  "coverageBefore": [
+    {
+      "repo": "calcium",
+      "reviewed": 552,
+      "complete": 552,
+      "partial": 0,
+      "readLines": 60286
+    },
+    {
+      "repo": "flint",
+      "reviewed": 883,
+      "complete": 863,
+      "partial": 20,
+      "readLines": 123367
+    }
+  ],
+  "coverageAtBinding": [
+    {
+      "repo": "calcium",
+      "reviewed": 552,
+      "complete": 552,
+      "partial": 0,
+      "readLines": 60286
+    },
+    {
+      "repo": "flint",
+      "reviewed": 883,
+      "complete": 863,
+      "partial": 20,
+      "readLines": 123367
+    }
+  ],
+  "newDonorLines": 0,
+  "liveFiles": 956,
+  "production": "No live production/donor edits, algorithm revisions, new retained transfers, source copies, cleanup/deletion, commits, pushes or external reports. Existing isolated demand candidate and all five retained transfers unchanged.",
+  "scope": "Cold-state semantic qualification only. No new CPU/allocation/Memcheck/consumer/representative-size result; full ecosystem audit and separate power-sum work incomplete."
+}

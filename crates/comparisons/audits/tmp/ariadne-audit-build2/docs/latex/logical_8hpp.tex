@@ -1,0 +1,115 @@
+\doxysubsection{source/foundations/logical.hpp File Reference}
+\hypertarget{logical_8hpp}{}\label{logical_8hpp}\index{source/foundations/logical.hpp@{source/foundations/logical.hpp}}
+
+
+\doxysubsubsection{Description}
+Logical classes. 
+
+{\ttfamily \#include "{}utility/stdlib.\+hpp"{}}\newline
+{\ttfamily \#include "{}utility/typedefs.\+hpp"{}}\newline
+{\ttfamily \#include "{}utility/handle.\+hpp"{}}\newline
+{\ttfamily \#include "{}foundations/paradigm.\+hpp"{}}\newline
+{\ttfamily \#include "{}logical.\+decl.\+hpp"{}}\newline
+\doxysubsubsubsection*{Classes}
+\begin{DoxyCompactItemize}
+\item 
+class \mbox{\hyperlink{classAriadne_1_1Effort}{Effort}}
+\begin{DoxyCompactList}\small\item\em The amount of work used in performing a calculation or checking a quasidecidable predicate. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1Boolean}{Boolean}}
+\begin{DoxyCompactList}\small\item\em A logical class representing the result of a decidable predicate. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1Sierpinskian}{Sierpinskian}}
+\begin{DoxyCompactList}\small\item\em A logical class representing the result of a verifyable predicate over a continuous (uncountable) data type which has no robustly {\ttfamily false} instances, such as inequality on a Hausdoff space. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1NegatedSierpinskian}{Negated\+Sierpinskian}}
+\begin{DoxyCompactList}\small\item\em A logical class representing the result of a falsifyable predicate over a continuous (uncountable) data type which has no robustly {\ttfamily true} instances, such as equality on a Hausdoff space. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1Kleenean}{Kleenean}}
+\begin{DoxyCompactList}\small\item\em A logical class representing the result of a quasidecidable predicate over a continuous (uncountable) data type. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1LowerKleenean}{Lower\+Kleenean}}
+\begin{DoxyCompactList}\small\item\em A logical class representing the result of a verifyable predicate over a continuous (uncountable) data type. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1UpperKleenean}{Upper\+Kleenean}}
+\begin{DoxyCompactList}\small\item\em A logical class representing the result of a falsifyable predicate over a continuous (uncountable) data type. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1NaiveKleenean}{Naive\+Kleenean}}
+\begin{DoxyCompactList}\small\item\em A logical class representing the result of a undecidable predicate over a continuous (uncountable) data type. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1ValidatedSierpinskian}{Validated\+Sierpinskian}}
+\begin{DoxyCompactList}\small\item\em A logical class representing the result of a verifyable predicate, checked to some given effort. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1ValidatedNegatedSierpinskian}{Validated\+Negated\+Sierpinskian}}
+\begin{DoxyCompactList}\small\item\em A logical class representing the result of a falsifyable predicate, checked using some given effort. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1ValidatedKleenean}{Validated\+Kleenean}}
+\begin{DoxyCompactList}\small\item\em A logical class representing a value of a quasidecidable predicate, either a \doxylink{classAriadne_1_1Kleenean}{Kleenean} value \doxylink{classAriadne_1_1Kleenean_af3fb110cf264150f8e81cf0ad6952204}{check}ed using some \doxylink{classAriadne_1_1Effort}{Effort}, or applied directly to a \doxylink{classAriadne_1_1Concepts_1_1Validated}{Validated} object. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1ValidatedLowerKleenean}{Validated\+Lower\+Kleenean}}
+\begin{DoxyCompactList}\small\item\em A logical class representing the result of checking a verifyable predicate. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1ValidatedUpperKleenean}{Validated\+Upper\+Kleenean}}
+\begin{DoxyCompactList}\small\item\em A logical class representing the result of checking a falsifyable predicate. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1ApproximateKleenean}{Approximate\+Kleenean}}
+\begin{DoxyCompactList}\small\item\em A logical class representing a value of an undecidable predicate, either a \doxylink{classAriadne_1_1NaiveKleenean}{Naive\+Kleenean} value \doxylink{classAriadne_1_1NaiveKleenean_afe091781b71e99d6b8de4e44d3c394ef}{check}ed using some \doxylink{classAriadne_1_1Effort}{Effort}, or applied directly to an \doxylink{classAriadne_1_1Concepts_1_1Approximate}{Approximate} object. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsubsection*{Namespaces}
+\begin{DoxyCompactItemize}
+\item 
+namespace \mbox{\hyperlink{namespaceAriadne}{Ariadne}}
+\begin{DoxyCompactList}\small\item\em Top-\/level Ariadne namespace. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsubsection*{Enumerations}
+\begin{DoxyCompactItemize}
+\item 
+enum class \mbox{\hyperlink{logical_8hpp_a876d8cd00668b5c6296c65e207f7cda9}{Logical\+Value}} \+: Comparable\+Enumeration\+Type \{ \newline
+\mbox{\hyperlink{logical_8hpp_a876d8cd00668b5c6296c65e207f7cda9a946003f97ccc52d5d3b54ac0ec31bbfc}{FALSE}} =-\/2
+, \mbox{\hyperlink{logical_8hpp_a876d8cd00668b5c6296c65e207f7cda9ad8c206977b386a055fc82a685cae4b00}{UNLIKELY}} =-\/1
+, \mbox{\hyperlink{logical_8hpp_a876d8cd00668b5c6296c65e207f7cda9a717bb676b27571e4f5392a911194842a}{INDETERMINATE}} = 0
+, \mbox{\hyperlink{logical_8hpp_a876d8cd00668b5c6296c65e207f7cda9a450eb97d6aff297fe107b8d3a9998d6e}{LIKELY}} =+1
+, \newline
+\mbox{\hyperlink{logical_8hpp_a876d8cd00668b5c6296c65e207f7cda9ac0d83f0b82a6b30de8811e69e6d95c61}{TRUE}} =+2
+ \}
+\begin{DoxyCompactList}\small\item\em An enumeration containing the possible values of a logical variable. \end{DoxyCompactList}\item 
+\Hypertarget{namespaceAriadne_a876d8cd00668b5c6296c65e207f7cda9}\label{namespaceAriadne_a876d8cd00668b5c6296c65e207f7cda9} 
+enum class \mbox{\hyperlink{namespaceAriadne_a876d8cd00668b5c6296c65e207f7cda9}{Logical\+Value}} 
+\begin{DoxyCompactList}\small\item\em An enumeration containing the possible values of a logical variable. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsubsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{namespaceAriadne_aa44ba4f2d015e8143195445b46782c31}\label{namespaceAriadne_aa44ba4f2d015e8143195445b46782c31} 
+{\footnotesize template$<$class L$>$ }\\bool {\bfseries definitely} (L const \&l)
+\begin{DoxyCompactList}\small\item\em Returns {\ttfamily true} if a finite (non-\/effective) logical type is definitely true, otherwise {\ttfamily false}. In particular, always returns {\ttfamily false} for a \doxylink{classAriadne_1_1ValidatedUpperKleenean}{Validated\+Upper\+Kleenean} or \doxylink{classAriadne_1_1ApproximateKleenean}{Approximate\+Kleenean}. \end{DoxyCompactList}\item 
+\Hypertarget{namespaceAriadne_a67004075d5a8db930365c150c0b8965a}\label{namespaceAriadne_a67004075d5a8db930365c150c0b8965a} 
+{\footnotesize template$<$class L$>$ }\\bool {\bfseries possibly} (L const \&l)
+\begin{DoxyCompactList}\small\item\em Returns {\ttfamily false} if a finite (non-\/effective) logical type is definitely false, otherwise {\ttfamily true}. In particular, always returns {\ttfamily false} for a \doxylink{classAriadne_1_1ValidatedLowerKleenean}{Validated\+Lower\+Kleenean} or \doxylink{classAriadne_1_1ApproximateKleenean}{Approximate\+Kleenean}. \end{DoxyCompactList}\item 
+\Hypertarget{namespaceAriadne_af8475832f5c7e1244f1ca1bc0f24203d}\label{namespaceAriadne_af8475832f5c7e1244f1ca1bc0f24203d} 
+{\footnotesize template$<$class L$>$ }\\bool {\bfseries probably} (L const \&l)
+\begin{DoxyCompactList}\small\item\em Returns an \textquotesingle{}educated guess\textquotesingle{} to the value of a finite (non-\/effective) logical type. Returns {\ttfamily true} for logical values of {\ttfamily TRUE} and {\ttfamily LIKELY}, and {\ttfamily false} for {\ttfamily INDETERMINATE}, {\ttfamily UNLIKELY} and {\ttfamily FALSE}. \end{DoxyCompactList}\item 
+\Hypertarget{namespaceAriadne_ad8d78b8db431545e9c2782516e0e954e}\label{namespaceAriadne_ad8d78b8db431545e9c2782516e0e954e} 
+{\footnotesize template$<$class L$>$ }\\bool {\bfseries decide} (L const \&l)
+\begin{DoxyCompactList}\small\item\em Force a decision of a logical type. Returns {\ttfamily true} for logical values of {\ttfamily TRUE}, and {\ttfamily LIKELY} for a non-\/effective type, and {\ttfamily decide(check(l,e))} for the default effort {\ttfamily e}. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\label{doc-enum-members}
+\Hypertarget{logical_8hpp_doc-enum-members}
+\doxysubsubsection{Enumeration Type Documentation}
+\Hypertarget{logical_8hpp_a876d8cd00668b5c6296c65e207f7cda9}\index{logical.hpp@{logical.hpp}!LogicalValue@{LogicalValue}}
+\index{LogicalValue@{LogicalValue}!logical.hpp@{logical.hpp}}
+\doxyparagraph{\texorpdfstring{LogicalValue}{LogicalValue}}
+{\footnotesize\ttfamily \label{logical_8hpp_a876d8cd00668b5c6296c65e207f7cda9} 
+enum class Logical\+Value \+: Comparable\+Enumeration\+Type\hspace{0.3cm}{\ttfamily [strong]}}
+
+
+
+An enumeration containing the possible values of a logical variable. 
+
+\begin{DoxyEnumFields}[2]{Enumerator}
+\raisebox{\heightof{T}}[0pt][0pt]{\index{FALSE@{FALSE}!logical.hpp@{logical.hpp}}\index{logical.hpp@{logical.hpp}!FALSE@{FALSE}}}\Hypertarget{logical_8hpp_a876d8cd00668b5c6296c65e207f7cda9a946003f97ccc52d5d3b54ac0ec31bbfc}\label{logical_8hpp_a876d8cd00668b5c6296c65e207f7cda9a946003f97ccc52d5d3b54ac0ec31bbfc} 
+FALSE&Definitely not true. \\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{UNLIKELY@{UNLIKELY}!logical.hpp@{logical.hpp}}\index{logical.hpp@{logical.hpp}!UNLIKELY@{UNLIKELY}}}\Hypertarget{logical_8hpp_a876d8cd00668b5c6296c65e207f7cda9ad8c206977b386a055fc82a685cae4b00}\label{logical_8hpp_a876d8cd00668b5c6296c65e207f7cda9ad8c206977b386a055fc82a685cae4b00} 
+UNLIKELY&Considered unlikely to be true. \\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{INDETERMINATE@{INDETERMINATE}!logical.hpp@{logical.hpp}}\index{logical.hpp@{logical.hpp}!INDETERMINATE@{INDETERMINATE}}}\Hypertarget{logical_8hpp_a876d8cd00668b5c6296c65e207f7cda9a717bb676b27571e4f5392a911194842a}\label{logical_8hpp_a876d8cd00668b5c6296c65e207f7cda9a717bb676b27571e4f5392a911194842a} 
+INDETERMINATE&Truth is unknown, possibly undecidable. \\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{LIKELY@{LIKELY}!logical.hpp@{logical.hpp}}\index{logical.hpp@{logical.hpp}!LIKELY@{LIKELY}}}\Hypertarget{logical_8hpp_a876d8cd00668b5c6296c65e207f7cda9a450eb97d6aff297fe107b8d3a9998d6e}\label{logical_8hpp_a876d8cd00668b5c6296c65e207f7cda9a450eb97d6aff297fe107b8d3a9998d6e} 
+LIKELY&Considered likely to be true. \\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{TRUE@{TRUE}!logical.hpp@{logical.hpp}}\index{logical.hpp@{logical.hpp}!TRUE@{TRUE}}}\Hypertarget{logical_8hpp_a876d8cd00668b5c6296c65e207f7cda9ac0d83f0b82a6b30de8811e69e6d95c61}\label{logical_8hpp_a876d8cd00668b5c6296c65e207f7cda9ac0d83f0b82a6b30de8811e69e6d95c61} 
+TRUE&Definitely true. \\
+\hline
+
+\end{DoxyEnumFields}

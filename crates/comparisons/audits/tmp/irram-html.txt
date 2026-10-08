@@ -1,0 +1,1210 @@
+ 
+ 
+ 
+   iRRAM : exact real arithmetic 
+ 
+   
+                  
+            
+    iRRAM : exact real arithmetic
+
+         
+         
+               
+ 
+
+       
+
+             Copyright (C) 2001-2003 Norbert Mueller   
+
+        
+
+         This file is part of the iRRAM Library.   
+
+        
+
+         The iRRAM Library is free software; you can redistribute it and/or 
+ modify    it under the terms of the GNU Library General Public License as 
+ published   by the Free Software Foundation; either version 2 of the License, 
+ or (at  your option) any later version.   The iRRAM Library is distributed 
+ in the  hope that it will be useful, but WITHOUT ANY WARRANTY; without even 
+ the implied   warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+   See the   GNU Library General Public License for more details.   You should
+  have received   a copy of the GNU Library General Public License along
+with   the iRRAM Library;   see the file COPYING.LIB.  If not, write to the
+Free   Software Foundation,   Inc., 59 Temple Place - Suite 330, Boston,
+MA 02111-1307,   USA.     
+
+        
+
+    
+ 
+
+       
+
+              
+ 
+            Introduction  
+            Dyadic numbers  
+            Real numbers  
+            Integers  
+            Rational numbers  
+            Complex numbers  
+            Intervals of real numbers  
+            Matrices of real numbers  
+            Sparse matrices of real numbers  
+            Lazy booleans  
+            Implemented arithmetic functions  
+            Limit operators  
+           Usage models  
+             
+ 
+               
+ 
+
+       
+
+       Introduction  
+
+          This file is an initial version of a documentation of the user
+interface     to the iRRAM package. It is in an early alpha stage!
+
+       
+
+     
+ 
+
+       
+
+           Usage models  
+
+The iRRAM can be used in two different modes: 
+
+(1) main mode
+
+(2) library mode
+
+
+
+In main mode,  the user has to define a function  void compute(void);
+ instead of the usual  int main(...)  This function will be then
+used as the main routine of the iRRAM. Especially, this function is the anchor
+of all iterations necessary to implement the exact real semantics.
+
+
+
+In library mode,  the user is able to use the iRRAM as a tool to compute
+discrete functions internally using of exact reals. 
+
+
+
+                 
+ extern "C" void iRRAM_initialize(int argc,char** argv);
+
+template <class ARGUMENT, class RESULT> 
+ RESULT iRRAM_exec (RESULT f(ARGUMENT), ARGUMENT);
+
+#ifndef do_not_activate_iRRAM_control
+extern void compute(void); 
+
+long iRRAM_compute(long arg){compute();return 0L;};
+ 
+int main (int argc,char **argv){
+  iRRAM_initialize(argc,argv);
+  long erg=iRRAM_exec(iRRAM_compute,0L);
+}
+#endif
+
+ 
+          Back to top 
+
+               
+ 
+
+       
+
+           Dyadic Numbers  
+
+                 
+ /****************************************************************************/
+// Definition of class DYADIC 
+/****************************************************************************/
+
+class DYADIC
+{
+public:
+
+// Set absolute precision for operations:  -----
+
+static void setprec(long p) {precision=p;};
+
+// Constructors: -------------------------------
+
+DYADIC ();
+DYADIC (const long i);
+DYADIC (const DYADIC& y);
+
+// Copy Constructor: ---------------------------
+
+
+DYADIC&   operator = (const DYADIC& y);
+
+// Destructor: ---------------------------------
+
+~DYADIC();
+
+// Standard Arithmetic: ------------------------
+
+friend DYADIC  operator +  (const DYADIC& x,
+                            const DYADIC& y);
+
+friend DYADIC  operator -  (const DYADIC& x,
+                            const DYADIC& y);
+
+friend DYADIC  operator -  (const DYADIC& x);
+
+friend DYADIC  operator *  (const DYADIC& x,
+                            const DYADIC& y);
+
+friend DYADIC  operator /  (const DYADIC& x,
+                            const DYADIC& y);
+
+// Comparisons: --------------------------------
+
+friend bool    operator <  (const DYADIC& x,
+                            const DYADIC& y);
+
+friend bool    operator <= (const DYADIC& x,
+                            const DYADIC& y);
+
+friend bool    operator >  (const DYADIC& x,
+                            const DYADIC& y);
+
+friend bool    operator >= (const DYADIC& x,
+                            const DYADIC& y);
+
+friend bool    operator == (const DYADIC& x,
+                            const DYADIC& y);
+
+friend bool    operator != (const DYADIC& x,
+                            const DYADIC& y);
+
+// Output: -------------------------------------
+
+friend void    rwrite      (const DYADIC& x,
+                            const long w);
+
+// miscellaneous: ------------------------------
+
+friend long    size        (const DYADIC& x); 
+
+friend DYADIC  abs         (const DYADIC& x); 
+
+// coexistence with other classes: -------------
+
+friend class REAL;
+friend class INTEGER;
+friend class RATIONAL;
+
+friend DYADIC  approx      (const REAL& x, 
+                            const long p);
+
+DYADIC(const INTEGER& x);
+
+// implementational issues: --------------------
+
+MP_type    value; 
+
+
+private:
+
+static long precision;
+
+
+DYADIC(MP_type  y);
+
+};
+ 
+          Back  to top 
+
+        
+ 
+
+       
+
+              Lazy Booleans  
+
+                 
+ 
+/****************************************************************************/
+// Definition of class LAZY_BOOLEAN 
+/****************************************************************************/
+#define BOTTOM -1
+class LAZY_BOOLEAN
+{
+public:
+LAZY_BOOLEAN(){value=0;};
+LAZY_BOOLEAN(int b){value=b;};
+friend LAZY_BOOLEAN operator && (const LAZY_BOOLEAN& x, const LAZY_BOOLEAN& y);
+friend LAZY_BOOLEAN operator || (const LAZY_BOOLEAN& x, const LAZY_BOOLEAN& y);
+friend LAZY_BOOLEAN operator ! ( const LAZY_BOOLEAN& x);
+friend int choose(const LAZY_BOOLEAN& x1= false,
+                  const LAZY_BOOLEAN& x2= false,
+                  const LAZY_BOOLEAN& x3= false,
+                  const LAZY_BOOLEAN& x4= false,
+                  const LAZY_BOOLEAN& x5= false,
+                  const LAZY_BOOLEAN& x6= false );
+operator bool const ();
+private:
+int value;
+};
+ 
+          Back  to top 
+
+               
+               
+ 
+
+       
+
+         Real Numbers  
+
+                 
+ /****************************************************************************/
+// Definition of class REAL 
+/****************************************************************************/
+
+class REAL
+{
+public:
+
+// Constructors: -------------------------------
+
+REAL();
+REAL(int  i);
+REAL(long i);
+REAL(char* s);
+REAL(const DYADIC& y);
+REAL(const REAL& y);
+REAL(double d);
+REAL(const INTEGER& y);
+REAL(const RATIONAL& y);
+
+// Copy Constructor: ---------------------------
+
+REAL& operator = (const REAL& y);
+
+// Destructor: ---------------------------------
+
+~REAL();
+
+// Standard Arithmetic: ------------------------
+
+friend REAL  operator +  (const REAL& x,	const REAL& y);
+friend REAL  operator +  (const REAL& x,	long int n);
+friend REAL  operator +  (long int n,	const REAL& x);
+friend REAL& operator += (REAL& x,		const REAL& y);
+			  
+friend REAL  operator -  (const REAL& x, 	const REAL& y);
+friend REAL  operator -  (const REAL& x,	long int n);
+friend REAL  operator -  (long int n,	const REAL& x);
+friend REAL  operator -  (const REAL& x);
+
+friend REAL  operator *  (const REAL& x,	const REAL& y);
+friend REAL  operator *  (const REAL& x, 	long int n);
+friend REAL  operator *  (long int n, 	const REAL& x);
+			  
+friend REAL& operator *= (REAL& x,		const REAL& y);
+friend REAL& operator *= (REAL& x,		long int n);
+			  
+friend REAL  operator /  (const REAL& x,	const REAL& y);
+friend REAL  operator /  (const REAL& x,	long int n);
+friend REAL  operator /  (long int n,	const REAL& x);
+
+friend REAL  operator ^  (const REAL& x,	const REAL& y);
+friend REAL  operator ^  (const REAL& x,	long n);
+
+friend REAL  operator << (const REAL& x,	long n);
+friend REAL  operator >> (const REAL& x,	long n);
+
+friend REAL  sqrt        (const REAL& x);
+
+friend REAL  square      (const REAL& x);
+
+friend REAL  scale       (const REAL& x,
+                          long k);
+
+// Comparisons: --------------------------------
+
+
+friend LAZY_BOOLEAN  operator <  (const REAL& x, const REAL& y);
+friend LAZY_BOOLEAN  operator <= (const REAL& x, const REAL& y);
+friend LAZY_BOOLEAN  operator >  (const REAL& x, const REAL& y);
+friend LAZY_BOOLEAN  operator >= (const REAL& x, const REAL& y);
+
+friend LAZY_BOOLEAN  positive    (const REAL& x, const long k);
+
+friend LAZY_BOOLEAN  bound       (const REAL& x, const long k);
+
+friend DYADIC approx     (const REAL& x, const long p);
+
+// Output: -------------------------------------
+
+friend void   rwrite     (const REAL& x, const long p, const long w);
+friend char*  swrite     (const REAL& x, const long p, const long w);
+friend void   rwrite     (const REAL& x, const long w);
+friend char*  swrite     (const REAL& x, const long w);
+friend void   rshow      (const REAL& x, const long w);
+
+void REAL::rcheck() const;
+
+friend long    upperbound (const REAL& x);
+friend long    size       (const REAL& x); 
+
+
+
+friend REAL    round2     (const REAL& x); 
+friend long    round      (const REAL& x); 
+
+friend REAL    abs        (const REAL& x);
+ 
+
+// limit operators: ------------------------
+
+//friend REAL    limit      (REAL f(long, const REAL&),
+//                           const REAL& x);
+
+friend REAL    limit      (REAL f(long, const REAL&, const REAL&),
+                           const REAL& x, 
+                           const REAL& y);
+
+friend REAL    limit      (REAL f(long));
+
+friend REAL    limit_hint (REAL f(long, const REAL&),
+                           long hint,
+                           const REAL& x);
+
+friend REAL    limit_hint (REAL f(long, const REAL&, const REAL&),
+                           long hint,
+                           const REAL& x, 
+                           const REAL& y);
+
+friend REAL    limit_hint (REAL f(long),
+                           long hint);
+
+friend REAL    limit_lip  (REAL f(long, const REAL&),
+                           long lip,
+                           const REAL& x);
+
+friend REAL    limit_lip   (REAL f(long, const REAL&, const REAL&),
+                           long lip,
+                           const REAL& x,
+                           const REAL& y);
+
+friend REAL    iterate     (REAL (*)(REAL&, REAL&, const REAL&),
+                           const REAL&, const REAL&, const REAL&);
+
+friend REAL    iterate     (REAL (*)(REAL&, REAL&),
+                           const REAL&, const REAL&);
+
+// reduced error propagation: ------------------------
+
+friend REAL    lipschitz  (REAL f(const REAL&),
+                           long lip,
+                           const REAL& x);
+
+friend REAL    lipschitz  (REAL f(const REAL&,const REAL&),
+                           long lip,
+                           const REAL& x,
+                           const REAL& y);
+
+friend REAL    lipschitz  (REAL f(long, const REAL&),
+                           long lip,
+                           long k,
+                           const REAL& x);
+
+friend REAL    lipschitz  (REAL f(long, const REAL&,const REAL&),
+                           long lip,
+                           long k,
+                           const REAL& x,
+                           const REAL& y);
+
+// coexistence with other classes: -------------
+
+friend class REALMATRIX;
+friend class SPARSEREALMATRIX;
+friend class INTEGER;
+friend class RATIONAL;
+
+// implementational issues: --------------------
+
+private:
+
+MP_type       value; 
+sizetype      error;
+
+
+public:
+REAL(MP_type y, const sizetype errorinfo);
+void adderror (sizetype error);
+void seterror (sizetype error);
+void geterror (sizetype& error) const;
+
+};
+
+
+void rscanf  (const char *format, void * input);
+void rprintf (const char *rformat, ...);
+
+void continous_begin ();
+void continous_end   ();
+
+
+#define iRRAM_ABSOLUTE 0
+#define iRRAM_RELATIVE 1
+void precision_policy (long policy);
+
+void stiff_begin ();
+void stiff_end   ();
+
+
+REAL strtoREAL(char* s, char** endptr);
+REAL atoREAL(char* s);
+ 
+         Back  to top 
+
+               
+ 
+
+       
+
+         Matrices of real numbers  
+
+                 
+ /****************************************************************************/
+// Definition of class REALMATRIX
+/****************************************************************************/
+
+class REALMATRIX
+{
+public:
+// Constructors: -------------------------------
+
+REALMATRIX(unsigned int rows,unsigned int columns);
+REALMATRIX();
+REALMATRIX(const REALMATRIX& y);
+// Copy Constructor: ---------------------------
+
+REALMATRIX&   operator = (const REALMATRIX& y);
+
+// Destructor: ---------------------------------
+
+~REALMATRIX();
+
+// Access to matrix elements: ------------------
+
+REAL&   operator ()           (unsigned int row,
+                               unsigned int column) const;
+
+REAL&   element               (unsigned int row,
+                               unsigned int column) const;
+
+// Standard Arithmetic: ------------------------
+
+friend REALMATRIX  operator + (const REALMATRIX& x,
+                               const REALMATRIX& y);
+friend REALMATRIX  operator - (const REALMATRIX& x,
+                               const REALMATRIX& y);
+friend REALMATRIX  operator * (const REALMATRIX& x,
+                               const REALMATRIX& y);
+friend REALMATRIX  operator / (const REALMATRIX& x,
+                               const REALMATRIX& y);
+
+// Arithmetic with Scalar: ---------------------
+friend REALMATRIX  operator * (const REALMATRIX& x,
+                               const REAL& y);
+inline friend REALMATRIX operator * (const REAL& y,
+                               const REALMATRIX& x)
+       {return x*y;};
+
+friend REALMATRIX  operator / (const REALMATRIX& x,
+                               const REAL& y);
+
+// Information on Dimensions: ------------------
+
+friend inline unsigned int rows (const REALMATRIX& x)
+                {return x.maxrow;};
+friend inline unsigned int columns (const REALMATRIX& x)
+                {return x.maxcolumn;};
+
+friend int bound (const REALMATRIX& x, 
+                  const long k);
+
+// Linear Algebra: -----------------------------
+
+friend REALMATRIX eye     (unsigned int rows);
+friend REALMATRIX zeroes  (unsigned int rows,
+                           unsigned int columns);
+friend REALMATRIX ones    (unsigned int rows,
+                           unsigned int columns);
+friend REAL       maxnorm (const REALMATRIX& x);
+friend REAL       rowsumnorm (const REALMATRIX& x);
+friend REAL       colsumnorm (const REALMATRIX& x);
+
+friend REALMATRIX solve (
+       REALMATRIX& lside,
+       REALMATRIX& rside,
+       int use_pivot);
+
+// IO-routines: --------------------------
+
+friend void       rwrite  (const REALMATRIX& x,
+                           const long p,
+                           const long w);
+friend void       rwrite  (const REALMATRIX& x,
+                           const long w);
+friend void       rshow   (const REALMATRIX& x,
+                           const long w);
+
+// Limits: --------------------------
+
+friend REALMATRIX limit_lip (REALMATRIX f(long, const REALMATRIX&),
+                           long lip,
+                           const REALMATRIX& x);
+
+
+public:
+REAL*  values; 
+unsigned int    maxrow,maxcolumn;
+void adderror (sizetype error);
+void seterror (sizetype error);
+void geterror (sizetype& error) const;
+};
+
+class SPM_ELEMENT
+{ public:
+REAL value;
+unsigned int rowindex;
+unsigned int colindex;
+SPM_ELEMENT* nextcol;
+SPM_ELEMENT* nextrow; 
+};
+ 
+         Back  to top 
+
+               
+ 
+
+       
+
+         Sparse matrices of real numbers  
+
+                 
+ /****************************************************************************/
+// Definition of class SPARSEREALMATRIX
+/****************************************************************************/
+
+class SPARSEREALMATRIX
+{
+public:
+// Constructors: -------------------------------
+
+SPARSEREALMATRIX(unsigned int rows,unsigned int columns);
+SPARSEREALMATRIX();
+SPARSEREALMATRIX(const SPARSEREALMATRIX& y);
+// Copy Constructor: ---------------------------
+
+SPARSEREALMATRIX&   operator = (const SPARSEREALMATRIX& y);
+
+// Destructor: ---------------------------------
+
+~SPARSEREALMATRIX();
+void clear();
+void free();
+
+// Access to matrix elements: ------------------
+
+friend void sparse_set(SPARSEREALMATRIX& m,unsigned int i,unsigned int j,const REAL& x);
+friend void sparse_unset(SPARSEREALMATRIX& m,unsigned int i,unsigned int j);
+friend SPM_ELEMENT* sparse_get_ptr(SPARSEREALMATRIX& m,unsigned int i,unsigned int j);
+
+REAL    operator ()           (unsigned int row,
+                               unsigned int column);
+
+
+// Standard Arithmetic: ------------------------
+
+friend SPARSEREALMATRIX  operator + (const SPARSEREALMATRIX& x,
+                               const SPARSEREALMATRIX& y);
+friend SPARSEREALMATRIX  operator - (const SPARSEREALMATRIX& x,
+                               const SPARSEREALMATRIX& y);
+friend SPARSEREALMATRIX  operator * (const SPARSEREALMATRIX& x,
+                               const SPARSEREALMATRIX& y);
+friend SPARSEREALMATRIX  operator / (const SPARSEREALMATRIX& x,
+                               const SPARSEREALMATRIX& y);
+
+// Arithmetic with Scalar: ---------------------
+friend SPARSEREALMATRIX  operator * (const SPARSEREALMATRIX& x,
+                               const REAL& y);
+inline friend SPARSEREALMATRIX operator * (const REAL& y,
+                               const SPARSEREALMATRIX& x)
+       {return x*y;};
+
+friend SPARSEREALMATRIX  operator / (const SPARSEREALMATRIX& x,
+                               const REAL& y);
+
+// Information on Dimensions: ------------------
+
+friend inline unsigned int rows (const SPARSEREALMATRIX& x)
+                {return x.maxrow;};
+friend inline unsigned int columns (const SPARSEREALMATRIX& x)
+                {return x.maxcolumn;};
+
+friend int bound (const SPARSEREALMATRIX& x, 
+                  const long k);
+
+// Linear Algebra: --------------------------
+
+friend SPARSEREALMATRIX sparse_eye     (unsigned int rows);
+friend SPARSEREALMATRIX sparse_zeroes  (unsigned int rows,
+                           unsigned int columns);
+friend SPARSEREALMATRIX sparse_ones    (unsigned int rows,
+                           unsigned int columns);
+friend REAL       maxnorm (const SPARSEREALMATRIX& x);
+friend REAL       rowsumnorm (const SPARSEREALMATRIX& x);
+friend REAL       colsumnorm (const SPARSEREALMATRIX& x);
+
+friend SPARSEREALMATRIX solve (
+       SPARSEREALMATRIX& lside,
+       SPARSEREALMATRIX& rside,
+       int use_pivot);
+
+
+// IO-routines: --------------------------
+
+friend void       rwrite  (const SPARSEREALMATRIX& x,
+                           const long p,
+                           const long w);
+friend void       rwrite  (const SPARSEREALMATRIX& x,
+                           const long w);
+friend void       rshow   (const SPARSEREALMATRIX& x,
+                           const long w);
+
+// Limits: --------------------------
+
+friend SPARSEREALMATRIX limit_lip (SPARSEREALMATRIX f(long, const SPARSEREALMATRIX&),
+                           long lip,
+                           const SPARSEREALMATRIX& x);
+
+//friend SPARSEREALMATRIX limit_mv (SPARSEREALMATRIX f(long prec,
+//                                         long* choice,
+//                                         const SPARSEREALMATRIX&),
+//                           const SPARSEREALMATRIX& x);
+
+//private:
+SPM_ELEMENT**  rowvector; 
+SPM_ELEMENT**  colvector; 
+SPM_ELEMENT* hotspot;
+unsigned int    maxrow,maxcolumn,filled;
+void adderror (sizetype error);
+void seterror (sizetype error);
+void geterror (sizetype& error) const;
+};
+ 
+         Back  to top 
+
+               
+ 
+
+       
+
+         Intervals of real numbers  
+
+                 
+ /****************************************************************************/
+// Definition of class INTERVAL
+/****************************************************************************/
+class INTERVAL 
+{
+public:
+
+// Constructors: -------------------------------
+
+INTERVAL();
+
+INTERVAL(const REAL& real);
+INTERVAL(const REAL& reala, const REAL& realb);
+
+// Standard Arithmetic: ------------------------
+
+friend INTERVAL  operator +  (const INTERVAL& x,
+                             const INTERVAL& y);
+friend INTERVAL  operator -  (const INTERVAL& x,
+                             const INTERVAL& y);
+friend INTERVAL  operator *  (const INTERVAL& x,
+                             const INTERVAL& y);
+friend INTERVAL  operator /  (const INTERVAL& x,
+                             const INTERVAL& y);
+
+friend REAL width(const INTERVAL& x);
+friend REAL lower(const INTERVAL& x);
+friend REAL upper(const INTERVAL& x);
+
+private :
+REAL low;
+REAL upp;
+
+};
+ 
+         Back  to top 
+
+               
+ 
+
+       
+
+         Complex numbers  
+
+                 
+ /****************************************************************************/
+// Definition of class COMPLEX 
+/****************************************************************************/
+
+class COMPLEX :public REALMATRIX
+{
+public:
+
+// Constructors: -------------------------------
+
+COMPLEX();
+COMPLEX(const REAL& real_part);
+COMPLEX(const REALMATRIX&);
+COMPLEX(const REAL& real_part, const REAL& imag_part);
+
+// Copy Constructor: ---------------------------
+// (already defined in base class REALMATRIX)
+
+// Standard Arithmetic: ------------------------
+
+friend COMPLEX  operator +  (const COMPLEX& x,
+                             const COMPLEX& y);
+friend COMPLEX  operator -  (const COMPLEX& x,
+                             const COMPLEX& y);
+friend COMPLEX  operator -  (const COMPLEX& x);
+friend COMPLEX  operator *  (const COMPLEX& x,
+                             const COMPLEX& y);
+friend COMPLEX  operator /  (const COMPLEX& x,
+                             const COMPLEX& y);
+
+friend REAL real(const COMPLEX& z);
+friend REAL imag(const COMPLEX& z);
+friend REAL abs (const COMPLEX& z);
+
+COMPLEX log(const COMPLEX& z);
+COMPLEX exp(const COMPLEX& z);
+
+/****************************/
+/* trigonometric functions  */
+/****************************/
+
+COMPLEX sin(const COMPLEX& z);
+COMPLEX cos(const COMPLEX& z);
+COMPLEX tan(const COMPLEX& z);
+COMPLEX cotan(const COMPLEX& z);
+COMPLEX sec(const COMPLEX& z);
+COMPLEX cosec(const COMPLEX& z);
+
+COMPLEX sinh(const COMPLEX& z);
+COMPLEX cosh(const COMPLEX& z);
+COMPLEX tanh(const COMPLEX& z);
+COMPLEX coth(const COMPLEX& z);
+COMPLEX sech(const COMPLEX& z);
+COMPLEX cosech(const COMPLEX& z);
+
+COMPLEX asin(const COMPLEX& z);
+COMPLEX acos(const COMPLEX& z);
+COMPLEX atan(const COMPLEX& z);
+COMPLEX acotan(const COMPLEX& z);
+COMPLEX asec(const COMPLEX& z);
+COMPLEX acosec(const COMPLEX& z);
+
+COMPLEX asinh(const COMPLEX& z);
+COMPLEX acosh(const COMPLEX& z);
+COMPLEX atanh(const COMPLEX& z);
+COMPLEX acoth(const COMPLEX& z);
+COMPLEX asech(const COMPLEX& z);
+COMPLEX acosech(const COMPLEX& z);
+
+};
+ 
+         Back  to top 
+
+               
+ 
+
+       
+
+         Functions  
+
+                 
+ /****************************************************************************/
+// arithmetic functions
+/****************************************************************************/
+REAL power(const REAL& x, const REAL& y);
+REAL power(const REAL& x, long n);
+REAL power(const REAL& x, int n);
+REAL modulo  (const REAL& x, const REAL& y);
+REAL maximum (const REAL& x, const REAL& y);
+REAL minimum (const REAL& x, const REAL& y);
+
+/****************************************************************************/
+// roots
+/****************************************************************************/
+REAL sqrt    (const REAL& x);
+REAL root    (const REAL& x,long n);
+
+/****************************************************************************/
+// trigonometric functions
+/****************************************************************************/
+REAL sin     (const REAL& x);
+REAL cos     (const REAL& x);
+REAL tan     (const REAL& x);
+REAL cotan   (const REAL& x);
+REAL sec     (const REAL& x);
+REAL cosec   (const REAL& x);
+
+/****************************************************************************/
+// inverse trigonometric functions
+/****************************************************************************/
+REAL atan    (const REAL& x);
+REAL asin    (const REAL& x);
+REAL acos    (const REAL& x);
+REAL acotan  (const REAL& x);
+REAL asec    (const REAL& x);
+REAL acosec  (const REAL& x);
+
+/****************************************************************************/
+//hyperbolic functions
+/****************************************************************************/
+REAL sinh    (const REAL& x);
+REAL cosh    (const REAL& x);
+REAL tanh    (const REAL& x);
+REAL coth    (const REAL& x);
+REAL sech    (const REAL& x);
+REAL cosech  (const REAL& x);
+
+/****************************************************************************/
+// inverse hyperbolic functions 
+/****************************************************************************/
+REAL asinh   (const REAL& x);
+REAL acosh   (const REAL& x);
+REAL atanh   (const REAL& x);
+REAL acoth   (const REAL& x);
+REAL asech   (const REAL& x);
+REAL acosech (const REAL& x);
+
+/****************************************************************************/
+// exponentiation + logarithm
+/****************************************************************************/
+REAL exp     (const REAL& x);
+REAL log     (const REAL& x);
+
+/****************************************************************************/
+// special constants values                                                 
+/****************************************************************************/
+REAL pi      ();   // = 3.141592653...
+REAL euler   ();   // = 2.718281828...
+REAL ln2     ();   // = 0.693147180...
+
+/****************************************************************************/
+//  matrix functions
+/****************************************************************************/
+REALMATRIX exp    (const REALMATRIX& x);
+
+REALMATRIX steady_state (const REALMATRIX& x);
+
+REALMATRIX steady_state (const SPARSEREALMATRIX& x);
+REALMATRIX equilib (const SPARSEREALMATRIX& x);
+void equilib_del (SPARSEREALMATRIX& x,REALMATRIX& z);
+
+
+/****************************************************************************/
+// complex functions
+/****************************************************************************/
+
+// defined for any complex number:
+COMPLEX  sqrt(const COMPLEX& z);
+
+// only defined for |z| > 0 (faster if |z| >> 0 ) :
+COMPLEX csqrt(const COMPLEX& z);
+ 
+         Back  to top 
+
+                
+ 
+
+       
+
+         Limit operators  
+
+                 
+ /****************************************************************************/
+// templates for limit operators
+/****************************************************************************/
+
+template   
+RESULT limit_mv (RESULT f(long prec,
+                                         long* choice,
+                                         const ARGUMENT&),
+                           const ARGUMENT& x);
+
+template   
+RESULT limit (RESULT f(long prec,const ARGUMENT&),
+                           const ARGUMENT& x);
+
+
+template   
+RESULT limit (RESULT f(long prec,const ARGUMENT&, long),
+                           const ARGUMENT& x, long param);
+
+
+
+    
+         Back  to top 
+
+                
+ 
+
+       
+
+         Integer numbers  
+
+                 
+ //****************************************************************************************/
+/* Definition of class INTEGER                                                           */
+//****************************************************************************************/
+
+class INTEGER 
+{
+	public:
+
+	friend class REAL;
+	friend class DYADIC;
+	friend class RATIONAL;
+	friend class RAND;
+
+	/****** Constructors ******/
+
+	INTEGER();
+	INTEGER(int i);
+	INTEGER(long i);
+	INTEGER(char* s);
+	INTEGER(const DYADIC& y); 
+	INTEGER(const REAL& y);  
+	INTEGER(const REAL& y, long p); 
+	INTEGER(double d);
+
+
+
+	/****** Copy constructor ******/
+
+	INTEGER& operator = (const INTEGER& y);
+	INTEGER& operator = (int y);
+	INTEGER& operator = (long int y);
+
+	/****** Destructor ******/
+	
+	~INTEGER();
+
+	/****** Standard arithmetic ******/
+
+	friend INTEGER 	operator + 	(const INTEGER& x, const INTEGER& y);
+	friend INTEGER 	operator + 	(const INTEGER& x, long int n      );
+	friend INTEGER 	operator + 	(long int n	     , const INTEGER& y);
+	friend INTEGER&	operator +=	(      INTEGER& x, const INTEGER& y);
+	friend INTEGER&	operator +=	(      INTEGER& x, long int n	     );
+	friend INTEGER 	operator - 	(const INTEGER& x, const INTEGER& y);
+	friend INTEGER 	operator - 	(const INTEGER& x, long int n      );
+	friend INTEGER 	operator - 	(long int n      , const INTEGER& y);
+	friend INTEGER 	operator - 	(const INTEGER& x);
+	friend INTEGER 	operator * 	(const INTEGER& x, const INTEGER& y);
+	friend INTEGER	operator *	(const INTEGER& x, long int n);
+	friend INTEGER	operator *	(long int n      , const INTEGER& x);
+	friend INTEGER&	operator *=	(	 INTEGER& x, const INTEGER& y);
+	friend INTEGER&	operator *=	(	 INTEGER& x, long int n);
+	friend INTEGER 	operator / 	(const INTEGER& x, const INTEGER& y);
+	friend INTEGER 	operator / 	(const INTEGER& x, long int n);
+	friend INTEGER 	operator / 	(long int n      ,const INTEGER& x);
+	friend INTEGER 	operator ^ 	(const INTEGER& x, const INTEGER& y);
+	friend INTEGER  operator ^  (const INTEGER& x, unsigned long int n);
+	friend INTEGER 	operator << (const INTEGER& x, long int n);
+	friend INTEGER 	operator >> (const INTEGER& x, long int n);
+	friend INTEGER	operator %  (const INTEGER& x, const INTEGER& y);
+
+	friend INTEGER 	sqrt		(const INTEGER& x);
+	friend INTEGER	square	(const INTEGER& x);
+	friend INTEGER	scale		(const INTEGER& x, long int k);
+	friend INTEGER 	factorial	(long int x);
+	friend INTEGER	root    	(const INTEGER& x,unsigned long n);
+	friend INTEGER	abs		(const INTEGER& x);
+	friend INTEGER	log2		(const INTEGER& x);
+
+
+	/****** Comparisons ******/
+
+	friend bool 	operator <  (const INTEGER& x, const INTEGER& y);
+	friend bool 	operator <= (const INTEGER& x, const INTEGER& y);
+	friend bool 	operator >  (const INTEGER& x, const INTEGER& y);
+	friend bool 	operator >= (const INTEGER& x, const INTEGER& y);
+	friend bool 	operator == (const INTEGER& x, const INTEGER& y);
+	friend bool 	operator != (const INTEGER& x, const INTEGER& y);
+	
+	friend INTEGER 	maximum  	(const INTEGER& x, const INTEGER& y);
+	friend INTEGER 	minimum 	(const INTEGER& x, const INTEGER& y);
+	
+	friend bool		positive	(const INTEGER& x);
+
+	/****** Output ******/
+
+	friend void 	rwrite	(const INTEGER& x, const long w);
+	friend char*    swrite  (const INTEGER& x, const long w);
+	friend char*    swrite  (const INTEGER& x);
+	friend void     rprintf (const INTEGER& x);
+	friend INTEGER 	strtoINTEGER(char* s, char** endptr);
+	friend INTEGER 	atoINTEGER	(char* s);
+	friend INTEGER 	INTEGER_random(long max, RAND rand);
+
+
+	/****** Implementational issues ******/
+
+	int size(); //****** will be private
+
+	/****** Private ******/
+private:
+
+	MP_int_type value;
+	INTEGER(MP_int_type y);
+
+};
+ 
+         Back  to top 
+
+                
+ 
+
+       
+
+         Rational numbers  
+
+                 
+ /****************************************************************************************/
+/* Definition of class RATIONAL                                                         */
+/****************************************************************************************/
+
+class RATIONAL
+{
+	public:
+
+	friend class INTEGER;
+	friend class REAL;
+
+	/****** Constructors ******/
+
+	inline RATIONAL(MP_rat_type y);
+	RATIONAL();
+	RATIONAL(int i);
+	RATIONAL(long i);
+	RATIONAL(long i, long j);
+	RATIONAL(int i, int j);
+	RATIONAL(char* s);
+	RATIONAL(const DYADIC& y); 
+	RATIONAL(const REAL& y);  
+	RATIONAL(const INTEGER& y);
+	RATIONAL(const INTEGER& x, const INTEGER& y);
+	RATIONAL(double d);
+	RATIONAL(const REAL& x, const INTEGER& den, long prec);
+
+	/****** Copy constructor ******/
+
+	RATIONAL& operator = (const RATIONAL& y);
+	RATIONAL& operator = (int y);
+
+	/****** Destructor ******/
+	
+	~RATIONAL();
+
+	/****** Standard arithmetic ******/
+
+	friend RATIONAL 	operator + 	(const RATIONAL& x, const RATIONAL& y);
+	friend RATIONAL 	operator + 	(const RATIONAL& x, long int n       );
+	friend RATIONAL 	operator + 	(long int n       , const RATIONAL& y);
+	friend RATIONAL&	operator +=	(      RATIONAL& x, const RATIONAL& y);
+	friend RATIONAL 	operator - 	(const RATIONAL& x, const RATIONAL& y);
+	friend RATIONAL 	operator - 	(const RATIONAL& x, long int n       );
+	friend RATIONAL 	operator - 	(long int n       , const RATIONAL& y);
+	friend RATIONAL 	operator - 	(const RATIONAL& x);
+	friend RATIONAL 	operator * 	(const RATIONAL& x, const RATIONAL& y);
+	friend RATIONAL		operator *	(const RATIONAL& x, long int n);
+	friend RATIONAL		operator *	(long int n       , const RATIONAL& x);
+	friend RATIONAL&	operator *=	(	 RATIONAL& x, const RATIONAL& y);
+	friend RATIONAL&	operator *=	(	 RATIONAL& x, long int n);
+	friend RATIONAL&	operator *=	(	 RATIONAL& x, int n);
+	friend RATIONAL 	operator / 	(const RATIONAL& x, const RATIONAL& y);
+	friend RATIONAL 	operator / 	(const RATIONAL& x, long int n);
+	friend RATIONAL 	operator / 	(long int n       , const RATIONAL& x);
+	friend RATIONAL 	operator ^ 	(const RATIONAL& x, const RATIONAL& y);
+	friend RATIONAL		operator ^  (const RATIONAL& x, long unsigned int n);
+	friend RATIONAL 	operator << (const RATIONAL& x, long int n);
+	friend RATIONAL 	operator >> (const RATIONAL& x, long int n);
+	friend RATIONAL		operator %  (const RATIONAL& x, const RATIONAL& y);
+
+	friend RATIONAL		square		(const RATIONAL& x);
+	friend RATIONAL		scale		(const RATIONAL& x, long int k);
+
+	friend RATIONAL 	sqrt 		(const RATIONAL& x);
+	friend RATIONAL		root    	(const RATIONAL& x,long n);
+	friend RATIONAL		abs		(const RATIONAL& x);
+	friend RATIONAL		log2		(const RATIONAL& x);
+	friend RATIONAL		sqrt_int	(const RATIONAL& x);
+
+	/****** Comparisons ******/
+
+	friend bool 	operator <      (const RATIONAL& x, const RATIONAL& y);
+	friend bool 	operator <=     (const RATIONAL& x, const RATIONAL& y);
+	friend bool 	operator >      (const RATIONAL& x, const RATIONAL& y);
+	friend bool 	operator >=     (const RATIONAL& x, const RATIONAL& y);
+	friend bool 	operator ==     (const RATIONAL& x, const RATIONAL& y);
+	friend bool 	operator !=     (const RATIONAL& x, const RATIONAL& y);
+
+	friend RATIONAL 	maximum  	(const RATIONAL& x, const RATIONAL& y);
+	friend RATIONAL 	minimum 	(const RATIONAL& x, const RATIONAL& y);
+	
+	friend bool		positive	(const RATIONAL& x, const long k);
+
+	/****** Output ******/
+
+	friend void 	rwrite		(const RATIONAL& x, const long w);
+	friend char*    swrite          (const RATIONAL& x, const long w);
+	friend char*    swrite          (const RATIONAL& x);
+	friend void 	rprintf     	(const RATIONAL& x);
+	friend RATIONAL 	strtoRATIONAL    	(char* s, char** endptr);
+	friend RATIONAL 	atoRATIONAL		(char* s);
+
+
+	/****** Private ******/
+private:
+
+	MP_rat_type value;
+	RATIONAL(MP_int_type y);
+	friend RATIONAL cos_prec_infinite(const RATIONAL& x, long prec);
+	friend RATIONAL cos_prec_infinite2(const RATIONAL& x, long prec);
+	int RATIONAL::size();
+};
+ 
+          Back  to top 
+
+   
+
+                 
+ 
+ 

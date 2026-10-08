@@ -1,0 +1,13 @@
+{
+  "tag": "arf-conversion-v2-linked-libraries",
+  "started": "2026-09-10T03:10:33.805Z",
+  "finished": "2026-09-10T03:10:33.832Z",
+  "elapsedSeconds": 0.024688010000000007,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison",
+  "command": "ldd",
+  "args": [
+    "/tmp/calcium-arf-conversion.ZnmLMf/controls-v2"
+  ],
+  "code": 0,
+  "signal": null
+}

@@ -1,0 +1,1267 @@
+{
+  "mode": "allocation",
+  "started": "2026-09-09T15:43:55.524Z",
+  "finished": "2026-09-09T15:43:56.511Z",
+  "cpu": 6,
+  "binaries": {
+    "baseline-cpu": {
+      "path": "/tmp/calcium-derivative-endpoint.XO0A0Q/baseline-cpu",
+      "bytes": 9984152,
+      "sha256": "8915e269befbfbd837cd8eca80cd72a8c509074c580580a17fe430dc759fcf6b",
+      "size": "text\t   data\t    bss\t    dec\t    hex\tfilename\n7789978\t 280224\t   3888\t8074090\t 7b336a\t/tmp/calcium-derivative-endpoint.XO0A0Q/baseline-cpu"
+    },
+    "baseline-allocation": {
+      "path": "/tmp/calcium-derivative-endpoint.XO0A0Q/baseline-allocation",
+      "bytes": 9988456,
+      "sha256": "d3e33f2d1fcd2a969ba66c9174bf2f1ce1a5011c1ebcfb8b0b037c6570e9d8a1",
+      "size": "text\t   data\t    bss\t    dec\t    hex\tfilename\n7793382\t 280232\t   4616\t8078230\t 7b4396\t/tmp/calcium-derivative-endpoint.XO0A0Q/baseline-allocation"
+    },
+    "candidate-cpu": {
+      "path": "/tmp/calcium-derivative-endpoint.XO0A0Q/candidate-cpu",
+      "bytes": 9983760,
+      "sha256": "b089157c2dcd4ffbbc16ea8e72833f2ca994df5593d8e2408bedfac47efb5bdc",
+      "size": "text\t   data\t    bss\t    dec\t    hex\tfilename\n7789694\t 280224\t   4176\t8074094\t 7b336e\t/tmp/calcium-derivative-endpoint.XO0A0Q/candidate-cpu"
+    },
+    "candidate-allocation": {
+      "path": "/tmp/calcium-derivative-endpoint.XO0A0Q/candidate-allocation",
+      "bytes": 9988112,
+      "sha256": "0c9be541c0ccb8c82d7d62b98e113049ddde70256d7eb6c75116b2c9adba0a4a",
+      "size": "text\t   data\t    bss\t    dec\t    hex\tfilename\n7793098\t 280232\t   4888\t8078218\t 7b438a\t/tmp/calcium-derivative-endpoint.XO0A0Q/candidate-allocation"
+    }
+  },
+  "summaries": [
+    {
+      "kind": 0,
+      "degree": 1,
+      "lifecycle": "retained_graph",
+      "iterations": 8,
+      "observations": 6,
+      "pilots": [
+        {
+          "started": "2026-09-09T15:43:55.525Z",
+          "finished": "2026-09-09T15:43:55.535Z",
+          "mode": "allocation",
+          "variant": "baseline",
+          "kind": 0,
+          "degree": 1,
+          "lifecycle": "retained_graph",
+          "iterations": 2,
+          "elapsed_ns": 13909,
+          "requests": 86,
+          "requested_bytes": 15624,
+          "live_delta": 0,
+          "peak_delta": 2560
+        },
+        {
+          "started": "2026-09-09T15:43:55.535Z",
+          "finished": "2026-09-09T15:43:55.539Z",
+          "mode": "allocation",
+          "variant": "candidate",
+          "kind": 0,
+          "degree": 1,
+          "lifecycle": "retained_graph",
+          "iterations": 2,
+          "elapsed_ns": 13659,
+          "requests": 86,
+          "requested_bytes": 15624,
+          "live_delta": 0,
+          "peak_delta": 2560
+        }
+      ],
+      "measurements": {
+        "baseline": {
+          "requests": {
+            "min": 344,
+            "max": 344
+          },
+          "requested_bytes": {
+            "min": 62496,
+            "max": 62496
+          },
+          "live_delta": {
+            "min": 0,
+            "max": 0
+          },
+          "peak_delta": {
+            "min": 2560,
+            "max": 2560
+          }
+        },
+        "candidate": {
+          "requests": {
+            "min": 344,
+            "max": 344
+          },
+          "requested_bytes": {
+            "min": 62496,
+            "max": 62496
+          },
+          "live_delta": {
+            "min": 0,
+            "max": 0
+          },
+          "peak_delta": {
+            "min": 2560,
+            "max": 2560
+          }
+        }
+      }
+    },
+    {
+      "kind": 0,
+      "degree": 1,
+      "lifecycle": "fresh_graph",
+      "iterations": 8,
+      "observations": 6,
+      "pilots": [
+        {
+          "started": "2026-09-09T15:43:55.572Z",
+          "finished": "2026-09-09T15:43:55.577Z",
+          "mode": "allocation",
+          "variant": "baseline",
+          "kind": 0,
+          "degree": 1,
+          "lifecycle": "fresh_graph",
+          "iterations": 2,
+          "elapsed_ns": 23449,
+          "requests": 168,
+          "requested_bytes": 28168,
+          "live_delta": 0,
+          "peak_delta": 7680
+        },
+        {
+          "started": "2026-09-09T15:43:55.577Z",
+          "finished": "2026-09-09T15:43:55.582Z",
+          "mode": "allocation",
+          "variant": "candidate",
+          "kind": 0,
+          "degree": 1,
+          "lifecycle": "fresh_graph",
+          "iterations": 2,
+          "elapsed_ns": 18959,
+          "requests": 168,
+          "requested_bytes": 28168,
+          "live_delta": 0,
+          "peak_delta": 7680
+        }
+      ],
+      "measurements": {
+        "baseline": {
+          "requests": {
+            "min": 672,
+            "max": 672
+          },
+          "requested_bytes": {
+            "min": 112672,
+            "max": 112672
+          },
+          "live_delta": {
+            "min": 0,
+            "max": 0
+          },
+          "peak_delta": {
+            "min": 7680,
+            "max": 7680
+          }
+        },
+        "candidate": {
+          "requests": {
+            "min": 672,
+            "max": 672
+          },
+          "requested_bytes": {
+            "min": 112672,
+            "max": 112672
+          },
+          "live_delta": {
+            "min": 0,
+            "max": 0
+          },
+          "peak_delta": {
+            "min": 7680,
+            "max": 7680
+          }
+        }
+      }
+    },
+    {
+      "kind": 0,
+      "degree": 3,
+      "lifecycle": "retained_graph",
+      "iterations": 8,
+      "observations": 6,
+      "pilots": [
+        {
+          "started": "2026-09-09T15:43:55.613Z",
+          "finished": "2026-09-09T15:43:55.618Z",
+          "mode": "allocation",
+          "variant": "baseline",
+          "kind": 0,
+          "degree": 3,
+          "lifecycle": "retained_graph",
+          "iterations": 2,
+          "elapsed_ns": 15769,
+          "requests": 102,
+          "requested_bytes": 17288,
+          "live_delta": 0,
+          "peak_delta": 2560
+        },
+        {
+          "started": "2026-09-09T15:43:55.618Z",
+          "finished": "2026-09-09T15:43:55.622Z",
+          "mode": "allocation",
+          "variant": "candidate",
+          "kind": 0,
+          "degree": 3,
+          "lifecycle": "retained_graph",
+          "iterations": 2,
+          "elapsed_ns": 14859,
+          "requests": 102,
+          "requested_bytes": 17288,
+          "live_delta": 0,
+          "peak_delta": 2560
+        }
+      ],
+      "measurements": {
+        "baseline": {
+          "requests": {
+            "min": 408,
+            "max": 408
+          },
+          "requested_bytes": {
+            "min": 69152,
+            "max": 69152
+          },
+          "live_delta": {
+            "min": 0,
+            "max": 0
+          },
+          "peak_delta": {
+            "min": 2560,
+            "max": 2560
+          }
+        },
+        "candidate": {
+          "requests": {
+            "min": 408,
+            "max": 408
+          },
+          "requested_bytes": {
+            "min": 69152,
+            "max": 69152
+          },
+          "live_delta": {
+            "min": 0,
+            "max": 0
+          },
+          "peak_delta": {
+            "min": 2560,
+            "max": 2560
+          }
+        }
+      }
+    },
+    {
+      "kind": 0,
+      "degree": 3,
+      "lifecycle": "fresh_graph",
+      "iterations": 8,
+      "observations": 6,
+      "pilots": [
+        {
+          "started": "2026-09-09T15:43:55.652Z",
+          "finished": "2026-09-09T15:43:55.657Z",
+          "mode": "allocation",
+          "variant": "baseline",
+          "kind": 0,
+          "degree": 3,
+          "lifecycle": "fresh_graph",
+          "iterations": 2,
+          "elapsed_ns": 47357,
+          "requests": 256,
+          "requested_bytes": 43976,
+          "live_delta": 0,
+          "peak_delta": 12064
+        },
+        {
+          "started": "2026-09-09T15:43:55.657Z",
+          "finished": "2026-09-09T15:43:55.663Z",
+          "mode": "allocation",
+          "variant": "candidate",
+          "kind": 0,
+          "degree": 3,
+          "lifecycle": "fresh_graph",
+          "iterations": 2,
+          "elapsed_ns": 39067,
+          "requests": 256,
+          "requested_bytes": 43976,
+          "live_delta": 0,
+          "peak_delta": 12064
+        }
+      ],
+      "measurements": {
+        "baseline": {
+          "requests": {
+            "min": 1024,
+            "max": 1024
+          },
+          "requested_bytes": {
+            "min": 175904,
+            "max": 175904
+          },
+          "live_delta": {
+            "min": 0,
+            "max": 0
+          },
+          "peak_delta": {
+            "min": 12064,
+            "max": 12064
+          }
+        },
+        "candidate": {
+          "requests": {
+            "min": 1024,
+            "max": 1024
+          },
+          "requested_bytes": {
+            "min": 175904,
+            "max": 175904
+          },
+          "live_delta": {
+            "min": 0,
+            "max": 0
+          },
+          "peak_delta": {
+            "min": 12064,
+            "max": 12064
+          }
+        }
+      }
+    },
+    {
+      "kind": 0,
+      "degree": 8,
+      "lifecycle": "retained_graph",
+      "iterations": 8,
+      "observations": 6,
+      "pilots": [
+        {
+          "started": "2026-09-09T15:43:55.693Z",
+          "finished": "2026-09-09T15:43:55.698Z",
+          "mode": "allocation",
+          "variant": "baseline",
+          "kind": 0,
+          "degree": 8,
+          "lifecycle": "retained_graph",
+          "iterations": 2,
+          "elapsed_ns": 21919,
+          "requests": 102,
+          "requested_bytes": 17288,
+          "live_delta": 0,
+          "peak_delta": 2560
+        },
+        {
+          "started": "2026-09-09T15:43:55.698Z",
+          "finished": "2026-09-09T15:43:55.702Z",
+          "mode": "allocation",
+          "variant": "candidate",
+          "kind": 0,
+          "degree": 8,
+          "lifecycle": "retained_graph",
+          "iterations": 2,
+          "elapsed_ns": 25428,
+          "requests": 102,
+          "requested_bytes": 17288,
+          "live_delta": 0,
+          "peak_delta": 2560
+        }
+      ],
+      "measurements": {
+        "baseline": {
+          "requests": {
+            "min": 408,
+            "max": 408
+          },
+          "requested_bytes": {
+            "min": 69152,
+            "max": 69152
+          },
+          "live_delta": {
+            "min": 0,
+            "max": 0
+          },
+          "peak_delta": {
+            "min": 2560,
+            "max": 2560
+          }
+        },
+        "candidate": {
+          "requests": {
+            "min": 408,
+            "max": 408
+          },
+          "requested_bytes": {
+            "min": 69152,
+            "max": 69152
+          },
+          "live_delta": {
+            "min": 0,
+            "max": 0
+          },
+          "peak_delta": {
+            "min": 2560,
+            "max": 2560
+          }
+        }
+      }
+    },
+    {
+      "kind": 0,
+      "degree": 8,
+      "lifecycle": "fresh_graph",
+      "iterations": 8,
+      "observations": 6,
+      "pilots": [
+        {
+          "started": "2026-09-09T15:43:55.730Z",
+          "finished": "2026-09-09T15:43:55.735Z",
+          "mode": "allocation",
+          "variant": "baseline",
+          "kind": 0,
+          "degree": 8,
+          "lifecycle": "fresh_graph",
+          "iterations": 2,
+          "elapsed_ns": 78945,
+          "requests": 464,
+          "requested_bytes": 83112,
+          "live_delta": 0,
+          "peak_delta": 17176
+        },
+        {
+          "started": "2026-09-09T15:43:55.735Z",
+          "finished": "2026-09-09T15:43:55.740Z",
+          "mode": "allocation",
+          "variant": "candidate",
+          "kind": 0,
+          "degree": 8,
+          "lifecycle": "fresh_graph",
+          "iterations": 2,
+          "elapsed_ns": 78184,
+          "requests": 464,
+          "requested_bytes": 83112,
+          "live_delta": 0,
+          "peak_delta": 17176
+        }
+      ],
+      "measurements": {
+        "baseline": {
+          "requests": {
+            "min": 1856,
+            "max": 1856
+          },
+          "requested_bytes": {
+            "min": 332448,
+            "max": 332448
+          },
+          "live_delta": {
+            "min": 0,
+            "max": 0
+          },
+          "peak_delta": {
+            "min": 17176,
+            "max": 17176
+          }
+        },
+        "candidate": {
+          "requests": {
+            "min": 1856,
+            "max": 1856
+          },
+          "requested_bytes": {
+            "min": 332448,
+            "max": 332448
+          },
+          "live_delta": {
+            "min": 0,
+            "max": 0
+          },
+          "peak_delta": {
+            "min": 17176,
+            "max": 17176
+          }
+        }
+      }
+    },
+    {
+      "kind": 0,
+      "degree": 24,
+      "lifecycle": "retained_graph",
+      "iterations": 8,
+      "observations": 6,
+      "pilots": [
+        {
+          "started": "2026-09-09T15:43:55.772Z",
+          "finished": "2026-09-09T15:43:55.777Z",
+          "mode": "allocation",
+          "variant": "baseline",
+          "kind": 0,
+          "degree": 24,
+          "lifecycle": "retained_graph",
+          "iterations": 2,
+          "elapsed_ns": 39157,
+          "requests": 102,
+          "requested_bytes": 17288,
+          "live_delta": 0,
+          "peak_delta": 2560
+        },
+        {
+          "started": "2026-09-09T15:43:55.777Z",
+          "finished": "2026-09-09T15:43:55.783Z",
+          "mode": "allocation",
+          "variant": "candidate",
+          "kind": 0,
+          "degree": 24,
+          "lifecycle": "retained_graph",
+          "iterations": 2,
+          "elapsed_ns": 45617,
+          "requests": 102,
+          "requested_bytes": 17288,
+          "live_delta": 0,
+          "peak_delta": 2560
+        }
+      ],
+      "measurements": {
+        "baseline": {
+          "requests": {
+            "min": 408,
+            "max": 408
+          },
+          "requested_bytes": {
+            "min": 69152,
+            "max": 69152
+          },
+          "live_delta": {
+            "min": 0,
+            "max": 0
+          },
+          "peak_delta": {
+            "min": 2560,
+            "max": 2560
+          }
+        },
+        "candidate": {
+          "requests": {
+            "min": 408,
+            "max": 408
+          },
+          "requested_bytes": {
+            "min": 69152,
+            "max": 69152
+          },
+          "live_delta": {
+            "min": 0,
+            "max": 0
+          },
+          "peak_delta": {
+            "min": 2560,
+            "max": 2560
+          }
+        }
+      }
+    },
+    {
+      "kind": 0,
+      "degree": 24,
+      "lifecycle": "fresh_graph",
+      "iterations": 8,
+      "observations": 6,
+      "pilots": [
+        {
+          "started": "2026-09-09T15:43:55.817Z",
+          "finished": "2026-09-09T15:43:55.824Z",
+          "mode": "allocation",
+          "variant": "baseline",
+          "kind": 0,
+          "degree": 24,
+          "lifecycle": "fresh_graph",
+          "iterations": 2,
+          "elapsed_ns": 365495,
+          "requests": 2378,
+          "requested_bytes": 363928,
+          "live_delta": 53920,
+          "peak_delta": 92984
+        },
+        {
+          "started": "2026-09-09T15:43:55.824Z",
+          "finished": "2026-09-09T15:43:55.832Z",
+          "mode": "allocation",
+          "variant": "candidate",
+          "kind": 0,
+          "degree": 24,
+          "lifecycle": "fresh_graph",
+          "iterations": 2,
+          "elapsed_ns": 347006,
+          "requests": 2378,
+          "requested_bytes": 363928,
+          "live_delta": 53920,
+          "peak_delta": 92984
+        }
+      ],
+      "measurements": {
+        "baseline": {
+          "requests": {
+            "min": 8156,
+            "max": 8156
+          },
+          "requested_bytes": {
+            "min": 1267168,
+            "max": 1267168
+          },
+          "live_delta": {
+            "min": 161568,
+            "max": 161568
+          },
+          "peak_delta": {
+            "min": 197016,
+            "max": 197016
+          }
+        },
+        "candidate": {
+          "requests": {
+            "min": 8156,
+            "max": 8156
+          },
+          "requested_bytes": {
+            "min": 1267168,
+            "max": 1267168
+          },
+          "live_delta": {
+            "min": 161568,
+            "max": 161568
+          },
+          "peak_delta": {
+            "min": 197016,
+            "max": 197016
+          }
+        }
+      }
+    },
+    {
+      "kind": 1,
+      "degree": 1,
+      "lifecycle": "retained_graph",
+      "iterations": 8,
+      "observations": 6,
+      "pilots": [
+        {
+          "started": "2026-09-09T15:43:55.885Z",
+          "finished": "2026-09-09T15:43:55.890Z",
+          "mode": "allocation",
+          "variant": "baseline",
+          "kind": 1,
+          "degree": 1,
+          "lifecycle": "retained_graph",
+          "iterations": 2,
+          "elapsed_ns": 29988,
+          "requests": 366,
+          "requested_bytes": 36456,
+          "live_delta": 0,
+          "peak_delta": 4240
+        },
+        {
+          "started": "2026-09-09T15:43:55.890Z",
+          "finished": "2026-09-09T15:43:55.894Z",
+          "mode": "allocation",
+          "variant": "candidate",
+          "kind": 1,
+          "degree": 1,
+          "lifecycle": "retained_graph",
+          "iterations": 2,
+          "elapsed_ns": 28838,
+          "requests": 366,
+          "requested_bytes": 36456,
+          "live_delta": 0,
+          "peak_delta": 4240
+        }
+      ],
+      "measurements": {
+        "baseline": {
+          "requests": {
+            "min": 1464,
+            "max": 1464
+          },
+          "requested_bytes": {
+            "min": 145824,
+            "max": 145824
+          },
+          "live_delta": {
+            "min": 0,
+            "max": 0
+          },
+          "peak_delta": {
+            "min": 4240,
+            "max": 4240
+          }
+        },
+        "candidate": {
+          "requests": {
+            "min": 1464,
+            "max": 1464
+          },
+          "requested_bytes": {
+            "min": 145824,
+            "max": 145824
+          },
+          "live_delta": {
+            "min": 0,
+            "max": 0
+          },
+          "peak_delta": {
+            "min": 4240,
+            "max": 4240
+          }
+        }
+      }
+    },
+    {
+      "kind": 1,
+      "degree": 1,
+      "lifecycle": "fresh_graph",
+      "iterations": 8,
+      "observations": 6,
+      "pilots": [
+        {
+          "started": "2026-09-09T15:43:55.923Z",
+          "finished": "2026-09-09T15:43:55.928Z",
+          "mode": "allocation",
+          "variant": "baseline",
+          "kind": 1,
+          "degree": 1,
+          "lifecycle": "fresh_graph",
+          "iterations": 2,
+          "elapsed_ns": 41838,
+          "requests": 496,
+          "requested_bytes": 52840,
+          "live_delta": 0,
+          "peak_delta": 10288
+        },
+        {
+          "started": "2026-09-09T15:43:55.928Z",
+          "finished": "2026-09-09T15:43:55.932Z",
+          "mode": "allocation",
+          "variant": "candidate",
+          "kind": 1,
+          "degree": 1,
+          "lifecycle": "fresh_graph",
+          "iterations": 2,
+          "elapsed_ns": 41718,
+          "requests": 496,
+          "requested_bytes": 52840,
+          "live_delta": 0,
+          "peak_delta": 10288
+        }
+      ],
+      "measurements": {
+        "baseline": {
+          "requests": {
+            "min": 1984,
+            "max": 1984
+          },
+          "requested_bytes": {
+            "min": 211360,
+            "max": 211360
+          },
+          "live_delta": {
+            "min": 0,
+            "max": 0
+          },
+          "peak_delta": {
+            "min": 10288,
+            "max": 10288
+          }
+        },
+        "candidate": {
+          "requests": {
+            "min": 1984,
+            "max": 1984
+          },
+          "requested_bytes": {
+            "min": 211360,
+            "max": 211360
+          },
+          "live_delta": {
+            "min": 0,
+            "max": 0
+          },
+          "peak_delta": {
+            "min": 10288,
+            "max": 10288
+          }
+        }
+      }
+    },
+    {
+      "kind": 1,
+      "degree": 3,
+      "lifecycle": "retained_graph",
+      "iterations": 8,
+      "observations": 6,
+      "pilots": [
+        {
+          "started": "2026-09-09T15:43:55.961Z",
+          "finished": "2026-09-09T15:43:55.967Z",
+          "mode": "allocation",
+          "variant": "baseline",
+          "kind": 1,
+          "degree": 3,
+          "lifecycle": "retained_graph",
+          "iterations": 2,
+          "elapsed_ns": 58286,
+          "requests": 534,
+          "requested_bytes": 50888,
+          "live_delta": 0,
+          "peak_delta": 7840
+        },
+        {
+          "started": "2026-09-09T15:43:55.967Z",
+          "finished": "2026-09-09T15:43:55.972Z",
+          "mode": "allocation",
+          "variant": "candidate",
+          "kind": 1,
+          "degree": 3,
+          "lifecycle": "retained_graph",
+          "iterations": 2,
+          "elapsed_ns": 49276,
+          "requests": 534,
+          "requested_bytes": 50888,
+          "live_delta": 0,
+          "peak_delta": 7840
+        }
+      ],
+      "measurements": {
+        "baseline": {
+          "requests": {
+            "min": 2136,
+            "max": 2136
+          },
+          "requested_bytes": {
+            "min": 203552,
+            "max": 203552
+          },
+          "live_delta": {
+            "min": 0,
+            "max": 0
+          },
+          "peak_delta": {
+            "min": 7840,
+            "max": 7840
+          }
+        },
+        "candidate": {
+          "requests": {
+            "min": 2136,
+            "max": 2136
+          },
+          "requested_bytes": {
+            "min": 203552,
+            "max": 203552
+          },
+          "live_delta": {
+            "min": 0,
+            "max": 0
+          },
+          "peak_delta": {
+            "min": 7840,
+            "max": 7840
+          }
+        }
+      }
+    },
+    {
+      "kind": 1,
+      "degree": 3,
+      "lifecycle": "fresh_graph",
+      "iterations": 8,
+      "observations": 6,
+      "pilots": [
+        {
+          "started": "2026-09-09T15:43:56.002Z",
+          "finished": "2026-09-09T15:43:56.007Z",
+          "mode": "allocation",
+          "variant": "baseline",
+          "kind": 1,
+          "degree": 3,
+          "lifecycle": "fresh_graph",
+          "iterations": 2,
+          "elapsed_ns": 77375,
+          "requests": 724,
+          "requested_bytes": 80328,
+          "live_delta": 0,
+          "peak_delta": 17584
+        },
+        {
+          "started": "2026-09-09T15:43:56.007Z",
+          "finished": "2026-09-09T15:43:56.013Z",
+          "mode": "allocation",
+          "variant": "candidate",
+          "kind": 1,
+          "degree": 3,
+          "lifecycle": "fresh_graph",
+          "iterations": 2,
+          "elapsed_ns": 123292,
+          "requests": 724,
+          "requested_bytes": 80328,
+          "live_delta": 0,
+          "peak_delta": 17584
+        }
+      ],
+      "measurements": {
+        "baseline": {
+          "requests": {
+            "min": 2896,
+            "max": 2896
+          },
+          "requested_bytes": {
+            "min": 321312,
+            "max": 321312
+          },
+          "live_delta": {
+            "min": 0,
+            "max": 0
+          },
+          "peak_delta": {
+            "min": 17584,
+            "max": 17584
+          }
+        },
+        "candidate": {
+          "requests": {
+            "min": 2896,
+            "max": 2896
+          },
+          "requested_bytes": {
+            "min": 321312,
+            "max": 321312
+          },
+          "live_delta": {
+            "min": 0,
+            "max": 0
+          },
+          "peak_delta": {
+            "min": 17584,
+            "max": 17584
+          }
+        }
+      }
+    },
+    {
+      "kind": 1,
+      "degree": 8,
+      "lifecycle": "retained_graph",
+      "iterations": 8,
+      "observations": 6,
+      "pilots": [
+        {
+          "started": "2026-09-09T15:43:56.045Z",
+          "finished": "2026-09-09T15:43:56.051Z",
+          "mode": "allocation",
+          "variant": "baseline",
+          "kind": 1,
+          "degree": 8,
+          "lifecycle": "retained_graph",
+          "iterations": 2,
+          "elapsed_ns": 62996,
+          "requests": 580,
+          "requested_bytes": 54392,
+          "live_delta": 0,
+          "peak_delta": 7944
+        },
+        {
+          "started": "2026-09-09T15:43:56.051Z",
+          "finished": "2026-09-09T15:43:56.055Z",
+          "mode": "allocation",
+          "variant": "candidate",
+          "kind": 1,
+          "degree": 8,
+          "lifecycle": "retained_graph",
+          "iterations": 2,
+          "elapsed_ns": 55006,
+          "requests": 580,
+          "requested_bytes": 54392,
+          "live_delta": 0,
+          "peak_delta": 7944
+        }
+      ],
+      "measurements": {
+        "baseline": {
+          "requests": {
+            "min": 2320,
+            "max": 2320
+          },
+          "requested_bytes": {
+            "min": 217568,
+            "max": 217568
+          },
+          "live_delta": {
+            "min": 0,
+            "max": 0
+          },
+          "peak_delta": {
+            "min": 7944,
+            "max": 7944
+          }
+        },
+        "candidate": {
+          "requests": {
+            "min": 2320,
+            "max": 2320
+          },
+          "requested_bytes": {
+            "min": 217568,
+            "max": 217568
+          },
+          "live_delta": {
+            "min": 0,
+            "max": 0
+          },
+          "peak_delta": {
+            "min": 7944,
+            "max": 7944
+          }
+        }
+      }
+    },
+    {
+      "kind": 1,
+      "degree": 8,
+      "lifecycle": "fresh_graph",
+      "iterations": 8,
+      "observations": 6,
+      "pilots": [
+        {
+          "started": "2026-09-09T15:43:56.086Z",
+          "finished": "2026-09-09T15:43:56.091Z",
+          "mode": "allocation",
+          "variant": "baseline",
+          "kind": 1,
+          "degree": 8,
+          "lifecycle": "fresh_graph",
+          "iterations": 2,
+          "elapsed_ns": 115433,
+          "requests": 950,
+          "requested_bytes": 119768,
+          "live_delta": 0,
+          "peak_delta": 22584
+        },
+        {
+          "started": "2026-09-09T15:43:56.091Z",
+          "finished": "2026-09-09T15:43:56.096Z",
+          "mode": "allocation",
+          "variant": "candidate",
+          "kind": 1,
+          "degree": 8,
+          "lifecycle": "fresh_graph",
+          "iterations": 2,
+          "elapsed_ns": 141700,
+          "requests": 950,
+          "requested_bytes": 119768,
+          "live_delta": 0,
+          "peak_delta": 22584
+        }
+      ],
+      "measurements": {
+        "baseline": {
+          "requests": {
+            "min": 3800,
+            "max": 3800
+          },
+          "requested_bytes": {
+            "min": 479072,
+            "max": 479072
+          },
+          "live_delta": {
+            "min": 0,
+            "max": 0
+          },
+          "peak_delta": {
+            "min": 22584,
+            "max": 22584
+          }
+        },
+        "candidate": {
+          "requests": {
+            "min": 3800,
+            "max": 3800
+          },
+          "requested_bytes": {
+            "min": 479072,
+            "max": 479072
+          },
+          "live_delta": {
+            "min": 0,
+            "max": 0
+          },
+          "peak_delta": {
+            "min": 22584,
+            "max": 22584
+          }
+        }
+      }
+    },
+    {
+      "kind": 1,
+      "degree": 24,
+      "lifecycle": "retained_graph",
+      "iterations": 8,
+      "observations": 6,
+      "pilots": [
+        {
+          "started": "2026-09-09T15:43:56.131Z",
+          "finished": "2026-09-09T15:43:56.137Z",
+          "mode": "allocation",
+          "variant": "baseline",
+          "kind": 1,
+          "degree": 24,
+          "lifecycle": "retained_graph",
+          "iterations": 2,
+          "elapsed_ns": 74865,
+          "requests": 692,
+          "requested_bytes": 61944,
+          "live_delta": 0,
+          "peak_delta": 7112
+        },
+        {
+          "started": "2026-09-09T15:43:56.137Z",
+          "finished": "2026-09-09T15:43:56.144Z",
+          "mode": "allocation",
+          "variant": "candidate",
+          "kind": 1,
+          "degree": 24,
+          "lifecycle": "retained_graph",
+          "iterations": 2,
+          "elapsed_ns": 77794,
+          "requests": 692,
+          "requested_bytes": 61944,
+          "live_delta": 0,
+          "peak_delta": 7112
+        }
+      ],
+      "measurements": {
+        "baseline": {
+          "requests": {
+            "min": 2768,
+            "max": 2768
+          },
+          "requested_bytes": {
+            "min": 247776,
+            "max": 247776
+          },
+          "live_delta": {
+            "min": 0,
+            "max": 0
+          },
+          "peak_delta": {
+            "min": 7112,
+            "max": 7112
+          }
+        },
+        "candidate": {
+          "requests": {
+            "min": 2768,
+            "max": 2768
+          },
+          "requested_bytes": {
+            "min": 247776,
+            "max": 247776
+          },
+          "live_delta": {
+            "min": 0,
+            "max": 0
+          },
+          "peak_delta": {
+            "min": 7112,
+            "max": 7112
+          }
+        }
+      }
+    },
+    {
+      "kind": 1,
+      "degree": 24,
+      "lifecycle": "fresh_graph",
+      "iterations": 8,
+      "observations": 6,
+      "pilots": [
+        {
+          "started": "2026-09-09T15:43:56.184Z",
+          "finished": "2026-09-09T15:43:56.191Z",
+          "mode": "allocation",
+          "variant": "baseline",
+          "kind": 1,
+          "degree": 24,
+          "lifecycle": "fresh_graph",
+          "iterations": 2,
+          "elapsed_ns": 363155,
+          "requests": 2178,
+          "requested_bytes": 296056,
+          "live_delta": 0,
+          "peak_delta": 43704
+        },
+        {
+          "started": "2026-09-09T15:43:56.191Z",
+          "finished": "2026-09-09T15:43:56.198Z",
+          "mode": "allocation",
+          "variant": "candidate",
+          "kind": 1,
+          "degree": 24,
+          "lifecycle": "fresh_graph",
+          "iterations": 2,
+          "elapsed_ns": 344887,
+          "requests": 2178,
+          "requested_bytes": 296056,
+          "live_delta": 0,
+          "peak_delta": 43704
+        }
+      ],
+      "measurements": {
+        "baseline": {
+          "requests": {
+            "min": 8712,
+            "max": 8712
+          },
+          "requested_bytes": {
+            "min": 1184224,
+            "max": 1184224
+          },
+          "live_delta": {
+            "min": 0,
+            "max": 0
+          },
+          "peak_delta": {
+            "min": 43704,
+            "max": 43704
+          }
+        },
+        "candidate": {
+          "requests": {
+            "min": 8712,
+            "max": 8712
+          },
+          "requested_bytes": {
+            "min": 1184224,
+            "max": 1184224
+          },
+          "live_delta": {
+            "min": 0,
+            "max": 0
+          },
+          "peak_delta": {
+            "min": 43704,
+            "max": 43704
+          }
+        }
+      }
+    }
+  ],
+  "limits": "Sixteen known closed-square four-fragment public tangent-order traversal workloads: degrees 1/3/8/24, rational and pi-scaled positive-weight curves, retained/fresh graphs from shared prebuilt input controls. Every result must certify the known single closed chain. Eight warm traversals after a precheck. End endpoint requests order one, start requests order three and is unchanged by candidate. Thus this measures the complete consumer, not an isolated high-order endpoint helper. Uninstrumented pinned CPU; separate Rust allocation counts, not RSS. Per-group bootstrap intervals are not multiplicity-adjusted or universal."
+}

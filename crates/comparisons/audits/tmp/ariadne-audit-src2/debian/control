@@ -1,0 +1,11 @@
+Source: ariadne
+Section: science
+Priority: optional
+Maintainer: Luca Geretti <luca.geretti@gmail.com>
+Build-Depends: cmake, build-essential, git, g++-12, libmpfr-dev, libcairo2-dev, gnuplot, python3-dev
+Homepage: https://www.ariadne.cps.org
+
+Package: ariadne
+Architecture: any
+Depends: libmpfr-dev, libcairo2-dev, gnuplot, python3-dev
+Description: C++ Library and Python Module for rigorous numerics and formal verification of cyber-physical systems. 

@@ -1,0 +1,1498 @@
+{
+  "source_manifest": "exact-source-axis-replay-20260926-v284-sources.json",
+  "source_directory": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/source-archives/exact-source-axis-replay-20260926-v284",
+  "cases": [
+    {
+      "binary": "exact-source-axis-replay-20260926-v284-hypercurve",
+      "name": "bezier_offset::conversion_tests::dense_tuple_point_sources_keep_their_algebraic_relations",
+      "returncode": 0,
+      "log": "exact-source-axis-replay-20260926-v284-case-000.log",
+      "elapsed_seconds": 0.012057762942276895
+    },
+    {
+      "binary": "exact-source-axis-replay-20260926-v284-hypercurve",
+      "name": "bezier_offset::conversion_tests::dense_tuple_sign_binds_exact_points_and_preserves_the_selected_root",
+      "returncode": 0,
+      "log": "exact-source-axis-replay-20260926-v284-case-001.log",
+      "elapsed_seconds": 0.003537517972290516
+    },
+    {
+      "binary": "exact-source-axis-replay-20260926-v284-hypercurve",
+      "name": "bezier_offset::conversion_tests::analytic_point_clones_reuse_the_certified_recursive_field",
+      "returncode": 0,
+      "log": "exact-source-axis-replay-20260926-v284-case-002.log",
+      "elapsed_seconds": 0.0035585660953074694
+    },
+    {
+      "binary": "exact-source-axis-replay-20260926-v284-hypercurve",
+      "name": "bezier_offset::conversion_tests::certified_circle_chord_endpoint_factor_preserves_roots_and_field",
+      "returncode": 0,
+      "log": "exact-source-axis-replay-20260926-v284-case-003.log",
+      "elapsed_seconds": 0.003521748003549874
+    },
+    {
+      "binary": "exact-source-axis-replay-20260926-v284-hypercurve",
+      "name": "bezier_offset::conversion_tests::chord_normal_dense_sheet_replay_keeps_even_roots_and_zero_components",
+      "returncode": 0,
+      "log": "exact-source-axis-replay-20260926-v284-case-004.log",
+      "elapsed_seconds": 0.0035807040985673666
+    },
+    {
+      "binary": "exact-source-axis-replay-20260926-v284-hypercurve",
+      "name": "bezier_offset::conversion_tests::chord_normal_dense_sheet_replay_rejects_conjugate_roots",
+      "returncode": 0,
+      "log": "exact-source-axis-replay-20260926-v284-case-005.log",
+      "elapsed_seconds": 0.0035277180140838027
+    },
+    {
+      "binary": "exact-source-axis-replay-20260926-v284-hypercurve",
+      "name": "bezier_offset::conversion_tests::chord_normal_recursive_frame_retains_center_and_oriented_unit_normal",
+      "returncode": 0,
+      "log": "exact-source-axis-replay-20260926-v284-case-006.log",
+      "elapsed_seconds": 0.031658920110203326
+    },
+    {
+      "binary": "exact-source-axis-replay-20260926-v284-hypercurve",
+      "name": "bezier_offset::conversion_tests::dense_chord_normal_circle_extends_over_an_independent_analytic_speed",
+      "returncode": 0,
+      "log": "exact-source-axis-replay-20260926-v284-case-007.log",
+      "elapsed_seconds": 0.03170911595225334
+    },
+    {
+      "binary": "exact-source-axis-replay-20260926-v284-hypercurve",
+      "name": "bezier_offset::conversion_tests::dense_chord_normal_incident_circle_retains_its_component",
+      "returncode": 0,
+      "log": "exact-source-axis-replay-20260926-v284-case-008.log",
+      "elapsed_seconds": 0.06380007602274418
+    },
+    {
+      "binary": "exact-source-axis-replay-20260926-v284-hypercurve",
+      "name": "bezier_offset::conversion_tests::dense_chord_normal_independent_anchor_uses_rank_independent_fallback",
+      "returncode": 0,
+      "log": "exact-source-axis-replay-20260926-v284-case-009.log",
+      "elapsed_seconds": 0.4142749299062416
+    },
+    {
+      "binary": "exact-source-axis-replay-20260926-v284-hypercurve",
+      "name": "bezier_offset::conversion_tests::dense_chord_normal_rejects_disjoint_and_finitely_clipped_chords",
+      "returncode": 0,
+      "log": "exact-source-axis-replay-20260926-v284-case-010.log",
+      "elapsed_seconds": 0.031758893048390746
+    },
+    {
+      "binary": "exact-source-axis-replay-20260926-v284-hypercurve",
+      "name": "bezier_offset::conversion_tests::dense_chord_normal_retains_rational_contacts_and_circle_components",
+      "returncode": 0,
+      "log": "exact-source-axis-replay-20260926-v284-case-011.log",
+      "elapsed_seconds": 0.21402593702077866
+    },
+    {
+      "binary": "exact-source-axis-replay-20260926-v284-hypercurve",
+      "name": "bezier_offset::conversion_tests::dense_chord_normal_tangency_retains_a_finite_endpoint",
+      "returncode": 0,
+      "log": "exact-source-axis-replay-20260926-v284-case-012.log",
+      "elapsed_seconds": 0.0035562169505283237
+    },
+    {
+      "binary": "exact-source-axis-replay-20260926-v284-hypercurve",
+      "name": "bezier_offset::conversion_tests::dense_projection_does_not_square_an_absent_radical",
+      "returncode": 0,
+      "log": "exact-source-axis-replay-20260926-v284-case-013.log",
+      "elapsed_seconds": 0.003520708065479994
+    },
+    {
+      "binary": "exact-source-axis-replay-20260926-v284-hypercurve",
+      "name": "bezier_offset::conversion_tests::dense_projection_keeps_roots_of_vanishing_radicands",
+      "returncode": 0,
+      "log": "exact-source-axis-replay-20260926-v284-case-014.log",
+      "elapsed_seconds": 0.0035865040263161063
+    },
+    {
+      "binary": "exact-source-axis-replay-20260926-v284-hypercurve",
+      "name": "bezier_offset::conversion_tests::dense_projection_single_radical_replays_the_authored_sheet",
+      "returncode": 0,
+      "log": "exact-source-axis-replay-20260926-v284-case-015.log",
+      "elapsed_seconds": 0.003537668031640351
+    },
+    {
+      "binary": "exact-source-axis-replay-20260926-v284-hypercurve",
+      "name": "bezier_offset::conversion_tests::dense_projection_zero_set_matches_all_four_conjugates",
+      "returncode": 0,
+      "log": "exact-source-axis-replay-20260926-v284-case-016.log",
+      "elapsed_seconds": 0.007597059011459351
+    },
+    {
+      "binary": "exact-source-axis-replay-20260926-v284-hypercurve",
+      "name": "bezier_offset::conversion_tests::dense_two_radical_square_matches_general_field_product",
+      "returncode": 0,
+      "log": "exact-source-axis-replay-20260926-v284-case-017.log",
+      "elapsed_seconds": 0.0034600530052557588
+    },
+    {
+      "binary": "exact-source-axis-replay-20260926-v284-hypercurve",
+      "name": "bezier_offset::conversion_tests::finite_circle_components_replay_pair_radial_and_recursive_inverses",
+      "returncode": 0,
+      "log": "exact-source-axis-replay-20260926-v284-case-018.log",
+      "elapsed_seconds": 0.31408236897550523
+    },
+    {
+      "binary": "exact-source-axis-replay-20260926-v284-hypercurve",
+      "name": "bezier_offset::conversion_tests::independent_field_chord_retains_a_third_contact_in_its_recursive_field",
+      "returncode": 0,
+      "log": "exact-source-axis-replay-20260926-v284-case-019.log",
+      "elapsed_seconds": 0.007565001025795937
+    },
+    {
+      "binary": "exact-source-axis-replay-20260926-v284-hypercurve",
+      "name": "bezier_offset::conversion_tests::independently_encoded_recursive_circles_intersect_and_recurse_exactly",
+      "returncode": 0,
+      "log": "exact-source-axis-replay-20260926-v284-case-020.log",
+      "elapsed_seconds": 0.11385458498261869
+    },
+    {
+      "binary": "exact-source-axis-replay-20260926-v284-hypercurve",
+      "name": "bezier_offset::conversion_tests::independently_encoded_recursive_circles_map_all_coincident_half_relations",
+      "returncode": 0,
+      "log": "exact-source-axis-replay-20260926-v284-case-021.log",
+      "elapsed_seconds": 0.11380121903494
+    },
+    {
+      "binary": "exact-source-axis-replay-20260926-v284-hypercurve",
+      "name": "bezier_offset::conversion_tests::independently_encoded_rotated_recursive_circles_intersect_exactly",
+      "returncode": 0,
+      "log": "exact-source-axis-replay-20260926-v284-case-022.log",
+      "elapsed_seconds": 0.2140244480688125
+    },
+    {
+      "binary": "exact-source-axis-replay-20260926-v284-hypercurve",
+      "name": "bezier_offset::conversion_tests::independently_encoded_scaled_rotated_recursive_circles_intersect_exactly",
+      "returncode": 0,
+      "log": "exact-source-axis-replay-20260926-v284-case-023.log",
+      "elapsed_seconds": 0.21392503392416984
+    },
+    {
+      "binary": "exact-source-axis-replay-20260926-v284-hypercurve",
+      "name": "bezier_offset::conversion_tests::independently_reencoded_recursive_parent_handles_exact_tangency",
+      "returncode": 0,
+      "log": "exact-source-axis-replay-20260926-v284-case-024.log",
+      "elapsed_seconds": 4.068908262997866
+    },
+    {
+      "binary": "exact-source-axis-replay-20260926-v284-hypercurve",
+      "name": "bezier_offset::conversion_tests::nonlinear_parameter_component_maps_recursive_projective_scalars_locally",
+      "returncode": 0,
+      "log": "exact-source-axis-replay-20260926-v284-case-025.log",
+      "elapsed_seconds": 0.007669503916986287
+    },
+    {
+      "binary": "exact-source-axis-replay-20260926-v284-hypercurve",
+      "name": "bezier_offset::conversion_tests::nonstructural_recursive_centers_handle_exact_tangency",
+      "returncode": 0,
+      "log": "exact-source-axis-replay-20260926-v284-case-026.log",
+      "elapsed_seconds": 0.3141049169935286
+    },
+    {
+      "binary": "exact-source-axis-replay-20260926-v284-hypercurve",
+      "name": "bezier_offset::conversion_tests::parallel_normal_recursive_frame_preserves_source_parameter_and_positive_speed",
+      "returncode": 0,
+      "log": "exact-source-axis-replay-20260926-v284-case-027.log",
+      "elapsed_seconds": 0.031756052980199456
+    },
+    {
+      "binary": "exact-source-axis-replay-20260926-v284-hypercurve",
+      "name": "bezier_offset::conversion_tests::quadratic_axis_factorization_replays_dense_multi_affine_products",
+      "returncode": 0,
+      "log": "exact-source-axis-replay-20260926-v284-case-028.log",
+      "elapsed_seconds": 0.007573530892841518
+    },
+    {
+      "binary": "exact-source-axis-replay-20260926-v284-hypercurve",
+      "name": "bezier_offset::conversion_tests::quadrivariate_selected_tuple_sign_recovers_an_even_correlated_root",
+      "returncode": 0,
+      "log": "exact-source-axis-replay-20260926-v284-case-029.log",
+      "elapsed_seconds": 0.0034941609483212233
+    },
+    {
+      "binary": "exact-source-axis-replay-20260926-v284-hypercurve",
+      "name": "bezier_offset::conversion_tests::quadrivariate_selected_tuple_sign_reduces_axis_relations_exactly",
+      "returncode": 0,
+      "log": "exact-source-axis-replay-20260926-v284-case-030.log",
+      "elapsed_seconds": 0.0035217490512877703
+    },
+    {
+      "binary": "exact-source-axis-replay-20260926-v284-hypercurve",
+      "name": "bezier_offset::conversion_tests::quadrivariate_selected_tuple_sign_separates_an_ordinary_nonzero_value",
+      "returncode": 0,
+      "log": "exact-source-axis-replay-20260926-v284-case-031.log",
+      "elapsed_seconds": 0.0035375369479879737
+    },
+    {
+      "binary": "exact-source-axis-replay-20260926-v284-hypercurve",
+      "name": "bezier_offset::conversion_tests::rank_independent_projection_crosses_the_dense_trivariate_boundary_exactly",
+      "returncode": 0,
+      "log": "exact-source-axis-replay-20260926-v284-case-032.log",
+      "elapsed_seconds": 0.06374571996275336
+    },
+    {
+      "binary": "exact-source-axis-replay-20260926-v284-hypercurve",
+      "name": "bezier_offset::conversion_tests::rank_independent_quadrivariate_projection_crosses_the_old_dense_boundary_exactly",
+      "returncode": 0,
+      "log": "exact-source-axis-replay-20260926-v284-case-033.log",
+      "elapsed_seconds": 0.3140973780537024
+    },
+    {
+      "binary": "exact-source-axis-replay-20260926-v284-hypercurve",
+      "name": "bezier_offset::conversion_tests::recursive_bounds_refine_each_shared_source_once",
+      "returncode": 0,
+      "log": "exact-source-axis-replay-20260926-v284-case-034.log",
+      "elapsed_seconds": 0.01567040605004877
+    },
+    {
+      "binary": "exact-source-axis-replay-20260926-v284-hypercurve",
+      "name": "bezier_offset::conversion_tests::recursive_chord_kernel_retains_all_cubic_crossings_with_opposite_endpoint_sides",
+      "returncode": 0,
+      "log": "exact-source-axis-replay-20260926-v284-case-035.log",
+      "elapsed_seconds": 0.0035349070094525814
+    },
+    {
+      "binary": "exact-source-axis-replay-20260926-v284-hypercurve",
+      "name": "bezier_offset::conversion_tests::recursive_chord_parallel_local_roots_reject_conjugates_and_clip_exactly",
+      "returncode": 0,
+      "log": "exact-source-axis-replay-20260926-v284-case-036.log",
+      "elapsed_seconds": 0.03180144005455077
+    },
+    {
+      "binary": "exact-source-axis-replay-20260926-v284-hypercurve",
+      "name": "bezier_offset::conversion_tests::recursive_chord_parallel_retains_owned_roots_across_exterior_ranges",
+      "returncode": 0,
+      "log": "exact-source-axis-replay-20260926-v284-case-037.log",
+      "elapsed_seconds": 0.06376412895042449
+    },
+    {
+      "binary": "exact-source-axis-replay-20260926-v284-hypercurve",
+      "name": "bezier_offset::conversion_tests::recursive_chord_parallel_zero_norm_midpoint_is_not_a_component",
+      "returncode": 0,
+      "log": "exact-source-axis-replay-20260926-v284-case-038.log",
+      "elapsed_seconds": 0.015613158931955695
+    },
+    {
+      "binary": "exact-source-axis-replay-20260926-v284-hypercurve",
+      "name": "bezier_offset::conversion_tests::recursive_chord_unrotated_derived_linear_and_equality_queries_are_complete",
+      "returncode": 0,
+      "log": "exact-source-axis-replay-20260926-v284-case-039.log",
+      "elapsed_seconds": 0.11379318905528635
+    },
+    {
+      "binary": "exact-source-axis-replay-20260926-v284-hypercurve",
+      "name": "bezier_offset::conversion_tests::recursive_circle_contact_tangent_sign_follows_root_branch",
+      "returncode": 0,
+      "log": "exact-source-axis-replay-20260926-v284-case-040.log",
+      "elapsed_seconds": 0.003499860060401261
+    },
+    {
+      "binary": "exact-source-axis-replay-20260926-v284-hypercurve",
+      "name": "bezier_offset::conversion_tests::recursive_circle_queries_preserve_tangent_scale_and_local_roots",
+      "returncode": 0,
+      "log": "exact-source-axis-replay-20260926-v284-case-041.log",
+      "elapsed_seconds": 2.2666103260125965
+    },
+    {
+      "binary": "exact-source-axis-replay-20260926-v284-hypercurve",
+      "name": "bezier_offset::conversion_tests::recursive_field_embeddings_do_not_consume_approximate_generator_equalities",
+      "returncode": 0,
+      "log": "exact-source-axis-replay-20260926-v284-case-042.log",
+      "elapsed_seconds": 0.003559716045856476
+    },
+    {
+      "binary": "exact-source-axis-replay-20260926-v284-hypercurve",
+      "name": "bezier_offset::conversion_tests::recursive_field_shares_zero_towers_and_folds_identities",
+      "returncode": 0,
+      "log": "exact-source-axis-replay-20260926-v284-case-043.log",
+      "elapsed_seconds": 0.0035894050961360335
+    },
+    {
+      "binary": "exact-source-axis-replay-20260926-v284-hypercurve",
+      "name": "bezier_offset::conversion_tests::recursive_line_contact_circles_publish_tangent_contacts_without_flattening",
+      "returncode": 0,
+      "log": "exact-source-axis-replay-20260926-v284-case-044.log",
+      "elapsed_seconds": 0.16389826394151896
+    },
+    {
+      "binary": "exact-source-axis-replay-20260926-v284-hypercurve",
+      "name": "bezier_offset::conversion_tests::recursive_line_contact_circles_publish_transverse_contacts_without_flattening",
+      "returncode": 0,
+      "log": "exact-source-axis-replay-20260926-v284-case-045.log",
+      "elapsed_seconds": 0.11381411703769118
+    },
+    {
+      "binary": "exact-source-axis-replay-20260926-v284-hypercurve",
+      "name": "bezier_offset::conversion_tests::recursive_line_contact_circles_reject_disjoint_supports_without_flattening",
+      "returncode": 0,
+      "log": "exact-source-axis-replay-20260926-v284-case-046.log",
+      "elapsed_seconds": 0.0637842370197177
+    },
+    {
+      "binary": "exact-source-axis-replay-20260926-v284-hypercurve",
+      "name": "bezier_offset::conversion_tests::recursive_local_isolation_reuses_exact_signs_below_interval_precision",
+      "returncode": 0,
+      "log": "exact-source-axis-replay-20260926-v284-case-047.log",
+      "elapsed_seconds": 0.0075795300072059035
+    },
+    {
+      "binary": "exact-source-axis-replay-20260926-v284-hypercurve",
+      "name": "bezier_offset::conversion_tests::recursive_ordered_field_isolation_does_not_guess_polynomial_degree",
+      "returncode": 0,
+      "log": "exact-source-axis-replay-20260926-v284-case-048.log",
+      "elapsed_seconds": 0.003516928991302848
+    },
+    {
+      "binary": "exact-source-axis-replay-20260926-v284-hypercurve",
+      "name": "bezier_offset::conversion_tests::recursive_pair_angle_queries_observe_requested_policy_on_both_sides",
+      "returncode": 0,
+      "log": "exact-source-axis-replay-20260926-v284-case-049.log",
+      "elapsed_seconds": 0.015650477027520537
+    },
+    {
+      "binary": "exact-source-axis-replay-20260926-v284-hypercurve",
+      "name": "bezier_offset::conversion_tests::recursive_parallel_expression_signs_keep_the_selected_speed_sheet",
+      "returncode": 0,
+      "log": "exact-source-axis-replay-20260926-v284-case-050.log",
+      "elapsed_seconds": 0.015647418098524213
+    },
+    {
+      "binary": "exact-source-axis-replay-20260926-v284-hypercurve",
+      "name": "bezier_offset::conversion_tests::recursive_parallel_expression_signs_reject_poles_and_zero_speed",
+      "returncode": 0,
+      "log": "exact-source-axis-replay-20260926-v284-case-051.log",
+      "elapsed_seconds": 0.06380162702407688
+    },
+    {
+      "binary": "exact-source-axis-replay-20260926-v284-hypercurve",
+      "name": "bezier_offset::conversion_tests::recursive_parallel_interval_filter_preserves_exact_zeros",
+      "returncode": 0,
+      "log": "exact-source-axis-replay-20260926-v284-case-052.log",
+      "elapsed_seconds": 0.003531388007104397
+    },
+    {
+      "binary": "exact-source-axis-replay-20260926-v284-hypercurve",
+      "name": "bezier_offset::conversion_tests::recursive_parameter_projection_preserves_roots_through_refinement_and_charts",
+      "returncode": 0,
+      "log": "exact-source-axis-replay-20260926-v284-case-053.log",
+      "elapsed_seconds": 0.015681155025959015
+    },
+    {
+      "binary": "exact-source-axis-replay-20260926-v284-hypercurve",
+      "name": "bezier_offset::conversion_tests::recursive_polynomial_crossing_signs_survive_exact_midpoint_collapse",
+      "returncode": 0,
+      "log": "exact-source-axis-replay-20260926-v284-case-054.log",
+      "elapsed_seconds": 0.003577115014195442
+    },
+    {
+      "binary": "exact-source-axis-replay-20260926-v284-hypercurve",
+      "name": "bezier_offset::conversion_tests::recursive_polynomial_isolators_keep_the_selected_root_after_endpoint_deflation",
+      "returncode": 0,
+      "log": "exact-source-axis-replay-20260926-v284-case-055.log",
+      "elapsed_seconds": 0.00351955892983824
+    },
+    {
+      "binary": "exact-source-axis-replay-20260926-v284-hypercurve",
+      "name": "bezier_offset::conversion_tests::recursive_polynomial_predicates_reuse_the_retained_field_relation",
+      "returncode": 0,
+      "log": "exact-source-axis-replay-20260926-v284-case-056.log",
+      "elapsed_seconds": 0.007537232944741845
+    },
+    {
+      "binary": "exact-source-axis-replay-20260926-v284-hypercurve",
+      "name": "bezier_offset::conversion_tests::recursive_polynomial_queries_reuse_a_selected_proper_factor",
+      "returncode": 0,
+      "log": "exact-source-axis-replay-20260926-v284-case-057.log",
+      "elapsed_seconds": 0.03173041495028883
+    },
+    {
+      "binary": "exact-source-axis-replay-20260926-v284-hypercurve",
+      "name": "bezier_offset::conversion_tests::recursive_polynomial_refinement_reuses_certified_bounds_and_identity",
+      "returncode": 0,
+      "log": "exact-source-axis-replay-20260926-v284-case-058.log",
+      "elapsed_seconds": 0.007608707994222641
+    },
+    {
+      "binary": "exact-source-axis-replay-20260926-v284-hypercurve",
+      "name": "bezier_offset::conversion_tests::recursive_projective_bounds_enclose_scaled_nested_radicals",
+      "returncode": 0,
+      "log": "exact-source-axis-replay-20260926-v284-case-059.log",
+      "elapsed_seconds": 0.007572431000880897
+    },
+    {
+      "binary": "exact-source-axis-replay-20260926-v284-hypercurve",
+      "name": "bezier_offset::conversion_tests::recursive_projective_bounds_keep_unwitnessed_source_fallback",
+      "returncode": 0,
+      "log": "exact-source-axis-replay-20260926-v284-case-060.log",
+      "elapsed_seconds": 0.0035071299644187093
+    },
+    {
+      "binary": "exact-source-axis-replay-20260926-v284-hypercurve",
+      "name": "bezier_offset::conversion_tests::recursive_projective_bounds_reuse_positive_denominator_certificate",
+      "returncode": 0,
+      "log": "exact-source-axis-replay-20260926-v284-case-061.log",
+      "elapsed_seconds": 0.01558262191247195
+    },
+    {
+      "binary": "exact-source-axis-replay-20260926-v284-hypercurve",
+      "name": "bezier_offset::conversion_tests::recursive_projective_center_projects_complete_nonlinear_fixed_distance",
+      "returncode": 0,
+      "log": "exact-source-axis-replay-20260926-v284-case-062.log",
+      "elapsed_seconds": 0.1639032739913091
+    },
+    {
+      "binary": "exact-source-axis-replay-20260926-v284-hypercurve",
+      "name": "bezier_offset::conversion_tests::recursive_projective_chord_handles_finite_contact_multiplicities",
+      "returncode": 0,
+      "log": "exact-source-axis-replay-20260926-v284-case-063.log",
+      "elapsed_seconds": 0.11388933297712356
+    },
+    {
+      "binary": "exact-source-axis-replay-20260926-v284-hypercurve",
+      "name": "bezier_offset::conversion_tests::recursive_projective_chord_partitions_collinear_rational_images",
+      "returncode": 0,
+      "log": "exact-source-axis-replay-20260926-v284-case-064.log",
+      "elapsed_seconds": 0.16390161402523518
+    },
+    {
+      "binary": "exact-source-axis-replay-20260926-v284-hypercurve",
+      "name": "bezier_offset::conversion_tests::recursive_projective_chord_rejects_constant_conjugate_norm_component",
+      "returncode": 0,
+      "log": "exact-source-axis-replay-20260926-v284-case-065.log",
+      "elapsed_seconds": 0.0035289679653942585
+    },
+    {
+      "binary": "exact-source-axis-replay-20260926-v284-hypercurve",
+      "name": "bezier_offset::conversion_tests::recursive_projective_chord_replays_identically_zero_norm_sheet",
+      "returncode": 0,
+      "log": "exact-source-axis-replay-20260926-v284-case-066.log",
+      "elapsed_seconds": 0.0035366580123081803
+    },
+    {
+      "binary": "exact-source-axis-replay-20260926-v284-hypercurve",
+      "name": "bezier_offset::conversion_tests::recursive_projective_chord_replays_nonzero_analytic_parallel",
+      "returncode": 0,
+      "log": "exact-source-axis-replay-20260926-v284-case-067.log",
+      "elapsed_seconds": 0.007593099027872086
+    },
+    {
+      "binary": "exact-source-axis-replay-20260926-v284-hypercurve",
+      "name": "bezier_offset::conversion_tests::recursive_projective_chord_retains_positive_degree_selected_conjugate_fiber",
+      "returncode": 0,
+      "log": "exact-source-axis-replay-20260926-v284-case-068.log",
+      "elapsed_seconds": 0.03167712804861367
+    },
+    {
+      "binary": "exact-source-axis-replay-20260926-v284-hypercurve",
+      "name": "bezier_offset::conversion_tests::recursive_projective_content_normalization_preserves_selected_fields",
+      "returncode": 0,
+      "log": "exact-source-axis-replay-20260926-v284-case-069.log",
+      "elapsed_seconds": 0.007617068011313677
+    },
+    {
+      "binary": "exact-source-axis-replay-20260926-v284-hypercurve",
+      "name": "bezier_offset::conversion_tests::recursive_projective_kernel_imports_similarity_of_algebraic_endpoints",
+      "returncode": 0,
+      "log": "exact-source-axis-replay-20260926-v284-case-070.log",
+      "elapsed_seconds": 0.007589139975607395
+    },
+    {
+      "binary": "exact-source-axis-replay-20260926-v284-hypercurve",
+      "name": "bezier_offset::conversion_tests::recursive_projective_oblique_chord_handles_even_contact_multiplicity",
+      "returncode": 0,
+      "log": "exact-source-axis-replay-20260926-v284-case-071.log",
+      "elapsed_seconds": 0.11381868692114949
+    },
+    {
+      "binary": "exact-source-axis-replay-20260926-v284-hypercurve",
+      "name": "bezier_offset::conversion_tests::recursive_quadratic_endpoint_roots_keep_the_original_field",
+      "returncode": 0,
+      "log": "exact-source-axis-replay-20260926-v284-case-072.log",
+      "elapsed_seconds": 0.0035132899647578597
+    },
+    {
+      "binary": "exact-source-axis-replay-20260926-v284-hypercurve",
+      "name": "bezier_offset::conversion_tests::recursive_radial_closure_chords_sign_a_shared_exact_vertex",
+      "returncode": 0,
+      "log": "exact-source-axis-replay-20260926-v284-case-073.log",
+      "elapsed_seconds": 0.06378710700664669
+    },
+    {
+      "binary": "exact-source-axis-replay-20260926-v284-hypercurve",
+      "name": "bezier_offset::conversion_tests::recursive_rational_contact_orients_a_retained_radial_endpoint",
+      "returncode": 0,
+      "log": "exact-source-axis-replay-20260926-v284-case-074.log",
+      "elapsed_seconds": 0.16389288508798927
+    },
+    {
+      "binary": "exact-source-axis-replay-20260926-v284-hypercurve",
+      "name": "bezier_offset::conversion_tests::recursive_real_witnesses_do_not_require_unused_selected_generators",
+      "returncode": 0,
+      "log": "exact-source-axis-replay-20260926-v284-case-075.log",
+      "elapsed_seconds": 0.003533747047185898
+    },
+    {
+      "binary": "exact-source-axis-replay-20260926-v284-hypercurve",
+      "name": "bezier_offset::conversion_tests::recursive_scalar_comparison_replays_exact_equality_before_approximation",
+      "returncode": 0,
+      "log": "exact-source-axis-replay-20260926-v284-case-076.log",
+      "elapsed_seconds": 0.003490290022455156
+    },
+    {
+      "binary": "exact-source-axis-replay-20260926-v284-hypercurve",
+      "name": "bezier_offset::conversion_tests::recursive_scalar_native_replay_preserves_selected_source_authority",
+      "returncode": 0,
+      "log": "exact-source-axis-replay-20260926-v284-case-077.log",
+      "elapsed_seconds": 0.0034976298920810223
+    },
+    {
+      "binary": "exact-source-axis-replay-20260926-v284-hypercurve",
+      "name": "bezier_offset::conversion_tests::recursive_scalar_publication_accepts_general_exact_witnesses",
+      "returncode": 0,
+      "log": "exact-source-axis-replay-20260926-v284-case-078.log",
+      "elapsed_seconds": 0.0035745250061154366
+    },
+    {
+      "binary": "exact-source-axis-replay-20260926-v284-hypercurve",
+      "name": "bezier_offset::conversion_tests::recursive_selected_radial_diameter_chord_intersects_a_rational_quadratic_approximate",
+      "returncode": 0,
+      "log": "exact-source-axis-replay-20260926-v284-case-079.log",
+      "elapsed_seconds": 45.171504550031386
+    },
+    {
+      "binary": "exact-source-axis-replay-20260926-v284-hypercurve",
+      "name": "bezier_offset::conversion_tests::recursive_selected_radial_diameter_chord_intersects_a_rational_quadratic_strict",
+      "returncode": 0,
+      "log": "exact-source-axis-replay-20260926-v284-case-080.log",
+      "elapsed_seconds": 45.17168420692906
+    },
+    {
+      "binary": "exact-source-axis-replay-20260926-v284-hypercurve",
+      "name": "bezier_offset::conversion_tests::recursive_selected_radial_line_image_preserves_target_orientation",
+      "returncode": 0,
+      "log": "exact-source-axis-replay-20260926-v284-case-081.log",
+      "elapsed_seconds": 0.1138616839889437
+    },
+    {
+      "binary": "exact-source-axis-replay-20260926-v284-hypercurve",
+      "name": "bezier_offset::conversion_tests::recursive_selected_radial_rational_kernel_retains_singular_circle_contacts",
+      "returncode": 0,
+      "log": "exact-source-axis-replay-20260926-v284-case-082.log",
+      "elapsed_seconds": 0.11385949503164738
+    },
+    {
+      "binary": "exact-source-axis-replay-20260926-v284-hypercurve",
+      "name": "bezier_offset::conversion_tests::recursive_sign_replays_correlated_real_witness_before_deep_intervals",
+      "returncode": 0,
+      "log": "exact-source-axis-replay-20260926-v284-case-083.log",
+      "elapsed_seconds": 0.0035304579650983214
+    },
+    {
+      "binary": "exact-source-axis-replay-20260926-v284-hypercurve",
+      "name": "bezier_offset::conversion_tests::recursive_source_refinement_keeps_its_equation_after_an_exact_midpoint",
+      "returncode": 0,
+      "log": "exact-source-axis-replay-20260926-v284-case-084.log",
+      "elapsed_seconds": 0.007555191987194121
+    },
+    {
+      "binary": "exact-source-axis-replay-20260926-v284-hypercurve",
+      "name": "bezier_offset::conversion_tests::represented_recursive_contact_centers_handle_exact_tangency",
+      "returncode": 0,
+      "log": "exact-source-axis-replay-20260926-v284-case-085.log",
+      "elapsed_seconds": 25.596088460995816
+    },
+    {
+      "binary": "exact-source-axis-replay-20260926-v284-hypercurve",
+      "name": "bezier_offset::conversion_tests::retained_real_witnesses_collapse_recursive_source_box_coefficients",
+      "returncode": 0,
+      "log": "exact-source-axis-replay-20260926-v284-case-086.log",
+      "elapsed_seconds": 0.0036035729572176933
+    },
+    {
+      "binary": "exact-source-axis-replay-20260926-v284-hypercurve",
+      "name": "bezier_offset::conversion_tests::selected_center_line_contact_stays_in_recursive_quadratic_solver",
+      "returncode": 0,
+      "log": "exact-source-axis-replay-20260926-v284-case-087.log",
+      "elapsed_seconds": 0.01569634396582842
+    },
+    {
+      "binary": "exact-source-axis-replay-20260926-v284-hypercurve",
+      "name": "bezier_offset::conversion_tests::selected_dense_kernel_projects_cubic_past_foreign_wide_components",
+      "returncode": 0,
+      "log": "exact-source-axis-replay-20260926-v284-case-088.log",
+      "elapsed_seconds": 0.007574810995720327
+    },
+    {
+      "binary": "exact-source-axis-replay-20260926-v284-hypercurve",
+      "name": "bezier_offset::conversion_tests::selected_parallel_normal_circle_accepts_a_center_locus_cusp",
+      "returncode": 0,
+      "log": "exact-source-axis-replay-20260926-v284-case-089.log",
+      "elapsed_seconds": 0.0035271579399704933
+    },
+    {
+      "binary": "exact-source-axis-replay-20260926-v284-hypercurve",
+      "name": "bezier_offset::conversion_tests::selected_parallel_normal_circle_intersects_genuinely_analytic_parallel_in_one_fiber",
+      "returncode": 0,
+      "log": "exact-source-axis-replay-20260926-v284-case-090.log",
+      "elapsed_seconds": 117.61514119105414
+    },
+    {
+      "binary": "exact-source-axis-replay-20260926-v284-hypercurve",
+      "name": "bezier_offset::conversion_tests::selected_parallel_normal_circle_intersects_rational_curves_exactly",
+      "returncode": 0,
+      "log": "exact-source-axis-replay-20260926-v284-case-091.log",
+      "elapsed_seconds": 0.031785122002474964
+    },
+    {
+      "binary": "exact-source-axis-replay-20260926-v284-hypercurve",
+      "name": "bezier_offset::conversion_tests::selected_parallel_normal_circle_keeps_contacts_when_center_refines_to_exact",
+      "returncode": 0,
+      "log": "exact-source-axis-replay-20260926-v284-case-092.log",
+      "elapsed_seconds": 0.007623797049745917
+    },
+    {
+      "binary": "exact-source-axis-replay-20260926-v284-hypercurve",
+      "name": "bezier_offset::conversion_tests::selected_parallel_normal_circle_pair_decides_every_concentric_case",
+      "returncode": 0,
+      "log": "exact-source-axis-replay-20260926-v284-case-093.log",
+      "elapsed_seconds": 0.0034996100002899766
+    },
+    {
+      "binary": "exact-source-axis-replay-20260926-v284-hypercurve",
+      "name": "bezier_offset::conversion_tests::selected_parallel_normal_circle_retains_every_represented_point_exactly",
+      "returncode": 0,
+      "log": "exact-source-axis-replay-20260926-v284-case-094.log",
+      "elapsed_seconds": 0.015629988978616893
+    },
+    {
+      "binary": "exact-source-axis-replay-20260926-v284-hypercurve",
+      "name": "bezier_offset::conversion_tests::selected_parallel_normal_circle_retains_general_rational_contacts_in_one_fiber",
+      "returncode": 0,
+      "log": "exact-source-axis-replay-20260926-v284-case-095.log",
+      "elapsed_seconds": 0.03167658892925829
+    },
+    {
+      "binary": "exact-source-axis-replay-20260926-v284-hypercurve",
+      "name": "bezier_offset::conversion_tests::selected_parallel_normal_circle_retains_general_rational_overlaps_in_one_fiber",
+      "returncode": 0,
+      "log": "exact-source-axis-replay-20260926-v284-case-096.log",
+      "elapsed_seconds": 0.015673714922741055
+    },
+    {
+      "binary": "exact-source-axis-replay-20260926-v284-hypercurve",
+      "name": "bezier_offset::conversion_tests::selected_parallel_normal_circle_retains_strict_replay_after_exact_approximate_request",
+      "returncode": 0,
+      "log": "exact-source-axis-replay-20260926-v284-case-097.log",
+      "elapsed_seconds": 0.0035804740618914366
+    },
+    {
+      "binary": "exact-source-axis-replay-20260926-v284-hypercurve",
+      "name": "bezier_offset::conversion_tests::selected_parallel_normal_circle_reuses_rationalized_analytic_parallel_components",
+      "returncode": 0,
+      "log": "exact-source-axis-replay-20260926-v284-case-098.log",
+      "elapsed_seconds": 0.21400735899806023
+    },
+    {
+      "binary": "exact-source-axis-replay-20260926-v284-hypercurve",
+      "name": "bezier_offset::conversion_tests::selected_parallel_normal_circle_uses_direct_exact_winding",
+      "returncode": 0,
+      "log": "exact-source-axis-replay-20260926-v284-case-099.log",
+      "elapsed_seconds": 0.0035323379561305046
+    },
+    {
+      "binary": "exact-source-axis-replay-20260926-v284-hypercurve",
+      "name": "bezier_offset::conversion_tests::selected_parallel_normal_incident_circle_selects_the_positive_speed_component",
+      "returncode": 0,
+      "log": "exact-source-axis-replay-20260926-v284-case-100.log",
+      "elapsed_seconds": 0.007621267926879227
+    },
+    {
+      "binary": "exact-source-axis-replay-20260926-v284-hypercurve",
+      "name": "bezier_offset::conversion_tests::selected_parallel_normal_positive_dimensional_projection_rejects_conjugate_components",
+      "returncode": 0,
+      "log": "exact-source-axis-replay-20260926-v284-case-101.log",
+      "elapsed_seconds": 0.0035581260453909636
+    },
+    {
+      "binary": "exact-source-axis-replay-20260926-v284-hypercurve",
+      "name": "bezier_offset::conversion_tests::selected_parallel_normal_radial_tangent_excludes_the_complementary_half",
+      "returncode": 0,
+      "log": "exact-source-axis-replay-20260926-v284-case-102.log",
+      "elapsed_seconds": 0.003601563978008926
+    },
+    {
+      "binary": "exact-source-axis-replay-20260926-v284-hypercurve",
+      "name": "bezier_offset::conversion_tests::selected_parallel_normal_tangent_replay_accepts_an_exact_center_parameter",
+      "returncode": 0,
+      "log": "exact-source-axis-replay-20260926-v284-case-103.log",
+      "elapsed_seconds": 0.007671474013477564
+    },
+    {
+      "binary": "exact-source-axis-replay-20260926-v284-hypercurve",
+      "name": "bezier_offset::conversion_tests::selected_radial_frame_joins_an_equivalent_recursive_point_base",
+      "returncode": 0,
+      "log": "exact-source-axis-replay-20260926-v284-case-104.log",
+      "elapsed_seconds": 0.007603528909385204
+    },
+    {
+      "binary": "exact-source-axis-replay-20260926-v284-hypercurve",
+      "name": "bezier_offset::conversion_tests::unrelated_recursive_circle_centers_intersect_exactly",
+      "returncode": 0,
+      "log": "exact-source-axis-replay-20260926-v284-case-105.log",
+      "elapsed_seconds": 0.36418139399029315
+    },
+    {
+      "binary": "exact-source-axis-replay-20260926-v284-hypercurve",
+      "name": "bezier_offset::conversion_tests::unused_positive_radicals_do_not_block_recursive_enclosures",
+      "returncode": 0,
+      "log": "exact-source-axis-replay-20260926-v284-case-106.log",
+      "elapsed_seconds": 0.0035118390806019306
+    },
+    {
+      "binary": "exact-source-axis-replay-20260926-v284-hypercurve",
+      "name": "bezier_parameter::conversion_tests::algebraic_sign_filter_has_no_fixed_refinement_cap",
+      "returncode": 0,
+      "log": "exact-source-axis-replay-20260926-v284-case-107.log",
+      "elapsed_seconds": 0.0035204089945182204
+    },
+    {
+      "binary": "exact-source-axis-replay-20260926-v284-hypercurve",
+      "name": "bezier_parameter::conversion_tests::algebraic_sign_filter_preserves_selected_root_and_boundary_ownership",
+      "returncode": 0,
+      "log": "exact-source-axis-replay-20260926-v284-case-108.log",
+      "elapsed_seconds": 0.0035336080472916365
+    },
+    {
+      "binary": "exact-source-axis-replay-20260926-v284-hypercurve",
+      "name": "bezier_parameter::conversion_tests::algebraic_sign_queries_reuse_the_singleton_for_tiny_separations",
+      "returncode": 0,
+      "log": "exact-source-axis-replay-20260926-v284-case-109.log",
+      "elapsed_seconds": 0.0035306980134919286
+    },
+    {
+      "binary": "exact-source-axis-replay-20260926-v284-hypercurve",
+      "name": "bezier_parameter::conversion_tests::algebraic_unit_complement_preserves_the_exact_singleton_root",
+      "returncode": 0,
+      "log": "exact-source-axis-replay-20260926-v284-case-110.log",
+      "elapsed_seconds": 0.003498289966955781
+    },
+    {
+      "binary": "exact-source-axis-replay-20260926-v284-hypercurve",
+      "name": "bezier_parameter::conversion_tests::arbitrary_degree_nonrational_bernstein_isolates_every_simple_root",
+      "returncode": 0,
+      "log": "exact-source-axis-replay-20260926-v284-case-111.log",
+      "elapsed_seconds": 0.007565972045995295
+    },
+    {
+      "binary": "exact-source-axis-replay-20260926-v284-hypercurve",
+      "name": "bezier_parameter::conversion_tests::authoritative_sturm_sequence_has_no_historical_degree_cap",
+      "returncode": 0,
+      "log": "exact-source-axis-replay-20260926-v284-case-112.log",
+      "elapsed_seconds": 0.0075692819664254785
+    },
+    {
+      "binary": "exact-source-axis-replay-20260926-v284-hypercurve",
+      "name": "bezier_parameter::conversion_tests::bernstein_simple_root_certificates_avoid_multiplicity_sturm_rebuilds",
+      "returncode": 0,
+      "log": "exact-source-axis-replay-20260926-v284-case-113.log",
+      "elapsed_seconds": 0.0035616259556263685
+    },
+    {
+      "binary": "exact-source-axis-replay-20260926-v284-hypercurve",
+      "name": "bezier_parameter::conversion_tests::bernstein_to_power_remains_exact_beyond_u64_binomials",
+      "returncode": 0,
+      "log": "exact-source-axis-replay-20260926-v284-case-114.log",
+      "elapsed_seconds": 0.0036231010453775525
+    },
+    {
+      "binary": "exact-source-axis-replay-20260926-v284-hypercurve",
+      "name": "bezier_parameter::conversion_tests::cached_scalar_refinement_preserves_the_selected_root_authority",
+      "returncode": 0,
+      "log": "exact-source-axis-replay-20260926-v284-case-115.log",
+      "elapsed_seconds": 0.003521739039570093
+    },
+    {
+      "binary": "exact-source-axis-replay-20260926-v284-hypercurve",
+      "name": "bezier_parameter::conversion_tests::carried_sturm_variations_match_partition_root_counts",
+      "returncode": 0,
+      "log": "exact-source-axis-replay-20260926-v284-case-116.log",
+      "elapsed_seconds": 0.0035084800329059362
+    },
+    {
+      "binary": "exact-source-axis-replay-20260926-v284-hypercurve",
+      "name": "bezier_parameter::conversion_tests::collapsed_exact_real_representation_imports_as_an_exact_parameter",
+      "returncode": 0,
+      "log": "exact-source-axis-replay-20260926-v284-case-117.log",
+      "elapsed_seconds": 0.0035003599477931857
+    },
+    {
+      "binary": "exact-source-axis-replay-20260926-v284-hypercurve",
+      "name": "bezier_parameter::conversion_tests::composed_projective_charts_share_one_root_without_growing_history_or_scale",
+      "returncode": 0,
+      "log": "exact-source-axis-replay-20260926-v284-case-118.log",
+      "elapsed_seconds": 0.003499200101941824
+    },
+    {
+      "binary": "exact-source-axis-replay-20260926-v284-hypercurve",
+      "name": "bezier_parameter::conversion_tests::decreasing_root_charts_preserve_owned_and_excluded_endpoints",
+      "returncode": 0,
+      "log": "exact-source-axis-replay-20260926-v284-case-119.log",
+      "elapsed_seconds": 0.003501820028759539
+    },
+    {
+      "binary": "exact-source-axis-replay-20260926-v284-hypercurve",
+      "name": "bezier_parameter::conversion_tests::finite_interval_isolation_has_no_fixed_dyadic_depth_limit",
+      "returncode": 0,
+      "log": "exact-source-axis-replay-20260926-v284-case-120.log",
+      "elapsed_seconds": 0.03164429101161659
+    },
+    {
+      "binary": "exact-source-axis-replay-20260926-v284-hypercurve",
+      "name": "bezier_parameter::conversion_tests::imported_root_comparisons_preserve_owned_and_excluded_endpoints",
+      "returncode": 0,
+      "log": "exact-source-axis-replay-20260926-v284-case-121.log",
+      "elapsed_seconds": 0.0034909109817817807
+    },
+    {
+      "binary": "exact-source-axis-replay-20260926-v284-hypercurve",
+      "name": "bezier_parameter::conversion_tests::incident_ray_isolation_orders_exact_roots_away_from_the_anchor",
+      "returncode": 0,
+      "log": "exact-source-axis-replay-20260926-v284-case-122.log",
+      "elapsed_seconds": 0.003532088012434542
+    },
+    {
+      "binary": "exact-source-axis-replay-20260926-v284-hypercurve",
+      "name": "bezier_parameter::conversion_tests::incident_ray_isolation_retains_irrational_exterior_root_authority",
+      "returncode": 0,
+      "log": "exact-source-axis-replay-20260926-v284-case-123.log",
+      "elapsed_seconds": 0.003520529018715024
+    },
+    {
+      "binary": "exact-source-axis-replay-20260926-v284-hypercurve",
+      "name": "bezier_parameter::conversion_tests::independent_singleton_charts_reuse_nested_root_identity",
+      "returncode": 0,
+      "log": "exact-source-axis-replay-20260926-v284-case-124.log",
+      "elapsed_seconds": 0.0035598259419202805
+    },
+    {
+      "binary": "exact-source-axis-replay-20260926-v284-hypercurve",
+      "name": "bezier_parameter::conversion_tests::interior_probes_do_not_embed_endpoint_expressions",
+      "returncode": 0,
+      "log": "exact-source-axis-replay-20260926-v284-case-125.log",
+      "elapsed_seconds": 0.0035452170995995402
+    },
+    {
+      "binary": "exact-source-axis-replay-20260926-v284-hypercurve",
+      "name": "bezier_parameter::conversion_tests::interval_root_isolation_uses_original_polynomial_and_closed_boundaries",
+      "returncode": 0,
+      "log": "exact-source-axis-replay-20260926-v284-case-126.log",
+      "elapsed_seconds": 0.003550446010194719
+    },
+    {
+      "binary": "exact-source-axis-replay-20260926-v284-hypercurve",
+      "name": "bezier_parameter::conversion_tests::isolation_retains_large_rational_roots_until_projection_is_requested",
+      "returncode": 0,
+      "log": "exact-source-axis-replay-20260926-v284-case-127.log",
+      "elapsed_seconds": 0.007585369981825352
+    },
+    {
+      "binary": "exact-source-axis-replay-20260926-v284-hypercurve",
+      "name": "bezier_parameter::conversion_tests::modular_sieve_rejects_only_rootless_rational_reductions",
+      "returncode": 0,
+      "log": "exact-source-axis-replay-20260926-v284-case-128.log",
+      "elapsed_seconds": 0.003551806090399623
+    },
+    {
+      "binary": "exact-source-axis-replay-20260926-v284-hypercurve",
+      "name": "bezier_parameter::conversion_tests::modular_sieve_retains_polynomials_with_known_rational_roots",
+      "returncode": 0,
+      "log": "exact-source-axis-replay-20260926-v284-case-129.log",
+      "elapsed_seconds": 0.00354498706292361
+    },
+    {
+      "binary": "exact-source-axis-replay-20260926-v284-hypercurve",
+      "name": "bezier_parameter::conversion_tests::native_small_modulus_matches_bigint_floor_remainder",
+      "returncode": 0,
+      "log": "exact-source-axis-replay-20260926-v284-case-130.log",
+      "elapsed_seconds": 0.003560845972970128
+    },
+    {
+      "binary": "exact-source-axis-replay-20260926-v284-hypercurve",
+      "name": "bezier_parameter::conversion_tests::nested_nonrational_quadratic_root_materializes_exactly",
+      "returncode": 0,
+      "log": "exact-source-axis-replay-20260926-v284-case-131.log",
+      "elapsed_seconds": 0.0035012499429285526
+    },
+    {
+      "binary": "exact-source-axis-replay-20260926-v284-hypercurve",
+      "name": "bezier_parameter::conversion_tests::nonlinear_and_approximate_zeroes_do_not_create_scalar_witnesses",
+      "returncode": 0,
+      "log": "exact-source-axis-replay-20260926-v284-case-132.log",
+      "elapsed_seconds": 0.0035256079863756895
+    },
+    {
+      "binary": "exact-source-axis-replay-20260926-v284-hypercurve",
+      "name": "bezier_parameter::conversion_tests::nonrational_low_degree_roots_materialize_without_sturm_work",
+      "returncode": 0,
+      "log": "exact-source-axis-replay-20260926-v284-case-133.log",
+      "elapsed_seconds": 0.003557325922884047
+    },
+    {
+      "binary": "exact-source-axis-replay-20260926-v284-hypercurve",
+      "name": "bezier_parameter::conversion_tests::nonrational_power_evaluation_uses_exact_endpoint_identities",
+      "returncode": 0,
+      "log": "exact-source-axis-replay-20260926-v284-case-134.log",
+      "elapsed_seconds": 0.0035222480073571205
+    },
+    {
+      "binary": "exact-source-axis-replay-20260926-v284-hypercurve",
+      "name": "bezier_parameter::conversion_tests::polynomial_sign_queries_do_not_require_a_known_degree",
+      "returncode": 0,
+      "log": "exact-source-axis-replay-20260926-v284-case-135.log",
+      "elapsed_seconds": 0.003534167888574302
+    },
+    {
+      "binary": "exact-source-axis-replay-20260926-v284-hypercurve",
+      "name": "bezier_parameter::conversion_tests::polynomial_signs_use_the_retained_interval_before_algebraic_replay",
+      "returncode": 0,
+      "log": "exact-source-axis-replay-20260926-v284-case-136.log",
+      "elapsed_seconds": 0.003566005965694785
+    },
+    {
+      "binary": "exact-source-axis-replay-20260926-v284-hypercurve",
+      "name": "bezier_parameter::conversion_tests::progressive_refinement_matches_one_pass_proof_budget",
+      "returncode": 0,
+      "log": "exact-source-axis-replay-20260926-v284-case-137.log",
+      "elapsed_seconds": 0.003566185012459755
+    },
+    {
+      "binary": "exact-source-axis-replay-20260926-v284-hypercurve",
+      "name": "bezier_parameter::conversion_tests::projective_images_preserve_exterior_singletons_across_unused_poles",
+      "returncode": 0,
+      "log": "exact-source-axis-replay-20260926-v284-case-138.log",
+      "elapsed_seconds": 0.007567961001768708
+    },
+    {
+      "binary": "exact-source-axis-replay-20260926-v284-hypercurve",
+      "name": "bezier_parameter::conversion_tests::rational_basis_subdivision_matches_the_shared_bernstein_kernel",
+      "returncode": 0,
+      "log": "exact-source-axis-replay-20260926-v284-case-139.log",
+      "elapsed_seconds": 0.003505959059111774
+    },
+    {
+      "binary": "exact-source-axis-replay-20260926-v284-hypercurve",
+      "name": "bezier_parameter::conversion_tests::rational_reconstruction_reuses_sturm_ownership_across_both_children",
+      "returncode": 0,
+      "log": "exact-source-axis-replay-20260926-v284-case-140.log",
+      "elapsed_seconds": 0.0035780349280685186
+    },
+    {
+      "binary": "exact-source-axis-replay-20260926-v284-hypercurve",
+      "name": "bezier_parameter::conversion_tests::refinement_to_an_exact_root_precedes_touching_interval_order",
+      "returncode": 0,
+      "log": "exact-source-axis-replay-20260926-v284-case-141.log",
+      "elapsed_seconds": 0.0035121890250593424
+    },
+    {
+      "binary": "exact-source-axis-replay-20260926-v284-hypercurve",
+      "name": "bezier_parameter::conversion_tests::retained_refinement_matches_square_free_reference_and_shares_sturm_work",
+      "returncode": 0,
+      "log": "exact-source-axis-replay-20260926-v284-case-142.log",
+      "elapsed_seconds": 0.003528497996740043
+    },
+    {
+      "binary": "exact-source-axis-replay-20260926-v284-hypercurve",
+      "name": "bezier_parameter::conversion_tests::retained_sturm_certificate_classifies_mixed_root_multiplicity",
+      "returncode": 0,
+      "log": "exact-source-axis-replay-20260926-v284-case-143.log",
+      "elapsed_seconds": 0.0035393370781093836
+    },
+    {
+      "binary": "exact-source-axis-replay-20260926-v284-hypercurve",
+      "name": "bezier_parameter::conversion_tests::root_refinement_does_not_embed_irrational_isolator_bounds",
+      "returncode": 0,
+      "log": "exact-source-axis-replay-20260926-v284-case-144.log",
+      "elapsed_seconds": 0.007623136974871159
+    },
+    {
+      "binary": "exact-source-axis-replay-20260926-v284-hypercurve",
+      "name": "bezier_parameter::conversion_tests::simple_root_certificate_accepts_an_endpoint_deflated_algebraic_carrier",
+      "returncode": 0,
+      "log": "exact-source-axis-replay-20260926-v284-case-145.log",
+      "elapsed_seconds": 0.003570085042156279
+    },
+    {
+      "binary": "exact-source-axis-replay-20260926-v284-hypercurve",
+      "name": "bezier_parameter::conversion_tests::simple_root_certificate_distinguishes_algebraic_multiplicity",
+      "returncode": 0,
+      "log": "exact-source-axis-replay-20260926-v284-case-146.log",
+      "elapsed_seconds": 0.0035335670690983534
+    },
+    {
+      "binary": "exact-source-axis-replay-20260926-v284-hypercurve",
+      "name": "bezier_parameter::conversion_tests::simple_root_certificate_distinguishes_exact_multiplicity",
+      "returncode": 0,
+      "log": "exact-source-axis-replay-20260926-v284-case-147.log",
+      "elapsed_seconds": 0.0035528059815987945
+    },
+    {
+      "binary": "exact-source-axis-replay-20260926-v284-hypercurve",
+      "name": "bezier_parameter::conversion_tests::solver_owned_root_refinement_excludes_repeated_lower_endpoints",
+      "returncode": 0,
+      "log": "exact-source-axis-replay-20260926-v284-case-148.log",
+      "elapsed_seconds": 0.007575809955596924
+    },
+    {
+      "binary": "exact-source-axis-replay-20260926-v284-hypercurve",
+      "name": "bezier_parameter::conversion_tests::square_free_bernstein_preserves_wide_signed_scale_certificates",
+      "returncode": 0,
+      "log": "exact-source-axis-replay-20260926-v284-case-149.log",
+      "elapsed_seconds": 0.007577970041893423
+    },
+    {
+      "binary": "exact-source-axis-replay-20260926-v284-hypercurve",
+      "name": "bezier_parameter::conversion_tests::square_free_bernstein_scaled_endpoint_and_midpoint_roots_keep_fallback",
+      "returncode": 0,
+      "log": "exact-source-axis-replay-20260926-v284-case-150.log",
+      "elapsed_seconds": 0.0035118289524689317
+    },
+    {
+      "binary": "exact-source-axis-replay-20260926-v284-hypercurve",
+      "name": "bezier_parameter::conversion_tests::square_free_degree_128_bernstein_isolates_every_unit_root",
+      "returncode": 0,
+      "log": "exact-source-axis-replay-20260926-v284-case-151.log",
+      "elapsed_seconds": 0.015634958050213754
+    },
+    {
+      "binary": "exact-source-axis-replay-20260926-v284-hypercurve",
+      "name": "bezier_parameter::conversion_tests::strict_gap_preserves_irrational_and_repeated_root_ownership",
+      "returncode": 0,
+      "log": "exact-source-axis-replay-20260926-v284-case-152.log",
+      "elapsed_seconds": 0.007637536968104541
+    },
+    {
+      "binary": "exact-source-axis-replay-20260926-v284-hypercurve",
+      "name": "bezier_parameter::conversion_tests::strict_gap_refines_both_overlapping_algebraic_parameters",
+      "returncode": 0,
+      "log": "exact-source-axis-replay-20260926-v284-case-153.log",
+      "elapsed_seconds": 0.003520738915540278
+    },
+    {
+      "binary": "exact-source-axis-replay-20260926-v284-hypercurve",
+      "name": "bezier_parameter::conversion_tests::strict_linear_queries_retain_witnesses_after_rational_reconstruction_declines",
+      "returncode": 0,
+      "log": "exact-source-axis-replay-20260926-v284-case-154.log",
+      "elapsed_seconds": 0.0035029000137001276
+    },
+    {
+      "binary": "exact-source-axis-replay-20260926-v284-hypercurve",
+      "name": "bezier_parameter::conversion_tests::strict_scalar_equalities_retain_arbitrary_real_parameter_witnesses",
+      "returncode": 0,
+      "log": "exact-source-axis-replay-20260926-v284-case-155.log",
+      "elapsed_seconds": 0.0035071989987045527
+    },
+    {
+      "binary": "exact-source-axis-replay-20260926-v284-hypercurve",
+      "name": "bezier_region::tests::collapsed_pair_radial_fillet_retains_its_recursive_center",
+      "returncode": 0,
+      "log": "exact-source-axis-replay-20260926-v284-case-156.log",
+      "elapsed_seconds": 0.11382247705478221
+    },
+    {
+      "binary": "exact-source-axis-replay-20260926-v284-hypercurve",
+      "name": "bezier_region::tests::recursive_selected_radial_cap_crosses_a_nonlinear_quadratic",
+      "returncode": 0,
+      "log": "exact-source-axis-replay-20260926-v284-case-157.log",
+      "elapsed_seconds": 3.8687508340226486
+    },
+    {
+      "binary": "exact-source-axis-replay-20260926-v284-hypercurve",
+      "name": "bezier_region::tests::recursive_selected_radial_crosses_a_nonlinear_quadratic",
+      "returncode": 0,
+      "log": "exact-source-axis-replay-20260926-v284-case-158.log",
+      "elapsed_seconds": 6.722167382016778
+    },
+    {
+      "binary": "exact-source-axis-replay-20260926-v284-hypercurve",
+      "name": "bezier_region::tests::recursive_selected_radial_projective_chamfer_reenters_corner_kernel",
+      "returncode": 0,
+      "log": "exact-source-axis-replay-20260926-v284-case-159.log",
+      "elapsed_seconds": 43.21847558603622
+    },
+    {
+      "binary": "exact-source-axis-replay-20260926-v284-hypercurve",
+      "name": "bezier_region::tests::selected_parallel_normal_circle_and_line_fillet_retains_recursive_contact",
+      "returncode": 0,
+      "log": "exact-source-axis-replay-20260926-v284-case-160.log",
+      "elapsed_seconds": 0.03173357399646193
+    },
+    {
+      "binary": "exact-source-axis-replay-20260926-v284-hypercurve",
+      "name": "curve::curve_fillet::tests::joined_path_selects_and_replays_a_continuous_fillet_family",
+      "returncode": 0,
+      "log": "exact-source-axis-replay-20260926-v284-case-161.log",
+      "elapsed_seconds": 0.21400109899695963
+    },
+    {
+      "binary": "exact-source-axis-replay-20260926-v284-hypercurve",
+      "name": "curve::curve_fillet::tests::normalized_region_selects_and_reuses_a_continuous_fillet_family",
+      "returncode": 0,
+      "log": "exact-source-axis-replay-20260926-v284-case-162.log",
+      "elapsed_seconds": 0.11393241002224386
+    },
+    {
+      "binary": "exact-source-axis-replay-20260926-v284-hypercurve",
+      "name": "curve::tests::distinct_parallel_sources_keep_a_shared_fillet_center_family",
+      "returncode": 0,
+      "log": "exact-source-axis-replay-20260926-v284-case-163.log",
+      "elapsed_seconds": 0.03170572698581964
+    },
+    {
+      "binary": "exact-source-axis-replay-20260926-v284-hypercurve",
+      "name": "events::tests::dense_ranked_candidates_match_flat_decided_aabb_filter",
+      "returncode": 0,
+      "log": "exact-source-axis-replay-20260926-v284-case-164.log",
+      "elapsed_seconds": 0.0034973209258168936
+    },
+    {
+      "binary": "exact-source-axis-replay-20260926-v284-hypercurve",
+      "name": "events::tests::retained_line_candidates_match_unreserved_dense_sweep",
+      "returncode": 0,
+      "log": "exact-source-axis-replay-20260926-v284-case-165.log",
+      "elapsed_seconds": 0.007563892053440213
+    }
+  ],
+  "builds": [
+    {
+      "crate": "hypercurve",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "test",
+        "--lib",
+        "--release",
+        "--all-features",
+        "--no-run",
+        "--message-format=json",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "log": "exact-source-axis-replay-20260926-v284-hypercurve-build.log",
+      "elapsed_seconds": 144.30987838609144,
+      "binary": {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/exact-source-axis-replay-20260926-v284-hypercurve",
+        "sha256": "08358923b4851b74f7d8fc58f5ed9df66510d6763fc67eac5161807607756255"
+      }
+    },
+    {
+      "crate": "hypercurve",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "test",
+        "--test",
+        "hypercurve_curve_region_promotion",
+        "--release",
+        "--all-features",
+        "--no-run",
+        "--message-format=json",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "log": "exact-source-axis-replay-20260926-v284-hypercurve_curve_region_promotion-build.log",
+      "elapsed_seconds": 82.2738477580715,
+      "binary": {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/exact-source-axis-replay-20260926-v284-hypercurve_curve_region_promotion",
+        "sha256": "c2370aa77d8f4edc69abed75934c2d497f6d32daaa4fce5516b8319b37aa7710"
+      }
+    }
+  ],
+  "all_processes_reaped": true,
+  "checks": [
+    {
+      "label": "format",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustfmt",
+        "--edition",
+        "2024",
+        "--config",
+        "skip_children=true",
+        "--check",
+        "src/bezier_offset.rs"
+      ],
+      "returncode": 0,
+      "log": "exact-source-axis-replay-20260926-v284-format.log",
+      "elapsed_seconds": 2.116488168016076
+    },
+    {
+      "label": "clippy-all-features",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "clippy",
+        "--all-targets",
+        "--all-features",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "returncode": 0,
+      "log": "exact-source-axis-replay-20260926-v284-clippy-all-features.log",
+      "elapsed_seconds": 24.84890846896451
+    },
+    {
+      "label": "clippy-no-default",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "clippy",
+        "--all-targets",
+        "--no-default-features",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "returncode": 0,
+      "log": "exact-source-axis-replay-20260926-v284-clippy-no-default.log",
+      "elapsed_seconds": 23.947045887005515
+    },
+    {
+      "label": "hypersolve-format",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustfmt",
+        "--edition",
+        "2024",
+        "--config",
+        "skip_children=true",
+        "--check",
+        "src/tensor_resultant.rs"
+      ],
+      "returncode": 0,
+      "log": "exact-source-axis-replay-20260926-v284-hypersolve-format.log",
+      "elapsed_seconds": 0.03172463399823755
+    },
+    {
+      "label": "hypersolve-clippy-all-features",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "clippy",
+        "--all-targets",
+        "--all-features",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "returncode": 0,
+      "log": "exact-source-axis-replay-20260926-v284-hypersolve-clippy-all-features.log",
+      "elapsed_seconds": 6.27274711697828
+    },
+    {
+      "label": "hypersolve-clippy-no-default",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "clippy",
+        "--all-targets",
+        "--no-default-features",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "returncode": 0,
+      "log": "exact-source-axis-replay-20260926-v284-hypersolve-clippy-no-default.log",
+      "elapsed_seconds": 6.223423960036598
+    }
+  ],
+  "qualification_scope": "Exact point-axis binding and coefficient compaction with selected-root replay: native parameters, dense/recursive fields, circle controls and continuous fillet families; separate whole re-offset diagnostics; all-target Clippy under both feature configurations",
+  "expected_cases": [
+    "bezier_offset::conversion_tests::dense_tuple_point_sources_keep_their_algebraic_relations",
+    "bezier_offset::conversion_tests::dense_tuple_sign_binds_exact_points_and_preserves_the_selected_root",
+    "bezier_offset::conversion_tests::analytic_point_clones_reuse_the_certified_recursive_field",
+    "bezier_offset::conversion_tests::certified_circle_chord_endpoint_factor_preserves_roots_and_field",
+    "bezier_offset::conversion_tests::chord_normal_dense_sheet_replay_keeps_even_roots_and_zero_components",
+    "bezier_offset::conversion_tests::chord_normal_dense_sheet_replay_rejects_conjugate_roots",
+    "bezier_offset::conversion_tests::chord_normal_recursive_frame_retains_center_and_oriented_unit_normal",
+    "bezier_offset::conversion_tests::dense_chord_normal_circle_extends_over_an_independent_analytic_speed",
+    "bezier_offset::conversion_tests::dense_chord_normal_incident_circle_retains_its_component",
+    "bezier_offset::conversion_tests::dense_chord_normal_independent_anchor_uses_rank_independent_fallback",
+    "bezier_offset::conversion_tests::dense_chord_normal_rejects_disjoint_and_finitely_clipped_chords",
+    "bezier_offset::conversion_tests::dense_chord_normal_retains_rational_contacts_and_circle_components",
+    "bezier_offset::conversion_tests::dense_chord_normal_tangency_retains_a_finite_endpoint",
+    "bezier_offset::conversion_tests::dense_projection_does_not_square_an_absent_radical",
+    "bezier_offset::conversion_tests::dense_projection_keeps_roots_of_vanishing_radicands",
+    "bezier_offset::conversion_tests::dense_projection_single_radical_replays_the_authored_sheet",
+    "bezier_offset::conversion_tests::dense_projection_zero_set_matches_all_four_conjugates",
+    "bezier_offset::conversion_tests::dense_two_radical_square_matches_general_field_product",
+    "bezier_offset::conversion_tests::finite_circle_components_replay_pair_radial_and_recursive_inverses",
+    "bezier_offset::conversion_tests::independent_field_chord_retains_a_third_contact_in_its_recursive_field",
+    "bezier_offset::conversion_tests::independently_encoded_recursive_circles_intersect_and_recurse_exactly",
+    "bezier_offset::conversion_tests::independently_encoded_recursive_circles_map_all_coincident_half_relations",
+    "bezier_offset::conversion_tests::independently_encoded_rotated_recursive_circles_intersect_exactly",
+    "bezier_offset::conversion_tests::independently_encoded_scaled_rotated_recursive_circles_intersect_exactly",
+    "bezier_offset::conversion_tests::independently_reencoded_recursive_parent_handles_exact_tangency",
+    "bezier_offset::conversion_tests::nonlinear_parameter_component_maps_recursive_projective_scalars_locally",
+    "bezier_offset::conversion_tests::nonstructural_recursive_centers_handle_exact_tangency",
+    "bezier_offset::conversion_tests::parallel_normal_recursive_frame_preserves_source_parameter_and_positive_speed",
+    "bezier_offset::conversion_tests::quadratic_axis_factorization_replays_dense_multi_affine_products",
+    "bezier_offset::conversion_tests::quadrivariate_selected_tuple_sign_recovers_an_even_correlated_root",
+    "bezier_offset::conversion_tests::quadrivariate_selected_tuple_sign_reduces_axis_relations_exactly",
+    "bezier_offset::conversion_tests::quadrivariate_selected_tuple_sign_separates_an_ordinary_nonzero_value",
+    "bezier_offset::conversion_tests::rank_independent_projection_crosses_the_dense_trivariate_boundary_exactly",
+    "bezier_offset::conversion_tests::rank_independent_quadrivariate_projection_crosses_the_old_dense_boundary_exactly",
+    "bezier_offset::conversion_tests::recursive_bounds_refine_each_shared_source_once",
+    "bezier_offset::conversion_tests::recursive_chord_kernel_retains_all_cubic_crossings_with_opposite_endpoint_sides",
+    "bezier_offset::conversion_tests::recursive_chord_parallel_local_roots_reject_conjugates_and_clip_exactly",
+    "bezier_offset::conversion_tests::recursive_chord_parallel_retains_owned_roots_across_exterior_ranges",
+    "bezier_offset::conversion_tests::recursive_chord_parallel_zero_norm_midpoint_is_not_a_component",
+    "bezier_offset::conversion_tests::recursive_chord_unrotated_derived_linear_and_equality_queries_are_complete",
+    "bezier_offset::conversion_tests::recursive_circle_contact_tangent_sign_follows_root_branch",
+    "bezier_offset::conversion_tests::recursive_circle_queries_preserve_tangent_scale_and_local_roots",
+    "bezier_offset::conversion_tests::recursive_field_embeddings_do_not_consume_approximate_generator_equalities",
+    "bezier_offset::conversion_tests::recursive_field_shares_zero_towers_and_folds_identities",
+    "bezier_offset::conversion_tests::recursive_line_contact_circles_publish_tangent_contacts_without_flattening",
+    "bezier_offset::conversion_tests::recursive_line_contact_circles_publish_transverse_contacts_without_flattening",
+    "bezier_offset::conversion_tests::recursive_line_contact_circles_reject_disjoint_supports_without_flattening",
+    "bezier_offset::conversion_tests::recursive_local_isolation_reuses_exact_signs_below_interval_precision",
+    "bezier_offset::conversion_tests::recursive_ordered_field_isolation_does_not_guess_polynomial_degree",
+    "bezier_offset::conversion_tests::recursive_pair_angle_queries_observe_requested_policy_on_both_sides",
+    "bezier_offset::conversion_tests::recursive_parallel_expression_signs_keep_the_selected_speed_sheet",
+    "bezier_offset::conversion_tests::recursive_parallel_expression_signs_reject_poles_and_zero_speed",
+    "bezier_offset::conversion_tests::recursive_parallel_interval_filter_preserves_exact_zeros",
+    "bezier_offset::conversion_tests::recursive_parameter_projection_preserves_roots_through_refinement_and_charts",
+    "bezier_offset::conversion_tests::recursive_polynomial_crossing_signs_survive_exact_midpoint_collapse",
+    "bezier_offset::conversion_tests::recursive_polynomial_isolators_keep_the_selected_root_after_endpoint_deflation",
+    "bezier_offset::conversion_tests::recursive_polynomial_predicates_reuse_the_retained_field_relation",
+    "bezier_offset::conversion_tests::recursive_polynomial_queries_reuse_a_selected_proper_factor",
+    "bezier_offset::conversion_tests::recursive_polynomial_refinement_reuses_certified_bounds_and_identity",
+    "bezier_offset::conversion_tests::recursive_projective_bounds_enclose_scaled_nested_radicals",
+    "bezier_offset::conversion_tests::recursive_projective_bounds_keep_unwitnessed_source_fallback",
+    "bezier_offset::conversion_tests::recursive_projective_bounds_reuse_positive_denominator_certificate",
+    "bezier_offset::conversion_tests::recursive_projective_center_projects_complete_nonlinear_fixed_distance",
+    "bezier_offset::conversion_tests::recursive_projective_chord_handles_finite_contact_multiplicities",
+    "bezier_offset::conversion_tests::recursive_projective_chord_partitions_collinear_rational_images",
+    "bezier_offset::conversion_tests::recursive_projective_chord_rejects_constant_conjugate_norm_component",
+    "bezier_offset::conversion_tests::recursive_projective_chord_replays_identically_zero_norm_sheet",
+    "bezier_offset::conversion_tests::recursive_projective_chord_replays_nonzero_analytic_parallel",
+    "bezier_offset::conversion_tests::recursive_projective_chord_retains_positive_degree_selected_conjugate_fiber",
+    "bezier_offset::conversion_tests::recursive_projective_content_normalization_preserves_selected_fields",
+    "bezier_offset::conversion_tests::recursive_projective_kernel_imports_similarity_of_algebraic_endpoints",
+    "bezier_offset::conversion_tests::recursive_projective_oblique_chord_handles_even_contact_multiplicity",
+    "bezier_offset::conversion_tests::recursive_quadratic_endpoint_roots_keep_the_original_field",
+    "bezier_offset::conversion_tests::recursive_radial_closure_chords_sign_a_shared_exact_vertex",
+    "bezier_offset::conversion_tests::recursive_rational_contact_orients_a_retained_radial_endpoint",
+    "bezier_offset::conversion_tests::recursive_real_witnesses_do_not_require_unused_selected_generators",
+    "bezier_offset::conversion_tests::recursive_scalar_comparison_replays_exact_equality_before_approximation",
+    "bezier_offset::conversion_tests::recursive_scalar_native_replay_preserves_selected_source_authority",
+    "bezier_offset::conversion_tests::recursive_scalar_publication_accepts_general_exact_witnesses",
+    "bezier_offset::conversion_tests::recursive_selected_radial_diameter_chord_intersects_a_rational_quadratic_approximate",
+    "bezier_offset::conversion_tests::recursive_selected_radial_diameter_chord_intersects_a_rational_quadratic_strict",
+    "bezier_offset::conversion_tests::recursive_selected_radial_line_image_preserves_target_orientation",
+    "bezier_offset::conversion_tests::recursive_selected_radial_rational_kernel_retains_singular_circle_contacts",
+    "bezier_offset::conversion_tests::recursive_sign_replays_correlated_real_witness_before_deep_intervals",
+    "bezier_offset::conversion_tests::recursive_source_refinement_keeps_its_equation_after_an_exact_midpoint",
+    "bezier_offset::conversion_tests::represented_recursive_contact_centers_handle_exact_tangency",
+    "bezier_offset::conversion_tests::retained_real_witnesses_collapse_recursive_source_box_coefficients",
+    "bezier_offset::conversion_tests::selected_center_line_contact_stays_in_recursive_quadratic_solver",
+    "bezier_offset::conversion_tests::selected_dense_kernel_projects_cubic_past_foreign_wide_components",
+    "bezier_offset::conversion_tests::selected_parallel_normal_circle_accepts_a_center_locus_cusp",
+    "bezier_offset::conversion_tests::selected_parallel_normal_circle_intersects_genuinely_analytic_parallel_in_one_fiber",
+    "bezier_offset::conversion_tests::selected_parallel_normal_circle_intersects_rational_curves_exactly",
+    "bezier_offset::conversion_tests::selected_parallel_normal_circle_keeps_contacts_when_center_refines_to_exact",
+    "bezier_offset::conversion_tests::selected_parallel_normal_circle_pair_decides_every_concentric_case",
+    "bezier_offset::conversion_tests::selected_parallel_normal_circle_retains_every_represented_point_exactly",
+    "bezier_offset::conversion_tests::selected_parallel_normal_circle_retains_general_rational_contacts_in_one_fiber",
+    "bezier_offset::conversion_tests::selected_parallel_normal_circle_retains_general_rational_overlaps_in_one_fiber",
+    "bezier_offset::conversion_tests::selected_parallel_normal_circle_retains_strict_replay_after_exact_approximate_request",
+    "bezier_offset::conversion_tests::selected_parallel_normal_circle_reuses_rationalized_analytic_parallel_components",
+    "bezier_offset::conversion_tests::selected_parallel_normal_circle_uses_direct_exact_winding",
+    "bezier_offset::conversion_tests::selected_parallel_normal_incident_circle_selects_the_positive_speed_component",
+    "bezier_offset::conversion_tests::selected_parallel_normal_positive_dimensional_projection_rejects_conjugate_components",
+    "bezier_offset::conversion_tests::selected_parallel_normal_radial_tangent_excludes_the_complementary_half",
+    "bezier_offset::conversion_tests::selected_parallel_normal_tangent_replay_accepts_an_exact_center_parameter",
+    "bezier_offset::conversion_tests::selected_radial_frame_joins_an_equivalent_recursive_point_base",
+    "bezier_offset::conversion_tests::unrelated_recursive_circle_centers_intersect_exactly",
+    "bezier_offset::conversion_tests::unused_positive_radicals_do_not_block_recursive_enclosures",
+    "bezier_parameter::conversion_tests::algebraic_sign_filter_has_no_fixed_refinement_cap",
+    "bezier_parameter::conversion_tests::algebraic_sign_filter_preserves_selected_root_and_boundary_ownership",
+    "bezier_parameter::conversion_tests::algebraic_sign_queries_reuse_the_singleton_for_tiny_separations",
+    "bezier_parameter::conversion_tests::algebraic_unit_complement_preserves_the_exact_singleton_root",
+    "bezier_parameter::conversion_tests::arbitrary_degree_nonrational_bernstein_isolates_every_simple_root",
+    "bezier_parameter::conversion_tests::authoritative_sturm_sequence_has_no_historical_degree_cap",
+    "bezier_parameter::conversion_tests::bernstein_simple_root_certificates_avoid_multiplicity_sturm_rebuilds",
+    "bezier_parameter::conversion_tests::bernstein_to_power_remains_exact_beyond_u64_binomials",
+    "bezier_parameter::conversion_tests::cached_scalar_refinement_preserves_the_selected_root_authority",
+    "bezier_parameter::conversion_tests::carried_sturm_variations_match_partition_root_counts",
+    "bezier_parameter::conversion_tests::collapsed_exact_real_representation_imports_as_an_exact_parameter",
+    "bezier_parameter::conversion_tests::composed_projective_charts_share_one_root_without_growing_history_or_scale",
+    "bezier_parameter::conversion_tests::decreasing_root_charts_preserve_owned_and_excluded_endpoints",
+    "bezier_parameter::conversion_tests::finite_interval_isolation_has_no_fixed_dyadic_depth_limit",
+    "bezier_parameter::conversion_tests::imported_root_comparisons_preserve_owned_and_excluded_endpoints",
+    "bezier_parameter::conversion_tests::incident_ray_isolation_orders_exact_roots_away_from_the_anchor",
+    "bezier_parameter::conversion_tests::incident_ray_isolation_retains_irrational_exterior_root_authority",
+    "bezier_parameter::conversion_tests::independent_singleton_charts_reuse_nested_root_identity",
+    "bezier_parameter::conversion_tests::interior_probes_do_not_embed_endpoint_expressions",
+    "bezier_parameter::conversion_tests::interval_root_isolation_uses_original_polynomial_and_closed_boundaries",
+    "bezier_parameter::conversion_tests::isolation_retains_large_rational_roots_until_projection_is_requested",
+    "bezier_parameter::conversion_tests::modular_sieve_rejects_only_rootless_rational_reductions",
+    "bezier_parameter::conversion_tests::modular_sieve_retains_polynomials_with_known_rational_roots",
+    "bezier_parameter::conversion_tests::native_small_modulus_matches_bigint_floor_remainder",
+    "bezier_parameter::conversion_tests::nested_nonrational_quadratic_root_materializes_exactly",
+    "bezier_parameter::conversion_tests::nonlinear_and_approximate_zeroes_do_not_create_scalar_witnesses",
+    "bezier_parameter::conversion_tests::nonrational_low_degree_roots_materialize_without_sturm_work",
+    "bezier_parameter::conversion_tests::nonrational_power_evaluation_uses_exact_endpoint_identities",
+    "bezier_parameter::conversion_tests::polynomial_sign_queries_do_not_require_a_known_degree",
+    "bezier_parameter::conversion_tests::polynomial_signs_use_the_retained_interval_before_algebraic_replay",
+    "bezier_parameter::conversion_tests::progressive_refinement_matches_one_pass_proof_budget",
+    "bezier_parameter::conversion_tests::projective_images_preserve_exterior_singletons_across_unused_poles",
+    "bezier_parameter::conversion_tests::rational_basis_subdivision_matches_the_shared_bernstein_kernel",
+    "bezier_parameter::conversion_tests::rational_reconstruction_reuses_sturm_ownership_across_both_children",
+    "bezier_parameter::conversion_tests::refinement_to_an_exact_root_precedes_touching_interval_order",
+    "bezier_parameter::conversion_tests::retained_refinement_matches_square_free_reference_and_shares_sturm_work",
+    "bezier_parameter::conversion_tests::retained_sturm_certificate_classifies_mixed_root_multiplicity",
+    "bezier_parameter::conversion_tests::root_refinement_does_not_embed_irrational_isolator_bounds",
+    "bezier_parameter::conversion_tests::simple_root_certificate_accepts_an_endpoint_deflated_algebraic_carrier",
+    "bezier_parameter::conversion_tests::simple_root_certificate_distinguishes_algebraic_multiplicity",
+    "bezier_parameter::conversion_tests::simple_root_certificate_distinguishes_exact_multiplicity",
+    "bezier_parameter::conversion_tests::solver_owned_root_refinement_excludes_repeated_lower_endpoints",
+    "bezier_parameter::conversion_tests::square_free_bernstein_preserves_wide_signed_scale_certificates",
+    "bezier_parameter::conversion_tests::square_free_bernstein_scaled_endpoint_and_midpoint_roots_keep_fallback",
+    "bezier_parameter::conversion_tests::square_free_degree_128_bernstein_isolates_every_unit_root",
+    "bezier_parameter::conversion_tests::strict_gap_preserves_irrational_and_repeated_root_ownership",
+    "bezier_parameter::conversion_tests::strict_gap_refines_both_overlapping_algebraic_parameters",
+    "bezier_parameter::conversion_tests::strict_linear_queries_retain_witnesses_after_rational_reconstruction_declines",
+    "bezier_parameter::conversion_tests::strict_scalar_equalities_retain_arbitrary_real_parameter_witnesses",
+    "bezier_region::tests::collapsed_pair_radial_fillet_retains_its_recursive_center",
+    "bezier_region::tests::recursive_selected_radial_cap_crosses_a_nonlinear_quadratic",
+    "bezier_region::tests::recursive_selected_radial_crosses_a_nonlinear_quadratic",
+    "bezier_region::tests::recursive_selected_radial_projective_chamfer_reenters_corner_kernel",
+    "bezier_region::tests::selected_parallel_normal_circle_and_line_fillet_retains_recursive_contact",
+    "curve::curve_fillet::tests::joined_path_selects_and_replays_a_continuous_fillet_family",
+    "curve::curve_fillet::tests::normalized_region_selects_and_reuses_a_continuous_fillet_family",
+    "curve::tests::distinct_parallel_sources_keep_a_shared_fillet_center_family",
+    "events::tests::dense_ranked_candidates_match_flat_decided_aabb_filter",
+    "events::tests::retained_line_candidates_match_unreserved_dense_sweep"
+  ],
+  "diagnostics": [
+    {
+      "name": "approximate_512_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions",
+      "returncode": 124,
+      "log": "exact-source-axis-replay-20260926-v284-reoffset-approximate_512.log",
+      "elapsed_seconds": 90.03159205801785
+    },
+    {
+      "name": "strict_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions",
+      "returncode": 124,
+      "log": "exact-source-axis-replay-20260926-v284-reoffset-strict.log",
+      "elapsed_seconds": 90.03241229103878
+    }
+  ],
+  "qualification_complete": true
+}

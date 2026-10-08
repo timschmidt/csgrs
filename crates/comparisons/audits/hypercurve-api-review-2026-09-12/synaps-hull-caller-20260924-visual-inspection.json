@@ -1,0 +1,18 @@
+{
+  "images": {
+    "synaps-hull-caller-20260924-visual/basic.openscad.png": "bf191b530c6981be1ef6024b20aa67bd10cfc3e7f8ee23da6fbf11e364637a29",
+    "synaps-hull-caller-20260924-visual/basic.synaps.png": "1dd3d873764ef5076ef8193bbb4c636f428a5897e18d6f1af2f6c4d714abe3ec",
+    "synaps-hull-caller-20260924-visual/concave_difference.openscad.png": "415b39a256ca09546b3369b5e9150a18f076c867f3276ed398fbd9f2310af2d3",
+    "synaps-hull-caller-20260924-visual/concave_difference.synaps.png": "4b9020c81bf640090f68abd482f4d067ea7202fce77898a558cbc3af8479339d",
+    "synaps-hull-caller-20260924-visual/rotated_intersection.openscad.png": "9eda1e7b9c2d829c1d6b957b8b9e1cc0f04b9ac4f8b00b0b7cc4af5bc0d53a04",
+    "synaps-hull-caller-20260924-visual/rotated_intersection.synaps.png": "57657638702dc02c0d5275a059c12a473816d1380228b2afd45c7566581427a3"
+  },
+  "inspected_all_six_images": true,
+  "findings": {
+    "basic": "Matching five-edge hull, including the sloping lower-right edge and flat top.",
+    "concave_difference": "Matching six-edge silhouette from the concave input and displaced square; no notch or missing fill.",
+    "rotated_intersection": "Matching clipped/rotated hull edges, upper short horizontal edge and right vertical edge."
+  },
+  "comparison_scope": "Shape and fill match despite different colors, framing and raster resolution.",
+  "source_and_preview_meshes_are_planar": true
+}

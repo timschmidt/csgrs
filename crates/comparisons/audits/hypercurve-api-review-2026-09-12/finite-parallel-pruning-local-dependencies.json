@@ -1,0 +1,32 @@
+[
+  {
+    "name": "hyperbrep",
+    "version": "0.2.0",
+    "manifest_path": "/home/tim/Documents/GitHub/workspace/hyperbrep/Cargo.toml"
+  },
+  {
+    "name": "hypercurve",
+    "version": "0.3.1",
+    "manifest_path": "/home/tim/Documents/GitHub/workspace/hypercurve/Cargo.toml"
+  },
+  {
+    "name": "hyperlattice",
+    "version": "0.6.1",
+    "manifest_path": "/home/tim/Documents/GitHub/workspace/hyperlattice/Cargo.toml"
+  },
+  {
+    "name": "hyperlimit",
+    "version": "0.4.1",
+    "manifest_path": "/home/tim/Documents/GitHub/workspace/hyperlimit/Cargo.toml"
+  },
+  {
+    "name": "hyperreal",
+    "version": "0.13.1",
+    "manifest_path": "/home/tim/Documents/GitHub/workspace/hyperreal/Cargo.toml"
+  },
+  {
+    "name": "hypersolve",
+    "version": "0.3.1",
+    "manifest_path": "/home/tim/Documents/GitHub/workspace/hypersolve/Cargo.toml"
+  }
+]

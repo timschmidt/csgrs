@@ -1,0 +1,13 @@
+[package]
+name = "calcium-point-extended-candidate"
+version = "0.0.0"
+edition = "2024"
+[workspace]
+[dependencies]
+hyperreal = { path = "../point-image-qualified-candidate/hyperreal", features = ["serde"] }
+hyperlimit = { path = "../point-image-qualified-candidate/hyperlimit" }
+hypersolve = { path = "../point-image-qualified-candidate/hypersolve" }
+serde_json = "1.0"
+[[bin]]
+name = "point-extended-candidate-cpu"
+path = "../point-extended-cpu.rs"

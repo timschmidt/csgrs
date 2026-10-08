@@ -1,0 +1,36 @@
+path	lines	classification
+.gitignore	12	metadata
+LICENSE	504	LGPL license
+README.md	41	architecture and safety warning
+Makefile	16	build metadata
+_CoqProject	31	build/source manifest
+description	11	package metadata
+definition.v	118	Reelc representation and operations
+Axiomes.v	80	axioms (includes inconsistency proof)
+Addition.v	89	addition correctness
+Absolue.v	76	absolute-value correctness
+Oppose.v	29	negation correctness
+Inverse.v	333	inverse definition/proof (ends Abort)
+Multiplication.v	1100	multiplication correctness
+Racine.v	343	square-root correctness
+Lemmes.v	291	base/sign helper lemmas
+Lemmes_generaux.v	592	general approximation/magnitude lemmas
+Tactiques.v	6	custom tactic
+Rlog.v	5	real logarithm helper
+sg.v	232	real sign lemmas
+powerRZ_complements.v	235	integer-power real lemmas
+Rbase_operations.v	113	real algebra identities
+Rbase_inegalites.v	191	real inequalities
+Rbase_doubles_inegalites.v	242	interval-style inequality lemmas
+Rind_complements.v	73	case-analysis lemmas
+Rabsolu_complements.v	38	absolute-value lemmas
+Zabs_complements.v	82	integer absolute-value lemmas
+Zdec_complements.v	71	integer decidability lemmas
+Zdiv2_complements.v	20	integer quotient lemmas
+Zind_complements.v	179	integer induction/case lemmas
+Zmax.v	42	integer maximum
+Zpower_complements.v	21	integer power lemmas
+Zsgn_complemnts.v	66	integer sign lemmas
+Zsqrt_complements.v	95	integer square-root lemmas
+Zarith_inegalites.v	31	integer inequalities
+Zarith_operations.v	63	integer/real conversions

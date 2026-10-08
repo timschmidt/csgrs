@@ -1,0 +1,30 @@
+{
+  "repo": "hypercurve",
+  "target": "hypercurve_dispatch_trace",
+  "binary": "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve_dispatch_trace-a8e4e8d2aa6193c0",
+  "command": [
+    "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve_dispatch_trace-a8e4e8d2aa6193c0",
+    "--test-threads=4",
+    "--color",
+    "never"
+  ],
+  "sha256": "52add8511a458c21b5a1934c6a029d183648b8fda04e7e54e7cc3368706aed8e",
+  "returncode": 0,
+  "timed_out": false,
+  "elapsed_seconds": 0.0034628529974725097,
+  "log": "mixed-circle-components-full-hypercurve-hypercurve_dispatch_trace.log",
+  "passed": [
+    "public_finite_ring_import_emits_correlated_exact_path_trace",
+    "public_curve_query_emits_correlated_exact_path_trace",
+    "public_straight_skeleton_emits_correlated_exact_path_trace"
+  ],
+  "failed": [],
+  "ignored": [],
+  "summaries": [
+    "test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s"
+  ],
+  "new_failures": [],
+  "known_failures": [],
+  "reused_identical_executable": true,
+  "previous_qualification": "mixed-circle-components-full-results.json"
+}

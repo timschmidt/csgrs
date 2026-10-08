@@ -1,0 +1,10 @@
+reading file "/tmp/hyperreal-affine-offset-demand-baseline-micro16.heap.zst" - please wait, this might take some time...
+Debuggee command was: /tmp/hyperreal-affine-offset-micro-baseline 16
+finished reading file, now analyzing data:
+
+total runtime: 0.053000s.
+calls to allocation functions: 1720 (32452/s)
+temporary memory allocations: 320 (6037/s)
+peak heap memory consumption: 81.48K
+peak RSS (including heaptrack overhead): 6.28M
+total memory leaked: 3.41K

@@ -1,0 +1,7 @@
+aern-mpfr-rounded> build (lib) with ghc-9.6.7
+Preprocessing library for aern-mpfr-rounded-0.5.0..
+Building library for aern-mpfr-rounded-0.5.0..
+[14 of 14] Compiling Numeric.AERN.MPFRBasis.Interval
+aern-mpfr-rounded> copy/register
+Installing library in /tmp/aern-audit.zp9Mzz/.stack-work/install/x86_64-linux-tinfo6/679cc64c76e222dbde5fd44af4907e261fb8c246ed2bc968e58bc5dabf57e98b/9.6.7/lib/x86_64-linux-ghc-9.6.7/aern-mpfr-rounded-0.5.0-B29geSdGhuKCzhzfnQwnxB
+Registering library for aern-mpfr-rounded-0.5.0..

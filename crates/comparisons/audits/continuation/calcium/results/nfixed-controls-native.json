@@ -1,0 +1,11 @@
+{
+  "tag": "nfixed-controls-native",
+  "started": "2026-09-09T16:34:10.542Z",
+  "finished": "2026-09-09T16:34:13.378Z",
+  "elapsedSeconds": 2.834071778,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison",
+  "command": "/tmp/calcium-nfixed-controls.qZn5o6/nfixed-controls",
+  "args": [],
+  "code": 1,
+  "signal": null
+}

@@ -1,0 +1,8 @@
+
+running 3 tests
+test rational::arithmetic::tests::dyadic_dot_stack_accumulator_handles_wide_products_alignment_and_borrow ... ok
+test rational::arithmetic::tests::dyadic_dot_stack_accumulator_preserves_arbitrary_precision_fallback ... ok
+test rational::arithmetic::tests::dyadic_dot_word_accumulator_handles_wide_denominators_and_falls_back ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 691 filtered out; finished in 0.00s
+

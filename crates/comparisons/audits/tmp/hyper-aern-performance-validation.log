@@ -1,0 +1,7 @@
+exp/200: 97 pass, 0 fail, 0 indeterminate
+exp/53: 97 pass, 0 fail, 0 indeterminate
+sin/200: 97 pass, 0 fail, 0 indeterminate
+sin/53: 97 pass, 0 fail, 0 indeterminate
+sqrt/200: 97 pass, 0 fail, 0 indeterminate
+sqrt/53: 97 pass, 0 fail, 0 indeterminate
+TOTAL: 582 pass, 0 fail, 0 indeterminate

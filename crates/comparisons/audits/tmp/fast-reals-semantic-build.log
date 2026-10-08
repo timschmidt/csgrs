@@ -1,0 +1,16 @@
+[1 of 6] Compiling Data.Approximate.ApproximateField ( /home/tim/Documents/GitHub/workspace/exact-real-references/haskell-fast-reals/src/Data/Approximate/ApproximateField.hs, semantic-build/Data/Approximate/ApproximateField.o )
+[2 of 6] Compiling Data.Reals.Lipschitz ( /home/tim/Documents/GitHub/workspace/exact-real-references/haskell-fast-reals/src/Data/Reals/Lipschitz.hs, semantic-build/Data/Reals/Lipschitz.o )
+[3 of 6] Compiling Data.Reals.Staged ( /home/tim/Documents/GitHub/workspace/exact-real-references/haskell-fast-reals/src/Data/Reals/Staged.hs, semantic-build/Data/Reals/Staged.o )
+[4 of 6] Compiling Data.Reals.Space ( /home/tim/Documents/GitHub/workspace/exact-real-references/haskell-fast-reals/src/Data/Reals/Space.hs, semantic-build/Data/Reals/Space.o )
+
+/home/tim/Documents/GitHub/workspace/exact-real-references/haskell-fast-reals/src/Data/Reals/Space.hs:56:3: warning: [GHC-64088] [-Wforall-identifier]
+    The use of ‘forall’ as an identifier
+    will become an error in a future GHC release.
+    Suggested fix:
+      Consider using another name, such as
+      ‘forAll’, ‘for_all’, or ‘forall_’.
+   |
+56 |   forall :: s -> (t -> Sigma) -> Sigma
+   |   ^^^^^^
+[5 of 6] Compiling Main             ( SemanticProbe.hs, semantic-build/Main.o )
+[6 of 6] Linking semantic-probe

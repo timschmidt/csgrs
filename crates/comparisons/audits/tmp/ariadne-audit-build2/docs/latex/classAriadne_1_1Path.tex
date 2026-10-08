@@ -1,0 +1,79 @@
+\doxysubsection{Path\texorpdfstring{$<$}{<} T \texorpdfstring{$>$}{>} Class Template Reference}
+\hypertarget{classAriadne_1_1Path}{}\label{classAriadne_1_1Path}\index{Path$<$ T $>$@{Path$<$ T $>$}}
+
+
+{\ttfamily \#include $<$path.\+hpp$>$}
+
+
+
+\doxysubsubsection{Description}
+\subsubsection*{template$<$class T$>$\newline
+class Ariadne\+::\+Path$<$ T $>$}
+A dynamically-\/allocated word. \doxysubsubsubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1Path_a652d288d66234d8a1c56cc8f6c743502}\label{classAriadne_1_1Path_a652d288d66234d8a1c56cc8f6c743502} 
+{\bfseries Path} (Height\+Type h)
+\begin{DoxyCompactList}\small\item\em Makes an empty path based at height {\itshape h}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Path_a3e70827fa3d3afeb2b11445dad3936bd}\label{classAriadne_1_1Path_a3e70827fa3d3afeb2b11445dad3936bd} 
+{\bfseries Path} (Height\+Type h, const \mbox{\hyperlink{namespaceAriadne_a8d51a34ecd8621e992f2470124281c93}{Initializer\+List}}$<$ T $>$ \&wd)
+\begin{DoxyCompactList}\small\item\em Construct from an initializer list. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Path_a060a00213e300eeeddedc0af4cd04b2d}\label{classAriadne_1_1Path_a060a00213e300eeeddedc0af4cd04b2d} 
+Height\+Type {\bfseries height} () const
+\begin{DoxyCompactList}\small\item\em The height of the path (i.\+e. first nontrivial digit). \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Path_a49afdda1da27691ddf2e4b4414cfb3ea}\label{classAriadne_1_1Path_a49afdda1da27691ddf2e4b4414cfb3ea} 
+Depth\+Type {\bfseries depth} () const
+\begin{DoxyCompactList}\small\item\em The depth of the path (i.\+e. last known digit). \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Path_a0472c48c2838a924eac36b19cbe017d0}\label{classAriadne_1_1Path_a0472c48c2838a924eac36b19cbe017d0} 
+Size\+Type {\bfseries size} () const
+\begin{DoxyCompactList}\small\item\em The number of elements in the word. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Path_a449638e4eb7f4f5db3584bc3007636cc}\label{classAriadne_1_1Path_a449638e4eb7f4f5db3584bc3007636cc} 
+\mbox{\hyperlink{classAriadne_1_1List}{List}}$<$ T $>$ const \& {\bfseries word} () const
+\begin{DoxyCompactList}\small\item\em The word describing the path. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Path_a420bb2f48f91129322d0e8f696a44c3c}\label{classAriadne_1_1Path_a420bb2f48f91129322d0e8f696a44c3c} 
+bool {\bfseries operator==} (const \mbox{\hyperlink{classAriadne_1_1Path}{Path}}$<$ T $>$ \&w) const
+\begin{DoxyCompactList}\small\item\em Equality operator. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Path_a3be147e4c3e675186df6966a0cb5e96e}\label{classAriadne_1_1Path_a3be147e4c3e675186df6966a0cb5e96e} 
+bool {\bfseries operator$<$} (const \mbox{\hyperlink{classAriadne_1_1Path}{Path}}$<$ T $>$ \&w) const
+\begin{DoxyCompactList}\small\item\em \doxylink{namespaceAriadne_a0e36a4c4b857737f71444bff61a9edb6}{Comparison} operator. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Path_a47a4f5b57f28d28f260c1ef779ff284a}\label{classAriadne_1_1Path_a47a4f5b57f28d28f260c1ef779ff284a} 
+\mbox{\hyperlink{classAriadne_1_1Path}{Path}}$<$ T $>$ {\bfseries operator+} (const T \&s) const
+\begin{DoxyCompactList}\small\item\em Append the symbol {\itshape s}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Path_adc2d1903c08ed147f0aa6b672021ff82}\label{classAriadne_1_1Path_adc2d1903c08ed147f0aa6b672021ff82} 
+T {\bfseries operator\mbox{[}$\,$\mbox{]}} (Depth\+Type k) const
+\begin{DoxyCompactList}\small\item\em Get the value at depth {\itshape k}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Path_a4cf9cd5dbfdb8a412e84d391f43bf23e}\label{classAriadne_1_1Path_a4cf9cd5dbfdb8a412e84d391f43bf23e} 
+T {\bfseries get\+\_\+back} () const
+\begin{DoxyCompactList}\small\item\em Sets the last bit to {\itshape x}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Path_a0e7af76a6cf06d28d371a2b1fbde936a}\label{classAriadne_1_1Path_a0e7af76a6cf06d28d371a2b1fbde936a} 
+void {\bfseries set\+\_\+back} (T x)
+\begin{DoxyCompactList}\small\item\em Sets the last bit to {\itshape x}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Path_ac88897d2a6e29978d1dd132656381ce5}\label{classAriadne_1_1Path_ac88897d2a6e29978d1dd132656381ce5} 
+void {\bfseries push\+\_\+back} (const T \&s)
+\begin{DoxyCompactList}\small\item\em appends the symbol {\itshape s}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Path_ad702374ab51a03308e76cc7305f42582}\label{classAriadne_1_1Path_ad702374ab51a03308e76cc7305f42582} 
+T {\bfseries pop} ()
+\begin{DoxyCompactList}\small\item\em Erase and return the last element. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Path_a73649441c9e19846aa9da9a2b214e03e}\label{classAriadne_1_1Path_a73649441c9e19846aa9da9a2b214e03e} 
+T {\bfseries pop\+\_\+back} ()
+\begin{DoxyCompactList}\small\item\em Erase and return the last element. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Path_ab8cdf0ed76e3fa030cbe1a92ce510db7}\label{classAriadne_1_1Path_ab8cdf0ed76e3fa030cbe1a92ce510db7} 
+void {\bfseries push} (const T \&s)
+\begin{DoxyCompactList}\small\item\em appends the symbol {\itshape s}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Path_a96b40081f072a9ce1e44a4207a9af48f}\label{classAriadne_1_1Path_a96b40081f072a9ce1e44a4207a9af48f} 
+void {\bfseries append} (const T \&s)
+\begin{DoxyCompactList}\small\item\em appends the symbol {\itshape s}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Path_ab7593e92a42043a3a83ffec5e76495ca}\label{classAriadne_1_1Path_ab7593e92a42043a3a83ffec5e76495ca} 
+void {\bfseries append} (const \mbox{\hyperlink{classAriadne_1_1List}{List}}$<$ T $>$ \&w)
+\begin{DoxyCompactList}\small\item\em appends the word {\itshape w}. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsubsection*{Related Types and Functions}
+(Note that these are not member symbols.) \begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1Path_ac1eb5eb49d5403bf7c14bce05574b610}\label{classAriadne_1_1Path_ac1eb5eb49d5403bf7c14bce05574b610} 
+{\footnotesize template$<$class T$>$ }\\\mbox{\hyperlink{namespaceAriadne_acbb98ddc4385af4599070e65a1a47ec1}{Output\+Stream}} \& {\bfseries operator$<$$<$} (\mbox{\hyperlink{namespaceAriadne_acbb98ddc4385af4599070e65a1a47ec1}{Output\+Stream}} \&os, const \mbox{\hyperlink{classAriadne_1_1Path}{Path}}$<$ T $>$ \&pth)
+\begin{DoxyCompactList}\small\item\em write to an output stream. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+The documentation for this class was generated from the following file\+:\begin{DoxyCompactItemize}
+\item 
+source/utility/\mbox{\hyperlink{path_8hpp}{path.\+hpp}}\end{DoxyCompactItemize}

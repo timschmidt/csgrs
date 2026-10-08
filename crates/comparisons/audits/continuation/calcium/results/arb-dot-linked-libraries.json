@@ -1,0 +1,13 @@
+{
+  "tag": "arb-dot-linked-libraries",
+  "started": "2026-09-09T22:38:53.110Z",
+  "finished": "2026-09-09T22:38:53.136Z",
+  "elapsedSeconds": 0.024606533999999996,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison",
+  "command": "ldd",
+  "args": [
+    "/tmp/calcium-arb-dot.zsWvwv/arb-dot-controls"
+  ],
+  "code": 0,
+  "signal": null
+}

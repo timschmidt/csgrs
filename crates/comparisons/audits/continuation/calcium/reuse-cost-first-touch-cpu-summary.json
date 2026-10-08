@@ -1,0 +1,3510 @@
+{
+  "phase": "first-touch",
+  "mode": "cpu",
+  "cpu": 6,
+  "started": "2026-09-08T22:19:15.003Z",
+  "binaries": {
+    "baseline": {
+      "path": "/tmp/calcium-reuse-costs.73SR1w/first-touch-cpu-baseline",
+      "bytes": 1925424,
+      "sha256": "8006ec054c817939f726376ab2faba411026b3ab8b0fb5ac533939b46c76524c",
+      "size": "text\t   data\t    bss\t    dec\t    hex\tfilename\n1374894\t 219840\t   3848\t1598582\t 186476\t/tmp/calcium-reuse-costs.73SR1w/first-touch-cpu-baseline"
+    },
+    "sign": {
+      "path": "/tmp/calcium-reuse-costs.73SR1w/first-touch-cpu-sign",
+      "bytes": 1933896,
+      "sha256": "9109a23b5254da6a788448fa31859d2078cd0a94abb2f0bd6958caaf586e0a8d",
+      "size": "text\t   data\t    bss\t    dec\t    hex\tfilename\n1382082\t 219904\t   4776\t1606762\t 18846a\t/tmp/calcium-reuse-costs.73SR1w/first-touch-cpu-sign"
+    },
+    "reuse": {
+      "path": "/tmp/calcium-reuse-costs.73SR1w/first-touch-cpu-reuse",
+      "bytes": 1937088,
+      "sha256": "38a315b4f91c307348b8a98dd34f4ea9b8926d563483d48e0abd14a88e74c715",
+      "size": "text\t   data\t    bss\t    dec\t    hex\tfilename\n1384334\t 220304\t   2136\t1606774\t 188476\t/tmp/calcium-reuse-costs.73SR1w/first-touch-cpu-reuse"
+    }
+  },
+  "finished": "2026-09-08T22:19:37.018Z",
+  "summaries": [
+    {
+      "name": "identity-1",
+      "setting": "independent",
+      "iterations": 32,
+      "observations": 72,
+      "pilots": [
+        {
+          "case": "identity-1",
+          "sharing": "independent",
+          "workers": 2,
+          "warm_queries_per_worker": 16,
+          "first_ns": 18939,
+          "warm_ns": 85335,
+          "clock_ns": 60,
+          "lifecycle_ns": 214685,
+          "first_calls": 0,
+          "first_bytes": 0,
+          "warm_calls": 0,
+          "warm_bytes": 0,
+          "outcomes": [
+            0,
+            0,
+            2
+          ]
+        },
+        {
+          "case": "identity-1",
+          "sharing": "independent",
+          "workers": 2,
+          "warm_queries_per_worker": 16,
+          "first_ns": 13949,
+          "warm_ns": 36028,
+          "clock_ns": 70,
+          "lifecycle_ns": 165359,
+          "first_calls": 0,
+          "first_bytes": 0,
+          "warm_calls": 0,
+          "warm_bytes": 0,
+          "outcomes": [
+            2,
+            0,
+            0
+          ]
+        },
+        {
+          "case": "identity-1",
+          "sharing": "independent",
+          "workers": 2,
+          "warm_queries_per_worker": 16,
+          "first_ns": 15778,
+          "warm_ns": 39638,
+          "clock_ns": 90,
+          "lifecycle_ns": 163679,
+          "first_calls": 0,
+          "first_bytes": 0,
+          "warm_calls": 0,
+          "warm_bytes": 0,
+          "outcomes": [
+            2,
+            0,
+            0
+          ]
+        }
+      ],
+      "comparisons": {
+        "baseline": {
+          "first_ns": {
+            "pairedMedianRatio": 0.800191070616469,
+            "pairedMedianBootstrap95": [
+              0.7222465629287604,
+              0.8294914590159527
+            ]
+          },
+          "warm_ns": {
+            "pairedMedianRatio": 0.41721394427195446,
+            "pairedMedianBootstrap95": [
+              0.4065472615131357,
+              0.4286811008654298
+            ]
+          },
+          "lifecycle_ns": {
+            "pairedMedianRatio": 0.741191295281005,
+            "pairedMedianBootstrap95": [
+              0.7142829475706798,
+              0.7503979117654527
+            ]
+          }
+        },
+        "sign": {
+          "first_ns": {
+            "pairedMedianRatio": 1.0594127607614314,
+            "pairedMedianBootstrap95": [
+              1.0400704410502857,
+              1.1163646703026857
+            ]
+          },
+          "warm_ns": {
+            "pairedMedianRatio": 0.9905689425202526,
+            "pairedMedianBootstrap95": [
+              0.9596732468256713,
+              1.0414974403750863
+            ]
+          },
+          "lifecycle_ns": {
+            "pairedMedianRatio": 1.0011201568230117,
+            "pairedMedianBootstrap95": [
+              0.9664157636973425,
+              1.0449018998886763
+            ]
+          }
+        }
+      },
+      "measurements": {
+        "baseline": {
+          "first_ns": 4261.8125,
+          "warm_ns": 2147.609375,
+          "clock_ns": 24.53125,
+          "lifecycle_ns": 78762.421875,
+          "first_calls": 0,
+          "first_bytes": 0,
+          "warm_calls": 0,
+          "warm_bytes": 0
+        },
+        "sign": {
+          "first_ns": 3176.609375,
+          "warm_ns": 902.9287109375,
+          "clock_ns": 25.9375,
+          "lifecycle_ns": 58175.859375,
+          "first_calls": 0,
+          "first_bytes": 0,
+          "warm_calls": 0,
+          "warm_bytes": 0
+        },
+        "reuse": {
+          "first_ns": 3438.171875,
+          "warm_ns": 894.1826171875,
+          "clock_ns": 30,
+          "lifecycle_ns": 58558.96875,
+          "first_calls": 0,
+          "first_bytes": 0,
+          "warm_calls": 0,
+          "warm_bytes": 0
+        }
+      }
+    },
+    {
+      "name": "identity-1",
+      "setting": "shared",
+      "iterations": 32,
+      "observations": 72,
+      "pilots": [
+        {
+          "case": "identity-1",
+          "sharing": "shared",
+          "workers": 2,
+          "warm_queries_per_worker": 16,
+          "first_ns": 16888,
+          "warm_ns": 75236,
+          "clock_ns": 70,
+          "lifecycle_ns": 196556,
+          "first_calls": 0,
+          "first_bytes": 0,
+          "warm_calls": 0,
+          "warm_bytes": 0,
+          "outcomes": [
+            0,
+            0,
+            2
+          ]
+        },
+        {
+          "case": "identity-1",
+          "sharing": "shared",
+          "workers": 2,
+          "warm_queries_per_worker": 16,
+          "first_ns": 11730,
+          "warm_ns": 29608,
+          "clock_ns": 60,
+          "lifecycle_ns": 150520,
+          "first_calls": 0,
+          "first_bytes": 0,
+          "warm_calls": 0,
+          "warm_bytes": 0,
+          "outcomes": [
+            2,
+            0,
+            0
+          ]
+        },
+        {
+          "case": "identity-1",
+          "sharing": "shared",
+          "workers": 2,
+          "warm_queries_per_worker": 16,
+          "first_ns": 16959,
+          "warm_ns": 31087,
+          "clock_ns": 90,
+          "lifecycle_ns": 149460,
+          "first_calls": 0,
+          "first_bytes": 0,
+          "warm_calls": 0,
+          "warm_bytes": 0,
+          "outcomes": [
+            2,
+            0,
+            0
+          ]
+        }
+      ],
+      "comparisons": {
+        "baseline": {
+          "first_ns": {
+            "pairedMedianRatio": 0.7200982018007412,
+            "pairedMedianBootstrap95": [
+              0.6521932994081716,
+              0.7371225003450838
+            ]
+          },
+          "warm_ns": {
+            "pairedMedianRatio": 0.43924506923135126,
+            "pairedMedianBootstrap95": [
+              0.4115975165400412,
+              0.4749738992754572
+            ]
+          },
+          "lifecycle_ns": {
+            "pairedMedianRatio": 0.7183687885847743,
+            "pairedMedianBootstrap95": [
+              0.6893803419951984,
+              0.7577432088777704
+            ]
+          }
+        },
+        "sign": {
+          "first_ns": {
+            "pairedMedianRatio": 1.043595526325525,
+            "pairedMedianBootstrap95": [
+              0.9899930973276797,
+              1.0613275971330318
+            ]
+          },
+          "warm_ns": {
+            "pairedMedianRatio": 1.05777676455493,
+            "pairedMedianBootstrap95": [
+              0.9763803970341192,
+              1.1289455955527212
+            ]
+          },
+          "lifecycle_ns": {
+            "pairedMedianRatio": 1.0178782476758461,
+            "pairedMedianBootstrap95": [
+              0.9280859129279617,
+              1.025598325749117
+            ]
+          }
+        }
+      },
+      "measurements": {
+        "baseline": {
+          "first_ns": 5075.109375,
+          "warm_ns": 2519.3583984375,
+          "clock_ns": 28.4375,
+          "lifecycle_ns": 92566.921875,
+          "first_calls": 0,
+          "first_bytes": 0,
+          "warm_calls": 0,
+          "warm_bytes": 0
+        },
+        "sign": {
+          "first_ns": 3397.09375,
+          "warm_ns": 1120.1767578125,
+          "clock_ns": 27.1875,
+          "lifecycle_ns": 69140.421875,
+          "first_calls": 0,
+          "first_bytes": 0,
+          "warm_calls": 0,
+          "warm_bytes": 0
+        },
+        "reuse": {
+          "first_ns": 3452.8125,
+          "warm_ns": 1075.9306640625,
+          "clock_ns": 32.03125,
+          "lifecycle_ns": 63477.359375,
+          "first_calls": 0,
+          "first_bytes": 0,
+          "warm_calls": 0,
+          "warm_bytes": 0
+        }
+      }
+    },
+    {
+      "name": "identity-1",
+      "setting": "common-tail",
+      "iterations": 32,
+      "observations": 72,
+      "pilots": [
+        {
+          "case": "identity-1",
+          "sharing": "common-tail",
+          "workers": 2,
+          "warm_queries_per_worker": 16,
+          "first_ns": 19149,
+          "warm_ns": 90824,
+          "clock_ns": 90,
+          "lifecycle_ns": 225315,
+          "first_calls": 0,
+          "first_bytes": 0,
+          "warm_calls": 0,
+          "warm_bytes": 0,
+          "outcomes": [
+            0,
+            0,
+            2
+          ]
+        },
+        {
+          "case": "identity-1",
+          "sharing": "common-tail",
+          "workers": 2,
+          "warm_queries_per_worker": 16,
+          "first_ns": 14518,
+          "warm_ns": 48757,
+          "clock_ns": 100,
+          "lifecycle_ns": 188957,
+          "first_calls": 0,
+          "first_bytes": 0,
+          "warm_calls": 0,
+          "warm_bytes": 0,
+          "outcomes": [
+            2,
+            0,
+            0
+          ]
+        },
+        {
+          "case": "identity-1",
+          "sharing": "common-tail",
+          "workers": 2,
+          "warm_queries_per_worker": 16,
+          "first_ns": 11649,
+          "warm_ns": 30168,
+          "clock_ns": 70,
+          "lifecycle_ns": 134591,
+          "first_calls": 0,
+          "first_bytes": 0,
+          "warm_calls": 0,
+          "warm_bytes": 0,
+          "outcomes": [
+            2,
+            0,
+            0
+          ]
+        }
+      ],
+      "comparisons": {
+        "baseline": {
+          "first_ns": {
+            "pairedMedianRatio": 0.7676152925341917,
+            "pairedMedianBootstrap95": [
+              0.7014779934433888,
+              0.9484578254111102
+            ]
+          },
+          "warm_ns": {
+            "pairedMedianRatio": 0.3985766403670664,
+            "pairedMedianBootstrap95": [
+              0.3817651758556454,
+              0.4122808632538708
+            ]
+          },
+          "lifecycle_ns": {
+            "pairedMedianRatio": 0.7235685436447858,
+            "pairedMedianBootstrap95": [
+              0.680232129004861,
+              0.792204264724397
+            ]
+          }
+        },
+        "sign": {
+          "first_ns": {
+            "pairedMedianRatio": 1.036267918874207,
+            "pairedMedianBootstrap95": [
+              0.9124062620945657,
+              1.253444588083206
+            ]
+          },
+          "warm_ns": {
+            "pairedMedianRatio": 0.9328206371131514,
+            "pairedMedianBootstrap95": [
+              0.8087757243154022,
+              0.9686661884682601
+            ]
+          },
+          "lifecycle_ns": {
+            "pairedMedianRatio": 0.9799942653634335,
+            "pairedMedianBootstrap95": [
+              0.9034431509134091,
+              1.006465134481816
+            ]
+          }
+        }
+      },
+      "measurements": {
+        "baseline": {
+          "first_ns": 4319.484375,
+          "warm_ns": 2193.7001953125,
+          "clock_ns": 25.78125,
+          "lifecycle_ns": 80212.46875,
+          "first_calls": 0,
+          "first_bytes": 0,
+          "warm_calls": 0,
+          "warm_bytes": 0
+        },
+        "sign": {
+          "first_ns": 3311.296875,
+          "warm_ns": 925.8251953125,
+          "clock_ns": 24.53125,
+          "lifecycle_ns": 58547.859375,
+          "first_calls": 0,
+          "first_bytes": 0,
+          "warm_calls": 0,
+          "warm_bytes": 0
+        },
+        "reuse": {
+          "first_ns": 3364.25,
+          "warm_ns": 889.6162109375,
+          "clock_ns": 34.359375,
+          "lifecycle_ns": 58985.8125,
+          "first_calls": 0,
+          "first_bytes": 0,
+          "warm_calls": 0,
+          "warm_bytes": 0
+        }
+      }
+    },
+    {
+      "name": "identity-8",
+      "setting": "independent",
+      "iterations": 32,
+      "observations": 72,
+      "pilots": [
+        {
+          "case": "identity-8",
+          "sharing": "independent",
+          "workers": 2,
+          "warm_queries_per_worker": 16,
+          "first_ns": 14400,
+          "warm_ns": 72714,
+          "clock_ns": 50,
+          "lifecycle_ns": 191237,
+          "first_calls": 0,
+          "first_bytes": 0,
+          "warm_calls": 0,
+          "warm_bytes": 0,
+          "outcomes": [
+            0,
+            0,
+            2
+          ]
+        },
+        {
+          "case": "identity-8",
+          "sharing": "independent",
+          "workers": 2,
+          "warm_queries_per_worker": 16,
+          "first_ns": 9459,
+          "warm_ns": 21998,
+          "clock_ns": 50,
+          "lifecycle_ns": 115622,
+          "first_calls": 0,
+          "first_bytes": 0,
+          "warm_calls": 0,
+          "warm_bytes": 0,
+          "outcomes": [
+            2,
+            0,
+            0
+          ]
+        },
+        {
+          "case": "identity-8",
+          "sharing": "independent",
+          "workers": 2,
+          "warm_queries_per_worker": 16,
+          "first_ns": 9920,
+          "warm_ns": 20558,
+          "clock_ns": 60,
+          "lifecycle_ns": 124102,
+          "first_calls": 0,
+          "first_bytes": 0,
+          "warm_calls": 0,
+          "warm_bytes": 0,
+          "outcomes": [
+            2,
+            0,
+            0
+          ]
+        }
+      ],
+      "comparisons": {
+        "baseline": {
+          "first_ns": {
+            "pairedMedianRatio": 0.6843321441402749,
+            "pairedMedianBootstrap95": [
+              0.6787584420664223,
+              0.8036766649484991
+            ]
+          },
+          "warm_ns": {
+            "pairedMedianRatio": 0.3045656566962811,
+            "pairedMedianBootstrap95": [
+              0.2873998511052675,
+              0.43453563475849855
+            ]
+          },
+          "lifecycle_ns": {
+            "pairedMedianRatio": 0.6977069288027659,
+            "pairedMedianBootstrap95": [
+              0.6716953416649925,
+              0.8142858195707927
+            ]
+          }
+        },
+        "sign": {
+          "first_ns": {
+            "pairedMedianRatio": 1.07866059332635,
+            "pairedMedianBootstrap95": [
+              1.0522813862609237,
+              1.2882146218294848
+            ]
+          },
+          "warm_ns": {
+            "pairedMedianRatio": 0.9076089877713953,
+            "pairedMedianBootstrap95": [
+              0.9031763158782075,
+              1.3572198654698011
+            ]
+          },
+          "lifecycle_ns": {
+            "pairedMedianRatio": 1.0252969004450734,
+            "pairedMedianBootstrap95": [
+              0.9876896609141474,
+              1.2042171316966759
+            ]
+          }
+        }
+      },
+      "measurements": {
+        "baseline": {
+          "first_ns": 4121.75,
+          "warm_ns": 2122.6923828125,
+          "clock_ns": 25.15625,
+          "lifecycle_ns": 77643.421875,
+          "first_calls": 0,
+          "first_bytes": 0,
+          "warm_calls": 0,
+          "warm_bytes": 0
+        },
+        "sign": {
+          "first_ns": 2608.78125,
+          "warm_ns": 682.7138671875,
+          "clock_ns": 24.84375,
+          "lifecycle_ns": 52712.484375,
+          "first_calls": 0,
+          "first_bytes": 0,
+          "warm_calls": 0,
+          "warm_bytes": 0
+        },
+        "reuse": {
+          "first_ns": 2872.40625,
+          "warm_ns": 643.0458984375,
+          "clock_ns": 30.625,
+          "lifecycle_ns": 53818.1875,
+          "first_calls": 0,
+          "first_bytes": 0,
+          "warm_calls": 0,
+          "warm_bytes": 0
+        }
+      }
+    },
+    {
+      "name": "identity-8",
+      "setting": "shared",
+      "iterations": 32,
+      "observations": 72,
+      "pilots": [
+        {
+          "case": "identity-8",
+          "sharing": "shared",
+          "workers": 2,
+          "warm_queries_per_worker": 16,
+          "first_ns": 16020,
+          "warm_ns": 89174,
+          "clock_ns": 70,
+          "lifecycle_ns": 210016,
+          "first_calls": 0,
+          "first_bytes": 0,
+          "warm_calls": 0,
+          "warm_bytes": 0,
+          "outcomes": [
+            0,
+            0,
+            2
+          ]
+        },
+        {
+          "case": "identity-8",
+          "sharing": "shared",
+          "workers": 2,
+          "warm_queries_per_worker": 16,
+          "first_ns": 11108,
+          "warm_ns": 26549,
+          "clock_ns": 70,
+          "lifecycle_ns": 143230,
+          "first_calls": 0,
+          "first_bytes": 0,
+          "warm_calls": 0,
+          "warm_bytes": 0,
+          "outcomes": [
+            2,
+            0,
+            0
+          ]
+        },
+        {
+          "case": "identity-8",
+          "sharing": "shared",
+          "workers": 2,
+          "warm_queries_per_worker": 16,
+          "first_ns": 11390,
+          "warm_ns": 27328,
+          "clock_ns": 70,
+          "lifecycle_ns": 148439,
+          "first_calls": 0,
+          "first_bytes": 0,
+          "warm_calls": 0,
+          "warm_bytes": 0,
+          "outcomes": [
+            2,
+            0,
+            0
+          ]
+        }
+      ],
+      "comparisons": {
+        "baseline": {
+          "first_ns": {
+            "pairedMedianRatio": 0.6014109240141603,
+            "pairedMedianBootstrap95": [
+              0.591125000514124,
+              0.6215618459863138
+            ]
+          },
+          "warm_ns": {
+            "pairedMedianRatio": 0.2914149590200127,
+            "pairedMedianBootstrap95": [
+              0.28541208328903817,
+              0.32639354546138233
+            ]
+          },
+          "lifecycle_ns": {
+            "pairedMedianRatio": 0.6477398451569499,
+            "pairedMedianBootstrap95": [
+              0.6454400515110662,
+              0.6949482323530105
+            ]
+          }
+        },
+        "sign": {
+          "first_ns": {
+            "pairedMedianRatio": 1.0955172439433571,
+            "pairedMedianBootstrap95": [
+              1.0509310129777567,
+              1.176620953003335
+            ]
+          },
+          "warm_ns": {
+            "pairedMedianRatio": 1.0318654290232392,
+            "pairedMedianBootstrap95": [
+              0.9833276836584481,
+              1.195934980544123
+            ]
+          },
+          "lifecycle_ns": {
+            "pairedMedianRatio": 1.0220094051835447,
+            "pairedMedianBootstrap95": [
+              0.9810884768314797,
+              1.0849340038432018
+            ]
+          }
+        }
+      },
+      "measurements": {
+        "baseline": {
+          "first_ns": 4210.875,
+          "warm_ns": 2199.841796875,
+          "clock_ns": 26.40625,
+          "lifecycle_ns": 79143.953125,
+          "first_calls": 0,
+          "first_bytes": 0,
+          "warm_calls": 0,
+          "warm_bytes": 0
+        },
+        "sign": {
+          "first_ns": 2386.5625,
+          "warm_ns": 631.072265625,
+          "clock_ns": 24.53125,
+          "lifecycle_ns": 52672.640625,
+          "first_calls": 0,
+          "first_bytes": 0,
+          "warm_calls": 0,
+          "warm_bytes": 0
+        },
+        "reuse": {
+          "first_ns": 2630.65625,
+          "warm_ns": 635.412109375,
+          "clock_ns": 33.75,
+          "lifecycle_ns": 51870.5,
+          "first_calls": 0,
+          "first_bytes": 0,
+          "warm_calls": 0,
+          "warm_bytes": 0
+        }
+      }
+    },
+    {
+      "name": "identity-8",
+      "setting": "common-tail",
+      "iterations": 32,
+      "observations": 72,
+      "pilots": [
+        {
+          "case": "identity-8",
+          "sharing": "common-tail",
+          "workers": 2,
+          "warm_queries_per_worker": 16,
+          "first_ns": 13869,
+          "warm_ns": 69016,
+          "clock_ns": 50,
+          "lifecycle_ns": 174309,
+          "first_calls": 0,
+          "first_bytes": 0,
+          "warm_calls": 0,
+          "warm_bytes": 0,
+          "outcomes": [
+            0,
+            0,
+            2
+          ]
+        },
+        {
+          "case": "identity-8",
+          "sharing": "common-tail",
+          "workers": 2,
+          "warm_queries_per_worker": 16,
+          "first_ns": 8830,
+          "warm_ns": 21138,
+          "clock_ns": 60,
+          "lifecycle_ns": 123961,
+          "first_calls": 0,
+          "first_bytes": 0,
+          "warm_calls": 0,
+          "warm_bytes": 0,
+          "outcomes": [
+            2,
+            0,
+            0
+          ]
+        },
+        {
+          "case": "identity-8",
+          "sharing": "common-tail",
+          "workers": 2,
+          "warm_queries_per_worker": 16,
+          "first_ns": 9480,
+          "warm_ns": 20168,
+          "clock_ns": 80,
+          "lifecycle_ns": 115782,
+          "first_calls": 0,
+          "first_bytes": 0,
+          "warm_calls": 0,
+          "warm_bytes": 0,
+          "outcomes": [
+            2,
+            0,
+            0
+          ]
+        }
+      ],
+      "comparisons": {
+        "baseline": {
+          "first_ns": {
+            "pairedMedianRatio": 0.6304696384378232,
+            "pairedMedianBootstrap95": [
+              0.598665229030339,
+              0.6511666031261913
+            ]
+          },
+          "warm_ns": {
+            "pairedMedianRatio": 0.29289734807300044,
+            "pairedMedianBootstrap95": [
+              0.27655622653282713,
+              0.323014630570071
+            ]
+          },
+          "lifecycle_ns": {
+            "pairedMedianRatio": 0.6792068550862952,
+            "pairedMedianBootstrap95": [
+              0.6281333576028743,
+              0.6979843832555588
+            ]
+          }
+        },
+        "sign": {
+          "first_ns": {
+            "pairedMedianRatio": 1.1023305142012618,
+            "pairedMedianBootstrap95": [
+              0.9874769255300229,
+              1.1972513206955318
+            ]
+          },
+          "warm_ns": {
+            "pairedMedianRatio": 0.9958685806814316,
+            "pairedMedianBootstrap95": [
+              0.9620918662154151,
+              1.0276809845074744
+            ]
+          },
+          "lifecycle_ns": {
+            "pairedMedianRatio": 1.0075903638291044,
+            "pairedMedianBootstrap95": [
+              0.9813805125922629,
+              1.0578857827737913
+            ]
+          }
+        }
+      },
+      "measurements": {
+        "baseline": {
+          "first_ns": 4178.25,
+          "warm_ns": 2170.0693359375,
+          "clock_ns": 24.53125,
+          "lifecycle_ns": 78653.8125,
+          "first_calls": 0,
+          "first_bytes": 0,
+          "warm_calls": 0,
+          "warm_bytes": 0
+        },
+        "sign": {
+          "first_ns": 2451.5625,
+          "warm_ns": 635.2724609375,
+          "clock_ns": 25.78125,
+          "lifecycle_ns": 52073.3125,
+          "first_calls": 0,
+          "first_bytes": 0,
+          "warm_calls": 0,
+          "warm_bytes": 0
+        },
+        "reuse": {
+          "first_ns": 2649.078125,
+          "warm_ns": 645.4521484375,
+          "clock_ns": 31.875,
+          "lifecycle_ns": 53192.125,
+          "first_calls": 0,
+          "first_bytes": 0,
+          "warm_calls": 0,
+          "warm_bytes": 0
+        }
+      }
+    },
+    {
+      "name": "identity-32",
+      "setting": "independent",
+      "iterations": 32,
+      "observations": 72,
+      "pilots": [
+        {
+          "case": "identity-32",
+          "sharing": "independent",
+          "workers": 2,
+          "warm_queries_per_worker": 16,
+          "first_ns": 13398,
+          "warm_ns": 67306,
+          "clock_ns": 60,
+          "lifecycle_ns": 169178,
+          "first_calls": 0,
+          "first_bytes": 0,
+          "warm_calls": 0,
+          "warm_bytes": 0,
+          "outcomes": [
+            0,
+            0,
+            2
+          ]
+        },
+        {
+          "case": "identity-32",
+          "sharing": "independent",
+          "workers": 2,
+          "warm_queries_per_worker": 16,
+          "first_ns": 9838,
+          "warm_ns": 24110,
+          "clock_ns": 60,
+          "lifecycle_ns": 127481,
+          "first_calls": 0,
+          "first_bytes": 0,
+          "warm_calls": 0,
+          "warm_bytes": 0,
+          "outcomes": [
+            2,
+            0,
+            0
+          ]
+        },
+        {
+          "case": "identity-32",
+          "sharing": "independent",
+          "workers": 2,
+          "warm_queries_per_worker": 16,
+          "first_ns": 10050,
+          "warm_ns": 20818,
+          "clock_ns": 60,
+          "lifecycle_ns": 117262,
+          "first_calls": 0,
+          "first_bytes": 0,
+          "warm_calls": 0,
+          "warm_bytes": 0,
+          "outcomes": [
+            2,
+            0,
+            0
+          ]
+        }
+      ],
+      "comparisons": {
+        "baseline": {
+          "first_ns": {
+            "pairedMedianRatio": 0.7282734953230621,
+            "pairedMedianBootstrap95": [
+              0.7183495335246308,
+              0.7644538377560113
+            ]
+          },
+          "warm_ns": {
+            "pairedMedianRatio": 0.30029684004392065,
+            "pairedMedianBootstrap95": [
+              0.293493580908621,
+              0.3143837254140447
+            ]
+          },
+          "lifecycle_ns": {
+            "pairedMedianRatio": 0.6875949630207978,
+            "pairedMedianBootstrap95": [
+              0.6682767310848173,
+              0.7139489020439677
+            ]
+          }
+        },
+        "sign": {
+          "first_ns": {
+            "pairedMedianRatio": 1.1006747462137434,
+            "pairedMedianBootstrap95": [
+              1.0419280812397456,
+              1.1552097568506352
+            ]
+          },
+          "warm_ns": {
+            "pairedMedianRatio": 0.8693217757573808,
+            "pairedMedianBootstrap95": [
+              0.8359235733091046,
+              0.9118235689150216
+            ]
+          },
+          "lifecycle_ns": {
+            "pairedMedianRatio": 0.9979964238613435,
+            "pairedMedianBootstrap95": [
+              0.9354403589278354,
+              1.0625233030194168
+            ]
+          }
+        }
+      },
+      "measurements": {
+        "baseline": {
+          "first_ns": 4099.890625,
+          "warm_ns": 2141.765625,
+          "clock_ns": 25.15625,
+          "lifecycle_ns": 78351.484375,
+          "first_calls": 0,
+          "first_bytes": 0,
+          "warm_calls": 0,
+          "warm_bytes": 0
+        },
+        "sign": {
+          "first_ns": 2758.109375,
+          "warm_ns": 757.109375,
+          "clock_ns": 24.375,
+          "lifecycle_ns": 55188.71875,
+          "first_calls": 0,
+          "first_bytes": 0,
+          "warm_calls": 0,
+          "warm_bytes": 0
+        },
+        "reuse": {
+          "first_ns": 3025.0625,
+          "warm_ns": 632.439453125,
+          "clock_ns": 29.375,
+          "lifecycle_ns": 53910.6875,
+          "first_calls": 0,
+          "first_bytes": 0,
+          "warm_calls": 0,
+          "warm_bytes": 0
+        }
+      }
+    },
+    {
+      "name": "identity-32",
+      "setting": "shared",
+      "iterations": 32,
+      "observations": 72,
+      "pilots": [
+        {
+          "case": "identity-32",
+          "sharing": "shared",
+          "workers": 2,
+          "warm_queries_per_worker": 16,
+          "first_ns": 13388,
+          "warm_ns": 68196,
+          "clock_ns": 50,
+          "lifecycle_ns": 174598,
+          "first_calls": 0,
+          "first_bytes": 0,
+          "warm_calls": 0,
+          "warm_bytes": 0,
+          "outcomes": [
+            0,
+            0,
+            2
+          ]
+        },
+        {
+          "case": "identity-32",
+          "sharing": "shared",
+          "workers": 2,
+          "warm_queries_per_worker": 16,
+          "first_ns": 10379,
+          "warm_ns": 39007,
+          "clock_ns": 100,
+          "lifecycle_ns": 164399,
+          "first_calls": 0,
+          "first_bytes": 0,
+          "warm_calls": 0,
+          "warm_bytes": 0,
+          "outcomes": [
+            2,
+            0,
+            0
+          ]
+        },
+        {
+          "case": "identity-32",
+          "sharing": "shared",
+          "workers": 2,
+          "warm_queries_per_worker": 16,
+          "first_ns": 8788,
+          "warm_ns": 20160,
+          "clock_ns": 70,
+          "lifecycle_ns": 117781,
+          "first_calls": 0,
+          "first_bytes": 0,
+          "warm_calls": 0,
+          "warm_bytes": 0,
+          "outcomes": [
+            2,
+            0,
+            0
+          ]
+        }
+      ],
+      "comparisons": {
+        "baseline": {
+          "first_ns": {
+            "pairedMedianRatio": 0.6016933756196753,
+            "pairedMedianBootstrap95": [
+              0.5854619841169986,
+              0.7090659715437113
+            ]
+          },
+          "warm_ns": {
+            "pairedMedianRatio": 0.30565816710267235,
+            "pairedMedianBootstrap95": [
+              0.29114833458185213,
+              0.3947108650977611
+            ]
+          },
+          "lifecycle_ns": {
+            "pairedMedianRatio": 0.6775285084588232,
+            "pairedMedianBootstrap95": [
+              0.6423311474074327,
+              0.7792367653026097
+            ]
+          }
+        },
+        "sign": {
+          "first_ns": {
+            "pairedMedianRatio": 1.0247874180656216,
+            "pairedMedianBootstrap95": [
+              0.9865528057806555,
+              1.229400566823353
+            ]
+          },
+          "warm_ns": {
+            "pairedMedianRatio": 1.0123024670352296,
+            "pairedMedianBootstrap95": [
+              0.9710163983562008,
+              1.3890936925165644
+            ]
+          },
+          "lifecycle_ns": {
+            "pairedMedianRatio": 1.0328320760453782,
+            "pairedMedianBootstrap95": [
+              0.9922668831115522,
+              1.2006527606655881
+            ]
+          }
+        }
+      },
+      "measurements": {
+        "baseline": {
+          "first_ns": 4159.875,
+          "warm_ns": 2125.8505859375,
+          "clock_ns": 25.625,
+          "lifecycle_ns": 78641.9375,
+          "first_calls": 0,
+          "first_bytes": 0,
+          "warm_calls": 0,
+          "warm_bytes": 0
+        },
+        "sign": {
+          "first_ns": 2433.90625,
+          "warm_ns": 642.048828125,
+          "clock_ns": 24.6875,
+          "lifecycle_ns": 52398.90625,
+          "first_calls": 0,
+          "first_bytes": 0,
+          "warm_calls": 0,
+          "warm_bytes": 0
+        },
+        "reuse": {
+          "first_ns": 2548.328125,
+          "warm_ns": 641.6787109375,
+          "clock_ns": 32.5,
+          "lifecycle_ns": 54149.734375,
+          "first_calls": 0,
+          "first_bytes": 0,
+          "warm_calls": 0,
+          "warm_bytes": 0
+        }
+      }
+    },
+    {
+      "name": "identity-32",
+      "setting": "common-tail",
+      "iterations": 32,
+      "observations": 72,
+      "pilots": [
+        {
+          "case": "identity-32",
+          "sharing": "common-tail",
+          "workers": 2,
+          "warm_queries_per_worker": 16,
+          "first_ns": 13199,
+          "warm_ns": 73824,
+          "clock_ns": 50,
+          "lifecycle_ns": 176718,
+          "first_calls": 0,
+          "first_bytes": 0,
+          "warm_calls": 0,
+          "warm_bytes": 0,
+          "outcomes": [
+            0,
+            0,
+            2
+          ]
+        },
+        {
+          "case": "identity-32",
+          "sharing": "common-tail",
+          "workers": 2,
+          "warm_queries_per_worker": 16,
+          "first_ns": 10789,
+          "warm_ns": 40817,
+          "clock_ns": 90,
+          "lifecycle_ns": 165989,
+          "first_calls": 0,
+          "first_bytes": 0,
+          "warm_calls": 0,
+          "warm_bytes": 0,
+          "outcomes": [
+            2,
+            0,
+            0
+          ]
+        },
+        {
+          "case": "identity-32",
+          "sharing": "common-tail",
+          "workers": 2,
+          "warm_queries_per_worker": 16,
+          "first_ns": 9709,
+          "warm_ns": 20509,
+          "clock_ns": 60,
+          "lifecycle_ns": 115912,
+          "first_calls": 0,
+          "first_bytes": 0,
+          "warm_calls": 0,
+          "warm_bytes": 0,
+          "outcomes": [
+            2,
+            0,
+            0
+          ]
+        }
+      ],
+      "comparisons": {
+        "baseline": {
+          "first_ns": {
+            "pairedMedianRatio": 0.6823187338300429,
+            "pairedMedianBootstrap95": [
+              0.6669748682533341,
+              0.7288641625488096
+            ]
+          },
+          "warm_ns": {
+            "pairedMedianRatio": 0.3316446249231414,
+            "pairedMedianBootstrap95": [
+              0.30631314856047465,
+              0.3447917861818349
+            ]
+          },
+          "lifecycle_ns": {
+            "pairedMedianRatio": 0.7108061782065889,
+            "pairedMedianBootstrap95": [
+              0.687113400305361,
+              0.7248575484582938
+            ]
+          }
+        },
+        "sign": {
+          "first_ns": {
+            "pairedMedianRatio": 1.0379035493700655,
+            "pairedMedianBootstrap95": [
+              0.9406084564919532,
+              1.2143185028248586
+            ]
+          },
+          "warm_ns": {
+            "pairedMedianRatio": 0.9700897972834808,
+            "pairedMedianBootstrap95": [
+              0.8650447484826664,
+              1.087219979581539
+            ]
+          },
+          "lifecycle_ns": {
+            "pairedMedianRatio": 0.9907851746039787,
+            "pairedMedianBootstrap95": [
+              0.9053178866312758,
+              1.0624644310935938
+            ]
+          }
+        }
+      },
+      "measurements": {
+        "baseline": {
+          "first_ns": 4173.328125,
+          "warm_ns": 2148.5849609375,
+          "clock_ns": 24.6875,
+          "lifecycle_ns": 78592.09375,
+          "first_calls": 0,
+          "first_bytes": 0,
+          "warm_calls": 0,
+          "warm_bytes": 0
+        },
+        "sign": {
+          "first_ns": 2695.875,
+          "warm_ns": 680.8408203125,
+          "clock_ns": 26.859375,
+          "lifecycle_ns": 55207.765625,
+          "first_calls": 0,
+          "first_bytes": 0,
+          "warm_calls": 0,
+          "warm_bytes": 0
+        },
+        "reuse": {
+          "first_ns": 2808.90625,
+          "warm_ns": 654.1064453125,
+          "clock_ns": 31.09375,
+          "lifecycle_ns": 54223.953125,
+          "first_calls": 0,
+          "first_bytes": 0,
+          "warm_calls": 0,
+          "warm_bytes": 0
+        }
+      }
+    },
+    {
+      "name": "identity-128",
+      "setting": "independent",
+      "iterations": 32,
+      "observations": 72,
+      "pilots": [
+        {
+          "case": "identity-128",
+          "sharing": "independent",
+          "workers": 2,
+          "warm_queries_per_worker": 16,
+          "first_ns": 13088,
+          "warm_ns": 67926,
+          "clock_ns": 50,
+          "lifecycle_ns": 172888,
+          "first_calls": 0,
+          "first_bytes": 0,
+          "warm_calls": 0,
+          "warm_bytes": 0,
+          "outcomes": [
+            0,
+            0,
+            2
+          ]
+        },
+        {
+          "case": "identity-128",
+          "sharing": "independent",
+          "workers": 2,
+          "warm_queries_per_worker": 16,
+          "first_ns": 33597,
+          "warm_ns": 233974,
+          "clock_ns": 50,
+          "lifecycle_ns": 363685,
+          "first_calls": 0,
+          "first_bytes": 0,
+          "warm_calls": 0,
+          "warm_bytes": 0,
+          "outcomes": [
+            2,
+            0,
+            0
+          ]
+        },
+        {
+          "case": "identity-128",
+          "sharing": "independent",
+          "workers": 2,
+          "warm_queries_per_worker": 16,
+          "first_ns": 46097,
+          "warm_ns": 36837,
+          "clock_ns": 110,
+          "lifecycle_ns": 213516,
+          "first_calls": 0,
+          "first_bytes": 0,
+          "warm_calls": 0,
+          "warm_bytes": 0,
+          "outcomes": [
+            2,
+            0,
+            0
+          ]
+        }
+      ],
+      "comparisons": {
+        "baseline": {
+          "first_ns": {
+            "pairedMedianRatio": 2.957748311431584,
+            "pairedMedianBootstrap95": [
+              2.8006805717538628,
+              3.1286225395615017
+            ]
+          },
+          "warm_ns": {
+            "pairedMedianRatio": 0.3028148145176647,
+            "pairedMedianBootstrap95": [
+              0.2939202259708903,
+              0.3137889340869853
+            ]
+          },
+          "lifecycle_ns": {
+            "pairedMedianRatio": 0.7976313973844319,
+            "pairedMedianBootstrap95": [
+              0.7754008458686704,
+              0.8424920684489009
+            ]
+          }
+        },
+        "sign": {
+          "first_ns": {
+            "pairedMedianRatio": 1.0236181700196563,
+            "pairedMedianBootstrap95": [
+              0.9937326682741354,
+              1.0972064406348117
+            ]
+          },
+          "warm_ns": {
+            "pairedMedianRatio": 0.08937203283588285,
+            "pairedMedianBootstrap95": [
+              0.08602702280898245,
+              0.10367170731826428
+            ]
+          },
+          "lifecycle_ns": {
+            "pairedMedianRatio": 0.3718141275762223,
+            "pairedMedianBootstrap95": [
+              0.3626276374840204,
+              0.392645011092573
+            ]
+          }
+        }
+      },
+      "measurements": {
+        "baseline": {
+          "first_ns": 4151.71875,
+          "warm_ns": 2146.5107421875,
+          "clock_ns": 24.6875,
+          "lifecycle_ns": 79053.953125,
+          "first_calls": 0,
+          "first_bytes": 0,
+          "warm_calls": 0,
+          "warm_bytes": 0
+        },
+        "sign": {
+          "first_ns": 12201.8125,
+          "warm_ns": 7215.970703125,
+          "clock_ns": 26.09375,
+          "lifecycle_ns": 171450.421875,
+          "first_calls": 0,
+          "first_bytes": 0,
+          "warm_calls": 0,
+          "warm_bytes": 0
+        },
+        "reuse": {
+          "first_ns": 12237.796875,
+          "warm_ns": 647.3779296875,
+          "clock_ns": 27.5,
+          "lifecycle_ns": 63481.265625,
+          "first_calls": 0,
+          "first_bytes": 0,
+          "warm_calls": 0,
+          "warm_bytes": 0
+        }
+      }
+    },
+    {
+      "name": "identity-128",
+      "setting": "shared",
+      "iterations": 32,
+      "observations": 72,
+      "pilots": [
+        {
+          "case": "identity-128",
+          "sharing": "shared",
+          "workers": 2,
+          "warm_queries_per_worker": 16,
+          "first_ns": 13530,
+          "warm_ns": 68455,
+          "clock_ns": 80,
+          "lifecycle_ns": 186847,
+          "first_calls": 0,
+          "first_bytes": 0,
+          "warm_calls": 0,
+          "warm_bytes": 0,
+          "outcomes": [
+            0,
+            0,
+            2
+          ]
+        },
+        {
+          "case": "identity-128",
+          "sharing": "shared",
+          "workers": 2,
+          "warm_queries_per_worker": 16,
+          "first_ns": 10769,
+          "warm_ns": 40278,
+          "clock_ns": 60,
+          "lifecycle_ns": 167458,
+          "first_calls": 0,
+          "first_bytes": 0,
+          "warm_calls": 0,
+          "warm_bytes": 0,
+          "outcomes": [
+            2,
+            0,
+            0
+          ]
+        },
+        {
+          "case": "identity-128",
+          "sharing": "shared",
+          "workers": 2,
+          "warm_queries_per_worker": 16,
+          "first_ns": 11000,
+          "warm_ns": 41407,
+          "clock_ns": 100,
+          "lifecycle_ns": 168968,
+          "first_calls": 0,
+          "first_bytes": 0,
+          "warm_calls": 0,
+          "warm_bytes": 0,
+          "outcomes": [
+            2,
+            0,
+            0
+          ]
+        }
+      ],
+      "comparisons": {
+        "baseline": {
+          "first_ns": {
+            "pairedMedianRatio": 0.5970812402926984,
+            "pairedMedianBootstrap95": [
+              0.5733404081689825,
+              0.6170914429846026
+            ]
+          },
+          "warm_ns": {
+            "pairedMedianRatio": 0.29184328042596686,
+            "pairedMedianBootstrap95": [
+              0.2658214368116756,
+              0.311197746005681
+            ]
+          },
+          "lifecycle_ns": {
+            "pairedMedianRatio": 0.6645735734825129,
+            "pairedMedianBootstrap95": [
+              0.6009581826218864,
+              0.6847993359530522
+            ]
+          }
+        },
+        "sign": {
+          "first_ns": {
+            "pairedMedianRatio": 1.0075615581061323,
+            "pairedMedianBootstrap95": [
+              0.9760375126743133,
+              1.0756166024798275
+            ]
+          },
+          "warm_ns": {
+            "pairedMedianRatio": 0.9777266364176156,
+            "pairedMedianBootstrap95": [
+              0.9428990213797598,
+              1.003170590537307
+            ]
+          },
+          "lifecycle_ns": {
+            "pairedMedianRatio": 0.9860284572535347,
+            "pairedMedianBootstrap95": [
+              0.9741394318038037,
+              1.0050210182500572
+            ]
+          }
+        }
+      },
+      "measurements": {
+        "baseline": {
+          "first_ns": 4283.453125,
+          "warm_ns": 2179.986328125,
+          "clock_ns": 27.5,
+          "lifecycle_ns": 79613.453125,
+          "first_calls": 0,
+          "first_bytes": 0,
+          "warm_calls": 0,
+          "warm_bytes": 0
+        },
+        "sign": {
+          "first_ns": 2554.828125,
+          "warm_ns": 645.814453125,
+          "clock_ns": 25.15625,
+          "lifecycle_ns": 53159.484375,
+          "first_calls": 0,
+          "first_bytes": 0,
+          "warm_calls": 0,
+          "warm_bytes": 0
+        },
+        "reuse": {
+          "first_ns": 2544.734375,
+          "warm_ns": 634.310546875,
+          "clock_ns": 29.6875,
+          "lifecycle_ns": 52811.53125,
+          "first_calls": 0,
+          "first_bytes": 0,
+          "warm_calls": 0,
+          "warm_bytes": 0
+        }
+      }
+    },
+    {
+      "name": "identity-128",
+      "setting": "common-tail",
+      "iterations": 32,
+      "observations": 72,
+      "pilots": [
+        {
+          "case": "identity-128",
+          "sharing": "common-tail",
+          "workers": 2,
+          "warm_queries_per_worker": 16,
+          "first_ns": 14269,
+          "warm_ns": 70374,
+          "clock_ns": 60,
+          "lifecycle_ns": 186777,
+          "first_calls": 0,
+          "first_bytes": 0,
+          "warm_calls": 0,
+          "warm_bytes": 0,
+          "outcomes": [
+            0,
+            0,
+            2
+          ]
+        },
+        {
+          "case": "identity-128",
+          "sharing": "common-tail",
+          "workers": 2,
+          "warm_queries_per_worker": 16,
+          "first_ns": 12699,
+          "warm_ns": 48797,
+          "clock_ns": 90,
+          "lifecycle_ns": 182147,
+          "first_calls": 0,
+          "first_bytes": 0,
+          "warm_calls": 0,
+          "warm_bytes": 0,
+          "outcomes": [
+            2,
+            0,
+            0
+          ]
+        },
+        {
+          "case": "identity-128",
+          "sharing": "common-tail",
+          "workers": 2,
+          "warm_queries_per_worker": 16,
+          "first_ns": 11959,
+          "warm_ns": 20698,
+          "clock_ns": 80,
+          "lifecycle_ns": 127752,
+          "first_calls": 0,
+          "first_bytes": 0,
+          "warm_calls": 0,
+          "warm_bytes": 0,
+          "outcomes": [
+            2,
+            0,
+            0
+          ]
+        }
+      ],
+      "comparisons": {
+        "baseline": {
+          "first_ns": {
+            "pairedMedianRatio": 0.801963167779004,
+            "pairedMedianBootstrap95": [
+              0.7836497454659672,
+              0.8274934377726695
+            ]
+          },
+          "warm_ns": {
+            "pairedMedianRatio": 0.2978292602736685,
+            "pairedMedianBootstrap95": [
+              0.2909956620313587,
+              0.33844816848242776
+            ]
+          },
+          "lifecycle_ns": {
+            "pairedMedianRatio": 0.6860337048802334,
+            "pairedMedianBootstrap95": [
+              0.6545997104628832,
+              0.7245411970295614
+            ]
+          }
+        },
+        "sign": {
+          "first_ns": {
+            "pairedMedianRatio": 1.0765966848375892,
+            "pairedMedianBootstrap95": [
+              1.0517813478030127,
+              1.0869292783987363
+            ]
+          },
+          "warm_ns": {
+            "pairedMedianRatio": 0.8734678025657001,
+            "pairedMedianBootstrap95": [
+              0.8535644668131352,
+              0.9501004579102924
+            ]
+          },
+          "lifecycle_ns": {
+            "pairedMedianRatio": 0.989126953188767,
+            "pairedMedianBootstrap95": [
+              0.9723305756409241,
+              1.011382721629986
+            ]
+          }
+        }
+      },
+      "measurements": {
+        "baseline": {
+          "first_ns": 4300.890625,
+          "warm_ns": 2193.892578125,
+          "clock_ns": 26.09375,
+          "lifecycle_ns": 80315.296875,
+          "first_calls": 0,
+          "first_bytes": 0,
+          "warm_calls": 0,
+          "warm_bytes": 0
+        },
+        "sign": {
+          "first_ns": 3194.953125,
+          "warm_ns": 755.130859375,
+          "clock_ns": 25,
+          "lifecycle_ns": 55777.09375,
+          "first_calls": 0,
+          "first_bytes": 0,
+          "warm_calls": 0,
+          "warm_bytes": 0
+        },
+        "reuse": {
+          "first_ns": 3429.75,
+          "warm_ns": 642.9716796875,
+          "clock_ns": 31.09375,
+          "lifecycle_ns": 54260.1875,
+          "first_calls": 0,
+          "first_bytes": 0,
+          "warm_calls": 0,
+          "warm_bytes": 0
+        }
+      }
+    },
+    {
+      "name": "unresolved-1",
+      "setting": "independent",
+      "iterations": 32,
+      "observations": 72,
+      "pilots": [
+        {
+          "case": "unresolved-1",
+          "sharing": "independent",
+          "workers": 2,
+          "warm_queries_per_worker": 16,
+          "first_ns": 18469,
+          "warm_ns": 98753,
+          "clock_ns": 60,
+          "lifecycle_ns": 229105,
+          "first_calls": 0,
+          "first_bytes": 0,
+          "warm_calls": 0,
+          "warm_bytes": 0,
+          "outcomes": [
+            0,
+            0,
+            2
+          ]
+        },
+        {
+          "case": "unresolved-1",
+          "sharing": "independent",
+          "workers": 2,
+          "warm_queries_per_worker": 16,
+          "first_ns": 24568,
+          "warm_ns": 115803,
+          "clock_ns": 70,
+          "lifecycle_ns": 247073,
+          "first_calls": 0,
+          "first_bytes": 0,
+          "warm_calls": 0,
+          "warm_bytes": 0,
+          "outcomes": [
+            0,
+            0,
+            2
+          ]
+        },
+        {
+          "case": "unresolved-1",
+          "sharing": "independent",
+          "workers": 2,
+          "warm_queries_per_worker": 16,
+          "first_ns": 26089,
+          "warm_ns": 114802,
+          "clock_ns": 100,
+          "lifecycle_ns": 250833,
+          "first_calls": 0,
+          "first_bytes": 0,
+          "warm_calls": 0,
+          "warm_bytes": 0,
+          "outcomes": [
+            0,
+            0,
+            2
+          ]
+        }
+      ],
+      "comparisons": {
+        "baseline": {
+          "first_ns": {
+            "pairedMedianRatio": 1.5897559743660734,
+            "pairedMedianBootstrap95": [
+              1.5826120834869761,
+              1.6457362779110354
+            ]
+          },
+          "warm_ns": {
+            "pairedMedianRatio": 1.3567876177406428,
+            "pairedMedianBootstrap95": [
+              1.3161700909529732,
+              1.3729929281496864
+            ]
+          },
+          "lifecycle_ns": {
+            "pairedMedianRatio": 1.2146620947678446,
+            "pairedMedianBootstrap95": [
+              1.1951423951515479,
+              1.226218868861455
+            ]
+          }
+        },
+        "sign": {
+          "first_ns": {
+            "pairedMedianRatio": 1.041182132960663,
+            "pairedMedianBootstrap95": [
+              1.0138920644209501,
+              1.0617183926503362
+            ]
+          },
+          "warm_ns": {
+            "pairedMedianRatio": 1.01644311887598,
+            "pairedMedianBootstrap95": [
+              0.9868431282249894,
+              1.0347921539819158
+            ]
+          },
+          "lifecycle_ns": {
+            "pairedMedianRatio": 1.0173866235384907,
+            "pairedMedianBootstrap95": [
+              0.995206428978325,
+              1.0280402436427787
+            ]
+          }
+        }
+      },
+      "measurements": {
+        "baseline": {
+          "first_ns": 4240,
+          "warm_ns": 2185.837890625,
+          "clock_ns": 25.15625,
+          "lifecycle_ns": 78796.625,
+          "first_calls": 0,
+          "first_bytes": 0,
+          "warm_calls": 0,
+          "warm_bytes": 0
+        },
+        "sign": {
+          "first_ns": 6644.390625,
+          "warm_ns": 2916.9404296875,
+          "clock_ns": 25,
+          "lifecycle_ns": 94808.1875,
+          "first_calls": 0,
+          "first_bytes": 0,
+          "warm_calls": 0,
+          "warm_bytes": 0
+        },
+        "reuse": {
+          "first_ns": 6880.640625,
+          "warm_ns": 2979.798828125,
+          "clock_ns": 28.28125,
+          "lifecycle_ns": 96566.1875,
+          "first_calls": 0,
+          "first_bytes": 0,
+          "warm_calls": 0,
+          "warm_bytes": 0
+        }
+      }
+    },
+    {
+      "name": "unresolved-1",
+      "setting": "shared",
+      "iterations": 32,
+      "observations": 72,
+      "pilots": [
+        {
+          "case": "unresolved-1",
+          "sharing": "shared",
+          "workers": 2,
+          "warm_queries_per_worker": 16,
+          "first_ns": 24068,
+          "warm_ns": 73835,
+          "clock_ns": 60,
+          "lifecycle_ns": 195066,
+          "first_calls": 0,
+          "first_bytes": 0,
+          "warm_calls": 0,
+          "warm_bytes": 0,
+          "outcomes": [
+            0,
+            0,
+            2
+          ]
+        },
+        {
+          "case": "unresolved-1",
+          "sharing": "shared",
+          "workers": 2,
+          "warm_queries_per_worker": 16,
+          "first_ns": 23478,
+          "warm_ns": 101854,
+          "clock_ns": 80,
+          "lifecycle_ns": 249013,
+          "first_calls": 0,
+          "first_bytes": 0,
+          "warm_calls": 0,
+          "warm_bytes": 0,
+          "outcomes": [
+            0,
+            0,
+            2
+          ]
+        },
+        {
+          "case": "unresolved-1",
+          "sharing": "shared",
+          "workers": 2,
+          "warm_queries_per_worker": 16,
+          "first_ns": 24458,
+          "warm_ns": 116052,
+          "clock_ns": 80,
+          "lifecycle_ns": 248263,
+          "first_calls": 0,
+          "first_bytes": 0,
+          "warm_calls": 0,
+          "warm_bytes": 0,
+          "outcomes": [
+            0,
+            0,
+            2
+          ]
+        }
+      ],
+      "comparisons": {
+        "baseline": {
+          "first_ns": {
+            "pairedMedianRatio": 1.5544454942475006,
+            "pairedMedianBootstrap95": [
+              1.52013822807306,
+              1.591500525452305
+            ]
+          },
+          "warm_ns": {
+            "pairedMedianRatio": 1.353074709955903,
+            "pairedMedianBootstrap95": [
+              1.3287275718230291,
+              1.3895125651220719
+            ]
+          },
+          "lifecycle_ns": {
+            "pairedMedianRatio": 1.2373477578319034,
+            "pairedMedianBootstrap95": [
+              1.1888038593377124,
+              1.2593245191915703
+            ]
+          }
+        },
+        "sign": {
+          "first_ns": {
+            "pairedMedianRatio": 1.0257650757009462,
+            "pairedMedianBootstrap95": [
+              0.9584531219473091,
+              1.064318873780667
+            ]
+          },
+          "warm_ns": {
+            "pairedMedianRatio": 1.0185726716506123,
+            "pairedMedianBootstrap95": [
+              1.0114150689582608,
+              1.0718499350874835
+            ]
+          },
+          "lifecycle_ns": {
+            "pairedMedianRatio": 1.0070928403482644,
+            "pairedMedianBootstrap95": [
+              0.9751789597133499,
+              1.0484864200819386
+            ]
+          }
+        }
+      },
+      "measurements": {
+        "baseline": {
+          "first_ns": 4298.671875,
+          "warm_ns": 2185.10546875,
+          "clock_ns": 25.15625,
+          "lifecycle_ns": 79446.265625,
+          "first_calls": 0,
+          "first_bytes": 0,
+          "warm_calls": 0,
+          "warm_bytes": 0
+        },
+        "sign": {
+          "first_ns": 6339.078125,
+          "warm_ns": 2891.58203125,
+          "clock_ns": 24.6875,
+          "lifecycle_ns": 94918.03125,
+          "first_calls": 0,
+          "first_bytes": 0,
+          "warm_calls": 0,
+          "warm_bytes": 0
+        },
+        "reuse": {
+          "first_ns": 6617.25,
+          "warm_ns": 2993.07421875,
+          "clock_ns": 30.78125,
+          "lifecycle_ns": 96264.328125,
+          "first_calls": 0,
+          "first_bytes": 0,
+          "warm_calls": 0,
+          "warm_bytes": 0
+        }
+      }
+    },
+    {
+      "name": "unresolved-1",
+      "setting": "common-tail",
+      "iterations": 32,
+      "observations": 72,
+      "pilots": [
+        {
+          "case": "unresolved-1",
+          "sharing": "common-tail",
+          "workers": 2,
+          "warm_queries_per_worker": 16,
+          "first_ns": 22889,
+          "warm_ns": 84844,
+          "clock_ns": 70,
+          "lifecycle_ns": 214875,
+          "first_calls": 0,
+          "first_bytes": 0,
+          "warm_calls": 0,
+          "warm_bytes": 0,
+          "outcomes": [
+            0,
+            0,
+            2
+          ]
+        },
+        {
+          "case": "unresolved-1",
+          "sharing": "common-tail",
+          "workers": 2,
+          "warm_queries_per_worker": 16,
+          "first_ns": 25658,
+          "warm_ns": 116262,
+          "clock_ns": 80,
+          "lifecycle_ns": 251673,
+          "first_calls": 0,
+          "first_bytes": 0,
+          "warm_calls": 0,
+          "warm_bytes": 0,
+          "outcomes": [
+            0,
+            0,
+            2
+          ]
+        },
+        {
+          "case": "unresolved-1",
+          "sharing": "common-tail",
+          "workers": 2,
+          "warm_queries_per_worker": 16,
+          "first_ns": 21318,
+          "warm_ns": 95724,
+          "clock_ns": 80,
+          "lifecycle_ns": 206676,
+          "first_calls": 0,
+          "first_bytes": 0,
+          "warm_calls": 0,
+          "warm_bytes": 0,
+          "outcomes": [
+            0,
+            0,
+            2
+          ]
+        }
+      ],
+      "comparisons": {
+        "baseline": {
+          "first_ns": {
+            "pairedMedianRatio": 1.577274164073235,
+            "pairedMedianBootstrap95": [
+              1.5511346954753542,
+              1.6499042807957431
+            ]
+          },
+          "warm_ns": {
+            "pairedMedianRatio": 1.3822029552980661,
+            "pairedMedianBootstrap95": [
+              1.3574549701191587,
+              1.4024773061858826
+            ]
+          },
+          "lifecycle_ns": {
+            "pairedMedianRatio": 1.2286588406608712,
+            "pairedMedianBootstrap95": [
+              1.2019364792028884,
+              1.248773135524678
+            ]
+          }
+        },
+        "sign": {
+          "first_ns": {
+            "pairedMedianRatio": 1.047786481081432,
+            "pairedMedianBootstrap95": [
+              1.0316687323429687,
+              1.0733893072851108
+            ]
+          },
+          "warm_ns": {
+            "pairedMedianRatio": 1.023644738045757,
+            "pairedMedianBootstrap95": [
+              1.0142144396028057,
+              1.0642253220869384
+            ]
+          },
+          "lifecycle_ns": {
+            "pairedMedianRatio": 1.0148573042737756,
+            "pairedMedianBootstrap95": [
+              0.9932801637043721,
+              1.046680058044486
+            ]
+          }
+        }
+      },
+      "measurements": {
+        "baseline": {
+          "first_ns": 4250.5625,
+          "warm_ns": 2142.6845703125,
+          "clock_ns": 25.3125,
+          "lifecycle_ns": 79201.296875,
+          "first_calls": 0,
+          "first_bytes": 0,
+          "warm_calls": 0,
+          "warm_bytes": 0
+        },
+        "sign": {
+          "first_ns": 6482.859375,
+          "warm_ns": 2904.587890625,
+          "clock_ns": 25.9375,
+          "lifecycle_ns": 95284.40625,
+          "first_calls": 0,
+          "first_bytes": 0,
+          "warm_calls": 0,
+          "warm_bytes": 0
+        },
+        "reuse": {
+          "first_ns": 6858.109375,
+          "warm_ns": 3001.359375,
+          "clock_ns": 30.78125,
+          "lifecycle_ns": 97082.40625,
+          "first_calls": 0,
+          "first_bytes": 0,
+          "warm_calls": 0,
+          "warm_bytes": 0
+        }
+      }
+    },
+    {
+      "name": "unresolved-8",
+      "setting": "independent",
+      "iterations": 32,
+      "observations": 72,
+      "pilots": [
+        {
+          "case": "unresolved-8",
+          "sharing": "independent",
+          "workers": 2,
+          "warm_queries_per_worker": 16,
+          "first_ns": 13670,
+          "warm_ns": 72694,
+          "clock_ns": 60,
+          "lifecycle_ns": 187927,
+          "first_calls": 0,
+          "first_bytes": 0,
+          "warm_calls": 0,
+          "warm_bytes": 0,
+          "outcomes": [
+            0,
+            0,
+            2
+          ]
+        },
+        {
+          "case": "unresolved-8",
+          "sharing": "independent",
+          "workers": 2,
+          "warm_queries_per_worker": 16,
+          "first_ns": 21058,
+          "warm_ns": 116622,
+          "clock_ns": 60,
+          "lifecycle_ns": 252103,
+          "first_calls": 0,
+          "first_bytes": 0,
+          "warm_calls": 0,
+          "warm_bytes": 0,
+          "outcomes": [
+            0,
+            0,
+            2
+          ]
+        },
+        {
+          "case": "unresolved-8",
+          "sharing": "independent",
+          "workers": 2,
+          "warm_queries_per_worker": 16,
+          "first_ns": 19479,
+          "warm_ns": 80664,
+          "clock_ns": 80,
+          "lifecycle_ns": 189337,
+          "first_calls": 0,
+          "first_bytes": 0,
+          "warm_calls": 0,
+          "warm_bytes": 0,
+          "outcomes": [
+            0,
+            0,
+            2
+          ]
+        }
+      ],
+      "comparisons": {
+        "baseline": {
+          "first_ns": {
+            "pairedMedianRatio": 1.4961079098185999,
+            "pairedMedianBootstrap95": [
+              1.4771932724417602,
+              1.600128962256877
+            ]
+          },
+          "warm_ns": {
+            "pairedMedianRatio": 1.2248088154121466,
+            "pairedMedianBootstrap95": [
+              1.2030614684217897,
+              1.2609203594224772
+            ]
+          },
+          "lifecycle_ns": {
+            "pairedMedianRatio": 1.1453450939512337,
+            "pairedMedianBootstrap95": [
+              1.1375432742829146,
+              1.1555409072602805
+            ]
+          }
+        },
+        "sign": {
+          "first_ns": {
+            "pairedMedianRatio": 1.0919364007737205,
+            "pairedMedianBootstrap95": [
+              1.0381255964002833,
+              1.109892047770512
+            ]
+          },
+          "warm_ns": {
+            "pairedMedianRatio": 0.9956065117443536,
+            "pairedMedianBootstrap95": [
+              0.9807372773585337,
+              1.024621499592281
+            ]
+          },
+          "lifecycle_ns": {
+            "pairedMedianRatio": 1.014963267294164,
+            "pairedMedianBootstrap95": [
+              1.0024408433896852,
+              1.0217677173222937
+            ]
+          }
+        }
+      },
+      "measurements": {
+        "baseline": {
+          "first_ns": 4112.859375,
+          "warm_ns": 2123.3095703125,
+          "clock_ns": 25.15625,
+          "lifecycle_ns": 77914.828125,
+          "first_calls": 0,
+          "first_bytes": 0,
+          "warm_calls": 0,
+          "warm_bytes": 0
+        },
+        "sign": {
+          "first_ns": 5796.65625,
+          "warm_ns": 2616.7138671875,
+          "clock_ns": 25.3125,
+          "lifecycle_ns": 89342.296875,
+          "first_calls": 0,
+          "first_bytes": 0,
+          "warm_calls": 0,
+          "warm_bytes": 0
+        },
+        "reuse": {
+          "first_ns": 6218.453125,
+          "warm_ns": 2580.3408203125,
+          "clock_ns": 26.5625,
+          "lifecycle_ns": 89184.328125,
+          "first_calls": 0,
+          "first_bytes": 0,
+          "warm_calls": 0,
+          "warm_bytes": 0
+        }
+      }
+    },
+    {
+      "name": "unresolved-8",
+      "setting": "shared",
+      "iterations": 32,
+      "observations": 72,
+      "pilots": [
+        {
+          "case": "unresolved-8",
+          "sharing": "shared",
+          "workers": 2,
+          "warm_queries_per_worker": 16,
+          "first_ns": 17079,
+          "warm_ns": 96574,
+          "clock_ns": 70,
+          "lifecycle_ns": 221994,
+          "first_calls": 0,
+          "first_bytes": 0,
+          "warm_calls": 0,
+          "warm_bytes": 0,
+          "outcomes": [
+            0,
+            0,
+            2
+          ]
+        },
+        {
+          "case": "unresolved-8",
+          "sharing": "shared",
+          "workers": 2,
+          "warm_queries_per_worker": 16,
+          "first_ns": 17279,
+          "warm_ns": 85674,
+          "clock_ns": 50,
+          "lifecycle_ns": 193656,
+          "first_calls": 0,
+          "first_bytes": 0,
+          "warm_calls": 0,
+          "warm_bytes": 0,
+          "outcomes": [
+            0,
+            0,
+            2
+          ]
+        },
+        {
+          "case": "unresolved-8",
+          "sharing": "shared",
+          "workers": 2,
+          "warm_queries_per_worker": 16,
+          "first_ns": 22858,
+          "warm_ns": 104554,
+          "clock_ns": 80,
+          "lifecycle_ns": 234954,
+          "first_calls": 0,
+          "first_bytes": 0,
+          "warm_calls": 0,
+          "warm_bytes": 0,
+          "outcomes": [
+            0,
+            0,
+            2
+          ]
+        }
+      ],
+      "comparisons": {
+        "baseline": {
+          "first_ns": {
+            "pairedMedianRatio": 1.436535247974519,
+            "pairedMedianBootstrap95": [
+              1.3971006225963611,
+              1.4795622271518631
+            ]
+          },
+          "warm_ns": {
+            "pairedMedianRatio": 1.221234781953829,
+            "pairedMedianBootstrap95": [
+              1.1734650807283409,
+              1.236206726737673
+            ]
+          },
+          "lifecycle_ns": {
+            "pairedMedianRatio": 1.144250044129567,
+            "pairedMedianBootstrap95": [
+              1.119870034683424,
+              1.1593980829420971
+            ]
+          }
+        },
+        "sign": {
+          "first_ns": {
+            "pairedMedianRatio": 1.0592981904723753,
+            "pairedMedianBootstrap95": [
+              1.0334790205515287,
+              1.0795777411337033
+            ]
+          },
+          "warm_ns": {
+            "pairedMedianRatio": 1.012269970270168,
+            "pairedMedianBootstrap95": [
+              1.0095753869955486,
+              1.0286141095271277
+            ]
+          },
+          "lifecycle_ns": {
+            "pairedMedianRatio": 1.0244484588595069,
+            "pairedMedianBootstrap95": [
+              1.0016938216421456,
+              1.0462142565268637
+            ]
+          }
+        }
+      },
+      "measurements": {
+        "baseline": {
+          "first_ns": 4150.9375,
+          "warm_ns": 2126.0068359375,
+          "clock_ns": 25.3125,
+          "lifecycle_ns": 77455.625,
+          "first_calls": 0,
+          "first_bytes": 0,
+          "warm_calls": 0,
+          "warm_bytes": 0
+        },
+        "sign": {
+          "first_ns": 5638.296875,
+          "warm_ns": 2539.123046875,
+          "clock_ns": 25.46875,
+          "lifecycle_ns": 87426.671875,
+          "first_calls": 0,
+          "first_bytes": 0,
+          "warm_calls": 0,
+          "warm_bytes": 0
+        },
+        "reuse": {
+          "first_ns": 5834.703125,
+          "warm_ns": 2582.4619140625,
+          "clock_ns": 27.34375,
+          "lifecycle_ns": 88957.015625,
+          "first_calls": 0,
+          "first_bytes": 0,
+          "warm_calls": 0,
+          "warm_bytes": 0
+        }
+      }
+    },
+    {
+      "name": "unresolved-8",
+      "setting": "common-tail",
+      "iterations": 32,
+      "observations": 72,
+      "pilots": [
+        {
+          "case": "unresolved-8",
+          "sharing": "common-tail",
+          "workers": 2,
+          "warm_queries_per_worker": 16,
+          "first_ns": 14150,
+          "warm_ns": 69654,
+          "clock_ns": 70,
+          "lifecycle_ns": 179598,
+          "first_calls": 0,
+          "first_bytes": 0,
+          "warm_calls": 0,
+          "warm_bytes": 0,
+          "outcomes": [
+            0,
+            0,
+            2
+          ]
+        },
+        {
+          "case": "unresolved-8",
+          "sharing": "common-tail",
+          "workers": 2,
+          "warm_queries_per_worker": 16,
+          "first_ns": 17859,
+          "warm_ns": 87854,
+          "clock_ns": 50,
+          "lifecycle_ns": 198206,
+          "first_calls": 0,
+          "first_bytes": 0,
+          "warm_calls": 0,
+          "warm_bytes": 0,
+          "outcomes": [
+            0,
+            0,
+            2
+          ]
+        },
+        {
+          "case": "unresolved-8",
+          "sharing": "common-tail",
+          "workers": 2,
+          "warm_queries_per_worker": 16,
+          "first_ns": 24748,
+          "warm_ns": 105033,
+          "clock_ns": 90,
+          "lifecycle_ns": 253412,
+          "first_calls": 0,
+          "first_bytes": 0,
+          "warm_calls": 0,
+          "warm_bytes": 0,
+          "outcomes": [
+            0,
+            0,
+            2
+          ]
+        }
+      ],
+      "comparisons": {
+        "baseline": {
+          "first_ns": {
+            "pairedMedianRatio": 1.430855404931959,
+            "pairedMedianBootstrap95": [
+              1.4136671662716718,
+              1.4633692865116528
+            ]
+          },
+          "warm_ns": {
+            "pairedMedianRatio": 1.1958683963701033,
+            "pairedMedianBootstrap95": [
+              1.1889718655337878,
+              1.2017148288203994
+            ]
+          },
+          "lifecycle_ns": {
+            "pairedMedianRatio": 1.1186434934015148,
+            "pairedMedianBootstrap95": [
+              1.108959957235856,
+              1.1454987937080765
+            ]
+          }
+        },
+        "sign": {
+          "first_ns": {
+            "pairedMedianRatio": 1.063300430145775,
+            "pairedMedianBootstrap95": [
+              1.0563713748501202,
+              1.0812846444750157
+            ]
+          },
+          "warm_ns": {
+            "pairedMedianRatio": 1.0072844737156463,
+            "pairedMedianBootstrap95": [
+              0.9772451090313651,
+              1.0183108261862044
+            ]
+          },
+          "lifecycle_ns": {
+            "pairedMedianRatio": 1.0076559235821114,
+            "pairedMedianBootstrap95": [
+              0.9903487483268995,
+              1.02753179993077
+            ]
+          }
+        }
+      },
+      "measurements": {
+        "baseline": {
+          "first_ns": 4107.6875,
+          "warm_ns": 2116.759765625,
+          "clock_ns": 25.765625,
+          "lifecycle_ns": 77993.25,
+          "first_calls": 0,
+          "first_bytes": 0,
+          "warm_calls": 0,
+          "warm_bytes": 0
+        },
+        "sign": {
+          "first_ns": 5542.9375,
+          "warm_ns": 2522.2392578125,
+          "clock_ns": 25.625,
+          "lifecycle_ns": 87242.453125,
+          "first_calls": 0,
+          "first_bytes": 0,
+          "warm_calls": 0,
+          "warm_bytes": 0
+        },
+        "reuse": {
+          "first_ns": 5917.984375,
+          "warm_ns": 2539.884765625,
+          "clock_ns": 29.375,
+          "lifecycle_ns": 87997.40625,
+          "first_calls": 0,
+          "first_bytes": 0,
+          "warm_calls": 0,
+          "warm_bytes": 0
+        }
+      }
+    },
+    {
+      "name": "unresolved-32",
+      "setting": "independent",
+      "iterations": 32,
+      "observations": 72,
+      "pilots": [
+        {
+          "case": "unresolved-32",
+          "sharing": "independent",
+          "workers": 2,
+          "warm_queries_per_worker": 16,
+          "first_ns": 14099,
+          "warm_ns": 73135,
+          "clock_ns": 60,
+          "lifecycle_ns": 180348,
+          "first_calls": 0,
+          "first_bytes": 0,
+          "warm_calls": 0,
+          "warm_bytes": 0,
+          "outcomes": [
+            0,
+            0,
+            2
+          ]
+        },
+        {
+          "case": "unresolved-32",
+          "sharing": "independent",
+          "workers": 2,
+          "warm_queries_per_worker": 16,
+          "first_ns": 17750,
+          "warm_ns": 84184,
+          "clock_ns": 70,
+          "lifecycle_ns": 196057,
+          "first_calls": 0,
+          "first_bytes": 0,
+          "warm_calls": 0,
+          "warm_bytes": 0,
+          "outcomes": [
+            0,
+            0,
+            2
+          ]
+        },
+        {
+          "case": "unresolved-32",
+          "sharing": "independent",
+          "workers": 2,
+          "warm_queries_per_worker": 16,
+          "first_ns": 19708,
+          "warm_ns": 80755,
+          "clock_ns": 60,
+          "lifecycle_ns": 189547,
+          "first_calls": 0,
+          "first_bytes": 0,
+          "warm_calls": 0,
+          "warm_bytes": 0,
+          "outcomes": [
+            0,
+            0,
+            2
+          ]
+        }
+      ],
+      "comparisons": {
+        "baseline": {
+          "first_ns": {
+            "pairedMedianRatio": 1.5877926773865227,
+            "pairedMedianBootstrap95": [
+              1.558422487204981,
+              1.6117936591819966
+            ]
+          },
+          "warm_ns": {
+            "pairedMedianRatio": 1.2061490035385574,
+            "pairedMedianBootstrap95": [
+              1.1815287545506552,
+              1.2287156303810605
+            ]
+          },
+          "lifecycle_ns": {
+            "pairedMedianRatio": 1.15769995396423,
+            "pairedMedianBootstrap95": [
+              1.143060580357505,
+              1.1752673896469037
+            ]
+          }
+        },
+        "sign": {
+          "first_ns": {
+            "pairedMedianRatio": 1.0533994178336534,
+            "pairedMedianBootstrap95": [
+              0.9949464951306493,
+              1.0660906057075374
+            ]
+          },
+          "warm_ns": {
+            "pairedMedianRatio": 0.9500210034725938,
+            "pairedMedianBootstrap95": [
+              0.9154188828260073,
+              0.9727112647509963
+            ]
+          },
+          "lifecycle_ns": {
+            "pairedMedianRatio": 0.9914148685613573,
+            "pairedMedianBootstrap95": [
+              0.9628891206908705,
+              0.9969247575837589
+            ]
+          }
+        }
+      },
+      "measurements": {
+        "baseline": {
+          "first_ns": 4070.40625,
+          "warm_ns": 2144.1201171875,
+          "clock_ns": 23.90625,
+          "lifecycle_ns": 78159.171875,
+          "first_calls": 0,
+          "first_bytes": 0,
+          "warm_calls": 0,
+          "warm_bytes": 0
+        },
+        "sign": {
+          "first_ns": 6036.34375,
+          "warm_ns": 2668.890625,
+          "clock_ns": 25.15625,
+          "lifecycle_ns": 90346.765625,
+          "first_calls": 0,
+          "first_bytes": 0,
+          "warm_calls": 0,
+          "warm_bytes": 0
+        },
+        "reuse": {
+          "first_ns": 6477.8125,
+          "warm_ns": 2571.3251953125,
+          "clock_ns": 30.15625,
+          "lifecycle_ns": 89687.921875,
+          "first_calls": 0,
+          "first_bytes": 0,
+          "warm_calls": 0,
+          "warm_bytes": 0
+        }
+      }
+    },
+    {
+      "name": "unresolved-32",
+      "setting": "shared",
+      "iterations": 32,
+      "observations": 72,
+      "pilots": [
+        {
+          "case": "unresolved-32",
+          "sharing": "shared",
+          "workers": 2,
+          "warm_queries_per_worker": 16,
+          "first_ns": 15549,
+          "warm_ns": 72546,
+          "clock_ns": 70,
+          "lifecycle_ns": 196316,
+          "first_calls": 0,
+          "first_bytes": 0,
+          "warm_calls": 0,
+          "warm_bytes": 0,
+          "outcomes": [
+            0,
+            0,
+            2
+          ]
+        },
+        {
+          "case": "unresolved-32",
+          "sharing": "shared",
+          "workers": 2,
+          "warm_queries_per_worker": 16,
+          "first_ns": 17788,
+          "warm_ns": 83304,
+          "clock_ns": 60,
+          "lifecycle_ns": 216575,
+          "first_calls": 0,
+          "first_bytes": 0,
+          "warm_calls": 0,
+          "warm_bytes": 0,
+          "outcomes": [
+            0,
+            0,
+            2
+          ]
+        },
+        {
+          "case": "unresolved-32",
+          "sharing": "shared",
+          "workers": 2,
+          "warm_queries_per_worker": 16,
+          "first_ns": 18559,
+          "warm_ns": 102153,
+          "clock_ns": 60,
+          "lifecycle_ns": 212775,
+          "first_calls": 0,
+          "first_bytes": 0,
+          "warm_calls": 0,
+          "warm_bytes": 0,
+          "outcomes": [
+            0,
+            0,
+            2
+          ]
+        }
+      ],
+      "comparisons": {
+        "baseline": {
+          "first_ns": {
+            "pairedMedianRatio": 1.3867852742215714,
+            "pairedMedianBootstrap95": [
+              1.3585460785288452,
+              1.4162157640693058
+            ]
+          },
+          "warm_ns": {
+            "pairedMedianRatio": 1.1795759368767587,
+            "pairedMedianBootstrap95": [
+              1.1665727350886383,
+              1.2216079890454865
+            ]
+          },
+          "lifecycle_ns": {
+            "pairedMedianRatio": 1.1053835723203642,
+            "pairedMedianBootstrap95": [
+              1.0958407230525926,
+              1.132948433549887
+            ]
+          }
+        },
+        "sign": {
+          "first_ns": {
+            "pairedMedianRatio": 1.0399858086605422,
+            "pairedMedianBootstrap95": [
+              1.0269660860061074,
+              1.0615370307220138
+            ]
+          },
+          "warm_ns": {
+            "pairedMedianRatio": 1.0084850538600891,
+            "pairedMedianBootstrap95": [
+              1.003579867863556,
+              1.034473667807442
+            ]
+          },
+          "lifecycle_ns": {
+            "pairedMedianRatio": 1.011568508988595,
+            "pairedMedianBootstrap95": [
+              1.00657348440215,
+              1.0269734876357393
+            ]
+          }
+        }
+      },
+      "measurements": {
+        "baseline": {
+          "first_ns": 4221.296875,
+          "warm_ns": 2172.166015625,
+          "clock_ns": 24.84375,
+          "lifecycle_ns": 80203.5625,
+          "first_calls": 0,
+          "first_bytes": 0,
+          "warm_calls": 0,
+          "warm_bytes": 0
+        },
+        "sign": {
+          "first_ns": 5595.296875,
+          "warm_ns": 2531.0556640625,
+          "clock_ns": 24.515625,
+          "lifecycle_ns": 86937.625,
+          "first_calls": 0,
+          "first_bytes": 0,
+          "warm_calls": 0,
+          "warm_bytes": 0
+        },
+        "reuse": {
+          "first_ns": 5800.59375,
+          "warm_ns": 2558.4677734375,
+          "clock_ns": 30.78125,
+          "lifecycle_ns": 88576.265625,
+          "first_calls": 0,
+          "first_bytes": 0,
+          "warm_calls": 0,
+          "warm_bytes": 0
+        }
+      }
+    },
+    {
+      "name": "unresolved-32",
+      "setting": "common-tail",
+      "iterations": 32,
+      "observations": 72,
+      "pilots": [
+        {
+          "case": "unresolved-32",
+          "sharing": "common-tail",
+          "workers": 2,
+          "warm_queries_per_worker": 16,
+          "first_ns": 16549,
+          "warm_ns": 78755,
+          "clock_ns": 60,
+          "lifecycle_ns": 203176,
+          "first_calls": 0,
+          "first_bytes": 0,
+          "warm_calls": 0,
+          "warm_bytes": 0,
+          "outcomes": [
+            0,
+            0,
+            2
+          ]
+        },
+        {
+          "case": "unresolved-32",
+          "sharing": "common-tail",
+          "workers": 2,
+          "warm_queries_per_worker": 16,
+          "first_ns": 22369,
+          "warm_ns": 114642,
+          "clock_ns": 80,
+          "lifecycle_ns": 245803,
+          "first_calls": 0,
+          "first_bytes": 0,
+          "warm_calls": 0,
+          "warm_bytes": 0,
+          "outcomes": [
+            0,
+            0,
+            2
+          ]
+        },
+        {
+          "case": "unresolved-32",
+          "sharing": "common-tail",
+          "workers": 2,
+          "warm_queries_per_worker": 16,
+          "first_ns": 25889,
+          "warm_ns": 114191,
+          "clock_ns": 70,
+          "lifecycle_ns": 253543,
+          "first_calls": 0,
+          "first_bytes": 0,
+          "warm_calls": 0,
+          "warm_bytes": 0,
+          "outcomes": [
+            0,
+            0,
+            2
+          ]
+        }
+      ],
+      "comparisons": {
+        "baseline": {
+          "first_ns": {
+            "pairedMedianRatio": 1.47174200318885,
+            "pairedMedianBootstrap95": [
+              1.4404230328563594,
+              1.5373218815283252
+            ]
+          },
+          "warm_ns": {
+            "pairedMedianRatio": 1.189565085580061,
+            "pairedMedianBootstrap95": [
+              1.1426507438315192,
+              1.2475157927202383
+            ]
+          },
+          "lifecycle_ns": {
+            "pairedMedianRatio": 1.125285713005496,
+            "pairedMedianBootstrap95": [
+              1.1022852253916713,
+              1.1801730829953534
+            ]
+          }
+        },
+        "sign": {
+          "first_ns": {
+            "pairedMedianRatio": 1.0584637342643282,
+            "pairedMedianBootstrap95": [
+              1.036780836218982,
+              1.0805944178606008
+            ]
+          },
+          "warm_ns": {
+            "pairedMedianRatio": 0.9785511205073105,
+            "pairedMedianBootstrap95": [
+              0.963404312536227,
+              0.9970549316265644
+            ]
+          },
+          "lifecycle_ns": {
+            "pairedMedianRatio": 0.9831272124612608,
+            "pairedMedianBootstrap95": [
+              0.9720476693877478,
+              0.997804820323714
+            ]
+          }
+        }
+      },
+      "measurements": {
+        "baseline": {
+          "first_ns": 4191.71875,
+          "warm_ns": 2186.58984375,
+          "clock_ns": 27.8125,
+          "lifecycle_ns": 79513.296875,
+          "first_calls": 0,
+          "first_bytes": 0,
+          "warm_calls": 0,
+          "warm_bytes": 0
+        },
+        "sign": {
+          "first_ns": 5868.46875,
+          "warm_ns": 2686.603515625,
+          "clock_ns": 25.46875,
+          "lifecycle_ns": 91663.71875,
+          "first_calls": 0,
+          "first_bytes": 0,
+          "warm_calls": 0,
+          "warm_bytes": 0
+        },
+        "reuse": {
+          "first_ns": 6253.859375,
+          "warm_ns": 2581.6806640625,
+          "clock_ns": 31.09375,
+          "lifecycle_ns": 90400.375,
+          "first_calls": 0,
+          "first_bytes": 0,
+          "warm_calls": 0,
+          "warm_bytes": 0
+        }
+      }
+    },
+    {
+      "name": "unresolved-128",
+      "setting": "independent",
+      "iterations": 32,
+      "observations": 72,
+      "pilots": [
+        {
+          "case": "unresolved-128",
+          "sharing": "independent",
+          "workers": 2,
+          "warm_queries_per_worker": 16,
+          "first_ns": 13829,
+          "warm_ns": 69376,
+          "clock_ns": 60,
+          "lifecycle_ns": 178538,
+          "first_calls": 0,
+          "first_bytes": 0,
+          "warm_calls": 0,
+          "warm_bytes": 0,
+          "outcomes": [
+            0,
+            0,
+            2
+          ]
+        },
+        {
+          "case": "unresolved-128",
+          "sharing": "independent",
+          "workers": 2,
+          "warm_queries_per_worker": 16,
+          "first_ns": 40997,
+          "warm_ns": 294830,
+          "clock_ns": 60,
+          "lifecycle_ns": 431590,
+          "first_calls": 0,
+          "first_bytes": 0,
+          "warm_calls": 0,
+          "warm_bytes": 0,
+          "outcomes": [
+            0,
+            0,
+            2
+          ]
+        },
+        {
+          "case": "unresolved-128",
+          "sharing": "independent",
+          "workers": 2,
+          "warm_queries_per_worker": 16,
+          "first_ns": 44797,
+          "warm_ns": 84044,
+          "clock_ns": 70,
+          "lifecycle_ns": 226765,
+          "first_calls": 0,
+          "first_bytes": 0,
+          "warm_calls": 0,
+          "warm_bytes": 0,
+          "outcomes": [
+            0,
+            0,
+            2
+          ]
+        }
+      ],
+      "comparisons": {
+        "baseline": {
+          "first_ns": {
+            "pairedMedianRatio": 3.772396719770219,
+            "pairedMedianBootstrap95": [
+              3.6820876559587967,
+              3.857157209262041
+            ]
+          },
+          "warm_ns": {
+            "pairedMedianRatio": 1.2166145508745356,
+            "pairedMedianBootstrap95": [
+              1.173296509591777,
+              1.2292629347361632
+            ]
+          },
+          "lifecycle_ns": {
+            "pairedMedianRatio": 1.2764606580244255,
+            "pairedMedianBootstrap95": [
+              1.2443954556072807,
+              1.3046167408830487
+            ]
+          }
+        },
+        "sign": {
+          "first_ns": {
+            "pairedMedianRatio": 1.029808741938539,
+            "pairedMedianBootstrap95": [
+              1.0192995872965673,
+              1.0501423503404075
+            ]
+          },
+          "warm_ns": {
+            "pairedMedianRatio": 0.2841906273543258,
+            "pairedMedianBootstrap95": [
+              0.27944886114504325,
+              0.288031990083466
+            ]
+          },
+          "lifecycle_ns": {
+            "pairedMedianRatio": 0.4877347798002085,
+            "pairedMedianBootstrap95": [
+              0.48034994362872857,
+              0.49057051527513396
+            ]
+          }
+        }
+      },
+      "measurements": {
+        "baseline": {
+          "first_ns": 4185.53125,
+          "warm_ns": 2139.5205078125,
+          "clock_ns": 25,
+          "lifecycle_ns": 78403.0625,
+          "first_calls": 0,
+          "first_bytes": 0,
+          "warm_calls": 0,
+          "warm_bytes": 0
+        },
+        "sign": {
+          "first_ns": 15288.1875,
+          "warm_ns": 9055.306640625,
+          "clock_ns": 25,
+          "lifecycle_ns": 203524.3125,
+          "first_calls": 0,
+          "first_bytes": 0,
+          "warm_calls": 0,
+          "warm_bytes": 0
+        },
+        "reuse": {
+          "first_ns": 15784.546875,
+          "warm_ns": 2589.822265625,
+          "clock_ns": 30,
+          "lifecycle_ns": 99745.03125,
+          "first_calls": 0,
+          "first_bytes": 0,
+          "warm_calls": 0,
+          "warm_bytes": 0
+        }
+      }
+    },
+    {
+      "name": "unresolved-128",
+      "setting": "shared",
+      "iterations": 32,
+      "observations": 72,
+      "pilots": [
+        {
+          "case": "unresolved-128",
+          "sharing": "shared",
+          "workers": 2,
+          "warm_queries_per_worker": 16,
+          "first_ns": 15919,
+          "warm_ns": 81495,
+          "clock_ns": 49,
+          "lifecycle_ns": 198967,
+          "first_calls": 0,
+          "first_bytes": 0,
+          "warm_calls": 0,
+          "warm_bytes": 0,
+          "outcomes": [
+            0,
+            0,
+            2
+          ]
+        },
+        {
+          "case": "unresolved-128",
+          "sharing": "shared",
+          "workers": 2,
+          "warm_queries_per_worker": 16,
+          "first_ns": 16729,
+          "warm_ns": 82644,
+          "clock_ns": 50,
+          "lifecycle_ns": 188777,
+          "first_calls": 0,
+          "first_bytes": 0,
+          "warm_calls": 0,
+          "warm_bytes": 0,
+          "outcomes": [
+            0,
+            0,
+            2
+          ]
+        },
+        {
+          "case": "unresolved-128",
+          "sharing": "shared",
+          "workers": 2,
+          "warm_queries_per_worker": 16,
+          "first_ns": 18769,
+          "warm_ns": 81885,
+          "clock_ns": 80,
+          "lifecycle_ns": 197997,
+          "first_calls": 0,
+          "first_bytes": 0,
+          "warm_calls": 0,
+          "warm_bytes": 0,
+          "outcomes": [
+            0,
+            0,
+            2
+          ]
+        }
+      ],
+      "comparisons": {
+        "baseline": {
+          "first_ns": {
+            "pairedMedianRatio": 1.4055862709110145,
+            "pairedMedianBootstrap95": [
+              1.3937179646997573,
+              1.4678227989337183
+            ]
+          },
+          "warm_ns": {
+            "pairedMedianRatio": 1.1930074895143348,
+            "pairedMedianBootstrap95": [
+              1.1726946821715556,
+              1.2133934440059626
+            ]
+          },
+          "lifecycle_ns": {
+            "pairedMedianRatio": 1.1169176403358994,
+            "pairedMedianBootstrap95": [
+              1.1020957495400614,
+              1.146330516473378
+            ]
+          }
+        },
+        "sign": {
+          "first_ns": {
+            "pairedMedianRatio": 1.0192155725437895,
+            "pairedMedianBootstrap95": [
+              0.9874919389509889,
+              1.0644622596868087
+            ]
+          },
+          "warm_ns": {
+            "pairedMedianRatio": 0.9915056002058442,
+            "pairedMedianBootstrap95": [
+              0.9500620302476064,
+              1.0340538470169032
+            ]
+          },
+          "lifecycle_ns": {
+            "pairedMedianRatio": 0.9871177195626701,
+            "pairedMedianBootstrap95": [
+              0.9509443835015398,
+              1.009104645654033
+            ]
+          }
+        }
+      },
+      "measurements": {
+        "baseline": {
+          "first_ns": 4182.65625,
+          "warm_ns": 2157.5361328125,
+          "clock_ns": 26.09375,
+          "lifecycle_ns": 79256.125,
+          "first_calls": 0,
+          "first_bytes": 0,
+          "warm_calls": 0,
+          "warm_bytes": 0
+        },
+        "sign": {
+          "first_ns": 5752.125,
+          "warm_ns": 2568.2001953125,
+          "clock_ns": 25.9375,
+          "lifecycle_ns": 88336.90625,
+          "first_calls": 0,
+          "first_bytes": 0,
+          "warm_calls": 0,
+          "warm_bytes": 0
+        },
+        "reuse": {
+          "first_ns": 5943.078125,
+          "warm_ns": 2577.228515625,
+          "clock_ns": 29.375,
+          "lifecycle_ns": 88289.25,
+          "first_calls": 0,
+          "first_bytes": 0,
+          "warm_calls": 0,
+          "warm_bytes": 0
+        }
+      }
+    },
+    {
+      "name": "unresolved-128",
+      "setting": "common-tail",
+      "iterations": 32,
+      "observations": 72,
+      "pilots": [
+        {
+          "case": "unresolved-128",
+          "sharing": "common-tail",
+          "workers": 2,
+          "warm_queries_per_worker": 16,
+          "first_ns": 14419,
+          "warm_ns": 69205,
+          "clock_ns": 60,
+          "lifecycle_ns": 173728,
+          "first_calls": 0,
+          "first_bytes": 0,
+          "warm_calls": 0,
+          "warm_bytes": 0,
+          "outcomes": [
+            0,
+            0,
+            2
+          ]
+        },
+        {
+          "case": "unresolved-128",
+          "sharing": "common-tail",
+          "workers": 2,
+          "warm_queries_per_worker": 16,
+          "first_ns": 21198,
+          "warm_ns": 85905,
+          "clock_ns": 100,
+          "lifecycle_ns": 206756,
+          "first_calls": 0,
+          "first_bytes": 0,
+          "warm_calls": 0,
+          "warm_bytes": 0,
+          "outcomes": [
+            0,
+            0,
+            2
+          ]
+        },
+        {
+          "case": "unresolved-128",
+          "sharing": "common-tail",
+          "workers": 2,
+          "warm_queries_per_worker": 16,
+          "first_ns": 20459,
+          "warm_ns": 83394,
+          "clock_ns": 60,
+          "lifecycle_ns": 194666,
+          "first_calls": 0,
+          "first_bytes": 0,
+          "warm_calls": 0,
+          "warm_bytes": 0,
+          "outcomes": [
+            0,
+            0,
+            2
+          ]
+        }
+      ],
+      "comparisons": {
+        "baseline": {
+          "first_ns": {
+            "pairedMedianRatio": 1.641109812430304,
+            "pairedMedianBootstrap95": [
+              1.6301361920343778,
+              1.6625631662146336
+            ]
+          },
+          "warm_ns": {
+            "pairedMedianRatio": 1.2112600775205162,
+            "pairedMedianBootstrap95": [
+              1.1921189927531697,
+              1.2245583383552876
+            ]
+          },
+          "lifecycle_ns": {
+            "pairedMedianRatio": 1.152893802742057,
+            "pairedMedianBootstrap95": [
+              1.1467626117125322,
+              1.1693421806618853
+            ]
+          }
+        },
+        "sign": {
+          "first_ns": {
+            "pairedMedianRatio": 1.0679286424624272,
+            "pairedMedianBootstrap95": [
+              1.0537630690285147,
+              1.0808148131691266
+            ]
+          },
+          "warm_ns": {
+            "pairedMedianRatio": 0.9725372100091013,
+            "pairedMedianBootstrap95": [
+              0.9666325742114718,
+              0.9805792477970943
+            ]
+          },
+          "lifecycle_ns": {
+            "pairedMedianRatio": 1.001972373614692,
+            "pairedMedianBootstrap95": [
+              0.9991464338286193,
+              1.0043643691674382
+            ]
+          }
+        }
+      },
+      "measurements": {
+        "baseline": {
+          "first_ns": 4139.0625,
+          "warm_ns": 2146.9306640625,
+          "clock_ns": 26.40625,
+          "lifecycle_ns": 78511.1875,
+          "first_calls": 0,
+          "first_bytes": 0,
+          "warm_calls": 0,
+          "warm_bytes": 0
+        },
+        "sign": {
+          "first_ns": 6387.78125,
+          "warm_ns": 2672.6298828125,
+          "clock_ns": 25.9375,
+          "lifecycle_ns": 90316.78125,
+          "first_calls": 0,
+          "first_bytes": 0,
+          "warm_calls": 0,
+          "warm_bytes": 0
+        },
+        "reuse": {
+          "first_ns": 6790.25,
+          "warm_ns": 2593.396484375,
+          "clock_ns": 29.0625,
+          "lifecycle_ns": 90223.34375,
+          "first_calls": 0,
+          "first_bytes": 0,
+          "warm_calls": 0,
+          "warm_bytes": 0
+        }
+      }
+    }
+  ],
+  "limits": "Same frozen numeric workload. First-touch operands/numeric caches and process constants preconditioned on parent; measured workers have fresh TLS, execute one first query then16 warm queries. Query clocks exclude thread start/exit; lifecycle clock includes17 queries and thread start/join/exit. Empty-clock samples reported without subtraction. Workers inherit CPU affinity and run sequentially. Shared/common-tail/independent graphs, not every collision or sharing pattern. Baseline Unknown versus candidate Equal is different work. Instrumented allocation clocks are not CPU evidence; requested Rust allocation bytes exclude native bookkeeping/allocator overhead. Snapshot binaries preserved separately by mode. Host/session confidence intervals, not universal bounds."
+}

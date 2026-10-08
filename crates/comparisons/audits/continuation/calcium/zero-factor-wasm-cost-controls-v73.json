@@ -1,0 +1,2496 @@
+{
+  "checkpoint": 73,
+  "status": "wasm-cost-controls-pass",
+  "recordControls": {
+    "accepted": 2,
+    "rejected": 36
+  },
+  "streamControls": {
+    "accepted": 2,
+    "rejected": 14
+  },
+  "scripts": {
+    "check-zero-factor-wasm-cost-controls-v73.mjs": "ead5430f4a42a5b3b89d3a6e8b49c6114e78b95ef9897c25371a78db9f01b69a",
+    "zero-factor-wasm-cost-protocol-v73.mjs": "0f204dfa567d62bb423d0262d4976939c79fe2c9e0594ef3bad21c426ebf01ed"
+  },
+  "results": [
+    {
+      "instanceMode": "persistent",
+      "name": "valid",
+      "row": {
+        "case": 23,
+        "checksum": 699,
+        "expected": {
+          "message": null,
+          "operation": "Divide",
+          "root": {
+            "constraint": 3,
+            "count": 1,
+            "exact": null,
+            "intervalIndex": 0,
+            "lower": "67/50",
+            "polynomial": [
+              "2/1",
+              "0/1",
+              "-1/1"
+            ],
+            "symbol": 3,
+            "upper": "39/25",
+            "validation": "Valid",
+            "validationMessage": null
+          },
+          "status": "Transformed"
+        },
+        "final_matches": true,
+        "iterations": 233,
+        "lifecycle": "retained",
+        "policy": 0,
+        "sources_unchanged": true,
+        "platform": "wasm",
+        "kind": "rational",
+        "mode": "cpu",
+        "sequence": 203,
+        "started": "2026-09-11T21:14:57.912Z",
+        "finished": "2026-09-11T21:14:57.916Z",
+        "host_checksum": 699,
+        "initialMemory": 1245184,
+        "initializedMemory": 1703936,
+        "memoryBeforePrepare": 1769472,
+        "memoryAfterPrepare": 1769472,
+        "memoryAfterBatch": 1769472,
+        "memoryAfterFinish": 1769472,
+        "outputBytes": 383,
+        "elapsed_ns": 2937978,
+        "variant": "baseline",
+        "instanceMode": "persistent"
+      },
+      "group": {
+        "case": 23,
+        "policy": 0,
+        "lifecycle": "retained",
+        "iterations": 233
+      },
+      "index": 203,
+      "accepted": true,
+      "error": null
+    },
+    {
+      "instanceMode": "persistent",
+      "name": "signed-coefficient",
+      "row": {
+        "case": 23,
+        "checksum": 699,
+        "expected": {
+          "message": null,
+          "operation": "Divide",
+          "root": {
+            "constraint": 3,
+            "count": 1,
+            "exact": null,
+            "intervalIndex": 0,
+            "lower": "67/50",
+            "polynomial": [
+              "-2/1",
+              "0/1",
+              "-1/1"
+            ],
+            "symbol": 3,
+            "upper": "39/25",
+            "validation": "Valid",
+            "validationMessage": null
+          },
+          "status": "Transformed"
+        },
+        "final_matches": true,
+        "iterations": 233,
+        "lifecycle": "retained",
+        "policy": 0,
+        "sources_unchanged": true,
+        "platform": "wasm",
+        "kind": "rational",
+        "mode": "cpu",
+        "sequence": 203,
+        "started": "2026-09-11T21:14:57.912Z",
+        "finished": "2026-09-11T21:14:57.916Z",
+        "host_checksum": 699,
+        "initialMemory": 1245184,
+        "initializedMemory": 1703936,
+        "memoryBeforePrepare": 1769472,
+        "memoryAfterPrepare": 1769472,
+        "memoryAfterBatch": 1769472,
+        "memoryAfterFinish": 1769472,
+        "outputBytes": 383,
+        "elapsed_ns": 2937978,
+        "variant": "baseline",
+        "instanceMode": "persistent"
+      },
+      "group": {
+        "case": 23,
+        "policy": 0,
+        "lifecycle": "retained",
+        "iterations": 233
+      },
+      "index": 203,
+      "accepted": false,
+      "error": "Expected values to be strictly deep-equal:\n+ actual - expected\n... Skipped lines\n\n  {\n    message: null,\n    operation: 'Divide',\n    root: {\n      constraint: 3,\n...\n      polynomial: [\n+       '-2/1',\n-       '2/1',\n        '0/1',\n        '-1/1'\n      ],\n      symbol: 3,\n      upper: '39/25',\n"
+    },
+    {
+      "instanceMode": "persistent",
+      "name": "endpoint",
+      "row": {
+        "case": 23,
+        "checksum": 699,
+        "expected": {
+          "message": null,
+          "operation": "Divide",
+          "root": {
+            "constraint": 3,
+            "count": 1,
+            "exact": null,
+            "intervalIndex": 0,
+            "lower": "0/1",
+            "polynomial": [
+              "2/1",
+              "0/1",
+              "-1/1"
+            ],
+            "symbol": 3,
+            "upper": "39/25",
+            "validation": "Valid",
+            "validationMessage": null
+          },
+          "status": "Transformed"
+        },
+        "final_matches": true,
+        "iterations": 233,
+        "lifecycle": "retained",
+        "policy": 0,
+        "sources_unchanged": true,
+        "platform": "wasm",
+        "kind": "rational",
+        "mode": "cpu",
+        "sequence": 203,
+        "started": "2026-09-11T21:14:57.912Z",
+        "finished": "2026-09-11T21:14:57.916Z",
+        "host_checksum": 699,
+        "initialMemory": 1245184,
+        "initializedMemory": 1703936,
+        "memoryBeforePrepare": 1769472,
+        "memoryAfterPrepare": 1769472,
+        "memoryAfterBatch": 1769472,
+        "memoryAfterFinish": 1769472,
+        "outputBytes": 383,
+        "elapsed_ns": 2937978,
+        "variant": "baseline",
+        "instanceMode": "persistent"
+      },
+      "group": {
+        "case": 23,
+        "policy": 0,
+        "lifecycle": "retained",
+        "iterations": 233
+      },
+      "index": 203,
+      "accepted": false,
+      "error": "Expected values to be strictly deep-equal:\n+ actual - expected\n... Skipped lines\n\n  {\n    message: null,\n    operation: 'Divide',\n    root: {\n      constraint: 3,\n...\n      intervalIndex: 0,\n+     lower: '0/1',\n-     lower: '67/50',\n      polynomial: [\n        '2/1',\n        '0/1',\n        '-1/1'\n      ],\n"
+    },
+    {
+      "instanceMode": "persistent",
+      "name": "status",
+      "row": {
+        "case": 23,
+        "checksum": 699,
+        "expected": {
+          "message": null,
+          "operation": "Divide",
+          "root": {
+            "constraint": 3,
+            "count": 1,
+            "exact": null,
+            "intervalIndex": 0,
+            "lower": "67/50",
+            "polynomial": [
+              "2/1",
+              "0/1",
+              "-1/1"
+            ],
+            "symbol": 3,
+            "upper": "39/25",
+            "validation": "Valid",
+            "validationMessage": null
+          },
+          "status": "Undecided"
+        },
+        "final_matches": true,
+        "iterations": 233,
+        "lifecycle": "retained",
+        "policy": 0,
+        "sources_unchanged": true,
+        "platform": "wasm",
+        "kind": "rational",
+        "mode": "cpu",
+        "sequence": 203,
+        "started": "2026-09-11T21:14:57.912Z",
+        "finished": "2026-09-11T21:14:57.916Z",
+        "host_checksum": 699,
+        "initialMemory": 1245184,
+        "initializedMemory": 1703936,
+        "memoryBeforePrepare": 1769472,
+        "memoryAfterPrepare": 1769472,
+        "memoryAfterBatch": 1769472,
+        "memoryAfterFinish": 1769472,
+        "outputBytes": 383,
+        "elapsed_ns": 2937978,
+        "variant": "baseline",
+        "instanceMode": "persistent"
+      },
+      "group": {
+        "case": 23,
+        "policy": 0,
+        "lifecycle": "retained",
+        "iterations": 233
+      },
+      "index": 203,
+      "accepted": false,
+      "error": "Expected values to be strictly deep-equal:\n+ actual - expected\n... Skipped lines\n\n  {\n    message: null,\n    operation: 'Divide',\n    root: {\n      constraint: 3,\n...\n    },\n+   status: 'Undecided'\n-   status: 'Transformed'\n  }\n"
+    },
+    {
+      "instanceMode": "persistent",
+      "name": "checksum",
+      "row": {
+        "case": 23,
+        "checksum": 700,
+        "expected": {
+          "message": null,
+          "operation": "Divide",
+          "root": {
+            "constraint": 3,
+            "count": 1,
+            "exact": null,
+            "intervalIndex": 0,
+            "lower": "67/50",
+            "polynomial": [
+              "2/1",
+              "0/1",
+              "-1/1"
+            ],
+            "symbol": 3,
+            "upper": "39/25",
+            "validation": "Valid",
+            "validationMessage": null
+          },
+          "status": "Transformed"
+        },
+        "final_matches": true,
+        "iterations": 233,
+        "lifecycle": "retained",
+        "policy": 0,
+        "sources_unchanged": true,
+        "platform": "wasm",
+        "kind": "rational",
+        "mode": "cpu",
+        "sequence": 203,
+        "started": "2026-09-11T21:14:57.912Z",
+        "finished": "2026-09-11T21:14:57.916Z",
+        "host_checksum": 699,
+        "initialMemory": 1245184,
+        "initializedMemory": 1703936,
+        "memoryBeforePrepare": 1769472,
+        "memoryAfterPrepare": 1769472,
+        "memoryAfterBatch": 1769472,
+        "memoryAfterFinish": 1769472,
+        "outputBytes": 383,
+        "elapsed_ns": 2937978,
+        "variant": "baseline",
+        "instanceMode": "persistent"
+      },
+      "group": {
+        "case": 23,
+        "policy": 0,
+        "lifecycle": "retained",
+        "iterations": 233
+      },
+      "index": 203,
+      "accepted": false,
+      "error": "Expected values to be strictly equal:\n\n699 !== 700\n"
+    },
+    {
+      "instanceMode": "persistent",
+      "name": "host-checksum",
+      "row": {
+        "case": 23,
+        "checksum": 699,
+        "expected": {
+          "message": null,
+          "operation": "Divide",
+          "root": {
+            "constraint": 3,
+            "count": 1,
+            "exact": null,
+            "intervalIndex": 0,
+            "lower": "67/50",
+            "polynomial": [
+              "2/1",
+              "0/1",
+              "-1/1"
+            ],
+            "symbol": 3,
+            "upper": "39/25",
+            "validation": "Valid",
+            "validationMessage": null
+          },
+          "status": "Transformed"
+        },
+        "final_matches": true,
+        "iterations": 233,
+        "lifecycle": "retained",
+        "policy": 0,
+        "sources_unchanged": true,
+        "platform": "wasm",
+        "kind": "rational",
+        "mode": "cpu",
+        "sequence": 203,
+        "started": "2026-09-11T21:14:57.912Z",
+        "finished": "2026-09-11T21:14:57.916Z",
+        "host_checksum": 700,
+        "initialMemory": 1245184,
+        "initializedMemory": 1703936,
+        "memoryBeforePrepare": 1769472,
+        "memoryAfterPrepare": 1769472,
+        "memoryAfterBatch": 1769472,
+        "memoryAfterFinish": 1769472,
+        "outputBytes": 383,
+        "elapsed_ns": 2937978,
+        "variant": "baseline",
+        "instanceMode": "persistent"
+      },
+      "group": {
+        "case": 23,
+        "policy": 0,
+        "lifecycle": "retained",
+        "iterations": 233
+      },
+      "index": 203,
+      "accepted": false,
+      "error": "Expected values to be strictly equal:\n\n700 !== 699\n"
+    },
+    {
+      "instanceMode": "persistent",
+      "name": "iterations",
+      "row": {
+        "case": 23,
+        "checksum": 699,
+        "expected": {
+          "message": null,
+          "operation": "Divide",
+          "root": {
+            "constraint": 3,
+            "count": 1,
+            "exact": null,
+            "intervalIndex": 0,
+            "lower": "67/50",
+            "polynomial": [
+              "2/1",
+              "0/1",
+              "-1/1"
+            ],
+            "symbol": 3,
+            "upper": "39/25",
+            "validation": "Valid",
+            "validationMessage": null
+          },
+          "status": "Transformed"
+        },
+        "final_matches": true,
+        "iterations": 234,
+        "lifecycle": "retained",
+        "policy": 0,
+        "sources_unchanged": true,
+        "platform": "wasm",
+        "kind": "rational",
+        "mode": "cpu",
+        "sequence": 203,
+        "started": "2026-09-11T21:14:57.912Z",
+        "finished": "2026-09-11T21:14:57.916Z",
+        "host_checksum": 699,
+        "initialMemory": 1245184,
+        "initializedMemory": 1703936,
+        "memoryBeforePrepare": 1769472,
+        "memoryAfterPrepare": 1769472,
+        "memoryAfterBatch": 1769472,
+        "memoryAfterFinish": 1769472,
+        "outputBytes": 383,
+        "elapsed_ns": 2937978,
+        "variant": "baseline",
+        "instanceMode": "persistent"
+      },
+      "group": {
+        "case": 23,
+        "policy": 0,
+        "lifecycle": "retained",
+        "iterations": 233
+      },
+      "index": 203,
+      "accepted": false,
+      "error": "iterations\n\n234 !== 233\n"
+    },
+    {
+      "instanceMode": "persistent",
+      "name": "zero-duration",
+      "row": {
+        "case": 23,
+        "checksum": 699,
+        "expected": {
+          "message": null,
+          "operation": "Divide",
+          "root": {
+            "constraint": 3,
+            "count": 1,
+            "exact": null,
+            "intervalIndex": 0,
+            "lower": "67/50",
+            "polynomial": [
+              "2/1",
+              "0/1",
+              "-1/1"
+            ],
+            "symbol": 3,
+            "upper": "39/25",
+            "validation": "Valid",
+            "validationMessage": null
+          },
+          "status": "Transformed"
+        },
+        "final_matches": true,
+        "iterations": 233,
+        "lifecycle": "retained",
+        "policy": 0,
+        "sources_unchanged": true,
+        "platform": "wasm",
+        "kind": "rational",
+        "mode": "cpu",
+        "sequence": 203,
+        "started": "2026-09-11T21:14:57.912Z",
+        "finished": "2026-09-11T21:14:57.916Z",
+        "host_checksum": 699,
+        "initialMemory": 1245184,
+        "initializedMemory": 1703936,
+        "memoryBeforePrepare": 1769472,
+        "memoryAfterPrepare": 1769472,
+        "memoryAfterBatch": 1769472,
+        "memoryAfterFinish": 1769472,
+        "outputBytes": 383,
+        "elapsed_ns": 0,
+        "variant": "baseline",
+        "instanceMode": "persistent"
+      },
+      "group": {
+        "case": 23,
+        "policy": 0,
+        "lifecycle": "retained",
+        "iterations": 233
+      },
+      "index": 203,
+      "accepted": false,
+      "error": "The expression evaluated to a falsy value:\n\n  assert(Number.isSafeInteger(row.elapsed_ns)&&row.elapsed_ns>0)\n"
+    },
+    {
+      "instanceMode": "persistent",
+      "name": "backward-clock",
+      "row": {
+        "case": 23,
+        "checksum": 699,
+        "expected": {
+          "message": null,
+          "operation": "Divide",
+          "root": {
+            "constraint": 3,
+            "count": 1,
+            "exact": null,
+            "intervalIndex": 0,
+            "lower": "67/50",
+            "polynomial": [
+              "2/1",
+              "0/1",
+              "-1/1"
+            ],
+            "symbol": 3,
+            "upper": "39/25",
+            "validation": "Valid",
+            "validationMessage": null
+          },
+          "status": "Transformed"
+        },
+        "final_matches": true,
+        "iterations": 233,
+        "lifecycle": "retained",
+        "policy": 0,
+        "sources_unchanged": true,
+        "platform": "wasm",
+        "kind": "rational",
+        "mode": "cpu",
+        "sequence": 203,
+        "started": "2026-09-11T21:14:57.912Z",
+        "finished": "1970-01-01T00:00:00.000Z",
+        "host_checksum": 699,
+        "initialMemory": 1245184,
+        "initializedMemory": 1703936,
+        "memoryBeforePrepare": 1769472,
+        "memoryAfterPrepare": 1769472,
+        "memoryAfterBatch": 1769472,
+        "memoryAfterFinish": 1769472,
+        "outputBytes": 383,
+        "elapsed_ns": 2937978,
+        "variant": "baseline",
+        "instanceMode": "persistent"
+      },
+      "group": {
+        "case": 23,
+        "policy": 0,
+        "lifecycle": "retained",
+        "iterations": 233
+      },
+      "index": 203,
+      "accepted": false,
+      "error": "The expression evaluated to a falsy value:\n\n  assert(Date.parse(row.finished)>=Date.parse(row.started))\n"
+    },
+    {
+      "instanceMode": "persistent",
+      "name": "fractional-memory",
+      "row": {
+        "case": 23,
+        "checksum": 699,
+        "expected": {
+          "message": null,
+          "operation": "Divide",
+          "root": {
+            "constraint": 3,
+            "count": 1,
+            "exact": null,
+            "intervalIndex": 0,
+            "lower": "67/50",
+            "polynomial": [
+              "2/1",
+              "0/1",
+              "-1/1"
+            ],
+            "symbol": 3,
+            "upper": "39/25",
+            "validation": "Valid",
+            "validationMessage": null
+          },
+          "status": "Transformed"
+        },
+        "final_matches": true,
+        "iterations": 233,
+        "lifecycle": "retained",
+        "policy": 0,
+        "sources_unchanged": true,
+        "platform": "wasm",
+        "kind": "rational",
+        "mode": "cpu",
+        "sequence": 203,
+        "started": "2026-09-11T21:14:57.912Z",
+        "finished": "2026-09-11T21:14:57.916Z",
+        "host_checksum": 699,
+        "initialMemory": 1245184,
+        "initializedMemory": 1703936,
+        "memoryBeforePrepare": 1769472,
+        "memoryAfterPrepare": 1769472,
+        "memoryAfterBatch": 1769472,
+        "memoryAfterFinish": 1769472.5,
+        "outputBytes": 383,
+        "elapsed_ns": 2937978,
+        "variant": "baseline",
+        "instanceMode": "persistent"
+      },
+      "group": {
+        "case": 23,
+        "policy": 0,
+        "lifecycle": "retained",
+        "iterations": 233
+      },
+      "index": 203,
+      "accepted": false,
+      "error": "memoryAfterFinish"
+    },
+    {
+      "instanceMode": "persistent",
+      "name": "decreasing-memory",
+      "row": {
+        "case": 23,
+        "checksum": 699,
+        "expected": {
+          "message": null,
+          "operation": "Divide",
+          "root": {
+            "constraint": 3,
+            "count": 1,
+            "exact": null,
+            "intervalIndex": 0,
+            "lower": "67/50",
+            "polynomial": [
+              "2/1",
+              "0/1",
+              "-1/1"
+            ],
+            "symbol": 3,
+            "upper": "39/25",
+            "validation": "Valid",
+            "validationMessage": null
+          },
+          "status": "Transformed"
+        },
+        "final_matches": true,
+        "iterations": 233,
+        "lifecycle": "retained",
+        "policy": 0,
+        "sources_unchanged": true,
+        "platform": "wasm",
+        "kind": "rational",
+        "mode": "cpu",
+        "sequence": 203,
+        "started": "2026-09-11T21:14:57.912Z",
+        "finished": "2026-09-11T21:14:57.916Z",
+        "host_checksum": 699,
+        "initialMemory": 1245184,
+        "initializedMemory": 1703936,
+        "memoryBeforePrepare": 1769472,
+        "memoryAfterPrepare": 1769472,
+        "memoryAfterBatch": 0,
+        "memoryAfterFinish": 1769472,
+        "outputBytes": 383,
+        "elapsed_ns": 2937978,
+        "variant": "baseline",
+        "instanceMode": "persistent"
+      },
+      "group": {
+        "case": 23,
+        "policy": 0,
+        "lifecycle": "retained",
+        "iterations": 233
+      },
+      "index": 203,
+      "accepted": false,
+      "error": "The expression evaluated to a falsy value:\n\n  assert(row.initialMemory>0&&row.memoryAfterPrepare>=row.initialMemory&&row.memoryAfterBatch>=row.memoryAfterPrepare&&row.memoryAfterFinish>=row.memoryAfterBatch)\n"
+    },
+    {
+      "instanceMode": "persistent",
+      "name": "instrumentation",
+      "row": {
+        "case": 23,
+        "checksum": 699,
+        "expected": {
+          "message": null,
+          "operation": "Divide",
+          "root": {
+            "constraint": 3,
+            "count": 1,
+            "exact": null,
+            "intervalIndex": 0,
+            "lower": "67/50",
+            "polynomial": [
+              "2/1",
+              "0/1",
+              "-1/1"
+            ],
+            "symbol": 3,
+            "upper": "39/25",
+            "validation": "Valid",
+            "validationMessage": null
+          },
+          "status": "Transformed"
+        },
+        "final_matches": true,
+        "iterations": 233,
+        "lifecycle": "retained",
+        "policy": 0,
+        "sources_unchanged": true,
+        "platform": "wasm",
+        "kind": "rational",
+        "mode": "cpu",
+        "sequence": 203,
+        "started": "2026-09-11T21:14:57.912Z",
+        "finished": "2026-09-11T21:14:57.916Z",
+        "host_checksum": 699,
+        "initialMemory": 1245184,
+        "initializedMemory": 1703936,
+        "memoryBeforePrepare": 1769472,
+        "memoryAfterPrepare": 1769472,
+        "memoryAfterBatch": 1769472,
+        "memoryAfterFinish": 1769472,
+        "outputBytes": 383,
+        "elapsed_ns": 2937978,
+        "variant": "baseline",
+        "instanceMode": "persistent",
+        "requests": 0
+      },
+      "group": {
+        "case": 23,
+        "policy": 0,
+        "lifecycle": "retained",
+        "iterations": 233
+      },
+      "index": 203,
+      "accepted": false,
+      "error": "The expression evaluated to a falsy value:\n\n  assert(!('requests'in row))\n"
+    },
+    {
+      "instanceMode": "persistent",
+      "name": "qualification-only-duration",
+      "row": {
+        "case": 23,
+        "checksum": 699,
+        "expected": {
+          "message": null,
+          "operation": "Divide",
+          "root": {
+            "constraint": 3,
+            "count": 1,
+            "exact": null,
+            "intervalIndex": 0,
+            "lower": "67/50",
+            "polynomial": [
+              "2/1",
+              "0/1",
+              "-1/1"
+            ],
+            "symbol": 3,
+            "upper": "39/25",
+            "validation": "Valid",
+            "validationMessage": null
+          },
+          "status": "Transformed"
+        },
+        "final_matches": true,
+        "iterations": 233,
+        "lifecycle": "retained",
+        "policy": 0,
+        "sources_unchanged": true,
+        "platform": "wasm",
+        "kind": "rational",
+        "mode": "cpu",
+        "sequence": 203,
+        "started": "2026-09-11T21:14:57.912Z",
+        "finished": "2026-09-11T21:14:57.916Z",
+        "host_checksum": 699,
+        "initialMemory": 1245184,
+        "initializedMemory": 1703936,
+        "memoryBeforePrepare": 1769472,
+        "memoryAfterPrepare": 1769472,
+        "memoryAfterBatch": 1769472,
+        "memoryAfterFinish": 1769472,
+        "outputBytes": 383,
+        "elapsed_ns": 2937978,
+        "variant": "baseline",
+        "instanceMode": "persistent",
+        "qualification_batch_ns": 2937978
+      },
+      "group": {
+        "case": 23,
+        "policy": 0,
+        "lifecycle": "retained",
+        "iterations": 233
+      },
+      "index": 203,
+      "accepted": false,
+      "error": "The expression evaluated to a falsy value:\n\n  assert(!('qualification_batch_ns'in row))\n"
+    },
+    {
+      "instanceMode": "persistent",
+      "name": "source-changed",
+      "row": {
+        "case": 23,
+        "checksum": 699,
+        "expected": {
+          "message": null,
+          "operation": "Divide",
+          "root": {
+            "constraint": 3,
+            "count": 1,
+            "exact": null,
+            "intervalIndex": 0,
+            "lower": "67/50",
+            "polynomial": [
+              "2/1",
+              "0/1",
+              "-1/1"
+            ],
+            "symbol": 3,
+            "upper": "39/25",
+            "validation": "Valid",
+            "validationMessage": null
+          },
+          "status": "Transformed"
+        },
+        "final_matches": true,
+        "iterations": 233,
+        "lifecycle": "retained",
+        "policy": 0,
+        "sources_unchanged": false,
+        "platform": "wasm",
+        "kind": "rational",
+        "mode": "cpu",
+        "sequence": 203,
+        "started": "2026-09-11T21:14:57.912Z",
+        "finished": "2026-09-11T21:14:57.916Z",
+        "host_checksum": 699,
+        "initialMemory": 1245184,
+        "initializedMemory": 1703936,
+        "memoryBeforePrepare": 1769472,
+        "memoryAfterPrepare": 1769472,
+        "memoryAfterBatch": 1769472,
+        "memoryAfterFinish": 1769472,
+        "outputBytes": 383,
+        "elapsed_ns": 2937978,
+        "variant": "baseline",
+        "instanceMode": "persistent"
+      },
+      "group": {
+        "case": 23,
+        "policy": 0,
+        "lifecycle": "retained",
+        "iterations": 233
+      },
+      "index": 203,
+      "accepted": false,
+      "error": "Expected values to be strictly equal:\n\nfalse !== true\n"
+    },
+    {
+      "instanceMode": "persistent",
+      "name": "result-changed",
+      "row": {
+        "case": 23,
+        "checksum": 699,
+        "expected": {
+          "message": null,
+          "operation": "Divide",
+          "root": {
+            "constraint": 3,
+            "count": 1,
+            "exact": null,
+            "intervalIndex": 0,
+            "lower": "67/50",
+            "polynomial": [
+              "2/1",
+              "0/1",
+              "-1/1"
+            ],
+            "symbol": 3,
+            "upper": "39/25",
+            "validation": "Valid",
+            "validationMessage": null
+          },
+          "status": "Transformed"
+        },
+        "final_matches": false,
+        "iterations": 233,
+        "lifecycle": "retained",
+        "policy": 0,
+        "sources_unchanged": true,
+        "platform": "wasm",
+        "kind": "rational",
+        "mode": "cpu",
+        "sequence": 203,
+        "started": "2026-09-11T21:14:57.912Z",
+        "finished": "2026-09-11T21:14:57.916Z",
+        "host_checksum": 699,
+        "initialMemory": 1245184,
+        "initializedMemory": 1703936,
+        "memoryBeforePrepare": 1769472,
+        "memoryAfterPrepare": 1769472,
+        "memoryAfterBatch": 1769472,
+        "memoryAfterFinish": 1769472,
+        "outputBytes": 383,
+        "elapsed_ns": 2937978,
+        "variant": "baseline",
+        "instanceMode": "persistent"
+      },
+      "group": {
+        "case": 23,
+        "policy": 0,
+        "lifecycle": "retained",
+        "iterations": 233
+      },
+      "index": 203,
+      "accepted": false,
+      "error": "Expected values to be strictly equal:\n\nfalse !== true\n"
+    },
+    {
+      "instanceMode": "persistent",
+      "name": "wrong-policy",
+      "row": {
+        "case": 23,
+        "checksum": 699,
+        "expected": {
+          "message": null,
+          "operation": "Divide",
+          "root": {
+            "constraint": 3,
+            "count": 1,
+            "exact": null,
+            "intervalIndex": 0,
+            "lower": "67/50",
+            "polynomial": [
+              "2/1",
+              "0/1",
+              "-1/1"
+            ],
+            "symbol": 3,
+            "upper": "39/25",
+            "validation": "Valid",
+            "validationMessage": null
+          },
+          "status": "Transformed"
+        },
+        "final_matches": true,
+        "iterations": 233,
+        "lifecycle": "retained",
+        "policy": 1,
+        "sources_unchanged": true,
+        "platform": "wasm",
+        "kind": "rational",
+        "mode": "cpu",
+        "sequence": 203,
+        "started": "2026-09-11T21:14:57.912Z",
+        "finished": "2026-09-11T21:14:57.916Z",
+        "host_checksum": 699,
+        "initialMemory": 1245184,
+        "initializedMemory": 1703936,
+        "memoryBeforePrepare": 1769472,
+        "memoryAfterPrepare": 1769472,
+        "memoryAfterBatch": 1769472,
+        "memoryAfterFinish": 1769472,
+        "outputBytes": 383,
+        "elapsed_ns": 2937978,
+        "variant": "baseline",
+        "instanceMode": "persistent"
+      },
+      "group": {
+        "case": 23,
+        "policy": 0,
+        "lifecycle": "retained",
+        "iterations": 233
+      },
+      "index": 203,
+      "accepted": false,
+      "error": "policy\n\n1 !== 0\n"
+    },
+    {
+      "instanceMode": "persistent",
+      "name": "wrong-variant",
+      "row": {
+        "case": 23,
+        "checksum": 699,
+        "expected": {
+          "message": null,
+          "operation": "Divide",
+          "root": {
+            "constraint": 3,
+            "count": 1,
+            "exact": null,
+            "intervalIndex": 0,
+            "lower": "67/50",
+            "polynomial": [
+              "2/1",
+              "0/1",
+              "-1/1"
+            ],
+            "symbol": 3,
+            "upper": "39/25",
+            "validation": "Valid",
+            "validationMessage": null
+          },
+          "status": "Transformed"
+        },
+        "final_matches": true,
+        "iterations": 233,
+        "lifecycle": "retained",
+        "policy": 0,
+        "sources_unchanged": true,
+        "platform": "wasm",
+        "kind": "rational",
+        "mode": "cpu",
+        "sequence": 203,
+        "started": "2026-09-11T21:14:57.912Z",
+        "finished": "2026-09-11T21:14:57.916Z",
+        "host_checksum": 699,
+        "initialMemory": 1245184,
+        "initializedMemory": 1703936,
+        "memoryBeforePrepare": 1769472,
+        "memoryAfterPrepare": 1769472,
+        "memoryAfterBatch": 1769472,
+        "memoryAfterFinish": 1769472,
+        "outputBytes": 383,
+        "elapsed_ns": 2937978,
+        "variant": "candidate",
+        "instanceMode": "persistent"
+      },
+      "group": {
+        "case": 23,
+        "policy": 0,
+        "lifecycle": "retained",
+        "iterations": 233
+      },
+      "index": 203,
+      "accepted": false,
+      "error": "Expected values to be strictly equal:\n+ actual - expected\n\n+ 'candidate'\n- 'baseline'\n"
+    },
+    {
+      "instanceMode": "persistent",
+      "name": "wrong-instance",
+      "row": {
+        "case": 23,
+        "checksum": 699,
+        "expected": {
+          "message": null,
+          "operation": "Divide",
+          "root": {
+            "constraint": 3,
+            "count": 1,
+            "exact": null,
+            "intervalIndex": 0,
+            "lower": "67/50",
+            "polynomial": [
+              "2/1",
+              "0/1",
+              "-1/1"
+            ],
+            "symbol": 3,
+            "upper": "39/25",
+            "validation": "Valid",
+            "validationMessage": null
+          },
+          "status": "Transformed"
+        },
+        "final_matches": true,
+        "iterations": 233,
+        "lifecycle": "retained",
+        "policy": 0,
+        "sources_unchanged": true,
+        "platform": "wasm",
+        "kind": "rational",
+        "mode": "cpu",
+        "sequence": 203,
+        "started": "2026-09-11T21:14:57.912Z",
+        "finished": "2026-09-11T21:14:57.916Z",
+        "host_checksum": 699,
+        "initialMemory": 1245184,
+        "initializedMemory": 1703936,
+        "memoryBeforePrepare": 1769472,
+        "memoryAfterPrepare": 1769472,
+        "memoryAfterBatch": 1769472,
+        "memoryAfterFinish": 1769472,
+        "outputBytes": 383,
+        "elapsed_ns": 2937978,
+        "variant": "baseline",
+        "instanceMode": "fresh"
+      },
+      "group": {
+        "case": 23,
+        "policy": 0,
+        "lifecycle": "retained",
+        "iterations": 233
+      },
+      "index": 203,
+      "accepted": false,
+      "error": "Expected values to be strictly equal:\n+ actual - expected\n\n+ 'fresh'\n- 'persistent'\n"
+    },
+    {
+      "instanceMode": "persistent",
+      "name": "wrong-sequence",
+      "row": {
+        "case": 23,
+        "checksum": 699,
+        "expected": {
+          "message": null,
+          "operation": "Divide",
+          "root": {
+            "constraint": 3,
+            "count": 1,
+            "exact": null,
+            "intervalIndex": 0,
+            "lower": "67/50",
+            "polynomial": [
+              "2/1",
+              "0/1",
+              "-1/1"
+            ],
+            "symbol": 3,
+            "upper": "39/25",
+            "validation": "Valid",
+            "validationMessage": null
+          },
+          "status": "Transformed"
+        },
+        "final_matches": true,
+        "iterations": 233,
+        "lifecycle": "retained",
+        "policy": 0,
+        "sources_unchanged": true,
+        "platform": "wasm",
+        "kind": "rational",
+        "mode": "cpu",
+        "sequence": 204,
+        "started": "2026-09-11T21:14:57.912Z",
+        "finished": "2026-09-11T21:14:57.916Z",
+        "host_checksum": 699,
+        "initialMemory": 1245184,
+        "initializedMemory": 1703936,
+        "memoryBeforePrepare": 1769472,
+        "memoryAfterPrepare": 1769472,
+        "memoryAfterBatch": 1769472,
+        "memoryAfterFinish": 1769472,
+        "outputBytes": 383,
+        "elapsed_ns": 2937978,
+        "variant": "baseline",
+        "instanceMode": "persistent"
+      },
+      "group": {
+        "case": 23,
+        "policy": 0,
+        "lifecycle": "retained",
+        "iterations": 233
+      },
+      "index": 203,
+      "accepted": false,
+      "error": "Expected values to be strictly equal:\n\n204 !== 203\n"
+    },
+    {
+      "instanceMode": "fresh",
+      "name": "valid",
+      "row": {
+        "case": 23,
+        "checksum": 732,
+        "expected": {
+          "message": null,
+          "operation": "Divide",
+          "root": {
+            "constraint": 3,
+            "count": 1,
+            "exact": null,
+            "intervalIndex": 0,
+            "lower": "67/50",
+            "polynomial": [
+              "2/1",
+              "0/1",
+              "-1/1"
+            ],
+            "symbol": 3,
+            "upper": "39/25",
+            "validation": "Valid",
+            "validationMessage": null
+          },
+          "status": "Transformed"
+        },
+        "final_matches": true,
+        "iterations": 244,
+        "lifecycle": "retained",
+        "policy": 0,
+        "sources_unchanged": true,
+        "platform": "wasm",
+        "kind": "rational",
+        "mode": "cpu",
+        "sequence": 0,
+        "started": "2026-09-11T21:14:48.377Z",
+        "finished": "2026-09-11T21:14:48.380Z",
+        "host_checksum": 732,
+        "initialMemory": 1245184,
+        "initializedMemory": 1703936,
+        "memoryBeforePrepare": 1703936,
+        "memoryAfterPrepare": 1703936,
+        "memoryAfterBatch": 1703936,
+        "memoryAfterFinish": 1703936,
+        "outputBytes": 383,
+        "elapsed_ns": 3106007,
+        "variant": "baseline",
+        "instanceMode": "fresh"
+      },
+      "group": {
+        "case": 23,
+        "policy": 0,
+        "lifecycle": "retained",
+        "iterations": 244
+      },
+      "index": 66,
+      "accepted": true,
+      "error": null
+    },
+    {
+      "instanceMode": "fresh",
+      "name": "signed-coefficient",
+      "row": {
+        "case": 23,
+        "checksum": 732,
+        "expected": {
+          "message": null,
+          "operation": "Divide",
+          "root": {
+            "constraint": 3,
+            "count": 1,
+            "exact": null,
+            "intervalIndex": 0,
+            "lower": "67/50",
+            "polynomial": [
+              "-2/1",
+              "0/1",
+              "-1/1"
+            ],
+            "symbol": 3,
+            "upper": "39/25",
+            "validation": "Valid",
+            "validationMessage": null
+          },
+          "status": "Transformed"
+        },
+        "final_matches": true,
+        "iterations": 244,
+        "lifecycle": "retained",
+        "policy": 0,
+        "sources_unchanged": true,
+        "platform": "wasm",
+        "kind": "rational",
+        "mode": "cpu",
+        "sequence": 0,
+        "started": "2026-09-11T21:14:48.377Z",
+        "finished": "2026-09-11T21:14:48.380Z",
+        "host_checksum": 732,
+        "initialMemory": 1245184,
+        "initializedMemory": 1703936,
+        "memoryBeforePrepare": 1703936,
+        "memoryAfterPrepare": 1703936,
+        "memoryAfterBatch": 1703936,
+        "memoryAfterFinish": 1703936,
+        "outputBytes": 383,
+        "elapsed_ns": 3106007,
+        "variant": "baseline",
+        "instanceMode": "fresh"
+      },
+      "group": {
+        "case": 23,
+        "policy": 0,
+        "lifecycle": "retained",
+        "iterations": 244
+      },
+      "index": 66,
+      "accepted": false,
+      "error": "Expected values to be strictly deep-equal:\n+ actual - expected\n... Skipped lines\n\n  {\n    message: null,\n    operation: 'Divide',\n    root: {\n      constraint: 3,\n...\n      polynomial: [\n+       '-2/1',\n-       '2/1',\n        '0/1',\n        '-1/1'\n      ],\n      symbol: 3,\n      upper: '39/25',\n"
+    },
+    {
+      "instanceMode": "fresh",
+      "name": "endpoint",
+      "row": {
+        "case": 23,
+        "checksum": 732,
+        "expected": {
+          "message": null,
+          "operation": "Divide",
+          "root": {
+            "constraint": 3,
+            "count": 1,
+            "exact": null,
+            "intervalIndex": 0,
+            "lower": "0/1",
+            "polynomial": [
+              "2/1",
+              "0/1",
+              "-1/1"
+            ],
+            "symbol": 3,
+            "upper": "39/25",
+            "validation": "Valid",
+            "validationMessage": null
+          },
+          "status": "Transformed"
+        },
+        "final_matches": true,
+        "iterations": 244,
+        "lifecycle": "retained",
+        "policy": 0,
+        "sources_unchanged": true,
+        "platform": "wasm",
+        "kind": "rational",
+        "mode": "cpu",
+        "sequence": 0,
+        "started": "2026-09-11T21:14:48.377Z",
+        "finished": "2026-09-11T21:14:48.380Z",
+        "host_checksum": 732,
+        "initialMemory": 1245184,
+        "initializedMemory": 1703936,
+        "memoryBeforePrepare": 1703936,
+        "memoryAfterPrepare": 1703936,
+        "memoryAfterBatch": 1703936,
+        "memoryAfterFinish": 1703936,
+        "outputBytes": 383,
+        "elapsed_ns": 3106007,
+        "variant": "baseline",
+        "instanceMode": "fresh"
+      },
+      "group": {
+        "case": 23,
+        "policy": 0,
+        "lifecycle": "retained",
+        "iterations": 244
+      },
+      "index": 66,
+      "accepted": false,
+      "error": "Expected values to be strictly deep-equal:\n+ actual - expected\n... Skipped lines\n\n  {\n    message: null,\n    operation: 'Divide',\n    root: {\n      constraint: 3,\n...\n      intervalIndex: 0,\n+     lower: '0/1',\n-     lower: '67/50',\n      polynomial: [\n        '2/1',\n        '0/1',\n        '-1/1'\n      ],\n"
+    },
+    {
+      "instanceMode": "fresh",
+      "name": "status",
+      "row": {
+        "case": 23,
+        "checksum": 732,
+        "expected": {
+          "message": null,
+          "operation": "Divide",
+          "root": {
+            "constraint": 3,
+            "count": 1,
+            "exact": null,
+            "intervalIndex": 0,
+            "lower": "67/50",
+            "polynomial": [
+              "2/1",
+              "0/1",
+              "-1/1"
+            ],
+            "symbol": 3,
+            "upper": "39/25",
+            "validation": "Valid",
+            "validationMessage": null
+          },
+          "status": "Undecided"
+        },
+        "final_matches": true,
+        "iterations": 244,
+        "lifecycle": "retained",
+        "policy": 0,
+        "sources_unchanged": true,
+        "platform": "wasm",
+        "kind": "rational",
+        "mode": "cpu",
+        "sequence": 0,
+        "started": "2026-09-11T21:14:48.377Z",
+        "finished": "2026-09-11T21:14:48.380Z",
+        "host_checksum": 732,
+        "initialMemory": 1245184,
+        "initializedMemory": 1703936,
+        "memoryBeforePrepare": 1703936,
+        "memoryAfterPrepare": 1703936,
+        "memoryAfterBatch": 1703936,
+        "memoryAfterFinish": 1703936,
+        "outputBytes": 383,
+        "elapsed_ns": 3106007,
+        "variant": "baseline",
+        "instanceMode": "fresh"
+      },
+      "group": {
+        "case": 23,
+        "policy": 0,
+        "lifecycle": "retained",
+        "iterations": 244
+      },
+      "index": 66,
+      "accepted": false,
+      "error": "Expected values to be strictly deep-equal:\n+ actual - expected\n... Skipped lines\n\n  {\n    message: null,\n    operation: 'Divide',\n    root: {\n      constraint: 3,\n...\n    },\n+   status: 'Undecided'\n-   status: 'Transformed'\n  }\n"
+    },
+    {
+      "instanceMode": "fresh",
+      "name": "checksum",
+      "row": {
+        "case": 23,
+        "checksum": 733,
+        "expected": {
+          "message": null,
+          "operation": "Divide",
+          "root": {
+            "constraint": 3,
+            "count": 1,
+            "exact": null,
+            "intervalIndex": 0,
+            "lower": "67/50",
+            "polynomial": [
+              "2/1",
+              "0/1",
+              "-1/1"
+            ],
+            "symbol": 3,
+            "upper": "39/25",
+            "validation": "Valid",
+            "validationMessage": null
+          },
+          "status": "Transformed"
+        },
+        "final_matches": true,
+        "iterations": 244,
+        "lifecycle": "retained",
+        "policy": 0,
+        "sources_unchanged": true,
+        "platform": "wasm",
+        "kind": "rational",
+        "mode": "cpu",
+        "sequence": 0,
+        "started": "2026-09-11T21:14:48.377Z",
+        "finished": "2026-09-11T21:14:48.380Z",
+        "host_checksum": 732,
+        "initialMemory": 1245184,
+        "initializedMemory": 1703936,
+        "memoryBeforePrepare": 1703936,
+        "memoryAfterPrepare": 1703936,
+        "memoryAfterBatch": 1703936,
+        "memoryAfterFinish": 1703936,
+        "outputBytes": 383,
+        "elapsed_ns": 3106007,
+        "variant": "baseline",
+        "instanceMode": "fresh"
+      },
+      "group": {
+        "case": 23,
+        "policy": 0,
+        "lifecycle": "retained",
+        "iterations": 244
+      },
+      "index": 66,
+      "accepted": false,
+      "error": "Expected values to be strictly equal:\n\n732 !== 733\n"
+    },
+    {
+      "instanceMode": "fresh",
+      "name": "host-checksum",
+      "row": {
+        "case": 23,
+        "checksum": 732,
+        "expected": {
+          "message": null,
+          "operation": "Divide",
+          "root": {
+            "constraint": 3,
+            "count": 1,
+            "exact": null,
+            "intervalIndex": 0,
+            "lower": "67/50",
+            "polynomial": [
+              "2/1",
+              "0/1",
+              "-1/1"
+            ],
+            "symbol": 3,
+            "upper": "39/25",
+            "validation": "Valid",
+            "validationMessage": null
+          },
+          "status": "Transformed"
+        },
+        "final_matches": true,
+        "iterations": 244,
+        "lifecycle": "retained",
+        "policy": 0,
+        "sources_unchanged": true,
+        "platform": "wasm",
+        "kind": "rational",
+        "mode": "cpu",
+        "sequence": 0,
+        "started": "2026-09-11T21:14:48.377Z",
+        "finished": "2026-09-11T21:14:48.380Z",
+        "host_checksum": 733,
+        "initialMemory": 1245184,
+        "initializedMemory": 1703936,
+        "memoryBeforePrepare": 1703936,
+        "memoryAfterPrepare": 1703936,
+        "memoryAfterBatch": 1703936,
+        "memoryAfterFinish": 1703936,
+        "outputBytes": 383,
+        "elapsed_ns": 3106007,
+        "variant": "baseline",
+        "instanceMode": "fresh"
+      },
+      "group": {
+        "case": 23,
+        "policy": 0,
+        "lifecycle": "retained",
+        "iterations": 244
+      },
+      "index": 66,
+      "accepted": false,
+      "error": "Expected values to be strictly equal:\n\n733 !== 732\n"
+    },
+    {
+      "instanceMode": "fresh",
+      "name": "iterations",
+      "row": {
+        "case": 23,
+        "checksum": 732,
+        "expected": {
+          "message": null,
+          "operation": "Divide",
+          "root": {
+            "constraint": 3,
+            "count": 1,
+            "exact": null,
+            "intervalIndex": 0,
+            "lower": "67/50",
+            "polynomial": [
+              "2/1",
+              "0/1",
+              "-1/1"
+            ],
+            "symbol": 3,
+            "upper": "39/25",
+            "validation": "Valid",
+            "validationMessage": null
+          },
+          "status": "Transformed"
+        },
+        "final_matches": true,
+        "iterations": 245,
+        "lifecycle": "retained",
+        "policy": 0,
+        "sources_unchanged": true,
+        "platform": "wasm",
+        "kind": "rational",
+        "mode": "cpu",
+        "sequence": 0,
+        "started": "2026-09-11T21:14:48.377Z",
+        "finished": "2026-09-11T21:14:48.380Z",
+        "host_checksum": 732,
+        "initialMemory": 1245184,
+        "initializedMemory": 1703936,
+        "memoryBeforePrepare": 1703936,
+        "memoryAfterPrepare": 1703936,
+        "memoryAfterBatch": 1703936,
+        "memoryAfterFinish": 1703936,
+        "outputBytes": 383,
+        "elapsed_ns": 3106007,
+        "variant": "baseline",
+        "instanceMode": "fresh"
+      },
+      "group": {
+        "case": 23,
+        "policy": 0,
+        "lifecycle": "retained",
+        "iterations": 244
+      },
+      "index": 66,
+      "accepted": false,
+      "error": "iterations\n\n245 !== 244\n"
+    },
+    {
+      "instanceMode": "fresh",
+      "name": "zero-duration",
+      "row": {
+        "case": 23,
+        "checksum": 732,
+        "expected": {
+          "message": null,
+          "operation": "Divide",
+          "root": {
+            "constraint": 3,
+            "count": 1,
+            "exact": null,
+            "intervalIndex": 0,
+            "lower": "67/50",
+            "polynomial": [
+              "2/1",
+              "0/1",
+              "-1/1"
+            ],
+            "symbol": 3,
+            "upper": "39/25",
+            "validation": "Valid",
+            "validationMessage": null
+          },
+          "status": "Transformed"
+        },
+        "final_matches": true,
+        "iterations": 244,
+        "lifecycle": "retained",
+        "policy": 0,
+        "sources_unchanged": true,
+        "platform": "wasm",
+        "kind": "rational",
+        "mode": "cpu",
+        "sequence": 0,
+        "started": "2026-09-11T21:14:48.377Z",
+        "finished": "2026-09-11T21:14:48.380Z",
+        "host_checksum": 732,
+        "initialMemory": 1245184,
+        "initializedMemory": 1703936,
+        "memoryBeforePrepare": 1703936,
+        "memoryAfterPrepare": 1703936,
+        "memoryAfterBatch": 1703936,
+        "memoryAfterFinish": 1703936,
+        "outputBytes": 383,
+        "elapsed_ns": 0,
+        "variant": "baseline",
+        "instanceMode": "fresh"
+      },
+      "group": {
+        "case": 23,
+        "policy": 0,
+        "lifecycle": "retained",
+        "iterations": 244
+      },
+      "index": 66,
+      "accepted": false,
+      "error": "The expression evaluated to a falsy value:\n\n  assert(Number.isSafeInteger(row.elapsed_ns)&&row.elapsed_ns>0)\n"
+    },
+    {
+      "instanceMode": "fresh",
+      "name": "backward-clock",
+      "row": {
+        "case": 23,
+        "checksum": 732,
+        "expected": {
+          "message": null,
+          "operation": "Divide",
+          "root": {
+            "constraint": 3,
+            "count": 1,
+            "exact": null,
+            "intervalIndex": 0,
+            "lower": "67/50",
+            "polynomial": [
+              "2/1",
+              "0/1",
+              "-1/1"
+            ],
+            "symbol": 3,
+            "upper": "39/25",
+            "validation": "Valid",
+            "validationMessage": null
+          },
+          "status": "Transformed"
+        },
+        "final_matches": true,
+        "iterations": 244,
+        "lifecycle": "retained",
+        "policy": 0,
+        "sources_unchanged": true,
+        "platform": "wasm",
+        "kind": "rational",
+        "mode": "cpu",
+        "sequence": 0,
+        "started": "2026-09-11T21:14:48.377Z",
+        "finished": "1970-01-01T00:00:00.000Z",
+        "host_checksum": 732,
+        "initialMemory": 1245184,
+        "initializedMemory": 1703936,
+        "memoryBeforePrepare": 1703936,
+        "memoryAfterPrepare": 1703936,
+        "memoryAfterBatch": 1703936,
+        "memoryAfterFinish": 1703936,
+        "outputBytes": 383,
+        "elapsed_ns": 3106007,
+        "variant": "baseline",
+        "instanceMode": "fresh"
+      },
+      "group": {
+        "case": 23,
+        "policy": 0,
+        "lifecycle": "retained",
+        "iterations": 244
+      },
+      "index": 66,
+      "accepted": false,
+      "error": "The expression evaluated to a falsy value:\n\n  assert(Date.parse(row.finished)>=Date.parse(row.started))\n"
+    },
+    {
+      "instanceMode": "fresh",
+      "name": "fractional-memory",
+      "row": {
+        "case": 23,
+        "checksum": 732,
+        "expected": {
+          "message": null,
+          "operation": "Divide",
+          "root": {
+            "constraint": 3,
+            "count": 1,
+            "exact": null,
+            "intervalIndex": 0,
+            "lower": "67/50",
+            "polynomial": [
+              "2/1",
+              "0/1",
+              "-1/1"
+            ],
+            "symbol": 3,
+            "upper": "39/25",
+            "validation": "Valid",
+            "validationMessage": null
+          },
+          "status": "Transformed"
+        },
+        "final_matches": true,
+        "iterations": 244,
+        "lifecycle": "retained",
+        "policy": 0,
+        "sources_unchanged": true,
+        "platform": "wasm",
+        "kind": "rational",
+        "mode": "cpu",
+        "sequence": 0,
+        "started": "2026-09-11T21:14:48.377Z",
+        "finished": "2026-09-11T21:14:48.380Z",
+        "host_checksum": 732,
+        "initialMemory": 1245184,
+        "initializedMemory": 1703936,
+        "memoryBeforePrepare": 1703936,
+        "memoryAfterPrepare": 1703936,
+        "memoryAfterBatch": 1703936,
+        "memoryAfterFinish": 1703936.5,
+        "outputBytes": 383,
+        "elapsed_ns": 3106007,
+        "variant": "baseline",
+        "instanceMode": "fresh"
+      },
+      "group": {
+        "case": 23,
+        "policy": 0,
+        "lifecycle": "retained",
+        "iterations": 244
+      },
+      "index": 66,
+      "accepted": false,
+      "error": "memoryAfterFinish"
+    },
+    {
+      "instanceMode": "fresh",
+      "name": "decreasing-memory",
+      "row": {
+        "case": 23,
+        "checksum": 732,
+        "expected": {
+          "message": null,
+          "operation": "Divide",
+          "root": {
+            "constraint": 3,
+            "count": 1,
+            "exact": null,
+            "intervalIndex": 0,
+            "lower": "67/50",
+            "polynomial": [
+              "2/1",
+              "0/1",
+              "-1/1"
+            ],
+            "symbol": 3,
+            "upper": "39/25",
+            "validation": "Valid",
+            "validationMessage": null
+          },
+          "status": "Transformed"
+        },
+        "final_matches": true,
+        "iterations": 244,
+        "lifecycle": "retained",
+        "policy": 0,
+        "sources_unchanged": true,
+        "platform": "wasm",
+        "kind": "rational",
+        "mode": "cpu",
+        "sequence": 0,
+        "started": "2026-09-11T21:14:48.377Z",
+        "finished": "2026-09-11T21:14:48.380Z",
+        "host_checksum": 732,
+        "initialMemory": 1245184,
+        "initializedMemory": 1703936,
+        "memoryBeforePrepare": 1703936,
+        "memoryAfterPrepare": 1703936,
+        "memoryAfterBatch": 0,
+        "memoryAfterFinish": 1703936,
+        "outputBytes": 383,
+        "elapsed_ns": 3106007,
+        "variant": "baseline",
+        "instanceMode": "fresh"
+      },
+      "group": {
+        "case": 23,
+        "policy": 0,
+        "lifecycle": "retained",
+        "iterations": 244
+      },
+      "index": 66,
+      "accepted": false,
+      "error": "The expression evaluated to a falsy value:\n\n  assert(row.initialMemory>0&&row.memoryAfterPrepare>=row.initialMemory&&row.memoryAfterBatch>=row.memoryAfterPrepare&&row.memoryAfterFinish>=row.memoryAfterBatch)\n"
+    },
+    {
+      "instanceMode": "fresh",
+      "name": "instrumentation",
+      "row": {
+        "case": 23,
+        "checksum": 732,
+        "expected": {
+          "message": null,
+          "operation": "Divide",
+          "root": {
+            "constraint": 3,
+            "count": 1,
+            "exact": null,
+            "intervalIndex": 0,
+            "lower": "67/50",
+            "polynomial": [
+              "2/1",
+              "0/1",
+              "-1/1"
+            ],
+            "symbol": 3,
+            "upper": "39/25",
+            "validation": "Valid",
+            "validationMessage": null
+          },
+          "status": "Transformed"
+        },
+        "final_matches": true,
+        "iterations": 244,
+        "lifecycle": "retained",
+        "policy": 0,
+        "sources_unchanged": true,
+        "platform": "wasm",
+        "kind": "rational",
+        "mode": "cpu",
+        "sequence": 0,
+        "started": "2026-09-11T21:14:48.377Z",
+        "finished": "2026-09-11T21:14:48.380Z",
+        "host_checksum": 732,
+        "initialMemory": 1245184,
+        "initializedMemory": 1703936,
+        "memoryBeforePrepare": 1703936,
+        "memoryAfterPrepare": 1703936,
+        "memoryAfterBatch": 1703936,
+        "memoryAfterFinish": 1703936,
+        "outputBytes": 383,
+        "elapsed_ns": 3106007,
+        "variant": "baseline",
+        "instanceMode": "fresh",
+        "requests": 0
+      },
+      "group": {
+        "case": 23,
+        "policy": 0,
+        "lifecycle": "retained",
+        "iterations": 244
+      },
+      "index": 66,
+      "accepted": false,
+      "error": "The expression evaluated to a falsy value:\n\n  assert(!('requests'in row))\n"
+    },
+    {
+      "instanceMode": "fresh",
+      "name": "qualification-only-duration",
+      "row": {
+        "case": 23,
+        "checksum": 732,
+        "expected": {
+          "message": null,
+          "operation": "Divide",
+          "root": {
+            "constraint": 3,
+            "count": 1,
+            "exact": null,
+            "intervalIndex": 0,
+            "lower": "67/50",
+            "polynomial": [
+              "2/1",
+              "0/1",
+              "-1/1"
+            ],
+            "symbol": 3,
+            "upper": "39/25",
+            "validation": "Valid",
+            "validationMessage": null
+          },
+          "status": "Transformed"
+        },
+        "final_matches": true,
+        "iterations": 244,
+        "lifecycle": "retained",
+        "policy": 0,
+        "sources_unchanged": true,
+        "platform": "wasm",
+        "kind": "rational",
+        "mode": "cpu",
+        "sequence": 0,
+        "started": "2026-09-11T21:14:48.377Z",
+        "finished": "2026-09-11T21:14:48.380Z",
+        "host_checksum": 732,
+        "initialMemory": 1245184,
+        "initializedMemory": 1703936,
+        "memoryBeforePrepare": 1703936,
+        "memoryAfterPrepare": 1703936,
+        "memoryAfterBatch": 1703936,
+        "memoryAfterFinish": 1703936,
+        "outputBytes": 383,
+        "elapsed_ns": 3106007,
+        "variant": "baseline",
+        "instanceMode": "fresh",
+        "qualification_batch_ns": 3106007
+      },
+      "group": {
+        "case": 23,
+        "policy": 0,
+        "lifecycle": "retained",
+        "iterations": 244
+      },
+      "index": 66,
+      "accepted": false,
+      "error": "The expression evaluated to a falsy value:\n\n  assert(!('qualification_batch_ns'in row))\n"
+    },
+    {
+      "instanceMode": "fresh",
+      "name": "source-changed",
+      "row": {
+        "case": 23,
+        "checksum": 732,
+        "expected": {
+          "message": null,
+          "operation": "Divide",
+          "root": {
+            "constraint": 3,
+            "count": 1,
+            "exact": null,
+            "intervalIndex": 0,
+            "lower": "67/50",
+            "polynomial": [
+              "2/1",
+              "0/1",
+              "-1/1"
+            ],
+            "symbol": 3,
+            "upper": "39/25",
+            "validation": "Valid",
+            "validationMessage": null
+          },
+          "status": "Transformed"
+        },
+        "final_matches": true,
+        "iterations": 244,
+        "lifecycle": "retained",
+        "policy": 0,
+        "sources_unchanged": false,
+        "platform": "wasm",
+        "kind": "rational",
+        "mode": "cpu",
+        "sequence": 0,
+        "started": "2026-09-11T21:14:48.377Z",
+        "finished": "2026-09-11T21:14:48.380Z",
+        "host_checksum": 732,
+        "initialMemory": 1245184,
+        "initializedMemory": 1703936,
+        "memoryBeforePrepare": 1703936,
+        "memoryAfterPrepare": 1703936,
+        "memoryAfterBatch": 1703936,
+        "memoryAfterFinish": 1703936,
+        "outputBytes": 383,
+        "elapsed_ns": 3106007,
+        "variant": "baseline",
+        "instanceMode": "fresh"
+      },
+      "group": {
+        "case": 23,
+        "policy": 0,
+        "lifecycle": "retained",
+        "iterations": 244
+      },
+      "index": 66,
+      "accepted": false,
+      "error": "Expected values to be strictly equal:\n\nfalse !== true\n"
+    },
+    {
+      "instanceMode": "fresh",
+      "name": "result-changed",
+      "row": {
+        "case": 23,
+        "checksum": 732,
+        "expected": {
+          "message": null,
+          "operation": "Divide",
+          "root": {
+            "constraint": 3,
+            "count": 1,
+            "exact": null,
+            "intervalIndex": 0,
+            "lower": "67/50",
+            "polynomial": [
+              "2/1",
+              "0/1",
+              "-1/1"
+            ],
+            "symbol": 3,
+            "upper": "39/25",
+            "validation": "Valid",
+            "validationMessage": null
+          },
+          "status": "Transformed"
+        },
+        "final_matches": false,
+        "iterations": 244,
+        "lifecycle": "retained",
+        "policy": 0,
+        "sources_unchanged": true,
+        "platform": "wasm",
+        "kind": "rational",
+        "mode": "cpu",
+        "sequence": 0,
+        "started": "2026-09-11T21:14:48.377Z",
+        "finished": "2026-09-11T21:14:48.380Z",
+        "host_checksum": 732,
+        "initialMemory": 1245184,
+        "initializedMemory": 1703936,
+        "memoryBeforePrepare": 1703936,
+        "memoryAfterPrepare": 1703936,
+        "memoryAfterBatch": 1703936,
+        "memoryAfterFinish": 1703936,
+        "outputBytes": 383,
+        "elapsed_ns": 3106007,
+        "variant": "baseline",
+        "instanceMode": "fresh"
+      },
+      "group": {
+        "case": 23,
+        "policy": 0,
+        "lifecycle": "retained",
+        "iterations": 244
+      },
+      "index": 66,
+      "accepted": false,
+      "error": "Expected values to be strictly equal:\n\nfalse !== true\n"
+    },
+    {
+      "instanceMode": "fresh",
+      "name": "wrong-policy",
+      "row": {
+        "case": 23,
+        "checksum": 732,
+        "expected": {
+          "message": null,
+          "operation": "Divide",
+          "root": {
+            "constraint": 3,
+            "count": 1,
+            "exact": null,
+            "intervalIndex": 0,
+            "lower": "67/50",
+            "polynomial": [
+              "2/1",
+              "0/1",
+              "-1/1"
+            ],
+            "symbol": 3,
+            "upper": "39/25",
+            "validation": "Valid",
+            "validationMessage": null
+          },
+          "status": "Transformed"
+        },
+        "final_matches": true,
+        "iterations": 244,
+        "lifecycle": "retained",
+        "policy": 1,
+        "sources_unchanged": true,
+        "platform": "wasm",
+        "kind": "rational",
+        "mode": "cpu",
+        "sequence": 0,
+        "started": "2026-09-11T21:14:48.377Z",
+        "finished": "2026-09-11T21:14:48.380Z",
+        "host_checksum": 732,
+        "initialMemory": 1245184,
+        "initializedMemory": 1703936,
+        "memoryBeforePrepare": 1703936,
+        "memoryAfterPrepare": 1703936,
+        "memoryAfterBatch": 1703936,
+        "memoryAfterFinish": 1703936,
+        "outputBytes": 383,
+        "elapsed_ns": 3106007,
+        "variant": "baseline",
+        "instanceMode": "fresh"
+      },
+      "group": {
+        "case": 23,
+        "policy": 0,
+        "lifecycle": "retained",
+        "iterations": 244
+      },
+      "index": 66,
+      "accepted": false,
+      "error": "policy\n\n1 !== 0\n"
+    },
+    {
+      "instanceMode": "fresh",
+      "name": "wrong-variant",
+      "row": {
+        "case": 23,
+        "checksum": 732,
+        "expected": {
+          "message": null,
+          "operation": "Divide",
+          "root": {
+            "constraint": 3,
+            "count": 1,
+            "exact": null,
+            "intervalIndex": 0,
+            "lower": "67/50",
+            "polynomial": [
+              "2/1",
+              "0/1",
+              "-1/1"
+            ],
+            "symbol": 3,
+            "upper": "39/25",
+            "validation": "Valid",
+            "validationMessage": null
+          },
+          "status": "Transformed"
+        },
+        "final_matches": true,
+        "iterations": 244,
+        "lifecycle": "retained",
+        "policy": 0,
+        "sources_unchanged": true,
+        "platform": "wasm",
+        "kind": "rational",
+        "mode": "cpu",
+        "sequence": 0,
+        "started": "2026-09-11T21:14:48.377Z",
+        "finished": "2026-09-11T21:14:48.380Z",
+        "host_checksum": 732,
+        "initialMemory": 1245184,
+        "initializedMemory": 1703936,
+        "memoryBeforePrepare": 1703936,
+        "memoryAfterPrepare": 1703936,
+        "memoryAfterBatch": 1703936,
+        "memoryAfterFinish": 1703936,
+        "outputBytes": 383,
+        "elapsed_ns": 3106007,
+        "variant": "candidate",
+        "instanceMode": "fresh"
+      },
+      "group": {
+        "case": 23,
+        "policy": 0,
+        "lifecycle": "retained",
+        "iterations": 244
+      },
+      "index": 66,
+      "accepted": false,
+      "error": "Expected values to be strictly equal:\n+ actual - expected\n\n+ 'candidate'\n- 'baseline'\n"
+    },
+    {
+      "instanceMode": "fresh",
+      "name": "wrong-instance",
+      "row": {
+        "case": 23,
+        "checksum": 732,
+        "expected": {
+          "message": null,
+          "operation": "Divide",
+          "root": {
+            "constraint": 3,
+            "count": 1,
+            "exact": null,
+            "intervalIndex": 0,
+            "lower": "67/50",
+            "polynomial": [
+              "2/1",
+              "0/1",
+              "-1/1"
+            ],
+            "symbol": 3,
+            "upper": "39/25",
+            "validation": "Valid",
+            "validationMessage": null
+          },
+          "status": "Transformed"
+        },
+        "final_matches": true,
+        "iterations": 244,
+        "lifecycle": "retained",
+        "policy": 0,
+        "sources_unchanged": true,
+        "platform": "wasm",
+        "kind": "rational",
+        "mode": "cpu",
+        "sequence": 0,
+        "started": "2026-09-11T21:14:48.377Z",
+        "finished": "2026-09-11T21:14:48.380Z",
+        "host_checksum": 732,
+        "initialMemory": 1245184,
+        "initializedMemory": 1703936,
+        "memoryBeforePrepare": 1703936,
+        "memoryAfterPrepare": 1703936,
+        "memoryAfterBatch": 1703936,
+        "memoryAfterFinish": 1703936,
+        "outputBytes": 383,
+        "elapsed_ns": 3106007,
+        "variant": "baseline",
+        "instanceMode": "persistent"
+      },
+      "group": {
+        "case": 23,
+        "policy": 0,
+        "lifecycle": "retained",
+        "iterations": 244
+      },
+      "index": 66,
+      "accepted": false,
+      "error": "Expected values to be strictly equal:\n+ actual - expected\n\n+ 'persistent'\n- 'fresh'\n"
+    },
+    {
+      "instanceMode": "fresh",
+      "name": "wrong-sequence",
+      "row": {
+        "case": 23,
+        "checksum": 732,
+        "expected": {
+          "message": null,
+          "operation": "Divide",
+          "root": {
+            "constraint": 3,
+            "count": 1,
+            "exact": null,
+            "intervalIndex": 0,
+            "lower": "67/50",
+            "polynomial": [
+              "2/1",
+              "0/1",
+              "-1/1"
+            ],
+            "symbol": 3,
+            "upper": "39/25",
+            "validation": "Valid",
+            "validationMessage": null
+          },
+          "status": "Transformed"
+        },
+        "final_matches": true,
+        "iterations": 244,
+        "lifecycle": "retained",
+        "policy": 0,
+        "sources_unchanged": true,
+        "platform": "wasm",
+        "kind": "rational",
+        "mode": "cpu",
+        "sequence": 1,
+        "started": "2026-09-11T21:14:48.377Z",
+        "finished": "2026-09-11T21:14:48.380Z",
+        "host_checksum": 732,
+        "initialMemory": 1245184,
+        "initializedMemory": 1703936,
+        "memoryBeforePrepare": 1703936,
+        "memoryAfterPrepare": 1703936,
+        "memoryAfterBatch": 1703936,
+        "memoryAfterFinish": 1703936,
+        "outputBytes": 383,
+        "elapsed_ns": 3106007,
+        "variant": "baseline",
+        "instanceMode": "fresh"
+      },
+      "group": {
+        "case": 23,
+        "policy": 0,
+        "lifecycle": "retained",
+        "iterations": 244
+      },
+      "index": 66,
+      "accepted": false,
+      "error": "Expected values to be strictly equal:\n\n1 !== 0\n"
+    }
+  ],
+  "streamResults": [
+    {
+      "instanceMode": "persistent",
+      "name": "valid",
+      "path": "zero-factor-wasm-cost-control-persistent-valid-v73.jsonl",
+      "sha256": "c0d5783bc547c6102d505ebf0814dc77ea4f667c1997898e319e6bffee91d12a",
+      "plan": "zero-factor-wasm-cost-control-persistent-plan-v73.json",
+      "sourceCapture": "results/zero-factor-wasm-cost-cpu-0-persistent-baseline-v73.stdout",
+      "sourceCaptureSha256": "86b8e8ff2b75a1635eb711df9ae7800e3463d12eb2e7984b621e37df30a74e27",
+      "authoredExcerpt": true,
+      "accepted": true,
+      "error": null
+    },
+    {
+      "instanceMode": "persistent",
+      "name": "drop-row",
+      "path": "zero-factor-wasm-cost-control-persistent-drop-row-v73.jsonl",
+      "sha256": "bcb48b7f64f852ce93f675980774fda59a4a3eb01c15983be0463e736491eaac",
+      "plan": "zero-factor-wasm-cost-control-persistent-plan-v73.json",
+      "sourceCapture": "results/zero-factor-wasm-cost-cpu-0-persistent-baseline-v73.stdout",
+      "sourceCaptureSha256": "86b8e8ff2b75a1635eb711df9ae7800e3463d12eb2e7984b621e37df30a74e27",
+      "authoredExcerpt": true,
+      "accepted": false,
+      "error": "Expected values to be strictly equal:\n\n2 !== 3\n"
+    },
+    {
+      "instanceMode": "persistent",
+      "name": "duplicate-row",
+      "path": "zero-factor-wasm-cost-control-persistent-duplicate-row-v73.jsonl",
+      "sha256": "64a67cc838e2befdd4ce9ad4c0cfbc907f2979366428105f25290e68f878b95d",
+      "plan": "zero-factor-wasm-cost-control-persistent-plan-v73.json",
+      "sourceCapture": "results/zero-factor-wasm-cost-cpu-0-persistent-baseline-v73.stdout",
+      "sourceCaptureSha256": "86b8e8ff2b75a1635eb711df9ae7800e3463d12eb2e7984b621e37df30a74e27",
+      "authoredExcerpt": true,
+      "accepted": false,
+      "error": "Expected values to be strictly equal:\n\n4 !== 3\n"
+    },
+    {
+      "instanceMode": "persistent",
+      "name": "swapped-rows",
+      "path": "zero-factor-wasm-cost-control-persistent-swapped-rows-v73.jsonl",
+      "sha256": "63d5797a4ced6c40bde7fb7332cdfad72b8bb4abf1a0efd02cf89d0b178414bd",
+      "plan": "zero-factor-wasm-cost-control-persistent-plan-v73.json",
+      "sourceCapture": "results/zero-factor-wasm-cost-cpu-0-persistent-baseline-v73.stdout",
+      "sourceCaptureSha256": "86b8e8ff2b75a1635eb711df9ae7800e3463d12eb2e7984b621e37df30a74e27",
+      "authoredExcerpt": true,
+      "accepted": false,
+      "error": "case\n\n68 !== 84\n"
+    },
+    {
+      "instanceMode": "persistent",
+      "name": "missing-terminal",
+      "path": "zero-factor-wasm-cost-control-persistent-missing-terminal-v73.jsonl",
+      "sha256": "654eb4f47e3b83cf16a8f9afdcd2488753ff5dac5767ac073cf0289efe42fb83",
+      "plan": "zero-factor-wasm-cost-control-persistent-plan-v73.json",
+      "sourceCapture": "results/zero-factor-wasm-cost-cpu-0-persistent-baseline-v73.stdout",
+      "sourceCaptureSha256": "86b8e8ff2b75a1635eb711df9ae7800e3463d12eb2e7984b621e37df30a74e27",
+      "authoredExcerpt": true,
+      "accepted": false,
+      "error": "Expected values to be strictly equal:\n\n2 !== 3\n"
+    },
+    {
+      "instanceMode": "persistent",
+      "name": "wrong-terminal-count",
+      "path": "zero-factor-wasm-cost-control-persistent-wrong-terminal-count-v73.jsonl",
+      "sha256": "2911c406d770435b649d0195ab5aaba70f6fb32a6980dd5a9f37b709f234ad00",
+      "plan": "zero-factor-wasm-cost-control-persistent-plan-v73.json",
+      "sourceCapture": "results/zero-factor-wasm-cost-cpu-0-persistent-baseline-v73.stdout",
+      "sourceCaptureSha256": "86b8e8ff2b75a1635eb711df9ae7800e3463d12eb2e7984b621e37df30a74e27",
+      "authoredExcerpt": true,
+      "accepted": false,
+      "error": "Expected values to be strictly equal:\n\n3 !== 2\n"
+    },
+    {
+      "instanceMode": "persistent",
+      "name": "wrong-terminal-gc",
+      "path": "zero-factor-wasm-cost-control-persistent-wrong-terminal-gc-v73.jsonl",
+      "sha256": "c7a9c20808e35af1258d8c4d52df1a520b280db3e131e42134d4d0e6497c4340",
+      "plan": "zero-factor-wasm-cost-control-persistent-plan-v73.json",
+      "sourceCapture": "results/zero-factor-wasm-cost-cpu-0-persistent-baseline-v73.stdout",
+      "sourceCaptureSha256": "86b8e8ff2b75a1635eb711df9ae7800e3463d12eb2e7984b621e37df30a74e27",
+      "authoredExcerpt": true,
+      "accepted": false,
+      "error": "Expected values to be strictly equal:\n\n1 !== 0\n"
+    },
+    {
+      "instanceMode": "persistent",
+      "name": "wrong-terminal-runtime",
+      "path": "zero-factor-wasm-cost-control-persistent-wrong-terminal-runtime-v73.jsonl",
+      "sha256": "352359911f7b389c7836eb9429a4efdc16786e389bba2b1eb0095451c75cdd0f",
+      "plan": "zero-factor-wasm-cost-control-persistent-plan-v73.json",
+      "sourceCapture": "results/zero-factor-wasm-cost-cpu-0-persistent-baseline-v73.stdout",
+      "sourceCaptureSha256": "86b8e8ff2b75a1635eb711df9ae7800e3463d12eb2e7984b621e37df30a74e27",
+      "authoredExcerpt": true,
+      "accepted": false,
+      "error": "Expected values to be strictly equal:\n+ actual - expected\n\n+ 'wrong'\n- 'v22.22.2'\n"
+    },
+    {
+      "instanceMode": "fresh",
+      "name": "valid",
+      "path": "zero-factor-wasm-cost-control-fresh-valid-v73.jsonl",
+      "sha256": "66e2a89fe008a6d4163b4f95efe8addd8ebfcbedb7cbfb77411294e5a051c968",
+      "plan": "zero-factor-wasm-cost-control-fresh-plan-v73.json",
+      "sourceCapture": "results/zero-factor-wasm-cost-cpu-0-fresh-baseline-v73.stdout",
+      "sourceCaptureSha256": "b9bb1ec2ea710e6e498c1615cd37551425db9ba2c12d050f93aa291ac4eeac25",
+      "authoredExcerpt": true,
+      "accepted": true,
+      "error": null
+    },
+    {
+      "instanceMode": "fresh",
+      "name": "drop-row",
+      "path": "zero-factor-wasm-cost-control-fresh-drop-row-v73.jsonl",
+      "sha256": "b7e1bf1510ac94e828dcc8bdbb1b64d1d8d5c077924c7911a50df1b42fbc7743",
+      "plan": "zero-factor-wasm-cost-control-fresh-plan-v73.json",
+      "sourceCapture": "results/zero-factor-wasm-cost-cpu-0-fresh-baseline-v73.stdout",
+      "sourceCaptureSha256": "b9bb1ec2ea710e6e498c1615cd37551425db9ba2c12d050f93aa291ac4eeac25",
+      "authoredExcerpt": true,
+      "accepted": false,
+      "error": "Expected values to be strictly equal:\n\n2 !== 3\n"
+    },
+    {
+      "instanceMode": "fresh",
+      "name": "duplicate-row",
+      "path": "zero-factor-wasm-cost-control-fresh-duplicate-row-v73.jsonl",
+      "sha256": "82eb8af70fd0e058c04c12c220f25842a8f7a6893923c76c51d894397e554b7d",
+      "plan": "zero-factor-wasm-cost-control-fresh-plan-v73.json",
+      "sourceCapture": "results/zero-factor-wasm-cost-cpu-0-fresh-baseline-v73.stdout",
+      "sourceCaptureSha256": "b9bb1ec2ea710e6e498c1615cd37551425db9ba2c12d050f93aa291ac4eeac25",
+      "authoredExcerpt": true,
+      "accepted": false,
+      "error": "Expected values to be strictly equal:\n\n4 !== 3\n"
+    },
+    {
+      "instanceMode": "fresh",
+      "name": "swapped-rows",
+      "path": "zero-factor-wasm-cost-control-fresh-swapped-rows-v73.jsonl",
+      "sha256": "8eac11e9be898c173765769225e78b5f786900dc611c879bca1908e4be758183",
+      "plan": "zero-factor-wasm-cost-control-fresh-plan-v73.json",
+      "sourceCapture": "results/zero-factor-wasm-cost-cpu-0-fresh-baseline-v73.stdout",
+      "sourceCaptureSha256": "b9bb1ec2ea710e6e498c1615cd37551425db9ba2c12d050f93aa291ac4eeac25",
+      "authoredExcerpt": true,
+      "accepted": false,
+      "error": "case\n\n12 !== 2\n"
+    },
+    {
+      "instanceMode": "fresh",
+      "name": "missing-terminal",
+      "path": "zero-factor-wasm-cost-control-fresh-missing-terminal-v73.jsonl",
+      "sha256": "e2d3f1f678b970c69428214fa15d429ac1961cb30277bb7865f8a1a10fc38d0d",
+      "plan": "zero-factor-wasm-cost-control-fresh-plan-v73.json",
+      "sourceCapture": "results/zero-factor-wasm-cost-cpu-0-fresh-baseline-v73.stdout",
+      "sourceCaptureSha256": "b9bb1ec2ea710e6e498c1615cd37551425db9ba2c12d050f93aa291ac4eeac25",
+      "authoredExcerpt": true,
+      "accepted": false,
+      "error": "Expected values to be strictly equal:\n\n2 !== 3\n"
+    },
+    {
+      "instanceMode": "fresh",
+      "name": "wrong-terminal-count",
+      "path": "zero-factor-wasm-cost-control-fresh-wrong-terminal-count-v73.jsonl",
+      "sha256": "873928ad56f914af32aee4359dab005a74511d54e98898da6f6c182354536a1e",
+      "plan": "zero-factor-wasm-cost-control-fresh-plan-v73.json",
+      "sourceCapture": "results/zero-factor-wasm-cost-cpu-0-fresh-baseline-v73.stdout",
+      "sourceCaptureSha256": "b9bb1ec2ea710e6e498c1615cd37551425db9ba2c12d050f93aa291ac4eeac25",
+      "authoredExcerpt": true,
+      "accepted": false,
+      "error": "Expected values to be strictly equal:\n\n3 !== 2\n"
+    },
+    {
+      "instanceMode": "fresh",
+      "name": "wrong-terminal-gc",
+      "path": "zero-factor-wasm-cost-control-fresh-wrong-terminal-gc-v73.jsonl",
+      "sha256": "1a0ef94d87013793b4553581421086c049b10bf7b65ade18a74e61242ef26538",
+      "plan": "zero-factor-wasm-cost-control-fresh-plan-v73.json",
+      "sourceCapture": "results/zero-factor-wasm-cost-cpu-0-fresh-baseline-v73.stdout",
+      "sourceCaptureSha256": "b9bb1ec2ea710e6e498c1615cd37551425db9ba2c12d050f93aa291ac4eeac25",
+      "authoredExcerpt": true,
+      "accepted": false,
+      "error": "Expected values to be strictly equal:\n\n1 !== 0\n"
+    },
+    {
+      "instanceMode": "fresh",
+      "name": "wrong-terminal-runtime",
+      "path": "zero-factor-wasm-cost-control-fresh-wrong-terminal-runtime-v73.jsonl",
+      "sha256": "4b008f4e80302c746cf6c2214bb5c7664bf37f09932191e04783b4b92623848a",
+      "plan": "zero-factor-wasm-cost-control-fresh-plan-v73.json",
+      "sourceCapture": "results/zero-factor-wasm-cost-cpu-0-fresh-baseline-v73.stdout",
+      "sourceCaptureSha256": "b9bb1ec2ea710e6e498c1615cd37551425db9ba2c12d050f93aa291ac4eeac25",
+      "authoredExcerpt": true,
+      "accepted": false,
+      "error": "Expected values to be strictly equal:\n+ actual - expected\n\n+ 'wrong'\n- 'v22.22.2'\n"
+    }
+  ]
+}

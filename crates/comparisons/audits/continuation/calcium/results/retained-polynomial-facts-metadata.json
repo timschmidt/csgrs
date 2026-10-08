@@ -1,0 +1,18 @@
+{
+  "tag": "retained-polynomial-facts-metadata",
+  "started": "2026-09-08T23:46:02.509Z",
+  "finished": "2026-09-08T23:46:02.537Z",
+  "elapsedSeconds": 0.025371070000000003,
+  "cwd": "/home/tim/Documents/GitHub/workspace/hypersolve",
+  "command": "cargo",
+  "args": [
+    "metadata",
+    "--offline",
+    "--locked",
+    "--no-deps",
+    "--format-version",
+    "1"
+  ],
+  "code": 0,
+  "signal": null
+}

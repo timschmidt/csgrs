@@ -1,0 +1,13 @@
+{
+  "tag": "point-statistics-check",
+  "started": "2026-09-11T00:19:50.691Z",
+  "finished": "2026-09-11T00:21:38.479Z",
+  "elapsedSeconds": 107.78555274899999,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "node",
+  "args": [
+    "check-point-statistics-v60.mjs"
+  ],
+  "code": 0,
+  "signal": null
+}

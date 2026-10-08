@@ -1,0 +1,284 @@
+path	lines	classification
+.gitignore	5	metadata/other
+LICENCE.txt	20	documentation/test/metadata
+Makefile	17	metadata/other
+README.md	45	documentation/test/metadata
+doc/README.TXT	3	documentation/test/metadata
+examples/algebra.thy	207	source/compiler or theory
+examples/fa.thy	48	source/compiler or theory
+examples/group.thy	10	source/compiler or theory
+examples/integer.ml	62	source/compiler or theory
+examples/integer.thy	4	source/compiler or theory
+examples/metric.thy	83	source/compiler or theory
+examples/number.thy	168	source/compiler or theory
+examples/order.thy	42	source/compiler or theory
+examples/rig.thy	71	source/compiler or theory
+examples/sets.thy	119	source/compiler or theory
+examples/wtype.ml	45	source/compiler or theory
+examples/wtype.thy	18	source/compiler or theory
+private/JLC-CIE-Bauer-Stone/Makefile	25	metadata/other
+private/JLC-CIE-Bauer-Stone/README.txt	39	documentation/test/metadata
+private/JLC-CIE-Bauer-Stone/choice.mli	37	source/compiler or theory
+private/JLC-CIE-Bauer-Stone/choice.thy	4	source/compiler or theory
+private/JLC-CIE-Bauer-Stone/comparison.tex	122	documentation/test/metadata
+private/JLC-CIE-Bauer-Stone/decidable1.mli	18	source/compiler or theory
+private/JLC-CIE-Bauer-Stone/decidable1.thy	2	source/compiler or theory
+private/JLC-CIE-Bauer-Stone/digraph.dot	11	documentation/test/metadata
+private/JLC-CIE-Bauer-Stone/digraph.eps	350	generated/binary artifact
+private/JLC-CIE-Bauer-Stone/digraph.pdf	126	generated/binary artifact
+private/JLC-CIE-Bauer-Stone/examples.tex	550	documentation/test/metadata
+private/JLC-CIE-Bauer-Stone/group.ml	7	source/compiler or theory
+private/JLC-CIE-Bauer-Stone/group.thy	11	source/compiler or theory
+private/JLC-CIE-Bauer-Stone/hoisted.thy	12	source/compiler or theory
+private/JLC-CIE-Bauer-Stone/ichoice.ml	14	source/compiler or theory
+private/JLC-CIE-Bauer-Stone/ichoice.mli	37	source/compiler or theory
+private/JLC-CIE-Bauer-Stone/ichoice.thy	5	source/compiler or theory
+private/JLC-CIE-Bauer-Stone/implementation.tex	111	documentation/test/metadata
+private/JLC-CIE-Bauer-Stone/introduction.tex	133	documentation/test/metadata
+private/JLC-CIE-Bauer-Stone/kuratowski.mli	152	source/compiler or theory
+private/JLC-CIE-Bauer-Stone/kuratowski.thy	29	source/compiler or theory
+private/JLC-CIE-Bauer-Stone/list.mli	54	source/compiler or theory
+private/JLC-CIE-Bauer-Stone/list.thy	11	source/compiler or theory
+private/JLC-CIE-Bauer-Stone/logic.tex	179	documentation/test/metadata
+private/JLC-CIE-Bauer-Stone/macros.tex	283	documentation/test/metadata
+private/JLC-CIE-Bauer-Stone/main.tex	5	documentation/test/metadata
+private/JLC-CIE-Bauer-Stone/modest_sets.tex	645	documentation/test/metadata
+private/JLC-CIE-Bauer-Stone/modulus.ml	14	source/compiler or theory
+private/JLC-CIE-Bauer-Stone/modulus.mli	45	source/compiler or theory
+private/JLC-CIE-Bauer-Stone/modulus.thy	16	source/compiler or theory
+private/JLC-CIE-Bauer-Stone/paper.tex	135	documentation/test/metadata
+private/JLC-CIE-Bauer-Stone/real.thy	19	source/compiler or theory
+private/JLC-CIE-Bauer-Stone/rzbib.bib	462	documentation/test/metadata
+private/JLC-CIE-Bauer-Stone/specifications.tex	273	documentation/test/metadata
+private/JLC-CIE-Bauer-Stone/translation.tex	368	documentation/test/metadata
+private/JLC-CIE-Bauer-Stone/wtype.ml	6	source/compiler or theory
+private/JLC-CIE-Bauer-Stone/wtype.mli	81	source/compiler or theory
+private/JLC-CIE-Bauer-Stone/wtype.tex	13	documentation/test/metadata
+private/JLC-CIE-Bauer-Stone/wtype.thy	16	source/compiler or theory
+private/cie/Makefile	35	metadata/other
+private/cie/README.txt	10	documentation/test/metadata
+private/cie/RZ-outline.pdf	1976	generated/binary artifact
+private/cie/choice.mli	37	source/compiler or theory
+private/cie/choice.thy	4	source/compiler or theory
+private/cie/cie-long.tex	6	documentation/test/metadata
+private/cie/cie-short.tex	5	documentation/test/metadata
+private/cie/cie.tex	131	documentation/test/metadata
+private/cie/cie2007-report.pdf	640	generated/binary artifact
+private/cie/comparison.tex	122	documentation/test/metadata
+private/cie/decidable1.mli	18	source/compiler or theory
+private/cie/decidable1.thy	2	source/compiler or theory
+private/cie/digraph.dot	11	documentation/test/metadata
+private/cie/digraph.eps	350	generated/binary artifact
+private/cie/digraph.pdf	126	generated/binary artifact
+private/cie/examples.tex	550	documentation/test/metadata
+private/cie/group.ml	7	source/compiler or theory
+private/cie/group.thy	11	source/compiler or theory
+private/cie/hoisted.thy	12	source/compiler or theory
+private/cie/ichoice.ml	14	source/compiler or theory
+private/cie/ichoice.mli	37	source/compiler or theory
+private/cie/ichoice.thy	5	source/compiler or theory
+private/cie/ifpdf.sty	167	documentation/test/metadata
+private/cie/implementation.tex	111	documentation/test/metadata
+private/cie/introduction.tex	133	documentation/test/metadata
+private/cie/kuratowski.mli	152	source/compiler or theory
+private/cie/kuratowski.thy	29	source/compiler or theory
+private/cie/list.mli	54	source/compiler or theory
+private/cie/list.thy	11	source/compiler or theory
+private/cie/llncs.cls	1190	documentation/test/metadata
+private/cie/llncs2e/history.txt	106	documentation/test/metadata
+private/cie/llncs2e/llncs.cls	1190	documentation/test/metadata
+private/cie/llncs2e/llncs.dem	1090	documentation/test/metadata
+private/cie/llncs2e/llncs.doc	1254	documentation/test/metadata
+private/cie/llncs2e/llncs.dvi	102	generated/binary artifact
+private/cie/llncs2e/llncs.ind	349	metadata/other
+private/cie/llncs2e/llncsdoc.pdf	1685	generated/binary artifact
+private/cie/llncs2e/llncsdoc.sty	42	documentation/test/metadata
+private/cie/llncs2e/read.me	24	documentation/test/metadata
+private/cie/llncs2e/splncs.bst	1098	documentation/test/metadata
+private/cie/llncs2e/sprmindx.sty	4	documentation/test/metadata
+private/cie/llncs2e/subjidx.ind	70	metadata/other
+private/cie/logic.tex	179	documentation/test/metadata
+private/cie/macros.tex	283	documentation/test/metadata
+private/cie/main.tex	5	documentation/test/metadata
+private/cie/mathpartir.sty	421	documentation/test/metadata
+private/cie/modest_sets.tex	645	documentation/test/metadata
+private/cie/modulus.ml	14	source/compiler or theory
+private/cie/modulus.mli	45	source/compiler or theory
+private/cie/modulus.thy	16	source/compiler or theory
+private/cie/outline.txt	39	documentation/test/metadata
+private/cie/pdfsync.sty	188	documentation/test/metadata
+private/cie/real.thy	19	source/compiler or theory
+private/cie/rzbib.bib	462	documentation/test/metadata
+private/cie/specifications.tex	273	documentation/test/metadata
+private/cie/splncs.bst	1098	documentation/test/metadata
+private/cie/translation.tex	368	documentation/test/metadata
+private/cie/wtype.ml	6	source/compiler or theory
+private/cie/wtype.mli	81	source/compiler or theory
+private/cie/wtype.tex	13	documentation/test/metadata
+private/cie/wtype.thy	16	source/compiler or theory
+private/cie-lncs-submission.zip	1427	generated/binary artifact
+private/cie-slides/group.thy	11	source/compiler or theory
+private/cie-slides/group.thy.ltx	11	documentation/test/metadata
+private/cie-slides/latexify.pl	30	documentation/test/metadata
+private/cie-slides/modulus.ml	14	source/compiler or theory
+private/cie-slides/modulus.mli	45	source/compiler or theory
+private/cie-slides/modulus.mli.ltx	45	documentation/test/metadata
+private/cie-slides/modulus.thy	16	source/compiler or theory
+private/cie-slides/modulus.thy.ltx	16	documentation/test/metadata
+private/cie-slides/slides.tex	388	documentation/test/metadata
+private/clase/case.bib	131	documentation/test/metadata
+private/clase/case.tex	179	documentation/test/metadata
+private/clase/choice.mli	21	source/compiler or theory
+private/clase/choice.thy	7	source/compiler or theory
+private/clase/conclusion.tex	52	documentation/test/metadata
+private/clase/decidable.mli	12	source/compiler or theory
+private/clase/decidable.thy	4	source/compiler or theory
+private/clase/entcs.cls	1174	documentation/test/metadata
+private/clase/examples.tex	107	documentation/test/metadata
+private/clase/implementation.tex	200	documentation/test/metadata
+private/clase/intro.tex	59	documentation/test/metadata
+private/clase/nat.mli	29	source/compiler or theory
+private/clase/nat.thy	13	source/compiler or theory
+private/clase/prentcsmacro.sty	132	documentation/test/metadata
+private/clase/realizability.tex	185	documentation/test/metadata
+private/clase/semigroup.mli	25	source/compiler or theory
+private/clase/semigroup.thy	9	source/compiler or theory
+private/clase/theories_signatures.tex	231	documentation/test/metadata
+private/coq/Reference-Manual.pdf	10894	generated/binary artifact
+private/coq/ac.v	17	source/compiler or theory
+private/coq/field.v	82	source/compiler or theory
+private/coq/field2.v	86	source/compiler or theory
+private/coq/modest.v	390	source/compiler or theory
+private/coq/syntax-v8.pdf	2434	generated/binary artifact
+private/coq/wtype.v	226	source/compiler or theory
+private/coq/wtype2.v	55	source/compiler or theory
+private/done.txt	118	documentation/test/metadata
+private/examples-old/algebra/Makefile	5	metadata/other
+private/examples-old/algebra/group.thy	59	source/compiler or theory
+private/examples-old/misc/Makefile	5	metadata/other
+private/examples-old/misc/bug.thy	11	source/compiler or theory
+private/examples-old/misc/choice.thy	16	source/compiler or theory
+private/examples-old/misc/dense.thy	17	source/compiler or theory
+private/examples-old/misc/empty.thy	3	source/compiler or theory
+private/examples-old/misc/field.thy	35	source/compiler or theory
+private/examples-old/misc/group-annotated.thy	30	source/compiler or theory
+private/examples-old/misc/group.thy	18	source/compiler or theory
+private/examples-old/misc/kuratowski.thy	44	source/compiler or theory
+private/examples-old/misc/lem.thy	10	source/compiler or theory
+private/examples-old/misc/list.thy	17	source/compiler or theory
+private/examples-old/misc/nat.thy	30	source/compiler or theory
+private/examples-old/misc/pqueue.thy	37	source/compiler or theory
+private/examples-old/misc/queue.thy	33	source/compiler or theory
+private/examples-old/misc/quot.thy	21	source/compiler or theory
+private/examples-old/misc/real.thy	154	source/compiler or theory
+private/examples-old/misc/semilattice.thy	14	source/compiler or theory
+private/examples-old/misc/separation.thy	26	source/compiler or theory
+private/examples-old/misc/subset.thy	18	source/compiler or theory
+private/examples-old/misc/sums.thy	25	source/compiler or theory
+private/examples-old/misc/test.thy	41	source/compiler or theory
+private/examples-old/misc/trivial.thy	9	source/compiler or theory
+private/jesper/jesper.tex	1220	documentation/test/metadata
+private/jesper/mathpartir.sty	421	documentation/test/metadata
+private/logic/logic.tex	1073	documentation/test/metadata
+private/logic/mathpartir.sty	421	documentation/test/metadata
+private/msfp-2008/abstract.bib	71	documentation/test/metadata
+private/msfp-2008/abstract.tex	239	documentation/test/metadata
+private/msfp-2008/entcs.bst	1392	documentation/test/metadata
+private/msfp-2008/entcs.cls	1184	documentation/test/metadata
+private/msfp-2008/prentcsmacro.sty	131	documentation/test/metadata
+private/msfp-2008/slides.tex	474	documentation/test/metadata
+private/oberwolfach/abstract.tex	111	documentation/test/metadata
+private/outline.txt	161	documentation/test/metadata
+private/pop-seminar/digraph.dot	11	documentation/test/metadata
+private/pop-seminar/digraph.eps	350	generated/binary artifact
+private/pop-seminar/digraph.pdf	126	generated/binary artifact
+private/pop-seminar/group.mli	44	source/compiler or theory
+private/pop-seminar/group.thy	13	source/compiler or theory
+private/pop-seminar/induction.mli	9	source/compiler or theory
+private/pop-seminar/induction.mli.ltx	9	documentation/test/metadata
+private/pop-seminar/induction.thy	5	source/compiler or theory
+private/pop-seminar/latexify.pl	30	documentation/test/metadata
+private/pop-seminar/slides.tex	430	documentation/test/metadata
+private/questions.txt	23	documentation/test/metadata
+private/refman/refman.tex	814	documentation/test/metadata
+private/research-papers/descriptions.pdf	6943	generated/binary artifact
+private/research-papers/komagata95implementation.pdf	11474	generated/binary artifact
+private/research-papers/letouzey-coq-extraction.pdf	22316	generated/binary artifact
+private/research-papers/longley99when.pdf	8304	generated/binary artifact
+private/research-papers/streicher-notes.ps	9624	generated/binary artifact
+private/research-papers/thesis100.ps	16359	generated/binary artifact
+private/slides.ps	4706	generated/binary artifact
+private/todo.txt	74	documentation/test/metadata
+private/userman/appendix.tex	21	documentation/test/metadata
+private/userman/chapter1.tex	106	documentation/test/metadata
+private/userman/chapter2.tex	75	documentation/test/metadata
+private/userman/chapter3.tex	33	documentation/test/metadata
+private/userman/chapter4.tex	10	documentation/test/metadata
+private/userman/chapter5.tex	10	documentation/test/metadata
+private/userman/rz.bib	131	documentation/test/metadata
+private/userman/userman.tex	139	documentation/test/metadata
+src/.cvsignore	6	metadata/other
+src/.depend	36	metadata/other
+src/Makefile	115	metadata/other
+src/context.ml	0	source/compiler or theory
+src/coqpp.ml	772	source/compiler or theory
+src/error.ml	326	source/compiler or theory
+src/expression.ml	54	source/compiler or theory
+src/flags.ml	33	source/compiler or theory
+src/infer.ml	1314	source/compiler or theory
+src/lexer.mll	160	source/compiler or theory
+src/load.ml	19	source/compiler or theory
+src/logic.ml	1112	source/compiler or theory
+src/logicrules.ml	1943	source/compiler or theory
+src/message.ml	11	source/compiler or theory
+src/name.ml	333	source/compiler or theory
+src/opt.ml	1254	source/compiler or theory
+src/outsyn.ml	1343	source/compiler or theory
+src/outsynrules.ml	1377	source/compiler or theory
+src/parser.mly	432	source/compiler or theory
+src/pp.ml	634	source/compiler or theory
+src/rename.ml	338	source/compiler or theory
+src/rz.ml	326	source/compiler or theory
+src/syntax.ml	656	source/compiler or theory
+src/tests/Makefile	8	metadata/other
+src/tests/ceiten.thy	9	source/compiler or theory
+src/tests/dependent_product.thy	7	source/compiler or theory
+src/tests/dependent_product.thy.ref	51	documentation/test/metadata
+src/tests/empty.thy	3	source/compiler or theory
+src/tests/empty.thy.ref	5	documentation/test/metadata
+src/tests/hoist.thy	34	source/compiler or theory
+src/tests/hoist.thy.ref	216	documentation/test/metadata
+src/tests/hotheory.thy	39	source/compiler or theory
+src/tests/hotheory.thy.ref	73	documentation/test/metadata
+src/tests/include.thy	13	source/compiler or theory
+src/tests/include.thy.ref	85	documentation/test/metadata
+src/tests/infix.thy	5	source/compiler or theory
+src/tests/infix.thy.ref	28	documentation/test/metadata
+src/tests/misc.thy	153	source/compiler or theory
+src/tests/misc.thy.ref	584	documentation/test/metadata
+src/tests/modelapp-bad.thy	26	source/compiler or theory
+src/tests/modelapp-bad.thy.ref	28	documentation/test/metadata
+src/tests/modelapp.thy	26	source/compiler or theory
+src/tests/modelapp.thy.ref	142	documentation/test/metadata
+src/tests/ops.thy	33	source/compiler or theory
+src/tests/ops.thy.ref	88	documentation/test/metadata
+src/tests/postrename.thy	20	source/compiler or theory
+src/tests/postrename.thy.ref	47	documentation/test/metadata
+src/tests/propositions.thy	32	source/compiler or theory
+src/tests/propositions.thy.ref	160	documentation/test/metadata
+src/tests/ring.thy	26	source/compiler or theory
+src/tests/set.thy	5	source/compiler or theory
+src/tests/set.thy.ref	17	documentation/test/metadata
+src/tests/shadow_boundvar.thy	6	source/compiler or theory
+src/tests/shadow_boundvar.thy.ref	21	documentation/test/metadata
+src/tests/shadow_set.thy	5	source/compiler or theory
+src/tests/shadow_set.thy.ref	17	documentation/test/metadata
+src/tests/terms.thy	33	source/compiler or theory
+src/tests/terms.thy.ref	138	documentation/test/metadata
+src/tests/test.sh	44	documentation/test/metadata
+src/tests/theoryapp.thy	31	source/compiler or theory
+src/tests/theoryapp.thy.ref	102	documentation/test/metadata
+src/tex.ml	278	source/compiler or theory
+src/thin.ml	808	source/compiler or theory
+src/translate.ml	963	source/compiler or theory
+src/types.ml	21	source/compiler or theory

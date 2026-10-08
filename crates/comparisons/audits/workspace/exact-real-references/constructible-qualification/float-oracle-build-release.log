@@ -1,0 +1,45 @@
+   Compiling numbers-qualification v0.0.0 (/home/tim/Documents/GitHub/workspace/exact-real-references/numbers-qualification)
+error[E0599]: no method named `is_finite` found for enum `Option<T>` in the current scope
+   --> ../constructible-qualification/float_oracle.rs:41:54
+    |
+ 41 |         let hyper=value.to_f64_lossy();assert!(hyper.is_finite());check_view("Hyper",Q::from_f64(hyper).unwrap(),&lo,&hi);
+    |                                                      ^^^^^^^^^
+    |
+note: the method `is_finite` exists on the type `f64`
+   --> /home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/core/src/num/f64.rs:706:5
+    |
+706 |     pub const fn is_finite(self) -> bool {
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+help: consider using `Option::expect` to unwrap the `f64` value, panicking if the value is an `Option::None`
+    |
+ 41 |         let hyper=value.to_f64_lossy();assert!(hyper.expect("REASON").is_finite());check_view("Hyper",Q::from_f64(hyper).unwrap(),&lo,&hi);
+    |                                                     +++++++++++++++++
+help: there is a method `is_none` with a similar name
+    |
+ 41 -         let hyper=value.to_f64_lossy();assert!(hyper.is_finite());check_view("Hyper",Q::from_f64(hyper).unwrap(),&lo,&hi);
+ 41 +         let hyper=value.to_f64_lossy();assert!(hyper.is_none());check_view("Hyper",Q::from_f64(hyper).unwrap(),&lo,&hi);
+    |
+
+error[E0308]: mismatched types
+   --> ../constructible-qualification/float_oracle.rs:41:98
+    |
+ 41 |         let hyper=value.to_f64_lossy();assert!(hyper.is_finite());check_view("Hyper",Q::from_f64(hyper).unwrap(),&lo,&hi);
+    |                                                                                      ----------- ^^^^^ expected `f64`, found `Option<f64>`
+    |                                                                                      |
+    |                                                                                      arguments to this function are incorrect
+    |
+    = note: expected type `f64`
+               found enum `Option<f64>`
+note: associated function defined here
+   --> /home/tim/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/rug-1.30.0/src/rational/big.rs:441:12
+    |
+441 |     pub fn from_f64(value: f64) -> Option<Self> {
+    |            ^^^^^^^^
+help: consider using `Option::expect` to unwrap the `Option<f64>` value, panicking if the value is an `Option::None`
+    |
+ 41 |         let hyper=value.to_f64_lossy();assert!(hyper.is_finite());check_view("Hyper",Q::from_f64(hyper.expect("REASON")).unwrap(),&lo,&hi);
+    |                                                                                                       +++++++++++++++++
+
+Some errors have detailed explanations: E0308, E0599.
+For more information about an error, try `rustc --explain E0308`.
+error: could not compile `numbers-qualification` (bin "constructible_float_oracle") due to 2 previous errors

@@ -1,0 +1,42 @@
+[
+  {
+    "name": "bezier_region::single_loop_corner_publication_tests::selected_circle_corner_candidates_publish_normalized_single_loops",
+    "returncode": 0,
+    "passed": true,
+    "limit_seconds": 75,
+    "elapsed_seconds": 0.16574238101020455,
+    "log": "corner-publication-postchart-20260923-focused1-case-0.log"
+  },
+  {
+    "name": "bezier_region::tests::selected_corner_candidates_reenter_normalization_with_retained_contacts",
+    "returncode": 0,
+    "passed": true,
+    "limit_seconds": 75,
+    "elapsed_seconds": 3.554259423050098,
+    "log": "corner-publication-postchart-20260923-focused1-case-1.log"
+  },
+  {
+    "name": "bezier_region::tests::independent_oblique_chord_pair_fillet_crosses_a_rational_line_exactly",
+    "returncode": 0,
+    "passed": true,
+    "limit_seconds": 75,
+    "elapsed_seconds": 1.7014636020176113,
+    "log": "corner-publication-postchart-20260923-focused1-case-2.log"
+  },
+  {
+    "name": "bezier_region::tests::general_nonrepresented_chord_and_retained_rational_arc_complete_the_fillet_kernel",
+    "returncode": 0,
+    "passed": true,
+    "limit_seconds": 75,
+    "elapsed_seconds": 3.3071030779974535,
+    "log": "corner-publication-postchart-20260923-focused1-case-3.log"
+  },
+  {
+    "name": "bezier_region::curve_corner_chain::tests::extended_fillet_region_classifies_both_sides_of_its_companion",
+    "returncode": 0,
+    "passed": true,
+    "limit_seconds": 300,
+    "elapsed_seconds": 260.97828262706753,
+    "log": "corner-publication-postchart-20260923-focused1-case-4.log"
+  }
+]

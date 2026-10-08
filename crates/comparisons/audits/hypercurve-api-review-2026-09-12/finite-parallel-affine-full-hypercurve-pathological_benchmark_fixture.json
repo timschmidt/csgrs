@@ -1,0 +1,29 @@
+{
+  "repo": "hypercurve",
+  "target": "pathological_benchmark_fixture",
+  "binary": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/pathological_benchmark_fixture-d5ece89a70e2568b",
+  "command": [
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/pathological_benchmark_fixture-d5ece89a70e2568b",
+    "--test-threads=4",
+    "--color",
+    "never"
+  ],
+  "sha256": "f7164a064b7a2af7b1cbdf1d8ae9b6d9fff05f37c7d228d233f5506f0ea5d272",
+  "returncode": 0,
+  "timed_out": false,
+  "elapsed_seconds": 16.58495750799193,
+  "log": "finite-parallel-affine-full-hypercurve-pathological_benchmark_fixture.log",
+  "passed": [
+    "pathological_cell_covers_every_curve_and_real_representation_family",
+    "pathological_cell_reaches_curved_intersections_and_decidable_polygon_booleans",
+    "pathological_pi_weight_conic_decides_native_booleans_without_projection",
+    "full_pathological_native_workload_decides_all_268_exact_booleans"
+  ],
+  "failed": [],
+  "ignored": [],
+  "summaries": [
+    "test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 16.55s"
+  ],
+  "new_failures": [],
+  "known_failures": []
+}

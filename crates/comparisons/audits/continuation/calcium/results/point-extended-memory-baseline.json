@@ -1,0 +1,18 @@
+{
+  "tag": "point-extended-memory-baseline",
+  "started": "2026-09-10T21:19:18.400Z",
+  "finished": "2026-09-10T21:19:22.569Z",
+  "elapsedSeconds": 4.167655186,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "valgrind",
+  "args": [
+    "--leak-check=full",
+    "--show-leak-kinds=all",
+    "--errors-for-leak-kinds=definite,indirect,possible",
+    "--error-exitcode=99",
+    "/tmp/calcium-point-extended.ejZUdW/baseline-cpu",
+    "check"
+  ],
+  "code": 0,
+  "signal": null
+}

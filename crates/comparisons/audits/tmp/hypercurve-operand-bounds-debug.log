@@ -1,0 +1,15 @@
+    Blocking waiting for file lock on build directory
+   Compiling hypercurve v0.3.1 (/home/tim/Documents/GitHub/workspace/hypercurve)
+error[E0282]: type annotations needed
+     --> src/curve_region_boolean.rs:21499:21
+      |
+21499 |                     Ok(context.carrier_bounds_are_outside_other_region(index))
+      |                     ^^ cannot infer type of the type parameter `E` declared on the enum `Result`
+      |
+help: consider specifying the generic arguments
+      |
+21499 |                     Ok::<bool, E>(context.carrier_bounds_are_outside_other_region(index))
+      |                       +++++++++++
+
+For more information about this error, try `rustc --explain E0282`.
+error: could not compile `hypercurve` (lib test) due to 1 previous error

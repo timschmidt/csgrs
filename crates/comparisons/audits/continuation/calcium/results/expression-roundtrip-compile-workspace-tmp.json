@@ -1,0 +1,32 @@
+{
+  "tag": "expression-roundtrip-compile-workspace-tmp",
+  "started": "2026-09-08T19:55:59.636Z",
+  "finished": "2026-09-08T19:55:59.761Z",
+  "elapsedSeconds": 0.123229815,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison",
+  "command": "env",
+  "args": [
+    "TMPDIR=/home/tim/Documents/GitHub/workspace/calcium-build-tmp.gVX5v4",
+    "gcc",
+    "-O2",
+    "-g0",
+    "-Wall",
+    "-Wextra",
+    "-Werror",
+    "-isystem",
+    "../exact-real-references/flint/src",
+    "audits/continuation/calcium/flint-expression-roundtrip-probe.c",
+    "-L",
+    "../exact-real-references/flint",
+    "-Wl,-rpath,/home/tim/Documents/GitHub/workspace/exact-real-references/flint",
+    "-lflint",
+    "-lmpfr",
+    "-lgmp",
+    "-lm",
+    "-lpthread",
+    "-o",
+    "/home/tim/Documents/GitHub/workspace/.audit-builds/calcium-expression-roundtrip-probe"
+  ],
+  "code": 0,
+  "signal": null
+}

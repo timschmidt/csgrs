@@ -1,0 +1,14 @@
+[
+  {
+    "binary": "stationary-ph-offset-bezier-bounds-policy",
+    "returncode": 0,
+    "wall_seconds": 25.145759235994774,
+    "log": "stationary-ph-offset-bezier-bounds-policy.log"
+  },
+  {
+    "binary": "stationary-ph-offset-bezier-bounds-policy-approximate",
+    "returncode": 0,
+    "wall_seconds": 23.694285525998566,
+    "log": "stationary-ph-offset-bezier-bounds-policy-approximate.log"
+  }
+]

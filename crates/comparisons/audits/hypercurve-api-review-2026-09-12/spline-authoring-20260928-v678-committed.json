@@ -1,0 +1,20 @@
+{
+  "repos": {
+    "hypercurve": {
+      "commit": "a5994a40e1d07c845972c2089bcf862f1d8b297f",
+      "parent": "2bbdba5e27935d8963d6344ab468218c70864b51",
+      "paths": {
+        "benches/bspline.rs": "1608df6cae192f833258c376a903034c02ecd2b9bef1ff00cb9b9ac3483633ba",
+        "fuzz/fuzz_targets/bspline.rs": "64534881339a6a78679ebeb2cf96ffaf52bd8520586a40094ad57383a293b172",
+        "src/bspline.rs": "f647a851c5320d66fc6e0f8366d7d2e447c1f1bff0e2062b22ca945395ec751d",
+        "src/lib.rs": "f94866f518301f89a146c76deab687419cd237ed50e037ea44941a184c0e7f20",
+        "src/nurbs.rs": "9e1a8b4bbb76776b5f74d562fc8e97603caa9dbd602b6625a201faa15b75c572",
+        "src/polynomial_spline.rs": "775d81426246b0e0d064103b4eb8e2976e7060d033934dddb255a809c79a35f6",
+        "tests/hypercurve_bspline.rs": "9bf1b5bfd21afd3f094281c412b0b8fed2452bb079c6e9f8196182d415b36f47"
+      }
+    }
+  },
+  "qualification": "spline-authoring-20260928-v678-terminal.json",
+  "verified_source_files": 2047,
+  "clean_repositories": 30
+}

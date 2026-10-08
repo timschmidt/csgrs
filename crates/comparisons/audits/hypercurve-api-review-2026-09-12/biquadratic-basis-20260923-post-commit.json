@@ -1,0 +1,18 @@
+{
+  "hyperreal": {
+    "commit": "071fa18a40e0c36b7ae103af647c7438a3cfa3df",
+    "clean": true,
+    "files": {
+      "src/computable/node/quadratic_tower.rs": "8634bb290e85681a8da18da30e2586c7477190b5d693ef475b73b07feeafca90",
+      "src/real/arithmetic/quadratic_tower_sign.rs": "690ea47b1e5fd346bc24fafaa11e3764a6570caa04647f59c8a87c0746143c13"
+    }
+  },
+  "hypercurve": {
+    "commit": "9c1d9e7788db62eb99c2cf96a01a19e6187e5f5b",
+    "clean": true,
+    "files": {
+      "src/bezier_algebraic_image.rs": "bb853ec9c69bfe0c37473b1abcc241899f2f87ca84cb17bab495fe061137085c",
+      "src/bezier_offset.rs": "9ceb87cc9666c8ad56b096f39bce3d22817fa386b47f6042025af06ac0fe7401"
+    }
+  }
+}

@@ -1,0 +1,78 @@
+Main project source code
+
+
+
+Alex.hs 	: Part of the lexer generator Alex, required by Lexer.hs
+DyStream.hs	: Dyadic Streams
+IParseTree.hs   : Parse Tree types, integration calc
+Lexer.x         : Lexer definition
+SBinFloat.hs	: Signed Binary Floats
+Calc.hs         : Interface
+Functions.hs    : Transcendental Functions
+IParser.hs      : Automatically generated parser for integration calculator
+Main.hs         : Top level for main calculator
+SBinStream.hs   : Signed binary stream
+Convert.hs      : Inter-representation conversino
+ICalc.hs        : Integration calculator interface
+IParser.y       : Integration calculator parser definition
+ParseTree.hs    : Parse Tree datatypes, main calculator
+Test.hs		: Misc. tests (logistic map)
+Database.hs     : Calculator database
+IDatabase.hs    : Int. Calculator database
+IReal.hs        : Nested interval repn.
+Parser.hs       : Automatically generated parser for main calc
+Tests.hs	: Tests
+Demos.hs        : Demo (Like Tests.hs)
+ILexer.hs       : Auto generated integration calc lexer
+Integr.hs       : Integration
+Parser.y       
+Utils.hs
+DyDigit.hs     
+ILexer.x       
+Interact.hs    
+README         
+X_Repn.hs
+DyFloat.hs     
+IMain.hs       
+Lexer.hs       
+SBinDec.hs     
+demo1.hs
+
+
+
+
+
+-rw-------   1 davidpl  ai4         14471 Jun 11 17:16 Alex.hs
+-rw-------   1 davidpl  ai4          3399 Jun 11 17:16 Calc.hs
+-rw-------   1 davidpl  ai4          1908 Jun 11 17:16 Convert.hs
+-rw-------   1 davidpl  ai4          1213 Jun 11 17:16 Database.hs
+-rw-------   1 davidpl  ai4           438 Jun 11 17:16 Demos.hs
+-rw-------   1 davidpl  ai4          5865 Jun 11 17:16 DyDigit.hs
+-rw-------   1 davidpl  ai4          3245 Jun 11 17:16 DyFloat.hs
+-rw-------   1 davidpl  ai4          3838 Jun 11 17:16 DyStream.hs
+-rw-------   1 davidpl  ai4         14332 Jun 11 17:16 Functions.hs
+-rw-------   1 davidpl  ai4          6755 Jun 11 17:16 ICalc.hs
+-rw-------   1 davidpl  ai4          1219 Jun 11 17:16 IDatabase.hs
+-rw-------   1 davidpl  ai4         46181 Jun 11 17:16 ILexer.hs
+-rw-------   1 davidpl  ai4          1760 Jun 11 17:15 ILexer.x
+-rw-------   1 davidpl  ai4           507 Jun 11 17:16 IMain.hs
+-rw-------   1 davidpl  ai4          2016 Jun 11 17:16 IParseTree.hs
+-rw-------   1 davidpl  ai4         28151 Jun 11 17:16 IParser.hs
+-rw-------   1 davidpl  ai4          2567 Jun 11 17:15 IParser.y
+-rw-------   1 davidpl  ai4          4498 Jun 11 17:16 IReal.hs
+-rw-------   1 davidpl  ai4          5578 Jun 11 17:16 Integr.hs
+-rw-------   1 davidpl  ai4          2499 Jun  3 10:21 Interact.hs
+-rw-------   1 davidpl  ai4         38136 Jun 11 17:16 Lexer.hs
+-rw-------   1 davidpl  ai4          1645 Jun 11 17:15 Lexer.x
+-rw-------   1 davidpl  ai4           495 Jun 11 17:16 Main.hs
+-rw-------   1 davidpl  ai4          1935 Jun 11 17:17 ParseTree.hs
+-rw-------   1 davidpl  ai4         23266 Jun 11 17:16 Parser.hs
+-rw-------   1 davidpl  ai4          2401 Jun 11 17:15 Parser.y
+-rw-------   1 davidpl  ai4          9804 Jun 11 17:16 SBinDec.hs
+-rw-------   1 davidpl  ai4          6034 Jun 11 17:16 SBinFloat.hs
+-rw-------   1 davidpl  ai4         13586 Jun 11 17:16 SBinStream.hs
+-rw-------   1 davidpl  ai4           128 Jun 11 17:16 Test.hs
+-rw-------   1 davidpl  ai4          3035 Jun 11 17:16 Tests.hs
+-rw-------   1 davidpl  ai4          1591 Jun 11 17:16 Utils.hs
+-rw-------   1 davidpl  ai4          3239 Jun 11 17:16 X_Repn.hs
+-rw-------   1 davidpl  ai4           419 Jun 11 17:16 demo1.hs

@@ -1,0 +1,78 @@
+\doxysubsection{source/numeric/rounding.hpp File Reference}
+\hypertarget{rounding_8hpp}{}\label{rounding_8hpp}\index{source/numeric/rounding.hpp@{source/numeric/rounding.hpp}}
+
+
+\doxysubsubsection{Description}
+Functions to set and retrieve the processor rounding mode. May be platform-\/dependent. 
+
+{\ttfamily \#include $<$iosfwd$>$}\newline
+{\ttfamily \#include $<$mpfr.\+h$>$}\newline
+\doxysubsubsubsection*{Classes}
+\begin{DoxyCompactItemize}
+\item 
+struct \mbox{\hyperlink{structAriadne_1_1RoundDownward}{Round\+Downward}}
+\begin{DoxyCompactList}\small\item\em Tag class for downward rounding. Constants \doxylink{group__NumericModule_ga6e90b4c1e041590cd9713739bd662aab}{downward}, \doxylink{group__NumericModule_ga54a3e0b3f2deed7e8fb80c5211414f2e}{down}. \end{DoxyCompactList}\item 
+struct \mbox{\hyperlink{structAriadne_1_1RoundToNearest}{Round\+To\+Nearest}}
+\begin{DoxyCompactList}\small\item\em Tag class for rounding to nearest. Constants \doxylink{group__NumericModule_ga8fe1087fba3fafcf0af365dfd7e4d7c9}{to\+\_\+nearest}, \doxylink{group__NumericModule_ga0ae8cc613c31723d1122d0627a20152a}{near}. \end{DoxyCompactList}\item 
+struct \mbox{\hyperlink{structAriadne_1_1RoundUpward}{Round\+Upward}}
+\begin{DoxyCompactList}\small\item\em Tag class for upward rounding. Constants \doxylink{group__NumericModule_gaf5c792cfa75f61390a4d3e51efb223e5}{upward}, \doxylink{group__NumericModule_gaf2afab3884f1860d5e0ba6f8004a132f}{up}. \end{DoxyCompactList}\item 
+struct \mbox{\hyperlink{structAriadne_1_1RoundTowardZero}{Round\+Toward\+Zero}}
+\begin{DoxyCompactList}\small\item\em Tag class for rounding towards zero. Constant \doxylink{group__NumericModule_gab65a9658e18313d6f8e2532daddb7948}{toward\+\_\+zero}. \end{DoxyCompactList}\item 
+struct \mbox{\hyperlink{structAriadne_1_1RoundApproximately}{Round\+Approximately}}
+\begin{DoxyCompactList}\small\item\em Tag class for approximate rounding. Constant \doxylink{group__NumericModule_ga95ba69cd782bab325c6b504b58ad7771}{approx}. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1Rounding}{Rounding}}
+\begin{DoxyCompactList}\small\item\em General rounding mode class. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsubsection*{Namespaces}
+\begin{DoxyCompactItemize}
+\item 
+namespace \mbox{\hyperlink{namespaceAriadne}{Ariadne}}
+\begin{DoxyCompactList}\small\item\em Top-\/level Ariadne namespace. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsubsection*{Rounding mode control}
+\begin{DoxyCompactItemize}
+\item 
+typedef rounding\+\_\+mode\+\_\+t {\bfseries Builtin\+Rounding\+Mode\+Type}
+\begin{DoxyCompactList}\small\item\em The rounding mode type used for builtin floating-\/point objects such as \doxylink{namespaceAriadne_af915b9f1459c9691328efa71c6f39c6e}{Float\+DP}. \end{DoxyCompactList}\item 
+typedef mpfr\+\_\+rnd\+\_\+t {\bfseries MPFRRounding\+Mode\+Type}
+\begin{DoxyCompactList}\small\item\em The rounding mode type used for multiple-\/precision floating-\/point objects such as \doxylink{namespaceAriadne_a07966b67e613cc8779412beecb60651d}{Float\+MP}. \end{DoxyCompactList}\item 
+using {\bfseries Round\+Approx} = \mbox{\hyperlink{structAriadne_1_1RoundApproximately}{Round\+Approximately}}
+\item 
+const rounding\+\_\+mode\+\_\+t {\bfseries ROUND\+\_\+\+TO\+\_\+\+NEAREST} = 0000
+\begin{DoxyCompactList}\small\item\em The floating-\/point environment value for rounding arithmetic to the nearest exactly-\/representable value. \end{DoxyCompactList}\item 
+const rounding\+\_\+mode\+\_\+t {\bfseries ROUND\+\_\+\+DOWNWARD} = 1024
+\begin{DoxyCompactList}\small\item\em The floating-\/point environment value for upwards-\/rounded arithmetic. \end{DoxyCompactList}\item 
+const rounding\+\_\+mode\+\_\+t {\bfseries ROUND\+\_\+\+UPWARD} = 2048
+\begin{DoxyCompactList}\small\item\em The floating-\/point environment value for downwards-\/rounded arithmetic. \end{DoxyCompactList}\item 
+const rounding\+\_\+mode\+\_\+t {\bfseries ROUND\+\_\+\+TOWARD\+\_\+\+ZERO} = 3072
+\begin{DoxyCompactList}\small\item\em The floating-\/point environment value for rounding arithmetic to zero. \end{DoxyCompactList}\item 
+const \mbox{\hyperlink{structAriadne_1_1RoundDownward}{Round\+Downward}} {\bfseries downward} = \mbox{\hyperlink{structAriadne_1_1RoundDownward}{Round\+Downward}}()
+\begin{DoxyCompactList}\small\item\em Round exact answer downward to a representable value. Synonymous with \doxylink{group__NumericModule_ga54a3e0b3f2deed7e8fb80c5211414f2e}{down}. \end{DoxyCompactList}\item 
+const \mbox{\hyperlink{structAriadne_1_1RoundToNearest}{Round\+To\+Nearest}} {\bfseries to\+\_\+nearest} = \mbox{\hyperlink{structAriadne_1_1RoundToNearest}{Round\+To\+Nearest}}()
+\begin{DoxyCompactList}\small\item\em Round exact answer to a nearest representable value. Synonymous with \doxylink{group__NumericModule_ga0ae8cc613c31723d1122d0627a20152a}{near}. \end{DoxyCompactList}\item 
+const \mbox{\hyperlink{structAriadne_1_1RoundUpward}{Round\+Upward}} {\bfseries upward} = \mbox{\hyperlink{structAriadne_1_1RoundUpward}{Round\+Upward}}()
+\begin{DoxyCompactList}\small\item\em Round exact answer upward to a representable value. Synonymous with \doxylink{group__NumericModule_gaf2afab3884f1860d5e0ba6f8004a132f}{up}. \end{DoxyCompactList}\item 
+const \mbox{\hyperlink{structAriadne_1_1RoundTowardZero}{Round\+Toward\+Zero}} {\bfseries toward\+\_\+zero} = \mbox{\hyperlink{structAriadne_1_1RoundTowardZero}{Round\+Toward\+Zero}}()
+\begin{DoxyCompactList}\small\item\em Round exact answer to a representable value at least as close to zero. \end{DoxyCompactList}\item 
+const \mbox{\hyperlink{structAriadne_1_1RoundApproximately}{Round\+Approximately}} {\bfseries approximately} = \mbox{\hyperlink{structAriadne_1_1RoundApproximately}{Round\+Approximately}}()
+\begin{DoxyCompactList}\small\item\em Round exact answer to some close representable value, which need not be the nearest. Synonymous with \doxylink{group__NumericModule_ga95ba69cd782bab325c6b504b58ad7771}{approx}. \end{DoxyCompactList}\item 
+const \mbox{\hyperlink{structAriadne_1_1RoundDownward}{Round\+Downward}} {\bfseries down} = \mbox{\hyperlink{group__NumericModule_ga6e90b4c1e041590cd9713739bd662aab}{downward}}
+\begin{DoxyCompactList}\small\item\em Round exact answer downward to a representable value. Synonymous with \doxylink{group__NumericModule_ga6e90b4c1e041590cd9713739bd662aab}{downward}. \end{DoxyCompactList}\item 
+const \mbox{\hyperlink{structAriadne_1_1RoundToNearest}{Round\+To\+Nearest}} {\bfseries near} = \mbox{\hyperlink{group__NumericModule_ga8fe1087fba3fafcf0af365dfd7e4d7c9}{to\+\_\+nearest}}
+\begin{DoxyCompactList}\small\item\em Round exact answer to a nearest representable value. Synonymous with \doxylink{group__NumericModule_ga8fe1087fba3fafcf0af365dfd7e4d7c9}{to\+\_\+nearest}. \end{DoxyCompactList}\item 
+const \mbox{\hyperlink{structAriadne_1_1RoundUpward}{Round\+Upward}} {\bfseries up} = \mbox{\hyperlink{group__NumericModule_gaf5c792cfa75f61390a4d3e51efb223e5}{upward}}
+\begin{DoxyCompactList}\small\item\em Round exact answer upward to a representable value. Synonymous with \doxylink{group__NumericModule_gaf5c792cfa75f61390a4d3e51efb223e5}{upward}. \end{DoxyCompactList}\item 
+const \mbox{\hyperlink{structAriadne_1_1RoundApproximately}{Round\+Approximately}} {\bfseries approx} = \mbox{\hyperlink{group__NumericModule_ga174f298c7d9af8f77665406e25d67e18}{approximately}}
+\begin{DoxyCompactList}\small\item\em Round exact answer to some close representable value, which need not be the nearest. Synonymous with \doxylink{group__NumericModule_ga174f298c7d9af8f77665406e25d67e18}{approximately}. \end{DoxyCompactList}\item 
+void {\bfseries set\+\_\+builtin\+\_\+rounding\+\_\+to\+\_\+nearest} ()
+\begin{DoxyCompactList}\small\item\em \doxylink{classAriadne_1_1Set}{Set} the rounding mode to nearest. \end{DoxyCompactList}\item 
+void {\bfseries set\+\_\+builtin\+\_\+rounding\+\_\+downward} ()
+\begin{DoxyCompactList}\small\item\em \doxylink{classAriadne_1_1Set}{Set} the rounding mode to downwards rounding. \end{DoxyCompactList}\item 
+void {\bfseries set\+\_\+builtin\+\_\+rounding\+\_\+upward} ()
+\begin{DoxyCompactList}\small\item\em \doxylink{classAriadne_1_1Set}{Set} the rounding mode to upwards rounding. \end{DoxyCompactList}\item 
+void {\bfseries set\+\_\+builtin\+\_\+rounding\+\_\+toward\+\_\+zero} ()
+\begin{DoxyCompactList}\small\item\em \doxylink{classAriadne_1_1Set}{Set} the rounding mode to towards-\/zero rounding. \end{DoxyCompactList}\item 
+void {\bfseries set\+\_\+builtin\+\_\+rounding\+\_\+mode} (\mbox{\hyperlink{group__NumericModule_ga9ef803f7cbcf4c5678b44c56cbc31319}{Builtin\+Rounding\+Mode\+Type}} rnd)
+\begin{DoxyCompactList}\small\item\em \doxylink{classAriadne_1_1Set}{Set} the builtin rounding mode. \end{DoxyCompactList}\item 
+rounding\+\_\+mode\+\_\+t {\bfseries get\+\_\+builtin\+\_\+rounding\+\_\+mode} ()
+\begin{DoxyCompactList}\small\item\em Get the current rounding mode. \end{DoxyCompactList}\item 
+\mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} {\bfseries set\+\_\+default\+\_\+builtin\+\_\+rounding} ()
+\begin{DoxyCompactList}\small\item\em \doxylink{classAriadne_1_1Set}{Set} the rounding mode to the expected default rounding mode. \end{DoxyCompactList}\end{DoxyCompactItemize}

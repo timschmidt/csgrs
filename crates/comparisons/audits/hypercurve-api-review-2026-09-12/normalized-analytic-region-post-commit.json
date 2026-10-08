@@ -1,0 +1,6 @@
+{
+  "commit": "c1eb63946af53034a69997066dc67c22c6cc5733",
+  "file": "tests/hypercurve_analytic_parallel_region.rs",
+  "sha256": "83d6fae2ab9426fbcd86274a578e2b16572151df1746078505d87f688d7bbbfc",
+  "status": " M src/bezier_offset.rs\n"
+}

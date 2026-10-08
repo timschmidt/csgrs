@@ -1,0 +1,68 @@
+[
+  {
+    "mode": "release",
+    "binary": "/home/tim/Documents/GitHub/workspace/exact-real-references/ruffini-qualification/hyper-polynomial-pilot/coefficient-oracle/binaries/release",
+    "binarySha256": "1e8413d0839fce27d4f534f87ec5ce442e4723b9c82e30817e3a524df28de84b",
+    "capMs": 300000,
+    "started": "2026-09-07T01:40:20.573Z",
+    "finished": "2026-09-07T01:40:50.323Z",
+    "status": 0,
+    "signal": null,
+    "error": null,
+    "file": "extended-release.log",
+    "sha256": "450156d2c7ce0e8ad5c486a16921a82e48c33f70f6ce2914a2976148461bb283",
+    "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "sources": [
+      [
+        "main.rs",
+        "45531136946346857ce800cd2e6d3376c43b3ce380c4b08de8f952da49791358"
+      ],
+      [
+        "Cargo.toml",
+        "ddc2160bf2dd8aaeb9dae2392eba9a5f85b86df818b08ded85cbba3c3acb0405"
+      ],
+      [
+        "../main.rs",
+        "1f581e68efeaf5f99afa25f61b9467c0b364de010ad56dab999b5a7a816523d7"
+      ],
+      [
+        "../baseline.rs",
+        "a70fe73900071228accf81b1ac2d9a91b23b76e52423e6b0243e1ab0b61735b3"
+      ]
+    ],
+    "lockSha256": "70ec3a92b35a062b9bd3915a52d0faade108f7ddb2e38ec22ec7402205426486"
+  },
+  {
+    "mode": "debug",
+    "binary": "/home/tim/Documents/GitHub/workspace/exact-real-references/ruffini-qualification/hyper-polynomial-pilot/coefficient-oracle/binaries/debug",
+    "binarySha256": "f38502216bc254fd9401997a6d3370dc47618555aac85adc4d4d3e35015931eb",
+    "capMs": 1200000,
+    "started": "2026-09-07T01:40:50.324Z",
+    "finished": "2026-09-07T01:52:04.939Z",
+    "status": 0,
+    "signal": null,
+    "error": null,
+    "file": "extended-debug.log",
+    "sha256": "450156d2c7ce0e8ad5c486a16921a82e48c33f70f6ce2914a2976148461bb283",
+    "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "sources": [
+      [
+        "main.rs",
+        "45531136946346857ce800cd2e6d3376c43b3ce380c4b08de8f952da49791358"
+      ],
+      [
+        "Cargo.toml",
+        "ddc2160bf2dd8aaeb9dae2392eba9a5f85b86df818b08ded85cbba3c3acb0405"
+      ],
+      [
+        "../main.rs",
+        "1f581e68efeaf5f99afa25f61b9467c0b364de010ad56dab999b5a7a816523d7"
+      ],
+      [
+        "../baseline.rs",
+        "a70fe73900071228accf81b1ac2d9a91b23b76e52423e6b0243e1ab0b61735b3"
+      ]
+    ],
+    "lockSha256": "70ec3a92b35a062b9bd3915a52d0faade108f7ddb2e38ec22ec7402205426486"
+  }
+]

@@ -1,0 +1,120 @@
+\doxysubsection{Hybrid\+Automaton\+Interface Class Reference}
+\hypertarget{classAriadne_1_1HybridAutomatonInterface}{}\label{classAriadne_1_1HybridAutomatonInterface}\index{HybridAutomatonInterface@{HybridAutomatonInterface}}
+
+
+{\ttfamily \#include $<$hybrid\+\_\+automaton\+\_\+interface.\+hpp$>$}
+
+
+
+\doxysubsubsection{Description}
+Interface for hybrid systems required to perform analysis. Inheritance diagram for Hybrid\+Automaton\+Interface\+:\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[height=2.000000cm]{classAriadne_1_1HybridAutomatonInterface}
+\end{center}
+\end{figure}
+\doxysubsubsubsection*{Public Types}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1HybridAutomatonInterface_a6758468f0d6935d3ea5db460673c9b71}\label{classAriadne_1_1HybridAutomatonInterface_a6758468f0d6935d3ea5db460673c9b71} 
+typedef \mbox{\hyperlink{classAriadne_1_1HybridTime}{Hybrid\+Time}} {\bfseries Time\+Type}
+\begin{DoxyCompactList}\small\item\em The type used to represent time. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1HybridAutomatonInterface_a108b13505cd16592f8f1ef4cbadd62c1}\label{classAriadne_1_1HybridAutomatonInterface_a108b13505cd16592f8f1ef4cbadd62c1} 
+typedef \mbox{\hyperlink{classAriadne_1_1HybridSpace}{Hybrid\+Space}} {\bfseries State\+Space\+Type}
+\begin{DoxyCompactList}\small\item\em The type used to describe the state space. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1HybridAutomatonInterface_ac94b75a6b18d3f38f26dc6dcdc7ca002}\label{classAriadne_1_1HybridAutomatonInterface_ac94b75a6b18d3f38f26dc6dcdc7ca002} 
+typedef \mbox{\hyperlink{classAriadne_1_1HybridEvolverInterface}{Hybrid\+Evolver\+Interface}} {\bfseries Evolver\+Type}
+\begin{DoxyCompactList}\small\item\em The type used to describe the state space. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1HybridAutomatonInterface_a18bbe636651f3479446e8d8f0d42e811}\label{classAriadne_1_1HybridAutomatonInterface_a18bbe636651f3479446e8d8f0d42e811} 
+typedef \mbox{\hyperlink{classAriadne_1_1HybridStorage}{Hybrid\+Storage}} {\bfseries Storage\+Type}
+\begin{DoxyCompactList}\small\item\em The type used to define global pavings of reach and evolve sets. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1HybridAutomatonInterface_ade79028b24d383c91872528e09552104}\label{classAriadne_1_1HybridAutomatonInterface_ade79028b24d383c91872528e09552104} 
+virtual {\bfseries \texorpdfstring{$\sim$}{\string~}\+Hybrid\+Automaton\+Interface} ()=default
+\begin{DoxyCompactList}\small\item\em Virtual destructor. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1HybridAutomatonInterface_a086d119da200215bf1c605d4ae87a6c4}\label{classAriadne_1_1HybridAutomatonInterface_a086d119da200215bf1c605d4ae87a6c4} 
+virtual \mbox{\hyperlink{classAriadne_1_1HybridAutomatonInterface}{Hybrid\+Automaton\+Interface}} \texorpdfstring{$\ast$}{*} {\bfseries clone} () const =0
+\begin{DoxyCompactList}\small\item\em Cloning operator. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\begin{Indent}\textbf{ Data access and queries.}\par
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1HybridAutomatonInterface_ae051681176356e27d345eb6f914e8692}\label{classAriadne_1_1HybridAutomatonInterface_ae051681176356e27d345eb6f914e8692} 
+virtual const \mbox{\hyperlink{classAriadne_1_1Identifier}{Identifier}} \& {\bfseries name} () const =0
+\begin{DoxyCompactList}\small\item\em The name of the automaton. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\end{Indent}
+\begin{Indent}\textbf{ Methods for testing and extracting the discrete dynamics.}\par
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1HybridAutomatonInterface_a9828fdecb45704fe36416d16ddf3dc27}\label{classAriadne_1_1HybridAutomatonInterface_a9828fdecb45704fe36416d16ddf3dc27} 
+virtual \mbox{\hyperlink{namespaceAriadne_a76a8b016e5ad61faf9062cc387df5016}{Bool}} {\bfseries has\+\_\+mode} (\mbox{\hyperlink{classAriadne_1_1DiscreteLocation}{Discrete\+Location}} location) const =0
+\begin{DoxyCompactList}\small\item\em Test if the hybrid automaton has a valid discrete mode {\itshape location}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1HybridAutomatonInterface_a9c88ce9bececdf0f02c0f5fb75a03c5b}\label{classAriadne_1_1HybridAutomatonInterface_a9c88ce9bececdf0f02c0f5fb75a03c5b} 
+virtual \mbox{\hyperlink{classAriadne_1_1Set}{Set}}$<$ \mbox{\hyperlink{classAriadne_1_1DiscreteEvent}{Discrete\+Event}} $>$ {\bfseries events} (\mbox{\hyperlink{classAriadne_1_1DiscreteLocation}{Discrete\+Location}} location) const =0
+\begin{DoxyCompactList}\small\item\em The set of all events possible in the given {\itshape location}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1HybridAutomatonInterface_a3ea476c2c15224f35c72a07c147c2c9b}\label{classAriadne_1_1HybridAutomatonInterface_a3ea476c2c15224f35c72a07c147c2c9b} 
+virtual Event\+Kind {\bfseries event\+\_\+kind} (\mbox{\hyperlink{classAriadne_1_1DiscreteLocation}{Discrete\+Location}} location, \mbox{\hyperlink{classAriadne_1_1DiscreteEvent}{Discrete\+Event}} event) const =0
+\begin{DoxyCompactList}\small\item\em The kind (permissive, urgent etc) of the event. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1HybridAutomatonInterface_a4b4da981c87c443ef0dd9d3fdfb2611a}\label{classAriadne_1_1HybridAutomatonInterface_a4b4da981c87c443ef0dd9d3fdfb2611a} 
+virtual \mbox{\hyperlink{namespaceAriadne_a76a8b016e5ad61faf9062cc387df5016}{Bool}} {\bfseries has\+\_\+invariant} (\mbox{\hyperlink{classAriadne_1_1DiscreteLocation}{Discrete\+Location}} location, \mbox{\hyperlink{classAriadne_1_1DiscreteEvent}{Discrete\+Event}} event) const =0
+\begin{DoxyCompactList}\small\item\em Test if the hybrid automaton has an invariant or urgent guard constraint in the {\itshape location} labelled by {\itshape event}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1HybridAutomatonInterface_a3e68932b17d2a48df9df723e9a5328bd}\label{classAriadne_1_1HybridAutomatonInterface_a3e68932b17d2a48df9df723e9a5328bd} 
+virtual \mbox{\hyperlink{namespaceAriadne_a76a8b016e5ad61faf9062cc387df5016}{Bool}} {\bfseries has\+\_\+guard} (\mbox{\hyperlink{classAriadne_1_1DiscreteLocation}{Discrete\+Location}} location, \mbox{\hyperlink{classAriadne_1_1DiscreteEvent}{Discrete\+Event}} event) const =0
+\begin{DoxyCompactList}\small\item\em Test if the hybrid automaton has a guard constraint in the {\itshape location} labelled by {\itshape event}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1HybridAutomatonInterface_aa10b7c05ca42aefff06b53c373f16736}\label{classAriadne_1_1HybridAutomatonInterface_aa10b7c05ca42aefff06b53c373f16736} 
+virtual \mbox{\hyperlink{namespaceAriadne_a76a8b016e5ad61faf9062cc387df5016}{Bool}} {\bfseries has\+\_\+transition} (\mbox{\hyperlink{classAriadne_1_1DiscreteLocation}{Discrete\+Location}} source, \mbox{\hyperlink{classAriadne_1_1DiscreteEvent}{Discrete\+Event}} event) const =0
+\begin{DoxyCompactList}\small\item\em Test if the hybrid automaton has a discrete transition in {\itshape source} due to {\itshape event}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1HybridAutomatonInterface_a6a81f05b33c97c807967f2b219f8e89b}\label{classAriadne_1_1HybridAutomatonInterface_a6a81f05b33c97c807967f2b219f8e89b} 
+virtual \mbox{\hyperlink{classAriadne_1_1DiscreteLocation}{Discrete\+Location}} {\bfseries target} (\mbox{\hyperlink{classAriadne_1_1DiscreteLocation}{Discrete\+Location}} source, \mbox{\hyperlink{classAriadne_1_1DiscreteEvent}{Discrete\+Event}} event) const =0
+\begin{DoxyCompactList}\small\item\em The target location of {\itshape event} starting in the {\itshape source} location. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\end{Indent}
+\begin{Indent}\textbf{ Methods for extracting the continuous dynamics.}\par
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1HybridAutomatonInterface_a2672e302f5502ae5c5dfe6121126acbd}\label{classAriadne_1_1HybridAutomatonInterface_a2672e302f5502ae5c5dfe6121126acbd} 
+virtual Dimension\+Type {\bfseries dimension} (\mbox{\hyperlink{classAriadne_1_1DiscreteLocation}{Discrete\+Location}} location) const =0
+\begin{DoxyCompactList}\small\item\em The dimension of the state space in the given {\itshape location}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1HybridAutomatonInterface_ad220dc69774fb12447e5a2c503fbca57}\label{classAriadne_1_1HybridAutomatonInterface_ad220dc69774fb12447e5a2c503fbca57} 
+virtual Effective\+Vector\+Multivariate\+Function {\bfseries auxiliary\+\_\+function} (\mbox{\hyperlink{classAriadne_1_1DiscreteLocation}{Discrete\+Location}} location) const =0
+\begin{DoxyCompactList}\small\item\em The function giving the auxiliary variables in the mode {\itshape location}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1HybridAutomatonInterface_a9b3e00b9e4023af179e44e7c6de02790}\label{classAriadne_1_1HybridAutomatonInterface_a9b3e00b9e4023af179e44e7c6de02790} 
+virtual Effective\+Vector\+Multivariate\+Function {\bfseries dynamic\+\_\+function} (\mbox{\hyperlink{classAriadne_1_1DiscreteLocation}{Discrete\+Location}} location) const =0
+\begin{DoxyCompactList}\small\item\em The dynamic valid in the mode {\itshape location}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1HybridAutomatonInterface_a695223a9f1219ce9a309c6414440e692}\label{classAriadne_1_1HybridAutomatonInterface_a695223a9f1219ce9a309c6414440e692} 
+virtual Effective\+Scalar\+Multivariate\+Function {\bfseries invariant\+\_\+function} (\mbox{\hyperlink{classAriadne_1_1DiscreteLocation}{Discrete\+Location}} location, \mbox{\hyperlink{classAriadne_1_1DiscreteEvent}{Discrete\+Event}} event) const =0
+\begin{DoxyCompactList}\small\item\em The constraint function defining the invariant or time-\/can-\/progress predicate $p(x)\leq0$. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1HybridAutomatonInterface_a3363a75eae977c28723d4897ee5ad99a}\label{classAriadne_1_1HybridAutomatonInterface_a3363a75eae977c28723d4897ee5ad99a} 
+virtual Effective\+Scalar\+Multivariate\+Function {\bfseries guard\+\_\+function} (\mbox{\hyperlink{classAriadne_1_1DiscreteLocation}{Discrete\+Location}} location, \mbox{\hyperlink{classAriadne_1_1DiscreteEvent}{Discrete\+Event}} event) const =0
+\begin{DoxyCompactList}\small\item\em The constraint function defining the condition $c(x)\geq0$ under which a transition occurs. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1HybridAutomatonInterface_a0f8ab8fbd6872b72f7127eeb05662a6a}\label{classAriadne_1_1HybridAutomatonInterface_a0f8ab8fbd6872b72f7127eeb05662a6a} 
+virtual Effective\+Vector\+Multivariate\+Function {\bfseries reset\+\_\+function} (\mbox{\hyperlink{classAriadne_1_1DiscreteLocation}{Discrete\+Location}} location, \mbox{\hyperlink{classAriadne_1_1DiscreteEvent}{Discrete\+Event}} event) const =0
+\begin{DoxyCompactList}\small\item\em The dynamic valid in the mode {\itshape location}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1HybridAutomatonInterface_aa6648fe70e23c2b9092d97bae624f97c}\label{classAriadne_1_1HybridAutomatonInterface_aa6648fe70e23c2b9092d97bae624f97c} 
+virtual \mbox{\hyperlink{classAriadne_1_1HybridSpace}{Hybrid\+Space}} {\bfseries state\+\_\+space} () const =0
+\begin{DoxyCompactList}\small\item\em The hybrid state space. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1HybridAutomatonInterface_a5820cd7393cc7ed81414866565e1c540}\label{classAriadne_1_1HybridAutomatonInterface_a5820cd7393cc7ed81414866565e1c540} 
+virtual \mbox{\hyperlink{classAriadne_1_1HybridSpace}{Hybrid\+Space}} {\bfseries state\+\_\+auxiliary\+\_\+space} () const =0
+\begin{DoxyCompactList}\small\item\em The hybrid space of state and auxiliary variables. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1HybridAutomatonInterface_ad3274b0b37bffcf92348dd2720629552}\label{classAriadne_1_1HybridAutomatonInterface_ad3274b0b37bffcf92348dd2720629552} 
+virtual \mbox{\hyperlink{classAriadne_1_1Space}{Real\+Space}} {\bfseries continuous\+\_\+state\+\_\+space} (\mbox{\hyperlink{classAriadne_1_1DiscreteLocation}{Discrete\+Location}} location) const =0
+\begin{DoxyCompactList}\small\item\em The continuous state space in the {\itshape location}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1HybridAutomatonInterface_ae653826985fcca184e37f3bd88433a91}\label{classAriadne_1_1HybridAutomatonInterface_ae653826985fcca184e37f3bd88433a91} 
+virtual \mbox{\hyperlink{classAriadne_1_1Space}{Real\+Space}} {\bfseries continuous\+\_\+auxiliary\+\_\+space} (\mbox{\hyperlink{classAriadne_1_1DiscreteLocation}{Discrete\+Location}} location) const =0
+\begin{DoxyCompactList}\small\item\em The continuous state space in the {\itshape location}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1HybridAutomatonInterface_a90567a307ff023c0653d1e0a8cfa000d}\label{classAriadne_1_1HybridAutomatonInterface_a90567a307ff023c0653d1e0a8cfa000d} 
+virtual \mbox{\hyperlink{classAriadne_1_1List}{List}}$<$ \mbox{\hyperlink{classAriadne_1_1Expression}{Real\+Expression}} $>$ {\bfseries auxiliary\+\_\+expressions} (\mbox{\hyperlink{classAriadne_1_1DiscreteLocation}{Discrete\+Location}} location) const
+\begin{DoxyCompactList}\small\item\em The continuous state space in the {\itshape location}. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\end{Indent}
+\begin{Indent}\textbf{ Input/output methods}\par
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1HybridAutomatonInterface_a9d7f3502ac31c1ccfa6a119d651a521b}\label{classAriadne_1_1HybridAutomatonInterface_a9d7f3502ac31c1ccfa6a119d651a521b} 
+virtual \mbox{\hyperlink{namespaceAriadne_acbb98ddc4385af4599070e65a1a47ec1}{Output\+Stream}} \& {\bfseries \+\_\+write} (\mbox{\hyperlink{namespaceAriadne_acbb98ddc4385af4599070e65a1a47ec1}{Output\+Stream}} \&os) const =0
+\begin{DoxyCompactList}\small\item\em Write to an output stream. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\end{Indent}
+
+
+The documentation for this class was generated from the following file\+:\begin{DoxyCompactItemize}
+\item 
+source/hybrid/\mbox{\hyperlink{hybrid__automaton__interface_8hpp}{hybrid\+\_\+automaton\+\_\+interface.\+hpp}}\end{DoxyCompactItemize}

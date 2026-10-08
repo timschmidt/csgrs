@@ -1,0 +1,5 @@
+{
+  "source_manifest": "parabola-overlap-dedup-source-before-tests.json",
+  "immutable_sources": true,
+  "format_and_diff_checks": true
+}

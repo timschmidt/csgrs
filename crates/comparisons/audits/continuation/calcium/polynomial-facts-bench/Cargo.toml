@@ -1,0 +1,14 @@
+[package]
+name = "calcium-polynomial-facts-bench"
+version = "0.1.0"
+edition = "2024"
+publish = false
+[workspace]
+[dependencies]
+hyperreal = { path = "../polynomial-facts-trial/hyperreal" }
+hyperlimit = { path = "../polynomial-facts-trial/hyperlimit" }
+hypersolve = { path = "../polynomial-facts-trial/hypersolve" }
+num = "0.4.3"
+[[bin]]
+name = "calcium-polynomial-facts-bench"
+path = "../polynomial-decision-bench.rs"

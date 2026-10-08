@@ -1,0 +1,44 @@
+{
+  "baseline": "affine-field-v905-sources.json",
+  "source_sha256": "32df18b4d779e047ef377592699e081645e9cc9af707426f2848b3d414b24b18",
+  "processes": [
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustc",
+        "--edition=2024",
+        "--crate-name",
+        "refined_field_transport_probe",
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/refined-field-transport-probe-v908.rs",
+        "--extern",
+        "hyperreal=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperreal-dff9c97d38a41830.rlib",
+        "--extern",
+        "hypersolve=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypersolve-dab45c0236e67f19.rlib",
+        "-L",
+        "dependency=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps",
+        "-C",
+        "opt-level=3",
+        "-o",
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/refined-field-transport-probe-v909-binary"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.4143200491089374,
+      "log": "refined-field-transport-probe-v909-compile.log"
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/refined-field-transport-probe-v909-binary"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.0035289779771119356,
+      "log": "refined-field-transport-probe-v909-cases.log"
+    }
+  ],
+  "all_processes_reaped": true,
+  "rlibs": {
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperreal-dff9c97d38a41830.rlib": "56fb2078969b2f3bc96e91071dfe71819628635181836527b0fea48d29ee79c3",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypersolve-dab45c0236e67f19.rlib": "fca004be49432aa2e2390df051483f0c78e548ac376a9bb0b3a53ce0ab6295d5"
+  },
+  "binary_sha256": "0ca834b94082c5e283b450e583e666d2169d9dd6e8f8eb6c062595266d271686",
+  "output": "premise source_degree=3 retained_degree=2\ncase=0 blocked=Undecided\ncase=1 decided=true\ncomplete requests=2 blocked=1\n",
+  "probe_complete": true
+}

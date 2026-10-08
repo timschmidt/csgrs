@@ -1,0 +1,57 @@
+{
+  "normal_production_build": false,
+  "source_manifest": "finite-field-root-shape-20260928-v562-sources.json",
+  "source_directory": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/source-archives/finite-field-root-shape-20260928-v562",
+  "builds": [
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "test",
+        "--test",
+        "hypercurve_curve_region_promotion",
+        "--release",
+        "--all-features",
+        "--locked",
+        "--offline",
+        "--no-run",
+        "--message-format=json"
+      ],
+      "returncode": 0,
+      "log": "finite-field-root-shape-20260928-v562-build.log",
+      "elapsed_seconds": 86.53784061595798,
+      "binaries": {
+        "hypercurve_curve_region_promotion": {
+          "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-field-root-shape-20260928-v562-hypercurve_curve_region_promotion-tests",
+          "sha256": "b8c92750928f2e503c8398e18c9345f9c4974c9334a9d950a69a2f36a2faf054"
+        }
+      }
+    }
+  ],
+  "cases": [
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-field-root-shape-20260928-v562-hypercurve_curve_region_promotion-tests",
+        "--exact",
+        "strict_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 124,
+      "log": "finite-field-root-shape-20260928-v562-strict_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions.log",
+      "elapsed_seconds": 60.10460826801136,
+      "target": "hypercurve_curve_region_promotion",
+      "name": "strict_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions",
+      "passed": false
+    }
+  ],
+  "checks": [],
+  "expected_cases": {
+    "hypercurve_curve_region_promotion": [
+      "strict_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions"
+    ]
+  },
+  "all_processes_reaped": true,
+  "probe_complete": false,
+  "qualification_complete": false,
+  "failure": "refinement probe failed"
+}

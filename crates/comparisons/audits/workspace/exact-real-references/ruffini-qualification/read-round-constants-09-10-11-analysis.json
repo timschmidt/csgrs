@@ -1,0 +1,43 @@
+{
+  "scriptSHA256": "351a5dc4a34164a740673706fb3036af8dcbc70a34856d560f2a8cf73e9ccca2",
+  "loaderSHA256": "e8d4dcbf37d53c451b0244dfe136ab5c0e0b7632148a2d71c511c80f23b829c8",
+  "files": [
+    {
+      "name": "constants09",
+      "sha256": "6ac075895b13b93b6c034aac5eb6c99bf8051032e917bf48ea7b94194893c281",
+      "bytes": 63117,
+      "physicalLines": 814,
+      "coordinates": 11,
+      "fullRounds": 8,
+      "partialRounds": 66,
+      "finalNewline": false,
+      "canonicalDecimalAndRange": true
+    },
+    {
+      "name": "constants10",
+      "sha256": "d12a5f3588dc0b524567cba698ec3ee46c222ad01994064c10101d7ed04a32cc",
+      "bytes": 63234,
+      "physicalLines": 816,
+      "coordinates": 12,
+      "fullRounds": 8,
+      "partialRounds": 60,
+      "finalNewline": false,
+      "canonicalDecimalAndRange": true
+    },
+    {
+      "name": "constants11",
+      "sha256": "0130e38264fd330502c9fb9d147dd2639b750bef73a90e575f271852df037840",
+      "bytes": 73533,
+      "physicalLines": 949,
+      "coordinates": 13,
+      "fullRounds": 8,
+      "partialRounds": 65,
+      "finalNewline": false,
+      "canonicalDecimalAndRange": true
+    }
+  ],
+  "totalEntries": 2579,
+  "predicateControls": 18,
+  "independentPredicatesAgree": true,
+  "scope": "Only explicitly requested, already-read resources. Shape, canonical decimal and modulus range, not generating-procedure, cryptographic or performance qualification; no unread-file credit."
+}

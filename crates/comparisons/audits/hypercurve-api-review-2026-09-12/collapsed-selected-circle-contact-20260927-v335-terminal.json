@@ -1,0 +1,29 @@
+{
+  "source_manifest": "collapsed-selected-circle-contact-20260927-v335-sources.json",
+  "source_directory": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/source-archives/collapsed-selected-circle-contact-20260927-v335",
+  "cases": [],
+  "builds": [
+    {
+      "crate": "hypercurve",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "test",
+        "--lib",
+        "--release",
+        "--all-features",
+        "--no-run",
+        "--message-format=json",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 101,
+      "log": "collapsed-selected-circle-contact-20260927-v335-hypercurve-build.log",
+      "elapsed_seconds": 18.840542627032846
+    }
+  ],
+  "all_processes_reaped": true,
+  "checks": [],
+  "qualification_scope": "Retained native-circle contacts, exact circular reconstruction, fillet and chamfer closure",
+  "failure": "build failure",
+  "qualification_complete": false
+}

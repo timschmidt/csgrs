@@ -1,0 +1,14 @@
+{
+  "tag": "arb-dot-output-check",
+  "started": "2026-09-09T22:42:02.200Z",
+  "finished": "2026-09-09T22:42:02.312Z",
+  "elapsedSeconds": 0.10905320699999999,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "node",
+  "args": [
+    "check-arb-dot-controls.mjs",
+    "--arb-dot-summary"
+  ],
+  "code": 0,
+  "signal": null
+}

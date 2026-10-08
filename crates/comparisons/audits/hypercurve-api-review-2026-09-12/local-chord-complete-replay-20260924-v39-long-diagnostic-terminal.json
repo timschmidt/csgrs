@@ -1,0 +1,22 @@
+{
+  "command": [
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/local-chord-complete-replay-20260924-v39-libtest",
+    "--exact",
+    "bezier_region::tests::one_fragment_nonzero_parallel_loop_extends_chamfer_cuts_on_one_finite_envelope",
+    "--nocapture",
+    "--test-threads=1",
+    "--color",
+    "never"
+  ],
+  "returncode": "timeout",
+  "elapsed_seconds": 180.32497296191286,
+  "limit_seconds": 180,
+  "diagnostic_only": true,
+  "qualification_limit_unchanged": 75,
+  "binary_sha256": "22f3d8c25935b45b3397553da942475cf15f5ae54456344f2bc923185b1d427f",
+  "source_manifest": "local-chord-complete-replay-20260924-v39-sources.json",
+  "all_sources_unchanged": true,
+  "all_processes_reaped": true,
+  "log": "local-chord-complete-replay-20260924-v39-long-diagnostic.log",
+  "passed": false
+}

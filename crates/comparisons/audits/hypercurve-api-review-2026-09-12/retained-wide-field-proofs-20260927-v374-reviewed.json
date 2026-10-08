@@ -1,0 +1,63 @@
+{
+  "qualification": "retained-wide-field-proofs-20260927-v374-terminal.json",
+  "source_manifest": "retained-wide-field-proofs-20260927-v374-sources.json",
+  "outer_session_reaped": 49937,
+  "validated_files": 2046,
+  "selected_geometry_tests": 232,
+  "suite_pass_counts": {
+    "hyperreal-full-lib": [
+      842
+    ],
+    "hypersolve-full-lib": [
+      528
+    ],
+    "hyperreal-integration": [
+      842,
+      0,
+      7,
+      10,
+      5,
+      2,
+      2,
+      1,
+      6,
+      10,
+      16,
+      1,
+      1,
+      1,
+      9,
+      8,
+      2,
+      2,
+      6
+    ],
+    "hypersolve-integration": [
+      528,
+      2,
+      9,
+      7,
+      2,
+      4,
+      131,
+      211,
+      1,
+      1
+    ]
+  },
+  "checks": 13,
+  "repos": {
+    "hyperreal": {
+      "parent": "b1beafe77ca073324770e95634df1ce09b00f2af",
+      "paths": {
+        "src/computable/node/quadratic_tower.rs": "7f4332ce62653f15e96d1035c44b02c50f5123fa7ae61f7745d60f7a20eff056",
+        "src/computable/node/representation.rs": "302999006e25e48e1201e23400b215002a6692b016d5fdfabb7dd67d60c4f017",
+        "src/real/arithmetic/quadratic_tower_sign.rs": "854d46043c49a02536503851677ee2d6e3a811e4a89d7632c2d8ee3e41eeb3a3"
+      }
+    }
+  },
+  "known_unresolved": [
+    "strict_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions",
+    "approximate_512_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions"
+  ]
+}

@@ -1,0 +1,15 @@
+{
+  "repos": {
+    "hypercurve": {
+      "commit": "8c013bc7a54bcc4f430b4c78eae4e98fb8f90311",
+      "parent": "e584d8662f02c79e2fc156b003989a3293b385d4",
+      "paths": {
+        "src/curve.rs": "2897454e1a5eef41cb845479e1a690065c1874cf82a33eb782401820e000360b",
+        "src/curve_fillet.rs": "9059baa217e734839c96ecfe1b4c82ee9ffde5a37efd078808a81273da454eb1"
+      }
+    }
+  },
+  "qualification": "fillet-endpoint-bridge-20260927-v548-terminal.json",
+  "verified_source_files": 2047,
+  "clean_repositories": 30
+}

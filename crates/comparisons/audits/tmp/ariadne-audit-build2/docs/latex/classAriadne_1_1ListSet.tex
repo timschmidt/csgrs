@@ -1,0 +1,101 @@
+\doxysubsection{List\+Set\texorpdfstring{$<$}{<} BS \texorpdfstring{$>$}{>} Class Template Reference}
+\hypertarget{classAriadne_1_1ListSet}{}\label{classAriadne_1_1ListSet}\index{ListSet$<$ BS $>$@{ListSet$<$ BS $>$}}
+
+
+{\ttfamily \#include $<$list\+\_\+set.\+hpp$>$}
+
+
+
+\doxysubsubsection{Description}
+\subsubsection*{template$<$class BS$>$\newline
+class Ariadne\+::\+List\+Set$<$ BS $>$}
+A set described as the union of sets in a list of basic sets. \doxysubsubsubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1ListSet_af71dfcdb77cfce44eb75911981d97f4e}\label{classAriadne_1_1ListSet_af71dfcdb77cfce44eb75911981d97f4e} 
+\mbox{\hyperlink{namespaceAriadne_a76a8b016e5ad61faf9062cc387df5016}{Bool}} {\bfseries operator==} (const \mbox{\hyperlink{classAriadne_1_1ListSet}{List\+Set}}$<$ BS $>$ \&other) const
+\begin{DoxyCompactList}\small\item\em Tests if the sets are equal. Tests equality of sequences, including ordering. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1ListSet_ae637ff8b6eb7714d29bcecc67dbabf67}\label{classAriadne_1_1ListSet_ae637ff8b6eb7714d29bcecc67dbabf67} 
+\mbox{\hyperlink{namespaceAriadne_a76a8b016e5ad61faf9062cc387df5016}{Bool}} {\bfseries empty} () const
+\begin{DoxyCompactList}\small\item\em Returns true if the list is empty. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1ListSet_a0472c48c2838a924eac36b19cbe017d0}\label{classAriadne_1_1ListSet_a0472c48c2838a924eac36b19cbe017d0} 
+\mbox{\hyperlink{namespaceAriadne_acd8b5f68421eb22a84277ef7c9c0ee2a}{Size\+Type}} {\bfseries size} () const
+\begin{DoxyCompactList}\small\item\em Returns the number of basic sets forming this object. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1ListSet_a2a9d0b00160104640390d5f8dbbc21cb}\label{classAriadne_1_1ListSet_a2a9d0b00160104640390d5f8dbbc21cb} 
+\mbox{\hyperlink{namespaceAriadne_acd8b5f68421eb22a84277ef7c9c0ee2a}{Size\+Type}} {\bfseries capacity} () const
+\begin{DoxyCompactList}\small\item\em Returns the number of basic sets which can be stored without reallocating memory. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1ListSet_a97bd3a7988ef79a9677d9d750d340470}\label{classAriadne_1_1ListSet_a97bd3a7988ef79a9677d9d750d340470} 
+const BS \& {\bfseries operator\mbox{[}$\,$\mbox{]}} (\mbox{\hyperlink{namespaceAriadne_acd8b5f68421eb22a84277ef7c9c0ee2a}{Size\+Type}} i) const
+\begin{DoxyCompactList}\small\item\em Accesses the i-\/th Basic\+Set. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1ListSet_aaecc226b7db6b8669e75e64e09285de4}\label{classAriadne_1_1ListSet_aaecc226b7db6b8669e75e64e09285de4} 
+\mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} {\bfseries clear} ()
+\begin{DoxyCompactList}\small\item\em Make the set empty. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1ListSet_ad5fee900c7aee90671038c79225bf8ec}\label{classAriadne_1_1ListSet_ad5fee900c7aee90671038c79225bf8ec} 
+Const\+Iterator {\bfseries begin} () const
+\begin{DoxyCompactList}\small\item\em A constant Iterator to the beginning of the list of basic sets. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1ListSet_a69b6e2a03c835ca5d658a1f16acbaa9c}\label{classAriadne_1_1ListSet_a69b6e2a03c835ca5d658a1f16acbaa9c} 
+Const\+Iterator {\bfseries end} () const
+\begin{DoxyCompactList}\small\item\em A constant Iterator to the end of the list of basic sets. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1ListSet_a2387033802383edbdc95f9bbb12a707e}\label{classAriadne_1_1ListSet_a2387033802383edbdc95f9bbb12a707e} 
+Iterator {\bfseries begin} ()
+\begin{DoxyCompactList}\small\item\em A Iterator to the beginning of the list of basic sets. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1ListSet_ab45dae688fc5d8983727abffa4389003}\label{classAriadne_1_1ListSet_ab45dae688fc5d8983727abffa4389003} 
+Iterator {\bfseries end} ()
+\begin{DoxyCompactList}\small\item\em A Iterator to the end of the list of basic sets. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1ListSet_a3c1a15a3831a647991a6a2c5bbe1e029}\label{classAriadne_1_1ListSet_a3c1a15a3831a647991a6a2c5bbe1e029} 
+Dimension\+Type {\bfseries dimension} () const
+\begin{DoxyCompactList}\small\item\em Returns the denotable set\textquotesingle{}s space dimension. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1ListSet_a3999f1b4549a852350ae64e8e0e61c81}\label{classAriadne_1_1ListSet_a3999f1b4549a852350ae64e8e0e61c81} 
+BS {\bfseries pop} ()
+\begin{DoxyCompactList}\small\item\em Removes a set from the list and return it. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1ListSet_a2314f2c8bffd292647295b2a870df8c9}\label{classAriadne_1_1ListSet_a2314f2c8bffd292647295b2a870df8c9} 
+Iterator {\bfseries erase} (Iterator iter)
+\begin{DoxyCompactList}\small\item\em Removes a set given identified by an Iterator from the list. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1ListSet_a6ceedeea09771df59539f26a0f0870e7}\label{classAriadne_1_1ListSet_a6ceedeea09771df59539f26a0f0870e7} 
+\mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} {\bfseries push\+\_\+back} (const BS \&bs)
+\begin{DoxyCompactList}\small\item\em Pushes a basic set to the end of the list. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1ListSet_af056cd1a0956c2e5fb122b1ab4c2e8bf}\label{classAriadne_1_1ListSet_af056cd1a0956c2e5fb122b1ab4c2e8bf} 
+\mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} {\bfseries adjoin} (const BS \&bs)
+\begin{DoxyCompactList}\small\item\em Adjoins (makes union with) a basic set. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1ListSet_a70a7c4b0d71fd47c04519de4388bdc59}\label{classAriadne_1_1ListSet_a70a7c4b0d71fd47c04519de4388bdc59} 
+\mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} {\bfseries adjoin} (const \mbox{\hyperlink{classAriadne_1_1ListSet}{List\+Set}}$<$ BS $>$ \&ls)
+\begin{DoxyCompactList}\small\item\em Adjoins (makes union with) another list set. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1ListSet_a1130cde7d4c85424fdf9174e26d89488}\label{classAriadne_1_1ListSet_a1130cde7d4c85424fdf9174e26d89488} 
+\mbox{\hyperlink{classAriadne_1_1ListSet}{List\+Set}}$<$ \mbox{\hyperlink{group__FunctionModule_gadb510bd9aa076e5ae44245b498901ca6}{Upper\+Box\+Type}} $>$ {\bfseries bounding\+\_\+boxes} () const
+\begin{DoxyCompactList}\small\item\em compute a list of the bounding boxes of the set elements. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1ListSet_a4f42b8d0d7337edea55f82e95f4a761a}\label{classAriadne_1_1ListSet_a4f42b8d0d7337edea55f82e95f4a761a} 
+\mbox{\hyperlink{group__FunctionModule_gadb510bd9aa076e5ae44245b498901ca6}{Upper\+Box\+Type}} {\bfseries bounding\+\_\+box} () const
+\begin{DoxyCompactList}\small\item\em A bounding box for the whole set. \end{DoxyCompactList}\item 
+{\footnotesize template$<$class PRJ$>$ }\\\mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} \mbox{\hyperlink{classAriadne_1_1ListSet_af72b6239ca0e8fa198b29448b2bc980c}{draw}} (\mbox{\hyperlink{classAriadne_1_1CanvasInterface}{Canvas\+Interface}} \&c, const PRJ \&p) const
+\begin{DoxyCompactList}\small\item\em Draw on a canvas. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1ListSet_aec3050510f58e6f3fece416706247410}\label{classAriadne_1_1ListSet_aec3050510f58e6f3fece416706247410} 
+\mbox{\hyperlink{namespaceAriadne_acbb98ddc4385af4599070e65a1a47ec1}{Output\+Stream}} \& {\bfseries \+\_\+write} (\mbox{\hyperlink{namespaceAriadne_acbb98ddc4385af4599070e65a1a47ec1}{Output\+Stream}} \&os) const
+\begin{DoxyCompactList}\small\item\em Write to an output stream. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1ListSet_a9421e0b08b7e4f305a001219131708e4}\label{classAriadne_1_1ListSet_a9421e0b08b7e4f305a001219131708e4} 
+List\+Set\+Summary {\bfseries summary} () const
+\begin{DoxyCompactList}\small\item\em Returns a summary of the size and dimension. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\label{doc-func-members}
+\Hypertarget{classAriadne_1_1ListSet_doc-func-members}
+\doxysubsubsection{Member Function Documentation}
+\Hypertarget{classAriadne_1_1ListSet_af72b6239ca0e8fa198b29448b2bc980c}\index{ListSet$<$ BS $>$@{ListSet$<$ BS $>$}!draw@{draw}}
+\index{draw@{draw}!ListSet$<$ BS $>$@{ListSet$<$ BS $>$}}
+\doxyparagraph{\texorpdfstring{draw()}{draw()}}
+{\footnotesize\ttfamily \label{classAriadne_1_1ListSet_af72b6239ca0e8fa198b29448b2bc980c} 
+template$<$class BS$>$ \\
+template$<$class PRJ$>$ \\
+\mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} draw (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{classAriadne_1_1CanvasInterface}{Canvas\+Interface}} \&}]{c}{, }\item[{const PRJ \&}]{p}{}\end{DoxyParamCaption}) const\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Draw on a canvas. 
+
+The \doxylink{classAriadne_1_1ListSet}{List\+Set} template does not implement the \doxylink{classAriadne_1_1Drawable2dInterface}{Drawable2d\+Interface} to avoid a dependency on the \doxylink{box_8hpp}{geometry/box.\+hpp} header file. 
+
+The documentation for this class was generated from the following files\+:\begin{DoxyCompactItemize}
+\item 
+source/dynamics/\mbox{\hyperlink{enclosure_8hpp}{enclosure.\+hpp}}\item 
+source/geometry/\mbox{\hyperlink{list__set_8hpp}{list\+\_\+set.\+hpp}}\item 
+source/dynamics/enclosure.\+cpp\item 
+source/hybrid/hybrid\+\_\+enclosure.\+cpp\end{DoxyCompactItemize}

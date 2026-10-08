@@ -1,0 +1,9 @@
+Reuse exact overlap maps across weights and certificate replay
+
+Accept positive endpoint-projective maps for finite mixed-weight Beziers
+after proving their homogeneous coefficient identity. Recognize rebuilt
+circle-overlap certificates by their exact ordered charts and topology.
+
+Add exact-value, reversal, common-scale, and inverse-transport regressions.
+Both all-target checks pass; 1,192 library tests pass with the same six
+ignored cases and 18 existing nonpasses.

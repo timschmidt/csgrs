@@ -1,0 +1,4 @@
+    Blocking waiting for file lock on build directory
+   Compiling hyperreal v0.13.1 (/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/root-exp-reuse-trial-hyperreal)
+   Compiling calcium-root-exp-opaque-reuse-bench v0.1.0 (/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/root-exp-opaque-reuse-bench)
+    Finished `release` profile [optimized] target(s) in 27.57s

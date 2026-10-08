@@ -1,0 +1,14 @@
+[package]
+name = "calcium-erf-trial-probe"
+version = "0.1.0"
+edition = "2024"
+publish = false
+
+[workspace]
+
+[dependencies]
+hyperreal = { path = "../erf-trial-hyperreal" }
+
+[[bin]]
+name = "calcium-erf-trial-probe"
+path = "../special-probe/src/main.rs"

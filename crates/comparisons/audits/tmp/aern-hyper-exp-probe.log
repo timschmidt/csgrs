@@ -1,0 +1,35 @@
+     Locking 16 packages to latest Rust 1.97.0 compatible versions
+   Compiling autocfg v1.5.1
+   Compiling gmp-mpfr-sys v1.7.1
+   Compiling libc v0.2.189
+   Compiling libm v0.2.16
+   Compiling rug v1.30.0
+   Compiling az v1.3.0
+   Compiling num-traits v0.2.19
+   Compiling num-integer v0.1.47
+   Compiling num-complex v0.4.6
+   Compiling num-bigint v0.4.8
+   Compiling num-iter v0.1.46
+   Compiling num-rational v0.4.2
+   Compiling num v0.4.3
+   Compiling hyperreal v0.13.1 (/home/tim/Documents/GitHub/workspace/hyperreal)
+   Compiling aern-hyper-exp-probe v0.0.0 (/tmp/aern-hyper-exp.PdU63J)
+    Finished `release` profile [optimized] target(s) in 9.76s
+     Running `/tmp/aern-hyper-exp.PdU63J/target/release/aern-hyper-exp-probe`
+exp(3/2) p=1: actual=0, error=2.240845 ulps
+exp(5/2) p=1: actual=0, error=6.091247 ulps
+exp(7/2) p=4: actual=0, error=2.069716 ulps
+exp(7/2) p=1: actual=0, error=16.557726 ulps
+exp(9/2) p=4: actual=0, error=5.626071 ulps
+exp(9/2) p=1: actual=0, error=45.008566 ulps
+exp(11/2) p=4: actual=0, error=15.293246 ulps
+exp(11/2) p=1: actual=0, error=122.345966 ulps
+exp(13/2) p=4: actual=0, error=41.571352 ulps
+exp(13/2) p=1: actual=0, error=332.570817 ulps
+exp(15/2) p=4: actual=0, error=113.002651 ulps
+exp(15/2) p=1: actual=0, error=904.021207 ulps
+exp(4/3) p=1: actual=0, error=1.896834 ulps
+exp(5/3) p=1: actual=0, error=2.647245 ulps
+exp(7/3) p=1: actual=0, error=5.156129 ulps
+exp(7/3) p=0: actual=9, error=1.312259 ulps
+cases=4068, one-ulp violations=630

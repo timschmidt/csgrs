@@ -1,0 +1,16 @@
+{
+  "previous_manifest": "rational-polynomial-20260924-v5-sources.json",
+  "current_manifest": "rational-polynomial-20260924-v6-sources.json",
+  "changed": [
+    "hyperreal/tests/gmp_api_coverage.rs"
+  ],
+  "all_production_library_test_other_integration_probe_and_fixture_bytes_identical": true,
+  "reused_records": [
+    "rational-polynomial-20260924-v5-terminal.json",
+    "rational-polynomial-20260924-v5-dependents-terminal.json",
+    "rational-polynomial-20260924-v5-demand-terminal.json",
+    "rational-polynomial-20260924-v5-public-scalars-terminal.json"
+  ],
+  "excluded_failed_target": "hyperreal/gmp_api_coverage",
+  "all_prior_processes_reaped": true
+}

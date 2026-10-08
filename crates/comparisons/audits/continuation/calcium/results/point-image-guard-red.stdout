@@ -1,0 +1,20 @@
+
+running 1 test
+test algebraic_binary::tests::binary_point_images_do_not_promote_approximately_chosen_extrema ... FAILED
+
+failures:
+
+---- algebraic_binary::tests::binary_point_images_do_not_promote_approximately_chosen_extrema stdout ----
+
+thread 'algebraic_binary::tests::binary_point_images_do_not_promote_approximately_chosen_extrema' (3749525) panicked at src/algebraic_binary.rs:802:9:
+assertion `left == right` failed
+  left: None
+ right: Some(Equal)
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    algebraic_binary::tests::binary_point_images_do_not_promote_approximately_chosen_extrema
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 444 filtered out; finished in 0.00s
+

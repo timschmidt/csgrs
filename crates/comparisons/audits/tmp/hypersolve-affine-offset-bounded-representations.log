@@ -1,0 +1,56 @@
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.07s
+     Running tests/real_representations.rs (target/debug/deps/real_representations-3c0fa7f505dcce91)
+
+running 4 tests
+test finite_real_certificate_inventory_is_current ... ok
+test variable_depth_opaque_dags_cross_solver_evaluation_and_certification ... ok
+test every_real_certificate_crosses_solver_analysis_and_proof_surfaces ... ok
+test every_ordered_pair_of_real_certificates_crosses_expression_and_replay ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.11s
+
+   Compiling hyperreal v0.13.1 (/home/tim/Documents/GitHub/workspace/hyperreal)
+   Compiling hyperlattice v0.6.1 (/home/tim/Documents/GitHub/workspace/hyperlattice)
+   Compiling hyperlimit v0.4.1 (/home/tim/Documents/GitHub/workspace/hyperlimit)
+   Compiling hypersolve v0.3.1 (/home/tim/Documents/GitHub/workspace/hypersolve)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 5.24s
+     Running tests/real_representations.rs (target/debug/deps/real_representations-7108a45f8c46b587)
+
+running 4 tests
+test finite_real_certificate_inventory_is_current ... ok
+test variable_depth_opaque_dags_cross_solver_evaluation_and_certification ... ok
+test every_real_certificate_crosses_solver_analysis_and_proof_surfaces ... ok
+test every_ordered_pair_of_real_certificates_crosses_expression_and_replay ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.10s
+
+   Compiling hyperreal v0.13.1 (/home/tim/Documents/GitHub/workspace/hyperreal)
+   Compiling hyperlattice v0.6.1 (/home/tim/Documents/GitHub/workspace/hyperlattice)
+   Compiling hyperlimit v0.4.1 (/home/tim/Documents/GitHub/workspace/hyperlimit)
+   Compiling hypersolve v0.3.1 (/home/tim/Documents/GitHub/workspace/hypersolve)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 4.75s
+     Running tests/real_representations.rs (target/debug/deps/real_representations-ca8674210f33c7f8)
+
+running 4 tests
+test finite_real_certificate_inventory_is_current ... ok
+test variable_depth_opaque_dags_cross_solver_evaluation_and_certification ... ok
+test every_real_certificate_crosses_solver_analysis_and_proof_surfaces ... ok
+test every_ordered_pair_of_real_certificates_crosses_expression_and_replay ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.11s
+
+   Compiling hyperreal v0.13.1 (/home/tim/Documents/GitHub/workspace/hyperreal)
+   Compiling hyperlattice v0.6.1 (/home/tim/Documents/GitHub/workspace/hyperlattice)
+   Compiling hyperlimit v0.4.1 (/home/tim/Documents/GitHub/workspace/hyperlimit)
+   Compiling hypersolve v0.3.1 (/home/tim/Documents/GitHub/workspace/hypersolve)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 9.63s
+     Running tests/real_representations.rs (target/debug/deps/real_representations-79b20127ba18a993)
+
+running 4 tests
+test finite_real_certificate_inventory_is_current ... ok
+test variable_depth_opaque_dags_cross_solver_evaluation_and_certification ... ok
+test every_real_certificate_crosses_solver_analysis_and_proof_surfaces ... ok
+test every_ordered_pair_of_real_certificates_crosses_expression_and_replay ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.17s
+

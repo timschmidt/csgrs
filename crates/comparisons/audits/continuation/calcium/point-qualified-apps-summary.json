@@ -1,0 +1,114 @@
+{
+  "recorded": "2026-09-10T20:41:39.510Z",
+  "root": "/tmp/calcium-point-qualified-apps.QIBZlE",
+  "originSha256": "36e6ede1b9857e1680add0c4d7697261bca063c422cc316fb539fa1bc26a3c71",
+  "reusedBaselineSummarySha256": "3c78fe321e0d5ceeacdcb332a289f9898d7269d34bd079e16c2d930aa20a96ba",
+  "artifacts": [
+    {
+      "variant": "baseline",
+      "crate": "hyperreal",
+      "example": "readme_quickstart",
+      "files": [
+        {
+          "path": "/tmp/calcium-e-qualified-apps.AHiwfn/candidate-hyperreal-readme_quickstart",
+          "bytes": 1701968,
+          "sha256": "96e0657bcb53458f0ce36885931a332eecb5836269e8b5adf04b8bebe3f93d6b"
+        },
+        {
+          "path": "/tmp/calcium-e-qualified-apps.AHiwfn/candidate-hyperreal-readme_quickstart.stripped",
+          "bytes": 1415896,
+          "sha256": "dfac813f558e385750d15ba15f2a0a61ab94cd48e7322ce29f7d40bd07d74bc0"
+        }
+      ],
+      "reusedFrom": "e-qualified-app-size-summary.json"
+    },
+    {
+      "variant": "candidate",
+      "crate": "hyperreal",
+      "example": "readme_quickstart",
+      "files": [
+        {
+          "path": "/tmp/calcium-point-qualified-apps.QIBZlE/candidate-hyperreal-readme_quickstart",
+          "bytes": 1701080,
+          "sha256": "24df0a5cd159f266f65432f60fdac6f899d6e7be2d5ee52941116326f8edde3d"
+        },
+        {
+          "path": "/tmp/calcium-point-qualified-apps.QIBZlE/candidate-hyperreal-readme_quickstart.stripped",
+          "bytes": 1415112,
+          "sha256": "25a3da3ecec94af9bfd69edc26c0b4279f733fb57d98c6e065ca222700206cb4"
+        }
+      ]
+    },
+    {
+      "variant": "baseline",
+      "crate": "hypercurve",
+      "example": "basic",
+      "files": [
+        {
+          "path": "/tmp/calcium-e-qualified-apps.AHiwfn/candidate-hypercurve-basic",
+          "bytes": 13494488,
+          "sha256": "dc4371cee27d5d90ec78d18ab0f72ce7c56c703b987e55d73772f59729ac09a7"
+        },
+        {
+          "path": "/tmp/calcium-e-qualified-apps.AHiwfn/candidate-hypercurve-basic.stripped",
+          "bytes": 11012856,
+          "sha256": "b434742e8f3147aa39610d309ec557521fcd29b488534dfe3a4e1f3140ca0966"
+        }
+      ],
+      "reusedFrom": "e-qualified-app-size-summary.json"
+    },
+    {
+      "variant": "baseline",
+      "crate": "hypercurve",
+      "example": "arrangement",
+      "files": [
+        {
+          "path": "/tmp/calcium-e-qualified-apps.AHiwfn/candidate-hypercurve-arrangement",
+          "bytes": 14181296,
+          "sha256": "d6f14fbd841b38da9590782ab703fc85fabc445f048babc5e829b0e8949ddbe8"
+        },
+        {
+          "path": "/tmp/calcium-e-qualified-apps.AHiwfn/candidate-hypercurve-arrangement.stripped",
+          "bytes": 11587192,
+          "sha256": "53aadaadfc84758b856a35ad4e2769e0d3843a483c6dc3fa01197365c2f19eca"
+        }
+      ],
+      "reusedFrom": "e-qualified-app-size-summary.json"
+    },
+    {
+      "variant": "candidate",
+      "crate": "hypercurve",
+      "example": "basic",
+      "files": [
+        {
+          "path": "/tmp/calcium-point-qualified-apps.QIBZlE/candidate-hypercurve-basic",
+          "bytes": 13495064,
+          "sha256": "e980f7e10280a1412030ab5f4be24cf26eec5939a76b0e58a45278cde7b1ff06"
+        },
+        {
+          "path": "/tmp/calcium-point-qualified-apps.QIBZlE/candidate-hypercurve-basic.stripped",
+          "bytes": 11013992,
+          "sha256": "34dc9d5f96b63769ce6ad516477f704740fe5febcd12f22ec320b2b17a6ca18a"
+        }
+      ]
+    },
+    {
+      "variant": "candidate",
+      "crate": "hypercurve",
+      "example": "arrangement",
+      "files": [
+        {
+          "path": "/tmp/calcium-point-qualified-apps.QIBZlE/candidate-hypercurve-arrangement",
+          "bytes": 14181832,
+          "sha256": "a4432fd2fcf2de5845e8bdc8388c83789109277ee7b04e69dc808cc2f9345e36"
+        },
+        {
+          "path": "/tmp/calcium-point-qualified-apps.QIBZlE/candidate-hypercurve-arrangement.stripped",
+          "bytes": 11588344,
+          "sha256": "067e0dde4d2b2101b583323196e9f44353057a7b6d61b24d3dcf16d91a9563f1"
+        }
+      ]
+    }
+  ],
+  "limits": "Three unchanged source examples, default features, ordinary release profile and separately stripped copies. Prior retained-baseline executables are source/hash/build-gate matched and rerun. These examples need not exercise binary root transforms. Not full Alumina, all-feature/LTO/size-optimized builds or application timings. Includes build-path and linker-layout effects."
+}

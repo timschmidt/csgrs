@@ -1,0 +1,50 @@
+\doxysubsubsubsection{System specification errors }
+\hypertarget{group__SystemSpecificationErrors}{}\label{group__SystemSpecificationErrors}\index{System specification errors@{System specification errors}}
+
+
+\doxysubsubsubsubsection{Description}
+Exception classes reporting system specification errors ! 
+
+\doxysubsubsubsubsubsection*{Classes}
+\begin{DoxyCompactItemize}
+\item 
+class \mbox{\hyperlink{classAriadne_1_1SystemSpecificationError}{System\+Specification\+Error}}
+\begin{DoxyCompactList}\small\item\em Base class for an error in system specification. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1NonExistentModeError}{Non\+Existent\+Mode\+Error}}
+\begin{DoxyCompactList}\small\item\em A reachable discrete location does not have dynamics specified. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1IndistinguishableModeError}{Indistinguishable\+Mode\+Error}}
+\begin{DoxyCompactList}\small\item\em Two modes cannot be distinguised, since they define different variables, but no defined variable differ. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1DuplicateEventError}{Duplicate\+Event\+Error}}
+\begin{DoxyCompactList}\small\item\em A discrete event is defined twice. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1MultipleGuardError}{Multiple\+Guard\+Error}}
+\begin{DoxyCompactList}\small\item\em A guard was defined twice in the same location. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1MultipleUrgentDeclarationError}{Multiple\+Urgent\+Declaration\+Error}}
+\begin{DoxyCompactList}\small\item\em An event was declared urgent (or impact) twice in the same context. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1UrgentDeclarationWithMultipleGuardsException}{Urgent\+Declaration\+With\+Multiple\+Guards\+Exception}}
+\begin{DoxyCompactList}\small\item\em An event was declared urgent (or impact) but has another (permissive) guard restricting its activation. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1MultipleTransitionError}{Multiple\+Transition\+Error}}
+\begin{DoxyCompactList}\small\item\em \doxylink{structAriadne_1_1Two}{Two} transitions kinds were specified for for an event in some location. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1AlgebraicLoopError}{Algebraic\+Loop\+Error}}
+\begin{DoxyCompactList}\small\item\em A set of variables has a loop of algebraic (rather than differential) dependencies in the continuous dynamics in a given mode. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1OverspecifiedSystemError}{Overspecified\+System\+Error}}
+\begin{DoxyCompactList}\small\item\em The dynamics of a system is overspecified in some way. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1OverspecifiedDynamicError}{Overspecified\+Dynamic\+Error}}
+\begin{DoxyCompactList}\small\item\em A variable has multiple defining (algebraic and/or differential) equations in some mode. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1OverspecifiedResetError}{Overspecified\+Reset\+Error}}
+\begin{DoxyCompactList}\small\item\em A variable has multiple defining values (updates and/or algebraic equations) after some event in some mode. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1UnderspecifiedSystemError}{Underspecified\+System\+Error}}
+\begin{DoxyCompactList}\small\item\em The dynamics of a system is underspecified in some way. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1MissingGuardError}{Missing\+Guard\+Error}}
+\begin{DoxyCompactList}\small\item\em A guard condition is missing for some event in some location. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1UnderspecifiedDynamicError}{Underspecified\+Dynamic\+Error}}
+\begin{DoxyCompactList}\small\item\em The continuous dynamics in some mode refers to variables which have no specified behaviour. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1UnderspecifiedConstraintError}{Underspecified\+Constraint\+Error}}
+\begin{DoxyCompactList}\small\item\em A constraint (guard/invariant) in some location uses undefined variables. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1UnderspecifiedResetError}{Underspecified\+Reset\+Error}}
+\begin{DoxyCompactList}\small\item\em The reset function for some event in some location refers to undefined variables. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1StateSpecificationError}{State\+Specification\+Error}}
+\begin{DoxyCompactList}\small\item\em The discrete locations of a system are ill-\/defined in some way. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1IndistinguishableLocationsError}{Indistinguishable\+Locations\+Error}}
+\begin{DoxyCompactList}\small\item\em \doxylink{structAriadne_1_1Two}{Two} discrete locations define different variables, but variables defined in both locations differ. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1OverspecifiedLocationException}{Overspecified\+Location\+Exception}}
+\begin{DoxyCompactList}\small\item\em A discrete location defines more variables than are needed to specify the discrete mode. \end{DoxyCompactList}\end{DoxyCompactItemize}

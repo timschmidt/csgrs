@@ -1,0 +1,13 @@
+{
+  "tag": "point-qualified-platform-build",
+  "started": "2026-09-10T20:41:12.370Z",
+  "finished": "2026-09-10T20:43:23.018Z",
+  "elapsedSeconds": 130.645579524,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "node",
+  "args": [
+    "build-point-qualified-platform.mjs"
+  ],
+  "code": 0,
+  "signal": null
+}

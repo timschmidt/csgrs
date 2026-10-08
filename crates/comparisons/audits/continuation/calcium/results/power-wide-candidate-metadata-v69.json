@@ -1,0 +1,22 @@
+{
+  "tag": "power-wide-candidate-metadata-v69",
+  "started": "2026-09-11T17:11:23.776Z",
+  "finished": "2026-09-11T17:11:23.834Z",
+  "elapsedSeconds": 0.05513050199999999,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/power-wide-candidate-app-v69",
+  "command": "env",
+  "args": [
+    "CARGO_TARGET_DIR=/tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse",
+    "CARGO_INCREMENTAL=0",
+    "CARGO_PROFILE_DEV_DEBUG=0",
+    "CARGO_BUILD_JOBS=2",
+    "cargo",
+    "metadata",
+    "--offline",
+    "--locked",
+    "--format-version",
+    "1"
+  ],
+  "code": 0,
+  "signal": null
+}

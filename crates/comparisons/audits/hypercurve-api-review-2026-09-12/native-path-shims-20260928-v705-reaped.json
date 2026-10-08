@@ -1,0 +1,6 @@
+{
+  "outer_session": 69249,
+  "outer_exit_code": 1,
+  "tests_passed": 70,
+  "failure": "hyperbrep-clippy failed"
+}

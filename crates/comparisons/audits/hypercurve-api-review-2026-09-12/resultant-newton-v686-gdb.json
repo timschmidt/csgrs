@@ -1,0 +1,15 @@
+{
+  "pid": 3791341,
+  "argv": [
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/resultant-newton-20260928-v685-hypercurve-tests",
+    "--exact",
+    "bezier_offset::structural_overlap_trace_regression::monotone_reparameterization_preserves_structural_pair_crossings_approximate",
+    "--nocapture",
+    "--test-threads=1"
+  ],
+  "cwd": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/source-archives/resultant-newton-20260928-v685/hypercurve",
+  "binary_sha256": "0cf59c9d5a16c4937df3abf6549b02ce7c948e574b80f55c9ba89a09bb8a6e05",
+  "original_executable": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve-aaccf7914fea7cbf",
+  "returncode": 0,
+  "log": "resultant-newton-v686-gdb.log"
+}

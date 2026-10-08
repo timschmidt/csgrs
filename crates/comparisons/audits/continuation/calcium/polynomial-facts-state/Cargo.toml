@@ -1,0 +1,15 @@
+[package]
+name = "calcium-polynomial-facts-state"
+version = "0.1.0"
+edition = "2024"
+publish = false
+[workspace]
+[dependencies]
+hyperreal = { path = "../polynomial-facts-trial/hyperreal", features = ["serde"] }
+hyperlimit = { path = "../polynomial-facts-trial/hyperlimit" }
+hypersolve = { path = "../polynomial-facts-trial/hypersolve" }
+num = "0.4.3"
+serde_json = "1.0.149"
+[[bin]]
+name = "calcium-polynomial-facts-state"
+path = "../polynomial-facts-state.rs"

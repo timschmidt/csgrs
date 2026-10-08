@@ -1,0 +1,14 @@
+{
+  "tag": "derivative-qualification-draft-verify",
+  "started": "2026-09-09T15:49:45.441Z",
+  "finished": "2026-09-09T15:49:55.675Z",
+  "elapsedSeconds": 10.231962008999998,
+  "cwd": "/home/tim/Documents/GitHub/workspace",
+  "command": "node",
+  "args": [
+    "exactcore-hyper-comparison/audits/continuation/calcium/verify-derivative-qualification.mjs",
+    "--draft-derivative-qualification"
+  ],
+  "code": 0,
+  "signal": null
+}

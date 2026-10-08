@@ -1,0 +1,30 @@
+{
+  "workspace_guard": "local-chord-complete-replay-20260924-v189-sources.json",
+  "cases": [
+    {
+      "role": "parent",
+      "binary": {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/selected-cusp-ranges-isolated-20260926-v185-hypercurve",
+        "sha256": "17748f953bd7a6ffe2c47cd8dd335db8c5d08967ce96a671f8b87cbd45b0ad46"
+      },
+      "name": "bezier_region::tests::general_nonrepresented_chord_and_retained_rational_arc_complete_the_fillet_kernel",
+      "returncode": 101,
+      "elapsed_seconds": 0.16409549303352833,
+      "log": "fillet-branches-20260926-v190-arc-boundary-comparison-parent.log"
+    },
+    {
+      "role": "combined",
+      "binary": {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/selected-cusp-fillet-fixed-20260926-v189-hypercurve",
+        "sha256": "184b92203d32cbe4cef7f518868997bba1e5db132bbd2932f1d7280b84bcaf88"
+      },
+      "name": "bezier_region::tests::general_nonrepresented_chord_and_retained_rational_arc_complete_the_fillet_kernel",
+      "returncode": 0,
+      "elapsed_seconds": 0.6230720499297604,
+      "log": "fillet-branches-20260926-v190-arc-boundary-comparison-combined.log"
+    }
+  ],
+  "all_processes_reaped": true,
+  "identical_test_body_sha256": "3467a3f025ad23613de398890896348956b574f82f89f078e626d7adfc23da5a",
+  "all_sources_and_binaries_unchanged": true
+}

@@ -1,0 +1,118 @@
+{
+  "checks": [
+    {
+      "label": "fmt",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustfmt",
+        "--edition",
+        "2024",
+        "--check",
+        "src/bareiss.rs",
+        "src/curve_resultant.rs",
+        "src/integer_interpolation.rs",
+        "src/resultant.rs"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.3829673449508846,
+      "log": "polynomial-determinant-20260925-v32-fmt.log"
+    },
+    {
+      "label": "clippy-1",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "clippy",
+        "--all-targets",
+        "--all-features",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 10.144399593933485,
+      "log": "polynomial-determinant-20260925-v32-clippy-1.log"
+    },
+    {
+      "label": "clippy-2",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "clippy",
+        "--all-targets",
+        "--no-default-features",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 9.696018468006514,
+      "log": "polynomial-determinant-20260925-v32-clippy-2.log"
+    }
+  ],
+  "cases": [
+    {
+      "label": "polynomial_determinant_restores_wide_rational_row_scales",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/polynomial-determinant-20260925-v32-libtest",
+        "--exact",
+        "curve_resultant::tests::polynomial_determinant_restores_wide_rational_row_scales",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.28076558001339436,
+      "log": "polynomial-determinant-20260925-v32-polynomial_determinant_restores_wide_rational_row_scales.log"
+    },
+    {
+      "label": "polynomial_determinant_preserves_singular_and_swapped_pivots",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/polynomial-determinant-20260925-v32-libtest",
+        "--exact",
+        "curve_resultant::tests::polynomial_determinant_preserves_singular_and_swapped_pivots",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.29058247606735677,
+      "log": "polynomial-determinant-20260925-v32-polynomial_determinant_preserves_singular_and_swapped_pivots.log"
+    },
+    {
+      "label": "generated_polynomial_determinant_matches_scalar_permutation_expansion",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/polynomial-determinant-20260925-v32-libtest",
+        "--exact",
+        "curve_resultant::tests::generated_polynomial_determinant_matches_scalar_permutation_expansion",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.39829256397206336,
+      "log": "polynomial-determinant-20260925-v32-generated_polynomial_determinant_matches_scalar_permutation_expansion.log"
+    },
+    {
+      "label": "full-library",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/polynomial-determinant-20260925-v32-libtest",
+        "--test-threads=2",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 2.7991265630116686,
+      "log": "polynomial-determinant-20260925-v32-full-library.log"
+    }
+  ],
+  "all_processes_reaped": true,
+  "plan": "polynomial-determinant-20260925-v32-plan.json",
+  "binary": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/polynomial-determinant-20260925-v32-libtest",
+  "binary_sha256": "7f48cf8eb06af23b380eb0a46f91b736d632c6d58647c8da639f3db1e99bb5f0",
+  "library_case_count": 508,
+  "passed": 508,
+  "ignored": 0,
+  "all_sources_unchanged": true
+}

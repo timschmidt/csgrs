@@ -1,0 +1,27 @@
+{
+  "tag": "power-rebased-fixed-kernel-v68",
+  "started": "2026-09-11T16:56:36.165Z",
+  "finished": "2026-09-11T16:56:37.538Z",
+  "elapsedSeconds": 1.370718412,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/power-rebased-v68/hypersolve",
+  "command": "env",
+  "args": [
+    "CARGO_TARGET_DIR=/tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse",
+    "CARGO_INCREMENTAL=0",
+    "CARGO_PROFILE_DEV_DEBUG=0",
+    "CARGO_BUILD_JOBS=2",
+    "cargo",
+    "test",
+    "--offline",
+    "--locked",
+    "--all-features",
+    "--lib",
+    "algebraic_binary::power_sums::tests::audit_kernel_corpus",
+    "--",
+    "--exact",
+    "--nocapture",
+    "--test-threads=1"
+  ],
+  "code": 0,
+  "signal": null
+}

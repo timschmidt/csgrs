@@ -1,0 +1,9 @@
+{
+  "parent": "20f15803ebaf16b702af07a2fb3ab6f89c1f8fc6",
+  "paths": {
+    "src/bezier_offset.rs": "c10e48c2508baddd1b4f070d6985053aca5fef674221dc415005d69c06e96f0a",
+    "src/curve_region_boolean.rs": "6a21b8448792335eff5ad11e0894c45c1b69741ee21a4cf58bb9dcc40bcbca8d"
+  },
+  "rustfmt_check": 0,
+  "all_owned_processes_reaped": true
+}

@@ -1,0 +1,112 @@
+\doxysubsection{Hybrid\+Reachability\+Analyser Class Reference}
+\hypertarget{classAriadne_1_1HybridReachabilityAnalyser}{}\label{classAriadne_1_1HybridReachabilityAnalyser}\index{HybridReachabilityAnalyser@{HybridReachabilityAnalyser}}
+
+
+{\ttfamily \#include $<$hybrid\+\_\+reachability\+\_\+analyser.\+hpp$>$}
+
+
+
+\doxysubsubsection{Description}
+A class for performing reachability analysis on a hybrid system. \begin{Desc}
+\item[Examples]\par
+\mbox{\hyperlink{tutorials_2hybrid_evolution_2hybrid_evolution_tutorial_8cpp-example}{tutorials/hybrid\+\_\+evolution/hybrid\+\_\+evolution\+\_\+tutorial.\+cpp}}.\end{Desc}
+Inheritance diagram for Hybrid\+Reachability\+Analyser\+:\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[height=3.000000cm]{classAriadne_1_1HybridReachabilityAnalyser}
+\end{center}
+\end{figure}
+\doxysubsubsubsection*{Public Member Functions}
+\begin{Indent}\textbf{ Constructors and destructors}\par
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1HybridReachabilityAnalyser_ac42f74f77c65ff6e2d1b8852d2285874}\label{classAriadne_1_1HybridReachabilityAnalyser_ac42f74f77c65ff6e2d1b8852d2285874} 
+{\bfseries Hybrid\+Reachability\+Analyser} (const \mbox{\hyperlink{classAriadne_1_1HybridEvolverInterface}{Hybrid\+Evolver\+Interface}} \&\mbox{\hyperlink{classAriadne_1_1ReachabilityAnalyser_ab13d342b2e3284021a3e96e4a4eaf39b}{evolver}})
+\begin{DoxyCompactList}\small\item\em Construct from an evolver. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1HybridReachabilityAnalyser_ac393bab9bee51c62c122e6ccc7aad86c}\label{classAriadne_1_1HybridReachabilityAnalyser_ac393bab9bee51c62c122e6ccc7aad86c} 
+virtual \mbox{\hyperlink{classAriadne_1_1HybridReachabilityAnalyser}{Hybrid\+Reachability\+Analyser}} \texorpdfstring{$\ast$}{*} {\bfseries clone} () const
+\begin{DoxyCompactList}\small\item\em Make a dynamically-\/allocated copy. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\end{Indent}
+\doxyparagraph*{Public Member Functions inherited from \mbox{\hyperlink{classAriadne_1_1ReachabilityAnalyser}{Reachability\+Analyser$<$ Hybrid\+Automaton\+Interface $>$}}}
+\begin{DoxyCompactItemize}
+\item 
+virtual {\bfseries \texorpdfstring{$\sim$}{\string~}\+Reachability\+Analyser} ()=default
+\begin{DoxyCompactList}\small\item\em Virtual destructor. \end{DoxyCompactList}\item 
+{\bfseries Reachability\+Analyser} (const \mbox{\hyperlink{classAriadne_1_1ReachabilityAnalyser_a4d54f21db8f911e0fcbd50593c0750f3}{Evolver\+Type}} \&\mbox{\hyperlink{classAriadne_1_1ReachabilityAnalyser_ab13d342b2e3284021a3e96e4a4eaf39b}{evolver}})
+\begin{DoxyCompactList}\small\item\em Construct from an evolver. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\begin{DoxyCompactItemize}
+\item 
+Configuration\+Type \& {\bfseries configuration} ()
+\begin{DoxyCompactList}\small\item\em A reference to the analyser\textquotesingle{}s configuration parameters. \end{DoxyCompactList}\item 
+const \mbox{\hyperlink{classAriadne_1_1ReachabilityAnalyser_a4d54f21db8f911e0fcbd50593c0750f3}{Evolver\+Type}} \& {\bfseries evolver} () const
+\begin{DoxyCompactList}\small\item\em A reference to the analyser\textquotesingle{}s evolver parameter. \end{DoxyCompactList}\item 
+virtual const \mbox{\hyperlink{classAriadne_1_1ReachabilityAnalyser_a95af9278082cc58957aa0fb8ef7d3ebb}{System\+Type}} \& {\bfseries system} () const override
+\begin{DoxyCompactList}\small\item\em Get the system associated with the analyser. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\begin{DoxyCompactItemize}
+\item 
+virtual \mbox{\hyperlink{namespaceAriadne_abbe0884d033ed6289d1f654576d7bb07}{Pair}}$<$ \mbox{\hyperlink{classAriadne_1_1HybridStorage}{Storage\+Type}}, \mbox{\hyperlink{classAriadne_1_1HybridStorage}{Storage\+Type}} $>$ {\bfseries lower\+\_\+reach\+\_\+evolve} (const \mbox{\hyperlink{classAriadne_1_1ReachabilityAnalyser_a13ebe2357ec154046148637faac32aa5}{Overt\+Set\+Interface\+Type}} \&initial\+\_\+set, const \mbox{\hyperlink{classAriadne_1_1ReachabilityAnalyser_a8f6e80667df93252f5afdc6ee1dc48a9}{Time\+Type}} \&time) const override
+\begin{DoxyCompactList}\small\item\em Compute a lower-\/approximation to the reachable and evolved sets of the system starting in {\itshape initial\+\_\+set} up to {\itshape time}. \end{DoxyCompactList}\item 
+virtual \mbox{\hyperlink{classAriadne_1_1HybridStorage}{Storage\+Type}} {\bfseries lower\+\_\+reach} (const \mbox{\hyperlink{classAriadne_1_1ReachabilityAnalyser_a13ebe2357ec154046148637faac32aa5}{Overt\+Set\+Interface\+Type}} \&initial\+\_\+set, const \mbox{\hyperlink{classAriadne_1_1ReachabilityAnalyser_a8f6e80667df93252f5afdc6ee1dc48a9}{Time\+Type}} \&time) const override
+\begin{DoxyCompactList}\small\item\em Compute a lower-\/approximation to the reachable set of the system starting in {\itshape initial\+\_\+set} up to {\itshape time}. \end{DoxyCompactList}\item 
+virtual \mbox{\hyperlink{classAriadne_1_1HybridStorage}{Storage\+Type}} {\bfseries upper\+\_\+evolve} (const \mbox{\hyperlink{classAriadne_1_1ReachabilityAnalyser_aa1143229fdcf6c11867546f487110469}{Compact\+Set\+Interface\+Type}} \&initial\+\_\+set, const \mbox{\hyperlink{classAriadne_1_1ReachabilityAnalyser_a8f6e80667df93252f5afdc6ee1dc48a9}{Time\+Type}} \&time) const override
+\begin{DoxyCompactList}\small\item\em Compute an upper-\/approximation to the set obtained by evolving the system starting in {\itshape initial\+\_\+set} up to {\itshape time}. \end{DoxyCompactList}\item 
+virtual \mbox{\hyperlink{namespaceAriadne_abbe0884d033ed6289d1f654576d7bb07}{Pair}}$<$ \mbox{\hyperlink{classAriadne_1_1HybridStorage}{Storage\+Type}}, \mbox{\hyperlink{classAriadne_1_1HybridStorage}{Storage\+Type}} $>$ {\bfseries upper\+\_\+reach\+\_\+evolve} (const \mbox{\hyperlink{classAriadne_1_1ReachabilityAnalyser_aa1143229fdcf6c11867546f487110469}{Compact\+Set\+Interface\+Type}} \&initial\+\_\+set, const \mbox{\hyperlink{classAriadne_1_1ReachabilityAnalyser_a8f6e80667df93252f5afdc6ee1dc48a9}{Time\+Type}} \&time) const override
+\begin{DoxyCompactList}\small\item\em Compute upper-\/approximations to the reachable and evolved sets of the system starting in {\itshape initial\+\_\+set} up to {\itshape time}. \end{DoxyCompactList}\item 
+virtual \mbox{\hyperlink{classAriadne_1_1HybridStorage}{Storage\+Type}} {\bfseries upper\+\_\+reach} (const \mbox{\hyperlink{classAriadne_1_1ReachabilityAnalyser_aa1143229fdcf6c11867546f487110469}{Compact\+Set\+Interface\+Type}} \&initial\+\_\+set, const \mbox{\hyperlink{classAriadne_1_1ReachabilityAnalyser_a8f6e80667df93252f5afdc6ee1dc48a9}{Time\+Type}} \&time) const override
+\begin{DoxyCompactList}\small\item\em Compute an upper-\/approximation to the reachable set of the system starting in {\itshape initial\+\_\+set} up to {\itshape time}. \end{DoxyCompactList}\item 
+virtual \mbox{\hyperlink{classAriadne_1_1HybridStorage}{Storage\+Type}} {\bfseries outer\+\_\+chain\+\_\+reach} (const \mbox{\hyperlink{classAriadne_1_1ReachabilityAnalyser_aa1143229fdcf6c11867546f487110469}{Compact\+Set\+Interface\+Type}} \&initial\+\_\+set) const override
+\begin{DoxyCompactList}\small\item\em Compute a (possibly-\/restricted) approximation to the outer chain-\/reachable set of the system starting in {\itshape initial\+\_\+set}. \end{DoxyCompactList}\item 
+virtual \mbox{\hyperlink{classAriadne_1_1ReachabilityAnalyser_a000afbe5c7fc55883ac9dea52cfb2c01}{Safety\+Certificate\+Type}} {\bfseries verify\+\_\+safety} (const \mbox{\hyperlink{classAriadne_1_1ReachabilityAnalyser_aa1143229fdcf6c11867546f487110469}{Compact\+Set\+Interface\+Type}} \&initial\+\_\+set, const \mbox{\hyperlink{classAriadne_1_1ReachabilityAnalyser_aaedc48bde2764b0abfc877010dfd14c8}{Open\+Set\+Interface\+Type}} \&safe\+\_\+set) const override
+\begin{DoxyCompactList}\small\item\em Test if the system is safe. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxyparagraph*{Public Member Functions inherited from \mbox{\hyperlink{classAriadne_1_1ReachabilityAnalyserInterface}{Reachability\+Analyser\+Interface$<$ Hybrid\+Automaton\+Interface $>$}}}
+\begin{DoxyCompactItemize}
+\item 
+virtual {\bfseries \texorpdfstring{$\sim$}{\string~}\+Reachability\+Analyser\+Interface} ()=default
+\begin{DoxyCompactList}\small\item\em Virtual destructor. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsubsection*{Additional Inherited Members}
+\doxyparagraph*{Public Types inherited from \mbox{\hyperlink{classAriadne_1_1ReachabilityAnalyserInterface}{Reachability\+Analyser\+Interface$<$ Hybrid\+Automaton\+Interface $>$}}}
+\begin{DoxyCompactItemize}
+\item 
+typedef \mbox{\hyperlink{classAriadne_1_1HybridAutomatonInterface}{Hybrid\+Automaton\+Interface}} {\bfseries System\+Type}
+\begin{DoxyCompactList}\small\item\em The type of the internal system. \end{DoxyCompactList}\item 
+typedef \mbox{\hyperlink{classAriadne_1_1HybridAutomatonInterface_ac94b75a6b18d3f38f26dc6dcdc7ca002}{System\+Type\+::\+Evolver\+Type}} {\bfseries Evolver\+Type}
+\begin{DoxyCompactList}\small\item\em The type used to define the elapsed evolution time for the system type. \end{DoxyCompactList}\item 
+typedef \mbox{\hyperlink{classAriadne_1_1EvolverInterface_a3eee62b15617b80a9cd7a2f4ba905cff}{Evolver\+Type\+::\+Enclosure\+Type}} {\bfseries Enclosure\+Type}
+\begin{DoxyCompactList}\small\item\em The type used to define enclosures for local reach and evolve sets. \end{DoxyCompactList}\item 
+typedef \mbox{\hyperlink{classAriadne_1_1HybridAutomatonInterface_a18bbe636651f3479446e8d8f0d42e811}{System\+Type\+::\+Storage\+Type}} {\bfseries Storage\+Type}
+\begin{DoxyCompactList}\small\item\em The type used to define global pavings of reach and evolve sets. \end{DoxyCompactList}\item 
+typedef \mbox{\hyperlink{classAriadne_1_1HybridAutomatonInterface_a6758468f0d6935d3ea5db460673c9b71}{System\+Type\+::\+Time\+Type}} {\bfseries Time\+Type}
+\begin{DoxyCompactList}\small\item\em The type used to define the elapsed evolution time for the system type. \end{DoxyCompactList}\item 
+typedef \mbox{\hyperlink{classAriadne_1_1HybridAutomatonInterface_a108b13505cd16592f8f1ef4cbadd62c1}{System\+Type\+::\+State\+Space\+Type}} {\bfseries State\+Space\+Type}
+\begin{DoxyCompactList}\small\item\em The type used to describe the state space of the system evolution. \end{DoxyCompactList}\item 
+typedef \mbox{\hyperlink{classAriadne_1_1HybridSpace_ab05016f107c90ca595a7dbaff2b82190}{State\+Space\+Type\+::\+Bounding\+Domain\+Type}} {\bfseries Bounding\+Domain\+Type}
+\begin{DoxyCompactList}\small\item\em The type used to describe the interface for bounded sets in the state space. \end{DoxyCompactList}\item 
+typedef \mbox{\hyperlink{classAriadne_1_1HybridSpace_a4cf62a41945f80d3c012a7e29c595a55}{State\+Space\+Type\+::\+Overt\+Set\+Interface\+Type}} {\bfseries Overt\+Set\+Interface\+Type}
+\begin{DoxyCompactList}\small\item\em The type used to describe the interface for overt sets in the state space, which are used as initial sets for lower reachability analysis. \end{DoxyCompactList}\item 
+typedef \mbox{\hyperlink{classAriadne_1_1HybridSpace_af62d3e0caeacd13f5b30267e23540bd0}{State\+Space\+Type\+::\+Open\+Set\+Interface\+Type}} {\bfseries Open\+Set\+Interface\+Type}
+\begin{DoxyCompactList}\small\item\em The type used to describe the interface for open sets in the state space, which are used as safe sets for lower reachability analysis. \end{DoxyCompactList}\item 
+typedef \mbox{\hyperlink{classAriadne_1_1HybridSpace_adf73efa3d965fb8bc4416ae9422cc916}{State\+Space\+Type\+::\+Compact\+Set\+Interface\+Type}} {\bfseries Compact\+Set\+Interface\+Type}
+\begin{DoxyCompactList}\small\item\em The type used to describe the interface for compact sets in the state space, which are used as initial sets for upper reachability analysis. \end{DoxyCompactList}\item 
+typedef \mbox{\hyperlink{classAriadne_1_1HybridSpace_ac4a34e211d161d0d29a973fe9809a5aa}{State\+Space\+Type\+::\+Located\+Set\+Interface\+Type}} {\bfseries Located\+Set\+Interface\+Type}
+\begin{DoxyCompactList}\small\item\em The type used to describe the interface for located sets in the state space, which are used as initial sets for verification. \end{DoxyCompactList}\item 
+typedef \mbox{\hyperlink{classAriadne_1_1HybridSpace_a7b3acddf7a4db52b04a78bec4db195e9}{State\+Space\+Type\+::\+Regular\+Set\+Interface\+Type}} {\bfseries Regular\+Set\+Interface\+Type}
+\begin{DoxyCompactList}\small\item\em The type used to describe the interface for regular sets in the state space, which are used as safe sets for verification. \end{DoxyCompactList}\item 
+typedef \mbox{\hyperlink{classAriadne_1_1HybridSpace_a706657e9ed35bf9c6f81120d71125c78}{State\+Space\+Type\+::\+Bounded\+Set\+Interface\+Type}} {\bfseries Bounded\+Set\+Interface\+Type}
+\begin{DoxyCompactList}\small\item\em The type used to describe the interface for bounded sets in the state space. \end{DoxyCompactList}\item 
+typedef \mbox{\hyperlink{classAriadne_1_1HybridSpace_a5a099a481fcb1b648e113737ae56da43}{State\+Space\+Type\+::\+Regular\+Located\+Set\+Interface\+Type}} {\bfseries Regular\+Located\+Set\+Interface\+Type}
+\begin{DoxyCompactList}\small\item\em The type used to describe the interface for bounded regular sets in the state space. \end{DoxyCompactList}\item 
+typedef \mbox{\hyperlink{classAriadne_1_1HybridSpace_ac55af6aca4c84822537d73858eba8d30}{State\+Space\+Type\+::\+Set\+Approximation\+Type}} {\bfseries Set\+Approximation\+Type}
+\begin{DoxyCompactList}\small\item\em The type used to describe the type used for upper approximations to sets. \end{DoxyCompactList}\item 
+typedef Safety\+Certificate$<$ \mbox{\hyperlink{classAriadne_1_1ReachabilityAnalyserInterface_a6987bb68f4f612f5b9a37180005f9a3b}{State\+Space\+Type}} $>$ {\bfseries Safety\+Certificate\+Type}
+\begin{DoxyCompactList}\small\item\em The type used to represent a certificate of safety. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxyparagraph*{Protected Member Functions inherited from \mbox{\hyperlink{classAriadne_1_1ReachabilityAnalyser}{Reachability\+Analyser$<$ Hybrid\+Automaton\+Interface $>$}}}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} {\bfseries \+\_\+checked\+\_\+restriction} (\mbox{\hyperlink{classAriadne_1_1HybridStorage}{Storage\+Type}} \&set, const \mbox{\hyperlink{classAriadne_1_1HybridStorage}{Storage\+Type}} \&bounding, Chain\+Overspill\+Policy policy) const
+\begin{DoxyCompactList}\small\item\em Perform restriction on {\itshape set}, using the overspill policy. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+The documentation for this class was generated from the following files\+:\begin{DoxyCompactItemize}
+\item 
+source/hybrid/\mbox{\hyperlink{hybrid__reachability__analyser_8hpp}{hybrid\+\_\+reachability\+\_\+analyser.\+hpp}}\item 
+source/hybrid/hybrid\+\_\+reachability\+\_\+analyser.\+cpp\end{DoxyCompactItemize}

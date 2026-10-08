@@ -1,0 +1,57 @@
+\doxysubsection{Canvas\+Base Class Reference}
+\hypertarget{classAriadne_1_1CanvasBase}{}\label{classAriadne_1_1CanvasBase}\index{CanvasBase@{CanvasBase}}
+
+
+{\ttfamily \#include $<$graphics\+\_\+base.\+hpp$>$}
+
+
+
+\doxysubsubsection{Description}
+Base for canvas classes. Inheritance diagram for Canvas\+Base\+:\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[height=2.000000cm]{classAriadne_1_1CanvasBase}
+\end{center}
+\end{figure}
+\doxysubsubsubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1CanvasBase_a567fbc0fb3f5ef34c7ee931c0b07a7f2}\label{classAriadne_1_1CanvasBase_a567fbc0fb3f5ef34c7ee931c0b07a7f2} 
+\mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} {\bfseries fill\+\_\+boundary} (\mbox{\hyperlink{classAriadne_1_1List}{List}}$<$ Point2d $>$ const \&boundary) override final
+\begin{DoxyCompactList}\small\item\em Draw the lines from the {\itshape boundary} and fill the corresponding closed polytope. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxyparagraph*{Public Member Functions inherited from \mbox{\hyperlink{classAriadne_1_1CanvasInterface}{Canvas\+Interface}}}
+\begin{DoxyCompactItemize}
+\item 
+virtual {\bfseries \texorpdfstring{$\sim$}{\string~}\+Canvas\+Interface} ()=default
+\begin{DoxyCompactList}\small\item\em Destructor. \end{DoxyCompactList}\item 
+virtual \mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} {\bfseries move\+\_\+to} (double x, double y)=0
+\begin{DoxyCompactList}\small\item\em Move the current initial point for a line to the point {\itshape }(x,y). \end{DoxyCompactList}\item 
+virtual \mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} {\bfseries line\+\_\+to} (double x, double y)=0
+\begin{DoxyCompactList}\small\item\em Create a line segment from the current point to the point {\itshape }(x,y). \end{DoxyCompactList}\item 
+virtual \mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} {\bfseries circle} (double x, double y, double r)=0
+\begin{DoxyCompactList}\small\item\em Draw a circle with centre {\itshape }(x,y) and radius {\itshape r}. \end{DoxyCompactList}\item 
+virtual \mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} {\bfseries dot} (double x, double y)=0
+\begin{DoxyCompactList}\small\item\em Draw a dot with centre {\itshape }(x,y). \end{DoxyCompactList}\item 
+virtual \mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} {\bfseries stroke} ()=0
+\begin{DoxyCompactList}\small\item\em Draw the working line. \end{DoxyCompactList}\item 
+virtual \mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} {\bfseries fill} ()=0
+\begin{DoxyCompactList}\small\item\em Draw and fill the working line. \end{DoxyCompactList}\item 
+virtual \mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} {\bfseries set\+\_\+line\+\_\+width} (double lw)=0
+\begin{DoxyCompactList}\small\item\em \doxylink{classAriadne_1_1Set}{Set} the width of the lines bounding shapes, in pixels. \end{DoxyCompactList}\item 
+virtual \mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} {\bfseries set\+\_\+line\+\_\+colour} (double r, double g, double b)=0
+\begin{DoxyCompactList}\small\item\em \doxylink{classAriadne_1_1Set}{Set} the colour of subsequent line to be drawn. The {\itshape r}, {\itshape g} and {\itshape b} arguments are intensities of red, green and blue on a scale of 0.\+0 to 1.\+0. \end{DoxyCompactList}\item 
+virtual \mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} {\bfseries set\+\_\+fill\+\_\+opacity} (double fo)=0
+\begin{DoxyCompactList}\small\item\em \doxylink{classAriadne_1_1Set}{Set} the colour of the next regions to be filled. \end{DoxyCompactList}\item 
+virtual \mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} {\bfseries set\+\_\+fill\+\_\+colour} (double r, double g, double b)=0
+\begin{DoxyCompactList}\small\item\em \doxylink{classAriadne_1_1Set}{Set} the colour of subsequent regions to be filled. \end{DoxyCompactList}\item 
+virtual \mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} {\bfseries set\+\_\+colour\+\_\+palette} ()=0
+\begin{DoxyCompactList}\small\item\em \doxylink{classAriadne_1_1Set}{Set} the colour palette. \end{DoxyCompactList}\item 
+virtual \mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} {\bfseries fill\+\_\+3d} ()=0
+\begin{DoxyCompactList}\small\item\em Draw and fill a 3d image. \end{DoxyCompactList}\item 
+virtual \mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} {\bfseries set\+\_\+heat\+\_\+map} (\mbox{\hyperlink{namespaceAriadne_a76a8b016e5ad61faf9062cc387df5016}{Bool}} b)=0
+\begin{DoxyCompactList}\small\item\em \doxylink{classAriadne_1_1Set}{Set} a heatmap projection. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+The documentation for this class was generated from the following file\+:\begin{DoxyCompactItemize}
+\item 
+source/io/\mbox{\hyperlink{graphics__base_8hpp}{graphics\+\_\+base.\+hpp}}\end{DoxyCompactItemize}

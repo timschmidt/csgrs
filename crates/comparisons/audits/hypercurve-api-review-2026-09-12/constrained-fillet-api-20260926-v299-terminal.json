@@ -1,0 +1,26 @@
+{
+  "source_manifest": "constrained-fillet-api-20260926-v299-sources.json",
+  "source_directory": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/source-archives/constrained-fillet-api-20260926-v299",
+  "cases": [],
+  "builds": [],
+  "all_processes_reaped": true,
+  "checks": [
+    {
+      "label": "check-all-targets",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "check",
+        "--all-targets",
+        "--all-features",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 101,
+      "log": "constrained-fillet-api-20260926-v299-check-all-targets.log",
+      "elapsed_seconds": 17.18980263301637
+    }
+  ],
+  "qualification_scope": "Constrained fillet public API and direct caller migration; authored parameter charts, isolated and continuous solutions, region compositions",
+  "failure": "check-all-targets failed",
+  "qualification_complete": false
+}

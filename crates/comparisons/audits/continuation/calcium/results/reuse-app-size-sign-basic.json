@@ -1,0 +1,14 @@
+{
+  "tag": "reuse-app-size-sign-basic",
+  "started": "2026-09-08T22:29:00.585Z",
+  "finished": "2026-09-08T22:29:00.598Z",
+  "elapsedSeconds": 0.010906892,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "size",
+  "args": [
+    "/tmp/calcium-reuse-costs.73SR1w/app-sign-basic",
+    "/tmp/calcium-reuse-costs.73SR1w/app-sign-basic.stripped"
+  ],
+  "code": 0,
+  "signal": null
+}

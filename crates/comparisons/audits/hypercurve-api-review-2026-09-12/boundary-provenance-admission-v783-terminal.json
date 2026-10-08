@@ -1,0 +1,1014 @@
+{
+  "normal_production_build": true,
+  "source_manifest": "boundary-provenance-admission-v783-sources.json",
+  "source_directory": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/source-archives/boundary-provenance-admission-v783",
+  "builds": [
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "test",
+        "--lib",
+        "--test",
+        "hypercurve_bezier_region",
+        "--test",
+        "hypercurve_curve_region_promotion",
+        "--release",
+        "--all-features",
+        "--locked",
+        "--offline",
+        "--no-run",
+        "--message-format=json"
+      ],
+      "returncode": 0,
+      "log": "boundary-provenance-admission-v783-hypercurve-build.log",
+      "elapsed_seconds": 204.09443839499727,
+      "binaries": {
+        "hypercurve_bezier_region": {
+          "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/boundary-provenance-admission-v783-hypercurve_bezier_region-tests",
+          "sha256": "dcab5d08cefe459b2f940514cd6f632c9108ba61dc78b13d5d02311cfb874379"
+        },
+        "hypercurve_curve_region_promotion": {
+          "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/boundary-provenance-admission-v783-hypercurve_curve_region_promotion-tests",
+          "sha256": "6a3d6524540cbd8218fc0c97b76a230523158e536ee668324a44eea01663be86"
+        },
+        "hypercurve": {
+          "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/boundary-provenance-admission-v783-hypercurve-tests",
+          "sha256": "2ba5bd38509ac5806c9adccb7300bbb626491a46422cb121a560f57a37549eae"
+        }
+      }
+    }
+  ],
+  "cases": [
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/boundary-provenance-admission-v783-hypercurve-tests",
+        "--exact",
+        "bezier_region::tests::certified_boundary_constructors_validate_arrangement_sources",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "boundary-provenance-admission-v783-certified_boundary_constructors_validate_arrangement_sources-8dc60876d7.log",
+      "elapsed_seconds": 0.0036144710611552,
+      "target": "hypercurve",
+      "name": "bezier_region::tests::certified_boundary_constructors_validate_arrangement_sources",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/boundary-provenance-admission-v783-hypercurve-tests",
+        "--exact",
+        "bezier_region::tests::retained_region_constructor_rejects_reused_arrangement_sources_across_loops",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "boundary-provenance-admission-v783-retained_region_constructor_rejects_reused_arrangement_sources_across_loops-bc0f303585.log",
+      "elapsed_seconds": 0.0035257379058748484,
+      "target": "hypercurve",
+      "name": "bezier_region::tests::retained_region_constructor_rejects_reused_arrangement_sources_across_loops",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/boundary-provenance-admission-v783-hypercurve-tests",
+        "--exact",
+        "bezier_region::tests::retained_region_constructor_rejects_duplicate_boundary_loops",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "boundary-provenance-admission-v783-retained_region_constructor_rejects_duplicate_boundary_loops-c97d1668b2.log",
+      "elapsed_seconds": 0.003517639124765992,
+      "target": "hypercurve",
+      "name": "bezier_region::tests::retained_region_constructor_rejects_duplicate_boundary_loops",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/boundary-provenance-admission-v783-hypercurve-tests",
+        "--exact",
+        "bezier_region::tests::native_boundary_loops_convert_into_unified_region_validation",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "boundary-provenance-admission-v783-native_boundary_loops_convert_into_unified_region_validation-ed1c9158a2.log",
+      "elapsed_seconds": 0.0035363570787012577,
+      "target": "hypercurve",
+      "name": "bezier_region::tests::native_boundary_loops_convert_into_unified_region_validation",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/boundary-provenance-admission-v783-hypercurve-tests",
+        "--exact",
+        "bezier_region::tests::regularized_analytic_loop_roles_follow_exact_nesting",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "boundary-provenance-admission-v783-regularized_analytic_loop_roles_follow_exact_nesting-37b134433f.log",
+      "elapsed_seconds": 0.007611158071085811,
+      "target": "hypercurve",
+      "name": "bezier_region::tests::regularized_analytic_loop_roles_follow_exact_nesting",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/boundary-provenance-admission-v783-hypercurve-tests",
+        "--exact",
+        "bezier_region::tests::boundary_path_construction_obeys_selected_terminal_policy",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "boundary-provenance-admission-v783-boundary_path_construction_obeys_selected_terminal_policy-27e99e9e73.log",
+      "elapsed_seconds": 0.003516949014738202,
+      "target": "hypercurve",
+      "name": "bezier_region::tests::boundary_path_construction_obeys_selected_terminal_policy",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/boundary-provenance-admission-v783-hypercurve-tests",
+        "--exact",
+        "bezier_region::tests::curve_region_mutations_report_selected_terminal_policy",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "boundary-provenance-admission-v783-curve_region_mutations_report_selected_terminal_policy-d953e78508.log",
+      "elapsed_seconds": 0.0638172379694879,
+      "target": "hypercurve",
+      "name": "bezier_region::tests::curve_region_mutations_report_selected_terminal_policy",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/boundary-provenance-admission-v783-hypercurve-tests",
+        "--exact",
+        "bezier_region::tests::pair_native_boolean_boundary_offset_remains_certified_under_approximate_policy_forward",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "boundary-provenance-admission-v783-pair_native_boolean_boundary_offset_remains_certified_under_approximate_policy_forward-e4ba2d1c28.log",
+      "elapsed_seconds": 0.8149145061615855,
+      "target": "hypercurve",
+      "name": "bezier_region::tests::pair_native_boolean_boundary_offset_remains_certified_under_approximate_policy_forward",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/boundary-provenance-admission-v783-hypercurve-tests",
+        "--exact",
+        "bezier_region::tests::pair_native_boolean_boundary_offset_remains_certified_under_approximate_policy_reversed",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "boundary-provenance-admission-v783-pair_native_boolean_boundary_offset_remains_certified_under_approximate_policy_reversed-29740d7e3d.log",
+      "elapsed_seconds": 0.815077155129984,
+      "target": "hypercurve",
+      "name": "bezier_region::tests::pair_native_boolean_boundary_offset_remains_certified_under_approximate_policy_reversed",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/boundary-provenance-admission-v783-hypercurve-tests",
+        "--exact",
+        "bezier_region::tests::retained_parallel_offset_coalesces_non_cusp_algebraic_arrangement_partitions",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "boundary-provenance-admission-v783-retained_parallel_offset_coalesces_non_cusp_algebraic_arrangement_partitions-57b454b4b4.log",
+      "elapsed_seconds": 0.007728388998657465,
+      "target": "hypercurve",
+      "name": "bezier_region::tests::retained_parallel_offset_coalesces_non_cusp_algebraic_arrangement_partitions",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/boundary-provenance-admission-v783-hypercurve-tests",
+        "--exact",
+        "bezier_region::tests::raw_crossing_loops_need_arrangement_before_nesting",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "boundary-provenance-admission-v783-raw_crossing_loops_need_arrangement_before_nesting-a754d1a868.log",
+      "elapsed_seconds": 0.007602878147736192,
+      "target": "hypercurve",
+      "name": "bezier_region::tests::raw_crossing_loops_need_arrangement_before_nesting",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/boundary-provenance-admission-v783-hypercurve-tests",
+        "--exact",
+        "bezier_region::tests::retained_boundary_identity_requires_finite_affine_endpoints",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "boundary-provenance-admission-v783-retained_boundary_identity_requires_finite_affine_endpoints-914b5a04aa.log",
+      "elapsed_seconds": 0.003556785872206092,
+      "target": "hypercurve",
+      "name": "bezier_region::tests::retained_boundary_identity_requires_finite_affine_endpoints",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/boundary-provenance-admission-v783-hypercurve-tests",
+        "--exact",
+        "bezier_region::tests::closed_ph_corner_edits_preserve_both_normalized_source_lobes",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "boundary-provenance-admission-v783-closed_ph_corner_edits_preserve_both_normalized_source_lobes-553d003a5a.log",
+      "elapsed_seconds": 0.26416133204475045,
+      "target": "hypercurve",
+      "name": "bezier_region::tests::closed_ph_corner_edits_preserve_both_normalized_source_lobes",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/boundary-provenance-admission-v783-hypercurve_bezier_region-tests",
+        "--exact",
+        "arrangement_admission_regularizes_crossings_and_canceled_seams",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "boundary-provenance-admission-v783-arrangement_admission_regularizes_crossings_and_canceled_seams-0a6a718811.log",
+      "elapsed_seconds": 0.007785696070641279,
+      "target": "hypercurve_bezier_region",
+      "name": "arrangement_admission_regularizes_crossings_and_canceled_seams",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/boundary-provenance-admission-v783-hypercurve_bezier_region-tests",
+        "--exact",
+        "arrangement_admission_retains_selected_curve_evidence_for_reentry",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "boundary-provenance-admission-v783-arrangement_admission_retains_selected_curve_evidence_for_reentry-928a4449f4.log",
+      "elapsed_seconds": 0.00766431400552392,
+      "target": "hypercurve_bezier_region",
+      "name": "arrangement_admission_retains_selected_curve_evidence_for_reentry",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/boundary-provenance-admission-v783-hypercurve_bezier_region-tests",
+        "--exact",
+        "closed_polynomial_arrangement_materializes_retained_region_with_exact_area",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "boundary-provenance-admission-v783-closed_polynomial_arrangement_materializes_retained_region_with_exact_area-732c79c434.log",
+      "elapsed_seconds": 0.0035277479328215122,
+      "target": "hypercurve_bezier_region",
+      "name": "closed_polynomial_arrangement_materializes_retained_region_with_exact_area",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/boundary-provenance-admission-v783-hypercurve_bezier_region-tests",
+        "--exact",
+        "conic_area_rejects_uncertified_projective_denominator",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "boundary-provenance-admission-v783-conic_area_rejects_uncertified_projective_denominator-3750b78e3e.log",
+      "elapsed_seconds": 0.0035643160808831453,
+      "target": "hypercurve_bezier_region",
+      "name": "conic_area_rejects_uncertified_projective_denominator",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/boundary-provenance-admission-v783-hypercurve_bezier_region-tests",
+        "--exact",
+        "conic_region_boundary_materializes_with_exact_area",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "boundary-provenance-admission-v783-conic_region_boundary_materializes_with_exact_area-8c8052d55e.log",
+      "elapsed_seconds": 0.003497009864076972,
+      "target": "hypercurve_bezier_region",
+      "name": "conic_region_boundary_materializes_with_exact_area",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/boundary-provenance-admission-v783-hypercurve_bezier_region-tests",
+        "--exact",
+        "empty_boundary_loops_do_not_certify_signed_area",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "boundary-provenance-admission-v783-empty_boundary_loops_do_not_certify_signed_area-08a8ac62b6.log",
+      "elapsed_seconds": 0.0035219090059399605,
+      "target": "hypercurve_bezier_region",
+      "name": "empty_boundary_loops_do_not_certify_signed_area",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/boundary-provenance-admission-v783-hypercurve_bezier_region-tests",
+        "--exact",
+        "equal_weight_rational_quadratic_area_matches_polynomial_exactly",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "boundary-provenance-admission-v783-equal_weight_rational_quadratic_area_matches_polynomial_exactly-ba363c191a.log",
+      "elapsed_seconds": 0.003539216937497258,
+      "target": "hypercurve_bezier_region",
+      "name": "equal_weight_rational_quadratic_area_matches_polynomial_exactly",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/boundary-provenance-admission-v783-hypercurve_bezier_region-tests",
+        "--exact",
+        "exact_conic_splits_and_reversal_retain_denominator_and_area_facts",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "boundary-provenance-admission-v783-exact_conic_splits_and_reversal_retain_denominator_and_area_facts-5096aa5600.log",
+      "elapsed_seconds": 0.007546632084995508,
+      "target": "hypercurve_bezier_region",
+      "name": "exact_conic_splits_and_reversal_retain_denominator_and_area_facts",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/boundary-provenance-admission-v783-hypercurve_bezier_region-tests",
+        "--exact",
+        "material_components_keep_recursive_hole_ownership_and_recompose_exactly",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "boundary-provenance-admission-v783-material_components_keep_recursive_hole_ownership_and_recompose_exactly-39e02f6cad.log",
+      "elapsed_seconds": 0.015715691028162837,
+      "target": "hypercurve_bezier_region",
+      "name": "material_components_keep_recursive_hole_ownership_and_recompose_exactly",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/boundary-provenance-admission-v783-hypercurve_bezier_region-tests",
+        "--exact",
+        "native_boundary_loop_constructor_rejects_open_fragment_cycle",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "boundary-provenance-admission-v783-native_boundary_loop_constructor_rejects_open_fragment_cycle-54d6430f60.log",
+      "elapsed_seconds": 0.0034858309663832188,
+      "target": "hypercurve_bezier_region",
+      "name": "native_boundary_loop_constructor_rejects_open_fragment_cycle",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/boundary-provenance-admission-v783-hypercurve_bezier_region-tests",
+        "--exact",
+        "open_arrangement_chain_does_not_materialize_region",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "boundary-provenance-admission-v783-open_arrangement_chain_does_not_materialize_region-69b8b967de.log",
+      "elapsed_seconds": 0.003533517010509968,
+      "target": "hypercurve_bezier_region",
+      "name": "open_arrangement_chain_does_not_materialize_region",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/boundary-provenance-admission-v783-hypercurve_bezier_region-tests",
+        "--exact",
+        "quarter_circle_rational_conic_area_is_exact_symbolic_sector",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "boundary-provenance-admission-v783-quarter_circle_rational_conic_area_is_exact_symbolic_sector-0fd997855c.log",
+      "elapsed_seconds": 0.003496859921142459,
+      "target": "hypercurve_bezier_region",
+      "name": "quarter_circle_rational_conic_area_is_exact_symbolic_sector",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/boundary-provenance-admission-v783-hypercurve_bezier_region-tests",
+        "--exact",
+        "rational_quadratic_area_is_invariant_under_negative_projective_scale",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "boundary-provenance-admission-v783-rational_quadratic_area_is_invariant_under_negative_projective_scale-b5ddbf680c.log",
+      "elapsed_seconds": 0.0035178791731595993,
+      "target": "hypercurve_bezier_region",
+      "name": "rational_quadratic_area_is_invariant_under_negative_projective_scale",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/boundary-provenance-admission-v783-hypercurve_bezier_region-tests",
+        "--exact",
+        "regularized_nonlinear_boundary_retains_roles_area_and_provenance",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "boundary-provenance-admission-v783-regularized_nonlinear_boundary_retains_roles_area_and_provenance-fa2277abd5.log",
+      "elapsed_seconds": 0.00362031115218997,
+      "target": "hypercurve_bezier_region",
+      "name": "regularized_nonlinear_boundary_retains_roles_area_and_provenance",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/boundary-provenance-admission-v783-hypercurve_bezier_region-tests",
+        "--exact",
+        "resolved_linear_overlap_traversal_materializes_unified_region",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "boundary-provenance-admission-v783-resolved_linear_overlap_traversal_materializes_unified_region-6f6c7b95ea.log",
+      "elapsed_seconds": 0.0036019019316881895,
+      "target": "hypercurve_bezier_region",
+      "name": "resolved_linear_overlap_traversal_materializes_unified_region",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/boundary-provenance-admission-v783-hypercurve_bezier_region-tests",
+        "--exact",
+        "resolved_rational_overlap_traversal_materializes_unified_region",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "boundary-provenance-admission-v783-resolved_rational_overlap_traversal_materializes_unified_region-b64ab71b81.log",
+      "elapsed_seconds": 0.0035207888577133417,
+      "target": "hypercurve_bezier_region",
+      "name": "resolved_rational_overlap_traversal_materializes_unified_region",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/boundary-provenance-admission-v783-hypercurve_bezier_region-tests",
+        "--exact",
+        "retained_algebraic_line_images_normalize_crossing_loops_under_both_policies",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "boundary-provenance-admission-v783-retained_algebraic_line_images_normalize_crossing_loops_under_both_policies-7de828d2eb.log",
+      "elapsed_seconds": 0.0076686430256813765,
+      "target": "hypercurve_bezier_region",
+      "name": "retained_algebraic_line_images_normalize_crossing_loops_under_both_policies",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/boundary-provenance-admission-v783-hypercurve_bezier_region-tests",
+        "--exact",
+        "retained_boundary_loop_constructor_rejects_forged_materialized_range_order",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "boundary-provenance-admission-v783-retained_boundary_loop_constructor_rejects_forged_materialized_range_order-2347314b72.log",
+      "elapsed_seconds": 0.003487501060590148,
+      "target": "hypercurve_bezier_region",
+      "name": "retained_boundary_loop_constructor_rejects_forged_materialized_range_order",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/boundary-provenance-admission-v783-hypercurve_bezier_region-tests",
+        "--exact",
+        "retained_boundary_loop_constructor_rejects_forged_source_endpoint_image",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "boundary-provenance-admission-v783-retained_boundary_loop_constructor_rejects_forged_source_endpoint_image-6792dc8229.log",
+      "elapsed_seconds": 0.00353801716119051,
+      "target": "hypercurve_bezier_region",
+      "name": "retained_boundary_loop_constructor_rejects_forged_source_endpoint_image",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/boundary-provenance-admission-v783-hypercurve_bezier_region-tests",
+        "--exact",
+        "retained_boundary_loop_constructor_rejects_incomplete_algebraic_endpoint_evidence",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "boundary-provenance-admission-v783-retained_boundary_loop_constructor_rejects_incomplete_algebraic_endpoint_evidence-870ec2395b.log",
+      "elapsed_seconds": 0.0035615048836916685,
+      "target": "hypercurve_bezier_region",
+      "name": "retained_boundary_loop_constructor_rejects_incomplete_algebraic_endpoint_evidence",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/boundary-provenance-admission-v783-hypercurve_bezier_region-tests",
+        "--exact",
+        "retained_boundary_loop_constructor_rejects_open_fragment_cycle",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "boundary-provenance-admission-v783-retained_boundary_loop_constructor_rejects_open_fragment_cycle-b20929b973.log",
+      "elapsed_seconds": 0.0035049589350819588,
+      "target": "hypercurve_bezier_region",
+      "name": "retained_boundary_loop_constructor_rejects_open_fragment_cycle",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/boundary-provenance-admission-v783-hypercurve_bezier_region-tests",
+        "--exact",
+        "retained_boundary_loop_constructor_rejects_source_only_algebraic_endpoint_evidence",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "boundary-provenance-admission-v783-retained_boundary_loop_constructor_rejects_source_only_algebraic_endpoint_evidence-a02def7ed5.log",
+      "elapsed_seconds": 0.003566944971680641,
+      "target": "hypercurve_bezier_region",
+      "name": "retained_boundary_loop_constructor_rejects_source_only_algebraic_endpoint_evidence",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/boundary-provenance-admission-v783-hypercurve_bezier_region-tests",
+        "--exact",
+        "retained_certified_nonlinear_line_image_uses_authoritative_roles",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "boundary-provenance-admission-v783-retained_certified_nonlinear_line_image_uses_authoritative_roles-45365092d8.log",
+      "elapsed_seconds": 0.0035139189567416906,
+      "target": "hypercurve_bezier_region",
+      "name": "retained_certified_nonlinear_line_image_uses_authoritative_roles",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/boundary-provenance-admission-v783-hypercurve_bezier_region-tests",
+        "--exact",
+        "retained_curve_envelope_includes_native_bezier_interior_extrema",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "boundary-provenance-admission-v783-retained_curve_envelope_includes_native_bezier_interior_extrema-ee3c79f3d1.log",
+      "elapsed_seconds": 0.0035355580039322376,
+      "target": "hypercurve_bezier_region",
+      "name": "retained_curve_envelope_includes_native_bezier_interior_extrema",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/boundary-provenance-admission-v783-hypercurve_bezier_region-tests",
+        "--exact",
+        "retained_curve_envelope_uses_algebraic_endpoint_image_before_interval_hull",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "boundary-provenance-admission-v783-retained_curve_envelope_uses_algebraic_endpoint_image_before_interval_hull-9483512065.log",
+      "elapsed_seconds": 0.003468681825324893,
+      "target": "hypercurve_bezier_region",
+      "name": "retained_curve_envelope_uses_algebraic_endpoint_image_before_interval_hull",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/boundary-provenance-admission-v783-hypercurve_bezier_region-tests",
+        "--exact",
+        "retained_curve_envelope_uses_algebraic_parameter_interval_hull",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "boundary-provenance-admission-v783-retained_curve_envelope_uses_algebraic_parameter_interval_hull-c69df19e3a.log",
+      "elapsed_seconds": 0.0035807439126074314,
+      "target": "hypercurve_bezier_region",
+      "name": "retained_curve_envelope_uses_algebraic_parameter_interval_hull",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/boundary-provenance-admission-v783-hypercurve_bezier_region-tests",
+        "--exact",
+        "retained_curve_envelope_uses_source_bounds_for_algebraic_split_fragments",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "boundary-provenance-admission-v783-retained_curve_envelope_uses_source_bounds_for_algebraic_split_fragments-045c490e23.log",
+      "elapsed_seconds": 0.003519168822094798,
+      "target": "hypercurve_bezier_region",
+      "name": "retained_curve_envelope_uses_source_bounds_for_algebraic_split_fragments",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/boundary-provenance-admission-v783-hypercurve_bezier_region-tests",
+        "--exact",
+        "retained_exact_algebraic_endpoint_line_images_assign_roles",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "boundary-provenance-admission-v783-retained_exact_algebraic_endpoint_line_images_assign_roles-b333026976.log",
+      "elapsed_seconds": 0.003512599039822817,
+      "target": "hypercurve_bezier_region",
+      "name": "retained_exact_algebraic_endpoint_line_images_assign_roles",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/boundary-provenance-admission-v783-hypercurve_bezier_region-tests",
+        "--exact",
+        "retained_exact_line_images_assign_nested_material_and_hole",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "boundary-provenance-admission-v783-retained_exact_line_images_assign_nested_material_and_hole-141e3d7158.log",
+      "elapsed_seconds": 0.003544987179338932,
+      "target": "hypercurve_bezier_region",
+      "name": "retained_exact_line_images_assign_nested_material_and_hole",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/boundary-provenance-admission-v783-hypercurve_bezier_region-tests",
+        "--exact",
+        "retained_nonlinear_algebraic_carriers_classify_without_materialization",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "boundary-provenance-admission-v783-retained_nonlinear_algebraic_carriers_classify_without_materialization-c9fcc38559.log",
+      "elapsed_seconds": 0.0035616550594568253,
+      "target": "hypercurve_bezier_region",
+      "name": "retained_nonlinear_algebraic_carriers_classify_without_materialization",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/boundary-provenance-admission-v783-hypercurve_bezier_region-tests",
+        "--exact",
+        "reversed_internal_overlap_traversal_materializes_union_boundary",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "boundary-provenance-admission-v783-reversed_internal_overlap_traversal_materializes_union_boundary-136424b4a6.log",
+      "elapsed_seconds": 0.003495568875223398,
+      "target": "hypercurve_bezier_region",
+      "name": "reversed_internal_overlap_traversal_materializes_union_boundary",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/boundary-provenance-admission-v783-hypercurve_bezier_region-tests",
+        "--exact",
+        "symmetric_quadratic_lens_area_scales_exactly",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "boundary-provenance-admission-v783-symmetric_quadratic_lens_area_scales_exactly-51bbaa707c.log",
+      "elapsed_seconds": 0.11380384606309235,
+      "target": "hypercurve_bezier_region",
+      "name": "symmetric_quadratic_lens_area_scales_exactly",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/boundary-provenance-admission-v783-hypercurve_curve_region_promotion-tests",
+        "--exact",
+        "selected_boundary_paths_retain_domains_through_repeated_region_roundtrips",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "boundary-provenance-admission-v783-selected_boundary_paths_retain_domains_through_repeated_region_roundtrips-5ff3474412.log",
+      "elapsed_seconds": 0.007664893986657262,
+      "target": "hypercurve_curve_region_promotion",
+      "name": "selected_boundary_paths_retain_domains_through_repeated_region_roundtrips",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/boundary-provenance-admission-v783-hypercurve_curve_region_promotion-tests",
+        "--exact",
+        "region_corner_edits_publish_normalized_hole_openings",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "boundary-provenance-admission-v783-region_corner_edits_publish_normalized_hole_openings-530711cee0.log",
+      "elapsed_seconds": 0.015651104971766472,
+      "target": "hypercurve_curve_region_promotion",
+      "name": "region_corner_edits_publish_normalized_hole_openings",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/boundary-provenance-admission-v783-hypercurve_curve_region_promotion-tests",
+        "--exact",
+        "authored_region_sides_are_certified_before_offset_and_boolean_reentry",
+        "--include-ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "boundary-provenance-admission-v783-authored_region_sides_are_certified_before_offset_and_boolean_reentry-0487ad6694.log",
+      "elapsed_seconds": 0.01567675406113267,
+      "target": "hypercurve_curve_region_promotion",
+      "name": "authored_region_sides_are_certified_before_offset_and_boolean_reentry",
+      "passed": true
+    }
+  ],
+  "checks": [
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "clippy",
+        "--all-targets",
+        "--all-features",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "returncode": 0,
+      "log": "boundary-provenance-admission-v783-hypercurve-clippy-all-features.log",
+      "elapsed_seconds": 22.751158789964393,
+      "label": "hypercurve-clippy-all-features"
+    },
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "clippy",
+        "--all-targets",
+        "--no-default-features",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "returncode": 0,
+      "log": "boundary-provenance-admission-v783-hypercurve-clippy-no-default.log",
+      "elapsed_seconds": 21.749811304034665,
+      "label": "hypercurve-clippy-no-default"
+    },
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustfmt",
+        "--edition",
+        "2024",
+        "--config",
+        "skip_children=true",
+        "--check",
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/build-workspace-20260925/hypercurve/src/bezier_region.rs",
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/build-workspace-20260925/hypercurve/tests/hypercurve_bezier_region.rs"
+      ],
+      "returncode": 0,
+      "log": "boundary-provenance-admission-v783-format.log",
+      "elapsed_seconds": 0.41440040594898164,
+      "label": "format"
+    },
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "check",
+        "--manifest-path",
+        "fuzz/Cargo.toml",
+        "--bin",
+        "region_boolean",
+        "--bin",
+        "bezier_region",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "log": "boundary-provenance-admission-v783-fuzz-check.log",
+      "elapsed_seconds": 11.682262056972831,
+      "label": "fuzz-check"
+    },
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "doc",
+        "--no-deps",
+        "--all-features",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "log": "boundary-provenance-admission-v783-hypercurve-documentation.log",
+      "elapsed_seconds": 11.33112312713638,
+      "label": "hypercurve-documentation"
+    },
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "clippy",
+        "--all-targets",
+        "--all-features",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "returncode": 0,
+      "log": "boundary-provenance-admission-v783-hyperbrep-clippy.log",
+      "elapsed_seconds": 16.740185138070956,
+      "label": "hyperbrep-clippy"
+    },
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "check",
+        "--all-targets",
+        "--all-features",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "log": "boundary-provenance-admission-v783-csgrs-check.log",
+      "elapsed_seconds": 15.539087848039344,
+      "label": "csgrs-check"
+    }
+  ],
+  "test_listings": {
+    "hypercurve_bezier_region": {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/boundary-provenance-admission-v783-hypercurve_bezier_region-tests",
+        "--list"
+      ],
+      "returncode": 0,
+      "log": "boundary-provenance-admission-v783-hypercurve_bezier_region-list.log",
+      "elapsed_seconds": 0.0035519259981811047
+    },
+    "hypercurve_curve_region_promotion": {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/boundary-provenance-admission-v783-hypercurve_curve_region_promotion-tests",
+        "--list"
+      ],
+      "returncode": 0,
+      "log": "boundary-provenance-admission-v783-hypercurve_curve_region_promotion-list.log",
+      "elapsed_seconds": 0.003542985999956727
+    },
+    "hypercurve": {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/boundary-provenance-admission-v783-hypercurve-tests",
+        "--list"
+      ],
+      "returncode": 0,
+      "log": "boundary-provenance-admission-v783-hypercurve-list.log",
+      "elapsed_seconds": 0.0077005610801279545
+    }
+  },
+  "expected_cases": {
+    "hypercurve": [
+      "bezier_region::tests::certified_boundary_constructors_validate_arrangement_sources",
+      "bezier_region::tests::retained_region_constructor_rejects_reused_arrangement_sources_across_loops",
+      "bezier_region::tests::retained_region_constructor_rejects_duplicate_boundary_loops",
+      "bezier_region::tests::native_boundary_loops_convert_into_unified_region_validation",
+      "bezier_region::tests::regularized_analytic_loop_roles_follow_exact_nesting",
+      "bezier_region::tests::boundary_path_construction_obeys_selected_terminal_policy",
+      "bezier_region::tests::curve_region_mutations_report_selected_terminal_policy",
+      "bezier_region::tests::pair_native_boolean_boundary_offset_remains_certified_under_approximate_policy_forward",
+      "bezier_region::tests::pair_native_boolean_boundary_offset_remains_certified_under_approximate_policy_reversed",
+      "bezier_region::tests::retained_parallel_offset_coalesces_non_cusp_algebraic_arrangement_partitions",
+      "bezier_region::tests::raw_crossing_loops_need_arrangement_before_nesting",
+      "bezier_region::tests::retained_boundary_identity_requires_finite_affine_endpoints",
+      "bezier_region::tests::closed_ph_corner_edits_preserve_both_normalized_source_lobes"
+    ],
+    "hypercurve_bezier_region": [
+      "arrangement_admission_regularizes_crossings_and_canceled_seams",
+      "arrangement_admission_retains_selected_curve_evidence_for_reentry",
+      "closed_polynomial_arrangement_materializes_retained_region_with_exact_area",
+      "conic_area_rejects_uncertified_projective_denominator",
+      "conic_region_boundary_materializes_with_exact_area",
+      "empty_boundary_loops_do_not_certify_signed_area",
+      "equal_weight_rational_quadratic_area_matches_polynomial_exactly",
+      "exact_conic_splits_and_reversal_retain_denominator_and_area_facts",
+      "material_components_keep_recursive_hole_ownership_and_recompose_exactly",
+      "native_boundary_loop_constructor_rejects_open_fragment_cycle",
+      "open_arrangement_chain_does_not_materialize_region",
+      "quarter_circle_rational_conic_area_is_exact_symbolic_sector",
+      "rational_quadratic_area_is_invariant_under_negative_projective_scale",
+      "regularized_nonlinear_boundary_retains_roles_area_and_provenance",
+      "resolved_linear_overlap_traversal_materializes_unified_region",
+      "resolved_rational_overlap_traversal_materializes_unified_region",
+      "retained_algebraic_line_images_normalize_crossing_loops_under_both_policies",
+      "retained_boundary_loop_constructor_rejects_forged_materialized_range_order",
+      "retained_boundary_loop_constructor_rejects_forged_source_endpoint_image",
+      "retained_boundary_loop_constructor_rejects_incomplete_algebraic_endpoint_evidence",
+      "retained_boundary_loop_constructor_rejects_open_fragment_cycle",
+      "retained_boundary_loop_constructor_rejects_source_only_algebraic_endpoint_evidence",
+      "retained_certified_nonlinear_line_image_uses_authoritative_roles",
+      "retained_curve_envelope_includes_native_bezier_interior_extrema",
+      "retained_curve_envelope_uses_algebraic_endpoint_image_before_interval_hull",
+      "retained_curve_envelope_uses_algebraic_parameter_interval_hull",
+      "retained_curve_envelope_uses_source_bounds_for_algebraic_split_fragments",
+      "retained_exact_algebraic_endpoint_line_images_assign_roles",
+      "retained_exact_line_images_assign_nested_material_and_hole",
+      "retained_nonlinear_algebraic_carriers_classify_without_materialization",
+      "reversed_internal_overlap_traversal_materializes_union_boundary",
+      "symmetric_quadratic_lens_area_scales_exactly"
+    ],
+    "hypercurve_curve_region_promotion": [
+      "selected_boundary_paths_retain_domains_through_repeated_region_roundtrips",
+      "region_corner_edits_publish_normalized_hole_openings",
+      "authored_region_sides_are_certified_before_offset_and_boolean_reentry"
+    ]
+  },
+  "all_processes_reaped": true,
+  "probe_complete": true,
+  "qualification_complete": true
+}

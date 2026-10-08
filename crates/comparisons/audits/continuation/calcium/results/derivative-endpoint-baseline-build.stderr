@@ -1,0 +1,74 @@
+warning: patch `hypertri v0.4.1 (/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/derivative-demand-baseline/hypertri)` was not used in the crate graph
+help: Check that the patched package version and available features are compatible
+      with the dependency requirements. If the patch has a different version from
+      what is locked in the Cargo.lock file, run `cargo update` to use the new
+      version. This may also occur with an optional dependency that is not enabled.
+     Locking 13 packages to latest Rust 1.97.0 compatible versions
+    Blocking waiting for file lock on build directory
+   Compiling calcium-derivative-endpoint-baseline v0.1.0 (/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/derivative-endpoint-baseline)
+error[E0061]: this function takes 2 arguments but 1 argument was supplied
+    --> ../derivative-endpoint-corpus.rs:66:36
+     |
+  66 | ...                   start: BezierParameter2::exact(Real::zero()),
+     |                              ^^^^^^^^^^^^^^^^^^^^^^^-------------- argument #2 of type `&CurveContext` is missing
+     |
+note: associated function defined here
+    --> /home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/derivative-demand-baseline/hypercurve/src/bezier_parameter.rs:1404:12
+     |
+1404 |     pub fn exact(value: Real, policy: &CurveContext) -> CurveResult<Classification<Self>> {
+     |            ^^^^^
+help: provide the argument
+     |
+  66 |                             start: BezierParameter2::exact(Real::zero(), /* &CurveContext */),
+     |                                                                        +++++++++++++++++++++
+
+error[E0308]: mismatched types
+  --> ../derivative-endpoint-corpus.rs:66:36
+   |
+66 | ...                   start: BezierParameter2::exact(Real::zero()),
+   |                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ expected `BezierParameter2`, found `Result<Classification<...>, ...>`
+   |
+   = note: expected enum `BezierParameter2`
+              found enum `Result<hypercurve::Classification<BezierParameter2>, CurveError>`
+
+error[E0061]: this function takes 2 arguments but 1 argument was supplied
+    --> ../derivative-endpoint-corpus.rs:67:34
+     |
+  67 | ...                   end: BezierParameter2::exact(Real::one()),
+     |                            ^^^^^^^^^^^^^^^^^^^^^^^------------- argument #2 of type `&CurveContext` is missing
+     |
+note: associated function defined here
+    --> /home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/derivative-demand-baseline/hypercurve/src/bezier_parameter.rs:1404:12
+     |
+1404 |     pub fn exact(value: Real, policy: &CurveContext) -> CurveResult<Classification<Self>> {
+     |            ^^^^^
+help: provide the argument
+     |
+  67 |                             end: BezierParameter2::exact(Real::one(), /* &CurveContext */),
+     |                                                                     +++++++++++++++++++++
+
+error[E0308]: mismatched types
+  --> ../derivative-endpoint-corpus.rs:67:34
+   |
+67 | ...                   end: BezierParameter2::exact(Real::one()),
+   |                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ expected `BezierParameter2`, found `Result<Classification<...>, ...>`
+   |
+   = note: expected enum `BezierParameter2`
+              found enum `Result<hypercurve::Classification<BezierParameter2>, CurveError>`
+
+error[E0599]: no method named `unwrap` found for enum `hypercurve::Classification<T>` in the current scope
+  --> ../derivative-endpoint-corpus.rs:82:14
+   |
+80 |           let Classification::Decided(result) = graph
+   |  _______________________________________________-
+81 | |             .traverse_with_tangent_order(&CurveContext::STRICT)
+82 | |             .unwrap()
+   | |             -^^^^^^ method not found in `hypercurve::Classification<BezierArrangementTraversal2>`
+   | |_____________|
+   |
+
+Some errors have detailed explanations: E0061, E0308, E0599.
+For more information about an error, try `rustc --explain E0061`.
+error: could not compile `calcium-derivative-endpoint-baseline` (bin "calcium-derivative-endpoint-baseline-cpu") due to 5 previous errors
+warning: build failed, waiting for other jobs to finish...
+error: could not compile `calcium-derivative-endpoint-baseline` (bin "calcium-derivative-endpoint-baseline-allocation") due to 5 previous errors

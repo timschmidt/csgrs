@@ -1,0 +1,14 @@
+{
+  "tag": "arf-fused-bigint-oracle",
+  "started": "2026-09-09T20:47:49.724Z",
+  "finished": "2026-09-09T20:47:55.487Z",
+  "elapsedSeconds": 5.760799744,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "node",
+  "args": [
+    "arf-fused-bigint-oracle.mjs",
+    "--arf-fused-bigint-summary"
+  ],
+  "code": 0,
+  "signal": null
+}

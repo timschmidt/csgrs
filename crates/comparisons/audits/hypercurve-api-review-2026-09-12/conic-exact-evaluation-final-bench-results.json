@@ -1,0 +1,1123 @@
+{
+  "method": "Three unloaded alternating runs; 1000 constructions per case, separately with both coordinates certified at -128 bits; microbenchmark, not a whole-operation speedup claim.",
+  "runs": [
+    {
+      "label": "baseline",
+      "run": 0,
+      "weights": "unequal",
+      "parameter": "rational",
+      "refine": false,
+      "iterations": 1000,
+      "nanoseconds_per_iteration": 1497.677
+    },
+    {
+      "label": "baseline",
+      "run": 0,
+      "weights": "unequal",
+      "parameter": "rational",
+      "refine": true,
+      "iterations": 1000,
+      "nanoseconds_per_iteration": 1468.0
+    },
+    {
+      "label": "baseline",
+      "run": 0,
+      "weights": "unequal",
+      "parameter": "radical",
+      "refine": false,
+      "iterations": 1000,
+      "nanoseconds_per_iteration": 6104.672
+    },
+    {
+      "label": "baseline",
+      "run": 0,
+      "weights": "unequal",
+      "parameter": "radical",
+      "refine": true,
+      "iterations": 1000,
+      "nanoseconds_per_iteration": 14239.934
+    },
+    {
+      "label": "baseline",
+      "run": 0,
+      "weights": "unequal",
+      "parameter": "pi_inverse",
+      "refine": false,
+      "iterations": 1000,
+      "nanoseconds_per_iteration": 2715.024
+    },
+    {
+      "label": "baseline",
+      "run": 0,
+      "weights": "unequal",
+      "parameter": "pi_inverse",
+      "refine": true,
+      "iterations": 1000,
+      "nanoseconds_per_iteration": 11013.185
+    },
+    {
+      "label": "baseline",
+      "run": 0,
+      "weights": "unit_radical",
+      "parameter": "rational",
+      "refine": false,
+      "iterations": 1000,
+      "nanoseconds_per_iteration": 2173.442
+    },
+    {
+      "label": "baseline",
+      "run": 0,
+      "weights": "unit_radical",
+      "parameter": "rational",
+      "refine": true,
+      "iterations": 1000,
+      "nanoseconds_per_iteration": 4695.908
+    },
+    {
+      "label": "baseline",
+      "run": 0,
+      "weights": "unit_radical",
+      "parameter": "radical",
+      "refine": false,
+      "iterations": 1000,
+      "nanoseconds_per_iteration": 8712.242
+    },
+    {
+      "label": "baseline",
+      "run": 0,
+      "weights": "unit_radical",
+      "parameter": "radical",
+      "refine": true,
+      "iterations": 1000,
+      "nanoseconds_per_iteration": 29939.108
+    },
+    {
+      "label": "baseline",
+      "run": 0,
+      "weights": "unit_radical",
+      "parameter": "pi_inverse",
+      "refine": false,
+      "iterations": 1000,
+      "nanoseconds_per_iteration": 14730.49
+    },
+    {
+      "label": "baseline",
+      "run": 0,
+      "weights": "unit_radical",
+      "parameter": "pi_inverse",
+      "refine": true,
+      "iterations": 1000,
+      "nanoseconds_per_iteration": 32070.572
+    },
+    {
+      "label": "baseline",
+      "run": 0,
+      "weights": "unit_pi",
+      "parameter": "rational",
+      "refine": false,
+      "iterations": 1000,
+      "nanoseconds_per_iteration": 6310.447
+    },
+    {
+      "label": "baseline",
+      "run": 0,
+      "weights": "unit_pi",
+      "parameter": "rational",
+      "refine": true,
+      "iterations": 1000,
+      "nanoseconds_per_iteration": 11771.043
+    },
+    {
+      "label": "baseline",
+      "run": 0,
+      "weights": "unit_pi",
+      "parameter": "radical",
+      "refine": false,
+      "iterations": 1000,
+      "nanoseconds_per_iteration": 15133.542
+    },
+    {
+      "label": "baseline",
+      "run": 0,
+      "weights": "unit_pi",
+      "parameter": "radical",
+      "refine": true,
+      "iterations": 1000,
+      "nanoseconds_per_iteration": 32017.335
+    },
+    {
+      "label": "baseline",
+      "run": 0,
+      "weights": "unit_pi",
+      "parameter": "pi_inverse",
+      "refine": false,
+      "iterations": 1000,
+      "nanoseconds_per_iteration": 14702.642
+    },
+    {
+      "label": "baseline",
+      "run": 0,
+      "weights": "unit_pi",
+      "parameter": "pi_inverse",
+      "refine": true,
+      "iterations": 1000,
+      "nanoseconds_per_iteration": 34575.06
+    },
+    {
+      "label": "current",
+      "run": 0,
+      "weights": "unequal",
+      "parameter": "rational",
+      "refine": false,
+      "iterations": 1000,
+      "nanoseconds_per_iteration": 1323.029
+    },
+    {
+      "label": "current",
+      "run": 0,
+      "weights": "unequal",
+      "parameter": "rational",
+      "refine": true,
+      "iterations": 1000,
+      "nanoseconds_per_iteration": 1377.455
+    },
+    {
+      "label": "current",
+      "run": 0,
+      "weights": "unequal",
+      "parameter": "radical",
+      "refine": false,
+      "iterations": 1000,
+      "nanoseconds_per_iteration": 3316.552
+    },
+    {
+      "label": "current",
+      "run": 0,
+      "weights": "unequal",
+      "parameter": "radical",
+      "refine": true,
+      "iterations": 1000,
+      "nanoseconds_per_iteration": 13257.231
+    },
+    {
+      "label": "current",
+      "run": 0,
+      "weights": "unequal",
+      "parameter": "pi_inverse",
+      "refine": false,
+      "iterations": 1000,
+      "nanoseconds_per_iteration": 4462.584
+    },
+    {
+      "label": "current",
+      "run": 0,
+      "weights": "unequal",
+      "parameter": "pi_inverse",
+      "refine": true,
+      "iterations": 1000,
+      "nanoseconds_per_iteration": 8730.142
+    },
+    {
+      "label": "current",
+      "run": 0,
+      "weights": "unit_radical",
+      "parameter": "rational",
+      "refine": false,
+      "iterations": 1000,
+      "nanoseconds_per_iteration": 2240.707
+    },
+    {
+      "label": "current",
+      "run": 0,
+      "weights": "unit_radical",
+      "parameter": "rational",
+      "refine": true,
+      "iterations": 1000,
+      "nanoseconds_per_iteration": 4689.379
+    },
+    {
+      "label": "current",
+      "run": 0,
+      "weights": "unit_radical",
+      "parameter": "radical",
+      "refine": false,
+      "iterations": 1000,
+      "nanoseconds_per_iteration": 10036.952
+    },
+    {
+      "label": "current",
+      "run": 0,
+      "weights": "unit_radical",
+      "parameter": "radical",
+      "refine": true,
+      "iterations": 1000,
+      "nanoseconds_per_iteration": 29144.002
+    },
+    {
+      "label": "current",
+      "run": 0,
+      "weights": "unit_radical",
+      "parameter": "pi_inverse",
+      "refine": false,
+      "iterations": 1000,
+      "nanoseconds_per_iteration": 11661.44
+    },
+    {
+      "label": "current",
+      "run": 0,
+      "weights": "unit_radical",
+      "parameter": "pi_inverse",
+      "refine": true,
+      "iterations": 1000,
+      "nanoseconds_per_iteration": 25319.834
+    },
+    {
+      "label": "current",
+      "run": 0,
+      "weights": "unit_pi",
+      "parameter": "rational",
+      "refine": false,
+      "iterations": 1000,
+      "nanoseconds_per_iteration": 9015.322
+    },
+    {
+      "label": "current",
+      "run": 0,
+      "weights": "unit_pi",
+      "parameter": "rational",
+      "refine": true,
+      "iterations": 1000,
+      "nanoseconds_per_iteration": 12563.689
+    },
+    {
+      "label": "current",
+      "run": 0,
+      "weights": "unit_pi",
+      "parameter": "radical",
+      "refine": false,
+      "iterations": 1000,
+      "nanoseconds_per_iteration": 15216.857
+    },
+    {
+      "label": "current",
+      "run": 0,
+      "weights": "unit_pi",
+      "parameter": "radical",
+      "refine": true,
+      "iterations": 1000,
+      "nanoseconds_per_iteration": 27951.404
+    },
+    {
+      "label": "current",
+      "run": 0,
+      "weights": "unit_pi",
+      "parameter": "pi_inverse",
+      "refine": false,
+      "iterations": 1000,
+      "nanoseconds_per_iteration": 13039.426
+    },
+    {
+      "label": "current",
+      "run": 0,
+      "weights": "unit_pi",
+      "parameter": "pi_inverse",
+      "refine": true,
+      "iterations": 1000,
+      "nanoseconds_per_iteration": 20111.882
+    },
+    {
+      "label": "current",
+      "run": 1,
+      "weights": "unequal",
+      "parameter": "rational",
+      "refine": false,
+      "iterations": 1000,
+      "nanoseconds_per_iteration": 1393.385
+    },
+    {
+      "label": "current",
+      "run": 1,
+      "weights": "unequal",
+      "parameter": "rational",
+      "refine": true,
+      "iterations": 1000,
+      "nanoseconds_per_iteration": 1326.699
+    },
+    {
+      "label": "current",
+      "run": 1,
+      "weights": "unequal",
+      "parameter": "radical",
+      "refine": false,
+      "iterations": 1000,
+      "nanoseconds_per_iteration": 2769.17
+    },
+    {
+      "label": "current",
+      "run": 1,
+      "weights": "unequal",
+      "parameter": "radical",
+      "refine": true,
+      "iterations": 1000,
+      "nanoseconds_per_iteration": 12460.716
+    },
+    {
+      "label": "current",
+      "run": 1,
+      "weights": "unequal",
+      "parameter": "pi_inverse",
+      "refine": false,
+      "iterations": 1000,
+      "nanoseconds_per_iteration": 4421.987
+    },
+    {
+      "label": "current",
+      "run": 1,
+      "weights": "unequal",
+      "parameter": "pi_inverse",
+      "refine": true,
+      "iterations": 1000,
+      "nanoseconds_per_iteration": 9871.383
+    },
+    {
+      "label": "current",
+      "run": 1,
+      "weights": "unit_radical",
+      "parameter": "rational",
+      "refine": false,
+      "iterations": 1000,
+      "nanoseconds_per_iteration": 2955.888
+    },
+    {
+      "label": "current",
+      "run": 1,
+      "weights": "unit_radical",
+      "parameter": "rational",
+      "refine": true,
+      "iterations": 1000,
+      "nanoseconds_per_iteration": 5616.005
+    },
+    {
+      "label": "current",
+      "run": 1,
+      "weights": "unit_radical",
+      "parameter": "radical",
+      "refine": false,
+      "iterations": 1000,
+      "nanoseconds_per_iteration": 8318.959
+    },
+    {
+      "label": "current",
+      "run": 1,
+      "weights": "unit_radical",
+      "parameter": "radical",
+      "refine": true,
+      "iterations": 1000,
+      "nanoseconds_per_iteration": 28953.505
+    },
+    {
+      "label": "current",
+      "run": 1,
+      "weights": "unit_radical",
+      "parameter": "pi_inverse",
+      "refine": false,
+      "iterations": 1000,
+      "nanoseconds_per_iteration": 10923.371
+    },
+    {
+      "label": "current",
+      "run": 1,
+      "weights": "unit_radical",
+      "parameter": "pi_inverse",
+      "refine": true,
+      "iterations": 1000,
+      "nanoseconds_per_iteration": 22245.165
+    },
+    {
+      "label": "current",
+      "run": 1,
+      "weights": "unit_pi",
+      "parameter": "rational",
+      "refine": false,
+      "iterations": 1000,
+      "nanoseconds_per_iteration": 8192.059
+    },
+    {
+      "label": "current",
+      "run": 1,
+      "weights": "unit_pi",
+      "parameter": "rational",
+      "refine": true,
+      "iterations": 1000,
+      "nanoseconds_per_iteration": 11480.482
+    },
+    {
+      "label": "current",
+      "run": 1,
+      "weights": "unit_pi",
+      "parameter": "radical",
+      "refine": false,
+      "iterations": 1000,
+      "nanoseconds_per_iteration": 15258.584
+    },
+    {
+      "label": "current",
+      "run": 1,
+      "weights": "unit_pi",
+      "parameter": "radical",
+      "refine": true,
+      "iterations": 1000,
+      "nanoseconds_per_iteration": 27961.053
+    },
+    {
+      "label": "current",
+      "run": 1,
+      "weights": "unit_pi",
+      "parameter": "pi_inverse",
+      "refine": false,
+      "iterations": 1000,
+      "nanoseconds_per_iteration": 13678.323
+    },
+    {
+      "label": "current",
+      "run": 1,
+      "weights": "unit_pi",
+      "parameter": "pi_inverse",
+      "refine": true,
+      "iterations": 1000,
+      "nanoseconds_per_iteration": 20031.517
+    },
+    {
+      "label": "baseline",
+      "run": 1,
+      "weights": "unequal",
+      "parameter": "rational",
+      "refine": false,
+      "iterations": 1000,
+      "nanoseconds_per_iteration": 1426.222
+    },
+    {
+      "label": "baseline",
+      "run": 1,
+      "weights": "unequal",
+      "parameter": "rational",
+      "refine": true,
+      "iterations": 1000,
+      "nanoseconds_per_iteration": 1414.773
+    },
+    {
+      "label": "baseline",
+      "run": 1,
+      "weights": "unequal",
+      "parameter": "radical",
+      "refine": false,
+      "iterations": 1000,
+      "nanoseconds_per_iteration": 6427.549
+    },
+    {
+      "label": "baseline",
+      "run": 1,
+      "weights": "unequal",
+      "parameter": "radical",
+      "refine": true,
+      "iterations": 1000,
+      "nanoseconds_per_iteration": 14282.551
+    },
+    {
+      "label": "baseline",
+      "run": 1,
+      "weights": "unequal",
+      "parameter": "pi_inverse",
+      "refine": false,
+      "iterations": 1000,
+      "nanoseconds_per_iteration": 2916.04
+    },
+    {
+      "label": "baseline",
+      "run": 1,
+      "weights": "unequal",
+      "parameter": "pi_inverse",
+      "refine": true,
+      "iterations": 1000,
+      "nanoseconds_per_iteration": 13450.098
+    },
+    {
+      "label": "baseline",
+      "run": 1,
+      "weights": "unit_radical",
+      "parameter": "rational",
+      "refine": false,
+      "iterations": 1000,
+      "nanoseconds_per_iteration": 2180.171
+    },
+    {
+      "label": "baseline",
+      "run": 1,
+      "weights": "unit_radical",
+      "parameter": "rational",
+      "refine": true,
+      "iterations": 1000,
+      "nanoseconds_per_iteration": 5102.31
+    },
+    {
+      "label": "baseline",
+      "run": 1,
+      "weights": "unit_radical",
+      "parameter": "radical",
+      "refine": false,
+      "iterations": 1000,
+      "nanoseconds_per_iteration": 9521.597
+    },
+    {
+      "label": "baseline",
+      "run": 1,
+      "weights": "unit_radical",
+      "parameter": "radical",
+      "refine": true,
+      "iterations": 1000,
+      "nanoseconds_per_iteration": 33163.206
+    },
+    {
+      "label": "baseline",
+      "run": 1,
+      "weights": "unit_radical",
+      "parameter": "pi_inverse",
+      "refine": false,
+      "iterations": 1000,
+      "nanoseconds_per_iteration": 14881.54
+    },
+    {
+      "label": "baseline",
+      "run": 1,
+      "weights": "unit_radical",
+      "parameter": "pi_inverse",
+      "refine": true,
+      "iterations": 1000,
+      "nanoseconds_per_iteration": 38143.516
+    },
+    {
+      "label": "baseline",
+      "run": 1,
+      "weights": "unit_pi",
+      "parameter": "rational",
+      "refine": false,
+      "iterations": 1000,
+      "nanoseconds_per_iteration": 5838.66
+    },
+    {
+      "label": "baseline",
+      "run": 1,
+      "weights": "unit_pi",
+      "parameter": "rational",
+      "refine": true,
+      "iterations": 1000,
+      "nanoseconds_per_iteration": 12601.826
+    },
+    {
+      "label": "baseline",
+      "run": 1,
+      "weights": "unit_pi",
+      "parameter": "radical",
+      "refine": false,
+      "iterations": 1000,
+      "nanoseconds_per_iteration": 16916.97
+    },
+    {
+      "label": "baseline",
+      "run": 1,
+      "weights": "unit_pi",
+      "parameter": "radical",
+      "refine": true,
+      "iterations": 1000,
+      "nanoseconds_per_iteration": 32648.342
+    },
+    {
+      "label": "baseline",
+      "run": 1,
+      "weights": "unit_pi",
+      "parameter": "pi_inverse",
+      "refine": false,
+      "iterations": 1000,
+      "nanoseconds_per_iteration": 14724.701
+    },
+    {
+      "label": "baseline",
+      "run": 1,
+      "weights": "unit_pi",
+      "parameter": "pi_inverse",
+      "refine": true,
+      "iterations": 1000,
+      "nanoseconds_per_iteration": 35589.2
+    },
+    {
+      "label": "baseline",
+      "run": 2,
+      "weights": "unequal",
+      "parameter": "rational",
+      "refine": false,
+      "iterations": 1000,
+      "nanoseconds_per_iteration": 1635.277
+    },
+    {
+      "label": "baseline",
+      "run": 2,
+      "weights": "unequal",
+      "parameter": "rational",
+      "refine": true,
+      "iterations": 1000,
+      "nanoseconds_per_iteration": 1604.59
+    },
+    {
+      "label": "baseline",
+      "run": 2,
+      "weights": "unequal",
+      "parameter": "radical",
+      "refine": false,
+      "iterations": 1000,
+      "nanoseconds_per_iteration": 5244.191
+    },
+    {
+      "label": "baseline",
+      "run": 2,
+      "weights": "unequal",
+      "parameter": "radical",
+      "refine": true,
+      "iterations": 1000,
+      "nanoseconds_per_iteration": 13632.076
+    },
+    {
+      "label": "baseline",
+      "run": 2,
+      "weights": "unequal",
+      "parameter": "pi_inverse",
+      "refine": false,
+      "iterations": 1000,
+      "nanoseconds_per_iteration": 2717.014
+    },
+    {
+      "label": "baseline",
+      "run": 2,
+      "weights": "unequal",
+      "parameter": "pi_inverse",
+      "refine": true,
+      "iterations": 1000,
+      "nanoseconds_per_iteration": 10993.106
+    },
+    {
+      "label": "baseline",
+      "run": 2,
+      "weights": "unit_radical",
+      "parameter": "rational",
+      "refine": false,
+      "iterations": 1000,
+      "nanoseconds_per_iteration": 2202.019
+    },
+    {
+      "label": "baseline",
+      "run": 2,
+      "weights": "unit_radical",
+      "parameter": "rational",
+      "refine": true,
+      "iterations": 1000,
+      "nanoseconds_per_iteration": 5184.935
+    },
+    {
+      "label": "baseline",
+      "run": 2,
+      "weights": "unit_radical",
+      "parameter": "radical",
+      "refine": false,
+      "iterations": 1000,
+      "nanoseconds_per_iteration": 8690.015
+    },
+    {
+      "label": "baseline",
+      "run": 2,
+      "weights": "unit_radical",
+      "parameter": "radical",
+      "refine": true,
+      "iterations": 1000,
+      "nanoseconds_per_iteration": 30718.045
+    },
+    {
+      "label": "baseline",
+      "run": 2,
+      "weights": "unit_radical",
+      "parameter": "pi_inverse",
+      "refine": false,
+      "iterations": 1000,
+      "nanoseconds_per_iteration": 14586.17
+    },
+    {
+      "label": "baseline",
+      "run": 2,
+      "weights": "unit_radical",
+      "parameter": "pi_inverse",
+      "refine": true,
+      "iterations": 1000,
+      "nanoseconds_per_iteration": 32462.254
+    },
+    {
+      "label": "baseline",
+      "run": 2,
+      "weights": "unit_pi",
+      "parameter": "rational",
+      "refine": false,
+      "iterations": 1000,
+      "nanoseconds_per_iteration": 5892.767
+    },
+    {
+      "label": "baseline",
+      "run": 2,
+      "weights": "unit_pi",
+      "parameter": "rational",
+      "refine": true,
+      "iterations": 1000,
+      "nanoseconds_per_iteration": 12080.432
+    },
+    {
+      "label": "baseline",
+      "run": 2,
+      "weights": "unit_pi",
+      "parameter": "radical",
+      "refine": false,
+      "iterations": 1000,
+      "nanoseconds_per_iteration": 15565.703
+    },
+    {
+      "label": "baseline",
+      "run": 2,
+      "weights": "unit_pi",
+      "parameter": "radical",
+      "refine": true,
+      "iterations": 1000,
+      "nanoseconds_per_iteration": 31439.125
+    },
+    {
+      "label": "baseline",
+      "run": 2,
+      "weights": "unit_pi",
+      "parameter": "pi_inverse",
+      "refine": false,
+      "iterations": 1000,
+      "nanoseconds_per_iteration": 14771.198
+    },
+    {
+      "label": "baseline",
+      "run": 2,
+      "weights": "unit_pi",
+      "parameter": "pi_inverse",
+      "refine": true,
+      "iterations": 1000,
+      "nanoseconds_per_iteration": 35680.434
+    },
+    {
+      "label": "current",
+      "run": 2,
+      "weights": "unequal",
+      "parameter": "rational",
+      "refine": false,
+      "iterations": 1000,
+      "nanoseconds_per_iteration": 1318.469
+    },
+    {
+      "label": "current",
+      "run": 2,
+      "weights": "unequal",
+      "parameter": "rational",
+      "refine": true,
+      "iterations": 1000,
+      "nanoseconds_per_iteration": 1326.059
+    },
+    {
+      "label": "current",
+      "run": 2,
+      "weights": "unequal",
+      "parameter": "radical",
+      "refine": false,
+      "iterations": 1000,
+      "nanoseconds_per_iteration": 2683.156
+    },
+    {
+      "label": "current",
+      "run": 2,
+      "weights": "unequal",
+      "parameter": "radical",
+      "refine": true,
+      "iterations": 1000,
+      "nanoseconds_per_iteration": 11114.408
+    },
+    {
+      "label": "current",
+      "run": 2,
+      "weights": "unequal",
+      "parameter": "pi_inverse",
+      "refine": false,
+      "iterations": 1000,
+      "nanoseconds_per_iteration": 4484.672
+    },
+    {
+      "label": "current",
+      "run": 2,
+      "weights": "unequal",
+      "parameter": "pi_inverse",
+      "refine": true,
+      "iterations": 1000,
+      "nanoseconds_per_iteration": 8562.893
+    },
+    {
+      "label": "current",
+      "run": 2,
+      "weights": "unit_radical",
+      "parameter": "rational",
+      "refine": false,
+      "iterations": 1000,
+      "nanoseconds_per_iteration": 2198.2
+    },
+    {
+      "label": "current",
+      "run": 2,
+      "weights": "unit_radical",
+      "parameter": "rational",
+      "refine": true,
+      "iterations": 1000,
+      "nanoseconds_per_iteration": 4752.215
+    },
+    {
+      "label": "current",
+      "run": 2,
+      "weights": "unit_radical",
+      "parameter": "radical",
+      "refine": false,
+      "iterations": 1000,
+      "nanoseconds_per_iteration": 8187.489
+    },
+    {
+      "label": "current",
+      "run": 2,
+      "weights": "unit_radical",
+      "parameter": "radical",
+      "refine": true,
+      "iterations": 1000,
+      "nanoseconds_per_iteration": 27036.547
+    },
+    {
+      "label": "current",
+      "run": 2,
+      "weights": "unit_radical",
+      "parameter": "pi_inverse",
+      "refine": false,
+      "iterations": 1000,
+      "nanoseconds_per_iteration": 12384.541
+    },
+    {
+      "label": "current",
+      "run": 2,
+      "weights": "unit_radical",
+      "parameter": "pi_inverse",
+      "refine": true,
+      "iterations": 1000,
+      "nanoseconds_per_iteration": 21927.327
+    },
+    {
+      "label": "current",
+      "run": 2,
+      "weights": "unit_pi",
+      "parameter": "rational",
+      "refine": false,
+      "iterations": 1000,
+      "nanoseconds_per_iteration": 8232.876
+    },
+    {
+      "label": "current",
+      "run": 2,
+      "weights": "unit_pi",
+      "parameter": "rational",
+      "refine": true,
+      "iterations": 1000,
+      "nanoseconds_per_iteration": 11522.75
+    },
+    {
+      "label": "current",
+      "run": 2,
+      "weights": "unit_pi",
+      "parameter": "radical",
+      "refine": false,
+      "iterations": 1000,
+      "nanoseconds_per_iteration": 15290.322
+    },
+    {
+      "label": "current",
+      "run": 2,
+      "weights": "unit_pi",
+      "parameter": "radical",
+      "refine": true,
+      "iterations": 1000,
+      "nanoseconds_per_iteration": 28245.693
+    },
+    {
+      "label": "current",
+      "run": 2,
+      "weights": "unit_pi",
+      "parameter": "pi_inverse",
+      "refine": false,
+      "iterations": 1000,
+      "nanoseconds_per_iteration": 15050.828
+    },
+    {
+      "label": "current",
+      "run": 2,
+      "weights": "unit_pi",
+      "parameter": "pi_inverse",
+      "refine": true,
+      "iterations": 1000,
+      "nanoseconds_per_iteration": 21557.863
+    }
+  ],
+  "medians": [
+    {
+      "weights": "unequal",
+      "parameter": "rational",
+      "refine": false,
+      "baseline": 1497.677,
+      "current": 1323.029,
+      "current_over_baseline": 0.8833874059627009
+    },
+    {
+      "weights": "unequal",
+      "parameter": "rational",
+      "refine": true,
+      "baseline": 1468.0,
+      "current": 1326.699,
+      "current_over_baseline": 0.9037459128065396
+    },
+    {
+      "weights": "unequal",
+      "parameter": "radical",
+      "refine": false,
+      "baseline": 6104.672,
+      "current": 2769.17,
+      "current_over_baseline": 0.4536148707088604
+    },
+    {
+      "weights": "unequal",
+      "parameter": "radical",
+      "refine": true,
+      "baseline": 14239.934,
+      "current": 12460.716,
+      "current_over_baseline": 0.8750543366282457
+    },
+    {
+      "weights": "unequal",
+      "parameter": "pi_inverse",
+      "refine": false,
+      "baseline": 2717.014,
+      "current": 4462.584,
+      "current_over_baseline": 1.6424589641422531
+    },
+    {
+      "weights": "unequal",
+      "parameter": "pi_inverse",
+      "refine": true,
+      "baseline": 11013.185,
+      "current": 8730.142,
+      "current_over_baseline": 0.7926991147429195
+    },
+    {
+      "weights": "unit_radical",
+      "parameter": "rational",
+      "refine": false,
+      "baseline": 2180.171,
+      "current": 2240.707,
+      "current_over_baseline": 1.0277666293148566
+    },
+    {
+      "weights": "unit_radical",
+      "parameter": "rational",
+      "refine": true,
+      "baseline": 5102.31,
+      "current": 4752.215,
+      "current_over_baseline": 0.9313850001273932
+    },
+    {
+      "weights": "unit_radical",
+      "parameter": "radical",
+      "refine": false,
+      "baseline": 8712.242,
+      "current": 8318.959,
+      "current_over_baseline": 0.9548585771607355
+    },
+    {
+      "weights": "unit_radical",
+      "parameter": "radical",
+      "refine": true,
+      "baseline": 30718.045,
+      "current": 28953.505,
+      "current_over_baseline": 0.942556891234452
+    },
+    {
+      "weights": "unit_radical",
+      "parameter": "pi_inverse",
+      "refine": false,
+      "baseline": 14730.49,
+      "current": 11661.44,
+      "current_over_baseline": 0.7916532308158113
+    },
+    {
+      "weights": "unit_radical",
+      "parameter": "pi_inverse",
+      "refine": true,
+      "baseline": 32462.254,
+      "current": 22245.165,
+      "current_over_baseline": 0.685262489782749
+    },
+    {
+      "weights": "unit_pi",
+      "parameter": "rational",
+      "refine": false,
+      "baseline": 5892.767,
+      "current": 8232.876,
+      "current_over_baseline": 1.3971154807240809
+    },
+    {
+      "weights": "unit_pi",
+      "parameter": "rational",
+      "refine": true,
+      "baseline": 12080.432,
+      "current": 11522.75,
+      "current_over_baseline": 0.9538359224239662
+    },
+    {
+      "weights": "unit_pi",
+      "parameter": "radical",
+      "refine": false,
+      "baseline": 15565.703,
+      "current": 15258.584,
+      "current_over_baseline": 0.9802695066197782
+    },
+    {
+      "weights": "unit_pi",
+      "parameter": "radical",
+      "refine": true,
+      "baseline": 32017.335,
+      "current": 27961.053,
+      "current_over_baseline": 0.873309817947059
+    },
+    {
+      "weights": "unit_pi",
+      "parameter": "pi_inverse",
+      "refine": false,
+      "baseline": 14724.701,
+      "current": 13678.323,
+      "current_over_baseline": 0.9289372327492423
+    },
+    {
+      "weights": "unit_pi",
+      "parameter": "pi_inverse",
+      "refine": true,
+      "baseline": 35589.2,
+      "current": 20111.882,
+      "current_over_baseline": 0.5651119440729211
+    }
+  ]
+}

@@ -1,0 +1,27 @@
+{
+  "repo": "hypercurve",
+  "target": "readme",
+  "binary": "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/readme-aa1708a41d62f264",
+  "command": [
+    "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/readme-aa1708a41d62f264",
+    "--test-threads=4",
+    "--color",
+    "never"
+  ],
+  "sha256": "6d0066098b8f66e1fa090adf7d0ed064ca9103d990f6ba353291f5700d470434",
+  "returncode": 0,
+  "timed_out": false,
+  "elapsed_seconds": 0.0034871829993790016,
+  "log": "native-line-arc-endpoint-full-hypercurve-readme.log",
+  "passed": [
+    "readme_quickstart_matches_the_runnable_example",
+    "readme_release_metadata_matches_the_manifest"
+  ],
+  "failed": [],
+  "ignored": [],
+  "summaries": [
+    "test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s"
+  ],
+  "new_failures": [],
+  "known_failures": []
+}

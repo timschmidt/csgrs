@@ -1,0 +1,23 @@
+{
+  "tag": "coq-aern-sqrt-regression-release-qualified-v86",
+  "started": "2026-09-12T06:03:41.038Z",
+  "finished": "2026-09-12T06:03:41.121Z",
+  "elapsedSeconds": 0.08139008799999999,
+  "cwd": "/home/tim/Documents/GitHub/workspace/hyperreal",
+  "command": "env",
+  "args": [
+    "CARGO_TARGET_DIR=/tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse",
+    "CARGO_INCREMENTAL=0",
+    "CARGO_PROFILE_DEV_DEBUG=0",
+    "CARGO_BUILD_JOBS=2",
+    "cargo",
+    "test",
+    "--offline",
+    "--locked",
+    "--release",
+    "--lib",
+    "sqrt"
+  ],
+  "code": 0,
+  "signal": null
+}

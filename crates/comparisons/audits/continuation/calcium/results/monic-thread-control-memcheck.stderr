@@ -1,0 +1,71 @@
+==19== Memcheck, a memory error detector
+==19== Copyright (C) 2002-2026, and GNU GPL'd, by Julian Seward et al.
+==19== Using Valgrind-3.27.1 and LibVEX; rerun with -h for copyright info
+==19== Command: /tmp/calcium-monic-state.rk70Kr/std-thread-control
+==19== 
+==19== 
+==19== HEAP SUMMARY:
+==19==     in use at exit: 592 bytes in 2 blocks
+==19==   total heap usage: 2,770 allocs, 2,768 frees, 153,332 bytes allocated
+==19== 
+==19== 48 bytes in 1 blocks are possibly lost in loss record 1 of 2
+==19==    at 0x48A5AE6: malloc (vg_replace_malloc.c:447)
+==19==    by 0x403DD7E: alloc (unix.rs:14)
+==19==    by 0x403DD7E: alloc_impl (alloc.rs:151)
+==19==    by 0x403DD7E: allocate (alloc.rs:214)
+==19==    by 0x403DD7E: {closure#0}<std::thread::thread::Inner, std::alloc::System> (sync.rs:810)
+==19==    by 0x403DD7E: allocate_for_layout<core::mem::maybe_uninit::MaybeUninit<std::thread::thread::Inner>, alloc::sync::{impl#17}::new_uninit_in::{closure_env#0}<std::thread::thread::Inner, std::alloc::System>, fn(*mut u8) -> *mut alloc::sync::ArcInner<core::mem::maybe_uninit::MaybeUninit<std::thread::thread::Inner>>> (sync.rs:2185)
+==19==    by 0x403DD7E: new_uninit_in<std::thread::thread::Inner, std::alloc::System> (sync.rs:808)
+==19==    by 0x403DD7E: <std::thread::thread::Thread>::new (thread.rs:102)
+==19==    by 0x4046529: std::thread::current::init_current (current.rs:294)
+==19==    by 0x401A56F: std::thread::scoped::scope::<monic_thread_control::main::{closure#0}, ()> (in /tmp/calcium-monic-state.rk70Kr/std-thread-control)
+==19==    by 0x401C148: monic_thread_control::main (in /tmp/calcium-monic-state.rk70Kr/std-thread-control)
+==19==    by 0x401E922: <fn() as core::ops::function::FnOnce<()>>::call_once (in /tmp/calcium-monic-state.rk70Kr/std-thread-control)
+==19==    by 0x401A515: std::sys::backtrace::__rust_begin_short_backtrace::<fn(), ()> (in /tmp/calcium-monic-state.rk70Kr/std-thread-control)
+==19==    by 0x401B748: std::rt::lang_start::<()>::{closure#0} (in /tmp/calcium-monic-state.rk70Kr/std-thread-control)
+==19==    by 0x4045116: call_once<(), (dyn core::ops::function::Fn<(), Output=i32> + core::marker::Sync + core::panic::unwind_safe::RefUnwindSafe)> (function.rs:287)
+==19==    by 0x4045116: do_call<&(dyn core::ops::function::Fn<(), Output=i32> + core::marker::Sync + core::panic::unwind_safe::RefUnwindSafe), i32> (panicking.rs:581)
+==19==    by 0x4045116: catch_unwind<i32, &(dyn core::ops::function::Fn<(), Output=i32> + core::marker::Sync + core::panic::unwind_safe::RefUnwindSafe)> (panicking.rs:544)
+==19==    by 0x4045116: catch_unwind<&(dyn core::ops::function::Fn<(), Output=i32> + core::marker::Sync + core::panic::unwind_safe::RefUnwindSafe), i32> (panic.rs:359)
+==19==    by 0x4045116: {closure#0} (rt.rs:175)
+==19==    by 0x4045116: do_call<std::rt::lang_start_internal::{closure_env#0}, isize> (panicking.rs:581)
+==19==    by 0x4045116: catch_unwind<isize, std::rt::lang_start_internal::{closure_env#0}> (panicking.rs:544)
+==19==    by 0x4045116: catch_unwind<std::rt::lang_start_internal::{closure_env#0}, isize> (panic.rs:359)
+==19==    by 0x4045116: std::rt::lang_start_internal (rt.rs:171)
+==19==    by 0x4019E80: std::rt::lang_start::<()> (in /tmp/calcium-monic-state.rk70Kr/std-thread-control)
+==19==    by 0x401ECD4: main (in /tmp/calcium-monic-state.rk70Kr/std-thread-control)
+==19== 
+==19== 544 bytes in 1 blocks are still reachable in loss record 2 of 2
+==19==    at 0x48A5AE6: malloc (vg_replace_malloc.c:447)
+==19==    by 0x4047FA9: alloc (alloc.rs:101)
+==19==    by 0x4047FA9: alloc_impl_runtime (alloc.rs:210)
+==19==    by 0x4047FA9: alloc_impl (alloc.rs:332)
+==19==    by 0x4047FA9: allocate (alloc.rs:449)
+==19==    by 0x4047FA9: try_new_uninit_in<alloc::collections::btree::node::LeafNode<usize, std::sys::pal::unix::stack_overflow::thread_info::ThreadInfo>, alloc::alloc::Global> (boxed.rs:614)
+==19==    by 0x4047FA9: new_uninit_in<alloc::collections::btree::node::LeafNode<usize, std::sys::pal::unix::stack_overflow::thread_info::ThreadInfo>, alloc::alloc::Global> (boxed.rs:581)
+==19==    by 0x4047FA9: new<usize, std::sys::pal::unix::stack_overflow::thread_info::ThreadInfo, alloc::alloc::Global> (node.rs:87)
+==19==    by 0x4047FA9: new_leaf<usize, std::sys::pal::unix::stack_overflow::thread_info::ThreadInfo, alloc::alloc::Global> (node.rs:225)
+==19==    by 0x4047FA9: insert_entry<usize, std::sys::pal::unix::stack_overflow::thread_info::ThreadInfo, alloc::alloc::Global> (entry.rs:386)
+==19==    by 0x4047FA9: insert<usize, std::sys::pal::unix::stack_overflow::thread_info::ThreadInfo, alloc::alloc::Global> (entry.rs:360)
+==19==    by 0x4047FA9: insert<usize, std::sys::pal::unix::stack_overflow::thread_info::ThreadInfo, alloc::alloc::Global> (map.rs:1052)
+==19==    by 0x4047FA9: std::sys::pal::unix::stack_overflow::thread_info::set_current_info (thread_info.rs:122)
+==19==    by 0x404504F: init (stack_overflow.rs:179)
+==19==    by 0x404504F: init (mod.rs:41)
+==19==    by 0x404504F: init (rt.rs:118)
+==19==    by 0x404504F: {closure#0} (rt.rs:173)
+==19==    by 0x404504F: do_call<std::rt::lang_start_internal::{closure_env#0}, isize> (panicking.rs:581)
+==19==    by 0x404504F: catch_unwind<isize, std::rt::lang_start_internal::{closure_env#0}> (panicking.rs:544)
+==19==    by 0x404504F: catch_unwind<std::rt::lang_start_internal::{closure_env#0}, isize> (panic.rs:359)
+==19==    by 0x404504F: std::rt::lang_start_internal (rt.rs:171)
+==19==    by 0x4019E80: std::rt::lang_start::<()> (in /tmp/calcium-monic-state.rk70Kr/std-thread-control)
+==19==    by 0x401ECD4: main (in /tmp/calcium-monic-state.rk70Kr/std-thread-control)
+==19== 
+==19== LEAK SUMMARY:
+==19==    definitely lost: 0 bytes in 0 blocks
+==19==    indirectly lost: 0 bytes in 0 blocks
+==19==      possibly lost: 48 bytes in 1 blocks
+==19==    still reachable: 544 bytes in 1 blocks
+==19==         suppressed: 0 bytes in 0 blocks
+==19== 
+==19== For lists of detected and suppressed errors, rerun with: -s
+==19== ERROR SUMMARY: 1 errors from 1 contexts (suppressed: 0 from 0)

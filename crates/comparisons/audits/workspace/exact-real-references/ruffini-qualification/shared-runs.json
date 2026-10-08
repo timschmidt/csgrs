@@ -1,0 +1,66 @@
+[
+  {
+    "mode": "jit",
+    "test": "junit",
+    "status": 1,
+    "error": null,
+    "signal": null,
+    "sha256": "9b38009bedf7b3421819bc107114db14f4480af1abd7d50bb894f7ef270017f8"
+  },
+  {
+    "mode": "jit",
+    "test": "shared",
+    "status": 0,
+    "error": null,
+    "signal": null,
+    "sha256": "d1036892c2d82eb109d26586b6c0994543f45bf48c48c68ef345e92402c107b1"
+  },
+  {
+    "mode": "jit",
+    "test": "dag",
+    "status": 0,
+    "error": null,
+    "signal": null,
+    "sha256": "1b48fc14a1cdf68e1fefe9eaa4d3c88775c32459554efdcc2d6a799b715f0948"
+  },
+  {
+    "mode": "jit",
+    "test": "binary-gcd-zero",
+    "status": null,
+    "error": "ETIMEDOUT",
+    "signal": "SIGKILL",
+    "sha256": "9654b3e809aa41c1a5f5c01f170c25f9056ee39414e988cd0c9c0bcdece26749"
+  },
+  {
+    "mode": "interpreter",
+    "test": "junit",
+    "status": 1,
+    "error": null,
+    "signal": null,
+    "sha256": "4e7a3b310783bd10ddf5372e92b3b7ce9c3b682d5dbd66a279e620e1e8e7bc0b"
+  },
+  {
+    "mode": "interpreter",
+    "test": "shared",
+    "status": 0,
+    "error": null,
+    "signal": null,
+    "sha256": "d1036892c2d82eb109d26586b6c0994543f45bf48c48c68ef345e92402c107b1"
+  },
+  {
+    "mode": "interpreter",
+    "test": "dag",
+    "status": 0,
+    "error": null,
+    "signal": null,
+    "sha256": "1b48fc14a1cdf68e1fefe9eaa4d3c88775c32459554efdcc2d6a799b715f0948"
+  },
+  {
+    "mode": "interpreter",
+    "test": "binary-gcd-zero",
+    "status": null,
+    "error": "ETIMEDOUT",
+    "signal": "SIGKILL",
+    "sha256": "9654b3e809aa41c1a5f5c01f170c25f9056ee39414e988cd0c9c0bcdece26749"
+  }
+]

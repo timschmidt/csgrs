@@ -1,0 +1,49 @@
+Name:           aern-fnreps
+Version:        0.5.0
+Cabal-Version:  >= 1.8
+Build-Type:     Simple
+License:        BSD3
+License-File:   LICENCE
+Author:         Michal Konecny, Eike Neumann (Aston University)
+Copyright:      (c) 2015 Michal Konecny, Eike Neumann
+Maintainer:     mikkonecny@gmail.com
+Homepage:       http://code.google.com/p/aern/
+Stability:      experimental
+Category:       Data, Math
+Synopsis:       compare real function representations
+Tested-with:    GHC==7.8.4
+Description:    Define and compare various representations of univariate continuous real functions.
+
+Library
+  hs-source-dirs:   src
+  ghc-options:      -Wall -rtsopts
+  Build-Depends:    
+        base >= 4.4,
+        containers >= 0.3,
+        aern-order == 0.5.*,
+        aern-real == 0.5.*,
+        aern-interval == 0.5.*,
+        aern-double == 0.5.*,
+        unordered-containers,
+        arithmoi
+  exposed-modules: FnReps.FunctionAbstraction
+  other-modules:    
+                    FnReps.Polynomial.UnaryChebSparse,
+                    FnReps.Polynomial.UnaryChebSparse.DCTMultiplication
+
+executable fnreps
+  Build-Depends:   
+        base >= 4.4,
+        containers >= 0.3,
+        aern-order == 0.5.*,
+        aern-real == 0.5.*,
+        aern-interval == 0.5.*,
+        aern-mpfr-rounded == 0.5.*,
+        unordered-containers,
+        arithmoi
+  hs-source-dirs:  src
+  ghc-options:     -Wall -rtsopts
+  main-is:         Main.hs
+  other-modules: FnReps.Polynomial.UnaryChebSparse.DCTMultiplication
+
+

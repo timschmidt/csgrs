@@ -1,0 +1,143 @@
+[
+  {
+    "repo": "hypercurve",
+    "target": "lib",
+    "binary": "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve-6e6572a45c5b177b",
+    "filter": "curve_region_trim::tests",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve-6e6572a45c5b177b",
+      "--test-threads=4",
+      "--color",
+      "never",
+      "curve_region_trim::tests"
+    ],
+    "sha256": "7220d2a962542f83ae7e65bc1c57fa8e7b86000c2e231040bb4e35d099995184",
+    "returncode": 0,
+    "timed_out": false,
+    "elapsed_seconds": 0.5646627609967254,
+    "log": "constant-image-trim-focused-curve_region_trim::tests.log",
+    "passed": [
+      "curve_region_trim::tests::constant_curve_images_trim_to_empty_inside_on_and_outside_a_region",
+      "curve_region_trim::tests::closed_path_trim_does_not_join_interior_curves_across_an_excluded_seam",
+      "curve_region_trim::tests::constant_curve_selected_restrictions_do_not_require_parameter_projection",
+      "curve_region_trim::tests::constant_prefix_and_suffix_preserve_a_closed_path_seam",
+      "curve_region_trim::tests::constant_spline_jumps_do_not_join_coincident_retained_endpoints",
+      "curve_region_trim::tests::constant_zero_distance_and_collapsed_circular_parallels_trim_to_empty",
+      "curve_region_trim::tests::constant_spline_spans_preserve_source_indices_charts_and_path_connectivity",
+      "curve_region_trim::tests::constant_authored_curves_bridge_incident_retained_path_pieces",
+      "curve_region_trim::tests::curve_trim_preserves_recursively_nested_islands_and_holes",
+      "curve_region_trim::tests::exact_curve_path_trim_groups_adjacent_source_curves",
+      "curve_region_trim::tests::equal_endpoint_images_do_not_collapse_nonconstant_curves",
+      "curve_region_trim::tests::exact_curve_path_trim_merges_a_closed_path_across_its_authored_seam",
+      "curve_region_trim::tests::exact_curve_path_trim_merges_a_periodic_curve_across_its_parameter_seam",
+      "curve_region_trim::tests::analytic_parallel_trim_keeps_selected_cuts_for_repeated_operations",
+      "curve_region_trim::tests::exact_curve_trim_intersects_materialized_quadratic_region_boundaries",
+      "curve_region_trim::tests::exact_curve_trim_retains_a_full_circles_right_semicircle",
+      "curve_region_trim::tests::exact_curve_trim_retains_a_positive_length_boundary_overlap",
+      "curve_region_trim::tests::exact_curve_path_trim_retains_algebraic_boundary_images",
+      "curve_region_trim::tests::exact_curve_trim_splits_a_line_across_material_and_hole_boundaries",
+      "curve_region_trim::tests::exact_path_trim_connects_inside_fragments_across_a_hole_boundary_overlap",
+      "curve_region_trim::tests::excluded_nonconstant_excursion_breaks_a_path_despite_equal_endpoints",
+      "curve_region_trim::tests::isolated_tangency_does_not_create_a_trimmed_curve",
+      "curve_region_trim::tests::parameter_retaining_trim_maps_nurbs_spans_to_the_public_domain",
+      "curve_region_trim::tests::parameter_retaining_trim_reports_canonical_boundary_provenance",
+      "curve_region_trim::tests::path_trim_separates_discontinuous_spline_spans_at_equal_knot_parameters",
+      "curve_region_trim::tests::nonconstant_parallel_certificate_survives_coincident_endpoints_and_a_midpoint_cusp",
+      "curve_region_trim::tests::selected_curve_trim_reuses_unprojected_parameters_and_reenters_operations",
+      "curve_region_trim::tests::generated_circle_trim_preserves_selected_frame_and_reversal",
+      "curve_region_trim::tests::generated_chord_trim_preserves_holes_and_exact_endpoint_replay"
+    ],
+    "failed": [],
+    "ignored": [],
+    "summaries": [
+      "test result: ok. 29 passed; 0 failed; 0 ignored; 0 measured; 1062 filtered out; finished in 0.52s"
+    ],
+    "new_failures": [],
+    "known_failures": []
+  },
+  {
+    "repo": "hypercurve",
+    "target": "lib",
+    "binary": "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve-6e6572a45c5b177b",
+    "filter": "curve_region_boolean::certified_successor_tests::curve_trim",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve-6e6572a45c5b177b",
+      "--test-threads=4",
+      "--color",
+      "never",
+      "curve_region_boolean::certified_successor_tests::curve_trim"
+    ],
+    "sha256": "7220d2a962542f83ae7e65bc1c57fa8e7b86000c2e231040bb4e35d099995184",
+    "returncode": 0,
+    "timed_out": false,
+    "elapsed_seconds": 0.11420267399807926,
+    "log": "constant-image-trim-focused-curve_region_boolean::certified_successor_tests::curve_trim.log",
+    "passed": [
+      "curve_region_boolean::certified_successor_tests::curve_trim_retains_selected_field_algebraic_chord_boundaries",
+      "curve_region_boolean::certified_successor_tests::curve_trim_retains_selected_field_algebraic_chord_overlaps"
+    ],
+    "failed": [],
+    "ignored": [],
+    "summaries": [
+      "test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 1089 filtered out; finished in 0.06s"
+    ],
+    "new_failures": [],
+    "known_failures": []
+  },
+  {
+    "repo": "hypercurve",
+    "target": "lib",
+    "binary": "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve-6e6572a45c5b177b",
+    "filter": "native_span_publication_preserves_geometry_and_parameter_lineage",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve-6e6572a45c5b177b",
+      "--test-threads=4",
+      "--color",
+      "never",
+      "native_span_publication_preserves_geometry_and_parameter_lineage"
+    ],
+    "sha256": "7220d2a962542f83ae7e65bc1c57fa8e7b86000c2e231040bb4e35d099995184",
+    "returncode": 0,
+    "timed_out": false,
+    "elapsed_seconds": 0.007534353993833065,
+    "log": "constant-image-trim-focused-native_span_publication_preserves_geometry_and_parameter_lineage.log",
+    "passed": [
+      "curve::curve_subdivision::tests::native_span_publication_preserves_geometry_and_parameter_lineage"
+    ],
+    "failed": [],
+    "ignored": [],
+    "summaries": [
+      "test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 1090 filtered out; finished in 0.00s"
+    ],
+    "new_failures": [],
+    "known_failures": []
+  },
+  {
+    "repo": "hypercurve",
+    "target": "lib",
+    "binary": "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve-6e6572a45c5b177b",
+    "filter": "curve_region_retains_and_classifies_an_algebraic_cusp_semicircle",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve-6e6572a45c5b177b",
+      "--test-threads=4",
+      "--color",
+      "never",
+      "curve_region_retains_and_classifies_an_algebraic_cusp_semicircle"
+    ],
+    "sha256": "7220d2a962542f83ae7e65bc1c57fa8e7b86000c2e231040bb4e35d099995184",
+    "returncode": 0,
+    "timed_out": false,
+    "elapsed_seconds": 0.01556191299459897,
+    "log": "constant-image-trim-focused-curve_region_retains_and_classifies_an_algebraic_cusp_semicircle.log",
+    "passed": [
+      "bezier_offset::conversion_tests::curve_region_retains_and_classifies_an_algebraic_cusp_semicircle"
+    ],
+    "failed": [],
+    "ignored": [],
+    "summaries": [
+      "test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 1090 filtered out; finished in 0.01s"
+    ],
+    "new_failures": [],
+    "known_failures": []
+  }
+]

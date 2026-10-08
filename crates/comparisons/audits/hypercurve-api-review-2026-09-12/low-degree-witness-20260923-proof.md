@@ -1,0 +1,15 @@
+# Exact witnesses for selected low-degree roots
+
+Hypersolve parent: e4f59ba19e01c224c9fdc37f44debb752b6d40ae. Candidate file: src/algebraic_tensor_image.rs, SHA256 8af1db098c986f685782d5e0d15c8b62a05bc30630851cf32d44657e033ee23d. Hyperreal's live worktree belongs to another session and is excluded from edits and build inputs.
+
+The existing compactor proposed small rational factors from an isolating interval's midpoint. Even a root originally defined by x^2-1/11 or x^2-1/13 could therefore lose its cheap scalar witness when its interval was coarse. Hypercurve's independent oblique chord imported successfully, but comparing its normal then reconstructed and repeatedly refined selected roots instead of reusing their scalar meanings.
+
+For a linear polynomial, the candidate derives -c/b. For a quadratic, it uses center=-b/(2a) and radius=sqrt(center^2-c/a). This accepts exact Real coefficients without imposing a rational-payload restriction. The two candidates do not imply a selection: exact interval membership must select one distinct candidate. An existing exact point witness supplies the effective singleton interval; repeated quadratic roots count once. The chosen witness is checked against the original polynomial under STRICT, retaining its polynomial, source symbol, constraint index and interval index.
+
+The basic algebraic-root payload validator trusts a supplied distinct-root count. The first candidate incorrectly treated that local validation as sufficient to disambiguate both quadratic branches. The new ambiguous-interval regression caught that error. That candidate is rejected and retained in focused1 records. The corrected selector explicitly rejects two distinct enclosed candidates. It also shares publication with the existing higher-degree rational/pure-quadratic factor optimizations, whose exact factor proof remains mandatory.
+
+Tests cover 64 quadratic selections across coarse and narrow intervals, positive and negative branches, shifted centers, negative coefficient gauges and denominators through 1009. Further cases exercise a large-denominator linear root, irrational linear and quadratic coefficients, a contradictory two-root interval, an existing positive or negative point witness, repeated roots and closed interval endpoints. All 506 Hypersolve library tests pass in the corrected candidate; source and executable bindings are in low-degree-witness-20260923-all-tests-terminal.json. Parent differential tests and all-target checks are pending.
+
+This resolves the witnessed-root omission. It does not yet qualify the Hypercurve circle-frame candidate: that test now quickly reaches Unsupported during an exact normal cancellation. Separate investigation is checking retention of the chord speed's defining relation. No full curve-family closure or end-to-end performance claim is made.
+
+Qualified and committed as 1bf4c8e49a1ac802f54013a17fd00c29ac38d13d. Both parent regressions fail as intended; both all-target feature checks pass without warnings. All processes terminal/reaped before staging and commit. See qualification, staged and post-commit records.

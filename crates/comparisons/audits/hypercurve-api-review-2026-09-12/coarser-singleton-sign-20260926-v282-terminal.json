@@ -1,0 +1,74 @@
+{
+  "source_manifest": "coarser-singleton-sign-20260926-v282-sources.json",
+  "source_directory": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/source-archives/coarser-singleton-sign-20260926-v282",
+  "cases": [],
+  "builds": [
+    {
+      "crate": "hypersolve",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "test",
+        "--lib",
+        "--features",
+        "hyperreal/serde",
+        "--release",
+        "--all-features",
+        "--no-run",
+        "--message-format=json",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "log": "coarser-singleton-sign-20260926-v282-hypersolve-build.log",
+      "elapsed_seconds": 58.44134639704134,
+      "binary": {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/coarser-singleton-sign-20260926-v282-hypersolve",
+        "sha256": "0bd71f577f5f95a7ee9e36bf6ad9b8d15350a06b27b86d21f200d4f755d17ae0"
+      }
+    }
+  ],
+  "all_processes_reaped": true,
+  "checks": [
+    {
+      "label": "hypersolve-all-tests",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/coarser-singleton-sign-20260926-v282-hypersolve",
+        "--test-threads=2"
+      ],
+      "returncode": 0,
+      "log": "coarser-singleton-sign-20260926-v282-hypersolve-all-tests.log",
+      "elapsed_seconds": 2.3167276750318706,
+      "passed": 525
+    },
+    {
+      "label": "scalar-build",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustc",
+        "--edition=2024",
+        "-C",
+        "opt-level=3",
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/fillet-selected-sign-replay-20260926-v280.rs",
+        "-o",
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/coarser-singleton-sign-20260926-v282-scalar",
+        "-L",
+        "dependency=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps",
+        "--extern",
+        "hyperreal=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperreal-21866f6c9ed7ae01.rlib",
+        "--extern",
+        "hyperlimit=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlimit-2276d64aa4d7bcc8.rlib"
+      ],
+      "returncode": 1,
+      "log": "coarser-singleton-sign-20260926-v282-scalar-build.log",
+      "elapsed_seconds": 0.06381560291629285
+    }
+  ],
+  "probe_inputs": {
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/fillet-selected-sign-export-20260926-v279-sign.jsonl": "0e700b30c5a756f163c2d9677833c6f9a58ae5bff155ea5c61c797bbaa5c73bc",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/fillet-selected-sign-replay-20260926-v280.rs": "18fbb54617ed88ed856f418449d2fa9eb21a176320a87d21cecebf4bddfb6758",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/qualify-coarser-singleton-sign-20260926-v282.py": "4d6a4b55cc79e29f15fb8362787b5caccad0e7e69f3474edb988383aba0ac966"
+  },
+  "qualification_scope": "Full Hypersolve release library with all features and Hyperreal serde for captured exact fixture replay; formatting and all-target Clippy under both feature configurations; whole Hypercurve re-offset remains separate",
+  "expected_test_count": 525,
+  "failure": "scalar-build failed",
+  "qualification_complete": false
+}

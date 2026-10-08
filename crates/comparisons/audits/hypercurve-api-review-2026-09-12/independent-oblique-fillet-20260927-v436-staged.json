@@ -1,0 +1,13 @@
+{
+  "parent": "922a155e059ce12feb5042ed8b65a4c2e26cafe4",
+  "paths": {
+    "src/bezier_offset.rs": "2c4d81dec20d2747826363d05046c6b2bbd51b9f00498110f732ffdf5f687182",
+    "src/bezier_region.rs": "bd77314f9f6a7c41cf152367cfc0fb33703ef52f03903243b0f5e0408a390f45",
+    "src/curve.rs": "0292ee2dfa74996fbb5c9b2e075a837305d0754ce2b6c4195babe88ee2605de6",
+    "src/curve_fillet.rs": "d6adc0637834b909fd18e8540a78d57213cc350feb78da68ea00114ef9bcf786",
+    "src/curve_region_boolean.rs": "1eb411177a0f0d1dc1444459bc78852f31701e80bb5b2d7bcb0e019c1faedca5",
+    "src/curve_support_intersection.rs": "f79a29f8e1b0168dbbca73216fb0c968f92699c83993856666c6495490daedfb"
+  },
+  "qualification": "independent-oblique-fillet-20260927-v436-terminal.json",
+  "verified_source_files": 2046
+}

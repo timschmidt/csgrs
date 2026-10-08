@@ -1,0 +1,9 @@
+   Compiling hypercurve v0.3.1 (/home/tim/Documents/GitHub/workspace/hypercurve)
+    Finished `release` profile [optimized] target(s) in 1m 11s
+     Running unittests src/lib.rs (target/release/deps/hypercurve-6e6572a45c5b177b)
+
+running 1 test
+test bezier_region::tests::rational_line_measurements_obey_policy_and_isolate_cached_certainty ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 875 filtered out; finished in 0.00s
+

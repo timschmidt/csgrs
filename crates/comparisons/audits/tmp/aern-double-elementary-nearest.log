@@ -1,0 +1,4 @@
+exp initial=ToNearest cases=50 passed=50
+sqrt initial=ToNearest cases=33 passed=33
+sin initial=ToNearest cases=64 passed=64
+cos initial=ToNearest cases=64 passed=64

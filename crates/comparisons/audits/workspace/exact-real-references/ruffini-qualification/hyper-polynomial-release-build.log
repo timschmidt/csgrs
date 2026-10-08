@@ -1,0 +1,6 @@
+   Compiling hyperlimit v0.4.1 (/home/tim/Documents/GitHub/workspace/hyperlimit)
+   Compiling hypersolve v0.3.1 (/home/tim/Documents/GitHub/workspace/hypersolve)
+   Compiling ruffini_polynomial_hyper v0.0.0 (/home/tim/Documents/GitHub/workspace/exact-real-references/ruffini-qualification/polynomial-hyper)
+    Finished `release` profile [optimized] target(s) in 8.75s
+
+{"status":0,"error":null}

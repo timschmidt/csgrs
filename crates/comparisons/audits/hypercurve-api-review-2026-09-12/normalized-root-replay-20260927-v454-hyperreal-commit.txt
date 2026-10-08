@@ -1,0 +1,5 @@
+Fuse exact quadratic arithmetic and reuse signed branches
+
+Use the existing fused rational product sums for quadratic products and norms. Decide signs from equal coefficient signs before constructing a larger norm, and compare opposed rational products without materializing their difference. Preserve principal-root branches, exact cancellation, and general scalar fallback.
+
+Validation: 933 Hyperreal and 898 Hypersolve tests, 323 selected Hypercurve release tests, three independently proved captured root queries, Clippy, formatting, denied-warning docs, editing fuzz compilation, and Hyperbrep compilation. The two original extended-fillet re-offset tests remain unresolved and are excluded from the passing geometry scope.

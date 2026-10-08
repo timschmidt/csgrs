@@ -1,0 +1,9 @@
+# Polynomial spline extraction/decomposition consolidation (isolated, unrun)
+
+Prepared while V667 NURBS qualification owns frozen production. Candidate has three copied files and must not promote until V667 is reaped/committed and every base hash matches. No production edit or build.
+
+Remove PolynomialSplineBezierDecomposition2. Its only additional state, exact source knot intervals, now lives on PolynomialBSplineBezierExtraction2 and is recorded in the same positive knot-window loop that emits each Bezier span. The extraction helper consumes the working control net and returns the complete extraction directly. The retained polynomial spline cache returns this actual result; forwarding wrapper, repeated source_intervals scan and export are removed. The standalone native span-fact query keeps its complete refined-knot replay unchanged. An extraction obtained under an approximate terminal policy has no intrinsic policy tag, so validating only stored positive intervals could miss an omitted uncertain knot window when later queried under STRICT. The retained spline cache already separates policies, but that does not authorize removing this standalone replay guard. Native low-degree and general polynomial carriers remain unchanged. No alias or compatibility interface.
+
+Meaningful existing validation should cover all polynomial spline, B-spline and public Curve integrations, library spline policy/domain/periodic guards, repeated/discontinuous knots, unclamped intervals, higher-degree spans, cached clones and retained bounds/monotonicity evidence. Add no implementation-mirroring tests. Lower public authoring-carrier consolidation remains a separate future change because finite endpoint admission and cold extraction benchmarks need explicit preservation.
+
+Candidate is UNFORMATTED/UNBUILT/UNPROMOTED. Next free artifact V674.

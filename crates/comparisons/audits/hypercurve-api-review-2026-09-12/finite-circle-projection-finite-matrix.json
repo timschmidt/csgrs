@@ -1,0 +1,26 @@
+{
+  "returncode": 0,
+  "elapsed_seconds": 0.714601752028102,
+  "normal_library_sha256": "6c28d291cd5328445f25eacc8c02c951baf90fd360386492128e9e4ae5795757",
+  "log": "finite-circle-projection-finite-matrix.log",
+  "source": "finite-rational-pairs-matrix.rs",
+  "command": [
+    "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustc",
+    "--edition=2024",
+    "-O",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-rational-pairs-matrix.rs",
+    "--extern",
+    "hypercurve=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypercurve-42c2716056451e86.rlib",
+    "-L",
+    "dependency=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps",
+    "-o",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-circle-projection-finite-matrix"
+  ],
+  "source_sha256": "dfcf4c581f86b772b183a73a53f9fe78e93f7b716731a73618d8b69a2cea69e4",
+  "executable_sha256": "5a4a365dd572d6c6cdddeeff55006d88c15919443b074dadd6fbd75f21f36e65",
+  "counts": {
+    "queries": 176,
+    "point_replays": 736,
+    "restrictions": 80
+  }
+}

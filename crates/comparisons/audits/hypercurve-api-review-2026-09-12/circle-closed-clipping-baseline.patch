@@ -1,0 +1,12 @@
+diff --git a/src/bezier_offset.rs b/src/bezier_offset.rs
+index c7c2bbf..4574d67 100644
+--- a/src/bezier_offset.rs
++++ b/src/bezier_offset.rs
+@@ -150110,6 +150110,7 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
+                 (Real::zero(), Real::one(), (1, 1)),
+                 (ratio(1, 8), ratio(3, 8), (1, 0)),
+                 (ratio(3, 4), Real::one(), (0, 1)),
++                (ratio(1, 2), ratio(3, 4), (1, 0)),
+             ] {
+                 let range = BezierParameterRange2::new_validated(
+                     BezierParameter2::Exact(start),

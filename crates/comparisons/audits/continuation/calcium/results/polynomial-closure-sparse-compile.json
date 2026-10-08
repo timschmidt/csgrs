@@ -1,0 +1,30 @@
+{
+  "tag": "polynomial-closure-sparse-compile",
+  "started": "2026-09-08T23:57:10.367Z",
+  "finished": "2026-09-08T23:57:10.557Z",
+  "elapsedSeconds": 0.18736455000000002,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison",
+  "command": "gcc",
+  "args": [
+    "-O2",
+    "-g0",
+    "-Wall",
+    "-Wextra",
+    "-Werror",
+    "-isystem",
+    "../exact-real-references/flint/src",
+    "audits/continuation/calcium/flint-polynomial-sparse-series-probe.c",
+    "-L",
+    "../exact-real-references/flint",
+    "-Wl,-rpath,/home/tim/Documents/GitHub/workspace/exact-real-references/flint",
+    "-lflint",
+    "-lmpfr",
+    "-lgmp",
+    "-lm",
+    "-lpthread",
+    "-o",
+    "/tmp/calcium-polynomial-closure.L3hLNa/flint-polynomial-sparse-series-probe"
+  ],
+  "code": 0,
+  "signal": null
+}

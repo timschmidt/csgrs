@@ -1,0 +1,248 @@
+\doxysubsection{Matrix\texorpdfstring{$<$}{<} X \texorpdfstring{$>$}{>} Class Template Reference}
+\hypertarget{classAriadne_1_1Matrix}{}\label{classAriadne_1_1Matrix}\index{Matrix$<$ X $>$@{Matrix$<$ X $>$}}
+
+
+{\ttfamily \#include $<$matrix.\+hpp$>$}
+
+
+
+\doxysubsubsection{Description}
+\subsubsection*{template$<$class X$>$\newline
+class Ariadne\+::\+Matrix$<$ X $>$}
+Matrices over some type {\itshape X}. \begin{Desc}
+\item[Examples]\par
+\mbox{\hyperlink{tutorials_2rigorous_numerics_2rigorous_numerics_tutorial_8cpp-example}{tutorials/rigorous\+\_\+numerics/rigorous\+\_\+numerics\+\_\+tutorial.\+cpp}}.\end{Desc}
+\doxysubsubsubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1Matrix_ac71bddcd77c390e63532962074c8aba3}\label{classAriadne_1_1Matrix_ac71bddcd77c390e63532962074c8aba3} 
+\mbox{\hyperlink{namespaceAriadne_acd8b5f68421eb22a84277ef7c9c0ee2a}{Size\+Type}} {\bfseries row\+\_\+size} () const
+\begin{DoxyCompactList}\small\item\em The number of rows of the matrix. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Matrix_aeb02d75dfd8d9fe97bebb33e3536b697}\label{classAriadne_1_1Matrix_aeb02d75dfd8d9fe97bebb33e3536b697} 
+\mbox{\hyperlink{namespaceAriadne_acd8b5f68421eb22a84277ef7c9c0ee2a}{Size\+Type}} {\bfseries column\+\_\+size} () const
+\begin{DoxyCompactList}\small\item\em The number of columns of the matrix. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Matrix_aab0350784bc40335a5aeba38778a82f9}\label{classAriadne_1_1Matrix_aab0350784bc40335a5aeba38778a82f9} 
+\mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} {\bfseries resize} (\mbox{\hyperlink{namespaceAriadne_acd8b5f68421eb22a84277ef7c9c0ee2a}{Size\+Type}} m, \mbox{\hyperlink{namespaceAriadne_acd8b5f68421eb22a84277ef7c9c0ee2a}{Size\+Type}} n)
+\begin{DoxyCompactList}\small\item\em Resize to an {\itshape m} by {\itshape n} matrix. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Matrix_aeb88621f16f8797cf03c7cc92eaf2764}\label{classAriadne_1_1Matrix_aeb88621f16f8797cf03c7cc92eaf2764} 
+Element\+Reference$<$ X $>$ \& {\bfseries at} (\mbox{\hyperlink{namespaceAriadne_acd8b5f68421eb22a84277ef7c9c0ee2a}{Size\+Type}} i, \mbox{\hyperlink{namespaceAriadne_acd8b5f68421eb22a84277ef7c9c0ee2a}{Size\+Type}} j)
+\begin{DoxyCompactList}\small\item\em Get the value stored in the {\itshape i\textsuperscript{th}} row and {\itshape j\textsuperscript{th}} column. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Matrix_a530803522a00373f1b53a91956d28738}\label{classAriadne_1_1Matrix_a530803522a00373f1b53a91956d28738} 
+const X \& {\bfseries get} (\mbox{\hyperlink{namespaceAriadne_acd8b5f68421eb22a84277ef7c9c0ee2a}{Size\+Type}} i, \mbox{\hyperlink{namespaceAriadne_acd8b5f68421eb22a84277ef7c9c0ee2a}{Size\+Type}} j) const
+\begin{DoxyCompactList}\small\item\em Get the value stored in the {\itshape i\textsuperscript{th}} row and {\itshape j\textsuperscript{th}} column. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Matrix_aaf4b5503dd2429e111f5ba3205e04ced}\label{classAriadne_1_1Matrix_aaf4b5503dd2429e111f5ba3205e04ced} 
+\mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} {\bfseries set} (\mbox{\hyperlink{namespaceAriadne_acd8b5f68421eb22a84277ef7c9c0ee2a}{Size\+Type}} i, \mbox{\hyperlink{namespaceAriadne_acd8b5f68421eb22a84277ef7c9c0ee2a}{Size\+Type}} j, const X \&x)
+\begin{DoxyCompactList}\small\item\em Set the value stored in the {\itshape i\textsuperscript{th}} row and {\itshape j\textsuperscript{th}} column to {\itshape x}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Matrix_a7e9f7dfa485a272275138eec0b3b8c4b}\label{classAriadne_1_1Matrix_a7e9f7dfa485a272275138eec0b3b8c4b} 
+const X \texorpdfstring{$\ast$}{*} {\bfseries begin} () const
+\begin{DoxyCompactList}\small\item\em A pointer to the first element of the data storage. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Matrix_ad0091f950e7b479c05092c56d0d6110e}\label{classAriadne_1_1Matrix_ad0091f950e7b479c05092c56d0d6110e} 
+X \& {\bfseries operator\mbox{[}$\,$\mbox{]}\mbox{[}$\,$\mbox{]}} (\mbox{\hyperlink{namespaceAriadne_acd8b5f68421eb22a84277ef7c9c0ee2a}{Size\+Type}} i, \mbox{\hyperlink{namespaceAriadne_acd8b5f68421eb22a84277ef7c9c0ee2a}{Size\+Type}} j)
+\begin{DoxyCompactList}\small\item\em C-\/style subscripting operator. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Matrix_a422fd80caa45a195f79af00d43d01571}\label{classAriadne_1_1Matrix_a422fd80caa45a195f79af00d43d01571} 
+const X \& {\bfseries operator\mbox{[}$\,$\mbox{]}\mbox{[}$\,$\mbox{]}} (\mbox{\hyperlink{namespaceAriadne_acd8b5f68421eb22a84277ef7c9c0ee2a}{Size\+Type}} i, \mbox{\hyperlink{namespaceAriadne_acd8b5f68421eb22a84277ef7c9c0ee2a}{Size\+Type}} j) const
+\begin{DoxyCompactList}\small\item\em C-\/style constant subscripting operator. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Matrix_a844fa8d1a013cb4060c7dd13880cdf82}\label{classAriadne_1_1Matrix_a844fa8d1a013cb4060c7dd13880cdf82} 
+\mbox{\hyperlink{structAriadne_1_1MatrixRange}{Matrix\+Range}}$<$ \mbox{\hyperlink{classAriadne_1_1Matrix}{Matrix}}$<$ X $>$ $>$ \& {\bfseries operator\mbox{[}$\,$\mbox{]}\mbox{[}$\,$\mbox{]}} (\mbox{\hyperlink{classAriadne_1_1Range}{Range}} is, \mbox{\hyperlink{classAriadne_1_1Range}{Range}} js)
+\begin{DoxyCompactList}\small\item\em C-\/style range subscripting operator. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Matrix_a1a28026be79d6413ce071c8597440e1e}\label{classAriadne_1_1Matrix_a1a28026be79d6413ce071c8597440e1e} 
+const \mbox{\hyperlink{structAriadne_1_1MatrixRange}{Matrix\+Range}}$<$ \mbox{\hyperlink{classAriadne_1_1Matrix}{Matrix}}$<$ X $>$ $>$ \& {\bfseries operator\mbox{[}$\,$\mbox{]}\mbox{[}$\,$\mbox{]}} (\mbox{\hyperlink{classAriadne_1_1Range}{Range}} i, \mbox{\hyperlink{classAriadne_1_1Range}{Range}} js) const
+\begin{DoxyCompactList}\small\item\em C-\/style constant subscripting operator. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Matrix_a31fe2a70cce9cf43c30af9efa92c9b45}\label{classAriadne_1_1Matrix_a31fe2a70cce9cf43c30af9efa92c9b45} 
+Ariadne\+::\+Characteristics\+Type$<$ X $>$ {\bfseries element\+\_\+characteristics} () const
+\begin{DoxyCompactList}\small\item\em The characteristic properties needed to create a zero element of the field/algebra of the matrix. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Matrix_a52ce8a61010cd04b6fb93d5de3e01477}\label{classAriadne_1_1Matrix_a52ce8a61010cd04b6fb93d5de3e01477} 
+X {\bfseries zero\+\_\+element} () const
+\begin{DoxyCompactList}\small\item\em The zero element of the field/algebra of the matrix. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\begin{Indent}\textbf{ Constructors}\par
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1Matrix_a2249c859d9c3503ec00d3a20fe963842}\label{classAriadne_1_1Matrix_a2249c859d9c3503ec00d3a20fe963842} 
+{\bfseries \texorpdfstring{$\sim$}{\string~}\+Matrix} ()
+\begin{DoxyCompactList}\small\item\em Destructor. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Matrix_ab77ae1931eeb7c510e1da9042856fbe2}\label{classAriadne_1_1Matrix_ab77ae1931eeb7c510e1da9042856fbe2} 
+{\bfseries Matrix} (\mbox{\hyperlink{namespaceAriadne_acd8b5f68421eb22a84277ef7c9c0ee2a}{Size\+Type}} m, \mbox{\hyperlink{namespaceAriadne_acd8b5f68421eb22a84277ef7c9c0ee2a}{Size\+Type}} n, Uninitialised)
+\begin{DoxyCompactList}\small\item\em Construct a matrix with {\itshape m} rows and {\itshape n} columns with values uninitialised. The values should be initialised using placement new. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Matrix_ac9a54e84d9e7d060272c2548d8a5cdb4}\label{classAriadne_1_1Matrix_ac9a54e84d9e7d060272c2548d8a5cdb4} 
+{\bfseries Matrix} (\mbox{\hyperlink{namespaceAriadne_acd8b5f68421eb22a84277ef7c9c0ee2a}{Size\+Type}} m, \mbox{\hyperlink{namespaceAriadne_acd8b5f68421eb22a84277ef7c9c0ee2a}{Size\+Type}} n, Ariadne\+::\+Characteristics\+Type$<$ X $>$ prs)
+\begin{DoxyCompactList}\small\item\em Construct a matrix with {\itshape r} rows and {\itshape c} columns with values initialised to {\itshape x}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Matrix_aea072802bea1d14377f403d817fe6b7b}\label{classAriadne_1_1Matrix_aea072802bea1d14377f403d817fe6b7b} 
+{\bfseries Matrix} (\mbox{\hyperlink{namespaceAriadne_acd8b5f68421eb22a84277ef7c9c0ee2a}{Size\+Type}} m, \mbox{\hyperlink{namespaceAriadne_acd8b5f68421eb22a84277ef7c9c0ee2a}{Size\+Type}} n, const X \&z)
+\begin{DoxyCompactList}\small\item\em Construct a matrix with {\itshape r} rows and {\itshape c} columns with values initialised to {\itshape x}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Matrix_aba0cf49f17b8ad938b758eca9a525a27}\label{classAriadne_1_1Matrix_aba0cf49f17b8ad938b758eca9a525a27} 
+{\footnotesize template$<$class... PRS$>$ \newline
+requires Constructible$<$X,\mbox{\hyperlink{namespaceAriadne_aae901a69a841b1a085a0dfe218e38fe9}{Nat}},PRS...$>$}\\{\bfseries Matrix} (\mbox{\hyperlink{namespaceAriadne_acd8b5f68421eb22a84277ef7c9c0ee2a}{Size\+Type}} m, \mbox{\hyperlink{namespaceAriadne_acd8b5f68421eb22a84277ef7c9c0ee2a}{Size\+Type}} n, PRS... prs)
+\begin{DoxyCompactList}\small\item\em Construct a matrix from parameters of {\itshape X}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Matrix_a6b21aec3986cf8aa8542b5d85227de6f}\label{classAriadne_1_1Matrix_a6b21aec3986cf8aa8542b5d85227de6f} 
+{\bfseries Matrix} (\mbox{\hyperlink{namespaceAriadne_acd8b5f68421eb22a84277ef7c9c0ee2a}{Size\+Type}} m, \mbox{\hyperlink{namespaceAriadne_acd8b5f68421eb22a84277ef7c9c0ee2a}{Size\+Type}} n, const X \texorpdfstring{$\ast$}{*}p)
+\begin{DoxyCompactList}\small\item\em Construct a matrix with {\itshape r} rows and {\itshape c} columns, with values initialised from the C-\/style array beginning at {\itshape ptr} in row-\/major format. The value in the {\itshape i\textsuperscript{th}} row and {\itshape j\textsuperscript{th}} column of the resulting matrix is {\itshape ptr}\mbox{[}i\texorpdfstring{$\ast$}{*}c+j\mbox{]}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Matrix_ab784de3c5998101ffbae945753603406}\label{classAriadne_1_1Matrix_ab784de3c5998101ffbae945753603406} 
+{\bfseries Matrix} (\mbox{\hyperlink{namespaceAriadne_a8d51a34ecd8621e992f2470124281c93}{Initializer\+List}}$<$ \mbox{\hyperlink{namespaceAriadne_a8d51a34ecd8621e992f2470124281c93}{Initializer\+List}}$<$ X $>$ $>$ lst)
+\begin{DoxyCompactList}\small\item\em Construct a matrix using initializer lists. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Matrix_ab8000556f0ead6a069c35bd43ff2d6d9}\label{classAriadne_1_1Matrix_ab8000556f0ead6a069c35bd43ff2d6d9} 
+{\footnotesize template$<$class... PRS$>$ \newline
+requires Constructible$<$X,\mbox{\hyperlink{classAriadne_1_1ExactDouble}{Exact\+Double}},PRS...$>$}\\{\bfseries Matrix} (\mbox{\hyperlink{namespaceAriadne_a8d51a34ecd8621e992f2470124281c93}{Initializer\+List}}$<$ \mbox{\hyperlink{namespaceAriadne_a8d51a34ecd8621e992f2470124281c93}{Initializer\+List}}$<$ \mbox{\hyperlink{classAriadne_1_1ExactDouble}{Exact\+Double}} $>$ $>$ lst, PRS... prs)
+\begin{DoxyCompactList}\small\item\em Construct a matrix using initializer lists. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Matrix_ac9f36aa1dc391fa1cd2d0b3e777dd4c7}\label{classAriadne_1_1Matrix_ac9f36aa1dc391fa1cd2d0b3e777dd4c7} 
+{\bfseries Matrix} (\mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ \mbox{\hyperlink{classAriadne_1_1Covector}{Covector}}$<$ X $>$ $>$)
+\begin{DoxyCompactList}\small\item\em Construct a matrix as a linear map from functionals. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Matrix_a982cfb8b56093520375d570541a88439}\label{classAriadne_1_1Matrix_a982cfb8b56093520375d570541a88439} 
+{\footnotesize template$<$class G$>$ \newline
+requires Invocable\+Returning$<$X,G,\mbox{\hyperlink{namespaceAriadne_acd8b5f68421eb22a84277ef7c9c0ee2a}{Size\+Type}},\mbox{\hyperlink{namespaceAriadne_acd8b5f68421eb22a84277ef7c9c0ee2a}{Size\+Type}}$>$}\\{\bfseries Matrix} (\mbox{\hyperlink{namespaceAriadne_acd8b5f68421eb22a84277ef7c9c0ee2a}{Size\+Type}} m, \mbox{\hyperlink{namespaceAriadne_acd8b5f68421eb22a84277ef7c9c0ee2a}{Size\+Type}} n, G const \&g)
+\begin{DoxyCompactList}\small\item\em Generate from a function (object) {\itshape g} of type {\itshape G} mapping an index pair to a value. \texorpdfstring{$\ast$}{*}/. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\end{Indent}
+\doxysubsubsubsection*{Static Public Member Functions}
+\begin{Indent}\textbf{ Static constructors}\par
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1Matrix_abc4bb829f4aabfc11f46becac36fe54c}\label{classAriadne_1_1Matrix_abc4bb829f4aabfc11f46becac36fe54c} 
+static \mbox{\hyperlink{classAriadne_1_1Matrix}{Matrix}}$<$ X $>$ {\bfseries zero} (\mbox{\hyperlink{namespaceAriadne_acd8b5f68421eb22a84277ef7c9c0ee2a}{Size\+Type}} m, \mbox{\hyperlink{namespaceAriadne_acd8b5f68421eb22a84277ef7c9c0ee2a}{Size\+Type}} n, Characteristics\+Type$<$ X $>$ z)
+\begin{DoxyCompactList}\small\item\em The zero matrix with {\itshape m} rows and {\itshape n} columns. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Matrix_a5f0bc731d79936044fc7a160c2d04949}\label{classAriadne_1_1Matrix_a5f0bc731d79936044fc7a160c2d04949} 
+static \mbox{\hyperlink{classAriadne_1_1Matrix}{Matrix}}$<$ X $>$ {\bfseries identity} (\mbox{\hyperlink{namespaceAriadne_acd8b5f68421eb22a84277ef7c9c0ee2a}{Size\+Type}} n, Characteristics\+Type$<$ X $>$ z)
+\begin{DoxyCompactList}\small\item\em The identity matrix with {\itshape n} rows and {\itshape n} columns. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Matrix_a3f2d07ebdf5132bc5127869a202f7aa2}\label{classAriadne_1_1Matrix_a3f2d07ebdf5132bc5127869a202f7aa2} 
+{\footnotesize template$<$class... PRS$>$ \newline
+requires Constructible$<$X,\mbox{\hyperlink{namespaceAriadne_aae901a69a841b1a085a0dfe218e38fe9}{Nat}},PRS...$>$}\\static \mbox{\hyperlink{classAriadne_1_1Matrix}{Matrix}}$<$ X $>$ {\bfseries zero} (\mbox{\hyperlink{namespaceAriadne_acd8b5f68421eb22a84277ef7c9c0ee2a}{Size\+Type}} m, \mbox{\hyperlink{namespaceAriadne_acd8b5f68421eb22a84277ef7c9c0ee2a}{Size\+Type}} n, PRS... prs)
+\begin{DoxyCompactList}\small\item\em The zero matrix with {\itshape m} rows and {\itshape n} columns, with elements described by the characteristics {\itshape prs}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Matrix_a4fc948d12836c4fe08f19a9ea1a7345a}\label{classAriadne_1_1Matrix_a4fc948d12836c4fe08f19a9ea1a7345a} 
+{\footnotesize template$<$class... PRS$>$ \newline
+requires Constructible$<$X,\mbox{\hyperlink{namespaceAriadne_aae901a69a841b1a085a0dfe218e38fe9}{Nat}},PRS...$>$}\\static \mbox{\hyperlink{classAriadne_1_1Matrix}{Matrix}}$<$ X $>$ {\bfseries identity} (\mbox{\hyperlink{namespaceAriadne_acd8b5f68421eb22a84277ef7c9c0ee2a}{Size\+Type}} n, PRS... prs)
+\begin{DoxyCompactList}\small\item\em The itentity matrix with {\itshape n} rows and {\itshape n} columns, with elements described by the characteristics {\itshape prs}. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\end{Indent}
+\doxysubsubsubsection*{Related Types and Functions}
+(Note that these are not member symbols.) \begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1Matrix_a06841e858a1323720c920139a53f074a}\label{classAriadne_1_1Matrix_a06841e858a1323720c920139a53f074a} 
+{\footnotesize template$<$class X$>$ }\\\mbox{\hyperlink{classAriadne_1_1Matrix}{Matrix}}$<$ X $>$ {\bfseries join} (\mbox{\hyperlink{classAriadne_1_1Matrix}{Matrix}}$<$ X $>$ const \&A1, \mbox{\hyperlink{classAriadne_1_1Matrix}{Matrix}}$<$ X $>$ const \&A2)
+\begin{DoxyCompactList}\small\item\em Join two matrices vertically. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Matrix_affa32cf799e9a4c0187f392b972bac27}\label{classAriadne_1_1Matrix_affa32cf799e9a4c0187f392b972bac27} 
+{\footnotesize template$<$class X$>$ }\\\mbox{\hyperlink{classAriadne_1_1Matrix}{Matrix}}$<$ X $>$ {\bfseries cojoin} (\mbox{\hyperlink{classAriadne_1_1Matrix}{Matrix}}$<$ X $>$ const \&A1, \mbox{\hyperlink{classAriadne_1_1Matrix}{Matrix}}$<$ X $>$ const \&A2)
+\begin{DoxyCompactList}\small\item\em Join two matrices horizontally. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Matrix_a2ac5ce7bb4c34b3fcbba5634495bd477}\label{classAriadne_1_1Matrix_a2ac5ce7bb4c34b3fcbba5634495bd477} 
+{\footnotesize template$<$class X$>$ }\\Transpose$<$ \mbox{\hyperlink{classAriadne_1_1Matrix}{Matrix}}$<$ X $>$ $>$ {\bfseries transpose} (const \mbox{\hyperlink{classAriadne_1_1Matrix}{Matrix}}$<$ X $>$ \&A)
+\begin{DoxyCompactList}\small\item\em Construct transpose. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Matrix_a806485aa7b077c63e0122906a508f859}\label{classAriadne_1_1Matrix_a806485aa7b077c63e0122906a508f859} 
+{\footnotesize template$<$class X$>$ }\\\mbox{\hyperlink{classAriadne_1_1Matrix}{Matrix}}$<$ Arithmetic\+Type$<$ X $>$ $>$ {\bfseries inverse} (\mbox{\hyperlink{classAriadne_1_1Matrix}{Matrix}}$<$ X $>$ const \&A)
+\begin{DoxyCompactList}\small\item\em Compute the inverse of $A$. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Matrix_aee099473a5c273617830f4acf4432bb5}\label{classAriadne_1_1Matrix_aee099473a5c273617830f4acf4432bb5} 
+{\footnotesize template$<$class X1, class X2$>$ }\\\mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ Arithmetic\+Type$<$ X1, X2 $>$ $>$ {\bfseries solve} (\mbox{\hyperlink{classAriadne_1_1Matrix}{Matrix}}$<$ X1 $>$ const \&A, \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ X2 $>$ const \&b)
+\begin{DoxyCompactList}\small\item\em Solve the linear equation $Ax=B$ for $x$. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Matrix_a975eb5b443c334a28701703cf0ded4c9}\label{classAriadne_1_1Matrix_a975eb5b443c334a28701703cf0ded4c9} 
+{\footnotesize template$<$class X1, class X2$>$ }\\\mbox{\hyperlink{classAriadne_1_1Matrix}{Matrix}}$<$ Arithmetic\+Type$<$ X1, X2 $>$ $>$ {\bfseries solve} (\mbox{\hyperlink{classAriadne_1_1Matrix}{Matrix}}$<$ X1 $>$ const \&A, \mbox{\hyperlink{classAriadne_1_1Matrix}{Matrix}}$<$ X2 $>$ const \&B)
+\begin{DoxyCompactList}\small\item\em Solve the linear equations $AX=B$ for matrix $X$. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Matrix_ad2a9ba4200a0d9e919a10e48e665e2af}\label{classAriadne_1_1Matrix_ad2a9ba4200a0d9e919a10e48e665e2af} 
+{\footnotesize template$<$class X$>$ }\\\mbox{\hyperlink{classAriadne_1_1Matrix}{Matrix}}$<$ X $>$ {\bfseries lu\+\_\+inverse} (const \mbox{\hyperlink{classAriadne_1_1Matrix}{Matrix}}$<$ X $>$ \&A)
+\begin{DoxyCompactList}\small\item\em Compute the inverse of {\itshape A} using lower/upper triangular factorization. \doxylink{structAriadne_1_1PLUMatrix}{PLUMatrix}. \end{DoxyCompactList}\item 
+{\footnotesize template$<$class X$>$ }\\\mbox{\hyperlink{classAriadne_1_1Matrix}{Matrix}}$<$ X $>$ \mbox{\hyperlink{classAriadne_1_1Matrix_a8a20b91e187ec8d9184d583855a6da46}{lu\+\_\+solve}} (const \mbox{\hyperlink{classAriadne_1_1Matrix}{Matrix}}$<$ X $>$ \&A, const \mbox{\hyperlink{classAriadne_1_1Matrix}{Matrix}}$<$ X $>$ \&B)
+\begin{DoxyCompactList}\small\item\em Solve the linear equations $AX=B$ for matrix $X$ using lower/upper triangular factorization. \end{DoxyCompactList}\item 
+{\footnotesize template$<$class X$>$ }\\\mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ X $>$ \mbox{\hyperlink{classAriadne_1_1Matrix_ad9913ac6e2c82417cd6e524f9f5e4366}{lu\+\_\+solve}} (const \mbox{\hyperlink{classAriadne_1_1Matrix}{Matrix}}$<$ X $>$ \&A, const \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ X $>$ \&b)
+\begin{DoxyCompactList}\small\item\em Solve the linear equation $Ax=b$ using lower/upper triangular factorization. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Matrix_ab3868072ccfe379bd6254ace697fc4c8}\label{classAriadne_1_1Matrix_ab3868072ccfe379bd6254ace697fc4c8} 
+{\footnotesize template$<$class X$>$ }\\\mbox{\hyperlink{classAriadne_1_1Matrix}{Matrix}}$<$ X $>$ {\bfseries gs\+\_\+inverse} (const \mbox{\hyperlink{classAriadne_1_1Matrix}{Matrix}}$<$ X $>$ \&A)
+\begin{DoxyCompactList}\small\item\em Compute the inverse of {\itshape A} using Gauss-\/\+Seidel iteration. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Matrix_a626974faa92f1df1dddac3370d99adfc}\label{classAriadne_1_1Matrix_a626974faa92f1df1dddac3370d99adfc} 
+{\footnotesize template$<$class X$>$ }\\\mbox{\hyperlink{classAriadne_1_1Matrix}{Matrix}}$<$ X $>$ {\bfseries gs\+\_\+solve} (const \mbox{\hyperlink{classAriadne_1_1Matrix}{Matrix}}$<$ X $>$ \&A, const \mbox{\hyperlink{classAriadne_1_1Matrix}{Matrix}}$<$ X $>$ \&B)
+\begin{DoxyCompactList}\small\item\em Solve the linear equations $AX=B$ for $X$ using Gauss-\/\+Seidel iteration. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Matrix_a0077e889b23b53c4c7d4402096411417}\label{classAriadne_1_1Matrix_a0077e889b23b53c4c7d4402096411417} 
+{\footnotesize template$<$class X$>$ }\\\mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ X $>$ {\bfseries gs\+\_\+solve} (const \mbox{\hyperlink{classAriadne_1_1Matrix}{Matrix}}$<$ X $>$ \&A, const \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ X $>$ \&b)
+\begin{DoxyCompactList}\small\item\em Solve the linear equation $Ax=b$ for $x$ using Gauss-\/\+Seidel iteration. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\begin{Indent}\textbf{ Type synonyms}\par
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1Matrix_a1f80bfaf2c58a6087c390b284ded0d38}\label{classAriadne_1_1Matrix_a1f80bfaf2c58a6087c390b284ded0d38} 
+using {\bfseries Dyadic\+Matrix} = \mbox{\hyperlink{classAriadne_1_1Matrix}{Matrix}}$<$\mbox{\hyperlink{classAriadne_1_1Dyadic}{Dyadic}}$>$
+\item 
+\Hypertarget{classAriadne_1_1Matrix_ae2e5efe4095cacbaaf8863e47018a9ec}\label{classAriadne_1_1Matrix_ae2e5efe4095cacbaaf8863e47018a9ec} 
+using {\bfseries Rational\+Matrix} = \mbox{\hyperlink{classAriadne_1_1Matrix}{Matrix}}$<$\mbox{\hyperlink{classAriadne_1_1Rational}{Rational}}$>$
+\item 
+\Hypertarget{classAriadne_1_1Matrix_a0336421ece4a195eb305ddd7f63c40a7}\label{classAriadne_1_1Matrix_a0336421ece4a195eb305ddd7f63c40a7} 
+using {\bfseries Real\+Matrix} = \mbox{\hyperlink{classAriadne_1_1Matrix}{Matrix}}$<$\mbox{\hyperlink{classAriadne_1_1Real}{Real}}$>$
+\item 
+\Hypertarget{classAriadne_1_1Matrix_af3c453f8c55a1b97aec86b15e2a9165d}\label{classAriadne_1_1Matrix_af3c453f8c55a1b97aec86b15e2a9165d} 
+using {\bfseries Float\+DPMatrix} = \mbox{\hyperlink{classAriadne_1_1Matrix}{Matrix}}$<$\mbox{\hyperlink{namespaceAriadne_af915b9f1459c9691328efa71c6f39c6e}{Float\+DP}}$>$
+\item 
+\Hypertarget{classAriadne_1_1Matrix_a85e5a44b7af93a8912ab8fcd0a89ef86}\label{classAriadne_1_1Matrix_a85e5a44b7af93a8912ab8fcd0a89ef86} 
+using {\bfseries Raw\+Float\+DPMatrix} = \mbox{\hyperlink{classAriadne_1_1Matrix}{Matrix}}$<$Raw\+Float\+DP$>$
+\item 
+\Hypertarget{classAriadne_1_1Matrix_ae09c9a8204d63fd78e058ce5758f3ac0}\label{classAriadne_1_1Matrix_ae09c9a8204d63fd78e058ce5758f3ac0} 
+using {\bfseries Float\+DPApproximation\+Matrix} = \mbox{\hyperlink{classAriadne_1_1Matrix}{Matrix}}$<$Float\+DPApproximation$>$
+\item 
+\Hypertarget{classAriadne_1_1Matrix_a175536e9f5705e6930d8009d8c5cd75e}\label{classAriadne_1_1Matrix_a175536e9f5705e6930d8009d8c5cd75e} 
+using {\bfseries Float\+DPBounds\+Matrix} = \mbox{\hyperlink{classAriadne_1_1Matrix}{Matrix}}$<$Float\+DPBounds$>$
+\item 
+\Hypertarget{classAriadne_1_1Matrix_a0d2c577da12e6f63edd53b5311ded189}\label{classAriadne_1_1Matrix_a0d2c577da12e6f63edd53b5311ded189} 
+using {\bfseries Float\+DPBall\+Matrix} = \mbox{\hyperlink{classAriadne_1_1Matrix}{Matrix}}$<$Float\+DPBall$>$
+\item 
+\Hypertarget{classAriadne_1_1Matrix_af3c453f8c55a1b97aec86b15e2a9165d}\label{classAriadne_1_1Matrix_af3c453f8c55a1b97aec86b15e2a9165d} 
+using {\bfseries Float\+DPMatrix} = \mbox{\hyperlink{classAriadne_1_1Matrix}{Matrix}}$<$\mbox{\hyperlink{namespaceAriadne_af915b9f1459c9691328efa71c6f39c6e}{Float\+DP}}$>$
+\item 
+\Hypertarget{classAriadne_1_1Matrix_ae7481c4a119cfe51767b6049a3e37041}\label{classAriadne_1_1Matrix_ae7481c4a119cfe51767b6049a3e37041} 
+using {\bfseries Float\+MPApproximation\+Matrix} = \mbox{\hyperlink{classAriadne_1_1Matrix}{Matrix}}$<$Float\+MPApproximation$>$
+\item 
+\Hypertarget{classAriadne_1_1Matrix_a6173dbc4c4c41f9eb5d259ad5a67d67f}\label{classAriadne_1_1Matrix_a6173dbc4c4c41f9eb5d259ad5a67d67f} 
+using {\bfseries Float\+MPBounds\+Matrix} = \mbox{\hyperlink{classAriadne_1_1Matrix}{Matrix}}$<$\mbox{\hyperlink{classAriadne_1_1Bounds}{Float\+MPBounds}}$>$
+\item 
+\Hypertarget{classAriadne_1_1Matrix_a52a40e45c159e0d950a02618c0d8ee1f}\label{classAriadne_1_1Matrix_a52a40e45c159e0d950a02618c0d8ee1f} 
+using {\bfseries Float\+MPBall\+Matrix} = \mbox{\hyperlink{classAriadne_1_1Matrix}{Matrix}}$<$Float\+MPBall$>$
+\item 
+\Hypertarget{classAriadne_1_1Matrix_ad982aab4b454e77f8065e0dd0698bca3}\label{classAriadne_1_1Matrix_ad982aab4b454e77f8065e0dd0698bca3} 
+using {\bfseries Float\+MPMatrix} = \mbox{\hyperlink{classAriadne_1_1Matrix}{Matrix}}$<$\mbox{\hyperlink{namespaceAriadne_a07966b67e613cc8779412beecb60651d}{Float\+MP}}$>$
+\item 
+\Hypertarget{classAriadne_1_1Matrix_ac1a22799d29d73f971d832595df25e3d}\label{classAriadne_1_1Matrix_ac1a22799d29d73f971d832595df25e3d} 
+using {\bfseries Float\+MPDPBall\+Matrix} = \mbox{\hyperlink{classAriadne_1_1Matrix}{Matrix}}$<$Float\+MPDPBall$>$
+\end{DoxyCompactItemize}
+\end{Indent}
+
+
+\label{doc-related-members}
+\Hypertarget{classAriadne_1_1Matrix_doc-related-members}
+\doxysubsubsection{Friends And Related Symbol Documentation}
+\Hypertarget{classAriadne_1_1Matrix_a8a20b91e187ec8d9184d583855a6da46}\index{Matrix$<$ X $>$@{Matrix$<$ X $>$}!lu\_solve@{lu\_solve}}
+\index{lu\_solve@{lu\_solve}!Matrix$<$ X $>$@{Matrix$<$ X $>$}}
+\doxyparagraph{\texorpdfstring{lu\_solve()}{lu\_solve()}\hspace{0.1cm}{\footnotesize\ttfamily [1/2]}}
+{\footnotesize\ttfamily \label{classAriadne_1_1Matrix_a8a20b91e187ec8d9184d583855a6da46} 
+template$<$class X$>$ \\
+\mbox{\hyperlink{classAriadne_1_1Matrix}{Matrix}}$<$ X $>$ lu\+\_\+solve (\begin{DoxyParamCaption}\item[{const \mbox{\hyperlink{classAriadne_1_1Matrix}{Matrix}}$<$ X $>$ \&}]{A}{, }\item[{const \mbox{\hyperlink{classAriadne_1_1Matrix}{Matrix}}$<$ X $>$ \&}]{B}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [related]}}
+
+
+
+Solve the linear equations $AX=B$ for matrix $X$ using lower/upper triangular factorization. 
+
+\begin{DoxySeeAlso}{See also}
+\doxylink{structAriadne_1_1PLUMatrix}{PLUMatrix} 
+\end{DoxySeeAlso}
+
+
+References \mbox{\hyperlink{classAriadne_1_1Matrix_ad2a9ba4200a0d9e919a10e48e665e2af}{lu\+\_\+inverse()}}, \mbox{\hyperlink{classAriadne_1_1Matrix_a8a20b91e187ec8d9184d583855a6da46}{lu\+\_\+solve()}}, and \mbox{\hyperlink{classAriadne_1_1Matrix_ab77ae1931eeb7c510e1da9042856fbe2}{Matrix()}}.
+
+
+
+Referenced by \mbox{\hyperlink{classAriadne_1_1Matrix_a8a20b91e187ec8d9184d583855a6da46}{lu\+\_\+solve()}}, and \mbox{\hyperlink{classAriadne_1_1Matrix_ad9913ac6e2c82417cd6e524f9f5e4366}{lu\+\_\+solve()}}.
+
+\Hypertarget{classAriadne_1_1Matrix_ad9913ac6e2c82417cd6e524f9f5e4366}\index{Matrix$<$ X $>$@{Matrix$<$ X $>$}!lu\_solve@{lu\_solve}}
+\index{lu\_solve@{lu\_solve}!Matrix$<$ X $>$@{Matrix$<$ X $>$}}
+\doxyparagraph{\texorpdfstring{lu\_solve()}{lu\_solve()}\hspace{0.1cm}{\footnotesize\ttfamily [2/2]}}
+{\footnotesize\ttfamily \label{classAriadne_1_1Matrix_ad9913ac6e2c82417cd6e524f9f5e4366} 
+template$<$class X$>$ \\
+\mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ X $>$ lu\+\_\+solve (\begin{DoxyParamCaption}\item[{const \mbox{\hyperlink{classAriadne_1_1Matrix}{Matrix}}$<$ X $>$ \&}]{A}{, }\item[{const \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ X $>$ \&}]{b}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [related]}}
+
+
+
+Solve the linear equation $Ax=b$ using lower/upper triangular factorization. 
+
+\begin{DoxySeeAlso}{See also}
+\doxylink{structAriadne_1_1PLUMatrix}{PLUMatrix} 
+\end{DoxySeeAlso}
+
+
+References \mbox{\hyperlink{classAriadne_1_1Matrix_ad2a9ba4200a0d9e919a10e48e665e2af}{lu\+\_\+inverse()}}, \mbox{\hyperlink{classAriadne_1_1Matrix_a8a20b91e187ec8d9184d583855a6da46}{lu\+\_\+solve()}}, and \mbox{\hyperlink{classAriadne_1_1Matrix_ab77ae1931eeb7c510e1da9042856fbe2}{Matrix()}}.
+
+
+
+The documentation for this class was generated from the following files\+:\begin{DoxyCompactItemize}
+\item 
+source/algebra/\mbox{\hyperlink{dense__differential_8hpp}{dense\+\_\+differential.\+hpp}}\item 
+source/algebra/\mbox{\hyperlink{linear__algebra_8decl_8hpp}{linear\+\_\+algebra.\+decl.\+hpp}}\item 
+source/algebra/\mbox{\hyperlink{matrix_8hpp}{matrix.\+hpp}}\item 
+source/algebra/matrix.\+tpl.\+hpp\end{DoxyCompactItemize}

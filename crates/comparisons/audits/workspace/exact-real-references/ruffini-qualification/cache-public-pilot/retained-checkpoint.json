@@ -1,0 +1,97 @@
+{
+  "scope": "Retained Ruffini cache transfer checkpoint, not completion of the full exact-real ecosystem goal.",
+  "totals": [
+    {
+      "name": "hyperreal-debug",
+      "passed": 756,
+      "status": 0
+    },
+    {
+      "name": "hyperreal-release-all",
+      "passed": 863,
+      "status": 0
+    },
+    {
+      "name": "hyperreal-clippy",
+      "passed": 0,
+      "status": 0
+    },
+    {
+      "name": "hyperreal-wasm",
+      "passed": 0,
+      "status": 0
+    },
+    {
+      "name": "hyperreal-fmt",
+      "passed": 0,
+      "status": 0
+    },
+    {
+      "name": "cache-tests-fmt",
+      "passed": 0,
+      "status": 0
+    },
+    {
+      "name": "hyperlattice",
+      "passed": 202,
+      "status": 0
+    },
+    {
+      "name": "hyperlimit",
+      "passed": 348,
+      "status": 0
+    },
+    {
+      "name": "hypertri",
+      "passed": 7,
+      "status": 0
+    },
+    {
+      "name": "hypersolve",
+      "passed": 796,
+      "status": 0
+    },
+    {
+      "name": "hypercurve-lib",
+      "passed": 910,
+      "status": 0
+    }
+  ],
+  "verifiedBaselineFiles": 947,
+  "newTestFiles": 1,
+  "verifiedRawMeasurements": 3140,
+  "retainedGateHash": "75900b1a1dc76ba4c79f323179326fa2c1a86b4abf8a0f518abd9ca221a3696a",
+  "sourceHashes": [
+    [
+      "src/computable/node.rs",
+      "c6cb5f5a1b1c8c471fedba18a7bb3e85b139c372fc65da3b033b39c4ecd49c6e"
+    ],
+    [
+      "src/computable/node/representation.rs",
+      "6901ebf2795947942eea4356b0031fa2a5794187f79e30c076e5c6a01351d940"
+    ],
+    [
+      "src/computable/node/cache_rescale_tests.rs",
+      "699c725764121e771a693c5cd9090f654442e40f15156c70e53ccc3c70572a0a"
+    ]
+  ],
+  "verifierHash": "1c74d16b40bedfafe9a81858149b0fe8cdec6b50e070b9b1a7e6ac4021dad425",
+  "evidence": [
+    [
+      "retention-baseline.json",
+      "bcfd719d324cf2570e63a0cdaaf12d9c9e224417ee5ef700e21165d576e60ca4"
+    ],
+    [
+      "paired-v1/analysis.json",
+      "fb79e0de09a4637789c09a32a58f67ce7a10b133434e36f0484e14a24ae35b37"
+    ],
+    [
+      "focused-v1/analysis.json",
+      "81a4b8df836517dcf2ba3faf6c0d0ac2e77f204b7bcf42975268d8ce0f06fbe4"
+    ],
+    [
+      "memcheck-v2/complete.json",
+      "1ddf7d52f0237584942604b087c639ec60b5d82ae014cb47e202282f97c33425"
+    ]
+  ]
+}

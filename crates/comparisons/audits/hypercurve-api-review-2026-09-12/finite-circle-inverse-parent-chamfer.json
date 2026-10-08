@@ -1,0 +1,11 @@
+{
+  "command": [
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-selected-point-domains-libraries/hypercurve-bd62b509c70a3efd",
+    "--exact",
+    "bezier_offset::conversion_tests::chamfer_transported_mapped_cusp_cut_inverts_on_analytic_overlap",
+    "--test-threads=1"
+  ],
+  "returncode": 0,
+  "elapsed_seconds": 0.665354066004511,
+  "binary_sha256": "bdab4c08389cbc7823d88e4b25a766bca1e8225f530645dbbe81b6158ba64a9b"
+}

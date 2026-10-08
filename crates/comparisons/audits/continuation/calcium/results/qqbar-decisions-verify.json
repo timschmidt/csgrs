@@ -1,0 +1,13 @@
+{
+  "tag": "qqbar-decisions-verify",
+  "started": "2026-09-10T05:49:15.964Z",
+  "finished": "2026-09-10T05:49:16.590Z",
+  "elapsedSeconds": 0.62459319,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "node",
+  "args": [
+    "verify-qqbar-decisions.mjs"
+  ],
+  "code": 0,
+  "signal": null
+}

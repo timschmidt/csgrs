@@ -1,0 +1,16 @@
+Retain degree-certified zero polynomial derivatives for tangent ordering
+
+The same quadratic branches traversed successfully as rational curves but
+blocked in their native representation because a zero third derivative
+was reported as absent. Supply that zero when higher endpoint evidence is
+requested. Selected quadratic and cubic sources also retain exact zero
+above their polynomial degree, without parameter projection or arithmetic.
+
+Keep rational derivative and finite-domain machinery unchanged. Independent
+regressions cover native/conic/general carrier equivalence, selected
+endpoints, both policies, reversed sources and pi coefficients. The unchanged
+18-case public probe repairs all six native-quadratic blockers.
+
+Validation: 339 selected release tests in 12 pinned binaries; seven
+lint/format/fuzz/doc/downstream checks. Evidence is in
+hypercurve-api-review-2026-09-12/polynomial-zero-jet-v874-reviewed.json.

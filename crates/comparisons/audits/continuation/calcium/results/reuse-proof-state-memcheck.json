@@ -1,0 +1,18 @@
+{
+  "tag": "reuse-proof-state-memcheck",
+  "started": "2026-09-08T22:01:40.392Z",
+  "finished": "2026-09-08T22:01:44.250Z",
+  "elapsedSeconds": 3.856298473,
+  "cwd": "/home/tim/Documents/GitHub/workspace",
+  "command": "valgrind",
+  "args": [
+    "--tool=memcheck",
+    "--error-exitcode=99",
+    "--leak-check=full",
+    "--show-leak-kinds=all",
+    "--errors-for-leak-kinds=definite,indirect,possible",
+    "/tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/release/calcium-reuse-proof-state"
+  ],
+  "code": 99,
+  "signal": null
+}

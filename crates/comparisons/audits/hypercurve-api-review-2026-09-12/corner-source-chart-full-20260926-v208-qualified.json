@@ -1,0 +1,159 @@
+{
+  "parents": {
+    "hypercurve": "f7bb46a2869097219d316b6af22ae26c2459492c",
+    "hypersolve": "42308d704df777b3e627aa344424afa3f215e456",
+    "hyperreal": "0cb5f29aee065c73e234e0ebb0a9e106398515bb"
+  },
+  "files": {
+    "src/bezier_offset.rs": "0ffd0ed2ea08eb9ee447a0fbc547f089ab66fea7d37d8f08d48ee52c15fdc98e",
+    "src/bezier_region.rs": "4041c2abf5ec093c6e0a00af357f6d5a29893114596c767cdfa577d6b25a37f9",
+    "src/curve.rs": "7112a1fc63dbf892cf286e9b0b43ea2c134a843c163e6cc5758af2bfc24bd409",
+    "src/curve_corner_chain.rs": "f2fce6c0f52911a7c1a0f906f2a0bbaa340cfa5fc3f284d4f4e80454b6648678",
+    "src/curve_region_boolean.rs": "6d6ac952633339cdc8db5d89c67b21d63dd3073a558822da08e53ea1ba3bcd92",
+    "src/curve_support_intersection.rs": "845111497798d2204354215cbb82ca0b76f9ca63aea08d7431acc8feb8751b86"
+  },
+  "qualification": "corner-source-chart-full-20260926-v208-terminal.json",
+  "source_manifest": "corner-source-chart-full-20260926-v208-sources.json",
+  "source_count": 2044,
+  "test_count": 524,
+  "binaries": {
+    "hypercurve": {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/corner-source-chart-full-20260926-v208-hypercurve",
+      "sha256": "ae7c20d629c57cea2cf2e7b81f65d6d36a44b6773184d900d9e08d46b5559caa"
+    },
+    "hypercurve_analytic_parallel_region": {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/corner-source-chart-full-20260926-v208-hypercurve_analytic_parallel_region",
+      "sha256": "fb6803ad0530dbff8f3a2790171d064f99469e3cb2011db20be11d89bfbe1199"
+    },
+    "hypercurve_arc_bezier": {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/corner-source-chart-full-20260926-v208-hypercurve_arc_bezier",
+      "sha256": "51cf7ce8b10299c851169bfe0832207b7494ae516488f257a88bd1198b2ea95c"
+    },
+    "hypercurve_bezier_arrangement": {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/corner-source-chart-full-20260926-v208-hypercurve_bezier_arrangement",
+      "sha256": "34dfcbfc1895d7852a7152af0a6a12576b64dbf63f48241961e4ca71de7a5bb2"
+    },
+    "hypercurve_curve": {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/corner-source-chart-full-20260926-v208-hypercurve_curve",
+      "sha256": "e28124b996a47dc90630aa6a7c87160f0174b5e6c1d63853a35227f4bc487d34"
+    },
+    "hypercurve_curve_region_boolean": {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/corner-source-chart-full-20260926-v208-hypercurve_curve_region_boolean",
+      "sha256": "12982d50fe9e3a1c75cbeac6463ac498a1b2c339211e7352ccb99724e162f193"
+    },
+    "hypercurve_curve_region_boolean_fuzz": {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/corner-source-chart-full-20260926-v208-hypercurve_curve_region_boolean_fuzz",
+      "sha256": "0ec93f41afc5cb26aa850fccb05fc8516c75852e41aa868acb52a95f1aeea440"
+    },
+    "hypercurve_pcb_boolean_regressions": {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/corner-source-chart-full-20260926-v208-hypercurve_pcb_boolean_regressions",
+      "sha256": "559328927b7bbd3b191c16a98e6ce4b994d0b58df219486210c427d0766b5706"
+    }
+  },
+  "checks": [
+    {
+      "repo": "hypercurve",
+      "label": "hypercurve-fmt",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustfmt",
+        "--edition",
+        "2024",
+        "--check",
+        "src/bezier_offset.rs",
+        "src/bezier_region.rs",
+        "src/curve.rs",
+        "src/curve_corner_chain.rs",
+        "src/curve_region_boolean.rs",
+        "src/curve_support_intersection.rs"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 3.017614230979234,
+      "log": "corner-source-chart-full-20260926-v208-hypercurve-fmt.log"
+    },
+    {
+      "repo": "hypercurve",
+      "label": "hypercurve-clippy-all",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "clippy",
+        "--all-targets",
+        "--all-features",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 20.092578507959843,
+      "log": "corner-source-chart-full-20260926-v208-hypercurve-clippy-all.log"
+    },
+    {
+      "repo": "hypercurve",
+      "label": "hypercurve-clippy-default",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "clippy",
+        "--all-targets",
+        "--no-default-features",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 19.04111524298787,
+      "log": "corner-source-chart-full-20260926-v208-hypercurve-clippy-default.log"
+    },
+    {
+      "repo": "hyperbrep",
+      "label": "hyperbrep-check",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "check",
+        "--all-targets",
+        "--all-features",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 14.082747819949873,
+      "log": "corner-source-chart-full-20260926-v208-hyperbrep-check.log"
+    }
+  ],
+  "all_processes_reaped": true,
+  "reaped_outer_session": 35031,
+  "workspace_status": {
+    "ExactCalculator": "",
+    "NURBS_BREP_kernel": "",
+    "alumina-firmware": "",
+    "alumina-interface": "",
+    "citizen-builder": "",
+    "crcalc": "",
+    "csgrs": "",
+    "csgrs-ffi": "",
+    "exactcore-hyper-comparison": "",
+    "hyperbrep": "",
+    "hypercircuit": "",
+    "hypercurve": " M src/bezier_offset.rs\n M src/bezier_region.rs\n M src/curve.rs\n M src/curve_corner_chain.rs\n M src/curve_region_boolean.rs\n M src/curve_support_intersection.rs\n",
+    "hyperdrc": "",
+    "hyperevolution": "",
+    "hypergraphics": "",
+    "hyperlattice": "",
+    "hyperlimit": "",
+    "hypermesh": "",
+    "hyperpack": "",
+    "hyperparts": "",
+    "hyperpath": "",
+    "hyperphysics": "",
+    "hyperreal": "",
+    "hypersdf": "",
+    "hypersolve": "",
+    "hypertri": "",
+    "hypervoxel": "",
+    "openscad-rs": "",
+    "synaps-cad": "",
+    "videos": ""
+  }
+}

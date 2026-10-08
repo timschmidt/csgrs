@@ -1,0 +1,850 @@
+[
+  {
+    "file": "hypercurve/Cargo.lock",
+    "sha256": "dd5d29eaf1ab3a6ca6f7d1362ad75f68e6045b124eb3c5033f379c3ab77cc05a"
+  },
+  {
+    "file": "hypercurve/Cargo.toml",
+    "sha256": "e6fa04394c7417807b4b5fcfa609fa1ce0e7b23b1519cd5e6cc325cf48c9d934"
+  },
+  {
+    "file": "hypercurve/README.md",
+    "sha256": "a03328c97fca775779bd6ac72735673236cad78058bc56cd3818e8d5c0cf8218"
+  },
+  {
+    "file": "hypercurve/benches/api_surface.rs",
+    "sha256": "9900544ea2991b2ae5b0a6e29fc017ec58e89d8d885086e9399ca57b753a1f84"
+  },
+  {
+    "file": "hypercurve/benches/arc.rs",
+    "sha256": "7d279ce68ef29ff3430759b9689d1e05eb942e66f6e7bd4128fd84628975934b"
+  },
+  {
+    "file": "hypercurve/benches/bezier_algebraic_parameter.rs",
+    "sha256": "6cac0534c8b3787357948f9d1182b1b698af2292144edc0b043f45d44294ea36"
+  },
+  {
+    "file": "hypercurve/benches/bezier_arrangement.rs",
+    "sha256": "0a1932fd58a8982334608f3032787069c0e87a49b29950ca52032e671e92903a"
+  },
+  {
+    "file": "hypercurve/benches/bezier_evaluation.rs",
+    "sha256": "b509bd49d20cfd1ba5d2eeacdaae99c2c49ac7f600a1b688fe969763db630d9f"
+  },
+  {
+    "file": "hypercurve/benches/bezier_rational_overlap.rs",
+    "sha256": "01f46acdeb68cc102395434af5f18649c53931fb1f1decc738304c79dad18950"
+  },
+  {
+    "file": "hypercurve/benches/bezier_region.rs",
+    "sha256": "96ec9739c6d244c4ee8b9ea926c7cfee463100f50e53090e5d9681835820ac03"
+  },
+  {
+    "file": "hypercurve/benches/bezier_split_materialization.rs",
+    "sha256": "818960fa1000b49cb8e68bf822b8fada75ca78d30231f3a0f44a295027a26d91"
+  },
+  {
+    "file": "hypercurve/benches/bezier_tangent_order.rs",
+    "sha256": "6abc38ce01ff763fac5d7af83ca465acaa5d5278b44795c08ed670465b7e4701"
+  },
+  {
+    "file": "hypercurve/benches/bspline.rs",
+    "sha256": "132b7aa48528e7bef7cd1bdff19810c264108cc875cb059c89df6be7b17f8458"
+  },
+  {
+    "file": "hypercurve/benches/common/pathological.rs",
+    "sha256": "b9c464ac1ad6c1c31cdca92fa595ee8eed049d0ed25418a847a80d7bcea0b79f"
+  },
+  {
+    "file": "hypercurve/benches/comparative.rs",
+    "sha256": "0a9ba6d238280deba314e5f68b94ab61928662363f0c33d0d1f0d47cb8094da5"
+  },
+  {
+    "file": "hypercurve/benches/containment.rs",
+    "sha256": "56bcf16fcaf842859d386a3fec68aa4e799e68282be3a234af90eecba02f1881"
+  },
+  {
+    "file": "hypercurve/benches/curve_path.rs",
+    "sha256": "ee09771cb200ec08221863ca727015fbf797c880ba67366abf329cf2da4c43b6"
+  },
+  {
+    "file": "hypercurve/benches/curve_region_boolean_batch.rs",
+    "sha256": "7bc6dafd2eb19f6a94cf7569c7fc0f2e638ab225f7c0c40bfdd929f9e0bcd2ba"
+  },
+  {
+    "file": "hypercurve/benches/dispatch_trace.rs",
+    "sha256": "5ce84055bda91cebb1998abd0f2a425d0f258de6e37fbb96033d3bc315869beb"
+  },
+  {
+    "file": "hypercurve/benches/editing.rs",
+    "sha256": "9db9db2ffc127bbc4b6cba56e63e6bd2548e5f848754eead7e2b8ac0621569f6"
+  },
+  {
+    "file": "hypercurve/benches/finite_projection.rs",
+    "sha256": "a3e4ba7e91db34cd6b1c1076637a889054ffdc35a5f39b47e3b141dff38f79cc"
+  },
+  {
+    "file": "hypercurve/benches/intersection.rs",
+    "sha256": "fac72764bf59809405db7b664a75e7e7a07e666d8650ee3e61710e527ed93e0d"
+  },
+  {
+    "file": "hypercurve/benches/intersection_sweep.rs",
+    "sha256": "3eafb59a8d6afe80a35b944062b1d6da45b400342b81ffca28bf976c855e75f1"
+  },
+  {
+    "file": "hypercurve/benches/offset.rs",
+    "sha256": "a9c38d748108e073fdd16f9e69fe58c8357e0c59e853b162c14ccdc0725d02af"
+  },
+  {
+    "file": "hypercurve/benches/pathological_regions.rs",
+    "sha256": "377ea7950752755064ca94628face7940f19e24dbaee683f6ec62111dc5bb5d5"
+  },
+  {
+    "file": "hypercurve/benches/rational_bezier.rs",
+    "sha256": "bddd5710fe6983a0445cd65a9a90eb9afa5cc2dbcbf0b43748890749efd04867"
+  },
+  {
+    "file": "hypercurve/benches/reconstruction.rs",
+    "sha256": "359030970aa4f326b0233b28ed939c86b787b89cc9981270927e38dbb015b214"
+  },
+  {
+    "file": "hypercurve/benches/straight_skeleton.rs",
+    "sha256": "9708a98c5144edbd899422d21f82e0533f9354e9a21952288b009c1ad21e7162"
+  },
+  {
+    "file": "hypercurve/examples/arrangement.rs",
+    "sha256": "8671397787a16f3ed11cdd2ac2c07518a38b4af4f68cd6ce6206e82648324576"
+  },
+  {
+    "file": "hypercurve/examples/basic.rs",
+    "sha256": "0641fa285fd2550e83c2b6b3dc29e3161fb4d9954ca3c5010633aae25f4c5aa1"
+  },
+  {
+    "file": "hypercurve/examples/hypercurve_ui/.gitignore",
+    "sha256": "4b8448c63b5ca9a51b9c70b8147371d65bf5069f7a0eec32d5400b7ce14b80c0"
+  },
+  {
+    "file": "hypercurve/examples/hypercurve_ui/Cargo.lock",
+    "sha256": "1b4253c544d02e231b1dec89557b98c9a692aff8092cecda4aa7d1fc79af2891"
+  },
+  {
+    "file": "hypercurve/examples/hypercurve_ui/Cargo.toml",
+    "sha256": "d8f31ef9003f88344ad9a6a8ee9efb250922d96400f0a63c4abfcfe1bb61a6ee"
+  },
+  {
+    "file": "hypercurve/examples/hypercurve_ui/README.md",
+    "sha256": "1cfb63eb16ba50ac72082d280c8bd5691b703d6dcbc7fb142cdca8456e264ccd"
+  },
+  {
+    "file": "hypercurve/examples/hypercurve_ui/Trunk.toml",
+    "sha256": "e996a27c64e0601278f8a1382fdaa72e55abdddfabc0d37a5df0d463f2977f45"
+  },
+  {
+    "file": "hypercurve/examples/hypercurve_ui/index.html",
+    "sha256": "9da8ff3b31fd944f1b9ff6466ab42e868a10709576f7a8bea708fff6e019c65e"
+  },
+  {
+    "file": "hypercurve/examples/hypercurve_ui/proptest-regressions/geometry.txt",
+    "sha256": "cfa0c7b77386667773be9ad5a0bb3dd34c995b7b50f22df29cf0d448a2dac4c8"
+  },
+  {
+    "file": "hypercurve/examples/hypercurve_ui/src/app.rs",
+    "sha256": "857f82600e8c83d8b7616c23ab7f4e01eee0ea7139685cb0d6b4a5b0d9c7733c"
+  },
+  {
+    "file": "hypercurve/examples/hypercurve_ui/src/corner_scenes.rs",
+    "sha256": "db7b6833418684fcf3b8d121feaf397fdf760e1a2e347a13432bff5461d13385"
+  },
+  {
+    "file": "hypercurve/examples/hypercurve_ui/src/editor.rs",
+    "sha256": "6b577fde2684adf4e0a76ab374af26d047861b00d382cfc92a61e35ac1a23f91"
+  },
+  {
+    "file": "hypercurve/examples/hypercurve_ui/src/geometry.rs",
+    "sha256": "dbbb89569eb12d40708ed72e280af515f1295523472b88e809ce4621a75dc983"
+  },
+  {
+    "file": "hypercurve/examples/hypercurve_ui/src/main.rs",
+    "sha256": "7d2615befce0e454ddc2dfd92b8232b3456db3fb70e39138eb746e14fa3f6257"
+  },
+  {
+    "file": "hypercurve/examples/hypercurve_ui/src/plotting.rs",
+    "sha256": "ef76a28686758dbf7f40a4e10c11168195d10f6b127486008e4b1584287b9806"
+  },
+  {
+    "file": "hypercurve/examples/hypercurve_ui/src/scenes.rs",
+    "sha256": "cb11dee22c3038692bbf2c02f74f94e4416f4a39bb6334fb91a023f6577b21c1"
+  },
+  {
+    "file": "hypercurve/examples/hypercurve_ui/src/share.rs",
+    "sha256": "104fd1cc6c0974e5e169a0c2291d8270810ab42ea0cae41f4d8f8312e48625a8"
+  },
+  {
+    "file": "hypercurve/examples/hypercurve_ui/src/theme.rs",
+    "sha256": "4687cc2280eaf24a16e60c893c2d5fa41f1b0fc44a6b7aa33b636d358bfdb69e"
+  },
+  {
+    "file": "hypercurve/examples/hypercurve_ui/src/torture_scene.rs",
+    "sha256": "b32f9ae2be097658da48a97e41c09194a1052f471372d5fe53edb5e98af1bec0"
+  },
+  {
+    "file": "hypercurve/fuzz/.gitignore",
+    "sha256": "aa955853301dfbb52525a6640a9c6bd64d3fc2d8d3c757145283513e6dfb9e39"
+  },
+  {
+    "file": "hypercurve/fuzz/Cargo.lock",
+    "sha256": "7c4a84b0b03daa9d548c1938df5420ebd42f8e32571170dd47f4b87baf362df2"
+  },
+  {
+    "file": "hypercurve/fuzz/Cargo.toml",
+    "sha256": "0087b0225d7e049c1069f12281ddd3c5f3ec7701bc3efe371e075eebe81b3de5"
+  },
+  {
+    "file": "hypercurve/fuzz/README.md",
+    "sha256": "f0542776a0bddfba8454eb60fcc19c0163aef99481d8070de2605da912d1941a"
+  },
+  {
+    "file": "hypercurve/fuzz/fuzz_targets/bezier_algebraic_image.rs",
+    "sha256": "b79952c309efb084be81f140df8c9bbf5ca5cdb4bf332bebecea840fa219a0e0"
+  },
+  {
+    "file": "hypercurve/fuzz/fuzz_targets/bezier_algebraic_parameter.rs",
+    "sha256": "7a647701e367237714645901e152d5c30324d14b2a782cc66127c6ba1e664713"
+  },
+  {
+    "file": "hypercurve/fuzz/fuzz_targets/bezier_arrangement.rs",
+    "sha256": "5b8d8bc433994a49f89a693108cfbd1b27f439d92d770486044567b06fd66f83"
+  },
+  {
+    "file": "hypercurve/fuzz/fuzz_targets/bezier_region.rs",
+    "sha256": "e88da846f867fa4eaeb42625500a9f184e2b68be2697a00d2eb6dcdad886ec50"
+  },
+  {
+    "file": "hypercurve/fuzz/fuzz_targets/bezier_split_materialization.rs",
+    "sha256": "aa3e96002cbe8a1c7687168dce9a10e0fda16e6a0e7c8708e177b79298363085"
+  },
+  {
+    "file": "hypercurve/fuzz/fuzz_targets/bezier_tangent_order.rs",
+    "sha256": "6584c863ec522aaf131ae9a40c43fc7e7b6275337857415de2a0243027c9ba22"
+  },
+  {
+    "file": "hypercurve/fuzz/fuzz_targets/bspline.rs",
+    "sha256": "d211b59ef44d7693bbb0ab8149588eb759695087bbe4dfa67dd09ee3a2c8aef5"
+  },
+  {
+    "file": "hypercurve/fuzz/fuzz_targets/curve_string_editing.rs",
+    "sha256": "7b76e01a5ceb61fe9e69686674016b48618cf91b99824bf8425867a3cb819900"
+  },
+  {
+    "file": "hypercurve/fuzz/fuzz_targets/hyperreal_representations.rs",
+    "sha256": "2f952d72b5230be91f669175a9bfbcd743f39d577ea8a904228b5cbaf5c47285"
+  },
+  {
+    "file": "hypercurve/fuzz/fuzz_targets/region_boolean.rs",
+    "sha256": "8baea9e50baf9cdf6c403112d1344172c23c198e269b72b7da34d18eee90e2b5"
+  },
+  {
+    "file": "hypercurve/fuzz/fuzz_targets/retained_import.rs",
+    "sha256": "3cf2713c1670ba796f8199f21a3df4efcc4c72b18df39b152154f5a53b94f341"
+  },
+  {
+    "file": "hypercurve/fuzz/fuzz_targets/straight_skeleton.rs",
+    "sha256": "70d797e4e6ad50195508496e884127b740375e2b5e65cb131929cc0573ab9c16"
+  },
+  {
+    "file": "hypercurve/fuzz/fuzz_targets/svg.rs",
+    "sha256": "0f1627ac3bb3bd2cfbf88b45f212de45daf435f40661e7190fb171769a21fd29"
+  },
+  {
+    "file": "hypercurve/src/arc_bezier.rs",
+    "sha256": "d8b127cc321783fe5ca83932502c014669b15bb03ddf03adcde30f78a064e045"
+  },
+  {
+    "file": "hypercurve/src/bbox.rs",
+    "sha256": "53bd35590b0063494f2eaeccaf89d72597be88f57f64cb90a954bda461652943"
+  },
+  {
+    "file": "hypercurve/src/bezier.rs",
+    "sha256": "65f7967f1c2ff893f3e3e5648b6d1bd875feff85f0e12e0dbf2f4c8a97c84263"
+  },
+  {
+    "file": "hypercurve/src/bezier_algebraic_image.rs",
+    "sha256": "65a9880df92978d89a07dbfcdad3fd19b4c11a4aea15ea3637a547ccb2c008f2"
+  },
+  {
+    "file": "hypercurve/src/bezier_arrangement.rs",
+    "sha256": "24979fdac22571232d2e24d90259be5ac43541c7ffb4b2fc77e39ddf9cfcb03a"
+  },
+  {
+    "file": "hypercurve/src/bezier_fit.rs",
+    "sha256": "71f21a7bce38a80996c397fa4c7e9533fda689b4efa73c1de4bc90800c29756d"
+  },
+  {
+    "file": "hypercurve/src/bezier_flatten.rs",
+    "sha256": "a310b6ca0d9dab126f59a34d4be242c5d4d944b09cf786cd3a67860b882e85cb"
+  },
+  {
+    "file": "hypercurve/src/bezier_metric.rs",
+    "sha256": "6fe148bd641dc300b0ab83e4a850bc14ed3783207d032a456fd0ce440173bebe"
+  },
+  {
+    "file": "hypercurve/src/bezier_moment.rs",
+    "sha256": "b1739be5ecd0e456c2667328a23f60ff7eb1aabe0dfc12d3dfefd97a78ab3b80"
+  },
+  {
+    "file": "hypercurve/src/bezier_offset.rs",
+    "sha256": "13745bdde382ab95f41a4e5bf3fb900ef9095f49722a0268a62888e5a7335feb"
+  },
+  {
+    "file": "hypercurve/src/bezier_parameter.rs",
+    "sha256": "b70c517d0180d986469aae5f497f5773965491ece32a12c26b4d331de1dd45fd"
+  },
+  {
+    "file": "hypercurve/src/bezier_region.rs",
+    "sha256": "c074ef0aa74750c9f64fb1ce1f7638c535d8984a02091343b898d78c257169c8"
+  },
+  {
+    "file": "hypercurve/src/bezier_retained_measure.rs",
+    "sha256": "3ba0a82714a4cb6b4c1a7cb77ab3c8f0056bfcd9a22798125f74559ccff3f164"
+  },
+  {
+    "file": "hypercurve/src/bezier_retained_overlap.rs",
+    "sha256": "61b115d3b203ecbce94aea0ba1a43e65f9e7bb7f5958e5b45677832ed5b41699"
+  },
+  {
+    "file": "hypercurve/src/bezier_split.rs",
+    "sha256": "db77b35c104471ff20b8fd0ae43c3350b074d4d1dff57c71b37405e05c4ff49f"
+  },
+  {
+    "file": "hypercurve/src/bezier_split_endpoint.rs",
+    "sha256": "cdec17955b46ad365b75ddbb911b54c452291f59cf71fbc18509399ea171244f"
+  },
+  {
+    "file": "hypercurve/src/bezier_tangent_order.rs",
+    "sha256": "515d1af1e54271952d7f9eefdd3ecfb662d70eb84c31835e97300d5fd784ba24"
+  },
+  {
+    "file": "hypercurve/src/bezier_topology.rs",
+    "sha256": "e05fa95af23dd9f02fe2cf9ac5899a7c8370f8a02139dd9a77915677de21fc95"
+  },
+  {
+    "file": "hypercurve/src/boolean_op.rs",
+    "sha256": "75cc8f8a420981709e406d94489be115a791f0e8a5d95543474a328bf7a2c032"
+  },
+  {
+    "file": "hypercurve/src/bspline.rs",
+    "sha256": "6c691632bad9bca80d836293734dda37b9609dc912d1341061efe9c2c6f48919"
+  },
+  {
+    "file": "hypercurve/src/bulge.rs",
+    "sha256": "9b3929b17070e64462bc09cbf1de02f9831f2e63cebea9a0fd4ac824df2235b0"
+  },
+  {
+    "file": "hypercurve/src/classify.rs",
+    "sha256": "fa658a66f6cb345f4d4a3c76459375e727f3036310b79b28ab7bf0ec493921ad"
+  },
+  {
+    "file": "hypercurve/src/contour.rs",
+    "sha256": "252b8cef466749087edaed21f31ff1d603d463441445ef491ec1543480661024"
+  },
+  {
+    "file": "hypercurve/src/curve.rs",
+    "sha256": "9757f370602d2ca378febfc76b752bf47d423e799b29b820feba4cb588ea2ec6"
+  },
+  {
+    "file": "hypercurve/src/curve_corner_chain.rs",
+    "sha256": "dfff6ce598219b0a7dbf292f83d4feb6034ac0303567e4cff5561d3e77984402"
+  },
+  {
+    "file": "hypercurve/src/curve_corner_domain.rs",
+    "sha256": "6c6cc7e89b7554ccbc135b4a80b94dabf0f307e6dfd3bebb46b45dfc0cf343a8"
+  },
+  {
+    "file": "hypercurve/src/curve_corner_reconstruction.rs",
+    "sha256": "88cd7080badb52bc808e188a91aecf46ad420c0000be9da3573994b66d5b3b9f"
+  },
+  {
+    "file": "hypercurve/src/curve_evaluation.rs",
+    "sha256": "3ee10485e3db323b438d9ce5b9d0393766f8c6f0f206db317d32ba859456bb05"
+  },
+  {
+    "file": "hypercurve/src/curve_intersection.rs",
+    "sha256": "2da2091389a2f5677a5ce0f7fa104ee66177c202e65ff09ea5caa399e512b180"
+  },
+  {
+    "file": "hypercurve/src/curve_path_intersection.rs",
+    "sha256": "d7a20c955fb77c5c962ddc92b5b44c0cb83a2869532be83388d535cac2cf895d"
+  },
+  {
+    "file": "hypercurve/src/curve_point.rs",
+    "sha256": "60524d9e0463708ef61273cbc29ae07e072dfb1c890942960c9aa3af4e888ff2"
+  },
+  {
+    "file": "hypercurve/src/curve_region_boolean.rs",
+    "sha256": "047b629e2f855c1a68f318e90cf446df0049ed0ef52e3ae0a6a68bb095240467"
+  },
+  {
+    "file": "hypercurve/src/curve_region_trim.rs",
+    "sha256": "4ff6752c8a05f0fd79dbce852eece2c72a0e8bedaebe89ff887de3d5a3a6e0e2"
+  },
+  {
+    "file": "hypercurve/src/curve_string.rs",
+    "sha256": "f0b82b24d64b5de37e3920400a68344839ce5ac036f80fa00f64ffe863449d0d"
+  },
+  {
+    "file": "hypercurve/src/curve_subdivision.rs",
+    "sha256": "8abeb403f62d647a70d0a16c9e34272c80308b49ff08148f32e301a84d77f0ee"
+  },
+  {
+    "file": "hypercurve/src/curve_support.rs",
+    "sha256": "efd1ae296241cdcba2e05cc20d4432eef2f77537654d7928d599ec564b91f25a"
+  },
+  {
+    "file": "hypercurve/src/derivative_demand_tests.rs",
+    "sha256": "dfe0937088100bd1baf508825c24c3e8f42cbe9b630b5eee895a6f58c3a664eb"
+  },
+  {
+    "file": "hypercurve/src/direction.rs",
+    "sha256": "d058a5fddc8eeaa51fef12d519519b5b9d749f246e9d9242c918864f3122835d"
+  },
+  {
+    "file": "hypercurve/src/error.rs",
+    "sha256": "2b36969ab31c12b74994fdf9de0f66a94ddf2953ec99a869681796b411380658"
+  },
+  {
+    "file": "hypercurve/src/events.rs",
+    "sha256": "30fc94aecfe1146fab9d12af8e19151447d2c7c696829235064a459e81e202de"
+  },
+  {
+    "file": "hypercurve/src/facts.rs",
+    "sha256": "a0e4921c1aebde121d784a4c0d277982f69c62bc3d2ea969613173d8b15593f6"
+  },
+  {
+    "file": "hypercurve/src/finite_projection.rs",
+    "sha256": "d24c36111ec6529b5873db775fbf4a2a6edf455312c4005aa64912a2ccbc448a"
+  },
+  {
+    "file": "hypercurve/src/fragment.rs",
+    "sha256": "97c3aa385d80b0c9263820ff87d4fc6818de1ea3ad588eaa77f61ef7f91c4c95"
+  },
+  {
+    "file": "hypercurve/src/hershey.rs",
+    "sha256": "95701beb8e6c616deee08a72ec9190bcd4a766be3c378fed23fdd22fe43576f5"
+  },
+  {
+    "file": "hypercurve/src/hershey_data.rs",
+    "sha256": "bad3e5cf2f5fd32344d723f9a7fc6a3efa3ef2bbc4044d67b66a654569aafc6b"
+  },
+  {
+    "file": "hypercurve/src/intersect.rs",
+    "sha256": "20c6f7cb7f901a9fb642e91592db91cb3084b2330f7399b11a20abd5ed5991bd"
+  },
+  {
+    "file": "hypercurve/src/lib.rs",
+    "sha256": "2c1df0c340599a2f95426986f3e45f25aa385e02e717dc97be5010d1f82dc64a"
+  },
+  {
+    "file": "hypercurve/src/native_region_tests.rs",
+    "sha256": "183535314908dfeec9d2a1b0c8f5a7dfbf7386e852a3d21c9948780c67f12871"
+  },
+  {
+    "file": "hypercurve/src/nurbs.rs",
+    "sha256": "390e388c9f933e80af9cbe4b0f6462b75eab8f8fbdd9bd379ed5acced3913d9b"
+  },
+  {
+    "file": "hypercurve/src/nurbs_interpolation.rs",
+    "sha256": "4aaf25e86a735666069a5e030d8d89dfbafee6bd1412868f72ad60a97df507d6"
+  },
+  {
+    "file": "hypercurve/src/offset.rs",
+    "sha256": "344e0651c32d99ac52faa83a26782c2cf8bf8b49e41a107d3f4d35be74753c47"
+  },
+  {
+    "file": "hypercurve/src/point.rs",
+    "sha256": "70de75e092d7596b5bb2ac9269ab4f06733c6c1aa0ac436463c2c2cc4f2168a6"
+  },
+  {
+    "file": "hypercurve/src/policy.rs",
+    "sha256": "3e7ac6f9b2d49b4984ec5dc49c255b744588a2aea489269060916b8901461200"
+  },
+  {
+    "file": "hypercurve/src/polynomial_spline.rs",
+    "sha256": "a57e77b85559383f7f88a6846570cf5c94199aca78dc7c46069e1ba99ab078ac"
+  },
+  {
+    "file": "hypercurve/src/prepared.rs",
+    "sha256": "ffbbd95841b916e0da1efde1cb66061b1a702063ec33bf432154b094cbfda8c8"
+  },
+  {
+    "file": "hypercurve/src/rational_bezier.rs",
+    "sha256": "e393fe505e550a59e16c877affa1abe0a188b367f93b9ff8614267dc82989a3b"
+  },
+  {
+    "file": "hypercurve/src/rational_bezier_general.rs",
+    "sha256": "9fdc83faa5ba5abc87db77da0d18335bee3314bb451b3f8f94655b9048689fcc"
+  },
+  {
+    "file": "hypercurve/src/reconstruct.rs",
+    "sha256": "857ab572fea41f0fed90cb9689199c690306665b51a54a1d24ef7114b8d029f7"
+  },
+  {
+    "file": "hypercurve/src/region.rs",
+    "sha256": "c5fac7f79c315b3974442aaa922500c66d5773eee163f20f0bbf333d0e3eadc7"
+  },
+  {
+    "file": "hypercurve/src/region_nesting.rs",
+    "sha256": "4c8810ba845469c63c6fb912c69668d7e497e43ea4b3dd38155f3576435b90d8"
+  },
+  {
+    "file": "hypercurve/src/retained_status.rs",
+    "sha256": "4514736a54304ff996274328c7bc5883e242eaff5adc3eff6022c667175dc90f"
+  },
+  {
+    "file": "hypercurve/src/segment.rs",
+    "sha256": "98139bfcc6a0c6f6dedfe22cc8157d6bcbdd3b54252ab088b453a13a0675a2de"
+  },
+  {
+    "file": "hypercurve/src/self_intersect.rs",
+    "sha256": "9e1d1b5b782b4d0b872c58e9cf4ba950a3cf6958d85626c49c06774b62a448fd"
+  },
+  {
+    "file": "hypercurve/src/spline_periodic.rs",
+    "sha256": "3f9cb5c28e93961b108c8648a4c47c0b9ceca175e7a504cd6227b26ad3820b7d"
+  },
+  {
+    "file": "hypercurve/src/split.rs",
+    "sha256": "2a29a5118c18669d5e33681d6a9bf85a9d66f3e8480884943ba06bb0f8ba5006"
+  },
+  {
+    "file": "hypercurve/src/straight_skeleton.rs",
+    "sha256": "b83727aa93f5aed5a2b2a642931e0c16c254086fcc64691125d2b55b830cad0a"
+  },
+  {
+    "file": "hypercurve/src/svg.rs",
+    "sha256": "1160e8168708c46243013e3bcf7aa4a4796c4e23636c92175d83a7e6ea7d0dc4"
+  },
+  {
+    "file": "hypercurve/src/svg/exact.rs",
+    "sha256": "f25f1ece9ea0d2fcdb5e38972e3518b927e12e5064b027f6da36988d6359bdbd"
+  },
+  {
+    "file": "hypercurve/src/transform.rs",
+    "sha256": "999c3f1fdd2cd7b1e8f03132a639f2ae42497a73a0423a4604788f4e999fbf5a"
+  },
+  {
+    "file": "hypercurve/src/translation_obstacle.rs",
+    "sha256": "fc8ce2b989bf15b5363b8e3a8d62c67ee89a32cebefc643a14d477305e47a34c"
+  },
+  {
+    "file": "hypercurve/src/triangulation.rs",
+    "sha256": "36f17f1345042b14f8ada3d6aed45e596a8719da8f7dcd2a2171d13ef252b709"
+  },
+  {
+    "file": "hypercurve/tests/exact_structural_facts.rs",
+    "sha256": "f5ad4b9e2f9972251a310e9afac04bd2130b44edcee24b97789ca42f16137756"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_adversarial_polygons.proptest-regressions",
+    "sha256": "598ba5b6d09a8cb08ca8722c178aa1b72783d99590b30370cf67973fc29124b2"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_adversarial_polygons.rs",
+    "sha256": "d6f33d5333ddcc2aafb4c1b8af69df5ab1485fb17f0d30dc425c86d0a89fe060"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_analytic_parallel_region.rs",
+    "sha256": "8f28618157bb4bd953d2b95271203045b19d44080ce39ce84b3b124eb70fba2b"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_arc_bezier.rs",
+    "sha256": "7dfce925db8ac2a08e0ca0f4bbe893f676f293ce7298b1ef9813fdf0ad37e868"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_bbox.rs",
+    "sha256": "86051777097b50459477880338fcc69306dbea824b4c74984e98e190d78a849b"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_bezier.proptest-regressions",
+    "sha256": "602b7acac61583ed480cbe95af3b2a0b4c5274f992950ba2b86c7ed1ea4e444e"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_bezier_algebraic_image.proptest-regressions",
+    "sha256": "341aa43d1a9e7798efb56856290dcb0669a834f9417eed2ba0d6a84c8bf96c8f"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_bezier_algebraic_image.rs",
+    "sha256": "49f000f6edc48e9b6e688fd8811dcb82418e2cc987b6100e1d819d64a80d4a34"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_bezier_algebraic_parameter.rs",
+    "sha256": "b3e7e914eee4013757d416a75c8c628109b8964858e20cee9e7f81c9e3dbee9e"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_bezier_arrangement.rs",
+    "sha256": "f893ef269dd2148429d487cf5e03ab717a2f2c63c5934eb8e95efe18eb1191fa"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_bezier_evaluation.rs",
+    "sha256": "8df92dcabccc4bc707137cf714e0219e42f96b8878e520d477d3ebc3e355e901"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_bezier_fit_offset.proptest-regressions",
+    "sha256": "abdf2bd4be0a2cdd4c51abdeea3d4aa67864cd42b8988e4025dd48285a226952"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_bezier_fit_offset.rs",
+    "sha256": "b17a9806e479dfec48f76d71dbaf57a3cf8227c93be96601f75fc62bc405642e"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_bezier_region.rs",
+    "sha256": "41fe023f9d09508032e710330e5a1a500c56ae0ca3ac1f81986a79cbdcde27b0"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_bezier_split_materialization.rs",
+    "sha256": "819680c29314a5b708e128188eeed1507f44f17277c5a9eb53edc5eb81b22c6e"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_bezier_tangent_order.rs",
+    "sha256": "8028112819b908d5eab4b3d21c5f8b26c30696238ad4d85573d78036e67c5609"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_bspline.rs",
+    "sha256": "11b79a740cab3be4de1e1747e2bdfc51af35c4b6a3e43645cd36063ece6e2e19"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_circle_predicates.rs",
+    "sha256": "c0a579bc53972c1c5e1ac6ded985ac9c465110127e2062c849bdf6519666f9c3"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_contour.rs",
+    "sha256": "f2adab28e9f92cd1980fb9682ab854f6313af7d8396a082d5be3350c95a8e239"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_curve.rs",
+    "sha256": "e38b56cd723ad83d41fc27e1ca21d68b249ab8aa1dc530905a501618314dab56"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_curve_intersection.rs",
+    "sha256": "351e0918fa455187f161d8fb91643b25fe22c99095ac0e603096e4f2724e4d66"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_curve_point.rs",
+    "sha256": "2fa2528af330fbff87324142526637916e5031d5816409e09091d3fca6648776"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_curve_region_boolean.rs",
+    "sha256": "fcb3c06ad989d3800fac2b3154ebdba12ccffda8a1a2c7f03379ca0889b40a0f"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_curve_region_boolean_fuzz.proptest-regressions",
+    "sha256": "50f4bd010f21a51db334aa626395fa74329b4fd9717e7a9a4e39cc75e71c6c3a"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_curve_region_boolean_fuzz.rs",
+    "sha256": "da800e042f45cb46bd17a8db4525fe83eb8d78143be4b364f58a5352afc9f4a7"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_curve_region_promotion.rs",
+    "sha256": "80f2cce86efad7b0ec5d0e3d083741b150d41b3ae592e89d957b64c8e386c51c"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_curve_region_stroke.rs",
+    "sha256": "ce170a9116017637150fa573e11ffc7cb92fda52420b8ad090780d5f9eb326bb"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_curve_string.rs",
+    "sha256": "29bab382aa356f32bf5bef905b70125b6f9a60c3679ee72fd3a1c0aba42d61ec"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_derivative_completeness.rs",
+    "sha256": "f2c9064a080ee82f96e24faf239d9797e596be6785b2564bcf790532a31a42e8"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_dispatch_trace.rs",
+    "sha256": "1d5c83afdd36c50135d7f24d29e1a41c16d55b2b71b71a964015bd73ca12ba14"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_events.rs",
+    "sha256": "be6ef0a09e4ac304a3609f5fdd341c5f2e78efcfaa7b2b0e8824a01c1316130c"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_exact_closure.rs",
+    "sha256": "32d81fdec27c27e0ea5ba50dfb9144d5f22702b1f51beaa9efe520c0cdb03231"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_fragments.proptest-regressions",
+    "sha256": "ae7e0c2b828cc26e866c16ff3be8770441c49671e2bef42de2161482f831c6f4"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_fragments.rs",
+    "sha256": "63e5cee53155f7fd4003b197284cf32d289407af9de98a5a0e6f8403d2ab2a52"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_fuzz_invariants.proptest-regressions",
+    "sha256": "ff09f954eb820ff5db26a3a1055ac0793bd33916ecc567f49ecdbe353d07063e"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_fuzz_regressions.rs",
+    "sha256": "9711d09cb54dcc31cd46c744d195a0db2ece34183be1c1d50569f5bee7ae6e94"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_geo_regressions.rs",
+    "sha256": "8efe5e534e41404f14ef27961e5d05d2f05302a1fee69431332bfe91a217fd36"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_nurbs.rs",
+    "sha256": "25ad8f494be1228e9cb3ab9dcfa426d76474cc6f07176c989fc80d30605b6dfa"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_nurbs_interpolation.rs",
+    "sha256": "b0949a0e095edff7a988db2ff077657555e3cdd485a0b68fb699ad974233e520"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_offset.rs",
+    "sha256": "a26fd8c673e7e69724bc3320110c283084f7d0bc325211c20917ae874e92dd22"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_path_closure.rs",
+    "sha256": "2757388103125f1ddc8d29c9cd46d3f436d4b94e187bbf5ee15de8f4eb550a20"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_pcb_boolean_regressions.rs",
+    "sha256": "89422d27cf9b71f439c257ea3a69d5897bf2e28a8f7fd0fc9a847ffad87b1f24"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_polynomial_spline.rs",
+    "sha256": "0cee4d5d55210a7f5c1612840ca14042bd0892a49dfa1c33d8f9d05bea7c4432"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_pr59_shape_regressions.rs",
+    "sha256": "69df0908e79193805ca93056f592b5e72fdd418e160f945e71ff50411932d468"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_rational_bezier.rs",
+    "sha256": "cfec8d332f261358adeaa2a36e675257e9985f22d4a4dc8f064a43db75843fd3"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_reconstruct.rs",
+    "sha256": "da7ca30682868bd5a11331556deeaa7d62a3f09149c95612ea04daca3b3ce0dd"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_self_contacts.rs",
+    "sha256": "272c2053c6a5962099a33d03c34f8e2a760761de0773089ae6edbaf2a119a805"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_split.rs",
+    "sha256": "27a3f4e8f30e68cffadf2abf7ea3c30af85f81370ecc6bf76e45216846005681"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_svg.rs",
+    "sha256": "22f68ba14ccc1571a65cb4433638e9a6ce2f64fa067e58e7c3a2e25eebf6b279"
+  },
+  {
+    "file": "hypercurve/tests/hypercurve_triangulation.rs",
+    "sha256": "d381f095a7b6ccacf6de42f99484a267bc6f1045f95549d938ef402422918646"
+  },
+  {
+    "file": "hypercurve/tests/line_constant_coordinates.rs",
+    "sha256": "7874d5f0c9d4e8a50a1334260d6d52cb32b337118fbe1001bd6054ebf24e2c47"
+  },
+  {
+    "file": "hypercurve/tests/pathological_benchmark_fixture.rs",
+    "sha256": "044a56bfae6a13e9195aa882c12e22205bca3eb26c898846c775c398dfd45e06"
+  },
+  {
+    "file": "hypercurve/tests/readme.rs",
+    "sha256": "5e48480c48e741d10906a54b00f008230f31dd2f6de1fcaaf29fb1b6e82bb149"
+  },
+  {
+    "file": "hypercurve/tests/support/mod.rs",
+    "sha256": "7dc9010188bf704bf90092c6eaccbecdcf13dadf91762f204253f3914dc5abaa"
+  },
+  {
+    "file": "hyperbrep/Cargo.lock",
+    "sha256": "61568670c40dc6b86aa1b10eb5d0d217cf486c3ced53559eb232bf78ed659770"
+  },
+  {
+    "file": "hyperbrep/Cargo.toml",
+    "sha256": "3c80594686e2079fa9fe14b5cf5caae0c985cec74ebd27a274bccd159efc8a0b"
+  },
+  {
+    "file": "hyperbrep/README.md",
+    "sha256": "b0aaf16c101ed2a9ba9683b86fc78c89bd3ea96665f2cb69e8937b82d16f2d10"
+  },
+  {
+    "file": "hyperbrep/benches/kernel.rs",
+    "sha256": "37b55d7d641c7c6b40e8360a43ee09e3315e6706f040d4033284c9dd35fbc036"
+  },
+  {
+    "file": "hyperbrep/examples/basic.rs",
+    "sha256": "6039bce68dbed19e15311f331e56a2c3cd71cb9925fd2d04c245d3607864c628"
+  },
+  {
+    "file": "hyperbrep/examples/path_extrusion.rs",
+    "sha256": "e280a6e2ae599b5784929c5734d947398921b8e45e41fd76b7868dac98b717a1"
+  },
+  {
+    "file": "hyperbrep/examples/planar_face.rs",
+    "sha256": "9e65fc06df2017fcd2dcbd129fccf8e71831984dd3c634f7cfec3731b2c46ff7"
+  },
+  {
+    "file": "hyperbrep/fuzz/.gitignore",
+    "sha256": "98d82ee4130b95c404bd9aa51fd5b75af36694f5a20fbc0d7694c8a19705f5b8"
+  },
+  {
+    "file": "hyperbrep/fuzz/Cargo.lock",
+    "sha256": "3aaefd83a91c2459192df38f2d1d05b4315afc8d82b9e0f25485643a30e1c64a"
+  },
+  {
+    "file": "hyperbrep/fuzz/Cargo.toml",
+    "sha256": "ca38588461c02bfe15a3242904a9225f6cc3a3288a94957e79b0eb0d5f4aaa21"
+  },
+  {
+    "file": "hyperbrep/fuzz/README.md",
+    "sha256": "89fe02a8dca245f47582e3f6da4e11374be961596f25da80b3e8e0e286dc0255"
+  },
+  {
+    "file": "hyperbrep/fuzz/fuzz_targets/analytic_solid_roundtrip.rs",
+    "sha256": "a6c71c1b96e478d3049b8ca2e3250aa3772fc7ff1535914a0694fa2ce24df279"
+  },
+  {
+    "file": "hyperbrep/fuzz/fuzz_targets/model_builder.rs",
+    "sha256": "c94d0fe0f96e5d3d986360af56201ab2434acf2224cc5af616b867dbd5967bb7"
+  },
+  {
+    "file": "hyperbrep/fuzz/fuzz_targets/topology_edit_roundtrip.rs",
+    "sha256": "99623a143cb9a68c951f276fe652518492f3d6d264524b59f2bd5edbf90ce994"
+  },
+  {
+    "file": "hyperbrep/src/boolean.rs",
+    "sha256": "f7857e22f246b803fbfa4dc44baf2ab6c5210a78fa379edc553bc532647c7386"
+  },
+  {
+    "file": "hyperbrep/src/builder.rs",
+    "sha256": "2d5510edeef599167b840cf1051f094099105dfd0a77397b483ee2f769a48f30"
+  },
+  {
+    "file": "hyperbrep/src/error.rs",
+    "sha256": "2cf6ca1ef249ad3c044d29b67399c6e95bef4a2c4b6e6cda024eb44e96a9ddc7"
+  },
+  {
+    "file": "hyperbrep/src/geometry.rs",
+    "sha256": "fbdcfa685a1dcf6a25fb8e86cfb88904814d840b001fac15ea97b265459029d3"
+  },
+  {
+    "file": "hyperbrep/src/lib.rs",
+    "sha256": "f0f0a9638cc16fc8c31665ff6ce564b8bb62910b0b05dfa57ca109a36a4b53fa"
+  },
+  {
+    "file": "hyperbrep/src/model.rs",
+    "sha256": "d00f3828f98d985eac462a392d008312d9a6c51c45b01952780fcc801c35f67a"
+  },
+  {
+    "file": "hyperbrep/src/persistence.rs",
+    "sha256": "015e358b5d4fb4b375295c13eedf51c54ec2704cbe3e093ebaae9e80b80e936a"
+  },
+  {
+    "file": "hyperbrep/src/tessellation.rs",
+    "sha256": "bd786e78950b853231d69a6b69164a608ea86494ba264f272849ab7d1c6c7343"
+  }
+]

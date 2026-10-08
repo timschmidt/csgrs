@@ -1,0 +1,13 @@
+{
+  "tag": "fexpr-formatting-verify",
+  "started": "2026-09-10T05:26:43.199Z",
+  "finished": "2026-09-10T05:26:43.602Z",
+  "elapsedSeconds": 0.400562044,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "node",
+  "args": [
+    "verify-fexpr-formatting.mjs"
+  ],
+  "code": 0,
+  "signal": null
+}

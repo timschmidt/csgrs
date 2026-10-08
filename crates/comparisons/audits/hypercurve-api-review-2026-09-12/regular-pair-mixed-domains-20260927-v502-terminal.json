@@ -1,0 +1,65 @@
+{
+  "diagnostic_only": true,
+  "source_manifest": "regular-pair-mixed-domains-20260927-v502-sources.json",
+  "source_directory": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/source-archives/regular-pair-mixed-domains-20260927-v502",
+  "workspace_guard": "regular-pair-domains-20260927-v501-sources.json",
+  "fixture_sha256": "7cb82fa300f1815c016323a40dcdc83e6f89bf0e5dca84f6df9e57c83a58ca8d",
+  "builds": [
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "test",
+        "--lib",
+        "--release",
+        "--all-features",
+        "--locked",
+        "--offline",
+        "--no-run",
+        "--message-format=json"
+      ],
+      "returncode": 0,
+      "log": "regular-pair-mixed-domains-20260927-v502-build.log",
+      "elapsed_seconds": 130.94427664205432,
+      "binary": {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/regular-pair-mixed-domains-20260927-v502-tests",
+        "sha256": "b5e8b624f7cd49dd026626430d2c51081cc1dd0655ed082607c13a89e42fc4b1"
+      }
+    }
+  ],
+  "cases": [
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/regular-pair-mixed-domains-20260927-v502-tests",
+        "--exact",
+        "bezier_offset::regular_pair_mixed_domain_probe::mixed_regular_pairs_keep_both_exterior_parameter_domains",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 101,
+      "log": "regular-pair-mixed-domains-20260927-v502-mixed_regular_pairs_keep_both_exterior_parameter_domains.log",
+      "elapsed_seconds": 0.0035541958641260862,
+      "name": "bezier_offset::regular_pair_mixed_domain_probe::mixed_regular_pairs_keep_both_exterior_parameter_domains",
+      "passed": false
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/regular-pair-mixed-domains-20260927-v502-tests",
+        "--exact",
+        "bezier_offset::regular_pair_mixed_domain_probe::rational_regular_pairs_use_the_requested_normal_sheet",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 101,
+      "log": "regular-pair-mixed-domains-20260927-v502-rational_regular_pairs_use_the_requested_normal_sheet.log",
+      "elapsed_seconds": 0.003527887864038348,
+      "name": "bezier_offset::regular_pair_mixed_domain_probe::rational_regular_pairs_use_the_requested_normal_sheet",
+      "passed": false
+    }
+  ],
+  "expected_cases": [
+    "bezier_offset::regular_pair_mixed_domain_probe::mixed_regular_pairs_keep_both_exterior_parameter_domains",
+    "bezier_offset::regular_pair_mixed_domain_probe::rational_regular_pairs_use_the_requested_normal_sheet"
+  ],
+  "all_processes_reaped": true,
+  "probe_complete": true
+}

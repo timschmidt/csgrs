@@ -1,0 +1,23 @@
+{
+  "tag": "polynomial-decision-trial-tests-release-corrected",
+  "started": "2026-09-08T23:00:32.614Z",
+  "finished": "2026-09-08T23:02:19.025Z",
+  "elapsedSeconds": 106.40904218799999,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/polynomial-decision-trial/hypersolve",
+  "command": "env",
+  "args": [
+    "CARGO_TARGET_DIR=/tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse",
+    "CARGO_INCREMENTAL=0",
+    "CARGO_BUILD_JOBS=2",
+    "cargo",
+    "test",
+    "--offline",
+    "--locked",
+    "--release",
+    "--all-features",
+    "--lib",
+    "--tests"
+  ],
+  "code": 0,
+  "signal": null
+}

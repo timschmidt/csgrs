@@ -1,0 +1,55 @@
+{
+  "diagnostic_only": true,
+  "source_manifest": "root-sign-input-20260927-v441-sources.json",
+  "source_directory": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/source-archives/root-sign-input-20260927-v441",
+  "cases": [
+    {
+      "binary": "root-sign-input-20260927-v441-hypercurve_curve_region_promotion",
+      "name": "strict_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions",
+      "returncode": 101,
+      "log": "root-sign-input-20260927-v441-case-000.log",
+      "elapsed_seconds": 38.26429161382839
+    }
+  ],
+  "builds": [
+    {
+      "crate": "hypercurve",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "test",
+        "--test",
+        "hypercurve_curve_region_promotion",
+        "--release",
+        "--all-features",
+        "--no-run",
+        "--message-format=json",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "log": "root-sign-input-20260927-v441-hypercurve_curve_region_promotion-build.log",
+      "elapsed_seconds": 90.53929934813641,
+      "binary": {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/root-sign-input-20260927-v441-hypercurve_curve_region_promotion",
+        "sha256": "63be24287c697b46ddb1e1206262ebae4086fcc76de46c2db061e9b98a84e888"
+      }
+    }
+  ],
+  "trial": {
+    "hypersolve/src/root_sign.rs": "34f152723caf811422c2045076643f9fe1c7927b5a196fcde245e3670511fbdf"
+  },
+  "all_processes_reaped": true,
+  "checks": [],
+  "qualification_scope": "Diagnostic capture of exact selected-root inputs; intentional test stop, not a test pass",
+  "expected_cases": {
+    "hypercurve_curve_region_promotion": [
+      "strict_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions"
+    ]
+  },
+  "known_unresolved": [
+    "strict_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions",
+    "approximate_512_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions"
+  ],
+  "capture_complete": true,
+  "qualification_complete": false
+}

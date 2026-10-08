@@ -1,0 +1,22 @@
+[
+  {
+    "file": "hypercurve/benches/editing.rs",
+    "sha256": "0c0957378c247b1d835e4e94bf59037b3ccb2056991bd4c5d4e1b33423adb996"
+  },
+  {
+    "file": "hypercurve/benches/offset.rs",
+    "sha256": "085279136e68b5d626710a0c661bfcfceabc0b1c635ffce2c9b02764231bde85"
+  },
+  {
+    "file": "hypercurve/benches/comparative.rs",
+    "sha256": "8963677c607b30dce0a6b06220a9e495faf2f3fa9e9ed64ba49a0b1b444fca34"
+  },
+  {
+    "file": "hypercurve/benches/curve_region_boolean_batch.rs",
+    "sha256": "d289e19ea7a8a18d02642562455d161f81581cb430293f693a553784107a7c59"
+  },
+  {
+    "file": "hypercurve/src/bezier_offset.rs",
+    "sha256": "3297b5740d2e63c8fc5cb8acb27121054bc160d3f233a898a0f78f5103664875"
+  }
+]

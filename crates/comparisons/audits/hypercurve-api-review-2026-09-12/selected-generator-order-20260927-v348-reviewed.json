@@ -1,0 +1,23 @@
+{
+  "source_manifest": "selected-generator-order-20260927-v348-sources.json",
+  "qualification": "selected-generator-order-20260927-v348-terminal.json",
+  "outer_session_reaped": 24412,
+  "validated_files": 2046,
+  "passed_tests": 232,
+  "static_checks": 6,
+  "reused_qualification": "selected-generator-order-20260927-v347-terminal.json",
+  "reused_outer_session_reaped": 56650,
+  "reused_tests": 4,
+  "repos": {
+    "hypercurve": {
+      "parent": "68e1f2b01bc9741dd77e410e9f9ba6b4099c9499",
+      "paths": {
+        "src/bezier_offset.rs": "ea246f8ee27ca7ab1e9af2a4f5cc7f084d20182cfbd6e24990e3759c00687daf"
+      }
+    }
+  },
+  "known_unresolved_not_requalified": [
+    "strict_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions",
+    "approximate_512_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions"
+  ]
+}

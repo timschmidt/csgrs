@@ -1,0 +1,554 @@
+{
+  "schema": 1,
+  "recorded": "2026-09-08T23:08:26.002Z",
+  "files": {
+    "prepare-polynomial-decision-trial.mjs": "e6ebccd66af007b440f098d081a5ddcaebe988a7a3b746bb652c160fa273f485",
+    "polynomial-decision-baseline-sources.json": "8ad2d6193c2386959bbbb896ab6968a7b4134ce2bd35108274b4257803c1702a",
+    "polynomial-decision-probe.rs": "b154e1b6891a9753e03991ba13250c7c22b9a4bca5fbecff8fe46381906b1368",
+    "polynomial-decision-bench.rs": "f65a6eb4ceda981d201d553bb309058b4afdbdffe057cf5c768931c12111b99d",
+    "flint-polynomial-decision-probe.c": "cb5895e29901f44098ab076abeac0798c100657e2c579ec8e986e6750ac9aabd",
+    "run-polynomial-decision-bench.mjs": "0659386be5fad9a764b3d72febc83d36c42936ad019be13c4208db0113c97b26",
+    "verify-polynomial-decision.mjs": "94a23f7d10ea522a8cd3f8051dab3d115793475ca26510265d2aac203d7d11ac",
+    "bind-polynomial-decision.mjs": "992fc5f2b38995391a6a19b25f93d525f24320b96638b673e785aaf0955e2ef0",
+    "polynomial-decision-read-selection.json": "d4ff96eb1d5ba4d96b7ec2be7b1e00c905b24b9799913d45b6561bad5443c240",
+    "polynomial-decision-cpu-summary.json": "5f587c74aedb7dcdf9999a0186976423275483692425e43a626c64aefc9520cf",
+    "results/polynomial-decision-cpu.jsonl": "1a17bbbb9507d9e6adc2dcd36b23d1e5b34cc9cf8eb7ee8ae7ccea50252a9ea4",
+    "polynomial-decision-trial/hypersolve/src/resultant.rs": "7e8513a95877d28e09148c7d261e531649947fa42600ccc0a1d12249769ef65e",
+    "polynomial-decision-baseline/Cargo.toml": "8925e30c1670d7fc4cf7ee11a15b4d5de4943d49a2d3d850583f0272b4faa217",
+    "polynomial-decision-baseline/Cargo.lock": "fabf5fd9e2b5ca5e5c6103a99b47fd602ea54e142e5f66d9a9c861a19c70dce6",
+    "polynomial-decision-trial-probe/Cargo.toml": "0068e24db3876b4bdabc5c26e76ec0e1f18e87a61e32f91b6f80fc205d1148b2",
+    "polynomial-decision-trial-probe/Cargo.lock": "1dc673a6dd28d5e6003d9e67f625f8fcf9107726294020ba7bc52ffcb1afab3e",
+    "polynomial-decision-baseline-bench/Cargo.toml": "40ccd873244826b8f25227cc74f0282259d90cb796bd5a24c2a790a384c5f241",
+    "polynomial-decision-baseline-bench/Cargo.lock": "c61ea46b6f0ba8daa57bf509d8fdcdc5feccad60a55a5e5df3c54a5d7a73f91f",
+    "polynomial-decision-trial-bench/Cargo.toml": "9ab093cf3e4583953c2b38b3f0db6d03145fff289eeddb900e8363f42abe1af7",
+    "polynomial-decision-trial-bench/Cargo.lock": "506bad02091b77c7fbb033d058d402eacf3502234999de175812ddd5d73e9af5",
+    "results/polynomial-decision-baseline-bench-build.json": "7411ffb201012b48a784e00acc0cc5c479c92bf9d98c8debca15c0da17f3a4b4",
+    "results/polynomial-decision-baseline-bench-build.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/polynomial-decision-baseline-bench-build.stderr": "bcbf2632ef75ed54ff6d95d7f828232381bd030657b0dfa2e07af6fc2273caee",
+    "results/polynomial-decision-baseline-debug.json": "c4d28113fa41eeabc40304c3423d87551efaf694cbbeac2b19fbc02e3c47c90e",
+    "results/polynomial-decision-baseline-debug.stdout": "780fc676ba5f040fee6c58b3ff1a2b39f27c160aa66e560eb9bf47e64a470674",
+    "results/polynomial-decision-baseline-debug.stderr": "32524a26e44635769c15f7a38fa0d85eaa5fb0f4a1b6da01c96df050273ee3ba",
+    "results/polynomial-decision-baseline-release.json": "dad7a6f27550eb97cc9637291b6a72ae8b46c1859a2142fd8c4e9ba6059d977f",
+    "results/polynomial-decision-baseline-release.stdout": "780fc676ba5f040fee6c58b3ff1a2b39f27c160aa66e560eb9bf47e64a470674",
+    "results/polynomial-decision-baseline-release.stderr": "7aa4e9e78e0bf1bd1d19789ce8d6dd11ab98e98e1a8a1c280640b83ca9707f5d",
+    "results/polynomial-decision-baseline-tests-debug.json": "660b098147bc1a66cf660c05d13ca20566e7a1f22023565ddb277e0fed70d6b3",
+    "results/polynomial-decision-baseline-tests-debug.stdout": "8085fe6a2620b669400afd476b3d9dbe1dbe22d23561dd9fecc46bf435c52ee5",
+    "results/polynomial-decision-baseline-tests-debug.stderr": "f7b95142cba9f762c06c555e89da10d70c939aab3b35f5a9757e3f97b9af50c9",
+    "results/polynomial-decision-cpu-run.json": "aa20a9b7f2c7895594d2356717cc19d55d07507ac335afc66c7375f7f82bcc10",
+    "results/polynomial-decision-cpu-run.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/polynomial-decision-cpu-run.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/polynomial-decision-native-compile.json": "501869f2f4bf1df4e1864f1387b7ab2e7ab4f0e0e4356a6a0651cca28e7abfc9",
+    "results/polynomial-decision-native-compile.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/polynomial-decision-native-compile.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/polynomial-decision-native-memcheck.json": "0860334c01ff70ea09f7656e3c705deeb850263940b3c39f1446f5260dbd886a",
+    "results/polynomial-decision-native-memcheck.stdout": "46a03583202f18de999a00b271ad46adb4004368a98e44523920c4159212c918",
+    "results/polynomial-decision-native-memcheck.stderr": "a7b7ae8b80fefd1461506f2ee337d576e1c744ce219e5fca2cdff22e7aab5c5d",
+    "results/polynomial-decision-native.json": "bec3f58d62b670f32425c6cfbf1cb40dd6538d8086439a4ac6ec0353255d97bf",
+    "results/polynomial-decision-native.stdout": "46a03583202f18de999a00b271ad46adb4004368a98e44523920c4159212c918",
+    "results/polynomial-decision-native.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/polynomial-decision-trial-bench-build.json": "fee5d187cdd2d7b147f0ece4faaacd401e175be5549f07219ce1a226bbeaf501",
+    "results/polynomial-decision-trial-bench-build.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/polynomial-decision-trial-bench-build.stderr": "d07d0ab84a0a18d260b9cf0f7a7bdec2dd897906df2233537d9d0d3fae434b79",
+    "results/polynomial-decision-trial-clippy.json": "e829d0be554def10d7f402541590b410ae290924d6136884075fe6e75bbb6f19",
+    "results/polynomial-decision-trial-clippy.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/polynomial-decision-trial-clippy.stderr": "e9894d72f49f24076b8122bdf47cafa44fe27c1c7a68b010b08b5a44d8c82803",
+    "results/polynomial-decision-trial-debug-final.json": "9bacdc1fa2a898c4c4cf4c1ed0302aa33c3a6f03a5a5c1a80c3c1579512441ce",
+    "results/polynomial-decision-trial-debug-final.stdout": "f7d381a703cc076c7d2aa8fe3217cbdab1112ba14b39f0a9dbed967c182ba96b",
+    "results/polynomial-decision-trial-debug-final.stderr": "b1f45d4e9e64afb92704003658fe0538d3b60a453a95a817c8b621dbf1d7faef",
+    "results/polynomial-decision-trial-debug.json": "b0d14c5e4c0c6347d490a0412700c3e9114ad2ae01d8415aa3db7222f738fe19",
+    "results/polynomial-decision-trial-debug.stdout": "f7d381a703cc076c7d2aa8fe3217cbdab1112ba14b39f0a9dbed967c182ba96b",
+    "results/polynomial-decision-trial-debug.stderr": "4283a8dcd14b930b5244231488f9a6de428804b5d2fefd13d02cbe59ae7a194c",
+    "results/polynomial-decision-trial-fmt.json": "10e49d4419132f87124e65042b46bd22844bab7e5e9a3af9825c4311786b23c5",
+    "results/polynomial-decision-trial-fmt.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/polynomial-decision-trial-fmt.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/polynomial-decision-trial-probe-memcheck.json": "c56cc897244e279ee183b4273518f34cf18cb54c62c3a8e069b901c023ed029a",
+    "results/polynomial-decision-trial-probe-memcheck.stdout": "f7d381a703cc076c7d2aa8fe3217cbdab1112ba14b39f0a9dbed967c182ba96b",
+    "results/polynomial-decision-trial-probe-memcheck.stderr": "e83413753c69b8db805260e32884ba5fb198f1d449ccd1db7a8f5355b01b15f1",
+    "results/polynomial-decision-trial-release.json": "7c7a1641522faefddbe146a17902adbc0631a32bf352e7ba407b1e31d9714cea",
+    "results/polynomial-decision-trial-release.stdout": "f7d381a703cc076c7d2aa8fe3217cbdab1112ba14b39f0a9dbed967c182ba96b",
+    "results/polynomial-decision-trial-release.stderr": "ec595738fb2cc7ab07b4c3b472fb123303782fa5427eb14de53f568d154330bf",
+    "results/polynomial-decision-trial-tests-debug.json": "a001eb48b1dd1ed880b25aa2bb0142ebcc01da727d7b331f92844416afdb0e5f",
+    "results/polynomial-decision-trial-tests-debug.stdout": "be835f266731e25c8ff79b7f2899ac55e359ad910ddeda7502c6daea73ce4dd3",
+    "results/polynomial-decision-trial-tests-debug.stderr": "87ec8162e4ed5573b0958675ce61697a0e28483071f75aebab786359e7311771",
+    "results/polynomial-decision-trial-tests-release-corrected.json": "1c3ed7102d09894f465d693bd8b4c95d4297338cbccd00d4bc26d972f6fcabde",
+    "results/polynomial-decision-trial-tests-release-corrected.stdout": "9387dc441426bdd72f606d19d68448d9838f62aaaedf3913fb44a6db56975911",
+    "results/polynomial-decision-trial-tests-release-corrected.stderr": "eb5abb52688c47fa08f8b608e8afdb14273078c6d15572eff4bbb58513d2f007",
+    "results/polynomial-decision-trial-tests-release.json": "f9040d41a843f0c73b11d76189947929ecbb5c95a420d69eb241a1b3b6c54fd2",
+    "results/polynomial-decision-trial-tests-release.stdout": "ac2a650307259f1ef6e2aded5778e9349cfd68f3e1c2b2d9de40dadc9d8ef5d3",
+    "results/polynomial-decision-trial-tests-release.stderr": "565187f23d6950b9dce2c9b722c7e4726cf91fdf163649082db4d050ed5cd140"
+  },
+  "gates": [
+    "baseline-bench-build",
+    "baseline-debug",
+    "baseline-release",
+    "baseline-tests-debug",
+    "cpu-run",
+    "native",
+    "native-compile",
+    "native-memcheck",
+    "trial-bench-build",
+    "trial-clippy",
+    "trial-debug",
+    "trial-debug-final",
+    "trial-fmt",
+    "trial-probe-memcheck",
+    "trial-release",
+    "trial-tests-debug",
+    "trial-tests-release",
+    "trial-tests-release-corrected"
+  ],
+  "binaries": {
+    "/tmp/calcium-polynomial-decision.ItisYX/polynomial-cpu-baseline": "e2ce9cb2402a8dac7af23345ca6a1f236ca5452282a0ad366de7fdd5abc985c7",
+    "/tmp/calcium-polynomial-decision.ItisYX/polynomial-cpu-trial": "59881ebc3a901850ead3d8a37a44c4f98efd49f11343c5be3046936494e9e81c",
+    "/tmp/calcium-polynomial-decision.ItisYX/polynomial-public-baseline": "5dc02a2c98b1ecb29e327e58b4f41e28861ceff747b42314999e983565f55de2",
+    "/tmp/calcium-polynomial-decision.ItisYX/polynomial-public-trial": "fa882bfc0297b79e6cab7275e62a200403cc988107608871dcdbdae324762791",
+    "/tmp/calcium-polynomial-decision.ItisYX/flint-polynomial-decision-probe": "79956e21c69b3f07de83498252ed43689e3a9ec6f01a143fa0e48e58e8ce1bf3"
+  },
+  "reads": [
+    {
+      "repo": "calcium",
+      "path": "ca_poly.h",
+      "ranges": [
+        [
+          1,
+          295
+        ]
+      ],
+      "note": "Complete independent header read: dense coefficients/length/capacity, unchecked coefficient pointer, owner/raw API split, caller-visible success on division/GCD. Archived ca_poly_div_fmpz ignores poly and divides res; current version uses poly. Archived header lacks the current get_fexpr declaration and exposes additional composition/atan entry points. Header comparison alone is not a native archived regression test."
+    },
+    {
+      "repo": "calcium",
+      "path": "doc/source/ca_poly.rst",
+      "ranges": [
+        [
+          1,
+          436
+        ]
+      ],
+      "note": "Complete independent documentation read: normalization removes only proven zeros, stored degree may exceed mathematical degree, proper checks exact leading degree and excludes special coefficients. Unknown coefficients are permitted. Division needs a proved invertible leading coefficient; GCD/root failure leaves outputs arbitrary. Numerical coprimality is a one-sided certificate, not approximate equality. Roots require symbolic representability; generic algebraic closure is not promised."
+    },
+    {
+      "repo": "calcium",
+      "path": "ca_poly/divrem.c",
+      "ranges": [
+        [
+          1,
+          126
+        ]
+      ],
+      "note": "Complete independent read: dispatcher uses basecase; one inverse is formed before output mutation, special inverse fails. Handles input/output aliasing with temporary quotient and divisor-aliased remainder. Short dividend still needs nonzero divisor leading proof. Quotient/remainder output identity is not assumed supported. Hyper already retains reciprocal and certified trimming, and drops algebraically canceled leading slots directly."
+    },
+    {
+      "repo": "calcium",
+      "path": "ca_poly/divrem_basecase.c",
+      "ranges": [
+        [
+          1,
+          120
+        ]
+      ],
+      "note": "Complete independent read: descending quotient coefficients, skip only certified zero residuals, multiply by one hoisted inverse and scalar submul. Owner wrapper handles zero divisor/short dividend and documented input aliases, clears full allocated storage. Unlike Hyper's certified division, materializes the leading cancellation before trimming it away."
+    },
+    {
+      "repo": "calcium",
+      "path": "ca_poly/gcd.c",
+      "ranges": [
+        [
+          1,
+          217
+        ]
+      ],
+      "note": "Complete independent read: rational vectors clear denominators and dispatch integer GCD; otherwise a low-precision real/complex Sylvester determinant enclosure excluding zero certifies coprimality, else Euclidean fallback. Public wrapper requires exact leading nonzero status, allows output/input aliases, normalizes monic. Current code preserves original allocation length and clears denominator; archived rational branch mutates lenA before clearing arrays and omits denominator clear. Only source mechanism credited for archived lifetime issue. Numerical determinant certificate merits separate comparison with Hypersolve's existing exact resultant schedule; not yet a retained fast path."
+    },
+    {
+      "repo": "calcium",
+      "path": "ca_poly/gcd_euclidean.c",
+      "ranges": [
+        [
+          1,
+          179
+        ]
+      ],
+      "note": "Complete independent read: one initialized workspace partitioned into quotient and three rotating remainders, reuse reciprocal scalar. Leading zero normalization fails explicitly on Unknown and never guesses degree. Public wrapper handles zero operands, aliases and monic final output; failure may replace output. Hyper already has rational specialization and certified-degree/reciprocal paths."
+    },
+    {
+      "repo": "calcium",
+      "path": "ca_poly/normalise.c",
+      "ranges": [
+        [
+          1,
+          28
+        ]
+      ],
+      "note": "Complete independent read: removes only top coefficients whose predicate is T_TRUE, canonicalizes removed payloads to zero, stops on nonzero or Unknown. Does not certify the retained leading coefficient as nonzero."
+    },
+    {
+      "repo": "calcium",
+      "path": "ca_poly/is_proper.c",
+      "ranges": [
+        [
+          1,
+          30
+        ]
+      ],
+      "note": "Complete independent read: rejects any special coefficient including Unknown, then requires leading zero predicate T_FALSE; canonical zero polynomial is proper. Stronger finite-coefficient requirement than merely normalizing storage."
+    },
+    {
+      "repo": "calcium",
+      "path": "ca_poly/make_monic.c",
+      "ranges": [
+        [
+          1,
+          52
+        ]
+      ],
+      "note": "Complete independent read: zero polynomial returns failure; leading +/-1 shortcuts otherwise copy and invert leading coefficient, reject special inverse, scale remaining coefficients once and publish exact leading one. Failure can mutate res; no transactional contract inferred."
+    },
+    {
+      "repo": "calcium",
+      "path": "ca_poly/check_equal.c",
+      "ranges": [
+        [
+          1,
+          56
+        ]
+      ],
+      "note": "Complete independent read: scans matching coordinates and excess zero coordinates; known inequality dominates earlier Unknown. Unknown is remembered until all coordinates checked. This differs from Hypersolve resultant helper's early unresolved-coefficient return; public completeness probe planned."
+    },
+    {
+      "repo": "calcium",
+      "path": "ca_poly/check_is_zero.c",
+      "ranges": [
+        [
+          1,
+          27
+        ]
+      ],
+      "note": "Complete independent read: empty polynomial is True; otherwise compare against initialized scalar zero through full coefficient equality reduction, so a known nonzero coefficient dominates Unknown in any position."
+    },
+    {
+      "repo": "calcium",
+      "path": "ca_poly/check_is_one.c",
+      "ranges": [
+        [
+          1,
+          28
+        ]
+      ],
+      "note": "Complete independent read: empty polynomial is False; otherwise compares against scalar one through coordinate reducer, retaining the same known-inequality-dominates-Unknown semantics."
+    },
+    {
+      "repo": "calcium",
+      "path": "ca_poly/test/t-gcd.c",
+      "ranges": [
+        [
+          1,
+          149
+        ]
+      ],
+      "note": "Complete independent test read: generate coprime controls by retrying until successful True, multiply a random common factor, exercise both input aliases and separate output, self-GCD and Euclidean agreement. Checks only successful returns and rejects only T_FALSE equality, allowing Unknown; does not establish decision completeness. Current default iteration factor is one tenth the archived coefficient."
+    },
+    {
+      "repo": "calcium",
+      "path": "ca_poly/test/t-gcd_euclidean.c",
+      "ranges": [
+        [
+          1,
+          131
+        ]
+      ],
+      "note": "Complete independent test read: seeded/random coprime generation, shared-factor construction, output/input aliases and self-GCD; failed algorithms and Unknown equality escape assertions. No systematic unknown-lower/known-leading coefficient corpus."
+    },
+    {
+      "repo": "calcium",
+      "path": "ca_poly/test/t-divrem.c",
+      "ranges": [
+        [
+          1,
+          99
+        ]
+      ],
+      "note": "Complete independent test read: random A=QB+R with separate output and four one-input alias modes. Only checks identity on successful division and only rejects T_FALSE, with no explicit remainder degree or systematic failure-state assertions. Does not claim quotient and remainder may share an output."
+    },
+    {
+      "repo": "flint",
+      "path": "src/ca_poly.h",
+      "ranges": [
+        [
+          1,
+          268
+        ]
+      ],
+      "note": "Complete independent header read: dense coefficients/length/capacity, unchecked coefficient pointer, owner/raw API split, caller-visible success on division/GCD. Archived ca_poly_div_fmpz ignores poly and divides res; current version uses poly. Archived header lacks the current get_fexpr declaration and exposes additional composition/atan entry points. Header comparison alone is not a native archived regression test."
+    },
+    {
+      "repo": "flint",
+      "path": "doc/source/ca_poly.rst",
+      "ranges": [
+        [
+          1,
+          426
+        ]
+      ],
+      "note": "Complete independent documentation read: normalization removes only proven zeros, stored degree may exceed mathematical degree, proper checks exact leading degree and excludes special coefficients. Unknown coefficients are permitted. Division needs a proved invertible leading coefficient; GCD/root failure leaves outputs arbitrary. Numerical coprimality is a one-sided certificate, not approximate equality. Roots require symbolic representability; generic algebraic closure is not promised."
+    },
+    {
+      "repo": "flint",
+      "path": "src/ca_poly/divrem.c",
+      "ranges": [
+        [
+          1,
+          126
+        ]
+      ],
+      "note": "Complete independent read: dispatcher uses basecase; one inverse is formed before output mutation, special inverse fails. Handles input/output aliasing with temporary quotient and divisor-aliased remainder. Short dividend still needs nonzero divisor leading proof. Quotient/remainder output identity is not assumed supported. Hyper already retains reciprocal and certified trimming, and drops algebraically canceled leading slots directly."
+    },
+    {
+      "repo": "flint",
+      "path": "src/ca_poly/divrem_basecase.c",
+      "ranges": [
+        [
+          1,
+          120
+        ]
+      ],
+      "note": "Complete independent read: descending quotient coefficients, skip only certified zero residuals, multiply by one hoisted inverse and scalar submul. Owner wrapper handles zero divisor/short dividend and documented input aliases, clears full allocated storage. Unlike Hyper's certified division, materializes the leading cancellation before trimming it away."
+    },
+    {
+      "repo": "flint",
+      "path": "src/ca_poly/gcd.c",
+      "ranges": [
+        [
+          1,
+          221
+        ]
+      ],
+      "note": "Complete independent read: rational vectors clear denominators and dispatch integer GCD; otherwise a low-precision real/complex Sylvester determinant enclosure excluding zero certifies coprimality, else Euclidean fallback. Public wrapper requires exact leading nonzero status, allows output/input aliases, normalizes monic. Current code preserves original allocation length and clears denominator; archived rational branch mutates lenA before clearing arrays and omits denominator clear. Only source mechanism credited for archived lifetime issue. Numerical determinant certificate merits separate comparison with Hypersolve's existing exact resultant schedule; not yet a retained fast path."
+    },
+    {
+      "repo": "flint",
+      "path": "src/ca_poly/gcd_euclidean.c",
+      "ranges": [
+        [
+          1,
+          179
+        ]
+      ],
+      "note": "Complete independent read: one initialized workspace partitioned into quotient and three rotating remainders, reuse reciprocal scalar. Leading zero normalization fails explicitly on Unknown and never guesses degree. Public wrapper handles zero operands, aliases and monic final output; failure may replace output. Hyper already has rational specialization and certified-degree/reciprocal paths."
+    },
+    {
+      "repo": "flint",
+      "path": "src/ca_poly/normalise.c",
+      "ranges": [
+        [
+          1,
+          28
+        ]
+      ],
+      "note": "Complete independent read: removes only top coefficients whose predicate is T_TRUE, canonicalizes removed payloads to zero, stops on nonzero or Unknown. Does not certify the retained leading coefficient as nonzero."
+    },
+    {
+      "repo": "flint",
+      "path": "src/ca_poly/is_proper.c",
+      "ranges": [
+        [
+          1,
+          30
+        ]
+      ],
+      "note": "Complete independent read: rejects any special coefficient including Unknown, then requires leading zero predicate T_FALSE; canonical zero polynomial is proper. Stronger finite-coefficient requirement than merely normalizing storage."
+    },
+    {
+      "repo": "flint",
+      "path": "src/ca_poly/make_monic.c",
+      "ranges": [
+        [
+          1,
+          52
+        ]
+      ],
+      "note": "Complete independent read: zero polynomial returns failure; leading +/-1 shortcuts otherwise copy and invert leading coefficient, reject special inverse, scale remaining coefficients once and publish exact leading one. Failure can mutate res; no transactional contract inferred."
+    },
+    {
+      "repo": "flint",
+      "path": "src/ca_poly/check_equal.c",
+      "ranges": [
+        [
+          1,
+          56
+        ]
+      ],
+      "note": "Complete independent read: scans matching coordinates and excess zero coordinates; known inequality dominates earlier Unknown. Unknown is remembered until all coordinates checked. This differs from Hypersolve resultant helper's early unresolved-coefficient return; public completeness probe planned."
+    },
+    {
+      "repo": "flint",
+      "path": "src/ca_poly/check_is_zero.c",
+      "ranges": [
+        [
+          1,
+          27
+        ]
+      ],
+      "note": "Complete independent read: empty polynomial is True; otherwise compare against initialized scalar zero through full coefficient equality reduction, so a known nonzero coefficient dominates Unknown in any position."
+    },
+    {
+      "repo": "flint",
+      "path": "src/ca_poly/check_is_one.c",
+      "ranges": [
+        [
+          1,
+          28
+        ]
+      ],
+      "note": "Complete independent read: empty polynomial is False; otherwise compares against scalar one through coordinate reducer, retaining the same known-inequality-dominates-Unknown semantics."
+    },
+    {
+      "repo": "flint",
+      "path": "src/ca_poly/test/t-gcd.c",
+      "ranges": [
+        [
+          1,
+          141
+        ]
+      ],
+      "note": "Complete independent test read: generate coprime controls by retrying until successful True, multiply a random common factor, exercise both input aliases and separate output, self-GCD and Euclidean agreement. Checks only successful returns and rejects only T_FALSE equality, allowing Unknown; does not establish decision completeness. Current default iteration factor is one tenth the archived coefficient."
+    },
+    {
+      "repo": "flint",
+      "path": "src/ca_poly/test/t-gcd_euclidean.c",
+      "ranges": [
+        [
+          1,
+          123
+        ]
+      ],
+      "note": "Complete independent test read: seeded/random coprime generation, shared-factor construction, output/input aliases and self-GCD; failed algorithms and Unknown equality escape assertions. No systematic unknown-lower/known-leading coefficient corpus."
+    },
+    {
+      "repo": "flint",
+      "path": "src/ca_poly/test/t-divrem.c",
+      "ranges": [
+        [
+          1,
+          91
+        ]
+      ],
+      "note": "Complete independent test read: random A=QB+R with separate output and four one-input alias modes. Only checks identity on successful division and only rejects T_FALSE, with no explicit remainder degree or systematic failure-state assertions. Does not claim quotient and remainder may share an output."
+    },
+    {
+      "repo": "calcium",
+      "path": "ca_poly/set_coeff_ca.c",
+      "ranges": [
+        [
+          1,
+          27
+        ]
+      ],
+      "note": "Complete independent read: grows initialized storage, zeros gaps before a high-index set, copies the coefficient, then normalizes only proven top zeros. Interior-pointer alias across realloc is not assumed supported."
+    },
+    {
+      "repo": "calcium",
+      "path": "ca_poly/set_length.c",
+      "ranges": [
+        [
+          1,
+          26
+        ]
+      ],
+      "note": "Complete independent read: shrinking zeros all removed scalar payloads while retaining allocated capacity; increasing length assumes caller has allocated/initialized storage. No implicit degree certification."
+    },
+    {
+      "repo": "calcium",
+      "path": "ca_poly/fit_length.c",
+      "ranges": [
+        [
+          1,
+          32
+        ]
+      ],
+      "note": "Complete independent read: doubles capacity or meets requested length, reallocates contiguous scalar owners and initializes every new slot. No shrinking and no direct Hyper port warranted for immutable/scoped coefficient carriers."
+    },
+    {
+      "repo": "calcium",
+      "path": "ca_poly/init.c",
+      "ranges": [
+        [
+          1,
+          27
+        ]
+      ],
+      "note": "Complete independent read: empty polynomial has NULL coefficients and zero length/capacity; init2 reserves initialized capacity but leaves mathematical length zero."
+    },
+    {
+      "repo": "calcium",
+      "path": "ca_poly/clear.c",
+      "ranges": [
+        [
+          1,
+          23
+        ]
+      ],
+      "note": "Complete independent read: clears every allocated scalar, including inactive capacity, then frees backing storage. Must occur before destroying its owning context; no double-clear contract."
+    },
+    {
+      "repo": "flint",
+      "path": "src/ca_poly/set_coeff_ca.c",
+      "ranges": [
+        [
+          1,
+          27
+        ]
+      ],
+      "note": "Complete independent read: grows initialized storage, zeros gaps before a high-index set, copies the coefficient, then normalizes only proven top zeros. Interior-pointer alias across realloc is not assumed supported."
+    },
+    {
+      "repo": "flint",
+      "path": "src/ca_poly/set_length.c",
+      "ranges": [
+        [
+          1,
+          26
+        ]
+      ],
+      "note": "Complete independent read: shrinking zeros all removed scalar payloads while retaining allocated capacity; increasing length assumes caller has allocated/initialized storage. No implicit degree certification."
+    },
+    {
+      "repo": "flint",
+      "path": "src/ca_poly/fit_length.c",
+      "ranges": [
+        [
+          1,
+          32
+        ]
+      ],
+      "note": "Complete independent read: doubles capacity or meets requested length, reallocates contiguous scalar owners and initializes every new slot. No shrinking and no direct Hyper port warranted for immutable/scoped coefficient carriers."
+    },
+    {
+      "repo": "flint",
+      "path": "src/ca_poly/init.c",
+      "ranges": [
+        [
+          1,
+          27
+        ]
+      ],
+      "note": "Complete independent read: empty polynomial has NULL coefficients and zero length/capacity; init2 reserves initialized capacity but leaves mathematical length zero."
+    },
+    {
+      "repo": "flint",
+      "path": "src/ca_poly/clear.c",
+      "ranges": [
+        [
+          1,
+          23
+        ]
+      ],
+      "note": "Complete independent read: clears every allocated scalar, including inactive capacity, then frees backing storage. Must occur before destroying its owning context; no double-clear contract."
+    }
+  ],
+  "status": "Isolated candidate; no production transfer.",
+  "exclusions": [
+    "The first48 CPU observations overlap formatting and are not performance evidence.",
+    "trial-tests-release omitted --release and is a debug run; corrected release command is separate."
+  ]
+}

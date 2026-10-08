@@ -1,0 +1,19 @@
+{
+  "qualification": "regular-pair-components-20260927-v526-terminal.json",
+  "source_manifest": "regular-pair-components-20260927-v526-sources.json",
+  "outer_session_reaped": 72150,
+  "validated_files": 2047,
+  "selected_geometry_tests": 64,
+  "checks": 6,
+  "repos": {
+    "hypercurve": {
+      "parent": "374dcfb8bd888ce00adcfe64de9a9925b8148576",
+      "paths": {
+        "src/bezier_offset.rs": "04c040dc40ab03a5ada15d8114f3149c92a47f3abe94d2196a7134f03af71e0b",
+        "tests/hypercurve_stationary_fillets.rs": "8745cd4bbc50db909dada1199ff1ccdf14973599267e75b83e9f7eafd6592193"
+      }
+    }
+  },
+  "scope": "Shared regular branch/component solver, exact component constraints, and public stationary fillets; interior cusp pair ownership and full implementation goal remain open",
+  "performance_changes": []
+}

@@ -1,0 +1,5 @@
+Retain stationary source frames in finite pair components
+
+Share regular-branch equations and exact rational images between finite intersection and component queries. A raw unit Boundary can now reach one-sided source frames, retaining component correspondences and exact contact constraints at stationary endpoints. Ordinary finite intersection fast paths remain available.
+
+Validation: 64 release regressions, including constrained stationary families on both operand axes and traversal orders, regular/exterior pair replay, and public stationary fillets through quadratic line charts in both trimming modes. Clippy with all and no default features, formatting, denied-warning documentation, editing-fuzz compilation, and Hyperbrep compilation passed. Interior cusp pair ownership remains follow-up work.

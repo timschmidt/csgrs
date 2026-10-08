@@ -1,0 +1,19 @@
+{
+  "source_manifest": "component-contact-constraints-20260926-v291-sources.json",
+  "qualification": "component-contact-constraints-20260926-v291-terminal.json",
+  "validated_files": 2046,
+  "passed_tests": 8,
+  "static_checks": 3,
+  "repos": {
+    "hypercurve": {
+      "parent": "f3ee9b129e5eae2805fdc700a6a52f2f01d0c84a",
+      "paths": {
+        "src/bezier_offset.rs": "a8fe40b3079b589b51feff6a9e67a4de1ae97fa6fcf7a6fa6ca112b42934314b",
+        "src/curve_fillet.rs": "a72efaf80a859585e6372a59503ba2a030b25efa3d0958acfe7b7b8b0ceb64b4",
+        "src/curve_parameter_component.rs": "41626e09dde70733e6d4a8ab659bd3ca137967c1bb65690ba455da187ac018a3"
+      },
+      "commit": "d49748d7f67105b79610fadf6489e42d38795de9"
+    }
+  },
+  "repositories_clean": 30
+}

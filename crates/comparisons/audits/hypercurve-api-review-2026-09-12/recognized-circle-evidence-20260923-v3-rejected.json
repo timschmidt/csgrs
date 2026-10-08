@@ -1,0 +1,5 @@
+{
+  "reason": "Endpoint witness specialization did not resolve the observed Ordering blocker and was removed from main.",
+  "main_general_source_matches_v2": true,
+  "all_processes_reaped": true
+}

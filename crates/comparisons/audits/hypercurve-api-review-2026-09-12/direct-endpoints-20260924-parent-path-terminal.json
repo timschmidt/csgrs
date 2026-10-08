@@ -1,0 +1,34 @@
+{
+  "command": [
+    "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+    "test",
+    "--release",
+    "--all-features",
+    "--no-run",
+    "--message-format=json",
+    "--locked",
+    "--offline",
+    "--test",
+    "hypercurve_path_closure"
+  ],
+  "binaries": {
+    "hypercurve_path_closure": {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/direct-endpoints-20260924-parent-path-hypercurve_path_closure",
+      "sha256": "1fbcc9a78f881b5a3d4e58900ffe2a6e71690803605adcbd2d4ad9d35e120026"
+    }
+  },
+  "cases": [
+    {
+      "target": "hypercurve_path_closure",
+      "name": "homogeneous_boundary_closes_through_boolean_corners_and_offset",
+      "returncode": "timeout",
+      "passed": false,
+      "elapsed_seconds": 90.12615513394121,
+      "limit_seconds": 90,
+      "log": "direct-endpoints-20260924-parent-path-case-00.log"
+    }
+  ],
+  "passed": 0,
+  "all_sources_unchanged": true,
+  "all_processes_reaped": true
+}

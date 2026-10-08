@@ -1,0 +1,31 @@
+bezier_parameter_bernstein_32_to_power: 20000 iterations in 492.204772ms (24.61µs/iter), degree_checksum=640000
+bezier_algebraic_parameter_sturm: 20000 iterations in 85.543508ms (4.277µs/iter), total=40000
+bezier_algebraic_parameter_refined_ordering: 10000 iterations in 146.059661ms (14.605µs/iter), ordered=10000
+bezier_algebraic_parameter_refined_even_root_ordering: 10000 iterations in 1.159955254s (115.995µs/iter), ordered=10000
+bezier_parameter_quintic_unit_isolation: 2000 iterations in 96.425502ms (48.212µs/iter), isolated=10000, sturm_builds=1, interval_counts=19, bisections=9, rational_refinements=0, max_depth=5
+bezier_algebraic_parameter_exact_rational_reconstruction: 500000 iterations in 17.134936ms (34ns/iter), reconstructed=500000
+bezier_algebraic_point_tangent_image: 20000 iterations in 54.337367ms (2.716µs/iter), transformed=40000
+rational_bezier_algebraic_point_tangent_image: 20000 iterations in 1.138532ms (56ns/iter), transformed=40000
+	Command being timed: "taskset -c 6 /tmp/hypercurve-shared-refinement-benchmark-baseline"
+	User time (seconds): 2.04
+	System time (seconds): 0.00
+	Percent of CPU this job got: 99%
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:02.05
+	Average shared text size (kbytes): 0
+	Average unshared data size (kbytes): 0
+	Average stack size (kbytes): 0
+	Average total size (kbytes): 0
+	Maximum resident set size (kbytes): 4480
+	Average resident set size (kbytes): 0
+	Major (requiring I/O) page faults: 0
+	Minor (reclaiming a frame) page faults: 307
+	Voluntary context switches: 1
+	Involuntary context switches: 9
+	Swaps: 0
+	File system inputs: 0
+	File system outputs: 0
+	Socket messages sent: 0
+	Socket messages received: 0
+	Signals delivered: 0
+	Page size (bytes): 4096
+	Exit status: 0

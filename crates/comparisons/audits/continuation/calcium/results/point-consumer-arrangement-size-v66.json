@@ -1,0 +1,18 @@
+{
+  "tag": "point-consumer-arrangement-size-v66",
+  "started": "2026-09-11T03:16:11.972Z",
+  "finished": "2026-09-11T03:16:11.986Z",
+  "elapsedSeconds": 0.01131667499999999,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "size",
+  "args": [
+    "/tmp/calcium-e-qualified-apps.AHiwfn/candidate-hypercurve-arrangement",
+    "/tmp/calcium-e-qualified-apps.AHiwfn/candidate-hypercurve-arrangement.stripped",
+    "/tmp/calcium-point-qualified-apps.QIBZlE/candidate-hypercurve-arrangement",
+    "/tmp/calcium-point-qualified-apps.QIBZlE/candidate-hypercurve-arrangement.stripped",
+    "/tmp/calcium-point-consumer.qyV59b/demand-arrangement",
+    "/tmp/calcium-point-consumer.qyV59b/demand-arrangement.stripped"
+  ],
+  "code": 0,
+  "signal": null
+}

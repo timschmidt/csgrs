@@ -1,0 +1,55 @@
+{
+  "normal_production_build": false,
+  "source_manifest": "unit-domain-projection-20260928-v642-sources.json",
+  "source_directory": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/source-archives/unit-domain-projection-20260928-v642",
+  "builds": [
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "test",
+        "--lib",
+        "--release",
+        "--all-features",
+        "--locked",
+        "--offline",
+        "--no-run",
+        "--message-format=json"
+      ],
+      "returncode": 101,
+      "log": "unit-domain-projection-20260928-v642-build.log",
+      "elapsed_seconds": 19.649221464060247
+    }
+  ],
+  "cases": [],
+  "checks": [],
+  "expected_cases": {
+    "hypercurve": [
+      "bezier_offset::conversion_tests::selected_structural_parallel_overlap_replays_off_diagonal_contacts",
+      "bezier_offset::retained_structural_pair_domain_regression::retained_structural_correspondence_preserves_off_diagonal_contact_domains",
+      "bezier_offset::conversion_tests::non_source_parallel_overlap_replays_the_radical_component",
+      "bezier_offset::conversion_tests::radical_component_saturation_retains_norm_intersections",
+      "bezier_offset::conversion_tests::analytic_parallel_self_intersection_removes_the_parameter_diagonal",
+      "bezier_offset::conversion_tests::exact_rational_parallel_self_intersections_reuse_rational_authority",
+      "bezier_offset::conversion_tests::ordered_self_contact_domains_retain_axis_roles_after_restriction",
+      "bezier_offset::conversion_tests::incident_pair_projection_accepts_a_non_source_radical_component",
+      "bezier_offset::conversion_tests::incident_non_source_parallel_overlap_reaches_the_common_projection",
+      "curve_region_boolean::certified_successor_tests::finite_parallel_self_contacts_retain_active_domain",
+      "bezier_offset::conversion_tests::odd_source_cusp_branches_do_not_saturate_a_false_source_diagonal",
+      "bezier_offset::conversion_tests::regular_ph_branch_pairs_retain_exact_cusp_incidence",
+      "bezier_offset::conversion_tests::nonzero_parallel_domains_exclude_undefined_normals_and_poles",
+      "bezier_offset::conversion_tests::nonzero_parallel_domains_partition_poles_on_components",
+      "bezier_offset::regular_parallel_contact_tests::stationary_component_queries_keep_one_sided_endpoints_and_exact_constraints",
+      "bezier_offset::regular_parallel_contact_tests::regular_source_cells_preserve_reversed_and_algebraic_range_boundaries",
+      "bezier_offset::regular_parallel_contact_tests::regular_source_frame_keeps_contact_scale_across_a_center_cusp",
+      "bezier_offset::regular_parallel_contact_tests::exterior_regular_pair_keeps_contacts_outside_ancestral_bounds",
+      "bezier_offset::structural_overlap_trace_regression::monotone_reparameterization_preserves_structural_pair_crossings_strict",
+      "bezier_offset::structural_overlap_trace_regression::monotone_reparameterization_preserves_structural_pair_crossings_approximate",
+      "bezier_offset::structural_overlap_trace_regression::reversed_monotone_reparameterization_preserves_structural_pair_crossings_strict",
+      "bezier_offset::structural_overlap_trace_regression::reversed_monotone_reparameterization_preserves_structural_pair_crossings_approximate"
+    ]
+  },
+  "all_processes_reaped": true,
+  "probe_complete": false,
+  "qualification_complete": false,
+  "failure": "unit-domain candidate build failed"
+}

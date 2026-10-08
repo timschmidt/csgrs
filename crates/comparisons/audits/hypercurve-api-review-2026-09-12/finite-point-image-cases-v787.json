@@ -1,0 +1,32 @@
+{
+  "hypercurve": [
+    "bezier_algebraic_image::policy_tests::arithmetic_adapter_replays_close_nonrational_bounds_strictly",
+    "bezier_algebraic_image::policy_tests::coordinate_images_preserve_native_polynomial_point_values",
+    "bezier_algebraic_image::policy_tests::exact_real_representation_preserves_native_point_payloads",
+    "bezier_algebraic_image::policy_tests::retained_constant_coordinates_do_not_require_scalar_parameter_images",
+    "bezier_offset::conversion_tests::algebraic_chord_retains_independent_endpoint_fields_under_both_policies",
+    "bezier_offset::conversion_tests::algebraic_cusp_semicircle_intersects_independent_field_oblique_chords_exactly",
+    "bezier_offset::conversion_tests::genuine_parallel_algebraic_ray_replays_the_unsquared_branch",
+    "bezier_offset::conversion_tests::independent_field_algebraic_chord_intersects_rational_curve_under_both_policies",
+    "bezier_offset::conversion_tests::represented_circle_incidence_replays_retained_similarity_points",
+    "bezier_offset::conversion_tests::weighted_selected_center_tangent_line_stays_recursive",
+    "bezier_region::tests::algebraic_query_winding_mixes_genuine_parallel_and_native_fragments",
+    "bezier_region::tests::algebraic_retained_range_ray_winding_handles_crossing_multiplicity",
+    "curve::curve_evaluation::tests::repeated_unit_chart_evaluation_reuses_selected_root_images",
+    "curve_region_trim::tests::generated_chord_trim_preserves_holes_and_exact_endpoint_replay",
+    "rational_bezier_general::tests::deferred_parametric_point_reuses_source_polynomials_for_exact_equality",
+    "rational_bezier_general::tests::exact_contact_evidence_reuses_a_retained_high_degree_image"
+  ],
+  "hypercurve_bezier_algebraic_image": null,
+  "hypercurve_curve_point": null,
+  "hypercurve_bezier_algebraic_parameter": null,
+  "hypercurve_bezier_split_materialization": null,
+  "hypercurve_bezier_tangent_order": null,
+  "hypercurve_bezier_arrangement": null,
+  "hypercurve_curve_region_promotion": [
+    "selected_algebraic_round_join_retains_a_general_minor_cut",
+    "selected_endpoint_chord_pairs_share_the_linear_fillet_kernel",
+    "selected_endpoint_chords_share_linear_arc_fillet_incidence",
+    "selected_endpoint_chords_share_linear_bezier_fillet_incidence"
+  ]
+}

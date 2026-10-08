@@ -1,0 +1,5 @@
+Unify region and path classification on retained exact points
+
+CurveRegion2 and closed CurvePath2 queries accept CurvePoint2, including generated endpoints and contacts. Remove the separate public algebraic-point query and two obsolete native batch forwarders. Keep private scalar/selected-field kernels and prepare native indexes and generated boundary carriers once per batch. Borrow the existing operand carrier partition for probes. Preserve retraced path boundaries and uncertainty when strict boundary validation cannot certify a join. Update every controlled test, example, benchmark, fuzz caller and the README directly. Repair an integration dispatch assertion reproduced in the archived pre-migration executable: either existing certified interval-ordering kernel satisfies the same guard; geometric and support-identity assertions remain unchanged.
+
+Validation: 730 release regressions across 20 executables, including all affected Hypercurve integration suites, stationary fillets, downstream nesting and native planar adapters. Eight feature/lint, formatting, documentation, doctest, fuzz and downstream checks pass.

@@ -1,0 +1,80 @@
+   Compiling libm v0.2.16
+   Compiling syn v2.0.117
+   Compiling num-traits v0.2.19
+   Compiling wasm-bindgen-shared v0.2.126
+    Checking num-integer v0.1.46
+   Compiling rustversion v1.0.23
+   Compiling bumpalo v3.20.3
+   Compiling wasm-bindgen v0.2.126
+    Checking unicode-ident v1.0.24
+   Compiling crossbeam-utils v0.8.21
+    Checking once_cell v1.21.4
+   Compiling wasm-bindgen-macro-support v0.2.126
+   Compiling serde_derive v1.0.228
+   Compiling zerocopy-derive v0.8.48
+    Checking serde v1.0.228
+    Checking num-complex v0.4.6
+    Checking zerocopy v0.8.48
+    Checking num-bigint v0.4.6
+   Compiling wasm-bindgen-macro v0.2.126
+    Checking num-rational v0.4.2
+    Checking crossbeam-epoch v0.9.18
+   Compiling getrandom v0.3.4
+   Compiling rayon-core v1.13.0
+    Checking crossbeam-deque v0.8.6
+    Checking approx v0.5.1
+    Checking either v1.15.0
+    Checking half v2.7.1
+    Checking smallvec v1.15.1
+    Checking ciborium-ll v0.2.2
+    Checking rand_core v0.9.5
+    Checking rayon v1.12.0
+    Checking num-iter v0.1.45
+    Checking foldhash v0.2.0
+    Checking byteorder v1.5.0
+    Checking rand_core v0.10.1
+    Checking equivalent v1.0.2
+    Checking allocator-api2 v0.2.21
+   Compiling heapless v0.8.0
+    Checking hash32 v0.3.1
+    Checking num v0.4.3
+    Checking ciborium v0.2.2
+    Checking ppv-lite86 v0.2.21
+    Checking slab v0.4.12
+    Checking stable_deref_trait v1.2.1
+    Checking futures-core v0.3.33
+    Checking pin-project-lite v0.2.17
+    Checking futures-task v0.3.33
+    Checking i_key_sort v0.10.3
+    Checking futures-util v0.3.33
+   Compiling getrandom v0.4.2
+   Compiling anyhow v1.0.102
+   Compiling thiserror v2.0.18
+    Checking rand_chacha v0.9.0
+    Checking hyperreal v0.13.1 (/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/derivative-demand-candidate/hyperreal)
+    Checking hashbrown v0.16.1
+   Compiling thiserror-impl v2.0.18
+    Checking i_float v1.16.0
+    Checking robust v1.2.0
+    Checking typenum v1.20.1
+    Checking bytemuck v1.25.1
+    Checking wide v1.5.0
+    Checking hyperlattice v0.6.1 (/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/derivative-demand-candidate/hyperlattice)
+    Checking spade v2.15.1
+    Checking i_shape v1.18.0
+   Compiling matrixmultiply v0.3.11
+    Checking js-sys v0.3.103
+    Checking rand v0.9.4
+error: The wasm32-unknown-unknown targets are not supported by default; you may need to enable the "wasm_js" crate feature. For more information see: https://docs.rs/getrandom/0.4.2/#webassembly-support
+   --> /home/tim/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/getrandom-0.4.2/src/backends.rs:176:17
+    |
+176 | /                 compile_error!(concat!(
+177 | |                     "The wasm32-unknown-unknown targets are not supported by default; \
+178 | |                     you may need to enable the \"wasm_js\" crate feature. \
+179 | |                     For more information see: \
+180 | |                     https://docs.rs/getrandom/", env!("CARGO_PKG_VERSION"), "/#webassembly-support"
+181 | |                 ));
+    | |__________________^
+
+error: could not compile `getrandom` (lib) due to 1 previous error
+warning: build failed, waiting for other jobs to finish...

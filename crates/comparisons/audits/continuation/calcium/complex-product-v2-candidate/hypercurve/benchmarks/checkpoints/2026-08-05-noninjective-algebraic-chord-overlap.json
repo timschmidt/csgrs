@@ -1,0 +1,218 @@
+{
+  "schema": 1,
+  "captured_on": "2026-08-05",
+  "checkpoint": "noninjective-algebraic-chord-overlap",
+  "source_revision": "2707423eed4e6ce4f7c3ebc7e9fe07a2321e8f81",
+  "implementation_revision": "b718de90622f37820cd35399c166462b5773c155",
+  "benchmark_revision": "34c6b5a826aabf38a15f553f1550ff95c9485500",
+  "matched_control_revision": "2707423eed4e6ce4f7c3ebc7e9fe07a2321e8f81",
+  "preceding_checkpoint": "2026-08-05-independent-field-algebraic-chord-boolean.json",
+  "dependency_snapshot": {
+    "hyperreal": "e238dc1615e0c5945c8fc1f25c12fde6ef3eb756",
+    "hyperlattice": "a475bb752c1e0fb0cfdb80f4db74a56caa6962c0",
+    "hyperlimit": "d2dee8fb801e3255dbcef93eb054d897003c28cf",
+    "hypertri": "aa99d162621fae601ebf304b8d26b9259db3f695",
+    "hypersolve": "f3cf7467219abdf5c6a27459e330ed158bbc590e",
+    "hyperbrep": "6336697cd124ef6ef8384166b1f90ef2fceb6663",
+    "hypermesh_modified_or_benchmarked": false,
+    "workspace_note": "Hypermesh was deliberately left untouched. The implementation reuses Hypercurve's selected-root machinery and the exact univariate isolation/refinement supplied by Hypersolve."
+  },
+  "semantic_evidence": {
+    "authoritative_route": "CurveRegion2::intersect_region continues through the single CurveRegionBooleanContext pair schedule. Algebraic chord/rational pairs enter BezierAlgebraicChord2::rational_intersections and its exact collinear specialization; no parallel Boolean or overlap engine was added.",
+    "structural_collinearity": "The selected chord support determinant is replayed against the rational source coordinate polynomials. Only a structurally zero homogeneous determinant enters the positive-dimensional path; sampling never establishes collinearity.",
+    "injective_source": "A derivative-sign proof reduces an injective collinear source to exact endpoint fibers, finite-chord clipping, and one oriented source/chord range correspondence.",
+    "noninjective_source": "All selected chord-endpoint preimages, authored source-domain endpoints, and roots of the selected coordinate derivative numerator partition the source domain into exact monotone cells. One exact rational sample classifies each open cell, after which exact endpoint transport publishes every covered branch.",
+    "branch_multiplicity": "Retraced source branches that cover the same geometric chord are retained as distinct overlap witnesses. Source ranges are oriented from the chord's low coordinate to its high coordinate; descending source ranges therefore carry Reversed orientation.",
+    "contact_and_overlap_coexistence": "The pair result can carry isolated contacts and positive-length overlaps simultaneously. Boundary contacts not consumed by an overlap remain explicit, and exclusion of an authored adjacent parameter removes only that isolated contact, never a positive-length branch.",
+    "endpoint_identity": "A one-bit selected-endpoint tag survives partition construction and clipping. Once exact support incidence and the chord's injective coordinate identify an endpoint, the engine does not attempt to rediscover that identity through an unrelated cross-field point comparison.",
+    "strict_policy": "STRICT uses exact structural zero tests, exact endpoint fibers, Sturm-isolated derivative roots, certified parameter order, exact rational cell samples, and exact selected-root coordinate comparisons. Any unproved singular projection remains a typed blocker.",
+    "approximate_512_policy": "APPROXIMATE_512 follows the same proof graph and observes all approximate certainty. Only the shared terminal may decide equality at 512 bits; published geometry and parameter ranges remain exact Hyperreal evidence.",
+    "lower_layer_correctness_fix": "Selected algebraic coordinate comparison with a canonical Real first evaluates that Real in the selected root's defining polynomial and checks the isolator. This lets STRICT prove radical equality without invoking the approximate terminal.",
+    "no_compatibility_shim": true
+  },
+  "mathematical_paths_covered": [
+    "injective collinear rational source with partial and complete chord coverage",
+    "noninjective quadratic and cubic rational sources with multiple monotone branches",
+    "same- and reversed-orientation overlap correspondence",
+    "multiple source branches covering one chord range",
+    "isolated collinear tangency without positive-length overlap",
+    "isolated contact coexisting with positive-length overlap",
+    "excluded authored isolated contact coexisting with retained overlap",
+    "independently selected algebraic chord endpoints",
+    "exact finite-chord clipping and uncovered-boundary contact retention",
+    "CurveRegion2 public intersection evidence",
+    "STRICT and APPROXIMATE_512 policy execution"
+  ],
+  "explicit_remaining_blockers": [
+    "independent-field algebraic chord/chord isolated contacts",
+    "algebraic chord/chord partial, complete, reversed, and multi-branch overlaps",
+    "singular collinear projections whose selected coordinate derivative is identically zero",
+    "noninjective isolated chord/rational contacts at a closure endpoint when the same geometric source point has multiple unrelated parameter preimages",
+    "finite projection and general exact transformation of retained algebraic endpoints",
+    "offset re-entry for retained algebraic chords",
+    "retained algebraic fillet circle and arc arrangement participation"
+  ],
+  "historical_behavior": {
+    "at_revision": "2707423",
+    "fixture_result": {
+      "authored_carrier_pair_count": 2,
+      "candidate_carrier_pair_count": 2,
+      "contacts": 0,
+      "overlaps": 0,
+      "blockers": 2,
+      "blocker": "Uncertain(Boundary)"
+    },
+    "successful_historical_fixture_throughput": false,
+    "matched_historical_result": "The preimplementation revision could not represent either positive-dimensional pair, so a finite speedup ratio would be dishonest.",
+    "historical_editing_executable_sha256": "9f9bb3efb85b2f01a76043f73ffec25c4b321388d03f40748acc0a86b5c23ee0"
+  },
+  "verification": {
+    "cargo_test_all_features_lib": "462 passed",
+    "cargo_test_all_features_hypercurve_curve_region_promotion": "54 passed",
+    "cargo_check_no_default_features_with_deny_warnings": "pass",
+    "cargo_clippy_all_features_all_targets_deny_warnings": "Hypercurve pass; external Hypertri emitted only its pre-existing ExactKernel::sub dead-code warning",
+    "cargo_check_all_features_editing_benchmark": "pass",
+    "cargo_fmt_all_check": "pass",
+    "git_diff_check": "pass"
+  },
+  "benchmark_method": {
+    "cpu": 11,
+    "primary_metric": "retired userspace instructions from seven taskset-pinned perf stat repetitions, with a matching disabled-lane process control subtracted",
+    "secondary_metric": "five taskset-pinned release wall samples after a discarded warm-up process",
+    "editing_executable": "target/release/deps/editing-1429e5261074e42b",
+    "editing_executable_sha256": "72f4c8866dfb59d7ddc59e4828915fb14a4e84708e05d5913b8598e49965bb7c",
+    "fixture": "A two-edge retained loop traverses the independently selected horizontal chord from sqrt(1/2) to sqrt(1/3) in both directions. A one-fragment closed quadratic x(t)=4t(1-t), y(t)=0 retraces the support. Public CurveRegion2 intersection schedules exactly two carrier pairs and returns four overlap witnesses, one Same and one Reversed source branch per chord traversal.",
+    "fixture_scope_note": "The deliberately retraced zero-area loops isolate intersection evidence rather than filled-region classification. A nondegenerate closure variant exposed the separately recorded noninjective isolated endpoint-contact blocker and was not allowed to contaminate this overlap benchmark."
+  },
+  "new_exact_capability_performance": {
+    "curve_region_noninjective_collinear_algebraic_chord_intersection": {
+      "wall_iterations_per_sample": 5000,
+      "wall_samples_seconds": [
+        2.942231989,
+        2.951726898,
+        2.965821682,
+        2.900569623,
+        2.927440612
+      ],
+      "wall_samples_us_per_operation": [
+        588.446,
+        590.345,
+        593.164,
+        580.113,
+        585.488
+      ],
+      "median_wall_us_per_operation": 588.446,
+      "perf_repetitions": 7,
+      "perf_iterations_per_repetition": 5000,
+      "target_instructions": 27633210398,
+      "disabled_lane_control_instructions": 1161012,
+      "instructions_per_operation_after_subtraction": 5526209.8772,
+      "target_cycles": 12382969132,
+      "disabled_lane_control_cycles": 1054414,
+      "cycles_per_operation_after_subtraction": 2476382.9436,
+      "target_branches": 5450422963,
+      "disabled_lane_control_branches": 245354,
+      "branches_per_operation_after_subtraction": 1090035.5218,
+      "target_branch_misses": 43734573,
+      "disabled_lane_control_branch_misses": 13909,
+      "branch_misses_per_operation_after_subtraction": 8744.1328,
+      "candidate_carrier_pairs_per_operation": 2,
+      "overlap_witnesses_per_operation": 4,
+      "historical_successful_control": false
+    }
+  },
+  "allocation_evidence": {
+    "method": "Heaptrack release processes with 100 target operations and a matching disabled-lane control; fixture construction occurs outside the timed loop but remains in process totals.",
+    "target": {
+      "allocation_calls": 754531,
+      "heaptrack_print_temporary_allocations": 86152,
+      "raw_counter_temporary_allocations": 82551,
+      "peak_heap_kib": 187.46,
+      "total_memory_leaked_kib": 44.98
+    },
+    "disabled_lane_control": {
+      "allocation_calls": 485,
+      "heaptrack_print_temporary_allocations": 29,
+      "raw_counter_temporary_allocations": 28,
+      "peak_heap_kib": 113.33,
+      "total_memory_leaked_kib": 10.49
+    },
+    "difference": {
+      "allocation_calls": 754046,
+      "allocation_calls_per_operation": 7540.46,
+      "heaptrack_print_temporary_allocations": 86123,
+      "heaptrack_print_temporary_allocations_per_operation": 861.23,
+      "raw_counter_temporary_allocations": 82523,
+      "raw_counter_temporary_allocations_per_operation": 825.23,
+      "peak_heap_kib": 74.13,
+      "total_memory_leaked_kib": 34.49
+    },
+    "dominant_route": "Exact Bezier-parameter equality/order refinement in partition sorting and overlap clipping. The largest single allocator stack was BigUint div_rem_ref with 80,280 calls, reached through BezierParameterPolynomial GCD and cmp_by_refinement from sort_and_dedup_collinear_partition_boundaries.",
+    "interpretation": "The profile now belongs to the intended noninjective overlap route. It identifies parameter comparison/GCD work as the first allocation-optimization target after the next mathematical branch is admitted."
+  },
+  "representative_linked_size": {
+    "benchmark": "curve_region_boolean_batch",
+    "baseline": "matched 2707423 build against the same live path dependencies",
+    "all_features": {
+      "candidate_sha256": "d3bf2f120d0b9cae838957b5a40299ac40093687e15798bc393a96897a3c17db",
+      "control_sha256": "dc48257a53e8febf35e613ade63cddee8aa727cae646fdb0ad80eb12c6a7ce23",
+      "candidate_text_bytes": 6779714,
+      "control_text_bytes": 6762442,
+      "text_change_bytes": 17272,
+      "text_change_percent": 0.255411,
+      "candidate_data_bytes": 272848,
+      "control_data_bytes": 272744,
+      "candidate_bss_bytes": 2664,
+      "control_bss_bytes": 3648,
+      "candidate_total_bytes": 7055226,
+      "control_total_bytes": 7038834,
+      "total_change_bytes": 16392,
+      "total_change_percent": 0.232879,
+      "candidate_file_bytes": 8867936,
+      "control_file_bytes": 8844648,
+      "file_change_bytes": 23288,
+      "file_change_percent": 0.2633
+    },
+    "no_default_features": {
+      "candidate_sha256": "6cd74233c35b2f168bdafb67dc95ec664fc23b65a2c91d963a6a390e689c601c",
+      "control_sha256": "aa30b83361ec95fd406de60435616fe94e5e145bfd6774be2a89f903133653df",
+      "candidate_text_bytes": 6081933,
+      "control_text_bytes": 6081933,
+      "candidate_data_bytes": 267984,
+      "control_data_bytes": 267984,
+      "candidate_bss_bytes": 4720,
+      "control_bss_bytes": 4720,
+      "candidate_total_bytes": 6354637,
+      "control_total_bytes": 6354637,
+      "text_change_bytes": 0,
+      "total_change_bytes": 0,
+      "candidate_file_bytes": 7998360,
+      "control_file_bytes": 7998736,
+      "interpretation": "The linked sections are identical without default features. The 376-byte container difference is build-path metadata, not linked code or data."
+    }
+  },
+  "static_callgraph": {
+    "command": "tools/hyper-callgraph/target/release/hyper-callgraph --root . --out-dir target/callgraph-hypercurve-noninjective-chord-b718de9 --format json --crate-name hypercurve,hypersolve --include-tests --include-bench --per-library",
+    "artifact": "../target/callgraph-hypercurve-noninjective-chord-b718de9/callgraph.json",
+    "libraries": [
+      "hypercurve",
+      "hypersolve"
+    ],
+    "nodes": 33119,
+    "edges": 64687,
+    "authoritative_route": "CurveRegionBooleanContext::pair_result -> BezierAlgebraicChord2::rational_intersections -> collinear_rational_intersections -> collinear_noninjective_rational_intersections -> selected endpoint fibers and derivative-root isolation -> exact partition sorting and sampling -> exact contact/overlap evidence -> CurveRegion clipping",
+    "resolution_note": "The utility is syntax-level and records locally imported Hypersolve aliases under Hypercurve call sites; the isolation/refinement implementation remains owned by Hypersolve.",
+    "duplicate_boolean_engine_added": false
+  },
+  "competitive_context": {
+    "exact_peer_available": false,
+    "finite_peer_control": "Cavalier Contours, Curvo, iOverlay, Clipper2, CGAL, and Open CASCADE do not expose a correctness-equivalent operation retaining independently selected canonical-Real endpoint fields, noninjective branch multiplicity, exact overlap correspondence, and STRICT/APPROXIMATE_512 proof evidence.",
+    "preceding_cavalier_capsule_ratio": 21.637198,
+    "preceding_curvo_open_cubic_certified_ratio": 3557.125329,
+    "interpretation": "Those finite ratios remain contextual optimization sentinels on comparable native or approximating lanes. No competitive ratio is fabricated for this stronger exact operation."
+  },
+  "next_priority": {
+    "correctness": "Close the newly isolated multi-preimage endpoint-contact blocker, then implement independent-field algebraic chord/chord isolated contacts and all overlap orientations in the same CurveRegionBooleanContext.",
+    "performance_and_memory": "After chord/chord coverage, eliminate repeated BezierParameterPolynomial GCD/refinement work in partition ordering and clipping without caching policy-derived certainty or weakening exact comparisons."
+  }
+}

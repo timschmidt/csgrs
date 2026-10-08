@@ -1,0 +1,25 @@
+{
+  "status": "PROGRESS; full ecosystem goal OPEN",
+  "sourceSHA256": "732455f71d3d90b247d32c6c94669341c64b09cc8bc18bdb5d5e1da89ad3b587",
+  "donorPin": "82d552fee22d92e493936183fab8672517694e56",
+  "sourceDataReadFiles": 237,
+  "sourceDataReadLines": 19087,
+  "separatelyReviewedAssets": 1,
+  "unreadFiles": 7,
+  "unreadLines": 7135,
+  "currentHyperSnapshotFiles": 397,
+  "currentDrift": [],
+  "artifactSHA256": {
+    "inspect-abstractions-v2.mjs": "cf4e3ff72bb8988b0be155bda0688e4ea54b02aa577aaddb8c0b9b602e8c58a8",
+    "verify-abstractions.mjs": "0f027f92fc6e2ad5d147152fb2a371d780a90fb7cd0fdce46da0a2b234bf01d5",
+    "abstractions-audit/metadata.json": "9922582211153ab6e8105b6fd626d57d0908b9119bed6c28f978da93cd664f94",
+    "abstractions-audit/verification.json": "01f54ac0685bb53b5398de2e939ff8c81b00990851622c7bacfb3e9f40f6bd79",
+    "check-round-constants-07-08.mjs": "782872189a8202472416c9f558788a845ea90de833eebaa4523928d509b7f48f",
+    "round-constants-07-08-analysis.json": "d4b35673d11e6144eb33252875699a66b6241f750baac0ccf65001c7482a553f",
+    "inventory.mjs": "a6ded40ee46323ece08d05d705d647605f1a8c1ee655a2e6cff08dc79697c6d6",
+    "../RUFFINI_FILE_INVENTORY.tsv": "9c9863d4cf482b30063ce32b19c42005d901756000d05eb374d31e98bd04d14b",
+    "../RUFFINI_READ_COVERAGE.tsv": "4df403368c5ca89a5438cca436b024077b660a5c2a681fa9a76297be5ed24bef"
+  },
+  "newProductionChanges": 0,
+  "scope": "Current resource/asset evidence and source-fingerprint checkpoint only; not a rerun of old native tests or performance experiments."
+}

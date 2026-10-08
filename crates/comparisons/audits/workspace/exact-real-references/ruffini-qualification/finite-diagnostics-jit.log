@@ -1,0 +1,260 @@
+DETAIL	berlekamp/3/17/0/0	VALUE	0
+DETAIL	berlekamp/3/17/0/1	IllegalArgumentException	Exceeded max number of iterations without finding a root for the given polynomial
+DETAIL	berlekamp/3/17/0/2	VALUE	2
+DETAIL	berlekamp/3/17/1/0	VALUE	2
+DETAIL	berlekamp/3/17/1/1	VALUE	1
+DETAIL	berlekamp/3/17/1/2	IllegalArgumentException	Exceeded max number of iterations without finding a root for the given polynomial
+DETAIL	berlekamp/3/17/2/0	VALUE	0
+DETAIL	berlekamp/3/17/2/1	VALUE	2
+DETAIL	berlekamp/3/17/2/2	IllegalArgumentException	Exceeded max number of iterations without finding a root for the given polynomial
+DETAIL	berlekamp/3/42/0/0	VALUE	0
+DETAIL	berlekamp/3/42/0/1	IllegalArgumentException	Exceeded max number of iterations without finding a root for the given polynomial
+DETAIL	berlekamp/3/42/0/2	VALUE	2
+DETAIL	berlekamp/3/42/1/0	VALUE	2
+DETAIL	berlekamp/3/42/1/1	VALUE	1
+DETAIL	berlekamp/3/42/1/2	IllegalArgumentException	Exceeded max number of iterations without finding a root for the given polynomial
+DETAIL	berlekamp/3/42/2/0	VALUE	0
+DETAIL	berlekamp/3/42/2/1	VALUE	2
+DETAIL	berlekamp/3/42/2/2	IllegalArgumentException	Exceeded max number of iterations without finding a root for the given polynomial
+DETAIL	berlekamp/3/149/0/0	VALUE	0
+DETAIL	berlekamp/3/149/0/1	IllegalArgumentException	Exceeded max number of iterations without finding a root for the given polynomial
+DETAIL	berlekamp/3/149/0/2	VALUE	2
+DETAIL	berlekamp/3/149/1/0	VALUE	2
+DETAIL	berlekamp/3/149/1/1	VALUE	1
+DETAIL	berlekamp/3/149/1/2	IllegalArgumentException	Exceeded max number of iterations without finding a root for the given polynomial
+DETAIL	berlekamp/3/149/2/0	VALUE	0
+DETAIL	berlekamp/3/149/2/1	VALUE	2
+DETAIL	berlekamp/3/149/2/2	IllegalArgumentException	Exceeded max number of iterations without finding a root for the given polynomial
+DETAIL	berlekamp/5/17/0/0	IllegalArgumentException	Exceeded max number of iterations without finding a root for the given polynomial
+DETAIL	berlekamp/5/17/0/1	VALUE	3
+DETAIL	berlekamp/5/17/0/2	IllegalArgumentException	Exceeded max number of iterations without finding a root for the given polynomial
+DETAIL	berlekamp/5/17/0/3	IllegalArgumentException	Exceeded max number of iterations without finding a root for the given polynomial
+DETAIL	berlekamp/5/17/0/4	VALUE	4
+DETAIL	berlekamp/5/17/1/0	VALUE	4
+DETAIL	berlekamp/5/17/1/1	IllegalArgumentException	Exceeded max number of iterations without finding a root for the given polynomial
+DETAIL	berlekamp/5/17/1/2	IllegalArgumentException	Exceeded max number of iterations without finding a root for the given polynomial
+DETAIL	berlekamp/5/17/1/3	VALUE	3
+DETAIL	berlekamp/5/17/1/4	NullPointerException	Cannot invoke "java.lang.Integer.intValue()" because "<parameter1>" is null
+FRAME	berlekamp/5/17/1/4	dk.jonaslindstrom.ruffini.integers.structures.Integers.negate(Integers.java:44)
+DETAIL	berlekamp/5/17/2/0	VALUE	3
+DETAIL	berlekamp/5/17/2/1	VALUE	4
+DETAIL	berlekamp/5/17/2/2	VALUE	2
+DETAIL	berlekamp/5/17/2/3	IllegalArgumentException	Exceeded max number of iterations without finding a root for the given polynomial
+DETAIL	berlekamp/5/17/2/4	IllegalArgumentException	Exceeded max number of iterations without finding a root for the given polynomial
+DETAIL	berlekamp/5/17/3/0	VALUE	0
+DETAIL	berlekamp/5/17/3/1	NullPointerException	Cannot invoke "java.lang.Integer.intValue()" because "<parameter1>" is null
+FRAME	berlekamp/5/17/3/1	dk.jonaslindstrom.ruffini.integers.structures.Integers.negate(Integers.java:44)
+DETAIL	berlekamp/5/17/3/2	VALUE	3
+DETAIL	berlekamp/5/17/3/3	IllegalArgumentException	Exceeded max number of iterations without finding a root for the given polynomial
+DETAIL	berlekamp/5/17/3/4	IllegalArgumentException	Exceeded max number of iterations without finding a root for the given polynomial
+DETAIL	berlekamp/5/17/4/0	VALUE	1
+DETAIL	berlekamp/5/17/4/1	IllegalArgumentException	Exceeded max number of iterations without finding a root for the given polynomial
+DETAIL	berlekamp/5/17/4/2	IllegalArgumentException	Exceeded max number of iterations without finding a root for the given polynomial
+DETAIL	berlekamp/5/17/4/3	VALUE	4
+DETAIL	berlekamp/5/17/4/4	VALUE	3
+DETAIL	berlekamp/5/42/0/0	IllegalArgumentException	Exceeded max number of iterations without finding a root for the given polynomial
+DETAIL	berlekamp/5/42/0/1	VALUE	3
+DETAIL	berlekamp/5/42/0/2	IllegalArgumentException	Exceeded max number of iterations without finding a root for the given polynomial
+DETAIL	berlekamp/5/42/0/3	IllegalArgumentException	Exceeded max number of iterations without finding a root for the given polynomial
+DETAIL	berlekamp/5/42/0/4	VALUE	1
+DETAIL	berlekamp/5/42/1/0	VALUE	0
+DETAIL	berlekamp/5/42/1/1	IllegalArgumentException	Exceeded max number of iterations without finding a root for the given polynomial
+DETAIL	berlekamp/5/42/1/2	IllegalArgumentException	Exceeded max number of iterations without finding a root for the given polynomial
+DETAIL	berlekamp/5/42/1/3	VALUE	3
+DETAIL	berlekamp/5/42/1/4	NullPointerException	Cannot invoke "java.lang.Integer.intValue()" because "<parameter1>" is null
+FRAME	berlekamp/5/42/1/4	dk.jonaslindstrom.ruffini.integers.structures.Integers.negate(Integers.java:44)
+DETAIL	berlekamp/5/42/2/0	VALUE	3
+DETAIL	berlekamp/5/42/2/1	NullPointerException	Cannot invoke "java.lang.Integer.intValue()" because "<parameter1>" is null
+FRAME	berlekamp/5/42/2/1	dk.jonaslindstrom.ruffini.integers.structures.Integers.negate(Integers.java:44)
+DETAIL	berlekamp/5/42/2/2	VALUE	1
+DETAIL	berlekamp/5/42/2/3	IllegalArgumentException	Exceeded max number of iterations without finding a root for the given polynomial
+DETAIL	berlekamp/5/42/2/4	IllegalArgumentException	Exceeded max number of iterations without finding a root for the given polynomial
+DETAIL	berlekamp/5/42/3/0	VALUE	0
+DETAIL	berlekamp/5/42/3/1	VALUE	1
+DETAIL	berlekamp/5/42/3/2	VALUE	3
+DETAIL	berlekamp/5/42/3/3	IllegalArgumentException	Exceeded max number of iterations without finding a root for the given polynomial
+DETAIL	berlekamp/5/42/3/4	IllegalArgumentException	Exceeded max number of iterations without finding a root for the given polynomial
+DETAIL	berlekamp/5/42/4/0	VALUE	1
+DETAIL	berlekamp/5/42/4/1	IllegalArgumentException	Exceeded max number of iterations without finding a root for the given polynomial
+DETAIL	berlekamp/5/42/4/2	IllegalArgumentException	Exceeded max number of iterations without finding a root for the given polynomial
+DETAIL	berlekamp/5/42/4/3	VALUE	4
+DETAIL	berlekamp/5/42/4/4	VALUE	3
+DETAIL	berlekamp/5/149/0/0	IllegalArgumentException	Exceeded max number of iterations without finding a root for the given polynomial
+DETAIL	berlekamp/5/149/0/1	VALUE	3
+DETAIL	berlekamp/5/149/0/2	IllegalArgumentException	Exceeded max number of iterations without finding a root for the given polynomial
+DETAIL	berlekamp/5/149/0/3	IllegalArgumentException	Exceeded max number of iterations without finding a root for the given polynomial
+DETAIL	berlekamp/5/149/0/4	VALUE	1
+DETAIL	berlekamp/5/149/1/0	VALUE	4
+DETAIL	berlekamp/5/149/1/1	IllegalArgumentException	Exceeded max number of iterations without finding a root for the given polynomial
+DETAIL	berlekamp/5/149/1/2	IllegalArgumentException	Exceeded max number of iterations without finding a root for the given polynomial
+DETAIL	berlekamp/5/149/1/3	VALUE	3
+DETAIL	berlekamp/5/149/1/4	NullPointerException	Cannot invoke "java.lang.Integer.intValue()" because "<parameter1>" is null
+FRAME	berlekamp/5/149/1/4	dk.jonaslindstrom.ruffini.integers.structures.Integers.negate(Integers.java:44)
+DETAIL	berlekamp/5/149/2/0	VALUE	3
+DETAIL	berlekamp/5/149/2/1	NullPointerException	Cannot invoke "java.lang.Integer.intValue()" because "<parameter1>" is null
+FRAME	berlekamp/5/149/2/1	dk.jonaslindstrom.ruffini.integers.structures.Integers.negate(Integers.java:44)
+DETAIL	berlekamp/5/149/2/2	VALUE	2
+DETAIL	berlekamp/5/149/2/3	IllegalArgumentException	Exceeded max number of iterations without finding a root for the given polynomial
+DETAIL	berlekamp/5/149/2/4	IllegalArgumentException	Exceeded max number of iterations without finding a root for the given polynomial
+DETAIL	berlekamp/5/149/3/0	VALUE	0
+DETAIL	berlekamp/5/149/3/1	VALUE	1
+DETAIL	berlekamp/5/149/3/2	VALUE	3
+DETAIL	berlekamp/5/149/3/3	IllegalArgumentException	Exceeded max number of iterations without finding a root for the given polynomial
+DETAIL	berlekamp/5/149/3/4	IllegalArgumentException	Exceeded max number of iterations without finding a root for the given polynomial
+DETAIL	berlekamp/5/149/4/0	VALUE	1
+DETAIL	berlekamp/5/149/4/1	IllegalArgumentException	Exceeded max number of iterations without finding a root for the given polynomial
+DETAIL	berlekamp/5/149/4/2	IllegalArgumentException	Exceeded max number of iterations without finding a root for the given polynomial
+DETAIL	berlekamp/5/149/4/3	VALUE	4
+DETAIL	berlekamp/5/149/4/4	VALUE	3
+DETAIL	berlekamp/7/17/0/0	IllegalArgumentException	Exceeded max number of iterations without finding a root for the given polynomial
+DETAIL	berlekamp/7/17/0/1	IllegalArgumentException	Exceeded max number of iterations without finding a root for the given polynomial
+DETAIL	berlekamp/7/17/0/2	IllegalArgumentException	Exceeded max number of iterations without finding a root for the given polynomial
+DETAIL	berlekamp/7/17/0/3	VALUE	5
+DETAIL	berlekamp/7/17/0/4	IllegalArgumentException	Exceeded max number of iterations without finding a root for the given polynomial
+DETAIL	berlekamp/7/17/0/5	VALUE	3
+DETAIL	berlekamp/7/17/0/6	VALUE	1
+DETAIL	berlekamp/7/17/1/0	VALUE	0
+DETAIL	berlekamp/7/17/1/1	VALUE	4
+DETAIL	berlekamp/7/17/1/2	VALUE	3
+DETAIL	berlekamp/7/17/1/3	IllegalArgumentException	Exceeded max number of iterations without finding a root for the given polynomial
+DETAIL	berlekamp/7/17/1/4	IllegalArgumentException	Exceeded max number of iterations without finding a root for the given polynomial
+DETAIL	berlekamp/7/17/1/5	VALUE	1
+DETAIL	berlekamp/7/17/1/6	IllegalArgumentException	Exceeded max number of iterations without finding a root for the given polynomial
+DETAIL	berlekamp/7/17/2/0	VALUE	5
+DETAIL	berlekamp/7/17/2/1	VALUE	6
+DETAIL	berlekamp/7/17/2/2	IllegalArgumentException	Exceeded max number of iterations without finding a root for the given polynomial
+DETAIL	berlekamp/7/17/2/3	IllegalArgumentException	Exceeded max number of iterations without finding a root for the given polynomial
+DETAIL	berlekamp/7/17/2/4	VALUE	1
+DETAIL	berlekamp/7/17/2/5	IllegalArgumentException	Exceeded max number of iterations without finding a root for the given polynomial
+DETAIL	berlekamp/7/17/2/6	VALUE	2
+DETAIL	berlekamp/7/17/3/0	VALUE	0
+DETAIL	berlekamp/7/17/3/1	IllegalArgumentException	Exceeded max number of iterations without finding a root for the given polynomial
+DETAIL	berlekamp/7/17/3/2	VALUE	5
+DETAIL	berlekamp/7/17/3/3	VALUE	1
+DETAIL	berlekamp/7/17/3/4	VALUE	2
+DETAIL	berlekamp/7/17/3/5	IllegalArgumentException	Exceeded max number of iterations without finding a root for the given polynomial
+DETAIL	berlekamp/7/17/3/6	IllegalArgumentException	Exceeded max number of iterations without finding a root for the given polynomial
+DETAIL	berlekamp/7/17/4/0	VALUE	3
+DETAIL	berlekamp/7/17/4/1	IllegalArgumentException	Exceeded max number of iterations without finding a root for the given polynomial
+DETAIL	berlekamp/7/17/4/2	VALUE	1
+DETAIL	berlekamp/7/17/4/3	VALUE	6
+DETAIL	berlekamp/7/17/4/4	VALUE	5
+DETAIL	berlekamp/7/17/4/5	IllegalArgumentException	Exceeded max number of iterations without finding a root for the given polynomial
+DETAIL	berlekamp/7/17/4/6	IllegalArgumentException	Exceeded max number of iterations without finding a root for the given polynomial
+DETAIL	berlekamp/7/17/5/0	VALUE	0
+DETAIL	berlekamp/7/17/5/1	VALUE	1
+DETAIL	berlekamp/7/17/5/2	IllegalArgumentException	Exceeded max number of iterations without finding a root for the given polynomial
+DETAIL	berlekamp/7/17/5/3	IllegalArgumentException	Exceeded max number of iterations without finding a root for the given polynomial
+DETAIL	berlekamp/7/17/5/4	VALUE	3
+DETAIL	berlekamp/7/17/5/5	IllegalArgumentException	Exceeded max number of iterations without finding a root for the given polynomial
+DETAIL	berlekamp/7/17/5/6	VALUE	4
+DETAIL	berlekamp/7/17/6/0	VALUE	1
+DETAIL	berlekamp/7/17/6/1	VALUE	5
+DETAIL	berlekamp/7/17/6/2	VALUE	4
+DETAIL	berlekamp/7/17/6/3	IllegalArgumentException	Exceeded max number of iterations without finding a root for the given polynomial
+DETAIL	berlekamp/7/17/6/4	IllegalArgumentException	Exceeded max number of iterations without finding a root for the given polynomial
+DETAIL	berlekamp/7/17/6/5	VALUE	6
+DETAIL	berlekamp/7/17/6/6	IllegalArgumentException	Exceeded max number of iterations without finding a root for the given polynomial
+DETAIL	berlekamp/7/42/0/0	IllegalArgumentException	Exceeded max number of iterations without finding a root for the given polynomial
+DETAIL	berlekamp/7/42/0/1	IllegalArgumentException	Exceeded max number of iterations without finding a root for the given polynomial
+DETAIL	berlekamp/7/42/0/2	IllegalArgumentException	Exceeded max number of iterations without finding a root for the given polynomial
+DETAIL	berlekamp/7/42/0/3	VALUE	2
+DETAIL	berlekamp/7/42/0/4	IllegalArgumentException	Exceeded max number of iterations without finding a root for the given polynomial
+DETAIL	berlekamp/7/42/0/5	VALUE	3
+DETAIL	berlekamp/7/42/0/6	VALUE	1
+DETAIL	berlekamp/7/42/1/0	VALUE	0
+DETAIL	berlekamp/7/42/1/1	VALUE	4
+DETAIL	berlekamp/7/42/1/2	VALUE	3
+DETAIL	berlekamp/7/42/1/3	IllegalArgumentException	Exceeded max number of iterations without finding a root for the given polynomial
+DETAIL	berlekamp/7/42/1/4	IllegalArgumentException	Exceeded max number of iterations without finding a root for the given polynomial
+DETAIL	berlekamp/7/42/1/5	VALUE	5
+DETAIL	berlekamp/7/42/1/6	IllegalArgumentException	Exceeded max number of iterations without finding a root for the given polynomial
+DETAIL	berlekamp/7/42/2/0	VALUE	5
+DETAIL	berlekamp/7/42/2/1	VALUE	6
+DETAIL	berlekamp/7/42/2/2	IllegalArgumentException	Exceeded max number of iterations without finding a root for the given polynomial
+DETAIL	berlekamp/7/42/2/3	IllegalArgumentException	Exceeded max number of iterations without finding a root for the given polynomial
+DETAIL	berlekamp/7/42/2/4	VALUE	4
+DETAIL	berlekamp/7/42/2/5	IllegalArgumentException	Exceeded max number of iterations without finding a root for the given polynomial
+DETAIL	berlekamp/7/42/2/6	VALUE	3
+DETAIL	berlekamp/7/42/3/0	VALUE	0
+DETAIL	berlekamp/7/42/3/1	IllegalArgumentException	Exceeded max number of iterations without finding a root for the given polynomial
+DETAIL	berlekamp/7/42/3/2	VALUE	6
+DETAIL	berlekamp/7/42/3/3	VALUE	3
+DETAIL	berlekamp/7/42/3/4	VALUE	2
+DETAIL	berlekamp/7/42/3/5	IllegalArgumentException	Exceeded max number of iterations without finding a root for the given polynomial
+DETAIL	berlekamp/7/42/3/6	IllegalArgumentException	Exceeded max number of iterations without finding a root for the given polynomial
+DETAIL	berlekamp/7/42/4/0	VALUE	3
+DETAIL	berlekamp/7/42/4/1	IllegalArgumentException	Exceeded max number of iterations without finding a root for the given polynomial
+DETAIL	berlekamp/7/42/4/2	VALUE	1
+DETAIL	berlekamp/7/42/4/3	VALUE	4
+DETAIL	berlekamp/7/42/4/4	VALUE	5
+DETAIL	berlekamp/7/42/4/5	IllegalArgumentException	Exceeded max number of iterations without finding a root for the given polynomial
+DETAIL	berlekamp/7/42/4/6	IllegalArgumentException	Exceeded max number of iterations without finding a root for the given polynomial
+DETAIL	berlekamp/7/42/5/0	VALUE	2
+DETAIL	berlekamp/7/42/5/1	VALUE	1
+DETAIL	berlekamp/7/42/5/2	IllegalArgumentException	Exceeded max number of iterations without finding a root for the given polynomial
+DETAIL	berlekamp/7/42/5/3	IllegalArgumentException	Exceeded max number of iterations without finding a root for the given polynomial
+DETAIL	berlekamp/7/42/5/4	VALUE	3
+DETAIL	berlekamp/7/42/5/5	IllegalArgumentException	Exceeded max number of iterations without finding a root for the given polynomial
+DETAIL	berlekamp/7/42/5/6	VALUE	4
+DETAIL	berlekamp/7/42/6/0	VALUE	1
+DETAIL	berlekamp/7/42/6/1	VALUE	3
+DETAIL	berlekamp/7/42/6/2	VALUE	4
+DETAIL	berlekamp/7/42/6/3	IllegalArgumentException	Exceeded max number of iterations without finding a root for the given polynomial
+DETAIL	berlekamp/7/42/6/4	IllegalArgumentException	Exceeded max number of iterations without finding a root for the given polynomial
+DETAIL	berlekamp/7/42/6/5	VALUE	6
+DETAIL	berlekamp/7/42/6/6	IllegalArgumentException	Exceeded max number of iterations without finding a root for the given polynomial
+DETAIL	berlekamp/7/149/0/0	IllegalArgumentException	Exceeded max number of iterations without finding a root for the given polynomial
+DETAIL	berlekamp/7/149/0/1	IllegalArgumentException	Exceeded max number of iterations without finding a root for the given polynomial
+DETAIL	berlekamp/7/149/0/2	IllegalArgumentException	Exceeded max number of iterations without finding a root for the given polynomial
+DETAIL	berlekamp/7/149/0/3	VALUE	5
+DETAIL	berlekamp/7/149/0/4	IllegalArgumentException	Exceeded max number of iterations without finding a root for the given polynomial
+DETAIL	berlekamp/7/149/0/5	VALUE	4
+DETAIL	berlekamp/7/149/0/6	VALUE	1
+DETAIL	berlekamp/7/149/1/0	VALUE	6
+DETAIL	berlekamp/7/149/1/1	VALUE	2
+DETAIL	berlekamp/7/149/1/2	VALUE	3
+DETAIL	berlekamp/7/149/1/3	IllegalArgumentException	Exceeded max number of iterations without finding a root for the given polynomial
+DETAIL	berlekamp/7/149/1/4	IllegalArgumentException	Exceeded max number of iterations without finding a root for the given polynomial
+DETAIL	berlekamp/7/149/1/5	VALUE	5
+DETAIL	berlekamp/7/149/1/6	IllegalArgumentException	Exceeded max number of iterations without finding a root for the given polynomial
+DETAIL	berlekamp/7/149/2/0	VALUE	5
+DETAIL	berlekamp/7/149/2/1	VALUE	6
+DETAIL	berlekamp/7/149/2/2	IllegalArgumentException	Exceeded max number of iterations without finding a root for the given polynomial
+DETAIL	berlekamp/7/149/2/3	IllegalArgumentException	Exceeded max number of iterations without finding a root for the given polynomial
+DETAIL	berlekamp/7/149/2/4	IllegalArgumentException	Exceeded max number of iterations without finding a root for the given polynomial
+DETAIL	berlekamp/7/149/2/5	IllegalArgumentException	Exceeded max number of iterations without finding a root for the given polynomial
+DETAIL	berlekamp/7/149/2/6	VALUE	2
+DETAIL	berlekamp/7/149/3/0	VALUE	4
+DETAIL	berlekamp/7/149/3/1	IllegalArgumentException	Exceeded max number of iterations without finding a root for the given polynomial
+DETAIL	berlekamp/7/149/3/2	VALUE	5
+DETAIL	berlekamp/7/149/3/3	VALUE	3
+DETAIL	berlekamp/7/149/3/4	VALUE	2
+DETAIL	berlekamp/7/149/3/5	IllegalArgumentException	Exceeded max number of iterations without finding a root for the given polynomial
+DETAIL	berlekamp/7/149/3/6	IllegalArgumentException	Exceeded max number of iterations without finding a root for the given polynomial
+DETAIL	berlekamp/7/149/4/0	VALUE	3
+DETAIL	berlekamp/7/149/4/1	IllegalArgumentException	Exceeded max number of iterations without finding a root for the given polynomial
+DETAIL	berlekamp/7/149/4/2	VALUE	2
+DETAIL	berlekamp/7/149/4/3	VALUE	6
+DETAIL	berlekamp/7/149/4/4	VALUE	5
+DETAIL	berlekamp/7/149/4/5	IllegalArgumentException	Exceeded max number of iterations without finding a root for the given polynomial
+DETAIL	berlekamp/7/149/4/6	IllegalArgumentException	Exceeded max number of iterations without finding a root for the given polynomial
+DETAIL	berlekamp/7/149/5/0	VALUE	0
+DETAIL	berlekamp/7/149/5/1	IllegalArgumentException	Exceeded max number of iterations without finding a root for the given polynomial
+DETAIL	berlekamp/7/149/5/2	IllegalArgumentException	Exceeded max number of iterations without finding a root for the given polynomial
+DETAIL	berlekamp/7/149/5/3	IllegalArgumentException	Exceeded max number of iterations without finding a root for the given polynomial
+DETAIL	berlekamp/7/149/5/4	VALUE	6
+DETAIL	berlekamp/7/149/5/5	IllegalArgumentException	Exceeded max number of iterations without finding a root for the given polynomial
+DETAIL	berlekamp/7/149/5/6	VALUE	5
+DETAIL	berlekamp/7/149/6/0	VALUE	1
+DETAIL	berlekamp/7/149/6/1	VALUE	5
+DETAIL	berlekamp/7/149/6/2	VALUE	4
+DETAIL	berlekamp/7/149/6/3	IllegalArgumentException	Exceeded max number of iterations without finding a root for the given polynomial
+DETAIL	berlekamp/7/149/6/4	IllegalArgumentException	Exceeded max number of iterations without finding a root for the given polynomial
+DETAIL	berlekamp/7/149/6/5	VALUE	2
+DETAIL	berlekamp/7/149/6/6	IllegalArgumentException	Exceeded max number of iterations without finding a root for the given polynomial
+HIGH	StackOverflowError
+HIGHFRAME	dk.jonaslindstrom.ruffini.common.algorithms.Power.apply(Power.java:49)
+HIGHFRAME	dk.jonaslindstrom.ruffini.common.algorithms.Power.apply(Power.java:49)
+HIGHFRAME	dk.jonaslindstrom.ruffini.common.algorithms.Power.apply(Power.java:49)
+SUMMARY	249

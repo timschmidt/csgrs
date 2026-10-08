@@ -1,0 +1,36 @@
+{
+  "repo": "hypercurve",
+  "target": "hypercurve_curve_region_boolean_fuzz",
+  "binary": "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve_curve_region_boolean_fuzz-652872b00d70f80e",
+  "command": [
+    "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve_curve_region_boolean_fuzz-652872b00d70f80e",
+    "--test-threads=4",
+    "--color",
+    "never"
+  ],
+  "sha256": "6244409a54d578a842a9be5a20e6bc78c0beefa3e83ef9dc6a5f5500f303e263",
+  "returncode": 0,
+  "timed_out": false,
+  "elapsed_seconds": 2.3667181319906376,
+  "log": "constant-image-trim-full-hypercurve-hypercurve_curve_region_boolean_fuzz.log",
+  "passed": [
+    "deterministic_coincident_curve_family_images_complete",
+    "conic_endpoint_root_isolation_completes",
+    "deterministic_tangent_curve_family_pair_matrix_completes",
+    "explicit_loop_topology_supports_reversed_nonuniform_rational_regions",
+    "deterministic_endpoint_curve_family_pair_matrix_completes",
+    "retired_candidate_interval_pruning_completes",
+    "algebraic_polyline_contacts_preserve_exact_contact_distinction",
+    "shared_endpoint_xor_completes",
+    "generated_exact_curve_region_booleans_complete_and_match_immediate_results",
+    "deterministic_transverse_curve_family_pair_matrix_completes",
+    "retired_exact_curve_region_boolean_failures_remain_in_the_corpus"
+  ],
+  "failed": [],
+  "ignored": [],
+  "summaries": [
+    "test result: ok. 11 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.32s"
+  ],
+  "new_failures": [],
+  "known_failures": []
+}

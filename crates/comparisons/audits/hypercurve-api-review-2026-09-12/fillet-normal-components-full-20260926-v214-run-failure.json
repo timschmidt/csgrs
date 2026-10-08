@@ -1,0 +1,7 @@
+{
+  "session_id": 6718,
+  "exit_code": 1,
+  "all_processes_reaped": true,
+  "qualification_complete": false,
+  "cause": "The expected selection count was too narrow: direct query migration also changes 25 existing component tests outside the prior 524-case selection. All four checks and eight fresh builds succeeded; no test had started."
+}

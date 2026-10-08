@@ -1,0 +1,6470 @@
+{
+  "mode": "allocation",
+  "started": "2026-09-10T00:40:43.410Z",
+  "finished": "2026-09-10T00:40:51.136Z",
+  "cpu": 6,
+  "summaries": [
+    {
+      "p": 0,
+      "route": "planner",
+      "lifecycle": "fresh",
+      "iterations": 16,
+      "pilots": [
+        {
+          "started": "2026-09-10T00:40:43.411Z",
+          "finished": "2026-09-10T00:40:43.420Z",
+          "variant": "baseline",
+          "p": 0,
+          "route": "planner",
+          "lifecycle": "fresh",
+          "iterations": 2,
+          "ns": 3830,
+          "allocation": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "fingerprint": "af63be4c8601b992",
+          "answerBits": 2
+        },
+        {
+          "started": "2026-09-10T00:40:43.420Z",
+          "finished": "2026-09-10T00:40:43.424Z",
+          "variant": "candidate",
+          "p": 0,
+          "route": "planner",
+          "lifecycle": "fresh",
+          "iterations": 2,
+          "ns": 210,
+          "allocation": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "fingerprint": "af63be4c8601b992",
+          "answerBits": 2
+        }
+      ],
+      "observations": 6,
+      "measurements": {
+        "baseline": [
+          {
+            "name": "requests",
+            "min": 0,
+            "max": 0
+          },
+          {
+            "name": "requestedBytes",
+            "min": 0,
+            "max": 0
+          },
+          {
+            "name": "liveDelta",
+            "min": 0,
+            "max": 0
+          },
+          {
+            "name": "peakDelta",
+            "min": 0,
+            "max": 0
+          }
+        ],
+        "candidate": [
+          {
+            "name": "requests",
+            "min": 0,
+            "max": 0
+          },
+          {
+            "name": "requestedBytes",
+            "min": 0,
+            "max": 0
+          },
+          {
+            "name": "liveDelta",
+            "min": 0,
+            "max": 0
+          },
+          {
+            "name": "peakDelta",
+            "min": 0,
+            "max": 0
+          }
+        ]
+      }
+    },
+    {
+      "p": 0,
+      "route": "kernel",
+      "lifecycle": "fresh",
+      "iterations": 16,
+      "pilots": [
+        {
+          "started": "2026-09-10T00:40:43.448Z",
+          "finished": "2026-09-10T00:40:43.451Z",
+          "variant": "baseline",
+          "p": 0,
+          "route": "kernel",
+          "lifecycle": "fresh",
+          "iterations": 2,
+          "ns": 6499,
+          "allocation": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "fingerprint": "af63be4c8601b992",
+          "answerBits": 2
+        },
+        {
+          "started": "2026-09-10T00:40:43.451Z",
+          "finished": "2026-09-10T00:40:43.454Z",
+          "variant": "candidate",
+          "p": 0,
+          "route": "kernel",
+          "lifecycle": "fresh",
+          "iterations": 2,
+          "ns": 6839,
+          "allocation": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "fingerprint": "af63be4c8601b992",
+          "answerBits": 2
+        }
+      ],
+      "observations": 6,
+      "measurements": {
+        "baseline": [
+          {
+            "name": "requests",
+            "min": 0,
+            "max": 0
+          },
+          {
+            "name": "requestedBytes",
+            "min": 0,
+            "max": 0
+          },
+          {
+            "name": "liveDelta",
+            "min": 0,
+            "max": 0
+          },
+          {
+            "name": "peakDelta",
+            "min": 0,
+            "max": 0
+          }
+        ],
+        "candidate": [
+          {
+            "name": "requests",
+            "min": 0,
+            "max": 0
+          },
+          {
+            "name": "requestedBytes",
+            "min": 0,
+            "max": 0
+          },
+          {
+            "name": "liveDelta",
+            "min": 0,
+            "max": 0
+          },
+          {
+            "name": "peakDelta",
+            "min": 0,
+            "max": 0
+          }
+        ]
+      }
+    },
+    {
+      "p": 0,
+      "route": "public",
+      "lifecycle": "fresh",
+      "iterations": 1,
+      "pilots": [
+        {
+          "started": "2026-09-10T00:40:43.475Z",
+          "finished": "2026-09-10T00:40:43.479Z",
+          "variant": "baseline",
+          "p": 0,
+          "route": "public",
+          "lifecycle": "fresh",
+          "iterations": 1,
+          "ns": 23158,
+          "allocation": [
+            1,
+            56,
+            56,
+            56
+          ],
+          "fingerprint": "af63be4c8601b992",
+          "answerBits": 2
+        },
+        {
+          "started": "2026-09-10T00:40:43.479Z",
+          "finished": "2026-09-10T00:40:43.482Z",
+          "variant": "candidate",
+          "p": 0,
+          "route": "public",
+          "lifecycle": "fresh",
+          "iterations": 1,
+          "ns": 20319,
+          "allocation": [
+            1,
+            56,
+            56,
+            56
+          ],
+          "fingerprint": "af63be4c8601b992",
+          "answerBits": 2
+        }
+      ],
+      "observations": 6,
+      "measurements": {
+        "baseline": [
+          {
+            "name": "requests",
+            "min": 1,
+            "max": 1
+          },
+          {
+            "name": "requestedBytes",
+            "min": 56,
+            "max": 56
+          },
+          {
+            "name": "liveDelta",
+            "min": 56,
+            "max": 56
+          },
+          {
+            "name": "peakDelta",
+            "min": 56,
+            "max": 56
+          }
+        ],
+        "candidate": [
+          {
+            "name": "requests",
+            "min": 1,
+            "max": 1
+          },
+          {
+            "name": "requestedBytes",
+            "min": 56,
+            "max": 56
+          },
+          {
+            "name": "liveDelta",
+            "min": 56,
+            "max": 56
+          },
+          {
+            "name": "peakDelta",
+            "min": 56,
+            "max": 56
+          }
+        ]
+      }
+    },
+    {
+      "p": 0,
+      "route": "public",
+      "lifecycle": "warm",
+      "iterations": 16,
+      "pilots": [
+        {
+          "started": "2026-09-10T00:40:43.504Z",
+          "finished": "2026-09-10T00:40:43.507Z",
+          "variant": "baseline",
+          "p": 0,
+          "route": "public",
+          "lifecycle": "warm",
+          "iterations": 2,
+          "ns": 250,
+          "allocation": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "fingerprint": "af63be4c8601b992",
+          "answerBits": 2
+        },
+        {
+          "started": "2026-09-10T00:40:43.507Z",
+          "finished": "2026-09-10T00:40:43.511Z",
+          "variant": "candidate",
+          "p": 0,
+          "route": "public",
+          "lifecycle": "warm",
+          "iterations": 2,
+          "ns": 250,
+          "allocation": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "fingerprint": "af63be4c8601b992",
+          "answerBits": 2
+        }
+      ],
+      "observations": 6,
+      "measurements": {
+        "baseline": [
+          {
+            "name": "requests",
+            "min": 0,
+            "max": 0
+          },
+          {
+            "name": "requestedBytes",
+            "min": 0,
+            "max": 0
+          },
+          {
+            "name": "liveDelta",
+            "min": 0,
+            "max": 0
+          },
+          {
+            "name": "peakDelta",
+            "min": 0,
+            "max": 0
+          }
+        ],
+        "candidate": [
+          {
+            "name": "requests",
+            "min": 0,
+            "max": 0
+          },
+          {
+            "name": "requestedBytes",
+            "min": 0,
+            "max": 0
+          },
+          {
+            "name": "liveDelta",
+            "min": 0,
+            "max": 0
+          },
+          {
+            "name": "peakDelta",
+            "min": 0,
+            "max": 0
+          }
+        ]
+      }
+    },
+    {
+      "p": 0,
+      "route": "public",
+      "lifecycle": "coarsen",
+      "iterations": 16,
+      "pilots": [
+        {
+          "started": "2026-09-10T00:40:43.533Z",
+          "finished": "2026-09-10T00:40:43.536Z",
+          "variant": "baseline",
+          "p": 0,
+          "route": "public",
+          "lifecycle": "coarsen",
+          "iterations": 2,
+          "ns": 1140,
+          "allocation": [
+            2,
+            32,
+            0,
+            16
+          ],
+          "fingerprint": "af63be4c8601b992",
+          "answerBits": 2
+        },
+        {
+          "started": "2026-09-10T00:40:43.536Z",
+          "finished": "2026-09-10T00:40:43.539Z",
+          "variant": "candidate",
+          "p": 0,
+          "route": "public",
+          "lifecycle": "coarsen",
+          "iterations": 2,
+          "ns": 1210,
+          "allocation": [
+            2,
+            32,
+            0,
+            16
+          ],
+          "fingerprint": "af63be4c8601b992",
+          "answerBits": 2
+        }
+      ],
+      "observations": 6,
+      "measurements": {
+        "baseline": [
+          {
+            "name": "requests",
+            "min": 16,
+            "max": 16
+          },
+          {
+            "name": "requestedBytes",
+            "min": 256,
+            "max": 256
+          },
+          {
+            "name": "liveDelta",
+            "min": 0,
+            "max": 0
+          },
+          {
+            "name": "peakDelta",
+            "min": 16,
+            "max": 16
+          }
+        ],
+        "candidate": [
+          {
+            "name": "requests",
+            "min": 16,
+            "max": 16
+          },
+          {
+            "name": "requestedBytes",
+            "min": 256,
+            "max": 256
+          },
+          {
+            "name": "liveDelta",
+            "min": 0,
+            "max": 0
+          },
+          {
+            "name": "peakDelta",
+            "min": 16,
+            "max": 16
+          }
+        ]
+      }
+    },
+    {
+      "p": -8,
+      "route": "planner",
+      "lifecycle": "fresh",
+      "iterations": 16,
+      "pilots": [
+        {
+          "started": "2026-09-10T00:40:43.561Z",
+          "finished": "2026-09-10T00:40:43.565Z",
+          "variant": "baseline",
+          "p": -8,
+          "route": "planner",
+          "lifecycle": "fresh",
+          "iterations": 2,
+          "ns": 3590,
+          "allocation": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "fingerprint": "af63bb4c8601b479",
+          "answerBits": 3
+        },
+        {
+          "started": "2026-09-10T00:40:43.565Z",
+          "finished": "2026-09-10T00:40:43.568Z",
+          "variant": "candidate",
+          "p": -8,
+          "route": "planner",
+          "lifecycle": "fresh",
+          "iterations": 2,
+          "ns": 270,
+          "allocation": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "fingerprint": "af63bb4c8601b479",
+          "answerBits": 3
+        }
+      ],
+      "observations": 6,
+      "measurements": {
+        "baseline": [
+          {
+            "name": "requests",
+            "min": 0,
+            "max": 0
+          },
+          {
+            "name": "requestedBytes",
+            "min": 0,
+            "max": 0
+          },
+          {
+            "name": "liveDelta",
+            "min": 0,
+            "max": 0
+          },
+          {
+            "name": "peakDelta",
+            "min": 0,
+            "max": 0
+          }
+        ],
+        "candidate": [
+          {
+            "name": "requests",
+            "min": 0,
+            "max": 0
+          },
+          {
+            "name": "requestedBytes",
+            "min": 0,
+            "max": 0
+          },
+          {
+            "name": "liveDelta",
+            "min": 0,
+            "max": 0
+          },
+          {
+            "name": "peakDelta",
+            "min": 0,
+            "max": 0
+          }
+        ]
+      }
+    },
+    {
+      "p": -8,
+      "route": "kernel",
+      "lifecycle": "fresh",
+      "iterations": 16,
+      "pilots": [
+        {
+          "started": "2026-09-10T00:40:43.589Z",
+          "finished": "2026-09-10T00:40:43.593Z",
+          "variant": "baseline",
+          "p": -8,
+          "route": "kernel",
+          "lifecycle": "fresh",
+          "iterations": 2,
+          "ns": 8059,
+          "allocation": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "fingerprint": "09ca5607b645e7bf",
+          "answerBits": 10
+        },
+        {
+          "started": "2026-09-10T00:40:43.593Z",
+          "finished": "2026-09-10T00:40:43.596Z",
+          "variant": "candidate",
+          "p": -8,
+          "route": "kernel",
+          "lifecycle": "fresh",
+          "iterations": 2,
+          "ns": 6659,
+          "allocation": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "fingerprint": "09ca5607b645e7bf",
+          "answerBits": 10
+        }
+      ],
+      "observations": 6,
+      "measurements": {
+        "baseline": [
+          {
+            "name": "requests",
+            "min": 0,
+            "max": 0
+          },
+          {
+            "name": "requestedBytes",
+            "min": 0,
+            "max": 0
+          },
+          {
+            "name": "liveDelta",
+            "min": 0,
+            "max": 0
+          },
+          {
+            "name": "peakDelta",
+            "min": 0,
+            "max": 0
+          }
+        ],
+        "candidate": [
+          {
+            "name": "requests",
+            "min": 0,
+            "max": 0
+          },
+          {
+            "name": "requestedBytes",
+            "min": 0,
+            "max": 0
+          },
+          {
+            "name": "liveDelta",
+            "min": 0,
+            "max": 0
+          },
+          {
+            "name": "peakDelta",
+            "min": 0,
+            "max": 0
+          }
+        ]
+      }
+    },
+    {
+      "p": -8,
+      "route": "public",
+      "lifecycle": "fresh",
+      "iterations": 1,
+      "pilots": [
+        {
+          "started": "2026-09-10T00:40:43.617Z",
+          "finished": "2026-09-10T00:40:43.620Z",
+          "variant": "baseline",
+          "p": -8,
+          "route": "public",
+          "lifecycle": "fresh",
+          "iterations": 1,
+          "ns": 11030,
+          "allocation": [
+            1,
+            56,
+            56,
+            56
+          ],
+          "fingerprint": "09ca5607b645e7bf",
+          "answerBits": 10
+        },
+        {
+          "started": "2026-09-10T00:40:43.620Z",
+          "finished": "2026-09-10T00:40:43.624Z",
+          "variant": "candidate",
+          "p": -8,
+          "route": "public",
+          "lifecycle": "fresh",
+          "iterations": 1,
+          "ns": 20698,
+          "allocation": [
+            1,
+            56,
+            56,
+            56
+          ],
+          "fingerprint": "09ca5607b645e7bf",
+          "answerBits": 10
+        }
+      ],
+      "observations": 6,
+      "measurements": {
+        "baseline": [
+          {
+            "name": "requests",
+            "min": 1,
+            "max": 1
+          },
+          {
+            "name": "requestedBytes",
+            "min": 56,
+            "max": 56
+          },
+          {
+            "name": "liveDelta",
+            "min": 56,
+            "max": 56
+          },
+          {
+            "name": "peakDelta",
+            "min": 56,
+            "max": 56
+          }
+        ],
+        "candidate": [
+          {
+            "name": "requests",
+            "min": 1,
+            "max": 1
+          },
+          {
+            "name": "requestedBytes",
+            "min": 56,
+            "max": 56
+          },
+          {
+            "name": "liveDelta",
+            "min": 56,
+            "max": 56
+          },
+          {
+            "name": "peakDelta",
+            "min": 56,
+            "max": 56
+          }
+        ]
+      }
+    },
+    {
+      "p": -8,
+      "route": "public",
+      "lifecycle": "warm",
+      "iterations": 16,
+      "pilots": [
+        {
+          "started": "2026-09-10T00:40:43.646Z",
+          "finished": "2026-09-10T00:40:43.649Z",
+          "variant": "baseline",
+          "p": -8,
+          "route": "public",
+          "lifecycle": "warm",
+          "iterations": 2,
+          "ns": 300,
+          "allocation": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "fingerprint": "09ca5607b645e7bf",
+          "answerBits": 10
+        },
+        {
+          "started": "2026-09-10T00:40:43.649Z",
+          "finished": "2026-09-10T00:40:43.653Z",
+          "variant": "candidate",
+          "p": -8,
+          "route": "public",
+          "lifecycle": "warm",
+          "iterations": 2,
+          "ns": 280,
+          "allocation": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "fingerprint": "09ca5607b645e7bf",
+          "answerBits": 10
+        }
+      ],
+      "observations": 6,
+      "measurements": {
+        "baseline": [
+          {
+            "name": "requests",
+            "min": 0,
+            "max": 0
+          },
+          {
+            "name": "requestedBytes",
+            "min": 0,
+            "max": 0
+          },
+          {
+            "name": "liveDelta",
+            "min": 0,
+            "max": 0
+          },
+          {
+            "name": "peakDelta",
+            "min": 0,
+            "max": 0
+          }
+        ],
+        "candidate": [
+          {
+            "name": "requests",
+            "min": 0,
+            "max": 0
+          },
+          {
+            "name": "requestedBytes",
+            "min": 0,
+            "max": 0
+          },
+          {
+            "name": "liveDelta",
+            "min": 0,
+            "max": 0
+          },
+          {
+            "name": "peakDelta",
+            "min": 0,
+            "max": 0
+          }
+        ]
+      }
+    },
+    {
+      "p": -8,
+      "route": "public",
+      "lifecycle": "coarsen",
+      "iterations": 16,
+      "pilots": [
+        {
+          "started": "2026-09-10T00:40:43.676Z",
+          "finished": "2026-09-10T00:40:43.679Z",
+          "variant": "baseline",
+          "p": -8,
+          "route": "public",
+          "lifecycle": "coarsen",
+          "iterations": 2,
+          "ns": 950,
+          "allocation": [
+            2,
+            32,
+            0,
+            16
+          ],
+          "fingerprint": "09ca5607b645e7bf",
+          "answerBits": 10
+        },
+        {
+          "started": "2026-09-10T00:40:43.679Z",
+          "finished": "2026-09-10T00:40:43.683Z",
+          "variant": "candidate",
+          "p": -8,
+          "route": "public",
+          "lifecycle": "coarsen",
+          "iterations": 2,
+          "ns": 990,
+          "allocation": [
+            2,
+            32,
+            0,
+            16
+          ],
+          "fingerprint": "09ca5607b645e7bf",
+          "answerBits": 10
+        }
+      ],
+      "observations": 6,
+      "measurements": {
+        "baseline": [
+          {
+            "name": "requests",
+            "min": 16,
+            "max": 16
+          },
+          {
+            "name": "requestedBytes",
+            "min": 256,
+            "max": 256
+          },
+          {
+            "name": "liveDelta",
+            "min": 0,
+            "max": 0
+          },
+          {
+            "name": "peakDelta",
+            "min": 16,
+            "max": 16
+          }
+        ],
+        "candidate": [
+          {
+            "name": "requests",
+            "min": 16,
+            "max": 16
+          },
+          {
+            "name": "requestedBytes",
+            "min": 256,
+            "max": 256
+          },
+          {
+            "name": "liveDelta",
+            "min": 0,
+            "max": 0
+          },
+          {
+            "name": "peakDelta",
+            "min": 16,
+            "max": 16
+          }
+        ]
+      }
+    },
+    {
+      "p": -8,
+      "route": "public",
+      "lifecycle": "refine",
+      "iterations": 1,
+      "pilots": [
+        {
+          "started": "2026-09-10T00:40:43.705Z",
+          "finished": "2026-09-10T00:40:43.708Z",
+          "variant": "baseline",
+          "p": -8,
+          "route": "public",
+          "lifecycle": "refine",
+          "iterations": 1,
+          "ns": 950,
+          "allocation": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "fingerprint": "09ca5607b645e7bf",
+          "answerBits": 10
+        },
+        {
+          "started": "2026-09-10T00:40:43.708Z",
+          "finished": "2026-09-10T00:40:43.712Z",
+          "variant": "candidate",
+          "p": -8,
+          "route": "public",
+          "lifecycle": "refine",
+          "iterations": 1,
+          "ns": 830,
+          "allocation": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "fingerprint": "09ca5607b645e7bf",
+          "answerBits": 10
+        }
+      ],
+      "observations": 6,
+      "measurements": {
+        "baseline": [
+          {
+            "name": "requests",
+            "min": 0,
+            "max": 0
+          },
+          {
+            "name": "requestedBytes",
+            "min": 0,
+            "max": 0
+          },
+          {
+            "name": "liveDelta",
+            "min": 0,
+            "max": 0
+          },
+          {
+            "name": "peakDelta",
+            "min": 0,
+            "max": 0
+          }
+        ],
+        "candidate": [
+          {
+            "name": "requests",
+            "min": 0,
+            "max": 0
+          },
+          {
+            "name": "requestedBytes",
+            "min": 0,
+            "max": 0
+          },
+          {
+            "name": "liveDelta",
+            "min": 0,
+            "max": 0
+          },
+          {
+            "name": "peakDelta",
+            "min": 0,
+            "max": 0
+          }
+        ]
+      }
+    },
+    {
+      "p": -32,
+      "route": "planner",
+      "lifecycle": "fresh",
+      "iterations": 16,
+      "pilots": [
+        {
+          "started": "2026-09-10T00:40:43.733Z",
+          "finished": "2026-09-10T00:40:43.737Z",
+          "variant": "baseline",
+          "p": -32,
+          "route": "planner",
+          "lifecycle": "fresh",
+          "iterations": 2,
+          "ns": 5030,
+          "allocation": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "fingerprint": "af63c04c8601bcf8",
+          "answerBits": 4
+        },
+        {
+          "started": "2026-09-10T00:40:43.737Z",
+          "finished": "2026-09-10T00:40:43.740Z",
+          "variant": "candidate",
+          "p": -32,
+          "route": "planner",
+          "lifecycle": "fresh",
+          "iterations": 2,
+          "ns": 260,
+          "allocation": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "fingerprint": "af63c04c8601bcf8",
+          "answerBits": 4
+        }
+      ],
+      "observations": 6,
+      "measurements": {
+        "baseline": [
+          {
+            "name": "requests",
+            "min": 0,
+            "max": 0
+          },
+          {
+            "name": "requestedBytes",
+            "min": 0,
+            "max": 0
+          },
+          {
+            "name": "liveDelta",
+            "min": 0,
+            "max": 0
+          },
+          {
+            "name": "peakDelta",
+            "min": 0,
+            "max": 0
+          }
+        ],
+        "candidate": [
+          {
+            "name": "requests",
+            "min": 0,
+            "max": 0
+          },
+          {
+            "name": "requestedBytes",
+            "min": 0,
+            "max": 0
+          },
+          {
+            "name": "liveDelta",
+            "min": 0,
+            "max": 0
+          },
+          {
+            "name": "peakDelta",
+            "min": 0,
+            "max": 0
+          }
+        ]
+      }
+    },
+    {
+      "p": -32,
+      "route": "kernel",
+      "lifecycle": "fresh",
+      "iterations": 16,
+      "pilots": [
+        {
+          "started": "2026-09-10T00:40:43.761Z",
+          "finished": "2026-09-10T00:40:43.765Z",
+          "variant": "baseline",
+          "p": -32,
+          "route": "kernel",
+          "lifecycle": "fresh",
+          "iterations": 2,
+          "ns": 8959,
+          "allocation": [
+            2,
+            32,
+            0,
+            16
+          ],
+          "fingerprint": "e730850fcd6493b6",
+          "answerBits": 34
+        },
+        {
+          "started": "2026-09-10T00:40:43.765Z",
+          "finished": "2026-09-10T00:40:43.768Z",
+          "variant": "candidate",
+          "p": -32,
+          "route": "kernel",
+          "lifecycle": "fresh",
+          "iterations": 2,
+          "ns": 8620,
+          "allocation": [
+            2,
+            32,
+            0,
+            16
+          ],
+          "fingerprint": "e730850fcd6493b6",
+          "answerBits": 34
+        }
+      ],
+      "observations": 6,
+      "measurements": {
+        "baseline": [
+          {
+            "name": "requests",
+            "min": 16,
+            "max": 16
+          },
+          {
+            "name": "requestedBytes",
+            "min": 256,
+            "max": 256
+          },
+          {
+            "name": "liveDelta",
+            "min": 0,
+            "max": 0
+          },
+          {
+            "name": "peakDelta",
+            "min": 16,
+            "max": 16
+          }
+        ],
+        "candidate": [
+          {
+            "name": "requests",
+            "min": 16,
+            "max": 16
+          },
+          {
+            "name": "requestedBytes",
+            "min": 256,
+            "max": 256
+          },
+          {
+            "name": "liveDelta",
+            "min": 0,
+            "max": 0
+          },
+          {
+            "name": "peakDelta",
+            "min": 16,
+            "max": 16
+          }
+        ]
+      }
+    },
+    {
+      "p": -32,
+      "route": "public",
+      "lifecycle": "fresh",
+      "iterations": 1,
+      "pilots": [
+        {
+          "started": "2026-09-10T00:40:43.789Z",
+          "finished": "2026-09-10T00:40:43.793Z",
+          "variant": "baseline",
+          "p": -32,
+          "route": "public",
+          "lifecycle": "fresh",
+          "iterations": 1,
+          "ns": 15319,
+          "allocation": [
+            2,
+            72,
+            56,
+            72
+          ],
+          "fingerprint": "e730850fcd6493b6",
+          "answerBits": 34
+        },
+        {
+          "started": "2026-09-10T00:40:43.793Z",
+          "finished": "2026-09-10T00:40:43.797Z",
+          "variant": "candidate",
+          "p": -32,
+          "route": "public",
+          "lifecycle": "fresh",
+          "iterations": 1,
+          "ns": 12359,
+          "allocation": [
+            2,
+            72,
+            56,
+            72
+          ],
+          "fingerprint": "e730850fcd6493b6",
+          "answerBits": 34
+        }
+      ],
+      "observations": 6,
+      "measurements": {
+        "baseline": [
+          {
+            "name": "requests",
+            "min": 2,
+            "max": 2
+          },
+          {
+            "name": "requestedBytes",
+            "min": 72,
+            "max": 72
+          },
+          {
+            "name": "liveDelta",
+            "min": 56,
+            "max": 56
+          },
+          {
+            "name": "peakDelta",
+            "min": 72,
+            "max": 72
+          }
+        ],
+        "candidate": [
+          {
+            "name": "requests",
+            "min": 2,
+            "max": 2
+          },
+          {
+            "name": "requestedBytes",
+            "min": 72,
+            "max": 72
+          },
+          {
+            "name": "liveDelta",
+            "min": 56,
+            "max": 56
+          },
+          {
+            "name": "peakDelta",
+            "min": 72,
+            "max": 72
+          }
+        ]
+      }
+    },
+    {
+      "p": -32,
+      "route": "public",
+      "lifecycle": "warm",
+      "iterations": 16,
+      "pilots": [
+        {
+          "started": "2026-09-10T00:40:43.818Z",
+          "finished": "2026-09-10T00:40:43.822Z",
+          "variant": "baseline",
+          "p": -32,
+          "route": "public",
+          "lifecycle": "warm",
+          "iterations": 2,
+          "ns": 250,
+          "allocation": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "fingerprint": "e730850fcd6493b6",
+          "answerBits": 34
+        },
+        {
+          "started": "2026-09-10T00:40:43.822Z",
+          "finished": "2026-09-10T00:40:43.825Z",
+          "variant": "candidate",
+          "p": -32,
+          "route": "public",
+          "lifecycle": "warm",
+          "iterations": 2,
+          "ns": 250,
+          "allocation": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "fingerprint": "e730850fcd6493b6",
+          "answerBits": 34
+        }
+      ],
+      "observations": 6,
+      "measurements": {
+        "baseline": [
+          {
+            "name": "requests",
+            "min": 0,
+            "max": 0
+          },
+          {
+            "name": "requestedBytes",
+            "min": 0,
+            "max": 0
+          },
+          {
+            "name": "liveDelta",
+            "min": 0,
+            "max": 0
+          },
+          {
+            "name": "peakDelta",
+            "min": 0,
+            "max": 0
+          }
+        ],
+        "candidate": [
+          {
+            "name": "requests",
+            "min": 0,
+            "max": 0
+          },
+          {
+            "name": "requestedBytes",
+            "min": 0,
+            "max": 0
+          },
+          {
+            "name": "liveDelta",
+            "min": 0,
+            "max": 0
+          },
+          {
+            "name": "peakDelta",
+            "min": 0,
+            "max": 0
+          }
+        ]
+      }
+    },
+    {
+      "p": -32,
+      "route": "public",
+      "lifecycle": "coarsen",
+      "iterations": 16,
+      "pilots": [
+        {
+          "started": "2026-09-10T00:40:43.847Z",
+          "finished": "2026-09-10T00:40:43.851Z",
+          "variant": "baseline",
+          "p": -32,
+          "route": "public",
+          "lifecycle": "coarsen",
+          "iterations": 2,
+          "ns": 1080,
+          "allocation": [
+            2,
+            32,
+            0,
+            16
+          ],
+          "fingerprint": "8aff52bc6119d7bd",
+          "answerBits": 34
+        },
+        {
+          "started": "2026-09-10T00:40:43.851Z",
+          "finished": "2026-09-10T00:40:43.854Z",
+          "variant": "candidate",
+          "p": -32,
+          "route": "public",
+          "lifecycle": "coarsen",
+          "iterations": 2,
+          "ns": 1360,
+          "allocation": [
+            2,
+            32,
+            0,
+            16
+          ],
+          "fingerprint": "8aff52bc6119d7bd",
+          "answerBits": 34
+        }
+      ],
+      "observations": 6,
+      "measurements": {
+        "baseline": [
+          {
+            "name": "requests",
+            "min": 16,
+            "max": 16
+          },
+          {
+            "name": "requestedBytes",
+            "min": 256,
+            "max": 256
+          },
+          {
+            "name": "liveDelta",
+            "min": 0,
+            "max": 0
+          },
+          {
+            "name": "peakDelta",
+            "min": 16,
+            "max": 16
+          }
+        ],
+        "candidate": [
+          {
+            "name": "requests",
+            "min": 16,
+            "max": 16
+          },
+          {
+            "name": "requestedBytes",
+            "min": 256,
+            "max": 256
+          },
+          {
+            "name": "liveDelta",
+            "min": 0,
+            "max": 0
+          },
+          {
+            "name": "peakDelta",
+            "min": 16,
+            "max": 16
+          }
+        ]
+      }
+    },
+    {
+      "p": -32,
+      "route": "public",
+      "lifecycle": "refine",
+      "iterations": 1,
+      "pilots": [
+        {
+          "started": "2026-09-10T00:40:43.876Z",
+          "finished": "2026-09-10T00:40:43.879Z",
+          "variant": "baseline",
+          "p": -32,
+          "route": "public",
+          "lifecycle": "refine",
+          "iterations": 1,
+          "ns": 1170,
+          "allocation": [
+            1,
+            16,
+            0,
+            16
+          ],
+          "fingerprint": "e730850fcd6493b6",
+          "answerBits": 34
+        },
+        {
+          "started": "2026-09-10T00:40:43.879Z",
+          "finished": "2026-09-10T00:40:43.883Z",
+          "variant": "candidate",
+          "p": -32,
+          "route": "public",
+          "lifecycle": "refine",
+          "iterations": 1,
+          "ns": 1040,
+          "allocation": [
+            1,
+            16,
+            0,
+            16
+          ],
+          "fingerprint": "e730850fcd6493b6",
+          "answerBits": 34
+        }
+      ],
+      "observations": 6,
+      "measurements": {
+        "baseline": [
+          {
+            "name": "requests",
+            "min": 1,
+            "max": 1
+          },
+          {
+            "name": "requestedBytes",
+            "min": 16,
+            "max": 16
+          },
+          {
+            "name": "liveDelta",
+            "min": 0,
+            "max": 0
+          },
+          {
+            "name": "peakDelta",
+            "min": 16,
+            "max": 16
+          }
+        ],
+        "candidate": [
+          {
+            "name": "requests",
+            "min": 1,
+            "max": 1
+          },
+          {
+            "name": "requestedBytes",
+            "min": 16,
+            "max": 16
+          },
+          {
+            "name": "liveDelta",
+            "min": 0,
+            "max": 0
+          },
+          {
+            "name": "peakDelta",
+            "min": 16,
+            "max": 16
+          }
+        ]
+      }
+    },
+    {
+      "p": -64,
+      "route": "planner",
+      "lifecycle": "fresh",
+      "iterations": 16,
+      "pilots": [
+        {
+          "started": "2026-09-10T00:40:43.903Z",
+          "finished": "2026-09-10T00:40:43.907Z",
+          "variant": "baseline",
+          "p": -64,
+          "route": "planner",
+          "lifecycle": "fresh",
+          "iterations": 2,
+          "ns": 5890,
+          "allocation": [
+            4,
+            64,
+            0,
+            32
+          ],
+          "fingerprint": "af63c84c8601ca90",
+          "answerBits": 5
+        },
+        {
+          "started": "2026-09-10T00:40:43.907Z",
+          "finished": "2026-09-10T00:40:43.911Z",
+          "variant": "candidate",
+          "p": -64,
+          "route": "planner",
+          "lifecycle": "fresh",
+          "iterations": 2,
+          "ns": 450,
+          "allocation": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "fingerprint": "af63c84c8601ca90",
+          "answerBits": 5
+        }
+      ],
+      "observations": 6,
+      "measurements": {
+        "baseline": [
+          {
+            "name": "requests",
+            "min": 32,
+            "max": 32
+          },
+          {
+            "name": "requestedBytes",
+            "min": 512,
+            "max": 512
+          },
+          {
+            "name": "liveDelta",
+            "min": 0,
+            "max": 0
+          },
+          {
+            "name": "peakDelta",
+            "min": 32,
+            "max": 32
+          }
+        ],
+        "candidate": [
+          {
+            "name": "requests",
+            "min": 0,
+            "max": 0
+          },
+          {
+            "name": "requestedBytes",
+            "min": 0,
+            "max": 0
+          },
+          {
+            "name": "liveDelta",
+            "min": 0,
+            "max": 0
+          },
+          {
+            "name": "peakDelta",
+            "min": 0,
+            "max": 0
+          }
+        ]
+      }
+    },
+    {
+      "p": -64,
+      "route": "kernel",
+      "lifecycle": "fresh",
+      "iterations": 16,
+      "pilots": [
+        {
+          "started": "2026-09-10T00:40:43.932Z",
+          "finished": "2026-09-10T00:40:43.936Z",
+          "variant": "baseline",
+          "p": -64,
+          "route": "kernel",
+          "lifecycle": "fresh",
+          "iterations": 2,
+          "ns": 10970,
+          "allocation": [
+            16,
+            304,
+            0,
+            72
+          ],
+          "fingerprint": "5282455a06f32530",
+          "answerBits": 66
+        },
+        {
+          "started": "2026-09-10T00:40:43.936Z",
+          "finished": "2026-09-10T00:40:43.940Z",
+          "variant": "candidate",
+          "p": -64,
+          "route": "kernel",
+          "lifecycle": "fresh",
+          "iterations": 2,
+          "ns": 8579,
+          "allocation": [
+            12,
+            240,
+            0,
+            72
+          ],
+          "fingerprint": "5282455a06f32530",
+          "answerBits": 66
+        }
+      ],
+      "observations": 6,
+      "measurements": {
+        "baseline": [
+          {
+            "name": "requests",
+            "min": 128,
+            "max": 128
+          },
+          {
+            "name": "requestedBytes",
+            "min": 2432,
+            "max": 2432
+          },
+          {
+            "name": "liveDelta",
+            "min": 0,
+            "max": 0
+          },
+          {
+            "name": "peakDelta",
+            "min": 72,
+            "max": 72
+          }
+        ],
+        "candidate": [
+          {
+            "name": "requests",
+            "min": 96,
+            "max": 96
+          },
+          {
+            "name": "requestedBytes",
+            "min": 1920,
+            "max": 1920
+          },
+          {
+            "name": "liveDelta",
+            "min": 0,
+            "max": 0
+          },
+          {
+            "name": "peakDelta",
+            "min": 72,
+            "max": 72
+          }
+        ]
+      }
+    },
+    {
+      "p": -64,
+      "route": "public",
+      "lifecycle": "fresh",
+      "iterations": 1,
+      "pilots": [
+        {
+          "started": "2026-09-10T00:40:43.961Z",
+          "finished": "2026-09-10T00:40:43.965Z",
+          "variant": "baseline",
+          "p": -64,
+          "route": "public",
+          "lifecycle": "fresh",
+          "iterations": 1,
+          "ns": 15579,
+          "allocation": [
+            10,
+            224,
+            72,
+            96
+          ],
+          "fingerprint": "5282455a06f32530",
+          "answerBits": 66
+        },
+        {
+          "started": "2026-09-10T00:40:43.965Z",
+          "finished": "2026-09-10T00:40:43.969Z",
+          "variant": "candidate",
+          "p": -64,
+          "route": "public",
+          "lifecycle": "fresh",
+          "iterations": 1,
+          "ns": 21248,
+          "allocation": [
+            8,
+            192,
+            72,
+            96
+          ],
+          "fingerprint": "5282455a06f32530",
+          "answerBits": 66
+        }
+      ],
+      "observations": 6,
+      "measurements": {
+        "baseline": [
+          {
+            "name": "requests",
+            "min": 10,
+            "max": 10
+          },
+          {
+            "name": "requestedBytes",
+            "min": 224,
+            "max": 224
+          },
+          {
+            "name": "liveDelta",
+            "min": 72,
+            "max": 72
+          },
+          {
+            "name": "peakDelta",
+            "min": 96,
+            "max": 96
+          }
+        ],
+        "candidate": [
+          {
+            "name": "requests",
+            "min": 8,
+            "max": 8
+          },
+          {
+            "name": "requestedBytes",
+            "min": 192,
+            "max": 192
+          },
+          {
+            "name": "liveDelta",
+            "min": 72,
+            "max": 72
+          },
+          {
+            "name": "peakDelta",
+            "min": 96,
+            "max": 96
+          }
+        ]
+      }
+    },
+    {
+      "p": -64,
+      "route": "public",
+      "lifecycle": "warm",
+      "iterations": 16,
+      "pilots": [
+        {
+          "started": "2026-09-10T00:40:43.990Z",
+          "finished": "2026-09-10T00:40:43.993Z",
+          "variant": "baseline",
+          "p": -64,
+          "route": "public",
+          "lifecycle": "warm",
+          "iterations": 2,
+          "ns": 300,
+          "allocation": [
+            2,
+            32,
+            0,
+            16
+          ],
+          "fingerprint": "5282455a06f32530",
+          "answerBits": 66
+        },
+        {
+          "started": "2026-09-10T00:40:43.993Z",
+          "finished": "2026-09-10T00:40:43.998Z",
+          "variant": "candidate",
+          "p": -64,
+          "route": "public",
+          "lifecycle": "warm",
+          "iterations": 2,
+          "ns": 360,
+          "allocation": [
+            2,
+            32,
+            0,
+            16
+          ],
+          "fingerprint": "5282455a06f32530",
+          "answerBits": 66
+        }
+      ],
+      "observations": 6,
+      "measurements": {
+        "baseline": [
+          {
+            "name": "requests",
+            "min": 16,
+            "max": 16
+          },
+          {
+            "name": "requestedBytes",
+            "min": 256,
+            "max": 256
+          },
+          {
+            "name": "liveDelta",
+            "min": 0,
+            "max": 0
+          },
+          {
+            "name": "peakDelta",
+            "min": 16,
+            "max": 16
+          }
+        ],
+        "candidate": [
+          {
+            "name": "requests",
+            "min": 16,
+            "max": 16
+          },
+          {
+            "name": "requestedBytes",
+            "min": 256,
+            "max": 256
+          },
+          {
+            "name": "liveDelta",
+            "min": 0,
+            "max": 0
+          },
+          {
+            "name": "peakDelta",
+            "min": 16,
+            "max": 16
+          }
+        ]
+      }
+    },
+    {
+      "p": -64,
+      "route": "public",
+      "lifecycle": "coarsen",
+      "iterations": 16,
+      "pilots": [
+        {
+          "started": "2026-09-10T00:40:44.019Z",
+          "finished": "2026-09-10T00:40:44.022Z",
+          "variant": "baseline",
+          "p": -64,
+          "route": "public",
+          "lifecycle": "coarsen",
+          "iterations": 2,
+          "ns": 1230,
+          "allocation": [
+            2,
+            48,
+            0,
+            24
+          ],
+          "fingerprint": "5282455a06f32530",
+          "answerBits": 66
+        },
+        {
+          "started": "2026-09-10T00:40:44.022Z",
+          "finished": "2026-09-10T00:40:44.026Z",
+          "variant": "candidate",
+          "p": -64,
+          "route": "public",
+          "lifecycle": "coarsen",
+          "iterations": 2,
+          "ns": 1190,
+          "allocation": [
+            2,
+            48,
+            0,
+            24
+          ],
+          "fingerprint": "5282455a06f32530",
+          "answerBits": 66
+        }
+      ],
+      "observations": 6,
+      "measurements": {
+        "baseline": [
+          {
+            "name": "requests",
+            "min": 16,
+            "max": 16
+          },
+          {
+            "name": "requestedBytes",
+            "min": 384,
+            "max": 384
+          },
+          {
+            "name": "liveDelta",
+            "min": 0,
+            "max": 0
+          },
+          {
+            "name": "peakDelta",
+            "min": 24,
+            "max": 24
+          }
+        ],
+        "candidate": [
+          {
+            "name": "requests",
+            "min": 16,
+            "max": 16
+          },
+          {
+            "name": "requestedBytes",
+            "min": 384,
+            "max": 384
+          },
+          {
+            "name": "liveDelta",
+            "min": 0,
+            "max": 0
+          },
+          {
+            "name": "peakDelta",
+            "min": 24,
+            "max": 24
+          }
+        ]
+      }
+    },
+    {
+      "p": -64,
+      "route": "public",
+      "lifecycle": "refine",
+      "iterations": 1,
+      "pilots": [
+        {
+          "started": "2026-09-10T00:40:44.047Z",
+          "finished": "2026-09-10T00:40:44.051Z",
+          "variant": "baseline",
+          "p": -64,
+          "route": "public",
+          "lifecycle": "refine",
+          "iterations": 1,
+          "ns": 2870,
+          "allocation": [
+            9,
+            168,
+            16,
+            72
+          ],
+          "fingerprint": "5282455a06f32530",
+          "answerBits": 66
+        },
+        {
+          "started": "2026-09-10T00:40:44.051Z",
+          "finished": "2026-09-10T00:40:44.055Z",
+          "variant": "candidate",
+          "p": -64,
+          "route": "public",
+          "lifecycle": "refine",
+          "iterations": 1,
+          "ns": 2610,
+          "allocation": [
+            7,
+            136,
+            16,
+            72
+          ],
+          "fingerprint": "5282455a06f32530",
+          "answerBits": 66
+        }
+      ],
+      "observations": 6,
+      "measurements": {
+        "baseline": [
+          {
+            "name": "requests",
+            "min": 9,
+            "max": 9
+          },
+          {
+            "name": "requestedBytes",
+            "min": 168,
+            "max": 168
+          },
+          {
+            "name": "liveDelta",
+            "min": 16,
+            "max": 16
+          },
+          {
+            "name": "peakDelta",
+            "min": 72,
+            "max": 72
+          }
+        ],
+        "candidate": [
+          {
+            "name": "requests",
+            "min": 7,
+            "max": 7
+          },
+          {
+            "name": "requestedBytes",
+            "min": 136,
+            "max": 136
+          },
+          {
+            "name": "liveDelta",
+            "min": 16,
+            "max": 16
+          },
+          {
+            "name": "peakDelta",
+            "min": 72,
+            "max": 72
+          }
+        ]
+      }
+    },
+    {
+      "p": -128,
+      "route": "planner",
+      "lifecycle": "fresh",
+      "iterations": 16,
+      "pilots": [
+        {
+          "started": "2026-09-10T00:40:44.076Z",
+          "finished": "2026-09-10T00:40:44.080Z",
+          "variant": "baseline",
+          "p": -128,
+          "route": "planner",
+          "lifecycle": "fresh",
+          "iterations": 2,
+          "ns": 5060,
+          "allocation": [
+            32,
+            544,
+            0,
+            48
+          ],
+          "fingerprint": "af639f4c860184e5",
+          "answerBits": 6
+        },
+        {
+          "started": "2026-09-10T00:40:44.080Z",
+          "finished": "2026-09-10T00:40:44.083Z",
+          "variant": "candidate",
+          "p": -128,
+          "route": "planner",
+          "lifecycle": "fresh",
+          "iterations": 2,
+          "ns": 570,
+          "allocation": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "fingerprint": "af639f4c860184e5",
+          "answerBits": 6
+        }
+      ],
+      "observations": 6,
+      "measurements": {
+        "baseline": [
+          {
+            "name": "requests",
+            "min": 256,
+            "max": 256
+          },
+          {
+            "name": "requestedBytes",
+            "min": 4352,
+            "max": 4352
+          },
+          {
+            "name": "liveDelta",
+            "min": 0,
+            "max": 0
+          },
+          {
+            "name": "peakDelta",
+            "min": 48,
+            "max": 48
+          }
+        ],
+        "candidate": [
+          {
+            "name": "requests",
+            "min": 0,
+            "max": 0
+          },
+          {
+            "name": "requestedBytes",
+            "min": 0,
+            "max": 0
+          },
+          {
+            "name": "liveDelta",
+            "min": 0,
+            "max": 0
+          },
+          {
+            "name": "peakDelta",
+            "min": 0,
+            "max": 0
+          }
+        ]
+      }
+    },
+    {
+      "p": -128,
+      "route": "kernel",
+      "lifecycle": "fresh",
+      "iterations": 16,
+      "pilots": [
+        {
+          "started": "2026-09-10T00:40:44.105Z",
+          "finished": "2026-09-10T00:40:44.109Z",
+          "variant": "baseline",
+          "p": -128,
+          "route": "kernel",
+          "lifecycle": "fresh",
+          "iterations": 2,
+          "ns": 16459,
+          "allocation": [
+            50,
+            976,
+            0,
+            96
+          ],
+          "fingerprint": "3d5303821bfad4e5",
+          "answerBits": 130
+        },
+        {
+          "started": "2026-09-10T00:40:44.109Z",
+          "finished": "2026-09-10T00:40:44.112Z",
+          "variant": "candidate",
+          "p": -128,
+          "route": "kernel",
+          "lifecycle": "fresh",
+          "iterations": 2,
+          "ns": 12499,
+          "allocation": [
+            18,
+            432,
+            0,
+            96
+          ],
+          "fingerprint": "3d5303821bfad4e5",
+          "answerBits": 130
+        }
+      ],
+      "observations": 6,
+      "measurements": {
+        "baseline": [
+          {
+            "name": "requests",
+            "min": 400,
+            "max": 400
+          },
+          {
+            "name": "requestedBytes",
+            "min": 7808,
+            "max": 7808
+          },
+          {
+            "name": "liveDelta",
+            "min": 0,
+            "max": 0
+          },
+          {
+            "name": "peakDelta",
+            "min": 96,
+            "max": 96
+          }
+        ],
+        "candidate": [
+          {
+            "name": "requests",
+            "min": 144,
+            "max": 144
+          },
+          {
+            "name": "requestedBytes",
+            "min": 3456,
+            "max": 3456
+          },
+          {
+            "name": "liveDelta",
+            "min": 0,
+            "max": 0
+          },
+          {
+            "name": "peakDelta",
+            "min": 96,
+            "max": 96
+          }
+        ]
+      }
+    },
+    {
+      "p": -128,
+      "route": "public",
+      "lifecycle": "fresh",
+      "iterations": 1,
+      "pilots": [
+        {
+          "started": "2026-09-10T00:40:44.135Z",
+          "finished": "2026-09-10T00:40:44.138Z",
+          "variant": "baseline",
+          "p": -128,
+          "route": "public",
+          "lifecycle": "fresh",
+          "iterations": 1,
+          "ns": 22868,
+          "allocation": [
+            27,
+            568,
+            80,
+            112
+          ],
+          "fingerprint": "3d5303821bfad4e5",
+          "answerBits": 130
+        },
+        {
+          "started": "2026-09-10T00:40:44.138Z",
+          "finished": "2026-09-10T00:40:44.142Z",
+          "variant": "candidate",
+          "p": -128,
+          "route": "public",
+          "lifecycle": "fresh",
+          "iterations": 1,
+          "ns": 30228,
+          "allocation": [
+            11,
+            296,
+            80,
+            112
+          ],
+          "fingerprint": "3d5303821bfad4e5",
+          "answerBits": 130
+        }
+      ],
+      "observations": 6,
+      "measurements": {
+        "baseline": [
+          {
+            "name": "requests",
+            "min": 27,
+            "max": 27
+          },
+          {
+            "name": "requestedBytes",
+            "min": 568,
+            "max": 568
+          },
+          {
+            "name": "liveDelta",
+            "min": 80,
+            "max": 80
+          },
+          {
+            "name": "peakDelta",
+            "min": 112,
+            "max": 112
+          }
+        ],
+        "candidate": [
+          {
+            "name": "requests",
+            "min": 11,
+            "max": 11
+          },
+          {
+            "name": "requestedBytes",
+            "min": 296,
+            "max": 296
+          },
+          {
+            "name": "liveDelta",
+            "min": 80,
+            "max": 80
+          },
+          {
+            "name": "peakDelta",
+            "min": 112,
+            "max": 112
+          }
+        ]
+      }
+    },
+    {
+      "p": -128,
+      "route": "public",
+      "lifecycle": "warm",
+      "iterations": 16,
+      "pilots": [
+        {
+          "started": "2026-09-10T00:40:44.165Z",
+          "finished": "2026-09-10T00:40:44.168Z",
+          "variant": "baseline",
+          "p": -128,
+          "route": "public",
+          "lifecycle": "warm",
+          "iterations": 2,
+          "ns": 370,
+          "allocation": [
+            2,
+            48,
+            0,
+            24
+          ],
+          "fingerprint": "3d5303821bfad4e5",
+          "answerBits": 130
+        },
+        {
+          "started": "2026-09-10T00:40:44.168Z",
+          "finished": "2026-09-10T00:40:44.172Z",
+          "variant": "candidate",
+          "p": -128,
+          "route": "public",
+          "lifecycle": "warm",
+          "iterations": 2,
+          "ns": 450,
+          "allocation": [
+            2,
+            48,
+            0,
+            24
+          ],
+          "fingerprint": "3d5303821bfad4e5",
+          "answerBits": 130
+        }
+      ],
+      "observations": 6,
+      "measurements": {
+        "baseline": [
+          {
+            "name": "requests",
+            "min": 16,
+            "max": 16
+          },
+          {
+            "name": "requestedBytes",
+            "min": 384,
+            "max": 384
+          },
+          {
+            "name": "liveDelta",
+            "min": 0,
+            "max": 0
+          },
+          {
+            "name": "peakDelta",
+            "min": 24,
+            "max": 24
+          }
+        ],
+        "candidate": [
+          {
+            "name": "requests",
+            "min": 16,
+            "max": 16
+          },
+          {
+            "name": "requestedBytes",
+            "min": 384,
+            "max": 384
+          },
+          {
+            "name": "liveDelta",
+            "min": 0,
+            "max": 0
+          },
+          {
+            "name": "peakDelta",
+            "min": 24,
+            "max": 24
+          }
+        ]
+      }
+    },
+    {
+      "p": -128,
+      "route": "public",
+      "lifecycle": "coarsen",
+      "iterations": 16,
+      "pilots": [
+        {
+          "started": "2026-09-10T00:40:44.194Z",
+          "finished": "2026-09-10T00:40:44.198Z",
+          "variant": "baseline",
+          "p": -128,
+          "route": "public",
+          "lifecycle": "coarsen",
+          "iterations": 2,
+          "ns": 1280,
+          "allocation": [
+            2,
+            64,
+            0,
+            32
+          ],
+          "fingerprint": "3d5303821bfad4e5",
+          "answerBits": 130
+        },
+        {
+          "started": "2026-09-10T00:40:44.198Z",
+          "finished": "2026-09-10T00:40:44.201Z",
+          "variant": "candidate",
+          "p": -128,
+          "route": "public",
+          "lifecycle": "coarsen",
+          "iterations": 2,
+          "ns": 1180,
+          "allocation": [
+            2,
+            64,
+            0,
+            32
+          ],
+          "fingerprint": "3d5303821bfad4e5",
+          "answerBits": 130
+        }
+      ],
+      "observations": 6,
+      "measurements": {
+        "baseline": [
+          {
+            "name": "requests",
+            "min": 16,
+            "max": 16
+          },
+          {
+            "name": "requestedBytes",
+            "min": 512,
+            "max": 512
+          },
+          {
+            "name": "liveDelta",
+            "min": 0,
+            "max": 0
+          },
+          {
+            "name": "peakDelta",
+            "min": 32,
+            "max": 32
+          }
+        ],
+        "candidate": [
+          {
+            "name": "requests",
+            "min": 16,
+            "max": 16
+          },
+          {
+            "name": "requestedBytes",
+            "min": 512,
+            "max": 512
+          },
+          {
+            "name": "liveDelta",
+            "min": 0,
+            "max": 0
+          },
+          {
+            "name": "peakDelta",
+            "min": 32,
+            "max": 32
+          }
+        ]
+      }
+    },
+    {
+      "p": -128,
+      "route": "public",
+      "lifecycle": "refine",
+      "iterations": 1,
+      "pilots": [
+        {
+          "started": "2026-09-10T00:40:44.223Z",
+          "finished": "2026-09-10T00:40:44.227Z",
+          "variant": "baseline",
+          "p": -128,
+          "route": "public",
+          "lifecycle": "refine",
+          "iterations": 1,
+          "ns": 6870,
+          "allocation": [
+            26,
+            512,
+            24,
+            96
+          ],
+          "fingerprint": "3d5303821bfad4e5",
+          "answerBits": 130
+        },
+        {
+          "started": "2026-09-10T00:40:44.227Z",
+          "finished": "2026-09-10T00:40:44.230Z",
+          "variant": "candidate",
+          "p": -128,
+          "route": "public",
+          "lifecycle": "refine",
+          "iterations": 1,
+          "ns": 8509,
+          "allocation": [
+            10,
+            240,
+            24,
+            96
+          ],
+          "fingerprint": "3d5303821bfad4e5",
+          "answerBits": 130
+        }
+      ],
+      "observations": 6,
+      "measurements": {
+        "baseline": [
+          {
+            "name": "requests",
+            "min": 26,
+            "max": 26
+          },
+          {
+            "name": "requestedBytes",
+            "min": 512,
+            "max": 512
+          },
+          {
+            "name": "liveDelta",
+            "min": 24,
+            "max": 24
+          },
+          {
+            "name": "peakDelta",
+            "min": 96,
+            "max": 96
+          }
+        ],
+        "candidate": [
+          {
+            "name": "requests",
+            "min": 10,
+            "max": 10
+          },
+          {
+            "name": "requestedBytes",
+            "min": 240,
+            "max": 240
+          },
+          {
+            "name": "liveDelta",
+            "min": 24,
+            "max": 24
+          },
+          {
+            "name": "peakDelta",
+            "min": 96,
+            "max": 96
+          }
+        ]
+      }
+    },
+    {
+      "p": -512,
+      "route": "planner",
+      "lifecycle": "fresh",
+      "iterations": 16,
+      "pilots": [
+        {
+          "started": "2026-09-10T00:40:44.253Z",
+          "finished": "2026-09-10T00:40:44.256Z",
+          "variant": "baseline",
+          "p": -512,
+          "route": "planner",
+          "lifecycle": "fresh",
+          "iterations": 2,
+          "ns": 14219,
+          "allocation": [
+            172,
+            7136,
+            0,
+            192
+          ],
+          "fingerprint": "af63df4c8601f1a5",
+          "answerBits": 7
+        },
+        {
+          "started": "2026-09-10T00:40:44.256Z",
+          "finished": "2026-09-10T00:40:44.260Z",
+          "variant": "candidate",
+          "p": -512,
+          "route": "planner",
+          "lifecycle": "fresh",
+          "iterations": 2,
+          "ns": 1389,
+          "allocation": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "fingerprint": "af63df4c8601f1a5",
+          "answerBits": 7
+        }
+      ],
+      "observations": 6,
+      "measurements": {
+        "baseline": [
+          {
+            "name": "requests",
+            "min": 1376,
+            "max": 1376
+          },
+          {
+            "name": "requestedBytes",
+            "min": 57088,
+            "max": 57088
+          },
+          {
+            "name": "liveDelta",
+            "min": 0,
+            "max": 0
+          },
+          {
+            "name": "peakDelta",
+            "min": 192,
+            "max": 192
+          }
+        ],
+        "candidate": [
+          {
+            "name": "requests",
+            "min": 0,
+            "max": 0
+          },
+          {
+            "name": "requestedBytes",
+            "min": 0,
+            "max": 0
+          },
+          {
+            "name": "liveDelta",
+            "min": 0,
+            "max": 0
+          },
+          {
+            "name": "peakDelta",
+            "min": 0,
+            "max": 0
+          }
+        ]
+      }
+    },
+    {
+      "p": -512,
+      "route": "kernel",
+      "lifecycle": "fresh",
+      "iterations": 16,
+      "pilots": [
+        {
+          "started": "2026-09-10T00:40:44.283Z",
+          "finished": "2026-09-10T00:40:44.287Z",
+          "variant": "baseline",
+          "p": -512,
+          "route": "kernel",
+          "lifecycle": "fresh",
+          "iterations": 2,
+          "ns": 25078,
+          "allocation": [
+            230,
+            9504,
+            0,
+            304
+          ],
+          "fingerprint": "8c62c7a5ab399bca",
+          "answerBits": 514
+        },
+        {
+          "started": "2026-09-10T00:40:44.287Z",
+          "finished": "2026-09-10T00:40:44.291Z",
+          "variant": "candidate",
+          "p": -512,
+          "route": "kernel",
+          "lifecycle": "fresh",
+          "iterations": 2,
+          "ns": 19459,
+          "allocation": [
+            58,
+            2368,
+            0,
+            304
+          ],
+          "fingerprint": "8c62c7a5ab399bca",
+          "answerBits": 514
+        }
+      ],
+      "observations": 6,
+      "measurements": {
+        "baseline": [
+          {
+            "name": "requests",
+            "min": 1840,
+            "max": 1840
+          },
+          {
+            "name": "requestedBytes",
+            "min": 76032,
+            "max": 76032
+          },
+          {
+            "name": "liveDelta",
+            "min": 0,
+            "max": 0
+          },
+          {
+            "name": "peakDelta",
+            "min": 304,
+            "max": 304
+          }
+        ],
+        "candidate": [
+          {
+            "name": "requests",
+            "min": 464,
+            "max": 464
+          },
+          {
+            "name": "requestedBytes",
+            "min": 18944,
+            "max": 18944
+          },
+          {
+            "name": "liveDelta",
+            "min": 0,
+            "max": 0
+          },
+          {
+            "name": "peakDelta",
+            "min": 304,
+            "max": 304
+          }
+        ]
+      }
+    },
+    {
+      "p": -512,
+      "route": "public",
+      "lifecycle": "fresh",
+      "iterations": 1,
+      "pilots": [
+        {
+          "started": "2026-09-10T00:40:44.314Z",
+          "finished": "2026-09-10T00:40:44.317Z",
+          "variant": "baseline",
+          "p": -512,
+          "route": "public",
+          "lifecycle": "fresh",
+          "iterations": 1,
+          "ns": 35408,
+          "allocation": [
+            117,
+            4880,
+            128,
+            304
+          ],
+          "fingerprint": "8c62c7a5ab399bca",
+          "answerBits": 514
+        },
+        {
+          "started": "2026-09-10T00:40:44.317Z",
+          "finished": "2026-09-10T00:40:44.321Z",
+          "variant": "candidate",
+          "p": -512,
+          "route": "public",
+          "lifecycle": "fresh",
+          "iterations": 1,
+          "ns": 31897,
+          "allocation": [
+            31,
+            1312,
+            128,
+            304
+          ],
+          "fingerprint": "8c62c7a5ab399bca",
+          "answerBits": 514
+        }
+      ],
+      "observations": 6,
+      "measurements": {
+        "baseline": [
+          {
+            "name": "requests",
+            "min": 117,
+            "max": 117
+          },
+          {
+            "name": "requestedBytes",
+            "min": 4880,
+            "max": 4880
+          },
+          {
+            "name": "liveDelta",
+            "min": 128,
+            "max": 128
+          },
+          {
+            "name": "peakDelta",
+            "min": 304,
+            "max": 304
+          }
+        ],
+        "candidate": [
+          {
+            "name": "requests",
+            "min": 31,
+            "max": 31
+          },
+          {
+            "name": "requestedBytes",
+            "min": 1312,
+            "max": 1312
+          },
+          {
+            "name": "liveDelta",
+            "min": 128,
+            "max": 128
+          },
+          {
+            "name": "peakDelta",
+            "min": 304,
+            "max": 304
+          }
+        ]
+      }
+    },
+    {
+      "p": -512,
+      "route": "public",
+      "lifecycle": "warm",
+      "iterations": 16,
+      "pilots": [
+        {
+          "started": "2026-09-10T00:40:44.344Z",
+          "finished": "2026-09-10T00:40:44.347Z",
+          "variant": "baseline",
+          "p": -512,
+          "route": "public",
+          "lifecycle": "warm",
+          "iterations": 2,
+          "ns": 330,
+          "allocation": [
+            2,
+            144,
+            0,
+            72
+          ],
+          "fingerprint": "8c62c7a5ab399bca",
+          "answerBits": 514
+        },
+        {
+          "started": "2026-09-10T00:40:44.347Z",
+          "finished": "2026-09-10T00:40:44.351Z",
+          "variant": "candidate",
+          "p": -512,
+          "route": "public",
+          "lifecycle": "warm",
+          "iterations": 2,
+          "ns": 390,
+          "allocation": [
+            2,
+            144,
+            0,
+            72
+          ],
+          "fingerprint": "8c62c7a5ab399bca",
+          "answerBits": 514
+        }
+      ],
+      "observations": 6,
+      "measurements": {
+        "baseline": [
+          {
+            "name": "requests",
+            "min": 16,
+            "max": 16
+          },
+          {
+            "name": "requestedBytes",
+            "min": 1152,
+            "max": 1152
+          },
+          {
+            "name": "liveDelta",
+            "min": 0,
+            "max": 0
+          },
+          {
+            "name": "peakDelta",
+            "min": 72,
+            "max": 72
+          }
+        ],
+        "candidate": [
+          {
+            "name": "requests",
+            "min": 16,
+            "max": 16
+          },
+          {
+            "name": "requestedBytes",
+            "min": 1152,
+            "max": 1152
+          },
+          {
+            "name": "liveDelta",
+            "min": 0,
+            "max": 0
+          },
+          {
+            "name": "peakDelta",
+            "min": 72,
+            "max": 72
+          }
+        ]
+      }
+    },
+    {
+      "p": -512,
+      "route": "public",
+      "lifecycle": "coarsen",
+      "iterations": 16,
+      "pilots": [
+        {
+          "started": "2026-09-10T00:40:44.373Z",
+          "finished": "2026-09-10T00:40:44.376Z",
+          "variant": "baseline",
+          "p": -512,
+          "route": "public",
+          "lifecycle": "coarsen",
+          "iterations": 2,
+          "ns": 1160,
+          "allocation": [
+            2,
+            160,
+            0,
+            80
+          ],
+          "fingerprint": "8c62c7a5ab399bca",
+          "answerBits": 514
+        },
+        {
+          "started": "2026-09-10T00:40:44.377Z",
+          "finished": "2026-09-10T00:40:44.380Z",
+          "variant": "candidate",
+          "p": -512,
+          "route": "public",
+          "lifecycle": "coarsen",
+          "iterations": 2,
+          "ns": 1650,
+          "allocation": [
+            2,
+            160,
+            0,
+            80
+          ],
+          "fingerprint": "8c62c7a5ab399bca",
+          "answerBits": 514
+        }
+      ],
+      "observations": 6,
+      "measurements": {
+        "baseline": [
+          {
+            "name": "requests",
+            "min": 16,
+            "max": 16
+          },
+          {
+            "name": "requestedBytes",
+            "min": 1280,
+            "max": 1280
+          },
+          {
+            "name": "liveDelta",
+            "min": 0,
+            "max": 0
+          },
+          {
+            "name": "peakDelta",
+            "min": 80,
+            "max": 80
+          }
+        ],
+        "candidate": [
+          {
+            "name": "requests",
+            "min": 16,
+            "max": 16
+          },
+          {
+            "name": "requestedBytes",
+            "min": 1280,
+            "max": 1280
+          },
+          {
+            "name": "liveDelta",
+            "min": 0,
+            "max": 0
+          },
+          {
+            "name": "peakDelta",
+            "min": 80,
+            "max": 80
+          }
+        ]
+      }
+    },
+    {
+      "p": -512,
+      "route": "public",
+      "lifecycle": "refine",
+      "iterations": 1,
+      "pilots": [
+        {
+          "started": "2026-09-10T00:40:44.403Z",
+          "finished": "2026-09-10T00:40:44.407Z",
+          "variant": "baseline",
+          "p": -512,
+          "route": "public",
+          "lifecycle": "refine",
+          "iterations": 1,
+          "ns": 10649,
+          "allocation": [
+            116,
+            4824,
+            48,
+            304
+          ],
+          "fingerprint": "8c62c7a5ab399bca",
+          "answerBits": 514
+        },
+        {
+          "started": "2026-09-10T00:40:44.407Z",
+          "finished": "2026-09-10T00:40:44.411Z",
+          "variant": "candidate",
+          "p": -512,
+          "route": "public",
+          "lifecycle": "refine",
+          "iterations": 1,
+          "ns": 7390,
+          "allocation": [
+            30,
+            1256,
+            48,
+            304
+          ],
+          "fingerprint": "8c62c7a5ab399bca",
+          "answerBits": 514
+        }
+      ],
+      "observations": 6,
+      "measurements": {
+        "baseline": [
+          {
+            "name": "requests",
+            "min": 116,
+            "max": 116
+          },
+          {
+            "name": "requestedBytes",
+            "min": 4824,
+            "max": 4824
+          },
+          {
+            "name": "liveDelta",
+            "min": 48,
+            "max": 48
+          },
+          {
+            "name": "peakDelta",
+            "min": 304,
+            "max": 304
+          }
+        ],
+        "candidate": [
+          {
+            "name": "requests",
+            "min": 30,
+            "max": 30
+          },
+          {
+            "name": "requestedBytes",
+            "min": 1256,
+            "max": 1256
+          },
+          {
+            "name": "liveDelta",
+            "min": 48,
+            "max": 48
+          },
+          {
+            "name": "peakDelta",
+            "min": 304,
+            "max": 304
+          }
+        ]
+      }
+    },
+    {
+      "p": -4096,
+      "route": "planner",
+      "lifecycle": "fresh",
+      "iterations": 16,
+      "pilots": [
+        {
+          "started": "2026-09-10T00:40:44.434Z",
+          "finished": "2026-09-10T00:40:44.438Z",
+          "variant": "baseline",
+          "p": -4096,
+          "route": "planner",
+          "lifecycle": "fresh",
+          "iterations": 2,
+          "ns": 132591,
+          "allocation": [
+            1160,
+            319584,
+            0,
+            1536
+          ],
+          "fingerprint": "08841607b530b85f",
+          "answerBits": 10
+        },
+        {
+          "started": "2026-09-10T00:40:44.438Z",
+          "finished": "2026-09-10T00:40:44.443Z",
+          "variant": "candidate",
+          "p": -4096,
+          "route": "planner",
+          "lifecycle": "fresh",
+          "iterations": 2,
+          "ns": 6389,
+          "allocation": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "fingerprint": "08841607b530b85f",
+          "answerBits": 10
+        }
+      ],
+      "observations": 6,
+      "measurements": {
+        "baseline": [
+          {
+            "name": "requests",
+            "min": 9280,
+            "max": 9280
+          },
+          {
+            "name": "requestedBytes",
+            "min": 2556672,
+            "max": 2556672
+          },
+          {
+            "name": "liveDelta",
+            "min": 0,
+            "max": 0
+          },
+          {
+            "name": "peakDelta",
+            "min": 1536,
+            "max": 1536
+          }
+        ],
+        "candidate": [
+          {
+            "name": "requests",
+            "min": 0,
+            "max": 0
+          },
+          {
+            "name": "requestedBytes",
+            "min": 0,
+            "max": 0
+          },
+          {
+            "name": "liveDelta",
+            "min": 0,
+            "max": 0
+          },
+          {
+            "name": "peakDelta",
+            "min": 0,
+            "max": 0
+          }
+        ]
+      }
+    },
+    {
+      "p": -4096,
+      "route": "kernel",
+      "lifecycle": "fresh",
+      "iterations": 16,
+      "pilots": [
+        {
+          "started": "2026-09-10T00:40:44.466Z",
+          "finished": "2026-09-10T00:40:44.470Z",
+          "variant": "baseline",
+          "p": -4096,
+          "route": "kernel",
+          "lifecycle": "fresh",
+          "iterations": 2,
+          "ns": 187607,
+          "allocation": [
+            1542,
+            342224,
+            0,
+            2088
+          ],
+          "fingerprint": "75449aa94b227299",
+          "answerBits": 4098
+        },
+        {
+          "started": "2026-09-10T00:40:44.470Z",
+          "finished": "2026-09-10T00:40:44.474Z",
+          "variant": "candidate",
+          "p": -4096,
+          "route": "kernel",
+          "lifecycle": "fresh",
+          "iterations": 2,
+          "ns": 90663,
+          "allocation": [
+            382,
+            22640,
+            0,
+            2088
+          ],
+          "fingerprint": "75449aa94b227299",
+          "answerBits": 4098
+        }
+      ],
+      "observations": 6,
+      "measurements": {
+        "baseline": [
+          {
+            "name": "requests",
+            "min": 12336,
+            "max": 12336
+          },
+          {
+            "name": "requestedBytes",
+            "min": 2737792,
+            "max": 2737792
+          },
+          {
+            "name": "liveDelta",
+            "min": 0,
+            "max": 0
+          },
+          {
+            "name": "peakDelta",
+            "min": 2088,
+            "max": 2088
+          }
+        ],
+        "candidate": [
+          {
+            "name": "requests",
+            "min": 3056,
+            "max": 3056
+          },
+          {
+            "name": "requestedBytes",
+            "min": 181120,
+            "max": 181120
+          },
+          {
+            "name": "liveDelta",
+            "min": 0,
+            "max": 0
+          },
+          {
+            "name": "peakDelta",
+            "min": 2088,
+            "max": 2088
+          }
+        ]
+      }
+    },
+    {
+      "p": -4096,
+      "route": "public",
+      "lifecycle": "fresh",
+      "iterations": 1,
+      "pilots": [
+        {
+          "started": "2026-09-10T00:40:44.502Z",
+          "finished": "2026-09-10T00:40:44.506Z",
+          "variant": "baseline",
+          "p": -4096,
+          "route": "public",
+          "lifecycle": "fresh",
+          "iterations": 1,
+          "ns": 111832,
+          "allocation": [
+            773,
+            171688,
+            576,
+            2088
+          ],
+          "fingerprint": "75449aa94b227299",
+          "answerBits": 4098
+        },
+        {
+          "started": "2026-09-10T00:40:44.506Z",
+          "finished": "2026-09-10T00:40:44.510Z",
+          "variant": "candidate",
+          "p": -4096,
+          "route": "public",
+          "lifecycle": "fresh",
+          "iterations": 1,
+          "ns": 82014,
+          "allocation": [
+            193,
+            11896,
+            576,
+            2088
+          ],
+          "fingerprint": "75449aa94b227299",
+          "answerBits": 4098
+        }
+      ],
+      "observations": 6,
+      "measurements": {
+        "baseline": [
+          {
+            "name": "requests",
+            "min": 773,
+            "max": 773
+          },
+          {
+            "name": "requestedBytes",
+            "min": 171688,
+            "max": 171688
+          },
+          {
+            "name": "liveDelta",
+            "min": 576,
+            "max": 576
+          },
+          {
+            "name": "peakDelta",
+            "min": 2088,
+            "max": 2088
+          }
+        ],
+        "candidate": [
+          {
+            "name": "requests",
+            "min": 193,
+            "max": 193
+          },
+          {
+            "name": "requestedBytes",
+            "min": 11896,
+            "max": 11896
+          },
+          {
+            "name": "liveDelta",
+            "min": 576,
+            "max": 576
+          },
+          {
+            "name": "peakDelta",
+            "min": 2088,
+            "max": 2088
+          }
+        ]
+      }
+    },
+    {
+      "p": -4096,
+      "route": "public",
+      "lifecycle": "warm",
+      "iterations": 16,
+      "pilots": [
+        {
+          "started": "2026-09-10T00:40:44.532Z",
+          "finished": "2026-09-10T00:40:44.536Z",
+          "variant": "baseline",
+          "p": -4096,
+          "route": "public",
+          "lifecycle": "warm",
+          "iterations": 2,
+          "ns": 450,
+          "allocation": [
+            2,
+            1040,
+            0,
+            520
+          ],
+          "fingerprint": "75449aa94b227299",
+          "answerBits": 4098
+        },
+        {
+          "started": "2026-09-10T00:40:44.536Z",
+          "finished": "2026-09-10T00:40:44.540Z",
+          "variant": "candidate",
+          "p": -4096,
+          "route": "public",
+          "lifecycle": "warm",
+          "iterations": 2,
+          "ns": 520,
+          "allocation": [
+            2,
+            1040,
+            0,
+            520
+          ],
+          "fingerprint": "75449aa94b227299",
+          "answerBits": 4098
+        }
+      ],
+      "observations": 6,
+      "measurements": {
+        "baseline": [
+          {
+            "name": "requests",
+            "min": 16,
+            "max": 16
+          },
+          {
+            "name": "requestedBytes",
+            "min": 8320,
+            "max": 8320
+          },
+          {
+            "name": "liveDelta",
+            "min": 0,
+            "max": 0
+          },
+          {
+            "name": "peakDelta",
+            "min": 520,
+            "max": 520
+          }
+        ],
+        "candidate": [
+          {
+            "name": "requests",
+            "min": 16,
+            "max": 16
+          },
+          {
+            "name": "requestedBytes",
+            "min": 8320,
+            "max": 8320
+          },
+          {
+            "name": "liveDelta",
+            "min": 0,
+            "max": 0
+          },
+          {
+            "name": "peakDelta",
+            "min": 520,
+            "max": 520
+          }
+        ]
+      }
+    },
+    {
+      "p": -4096,
+      "route": "public",
+      "lifecycle": "coarsen",
+      "iterations": 16,
+      "pilots": [
+        {
+          "started": "2026-09-10T00:40:44.562Z",
+          "finished": "2026-09-10T00:40:44.566Z",
+          "variant": "baseline",
+          "p": -4096,
+          "route": "public",
+          "lifecycle": "coarsen",
+          "iterations": 2,
+          "ns": 1530,
+          "allocation": [
+            2,
+            1056,
+            0,
+            528
+          ],
+          "fingerprint": "75449aa94b227299",
+          "answerBits": 4098
+        },
+        {
+          "started": "2026-09-10T00:40:44.566Z",
+          "finished": "2026-09-10T00:40:44.570Z",
+          "variant": "candidate",
+          "p": -4096,
+          "route": "public",
+          "lifecycle": "coarsen",
+          "iterations": 2,
+          "ns": 1459,
+          "allocation": [
+            2,
+            1056,
+            0,
+            528
+          ],
+          "fingerprint": "75449aa94b227299",
+          "answerBits": 4098
+        }
+      ],
+      "observations": 6,
+      "measurements": {
+        "baseline": [
+          {
+            "name": "requests",
+            "min": 16,
+            "max": 16
+          },
+          {
+            "name": "requestedBytes",
+            "min": 8448,
+            "max": 8448
+          },
+          {
+            "name": "liveDelta",
+            "min": 0,
+            "max": 0
+          },
+          {
+            "name": "peakDelta",
+            "min": 528,
+            "max": 528
+          }
+        ],
+        "candidate": [
+          {
+            "name": "requests",
+            "min": 16,
+            "max": 16
+          },
+          {
+            "name": "requestedBytes",
+            "min": 8448,
+            "max": 8448
+          },
+          {
+            "name": "liveDelta",
+            "min": 0,
+            "max": 0
+          },
+          {
+            "name": "peakDelta",
+            "min": 528,
+            "max": 528
+          }
+        ]
+      }
+    },
+    {
+      "p": -4096,
+      "route": "public",
+      "lifecycle": "refine",
+      "iterations": 1,
+      "pilots": [
+        {
+          "started": "2026-09-10T00:40:44.592Z",
+          "finished": "2026-09-10T00:40:44.596Z",
+          "variant": "baseline",
+          "p": -4096,
+          "route": "public",
+          "lifecycle": "refine",
+          "iterations": 1,
+          "ns": 94863,
+          "allocation": [
+            772,
+            171632,
+            384,
+            2088
+          ],
+          "fingerprint": "75449aa94b227299",
+          "answerBits": 4098
+        },
+        {
+          "started": "2026-09-10T00:40:44.596Z",
+          "finished": "2026-09-10T00:40:44.600Z",
+          "variant": "candidate",
+          "p": -4096,
+          "route": "public",
+          "lifecycle": "refine",
+          "iterations": 1,
+          "ns": 44117,
+          "allocation": [
+            192,
+            11840,
+            384,
+            2088
+          ],
+          "fingerprint": "75449aa94b227299",
+          "answerBits": 4098
+        }
+      ],
+      "observations": 6,
+      "measurements": {
+        "baseline": [
+          {
+            "name": "requests",
+            "min": 772,
+            "max": 772
+          },
+          {
+            "name": "requestedBytes",
+            "min": 171632,
+            "max": 171632
+          },
+          {
+            "name": "liveDelta",
+            "min": 384,
+            "max": 384
+          },
+          {
+            "name": "peakDelta",
+            "min": 2088,
+            "max": 2088
+          }
+        ],
+        "candidate": [
+          {
+            "name": "requests",
+            "min": 192,
+            "max": 192
+          },
+          {
+            "name": "requestedBytes",
+            "min": 11840,
+            "max": 11840
+          },
+          {
+            "name": "liveDelta",
+            "min": 384,
+            "max": 384
+          },
+          {
+            "name": "peakDelta",
+            "min": 2088,
+            "max": 2088
+          }
+        ]
+      }
+    },
+    {
+      "p": -16384,
+      "route": "planner",
+      "lifecycle": "fresh",
+      "iterations": 16,
+      "pilots": [
+        {
+          "started": "2026-09-10T00:40:44.621Z",
+          "finished": "2026-09-10T00:40:44.626Z",
+          "variant": "baseline",
+          "p": -16384,
+          "route": "planner",
+          "lifecycle": "fresh",
+          "iterations": 2,
+          "ns": 660645,
+          "allocation": [
+            3980,
+            4383056,
+            0,
+            6144
+          ],
+          "fingerprint": "0b176207b760dd71",
+          "answerBits": 11
+        },
+        {
+          "started": "2026-09-10T00:40:44.626Z",
+          "finished": "2026-09-10T00:40:44.630Z",
+          "variant": "candidate",
+          "p": -16384,
+          "route": "planner",
+          "lifecycle": "fresh",
+          "iterations": 2,
+          "ns": 16279,
+          "allocation": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "fingerprint": "0b176207b760dd71",
+          "answerBits": 11
+        }
+      ],
+      "observations": 6,
+      "measurements": {
+        "baseline": [
+          {
+            "name": "requests",
+            "min": 31840,
+            "max": 31840
+          },
+          {
+            "name": "requestedBytes",
+            "min": 35064448,
+            "max": 35064448
+          },
+          {
+            "name": "liveDelta",
+            "min": 0,
+            "max": 0
+          },
+          {
+            "name": "peakDelta",
+            "min": 6144,
+            "max": 6144
+          }
+        ],
+        "candidate": [
+          {
+            "name": "requests",
+            "min": 0,
+            "max": 0
+          },
+          {
+            "name": "requestedBytes",
+            "min": 0,
+            "max": 0
+          },
+          {
+            "name": "liveDelta",
+            "min": 0,
+            "max": 0
+          },
+          {
+            "name": "peakDelta",
+            "min": 0,
+            "max": 0
+          }
+        ]
+      }
+    },
+    {
+      "p": -16384,
+      "route": "kernel",
+      "lifecycle": "fresh",
+      "iterations": 16,
+      "pilots": [
+        {
+          "started": "2026-09-10T00:40:44.667Z",
+          "finished": "2026-09-10T00:40:44.672Z",
+          "variant": "baseline",
+          "p": -16384,
+          "route": "kernel",
+          "lifecycle": "fresh",
+          "iterations": 2,
+          "ns": 970064,
+          "allocation": [
+            5766,
+            4764912,
+            0,
+            24096
+          ],
+          "fingerprint": "4c78d73016d45572",
+          "answerBits": 16386
+        },
+        {
+          "started": "2026-09-10T00:40:44.672Z",
+          "finished": "2026-09-10T00:40:44.676Z",
+          "variant": "candidate",
+          "p": -16384,
+          "route": "kernel",
+          "lifecycle": "fresh",
+          "iterations": 2,
+          "ns": 485947,
+          "allocation": [
+            1786,
+            381856,
+            0,
+            24096
+          ],
+          "fingerprint": "4c78d73016d45572",
+          "answerBits": 16386
+        }
+      ],
+      "observations": 6,
+      "measurements": {
+        "baseline": [
+          {
+            "name": "requests",
+            "min": 46128,
+            "max": 46128
+          },
+          {
+            "name": "requestedBytes",
+            "min": 38119296,
+            "max": 38119296
+          },
+          {
+            "name": "liveDelta",
+            "min": 0,
+            "max": 0
+          },
+          {
+            "name": "peakDelta",
+            "min": 24096,
+            "max": 24096
+          }
+        ],
+        "candidate": [
+          {
+            "name": "requests",
+            "min": 14288,
+            "max": 14288
+          },
+          {
+            "name": "requestedBytes",
+            "min": 3054848,
+            "max": 3054848
+          },
+          {
+            "name": "liveDelta",
+            "min": 0,
+            "max": 0
+          },
+          {
+            "name": "peakDelta",
+            "min": 24096,
+            "max": 24096
+          }
+        ]
+      }
+    },
+    {
+      "p": -16384,
+      "route": "public",
+      "lifecycle": "fresh",
+      "iterations": 1,
+      "pilots": [
+        {
+          "started": "2026-09-10T00:40:44.730Z",
+          "finished": "2026-09-10T00:40:44.734Z",
+          "variant": "baseline",
+          "p": -16384,
+          "route": "public",
+          "lifecycle": "fresh",
+          "iterations": 1,
+          "ns": 726820,
+          "allocation": [
+            2885,
+            2384568,
+            2112,
+            24096
+          ],
+          "fingerprint": "4c78d73016d45572",
+          "answerBits": 16386
+        },
+        {
+          "started": "2026-09-10T00:40:44.734Z",
+          "finished": "2026-09-10T00:40:44.738Z",
+          "variant": "candidate",
+          "p": -16384,
+          "route": "public",
+          "lifecycle": "fresh",
+          "iterations": 1,
+          "ns": 294619,
+          "allocation": [
+            895,
+            193040,
+            2112,
+            24096
+          ],
+          "fingerprint": "4c78d73016d45572",
+          "answerBits": 16386
+        }
+      ],
+      "observations": 6,
+      "measurements": {
+        "baseline": [
+          {
+            "name": "requests",
+            "min": 2885,
+            "max": 2885
+          },
+          {
+            "name": "requestedBytes",
+            "min": 2384568,
+            "max": 2384568
+          },
+          {
+            "name": "liveDelta",
+            "min": 2112,
+            "max": 2112
+          },
+          {
+            "name": "peakDelta",
+            "min": 24096,
+            "max": 24096
+          }
+        ],
+        "candidate": [
+          {
+            "name": "requests",
+            "min": 895,
+            "max": 895
+          },
+          {
+            "name": "requestedBytes",
+            "min": 193040,
+            "max": 193040
+          },
+          {
+            "name": "liveDelta",
+            "min": 2112,
+            "max": 2112
+          },
+          {
+            "name": "peakDelta",
+            "min": 24096,
+            "max": 24096
+          }
+        ]
+      }
+    },
+    {
+      "p": -16384,
+      "route": "public",
+      "lifecycle": "warm",
+      "iterations": 16,
+      "pilots": [
+        {
+          "started": "2026-09-10T00:40:44.764Z",
+          "finished": "2026-09-10T00:40:44.768Z",
+          "variant": "baseline",
+          "p": -16384,
+          "route": "public",
+          "lifecycle": "warm",
+          "iterations": 2,
+          "ns": 770,
+          "allocation": [
+            2,
+            4112,
+            0,
+            2056
+          ],
+          "fingerprint": "4c78d73016d45572",
+          "answerBits": 16386
+        },
+        {
+          "started": "2026-09-10T00:40:44.768Z",
+          "finished": "2026-09-10T00:40:44.772Z",
+          "variant": "candidate",
+          "p": -16384,
+          "route": "public",
+          "lifecycle": "warm",
+          "iterations": 2,
+          "ns": 520,
+          "allocation": [
+            2,
+            4112,
+            0,
+            2056
+          ],
+          "fingerprint": "4c78d73016d45572",
+          "answerBits": 16386
+        }
+      ],
+      "observations": 6,
+      "measurements": {
+        "baseline": [
+          {
+            "name": "requests",
+            "min": 16,
+            "max": 16
+          },
+          {
+            "name": "requestedBytes",
+            "min": 32896,
+            "max": 32896
+          },
+          {
+            "name": "liveDelta",
+            "min": 0,
+            "max": 0
+          },
+          {
+            "name": "peakDelta",
+            "min": 2056,
+            "max": 2056
+          }
+        ],
+        "candidate": [
+          {
+            "name": "requests",
+            "min": 16,
+            "max": 16
+          },
+          {
+            "name": "requestedBytes",
+            "min": 32896,
+            "max": 32896
+          },
+          {
+            "name": "liveDelta",
+            "min": 0,
+            "max": 0
+          },
+          {
+            "name": "peakDelta",
+            "min": 2056,
+            "max": 2056
+          }
+        ]
+      }
+    },
+    {
+      "p": -16384,
+      "route": "public",
+      "lifecycle": "coarsen",
+      "iterations": 16,
+      "pilots": [
+        {
+          "started": "2026-09-10T00:40:44.797Z",
+          "finished": "2026-09-10T00:40:44.801Z",
+          "variant": "baseline",
+          "p": -16384,
+          "route": "public",
+          "lifecycle": "coarsen",
+          "iterations": 2,
+          "ns": 1700,
+          "allocation": [
+            2,
+            4128,
+            0,
+            2064
+          ],
+          "fingerprint": "4c78d73016d45572",
+          "answerBits": 16386
+        },
+        {
+          "started": "2026-09-10T00:40:44.801Z",
+          "finished": "2026-09-10T00:40:44.805Z",
+          "variant": "candidate",
+          "p": -16384,
+          "route": "public",
+          "lifecycle": "coarsen",
+          "iterations": 2,
+          "ns": 1530,
+          "allocation": [
+            2,
+            4128,
+            0,
+            2064
+          ],
+          "fingerprint": "4c78d73016d45572",
+          "answerBits": 16386
+        }
+      ],
+      "observations": 6,
+      "measurements": {
+        "baseline": [
+          {
+            "name": "requests",
+            "min": 16,
+            "max": 16
+          },
+          {
+            "name": "requestedBytes",
+            "min": 33024,
+            "max": 33024
+          },
+          {
+            "name": "liveDelta",
+            "min": 0,
+            "max": 0
+          },
+          {
+            "name": "peakDelta",
+            "min": 2064,
+            "max": 2064
+          }
+        ],
+        "candidate": [
+          {
+            "name": "requests",
+            "min": 16,
+            "max": 16
+          },
+          {
+            "name": "requestedBytes",
+            "min": 33024,
+            "max": 33024
+          },
+          {
+            "name": "liveDelta",
+            "min": 0,
+            "max": 0
+          },
+          {
+            "name": "peakDelta",
+            "min": 2064,
+            "max": 2064
+          }
+        ]
+      }
+    },
+    {
+      "p": -16384,
+      "route": "public",
+      "lifecycle": "refine",
+      "iterations": 1,
+      "pilots": [
+        {
+          "started": "2026-09-10T00:40:44.830Z",
+          "finished": "2026-09-10T00:40:44.835Z",
+          "variant": "baseline",
+          "p": -16384,
+          "route": "public",
+          "lifecycle": "refine",
+          "iterations": 1,
+          "ns": 654415,
+          "allocation": [
+            2884,
+            2384512,
+            1536,
+            24096
+          ],
+          "fingerprint": "4c78d73016d45572",
+          "answerBits": 16386
+        },
+        {
+          "started": "2026-09-10T00:40:44.835Z",
+          "finished": "2026-09-10T00:40:44.839Z",
+          "variant": "candidate",
+          "p": -16384,
+          "route": "public",
+          "lifecycle": "refine",
+          "iterations": 1,
+          "ns": 265142,
+          "allocation": [
+            894,
+            192984,
+            1536,
+            24096
+          ],
+          "fingerprint": "4c78d73016d45572",
+          "answerBits": 16386
+        }
+      ],
+      "observations": 6,
+      "measurements": {
+        "baseline": [
+          {
+            "name": "requests",
+            "min": 2884,
+            "max": 2884
+          },
+          {
+            "name": "requestedBytes",
+            "min": 2384512,
+            "max": 2384512
+          },
+          {
+            "name": "liveDelta",
+            "min": 1536,
+            "max": 1536
+          },
+          {
+            "name": "peakDelta",
+            "min": 24096,
+            "max": 24096
+          }
+        ],
+        "candidate": [
+          {
+            "name": "requests",
+            "min": 894,
+            "max": 894
+          },
+          {
+            "name": "requestedBytes",
+            "min": 192984,
+            "max": 192984
+          },
+          {
+            "name": "liveDelta",
+            "min": 1536,
+            "max": 1536
+          },
+          {
+            "name": "peakDelta",
+            "min": 24096,
+            "max": 24096
+          }
+        ]
+      }
+    },
+    {
+      "p": -65536,
+      "route": "planner",
+      "lifecycle": "fresh",
+      "iterations": 16,
+      "pilots": [
+        {
+          "started": "2026-09-10T00:40:44.864Z",
+          "finished": "2026-09-10T00:40:44.878Z",
+          "variant": "baseline",
+          "p": -65536,
+          "route": "planner",
+          "lifecycle": "fresh",
+          "iterations": 2,
+          "ns": 7169829,
+          "allocation": [
+            13830,
+            62128480,
+            0,
+            24584
+          ],
+          "fingerprint": "085ea107b510d553",
+          "answerBits": 13
+        },
+        {
+          "started": "2026-09-10T00:40:44.878Z",
+          "finished": "2026-09-10T00:40:44.882Z",
+          "variant": "candidate",
+          "p": -65536,
+          "route": "planner",
+          "lifecycle": "fresh",
+          "iterations": 2,
+          "ns": 61056,
+          "allocation": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "fingerprint": "085ea107b510d553",
+          "answerBits": 13
+        }
+      ],
+      "observations": 6,
+      "measurements": {
+        "baseline": [
+          {
+            "name": "requests",
+            "min": 110640,
+            "max": 110640
+          },
+          {
+            "name": "requestedBytes",
+            "min": 497027840,
+            "max": 497027840
+          },
+          {
+            "name": "liveDelta",
+            "min": 0,
+            "max": 0
+          },
+          {
+            "name": "peakDelta",
+            "min": 24584,
+            "max": 24584
+          }
+        ],
+        "candidate": [
+          {
+            "name": "requests",
+            "min": 0,
+            "max": 0
+          },
+          {
+            "name": "requestedBytes",
+            "min": 0,
+            "max": 0
+          },
+          {
+            "name": "liveDelta",
+            "min": 0,
+            "max": 0
+          },
+          {
+            "name": "peakDelta",
+            "min": 0,
+            "max": 0
+          }
+        ]
+      }
+    },
+    {
+      "p": -65536,
+      "route": "kernel",
+      "lifecycle": "fresh",
+      "iterations": 16,
+      "pilots": [
+        {
+          "started": "2026-09-10T00:40:45.039Z",
+          "finished": "2026-09-10T00:40:45.053Z",
+          "variant": "baseline",
+          "p": -65536,
+          "route": "kernel",
+          "lifecycle": "fresh",
+          "iterations": 2,
+          "ns": 6734979,
+          "allocation": [
+            23112,
+            65369712,
+            0,
+            103248
+          ],
+          "fingerprint": "8ecfa4252d1feae0",
+          "answerBits": 65538
+        },
+        {
+          "started": "2026-09-10T00:40:45.053Z",
+          "finished": "2026-09-10T00:40:45.060Z",
+          "variant": "candidate",
+          "p": -65536,
+          "route": "kernel",
+          "lifecycle": "fresh",
+          "iterations": 2,
+          "ns": 2407585,
+          "allocation": [
+            9282,
+            3241232,
+            0,
+            103248
+          ],
+          "fingerprint": "8ecfa4252d1feae0",
+          "answerBits": 65538
+        }
+      ],
+      "observations": 6,
+      "measurements": {
+        "baseline": [
+          {
+            "name": "requests",
+            "min": 184896,
+            "max": 184896
+          },
+          {
+            "name": "requestedBytes",
+            "min": 522957696,
+            "max": 522957696
+          },
+          {
+            "name": "liveDelta",
+            "min": 0,
+            "max": 0
+          },
+          {
+            "name": "peakDelta",
+            "min": 103248,
+            "max": 103248
+          }
+        ],
+        "candidate": [
+          {
+            "name": "requests",
+            "min": 74256,
+            "max": 74256
+          },
+          {
+            "name": "requestedBytes",
+            "min": 25929856,
+            "max": 25929856
+          },
+          {
+            "name": "liveDelta",
+            "min": 0,
+            "max": 0
+          },
+          {
+            "name": "peakDelta",
+            "min": 103248,
+            "max": 103248
+          }
+        ]
+      }
+    },
+    {
+      "p": -65536,
+      "route": "public",
+      "lifecycle": "fresh",
+      "iterations": 1,
+      "pilots": [
+        {
+          "started": "2026-09-10T00:40:45.364Z",
+          "finished": "2026-09-10T00:40:45.371Z",
+          "variant": "baseline",
+          "p": -65536,
+          "route": "public",
+          "lifecycle": "fresh",
+          "iterations": 1,
+          "ns": 3573595,
+          "allocation": [
+            11558,
+            32693112,
+            8256,
+            103248
+          ],
+          "fingerprint": "8ecfa4252d1feae0",
+          "answerBits": 65538
+        },
+        {
+          "started": "2026-09-10T00:40:45.371Z",
+          "finished": "2026-09-10T00:40:45.376Z",
+          "variant": "candidate",
+          "p": -65536,
+          "route": "public",
+          "lifecycle": "fresh",
+          "iterations": 1,
+          "ns": 1514236,
+          "allocation": [
+            4643,
+            1628872,
+            8256,
+            103248
+          ],
+          "fingerprint": "8ecfa4252d1feae0",
+          "answerBits": 65538
+        }
+      ],
+      "observations": 6,
+      "measurements": {
+        "baseline": [
+          {
+            "name": "requests",
+            "min": 11558,
+            "max": 11558
+          },
+          {
+            "name": "requestedBytes",
+            "min": 32693112,
+            "max": 32693112
+          },
+          {
+            "name": "liveDelta",
+            "min": 8256,
+            "max": 8256
+          },
+          {
+            "name": "peakDelta",
+            "min": 103248,
+            "max": 103248
+          }
+        ],
+        "candidate": [
+          {
+            "name": "requests",
+            "min": 4643,
+            "max": 4643
+          },
+          {
+            "name": "requestedBytes",
+            "min": 1628872,
+            "max": 1628872
+          },
+          {
+            "name": "liveDelta",
+            "min": 8256,
+            "max": 8256
+          },
+          {
+            "name": "peakDelta",
+            "min": 103248,
+            "max": 103248
+          }
+        ]
+      }
+    },
+    {
+      "p": -65536,
+      "route": "public",
+      "lifecycle": "warm",
+      "iterations": 16,
+      "pilots": [
+        {
+          "started": "2026-09-10T00:40:45.414Z",
+          "finished": "2026-09-10T00:40:45.422Z",
+          "variant": "baseline",
+          "p": -65536,
+          "route": "public",
+          "lifecycle": "warm",
+          "iterations": 2,
+          "ns": 920,
+          "allocation": [
+            2,
+            16400,
+            0,
+            8200
+          ],
+          "fingerprint": "8ecfa4252d1feae0",
+          "answerBits": 65538
+        },
+        {
+          "started": "2026-09-10T00:40:45.422Z",
+          "finished": "2026-09-10T00:40:45.427Z",
+          "variant": "candidate",
+          "p": -65536,
+          "route": "public",
+          "lifecycle": "warm",
+          "iterations": 2,
+          "ns": 730,
+          "allocation": [
+            2,
+            16400,
+            0,
+            8200
+          ],
+          "fingerprint": "8ecfa4252d1feae0",
+          "answerBits": 65538
+        }
+      ],
+      "observations": 6,
+      "measurements": {
+        "baseline": [
+          {
+            "name": "requests",
+            "min": 16,
+            "max": 16
+          },
+          {
+            "name": "requestedBytes",
+            "min": 131200,
+            "max": 131200
+          },
+          {
+            "name": "liveDelta",
+            "min": 0,
+            "max": 0
+          },
+          {
+            "name": "peakDelta",
+            "min": 8200,
+            "max": 8200
+          }
+        ],
+        "candidate": [
+          {
+            "name": "requests",
+            "min": 16,
+            "max": 16
+          },
+          {
+            "name": "requestedBytes",
+            "min": 131200,
+            "max": 131200
+          },
+          {
+            "name": "liveDelta",
+            "min": 0,
+            "max": 0
+          },
+          {
+            "name": "peakDelta",
+            "min": 8200,
+            "max": 8200
+          }
+        ]
+      }
+    },
+    {
+      "p": -65536,
+      "route": "public",
+      "lifecycle": "coarsen",
+      "iterations": 16,
+      "pilots": [
+        {
+          "started": "2026-09-10T00:40:45.466Z",
+          "finished": "2026-09-10T00:40:45.473Z",
+          "variant": "baseline",
+          "p": -65536,
+          "route": "public",
+          "lifecycle": "coarsen",
+          "iterations": 2,
+          "ns": 2829,
+          "allocation": [
+            2,
+            16416,
+            0,
+            8208
+          ],
+          "fingerprint": "8ecfa4252d1feae0",
+          "answerBits": 65538
+        },
+        {
+          "started": "2026-09-10T00:40:45.473Z",
+          "finished": "2026-09-10T00:40:45.478Z",
+          "variant": "candidate",
+          "p": -65536,
+          "route": "public",
+          "lifecycle": "coarsen",
+          "iterations": 2,
+          "ns": 2370,
+          "allocation": [
+            2,
+            16416,
+            0,
+            8208
+          ],
+          "fingerprint": "8ecfa4252d1feae0",
+          "answerBits": 65538
+        }
+      ],
+      "observations": 6,
+      "measurements": {
+        "baseline": [
+          {
+            "name": "requests",
+            "min": 16,
+            "max": 16
+          },
+          {
+            "name": "requestedBytes",
+            "min": 131328,
+            "max": 131328
+          },
+          {
+            "name": "liveDelta",
+            "min": 0,
+            "max": 0
+          },
+          {
+            "name": "peakDelta",
+            "min": 8208,
+            "max": 8208
+          }
+        ],
+        "candidate": [
+          {
+            "name": "requests",
+            "min": 16,
+            "max": 16
+          },
+          {
+            "name": "requestedBytes",
+            "min": 131328,
+            "max": 131328
+          },
+          {
+            "name": "liveDelta",
+            "min": 0,
+            "max": 0
+          },
+          {
+            "name": "peakDelta",
+            "min": 8208,
+            "max": 8208
+          }
+        ]
+      }
+    },
+    {
+      "p": -65536,
+      "route": "public",
+      "lifecycle": "refine",
+      "iterations": 1,
+      "pilots": [
+        {
+          "started": "2026-09-10T00:40:45.515Z",
+          "finished": "2026-09-10T00:40:45.526Z",
+          "variant": "baseline",
+          "p": -65536,
+          "route": "public",
+          "lifecycle": "refine",
+          "iterations": 1,
+          "ns": 6069154,
+          "allocation": [
+            11557,
+            32693056,
+            6144,
+            103248
+          ],
+          "fingerprint": "8ecfa4252d1feae0",
+          "answerBits": 65538
+        },
+        {
+          "started": "2026-09-10T00:40:45.526Z",
+          "finished": "2026-09-10T00:40:45.531Z",
+          "variant": "candidate",
+          "p": -65536,
+          "route": "public",
+          "lifecycle": "refine",
+          "iterations": 1,
+          "ns": 1245205,
+          "allocation": [
+            4642,
+            1628816,
+            6144,
+            103248
+          ],
+          "fingerprint": "8ecfa4252d1feae0",
+          "answerBits": 65538
+        }
+      ],
+      "observations": 6,
+      "measurements": {
+        "baseline": [
+          {
+            "name": "requests",
+            "min": 11557,
+            "max": 11557
+          },
+          {
+            "name": "requestedBytes",
+            "min": 32693056,
+            "max": 32693056
+          },
+          {
+            "name": "liveDelta",
+            "min": 6144,
+            "max": 6144
+          },
+          {
+            "name": "peakDelta",
+            "min": 103248,
+            "max": 103248
+          }
+        ],
+        "candidate": [
+          {
+            "name": "requests",
+            "min": 4642,
+            "max": 4642
+          },
+          {
+            "name": "requestedBytes",
+            "min": 1628816,
+            "max": 1628816
+          },
+          {
+            "name": "liveDelta",
+            "min": 6144,
+            "max": 6144
+          },
+          {
+            "name": "peakDelta",
+            "min": 103248,
+            "max": 103248
+          }
+        ]
+      }
+    },
+    {
+      "p": -262144,
+      "route": "planner",
+      "lifecycle": "fresh",
+      "iterations": 16,
+      "pilots": [
+        {
+          "started": "2026-09-10T00:40:45.570Z",
+          "finished": "2026-09-10T00:40:45.657Z",
+          "variant": "baseline",
+          "p": -262144,
+          "route": "planner",
+          "lifecycle": "fresh",
+          "iterations": 2,
+          "ns": 55390228,
+          "allocation": [
+            48884,
+            898664880,
+            0,
+            98304
+          ],
+          "fingerprint": "09fa3907b66eda3a",
+          "answerBits": 15
+        },
+        {
+          "started": "2026-09-10T00:40:45.657Z",
+          "finished": "2026-09-10T00:40:45.662Z",
+          "variant": "candidate",
+          "p": -262144,
+          "route": "planner",
+          "lifecycle": "fresh",
+          "iterations": 2,
+          "ns": 254182,
+          "allocation": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "fingerprint": "09fa3907b66eda3a",
+          "answerBits": 15
+        }
+      ],
+      "observations": 6,
+      "measurements": {
+        "baseline": [
+          {
+            "name": "requests",
+            "min": 391072,
+            "max": 391072
+          },
+          {
+            "name": "requestedBytes",
+            "min": 7189319040,
+            "max": 7189319040
+          },
+          {
+            "name": "liveDelta",
+            "min": 0,
+            "max": 0
+          },
+          {
+            "name": "peakDelta",
+            "min": 98304,
+            "max": 98304
+          }
+        ],
+        "candidate": [
+          {
+            "name": "requests",
+            "min": 0,
+            "max": 0
+          },
+          {
+            "name": "requestedBytes",
+            "min": 0,
+            "max": 0
+          },
+          {
+            "name": "liveDelta",
+            "min": 0,
+            "max": 0
+          },
+          {
+            "name": "peakDelta",
+            "min": 0,
+            "max": 0
+          }
+        ]
+      }
+    },
+    {
+      "p": -262144,
+      "route": "kernel",
+      "lifecycle": "fresh",
+      "iterations": 16,
+      "pilots": [
+        {
+          "started": "2026-09-10T00:40:47.107Z",
+          "finished": "2026-09-10T00:40:47.220Z",
+          "variant": "baseline",
+          "p": -262144,
+          "route": "kernel",
+          "lifecycle": "fresh",
+          "iterations": 2,
+          "ns": 72674783,
+          "allocation": [
+            101732,
+            925813152,
+            0,
+            422424
+          ],
+          "fingerprint": "0467a0ebf956e085",
+          "answerBits": 262146
+        },
+        {
+          "started": "2026-09-10T00:40:47.220Z",
+          "finished": "2026-09-10T00:40:47.250Z",
+          "variant": "candidate",
+          "p": -262144,
+          "route": "kernel",
+          "lifecycle": "fresh",
+          "iterations": 2,
+          "ns": 17807711,
+          "allocation": [
+            52848,
+            27148272,
+            0,
+            422424
+          ],
+          "fingerprint": "0467a0ebf956e085",
+          "answerBits": 262146
+        }
+      ],
+      "observations": 6,
+      "measurements": {
+        "baseline": [
+          {
+            "name": "requests",
+            "min": 813856,
+            "max": 813856
+          },
+          {
+            "name": "requestedBytes",
+            "min": 7406505216,
+            "max": 7406505216
+          },
+          {
+            "name": "liveDelta",
+            "min": 0,
+            "max": 0
+          },
+          {
+            "name": "peakDelta",
+            "min": 422424,
+            "max": 422424
+          }
+        ],
+        "candidate": [
+          {
+            "name": "requests",
+            "min": 422784,
+            "max": 422784
+          },
+          {
+            "name": "requestedBytes",
+            "min": 217186176,
+            "max": 217186176
+          },
+          {
+            "name": "liveDelta",
+            "min": 0,
+            "max": 0
+          },
+          {
+            "name": "peakDelta",
+            "min": 422424,
+            "max": 422424
+          }
+        ]
+      }
+    },
+    {
+      "p": -262144,
+      "route": "public",
+      "lifecycle": "fresh",
+      "iterations": 1,
+      "pilots": [
+        {
+          "started": "2026-09-10T00:40:49.579Z",
+          "finished": "2026-09-10T00:40:49.619Z",
+          "variant": "baseline",
+          "p": -262144,
+          "route": "public",
+          "lifecycle": "fresh",
+          "iterations": 1,
+          "ns": 35888883,
+          "allocation": [
+            50868,
+            462939408,
+            32832,
+            422424
+          ],
+          "fingerprint": "0467a0ebf956e085",
+          "answerBits": 262146
+        },
+        {
+          "started": "2026-09-10T00:40:49.619Z",
+          "finished": "2026-09-10T00:40:49.632Z",
+          "variant": "candidate",
+          "p": -262144,
+          "route": "public",
+          "lifecycle": "fresh",
+          "iterations": 1,
+          "ns": 9076018,
+          "allocation": [
+            26426,
+            13606968,
+            32832,
+            422424
+          ],
+          "fingerprint": "0467a0ebf956e085",
+          "answerBits": 262146
+        }
+      ],
+      "observations": 6,
+      "measurements": {
+        "baseline": [
+          {
+            "name": "requests",
+            "min": 50868,
+            "max": 50868
+          },
+          {
+            "name": "requestedBytes",
+            "min": 462939408,
+            "max": 462939408
+          },
+          {
+            "name": "liveDelta",
+            "min": 32832,
+            "max": 32832
+          },
+          {
+            "name": "peakDelta",
+            "min": 422424,
+            "max": 422424
+          }
+        ],
+        "candidate": [
+          {
+            "name": "requests",
+            "min": 26426,
+            "max": 26426
+          },
+          {
+            "name": "requestedBytes",
+            "min": 13606968,
+            "max": 13606968
+          },
+          {
+            "name": "liveDelta",
+            "min": 32832,
+            "max": 32832
+          },
+          {
+            "name": "peakDelta",
+            "min": 422424,
+            "max": 422424
+          }
+        ]
+      }
+    },
+    {
+      "p": -262144,
+      "route": "public",
+      "lifecycle": "warm",
+      "iterations": 16,
+      "pilots": [
+        {
+          "started": "2026-09-10T00:40:49.789Z",
+          "finished": "2026-09-10T00:40:49.828Z",
+          "variant": "baseline",
+          "p": -262144,
+          "route": "public",
+          "lifecycle": "warm",
+          "iterations": 2,
+          "ns": 1619,
+          "allocation": [
+            2,
+            65552,
+            0,
+            32776
+          ],
+          "fingerprint": "0467a0ebf956e085",
+          "answerBits": 262146
+        },
+        {
+          "started": "2026-09-10T00:40:49.828Z",
+          "finished": "2026-09-10T00:40:49.841Z",
+          "variant": "candidate",
+          "p": -262144,
+          "route": "public",
+          "lifecycle": "warm",
+          "iterations": 2,
+          "ns": 1810,
+          "allocation": [
+            2,
+            65552,
+            0,
+            32776
+          ],
+          "fingerprint": "0467a0ebf956e085",
+          "answerBits": 262146
+        }
+      ],
+      "observations": 6,
+      "measurements": {
+        "baseline": [
+          {
+            "name": "requests",
+            "min": 16,
+            "max": 16
+          },
+          {
+            "name": "requestedBytes",
+            "min": 524416,
+            "max": 524416
+          },
+          {
+            "name": "liveDelta",
+            "min": 0,
+            "max": 0
+          },
+          {
+            "name": "peakDelta",
+            "min": 32776,
+            "max": 32776
+          }
+        ],
+        "candidate": [
+          {
+            "name": "requests",
+            "min": 16,
+            "max": 16
+          },
+          {
+            "name": "requestedBytes",
+            "min": 524416,
+            "max": 524416
+          },
+          {
+            "name": "liveDelta",
+            "min": 0,
+            "max": 0
+          },
+          {
+            "name": "peakDelta",
+            "min": 32776,
+            "max": 32776
+          }
+        ]
+      }
+    },
+    {
+      "p": -262144,
+      "route": "public",
+      "lifecycle": "coarsen",
+      "iterations": 16,
+      "pilots": [
+        {
+          "started": "2026-09-10T00:40:49.996Z",
+          "finished": "2026-09-10T00:40:50.036Z",
+          "variant": "baseline",
+          "p": -262144,
+          "route": "public",
+          "lifecycle": "coarsen",
+          "iterations": 2,
+          "ns": 5639,
+          "allocation": [
+            2,
+            65568,
+            0,
+            32784
+          ],
+          "fingerprint": "0467a0ebf956e085",
+          "answerBits": 262146
+        },
+        {
+          "started": "2026-09-10T00:40:50.036Z",
+          "finished": "2026-09-10T00:40:50.048Z",
+          "variant": "candidate",
+          "p": -262144,
+          "route": "public",
+          "lifecycle": "coarsen",
+          "iterations": 2,
+          "ns": 5930,
+          "allocation": [
+            2,
+            65568,
+            0,
+            32784
+          ],
+          "fingerprint": "0467a0ebf956e085",
+          "answerBits": 262146
+        }
+      ],
+      "observations": 6,
+      "measurements": {
+        "baseline": [
+          {
+            "name": "requests",
+            "min": 16,
+            "max": 16
+          },
+          {
+            "name": "requestedBytes",
+            "min": 524544,
+            "max": 524544
+          },
+          {
+            "name": "liveDelta",
+            "min": 0,
+            "max": 0
+          },
+          {
+            "name": "peakDelta",
+            "min": 32784,
+            "max": 32784
+          }
+        ],
+        "candidate": [
+          {
+            "name": "requests",
+            "min": 16,
+            "max": 16
+          },
+          {
+            "name": "requestedBytes",
+            "min": 524544,
+            "max": 524544
+          },
+          {
+            "name": "liveDelta",
+            "min": 0,
+            "max": 0
+          },
+          {
+            "name": "peakDelta",
+            "min": 32784,
+            "max": 32784
+          }
+        ]
+      }
+    },
+    {
+      "p": -262144,
+      "route": "public",
+      "lifecycle": "refine",
+      "iterations": 1,
+      "pilots": [
+        {
+          "started": "2026-09-10T00:40:50.208Z",
+          "finished": "2026-09-10T00:40:50.252Z",
+          "variant": "baseline",
+          "p": -262144,
+          "route": "public",
+          "lifecycle": "refine",
+          "iterations": 1,
+          "ns": 36292715,
+          "allocation": [
+            50867,
+            462939352,
+            24576,
+            422424
+          ],
+          "fingerprint": "0467a0ebf956e085",
+          "answerBits": 262146
+        },
+        {
+          "started": "2026-09-10T00:40:50.252Z",
+          "finished": "2026-09-10T00:40:50.266Z",
+          "variant": "candidate",
+          "p": -262144,
+          "route": "public",
+          "lifecycle": "refine",
+          "iterations": 1,
+          "ns": 8901641,
+          "allocation": [
+            26425,
+            13606912,
+            24576,
+            422424
+          ],
+          "fingerprint": "0467a0ebf956e085",
+          "answerBits": 262146
+        }
+      ],
+      "observations": 6,
+      "measurements": {
+        "baseline": [
+          {
+            "name": "requests",
+            "min": 50867,
+            "max": 50867
+          },
+          {
+            "name": "requestedBytes",
+            "min": 462939352,
+            "max": 462939352
+          },
+          {
+            "name": "liveDelta",
+            "min": 24576,
+            "max": 24576
+          },
+          {
+            "name": "peakDelta",
+            "min": 422424,
+            "max": 422424
+          }
+        ],
+        "candidate": [
+          {
+            "name": "requests",
+            "min": 26425,
+            "max": 26425
+          },
+          {
+            "name": "requestedBytes",
+            "min": 13606912,
+            "max": 13606912
+          },
+          {
+            "name": "liveDelta",
+            "min": 24576,
+            "max": 24576
+          },
+          {
+            "name": "peakDelta",
+            "min": 422424,
+            "max": 422424
+          }
+        ]
+      }
+    },
+    {
+      "p": -64,
+      "route": "pi-control",
+      "lifecycle": "fresh",
+      "iterations": 1,
+      "pilots": [
+        {
+          "started": "2026-09-10T00:40:50.438Z",
+          "finished": "2026-09-10T00:40:50.442Z",
+          "variant": "baseline",
+          "p": -64,
+          "route": "pi-control",
+          "lifecycle": "fresh",
+          "iterations": 1,
+          "ns": 22808,
+          "allocation": [
+            31,
+            1136,
+            72,
+            296
+          ],
+          "fingerprint": "0d5b9106716e8ef8",
+          "answerBits": 66
+        },
+        {
+          "started": "2026-09-10T00:40:50.442Z",
+          "finished": "2026-09-10T00:40:50.445Z",
+          "variant": "candidate",
+          "p": -64,
+          "route": "pi-control",
+          "lifecycle": "fresh",
+          "iterations": 1,
+          "ns": 19619,
+          "allocation": [
+            31,
+            1136,
+            72,
+            296
+          ],
+          "fingerprint": "0d5b9106716e8ef8",
+          "answerBits": 66
+        }
+      ],
+      "observations": 6,
+      "measurements": {
+        "baseline": [
+          {
+            "name": "requests",
+            "min": 31,
+            "max": 31
+          },
+          {
+            "name": "requestedBytes",
+            "min": 1136,
+            "max": 1136
+          },
+          {
+            "name": "liveDelta",
+            "min": 72,
+            "max": 72
+          },
+          {
+            "name": "peakDelta",
+            "min": 296,
+            "max": 296
+          }
+        ],
+        "candidate": [
+          {
+            "name": "requests",
+            "min": 31,
+            "max": 31
+          },
+          {
+            "name": "requestedBytes",
+            "min": 1136,
+            "max": 1136
+          },
+          {
+            "name": "liveDelta",
+            "min": 72,
+            "max": 72
+          },
+          {
+            "name": "peakDelta",
+            "min": 296,
+            "max": 296
+          }
+        ]
+      }
+    },
+    {
+      "p": -64,
+      "route": "pi-control",
+      "lifecycle": "warm",
+      "iterations": 16,
+      "pilots": [
+        {
+          "started": "2026-09-10T00:40:50.466Z",
+          "finished": "2026-09-10T00:40:50.469Z",
+          "variant": "baseline",
+          "p": -64,
+          "route": "pi-control",
+          "lifecycle": "warm",
+          "iterations": 2,
+          "ns": 400,
+          "allocation": [
+            2,
+            32,
+            0,
+            16
+          ],
+          "fingerprint": "0d5b9106716e8ef8",
+          "answerBits": 66
+        },
+        {
+          "started": "2026-09-10T00:40:50.469Z",
+          "finished": "2026-09-10T00:40:50.473Z",
+          "variant": "candidate",
+          "p": -64,
+          "route": "pi-control",
+          "lifecycle": "warm",
+          "iterations": 2,
+          "ns": 340,
+          "allocation": [
+            2,
+            32,
+            0,
+            16
+          ],
+          "fingerprint": "0d5b9106716e8ef8",
+          "answerBits": 66
+        }
+      ],
+      "observations": 6,
+      "measurements": {
+        "baseline": [
+          {
+            "name": "requests",
+            "min": 16,
+            "max": 16
+          },
+          {
+            "name": "requestedBytes",
+            "min": 256,
+            "max": 256
+          },
+          {
+            "name": "liveDelta",
+            "min": 0,
+            "max": 0
+          },
+          {
+            "name": "peakDelta",
+            "min": 16,
+            "max": 16
+          }
+        ],
+        "candidate": [
+          {
+            "name": "requests",
+            "min": 16,
+            "max": 16
+          },
+          {
+            "name": "requestedBytes",
+            "min": 256,
+            "max": 256
+          },
+          {
+            "name": "liveDelta",
+            "min": 0,
+            "max": 0
+          },
+          {
+            "name": "peakDelta",
+            "min": 16,
+            "max": 16
+          }
+        ]
+      }
+    },
+    {
+      "p": -64,
+      "route": "pi-control",
+      "lifecycle": "coarsen",
+      "iterations": 16,
+      "pilots": [
+        {
+          "started": "2026-09-10T00:40:50.495Z",
+          "finished": "2026-09-10T00:40:50.498Z",
+          "variant": "baseline",
+          "p": -64,
+          "route": "pi-control",
+          "lifecycle": "coarsen",
+          "iterations": 2,
+          "ns": 710,
+          "allocation": [
+            2,
+            48,
+            0,
+            24
+          ],
+          "fingerprint": "0d5b9106716e8ef8",
+          "answerBits": 66
+        },
+        {
+          "started": "2026-09-10T00:40:50.498Z",
+          "finished": "2026-09-10T00:40:50.502Z",
+          "variant": "candidate",
+          "p": -64,
+          "route": "pi-control",
+          "lifecycle": "coarsen",
+          "iterations": 2,
+          "ns": 650,
+          "allocation": [
+            2,
+            48,
+            0,
+            24
+          ],
+          "fingerprint": "0d5b9106716e8ef8",
+          "answerBits": 66
+        }
+      ],
+      "observations": 6,
+      "measurements": {
+        "baseline": [
+          {
+            "name": "requests",
+            "min": 16,
+            "max": 16
+          },
+          {
+            "name": "requestedBytes",
+            "min": 384,
+            "max": 384
+          },
+          {
+            "name": "liveDelta",
+            "min": 0,
+            "max": 0
+          },
+          {
+            "name": "peakDelta",
+            "min": 24,
+            "max": 24
+          }
+        ],
+        "candidate": [
+          {
+            "name": "requests",
+            "min": 16,
+            "max": 16
+          },
+          {
+            "name": "requestedBytes",
+            "min": 384,
+            "max": 384
+          },
+          {
+            "name": "liveDelta",
+            "min": 0,
+            "max": 0
+          },
+          {
+            "name": "peakDelta",
+            "min": 24,
+            "max": 24
+          }
+        ]
+      }
+    },
+    {
+      "p": -64,
+      "route": "pi-control",
+      "lifecycle": "refine",
+      "iterations": 1,
+      "pilots": [
+        {
+          "started": "2026-09-10T00:40:50.523Z",
+          "finished": "2026-09-10T00:40:50.527Z",
+          "variant": "baseline",
+          "p": -64,
+          "route": "pi-control",
+          "lifecycle": "refine",
+          "iterations": 1,
+          "ns": 4700,
+          "allocation": [
+            30,
+            1080,
+            16,
+            296
+          ],
+          "fingerprint": "0d5b9106716e8ef8",
+          "answerBits": 66
+        },
+        {
+          "started": "2026-09-10T00:40:50.527Z",
+          "finished": "2026-09-10T00:40:50.531Z",
+          "variant": "candidate",
+          "p": -64,
+          "route": "pi-control",
+          "lifecycle": "refine",
+          "iterations": 1,
+          "ns": 3689,
+          "allocation": [
+            30,
+            1080,
+            16,
+            296
+          ],
+          "fingerprint": "0d5b9106716e8ef8",
+          "answerBits": 66
+        }
+      ],
+      "observations": 6,
+      "measurements": {
+        "baseline": [
+          {
+            "name": "requests",
+            "min": 30,
+            "max": 30
+          },
+          {
+            "name": "requestedBytes",
+            "min": 1080,
+            "max": 1080
+          },
+          {
+            "name": "liveDelta",
+            "min": 16,
+            "max": 16
+          },
+          {
+            "name": "peakDelta",
+            "min": 296,
+            "max": 296
+          }
+        ],
+        "candidate": [
+          {
+            "name": "requests",
+            "min": 30,
+            "max": 30
+          },
+          {
+            "name": "requestedBytes",
+            "min": 1080,
+            "max": 1080
+          },
+          {
+            "name": "liveDelta",
+            "min": 16,
+            "max": 16
+          },
+          {
+            "name": "peakDelta",
+            "min": 296,
+            "max": 296
+          }
+        ]
+      }
+    },
+    {
+      "p": -4096,
+      "route": "pi-control",
+      "lifecycle": "fresh",
+      "iterations": 1,
+      "pilots": [
+        {
+          "started": "2026-09-10T00:40:50.553Z",
+          "finished": "2026-09-10T00:40:50.557Z",
+          "variant": "baseline",
+          "p": -4096,
+          "route": "pi-control",
+          "lifecycle": "fresh",
+          "iterations": 1,
+          "ns": 159639,
+          "allocation": [
+            634,
+            141600,
+            576,
+            11648
+          ],
+          "fingerprint": "77f5dbf21707ad18",
+          "answerBits": 4098
+        },
+        {
+          "started": "2026-09-10T00:40:50.557Z",
+          "finished": "2026-09-10T00:40:50.560Z",
+          "variant": "candidate",
+          "p": -4096,
+          "route": "pi-control",
+          "lifecycle": "fresh",
+          "iterations": 1,
+          "ns": 207046,
+          "allocation": [
+            634,
+            141600,
+            576,
+            11648
+          ],
+          "fingerprint": "77f5dbf21707ad18",
+          "answerBits": 4098
+        }
+      ],
+      "observations": 6,
+      "measurements": {
+        "baseline": [
+          {
+            "name": "requests",
+            "min": 634,
+            "max": 634
+          },
+          {
+            "name": "requestedBytes",
+            "min": 141600,
+            "max": 141600
+          },
+          {
+            "name": "liveDelta",
+            "min": 576,
+            "max": 576
+          },
+          {
+            "name": "peakDelta",
+            "min": 11648,
+            "max": 11648
+          }
+        ],
+        "candidate": [
+          {
+            "name": "requests",
+            "min": 634,
+            "max": 634
+          },
+          {
+            "name": "requestedBytes",
+            "min": 141600,
+            "max": 141600
+          },
+          {
+            "name": "liveDelta",
+            "min": 576,
+            "max": 576
+          },
+          {
+            "name": "peakDelta",
+            "min": 11648,
+            "max": 11648
+          }
+        ]
+      }
+    },
+    {
+      "p": -4096,
+      "route": "pi-control",
+      "lifecycle": "warm",
+      "iterations": 16,
+      "pilots": [
+        {
+          "started": "2026-09-10T00:40:50.583Z",
+          "finished": "2026-09-10T00:40:50.586Z",
+          "variant": "baseline",
+          "p": -4096,
+          "route": "pi-control",
+          "lifecycle": "warm",
+          "iterations": 2,
+          "ns": 450,
+          "allocation": [
+            2,
+            1040,
+            0,
+            520
+          ],
+          "fingerprint": "77f5dbf21707ad18",
+          "answerBits": 4098
+        },
+        {
+          "started": "2026-09-10T00:40:50.586Z",
+          "finished": "2026-09-10T00:40:50.590Z",
+          "variant": "candidate",
+          "p": -4096,
+          "route": "pi-control",
+          "lifecycle": "warm",
+          "iterations": 2,
+          "ns": 360,
+          "allocation": [
+            2,
+            1040,
+            0,
+            520
+          ],
+          "fingerprint": "77f5dbf21707ad18",
+          "answerBits": 4098
+        }
+      ],
+      "observations": 6,
+      "measurements": {
+        "baseline": [
+          {
+            "name": "requests",
+            "min": 16,
+            "max": 16
+          },
+          {
+            "name": "requestedBytes",
+            "min": 8320,
+            "max": 8320
+          },
+          {
+            "name": "liveDelta",
+            "min": 0,
+            "max": 0
+          },
+          {
+            "name": "peakDelta",
+            "min": 520,
+            "max": 520
+          }
+        ],
+        "candidate": [
+          {
+            "name": "requests",
+            "min": 16,
+            "max": 16
+          },
+          {
+            "name": "requestedBytes",
+            "min": 8320,
+            "max": 8320
+          },
+          {
+            "name": "liveDelta",
+            "min": 0,
+            "max": 0
+          },
+          {
+            "name": "peakDelta",
+            "min": 520,
+            "max": 520
+          }
+        ]
+      }
+    },
+    {
+      "p": -4096,
+      "route": "pi-control",
+      "lifecycle": "coarsen",
+      "iterations": 16,
+      "pilots": [
+        {
+          "started": "2026-09-10T00:40:50.612Z",
+          "finished": "2026-09-10T00:40:50.616Z",
+          "variant": "baseline",
+          "p": -4096,
+          "route": "pi-control",
+          "lifecycle": "coarsen",
+          "iterations": 2,
+          "ns": 740,
+          "allocation": [
+            2,
+            1056,
+            0,
+            528
+          ],
+          "fingerprint": "77f5dbf21707ad18",
+          "answerBits": 4098
+        },
+        {
+          "started": "2026-09-10T00:40:50.616Z",
+          "finished": "2026-09-10T00:40:50.619Z",
+          "variant": "candidate",
+          "p": -4096,
+          "route": "pi-control",
+          "lifecycle": "coarsen",
+          "iterations": 2,
+          "ns": 830,
+          "allocation": [
+            2,
+            1056,
+            0,
+            528
+          ],
+          "fingerprint": "77f5dbf21707ad18",
+          "answerBits": 4098
+        }
+      ],
+      "observations": 6,
+      "measurements": {
+        "baseline": [
+          {
+            "name": "requests",
+            "min": 16,
+            "max": 16
+          },
+          {
+            "name": "requestedBytes",
+            "min": 8448,
+            "max": 8448
+          },
+          {
+            "name": "liveDelta",
+            "min": 0,
+            "max": 0
+          },
+          {
+            "name": "peakDelta",
+            "min": 528,
+            "max": 528
+          }
+        ],
+        "candidate": [
+          {
+            "name": "requests",
+            "min": 16,
+            "max": 16
+          },
+          {
+            "name": "requestedBytes",
+            "min": 8448,
+            "max": 8448
+          },
+          {
+            "name": "liveDelta",
+            "min": 0,
+            "max": 0
+          },
+          {
+            "name": "peakDelta",
+            "min": 528,
+            "max": 528
+          }
+        ]
+      }
+    },
+    {
+      "p": -4096,
+      "route": "pi-control",
+      "lifecycle": "refine",
+      "iterations": 1,
+      "pilots": [
+        {
+          "started": "2026-09-10T00:40:50.642Z",
+          "finished": "2026-09-10T00:40:50.646Z",
+          "variant": "baseline",
+          "p": -4096,
+          "route": "pi-control",
+          "lifecycle": "refine",
+          "iterations": 1,
+          "ns": 114923,
+          "allocation": [
+            633,
+            141544,
+            384,
+            11648
+          ],
+          "fingerprint": "77f5dbf21707ad18",
+          "answerBits": 4098
+        },
+        {
+          "started": "2026-09-10T00:40:50.646Z",
+          "finished": "2026-09-10T00:40:50.649Z",
+          "variant": "candidate",
+          "p": -4096,
+          "route": "pi-control",
+          "lifecycle": "refine",
+          "iterations": 1,
+          "ns": 161199,
+          "allocation": [
+            633,
+            141544,
+            384,
+            11648
+          ],
+          "fingerprint": "77f5dbf21707ad18",
+          "answerBits": 4098
+        }
+      ],
+      "observations": 6,
+      "measurements": {
+        "baseline": [
+          {
+            "name": "requests",
+            "min": 633,
+            "max": 633
+          },
+          {
+            "name": "requestedBytes",
+            "min": 141544,
+            "max": 141544
+          },
+          {
+            "name": "liveDelta",
+            "min": 384,
+            "max": 384
+          },
+          {
+            "name": "peakDelta",
+            "min": 11648,
+            "max": 11648
+          }
+        ],
+        "candidate": [
+          {
+            "name": "requests",
+            "min": 633,
+            "max": 633
+          },
+          {
+            "name": "requestedBytes",
+            "min": 141544,
+            "max": 141544
+          },
+          {
+            "name": "liveDelta",
+            "min": 384,
+            "max": 384
+          },
+          {
+            "name": "peakDelta",
+            "min": 11648,
+            "max": 11648
+          }
+        ]
+      }
+    },
+    {
+      "p": -65536,
+      "route": "pi-control",
+      "lifecycle": "fresh",
+      "iterations": 1,
+      "pilots": [
+        {
+          "started": "2026-09-10T00:40:50.671Z",
+          "finished": "2026-09-10T00:40:50.683Z",
+          "variant": "baseline",
+          "p": -65536,
+          "route": "pi-control",
+          "lifecycle": "fresh",
+          "iterations": 1,
+          "ns": 7526795,
+          "allocation": [
+            22508,
+            13578088,
+            8256,
+            195712
+          ],
+          "fingerprint": "4e33a2f72194c4f0",
+          "answerBits": 65538
+        },
+        {
+          "started": "2026-09-10T00:40:50.683Z",
+          "finished": "2026-09-10T00:40:50.693Z",
+          "variant": "candidate",
+          "p": -65536,
+          "route": "pi-control",
+          "lifecycle": "fresh",
+          "iterations": 1,
+          "ns": 7234895,
+          "allocation": [
+            22508,
+            13578088,
+            8256,
+            195712
+          ],
+          "fingerprint": "4e33a2f72194c4f0",
+          "answerBits": 65538
+        }
+      ],
+      "observations": 6,
+      "measurements": {
+        "baseline": [
+          {
+            "name": "requests",
+            "min": 22508,
+            "max": 22508
+          },
+          {
+            "name": "requestedBytes",
+            "min": 13578088,
+            "max": 13578088
+          },
+          {
+            "name": "liveDelta",
+            "min": 8256,
+            "max": 8256
+          },
+          {
+            "name": "peakDelta",
+            "min": 195712,
+            "max": 195712
+          }
+        ],
+        "candidate": [
+          {
+            "name": "requests",
+            "min": 22508,
+            "max": 22508
+          },
+          {
+            "name": "requestedBytes",
+            "min": 13578088,
+            "max": 13578088
+          },
+          {
+            "name": "liveDelta",
+            "min": 8256,
+            "max": 8256
+          },
+          {
+            "name": "peakDelta",
+            "min": 195712,
+            "max": 195712
+          }
+        ]
+      }
+    },
+    {
+      "p": -65536,
+      "route": "pi-control",
+      "lifecycle": "warm",
+      "iterations": 16,
+      "pilots": [
+        {
+          "started": "2026-09-10T00:40:50.762Z",
+          "finished": "2026-09-10T00:40:50.773Z",
+          "variant": "baseline",
+          "p": -65536,
+          "route": "pi-control",
+          "lifecycle": "warm",
+          "iterations": 2,
+          "ns": 780,
+          "allocation": [
+            2,
+            16400,
+            0,
+            8200
+          ],
+          "fingerprint": "4e33a2f72194c4f0",
+          "answerBits": 65538
+        },
+        {
+          "started": "2026-09-10T00:40:50.773Z",
+          "finished": "2026-09-10T00:40:50.785Z",
+          "variant": "candidate",
+          "p": -65536,
+          "route": "pi-control",
+          "lifecycle": "warm",
+          "iterations": 2,
+          "ns": 830,
+          "allocation": [
+            2,
+            16400,
+            0,
+            8200
+          ],
+          "fingerprint": "4e33a2f72194c4f0",
+          "answerBits": 65538
+        }
+      ],
+      "observations": 6,
+      "measurements": {
+        "baseline": [
+          {
+            "name": "requests",
+            "min": 16,
+            "max": 16
+          },
+          {
+            "name": "requestedBytes",
+            "min": 131200,
+            "max": 131200
+          },
+          {
+            "name": "liveDelta",
+            "min": 0,
+            "max": 0
+          },
+          {
+            "name": "peakDelta",
+            "min": 8200,
+            "max": 8200
+          }
+        ],
+        "candidate": [
+          {
+            "name": "requests",
+            "min": 16,
+            "max": 16
+          },
+          {
+            "name": "requestedBytes",
+            "min": 131200,
+            "max": 131200
+          },
+          {
+            "name": "liveDelta",
+            "min": 0,
+            "max": 0
+          },
+          {
+            "name": "peakDelta",
+            "min": 8200,
+            "max": 8200
+          }
+        ]
+      }
+    },
+    {
+      "p": -65536,
+      "route": "pi-control",
+      "lifecycle": "coarsen",
+      "iterations": 16,
+      "pilots": [
+        {
+          "started": "2026-09-10T00:40:50.852Z",
+          "finished": "2026-09-10T00:40:50.863Z",
+          "variant": "baseline",
+          "p": -65536,
+          "route": "pi-control",
+          "lifecycle": "coarsen",
+          "iterations": 2,
+          "ns": 1850,
+          "allocation": [
+            2,
+            16416,
+            0,
+            8208
+          ],
+          "fingerprint": "4e33a2f72194c4f0",
+          "answerBits": 65538
+        },
+        {
+          "started": "2026-09-10T00:40:50.863Z",
+          "finished": "2026-09-10T00:40:50.874Z",
+          "variant": "candidate",
+          "p": -65536,
+          "route": "pi-control",
+          "lifecycle": "coarsen",
+          "iterations": 2,
+          "ns": 1849,
+          "allocation": [
+            2,
+            16416,
+            0,
+            8208
+          ],
+          "fingerprint": "4e33a2f72194c4f0",
+          "answerBits": 65538
+        }
+      ],
+      "observations": 6,
+      "measurements": {
+        "baseline": [
+          {
+            "name": "requests",
+            "min": 16,
+            "max": 16
+          },
+          {
+            "name": "requestedBytes",
+            "min": 131328,
+            "max": 131328
+          },
+          {
+            "name": "liveDelta",
+            "min": 0,
+            "max": 0
+          },
+          {
+            "name": "peakDelta",
+            "min": 8208,
+            "max": 8208
+          }
+        ],
+        "candidate": [
+          {
+            "name": "requests",
+            "min": 16,
+            "max": 16
+          },
+          {
+            "name": "requestedBytes",
+            "min": 131328,
+            "max": 131328
+          },
+          {
+            "name": "liveDelta",
+            "min": 0,
+            "max": 0
+          },
+          {
+            "name": "peakDelta",
+            "min": 8208,
+            "max": 8208
+          }
+        ]
+      }
+    },
+    {
+      "p": -65536,
+      "route": "pi-control",
+      "lifecycle": "refine",
+      "iterations": 1,
+      "pilots": [
+        {
+          "started": "2026-09-10T00:40:50.943Z",
+          "finished": "2026-09-10T00:40:50.955Z",
+          "variant": "baseline",
+          "p": -65536,
+          "route": "pi-control",
+          "lifecycle": "refine",
+          "iterations": 1,
+          "ns": 7258482,
+          "allocation": [
+            22507,
+            13578032,
+            6144,
+            195712
+          ],
+          "fingerprint": "4e33a2f72194c4f0",
+          "answerBits": 65538
+        },
+        {
+          "started": "2026-09-10T00:40:50.955Z",
+          "finished": "2026-09-10T00:40:50.968Z",
+          "variant": "candidate",
+          "p": -65536,
+          "route": "pi-control",
+          "lifecycle": "refine",
+          "iterations": 1,
+          "ns": 7668784,
+          "allocation": [
+            22507,
+            13578032,
+            6144,
+            195712
+          ],
+          "fingerprint": "4e33a2f72194c4f0",
+          "answerBits": 65538
+        }
+      ],
+      "observations": 6,
+      "measurements": {
+        "baseline": [
+          {
+            "name": "requests",
+            "min": 22507,
+            "max": 22507
+          },
+          {
+            "name": "requestedBytes",
+            "min": 13578032,
+            "max": 13578032
+          },
+          {
+            "name": "liveDelta",
+            "min": 6144,
+            "max": 6144
+          },
+          {
+            "name": "peakDelta",
+            "min": 195712,
+            "max": 195712
+          }
+        ],
+        "candidate": [
+          {
+            "name": "requests",
+            "min": 22507,
+            "max": 22507
+          },
+          {
+            "name": "requestedBytes",
+            "min": 13578032,
+            "max": 13578032
+          },
+          {
+            "name": "liveDelta",
+            "min": 6144,
+            "max": 6144
+          },
+          {
+            "name": "peakDelta",
+            "min": 195712,
+            "max": 195712
+          }
+        ]
+      }
+    }
+  ],
+  "limits": "71 predeclared groups, ten precision levels. Planner and exact series kernel are uncached. Fresh/refine public calls are one query in each fresh process; warm/coarsen calls are repeated after explicit setup. Pi is an unchanged-path control. Wrapper/setup and postflight fingerprint are excluded, output destruction included. Allocation and CPU binaries are separate. Matched fingerprints are not a mathematical oracle; GMP/MPFR qualification is separate. 12 alternating ABBA/BAAB blocks and 5000 paired median bootstrap resamples per CPU group, intervals not multiplicity-adjusted. No whole-application timing, peak RSS, universal gain, arbitrary history or other-target claim."
+}

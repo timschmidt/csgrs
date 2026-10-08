@@ -1,0 +1,6 @@
+PASS	evaluation	420
+PASS	exact-division	675
+PASS	monomial-division	117
+PASS	monic-gcd	49
+PASS	bivariate-division	243
+SUMMARY	1520

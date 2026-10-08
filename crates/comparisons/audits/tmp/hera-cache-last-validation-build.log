@@ -1,0 +1,27 @@
+
+compat/Data/Number/MPFR.hs:2:12: warning: [-Wdeprecated-flags]
+    -#include is deprecated: -#include and INCLUDE pragmas are deprecated: They no longer have any effect
+  |
+2 | {-# INCLUDE <mpfr.h> #-}
+  |            ^^^^^^^^^^
+
+compat/Data/Number/MPFR.hs:3:12: warning: [-Wdeprecated-flags]
+    -#include is deprecated: -#include and INCLUDE pragmas are deprecated: They no longer have any effect
+  |
+3 | {-# INCLUDE <hsmpfr.h> #-}
+  |            ^^^^^^^^^^^^
+
+compat/Data/Number/Ball.hs:1:12: warning: [-Wdeprecated-flags]
+    -#include is deprecated: -#include and INCLUDE pragmas are deprecated: They no longer have any effect
+  |
+1 | {-# INCLUDE <mpfr.h> #-}
+  |            ^^^^^^^^^^
+
+compat/Data/Number/Ball.hs:2:12: warning: [-Wdeprecated-flags]
+    -#include is deprecated: -#include and INCLUDE pragmas are deprecated: They no longer have any effect
+  |
+2 | {-# INCLUDE <hsmpfr.h> #-}
+  |            ^^^^^^^^^^^^
+[ 8 of 10] Compiling Main             ( HeraCacheBench.hs, cache-last-build/Main.o ) [Flags changed]
+[ 9 of 10] Compiling Validation       ( HeraCacheValidation.hs, cache-last-build/Validation.o )
+[10 of 10] Linking hera-cache-last-validation

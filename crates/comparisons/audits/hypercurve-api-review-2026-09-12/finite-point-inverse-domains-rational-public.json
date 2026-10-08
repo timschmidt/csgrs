@@ -1,0 +1,31 @@
+{
+  "returncode": 0,
+  "elapsed_seconds": 2.917646079993574,
+  "normal_library_sha256": "68b7eb07dd682f6f27b42ea8f5bf32ff3fb0e3d96d09c29889738e18190708f9",
+  "log": "finite-point-inverse-domains-rational-public.log",
+  "source": "finite-circle-native-poles-charts-public.rs",
+  "command": [
+    "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustc",
+    "--edition=2024",
+    "-O",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-circle-native-poles-charts-public.rs",
+    "--extern",
+    "hypercurve=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypercurve-e19f31178f76cad1.rlib",
+    "-L",
+    "dependency=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps",
+    "-o",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-point-inverse-domains-rational-public"
+  ],
+  "run_command": [
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-point-inverse-domains-rational-public",
+    "2"
+  ],
+  "source_sha256": "5db37216d54f7ee63711e8d0d36396d4923d626d1f77f9e79d0ef4fdc7b8b6b9",
+  "executable_sha256": "9e9ba19e2df81a3e300de38a34f98b3e56a22dba5a5235fd2760b52adb6adbb7",
+  "counts": {
+    "cases": 16,
+    "contacts": 16,
+    "point_replays": 32,
+    "failures": 0
+  }
+}

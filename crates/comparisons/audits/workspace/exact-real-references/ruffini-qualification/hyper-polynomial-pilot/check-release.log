@@ -1,0 +1,4 @@
+PASS	shape-integer-grid	2880
+PASS	large-rational-grid	270
+PASS	symbolic-and-zero-boundaries	95
+SUMMARY	3245

@@ -1,0 +1,51 @@
+[1 of 9] Compiling DyDigitM         ( /home/tim/Documents/GitHub/workspace/exact-real-references/Plume/versioned/perform/DyDigitM.hs, nothing )
+
+/home/tim/Documents/GitHub/workspace/exact-real-references/Plume/versioned/perform/DyDigitM.hs:132:1: warning: [GHC-94817] [-Wtabs]
+    Tab character found here, and in 34 further locations.
+    Suggested fix: Please use spaces instead.
+    |
+132 |                      | otherwise = dydNormalise (a `div` 2, b - 1, x)
+    | ^^^^^^^^
+[2 of 9] Compiling DyStreamM        ( /home/tim/Documents/GitHub/workspace/exact-real-references/Plume/versioned/perform/DyStreamM.hs, nothing )
+
+/home/tim/Documents/GitHub/workspace/exact-real-references/Plume/versioned/perform/DyStreamM.hs:48:38: warning: [GHC-94817] [-Wtabs]
+    Tab character found here, and in 27 further locations.
+    Suggested fix: Please use spaces instead.
+   |
+48 | dys_OneL           = dydList dys_One'           :: DyStream 
+   |                                      ^^^
+
+/home/tim/Documents/GitHub/workspace/exact-real-references/Plume/versioned/perform/DyStreamM.hs:83:1: warning: [GHC-53633] [-Woverlapping-patterns]
+    Pattern match is redundant
+    In an equation for ‘dysDigAdd’: dysDigAdd d (h : x) = ...
+   |
+83 | dysDigAdd d    (h:x) = (a:dysDigAdd b x)
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^...
+[3 of 9] Compiling DyFloatM         ( /home/tim/Documents/GitHub/workspace/exact-real-references/Plume/versioned/perform/DyFloatM.hs, nothing )
+
+/home/tim/Documents/GitHub/workspace/exact-real-references/Plume/versioned/perform/DyFloatM.hs:47:35: warning: [GHC-94817] [-Wtabs]
+    Tab character found here, and in 14 further locations.
+    Suggested fix: Please use spaces instead.
+   |
+47 | dyf_Half           = (0, dys_Half)         :: DyFloat
+   |                                   ^^^^^^
+[4 of 9] Compiling LookInt          ( /home/tim/Documents/GitHub/workspace/exact-real-references/Plume/versioned/perform/LookInt.hs, nothing )
+
+/home/tim/Documents/GitHub/workspace/exact-real-references/Plume/versioned/perform/LookInt.hs:144:8: error: [GHC-88464]
+    Variable not in scope: fromInt :: Int -> Lookint
+    |
+144 | lig0 = fromInt
+    |        ^^^^^^^
+[5 of 9] Compiling Utils            ( /home/tim/Documents/GitHub/workspace/exact-real-references/Plume/versioned/perform/Utils.hs, nothing )
+
+/home/tim/Documents/GitHub/workspace/exact-real-references/Plume/versioned/perform/Utils.hs:63:26: error: [GHC-88464]
+    Variable not in scope: toInt :: a -> Int
+   |
+63 | take_integer n x = take (toInt n) x
+   |                          ^^^^^
+
+/home/tim/Documents/GitHub/workspace/exact-real-references/Plume/versioned/perform/Utils.hs:66:26: error: [GHC-88464]
+    Variable not in scope: toInt :: a -> Int
+   |
+66 | drop_integer n x = drop (toInt n) x
+   |                          ^^^^^

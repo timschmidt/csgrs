@@ -1,0 +1,288 @@
+[
+  {
+    "repo": "calcium",
+    "path": "qqbar/abs.c",
+    "ranges": [
+      [
+        1,
+        52
+      ]
+    ],
+    "note": "Checkpoint83: Full real sign, root-of-unity, pure-imaginary and conjugate-product square-root paths; force exact zero imaginary enclosure."
+  },
+  {
+    "repo": "calcium",
+    "path": "qqbar/im.c",
+    "ranges": [
+      [
+        1,
+        45
+      ]
+    ],
+    "note": "Checkpoint83: Full zero/pure-imaginary paths and (x-conj(x))/(2i), including in-place operations and exact-real enclosure projection."
+  },
+  {
+    "repo": "calcium",
+    "path": "qqbar/re.c",
+    "ranges": [
+      [
+        1,
+        35
+      ]
+    ],
+    "note": "Checkpoint83: Full real/pure-imaginary paths and (x+conj(x))/2, retaining exact-real enclosure."
+  },
+  {
+    "repo": "calcium",
+    "path": "qqbar/re_im.c",
+    "ranges": [
+      [
+        1,
+        27
+      ]
+    ],
+    "note": "Checkpoint83: Full scheduling of two projections when the real output aliases input. Distinct outputs; upstream test does not invoke this combined wrapper or its input-alias paths."
+  },
+  {
+    "repo": "calcium",
+    "path": "qqbar/sgn.c",
+    "ranges": [
+      [
+        1,
+        40
+      ]
+    ],
+    "note": "Checkpoint83: Full zero/real/imaginary shortcuts and x/abs(x). Complex sign is a unit phase, not csgn or a general real-valued ordering."
+  },
+  {
+    "repo": "calcium",
+    "path": "qqbar/get_fexpr.c",
+    "ranges": [
+      [
+        1,
+        1067
+      ]
+    ],
+    "note": "Checkpoint83: Full internal serialization, nearest/indexed root presentation, certified decimal selection, cyclotomic field search, flagged quadratic/deflation/separation formulas and recursion guards. Formula failure is not nonexistence proof; selected embedding must survive conversion."
+  },
+  {
+    "repo": "calcium",
+    "path": "qqbar/set_fexpr.c",
+    "ranges": [
+      [
+        1,
+        1126
+      ]
+    ],
+    "note": "Checkpoint83: Full dyadic-ball and decimal parsing; Pi-factor detection; indexed/nearest root conversion; all public expression cases, operation domains, coefficient/exponent bounds, variadic aggregation and cleanup. Suspected false-success Pi and large-coefficient branches and missing temporary fmpz cleanup selected for public native diagnostics."
+  },
+  {
+    "repo": "calcium",
+    "path": "qqbar/test/t-abs.c",
+    "ranges": [
+      [
+        1,
+        67
+      ]
+    ],
+    "note": "Checkpoint83: Full randomized abs test: input construction, property/reconstruction comparisons, failure diagnostics and cleanup. Formula tests ignore the set_fexpr return flag and do not cover missing-Pi or huge coefficient guards. Source read, not newly executed."
+  },
+  {
+    "repo": "calcium",
+    "path": "qqbar/test/t-abs2.c",
+    "ranges": [
+      [
+        1,
+        58
+      ]
+    ],
+    "note": "Checkpoint83: Full randomized abs2 test: input construction, property/reconstruction comparisons, failure diagnostics and cleanup. Formula tests ignore the set_fexpr return flag and do not cover missing-Pi or huge coefficient guards. Source read, not newly executed."
+  },
+  {
+    "repo": "calcium",
+    "path": "qqbar/test/t-re_im.c",
+    "ranges": [
+      [
+        1,
+        70
+      ]
+    ],
+    "note": "Checkpoint83: Full randomized re_im test: input construction, property/reconstruction comparisons, failure diagnostics and cleanup. Formula tests ignore the set_fexpr return flag and do not cover missing-Pi or huge coefficient guards. Source read, not newly executed."
+  },
+  {
+    "repo": "calcium",
+    "path": "qqbar/test/t-sgn.c",
+    "ranges": [
+      [
+        1,
+        57
+      ]
+    ],
+    "note": "Checkpoint83: Full randomized sgn test: input construction, property/reconstruction comparisons, failure diagnostics and cleanup. Formula tests ignore the set_fexpr return flag and do not cover missing-Pi or huge coefficient guards. Source read, not newly executed."
+  },
+  {
+    "repo": "calcium",
+    "path": "qqbar/test/t-get_fexpr.c",
+    "ranges": [
+      [
+        1,
+        96
+      ]
+    ],
+    "note": "Checkpoint83: Full randomized get_fexpr test: input construction, property/reconstruction comparisons, failure diagnostics and cleanup. Formula tests ignore the set_fexpr return flag and do not cover missing-Pi or huge coefficient guards. Source read, not newly executed."
+  },
+  {
+    "repo": "calcium",
+    "path": "qqbar/test/t-get_fexpr_formula.c",
+    "ranges": [
+      [
+        1,
+        146
+      ]
+    ],
+    "note": "Checkpoint83: Full randomized get_fexpr_formula test: input construction, property/reconstruction comparisons, failure diagnostics and cleanup. Formula tests ignore the set_fexpr return flag and do not cover missing-Pi or huge coefficient guards. Source read, not newly executed."
+  },
+  {
+    "repo": "flint",
+    "path": "src/qqbar/abs.c",
+    "ranges": [
+      [
+        1,
+        52
+      ]
+    ],
+    "note": "Checkpoint83: Full real sign, root-of-unity, pure-imaginary and conjugate-product square-root paths; force exact zero imaginary enclosure."
+  },
+  {
+    "repo": "flint",
+    "path": "src/qqbar/im.c",
+    "ranges": [
+      [
+        1,
+        45
+      ]
+    ],
+    "note": "Checkpoint83: Full zero/pure-imaginary paths and (x-conj(x))/(2i), including in-place operations and exact-real enclosure projection."
+  },
+  {
+    "repo": "flint",
+    "path": "src/qqbar/re.c",
+    "ranges": [
+      [
+        1,
+        35
+      ]
+    ],
+    "note": "Checkpoint83: Full real/pure-imaginary paths and (x+conj(x))/2, retaining exact-real enclosure."
+  },
+  {
+    "repo": "flint",
+    "path": "src/qqbar/re_im.c",
+    "ranges": [
+      [
+        1,
+        27
+      ]
+    ],
+    "note": "Checkpoint83: Full scheduling of two projections when the real output aliases input. Distinct outputs; upstream test does not invoke this combined wrapper or its input-alias paths."
+  },
+  {
+    "repo": "flint",
+    "path": "src/qqbar/sgn.c",
+    "ranges": [
+      [
+        1,
+        40
+      ]
+    ],
+    "note": "Checkpoint83: Full zero/real/imaginary shortcuts and x/abs(x). Complex sign is a unit phase, not csgn or a general real-valued ordering."
+  },
+  {
+    "repo": "flint",
+    "path": "src/qqbar/get_fexpr.c",
+    "ranges": [
+      [
+        1,
+        1072
+      ]
+    ],
+    "note": "Checkpoint83: Full internal serialization, nearest/indexed root presentation, certified decimal selection, cyclotomic field search, flagged quadratic/deflation/separation formulas and recursion guards. Formula failure is not nonexistence proof; selected embedding must survive conversion."
+  },
+  {
+    "repo": "flint",
+    "path": "src/qqbar/set_fexpr.c",
+    "ranges": [
+      [
+        1,
+        1128
+      ]
+    ],
+    "note": "Checkpoint83: Full dyadic-ball and decimal parsing; Pi-factor detection; indexed/nearest root conversion; all public expression cases, operation domains, coefficient/exponent bounds, variadic aggregation and cleanup. Suspected false-success Pi and large-coefficient branches and missing temporary fmpz cleanup selected for public native diagnostics."
+  },
+  {
+    "repo": "flint",
+    "path": "src/qqbar/test/t-abs.c",
+    "ranges": [
+      [
+        1,
+        58
+      ]
+    ],
+    "note": "Checkpoint83: Full randomized abs test: input construction, property/reconstruction comparisons, failure diagnostics and cleanup. Formula tests ignore the set_fexpr return flag and do not cover missing-Pi or huge coefficient guards. Source read, not newly executed."
+  },
+  {
+    "repo": "flint",
+    "path": "src/qqbar/test/t-abs2.c",
+    "ranges": [
+      [
+        1,
+        49
+      ]
+    ],
+    "note": "Checkpoint83: Full randomized abs2 test: input construction, property/reconstruction comparisons, failure diagnostics and cleanup. Formula tests ignore the set_fexpr return flag and do not cover missing-Pi or huge coefficient guards. Source read, not newly executed."
+  },
+  {
+    "repo": "flint",
+    "path": "src/qqbar/test/t-re_im.c",
+    "ranges": [
+      [
+        1,
+        61
+      ]
+    ],
+    "note": "Checkpoint83: Full randomized re_im test: input construction, property/reconstruction comparisons, failure diagnostics and cleanup. Formula tests ignore the set_fexpr return flag and do not cover missing-Pi or huge coefficient guards. Source read, not newly executed."
+  },
+  {
+    "repo": "flint",
+    "path": "src/qqbar/test/t-sgn.c",
+    "ranges": [
+      [
+        1,
+        48
+      ]
+    ],
+    "note": "Checkpoint83: Full randomized sgn test: input construction, property/reconstruction comparisons, failure diagnostics and cleanup. Formula tests ignore the set_fexpr return flag and do not cover missing-Pi or huge coefficient guards. Source read, not newly executed."
+  },
+  {
+    "repo": "flint",
+    "path": "src/qqbar/test/t-get_fexpr.c",
+    "ranges": [
+      [
+        1,
+        87
+      ]
+    ],
+    "note": "Checkpoint83: Full randomized get_fexpr test: input construction, property/reconstruction comparisons, failure diagnostics and cleanup. Formula tests ignore the set_fexpr return flag and do not cover missing-Pi or huge coefficient guards. Source read, not newly executed."
+  },
+  {
+    "repo": "flint",
+    "path": "src/qqbar/test/t-get_fexpr_formula.c",
+    "ranges": [
+      [
+        1,
+        140
+      ]
+    ],
+    "note": "Checkpoint83: Full randomized get_fexpr_formula test: input construction, property/reconstruction comparisons, failure diagnostics and cleanup. Formula tests ignore the set_fexpr return flag and do not cover missing-Pi or huge coefficient guards. Source read, not newly executed."
+  }
+]

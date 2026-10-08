@@ -1,0 +1,95 @@
+\doxysubsection{Argument\+Parser\+Base Class Reference}
+\hypertarget{classAriadne_1_1ArgumentParserBase}{}\label{classAriadne_1_1ArgumentParserBase}\index{ArgumentParserBase@{ArgumentParserBase}}
+
+
+\doxysubsubsection{Description}
+Supplies base behavior for argument parsers. Inheritance diagram for Argument\+Parser\+Base\+:\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[height=2.000000cm]{classAriadne_1_1ArgumentParserBase}
+\end{center}
+\end{figure}
+\doxysubsubsubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\hyperlink{classAriadne_1_1ArgumentPack}{Argument\+Pack}} \mbox{\hyperlink{classAriadne_1_1ArgumentParserBase_a23688b54569b903e666bb34859404ff1}{consume}} (\mbox{\hyperlink{classAriadne_1_1ArgumentStream}{Argument\+Stream}} \&stream) const override
+\begin{DoxyCompactList}\small\item\em Consume the stream, returning a pack of the arguments for processing. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1ArgumentParserBase_aea13684c808ced68575c205bc31f3ffb}\label{classAriadne_1_1ArgumentParserBase_aea13684c808ced68575c205bc31f3ffb} 
+virtual \mbox{\hyperlink{namespaceAriadne_a76a8b016e5ad61faf9062cc387df5016}{Bool}} {\bfseries requires\+\_\+value} () const =0
+\begin{DoxyCompactList}\small\item\em If a value is required for this argument. \end{DoxyCompactList}\item 
+\mbox{\hyperlink{namespaceAriadne_a76a8b016e5ad61faf9062cc387df5016}{Bool}} \mbox{\hyperlink{classAriadne_1_1ArgumentParserBase_a74269b3c00b2f8b62fa9fce4040726a7}{is\+\_\+consumable}} (\mbox{\hyperlink{classAriadne_1_1ArgumentStream}{Argument\+Stream}} const \&stream) const override
+\begin{DoxyCompactList}\small\item\em If the tip of the stream is consumable by this parser. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1ArgumentParserBase_a6b0a5343575694fe98e45a69ce859a5b}\label{classAriadne_1_1ArgumentParserBase_a6b0a5343575694fe98e45a69ce859a5b} 
+\mbox{\hyperlink{namespaceAriadne_acd8b5f68421eb22a84277ef7c9c0ee2a}{Size\+Type}} {\bfseries help\+\_\+description\+\_\+header\+\_\+size} () const override
+\begin{DoxyCompactList}\small\item\em The size in characters of the help description header for the argument. \end{DoxyCompactList}\item 
+\mbox{\hyperlink{classAriadne_1_1String}{String}} \mbox{\hyperlink{classAriadne_1_1ArgumentParserBase_a62bfab9370f2f9dca55c95e3c6b6a9b0}{help\+\_\+description}} (\mbox{\hyperlink{namespaceAriadne_acd8b5f68421eb22a84277ef7c9c0ee2a}{Size\+Type}} num\+\_\+chars\+\_\+to\+\_\+align\+\_\+instructions) const override
+\begin{DoxyCompactList}\small\item\em The description to print for the help. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\label{doc-func-members}
+\Hypertarget{classAriadne_1_1ArgumentParserBase_doc-func-members}
+\doxysubsubsection{Member Function Documentation}
+\Hypertarget{classAriadne_1_1ArgumentParserBase_a23688b54569b903e666bb34859404ff1}\index{ArgumentParserBase@{ArgumentParserBase}!consume@{consume}}
+\index{consume@{consume}!ArgumentParserBase@{ArgumentParserBase}}
+\doxyparagraph{\texorpdfstring{consume()}{consume()}}
+{\footnotesize\ttfamily \label{classAriadne_1_1ArgumentParserBase_a23688b54569b903e666bb34859404ff1} 
+\mbox{\hyperlink{classAriadne_1_1ArgumentPack}{Argument\+Pack}} consume (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{classAriadne_1_1ArgumentStream}{Argument\+Stream}} \&}]{stream}{}\end{DoxyParamCaption}) const\hspace{0.3cm}{\ttfamily [override]}, {\ttfamily [virtual]}}
+
+
+
+Consume the stream, returning a pack of the arguments for processing. 
+
+
+\begin{DoxyExceptions}{Exceptions}
+{\em \doxylink{classAriadne_1_1InvalidArgumentValueException}{Invalid\+Argument\+Value\+Exception}} & if the value is incorrect\\
+\hline
+\end{DoxyExceptions}
+Assumes that it has already been checked by is\+\_\+consumable 
+
+Implements \mbox{\hyperlink{classAriadne_1_1ArgumentParserInterface_a015b52492b354b609d03949a6c1dd55c}{Argument\+Parser\+Interface}}.
+
+
+
+References \mbox{\hyperlink{classAriadne_1_1ArgumentStream_a4e9f0db1ce7dd55e0cdef0872be33a1a}{Argument\+Stream\+::pop()}}.
+
+\Hypertarget{classAriadne_1_1ArgumentParserBase_a74269b3c00b2f8b62fa9fce4040726a7}\index{ArgumentParserBase@{ArgumentParserBase}!is\_consumable@{is\_consumable}}
+\index{is\_consumable@{is\_consumable}!ArgumentParserBase@{ArgumentParserBase}}
+\doxyparagraph{\texorpdfstring{is\_consumable()}{is\_consumable()}}
+{\footnotesize\ttfamily \label{classAriadne_1_1ArgumentParserBase_a74269b3c00b2f8b62fa9fce4040726a7} 
+\mbox{\hyperlink{namespaceAriadne_a76a8b016e5ad61faf9062cc387df5016}{Bool}} is\+\_\+consumable (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{classAriadne_1_1ArgumentStream}{Argument\+Stream}} const \&}]{stream}{}\end{DoxyParamCaption}) const\hspace{0.3cm}{\ttfamily [override]}, {\ttfamily [virtual]}}
+
+
+
+If the tip of the stream is consumable by this parser. 
+
+Checks only the kind, not the value 
+
+Implements \mbox{\hyperlink{classAriadne_1_1ArgumentParserInterface_ae702ba4a04e7ddf2138b35e38c43f2f8}{Argument\+Parser\+Interface}}.
+
+
+
+References \mbox{\hyperlink{classAriadne_1_1ArgumentStream_ac58d2f656eb5ba733367084c0882af0f}{Argument\+Stream\+::peek()}}.
+
+\Hypertarget{classAriadne_1_1ArgumentParserBase_a62bfab9370f2f9dca55c95e3c6b6a9b0}\index{ArgumentParserBase@{ArgumentParserBase}!help\_description@{help\_description}}
+\index{help\_description@{help\_description}!ArgumentParserBase@{ArgumentParserBase}}
+\doxyparagraph{\texorpdfstring{help\_description()}{help\_description()}}
+{\footnotesize\ttfamily \label{classAriadne_1_1ArgumentParserBase_a62bfab9370f2f9dca55c95e3c6b6a9b0} 
+\mbox{\hyperlink{classAriadne_1_1String}{String}} help\+\_\+description (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{namespaceAriadne_acd8b5f68421eb22a84277ef7c9c0ee2a}{Size\+Type}}}]{num\+\_\+chars\+\_\+to\+\_\+separate\+\_\+instructions}{}\end{DoxyParamCaption}) const\hspace{0.3cm}{\ttfamily [override]}, {\ttfamily [virtual]}}
+
+
+
+The description to print for the help. 
+
+Takes {\itshape num\+\_\+chars\+\_\+to\+\_\+separate\+\_\+instructions} as the number of spaces that separate the instructions in the help summary for the argument 
+
+Implements \mbox{\hyperlink{classAriadne_1_1ArgumentParserInterface_a583e1c8bff1be421af998061fdab5aff}{Argument\+Parser\+Interface}}.
+
+
+
+References \mbox{\hyperlink{classAriadne_1_1ArgumentParserBase_aea13684c808ced68575c205bc31f3ffb}{requires\+\_\+value()}}.
+
+
+
+The documentation for this class was generated from the following file\+:\begin{DoxyCompactItemize}
+\item 
+source/io/command\+\_\+line\+\_\+interface.\+cpp\end{DoxyCompactItemize}

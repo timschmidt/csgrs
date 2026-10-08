@@ -1,0 +1,12 @@
+{
+  "tag": "expression-roundtrip-native",
+  "started": "2026-09-08T19:54:10.997Z",
+  "finished": "2026-09-08T19:54:11.011Z",
+  "elapsedSeconds": 0.011038232999999991,
+  "cwd": "/home/tim/Documents/GitHub/workspace",
+  "command": ".audit-builds/calcium-expression-roundtrip-probe",
+  "args": [],
+  "code": null,
+  "signal": null,
+  "error": "Error: spawn .audit-builds/calcium-expression-roundtrip-probe ENOENT"
+}

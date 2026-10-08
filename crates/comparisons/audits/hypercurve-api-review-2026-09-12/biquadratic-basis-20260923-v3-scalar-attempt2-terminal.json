@@ -1,0 +1,22 @@
+{
+  "library_package": "path+file:///tmp/hypercurve-biquadratic-basis-v3-2026-09-23/hyperreal#0.13.1",
+  "library_sha256": "1275a4dc13ed773cafce908596bbeafcacc0e2d9edb9ed8d2f19a4996db05529",
+  "cases": [
+    {
+      "label": "sum",
+      "source_sha256": "3a988d0707428023b0f0cfc1a85da05390ea7461e82637b56710dc78e21b7331",
+      "returncode": 0,
+      "binary_sha256": "6cb1649d813e7db50545d334c94f82717bb67d9af4fd432be71674f67d7efce6",
+      "log": "biquadratic-basis-20260923-v3-scalar-attempt2-sum.log"
+    },
+    {
+      "label": "shared-zero",
+      "source_sha256": "5817f9579626ffa4e14e648a4b165980d71071a14bbe2e15736a416b129648ca",
+      "returncode": 0,
+      "binary_sha256": "c9f17515b4da1afb34217b99556886a0efb8e2dbcb88e53e58ddb59adf6d243c",
+      "log": "biquadratic-basis-20260923-v3-scalar-attempt2-shared-zero.log"
+    }
+  ],
+  "all_processes_reaped": true,
+  "all_sources_unchanged": true
+}

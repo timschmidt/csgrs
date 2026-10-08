@@ -1,0 +1,26 @@
+{
+  "failed_qualification": "same-side-reflection-v864-terminal.json",
+  "outer_exit_code": 1,
+  "failed_case": "tangent_ordered_traversal_uses_second_order_for_equal_outgoing_tangents",
+  "observed_path": [
+    0,
+    1
+  ],
+  "old_expected_path": [
+    0,
+    2
+  ],
+  "first_curve": "(2+2t,2t-2t^2)",
+  "second_curve": "(2+4u-u^2,4u-4u^2)",
+  "matching_x": "t=2u-u^2/2",
+  "second_y_minus_first_y": [
+    "0",
+    "0",
+    "5",
+    "-4",
+    "1/2"
+  ],
+  "domain": "0<u<1/2 ensures both authored parameters are in (0,1).",
+  "sign_proof": "delta=(u^2/2)*(u^2-8u+10)>0 since 10-8u>6. Both departure rays are in the upper half-plane. With equal positive x, their cross product is positive, so the first ray precedes the second from the incoming +x direction.",
+  "correction": "Update both native and retained expected chains to [0,1] and [2]. Production candidate unchanged."
+}

@@ -1,0 +1,5 @@
+[
+  "hypercurve/README.md:321:- `CurveRegion2::recover_from_finite_profiles` reconstructs a region from",
+  "hypercurve/src/bezier_region.rs:11925:    /// [`Self::recover_from_finite_profiles`] for its reconstruction counterpart.",
+  "hypercurve/src/reconstruct.rs:338:    pub fn recover_from_finite_profiles("
+]

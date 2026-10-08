@@ -1,0 +1,12 @@
+Check generated round offsets against independent exact boundaries
+
+A convex-boundary certificate can correctly bypass adjacent circle/chord
+intersection replay. Replace the regression requiring eight dispatch calls
+with certified empty XOR against a directly authored rounded rectangle.
+Check both operand orders, both policies, repeated expansion and contraction.
+Retain the checks against general-rational fallback work.
+
+Validation: all 20 exact XOR comparisons pass; the promotion target has 93
+passes and the eight remaining known failures, with no new failures. The
+all-target no-default-features check and source/formatting checks pass.
+Production sources and the previously qualified normal library are unchanged.

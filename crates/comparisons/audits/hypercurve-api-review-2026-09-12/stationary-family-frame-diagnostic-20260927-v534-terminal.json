@@ -1,0 +1,73 @@
+{
+  "normal_production_build": false,
+  "source_manifest": "stationary-family-frame-diagnostic-20260927-v534-sources.json",
+  "source_directory": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/source-archives/stationary-family-frame-diagnostic-20260927-v534",
+  "builds": [
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "test",
+        "--lib",
+        "--release",
+        "--all-features",
+        "--locked",
+        "--offline",
+        "--no-run",
+        "--message-format=json"
+      ],
+      "returncode": 0,
+      "log": "stationary-family-frame-diagnostic-20260927-v534-build.log",
+      "elapsed_seconds": 130.39415895589627,
+      "binaries": {
+        "hypercurve": {
+          "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/stationary-family-frame-diagnostic-20260927-v534-hypercurve-tests",
+          "sha256": "a596d67112ac1ca9160b74ffb46f216d255de7409aba8c09cd425d1e27c162fd"
+        }
+      }
+    }
+  ],
+  "cases": [
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/stationary-family-frame-diagnostic-20260927-v534-hypercurve-tests",
+        "--exact",
+        "bezier_offset::conversion_tests::independent_oblique_chords_support_constrained_fillet_families",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 101,
+      "log": "stationary-family-frame-diagnostic-20260927-v534-retained-source-frames.log",
+      "elapsed_seconds": 0.11389378202147782,
+      "target": "hypercurve",
+      "name": "bezier_offset::conversion_tests::independent_oblique_chords_support_constrained_fillet_families",
+      "variant": "retained-source-frames",
+      "passed": false
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/stationary-family-frame-diagnostic-20260927-v534-hypercurve-tests",
+        "--exact",
+        "bezier_offset::conversion_tests::independent_oblique_chords_support_constrained_fillet_families",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "stationary-family-frame-diagnostic-20260927-v534-ordinary-cut-replay.log",
+      "elapsed_seconds": 20.239576213993132,
+      "target": "hypercurve",
+      "name": "bezier_offset::conversion_tests::independent_oblique_chords_support_constrained_fillet_families",
+      "variant": "ordinary-cut-replay",
+      "passed": true
+    }
+  ],
+  "checks": [],
+  "expected_cases": {
+    "hypercurve": [
+      "bezier_offset::conversion_tests::independent_oblique_chords_support_constrained_fillet_families"
+    ]
+  },
+  "all_processes_reaped": true,
+  "probe_complete": true,
+  "qualification_complete": false,
+  "failure": "focused regression failure"
+}

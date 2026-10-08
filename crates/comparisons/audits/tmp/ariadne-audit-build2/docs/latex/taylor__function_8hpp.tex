@@ -1,0 +1,67 @@
+\doxysubsection{source/function/taylor\+\_\+function.hpp File Reference}
+\hypertarget{taylor__function_8hpp}{}\label{taylor__function_8hpp}\index{source/function/taylor\_function.hpp@{source/function/taylor\_function.hpp}}
+
+
+\doxysubsubsection{Description}
+Over-\/approximations of functions based on Taylor expansions. 
+
+{\ttfamily \#include $<$iosfwd$>$}\newline
+{\ttfamily \#include "{}utility/container.\+hpp"{}}\newline
+{\ttfamily \#include "{}utility/exceptions.\+hpp"{}}\newline
+{\ttfamily \#include "{}numeric/numeric.\+hpp"{}}\newline
+{\ttfamily \#include "{}algebra/vector.\+hpp"{}}\newline
+{\ttfamily \#include "{}function/taylor\+\_\+model.\+hpp"{}}\newline
+{\ttfamily \#include "{}function/function\+\_\+interface.\+hpp"{}}\newline
+{\ttfamily \#include "{}function/function\+\_\+mixin.\+hpp"{}}\newline
+{\ttfamily \#include "{}function/function\+\_\+model.\+hpp"{}}\newline
+{\ttfamily \#include "{}function/scaled\+\_\+function\+\_\+patch.\+hpp"{}}\newline
+\doxysubsubsubsection*{Namespaces}
+\begin{DoxyCompactItemize}
+\item 
+namespace \mbox{\hyperlink{namespaceAriadne}{Ariadne}}
+\begin{DoxyCompactList}\small\item\em Top-\/level Ariadne namespace. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsubsection*{Typedefs}
+\begin{Indent}\textbf{ Template shorthands and type synonyms for Taylor function models}\par
+\begin{DoxyCompactItemize}
+\item 
+{\footnotesize template$<$class P, class F$>$ }\\using {\bfseries Scalar\+Multivariate\+Taylor\+Function\+Model} = \mbox{\hyperlink{classAriadne_1_1ScaledFunctionPatch}{Scalar\+Scaled\+Function\+Patch}}$<$\mbox{\hyperlink{classAriadne_1_1TaylorModel}{Taylor\+Model}}$<$P,F$>$$>$
+\item 
+{\footnotesize template$<$class P, class F$>$ }\\using {\bfseries Vector\+Multivariate\+Taylor\+Function\+Model} = \mbox{\hyperlink{classAriadne_1_1VectorScaledFunctionPatch}{Vector\+Scaled\+Function\+Patch}}$<$\mbox{\hyperlink{classAriadne_1_1TaylorModel}{Taylor\+Model}}$<$P,F$>$$>$
+\item 
+{\footnotesize template$<$class F$>$ }\\using {\bfseries Validated\+Scalar\+Multivariate\+Taylor\+Function\+Model} = \mbox{\hyperlink{classAriadne_1_1ScaledFunctionPatch}{Scalar\+Scaled\+Function\+Patch}}$<$\mbox{\hyperlink{classAriadne_1_1TaylorModel}{Validated\+Taylor\+Model}}$<$F$>$$>$
+\item 
+{\footnotesize template$<$class F$>$ }\\using {\bfseries Validated\+Vector\+Multivariate\+Taylor\+Function\+Model} = \mbox{\hyperlink{classAriadne_1_1VectorScaledFunctionPatch}{Vector\+Scaled\+Function\+Patch}}$<$\mbox{\hyperlink{classAriadne_1_1TaylorModel}{Validated\+Taylor\+Model}}$<$F$>$$>$
+\item 
+{\footnotesize template$<$class F$>$ }\\using {\bfseries Approximate\+Scalar\+Multivariate\+Taylor\+Function\+Model} = \mbox{\hyperlink{classAriadne_1_1ScaledFunctionPatch}{Scalar\+Scaled\+Function\+Patch}}$<$\mbox{\hyperlink{classAriadne_1_1TaylorModel}{Approximate\+Taylor\+Model}}$<$F$>$$>$
+\item 
+{\footnotesize template$<$class F$>$ }\\using {\bfseries Approximate\+Vector\+Multivariate\+Taylor\+Function\+Model} = \mbox{\hyperlink{classAriadne_1_1VectorScaledFunctionPatch}{Vector\+Scaled\+Function\+Patch}}$<$\mbox{\hyperlink{classAriadne_1_1TaylorModel}{Approximate\+Taylor\+Model}}$<$F$>$$>$
+\item 
+using {\bfseries Validated\+Vector\+Multivariate\+Taylor\+Function\+Model\+DP} = \mbox{\hyperlink{classAriadne_1_1VectorScaledFunctionPatch}{Vector\+Scaled\+Function\+Patch}}$<$\mbox{\hyperlink{classAriadne_1_1TaylorModel}{Validated\+Taylor\+Model\+DP}}$>$
+\item 
+using {\bfseries Approximate\+Scalar\+Multivariate\+Taylor\+Function\+Model\+DP} = \mbox{\hyperlink{classAriadne_1_1ScaledFunctionPatch}{Scalar\+Scaled\+Function\+Patch}}$<$\mbox{\hyperlink{classAriadne_1_1TaylorModel}{Approximate\+Taylor\+Model\+DP}}$>$
+\item 
+using {\bfseries Approximate\+Vector\+Multivariate\+Taylor\+Function\+Model\+DP} = \mbox{\hyperlink{classAriadne_1_1VectorScaledFunctionPatch}{Vector\+Scaled\+Function\+Patch}}$<$\mbox{\hyperlink{classAriadne_1_1TaylorModel}{Approximate\+Taylor\+Model\+DP}}$>$
+\item 
+using {\bfseries Validated\+Scalar\+Multivariate\+Taylor\+Function\+Model\+MP} = \mbox{\hyperlink{classAriadne_1_1ScaledFunctionPatch}{Scalar\+Scaled\+Function\+Patch}}$<$\mbox{\hyperlink{classAriadne_1_1TaylorModel}{Validated\+Taylor\+Model\+MP}}$>$
+\item 
+using {\bfseries Validated\+Vector\+Multivariate\+Taylor\+Function\+Model\+MP} = \mbox{\hyperlink{classAriadne_1_1VectorScaledFunctionPatch}{Vector\+Scaled\+Function\+Patch}}$<$\mbox{\hyperlink{classAriadne_1_1TaylorModel}{Validated\+Taylor\+Model\+MP}}$>$
+\item 
+using {\bfseries Approximate\+Scalar\+Multivariate\+Taylor\+Function\+Model\+MP} = \mbox{\hyperlink{classAriadne_1_1ScaledFunctionPatch}{Scalar\+Scaled\+Function\+Patch}}$<$\mbox{\hyperlink{classAriadne_1_1TaylorModel}{Approximate\+Taylor\+Model\+MP}}$>$
+\item 
+using {\bfseries Approximate\+Vector\+Multivariate\+Taylor\+Function\+Model\+MP} = \mbox{\hyperlink{classAriadne_1_1VectorScaledFunctionPatch}{Vector\+Scaled\+Function\+Patch}}$<$\mbox{\hyperlink{classAriadne_1_1TaylorModel}{Approximate\+Taylor\+Model\+MP}}$>$
+\item 
+{\footnotesize template$<$class P, class F$>$ }\\using {\bfseries Scalar\+Multivariate\+Bounds\+Taylor\+Function\+Model} = \mbox{\hyperlink{classAriadne_1_1ScaledFunctionPatch}{Scalar\+Scaled\+Function\+Patch}}$<$\mbox{\hyperlink{classAriadne_1_1TaylorModel}{Taylor\+Model}}$<$P,\mbox{\hyperlink{classAriadne_1_1Bounds}{Bounds}}$<$F$>$$>$$>$
+\item 
+{\footnotesize template$<$class P, class F$>$ }\\using {\bfseries Vector\+Multivariate\+Bounds\+Taylor\+Function\+Model} = \mbox{\hyperlink{classAriadne_1_1VectorScaledFunctionPatch}{Vector\+Scaled\+Function\+Patch}}$<$\mbox{\hyperlink{classAriadne_1_1TaylorModel}{Taylor\+Model}}$<$P,\mbox{\hyperlink{classAriadne_1_1Bounds}{Bounds}}$<$F$>$$>$$>$
+\item 
+{\footnotesize template$<$class F$>$ }\\using {\bfseries Validated\+Scalar\+Multivariate\+Bounds\+Taylor\+Function\+Model} = \mbox{\hyperlink{classAriadne_1_1ScaledFunctionPatch}{Scalar\+Scaled\+Function\+Patch}}$<$Validated\+Bounds\+Taylor\+Model$<$F$>$$>$
+\item 
+{\footnotesize template$<$class F$>$ }\\using {\bfseries Validated\+Vector\+Multivariate\+Bounds\+Taylor\+Function\+Model} = \mbox{\hyperlink{classAriadne_1_1VectorScaledFunctionPatch}{Vector\+Scaled\+Function\+Patch}}$<$Validated\+Bounds\+Taylor\+Model$<$F$>$$>$
+\item 
+using {\bfseries Validated\+Scalar\+Multivariate\+Bounds\+Taylor\+Function\+Model\+DP} = \mbox{\hyperlink{classAriadne_1_1ScaledFunctionPatch}{Scalar\+Scaled\+Function\+Patch}}$<$Validated\+Bounds\+Taylor\+Model\+DP$>$
+\item 
+using {\bfseries Validated\+Vector\+Multivariate\+Bounds\+Taylor\+Function\+Model\+DP} = \mbox{\hyperlink{classAriadne_1_1VectorScaledFunctionPatch}{Vector\+Scaled\+Function\+Patch}}$<$Validated\+Bounds\+Taylor\+Model\+DP$>$
+\item 
+using {\bfseries Validated\+Scalar\+Multivariate\+Bounds\+Taylor\+Function\+Model\+MP} = \mbox{\hyperlink{classAriadne_1_1ScaledFunctionPatch}{Scalar\+Scaled\+Function\+Patch}}$<$Validated\+Bounds\+Taylor\+Model\+MP$>$
+\end{DoxyCompactItemize}
+\end{Indent}

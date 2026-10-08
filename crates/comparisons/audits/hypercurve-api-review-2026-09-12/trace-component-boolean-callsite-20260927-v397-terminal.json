@@ -1,0 +1,65 @@
+{
+  "source_manifest": "fillet-component-witnesses-20260927-v395-sources.json",
+  "source_directory": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/source-archives/trace-component-boolean-callsite-20260927-v397",
+  "trial": {
+    "hypercurve/src/error.rs": "5be51eaf83039d74ea77cba5ffa5cd9af04dcb09dc7b54b9a42f62c2d32f76a3",
+    "hypercurve/src/curve_region_boolean.rs": "ce0df1af277e7f55047c69f1fd96c8deda2ca5fa8c2fd76a930ee48ee0f32356"
+  },
+  "probe_sha256": "11c501d2aa87d6835e15f446ea808495ffc0af329b55960e8c5fa0d54c6e79be",
+  "records": [
+    {
+      "label": "library-build",
+      "returncode": 0,
+      "elapsed_seconds": 77.0695585499052,
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "build",
+        "--lib",
+        "--release",
+        "--all-features",
+        "--message-format=json",
+        "--locked",
+        "--offline"
+      ],
+      "log": "trace-component-boolean-callsite-20260927-v397-library-build.log"
+    },
+    {
+      "label": "probe-build",
+      "returncode": 0,
+      "elapsed_seconds": 0.36420416296459734,
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustc",
+        "--edition=2024",
+        "-C",
+        "opt-level=3",
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/trace-component-boolean-callsite-20260927-v397.rs",
+        "--extern",
+        "hypercurve=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/libhypercurve.rlib",
+        "-L",
+        "dependency=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps",
+        "-o",
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/trace-component-boolean-callsite-20260927-v397"
+      ],
+      "log": "trace-component-boolean-callsite-20260927-v397-probe-build.log"
+    },
+    {
+      "label": "probe",
+      "returncode": 0,
+      "elapsed_seconds": 0.11385951796546578,
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/trace-component-boolean-callsite-20260927-v397"
+      ],
+      "log": "trace-component-boolean-callsite-20260927-v397-probe.log"
+    }
+  ],
+  "all_processes_reaped": true,
+  "library": {
+    "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/libhypercurve.rlib",
+    "sha256": "c4e7f5f47ebfc06d93319d5cd4297b1074ae8c0cbe51c0a2517b22d8d5f5e9c4"
+  },
+  "binary": {
+    "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/trace-component-boolean-callsite-20260927-v397",
+    "sha256": "c1c245f37152db7d3b1efb6042eb95d7eb1e7227b5df9c8cf08aa2a47c081b61"
+  },
+  "diagnostic_complete": true
+}

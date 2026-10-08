@@ -1,0 +1,83 @@
+{
+  "source_manifest": "exact-tower-coefficient-replay-20260927-v367-sources.json",
+  "source_directory": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/source-archives/exact-tower-coefficient-replay-20260927-v367",
+  "cases": [
+    {
+      "binary": "exact-tower-coefficient-replay-20260927-v367-hyperreal",
+      "name": "computable::node::quadratic_tower_tests::exact_tower_replay_allows_wide_intermediates_without_caching_them",
+      "returncode": 0,
+      "log": "exact-tower-coefficient-replay-20260927-v367-case-000.log",
+      "elapsed_seconds": 0.0035555759677663445
+    },
+    {
+      "binary": "exact-tower-coefficient-replay-20260927-v367-hypercurve_curve_region_promotion",
+      "name": "strict_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions",
+      "returncode": 124,
+      "log": "exact-tower-coefficient-replay-20260927-v367-case-001.log",
+      "elapsed_seconds": 240.03576490201522
+    }
+  ],
+  "builds": [
+    {
+      "crate": "hyperreal",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "test",
+        "--lib",
+        "--release",
+        "--all-features",
+        "--no-run",
+        "--message-format=json",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "log": "exact-tower-coefficient-replay-20260927-v367-hyperreal-build.log",
+      "elapsed_seconds": 30.862576048006304,
+      "binary": {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/exact-tower-coefficient-replay-20260927-v367-hyperreal",
+        "sha256": "04e331e141e1e98a17326d86acc2cebf2f2b84e8a789d5e1f45af65bb4e9dd52"
+      }
+    },
+    {
+      "crate": "hypercurve",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "test",
+        "--test",
+        "hypercurve_curve_region_promotion",
+        "--release",
+        "--all-features",
+        "--no-run",
+        "--message-format=json",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "log": "exact-tower-coefficient-replay-20260927-v367-hypercurve_curve_region_promotion-build.log",
+      "elapsed_seconds": 118.20419119799044,
+      "binary": {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/exact-tower-coefficient-replay-20260927-v367-hypercurve_curve_region_promotion",
+        "sha256": "509c55175ee9bc48385675faa0d7aa706461cce1b80a719bc0368f50179564c6"
+      }
+    }
+  ],
+  "all_processes_reaped": true,
+  "checks": [
+    {
+      "label": "hyperreal-tower-tests",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/exact-tower-coefficient-replay-20260927-v367-hyperreal",
+        "quadratic_tower",
+        "--nocapture",
+        "--test-threads=2"
+      ],
+      "returncode": 0,
+      "log": "exact-tower-coefficient-replay-20260927-v367-hyperreal-tower-tests.log",
+      "elapsed_seconds": 0.015653006033971906
+    }
+  ],
+  "qualification_scope": "Focused scalar regression and original strict full extended-fillet re-offset after separating field arithmetic from cache admission",
+  "failure": "case failure",
+  "qualification_complete": false
+}

@@ -1,0 +1,292 @@
+==46== Memcheck, a memory error detector
+==46== Copyright (C) 2002-2026, and GNU GPL'd, by Julian Seward et al.
+==46== Using Valgrind-3.27.1 and LibVEX; rerun with -h for copyright info
+==46== Command: /home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype/debug/calcium-erf-trial-probe
+==46== 
+==46== 
+==46== HEAP SUMMARY:
+==46==     in use at exit: 4,208 bytes in 30 blocks
+==46==   total heap usage: 2,390 allocs, 2,360 frees, 222,236 bytes allocated
+==46== 
+==46== 104 bytes in 1 blocks are still reachable in loss record 1 of 20
+==46==    at 0x4A2FAE6: malloc (vg_replace_malloc.c:447)
+==46==    by 0x412E421: <alloc::alloc::Global>::alloc_impl_runtime (in /home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype/debug/calcium-erf-trial-probe)
+==46==    by 0x4136474: alloc::boxed::box_new_uninit (in /home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype/debug/calcium-erf-trial-probe)
+==46==    by 0x412AE67: <alloc::sync::Arc<hyperreal::rational::arithmetic::RationalData>>::new (in /home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype/debug/calcium-erf-trial-probe)
+==46==    by 0x409D666: <hyperreal::rational::arithmetic::Rational>::from_parts_raw (in /home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype/debug/calcium-erf-trial-probe)
+==46==    by 0x408A985: hyperreal::rational::arithmetic::RATIONAL_ONE::{closure#0} (in /home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype/debug/calcium-erf-trial-probe)
+==46==    by 0x4124091: <hyperreal::rational::arithmetic::RATIONAL_ONE::{closure#0} as core::ops::function::FnOnce<()>>::call_once (in /home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype/debug/calcium-erf-trial-probe)
+==46==    by 0x4123212: <fn() -> hyperreal::rational::arithmetic::Rational as core::ops::function::FnOnce<()>>::call_once (in /home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype/debug/calcium-erf-trial-probe)
+==46==    by 0x4132D77: <std::sync::lazy_lock::LazyLock<hyperreal::rational::arithmetic::Rational>>::force::{closure#0} (in /home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype/debug/calcium-erf-trial-probe)
+==46==    by 0x4130FC6: <std::sync::once::Once>::call_once_force::<<std::sync::lazy_lock::LazyLock<hyperreal::rational::arithmetic::Rational>>::force::{closure#0}>::{closure#0} (in /home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype/debug/calcium-erf-trial-probe)
+==46==    by 0x4184078: <std::sys::sync::once::futex::Once>::call (in /home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype/debug/calcium-erf-trial-probe)
+==46==    by 0x413095D: <std::sync::once::Once>::call_once_force::<<std::sync::lazy_lock::LazyLock<hyperreal::rational::arithmetic::Rational>>::force::{closure#0}> (in /home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype/debug/calcium-erf-trial-probe)
+==46== 
+==46== 104 bytes in 1 blocks are still reachable in loss record 2 of 20
+==46==    at 0x4A2FAE6: malloc (vg_replace_malloc.c:447)
+==46==    by 0x412E421: <alloc::alloc::Global>::alloc_impl_runtime (in /home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype/debug/calcium-erf-trial-probe)
+==46==    by 0x4136474: alloc::boxed::box_new_uninit (in /home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype/debug/calcium-erf-trial-probe)
+==46==    by 0x412AE67: <alloc::sync::Arc<hyperreal::rational::arithmetic::RationalData>>::new (in /home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype/debug/calcium-erf-trial-probe)
+==46==    by 0x409D666: <hyperreal::rational::arithmetic::Rational>::from_parts_raw (in /home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype/debug/calcium-erf-trial-probe)
+==46==    by 0x408AAB2: hyperreal::rational::arithmetic::RATIONAL_MINUS_ONE::{closure#0} (in /home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype/debug/calcium-erf-trial-probe)
+==46==    by 0x412410D: <hyperreal::rational::arithmetic::RATIONAL_MINUS_ONE::{closure#0} as core::ops::function::FnOnce<()>>::call_once (in /home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype/debug/calcium-erf-trial-probe)
+==46==    by 0x4123212: <fn() -> hyperreal::rational::arithmetic::Rational as core::ops::function::FnOnce<()>>::call_once (in /home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype/debug/calcium-erf-trial-probe)
+==46==    by 0x4132D77: <std::sync::lazy_lock::LazyLock<hyperreal::rational::arithmetic::Rational>>::force::{closure#0} (in /home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype/debug/calcium-erf-trial-probe)
+==46==    by 0x4130FC6: <std::sync::once::Once>::call_once_force::<<std::sync::lazy_lock::LazyLock<hyperreal::rational::arithmetic::Rational>>::force::{closure#0}>::{closure#0} (in /home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype/debug/calcium-erf-trial-probe)
+==46==    by 0x4184078: <std::sys::sync::once::futex::Once>::call (in /home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype/debug/calcium-erf-trial-probe)
+==46==    by 0x413095D: <std::sync::once::Once>::call_once_force::<<std::sync::lazy_lock::LazyLock<hyperreal::rational::arithmetic::Rational>>::force::{closure#0}> (in /home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype/debug/calcium-erf-trial-probe)
+==46== 
+==46== 104 bytes in 1 blocks are still reachable in loss record 3 of 20
+==46==    at 0x4A2FAE6: malloc (vg_replace_malloc.c:447)
+==46==    by 0x412E421: <alloc::alloc::Global>::alloc_impl_runtime (in /home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype/debug/calcium-erf-trial-probe)
+==46==    by 0x4136474: alloc::boxed::box_new_uninit (in /home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype/debug/calcium-erf-trial-probe)
+==46==    by 0x412AE67: <alloc::sync::Arc<hyperreal::rational::arithmetic::RationalData>>::new (in /home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype/debug/calcium-erf-trial-probe)
+==46==    by 0x409D666: <hyperreal::rational::arithmetic::Rational>::from_parts_raw (in /home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype/debug/calcium-erf-trial-probe)
+==46==    by 0x408AA20: hyperreal::rational::arithmetic::RATIONAL_ZERO::{closure#0} (in /home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype/debug/calcium-erf-trial-probe)
+==46==    by 0x41240CD: <hyperreal::rational::arithmetic::RATIONAL_ZERO::{closure#0} as core::ops::function::FnOnce<()>>::call_once (in /home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype/debug/calcium-erf-trial-probe)
+==46==    by 0x4123212: <fn() -> hyperreal::rational::arithmetic::Rational as core::ops::function::FnOnce<()>>::call_once (in /home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype/debug/calcium-erf-trial-probe)
+==46==    by 0x4132D77: <std::sync::lazy_lock::LazyLock<hyperreal::rational::arithmetic::Rational>>::force::{closure#0} (in /home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype/debug/calcium-erf-trial-probe)
+==46==    by 0x4130FC6: <std::sync::once::Once>::call_once_force::<<std::sync::lazy_lock::LazyLock<hyperreal::rational::arithmetic::Rational>>::force::{closure#0}>::{closure#0} (in /home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype/debug/calcium-erf-trial-probe)
+==46==    by 0x4184078: <std::sys::sync::once::futex::Once>::call (in /home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype/debug/calcium-erf-trial-probe)
+==46==    by 0x413095D: <std::sync::once::Once>::call_once_force::<<std::sync::lazy_lock::LazyLock<hyperreal::rational::arithmetic::Rational>>::force::{closure#0}> (in /home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype/debug/calcium-erf-trial-probe)
+==46== 
+==46== 104 bytes in 1 blocks are still reachable in loss record 4 of 20
+==46==    at 0x4A2FAE6: malloc (vg_replace_malloc.c:447)
+==46==    by 0x412E421: <alloc::alloc::Global>::alloc_impl_runtime (in /home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype/debug/calcium-erf-trial-probe)
+==46==    by 0x4136474: alloc::boxed::box_new_uninit (in /home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype/debug/calcium-erf-trial-probe)
+==46==    by 0x412AE67: <alloc::sync::Arc<hyperreal::rational::arithmetic::RationalData>>::new (in /home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype/debug/calcium-erf-trial-probe)
+==46==    by 0x409D666: <hyperreal::rational::arithmetic::Rational>::from_parts_raw (in /home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype/debug/calcium-erf-trial-probe)
+==46==    by 0x408A3C0: <hyperreal::rational::arithmetic::Rational>::small_reduced_dyadic::{closure#0} (in /home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype/debug/calcium-erf-trial-probe)
+==46==    by 0x413F984: <std::sync::once_lock::OnceLock<hyperreal::rational::arithmetic::Rational>>::get_or_init::<<hyperreal::rational::arithmetic::Rational>::small_reduced_dyadic::{closure#0}>::{closure#0} (in /home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype/debug/calcium-erf-trial-probe)
+==46==    by 0x413F8DC: <std::sync::once_lock::OnceLock<hyperreal::rational::arithmetic::Rational>>::initialize::<<std::sync::once_lock::OnceLock<hyperreal::rational::arithmetic::Rational>>::get_or_init<<hyperreal::rational::arithmetic::Rational>::small_reduced_dyadic::{closure#0}>::{closure#0}, !>::{closure#0} (in /home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype/debug/calcium-erf-trial-probe)
+==46==    by 0x4130D9D: <std::sync::once::Once>::call_once_force::<<std::sync::once_lock::OnceLock<hyperreal::rational::arithmetic::Rational>>::initialize<<std::sync::once_lock::OnceLock<hyperreal::rational::arithmetic::Rational>>::get_or_init<<hyperreal::rational::arithmetic::Rational>::small_reduced_dyadic::{closure#0}>::{closure#0}, !>::{closure#0}>::{closure#0} (in /home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype/debug/calcium-erf-trial-probe)
+==46==    by 0x4184078: <std::sys::sync::once::futex::Once>::call (in /home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype/debug/calcium-erf-trial-probe)
+==46==    by 0x4130545: <std::sync::once::Once>::call_once_force::<<std::sync::once_lock::OnceLock<hyperreal::rational::arithmetic::Rational>>::initialize<<std::sync::once_lock::OnceLock<hyperreal::rational::arithmetic::Rational>>::get_or_init<<hyperreal::rational::arithmetic::Rational>::small_reduced_dyadic::{closure#0}>::{closure#0}, !>::{closure#0}> (in /home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype/debug/calcium-erf-trial-probe)
+==46==    by 0x413E752: <std::sync::once_lock::OnceLock<hyperreal::rational::arithmetic::Rational>>::initialize::<<std::sync::once_lock::OnceLock<hyperreal::rational::arithmetic::Rational>>::get_or_init<<hyperreal::rational::arithmetic::Rational>::small_reduced_dyadic::{closure#0}>::{closure#0}, !> (in /home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype/debug/calcium-erf-trial-probe)
+==46== 
+==46== 104 bytes in 1 blocks are still reachable in loss record 5 of 20
+==46==    at 0x4A2FAE6: malloc (vg_replace_malloc.c:447)
+==46==    by 0x412E421: <alloc::alloc::Global>::alloc_impl_runtime (in /home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype/debug/calcium-erf-trial-probe)
+==46==    by 0x4136474: alloc::boxed::box_new_uninit (in /home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype/debug/calcium-erf-trial-probe)
+==46==    by 0x412AE67: <alloc::sync::Arc<hyperreal::rational::arithmetic::RationalData>>::new (in /home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype/debug/calcium-erf-trial-probe)
+==46==    by 0x409D666: <hyperreal::rational::arithmetic::Rational>::from_parts_raw (in /home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype/debug/calcium-erf-trial-probe)
+==46==    by 0x408EBC0: <hyperreal::rational::arithmetic::Rational>::extract_square_reduced (in /home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype/debug/calcium-erf-trial-probe)
+==46==    by 0x408FE01: <hyperreal::rational::arithmetic::Rational>::extract_square_reduced_retained (in /home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype/debug/calcium-erf-trial-probe)
+==46==    by 0x407AD45: <hyperreal::real::arithmetic::Real>::sqrt (in /home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype/debug/calcium-erf-trial-probe)
+==46==    by 0x4074F8C: calcium_erf_trial_probe::argument (in /home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype/debug/calcium-erf-trial-probe)
+==46==    by 0x40742A6: calcium_erf_trial_probe::main (in /home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype/debug/calcium-erf-trial-probe)
+==46==    by 0x40781A2: <fn() as core::ops::function::FnOnce<()>>::call_once (in /home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype/debug/calcium-erf-trial-probe)
+==46==    by 0x4073EA5: std::sys::backtrace::__rust_begin_short_backtrace::<fn(), ()> (in /home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype/debug/calcium-erf-trial-probe)
+==46== 
+==46== 104 bytes in 1 blocks are still reachable in loss record 6 of 20
+==46==    at 0x4A2FAE6: malloc (vg_replace_malloc.c:447)
+==46==    by 0x412E421: <alloc::alloc::Global>::alloc_impl_runtime (in /home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype/debug/calcium-erf-trial-probe)
+==46==    by 0x4136474: alloc::boxed::box_new_uninit (in /home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype/debug/calcium-erf-trial-probe)
+==46==    by 0x412AE67: <alloc::sync::Arc<hyperreal::rational::arithmetic::RationalData>>::new (in /home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype/debug/calcium-erf-trial-probe)
+==46==    by 0x409D666: <hyperreal::rational::arithmetic::Rational>::from_parts_raw (in /home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype/debug/calcium-erf-trial-probe)
+==46==    by 0x408ECD8: <hyperreal::rational::arithmetic::Rational>::extract_square_reduced (in /home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype/debug/calcium-erf-trial-probe)
+==46==    by 0x408FE01: <hyperreal::rational::arithmetic::Rational>::extract_square_reduced_retained (in /home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype/debug/calcium-erf-trial-probe)
+==46==    by 0x407AD45: <hyperreal::real::arithmetic::Real>::sqrt (in /home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype/debug/calcium-erf-trial-probe)
+==46==    by 0x4074F8C: calcium_erf_trial_probe::argument (in /home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype/debug/calcium-erf-trial-probe)
+==46==    by 0x40742A6: calcium_erf_trial_probe::main (in /home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype/debug/calcium-erf-trial-probe)
+==46==    by 0x40781A2: <fn() as core::ops::function::FnOnce<()>>::call_once (in /home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype/debug/calcium-erf-trial-probe)
+==46==    by 0x4073EA5: std::sys::backtrace::__rust_begin_short_backtrace::<fn(), ()> (in /home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype/debug/calcium-erf-trial-probe)
+==46== 
+==46== 176 bytes in 1 blocks are still reachable in loss record 7 of 20
+==46==    at 0x4A2FAE6: malloc (vg_replace_malloc.c:447)
+==46==    by 0x412E421: <alloc::alloc::Global>::alloc_impl_runtime (in /home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype/debug/calcium-erf-trial-probe)
+==46==    by 0x4136474: alloc::boxed::box_new_uninit (in /home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype/debug/calcium-erf-trial-probe)
+==46==    by 0x409402D: <hyperreal::rational::arithmetic::Rational>::retain_linear (in /home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype/debug/calcium-erf-trial-probe)
+==46==    by 0x409418F: <hyperreal::rational::arithmetic::Rational>::retain_sum_pair (in /home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype/debug/calcium-erf-trial-probe)
+==46==    by 0x40979B3: <hyperreal::rational::arithmetic::Rational>::add_ref (in /home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype/debug/calcium-erf-trial-probe)
+==46==    by 0x40AA26F: <&hyperreal::rational::arithmetic::Rational as core::ops::arith::Add>::add (in /home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype/debug/calcium-erf-trial-probe)
+==46==    by 0x40AA375: <hyperreal::rational::arithmetic::Rational as core::ops::arith::Add>::add (in /home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype/debug/calcium-erf-trial-probe)
+==46==    by 0x40AE843: <hyperreal::computable::node::Computable>::rational_offset_parts::{closure#0} (in /home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype/debug/calcium-erf-trial-probe)
+==46==    by 0x41272F2: <bool>::then::<(&hyperreal::computable::node::Computable, hyperreal::rational::arithmetic::Rational, hyperreal::rational::arithmetic::Rational), <hyperreal::computable::node::Computable>::rational_offset_parts::{closure#0}> (in /home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype/debug/calcium-erf-trial-probe)
+==46==    by 0x40CE216: <hyperreal::computable::node::Computable>::rational_offset_parts (in /home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype/debug/calcium-erf-trial-probe)
+==46==    by 0x40D34E4: <hyperreal::computable::node::Computable>::add (in /home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype/debug/calcium-erf-trial-probe)
+==46== 
+==46== 176 bytes in 1 blocks are still reachable in loss record 8 of 20
+==46==    at 0x4A2FAE6: malloc (vg_replace_malloc.c:447)
+==46==    by 0x412E421: <alloc::alloc::Global>::alloc_impl_runtime (in /home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype/debug/calcium-erf-trial-probe)
+==46==    by 0x4136474: alloc::boxed::box_new_uninit (in /home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype/debug/calcium-erf-trial-probe)
+==46==    by 0x4098F64: <hyperreal::rational::arithmetic::Rational>::retain_negation_entry (in /home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype/debug/calcium-erf-trial-probe)
+==46==    by 0x40985B0: <hyperreal::rational::arithmetic::Rational>::retain_negation_pair (in /home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype/debug/calcium-erf-trial-probe)
+==46==    by 0x4077191: <&hyperreal::rational::arithmetic::Rational as core::ops::arith::Neg>::neg (in /home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype/debug/calcium-erf-trial-probe)
+==46==    by 0x407741E: <hyperreal::rational::arithmetic::Rational as core::ops::arith::Neg>::neg (in /home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype/debug/calcium-erf-trial-probe)
+==46==    by 0x4076ED9: <hyperreal::real::arithmetic::Real as core::ops::arith::Neg>::neg (in /home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype/debug/calcium-erf-trial-probe)
+==46==    by 0x407461F: calcium_erf_trial_probe::main (in /home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype/debug/calcium-erf-trial-probe)
+==46==    by 0x40781A2: <fn() as core::ops::function::FnOnce<()>>::call_once (in /home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype/debug/calcium-erf-trial-probe)
+==46==    by 0x4073EA5: std::sys::backtrace::__rust_begin_short_backtrace::<fn(), ()> (in /home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype/debug/calcium-erf-trial-probe)
+==46==    by 0x4073EB8: std::rt::lang_start::<()>::{closure#0} (in /home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype/debug/calcium-erf-trial-probe)
+==46== 
+==46== 176 bytes in 1 blocks are still reachable in loss record 9 of 20
+==46==    at 0x4A2FAE6: malloc (vg_replace_malloc.c:447)
+==46==    by 0x412E421: <alloc::alloc::Global>::alloc_impl_runtime (in /home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype/debug/calcium-erf-trial-probe)
+==46==    by 0x4136474: alloc::boxed::box_new_uninit (in /home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype/debug/calcium-erf-trial-probe)
+==46==    by 0x409402D: <hyperreal::rational::arithmetic::Rational>::retain_linear (in /home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype/debug/calcium-erf-trial-probe)
+==46==    by 0x409418F: <hyperreal::rational::arithmetic::Rational>::retain_sum_pair (in /home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype/debug/calcium-erf-trial-probe)
+==46==    by 0x40979B3: <hyperreal::rational::arithmetic::Rational>::add_ref (in /home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype/debug/calcium-erf-trial-probe)
+==46==    by 0x40AA26F: <&hyperreal::rational::arithmetic::Rational as core::ops::arith::Add>::add (in /home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype/debug/calcium-erf-trial-probe)
+==46==    by 0x4083558: <hyperreal::real::arithmetic::Real as core::ops::arith::AddAssign>::add_assign (in /home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype/debug/calcium-erf-trial-probe)
+==46==    by 0x40749B6: calcium_erf_trial_probe::main (in /home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype/debug/calcium-erf-trial-probe)
+==46==    by 0x40781A2: <fn() as core::ops::function::FnOnce<()>>::call_once (in /home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype/debug/calcium-erf-trial-probe)
+==46==    by 0x4073EA5: std::sys::backtrace::__rust_begin_short_backtrace::<fn(), ()> (in /home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype/debug/calcium-erf-trial-probe)
+==46==    by 0x4073EB8: std::rt::lang_start::<()>::{closure#0} (in /home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype/debug/calcium-erf-trial-probe)
+==46== 
+==46== 208 bytes in 2 blocks are still reachable in loss record 10 of 20
+==46==    at 0x4A2FAE6: malloc (vg_replace_malloc.c:447)
+==46==    by 0x412E421: <alloc::alloc::Global>::alloc_impl_runtime (in /home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype/debug/calcium-erf-trial-probe)
+==46==    by 0x4136474: alloc::boxed::box_new_uninit (in /home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype/debug/calcium-erf-trial-probe)
+==46==    by 0x412AE67: <alloc::sync::Arc<hyperreal::rational::arithmetic::RationalData>>::new (in /home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype/debug/calcium-erf-trial-probe)
+==46==    by 0x409D666: <hyperreal::rational::arithmetic::Rational>::from_parts_raw (in /home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype/debug/calcium-erf-trial-probe)
+==46==    by 0x408A075: <hyperreal::rational::arithmetic::Rational>::small_integer::{closure#0} (in /home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype/debug/calcium-erf-trial-probe)
+==46==    by 0x413F955: <std::sync::once_lock::OnceLock<hyperreal::rational::arithmetic::Rational>>::get_or_init::<<hyperreal::rational::arithmetic::Rational>::small_integer::{closure#0}>::{closure#0} (in /home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype/debug/calcium-erf-trial-probe)
+==46==    by 0x413F888: <std::sync::once_lock::OnceLock<hyperreal::rational::arithmetic::Rational>>::initialize::<<std::sync::once_lock::OnceLock<hyperreal::rational::arithmetic::Rational>>::get_or_init<<hyperreal::rational::arithmetic::Rational>::small_integer::{closure#0}>::{closure#0}, !>::{closure#0} (in /home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype/debug/calcium-erf-trial-probe)
+==46==    by 0x4130D03: <std::sync::once::Once>::call_once_force::<<std::sync::once_lock::OnceLock<hyperreal::rational::arithmetic::Rational>>::initialize<<std::sync::once_lock::OnceLock<hyperreal::rational::arithmetic::Rational>>::get_or_init<<hyperreal::rational::arithmetic::Rational>::small_integer::{closure#0}>::{closure#0}, !>::{closure#0}>::{closure#0} (in /home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype/debug/calcium-erf-trial-probe)
+==46==    by 0x4184078: <std::sys::sync::once::futex::Once>::call (in /home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype/debug/calcium-erf-trial-probe)
+==46==    by 0x4130436: <std::sync::once::Once>::call_once_force::<<std::sync::once_lock::OnceLock<hyperreal::rational::arithmetic::Rational>>::initialize<<std::sync::once_lock::OnceLock<hyperreal::rational::arithmetic::Rational>>::get_or_init<<hyperreal::rational::arithmetic::Rational>::small_integer::{closure#0}>::{closure#0}, !>::{closure#0}> (in /home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype/debug/calcium-erf-trial-probe)
+==46==    by 0x413E6F5: <std::sync::once_lock::OnceLock<hyperreal::rational::arithmetic::Rational>>::initialize::<<std::sync::once_lock::OnceLock<hyperreal::rational::arithmetic::Rational>>::get_or_init<<hyperreal::rational::arithmetic::Rational>::small_integer::{closure#0}>::{closure#0}, !> (in /home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype/debug/calcium-erf-trial-probe)
+==46== 
+==46== 208 bytes in 2 blocks are still reachable in loss record 11 of 20
+==46==    at 0x4A2FAE6: malloc (vg_replace_malloc.c:447)
+==46==    by 0x412E421: <alloc::alloc::Global>::alloc_impl_runtime (in /home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype/debug/calcium-erf-trial-probe)
+==46==    by 0x4136474: alloc::boxed::box_new_uninit (in /home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype/debug/calcium-erf-trial-probe)
+==46==    by 0x412AE67: <alloc::sync::Arc<hyperreal::rational::arithmetic::RationalData>>::new (in /home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype/debug/calcium-erf-trial-probe)
+==46==    by 0x409D666: <hyperreal::rational::arithmetic::Rational>::from_parts_raw (in /home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype/debug/calcium-erf-trial-probe)
+==46==    by 0x409F40A: <hyperreal::rational::arithmetic::Rational>::from_fraction_parts_reduced (in /home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype/debug/calcium-erf-trial-probe)
+==46==    by 0x409DDAB: <hyperreal::rational::arithmetic::Rational>::from_bigint_fraction (in /home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype/debug/calcium-erf-trial-probe)
+==46==    by 0x409CDAA: <hyperreal::rational::arithmetic::Rational>::from_bigint (in /home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype/debug/calcium-erf-trial-probe)
+==46==    by 0x40B53B4: <hyperreal::computable::node::Computable>::exact_rational (in /home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype/debug/calcium-erf-trial-probe)
+==46==    by 0x40CDCDB: <hyperreal::computable::node::Computable>::rational_offset_parts (in /home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype/debug/calcium-erf-trial-probe)
+==46==    by 0x40CE074: <hyperreal::computable::node::Computable>::rational_offset_parts (in /home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype/debug/calcium-erf-trial-probe)
+==46==    by 0x40D34E4: <hyperreal::computable::node::Computable>::add (in /home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype/debug/calcium-erf-trial-probe)
+==46== 
+==46== 208 bytes in 2 blocks are still reachable in loss record 12 of 20
+==46==    at 0x4A2FAE6: malloc (vg_replace_malloc.c:447)
+==46==    by 0x412E421: <alloc::alloc::Global>::alloc_impl_runtime (in /home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype/debug/calcium-erf-trial-probe)
+==46==    by 0x4136474: alloc::boxed::box_new_uninit (in /home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype/debug/calcium-erf-trial-probe)
+==46==    by 0x412AE67: <alloc::sync::Arc<hyperreal::rational::arithmetic::RationalData>>::new (in /home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype/debug/calcium-erf-trial-probe)
+==46==    by 0x409D666: <hyperreal::rational::arithmetic::Rational>::from_parts_raw (in /home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype/debug/calcium-erf-trial-probe)
+==46==    by 0x409F40A: <hyperreal::rational::arithmetic::Rational>::from_fraction_parts_reduced (in /home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype/debug/calcium-erf-trial-probe)
+==46==    by 0x40A12FC: <hyperreal::rational::arithmetic::Rational>::fraction (in /home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype/debug/calcium-erf-trial-probe)
+==46==    by 0x40748BB: calcium_erf_trial_probe::main (in /home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype/debug/calcium-erf-trial-probe)
+==46==    by 0x40781A2: <fn() as core::ops::function::FnOnce<()>>::call_once (in /home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype/debug/calcium-erf-trial-probe)
+==46==    by 0x4073EA5: std::sys::backtrace::__rust_begin_short_backtrace::<fn(), ()> (in /home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype/debug/calcium-erf-trial-probe)
+==46==    by 0x4073EB8: std::rt::lang_start::<()>::{closure#0} (in /home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype/debug/calcium-erf-trial-probe)
+==46==    by 0x41917F6: std::rt::lang_start_internal (in /home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype/debug/calcium-erf-trial-probe)
+==46== 
+==46== 208 bytes in 2 blocks are still reachable in loss record 13 of 20
+==46==    at 0x4A2FAE6: malloc (vg_replace_malloc.c:447)
+==46==    by 0x412E421: <alloc::alloc::Global>::alloc_impl_runtime (in /home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype/debug/calcium-erf-trial-probe)
+==46==    by 0x4136474: alloc::boxed::box_new_uninit (in /home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype/debug/calcium-erf-trial-probe)
+==46==    by 0x412AE67: <alloc::sync::Arc<hyperreal::rational::arithmetic::RationalData>>::new (in /home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype/debug/calcium-erf-trial-probe)
+==46==    by 0x409D666: <hyperreal::rational::arithmetic::Rational>::from_parts_raw (in /home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype/debug/calcium-erf-trial-probe)
+==46==    by 0x40AA5B5: <&hyperreal::rational::arithmetic::Rational as core::ops::arith::Neg>::neg (in /home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype/debug/calcium-erf-trial-probe)
+==46==    by 0x40AA86E: <hyperreal::rational::arithmetic::Rational as core::ops::arith::Neg>::neg (in /home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype/debug/calcium-erf-trial-probe)
+==46==    by 0x40D5AE2: <hyperreal::computable::node::Computable>::negate (in /home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype/debug/calcium-erf-trial-probe)
+==46==    by 0x4084417: <&hyperreal::real::arithmetic::Real as core::ops::arith::Sub>::sub (in /home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype/debug/calcium-erf-trial-probe)
+==46==    by 0x4076924: <hyperreal::real::arithmetic::Real>::certified_eq_until (in /home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype/debug/calcium-erf-trial-probe)
+==46==    by 0x407489B: calcium_erf_trial_probe::main (in /home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype/debug/calcium-erf-trial-probe)
+==46==    by 0x40781A2: <fn() as core::ops::function::FnOnce<()>>::call_once (in /home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype/debug/calcium-erf-trial-probe)
+==46== 
+==46== 208 bytes in 2 blocks are still reachable in loss record 14 of 20
+==46==    at 0x4A2FAE6: malloc (vg_replace_malloc.c:447)
+==46==    by 0x412E421: <alloc::alloc::Global>::alloc_impl_runtime (in /home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype/debug/calcium-erf-trial-probe)
+==46==    by 0x4136474: alloc::boxed::box_new_uninit (in /home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype/debug/calcium-erf-trial-probe)
+==46==    by 0x412AE67: <alloc::sync::Arc<hyperreal::rational::arithmetic::RationalData>>::new (in /home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype/debug/calcium-erf-trial-probe)
+==46==    by 0x4076066: <hyperreal::rational::arithmetic::Rational>::from_parts_raw (in /home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype/debug/calcium-erf-trial-probe)
+==46==    by 0x4077165: <&hyperreal::rational::arithmetic::Rational as core::ops::arith::Neg>::neg (in /home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype/debug/calcium-erf-trial-probe)
+==46==    by 0x407741E: <hyperreal::rational::arithmetic::Rational as core::ops::arith::Neg>::neg (in /home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype/debug/calcium-erf-trial-probe)
+==46==    by 0x4076ED9: <hyperreal::real::arithmetic::Real as core::ops::arith::Neg>::neg (in /home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype/debug/calcium-erf-trial-probe)
+==46==    by 0x407461F: calcium_erf_trial_probe::main (in /home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype/debug/calcium-erf-trial-probe)
+==46==    by 0x40781A2: <fn() as core::ops::function::FnOnce<()>>::call_once (in /home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype/debug/calcium-erf-trial-probe)
+==46==    by 0x4073EA5: std::sys::backtrace::__rust_begin_short_backtrace::<fn(), ()> (in /home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype/debug/calcium-erf-trial-probe)
+==46==    by 0x4073EB8: std::rt::lang_start::<()>::{closure#0} (in /home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype/debug/calcium-erf-trial-probe)
+==46== 
+==46== 208 bytes in 2 blocks are still reachable in loss record 15 of 20
+==46==    at 0x4A2FAE6: malloc (vg_replace_malloc.c:447)
+==46==    by 0x412E421: <alloc::alloc::Global>::alloc_impl_runtime (in /home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype/debug/calcium-erf-trial-probe)
+==46==    by 0x4136474: alloc::boxed::box_new_uninit (in /home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype/debug/calcium-erf-trial-probe)
+==46==    by 0x412AE67: <alloc::sync::Arc<hyperreal::rational::arithmetic::RationalData>>::new (in /home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype/debug/calcium-erf-trial-probe)
+==46==    by 0x409D666: <hyperreal::rational::arithmetic::Rational>::from_parts_raw (in /home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype/debug/calcium-erf-trial-probe)
+==46==    by 0x409F40A: <hyperreal::rational::arithmetic::Rational>::from_fraction_parts_reduced (in /home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype/debug/calcium-erf-trial-probe)
+==46==    by 0x409DDAB: <hyperreal::rational::arithmetic::Rational>::from_bigint_fraction (in /home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype/debug/calcium-erf-trial-probe)
+==46==    by 0x409CDAA: <hyperreal::rational::arithmetic::Rational>::from_bigint (in /home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype/debug/calcium-erf-trial-probe)
+==46==    by 0x40B53B4: <hyperreal::computable::node::Computable>::exact_rational (in /home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype/debug/calcium-erf-trial-probe)
+==46==    by 0x40D340A: <hyperreal::computable::node::Computable>::add (in /home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype/debug/calcium-erf-trial-probe)
+==46==    by 0x408444E: <&hyperreal::real::arithmetic::Real as core::ops::arith::Sub>::sub (in /home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype/debug/calcium-erf-trial-probe)
+==46==    by 0x4076924: <hyperreal::real::arithmetic::Real>::certified_eq_until (in /home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype/debug/calcium-erf-trial-probe)
+==46== 
+==46== 208 bytes in 2 blocks are still reachable in loss record 16 of 20
+==46==    at 0x4A2FAE6: malloc (vg_replace_malloc.c:447)
+==46==    by 0x412E421: <alloc::alloc::Global>::alloc_impl_runtime (in /home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype/debug/calcium-erf-trial-probe)
+==46==    by 0x4136474: alloc::boxed::box_new_uninit (in /home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype/debug/calcium-erf-trial-probe)
+==46==    by 0x412AE67: <alloc::sync::Arc<hyperreal::rational::arithmetic::RationalData>>::new (in /home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype/debug/calcium-erf-trial-probe)
+==46==    by 0x409D666: <hyperreal::rational::arithmetic::Rational>::from_parts_raw (in /home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype/debug/calcium-erf-trial-probe)
+==46==    by 0x40A6DCC: <hyperreal::rational::arithmetic::Rational>::from_reduced_word_parts (in /home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype/debug/calcium-erf-trial-probe)
+==46==    by 0x40957B1: <hyperreal::rational::arithmetic::Rational>::from_reduced_word_sum (in /home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype/debug/calcium-erf-trial-probe)
+==46==    by 0x4091E9D: <hyperreal::rational::arithmetic::Rational>::add_sub_words (in /home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype/debug/calcium-erf-trial-probe)
+==46==    by 0x4097953: <hyperreal::rational::arithmetic::Rational>::add_ref (in /home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype/debug/calcium-erf-trial-probe)
+==46==    by 0x40AA26F: <&hyperreal::rational::arithmetic::Rational as core::ops::arith::Add>::add (in /home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype/debug/calcium-erf-trial-probe)
+==46==    by 0x4083558: <hyperreal::real::arithmetic::Real as core::ops::arith::AddAssign>::add_assign (in /home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype/debug/calcium-erf-trial-probe)
+==46==    by 0x40749B6: calcium_erf_trial_probe::main (in /home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype/debug/calcium-erf-trial-probe)
+==46== 
+==46== 352 bytes in 2 blocks are still reachable in loss record 17 of 20
+==46==    at 0x4A2FAE6: malloc (vg_replace_malloc.c:447)
+==46==    by 0x412E421: <alloc::alloc::Global>::alloc_impl_runtime (in /home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype/debug/calcium-erf-trial-probe)
+==46==    by 0x4136474: alloc::boxed::box_new_uninit (in /home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype/debug/calcium-erf-trial-probe)
+==46==    by 0x4098F64: <hyperreal::rational::arithmetic::Rational>::retain_negation_entry (in /home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype/debug/calcium-erf-trial-probe)
+==46==    by 0x4098595: <hyperreal::rational::arithmetic::Rational>::retain_negation_pair (in /home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype/debug/calcium-erf-trial-probe)
+==46==    by 0x40AA5E1: <&hyperreal::rational::arithmetic::Rational as core::ops::arith::Neg>::neg (in /home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype/debug/calcium-erf-trial-probe)
+==46==    by 0x40AA86E: <hyperreal::rational::arithmetic::Rational as core::ops::arith::Neg>::neg (in /home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype/debug/calcium-erf-trial-probe)
+==46==    by 0x40D5AE2: <hyperreal::computable::node::Computable>::negate (in /home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype/debug/calcium-erf-trial-probe)
+==46==    by 0x4084417: <&hyperreal::real::arithmetic::Real as core::ops::arith::Sub>::sub (in /home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype/debug/calcium-erf-trial-probe)
+==46==    by 0x4076924: <hyperreal::real::arithmetic::Real>::certified_eq_until (in /home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype/debug/calcium-erf-trial-probe)
+==46==    by 0x407489B: calcium_erf_trial_probe::main (in /home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype/debug/calcium-erf-trial-probe)
+==46==    by 0x40781A2: <fn() as core::ops::function::FnOnce<()>>::call_once (in /home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype/debug/calcium-erf-trial-probe)
+==46== 
+==46== 352 bytes in 2 blocks are still reachable in loss record 18 of 20
+==46==    at 0x4A2FAE6: malloc (vg_replace_malloc.c:447)
+==46==    by 0x412E421: <alloc::alloc::Global>::alloc_impl_runtime (in /home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype/debug/calcium-erf-trial-probe)
+==46==    by 0x4136474: alloc::boxed::box_new_uninit (in /home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype/debug/calcium-erf-trial-probe)
+==46==    by 0x4098F64: <hyperreal::rational::arithmetic::Rational>::retain_negation_entry (in /home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype/debug/calcium-erf-trial-probe)
+==46==    by 0x40985B0: <hyperreal::rational::arithmetic::Rational>::retain_negation_pair (in /home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype/debug/calcium-erf-trial-probe)
+==46==    by 0x40AA5E1: <&hyperreal::rational::arithmetic::Rational as core::ops::arith::Neg>::neg (in /home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype/debug/calcium-erf-trial-probe)
+==46==    by 0x40AA86E: <hyperreal::rational::arithmetic::Rational as core::ops::arith::Neg>::neg (in /home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype/debug/calcium-erf-trial-probe)
+==46==    by 0x40D5AE2: <hyperreal::computable::node::Computable>::negate (in /home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype/debug/calcium-erf-trial-probe)
+==46==    by 0x4084417: <&hyperreal::real::arithmetic::Real as core::ops::arith::Sub>::sub (in /home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype/debug/calcium-erf-trial-probe)
+==46==    by 0x4076924: <hyperreal::real::arithmetic::Real>::certified_eq_until (in /home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype/debug/calcium-erf-trial-probe)
+==46==    by 0x407489B: calcium_erf_trial_probe::main (in /home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype/debug/calcium-erf-trial-probe)
+==46==    by 0x40781A2: <fn() as core::ops::function::FnOnce<()>>::call_once (in /home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype/debug/calcium-erf-trial-probe)
+==46== 
+==46== 352 bytes in 2 blocks are still reachable in loss record 19 of 20
+==46==    at 0x4A2FAE6: malloc (vg_replace_malloc.c:447)
+==46==    by 0x412E421: <alloc::alloc::Global>::alloc_impl_runtime (in /home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype/debug/calcium-erf-trial-probe)
+==46==    by 0x4136474: alloc::boxed::box_new_uninit (in /home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype/debug/calcium-erf-trial-probe)
+==46==    by 0x4098F64: <hyperreal::rational::arithmetic::Rational>::retain_negation_entry (in /home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype/debug/calcium-erf-trial-probe)
+==46==    by 0x4098595: <hyperreal::rational::arithmetic::Rational>::retain_negation_pair (in /home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype/debug/calcium-erf-trial-probe)
+==46==    by 0x4077191: <&hyperreal::rational::arithmetic::Rational as core::ops::arith::Neg>::neg (in /home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype/debug/calcium-erf-trial-probe)
+==46==    by 0x407741E: <hyperreal::rational::arithmetic::Rational as core::ops::arith::Neg>::neg (in /home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype/debug/calcium-erf-trial-probe)
+==46==    by 0x4076ED9: <hyperreal::real::arithmetic::Real as core::ops::arith::Neg>::neg (in /home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype/debug/calcium-erf-trial-probe)
+==46==    by 0x407461F: calcium_erf_trial_probe::main (in /home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype/debug/calcium-erf-trial-probe)
+==46==    by 0x40781A2: <fn() as core::ops::function::FnOnce<()>>::call_once (in /home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype/debug/calcium-erf-trial-probe)
+==46==    by 0x4073EA5: std::sys::backtrace::__rust_begin_short_backtrace::<fn(), ()> (in /home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype/debug/calcium-erf-trial-probe)
+==46==    by 0x4073EB8: std::rt::lang_start::<()>::{closure#0} (in /home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype/debug/calcium-erf-trial-probe)
+==46== 
+==46== 544 bytes in 1 blocks are still reachable in loss record 20 of 20
+==46==    at 0x4A2FAE6: malloc (vg_replace_malloc.c:447)
+==46==    by 0x4194669: std::sys::pal::unix::stack_overflow::thread_info::set_current_info (in /home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype/debug/calcium-erf-trial-probe)
+==46==    by 0x419172F: std::rt::lang_start_internal (in /home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype/debug/calcium-erf-trial-probe)
+==46==    by 0x4073E90: std::rt::lang_start::<()> (in /home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype/debug/calcium-erf-trial-probe)
+==46==    by 0x4078214: main (in /home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype/debug/calcium-erf-trial-probe)
+==46== 
+==46== LEAK SUMMARY:
+==46==    definitely lost: 0 bytes in 0 blocks
+==46==    indirectly lost: 0 bytes in 0 blocks
+==46==      possibly lost: 0 bytes in 0 blocks
+==46==    still reachable: 4,208 bytes in 30 blocks
+==46==         suppressed: 0 bytes in 0 blocks
+==46== 
+==46== For lists of detected and suppressed errors, rerun with: -s
+==46== ERROR SUMMARY: 0 errors from 0 contexts (suppressed: 0 from 0)

@@ -1,0 +1,4312 @@
+[
+  {
+    "target": "hypercurve",
+    "name": "arc_bezier::tests::mixed_weight_conic_with_a_projective_pole_is_not_a_regular_arc",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.006703391089104116,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0000.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "arc_bezier::tests::mixed_weight_major_circle_is_recognized_without_a_projective_pole",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.010068809962831438,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0001.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_flatten::tests::flatness_certificate_covers_collinear_overshoot",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.004073851043358445,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0002.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_offset::chord_overlap_transport_tests::chord_overlap_inverse_reuses_unprojected_selected_parameter_identity",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.004111928050406277,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0003.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_offset::chord_overlap_transport_tests::chord_overlap_inverse_uses_its_finite_exterior_source_domain",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.0038307480281218886,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0004.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_offset::chord_overlap_transport_tests::nonlinear_chord_overlap_clips_either_operand_and_keeps_paired_orientation",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.0036919770063832402,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0005.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_offset::conversion_tests::algebraic_chord_is_one_word_and_reverses_without_rounding",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.0037674709456041455,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0006.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_offset::conversion_tests::algebraic_chord_rejects_a_certified_zero_length",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.0035474769538268447,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0008.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_offset::conversion_tests::algebraic_chord_retains_independent_endpoint_fields_under_both_policies",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.0036579190054908395,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0009.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_offset::conversion_tests::algebraic_chord_source_incidence_deflates_only_the_retained_contact",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.007795055978931487,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0010.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_offset::conversion_tests::algebraic_cusp_semicircle_intersects_exact_oblique_chords_exactly",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.00772890099324286,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0011.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_offset::conversion_tests::algebraic_cusp_semicircle_intersects_finite_axis_chords_exactly",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.06396675703581423,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0012.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_offset::conversion_tests::algebraic_chord_pair_handles_endpoint_disjoint_and_collinear_fast_paths",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.11414214898832142,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0007.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_offset::conversion_tests::algebraic_cusp_semicircle_intersects_independent_field_oblique_chords_exactly",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.03205193404573947,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0013.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_offset::conversion_tests::algebraic_cusp_semicircle_reoffsets_independent_field_oblique_chord_cap",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.11423264304175973,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0014.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_offset::conversion_tests::algebraic_selected_fiber_incident_chart_preserves_affine_authority",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.0038414569571614265,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0016.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_offset::conversion_tests::analytic_parallel_classifies_correlated_chord_pair_points",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.007785697001963854,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0017.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_offset::conversion_tests::analytic_point_clones_reuse_the_certified_recursive_field",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.003840976976789534,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0018.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_offset::conversion_tests::benchmark_independent_oblique_chord_cap_offset_driver",
+    "returncode": 0,
+    "passed": false,
+    "ignored": true,
+    "elapsed_seconds": 0.003731613978743553,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0019.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_offset::conversion_tests::benchmark_nested_chord_mapped_cap_offset_driver",
+    "returncode": 0,
+    "passed": false,
+    "ignored": true,
+    "elapsed_seconds": 0.0037171749863773584,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0020.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_offset::conversion_tests::bounded_general_resultant_isolates_only_the_requested_selected_fiber_range",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.0038361370097845793,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0021.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_offset::conversion_tests::certified_circle_chord_endpoint_factor_preserves_roots_and_field",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.007834522984921932,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0022.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_offset::conversion_tests::chord_normal_dense_sheet_replay_keeps_even_roots_and_zero_components",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.003706056042574346,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0023.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_offset::conversion_tests::chord_normal_dense_sheet_replay_rejects_conjugate_roots",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.003684487077407539,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0024.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_offset::conversion_tests::chord_normal_recursive_frame_retains_center_and_oriented_unit_normal",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.06407645996659994,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0025.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_offset::conversion_tests::chord_pair_axis_order_reuses_analytic_support_coordinates",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.003920031012967229,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0026.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_offset::conversion_tests::chord_pair_orders_support_intersections_beyond_a_finite_witness",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.0037637719651684165,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0027.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_offset::conversion_tests::chord_parallel_extension_keeps_target_and_chord_domains_independent",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.007906368002295494,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0028.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_offset::conversion_tests::chord_parallel_monotonicity_covers_the_retained_parameter_range",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.0077913469867780805,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0029.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_offset::conversion_tests::chord_parallel_monotonicity_rejects_opposed_endpoint_signs",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.0037049860693514347,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0030.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_offset::conversion_tests::chord_rational_contact_ownership_preserves_selected_fiber_parameters",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.015745370998047292,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0031.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_offset::conversion_tests::conservative_chord_envelopes_preserve_requested_refinement",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.0036254609003663063,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0032.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_offset::conversion_tests::dense_chord_normal_circle_extends_over_an_independent_analytic_speed",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.015860812971368432,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0033.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_offset::conversion_tests::dense_chord_normal_incident_circle_retains_its_component",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.015891890972852707,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0034.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_offset::conversion_tests::algebraic_cusp_semicircle_reoffsets_nested_chord_mapped_cap",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 2.96808898600284,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0015.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_offset::conversion_tests::dense_chord_normal_rejects_disjoint_and_finitely_clipped_chords",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.114339305087924,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0036.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_offset::conversion_tests::dense_chord_normal_retains_rational_contacts_and_circle_components",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.26456545293331146,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0037.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_offset::conversion_tests::dense_chord_normal_tangency_retains_a_finite_endpoint",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.03217915503773838,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0038.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_offset::conversion_tests::exact_radial_chord_replays_a_retained_circle_endpoint_contact",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.003841946949250996,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0039.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_offset::conversion_tests::finite_circle_components_replay_chord_normal_and_represented_inverses",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 3.669342918903567,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0040.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_offset::conversion_tests::finite_circle_components_replay_pair_radial_and_recursive_inverses",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.5149750859709457,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0041.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_offset::conversion_tests::incident_selected_fiber_projection_honors_the_requested_resultant_schedule",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.003980306908488274,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0042.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_offset::conversion_tests::incident_source_circle_stops_at_the_first_projective_pole",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.0038286070339381695,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0043.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_offset::conversion_tests::independent_cusp_chord_contacts_order_on_the_shared_axis",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.015902769984677434,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0044.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_offset::conversion_tests::independent_field_algebraic_chord_intersects_rational_curve_under_both_policies",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.032089521060697734,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0045.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_offset::conversion_tests::independent_field_chord_retains_a_third_contact_in_its_recursive_field",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.01603437098674476,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0046.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_offset::conversion_tests::independent_field_chord_retains_both_noninjective_endpoint_preimages",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.007904347963631153,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0047.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_offset::conversion_tests::independently_encoded_recursive_circles_intersect_and_recurse_exactly",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.11422318394761533,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0048.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_offset::conversion_tests::independently_encoded_recursive_circles_map_all_coincident_half_relations",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.16439571604132652,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0049.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_offset::conversion_tests::independently_encoded_rotated_recursive_circles_intersect_exactly",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.2144758349750191,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0050.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_offset::conversion_tests::independently_encoded_scaled_rotated_recursive_circles_intersect_exactly",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.214529681019485,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0051.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_offset::conversion_tests::independently_reencoded_recursive_parent_handles_exact_tangency",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 5.222077874001116,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0052.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_offset::conversion_tests::mapped_chord_angle_query_observes_requested_policy",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.016055869054980576,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0053.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_offset::conversion_tests::mixed_chord_pair_axis_order_keeps_oblique_supports_in_the_retained_field",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.06408960302360356,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0054.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_offset::conversion_tests::nested_procedural_chord_reversals_match_exact_side_and_winding",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.007879970013163984,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0055.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_offset::conversion_tests::nonaffine_distinct_field_chord_zero_is_exact_in_strict",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.007800235063768923,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0056.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_offset::conversion_tests::noninjective_collinear_chord_overlap_partitions_every_monotone_branch",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.015840474050492048,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0057.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_offset::conversion_tests::nonlinear_parameter_component_maps_recursive_projective_scalars_locally",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.007742888992652297,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0058.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_offset::conversion_tests::nonquadratic_selected_fiber_keeps_its_defining_authority",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.003743913024663925,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0059.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_offset::conversion_tests::nonstructural_recursive_centers_handle_exact_tangency",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.31447080499492586,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0060.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_offset::conversion_tests::oblique_retained_offset_chord_reuses_exact_line_contacts",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 7.924060367047787,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0061.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_offset::conversion_tests::pair_radial_circle_intersects_independent_field_chord_exactly",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 3.0679850289598107,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0062.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_offset::conversion_tests::pair_radial_circle_rejects_disjoint_and_finitely_clipped_four_field_chords",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.008067955961450934,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0063.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_offset::conversion_tests::pair_radial_circle_retains_independent_field_chord_tangency",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 1.6162680960260332,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0064.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_offset::conversion_tests::parallel_normal_recursive_frame_preserves_source_parameter_and_positive_speed",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.064176767016761,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0065.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_offset::conversion_tests::procedural_endpoint_chord_replays_complete_parallel_contacts",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.0038354869466274977,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0066.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_offset::conversion_tests::projective_quadratic_conic_inverse_survives_elevation_and_reversal",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.6147838530596346,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0067.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_offset::conversion_tests::provenance_support_represents_a_chord_between_correlated_cuts",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.003878674004226923,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0068.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_offset::conversion_tests::rank_independent_chord_normal_circle_partitions_folded_rational_overlap",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 1.7162789939902723,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0069.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_offset::conversion_tests::dense_chord_normal_independent_anchor_uses_rank_independent_fallback",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 29.7056064249482,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0035.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_offset::conversion_tests::rank_independent_chord_normal_circle_publishes_rational_overlap",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.06408662302419543,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0071.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_offset::conversion_tests::recursive_chord_kernel_retains_all_cubic_crossings_with_opposite_endpoint_sides",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.0037726410664618015,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0072.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_offset::conversion_tests::recursive_chord_unrotated_derived_linear_and_equality_queries_are_complete",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.16414916899520904,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0073.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_offset::conversion_tests::recursive_circle_contact_tangent_sign_follows_root_branch",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.0039211909752339125,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0074.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_offset::conversion_tests::recursive_field_embeddings_do_not_consume_approximate_generator_equalities",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.0037095959996804595,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0075.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_offset::conversion_tests::recursive_field_shares_zero_towers_and_folds_identities",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.0036044520093128085,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0076.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_offset::conversion_tests::recursive_line_contact_circles_publish_tangent_contacts_without_flattening",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.26438752200920135,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0077.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_offset::conversion_tests::recursive_line_contact_circles_publish_transverse_contacts_without_flattening",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.16431012796238065,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0078.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_offset::conversion_tests::recursive_line_contact_circles_reject_disjoint_supports_without_flattening",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.06413901003543288,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0079.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_offset::conversion_tests::recursive_ordered_field_isolation_does_not_guess_polynomial_degree",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.0037979090120643377,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0080.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_offset::conversion_tests::rank_independent_chord_normal_circle_partitions_rational_overlap",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 1.7162514759693295,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0070.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_offset::conversion_tests::recursive_polynomial_crossing_signs_survive_exact_midpoint_collapse",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.003727414063178003,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0082.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_offset::conversion_tests::recursive_pair_angle_queries_observe_requested_policy_on_both_sides",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.01600199204403907,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0081.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_offset::conversion_tests::recursive_polynomial_isolators_keep_the_selected_root_after_endpoint_deflation",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.0037632319144904613,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0083.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_offset::conversion_tests::recursive_polynomial_predicates_reuse_the_retained_field_relation",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.007852272014133632,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0084.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_offset::conversion_tests::recursive_polynomial_refinement_reuses_certified_bounds_and_identity",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.007818783982656896,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0086.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_offset::conversion_tests::recursive_projective_bounds_enclose_scaled_nested_radicals",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.007851451984606683,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0087.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_offset::conversion_tests::recursive_projective_bounds_keep_unwitnessed_source_fallback",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.003788920002989471,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0088.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_offset::conversion_tests::recursive_polynomial_queries_reuse_a_selected_proper_factor",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.0319267800077796,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0085.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_offset::conversion_tests::recursive_projective_bounds_reuse_positive_denominator_certificate",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.01608587591908872,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0089.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_offset::conversion_tests::recursive_projective_chord_handles_finite_contact_multiplicities",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.11419926607050002,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0091.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_offset::conversion_tests::recursive_projective_center_projects_complete_nonlinear_fixed_distance",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.21423110202886164,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0090.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_offset::conversion_tests::recursive_projective_chord_rejects_constant_conjugate_norm_component",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.003787391004152596,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0093.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_offset::conversion_tests::recursive_projective_chord_replays_identically_zero_norm_sheet",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.003809218993410468,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0094.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_offset::conversion_tests::recursive_projective_chord_replays_nonzero_analytic_parallel",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.007797985104843974,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0095.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_offset::conversion_tests::recursive_projective_chord_retains_positive_degree_selected_conjugate_fiber",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.03198887500911951,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0096.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_offset::conversion_tests::recursive_projective_content_normalization_preserves_selected_fields",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.007850811001844704,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0097.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_offset::conversion_tests::recursive_projective_kernel_imports_similarity_of_algebraic_endpoints",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.007850961061194539,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0098.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_offset::conversion_tests::recursive_projective_chord_partitions_collinear_rational_images",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.2643079070840031,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0092.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_offset::conversion_tests::recursive_quadratic_endpoint_roots_keep_the_original_field",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.0038103590486571193,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0100.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_offset::conversion_tests::recursive_projective_oblique_chord_handles_even_contact_multiplicity",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.16417533694766462,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0099.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_offset::conversion_tests::recursive_radial_closure_chords_sign_a_shared_exact_vertex",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.06398275110404938,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0101.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_offset::conversion_tests::recursive_real_witnesses_do_not_require_unused_selected_generators",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.00372251495718956,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0103.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_offset::conversion_tests::recursive_scalar_comparison_replays_exact_equality_before_approximation",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.015896809054538608,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0104.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_offset::conversion_tests::recursive_scalar_native_replay_preserves_selected_source_authority",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.003809059038758278,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0105.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_offset::conversion_tests::recursive_scalar_publication_accepts_general_exact_witnesses",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.0037772110663354397,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0106.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_offset::conversion_tests::recursive_rational_contact_orients_a_retained_radial_endpoint",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.16417240700684488,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0102.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_offset::conversion_tests::recursive_selected_radial_diameter_chord_intersects_a_rational_quadratic_approximate",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 9.87727425491903,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0107.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_offset::conversion_tests::recursive_selected_radial_diameter_chord_intersects_a_rational_quadratic_strict",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 9.82729093497619,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0108.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_offset::conversion_tests::recursive_selected_radial_line_image_preserves_target_orientation",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.1645121038891375,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0109.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_offset::conversion_tests::recursive_sign_replays_correlated_real_witness_before_deep_intervals",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.008041438995860517,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0111.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_offset::conversion_tests::recursive_selected_radial_rational_kernel_retains_singular_circle_contacts",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.16436193394474685,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0110.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_offset::conversion_tests::recursively_pair_radial_center_retains_exact_point",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.03210735693573952,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0113.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_offset::conversion_tests::recursively_pair_radial_cap_offsets_exactly",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.11420991504564881,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0112.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_offset::conversion_tests::recursively_pair_radial_circle_intersects_a_rational_quadratic_without_representation",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.4647257970646024,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0115.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_offset::conversion_tests::recursively_pair_radial_circle_materializes_its_exact_frame",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.03215631400234997,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0116.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_offset::conversion_tests::recursively_pair_radial_circles_handle_tangent_and_disjoint_supports",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.032078518997877836,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0117.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_offset::conversion_tests::recursively_pair_radial_circles_intersect_and_recurse_exactly",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.03209629701450467,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0118.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_offset::conversion_tests::recursively_pair_radial_rational_circle_component_maps_both_directions_exactly",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.11427459993865341,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0119.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_offset::conversion_tests::regular_rational_parallel_components_retain_exterior_collinear_bounds",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.016109414980746806,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0120.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_offset::conversion_tests::regularized_retracing_line_chord_publishes_exact_component",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.007990721962414682,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0121.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_offset::conversion_tests::recursively_pair_radial_circle_intersects_a_genuine_analytic_parallel",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 7.173891913029365,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0114.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_offset::conversion_tests::retained_chord_coordinate_and_linear_queries_observe_requested_policy",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.1144465379184112,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0123.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_offset::conversion_tests::retained_chord_derived_queries_match_exact_affine_oracles_and_requested_policy",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.31459173699840903,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0124.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_offset::conversion_tests::retained_chord_fallback_affine_queries_match_certified_bounds",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 1.1163723609643057,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0125.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_offset::conversion_tests::retained_chord_incidence_replays_independently_allocated_coefficient_fields",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.06436952389776707,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0126.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_offset::conversion_tests::retained_chord_rejects_collinear_winding_rays_outside_its_finite_extent",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.003988805925473571,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0127.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_offset::conversion_tests::retained_offset_chord_pair_intersects_the_physical_supports",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.03211905597709119,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0128.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_offset::conversion_tests::retained_offset_chord_rational_intersections_select_the_physical_support",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.1143478750018403,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0129.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_offset::conversion_tests::retained_parallel_preserves_reversed_finite_chord_domains",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.0040102050406858325,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0130.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_offset::conversion_tests::retained_real_witnesses_collapse_recursive_source_box_coefficients",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.0038616349920630455,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0131.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_offset::conversion_tests::scaled_distinct_field_chord_zero_is_exact_in_strict",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.003597042988985777,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0132.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_offset::conversion_tests::selected_center_line_contact_stays_in_recursive_quadratic_solver",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.016015450935810804,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0133.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_offset::conversion_tests::selected_chord_normal_contact_accepts_complementary_radial_sign",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.003845066064968705,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0134.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_offset::conversion_tests::selected_fiber_affine_chart_round_trip_avoids_global_projection",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.015998863033019006,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0135.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_offset::conversion_tests::selected_fiber_analytic_circle_overlaps_complete_region_booleans",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.0640661750221625,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0136.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_offset::conversion_tests::selected_fiber_analytic_transverse_cut_inverts_by_point",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.1143984419759363,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0137.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_offset::conversion_tests::selected_fiber_angle_query_observes_its_requested_policy",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.00807092699687928,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0138.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_offset::conversion_tests::selected_fiber_center_replays_nonlinear_two_normal_fixed_distance",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.03209145809523761,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0139.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_offset::conversion_tests::selected_fiber_center_retains_nonlinear_fixed_distance_incident_cut",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.008006411022506654,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0140.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_offset::conversion_tests::selected_fiber_chart_uncertainty_preserves_exact_coefficient_replay",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.004044491914100945,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0141.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_offset::conversion_tests::selected_fiber_circle_overlap_does_not_prove_source_parameter_identity",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.007998060900717974,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0142.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_offset::conversion_tests::represented_recursive_contact_centers_handle_exact_tangency",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 30.90549703594297,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0122.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_offset::conversion_tests::selected_fiber_comparison_accepts_a_newly_represented_root",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.004027322982437909,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0144.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_offset::conversion_tests::selected_fiber_comparison_replays_composed_projective_charts_with_signed_denominators",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.0038654450327157974,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0145.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_offset::conversion_tests::selected_fiber_comparison_reuses_high_degree_affine_root_identity",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.0036021829582750797,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0146.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_offset::conversion_tests::selected_fiber_deflation_excludes_foreign_critical_roots",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.003877443028613925,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0147.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_offset::conversion_tests::selected_fiber_diagonal_identity_preserves_distinct_root_ownership",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.0038470959989354014,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0148.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_offset::conversion_tests::selected_fiber_distinct_field_equality_uses_only_the_512_bit_terminal",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.5649223329965025,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0149.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_offset::conversion_tests::selected_fiber_distinct_fields_order_before_bounded_global_projection",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.004055432043969631,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0150.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_offset::conversion_tests::selected_fiber_equality_requires_selected_root_containment",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.004032463068142533,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0151.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_offset::conversion_tests::selected_fiber_fixed_distance_descends_from_conjugate_circle_component",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.03219389100559056,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0152.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_offset::conversion_tests::selected_fiber_genuinely_analytic_contacts_complete_region_booleans",
+    "returncode": 0,
+    "passed": false,
+    "ignored": true,
+    "elapsed_seconds": 0.004067520960234106,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0153.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_offset::conversion_tests::selected_fiber_import_and_refinement_retain_the_known_scalar_representation",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.003920190967619419,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0154.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_offset::conversion_tests::selected_fiber_interval_supports_exact_and_nonexact_exterior_roots",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.0038963520200923085,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0155.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_offset::conversion_tests::selected_fiber_mapped_cut_inverts_on_analytic_overlap",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.11429056897759438,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0156.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_offset::conversion_tests::selected_fiber_norm_isolation_refines_past_the_old_limit",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.016219657962210476,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0157.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_offset::conversion_tests::selected_fiber_offset_coalesces_boolean_only_cuts_through_one_parallel_kernel",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.00802519905846566,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0158.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_offset::conversion_tests::selected_fiber_overlap_inverts_transported_mapped_cusp_cut",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.064236153033562,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0159.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_offset::conversion_tests::selected_fiber_pair_correlation_deflates_repeated_fibers",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.016209197929129004,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0160.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_offset::conversion_tests::selected_fiber_pair_subresultant_rejects_foreign_image_conjugate",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.00805524701718241,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0161.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_offset::conversion_tests::selected_fiber_pair_tangent_correlation_stays_in_degree_130_local_field",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.11438594199717045,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0162.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_offset::conversion_tests::selected_fiber_points_reuse_projective_roots_without_global_promotion",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.11456873000133783,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0163.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_offset::conversion_tests::selected_fiber_positive_dimensional_projection_reports_authored_continuum",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.004053122014738619,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0164.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_offset::conversion_tests::selected_fiber_predicate_handles_a_retained_root_becoming_exact_after_64_steps",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.008088675094768405,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0165.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_offset::conversion_tests::selected_fiber_predicate_sign_refines_past_the_policy_terminal_under_strict",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.1644603570457548,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0166.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_offset::conversion_tests::selected_fiber_projective_chart_round_trip_avoids_global_projection",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.008159019984304905,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0167.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_offset::conversion_tests::selected_fiber_rational_circle_overlaps_complete_region_booleans",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.06431749800685793,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0168.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_offset::conversion_tests::selected_fiber_rational_component_publishes_its_isolated_endpoint",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.01623651699628681,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0169.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_offset::conversion_tests::selected_fiber_rational_component_rejects_the_conjugate_circle",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.06434570497367531,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0170.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_offset::conversion_tests::selected_fiber_rational_overlap_keeps_exact_center",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.016184059088118374,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0171.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_offset::conversion_tests::selected_fiber_rational_overlap_replays_certified_policy",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.0322870051022619,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0172.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_offset::conversion_tests::selected_fiber_root_isolation_rejoins_uncapped_depth",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.004332012962549925,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0173.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_offset::conversion_tests::selected_fiber_scalar_is_compact_exact_and_ordered_without_a_norm",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.008013310958631337,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0174.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_offset::conversion_tests::selected_fiber_tangent_correspondence_retains_local_image",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.03215771401301026,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0175.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_offset::conversion_tests::selected_fiber_transverse_mapped_cut_inverts_by_point",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 4.520381098031066,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0176.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_offset::conversion_tests::selected_radial_frame_joins_an_equivalent_recursive_point_base",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.008137330994941294,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0177.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_offset::conversion_tests::translated_distinct_field_chord_zero_is_exact_in_strict",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.003974828054197133,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0178.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_offset::conversion_tests::unrelated_recursive_circle_centers_intersect_exactly",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.36466261197347194,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0179.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_offset::conversion_tests::weighted_selected_center_tangent_line_stays_recursive",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.01619928900618106,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0180.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_offset::conversion_tests::zero_parallel_domains_exclude_projective_poles",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.004024674068205059,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0181.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_offset::parallel_normal_source_angle_tests::selected_chord_parallel_normal_angles_use_source_direction",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.016213787952437997,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0182.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_parameter::conversion_tests::composed_projective_charts_share_one_root_without_growing_history_or_scale",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.003992715966887772,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0183.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_parameter::conversion_tests::projective_images_preserve_exterior_singletons_across_unused_poles",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.008013679995201528,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0184.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_offset::conversion_tests::selected_fiber_circle_overlap_preserves_an_isolated_parameter_visit",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 41.92108528804965,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0143.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_region::tests::algebraic_side_ray_skips_coincident_chords_across_loops",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.004121646983548999,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0186.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_region::tests::collapsed_chord_pair_center_classifies_an_analytic_parallel",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.11430524801835418,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0187.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_region::tests::collapsed_pair_radial_fillet_retains_its_recursive_center",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.11453602195251733,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0188.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_region::tests::collapsed_selected_circle_center_classifies_nonrepresented_chord",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.03250549000222236,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0189.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_region::tests::general_nonrepresented_chord_and_retained_rational_arc_complete_the_fillet_kernel",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 1.1660350930178538,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0190.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_region::tests::independent_field_algebraic_chord_closes_and_classifies_a_region",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.00420761201530695,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0191.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_region::tests::independent_field_chord_crosses_a_genuine_analytic_parallel_boolean",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.16404941491782665,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0192.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_region::tests::independent_field_chord_publishes_nonzero_parallel_line_overlap",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.11450633499771357,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0193.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_region::tests::independent_field_chord_replays_a_genuine_parallel_endpoint_contact",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 6.172341933939606,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0194.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_region::tests::independent_oblique_chord_pair_fillet_crosses_a_rational_line_exactly",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 1.5663934769108891,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0195.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_region::tests::independent_oblique_chord_pair_fillet_crosses_algebraic_chords_exactly",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.4650228270329535,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0196.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_region::tests::independent_oblique_chord_pair_fillets_extend_on_infinite_supports",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.7156485930318013,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0197.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_region::tests::major_retained_rational_arc_and_general_chord_share_the_fillet_kernel",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 7.674842034000903,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0198.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_region::curve_corner_chain::tests::extended_fillet_region_classifies_both_sides_of_its_companion",
+    "returncode": "timeout",
+    "passed": false,
+    "ignored": false,
+    "elapsed_seconds": 75.00337111297995,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0185.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_region::tests::nonrepresented_cardinal_chord_pair_fillets_through_shared_carriers",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.008143050945363939,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0200.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_region::tests::nonrepresented_chord_and_retained_rational_arc_share_the_fillet_kernel",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.5152378720231354,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0201.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_region::tests::nonlinear_selected_corner_chamfers_through_retained_fixed_distance_image",
+    "returncode": "timeout",
+    "passed": false,
+    "ignored": false,
+    "elapsed_seconds": 75.97382447496057,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0199.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_region::tests::nonrepresented_chord_line_corner_fillets_through_shared_carriers",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.21485997992567718,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0203.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_region::tests::nonrepresented_chord_parallel_corner_fillets_without_reintersection",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 8.876302967895754,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0204.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_region::tests::one_fragment_ph_loop_projective_corners_retain_one_extended_interval",
+    "returncode": 101,
+    "passed": false,
+    "ignored": false,
+    "elapsed_seconds": 0.06434852501843125,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0205.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_region::tests::one_fragment_selected_projective_extensions_keep_the_local_fiber",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.016184599953703582,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0206.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_region::tests::pair_native_boolean_algebraic_chord_corner_publishes_a_third_generation_fillet",
+    "returncode": "timeout",
+    "passed": false,
+    "ignored": false,
+    "elapsed_seconds": 75.00221219402738,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0207.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_region::tests::recursive_selected_radial_cap_crosses_a_nonlinear_quadratic",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 1.0163004259811714,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0208.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_region::tests::recursive_selected_radial_crosses_a_nonlinear_quadratic",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.865776692982763,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0209.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_region::tests::nonrepresented_chord_and_selected_circle_complete_the_fillet_kernel",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 149.02663159905933,
+    "limit_seconds": 180,
+    "log": "selected-projective-import-20260924-broad-case-0202.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_region::tests::recursively_nested_selected_radial_operations_remain_exact",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 19.442130345036276,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0211.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_region::tests::recursive_selected_radial_projective_chamfer_reenters_corner_kernel",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 61.70288138999604,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0210.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_region::tests::recursively_nested_selected_radial_public_offset_regularizes_approximate_512",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 19.541382275987417,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0212.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_region::tests::regularized_composite_chord_roles_preserve_nested_islands_and_profiles",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 1.6668712339596823,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0214.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_region::tests::recursively_nested_selected_radial_public_offset_regularizes_strict",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 19.54280265897978,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0213.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_region::tests::retained_offset_independent_chord_crosses_a_genuine_analytic_parallel",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.46515169797930866,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0216.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_region::tests::retained_selected_corner_trim_keeps_distinct_bounded_fields_local",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.008289871038869023,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0217.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_region::tests::retained_subcurve_point_query_preserves_projective_denominator_uncertainty",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.004158905008807778,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0218.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_region::tests::selected_circle_and_promoted_line_extend_through_the_chord_support_cell",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 6.623359752004035,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0219.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_region::tests::selected_corner_candidates_reenter_normalization_with_retained_contacts",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 1.4165816250024363,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0220.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_region::tests::selected_fiber_line_image_fit_rejects_nonmonotone_subrange_excursions",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.004202932002954185,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0221.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_region::tests::selected_fiber_line_images_reuse_exact_real_endpoints_in_both_directions",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.00406982097774744,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0222.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_region::tests::selected_parallel_normal_circle_and_line_fillet_retains_recursive_contact",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.2649531529750675,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0223.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "curve::curve_evaluation::tests::point_order_from_a_parallel_chord_is_not_an_incident_parameter",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.016334469080902636,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0224.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "curve::curve_evaluation::tests::selected_fiber_evaluation_keeps_a_local_field_beyond_global_projection_budget",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.004053421085700393,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0225.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "curve::curve_subdivision::tests::selected_chord_subdivision_reuses_incidence_and_traversal",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.008148881024681032,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0226.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "curve::curve_subdivision::tests::selected_circular_chart_fillets_continue_across_projective_infinity",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.06447164702694863,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0227.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "curve::curve_subdivision::tests::selected_circular_parallel_charts_continue_across_projective_infinity",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.1646465939702466,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0228.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "curve::curve_subdivision::tests::source_domain_fillets_continue_circular_splines_across_projective_infinity",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.03254796692635864,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0229.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "curve::tests::native_arc_and_nonrepresented_chord_share_extension_projection",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.2647845350438729,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0230.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "curve::tests::parallel_derivative_orientation_replays_unprojectable_selected_fibers",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.008214317029342055,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0231.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "curve::tests::retained_parallel_and_direct_bezier_share_projective_fillet_extension",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.016352358041331172,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0232.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "curve::tests::selected_circle_and_direct_bezier_share_projective_fillet_extension",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.06438085297122598,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0233.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "curve::tests::selected_circle_and_native_line_share_projective_fillet_extension",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.03232629189733416,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0234.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "curve_intersection::curve_support_intersection::analytic_dispatch_tests::finite_chord_analytic_parallel_replays_exterior_contacts",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.01637742598541081,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0235.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "curve_intersection::curve_support_intersection::analytic_dispatch_tests::finite_chord_rational_contacts_replay_all_roots_and_stationary_points",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.016620790003798902,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0236.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "curve_intersection::curve_support_intersection::analytic_dispatch_tests::finite_chord_rational_point_fibers_and_poles_use_the_active_domain",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.008245585020631552,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0237.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "curve_intersection::curve_support_intersection::analytic_dispatch_tests::finite_chord_rational_retracing_keeps_all_overlap_branches",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.00811554305255413,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0238.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "curve_intersection::curve_support_intersection::analytic_dispatch_tests::point_image_components_retain_chord_cuts_and_authored_poles",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.008105803979560733,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0239.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "curve_intersection::curve_support_intersection::circle_dispatch_tests::selected_circle_intersects_rational_curves_and_retained_chords",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.11442611995153129,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0240.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "curve_region_boolean::certified_successor_tests::adjacent_general_chord_fallback_excludes_the_authored_endpoint",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.03240463696420193,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0241.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "curve_region_boolean::certified_successor_tests::affine_region_classifies_a_general_algebraic_cusp_point_in_its_source_field",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.016551824053749442,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0242.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "curve_region_boolean::certified_successor_tests::algebraic_chord_analytic_parallel_pair_replays_contacts_and_overlap",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.16474070795811713,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0243.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "curve_region_boolean::certified_successor_tests::algebraic_chord_carrier_retains_ordered_interior_splits",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.004243718925863504,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0244.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "curve_region_boolean::certified_successor_tests::algebraic_chord_exact_linear_bezier_pair_replays_all_line_relations",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.004107167944312096,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0245.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "curve_region_boolean::certified_successor_tests::algebraic_chord_pair_overlap_enters_region_intersection_evidence",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.016422283020801842,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0246.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "curve_region_boolean::certified_successor_tests::algebraic_chord_parallel_boolean_keeps_exterior_and_selected_ranges",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.01624720497056842,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0247.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "curve_region_boolean::certified_successor_tests::authored_parallel_support_contact_classifies_perpendicular_and_tangent_joins",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.004122026963159442,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0248.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "curve_region_boolean::certified_successor_tests::boolean_topology_seeds_a_general_cusp_run_from_an_adjacent_carrier",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.03254604700487107,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0249.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "curve_region_boolean::certified_successor_tests::boundary_probe_reuses_endpoint_incidence_and_keeps_residual_contacts",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.01630305196158588,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0250.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "curve_region_boolean::certified_successor_tests::certified_branch_order_matches_exact_vector_order",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.00421522103715688,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0251.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "curve_region_boolean::certified_successor_tests::classified_crossing_side_recovers_oriented_tangent_cross",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.00423305993899703,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0252.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "curve_region_boolean::certified_successor_tests::contact_point_bounds_reject_disjoint_lazy_sources",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.004247438977472484,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0253.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "curve_region_boolean::certified_successor_tests::curve_trim_retains_selected_field_algebraic_chord_boundaries",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.032266777008771896,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0254.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "curve_region_boolean::certified_successor_tests::curve_trim_retains_selected_field_algebraic_chord_overlaps",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.11459819704759866,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0255.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "curve_region_boolean::certified_successor_tests::curved_face_windings_preserve_crossings_tangencies_overlaps_and_nested_holes",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.5238851880421862,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0256.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "curve_region_boolean::certified_successor_tests::cusp_chord_pair_retains_an_independent_field_oblique_contact",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.016563873970881104,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0257.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "curve_region_boolean::certified_successor_tests::cusp_chord_pair_retains_an_interior_axis_contact",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.004303565016016364,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0258.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "curve_region_boolean::certified_successor_tests::cusp_chord_pair_retains_an_interior_exact_oblique_contact",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.008152420981787145,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0259.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "curve_region_boolean::certified_successor_tests::cusp_overlap_clipping_maps_partial_carriers_in_both_orientations",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.008349927025847137,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0260.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "curve_region_boolean::certified_successor_tests::cusp_separated_parallel_contacts_are_not_declared_distinct",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.004109608009457588,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0261.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "curve_region_boolean::certified_successor_tests::exact_retained_chord_uses_the_canonical_boolean_carrier",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.004103317973203957,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0262.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "curve_region_boolean::certified_successor_tests::exact_subfragment_of_algebraic_chord_retains_selected_field_witness",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.004175173002295196,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0263.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "curve_region_boolean::certified_successor_tests::exterior_circular_split_preserves_major_arc_and_algebraic_endpoints",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.0041650040075182915,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0264.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "curve_region_boolean::certified_successor_tests::finite_parallel_self_contacts_retain_active_domain",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.0040358430705964565,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0265.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "curve_region_boolean::certified_successor_tests::finite_self_crossing_regions_retain_boundary_ownership_on_reentry",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.03230498405173421,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0266.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "curve_region_boolean::certified_successor_tests::identical_injective_source_parameters_compare_without_materialization",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.004078479949384928,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0267.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "curve_region_boolean::certified_successor_tests::independent_field_algebraic_chord_uses_general_boolean_pair_engine",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.032311753020621836,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0268.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "curve_region_boolean::certified_successor_tests::independent_field_collinear_chord_overlap_enters_all_boolean_topology",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.03228057501837611,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0269.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "curve_region_boolean::certified_successor_tests::injective_carrier_topology_vertex_canonicalizes_unorderable_parameter_aliases",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.00839693401940167,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0270.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "curve_region_boolean::certified_successor_tests::isolated_circle_endpoint_contacts_retain_transverse_signs",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.008406113949604332,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0271.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "curve_region_boolean::certified_successor_tests::monotone_parallel_ranges_remove_only_proven_unary_pairs",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 1.5168035590322688,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0272.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "curve_region_boolean::certified_successor_tests::native_region_fast_path_matches_forced_general_arrangement",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.008636608021333814,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0273.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "curve_region_boolean::certified_successor_tests::nonadjacent_source_chord_pair_replays_endpoint_and_residual_contacts",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.008447501109912992,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0274.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "curve_region_boolean::certified_successor_tests::noninjective_carrier_retains_distinct_branches_at_one_topology_vertex",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.0045220390893518925,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0275.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "curve_region_boolean::certified_successor_tests::noninjective_collinear_chord_dispatch_retains_contacts_and_overlaps",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.008577741915360093,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0276.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "curve_region_boolean::certified_successor_tests::noninjective_preimages_survive_curve_queries_and_cancel_from_regions",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.11499399994499981,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0277.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "curve_region_boolean::certified_successor_tests::nontransverse_point_touch_certifies_authored_loop_successors",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.004552967962808907,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0278.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "curve_region_boolean::certified_successor_tests::operand_bounds_are_lazy_shared_and_policy_neutral",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.004310083924792707,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0279.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "curve_region_boolean::certified_successor_tests::parameter_order_uses_exact_translation_before_approximate_512_terminal",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.0037633120082318783,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0280.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "curve_region_boolean::certified_successor_tests::polynomial_control_polygon_certifies_only_monotone_injective_axis",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.004137516021728516,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0281.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "curve_region_boolean::certified_successor_tests::regularization_removes_symmetric_polynomial_and_rational_retracing",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.004020633990876377,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0282.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "curve_region_boolean::certified_successor_tests::retained_aabb_candidates_match_cartesian_pairs_in_authored_order",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.06428220996167511,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0283.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "curve_region_boolean::certified_successor_tests::selected_general_overlap_clips_through_exact_projection",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.004335333011113107,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0284.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "curve_region_boolean::certified_successor_tests::selected_parameter_component_overlap_clips_in_both_boolean_orders",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.008230885025113821,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0285.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "curve_region_boolean::certified_successor_tests::selected_projective_overlap_clips_without_global_parameter_projection",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.004202712094411254,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0286.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "curve_region_boolean::certified_successor_tests::shared_chord_splits_contacts_from_independent_selected_circles_in_order",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.004101368016563356,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0287.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "curve_region_boolean::certified_successor_tests::sibling_circle_tangency_preserves_half_chart_and_finite_range_ownership",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.004172523971647024,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0288.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "curve_region_boolean::certified_successor_tests::source_related_algebraic_chord_contact_enters_split_topology",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.016303951968438923,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0289.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "curve_region_boolean::certified_successor_tests::strict_interior_algebraic_chord_pair_contact_splits_both_carriers",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.7655869059963152,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0290.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "curve_region_boolean::certified_successor_tests::transitive_topology_merge_canonicalizes_deferred_injective_aliases",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.008827044977806509,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0291.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "curve_region_boolean::certified_successor_tests::transverse_contact_certificates_seed_both_operand_faces",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.004497962072491646,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0292.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "curve_region_boolean::certified_successor_tests::unary_cusp_regularization_samples_sides_in_the_selected_field",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.26468228199519217,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0293.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "curve_region_boolean::certified_successor_tests::unsupported_parameter_order_obeys_strict_and_approximate_512_policies",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.016419524094089866,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0294.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "curve_region_boolean::certified_successor_tests::xor_composition_fallback_removes_coincident_seams",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.00820220704190433,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0295.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "curve_region_boolean::regularization_successor_tests::colliding_contact_claims_remain_unselected",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.004595614969730377,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0296.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "curve_region_boolean::regularization_successor_tests::face_sector_claim_forces_the_unmaterialized_complement",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.0043151939753443,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0297.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "curve_region_boolean::regularized_face_winding_tests::contradiction_preserves_independent_winding_components",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.004139716038480401,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0298.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "curve_region_boolean::regularized_face_winding_tests::contradictory_winding_accelerator_is_disabled",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.004115237970836461,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0299.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "curve_region_boolean::regularized_face_winding_tests::contradictory_winding_propagation_is_transactional",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.004082619911059737,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0300.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "curve_region_boolean::regularized_face_winding_tests::winding_propagation_publishes_only_a_consistent_component",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.004348381073214114,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0301.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "curve_region_trim::tests::curve_trim_preserves_recursively_nested_islands_and_holes",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.008129721973091364,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0302.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "curve_region_trim::tests::generated_chord_trim_preserves_holes_and_exact_endpoint_replay",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.46505232504568994,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0303.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "rational_bezier_general::tests::affine_subcurve_rejects_a_crossed_projective_pole",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.016440961975604296,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0304.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "rational_bezier_general::tests::endpoint_projective_cubic_correspondence_maps_both_orientations",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.0044976320350542665,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0305.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "rational_bezier_general::tests::mixed_weight_projective_overlap_preserves_the_finite_parameter_domain",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.004410677007399499,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0306.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "rational_bezier_general::tests::range_projective_correspondence_maps_and_inverts_oriented_ranges",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.004330442985519767,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0307.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "straight_skeleton::tests::codirected_collinear_source_edges_are_normalized_exactly",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.0043019140139222145,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0308.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "tests::line_line_intersection_detects_collinear_overlap",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.004226180026307702,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0309.log"
+  },
+  {
+    "target": "hypercurve_curve_region_boolean_fuzz",
+    "name": "algebraic_polyline_contacts_preserve_exact_contact_distinction",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.9659666999941692,
+    "limit_seconds": 180,
+    "log": "selected-projective-import-20260924-broad-case-0310.log"
+  },
+  {
+    "target": "hypercurve_curve_region_boolean_fuzz",
+    "name": "conic_endpoint_root_isolation_completes",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.0325532560236752,
+    "limit_seconds": 180,
+    "log": "selected-projective-import-20260924-broad-case-0311.log"
+  },
+  {
+    "target": "hypercurve_curve_region_boolean_fuzz",
+    "name": "deterministic_coincident_curve_family_images_complete",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.06469697097782046,
+    "limit_seconds": 180,
+    "log": "selected-projective-import-20260924-broad-case-0312.log"
+  },
+  {
+    "target": "hypercurve_curve_region_boolean_fuzz",
+    "name": "deterministic_endpoint_curve_family_pair_matrix_completes",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.2149010970024392,
+    "limit_seconds": 180,
+    "log": "selected-projective-import-20260924-broad-case-0313.log"
+  },
+  {
+    "target": "hypercurve_curve_region_boolean_fuzz",
+    "name": "deterministic_tangent_curve_family_pair_matrix_completes",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.21498593094293028,
+    "limit_seconds": 180,
+    "log": "selected-projective-import-20260924-broad-case-0314.log"
+  },
+  {
+    "target": "hypercurve_curve_region_boolean_fuzz",
+    "name": "deterministic_transverse_curve_family_pair_matrix_completes",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 2.0174165539210662,
+    "limit_seconds": 180,
+    "log": "selected-projective-import-20260924-broad-case-0315.log"
+  },
+  {
+    "target": "hypercurve_curve_region_boolean_fuzz",
+    "name": "explicit_loop_topology_supports_reversed_nonuniform_rational_regions",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.008493017056025565,
+    "limit_seconds": 180,
+    "log": "selected-projective-import-20260924-broad-case-0316.log"
+  },
+  {
+    "target": "hypercurve_curve_region_boolean_fuzz",
+    "name": "generated_exact_curve_region_booleans_complete_and_match_immediate_results",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 1.066056782961823,
+    "limit_seconds": 180,
+    "log": "selected-projective-import-20260924-broad-case-0317.log"
+  },
+  {
+    "target": "hypercurve_curve_region_boolean_fuzz",
+    "name": "retired_candidate_interval_pruning_completes",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.11468330200295895,
+    "limit_seconds": 180,
+    "log": "selected-projective-import-20260924-broad-case-0318.log"
+  },
+  {
+    "target": "hypercurve_curve_region_boolean_fuzz",
+    "name": "retired_exact_curve_region_boolean_failures_remain_in_the_corpus",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 1.9676277099642903,
+    "limit_seconds": 180,
+    "log": "selected-projective-import-20260924-broad-case-0319.log"
+  },
+  {
+    "target": "hypercurve_curve_region_boolean_fuzz",
+    "name": "shared_endpoint_xor_completes",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.016787707922048867,
+    "limit_seconds": 180,
+    "log": "selected-projective-import-20260924-broad-case-0320.log"
+  },
+  {
+    "target": "hypercurve_bezier_arrangement",
+    "name": "algebraic_split_boundary_blocks_graph_traversal",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.016694235033355653,
+    "limit_seconds": 180,
+    "log": "selected-projective-import-20260924-broad-case-0321.log"
+  },
+  {
+    "target": "hypercurve_bezier_arrangement",
+    "name": "arrangement_graph_accepts_adjacent_reused_source_fragment_ranges",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.004554957966320217,
+    "limit_seconds": 180,
+    "log": "selected-projective-import-20260924-broad-case-0322.log"
+  },
+  {
+    "target": "hypercurve_bezier_arrangement",
+    "name": "arrangement_graph_rejects_duplicate_source_fragment_evidence",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.0041124679846689105,
+    "limit_seconds": 180,
+    "log": "selected-projective-import-20260924-broad-case-0323.log"
+  },
+  {
+    "target": "hypercurve_bezier_arrangement",
+    "name": "arrangement_graph_rejects_forged_algebraic_endpoint_image_evidence",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.004359311074949801,
+    "limit_seconds": 180,
+    "log": "selected-projective-import-20260924-broad-case-0324.log"
+  },
+  {
+    "target": "hypercurve_bezier_arrangement",
+    "name": "arrangement_graph_rejects_invalid_unique_source_fragment_ranges",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.0041569450404495,
+    "limit_seconds": 180,
+    "log": "selected-projective-import-20260924-broad-case-0325.log"
+  },
+  {
+    "target": "hypercurve_bezier_arrangement",
+    "name": "arrangement_graph_rejects_overlapping_reused_source_fragment_ranges",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.00225560599938035,
+    "limit_seconds": 180,
+    "log": "selected-projective-import-20260924-broad-case-0326.log"
+  },
+  {
+    "target": "hypercurve_bezier_arrangement",
+    "name": "branch_vertex_is_explicit_uncertainty_not_arbitrary_successor",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.004573766025714576,
+    "limit_seconds": 180,
+    "log": "selected-projective-import-20260924-broad-case-0327.log"
+  },
+  {
+    "target": "hypercurve_bezier_arrangement",
+    "name": "certified_overlap_evidence_replays_across_graph_clones",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.00442444602958858,
+    "limit_seconds": 180,
+    "log": "selected-projective-import-20260924-broad-case-0328.log"
+  },
+  {
+    "target": "hypercurve_bezier_arrangement",
+    "name": "contact_parameters_follow_their_carrier_domains",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.004494161927141249,
+    "limit_seconds": 180,
+    "log": "selected-projective-import-20260924-broad-case-0329.log"
+  },
+  {
+    "target": "hypercurve_bezier_arrangement",
+    "name": "empty_overlap_refinement_preserves_exact_unit_fragment",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.004446564940735698,
+    "limit_seconds": 180,
+    "log": "selected-projective-import-20260924-broad-case-0330.log"
+  },
+  {
+    "target": "hypercurve_bezier_arrangement",
+    "name": "exact_endpoint_buckets_retain_symbolic_matches",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.004364089923910797,
+    "limit_seconds": 180,
+    "log": "selected-projective-import-20260924-broad-case-0331.log"
+  },
+  {
+    "target": "hypercurve_bezier_arrangement",
+    "name": "exact_split_fragments_traverse_as_one_closed_bezier_chain",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.004220570088364184,
+    "limit_seconds": 180,
+    "log": "selected-projective-import-20260924-broad-case-0332.log"
+  },
+  {
+    "target": "hypercurve_bezier_arrangement",
+    "name": "monotone_span_rejects_reversed_parameter_evidence",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.004762422991916537,
+    "limit_seconds": 180,
+    "log": "selected-projective-import-20260924-broad-case-0333.log"
+  },
+  {
+    "target": "hypercurve_bezier_arrangement",
+    "name": "open_quadratic_chain_stays_one_nonclosed_chain",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.004089939990080893,
+    "limit_seconds": 180,
+    "log": "selected-projective-import-20260924-broad-case-0334.log"
+  },
+  {
+    "target": "hypercurve_bezier_arrangement",
+    "name": "retained_arrangement_traversal_constructors_validate_fragment_ownership",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.0042160500306636095,
+    "limit_seconds": 180,
+    "log": "selected-projective-import-20260924-broad-case-0335.log"
+  },
+  {
+    "target": "hypercurve_bezier_arrangement",
+    "name": "retained_linear_overlap_refinement_evidence_reversed_span_orientation",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.004202052019536495,
+    "limit_seconds": 180,
+    "log": "selected-projective-import-20260924-broad-case-0336.log"
+  },
+  {
+    "target": "hypercurve_bezier_arrangement",
+    "name": "retained_linear_overlap_split_graph_rejects_forged_orientation",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.004499781061895192,
+    "limit_seconds": 180,
+    "log": "selected-projective-import-20260924-broad-case-0337.log"
+  },
+  {
+    "target": "hypercurve_bezier_arrangement",
+    "name": "retained_linear_overlap_split_graph_rejects_forged_resolved_provenance",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.0045204199850559235,
+    "limit_seconds": 180,
+    "log": "selected-projective-import-20260924-broad-case-0338.log"
+  },
+  {
+    "target": "hypercurve_bezier_arrangement",
+    "name": "retained_linear_overlap_split_graph_rejects_forged_split_evidence_geometry",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.004482322023250163,
+    "limit_seconds": 180,
+    "log": "selected-projective-import-20260924-broad-case-0339.log"
+  },
+  {
+    "target": "hypercurve_bezier_arrangement",
+    "name": "retained_linear_overlap_split_graph_rejects_missing_refined_provenance",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.0042964250314980745,
+    "limit_seconds": 180,
+    "log": "selected-projective-import-20260924-broad-case-0340.log"
+  },
+  {
+    "target": "hypercurve_bezier_arrangement",
+    "name": "retained_linear_overlap_split_graph_rejects_missing_split_evidence_evidence",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.004267867072485387,
+    "limit_seconds": 180,
+    "log": "selected-projective-import-20260924-broad-case-0341.log"
+  },
+  {
+    "target": "hypercurve_bezier_arrangement",
+    "name": "retained_linear_overlap_traversal_cancels_reversed_internal_span_in_loop",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.00419724197126925,
+    "limit_seconds": 180,
+    "log": "selected-projective-import-20260924-broad-case-0342.log"
+  },
+  {
+    "target": "hypercurve_bezier_arrangement",
+    "name": "retained_linear_overlap_traversal_rejects_incomplete_refined_partition",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.004734914982691407,
+    "limit_seconds": 180,
+    "log": "selected-projective-import-20260924-broad-case-0343.log"
+  },
+  {
+    "target": "hypercurve_bezier_arrangement",
+    "name": "retained_linear_overlap_traversal_rejects_indices_outside_refinement",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.004382969927974045,
+    "limit_seconds": 180,
+    "log": "selected-projective-import-20260924-broad-case-0344.log"
+  },
+  {
+    "target": "hypercurve_bezier_arrangement",
+    "name": "retained_linear_overlap_traversal_splits_and_consumes_duplicate_span_in_loop",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.0042609680676832795,
+    "limit_seconds": 180,
+    "log": "selected-projective-import-20260924-broad-case-0345.log"
+  },
+  {
+    "target": "hypercurve_bezier_arrangement",
+    "name": "retained_overlap_evidence_constructor_rejects_unsorted_or_duplicate_pairs",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.004316243925131857,
+    "limit_seconds": 180,
+    "log": "selected-projective-import-20260924-broad-case-0346.log"
+  },
+  {
+    "target": "hypercurve_bezier_arrangement",
+    "name": "retained_overlap_evidence_does_not_call_same_curve_image_a_line_split",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.004164205049164593,
+    "limit_seconds": 180,
+    "log": "selected-projective-import-20260924-broad-case-0347.log"
+  },
+  {
+    "target": "hypercurve_bezier_arrangement",
+    "name": "retained_overlap_evidence_extracts_partial_line_image_split_ranges",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.004188993014395237,
+    "limit_seconds": 180,
+    "log": "selected-projective-import-20260924-broad-case-0348.log"
+  },
+  {
+    "target": "hypercurve_bezier_arrangement",
+    "name": "retained_overlap_evidence_finds_identical_materialized_fragments",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.004255257896147668,
+    "limit_seconds": 180,
+    "log": "selected-projective-import-20260924-broad-case-0349.log"
+  },
+  {
+    "target": "hypercurve_bezier_arrangement",
+    "name": "retained_overlap_evidence_finds_reversed_degree_elevated_same_image",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.0041575649520382285,
+    "limit_seconds": 180,
+    "log": "selected-projective-import-20260924-broad-case-0350.log"
+  },
+  {
+    "target": "hypercurve_bezier_arrangement",
+    "name": "retained_overlap_evidence_preserves_strict_rational_overlap_ranges",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.0042456090450286865,
+    "limit_seconds": 180,
+    "log": "selected-projective-import-20260924-broad-case-0351.log"
+  },
+  {
+    "target": "hypercurve_bezier_arrangement",
+    "name": "retained_overlap_evidence_recognizes_projectively_reversed_rational_fragments",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.0042895759688690305,
+    "limit_seconds": 180,
+    "log": "selected-projective-import-20260924-broad-case-0352.log"
+  },
+  {
+    "target": "hypercurve_bezier_arrangement",
+    "name": "retained_overlap_evidence_rejects_nonlinear_line_image_bezier_ranges",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.004282796056941152,
+    "limit_seconds": 180,
+    "log": "selected-projective-import-20260924-broad-case-0353.log"
+  },
+  {
+    "target": "hypercurve_bezier_arrangement",
+    "name": "retained_overlap_evidence_separates_endpoint_touch_from_overlap",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.004226619959808886,
+    "limit_seconds": 180,
+    "log": "selected-projective-import-20260924-broad-case-0354.log"
+  },
+  {
+    "target": "hypercurve_bezier_arrangement",
+    "name": "retained_overlap_pair_constructor_rejects_non_overlap_line_evidence",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.0045992640079930425,
+    "limit_seconds": 180,
+    "log": "selected-projective-import-20260924-broad-case-0355.log"
+  },
+  {
+    "target": "hypercurve_bezier_arrangement",
+    "name": "retained_overlap_pair_constructor_rejects_unordered_indices",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.004626182024367154,
+    "limit_seconds": 180,
+    "log": "selected-projective-import-20260924-broad-case-0356.log"
+  },
+  {
+    "target": "hypercurve_bezier_arrangement",
+    "name": "retained_overlap_refined_fragment_constructor_validates_local_range",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.004281846922822297,
+    "limit_seconds": 180,
+    "log": "selected-projective-import-20260924-broad-case-0357.log"
+  },
+  {
+    "target": "hypercurve_bezier_arrangement",
+    "name": "retained_overlap_split_constructors_reject_unordered_indices",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.004280355991795659,
+    "limit_seconds": 180,
+    "log": "selected-projective-import-20260924-broad-case-0358.log"
+  },
+  {
+    "target": "hypercurve_bezier_arrangement",
+    "name": "retained_overlap_split_constructors_validate_range_evidence",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.004185353056527674,
+    "limit_seconds": 180,
+    "log": "selected-projective-import-20260924-broad-case-0359.log"
+  },
+  {
+    "target": "hypercurve_bezier_arrangement",
+    "name": "retained_overlap_traversal_deduplicates_oriented_duplicate_loop_edges",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.004198162001557648,
+    "limit_seconds": 180,
+    "log": "selected-projective-import-20260924-broad-case-0360.log"
+  },
+  {
+    "target": "hypercurve_bezier_arrangement",
+    "name": "retained_overlap_traversal_rejects_reversed_duplicate_as_ownership_boundary",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.004310563905164599,
+    "limit_seconds": 180,
+    "log": "selected-projective-import-20260924-broad-case-0361.log"
+  },
+  {
+    "target": "hypercurve_bezier_arrangement",
+    "name": "retained_rational_overlap_promotes_represented_incidence_root",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.004154195077717304,
+    "limit_seconds": 180,
+    "log": "selected-projective-import-20260924-broad-case-0362.log"
+  },
+  {
+    "target": "hypercurve_bezier_arrangement",
+    "name": "retained_rational_overlap_refinement_cancels_reversed_span",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.004562097019515932,
+    "limit_seconds": 180,
+    "log": "selected-projective-import-20260924-broad-case-0363.log"
+  },
+  {
+    "target": "hypercurve_bezier_arrangement",
+    "name": "retained_resolved_overlap_constructor_rejects_unordered_indices",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.004272746969945729,
+    "limit_seconds": 180,
+    "log": "selected-projective-import-20260924-broad-case-0364.log"
+  },
+  {
+    "target": "hypercurve_bezier_arrangement",
+    "name": "retained_tangent_order_rejects_equal_algebraic_successors",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.00418963294941932,
+    "limit_seconds": 180,
+    "log": "selected-projective-import-20260924-broad-case-0365.log"
+  },
+  {
+    "target": "hypercurve_bezier_arrangement",
+    "name": "retained_tangent_order_transforms_reversed_algebraic_endpoints_and_tangents",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.004255478037521243,
+    "limit_seconds": 180,
+    "log": "selected-projective-import-20260924-broad-case-0366.log"
+  },
+  {
+    "target": "hypercurve_bezier_arrangement",
+    "name": "retained_tangent_order_traverses_algebraic_branch_vertex",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.004214711021631956,
+    "limit_seconds": 180,
+    "log": "selected-projective-import-20260924-broad-case-0367.log"
+  },
+  {
+    "target": "hypercurve_bezier_arrangement",
+    "name": "retained_tangent_order_uses_algebraic_second_order_for_equal_successors",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.00423416995909065,
+    "limit_seconds": 180,
+    "log": "selected-projective-import-20260924-broad-case-0368.log"
+  },
+  {
+    "target": "hypercurve_bezier_arrangement",
+    "name": "retained_tangent_order_uses_algebraic_third_order_for_cubic_same_tangent_inflections",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.004279216984286904,
+    "limit_seconds": 180,
+    "log": "selected-projective-import-20260924-broad-case-0369.log"
+  },
+  {
+    "target": "hypercurve_bezier_arrangement",
+    "name": "retained_tangent_order_uses_rational_algebraic_second_order_for_equal_successors",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.0042482889257371426,
+    "limit_seconds": 180,
+    "log": "selected-projective-import-20260924-broad-case-0370.log"
+  },
+  {
+    "target": "hypercurve_bezier_arrangement",
+    "name": "tangent_ordered_traversal_rejects_equal_rational_second_order_successors",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.004216100904159248,
+    "limit_seconds": 180,
+    "log": "selected-projective-import-20260924-broad-case-0371.log"
+  },
+  {
+    "target": "hypercurve_bezier_arrangement",
+    "name": "tangent_ordered_traversal_rejects_equal_second_order_outgoing_tangents",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.0042449189350008965,
+    "limit_seconds": 180,
+    "log": "selected-projective-import-20260924-broad-case-0372.log"
+  },
+  {
+    "target": "hypercurve_bezier_arrangement",
+    "name": "tangent_ordered_traversal_rejects_equal_third_order_cubic_successors",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.004259407054632902,
+    "limit_seconds": 180,
+    "log": "selected-projective-import-20260924-broad-case-0373.log"
+  },
+  {
+    "target": "hypercurve_bezier_arrangement",
+    "name": "tangent_ordered_traversal_resolves_simple_branch_vertex",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.004236788954585791,
+    "limit_seconds": 180,
+    "log": "selected-projective-import-20260924-broad-case-0374.log"
+  },
+  {
+    "target": "hypercurve_bezier_arrangement",
+    "name": "tangent_ordered_traversal_uses_rational_second_order_for_equal_outgoing_tangents",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.004245788906700909,
+    "limit_seconds": 180,
+    "log": "selected-projective-import-20260924-broad-case-0375.log"
+  },
+  {
+    "target": "hypercurve_bezier_arrangement",
+    "name": "tangent_ordered_traversal_uses_second_order_for_equal_outgoing_tangents",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.004312644945457578,
+    "limit_seconds": 180,
+    "log": "selected-projective-import-20260924-broad-case-0376.log"
+  },
+  {
+    "target": "hypercurve_bezier_arrangement",
+    "name": "tangent_ordered_traversal_uses_third_order_for_cubic_same_tangent_inflections",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.004271036945283413,
+    "limit_seconds": 180,
+    "log": "selected-projective-import-20260924-broad-case-0377.log"
+  },
+  {
+    "target": "hypercurve",
+    "name": "bezier_region::tests::resource_blocked_selected_corner_chamfers_in_its_affine_fiber",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 32.615560116944835,
+    "limit_seconds": 75,
+    "log": "selected-projective-import-20260924-broad-case-0215.log"
+  },
+  {
+    "target": "hypercurve_pcb_boolean_regressions",
+    "name": "easyduino_scale_process_image_containment_corpus",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 6.775013586971909,
+    "limit_seconds": 180,
+    "log": "selected-projective-import-20260924-broad-case-0378.log"
+  },
+  {
+    "target": "hypercurve_pcb_boolean_regressions",
+    "name": "pcb_process_image_containment_regression_decides_exactly",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.16483346198219806,
+    "limit_seconds": 180,
+    "log": "selected-projective-import-20260924-broad-case-0380.log"
+  },
+  {
+    "target": "hypercurve_pcb_boolean_regressions",
+    "name": "pcb_process_image_hole_ownership_culls_sparse_materials",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 11.03261553205084,
+    "limit_seconds": 180,
+    "log": "selected-projective-import-20260924-broad-case-0381.log"
+  },
+  {
+    "target": "hypercurve_path_closure",
+    "name": "boundary_admission_rejects_disconnected_spline_spans",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.02515467396005988,
+    "limit_seconds": 180,
+    "log": "selected-projective-import-20260924-broad-case-0382.log"
+  },
+  {
+    "target": "hypercurve_path_closure",
+    "name": "finite_fixed_distance_domains::finite_chamfers_preserve_equivalent_source_charts",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.06481026392430067,
+    "limit_seconds": 180,
+    "log": "selected-projective-import-20260924-broad-case-0383.log"
+  },
+  {
+    "target": "hypercurve_path_closure",
+    "name": "finite_fixed_distance_domains::repeated_finite_chamfers_preserve_selected_cuts",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 30.209078034036793,
+    "limit_seconds": 180,
+    "log": "selected-projective-import-20260924-broad-case-0384.log"
+  },
+  {
+    "target": "hypercurve_path_closure",
+    "name": "finite_selected_point_domains::collapsed_circle_fillet_preserves_finite_parallel_domains",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.11497319198679179,
+    "limit_seconds": 180,
+    "log": "selected-projective-import-20260924-broad-case-0385.log"
+  },
+  {
+    "target": "hypercurve_path_closure",
+    "name": "homogeneous_boundary_closes_through_boolean_corners_and_offset",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.4655755989952013,
+    "limit_seconds": 180,
+    "log": "selected-projective-import-20260924-broad-case-0386.log"
+  },
+  {
+    "target": "hypercurve_path_closure",
+    "name": "selected_chamfers_preserve_all_major_arc_contacts",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.016655158018693328,
+    "limit_seconds": 180,
+    "log": "selected-projective-import-20260924-broad-case-0387.log"
+  },
+  {
+    "target": "hypercurve_path_closure",
+    "name": "selected_major_arc_fillets_keep_the_complete_authored_sweep",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.4152529010316357,
+    "limit_seconds": 180,
+    "log": "selected-projective-import-20260924-broad-case-0388.log"
+  },
+  {
+    "target": "hypercurve_path_closure",
+    "name": "selected_open_chamfers_reenter_the_public_path_api",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.008560082991607487,
+    "limit_seconds": 180,
+    "log": "selected-projective-import-20260924-broad-case-0389.log"
+  },
+  {
+    "target": "hypercurve_path_closure",
+    "name": "selected_open_fillets_accept_a_subsequent_chamfer",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.008554222993552685,
+    "limit_seconds": 180,
+    "log": "selected-projective-import-20260924-broad-case-0390.log"
+  },
+  {
+    "target": "hypercurve_path_closure",
+    "name": "selected_path_chamfers_close_through_all_region_booleans",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.01648317906074226,
+    "limit_seconds": 180,
+    "log": "selected-projective-import-20260924-broad-case-0391.log"
+  },
+  {
+    "target": "hypercurve_path_closure",
+    "name": "selected_spline_chamfers_keep_every_untrimmed_span",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.004586715949699283,
+    "limit_seconds": 180,
+    "log": "selected-projective-import-20260924-broad-case-0392.log"
+  },
+  {
+    "target": "hypercurve_path_closure",
+    "name": "selected_spline_fillets_preserve_knot_charts_and_other_spans",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.008873910992406309,
+    "limit_seconds": 180,
+    "log": "selected-projective-import-20260924-broad-case-0393.log"
+  },
+  {
+    "target": "hypercurve_curve_region_boolean",
+    "name": "affine_line_batch_preserves_material_and_hole_roles",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.032900803023949265,
+    "limit_seconds": 180,
+    "log": "selected-projective-import-20260924-broad-case-0394.log"
+  },
+  {
+    "target": "hypercurve_curve_region_boolean",
+    "name": "affine_line_batch_reuses_the_authoritative_arrangement_topology",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.008475617971271276,
+    "limit_seconds": 180,
+    "log": "selected-projective-import-20260924-broad-case-0395.log"
+  },
+  {
+    "target": "hypercurve_curve_region_boolean",
+    "name": "algebraic_curved_region_output_can_feed_another_boolean",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.01648693799506873,
+    "limit_seconds": 180,
+    "log": "selected-projective-import-20260924-broad-case-0396.log"
+  },
+  {
+    "target": "hypercurve_curve_region_boolean",
+    "name": "approximate_offset_reports_a_consumed_terminal_for_symbolic_zero_distance",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.009141313028521836,
+    "limit_seconds": 180,
+    "log": "selected-projective-import-20260924-broad-case-0397.log"
+  },
+  {
+    "target": "hypercurve_curve_region_boolean",
+    "name": "approximate_policy_reports_a_consumed_terminal_instead_of_relabeling_it_exact",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.016691555036231875,
+    "limit_seconds": 180,
+    "log": "selected-projective-import-20260924-broad-case-0398.log"
+  },
+  {
+    "target": "hypercurve_curve_region_boolean",
+    "name": "boolean_batch_short_circuits_empty_and_identical_operands",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.004375130054540932,
+    "limit_seconds": 180,
+    "log": "selected-projective-import-20260924-broad-case-0399.log"
+  },
+  {
+    "target": "hypercurve_curve_region_boolean",
+    "name": "circular_boolean_outputs_publish_native_boundaries_under_both_policies",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.03258017497137189,
+    "limit_seconds": 180,
+    "log": "selected-projective-import-20260924-broad-case-0400.log"
+  },
+  {
+    "target": "hypercurve_curve_region_boolean",
+    "name": "circular_conic_batch_obeys_the_approximate_512_terminal",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.032871724921278656,
+    "limit_seconds": 180,
+    "log": "selected-projective-import-20260924-broad-case-0401.log"
+  },
+  {
+    "target": "hypercurve_curve_region_boolean",
+    "name": "circular_conic_batch_reuses_one_authoritative_topology",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 1.9677153050433844,
+    "limit_seconds": 180,
+    "log": "selected-projective-import-20260924-broad-case-0402.log"
+  },
+  {
+    "target": "hypercurve_curve_region_boolean",
+    "name": "conic_general_batch_obeys_the_approximate_512_terminal",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.03295111900661141,
+    "limit_seconds": 180,
+    "log": "selected-projective-import-20260924-broad-case-0403.log"
+  },
+  {
+    "target": "hypercurve_curve_region_boolean",
+    "name": "curve_path_construction_obeys_the_approximate_512_terminal",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.004460014053620398,
+    "limit_seconds": 180,
+    "log": "selected-projective-import-20260924-broad-case-0404.log"
+  },
+  {
+    "target": "hypercurve_curve_region_boolean",
+    "name": "curved_region_boolean_output_can_feed_another_boolean",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.00436477002222091,
+    "limit_seconds": 180,
+    "log": "selected-projective-import-20260924-broad-case-0405.log"
+  },
+  {
+    "target": "hypercurve_curve_region_boolean",
+    "name": "curved_region_boolean_respects_nested_hole_roles",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.004539018031209707,
+    "limit_seconds": 180,
+    "log": "selected-projective-import-20260924-broad-case-0406.log"
+  },
+  {
+    "target": "hypercurve_curve_region_boolean",
+    "name": "elevated_circular_boolean_outputs_publish_native_boundaries",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.03248993097804487,
+    "limit_seconds": 180,
+    "log": "selected-projective-import-20260924-broad-case-0407.log"
+  },
+  {
+    "target": "hypercurve_curve_region_boolean",
+    "name": "empty_output_does_not_certify_an_approximate_normalization",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.008561092079617083,
+    "limit_seconds": 180,
+    "log": "selected-projective-import-20260924-broad-case-0408.log"
+  },
+  {
+    "target": "hypercurve_curve_region_boolean",
+    "name": "finite_bezier_charts_preserve_bounds_boundary_and_winding",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.033112559001892805,
+    "limit_seconds": 180,
+    "log": "selected-projective-import-20260924-broad-case-0409.log"
+  },
+  {
+    "target": "hypercurve_curve_region_boolean",
+    "name": "general_curve_batch_obeys_the_approximate_512_terminal",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.008512826054356992,
+    "limit_seconds": 180,
+    "log": "selected-projective-import-20260924-broad-case-0410.log"
+  },
+  {
+    "target": "hypercurve_curve_region_boolean",
+    "name": "independent_nonlinear_line_parameters_compact_to_reusable_regions",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.008457019925117493,
+    "limit_seconds": 180,
+    "log": "selected-projective-import-20260924-broad-case-0411.log"
+  },
+  {
+    "target": "hypercurve_curve_region_boolean",
+    "name": "line_general_batch_obeys_the_approximate_512_terminal",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.0088004469871521,
+    "limit_seconds": 180,
+    "log": "selected-projective-import-20260924-broad-case-0412.log"
+  },
+  {
+    "target": "hypercurve_curve_region_boolean",
+    "name": "mixed_line_circular_conic_batch_obeys_the_approximate_512_terminal",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.032640610937960446,
+    "limit_seconds": 180,
+    "log": "selected-projective-import-20260924-broad-case-0413.log"
+  },
+  {
+    "target": "hypercurve_curve_region_boolean",
+    "name": "mixed_line_circular_conic_batch_reuses_one_authoritative_topology",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.11491876607760787,
+    "limit_seconds": 180,
+    "log": "selected-projective-import-20260924-broad-case-0414.log"
+  },
+  {
+    "target": "hypercurve_curve_region_boolean",
+    "name": "mixed_line_circular_conic_degeneracy_matrix_matches_native_results",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 2.46895233693067,
+    "limit_seconds": 180,
+    "log": "selected-projective-import-20260924-broad-case-0415.log"
+  },
+  {
+    "target": "hypercurve_curve_region_boolean",
+    "name": "native_chart_poles_do_not_block_finite_region_queries",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.008660916006192565,
+    "limit_seconds": 180,
+    "log": "selected-projective-import-20260924-broad-case-0416.log"
+  },
+  {
+    "target": "hypercurve_curve_region_boolean",
+    "name": "noncircular_conic_boolean_output_is_not_mislabeled_as_native_arc",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.004422195954248309,
+    "limit_seconds": 180,
+    "log": "selected-projective-import-20260924-broad-case-0417.log"
+  },
+  {
+    "target": "hypercurve_curve_region_boolean",
+    "name": "point_query_reports_when_approximate_policy_decides_a_symbolic_boundary",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.008758308948017657,
+    "limit_seconds": 180,
+    "log": "selected-projective-import-20260924-broad-case-0418.log"
+  },
+  {
+    "target": "hypercurve_curve_region_boolean",
+    "name": "region_intersection_carriers_replay_prepared_charts_and_outlive_inputs",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.0085369439329952,
+    "limit_seconds": 180,
+    "log": "selected-projective-import-20260924-broad-case-0419.log"
+  },
+  {
+    "target": "hypercurve_curve_region_boolean",
+    "name": "region_intersection_removes_authored_internal_and_canceled_boundaries",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.008484908030368388,
+    "limit_seconds": 180,
+    "log": "selected-projective-import-20260924-broad-case-0420.log"
+  },
+  {
+    "target": "hypercurve_curve_region_boolean",
+    "name": "regularized_affine_contacts_discard_lower_dimensional_intersections",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.00857065198943019,
+    "limit_seconds": 180,
+    "log": "selected-projective-import-20260924-broad-case-0421.log"
+  },
+  {
+    "target": "hypercurve_curve_region_boolean",
+    "name": "regularized_conic_tangencies_preserve_regions_but_not_point_intersections",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.016433192999102175,
+    "limit_seconds": 180,
+    "log": "selected-projective-import-20260924-broad-case-0422.log"
+  },
+  {
+    "target": "hypercurve_curve_region_boolean",
+    "name": "regularized_partial_shared_edges_resolve_exact_side_ownership",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.008465619059279561,
+    "limit_seconds": 180,
+    "log": "selected-projective-import-20260924-broad-case-0423.log"
+  },
+  {
+    "target": "hypercurve_curve_region_boolean",
+    "name": "regularized_topology_does_not_upgrade_terminal_connectivity",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.009109535021707416,
+    "limit_seconds": 180,
+    "log": "selected-projective-import-20260924-broad-case-0424.log"
+  },
+  {
+    "target": "hypercurve_curve_region_boolean",
+    "name": "regularized_topology_retains_only_the_policy_actually_consumed",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.004163404926657677,
+    "limit_seconds": 180,
+    "log": "selected-projective-import-20260924-broad-case-0425.log"
+  },
+  {
+    "target": "hypercurve_curve_region_boolean",
+    "name": "retained_regions_clip_degree_equivalent_shared_images_to_carrier_ranges",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.03262643201742321,
+    "limit_seconds": 180,
+    "log": "selected-projective-import-20260924-broad-case-0426.log"
+  },
+  {
+    "target": "hypercurve_curve_region_boolean",
+    "name": "retained_regions_clip_mobius_reparameterized_conics_to_carrier_ranges",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.06516065006144345,
+    "limit_seconds": 180,
+    "log": "selected-projective-import-20260924-broad-case-0427.log"
+  },
+  {
+    "target": "hypercurve_curve_region_boolean",
+    "name": "retained_regions_clip_non_axis_monotone_mobius_cubic_components",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.06516215892042965,
+    "limit_seconds": 180,
+    "log": "selected-projective-import-20260924-broad-case-0428.log"
+  },
+  {
+    "target": "hypercurve_curve_region_boolean",
+    "name": "retained_regions_clip_shared_source_components_to_carrier_ranges",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 0.016908540041185915,
+    "limit_seconds": 180,
+    "log": "selected-projective-import-20260924-broad-case-0429.log"
+  },
+  {
+    "target": "hypercurve_curve_region_boolean",
+    "name": "selected_fillet_region_intersection_closes_through_exterior_cap_booleans",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 3.970608075032942,
+    "limit_seconds": 180,
+    "log": "selected-projective-import-20260924-broad-case-0430.log"
+  },
+  {
+    "target": "hypercurve_pcb_boolean_regressions",
+    "name": "easyduino_uno_scale_process_image_with_holes_corpus",
+    "returncode": 0,
+    "passed": true,
+    "ignored": false,
+    "elapsed_seconds": 69.7285092480015,
+    "limit_seconds": 180,
+    "log": "selected-projective-import-20260924-broad-case-0379.log"
+  }
+]

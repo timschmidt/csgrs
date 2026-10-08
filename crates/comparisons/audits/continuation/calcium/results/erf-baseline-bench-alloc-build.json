@@ -1,0 +1,24 @@
+{
+  "tag": "erf-baseline-bench-alloc-build",
+  "started": "2026-09-08T10:55:28.926Z",
+  "finished": "2026-09-08T10:55:29.139Z",
+  "elapsedSeconds": 0.211243179,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison",
+  "command": "env",
+  "args": [
+    "TMPDIR=/home/tim/Documents/GitHub/workspace/calcium-build-tmp.gVX5v4",
+    "CARGO_INCREMENTAL=0",
+    "cargo",
+    "build",
+    "--offline",
+    "--release",
+    "--features",
+    "allocation-count",
+    "--manifest-path",
+    "audits/continuation/calcium/erf-baseline-bench/Cargo.toml",
+    "--target-dir",
+    "/home/tim/Documents/GitHub/workspace/.audit-builds/calcium-baseline"
+  ],
+  "code": 0,
+  "signal": null
+}

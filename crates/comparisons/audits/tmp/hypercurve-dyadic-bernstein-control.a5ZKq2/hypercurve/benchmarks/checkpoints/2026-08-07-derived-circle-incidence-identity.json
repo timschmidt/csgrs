@@ -1,0 +1,118 @@
+{
+  "schema": "hypercurve.performance-checkpoint.v1",
+  "captured_on": "2026-08-07",
+  "checkpoint": "exact derived-circle incidence identity and translation-zero fast path",
+  "implementation_revision": "1659f28c8358d45cdaf2392a38b2a57373a3e146",
+  "correctness_equivalent_baseline_revision": "05e74e30fa84e8f0004a12b1c21830141e6ef503",
+  "preceding_checkpoint": "2026-08-07-oblique-tensor-fusion.json",
+  "benchmark_source_changed": false,
+  "dependency_revisions_changed": false,
+  "lower_layer_modified": false,
+  "hypermesh_modified_or_benchmarked": false,
+  "scope": {
+    "changed": [
+      "zero-translation radial maps sign the exact scalar residual s^2*r0^2-r^2 before constructing any retained polynomial system",
+      "oblique three-field translated maps reuse the certified source-circle incidence |P-C|^2=r0^2",
+      "the oblique residual is built as s^2*r0^2 + 2*s*T dot (P-C) + |T|^2-r^2 with the retained positive homogeneous denominator",
+      "the direct regression now signs zero, interior, exterior, reflected, and translated derived contacts under both policies and both chord orientations"
+    ],
+    "unchanged": [
+      "the cardinal nonzero-translation expression path",
+      "the selected-root refinement and exact sign authority",
+      "STRICT and APPROXIMATE_512 terminal policy handling",
+      "the retained contact representation, public API, resource ceilings, and benchmark fixture"
+    ],
+    "rejected_experiment": "A general bivariate linear-combination rewrite for cardinal nonzero-translation incidence was measured and reverted because it increased cycles and branch misses in the established cardinal re-offset lane despite a small instruction reduction."
+  },
+  "exactness": {
+    "identity": "For Q=C+s(P-C)+T, expanding |Q-C|^2-r^2 and substituting the already-certified selected-root identity |P-C|^2=r0^2 gives the implemented expression exactly.",
+    "homogeneous_form": "The rational component is D^2*(s^2*r0^2+|T|^2-r^2)+2*s*D*T dot rational(P-C); the radical component is 2*s*D*T dot radical(P-C). D is the retained positive common denominator.",
+    "coefficients": "Every coefficient remains hyperreal::Real and all construction uses exact Real arithmetic; no finite preview or approximate coordinate enters the predicate.",
+    "policy": "The scalar fast path calls the shared policy-aware Real sign operation. The oblique path terminates in the existing selected-root trivariate radical sign predicate, so APPROXIMATE_512 remains only the final equality fallback when exact proof is unavailable.",
+    "failure_semantics": "Tensor-cap exhaustion still returns Unsupported/Uncertain through the existing classification path; the optimization introduces no guessed mathematical result."
+  },
+  "benchmark_method": {
+    "group": "algebraic_round_boolean/oblique_cusp_chord_bevel_reoffset",
+    "baseline_executable": "/tmp/hypercurve-oblique-tensor-fusion-05e74e3",
+    "current_executable": "target/oblique-opt-fused/release/deps/comparative-68819996ab3fdf67",
+    "cpu": 11,
+    "wall_primary": "Nine alternating process pairs, one Runner sample per process and eight timed operations after the untimed warm-up.",
+    "wall_final_sanity": "One pinned process per executable, seven calibrated 100 ms samples after the untimed warm-up.",
+    "perf": "perf stat -r 5, 32 timed operations plus one warm-up; subtract the implementation-filter=disabled process and divide by 33.",
+    "heap": "Heaptrack record-only, 32 timed operations plus one warm-up; subtract the disabled process and divide by 33.",
+    "size": "GNU size and stat on the all-feature comparative executables."
+  },
+  "wall_performance": {
+    "interpretation": "Wall time remains neutral within process and host noise; no throughput win or regression is claimed.",
+    "alternating_pairs": {
+      "baseline_median_ns": 27248652.9,
+      "current_median_ns": 27376671.6,
+      "median_paired_delta_percent": 0.4048,
+      "paired_delta_percent_range": [-1.42, 3.09]
+    },
+    "final_binary_sanity": {
+      "baseline_median_ns": 27208246.5,
+      "current_median_ns": 27136631.2,
+      "delta_percent": -0.263212
+    }
+  },
+  "deterministic_perf": {
+    "raw_array_order": [
+      "instructions",
+      "cycles",
+      "branches",
+      "branch_misses",
+      "cache_misses"
+    ],
+    "baseline_raw_disabled_process": [471452796, 203572610, 90199175, 1242749, 948470],
+    "baseline_raw_reoffset_process": [9209198123, 4008338679, 1764114255, 25792293, 19280110],
+    "baseline_normalized": [264780161.424, 115295941.485, 50724699.394, 743925.576, 555504.242],
+    "current_raw_disabled_process": [471240642, 201315567, 90158154, 1247095, 901420],
+    "current_raw_reoffset_process": [9198721539, 4011385068, 1759576347, 26031569, 18959819],
+    "current_normalized": [264469118.091, 115456651.545, 50588430.091, 751044.667, 547224.212],
+    "delta_percent": [-0.117472, 0.139389, -0.268645, 0.956963, -1.490543],
+    "interpretation": "The exact lane retires 0.12% fewer instructions and 0.27% fewer branches. Cycles are effectively neutral; branch-miss and cache-miss deltas are too noisy to claim."
+  },
+  "allocation_evidence": {
+    "baseline_raw_disabled_allocation_calls": 778854,
+    "baseline_raw_reoffset_allocation_calls": 14587971,
+    "baseline_normalized_allocation_calls": 418458.090909,
+    "current_raw_disabled_allocation_calls": 778378,
+    "current_raw_reoffset_allocation_calls": 14579014,
+    "current_normalized_allocation_calls": 418201.090909,
+    "allocation_call_delta": -257.0,
+    "allocation_call_delta_percent": -0.061416,
+    "interpretation": "The identity avoids 257 heap allocation calls per Boolean-plus-re-offset operation; heaptrack temporary-allocation counts were materially unchanged."
+  },
+  "linked_size": {
+    "baseline_file_bytes": 13138192,
+    "current_file_bytes": 13137192,
+    "file_delta_bytes": -1000,
+    "file_delta_percent": -0.007611,
+    "baseline_text_bytes": 10033599,
+    "current_text_bytes": 10032923,
+    "text_delta_bytes": -676,
+    "text_delta_percent": -0.006737,
+    "baseline_data_bytes": 311088,
+    "current_data_bytes": 311088,
+    "data_delta_bytes": 0,
+    "baseline_bss_bytes": 3984,
+    "current_bss_bytes": 4672,
+    "bss_delta_bytes": 688,
+    "baseline_allocated_total_bytes": 10348671,
+    "current_allocated_total_bytes": 10348683,
+    "allocated_total_delta_bytes": 12,
+    "interpretation": "The linked file and text shrink slightly; the 12-byte allocated-section increase is negligible and is reported rather than characterized as a size win."
+  },
+  "verification": {
+    "all_features_library": "cargo test --all-features --lib: 486 passed, 0 failed, 1 ignored",
+    "public_promotion": "cargo test --all-features --test hypercurve_curve_region_promotion: 66 passed, 0 failed",
+    "minimal_library": "cargo test --no-default-features --lib: 324 passed, 0 failed",
+    "all_features_clippy": "cargo clippy --all-targets --all-features -- -D warnings: passed for Hypercurve; only the pre-existing Hypertri dependency dead-code warning was emitted",
+    "minimal_clippy": "cargo clippy --all-targets --no-default-features -- -D warnings: passed",
+    "format": "cargo fmt --all -- --check: passed",
+    "benchmark_build": "cargo build --release --all-features --bench comparative --target-dir target/oblique-opt-fused: passed",
+    "direct_regression": "algebraic_cusp_semicircle_intersects_independent_field_oblique_chords_exactly",
+    "public_regression": "rotated_algebraic_round_regions_boolean_through_oblique_three_field_contacts"
+  }
+}

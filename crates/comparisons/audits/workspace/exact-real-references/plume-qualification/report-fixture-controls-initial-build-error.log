@@ -1,0 +1,39 @@
+   Compiling plume-qualification v0.0.0 (/home/tim/Documents/GitHub/workspace/exact-real-references/plume-qualification)
+error[E0277]: cannot subtract `rational::arith::AddIncomplete<'_>` from `rug::Rational`
+  --> report_fixture_controls.rs:69:28
+   |
+69 |     let lower_sqrt=(q(30,1)-(&center+&radius))/2;
+   |                            ^ no implementation for `rug::Rational - rational::arith::AddIncomplete<'_>`
+   |
+   = help: the trait `Sub<rational::arith::AddIncomplete<'_>>` is not implemented for `rug::Rational`
+   = help: the following other types implement trait `Sub<Rhs>`:
+             `&rug::Rational` implements `Sub<&MiniRational>`
+             `&rug::Rational` implements `Sub<&i128>`
+             `&rug::Rational` implements `Sub<&i16>`
+             `&rug::Rational` implements `Sub<&i32>`
+             `&rug::Rational` implements `Sub<&i64>`
+             `&rug::Rational` implements `Sub<&i8>`
+             `&rug::Rational` implements `Sub<&isize>`
+             `&rug::Rational` implements `Sub<&rug::Float>`
+           and 58 others
+
+error[E0277]: cannot subtract `rational::arith::SubIncomplete<'_>` from `rug::Rational`
+  --> report_fixture_controls.rs:70:28
+   |
+70 |     let upper_sqrt=(q(30,1)-(&center-&radius))/2;
+   |                            ^ no implementation for `rug::Rational - rational::arith::SubIncomplete<'_>`
+   |
+   = help: the trait `Sub<rational::arith::SubIncomplete<'_>>` is not implemented for `rug::Rational`
+   = help: the following other types implement trait `Sub<Rhs>`:
+             `&rug::Rational` implements `Sub<&MiniRational>`
+             `&rug::Rational` implements `Sub<&i128>`
+             `&rug::Rational` implements `Sub<&i16>`
+             `&rug::Rational` implements `Sub<&i32>`
+             `&rug::Rational` implements `Sub<&i64>`
+             `&rug::Rational` implements `Sub<&i8>`
+             `&rug::Rational` implements `Sub<&isize>`
+             `&rug::Rational` implements `Sub<&rug::Float>`
+           and 58 others
+
+For more information about this error, try `rustc --explain E0277`.
+error: could not compile `plume-qualification` (bin "report_fixture_controls") due to 2 previous errors

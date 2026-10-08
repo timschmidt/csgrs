@@ -1,0 +1,14 @@
+{
+  "tag": "charpoly-domain-inventory",
+  "started": "2026-09-09T03:19:12.910Z",
+  "finished": "2026-09-09T03:19:13.369Z",
+  "elapsedSeconds": 0.45696857599999996,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison",
+  "command": "node",
+  "args": [
+    "audits/continuation/calcium/inventory.mjs",
+    "verify"
+  ],
+  "code": 0,
+  "signal": null
+}

@@ -1,0 +1,10 @@
+   Compiling hyperreal v0.13.1 (/home/tim/Documents/GitHub/workspace/hyperreal)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1.74s
+     Running unittests src/lib.rs (target/debug/deps/hyperreal-99435bbe0ce6f1f3)
+
+running 2 tests
+test computable::node::tests::affine_offset_scaling_keeps_extreme_binary_exponents_exact ... ok
+test computable::node::tests::affine_offsets_preserve_shared_bases_through_exact_scaling ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 723 filtered out; finished in 0.00s
+

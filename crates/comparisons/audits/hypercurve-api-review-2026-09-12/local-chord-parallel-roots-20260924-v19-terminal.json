@@ -1,0 +1,575 @@
+{
+  "checks": [
+    {
+      "label": "fmt",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustfmt",
+        "--edition",
+        "2024",
+        "--check",
+        "src/bezier_offset.rs",
+        "src/bezier_parameter.rs",
+        "src/bezier_region.rs",
+        "src/bezier_split.rs",
+        "src/curve.rs",
+        "src/curve_corner_chain.rs",
+        "src/curve_region_boolean.rs",
+        "src/curve_region_trim.rs",
+        "src/curve_subdivision.rs",
+        "src/curve_support_intersection.rs"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 3.4391630509635434,
+      "log": "local-chord-parallel-roots-20260924-v19-fmt.log"
+    },
+    {
+      "label": "clippy-1",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "clippy",
+        "--all-targets",
+        "--all-features",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 26.0238541290164,
+      "log": "local-chord-parallel-roots-20260924-v19-clippy-1.log"
+    },
+    {
+      "label": "clippy-2",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "clippy",
+        "--all-targets",
+        "--no-default-features",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 24.921064059017226,
+      "log": "local-chord-parallel-roots-20260924-v19-clippy-2.log"
+    }
+  ],
+  "cases": [
+    {
+      "label": "recursive_parameter_projection_preserves_roots_through_refinement_and_charts",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/local-chord-parallel-roots-20260924-v19-libtest",
+        "--exact",
+        "bezier_offset::conversion_tests::recursive_parameter_projection_preserves_roots_through_refinement_and_charts",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.2768807819811627,
+      "log": "local-chord-parallel-roots-20260924-v19-recursive_parameter_projection_preserves_roots_through_refinement_and_charts.log"
+    },
+    {
+      "label": "independent_singleton_charts_reuse_nested_root_identity",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/local-chord-parallel-roots-20260924-v19-libtest",
+        "--exact",
+        "bezier_parameter::conversion_tests::independent_singleton_charts_reuse_nested_root_identity",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.27182572800666094,
+      "log": "local-chord-parallel-roots-20260924-v19-independent_singleton_charts_reuse_nested_root_identity.log"
+    },
+    {
+      "label": "retained_parallel_contact_keeps_local_root_through_angular_and_point_queries",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/local-chord-parallel-roots-20260924-v19-libtest",
+        "--exact",
+        "bezier_offset::conversion_tests::retained_parallel_contact_keeps_local_root_through_angular_and_point_queries",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.2860302940243855,
+      "log": "local-chord-parallel-roots-20260924-v19-retained_parallel_contact_keeps_local_root_through_angular_and_point_queries.log"
+    },
+    {
+      "label": "recursive_chord_parallel_zero_norm_midpoint_is_not_a_component",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/local-chord-parallel-roots-20260924-v19-libtest",
+        "--exact",
+        "bezier_offset::conversion_tests::recursive_chord_parallel_zero_norm_midpoint_is_not_a_component",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.28522074897773564,
+      "log": "local-chord-parallel-roots-20260924-v19-recursive_chord_parallel_zero_norm_midpoint_is_not_a_component.log"
+    },
+    {
+      "label": "recursive_chord_parallel_local_roots_reject_conjugates_and_clip_exactly",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/local-chord-parallel-roots-20260924-v19-libtest",
+        "--exact",
+        "bezier_offset::conversion_tests::recursive_chord_parallel_local_roots_reject_conjugates_and_clip_exactly",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.31005961494520307,
+      "log": "local-chord-parallel-roots-20260924-v19-recursive_chord_parallel_local_roots_reject_conjugates_and_clip_exactly.log"
+    },
+    {
+      "label": "common_scalar_gap_refines_mixed_native_parameters_without_projection",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/local-chord-parallel-roots-20260924-v19-libtest",
+        "--exact",
+        "bezier_offset::conversion_tests::common_scalar_gap_refines_mixed_native_parameters_without_projection",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.2944539659656584,
+      "log": "local-chord-parallel-roots-20260924-v19-common_scalar_gap_refines_mixed_native_parameters_without_projection.log"
+    },
+    {
+      "label": "resource_blocked_selected_parallel_parameter_retains_local_fillet_frame",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/local-chord-parallel-roots-20260924-v19-libtest",
+        "--exact",
+        "curve::tests::resource_blocked_selected_parallel_parameter_retains_local_fillet_frame",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.27957761695142835,
+      "log": "local-chord-parallel-roots-20260924-v19-resource_blocked_selected_parallel_parameter_retains_local_fillet_frame.log"
+    },
+    {
+      "label": "selected_parallel_normal_circle_intersects_rational_curves_exactly",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/local-chord-parallel-roots-20260924-v19-libtest",
+        "--exact",
+        "bezier_offset::conversion_tests::selected_parallel_normal_circle_intersects_rational_curves_exactly",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.3118137050187215,
+      "log": "local-chord-parallel-roots-20260924-v19-selected_parallel_normal_circle_intersects_rational_curves_exactly.log"
+    },
+    {
+      "label": "selected_parallel_normal_tangent_replay_accepts_an_exact_center_parameter",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/local-chord-parallel-roots-20260924-v19-libtest",
+        "--exact",
+        "bezier_offset::conversion_tests::selected_parallel_normal_tangent_replay_accepts_an_exact_center_parameter",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.28986464091576636,
+      "log": "local-chord-parallel-roots-20260924-v19-selected_parallel_normal_tangent_replay_accepts_an_exact_center_parameter.log"
+    },
+    {
+      "label": "selected_affine_tangent_source_retains_incident_endpoint_and_contacts_locally",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/local-chord-parallel-roots-20260924-v19-libtest",
+        "--exact",
+        "bezier_offset::conversion_tests::selected_affine_tangent_source_retains_incident_endpoint_and_contacts_locally",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.29010382399428636,
+      "log": "local-chord-parallel-roots-20260924-v19-selected_affine_tangent_source_retains_incident_endpoint_and_contacts_locally.log"
+    },
+    {
+      "label": "nonrepresented_chord_parallel_corner_fillets_without_reintersection",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/local-chord-parallel-roots-20260924-v19-libtest",
+        "--exact",
+        "bezier_region::tests::nonrepresented_chord_parallel_corner_fillets_without_reintersection",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 9.954578852048144,
+      "log": "local-chord-parallel-roots-20260924-v19-nonrepresented_chord_parallel_corner_fillets_without_reintersection.log"
+    },
+    {
+      "label": "nonlinear_algebraic_endpoint_fillet_uses_complete_incident_domain",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/local-chord-parallel-roots-20260924-v19-libtest",
+        "--exact",
+        "bezier_region::tests::nonlinear_algebraic_endpoint_fillet_uses_complete_incident_domain",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 40.50431011803448,
+      "log": "local-chord-parallel-roots-20260924-v19-nonlinear_algebraic_endpoint_fillet_uses_complete_incident_domain.log"
+    },
+    {
+      "label": "recursive_circle_queries_preserve_tangent_scale_and_local_roots",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/local-chord-parallel-roots-20260924-v19-libtest",
+        "--exact",
+        "bezier_offset::conversion_tests::recursive_circle_queries_preserve_tangent_scale_and_local_roots",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 2.737425598083064,
+      "log": "local-chord-parallel-roots-20260924-v19-recursive_circle_queries_preserve_tangent_scale_and_local_roots.log"
+    },
+    {
+      "label": "recursive_parallel_expression_signs_keep_the_selected_speed_sheet",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/local-chord-parallel-roots-20260924-v19-libtest",
+        "--exact",
+        "bezier_offset::conversion_tests::recursive_parallel_expression_signs_keep_the_selected_speed_sheet",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.28613682405557483,
+      "log": "local-chord-parallel-roots-20260924-v19-recursive_parallel_expression_signs_keep_the_selected_speed_sheet.log"
+    },
+    {
+      "label": "recursive_parallel_expression_signs_reject_poles_and_zero_speed",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/local-chord-parallel-roots-20260924-v19-libtest",
+        "--exact",
+        "bezier_offset::conversion_tests::recursive_parallel_expression_signs_reject_poles_and_zero_speed",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.3378007779829204,
+      "log": "local-chord-parallel-roots-20260924-v19-recursive_parallel_expression_signs_reject_poles_and_zero_speed.log"
+    },
+    {
+      "label": "analytic_axis_and_circle_predicates_keep_positive_frame_sheet_and_weight_sign",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/local-chord-parallel-roots-20260924-v19-libtest",
+        "--exact",
+        "bezier_offset::conversion_tests::analytic_axis_and_circle_predicates_keep_positive_frame_sheet_and_weight_sign",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.28057240589987487,
+      "log": "local-chord-parallel-roots-20260924-v19-analytic_axis_and_circle_predicates_keep_positive_frame_sheet_and_weight_sign.log"
+    },
+    {
+      "label": "analytic_scalar_predicates_distinguish_stationary_points_from_source_poles",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/local-chord-parallel-roots-20260924-v19-libtest",
+        "--exact",
+        "bezier_offset::conversion_tests::analytic_scalar_predicates_distinguish_stationary_points_from_source_poles",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.2683999420842156,
+      "log": "local-chord-parallel-roots-20260924-v19-analytic_scalar_predicates_distinguish_stationary_points_from_source_poles.log"
+    },
+    {
+      "label": "recursive_polynomial_predicates_reuse_the_retained_field_relation",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/local-chord-parallel-roots-20260924-v19-libtest",
+        "--exact",
+        "bezier_offset::conversion_tests::recursive_polynomial_predicates_reuse_the_retained_field_relation",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.26939709309954196,
+      "log": "local-chord-parallel-roots-20260924-v19-recursive_polynomial_predicates_reuse_the_retained_field_relation.log"
+    },
+    {
+      "label": "recursive_polynomial_queries_reuse_a_selected_proper_factor",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/local-chord-parallel-roots-20260924-v19-libtest",
+        "--exact",
+        "bezier_offset::conversion_tests::recursive_polynomial_queries_reuse_a_selected_proper_factor",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.29792312590871006,
+      "log": "local-chord-parallel-roots-20260924-v19-recursive_polynomial_queries_reuse_a_selected_proper_factor.log"
+    },
+    {
+      "label": "pair_radial_circle_intersects_a_general_analytic_parallel_exactly",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/local-chord-parallel-roots-20260924-v19-libtest",
+        "--exact",
+        "bezier_offset::conversion_tests::pair_radial_circle_intersects_a_general_analytic_parallel_exactly",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.4384514919947833,
+      "log": "local-chord-parallel-roots-20260924-v19-pair_radial_circle_intersects_a_general_analytic_parallel_exactly.log"
+    },
+    {
+      "label": "represented_circle_retained_point_incidence_observes_requested_policy",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/local-chord-parallel-roots-20260924-v19-libtest",
+        "--exact",
+        "bezier_offset::conversion_tests::represented_circle_retained_point_incidence_observes_requested_policy",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.28576702007558197,
+      "log": "local-chord-parallel-roots-20260924-v19-represented_circle_retained_point_incidence_observes_requested_policy.log"
+    },
+    {
+      "label": "independent_field_corner_edits_preserve_normalized_sets",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/local-chord-parallel-roots-20260924-v19-libtest",
+        "--exact",
+        "bezier_region::tests::independent_field_corner_edits_preserve_normalized_sets",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.8317865299759433,
+      "log": "local-chord-parallel-roots-20260924-v19-independent_field_corner_edits_preserve_normalized_sets.log"
+    },
+    {
+      "label": "retained_chord_incidence_replays_independently_allocated_coefficient_fields",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/local-chord-parallel-roots-20260924-v19-libtest",
+        "--exact",
+        "bezier_offset::conversion_tests::retained_chord_incidence_replays_independently_allocated_coefficient_fields",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.3248712361091748,
+      "log": "local-chord-parallel-roots-20260924-v19-retained_chord_incidence_replays_independently_allocated_coefficient_fields.log"
+    },
+    {
+      "label": "dense_projection_does_not_square_an_absent_radical",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/local-chord-parallel-roots-20260924-v19-libtest",
+        "--exact",
+        "bezier_offset::conversion_tests::dense_projection_does_not_square_an_absent_radical",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.2694353900151327,
+      "log": "local-chord-parallel-roots-20260924-v19-dense_projection_does_not_square_an_absent_radical.log"
+    },
+    {
+      "label": "dense_projection_single_radical_replays_the_authored_sheet",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/local-chord-parallel-roots-20260924-v19-libtest",
+        "--exact",
+        "bezier_offset::conversion_tests::dense_projection_single_radical_replays_the_authored_sheet",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.2841381119797006,
+      "log": "local-chord-parallel-roots-20260924-v19-dense_projection_single_radical_replays_the_authored_sheet.log"
+    },
+    {
+      "label": "chord_parallel_monotonicity_covers_the_retained_parameter_range",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/local-chord-parallel-roots-20260924-v19-libtest",
+        "--exact",
+        "bezier_offset::conversion_tests::chord_parallel_monotonicity_covers_the_retained_parameter_range",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.28509424603544176,
+      "log": "local-chord-parallel-roots-20260924-v19-chord_parallel_monotonicity_covers_the_retained_parameter_range.log"
+    },
+    {
+      "label": "recursive_chord_kernel_retains_all_cubic_crossings_with_opposite_endpoint_sides",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/local-chord-parallel-roots-20260924-v19-libtest",
+        "--exact",
+        "bezier_offset::conversion_tests::recursive_chord_kernel_retains_all_cubic_crossings_with_opposite_endpoint_sides",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.26715593703556806,
+      "log": "local-chord-parallel-roots-20260924-v19-recursive_chord_kernel_retains_all_cubic_crossings_with_opposite_endpoint_sides.log"
+    },
+    {
+      "label": "independent_field_chord_replays_a_genuine_parallel_endpoint_contact",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/local-chord-parallel-roots-20260924-v19-libtest",
+        "--exact",
+        "bezier_region::tests::independent_field_chord_replays_a_genuine_parallel_endpoint_contact",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 1.433119624038227,
+      "log": "local-chord-parallel-roots-20260924-v19-independent_field_chord_replays_a_genuine_parallel_endpoint_contact.log"
+    },
+    {
+      "label": "recursive_chord_unrotated_derived_linear_and_equality_queries_are_complete",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/local-chord-parallel-roots-20260924-v19-libtest",
+        "--exact",
+        "bezier_offset::conversion_tests::recursive_chord_unrotated_derived_linear_and_equality_queries_are_complete",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.43179673806298524,
+      "log": "local-chord-parallel-roots-20260924-v19-recursive_chord_unrotated_derived_linear_and_equality_queries_are_complete.log"
+    },
+    {
+      "label": "procedural_endpoint_chord_replays_complete_parallel_contacts",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/local-chord-parallel-roots-20260924-v19-libtest",
+        "--exact",
+        "bezier_offset::conversion_tests::procedural_endpoint_chord_replays_complete_parallel_contacts",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.27127236395608634,
+      "log": "local-chord-parallel-roots-20260924-v19-procedural_endpoint_chord_replays_complete_parallel_contacts.log"
+    },
+    {
+      "label": "recursive_projective_chord_replays_nonzero_analytic_parallel",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/local-chord-parallel-roots-20260924-v19-libtest",
+        "--exact",
+        "bezier_offset::conversion_tests::recursive_projective_chord_replays_nonzero_analytic_parallel",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.27304844197351485,
+      "log": "local-chord-parallel-roots-20260924-v19-recursive_projective_chord_replays_nonzero_analytic_parallel.log"
+    },
+    {
+      "label": "recursive_projective_chord_rejects_constant_conjugate_norm_component",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/local-chord-parallel-roots-20260924-v19-libtest",
+        "--exact",
+        "bezier_offset::conversion_tests::recursive_projective_chord_rejects_constant_conjugate_norm_component",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.2689747220138088,
+      "log": "local-chord-parallel-roots-20260924-v19-recursive_projective_chord_rejects_constant_conjugate_norm_component.log"
+    },
+    {
+      "label": "recursive_projective_chord_retains_positive_degree_selected_conjugate_fiber",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/local-chord-parallel-roots-20260924-v19-libtest",
+        "--exact",
+        "bezier_offset::conversion_tests::recursive_projective_chord_retains_positive_degree_selected_conjugate_fiber",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.3304848010884598,
+      "log": "local-chord-parallel-roots-20260924-v19-recursive_projective_chord_retains_positive_degree_selected_conjugate_fiber.log"
+    },
+    {
+      "label": "recursive_projective_chord_replays_identically_zero_norm_sheet",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/local-chord-parallel-roots-20260924-v19-libtest",
+        "--exact",
+        "bezier_offset::conversion_tests::recursive_projective_chord_replays_identically_zero_norm_sheet",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.27473798603750765,
+      "log": "local-chord-parallel-roots-20260924-v19-recursive_projective_chord_replays_identically_zero_norm_sheet.log"
+    }
+  ],
+  "all_processes_reaped": true,
+  "binary_sha256": "2ed9ec4f5f7ce908fc0243230ce08bd6a50f6c4c234a9198d673bcf2a4984993",
+  "all_sources_unchanged": true
+}

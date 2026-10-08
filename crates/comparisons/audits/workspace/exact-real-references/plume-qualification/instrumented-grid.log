@@ -1,0 +1,36 @@
+FAIL int-div-negative ("([-1,-1,-1],-1)",-7,4) Right False
+FAIL int-div-negative ("([-1,-1,-1],-1)",-3,4) Right False
+FAIL int-div-negative ("([-1,-1,-1],-1)",-2,4) Right False
+FAIL capped-double ([-1,0,-1],0) Right False
+FAIL capped-double ([-1,0,-1],0) Right False
+FAIL capped-double ([-1,0,-1],0) Right False
+FAIL representation-float-div ("([-1,-1,-1],-1)","([0,0,1],0)") Right False
+FAIL representation-float-div ("([-1,-1,-1],-1)","([0,0,1],0)") Right False
+FAIL representation-float-div ("([-1,-1,-1],-1)","([0,0,1],0)") Right False
+FAIL strict-comparison ("([-1,-1,-1],0)","([-1,-1,-1],-1)") Right False
+FAIL strict-comparison ("([-1,-1,-1],0)","([-1,-1,-1],1)") Right False
+FAIL strict-comparison ("([-1,-1,0],-1)","([-1,-1,-1],-1)") Right False
+FAIL nested-limit (-3,1,4) Right False
+FAIL nested-limit (-3,1,16) Right False
+FAIL nested-limit (-3,1,32) Right False
+operation checks failures exceptions
+absolute 243 0 0
+add 17301 0 0
+average 19683 0 0
+average-neg 19683 0 0
+average3 19683 0 0
+capped-double 243 21 0
+convert 243 0 0
+cross-multiply 19683 0 0
+float-div 540 0 0
+int-div-negative 972 967 0
+int-div-positive 972 0 0
+maximum 19683 0 0
+minimum 19683 0 0
+multiply 19683 0 0
+negate 243 0 0
+nested-limit 102 3 0
+representation-float-div 17982 870 0
+strict-comparison 6094 1980 0
+subtract 17301 0 0
+TOTAL (200017,3841,0)

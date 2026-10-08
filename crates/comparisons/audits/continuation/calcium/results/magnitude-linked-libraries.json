@@ -1,0 +1,13 @@
+{
+  "tag": "magnitude-linked-libraries",
+  "started": "2026-09-09T23:02:33.473Z",
+  "finished": "2026-09-09T23:02:33.500Z",
+  "elapsedSeconds": 0.024598033999999998,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison",
+  "command": "ldd",
+  "args": [
+    "/tmp/calcium-magnitude.ipqBZw/magnitude-controls"
+  ],
+  "code": 0,
+  "signal": null
+}

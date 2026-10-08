@@ -1,0 +1,39 @@
+{
+  "checks": [
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "clippy",
+        "--all-targets",
+        "--all-features",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "returncode": 0,
+      "log": "rational-polynomial-20260924-v6-inventory-clippy-0.log"
+    },
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "clippy",
+        "--all-targets",
+        "--no-default-features",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "returncode": 0,
+      "log": "rational-polynomial-20260924-v6-inventory-clippy-1.log"
+    }
+  ],
+  "all_processes_reaped": true,
+  "returncode": 0,
+  "log": "rational-polynomial-20260924-v6-inventory-test.log",
+  "binary_sha256": "063b990d45c827d6ac3bdf2ef8c91cfd0c18ab5ee46fb8b1ea62e26cb64c992b",
+  "all_sources_unchanged": true
+}

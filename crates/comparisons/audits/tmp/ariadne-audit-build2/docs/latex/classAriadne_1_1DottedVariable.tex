@@ -1,0 +1,50 @@
+\doxysubsection{Dotted\+Variable\texorpdfstring{$<$}{<} T \texorpdfstring{$>$}{>} Class Template Reference}
+\hypertarget{classAriadne_1_1DottedVariable}{}\label{classAriadne_1_1DottedVariable}\index{DottedVariable$<$ T $>$@{DottedVariable$<$ T $>$}}
+
+
+{\ttfamily \#include $<$variable.\+hpp$>$}
+
+
+
+\doxysubsubsection{Description}
+\subsubsection*{template$<$class T$>$\newline
+class Ariadne\+::\+Dotted\+Variable$<$ T $>$}
+A named variable of type {\itshape T} decorated by a dot representing differentiation with respect to time. 
+
+\begin{DoxyParagraph}{{\bfseries{Example}} }
+
+\begin{DoxyCodeInclude}{0}
+
+\end{DoxyCodeInclude}
+ 
+\end{DoxyParagraph}
+\begin{DoxySeeAlso}{See also}
+\doxylink{classAriadne_1_1Variable}{Variable}, \doxylink{classAriadne_1_1Assignment}{Assignment} 
+\end{DoxySeeAlso}
+\doxysubsubsubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1DottedVariable_a1dc735980c11af6ccaffbe863cde5bf5}\label{classAriadne_1_1DottedVariable_a1dc735980c11af6ccaffbe863cde5bf5} 
+\mbox{\hyperlink{classAriadne_1_1Assignment}{Assignment}}$<$ \mbox{\hyperlink{classAriadne_1_1DottedVariable}{Dotted\+Variable}}$<$ T $>$, \mbox{\hyperlink{classAriadne_1_1Expression}{Expression}}$<$ T $>$ $>$ {\bfseries operator=} (const \mbox{\hyperlink{classAriadne_1_1Expression}{Expression}}$<$ T $>$ \&e) const
+\begin{DoxyCompactList}\small\item\em Construct an assignment statement representing the differential equation {\itshape dot(var)} \+:= {\itshape expr}. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsubsection*{Friends}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1DottedVariable_ad69299082091504f19ec710e225b27e8}\label{classAriadne_1_1DottedVariable_ad69299082091504f19ec710e225b27e8} 
+\mbox{\hyperlink{classAriadne_1_1DottedVariable}{Dotted\+Variable}}$<$ \mbox{\hyperlink{classAriadne_1_1Real}{Real}} $>$ {\bfseries dot} (const \mbox{\hyperlink{classAriadne_1_1Variable}{Variable}}$<$ \mbox{\hyperlink{classAriadne_1_1Real}{Real}} $>$ \&var)
+\begin{DoxyCompactList}\small\item\em Decorate a simple variable with a dot. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsubsection*{Related Types and Functions}
+(Note that these are not member symbols.) \begin{Indent}\textbf{ Type synonyms}\par
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1DottedVariable_a9dbb22900b547aa89b984573ec52a129}\label{classAriadne_1_1DottedVariable_a9dbb22900b547aa89b984573ec52a129} 
+using {\bfseries Dotted\+Real\+Variable} = \mbox{\hyperlink{classAriadne_1_1DottedVariable}{Dotted\+Variable}}$<$\mbox{\hyperlink{classAriadne_1_1Real}{Real}}$>$
+\end{DoxyCompactItemize}
+\end{Indent}
+
+
+The documentation for this class was generated from the following files\+:\begin{DoxyCompactItemize}
+\item 
+source/symbolic/\mbox{\hyperlink{expression_8decl_8hpp}{expression.\+decl.\+hpp}}\item 
+source/symbolic/\mbox{\hyperlink{variable_8hpp}{variable.\+hpp}}\item 
+source/symbolic/\mbox{\hyperlink{assignment_8hpp}{assignment.\+hpp}}\end{DoxyCompactItemize}

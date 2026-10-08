@@ -1,0 +1,68 @@
+{
+  "status": "implemented, qualified, committed; original goal active",
+  "commits": {
+    "hypercurve": "5060fbb018ce18c850d5c4a4a4d4e49fd85c825a",
+    "hypersolve": "54859d54c7f112bc421712aec1862138da8cca42",
+    "hyperbrep": "8a84ee7db02fd2720ac89a1a6a227ee4ec2a8171"
+  },
+  "preceding_hypercurve_commit": "496ac88bedec6bf43b9b8f9b4096ac19778216d3",
+  "preceding_hypersolve_commit": "9211d62fe0b2322e60110da19afb95fdbda3704b",
+  "implementation": "Expose the existing exact Hypersolve selected-root sign query directly and use it from Hypercurve before its GCD/filter-root isolation path. The shared Sturm-Tarski query reuses the selected singleton domain, accepts arbitrary exact Real coefficients, and makes all scalar decisions strictly. The previous complete fallback remains when the shared query declines. No root cache, root carrier, compatibility wrapper or alias was added.",
+  "regression": "At the positive root of 2*t^3-1, query that relation shifted by zero and +/-2^-600, including negated predicates, repeated defining roots and both contexts. Exact signs no longer require the retained parameter refinement chain. Existing selected-root, boundary-ownership, nonrational coefficient and unbounded-refinement tests also pass.",
+  "baseline": "shared-selected-root-sign-baseline.log: preceding source constructs the defining refinement chain and fails the new regression.",
+  "focused": "shared-selected-root-sign-focused.log: five tests passed in 0.06 seconds.",
+  "tests": {
+    "hypercurve": {
+      "passed": 1450,
+      "ignored": 6,
+      "targets": 13,
+      "log": "shared-selected-root-sign-hypercurve-tests.log",
+      "exit_code": 0
+    },
+    "hyperbrep": {
+      "passed": 232,
+      "ignored": 0,
+      "targets": 1,
+      "log": "shared-selected-root-sign-hyperbrep-tests.log",
+      "exit_code": 0
+    },
+    "hypersolve": {
+      "passed": 487,
+      "ignored": 0,
+      "targets": 1,
+      "log": "shared-selected-root-sign-hypersolve-tests.log",
+      "exit_code": 0
+    }
+  },
+  "freshly_run_total": 2169,
+  "established_expensive_hypercurve_exclusions": 4,
+  "checks": [
+    "shared-selected-root-sign-hypercurve-check.log: exit 0",
+    "shared-selected-root-sign-hyperbrep-check.log: exit 0",
+    "shared-selected-root-sign-hypersolve-check.log: exit 0",
+    "changed-file rustfmt --check and both git diff --check: exit 0"
+  ],
+  "source_sha256": {
+    "hypercurve/src/bezier_parameter.rs": "45706f65c7b1baf98d69a54c9f4cd94f778b5e7adea511e7dec9f6fdcfe019da",
+    "hypersolve/src/lib.rs": "9896c7dd91b919147b4f2b9ee41e7462752aaccf738a89fd4b63138fdd02f3fe",
+    "hypersolve/src/root_sign.rs": "db394ace89a23d3a455a4fc6de069641e94992dc56d07da7d573e06b31f35db0"
+  },
+  "diagnostics": {
+    "binary": "stationary-ph-offset-shared-root-sign",
+    "binary_sha256": "eb4f5aa48da80df08ccddad6a1c2d014269d23cdf4c05b2047d32ed31fbb8d0e",
+    "log": "stationary-ph-offset-shared-root-sign.log",
+    "timeout_seconds": 60,
+    "exit_code": 124,
+    "first_offset": "Certified with degree-five analytic source, 3.756409589 seconds.",
+    "second_offset": "No result before total timeout; no inward closure repair or application speedup claimed.",
+    "stack": "stationary-ph-shared-root-sign-stack.log",
+    "finding": "The sample uses Hypersolve sign_at_selected_root in coefficient signing during local polynomial refinement; expensive integer remainder content remains. The refiner still signs both old bracket endpoints before deeper refinement although crossing construction already owns their signs. The profile alone does not distinguish an endpoint sign from a new midpoint sign.",
+    "library_duration_seconds": 104.19,
+    "preceding_library_duration_seconds": 101.16,
+    "timing_scope": "The library test run overlapped the short diagnostic profile; these durations are qualification observations, not controlled application benchmarks."
+  },
+  "next_implementation": "Retain exact endpoint signs with each Polynomial parameter bracket. recursive_projective_polynomial_unit_parameters_with_crossing already owns crossing.start_sign and crossing.end_sign, but drops them. refined_parameter re-signs both endpoints before every deeper request. Store proof with the Polynomial authority variant, seed it from the crossing, preserve it through exact field embeddings and identity changes, update it on exact midpoint collapse, and reset it on a changed projective polynomial chart unless its sign transform is proved. Lazy exact endpoint proof for other local isolators must be reusable across parameter clones. Preserve original root selection, cumulative refinement, and both policies.",
+  "clean_repository_count": 30,
+  "workspace_state": "shared-selected-root-sign-workspace-after-commit.json",
+  "goal_status": "active"
+}

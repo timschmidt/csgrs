@@ -1,0 +1,15 @@
+{
+  "tag": "flint-ca-tests",
+  "started": "2026-09-08T08:30:47.317Z",
+  "finished": "2026-09-08T08:30:49.179Z",
+  "elapsedSeconds": 1.8600221270000001,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exact-real-references/flint",
+  "command": "make",
+  "args": [
+    "-j4",
+    "check",
+    "MOD=ca"
+  ],
+  "code": 0,
+  "signal": null
+}

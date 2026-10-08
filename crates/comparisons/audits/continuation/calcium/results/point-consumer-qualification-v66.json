@@ -1,0 +1,13 @@
+{
+  "tag": "point-consumer-qualification-v66",
+  "started": "2026-09-11T03:13:18.776Z",
+  "finished": "2026-09-11T03:16:13.085Z",
+  "elapsedSeconds": 174.306014361,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "node",
+  "args": [
+    "qualify-point-consumer-v66.mjs"
+  ],
+  "code": 0,
+  "signal": null
+}

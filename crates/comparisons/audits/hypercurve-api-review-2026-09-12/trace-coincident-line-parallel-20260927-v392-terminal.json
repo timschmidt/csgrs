@@ -1,0 +1,64 @@
+{
+  "source_manifest": "coincident-circular-constraints-20260927-v390-sources.json",
+  "source_directory": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/source-archives/trace-coincident-line-parallel-20260927-v392",
+  "trial": {
+    "hypercurve/src/error.rs": "5be51eaf83039d74ea77cba5ffa5cd9af04dcb09dc7b54b9a42f62c2d32f76a3"
+  },
+  "probe_sha256": "1c19fb240075259769382b26337a27b0288ba0d62be0e66954718f4ec15a4c2e",
+  "records": [
+    {
+      "label": "library-build",
+      "returncode": 0,
+      "elapsed_seconds": 80.9421601369977,
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "build",
+        "--lib",
+        "--release",
+        "--all-features",
+        "--message-format=json",
+        "--locked",
+        "--offline"
+      ],
+      "log": "trace-coincident-line-parallel-20260927-v392-library-build.log"
+    },
+    {
+      "label": "probe-build",
+      "returncode": 0,
+      "elapsed_seconds": 0.3645372991450131,
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustc",
+        "--edition=2024",
+        "-C",
+        "opt-level=3",
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/trace-coincident-line-parallel-20260927-v392.rs",
+        "--extern",
+        "hypercurve=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/libhypercurve.rlib",
+        "-L",
+        "dependency=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps",
+        "-o",
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/trace-coincident-line-parallel-20260927-v392"
+      ],
+      "log": "trace-coincident-line-parallel-20260927-v392-probe-build.log"
+    },
+    {
+      "label": "probe",
+      "returncode": 0,
+      "elapsed_seconds": 0.2142033870331943,
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/trace-coincident-line-parallel-20260927-v392"
+      ],
+      "log": "trace-coincident-line-parallel-20260927-v392-probe.log"
+    }
+  ],
+  "all_processes_reaped": true,
+  "library": {
+    "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/libhypercurve.rlib",
+    "sha256": "32925cb47cad856c7e028c24598b274ef9f0ad188d21c8b2675c7ee770f60e5f"
+  },
+  "binary": {
+    "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/trace-coincident-line-parallel-20260927-v392",
+    "sha256": "2c63b50c6ccfb487dd85abc6ba8f61246c7a07ca14f02861b4d93e26ca9628d4"
+  },
+  "diagnostic_complete": true
+}

@@ -1,0 +1,6 @@
+{
+  "baseline": "v18",
+  "all_production_unchanged": true,
+  "all_five_new_regressions_unchanged": true,
+  "endpoint_regression_correction": "Inspect every normalized boundary component instead of only loop zero; retain exact parabola, circle-presence, normalization and candidate-count assertions."
+}

@@ -1,0 +1,229 @@
+psqueues  > configure
+psqueues  > Configuring psqueues-0.2.8.1...
+psqueues  > build with ghc-9.6.7
+psqueues  > Preprocessing library for psqueues-0.2.8.1..
+psqueues  > Building library for psqueues-0.2.8.1..
+psqueues  > [1 of 7] Compiling Data.BitUtil
+psqueues  > [2 of 7] Compiling Data.IntPSQ.Internal
+psqueues  > 
+psqueues  > /tmp/stack-fa033cdad40973e2/psqueues-0.2.8.1/src/Data/IntPSQ/Internal.hs:66:1: warning: [-Wunused-imports]
+psqueues  >     The import of ‘Control.Applicative’ is redundant
+psqueues  >       except perhaps to import instances from ‘Control.Applicative’
+psqueues  >     To import instances alone, use: import Control.Applicative()
+psqueues  >    |
+psqueues  > 66 | import           Control.Applicative ((<$>), (<*>))
+psqueues  >    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+psqueues  > 
+psqueues  > /tmp/stack-fa033cdad40973e2/psqueues-0.2.8.1/src/Data/IntPSQ/Internal.hs:70:1: warning: [-Wunused-imports]
+psqueues  >     The import of ‘Data.Foldable’ is redundant
+psqueues  >       except perhaps to import instances from ‘Data.Foldable’
+psqueues  >     To import instances alone, use: import Data.Foldable()
+psqueues  >    |
+psqueues  > 70 | import           Data.Foldable       (Foldable)
+psqueues  >    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+psqueues  > 
+psqueues  > /tmp/stack-fa033cdad40973e2/psqueues-0.2.8.1/src/Data/IntPSQ/Internal.hs:75:1: warning: [-Wunused-imports]
+psqueues  >     The import of ‘Data.Word’ is redundant
+psqueues  >       except perhaps to import instances from ‘Data.Word’
+psqueues  >     To import instances alone, use: import Data.Word()
+psqueues  >    |
+psqueues  > 75 | import           Data.Word           (Word)
+psqueues  >    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+psqueues  > [3 of 7] Compiling Data.IntPSQ
+psqueues  > [4 of 7] Compiling Data.OrdPSQ.Internal
+psqueues  > [5 of 7] Compiling Data.OrdPSQ
+psqueues  > [6 of 7] Compiling Data.HashPSQ.Internal
+psqueues  > 
+psqueues  > /tmp/stack-fa033cdad40973e2/psqueues-0.2.8.1/src/Data/HashPSQ/Internal.hs:59:1: warning: [-Wunused-imports]
+psqueues  >     The import of ‘Data.Foldable’ is redundant
+psqueues  >       except perhaps to import instances from ‘Data.Foldable’
+psqueues  >     To import instances alone, use: import Data.Foldable()
+psqueues  >    |
+psqueues  > 59 | import           Data.Foldable        (Foldable)
+psqueues  >    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+psqueues  > [7 of 7] Compiling Data.HashPSQ
+psqueues  > copy/register
+psqueues  > Installing library in /tmp/aern2-stack.ryVCFK/snapshots/x86_64-linux-tinfo6/b592dd4acb73086f74d238dd1c126581e2a5d5fe389f24cb377ec81a833f3622/9.6.7/lib/x86_64-linux-ghc-9.6.7/psqueues-0.2.8.1-6SNS4J0BeGGDPeyZkiZ40u
+psqueues  > Registering library for psqueues-0.2.8.1..
+aern2-fun > configure (lib)
+aern2-fun > Configuring aern2-fun-0.2.9.0...
+aern2-fun > build (lib) with ghc-9.6.7
+aern2-fun > Preprocessing library for aern2-fun-0.2.9.0..
+aern2-fun > Building library for aern2-fun-0.2.9.0..
+aern2-fun > [1 of 6] Compiling AERN2.Interval
+aern2-fun > [2 of 6] Compiling AERN2.PQueue
+aern2-fun > [3 of 6] Compiling AERN2.RealFun.Operations
+aern2-fun > [4 of 6] Compiling AERN2.RealFun.SineCosine
+aern2-fun > 
+aern2-fun > /home/tim/Documents/GitHub/workspace/exact-real-references/aern2/aern2-fun/src/AERN2/RealFun/SineCosine.hs:291:11: warning: [GHC-62161] [-Wincomplete-uni-patterns]
+aern2-fun >     Pattern match(es) are non-exhaustive
+aern2-fun >     In a pattern binding:
+aern2-fun >         Patterns of type ‘Maybe Accuracy’ not matched: Nothing
+aern2-fun >     |
+aern2-fun > 291 |           Just pa = Map.lookup i powerAccuracies
+aern2-fun >     |           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+aern2-fun > [5 of 6] Compiling AERN2.RealFun.Tests
+aern2-fun > [6 of 6] Compiling Paths_aern2_fun
+aern2-fun > copy/register
+aern2-fun > Installing library in /tmp/aern2-audit/.stack-work/install/x86_64-linux-tinfo6/b592dd4acb73086f74d238dd1c126581e2a5d5fe389f24cb377ec81a833f3622/9.6.7/lib/x86_64-linux-ghc-9.6.7/aern2-fun-0.2.9.0-GvXH6eaLKCm19IcZxJsFdr
+aern2-fun > Registering library for aern2-fun-0.2.9.0..
+aern2-mfun> configure (lib)
+aern2-mfun> Configuring aern2-mfun-0.2.9.0...
+aern2-mfun> build (lib) with ghc-9.6.7
+aern2-mfun> Preprocessing library for aern2-mfun-0.2.9.0..
+aern2-mfun> Building library for aern2-mfun-0.2.9.0..
+aern2-mfun> [ 1 of 13] Compiling AERN2.AD.Type
+aern2-mfun> [ 2 of 13] Compiling AERN2.AD.GenericOperations
+aern2-mfun> [ 3 of 13] Compiling AERN2.AD.MPBallOperations
+aern2-mfun> [ 4 of 13] Compiling AERN2.AD.Differential
+aern2-mfun> 
+aern2-mfun> /home/tim/Documents/GitHub/workspace/exact-real-references/aern2/aern2-mfun/src/AERN2/AD/Differential.hs:5:7: warning: [GHC-64649] [-Wdodgy-exports]
+aern2-mfun>     The export item ‘module AERN2.AD.MPBallOperations’ exports nothing
+aern2-mfun>   |
+aern2-mfun> 5 |     , module AERN2.AD.MPBallOperations
+aern2-mfun>   |       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+aern2-mfun> 
+aern2-mfun> /home/tim/Documents/GitHub/workspace/exact-real-references/aern2/aern2-mfun/src/AERN2/AD/Differential.hs:11:1: warning: [-Wunused-imports]
+aern2-mfun>     The import of ‘AERN2.AD.MPBallOperations’ is redundant
+aern2-mfun>       except perhaps to import instances from ‘AERN2.AD.MPBallOperations’
+aern2-mfun>     To import instances alone, use: import AERN2.AD.MPBallOperations()
+aern2-mfun>    |
+aern2-mfun> 11 | import AERN2.AD.MPBallOperations
+aern2-mfun>    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+aern2-mfun> [ 5 of 13] Compiling AERN2.Linear.Vector.Type
+aern2-mfun> 
+aern2-mfun> /home/tim/Documents/GitHub/workspace/exact-real-references/aern2/aern2-mfun/src/AERN2/Linear/Vector/Type.hs:86:1: warning: [GHC-90177] [-Worphans]
+aern2-mfun>     Orphan instance: instance (HasAccuracy a, HasPrecision a) =>
+aern2-mfun>                               HasAccuracy (Vector a)
+aern2-mfun>     Suggested fix:
+aern2-mfun>       Move the instance declaration to the module of the class or of the type, or
+aern2-mfun>       wrap the type with a newtype and declare the instance on the new type.
+aern2-mfun>    |
+aern2-mfun> 86 | instance 
+aern2-mfun>    | ^^^^^^^^^...
+aern2-mfun> 
+aern2-mfun> /home/tim/Documents/GitHub/workspace/exact-real-references/aern2/aern2-mfun/src/AERN2/Linear/Vector/Type.hs:92:1: warning: [GHC-90177] [-Worphans]
+aern2-mfun>     Orphan instance: instance HasPrecision a => HasPrecision (Vector a)
+aern2-mfun>     Suggested fix:
+aern2-mfun>       Move the instance declaration to the module of the class or of the type, or
+aern2-mfun>       wrap the type with a newtype and declare the instance on the new type.
+aern2-mfun>    |
+aern2-mfun> 92 | instance 
+aern2-mfun>    | ^^^^^^^^^...
+aern2-mfun> 
+aern2-mfun> /home/tim/Documents/GitHub/workspace/exact-real-references/aern2/aern2-mfun/src/AERN2/Linear/Vector/Type.hs:101:1: warning: [GHC-90177] [-Worphans]
+aern2-mfun>     Orphan instance: instance CanSetPrecision a =>
+aern2-mfun>                               CanSetPrecision (Vector a)
+aern2-mfun>     Suggested fix:
+aern2-mfun>       Move the instance declaration to the module of the class or of the type, or
+aern2-mfun>       wrap the type with a newtype and declare the instance on the new type.
+aern2-mfun>     |
+aern2-mfun> 101 | instance 
+aern2-mfun>     | ^^^^^^^^^...
+aern2-mfun> 
+aern2-mfun> /home/tim/Documents/GitHub/workspace/exact-real-references/aern2/aern2-mfun/src/AERN2/Linear/Vector/Type.hs:106:1: warning: [GHC-90177] [-Worphans]
+aern2-mfun>     Orphan instance: instance CanAddSameType a =>
+aern2-mfun>                               CanAddAsymmetric (Vector a) (Vector a)
+aern2-mfun>     Suggested fix:
+aern2-mfun>       Move the instance declaration to the module of the class or of the type, or
+aern2-mfun>       wrap the type with a newtype and declare the instance on the new type.
+aern2-mfun>     |
+aern2-mfun> 106 | instance 
+aern2-mfun>     | ^^^^^^^^^...
+aern2-mfun> 
+aern2-mfun> /home/tim/Documents/GitHub/workspace/exact-real-references/aern2/aern2-mfun/src/AERN2/Linear/Vector/Type.hs:128:1: warning: [GHC-90177] [-Worphans]
+aern2-mfun>     Orphan instance: instance CanSubSameType a =>
+aern2-mfun>                               CanSub (Vector a) (Vector a)
+aern2-mfun>     Suggested fix:
+aern2-mfun>       Move the instance declaration to the module of the class or of the type, or
+aern2-mfun>       wrap the type with a newtype and declare the instance on the new type.
+aern2-mfun>     |
+aern2-mfun> 128 | instance 
+aern2-mfun>     | ^^^^^^^^^...
+aern2-mfun> 
+aern2-mfun> /home/tim/Documents/GitHub/workspace/exact-real-references/aern2/aern2-mfun/src/AERN2/Linear/Vector/Type.hs:151:1: warning: [GHC-90177] [-Worphans]
+aern2-mfun>     Orphan instance: instance (CanAddSameType a, CanMulSameType a,
+aern2-mfun>                                HasIntegers a) =>
+aern2-mfun>                               CanMulAsymmetric (Vector a) (Vector a)
+aern2-mfun>     Suggested fix:
+aern2-mfun>       Move the instance declaration to the module of the class or of the type, or
+aern2-mfun>       wrap the type with a newtype and declare the instance on the new type.
+aern2-mfun>     |
+aern2-mfun> 151 | instance 
+aern2-mfun>     | ^^^^^^^^^...
+aern2-mfun> 
+aern2-mfun> /home/tim/Documents/GitHub/workspace/exact-real-references/aern2/aern2-mfun/src/AERN2/Linear/Vector/Type.hs:159:9: warning: [GHC-63397] [-Wname-shadowing]
+aern2-mfun>     This binding for ‘sum’ shadows the existing binding
+aern2-mfun>       imported from ‘MixedTypesNumPrelude’ at src/AERN2/Linear/Vector/Type.hs:5:1-43
+aern2-mfun>       (and originally defined in ‘Numeric.MixedTypes.AddSub’)
+aern2-mfun>     |
+aern2-mfun> 159 |         sum <- newSTRef (convertExactly 0)
+aern2-mfun>     |         ^^^
+aern2-mfun> 
+aern2-mfun> /home/tim/Documents/GitHub/workspace/exact-real-references/aern2/aern2-mfun/src/AERN2/Linear/Vector/Type.hs:165:13: warning: [GHC-63397] [-Wname-shadowing]
+aern2-mfun>     This binding for ‘sum’ shadows the existing binding
+aern2-mfun>       imported from ‘MixedTypesNumPrelude’ at src/AERN2/Linear/Vector/Type.hs:5:1-43
+aern2-mfun>       (and originally defined in ‘Numeric.MixedTypes.AddSub’)
+aern2-mfun>     |
+aern2-mfun> 165 |         aux sum k = 
+aern2-mfun>     |             ^^^
+aern2-mfun> 
+aern2-mfun> /home/tim/Documents/GitHub/workspace/exact-real-references/aern2/aern2-mfun/src/AERN2/Linear/Vector/Type.hs:173:1: warning: [GHC-90177] [-Worphans]
+aern2-mfun>     Orphan instance: instance CanMulAsymmetric
+aern2-mfun>                                 (CN MPBall) (Vector (CN MPBall))
+aern2-mfun>     Suggested fix:
+aern2-mfun>       Move the instance declaration to the module of the class or of the type, or
+aern2-mfun>       wrap the type with a newtype and declare the instance on the new type.
+aern2-mfun>     |
+aern2-mfun> 173 | instance 
+aern2-mfun>     | ^^^^^^^^^...
+aern2-mfun> [ 6 of 13] Compiling AERN2.Linear.Matrix.Type
+aern2-mfun> [ 7 of 13] Compiling AERN2.Linear.Matrix.Inverse
+aern2-mfun> [ 8 of 13] Compiling AERN2.Util.Util
+aern2-mfun> [ 9 of 13] Compiling AERN2.BoxFun.Box
+aern2-mfun> 
+aern2-mfun> /home/tim/Documents/GitHub/workspace/exact-real-references/aern2/aern2-mfun/src/AERN2/BoxFun/Box.hs:36:10: warning: [GHC-06201] [-Wmissing-methods]
+aern2-mfun>     • No explicit implementation for
+aern2-mfun>         ‘centreAsBallAndRadius’ and ‘updateRadius’
+aern2-mfun>     • In the instance declaration for ‘IsBall Box’
+aern2-mfun>    |
+aern2-mfun> 36 | instance IsBall Box where
+aern2-mfun>    |          ^^^^^^^^^^
+aern2-mfun> 
+aern2-mfun> /home/tim/Documents/GitHub/workspace/exact-real-references/aern2/aern2-mfun/src/AERN2/BoxFun/Box.hs:80:5: warning: [GHC-62161] [-Wincomplete-uni-patterns]
+aern2-mfun>     Pattern match(es) are non-exhaustive
+aern2-mfun>     In a pattern binding:
+aern2-mfun>         Patterns of type ‘AddType Integer NormLog’ not matched: NormZero
+aern2-mfun>    |
+aern2-mfun> 80 |     NormBits ilog = 2 + (getNormLog $  mpBall $ 1 + abs lbc )
+aern2-mfun>    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+aern2-mfun> [10 of 13] Compiling AERN2.BoxFun.Type
+aern2-mfun> 
+aern2-mfun> /home/tim/Documents/GitHub/workspace/exact-real-references/aern2/aern2-mfun/src/AERN2/BoxFun/Type.hs:166:9: warning: [GHC-63397] [-Wname-shadowing]
+aern2-mfun>     This binding for ‘lowerBounds’ shadows the existing binding
+aern2-mfun>       imported from ‘AERN2.BoxFun.Box’ at src/AERN2/BoxFun/Type.hs:11:1-23
+aern2-mfun>       (and originally defined at src/AERN2/BoxFun/Box.hs:117:1-11)
+aern2-mfun>     |
+aern2-mfun> 166 |         lowerBounds = firstDerivatives - secondDerivatives * V.map (fmap (mpBall . radius)) v
+aern2-mfun>     |         ^^^^^^^^^^^
+aern2-mfun> 
+aern2-mfun> /home/tim/Documents/GitHub/workspace/exact-real-references/aern2/aern2-mfun/src/AERN2/BoxFun/Type.hs:167:9: warning: [GHC-63397] [-Wname-shadowing]
+aern2-mfun>     This binding for ‘upperBounds’ shadows the existing binding
+aern2-mfun>       imported from ‘AERN2.BoxFun.Box’ at src/AERN2/BoxFun/Type.hs:11:1-23
+aern2-mfun>       (and originally defined at src/AERN2/BoxFun/Box.hs:120:1-11)
+aern2-mfun>     |
+aern2-mfun> 167 |         upperBounds = firstDerivatives + secondDerivatives * V.map (fmap (mpBall . radius)) v
+aern2-mfun>     |         ^^^^^^^^^^^
+aern2-mfun> 
+aern2-mfun> /home/tim/Documents/GitHub/workspace/exact-real-references/aern2/aern2-mfun/src/AERN2/BoxFun/Type.hs:170:9: warning: [-Wunused-local-binds]
+aern2-mfun>     Defined but not used: ‘p’
+aern2-mfun>     |
+aern2-mfun> 170 |         p = getPrecision v
+aern2-mfun>     |         ^
+aern2-mfun> [11 of 13] Compiling AERN2.BoxFun.TestFunctions
+aern2-mfun> [12 of 13] Compiling AERN2.BoxFun.Optimisation
+aern2-mfun> [13 of 13] Compiling Paths_aern2_mfun
+aern2-mfun> copy/register
+aern2-mfun> Installing library in /tmp/aern2-audit/.stack-work/install/x86_64-linux-tinfo6/b592dd4acb73086f74d238dd1c126581e2a5d5fe389f24cb377ec81a833f3622/9.6.7/lib/x86_64-linux-ghc-9.6.7/aern2-mfun-0.2.9.0-Igm9AoLFbew3lZGu7hfVIy
+aern2-mfun> Registering library for aern2-mfun-0.2.9.0..
+Completed 3 action(s).

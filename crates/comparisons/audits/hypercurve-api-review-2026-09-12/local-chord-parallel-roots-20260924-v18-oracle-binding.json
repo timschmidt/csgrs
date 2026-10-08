@@ -1,0 +1,6 @@
+{
+  "baseline": "v17",
+  "all_five_new_regressions_unchanged": true,
+  "endpoint_regression_correction": "is_zero returns Option<bool>; only Some(true) certifies equality.",
+  "production_review": "An uncertain original-source chart replay falls back to direct mapped-polynomial projection."
+}

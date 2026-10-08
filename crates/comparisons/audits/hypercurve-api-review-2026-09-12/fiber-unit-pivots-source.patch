@@ -1,0 +1,213 @@
+diff --git a/src/algebraic_fiber.rs b/src/algebraic_fiber.rs
+index 2ef9bcd..1de056f 100644
+--- a/src/algebraic_fiber.rs
++++ b/src/algebraic_fiber.rs
+@@ -2074,9 +2074,84 @@ fn local_image_polynomial_multiply_reduced(
+     }
+ }
+ 
+-/// Division-free Berkowitz determinant over the commutative polynomial ring
+-/// `Q(alpha)[z]`. The returned characteristic-polynomial constant is adjusted
+-/// by `(-1)^n` to recover the determinant.
++/// Eliminates a manifest rational unit before expanding a determinant.
++///
++/// Schur reduction needs only this scalar's inverse, even when the source
++/// quotient has zero divisors. Moving row r and column c to the front changes
++/// the determinant by (-1)^(r+c). Every product keeps the same source modulus.
++fn local_polynomial_matrix_scalar_unit_elimination(
++    entries: &[LocalImagePolynomial],
++    dimension: usize,
++    modulus: Option<&[LocalFieldElement]>,
++    field: &mut LocalAlgebraicField,
++) -> Result<Option<LocalImagePolynomial>, LocalFieldError> {
++    let Some((index, pivot)) = entries.iter().enumerate().find_map(|(index, entry)| {
++        let [value] = entry.as_slice() else {
++            return None;
++        };
++        let [constant] = value.numerator.as_slice() else {
++            return None;
++        };
++        (value.denominator.is_none()
++            && constant.exact_rational_ref().is_some()
++            && !constant.definitely_zero())
++        .then_some((index, constant))
++    }) else {
++        return Ok(None);
++    };
++    let pivot_row = index / dimension;
++    let pivot_column = index % dimension;
++    let inverse = LocalFieldElement::from_polynomial(
++        vec![(Real::one() / pivot).map_err(|_| LocalFieldError::Undecided)?],
++        field,
++    )?;
++    let mut minor = Vec::new();
++    minor
++        .try_reserve_exact((dimension - 1) * (dimension - 1))
++        .map_err(|_| LocalFieldError::Undecided)?;
++    for row in 0..dimension {
++        if row == pivot_row {
++            continue;
++        }
++        let multiplier = local_image_polynomial_scale(
++            &entries[row * dimension + pivot_column],
++            &inverse,
++            field,
++        )?;
++        for column in 0..dimension {
++            if column == pivot_column {
++                continue;
++            }
++            let removed = local_image_polynomial_multiply_reduced(
++                &multiplier,
++                &entries[pivot_row * dimension + column],
++                modulus,
++                field,
++            )?;
++            minor.push(local_image_polynomial_add(
++                &entries[row * dimension + column],
++                &removed,
++                true,
++                field,
++            )?);
++        }
++    }
++    let determinant = local_polynomial_matrix_determinant(&minor, dimension - 1, modulus, field)?;
++    let scale = if (pivot_row + pivot_column) % 2 == 0 {
++        pivot.clone()
++    } else {
++        -pivot
++    };
++    Ok(Some(local_image_polynomial_scale(
++        &determinant,
++        &LocalFieldElement::from_polynomial(vec![scale], field)?,
++        field,
++    )?))
++}
++
++/// Determinant over a commutative polynomial or source quotient ring.
++/// Manifest rational units reduce source-quotient matrices first. Otherwise,
++/// division-free Berkowitz arithmetic needs no inverse in the quotient ring.
+ fn local_polynomial_matrix_determinant(
+     entries: &[LocalImagePolynomial],
+     dimension: usize,
+@@ -2090,6 +2165,13 @@ fn local_polynomial_matrix_determinant(
+     {
+         return Err(LocalFieldError::Undecided);
+     }
++    if dimension > 2
++        && modulus.is_some()
++        && let Ok(Some(determinant)) =
++            local_polynomial_matrix_scalar_unit_elimination(entries, dimension, modulus, field)
++    {
++        return Ok(determinant);
++    }
+     let mut determinant = match dimension {
+         0 => local_image_polynomial_one(field)?,
+         1 => entries[0].clone(),
+diff --git a/src/algebraic_fiber/subresultant.rs b/src/algebraic_fiber/subresultant.rs
+index c855e8d..3703bc6 100644
+--- a/src/algebraic_fiber/subresultant.rs
++++ b/src/algebraic_fiber/subresultant.rs
+@@ -21,8 +21,9 @@ pub enum AlgebraicFiberSubresultantError {
+ /// as a GCD certificate. The source fiber may contain other conjugates.
+ ///
+ /// Ring arithmetic reduces every product by the retained equations. No global
+-/// source projection or interpolation is needed, and no inverse in the source
+-/// quotient ring is taken. One common nonzero scale clears base-field
++/// source projection or interpolation is needed. Manifest rational units may
++/// reduce determinants before expansion. No element depending on the source
++/// fiber coordinate is inverted. One common nonzero scale clears base-field
+ /// denominators across all returned coefficients, preserving the polynomial's
+ /// roots and its specialized GCD meaning. All evidence is replayed strictly.
+ pub fn subresultant_in_algebraic_fiber(
+@@ -161,6 +162,90 @@ mod tests {
+         )
+     }
+ 
++    #[test]
++    fn fiber_determinants_preserve_all_row_and_column_permutation_signs() {
++        let root = retained_root();
++        let mut field = LocalAlgebraicField::new(&root, PredicatePolicy::STRICT).unwrap();
++        let convert = |p: &BivariatePolynomial, field: &mut LocalAlgebraicField| {
++            local_fiber_polynomial(p, CurveResultantParameter::First, field).unwrap()
++        };
++        let fiber = convert(&coefficient(&[&[0, 0, 1], &[-1]]), &mut field);
++        // det [[u,2,0], [alpha,u,1], [1,0,u]] = u^3-2*alpha*u+2
++        // and u^2=alpha reduces this to 2-alpha*u.
++        let entries = [
++            coefficient(&[&[0, 1]]),
++            coefficient(&[&[2]]),
++            coefficient(&[&[0]]),
++            coefficient(&[&[0], &[1]]),
++            coefficient(&[&[0, 1]]),
++            coefficient(&[&[1]]),
++            coefficient(&[&[1]]),
++            coefficient(&[&[0]]),
++            coefficient(&[&[0, 1]]),
++        ]
++        .map(|entry| convert(&entry, &mut field));
++        let expected = convert(&coefficient(&[&[2], &[0, -1]]), &mut field);
++        let permutations = [
++            [0, 1, 2],
++            [0, 2, 1],
++            [1, 0, 2],
++            [1, 2, 0],
++            [2, 0, 1],
++            [2, 1, 0],
++        ];
++        let inversions = |p: [usize; 3]| {
++            usize::from(p[0] > p[1]) + usize::from(p[0] > p[2]) + usize::from(p[1] > p[2])
++        };
++        for rows in permutations {
++            for columns in permutations {
++                let mut matrix = Vec::new();
++                for row in rows {
++                    for column in columns {
++                        matrix.push(entries[row * 3 + column].clone());
++                    }
++                }
++                let actual =
++                    local_polynomial_matrix_determinant(&matrix, 3, Some(&fiber), &mut field)
++                        .unwrap();
++                let expected = if (inversions(rows) + inversions(columns)) % 2 == 0 {
++                    expected.clone()
++                } else {
++                    local_image_polynomial_negated(&expected)
++                };
++                let difference =
++                    local_image_polynomial_add(&actual, &expected, true, &mut field).unwrap();
++                assert!(local_polynomial_is_zero(&difference, &mut field).unwrap());
++            }
++        }
++    }
++
++    #[test]
++    fn fiber_determinants_keep_zero_divisors_without_scalar_units() {
++        let root = retained_root();
++        let mut field = LocalAlgebraicField::new(&root, PredicatePolicy::STRICT).unwrap();
++        let fiber = local_fiber_polynomial(
++            &coefficient(&[&[0, -1, 1]]), // u*(u-1)=0
++            CurveResultantParameter::First,
++            &mut field,
++        )
++        .unwrap();
++        let u = local_fiber_polynomial(
++            &coefficient(&[&[0, 1]]),
++            CurveResultantParameter::First,
++            &mut field,
++        )
++        .unwrap();
++        let mut diagonal = vec![local_image_polynomial_zero(); 9];
++        for index in [0, 4, 8] {
++            diagonal[index] = u.clone();
++        }
++        let actual =
++            local_polynomial_matrix_determinant(&diagonal, 3, Some(&fiber), &mut field).unwrap();
++        // det(u I)=u^3=u on both components, including the zero sheet.
++        let difference = local_image_polynomial_add(&actual, &u, true, &mut field).unwrap();
++        assert!(local_polynomial_is_zero(&difference, &mut field).unwrap());
++    }
++
+     #[test]
+     fn subresultants_reduce_source_conjugates_without_global_projection() {
+         let root = retained_root();

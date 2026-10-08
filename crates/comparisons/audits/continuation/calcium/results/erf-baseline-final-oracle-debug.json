@@ -1,0 +1,13 @@
+{
+  "tag": "erf-baseline-final-oracle-debug",
+  "started": "2026-09-08T11:02:10.975Z",
+  "finished": "2026-09-08T11:02:18.291Z",
+  "elapsedSeconds": 7.3135977919999995,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison",
+  "command": "/home/tim/Documents/GitHub/workspace/.audit-builds/calcium-baseline/debug/calcium-erf-baseline-qualification",
+  "args": [
+    "oracle"
+  ],
+  "code": 0,
+  "signal": null
+}

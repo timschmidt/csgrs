@@ -1,0 +1,14 @@
+{
+  "command": [
+    "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve-6e6572a45c5b177b",
+    "selected_circle_affine_parallel_domains_preserve_source_parameters",
+    "--test-threads=1",
+    "--nocapture",
+    "--color",
+    "never"
+  ],
+  "returncode": 101,
+  "elapsed_seconds": 0.031634383005439304,
+  "binary_sha256": "d1c844bc3ab5573a8c1c766d75c1490e834cd42f1f041da7e5d68ac8d40ed688",
+  "production_commit": "b3df58f65925a8f3ec54a2cb8bcacf3a97c37d3a"
+}

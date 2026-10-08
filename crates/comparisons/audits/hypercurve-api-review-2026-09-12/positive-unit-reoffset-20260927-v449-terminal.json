@@ -1,0 +1,53 @@
+{
+  "source_manifest": "positive-unit-reoffset-20260927-v449-sources.json",
+  "source_directory": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/source-archives/root-sign-positive-unit-20260927-v448",
+  "cases": [
+    {
+      "binary": "positive-unit-reoffset-20260927-v449-hypercurve_curve_region_promotion",
+      "name": "strict_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions",
+      "returncode": 101,
+      "log": "positive-unit-reoffset-20260927-v449-case-000.log",
+      "elapsed_seconds": 161.77532584196888
+    }
+  ],
+  "builds": [
+    {
+      "crate": "hypercurve",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "test",
+        "--test",
+        "hypercurve_curve_region_promotion",
+        "--release",
+        "--all-features",
+        "--no-run",
+        "--message-format=json",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "log": "positive-unit-reoffset-20260927-v449-hypercurve_curve_region_promotion-build.log",
+      "elapsed_seconds": 111.86773493001238,
+      "binary": {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/positive-unit-reoffset-20260927-v449-hypercurve_curve_region_promotion",
+        "sha256": "60c2d4ae520e2fab512dddc3519f554999dbbd150c4c4c36c43c02c8f42acc48"
+      }
+    }
+  ],
+  "trial": {
+    "hypersolve/src/root_sign.rs": "059b52129bb49f0acec75f283bceca6de365900d9b784a0f62f80ccf0e64f43e",
+    "hyperreal/src/computable/node/quadratic_tower.rs": "600a9a0671a26437bca02ff4af1b922776b134df4597c6cb86099b39ced39c6e",
+    "hypersolve/src/root_isolation.rs": "70d69c3759a5cd6ba758365080c51ed30b12158eb33c2a6ef79faaeff28cc7d4"
+  },
+  "all_processes_reaped": true,
+  "checks": [],
+  "qualification_scope": "Original extended-fillet re-offset composition with scalar fusion and positive leading-unit root-query normalization",
+  "expected_cases": {
+    "hypercurve_curve_region_promotion": [
+      "strict_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions",
+      "approximate_512_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions"
+    ]
+  },
+  "failure": "case failure or missing exact test",
+  "qualification_complete": false
+}

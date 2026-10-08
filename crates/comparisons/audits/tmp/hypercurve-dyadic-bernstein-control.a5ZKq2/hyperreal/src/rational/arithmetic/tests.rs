@@ -1,0 +1,5276 @@
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::mem::size_of;
+    use std::sync::atomic::Ordering as AtomicOrdering;
+
+    fn limbs_to_biguint(limbs: &[u64]) -> BigUint {
+        limbs.iter().rev().fold(BigUint::ZERO, |value, limb| {
+            (value << 64) + BigUint::from(*limb)
+        })
+    }
+
+    fn assert_f64_enclosure_contains(value: &Rational) {
+        let [lower, upper] = value.to_f64_enclosure().unwrap();
+        assert!(lower.is_finite());
+        assert!(upper.is_finite());
+        assert!(lower <= upper);
+        assert!(Rational::try_from(lower).unwrap() <= *value);
+        assert!(*value <= Rational::try_from(upper).unwrap());
+    }
+
+    #[test]
+    fn direct_shifted_stack_products_match_biguint_boundaries() {
+        let cases = [
+            (1_u128, 1_u128, 0_u64),
+            (u128::MAX, u128::MAX, 1),
+            (u128::MAX, u128::MAX - 1, 63),
+            (u128::MAX - 1, u128::MAX, 64),
+            (u128::MAX, (1_u128 << 127) + 1, 127),
+            (u128::MAX, u128::MAX, 128),
+        ];
+        for (left, right, shift) in cases {
+            let mut actual = DyadicStackAccumulator::default();
+            assert_eq!(
+                actual.add_product(left, right, shift),
+                Some(()),
+                "left={left} right={right} shift={shift}"
+            );
+            let expected =
+                (BigUint::from(left) * BigUint::from(right)) << usize::try_from(shift).unwrap();
+            assert_eq!(limbs_to_biguint(&actual.0), expected);
+        }
+
+        let mut carry = DyadicStackAccumulator::default();
+        carry.0[0] = u64::MAX;
+        assert_eq!(carry.add_product(1, 1, 0), Some(()));
+        assert_eq!(&carry.0[..2], &[0, 1]);
+
+        let mut overflow = DyadicStackAccumulator([u64::MAX; DYADIC_STACK_LIMBS]);
+        assert_eq!(overflow.add_product(1, 1, 0), None);
+        let mut shifted_overflow = DyadicStackAccumulator::default();
+        assert_eq!(
+            shifted_overflow.add_product(u128::MAX, u128::MAX, 129),
+            None
+        );
+    }
+
+    #[test]
+    fn unplanned_four_and_six_term_dyadic_word_totals_match_two_pass_alignment() {
+        let mut state = 0x243f_6a88_85a3_08d3_u64;
+        let mut saw_fallback = false;
+        for case in 0..512 {
+            let narrow = case % 2 == 0;
+            let values: [Rational; 12] = std::array::from_fn(|_| {
+                state = state
+                    .wrapping_mul(6_364_136_223_846_793_005)
+                    .wrapping_add(1_442_695_040_888_963_407);
+                let magnitude = if narrow {
+                    u128::from((state & 0xfff) | 1)
+                } else {
+                    u128::from(state | 1)
+                };
+                let shift = if narrow { state % 16 } else { state % 128 };
+                Rational::from_bigint_fraction(
+                    BigInt::from(magnitude),
+                    BigUint::one() << usize::try_from(shift).unwrap(),
+                )
+                .unwrap()
+            });
+            let terms: [[&Rational; 2]; 6] =
+                std::array::from_fn(|index| [&values[index * 2], &values[index * 2 + 1]]);
+            let signs = [Plus, Minus, Plus, Minus, Plus, Minus];
+            let plan = Rational::product_sum_dyadic_plan(terms, signs).unwrap();
+            let expected = Rational::signed_product_sum_dyadic_word_totals(
+                terms,
+                signs,
+                plan.denominator_shifts,
+                plan.max_shift,
+            );
+            let actual = Rational::signed_product_sum_dyadic_word_totals_unplanned(
+                [true, false, true, false, true, false],
+                terms,
+            );
+            assert_eq!(actual, expected, "case {case}");
+            assert!(!narrow || expected.is_some());
+            saw_fallback |= expected.is_none();
+
+            let terms: [[&Rational; 2]; 4] =
+                std::array::from_fn(|index| [&values[index * 2], &values[index * 2 + 1]]);
+            let signs = [Plus, Minus, Plus, Minus];
+            let plan = Rational::product_sum_dyadic_plan(terms, signs).unwrap();
+            let expected = Rational::signed_product_sum_dyadic_word_totals(
+                terms,
+                signs,
+                plan.denominator_shifts,
+                plan.max_shift,
+            );
+            let actual = Rational::signed_product_sum_dyadic_word_totals_unplanned(
+                [true, false, true, false],
+                terms,
+            );
+            assert_eq!(actual, expected, "four-term case {case}");
+            assert!(!narrow || expected.is_some());
+            saw_fallback |= expected.is_none();
+        }
+        assert!(saw_fallback);
+    }
+
+    #[test]
+    fn direct_shifted_wide_narrow_product_matches_biguint() {
+        let left = [u64::MAX, u64::MAX - 1, 1, 0];
+        for right in [u128::from(u64::MAX) - 17, u128::MAX - 17] {
+            for shift in [0_u64, 1, 63, 64, 127] {
+                let mut actual = DyadicStackAccumulator::default();
+                assert_eq!(
+                    actual.add_wide_word_product(left, right, shift),
+                    Some(()),
+                    "right={right}, shift={shift}"
+                );
+                let expected = (limbs_to_biguint(&left) * BigUint::from(right))
+                    << usize::try_from(shift).unwrap();
+                assert_eq!(limbs_to_biguint(&actual.0), expected);
+            }
+        }
+    }
+
+    #[test]
+    fn compact_dyadic_parameter_comparison_matches_biguint_cross_products() {
+        fn next(state: &mut u64) -> u64 {
+            *state = state
+                .wrapping_mul(6_364_136_223_846_793_005)
+                .wrapping_add(1_442_695_040_888_963_407);
+            *state
+        }
+
+        fn word(state: &mut u64, allow_zero: bool) -> DyadicWord {
+            let magnitude = (u128::from(next(state)) << 64) | u128::from(next(state));
+            let sign = if allow_zero && next(state).is_multiple_of(29) {
+                NoSign
+            } else if next(state) & 1 == 0 {
+                Plus
+            } else {
+                Minus
+            };
+            DyadicWord {
+                sign,
+                magnitude: if sign == NoSign { 0 } else { magnitude.max(1) },
+                denominator_shift: next(state) % 2_048,
+            }
+        }
+
+        fn expected(
+            left_numerator: DyadicWord,
+            left_denominator: DyadicWord,
+            right_numerator: DyadicWord,
+            right_denominator: DyadicWord,
+        ) -> Ordering {
+            let left_sign = left_numerator.sign * left_denominator.sign;
+            let right_sign = right_numerator.sign * right_denominator.sign;
+            if left_sign != right_sign {
+                return match (left_sign, right_sign) {
+                    (Minus, _) | (_, Plus) => Ordering::Less,
+                    (Plus, _) | (_, Minus) => Ordering::Greater,
+                    _ => Ordering::Equal,
+                };
+            }
+            if left_sign == NoSign {
+                return Ordering::Equal;
+            }
+            let left_shift = left_denominator.denominator_shift
+                + right_numerator.denominator_shift;
+            let right_shift = right_denominator.denominator_shift
+                + left_numerator.denominator_shift;
+            let common_shift = left_shift.min(right_shift);
+            let left = (BigUint::from(left_numerator.magnitude)
+                * right_denominator.magnitude)
+                << usize::try_from(left_shift - common_shift).unwrap();
+            let right = (BigUint::from(right_numerator.magnitude)
+                * left_denominator.magnitude)
+                << usize::try_from(right_shift - common_shift).unwrap();
+            let ordering = left.cmp(&right);
+            if left_sign == Minus {
+                ordering.reverse()
+            } else {
+                ordering
+            }
+        }
+
+        let mut state = 0x243f_6a88_85a3_08d3;
+        for _ in 0..20_000 {
+            let left_numerators = [word(&mut state, true), word(&mut state, true)];
+            let left_denominator = word(&mut state, false);
+            let right_numerators = [word(&mut state, true), word(&mut state, true)];
+            let right_denominator = word(&mut state, false);
+            let left = ExactDyadicLineParameters2::from_words(
+                left_numerators,
+                left_denominator,
+            );
+            let right = ExactDyadicLineParameters2::from_words(
+                right_numerators,
+                right_denominator,
+            );
+            let expected_first = expected(
+                left_numerators[0],
+                left_denominator,
+                right_numerators[0],
+                right_denominator,
+            );
+            let expected_second = expected(
+                left_numerators[1],
+                left_denominator,
+                right_numerators[1],
+                right_denominator,
+            );
+            assert_eq!(left.compare_first_parameter(&right), expected_first);
+            assert_eq!(
+                left.compare_first_parameter_normalized(&right),
+                expected_first
+            );
+            assert_eq!(left.compare_second_parameter(&right), expected_second);
+            assert_eq!(
+                left.compare_second_parameter_normalized(&right),
+                expected_second
+            );
+        }
+    }
+
+    #[test]
+    fn rational_data_layout_stays_bounded() {
+        assert!(
+            size_of::<RationalData>() <= 88,
+            "RationalData grew to {} bytes",
+            size_of::<RationalData>()
+        );
+    }
+
+    #[test]
+    fn compact_once_box_publishes_one_value_and_drops_every_candidate() {
+        struct Counted(usize, Arc<std::sync::atomic::AtomicUsize>);
+
+        impl Drop for Counted {
+            fn drop(&mut self) {
+                self.1
+                    .fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+            }
+        }
+
+        let drops = Arc::new(std::sync::atomic::AtomicUsize::new(0));
+        let cell = Arc::new(CompactOnceBox::new());
+        std::thread::scope(|scope| {
+            for value in 0..8 {
+                let cell = Arc::clone(&cell);
+                let drops = Arc::clone(&drops);
+                scope.spawn(move || drop(cell.set(Box::new(Counted(value, drops)))));
+            }
+        });
+        assert!(cell.get().is_some_and(|value| value.0 < 8));
+        drop(cell);
+        assert_eq!(drops.load(std::sync::atomic::Ordering::Relaxed), 8);
+    }
+
+    fn magnitude_with_backend_limbs(limbs: usize) -> BigUint {
+        assert!(limbs > 0);
+        BigUint::one() << ((limbs - 1) * usize::BITS as usize)
+    }
+
+    #[test]
+    fn backend_multiplication_classifier_matches_locked_num_bigint_thresholds() {
+        let limbs = magnitude_with_backend_limbs;
+        assert_eq!(
+            Rational::backend_multiplication_algorithm(&limbs(32), &limbs(400)),
+            BackendMultiplicationAlgorithm::Basecase
+        );
+        assert_eq!(
+            Rational::backend_multiplication_algorithm(&limbs(33), &limbs(66)),
+            BackendMultiplicationAlgorithm::HalfKaratsuba
+        );
+        assert_eq!(
+            Rational::backend_multiplication_algorithm(&limbs(33), &limbs(65)),
+            BackendMultiplicationAlgorithm::Karatsuba
+        );
+        assert_eq!(
+            Rational::backend_multiplication_algorithm(&limbs(256), &limbs(256)),
+            BackendMultiplicationAlgorithm::Karatsuba
+        );
+        assert_eq!(
+            Rational::backend_multiplication_algorithm(&limbs(257), &limbs(257)),
+            BackendMultiplicationAlgorithm::Toom3
+        );
+    }
+
+    #[test]
+    fn rust_native_toom4_matches_backend_products() {
+        let threshold = usize::try_from(Rational::TOOM4_MULTIPLICATION_THRESHOLD_BITS).unwrap();
+        assert!(!Rational::should_use_toom4_multiplication(
+            &(BigUint::one() << (threshold - 2)),
+            &(BigUint::one() << (threshold - 2))
+        ));
+        assert!(Rational::should_use_toom4_multiplication(
+            &(BigUint::one() << (threshold - 1)),
+            &(BigUint::one() << (threshold - 1))
+        ));
+        assert!(!Rational::should_use_toom4_multiplication(
+            &(BigUint::one() << (threshold + threshold / 2)),
+            &(BigUint::one() << (threshold - 1))
+        ));
+
+        for left in 0_u32..128 {
+            for right in 0_u32..128 {
+                let left = BigUint::from(left);
+                let right = BigUint::from(right);
+                assert_eq!(
+                    Rational::multiply_magnitudes_toom4_candidate(&left, &right),
+                    &left * &right
+                );
+            }
+        }
+
+        fn generated_magnitude(bits: usize, state: &mut u64) -> BigUint {
+            let mut value = BigUint::ZERO;
+            for _ in 0..bits.div_ceil(64) {
+                *state = state
+                    .wrapping_mul(6_364_136_223_846_793_005)
+                    .wrapping_add(1_442_695_040_888_963_407);
+                value = (value << 64_usize) + *state;
+            }
+            let mask = (BigUint::one() << bits) - 1_u8;
+            (value & mask) | (BigUint::one() << (bits - 1))
+        }
+
+        let mut state = 0xa409_3822_299f_31d0_u64;
+        for bits in [257, 1024, 4096, 16_384, 65_536] {
+            for shorter_bits in [bits, bits - 1, bits * 3 / 4] {
+                let left = generated_magnitude(bits, &mut state);
+                let right = generated_magnitude(shorter_bits, &mut state);
+                assert_eq!(
+                    Rational::multiply_magnitudes_toom4_candidate(&left, &right),
+                    &left * &right,
+                    "failed for {bits}-by-{shorter_bits}-bit operands"
+                );
+            }
+        }
+    }
+
+    #[cfg(feature = "dispatch-trace")]
+    #[test]
+    fn rust_native_toom4_candidate_path_is_traced() {
+        let left = (BigUint::one() << 4096_usize) + 17_u8;
+        let right = (BigUint::one() << 4095_usize) + 19_u8;
+        crate::dispatch_trace::reset();
+        crate::dispatch_trace::with_recording(|| {
+            assert_eq!(
+                Rational::multiply_magnitudes_toom4_candidate(&left, &right),
+                &left * &right
+            );
+        });
+        assert_eq!(
+            crate::dispatch_trace::take_trace().path_count(
+                "rational_algorithm",
+                "multiplication-candidate",
+                "rust-native-toom4"
+            ),
+            1
+        );
+    }
+
+    #[cfg(feature = "dispatch-trace")]
+    #[test]
+    fn rust_native_toom4_selected_path_is_traced_at_crossover() {
+        let shorter_bits = usize::try_from(Rational::TOOM4_MULTIPLICATION_THRESHOLD_BITS).unwrap();
+        let longer_bits = shorter_bits + shorter_bits / 5;
+        let left = (BigUint::one() << (longer_bits - 1)) + 17_u8;
+        let right = (BigUint::one() << (shorter_bits - 1)) + 19_u8;
+        crate::dispatch_trace::reset();
+        crate::dispatch_trace::with_recording(|| {
+            assert_eq!(
+                Rational::multiply_magnitudes("toom4-selection-test", &left, &right),
+                &left * &right
+            );
+        });
+        assert_eq!(
+            crate::dispatch_trace::take_trace().path_count(
+                "rational_algorithm",
+                "toom4-selection-test",
+                "rust-native-toom4"
+            ),
+            1
+        );
+    }
+
+    #[test]
+    fn rust_native_toom6_matches_backend_products() {
+        let threshold = usize::try_from(Rational::TOOM6_MULTIPLICATION_THRESHOLD_BITS).unwrap();
+        assert!(!Rational::should_use_toom6_multiplication(
+            &(BigUint::one() << (threshold - 2)),
+            &(BigUint::one() << (threshold - 2))
+        ));
+        assert!(Rational::should_use_toom6_multiplication(
+            &(BigUint::one() << (threshold - 1)),
+            &(BigUint::one() << (threshold - 1))
+        ));
+        assert!(!Rational::should_use_toom6_multiplication(
+            &(BigUint::one() << (threshold + threshold / 5)),
+            &(BigUint::one() << (threshold - 1))
+        ));
+
+        for left in 0_u32..64 {
+            for right in 0_u32..64 {
+                let left = BigUint::from(left);
+                let right = BigUint::from(right);
+                assert_eq!(
+                    Rational::multiply_magnitudes_toom6_candidate(&left, &right),
+                    &left * &right
+                );
+            }
+        }
+
+        fn generated_magnitude(bits: usize, state: &mut u64) -> BigUint {
+            let mut value = BigUint::ZERO;
+            for _ in 0..bits.div_ceil(64) {
+                *state = state
+                    .wrapping_mul(6_364_136_223_846_793_005)
+                    .wrapping_add(1_442_695_040_888_963_407);
+                value = (value << 64_usize) + *state;
+            }
+            let mask = (BigUint::one() << bits) - 1_u8;
+            (value & mask) | (BigUint::one() << (bits - 1))
+        }
+
+        let mut state = 0x082e_fa98_ec4e_6c89_u64;
+        for bits in [257, 1024, 4096, 65_536, 131_072] {
+            for shorter_bits in [bits, bits - 1, bits * 5 / 6] {
+                let left = generated_magnitude(bits, &mut state);
+                let right = generated_magnitude(shorter_bits, &mut state);
+                assert_eq!(
+                    Rational::multiply_magnitudes_toom6_candidate(&left, &right),
+                    &left * &right,
+                    "failed for {bits}-by-{shorter_bits}-bit operands"
+                );
+            }
+        }
+    }
+
+    #[cfg(feature = "dispatch-trace")]
+    #[test]
+    fn rust_native_toom6_candidate_path_is_traced() {
+        let left = (BigUint::one() << 4096_usize) + 23_u8;
+        let right = (BigUint::one() << 4095_usize) + 29_u8;
+        crate::dispatch_trace::reset();
+        crate::dispatch_trace::with_recording(|| {
+            assert_eq!(
+                Rational::multiply_magnitudes_toom6_candidate(&left, &right),
+                &left * &right
+            );
+        });
+        assert_eq!(
+            crate::dispatch_trace::take_trace().path_count(
+                "rational_algorithm",
+                "multiplication-candidate",
+                "rust-native-toom6"
+            ),
+            1
+        );
+    }
+
+    #[cfg(feature = "dispatch-trace")]
+    #[test]
+    fn rust_native_toom6_selected_path_is_traced_at_crossover() {
+        let shorter_bits = usize::try_from(Rational::TOOM6_MULTIPLICATION_THRESHOLD_BITS).unwrap();
+        let longer_bits = shorter_bits + shorter_bits / 7;
+        let left = (BigUint::one() << (longer_bits - 1)) + 31_u8;
+        let right = (BigUint::one() << (shorter_bits - 1)) + 37_u8;
+        crate::dispatch_trace::reset();
+        crate::dispatch_trace::with_recording(|| {
+            assert_eq!(
+                Rational::multiply_magnitudes("toom6-selection-test", &left, &right),
+                &left * &right
+            );
+        });
+        assert_eq!(
+            crate::dispatch_trace::take_trace().path_count(
+                "rational_algorithm",
+                "toom6-selection-test",
+                "rust-native-toom6"
+            ),
+            1
+        );
+    }
+
+    #[test]
+    fn rust_native_toom8_matches_backend_products() {
+        let threshold = usize::try_from(Rational::TOOM8_MULTIPLICATION_THRESHOLD_BITS).unwrap();
+        assert!(!Rational::should_use_toom8_multiplication(
+            &(BigUint::one() << (threshold - 2)),
+            &(BigUint::one() << (threshold - 2))
+        ));
+        assert!(Rational::should_use_toom8_multiplication(
+            &(BigUint::one() << (threshold - 1)),
+            &(BigUint::one() << (threshold - 1))
+        ));
+        assert!(!Rational::should_use_toom8_multiplication(
+            &(BigUint::one() << (threshold + threshold / 7)),
+            &(BigUint::one() << (threshold - 1))
+        ));
+
+        for left in 0_u32..32 {
+            for right in 0_u32..32 {
+                let left = BigUint::from(left);
+                let right = BigUint::from(right);
+                assert_eq!(
+                    Rational::multiply_magnitudes_toom8_candidate(&left, &right),
+                    &left * &right
+                );
+            }
+        }
+
+        fn generated_magnitude(bits: usize, state: &mut u64) -> BigUint {
+            let mut value = BigUint::ZERO;
+            for _ in 0..bits.div_ceil(64) {
+                *state = state
+                    .wrapping_mul(6_364_136_223_846_793_005)
+                    .wrapping_add(1_442_695_040_888_963_407);
+                value = (value << 64_usize) + *state;
+            }
+            let mask = (BigUint::one() << bits) - 1_u8;
+            (value & mask) | (BigUint::one() << (bits - 1))
+        }
+
+        let mut state = 0x4528_21e6_38d0_1377_u64;
+        for bits in [257, 1024, 4096, 65_536, 131_072] {
+            for shorter_bits in [bits, bits - 1, bits * 7 / 8] {
+                let left = generated_magnitude(bits, &mut state);
+                let right = generated_magnitude(shorter_bits, &mut state);
+                assert_eq!(
+                    Rational::multiply_magnitudes_toom8_candidate(&left, &right),
+                    &left * &right,
+                    "failed for {bits}-by-{shorter_bits}-bit operands"
+                );
+            }
+        }
+    }
+
+    #[cfg(feature = "dispatch-trace")]
+    #[test]
+    fn rust_native_toom8_candidate_path_is_traced() {
+        let left = (BigUint::one() << 4096_usize) + 41_u8;
+        let right = (BigUint::one() << 4095_usize) + 43_u8;
+        crate::dispatch_trace::reset();
+        crate::dispatch_trace::with_recording(|| {
+            assert_eq!(
+                Rational::multiply_magnitudes_toom8_candidate(&left, &right),
+                &left * &right
+            );
+        });
+        assert_eq!(
+            crate::dispatch_trace::take_trace().path_count(
+                "rational_algorithm",
+                "multiplication-candidate",
+                "rust-native-toom8"
+            ),
+            1
+        );
+    }
+
+    #[cfg(feature = "dispatch-trace")]
+    #[test]
+    fn rust_native_toom8_selected_path_is_traced_at_crossover() {
+        let bits = usize::try_from(Rational::TOOM8_MULTIPLICATION_THRESHOLD_BITS).unwrap();
+        let left = (BigUint::one() << (bits - 1)) + 47_u8;
+        let right = (BigUint::one() << (bits - 1)) + 53_u8;
+        crate::dispatch_trace::reset();
+        crate::dispatch_trace::with_recording(|| {
+            assert_eq!(
+                Rational::multiply_magnitudes("toom8-selection-test", &left, &right),
+                &left * &right
+            );
+        });
+        assert_eq!(
+            crate::dispatch_trace::take_trace().path_count(
+                "rational_algorithm",
+                "toom8-selection-test",
+                "rust-native-toom8"
+            ),
+            1
+        );
+    }
+
+    #[test]
+    fn rust_native_ntt_matches_backend_products() {
+        for left in 0_u32..32 {
+            for right in 0_u32..32 {
+                let left = BigUint::from(left);
+                let right = BigUint::from(right);
+                assert_eq!(
+                    Rational::multiply_magnitudes_ntt_candidate(&left, &right),
+                    &left * &right
+                );
+            }
+        }
+
+        fn generated_magnitude(bits: usize, state: &mut u64) -> BigUint {
+            let mut value = BigUint::ZERO;
+            for _ in 0..bits.div_ceil(64) {
+                *state = state
+                    .wrapping_mul(6_364_136_223_846_793_005)
+                    .wrapping_add(1_442_695_040_888_963_407);
+                value = (value << 64_usize) + *state;
+            }
+            let mask = (BigUint::one() << bits) - 1_u8;
+            (value & mask) | (BigUint::one() << (bits - 1))
+        }
+
+        let mut state = 0xbe54_66cf_34e9_0c6c_u64;
+        for bits in [1, 15, 16, 31, 32, 257, 4096, 65_536, 262_144] {
+            let left = generated_magnitude(bits, &mut state);
+            let right = generated_magnitude(bits.saturating_sub(1).max(1), &mut state);
+            assert_eq!(
+                Rational::multiply_magnitudes_ntt_candidate(&left, &right),
+                &left * &right,
+                "failed for {bits}-bit operands"
+            );
+        }
+    }
+
+    #[cfg(feature = "dispatch-trace")]
+    #[test]
+    fn rust_native_ntt_candidate_path_is_traced() {
+        let left = (BigUint::one() << 4096_usize) + 59_u8;
+        let right = (BigUint::one() << 4095_usize) + 61_u8;
+        crate::dispatch_trace::reset();
+        crate::dispatch_trace::with_recording(|| {
+            assert_eq!(
+                Rational::multiply_magnitudes_ntt_candidate(&left, &right),
+                &left * &right
+            );
+        });
+        assert_eq!(
+            crate::dispatch_trace::take_trace().path_count(
+                "rational_algorithm",
+                "multiplication-candidate",
+                "rust-native-ntt-crt"
+            ),
+            1
+        );
+    }
+
+    #[test]
+    fn backend_division_classifier_matches_locked_num_bigint_thresholds() {
+        let limbs = magnitude_with_backend_limbs;
+        assert_eq!(
+            Rational::backend_division_algorithm(&limbs(2), &limbs(3)),
+            BackendDivisionAlgorithm::TrivialOrSmallQuotient
+        );
+        assert_eq!(
+            Rational::backend_division_algorithm(&limbs(10), &BigUint::from(3_u8)),
+            BackendDivisionAlgorithm::SingleLimb
+        );
+        assert_eq!(
+            Rational::backend_division_algorithm(&limbs(128), &limbs(64)),
+            BackendDivisionAlgorithm::KnuthBasecase
+        );
+        assert_eq!(
+            Rational::backend_division_algorithm(&limbs(129), &limbs(65)),
+            BackendDivisionAlgorithm::KnuthBasecase
+        );
+    }
+
+    #[test]
+    fn block_wise_barrett_matches_backend_div_rem() {
+        fn generated_magnitude(bits: usize, state: &mut u64) -> BigUint {
+            let mut value = BigUint::ZERO;
+            for _ in 0..bits.div_ceil(64) {
+                *state = state
+                    .wrapping_mul(6_364_136_223_846_793_005)
+                    .wrapping_add(1_442_695_040_888_963_407);
+                value = (value << 64_usize) + *state;
+            }
+            let mask = (BigUint::one() << bits) - 1_u8;
+            (value & mask) | (BigUint::one() << (bits - 1))
+        }
+
+        use num::Integer as _;
+        for divisor in 1_u32..128 {
+            let divisor = BigUint::from(divisor);
+            for quotient in [0_u32, 1, 2, 7, 31, 127, 1021] {
+                for remainder in [0_u32, 1, 3, 17, 63, 126] {
+                    let remainder = BigUint::from(remainder) % &divisor;
+                    let dividend = &divisor * quotient + remainder;
+                    assert_eq!(
+                        Rational::div_rem_magnitudes_barrett_candidate(&dividend, &divisor),
+                        dividend.div_rem(&divisor)
+                    );
+                }
+            }
+        }
+
+        let mut state = 0x243f_6a88_85a3_08d3_u64;
+        for divisor_bits in [64, 65, 192, 1024, 4096] {
+            for blocks in [1, 2, 3, 8] {
+                for case in 0..8 {
+                    let divisor = generated_magnitude(divisor_bits, &mut state);
+                    let dividend_bits = divisor_bits * blocks + case;
+                    let dividend = generated_magnitude(dividend_bits.max(1), &mut state);
+                    assert_eq!(
+                        Rational::div_rem_magnitudes_barrett_candidate(&dividend, &divisor),
+                        dividend.div_rem(&divisor),
+                        "failed for {divisor_bits}-bit divisor, {blocks} blocks, case {case}"
+                    );
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn block_wise_barrett_batch_reuses_one_reciprocal() {
+        let divisor = (BigUint::one() << 1023_usize) + 0x9e37_79b9_u64;
+        let dividends: Vec<_> = (1_u32..=16)
+            .map(|index| {
+                (&divisor << (usize::try_from(index).unwrap() * 257))
+                    + &divisor * index
+                    + (index - 1)
+            })
+            .collect();
+        assert_eq!(
+            Rational::div_rem_magnitudes_barrett_batch_candidate(&dividends, &divisor),
+            Rational::div_rem_magnitudes_backend_batch(&dividends, &divisor)
+        );
+    }
+
+    #[cfg(feature = "dispatch-trace")]
+    #[test]
+    fn block_wise_barrett_candidate_path_is_traced() {
+        let divisor = (BigUint::one() << 1023_usize) + 17_u8;
+        let dividend = (&divisor << 4096_usize) + 19_u8;
+        crate::dispatch_trace::reset();
+        crate::dispatch_trace::with_recording(|| {
+            let _ = Rational::div_rem_magnitudes_barrett_candidate(&dividend, &divisor);
+        });
+        assert_eq!(
+            crate::dispatch_trace::take_trace().path_count(
+                "rational_algorithm",
+                "division-candidate",
+                "block-wise-barrett"
+            ),
+            1
+        );
+    }
+
+    #[test]
+    fn backend_radix_classifier_matches_locked_num_bigint_threshold() {
+        assert_eq!(
+            Rational::backend_radix_output_algorithm(&magnitude_with_backend_limbs(31)),
+            BackendRadixOutputAlgorithm::RepeatedSingleLimbDivision
+        );
+        assert_eq!(
+            Rational::backend_radix_output_algorithm(&magnitude_with_backend_limbs(32)),
+            BackendRadixOutputAlgorithm::DivideAndConquer
+        );
+    }
+
+    #[test]
+    fn divide_conquer_decimal_parser_matches_backend_reference() {
+        let digits = "1234567890".repeat(1024);
+        let expected = Rational::from_bigint(BigInt::from(
+            BigUint::parse_bytes(digits.as_bytes(), 10).unwrap(),
+        ));
+        assert_eq!(digits.parse::<Rational>().unwrap(), expected);
+    }
+
+    #[cfg(feature = "dispatch-trace")]
+    #[test]
+    fn retained_dyadic_fact_and_backend_algorithm_paths_are_traced() {
+        crate::dispatch_trace::reset();
+        crate::dispatch_trace::with_recording(|| {
+            let non_dyadic = Rational::fraction(7, 15).unwrap();
+            assert!(!non_dyadic.is_dyadic());
+            assert!(!non_dyadic.is_dyadic());
+
+            let left = Rational::from_bigint(BigInt::from_biguint(
+                Plus,
+                magnitude_with_backend_limbs(40) + 1_u8,
+            ));
+            let right = Rational::from_bigint(BigInt::from_biguint(
+                Plus,
+                magnitude_with_backend_limbs(40) + 3_u8,
+            ));
+            let _ = &left * &right;
+        });
+        let trace = crate::dispatch_trace::take_trace();
+        assert_eq!(
+            trace.path_count("rational", "retained-facts", "dyadic-learned"),
+            1
+        );
+        assert_eq!(
+            trace.path_count("rational", "retained-facts", "dyadic-hit"),
+            3
+        );
+        assert_eq!(
+            trace.path_count(
+                "rational_algorithm",
+                "multiplication-wide-dyadic",
+                "backend-karatsuba"
+            ),
+            1
+        );
+    }
+
+    #[cfg(feature = "dispatch-trace")]
+    #[test]
+    fn exact_reduction_traces_single_limb_and_small_and_large_knuth_division() {
+        crate::dispatch_trace::reset();
+        crate::dispatch_trace::with_recording(|| {
+            let single_limb_numerator = magnitude_with_backend_limbs(10) * 3_u8;
+            assert_eq!(
+                Rational::from_bigint_fraction(
+                    BigInt::from(single_limb_numerator),
+                    BigUint::from(3_u8),
+                )
+                .unwrap(),
+                Rational::from_bigint(BigInt::from(magnitude_with_backend_limbs(10)))
+            );
+
+            let common = magnitude_with_backend_limbs(10) + 1_u8;
+            assert_eq!(
+                Rational::from_bigint_fraction(
+                    BigInt::from(&common * 3_u8),
+                    &common * 5_u8,
+                )
+                .unwrap(),
+                Rational::fraction(3, 5).unwrap()
+            );
+
+            let wide_common = magnitude_with_backend_limbs(65) + 1_u8;
+            let wide_factor = magnitude_with_backend_limbs(65) + 2_u8;
+            let _ = Rational::from_bigint_fraction(
+                BigInt::from(&wide_common * &wide_factor),
+                &wide_common * 3_u8,
+            )
+            .unwrap();
+        });
+        let trace = crate::dispatch_trace::take_trace();
+        assert!(
+            trace.path_count(
+                "rational_algorithm",
+                "reduction-numerator",
+                "backend-single-limb"
+            )
+                >= 1
+        );
+        assert!(
+            trace.path_count(
+                "rational_algorithm",
+                "reduction-numerator",
+                "backend-knuth-basecase"
+            )
+                >= 2
+        );
+    }
+
+    #[cfg(feature = "dispatch-trace")]
+    #[test]
+    fn exact_fractional_remainder_traces_backend_division() {
+        let denominator = magnitude_with_backend_limbs(65) + 3_u8;
+        let numerator = (&denominator << (64 * usize::BITS as usize)) + 17_u8;
+        let value = Rational::from_bigint_fraction(BigInt::from(numerator), denominator).unwrap();
+        crate::dispatch_trace::reset();
+        crate::dispatch_trace::with_recording(|| {
+            assert!(!value.fract().is_integer());
+        });
+        assert_eq!(
+            crate::dispatch_trace::take_trace().path_count(
+                "rational_algorithm",
+                "exact-fractional-remainder",
+                "backend-knuth-basecase"
+            ),
+            1
+        );
+    }
+
+    #[cfg(feature = "dispatch-trace")]
+    #[test]
+    fn radix_conversion_paths_are_traced_at_backend_crossover() {
+        let large = Rational::from_bigint(BigInt::from_biguint(
+            Plus,
+            magnitude_with_backend_limbs(32) + 17_u8,
+        ));
+        let large_decimal = large.to_string();
+
+        crate::dispatch_trace::reset();
+        crate::dispatch_trace::with_recording(|| {
+            assert_eq!(Rational::new(17).to_string(), "17");
+            assert_eq!(large.to_string(), large_decimal);
+            assert_eq!(large_decimal.parse::<Rational>().unwrap(), large);
+            assert_eq!(format!("{:#.4}", Rational::fraction(1, 7).unwrap()), "0.1428");
+        });
+        let trace = crate::dispatch_trace::take_trace();
+        assert!(
+            trace.path_count(
+                "rational_algorithm",
+                "binary-to-radix",
+                "backend-repeated-single-limb-division"
+            )
+                >= 1
+        );
+        assert_eq!(
+            trace.path_count(
+                "rational_algorithm",
+                "binary-to-radix",
+                "backend-divide-and-conquer"
+            ),
+            1
+        );
+        assert_eq!(
+            trace.path_count(
+                "rational_algorithm",
+                "radix-to-binary",
+                "backend-chunked-multiply-add"
+            ),
+            1
+        );
+        assert_eq!(
+            trace.path_count(
+                "rational_algorithm",
+                "binary-to-radix",
+                "rational-repeated-digit-division"
+            ),
+            1
+        );
+    }
+
+    #[cfg(feature = "dispatch-trace")]
+    #[test]
+    fn divide_conquer_radix_input_path_is_traced() {
+        let digits = "3141592653".repeat(1024);
+        crate::dispatch_trace::reset();
+        crate::dispatch_trace::with_recording(|| {
+            let parsed = digits.parse::<Rational>().unwrap();
+            assert!(parsed.is_integer());
+        });
+        let trace = crate::dispatch_trace::take_trace();
+        assert_eq!(
+            trace.path_count(
+                "rational_algorithm",
+                "radix-to-binary",
+                "divide-conquer-product-tree"
+            ),
+            1
+        );
+    }
+
+    #[test]
+    fn binary_word_gcd_matches_euclidean_reference() {
+        fn reference(mut left: u128, mut right: u128) -> u128 {
+            while right != 0 {
+                (left, right) = (right, left % right);
+            }
+            left
+        }
+
+        let wide_divisor = (1_u128 << 100) + 151;
+        let low_high_limb_divisor = (1_u128 << 64) + u128::from(u64::MAX);
+        let near_quotient_five_limit = u128::MAX / 5 - 151;
+        let edge_cases = [
+            (0, 0),
+            (0, 1),
+            (1, 0),
+            (1, 1),
+            (2, 4),
+            (u128::MAX, u128::MAX - 1),
+            (u128::MAX, u128::from(u64::MAX - 58)),
+            (u128::from(u64::MAX - 58), u128::MAX),
+            (1_u128 << 127, 1_u128 << 126),
+            ((1_u128 << 127) + (1_u128 << 63), 1_u128 << 64),
+            (wide_divisor + 77, wide_divisor),
+            (2 * wide_divisor + 77, wide_divisor),
+            (3 * wide_divisor + 77, wide_divisor),
+            (4 * wide_divisor + 77, wide_divisor),
+            (5 * wide_divisor + 77, wide_divisor),
+            (6 * wide_divisor + 77, wide_divisor),
+            (8 * wide_divisor + 77, wide_divisor),
+            (17 * wide_divisor + 77, wide_divisor),
+            (5 * low_high_limb_divisor + 77, low_high_limb_divisor),
+            (9 * low_high_limb_divisor + 77, low_high_limb_divisor),
+            (
+                5 * near_quotient_five_limit + 77,
+                near_quotient_five_limit,
+            ),
+        ];
+        for (left, right) in edge_cases {
+            assert_eq!(Rational::gcd_word(left, right), reference(left, right));
+        }
+        for left in 0..64 {
+            for right in 0..64 {
+                assert_eq!(Rational::gcd_word(left, right), reference(left, right));
+            }
+        }
+
+        let mut left = 0x243f_6a88_85a3_08d3_1319_8a2e_0370_7344_u128;
+        let mut right = 0xa409_3822_299f_31d0_082e_fa98_ec4e_6c89_u128;
+        for _ in 0..20_000 {
+            left ^= left << 13;
+            left ^= left >> 17;
+            left ^= left << 43;
+            right ^= right << 29;
+            right ^= right >> 31;
+            right ^= right << 37;
+            assert_eq!(Rational::gcd_word(left, right), reference(left, right));
+        }
+    }
+
+    #[test]
+    fn fixed_512_gcd_matches_biguint_reference() {
+        let equal_256 = ((BigUint::one() << 200_usize) + BigUint::from(21_u8)) << 37_usize;
+        assert_eq!(
+            Rational::gcd_fixed::<4>(&equal_256, &equal_256),
+            Some(equal_256.clone())
+        );
+        let equal_512 = ((BigUint::one() << 450_usize) + BigUint::from(35_u8)) << 17_usize;
+        assert_eq!(
+            Rational::gcd_fixed::<8>(&equal_512, &equal_512),
+            Some(equal_512.clone())
+        );
+
+        let mut state = [
+            0x243f_6a88_85a3_08d3_u64,
+            0x1319_8a2e_0370_7344_u64,
+            0xa409_3822_299f_31d0_u64,
+            0x082e_fa98_ec4e_6c89_u64,
+        ];
+        let next = |state: &mut [u64; 4]| {
+            let result = state[0].wrapping_add(state[3]);
+            let temporary = state[1] << 17;
+            state[2] ^= state[0];
+            state[3] ^= state[1];
+            state[1] ^= state[2];
+            state[0] ^= state[3];
+            state[2] ^= temporary;
+            state[3] = state[3].rotate_left(45);
+            result
+        };
+        for index in 0..20_000_u32 {
+            let mut left_words = [0_u32; 8];
+            let mut right_words = [0_u32; 8];
+            for word in &mut left_words[..6] {
+                *word = next(&mut state) as u32;
+            }
+            for word in &mut right_words[..6] {
+                *word = next(&mut state) as u32;
+            }
+            left_words[4] |= 1;
+            right_words[4] |= 1;
+            let common_shift = index % 64;
+            let left = BigUint::from_slice(&left_words) << common_shift;
+            let right = BigUint::from_slice(&right_words) << common_shift;
+            assert_eq!(
+                Rational::gcd_fixed::<4>(&left, &right),
+                Some(num::Integer::gcd(&left, &right))
+            );
+        }
+        for bits in [257_usize, 384, 511, 512] {
+            let left = (BigUint::one() << (bits - 1))
+                + (BigUint::one() << (bits / 2))
+                + BigUint::from(15_u8);
+            let right = (BigUint::one() << (bits - 2))
+                + (BigUint::one() << (bits / 3))
+                + BigUint::from(21_u8);
+            assert_eq!(
+                Rational::gcd_fixed::<8>(&left, &right),
+                Some(num::Integer::gcd(&left, &right)),
+                "failed for {bits}-bit fixed GCD operands"
+            );
+        }
+        assert_eq!(
+            Rational::gcd_fixed::<8>(
+                &((BigUint::one() << 512_usize) + BigUint::one()),
+                &((BigUint::one() << 511_usize) + BigUint::one()),
+            ),
+            None
+        );
+    }
+
+    #[test]
+    fn wide_magnitude_gcd_handles_balanced_and_wide_word_operands() {
+        let common = (BigUint::one() << 192_usize) + BigUint::one();
+        assert_eq!(
+            Rational::gcd_magnitudes(&(&common * 17_u8), &(&common * 19_u8)),
+            common
+        );
+
+        let word = BigUint::from(15_u8);
+        let wide = ((BigUint::one() << 260_usize) + BigUint::from(2_u8)) * &word;
+        assert_eq!(Rational::gcd_magnitudes(&wide, &word), word);
+        assert_eq!(
+            Rational::gcd_magnitudes(&BigUint::ZERO, &wide),
+            wide
+        );
+    }
+
+    #[test]
+    fn rational_operation_gcd_dispatch_handles_mixed_width_and_zero_operands() {
+        let left_word = BigUint::from((1_u128 << 127) + (1_u128 << 63));
+        let right_word = BigUint::from(1_u128 << 64);
+        assert_eq!(
+            Rational::gcd_magnitudes_with_mixed_width_fast_path(&left_word, &right_word),
+            BigUint::from(1_u128 << 63)
+        );
+
+        let word = BigUint::from(15_u8);
+        let wide = ((BigUint::one() << 260_usize) + BigUint::from(2_u8)) * &word;
+        assert_eq!(
+            Rational::gcd_magnitudes_with_mixed_width_fast_path(&wide, &word),
+            word
+        );
+        assert_eq!(
+            Rational::gcd_magnitudes_with_mixed_width_fast_path(&word, &wide),
+            word
+        );
+        assert_eq!(
+            Rational::gcd_magnitudes_with_mixed_width_fast_path(&BigUint::ZERO, &wide),
+            wide
+        );
+        assert_eq!(
+            Rational::gcd_magnitudes_with_mixed_width_fast_path(&wide, &BigUint::ZERO),
+            wide
+        );
+
+        let one = BigUint::one();
+        assert_eq!(
+            Rational::gcd_magnitudes_with_mixed_width_fast_path(&one, &wide),
+            one
+        );
+        assert_eq!(
+            Rational::gcd_magnitudes_with_mixed_width_fast_path(&wide, &one),
+            one
+        );
+        let word_power_of_two = BigUint::from(8_u8);
+        assert_eq!(
+            Rational::gcd_magnitudes_with_mixed_width_fast_path(&word_power_of_two, &wide),
+            BigUint::from(2_u8)
+        );
+        assert_eq!(
+            Rational::gcd_magnitudes_with_mixed_width_fast_path(&wide, &word_power_of_two),
+            BigUint::from(2_u8)
+        );
+        assert_eq!(
+            Rational::gcd_magnitudes_with_mixed_width_fast_path(&wide, &wide),
+            wide
+        );
+        let wide_power_of_two = BigUint::one() << 300_usize;
+        let wide_even = (BigUint::one() << 400_usize) + BigUint::from(12_u8);
+        assert_eq!(
+            Rational::gcd_magnitudes_with_mixed_width_fast_path(
+                &wide_power_of_two,
+                &wide_even,
+            ),
+            BigUint::from(4_u8)
+        );
+        assert_eq!(
+            Rational::gcd_magnitudes_with_mixed_width_fast_path(
+                &wide_even,
+                &wide_power_of_two,
+            ),
+            BigUint::from(4_u8)
+        );
+
+        let other = ((BigUint::one() << 259_usize) + BigUint::from(7_u8)) * 21_u8;
+        let fixed_left = ((BigUint::one() << 190_usize) + BigUint::from(13_u8)) * 15_u8;
+        let fixed_right = ((BigUint::one() << 189_usize) + BigUint::from(11_u8)) * 21_u8;
+        let backend_left = ((BigUint::one() << 600_usize) + BigUint::from(13_u8)) * 15_u8;
+        let backend_right = ((BigUint::one() << 599_usize) + BigUint::from(11_u8)) * 21_u8;
+        assert_eq!(
+            Rational::gcd_magnitudes_with_mixed_width_fast_path(&fixed_left, &fixed_right),
+            num::Integer::gcd(&fixed_left, &fixed_right)
+        );
+        assert_eq!(
+            Rational::gcd_magnitudes_with_mixed_width_fast_path(&wide, &other),
+            num::Integer::gcd(&wide, &other)
+        );
+        assert_eq!(
+            Rational::gcd_magnitudes_with_mixed_width_fast_path(&backend_left, &backend_right),
+            num::Integer::gcd(&backend_left, &backend_right)
+        );
+    }
+
+    #[test]
+    fn numerator_magnitude_gcd_ignores_signs_and_denominators() {
+        let common = (BigUint::one() << 192_usize) + BigUint::one();
+        let left = -Rational::from_unsigned_integer(&common * 15_u8) / Rational::from(8_u8);
+        let right = Rational::from_unsigned_integer(&common * 21_u8) / Rational::from(32_u8);
+
+        assert_eq!(
+            left.numerator_magnitude_gcd(&right),
+            Rational::from_unsigned_integer(&common * 3_u8)
+        );
+        assert_eq!(
+            Rational::zero().numerator_magnitude_gcd(&right),
+            Rational::from_unsigned_integer(&common * 21_u8)
+        );
+    }
+
+    #[test]
+    fn dyadic_difference_numerator_query_is_reduced_and_unsigned() {
+        let wide = (BigUint::one() << 192_usize) + BigUint::one();
+        let left = Rational::from_unsigned_integer(&wide * 9_u8) / Rational::from(32_u8);
+        let right = Rational::from_unsigned_integer(&wide * 3_u8) / Rational::from(8_u8);
+        assert_eq!(
+            left.dyadic_difference_numerator_magnitude(&right),
+            Some(Rational::from_unsigned_integer(&wide * 3_u8))
+        );
+        assert_eq!(
+            (-&left).dyadic_difference_numerator_magnitude(&right),
+            Some(Rational::from_unsigned_integer(&wide * 21_u8))
+        );
+        assert_eq!(
+            left.dyadic_difference_numerator_magnitude(&left),
+            Some(Rational::zero())
+        );
+        assert_eq!(
+            left.dyadic_difference_numerator_magnitude(&Rational::fraction(1, 3).unwrap()),
+            None
+        );
+    }
+
+    #[cfg(feature = "dispatch-trace")]
+    #[test]
+    fn rational_operation_gcd_trace_reports_selected_algorithm() {
+        let word = BigUint::from(15_u8);
+        let wide = ((BigUint::one() << 260_usize) + BigUint::from(2_u8)) * &word;
+        let power = BigUint::one() << 300_usize;
+        let other = ((BigUint::one() << 259_usize) + BigUint::from(7_u8)) * 21_u8;
+        let fixed_left = ((BigUint::one() << 190_usize) + BigUint::from(13_u8)) * 15_u8;
+        let fixed_right = ((BigUint::one() << 189_usize) + BigUint::from(11_u8)) * 21_u8;
+        let backend_left = ((BigUint::one() << 600_usize) + BigUint::from(13_u8)) * 15_u8;
+        let backend_right = ((BigUint::one() << 599_usize) + BigUint::from(11_u8)) * 21_u8;
+
+        crate::dispatch_trace::reset();
+        crate::dispatch_trace::with_recording(|| {
+            Rational::gcd_magnitudes_with_mixed_width_fast_path(&word, &word);
+            Rational::gcd_magnitudes_with_mixed_width_fast_path(&BigUint::one(), &wide);
+            Rational::gcd_magnitudes_with_mixed_width_fast_path(&power, &wide);
+            Rational::gcd_magnitudes_with_mixed_width_fast_path(&wide, &wide);
+            Rational::gcd_magnitudes_with_mixed_width_fast_path(&word, &wide);
+            Rational::gcd_magnitudes_with_mixed_width_fast_path(&fixed_left, &fixed_right);
+            Rational::gcd_magnitudes_with_mixed_width_fast_path(&wide, &other);
+            Rational::gcd_magnitudes_with_mixed_width_fast_path(&backend_left, &backend_right);
+        });
+        let trace = crate::dispatch_trace::take_trace();
+        for path in [
+            "binary-word",
+            "identity-wide",
+            "power-of-two-wide",
+            "equal-wide",
+            "euclidean-wide-word",
+            "binary-fixed-256",
+            "binary-fixed-512",
+            "lehmer-leading-limb",
+        ] {
+            assert_eq!(trace.path_count("rational_algorithm", "gcd", path), 1);
+        }
+    }
+
+    #[test]
+    fn lehmer_magnitude_gcd_matches_backend_reference() {
+        fn generated_magnitude(bits: usize, state: &mut u64) -> BigUint {
+            let mut value = BigUint::ZERO;
+            for _ in 0..bits.div_ceil(64) {
+                *state = state
+                    .wrapping_mul(6_364_136_223_846_793_005)
+                    .wrapping_add(1_442_695_040_888_963_407);
+                value = (value << 64_usize) + *state;
+            }
+            let mask = (BigUint::one() << bits) - 1_u8;
+            (value & mask) | (BigUint::one() << (bits - 1))
+        }
+
+        let mut state = 0x243f_6a88_85a3_08d3_u64;
+        for bits in [192, 193, 256, 1024, 1031, 2048, 4096] {
+            for case in 0..24 {
+                let common = BigUint::from((case % 7) + 1);
+                let left = generated_magnitude(bits, &mut state) * &common;
+                let right = generated_magnitude(bits - case % 2, &mut state) * &common;
+                assert_eq!(
+                    Rational::gcd_magnitudes(&left, &right),
+                    num::Integer::gcd(&left, &right),
+                    "failed for {bits}-bit case {case}"
+                );
+            }
+        }
+
+        for bits in [191, 192, 256, 512, 1024, 4096] {
+            let first = generated_magnitude(bits, &mut state);
+            let second = generated_magnitude(bits - 1, &mut state);
+            let (divisor, remainder) = if first > second {
+                (first, second)
+            } else {
+                (second, first)
+            };
+            let dividend =
+                &divisor * (BigUint::one() << usize::try_from(divisor.bits()).unwrap())
+                    + &remainder;
+            assert!(dividend.bits().abs_diff(divisor.bits()) > 1);
+            assert_eq!(
+                Rational::gcd_magnitudes(&dividend, &divisor),
+                num::Integer::gcd(&dividend, &divisor),
+                "failed after an initially unbalanced {bits}-bit state"
+            );
+        }
+    }
+
+    #[test]
+    fn unsigned_lehmer_matrix_application_matches_signed_magnitudes() {
+        fn signed_reference(
+            larger: &BigUint,
+            smaller: &BigUint,
+            [a, b, c, d]: [i128; 4],
+        ) -> Option<(BigUint, BigUint)> {
+            let larger_signed = BigInt::from(larger.clone());
+            let smaller_signed = BigInt::from(smaller.clone());
+            let first = (&larger_signed * a + &smaller_signed * b)
+                .magnitude()
+                .clone();
+            let second = (larger_signed * c + smaller_signed * d)
+                .magnitude()
+                .clone();
+            if &first >= larger || &second >= larger {
+                return None;
+            }
+            Some((first, second))
+        }
+
+        let larger = (BigUint::one() << 320_usize) + (BigUint::one() << 127_usize) + 17_u8;
+        let smaller = (BigUint::one() << 319_usize) + (BigUint::one() << 191_usize) + 29_u8;
+        for a in [-3_i128, -1, 0, 1, 3] {
+            for b in [-3_i128, -1, 0, 1, 3] {
+                for c in [-3_i128, -1, 0, 1, 3] {
+                    for d in [-3_i128, -1, 0, 1, 3] {
+                        let matrix = [a, b, c, d];
+                        assert_eq!(
+                            Rational::apply_lehmer_gcd_matrix(&larger, &smaller, matrix),
+                            signed_reference(&larger, &smaller, matrix),
+                            "matrix={matrix:?}"
+                        );
+                    }
+                }
+            }
+        }
+        for oversized in [i128::MIN, i128::MAX] {
+            assert_eq!(
+                Rational::apply_lehmer_gcd_matrix(
+                    &larger,
+                    &smaller,
+                    [oversized, -oversized.saturating_abs(), 1, -1]
+                ),
+                None
+            );
+        }
+    }
+
+    #[test]
+    fn recursive_half_gcd_preserves_matrix_and_stop_invariants() {
+        fn generated_magnitude(bits: usize, mut state: u64) -> BigUint {
+            let mut value = BigUint::ZERO;
+            for _ in 0..bits.div_ceil(64) {
+                state = state
+                    .wrapping_mul(6_364_136_223_846_793_005)
+                    .wrapping_add(1_442_695_040_888_963_407);
+                value = (value << 64_usize) + state;
+            }
+            let mask = (BigUint::one() << bits) - 1_u8;
+            (value & mask) | (BigUint::one() << (bits - 1))
+        }
+
+        for bits in [1024, 1025, 2048, 4096] {
+            let left = generated_magnitude(bits, 0x243f_6a88_85a3_08d3);
+            let right = generated_magnitude(bits, 0xa409_3822_299f_31d0);
+            let reduction = Rational::half_gcd_reduce(&left, &right)
+                .unwrap_or_else(|| panic!("half-GCD failed for {bits}-bit operands"));
+            let matrix = &reduction.matrix;
+            assert_eq!(
+                &matrix.u00 * &reduction.left + &matrix.u01 * &reduction.right,
+                left
+            );
+            assert_eq!(
+                &matrix.u10 * &reduction.left + &matrix.u11 * &reduction.right,
+                right
+            );
+            assert_eq!(
+                &matrix.u00 * &matrix.u11 - &matrix.u01 * &matrix.u10,
+                BigUint::one()
+            );
+            let stop_bits = left.bits().max(right.bits()) / 2 + 1;
+            assert!(reduction.left.bits().min(reduction.right.bits()) > stop_bits);
+            assert!(
+                Rational::magnitude_difference_bits(&reduction.left, &reduction.right)
+                    <= stop_bits,
+                "{bits}-bit reduction stopped at {} difference bits with [{}, {}]-bit remainders (target {stop_bits})",
+                Rational::magnitude_difference_bits(&reduction.left, &reduction.right),
+                reduction.left.bits(),
+                reduction.right.bits()
+            );
+            assert_eq!(
+                num::Integer::gcd(&reduction.left, &reduction.right),
+                num::Integer::gcd(&left, &right)
+            );
+        }
+    }
+
+    #[test]
+    fn half_gcd_candidate_matches_lehmer_baseline() {
+        fn generated_magnitude(bits: usize, mut state: u64) -> BigUint {
+            let mut value = BigUint::ZERO;
+            for _ in 0..bits.div_ceil(64) {
+                state = state
+                    .wrapping_mul(6_364_136_223_846_793_005)
+                    .wrapping_add(1_442_695_040_888_963_407);
+                value = (value << 64_usize) + state;
+            }
+            let mask = (BigUint::one() << bits) - 1_u8;
+            (value & mask) | (BigUint::one() << (bits - 1))
+        }
+
+        for (bits, seed) in [(16_384, 1_u64), (16_391, 2), (32_768, 3)] {
+            let left = generated_magnitude(bits, 0x243f_6a88_85a3_08d3 ^ seed);
+            let right = generated_magnitude(bits, 0xa409_3822_299f_31d0 ^ seed);
+            assert_eq!(
+                Rational::gcd_magnitudes_half_gcd_candidate(&left, &right),
+                Rational::gcd_magnitudes_lehmer_baseline(&left, &right),
+                "failed for {bits}-bit operands"
+            );
+        }
+    }
+
+    #[cfg(feature = "dispatch-trace")]
+    #[test]
+    fn recursive_half_gcd_path_is_traced() {
+        let bits = usize::try_from(Rational::HALF_GCD_THRESHOLD_BITS).unwrap();
+        let generated_magnitude = |mut state: u64| {
+            let mut value = BigUint::ZERO;
+            for _ in 0..bits.div_ceil(64) {
+                state = state
+                    .wrapping_mul(6_364_136_223_846_793_005)
+                    .wrapping_add(1_442_695_040_888_963_407);
+                value = (value << 64_usize) + state;
+            }
+            value | (BigUint::one() << (bits - 1))
+        };
+        let left = generated_magnitude(0x243f_6a88_85a3_08d3);
+        let right = generated_magnitude(0xa409_3822_299f_31d0);
+        let expected = Rational::gcd_magnitudes_lehmer_baseline(&left, &right);
+
+        crate::dispatch_trace::reset();
+        crate::dispatch_trace::with_recording(|| {
+            assert_eq!(
+                Rational::gcd_magnitudes_half_gcd_candidate(&left, &right),
+                expected
+            );
+        });
+        let trace = crate::dispatch_trace::take_trace();
+        assert_eq!(
+            trace.path_count(
+                "rational_algorithm",
+                "gcd",
+                "recursive-half-gcd"
+            ),
+            1
+        );
+    }
+
+    #[cfg(feature = "dispatch-trace")]
+    #[test]
+    fn lehmer_magnitude_gcd_path_is_traced() {
+        fn fibonacci_pair_at_least(bits: u64) -> (BigUint, BigUint) {
+            let (mut previous, mut current) = (BigUint::one(), BigUint::one());
+            while current.bits() < bits {
+                (previous, current) = (current.clone(), previous + current);
+            }
+            (current, previous)
+        }
+
+        let (below, below_previous) =
+            fibonacci_pair_at_least(Rational::LEHMER_GCD_THRESHOLD_BITS - 1);
+        crate::dispatch_trace::reset();
+        crate::dispatch_trace::with_recording(|| {
+            assert_eq!(
+                Rational::gcd_magnitudes(&below, &below_previous),
+                BigUint::one()
+            );
+        });
+        let trace = crate::dispatch_trace::take_trace();
+        assert_eq!(
+            trace.path_count(
+                "rational_algorithm",
+                "gcd",
+                "euclidean-wide-remainder"
+            ),
+            1
+        );
+
+        let dividend =
+            &below * (BigUint::one() << usize::try_from(below.bits()).unwrap()) + &below_previous;
+        crate::dispatch_trace::reset();
+        crate::dispatch_trace::with_recording(|| {
+            assert_eq!(
+                Rational::gcd_magnitudes(&dividend, &below),
+                BigUint::one()
+            );
+        });
+        let trace = crate::dispatch_trace::take_trace();
+        assert_eq!(
+            trace.path_count(
+                "rational_algorithm",
+                "gcd",
+                "euclidean-wide-remainder"
+            ),
+            1
+        );
+
+        let (current, previous) =
+            fibonacci_pair_at_least(Rational::LEHMER_GCD_THRESHOLD_BITS + 128);
+        crate::dispatch_trace::reset();
+        crate::dispatch_trace::with_recording(|| {
+            assert_eq!(
+                Rational::gcd_magnitudes(&current, &previous),
+                BigUint::one()
+            );
+        });
+        let trace = crate::dispatch_trace::take_trace();
+        assert_eq!(
+            trace.path_count(
+                "rational_algorithm",
+                "gcd",
+                "lehmer-leading-limb"
+            ),
+            1
+        );
+
+        let dividend = &current
+            * (BigUint::one() << usize::try_from(current.bits()).unwrap())
+            + &previous;
+        assert!(dividend.bits().abs_diff(current.bits()) > 1);
+        crate::dispatch_trace::reset();
+        crate::dispatch_trace::with_recording(|| {
+            assert_eq!(
+                Rational::gcd_magnitudes(&dividend, &current),
+                BigUint::one()
+            );
+        });
+        let trace = crate::dispatch_trace::take_trace();
+        assert_eq!(
+            trace.path_count(
+                "rational_algorithm",
+                "gcd",
+                "lehmer-leading-limb"
+            ),
+            1
+        );
+    }
+
+    #[test]
+    fn clear_common_denominator_preserves_one_positive_shared_scale() {
+        let values = [
+            Rational::fraction(3, 8).unwrap(),
+            Rational::fraction(-5, 12).unwrap(),
+            Rational::zero(),
+        ];
+        assert_eq!(
+            Rational::clear_common_denominator([&values[0], &values[1], &values[2]]),
+            [Rational::new(9), Rational::new(-10), Rational::zero()]
+        );
+        assert_eq!(
+            Rational::clear_common_denominator_slice(&[
+                &values[0],
+                &values[1],
+                &values[2],
+            ]),
+            vec![Rational::new(9), Rational::new(-10), Rational::zero()]
+        );
+    }
+
+    #[test]
+    fn clear_common_denominator_slice_preserves_empty_input() {
+        assert!(Rational::clear_common_denominator_slice(&[]).is_empty());
+    }
+
+    #[test]
+    fn primitive_integer_ratio_clears_denominators_and_content() {
+        let values = [
+            Rational::fraction(2, 3).unwrap(),
+            Rational::fraction(-4, 3).unwrap(),
+            Rational::zero(),
+        ];
+        assert_eq!(
+            Rational::primitive_integer_ratio([&values[0], &values[1], &values[2]]),
+            [Rational::one(), Rational::new(-2), Rational::zero()]
+        );
+        assert_eq!(
+            Rational::primitive_integer_ratio([&Rational::zero(), &Rational::zero()]),
+            [Rational::zero(), Rational::zero()]
+        );
+        assert_eq!(
+            Rational::primitive_integer_ratio([
+                &Rational::zero(),
+                &Rational::fraction(-42, 5).unwrap(),
+                &Rational::zero(),
+            ]),
+            [Rational::zero(), Rational::new(-1), Rational::zero()]
+        );
+        assert!(Rational::primitive_integer_ratio([]).is_empty());
+    }
+
+    #[test]
+    fn primitive_bigint_ratio_matches_rational_components() {
+        let values = [
+            Rational::fraction(2, 3).unwrap(),
+            Rational::fraction(-4, 3).unwrap(),
+            Rational::zero(),
+        ];
+        assert_eq!(
+            Rational::primitive_bigint_ratio(&[&values[0], &values[1], &values[2]]),
+            vec![BigInt::one(), BigInt::from(-2), BigInt::ZERO]
+        );
+        assert_eq!(
+            Rational::primitive_bigint_ratio(&[
+                &Rational::fraction(3, 10).unwrap(),
+                &Rational::fraction(9, 14).unwrap(),
+            ]),
+            vec![BigInt::from(7), BigInt::from(15)]
+        );
+        assert!(Rational::primitive_bigint_ratio(&[]).is_empty());
+    }
+
+    #[test]
+    fn checked_exact_integer_quotient_requires_divisible_integers() {
+        assert_eq!(
+            Rational::new(-84).checked_exact_integer_quotient(&Rational::new(7)),
+            Some(Rational::new(-12))
+        );
+        assert_eq!(
+            Rational::zero().checked_exact_integer_quotient(&Rational::new(-3)),
+            Some(Rational::zero())
+        );
+        assert_eq!(
+            Rational::new(5).checked_exact_integer_quotient(&Rational::new(2)),
+            None
+        );
+        assert_eq!(
+            Rational::fraction(6, 5)
+                .unwrap()
+                .checked_exact_integer_quotient(&Rational::new(3)),
+            None
+        );
+        assert_eq!(
+            Rational::new(6).checked_exact_integer_quotient(&Rational::zero()),
+            None
+        );
+        for quotient in -32_i64..=32 {
+            for divisor in (-32_i64..=32).filter(|divisor| *divisor != 0) {
+                assert_eq!(
+                    Rational::new(quotient * divisor)
+                        .checked_exact_integer_quotient(&Rational::new(divisor)),
+                    Some(Rational::new(quotient))
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn checked_exact_integer_cross_difference_quotient_matches_small_integers() {
+        for left in -3_i64..=3 {
+            for right in -3_i64..=3 {
+                for subtract_left in -3_i64..=3 {
+                    for subtract_right in -3_i64..=3 {
+                        for divisor in (-8_i64..=8).filter(|divisor| *divisor != 0) {
+                            let numerator = left * right - subtract_left * subtract_right;
+                            let expected = (numerator % divisor == 0)
+                                .then(|| Rational::new(numerator / divisor));
+                            assert_eq!(
+                                Rational::new(left)
+                                    .checked_exact_integer_cross_difference_quotient(
+                                        &Rational::new(right),
+                                        &Rational::new(subtract_left),
+                                        &Rational::new(subtract_right),
+                                        &Rational::new(divisor),
+                                    ),
+                                expected
+                            );
+                        }
+                    }
+                }
+            }
+        }
+        assert_eq!(
+            Rational::fraction(1, 2)
+                .unwrap()
+                .checked_exact_integer_cross_difference_quotient(
+                    &Rational::new(2),
+                    &Rational::new(1),
+                    &Rational::new(1),
+                    &Rational::new(1),
+                ),
+            None
+        );
+        assert_eq!(
+            Rational::new(1).checked_exact_integer_cross_difference_quotient(
+                &Rational::new(1),
+                &Rational::new(1),
+                &Rational::new(1),
+                &Rational::zero(),
+            ),
+            None
+        );
+        let wide =
+            Rational::from_unsigned_integer((BigUint::one() << 191_usize) + BigUint::from(17_u8));
+        assert_eq!(
+            wide.checked_exact_integer_cross_difference_quotient(
+                &Rational::new(7),
+                &wide,
+                &Rational::new(4),
+                &Rational::new(3),
+            ),
+            Some(wide.clone())
+        );
+        assert_eq!(
+            wide.checked_exact_integer_cross_difference_quotient(
+                &Rational::new(7),
+                &wide,
+                &Rational::new(4),
+                &Rational::minus_one(),
+            ),
+            Some(-(&wide * Rational::new(3)))
+        );
+    }
+
+    #[test]
+    fn checked_exact_integer_scaled_difference_matches_small_integers() {
+        for left in -8_i64..=8 {
+            for subtractand in -8_i64..=8 {
+                for scale in -8_i64..=8 {
+                    assert_eq!(
+                        Rational::new(left)
+                            .checked_exact_integer_scaled_difference(
+                                &Rational::new(subtractand),
+                                scale,
+                            ),
+                        Some(Rational::new(left - subtractand * scale))
+                    );
+                }
+            }
+        }
+        assert_eq!(
+            Rational::fraction(1, 2)
+                .unwrap()
+                .checked_exact_integer_scaled_difference(&Rational::new(2), 3),
+            None
+        );
+        assert_eq!(
+            Rational::new(2).checked_exact_integer_scaled_difference(
+                &Rational::fraction(1, 3).unwrap(),
+                3,
+            ),
+            None
+        );
+        let wide =
+            Rational::from_unsigned_integer((BigUint::one() << 191_usize) + BigUint::from(17_u8));
+        assert_eq!(
+            wide.checked_exact_integer_scaled_difference(&wide, -3),
+            Some(&wide * Rational::new(4))
+        );
+        assert_eq!(
+            Rational::new(1)
+                .checked_exact_integer_scaled_difference(&Rational::new(2), i64::MIN),
+            Some(&Rational::new(1) - &(&Rational::new(2) * Rational::new(i64::MIN)))
+        );
+    }
+
+    #[test]
+    fn iterator_products_balance_exact_factors_and_preserve_semantics() {
+        let empty: Vec<Rational> = Vec::new();
+        assert_eq!(empty.clone().into_iter().product::<Rational>(), Rational::one());
+        assert_eq!(empty.iter().product::<Rational>(), Rational::one());
+
+        for count in [1_usize, 2, 3, 8, 31, 128, 257, 511, 512, 513, 777] {
+            let factors: Vec<Rational> = (0..count)
+                .map(|index| {
+                    let magnitude = i64::try_from(index % 29 + 1).unwrap();
+                    let numerator = if index % 3 == 0 {
+                        -magnitude
+                    } else {
+                        magnitude
+                    };
+                    Rational::fraction(numerator, u64::try_from(index % 17 + 1).unwrap()).unwrap()
+                })
+                .collect();
+            let expected = factors
+                .iter()
+                .fold(Rational::one(), |product, factor| &product * factor);
+            assert_eq!(
+                factors.clone().into_iter().product::<Rational>(),
+                expected,
+                "owned product with {count} factors"
+            );
+            assert_eq!(
+                factors.iter().product::<Rational>(),
+                expected,
+                "borrowed product with {count} factors"
+            );
+        }
+
+        let wallis: Vec<Rational> = (1_i64..=256)
+            .map(|index| {
+                let square4 = 4 * index * index;
+                Rational::fraction(square4, u64::try_from(square4 - 1).unwrap()).unwrap()
+            })
+            .collect();
+        let sequential = wallis
+            .iter()
+            .fold(Rational::one(), |product, factor| &product * factor);
+        assert_eq!(wallis.iter().product::<Rational>(), sequential);
+
+        let visits = std::cell::Cell::new(0);
+        let with_zero = (0_i64..5).map(|index| {
+            visits.set(visits.get() + 1);
+            if index == 1 {
+                Rational::zero()
+            } else {
+                Rational::new(index + 2)
+            }
+        });
+        assert_eq!(with_zero.product::<Rational>(), Rational::zero());
+        assert_eq!(visits.get(), 5, "product must consume the whole iterator");
+    }
+
+    #[test]
+    fn word_multiplication_cross_cancellation_stays_reduced() {
+        let dyadic = Rational::try_from(0.123_456_789_f64).unwrap();
+        let scaled = &dyadic * Rational::new(10);
+        assert_eq!(
+            scaled,
+            Rational::from_bigint_fraction(
+                BigInt::from(44_479_995_914_940_635_u64),
+                BigUint::from(36_028_797_018_963_968_u64),
+            )
+            .unwrap()
+        );
+
+        let left = Rational::fraction(35, 22).unwrap();
+        let right = Rational::fraction(121, 14).unwrap();
+        assert_eq!(&left * right, Rational::fraction(55, 4).unwrap());
+
+        // Decimal parsing may retain an unreduced internal fraction until a
+        // later arithmetic operation. The dyadic/general path must reduce
+        // those parts as well as cross-cancelling the operands.
+        let decimal: Rational = "1.6".parse().unwrap();
+        assert_eq!(Rational::fraction(5, 4).unwrap() * decimal, Rational::new(2));
+        let odd_common_factor: Rational = "1.5".parse().unwrap();
+        assert_eq!(
+            Rational::fraction(5, 4).unwrap() * odd_common_factor,
+            Rational::fraction(15, 8).unwrap()
+        );
+    }
+
+    #[test]
+    fn wide_dyadic_multiplication_cross_cancels_before_products() {
+        let dyadic = Rational::from_bigint_fraction(
+            BigInt::from(35_u8),
+            BigUint::one() << 180_usize,
+        )
+        .unwrap();
+        let general = Rational::from_bigint_fraction(
+            BigInt::from(11_u8) << 150_usize,
+            BigUint::from(21_u8),
+        )
+        .unwrap();
+        let expected = Rational::from_bigint_fraction(
+            BigInt::from(55_u8),
+            BigUint::from(3_u8) << 30_usize,
+        )
+        .unwrap();
+        assert_eq!(&dyadic * &general, expected);
+        assert_eq!(&general * &dyadic, expected);
+        assert_eq!((-&dyadic) * &general, -&expected);
+
+        let unreduced_general = Rational::from_parts_raw(
+            Plus,
+            (BigUint::from(11_u8) << 150_usize) * BigUint::from(3_u8),
+            BigUint::from(63_u8),
+        );
+        assert_eq!(&dyadic * unreduced_general, expected);
+
+        let left = Rational::from_bigint_fraction(
+            BigInt::from(3_u8),
+            BigUint::one() << 200_usize,
+        )
+        .unwrap();
+        let right = Rational::from_bigint_fraction(
+            BigInt::from(5_u8) << 140_usize,
+            BigUint::one() << 220_usize,
+        )
+        .unwrap();
+        let expected = Rational::from_bigint_fraction(
+            BigInt::from(15_u8),
+            BigUint::one() << 280_usize,
+        )
+        .unwrap();
+        assert_eq!(left * right, expected);
+
+        let dyadic = Rational::from_bigint_fraction(
+            BigInt::from(1_u8),
+            BigUint::one() << 120_usize,
+        )
+        .unwrap();
+        let odd_denominator = (BigUint::one() << 20_usize) + BigUint::one();
+        let general = Rational::from_bigint_fraction(
+            BigInt::from(1_u8),
+            odd_denominator.clone(),
+        )
+        .unwrap();
+        let expected = Rational::from_bigint_fraction(
+            BigInt::from(1_u8),
+            odd_denominator << 120_usize,
+        )
+        .unwrap();
+        assert_eq!(dyadic * general, expected);
+    }
+
+    #[test]
+    fn wide_dyadic_word_numerator_product_matches_biguint_reference() {
+        let tiny = Rational::try_from(1.0e-12_f64).unwrap();
+        assert!(tiny.denominator.bits() * 2 > u64::from(u128::BITS));
+        assert!(tiny.numerator.to_u128().is_some());
+        let negative = -tiny.clone();
+        let product = &tiny * &negative;
+        let expected = Rational::from_bigint_fraction(
+            -BigInt::from_biguint(Plus, &tiny.numerator * &tiny.numerator),
+            &tiny.denominator * &tiny.denominator,
+        )
+        .unwrap();
+        assert_eq!(product, expected);
+    }
+
+    #[test]
+    fn exact_dyadic_f64_view_round_trips_finite_binary64_values() {
+        let mut state = 0xbb67_ae85_84ca_a73b_u64;
+        let mut recovered_count = 0_u32;
+        for _ in 0..20_000 {
+            state ^= state << 13;
+            state ^= state >> 7;
+            state ^= state << 17;
+            let value = f64::from_bits(state);
+            if !value.is_finite() {
+                continue;
+            }
+            let rational = Rational::try_from(value).unwrap();
+            if let Some(recovered) = rational.dyadic_to_f64_exact() {
+                assert_eq!(Rational::try_from(recovered).unwrap(), rational);
+                recovered_count += 1;
+            }
+        }
+        assert!(recovered_count > 19_000);
+    }
+
+    #[test]
+    fn direct_binary64_words_match_canonical_rational_words() {
+        let mut state = 0x3c6e_f372_fe94_f82b_u64;
+        for _ in 0..20_000 {
+            state ^= state << 13;
+            state ^= state >> 7;
+            state ^= state << 17;
+            let value = f64::from_bits(state);
+            let direct = Rational::exact_dyadic_f64_word(value);
+            let canonical = value
+                .is_finite()
+                .then(|| Rational::try_from(value).unwrap())
+                .and_then(|value| Rational::known_dyadic_word(&value));
+            match (direct, canonical) {
+                (Some(direct), Some(canonical)) => {
+                    assert_eq!(direct.sign, canonical.sign, "value={value:?}");
+                    assert_eq!(direct.magnitude, canonical.magnitude, "value={value:?}");
+                    assert_eq!(
+                        direct.denominator_shift, canonical.denominator_shift,
+                        "value={value:?}"
+                    );
+                }
+                (None, None) => {}
+                (direct, canonical) => {
+                    panic!("binary64 word envelope differs for {value:?}: direct={direct:?} canonical={canonical:?}")
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn native_word_product_sums_match_stack_accumulation() {
+        fn next(state: &mut u64) -> u64 {
+            *state ^= *state << 13;
+            *state ^= *state >> 7;
+            *state ^= *state << 17;
+            *state
+        }
+
+        fn word(state: &mut u64) -> DyadicWord {
+            let control = next(state);
+            let sign = match control & 15 {
+                0 => NoSign,
+                value if value & 1 == 0 => Plus,
+                _ => Minus,
+            };
+            let magnitude = if sign == NoSign {
+                0
+            } else if control & 31 == 1 {
+                u128::MAX - u128::from(next(state) & 255)
+            } else {
+                u128::from(next(state) & ((1_u64 << 56) - 1)) + 1
+            };
+            DyadicWord {
+                sign,
+                magnitude,
+                denominator_shift: next(state) % 32,
+            }
+        }
+
+        let mut state = 0xa54f_f53a_5f1d_36f1_u64;
+        let mut admitted = 0_u32;
+        let mut deferred = 0_u32;
+        for _ in 0..20_000 {
+            let left = [word(&mut state), word(&mut state)];
+            let right = [word(&mut state), word(&mut state)];
+            let positive_terms = [next(&mut state) & 1 == 0, next(&mut state) & 1 == 0];
+            let stack = Rational::product_sum_dyadic_words(left, right, positive_terms)
+                .expect("the 384-bit reference carrier covers the generated products");
+            match Rational::product_sum2_dyadic_words_word(left, right, positive_terms) {
+                Some(native) => {
+                    let reference = Rational::dyadic_stack_sum_word(stack)
+                        .expect("a native result must fit the reference word envelope");
+                    assert_eq!(native.sign, reference.sign);
+                    assert_eq!(native.magnitude, reference.magnitude);
+                    assert_eq!(native.denominator_shift, reference.denominator_shift);
+                    admitted += 1;
+                }
+                None => deferred += 1,
+            }
+        }
+        assert!(admitted > 10_000, "only {admitted} native sums admitted");
+        assert!(deferred > 100, "only {deferred} wide sums deferred");
+    }
+
+    #[test]
+    fn exact_dyadic_f64_view_rejects_unrepresentable_values() {
+        let too_precise = Rational::new((1_i64 << 54) + 1);
+        let exactly_representable = Rational::new((1_i64 << 54) + 4);
+        let non_dyadic = Rational::fraction(1, 3).unwrap();
+        let too_small = Rational::from_bigint_fraction(
+            BigInt::from(1_u8),
+            BigUint::from(1_u8) << 1075,
+        )
+        .unwrap();
+        let least_subnormal = Rational::from_bigint_fraction(
+            BigInt::from(1_u8),
+            BigUint::from(1_u8) << 1074,
+        )
+        .unwrap();
+        let negative_least_subnormal = -least_subnormal.clone();
+
+        assert_eq!(non_dyadic.dyadic_to_f64_exact(), None);
+        assert_eq!(too_precise.dyadic_to_f64_exact(), None);
+        assert_eq!(
+            exactly_representable.dyadic_to_f64_exact(),
+            Some((1_u64 << 54) as f64 + 4.0),
+        );
+        assert_eq!(
+            least_subnormal.dyadic_to_f64_exact().map(f64::to_bits),
+            Some(1),
+        );
+        assert_eq!(
+            negative_least_subnormal
+                .dyadic_to_f64_exact()
+                .map(f64::to_bits),
+            Some((1_u64 << 63) | 1),
+        );
+        assert_eq!(
+            least_subnormal.to_f64_enclosure().map(|bounds| bounds.map(f64::to_bits)),
+            Some([1, 1]),
+        );
+        assert_eq!(too_small.dyadic_to_f64_exact(), None);
+    }
+
+    #[test]
+    fn f64_enclosure_contains_wide_non_dyadic_rationals() {
+        let wide = BigUint::one() << 4096_usize;
+        let below_one = Rational::from_bigint_fraction(
+            BigInt::from_biguint(Plus, &wide + BigUint::one()),
+            &wide + BigUint::from(3_u8),
+        )
+        .unwrap();
+        let above_one = Rational::from_bigint_fraction(
+            BigInt::from_biguint(Plus, &wide + BigUint::from(3_u8)),
+            &wide + BigUint::one(),
+        )
+        .unwrap();
+        let negative = -above_one.clone();
+
+        for value in [
+            Rational::fraction(1, 3).unwrap(),
+            below_one,
+            above_one,
+            negative,
+        ] {
+            assert_f64_enclosure_contains(&value);
+        }
+        assert_f64_enclosure_contains(&Rational::fraction(3, 8).unwrap());
+        assert_eq!(Rational::zero().to_f64_enclosure(), Some([0.0, 0.0]));
+    }
+
+    #[test]
+    fn f64_enclosure_contains_varied_exact_rational_corpus() {
+        fn generated_magnitude(bits: usize, state: &mut u64) -> BigUint {
+            let mut value = BigUint::ZERO;
+            let mut offset = 0_usize;
+            while offset < bits {
+                *state ^= *state << 13;
+                *state ^= *state >> 7;
+                *state ^= *state << 17;
+                let width = (bits - offset).min(64);
+                let mask = if width == 64 {
+                    u64::MAX
+                } else {
+                    (1_u64 << width) - 1
+                };
+                value |= BigUint::from(*state & mask) << offset;
+                offset += width;
+            }
+            value | (BigUint::one() << (bits - 1)) | BigUint::one()
+        }
+
+        let mut state = 0x1319_8a2e_0370_7344_u64;
+        for (numerator_bits, denominator_bits) in [
+            (1, 1),
+            (53, 64),
+            (64, 53),
+            (193, 257),
+            (257, 193),
+            (997, 1024),
+            (1024, 997),
+            (4000, 4096),
+            (4096, 4000),
+        ] {
+            for case in 0..8 {
+                let numerator = generated_magnitude(numerator_bits, &mut state);
+                let denominator = generated_magnitude(denominator_bits, &mut state);
+                let sign = if case % 2 == 0 { Plus } else { Minus };
+                let value = Rational::from_fraction_parts(sign, numerator, denominator);
+                assert_f64_enclosure_contains(&value);
+            }
+        }
+    }
+
+    #[test]
+    fn lossy_dyadic_view_handles_wide_geometry_coefficients() {
+        let numerator = (BigUint::one() << 200_usize)
+            + (BigUint::one() << 148_usize)
+            + BigUint::one();
+        let denominator = BigUint::one() << 180_usize;
+        let expected = 2.0_f64.powi(20) + 2.0_f64.powi(-32);
+        let positive = Rational::from_fraction_parts(
+            Plus,
+            numerator.clone(),
+            denominator.clone(),
+        );
+        let negative = Rational::from_fraction_parts(Minus, numerator, denominator);
+
+        assert_eq!(positive.to_f64_lossy(), Some(expected));
+        assert_eq!(negative.to_f64_lossy(), Some(-expected));
+
+        let wide_denominator = BigUint::one() << 2048_usize;
+        let wide_numerator = &wide_denominator
+            + (BigUint::one() << 1996_usize)
+            + BigUint::one();
+        let balanced = Rational::from_fraction_parts(
+            Plus,
+            wide_numerator,
+            wide_denominator,
+        );
+        assert_eq!(balanced.to_f64_lossy(), Some(1.0 + 2.0_f64.powi(-52)));
+    }
+
+    #[test]
+    fn exact_word_dyadic_view_is_bit_exact_across_the_fast_path() {
+        for numerator in [
+            1_u64,
+            3,
+            (1_u64 << 16) + 1,
+            (1_u64 << 32) + 1,
+            (1_u64 << 52) + 1,
+            (1_u64 << 53) - 1,
+        ] {
+            for denominator_shift in [0_u64, 1, 17, 40, 511, 1022] {
+                let numerator_bits = u64::from(64 - numerator.leading_zeros());
+                if i128::from(numerator_bits - 1) - i128::from(denominator_shift) < -1022 {
+                    continue;
+                }
+                let value = Rational::from_fraction_parts(
+                    Plus,
+                    BigUint::from(numerator),
+                    BigUint::one() << denominator_shift,
+                );
+                let scale = f64::from_bits((1023 - denominator_shift) << 52);
+                let expected = (numerator as f64) * scale;
+
+                assert_eq!(
+                    value
+                        .exact_word_dyadic_f64_magnitude(denominator_shift)
+                        .map(f64::to_bits),
+                    Some(expected.to_bits())
+                );
+                assert_eq!(
+                    value.to_f64_lossy().map(f64::to_bits),
+                    Some(expected.to_bits())
+                );
+                assert_eq!(value.to_f64_enclosure(), Some([expected, expected]));
+
+                let negative = -value;
+                assert_eq!(
+                    negative.to_f64_lossy().map(f64::to_bits),
+                    Some((-expected).to_bits())
+                );
+                assert_eq!(negative.to_f64_enclosure(), Some([-expected, -expected]));
+            }
+        }
+
+        let too_wide = Rational::from_fraction_parts(
+            Plus,
+            BigUint::from((1_u64 << 53) + 1),
+            BigUint::one(),
+        );
+        assert_eq!(too_wide.exact_word_dyadic_f64_magnitude(0), None);
+        assert_eq!(too_wide.to_f64_lossy(), Some(((1_u64 << 53) + 1) as f64));
+
+        let deep_denominator = Rational::from_fraction_parts(
+            Plus,
+            BigUint::from(3_u8),
+            BigUint::one() << 1023_u64,
+        );
+        let deep_expected = 3.0 * f64::from_bits(1_u64 << 51);
+        assert_eq!(
+            deep_denominator.exact_word_dyadic_f64_magnitude(1023),
+            None
+        );
+        assert_eq!(deep_denominator.to_f64_lossy(), Some(deep_expected));
+    }
+
+    #[test]
+    fn normal_dyadic_view_matches_gmp_rounding() {
+        use rug::{Float, Integer, Rational as GmpRational, integer::Order};
+
+        let mut state = 0x6a09_e667_f3bc_c909_u64;
+        let mut checked = 0;
+        for _ in 0..5_000 {
+            state ^= state << 13;
+            state ^= state >> 7;
+            state ^= state << 17;
+            let bits = 65_u64 + state % 1_984;
+            let mut numerator = BigUint::from(state | (1_u64 << 63)) << (bits - 64);
+            state ^= state.rotate_left(29);
+            numerator |= BigUint::from(state) << ((bits - 64) / 2);
+            numerator |= BigUint::one();
+
+            state ^= state << 13;
+            state ^= state >> 7;
+            state ^= state << 17;
+            let denominator_shift = state % 3_000;
+            let exponent = i128::from(numerator.bits() - 1) - i128::from(denominator_shift);
+            if !(-1022..=1023).contains(&exponent) {
+                continue;
+            }
+
+            let denominator = BigUint::one() << denominator_shift;
+            let value = Rational::from_fraction_parts(
+                Plus,
+                numerator.clone(),
+                denominator,
+            );
+            let gmp_numerator = Integer::from_digits(
+                &numerator.to_u64_digits(),
+                Order::Lsf,
+            );
+            let gmp_denominator =
+                Integer::from(1) << usize::try_from(denominator_shift).unwrap();
+            let gmp = GmpRational::from((gmp_numerator, gmp_denominator));
+            let expected = Float::with_val(53, &gmp).to_f64();
+
+            assert_eq!(value.to_f64_lossy().map(f64::to_bits), Some(expected.to_bits()));
+            assert_eq!(
+                value.to_f64_enclosure(),
+                Some([expected.next_down(), expected.next_up()]),
+            );
+            checked += 1;
+        }
+        assert!(checked > 3_000);
+    }
+
+    #[test]
+    fn display() {
+        let many: Rational = "12345".parse().unwrap();
+        let s = format!("{many}");
+        assert_eq!(s, "12345");
+        let five: Rational = "5".parse().unwrap();
+        let third: Rational = "1/3".parse().unwrap();
+        let s = format!("{}", five * third);
+        assert_eq!(s, "1 2/3");
+    }
+
+    #[test]
+    fn decimals() {
+        let first: Rational = "0.0".parse().unwrap();
+        assert_eq!(first, Rational::zero());
+        let a: Rational = "0.4".parse().unwrap();
+        let b: Rational = "2.5".parse().unwrap();
+        let answer = a * b;
+        assert_eq!(answer, Rational::one());
+        assert_eq!(".5".parse::<Rational>().unwrap(), Rational::fraction(1, 2).unwrap());
+        assert_eq!("5.".parse::<Rational>().unwrap(), Rational::new(5));
+        assert_eq!("+0.25".parse::<Rational>().unwrap(), Rational::fraction(1, 4).unwrap());
+
+        let word_limit = u128::MAX.to_string();
+        assert_eq!(word_limit.parse::<Rational>().unwrap().to_string(), word_limit);
+        let beyond_word = "340282366920938463463374607431768211456";
+        assert_eq!(
+            beyond_word.parse::<Rational>().unwrap().to_string(),
+            beyond_word
+        );
+        assert_eq!(
+            "18446744073709551616.5"
+                .parse::<Rational>()
+                .unwrap()
+                .to_string(),
+            "18446744073709551616 1/2"
+        );
+    }
+
+    #[test]
+    fn scientific_notation_parses_as_an_exact_rational() {
+        let cases = [
+            ("1e3", "1000"),
+            ("1E+3", "1000"),
+            ("2.5E3", "2500"),
+            ("-7.78437e-005", "-0.0000778437"),
+            ("1200e-2", "12"),
+            (".5e1", "5"),
+            ("5.e-1", "0.5"),
+            ("+3.125e+2", "312.5"),
+            (
+                "340282366920938463463374607431768211456e-38",
+                "3.40282366920938463463374607431768211456",
+            ),
+            (
+                "340282366920938463463374607431768211455e-1",
+                "34028236692093846346337460743176821145.5",
+            ),
+            (
+                "340282366920938463463374607431768211457e-3",
+                "340282366920938463463374607431768211.457",
+            ),
+            (
+                "340282366920938463463374607431768211456e2",
+                "34028236692093846346337460743176821145600",
+            ),
+        ];
+
+        for (scientific, decimal) in cases {
+            assert_eq!(
+                scientific.parse::<Rational>().unwrap(),
+                decimal.parse::<Rational>().unwrap(),
+                "{scientific}"
+            );
+        }
+    }
+
+    #[test]
+    fn scientific_notation_validates_grammar_and_bounds_expansion() {
+        for malformed in [
+            "e1", ".e1", "1e", "1e+", "1e-", "1e1e2", "1.2.3e4", "1/2e3",
+            "1e999999999999999999999999x",
+        ] {
+            assert_eq!(
+                malformed.parse::<Rational>(),
+                Err(Problem::BadDecimal),
+                "{malformed}"
+            );
+        }
+
+        assert_eq!("1e2000000".parse::<Rational>(), Err(Problem::Exhausted));
+        assert_eq!("1e-2000000".parse::<Rational>(), Err(Problem::Exhausted));
+        assert_eq!(
+            "1e999999999999999999999999".parse::<Rational>(),
+            Err(Problem::Exhausted)
+        );
+
+        // The exponent is syntactically checked, but zero never allocates an
+        // exponent-sized numerator or denominator.
+        assert_eq!(
+            "0e999999999999999999999999".parse::<Rational>(),
+            Ok(Rational::zero())
+        );
+        let wide_zero = format!("{}e{}", "0".repeat(10_000), "9".repeat(100));
+        assert_eq!(wide_zero.parse::<Rational>(), Ok(Rational::zero()));
+    }
+
+    #[test]
+    /// Large decimal integer parsing and multiplication remain exact.
+    fn parse() {
+        let big: Rational = "288230376151711743".parse().unwrap();
+        let small: Rational = "45".parse().unwrap();
+        let expected: Rational = "12970366926827028435".parse().unwrap();
+        assert_eq!(big * small, expected);
+    }
+
+    #[test]
+    fn parse_fractions() {
+        let third: Rational = "1/3".parse().unwrap();
+        let minus_four: Rational = "-4".parse().unwrap();
+        let twelve: Rational = "12/20".parse().unwrap();
+        let answer = third + minus_four * twelve;
+        let expected: Rational = "-31/15".parse().unwrap();
+        assert_eq!(answer, expected);
+    }
+
+    #[test]
+    fn parse_fraction_rejects_zero_denominator_and_reduces() {
+        assert_eq!("1/0".parse::<Rational>(), Err(Problem::DivideByZero));
+        assert_eq!("0/0".parse::<Rational>(), Err(Problem::DivideByZero));
+
+        let reduced: Rational = "9/18".parse().unwrap();
+        assert_eq!(reduced, Rational::fraction(1, 2).unwrap());
+        assert_eq!(format!("{reduced}"), "1/2");
+    }
+
+    #[cfg(feature = "serde")]
+    #[test]
+    fn serde_rejects_invalid_or_uncanonical_rational_state() {
+        let bad = r#"{"sign":1,"numerator":[1],"denominator":[]}"#;
+        assert!(serde_json::from_str::<Rational>(bad).is_err());
+
+        let unreduced = r#"{"sign":1,"numerator":[9],"denominator":[18]}"#;
+        let decoded: Rational = serde_json::from_str(unreduced).unwrap();
+        assert_eq!(decoded, Rational::fraction(1, 2).unwrap());
+        assert_eq!(format!("{decoded}"), "1/2");
+    }
+
+    #[test]
+    fn square_reduced() {
+        let thirty_two = Rational::new(32);
+        let (square, rest) = thirty_two.extract_square_reduced();
+        let four = Rational::new(4);
+        assert_eq!(square, four);
+        let two = Rational::new(2);
+        assert_eq!(rest, two);
+        let minus_one = Rational::new(-1);
+        let (square, rest) = minus_one.clone().extract_square_reduced();
+        assert_eq!(square, Rational::one());
+        assert_eq!(rest, minus_one);
+    }
+
+    #[test]
+    fn square_reduction_rationalizes_the_residual_denominator() {
+        let half = Rational::fraction(1, 2).unwrap();
+        let (scale, radicand) = half.clone().extract_square_reduced();
+        assert_eq!(scale, Rational::fraction(1, 2).unwrap());
+        assert_eq!(radicand, Rational::new(2));
+        assert_eq!(&scale * &scale * radicand, half);
+    }
+
+    #[test]
+    fn perfect_square_residue_filter_never_rejects_a_square() {
+        assert_eq!(
+            Rational::SMALL_SQUARE_FACTORS
+                .iter()
+                .map(|(_, square)| square)
+                .product::<u64>(),
+            Rational::SMALL_SQUARE_PRODUCT
+        );
+        for root in 0_u64..=4096 {
+            let root = BigUint::from(root);
+            let square = &root * &root;
+            assert!(Rational::could_be_perfect_square(&square));
+            assert_eq!(Rational::try_perfect(&square), Some(root));
+        }
+
+        for nonsquare in [2_u64, 3, 5, 6, 7, 8, 10, 11, 12, 13, 14, 15, 19, 23] {
+            assert_eq!(Rational::try_perfect(&BigUint::from(nonsquare)), None);
+        }
+    }
+
+    #[test]
+    fn large_square_factor_schedule_preserves_canonical_residuals() {
+        let base = (BigUint::one() << 80_usize) + BigUint::from(123_u8);
+        for small_factor in [1_u64, 2, 3, 5, 7, 11, 13, 17] {
+            let expected_root = &base * small_factor;
+            for residual in [1_u64, 2, 3, 5, 6, 7, 10, 11, 13, 15, 17, 19] {
+                let value = &expected_root * &expected_root * residual;
+                let (root, rest) = Rational::extract_square(value);
+                assert_eq!(root, expected_root);
+                assert_eq!(rest, BigUint::from(residual));
+            }
+        }
+    }
+
+    #[test]
+    fn large_power_of_two_square_extraction_splits_the_exponent() {
+        for exponent in [64_usize, 65, 256, 257] {
+            let value = BigUint::one() << exponent;
+            let (root, rest) = Rational::extract_square(value.clone());
+            assert_eq!(&root * &root * &rest, value);
+            assert_eq!(rest, BigUint::from(if exponent.is_multiple_of(2) { 1_u8 } else { 2 }));
+        }
+    }
+
+    #[test]
+    fn signs() {
+        let half: Rational = "4/8".parse().unwrap();
+        let one = Rational::one();
+        let minus_half = half - one;
+        let two = Rational::new(2);
+        let zero = Rational::zero();
+        let minus_two = zero - two;
+        let i2 = minus_two.inverse().unwrap();
+        assert_eq!(i2, minus_half);
+    }
+
+    #[test]
+    fn half_plus_one_times_two() {
+        let two = Rational::new(2);
+        let half = two.inverse().unwrap();
+        let one = Rational::one();
+        let two = Rational::new(2);
+        let three = Rational::new(3);
+        let sum = half + one;
+        assert_eq!(sum * two, three);
+    }
+
+    #[test]
+    fn average_pair_matches_expanded_exact_arithmetic() {
+        let cases = [
+            (
+                Rational::fraction(5, 8).unwrap(),
+                Rational::fraction(5, 8).unwrap(),
+            ),
+            (
+                Rational::fraction(-7, 12).unwrap(),
+                Rational::fraction(11, 18).unwrap(),
+            ),
+            (
+                Rational::zero(),
+                Rational::fraction(-13, 32).unwrap(),
+            ),
+            (
+                Rational::from_parts_raw(
+                    Plus,
+                    BigUint::from(3_u8),
+                    BigUint::one() << 200_usize,
+                ),
+                Rational::from_parts_raw(
+                    Minus,
+                    BigUint::from(5_u8),
+                    BigUint::one() << 201_usize,
+                ),
+            ),
+            (
+                Rational::from_unsigned_integer(BigUint::one() << 127_usize),
+                Rational::from_unsigned_integer(
+                    (BigUint::one() << 127_usize) + BigUint::from(2_u8),
+                ),
+            ),
+        ];
+        let half = Rational::fraction(1, 2).unwrap();
+        for (left, right) in cases {
+            let expanded = (&left + &right) * &half;
+            assert_eq!(Rational::average_pair(&left, &right), expanded);
+            assert_eq!(Rational::average_pair(&right, &left), expanded);
+        }
+    }
+
+    #[cfg(feature = "dispatch-trace")]
+    #[test]
+    fn average_pair_bounds_final_reduction_by_shared_denominator_content() {
+        let power = BigUint::one() << 300_usize;
+        let left = Rational::from_parts_raw(Plus, BigUint::one(), power.clone());
+        let right = Rational::from_parts_raw(
+            Plus,
+            BigUint::one(),
+            &power + BigUint::one(),
+        );
+        let expected = (&left + &right) * Rational::fraction(1, 2).unwrap();
+
+        crate::dispatch_trace::reset();
+        let actual = crate::dispatch_trace::with_recording(|| {
+            Rational::average_pair(&left, &right)
+        });
+        let trace = crate::dispatch_trace::take_trace();
+
+        assert_eq!(actual, expected);
+        assert_eq!(trace.rational.gcds, 1);
+        assert_eq!(
+            trace.path_count("rational", "average_pair", "arbitrary-precision"),
+            1,
+        );
+    }
+
+    #[test]
+    fn mean_refs_matches_expanded_exact_arithmetic() {
+        let schedules = [
+            vec![
+                Rational::fraction(1, 8).unwrap(),
+                Rational::fraction(-5, 16).unwrap(),
+                Rational::fraction(9, 32).unwrap(),
+                Rational::zero(),
+            ],
+            vec![
+                Rational::fraction(2, 15).unwrap(),
+                Rational::fraction(-7, 15).unwrap(),
+                Rational::fraction(11, 15).unwrap(),
+            ],
+            vec![
+                Rational::fraction(5, 12).unwrap(),
+                Rational::fraction(-7, 18).unwrap(),
+                Rational::fraction(13, 35).unwrap(),
+                Rational::zero(),
+                Rational::fraction(17, 22).unwrap(),
+            ],
+            vec![
+                Rational::from_parts_raw(
+                    Plus,
+                    (BigUint::one() << 160_usize) + BigUint::one(),
+                    BigUint::one() << 220_usize,
+                ),
+                Rational::from_parts_raw(
+                    Minus,
+                    (BigUint::one() << 159_usize) + BigUint::one(),
+                    BigUint::one() << 221_usize,
+                ),
+                Rational::zero(),
+            ],
+        ];
+
+        assert_eq!(Rational::mean_refs(&[]), None);
+        for values in schedules {
+            let sum = values
+                .iter()
+                .fold(Rational::zero(), |sum, value| &sum + value);
+            let count = Rational::new(i64::try_from(values.len()).unwrap());
+            let expected = &sum / &count;
+            let refs = values.iter().collect::<Vec<_>>();
+            assert_eq!(Rational::mean_refs(&refs), Some(expected));
+        }
+    }
+
+    #[test]
+    fn mean3_refs_matches_expanded_exact_arithmetic() {
+        let schedules = [
+            [
+                Rational::fraction(1, 8).unwrap(),
+                Rational::fraction(-5, 16).unwrap(),
+                Rational::fraction(9, 32).unwrap(),
+            ],
+            [
+                Rational::fraction(2, 15).unwrap(),
+                Rational::fraction(-7, 15).unwrap(),
+                Rational::fraction(11, 15).unwrap(),
+            ],
+            [
+                Rational::fraction(5, 12).unwrap(),
+                Rational::fraction(-7, 18).unwrap(),
+                Rational::fraction(13, 35).unwrap(),
+            ],
+            [
+                Rational::zero(),
+                Rational::zero(),
+                Rational::zero(),
+            ],
+            [
+                Rational::zero(),
+                Rational::fraction(-11, 21).unwrap(),
+                Rational::fraction(17, 26).unwrap(),
+            ],
+            [
+                Rational::from_parts_raw(
+                    Plus,
+                    (BigUint::one() << 193_usize) + BigUint::from(17_u8),
+                    (BigUint::one() << 211_usize) + BigUint::from(39_u8),
+                ),
+                Rational::from_parts_raw(
+                    Minus,
+                    (BigUint::one() << 181_usize) + BigUint::from(29_u8),
+                    (BigUint::one() << 207_usize) + BigUint::from(51_u8),
+                ),
+                Rational::fraction(23, 35).unwrap(),
+            ],
+        ];
+
+        for values in schedules {
+            let expected = Rational::mean_refs(&values.iter().collect::<Vec<_>>()).unwrap();
+            assert_eq!(
+                Rational::mean3_refs([&values[0], &values[1], &values[2]]),
+                expected
+            );
+        }
+    }
+
+    #[test]
+    fn three_divided_by_six() {
+        let three = Rational::new(3);
+        let six = Rational::new(6);
+        let half: Rational = "1/2".parse().unwrap();
+        assert_eq!(three / six, half);
+    }
+
+    #[test]
+    fn one_plus_two() {
+        let one = Rational::one();
+        let two = Rational::new(2);
+        let three = Rational::new(3);
+        assert_eq!(one + two, three);
+    }
+
+    #[test]
+    fn two_minus_one() {
+        let two = Rational::new(2);
+        let one = Rational::one();
+        assert_eq!(two - one, Rational::one());
+    }
+
+    #[test]
+    fn two_times_three() {
+        let two = Rational::new(2);
+        let three = Rational::new(3);
+        assert_eq!(two * three, Rational::new(6));
+    }
+
+    #[test]
+    fn fract() {
+        let seventy_ninths = Rational::fraction(70, 9).unwrap();
+        assert_eq!(seventy_ninths.fract(), Rational::fraction(7, 9).unwrap());
+        assert_eq!(
+            seventy_ninths.neg().fract(),
+            Rational::fraction(-7, 9).unwrap()
+        );
+        let six = Rational::new(6);
+        assert_eq!(six.fract(), Rational::zero());
+    }
+
+    #[test]
+    fn trunc() {
+        let seventy_ninths = Rational::fraction(70, 9).unwrap();
+        let whole = seventy_ninths.trunc();
+        let frac = seventy_ninths.fract();
+        assert_eq!(whole + frac, seventy_ninths);
+        let shrink = Rational::fraction(-405, 11).unwrap();
+        let whole = shrink.trunc();
+        let frac = shrink.fract();
+        assert_eq!(whole + frac, shrink);
+        let zero = Rational::zero();
+        let whole = zero.trunc();
+        let frac = zero.fract();
+        assert_eq!(whole, frac);
+        assert_eq!(whole + frac, zero);
+    }
+
+    #[test]
+    fn power() {
+        let one_two_five = Rational::new(5).powi(BigInt::from(-3));
+        assert_eq!(one_two_five, Rational::fraction(1, 125));
+        let more = Rational::new(7).powi(11i32.into()).unwrap();
+        assert_eq!(more, Rational::new(1_977_326_743));
+
+        let dyadic = Rational::try_from(1.0e-12_f64).unwrap();
+        let powered = dyadic.clone().powi(5_i32.into()).unwrap();
+        let square = &dyadic * &dyadic;
+        let fourth = &square * &square;
+        assert_eq!(powered, fourth * dyadic);
+
+        let negative = Rational::fraction(-7, 5).unwrap();
+        assert_eq!(
+            negative.clone().powi(3_i32.into()),
+            Rational::fraction(-343, 125)
+        );
+        assert_eq!(
+            negative.clone().powi(4_i32.into()),
+            Rational::fraction(2_401, 625)
+        );
+        assert_eq!(
+            negative.powi((-3_i32).into()),
+            Rational::fraction(-125, 343)
+        );
+
+        assert_eq!(
+            Rational::new(10).powi(BigInt::from(20_000_u32)),
+            Err(Problem::Exhausted)
+        );
+        assert_eq!(
+            Rational::new(10).powi(BigInt::from(-20_000_i32)),
+            Err(Problem::Exhausted)
+        );
+    }
+
+    #[test]
+    fn sqrt_trouble() {
+        for (n, root, rest) in [
+            (1, 1, 1),
+            (2, 1, 2),
+            (3, 1, 3),
+            (4, 2, 1),
+            (16, 4, 1),
+            (400, 20, 1),
+            (1323, 21, 3),
+            (4761, 69, 1),
+            (123456, 8, 1929),
+            (715716, 846, 1),
+        ] {
+            let n = Rational::new(n);
+            let reduced = n.extract_square_reduced();
+            assert_eq!(reduced, (Rational::new(root), Rational::new(rest)));
+        }
+    }
+
+    #[test]
+    fn word_sized_square_extraction_preserves_exact_product() {
+        for value in [
+            1_u64,
+            2,
+            18,
+            123_456,
+            715_716,
+            u32::MAX as u64,
+            u64::MAX,
+        ] {
+            let (root, rest) = Rational::extract_square(BigUint::from(value));
+            assert_eq!(&root * &root * rest, BigUint::from(value));
+        }
+    }
+
+    #[test]
+    fn clones_share_storage_without_sharing_arithmetic_results() {
+        let value = Rational::fraction(7, 11).unwrap();
+        let clone = value.clone();
+        assert!(Arc::ptr_eq(&value.0, &clone.0));
+
+        let negated = -clone;
+        assert_eq!(value, Rational::fraction(7, 11).unwrap());
+        assert_eq!(negated, Rational::fraction(-7, 11).unwrap());
+        assert!(!Arc::ptr_eq(&value.0, &negated.0));
+    }
+
+    #[test]
+    fn identity_constructors_share_canonical_storage() {
+        let zero = Rational::zero();
+        let another_zero = Rational::zero();
+        let one = Rational::one();
+        let another_one = Rational::one();
+
+        assert!(Arc::ptr_eq(&zero.0, &another_zero.0));
+        assert!(Arc::ptr_eq(&one.0, &another_one.0));
+        assert!(!Arc::ptr_eq(&zero.0, &one.0));
+    }
+
+    #[test]
+    fn primitive_small_integer_constructors_share_canonical_storage() {
+        let positive_u8 = Rational::from(4_u8);
+        let positive_u128 = Rational::from(4_u128);
+        let positive_new = Rational::new(4);
+        let negative_i8 = Rational::from(-4_i8);
+        let negative_i128 = Rational::from(-4_i128);
+        let negative_new = Rational::new(-4);
+
+        assert!(Arc::ptr_eq(&positive_u8.0, &positive_u128.0));
+        assert!(Arc::ptr_eq(&positive_u8.0, &positive_new.0));
+        assert!(Arc::ptr_eq(&negative_i8.0, &negative_i128.0));
+        assert!(Arc::ptr_eq(&negative_i8.0, &negative_new.0));
+        assert!(!Arc::ptr_eq(&positive_u8.0, &negative_i8.0));
+
+        let upper_boundary = Rational::from(64_u128);
+        let repeated_upper_boundary = Rational::new(64);
+        assert!(Arc::ptr_eq(
+            &upper_boundary.0,
+            &repeated_upper_boundary.0
+        ));
+
+        let outside_boundary = Rational::from(65_u128);
+        let repeated_outside_boundary = Rational::new(65);
+        assert_eq!(outside_boundary, repeated_outside_boundary);
+        assert!(!Arc::ptr_eq(
+            &outside_boundary.0,
+            &repeated_outside_boundary.0
+        ));
+    }
+
+    #[test]
+    fn finite_float_imports_reuse_small_canonical_storage() {
+        let positive_one = Rational::try_from(1.0_f64).unwrap();
+        let negative_one = Rational::try_from(-1.0_f64).unwrap();
+        let positive_integer = Rational::try_from(4.0_f64).unwrap();
+        let canonical_integer = Rational::from(4_u8);
+        let positive_dyadic = Rational::try_from(0.375_f64).unwrap();
+        let positive_dyadic_f32 = Rational::try_from(0.375_f32).unwrap();
+        let canonical_dyadic = Rational::from_reduced_word_parts(Plus, 3, 8);
+        let negative_dyadic = Rational::try_from(-0.375_f64).unwrap();
+        let canonical_negative = Rational::from_reduced_word_parts(Minus, 3, 8);
+
+        assert!(Arc::ptr_eq(&positive_one.0, &Rational::one().0));
+        assert!(Arc::ptr_eq(&negative_one.0, &Rational::minus_one().0));
+        assert!(Arc::ptr_eq(&positive_integer.0, &canonical_integer.0));
+        assert!(Arc::ptr_eq(&positive_dyadic.0, &canonical_dyadic.0));
+        assert!(Arc::ptr_eq(&positive_dyadic_f32.0, &canonical_dyadic.0));
+        assert!(Arc::ptr_eq(&negative_dyadic.0, &canonical_negative.0));
+        assert!(!Arc::ptr_eq(&positive_dyadic.0, &negative_dyadic.0));
+        assert!(positive_integer.has_exact_f64_view());
+        assert!(positive_dyadic.has_exact_f64_view());
+
+        let outside_integer = Rational::try_from(65.0_f64).unwrap();
+        let repeated_outside_integer = Rational::try_from(65.0_f64).unwrap();
+        let outside_magnitude = Rational::try_from(32.5_f64).unwrap();
+        let repeated_outside_magnitude = Rational::try_from(32.5_f64).unwrap();
+        let outside_shift = Rational::try_from(3.0_f64 * 2.0_f64.powi(-64)).unwrap();
+        let repeated_outside_shift = Rational::try_from(3.0_f64 * 2.0_f64.powi(-64)).unwrap();
+        assert!(!Arc::ptr_eq(
+            &outside_integer.0,
+            &repeated_outside_integer.0
+        ));
+        assert!(!Arc::ptr_eq(
+            &outside_magnitude.0,
+            &repeated_outside_magnitude.0
+        ));
+        assert!(!Arc::ptr_eq(
+            &outside_shift.0,
+            &repeated_outside_shift.0
+        ));
+    }
+
+    #[test]
+    fn repeated_negation_reuses_exact_storage_without_a_cycle() {
+        let value = Rational::fraction(5_000_000_003, 7_000_000_009).unwrap();
+        let owner = Arc::downgrade(&value.0);
+
+        let first = -&value;
+        let second = -&value;
+        assert!(Arc::ptr_eq(&first.0, &second.0));
+
+        drop(value);
+        drop(first);
+        drop(second);
+        assert!(owner.upgrade().is_none());
+    }
+
+    #[test]
+    fn shared_owned_negation_reuses_retained_storage() {
+        let value = Rational::fraction(5_000_000_003, 7_000_000_009).unwrap();
+        let shared = value.clone();
+
+        let first = -value;
+        let second = -shared;
+        assert!(Arc::ptr_eq(&first.0, &second.0));
+    }
+
+    #[test]
+    fn negation_first_cache_still_retains_inverse_and_two_linear_results() {
+        let left = Rational::new(5_000_000_000);
+        let _shared_left = left.clone();
+        let negation = -&left;
+        let inverse = left.clone().inverse().unwrap();
+        let first_right = Rational::try_from(11.0e-9_f64).unwrap();
+        let second_right = Rational::try_from(13.0e-9_f64).unwrap();
+
+        let first = &left + &first_right;
+        let second = &left + &second_right;
+        let negation_reused = -&left;
+        let inverse_reused = left.clone().inverse().unwrap();
+        let first_reused = &left + &first_right;
+        let second_reused = &left + &second_right;
+
+        assert!(Arc::ptr_eq(&negation.0, &negation_reused.0));
+        assert!(Arc::ptr_eq(&inverse.0, &inverse_reused.0));
+        assert!(Arc::ptr_eq(&first.0, &first_reused.0));
+        assert!(Arc::ptr_eq(&second.0, &second_reused.0));
+    }
+
+    #[test]
+    fn unique_owned_negation_discards_results_for_the_old_sign() {
+        let left = Rational::new(5_000_000_000);
+        let right = Rational::fraction(1, 7).unwrap();
+
+        let _cold = &left + &right;
+        let retained = &left + &right;
+        let reused = &left + &right;
+        assert!(Arc::ptr_eq(&retained.0, &reused.0));
+
+        let negated = -left;
+        assert_eq!(&negated + &right, Rational::fraction(-34_999_999_999_i64, 7).unwrap());
+    }
+
+    #[test]
+    fn repeated_small_power_reuses_the_retained_product_chain() {
+        for exponent in 2..=5 {
+            let base = Rational::fraction(5_000_000_003, 7_000_000_009).unwrap();
+
+            let cold = base.clone().powi_i64(exponent).unwrap();
+            let retained = base.clone().powi_i64(exponent).unwrap();
+            let reused = base.powi_i64(exponent).unwrap();
+
+            assert_eq!(cold, retained);
+            assert!(Arc::ptr_eq(&retained.0, &reused.0));
+        }
+    }
+
+    #[test]
+    fn repeated_square_reduction_reuses_exact_factors_without_a_cycle() {
+        let value = Rational::fraction(90_000_000_054_i64, 49_000_000_063).unwrap();
+        let owner = Arc::downgrade(&value.0);
+
+        let cold = value.clone().extract_square_reduced_retained();
+        let retained = value.clone().extract_square_reduced_retained();
+        let reused = value.clone().extract_square_reduced_retained();
+
+        assert_eq!(cold, retained);
+        assert!(Arc::ptr_eq(&retained.0.0, &reused.0.0));
+        assert!(Arc::ptr_eq(&retained.1.0, &reused.1.0));
+
+        drop(value);
+        drop(cold);
+        drop(retained);
+        drop(reused);
+        assert!(owner.upgrade().is_none());
+    }
+
+    #[test]
+    fn square_reduction_first_cache_retains_both_unary_and_linear_pairs() {
+        let left = Rational::new(5_000_000_000);
+        let _shared_left = left.clone();
+        let _cold_reduction = left.clone().extract_square_reduced_retained();
+        let reduction = left.clone().extract_square_reduced_retained();
+        let inverse = left.clone().inverse().unwrap();
+        let negation = -&left;
+        let first_right = Rational::try_from(11.0e-9_f64).unwrap();
+        let second_right = Rational::try_from(13.0e-9_f64).unwrap();
+
+        let first = &left + &first_right;
+        let second = &left + &second_right;
+        let reduction_reused = left.clone().extract_square_reduced_retained();
+        let inverse_reused = left.clone().inverse().unwrap();
+        let negation_reused = -&left;
+        let first_reused = &left + &first_right;
+        let second_reused = &left + &second_right;
+
+        assert!(Arc::ptr_eq(&reduction.0.0, &reduction_reused.0.0));
+        assert!(Arc::ptr_eq(&reduction.1.0, &reduction_reused.1.0));
+        assert!(Arc::ptr_eq(&inverse.0, &inverse_reused.0));
+        assert!(Arc::ptr_eq(&negation.0, &negation_reused.0));
+        assert!(Arc::ptr_eq(&first.0, &first_reused.0));
+        assert!(Arc::ptr_eq(&second.0, &second_reused.0));
+    }
+
+    #[test]
+    fn small_dyadic_products_share_canonical_storage() {
+        let left = Rational::fraction(5, 4).unwrap();
+        let right = Rational::fraction(5, 2).unwrap();
+        let first = &left * &right;
+        let second = &left * &right;
+        assert_eq!(first, Rational::fraction(25, 8).unwrap());
+        assert!(Arc::ptr_eq(&first.0, &second.0));
+
+        let negative = -Rational::fraction(11, 4).unwrap();
+        let eighth = Rational::fraction(1, 8).unwrap();
+        let first = &negative * &eighth;
+        let second = &negative * &eighth;
+        assert_eq!(first, Rational::fraction(-11, 32).unwrap());
+        assert!(Arc::ptr_eq(&first.0, &second.0));
+    }
+
+    #[test]
+    fn small_general_products_share_canonical_storage() {
+        let first =
+            Rational::fraction(7, 3).unwrap() * Rational::fraction(3, 5).unwrap();
+        let second =
+            Rational::fraction(14, 3).unwrap() * Rational::fraction(3, 10).unwrap();
+        assert_eq!(first, Rational::fraction(7, 5).unwrap());
+        assert!(Arc::ptr_eq(&first.0, &second.0));
+
+        let first =
+            Rational::fraction(-5, 3).unwrap() * Rational::fraction(3, 7).unwrap();
+        let second =
+            Rational::fraction(-5, 2).unwrap() * Rational::fraction(2, 7).unwrap();
+        assert_eq!(first, Rational::fraction(-5, 7).unwrap());
+        assert!(Arc::ptr_eq(&first.0, &second.0));
+
+        let first =
+            Rational::fraction(63, 5).unwrap() * Rational::fraction(5, 62).unwrap();
+        let second =
+            Rational::fraction(63, 2).unwrap() * Rational::fraction(2, 62).unwrap();
+        assert_eq!(first, Rational::fraction(63, 62).unwrap());
+        assert!(Arc::ptr_eq(&first.0, &second.0));
+    }
+
+    #[test]
+    fn products_retain_exact_results_in_both_operand_orders() {
+        let value = Rational::try_from(1.0e-12_f64).unwrap();
+        let positive = &value * &value;
+        let retained_positive = &value * &value;
+        assert!(Arc::ptr_eq(&positive.0, &retained_positive.0));
+
+        let left = Rational::new(1_000_000_000);
+        let right = Rational::try_from(1.0e-9_f64).unwrap();
+        let product = &left * &right;
+        let retained = &left * &right;
+        let reversed = &right * &left;
+        assert!(Arc::ptr_eq(&product.0, &retained.0));
+        assert!(Arc::ptr_eq(&product.0, &reversed.0));
+    }
+
+    #[test]
+    fn product_retention_occupies_only_one_primary_slot() {
+        let left = Rational::fraction(1_000_000_007, 1_000_000_009).unwrap();
+        let right = Rational::fraction(1_000_000_021, 1_000_000_033).unwrap();
+        let product = &left * &right;
+
+        assert!(left.product_cache.get().is_some());
+        assert!(right.product_cache.get().is_none());
+        assert!(Arc::ptr_eq(&product.0, &(&right * &left).0));
+    }
+
+    #[test]
+    fn secondary_product_retention_handles_two_occupied_primary_slots() {
+        let left = Rational::fraction(123_456_789_012_345_i64, 1_u64 << 50).unwrap();
+        let right = Rational::fraction(234_567_890_123_457_i64, 1_u64 << 49).unwrap();
+        let left_blocker = Rational::fraction(345_678_901_234_569_i64, 1_u64 << 48).unwrap();
+        let right_blocker = Rational::fraction(456_789_012_345_671_i64, 1_u64 << 47).unwrap();
+        let _ = &left * &left_blocker;
+        let _ = &right * &right_blocker;
+
+        let product = &left * &right;
+        let retained = &left * &right;
+        let reversed = &right * &left;
+        assert!(Arc::ptr_eq(&product.0, &retained.0));
+        assert!(Arc::ptr_eq(&product.0, &reversed.0));
+    }
+
+    #[test]
+    fn observed_linear_operations_retain_exact_results_without_competing_for_one_slot() {
+        let left = Rational::new(1_000_000_000);
+        let right = Rational::try_from(1.0e-9_f64).unwrap();
+        let _retained_left = left.clone();
+        let _retained_right = right.clone();
+
+        let cold_sum = &left + &right;
+        let retained_sum = &left + &right;
+        let reversed_sum = &right + &left;
+        assert_eq!(cold_sum, retained_sum);
+        assert!(!Arc::ptr_eq(&cold_sum.0, &retained_sum.0));
+        assert!(Arc::ptr_eq(&retained_sum.0, &reversed_sum.0));
+
+        let difference = &left - &right;
+        let retained_difference = &left - &right;
+        assert!(Arc::ptr_eq(&difference.0, &retained_difference.0));
+
+        let product = &left * &right;
+        let retained_product = &left * &right;
+        assert!(Arc::ptr_eq(&product.0, &retained_product.0));
+    }
+
+    #[test]
+    fn borrowed_linear_operations_retain_only_after_reuse_evidence() {
+        let left = Rational::new(1_000_000_000);
+        let right = Rational::try_from(1.0e-9_f64).unwrap();
+
+        let cold_sum = &left + &right;
+        let retained_sum = &left + &right;
+        let reused_sum = &left + &right;
+        assert_eq!(cold_sum, retained_sum);
+        assert!(!Arc::ptr_eq(&cold_sum.0, &retained_sum.0));
+        assert!(Arc::ptr_eq(&retained_sum.0, &reused_sum.0));
+
+        let difference_left = Rational::new(2_000_000_000);
+        let difference_right = Rational::try_from(3.0e-9_f64).unwrap();
+        let cold_difference = &difference_left - &difference_right;
+        let retained_difference = &difference_left - &difference_right;
+        let reused_difference = &difference_left - &difference_right;
+        assert_eq!(cold_difference, retained_difference);
+        assert!(!Arc::ptr_eq(
+            &cold_difference.0,
+            &retained_difference.0
+        ));
+        assert!(Arc::ptr_eq(
+            &retained_difference.0,
+            &reused_difference.0
+        ));
+    }
+
+    #[test]
+    fn observed_right_operand_can_retain_a_directed_difference() {
+        let left = Rational::new(3_000_000_000);
+        let right = Rational::try_from(7.0e-9_f64).unwrap();
+        let _shared_right = right.clone();
+
+        let cold = &left - &right;
+        let retained = &left - &right;
+        let reused = &left - &right;
+        assert_eq!(cold, retained);
+        assert!(!Arc::ptr_eq(&cold.0, &retained.0));
+        assert!(Arc::ptr_eq(&retained.0, &reused.0));
+    }
+
+    #[test]
+    fn observed_operand_retains_two_distinct_linear_results() {
+        let left = Rational::new(5_000_000_000);
+        let _shared_left = left.clone();
+        let first_right = Rational::try_from(11.0e-9_f64).unwrap();
+        let second_right = Rational::try_from(13.0e-9_f64).unwrap();
+
+        let first = &left + &first_right;
+        let second = &left + &second_right;
+        let first_reused = &left + &first_right;
+        let second_reused = &left + &second_right;
+        let first_retained = &left + &first_right;
+
+        assert_eq!(first, first_reused);
+        assert!(!Arc::ptr_eq(&first.0, &first_reused.0));
+        assert!(Arc::ptr_eq(&first_reused.0, &first_retained.0));
+        assert!(Arc::ptr_eq(&second.0, &second_reused.0));
+    }
+
+    #[test]
+    fn shared_inverse_is_retained_with_weak_reverse_link() {
+        let value = Rational::fraction(5_000_000_003, 7_000_000_009).unwrap();
+        let shared = value.clone();
+
+        let inverse = value.clone().inverse().unwrap();
+        let reused = shared.clone().inverse().unwrap();
+        assert!(Arc::ptr_eq(&inverse.0, &reused.0));
+
+        let reversed = inverse.inverse().unwrap();
+        assert!(Arc::ptr_eq(&value.0, &reversed.0));
+
+        let owner = Arc::downgrade(&value.0);
+        drop(value);
+        drop(shared);
+        drop(reversed);
+        assert!(owner.upgrade().is_none());
+    }
+
+    #[test]
+    fn inverse_first_cache_still_retains_two_linear_results() {
+        let left = Rational::new(5_000_000_000);
+        let _shared_left = left.clone();
+        let _inverse = left.clone().inverse().unwrap();
+        let first_right = Rational::try_from(11.0e-9_f64).unwrap();
+        let second_right = Rational::try_from(13.0e-9_f64).unwrap();
+
+        let first = &left + &first_right;
+        let second = &left + &second_right;
+        let first_reused = &left + &first_right;
+        let second_reused = &left + &second_right;
+
+        assert!(Arc::ptr_eq(&first.0, &first_reused.0));
+        assert!(Arc::ptr_eq(&second.0, &second_reused.0));
+    }
+
+    #[test]
+    fn perfect_nth_root_detects_exact_rational_roots() {
+        assert_eq!(
+            Rational::new(27).perfect_nth_root(3),
+            Some(Rational::new(3))
+        );
+        assert_eq!(
+            Rational::new(-27).perfect_nth_root(3),
+            Some(Rational::new(-3))
+        );
+        assert_eq!(
+            Rational::fraction(8, 27).unwrap().perfect_nth_root(3),
+            Some(Rational::fraction(2, 3).unwrap())
+        );
+        assert_eq!(Rational::new(2).perfect_nth_root(3), None);
+        assert_eq!(Rational::new(-16).perfect_nth_root(4), None);
+        assert_eq!(Rational::new(16).perfect_nth_root(0), None);
+    }
+
+    #[test]
+    fn general_perfect_power_detection_matches_integer_definition() {
+        for value in [
+            Rational::zero(),
+            Rational::one(),
+            Rational::new(-1),
+            Rational::new(64),
+            Rational::new(729),
+            Rational::new(-27),
+            Rational::new(-512),
+            Rational::fraction(8, 27).unwrap(),
+            Rational::fraction(101_i64.pow(7), 103_u64.pow(7)).unwrap(),
+        ] {
+            assert!(value.is_perfect_power(), "expected {value} to be a perfect power");
+        }
+        for value in [
+            Rational::new(2),
+            Rational::new(12),
+            Rational::new(-16),
+            Rational::fraction(4, 8).unwrap(),
+            Rational::fraction(101_i64.pow(7), 103_u64.pow(5)).unwrap(),
+        ] {
+            assert!(!value.is_perfect_power(), "expected {value} not to be a perfect power");
+        }
+    }
+
+    #[cfg(feature = "dispatch-trace")]
+    #[test]
+    fn general_perfect_power_paths_are_traced() {
+        crate::dispatch_trace::reset();
+        crate::dispatch_trace::with_recording(|| {
+            assert!(!Rational::new(12).is_perfect_power());
+            assert!(
+                Rational::fraction(101_i64.pow(7), 103_u64.pow(7))
+                    .unwrap()
+                    .is_perfect_power()
+            );
+        });
+        let trace = crate::dispatch_trace::take_trace();
+        assert_eq!(
+            trace.path_count(
+                "rational_algorithm",
+                "perfect-power",
+                "factor-multiplicity-reject"
+            ),
+            1
+        );
+        assert_eq!(
+            trace.path_count(
+                "rational_algorithm",
+                "perfect-power",
+                "prime-root-exact"
+            ),
+            1
+        );
+    }
+
+    #[test]
+    fn decimal() {
+        let decimal: Rational = "7.125".parse().unwrap();
+        assert!(!decimal.prefer_fraction());
+        let half: Rational = "4/8".parse().unwrap();
+        assert!(!half.prefer_fraction());
+        let third: Rational = "2/6".parse().unwrap();
+        assert!(third.prefer_fraction());
+    }
+
+    #[test]
+    fn power_of_two_shift_detects_only_power_of_two_ratios() {
+        assert_eq!(
+            Rational::fraction(8, 1).unwrap().power_of_two_shift(),
+            Some((3, Plus))
+        );
+        assert_eq!(
+            Rational::fraction(1, 8).unwrap().power_of_two_shift(),
+            Some((-3, Plus))
+        );
+        assert_eq!(
+            Rational::fraction(-4, 32).unwrap().power_of_two_shift(),
+            Some((-3, Minus))
+        );
+        assert_eq!(Rational::fraction(7, 8).unwrap().power_of_two_shift(), None);
+        assert_eq!(Rational::fraction(5, 6).unwrap().power_of_two_shift(), None);
+        assert_eq!(Rational::zero().power_of_two_shift(), None);
+    }
+
+    #[test]
+    fn add_and_subtract_one_helpers_match_generic_arithmetic() {
+        for value in [
+            Rational::zero(),
+            Rational::one(),
+            Rational::new(-1),
+            Rational::fraction(7, 4).unwrap(),
+            Rational::fraction(3, 5).unwrap(),
+            Rational::fraction(-7, 4).unwrap(),
+            Rational::fraction(-3, 5).unwrap(),
+        ] {
+            assert_eq!(value.add_one(), value.clone() + Rational::one());
+            assert_eq!(value.subtract_one(), value.clone() - Rational::one());
+        }
+    }
+
+    #[test]
+    fn word_sized_add_sub_matches_arbitrary_precision_fallback() {
+        let left = Rational::fraction(-17, 30).unwrap();
+        let right = Rational::fraction(11, 42).unwrap();
+        assert_eq!(&left + &right, Rational::fraction(-32, 105).unwrap());
+        assert_eq!(&left - &right, Rational::fraction(-29, 35).unwrap());
+
+        let huge = Rational::from_bigint(BigInt::from(1_u8) << 200);
+        assert_eq!(&huge + &right - &huge, right);
+    }
+
+    #[test]
+    fn word_sized_mul_div_matches_arbitrary_precision_fallback() {
+        let left = Rational::fraction(-17, 30).unwrap();
+        let right = Rational::fraction(11, 42).unwrap();
+        assert_eq!(&left * &right, Rational::fraction(-187, 1260).unwrap());
+        assert_eq!(&left / &right, Rational::fraction(-119, 55).unwrap());
+
+        let a = BigUint::one() << 80_usize;
+        let b = &a - BigUint::one();
+        let ratio = Rational::from_bigint_fraction(BigInt::from(a.clone()), b.clone()).unwrap();
+        let reciprocal =
+            Rational::from_bigint_fraction(BigInt::from(b), a).unwrap();
+        assert_eq!(&ratio * &reciprocal, Rational::one());
+        assert_eq!(&ratio / &ratio, Rational::one());
+
+        let huge = Rational::from_bigint(BigInt::from(1_u8) << 200);
+        assert_eq!(&huge * &right / &huge, right);
+        assert_eq!(&huge * Rational::one(), huge);
+        assert_eq!(&huge / &huge, Rational::one());
+
+        let huge_ratio: Rational = format!("{}/3", BigInt::from(1_u8) << 200)
+            .parse()
+            .unwrap();
+        let huge_reciprocal: Rational = format!("3/{}", BigInt::from(1_u8) << 200)
+            .parse()
+            .unwrap();
+        assert_eq!(&huge_ratio * &huge_reciprocal, Rational::one());
+    }
+
+    #[test]
+    fn reduced_word_construction_preserves_narrow_and_wide_parts() {
+        for (magnitude, denominator) in [
+            (
+                u128::from(u64::MAX),
+                u128::from(u64::MAX).saturating_sub(1),
+            ),
+            ((1_u128 << 100) + 3, 1_u128 << 99),
+        ] {
+            let expected = Rational::from_bigint_fraction(
+                BigInt::from(magnitude),
+                BigUint::from(denominator),
+            )
+            .unwrap();
+            assert_eq!(
+                Rational::from_reduced_word_parts(Plus, magnitude, denominator),
+                expected
+            );
+        }
+    }
+
+    #[cfg(feature = "dispatch-trace")]
+    #[test]
+    fn word_reduction_trace_classifies_odd_denominator_shapes() {
+        crate::dispatch_trace::reset();
+        crate::dispatch_trace::with_recording(|| {
+            for denominator in [
+                25_u128,
+                27,
+                49,
+                75,
+                11,
+                65_537,
+                (1_u128 << 65) + 1,
+            ] {
+                let _ = Rational::from_word_magnitude_difference(1, 0, denominator);
+            }
+        });
+        let trace = crate::dispatch_trace::take_trace();
+        for path in [
+            "power-of-five-denominator",
+            "power-of-three-denominator",
+            "power-of-seven-denominator",
+            "mixed-357-smooth-denominator",
+            "other-small-odd-denominator",
+            "other-word-odd-denominator",
+            "other-wide-odd-denominator",
+        ] {
+            assert_eq!(
+                trace.path_count("rational", "word-reduction", path),
+                1,
+                "missing {path}"
+            );
+        }
+    }
+
+    #[test]
+    fn magnitude_at_least_power_of_two_handles_threshold_boundaries() {
+        assert!(
+            !Rational::fraction(7, 1)
+                .unwrap()
+                .magnitude_at_least_power_of_two(3)
+        );
+        assert!(
+            Rational::fraction(8, 1)
+                .unwrap()
+                .magnitude_at_least_power_of_two(3)
+        );
+        assert!(
+            Rational::fraction(-9, 1)
+                .unwrap()
+                .magnitude_at_least_power_of_two(3)
+        );
+        assert!(
+            !Rational::fraction(15, 2)
+                .unwrap()
+                .magnitude_at_least_power_of_two(3)
+        );
+        assert!(
+            Rational::fraction(16, 2)
+                .unwrap()
+                .magnitude_at_least_power_of_two(3)
+        );
+        assert!(!Rational::zero().magnitude_at_least_power_of_two(3));
+    }
+
+    #[test]
+    fn exact_msd_matches_f64_floor_for_small_rationals() {
+        for numerator in 1..=128 {
+            for denominator in 1..=128 {
+                let rational = Rational::fraction(numerator, denominator).unwrap();
+                let expected = ((numerator as f64) / (denominator as f64))
+                    .log2()
+                    .floor() as i32;
+                assert_eq!(rational.msd_exact(), Some(expected));
+            }
+        }
+    }
+
+    #[test]
+    fn exact_msd_handles_large_shift_boundaries_without_rounding() {
+        let power = BigUint::one() << 4096usize;
+        let exact = Rational::from_fraction_parts(Plus, power.clone(), BigUint::one());
+        let below = Rational::from_fraction_parts(Plus, &power - BigUint::one(), BigUint::one());
+        let reciprocal = Rational::from_fraction_parts(Plus, BigUint::one(), power);
+
+        assert_eq!(exact.msd_exact(), Some(4096));
+        assert_eq!(below.msd_exact(), Some(4095));
+        assert_eq!(reciprocal.msd_exact(), Some(-4096));
+    }
+
+    #[test]
+    fn dyadic_denominator_shift_is_retained() {
+        let value =
+            Rational::from_parts_raw(Plus, BigUint::from(3_u8), BigUint::one() << 300usize);
+        assert_eq!(
+            value
+                .retained_facts
+                .load(std::sync::atomic::Ordering::Relaxed)
+                & RETAINED_DYADIC_SHIFT_MASK,
+            0
+        );
+
+        assert_eq!(value.dyadic_denominator_shift(), Some(300));
+        let retained = value
+            .retained_facts
+            .load(std::sync::atomic::Ordering::Relaxed);
+        assert_eq!(
+            (retained & RETAINED_DYADIC_SHIFT_MASK) >> RETAINED_DYADIC_SHIFT_OFFSET,
+            301
+        );
+        assert_eq!(value.dyadic_denominator_shift(), Some(300));
+
+        assert_eq!(
+            Rational::encoded_dyadic_denominator_shift(RETAINED_DYADIC_SHIFT_MAX),
+            RETAINED_DYADIC_SHIFT_MASK
+        );
+        assert_eq!(
+            Rational::encoded_dyadic_denominator_shift(RETAINED_DYADIC_SHIFT_MAX + 1),
+            0
+        );
+    }
+
+    #[test]
+    fn lossy_view_preserves_every_retained_dyadic_fact_path() {
+        let dyadic =
+            Rational::from_parts_raw(Plus, BigUint::from(3_u8), BigUint::one() << 300usize);
+        assert_eq!(dyadic.to_f64_lossy(), Some(3.0 * 2.0_f64.powi(-300)));
+        let dyadic_facts = dyadic
+            .retained_facts
+            .load(std::sync::atomic::Ordering::Relaxed);
+        assert_eq!(
+            dyadic_facts & (RETAINED_DYADIC_KNOWN | RETAINED_DYADIC_VALUE),
+            RETAINED_DYADIC_KNOWN | RETAINED_DYADIC_VALUE
+        );
+        assert_eq!(
+            (dyadic_facts & RETAINED_DYADIC_SHIFT_MASK) >> RETAINED_DYADIC_SHIFT_OFFSET,
+            301
+        );
+        assert_eq!(dyadic.to_f64_lossy(), Some(3.0 * 2.0_f64.powi(-300)));
+        assert_eq!(
+            dyadic
+                .retained_facts
+                .load(std::sync::atomic::Ordering::Relaxed),
+            dyadic_facts
+        );
+
+        let non_dyadic =
+            Rational::from_parts_raw(Plus, BigUint::from(2_u8), BigUint::from(3_u8));
+        assert_eq!(non_dyadic.to_f64_lossy(), Some(2.0 / 3.0));
+        let non_dyadic_facts = non_dyadic
+            .retained_facts
+            .load(std::sync::atomic::Ordering::Relaxed);
+        assert_ne!(non_dyadic_facts & RETAINED_DYADIC_KNOWN, 0);
+        assert_eq!(
+            non_dyadic_facts & (RETAINED_DYADIC_VALUE | RETAINED_DYADIC_SHIFT_MASK),
+            0
+        );
+        assert_eq!(non_dyadic.to_f64_lossy(), Some(2.0 / 3.0));
+
+        let unreduced = Rational::from_parts_raw_unreduced(
+            Plus,
+            BigUint::from(6_u8),
+            BigUint::from(8_u8),
+        );
+        assert_eq!(unreduced.to_f64_lossy(), Some(0.75));
+        let canonical_facts = unreduced
+            .canonicalized_ref()
+            .retained_facts
+            .load(std::sync::atomic::Ordering::Relaxed);
+        assert_eq!(
+            (canonical_facts & RETAINED_DYADIC_SHIFT_MASK) >> RETAINED_DYADIC_SHIFT_OFFSET,
+            3
+        );
+
+        let zero = Rational::from_parts_raw(NoSign, BigUint::zero(), BigUint::one());
+        assert_eq!(zero.to_f64_lossy(), Some(0.0));
+        assert_eq!(
+            zero.retained_facts
+                .load(std::sync::atomic::Ordering::Relaxed),
+            0
+        );
+    }
+
+    #[test]
+    fn reduced_dyadic_shift_probe_preserves_every_representation_path() {
+        let dyadic =
+            Rational::from_parts_raw(Plus, BigUint::from(3_u8), BigUint::one() << 300usize);
+        assert_eq!(
+            dyadic.dyadic_denominator_shift_if_reduced(),
+            Some(300)
+        );
+        assert_eq!(
+            dyadic.dyadic_denominator_shift_if_reduced(),
+            Some(300)
+        );
+
+        let non_dyadic = Rational::fraction(2, 3).unwrap();
+        assert_eq!(
+            non_dyadic.dyadic_denominator_shift_if_reduced(),
+            None
+        );
+
+        let unreduced = Rational::from_parts_raw_unreduced(
+            Plus,
+            BigUint::from(6_u8),
+            BigUint::from(8_u8),
+        );
+        assert_eq!(
+            unreduced.dyadic_denominator_shift_if_reduced(),
+            None
+        );
+        assert_eq!(unreduced.dyadic_denominator_shift(), Some(2));
+
+        let wide_unreduced = Rational::from_parts_raw_unreduced(
+            Plus,
+            BigUint::from(6_u8),
+            BigUint::one() << 200usize,
+        );
+        let wide_dyadic = Rational::from_parts_raw(
+            Plus,
+            BigUint::from(5_u8),
+            BigUint::one() << 200usize,
+        );
+        let expected = Rational::from_bigint_fraction(
+            BigInt::from(15_u8),
+            BigUint::one() << 399usize,
+        )
+        .unwrap();
+        assert_eq!(wide_unreduced * wide_dyadic, expected);
+    }
+
+    #[test]
+    fn dyadic_add_sub_stay_reduced() {
+        let three_eighths = Rational::fraction(3, 8).unwrap();
+        let five_sixteenths = Rational::fraction(5, 16).unwrap();
+
+        assert_eq!(
+            &three_eighths + &five_sixteenths,
+            Rational::fraction(11, 16).unwrap()
+        );
+        assert_eq!(
+            &three_eighths - &five_sixteenths,
+            Rational::fraction(1, 16).unwrap()
+        );
+        assert_eq!(
+            &five_sixteenths - &three_eighths,
+            Rational::fraction(-1, 16).unwrap()
+        );
+        assert_eq!(&three_eighths - &three_eighths, Rational::zero());
+    }
+
+    #[test]
+    fn wide_dyadic_add_sub_matches_fraction_construction() {
+        let magnitude = (BigUint::one() << 180_usize) + 3_u8;
+        for left_shift in [0_u64, 1, 127, 128, 255, 300] {
+            for right_shift in [0_u64, 1, 127, 128, 255, 300] {
+                let common_shift = left_shift.max(right_shift);
+                for left_sign in [Plus, Minus] {
+                    for right_sign in [Plus, Minus] {
+                        let left_magnitude = &magnitude + BigUint::from(left_shift * 2);
+                        let right_magnitude =
+                            &magnitude + BigUint::from(right_shift * 2 + 2);
+                        let left = Rational::from_parts_raw(
+                            left_sign,
+                            left_magnitude.clone(),
+                            BigUint::one() << usize::try_from(left_shift).unwrap(),
+                        );
+                        let right = Rational::from_parts_raw(
+                            right_sign,
+                            right_magnitude.clone(),
+                            BigUint::one() << usize::try_from(right_shift).unwrap(),
+                        );
+                        let signed = |sign, value: BigUint| match sign {
+                            Plus => BigInt::from(value),
+                            Minus => -BigInt::from(value),
+                            NoSign => BigInt::zero(),
+                        };
+                        let left_aligned = left_magnitude
+                            << usize::try_from(common_shift - left_shift).unwrap();
+                        let right_aligned = right_magnitude
+                            << usize::try_from(common_shift - right_shift).unwrap();
+                        let left_integer = signed(left_sign, left_aligned);
+                        let right_integer = signed(right_sign, right_aligned);
+                        let denominator = BigUint::one()
+                            << usize::try_from(common_shift).unwrap();
+                        let expected_sum = Rational::from_bigint_fraction(
+                            &left_integer + &right_integer,
+                            denominator.clone(),
+                        )
+                        .unwrap();
+                        let expected_difference = Rational::from_bigint_fraction(
+                            &left_integer - &right_integer,
+                            denominator,
+                        )
+                        .unwrap();
+
+                        assert_eq!(&left + &right, expected_sum);
+                        assert_eq!(&left - &right, expected_difference);
+                    }
+                }
+            }
+        }
+
+        let value = Rational::from_parts_raw(
+            Plus,
+            (BigUint::one() << 180_usize) + 3_u8,
+            BigUint::one() << 300_usize,
+        );
+        assert_eq!(&value - &value, Rational::zero());
+    }
+
+    #[cfg(feature = "dispatch-trace")]
+    #[test]
+    fn wide_dyadic_add_sub_uses_shift_only_reduction() {
+        let left = Rational::from_parts_raw(
+            Plus,
+            (BigUint::one() << 180_usize) + 3_u8,
+            BigUint::one() << 300_usize,
+        );
+        let right = Rational::from_parts_raw(
+            Minus,
+            (BigUint::one() << 181_usize) + 5_u8,
+            BigUint::one() << 255_usize,
+        );
+        crate::dispatch_trace::reset();
+        crate::dispatch_trace::with_recording(|| {
+            let _ = &left + &right;
+            let _ = &left - &right;
+        });
+        let trace = crate::dispatch_trace::take_trace();
+        assert_eq!(trace.path_count("rational", "add", "wide-dyadic"), 1);
+        assert_eq!(trace.path_count("rational", "sub", "wide-dyadic"), 1);
+        assert_eq!(trace.rational.gcds, 0);
+
+        let unreduced = Rational::from_parts_raw_unreduced(
+            Plus,
+            BigUint::from(6_u8),
+            BigUint::one() << 300_usize,
+        );
+        let expected = Rational::from_bigint_fraction(
+            BigInt::from(6_u8)
+                + (BigInt::from_biguint(Plus, right.numerator.clone()) << 45_usize),
+            BigUint::one() << 300_usize,
+        )
+        .unwrap();
+        crate::dispatch_trace::reset();
+        let actual = crate::dispatch_trace::with_recording(|| &unreduced - &right);
+        let trace = crate::dispatch_trace::take_trace();
+        assert_eq!(actual, expected);
+        assert_eq!(trace.path_count("rational", "sub", "wide-dyadic"), 0);
+        assert_ne!(trace.rational.gcds, 0);
+    }
+
+    #[test]
+    fn integer_add_sub_preserves_reduced_fraction_denominator() {
+        let three_eighths = Rational::fraction(3, 8).unwrap();
+        let five = Rational::from(5_u8);
+        let negative_five = Rational::from(-5_i8);
+
+        for (actual, expected) in [
+            (&three_eighths + &five, Rational::fraction(43, 8).unwrap()),
+            (&five + &three_eighths, Rational::fraction(43, 8).unwrap()),
+            (&three_eighths - &five, Rational::fraction(-37, 8).unwrap()),
+            (&five - &three_eighths, Rational::fraction(37, 8).unwrap()),
+            (
+                &three_eighths + &negative_five,
+                Rational::fraction(-37, 8).unwrap(),
+            ),
+            (
+                &negative_five - &three_eighths,
+                Rational::fraction(-43, 8).unwrap(),
+            ),
+        ] {
+            assert_eq!(actual, expected);
+            assert_eq!(actual.denominator(), &BigUint::from(8_u8));
+        }
+    }
+
+    #[test]
+    fn same_denominator_reports_reduced_common_scale() {
+        let a = Rational::fraction(3, 10).unwrap();
+        let b = Rational::fraction(-7, 10).unwrap();
+        let reduced = Rational::fraction(6, 20).unwrap();
+        let c = Rational::fraction(1, 3).unwrap();
+
+        assert!(a.same_denominator(&b));
+        assert!(a.same_denominator(&reduced));
+        assert!(!a.same_denominator(&c));
+    }
+
+    #[test]
+    fn dot_products_match_pairwise_arithmetic() {
+        let left = [
+            Rational::fraction(3, 8).unwrap(),
+            Rational::fraction(-5, 16).unwrap(),
+            Rational::zero(),
+            Rational::fraction(7, 10).unwrap(),
+        ];
+        let right = [
+            Rational::fraction(11, 32).unwrap(),
+            Rational::fraction(13, 64).unwrap(),
+            Rational::fraction(17, 19).unwrap(),
+            Rational::fraction(-23, 25).unwrap(),
+        ];
+        let expected = &(&left[0] * &right[0])
+            + &(&left[1] * &right[1])
+            + &(&left[2] * &right[2])
+            + &(&left[3] * &right[3]);
+
+        assert_eq!(
+            Rational::dot_products(
+                [&left[0], &left[1], &left[2], &left[3]],
+                [&right[0], &right[1], &right[2], &right[3]],
+            ),
+            expected
+        );
+    }
+
+    #[test]
+    fn dot_products_preserve_dyadic_exactness() {
+        let left = [
+            Rational::fraction(1, 8).unwrap(),
+            Rational::fraction(3, 16).unwrap(),
+            Rational::fraction(-5, 32).unwrap(),
+        ];
+        let right = [
+            Rational::fraction(7, 4).unwrap(),
+            Rational::fraction(-11, 8).unwrap(),
+            Rational::fraction(13, 16).unwrap(),
+        ];
+
+        let dot = Rational::dot_products(
+            [&left[0], &left[1], &left[2]],
+            [&right[0], &right[1], &right[2]],
+        );
+        assert!(dot.is_dyadic());
+        assert_eq!(
+            dot,
+            &(&left[0] * &right[0]) + &(&left[1] * &right[1]) + &(&left[2] * &right[2])
+        );
+    }
+
+    #[test]
+    fn dyadic_dot_word_accumulator_handles_wide_denominators_and_falls_back() {
+        let tiny = Rational::from_reduced_dyadic_word(Plus, 3, 200);
+        let five = Rational::from(5_u8);
+        let seven = Rational::from(7_u8);
+        let word = Rational::dot_products_dyadic_words(
+            [&tiny, &tiny],
+            [&five, &seven],
+            [Plus, Plus],
+            [200, 200],
+            200,
+        )
+        .unwrap();
+        assert_eq!(word, Rational::dot_products([&tiny, &tiny], [&five, &seven]));
+        assert_eq!(word.denominator(), &(BigUint::one() << 198));
+
+        let too_wide = Rational::from_unsigned_integer(BigUint::one() << 130);
+        assert!(Rational::dot_products_dyadic_words(
+            [&too_wide, &five],
+            [&seven, &tiny],
+            [Plus, Plus],
+            [0, 200],
+            200,
+        )
+        .is_none());
+        assert_eq!(
+            Rational::dot_products([&too_wide, &five], [&seven, &tiny]),
+            &too_wide * &seven + &five * &tiny
+        );
+    }
+
+    #[test]
+    fn dyadic_dot_stack_accumulator_handles_wide_products_alignment_and_borrow() {
+        let largest = Rational::from_unsigned_integer(BigUint::from(u128::MAX));
+        let nearby = Rational::from_unsigned_integer(BigUint::from(u128::MAX - 2));
+        let difference = Rational::dot_products_dyadic_stack(
+            [&largest, &nearby],
+            [&largest, &nearby],
+            [Plus, Minus],
+            [0, 0],
+            0,
+        )
+        .unwrap();
+        assert_eq!(
+            difference,
+            &largest * &largest - &nearby * &nearby
+        );
+
+        let wide_left = Rational::from_unsigned_integer(BigUint::from((1_u128 << 119) + 1));
+        let wide_right = Rational::from_unsigned_integer(BigUint::from((1_u128 << 117) + 3));
+        let tiny_left = Rational::from_bigint_fraction(
+            BigInt::from(3_u8),
+            BigUint::one() << 60_usize,
+        )
+        .unwrap();
+        let tiny_right = Rational::from_bigint_fraction(
+            BigInt::from(5_u8),
+            BigUint::one() << 60_usize,
+        )
+        .unwrap();
+        let aligned = Rational::dot_products_dyadic_stack(
+            [&wide_left, &tiny_left],
+            [&wide_right, &tiny_right],
+            [Plus, Plus],
+            [0, 120],
+            120,
+        )
+        .unwrap();
+        assert_eq!(
+            aligned,
+            &wide_left * &wide_right + &tiny_left * &tiny_right
+        );
+        assert!(aligned.numerator().bits() >= 350);
+    }
+
+    #[test]
+    fn dyadic_dot_stack_accumulator_preserves_arbitrary_precision_fallback() {
+        let largest = Rational::from_unsigned_integer(BigUint::from(u128::MAX));
+        let tiny = Rational::from_reduced_dyadic_word(Plus, 3, 400);
+        let one = Rational::one();
+        assert!(
+            Rational::dot_products_dyadic_stack(
+                [&largest, &tiny],
+                [&largest, &one],
+                [Plus, Plus],
+                [0, 400],
+                400,
+            )
+            .is_none()
+        );
+        assert_eq!(
+            Rational::dot_products([&largest, &tiny], [&largest, &one]),
+            &largest * &largest + &tiny
+        );
+    }
+
+    #[test]
+    fn self_dot_admits_after_observation_and_reuses_result() {
+        let values = [
+            Rational::fraction(123_456_789_012_345_i64, 1_u64 << 50).unwrap(),
+            Rational::fraction(-234_567_890_123_457_i64, 1_u64 << 49).unwrap(),
+            Rational::fraction(345_678_901_234_569_i64, 1_u64 << 48).unwrap(),
+        ];
+        let refs = [&values[0], &values[1], &values[2]];
+
+        assert!(Rational::self_dot_if_reused(refs).is_none());
+        let second = Rational::self_dot_if_reused(refs).unwrap();
+        let third = Rational::self_dot_if_reused(refs).unwrap();
+        assert_eq!(second, Rational::dot_products(refs, refs));
+        assert!(std::ptr::eq(&*second, &*third));
+
+        let zero = Rational::zero();
+        assert!(Rational::self_dot_if_reused([&values[0], &values[1], &zero]).is_none());
+
+        let conflicted = [
+            Rational::fraction(456_789_012_345_671_i64, 1_u64 << 50).unwrap(),
+            Rational::fraction(-567_890_123_456_781_i64, 1_u64 << 49).unwrap(),
+            Rational::fraction(678_901_234_567_893_i64, 1_u64 << 48).unwrap(),
+        ];
+        let scale = Rational::fraction(789_012_345_678_905_i64, 1_u64 << 47).unwrap();
+        for value in &conflicted {
+            let _ = value * &scale;
+        }
+        let refs = [&conflicted[0], &conflicted[1], &conflicted[2]];
+        let admitted = Rational::self_dot_if_reused(refs).unwrap();
+        let retained = Rational::self_dot_if_reused(refs).unwrap();
+        assert!(Arc::ptr_eq(&admitted.0, &retained.0));
+    }
+
+    #[test]
+    fn dot_products_handle_equal_non_dyadic_denominators() {
+        let left = [
+            Rational::fraction(7, 10).unwrap(),
+            Rational::fraction(-9, 10).unwrap(),
+            Rational::fraction(11, 10).unwrap(),
+        ];
+        let right = [
+            Rational::fraction(13, 7).unwrap(),
+            Rational::fraction(5, 7).unwrap(),
+            Rational::fraction(-3, 7).unwrap(),
+        ];
+
+        assert_eq!(
+            Rational::dot_products(
+                [&left[0], &left[1], &left[2]],
+                [&right[0], &right[1], &right[2]],
+            ),
+            &(&left[0] * &right[0]) + &(&left[1] * &right[1]) + &(&left[2] * &right[2])
+        );
+    }
+
+    #[test]
+    fn signed_product_sum_matches_pairwise_arithmetic() {
+        let terms = [
+            [
+                Rational::fraction(3, 8).unwrap(),
+                Rational::fraction(-5, 12).unwrap(),
+                Rational::fraction(7, 11).unwrap(),
+            ],
+            [
+                Rational::fraction(13, 9).unwrap(),
+                Rational::fraction(17, 25).unwrap(),
+                Rational::fraction(-19, 6).unwrap(),
+            ],
+            [
+                Rational::fraction(-23, 10).unwrap(),
+                Rational::fraction(29, 14).unwrap(),
+                Rational::fraction(31, 15).unwrap(),
+            ],
+        ];
+        let expected = &(&terms[0][0] * &terms[0][1] * &terms[0][2])
+            - &(&terms[1][0] * &terms[1][1] * &terms[1][2])
+            + &(&terms[2][0] * &terms[2][1] * &terms[2][2]);
+
+        assert_eq!(
+            Rational::signed_product_sum(
+                [true, false, true],
+                [
+                    [&terms[0][0], &terms[0][1], &terms[0][2]],
+                    [&terms[1][0], &terms[1][1], &terms[1][2]],
+                    [&terms[2][0], &terms[2][1], &terms[2][2]],
+                ],
+            ),
+            expected
+        );
+    }
+
+    #[test]
+    fn signed_product_sum_preserves_dyadic_exactness() {
+        let terms = [
+            [
+                Rational::fraction(1, 8).unwrap(),
+                Rational::fraction(3, 16).unwrap(),
+            ],
+            [
+                Rational::fraction(5, 32).unwrap(),
+                Rational::fraction(7, 64).unwrap(),
+            ],
+            [
+                Rational::fraction(-9, 4).unwrap(),
+                Rational::fraction(11, 8).unwrap(),
+            ],
+        ];
+        let product_terms = [
+            [&terms[0][0], &terms[0][1]],
+            [&terms[1][0], &terms[1][1]],
+            [&terms[2][0], &terms[2][1]],
+        ];
+        let sum = Rational::signed_product_sum([true, false, true], product_terms);
+
+        assert!(sum.is_dyadic());
+        assert_eq!(
+            Rational::signed_product_sum_known_dyadic(
+                [true, false, true],
+                product_terms,
+            ),
+            sum
+        );
+        assert_eq!(
+            sum,
+            &(&terms[0][0] * &terms[0][1]) - &(&terms[1][0] * &terms[1][1])
+                + &(&terms[2][0] * &terms[2][1])
+        );
+    }
+
+    #[test]
+    fn signed_product_sum_dyadic_word_accumulator_materializes_a_wide_denominator() {
+        let tiny = Rational::from_bigint_fraction(
+            BigInt::one(),
+            BigUint::one() << 130_usize,
+        )
+        .unwrap();
+        let one = Rational::one();
+        let terms = [[&tiny, &one], [&tiny, &one]];
+        let sum = Rational::signed_product_sum([true, true], terms);
+
+        assert_eq!(
+            sum,
+            Rational::from_bigint_fraction(
+                BigInt::one(),
+                BigUint::one() << 129_usize,
+            )
+            .unwrap(),
+        );
+        assert_eq!(
+            Rational::signed_product_sum_ordering([true, true], terms),
+            Ordering::Greater,
+        );
+    }
+
+    #[test]
+    fn signed_product_sum_falls_back_when_dyadic_alignment_exceeds_a_word() {
+        let wide_word = Rational::from_bigint(BigInt::from(1_u8) << 100_usize);
+        let one = Rational::one();
+        let tiny = Rational::from_bigint_fraction(
+            BigInt::one(),
+            BigUint::one() << 100_usize,
+        )
+        .unwrap();
+        let actual = Rational::signed_product_sum_known_dyadic(
+            [true, true],
+            [[&wide_word, &one], [&tiny, &one]],
+        );
+
+        assert_eq!(actual, &wide_word + &tiny);
+    }
+
+    #[test]
+    fn signed_product_sum_handles_equal_non_dyadic_denominators() {
+        let terms = [
+            [
+                Rational::fraction(7, 10).unwrap(),
+                Rational::fraction(13, 7).unwrap(),
+            ],
+            [
+                Rational::fraction(9, 10).unwrap(),
+                Rational::fraction(5, 7).unwrap(),
+            ],
+            [
+                Rational::fraction(11, 10).unwrap(),
+                Rational::fraction(3, 7).unwrap(),
+            ],
+        ];
+
+        assert_eq!(
+            Rational::signed_product_sum(
+                [true, false, true],
+                [
+                    [&terms[0][0], &terms[0][1]],
+                    [&terms[1][0], &terms[1][1]],
+                    [&terms[2][0], &terms[2][1]],
+                ],
+            ),
+            &(&terms[0][0] * &terms[0][1]) - &(&terms[1][0] * &terms[1][1])
+                + &(&terms[2][0] * &terms[2][1])
+        );
+    }
+
+    #[test]
+    fn signed_product_sum_word_overflow_falls_back_to_biguint() {
+        let huge = Rational::from_bigint(BigInt::one() << 200_usize);
+        let two = Rational::new(2);
+        let three = Rational::new(3);
+        let expected = &huge * &three - &huge * &two;
+
+        assert_eq!(
+            Rational::signed_product_sum(
+                [true, false],
+                [[&huge, &three], [&huge, &two]],
+            ),
+            expected
+        );
+    }
+
+    #[test]
+    fn signed_product_sum_cross_cancels_before_word_overflow() {
+        let a = BigUint::one() << 80_usize;
+        let b = &a - BigUint::one();
+        let ratio = Rational::from_bigint_fraction(BigInt::from(a.clone()), b.clone()).unwrap();
+        let reciprocal = Rational::from_bigint_fraction(BigInt::from(b), a).unwrap();
+
+        assert_eq!(
+            Rational::signed_product_sum([true], [[&ratio, &reciprocal]]),
+            Rational::one(),
+        );
+    }
+
+    #[test]
+    fn signed_product_sum_ordering_matches_materialized_result_and_overflow_fallback() {
+        let one = Rational::one();
+        let zero = Rational::zero();
+        let two = Rational::new(2);
+        let three = Rational::new(3);
+        assert_eq!(
+            Rational::signed_product_sum_ordering(
+                [true, false],
+                [[&zero, &three], [&two, &zero]],
+            ),
+            Ordering::Equal,
+        );
+        assert_eq!(
+            Rational::signed_product_sum_ordering(
+                [true, false],
+                [[&zero, &three], [&two, &one]],
+            ),
+            Ordering::Less,
+        );
+        assert_eq!(
+            Rational::signed_product_sum_ordering(
+                [true, false],
+                [[&three, &one], [&two, &one]],
+            ),
+            Ordering::Greater,
+        );
+
+        let huge = Rational::from_bigint(BigInt::from(1_u8) << 200);
+        assert_eq!(
+            Rational::signed_product_sum_ordering(
+                [false, true],
+                [[&huge, &three], [&huge, &two]],
+            ),
+            Ordering::Less,
+        );
+
+        let wide_a = Rational::from_bigint_fraction(
+            BigInt::from((BigUint::one() << 220_usize) + BigUint::from(7_u8)),
+            BigUint::from(15_u8),
+        )
+        .unwrap();
+        let wide_b = Rational::from_bigint_fraction(
+            BigInt::from((BigUint::one() << 180_usize) + BigUint::from(11_u8)),
+            BigUint::from(77_u8),
+        )
+        .unwrap();
+        let wide_c = Rational::from_bigint_fraction(
+            BigInt::from((BigUint::one() << 160_usize) + BigUint::from(13_u8)),
+            BigUint::from(143_u16),
+        )
+        .unwrap();
+        let wide_d = Rational::from_bigint_fraction(
+            BigInt::from((BigUint::one() << 140_usize) + BigUint::from(17_u8)),
+            BigUint::from(221_u16),
+        )
+        .unwrap();
+        let terms = [[&wide_a, &wide_b], [&wide_c, &wide_d], [&wide_b, &wide_d]];
+        let signs = [true, false, true];
+        let materialized = Rational::signed_product_sum(signs, terms);
+        assert_eq!(
+            Rational::signed_product_sum_ordering(signs, terms),
+            materialized.partial_cmp(&Rational::zero()).unwrap(),
+        );
+
+        let dyadic_a = Rational::from_bigint_fraction(
+            BigInt::from((BigUint::one() << 200_usize) + BigUint::one()),
+            BigUint::one() << 127_usize,
+        )
+        .unwrap();
+        let dyadic_b = Rational::from_bigint_fraction(
+            BigInt::from((BigUint::one() << 170_usize) + BigUint::one()),
+            BigUint::one() << 93_usize,
+        )
+        .unwrap();
+        let dyadic_terms = [[&dyadic_a, &dyadic_b], [&dyadic_b, &dyadic_b]];
+        let dyadic_signs = [false, true];
+        let materialized = Rational::signed_product_sum(dyadic_signs, dyadic_terms);
+        assert_eq!(
+            Rational::signed_product_sum_ordering(dyadic_signs, dyadic_terms),
+            materialized.partial_cmp(&Rational::zero()).unwrap(),
+        );
+    }
+
+    #[test]
+    fn fused_unplanned_signs_preserve_zero_single_and_mixed_product_ordering() {
+        let zero = Rational::zero();
+        let one = Rational::one();
+        let two = Rational::new(2);
+        let minus_three = Rational::new(-3);
+        let five = Rational::new(5);
+        let minus_seven = Rational::new(-7);
+
+        let all_zero = [[&zero, &one]; 4];
+        assert_eq!(
+            Rational::signed_product_sum_ordering([true, false, true, false], all_zero),
+            Ordering::Equal,
+        );
+
+        let single = [
+            [&zero, &one],
+            [&zero, &five],
+            [&minus_three, &two],
+            [&zero, &minus_seven],
+        ];
+        assert_eq!(
+            Rational::signed_product_sum_ordering([true; 4], single),
+            Ordering::Less,
+        );
+
+        let mixed = [
+            [&minus_three, &two],
+            [&five, &minus_seven],
+            [&two, &five],
+            [&minus_seven, &minus_three],
+            [&zero, &five],
+            [&one, &minus_seven],
+        ];
+        let positive_terms = [true, false, true, false, true, false];
+        let materialized = Rational::signed_product_sum(positive_terms, mixed);
+        assert_eq!(
+            Rational::signed_product_sum_ordering(positive_terms, mixed),
+            materialized.partial_cmp(&zero).unwrap(),
+        );
+    }
+
+    #[test]
+    fn dynamic_signed_product_sum_ordering_matches_materialized_result() {
+        let values = [
+            Rational::new(7) / Rational::new(11),
+            Rational::new(-13) / Rational::new(17),
+            Rational::new(19) / Rational::new(23),
+            Rational::new(29) / Rational::new(31),
+            Rational::new(-37) / Rational::new(41),
+            Rational::new(43) / Rational::new(47),
+        ];
+        let signs = [true, false, true];
+        let terms = [
+            [&values[0], &values[1]],
+            [&values[2], &values[3]],
+            [&values[4], &values[5]],
+        ];
+        let materialized = Rational::signed_product_sum(signs, terms);
+        assert_eq!(
+            Rational::signed_product_sum2_ordering_slice(&signs, &terms),
+            materialized.partial_cmp(&Rational::zero()).unwrap()
+        );
+
+        let huge = BigUint::one() << 320_usize;
+        let wide = [
+            Rational::from_parts_raw(Plus, &huge + BigUint::from(7_u8), BigUint::from(11_u8)),
+            Rational::from_parts_raw(Minus, &huge - BigUint::from(3_u8), BigUint::from(13_u8)),
+            Rational::from_parts_raw(Plus, &huge + BigUint::from(5_u8), BigUint::from(17_u8)),
+            Rational::from_parts_raw(Plus, &huge - BigUint::from(9_u8), BigUint::from(19_u8)),
+        ];
+        let wide_signs = [true, false];
+        let wide_terms = [[&wide[0], &wide[1]], [&wide[2], &wide[3]]];
+        let wide_materialized = Rational::signed_product_sum(wide_signs, wide_terms);
+        assert_eq!(
+            Rational::signed_product_sum2_ordering_slice(&wide_signs, &wide_terms),
+            wide_materialized
+                .partial_cmp(&Rational::zero())
+                .unwrap()
+        );
+    }
+
+    #[test]
+    fn signed_product_sum_ordering_four_products_preserves_wide_dyadic_fallbacks() {
+        let wide = |bits: usize, add: u8, shift: usize| {
+            Rational::from_bigint_fraction(
+                BigInt::from((BigUint::one() << bits) + BigUint::from(add)),
+                BigUint::one() << shift,
+            )
+            .unwrap()
+        };
+        let assert_matches_materialized = |values: &[Rational; 8]| {
+            let terms = [
+                [&values[0], &values[1]],
+                [&values[2], &values[3]],
+                [&values[4], &values[5]],
+                [&values[6], &values[7]],
+            ];
+            let signs = [true, false, true, false];
+            let materialized = Rational::signed_product_sum(signs, terms);
+            assert_eq!(
+                Rational::signed_product_sum_ordering(signs, terms),
+                materialized.partial_cmp(&Rational::zero()).unwrap(),
+            );
+        };
+
+        // Four-limb by native-word products fit the fixed stack path.
+        assert_matches_materialized(&[
+            wide(220, 3, 101),
+            wide(90, 5, 43),
+            wide(210, 7, 97),
+            wide(88, 9, 41),
+            wide(200, 11, 89),
+            wide(84, 13, 37),
+            wide(190, 15, 83),
+            wide(80, 17, 31),
+        ]);
+        // A carry beyond six limbs falls through to arbitrary precision.
+        assert_matches_materialized(&[
+            wide(255, 1, 1),
+            wide(127, 1, 1),
+            wide(255, 3, 1),
+            wide(127, 3, 1),
+            wide(255, 5, 1),
+            wide(127, 5, 1),
+            wide(255, 7, 1),
+            wide(127, 7, 1),
+        ]);
+        // Numerators wider than four limbs and pairs with no native-word
+        // factor retain the general arbitrary-precision reducer.
+        assert_matches_materialized(&[
+            wide(270, 3, 109),
+            wide(90, 5, 43),
+            wide(220, 7, 97),
+            wide(150, 9, 61),
+            wide(210, 11, 89),
+            wide(145, 13, 59),
+            wide(200, 15, 83),
+            wide(140, 17, 53),
+        ]);
+    }
+
+    #[test]
+    fn affine_plane3_dyadic_stack_matches_expanded_determinants_and_falls_back() {
+        let dyadic = |numerator: i64, shift: usize| {
+            Rational::from_bigint_fraction(
+                BigInt::from(numerator),
+                BigUint::one() << shift,
+            )
+            .unwrap()
+        };
+        let points = [
+            [dyadic(17, 3), dyadic(-29, 5), dyadic(43, 4)],
+            [dyadic(61, 6), dyadic(73, 4), dyadic(-89, 7)],
+            [dyadic(-101, 5), dyadic(113, 8), dyadic(127, 6)],
+        ];
+        let references = points.each_ref().map(|point| point.each_ref());
+        let [x0, y0, z0] = references[0];
+        let [x1, y1, z1] = references[1];
+        let [x2, y2, z2] = references[2];
+        let signs = [true, false, false, false, true, true];
+        let x = Rational::signed_product_sum(
+            signs,
+            [[y1, z2], [y1, z0], [y0, z2], [z1, y2], [z1, y0], [z0, y2]],
+        );
+        let y = Rational::signed_product_sum(
+            signs,
+            [[z1, x2], [z1, x0], [z0, x2], [x1, z2], [x1, z0], [x0, z2]],
+        );
+        let z = Rational::signed_product_sum(
+            signs,
+            [[x1, y2], [x1, y0], [x0, y2], [y1, x2], [y1, x0], [y0, x2]],
+        );
+        let offset = Rational::signed_product_sum(
+            [false; 3],
+            [[&x, x0], [&y, y0], [&z, z0]],
+        );
+        assert_eq!(
+            Rational::affine_plane3_coefficients_known_dyadic(references),
+            Some([x, y, z, offset]),
+        );
+
+        let non_dyadic = Rational::fraction(1, 3).unwrap();
+        let mut ineligible = references;
+        ineligible[0][0] = &non_dyadic;
+        assert!(
+            Rational::affine_plane3_coefficients_known_dyadic(ineligible).is_none()
+        );
+
+        let over_width = Rational::from_bigint_fraction(
+            BigInt::from((BigUint::one() << 129_usize) + BigUint::one()),
+            BigUint::one(),
+        )
+        .unwrap();
+        let mut ineligible = references;
+        ineligible[0][0] = &over_width;
+        assert!(
+            Rational::affine_plane3_coefficients_known_dyadic(ineligible).is_none()
+        );
+
+        let over_shift = Rational::from_bigint_fraction(
+            BigInt::one(),
+            BigUint::one() << 300_usize,
+        )
+        .unwrap();
+        let mut ineligible = references;
+        ineligible[0][0] = &over_shift;
+        assert!(
+            Rational::affine_plane3_coefficients_known_dyadic(ineligible).is_none()
+        );
+    }
+
+    #[cfg(feature = "dispatch-trace")]
+    #[test]
+    fn signed_product_sum_ordering_traces_four_product_dyadic_stack_path() {
+        let wide = Rational::from_bigint_fraction(
+            BigInt::from((BigUint::one() << 220_usize) + BigUint::from(3_u8)),
+            BigUint::one() << 101_usize,
+        )
+        .unwrap();
+        let narrow = Rational::fraction(5, 8).unwrap();
+        crate::dispatch_trace::reset();
+        crate::dispatch_trace::with_recording(|| {
+            assert_eq!(
+                Rational::signed_product_sum_ordering(
+                    [true, false, true, false],
+                    [
+                        [&wide, &narrow],
+                        [&wide, &Rational::fraction(3, 4).unwrap()],
+                        [&wide, &Rational::fraction(7, 16).unwrap()],
+                        [&wide, &Rational::fraction(1, 2).unwrap()],
+                    ],
+                ),
+                Ordering::Less,
+            );
+        });
+        let trace = crate::dispatch_trace::take_trace();
+        assert_eq!(
+            trace.path_count(
+                "rational",
+                "product_sum_ordering",
+                "dyadic-stack-accumulator"
+            ),
+            1
+        );
+    }
+
+    #[test]
+    fn signed_product_sum_ordering_six_products_preserves_all_fallbacks() {
+        let assert_matches_materialized = |values: &[Rational; 12]| {
+            let terms = [
+                [&values[0], &values[1]],
+                [&values[2], &values[3]],
+                [&values[4], &values[5]],
+                [&values[6], &values[7]],
+                [&values[8], &values[9]],
+                [&values[10], &values[11]],
+            ];
+            let signs = [true, true, false, true, false, false];
+            let materialized = Rational::signed_product_sum(signs, terms);
+            assert_eq!(
+                Rational::signed_product_sum_ordering(signs, terms),
+                materialized.partial_cmp(&Rational::zero()).unwrap(),
+            );
+        };
+
+        assert_matches_materialized(&[
+            Rational::fraction(3, 8).unwrap(),
+            Rational::new(5),
+            Rational::fraction(-7, 16).unwrap(),
+            Rational::new(2),
+            Rational::fraction(11, 4).unwrap(),
+            Rational::fraction(13, 2).unwrap(),
+            Rational::new(17),
+            Rational::fraction(-19, 32).unwrap(),
+            Rational::fraction(23, 8).unwrap(),
+            Rational::new(29),
+            Rational::fraction(31, 16).unwrap(),
+            Rational::new(37),
+        ]);
+
+        let wide = |bits, add| {
+            Rational::from_bigint_fraction(
+                BigInt::from((BigUint::one() << bits) + BigUint::from(add)),
+                BigUint::one() << (bits / 2),
+            )
+            .unwrap()
+        };
+        assert_matches_materialized(&std::array::from_fn(|index| {
+            wide(150 + index * 7, 2 * index + 1)
+        }));
+
+        assert_matches_materialized(&[
+            Rational::fraction(2, 3).unwrap(),
+            Rational::fraction(5, 7).unwrap(),
+            Rational::fraction(-11, 13).unwrap(),
+            Rational::fraction(17, 19).unwrap(),
+            Rational::fraction(23, 29).unwrap(),
+            Rational::fraction(31, 37).unwrap(),
+            Rational::fraction(-41, 43).unwrap(),
+            Rational::fraction(47, 53).unwrap(),
+            Rational::fraction(59, 61).unwrap(),
+            Rational::fraction(67, 71).unwrap(),
+            Rational::fraction(73, 79).unwrap(),
+            Rational::fraction(83, 89).unwrap(),
+        ]);
+    }
+
+    #[test]
+    fn signed_product_sum_shared_denominator_consumes_common_scale() {
+        let terms = [
+            [
+                Rational::fraction(7, 15).unwrap(),
+                Rational::fraction(13, 15).unwrap(),
+            ],
+            [
+                Rational::fraction(8, 15).unwrap(),
+                Rational::fraction(-2, 15).unwrap(),
+            ],
+            [
+                Rational::fraction(11, 15).unwrap(),
+                Rational::fraction(14, 15).unwrap(),
+            ],
+        ];
+        let expected = &(&terms[0][0] * &terms[0][1]) - &(&terms[1][0] * &terms[1][1])
+            + &(&terms[2][0] * &terms[2][1]);
+
+        assert_eq!(
+            Rational::signed_product_sum_shared_denominator(
+                [true, false, true],
+                [
+                    [&terms[0][0], &terms[0][1]],
+                    [&terms[1][0], &terms[1][1]],
+                    [&terms[2][0], &terms[2][1]],
+                ],
+            ),
+            Some(expected)
+        );
+
+        let mixed = Rational::fraction(1, 7).unwrap();
+        assert_eq!(
+            Rational::signed_product_sum_shared_denominator(
+                [true, false, true],
+                [
+                    [&terms[0][0], &terms[0][1]],
+                    [&terms[1][0], &mixed],
+                    [&terms[2][0], &terms[2][1]],
+                ],
+            ),
+            None
+        );
+    }
+
+    #[test]
+    fn paired_complex_product_matches_independent_exact_arithmetic() {
+        let cases = [
+            [
+                Rational::fraction(3, 7).unwrap(),
+                Rational::fraction(-5, 11).unwrap(),
+                Rational::fraction(13, 17).unwrap(),
+                Rational::fraction(19, 23).unwrap(),
+            ],
+            [
+                Rational::try_from(3.25_f64).unwrap(),
+                Rational::try_from(-2.125_f64).unwrap(),
+                Rational::try_from(1.75_f64).unwrap(),
+                Rational::try_from(0.625_f64).unwrap(),
+            ],
+        ];
+
+        for [a, b, c, d] in &cases {
+            let (re, im) = Rational::complex_product_components([a, b], [c, d]);
+            assert_eq!(re, a * c - b * d);
+            assert_eq!(im, a * d + b * c);
+        }
+
+        let wide = Rational::from_bigint_fraction(
+            BigInt::from((BigUint::one() << 170_usize) + BigUint::from(3_u8)),
+            (BigUint::one() << 149_usize) + BigUint::one(),
+        )
+        .unwrap();
+        let (re, im) = Rational::complex_product_components(
+            [&wide, &Rational::one()],
+            [&wide, &Rational::minus_one()],
+        );
+        assert_eq!(re, &wide * &wide + Rational::one());
+        assert_eq!(im, Rational::zero());
+    }
+
+    #[test]
+    fn paired_complex_quotient_matches_independent_exact_arithmetic() {
+        let cases = [
+            [
+                Rational::fraction(3, 7).unwrap(),
+                Rational::fraction(-5, 11).unwrap(),
+                Rational::fraction(13, 17).unwrap(),
+                Rational::fraction(19, 23).unwrap(),
+            ],
+            [
+                Rational::try_from(1.0e-9_f64).unwrap(),
+                Rational::try_from(-2.0e-9_f64).unwrap(),
+                Rational::try_from(-1.0e-9_f64).unwrap(),
+                Rational::try_from(2.0e-9_f64).unwrap(),
+            ],
+        ];
+        for [a, b, c, d] in &cases {
+            let denominator = c * c + d * d;
+            let (re, im) = Rational::complex_quotient_components([a, b], [c, d]).unwrap();
+            assert_eq!(re, (a * c + b * d) / &denominator);
+            assert_eq!(im, (b * c - a * d) / &denominator);
+        }
+
+        let wide = Rational::from_bigint_fraction(
+            BigInt::from((BigUint::one() << 170_usize) + BigUint::from(3_u8)),
+            (BigUint::one() << 149_usize) + BigUint::one(),
+        )
+        .unwrap();
+        let wide_other = Rational::from_bigint_fraction(
+            BigInt::from((BigUint::one() << 163_usize) + BigUint::from(5_u8)),
+            (BigUint::one() << 137_usize) + BigUint::from(3_u8),
+        )
+        .unwrap();
+        let denominator = &wide_other * &wide_other + Rational::one();
+        let (re, im) = Rational::complex_quotient_components(
+            [&wide, &Rational::minus_one()],
+            [&wide_other, &Rational::one()],
+        )
+        .unwrap();
+        assert_eq!(
+            re,
+            (&wide * &wide_other - Rational::one()) / &denominator
+        );
+        assert_eq!(
+            im,
+            (-&wide_other - &wide) / &denominator
+        );
+
+        let a = &cases[0][0];
+        let b = &cases[0][1];
+
+        assert_eq!(
+            Rational::complex_quotient_components(
+                [a, b],
+                [&Rational::zero(), &Rational::zero()],
+            ),
+            Err(crate::Problem::DivideByZero),
+        );
+    }
+
+    #[test]
+    fn compare() {
+        assert!(Rational::one() > Rational::zero());
+        assert!(Rational::new(5) > Rational::new(4));
+        assert!(Rational::new(-10) < Rational::new(5));
+        assert!(Rational::fraction(1, 4).unwrap() < Rational::fraction(1, 3).unwrap());
+    }
+
+    #[test]
+    fn sign_queries_are_strict() {
+        assert!(Rational::new(-1).is_negative());
+        assert!(!Rational::new(-1).is_positive());
+        assert!(!Rational::zero().is_negative());
+        assert!(!Rational::zero().is_positive());
+        assert!(!Rational::one().is_negative());
+        assert!(Rational::one().is_positive());
+        assert_eq!(Rational::one_ref(), &Rational::one());
+        assert!(std::ptr::eq(Rational::one_ref(), Rational::one_ref()));
+    }
+
+    #[test]
+    fn equality_cross_multiplies_unequal_denominators() {
+        let half = Rational::fraction(1, 2).unwrap();
+        let two_quarters = Rational::from_parts_raw(
+            Plus,
+            BigUint::from(2_u8),
+            BigUint::from(4_u8),
+        );
+        let three_sixths = Rational::from_parts_raw(
+            Plus,
+            BigUint::from(3_u8),
+            BigUint::from(6_u8),
+        );
+        assert_eq!(half, two_quarters);
+        assert_eq!(two_quarters, three_sixths);
+    }
+
+    #[test]
+    fn lazy_internal_fraction_is_canonical_at_observable_boundaries() {
+        use std::collections::hash_map::DefaultHasher;
+        use std::hash::{Hash, Hasher};
+
+        let lazy = Rational::from_parts_raw_unreduced(
+            Plus,
+            BigUint::from(6_u8),
+            BigUint::from(4_u8),
+        );
+        let canonical = Rational::fraction(3, 2).unwrap();
+        assert!(lazy.is_internally_unreduced());
+        assert_eq!(lazy, canonical);
+        assert_eq!(lazy.partial_cmp(&canonical), Some(Ordering::Equal));
+        assert_eq!(lazy.numerator(), canonical.numerator());
+        assert_eq!(lazy.denominator(), canonical.denominator());
+        assert_eq!(lazy.to_string(), canonical.to_string());
+        assert_eq!(format!("{lazy:?}"), format!("{canonical:?}"));
+        assert!(lazy.is_dyadic());
+        assert!(lazy.same_denominator(&Rational::fraction(1, 2).unwrap()));
+        assert!(!lazy.is_integer());
+        assert_eq!(lazy.trunc(), Rational::one());
+        assert_eq!(lazy.fract(), Rational::fraction(1, 2).unwrap());
+        assert!(!lazy.prefer_fraction());
+        assert_eq!(lazy.shifted_big_integer(1), BigInt::from(3_u8));
+        assert_eq!(lazy.to_f64_lossy(), Some(1.5));
+        assert_eq!(lazy.dyadic_to_f64_exact(), Some(1.5));
+
+        let mut lazy_hash = DefaultHasher::new();
+        lazy.hash(&mut lazy_hash);
+        let mut canonical_hash = DefaultHasher::new();
+        canonical.hash(&mut canonical_hash);
+        assert_eq!(lazy_hash.finish(), canonical_hash.finish());
+
+        assert_eq!(&lazy + Rational::fraction(1, 2).unwrap(), Rational::new(2));
+        assert_eq!(&lazy * Rational::new(2), Rational::new(3));
+        assert_eq!(&lazy / Rational::new(3), Rational::fraction(1, 2).unwrap());
+        assert_eq!(-&lazy, Rational::fraction(-3, 2).unwrap());
+        assert_eq!(
+            lazy.clone().inverse().unwrap(),
+            Rational::fraction(2, 3).unwrap()
+        );
+        assert_eq!(
+            lazy.clone().powi_i64(2).unwrap(),
+            Rational::fraction(9, 4).unwrap()
+        );
+        let two = Rational::new(2);
+        let half = Rational::fraction(1, 2).unwrap();
+        assert_eq!(Rational::dot_products([&lazy], [&two]), Rational::new(3));
+        assert_eq!(
+            Rational::signed_product_sum_known_dyadic([true], [[&lazy, &two]]),
+            Rational::new(3)
+        );
+        assert_eq!(
+            Rational::mean_refs(&[&lazy, &half]),
+            Some(Rational::one())
+        );
+        assert_eq!(
+            Rational::quotient_known_dyadic(&lazy, &half).unwrap(),
+            Rational::new(3)
+        );
+
+        let integer = Rational::from_parts_raw_unreduced(
+            Plus,
+            BigUint::from(12_u8),
+            BigUint::from(4_u8),
+        );
+        assert!(integer.is_integer());
+        assert!(integer.is_perfect_power() == Rational::new(3).is_perfect_power());
+        assert_eq!(integer.to_big_integer(), Some(BigInt::from(3_u8)));
+
+        let square = Rational::from_parts_raw_unreduced(
+            Plus,
+            BigUint::from(16_u8),
+            BigUint::from(36_u8),
+        );
+        assert_eq!(
+            square.perfect_nth_root(2),
+            Some(Rational::fraction(2, 3).unwrap())
+        );
+        let (root, rest) = square.extract_square_reduced();
+        assert_eq!(root, Rational::fraction(2, 3).unwrap());
+        assert_eq!(rest, Rational::one());
+    }
+
+    #[test]
+    fn lazy_internal_canonicalization_is_shared_across_threads() {
+        let lazy = Rational::from_parts_raw_unreduced(
+            Plus,
+            BigUint::from(6_u8),
+            BigUint::from(4_u8),
+        );
+        let identities = std::thread::scope(|scope| {
+            let handles: Vec<_> = (0..8)
+                .map(|_| {
+                    let lazy = lazy.clone();
+                    scope.spawn(move || lazy.canonicalized_ref().storage_identity())
+                })
+                .collect();
+            handles
+                .into_iter()
+                .map(|handle| handle.join().unwrap())
+                .collect::<Vec<_>>()
+        });
+        assert!(identities.iter().all(|identity| *identity == identities[0]));
+    }
+
+    #[cfg(feature = "serde")]
+    #[test]
+    fn lazy_internal_fraction_serializes_canonically() {
+        let lazy = Rational::from_parts_raw_unreduced(
+            Plus,
+            BigUint::from(6_u8),
+            BigUint::from(4_u8),
+        );
+        let encoded = serde_json::to_string(&lazy).unwrap();
+        let decoded: Rational = serde_json::from_str(&encoded).unwrap();
+        assert_eq!(decoded, Rational::fraction(3, 2).unwrap());
+        assert_eq!(decoded.numerator(), &BigUint::from(3_u8));
+        assert_eq!(decoded.denominator(), &BigUint::from(2_u8));
+    }
+
+    #[test]
+    fn word_comparison_falls_back_exactly_when_cross_products_overflow() {
+        use std::cmp::Ordering;
+
+        let left = Rational::from_parts_raw(
+            Plus,
+            BigUint::from(u128::MAX),
+            BigUint::from(3_u8),
+        );
+        let right = Rational::from_parts_raw(
+            Plus,
+            BigUint::from(u128::MAX - 1),
+            BigUint::from(2_u8),
+        );
+        assert_ne!(left, right);
+        assert_eq!(left.partial_cmp(&right), Some(Ordering::Less));
+    }
+
+    #[test]
+    fn leading_bit_interval_comparison_matches_large_cross_products() {
+        for bits in [129_usize, 257, 521] {
+            for left_offset in [3_u32, 17, 257, 65_537] {
+                for right_offset in [5_u32, 31, 1_025, 131_071] {
+                    let left = Rational::from_parts_raw(
+                        Plus,
+                        (BigUint::one() << bits) + BigUint::from(left_offset),
+                        (BigUint::one() << (bits - 1)) + BigUint::from(right_offset | 1),
+                    );
+                    let right = Rational::from_parts_raw(
+                        Plus,
+                        (BigUint::one() << bits)
+                            + (BigUint::from(right_offset) << (bits / 3))
+                            + BigUint::from(1_u8),
+                        (BigUint::one() << (bits - 1))
+                            + (BigUint::from(left_offset) << (bits / 4))
+                            + BigUint::from(1_u8),
+                    );
+                    let expected = (&left.numerator * &right.denominator)
+                        .cmp(&(&right.numerator * &left.denominator));
+                    assert_eq!(left.partial_cmp(&right), Some(expected));
+
+                    let left_negative = Rational::from_parts_raw(
+                        Minus,
+                        left.numerator.clone(),
+                        left.denominator.clone(),
+                    );
+                    let right_negative = Rational::from_parts_raw(
+                        Minus,
+                        right.numerator.clone(),
+                        right.denominator.clone(),
+                    );
+                    assert_eq!(
+                        left_negative.partial_cmp(&right_negative),
+                        Some(expected.reverse())
+                    );
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn leading_significand_cross_products_certify_exact_order() {
+        for bits in [129_usize, 257, 521, 1025] {
+            let denominator = (BigUint::one() << bits) + BigUint::from(65_537_u32);
+            let larger = Rational::from_parts_raw(
+                Plus,
+                (BigUint::one() << bits)
+                    + (BigUint::one() << (bits - 2))
+                    + BigUint::from(3_u8),
+                denominator.clone(),
+            );
+            let smaller = Rational::from_parts_raw(
+                Plus,
+                (BigUint::one() << bits)
+                    + (BigUint::one() << (bits - 3))
+                    + BigUint::from(5_u8),
+                denominator,
+            );
+            assert_eq!(larger.msd_exact(), Some(0));
+            assert_eq!(smaller.msd_exact(), Some(0));
+            assert_eq!(
+                compare_normalized_magnitude_intervals(&larger, &smaller, 0),
+                Some(Ordering::Greater)
+            );
+            assert_eq!(
+                compare_normalized_magnitude_intervals(&smaller, &larger, 0),
+                Some(Ordering::Less)
+            );
+        }
+    }
+
+    #[test]
+    fn normalized_significand_intervals_match_biguint_reference() {
+        fn generated(bits: usize, state: &mut u64) -> BigUint {
+            let mut value = BigUint::ZERO;
+            for _ in 0..bits.div_ceil(64) {
+                *state ^= *state << 13;
+                *state ^= *state >> 7;
+                *state ^= *state << 17;
+                value = (value << 64_usize) | BigUint::from(*state);
+            }
+            value >>= bits.div_ceil(64) * 64 - bits;
+            value | (BigUint::one() << (bits - 1))
+        }
+
+        let mut state = 0x0243_f6a8_885a_308d_u64;
+        for index in 0..10_000_usize {
+            let bits = 1 + (state as usize + index * 17) % 1_024;
+            let value = generated(bits, &mut state);
+            let (lower, upper, actual_bits) =
+                normalized_biguint_significand_interval(&value).unwrap();
+            assert_eq!(actual_bits, bits as u64);
+            if bits <= 53 {
+                assert_eq!(lower, upper);
+                assert_eq!(BigUint::from(lower), &value << (53 - bits));
+            } else {
+                let shift = bits - 53;
+                assert!(BigUint::from(lower) << shift <= value);
+                assert!(value < BigUint::from(upper) << shift);
+            }
+        }
+
+        let mut certified = 0_usize;
+        for index in 0..5_000_usize {
+            let numerator_bits = 129 + (state as usize + index * 29) % 896;
+            let denominator_bits = 129 + ((state >> 13) as usize + index * 11) % 896;
+            let left = Rational::from_parts_raw(
+                Plus,
+                generated(numerator_bits, &mut state),
+                generated(denominator_bits, &mut state),
+            );
+            let right = Rational::from_parts_raw(
+                Plus,
+                generated(numerator_bits, &mut state),
+                generated(denominator_bits, &mut state),
+            );
+            let Some(common_msd) = left
+                .msd_exact()
+                .filter(|msd| right.msd_exact() == Some(*msd))
+            else {
+                continue;
+            };
+            let Some(ordering) =
+                compare_normalized_magnitude_intervals(&left, &right, common_msd)
+            else {
+                continue;
+            };
+            let reference = (&left.numerator * &right.denominator)
+                .cmp(&(&right.numerator * &left.denominator));
+            assert_eq!(ordering, reference, "generated comparison {index}");
+            certified += 1;
+        }
+        assert!(certified >= 1_000, "only {certified} comparisons certified");
+    }
+
+    #[test]
+    fn same() {
+        use std::cmp::Ordering;
+
+        assert_eq!(
+            Rational::zero().partial_cmp(&Rational::zero()),
+            Some(Ordering::Equal)
+        );
+        assert_eq!(
+            Rational::one().partial_cmp(&Rational::one()),
+            Some(Ordering::Equal)
+        );
+        assert_eq!(
+            Rational::new(-10).partial_cmp(&Rational::new(-10)),
+            Some(Ordering::Equal)
+        );
+    }
+
+    #[test]
+    fn dyadic_comparison_handles_unequal_denominators_without_cross_products() {
+        use std::cmp::Ordering;
+
+        let values = [
+            Rational::fraction(-17, 32).unwrap(),
+            Rational::fraction(-1, 2).unwrap(),
+            Rational::fraction(3, 16).unwrap(),
+            Rational::fraction(1, 2).unwrap(),
+            Rational::fraction(17, 32).unwrap(),
+        ];
+        for left in &values {
+            for right in &values {
+                let cross_products = match left.sign.cmp(&right.sign) {
+                    Ordering::Equal if left.sign == Plus => (&left.numerator
+                        * &right.denominator)
+                        .cmp(&(&right.numerator * &left.denominator)),
+                    Ordering::Equal if left.sign == Minus => (&right.numerator
+                        * &left.denominator)
+                        .cmp(&(&left.numerator * &right.denominator)),
+                    ordering => ordering,
+                };
+                assert_eq!(left.partial_cmp(right), Some(cross_products));
+            }
+        }
+
+        let two_quarters = Rational::from_parts_raw(
+            Plus,
+            BigUint::from(2_u8),
+            BigUint::from(4_u8),
+        );
+        assert_eq!(Rational::fraction(1, 2).unwrap(), two_quarters);
+    }
+
+    #[test]
+    fn wide_dyadic_comparison_reuses_retained_denominator_shifts() {
+        use std::cmp::Ordering;
+
+        let left = Rational::from_parts_raw(
+            Plus,
+            BigUint::from(5_u8),
+            BigUint::one() << 512_usize,
+        );
+        let right = Rational::from_parts_raw(
+            Plus,
+            BigUint::from(3_u8),
+            BigUint::one() << 511_usize,
+        );
+        assert_eq!(
+            left.retained_facts.load(AtomicOrdering::Relaxed)
+                & RETAINED_DYADIC_SHIFT_MASK,
+            0
+        );
+        assert_eq!(left.partial_cmp(&right), Some(Ordering::Less));
+
+        let left_facts = left.retained_facts.load(AtomicOrdering::Relaxed);
+        let right_facts = right.retained_facts.load(AtomicOrdering::Relaxed);
+        assert_eq!(
+            (left_facts & RETAINED_DYADIC_SHIFT_MASK) >> RETAINED_DYADIC_SHIFT_OFFSET,
+            513
+        );
+        assert_eq!(
+            (right_facts & RETAINED_DYADIC_SHIFT_MASK) >> RETAINED_DYADIC_SHIFT_OFFSET,
+            512
+        );
+        for _ in 0..128 {
+            assert_eq!(left.partial_cmp(&right), Some(Ordering::Less));
+        }
+        assert_eq!(
+            left.retained_facts.load(AtomicOrdering::Relaxed),
+            left_facts
+        );
+        assert_eq!(
+            right.retained_facts.load(AtomicOrdering::Relaxed),
+            right_facts
+        );
+
+        let unreduced = Rational::from_parts_raw_unreduced(
+            Plus,
+            BigUint::from(10_u8),
+            BigUint::one() << 513_usize,
+        );
+        assert_eq!(unreduced.partial_cmp(&left), Some(Ordering::Equal));
+    }
+
+    #[cfg(feature = "dispatch-trace")]
+    #[test]
+    fn dyadic_comparison_trace_reports_borrowed_digit_path() {
+        let left = Rational::fraction(17, 32).unwrap();
+        let right = Rational::fraction(9, 16).unwrap();
+        crate::dispatch_trace::reset();
+        let ordering = crate::dispatch_trace::with_recording(|| left.partial_cmp(&right));
+        assert_eq!(ordering, Some(Ordering::Less));
+        let trace = crate::dispatch_trace::take_trace();
+        assert_eq!(
+            trace.path_count("rational", "comparison", "dyadic-borrowed-digits"),
+            1
+        );
+    }
+
+    #[test]
+    fn shifted_biguint_comparison_matches_materialized_shifts() {
+        fn generated(bits: usize, state: &mut u64) -> BigUint {
+            let mut value = BigUint::ZERO;
+            for _ in 0..bits.div_ceil(64) {
+                *state ^= *state << 13;
+                *state ^= *state >> 7;
+                *state ^= *state << 17;
+                value = (value << 64_usize) | BigUint::from(*state);
+            }
+            value | (BigUint::one() << (bits - 1))
+        }
+
+        let boundary_value =
+            (BigUint::one() << 130_usize) | (BigUint::one() << 63_usize) | BigUint::one();
+        for shift in 1_u64..64 {
+            let shifted = &boundary_value << shift as usize;
+            assert_eq!(
+                compare_shifted_biguints(&boundary_value, shift, &shifted, 0),
+                Ordering::Equal
+            );
+            assert_eq!(
+                compare_shifted_biguints(&shifted, 0, &boundary_value, shift),
+                Ordering::Equal
+            );
+        }
+        for shift in [64_u64, 65, 127, 128, 129] {
+            let shifted = &boundary_value << shift as usize;
+            assert_eq!(
+                compare_shifted_biguints(&boundary_value, shift, &shifted, 0),
+                Ordering::Equal
+            );
+            assert_eq!(
+                compare_shifted_biguints(&shifted, 0, &boundary_value, shift),
+                Ordering::Equal
+            );
+        }
+
+        let mut state = 0x9e37_79b9_7f4a_7c15_u64;
+        for index in 0..5_000_usize {
+            let left_bits = 1 + (state as usize % 512);
+            let left = generated(left_bits, &mut state);
+            let right_bits = 1 + (state as usize % 512);
+            let right = generated(right_bits, &mut state);
+            let left_shift = ((state >> 11) + index as u64) % 385;
+            let right_shift = ((state >> 29) + index as u64 * 3) % 385;
+            let expected = (&left << left_shift as usize).cmp(&(&right << right_shift as usize));
+            assert_eq!(
+                compare_shifted_biguints(&left, left_shift, &right, right_shift),
+                expected,
+                "generated case {index}"
+            );
+        }
+    }
+
+    #[test]
+    fn divide_by_zero() {
+        let err = Rational::fraction(1, 0).unwrap_err();
+        assert_eq!(err, Problem::DivideByZero);
+        let zero = Rational::zero();
+        let err = zero.inverse().unwrap_err();
+        assert_eq!(err, Problem::DivideByZero);
+    }
+
+    #[test]
+    fn operations_work_on_refs_on_rhs() {
+        let a = Rational::new(2);
+        let b = Rational::new(3);
+        let c = Rational::new(6);
+        assert_eq!(a.clone() * &b, c.clone());
+        assert_eq!(c.clone() / &b, a.clone());
+        assert_eq!(c.clone() - &a, Rational::new(4));
+        assert_eq!(-&c, Rational::new(-6));
+        assert_eq!(a.clone() + &b, Rational::new(5));
+    }
+
+    #[test]
+    fn operations_work_on_refs() {
+        let a = Rational::new(2);
+        let b = Rational::new(3);
+        let c = Rational::new(6);
+        assert_eq!(&a * &b, c.clone());
+        assert_eq!(&c / &b, a.clone());
+        assert_eq!(&c - &a, Rational::new(4));
+        assert_eq!(-&c, Rational::new(-6));
+        assert_eq!(&a + &b, Rational::new(5));
+    }
+}

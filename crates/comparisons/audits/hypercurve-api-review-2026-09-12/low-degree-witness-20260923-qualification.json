@@ -1,0 +1,60 @@
+{
+  "parent": "e4f59ba19e01c224c9fdc37f44debb752b6d40ae",
+  "main_files_verified": 185,
+  "sha256": "8af1db098c986f685782d5e0d15c8b62a05bc30630851cf32d44657e033ee23d",
+  "tests": {
+    "returncode": 0,
+    "passed": 506,
+    "elapsed_seconds": 3.4240259440848604,
+    "binary_sha256": "9d5da45240a6f03bcd13425ed53744314cac017ed73f51f328eb5e51cb1bda97",
+    "bindings": "chord-normal-witness-20260923-focused2-sources.json",
+    "all_sources_unchanged": true,
+    "all_processes_reaped": true
+  },
+  "checks": {
+    "parent_cases": [
+      {
+        "name": "algebraic_tensor_image::tests::selected_low_degree_witness_does_not_depend_on_interval_precision",
+        "returncode": 101,
+        "log": "low-degree-witness-20260923-parent1-case-0.log"
+      },
+      {
+        "name": "algebraic_tensor_image::tests::selected_low_degree_witness_accepts_exact_nonrational_coefficients",
+        "returncode": 101,
+        "log": "low-degree-witness-20260923-parent1-case-1.log"
+      }
+    ],
+    "parent_binary_sha256": "9d061d6f1417ac1bd6c61d734f5ee8e53205e2da55a1c4b6c75da67f3e7ce6ea",
+    "candidate_checks": [
+      {
+        "command": [
+          "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+          "check",
+          "--all-targets",
+          "--all-features",
+          "--locked",
+          "--offline"
+        ],
+        "returncode": 0,
+        "log": "low-degree-witness-20260923-check-0.log"
+      },
+      {
+        "command": [
+          "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+          "check",
+          "--all-targets",
+          "--no-default-features",
+          "--locked",
+          "--offline"
+        ],
+        "returncode": 0,
+        "log": "low-degree-witness-20260923-check-1.log"
+      }
+    ],
+    "all_sources_unchanged": true,
+    "all_processes_reaped": true
+  },
+  "all_owned_processes_reaped": true,
+  "hypercurve_candidate_not_qualified": true,
+  "full_goal_complete": false
+}

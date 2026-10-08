@@ -1,0 +1,10 @@
+[ 1 of 10] Compiling AuditCReal       ( .audit-numbers.rjcbha/AuditCReal.hs, .audit-numbers.rjcbha/O0/AuditCReal.o )
+[ 2 of 10] Compiling Data.Number.CReal ( exact-real-references/numbers/Data/Number/CReal.hs, .audit-numbers.rjcbha/O0/Data/Number/CReal.o )
+[ 3 of 10] Compiling Data.Number.Dif  ( exact-real-references/numbers/Data/Number/Dif.hs, .audit-numbers.rjcbha/O0/Data/Number/Dif.o )
+[ 4 of 10] Compiling Data.Number.FixedFunctions ( exact-real-references/numbers/Data/Number/FixedFunctions.hs, .audit-numbers.rjcbha/O0/Data/Number/FixedFunctions.o )
+[ 5 of 10] Compiling Data.Number.Fixed ( .audit-numbers.rjcbha/compat/Data/Number/Fixed.hs, .audit-numbers.rjcbha/O0/Data/Number/Fixed.o )
+[ 6 of 10] Compiling Data.Number.BigFloat ( exact-real-references/numbers/Data/Number/BigFloat.hs, .audit-numbers.rjcbha/O0/Data/Number/BigFloat.o )
+[ 7 of 10] Compiling Data.Number.Interval ( exact-real-references/numbers/Data/Number/Interval.hs, .audit-numbers.rjcbha/O0/Data/Number/Interval.o )
+[ 8 of 10] Compiling Data.Number.Symbolic ( exact-real-references/numbers/Data/Number/Symbolic.hs, .audit-numbers.rjcbha/O0/Data/Number/Symbolic.o )
+[ 9 of 10] Compiling Main             ( exact-real-references/numbers-qualification/Probe.hs, .audit-numbers.rjcbha/O0/Main.o )
+[10 of 10] Linking .audit-numbers.rjcbha/probe-O0

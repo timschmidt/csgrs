@@ -1,0 +1,1422 @@
+use hypercurve::BezierAlgebraicImageStatus;
+use hypercurve::{
+    Axis2, BezierLineContactKind, BezierLineContactRelation, BezierParameter2,
+    BezierSplitFragment2, BezierSubcurve2, Classification, CubicBezier2, Curve2, CurveContext,
+    CurveFamily2, CurveOperation2, ExactCurveError, LineSeg2, ParamRange, Point2, QuadraticBezier2,
+    RationalBezier2, RationalBezierIntersectionCandidates2, RationalBezierIntersectionContacts2,
+    RationalBezierIntersectionPointEvidence2, RationalBezierOverlapOrientation2,
+    RationalBezierPointIncidence2, RationalQuadraticBezier2, Real,
+};
+use hyperreal::Rational;
+use num::{BigInt, BigUint};
+
+fn r(value: i32) -> Real {
+    value.into()
+}
+
+fn q(numerator: i32, denominator: i32) -> Real {
+    (r(numerator) / r(denominator)).unwrap()
+}
+
+fn p(x: i32, y: i32) -> Point2 {
+    Point2::new(r(x), r(y))
+}
+
+fn unresolved_positive() -> Real {
+    let tiny = Real::new(
+        Rational::from_bigint_fraction(BigInt::from(1_u8), BigUint::from(1_u8) << 5000).unwrap(),
+    );
+    (Real::pi() + tiny) - Real::pi()
+}
+
+fn decided<T>(classification: Classification<T>) -> T {
+    match classification {
+        Classification::Decided(value) => value,
+        Classification::Uncertain(reason) => panic!("unexpected uncertainty: {reason:?}"),
+    }
+}
+
+fn curve() -> RationalBezier2 {
+    RationalBezier2::try_new(
+        vec![p(0, 0), p(1, 3), p(3, 3), p(4, 0)],
+        vec![r(1), r(2), r(3), r(4)],
+    )
+    .unwrap()
+}
+
+#[test]
+fn general_rational_cubic_evaluates_exactly() {
+    let curve = curve();
+    let policy = CurveContext::STRICT;
+    let half = q(1, 2);
+
+    assert_eq!(curve.point_at(&r(0), &policy).unwrap(), p(0, 0));
+    assert_eq!(curve.point_at(&r(1), &policy).unwrap(), p(4, 0));
+    assert_eq!(
+        curve.point_at(&half, &policy).unwrap(),
+        Point2::new(q(49, 20), q(9, 4))
+    );
+}
+
+#[test]
+fn rational_quadratic_rational_parameter_uses_exact_power_quotient() {
+    let curve =
+        RationalQuadraticBezier2::try_new(p(0, 0), p(2, 4), p(6, 0), r(1), r(2), r(3)).unwrap();
+
+    assert_eq!(
+        decided(curve.point_at(q(1, 2), &CurveContext::STRICT)),
+        Point2::new(q(13, 4), r(2))
+    );
+}
+
+#[test]
+fn rational_quadratic_monotone_root_preserves_unequal_weight_quotient_derivative() {
+    let curve = RationalQuadraticBezier2::try_new(
+        p(0, 0),
+        p(1, 2),
+        Point2::new(q(4, 9), r(5)),
+        r(1),
+        r(2),
+        r(3),
+    )
+    .unwrap();
+
+    assert_eq!(
+        decided(curve.axis_monotone_parameters(Axis2::X, &CurveContext::STRICT)),
+        vec![q(1, 2)]
+    );
+}
+
+#[test]
+fn rational_quadratic_monotone_root_retains_exact_transcendental_endpoint() {
+    // The x coordinate has a horizontal tangent at t=1. Building that root
+    // through the generic quadratic formula leaves a cancellative expression
+    // involving pi, so endpoint extraction must retain the exact parameter
+    // before radical construction.
+    let curve = RationalQuadraticBezier2::try_new(
+        p(0, 0),
+        Point2::new(q(24, 5), q(7, 5)),
+        Point2::new(q(24, 5), q(32, 5)),
+        r(1),
+        Real::pi(),
+        r(1),
+    )
+    .unwrap();
+
+    assert_eq!(
+        decided(curve.axis_monotone_parameters(Axis2::X, &CurveContext::STRICT)),
+        vec![Real::one()]
+    );
+}
+
+#[test]
+fn general_rational_derivative_is_exact_and_reuses_power_basis() {
+    let curve = RationalBezier2::try_new(vec![p(0, 0), p(4, 0)], vec![r(1), r(3)]).unwrap();
+    let clone = curve.clone();
+    let policy = CurveContext::STRICT;
+
+    let derivative = curve.derivative_at(&q(1, 2), &policy).unwrap();
+    assert_eq!(derivative.dx(), &r(3));
+    assert_eq!(derivative.dy(), &r(0));
+    assert_eq!(clone.derivative_at(&q(1, 2), &policy).unwrap(), derivative);
+}
+
+#[test]
+fn general_rational_derivatives_are_not_truncated_at_bezier_degree() {
+    let curve = RationalBezier2::try_new(vec![p(0, 0), p(4, 0)], vec![r(1), r(3)]).unwrap();
+    let policy = CurveContext::STRICT;
+
+    let derivatives = curve.derivatives_at(&q(1, 2), 3, &policy).unwrap();
+
+    assert_eq!(derivatives.len(), 3);
+    assert_eq!((derivatives[0].dx(), derivatives[0].dy()), (&r(3), &r(0)));
+    assert_eq!((derivatives[1].dx(), derivatives[1].dy()), (&r(-6), &r(0)));
+    assert_eq!((derivatives[2].dx(), derivatives[2].dy()), (&r(18), &r(0)));
+}
+
+#[test]
+fn rational_bezier_clones_evaluate_identically() {
+    let curve = curve();
+    let clone = curve.clone();
+    let policy = CurveContext::STRICT;
+    assert_eq!(
+        clone.point_at(&q(1, 2), &policy).unwrap(),
+        curve.point_at(&q(1, 2), &policy).unwrap()
+    );
+}
+
+#[test]
+fn rational_bezier_clones_have_identical_point_incidence() {
+    let curve = curve();
+    let clone = curve.clone();
+    let policy = CurveContext::STRICT;
+    let point = Point2::new(q(49, 20), q(9, 4));
+    assert!(clone.contains_point(&point, &policy).unwrap());
+    assert_eq!(
+        clone.contains_point(&point, &policy).unwrap(),
+        curve.contains_point(&point, &policy).unwrap()
+    );
+}
+
+#[test]
+fn general_rational_split_preserves_join_and_degree() {
+    let curve = curve();
+    let policy = CurveContext::STRICT;
+    let half = q(1, 2);
+    let expected_join = curve.point_at(&half, &policy).unwrap();
+    let (left, right) = decided(curve.split_at_exact(&half, &policy).unwrap());
+
+    assert_eq!(left.degree(), 3);
+    assert_eq!(right.degree(), 3);
+    assert_eq!(left.end(), &expected_join);
+    assert_eq!(right.start(), &expected_join);
+    assert_eq!(left.point_at(&r(1), &policy).unwrap(), expected_join);
+    assert_eq!(right.point_at(&r(0), &policy).unwrap(), expected_join);
+}
+
+#[test]
+fn general_rational_cubic_certifies_obvious_axis_monotonicity() {
+    let curve = curve();
+    let policy = CurveContext::STRICT;
+
+    assert!(curve.axis_is_monotone(Axis2::X, &policy).unwrap());
+    assert!(!curve.axis_is_monotone(Axis2::Y, &policy).unwrap());
+}
+
+#[test]
+fn mixed_derivative_controls_use_exact_root_multiplicity_for_monotonicity() {
+    let policy = CurveContext::STRICT;
+    let stationary_monotone =
+        RationalBezier2::try_new(vec![p(0, 0), p(1, 0), p(0, 0), p(1, 0)], vec![r(1); 4]).unwrap();
+    let two_extrema =
+        RationalBezier2::try_new(vec![p(0, 0), p(3, 0), p(-2, 0), p(1, 0)], vec![r(1); 4]).unwrap();
+    let endpoint_sign_reversal =
+        RationalBezier2::try_new(vec![p(0, 0), p(1, 0), p(1, 0), p(0, 0)], vec![r(1); 4]).unwrap();
+
+    assert!(
+        stationary_monotone
+            .axis_is_monotone(Axis2::X, &policy)
+            .unwrap()
+    );
+    assert!(!two_extrema.axis_is_monotone(Axis2::X, &policy).unwrap());
+    assert!(
+        !endpoint_sign_reversal
+            .axis_is_monotone(Axis2::X, &policy)
+            .unwrap()
+    );
+}
+
+#[test]
+fn high_degree_nonuniform_rational_weights_preserve_axis_monotonicity() {
+    let curve = RationalBezier2::try_new(
+        (0..=12)
+            .map(|index| p(index, (index * index) % 7))
+            .collect(),
+        (0..=12).map(|index| r(1 + index % 3)).collect(),
+    )
+    .unwrap();
+
+    assert!(
+        curve
+            .axis_is_monotone(Axis2::X, &CurveContext::STRICT)
+            .unwrap()
+    );
+}
+
+#[test]
+fn degree_40_rational_monotonicity_does_not_depend_on_u64_binomials() {
+    let curve = RationalBezier2::try_new(
+        (0..=40).map(|index| p(index, index % 3)).collect(),
+        vec![r(1); 41],
+    )
+    .unwrap();
+
+    assert!(
+        curve
+            .axis_is_monotone(Axis2::X, &CurveContext::STRICT)
+            .unwrap()
+    );
+}
+
+#[test]
+fn shared_cancellation_resolves_rational_weight_monotonicity_blocker() {
+    let curve = RationalBezier2::try_new(vec![p(0, 0), p(1, 1)], vec![unresolved_positive(), r(1)])
+        .unwrap();
+
+    assert!(
+        curve
+            .axis_is_monotone(Axis2::X, &CurveContext::STRICT)
+            .unwrap()
+    );
+}
+
+#[test]
+fn shared_cancellation_resolves_rational_evaluation_and_bounds_blockers() {
+    let curve = RationalBezier2::try_new(vec![p(0, 0), p(1, 1)], vec![unresolved_positive(), r(1)])
+        .unwrap();
+    let policy = CurveContext::STRICT;
+
+    assert_eq!(curve.point_at(&r(0), &policy).unwrap(), p(0, 0));
+    assert!(curve.derivative_at(&r(0), &policy).is_ok());
+    assert!(curve.derivatives_at(&r(0), 3, &policy).is_ok());
+    assert!(curve.certified_bounds(&policy).is_ok());
+}
+
+#[test]
+fn top_level_general_rational_curve_preserves_family_and_native_geometry() {
+    let top_level = Curve2::from(curve());
+
+    assert_eq!(top_level.family(), CurveFamily2::RationalBezier);
+    let fragments = top_level
+        .native_bezier_fragments(&CurveContext::STRICT)
+        .unwrap()
+        .into_value();
+    assert_eq!(fragments.len(), 1);
+    assert!(matches!(
+        fragments[0].curve(),
+        hypercurve::BezierSubcurve2::Rational(_)
+    ));
+}
+
+#[test]
+fn represented_multi_split_materializes_connected_rational_fragments() {
+    let curve = curve();
+    let policy = CurveContext::STRICT;
+    let split = decided(
+        curve
+            .split_at_parameters(
+                &[
+                    BezierParameter2::Exact(q(3, 4)),
+                    BezierParameter2::Exact(q(1, 4)),
+                    BezierParameter2::Exact(q(1, 4)),
+                ],
+                &policy,
+            )
+            .unwrap(),
+    );
+
+    assert!(split.is_fully_materialized());
+    assert_eq!(split.fragments().len(), 3);
+    let curves = split
+        .fragments()
+        .iter()
+        .map(|fragment| match fragment {
+            BezierSplitFragment2::Materialized {
+                curve: BezierSubcurve2::Rational(curve),
+                ..
+            } => curve,
+            _ => panic!("represented rational split did not materialize natively"),
+        })
+        .collect::<Vec<_>>();
+    assert_eq!(curves[0].start(), curve.start());
+    assert_eq!(curves[0].end(), curves[1].start());
+    assert_eq!(curves[1].end(), curves[2].start());
+    assert_eq!(curves[2].end(), curve.end());
+}
+
+#[test]
+fn general_rational_line_contact_retains_exact_parameter_and_kind() {
+    let curve = curve();
+    let policy = CurveContext::STRICT;
+    let line =
+        LineSeg2::try_new(Point2::new(q(49, 20), r(-1)), Point2::new(q(49, 20), r(1))).unwrap();
+
+    let relation = decided(curve.relation_to_line_with_contacts(&line, &policy));
+    let BezierLineContactRelation::Contacts { contacts } = relation else {
+        panic!("represented rational line root was not materialized");
+    };
+    assert_eq!(contacts.len(), 1);
+    assert_eq!(contacts[0].parameter(), &q(1, 2));
+    assert_eq!(contacts[0].kind(), BezierLineContactKind::Crossing);
+}
+
+#[test]
+fn general_rational_line_contact_retains_irrational_crossing_parameter() {
+    let curve = RationalBezier2::try_new(
+        vec![p(0, 0), Point2::new(q(1, 2), r(0)), p(1, 1)],
+        vec![r(1); 3],
+    )
+    .unwrap();
+    let line = LineSeg2::try_new(Point2::new(r(-1), q(1, 2)), Point2::new(r(2), q(1, 2))).unwrap();
+
+    let relation = decided(curve.relation_to_line_with_contacts(&line, &CurveContext::STRICT));
+    let BezierLineContactRelation::Contacts { contacts } = relation else {
+        panic!("irrational rational-Bezier line root was not retained");
+    };
+    assert_eq!(contacts.len(), 1);
+    assert!(matches!(
+        contacts[0].parameter(),
+        BezierParameter2::Algebraic(_)
+    ));
+    assert_eq!(contacts[0].kind(), BezierLineContactKind::Crossing);
+}
+
+#[test]
+fn every_bezier_family_retains_irrational_line_contacts() {
+    let policy = CurveContext::STRICT;
+    let horizontal_half =
+        LineSeg2::try_new(Point2::new(r(-1), q(1, 2)), Point2::new(r(2), q(1, 2))).unwrap();
+    let quadratic = QuadraticBezier2::new(p(0, 0), Point2::new(q(1, 2), r(0)), p(1, 1));
+    let cubic = CubicBezier2::new(
+        p(0, 0),
+        Point2::new(q(1, 3), r(0)),
+        Point2::new(q(2, 3), r(0)),
+        p(1, 1),
+    );
+    let rational = RationalQuadraticBezier2::try_new(
+        p(0, 0),
+        Point2::new(q(1, 2), r(0)),
+        p(1, 1),
+        r(1),
+        r(2),
+        r(1),
+    )
+    .unwrap();
+
+    for relation in [
+        quadratic.relation_to_line_with_contacts(&horizontal_half, &policy),
+        cubic.relation_to_line_with_contacts(&horizontal_half, &policy),
+        rational.relation_to_line_with_contacts(&horizontal_half, &policy),
+    ] {
+        let BezierLineContactRelation::Contacts { contacts } = decided(relation) else {
+            panic!("Bezier family did not retain its irrational line root");
+        };
+        assert_eq!(contacts.len(), 1);
+        assert!(matches!(
+            contacts[0].parameter(),
+            BezierParameter2::Algebraic(_)
+        ));
+        assert_eq!(contacts[0].kind(), BezierLineContactKind::Crossing);
+    }
+}
+
+#[test]
+fn exact_line_contact_solver_distinguishes_hull_overlap_from_curve_contact() {
+    // y(t) = t^2 - t + 1/3 is strictly positive, although its middle
+    // Bernstein control lies below y = 0.
+    let curve = QuadraticBezier2::new(
+        Point2::new(r(0), q(1, 3)),
+        Point2::new(q(1, 2), q(-1, 6)),
+        Point2::new(r(1), q(1, 3)),
+    );
+    let axis = LineSeg2::try_new(p(-1, 0), p(2, 0)).unwrap();
+
+    assert_eq!(
+        curve.relation_to_line_with_contacts(&axis, &CurveContext::STRICT),
+        Classification::Decided(BezierLineContactRelation::NoContact)
+    );
+}
+
+#[test]
+fn general_rational_line_relation_certifies_hull_miss_and_coincidence() {
+    let policy = CurveContext::STRICT;
+    let below = LineSeg2::try_new(p(0, -1), p(4, -1)).unwrap();
+    assert!(matches!(
+        curve().relation_to_line_with_contacts(&below, &policy),
+        Classification::Decided(BezierLineContactRelation::ControlHullDisjoint { .. })
+    ));
+
+    let collinear = RationalBezier2::try_new(
+        vec![p(0, 0), p(1, 0), p(3, 0), p(4, 0)],
+        vec![r(1), r(2), r(3), r(4)],
+    )
+    .unwrap();
+    let axis = LineSeg2::try_new(p(0, 0), p(4, 0)).unwrap();
+    assert_eq!(
+        collinear.relation_to_line_with_contacts(&axis, &policy),
+        Classification::Decided(BezierLineContactRelation::OnSupportingLine)
+    );
+}
+
+#[test]
+fn general_rational_point_incidence_rechecks_full_homogeneous_image() {
+    let curve = curve();
+    let policy = CurveContext::STRICT;
+    let midpoint = Point2::new(q(49, 20), q(9, 4));
+
+    assert_eq!(
+        curve.point_incidence(&midpoint, &policy).unwrap(),
+        RationalBezierPointIncidence2::Parameters(vec![BezierParameter2::Exact(q(1, 2))])
+    );
+    assert!(curve.contains_point(&midpoint, &policy).unwrap());
+    assert!(!curve.contains_point(&p(5, 1), &policy).unwrap());
+    assert!(!curve.contains_point(&p(2, 1), &policy).unwrap());
+}
+
+#[test]
+fn general_rational_point_incidence_retains_nonlinear_algebraic_parameter() {
+    let curve =
+        RationalBezier2::try_new(vec![p(0, 0), p(0, 0), p(1, 1)], vec![r(1), r(1), r(1)]).unwrap();
+    let policy = CurveContext::STRICT;
+    let query = Point2::new(q(1, 2), q(1, 2));
+    let incidence = curve.point_incidence(&query, &policy).unwrap();
+    let RationalBezierPointIncidence2::Parameters(parameters) = incidence else {
+        panic!("nonconstant curve reported whole-curve incidence");
+    };
+
+    assert_eq!(parameters.len(), 1);
+    assert!(matches!(parameters[0], BezierParameter2::Algebraic(_)));
+    assert!(curve.contains_point(&query, &policy).unwrap());
+}
+
+#[test]
+fn general_rational_point_incidence_retains_endpoint_and_entire_curve_cases() {
+    let policy = CurveContext::STRICT;
+    let parabola =
+        RationalBezier2::try_new(vec![p(0, 0), p(0, 0), p(1, 1)], vec![r(1), r(1), r(1)]).unwrap();
+    assert_eq!(
+        parabola.point_incidence(&p(0, 0), &policy).unwrap(),
+        RationalBezierPointIncidence2::Parameters(vec![BezierParameter2::Exact(r(0))])
+    );
+    assert_eq!(
+        parabola.point_incidence(&p(1, 1), &policy).unwrap(),
+        RationalBezierPointIncidence2::Parameters(vec![BezierParameter2::Exact(r(1))])
+    );
+
+    let constant =
+        RationalBezier2::try_new(vec![p(2, 3), p(2, 3), p(2, 3)], vec![r(1), r(2), r(3)]).unwrap();
+    assert_eq!(
+        constant.point_incidence(&p(2, 3), &policy).unwrap(),
+        RationalBezierPointIncidence2::EntireCurve
+    );
+    assert!(!constant.contains_point(&p(3, 2), &policy).unwrap());
+}
+
+#[test]
+fn general_rational_contacts_recognize_projective_scale_and_reversal() {
+    let curve = curve();
+    let policy = CurveContext::STRICT;
+    let scaled = RationalBezier2::try_new(
+        curve.control_points().to_vec(),
+        vec![r(2), r(4), r(6), r(8)],
+    )
+    .unwrap();
+
+    for (other, orientation, second_range) in [
+        (
+            curve.clone(),
+            RationalBezierOverlapOrientation2::Same,
+            ParamRange::new(r(0), r(1)),
+        ),
+        (
+            scaled,
+            RationalBezierOverlapOrientation2::Same,
+            ParamRange::new(r(0), r(1)),
+        ),
+        (
+            curve.reversed(),
+            RationalBezierOverlapOrientation2::Reversed,
+            ParamRange::new(r(1), r(0)),
+        ),
+    ] {
+        let RationalBezierIntersectionContacts2::Overlap(overlap) =
+            curve.intersection_contacts(&other, &policy).unwrap()
+        else {
+            panic!("projectively equivalent curve did not retain overlap evidence");
+        };
+        assert_eq!(overlap.first_range(), &ParamRange::new(r(0), r(1)));
+        assert_eq!(overlap.second_range(), &second_range);
+        assert_eq!(overlap.orientation(), orientation);
+    }
+}
+
+#[test]
+fn general_rational_contacts_reject_disjoint_control_hulls() {
+    let policy = CurveContext::STRICT;
+    let shifted = RationalBezier2::try_new(
+        vec![p(10, 0), p(11, 3), p(13, 3), p(14, 0)],
+        vec![r(1), r(2), r(3), r(4)],
+    )
+    .unwrap();
+
+    assert_eq!(
+        curve().intersection_contacts(&shifted, &policy).unwrap(),
+        RationalBezierIntersectionContacts2::NoIntersection
+    );
+}
+
+#[test]
+fn direct_disjoint_conic_cubic_reports_no_candidates_or_contacts() {
+    let policy = CurveContext::STRICT;
+    let conic =
+        RationalBezier2::try_new(vec![p(1, 0), p(1, 1), p(0, 1)], vec![r(1), r(1), r(2)]).unwrap();
+    let disjoint_cubic =
+        RationalBezier2::try_new(vec![p(10, 0), p(11, 1), p(11, 2), p(10, 3)], vec![r(1); 4])
+            .unwrap();
+
+    assert_eq!(
+        conic
+            .intersection_candidates(&disjoint_cubic, &policy)
+            .unwrap(),
+        RationalBezierIntersectionCandidates2::NoIntersection
+    );
+    assert_eq!(
+        conic
+            .intersection_contacts(&disjoint_cubic, &policy)
+            .unwrap(),
+        RationalBezierIntersectionContacts2::NoIntersection
+    );
+}
+
+#[test]
+fn implicit_conic_route_replays_degree_elevated_line_contact_in_both_orders() {
+    let policy = CurveContext::STRICT;
+    let conic =
+        RationalBezier2::try_new(vec![p(1, 0), p(1, 1), p(0, 1)], vec![r(1), r(1), r(2)]).unwrap();
+    let cubic_line = RationalBezier2::try_new(
+        vec![
+            Point2::new(q(3, 5), r(-1)),
+            Point2::new(q(3, 5), r(0)),
+            Point2::new(q(3, 5), r(1)),
+            Point2::new(q(3, 5), r(2)),
+        ],
+        vec![r(1); 4],
+    )
+    .unwrap();
+
+    let RationalBezierIntersectionContacts2::Contacts(contacts) =
+        conic.intersection_contacts(&cubic_line, &policy).unwrap()
+    else {
+        panic!("implicit conic route did not retain its exact contact");
+    };
+    assert_eq!(contacts.len(), 1);
+    assert!(contacts[0].is_certified_transverse());
+    assert_eq!(contacts[0].first_parameter().as_exact(), Some(&q(1, 2)));
+    assert_eq!(contacts[0].second_parameter().as_exact(), Some(&q(3, 5)));
+    assert!(matches!(
+        contacts[0].point(),
+        RationalBezierIntersectionPointEvidence2::Exact(point)
+            if point == &Point2::new(q(3, 5), q(4, 5))
+    ));
+
+    let RationalBezierIntersectionContacts2::Contacts(reversed) =
+        cubic_line.intersection_contacts(&conic, &policy).unwrap()
+    else {
+        panic!("reversed implicit conic route did not retain its exact contact");
+    };
+    assert_eq!(reversed.len(), 1);
+    assert!(reversed[0].is_certified_transverse());
+    assert_eq!(
+        reversed[0].first_parameter(),
+        contacts[0].second_parameter()
+    );
+    assert_eq!(
+        reversed[0].second_parameter(),
+        contacts[0].first_parameter()
+    );
+}
+
+#[test]
+fn pi_weight_conic_replays_degree_elevated_horizontal_contact() {
+    let policy = CurveContext::STRICT;
+    let conic = RationalBezier2::try_new(
+        vec![p(0, 0), Point2::new(q(1, 2), r(0)), p(1, 1)],
+        vec![Real::one(), Real::pi(), Real::one()],
+    )
+    .unwrap();
+    let cubic_line = RationalBezier2::try_new(
+        vec![
+            Point2::new(r(0), q(1, 2)),
+            Point2::new(q(1, 3), q(1, 2)),
+            Point2::new(q(2, 3), q(1, 2)),
+            Point2::new(r(1), q(1, 2)),
+        ],
+        vec![Real::one(); 4],
+    )
+    .unwrap();
+
+    let contacts = conic
+        .intersection_contacts(&cubic_line, &policy)
+        .expect("pi-weight conic contact should remain exact");
+
+    let RationalBezierIntersectionContacts2::Contacts(contacts) = &contacts else {
+        panic!("pi-weight conic contact did not retain its isolated evidence");
+    };
+    assert_eq!(contacts.len(), 1);
+    let RationalBezierIntersectionPointEvidence2::Algebraic(point) = contacts[0].point() else {
+        panic!("pi-weight conic contact did not retain its exact selected-root expression");
+    };
+    assert!(matches!(
+        point.status(),
+        BezierAlgebraicImageStatus::Transformed
+            | BezierAlgebraicImageStatus::RetainedRationalExpression
+    ));
+
+    let reversed = cubic_line
+        .intersection_contacts(&conic, &policy)
+        .expect("reversed pi-weight conic contact should remain exact");
+    assert!(matches!(
+        reversed,
+        RationalBezierIntersectionContacts2::Contacts(ref contacts) if contacts.len() == 1
+    ));
+
+    let candidates = conic
+        .intersection_candidates(&cubic_line, &policy)
+        .expect("pi-weight conic candidates should remain exact");
+    assert!(!matches!(
+        candidates,
+        RationalBezierIntersectionCandidates2::NoIntersection
+    ));
+
+    let topology = conic
+        .intersection_topology(&cubic_line, &policy)
+        .expect("pi-weight conic topology should remain exact");
+    assert_eq!(topology.contacts().len(), 1);
+    assert_eq!(topology.arrangement_graph().unwrap().fragments().len(), 4);
+
+    let approximate = conic
+        .intersection_topology(&cubic_line, &CurveContext::APPROXIMATE_512)
+        .expect("approximate policy must retain the same exact pi-weight topology");
+    assert_eq!(approximate.contacts().len(), 1);
+    assert_eq!(
+        approximate.arrangement_graph().unwrap().fragments().len(),
+        4
+    );
+    assert_eq!(
+        approximate.contacts()[0]
+            .first_parameter()
+            .cmp_by_refinement(
+                topology.contacts()[0].first_parameter(),
+                &CurveContext::APPROXIMATE_512,
+            )
+            .unwrap(),
+        Classification::Decided(std::cmp::Ordering::Equal)
+    );
+    assert_eq!(
+        approximate.contacts()[0]
+            .second_parameter()
+            .cmp_by_refinement(
+                topology.contacts()[0].second_parameter(),
+                &CurveContext::APPROXIMATE_512,
+            )
+            .unwrap(),
+        Classification::Decided(std::cmp::Ordering::Equal)
+    );
+}
+
+#[test]
+fn implicit_conic_route_retains_an_interior_rational_quadratic_cubic_contact() {
+    let policy = CurveContext::STRICT;
+    let conic = RationalBezier2::try_new(vec![p(5, 6), p(14, 5), p(23, 6)], vec![r(1), r(2), r(1)])
+        .unwrap();
+    let cubic = RationalBezier2::try_new(
+        vec![
+            p(28, 4),
+            Point2::new(q(61, 3), r(8)),
+            Point2::new(q(38, 3), r(8)),
+            p(5, 4),
+        ],
+        vec![r(1); 4],
+    )
+    .unwrap();
+
+    let result = conic.intersection_contacts(&cubic, &policy).unwrap();
+    let RationalBezierIntersectionContacts2::Contacts(contacts) = &result else {
+        let candidates = conic.intersection_candidates(&cubic, &policy).unwrap();
+        panic!(
+            "implicit conic route discarded its interior contact: {result:#?}; candidates: {candidates:#?}"
+        );
+    };
+    assert_eq!(contacts.len(), 1);
+}
+
+#[test]
+fn resultant_replay_retains_an_interior_nonuniform_rational_cubic_contact() {
+    let policy = CurveContext::STRICT;
+    let first = RationalBezier2::try_new(
+        vec![p(5, 6), p(11, 5), p(17, 5), p(23, 6)],
+        vec![r(1), r(2), r(2), r(1)],
+    )
+    .unwrap();
+    let second = RationalBezier2::try_new(
+        vec![
+            p(28, 4),
+            Point2::new(q(61, 3), r(8)),
+            Point2::new(q(38, 3), r(8)),
+            p(5, 4),
+        ],
+        vec![r(1), r(4), r(4), r(1)],
+    )
+    .unwrap();
+
+    let result = first.intersection_contacts(&second, &policy).unwrap();
+    let RationalBezierIntersectionContacts2::Contacts(contacts) = &result else {
+        panic!("resultant replay discarded its interior contact: {result:#?}");
+    };
+    assert_eq!(contacts.len(), 1);
+}
+
+#[test]
+fn polynomial_graph_replay_accepts_unequal_resultant_projection_counts() {
+    let policy = CurveContext::STRICT;
+    let first = RationalBezier2::try_new(
+        vec![p(5, 6), p(11, 5), p(17, 5), p(23, 6)],
+        vec![r(1), r(2), r(2), r(1)],
+    )
+    .unwrap();
+    let second = RationalBezier2::try_new(
+        vec![
+            p(28, 4),
+            Point2::new(q(61, 3), r(8)),
+            Point2::new(q(38, 3), r(8)),
+            p(5, 4),
+        ],
+        vec![r(1); 4],
+    )
+    .unwrap();
+
+    let result = first.intersection_contacts(&second, &policy).unwrap();
+    let RationalBezierIntersectionContacts2::Contacts(contacts) = &result else {
+        panic!("polynomial-graph replay discarded its interior contact: {result:#?}");
+    };
+    assert_eq!(contacts.len(), 1);
+}
+
+#[test]
+fn implicit_conic_route_does_not_certify_a_tangent_root_as_transverse() {
+    let policy = CurveContext::STRICT;
+    let conic =
+        RationalBezier2::try_new(vec![p(1, 0), p(1, 1), p(0, 1)], vec![r(1), r(1), r(2)]).unwrap();
+    let tangent_line =
+        RationalBezier2::try_new(vec![p(1, -1), p(1, 0), p(1, 1), p(1, 2)], vec![r(1); 4]).unwrap();
+
+    let RationalBezierIntersectionContacts2::Contacts(contacts) =
+        conic.intersection_contacts(&tangent_line, &policy).unwrap()
+    else {
+        panic!("implicit conic route did not retain its tangent contact");
+    };
+    assert_eq!(contacts.len(), 1);
+    assert!(!contacts[0].is_certified_transverse());
+}
+
+#[test]
+fn shared_cancellation_resolves_disjoint_rational_contact_blocker() {
+    let first = RationalBezier2::try_new(vec![p(0, 0), p(1, 1)], vec![unresolved_positive(), r(1)])
+        .unwrap();
+    let second = RationalBezier2::try_new(vec![p(3, 0), p(4, 1)], vec![r(1), r(1)]).unwrap();
+
+    assert!(matches!(
+        first
+            .intersection_contacts(&second, &CurveContext::STRICT)
+            .unwrap(),
+        RationalBezierIntersectionContacts2::NoIntersection
+    ));
+}
+
+#[test]
+fn rational_resultant_certifies_disjoint_and_represented_crossing_parameters() {
+    let policy = CurveContext::STRICT;
+    let rising = RationalBezier2::try_new(vec![p(0, 0), p(1, 1)], vec![r(1), r(1)]).unwrap();
+    let falling = RationalBezier2::try_new(vec![p(0, 1), p(1, 0)], vec![r(1), r(1)]).unwrap();
+    let crossing = rising.intersection_candidates(&falling, &policy).unwrap();
+    let RationalBezierIntersectionCandidates2::Candidates {
+        first_parameters,
+        second_parameters,
+    } = crossing
+    else {
+        panic!("crossing lines did not retain resultant candidates");
+    };
+    assert_eq!(first_parameters, vec![BezierParameter2::Exact(q(1, 2))]);
+    assert_eq!(second_parameters, vec![BezierParameter2::Exact(q(1, 2))]);
+    let contacts = rising.intersection_contacts(&falling, &policy).unwrap();
+    let RationalBezierIntersectionContacts2::Contacts(contacts) = contacts else {
+        panic!("represented crossing candidates did not replay");
+    };
+    assert_eq!(contacts.len(), 1);
+    assert!(matches!(
+        contacts[0].point(),
+        RationalBezierIntersectionPointEvidence2::Exact(point)
+            if point == &Point2::new(q(1, 2), q(1, 2))
+    ));
+    let above = RationalBezier2::try_new(vec![p(0, 2), p(1, 2)], vec![r(1), r(1)]).unwrap();
+    assert_eq!(
+        rising.intersection_candidates(&above, &policy).unwrap(),
+        RationalBezierIntersectionCandidates2::NoIntersection
+    );
+}
+
+#[test]
+fn rational_resultant_retains_algebraic_parameter_projections() {
+    let policy = CurveContext::STRICT;
+    let parabola = RationalBezier2::try_new(
+        vec![Point2::new(r(0), r(0)), Point2::new(q(1, 2), r(0)), p(1, 1)],
+        vec![r(1), r(1), r(1)],
+    )
+    .unwrap();
+    let horizontal = RationalBezier2::try_new(
+        vec![Point2::new(r(0), q(1, 2)), Point2::new(r(1), q(1, 2))],
+        vec![r(1), r(1)],
+    )
+    .unwrap();
+    let candidates = parabola
+        .intersection_candidates(&horizontal, &policy)
+        .unwrap();
+    let RationalBezierIntersectionCandidates2::Candidates {
+        first_parameters,
+        second_parameters,
+    } = candidates
+    else {
+        panic!("parabola crossing did not retain resultant candidates");
+    };
+    assert!(matches!(
+        first_parameters.as_slice(),
+        [BezierParameter2::Algebraic(_)]
+    ));
+    assert!(matches!(
+        second_parameters.as_slice(),
+        [BezierParameter2::Algebraic(_)]
+    ));
+    let BezierParameter2::Algebraic(first_parameter) = &first_parameters[0] else {
+        unreachable!("asserted algebraic parameter")
+    };
+    let image = parabola
+        .point_at_algebraic_parameter(first_parameter, &policy)
+        .unwrap();
+    assert_eq!(
+        image.status(),
+        BezierAlgebraicImageStatus::Transformed,
+        "{image:?}"
+    );
+    assert!(
+        image
+            .x()
+            .and_then(|coordinate| coordinate.representation())
+            .is_some()
+    );
+    assert!(
+        image
+            .y()
+            .and_then(|coordinate| coordinate.representation())
+            .is_some()
+    );
+    let derivatives = parabola
+        .derivatives_at_algebraic_parameter(first_parameter, 3, &policy)
+        .unwrap();
+    assert_eq!(derivatives.len(), 3);
+    assert!(
+        derivatives
+            .iter()
+            .all(|derivative| derivative.status() == BezierAlgebraicImageStatus::Transformed)
+    );
+    let represented_coordinate = |order: usize, x_axis: bool| {
+        let coordinate = if x_axis {
+            derivatives[order - 1].dx()
+        } else {
+            derivatives[order - 1].dy()
+        };
+        coordinate
+            .and_then(|coordinate| coordinate.representation())
+            .and_then(|coordinate| coordinate.exact_rational_witness())
+            .cloned()
+    };
+    assert_eq!(represented_coordinate(2, true), Some(r(0)));
+    assert_eq!(represented_coordinate(2, false), Some(r(2)));
+    assert_eq!(represented_coordinate(3, true), Some(r(0)));
+    assert_eq!(represented_coordinate(3, false), Some(r(0)));
+    let contacts = parabola
+        .intersection_contacts(&horizontal, &policy)
+        .unwrap();
+    let RationalBezierIntersectionContacts2::Contacts(contacts) = contacts else {
+        panic!("algebraic resultant candidates did not replay completely");
+    };
+    assert_eq!(contacts.len(), 1);
+    assert!(contacts[0].first_parameter().as_exact().is_none());
+    assert!(contacts[0].second_parameter().as_exact().is_none());
+    assert!(matches!(
+        contacts[0].point(),
+        RationalBezierIntersectionPointEvidence2::Algebraic(_)
+    ));
+
+    let topology = parabola
+        .intersection_topology(&horizontal, &policy)
+        .unwrap();
+    assert_eq!(topology.contacts().len(), 1);
+    assert_eq!(topology.first().fragments().len(), 2);
+    assert_eq!(topology.second().fragments().len(), 2);
+    assert!(
+        topology
+            .first()
+            .fragments()
+            .iter()
+            .chain(topology.second().fragments())
+            .all(|fragment| matches!(
+                fragment,
+                BezierSplitFragment2::AlgebraicEndpointImages { .. }
+            ))
+    );
+    assert_eq!(topology.arrangement_graph_view().unwrap().len(), 4);
+    assert_eq!(topology.arrangement_graph_view().unwrap().len(), 4);
+    assert_eq!(topology.arrangement_graph().unwrap().len(), 4);
+
+    let split = decided(
+        parabola
+            .split_at_parameters(&first_parameters, &policy)
+            .unwrap(),
+    );
+    assert_eq!(split.fragments().len(), 2);
+    assert!(split.fragments().iter().all(|fragment| matches!(
+        fragment,
+        BezierSplitFragment2::AlgebraicEndpointImages {
+            start_image,
+            end_image,
+            ..
+        } if start_image.as_ref().is_none_or(|image| image.is_exact())
+            && end_image.as_ref().is_none_or(|image| image.is_exact())
+    )));
+    for image in split
+        .fragments()
+        .iter()
+        .flat_map(|fragment| match fragment {
+            BezierSplitFragment2::AlgebraicEndpointImages {
+                start_image,
+                end_image,
+                ..
+            } => [start_image.as_ref(), end_image.as_ref()],
+            _ => [None, None],
+        })
+    {
+        let Some(image) = image else { continue };
+        assert!(image.second_derivative().is_some());
+        assert!(image.third_derivative().is_some());
+    }
+}
+
+#[test]
+fn rational_contacts_replay_represented_resultant_candidates() {
+    let policy = CurveContext::STRICT;
+    let parabola = RationalBezier2::try_new(
+        vec![Point2::new(r(0), r(0)), Point2::new(q(1, 2), r(0)), p(1, 1)],
+        vec![r(1), r(1), r(1)],
+    )
+    .unwrap();
+    let horizontal = RationalBezier2::try_new(
+        vec![Point2::new(r(0), q(1, 4)), Point2::new(r(1), q(1, 4))],
+        vec![r(1), r(1)],
+    )
+    .unwrap();
+    let contacts = parabola
+        .intersection_contacts(&horizontal, &policy)
+        .unwrap();
+    let RationalBezierIntersectionContacts2::Contacts(contacts) = contacts else {
+        panic!("represented resultant candidates were not replayed");
+    };
+    assert_eq!(contacts.len(), 1);
+    assert!(matches!(
+        contacts[0].point(),
+        RationalBezierIntersectionPointEvidence2::Exact(point)
+            if point == &Point2::new(q(1, 2), q(1, 4))
+    ));
+}
+
+#[test]
+fn rational_resultant_replays_identical_and_reversed_full_image_overlap() {
+    let policy = CurveContext::STRICT;
+    let curve = curve();
+    assert_eq!(
+        curve
+            .intersection_candidates(&curve.clone(), &policy)
+            .unwrap(),
+        RationalBezierIntersectionCandidates2::DegenerateResultant
+    );
+    let RationalBezierIntersectionContacts2::Overlap(overlap) = curve
+        .intersection_contacts(&curve.clone(), &policy)
+        .unwrap()
+    else {
+        panic!("identical curve did not retain certified overlap");
+    };
+    assert_eq!(
+        overlap.orientation(),
+        RationalBezierOverlapOrientation2::Same
+    );
+    assert_eq!(
+        overlap.first_range(),
+        &ParamRange::new(Real::zero(), Real::one())
+    );
+    assert_eq!(
+        overlap.second_range(),
+        &ParamRange::new(Real::zero(), Real::one())
+    );
+    let RationalBezierIntersectionContacts2::Overlap(overlap) = curve
+        .intersection_contacts(&curve.reversed(), &policy)
+        .unwrap()
+    else {
+        panic!("reversed curve did not retain certified overlap");
+    };
+    assert_eq!(
+        overlap.orientation(),
+        RationalBezierOverlapOrientation2::Reversed
+    );
+    assert_eq!(
+        overlap.second_range(),
+        &ParamRange::new(Real::one(), Real::zero())
+    );
+    let error = curve
+        .intersection_topology(&curve.clone(), &policy)
+        .unwrap_err();
+    assert_eq!(error.operation(), hypercurve::CurveOperation2::Arrangement);
+    assert_eq!(error.family(), CurveFamily2::RationalBezier);
+}
+
+#[test]
+fn projectively_reparameterized_rational_quadratic_certifies_shared_conic() {
+    let weight = (r(2).sqrt().unwrap() / r(2)).unwrap();
+    let first = RationalBezier2::try_new(
+        vec![p(1, 0), p(1, 1), p(0, 1)],
+        vec![r(1), weight.clone(), r(1)],
+    )
+    .unwrap();
+    let second = RationalBezier2::try_new(
+        vec![p(1, 0), p(1, 1), p(0, 1)],
+        vec![r(1), r(2) * weight, r(4)],
+    )
+    .unwrap();
+    let contacts = first
+        .intersection_contacts(&second, &CurveContext::STRICT)
+        .unwrap();
+    let RationalBezierIntersectionContacts2::Overlap(overlap) = contacts else {
+        panic!("projectively reparameterized conic remained unresolved: {contacts:?}");
+    };
+    assert_eq!(
+        overlap.first_range().exact_endpoints(),
+        Some((&Real::zero(), &Real::one()))
+    );
+    assert_eq!(
+        overlap.second_range().exact_endpoints(),
+        Some((&Real::zero(), &Real::one()))
+    );
+    assert_eq!(
+        overlap.orientation(),
+        RationalBezierOverlapOrientation2::Same
+    );
+
+    let RationalBezierIntersectionContacts2::Overlap(reversed) = first
+        .intersection_contacts(&second.reversed(), &CurveContext::STRICT)
+        .unwrap()
+    else {
+        panic!("reversed projective conic did not retain overlap");
+    };
+    assert_eq!(
+        reversed.orientation(),
+        RationalBezierOverlapOrientation2::Reversed
+    );
+    assert_eq!(
+        reversed.second_range().exact_endpoints(),
+        Some((&Real::one(), &Real::zero()))
+    );
+}
+
+#[test]
+fn independently_trimmed_projective_conics_retain_partial_overlap() {
+    let policy = CurveContext::STRICT;
+    let weight = (r(2).sqrt().unwrap() / r(2)).unwrap();
+    let controls = vec![p(1, 0), p(1, 1), p(0, 1)];
+    let first =
+        RationalBezier2::try_new(controls.clone(), vec![r(1), weight.clone(), r(1)]).unwrap();
+    let second = RationalBezier2::try_new(controls, vec![r(1), r(2) * weight, r(4)]).unwrap();
+    let first = decided(
+        first
+            .subcurve_between_exact(&Real::zero(), &q(3, 4), &policy)
+            .unwrap(),
+    );
+    let second = decided(
+        second
+            .subcurve_between_exact(&q(1, 4), &Real::one(), &policy)
+            .unwrap(),
+    );
+
+    let RationalBezierIntersectionContacts2::Overlap(overlap) =
+        first.intersection_contacts(&second, &policy).unwrap()
+    else {
+        panic!("independently trimmed projective conics did not retain overlap");
+    };
+    let (first_start, first_end) = overlap.first_range().exact_endpoints().unwrap();
+    assert!(matches!(
+        BezierParameter2::Exact(first_start.clone())
+            .cmp_by_interval(&BezierParameter2::Exact(Real::zero()), &policy)
+            .unwrap(),
+        Classification::Decided(std::cmp::Ordering::Greater)
+    ));
+    assert_eq!(first_end, &Real::one());
+    let (second_start, second_end) = overlap.second_range().exact_endpoints().unwrap();
+    assert_eq!(second_start, &Real::zero());
+    assert!(matches!(
+        BezierParameter2::Exact(second_end.clone())
+            .cmp_by_interval(&BezierParameter2::Exact(Real::one()), &policy)
+            .unwrap(),
+        Classification::Decided(std::cmp::Ordering::Less)
+    ));
+    assert_eq!(
+        overlap.orientation(),
+        RationalBezierOverlapOrientation2::Same
+    );
+}
+
+#[test]
+fn rational_resultant_certifies_exact_partial_nonlinear_overlap_ranges() {
+    let policy = CurveContext::STRICT;
+    let source = curve();
+    let first = decided(
+        source
+            .subcurve_between_exact(&Real::zero(), &q(3, 4), &policy)
+            .unwrap(),
+    );
+    let second = decided(
+        source
+            .subcurve_between_exact(&q(3, 8), &q(7, 8), &policy)
+            .unwrap(),
+    );
+    assert_eq!(
+        first.point_incidence(second.start(), &policy).unwrap(),
+        RationalBezierPointIncidence2::Parameters(vec![BezierParameter2::Exact(q(1, 2))])
+    );
+    assert_eq!(
+        second.point_incidence(first.end(), &policy).unwrap(),
+        RationalBezierPointIncidence2::Parameters(vec![BezierParameter2::Exact(q(3, 4))])
+    );
+    let first_overlap = decided(
+        first
+            .subcurve_between_exact(&q(1, 2), &Real::one(), &policy)
+            .unwrap(),
+    );
+    let second_overlap = decided(
+        second
+            .subcurve_between_exact(&Real::zero(), &q(3, 4), &policy)
+            .unwrap(),
+    );
+    assert!(matches!(
+        first_overlap
+            .intersection_contacts(&second_overlap, &policy)
+            .unwrap(),
+        RationalBezierIntersectionContacts2::Overlap(_)
+    ));
+
+    let contacts = first.intersection_contacts(&second, &policy).unwrap();
+    let RationalBezierIntersectionContacts2::Overlap(overlap) = contacts else {
+        panic!("partial nonlinear shared image did not retain certified overlap: {contacts:?}");
+    };
+    assert_eq!(
+        overlap.orientation(),
+        RationalBezierOverlapOrientation2::Same
+    );
+    assert_eq!(
+        overlap.first_range(),
+        &ParamRange::new(q(1, 2), Real::one())
+    );
+    assert_eq!(
+        overlap.second_range(),
+        &ParamRange::new(Real::zero(), q(3, 4))
+    );
+
+    let reversed = second.reversed();
+    let RationalBezierIntersectionContacts2::Overlap(overlap) =
+        first.intersection_contacts(&reversed, &policy).unwrap()
+    else {
+        panic!("reversed partial nonlinear shared image did not retain certified overlap");
+    };
+    assert_eq!(
+        overlap.orientation(),
+        RationalBezierOverlapOrientation2::Reversed
+    );
+    assert_eq!(
+        overlap.first_range(),
+        &ParamRange::new(q(1, 2), Real::one())
+    );
+    assert_eq!(
+        overlap.second_range(),
+        &ParamRange::new(Real::one(), q(1, 4))
+    );
+}
+#[test]
+fn independently_constructed_partial_overlap_reconstructs_rational_endpoints() {
+    let policy = CurveContext::STRICT;
+    let source = curve();
+    let source_first = decided(
+        source
+            .subcurve_between_exact(&Real::zero(), &q(3, 4), &policy)
+            .unwrap(),
+    );
+    let source_second = decided(
+        source
+            .subcurve_between_exact(&q(1, 4), &Real::one(), &policy)
+            .unwrap(),
+    );
+    let first = RationalBezier2::try_new(
+        source_first.control_points().to_vec(),
+        source_first.weights().to_vec(),
+    )
+    .unwrap();
+    let second = RationalBezier2::try_new(
+        source_second.control_points().to_vec(),
+        source_second.weights().to_vec(),
+    )
+    .unwrap();
+
+    let RationalBezierIntersectionContacts2::Overlap(overlap) =
+        first.intersection_contacts(&second, &policy).unwrap()
+    else {
+        panic!("independently reconstructed shared image did not certify overlap");
+    };
+    assert_eq!(
+        overlap.first_range(),
+        &ParamRange::new(q(1, 3), Real::one())
+    );
+    assert_eq!(
+        overlap.second_range(),
+        &ParamRange::new(Real::zero(), q(2, 3))
+    );
+}
+
+#[test]
+fn line_image_overlap_retains_irrational_algebraic_parameter_boundary() {
+    let policy = CurveContext::STRICT;
+    let quadratic_parameterization = RationalBezier2::try_new(
+        vec![p(0, 0), Point2::new(q(1, 4), r(0)), p(1, 0)],
+        vec![r(1), r(1), r(1)],
+    )
+    .unwrap();
+    let partial_line =
+        RationalBezier2::try_new(vec![Point2::new(q(1, 2), r(0)), p(1, 0)], vec![r(1), r(1)])
+            .unwrap();
+
+    let RationalBezierIntersectionContacts2::Overlap(overlap) = quadratic_parameterization
+        .intersection_contacts(&partial_line, &policy)
+        .unwrap()
+    else {
+        panic!("certified line images did not retain their algebraic overlap range");
+    };
+    assert!(matches!(
+        overlap.first_range().start(),
+        BezierParameter2::Algebraic(_)
+    ));
+    assert_eq!(overlap.first_range().end().as_exact(), Some(&Real::one()));
+    assert_eq!(
+        overlap.second_range().exact_endpoints(),
+        Some((&Real::zero(), &Real::one()))
+    );
+    assert_eq!(
+        overlap.orientation(),
+        RationalBezierOverlapOrientation2::Same
+    );
+}
+
+#[test]
+fn line_image_overlap_accepts_monotone_parameterization_with_stationary_point() {
+    let policy = CurveContext::STRICT;
+    let stationary_monotone =
+        RationalBezier2::try_new(vec![p(0, 0), p(1, 0), p(0, 0), p(1, 0)], vec![r(1); 4]).unwrap();
+    let upper_half =
+        RationalBezier2::try_new(vec![Point2::new(q(1, 2), r(0)), p(1, 0)], vec![r(1), r(1)])
+            .unwrap();
+
+    let RationalBezierIntersectionContacts2::Overlap(overlap) = stationary_monotone
+        .intersection_contacts(&upper_half, &policy)
+        .unwrap()
+    else {
+        panic!("stationary monotone line image did not retain its overlap");
+    };
+    assert_eq!(
+        overlap.first_range().exact_endpoints(),
+        Some((&q(1, 2), &Real::one()))
+    );
+    assert_eq!(
+        overlap.second_range().exact_endpoints(),
+        Some((&Real::zero(), &Real::one()))
+    );
+    assert_eq!(
+        overlap.orientation(),
+        RationalBezierOverlapOrientation2::Same
+    );
+}
+
+#[test]
+fn polynomial_graph_overlap_retains_irrational_curved_boundary() {
+    let policy = CurveContext::STRICT;
+    let partial_parabola = RationalBezier2::try_new(
+        vec![
+            Point2::new(q(1, 2), q(1, 4)),
+            Point2::new(q(3, 4), q(1, 2)),
+            p(1, 1),
+        ],
+        vec![r(1), r(1), r(1)],
+    )
+    .unwrap();
+    let nonlinear_parameterization = RationalBezier2::try_new(
+        vec![
+            p(0, 0),
+            Point2::new(q(1, 8), r(0)),
+            Point2::new(q(1, 3), q(1, 24)),
+            Point2::new(q(5, 8), q(1, 4)),
+            p(1, 1),
+        ],
+        vec![r(1); 5],
+    )
+    .unwrap();
+
+    assert_eq!(
+        partial_parabola
+            .intersection_candidates(&nonlinear_parameterization, &policy)
+            .unwrap(),
+        RationalBezierIntersectionCandidates2::DegenerateResultant
+    );
+    let RationalBezierIntersectionContacts2::Overlap(overlap) = partial_parabola
+        .intersection_contacts(&nonlinear_parameterization, &policy)
+        .unwrap()
+    else {
+        panic!("certified polynomial graph did not retain its curved overlap");
+    };
+    assert_eq!(
+        overlap.first_range().exact_endpoints(),
+        Some((&Real::zero(), &Real::one()))
+    );
+    assert!(matches!(
+        overlap.second_range().start(),
+        BezierParameter2::Algebraic(_)
+    ));
+    assert_eq!(overlap.second_range().end().as_exact(), Some(&Real::one()));
+    assert_eq!(
+        overlap.orientation(),
+        RationalBezierOverlapOrientation2::Same
+    );
+}
+
+#[test]
+fn rational_bezier_degree_elevation_preserves_exact_parameterized_image_and_lineage() {
+    let curve = curve();
+    let clone = curve.clone();
+
+    let elevated = curve.elevated_to_degree(5).unwrap();
+    assert_eq!(elevated.degree(), 5);
+    assert_eq!(
+        elevated.weights(),
+        &[r(1), q(8, 5), q(11, 5), q(14, 5), q(17, 5), r(4)]
+    );
+    for parameter in [r(0), q(1, 4), q(1, 2), q(3, 4), r(1)] {
+        assert_eq!(
+            elevated.point_at(&parameter, &CurveContext::STRICT),
+            curve.point_at(&parameter, &CurveContext::STRICT)
+        );
+    }
+    assert_eq!(clone.elevated_to_degree(5).unwrap(), elevated);
+    assert_eq!(
+        elevated.source_parameter_range(),
+        curve.source_parameter_range()
+    );
+}
+
+#[test]
+fn rational_bezier_degree_elevation_evidence_invalid_target_and_zero_projective_weight() {
+    let curve = curve();
+    let invalid = curve.elevated_to_degree(2).unwrap_err();
+    assert_eq!(invalid.operation(), CurveOperation2::DegreeElevation);
+    assert_eq!(invalid.family(), CurveFamily2::RationalBezier);
+
+    let singular = RationalBezier2::try_new(vec![p(0, 0), p(2, 0)], vec![r(1), r(-1)]).unwrap();
+    let first = singular.elevated_to_degree(2);
+    assert!(matches!(
+        &first,
+        Err(ExactCurveError::Blocked(blocker))
+            if blocker.operation() == CurveOperation2::DegreeElevation
+                && blocker.family() == CurveFamily2::RationalBezier
+    ));
+    assert_eq!(singular.elevated_to_degree(2), first);
+}

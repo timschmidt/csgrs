@@ -1,0 +1,23 @@
+Retain exact constrained fillets on coincident circular supports
+
+Require a center or contact when coincident circular offsets leave a
+nonzero fillet family. Replay center, point and authored-parameter
+constraints through the common cut and reconstruction authority.
+Classify actual surviving rational intervals, including full/major native
+sweeps, signed-radius sheets and isolated source-chart endpoints.
+
+Preserve the opposed-tangent proof instead of reconstructing a semicircle
+through general incidence. Extend the shared concentric-normal constructor
+to arbitrary retained centers using the existing chord-normal frame.
+Carry each solved fragment index with its authored domain so reconstruction
+cannot evaluate a circular contact on a neighboring NURBS line span.
+
+Cover both policies, reversal, trim/extension, retained centers and contacts,
+irrational interval bounds, exact contact positions, independent-region
+Boolean equality and re-offset. No new public type or compatibility layer.
+
+Validation: 234 selected release tests and six checks for the shared fixes;
+after the final surviving-domain correction, 86 affected tests and all six
+checks pass again (Clippy both feature modes, formatting, editing fuzz,
+denied-warning docs and Hyperbrep). The two previously recorded full
+extended-fillet re-offset performance failures remain unresolved.

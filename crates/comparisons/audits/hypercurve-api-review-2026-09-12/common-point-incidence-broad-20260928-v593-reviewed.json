@@ -1,0 +1,19 @@
+{
+  "qualification": "common-point-incidence-broad-20260928-v593-terminal.json",
+  "source_manifest": "common-point-incidence-broad-20260928-v593-sources.json",
+  "outer_session_reaped": 92455,
+  "validated_files": 2047,
+  "selected_geometry_tests": 489,
+  "checks": 6,
+  "repos": {
+    "hypercurve": {
+      "parent": "7386110870ec4bece15241887e098eff74f1b3c6",
+      "paths": {
+        "src/bezier_offset.rs": "cc2fbe4c176ddc78cd030fc72157af5d0dcc660c8fa0cd34fd540ab41c303628"
+      }
+    }
+  },
+  "scope": "One retained-field point enumerator serves generic algebraic images, generated points and winding membership; winding owns its ordered crossings; full goal remains active",
+  "performance_changes": [],
+  "workload_changes": []
+}

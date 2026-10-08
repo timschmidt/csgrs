@@ -1,0 +1,13 @@
+{
+  "tag": "zero-factor-degree-baseline-v70",
+  "started": "2026-09-11T19:07:40.878Z",
+  "finished": "2026-09-11T19:07:40.895Z",
+  "elapsedSeconds": 0.014123239999999995,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "/tmp/calcium-power-wide.ijyxgC/baseline",
+  "args": [
+    "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/zero-factor-degree-input-v70.json"
+  ],
+  "code": 0,
+  "signal": null
+}

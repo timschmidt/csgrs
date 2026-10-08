@@ -1,0 +1,23 @@
+{
+  "tag": "reuse-cost-build-first-touch-cpu-reuse",
+  "started": "2026-09-08T22:18:22.915Z",
+  "finished": "2026-09-08T22:18:23.387Z",
+  "elapsedSeconds": 0.46854201,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "env",
+  "args": [
+    "CARGO_TARGET_DIR=/tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse",
+    "CARGO_INCREMENTAL=0",
+    "CARGO_PROFILE_DEV_DEBUG=0",
+    "CARGO_BUILD_JOBS=2",
+    "cargo",
+    "build",
+    "--offline",
+    "--locked",
+    "--release",
+    "--manifest-path",
+    "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/reuse-first-touch-reuse/Cargo.toml"
+  ],
+  "code": 0,
+  "signal": null
+}

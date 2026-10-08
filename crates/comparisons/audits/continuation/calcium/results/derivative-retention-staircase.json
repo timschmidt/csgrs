@@ -1,0 +1,13 @@
+{
+  "tag": "derivative-retention-staircase",
+  "started": "2026-09-09T15:04:16.097Z",
+  "finished": "2026-09-09T15:05:23.922Z",
+  "elapsedSeconds": 67.813627827,
+  "cwd": "/home/tim/Documents/GitHub/workspace",
+  "command": "node",
+  "args": [
+    "exactcore-hyper-comparison/audits/continuation/calcium/run-derivative-retention.mjs"
+  ],
+  "code": 0,
+  "signal": null
+}

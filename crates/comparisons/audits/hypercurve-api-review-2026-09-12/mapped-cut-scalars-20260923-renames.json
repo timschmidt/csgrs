@@ -1,0 +1,18 @@
+{
+  "renames": {
+    "represented_rational_value": "scalar_value",
+    "rational_mapped_cusp_represented_rational": "rational_mapped_cusp_scalar_value",
+    "parallel_mapped_cusp_represented_rational": "parallel_mapped_cusp_scalar_value",
+    "mapped_cusp_represented_rational_from_incidence": "mapped_cusp_scalar_value_from_incidence",
+    "RepresentedRational": "ScalarValue",
+    "Approximate512Rational": "Approximate512ScalarValue"
+  },
+  "counts": {
+    "represented_rational_value": 36,
+    "rational_mapped_cusp_represented_rational": 2,
+    "parallel_mapped_cusp_represented_rational": 2,
+    "mapped_cusp_represented_rational_from_incidence": 3,
+    "RepresentedRational": 5,
+    "Approximate512Rational": 5
+  }
+}

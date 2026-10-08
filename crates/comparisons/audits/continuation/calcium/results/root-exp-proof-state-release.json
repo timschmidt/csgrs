@@ -1,0 +1,13 @@
+{
+  "tag": "root-exp-proof-state-release",
+  "started": "2026-09-08T13:09:38.007Z",
+  "finished": "2026-09-08T13:09:38.023Z",
+  "elapsedSeconds": 0.014012070000000008,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison",
+  "command": "/home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype/release/calcium-root-exp-proof-qualification",
+  "args": [
+    "state"
+  ],
+  "code": 0,
+  "signal": null
+}

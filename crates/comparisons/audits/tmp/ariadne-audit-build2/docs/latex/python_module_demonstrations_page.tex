@@ -1,0 +1,385 @@
+\doxysection{Python Module Demonstrations }
+\hypertarget{python_module_demonstrations_page}{}\label{python_module_demonstrations_page}\index{Python Module Demonstrations@{Python Module Demonstrations}}
+On this page, we illustrate how to use Ariadne via the Python interface. The focus is on the syntax used (which may be different from the C++ syntax) and not on how to use Ariadne to solve problems, for which examples can be found on the \doxysectlink{rigorous_numerics_tutorial_page}{Tutorial on Rigorous Numerics and Computable Analysis}{0} page and the \doxysectlink{python_module_tutorials_page}{Python Module Tutorials}{0} page.
+
+First, a brief overview of the numerical types and linear algebra operations are given in the \doxysectlink{python_module_demonstrations_page_python_numerical_demonstration}{Numerical Types}{1} and \doxysectlink{python_module_demonstrations_page_python_linear_algebra_demonstration}{Linear Algebra}{1} sections. A guide to the nonlinear functions available is given in \doxysectlink{python_module_demonstrations_page_python_function_demonstration}{Function Calculus}{1}, including a guide to the use of polynomial function calculus in \doxysectlink{python_module_demonstrations_page_python_taylor_function_calculus_demonstration}{Taylor Function Calculus}{2}. A guide to working with sets and geometry is given in \doxysectlink{python_module_demonstrations_page_python_geometry_demonstration}{Sets and Geometry}{1}. Solving algebraic and differential equations, and optimisation problems is handled in \doxysectlink{python_module_demonstrations_page_python_solvers_demonstration}{Solvers for Algebraic and Differential Equations}{1}.
+
+The full code of the demonstrations are given in the following files in the \doxylink{dir_eaddda9c7dcb7bbc500deddd3c210e00}{python/tutorials}/ directory\+: \doxylink{python_2tutorials_2numeric_demonstration_8py-example}{numeric\+\_\+demonstration.\+py}, \doxylink{python_2tutorials_2algebra_demonstration_8py-example}{algebra\+\_\+demonstration.\+py}, \doxylink{python_2tutorials_2function_demonstration_8py-example}{function\+\_\+demonstration.\+py}, \doxylink{python_2tutorials_2geometry_demonstration_8py-example}{geometry\+\_\+demonstration.\+py} and \doxylink{python_2tutorials_2solver_demonstration_8py-example}{solver\+\_\+demonstration.\+py}.
+
+Links are given to the main classes used in the demonstrations. The documentation for these classes is automatically generated from comments in the C++ code. To help Python users unfamiliar with C++ understand this documentation, a guide on the main differences between C++ and Python can be found on the \doxysectlink{python_interface_page}{Python Interface}{0} page.\hypertarget{python_module_demonstrations_page_python_introspection_demonstration}{}\doxysubsection{\texorpdfstring{The Ariadne module.}{The Ariadne module.}}\label{python_module_demonstrations_page_python_introspection_demonstration}
+First, import the Ariadne module. For ease-\/of-\/use, the {\ttfamily from} version of {\ttfamily import} is recommended\+: 
+\begin{DoxyCode}{0}
+\DoxyCodeLine{from\ pyariadne\ \textcolor{keyword}{import}\ *\ }
+
+\end{DoxyCode}
+ To see all the classes and functions available in Ariadne, type\+: 
+\begin{DoxyCode}{0}
+\DoxyCodeLine{print(dir(ariadne))\ }
+
+\end{DoxyCode}
+\hypertarget{python_module_demonstrations_page_python_numerical_demonstration}{}\doxysubsection{\texorpdfstring{Numerical Types}{Numerical Types}}\label{python_module_demonstrations_page_python_numerical_demonstration}
+
+
+The full code of this demonstration is given in the file \doxylink{python_2tutorials_2numeric_demonstration_8py-example}{python/tutorials/numeric\+\_\+demonstration.\+py}.
+
+Ariadne supports several basic numerical types, including core \doxylink{classAriadne_1_1Natural}{Natural}, \doxylink{classAriadne_1_1Integer}{Integer}, \doxylink{classAriadne_1_1Dyadic}{Dyadic}, \doxylink{classAriadne_1_1Decimal}{Decimal}, \doxylink{classAriadne_1_1Rational}{Rational} and \doxylink{classAriadne_1_1Real}{Real} classes, which store numbers exactly. These number types are good for problem specification, but may be inefficient for actual numerical computations.
+
+The \doxylink{classAriadne_1_1Integer}{Integer} class supports integers of arbitrary size. 
+\begin{DoxyCodeInclude}{0}
+\DoxyCodeLine{00000\ \ \ \ \ z=Integer(5)}
+
+\end{DoxyCodeInclude}
+ The \doxylink{classAriadne_1_1Dyadic}{Dyadic} class supports numbers of the form $p/2^q$ where $p$ and $q$ are integers; equivalently, numbers with a terminating binary expansion. These include all numbers of binary floating-\/point types and are useful as computational intermediates. 
+\begin{DoxyCodeInclude}{0}
+\DoxyCodeLine{00041\ \ \ \ \ w=Dyadic(z)}
+\DoxyCodeLine{00042\ \ \ \ \ w=Dyadic(5)}
+\DoxyCodeLine{00043\ \ \ \ \ w=Dyadic(11,3)\ \textcolor{comment}{\#\ Constructs\ the\ number\ 11/2\string^3=11/8}}
+\DoxyCodeLine{00044\ \ \ \ \ w=11/two**3\ \ \ \ \textcolor{comment}{\#\ Alternative\ syntax\ for\ 11/2\string^3}}
+
+\end{DoxyCodeInclude}
+ The \doxylink{classAriadne_1_1Decimal}{Decimal} class supports exact representation of decimal numbers. Numbers can be constructed from floating-\/point values up to around 9 decimal places; for more accuracy a string literal must be used\+: 
+\begin{DoxyCodeInclude}{0}
+\DoxyCodeLine{00045\ \ \ \ \ g=Decimal(w)}
+\DoxyCodeLine{00049\ \ \ \ \ g=Decimal(9.81)}
+\DoxyCodeLine{00050\ \ \ \ \ g=Decimal(\textcolor{stringliteral}{"{}9.81"{}})}
+
+\end{DoxyCodeInclude}
+ The \doxylink{classAriadne_1_1Rational}{Rational} class supports exact representation of rational numbers. 
+\begin{DoxyCodeInclude}{0}
+\DoxyCodeLine{00051\ \ \ \ \ q=Rational(w);}
+\DoxyCodeLine{00055\ \ \ \ \ q=Rational(5);}
+\DoxyCodeLine{00056\ \ \ \ \ q=Rational(11,8);}
+
+\end{DoxyCodeInclude}
+ The \doxylink{classAriadne_1_1Real}{Real} number class represents general real numbers 
+\begin{DoxyCodeInclude}{0}
+\DoxyCodeLine{00057\ \ \ \ \ r=Real(q)}
+
+\end{DoxyCodeInclude}
+ All numeric classes support standard arithmetical operators 
+\begin{DoxyCodeInclude}{0}
+\DoxyCodeLine{00061\ \ \ \ \ +r;\ -\/r;\ r+r;\ r-\/r;\ r*r;\ r/r}
+
+\end{DoxyCodeInclude}
+named versions of these arithmetical operations, 
+\begin{DoxyCodeInclude}{0}
+\DoxyCodeLine{00067\ \ \ \ \ pos(r);\ neg(r);\ \textcolor{comment}{\#\ add(r,r);\ sub(r,r);\ mul(r,r);\ div(r,r);}}
+
+\end{DoxyCodeInclude}
+and other arithmetical operations, including halving {\ttfamily hlf} and reciprocal {\ttfamily rec}. 
+\begin{DoxyCodeInclude}{0}
+\DoxyCodeLine{00069\ \ \ \ \ nul(r);\ sqr(r);\ hlf(r);\ rec(r);\ pow(r,-\/3)}
+
+\end{DoxyCodeInclude}
+elementary functions (root, exponential, logarithm and trigonometric) 
+\begin{DoxyCodeInclude}{0}
+\DoxyCodeLine{00071\ \ \ \ \ sqrt(r);\ exp(r);\ log(r);\ sin(r);\ cos(r);\ tan(r);\ atan(r)}
+
+\end{DoxyCodeInclude}
+lattice operations 
+\begin{DoxyCodeInclude}{0}
+\DoxyCodeLine{00073\ \ \ \ \ abs(r);\ max(r,r);\ min(r,r)}
+
+\end{DoxyCodeInclude}
+comparisons 
+\begin{DoxyCodeInclude}{0}
+\DoxyCodeLine{00075\ \ \ \ \ k=(r<=r)}
+
+\end{DoxyCodeInclude}
+and the distance function 
+\begin{DoxyCodeInclude}{0}
+\DoxyCodeLine{00077\ \ \ \ \ dist(r,r)}
+
+\end{DoxyCodeInclude}
+A full list of these operations is given in the list of supported operations.\hypertarget{python_module_demonstrations_page_python_floating_point}{}\doxysubsubsection{\texorpdfstring{Floating-\/point numbers}{Floating-\/point numbers}}\label{python_module_demonstrations_page_python_floating_point}
+Computations in Ariadne are usually most efficiently performed using floating-\/point number types. Ariadne internally supports the \doxylink{namespaceAriadne_af915b9f1459c9691328efa71c6f39c6e}{Float\+DP} and \doxylink{namespaceAriadne_a07966b67e613cc8779412beecb60651d}{Float\+MP} types, which are respectively based on builtin IEEE double-\/precision floating-\/point numbers, and multiple-\/precision floating-\/point numbers from the MPFR library.
+
+Since Python\textquotesingle{}s builtin {\ttfamily float} class uses rounded arithmetic, such numbers may not be an exact representation of a value, leading to unsafe computation. If a Python {\ttfamily float} is indeed an exact value, (e.\+g. 1.\+375 is an exact double-\/precision floating-\/point number), this must first be converted to an Ariadne \doxylink{classAriadne_1_1ExactDouble}{Exact\+Double} class\+: 
+\begin{DoxyCodeInclude}{0}
+\DoxyCodeLine{00079\ \ \ \ \ d=ExactDouble(1.375)}
+\DoxyCodeLine{00083\ \ \ \ \ d=cast\_exact(1.375)}
+
+\end{DoxyCodeInclude}
+Numbers which are not exactly representable in double-\/precision should be converted to the \doxylink{classAriadne_1_1Decimal}{Decimal} class instead.
+
+Ariadne uses C++/\+Python\textquotesingle{}s built-\/in floating-\/point types to provide a double-\/precision floating-\/point number class \doxylink{namespaceAriadne_af915b9f1459c9691328efa71c6f39c6e}{Float\+DP}, and the MPFR library to provide a multiple-\/precision floating-\/point type \doxylink{namespaceAriadne_a07966b67e613cc8779412beecb60651d}{Float\+MP}. Each type has a corresponding precision\+: 
+\begin{DoxyCodeInclude}{0}
+\DoxyCodeLine{00084\ \ \ \ \ dp=DoublePrecision()}
+\DoxyCodeLine{00101\ \ \ \ \ dp=double\_precision}
+\DoxyCodeLine{00102\ \ \ \ \ mp=MultiplePrecision(128)}
+
+\end{DoxyCodeInclude}
+Floating-\/point numbers can be constructed from integers and dyadic numbers by supplying the precision\+: 
+\begin{DoxyCodeInclude}{0}
+\DoxyCodeLine{00103\ \ \ \ \ xdp=FloatDP(exact(1.75),dp)}
+\DoxyCodeLine{00106\ \ \ \ \ xmp=FloatMP(exact(1.75),mp)}
+
+\end{DoxyCodeInclude}
+ Raw floating-\/point numbers only support rounded arithmetic, so are best avoided in user code. Instead, they can be used in safe correctly-\/rounded generic types Value\texorpdfstring{$<$}{<}F\texorpdfstring{$>$}{>}, \doxylink{classAriadne_1_1Ball}{Ball\texorpdfstring{$<$}{<}F,FE\texorpdfstring{$>$}{>}}, \doxylink{classAriadne_1_1Bounds}{Bounds\texorpdfstring{$<$}{<}F\texorpdfstring{$>$}{>}}, \doxylink{classAriadne_1_1UpperBound}{Upper\+Bound\texorpdfstring{$<$}{<}F\texorpdfstring{$>$}{>}}, \doxylink{classAriadne_1_1LowerBound}{Lower\+Bound\texorpdfstring{$<$}{<}F\texorpdfstring{$>$}{>}} and \doxylink{classAriadne_1_1Approximation}{Approximation\texorpdfstring{$<$}{<}F\texorpdfstring{$>$}{>}}. In Python, this template parameter is appended to the class name, so Float\+DPBounds is the Python name for \doxylink{classAriadne_1_1Bounds}{Bounds\texorpdfstring{$<$}{<}Float\+DP\texorpdfstring{$>$}{>}}, and Float\+MPBounds is the name for \doxylink{classAriadne_1_1Bounds}{Bounds\texorpdfstring{$<$}{<}Float\+MP\texorpdfstring{$>$}{>}}.
+
+For example, the \doxylink{classAriadne_1_1Bounds}{Bounds} classes support outward-\/rounded interval arithmetic 
+\begin{DoxyCodeInclude}{0}
+\DoxyCodeLine{00110\ \ \ \ \ xdpb=FloatDPBounds(Decimal(1.2),dp)\ \textcolor{comment}{\#\ Creates\ the\ interval\ [1.19999999999999996:1.20000000000000018]}}
+\DoxyCodeLine{00114\ \ \ \ \ xdpb=FloatDPBounds(Rational(11,10),Rational(14,10),dp)\ \textcolor{comment}{\#\ Creates\ the\ interval\ [1.09999999999999987:1.40000000000000013]}}
+\DoxyCodeLine{00123\ \ \ \ \ xmpb=FloatMPBounds(dec(\textcolor{stringliteral}{"{}1.2"{}}),mp)\ \textcolor{comment}{\#\ Creates\ the\ interval\ [1.19999999999999996:19999999999999996]}}
+\DoxyCodeLine{00127\ \ \ \ \ xmpb=FloatMPBounds(dec(1.5),dec(2.25),mp)\ \textcolor{comment}{\#\ Creates\ the\ interval\ [1.5,2.25]}}
+\DoxyCodeLine{00131\ \ \ \ \ xmpb=FloatMPBounds(Rational(11,10),Rational(14,10),mp)\ \textcolor{comment}{\#\ Creates\ the\ interval\ [1.10000000000000009:1.39999999999999991]}}
+
+\end{DoxyCodeInclude}
+and the \doxylink{classAriadne_1_1Approximation}{Approximation} classes support approximate arithmetic. 
+\begin{DoxyCodeInclude}{0}
+\DoxyCodeLine{00135\ \ \ \ \ xdpa=FloatDPApproximation(1.23,dp)}
+\DoxyCodeLine{00139\ \ \ \ \ xmpa=FloatMPApproximation(1.23,mp)}
+\DoxyCodeLine{00147\ \ \ \ \ xmpa=FloatMPApproximation(Decimal(\textcolor{stringliteral}{"{}1.23"{}}),mp)}
+
+\end{DoxyCodeInclude}
+ \begin{DoxySeeAlso}{See also}
+\doxylink{group__NumericModule}{Numeric Module}
+\end{DoxySeeAlso}
+\hypertarget{python_module_demonstrations_page_python_linear_algebra_demonstration}{}\doxysubsection{\texorpdfstring{Linear Algebra}{Linear Algebra}}\label{python_module_demonstrations_page_python_linear_algebra_demonstration}
+
+
+Ariadne supports linear algebra operations based on \doxylink{classAriadne_1_1Vector}{Vector} and \doxylink{classAriadne_1_1Matrix}{Matrix} classes. In the C++ library, these types are parameterised by the scalar type (e.\+g. \doxylink{classAriadne_1_1Rational}{Rational}, Float\+DPBounds). In Python, this gives class names such as \doxylink{classAriadne_1_1Vector_ae1bbb29dec0c8defa27197c48ed86bfe}{Rational\+Vector} and \doxylink{classAriadne_1_1Matrix_a175536e9f5705e6930d8009d8c5cd75e}{Float\+DPBounds\+Matrix}.
+
+Vector and matrix classes can be constructed using Python lists. 
+\begin{DoxyCodeInclude}{0}
+\DoxyCodeLine{00000\ \ \ \ \ bq=RationalVector([1,q\_(2.4),Rational(31,8)])}
+\DoxyCodeLine{00032\ \ \ \ \ Aq=RationalMatrix([[1,2,4],[3,q\_(1.5),2],[0,0,1]])}
+\DoxyCodeLine{00037\ \ \ \ \ Aq=Matrix[Rational]([[1,2,4],[3,q\_(1.5),2],[0,-\/1,1]])}
+
+\end{DoxyCodeInclude}
+ As well as matrix and vector arithmetic, Ariadne provides a {\ttfamily solve} routine for solving systems of linear equations\+: 
+\begin{DoxyCodeInclude}{0}
+\DoxyCodeLine{00038\ \ \ \ \ xq=solve(Aq,bq)}
+
+\end{DoxyCodeInclude}
+ \begin{DoxySeeAlso}{See also}
+\doxylink{group__LinearAlgebraSubModule}{Linear Algebra Submodule}
+\end{DoxySeeAlso}
+\hypertarget{python_module_demonstrations_page_python_function_demonstration}{}\doxysubsection{\texorpdfstring{Function Calculus}{Function Calculus}}\label{python_module_demonstrations_page_python_function_demonstration}
+
+
+Ariadne\textquotesingle{}s \doxylink{classAriadne_1_1Function}{Function} class supports nonlinear functions by means of templated abstract classes, with template parameters indicating the argument and result times. These include \doxylink{classAriadne_1_1Function_a80f5bd6125c3c06ec3a4b760854eef4f}{Effective\+Scalar\+Multivariate\+Function} for scalar functions $f:\R^m\rightarrow\R$ 
+\begin{DoxyCodeInclude}{0}
+\DoxyCodeLine{00000\ \ \ \ \ x=[EffectiveScalarMultivariateFunction.coordinate(2,index)\ \textcolor{keywordflow}{for}\ index\ \textcolor{keywordflow}{in}\ range(0,2)]}
+\DoxyCodeLine{00032\ \ \ \ \ sf=sqrt(sqr(x[0])+sqr(x[1]))}
+\DoxyCodeLine{00033\ \ \ \ \ sfa=sf(a)}
+\DoxyCodeLine{00036\ \ \ \ \ sfb=sf(b)}
+
+\end{DoxyCodeInclude}
+and the \doxylink{classAriadne_1_1Function_a551c88efdfac0e1bb62698081921e0db}{Effective\+Vector\+Multivariate\+Function} for functions $f:\R^m\rightarrow\R^n$. 
+\begin{DoxyCodeInclude}{0}
+\DoxyCodeLine{00039\ \ \ \ \ x=EffectiveVectorMultivariateFunction.identity(3)}
+\DoxyCodeLine{00042\ \ \ \ \ vf=EffectiveVectorMultivariateFunction([sqrt(sqr(x[0])+sqr(x[1])),x[1]+x[2]])}
+\DoxyCodeLine{00043\ \ \ \ \ vfa=vf(a)}
+\DoxyCodeLine{00046\ \ \ \ \ vfb=evaluate(vf,b)}
+
+\end{DoxyCodeInclude}
+and functions of a scalar argument \doxylink{classAriadne_1_1Function_a91c3811cfb016061f1d24582b89bede1}{Effective\+Scalar\+Univariate\+Function} for functions $f:\R\rightarrow\R$, \doxylink{classAriadne_1_1Function_a52deafdf4bacb66638681a3c34475c95}{Effective\+Vector\+Univariate\+Function} for $f:\R\rightarrow\R^n$.
+
+These functions can be differentiated with respect to their coordinates. 
+\begin{DoxyCodeInclude}{0}
+\DoxyCodeLine{00049\ \ \ \ \ dsf0=derivative(sf,0);}
+
+\end{DoxyCodeInclude}
+ The \doxylink{classAriadne_1_1Polynomial}{Polynomial\texorpdfstring{$<$}{<}X\texorpdfstring{$>$}{>}} class provides concrete implementations of the function calculus. For example, \doxylink{classAriadne_1_1Polynomial_a3da3b15eba68ef9bf548b1c2f0a16879}{Float\+DPApproximation\+Multivariate\+Polynomial} class defines a polynomial in multiple variables with coefficients of type Float\+DPApproximation. A polynomial can be created by using the {\ttfamily coordinate(n,j)} static method, which creates the polynomial $p(x)=x_j$ for $x\in\R^n$\+: 
+\begin{DoxyCodeInclude}{0}
+\DoxyCodeLine{00052\ \ \ \ \ p0=FloatDPApproximationMultivariatePolynomial.coordinate(2,0,dp);}
+\DoxyCodeLine{00055\ \ \ \ \ p1=FloatDPApproximationMultivariatePolynomial.coordinate(2,1,dp);}
+
+\end{DoxyCodeInclude}
+The standard arithmetical operations are available for polynomial expressions\+: 
+\begin{DoxyCodeInclude}{0}
+\DoxyCodeLine{00056\ \ \ \ \ q=p0*(p0+p1*a3)+a5}
+
+\end{DoxyCodeInclude}
+ \begin{DoxySeeAlso}{See also}
+\doxylink{group__FunctionModule}{Function Module}
+\end{DoxySeeAlso}
+\hypertarget{python_module_demonstrations_page_python_taylor_function_calculus_demonstration}{}\doxysubsubsection{\texorpdfstring{Taylor Function Calculus}{Taylor Function Calculus}}\label{python_module_demonstrations_page_python_taylor_function_calculus_demonstration}
+The generic function interfaces cannot generally be directly manipulated. Instead, they can be converted to numerical \doxylink{group__FunctionModelSubModule_ga05c1c7011f989b1ec0ba7f5d4e81580f}{Validated\+Scalar\+Multivariate\+Taylor\+Function\+Model\+DP} and \doxylink{group__FunctionModelSubModule_ga2c22c0befb7ccf11c80015eee7e7a78b}{Validated\+Vector\+Multivariate\+Taylor\+Function\+Model\+DP} types which can then be worked with.
+
+The core type is a \doxylink{group__FunctionModelSubModule_gae1628e0ab768b5e00d157d1b30e08bd1}{Scalar\+Multivariate\+Taylor\+Function\+Model\texorpdfstring{$<$}{<}P,F\texorpdfstring{$>$}{>}}, which is a polynomial {\itshape p} precomposed by a scaling {\itshape s\textsuperscript{-\/1}} of a function {\itshape f} on a box {\itshape D} in Euclidean space with uniform error {\itshape e\+:} $ f(x) = p(s^{-1}(x))\pm e \text{ for } x\in D . $
+
+To construct a Taylor function model, we need to give the domain and a "{}sweeper"{} which controls the accuracy. 
+\begin{DoxyCodeInclude}{0}
+\DoxyCodeLine{00060\ \ \ \ \ dom=BoxDomainType([\{4:7\},\{1:6\},\{-\/1:+1\}])}
+\DoxyCodeLine{00069\ \ \ \ \ swp=ThresholdSweeperDP(dp,1e-\/8)}
+
+\end{DoxyCodeInclude}
+ \doxylink{classAriadne_1_1Constant}{Constant} and coordinated functions can easily be created 
+\begin{DoxyCodeInclude}{0}
+\DoxyCodeLine{00073\ \ \ \ \ tc=ValidatedScalarMultivariateTaylorFunctionModelDP.constant(dom,dec\_(4.2),swp)}
+\DoxyCodeLine{00078\ \ \ \ \ t1=ValidatedScalarMultivariateTaylorFunctionModelDP.coordinate(dom,1,swp)}
+
+\end{DoxyCodeInclude}
+and a general function can be converted to a Taylor function model 
+\begin{DoxyCodeInclude}{0}
+\DoxyCodeLine{00082\ \ \ \ \ p=EffectiveScalarMultivariateFunction.coordinate(3,0)}
+\DoxyCodeLine{00100\ \ \ \ \ tp=ValidatedScalarMultivariateTaylorFunctionModelDP(dom,p,swp)}
+
+\end{DoxyCodeInclude}
+ We can extract the domain of the functions, and over-\/approximations to the codomain/range 
+\begin{DoxyCodeInclude}{0}
+\DoxyCodeLine{00101\ \ \ \ \ print(\textcolor{stringliteral}{"{}tx.domain():"{}},tx.domain())}
+\DoxyCodeLine{00106\ \ \ \ \ print(\textcolor{stringliteral}{"{}tx.codomain():"{}},tx.codomain())}
+\DoxyCodeLine{00108\ \ \ \ \ print(\textcolor{stringliteral}{"{}tx.range():"{}},tx.range())}
+
+\end{DoxyCodeInclude}
+ Taylor function models support arithmetic 
+\begin{DoxyCodeInclude}{0}
+\DoxyCodeLine{00110\ \ \ \ \ +tx;\ -\/tx;\ tx+ty;\ tx-\/ty;\ tx*ty;\ tx/ty;}
+
+\end{DoxyCodeInclude}
+and mixed arithmetic with numerical types 
+\begin{DoxyCodeInclude}{0}
+\DoxyCodeLine{00118\ \ \ \ \ tx+c;\ tx-\/c;\ tx*c;\ tx/c;}
+\DoxyCodeLine{00121\ \ \ \ \ c+tx;\ c-\/tx;\ c*tx;\ c/tx;}
+
+\end{DoxyCodeInclude}
+They also support lattice operations, 
+\begin{DoxyCodeInclude}{0}
+\DoxyCodeLine{00122\ \ \ \ \ min(tx,ty);\ max(tx,ty);\ abs(tx);}
+
+\end{DoxyCodeInclude}
+standard named arithmetical operations, 
+\begin{DoxyCodeInclude}{0}
+\DoxyCodeLine{00128\ \ \ \ \ neg(tx);}
+\DoxyCodeLine{00131\ \ \ \ \ rec(tx);}
+\DoxyCodeLine{00132\ \ \ \ \ sqr(tx);}
+\DoxyCodeLine{00133\ \ \ \ \ pow(tx,n);}
+
+\end{DoxyCodeInclude}
+and roots, exponentials, logarithms and trigonometric functions 
+\begin{DoxyCodeInclude}{0}
+\DoxyCodeLine{00134\ \ \ \ \ sqrt(tx);}
+\DoxyCodeLine{00137\ \ \ \ \ exp(tx);\ log(tx);}
+\DoxyCodeLine{00138\ \ \ \ \ sin(tx),\ cos(tx),\ tan(tx/2)}
+
+\end{DoxyCodeInclude}
+In-\/place operations are also provided 
+\begin{DoxyCodeInclude}{0}
+\DoxyCodeLine{00139\ \ \ \ \ tx+=ty;\ tx-\/=ty;}
+\DoxyCodeLine{00142\ \ \ \ \ tx+=c;\ tx-\/=c;\ tx*=c;\ tx/=c;}
+
+\end{DoxyCodeInclude}
+ We can compute antiderivatives (indefinite integrals) with respect to the coordinates 
+\begin{DoxyCodeInclude}{0}
+\DoxyCodeLine{00143\ \ \ \ \ Itf0=antiderivative(tf,0)}
+
+\end{DoxyCodeInclude}
+specifying an optional base-\/point 
+\begin{DoxyCodeInclude}{0}
+\DoxyCodeLine{00153\ \ \ \ \ Itf1=antiderivative(tf,1,c)}
+
+\end{DoxyCodeInclude}
+ For higher accuracy, the approximation can be restricted to a subdomain 
+\begin{DoxyCodeInclude}{0}
+\DoxyCodeLine{00155\ \ \ \ \ rw=restriction(w,subdom)}
+
+\end{DoxyCodeInclude}
+ Standard function operations are provided, including direct sum (join) $x\mapsto[f(x),g(x)]$ and product (combine) $[x,y]\mapsto[f(x),g(y)]$. 
+\begin{DoxyCodeInclude}{0}
+\DoxyCodeLine{00162\ \ \ \ \ tfg=join(tf,tg)}
+\DoxyCodeLine{00167\ \ \ \ \ tfg=combine(tf,tg)}
+
+\end{DoxyCodeInclude}
+ Taylor function models can be post-\/composition by a generic function 
+\begin{DoxyCodeInclude}{0}
+\DoxyCodeLine{00171\ \ \ \ \ fth=compose(f,th)}
+\DoxyCodeLine{00186\ \ \ \ \ gth=compose(g,th)}
+
+\end{DoxyCodeInclude}
+or composed with another Taylor function model 
+\begin{DoxyCodeInclude}{0}
+\DoxyCodeLine{00190\ \ \ \ \ tfh=compose(tf,th)}
+\DoxyCodeLine{00195\ \ \ \ \ tgh=compose(tg,th)}
+
+\end{DoxyCodeInclude}
+
+
+Since Taylor function models provide a set of possibilities for the actual function, we can test whether two computations are inconsistent (disjoint) or if one refines another, and compute the common refinement 
+\begin{DoxyCodeInclude}{0}
+\DoxyCodeLine{00200\ \ \ \ \ ic=inconsistent(tf1,tf2)}
+\DoxyCodeLine{00210\ \ \ \ \ rf=refines(tf1,tf2)}
+\DoxyCodeLine{00212\ \ \ \ \ tf=refinement(tf1,tf2)}
+
+\end{DoxyCodeInclude}
+\hypertarget{python_module_demonstrations_page_python_geometry_demonstration}{}\doxysubsection{\texorpdfstring{Sets and Geometry}{Sets and Geometry}}\label{python_module_demonstrations_page_python_geometry_demonstration}
+
+
+Ariadne supports a \doxylink{classAriadne_1_1Interval}{Interval$<$\+UB$>$} class with different types for the endpoints, such as \doxylink{classAriadne_1_1Interval_a98bb44400914498b6b8a475167eee7c0}{Rational\+Interval} and \doxylink{classAriadne_1_1Interval_abb502b218fc8893f092b34dc20d7a131}{Float\+DPUpper\+Interval}, the latter being \doxylink{classAriadne_1_1Interval}{Interval\texorpdfstring{$<$}{<}Float\+DPUpper\+Bound\texorpdfstring{$>$}{>}}. 
+\begin{DoxyCodeInclude}{0}
+\DoxyCodeLine{00000\ \ \ \ \ ivlq\ =\ RationalInterval(Rational(4,7),Rational(3,5))}
+\DoxyCodeLine{00032\ \ \ \ \ ivlu\ =\ FloatDPUpperInterval(\{exact(1.5):exact(2.5)\})}
+
+\end{DoxyCodeInclude}
+A \doxylink{classAriadne_1_1Box}{Box} is the Cartesian product of intervals, and can be created from a list of intervals 
+\begin{DoxyCodeInclude}{0}
+\DoxyCodeLine{00035\ \ \ \ \ bx\ =\ RealBox([\ [Rational(4,7),Rational(3,5)]\ ,\ \{exact(1.5):exact(2.5)\}\ ])}
+
+\end{DoxyCodeInclude}
+ Standard geometric predicates are supported 
+\begin{DoxyCodeInclude}{0}
+\DoxyCodeLine{00041\ \ \ \ \ subset(\{2:3\},\{1:4\})}
+\DoxyCodeLine{00046\ \ \ \ \ disjoint(\{2:3\},\{4:5\})}
+
+\end{DoxyCodeInclude}
+ Sets can also be defined based on constraints, such as \doxylink{classAriadne_1_1ConstraintSet}{Constraint\+Set}. 
+\begin{DoxyCodeInclude}{0}
+\DoxyCodeLine{00047\ \ \ \ \ cs\ =\ ConstraintSet([sqr(x)+2*sqr(y)<=1,3*x+2*y>=1])}
+
+\end{DoxyCodeInclude}
+ The intersections of a box and a set based on constraints is guaranteed to be bounded, with type \doxylink{classAriadne_1_1BoundedConstraintSet}{Bounded\+Constraint\+Set} 
+\begin{DoxyCodeInclude}{0}
+\DoxyCodeLine{00052\ \ \ \ \ \textcolor{comment}{\#\ Compute\ the\ intersection\ of\ a\ contraint\ set\ with\ a\ box,\ obtaining\ a\ bounded\ set}}
+\DoxyCodeLine{00056\ \ \ \ \ bcs\ =\ intersection(bx,cs)}
+
+\end{DoxyCodeInclude}
+and we can compute its image under a continuous function yielding a \doxylink{classAriadne_1_1ConstrainedImageSet}{Constrained\+Image\+Set}. 
+\begin{DoxyCodeInclude}{0}
+\DoxyCodeLine{00057\ \ \ \ \ \textcolor{comment}{\#\ Compute\ the\ image\ of\ a\ bounded\ contraint\ set\ under\ a\ continuous\ function}}
+\DoxyCodeLine{00060\ \ \ \ \ cis\ =\ image(bcs,h)}
+
+\end{DoxyCodeInclude}
+ Sets can be discretised on a grid to obtain a \doxylink{classAriadne_1_1GridTreePaving}{Grid\+Tree\+Paving} comprised of \doxylink{classAriadne_1_1GridCell}{Grid\+Cell} objects. 
+\begin{DoxyCodeInclude}{0}
+\DoxyCodeLine{00062\ \ \ \ \ gtp\ =\ outer\_approximation(cis,g,dpth)}
+
+\end{DoxyCodeInclude}
+ The projection onto a two-\/dimensional coordinate space can be plotted 
+\begin{DoxyCodeInclude}{0}
+\DoxyCodeLine{00068\ \ \ \ \ plot(\textcolor{stringliteral}{"{}geometry\_demonstration"{}},\ prj,\ wnd,\ [(green,cis)])}
+
+\end{DoxyCodeInclude}
+ \begin{DoxySeeAlso}{See also}
+\doxylink{group__GeometryModule}{Geometry Module}
+\end{DoxySeeAlso}
+\hypertarget{python_module_demonstrations_page_python_solvers_demonstration}{}\doxysubsection{\texorpdfstring{Solvers for Algebraic and Differential Equations}{Solvers for Algebraic and Differential Equations}}\label{python_module_demonstrations_page_python_solvers_demonstration}
+
+
+Ariadne uses Solver classes for complicated operations such as solving algebraic or differential equations.\hypertarget{python_module_demonstrations_page_python_algebraic_solvers_demonstration}{}\doxysubsubsection{\texorpdfstring{Solving Algebraic Equations}{Solving Algebraic Equations}}\label{python_module_demonstrations_page_python_algebraic_solvers_demonstration}
+We can solve parameterised algebraic equations using the operator {\ttfamily implicit} of a {\itshape Solver} class, such as \doxylink{classAriadne_1_1IntervalNewtonSolver}{Interval\+Newton\+Solver} or \doxylink{classAriadne_1_1KrawczykSolver}{Krawczyk\+Solver}/ If $f:D_1\times D_2\rightarrow \R^n$ with $D_2\subset\R^n$ then the operator {\ttfamily implicit(f)} attempts to compute a function $h:D_1\to\R^n$ such that $f(x,h(x))=0$ for $x\in D_m$. The function $h$ must satisfy $h(D_1)\subset D_2$.
+
+
+\begin{DoxyCodeInclude}{0}
+\DoxyCodeLine{00000\ \ \ \ \ slv=IntervalNewtonSolver(1e-\/8,6)}
+\DoxyCodeLine{00032\ \ \ \ \ f=join(x+4*y0+y1,y0+y1)}
+\DoxyCodeLine{00037\ \ \ \ \ hf=slv.implicit(f,BoxDomainType([\{-\/1:+1\}]),BoxDomainType([\{-\/1:+1\},\{-\/1:+1\}]))}
+\DoxyCodeLine{00039\ \ \ \ \ g=x-\/4*y+y*y}
+\DoxyCodeLine{00047\ \ \ \ \ hg=slv.implicit(g,\ BoxDomainType([\{-\/1:+1\}]),IntervalDomainType(\{-\/1:+1\}))}
+
+\end{DoxyCodeInclude}
+\hypertarget{python_module_demonstrations_page_python_differential_equation_solvers_demonstration}{}\doxysubsubsection{\texorpdfstring{Solving Differential Equations}{Solving Differential Equations}}\label{python_module_demonstrations_page_python_differential_equation_solvers_demonstration}
+We can solve differential equations using the operator {\ttfamily flow} of an {\itshape Integrator} class, such as \doxylink{classAriadne_1_1TaylorPicardIntegrator}{Taylor\+Picard\+Integrator} or \doxylink{classAriadne_1_1GradedTaylorSeriesIntegrator}{Graded\+Taylor\+Series\+Integrator}. If $:\R^n\to\R^n$, $D\subset\R^n$ and $h>0$, then the operator {\ttfamily flow(f,\+D,h)} computes a function $\phi:D\times[0,h]\to\R^n$ satisfying $\dot{\phi}(x,t)=f(\phi(x,t))$ and $\phi(x,0)=x$.
+
+
+\begin{DoxyCodeInclude}{0}
+\DoxyCodeLine{00049\ \ \ \ \ integrator=GradedTaylorSeriesIntegrator(1e-\/8)}
+\DoxyCodeLine{00058\ \ \ \ \ f=ValidatedVectorMultivariateFunction.identity(1)}
+\DoxyCodeLine{00063\ \ \ \ \ phi=integrator.flow(f,dom,h)}
+
+\end{DoxyCodeInclude}
+ \begin{DoxySeeAlso}{See also}
+\doxylink{group__SolverModule}{Solver Module} 
+\end{DoxySeeAlso}

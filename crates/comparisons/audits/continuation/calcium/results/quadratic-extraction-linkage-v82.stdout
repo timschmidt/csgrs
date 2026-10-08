@@ -1,0 +1,7 @@
+	linux-vdso.so.1 (0x00007f59b1b6e000)
+	libflint.so.25 => /home/tim/Documents/GitHub/workspace/exact-real-references/flint/libflint.so.25 (0x00007f59b0c00000)
+	libmpfr.so.6 => /lib64/libmpfr.so.6 (0x00007f59b1a6b000)
+	libgmp.so.10 => /lib64/libgmp.so.10 (0x00007f59b19c4000)
+	libm.so.6 => /lib64/libm.so.6 (0x00007f59b0b0b000)
+	libc.so.6 => /lib64/libc.so.6 (0x00007f59b0918000)
+	/lib64/ld-linux-x86-64.so.2 (0x00007f59b1b70000)

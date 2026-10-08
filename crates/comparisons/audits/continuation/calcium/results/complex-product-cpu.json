@@ -1,0 +1,14 @@
+{
+  "tag": "complex-product-cpu",
+  "started": "2026-09-09T21:46:26.356Z",
+  "finished": "2026-09-09T21:47:58.347Z",
+  "elapsedSeconds": 91.988948776,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "node",
+  "args": [
+    "run-complex-product-costs.mjs",
+    "cpu"
+  ],
+  "code": 0,
+  "signal": null
+}

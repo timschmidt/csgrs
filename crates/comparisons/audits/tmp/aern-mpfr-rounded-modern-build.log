@@ -1,0 +1,481 @@
+OneTuple                           > using precompiled package
+Only                               > using precompiled package
+StateVar                           > using precompiled package
+assoc                              > using precompiled package
+base-compat                        > using precompiled package
+base-orphans                       > using precompiled package
+binary-orphans                     > using precompiled package
+code-page                          > using precompiled package
+colour                             > using precompiled package
+data-default-class                 > using precompiled package
+dlist                              > using precompiled package
+extensible-exceptions              > using precompiled package
+generically                        > using precompiled package
+hostname                           > using precompiled package
+indexed-traversable                > using precompiled package
+hgmp                               > configure
+hgmp                               > Configuring hgmp-0.1.2.1...
+integer-logarithms                 > using precompiled package
+js-chart                           > using precompiled package
+contravariant                      > using precompiled package
+long-double                        > configure
+long-double                        > Configuring long-double-0.1.1.1...
+hgmp                               > build with ghc-9.6.7
+hgmp                               > Preprocessing library for hgmp-0.1.2.1..
+base-compat-batteries              > using precompiled package
+hgmp                               > Building library for hgmp-0.1.2.1..
+old-locale                         > using precompiled package
+hgmp                               > [1 of 4] Compiling Numeric.GMP.Types
+os-string                          > using precompiled package
+hgmp                               > 
+hgmp                               > /tmp/stack-157ed786311c7b82/hgmp-0.1.2.1/src/Numeric/GMP/Types.hsc:14:1: warning: [-Wunused-imports]
+hgmp                               >     The import of ‘Data.Typeable’ is redundant
+hgmp                               >       except perhaps to import instances from ‘Data.Typeable’
+hgmp                               >     To import instances alone, use: import Data.Typeable()
+hgmp                               >    |
+hgmp                               > 14 | import Data.Typeable
+hgmp                               >    | ^^^^^^^^^^^^^^^^^^^^
+hgmp                               > 
+hgmp                               > /tmp/stack-157ed786311c7b82/hgmp-0.1.2.1/src/Numeric/GMP/Types.hsc:20:36: warning: [-Wunused-imports]
+hgmp                               >     The import of ‘nullPtr’ from module ‘Foreign’ is redundant
+hgmp                               >    |
+hgmp                               > 20 | import Foreign (Storable(..), Ptr, nullPtr, plusPtr)
+hgmp                               >    |                                    ^^^^^^^
+parallel                           > using precompiled package
+long-double                        > build with ghc-9.6.7
+long-double                        > Preprocessing library for long-double-0.1.1.1..
+long-double                        > Building library for long-double-0.1.1.1..
+ansi-terminal-types                > using precompiled package
+long-double                        > [1 of 2] Compiling Numeric.LongDouble.X87_128
+prettyprinter                      > using precompiled package
+primitive                          > using precompiled package
+reflection                         > using precompiled package
+regex-base                         > using precompiled package
+long-double                        > [2 of 2] Compiling Numeric.LongDouble
+splitmix                           > using precompiled package
+tagged                             > using precompiled package
+hgmp                               > [2 of 4] Compiling Numeric.GMP.Raw.Unsafe
+th-abstraction                     > using precompiled package
+transformers-compat                > using precompiled package
+vector-stream                      > using precompiled package
+xml                                > using precompiled package
+hashable                           > using precompiled package
+hgmp                               > [3 of 4] Compiling Numeric.GMP.Raw.Safe
+ansi-terminal                      > using precompiled package
+regex-posix                        > using precompiled package
+hgmp                               > [4 of 4] Compiling Numeric.GMP.Utils
+random                             > using precompiled package
+distributive                       > using precompiled package
+long-double                        > copy/register
+long-double                        > Installing library in /tmp/aern2-stack.ryVCFK/snapshots/x86_64-linux-tinfo6/679cc64c76e222dbde5fd44af4907e261fb8c246ed2bc968e58bc5dabf57e98b/9.6.7/lib/x86_64-linux-ghc-9.6.7/long-double-0.1.1.1-LkRtmneQ88UA48CGRkPAl2
+hgmp                               > cbits/wrappers.c: In function ‘mpz_set_HsInt’:
+hgmp                               > 
+hgmp                               > /tmp/stack-157ed786311c7b82/hgmp-0.1.2.1/cbits/wrappers.c:12:23: error:
+hgmp                               >      warning: right shift count >= width of type [-Wshift-count-overflow]
+hgmp                               >        12 |     mpz_set_si(dst, n >> lobits); // warns when branch will be unused
+hgmp                               >           |                       ^~
+hgmp                               >    |
+hgmp                               > 12 |     mpz_set_si(dst, n >> lobits); // warns when branch will be unused
+hgmp                               >    |                       ^
+hgmp                               > 
+hgmp                               > /tmp/stack-157ed786311c7b82/hgmp-0.1.2.1/cbits/wrappers.c:11:23: error:
+hgmp                               >      warning: left shift count >= width of type [-Wshift-count-overflow]
+hgmp                               >        11 | #define lomask ((1ULL << lobits) - 1)
+hgmp                               >           |                       ^~
+hgmp                               >    |
+hgmp                               > 11 | #define lomask ((1ULL << lobits) - 1)
+hgmp                               >    |                       ^
+hgmp                               > 
+hgmp                               > /tmp/stack-157ed786311c7b82/hgmp-0.1.2.1/cbits/wrappers.c:14:30: error:
+hgmp                               >      note: in expansion of macro ‘lomask’
+hgmp                               >        14 |     mpz_add_ui(dst, dst, n & lomask);
+hgmp                               >           |                              ^~~~~~
+hgmp                               >    |
+hgmp                               > 14 |     mpz_add_ui(dst, dst, n & lomask);
+hgmp                               >    |                              ^
+hgmp                               > cbits/wrappers.c: In function ‘mpz_set_HsInt’:
+hgmp                               > 
+hgmp                               > /tmp/stack-157ed786311c7b82/hgmp-0.1.2.1/cbits/wrappers.c:12:23: error:
+hgmp                               >      warning: right shift count >= width of type [-Wshift-count-overflow]
+hgmp                               >        12 |     mpz_set_si(dst, n >> lobits); // warns when branch will be unused
+hgmp                               >           |                       ^~
+hgmp                               >    |
+hgmp                               > 12 |     mpz_set_si(dst, n >> lobits); // warns when branch will be unused
+hgmp                               >    |                       ^
+hgmp                               > 
+hgmp                               > /tmp/stack-157ed786311c7b82/hgmp-0.1.2.1/cbits/wrappers.c:11:23: error:
+hgmp                               >      warning: left shift count >= width of type [-Wshift-count-overflow]
+hgmp                               >        11 | #define lomask ((1ULL << lobits) - 1)
+hgmp                               >           |                       ^~
+hgmp                               >    |
+hgmp                               > 11 | #define lomask ((1ULL << lobits) - 1)
+hgmp                               >    |                       ^
+hgmp                               > 
+hgmp                               > /tmp/stack-157ed786311c7b82/hgmp-0.1.2.1/cbits/wrappers.c:14:30: error:
+hgmp                               >      note: in expansion of macro ‘lomask’
+hgmp                               >        14 |     mpz_add_ui(dst, dst, n & lomask);
+hgmp                               >           |                              ^~~~~~
+hgmp                               >    |
+hgmp                               > 14 |     mpz_add_ui(dst, dst, n & lomask);
+hgmp                               >    |                              ^
+long-double                        > Registering library for long-double-0.1.1.1..
+Glob                               > using precompiled package
+vector                             > using precompiled package
+async                              > using precompiled package
+data-fix                           > using precompiled package
+scientific                         > using precompiled package
+text-short                         > using precompiled package
+these                              > using precompiled package
+time-compat                        > using precompiled package
+unordered-containers               > using precompiled package
+prettyprinter-ansi-terminal        > using precompiled package
+QuickCheck                         > using precompiled package
+uuid-types                         > using precompiled package
+hgmp                               > copy/register
+hgmp                               > Installing library in /tmp/aern2-stack.ryVCFK/snapshots/x86_64-linux-tinfo6/679cc64c76e222dbde5fd44af4907e261fb8c246ed2bc968e58bc5dabf57e98b/9.6.7/lib/x86_64-linux-ghc-9.6.7/hgmp-0.1.2.1-95ETdmHU6Qj6F481Kf1Hoh
+comonad                            > using precompiled package
+hgmp                               > Registering library for hgmp-0.1.2.1..
+rounded                            > configure
+rounded                            > Configuring rounded-1.1.1...
+bitvec                             > using precompiled package
+math-functions                     > using precompiled package
+vector-binary-instances            > using precompiled package
+vector-th-unbox                    > using precompiled package
+rounded                            > build with ghc-9.6.7
+rounded                            > Preprocessing library for rounded-1.1.1..
+attoparsec                         > using precompiled package
+rounded                            > Building library for rounded-1.1.1..
+rounded                            > [ 1 of 10] Compiling Numeric.MPFR.Types
+strict                             > using precompiled package
+rounded                            > 
+rounded                            > /tmp/stack-157ed786311c7b82/rounded-1.1.1/src/Numeric/MPFR/Types.hsc:24:1: warning: [-Wunused-imports]
+rounded                            >     The import of ‘Data.Typeable’ is redundant
+rounded                            >       except perhaps to import instances from ‘Data.Typeable’
+rounded                            >     To import instances alone, use: import Data.Typeable()
+rounded                            >    |
+rounded                            > 24 | import Data.Typeable
+rounded                            >    | ^^^^^^^^^^^^^^^^^^^^
+rounded                            > 
+rounded                            > /tmp/stack-157ed786311c7b82/rounded-1.1.1/src/Numeric/MPFR/Types.hsc:35:1: warning: [GHC-38417] [-Wmissing-pattern-synonym-signatures]
+rounded                            >     Pattern synonym with no type signature:
+rounded                            >       pattern MPFR_VERSION_MAJOR :: forall {a}. (Eq a, Num a) => a
+rounded                            >    |
+rounded                            > 35 | pattern MPFR_VERSION_MAJOR = #const MPFR_VERSION_MAJOR
+rounded                            >    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+rounded                            > 
+rounded                            > /tmp/stack-157ed786311c7b82/rounded-1.1.1/src/Numeric/MPFR/Types.hsc:36:1: warning: [GHC-38417] [-Wmissing-pattern-synonym-signatures]
+rounded                            >     Pattern synonym with no type signature:
+rounded                            >       pattern MPFR_VERSION_MINOR :: forall {a}. (Eq a, Num a) => a
+rounded                            >    |
+rounded                            > 36 | pattern MPFR_VERSION_MINOR = #const MPFR_VERSION_MINOR
+rounded                            >    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+rounded                            > 
+rounded                            > /tmp/stack-157ed786311c7b82/rounded-1.1.1/src/Numeric/MPFR/Types.hsc:37:1: warning: [GHC-38417] [-Wmissing-pattern-synonym-signatures]
+rounded                            >     Pattern synonym with no type signature:
+rounded                            >       pattern MPFR_VERSION_PATCHLEVEL :: forall {a}. (Eq a, Num a) => a
+rounded                            >    |
+rounded                            > 37 | pattern MPFR_VERSION_PATCHLEVEL = #const MPFR_VERSION_PATCHLEVEL
+rounded                            >    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+rounded                            > 
+rounded                            > /tmp/stack-157ed786311c7b82/rounded-1.1.1/src/Numeric/MPFR/Types.hsc:38:1: warning: [GHC-38417] [-Wmissing-pattern-synonym-signatures]
+rounded                            >     Pattern synonym with no type signature:
+rounded                            >       pattern MPFR_VERSION :: forall {a}. (Eq a, Num a) => a
+rounded                            >    |
+rounded                            > 38 | pattern MPFR_VERSION = #const MPFR_VERSION
+rounded                            >    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+rounded                            > 
+rounded                            > /tmp/stack-157ed786311c7b82/rounded-1.1.1/src/Numeric/MPFR/Types.hsc:87:1: warning: [GHC-38417] [-Wmissing-pattern-synonym-signatures]
+rounded                            >     Pattern synonym with no type signature:
+rounded                            >       pattern MPFR_PREC_MIN :: forall {a}. (Eq a, Num a) => a
+rounded                            >    |
+rounded                            > 87 | pattern MPFR_PREC_MIN = (#const MPFR_PREC_MIN)
+rounded                            >    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+rounded                            > 
+rounded                            > /tmp/stack-157ed786311c7b82/rounded-1.1.1/src/Numeric/MPFR/Types.hsc:88:1: warning: [GHC-38417] [-Wmissing-pattern-synonym-signatures]
+rounded                            >     Pattern synonym with no type signature:
+rounded                            >       pattern MPFR_PREC_MAX :: forall {a}. (Eq a, Num a) => a
+rounded                            >    |
+rounded                            > 88 | pattern MPFR_PREC_MAX = (#const MPFR_PREC_MAX)
+rounded                            >    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+rounded                            > 
+rounded                            > /tmp/stack-157ed786311c7b82/rounded-1.1.1/src/Numeric/MPFR/Types.hsc:100:1: warning: [GHC-38417] [-Wmissing-pattern-synonym-signatures]
+rounded                            >     Pattern synonym with no type signature:
+rounded                            >       pattern MPFR_EMAX_DEFAULT :: forall {a}. (Eq a, Num a) => a
+rounded                            >     |
+rounded                            > 100 | pattern MPFR_EMAX_DEFAULT = (#const MPFR_EMAX_DEFAULT)
+rounded                            >     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+rounded                            > 
+rounded                            > /tmp/stack-157ed786311c7b82/rounded-1.1.1/src/Numeric/MPFR/Types.hsc:101:1: warning: [GHC-38417] [-Wmissing-pattern-synonym-signatures]
+rounded                            >     Pattern synonym with no type signature:
+rounded                            >       pattern MPFR_EMIN_DEFAULT :: forall {a}. (Eq a, Num a) => a
+rounded                            >     |
+rounded                            > 101 | pattern MPFR_EMIN_DEFAULT = (#const MPFR_EMIN_DEFAULT)
+rounded                            >     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+rounded                            > 
+rounded                            > /tmp/stack-157ed786311c7b82/rounded-1.1.1/src/Numeric/MPFR/Types.hsc:107:1: warning: [GHC-38417] [-Wmissing-pattern-synonym-signatures]
+rounded                            >     Pattern synonym with no type signature:
+rounded                            >       pattern MPFR_RNDN :: forall {a}. (Eq a, Num a) => a
+rounded                            >     |
+rounded                            > 107 | pattern MPFR_RNDN = (#const MPFR_RNDN)
+rounded                            >     | ^^^^^^^^^^^^^^^^^^^^^^^
+rounded                            > 
+rounded                            > /tmp/stack-157ed786311c7b82/rounded-1.1.1/src/Numeric/MPFR/Types.hsc:109:1: warning: [GHC-38417] [-Wmissing-pattern-synonym-signatures]
+rounded                            >     Pattern synonym with no type signature:
+rounded                            >       pattern MPFR_RNDZ :: forall {a}. (Eq a, Num a) => a
+rounded                            >     |
+rounded                            > 109 | pattern MPFR_RNDZ = (#const MPFR_RNDZ)
+rounded                            >     | ^^^^^^^^^^^^^^^^^^^^^^^
+rounded                            > 
+rounded                            > /tmp/stack-157ed786311c7b82/rounded-1.1.1/src/Numeric/MPFR/Types.hsc:111:1: warning: [GHC-38417] [-Wmissing-pattern-synonym-signatures]
+rounded                            >     Pattern synonym with no type signature:
+rounded                            >       pattern MPFR_RNDU :: forall {a}. (Eq a, Num a) => a
+rounded                            >     |
+rounded                            > 111 | pattern MPFR_RNDU = (#const MPFR_RNDU)
+rounded                            >     | ^^^^^^^^^^^^^^^^^^^^^^^
+rounded                            > 
+rounded                            > /tmp/stack-157ed786311c7b82/rounded-1.1.1/src/Numeric/MPFR/Types.hsc:113:1: warning: [GHC-38417] [-Wmissing-pattern-synonym-signatures]
+rounded                            >     Pattern synonym with no type signature:
+rounded                            >       pattern MPFR_RNDD :: forall {a}. (Eq a, Num a) => a
+rounded                            >     |
+rounded                            > 113 | pattern MPFR_RNDD = (#const MPFR_RNDD)
+rounded                            >     | ^^^^^^^^^^^^^^^^^^^^^^^
+rounded                            > 
+rounded                            > /tmp/stack-157ed786311c7b82/rounded-1.1.1/src/Numeric/MPFR/Types.hsc:115:1: warning: [GHC-38417] [-Wmissing-pattern-synonym-signatures]
+rounded                            >     Pattern synonym with no type signature:
+rounded                            >       pattern MPFR_RNDA :: forall {a}. (Eq a, Num a) => a
+rounded                            >     |
+rounded                            > 115 | pattern MPFR_RNDA = (#const MPFR_RNDA)
+rounded                            >     | ^^^^^^^^^^^^^^^^^^^^^^^
+rounded                            > 
+rounded                            > /tmp/stack-157ed786311c7b82/rounded-1.1.1/src/Numeric/MPFR/Types.hsc:117:1: warning: [GHC-38417] [-Wmissing-pattern-synonym-signatures]
+rounded                            >     Pattern synonym with no type signature:
+rounded                            >       pattern MPFR_RNDF :: forall {a}. (Eq a, Num a) => a
+rounded                            >     |
+rounded                            > 117 | pattern MPFR_RNDF = (#const MPFR_RNDF)
+rounded                            >     | ^^^^^^^^^^^^^^^^^^^^^^^
+rounded                            > 
+rounded                            > /tmp/stack-157ed786311c7b82/rounded-1.1.1/src/Numeric/MPFR/Types.hsc:119:1: warning: [GHC-38417] [-Wmissing-pattern-synonym-signatures]
+rounded                            >     Pattern synonym with no type signature:
+rounded                            >       pattern MPFR_RNDNA :: forall {a}. (Eq a, Num a) => a
+rounded                            >     |
+rounded                            > 119 | pattern MPFR_RNDNA = (#const MPFR_RNDNA)
+rounded                            >     | ^^^^^^^^^^^^^^^^^^^^^^^^^
+rounded                            > 
+rounded                            > /tmp/stack-157ed786311c7b82/rounded-1.1.1/src/Numeric/MPFR/Types.hsc:124:1: warning: [GHC-38417] [-Wmissing-pattern-synonym-signatures]
+rounded                            >     Pattern synonym with no type signature:
+rounded                            >       pattern MPFR_NAN_KIND :: forall {a}. (Eq a, Num a) => a
+rounded                            >     |
+rounded                            > 124 | pattern MPFR_NAN_KIND = (#const MPFR_NAN_KIND)
+rounded                            >     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+rounded                            > 
+rounded                            > /tmp/stack-157ed786311c7b82/rounded-1.1.1/src/Numeric/MPFR/Types.hsc:125:1: warning: [GHC-38417] [-Wmissing-pattern-synonym-signatures]
+rounded                            >     Pattern synonym with no type signature:
+rounded                            >       pattern MPFR_INF_KIND :: forall {a}. (Eq a, Num a) => a
+rounded                            >     |
+rounded                            > 125 | pattern MPFR_INF_KIND = (#const MPFR_INF_KIND)
+rounded                            >     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+rounded                            > 
+rounded                            > /tmp/stack-157ed786311c7b82/rounded-1.1.1/src/Numeric/MPFR/Types.hsc:126:1: warning: [GHC-38417] [-Wmissing-pattern-synonym-signatures]
+rounded                            >     Pattern synonym with no type signature:
+rounded                            >       pattern MPFR_ZERO_KIND :: forall {a}. (Eq a, Num a) => a
+rounded                            >     |
+rounded                            > 126 | pattern MPFR_ZERO_KIND = (#const MPFR_ZERO_KIND)
+rounded                            >     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+rounded                            > 
+rounded                            > /tmp/stack-157ed786311c7b82/rounded-1.1.1/src/Numeric/MPFR/Types.hsc:127:1: warning: [GHC-38417] [-Wmissing-pattern-synonym-signatures]
+rounded                            >     Pattern synonym with no type signature:
+rounded                            >       pattern MPFR_REGULAR_KIND :: forall {a}. (Eq a, Num a) => a
+rounded                            >     |
+rounded                            > 127 | pattern MPFR_REGULAR_KIND = (#const MPFR_REGULAR_KIND)
+rounded                            >     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+indexed-traversable-instances      > using precompiled package
+optparse-applicative               > using precompiled package
+prettyprinter-compat-ansi-wl-pprint> using precompiled package
+bifunctors                         > using precompiled package
+vector-algorithms                  > using precompiled package
+mwc-random                         > using precompiled package
+rounded                            > [ 2 of 10] Compiling Numeric.MPFR.Raw.Unsafe
+rounded                            > [ 3 of 10] Compiling Numeric.MPFR.Raw.Safe
+cassava                            > using precompiled package
+rounded                            > [ 4 of 10] Compiling Numeric.MPFR.Raw
+witherable                         > using precompiled package
+rounded                            > [ 5 of 10] Compiling Numeric.Rounded.Precision
+rounded                            > 
+rounded                            > /tmp/stack-157ed786311c7b82/rounded-1.1.1/src/Numeric/Rounded/Precision.hs:70:29: warning: [GHC-39567] [-Wstar-is-type]
+rounded                            >     Using ‘*’ (or its Unicode variant) to mean ‘Data.Kind.Type’
+rounded                            >     relies on the StarIsType extension, which will become
+rounded                            >     deprecated in the future.
+rounded                            >     Suggested fix: Use ‘Type’ from ‘Data.Kind’ instead.
+rounded                            >    |
+rounded                            > 70 | data ReifiedPrecision (s :: *)
+rounded                            >    |                             ^
+rounded                            > 
+rounded                            > /tmp/stack-157ed786311c7b82/rounded-1.1.1/src/Numeric/Rounded/Precision.hs:79:40: warning: [GHC-39567] [-Wstar-is-type]
+rounded                            >     Using ‘*’ (or its Unicode variant) to mean ‘Data.Kind.Type’
+rounded                            >     relies on the StarIsType extension, which will become
+rounded                            >     deprecated in the future.
+rounded                            >     Suggested fix: Use ‘Type’ from ‘Data.Kind’ instead.
+rounded                            >    |
+rounded                            > 79 | reifyPrecision :: Int -> (forall (p :: *). Precision p => Proxy p -> a) -> a
+rounded                            >    |                                        ^
+rounded                            > [ 6 of 10] Compiling Numeric.Rounded.Rounding
+ansi-wl-pprint                     > using precompiled package
+rounded                            > [ 7 of 10] Compiling Numeric.Rounded.Internal
+rounded                            > 
+rounded                            > /tmp/stack-157ed786311c7b82/rounded-1.1.1/src/Numeric/Rounded/Internal.hs:27:1: warning: [-Wunused-imports]
+rounded                            >     The import of ‘Data.Int’ is redundant
+rounded                            >       except perhaps to import instances from ‘Data.Int’
+rounded                            >     To import instances alone, use: import Data.Int()
+rounded                            >    |
+rounded                            > 27 | import Data.Int (Int32)
+rounded                            >    | ^^^^^^^^^^^^^^^^^^^^^^^
+rounded                            > 
+rounded                            > /tmp/stack-157ed786311c7b82/rounded-1.1.1/src/Numeric/Rounded/Internal.hs:103:12: warning: [GHC-62161] [-Wincomplete-patterns]
+rounded                            >     Pattern match(es) are non-exhaustive
+rounded                            >     In a case alternative: Patterns of type ‘()’ not matched: ()
+rounded                            >     |
+rounded                            > 103 |   return $ case () of
+rounded                            >     |            ^^^^^^^^^^...
+rounded                            > 
+rounded                            > /tmp/stack-157ed786311c7b82/rounded-1.1.1/src/Numeric/Rounded/Internal.hs:622:56: warning: [GHC-39567] [-Wstar-is-type]
+rounded                            >     Using ‘*’ (or its Unicode variant) to mean ‘Data.Kind.Type’
+rounded                            >     relies on the StarIsType extension, which will become
+rounded                            >     deprecated in the future.
+rounded                            >     Suggested fix: Use ‘Type’ from ‘Data.Kind’ instead.
+rounded                            >     |
+rounded                            > 622 | peekRounded :: Rounding r => Ptr MPFR -> (forall (p :: *) . Precision p => Rounded r p -> IO a) -> IO a
+rounded                            >     |                                                        ^
+rounded                            > 
+rounded                            > /tmp/stack-157ed786311c7b82/rounded-1.1.1/src/Numeric/Rounded/Internal.hs:627:26: warning: [GHC-39567] [-Wstar-is-type]
+rounded                            >     Using ‘*’ (or its Unicode variant) to mean ‘Data.Kind.Type’
+rounded                            >     relies on the StarIsType extension, which will become
+rounded                            >     deprecated in the future.
+rounded                            >     Suggested fix: Use ‘Type’ from ‘Data.Kind’ instead.
+rounded                            >     |
+rounded                            > 627 |     wrap :: forall (p :: *) (r :: RoundingMode) (a :: *) . (Rounding r, Precision p) => (forall (q :: *) . Precision q => Rounded r q -> IO a) -> Rounded r p -> Proxy p -> IO a
+rounded                            >     |                          ^
+rounded                            > 
+rounded                            > /tmp/stack-157ed786311c7b82/rounded-1.1.1/src/Numeric/Rounded/Internal.hs:627:55: warning: [GHC-39567] [-Wstar-is-type]
+rounded                            >     Using ‘*’ (or its Unicode variant) to mean ‘Data.Kind.Type’
+rounded                            >     relies on the StarIsType extension, which will become
+rounded                            >     deprecated in the future.
+rounded                            >     Suggested fix: Use ‘Type’ from ‘Data.Kind’ instead.
+rounded                            >     |
+rounded                            > 627 |     wrap :: forall (p :: *) (r :: RoundingMode) (a :: *) . (Rounding r, Precision p) => (forall (q :: *) . Precision q => Rounded r q -> IO a) -> Rounded r p -> Proxy p -> IO a
+rounded                            >     |                                                       ^
+rounded                            > 
+rounded                            > /tmp/stack-157ed786311c7b82/rounded-1.1.1/src/Numeric/Rounded/Internal.hs:627:103: warning: [GHC-39567] [-Wstar-is-type]
+rounded                            >     Using ‘*’ (or its Unicode variant) to mean ‘Data.Kind.Type’
+rounded                            >     relies on the StarIsType extension, which will become
+rounded                            >     deprecated in the future.
+rounded                            >     Suggested fix: Use ‘Type’ from ‘Data.Kind’ instead.
+rounded                            >     |
+rounded                            > 627 |     wrap :: forall (p :: *) (r :: RoundingMode) (a :: *) . (Rounding r, Precision p) => (forall (q :: *) . Precision q => Rounded r q -> IO a) -> Rounded r p -> Proxy p -> IO a
+rounded                            >     |                                                                                                       ^
+semigroupoids                      > using precompiled package
+dense-linear-algebra               > using precompiled package
+test-framework                     > using precompiled package
+semialign                          > using precompiled package
+rounded                            > [ 8 of 10] Compiling Numeric.Rounded
+rounded                            > [ 9 of 10] Compiling Numeric.Rounded.Interval
+test-framework-quickcheck2         > using precompiled package
+aeson                              > using precompiled package
+criterion-measurement              > using precompiled package
+microstache                        > using precompiled package
+statistics                         > using precompiled package
+rounded                            > [10 of 10] Compiling Numeric.Rounded.Simple
+rounded                            > 
+rounded                            > /tmp/stack-157ed786311c7b82/rounded-1.1.1/src/Numeric/Rounded/Simple.hs:157:1: warning: [GHC-99623] [-Wdodgy-imports]
+rounded                            >     The import item ‘Ptr(..)’ suggests that
+rounded                            >     ‘Ptr’ has (in-scope) constructors or class methods,
+rounded                            >     but it has none
+rounded                            >     |
+rounded                            > 157 | import Foreign (Ptr(..), alloca)
+rounded                            >     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+criterion                          > using precompiled package
+aern-order                         > configure (lib)
+aern-order                         > Configuring aern-order-0.5.0...
+aern-order                         > build (lib) with ghc-9.6.7
+aern-order                         > Preprocessing library for aern-order-0.5.0..
+aern-order                         > Building library for aern-order-0.5.0..
+rounded                            > copy/register
+rounded                            > Installing library in /tmp/aern2-stack.ryVCFK/snapshots/x86_64-linux-tinfo6/679cc64c76e222dbde5fd44af4907e261fb8c246ed2bc968e58bc5dabf57e98b/9.6.7/lib/x86_64-linux-ghc-9.6.7/rounded-1.1.1-JOoQN04tovPB2ml1kDvsC8
+rounded                            > Registering library for rounded-1.1.1..
+aern-order                         > copy/register
+aern-order                         > Installing library in /tmp/aern-audit.zp9Mzz/.stack-work/install/x86_64-linux-tinfo6/679cc64c76e222dbde5fd44af4907e261fb8c246ed2bc968e58bc5dabf57e98b/9.6.7/lib/x86_64-linux-ghc-9.6.7/aern-order-0.5.0-H6cJcmLkc6YCnKhaf2zhqP
+aern-order                         > Registering library for aern-order-0.5.0..
+aern-real                          > configure (lib)
+aern-real                          > Configuring aern-real-0.5.0...
+aern-real                          > build (lib) with ghc-9.6.7
+aern-real                          > Preprocessing library for aern-real-0.5.0..
+aern-real                          > Building library for aern-real-0.5.0..
+aern-real                          > copy/register
+aern-real                          > Installing library in /tmp/aern-audit.zp9Mzz/.stack-work/install/x86_64-linux-tinfo6/679cc64c76e222dbde5fd44af4907e261fb8c246ed2bc968e58bc5dabf57e98b/9.6.7/lib/x86_64-linux-ghc-9.6.7/aern-real-0.5.0-2XCNQeqHIzXEvEojwxvf50
+aern-real                          > Registering library for aern-real-0.5.0..
+aern-interval                      > configure (lib)
+aern-interval                      > Configuring aern-interval-0.5.0...
+aern-interval                      > build (lib) with ghc-9.6.7
+aern-interval                      > Preprocessing library for aern-interval-0.5.0..
+aern-interval                      > Building library for aern-interval-0.5.0..
+aern-interval                      > copy/register
+aern-interval                      > Installing library in /tmp/aern-audit.zp9Mzz/.stack-work/install/x86_64-linux-tinfo6/679cc64c76e222dbde5fd44af4907e261fb8c246ed2bc968e58bc5dabf57e98b/9.6.7/lib/x86_64-linux-ghc-9.6.7/aern-interval-0.5.0-1HwUziHwpqEDIuL7qCev2C
+aern-interval                      > Registering library for aern-interval-0.5.0..
+aern-mpfr-rounded                  > configure (lib)
+Configuring aern-mpfr-rounded-0.5.0...
+aern-mpfr-rounded                  > build (lib) with ghc-9.6.7
+Preprocessing library for aern-mpfr-rounded-0.5.0..
+Building library for aern-mpfr-rounded-0.5.0..
+[ 1 of 14] Compiling Numeric.AERN.RealArithmetic.Basis.MPFR.Basics
+[ 2 of 14] Compiling Numeric.AERN.RealArithmetic.Basis.MPFR.ExactOps
+[ 3 of 14] Compiling Numeric.AERN.RealArithmetic.Basis.MPFR.NumericOrder
+[ 4 of 14] Compiling Numeric.AERN.RealArithmetic.Basis.MPFR.ShowInternals
+[ 5 of 14] Compiling Numeric.AERN.RealArithmetic.Basis.MPFR.Utilities
+[ 6 of 14] Compiling Numeric.AERN.RealArithmetic.Basis.MPFR.FieldOps
+[ 7 of 14] Compiling Numeric.AERN.RealArithmetic.Basis.MPFR.SpecialConst
+[ 8 of 14] Compiling Numeric.AERN.RealArithmetic.Basis.MPFR.Elementary
+[ 9 of 14] Compiling Numeric.AERN.RealArithmetic.Basis.MPFR.Conversion
+
+/tmp/aern-audit.zp9Mzz/source/aern-mpfr-rounded/src/Numeric/AERN/RealArithmetic/Basis/MPFR/Conversion.hs:86:10: warning: [GHC-06201] [-Wmissing-methods]
+    • No explicit implementation for
+        ‘convertUpEff’ and ‘convertDnEff’
+    • In the instance declaration for ‘Convertible MPFR Double’
+   |
+86 | instance Convertible MPFR Double where
+   |          ^^^^^^^^^^^^^^^^^^^^^^^
+[10 of 14] Compiling Numeric.AERN.RealArithmetic.Basis.MPFR.MixedFieldOps
+[11 of 14] Compiling Numeric.AERN.RealArithmetic.Interval.MPFR
+[12 of 14] Compiling Numeric.AERN.RealArithmetic.Basis.MPFR.Measures
+[13 of 14] Compiling Numeric.AERN.RealArithmetic.Basis.MPFR
+
+/tmp/aern-audit.zp9Mzz/source/aern-mpfr-rounded/src/Numeric/AERN/RealArithmetic/Basis/MPFR.hs:50:10: warning: [GHC-06201] [-Wmissing-methods]
+    • No explicit implementation for
+        ‘rrEffortSelfMixedField’
+    • In the instance declaration for ‘RoundedReal MPFR’
+   |
+50 | instance RoundedReal MPFR where
+   |          ^^^^^^^^^^^^^^^^
+[14 of 14] Compiling Numeric.AERN.MPFRBasis.Interval
+
+/tmp/aern-audit.zp9Mzz/source/aern-mpfr-rounded/src/Numeric/AERN/MPFRBasis/Interval.hs:139:17: error:
+    Ambiguous occurrence ‘<*>’
+    It could refer to
+       either ‘Prelude.<*>’,
+              imported from ‘Prelude’ at src/Numeric/AERN/MPFRBasis/Interval.hs:15:8-38
+              (and originally defined in ‘GHC.Base’)
+           or ‘Numeric.AERN.MPFRBasis.Interval.<*>’,
+              defined at src/Numeric/AERN/MPFRBasis/Interval.hs:496:1
+    |
+139 |     (<+>),(<->),(<*>),(</>),
+    |                 ^^^^^
+Completed 83 action(s).
+
+Error: [S-7282]
+       Stack failed to execute the build plan.
+       
+       While executing the build plan, Stack encountered the error:
+       
+       [S-7011]
+       While building package aern-mpfr-rounded-0.5.0 (scroll up to its section to see the error)
+       using:
+       /tmp/aern2-stack.ryVCFK/setup-exe-cache/x86_64-linux-tinfo6/Cabal-simple_O_vy6YIf_3.10.3.0_ghc-9.6.7 --verbose=1 --builddir=.stack-work/dist/x86_64-linux-tinfo6/ghc-9.6.7 build lib:aern-mpfr-rounded --ghc-options ""
+       Process exited with code: ExitFailure 1 

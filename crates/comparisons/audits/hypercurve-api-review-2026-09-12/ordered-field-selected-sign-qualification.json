@@ -1,0 +1,100 @@
+{
+  "status": "implemented, qualified, committed; original goal active",
+  "commits": {
+    "hypercurve": "bb9744b59e34a3adb1aae703be588a2ff7d84aa1",
+    "hypersolve": "9fa774c843b32f7a9f423e2784f0e3376df16e5a",
+    "hyperbrep": "8a84ee7db02fd2720ac89a1a6a227ee4ec2a8171"
+  },
+  "preceding_commits": {
+    "hypercurve": "49692e2751a3f53693530af1479d6ec7d16c7e2b",
+    "hypersolve": "c0742ace4a762d701df6241bdfa919c313e6cec4"
+  },
+  "implementation": [
+    "Hypersolve signs a predicate at a caller-certified singleton through the existing OrderedFieldPolynomialContext. A streaming Sturm-Tarski chain uses the shared sign-preserving pseudo-remainder, without field division, scalar projection or another root isolation. Existing integer/Real fast paths remain.",
+    "Hypercurve requests this native proof after its short interval pass and before deeper bisection or global promotion. Root selection uses the original retained bracket. Unknown coefficient decisions decline; approximation cannot establish field evidence.",
+    "Four production callers consume one borrowed-coefficient sign query. The old scalar-value-at-parameter helper, chord-specific wrapper and duplicate projective Horner loop were removed. Projective parameters lift ancestor coefficients through the existing homogeneous evaluator; polynomial-selected parameters consume their defining authority.",
+    "Hypercurve production source prefixes shrink by seven lines despite adding the native proof path. No compatibility interface, replacement root carrier or new cache was added."
+  ],
+  "baseline": {
+    "log": "ordered-field-selected-sign-baseline.log",
+    "exit_code": 101,
+    "finding": "The unit root of P(t)=(t^3-sqrt(5)/3)*(t-2) cannot sign its proper factor G(t)=t^3-sqrt(5)/3 in the bounded exact pass: Uncertain instead of Zero."
+  },
+  "regressions": [
+    "G and G +/- 2^-600 sign exactly in both contexts, with defining gauges 1 and -pi, through the shared Hypercurve caller interface.",
+    "Hypersolve generated queries agree with exact evaluation. Coverage includes repeated and conjugate roots, nonrational coefficients, tiny signs, endpoint roots, collapsed intervals, unknown degrees and invalid singleton metadata.",
+    "Seven existing geometry regressions exercise ancestor-field lifting through circle/chord contacts, independent endpoint preimages, retraced overlaps, selected-source reentry and public Boolean intersection. All pass on final source."
+  ],
+  "focused": {
+    "hypersolve": "ordered-field-selected-sign-hypersolve-focused.log: 5 passed in 0.01 seconds",
+    "hypercurve_initial": "ordered-field-selected-sign-hypercurve-focused.log: 7 passed in 0.10 seconds",
+    "hypercurve_caller_migration": "ordered-field-selected-sign-hypercurve-focused-v2.log: 7 library tests and the outward PH composition integration passed"
+  },
+  "intermediate_validation": {
+    "log": "ordered-field-selected-sign-hypercurve-tests-v2.log",
+    "finding": "Seven library regressions exposed a same-field-only duplicate sign evaluator. Consolidation onto the existing ancestor-lifting evaluator fixes them; final v3 qualification passes all seven."
+  },
+  "tests": {
+    "hypercurve": {
+      "passed": 1457,
+      "targets": 13,
+      "ignored": 6,
+      "log": "ordered-field-selected-sign-hypercurve-tests-v3.log",
+      "exit_code": 0,
+      "fresh_in_this_stage": true
+    },
+    "hyperbrep": {
+      "passed": 232,
+      "targets": 1,
+      "ignored": 0,
+      "log": "ordered-field-selected-sign-hyperbrep-tests-v3.log",
+      "exit_code": 0,
+      "fresh_in_this_stage": true
+    },
+    "hypersolve": {
+      "passed": 491,
+      "targets": 1,
+      "ignored": 0,
+      "log": "ordered-field-selected-sign-hypersolve-tests.log",
+      "exit_code": 0,
+      "fresh_in_this_stage": true
+    }
+  },
+  "freshly_run_total": 2180,
+  "established_expensive_hypercurve_exclusions": 4,
+  "checks": [
+    "ordered-field-selected-sign-hypercurve-check-v3.log: exit 0",
+    "ordered-field-selected-sign-hyperbrep-check-v3.log: exit 0",
+    "ordered-field-selected-sign-hypersolve-check.log: exit 0",
+    "changed-file rustfmt --check, git diff --check and source hashes: pass"
+  ],
+  "source_sha256": {
+    "hypercurve/src/bezier_offset.rs": "f88d3b0d7ca74d93aa006043d0fd4cdb89b1bdea03b4c4e75f57924c86e2fa3f",
+    "hypersolve/src/root_sign.rs": "0c673f1137b0fc5a0ed38fe618ce194593ed31f0596003008c8a33f7cc609dc3",
+    "hypersolve/src/ordered_field_roots.rs": "e2a1b9565c5803330a5b79c5a67dd11629211949594b4e9b920ad995808c1905",
+    "hypersolve/src/lib.rs": "5d8e9d33259f74804a663cd672cb5ac39092b4ec07fd8a132e4029c8647bdecb"
+  },
+  "diagnostics": {
+    "binary": "stationary-ph-offset-native-field-sign",
+    "binary_sha256": "44e77f58de7a41cec209f052ab73fef6cb3da42e69e7c993ffcc8a6a7c07bebf",
+    "log": "stationary-ph-offset-native-field-sign.log",
+    "timeout_seconds": 60,
+    "exit_code": 124,
+    "first_offset": "Certified with degree-five analytic source, 3.778918751s",
+    "second_offset": "No result before total timeout; full inward composition closure is not claimed.",
+    "stack": "stationary-ph-native-field-sign-stack.log",
+    "finding": "The stack reaches a later chord/parallel pair endpoint-side comparison, full represented point coordinates, algebraic tensor image projection and a Bareiss resultant. The former polynomial-parameter scalar-carrier error is removed.",
+    "earlier_native_query_probe": "stationary-ph-ordered-field-sign-stack.log: native replay reaches the previously hidden chord/rational scalar-carrier error after about 9.17 seconds of the second offset; caller consolidation repairs that requirement.",
+    "timing_scope": "The final 60-second probe ran after qualification, profiling and the held-out retry finished. Earlier profiles overlapped qualification; library durations are not controlled benchmarks."
+  },
+  "held_out_retry": {
+    "test": "bezier_region::tests::pair_native_boolean_algebraic_chord_corner_publishes_a_third_generation_fillet",
+    "log": "ordered-field-selected-sign-third-generation-fillet.log",
+    "timeout_seconds": 60,
+    "exit_code": 124,
+    "result": "No result before timeout; remains excluded and unqualified. The other three expensive exclusions were not rerun in this stage."
+  },
+  "clean_repository_count": 30,
+  "workspace_state": "ordered-field-selected-sign-workspace-after-commit.json",
+  "goal_status": "active"
+}

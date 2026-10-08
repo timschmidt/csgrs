@@ -1,0 +1,58 @@
+{
+  "csgrs/src/io/gerber.rs": [
+    {
+      "line": 804,
+      "text": "CurveRegion2::try_from_native_boundary_contours("
+    }
+  ],
+  "hypercurve/README.md": [
+    {
+      "line": 304,
+      "text": "try_from_native_material_contours, try_from_native_boundary_contours,"
+    }
+  ],
+  "hypercurve/benches/editing.rs": [
+    {
+      "line": 1769,
+      "text": "let Classification::Decided(region) = CurveRegion2::try_from_native_boundary_contours("
+    }
+  ],
+  "hypercurve/src/bezier_region.rs": [
+    {
+      "line": 10253,
+      "text": "pub fn try_from_native_boundary_contours("
+    },
+    {
+      "line": 10258,
+      "text": "let nesting = match Self::native_boundary_contour_nesting_raw(&contours, attempt)? {"
+    },
+    {
+      "line": 10285,
+      "text": "fn native_boundary_contour_nesting_raw("
+    },
+    {
+      "line": 11008,
+      "text": "let nesting = match Self::native_boundary_contour_nesting_raw(&contours, policy) {"
+    }
+  ],
+  "hypercurve/src/native_region_tests.rs": [
+    {
+      "line": 101,
+      "text": "let outcome = CurveRegion2::try_from_native_boundary_contours(Vec::new(), &policy)"
+    },
+    {
+      "line": 187,
+      "text": "let classified = CurveRegion2::try_from_native_boundary_contours("
+    },
+    {
+      "line": 217,
+      "text": "CurveRegion2::try_from_native_boundary_contours(contours, &policy())"
+    }
+  ],
+  "hypercurve/tests/hypercurve_curve_region_promotion.rs": [
+    {
+      "line": 8027,
+      "text": "CurveRegion2::try_from_native_boundary_contours(boundaries, &policy)"
+    }
+  ]
+}

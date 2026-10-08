@@ -1,0 +1,14 @@
+{
+  "normal_production_build": true,
+  "source_manifest": "known-fillet-centers-20260928-v669-sources.json",
+  "source_directory": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/source-archives/known-fillet-centers-20260928-v669",
+  "builds": [],
+  "cases": [],
+  "checks": [],
+  "all_processes_reaped": true,
+  "probe_complete": false,
+  "qualification_complete": false,
+  "failure": "Initial source guard rejected unreaped formatter mutation; no build or tests started.",
+  "formatter_outer": 61289,
+  "formatter_reaped_exit": 0
+}

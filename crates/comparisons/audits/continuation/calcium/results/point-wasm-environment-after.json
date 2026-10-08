@@ -1,0 +1,13 @@
+{
+  "tag": "point-wasm-environment-after",
+  "started": "2026-09-10T23:57:47.854Z",
+  "finished": "2026-09-10T23:57:47.956Z",
+  "elapsedSeconds": 0.099954474,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "node",
+  "args": [
+    "point-image-cost-environment.mjs"
+  ],
+  "code": 0,
+  "signal": null
+}

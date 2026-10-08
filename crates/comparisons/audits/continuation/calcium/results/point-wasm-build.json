@@ -1,0 +1,13 @@
+{
+  "tag": "point-wasm-build",
+  "started": "2026-09-10T23:31:28.832Z",
+  "finished": "2026-09-10T23:31:33.615Z",
+  "elapsedSeconds": 4.780889303,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "node",
+  "args": [
+    "build-point-wasm.mjs"
+  ],
+  "code": 0,
+  "signal": null
+}

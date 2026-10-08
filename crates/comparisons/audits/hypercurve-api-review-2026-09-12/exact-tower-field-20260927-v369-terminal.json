@@ -1,0 +1,33 @@
+{
+  "source_manifest": "exact-tower-coefficient-replay-20260927-v367-sources.json",
+  "binary": {
+    "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/exact-tower-coefficient-replay-20260927-v367-hypercurve_curve_region_promotion",
+    "sha256": "509c55175ee9bc48385675faa0d7aa706461cce1b80a719bc0368f50179564c6"
+  },
+  "command": [
+    "gdb",
+    "--quiet",
+    "--batch",
+    "-ex",
+    "set pagination off",
+    "-ex",
+    "set confirm off",
+    "-ex",
+    "set debuginfod enabled off",
+    "-ex",
+    "run",
+    "-ex",
+    "thread apply all bt -65",
+    "-ex",
+    "quit",
+    "--args",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/exact-tower-coefficient-replay-20260927-v367-hypercurve_curve_region_promotion",
+    "--exact",
+    "strict_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions",
+    "--nocapture",
+    "--test-threads=1"
+  ],
+  "returncode": 0,
+  "elapsed_seconds": 0.5547520730178803,
+  "all_processes_reaped": true
+}

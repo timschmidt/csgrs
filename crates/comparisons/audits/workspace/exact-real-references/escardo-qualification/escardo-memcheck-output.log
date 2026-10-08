@@ -1,0 +1,38 @@
+compl	checks=243	failures=0
+addOne	checks=243	failures=0
+subOne	checks=243	failures=0
+oneMinus	checks=243	failures=0
+mulBy2	checks=243	failures=0
+mulBy4	checks=243	failures=0
+sqr	checks=243	failures=0
+iabs	checks=243	failures=0
+pabs	checks=243	failures=0
+znorm	checks=243	failures=0
+idAffine	checks=243	failures=0
+complAffine	checks=243	failures=0
+mid	checks=19683	failures=0
+tadd	checks=19683	failures=0
+imin	checks=19683	failures=540
+  ((-3) % 4,(-7) % 8,5)
+  ((-3) % 4,(-7) % 8,12)
+  ((-3) % 4,(-5) % 8,5)
+imax	checks=19683	failures=540
+  ((-7) % 8,(-3) % 4,5)
+  ((-7) % 8,(-3) % 4,12)
+  ((-5) % 8,(-3) % 4,5)
+pmax	checks=19683	failures=0
+mul0	checks=19683	failures=0
+mul1	checks=19683	failures=0
+mul2	checks=19683	failures=1554
+  ((-7) % 8,(-3) % 4,12)
+  ((-7) % 8,(-5) % 8,12)
+  ((-7) % 8,(-1) % 2,12)
+mul3	checks=19683	failures=0
+divByInt	checks=1458	failures=0
+tMulByInt	checks=1701	failures=0
+mulByInt	checks=1701	failures=0
+bigMid-constant-periodic	checks=18	failures=0
+fromDouble-exact-import	checks=120	failures=66
+  (-1.0,64,(-36028797018963967) % 36028797018963968)
+  (-1.0,128,(-36028797018963967) % 36028797018963968)
+  (-1.0,1100,(-36028797018963967) % 36028797018963968)

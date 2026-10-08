@@ -1,0 +1,82 @@
+{
+  "source_manifest": "constrained-fillet-api-20260926-v297-sources.json",
+  "source_directory": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/source-archives/constrained-fillet-api-20260926-v297",
+  "cases": [
+    {
+      "binary": "constrained-fillet-api-20260926-v297-hypercurve",
+      "name": "curve::curve_fillet::tests::isolated_fillet_constraints_are_conjunctive_and_use_input_parameters",
+      "returncode": 0,
+      "log": "constrained-fillet-api-20260926-v297-case-000.log",
+      "elapsed_seconds": 0.003596693044528365
+    },
+    {
+      "binary": "constrained-fillet-api-20260926-v297-hypercurve",
+      "name": "curve::curve_fillet::tests::joined_path_selects_and_replays_a_continuous_fillet_family",
+      "returncode": 0,
+      "log": "constrained-fillet-api-20260926-v297-case-001.log",
+      "elapsed_seconds": 2.7174324999796227
+    },
+    {
+      "binary": "constrained-fillet-api-20260926-v297-hypercurve",
+      "name": "curve::curve_fillet::tests::normalized_region_selects_and_reuses_a_continuous_fillet_family",
+      "returncode": 0,
+      "log": "constrained-fillet-api-20260926-v297-case-002.log",
+      "elapsed_seconds": 0.11386170005425811
+    },
+    {
+      "binary": "constrained-fillet-api-20260926-v297-hypercurve",
+      "name": "curve::tests::distinct_parallel_sources_keep_a_shared_fillet_center_family",
+      "returncode": 0,
+      "log": "constrained-fillet-api-20260926-v297-case-003.log",
+      "elapsed_seconds": 0.031749062007293105
+    }
+  ],
+  "builds": [
+    {
+      "crate": "hypercurve",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "test",
+        "--lib",
+        "--release",
+        "--all-features",
+        "--no-run",
+        "--message-format=json",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "log": "constrained-fillet-api-20260926-v297-hypercurve-build.log",
+      "elapsed_seconds": 128.89745500904974,
+      "binary": {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/constrained-fillet-api-20260926-v297-hypercurve",
+        "sha256": "ac170f86bb2b01cb6a1909d94d47587b30040d8b9c0e8e0185dbf9cf06db3699"
+      }
+    }
+  ],
+  "all_processes_reaped": true,
+  "checks": [
+    {
+      "label": "check-all-targets",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "check",
+        "--all-targets",
+        "--all-features",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "log": "constrained-fillet-api-20260926-v297-check-all-targets.log",
+      "elapsed_seconds": 17.89026042004116
+    }
+  ],
+  "qualification_scope": "Retained point-incidence parameter visitation and demand-driven existence checks; all-preimage, collapsed-circle, correlated exterior, membership, component and fillet controls; both feature Clippy checks",
+  "expected_cases": [
+    "curve::curve_fillet::tests::isolated_fillet_constraints_are_conjunctive_and_use_input_parameters",
+    "curve::curve_fillet::tests::joined_path_selects_and_replays_a_continuous_fillet_family",
+    "curve::curve_fillet::tests::normalized_region_selects_and_reuses_a_continuous_fillet_family",
+    "curve::tests::distinct_parallel_sources_keep_a_shared_fillet_center_family"
+  ],
+  "qualification_complete": true
+}

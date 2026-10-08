@@ -1,0 +1,31 @@
+Start testing: Sep 03 19:40 EDT
+----------------------------------------------------------
+1/1 Testing: test.sh
+1/1 Test: test.sh
+Command: "/home/tim/Documents/GitHub/workspace/exact-real-references/spigot/test.sh" "/tmp/spigot-audit.iKvIgb/gmp/spigot"
+Directory: /tmp/spigot-audit.iKvIgb/gmp
+"test.sh" start time: Sep 03 19:40 EDT
+Output:
+----------------------------------------------------------
+---- general info
+Program under test:
+| /tmp/spigot-audit.iKvIgb/gmp/spigot
+Version dump:
+| spigot, unidentified build
+|   big integer provider: gmp
+|   fd literals (cfracfd:F, baseNfd:F): supported
+---- core tests
+---- fd tests
+---- results
+pass 1495
+fail 0
+total 1495
+<end of output>
+Test time =  22.16 sec
+----------------------------------------------------------
+Test Passed.
+"test.sh" end time: Sep 03 19:40 EDT
+"test.sh" time elapsed: 00:00:22
+----------------------------------------------------------
+
+End testing: Sep 03 19:40 EDT

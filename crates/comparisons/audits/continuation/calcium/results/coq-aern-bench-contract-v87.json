@@ -1,0 +1,13 @@
+{
+  "tag": "coq-aern-bench-contract-v87",
+  "started": "2026-09-12T06:38:08.375Z",
+  "finished": "2026-09-12T06:38:08.486Z",
+  "elapsedSeconds": 0.109679982,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/coq-aern/v87",
+  "command": "node",
+  "args": [
+    "bench-contract-v87.mjs"
+  ],
+  "code": 1,
+  "signal": null
+}

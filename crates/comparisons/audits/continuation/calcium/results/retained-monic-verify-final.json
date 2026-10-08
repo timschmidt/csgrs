@@ -1,0 +1,14 @@
+{
+  "tag": "retained-monic-verify-final",
+  "started": "2026-09-09T01:55:56.963Z",
+  "finished": "2026-09-09T01:56:04.719Z",
+  "elapsedSeconds": 7.753643407,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "node",
+  "args": [
+    "verify-retained-monic.mjs",
+    "--monic-live"
+  ],
+  "code": 0,
+  "signal": null
+}

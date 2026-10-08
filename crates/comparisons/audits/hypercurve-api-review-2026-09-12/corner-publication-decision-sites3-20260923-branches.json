@@ -1,0 +1,232 @@
+{
+  "CONIC_ENDPOINT:6851": {
+    "file": "src/rational_bezier_general.rs",
+    "line": 6851,
+    "expression": "return Classification::Uncertain(UncertaintyReason::Unsupported)"
+  },
+  "CONIC_ENDPOINT:6859": {
+    "file": "src/rational_bezier_general.rs",
+    "line": 6859,
+    "expression": "return Classification::Uncertain(UncertaintyReason::Unsupported)"
+  },
+  "CONIC_ENDPOINT:6865": {
+    "file": "src/rational_bezier_general.rs",
+    "line": 6865,
+    "expression": "return Classification::Uncertain(UncertaintyReason::RealSign)"
+  },
+  "CONIC_ENDPOINT:6868": {
+    "file": "src/rational_bezier_general.rs",
+    "line": 6868,
+    "expression": "return Classification::Uncertain(UncertaintyReason::RealSign)"
+  },
+  "CONIC_ENDPOINT:6875": {
+    "file": "src/rational_bezier_general.rs",
+    "line": 6875,
+    "expression": "return Classification::Uncertain(UncertaintyReason::Unsupported)"
+  },
+  "CONIC_OVERLAP:5546": {
+    "file": "src/rational_bezier_general.rs",
+    "line": 5546,
+    "expression": "return Classification::Uncertain(UncertaintyReason::RealSign)"
+  },
+  "CONIC_OVERLAP:5576": {
+    "file": "src/rational_bezier_general.rs",
+    "line": 5576,
+    "expression": "return Classification::Uncertain(UncertaintyReason::Boundary)"
+  },
+  "CONIC_OVERLAP:5581": {
+    "file": "src/rational_bezier_general.rs",
+    "line": 5581,
+    "expression": "return Classification::Uncertain(UncertaintyReason::RealSign)"
+  },
+  "CONIC_OVERLAP:5584": {
+    "file": "src/rational_bezier_general.rs",
+    "line": 5584,
+    "expression": "return Classification::Uncertain(UncertaintyReason::RealSign)"
+  },
+  "CONIC_OVERLAP:5594": {
+    "file": "src/rational_bezier_general.rs",
+    "line": 5594,
+    "expression": "return Classification::Uncertain(UncertaintyReason::RealSign)"
+  },
+  "CONIC_OVERLAP:5597": {
+    "file": "src/rational_bezier_general.rs",
+    "line": 5597,
+    "expression": "return Classification::Uncertain(UncertaintyReason::RealSign)"
+  },
+  "CONIC_OVERLAP:5622": {
+    "file": "src/rational_bezier_general.rs",
+    "line": 5622,
+    "expression": "return Classification::Uncertain(UncertaintyReason::RealSign)"
+  },
+  "CONIC_OVERLAP:5624": {
+    "file": "src/rational_bezier_general.rs",
+    "line": 5624,
+    "expression": "return Classification::Uncertain(UncertaintyReason::Unsupported)"
+  },
+  "CONIC_OVERLAP:5635": {
+    "file": "src/rational_bezier_general.rs",
+    "line": 5635,
+    "expression": "return Classification::Uncertain(UncertaintyReason::RealSign)"
+  },
+  "CONIC_OVERLAP:5637": {
+    "file": "src/rational_bezier_general.rs",
+    "line": 5637,
+    "expression": "return Classification::Uncertain(UncertaintyReason::Unsupported)"
+  },
+  "CONIC_OVERLAP:5659": {
+    "file": "src/rational_bezier_general.rs",
+    "line": 5659,
+    "expression": "return Classification::Uncertain(reason)"
+  },
+  "CONIC_OVERLAP:5669": {
+    "file": "src/rational_bezier_general.rs",
+    "line": 5669,
+    "expression": "return Classification::Uncertain(reason)"
+  },
+  "CONIC_OVERLAP:5681": {
+    "file": "src/rational_bezier_general.rs",
+    "line": 5681,
+    "expression": "return Classification::Uncertain(reason)"
+  },
+  "CONIC_OVERLAP:5783": {
+    "file": "src/rational_bezier_general.rs",
+    "line": 5783,
+    "expression": "return Classification::Uncertain(reason)"
+  },
+  "CONIC_OVERLAP:5793": {
+    "file": "src/rational_bezier_general.rs",
+    "line": 5793,
+    "expression": "return Classification::Uncertain(reason)"
+  },
+  "CONIC_OVERLAP:5815": {
+    "file": "src/rational_bezier_general.rs",
+    "line": 5815,
+    "expression": "return Classification::Uncertain(reason)"
+  },
+  "CONIC_OVERLAP:5825": {
+    "file": "src/rational_bezier_general.rs",
+    "line": 5825,
+    "expression": "return Classification::Uncertain(UncertaintyReason::RealSign)"
+  },
+  "CONIC_OVERLAP:5827": {
+    "file": "src/rational_bezier_general.rs",
+    "line": 5827,
+    "expression": "return Classification::Uncertain(UncertaintyReason::Unsupported)"
+  },
+  "CONIC_OVERLAP:5845": {
+    "file": "src/rational_bezier_general.rs",
+    "line": 5845,
+    "expression": "return Classification::Uncertain(reason)"
+  },
+  "CONIC_OVERLAP:5867": {
+    "file": "src/rational_bezier_general.rs",
+    "line": 5867,
+    "expression": "return Classification::Uncertain(reason)"
+  },
+  "CONIC_OVERLAP:5877": {
+    "file": "src/rational_bezier_general.rs",
+    "line": 5877,
+    "expression": "return Classification::Uncertain(UncertaintyReason::RealSign)"
+  },
+  "CONIC_OVERLAP:5879": {
+    "file": "src/rational_bezier_general.rs",
+    "line": 5879,
+    "expression": "return Classification::Uncertain(UncertaintyReason::Unsupported)"
+  },
+  "CONIC_OVERLAP:5897": {
+    "file": "src/rational_bezier_general.rs",
+    "line": 5897,
+    "expression": "return Classification::Uncertain(reason)"
+  },
+  "CONIC_OVERLAP:5911": {
+    "file": "src/rational_bezier_general.rs",
+    "line": 5911,
+    "expression": "return Classification::Uncertain(reason)"
+  },
+  "CONIC_OVERLAP:5926": {
+    "file": "src/rational_bezier_general.rs",
+    "line": 5926,
+    "expression": "return Classification::Uncertain(reason)"
+  },
+  "CONIC_OVERLAP:5932": {
+    "file": "src/rational_bezier_general.rs",
+    "line": 5932,
+    "expression": "return Classification::Uncertain(reason)"
+  },
+  "CONIC_OVERLAP:5934": {
+    "file": "src/rational_bezier_general.rs",
+    "line": 5934,
+    "expression": "return Classification::Uncertain(UncertaintyReason::Unsupported)"
+  },
+  "CONIC_OVERLAP:5948": {
+    "file": "src/rational_bezier_general.rs",
+    "line": 5948,
+    "expression": "return Classification::Uncertain(reason)"
+  },
+  "CONIC_OVERLAP:5996": {
+    "file": "src/rational_bezier_general.rs",
+    "line": 5996,
+    "expression": "return Classification::Uncertain(reason)"
+  },
+  "CONIC_OVERLAP:5999": {
+    "file": "src/rational_bezier_general.rs",
+    "line": 5999,
+    "expression": "return Classification::Uncertain(UncertaintyReason::RealSign)"
+  },
+  "CONIC_OVERLAP:6002": {
+    "file": "src/rational_bezier_general.rs",
+    "line": 6002,
+    "expression": "return Classification::Uncertain(UncertaintyReason::Unsupported)"
+  },
+  "CONIC_OVERLAP:6013": {
+    "file": "src/rational_bezier_general.rs",
+    "line": 6013,
+    "expression": "return Classification::Uncertain(UncertaintyReason::RealSign)"
+  },
+  "CONIC_OVERLAP:6015": {
+    "file": "src/rational_bezier_general.rs",
+    "line": 6015,
+    "expression": "return Classification::Uncertain(UncertaintyReason::Unsupported)"
+  },
+  "CONIC_OVERLAP:6028": {
+    "file": "src/rational_bezier_general.rs",
+    "line": 6028,
+    "expression": "return Classification::Uncertain(reason)"
+  },
+  "CONIC_OVERLAP:6033": {
+    "file": "src/rational_bezier_general.rs",
+    "line": 6033,
+    "expression": "return Classification::Uncertain(reason)"
+  },
+  "CONIC_OVERLAP:6038": {
+    "file": "src/rational_bezier_general.rs",
+    "line": 6038,
+    "expression": "return Classification::Uncertain(reason)"
+  },
+  "CONIC_OVERLAP:6043": {
+    "file": "src/rational_bezier_general.rs",
+    "line": 6043,
+    "expression": "return Classification::Uncertain(reason)"
+  },
+  "CONIC_OVERLAP:6047": {
+    "file": "src/rational_bezier_general.rs",
+    "line": 6047,
+    "expression": "return Classification::Uncertain(reason)"
+  },
+  "CONIC_OVERLAP:6048": {
+    "file": "src/rational_bezier_general.rs",
+    "line": 6048,
+    "expression": "return Classification::Uncertain(UncertaintyReason::Unsupported)"
+  },
+  "CONIC_OVERLAP:6060": {
+    "file": "src/rational_bezier_general.rs",
+    "line": 6060,
+    "expression": "return Classification::Uncertain(reason)"
+  },
+  "CONIC_OVERLAP:6061": {
+    "file": "src/rational_bezier_general.rs",
+    "line": 6061,
+    "expression": "return Classification::Uncertain(UncertaintyReason::Unsupported)"
+  }
+}

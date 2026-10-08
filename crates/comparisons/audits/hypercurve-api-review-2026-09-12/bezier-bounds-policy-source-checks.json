@@ -1,0 +1,103 @@
+{
+  "hypercurve": {
+    "context_parameters_removed": 26,
+    "files": [
+      {
+        "file": "src/arc_bezier.rs",
+        "context_parameters_removed": 0,
+        "production_line_delta": 0
+      },
+      {
+        "file": "src/bezier_algebraic_image.rs",
+        "context_parameters_removed": 0,
+        "production_line_delta": 0
+      },
+      {
+        "file": "src/bezier_flatten.rs",
+        "context_parameters_removed": 2,
+        "production_line_delta": -3
+      },
+      {
+        "file": "src/bezier_moment.rs",
+        "context_parameters_removed": 0,
+        "production_line_delta": 0
+      },
+      {
+        "file": "src/bezier_offset.rs",
+        "context_parameters_removed": 2,
+        "production_line_delta": -2
+      },
+      {
+        "file": "src/bezier_region.rs",
+        "context_parameters_removed": 0,
+        "production_line_delta": 0
+      },
+      {
+        "file": "src/bezier_retained_measure.rs",
+        "context_parameters_removed": 1,
+        "production_line_delta": -2
+      },
+      {
+        "file": "src/bezier_retained_overlap.rs",
+        "context_parameters_removed": 0,
+        "production_line_delta": 0
+      },
+      {
+        "file": "src/bezier_split.rs",
+        "context_parameters_removed": 1,
+        "production_line_delta": -5
+      },
+      {
+        "file": "src/bezier_topology.rs",
+        "context_parameters_removed": 10,
+        "production_line_delta": -25
+      },
+      {
+        "file": "src/bspline.rs",
+        "context_parameters_removed": 1,
+        "production_line_delta": -3
+      },
+      {
+        "file": "src/curve.rs",
+        "context_parameters_removed": 1,
+        "production_line_delta": -3
+      },
+      {
+        "file": "src/curve_evaluation.rs",
+        "context_parameters_removed": 0,
+        "production_line_delta": 0
+      },
+      {
+        "file": "src/curve_support.rs",
+        "context_parameters_removed": 1,
+        "production_line_delta": -3
+      },
+      {
+        "file": "src/rational_bezier.rs",
+        "context_parameters_removed": 2,
+        "production_line_delta": -16
+      },
+      {
+        "file": "src/rational_bezier_general.rs",
+        "context_parameters_removed": 5,
+        "production_line_delta": -9
+      }
+    ],
+    "diff_check": true,
+    "format_check": true,
+    "immutable_source_hashes": true
+  },
+  "hyperbrep": {
+    "context_parameters_removed": 0,
+    "files": [
+      {
+        "file": "src/geometry.rs",
+        "context_parameters_removed": 0,
+        "production_line_delta": 0
+      }
+    ],
+    "diff_check": true,
+    "format_check": true,
+    "immutable_source_hashes": true
+  }
+}

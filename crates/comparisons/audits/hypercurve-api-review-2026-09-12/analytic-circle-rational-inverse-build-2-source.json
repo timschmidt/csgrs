@@ -1,0 +1,7 @@
+{
+  "commit": "330edacf73d34ef7524e2dd904d5ef3016821b83",
+  "files": {
+    "src/bezier_offset.rs": "8c98150b427bdfbdb73232ee5c3a8ff6433ed6d652686e2789ba40a3c785389f",
+    "tests/hypercurve_analytic_parallel_region.rs": "210209eed7b7ae58a66b6bfafde20642c59dc7f634c38b0015476c4536575b8f"
+  }
+}

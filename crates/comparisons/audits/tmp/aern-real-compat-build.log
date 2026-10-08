@@ -1,0 +1,28 @@
+aern-real> build (lib) with ghc-9.6.7
+Preprocessing library for aern-real-0.5.0..
+Building library for aern-real-0.5.0..
+[23 of 25] Compiling Numeric.AERN.RealArithmetic.RefinementOrderRounding.Operators
+[24 of 25] Compiling Numeric.AERN.RealArithmetic.RefinementOrderRounding.ElementaryFromFieldOps.SineCosine
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/RefinementOrderRounding/ElementaryFromFieldOps/SineCosine.hs:222:5: warning: [GHC-63397] [-Wname-shadowing]
+    This binding for ‘pi’ shadows the existing binding
+      imported from ‘Prelude’ at src/Numeric/AERN/RealArithmetic/RefinementOrderRounding/ElementaryFromFieldOps/SineCosine.hs:18:8-92
+      (and originally defined in ‘GHC.Float’)
+    |
+222 |     pi = ArithInOut.piOut sampleCoeff
+    |     ^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/RefinementOrderRounding/ElementaryFromFieldOps/SineCosine.hs:232:16: warning: [-Wunused-local-binds]
+    Defined but not used: ‘sLUp’
+    |
+232 |         (sLDn, sLUp) = RefOrd.getEndpointsOut sL
+    |                ^^^^
+
+/tmp/aern-audit.zp9Mzz/source/aern-real/src/Numeric/AERN/RealArithmetic/RefinementOrderRounding/ElementaryFromFieldOps/SineCosine.hs:233:10: warning: [-Wunused-local-binds]
+    Defined but not used: ‘sRDn’
+    |
+233 |         (sRDn, sRUp) = RefOrd.getEndpointsOut sR
+    |          ^^^^
+aern-real> copy/register
+Installing library in /tmp/aern-audit.zp9Mzz/.stack-work/install/x86_64-linux-tinfo6/a9cdb111ba43c34a9894161df33edb1b290c1c61f1b004418a8411cbdf470c15/9.6.7/lib/x86_64-linux-ghc-9.6.7/aern-real-0.5.0-2XCNQeqHIzXEvEojwxvf50
+Registering library for aern-real-0.5.0..

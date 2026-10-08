@@ -1,0 +1,13 @@
+
+running 8 tests
+test bezier_offset::conversion_tests::rank_independent_public_booleans_strict_first_quarter_cusp_first ... ok
+test bezier_offset::conversion_tests::rank_independent_public_booleans_approximate_first_quarter_cusp_first ... ok
+test bezier_offset::conversion_tests::rank_independent_public_booleans_strict_first_quarter_cusp_second ... ok
+test bezier_offset::conversion_tests::rank_independent_public_booleans_approximate_first_quarter_cusp_second ... ok
+test bezier_offset::conversion_tests::rank_independent_public_booleans_strict_second_quarter_cusp_first ... ok
+test bezier_offset::conversion_tests::rank_independent_public_booleans_strict_second_quarter_cusp_second ... ok
+test bezier_offset::conversion_tests::rank_independent_public_booleans_approximate_second_quarter_cusp_first ... ok
+test bezier_offset::conversion_tests::rank_independent_public_booleans_approximate_second_quarter_cusp_second ... ok
+
+test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 868 filtered out; finished in 2.77s
+

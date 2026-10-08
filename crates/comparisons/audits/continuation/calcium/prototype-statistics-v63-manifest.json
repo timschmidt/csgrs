@@ -1,0 +1,1156 @@
+{
+  "schema": 1,
+  "checkpoint": 63,
+  "recorded": "2026-09-11T02:06:15.096Z",
+  "previousManifest": "proof-facts-monic-v62-manifest.json",
+  "files": {
+    "prototype-statistics-v63-findings.md": "459a91100a8b356d23f75a1afaaf0cc1cfc502a19c964aba43944ef546138fdb",
+    "prototype-statistics-v63-analysis.json": "4ab0674d63b9bc6457990b3600e1d42359ef216901dd29442397d0e7ef5b7d39",
+    "reanalyse-prototype-statistics-v63.mjs": "e2284f2a4affccfa6aa031f2570828280c4e5f1dc81d664f00e71b91d72c5536",
+    "check-prototype-statistics-v63.mjs": "f84c7b7408e6d4a59e05a157fc345399dc244559c452a7316c74f87a96953bb8",
+    "prototype-statistics-evidence-v63.mjs": "3c5320981ea44bf72d2e855848a6d7755c4d90a3dc02f08a86ce3194ed076495",
+    "record-prototype-statistics-v63.mjs": "6eb79b31ad800462594446a52da3aafb37d82197b624415c422b54536a4fdc96",
+    "verify-prototype-statistics-v63.mjs": "54962a5d2c99f82afdd4653872160ceebc4aa03cd6a0df0c4f38a291481516b8",
+    "paired-statistics-v60.mjs": "b40e8b928b866a0298a06520ac415ec09013fc8c5f704e2eda8df02d770bbc5d",
+    "prototype-statistics-v63-inventory.mjs": "56a1740f34253cd1834697507252f43d5e6e9dfac4bc340a3646f673c4e8894b",
+    "prototype-statistics-v63-inventory.json": "53c5f4223b285572dc4a5f050aa89bd19aa63521fb47271eaecfb2d685aa8138",
+    "prototype-statistics-inventory-v63.mjs": "fed807786103d6d5c497a1427281127e62f600dbf9d7477723b691f72d58305c",
+    "prototype-statistics-inventory-failed-v63.mjs": "dc6ecb4abe6de41b2ec9acac2cf3a511de6a922539926331adabed7da9fed7d8",
+    "prototype-statistics-v63-inventory-corrected.json": "9fc47b900bf70aec47e487c60c7a43c5e708ba6fb682ebe4a2a12599b456c3aa",
+    "proof-facts-monic-v62-manifest.json": "a0c714176e58d8d8f720aa2788da3be316a8fec0b5ba0e8e47b6ddda39f37c5e",
+    "reanalyse-proof-facts-monic-v62.mjs": "f4f2af3865b71ac353eed30c8215e5feb81fd85f21f27c37971a57409fb5825f",
+    "point-demand-sources.mjs": "6c10d4c9a336971b3018373508999cd1fe37635d8a336d8b337f2c1997f37700",
+    "capture.mjs": "aaf6df6bbd73025a8541617ce83731ae5ea3fd2272bd98c15e3c4c12b713ce23",
+    "matrix-solve-experiment.json": "728b99ad03ab774ebf813bec3b714c527a16074a8ca4f6306be1ce5430645248",
+    "complex-product-experiment.json": "c1e8f91dbde3c808a2ed08edc0b0ab3c37a06c87bfc6e6a4623968ad35adb7bd",
+    "complex-product-v2-experiment.json": "63cdfb9580e34ba3c6ac7c4b57f0a5fb1a0ddbc59cc00cb164e7a8203ba3dd08",
+    "rank-cost-experiment.json": "21864bbc7d412989f05d65d76cd041ae110c9b13c13110aa060beffe7da7462a",
+    "sign-filter-experiment.json": "d87ebbfdbd59662eb0fdc3fb34d99891ccb6058ea29028cc8e8722213e4d8037",
+    "sign-filter-mask-experiment.json": "f2c31f5f7003eebbab6433d9bd5e4be457abed538f3ab19d2e925a9971435949",
+    "run-complex-product-costs.mjs": "e18778063f779309e53cf57bdaaef52377eeee49dac843ce3e29bb797287eadb",
+    "run-complex-product-v2-costs.mjs": "119732f39ceb4cce41e8cf14d1c166161cf6f996feb1ef0af35bc613741052f2",
+    "run-rank-costs.mjs": "22763eb0233811786db9913c192d45e2985dd71234bdb723a572997c5a8ea2ce",
+    "run-sign-filter-costs.mjs": "fd31a68ad0ac3d3d33ac9f65f9c2d65e72ef4334959cbf61fe843773212413a9",
+    "run-sign-filter-mask-costs.mjs": "cfe752dd851380da198d48f625a60269917c936299a2ff0b8c6afcd2af4d3496",
+    "check-complex-product.mjs": "5769ca77c69c2705d6bc20856531023301818b4c7ceb76599b94d9803940ac70",
+    "check-complex-product-v2.mjs": "b6f33ab4d8c144927850b7a74c23e93dc036abdcf27bf68bec907ed9bd879288",
+    "check-sign-filter.mjs": "091cdd6bf93257b3dfeefac0e35aaa846b4bcd09c4fda0161999297684f56b45",
+    "check-sign-filter-mask.mjs": "a33aee147e969ed825128c15e683346706640a3c234934fb066b3ea8a8b12d17",
+    "verify-rank-costs.mjs": "c6fd9c80647552cea431298d788084739db58ea0a706b03061ce162c5c5bcf9e",
+    "snapshot-v43-check-complex-product.mjs": "b797557531c98ed66c195de5a6c94ba47469433e5f9e6b148f5ad135ad136b27",
+    "snapshot-v43-check-complex-product-v2.mjs": "c3d00b056103e45030105eb13632a364926b56c56b359c463224e7a8de54b2be",
+    "complex-product-sources.mjs": "67fe7d85f4d598369f9de8821af8bb661b1d2c67a7c6443c281611428da71e9e",
+    "complex-product-v2-sources.mjs": "b6544549899ab625674aca9b60b24a7ecf7378c5252a84641311caeebc15ebb4",
+    "snapshot-v43-complex-product-sources.mjs": "c737bbc08a172e579fbefe3c90f12484eb80cc732171782ea31eac2eb68c658d",
+    "snapshot-v43-complex-product-v2-sources.mjs": "3454655915bb91da95e4b099bcb13bfc0b018462ae08b77fc4f1d8fd6d9807fc",
+    "sign-filter-sources.mjs": "727196f1f7ff6e38ee492bc6eeeca17b2490094496274af3988bc761ec545c6b",
+    "sign-filter-mask-sources.mjs": "39b9fb14108d73346665669e08a671e842015950ef5d8abea2d2223122452c27",
+    "sign-filter-ring-oracle.mjs": "022cab1a665c7f6ea9388710a6ba691bfd8f7e7f4d1138b64773d3e0e0b1fd2e",
+    "complex-product-cpu-summary.json": "e6670d223a80833ef7f685165b470798782312399ae80ccc052ca268c70f00d9",
+    "results/complex-product-cpu.jsonl": "1c071fe9a454b7bccf6665e4b359a08f95902cc130ac088ad5c3ea765799a431",
+    "complex-product-allocation-summary.json": "30747ca68e228cd9b0166aaf3bf1ad37fd2afc1852fdfbf62cdc7a604e3c427f",
+    "results/complex-product-allocation.jsonl": "0b47e3d145796d8152235dad4fc06369a25ec06bc01169df2e07b9f1509b28d5",
+    "complex-product-v2-cpu-summary.json": "fbbe5f4d6ab9646a69f3df7e78d7c3f8a4756bbfdebca8b767024a17cb06d180",
+    "results/complex-product-v2-cpu.jsonl": "2dafb0cf2fdcd6bf49e25d55eea04e8d1a70f921fef83084625d418b2bddcd12",
+    "complex-product-v2-allocation-summary.json": "48410b788dd9b99cc5cef35605dfbd3dc2fc5f29325c0fc404b34b56c2072aa7",
+    "results/complex-product-v2-allocation.jsonl": "b1a88271824c9c24f04727bfe9e3e19c6464a74e01845b4b472e1272380c7b8d",
+    "rank-cost-cpu-summary.json": "cdfca67b033ef73542aeb8165d74efe7765a90a3465561c036d1525b0554228f",
+    "results/rank-cost-cpu.jsonl": "6306cfa6db226f9ded0327a3c048d0cb06ffe55d97668cf56b58eadffeb99d3b",
+    "rank-cost-allocation-summary.json": "632c4f67fa29e3dc7956c9c9d2d6f46f13cfe4e5f7cb0e1d981917e7aece8787",
+    "results/rank-cost-allocation.jsonl": "9459f3e90b546642a1620c0aafe847965f365e3f76f8d1aaef5d99851ed1a75d",
+    "sign-filter-cpu-summary.json": "3c772f0b9ae759d780016dcec73e62455cac8a955aa88de7d3c57c7b2fffb0f9",
+    "results/sign-filter-cpu.jsonl": "8d76af95d05ad6516aafb2b41b52b275376837111fb078e9cd49410d63d63022",
+    "sign-filter-allocation-summary.json": "a0a763fa045a8b2a1e2e5d45defb25f3bab1c8d02a0b679ccb62ecdaa14482d2",
+    "results/sign-filter-allocation.jsonl": "d5c622c5a00365f35371f4118a69af228c624c62d828fa0130c869e771a87f05",
+    "sign-filter-mask-cpu-summary.json": "8e5c00e36f33719446d5adb85fe36d1672809a580a275fa0f6ab5e1ecdef4f98",
+    "results/sign-filter-mask-cpu.jsonl": "108b11fb8ccecbc4d16746872fd7d6dfb786946dd2790ee303b6b538e8adc265",
+    "sign-filter-mask-allocation-summary.json": "ce640faa8df7a8bd5f848e19631ffda68e262e2f9866bc35e7c7b896b21d76bc",
+    "results/sign-filter-mask-allocation.jsonl": "f4545350ab184869e8013e2b9a6d116053db072d7f2e9c66bf18b77470e7bc33",
+    "results/proof-facts-monic-verify.json": "6cc9a76fd7595a67d98e9cec14b1d1d6ba5a427485c3ab54dbd95462aa264ef6",
+    "results/proof-facts-monic-verify.stdout": "7ab625eca2a1ec6f27267e6fa75624e6065dbb36d3ffb64972b1c559c3c397d2",
+    "results/proof-facts-monic-verify.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/prototype-statistics-inventory.json": "c140a06735a8b030777ea08b31f9f866e9c187e170c7467ac42cc275621483d1",
+    "results/prototype-statistics-inventory.stdout": "dfd2aacdc418874b14cfdc5caf45fafdb8e377ea6e7e3af7dd5c9fd83faf15a4",
+    "results/prototype-statistics-inventory.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/prototype-statistics-historical-rank.json": "3d18474058ffe25c9208c71b170a7cb7001500a1b63af24098855c0037af6266",
+    "results/prototype-statistics-historical-rank.stdout": "6fa43442e5e7c8e8fcb76784c4bfafaaf7be007c2ace40e6a4ad20a6b5bba4e4",
+    "results/prototype-statistics-historical-rank.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/prototype-statistics-inventory-corrected.json": "f5780d1647720c5e3627ce277f2f84c8f837e844f6ab08db947030cb53a55feb",
+    "results/prototype-statistics-inventory-corrected.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/prototype-statistics-inventory-corrected.stderr": "495dd180f4f18faabc1fa3bc64792d7ee65148e933427f18677a3e61bec45db5",
+    "results/prototype-statistics-inventory-corrected-confirm.json": "aafdd14fc7af07b8c5ebee06fc60f994bab6a441cbad7ac6c08e27dafed4ba18",
+    "results/prototype-statistics-inventory-corrected-confirm.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/prototype-statistics-inventory-corrected-confirm.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/prototype-statistics-ring-oracle.json": "0ad6fa083354a70e3d8499a7d2e3c0b7705900e2958bfa3ac5e42a9d93abff9f",
+    "results/prototype-statistics-ring-oracle.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/prototype-statistics-ring-oracle.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/prototype-statistics-inventory-qualified.json": "78c921682216f908da407e4b25e20468aa37fdb70c9b465df623d95e31cdb744",
+    "results/prototype-statistics-inventory-qualified.stdout": "4d82640c3f7e995cc307ba4358e31c998b4bc6bcd8dfd744ca0cf735865ceee5",
+    "results/prototype-statistics-inventory-qualified.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/prototype-statistics-ring-oracle-qualified.json": "923b53cc547f97baf3b375870e93fdb8afc27b5cc1c7cbbaa71ac5905b95893f",
+    "results/prototype-statistics-ring-oracle-qualified.stdout": "4f73aa2e3233a2f8c757057f588e2299f7bf3eee22688371c377dd7a8c5afa30",
+    "results/prototype-statistics-ring-oracle-qualified.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/prototype-statistics-reanalysis.json": "eed02891afaf68bfa0e69c318971c2153c513efc4c58509488ac8cf2c716fa86",
+    "results/prototype-statistics-reanalysis.stdout": "3d45c79ef41cbd670bf3845a7f0ee34eb7145a7318e366a49bd821381d2de684",
+    "results/prototype-statistics-reanalysis.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/prototype-statistics-check.json": "c9b92192fcd4e26b4909b315b74425ed847ac8464d15bd0a2436e7396a9ed799",
+    "results/prototype-statistics-check.stdout": "27b4c8e148ada32e674988d7f7d4f3e265fbed0845bb30f01916feb86c0067c5",
+    "results/prototype-statistics-check.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/prototype-statistics-capacity.json": "aa553ac8ee2437434c46135612e5ebf273a297c4b4bc1d0c89a4ff0f9f496748",
+    "results/prototype-statistics-capacity.stdout": "47fc095167a8dd3e1186ded7db1e777d91d0c68f10677afc0cea4434505bd2a7",
+    "results/prototype-statistics-capacity.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "sources": {
+    "previousManifestSha256": "a0c714176e58d8d8f720aa2788da3be316a8fec0b5ba0e8e47b6ddda39f37c5e",
+    "previousArtifacts": 78,
+    "previousFinished": "2026-09-11T01:38:44.027Z",
+    "liveFiles": 956,
+    "pointCandidateFiles": 175,
+    "historical": [
+      {
+        "path": "complex-product-experiment.json",
+        "sha256": "c1e8f91dbde3c808a2ed08edc0b0ab3c37a06c87bfc6e6a4623968ad35adb7bd",
+        "artifacts": 71
+      },
+      {
+        "path": "complex-product-v2-experiment.json",
+        "sha256": "63cdfb9580e34ba3c6ac7c4b57f0a5fb1a0ddbc59cc00cb164e7a8203ba3dd08",
+        "artifacts": 68
+      },
+      {
+        "path": "rank-cost-experiment.json",
+        "sha256": "21864bbc7d412989f05d65d76cd041ae110c9b13c13110aa060beffe7da7462a",
+        "artifacts": 41
+      },
+      {
+        "path": "sign-filter-experiment.json",
+        "sha256": "d87ebbfdbd59662eb0fdc3fb34d99891ccb6058ea29028cc8e8722213e4d8037",
+        "artifacts": 67
+      },
+      {
+        "path": "sign-filter-mask-experiment.json",
+        "sha256": "f2c31f5f7003eebbab6433d9bd5e4be457abed538f3ab19d2e925a9971435949",
+        "artifacts": 41
+      }
+    ],
+    "sourceCounts": {
+      "complex-product": {
+        "baseline": 955,
+        "candidate": 955
+      },
+      "complex-product-v2": {
+        "baseline": 955,
+        "candidate": 955
+      },
+      "sign-filter": {
+        "baseline": 956,
+        "candidate": 956
+      },
+      "sign-filter-mask": {
+        "baseline": 956,
+        "candidate": 956
+      },
+      "rankCandidate": 774
+    },
+    "reads": [
+      {
+        "path": "run-complex-product-costs.mjs",
+        "sha256": "e18778063f779309e53cf57bdaaef52377eeee49dac843ce3e29bb797287eadb",
+        "lines": 71,
+        "ranges": [
+          [
+            1,
+            71
+          ]
+        ]
+      },
+      {
+        "path": "run-complex-product-v2-costs.mjs",
+        "sha256": "119732f39ceb4cce41e8cf14d1c166161cf6f996feb1ef0af35bc613741052f2",
+        "lines": 58,
+        "ranges": [
+          [
+            1,
+            58
+          ]
+        ]
+      },
+      {
+        "path": "run-rank-costs.mjs",
+        "sha256": "22763eb0233811786db9913c192d45e2985dd71234bdb723a572997c5a8ea2ce",
+        "lines": 77,
+        "ranges": [
+          [
+            1,
+            77
+          ]
+        ]
+      },
+      {
+        "path": "run-sign-filter-costs.mjs",
+        "sha256": "fd31a68ad0ac3d3d33ac9f65f9c2d65e72ef4334959cbf61fe843773212413a9",
+        "lines": 61,
+        "ranges": [
+          [
+            1,
+            61
+          ]
+        ]
+      },
+      {
+        "path": "run-sign-filter-mask-costs.mjs",
+        "sha256": "cfe752dd851380da198d48f625a60269917c936299a2ff0b8c6afcd2af4d3496",
+        "lines": 62,
+        "ranges": [
+          [
+            1,
+            62
+          ]
+        ]
+      },
+      {
+        "path": "check-complex-product.mjs",
+        "sha256": "5769ca77c69c2705d6bc20856531023301818b4c7ceb76599b94d9803940ac70",
+        "lines": 96,
+        "ranges": [
+          [
+            1,
+            96
+          ]
+        ]
+      },
+      {
+        "path": "check-complex-product-v2.mjs",
+        "sha256": "b6f33ab4d8c144927850b7a74c23e93dc036abdcf27bf68bec907ed9bd879288",
+        "lines": 98,
+        "ranges": [
+          [
+            1,
+            98
+          ]
+        ]
+      },
+      {
+        "path": "check-sign-filter.mjs",
+        "sha256": "091cdd6bf93257b3dfeefac0e35aaa846b4bcd09c4fda0161999297684f56b45",
+        "lines": 86,
+        "ranges": [
+          [
+            1,
+            86
+          ]
+        ]
+      },
+      {
+        "path": "check-sign-filter-mask.mjs",
+        "sha256": "a33aee147e969ed825128c15e683346706640a3c234934fb066b3ea8a8b12d17",
+        "lines": 84,
+        "ranges": [
+          [
+            1,
+            84
+          ]
+        ]
+      },
+      {
+        "path": "verify-rank-costs.mjs",
+        "sha256": "c6fd9c80647552cea431298d788084739db58ea0a706b03061ce162c5c5bcf9e",
+        "lines": 147,
+        "ranges": [
+          [
+            1,
+            147
+          ]
+        ]
+      },
+      {
+        "path": "snapshot-v43-check-complex-product.mjs",
+        "sha256": "b797557531c98ed66c195de5a6c94ba47469433e5f9e6b148f5ad135ad136b27",
+        "lines": 96,
+        "ranges": [
+          [
+            1,
+            96
+          ]
+        ]
+      },
+      {
+        "path": "snapshot-v43-check-complex-product-v2.mjs",
+        "sha256": "c3d00b056103e45030105eb13632a364926b56c56b359c463224e7a8de54b2be",
+        "lines": 98,
+        "ranges": [
+          [
+            1,
+            98
+          ]
+        ]
+      }
+    ],
+    "supportingReads": [
+      {
+        "path": "complex-product-sources.mjs",
+        "sha256": "67fe7d85f4d598369f9de8821af8bb661b1d2c67a7c6443c281611428da71e9e",
+        "lines": 19,
+        "ranges": [
+          [
+            1,
+            19
+          ]
+        ]
+      },
+      {
+        "path": "complex-product-v2-sources.mjs",
+        "sha256": "b6544549899ab625674aca9b60b24a7ecf7378c5252a84641311caeebc15ebb4",
+        "lines": 20,
+        "ranges": [
+          [
+            1,
+            20
+          ]
+        ]
+      },
+      {
+        "path": "snapshot-v43-complex-product-sources.mjs",
+        "sha256": "c737bbc08a172e579fbefe3c90f12484eb80cc732171782ea31eac2eb68c658d",
+        "lines": 19,
+        "ranges": [
+          [
+            1,
+            19
+          ]
+        ]
+      },
+      {
+        "path": "snapshot-v43-complex-product-v2-sources.mjs",
+        "sha256": "3454655915bb91da95e4b099bcb13bfc0b018462ae08b77fc4f1d8fd6d9807fc",
+        "lines": 20,
+        "ranges": [
+          [
+            1,
+            20
+          ]
+        ]
+      },
+      {
+        "path": "sign-filter-sources.mjs",
+        "sha256": "727196f1f7ff6e38ee492bc6eeeca17b2490094496274af3988bc761ec545c6b",
+        "lines": 60,
+        "ranges": [
+          [
+            1,
+            60
+          ]
+        ]
+      },
+      {
+        "path": "sign-filter-mask-sources.mjs",
+        "sha256": "39b9fb14108d73346665669e08a671e842015950ef5d8abea2d2223122452c27",
+        "lines": 49,
+        "ranges": [
+          [
+            1,
+            49
+          ]
+        ]
+      },
+      {
+        "path": "sign-filter-ring-oracle.mjs",
+        "sha256": "022cab1a665c7f6ea9388710a6ba691bfd8f7e7f4d1138b64773d3e0e0b1fd2e",
+        "lines": 41,
+        "ranges": [
+          [
+            1,
+            41
+          ]
+        ]
+      }
+    ],
+    "reviewedScriptLines": 1034,
+    "supportingLines": 228,
+    "inventory": {
+      "files": 370,
+      "matchingFiles": 65,
+      "knownLcgMatches": 45,
+      "otherPotentialFiles": 20,
+      "recoveredHistoricalFiles": [
+        "bind-arf-rounding-v2.mjs",
+        "bind-complex-product-v2.mjs",
+        "check-complex-product-v2.mjs",
+        "check-point-extended-v1.mjs",
+        "freeze-complex-product-v2.mjs",
+        "point-extended-field-v1.mjs",
+        "prepare-arf-conversion-v2.mjs",
+        "prepare-complex-product-v2.mjs",
+        "prepare-snapshot-v43.mjs",
+        "snapshot-v43-check-complex-product-v2.mjs",
+        "snapshot-v43-verify-arf-rounding-v2.mjs",
+        "snapshot-v43-verify-complex-product-v2.mjs",
+        "verify-arf-rounding-v2.mjs",
+        "verify-complex-product-v2.mjs"
+      ],
+      "scope": "Frozen top-level .mjs membership, excluding correction files ending -v60.mjs or later. The initial snapshot excluded 14 historical scripts, including two known legacy v2 statistical checkers; it remains preserved as an incomplete inventory. Text matches are not semantic estimator classification, and no subdirectory or workspace-wide closure is claimed."
+    }
+  },
+  "captures": [
+    {
+      "tag": "prototype-statistics-inventory",
+      "code": 0,
+      "disposition": "incomplete-inventory"
+    },
+    {
+      "tag": "prototype-statistics-historical-rank",
+      "code": 0,
+      "disposition": "qualified-archival-integrity-only"
+    },
+    {
+      "tag": "prototype-statistics-inventory-corrected",
+      "code": 1,
+      "disposition": "failed-overrestrictive-added-membership-assertion"
+    },
+    {
+      "tag": "prototype-statistics-inventory-corrected-confirm",
+      "code": 0,
+      "disposition": "missing-output-not-qualified"
+    },
+    {
+      "tag": "prototype-statistics-ring-oracle",
+      "code": 0,
+      "disposition": "missing-output-not-qualified"
+    },
+    {
+      "tag": "prototype-statistics-inventory-qualified",
+      "code": 0,
+      "disposition": "qualified-bounded-inventory"
+    },
+    {
+      "tag": "prototype-statistics-ring-oracle-qualified",
+      "code": 0,
+      "disposition": "qualified-exact-sign-oracle"
+    },
+    {
+      "tag": "prototype-statistics-reanalysis",
+      "code": 0,
+      "disposition": "qualified-reanalysis"
+    },
+    {
+      "tag": "prototype-statistics-check",
+      "code": 0,
+      "disposition": "qualified-check"
+    },
+    {
+      "tag": "prototype-statistics-capacity",
+      "code": 0,
+      "disposition": "qualified-capacity"
+    }
+  ],
+  "qualifiedGates": [
+    "prototype-statistics-historical-rank",
+    "prototype-statistics-inventory-qualified",
+    "prototype-statistics-ring-oracle-qualified",
+    "prototype-statistics-reanalysis",
+    "prototype-statistics-check",
+    "prototype-statistics-capacity"
+  ],
+  "rawRows": 25728,
+  "comparisons": 536,
+  "allocationRows": 3216,
+  "aggregate": {
+    "changedIntervals": 486,
+    "lostDirectional": 34,
+    "gainedDirectional": 0,
+    "reversedDirectional": 0
+  },
+  "campaigns": [
+    {
+      "id": "complexV1",
+      "rawRows": 9216,
+      "counts": {
+        "comparisons": 192,
+        "intervals": {
+          "legacy": {
+            "below": 64,
+            "above": 43,
+            "includes": 85
+          },
+          "correctedBootstrap": {
+            "below": 61,
+            "above": 35,
+            "includes": 96
+          },
+          "orderStatistic": {
+            "below": 56,
+            "above": 28,
+            "includes": 108
+          }
+        },
+        "changedIntervals": 174,
+        "lostDirectional": 11,
+        "gainedDirectional": 0,
+        "reversedDirectional": 0
+      },
+      "strata": {
+        "numeric-contract-checked-separately": {
+          "comparisons": 192,
+          "intervals": {
+            "legacy": {
+              "below": 64,
+              "above": 43,
+              "includes": 85
+            },
+            "correctedBootstrap": {
+              "below": 61,
+              "above": 35,
+              "includes": 96
+            },
+            "orderStatistic": {
+              "below": 56,
+              "above": 28,
+              "includes": 108
+            }
+          },
+          "changedIntervals": 174,
+          "lostDirectional": 11,
+          "gainedDirectional": 0,
+          "reversedDirectional": 0
+        }
+      }
+    },
+    {
+      "id": "complexV2",
+      "rawRows": 9216,
+      "counts": {
+        "comparisons": 192,
+        "intervals": {
+          "legacy": {
+            "below": 66,
+            "above": 17,
+            "includes": 109
+          },
+          "correctedBootstrap": {
+            "below": 60,
+            "above": 14,
+            "includes": 118
+          },
+          "orderStatistic": {
+            "below": 55,
+            "above": 8,
+            "includes": 129
+          }
+        },
+        "changedIntervals": 177,
+        "lostDirectional": 9,
+        "gainedDirectional": 0,
+        "reversedDirectional": 0
+      },
+      "strata": {
+        "numeric-contract-checked-separately": {
+          "comparisons": 192,
+          "intervals": {
+            "legacy": {
+              "below": 66,
+              "above": 17,
+              "includes": 109
+            },
+            "correctedBootstrap": {
+              "below": 60,
+              "above": 14,
+              "includes": 118
+            },
+            "orderStatistic": {
+              "below": 55,
+              "above": 8,
+              "includes": 129
+            }
+          },
+          "changedIntervals": 177,
+          "lostDirectional": 9,
+          "gainedDirectional": 0,
+          "reversedDirectional": 0
+        }
+      }
+    },
+    {
+      "id": "rank",
+      "rawRows": 2688,
+      "counts": {
+        "comparisons": 56,
+        "intervals": {
+          "legacy": {
+            "below": 0,
+            "above": 43,
+            "includes": 13
+          },
+          "correctedBootstrap": {
+            "below": 0,
+            "above": 40,
+            "includes": 16
+          },
+          "orderStatistic": {
+            "below": 0,
+            "above": 40,
+            "includes": 16
+          }
+        },
+        "changedIntervals": 49,
+        "lostDirectional": 3,
+        "gainedDirectional": 0,
+        "reversedDirectional": 0
+      },
+      "strata": {
+        "matching-known-status": {
+          "comparisons": 40,
+          "intervals": {
+            "legacy": {
+              "below": 0,
+              "above": 27,
+              "includes": 13
+            },
+            "correctedBootstrap": {
+              "below": 0,
+              "above": 24,
+              "includes": 16
+            },
+            "orderStatistic": {
+              "below": 0,
+              "above": 24,
+              "includes": 16
+            }
+          },
+          "changedIntervals": 36,
+          "lostDirectional": 3,
+          "gainedDirectional": 0,
+          "reversedDirectional": 0
+        },
+        "additional-answer": {
+          "comparisons": 16,
+          "intervals": {
+            "legacy": {
+              "below": 0,
+              "above": 16,
+              "includes": 0
+            },
+            "correctedBootstrap": {
+              "below": 0,
+              "above": 16,
+              "includes": 0
+            },
+            "orderStatistic": {
+              "below": 0,
+              "above": 16,
+              "includes": 0
+            }
+          },
+          "changedIntervals": 13,
+          "lostDirectional": 0,
+          "gainedDirectional": 0,
+          "reversedDirectional": 0
+        }
+      }
+    },
+    {
+      "id": "signSummary",
+      "rawRows": 2304,
+      "counts": {
+        "comparisons": 48,
+        "intervals": {
+          "legacy": {
+            "below": 5,
+            "above": 11,
+            "includes": 32
+          },
+          "correctedBootstrap": {
+            "below": 1,
+            "above": 7,
+            "includes": 40
+          },
+          "orderStatistic": {
+            "below": 1,
+            "above": 4,
+            "includes": 43
+          }
+        },
+        "changedIntervals": 44,
+        "lostDirectional": 8,
+        "gainedDirectional": 0,
+        "reversedDirectional": 0
+      },
+      "strata": {
+        "matching-full-sign-outcome": {
+          "comparisons": 48,
+          "intervals": {
+            "legacy": {
+              "below": 5,
+              "above": 11,
+              "includes": 32
+            },
+            "correctedBootstrap": {
+              "below": 1,
+              "above": 7,
+              "includes": 40
+            },
+            "orderStatistic": {
+              "below": 1,
+              "above": 4,
+              "includes": 43
+            }
+          },
+          "changedIntervals": 44,
+          "lostDirectional": 8,
+          "gainedDirectional": 0,
+          "reversedDirectional": 0
+        }
+      }
+    },
+    {
+      "id": "signMask",
+      "rawRows": 2304,
+      "counts": {
+        "comparisons": 48,
+        "intervals": {
+          "legacy": {
+            "below": 2,
+            "above": 7,
+            "includes": 39
+          },
+          "correctedBootstrap": {
+            "below": 1,
+            "above": 5,
+            "includes": 42
+          },
+          "orderStatistic": {
+            "below": 1,
+            "above": 5,
+            "includes": 42
+          }
+        },
+        "changedIntervals": 42,
+        "lostDirectional": 3,
+        "gainedDirectional": 0,
+        "reversedDirectional": 0
+      },
+      "strata": {
+        "matching-full-sign-outcome": {
+          "comparisons": 48,
+          "intervals": {
+            "legacy": {
+              "below": 2,
+              "above": 7,
+              "includes": 39
+            },
+            "correctedBootstrap": {
+              "below": 1,
+              "above": 5,
+              "includes": 42
+            },
+            "orderStatistic": {
+              "below": 1,
+              "above": 5,
+              "includes": 42
+            }
+          },
+          "changedIntervals": 42,
+          "lostDirectional": 3,
+          "gainedDirectional": 0,
+          "reversedDirectional": 0
+        }
+      }
+    }
+  ],
+  "allocations": [
+    {
+      "id": "complexV1",
+      "rawRows": 1152,
+      "groups": 192,
+      "deltas": {
+        "requests": {
+          "lower": 72,
+          "equal": 120,
+          "higher": 0
+        },
+        "requested_bytes": {
+          "lower": 75,
+          "equal": 117,
+          "higher": 0
+        },
+        "live_delta": {
+          "lower": 0,
+          "equal": 192,
+          "higher": 0
+        },
+        "peak_delta": {
+          "lower": 9,
+          "equal": 117,
+          "higher": 66
+        }
+      }
+    },
+    {
+      "id": "complexV2",
+      "rawRows": 1152,
+      "groups": 192,
+      "deltas": {
+        "requests": {
+          "lower": 57,
+          "equal": 135,
+          "higher": 0
+        },
+        "requested_bytes": {
+          "lower": 60,
+          "equal": 132,
+          "higher": 0
+        },
+        "live_delta": {
+          "lower": 0,
+          "equal": 192,
+          "higher": 0
+        },
+        "peak_delta": {
+          "lower": 27,
+          "equal": 132,
+          "higher": 33
+        }
+      }
+    },
+    {
+      "id": "rank",
+      "rawRows": 336,
+      "groups": 56,
+      "deltas": {
+        "requests": {
+          "lower": 0,
+          "equal": 24,
+          "higher": 32
+        },
+        "requested_bytes": {
+          "lower": 0,
+          "equal": 24,
+          "higher": 32
+        },
+        "live_delta": {
+          "lower": 0,
+          "equal": 56,
+          "higher": 0
+        },
+        "peak_delta": {
+          "lower": 0,
+          "equal": 32,
+          "higher": 24
+        }
+      }
+    },
+    {
+      "id": "signSummary",
+      "rawRows": 288,
+      "groups": 48,
+      "deltas": {
+        "requests": {
+          "lower": 24,
+          "equal": 24,
+          "higher": 0
+        },
+        "requested_bytes": {
+          "lower": 24,
+          "equal": 24,
+          "higher": 0
+        },
+        "live_delta": {
+          "lower": 0,
+          "equal": 48,
+          "higher": 0
+        },
+        "peak_delta": {
+          "lower": 12,
+          "equal": 36,
+          "higher": 0
+        }
+      }
+    },
+    {
+      "id": "signMask",
+      "rawRows": 288,
+      "groups": 48,
+      "deltas": {
+        "requests": {
+          "lower": 24,
+          "equal": 24,
+          "higher": 0
+        },
+        "requested_bytes": {
+          "lower": 24,
+          "equal": 24,
+          "higher": 0
+        },
+        "live_delta": {
+          "lower": 0,
+          "equal": 48,
+          "higher": 0
+        },
+        "peak_delta": {
+          "lower": 12,
+          "equal": 36,
+          "higher": 0
+        }
+      }
+    }
+  ],
+  "complexV2HistoricalDispatchStrata": {
+    "selected": {
+      "comparisons": 60,
+      "intervals": {
+        "legacy": {
+          "below": 55,
+          "above": 0,
+          "includes": 5
+        },
+        "correctedBootstrap": {
+          "below": 55,
+          "above": 0,
+          "includes": 5
+        },
+        "orderStatistic": {
+          "below": 52,
+          "above": 0,
+          "includes": 8
+        }
+      },
+      "changedIntervals": 57,
+      "lostDirectional": 0,
+      "gainedDirectional": 0,
+      "reversedDirectional": 0
+    },
+    "bypass": {
+      "comparisons": 132,
+      "intervals": {
+        "legacy": {
+          "below": 11,
+          "above": 17,
+          "includes": 104
+        },
+        "correctedBootstrap": {
+          "below": 5,
+          "above": 14,
+          "includes": 113
+        },
+        "orderStatistic": {
+          "below": 3,
+          "above": 8,
+          "includes": 121
+        }
+      },
+      "changedIntervals": 120,
+      "lostDirectional": 9,
+      "gainedDirectional": 0,
+      "reversedDirectional": 0
+    }
+  },
+  "unresolvedRankWidth32Retained": {
+    "pairedRatio": 48.006656012080995,
+    "bootstrap": [
+      41.739880700358455,
+      51.47754826032336
+    ],
+    "orderStatistic": [
+      38.56703502298662,
+      52.93464621497378
+    ],
+    "nsPerQuery": {
+      "baseline": 23261.222222222223,
+      "candidate": 989487.7222222222
+    },
+    "requestedBytesPerQuery": {
+      "baseline": 47320,
+      "candidate": 1141240
+    }
+  },
+  "controls": {
+    "status": "pass",
+    "rejectedMutations": [
+      "complexV1/wrong-block",
+      "complexV1/wrong-variant",
+      "complexV1/false-numeric-preflight",
+      "complexV1/zero-clock",
+      "complexV1/fractional-clock",
+      "complexV1/CPU-allocation-instrumented",
+      "complexV2/missing-row",
+      "complexV2/extra-row",
+      "complexV2/changed-paired-estimate",
+      "complexV2/changed-marginal-median",
+      "complexV2/missing-pilot",
+      "complexV2/wrong-pilot-iterations",
+      "rank/wrong-known-count",
+      "rank/invented-baseline-answer",
+      "rank/wrong-descriptor",
+      "rank/wrong-calibration",
+      "rank/nonzero-CPU-request-count",
+      "signSummary/wrong-sign-value",
+      "signSummary/wrong-certainty",
+      "signSummary/wrong-decision-stage",
+      "signMask/observation-before-pilots",
+      "signMask/observation-outside-campaign",
+      "signMask/reversed-clock-envelope",
+      "signMask/wrong-summary-outcome",
+      "complexV1/wrong-allocation-label",
+      "complexV2/nondeterministic-request-count",
+      "rank/unreported-live-retention",
+      "signSummary/changed-allocation-summary",
+      "signMask/invented-allocation-timing-interval",
+      "inventory/duplicated-membership"
+    ]
+  },
+  "historical": {
+    "complex": {
+      "complex-product": {
+        "correctness": {
+          "status": "pass",
+          "fixtures": 6912,
+          "components": 82944,
+          "inputChecks": 27648,
+          "zeroComponents": 4608
+        },
+        "memory": {
+          "baseline": {
+            "allocations": 12412763,
+            "frees": 12412627,
+            "cumulativeBytesIncludingOracle": 1879323436,
+            "reachableBytes": 13832,
+            "reachableBlocks": 136
+          },
+          "candidate": {
+            "allocations": 12328283,
+            "frees": 12328147,
+            "cumulativeBytesIncludingOracle": 1870305676,
+            "reachableBytes": 13832,
+            "reachableBlocks": 136
+          }
+        },
+        "traceRowsPerVariant": 5832,
+        "candidateSelections": 2520
+      },
+      "complex-product-v2": {
+        "correctness": {
+          "status": "pass",
+          "fixtures": 6912,
+          "components": 82944,
+          "inputChecks": 27648,
+          "zeroComponents": 4608
+        },
+        "memory": {
+          "baseline": {
+            "allocations": 12412763,
+            "frees": 12412627,
+            "cumulativeBytesIncludingOracle": 1879323436,
+            "reachableBytes": 13832,
+            "reachableBlocks": 136
+          },
+          "candidate": {
+            "allocations": 12364643,
+            "frees": 12364507,
+            "cumulativeBytesIncludingOracle": 1871964076,
+            "reachableBytes": 13832,
+            "reachableBlocks": 136
+          }
+        },
+        "traceRowsPerVariant": 5832,
+        "candidateSelections": 1800
+      }
+    },
+    "sign": {
+      "sign-filter": {
+        "testsPerProfile": 364,
+        "publicTraces": 45,
+        "independentRingSigns": 24,
+        "benchBinaryDeltas": {
+          "cpu": {
+            "file": 2536,
+            "sections": [
+              1920,
+              -8,
+              2232
+            ]
+          },
+          "allocation": {
+            "file": 2552,
+            "sections": [
+              1912,
+              -8,
+              2168
+            ]
+          }
+        }
+      },
+      "sign-filter-mask": {
+        "testsPerProfile": 364,
+        "publicTraces": 45,
+        "independentRingSigns": 24,
+        "benchBinaryDeltas": {
+          "cpu": {
+            "file": -1176,
+            "sections": [
+              -576,
+              -8,
+              600
+            ]
+          },
+          "allocation": {
+            "file": -1264,
+            "sections": [
+              -584,
+              -8,
+              600
+            ]
+          }
+        }
+      }
+    }
+  },
+  "remainingMatches": [
+    "run-erf-bench.mjs",
+    "run-log-bench.mjs",
+    "run-polynomial-decision-bench.mjs",
+    "run-root-exp-bench.mjs",
+    "run-root-exp-opaque-bench.mjs",
+    "run-root-exp-sign-bench.mjs",
+    "verify-polynomial-decision.mjs",
+    "verify-root-exp-sign-checkpoint.mjs",
+    "verify-sign-work-cost-checkpoint.mjs"
+  ],
+  "analysisBytes": 1638145,
+  "newTemporaryBytes": 0,
+  "next": "Review the remaining nine known sampler matches and the twenty other potential text matches, without confusing a top-level inventory with workspace-wide semantic closure. Continue point-candidate runtime/consumer/size qualification, power sums, remaining donor reads and the complete original reference inventory.",
+  "coverageBefore": [
+    {
+      "repo": "calcium",
+      "reviewed": 552,
+      "complete": 552,
+      "partial": 0,
+      "readLines": 60286
+    },
+    {
+      "repo": "flint",
+      "reviewed": 883,
+      "complete": 863,
+      "partial": 20,
+      "readLines": 123367
+    }
+  ],
+  "coverageAtBinding": [
+    {
+      "repo": "calcium",
+      "reviewed": 552,
+      "complete": 552,
+      "partial": 0,
+      "readLines": 60286
+    },
+    {
+      "repo": "flint",
+      "reviewed": 883,
+      "complete": 863,
+      "partial": 20,
+      "readLines": 123367
+    }
+  ],
+  "newDonorLines": 0,
+  "liveFiles": 956,
+  "production": "No production/donor change, new retained transfer, source-tree copy, benchmark, binary, temporary build/file, cleanup/deletion, commit or push. Five previously rejected prototypes remain isolated; five existing retained continuation changes remain unchanged.",
+  "scope": "Five historical CPU campaigns corrected and allocation metrics rechecked. Historical 23-checkpoint rank chain plus four complex/sign checkers rerun; only the small exact BigInt sign oracle is newly executed. No fresh Rust/backend/Memcheck/consumer/size runs or full 47-chain. Initial incomplete/failed/output-missing inventory/oracle captures remain preserved. Historical estimator review and the original ecosystem audit are incomplete."
+}

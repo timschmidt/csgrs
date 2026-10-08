@@ -1,0 +1,8 @@
+{
+  "parent": "c46890e2694b50d8ed5dc0baddd43023e757dc3e",
+  "baseline_manifest": "represented-circle-incidence-20260924-v2-sources.json",
+  "only_change": "bounded equality reuse for one rational coordinate chart in retained_parameter_axis_order_to_point",
+  "all_tests_unchanged": true,
+  "physical_snapshot": "/tmp/hypercurve-retained-coordinate-identity-v1-20260924",
+  "diagnostic": "one-fragment-chamfer-20260924-stack2-terminal.json"
+}

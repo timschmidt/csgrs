@@ -1,0 +1,33 @@
+
+rationalcompressed/Data/Real/CReal.hs:1:17: warning: [-Wdeprecated-flags]
+    -fglasgow-exts is deprecated: Use individual extensions instead
+  |
+1 | {-# OPTIONS_GHC -fglasgow-exts #-}
+  |                 ^^^^^^^^^^^^^^
+
+rationalcompressed/Data/Interval.hs:1:17: warning: [-Wdeprecated-flags]
+    -fglasgow-exts is deprecated: Use individual extensions instead
+  |
+1 | {-# OPTIONS_GHC -fglasgow-exts #-}
+  |                 ^^^^^^^^^^^^^^
+
+rationalcompressed/Data/Multinomial.hs:1:17: warning: [-Wdeprecated-flags]
+    -fglasgow-exts is deprecated: Use individual extensions instead
+  |
+1 | {-# OPTIONS_GHC -fglasgow-exts #-}
+  |                 ^^^^^^^^^^^^^^
+
+rationalcompressed/Data/Real/Complete.hs:1:17: warning: [-Wdeprecated-flags]
+    -fglasgow-exts is deprecated: Use individual extensions instead
+  |
+1 | {-# OPTIONS_GHC -fglasgow-exts #-}
+  |                 ^^^^^^^^^^^^^^
+[1 of 9] Compiling Combinatorics    ( rationalcompressed/Combinatorics.hs, rationalcompressed-build/Combinatorics.o )
+[2 of 9] Compiling Data.Interval    ( rationalcompressed/Data/Interval.hs, rationalcompressed-build/Data/Interval.o )
+[3 of 9] Compiling Data.Multinomial ( rationalcompressed/Data/Multinomial.hs, rationalcompressed-build/Data/Multinomial.o )
+[4 of 9] Compiling Data.Real.Complete ( rationalcompressed/Data/Real/Complete.hs, rationalcompressed-build/Data/Real/Complete.o )
+[5 of 9] Compiling Data.Real.Gauge  ( rationalcompressed/Data/Real/Gauge.hs, rationalcompressed-build/Data/Real/Gauge.o )
+[6 of 9] Compiling Data.Real.Base   ( rationalcompressed/Data/Real/Base.hs, rationalcompressed-build/Data/Real/Base.o )
+[7 of 9] Compiling Data.Real.CReal  ( rationalcompressed/Data/Real/CReal.hs, rationalcompressed-build/Data/Real/CReal.o )
+[8 of 9] Compiling Main             ( FewCompressionBench.hs, rationalcompressed-build/Main.o )
+[9 of 9] Linking few-rational-compressed

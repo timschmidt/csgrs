@@ -1,0 +1,18 @@
+{
+  "repos": {
+    "hypercurve": {
+      "commit": "69b8de1644de4dd423af5e73f5d44d3685512756",
+      "parent": "2a0647eecd349155e07c3002457d0e0fa1a9dd3f",
+      "paths": {
+        "src/bezier_split.rs": "e6e18e16c64fb1547a7051b6f230563dcd949792710e1e26e6e0c7d7cadb358a",
+        "src/bspline.rs": "eb274a5c6bc25bf44cff5ed27b001284ab4bb2aa464e49456275daa7ec80d413",
+        "src/classify.rs": "3b9c6a86b04823971edf982af06a7040627f0eadd6783f21220a99edb6403721",
+        "src/rational_bezier.rs": "10f3ebd812feb99d59274ceda03fddb2ccf618d8894cb52f5adca0610d95d5e8",
+        "src/rational_bezier_general.rs": "6452057d67dc5ccb74601e8e9ccc465bb483f31886bc9cd98bf9ba0b5434166d"
+      }
+    }
+  },
+  "qualification": "homogeneous-projection-v800-terminal.json",
+  "verified_source_files": 2048,
+  "clean_repositories": 30
+}

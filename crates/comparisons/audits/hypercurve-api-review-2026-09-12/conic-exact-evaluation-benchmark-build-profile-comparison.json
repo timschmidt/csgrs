@@ -1,0 +1,48 @@
+{
+  "baseline": [
+    {
+      "features": [
+        "comparative-benchmarks",
+        "default",
+        "dispatch-trace",
+        "hershey",
+        "svg",
+        "triangulation"
+      ],
+      "profile": {
+        "opt_level": "3",
+        "debuginfo": 0,
+        "debug_assertions": false,
+        "overflow_checks": false,
+        "test": false
+      },
+      "filenames": [
+        "/tmp/hypercurve-box-policy-baseline-b4a0d02/target/release/deps/libhypercurve-4d52d71dbd9ae0a9.rlib",
+        "/tmp/hypercurve-box-policy-baseline-b4a0d02/target/release/deps/libhypercurve-4d52d71dbd9ae0a9.rmeta"
+      ]
+    }
+  ],
+  "current": [
+    {
+      "features": [
+        "comparative-benchmarks",
+        "default",
+        "dispatch-trace",
+        "hershey",
+        "svg",
+        "triangulation"
+      ],
+      "profile": {
+        "opt_level": "3",
+        "debuginfo": 0,
+        "debug_assertions": false,
+        "overflow_checks": false,
+        "test": false
+      },
+      "filenames": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/libhypercurve-2c7ff6f3fbe07653.rlib",
+        "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/libhypercurve-2c7ff6f3fbe07653.rmeta"
+      ]
+    }
+  ]
+}

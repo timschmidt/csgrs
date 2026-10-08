@@ -1,0 +1,19 @@
+{
+  "command": "cargo",
+  "args": [
+    "fmt",
+    "--manifest-path",
+    "source/hyperreal/Cargo.toml",
+    "-p",
+    "hyperreal",
+    "--",
+    "--check"
+  ],
+  "begin": "2026-09-07T05:54:12.683Z",
+  "end": "2026-09-07T05:54:13.109Z",
+  "status": 0,
+  "signal": null,
+  "error": null,
+  "stdout": "",
+  "stderr": ""
+}

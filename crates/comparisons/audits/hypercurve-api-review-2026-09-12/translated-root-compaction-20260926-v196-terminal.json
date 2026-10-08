@@ -1,0 +1,94 @@
+{
+  "parents": {
+    "hypercurve": "9370aa67a692d651b46ad32d836fed62f9da726f",
+    "hypersolve": "41855c3604cbd18605a020d60758c8e5c489b629",
+    "hyperreal": "0cb5f29aee065c73e234e0ebb0a9e106398515bb"
+  },
+  "source_manifest": "translated-root-compaction-20260926-v196-sources.json",
+  "source_directory": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/source-archives/translated-root-compaction-20260926-v196",
+  "build_source_directory": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/build-workspace-20260925",
+  "workspace_guard": "translated-root-compaction-20260926-v196-workspace.json",
+  "checks": [],
+  "cases": [
+    {
+      "repo": "hypersolve",
+      "label": "solver-tests",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/translated-root-compaction-20260926-v196-hypersolve",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 3.818732909974642,
+      "log": "translated-root-compaction-20260926-v196-solver-tests.log"
+    },
+    {
+      "repo": "hypercurve",
+      "label": "case-00",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/translated-root-compaction-20260926-v196-hypercurve",
+        "--exact",
+        "bezier_offset::conversion_tests::retained_normal_contact_requires_its_undisplaced_regular_source",
+        "--test-threads=1",
+        "--nocapture",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.003536126925610006,
+      "log": "translated-root-compaction-20260926-v196-case-00.log",
+      "name": "bezier_offset::conversion_tests::retained_normal_contact_requires_its_undisplaced_regular_source"
+    },
+    {
+      "repo": "hypercurve",
+      "label": "case-01",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/translated-root-compaction-20260926-v196-hypercurve",
+        "--exact",
+        "bezier_offset::conversion_tests::retained_parallel_normal_contacts_preserve_native_roots_and_sheets",
+        "--test-threads=1",
+        "--nocapture",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.5143252399284393,
+      "log": "translated-root-compaction-20260926-v196-case-01.log",
+      "name": "bezier_offset::conversion_tests::retained_parallel_normal_contacts_preserve_native_roots_and_sheets"
+    },
+    {
+      "repo": "hypercurve",
+      "label": "case-02",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/translated-root-compaction-20260926-v196-hypercurve",
+        "--exact",
+        "curve_region_boolean::certified_successor_tests::selected_parallel_arrangement_splits_interior_cusps",
+        "--test-threads=1",
+        "--nocapture",
+        "--color",
+        "never"
+      ],
+      "returncode": "timeout",
+      "elapsed_seconds": 180.00455127900932,
+      "log": "translated-root-compaction-20260926-v196-case-02.log",
+      "name": "curve_region_boolean::certified_successor_tests::selected_parallel_arrangement_splits_interior_cusps"
+    }
+  ],
+  "binaries": {
+    "hypersolve": {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/translated-root-compaction-20260926-v196-hypersolve",
+      "sha256": "7c060c0cac30ea3111367eed12a2f21722ef5271ab1bdb550cb749fab3f033bc"
+    },
+    "hypercurve": {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/translated-root-compaction-20260926-v196-hypercurve",
+      "sha256": "7e475080d2b5c5bb94cae6199640a71954d7b688ee4002515012870dae0a8c3c"
+    }
+  },
+  "all_processes_reaped": true,
+  "diagnostic_only": false,
+  "hypersolve_build_returncode": 0,
+  "hypercurve_build_returncode": 0,
+  "all_sources_unchanged": true,
+  "qualification_complete": false
+}

@@ -1,0 +1,23 @@
+{
+  "tag": "reuse-consumer-hypertri-debug",
+  "started": "2026-09-08T21:49:00.622Z",
+  "finished": "2026-09-08T21:49:08.339Z",
+  "elapsedSeconds": 7.71432611,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/reuse-consumers/hypertri",
+  "command": "env",
+  "args": [
+    "CARGO_TARGET_DIR=/tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse",
+    "CARGO_INCREMENTAL=0",
+    "CARGO_PROFILE_DEV_DEBUG=0",
+    "CARGO_BUILD_JOBS=2",
+    "cargo",
+    "test",
+    "--offline",
+    "--locked",
+    "--all-features",
+    "--lib",
+    "--tests"
+  ],
+  "code": 0,
+  "signal": null
+}

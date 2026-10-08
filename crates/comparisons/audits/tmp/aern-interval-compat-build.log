@@ -1,0 +1,26 @@
+aern-interval> build (lib) with ghc-9.6.7
+Preprocessing library for aern-interval-0.5.0..
+Building library for aern-interval-0.5.0..
+[15 of 18] Compiling Numeric.AERN.RealArithmetic.Interval.Floating
+
+/tmp/aern-audit.zp9Mzz/source/aern-interval/src/Numeric/AERN/RealArithmetic/Interval/Floating.hs:210:5: warning: [GHC-06201] [-Wmissing-methods]
+    • No explicit implementation for
+        ‘log’, ‘asin’, ‘acos’, ‘atan’, ‘sinh’, ‘cosh’, ‘asinh’,
+        ‘acosh’, and ‘atanh’
+    • In the instance declaration for ‘Floating (Interval e)’
+    |
+210 |     (HasSampleFromContext e,
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^...
+
+/tmp/aern-audit.zp9Mzz/source/aern-interval/src/Numeric/AERN/RealArithmetic/Interval/Floating.hs:231:5: warning: [GHC-06201] [-Wmissing-methods]
+    • No explicit implementation for
+        ‘log’, ‘sin’, ‘cos’, ‘asin’, ‘acos’, ‘atan’, ‘sinh’, ‘cosh’,
+        ‘asinh’, ‘acosh’, and ‘atanh’
+    • In the instance declaration for ‘Floating (IntervalApprox e)’
+    |
+231 |     (HasSampleFromContext e,
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^...
+[18 of 18] Compiling Numeric.AERN.RealArithmetic.Interval
+aern-interval> copy/register
+Installing library in /tmp/aern-audit.zp9Mzz/.stack-work/install/x86_64-linux-tinfo6/a9cdb111ba43c34a9894161df33edb1b290c1c61f1b004418a8411cbdf470c15/9.6.7/lib/x86_64-linux-ghc-9.6.7/aern-interval-0.5.0-1HwUziHwpqEDIuL7qCev2C
+Registering library for aern-interval-0.5.0..

@@ -1,0 +1,44 @@
+{
+  "commits": {
+    "hyperreal": "f0a17ce20a7683751c7d278157614f36048fa239",
+    "hypersolve": "72691085d1f4d4079741a3030ae369b90440edba"
+  },
+  "indexed": {
+    "hyperreal/src/computable/node/quadratic_tower.rs": "b886c9b20fbb9699216db21a3381f13b254deacf99c4c730e775ae0cd85d5094",
+    "hyperreal/src/real/arithmetic/quadratic_tower_sign.rs": "87de5747b06dff15d199d0522299a3c05da1e9c97d073efe53fa4e098b46cd20",
+    "hypersolve/src/algebraic_tensor_image.rs": "5666fc79eb89be4c2fc2ffd362085fedf08f2130f7f7211d8ae32fb714124d54"
+  },
+  "source_manifest": "compact-image-coefficients-20260926-v275-sources.json",
+  "repositories": {
+    "hypersdf": "",
+    "hyperbrep": "",
+    "hyperparts": "",
+    "alumina-interface": "",
+    "hyperlattice": "",
+    "citizen-builder": "",
+    "csgrs-ffi": "",
+    "alumina-firmware": "",
+    "videos": "",
+    "hypertri": "",
+    "hyperreal": "",
+    "hyperpath": "",
+    "hypervoxel": "",
+    "hypergraphics": "",
+    "hyperevolution": "",
+    "exactcore-hyper-comparison": "",
+    "hypersolve": "",
+    "hypercurve": "",
+    "crcalc": "",
+    "openscad-rs": "",
+    "hypermesh": "",
+    "csgrs": "",
+    "synaps-cad": "",
+    "hyperdrc": "",
+    "hyperphysics": "",
+    "hyperlimit": "",
+    "hyperpack": "",
+    "NURBS_BREP_kernel": "",
+    "ExactCalculator": "",
+    "hypercircuit": ""
+  }
+}

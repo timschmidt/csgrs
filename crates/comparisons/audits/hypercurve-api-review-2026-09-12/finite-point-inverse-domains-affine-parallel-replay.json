@@ -1,0 +1,30 @@
+{
+  "returncode": 0,
+  "elapsed_seconds": 7.531949639000231,
+  "normal_library_sha256": "68b7eb07dd682f6f27b42ea8f5bf32ff3fb0e3d96d09c29889738e18190708f9",
+  "log": "finite-point-inverse-domains-affine-parallel-replay.log",
+  "source": "finite-circle-affine-parallel-public.rs",
+  "command": [
+    "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustc",
+    "--edition=2024",
+    "-O",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-circle-affine-parallel-public.rs",
+    "--extern",
+    "hypercurve=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypercurve-e19f31178f76cad1.rlib",
+    "-L",
+    "dependency=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps",
+    "-o",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-point-inverse-domains-affine-parallel-replay"
+  ],
+  "run_command": [
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-point-inverse-domains-affine-parallel-replay"
+  ],
+  "source_sha256": "e8edcbaa22fae40f130a617e793526b30d54f665215e359a47afc553e1a416b6",
+  "executable_sha256": "c7674d87ddeb19d24d3004b4ffa935af8054f09284f05e3783ec993d029cc57f",
+  "counts": {
+    "tangent_queries": 144,
+    "opposite_tangent_exclusions": 48,
+    "point_replays": 288,
+    "topologies": 144
+  }
+}

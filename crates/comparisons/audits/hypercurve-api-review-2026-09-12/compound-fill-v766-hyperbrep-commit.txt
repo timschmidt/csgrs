@@ -1,0 +1,5 @@
+Make region fill semantics explicit at path admission
+
+Pass EvenOdd to the unified boundary-path constructor when recovering the planar nesting fixture. This preserves existing fill semantics under Hypercurve's explicit global-winding API without a compatibility wrapper.
+
+Validation: the selected 50 Hyperbrep release regressions and warning-denied all-target/all-feature Clippy pass with the qualified Hypercurve change.

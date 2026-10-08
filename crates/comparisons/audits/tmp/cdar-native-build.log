@@ -1,0 +1,578 @@
+Specified file "README.md" for extra-source-files does not exist
+/tmp/cdar-audit.HQMgJs/master/cdar.cabal was modified manually. Ignoring /tmp/cdar-audit.HQMgJs/master/package.yaml in favor of the Cabal file.
+If you want to use the package.yaml file instead of the Cabal file,
+then please delete the Cabal file.
+All test running disabled by --no-run-tests flag. To mute this message in future, set
+notify-if-no-run-tests: false in Stack's configuration.
+tasty           > configure
+tasty           > Configuring tasty-1.4.3...
+tasty           > build with ghc-9.6.7
+tasty           > Preprocessing library for tasty-1.4.3..
+tasty           > Building library for tasty-1.4.3..
+tasty           > [ 1 of 25] Compiling Control.Concurrent.Async
+tasty           > [ 2 of 25] Compiling Test.Tasty.Options
+tasty           > [ 3 of 25] Compiling Test.Tasty.Parallel
+tasty           > [ 4 of 25] Compiling Test.Tasty.Patterns.Expr
+tasty           > [ 5 of 25] Compiling Test.Tasty.Patterns.Types
+tasty           > [ 6 of 25] Compiling Test.Tasty.Patterns.Printer
+tasty           > [ 7 of 25] Compiling Test.Tasty.Patterns.Parser
+tasty           > [ 8 of 25] Compiling Test.Tasty.Patterns.Eval
+tasty           > [ 9 of 25] Compiling Test.Tasty.Patterns
+tasty           > [10 of 25] Compiling Test.Tasty.Options.Core
+tasty           > [11 of 25] Compiling Test.Tasty.Providers.ConsoleFormat
+tasty           > [12 of 25] Compiling Test.Tasty.Core
+tasty           > [13 of 25] Compiling Test.Tasty.Providers
+tasty           > [14 of 25] Compiling Test.Tasty.Runners.Reducers
+tasty           > [15 of 25] Compiling Test.Tasty.Runners.Utils
+tasty           > [16 of 25] Compiling Test.Tasty.Run
+tasty           > [17 of 25] Compiling Test.Tasty.Ingredients
+tasty           > [18 of 25] Compiling Test.Tasty.Options.Env
+tasty           > [19 of 25] Compiling Test.Tasty.Ingredients.ListTests
+tasty           > [20 of 25] Compiling Test.Tasty.Ingredients.IncludingOptions
+tasty           > [21 of 25] Compiling Test.Tasty.Ingredients.ConsoleReporter
+tasty           > [22 of 25] Compiling Test.Tasty.Ingredients.Basic
+tasty           > [23 of 25] Compiling Test.Tasty.CmdLine
+tasty           > [24 of 25] Compiling Test.Tasty.Runners
+tasty           > [25 of 25] Compiling Test.Tasty
+tasty           > copy/register
+tasty           > Installing library in /tmp/aern2-stack.ryVCFK/snapshots/x86_64-linux-tinfo6/e5cc2549a3c454f19aa2276acd18607c9783b172227abbecbb037757f49cffda/9.6.7/lib/x86_64-linux-ghc-9.6.7/tasty-1.4.3-Acv7TBDf5KuIo3sTbR4pH
+tasty           > Registering library for tasty-1.4.3..
+tasty-hunit     > configure
+tasty-quickcheck> configure
+tasty-smallcheck> configure
+tasty-hunit     > Configuring tasty-hunit-0.10.2...
+tasty-smallcheck> Configuring tasty-smallcheck-0.8.2...
+tasty-quickcheck> Configuring tasty-quickcheck-0.10.2...
+tasty-quickcheck> build with ghc-9.6.7
+tasty-smallcheck> build with ghc-9.6.7
+tasty-hunit     > build with ghc-9.6.7
+tasty-quickcheck> Preprocessing library for tasty-quickcheck-0.10.2..
+tasty-quickcheck> Building library for tasty-quickcheck-0.10.2..
+tasty-smallcheck> Preprocessing library for tasty-smallcheck-0.8.2..
+tasty-smallcheck> Building library for tasty-smallcheck-0.8.2..
+tasty-hunit     > Preprocessing library for tasty-hunit-0.10.2..
+tasty-hunit     > Building library for tasty-hunit-0.10.2..
+tasty-hunit     > [1 of 3] Compiling Test.Tasty.HUnit.Orig
+tasty-smallcheck> [1 of 1] Compiling Test.Tasty.SmallCheck
+tasty-quickcheck> [1 of 1] Compiling Test.Tasty.QuickCheck
+tasty-hunit     > [2 of 3] Compiling Test.Tasty.HUnit.Steps
+tasty-hunit     > [3 of 3] Compiling Test.Tasty.HUnit
+tasty-smallcheck> copy/register
+tasty-smallcheck> Installing library in /tmp/aern2-stack.ryVCFK/snapshots/x86_64-linux-tinfo6/e5cc2549a3c454f19aa2276acd18607c9783b172227abbecbb037757f49cffda/9.6.7/lib/x86_64-linux-ghc-9.6.7/tasty-smallcheck-0.8.2-3i3NCLpxInI1qLfJ9lKR5U
+tasty-smallcheck> Registering library for tasty-smallcheck-0.8.2..
+tasty-hunit     > copy/register
+tasty-hunit     > Installing library in /tmp/aern2-stack.ryVCFK/snapshots/x86_64-linux-tinfo6/e5cc2549a3c454f19aa2276acd18607c9783b172227abbecbb037757f49cffda/9.6.7/lib/x86_64-linux-ghc-9.6.7/tasty-hunit-0.10.2-CxGhTQD77tmLcSWRnG9TZO
+tasty-hunit     > Registering library for tasty-hunit-0.10.2..
+tasty-quickcheck> copy/register
+tasty-quickcheck> Installing library in /tmp/aern2-stack.ryVCFK/snapshots/x86_64-linux-tinfo6/e5cc2549a3c454f19aa2276acd18607c9783b172227abbecbb037757f49cffda/9.6.7/lib/x86_64-linux-ghc-9.6.7/tasty-quickcheck-0.10.2-Dvh48A7LyTT2N2B4LK9h9a
+tasty-quickcheck> Registering library for tasty-quickcheck-0.10.2..
+cdar            > configure (lib + test)
+cdar-mBound     > configure (lib + test)
+cdar            > Configuring cdar-0.1.0.0...
+cdar-mBound     > Configuring cdar-mBound-0.1.0.4...
+
+Warning: File listed in /tmp/cdar-audit.HQMgJs/master/cdar.cabal file does not exist: README.md
+cdar            > build (lib + test) with ghc-9.6.7
+cdar-mBound     > build (lib + test) with ghc-9.6.7
+cdar            > Preprocessing library for cdar-0.1.0.0..
+cdar            > Building library for cdar-0.1.0.0..
+cdar-mBound     > Preprocessing library for cdar-mBound-0.1.0.4..
+cdar-mBound     > Building library for cdar-mBound-0.1.0.4..
+cdar-mBound     > [1 of 6] Compiling Data.CDAR.Classes
+cdar            > [1 of 7] Compiling Data.CDAR.Classes
+cdar-mBound     > [2 of 6] Compiling Data.CDAR.Extended
+cdar            > [2 of 7] Compiling Data.CDAR.Extended
+cdar-mBound     > [3 of 6] Compiling Data.CDAR.IntegerLog
+cdar-mBound     > [4 of 6] Compiling Data.CDAR.Dyadic
+cdar            > [3 of 7] Compiling Data.CDAR.IntegerLog
+cdar            > [4 of 7] Compiling Data.CDAR.Dyadic
+cdar-mBound     > [5 of 6] Compiling Data.CDAR.Approx
+cdar            > [5 of 7] Compiling Data.CDAR.Approx
+cdar-mBound     > 
+cdar-mBound     > /tmp/cdar-audit.HQMgJs/mbound/src/Data/CDAR/Approx.hs:826:9: warning: [GHC-62161] [-Wincomplete-uni-patterns]
+cdar-mBound     >     Pattern match(es) are non-exhaustive
+cdar-mBound     >     In a pattern binding:
+cdar-mBound     >         Patterns of type ‘Maybe Dyadic’ not matched: Nothing
+cdar-mBound     >     |
+cdar-mBound     > 826 |         (Just c) = centre x
+cdar-mBound     >     |         ^^^^^^^^^^^^^^^^^^^
+cdar-mBound     > 
+cdar-mBound     > /tmp/cdar-audit.HQMgJs/mbound/src/Data/CDAR/Approx.hs:829:9: warning: [GHC-62161] [-Wincomplete-uni-patterns]
+cdar-mBound     >     Pattern match(es) are non-exhaustive
+cdar-mBound     >     In a pattern binding:
+cdar-mBound     >         Patterns of type ‘Extended Dyadic’ not matched:
+cdar-mBound     >             PosInf
+cdar-mBound     >             NegInf
+cdar-mBound     >     |
+cdar-mBound     > 829 |         (Finite b) = upperBound . abs $ poly' ds x
+cdar-mBound     >     |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+cdar-mBound     > 
+cdar-mBound     > /tmp/cdar-audit.HQMgJs/mbound/src/Data/CDAR/Approx.hs:830:9: warning: [GHC-62161] [-Wincomplete-uni-patterns]
+cdar-mBound     >     Pattern match(es) are non-exhaustive
+cdar-mBound     >     In a pattern binding:
+cdar-mBound     >         Patterns of type ‘Extended Dyadic’ not matched:
+cdar-mBound     >             PosInf
+cdar-mBound     >             NegInf
+cdar-mBound     >     |
+cdar-mBound     > 830 |         (Finite (e':^_)) = fmap (b*) $ radius x
+cdar-mBound     >     |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+cdar-mBound     > 
+cdar-mBound     > /tmp/cdar-audit.HQMgJs/mbound/src/Data/CDAR/Approx.hs:875:23: warning: [GHC-62161] [-Wincomplete-uni-patterns]
+cdar-mBound     >     Pattern match(es) are non-exhaustive
+cdar-mBound     >     In a pattern binding:
+cdar-mBound     >         Patterns of type ‘Extended Int’ not matched:
+cdar-mBound     >             PosInf
+cdar-mBound     >             NegInf
+cdar-mBound     >     |
+cdar-mBound     > 875 |     | otherwise = let (Finite p) = significance a
+cdar-mBound     >     |                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+cdar-mBound     > 
+cdar-mBound     > /tmp/cdar-audit.HQMgJs/mbound/src/Data/CDAR/Approx.hs:916:21: warning: [GHC-62161] [-Wincomplete-uni-patterns]
+cdar-mBound     >     Pattern match(es) are non-exhaustive
+cdar-mBound     >     In a pattern binding:
+cdar-mBound     >         Patterns of type ‘Extended Int’ not matched:
+cdar-mBound     >             PosInf
+cdar-mBound     >             NegInf
+cdar-mBound     >     |
+cdar-mBound     > 916 |   | otherwise = let (Finite p) = significance a
+cdar-mBound     >     |                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+cdar-mBound     > 
+cdar-mBound     > /tmp/cdar-audit.HQMgJs/mbound/src/Data/CDAR/Approx.hs:1032:7: warning: [GHC-62161] [-Wincomplete-uni-patterns]
+cdar-mBound     >     Pattern match(es) are non-exhaustive
+cdar-mBound     >     In a pattern binding:
+cdar-mBound     >         Patterns of type ‘([Approx], [Approx])’ not matched: (_, [])
+cdar-mBound     >      |
+cdar-mBound     > 1032 |       (cs,(d:_)) = span nonZeroCentredA mb -- This span and the sum on the next line do probably not fuse!
+cdar-mBound     >      |       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+cdar-mBound     > 
+cdar-mBound     > /tmp/cdar-audit.HQMgJs/mbound/src/Data/CDAR/Approx.hs:1106:7: warning: [GHC-62161] [-Wincomplete-uni-patterns]
+cdar-mBound     >     Pattern match(es) are non-exhaustive
+cdar-mBound     >     In a pattern binding:
+cdar-mBound     >         Patterns of type ‘Maybe Int’ not matched: Nothing
+cdar-mBound     >      |
+cdar-mBound     > 1106 |       (Just n) = findIndex (>= res+r) $ zipWith (+) log2Factorials [0,r'..]
+cdar-mBound     >      |       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+cdar-mBound     > 
+cdar-mBound     > /tmp/cdar-audit.HQMgJs/mbound/src/Data/CDAR/Approx.hs:1205:13: warning: [GHC-62161] [-Wincomplete-uni-patterns]
+cdar-mBound     >     Pattern match(es) are non-exhaustive
+cdar-mBound     >     In a pattern binding:
+cdar-mBound     >         Patterns of type ‘Extended Int’ not matched:
+cdar-mBound     >             PosInf
+cdar-mBound     >             NegInf
+cdar-mBound     >      |
+cdar-mBound     > 1205 |             Finite res' = min (significance a) (Finite res)
+cdar-mBound     >      |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+cdar-mBound     > 
+cdar-mBound     > /tmp/cdar-audit.HQMgJs/mbound/src/Data/CDAR/Approx.hs:1295:9: warning: [GHC-62161] [-Wincomplete-uni-patterns]
+cdar-mBound     >     Pattern match(es) are non-exhaustive
+cdar-mBound     >     In a pattern binding: Patterns of type ‘Approx’ not matched: Bottom
+cdar-mBound     >      |
+cdar-mBound     > 1295 |         (Approx mb' m' e' s') = 4 * a * recipA _pi
+cdar-mBound     >      |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+cdar-mBound     > 
+cdar-mBound     > /tmp/cdar-audit.HQMgJs/mbound/src/Data/CDAR/Approx.hs:1316:9: warning: [GHC-62161] [-Wincomplete-uni-patterns]
+cdar-mBound     >     Pattern match(es) are non-exhaustive
+cdar-mBound     >     In a pattern binding: Patterns of type ‘Approx’ not matched: Bottom
+cdar-mBound     >      |
+cdar-mBound     > 1316 |         (Approx mb' m' e' s') = 4 * a * recipA _pi
+cdar-mBound     >      |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+cdar-mBound     > 
+cdar-mBound     > /tmp/cdar-audit.HQMgJs/mbound/src/Data/CDAR/Approx.hs:1371:7: warning: [GHC-62161] [-Wincomplete-uni-patterns]
+cdar-mBound     >     Pattern match(es) are non-exhaustive
+cdar-mBound     >     In a pattern binding:
+cdar-mBound     >         Patterns of type ‘Extended Precision’ not matched:
+cdar-mBound     >             PosInf
+cdar-mBound     >             NegInf
+cdar-mBound     >      |
+cdar-mBound     > 1371 |   let (Finite r) = min (pure res) (significance a)
+cdar-mBound     >      |       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+cdar-mBound     > 
+cdar-mBound     > /tmp/cdar-audit.HQMgJs/mbound/src/Data/CDAR/Approx.hs:1575:9: warning: [GHC-62161] [-Wincomplete-uni-patterns]
+cdar-mBound     >     Pattern match(es) are non-exhaustive
+cdar-mBound     >     In a pattern binding:
+cdar-mBound     >         Patterns of type ‘[(Approx, Approx)]’ not matched: []
+cdar-mBound     >      |
+cdar-mBound     > 1575 |         ((an,bn):_) = dropWhile (not . close) $ iterate step (a,b)
+cdar-mBound     >      |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+cdar-mBound     > 
+cdar-mBound     > /tmp/cdar-audit.HQMgJs/mbound/src/Data/CDAR/Approx.hs:1585:9: warning: [GHC-62161] [-Wincomplete-uni-patterns]
+cdar-mBound     >     Pattern match(es) are non-exhaustive
+cdar-mBound     >     In a pattern binding:
+cdar-mBound     >         Patterns of type ‘Extended Int’ not matched:
+cdar-mBound     >             PosInf
+cdar-mBound     >             NegInf
+cdar-mBound     >      |
+cdar-mBound     > 1585 |     let (Finite k) = min (significance x) (Finite (-t))
+cdar-mBound     >      |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+cdar-mBound     > 
+cdar-mBound     > /tmp/cdar-audit.HQMgJs/mbound/src/Data/CDAR/Approx.hs:1591:9: warning: [GHC-62161] [-Wincomplete-uni-patterns]
+cdar-mBound     >     Pattern match(es) are non-exhaustive
+cdar-mBound     >     In a pattern binding: Patterns of type ‘Approx’ not matched: Bottom
+cdar-mBound     >      |
+cdar-mBound     > 1591 |         (Approx mb2 m e s) = lnSuperSizeKnownPi t _pi $ x^(2^n)
+cdar-mBound     >      |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+cdar-mBound     > 
+cdar-mBound     > /tmp/cdar-audit.HQMgJs/mbound/src/Data/CDAR/Approx.hs:1597:9: warning: [GHC-62161] [-Wincomplete-uni-patterns]
+cdar-mBound     >     Pattern match(es) are non-exhaustive
+cdar-mBound     >     In a pattern binding:
+cdar-mBound     >         Patterns of type ‘Extended Int’ not matched:
+cdar-mBound     >             PosInf
+cdar-mBound     >             NegInf
+cdar-mBound     >      |
+cdar-mBound     > 1597 |     let (Finite t') = min (significance x) (Finite (-t))
+cdar-mBound     >      |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+cdar            > 
+cdar            > /tmp/cdar-audit.HQMgJs/master/src/Data/CDAR/Approx.hs:724:9: warning: [GHC-62161] [-Wincomplete-uni-patterns]
+cdar            >     Pattern match(es) are non-exhaustive
+cdar            >     In a pattern binding:
+cdar            >         Patterns of type ‘Maybe Dyadic’ not matched: Nothing
+cdar            >     |
+cdar            > 724 |         (Just c) = centre x
+cdar            >     |         ^^^^^^^^^^^^^^^^^^^
+cdar            > 
+cdar            > /tmp/cdar-audit.HQMgJs/master/src/Data/CDAR/Approx.hs:727:9: warning: [GHC-62161] [-Wincomplete-uni-patterns]
+cdar            >     Pattern match(es) are non-exhaustive
+cdar            >     In a pattern binding:
+cdar            >         Patterns of type ‘Extended Dyadic’ not matched:
+cdar            >             PosInf
+cdar            >             NegInf
+cdar            >     |
+cdar            > 727 |         (Finite b) = upperBound . abs $ poly' ds x
+cdar            >     |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+cdar            > 
+cdar            > /tmp/cdar-audit.HQMgJs/master/src/Data/CDAR/Approx.hs:728:9: warning: [GHC-62161] [-Wincomplete-uni-patterns]
+cdar            >     Pattern match(es) are non-exhaustive
+cdar            >     In a pattern binding:
+cdar            >         Patterns of type ‘Extended Dyadic’ not matched:
+cdar            >             PosInf
+cdar            >             NegInf
+cdar            >     |
+cdar            > 728 |         (Finite (e':^_)) = fmap (b*) $ radius x
+cdar            >     |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+cdar            > 
+cdar            > /tmp/cdar-audit.HQMgJs/master/src/Data/CDAR/Approx.hs:773:23: warning: [GHC-62161] [-Wincomplete-uni-patterns]
+cdar            >     Pattern match(es) are non-exhaustive
+cdar            >     In a pattern binding:
+cdar            >         Patterns of type ‘Extended Int’ not matched:
+cdar            >             PosInf
+cdar            >             NegInf
+cdar            >     |
+cdar            > 773 |     | otherwise = let (Finite p) = significance a
+cdar            >     |                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+cdar            > 
+cdar            > /tmp/cdar-audit.HQMgJs/master/src/Data/CDAR/Approx.hs:806:21: warning: [GHC-62161] [-Wincomplete-uni-patterns]
+cdar            >     Pattern match(es) are non-exhaustive
+cdar            >     In a pattern binding:
+cdar            >         Patterns of type ‘Extended Int’ not matched:
+cdar            >             PosInf
+cdar            >             NegInf
+cdar            >     |
+cdar            > 806 |   | otherwise = let (Finite p) = significance a
+cdar            >     |                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+cdar            > 
+cdar            > /tmp/cdar-audit.HQMgJs/master/src/Data/CDAR/Approx.hs:921:7: warning: [GHC-62161] [-Wincomplete-uni-patterns]
+cdar            >     Pattern match(es) are non-exhaustive
+cdar            >     In a pattern binding:
+cdar            >         Patterns of type ‘([Approx], [Approx])’ not matched: (_, [])
+cdar            >     |
+cdar            > 921 |       (cs,(d:_)) = span nonZeroCentredA bs -- This span and the sum on the next line do probably not fuse!
+cdar            >     |       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+cdar            > 
+cdar            > /tmp/cdar-audit.HQMgJs/master/src/Data/CDAR/Approx.hs:985:7: warning: [GHC-62161] [-Wincomplete-uni-patterns]
+cdar            >     Pattern match(es) are non-exhaustive
+cdar            >     In a pattern binding:
+cdar            >         Patterns of type ‘Maybe Int’ not matched: Nothing
+cdar            >     |
+cdar            > 985 |       (Just n) = findIndex (>= res+r) $ zipWith (+) log2Factorials [0,r'..]
+cdar            >     |       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+cdar            > 
+cdar            > /tmp/cdar-audit.HQMgJs/master/src/Data/CDAR/Approx.hs:1077:13: warning: [GHC-62161] [-Wincomplete-uni-patterns]
+cdar            >     Pattern match(es) are non-exhaustive
+cdar            >     In a pattern binding:
+cdar            >         Patterns of type ‘Extended Int’ not matched:
+cdar            >             PosInf
+cdar            >             NegInf
+cdar            >      |
+cdar            > 1077 |             Finite res' = min (significance a) (Finite res)
+cdar            >      |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+cdar            > 
+cdar            > /tmp/cdar-audit.HQMgJs/master/src/Data/CDAR/Approx.hs:1147:9: warning: [GHC-62161] [-Wincomplete-uni-patterns]
+cdar            >     Pattern match(es) are non-exhaustive
+cdar            >     In a pattern binding: Patterns of type ‘Approx’ not matched: Bottom
+cdar            >      |
+cdar            > 1147 |         (Approx m' e' s') = 4 * a * recipA res _pi
+cdar            >      |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+cdar            > 
+cdar            > /tmp/cdar-audit.HQMgJs/master/src/Data/CDAR/Approx.hs:1168:9: warning: [GHC-62161] [-Wincomplete-uni-patterns]
+cdar            >     Pattern match(es) are non-exhaustive
+cdar            >     In a pattern binding: Patterns of type ‘Approx’ not matched: Bottom
+cdar            >      |
+cdar            > 1168 |         (Approx m' e' s') = 4 * a * recipA res _pi
+cdar            >      |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+cdar            > 
+cdar            > /tmp/cdar-audit.HQMgJs/master/src/Data/CDAR/Approx.hs:1222:7: warning: [GHC-62161] [-Wincomplete-uni-patterns]
+cdar            >     Pattern match(es) are non-exhaustive
+cdar            >     In a pattern binding:
+cdar            >         Patterns of type ‘Extended Precision’ not matched:
+cdar            >             PosInf
+cdar            >             NegInf
+cdar            >      |
+cdar            > 1222 |   let (Finite r) = min (pure res) (significance a)
+cdar            >      |       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+cdar            > 
+cdar            > /tmp/cdar-audit.HQMgJs/master/src/Data/CDAR/Approx.hs:1409:9: warning: [GHC-62161] [-Wincomplete-uni-patterns]
+cdar            >     Pattern match(es) are non-exhaustive
+cdar            >     In a pattern binding:
+cdar            >         Patterns of type ‘[(Approx, Approx)]’ not matched: []
+cdar            >      |
+cdar            > 1409 |         ((an,bn):_) = dropWhile (not . close) $ iterate step (a,b)
+cdar            >      |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+cdar            > 
+cdar            > /tmp/cdar-audit.HQMgJs/master/src/Data/CDAR/Approx.hs:1418:9: warning: [GHC-62161] [-Wincomplete-uni-patterns]
+cdar            >     Pattern match(es) are non-exhaustive
+cdar            >     In a pattern binding:
+cdar            >         Patterns of type ‘Extended Int’ not matched:
+cdar            >             PosInf
+cdar            >             NegInf
+cdar            >      |
+cdar            > 1418 |     let (Finite k) = min (significance x) (Finite (-t))
+cdar            >      |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+cdar            > 
+cdar            > /tmp/cdar-audit.HQMgJs/master/src/Data/CDAR/Approx.hs:1423:9: warning: [GHC-62161] [-Wincomplete-uni-patterns]
+cdar            >     Pattern match(es) are non-exhaustive
+cdar            >     In a pattern binding: Patterns of type ‘Approx’ not matched: Bottom
+cdar            >      |
+cdar            > 1423 |         (Approx m e s) = lnSuperSizeKnownPi t _pi $ x^(2^n)
+cdar            >      |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+cdar            > 
+cdar            > /tmp/cdar-audit.HQMgJs/master/src/Data/CDAR/Approx.hs:1429:9: warning: [GHC-62161] [-Wincomplete-uni-patterns]
+cdar            >     Pattern match(es) are non-exhaustive
+cdar            >     In a pattern binding:
+cdar            >         Patterns of type ‘Extended Int’ not matched:
+cdar            >             PosInf
+cdar            >             NegInf
+cdar            >      |
+cdar            > 1429 |     let (Finite t') = min (significance x) (Finite (-t))
+cdar            >      |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+cdar            > [6 of 7] Compiling Data.CDAR
+cdar            > [7 of 7] Compiling Paths_cdar
+cdar-mBound     > [6 of 6] Compiling Data.CDAR
+cdar            > Preprocessing test suite 'test' for cdar-0.1.0.0..
+cdar            > Building test suite 'test' for cdar-0.1.0.0..
+cdar            > [1 of 2] Compiling Main
+cdar-mBound     > Preprocessing test suite 'test' for cdar-mBound-0.1.0.4..
+cdar-mBound     > Building test suite 'test' for cdar-mBound-0.1.0.4..
+cdar-mBound     > [1 of 1] Compiling Main
+cdar            > 
+cdar            > /tmp/cdar-audit.HQMgJs/master/test/Test.hs:11:1: warning: [-Wunused-imports]
+cdar            >     The import of ‘Data.Functor’ is redundant
+cdar            >       except perhaps to import instances from ‘Data.Functor’
+cdar            >     To import instances alone, use: import Data.Functor()
+cdar            >    |
+cdar            > 11 | import Data.Functor
+cdar            >    | ^^^^^^^^^^^^^^^^^^^
+cdar            > 
+cdar            > /tmp/cdar-audit.HQMgJs/master/test/Test.hs:13:1: warning: [-Wunused-imports]
+cdar            >     The import of ‘Data.List’ is redundant
+cdar            >       except perhaps to import instances from ‘Data.List’
+cdar            >     To import instances alone, use: import Data.List()
+cdar            >    |
+cdar            > 13 | import Data.List
+cdar            >    | ^^^^^^^^^^^^^^^^
+cdar            > 
+cdar            > /tmp/cdar-audit.HQMgJs/master/test/Test.hs:14:1: warning: [-Wunused-imports]
+cdar            >     The import of ‘Data.Ord’ is redundant
+cdar            >       except perhaps to import instances from ‘Data.Ord’
+cdar            >     To import instances alone, use: import Data.Ord()
+cdar            >    |
+cdar            > 14 | import Data.Ord
+cdar            >    | ^^^^^^^^^^^^^^^
+cdar            > 
+cdar            > /tmp/cdar-audit.HQMgJs/master/test/Test.hs:15:1: warning: [-Wunused-imports]
+cdar            >     The import of ‘Data.Fixed’ is redundant
+cdar            >       except perhaps to import instances from ‘Data.Fixed’
+cdar            >     To import instances alone, use: import Data.Fixed()
+cdar            >    |
+cdar            > 15 | import Data.Fixed (mod')
+cdar            >    | ^^^^^^^^^^^^^^^^^^^^^^^^
+cdar            > 
+cdar            > /tmp/cdar-audit.HQMgJs/master/test/Test.hs:21:1: warning: [GHC-38417] [-Wmissing-signatures]
+cdar            >     Top-level binding with no type signature: main :: IO ()
+cdar            >    |
+cdar            > 21 | main = defaultMain tests
+cdar            >    | ^^^^
+cdar            > 
+cdar            > /tmp/cdar-audit.HQMgJs/master/test/Test.hs:41:1: warning: [GHC-90177] [-Worphans]
+cdar            >     Orphan instance: instance Generic Dyadic
+cdar            >     Suggested fix:
+cdar            >       Move the instance declaration to the module of the class or of the type, or
+cdar            >       wrap the type with a newtype and declare the instance on the new type.
+cdar            >    |
+cdar            > 41 | deriving instance Generic Dyadic
+cdar            >    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+cdar            > 
+cdar            > /tmp/cdar-audit.HQMgJs/master/test/Test.hs:42:1: warning: [GHC-90177] [-Worphans]
+cdar            >     Orphan instance: instance Monad m => Serial m Dyadic
+cdar            >     Suggested fix:
+cdar            >       Move the instance declaration to the module of the class or of the type, or
+cdar            >       wrap the type with a newtype and declare the instance on the new type.
+cdar            >    |
+cdar            > 42 | instance (Monad m) => Serial m Dyadic
+cdar            >    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+cdar            > 
+cdar            > /tmp/cdar-audit.HQMgJs/master/test/Test.hs:44:1: warning: [GHC-90177] [-Worphans]
+cdar            >     Orphan instance: instance Arbitrary Dyadic
+cdar            >     Suggested fix:
+cdar            >       Move the instance declaration to the module of the class or of the type, or
+cdar            >       wrap the type with a newtype and declare the instance on the new type.
+cdar            >    |
+cdar            > 44 | instance Arbitrary Dyadic where
+cdar            >    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^...
+cdar            > 
+cdar            > /tmp/cdar-audit.HQMgJs/master/test/Test.hs:52:1: warning: [GHC-38417] [-Wmissing-signatures]
+cdar            >     Top-level binding with no type signature: scPropD :: TestTree
+cdar            >    |
+cdar            > 52 | scPropD = testGroup "(checked by SmallCheck)"
+cdar            >    | ^^^^^^^
+cdar            > 
+cdar            > /tmp/cdar-audit.HQMgJs/master/test/Test.hs:71:49: warning: [-Wunused-matches]
+cdar            >     Defined but not used: ‘a’
+cdar            >    |
+cdar            > 71 |   , SC.testProperty "shift left identity" $ \d@(a :^ s) (SC.NonNegative n) -> shiftD (s - n) d == d
+cdar            >    |                                                 ^
+cdar            > 
+cdar            > /tmp/cdar-audit.HQMgJs/master/test/Test.hs:72:34: warning: [-Wunused-matches]
+cdar            >     Defined but not used: ‘a’
+cdar            >    |
+cdar            > 72 |   , SC.testProperty "sqrt" $ \d@(a :^ s) -> sqrtD (min 0 (2*s)) (d*d) == abs d
+cdar            >    |                                  ^
+cdar            > 
+cdar            > /tmp/cdar-audit.HQMgJs/master/test/Test.hs:75:1: warning: [GHC-38417] [-Wmissing-signatures]
+cdar            >     Top-level binding with no type signature: qcPropD :: TestTree
+cdar            >    |
+cdar            > 75 | qcPropD = testGroup "(checked by QuickCheck)"
+cdar            >    | ^^^^^^^
+cdar            > 
+cdar            > /tmp/cdar-audit.HQMgJs/master/test/Test.hs:92:49: warning: [-Wunused-matches]
+cdar            >     Defined but not used: ‘a’
+cdar            >    |
+cdar            > 92 |   , QC.testProperty "shift left identity" $ \d@(a :^ s) (QC.NonNegative n) -> shiftD (s - n) d == d
+cdar            >    |                                                 ^
+cdar            > 
+cdar            > /tmp/cdar-audit.HQMgJs/master/test/Test.hs:93:34: warning: [-Wunused-matches]
+cdar            >     Defined but not used: ‘a’
+cdar            >    |
+cdar            > 93 |   , QC.testProperty "sqrt" $ \d@(a :^ s) -> sqrtD (min 0 (2*s)) (d*d) == abs d
+cdar            >    |                                  ^
+cdar            > 
+cdar            > /tmp/cdar-audit.HQMgJs/master/test/Test.hs:104:1: warning: [GHC-90177] [-Worphans]
+cdar            >     Orphan instance: instance Monad m => Serial m Approx
+cdar            >     Suggested fix:
+cdar            >       Move the instance declaration to the module of the class or of the type, or
+cdar            >       wrap the type with a newtype and declare the instance on the new type.
+cdar            >     |
+cdar            > 104 | instance Monad m => Serial m Approx where
+cdar            >     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^...
+cdar            > 
+cdar            > /tmp/cdar-audit.HQMgJs/master/test/Test.hs:109:1: warning: [GHC-90177] [-Worphans]
+cdar            >     Orphan instance: instance Arbitrary Approx
+cdar            >     Suggested fix:
+cdar            >       Move the instance declaration to the module of the class or of the type, or
+cdar            >       wrap the type with a newtype and declare the instance on the new type.
+cdar            >     |
+cdar            > 109 | instance Arbitrary Approx where
+cdar            >     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^...
+cdar            > 
+cdar            > /tmp/cdar-audit.HQMgJs/master/test/Test.hs:140:33: warning: [GHC-62161] [-Wincomplete-uni-patterns]
+cdar            >     Pattern match(es) are non-exhaustive
+cdar            >     In a pattern binding: Patterns of type ‘Approx’ not matched: Bottom
+cdar            >     |
+cdar            > 140 |             Approx _ _ _ -> let b@(Approx _ e _) = boundErrorTerm a
+cdar            >     |                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+cdar            > 
+cdar            > /tmp/cdar-audit.HQMgJs/master/test/Test.hs:145:33: warning: [GHC-62161] [-Wincomplete-uni-patterns]
+cdar            >     Pattern match(es) are non-exhaustive
+cdar            >     In a pattern binding: Patterns of type ‘Approx’ not matched: Bottom
+cdar            >     |
+cdar            > 145 |             Approx _ _ _ -> let b@(Approx _ _ s) = limitSize 2 a
+cdar            >     |                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+cdar            > 
+cdar            > /tmp/cdar-audit.HQMgJs/master/test/Test.hs:174:33: warning: [GHC-62161] [-Wincomplete-uni-patterns]
+cdar            >     Pattern match(es) are non-exhaustive
+cdar            >     In a pattern binding: Patterns of type ‘Approx’ not matched: Bottom
+cdar            >     |
+cdar            > 174 |             Approx _ _ _ -> let b@(Approx _ e _) = boundErrorTerm a
+cdar            >     |                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+cdar            > 
+cdar            > /tmp/cdar-audit.HQMgJs/master/test/Test.hs:179:33: warning: [GHC-62161] [-Wincomplete-uni-patterns]
+cdar            >     Pattern match(es) are non-exhaustive
+cdar            >     In a pattern binding: Patterns of type ‘Approx’ not matched: Bottom
+cdar            >     |
+cdar            > 179 |             Approx _ _ _ -> let b@(Approx _ _ s) = limitSize 2 a
+cdar            >     |                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+cdar            > 
+cdar            > /tmp/cdar-audit.HQMgJs/master/test/Test.hs:182:42: warning: [-Wunused-local-binds]
+cdar            >     Defined but not used: ‘types’
+cdar            >     |
+cdar            > 182 |   , QC.testProperty "values" $ \a -> let types = a :: Approx in collect a True
+cdar            >     |                                          ^^^^^
+cdar            > 
+cdar            > /tmp/cdar-audit.HQMgJs/master/test/Test.hs:193:1: warning: [-Wunused-top-binds]
+cdar            >     Defined but not used: ‘genCRApprox’
+cdar            >     |
+cdar            > 193 | genCRApprox = liftM (CR . pure)
+cdar            >     | ^^^^^^^^^^^
+cdar            > 
+cdar            > /tmp/cdar-audit.HQMgJs/master/test/Test.hs:224:1: warning: [GHC-90177] [-Worphans]
+cdar            >     Orphan instance: instance Arbitrary CR
+cdar            >     Suggested fix:
+cdar            >       Move the instance declaration to the module of the class or of the type, or
+cdar            >       wrap the type with a newtype and declare the instance on the new type.
+cdar            >     |
+cdar            > 224 | instance Arbitrary CR where
+cdar            >     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^...
+cdar            > 
+cdar            > /tmp/cdar-audit.HQMgJs/master/test/Test.hs:227:1: warning: [GHC-90177] [-Worphans]
+cdar            >     Orphan instance: instance Show CR
+cdar            >     Suggested fix:
+cdar            >       Move the instance declaration to the module of the class or of the type, or
+cdar            >       wrap the type with a newtype and declare the instance on the new type.
+cdar            >     |
+cdar            > 227 | instance Show CR where
+cdar            >     | ^^^^^^^^^^^^^^^^^^^^^^...
+cdar            > 
+cdar            > /tmp/cdar-audit.HQMgJs/master/test/Test.hs:244:1: warning: [GHC-38417] [-Wmissing-signatures]
+cdar            >     Top-level binding with no type signature: scPropCR :: TestTree
+cdar            >     |
+cdar            > 244 | scPropCR = testGroup "(checked by smallCheck)"
+cdar            >     | ^^^^^^^^
+cdar            > 
+cdar            > /tmp/cdar-audit.HQMgJs/master/test/Test.hs:254:1: warning: [GHC-38417] [-Wmissing-signatures]
+cdar            >     Top-level binding with no type signature: qcPropCR :: TestTree
+cdar            >     |
+cdar            > 254 | qcPropCR = testGroup "(checked by quickCheck)"
+cdar            >     | ^^^^^^^^
+cdar            > 
+cdar            > /tmp/cdar-audit.HQMgJs/master/test/Test.hs:255:42: warning: [-Wunused-local-binds]
+cdar            >     Defined but not used: ‘types’
+cdar            >     |
+cdar            > 255 |   [ QC.testProperty "values" $ \x -> let types = x :: CR in collect (show x) True
+cdar            >     |                                          ^^^^^
+cdar            > 
+cdar            > /tmp/cdar-audit.HQMgJs/master/test/Test.hs:291:1: warning: [GHC-38417] [-Wmissing-signatures]
+cdar            >     Top-level binding with no type signature: unitTests :: TestTree
+cdar            >     |
+cdar            > 291 | unitTests = testGroup "Unit tests"
+cdar            >     | ^^^^^^^^^
+cdar            > [2 of 2] Compiling Paths_cdar
+cdar            > [3 of 3] Linking .stack-work/dist/x86_64-linux-tinfo6/ghc-9.6.7/build/test/test
+cdar-mBound     > [2 of 2] Linking .stack-work/dist/x86_64-linux-tinfo6/ghc-9.6.7/build/test/test
+
+Warning: File listed in /tmp/cdar-audit.HQMgJs/master/cdar.cabal file does not exist: README.md
+cdar            > copy/register
+cdar            > Installing library in /tmp/cdar-audit.HQMgJs/.stack-work/install/x86_64-linux-tinfo6/e5cc2549a3c454f19aa2276acd18607c9783b172227abbecbb037757f49cffda/9.6.7/lib/x86_64-linux-ghc-9.6.7/cdar-0.1.0.0-63g1mpsbG20Gsq7NbTLIqf
+cdar            > Registering library for cdar-0.1.0.0..
+cdar-mBound     > copy/register
+cdar-mBound     > Installing library in /tmp/cdar-audit.HQMgJs/.stack-work/install/x86_64-linux-tinfo6/e5cc2549a3c454f19aa2276acd18607c9783b172227abbecbb037757f49cffda/9.6.7/lib/x86_64-linux-ghc-9.6.7/cdar-mBound-0.1.0.4-76CGSBBscU19Uf7aGCDL6A
+cdar-mBound     > Registering library for cdar-mBound-0.1.0.4..
+Completed 6 action(s).

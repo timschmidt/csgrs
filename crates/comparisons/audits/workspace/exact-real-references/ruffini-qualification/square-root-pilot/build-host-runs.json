@@ -1,0 +1,45 @@
+[
+  {
+    "mode": "debug",
+    "args": [
+      "build",
+      "--offline",
+      "--manifest-path",
+      "/home/tim/Documents/GitHub/workspace/exact-real-references/ruffini-qualification/square-root-pilot/Cargo.toml",
+      "--target-dir",
+      "/tmp/hyper-square-root-audit.hob6KqKx/target"
+    ],
+    "started": "2026-09-07T02:31:26.636Z",
+    "finished": "2026-09-07T02:31:26.772Z",
+    "status": 101,
+    "signal": null,
+    "error": null,
+    "file": "build-host-debug.log",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderrSha256": "6638d072ce6a0b1672e0e5d7dc5a0171655809a477473733f99d73e63137d176",
+    "sources": [
+      [
+        "main.rs",
+        "d6b3b28c73bdc1c16452a98f55d827e7695d5344db679dcabff09dd8015a6f6f"
+      ],
+      [
+        "diagonal.rs",
+        "fe7e844196357e900969c6a919d5aafca192839f6f42a34814845e8f5fbf5fd8"
+      ],
+      [
+        "baseline.rs",
+        "f09fb430259ecd9ca39a7821e738ea9c881cbe0e6f65cf410d62f6a5f9c5b2f4"
+      ],
+      [
+        "shared.rs",
+        "5ea43f1efafd86c8977314e75045e072fb9c5fe54711a8b34eb474cf663f9971"
+      ],
+      [
+        "Cargo.toml",
+        "62876e919a9fa353b6c6738ff1603147d6446f7191b86a51fe2d2593bbb16c5d"
+      ]
+    ],
+    "lockSha256": "fb633e7c76c151af86d2240f378e28e7392830d29677e555af5ea43eddadbee0",
+    "runnerSha256": "24c607dd96b7fef2378b62e36291cb0fbc4e97a719786eb39c5e205927f52e8c"
+  }
+]

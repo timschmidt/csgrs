@@ -1,0 +1,53 @@
+{
+  "source_manifest": "trace-fillet-component-boolean-20260927-v396-sources.json",
+  "source_directory": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/source-archives/trace-fillet-component-boolean-20260927-v396",
+  "cases": [
+    {
+      "binary": "trace-fillet-component-boolean-20260927-v396-hypercurve",
+      "name": "curve::curve_fillet::tests::nonlinear_linear_fillet_components_retain_unique_contacts_and_tangents",
+      "returncode": 101,
+      "log": "trace-fillet-component-boolean-20260927-v396-case-000.log",
+      "elapsed_seconds": 0.01568253501318395
+    }
+  ],
+  "builds": [
+    {
+      "crate": "hypercurve",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "test",
+        "--lib",
+        "--release",
+        "--all-features",
+        "--no-run",
+        "--message-format=json",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "log": "trace-fillet-component-boolean-20260927-v396-hypercurve-build.log",
+      "elapsed_seconds": 130.0950460061431,
+      "binary": {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/trace-fillet-component-boolean-20260927-v396-hypercurve",
+        "sha256": "d53102a41883a9c4367f7b87c5e330aa72d02b4c496148436ba390f332de8fc4"
+      }
+    }
+  ],
+  "trial": {
+    "hypercurve/src/error.rs": "5be51eaf83039d74ea77cba5ffa5cd9af04dcb09dc7b54b9a42f62c2d32f76a3"
+  },
+  "all_processes_reaped": true,
+  "checks": [],
+  "qualification_scope": "Selected component pairs retain tangent proofs and eliminate repeated chart coverage",
+  "expected_cases": {
+    "hypercurve": [
+      "curve::curve_fillet::tests::nonlinear_linear_fillet_components_retain_unique_contacts_and_tangents"
+    ]
+  },
+  "known_unresolved": [
+    "strict_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions",
+    "approximate_512_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions"
+  ],
+  "failure": "case failure",
+  "qualification_complete": false
+}

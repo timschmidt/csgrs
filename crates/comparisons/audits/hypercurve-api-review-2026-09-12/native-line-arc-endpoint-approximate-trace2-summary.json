@@ -1,0 +1,20 @@
+{
+  "consumed_count": 48,
+  "stacks": {
+    "hypercurve::classify::real_sign -> hypercurve::rational_bezier_general::quadratic_conic_homogeneous_point_parameters -> hypercurve::rational_bezier_general::quadratic_conic_point_parameters -> <hypercurve::rational_bezier_general::RationalBezier2>::relation_to_line_with_contacts -> <hypercurve::curve_region_boolean::CurveRegionBooleanContext>::algebraic_chord_shared_image_endpoint_pair_result": 8,
+    "hypercurve::classify::compare_reals -> hypercurve::classify::closed_unit_interval_location -> hypercurve::rational_bezier_general::quadratic_conic_homogeneous_point_parameters -> hypercurve::rational_bezier_general::quadratic_conic_point_parameters -> <hypercurve::rational_bezier_general::RationalBezier2>::relation_to_line_with_contacts": 8,
+    "hypercurve::classify::compare_reals -> hypercurve::classify::closed_unit_interval_location -> <hypercurve::rational_bezier_general::RationalBezier2>::derivative_at_classified -> <hypercurve::rational_bezier_general::RationalBezier2>::relation_to_line_with_contacts -> <hypercurve::curve_region_boolean::CurveRegionBooleanContext>::algebraic_chord_shared_image_endpoint_pair_result": 8,
+    "hypercurve::classify::compare_reals -> <hypercurve::bezier_parameter::BezierParameter2>::cmp_by_refinement_once -> <hypercurve::bezier_split::CurveParameter2>::cmp_by_refinement -> hypercurve::curve_region_boolean::parameter_location_in_carrier -> <hypercurve::curve_region_boolean::CurveRegionBooleanContext>::algebraic_chord_shared_image_endpoint_pair_result": 8,
+    "hypercurve::classify::compare_reals -> <hypercurve::bezier_parameter::BezierParameter2>::same_value -> <hypercurve::curve_region_boolean::CurveRegionBooleanContext>::algebraic_chord_shared_image_endpoint_pair_result -> <hypercurve::curve_region_boolean::CurveRegionBooleanContext>::pair_result -> <hypercurve::curve_region_boolean::CurveRegionBooleanContext>::build_split_topology": 2,
+    "hypercurve::classify::compare_reals -> <hypercurve::bezier_parameter::BezierParameter2>::cmp_by_refinement_once -> <hypercurve::bezier_split::CurveParameter2>::cmp_by_refinement -> hypercurve::curve_region_boolean::parameter_location_in_carrier -> <hypercurve::curve_region_boolean::CurveRegionBooleanContext>::build_split_topology": 2,
+    "hypercurve::classify::compare_reals -> <hypercurve::bezier_parameter::BezierParameter2>::same_value -> <hypercurve::curve_region_boolean::CurveRegionBooleanContext>::algebraic_chord_shared_image_endpoint_pair_result -> <hypercurve::curve_region_boolean::CurveRegionBooleanContext>::pair_result -> <hypercurve::curve_region_boolean::CurveRegionBooleanContext>::build_intersection_evidence": 6,
+    "hypercurve::classify::compare_reals -> <hypercurve::bezier_parameter::BezierParameter2>::cmp_by_refinement_once -> <hypercurve::bezier_split::CurveParameter2>::cmp_by_refinement -> hypercurve::curve_region_boolean::parameter_location_in_carrier -> <hypercurve::curve_region_boolean::CurveRegionBooleanContext>::build_intersection_evidence": 6
+  },
+  "result_lines": [
+    "same set xor: Ok((Approximate512Consumed, true))",
+    "region self normalized: Ok((Approximate512Consumed, true, 54, 15))",
+    "region self recovered: Ok((Approximate512Consumed, true, 54, 15))",
+    "region mixed: Ok((Approximate512Consumed, true, 54, 15))",
+    "curve matrix 15 x 15"
+  ]
+}

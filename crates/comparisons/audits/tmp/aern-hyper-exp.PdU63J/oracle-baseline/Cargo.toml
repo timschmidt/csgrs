@@ -1,0 +1,11 @@
+[package]
+name = "aern-bench-oracle"
+version = "0.0.0"
+edition = "2024"
+[dependencies]
+hyperreal = { path = "../hyperreal-baseline" }
+num-bigint = "=0.4.6"
+rug = { version = "1.30.0", default-features = false, features = ["float", "rational", "std"] }
+[[bin]]
+name = "aern-bench-oracle"
+path = "../bench-oracle.rs"

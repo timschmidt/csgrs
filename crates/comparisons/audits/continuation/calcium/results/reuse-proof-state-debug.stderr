@@ -1,0 +1,14 @@
+   Compiling calcium-reuse-proof-state v0.1.0 (/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/reuse-proof-state)
+error[E0624]: method `shift_right` is private
+    --> ../reuse-proof-state.rs:13:61
+     |
+  13 |     (argument(case,depth).exp().sqrt(),argument(case,depth).shift_right(1)
+     |                                                             ^^^^^^^^^^^ private method
+     |
+    ::: /home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/root-exp-reuse-trial-hyperreal/src/computable/node/algebra.rs:1246:5
+     |
+1246 |     fn shift_right(self, n: i32) -> Self {
+     |     ------------------------------------ private method defined here
+
+For more information about this error, try `rustc --explain E0624`.
+error: could not compile `calcium-reuse-proof-state` (bin "calcium-reuse-proof-state") due to 1 previous error

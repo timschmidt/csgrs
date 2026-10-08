@@ -1,0 +1,2 @@
+All independent rational identities passed.
+{'join': (Fraction(-2097, 1600), Fraction(449, 400)), 'center': (Fraction(-1747, 1200), Fraction(1, 1)), 'cusp': (Fraction(-4, 3), Fraction(1, 1)), 'radius': Fraction(49, 400), 'second_contact': (Fraction(-1332231307, 997863600), Fraction(65151603, 66524240)), 'tangent': (Fraction(-19525061, 798290880), Fraction(-23804641, 166310600))}

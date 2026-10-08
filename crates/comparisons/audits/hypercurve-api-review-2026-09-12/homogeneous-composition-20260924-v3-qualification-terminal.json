@@ -1,0 +1,228 @@
+{
+  "checks": [
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "clippy",
+        "--all-targets",
+        "--all-features",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "returncode": 0,
+      "log": "homogeneous-composition-20260924-v3-qualification-check-0.log"
+    },
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "clippy",
+        "--all-targets",
+        "--no-default-features",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "returncode": 0,
+      "log": "homogeneous-composition-20260924-v3-qualification-check-1.log"
+    }
+  ],
+  "command": [
+    "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+    "test",
+    "--lib",
+    "--release",
+    "--all-features",
+    "--no-run",
+    "--message-format=json",
+    "--locked",
+    "--offline",
+    "--test",
+    "hypercurve_path_closure",
+    "--test",
+    "hypercurve_curve_region_boolean",
+    "--test",
+    "hypercurve_bezier_arrangement",
+    "--test",
+    "hypercurve_curve_region_boolean_fuzz",
+    "--test",
+    "hypercurve_pcb_boolean_regressions"
+  ],
+  "binaries": {
+    "hypercurve_curve_region_boolean": {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/homogeneous-composition-20260924-v3-qualification-hypercurve_curve_region_boolean",
+      "sha256": "dd5c3868012e56b7678f93fcbcc79259bcb22c06347cd113e5415a57db77dce9"
+    },
+    "hypercurve_bezier_arrangement": {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/homogeneous-composition-20260924-v3-qualification-hypercurve_bezier_arrangement",
+      "sha256": "377a23cbb69b4307b0352d9cd01fa8ca19fd132b34822a0154365c33d44eafef"
+    },
+    "hypercurve_pcb_boolean_regressions": {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/homogeneous-composition-20260924-v3-qualification-hypercurve_pcb_boolean_regressions",
+      "sha256": "9505d38ae2d90f3d3d54126b3561be13dc9edea0bfe3431138b50903845a5d8e"
+    },
+    "hypercurve_path_closure": {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/homogeneous-composition-20260924-v3-qualification-hypercurve_path_closure",
+      "sha256": "6edb5dcdef5f930e7c5c7c0a8144a5bc039e18642f41a1225b9a053d64934e7b"
+    },
+    "hypercurve_curve_region_boolean_fuzz": {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/homogeneous-composition-20260924-v3-qualification-hypercurve_curve_region_boolean_fuzz",
+      "sha256": "f49322ce4680600c022c36765c94cad4fc12847e12dcf17bdf999205fecbe6bc"
+    },
+    "hypercurve": {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/homogeneous-composition-20260924-v3-qualification-hypercurve",
+      "sha256": "a2f463f8739237b40b0a8364e687a3a004482af52c16a579e5ed51a72b41927c"
+    }
+  },
+  "attempted": 1348,
+  "passed": 1328,
+  "ignored": 6,
+  "nonpasses": [
+    {
+      "target": "hypercurve",
+      "name": "bezier_offset::conversion_tests::selected_parallel_normal_circle_intersects_genuinely_analytic_parallel_in_one_fiber",
+      "returncode": "timeout",
+      "passed": false,
+      "ignored": false,
+      "elapsed_seconds": 75.04577383492142,
+      "limit_seconds": 75,
+      "log": "homogeneous-composition-20260924-v3-qualification-case-0659.log"
+    },
+    {
+      "target": "hypercurve",
+      "name": "bezier_region::tests::algebraic_endpoint_images_reenter_shared_corner_carriers",
+      "returncode": 101,
+      "passed": false,
+      "ignored": false,
+      "elapsed_seconds": 0.06517012999393046,
+      "limit_seconds": 75,
+      "log": "homogeneous-composition-20260924-v3-qualification-case-0750.log"
+    },
+    {
+      "target": "hypercurve",
+      "name": "bezier_region::curve_corner_chain::tests::extended_fillet_region_classifies_both_sides_of_its_companion",
+      "returncode": "timeout",
+      "passed": false,
+      "ignored": false,
+      "elapsed_seconds": 75.00510785309598,
+      "limit_seconds": 75,
+      "log": "homogeneous-composition-20260924-v3-qualification-case-0746.log"
+    },
+    {
+      "target": "hypercurve",
+      "name": "bezier_region::tests::nonlinear_algebraic_endpoint_fillet_uses_complete_incident_domain",
+      "returncode": "timeout",
+      "passed": false,
+      "ignored": false,
+      "elapsed_seconds": 75.01164773502387,
+      "limit_seconds": 75,
+      "log": "homogeneous-composition-20260924-v3-qualification-case-0804.log"
+    },
+    {
+      "target": "hypercurve",
+      "name": "bezier_region::tests::nonlinear_selected_corner_chamfers_through_retained_fixed_distance_image",
+      "returncode": "timeout",
+      "passed": false,
+      "ignored": false,
+      "elapsed_seconds": 75.9820599158993,
+      "limit_seconds": 75,
+      "log": "homogeneous-composition-20260924-v3-qualification-case-0807.log"
+    },
+    {
+      "target": "hypercurve",
+      "name": "bezier_region::tests::one_fragment_materialized_loop_chamfers_to_one_middle_interval",
+      "returncode": "timeout",
+      "passed": false,
+      "ignored": false,
+      "elapsed_seconds": 75.03159053204581,
+      "limit_seconds": 75,
+      "log": "homogeneous-composition-20260924-v3-qualification-case-0814.log"
+    },
+    {
+      "target": "hypercurve",
+      "name": "bezier_region::tests::one_fragment_materialized_loop_extends_algebraic_chamfer_cuts_once",
+      "returncode": "timeout",
+      "passed": false,
+      "ignored": false,
+      "elapsed_seconds": 75.02978900098242,
+      "limit_seconds": 75,
+      "log": "homogeneous-composition-20260924-v3-qualification-case-0815.log"
+    },
+    {
+      "target": "hypercurve",
+      "name": "bezier_region::tests::one_fragment_ph_loop_projective_corners_retain_one_extended_interval",
+      "returncode": 101,
+      "passed": false,
+      "ignored": false,
+      "elapsed_seconds": 0.06546963006258011,
+      "limit_seconds": 75,
+      "log": "homogeneous-composition-20260924-v3-qualification-case-0818.log"
+    },
+    {
+      "target": "hypercurve",
+      "name": "bezier_region::tests::one_fragment_nonzero_parallel_loop_extends_chamfer_cuts_on_one_finite_envelope",
+      "returncode": "timeout",
+      "passed": false,
+      "ignored": false,
+      "elapsed_seconds": 75.02106772002298,
+      "limit_seconds": 75,
+      "log": "homogeneous-composition-20260924-v3-qualification-case-0816.log"
+    },
+    {
+      "target": "hypercurve",
+      "name": "bezier_region::tests::one_fragment_selected_loop_chamfers_from_one_interval",
+      "returncode": "timeout",
+      "passed": false,
+      "ignored": false,
+      "elapsed_seconds": 75.03385631099809,
+      "limit_seconds": 75,
+      "log": "homogeneous-composition-20260924-v3-qualification-case-0820.log"
+    },
+    {
+      "target": "hypercurve",
+      "name": "bezier_region::tests::one_fragment_selected_loop_extends_chamfer_cuts_on_its_analytic_carrier",
+      "returncode": "timeout",
+      "passed": false,
+      "ignored": false,
+      "elapsed_seconds": 75.03885003901087,
+      "limit_seconds": 75,
+      "log": "homogeneous-composition-20260924-v3-qualification-case-0821.log"
+    },
+    {
+      "target": "hypercurve",
+      "name": "bezier_region::tests::pair_native_boolean_algebraic_chord_corner_publishes_a_third_generation_fillet",
+      "returncode": "timeout",
+      "passed": false,
+      "ignored": false,
+      "elapsed_seconds": 75.00344326696359,
+      "limit_seconds": 75,
+      "log": "homogeneous-composition-20260924-v3-qualification-case-0826.log"
+    },
+    {
+      "target": "hypercurve",
+      "name": "bezier_region::tests::retained_analytic_multifragment_corner_extends_chamfer_and_fillet",
+      "returncode": 101,
+      "passed": false,
+      "ignored": false,
+      "elapsed_seconds": 0.009036269970238209,
+      "limit_seconds": 75,
+      "log": "homogeneous-composition-20260924-v3-qualification-case-0851.log"
+    },
+    {
+      "target": "hypercurve",
+      "name": "bezier_region::tests::selected_parallel_companion_fillets_without_range_promotion",
+      "returncode": "timeout",
+      "passed": false,
+      "ignored": false,
+      "elapsed_seconds": 75.00296306994278,
+      "limit_seconds": 75,
+      "log": "homogeneous-composition-20260924-v3-qualification-case-0885.log"
+    }
+  ],
+  "all_sources_unchanged": true,
+  "all_processes_reaped": true
+}

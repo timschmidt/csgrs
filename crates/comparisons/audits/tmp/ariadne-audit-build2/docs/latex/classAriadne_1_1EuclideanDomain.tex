@@ -1,0 +1,68 @@
+\doxysubsection{Euclidean\+Domain Class Reference}
+\hypertarget{classAriadne_1_1EuclideanDomain}{}\label{classAriadne_1_1EuclideanDomain}\index{EuclideanDomain@{EuclideanDomain}}
+
+
+{\ttfamily \#include $<$domain.\+hpp$>$}
+
+
+
+\doxysubsubsection{Description}
+\textbackslash{} . \begin{Desc}
+\item[Examples]\par
+\mbox{\hyperlink{tutorials_2rigorous_numerics_2rigorous_numerics_tutorial_8cpp-example}{tutorials/rigorous\+\_\+numerics/rigorous\+\_\+numerics\+\_\+tutorial.\+cpp}}.\end{Desc}
+\doxysubsubsubsection*{Public Types}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1EuclideanDomain_a4b06015a4986ef014fb6643680cb04d2}\label{classAriadne_1_1EuclideanDomain_a4b06015a4986ef014fb6643680cb04d2} 
+typedef Size\+Type {\bfseries Dimension\+Type}
+\item 
+\Hypertarget{classAriadne_1_1EuclideanDomain_af6ba041532ba63ad985c39c06cecd2ad}\label{classAriadne_1_1EuclideanDomain_af6ba041532ba63ad985c39c06cecd2ad} 
+typedef Size\+Type {\bfseries Index\+Type}
+\end{DoxyCompactItemize}
+\doxysubsubsubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1EuclideanDomain_a9f0bebb19681fa413ae6d01d24bb4d41}\label{classAriadne_1_1EuclideanDomain_a9f0bebb19681fa413ae6d01d24bb4d41} 
+constexpr {\bfseries Euclidean\+Domain} (Size\+Type dim)
+\item 
+\Hypertarget{classAriadne_1_1EuclideanDomain_a49fc6538d2b18683ceab65b8cc88f3fb}\label{classAriadne_1_1EuclideanDomain_a49fc6538d2b18683ceab65b8cc88f3fb} 
+constexpr {\bfseries Euclidean\+Domain} (Size\+Type dim, \mbox{\hyperlink{classAriadne_1_1RealDomain}{Real\+Domain}})
+\item 
+\Hypertarget{classAriadne_1_1EuclideanDomain_a788a329b79cd8eded42a86f315196a3e}\label{classAriadne_1_1EuclideanDomain_a788a329b79cd8eded42a86f315196a3e} 
+constexpr Size\+Type {\bfseries dimension} () const
+\item 
+\Hypertarget{classAriadne_1_1EuclideanDomain_a071e6079ddb1f7c574dad04911de1d1a}\label{classAriadne_1_1EuclideanDomain_a071e6079ddb1f7c574dad04911de1d1a} 
+constexpr \mbox{\hyperlink{classAriadne_1_1RealDomain}{Real\+Domain}} {\bfseries operator\mbox{[}$\,$\mbox{]}} (Size\+Type ind)
+\item 
+\Hypertarget{classAriadne_1_1EuclideanDomain_ac2ad76e00b70e0f72f43fe24dd71bedd}\label{classAriadne_1_1EuclideanDomain_ac2ad76e00b70e0f72f43fe24dd71bedd} 
+{\bfseries operator Box\+Domain\+Type} () const
+\end{DoxyCompactItemize}
+\doxysubsubsubsection*{Friends}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1EuclideanDomain_a895c741b5e276f6942dc3223402d0f90}\label{classAriadne_1_1EuclideanDomain_a895c741b5e276f6942dc3223402d0f90} 
+\mbox{\hyperlink{classAriadne_1_1EuclideanDomain}{Euclidean\+Domain}} {\bfseries intersection} (\mbox{\hyperlink{classAriadne_1_1EuclideanDomain}{Euclidean\+Domain}} const \&dom1, \mbox{\hyperlink{classAriadne_1_1EuclideanDomain}{Euclidean\+Domain}} const \&dom2)
+\item 
+\Hypertarget{classAriadne_1_1EuclideanDomain_aaaea473421d37a529cfc71b4ce63f118}\label{classAriadne_1_1EuclideanDomain_aaaea473421d37a529cfc71b4ce63f118} 
+\mbox{\hyperlink{classAriadne_1_1EuclideanDomain}{Euclidean\+Domain}} {\bfseries product} (\mbox{\hyperlink{classAriadne_1_1EuclideanDomain}{Euclidean\+Domain}} const \&dom1, \mbox{\hyperlink{classAriadne_1_1EuclideanDomain}{Euclidean\+Domain}} const \&dom2)
+\item 
+\Hypertarget{classAriadne_1_1EuclideanDomain_a6f884be26e960ef4d57ce663765e4cbe}\label{classAriadne_1_1EuclideanDomain_a6f884be26e960ef4d57ce663765e4cbe} 
+\mbox{\hyperlink{classAriadne_1_1EuclideanDomain}{Euclidean\+Domain}} {\bfseries product} (\mbox{\hyperlink{classAriadne_1_1EuclideanDomain}{Euclidean\+Domain}} const \&dom1, \mbox{\hyperlink{classAriadne_1_1RealDomain}{Real\+Domain}} const \&dom2)
+\item 
+\Hypertarget{classAriadne_1_1EuclideanDomain_aad6256289606095badbf3e335436c099}\label{classAriadne_1_1EuclideanDomain_aad6256289606095badbf3e335436c099} 
+\mbox{\hyperlink{namespaceAriadne_a76a8b016e5ad61faf9062cc387df5016}{Bool}} {\bfseries operator==} (\mbox{\hyperlink{classAriadne_1_1EuclideanDomain}{Euclidean\+Domain}} const \&dom1, \mbox{\hyperlink{classAriadne_1_1EuclideanDomain}{Euclidean\+Domain}} const \&dom2)
+\item 
+\Hypertarget{classAriadne_1_1EuclideanDomain_af0166b82ab58e5a5fdd33a14fd791f48}\label{classAriadne_1_1EuclideanDomain_af0166b82ab58e5a5fdd33a14fd791f48} 
+\mbox{\hyperlink{namespaceAriadne_a76a8b016e5ad61faf9062cc387df5016}{Bool}} {\bfseries operator==} (\mbox{\hyperlink{classAriadne_1_1EuclideanDomain}{Euclidean\+Domain}} const \&dom1, \mbox{\hyperlink{group__FunctionModule_gaf5c0b733c80abb59b1c3d1eb58c20099}{Box\+Domain\+Type}} const \&dom2)
+\item 
+\Hypertarget{classAriadne_1_1EuclideanDomain_ac7d4fc9ef0f43019d9f8c862ed2bd62e}\label{classAriadne_1_1EuclideanDomain_ac7d4fc9ef0f43019d9f8c862ed2bd62e} 
+\mbox{\hyperlink{namespaceAriadne_a76a8b016e5ad61faf9062cc387df5016}{Bool}} {\bfseries operator==} (\mbox{\hyperlink{group__FunctionModule_gaf5c0b733c80abb59b1c3d1eb58c20099}{Box\+Domain\+Type}} const \&dom1, \mbox{\hyperlink{classAriadne_1_1EuclideanDomain}{Euclidean\+Domain}} const \&dom2)
+\item 
+\Hypertarget{classAriadne_1_1EuclideanDomain_a2538716090a9cc56aed81b76f8f09b2a}\label{classAriadne_1_1EuclideanDomain_a2538716090a9cc56aed81b76f8f09b2a} 
+\mbox{\hyperlink{namespaceAriadne_acbb98ddc4385af4599070e65a1a47ec1}{Output\+Stream}} \& {\bfseries operator$<$$<$} (\mbox{\hyperlink{namespaceAriadne_acbb98ddc4385af4599070e65a1a47ec1}{Output\+Stream}} \&os, \mbox{\hyperlink{classAriadne_1_1EuclideanDomain}{Euclidean\+Domain}} const \&dom)
+\end{DoxyCompactItemize}
+
+
+The documentation for this class was generated from the following file\+:\begin{DoxyCompactItemize}
+\item 
+source/function/\mbox{\hyperlink{domain_8hpp}{domain.\+hpp}}\end{DoxyCompactItemize}

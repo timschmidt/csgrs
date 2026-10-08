@@ -1,0 +1,13 @@
+{
+  "tag": "scalar-boundary-linkage-v81",
+  "started": "2026-09-12T02:22:58.949Z",
+  "finished": "2026-09-12T02:22:58.975Z",
+  "elapsedSeconds": 0.024324872,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "ldd",
+  "args": [
+    "/tmp/calcium-scalar-boundary-v81.nLhDoT/controls"
+  ],
+  "code": 0,
+  "signal": null
+}

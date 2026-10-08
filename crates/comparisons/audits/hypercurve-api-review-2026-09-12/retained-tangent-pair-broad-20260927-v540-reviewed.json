@@ -1,0 +1,27 @@
+{
+  "qualification": "retained-tangent-pair-broad-20260927-v540-terminal.json",
+  "source_manifest": "retained-tangent-pair-broad-20260927-v540-sources.json",
+  "outer_session_reaped": 6737,
+  "validated_files": 2047,
+  "selected_geometry_tests": 396,
+  "checks": 6,
+  "repos": {
+    "hypercurve": {
+      "parent": "f546552162c64e8a14cd28733ff23417bf003666",
+      "paths": {
+        "src/bezier_offset.rs": "e29e35c16dcb23e8f620e64e8696252a67f5691dcb97f7916b6ffd197149c84d",
+        "src/curve_fillet.rs": "b612b761d069de5ebea93ff777cfabc4cec100383d132d959a9e49a78941513a"
+      }
+    }
+  },
+  "scope": "Retained analytic tangent displacements replay polynomial cross/dot relations in shared parameter evidence before independent endpoint refinement; stationary continuous-family constraint regression; full implementation goal remains active",
+  "performance_changes": [],
+  "workload_changes": [
+    {
+      "name": "bezier_offset::regular_parallel_contact_tests::regular_source_frames_retain_unprojectable_selected_parameters",
+      "before": 0.003520647995173931,
+      "after": 0.0075527511071413755,
+      "change": "also checks cross/dot of independently anchored opposite tangents without global parameter promotion"
+    }
+  ]
+}

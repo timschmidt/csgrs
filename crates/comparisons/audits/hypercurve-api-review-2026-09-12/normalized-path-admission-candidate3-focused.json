@@ -1,0 +1,108 @@
+[
+  {
+    "target": "hypercurve_curve_region_boolean",
+    "command": [
+      "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve_curve_region_boolean-c2cb10d17834015e",
+      "--test-threads=4",
+      "--color",
+      "never",
+      "empty_output_does_not_certify_an_approximate_normalization"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.003419535991270095,
+    "binary_sha256": "50f0e0aea598301b4e30f7e2a18bd3fc922f701c84ebdecafc215a005558ceef",
+    "summaries": [
+      "test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 36 filtered out; finished in 0.00s"
+    ],
+    "failures": []
+  },
+  {
+    "target": "hypercurve_svg",
+    "command": [
+      "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve_svg-f179765e82e87aa3",
+      "--test-threads=4",
+      "--color",
+      "never"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.03161190199898556,
+    "binary_sha256": "2cca4f439efcd1e27f11a97806661a5f526906d8da5b39e5951a2d7a7fd86223",
+    "summaries": [
+      "test result: ok. 18 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s"
+    ],
+    "failures": []
+  },
+  {
+    "target": "hypercurve_curve_region_promotion",
+    "command": [
+      "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve_curve_region_promotion-e523831f2638d8ff",
+      "--test-threads=4",
+      "--color",
+      "never",
+      "affine_line_fast_path_preserves_nonzero_and_even_odd_fill_rules",
+      "all_family_nesting_rejects_crossing_loops_before_role_assignment",
+      "approximate_512_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions",
+      "authored_loop_semantics_drive_nonzero_and_even_odd_classification",
+      "authored_nested_material_roles_certify_filled_sides_directly",
+      "boundary_paths_obey_terminal_policy_once",
+      "exact_profiles_assign_holes_to_the_smallest_containing_material",
+      "native_contour_constructors_and_signed_depth_need_no_region_wrapper",
+      "non_ph_bezier_pair_projective_fillet_retains_algebraic_extensions",
+      "nonconvex_algebraic_chord_expansion_is_exact_and_local_collapse_is_explicit",
+      "nonperiodic_self_contact_does_not_claim_a_green_integral_as_filled_area",
+      "region_promotion_retains_explicit_roles_and_line_fast_path",
+      "region_promotion_retains_hole_role_for_projection",
+      "retained_circular_regions_chamfer_over_the_full_support",
+      "transformed_promotion_retains_explicit_roles_without_the_source_fast_path",
+      "strict_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions",
+      "unified_native_constructor_retains_zero_signed_area_boundary_for_diagnostics",
+      "unified_region_chamfer_and_fillet_edit_higher_order_loops",
+      "unified_region_chamfer_reenters_general_algebraic_chords",
+      "unified_mixed_line_arc_erosion_splits_after_a_curved_neck_collapse",
+      "unified_region_offsets_quadratic_boundary_through_exact_parallel_arrangement",
+      "unified_region_reuses_design_parameter_corner_solvers",
+      "region_constructors_remove_canceled_boundaries_and_filled_seams",
+      "crossing_authored_loops_publish_the_regularized_even_odd_set",
+      "unified_native_constructor_regularizes_zero_signed_area_self_crossing"
+    ],
+    "returncode": 101,
+    "elapsed_seconds": 5.671738539007492,
+    "binary_sha256": "3e7388576bd76a713937b6d58c2468c55fec695e447cb3b39f6d77ddc16ac3d2",
+    "summaries": [
+      "test result: FAILED. 16 passed; 7 failed; 0 ignored; 0 measured; 79 filtered out; finished in 5.63s"
+    ],
+    "failures": [
+      "nonconvex_algebraic_chord_expansion_is_exact_and_local_collapse_is_explicit",
+      "approximate_512_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions",
+      "strict_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions",
+      "unified_region_offsets_quadratic_boundary_through_exact_parallel_arrangement",
+      "unified_region_reuses_design_parameter_corner_solvers",
+      "unified_mixed_line_arc_erosion_splits_after_a_curved_neck_collapse",
+      "non_ph_bezier_pair_projective_fillet_retains_algebraic_extensions"
+    ]
+  },
+  {
+    "target": "hypercurve",
+    "command": [
+      "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve-0b4591d2a89c50f8",
+      "--test-threads=4",
+      "--color",
+      "never",
+      "bezier_region::tests::authored_region_clones_share_certified_normalization_without_retaining_the_input",
+      "bezier_region::tests::boundary_path_construction_obeys_selected_terminal_policy",
+      "bezier_region::tests::nonlinear_retained_rational_circle_corner_edits_keep_algebraic_source_cuts",
+      "curve_region_trim::tests::parameter_retaining_trim_reports_canonical_boundary_provenance",
+      "finite_projection::tests::region_curve_path_projection_rechecks_symbolic_materialized_joins",
+      "native_region_tests::contour_profiles_reject_holes_without_a_material_owner",
+      "native_region_tests::unified_finite_profiles_preserve_material_hole_bins_and_ownership",
+      "raw_crossing_loops_need_arrangement_before_nesting"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.015681894001318142,
+    "binary_sha256": "742b53c24a1179a6e1cc06bfdf98b7bad9332089ca865f607cf0c9e138a98d06",
+    "summaries": [
+      "test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 1183 filtered out; finished in 0.01s"
+    ],
+    "failures": []
+  }
+]

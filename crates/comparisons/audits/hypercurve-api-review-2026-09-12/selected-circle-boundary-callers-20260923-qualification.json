@@ -1,0 +1,17 @@
+{
+  "parent": "50f2a03e6335df1d4a9e248b60ee5f96c1477e93",
+  "main_files_verified": 368,
+  "region_sha256": "ba17be2a5c3e2111045b8f223c3646034ec6d7e76266d4915db08379bba95543",
+  "qualified_case": {
+    "name": "bezier_region::tests::nonrepresented_chord_and_selected_circle_complete_the_fillet_kernel",
+    "returncode": 0,
+    "passed": true,
+    "limit_seconds": 600,
+    "elapsed_seconds": 147.1178042680258,
+    "log": "contact-callers-20260923-focused2-case-2.log"
+  },
+  "binary_sha256": "28508724b4482ffea045a0b4981cdf79643d09dde36813ea78473f8d4e15c1ce",
+  "other_offset_test_changes_unqualified": true,
+  "all_owned_processes_reaped": true,
+  "full_goal_complete": false
+}

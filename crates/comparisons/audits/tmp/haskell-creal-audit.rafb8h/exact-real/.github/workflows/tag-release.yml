@@ -1,0 +1,19 @@
+name: Tag Latest Release
+
+on:
+  push:
+    branches:
+    - master
+
+jobs:
+  update:
+    runs-on: ubuntu-20.04
+    steps:
+    - uses: cachix/install-nix-action@v12
+      with:
+        nix_path: nixpkgs=channel:nixos-unstable
+    - uses: actions/checkout@v2
+      with:
+        fetch-depth: 0 # Fetch everything
+        ssh-key: ${{ secrets.DEPLOY_KEY }}
+    - uses: expipiplus1/tag-latest-release/tag-latest-release@HEAD

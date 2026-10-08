@@ -1,0 +1,514 @@
+{
+  "normal_production_build": true,
+  "source_manifest": "rational-image-selection-20260928-v608-sources.json",
+  "source_directory": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/source-archives/rational-image-selection-20260928-v608",
+  "builds": [
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "test",
+        "--lib",
+        "--release",
+        "--all-features",
+        "--locked",
+        "--offline",
+        "--no-run",
+        "--message-format=json"
+      ],
+      "returncode": 0,
+      "log": "rational-image-selection-20260928-v608-build.log",
+      "elapsed_seconds": 133.04860273585655,
+      "binaries": {
+        "hypercurve": {
+          "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/rational-image-selection-20260928-v608-hypercurve-tests",
+          "sha256": "839f40799340754b1bc7d24b54e5cfa94e1d7c4eb6153efebac0ecd6c6525fac"
+        }
+      }
+    }
+  ],
+  "cases": [
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/rational-image-selection-20260928-v608-hypercurve-tests",
+        "--exact",
+        "rational_bezier_general::tests::rational_image_selection_certifies_unit_endpoints_before_admission",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "rational-image-selection-20260928-v608-rational_image_selection_certifies_unit_endpoints_before_admission.log",
+      "elapsed_seconds": 0.0035417668987065554,
+      "target": "hypercurve",
+      "name": "rational_bezier_general::tests::rational_image_selection_certifies_unit_endpoints_before_admission",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/rational-image-selection-20260928-v608-hypercurve-tests",
+        "--exact",
+        "rational_bezier_general::tests::rational_image_selection_refines_competing_deflated_isolators",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "rational-image-selection-20260928-v608-rational_image_selection_refines_competing_deflated_isolators.log",
+      "elapsed_seconds": 0.0035427568946033716,
+      "target": "hypercurve",
+      "name": "rational_bezier_general::tests::rational_image_selection_refines_competing_deflated_isolators",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/rational-image-selection-20260928-v608-hypercurve-tests",
+        "--exact",
+        "rational_bezier_general::tests::rational_image_selection_reuses_learned_exact_scalar_views",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "rational-image-selection-20260928-v608-rational_image_selection_reuses_learned_exact_scalar_views.log",
+      "elapsed_seconds": 0.0035229078494012356,
+      "target": "hypercurve",
+      "name": "rational_bezier_general::tests::rational_image_selection_reuses_learned_exact_scalar_views",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/rational-image-selection-20260928-v608-hypercurve-tests",
+        "--exact",
+        "rational_bezier_general::tests::conic_rational_image_separation_refines_past_the_old_limit",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "rational-image-selection-20260928-v608-conic_rational_image_separation_refines_past_the_old_limit.log",
+      "elapsed_seconds": 0.007558772107586265,
+      "target": "hypercurve",
+      "name": "rational_bezier_general::tests::conic_rational_image_separation_refines_past_the_old_limit",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/rational-image-selection-20260928-v608-hypercurve-tests",
+        "--exact",
+        "rational_bezier_general::tests::affine_subcurve_rejects_a_crossed_projective_pole",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "rational-image-selection-20260928-v608-affine_subcurve_rejects_a_crossed_projective_pole.log",
+      "elapsed_seconds": 0.003492909949272871,
+      "target": "hypercurve",
+      "name": "rational_bezier_general::tests::affine_subcurve_rejects_a_crossed_projective_pole",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/rational-image-selection-20260928-v608-hypercurve-tests",
+        "--exact",
+        "rational_bezier_general::tests::conic_parameter_primary_map_defers_fallback_image_polynomial",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "rational-image-selection-20260928-v608-conic_parameter_primary_map_defers_fallback_image_polynomial.log",
+      "elapsed_seconds": 0.003554405877366662,
+      "target": "hypercurve",
+      "name": "rational_bezier_general::tests::conic_parameter_primary_map_defers_fallback_image_polynomial",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/rational-image-selection-20260928-v608-hypercurve-tests",
+        "--exact",
+        "rational_bezier_general::tests::conic_parameter_refines_primary_map_before_constructing_fallback",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "rational-image-selection-20260928-v608-conic_parameter_refines_primary_map_before_constructing_fallback.log",
+      "elapsed_seconds": 0.003622310934588313,
+      "target": "hypercurve",
+      "name": "rational_bezier_general::tests::conic_parameter_refines_primary_map_before_constructing_fallback",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/rational-image-selection-20260928-v608-hypercurve-tests",
+        "--exact",
+        "rational_bezier_general::tests::endpoint_projective_cubic_correspondence_maps_both_orientations",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "rational-image-selection-20260928-v608-endpoint_projective_cubic_correspondence_maps_both_orientations.log",
+      "elapsed_seconds": 0.0034982908982783556,
+      "target": "hypercurve",
+      "name": "rational_bezier_general::tests::endpoint_projective_cubic_correspondence_maps_both_orientations",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/rational-image-selection-20260928-v608-hypercurve-tests",
+        "--exact",
+        "rational_bezier_general::tests::exact_degree_elevated_line_recovers_linear_parameter_transport",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "rational-image-selection-20260928-v608-exact_degree_elevated_line_recovers_linear_parameter_transport.log",
+      "elapsed_seconds": 0.0034848409704864025,
+      "target": "hypercurve",
+      "name": "rational_bezier_general::tests::exact_degree_elevated_line_recovers_linear_parameter_transport",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/rational-image-selection-20260928-v608-hypercurve-tests",
+        "--exact",
+        "rational_bezier_general::tests::exact_high_degree_rational_elevation_recovers_its_minimal_parameter_frame",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "rational-image-selection-20260928-v608-exact_high_degree_rational_elevation_recovers_its_minimal_parameter_frame.log",
+      "elapsed_seconds": 0.003520088968798518,
+      "target": "hypercurve",
+      "name": "rational_bezier_general::tests::exact_high_degree_rational_elevation_recovers_its_minimal_parameter_frame",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/rational-image-selection-20260928-v608-hypercurve-tests",
+        "--exact",
+        "rational_bezier_general::tests::implicit_conic_certificate_is_parameterization_independent_and_shared",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "rational-image-selection-20260928-v608-implicit_conic_certificate_is_parameterization_independent_and_shared.log",
+      "elapsed_seconds": 0.003514228854328394,
+      "target": "hypercurve",
+      "name": "rational_bezier_general::tests::implicit_conic_certificate_is_parameterization_independent_and_shared",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/rational-image-selection-20260928-v608-hypercurve-tests",
+        "--exact",
+        "rational_bezier_general::tests::implicit_conic_contacts_retain_source_parameter_point_image_first",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "rational-image-selection-20260928-v608-implicit_conic_contacts_retain_source_parameter_point_image_first.log",
+      "elapsed_seconds": 0.0034669118467718363,
+      "target": "hypercurve",
+      "name": "rational_bezier_general::tests::implicit_conic_contacts_retain_source_parameter_point_image_first",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/rational-image-selection-20260928-v608-hypercurve-tests",
+        "--exact",
+        "rational_bezier_general::tests::injectivity_scope_preserves_every_parameter_of_a_collapsed_chart",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "rational-image-selection-20260928-v608-injectivity_scope_preserves_every_parameter_of_a_collapsed_chart.log",
+      "elapsed_seconds": 0.003517598146572709,
+      "target": "hypercurve",
+      "name": "rational_bezier_general::tests::injectivity_scope_preserves_every_parameter_of_a_collapsed_chart",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/rational-image-selection-20260928-v608-hypercurve-tests",
+        "--exact",
+        "rational_bezier_general::tests::mixed_weight_projective_overlap_preserves_the_finite_parameter_domain",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "rational-image-selection-20260928-v608-mixed_weight_projective_overlap_preserves_the_finite_parameter_domain.log",
+      "elapsed_seconds": 0.0035064988769590855,
+      "target": "hypercurve",
+      "name": "rational_bezier_general::tests::mixed_weight_projective_overlap_preserves_the_finite_parameter_domain",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/rational-image-selection-20260928-v608-hypercurve-tests",
+        "--exact",
+        "rational_bezier_general::tests::range_projective_correspondence_maps_and_inverts_oriented_ranges",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "rational-image-selection-20260928-v608-range_projective_correspondence_maps_and_inverts_oriented_ranges.log",
+      "elapsed_seconds": 0.0035043100360780954,
+      "target": "hypercurve",
+      "name": "rational_bezier_general::tests::range_projective_correspondence_maps_and_inverts_oriented_ranges",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/rational-image-selection-20260928-v608-hypercurve-tests",
+        "--exact",
+        "rational_bezier_general::tests::rational_parameter_image_map_reuses_quotient_authority_across_isolators",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "rational-image-selection-20260928-v608-rational_parameter_image_map_reuses_quotient_authority_across_isolators.log",
+      "elapsed_seconds": 0.003514308948069811,
+      "target": "hypercurve",
+      "name": "rational_bezier_general::tests::rational_parameter_image_map_reuses_quotient_authority_across_isolators",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/rational-image-selection-20260928-v608-hypercurve-tests",
+        "--exact",
+        "rational_bezier_general::tests::unit_weight_degree_one_curve_exposes_its_exact_line_parameterization",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "rational-image-selection-20260928-v608-unit_weight_degree_one_curve_exposes_its_exact_line_parameterization.log",
+      "elapsed_seconds": 0.0034894910641014576,
+      "target": "hypercurve",
+      "name": "rational_bezier_general::tests::unit_weight_degree_one_curve_exposes_its_exact_line_parameterization",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/rational-image-selection-20260928-v608-hypercurve-tests",
+        "--exact",
+        "rational_bezier_general::tests::conic_dual_coordinate_sum_maps_endpoints_without_a_pole",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "rational-image-selection-20260928-v608-conic_dual_coordinate_sum_maps_endpoints_without_a_pole.log",
+      "elapsed_seconds": 0.0034991500433534384,
+      "target": "hypercurve",
+      "name": "rational_bezier_general::tests::conic_dual_coordinate_sum_maps_endpoints_without_a_pole",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/rational-image-selection-20260928-v608-hypercurve-tests",
+        "--exact",
+        "rational_bezier_general::tests::exact_line_image_route_replays_algebraic_conic_contact",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "rational-image-selection-20260928-v608-exact_line_image_route_replays_algebraic_conic_contact.log",
+      "elapsed_seconds": 0.003509458852931857,
+      "target": "hypercurve",
+      "name": "rational_bezier_general::tests::exact_line_image_route_replays_algebraic_conic_contact",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/rational-image-selection-20260928-v608-hypercurve-tests",
+        "--exact",
+        "rational_bezier_general::tests::implicit_conic_route_replays_quadratic_line_contact",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "rational-image-selection-20260928-v608-implicit_conic_route_replays_quadratic_line_contact.log",
+      "elapsed_seconds": 0.0035265381447970867,
+      "target": "hypercurve",
+      "name": "rational_bezier_general::tests::implicit_conic_route_replays_quadratic_line_contact",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/rational-image-selection-20260928-v608-hypercurve-tests",
+        "--exact",
+        "rational_bezier_general::tests::retained_circle_line_contacts_fall_back_at_an_omitted_chart_point",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "rational-image-selection-20260928-v608-retained_circle_line_contacts_fall_back_at_an_omitted_chart_point.log",
+      "elapsed_seconds": 0.0034789920318871737,
+      "target": "hypercurve",
+      "name": "rational_bezier_general::tests::retained_circle_line_contacts_fall_back_at_an_omitted_chart_point",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/rational-image-selection-20260928-v608-hypercurve-tests",
+        "--exact",
+        "rational_bezier_general::tests::quotient_ring_rational_image_matches_exact_resultant_samples",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "rational-image-selection-20260928-v608-quotient_ring_rational_image_matches_exact_resultant_samples.log",
+      "elapsed_seconds": 0.0035090288147330284,
+      "target": "hypercurve",
+      "name": "rational_bezier_general::tests::quotient_ring_rational_image_matches_exact_resultant_samples",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/rational-image-selection-20260928-v608-hypercurve-tests",
+        "--exact",
+        "rational_bezier_general::tests::quotient_ring_rational_image_retains_nonrational_source_coefficients",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "rational-image-selection-20260928-v608-quotient_ring_rational_image_retains_nonrational_source_coefficients.log",
+      "elapsed_seconds": 0.0035401370842009783,
+      "target": "hypercurve",
+      "name": "rational_bezier_general::tests::quotient_ring_rational_image_retains_nonrational_source_coefficients",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/rational-image-selection-20260928-v608-hypercurve-tests",
+        "--exact",
+        "rational_bezier_general::tests::quotient_ring_rational_image_reuses_nonrational_source_scale",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "rational-image-selection-20260928-v608-quotient_ring_rational_image_reuses_nonrational_source_scale.log",
+      "elapsed_seconds": 0.0034833219833672047,
+      "target": "hypercurve",
+      "name": "rational_bezier_general::tests::quotient_ring_rational_image_reuses_nonrational_source_scale",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/rational-image-selection-20260928-v608-hypercurve-tests",
+        "--exact",
+        "bezier_parameter::finite_interval_import_regression::represented_root_imports_admit_exact_values_in_the_requested_domain",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "rational-image-selection-20260928-v608-represented_root_imports_admit_exact_values_in_the_requested_domain.log",
+      "elapsed_seconds": 0.0034980399068444967,
+      "target": "hypercurve",
+      "name": "bezier_parameter::finite_interval_import_regression::represented_root_imports_admit_exact_values_in_the_requested_domain",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/rational-image-selection-20260928-v608-hypercurve-tests",
+        "--exact",
+        "bezier_parameter::conversion_tests::nonlinear_and_approximate_zeroes_do_not_create_scalar_witnesses",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "rational-image-selection-20260928-v608-nonlinear_and_approximate_zeroes_do_not_create_scalar_witnesses.log",
+      "elapsed_seconds": 0.007566441083326936,
+      "target": "hypercurve",
+      "name": "bezier_parameter::conversion_tests::nonlinear_and_approximate_zeroes_do_not_create_scalar_witnesses",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/rational-image-selection-20260928-v608-hypercurve-tests",
+        "--exact",
+        "bezier_parameter::conversion_tests::progressive_refinement_matches_one_pass_proof_budget",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "rational-image-selection-20260928-v608-progressive_refinement_matches_one_pass_proof_budget.log",
+      "elapsed_seconds": 0.0035092891193926334,
+      "target": "hypercurve",
+      "name": "bezier_parameter::conversion_tests::progressive_refinement_matches_one_pass_proof_budget",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/rational-image-selection-20260928-v608-hypercurve-tests",
+        "--exact",
+        "bezier_parameter::conversion_tests::strict_linear_queries_retain_witnesses_after_rational_reconstruction_declines",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "rational-image-selection-20260928-v608-strict_linear_queries_retain_witnesses_after_rational_reconstruction_declines.log",
+      "elapsed_seconds": 0.007601049030199647,
+      "target": "hypercurve",
+      "name": "bezier_parameter::conversion_tests::strict_linear_queries_retain_witnesses_after_rational_reconstruction_declines",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/rational-image-selection-20260928-v608-hypercurve-tests",
+        "--exact",
+        "bezier_parameter::conversion_tests::strict_scalar_equalities_retain_arbitrary_real_parameter_witnesses",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "rational-image-selection-20260928-v608-strict_scalar_equalities_retain_arbitrary_real_parameter_witnesses.log",
+      "elapsed_seconds": 0.003581114113330841,
+      "target": "hypercurve",
+      "name": "bezier_parameter::conversion_tests::strict_scalar_equalities_retain_arbitrary_real_parameter_witnesses",
+      "passed": true
+    }
+  ],
+  "checks": [],
+  "expected_cases": {
+    "hypercurve": [
+      "rational_bezier_general::tests::rational_image_selection_certifies_unit_endpoints_before_admission",
+      "rational_bezier_general::tests::rational_image_selection_refines_competing_deflated_isolators",
+      "rational_bezier_general::tests::rational_image_selection_reuses_learned_exact_scalar_views",
+      "rational_bezier_general::tests::conic_rational_image_separation_refines_past_the_old_limit",
+      "rational_bezier_general::tests::affine_subcurve_rejects_a_crossed_projective_pole",
+      "rational_bezier_general::tests::conic_parameter_primary_map_defers_fallback_image_polynomial",
+      "rational_bezier_general::tests::conic_parameter_refines_primary_map_before_constructing_fallback",
+      "rational_bezier_general::tests::endpoint_projective_cubic_correspondence_maps_both_orientations",
+      "rational_bezier_general::tests::exact_degree_elevated_line_recovers_linear_parameter_transport",
+      "rational_bezier_general::tests::exact_high_degree_rational_elevation_recovers_its_minimal_parameter_frame",
+      "rational_bezier_general::tests::implicit_conic_certificate_is_parameterization_independent_and_shared",
+      "rational_bezier_general::tests::implicit_conic_contacts_retain_source_parameter_point_image_first",
+      "rational_bezier_general::tests::injectivity_scope_preserves_every_parameter_of_a_collapsed_chart",
+      "rational_bezier_general::tests::mixed_weight_projective_overlap_preserves_the_finite_parameter_domain",
+      "rational_bezier_general::tests::range_projective_correspondence_maps_and_inverts_oriented_ranges",
+      "rational_bezier_general::tests::rational_parameter_image_map_reuses_quotient_authority_across_isolators",
+      "rational_bezier_general::tests::unit_weight_degree_one_curve_exposes_its_exact_line_parameterization",
+      "rational_bezier_general::tests::conic_dual_coordinate_sum_maps_endpoints_without_a_pole",
+      "rational_bezier_general::tests::exact_line_image_route_replays_algebraic_conic_contact",
+      "rational_bezier_general::tests::implicit_conic_route_replays_quadratic_line_contact",
+      "rational_bezier_general::tests::retained_circle_line_contacts_fall_back_at_an_omitted_chart_point",
+      "rational_bezier_general::tests::quotient_ring_rational_image_matches_exact_resultant_samples",
+      "rational_bezier_general::tests::quotient_ring_rational_image_retains_nonrational_source_coefficients",
+      "rational_bezier_general::tests::quotient_ring_rational_image_reuses_nonrational_source_scale",
+      "bezier_parameter::finite_interval_import_regression::represented_root_imports_admit_exact_values_in_the_requested_domain",
+      "bezier_parameter::conversion_tests::nonlinear_and_approximate_zeroes_do_not_create_scalar_witnesses",
+      "bezier_parameter::conversion_tests::progressive_refinement_matches_one_pass_proof_budget",
+      "bezier_parameter::conversion_tests::strict_linear_queries_retain_witnesses_after_rational_reconstruction_declines",
+      "bezier_parameter::conversion_tests::strict_scalar_equalities_retain_arbitrary_real_parameter_witnesses"
+    ]
+  },
+  "all_processes_reaped": true,
+  "probe_complete": true,
+  "qualification_complete": false,
+  "test_listings": {
+    "hypercurve": {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/rational-image-selection-20260928-v608-hypercurve-tests",
+        "--list"
+      ],
+      "returncode": 0,
+      "log": "rational-image-selection-20260928-v608-hypercurve-test-list.log",
+      "elapsed_seconds": 0.007625397061929107
+    }
+  }
+}

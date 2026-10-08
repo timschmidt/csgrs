@@ -1,0 +1,19 @@
+{
+  "command": [
+    "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+    "test",
+    "--lib",
+    "--release",
+    "--all-features",
+    "--no-run",
+    "--message-format=json",
+    "--locked",
+    "--offline"
+  ],
+  "name": "bezier_offset::conversion_tests::chord_parallel_monotonicity_covers_the_retained_parameter_range",
+  "returncode": 101,
+  "elapsed_seconds": 0.27397969795856625,
+  "binary_sha256": "4483e90fe8e118800bce87e8a81903c3d3c13dbfe92032df5460659694a2759a",
+  "all_sources_unchanged": true,
+  "all_processes_reaped": true
+}

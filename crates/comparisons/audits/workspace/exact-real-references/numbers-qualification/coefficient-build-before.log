@@ -1,0 +1,15 @@
+   Compiling hyperreal v0.13.1 (/home/tim/Documents/GitHub/workspace/hyperreal)
+   Compiling numbers-qualification v0.0.0 (/home/tim/Documents/GitHub/workspace/exact-real-references/numbers-qualification)
+error[E0624]: method `shift_right` is private
+    --> coefficient_controls.rs:42:35
+     |
+  42 |             (c(&Q::from(n)).sin().shift_right(6), (lo.to_rational().unwrap() / 64, hi.to_rational().unwrap() / 64))
+     |                                   ^^^^^^^^^^^ private method
+     |
+    ::: /home/tim/Documents/GitHub/workspace/hyperreal/src/computable/node/algebra.rs:1246:5
+     |
+1246 |     fn shift_right(self, n: i32) -> Self {
+     |     ------------------------------------ private method defined here
+
+For more information about this error, try `rustc --explain E0624`.
+error: could not compile `numbers-qualification` (bin "numbers_coefficient_controls") due to 1 previous error

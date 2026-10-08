@@ -1,0 +1,10 @@
+#! /usr/local/bin/perl
+
+while (<STDIN>) {
+  @x = split(/,/);
+  $i = 0;
+  foreach (@x) {
+    if ($_ != "") { print "$i $_\n";} 
+    $i++; }
+}
+

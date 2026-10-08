@@ -1,0 +1,28 @@
+{
+  "tag": "point-consumer-wasm-v66",
+  "started": "2026-09-11T03:13:50.516Z",
+  "finished": "2026-09-11T03:14:53.656Z",
+  "elapsedSeconds": 63.137882769,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "env",
+  "args": [
+    "CARGO_TARGET_DIR=/tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse",
+    "CARGO_INCREMENTAL=0",
+    "CARGO_PROFILE_DEV_DEBUG=0",
+    "CARGO_BUILD_JOBS=2",
+    "cargo",
+    "build",
+    "--offline",
+    "--locked",
+    "--manifest-path",
+    "point-demand-consumer-v66/hypercurve/Cargo.toml",
+    "--release",
+    "--lib",
+    "--features",
+    "triangulation,svg,hershey",
+    "--target",
+    "wasm32-unknown-unknown"
+  ],
+  "code": 0,
+  "signal": null
+}

@@ -1,0 +1,23 @@
+{
+  "tag": "zero-factor-wasm-cost-cpu-9-fresh-candidate-v73",
+  "started": "2026-09-11T21:17:28.985Z",
+  "finished": "2026-09-11T21:17:33.225Z",
+  "elapsedSeconds": 4.236908711,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "taskset",
+  "args": [
+    "-c",
+    "2",
+    "node",
+    "--expose-gc",
+    "--no-liftoff",
+    "--no-wasm-tier-up",
+    "--no-wasm-lazy-compilation",
+    "zero-factor-wasm-cost-worker-v73.mjs",
+    "candidate",
+    "fresh",
+    "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/zero-factor-wasm-cost-cpu-fresh-9-plan-v73.json"
+  ],
+  "code": 0,
+  "signal": null
+}

@@ -1,0 +1,285 @@
+{
+  "crates": [
+    {
+      "crate": "hyperlimit",
+      "checks": [
+        {
+          "command": [
+            "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+            "clippy",
+            "--all-targets",
+            "--all-features",
+            "--locked",
+            "--offline",
+            "--",
+            "-D",
+            "warnings"
+          ],
+          "returncode": 0,
+          "log": "rational-polynomial-20260924-v5-dependents-hyperlimit-clippy-0.log"
+        },
+        {
+          "command": [
+            "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+            "clippy",
+            "--all-targets",
+            "--no-default-features",
+            "--locked",
+            "--offline",
+            "--",
+            "-D",
+            "warnings"
+          ],
+          "returncode": 0,
+          "log": "rational-polynomial-20260924-v5-dependents-hyperlimit-clippy-1.log"
+        }
+      ],
+      "cases": [
+        {
+          "name": "all",
+          "returncode": 0,
+          "elapsed_seconds": 0.47281559801194817,
+          "limit_seconds": 180,
+          "log": "rational-polynomial-20260924-v5-dependents-hyperlimit-case-0.log"
+        }
+      ],
+      "hyperreal_artifacts": [
+        {
+          "reason": "compiler-artifact",
+          "package_id": "path+file:///tmp/hypercurve-rational-polynomial-v5-20260924/hyperreal#0.13.1",
+          "manifest_path": "/tmp/hypercurve-rational-polynomial-v5-20260924/hyperreal/Cargo.toml",
+          "target": {
+            "kind": [
+              "lib"
+            ],
+            "crate_types": [
+              "lib"
+            ],
+            "name": "hyperreal",
+            "src_path": "/tmp/hypercurve-rational-polynomial-v5-20260924/hyperreal/src/lib.rs",
+            "edition": "2024",
+            "doc": true,
+            "doctest": true,
+            "test": true
+          },
+          "profile": {
+            "opt_level": "3",
+            "debuginfo": 0,
+            "debug_assertions": false,
+            "overflow_checks": false,
+            "test": false
+          },
+          "features": [
+            "default",
+            "dispatch-trace",
+            "serde"
+          ],
+          "filenames": [
+            "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperreal-d207197cf0040b44.rlib",
+            "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperreal-d207197cf0040b44.rmeta"
+          ],
+          "executable": null,
+          "fresh": false
+        }
+      ],
+      "binary_sha256": "215708a15414b6bc36160187f55ec067f8b4ef58c35e5206d8f487e7a451bc88"
+    },
+    {
+      "crate": "hypersolve",
+      "checks": [
+        {
+          "command": [
+            "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+            "clippy",
+            "--all-targets",
+            "--all-features",
+            "--locked",
+            "--offline",
+            "--",
+            "-D",
+            "warnings"
+          ],
+          "returncode": 0,
+          "log": "rational-polynomial-20260924-v5-dependents-hypersolve-clippy-0.log"
+        },
+        {
+          "command": [
+            "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+            "clippy",
+            "--all-targets",
+            "--no-default-features",
+            "--locked",
+            "--offline",
+            "--",
+            "-D",
+            "warnings"
+          ],
+          "returncode": 0,
+          "log": "rational-polynomial-20260924-v5-dependents-hypersolve-clippy-1.log"
+        }
+      ],
+      "cases": [
+        {
+          "name": "all",
+          "returncode": 0,
+          "elapsed_seconds": 2.683563565951772,
+          "limit_seconds": 180,
+          "log": "rational-polynomial-20260924-v5-dependents-hypersolve-case-0.log"
+        }
+      ],
+      "hyperreal_artifacts": [
+        {
+          "reason": "compiler-artifact",
+          "package_id": "path+file:///tmp/hypercurve-rational-polynomial-v5-20260924/hyperreal#0.13.1",
+          "manifest_path": "/tmp/hypercurve-rational-polynomial-v5-20260924/hyperreal/Cargo.toml",
+          "target": {
+            "kind": [
+              "lib"
+            ],
+            "crate_types": [
+              "lib"
+            ],
+            "name": "hyperreal",
+            "src_path": "/tmp/hypercurve-rational-polynomial-v5-20260924/hyperreal/src/lib.rs",
+            "edition": "2024",
+            "doc": true,
+            "doctest": true,
+            "test": true
+          },
+          "profile": {
+            "opt_level": "3",
+            "debuginfo": 0,
+            "debug_assertions": false,
+            "overflow_checks": false,
+            "test": false
+          },
+          "features": [
+            "default",
+            "dispatch-trace"
+          ],
+          "filenames": [
+            "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperreal-fe6bd93b6a1ec361.rlib",
+            "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperreal-fe6bd93b6a1ec361.rmeta"
+          ],
+          "executable": null,
+          "fresh": false
+        }
+      ],
+      "binary_sha256": "11745a0862669debcddc7da6ee23692b580a261d8e4147dac407e975053fb308"
+    },
+    {
+      "crate": "hypercurve",
+      "checks": [
+        {
+          "command": [
+            "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+            "clippy",
+            "--all-targets",
+            "--all-features",
+            "--locked",
+            "--offline",
+            "--",
+            "-D",
+            "warnings"
+          ],
+          "returncode": 0,
+          "log": "rational-polynomial-20260924-v5-dependents-hypercurve-clippy-0.log"
+        },
+        {
+          "command": [
+            "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+            "clippy",
+            "--all-targets",
+            "--no-default-features",
+            "--locked",
+            "--offline",
+            "--",
+            "-D",
+            "warnings"
+          ],
+          "returncode": 0,
+          "log": "rational-polynomial-20260924-v5-dependents-hypercurve-clippy-1.log"
+        }
+      ],
+      "cases": [
+        {
+          "name": "recursive_bounds_refine_each_shared_source_once",
+          "returncode": 0,
+          "elapsed_seconds": 0.2912840199423954,
+          "limit_seconds": 75,
+          "log": "rational-polynomial-20260924-v5-dependents-hypercurve-case-0.log"
+        },
+        {
+          "name": "nonlinear_selected_corner_chamfers_through_retained_fixed_distance_image",
+          "returncode": 0,
+          "elapsed_seconds": 5.130078851012513,
+          "limit_seconds": 75,
+          "log": "rational-polynomial-20260924-v5-dependents-hypercurve-case-1.log"
+        },
+        {
+          "name": "recursive_selected_radial_projective_chamfer_reenters_corner_kernel",
+          "returncode": 0,
+          "elapsed_seconds": 61.427064219955355,
+          "limit_seconds": 75,
+          "log": "rational-polynomial-20260924-v5-dependents-hypercurve-case-2.log"
+        },
+        {
+          "name": "extended_fillet_region_classifies_both_sides_of_its_companion",
+          "returncode": 0,
+          "elapsed_seconds": 38.28743316989858,
+          "limit_seconds": 75,
+          "log": "rational-polynomial-20260924-v5-dependents-hypercurve-case-3.log"
+        },
+        {
+          "name": "pair_native_boolean_algebraic_chord_corner_publishes_a_third_generation_fillet",
+          "returncode": "timeout",
+          "elapsed_seconds": 75.25972810294479,
+          "limit_seconds": 75,
+          "log": "rational-polynomial-20260924-v5-dependents-hypercurve-case-4.log"
+        }
+      ],
+      "hyperreal_artifacts": [
+        {
+          "reason": "compiler-artifact",
+          "package_id": "path+file:///tmp/hypercurve-rational-polynomial-v5-20260924/hyperreal#0.13.1",
+          "manifest_path": "/tmp/hypercurve-rational-polynomial-v5-20260924/hyperreal/Cargo.toml",
+          "target": {
+            "kind": [
+              "lib"
+            ],
+            "crate_types": [
+              "lib"
+            ],
+            "name": "hyperreal",
+            "src_path": "/tmp/hypercurve-rational-polynomial-v5-20260924/hyperreal/src/lib.rs",
+            "edition": "2024",
+            "doc": true,
+            "doctest": true,
+            "test": true
+          },
+          "profile": {
+            "opt_level": "3",
+            "debuginfo": 0,
+            "debug_assertions": false,
+            "overflow_checks": false,
+            "test": false
+          },
+          "features": [
+            "default",
+            "dispatch-trace",
+            "serde"
+          ],
+          "filenames": [
+            "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperreal-8610392638fd0e41.rlib",
+            "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperreal-8610392638fd0e41.rmeta"
+          ],
+          "executable": null,
+          "fresh": false
+        }
+      ],
+      "binary_sha256": "05f7a13dfad7eb459b7438cdd22afcfc5ae58b5df8a34c644e4d2503ee6bba19"
+    }
+  ],
+  "all_processes_reaped": true,
+  "all_sources_unchanged": true
+}

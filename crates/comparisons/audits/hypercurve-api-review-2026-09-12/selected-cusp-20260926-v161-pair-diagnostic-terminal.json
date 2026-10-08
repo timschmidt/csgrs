@@ -1,0 +1,22 @@
+{
+  "source_manifest": "selected-cusp-arrangement-20260926-v161-sources.json",
+  "binary": {
+    "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/selected-cusp-arrangement-20260926-v161-hypercurve",
+    "sha256": "cba0352c14ef7c5b602f951423964a71a8db204b5a3736e48365a7f842034b7a"
+  },
+  "command": [
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/selected-cusp-arrangement-20260926-v161-hypercurve",
+    "--exact",
+    "curve_region_boolean::certified_successor_tests::selected_parallel_arrangement_splits_interior_cusps",
+    "--test-threads=1",
+    "--nocapture",
+    "--color",
+    "never"
+  ],
+  "returncode": 101,
+  "elapsed_seconds": 43.66824544093106,
+  "log": "selected-cusp-20260926-v161-pair-diagnostic.log",
+  "all_sources_unchanged": true,
+  "all_processes_reaped": true,
+  "diagnostic_only": true
+}

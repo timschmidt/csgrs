@@ -1,0 +1,14 @@
+heaptrack output will be written to "/tmp/hypercurve-native-eval-candidate-rational.heap.zst"
+starting application, this might take some time...
+NOTE: heaptrack detected DEBUGINFOD_URLS but will disable it to prevent 
+unintended network delays during recording
+If you really want to use DEBUGINFOD, export HEAPTRACK_ENABLE_DEBUGINFOD=1
+rational_bezier_large_cold_evaluation_16_controls: 4 iterations in 43.675278ms (10.918819ms/iter), checksum=0
+rational_bezier_large_cached_evaluation_16_controls: 4 iterations in 230.194µs (57.548µs/iter), checksum=0
+heaptrack stats:
+	allocations:          	5881
+	leaked allocations:   	2033
+	temporary allocations:	229
+Heaptrack finished! Now run the following to investigate the data:
+
+  heaptrack --analyze "/tmp/hypercurve-native-eval-candidate-rational.heap.zst"

@@ -1,0 +1,18 @@
+{
+  "tag": "sign-consumer-probe-sign-memcheck",
+  "started": "2026-09-08T20:07:40.047Z",
+  "finished": "2026-09-08T20:07:41.651Z",
+  "elapsedSeconds": 1.6012505080000001,
+  "cwd": "/home/tim/Documents/GitHub/workspace",
+  "command": "valgrind",
+  "args": [
+    "--tool=memcheck",
+    "--error-exitcode=99",
+    "--leak-check=full",
+    "--show-leak-kinds=all",
+    "--errors-for-leak-kinds=definite,indirect,possible",
+    ".audit-builds/calcium-prototype/release/calcium-sign-consumer-probe-sign"
+  ],
+  "code": 0,
+  "signal": null
+}

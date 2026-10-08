@@ -1,0 +1,18 @@
+{
+  "tag": "twelfth-metadata-candidate-v79",
+  "started": "2026-09-12T00:31:25.989Z",
+  "finished": "2026-09-12T00:31:26.109Z",
+  "elapsedSeconds": 0.117803689,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/twelfth-revision-candidate-v79/hyperreal",
+  "command": "cargo",
+  "args": [
+    "metadata",
+    "--locked",
+    "--offline",
+    "--all-features",
+    "--format-version",
+    "1"
+  ],
+  "code": 0,
+  "signal": null
+}

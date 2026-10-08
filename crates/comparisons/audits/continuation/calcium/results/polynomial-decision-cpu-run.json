@@ -1,0 +1,13 @@
+{
+  "tag": "polynomial-decision-cpu-run",
+  "started": "2026-09-08T23:02:56.392Z",
+  "finished": "2026-09-08T23:03:15.489Z",
+  "elapsedSeconds": 19.095026989,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison",
+  "command": "node",
+  "args": [
+    "audits/continuation/calcium/run-polynomial-decision-bench.mjs"
+  ],
+  "code": 0,
+  "signal": null
+}

@@ -1,0 +1,178 @@
+   Compiling proc-macro2 v1.0.106
+   Compiling unicode-ident v1.0.24
+   Compiling quote v1.0.45
+   Compiling libc v0.2.186
+   Compiling cfg-if v1.0.4
+   Compiling autocfg v1.5.0
+   Compiling serde_core v1.0.228
+   Compiling serde v1.0.228
+   Compiling zerocopy v0.8.48
+   Compiling crossbeam-utils v0.8.21
+   Compiling getrandom v0.3.4
+   Compiling zmij v1.0.21
+   Compiling getrandom v0.4.2
+   Compiling rustix v1.1.4
+   Compiling either v1.15.0
+   Compiling gmp-mpfr-sys v1.7.1
+   Compiling serde_json v1.0.149
+   Compiling regex-syntax v0.8.10
+rustc-LLVM ERROR: IO failure on output stream: Disk quota exceeded
+rustc-LLVM ERROR: IO failure on output stream: Disk quota exceeded
+rustc-LLVM ERROR: IO failure on output stream: Disk quota exceeded
+rustc-LLVM ERROR: IO failure on output stream: Disk quota exceeded
+error: linking with `cc` failed: exit status: 1
+  |
+  = note:  "cc" "-m64" "/tmp/calcium-prototype-target/debug/build/quote-6d699ebef8c2e3a7/rustcC7CVCA/symbols.o" "<2 object files omitted>" "-Wl,--as-needed" "-Wl,-Bstatic" "<sysroot>/lib/rustlib/x86_64-unknown-linux-gnu/lib/{libstd-*,libpanic_unwind-*,libobject-*,libmemchr-*,libaddr2line-*,libgimli-*,libcfg_if-*,librustc_demangle-*,libstd_detect-*,libhashbrown-*,librustc_std_workspace_alloc-*,libminiz_oxide-*,libadler2-*,libunwind-*,liblibc-*,librustc_std_workspace_core-*,liballoc-*,libcore-*,libcompiler_builtins-*}.rlib" "-Wl,-Bdynamic" "-lgcc_s" "-lutil" "-lrt" "-lpthread" "-lm" "-ldl" "-lc" "-L" "/tmp/calcium-prototype-target/debug/build/quote-6d699ebef8c2e3a7/rustcC7CVCA/raw-dylibs" "-B<sysroot>/lib/rustlib/x86_64-unknown-linux-gnu/bin/gcc-ld" "-fuse-ld=lld" "-Wl,--eh-frame-hdr" "-Wl,-z,noexecstack" "-L" "<sysroot>/lib/rustlib/x86_64-unknown-linux-gnu/lib" "-o" "/tmp/calcium-prototype-target/debug/build/quote-6d699ebef8c2e3a7/build_script_build-6d699ebef8c2e3a7" "-Wl,--gc-sections" "-pie" "-Wl,-z,relro,-z,now" "-nodefaultlibs"
+  = note: some arguments are omitted. use `--verbose` to show all linker arguments
+  = note: PLEASE submit a bug report to https://github.com/llvm/llvm-project/issues/ and include the crash backtrace and instructions to reproduce the bug.
+          LLVM ERROR: IO failure on output stream: Disk quota exceeded
+          collect2: error: ld returned 1 exit status
+          
+
+error: could not compile `rustix` (build script)
+
+Caused by:
+  Disk quota exceeded (os error 122)
+
+Caused by:
+  failed to parse process output: `/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustc --crate-name build_script_build --edition=2021 /home/tim/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/rustix-1.1.4/build.rs --error-format=json --json=diagnostic-rendered-ansi,artifacts,future-incompat --crate-type bin --emit=dep-info,link -C embed-bitcode=no --warn=unexpected_cfgs --check-cfg 'cfg(alloc_c_string)' --check-cfg 'cfg(alloc_ffi)' --check-cfg 'cfg(apple)' --check-cfg 'cfg(asm_experimental_arch)' --check-cfg 'cfg(bsd)' --check-cfg 'cfg(core_c_str)' --check-cfg 'cfg(core_ffi_c)' --check-cfg 'cfg(core_intrinsics)' --check-cfg 'cfg(criterion)' --check-cfg 'cfg(document_experimental_runtime_api)' --check-cfg 'cfg(error_in_core)' --check-cfg 'cfg(fix_y2038)' --check-cfg 'cfg(freebsdlike)' --check-cfg 'cfg(libc)' --check-cfg 'cfg(linux_kernel)' --check-cfg 'cfg(linux_like)' --check-cfg 'cfg(linux_raw)' --check-cfg 'cfg(linux_raw_dep)' --check-cfg 'cfg(lower_upper_exp_for_non_zero)' --check-cfg 'cfg(sanitize_memory)' --check-cfg 'cfg(netbsdlike)' --check-cfg 'cfg(rustc_attrs)' --check-cfg 'cfg(rustc_diagnostics)' --check-cfg 'cfg(solarish)' --check-cfg 'cfg(staged_api)' --check-cfg 'cfg(static_assertions)' --check-cfg 'cfg(thumb_mode)' --check-cfg 'cfg(wasi)' --check-cfg 'cfg(wasi_ext)' --check-cfg 'cfg(wasip2)' --check-cfg 'cfg(target_arch, values("xtensa"))' --check-cfg 'cfg(target_os, values("cygwin"))' --cfg 'feature="alloc"' --cfg 'feature="default"' --cfg 'feature="fs"' --cfg 'feature="std"' --check-cfg 'cfg(docsrs,test)' --check-cfg 'cfg(feature, values("all-apis", "alloc", "core", "default", "event", "fs", "io_uring", "libc", "libc_errno", "linux_4_11", "linux_5_1", "linux_5_11", "linux_latest", "mm", "mount", "net", "param", "pipe", "process", "pty", "rand", "runtime", "rustc-dep-of-std", "rustc-std-workspace-alloc", "shm", "std", "stdio", "system", "termios", "thread", "time", "try_close", "use-explicitly-provided-auxv", "use-libc", "use-libc-auxv"))' -C metadata=f2f3626e4ee4ea26 -C extra-filename=-665b91419912850a --out-dir /tmp/calcium-prototype-target/debug/build/rustix-665b91419912850a -L dependency=/tmp/calcium-prototype-target/debug/deps --cap-lints allow` (exit status: 101)
+warning: build failed, waiting for other jobs to finish...
+error: could not compile `zerocopy` (build script)
+
+Caused by:
+  Disk quota exceeded (os error 122)
+
+Caused by:
+  failed to parse process output: `/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustc --crate-name build_script_build --edition=2021 /home/tim/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/zerocopy-0.8.48/build.rs --error-format=json --json=diagnostic-rendered-ansi,artifacts,future-incompat --crate-type bin --emit=dep-info,link -C embed-bitcode=no --cfg 'feature="derive"' --cfg 'feature="simd"' --cfg 'feature="zerocopy-derive"' --check-cfg 'cfg(docsrs,test)' --check-cfg 'cfg(feature, values("__internal_use_only_features_that_work_on_stable", "alloc", "derive", "float-nightly", "simd", "simd-nightly", "std", "zerocopy-derive"))' -C metadata=7537e3d5739f7f9f -C extra-filename=-b619ea593661ea4f --out-dir /tmp/calcium-prototype-target/debug/build/zerocopy-b619ea593661ea4f -L dependency=/tmp/calcium-prototype-target/debug/deps --cap-lints allow` (exit status: 101)
+rustc-LLVM ERROR: IO failure on output stream: Disk quota exceeded
+error: could not compile `getrandom` (build script)
+
+Caused by:
+  Disk quota exceeded (os error 122)
+
+Caused by:
+  failed to parse process output: `/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustc --crate-name build_script_build --edition=2021 /home/tim/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/getrandom-0.3.4/build.rs --error-format=json --json=diagnostic-rendered-ansi,artifacts,future-incompat --crate-type bin --emit=dep-info,link -C embed-bitcode=no --warn=unexpected_cfgs --check-cfg 'cfg(getrandom_backend, values("custom", "efi_rng", "rdrand", "rndr", "linux_getrandom", "linux_raw", "wasm_js", "windows_legacy", "unsupported"))' --check-cfg 'cfg(getrandom_msan)' --check-cfg 'cfg(getrandom_test_linux_fallback)' --check-cfg 'cfg(getrandom_test_linux_without_fallback)' --check-cfg 'cfg(getrandom_test_netbsd_fallback)' --check-cfg 'cfg(target_os, values("cygwin"))' --cfg 'feature="std"' --check-cfg 'cfg(docsrs,test)' --check-cfg 'cfg(feature, values("std", "wasm_js"))' -C metadata=2b763152e1d4b22a -C extra-filename=-9318793a34c9da55 --out-dir /tmp/calcium-prototype-target/debug/build/getrandom-9318793a34c9da55 -L dependency=/tmp/calcium-prototype-target/debug/deps --cap-lints allow` (exit status: 101)
+rustc-LLVM ERROR: IO failure on output stream: Disk quota exceeded
+error: could not compile `quote` (build script) due to 1 previous error
+error: failed to write to `/tmp/calcium-prototype-target/debug/deps/rmetazmK1kV/full.rmeta`: Disk quota exceeded (os error 122)
+
+error: could not compile `crossbeam-utils` (build script)
+
+Caused by:
+  Disk quota exceeded (os error 122)
+
+Caused by:
+  failed to parse process output: `/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustc --crate-name build_script_build --edition=2021 /home/tim/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/crossbeam-utils-0.8.21/build.rs --error-format=json --json=diagnostic-rendered-ansi,artifacts,future-incompat --crate-type bin --emit=dep-info,link -C embed-bitcode=no --warn=unexpected_cfgs '--allow=clippy::lint_groups_priority' '--allow=clippy::declare_interior_mutable_const' --check-cfg 'cfg(crossbeam_loom)' --check-cfg 'cfg(crossbeam_sanitize)' --cfg 'feature="default"' --cfg 'feature="std"' --check-cfg 'cfg(docsrs,test)' --check-cfg 'cfg(feature, values("default", "loom", "nightly", "std"))' -C metadata=7de699be37fd5bfe -C extra-filename=-04f829ae4ff93282 --out-dir /tmp/calcium-prototype-target/debug/build/crossbeam-utils-04f829ae4ff93282 -L dependency=/tmp/calcium-prototype-target/debug/deps --cap-lints allow` (exit status: 101)
+error: could not compile `serde_core` (build script)
+
+Caused by:
+  Disk quota exceeded (os error 122)
+
+Caused by:
+  failed to parse process output: `/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustc --crate-name build_script_build --edition=2021 /home/tim/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde_core-1.0.228/build.rs --error-format=json --json=diagnostic-rendered-ansi,artifacts,future-incompat --crate-type bin --emit=dep-info,link -C embed-bitcode=no --cfg 'feature="alloc"' --cfg 'feature="rc"' --cfg 'feature="result"' --cfg 'feature="std"' --check-cfg 'cfg(docsrs,test)' --check-cfg 'cfg(feature, values("alloc", "default", "rc", "result", "std", "unstable"))' -C metadata=9600c41f3f82e084 -C extra-filename=-11d62619a53390a1 --out-dir /tmp/calcium-prototype-target/debug/build/serde_core-11d62619a53390a1 -L dependency=/tmp/calcium-prototype-target/debug/deps --cap-lints allow` (exit status: 101)
+error: could not compile `libc` (build script)
+
+Caused by:
+  Disk quota exceeded (os error 122)
+
+Caused by:
+  failed to parse process output: `/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustc --crate-name build_script_build --edition=2021 /home/tim/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/libc-0.2.186/build.rs --error-format=json --json=diagnostic-rendered-ansi,artifacts,future-incompat --crate-type bin --emit=dep-info,link -C embed-bitcode=no '--allow=clippy::used_underscore_binding' --allow=unused_qualifications '--warn=clippy::unnecessary_semicolon' '--allow=clippy::unnecessary_cast' '--allow=clippy::uninlined_format_args' '--warn=clippy::ptr_as_ptr' '--allow=clippy::non_minimal_cfg' '--allow=clippy::missing_safety_doc' '--warn=clippy::map_unwrap_or' '--warn=clippy::manual_assert' '--allow=clippy::identity_op' '--warn=clippy::explicit_iter_loop' '--allow=clippy::expl_impl_clone_on_copy' --cfg 'feature="default"' --cfg 'feature="std"' --check-cfg 'cfg(docsrs,test)' --check-cfg 'cfg(feature, values("align", "const-extern-fn", "default", "extra_traits", "rustc-dep-of-std", "rustc-std-workspace-core", "std", "use_std"))' -C metadata=8bdce1f778538892 -C extra-filename=-0a430fa2c40274f2 --out-dir /tmp/calcium-prototype-target/debug/build/libc-0a430fa2c40274f2 -L dependency=/tmp/calcium-prototype-target/debug/deps --cap-lints allow` (exit status: 101)
+error: could not compile `autocfg` (lib) due to 1 previous error
+error: failed to write to `/tmp/calcium-prototype-target/debug/deps/rmeta7rtUNE/full.rmeta`: Disk quota exceeded (os error 122)
+
+error: could not compile `either` (lib) due to 1 previous error
+rustc-LLVM ERROR: IO failure on output stream: Disk quota exceeded
+error: could not compile `gmp-mpfr-sys` (build script)
+
+Caused by:
+  Disk quota exceeded (os error 122)
+
+Caused by:
+  failed to parse process output: `/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustc --crate-name build_script_build --edition=2021 /home/tim/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/gmp-mpfr-sys-1.7.1/build.rs --error-format=json --json=diagnostic-rendered-ansi,artifacts,future-incompat --crate-type bin --emit=dep-info,link -C embed-bitcode=no --cfg 'feature="mpfr"' --check-cfg 'cfg(docsrs,test)' --check-cfg 'cfg(feature, values("c-no-tests", "cnodelete", "default", "fail-on-warnings", "force-cross", "mpc", "mpfr", "use-system-libs"))' -C metadata=5b2545ddaa56ed86 -C extra-filename=-2530b0d8f06e2ba1 --out-dir /tmp/calcium-prototype-target/debug/build/gmp-mpfr-sys-2530b0d8f06e2ba1 -L dependency=/tmp/calcium-prototype-target/debug/deps --cap-lints allow` (exit status: 101)
+error: failed to write to `/tmp/calcium-prototype-target/debug/deps/rmetaLZDrpL/full.rmeta`: Disk quota exceeded (os error 122)
+
+error: could not compile `regex-syntax` (lib) due to 1 previous error
+error: linking with `cc` failed: exit status: 1
+  |
+  = note:  "cc" "-m64" "/tmp/calcium-prototype-target/debug/build/proc-macro2-4080058e8713f341/rustcedD7Wq/symbols.o" "<2 object files omitted>" "-Wl,--as-needed" "-Wl,-Bstatic" "<sysroot>/lib/rustlib/x86_64-unknown-linux-gnu/lib/{libstd-*,libpanic_unwind-*,libobject-*,libmemchr-*,libaddr2line-*,libgimli-*,libcfg_if-*,librustc_demangle-*,libstd_detect-*,libhashbrown-*,librustc_std_workspace_alloc-*,libminiz_oxide-*,libadler2-*,libunwind-*,liblibc-*,librustc_std_workspace_core-*,liballoc-*,libcore-*,libcompiler_builtins-*}.rlib" "-Wl,-Bdynamic" "-lgcc_s" "-lutil" "-lrt" "-lpthread" "-lm" "-ldl" "-lc" "-L" "/tmp/calcium-prototype-target/debug/build/proc-macro2-4080058e8713f341/rustcedD7Wq/raw-dylibs" "-B<sysroot>/lib/rustlib/x86_64-unknown-linux-gnu/bin/gcc-ld" "-fuse-ld=lld" "-Wl,--eh-frame-hdr" "-Wl,-z,noexecstack" "-L" "<sysroot>/lib/rustlib/x86_64-unknown-linux-gnu/lib" "-o" "/tmp/calcium-prototype-target/debug/build/proc-macro2-4080058e8713f341/build_script_build-4080058e8713f341" "-Wl,--gc-sections" "-pie" "-Wl,-z,relro,-z,now" "-nodefaultlibs"
+  = note: some arguments are omitted. use `--verbose` to show all linker arguments
+  = note: PLEASE submit a bug report to https://github.com/llvm/llvm-project/issues/ and include the crash backtrace and instructions to reproduce the bug.
+          LLVM ERROR: IO failure on output stream: Disk quota exceeded
+          collect2: fatal error: ld terminated with signal 7 [Bus error], core dumped
+          compilation terminated.
+          
+
+error: could not compile `proc-macro2` (build script) due to 1 previous error
+error: linking with `cc` failed: exit status: 1
+  |
+  = note:  "cc" "-m64" "/tmp/calcium-prototype-target/debug/build/serde_json-2a41953e49eba6c4/rustcJqNptL/symbols.o" "<2 object files omitted>" "-Wl,--as-needed" "-Wl,-Bstatic" "<sysroot>/lib/rustlib/x86_64-unknown-linux-gnu/lib/{libstd-*,libpanic_unwind-*,libobject-*,libmemchr-*,libaddr2line-*,libgimli-*,libcfg_if-*,librustc_demangle-*,libstd_detect-*,libhashbrown-*,librustc_std_workspace_alloc-*,libminiz_oxide-*,libadler2-*,libunwind-*,liblibc-*,librustc_std_workspace_core-*,liballoc-*,libcore-*,libcompiler_builtins-*}.rlib" "-Wl,-Bdynamic" "-lgcc_s" "-lutil" "-lrt" "-lpthread" "-lm" "-ldl" "-lc" "-L" "/tmp/calcium-prototype-target/debug/build/serde_json-2a41953e49eba6c4/rustcJqNptL/raw-dylibs" "-B<sysroot>/lib/rustlib/x86_64-unknown-linux-gnu/bin/gcc-ld" "-fuse-ld=lld" "-Wl,--eh-frame-hdr" "-Wl,-z,noexecstack" "-L" "<sysroot>/lib/rustlib/x86_64-unknown-linux-gnu/lib" "-o" "/tmp/calcium-prototype-target/debug/build/serde_json-2a41953e49eba6c4/build_script_build-2a41953e49eba6c4" "-Wl,--gc-sections" "-pie" "-Wl,-z,relro,-z,now" "-nodefaultlibs"
+  = note: some arguments are omitted. use `--verbose` to show all linker arguments
+  = note: PLEASE submit a bug report to https://github.com/llvm/llvm-project/issues/ and include the crash backtrace and instructions to reproduce the bug.
+          LLVM ERROR: IO failure on output stream: Disk quota exceeded
+          collect2: fatal error: ld terminated with signal 7 [Bus error], core dumped
+          compilation terminated.
+          
+
+error: could not compile `serde_json` (build script) due to 1 previous error
+error: linking with `cc` failed: exit status: 1
+  |
+  = note:  "cc" "-m64" "/tmp/calcium-prototype-target/debug/build/zmij-9e3b0b9dc5ec6888/rustcMLNwMQ/symbols.o" "<2 object files omitted>" "-Wl,--as-needed" "-Wl,-Bstatic" "<sysroot>/lib/rustlib/x86_64-unknown-linux-gnu/lib/{libstd-*,libpanic_unwind-*,libobject-*,libmemchr-*,libaddr2line-*,libgimli-*,libcfg_if-*,librustc_demangle-*,libstd_detect-*,libhashbrown-*,librustc_std_workspace_alloc-*,libminiz_oxide-*,libadler2-*,libunwind-*,liblibc-*,librustc_std_workspace_core-*,liballoc-*,libcore-*,libcompiler_builtins-*}.rlib" "-Wl,-Bdynamic" "-lgcc_s" "-lutil" "-lrt" "-lpthread" "-lm" "-ldl" "-lc" "-L" "/tmp/calcium-prototype-target/debug/build/zmij-9e3b0b9dc5ec6888/rustcMLNwMQ/raw-dylibs" "-B<sysroot>/lib/rustlib/x86_64-unknown-linux-gnu/bin/gcc-ld" "-fuse-ld=lld" "-Wl,--eh-frame-hdr" "-Wl,-z,noexecstack" "-L" "<sysroot>/lib/rustlib/x86_64-unknown-linux-gnu/lib" "-o" "/tmp/calcium-prototype-target/debug/build/zmij-9e3b0b9dc5ec6888/build_script_build-9e3b0b9dc5ec6888" "-Wl,--gc-sections" "-pie" "-Wl,-z,relro,-z,now" "-nodefaultlibs"
+  = note: some arguments are omitted. use `--verbose` to show all linker arguments
+  = note: PLEASE submit a bug report to https://github.com/llvm/llvm-project/issues/ and include the crash backtrace and instructions to reproduce the bug.
+          Stack dump:
+          0.	Program arguments: /home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/lib/rustlib/x86_64-unknown-linux-gnu/bin/rust-lld -flavor gnu -plugin /usr/libexec/gcc/x86_64-redhat-linux/15/liblto_plugin.so -plugin-opt=/usr/libexec/gcc/x86_64-redhat-linux/15/lto-wrapper -plugin-opt=-fresolution=/tmp/ccx7KwNg.res --build-id --no-add-needed --eh-frame-hdr --hash-style=gnu -m elf_x86_64 -dynamic-linker /lib64/ld-linux-x86-64.so.2 -pie -o /tmp/calcium-prototype-target/debug/build/zmij-9e3b0b9dc5ec6888/build_script_build-9e3b0b9dc5ec6888 /usr/lib/gcc/x86_64-redhat-linux/15/../../../../lib64/Scrt1.o /usr/lib/gcc/x86_64-redhat-linux/15/../../../../lib64/crti.o /usr/lib/gcc/x86_64-redhat-linux/15/crtbeginS.o -L/tmp/calcium-prototype-target/debug/build/zmij-9e3b0b9dc5ec6888/rustcMLNwMQ/raw-dylibs -L/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/lib/rustlib/x86_64-unknown-linux-gnu/lib -L/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/lib/rustlib/x86_64-unknown-linux-gnu/bin/gcc-ld -L/usr/lib/gcc/x86_64-redhat-linux/15 -L/usr/lib/gcc/x86_64-redhat-linux/15/../../../../lib64 -L/lib/../lib64 -L/usr/lib/../lib64 -L/usr/lib/gcc/x86_64-redhat-linux/15/../../.. -L/lib -L/usr/lib /tmp/calcium-prototype-target/debug/build/zmij-9e3b0b9dc5ec6888/rustcMLNwMQ/symbols.o /tmp/calcium-prototype-target/debug/build/zmij-9e3b0b9dc5ec6888/build_script_build-9e3b0b9dc5ec6888.build_script_build.d69e02ef9a027232-cgu.0.rcgu.o /tmp/calcium-prototype-target/debug/build/zmij-9e3b0b9dc5ec6888/build_script_build-9e3b0b9dc5ec6888.7nbqf17qfgh5oxywr5oxlzkyy.rcgu.o --as-needed -Bstatic /home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/lib/rustlib/x86_64-unknown-linux-gnu/lib/libstd-ca8536218e109c03.rlib /home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/lib/rustlib/x86_64-unknown-linux-gnu/lib/libpanic_unwind-1ca038c4336dd688.rlib /home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/lib/rustlib/x86_64-unknown-linux-gnu/lib/libobject-9464813eb8f4d63d.rlib /home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/lib/rustlib/x86_64-unknown-linux-gnu/lib/libmemchr-d8125620bde8e2fe.rlib /home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/lib/rustlib/x86_64-unknown-linux-gnu/lib/libaddr2line-ff25e65c5cc03713.rlib /home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/lib/rustlib/x86_64-unknown-linux-gnu/lib/libgimli-51bc00ab056f6d22.rlib /home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/lib/rustlib/x86_64-unknown-linux-gnu/lib/libcfg_if-8b02fd84319a1e08.rlib /home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/lib/rustlib/x86_64-unknown-linux-gnu/lib/librustc_demangle-53f98de42e68a2c1.rlib /home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/lib/rustlib/x86_64-unknown-linux-gnu/lib/libstd_detect-8deff3798f535b60.rlib /home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/lib/rustlib/x86_64-unknown-linux-gnu/lib/libhashbrown-1252279445b02f61.rlib /home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/lib/rustlib/x86_64-unknown-linux-gnu/lib/librustc_std_workspace_alloc-84f3762cd9ec3059.rlib /home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/lib/rustlib/x86_64-unknown-linux-gnu/lib/libminiz_oxide-1841f7d7ec10f3aa.rlib /home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/lib/rustlib/x86_64-unknown-linux-gnu/lib/libadler2-01e756bb64875137.rlib /home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/lib/rustlib/x86_64-unknown-linux-gnu/lib/libunwind-6c84d4415d304087.rlib /home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/lib/rustlib/x86_64-unknown-linux-gnu/lib/liblibc-fbfa92332758dd67.rlib /home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/lib/rustlib/x86_64-unknown-linux-gnu/lib/librustc_std_workspace_core-530cca9f1e441165.rlib /home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/lib/rustlib/x86_64-unknown-linux-gnu/lib/liballoc-d5238ef8bbdabd19.rlib /home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/lib/rustlib/x86_64-unknown-linux-gnu/lib/libcore-e2798d8a0cf2374b.rlib /home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/lib/rustlib/x86_64-unknown-linux-gnu/lib/libcompiler_builtins-c85e6da4caf4bf8a.rlib -Bdynamic -lgcc_s -lutil -lrt -lpthread -lm -ldl -lc --eh-frame-hdr -z noexecstack --gc-sections -z relro -z now /usr/lib/gcc/x86_64-redhat-linux/15/crtendS.o /usr/lib/gcc/x86_64-redhat-linux/15/../../../../lib64/crtn.o
+          Stack dump without symbol names (ensure you have llvm-symbolizer in your PATH or set the environment var `LLVM_SYMBOLIZER_PATH` to point to it):
+          0  libLLVM.so.22.1-rust-1.97.0-stable 0x00007ff8c2148847 llvm::sys::PrintStackTrace(llvm::raw_ostream&, int) + 39
+          1  libLLVM.so.22.1-rust-1.97.0-stable 0x00007ff8c214913d
+          2  libc.so.6                          0x00007ff8bbffb290
+          3  rust-lld                           0x0000564232b4482b
+          4  rust-lld                           0x000056423291d5e5
+          5  rust-lld                           0x00005642328f950c
+          6  rust-lld                           0x00005642328f434e
+          7  rust-lld                           0x00005642327fa165
+          8  rust-lld                           0x00005642327f9290
+          9  rust-lld                           0x00005642327f9901
+          10 libc.so.6                          0x00007ff8bbfe45b5
+          11 libc.so.6                          0x00007ff8bbfe4668 __libc_start_main + 136
+          12 rust-lld                           0x000056423267c1e9
+          collect2: fatal error: ld terminated with signal 7 [Bus error], core dumped
+          compilation terminated.
+          
+
+error: could not compile `zmij` (build script) due to 1 previous error
+error: linking with `cc` failed: exit status: 1
+  |
+  = note:  "cc" "-m64" "/tmp/calcium-prototype-target/debug/build/serde-0c91f74152b9d2b8/rustcTZplJZ/symbols.o" "<2 object files omitted>" "-Wl,--as-needed" "-Wl,-Bstatic" "<sysroot>/lib/rustlib/x86_64-unknown-linux-gnu/lib/{libstd-*,libpanic_unwind-*,libobject-*,libmemchr-*,libaddr2line-*,libgimli-*,libcfg_if-*,librustc_demangle-*,libstd_detect-*,libhashbrown-*,librustc_std_workspace_alloc-*,libminiz_oxide-*,libadler2-*,libunwind-*,liblibc-*,librustc_std_workspace_core-*,liballoc-*,libcore-*,libcompiler_builtins-*}.rlib" "-Wl,-Bdynamic" "-lgcc_s" "-lutil" "-lrt" "-lpthread" "-lm" "-ldl" "-lc" "-L" "/tmp/calcium-prototype-target/debug/build/serde-0c91f74152b9d2b8/rustcTZplJZ/raw-dylibs" "-B<sysroot>/lib/rustlib/x86_64-unknown-linux-gnu/bin/gcc-ld" "-fuse-ld=lld" "-Wl,--eh-frame-hdr" "-Wl,-z,noexecstack" "-L" "<sysroot>/lib/rustlib/x86_64-unknown-linux-gnu/lib" "-o" "/tmp/calcium-prototype-target/debug/build/serde-0c91f74152b9d2b8/build_script_build-0c91f74152b9d2b8" "-Wl,--gc-sections" "-pie" "-Wl,-z,relro,-z,now" "-nodefaultlibs"
+  = note: some arguments are omitted. use `--verbose` to show all linker arguments
+  = note: PLEASE submit a bug report to https://github.com/llvm/llvm-project/issues/ and include the crash backtrace and instructions to reproduce the bug.
+          Stack dump:
+          0.	Program arguments: /home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/lib/rustlib/x86_64-unknown-linux-gnu/bin/rust-lld -flavor gnu -plugin /usr/libexec/gcc/x86_64-redhat-linux/15/liblto_plugin.so -plugin-opt=/usr/libexec/gcc/x86_64-redhat-linux/15/lto-wrapper -plugin-opt=-fresolution=/tmp/ccGFxiQh.res --build-id --no-add-needed --eh-frame-hdr --hash-style=gnu -m elf_x86_64 -dynamic-linker /lib64/ld-linux-x86-64.so.2 -pie -o /tmp/calcium-prototype-target/debug/build/serde-0c91f74152b9d2b8/build_script_build-0c91f74152b9d2b8 /usr/lib/gcc/x86_64-redhat-linux/15/../../../../lib64/Scrt1.o /usr/lib/gcc/x86_64-redhat-linux/15/../../../../lib64/crti.o /usr/lib/gcc/x86_64-redhat-linux/15/crtbeginS.o -L/tmp/calcium-prototype-target/debug/build/serde-0c91f74152b9d2b8/rustcTZplJZ/raw-dylibs -L/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/lib/rustlib/x86_64-unknown-linux-gnu/lib -L/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/lib/rustlib/x86_64-unknown-linux-gnu/bin/gcc-ld -L/usr/lib/gcc/x86_64-redhat-linux/15 -L/usr/lib/gcc/x86_64-redhat-linux/15/../../../../lib64 -L/lib/../lib64 -L/usr/lib/../lib64 -L/usr/lib/gcc/x86_64-redhat-linux/15/../../.. -L/lib -L/usr/lib /tmp/calcium-prototype-target/debug/build/serde-0c91f74152b9d2b8/rustcTZplJZ/symbols.o /tmp/calcium-prototype-target/debug/build/serde-0c91f74152b9d2b8/build_script_build-0c91f74152b9d2b8.build_script_build.dd1884226d8f152e-cgu.0.rcgu.o /tmp/calcium-prototype-target/debug/build/serde-0c91f74152b9d2b8/build_script_build-0c91f74152b9d2b8.2nn48es7uoan455an135sistk.rcgu.o --as-needed -Bstatic /home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/lib/rustlib/x86_64-unknown-linux-gnu/lib/libstd-ca8536218e109c03.rlib /home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/lib/rustlib/x86_64-unknown-linux-gnu/lib/libpanic_unwind-1ca038c4336dd688.rlib /home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/lib/rustlib/x86_64-unknown-linux-gnu/lib/libobject-9464813eb8f4d63d.rlib /home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/lib/rustlib/x86_64-unknown-linux-gnu/lib/libmemchr-d8125620bde8e2fe.rlib /home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/lib/rustlib/x86_64-unknown-linux-gnu/lib/libaddr2line-ff25e65c5cc03713.rlib /home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/lib/rustlib/x86_64-unknown-linux-gnu/lib/libgimli-51bc00ab056f6d22.rlib /home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/lib/rustlib/x86_64-unknown-linux-gnu/lib/libcfg_if-8b02fd84319a1e08.rlib /home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/lib/rustlib/x86_64-unknown-linux-gnu/lib/librustc_demangle-53f98de42e68a2c1.rlib /home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/lib/rustlib/x86_64-unknown-linux-gnu/lib/libstd_detect-8deff3798f535b60.rlib /home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/lib/rustlib/x86_64-unknown-linux-gnu/lib/libhashbrown-1252279445b02f61.rlib /home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/lib/rustlib/x86_64-unknown-linux-gnu/lib/librustc_std_workspace_alloc-84f3762cd9ec3059.rlib /home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/lib/rustlib/x86_64-unknown-linux-gnu/lib/libminiz_oxide-1841f7d7ec10f3aa.rlib /home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/lib/rustlib/x86_64-unknown-linux-gnu/lib/libadler2-01e756bb64875137.rlib /home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/lib/rustlib/x86_64-unknown-linux-gnu/lib/libunwind-6c84d4415d304087.rlib /home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/lib/rustlib/x86_64-unknown-linux-gnu/lib/liblibc-fbfa92332758dd67.rlib /home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/lib/rustlib/x86_64-unknown-linux-gnu/lib/librustc_std_workspace_core-530cca9f1e441165.rlib /home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/lib/rustlib/x86_64-unknown-linux-gnu/lib/liballoc-d5238ef8bbdabd19.rlib /home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/lib/rustlib/x86_64-unknown-linux-gnu/lib/libcore-e2798d8a0cf2374b.rlib /home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/lib/rustlib/x86_64-unknown-linux-gnu/lib/libcompiler_builtins-c85e6da4caf4bf8a.rlib -Bdynamic -lgcc_s -lutil -lrt -lpthread -lm -ldl -lc --eh-frame-hdr -z noexecstack --gc-sections -z relro -z now /usr/lib/gcc/x86_64-redhat-linux/15/crtendS.o /usr/lib/gcc/x86_64-redhat-linux/15/../../../../lib64/crtn.o
+          Stack dump without symbol names (ensure you have llvm-symbolizer in your PATH or set the environment var `LLVM_SYMBOLIZER_PATH` to point to it):
+          0  libLLVM.so.22.1-rust-1.97.0-stable 0x00007f53bd148847 llvm::sys::PrintStackTrace(llvm::raw_ostream&, int) + 39
+          1  libLLVM.so.22.1-rust-1.97.0-stable 0x00007f53bd14913d
+          2  libc.so.6                          0x00007f53b6f32290
+          3  rust-lld                           0x00005585747fe82b
+          4  rust-lld                           0x00005585745d75e5
+          5  rust-lld                           0x00005585745b350c
+          6  rust-lld                           0x00005585745ae34e
+          7  rust-lld                           0x00005585744b4165
+          8  rust-lld                           0x00005585744b3290
+          9  rust-lld                           0x00005585744b3901
+          10 libc.so.6                          0x00007f53b6f1b5b5
+          11 libc.so.6                          0x00007f53b6f1b668 __libc_start_main + 136
+          12 rust-lld                           0x00005585743361e9
+          collect2: fatal error: ld terminated with signal 7 [Bus error], core dumped
+          compilation terminated.
+          
+
+error: could not compile `serde` (build script) due to 1 previous error
+error: linking with `cc` failed: exit status: 1
+  |
+  = note:  "cc" "-m64" "/tmp/calcium-prototype-target/debug/build/getrandom-81e38ed13d790fc5/rustc0cuEbw/symbols.o" "<2 object files omitted>" "-Wl,--as-needed" "-Wl,-Bstatic" "<sysroot>/lib/rustlib/x86_64-unknown-linux-gnu/lib/{libstd-*,libpanic_unwind-*,libobject-*,libmemchr-*,libaddr2line-*,libgimli-*,libcfg_if-*,librustc_demangle-*,libstd_detect-*,libhashbrown-*,librustc_std_workspace_alloc-*,libminiz_oxide-*,libadler2-*,libunwind-*,liblibc-*,librustc_std_workspace_core-*,liballoc-*,libcore-*,libcompiler_builtins-*}.rlib" "-Wl,-Bdynamic" "-lgcc_s" "-lutil" "-lrt" "-lpthread" "-lm" "-ldl" "-lc" "-L" "/tmp/calcium-prototype-target/debug/build/getrandom-81e38ed13d790fc5/rustc0cuEbw/raw-dylibs" "-B<sysroot>/lib/rustlib/x86_64-unknown-linux-gnu/bin/gcc-ld" "-fuse-ld=lld" "-Wl,--eh-frame-hdr" "-Wl,-z,noexecstack" "-L" "<sysroot>/lib/rustlib/x86_64-unknown-linux-gnu/lib" "-o" "/tmp/calcium-prototype-target/debug/build/getrandom-81e38ed13d790fc5/build_script_build-81e38ed13d790fc5" "-Wl,--gc-sections" "-pie" "-Wl,-z,relro,-z,now" "-nodefaultlibs"
+  = note: some arguments are omitted. use `--verbose` to show all linker arguments
+  = note: PLEASE submit a bug report to https://github.com/llvm/llvm-project/issues/ and include the crash backtrace and instructions to reproduce the bug.
+          collect2: fatal error: ld terminated with signal 7 [Bus error], core dumped
+          compilation terminated.
+          
+
+error: could not compile `getrandom` (build script) due to 1 previous error

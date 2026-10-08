@@ -1,0 +1,11 @@
+{
+  "tag": "point-consumer-basic-eager-run-v66",
+  "started": "2026-09-11T03:16:11.103Z",
+  "finished": "2026-09-11T03:16:11.116Z",
+  "elapsedSeconds": 0.010277355999999998,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "/tmp/calcium-point-qualified-apps.QIBZlE/candidate-hypercurve-basic.stripped",
+  "args": [],
+  "code": 0,
+  "signal": null
+}

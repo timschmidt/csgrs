@@ -1,0 +1,24 @@
+{
+  "tag": "complex-abs-isolation-memcheck-v83",
+  "started": "2026-09-12T03:52:20.579Z",
+  "finished": "2026-09-12T03:52:21.591Z",
+  "elapsedSeconds": 1.009943448,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "timeout",
+  "args": [
+    "60s",
+    "prlimit",
+    "--core=0",
+    "--cpu=30",
+    "--",
+    "valgrind",
+    "--tool=memcheck",
+    "--leak-check=full",
+    "--show-leak-kinds=all",
+    "--errors-for-leak-kinds=definite,indirect,possible",
+    "--error-exitcode=97",
+    "/tmp/calcium-symbolic-boundary-v83.JuGH8X/isolated-abs"
+  ],
+  "code": null,
+  "signal": "SIGABRT"
+}

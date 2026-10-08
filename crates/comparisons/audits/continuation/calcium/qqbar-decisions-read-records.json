@@ -1,0 +1,1014 @@
+[
+  {
+    "repo": "calcium",
+    "path": "qqbar.h",
+    "ranges": [
+      [
+        1,
+        480
+      ]
+    ],
+    "note": "Checkpoint50: Entire algebraic object layout, inline canonical-polynomial predicates, limits, arithmetic/root/decision/enclosure/expression interfaces. No general computable-real equality contract."
+  },
+  {
+    "repo": "calcium",
+    "path": "doc/source/qqbar.rst",
+    "ranges": [
+      [
+        1,
+        1018
+      ]
+    ],
+    "note": "Checkpoint50: Entire manual: minimal-polynomial/isolation invariant, expensive arithmetic, exact component polish and explicit cache contracts, canonical root ordering, heuristic versus certified relation APIs, trusted serialization and unimplemented formula flags."
+  },
+  {
+    "repo": "calcium",
+    "path": "qqbar/validate_enclosure.c",
+    "ranges": [
+      [
+        1,
+        197
+      ]
+    ],
+    "note": "Checkpoint50: Both interval-Newton validators; existence premise and inflated uniqueness differ from existence-and-uniqueness with axis checks. Source contracts, not arbitrary-ball qualification."
+  },
+  {
+    "repo": "calcium",
+    "path": "qqbar/enclosure_raw.c",
+    "ranges": [
+      [
+        1,
+        155
+      ]
+    ],
+    "note": "Checkpoint50: Whole cached-accuracy return, rational solve, iterative Newton/fallback all-conjugate recomputation; current real-specialized route absent in archive. Recursive numerical kernels remain open."
+  },
+  {
+    "repo": "calcium",
+    "path": "qqbar/equal.c",
+    "ranges": [
+      [
+        1,
+        73
+      ]
+    ],
+    "note": "Checkpoint50: Whole canonical polynomial, disjointness/containment, iterative refinement and unique-union equality algorithm; depends on representation invariant."
+  },
+  {
+    "repo": "calcium",
+    "path": "qqbar/sgn_re.c",
+    "ranges": [
+      [
+        1,
+        76
+      ]
+    ],
+    "note": "Checkpoint50: Whole rational/exact/separated-component shortcuts, odd-coefficient axis filter and existence-certified zero real part."
+  },
+  {
+    "repo": "calcium",
+    "path": "qqbar/sgn_im.c",
+    "ranges": [
+      [
+        1,
+        70
+      ]
+    ],
+    "note": "Checkpoint50: Whole rational/exact/separated-component shortcuts, refinement and existence-certified real axis; disabled alternative also read."
+  },
+  {
+    "repo": "calcium",
+    "path": "qqbar/cmp_re.c",
+    "ranges": [
+      [
+        1,
+        113
+      ]
+    ],
+    "note": "Checkpoint50: Whole real interval/rational/conjugacy shortcuts, refinement, delayed exact difference for nonreal equal components; readonly refined work not saved."
+  },
+  {
+    "repo": "calcium",
+    "path": "qqbar/cmp_im.c",
+    "ranges": [
+      [
+        1,
+        82
+      ]
+    ],
+    "note": "Checkpoint50: Whole imaginary interval/sign/equality/reflected-conjugate shortcuts, refinement and delayed exact-difference fallback."
+  },
+  {
+    "repo": "calcium",
+    "path": "qqbar/cmp_root_order.c",
+    "ranges": [
+      [
+        1,
+        34
+      ]
+    ],
+    "note": "Checkpoint50: Whole real-first, descending real, ascending imaginary magnitude and final sign tie-break. Equal-nonreal comparator contract checked independently, not sorting stress."
+  },
+  {
+    "repo": "calcium",
+    "path": "qqbar/cmpabs.c",
+    "ranges": [
+      [
+        1,
+        75
+      ]
+    ],
+    "note": "Checkpoint50: Whole axis special cases, numerical magnitude separation, delayed exact squared-magnitude comparison."
+  },
+  {
+    "repo": "calcium",
+    "path": "qqbar/cmpabs_re.c",
+    "ranges": [
+      [
+        1,
+        73
+      ]
+    ],
+    "note": "Checkpoint50: Whole borrowed temporary absolute-enclosure view and sign-conditioned exact real-component comparisons."
+  },
+  {
+    "repo": "calcium",
+    "path": "qqbar/cmpabs_im.c",
+    "ranges": [
+      [
+        1,
+        73
+      ]
+    ],
+    "note": "Checkpoint50: Whole borrowed temporary absolute-enclosure view and sign-conditioned exact imaginary-component comparisons."
+  },
+  {
+    "repo": "calcium",
+    "path": "qqbar/get_acb.c",
+    "ranges": [
+      [
+        1,
+        94
+      ]
+    ],
+    "note": "Checkpoint50: Whole rational output and component-sign polishing, precision growth, attempted dyadic reconstruction and final rounding. Exact-component failure independently recorded; containment passes stated corpus."
+  },
+  {
+    "repo": "calcium",
+    "path": "qqbar/cache_enclosure.c",
+    "ranges": [
+      [
+        1,
+        30
+      ]
+    ],
+    "note": "Checkpoint50: Whole explicit extra-precision polish and containment-only cache swap; not automatic readonly-query memoization."
+  },
+  {
+    "repo": "calcium",
+    "path": "qqbar/init.c",
+    "ranges": [
+      [
+        1,
+        21
+      ]
+    ],
+    "note": "Checkpoint50: Whole polynomial/enclosure initialization to exact zero."
+  },
+  {
+    "repo": "calcium",
+    "path": "qqbar/clear.c",
+    "ranges": [
+      [
+        1,
+        20
+      ]
+    ],
+    "note": "Checkpoint50: Whole owned polynomial/enclosure release."
+  },
+  {
+    "repo": "calcium",
+    "path": "qqbar/set.c",
+    "ranges": [
+      [
+        1,
+        20
+      ]
+    ],
+    "note": "Checkpoint50: Whole deep polynomial/enclosure copy, not shared expression-DAG identity."
+  },
+  {
+    "repo": "calcium",
+    "path": "qqbar/set_si.c",
+    "ranges": [
+      [
+        1,
+        22
+      ]
+    ],
+    "note": "Checkpoint50: Whole signed machine integer temporary and integer constructor."
+  },
+  {
+    "repo": "calcium",
+    "path": "qqbar/set_ui.c",
+    "ranges": [
+      [
+        1,
+        22
+      ]
+    ],
+    "note": "Checkpoint50: Whole unsigned machine integer temporary and integer constructor."
+  },
+  {
+    "repo": "calcium",
+    "path": "qqbar/set_fmpq.c",
+    "ranges": [
+      [
+        1,
+        22
+      ]
+    ],
+    "note": "Checkpoint50: Whole linear canonical rational polynomial and default-precision enclosure."
+  },
+  {
+    "repo": "calcium",
+    "path": "qqbar/set_fmpz.c",
+    "ranges": [
+      [
+        1,
+        22
+      ]
+    ],
+    "note": "Checkpoint50: Whole linear integer polynomial and default-precision enclosure."
+  },
+  {
+    "repo": "calcium",
+    "path": "qqbar/set_re_im.c",
+    "ranges": [
+      [
+        1,
+        36
+      ]
+    ],
+    "note": "Checkpoint50: Whole zero-imaginary shortcut and temporary-owned arithmetic construction of x+i*y."
+  },
+  {
+    "repo": "calcium",
+    "path": "qqbar/conj.c",
+    "ranges": [
+      [
+        1,
+        20
+      ]
+    ],
+    "note": "Checkpoint50: Whole unchanged minimal polynomial and conjugated enclosure."
+  },
+  {
+    "repo": "calcium",
+    "path": "qqbar/neg.c",
+    "ranges": [
+      [
+        1,
+        25
+      ]
+    ],
+    "note": "Checkpoint50: Whole parity-selected polynomial coefficient negation and enclosure negation."
+  },
+  {
+    "repo": "calcium",
+    "path": "qqbar/abs2.c",
+    "ranges": [
+      [
+        1,
+        47
+      ]
+    ],
+    "note": "Checkpoint50: Whole real/root-of-unity/pure-imaginary/conjugate-product routes and exact zero imaginary component."
+  },
+  {
+    "repo": "calcium",
+    "path": "qqbar/hash.c",
+    "ranges": [
+      [
+        1,
+        32
+      ]
+    ],
+    "note": "Checkpoint50: Whole minimal-polynomial-only integer hash, intentional conjugate collisions; not equality evidence."
+  },
+  {
+    "repo": "calcium",
+    "path": "qqbar/csgn.c",
+    "ranges": [
+      [
+        1,
+        23
+      ]
+    ],
+    "note": "Checkpoint50: Whole real-component sign followed by imaginary-axis sign."
+  },
+  {
+    "repo": "calcium",
+    "path": "qqbar/root_ui.c",
+    "ranges": [
+      [
+        1,
+        166
+      ]
+    ],
+    "note": "Checkpoint50: Whole principal-surd fast detection, rational/root-of-unity routes, factored annihilator and unique-root selection. Invalid/resource boundary branches read, not probed."
+  },
+  {
+    "repo": "calcium",
+    "path": "qqbar/fmpq_root_ui.c",
+    "ranges": [
+      [
+        1,
+        126
+      ]
+    ],
+    "note": "Checkpoint50: Whole square/root reduction of rational numerator and denominator, principal negative-input delegation and positive surd construction. Only bounded positive square roots executed here."
+  },
+  {
+    "repo": "calcium",
+    "path": "qqbar/i.c",
+    "ranges": [
+      [
+        1,
+        22
+      ]
+    ],
+    "note": "Checkpoint50: Whole canonical x^2+1 polynomial and exact positive imaginary-unit enclosure."
+  },
+  {
+    "repo": "calcium",
+    "path": "qqbar/get_arb.c",
+    "ranges": [
+      [
+        1,
+        29
+      ]
+    ],
+    "note": "Checkpoint50: Whole real admission and polished complex extraction, otherwise indeterminate output."
+  },
+  {
+    "repo": "calcium",
+    "path": "qqbar/get_arb_re.c",
+    "ranges": [
+      [
+        1,
+        29
+      ]
+    ],
+    "note": "Checkpoint50: Whole exact zero real shortcut or polished component extraction."
+  },
+  {
+    "repo": "calcium",
+    "path": "qqbar/get_arb_im.c",
+    "ranges": [
+      [
+        1,
+        29
+      ]
+    ],
+    "note": "Checkpoint50: Whole exact zero imaginary shortcut or polished component extraction."
+  },
+  {
+    "repo": "calcium",
+    "path": "qqbar/roots_fmpz_poly.c",
+    "ranges": [
+      [
+        1,
+        116
+      ]
+    ],
+    "note": "Checkpoint50: Whole factor/content/root-isolation paths, multiplicity expansion before final qsort. No new root-list numerical or sorting-failure claim."
+  },
+  {
+    "repo": "calcium",
+    "path": "qqbar/conjugates.c",
+    "ranges": [
+      [
+        1,
+        22
+      ]
+    ],
+    "note": "Checkpoint50: Whole rational copy or irreducible-minimal-polynomial root enumeration."
+  },
+  {
+    "repo": "calcium",
+    "path": "qqbar/test/t-cmp_re.c",
+    "ranges": [
+      [
+        1,
+        79
+      ]
+    ],
+    "note": "Checkpoint50: Entire t-cmp_re.c source: shared-backend reference/control flow, random cases, failure checks and cleanup. Read only, not newly executed; independent corpus has separate oracle and stated scope."
+  },
+  {
+    "repo": "calcium",
+    "path": "qqbar/test/t-cmp_im.c",
+    "ranges": [
+      [
+        1,
+        78
+      ]
+    ],
+    "note": "Checkpoint50: Entire t-cmp_im.c source: shared-backend reference/control flow, random cases, failure checks and cleanup. Read only, not newly executed; independent corpus has separate oracle and stated scope."
+  },
+  {
+    "repo": "calcium",
+    "path": "qqbar/test/t-cmpabs.c",
+    "ranges": [
+      [
+        1,
+        66
+      ]
+    ],
+    "note": "Checkpoint50: Entire t-cmpabs.c source: shared-backend reference/control flow, random cases, failure checks and cleanup. Read only, not newly executed; independent corpus has separate oracle and stated scope."
+  },
+  {
+    "repo": "calcium",
+    "path": "qqbar/test/t-cmpabs_re.c",
+    "ranges": [
+      [
+        1,
+        76
+      ]
+    ],
+    "note": "Checkpoint50: Entire t-cmpabs_re.c source: shared-backend reference/control flow, random cases, failure checks and cleanup. Read only, not newly executed; independent corpus has separate oracle and stated scope."
+  },
+  {
+    "repo": "calcium",
+    "path": "qqbar/test/t-cmpabs_im.c",
+    "ranges": [
+      [
+        1,
+        83
+      ]
+    ],
+    "note": "Checkpoint50: Entire t-cmpabs_im.c source: shared-backend reference/control flow, random cases, failure checks and cleanup. Read only, not newly executed; independent corpus has separate oracle and stated scope."
+  },
+  {
+    "repo": "calcium",
+    "path": "qqbar/test/t-sgn_re.c",
+    "ranges": [
+      [
+        1,
+        108
+      ]
+    ],
+    "note": "Checkpoint50: Entire t-sgn_re.c source: shared-backend reference/control flow, random cases, failure checks and cleanup. Read only, not newly executed; independent corpus has separate oracle and stated scope."
+  },
+  {
+    "repo": "calcium",
+    "path": "qqbar/test/t-csgn.c",
+    "ranges": [
+      [
+        1,
+        66
+      ]
+    ],
+    "note": "Checkpoint50: Entire t-csgn.c source: shared-backend reference/control flow, random cases, failure checks and cleanup. Read only, not newly executed; independent corpus has separate oracle and stated scope."
+  },
+  {
+    "repo": "calcium",
+    "path": "qqbar/test/t-get_acb.c",
+    "ranges": [
+      [
+        1,
+        92
+      ]
+    ],
+    "note": "Checkpoint50: Entire t-get_acb.c source: shared-backend reference/control flow, random cases, failure checks and cleanup. Read only, not newly executed; independent corpus has separate oracle and stated scope."
+  },
+  {
+    "repo": "calcium",
+    "path": "qqbar/test/t-roots_fmpz_poly.c",
+    "ranges": [
+      [
+        1,
+        83
+      ]
+    ],
+    "note": "Checkpoint50: Entire t-roots_fmpz_poly.c source: shared-backend reference/control flow, random cases, failure checks and cleanup. Read only, not newly executed; independent corpus has separate oracle and stated scope."
+  },
+  {
+    "repo": "calcium",
+    "path": "qqbar/test/t-conjugates.c",
+    "ranges": [
+      [
+        1,
+        76
+      ]
+    ],
+    "note": "Checkpoint50: Entire t-conjugates.c source: shared-backend reference/control flow, random cases, failure checks and cleanup. Read only, not newly executed; independent corpus has separate oracle and stated scope."
+  },
+  {
+    "repo": "flint",
+    "path": "src/qqbar.h",
+    "ranges": [
+      [
+        1,
+        405
+      ]
+    ],
+    "note": "Checkpoint50: Entire algebraic object layout, inline canonical-polynomial predicates, limits, arithmetic/root/decision/enclosure/expression interfaces. No general computable-real equality contract."
+  },
+  {
+    "repo": "flint",
+    "path": "doc/source/qqbar.rst",
+    "ranges": [
+      [
+        1,
+        1053
+      ]
+    ],
+    "note": "Checkpoint50: Entire manual: minimal-polynomial/isolation invariant, expensive arithmetic, exact component polish and explicit cache contracts, canonical root ordering, heuristic versus certified relation APIs, trusted serialization and unimplemented formula flags."
+  },
+  {
+    "repo": "flint",
+    "path": "src/qqbar/validate_enclosure.c",
+    "ranges": [
+      [
+        1,
+        197
+      ]
+    ],
+    "note": "Checkpoint50: Both interval-Newton validators; existence premise and inflated uniqueness differ from existence-and-uniqueness with axis checks. Source contracts, not arbitrary-ball qualification."
+  },
+  {
+    "repo": "flint",
+    "path": "src/qqbar/enclosure_raw.c",
+    "ranges": [
+      [
+        1,
+        159
+      ]
+    ],
+    "note": "Checkpoint50: Whole cached-accuracy return, rational solve, iterative Newton/fallback all-conjugate recomputation; current real-specialized route absent in archive. Recursive numerical kernels remain open."
+  },
+  {
+    "repo": "flint",
+    "path": "src/qqbar/equal.c",
+    "ranges": [
+      [
+        1,
+        73
+      ]
+    ],
+    "note": "Checkpoint50: Whole canonical polynomial, disjointness/containment, iterative refinement and unique-union equality algorithm; depends on representation invariant."
+  },
+  {
+    "repo": "flint",
+    "path": "src/qqbar/sgn_re.c",
+    "ranges": [
+      [
+        1,
+        76
+      ]
+    ],
+    "note": "Checkpoint50: Whole rational/exact/separated-component shortcuts, odd-coefficient axis filter and existence-certified zero real part."
+  },
+  {
+    "repo": "flint",
+    "path": "src/qqbar/sgn_im.c",
+    "ranges": [
+      [
+        1,
+        70
+      ]
+    ],
+    "note": "Checkpoint50: Whole rational/exact/separated-component shortcuts, refinement and existence-certified real axis; disabled alternative also read."
+  },
+  {
+    "repo": "flint",
+    "path": "src/qqbar/cmp_re.c",
+    "ranges": [
+      [
+        1,
+        115
+      ]
+    ],
+    "note": "Checkpoint50: Whole real interval/rational/conjugacy shortcuts, refinement, delayed exact difference for nonreal equal components; readonly refined work not saved."
+  },
+  {
+    "repo": "flint",
+    "path": "src/qqbar/cmp_im.c",
+    "ranges": [
+      [
+        1,
+        81
+      ]
+    ],
+    "note": "Checkpoint50: Whole imaginary interval/sign/equality/reflected-conjugate shortcuts, refinement and delayed exact-difference fallback."
+  },
+  {
+    "repo": "flint",
+    "path": "src/qqbar/cmp_root_order.c",
+    "ranges": [
+      [
+        1,
+        34
+      ]
+    ],
+    "note": "Checkpoint50: Whole real-first, descending real, ascending imaginary magnitude and final sign tie-break. Equal-nonreal comparator contract checked independently, not sorting stress."
+  },
+  {
+    "repo": "flint",
+    "path": "src/qqbar/cmpabs.c",
+    "ranges": [
+      [
+        1,
+        74
+      ]
+    ],
+    "note": "Checkpoint50: Whole axis special cases, numerical magnitude separation, delayed exact squared-magnitude comparison."
+  },
+  {
+    "repo": "flint",
+    "path": "src/qqbar/cmpabs_re.c",
+    "ranges": [
+      [
+        1,
+        73
+      ]
+    ],
+    "note": "Checkpoint50: Whole borrowed temporary absolute-enclosure view and sign-conditioned exact real-component comparisons."
+  },
+  {
+    "repo": "flint",
+    "path": "src/qqbar/cmpabs_im.c",
+    "ranges": [
+      [
+        1,
+        73
+      ]
+    ],
+    "note": "Checkpoint50: Whole borrowed temporary absolute-enclosure view and sign-conditioned exact imaginary-component comparisons."
+  },
+  {
+    "repo": "flint",
+    "path": "src/qqbar/get_acb.c",
+    "ranges": [
+      [
+        1,
+        93
+      ]
+    ],
+    "note": "Checkpoint50: Whole rational output and component-sign polishing, precision growth, attempted dyadic reconstruction and final rounding. Exact-component failure independently recorded; containment passes stated corpus."
+  },
+  {
+    "repo": "flint",
+    "path": "src/qqbar/cache_enclosure.c",
+    "ranges": [
+      [
+        1,
+        29
+      ]
+    ],
+    "note": "Checkpoint50: Whole explicit extra-precision polish and containment-only cache swap; not automatic readonly-query memoization."
+  },
+  {
+    "repo": "flint",
+    "path": "src/qqbar/init.c",
+    "ranges": [
+      [
+        1,
+        21
+      ]
+    ],
+    "note": "Checkpoint50: Whole polynomial/enclosure initialization to exact zero."
+  },
+  {
+    "repo": "flint",
+    "path": "src/qqbar/clear.c",
+    "ranges": [
+      [
+        1,
+        20
+      ]
+    ],
+    "note": "Checkpoint50: Whole owned polynomial/enclosure release."
+  },
+  {
+    "repo": "flint",
+    "path": "src/qqbar/set.c",
+    "ranges": [
+      [
+        1,
+        20
+      ]
+    ],
+    "note": "Checkpoint50: Whole deep polynomial/enclosure copy, not shared expression-DAG identity."
+  },
+  {
+    "repo": "flint",
+    "path": "src/qqbar/set_si.c",
+    "ranges": [
+      [
+        1,
+        21
+      ]
+    ],
+    "note": "Checkpoint50: Whole signed machine integer temporary and integer constructor."
+  },
+  {
+    "repo": "flint",
+    "path": "src/qqbar/set_ui.c",
+    "ranges": [
+      [
+        1,
+        21
+      ]
+    ],
+    "note": "Checkpoint50: Whole unsigned machine integer temporary and integer constructor."
+  },
+  {
+    "repo": "flint",
+    "path": "src/qqbar/set_fmpq.c",
+    "ranges": [
+      [
+        1,
+        23
+      ]
+    ],
+    "note": "Checkpoint50: Whole linear canonical rational polynomial and default-precision enclosure."
+  },
+  {
+    "repo": "flint",
+    "path": "src/qqbar/set_fmpz.c",
+    "ranges": [
+      [
+        1,
+        22
+      ]
+    ],
+    "note": "Checkpoint50: Whole linear integer polynomial and default-precision enclosure."
+  },
+  {
+    "repo": "flint",
+    "path": "src/qqbar/set_re_im.c",
+    "ranges": [
+      [
+        1,
+        35
+      ]
+    ],
+    "note": "Checkpoint50: Whole zero-imaginary shortcut and temporary-owned arithmetic construction of x+i*y."
+  },
+  {
+    "repo": "flint",
+    "path": "src/qqbar/conj.c",
+    "ranges": [
+      [
+        1,
+        20
+      ]
+    ],
+    "note": "Checkpoint50: Whole unchanged minimal polynomial and conjugated enclosure."
+  },
+  {
+    "repo": "flint",
+    "path": "src/qqbar/neg.c",
+    "ranges": [
+      [
+        1,
+        25
+      ]
+    ],
+    "note": "Checkpoint50: Whole parity-selected polynomial coefficient negation and enclosure negation."
+  },
+  {
+    "repo": "flint",
+    "path": "src/qqbar/abs2.c",
+    "ranges": [
+      [
+        1,
+        47
+      ]
+    ],
+    "note": "Checkpoint50: Whole real/root-of-unity/pure-imaginary/conjugate-product routes and exact zero imaginary component."
+  },
+  {
+    "repo": "flint",
+    "path": "src/qqbar/hash.c",
+    "ranges": [
+      [
+        1,
+        33
+      ]
+    ],
+    "note": "Checkpoint50: Whole minimal-polynomial-only integer hash, intentional conjugate collisions; not equality evidence."
+  },
+  {
+    "repo": "flint",
+    "path": "src/qqbar/csgn.c",
+    "ranges": [
+      [
+        1,
+        23
+      ]
+    ],
+    "note": "Checkpoint50: Whole real-component sign followed by imaginary-axis sign."
+  },
+  {
+    "repo": "flint",
+    "path": "src/qqbar/root_ui.c",
+    "ranges": [
+      [
+        1,
+        168
+      ]
+    ],
+    "note": "Checkpoint50: Whole principal-surd fast detection, rational/root-of-unity routes, factored annihilator and unique-root selection. Invalid/resource boundary branches read, not probed."
+  },
+  {
+    "repo": "flint",
+    "path": "src/qqbar/fmpq_root_ui.c",
+    "ranges": [
+      [
+        1,
+        128
+      ]
+    ],
+    "note": "Checkpoint50: Whole square/root reduction of rational numerator and denominator, principal negative-input delegation and positive surd construction. Only bounded positive square roots executed here."
+  },
+  {
+    "repo": "flint",
+    "path": "src/qqbar/i.c",
+    "ranges": [
+      [
+        1,
+        22
+      ]
+    ],
+    "note": "Checkpoint50: Whole canonical x^2+1 polynomial and exact positive imaginary-unit enclosure."
+  },
+  {
+    "repo": "flint",
+    "path": "src/qqbar/get_arb.c",
+    "ranges": [
+      [
+        1,
+        29
+      ]
+    ],
+    "note": "Checkpoint50: Whole real admission and polished complex extraction, otherwise indeterminate output."
+  },
+  {
+    "repo": "flint",
+    "path": "src/qqbar/get_arb_re.c",
+    "ranges": [
+      [
+        1,
+        29
+      ]
+    ],
+    "note": "Checkpoint50: Whole exact zero real shortcut or polished component extraction."
+  },
+  {
+    "repo": "flint",
+    "path": "src/qqbar/get_arb_im.c",
+    "ranges": [
+      [
+        1,
+        29
+      ]
+    ],
+    "note": "Checkpoint50: Whole exact zero imaginary shortcut or polished component extraction."
+  },
+  {
+    "repo": "flint",
+    "path": "src/qqbar/roots_fmpz_poly.c",
+    "ranges": [
+      [
+        1,
+        119
+      ]
+    ],
+    "note": "Checkpoint50: Whole factor/content/root-isolation paths, multiplicity expansion before final qsort. No new root-list numerical or sorting-failure claim."
+  },
+  {
+    "repo": "flint",
+    "path": "src/qqbar/conjugates.c",
+    "ranges": [
+      [
+        1,
+        21
+      ]
+    ],
+    "note": "Checkpoint50: Whole rational copy or irreducible-minimal-polynomial root enumeration."
+  },
+  {
+    "repo": "flint",
+    "path": "src/qqbar/test/t-cmp_re.c",
+    "ranges": [
+      [
+        1,
+        70
+      ]
+    ],
+    "note": "Checkpoint50: Entire t-cmp_re.c source: shared-backend reference/control flow, random cases, failure checks and cleanup. Read only, not newly executed; independent corpus has separate oracle and stated scope."
+  },
+  {
+    "repo": "flint",
+    "path": "src/qqbar/test/t-cmp_im.c",
+    "ranges": [
+      [
+        1,
+        190
+      ]
+    ],
+    "note": "Checkpoint50: Entire t-cmp_im.c source: shared-backend reference/control flow, random cases, failure checks and cleanup. Read only, not newly executed; independent corpus has separate oracle and stated scope."
+  },
+  {
+    "repo": "flint",
+    "path": "src/qqbar/test/t-cmpabs.c",
+    "ranges": [
+      [
+        1,
+        63
+      ]
+    ],
+    "note": "Checkpoint50: Entire t-cmpabs.c source: shared-backend reference/control flow, random cases, failure checks and cleanup. Read only, not newly executed; independent corpus has separate oracle and stated scope."
+  },
+  {
+    "repo": "flint",
+    "path": "src/qqbar/test/t-cmpabs_re.c",
+    "ranges": [
+      [
+        1,
+        67
+      ]
+    ],
+    "note": "Checkpoint50: Entire t-cmpabs_re.c source: shared-backend reference/control flow, random cases, failure checks and cleanup. Read only, not newly executed; independent corpus has separate oracle and stated scope."
+  },
+  {
+    "repo": "flint",
+    "path": "src/qqbar/test/t-cmpabs_im.c",
+    "ranges": [
+      [
+        1,
+        74
+      ]
+    ],
+    "note": "Checkpoint50: Entire t-cmpabs_im.c source: shared-backend reference/control flow, random cases, failure checks and cleanup. Read only, not newly executed; independent corpus has separate oracle and stated scope."
+  },
+  {
+    "repo": "flint",
+    "path": "src/qqbar/test/t-sgn_re.c",
+    "ranges": [
+      [
+        1,
+        99
+      ]
+    ],
+    "note": "Checkpoint50: Entire t-sgn_re.c source: shared-backend reference/control flow, random cases, failure checks and cleanup. Read only, not newly executed; independent corpus has separate oracle and stated scope."
+  },
+  {
+    "repo": "flint",
+    "path": "src/qqbar/test/t-csgn.c",
+    "ranges": [
+      [
+        1,
+        57
+      ]
+    ],
+    "note": "Checkpoint50: Entire t-csgn.c source: shared-backend reference/control flow, random cases, failure checks and cleanup. Read only, not newly executed; independent corpus has separate oracle and stated scope."
+  },
+  {
+    "repo": "flint",
+    "path": "src/qqbar/test/t-get_acb.c",
+    "ranges": [
+      [
+        1,
+        82
+      ]
+    ],
+    "note": "Checkpoint50: Entire t-get_acb.c source: shared-backend reference/control flow, random cases, failure checks and cleanup. Read only, not newly executed; independent corpus has separate oracle and stated scope."
+  },
+  {
+    "repo": "flint",
+    "path": "src/qqbar/test/t-roots_fmpz_poly.c",
+    "ranges": [
+      [
+        1,
+        74
+      ]
+    ],
+    "note": "Checkpoint50: Entire t-roots_fmpz_poly.c source: shared-backend reference/control flow, random cases, failure checks and cleanup. Read only, not newly executed; independent corpus has separate oracle and stated scope."
+  },
+  {
+    "repo": "flint",
+    "path": "src/qqbar/test/t-conjugates.c",
+    "ranges": [
+      [
+        1,
+        68
+      ]
+    ],
+    "note": "Checkpoint50: Entire t-conjugates.c source: shared-backend reference/control flow, random cases, failure checks and cleanup. Read only, not newly executed; independent corpus has separate oracle and stated scope."
+  }
+]

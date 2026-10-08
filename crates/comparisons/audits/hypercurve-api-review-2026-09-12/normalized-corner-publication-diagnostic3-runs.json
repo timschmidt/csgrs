@@ -1,0 +1,114 @@
+[
+  {
+    "name": "region_corner_edits_publish_normalized_hole_openings",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/normalized-corner-publication-diagnostic3-test",
+      "--exact",
+      "region_corner_edits_publish_normalized_hole_openings",
+      "--test-threads=1",
+      "--nocapture",
+      "--color",
+      "never"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.015972857014276087,
+    "log": "normalized-corner-publication-diagnostic3-region_corner_edits_publish_normalized_hole_openings.log",
+    "binary_sha256": "e1f883b89d8ce53c3d79b457ca14f53f522bc0779a8984c3130346cc285aad4a"
+  },
+  {
+    "name": "unified_region_chamfer_and_fillet_edit_higher_order_loops",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/normalized-corner-publication-diagnostic3-test",
+      "--exact",
+      "unified_region_chamfer_and_fillet_edit_higher_order_loops",
+      "--test-threads=1",
+      "--nocapture",
+      "--color",
+      "never"
+    ],
+    "returncode": 101,
+    "elapsed_seconds": 0.21415829699253663,
+    "log": "normalized-corner-publication-diagnostic3-unified_region_chamfer_and_fillet_edit_higher_order_loops.log",
+    "binary_sha256": "e1f883b89d8ce53c3d79b457ca14f53f522bc0779a8984c3130346cc285aad4a"
+  },
+  {
+    "name": "retained_circular_regions_chamfer_over_the_full_support",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/normalized-corner-publication-diagnostic3-test",
+      "--exact",
+      "retained_circular_regions_chamfer_over_the_full_support",
+      "--test-threads=1",
+      "--nocapture",
+      "--color",
+      "never"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.6145602850010619,
+    "log": "normalized-corner-publication-diagnostic3-retained_circular_regions_chamfer_over_the_full_support.log",
+    "binary_sha256": "e1f883b89d8ce53c3d79b457ca14f53f522bc0779a8984c3130346cc285aad4a"
+  },
+  {
+    "name": "unified_region_reuses_design_parameter_corner_solvers",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/normalized-corner-publication-diagnostic3-test",
+      "--exact",
+      "unified_region_reuses_design_parameter_corner_solvers",
+      "--test-threads=1",
+      "--nocapture",
+      "--color",
+      "never"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.007651635998627171,
+    "log": "normalized-corner-publication-diagnostic3-unified_region_reuses_design_parameter_corner_solvers.log",
+    "binary_sha256": "e1f883b89d8ce53c3d79b457ca14f53f522bc0779a8984c3130346cc285aad4a"
+  },
+  {
+    "name": "line_parabola_fillet_extends_the_regular_incident_cell_exactly",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/normalized-corner-publication-diagnostic3-test",
+      "--exact",
+      "line_parabola_fillet_extends_the_regular_incident_cell_exactly",
+      "--test-threads=1",
+      "--nocapture",
+      "--color",
+      "never"
+    ],
+    "returncode": 101,
+    "elapsed_seconds": 3.5682291730190627,
+    "log": "normalized-corner-publication-diagnostic3-line_parabola_fillet_extends_the_regular_incident_cell_exactly.log",
+    "binary_sha256": "e1f883b89d8ce53c3d79b457ca14f53f522bc0779a8984c3130346cc285aad4a"
+  },
+  {
+    "name": "arc_parabola_fillet_recovers_exact_complement_contacts",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/normalized-corner-publication-diagnostic3-test",
+      "--exact",
+      "arc_parabola_fillet_recovers_exact_complement_contacts",
+      "--test-threads=1",
+      "--nocapture",
+      "--color",
+      "never"
+    ],
+    "returncode": "timeout",
+    "elapsed_seconds": 45.014447141991695,
+    "log": "normalized-corner-publication-diagnostic3-arc_parabola_fillet_recovers_exact_complement_contacts.log",
+    "binary_sha256": "e1f883b89d8ce53c3d79b457ca14f53f522bc0779a8984c3130346cc285aad4a"
+  },
+  {
+    "name": "non_ph_bezier_pair_projective_fillet_retains_algebraic_extensions",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/normalized-corner-publication-diagnostic3-test",
+      "--exact",
+      "non_ph_bezier_pair_projective_fillet_retains_algebraic_extensions",
+      "--test-threads=1",
+      "--nocapture",
+      "--color",
+      "never"
+    ],
+    "returncode": "timeout",
+    "elapsed_seconds": 45.00279764999868,
+    "log": "normalized-corner-publication-diagnostic3-non_ph_bezier_pair_projective_fillet_retains_algebraic_extensions.log",
+    "binary_sha256": "e1f883b89d8ce53c3d79b457ca14f53f522bc0779a8984c3130346cc285aad4a"
+  }
+]

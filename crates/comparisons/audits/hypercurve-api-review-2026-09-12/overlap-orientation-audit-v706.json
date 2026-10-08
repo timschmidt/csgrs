@@ -1,0 +1,57 @@
+{
+  "uses": [
+    {
+      "path": "hypercurve/src/bezier_offset.rs",
+      "count": 226
+    },
+    {
+      "path": "hypercurve/src/bezier_retained_overlap.rs",
+      "count": 9
+    },
+    {
+      "path": "hypercurve/src/curve_intersection.rs",
+      "count": 12
+    },
+    {
+      "path": "hypercurve/src/curve_region_boolean.rs",
+      "count": 19
+    },
+    {
+      "path": "hypercurve/src/curve_support_intersection.rs",
+      "count": 15
+    },
+    {
+      "path": "hypercurve/src/lib.rs",
+      "count": 1
+    },
+    {
+      "path": "hypercurve/src/rational_bezier_general.rs",
+      "count": 20
+    },
+    {
+      "path": "hypercurve/tests/hypercurve_bezier_arrangement.rs",
+      "count": 5
+    },
+    {
+      "path": "hypercurve/tests/hypercurve_bezier_fit_offset.rs",
+      "count": 27
+    },
+    {
+      "path": "hypercurve/tests/hypercurve_curve.rs",
+      "count": 1
+    },
+    {
+      "path": "hypercurve/tests/hypercurve_curve_intersection.rs",
+      "count": 20
+    },
+    {
+      "path": "hypercurve/tests/hypercurve_rational_bezier.rs",
+      "count": 16
+    }
+  ],
+  "repositories": 30,
+  "candidate": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/overlap-orientation-candidate-v706",
+  "status": "isolated, unformatted and unbuilt; V707 frozen inputs untouched",
+  "scope": "root documents plus src,tests,benches,examples,fuzz in 30 repositories; historical audits and source snapshots excluded",
+  "initial_audits": "First full tracked-file scans encountered legacy document encoding and historical copied sources; neither changed production or active driver inputs"
+}

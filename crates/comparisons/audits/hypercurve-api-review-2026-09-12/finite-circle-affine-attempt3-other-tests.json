@@ -1,0 +1,28 @@
+[
+  {
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve-6e6572a45c5b177b",
+      "selected_fillet_tangency_replays_an_exterior_affine_source_chart",
+      "--test-threads=2",
+      "--color",
+      "never",
+      "--nocapture"
+    ],
+    "returncode": 101,
+    "elapsed_seconds": 1.2653059820004273,
+    "binary_sha256": "a7209c6ea3663c0bb065f969f6730e1caf168ff9e502d2d59e401645bed02693"
+  },
+  {
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve-6e6572a45c5b177b",
+      "selected_circle_intersects_rational_curves_and_retained_chords",
+      "--test-threads=2",
+      "--color",
+      "never",
+      "--nocapture"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.6645871189975878,
+    "binary_sha256": "a7209c6ea3663c0bb065f969f6730e1caf168ff9e502d2d59e401645bed02693"
+  }
+]

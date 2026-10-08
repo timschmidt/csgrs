@@ -1,0 +1,26 @@
+{
+  "tag": "root-exp-opaque-baseline-build-alloc",
+  "started": "2026-09-08T20:35:49.359Z",
+  "finished": "2026-09-08T20:35:49.722Z",
+  "elapsedSeconds": 0.36020270200000004,
+  "cwd": "/home/tim/Documents/GitHub/workspace",
+  "command": "env",
+  "args": [
+    "TMPDIR=/home/tim/Documents/GitHub/workspace/calcium-build-tmp.gVX5v4",
+    "CARGO_INCREMENTAL=0",
+    "CARGO_PROFILE_DEV_DEBUG=0",
+    "cargo",
+    "build",
+    "--release",
+    "--offline",
+    "--locked",
+    "--features",
+    "allocation-count",
+    "--manifest-path",
+    "exactcore-hyper-comparison/audits/continuation/calcium/root-exp-opaque-baseline-bench/Cargo.toml",
+    "--target-dir",
+    ".audit-builds/calcium-baseline"
+  ],
+  "code": 0,
+  "signal": null
+}

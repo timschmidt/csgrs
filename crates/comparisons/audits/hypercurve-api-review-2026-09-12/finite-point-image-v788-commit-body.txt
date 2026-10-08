@@ -1,0 +1,17 @@
+Require finite algebraic images before publishing exact curve points
+
+Rational point construction used to return a failed image with no coordinates
+or retained expression, which CurvePoint2 could admit and certify equal to
+itself. Return classified construction blockers for affine poles and undecided
+denominators. Keep exact Real-coefficient retained expressions and geometry-owned
+finite-point evidence available when coordinate projection cannot finish.
+
+Propagate the classified result through rational endpoint construction,
+lazy endpoint access, splitting, predicates and every controlled caller.
+Remove the panicking point-access wrapper. Cache only successful lazy images,
+and keep parameter-owned caches free of retained-expression reference cycles.
+Reject certified zero denominators in the two owned-frame fallback paths.
+
+Validate pole rejection and finite controls under both policies, exact retained
+point reuse, split/arrangement behavior, and constrained fillet compositions.
+Qualification results are recorded in the workspace implementation journal.

@@ -1,0 +1,22 @@
+[
+  {
+    "file": "hypercurve/src/bezier_offset.rs",
+    "sha256": "b98feaf107e735d68bbb78dbf4fe4b8f912b46456e460eddb7532dae0756278e"
+  },
+  {
+    "file": "hypercurve/src/bezier_region.rs",
+    "sha256": "debd7e9808349e0b2a68363dc632b6b32c63b8b34a636846568b4d8e3277e8d3"
+  },
+  {
+    "file": "hypercurve/src/bezier_split.rs",
+    "sha256": "da67ca556f8e7b24c56b77b773365ae2e843c222a427bc212d215b8db170b2c5"
+  },
+  {
+    "file": "hypercurve/src/curve_region_boolean.rs",
+    "sha256": "ca4986e702ef012e1d679eba82a848bfd5499c876092577c5e502c8fb782a243"
+  },
+  {
+    "file": "hypercurve/src/curve_support_intersection.rs",
+    "sha256": "125a7951a50b05796fdf393ac86cc2627dbd6491e4cc24c28311a21bcf90006d"
+  }
+]

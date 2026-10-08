@@ -1,0 +1,17 @@
+{
+  "tag": "e-qualified-wasm-cpu",
+  "started": "2026-09-10T01:48:02.736Z",
+  "finished": "2026-09-10T01:48:44.084Z",
+  "elapsedSeconds": 41.345231928000004,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "taskset",
+  "args": [
+    "-c",
+    "6",
+    "node",
+    "--expose-gc",
+    "run-e-qualified-wasm-costs.mjs"
+  ],
+  "code": 0,
+  "signal": null
+}

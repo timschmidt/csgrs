@@ -1,0 +1,20 @@
+{
+  "source_manifest": "fillet-fiber-fallback-20260926-v245-sources.json",
+  "source_directory": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/source-archives/fillet-fiber-fallback-20260926-v245",
+  "workspace_guard": "public-fillet-families-full-20260926-v236-sources.json",
+  "fixture": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/fillet-reoffset-compact-20260926-v243-fiber.jsonl",
+  "fixture_sha256": "f5b4f684b499a3c3b525fbf2029e413a5a0d27a6b8fa12e95c2becac081e50bc",
+  "all_processes_reaped": true,
+  "command": [
+    "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+    "build",
+    "--release",
+    "--locked",
+    "--offline",
+    "--message-format=json"
+  ],
+  "build_returncode": 0,
+  "binary_sha256": "7d001f7ac768d5cbde54623f9228e05013a8130c44ed5e9e0b027ad56ddbbf96",
+  "run_returncode": 0,
+  "elapsed_seconds": 105.70846170000732
+}

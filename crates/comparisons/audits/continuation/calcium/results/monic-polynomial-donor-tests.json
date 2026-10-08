@@ -1,0 +1,15 @@
+{
+  "tag": "monic-polynomial-donor-tests",
+  "started": "2026-09-09T01:13:00.273Z",
+  "finished": "2026-09-09T01:13:01.541Z",
+  "elapsedSeconds": 1.26549408,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exact-real-references/flint",
+  "command": "make",
+  "args": [
+    "-j2",
+    "check",
+    "MOD=ca_poly"
+  ],
+  "code": 0,
+  "signal": null
+}

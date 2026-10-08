@@ -1,0 +1,11 @@
+[package]
+name = "qqbar-trig-hyper-v76"
+version = "0.0.0"
+edition = "2024"
+publish = false
+
+[workspace]
+
+[dependencies]
+hyperreal = { path = "../../../../../hyperreal" }
+num = "0.4.3"

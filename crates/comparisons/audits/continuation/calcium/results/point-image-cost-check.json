@@ -1,0 +1,13 @@
+{
+  "tag": "point-image-cost-check",
+  "started": "2026-09-10T19:59:55.200Z",
+  "finished": "2026-09-10T19:59:56.044Z",
+  "elapsedSeconds": 0.842310931,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "node",
+  "args": [
+    "check-point-image-costs.mjs"
+  ],
+  "code": 0,
+  "signal": null
+}

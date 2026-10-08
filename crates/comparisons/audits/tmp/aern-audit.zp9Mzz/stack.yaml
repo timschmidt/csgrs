@@ -1,0 +1,16 @@
+resolver: lts-22.44
+system-ghc: false
+packages:
+- source/aern-order
+- source/aern-real
+- source/aern-interval
+- source/aern-double
+- source/aern-mpfr-rounded
+- source/aern-mpfr
+- source/aern-realfn
+- source/aern-poly
+extra-deps:
+- ieee-utils-tempfix-0.4.0.1@sha256:435f35ed975e6562a9cd825008ffcdf56bddf105b87755aae4e297f0c4bddd57,1263
+- rounded-1.1.1@sha256:006b8f99f4a3cc913a1fc4248cf58c4f03ade52b661a558c6d9e3b47eff10c80,3475
+- hgmp-0.1.2.1@sha256:9d247b386e069de731442038988a5cf4bb221913ceb9f639215dd52856472088,2421
+- long-double-0.1.1.1@sha256:3973211b218d231cbbc3626ca1e705e4cf70bf50114bf875898f6e3d38ea3d3a,2417

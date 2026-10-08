@@ -1,0 +1,48 @@
+{
+  "source_manifest": "restricted-fiber-box-20260927-v472-sources.json",
+  "source_directory": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/source-archives/restricted-fiber-box-20260927-v472",
+  "cases": [
+    {
+      "binary": "restricted-fiber-box-20260927-v472-hypercurve",
+      "name": "bezier_offset::captured_fiber_interval_query::exact_restricted_fiber_box_excludes_captured_common_root",
+      "returncode": 0,
+      "log": "restricted-fiber-box-20260927-v472-case-000.log",
+      "elapsed_seconds": 0.031882072100415826
+    }
+  ],
+  "builds": [
+    {
+      "crate": "hypercurve",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "test",
+        "--lib",
+        "--release",
+        "--all-features",
+        "--no-run",
+        "--message-format=json",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "log": "restricted-fiber-box-20260927-v472-hypercurve-build.log",
+      "elapsed_seconds": 131.1478566781152,
+      "binary": {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/restricted-fiber-box-20260927-v472-hypercurve",
+        "sha256": "6d1ff614d492dd8c2e16678a92becc6c1c49b262d331ebed3a668c140ad32086"
+      }
+    }
+  ],
+  "trial": {
+    "hypercurve/src/bezier_offset.rs": "6ebe337ece017570abc65892821352ce1dcf5669c9e333e4307a81ff7711ba58"
+  },
+  "all_processes_reaped": true,
+  "checks": [],
+  "qualification_scope": "One independent captured fiber-box sign with shifted exact Real interval evaluation; copy-only trial, not full composition qualification",
+  "expected_cases": {
+    "hypercurve": [
+      "bezier_offset::captured_fiber_interval_query::exact_restricted_fiber_box_excludes_captured_common_root"
+    ]
+  },
+  "qualification_complete": true
+}

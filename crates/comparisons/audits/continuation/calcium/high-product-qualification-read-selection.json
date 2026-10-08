@@ -1,0 +1,92 @@
+[
+  {
+    "repo": "flint",
+    "path": "src/arf/mul_rnd_down.c",
+    "newRanges": [
+      [
+        1,
+        260
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "src/arf/mul_rnd_any.c",
+    "newRanges": [
+      [
+        1,
+        62
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "src/arf/mul_via_mpfr.c",
+    "newRanges": [
+      [
+        1,
+        80
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "src/arf/mul_tmp_cleanup.c",
+    "newRanges": [
+      [
+        1,
+        22
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "src/mpn_extras/x86_64/broadwell/mulhigh_basecase.asm",
+    "newRanges": [
+      [
+        1,
+        299
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "src/mpn_extras/x86_64/broadwell/sqrhigh_basecase_odd.asm",
+    "newRanges": [
+      [
+        1,
+        405
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "src/mpn_extras/x86_64/broadwell/sqrhigh_basecase_even.asm",
+    "newRanges": [
+      [
+        1,
+        418
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "src/mpn_extras.h",
+    "newRanges": [
+      [
+        320,
+        395
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "src/arf.h",
+    "newRanges": [
+      [
+        700,
+        785
+      ]
+    ]
+  }
+]

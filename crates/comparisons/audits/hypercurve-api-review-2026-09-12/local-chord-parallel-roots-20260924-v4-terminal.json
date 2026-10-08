@@ -1,0 +1,41 @@
+{
+  "checks": [
+    {
+      "label": "fmt",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustfmt",
+        "--edition",
+        "2024",
+        "--check",
+        "src/bezier_offset.rs",
+        "src/bezier_region.rs",
+        "src/curve.rs",
+        "src/curve_region_boolean.rs",
+        "src/curve_support_intersection.rs"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 3.226598087931052,
+      "log": "local-chord-parallel-roots-20260924-v4-fmt.log"
+    }
+  ],
+  "cases": [
+    {
+      "label": "recursive_chord_parallel_zero_norm_midpoint_is_not_a_component",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/local-chord-parallel-roots-20260924-v4-libtest",
+        "--exact",
+        "bezier_offset::conversion_tests::recursive_chord_parallel_zero_norm_midpoint_is_not_a_component",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 101,
+      "elapsed_seconds": 0.26644163206219673,
+      "log": "local-chord-parallel-roots-20260924-v4-recursive_chord_parallel_zero_norm_midpoint_is_not_a_component.log"
+    }
+  ],
+  "all_processes_reaped": true,
+  "binary_sha256": "2c9fa7506e4078c04efa420a66b836524e4fd666e937e4f3f2ddd9b4e3ac5991",
+  "all_sources_unchanged": true
+}

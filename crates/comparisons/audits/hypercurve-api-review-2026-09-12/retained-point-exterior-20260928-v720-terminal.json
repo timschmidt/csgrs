@@ -1,0 +1,388 @@
+{
+  "normal_production_build": true,
+  "source_manifest": "retained-point-exterior-20260928-v720-sources.json",
+  "source_directory": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/source-archives/retained-point-exterior-20260928-v720",
+  "builds": [
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "test",
+        "--lib",
+        "--release",
+        "--all-features",
+        "--locked",
+        "--offline",
+        "--no-run",
+        "--message-format=json"
+      ],
+      "returncode": 0,
+      "log": "retained-point-exterior-20260928-v720-hypercurve-build.log",
+      "elapsed_seconds": 134.70259863696992,
+      "binaries": {
+        "hypercurve": {
+          "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-point-exterior-20260928-v720-hypercurve-tests",
+          "sha256": "5e479f03d8672259344a949e9d8b078d79e5b391d24982503173950a711fd1f5"
+        }
+      }
+    }
+  ],
+  "cases": [
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-point-exterior-20260928-v720-hypercurve-tests",
+        "--exact",
+        "bezier_offset::conversion_tests::correlated_algebraic_point_oblique_projection_is_exact",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "retained-point-exterior-20260928-v720-correlated_algebraic_point_oblique_projection_is_exact-67c6ad0227.log",
+      "elapsed_seconds": 0.003538799937814474,
+      "target": "hypercurve",
+      "name": "bezier_offset::conversion_tests::correlated_algebraic_point_oblique_projection_is_exact",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-point-exterior-20260928-v720-hypercurve-tests",
+        "--exact",
+        "bezier_offset::conversion_tests::displaced_algebraic_point_incidence_reuses_its_retained_field",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "retained-point-exterior-20260928-v720-displaced_algebraic_point_incidence_reuses_its_retained_field-2ec9298ffe.log",
+      "elapsed_seconds": 0.00351999094709754,
+      "target": "hypercurve",
+      "name": "bezier_offset::conversion_tests::displaced_algebraic_point_incidence_reuses_its_retained_field",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-point-exterior-20260928-v720-hypercurve-tests",
+        "--exact",
+        "bezier_offset::conversion_tests::independent_algebraic_point_oblique_projections_compare_exactly",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "retained-point-exterior-20260928-v720-independent_algebraic_point_oblique_projections_compare_exactly-c430097e06.log",
+      "elapsed_seconds": 0.003518200945109129,
+      "target": "hypercurve",
+      "name": "bezier_offset::conversion_tests::independent_algebraic_point_oblique_projections_compare_exactly",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-point-exterior-20260928-v720-hypercurve-tests",
+        "--exact",
+        "bezier_region::retained_point_classification_tests::analytic_parallel_points_classify_on_exact_rectangle_oracles",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "retained-point-exterior-20260928-v720-analytic_parallel_points_classify_on_exact_rectangle_oracles-7fa252d40a.log",
+      "elapsed_seconds": 0.01564373797737062,
+      "target": "hypercurve",
+      "name": "bezier_region::retained_point_classification_tests::analytic_parallel_points_classify_on_exact_rectangle_oracles",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-point-exterior-20260928-v720-hypercurve-tests",
+        "--exact",
+        "bezier_region::retained_point_classification_tests::chord_normal_points_classify_on_exact_rectangle_oracles",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "retained-point-exterior-20260928-v720-chord_normal_points_classify_on_exact_rectangle_oracles-d8d1d1c7ef.log",
+      "elapsed_seconds": 0.031705867033451796,
+      "target": "hypercurve",
+      "name": "bezier_region::retained_point_classification_tests::chord_normal_points_classify_on_exact_rectangle_oracles",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-point-exterior-20260928-v720-hypercurve-tests",
+        "--exact",
+        "bezier_region::retained_point_classification_tests::lazy_endpoint_points_classify_on_exact_rectangle_oracles",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "retained-point-exterior-20260928-v720-lazy_endpoint_points_classify_on_exact_rectangle_oracles-61620bc0fc.log",
+      "elapsed_seconds": 0.01568990503437817,
+      "target": "hypercurve",
+      "name": "bezier_region::retained_point_classification_tests::lazy_endpoint_points_classify_on_exact_rectangle_oracles",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-point-exterior-20260928-v720-hypercurve-tests",
+        "--exact",
+        "bezier_region::retained_point_classification_tests::similarity_points_classify_on_exact_rectangle_oracles",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "retained-point-exterior-20260928-v720-similarity_points_classify_on_exact_rectangle_oracles-08f67b2723.log",
+      "elapsed_seconds": 0.03169502806849778,
+      "target": "hypercurve",
+      "name": "bezier_region::retained_point_classification_tests::similarity_points_classify_on_exact_rectangle_oracles",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-point-exterior-20260928-v720-hypercurve-tests",
+        "--exact",
+        "bezier_region::tests::algebraic_retained_ray_vertices_use_spatial_endpoint_ownership",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "retained-point-exterior-20260928-v720-algebraic_retained_ray_vertices_use_spatial_endpoint_ownership-4c5fa02d67.log",
+      "elapsed_seconds": 0.015598241006955504,
+      "target": "hypercurve",
+      "name": "bezier_region::tests::algebraic_retained_ray_vertices_use_spatial_endpoint_ownership",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-point-exterior-20260928-v720-hypercurve-tests",
+        "--exact",
+        "bezier_region::tests::raw_crossing_loops_need_arrangement_before_nesting",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "retained-point-exterior-20260928-v720-raw_crossing_loops_need_arrangement_before_nesting-a754d1a868.log",
+      "elapsed_seconds": 0.007607082836329937,
+      "target": "hypercurve",
+      "name": "bezier_region::tests::raw_crossing_loops_need_arrangement_before_nesting",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-point-exterior-20260928-v720-hypercurve-tests",
+        "--exact",
+        "bezier_region::tests::regularized_analytic_loop_roles_follow_exact_nesting",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "retained-point-exterior-20260928-v720-regularized_analytic_loop_roles_follow_exact_nesting-37b134433f.log",
+      "elapsed_seconds": 0.007587535073980689,
+      "target": "hypercurve",
+      "name": "bezier_region::tests::regularized_analytic_loop_roles_follow_exact_nesting",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-point-exterior-20260928-v720-hypercurve-tests",
+        "--exact",
+        "bezier_region::tests::regularized_composite_chord_roles_preserve_nested_islands_and_profiles",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "retained-point-exterior-20260928-v720-regularized_composite_chord_roles_preserve_nested_islands_and_profiles-1249c10200.log",
+      "elapsed_seconds": 1.565727415960282,
+      "target": "hypercurve",
+      "name": "bezier_region::tests::regularized_composite_chord_roles_preserve_nested_islands_and_profiles",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-point-exterior-20260928-v720-hypercurve-tests",
+        "--exact",
+        "bezier_region::tests::retained_subcurve_point_query_preserves_projective_denominator_uncertainty",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "retained-point-exterior-20260928-v720-retained_subcurve_point_query_preserves_projective_denominator_uncertainty-e7e8ae893e.log",
+      "elapsed_seconds": 0.0036123348399996758,
+      "target": "hypercurve",
+      "name": "bezier_region::tests::retained_subcurve_point_query_preserves_projective_denominator_uncertainty",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-point-exterior-20260928-v720-hypercurve-tests",
+        "--exact",
+        "bezier_region::tests::single_loop_filled_side_uses_area_without_constructing_nesting_bounds",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "retained-point-exterior-20260928-v720-single_loop_filled_side_uses_area_without_constructing_nesting_bounds-82ed69e58e.log",
+      "elapsed_seconds": 0.0034989528357982635,
+      "target": "hypercurve",
+      "name": "bezier_region::tests::single_loop_filled_side_uses_area_without_constructing_nesting_bounds",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-point-exterior-20260928-v720-hypercurve-tests",
+        "--exact",
+        "curve_region_boolean::certified_successor_tests::boundary_probe_reuses_endpoint_incidence_and_keeps_residual_contacts",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "retained-point-exterior-20260928-v720-boundary_probe_reuses_endpoint_incidence_and_keeps_residual_contacts-500ebcf26f.log",
+      "elapsed_seconds": 0.015684465179219842,
+      "target": "hypercurve",
+      "name": "curve_region_boolean::certified_successor_tests::boundary_probe_reuses_endpoint_incidence_and_keeps_residual_contacts",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-point-exterior-20260928-v720-hypercurve-tests",
+        "--exact",
+        "curve_region_boolean::certified_successor_tests::curved_face_windings_preserve_crossings_tangencies_overlaps_and_nested_holes",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "retained-point-exterior-20260928-v720-curved_face_windings_preserve_crossings_tangencies_overlaps_and_nested_holes-ba5527a8d4.log",
+      "elapsed_seconds": 0.514401552034542,
+      "target": "hypercurve",
+      "name": "curve_region_boolean::certified_successor_tests::curved_face_windings_preserve_crossings_tangencies_overlaps_and_nested_holes",
+      "passed": true
+    }
+  ],
+  "checks": [
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "clippy",
+        "--all-targets",
+        "--all-features",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "returncode": 0,
+      "log": "retained-point-exterior-20260928-v720-hypercurve-clippy-all-features.log",
+      "elapsed_seconds": 20.844574962044135,
+      "label": "hypercurve-clippy-all-features"
+    },
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "clippy",
+        "--all-targets",
+        "--no-default-features",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "returncode": 0,
+      "log": "retained-point-exterior-20260928-v720-hypercurve-clippy-no-default.log",
+      "elapsed_seconds": 20.043442548951134,
+      "label": "hypercurve-clippy-no-default"
+    },
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustfmt",
+        "--edition",
+        "2024",
+        "--config",
+        "skip_children=true",
+        "--check",
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/build-workspace-20260925/hypercurve/src/bezier_region.rs",
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/build-workspace-20260925/hypercurve/src/curve_region_boolean.rs"
+      ],
+      "returncode": 0,
+      "log": "retained-point-exterior-20260928-v720-format.log",
+      "elapsed_seconds": 0.6646817468572408,
+      "label": "format"
+    },
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "check",
+        "--manifest-path",
+        "fuzz/Cargo.toml",
+        "--bin",
+        "region_boolean",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "log": "retained-point-exterior-20260928-v720-fuzz-check.log",
+      "elapsed_seconds": 10.978604546980932,
+      "label": "fuzz-check"
+    },
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "doc",
+        "--no-deps",
+        "--all-features",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "log": "retained-point-exterior-20260928-v720-hypercurve-documentation.log",
+      "elapsed_seconds": 10.527905080001801,
+      "label": "hypercurve-documentation"
+    },
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "clippy",
+        "--all-targets",
+        "--all-features",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "returncode": 0,
+      "log": "retained-point-exterior-20260928-v720-hyperbrep-clippy.log",
+      "elapsed_seconds": 15.234713403973728,
+      "label": "hyperbrep-clippy"
+    }
+  ],
+  "test_listings": {
+    "hypercurve": {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-point-exterior-20260928-v720-hypercurve-tests",
+        "--list"
+      ],
+      "returncode": 0,
+      "log": "retained-point-exterior-20260928-v720-hypercurve-list.log",
+      "elapsed_seconds": 0.007655230117961764
+    }
+  },
+  "expected_cases": {
+    "hypercurve": [
+      "bezier_offset::conversion_tests::correlated_algebraic_point_oblique_projection_is_exact",
+      "bezier_offset::conversion_tests::displaced_algebraic_point_incidence_reuses_its_retained_field",
+      "bezier_offset::conversion_tests::independent_algebraic_point_oblique_projections_compare_exactly",
+      "bezier_region::retained_point_classification_tests::analytic_parallel_points_classify_on_exact_rectangle_oracles",
+      "bezier_region::retained_point_classification_tests::chord_normal_points_classify_on_exact_rectangle_oracles",
+      "bezier_region::retained_point_classification_tests::lazy_endpoint_points_classify_on_exact_rectangle_oracles",
+      "bezier_region::retained_point_classification_tests::similarity_points_classify_on_exact_rectangle_oracles",
+      "bezier_region::tests::algebraic_retained_ray_vertices_use_spatial_endpoint_ownership",
+      "bezier_region::tests::raw_crossing_loops_need_arrangement_before_nesting",
+      "bezier_region::tests::regularized_analytic_loop_roles_follow_exact_nesting",
+      "bezier_region::tests::regularized_composite_chord_roles_preserve_nested_islands_and_profiles",
+      "bezier_region::tests::retained_subcurve_point_query_preserves_projective_denominator_uncertainty",
+      "bezier_region::tests::single_loop_filled_side_uses_area_without_constructing_nesting_bounds",
+      "curve_region_boolean::certified_successor_tests::boundary_probe_reuses_endpoint_incidence_and_keeps_residual_contacts",
+      "curve_region_boolean::certified_successor_tests::curved_face_windings_preserve_crossings_tangencies_overlaps_and_nested_holes"
+    ]
+  },
+  "all_processes_reaped": true,
+  "probe_complete": true,
+  "qualification_complete": true
+}

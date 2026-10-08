@@ -1,0 +1,8 @@
+{
+  "files": {
+    "src/algebraic_fiber.rs": "a0bfa3954dbf6521d77e937e1a072d4192bb3997f7862b317b9dfa1ff49bb8d4",
+    "tests/data/nonph_fillet_endpoint_sign.json": "f11f03937b482b72bf2944445dad4f1934e4b0dcfb328b0469feeed81ca6f973"
+  },
+  "qualified_bytes_match": true,
+  "other_staged_files": false
+}

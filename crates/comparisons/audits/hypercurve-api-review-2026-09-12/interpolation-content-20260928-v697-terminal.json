@@ -1,0 +1,3650 @@
+{
+  "normal_production_build": false,
+  "source_manifest": "interpolation-content-20260928-v697-sources.json",
+  "source_directory": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/source-archives/interpolation-content-20260928-v697",
+  "builds": [
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "test",
+        "--lib",
+        "--release",
+        "--all-features",
+        "--locked",
+        "--offline",
+        "--no-run",
+        "--message-format=json"
+      ],
+      "returncode": 0,
+      "log": "interpolation-content-20260928-v697-hypersolve-build.log",
+      "elapsed_seconds": 35.71668317192234,
+      "binaries": {
+        "hypersolve": {
+          "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/interpolation-content-20260928-v697-hypersolve-tests",
+          "sha256": "e3f3730855888ffbcdd8fd6a3838e88a3fcf3f02cfca9a532c96798bfd479d74"
+        }
+      }
+    },
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "test",
+        "--lib",
+        "--release",
+        "--all-features",
+        "--locked",
+        "--offline",
+        "--no-run",
+        "--message-format=json"
+      ],
+      "returncode": 0,
+      "log": "interpolation-content-20260928-v697-hypercurve-build.log",
+      "elapsed_seconds": 155.44423217885196,
+      "binaries": {
+        "hypercurve": {
+          "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/interpolation-content-20260928-v697-hypercurve-tests",
+          "sha256": "14e239716adfa64f002d29c22f950c5f07bfeb3d48eed4965b762b39d92041f5"
+        }
+      }
+    }
+  ],
+  "cases": [
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/interpolation-content-20260928-v697-hypersolve-tests",
+        "--exact",
+        "algebraic_binary::tests::binary_constructs_difference_of_independent_square_roots",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "interpolation-content-20260928-v697-binary_constructs_difference_of_independent_square_roots-bd67c8e035.log",
+      "elapsed_seconds": 0.0035124069545418024,
+      "target": "hypersolve",
+      "name": "algebraic_binary::tests::binary_constructs_difference_of_independent_square_roots",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/interpolation-content-20260928-v697-hypersolve-tests",
+        "--exact",
+        "algebraic_binary::tests::binary_constructs_product_of_independent_cubic_roots",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "interpolation-content-20260928-v697-binary_constructs_product_of_independent_cubic_roots-84a112d82c.log",
+      "elapsed_seconds": 0.003538646036759019,
+      "target": "hypersolve",
+      "name": "algebraic_binary::tests::binary_constructs_product_of_independent_cubic_roots",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/interpolation-content-20260928-v697-hypersolve-tests",
+        "--exact",
+        "algebraic_binary::tests::binary_constructs_product_of_independent_square_roots",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "interpolation-content-20260928-v697-binary_constructs_product_of_independent_square_roots-a3ccbc6aae.log",
+      "elapsed_seconds": 0.003531285095959902,
+      "target": "hypersolve",
+      "name": "algebraic_binary::tests::binary_constructs_product_of_independent_square_roots",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/interpolation-content-20260928-v697-hypersolve-tests",
+        "--exact",
+        "algebraic_binary::tests::binary_constructs_quotient_of_independent_square_roots",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "interpolation-content-20260928-v697-binary_constructs_quotient_of_independent_square_roots-1a19fe0c98.log",
+      "elapsed_seconds": 0.003501696977764368,
+      "target": "hypersolve",
+      "name": "algebraic_binary::tests::binary_constructs_quotient_of_independent_square_roots",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/interpolation-content-20260928-v697-hypersolve-tests",
+        "--exact",
+        "algebraic_binary::tests::binary_constructs_sum_of_independent_square_roots",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "interpolation-content-20260928-v697-binary_constructs_sum_of_independent_square_roots-3ffca57bf8.log",
+      "elapsed_seconds": 0.0035026969853788614,
+      "target": "hypersolve",
+      "name": "algebraic_binary::tests::binary_constructs_sum_of_independent_square_roots",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/interpolation-content-20260928-v697-hypersolve-tests",
+        "--exact",
+        "algebraic_binary::tests::binary_interval_division_reuses_policy_nonzero_endpoints",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "interpolation-content-20260928-v697-binary_interval_division_reuses_policy_nonzero_endpoints-e4443f6c52.log",
+      "elapsed_seconds": 0.0035401450004428625,
+      "target": "hypersolve",
+      "name": "algebraic_binary::tests::binary_interval_division_reuses_policy_nonzero_endpoints",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/interpolation-content-20260928-v697-hypersolve-tests",
+        "--exact",
+        "algebraic_binary::tests::binary_keeps_the_resultant_cap_after_square_free_reduction",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "interpolation-content-20260928-v697-binary_keeps_the_resultant_cap_after_square_free_reduction-68fe8d1ad2.log",
+      "elapsed_seconds": 0.0035556640941649675,
+      "target": "hypersolve",
+      "name": "algebraic_binary::tests::binary_keeps_the_resultant_cap_after_square_free_reduction",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/interpolation-content-20260928-v697-hypersolve-tests",
+        "--exact",
+        "algebraic_binary::tests::binary_point_images_do_not_change_half_open_ownership",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "interpolation-content-20260928-v697-binary_point_images_do_not_change_half_open_ownership-f031c0fa65.log",
+      "elapsed_seconds": 0.003518336918205023,
+      "target": "hypersolve",
+      "name": "algebraic_binary::tests::binary_point_images_do_not_change_half_open_ownership",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/interpolation-content-20260928-v697-hypersolve-tests",
+        "--exact",
+        "algebraic_binary::tests::binary_point_images_do_not_promote_approximately_chosen_extrema",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "interpolation-content-20260928-v697-binary_point_images_do_not_promote_approximately_chosen_extrema-99fc60bdac.log",
+      "elapsed_seconds": 0.0034884789492934942,
+      "target": "hypersolve",
+      "name": "algebraic_binary::tests::binary_point_images_do_not_promote_approximately_chosen_extrema",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/interpolation-content-20260928-v697-hypersolve-tests",
+        "--exact",
+        "algebraic_binary::tests::binary_point_images_preserve_nonrational_witnesses",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "interpolation-content-20260928-v697-binary_point_images_preserve_nonrational_witnesses-f0303b9a98.log",
+      "elapsed_seconds": 0.003502937965095043,
+      "target": "hypersolve",
+      "name": "algebraic_binary::tests::binary_point_images_preserve_nonrational_witnesses",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/interpolation-content-20260928-v697-hypersolve-tests",
+        "--exact",
+        "algebraic_binary::tests::binary_point_images_preserve_rational_witnesses",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "interpolation-content-20260928-v697-binary_point_images_preserve_rational_witnesses-39004c9965.log",
+      "elapsed_seconds": 0.007571206893771887,
+      "target": "hypersolve",
+      "name": "algebraic_binary::tests::binary_point_images_preserve_rational_witnesses",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/interpolation-content-20260928-v697-hypersolve-tests",
+        "--exact",
+        "algebraic_binary::tests::binary_point_images_preserve_zero_products_with_wide_inputs",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "interpolation-content-20260928-v697-binary_point_images_preserve_zero_products_with_wide_inputs-f47a0b6bb3.log",
+      "elapsed_seconds": 0.003505488159134984,
+      "target": "hypersolve",
+      "name": "algebraic_binary::tests::binary_point_images_preserve_zero_products_with_wide_inputs",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/interpolation-content-20260928-v697-hypersolve-tests",
+        "--exact",
+        "algebraic_binary::tests::binary_point_images_require_certified_extrema_for_a_symmetric_product",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "interpolation-content-20260928-v697-binary_point_images_require_certified_extrema_for_a_symmetric_product-b6e6cb41c2.log",
+      "elapsed_seconds": 0.0035139769315719604,
+      "target": "hypersolve",
+      "name": "algebraic_binary::tests::binary_point_images_require_certified_extrema_for_a_symmetric_product",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/interpolation-content-20260928-v697-hypersolve-tests",
+        "--exact",
+        "algebraic_binary::tests::binary_point_images_require_strict_equality_even_under_approximate_policy",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "interpolation-content-20260928-v697-binary_point_images_require_strict_equality_even_under_approximate_policy-87b9f06298.log",
+      "elapsed_seconds": 0.0035004380624741316,
+      "target": "hypersolve",
+      "name": "algebraic_binary::tests::binary_point_images_require_strict_equality_even_under_approximate_policy",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/interpolation-content-20260928-v697-hypersolve-tests",
+        "--exact",
+        "algebraic_binary::tests::binary_point_images_still_replay_the_polynomial",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "interpolation-content-20260928-v697-binary_point_images_still_replay_the_polynomial-0ea77947bf.log",
+      "elapsed_seconds": 0.003511707065626979,
+      "target": "hypersolve",
+      "name": "algebraic_binary::tests::binary_point_images_still_replay_the_polynomial",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/interpolation-content-20260928-v697-hypersolve-tests",
+        "--exact",
+        "algebraic_binary::tests::binary_refuses_division_when_denominator_interval_may_contain_zero",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "interpolation-content-20260928-v697-binary_refuses_division_when_denominator_interval_may_contain_zero-f5c3ddd0f6.log",
+      "elapsed_seconds": 0.003490698989480734,
+      "target": "hypersolve",
+      "name": "algebraic_binary::tests::binary_refuses_division_when_denominator_interval_may_contain_zero",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/interpolation-content-20260928-v697-hypersolve-tests",
+        "--exact",
+        "algebraic_binary::tests::binary_rejects_nonisolating_image_interval",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "interpolation-content-20260928-v697-binary_rejects_nonisolating_image_interval-d2aa212d3e.log",
+      "elapsed_seconds": 0.0035522039979696274,
+      "target": "hypersolve",
+      "name": "algebraic_binary::tests::binary_rejects_nonisolating_image_interval",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/interpolation-content-20260928-v697-hypersolve-tests",
+        "--exact",
+        "algebraic_binary::tests::binary_replays_source_validation_instead_of_trusting_stale_status",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "interpolation-content-20260928-v697-binary_replays_source_validation_instead_of_trusting_stale_status-a8343ea33a.log",
+      "elapsed_seconds": 0.0035374450962990522,
+      "target": "hypersolve",
+      "name": "algebraic_binary::tests::binary_replays_source_validation_instead_of_trusting_stale_status",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/interpolation-content-20260928-v697-hypersolve-tests",
+        "--exact",
+        "algebraic_binary::tests::binary_resultant_clears_source_denominators_before_elimination",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "interpolation-content-20260928-v697-binary_resultant_clears_source_denominators_before_elimination-fbff334e92.log",
+      "elapsed_seconds": 0.0035390059929341078,
+      "target": "hypersolve",
+      "name": "algebraic_binary::tests::binary_resultant_clears_source_denominators_before_elimination",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/interpolation-content-20260928-v697-hypersolve-tests",
+        "--exact",
+        "algebraic_binary::tests::binary_reuses_a_shared_square_free_carrier_for_distinct_conjugates",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "interpolation-content-20260928-v697-binary_reuses_a_shared_square_free_carrier_for_distinct_conjugates-dc11252b0b.log",
+      "elapsed_seconds": 0.0035449250135570765,
+      "target": "hypersolve",
+      "name": "algebraic_binary::tests::binary_reuses_a_shared_square_free_carrier_for_distinct_conjugates",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/interpolation-content-20260928-v697-hypersolve-tests",
+        "--exact",
+        "algebraic_binary::tests::binary_reuses_square_free_sources_beyond_the_stored_degree_cap",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "interpolation-content-20260928-v697-binary_reuses_square_free_sources_beyond_the_stored_degree_cap-71e8cff15e.log",
+      "elapsed_seconds": 0.003525206120684743,
+      "target": "hypersolve",
+      "name": "algebraic_binary::tests::binary_reuses_square_free_sources_beyond_the_stored_degree_cap",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/interpolation-content-20260928-v697-hypersolve-tests",
+        "--exact",
+        "algebraic_binary::tests::exact_rational_resultant_trimming_fails_closed",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "interpolation-content-20260928-v697-exact_rational_resultant_trimming_fails_closed-5c515063b4.log",
+      "elapsed_seconds": 0.003494169097393751,
+      "target": "hypersolve",
+      "name": "algebraic_binary::tests::exact_rational_resultant_trimming_fails_closed",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/interpolation-content-20260928-v697-hypersolve-tests",
+        "--exact",
+        "algebraic_binary::tests::generated_signed_unit_linear_compositions_evaluate_exactly",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "interpolation-content-20260928-v697-generated_signed_unit_linear_compositions_evaluate_exactly-0a9daf4507.log",
+      "elapsed_seconds": 0.0035322559997439384,
+      "target": "hypersolve",
+      "name": "algebraic_binary::tests::generated_signed_unit_linear_compositions_evaluate_exactly",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/interpolation-content-20260928-v697-hypersolve-tests",
+        "--exact",
+        "algebraic_binary::tests::generated_square_root_products_match_expected_resultant_shape",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "interpolation-content-20260928-v697-generated_square_root_products_match_expected_resultant_shape-266264b742.log",
+      "elapsed_seconds": 0.0075845851097255945,
+      "target": "hypersolve",
+      "name": "algebraic_binary::tests::generated_square_root_products_match_expected_resultant_shape",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/interpolation-content-20260928-v697-hypersolve-tests",
+        "--exact",
+        "algebraic_binary::zero_factor_tests::division_admits_only_the_reduced_degree_bound",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "interpolation-content-20260928-v697-division_admits_only_the_reduced_degree_bound-8242270cc2.log",
+      "elapsed_seconds": 0.0034695910289883614,
+      "target": "hypersolve",
+      "name": "algebraic_binary::zero_factor_tests::division_admits_only_the_reduced_degree_bound",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/interpolation-content-20260928-v697-hypersolve-tests",
+        "--exact",
+        "algebraic_binary::zero_factor_tests::division_deflates_after_shared_oversized_square_free_reduction",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "interpolation-content-20260928-v697-division_deflates_after_shared_oversized_square_free_reduction-9b8cec23fa.log",
+      "elapsed_seconds": 0.0035309260711073875,
+      "target": "hypersolve",
+      "name": "algebraic_binary::zero_factor_tests::division_deflates_after_shared_oversized_square_free_reduction",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/interpolation-content-20260928-v697-hypersolve-tests",
+        "--exact",
+        "algebraic_binary::zero_factor_tests::division_keeps_zero_interval_and_invalid_payload_guards",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "interpolation-content-20260928-v697-division_keeps_zero_interval_and_invalid_payload_guards-0c1a1b9d61.log",
+      "elapsed_seconds": 0.003512756898999214,
+      "target": "hypersolve",
+      "name": "algebraic_binary::zero_factor_tests::division_keeps_zero_interval_and_invalid_payload_guards",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/interpolation-content-20260928-v697-hypersolve-tests",
+        "--exact",
+        "algebraic_binary::zero_factor_tests::division_preserves_signed_nonzero_resultants",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "interpolation-content-20260928-v697-division_preserves_signed_nonzero_resultants-8366424de2.log",
+      "elapsed_seconds": 0.007577706128358841,
+      "target": "hypersolve",
+      "name": "algebraic_binary::zero_factor_tests::division_preserves_signed_nonzero_resultants",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/interpolation-content-20260928-v697-hypersolve-tests",
+        "--exact",
+        "algebraic_binary::zero_factor_tests::division_recovers_unused_common_zero_roots",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "interpolation-content-20260928-v697-division_recovers_unused_common_zero_roots-f8d98eb831.log",
+      "elapsed_seconds": 0.0035219071432948112,
+      "target": "hypersolve",
+      "name": "algebraic_binary::zero_factor_tests::division_recovers_unused_common_zero_roots",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/interpolation-content-20260928-v697-hypersolve-tests",
+        "--exact",
+        "algebraic_binary::zero_factor_tests::divisor_deflation_borrows_or_reuses_owned_storage",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "interpolation-content-20260928-v697-divisor_deflation_borrows_or_reuses_owned_storage-28bd746eea.log",
+      "elapsed_seconds": 0.0035292059183120728,
+      "target": "hypersolve",
+      "name": "algebraic_binary::zero_factor_tests::divisor_deflation_borrows_or_reuses_owned_storage",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/interpolation-content-20260928-v697-hypersolve-tests",
+        "--exact",
+        "algebraic_binary::zero_factor_tests::divisor_deflation_requires_strict_nonzero_and_nonconstant_residual",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "interpolation-content-20260928-v697-divisor_deflation_requires_strict_nonzero_and_nonconstant_residual-21a3a7dadf.log",
+      "elapsed_seconds": 0.003509707050397992,
+      "target": "hypersolve",
+      "name": "algebraic_binary::zero_factor_tests::divisor_deflation_requires_strict_nonzero_and_nonconstant_residual",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/interpolation-content-20260928-v697-hypersolve-tests",
+        "--exact",
+        "algebraic_polynomial_image::tests::generated_constant_source_relations_are_detected_exactly",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "interpolation-content-20260928-v697-generated_constant_source_relations_are_detected_exactly-482c0b69ce.log",
+      "elapsed_seconds": 0.003503988031297922,
+      "target": "hypersolve",
+      "name": "algebraic_polynomial_image::tests::generated_constant_source_relations_are_detected_exactly",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/interpolation-content-20260928-v697-hypersolve-tests",
+        "--exact",
+        "algebraic_polynomial_image::tests::generated_interval_horner_contains_endpoint_and_midpoint_values",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "interpolation-content-20260928-v697-generated_interval_horner_contains_endpoint_and_midpoint_values-4a559ea154.log",
+      "elapsed_seconds": 0.0035308559890836477,
+      "target": "hypersolve",
+      "name": "algebraic_polynomial_image::tests::generated_interval_horner_contains_endpoint_and_midpoint_values",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/interpolation-content-20260928-v697-hypersolve-tests",
+        "--exact",
+        "algebraic_polynomial_image::tests::generated_rational_witness_polynomial_image_matches_integer_evaluation",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "interpolation-content-20260928-v697-generated_rational_witness_polynomial_image_matches_integer_evaluation-ea3e7bd3c2.log",
+      "elapsed_seconds": 0.0034597208723425865,
+      "target": "hypersolve",
+      "name": "algebraic_polynomial_image::tests::generated_rational_witness_polynomial_image_matches_integer_evaluation",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/interpolation-content-20260928-v697-hypersolve-tests",
+        "--exact",
+        "algebraic_polynomial_image::tests::polynomial_image_clears_disparate_denominators_before_elimination",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "interpolation-content-20260928-v697-polynomial_image_clears_disparate_denominators_before_elimination-4399015500.log",
+      "elapsed_seconds": 0.0035158470273017883,
+      "target": "hypersolve",
+      "name": "algebraic_polynomial_image::tests::polynomial_image_clears_disparate_denominators_before_elimination",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/interpolation-content-20260928-v697-hypersolve-tests",
+        "--exact",
+        "algebraic_polynomial_image::tests::polynomial_image_constructs_quadratic_expression_of_sqrt_two",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "interpolation-content-20260928-v697-polynomial_image_constructs_quadratic_expression_of_sqrt_two-b25c091e44.log",
+      "elapsed_seconds": 0.0035177769605070353,
+      "target": "hypersolve",
+      "name": "algebraic_polynomial_image::tests::polynomial_image_constructs_quadratic_expression_of_sqrt_two",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/interpolation-content-20260928-v697-hypersolve-tests",
+        "--exact",
+        "algebraic_polynomial_image::tests::polynomial_image_constructs_square_of_sqrt_two",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "interpolation-content-20260928-v697-polynomial_image_constructs_square_of_sqrt_two-99745cc820.log",
+      "elapsed_seconds": 0.003557513002306223,
+      "target": "hypersolve",
+      "name": "algebraic_polynomial_image::tests::polynomial_image_constructs_square_of_sqrt_two",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/interpolation-content-20260928-v697-hypersolve-tests",
+        "--exact",
+        "algebraic_polynomial_image::tests::polynomial_image_detects_a_constant_source_relation",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "interpolation-content-20260928-v697-polynomial_image_detects_a_constant_source_relation-9d4c6affc3.log",
+      "elapsed_seconds": 0.0035292059183120728,
+      "target": "hypersolve",
+      "name": "algebraic_polynomial_image::tests::polynomial_image_detects_a_constant_source_relation",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/interpolation-content-20260928-v697-hypersolve-tests",
+        "--exact",
+        "algebraic_polynomial_image::tests::polynomial_image_keeps_the_degree_cap_after_square_free_reduction",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "interpolation-content-20260928-v697-polynomial_image_keeps_the_degree_cap_after_square_free_reduction-c3278f4d6c.log",
+      "elapsed_seconds": 0.0035563241690397263,
+      "target": "hypersolve",
+      "name": "algebraic_polynomial_image::tests::polynomial_image_keeps_the_degree_cap_after_square_free_reduction",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/interpolation-content-20260928-v697-hypersolve-tests",
+        "--exact",
+        "algebraic_polynomial_image::tests::polynomial_image_preserves_rational_witnesses",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "interpolation-content-20260928-v697-polynomial_image_preserves_rational_witnesses-cf60d8d962.log",
+      "elapsed_seconds": 0.0034998380579054356,
+      "target": "hypersolve",
+      "name": "algebraic_polynomial_image::tests::polynomial_image_preserves_rational_witnesses",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/interpolation-content-20260928-v697-hypersolve-tests",
+        "--exact",
+        "algebraic_polynomial_image::tests::polynomial_image_refines_a_nonmonotone_source_interval",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "interpolation-content-20260928-v697-polynomial_image_refines_a_nonmonotone_source_interval-2737be18c2.log",
+      "elapsed_seconds": 0.003519275924190879,
+      "target": "hypersolve",
+      "name": "algebraic_polynomial_image::tests::polynomial_image_refines_a_nonmonotone_source_interval",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/interpolation-content-20260928-v697-hypersolve-tests",
+        "--exact",
+        "algebraic_polynomial_image::tests::polynomial_image_refines_away_a_foreign_resultant_root",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "interpolation-content-20260928-v697-polynomial_image_refines_away_a_foreign_resultant_root-91d22fa482.log",
+      "elapsed_seconds": 0.0035416248720139265,
+      "target": "hypersolve",
+      "name": "algebraic_polynomial_image::tests::polynomial_image_refines_away_a_foreign_resultant_root",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/interpolation-content-20260928-v697-hypersolve-tests",
+        "--exact",
+        "algebraic_polynomial_image::tests::polynomial_image_rejects_empty_and_nonrational_authored_storage",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "interpolation-content-20260928-v697-polynomial_image_rejects_empty_and_nonrational_authored_storage-09a498d510.log",
+      "elapsed_seconds": 0.00353285507299006,
+      "target": "hypersolve",
+      "name": "algebraic_polynomial_image::tests::polynomial_image_rejects_empty_and_nonrational_authored_storage",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/interpolation-content-20260928-v697-hypersolve-tests",
+        "--exact",
+        "algebraic_polynomial_image::tests::polynomial_image_replays_cached_source_validation_strictly",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "interpolation-content-20260928-v697-polynomial_image_replays_cached_source_validation_strictly-a5b52b9395.log",
+      "elapsed_seconds": 0.0034899788442999125,
+      "target": "hypersolve",
+      "name": "algebraic_polynomial_image::tests::polynomial_image_replays_cached_source_validation_strictly",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/interpolation-content-20260928-v697-hypersolve-tests",
+        "--exact",
+        "algebraic_polynomial_image::tests::polynomial_image_represents_a_stationary_algebraic_map",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "interpolation-content-20260928-v697-polynomial_image_represents_a_stationary_algebraic_map-91a9976011.log",
+      "elapsed_seconds": 0.0035294259432703257,
+      "target": "hypersolve",
+      "name": "algebraic_polynomial_image::tests::polynomial_image_represents_a_stationary_algebraic_map",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/interpolation-content-20260928-v697-hypersolve-tests",
+        "--exact",
+        "algebraic_polynomial_image::tests::polynomial_image_square_frees_an_oversized_repeated_carrier",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "interpolation-content-20260928-v697-polynomial_image_square_frees_an_oversized_repeated_carrier-7d9bc3f026.log",
+      "elapsed_seconds": 0.0034999081399291754,
+      "target": "hypersolve",
+      "name": "algebraic_polynomial_image::tests::polynomial_image_square_frees_an_oversized_repeated_carrier",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/interpolation-content-20260928-v697-hypersolve-tests",
+        "--exact",
+        "algebraic_rational_image::tests::bounded_rational_image_retains_boundary_touching_enclosures",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "interpolation-content-20260928-v697-bounded_rational_image_retains_boundary_touching_enclosures-3c95016631.log",
+      "elapsed_seconds": 0.0034896391443908215,
+      "target": "hypersolve",
+      "name": "algebraic_rational_image::tests::bounded_rational_image_retains_boundary_touching_enclosures",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/interpolation-content-20260928-v697-hypersolve-tests",
+        "--exact",
+        "algebraic_rational_image::tests::bounded_rational_image_skips_disjoint_elimination",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "interpolation-content-20260928-v697-bounded_rational_image_skips_disjoint_elimination-eae08af10a.log",
+      "elapsed_seconds": 0.0035652630031108856,
+      "target": "hypersolve",
+      "name": "algebraic_rational_image::tests::bounded_rational_image_skips_disjoint_elimination",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/interpolation-content-20260928-v697-hypersolve-tests",
+        "--exact",
+        "algebraic_rational_image::tests::generated_rational_image_batches_match_singleton_order",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "interpolation-content-20260928-v697-generated_rational_image_batches_match_singleton_order-04d311ee69.log",
+      "elapsed_seconds": 0.015611910028383136,
+      "target": "hypersolve",
+      "name": "algebraic_rational_image::tests::generated_rational_image_batches_match_singleton_order",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/interpolation-content-20260928-v697-hypersolve-tests",
+        "--exact",
+        "algebraic_rational_image::tests::generated_rational_witness_rational_image_matches_exact_fraction",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "interpolation-content-20260928-v697-generated_rational_witness_rational_image_matches_exact_fraction-7bd54aaf9c.log",
+      "elapsed_seconds": 0.003542474936693907,
+      "target": "hypersolve",
+      "name": "algebraic_rational_image::tests::generated_rational_witness_rational_image_matches_exact_fraction",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/interpolation-content-20260928-v697-hypersolve-tests",
+        "--exact",
+        "algebraic_rational_image::tests::generated_shared_factors_preserve_the_selected_rational_image",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "interpolation-content-20260928-v697-generated_shared_factors_preserve_the_selected_rational_image-ce4b8e5b80.log",
+      "elapsed_seconds": 0.01565810712054372,
+      "target": "hypersolve",
+      "name": "algebraic_rational_image::tests::generated_shared_factors_preserve_the_selected_rational_image",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/interpolation-content-20260928-v697-hypersolve-tests",
+        "--exact",
+        "algebraic_rational_image::tests::rational_image_batch_matches_independent_shared_denominator_transforms",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "interpolation-content-20260928-v697-rational_image_batch_matches_independent_shared_denominator_transforms-4954cb778c.log",
+      "elapsed_seconds": 0.003515656804665923,
+      "target": "hypersolve",
+      "name": "algebraic_rational_image::tests::rational_image_batch_matches_independent_shared_denominator_transforms",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/interpolation-content-20260928-v697-hypersolve-tests",
+        "--exact",
+        "algebraic_rational_image::tests::rational_image_batch_preserves_invalid_source_reports_and_empty_noop",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "interpolation-content-20260928-v697-rational_image_batch_preserves_invalid_source_reports_and_empty_noop-f922735cbf.log",
+      "elapsed_seconds": 0.0034483710769563913,
+      "target": "hypersolve",
+      "name": "algebraic_rational_image::tests::rational_image_batch_preserves_invalid_source_reports_and_empty_noop",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/interpolation-content-20260928-v697-hypersolve-tests",
+        "--exact",
+        "algebraic_rational_image::tests::rational_image_batch_shares_strengthened_domain_evidence_exactly",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "interpolation-content-20260928-v697-rational_image_batch_shares_strengthened_domain_evidence_exactly-51cf8fc243.log",
+      "elapsed_seconds": 0.0035167569294571877,
+      "target": "hypersolve",
+      "name": "algebraic_rational_image::tests::rational_image_batch_shares_strengthened_domain_evidence_exactly",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/interpolation-content-20260928-v697-hypersolve-tests",
+        "--exact",
+        "algebraic_rational_image::tests::rational_image_cancels_a_common_factor_outside_the_isolated_root",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "interpolation-content-20260928-v697-rational_image_cancels_a_common_factor_outside_the_isolated_root-d6ad78934e.log",
+      "elapsed_seconds": 0.0034944280050694942,
+      "target": "hypersolve",
+      "name": "algebraic_rational_image::tests::rational_image_cancels_a_common_factor_outside_the_isolated_root",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/interpolation-content-20260928-v697-hypersolve-tests",
+        "--exact",
+        "algebraic_rational_image::tests::rational_image_certifies_an_algebraic_pole_before_cancellation",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "interpolation-content-20260928-v697-rational_image_certifies_an_algebraic_pole_before_cancellation-854ada5a8a.log",
+      "elapsed_seconds": 0.0034974277950823307,
+      "target": "hypersolve",
+      "name": "algebraic_rational_image::tests::rational_image_certifies_an_algebraic_pole_before_cancellation",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/interpolation-content-20260928-v697-hypersolve-tests",
+        "--exact",
+        "algebraic_rational_image::tests::rational_image_clears_disparate_denominators_before_elimination",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "interpolation-content-20260928-v697-rational_image_clears_disparate_denominators_before_elimination-98ccfc4cb0.log",
+      "elapsed_seconds": 0.0034886288922280073,
+      "target": "hypersolve",
+      "name": "algebraic_rational_image::tests::rational_image_clears_disparate_denominators_before_elimination",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/interpolation-content-20260928-v697-hypersolve-tests",
+        "--exact",
+        "algebraic_rational_image::tests::rational_image_constructs_linear_fractional_value",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "interpolation-content-20260928-v697-rational_image_constructs_linear_fractional_value-6cfab3c6a7.log",
+      "elapsed_seconds": 0.0035235958639532328,
+      "target": "hypersolve",
+      "name": "algebraic_rational_image::tests::rational_image_constructs_linear_fractional_value",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/interpolation-content-20260928-v697-hypersolve-tests",
+        "--exact",
+        "algebraic_rational_image::tests::rational_image_direct_resultant_accepts_nonmonotone_denominator_image",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "interpolation-content-20260928-v697-rational_image_direct_resultant_accepts_nonmonotone_denominator_image-ee3e7fc2ae.log",
+      "elapsed_seconds": 0.0034852689132094383,
+      "target": "hypersolve",
+      "name": "algebraic_rational_image::tests::rational_image_direct_resultant_accepts_nonmonotone_denominator_image",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/interpolation-content-20260928-v697-hypersolve-tests",
+        "--exact",
+        "algebraic_rational_image::tests::rational_image_distinguishes_unsupported_nonlinear_map_coefficients",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "interpolation-content-20260928-v697-rational_image_distinguishes_unsupported_nonlinear_map_coefficients-be52506740.log",
+      "elapsed_seconds": 0.0035380548797547817,
+      "target": "hypersolve",
+      "name": "algebraic_rational_image::tests::rational_image_distinguishes_unsupported_nonlinear_map_coefficients",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/interpolation-content-20260928-v697-hypersolve-tests",
+        "--exact",
+        "algebraic_rational_image::tests::rational_image_divisions_reuse_policy_nonzero_evidence",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "interpolation-content-20260928-v697-rational_image_divisions_reuse_policy_nonzero_evidence-565f2ed3f2.log",
+      "elapsed_seconds": 0.003485670080408454,
+      "target": "hypersolve",
+      "name": "algebraic_rational_image::tests::rational_image_divisions_reuse_policy_nonzero_evidence",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/interpolation-content-20260928-v697-hypersolve-tests",
+        "--exact",
+        "algebraic_rational_image::tests::rational_image_norm_keeps_a_shared_scale_when_sample_degree_drops",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "interpolation-content-20260928-v697-rational_image_norm_keeps_a_shared_scale_when_sample_degree_drops-231055f606.log",
+      "elapsed_seconds": 0.0034987579565495253,
+      "target": "hypersolve",
+      "name": "algebraic_rational_image::tests::rational_image_norm_keeps_a_shared_scale_when_sample_degree_drops",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/interpolation-content-20260928-v697-hypersolve-tests",
+        "--exact",
+        "algebraic_rational_image::tests::rational_image_preserves_a_refinement_discovered_rational_root",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "interpolation-content-20260928-v697-rational_image_preserves_a_refinement_discovered_rational_root-47edf6f758.log",
+      "elapsed_seconds": 0.003591332118958235,
+      "target": "hypersolve",
+      "name": "algebraic_rational_image::tests::rational_image_preserves_a_refinement_discovered_rational_root",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/interpolation-content-20260928-v697-hypersolve-tests",
+        "--exact",
+        "algebraic_rational_image::tests::rational_image_preserves_partition_ownership_for_reversed_maps",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "interpolation-content-20260928-v697-rational_image_preserves_partition_ownership_for_reversed_maps-687228cd80.log",
+      "elapsed_seconds": 0.0034971581771969795,
+      "target": "hypersolve",
+      "name": "algebraic_rational_image::tests::rational_image_preserves_partition_ownership_for_reversed_maps",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/interpolation-content-20260928-v697-hypersolve-tests",
+        "--exact",
+        "algebraic_rational_image::tests::rational_image_preserves_rational_witnesses",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "interpolation-content-20260928-v697-rational_image_preserves_rational_witnesses-137f04b1e6.log",
+      "elapsed_seconds": 0.0034558509942144156,
+      "target": "hypersolve",
+      "name": "algebraic_rational_image::tests::rational_image_preserves_rational_witnesses",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/interpolation-content-20260928-v697-hypersolve-tests",
+        "--exact",
+        "algebraic_rational_image::tests::rational_image_promotes_a_repeated_rational_image_root",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "interpolation-content-20260928-v697-rational_image_promotes_a_repeated_rational_image_root-d8e089509a.log",
+      "elapsed_seconds": 0.0035183271393179893,
+      "target": "hypersolve",
+      "name": "algebraic_rational_image::tests::rational_image_promotes_a_repeated_rational_image_root",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/interpolation-content-20260928-v697-hypersolve-tests",
+        "--exact",
+        "algebraic_rational_image::tests::rational_image_reduces_an_oversized_map_before_the_degree_budget",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "interpolation-content-20260928-v697-rational_image_reduces_an_oversized_map_before_the_degree_budget-47ad717c4d.log",
+      "elapsed_seconds": 0.003478480037301779,
+      "target": "hypersolve",
+      "name": "algebraic_rational_image::tests::rational_image_reduces_an_oversized_map_before_the_degree_budget",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/interpolation-content-20260928-v697-hypersolve-tests",
+        "--exact",
+        "algebraic_rational_image::tests::rational_image_reduces_both_map_sides_modulo_the_source_relation",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "interpolation-content-20260928-v697-rational_image_reduces_both_map_sides_modulo_the_source_relation-93846d49ec.log",
+      "elapsed_seconds": 0.0034855790436267853,
+      "target": "hypersolve",
+      "name": "algebraic_rational_image::tests::rational_image_reduces_both_map_sides_modulo_the_source_relation",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/interpolation-content-20260928-v697-hypersolve-tests",
+        "--exact",
+        "algebraic_rational_image::tests::rational_image_refines_a_dependency_broadened_denominator_interval",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "interpolation-content-20260928-v697-rational_image_refines_a_dependency_broadened_denominator_interval-30c08afff8.log",
+      "elapsed_seconds": 0.0034914291463792324,
+      "target": "hypersolve",
+      "name": "algebraic_rational_image::tests::rational_image_refines_a_dependency_broadened_denominator_interval",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/interpolation-content-20260928-v697-hypersolve-tests",
+        "--exact",
+        "algebraic_rational_image::tests::rational_image_refines_a_nonmonotone_source_interval",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "interpolation-content-20260928-v697-rational_image_refines_a_nonmonotone_source_interval-12f617a7ac.log",
+      "elapsed_seconds": 0.003486819099634886,
+      "target": "hypersolve",
+      "name": "algebraic_rational_image::tests::rational_image_refines_a_nonmonotone_source_interval",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/interpolation-content-20260928-v697-hypersolve-tests",
+        "--exact",
+        "algebraic_rational_image::tests::rational_image_refines_away_a_foreign_resultant_root",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "interpolation-content-20260928-v697-rational_image_refines_away_a_foreign_resultant_root-a6353283fb.log",
+      "elapsed_seconds": 0.003495709039270878,
+      "target": "hypersolve",
+      "name": "algebraic_rational_image::tests::rational_image_refines_away_a_foreign_resultant_root",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/interpolation-content-20260928-v697-hypersolve-tests",
+        "--exact",
+        "algebraic_rational_image::tests::rational_image_refines_away_an_excluded_endpoint_pole",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "interpolation-content-20260928-v697-rational_image_refines_away_an_excluded_endpoint_pole-cf6c8f32c3.log",
+      "elapsed_seconds": 0.003520307131111622,
+      "target": "hypersolve",
+      "name": "algebraic_rational_image::tests::rational_image_refines_away_an_excluded_endpoint_pole",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/interpolation-content-20260928-v697-hypersolve-tests",
+        "--exact",
+        "algebraic_rational_image::tests::rational_image_represents_a_stationary_algebraic_map",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "interpolation-content-20260928-v697-rational_image_represents_a_stationary_algebraic_map-ab53cddd39.log",
+      "elapsed_seconds": 0.0035018869675695896,
+      "target": "hypersolve",
+      "name": "algebraic_rational_image::tests::rational_image_represents_a_stationary_algebraic_map",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/interpolation-content-20260928-v697-hypersolve-tests",
+        "--exact",
+        "algebraic_rational_image::tests::rational_image_retains_an_arbitrary_exact_point_witness",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "interpolation-content-20260928-v697-rational_image_retains_an_arbitrary_exact_point_witness-dab6258dd9.log",
+      "elapsed_seconds": 0.003486948786303401,
+      "target": "hypersolve",
+      "name": "algebraic_rational_image::tests::rational_image_retains_an_arbitrary_exact_point_witness",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/interpolation-content-20260928-v697-hypersolve-tests",
+        "--exact",
+        "algebraic_rational_image::tests::rational_image_reuses_mobius_support_for_an_exact_real_source",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "interpolation-content-20260928-v697-rational_image_reuses_mobius_support_for_an_exact_real_source-62f3a49c4b.log",
+      "elapsed_seconds": 0.0034873890690505505,
+      "target": "hypersolve",
+      "name": "algebraic_rational_image::tests::rational_image_reuses_mobius_support_for_an_exact_real_source",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/interpolation-content-20260928-v697-hypersolve-tests",
+        "--exact",
+        "algebraic_rational_image::tests::rational_image_reuses_mobius_support_for_exact_real_map_coefficients",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "interpolation-content-20260928-v697-rational_image_reuses_mobius_support_for_exact_real_map_coefficients-ff90e42611.log",
+      "elapsed_seconds": 0.003546744119375944,
+      "target": "hypersolve",
+      "name": "algebraic_rational_image::tests::rational_image_reuses_mobius_support_for_exact_real_map_coefficients",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/interpolation-content-20260928-v697-hypersolve-tests",
+        "--exact",
+        "algebraic_rational_image::tests::rational_image_supports_degree_twelve_source_with_cubic_map",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "interpolation-content-20260928-v697-rational_image_supports_degree_twelve_source_with_cubic_map-cb0d004f37.log",
+      "elapsed_seconds": 0.0035019279457628727,
+      "target": "hypersolve",
+      "name": "algebraic_rational_image::tests::rational_image_supports_degree_twelve_source_with_cubic_map",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/interpolation-content-20260928-v697-hypersolve-tests",
+        "--exact",
+        "algebraic_rational_image::tests::rational_map_caches_a_source_reduced_map_without_forcing_a_resultant",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "interpolation-content-20260928-v697-rational_map_caches_a_source_reduced_map_without_forcing_a_resultant-0c56d13e88.log",
+      "elapsed_seconds": 0.003507847897708416,
+      "target": "hypersolve",
+      "name": "algebraic_rational_image::tests::rational_map_caches_a_source_reduced_map_without_forcing_a_resultant",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/interpolation-content-20260928-v697-hypersolve-tests",
+        "--exact",
+        "algebraic_rational_image::tests::rational_map_falls_back_for_a_distinct_source_polynomial",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "interpolation-content-20260928-v697-rational_map_falls_back_for_a_distinct_source_polynomial-ba70005021.log",
+      "elapsed_seconds": 0.0035140670370310545,
+      "target": "hypersolve",
+      "name": "algebraic_rational_image::tests::rational_map_falls_back_for_a_distinct_source_polynomial",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/interpolation-content-20260928-v697-hypersolve-tests",
+        "--exact",
+        "algebraic_rational_image::tests::rational_map_reuses_elimination_across_source_roots",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "interpolation-content-20260928-v697-rational_map_reuses_elimination_across_source_roots-5fa74205be.log",
+      "elapsed_seconds": 0.003539775963872671,
+      "target": "hypersolve",
+      "name": "algebraic_rational_image::tests::rational_map_reuses_elimination_across_source_roots",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/interpolation-content-20260928-v697-hypersolve-tests",
+        "--exact",
+        "algebraic_rational_image::tests::rational_map_target_rejection_keeps_construction_caches_cold",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "interpolation-content-20260928-v697-rational_map_target_rejection_keeps_construction_caches_cold-9e55f55740.log",
+      "elapsed_seconds": 0.0035020578652620316,
+      "target": "hypersolve",
+      "name": "algebraic_rational_image::tests::rational_map_target_rejection_keeps_construction_caches_cold",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/interpolation-content-20260928-v697-hypersolve-tests",
+        "--exact",
+        "algebraic_tensor_image::tests::direct_tag_difference_square_matches_tensor_arithmetic",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "interpolation-content-20260928-v697-direct_tag_difference_square_matches_tensor_arithmetic-f4834376de.log",
+      "elapsed_seconds": 0.0034472420811653137,
+      "target": "hypersolve",
+      "name": "algebraic_tensor_image::tests::direct_tag_difference_square_matches_tensor_arithmetic",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/interpolation-content-20260928-v697-hypersolve-tests",
+        "--exact",
+        "algebraic_tensor_image::tests::exact_small_rational_image_candidates_require_exact_replay",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "interpolation-content-20260928-v697-exact_small_rational_image_candidates_require_exact_replay-00b1b2679a.log",
+      "elapsed_seconds": 0.0035035768523812294,
+      "target": "hypersolve",
+      "name": "algebraic_tensor_image::tests::exact_small_rational_image_candidates_require_exact_replay",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/interpolation-content-20260928-v697-hypersolve-tests",
+        "--exact",
+        "algebraic_tensor_image::tests::flat_first_parameter_handoff_matches_public_primitive_component",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "interpolation-content-20260928-v697-flat_first_parameter_handoff_matches_public_primitive_component-d3c7a8a124.log",
+      "elapsed_seconds": 0.0035085470881313086,
+      "target": "hypersolve",
+      "name": "algebraic_tensor_image::tests::flat_first_parameter_handoff_matches_public_primitive_component",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/interpolation-content-20260928-v697-hypersolve-tests",
+        "--exact",
+        "algebraic_tensor_image::tests::selected_low_degree_witness_accepts_exact_nonrational_coefficients",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "interpolation-content-20260928-v697-selected_low_degree_witness_accepts_exact_nonrational_coefficients-3221803d44.log",
+      "elapsed_seconds": 0.003484599059447646,
+      "target": "hypersolve",
+      "name": "algebraic_tensor_image::tests::selected_low_degree_witness_accepts_exact_nonrational_coefficients",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/interpolation-content-20260928-v697-hypersolve-tests",
+        "--exact",
+        "algebraic_tensor_image::tests::selected_low_degree_witness_does_not_depend_on_interval_precision",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "interpolation-content-20260928-v697-selected_low_degree_witness_does_not_depend_on_interval_precision-8559e48583.log",
+      "elapsed_seconds": 0.0034890579991042614,
+      "target": "hypersolve",
+      "name": "algebraic_tensor_image::tests::selected_low_degree_witness_does_not_depend_on_interval_precision",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/interpolation-content-20260928-v697-hypersolve-tests",
+        "--exact",
+        "algebraic_tensor_image::tests::selected_quadratic_witness_preserves_repeated_and_endpoint_roots",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "interpolation-content-20260928-v697-selected_quadratic_witness_preserves_repeated_and_endpoint_roots-85d654ceb2.log",
+      "elapsed_seconds": 0.003528706030920148,
+      "target": "hypersolve",
+      "name": "algebraic_tensor_image::tests::selected_quadratic_witness_preserves_repeated_and_endpoint_roots",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/interpolation-content-20260928-v697-hypersolve-tests",
+        "--exact",
+        "algebraic_tensor_image::tests::selected_rational_quadratic_witness_eliminates_its_tensor_axis",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "interpolation-content-20260928-v697-selected_rational_quadratic_witness_eliminates_its_tensor_axis-9d42289475.log",
+      "elapsed_seconds": 0.0035222761798650026,
+      "target": "hypersolve",
+      "name": "algebraic_tensor_image::tests::selected_rational_quadratic_witness_eliminates_its_tensor_axis",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/interpolation-content-20260928-v697-hypersolve-tests",
+        "--exact",
+        "algebraic_tensor_image::tests::selected_root_quadratic_compaction_requires_exact_factor",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "interpolation-content-20260928-v697-selected_root_quadratic_compaction_requires_exact_factor-f62f991646.log",
+      "elapsed_seconds": 0.003500147955492139,
+      "target": "hypersolve",
+      "name": "algebraic_tensor_image::tests::selected_root_quadratic_compaction_requires_exact_factor",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/interpolation-content-20260928-v697-hypersolve-tests",
+        "--exact",
+        "algebraic_tensor_image::tests::selected_root_rational_compaction_requires_exact_replay",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "interpolation-content-20260928-v697-selected_root_rational_compaction_requires_exact_replay-951dbe4d18.log",
+      "elapsed_seconds": 0.0035497050266712904,
+      "target": "hypersolve",
+      "name": "algebraic_tensor_image::tests::selected_root_rational_compaction_requires_exact_replay",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/interpolation-content-20260928-v697-hypersolve-tests",
+        "--exact",
+        "algebraic_tensor_image::tests::tagged_norm_projects_nonzero_selected_fiber_past_foreign_wide_components",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "interpolation-content-20260928-v697-tagged_norm_projects_nonzero_selected_fiber_past_foreign_wide_components-e29067b10b.log",
+      "elapsed_seconds": 0.003522466868162155,
+      "target": "hypersolve",
+      "name": "algebraic_tensor_image::tests::tagged_norm_projects_nonzero_selected_fiber_past_foreign_wide_components",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/interpolation-content-20260928-v697-hypersolve-tests",
+        "--exact",
+        "algebraic_tensor_image::tests::tagged_norm_reuses_a_square_free_exact_witness_carrier",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "interpolation-content-20260928-v697-tagged_norm_reuses_a_square_free_exact_witness_carrier-9a60cec5e2.log",
+      "elapsed_seconds": 0.003536775941029191,
+      "target": "hypersolve",
+      "name": "algebraic_tensor_image::tests::tagged_norm_reuses_a_square_free_exact_witness_carrier",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/interpolation-content-20260928-v697-hypersolve-tests",
+        "--exact",
+        "algebraic_tensor_image::tests::tensor_image_collapses_certified_affine_selected_source_axes",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "interpolation-content-20260928-v697-tensor_image_collapses_certified_affine_selected_source_axes-22372d58d0.log",
+      "elapsed_seconds": 0.0034963879734277725,
+      "target": "hypersolve",
+      "name": "algebraic_tensor_image::tests::tensor_image_collapses_certified_affine_selected_source_axes",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/interpolation-content-20260928-v697-hypersolve-tests",
+        "--exact",
+        "algebraic_tensor_image::tests::tensor_image_counts_collapsed_axes_before_a_later_elimination_failure",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "interpolation-content-20260928-v697-tensor_image_counts_collapsed_axes_before_a_later_elimination_failure-c29e3169d3.log",
+      "elapsed_seconds": 0.0034876589197665453,
+      "target": "hypersolve",
+      "name": "algebraic_tensor_image::tests::tensor_image_counts_collapsed_axes_before_a_later_elimination_failure",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/interpolation-content-20260928-v697-hypersolve-tests",
+        "--exact",
+        "algebraic_tensor_image::tests::tensor_image_does_not_select_an_extraneous_cardinal_conjugate_image",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "interpolation-content-20260928-v697-tensor_image_does_not_select_an_extraneous_cardinal_conjugate_image-1b8803c62b.log",
+      "elapsed_seconds": 0.0034855189733207226,
+      "target": "hypersolve",
+      "name": "algebraic_tensor_image::tests::tensor_image_does_not_select_an_extraneous_cardinal_conjugate_image",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/interpolation-content-20260928-v697-hypersolve-tests",
+        "--exact",
+        "algebraic_tensor_image::tests::tensor_image_identifies_duplicate_selected_source_axes_exactly",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "interpolation-content-20260928-v697-tensor_image_identifies_duplicate_selected_source_axes_exactly-29310a2a95.log",
+      "elapsed_seconds": 0.003533985000103712,
+      "target": "hypersolve",
+      "name": "algebraic_tensor_image::tests::tensor_image_identifies_duplicate_selected_source_axes_exactly",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/interpolation-content-20260928-v697-hypersolve-tests",
+        "--exact",
+        "algebraic_tensor_image::tests::tensor_image_materializes_a_unique_cardinal_factor_of_a_nonlinear_eliminant",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "interpolation-content-20260928-v697-tensor_image_materializes_a_unique_cardinal_factor_of_a_nonlinear_eliminant-15bf0f63bd.log",
+      "elapsed_seconds": 0.003541534999385476,
+      "target": "hypersolve",
+      "name": "algebraic_tensor_image::tests::tensor_image_materializes_a_unique_cardinal_factor_of_a_nonlinear_eliminant",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/interpolation-content-20260928-v697-hypersolve-tests",
+        "--exact",
+        "algebraic_tensor_image::tests::tensor_image_materializes_an_enclosed_exact_linear_eliminant",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "interpolation-content-20260928-v697-tensor_image_materializes_an_enclosed_exact_linear_eliminant-65e186a45c.log",
+      "elapsed_seconds": 0.003517386969178915,
+      "target": "hypersolve",
+      "name": "algebraic_tensor_image::tests::tensor_image_materializes_an_enclosed_exact_linear_eliminant",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/interpolation-content-20260928-v697-hypersolve-tests",
+        "--exact",
+        "algebraic_tensor_image::tests::tensor_image_rejects_nonisolating_and_misshaped_evidence",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "interpolation-content-20260928-v697-tensor_image_rejects_nonisolating_and_misshaped_evidence-11fa8f1084.log",
+      "elapsed_seconds": 0.0035084679257124662,
+      "target": "hypersolve",
+      "name": "algebraic_tensor_image::tests::tensor_image_rejects_nonisolating_and_misshaped_evidence",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/interpolation-content-20260928-v697-hypersolve-tests",
+        "--exact",
+        "algebraic_tensor_image::tests::tensor_image_represents_four_correlated_selected_roots",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "interpolation-content-20260928-v697-tensor_image_represents_four_correlated_selected_roots-0304641018.log",
+      "elapsed_seconds": 0.0035643328446894884,
+      "target": "hypersolve",
+      "name": "algebraic_tensor_image::tests::tensor_image_represents_four_correlated_selected_roots",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/interpolation-content-20260928-v697-hypersolve-tests",
+        "--exact",
+        "algebraic_tensor_image::tests::tensor_image_retains_carriers_for_a_complete_nonrational_point_tuple",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "interpolation-content-20260928-v697-tensor_image_retains_carriers_for_a_complete_nonrational_point_tuple-987dcbc541.log",
+      "elapsed_seconds": 0.00352118699811399,
+      "target": "hypersolve",
+      "name": "algebraic_tensor_image::tests::tensor_image_retains_carriers_for_a_complete_nonrational_point_tuple",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/interpolation-content-20260928-v697-hypersolve-tests",
+        "--exact",
+        "algebraic_tensor_image::tests::tensor_image_retains_exact_real_coefficient_fields",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "interpolation-content-20260928-v697-tensor_image_retains_exact_real_coefficient_fields-7544df6c1f.log",
+      "elapsed_seconds": 0.0035103969275951385,
+      "target": "hypersolve",
+      "name": "algebraic_tensor_image::tests::tensor_image_retains_exact_real_coefficient_fields",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/interpolation-content-20260928-v697-hypersolve-tests",
+        "--exact",
+        "algebraic_tensor_image::tests::tensor_image_reuses_square_free_constraint_for_selected_conjugates",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "interpolation-content-20260928-v697-tensor_image_reuses_square_free_constraint_for_selected_conjugates-ccbfee2c13.log",
+      "elapsed_seconds": 0.0035873509477823973,
+      "target": "hypersolve",
+      "name": "algebraic_tensor_image::tests::tensor_image_reuses_square_free_constraint_for_selected_conjugates",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/interpolation-content-20260928-v697-hypersolve-tests",
+        "--exact",
+        "algebraic_tensor_image::tests::tensor_image_substitutes_exact_source_axes_before_elimination",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "interpolation-content-20260928-v697-tensor_image_substitutes_exact_source_axes_before_elimination-2b06518261.log",
+      "elapsed_seconds": 0.0034858090803027153,
+      "target": "hypersolve",
+      "name": "algebraic_tensor_image::tests::tensor_image_substitutes_exact_source_axes_before_elimination",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/interpolation-content-20260928-v697-hypersolve-tests",
+        "--exact",
+        "algebraic_tensor_image::tests::tensor_images_remove_irrelevant_wide_rational_content",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "interpolation-content-20260928-v697-tensor_images_remove_irrelevant_wide_rational_content-a46bdfb891.log",
+      "elapsed_seconds": 0.0035164470318704844,
+      "target": "hypersolve",
+      "name": "algebraic_tensor_image::tests::tensor_images_remove_irrelevant_wide_rational_content",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/interpolation-content-20260928-v697-hypersolve-tests",
+        "--exact",
+        "algebraic_tensor_image::tests::tensor_images_replay_nonrational_coefficients_after_repeated_arithmetic",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "interpolation-content-20260928-v697-tensor_images_replay_nonrational_coefficients_after_repeated_arithmetic-71298000eb.log",
+      "elapsed_seconds": 0.003549413988366723,
+      "target": "hypersolve",
+      "name": "algebraic_tensor_image::tests::tensor_images_replay_nonrational_coefficients_after_repeated_arithmetic",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/interpolation-content-20260928-v697-hypersolve-tests",
+        "--exact",
+        "algebraic_tensor_image::tests::translated_quadratic_compaction_preserves_selected_factor_and_ownership",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "interpolation-content-20260928-v697-translated_quadratic_compaction_preserves_selected_factor_and_ownership-8bca8f8254.log",
+      "elapsed_seconds": 0.015619919868186116,
+      "target": "hypersolve",
+      "name": "algebraic_tensor_image::tests::translated_quadratic_compaction_preserves_selected_factor_and_ownership",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/interpolation-content-20260928-v697-hypersolve-tests",
+        "--exact",
+        "curve_resultant::tests::axis_saturation_preserves_rootful_fibers_and_closed_boundaries",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "interpolation-content-20260928-v697-axis_saturation_preserves_rootful_fibers_and_closed_boundaries-a92f7c9d7e.log",
+      "elapsed_seconds": 0.0034922179765999317,
+      "target": "hypersolve",
+      "name": "curve_resultant::tests::axis_saturation_preserves_rootful_fibers_and_closed_boundaries",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/interpolation-content-20260928-v697-hypersolve-tests",
+        "--exact",
+        "curve_resultant::tests::axis_saturation_uses_the_requested_exact_rectangle",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "interpolation-content-20260928-v697-axis_saturation_uses_the_requested_exact_rectangle-0981e0a1e2.log",
+      "elapsed_seconds": 0.00350393820554018,
+      "target": "hypersolve",
+      "name": "curve_resultant::tests::axis_saturation_uses_the_requested_exact_rectangle",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/interpolation-content-20260928-v697-hypersolve-tests",
+        "--exact",
+        "curve_resultant::tests::bivariate_affine_substitution_preserves_ragged_exact_polynomials",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "interpolation-content-20260928-v697-bivariate_affine_substitution_preserves_ragged_exact_polynomials-5d7b41a666.log",
+      "elapsed_seconds": 0.0035520039964467287,
+      "target": "hypersolve",
+      "name": "curve_resultant::tests::bivariate_affine_substitution_preserves_ragged_exact_polynomials",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/interpolation-content-20260928-v697-hypersolve-tests",
+        "--exact",
+        "curve_resultant::tests::bivariate_affine_substitution_retains_general_exact_coefficients_and_maps",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "interpolation-content-20260928-v697-bivariate_affine_substitution_retains_general_exact_coefficients_and_maps-07554cef5e.log",
+      "elapsed_seconds": 0.003548664040863514,
+      "target": "hypersolve",
+      "name": "curve_resultant::tests::bivariate_affine_substitution_retains_general_exact_coefficients_and_maps",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/interpolation-content-20260928-v697-hypersolve-tests",
+        "--exact",
+        "curve_resultant::tests::bivariate_axis_factor_preserves_nonrational_coefficient_tower",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "interpolation-content-20260928-v697-bivariate_axis_factor_preserves_nonrational_coefficient_tower-1d811864bd.log",
+      "elapsed_seconds": 0.003578412812203169,
+      "target": "hypersolve",
+      "name": "curve_resultant::tests::bivariate_axis_factor_preserves_nonrational_coefficient_tower",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/interpolation-content-20260928-v697-hypersolve-tests",
+        "--exact",
+        "curve_resultant::tests::bivariate_axis_factors_extract_both_axes_sequentially",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "interpolation-content-20260928-v697-bivariate_axis_factors_extract_both_axes_sequentially-d17ee35b96.log",
+      "elapsed_seconds": 0.0035612331703305244,
+      "target": "hypersolve",
+      "name": "curve_resultant::tests::bivariate_axis_factors_extract_both_axes_sequentially",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/interpolation-content-20260928-v697-hypersolve-tests",
+        "--exact",
+        "curve_resultant::tests::bivariate_axis_factors_extract_first_parameter_content_exactly",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "interpolation-content-20260928-v697-bivariate_axis_factors_extract_first_parameter_content_exactly-cab56291b7.log",
+      "elapsed_seconds": 0.003552975133061409,
+      "target": "hypersolve",
+      "name": "curve_resultant::tests::bivariate_axis_factors_extract_first_parameter_content_exactly",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/interpolation-content-20260928-v697-hypersolve-tests",
+        "--exact",
+        "curve_resultant::tests::bivariate_axis_factors_leave_primitive_system_unallocated",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "interpolation-content-20260928-v697-bivariate_axis_factors_leave_primitive_system_unallocated-c802fd77c7.log",
+      "elapsed_seconds": 0.0035330650862306356,
+      "target": "hypersolve",
+      "name": "curve_resultant::tests::bivariate_axis_factors_leave_primitive_system_unallocated",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/interpolation-content-20260928-v697-hypersolve-tests",
+        "--exact",
+        "curve_resultant::tests::bivariate_axis_factors_reduce_one_zero_equation_without_losing_evidence",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "interpolation-content-20260928-v697-bivariate_axis_factors_reduce_one_zero_equation_without_losing_evidence-d590b1311b.log",
+      "elapsed_seconds": 0.0035564638674259186,
+      "target": "hypersolve",
+      "name": "curve_resultant::tests::bivariate_axis_factors_reduce_one_zero_equation_without_losing_evidence",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/interpolation-content-20260928-v697-hypersolve-tests",
+        "--exact",
+        "curve_resultant::tests::bivariate_axis_factors_remove_independent_nonrational_equation_scales",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "interpolation-content-20260928-v697-bivariate_axis_factors_remove_independent_nonrational_equation_scales-ce09cc741b.log",
+      "elapsed_seconds": 0.0035384451039135456,
+      "target": "hypersolve",
+      "name": "curve_resultant::tests::bivariate_axis_factors_remove_independent_nonrational_equation_scales",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/interpolation-content-20260928-v697-hypersolve-tests",
+        "--exact",
+        "curve_resultant::tests::bivariate_axis_factors_report_zero_and_reduce_transcendental_content",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "interpolation-content-20260928-v697-bivariate_axis_factors_report_zero_and_reduce_transcendental_content-2a5685a82a.log",
+      "elapsed_seconds": 0.0035253160167485476,
+      "target": "hypersolve",
+      "name": "curve_resultant::tests::bivariate_axis_factors_report_zero_and_reduce_transcendental_content",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/interpolation-content-20260928-v697-hypersolve-tests",
+        "--exact",
+        "curve_resultant::tests::bivariate_component_removes_independent_nonrational_equation_scales",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "interpolation-content-20260928-v697-bivariate_component_removes_independent_nonrational_equation_scales-435c3904b5.log",
+      "elapsed_seconds": 0.003476338926702738,
+      "target": "hypersolve",
+      "name": "curve_resultant::tests::bivariate_component_removes_independent_nonrational_equation_scales",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/interpolation-content-20260928-v697-hypersolve-tests",
+        "--exact",
+        "curve_resultant::tests::bivariate_component_retains_an_identically_zero_equation",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "interpolation-content-20260928-v697-bivariate_component_retains_an_identically_zero_equation-aec276435a.log",
+      "elapsed_seconds": 0.0035366551019251347,
+      "target": "hypersolve",
+      "name": "curve_resultant::tests::bivariate_component_retains_an_identically_zero_equation",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/interpolation-content-20260928-v697-hypersolve-tests",
+        "--exact",
+        "curve_resultant::tests::bivariate_component_retains_an_irreducible_quadratic_fiber",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "interpolation-content-20260928-v697-bivariate_component_retains_an_irreducible_quadratic_fiber-93ad453897.log",
+      "elapsed_seconds": 0.003505618078634143,
+      "target": "hypersolve",
+      "name": "curve_resultant::tests::bivariate_component_retains_an_irreducible_quadratic_fiber",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/interpolation-content-20260928-v697-hypersolve-tests",
+        "--exact",
+        "curve_resultant::tests::bivariate_component_retains_degree_four_common_fiber_implicitly",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "interpolation-content-20260928-v697-bivariate_component_retains_degree_four_common_fiber_implicitly-c65ff7ff50.log",
+      "elapsed_seconds": 0.0035139969550073147,
+      "target": "hypersolve",
+      "name": "curve_resultant::tests::bivariate_component_retains_degree_four_common_fiber_implicitly",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/interpolation-content-20260928-v697-hypersolve-tests",
+        "--exact",
+        "curve_resultant::tests::bivariate_component_retains_square_free_distinct_cubic_implicitly",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "interpolation-content-20260928-v697-bivariate_component_retains_square_free_distinct_cubic_implicitly-5c74450cfd.log",
+      "elapsed_seconds": 0.003488218877464533,
+      "target": "hypersolve",
+      "name": "curve_resultant::tests::bivariate_component_retains_square_free_distinct_cubic_implicitly",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/interpolation-content-20260928-v697-hypersolve-tests",
+        "--exact",
+        "curve_resultant::tests::bivariate_linear_lifts_recover_a_nonlinear_common_root",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "interpolation-content-20260928-v697-bivariate_linear_lifts_recover_a_nonlinear_common_root-9ca9126f06.log",
+      "elapsed_seconds": 0.003505007131025195,
+      "target": "hypersolve",
+      "name": "curve_resultant::tests::bivariate_linear_lifts_recover_a_nonlinear_common_root",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/interpolation-content-20260928-v697-hypersolve-tests",
+        "--exact",
+        "curve_resultant::tests::bivariate_linear_lifts_recover_either_parameter_from_adjugate_ratios",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "interpolation-content-20260928-v697-bivariate_linear_lifts_recover_either_parameter_from_adjugate_ratios-07c76a00e2.log",
+      "elapsed_seconds": 0.0035030881408602,
+      "target": "hypersolve",
+      "name": "curve_resultant::tests::bivariate_linear_lifts_recover_either_parameter_from_adjugate_ratios",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/interpolation-content-20260928-v697-hypersolve-tests",
+        "--exact",
+        "curve_resultant::tests::bivariate_linear_lifts_report_nonlinear_fibers_explicitly",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "interpolation-content-20260928-v697-bivariate_linear_lifts_report_nonlinear_fibers_explicitly-5fb4ecda36.log",
+      "elapsed_seconds": 0.0035061079543083906,
+      "target": "hypersolve",
+      "name": "curve_resultant::tests::bivariate_linear_lifts_report_nonlinear_fibers_explicitly",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/interpolation-content-20260928-v697-hypersolve-tests",
+        "--exact",
+        "curve_resultant::tests::bivariate_rational_component_extracts_repeated_cubic_factor",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "interpolation-content-20260928-v697-bivariate_rational_component_extracts_repeated_cubic_factor-bb4a14aaf5.log",
+      "elapsed_seconds": 0.0035474940668791533,
+      "target": "hypersolve",
+      "name": "curve_resultant::tests::bivariate_rational_component_extracts_repeated_cubic_factor",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/interpolation-content-20260928-v697-hypersolve-tests",
+        "--exact",
+        "curve_resultant::tests::bivariate_rational_component_extracts_repeated_quadratic_factor",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "interpolation-content-20260928-v697-bivariate_rational_component_extracts_repeated_quadratic_factor-a62b170178.log",
+      "elapsed_seconds": 0.0035109268501400948,
+      "target": "hypersolve",
+      "name": "curve_resultant::tests::bivariate_rational_component_extracts_repeated_quadratic_factor",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/interpolation-content-20260928-v697-hypersolve-tests",
+        "--exact",
+        "curve_resultant::tests::bivariate_rational_component_extracts_triple_cubic_factor",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "interpolation-content-20260928-v697-bivariate_rational_component_extracts_triple_cubic_factor-85dcf037f3.log",
+      "elapsed_seconds": 0.003516717115417123,
+      "target": "hypersolve",
+      "name": "curve_resultant::tests::bivariate_rational_component_extracts_triple_cubic_factor",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/interpolation-content-20260928-v697-hypersolve-tests",
+        "--exact",
+        "curve_resultant::tests::bivariate_rational_component_extracts_two_linear_quadratic_factors",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "interpolation-content-20260928-v697-bivariate_rational_component_extracts_two_linear_quadratic_factors-1c82a51213.log",
+      "elapsed_seconds": 0.0034972578287124634,
+      "target": "hypersolve",
+      "name": "curve_resultant::tests::bivariate_rational_component_extracts_two_linear_quadratic_factors",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/interpolation-content-20260928-v697-hypersolve-tests",
+        "--exact",
+        "curve_resultant::tests::bivariate_rational_component_handles_unequal_degrees_in_both_orientations",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "interpolation-content-20260928-v697-bivariate_rational_component_handles_unequal_degrees_in_both_orientations-5fcf8d7a61.log",
+      "elapsed_seconds": 0.0035234461538493633,
+      "target": "hypersolve",
+      "name": "curve_resultant::tests::bivariate_rational_component_handles_unequal_degrees_in_both_orientations",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/interpolation-content-20260928-v697-hypersolve-tests",
+        "--exact",
+        "curve_resultant::tests::bivariate_rational_component_preserves_nonrational_map_coefficients",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "interpolation-content-20260928-v697-bivariate_rational_component_preserves_nonrational_map_coefficients-c68856f528.log",
+      "elapsed_seconds": 0.0035904909018427134,
+      "target": "hypersolve",
+      "name": "curve_resultant::tests::bivariate_rational_component_preserves_nonrational_map_coefficients",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/interpolation-content-20260928-v697-hypersolve-tests",
+        "--exact",
+        "curve_resultant::tests::bivariate_rational_component_recovers_primitive_nonlinear_map",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "interpolation-content-20260928-v697-bivariate_rational_component_recovers_primitive_nonlinear_map-9dd1f269e6.log",
+      "elapsed_seconds": 0.0034905890934169292,
+      "target": "hypersolve",
+      "name": "curve_resultant::tests::bivariate_rational_component_recovers_primitive_nonlinear_map",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/interpolation-content-20260928-v697-hypersolve-tests",
+        "--exact",
+        "curve_resultant::tests::bivariate_system_eliminates_either_parameter_with_the_same_root",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "interpolation-content-20260928-v697-bivariate_system_eliminates_either_parameter_with_the_same_root-a3e223193a.log",
+      "elapsed_seconds": 0.003605149919167161,
+      "target": "hypersolve",
+      "name": "curve_resultant::tests::bivariate_system_eliminates_either_parameter_with_the_same_root",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/interpolation-content-20260928-v697-hypersolve-tests",
+        "--exact",
+        "curve_resultant::tests::bivariate_system_reports_an_identically_degenerate_equation",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "interpolation-content-20260928-v697-bivariate_system_reports_an_identically_degenerate_equation-be09914d55.log",
+      "elapsed_seconds": 0.0035706430207937956,
+      "target": "hypersolve",
+      "name": "curve_resultant::tests::bivariate_system_reports_an_identically_degenerate_equation",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/interpolation-content-20260928-v697-hypersolve-tests",
+        "--exact",
+        "curve_resultant::tests::constrained_quadrivariate_fourth_axis_recovers_a_specialized_tangent_gcd",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "interpolation-content-20260928-v697-constrained_quadrivariate_fourth_axis_recovers_a_specialized_tangent_gcd-bcb55c44da.log",
+      "elapsed_seconds": 0.0035211569629609585,
+      "target": "hypersolve",
+      "name": "curve_resultant::tests::constrained_quadrivariate_fourth_axis_recovers_a_specialized_tangent_gcd",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/interpolation-content-20260928-v697-hypersolve-tests",
+        "--exact",
+        "curve_resultant::tests::constrained_trivariate_resultant_uses_strict_constraint_normalization",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "interpolation-content-20260928-v697-constrained_trivariate_resultant_uses_strict_constraint_normalization-69e104f469.log",
+      "elapsed_seconds": 0.0036166401114314795,
+      "target": "hypersolve",
+      "name": "curve_resultant::tests::constrained_trivariate_resultant_uses_strict_constraint_normalization",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/interpolation-content-20260928-v697-hypersolve-tests",
+        "--exact",
+        "curve_resultant::tests::constrained_trivariate_subresultant_recovers_a_specialized_tangent_gcd",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "interpolation-content-20260928-v697-constrained_trivariate_subresultant_recovers_a_specialized_tangent_gcd-68bf104e16.log",
+      "elapsed_seconds": 0.003556963987648487,
+      "target": "hypersolve",
+      "name": "curve_resultant::tests::constrained_trivariate_subresultant_recovers_a_specialized_tangent_gcd",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/interpolation-content-20260928-v697-hypersolve-tests",
+        "--exact",
+        "curve_resultant::tests::curve_resultant_degree_helpers_complete_strict_exact_boundaries",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "interpolation-content-20260928-v697-curve_resultant_degree_helpers_complete_strict_exact_boundaries-1c6d975184.log",
+      "elapsed_seconds": 0.0035040280781686306,
+      "target": "hypersolve",
+      "name": "curve_resultant::tests::curve_resultant_degree_helpers_complete_strict_exact_boundaries",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/interpolation-content-20260928-v697-hypersolve-tests",
+        "--exact",
+        "curve_resultant::tests::curve_resultant_finds_parabola_horizontal_intersections",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "interpolation-content-20260928-v697-curve_resultant_finds_parabola_horizontal_intersections-172e68060d.log",
+      "elapsed_seconds": 0.0034990180283784866,
+      "target": "hypersolve",
+      "name": "curve_resultant::tests::curve_resultant_finds_parabola_horizontal_intersections",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/interpolation-content-20260928-v697-hypersolve-tests",
+        "--exact",
+        "curve_resultant::tests::curve_resultant_rejects_empty_inputs_and_degree_over_budget",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "interpolation-content-20260928-v697-curve_resultant_rejects_empty_inputs_and_degree_over_budget-f65592ac1b.log",
+      "elapsed_seconds": 0.003633329179137945,
+      "target": "hypersolve",
+      "name": "curve_resultant::tests::curve_resultant_rejects_empty_inputs_and_degree_over_budget",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/interpolation-content-20260928-v697-hypersolve-tests",
+        "--exact",
+        "curve_resultant::tests::curve_resultant_reports_parallel_disjoint_line_constant",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "interpolation-content-20260928-v697-curve_resultant_reports_parallel_disjoint_line_constant-81385a775f.log",
+      "elapsed_seconds": 0.00352175603620708,
+      "target": "hypersolve",
+      "name": "curve_resultant::tests::curve_resultant_reports_parallel_disjoint_line_constant",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/interpolation-content-20260928-v697-hypersolve-tests",
+        "--exact",
+        "curve_resultant::tests::curve_resultant_retaining_second_swaps_parameters",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "interpolation-content-20260928-v697-curve_resultant_retaining_second_swaps_parameters-df2378ed88.log",
+      "elapsed_seconds": 0.003492428921163082,
+      "target": "hypersolve",
+      "name": "curve_resultant::tests::curve_resultant_retaining_second_swaps_parameters",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/interpolation-content-20260928-v697-hypersolve-tests",
+        "--exact",
+        "curve_resultant::tests::dense_resultant_preserves_signed_scale_and_repeated_factors",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "interpolation-content-20260928-v697-dense_resultant_preserves_signed_scale_and_repeated_factors-d255f85cbd.log",
+      "elapsed_seconds": 0.003499477868899703,
+      "target": "hypersolve",
+      "name": "curve_resultant::tests::dense_resultant_preserves_signed_scale_and_repeated_factors",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/interpolation-content-20260928-v697-hypersolve-tests",
+        "--exact",
+        "curve_resultant::tests::equal_degree_bezout_matches_sylvester_through_degree_five",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "interpolation-content-20260928-v697-equal_degree_bezout_matches_sylvester_through_degree_five-29f5c3f86a.log",
+      "elapsed_seconds": 0.007600525161251426,
+      "target": "hypersolve",
+      "name": "curve_resultant::tests::equal_degree_bezout_matches_sylvester_through_degree_five",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/interpolation-content-20260928-v697-hypersolve-tests",
+        "--exact",
+        "curve_resultant::tests::equal_degree_bezout_resultant_preserves_exact_orientation_on_either_axis",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "interpolation-content-20260928-v697-equal_degree_bezout_resultant_preserves_exact_orientation_on_either_axis-4bee284a6c.log",
+      "elapsed_seconds": 0.0035102469846606255,
+      "target": "hypersolve",
+      "name": "curve_resultant::tests::equal_degree_bezout_resultant_preserves_exact_orientation_on_either_axis",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/interpolation-content-20260928-v697-hypersolve-tests",
+        "--exact",
+        "curve_resultant::tests::exact_bivariate_division_replays_non_monic_ragged_products",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "interpolation-content-20260928-v697-exact_bivariate_division_replays_non_monic_ragged_products-864febddc7.log",
+      "elapsed_seconds": 0.003551814006641507,
+      "target": "hypersolve",
+      "name": "curve_resultant::tests::exact_bivariate_division_replays_non_monic_ragged_products",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/interpolation-content-20260928-v697-hypersolve-tests",
+        "--exact",
+        "curve_resultant::tests::exact_bivariate_monomial_division_retains_nonrational_coefficients",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "interpolation-content-20260928-v697-exact_bivariate_monomial_division_retains_nonrational_coefficients-742c87cd1b.log",
+      "elapsed_seconds": 0.003470319788902998,
+      "target": "hypersolve",
+      "name": "curve_resultant::tests::exact_bivariate_monomial_division_retains_nonrational_coefficients",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/interpolation-content-20260928-v697-hypersolve-tests",
+        "--exact",
+        "curve_resultant::tests::exact_univariate_gcd_and_division_replay_axis_content",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "interpolation-content-20260928-v697-exact_univariate_gcd_and_division_replay_axis_content-8e92d0b650.log",
+      "elapsed_seconds": 0.00354031496681273,
+      "target": "hypersolve",
+      "name": "curve_resultant::tests::exact_univariate_gcd_and_division_replay_axis_content",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/interpolation-content-20260928-v697-hypersolve-tests",
+        "--exact",
+        "curve_resultant::tests::generated_exact_bivariate_division_rejects_a_perturbed_product",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "interpolation-content-20260928-v697-generated_exact_bivariate_division_rejects_a_perturbed_product-f4df9aacec.log",
+      "elapsed_seconds": 0.007585835875943303,
+      "target": "hypersolve",
+      "name": "curve_resultant::tests::generated_exact_bivariate_division_rejects_a_perturbed_product",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/interpolation-content-20260928-v697-hypersolve-tests",
+        "--exact",
+        "curve_resultant::tests::generated_exact_bivariate_division_replays_ragged_products",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "interpolation-content-20260928-v697-generated_exact_bivariate_division_replays_ragged_products-45b72e90f0.log",
+      "elapsed_seconds": 0.003512457013130188,
+      "target": "hypersolve",
+      "name": "curve_resultant::tests::generated_exact_bivariate_division_replays_ragged_products",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/interpolation-content-20260928-v697-hypersolve-tests",
+        "--exact",
+        "curve_resultant::tests::generated_horizontal_line_intersects_parabola_at_exact_height",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "interpolation-content-20260928-v697-generated_horizontal_line_intersects_parabola_at_exact_height-395ea10fc7.log",
+      "elapsed_seconds": 0.003466219874098897,
+      "target": "hypersolve",
+      "name": "curve_resultant::tests::generated_horizontal_line_intersects_parabola_at_exact_height",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/interpolation-content-20260928-v697-hypersolve-tests",
+        "--exact",
+        "curve_resultant::tests::generated_polynomial_determinant_matches_scalar_permutation_expansion",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "interpolation-content-20260928-v697-generated_polynomial_determinant_matches_scalar_permutation_expansion-3338c9d293.log",
+      "elapsed_seconds": 0.11380579019896686,
+      "target": "hypersolve",
+      "name": "curve_resultant::tests::generated_polynomial_determinant_matches_scalar_permutation_expansion",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/interpolation-content-20260928-v697-hypersolve-tests",
+        "--exact",
+        "curve_resultant::tests::generated_rational_weighted_parabola_resultant_cross_multiplies_height",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "interpolation-content-20260928-v697-generated_rational_weighted_parabola_resultant_cross_multiplies_height-b1f2c121f2.log",
+      "elapsed_seconds": 0.0035303861368447542,
+      "target": "hypersolve",
+      "name": "curve_resultant::tests::generated_rational_weighted_parabola_resultant_cross_multiplies_height",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/interpolation-content-20260928-v697-hypersolve-tests",
+        "--exact",
+        "curve_resultant::tests::interpolation_preserves_arbitrary_exact_values_on_nonuniform_nodes",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "interpolation-content-20260928-v697-interpolation_preserves_arbitrary_exact_values_on_nonuniform_nodes-3f48f92d63.log",
+      "elapsed_seconds": 0.003503856947645545,
+      "target": "hypersolve",
+      "name": "curve_resultant::tests::interpolation_preserves_arbitrary_exact_values_on_nonuniform_nodes",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/interpolation-content-20260928-v697-hypersolve-tests",
+        "--exact",
+        "curve_resultant::tests::interpolation_preserves_scaled_integer_valued_polynomials",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "interpolation-content-20260928-v697-interpolation_preserves_scaled_integer_valued_polynomials-cf2619f8eb.log",
+      "elapsed_seconds": 0.0034958391916006804,
+      "target": "hypersolve",
+      "name": "curve_resultant::tests::interpolation_preserves_scaled_integer_valued_polynomials",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/interpolation-content-20260928-v697-hypersolve-tests",
+        "--exact",
+        "curve_resultant::tests::nonrational_resultant_preserves_specialized_degree_drop_identity",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "interpolation-content-20260928-v697-nonrational_resultant_preserves_specialized_degree_drop_identity-7c543d2917.log",
+      "elapsed_seconds": 0.003538544988259673,
+      "target": "hypersolve",
+      "name": "curve_resultant::tests::nonrational_resultant_preserves_specialized_degree_drop_identity",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/interpolation-content-20260928-v697-hypersolve-tests",
+        "--exact",
+        "curve_resultant::tests::polynomial_determinant_preserves_singular_and_swapped_pivots",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "interpolation-content-20260928-v697-polynomial_determinant_preserves_singular_and_swapped_pivots-654f9e2f06.log",
+      "elapsed_seconds": 0.0035037880297750235,
+      "target": "hypersolve",
+      "name": "curve_resultant::tests::polynomial_determinant_preserves_singular_and_swapped_pivots",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/interpolation-content-20260928-v697-hypersolve-tests",
+        "--exact",
+        "curve_resultant::tests::polynomial_determinant_restores_wide_rational_row_scales",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "interpolation-content-20260928-v697-polynomial_determinant_restores_wide_rational_row_scales-cc54f5d809.log",
+      "elapsed_seconds": 0.0035084779374301434,
+      "target": "hypersolve",
+      "name": "curve_resultant::tests::polynomial_determinant_restores_wide_rational_row_scales",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/interpolation-content-20260928-v697-hypersolve-tests",
+        "--exact",
+        "curve_resultant::tests::quadrivariate_fourth_axis_resultant_retains_all_three_source_axes",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "interpolation-content-20260928-v697-quadrivariate_fourth_axis_resultant_retains_all_three_source_axes-6edacbbd2e.log",
+      "elapsed_seconds": 0.003585292026400566,
+      "target": "hypersolve",
+      "name": "curve_resultant::tests::quadrivariate_fourth_axis_resultant_retains_all_three_source_axes",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/interpolation-content-20260928-v697-hypersolve-tests",
+        "--exact",
+        "curve_resultant::tests::rational_curve_resultant_cross_multiplies_weighted_parabola",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "interpolation-content-20260928-v697-rational_curve_resultant_cross_multiplies_weighted_parabola-fa5d8adb18.log",
+      "elapsed_seconds": 0.00346597982570529,
+      "target": "hypersolve",
+      "name": "curve_resultant::tests::rational_curve_resultant_cross_multiplies_weighted_parabola",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/interpolation-content-20260928-v697-hypersolve-tests",
+        "--exact",
+        "curve_resultant::tests::rational_curve_resultant_rejects_certified_zero_weight",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "interpolation-content-20260928-v697-rational_curve_resultant_rejects_certified_zero_weight-2083c32b2d.log",
+      "elapsed_seconds": 0.0034890288952738047,
+      "target": "hypersolve",
+      "name": "curve_resultant::tests::rational_curve_resultant_rejects_certified_zero_weight",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/interpolation-content-20260928-v697-hypersolve-tests",
+        "--exact",
+        "curve_resultant::tests::rational_interpolation_preserves_signed_scale_at_degree_drops_on_either_axis",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "interpolation-content-20260928-v697-rational_interpolation_preserves_signed_scale_at_degree_drops_on_either_axis-bd50d9b586.log",
+      "elapsed_seconds": 0.0034793291706591845,
+      "target": "hypersolve",
+      "name": "curve_resultant::tests::rational_interpolation_preserves_signed_scale_at_degree_drops_on_either_axis",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/interpolation-content-20260928-v697-hypersolve-tests",
+        "--exact",
+        "curve_resultant::tests::rational_resultant_preserves_specialized_degree_drop_identity",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "interpolation-content-20260928-v697-rational_resultant_preserves_specialized_degree_drop_identity-33e4e97314.log",
+      "elapsed_seconds": 0.003494648030027747,
+      "target": "hypersolve",
+      "name": "curve_resultant::tests::rational_resultant_preserves_specialized_degree_drop_identity",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/interpolation-content-20260928-v697-hypersolve-tests",
+        "--exact",
+        "curve_resultant::tests::sampled_fiber_gcd_removes_high_degree_cofactor_scale_exactly",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "interpolation-content-20260928-v697-sampled_fiber_gcd_removes_high_degree_cofactor_scale_exactly-2f83e8adb5.log",
+      "elapsed_seconds": 0.0035023479722440243,
+      "target": "hypersolve",
+      "name": "curve_resultant::tests::sampled_fiber_gcd_removes_high_degree_cofactor_scale_exactly",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/interpolation-content-20260928-v697-hypersolve-tests",
+        "--exact",
+        "curve_resultant::tests::trivariate_constraint_resultant_eliminates_every_tensor_axis",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "interpolation-content-20260928-v697-trivariate_constraint_resultant_eliminates_every_tensor_axis-825c5e59ea.log",
+      "elapsed_seconds": 0.0035407650284469128,
+      "target": "hypersolve",
+      "name": "curve_resultant::tests::trivariate_constraint_resultant_eliminates_every_tensor_axis",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/interpolation-content-20260928-v697-hypersolve-tests",
+        "--exact",
+        "curve_resultant::tests::trivariate_constraint_resultant_obeys_each_retained_degree_budget",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "interpolation-content-20260928-v697-trivariate_constraint_resultant_obeys_each_retained_degree_budget-0f2366d0da.log",
+      "elapsed_seconds": 0.00352852582000196,
+      "target": "hypersolve",
+      "name": "curve_resultant::tests::trivariate_constraint_resultant_obeys_each_retained_degree_budget",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/interpolation-content-20260928-v697-hypersolve-tests",
+        "--exact",
+        "curve_resultant::tests::trivariate_system_resultant_eliminates_every_tensor_axis",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "interpolation-content-20260928-v697-trivariate_system_resultant_eliminates_every_tensor_axis-d34aab078a.log",
+      "elapsed_seconds": 0.0035115270875394344,
+      "target": "hypersolve",
+      "name": "curve_resultant::tests::trivariate_system_resultant_eliminates_every_tensor_axis",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/interpolation-content-20260928-v697-hypersolve-tests",
+        "--exact",
+        "curve_resultant::tests::trivariate_system_resultant_handles_constant_eliminated_operand",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "interpolation-content-20260928-v697-trivariate_system_resultant_handles_constant_eliminated_operand-88058d469f.log",
+      "elapsed_seconds": 0.003506818087771535,
+      "target": "hypersolve",
+      "name": "curve_resultant::tests::trivariate_system_resultant_handles_constant_eliminated_operand",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/interpolation-content-20260928-v697-hypersolve-tests",
+        "--exact",
+        "curve_resultant::tests::trivariate_system_resultant_ignores_trailing_zero_storage",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "interpolation-content-20260928-v697-trivariate_system_resultant_ignores_trailing_zero_storage-2728908668.log",
+      "elapsed_seconds": 0.003533695824444294,
+      "target": "hypersolve",
+      "name": "curve_resultant::tests::trivariate_system_resultant_ignores_trailing_zero_storage",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/interpolation-content-20260928-v697-hypersolve-tests",
+        "--exact",
+        "curve_resultant::tests::trivariate_system_resultant_preserves_nominal_degree_at_grid_drop",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "interpolation-content-20260928-v697-trivariate_system_resultant_preserves_nominal_degree_at_grid_drop-d175c39e2c.log",
+      "elapsed_seconds": 0.003504076972603798,
+      "target": "hypersolve",
+      "name": "curve_resultant::tests::trivariate_system_resultant_preserves_nominal_degree_at_grid_drop",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/interpolation-content-20260928-v697-hypersolve-tests",
+        "--exact",
+        "curve_resultant::tests::trivariate_system_subresultant_recovers_tangent_selected_pair_gcd",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "interpolation-content-20260928-v697-trivariate_system_subresultant_recovers_tangent_selected_pair_gcd-3fb4077344.log",
+      "elapsed_seconds": 0.003505706787109375,
+      "target": "hypersolve",
+      "name": "curve_resultant::tests::trivariate_system_subresultant_recovers_tangent_selected_pair_gcd",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/interpolation-content-20260928-v697-hypersolve-tests",
+        "--exact",
+        "curve_resultant::tests::zero_dividend_still_requires_a_certified_nonzero_divisor",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "interpolation-content-20260928-v697-zero_dividend_still_requires_a_certified_nonzero_divisor-86f5b68a86.log",
+      "elapsed_seconds": 0.0035589030012488365,
+      "target": "hypersolve",
+      "name": "curve_resultant::tests::zero_dividend_still_requires_a_certified_nonzero_divisor",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/interpolation-content-20260928-v697-hypersolve-tests",
+        "--exact",
+        "resultant::tests::constant_quotient_relation_retains_padded_pseudo_scale",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "interpolation-content-20260928-v697-constant_quotient_relation_retains_padded_pseudo_scale-8970afdda7.log",
+      "elapsed_seconds": 0.003522405866533518,
+      "target": "hypersolve",
+      "name": "resultant::tests::constant_quotient_relation_retains_padded_pseudo_scale",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/interpolation-content-20260928-v697-hypersolve-tests",
+        "--exact",
+        "resultant::tests::constant_resultant_uses_exact_binary_power_for_high_degree",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "interpolation-content-20260928-v697-constant_resultant_uses_exact_binary_power_for_high_degree-d7bab527af.log",
+      "elapsed_seconds": 0.0034888088703155518,
+      "target": "hypersolve",
+      "name": "resultant::tests::constant_resultant_uses_exact_binary_power_for_high_degree",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/interpolation-content-20260928-v697-hypersolve-tests",
+        "--exact",
+        "resultant::tests::flat_integer_bareiss_matches_reported_determinants",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "interpolation-content-20260928-v697-flat_integer_bareiss_matches_reported_determinants-9f0def7b34.log",
+      "elapsed_seconds": 0.003485328983515501,
+      "target": "hypersolve",
+      "name": "resultant::tests::flat_integer_bareiss_matches_reported_determinants",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/interpolation-content-20260928-v697-hypersolve-tests",
+        "--exact",
+        "resultant::tests::generated_common_linear_factor_resultant_is_zero",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "interpolation-content-20260928-v697-generated_common_linear_factor_resultant_is_zero-dbb0a522b0.log",
+      "elapsed_seconds": 0.0034925879444926977,
+      "target": "hypersolve",
+      "name": "resultant::tests::generated_common_linear_factor_resultant_is_zero",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/interpolation-content-20260928-v697-hypersolve-tests",
+        "--exact",
+        "resultant::tests::generated_exact_rational_scalar_resultants_match_full_reports",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "interpolation-content-20260928-v697-generated_exact_rational_scalar_resultants_match_full_reports-7ad646131f.log",
+      "elapsed_seconds": 0.0075593870133161545,
+      "target": "hypersolve",
+      "name": "resultant::tests::generated_exact_rational_scalar_resultants_match_full_reports",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/interpolation-content-20260928-v697-hypersolve-tests",
+        "--exact",
+        "resultant::tests::generated_flat_integer_bareiss_matches_reported_four_by_four",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "interpolation-content-20260928-v697-generated_flat_integer_bareiss_matches_reported_four_by_four-f3314038f1.log",
+      "elapsed_seconds": 0.0035249958746135235,
+      "target": "hypersolve",
+      "name": "resultant::tests::generated_flat_integer_bareiss_matches_reported_four_by_four",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/interpolation-content-20260928-v697-hypersolve-tests",
+        "--exact",
+        "resultant::tests::generated_linear_resultants_match_root_difference",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "interpolation-content-20260928-v697-generated_linear_resultants_match_root_difference-3d9a240de6.log",
+      "elapsed_seconds": 0.003450911957770586,
+      "target": "hypersolve",
+      "name": "resultant::tests::generated_linear_resultants_match_root_difference",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/interpolation-content-20260928-v697-hypersolve-tests",
+        "--exact",
+        "resultant::tests::generated_monic_quotient_ring_samples_match_sylvester_up_to_scale",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "interpolation-content-20260928-v697-generated_monic_quotient_ring_samples_match_sylvester_up_to_scale-4c9c2a5f3e.log",
+      "elapsed_seconds": 0.015688195824623108,
+      "target": "hypersolve",
+      "name": "resultant::tests::generated_monic_quotient_ring_samples_match_sylvester_up_to_scale",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/interpolation-content-20260928-v697-hypersolve-tests",
+        "--exact",
+        "resultant::tests::generated_resultant_schedule_classifies_linear_pairs",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "interpolation-content-20260928-v697-generated_resultant_schedule_classifies_linear_pairs-867c08e69d.log",
+      "elapsed_seconds": 0.0035063670948147774,
+      "target": "hypersolve",
+      "name": "resultant::tests::generated_resultant_schedule_classifies_linear_pairs",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/interpolation-content-20260928-v697-hypersolve-tests",
+        "--exact",
+        "resultant::tests::generated_subresultant_chain_detects_common_linear_factor",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "interpolation-content-20260928-v697-generated_subresultant_chain_detects_common_linear_factor-8ed6bebfcb.log",
+      "elapsed_seconds": 0.0035017579793930054,
+      "target": "hypersolve",
+      "name": "resultant::tests::generated_subresultant_chain_detects_common_linear_factor",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/interpolation-content-20260928-v697-hypersolve-tests",
+        "--exact",
+        "resultant::tests::polynomial_zero_truth_lets_nonzero_dominate_unknown",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "interpolation-content-20260928-v697-polynomial_zero_truth_lets_nonzero_dominate_unknown-450e9ace9b.log",
+      "elapsed_seconds": 0.0035340150352567434,
+      "target": "hypersolve",
+      "name": "resultant::tests::polynomial_zero_truth_lets_nonzero_dominate_unknown",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/interpolation-content-20260928-v697-hypersolve-tests",
+        "--exact",
+        "resultant::tests::quotient_ring_samples_match_sylvester_resultants_up_to_one_scale",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "interpolation-content-20260928-v697-quotient_ring_samples_match_sylvester_resultants_up_to_one_scale-c072cb6665.log",
+      "elapsed_seconds": 0.0035812719725072384,
+      "target": "hypersolve",
+      "name": "resultant::tests::quotient_ring_samples_match_sylvester_resultants_up_to_one_scale",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/interpolation-content-20260928-v697-hypersolve-tests",
+        "--exact",
+        "resultant::tests::resultant_of_linear_polynomials_is_exact_difference",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "interpolation-content-20260928-v697-resultant_of_linear_polynomials_is_exact_difference-1680e0a3e2.log",
+      "elapsed_seconds": 0.0034954978618770838,
+      "target": "hypersolve",
+      "name": "resultant::tests::resultant_of_linear_polynomials_is_exact_difference",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/interpolation-content-20260928-v697-hypersolve-tests",
+        "--exact",
+        "resultant::tests::resultant_reports_common_linear_root_as_zero",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "interpolation-content-20260928-v697-resultant_reports_common_linear_root_as_zero-ae13184591.log",
+      "elapsed_seconds": 0.0034834390971809626,
+      "target": "hypersolve",
+      "name": "resultant::tests::resultant_reports_common_linear_root_as_zero",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/interpolation-content-20260928-v697-hypersolve-tests",
+        "--exact",
+        "resultant::tests::resultant_schedule_classifies_coprime_common_and_bad_pairs",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "interpolation-content-20260928-v697-resultant_schedule_classifies_coprime_common_and_bad_pairs-0c67bf39a9.log",
+      "elapsed_seconds": 0.003543234895914793,
+      "target": "hypersolve",
+      "name": "resultant::tests::resultant_schedule_classifies_coprime_common_and_bad_pairs",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/interpolation-content-20260928-v697-hypersolve-tests",
+        "--exact",
+        "resultant::tests::resultant_trimming_uses_strict_exact_signs_without_guessing",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "interpolation-content-20260928-v697-resultant_trimming_uses_strict_exact_signs_without_guessing-824fe5da5f.log",
+      "elapsed_seconds": 0.0034802588634192944,
+      "target": "hypersolve",
+      "name": "resultant::tests::resultant_trimming_uses_strict_exact_signs_without_guessing",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/interpolation-content-20260928-v697-hypersolve-tests",
+        "--exact",
+        "resultant::tests::resultant_validates_empty_and_zero_polynomials",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "interpolation-content-20260928-v697-resultant_validates_empty_and_zero_polynomials-ac2cd00ee5.log",
+      "elapsed_seconds": 0.0034858789294958115,
+      "target": "hypersolve",
+      "name": "resultant::tests::resultant_validates_empty_and_zero_polynomials",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/interpolation-content-20260928-v697-hypersolve-tests",
+        "--exact",
+        "resultant::tests::scalar_integer_resultant_matches_full_report_at_binary_dimension_limit",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "interpolation-content-20260928-v697-scalar_integer_resultant_matches_full_report_at_binary_dimension_limit-434ac05bff.log",
+      "elapsed_seconds": 0.003490978851914406,
+      "target": "hypersolve",
+      "name": "resultant::tests::scalar_integer_resultant_matches_full_report_at_binary_dimension_limit",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/interpolation-content-20260928-v697-hypersolve-tests",
+        "--exact",
+        "resultant::tests::scalar_resultant_preserves_exact_fractional_scale",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "interpolation-content-20260928-v697-scalar_resultant_preserves_exact_fractional_scale-c91f5904ab.log",
+      "elapsed_seconds": 0.0035206060856580734,
+      "target": "hypersolve",
+      "name": "resultant::tests::scalar_resultant_preserves_exact_fractional_scale",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/interpolation-content-20260928-v697-hypersolve-tests",
+        "--exact",
+        "resultant::tests::subresultant_and_scheduler_complete_strict_exact_boundaries",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "interpolation-content-20260928-v697-subresultant_and_scheduler_complete_strict_exact_boundaries-2d7b142a9c.log",
+      "elapsed_seconds": 0.0034915581345558167,
+      "target": "hypersolve",
+      "name": "resultant::tests::subresultant_and_scheduler_complete_strict_exact_boundaries",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/interpolation-content-20260928-v697-hypersolve-tests",
+        "--exact",
+        "resultant::tests::subresultant_chain_keeps_unknown_lower_coefficients",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "interpolation-content-20260928-v697-subresultant_chain_keeps_unknown_lower_coefficients-2149a5f2f9.log",
+      "elapsed_seconds": 0.0034919281024485826,
+      "target": "hypersolve",
+      "name": "resultant::tests::subresultant_chain_keeps_unknown_lower_coefficients",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/interpolation-content-20260928-v697-hypersolve-tests",
+        "--exact",
+        "resultant::tests::subresultant_chain_reports_common_factor",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "interpolation-content-20260928-v697-subresultant_chain_reports_common_factor-85fcd4e772.log",
+      "elapsed_seconds": 0.003492129035294056,
+      "target": "hypersolve",
+      "name": "resultant::tests::subresultant_chain_reports_common_factor",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/interpolation-content-20260928-v697-hypersolve-tests",
+        "--exact",
+        "resultant::tests::subresultant_chain_reports_coprime_linear_inputs",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "interpolation-content-20260928-v697-subresultant_chain_reports_coprime_linear_inputs-6114c432a1.log",
+      "elapsed_seconds": 0.0034990671556442976,
+      "target": "hypersolve",
+      "name": "resultant::tests::subresultant_chain_reports_coprime_linear_inputs",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/interpolation-content-20260928-v697-hypersolve-tests",
+        "--exact",
+        "resultant::tests::subresultant_chain_still_rejects_unknown_leading_degree",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "interpolation-content-20260928-v697-subresultant_chain_still_rejects_unknown_leading_degree-2f3dfb27b0.log",
+      "elapsed_seconds": 0.003542335005477071,
+      "target": "hypersolve",
+      "name": "resultant::tests::subresultant_chain_still_rejects_unknown_leading_degree",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/interpolation-content-20260928-v697-hypersolve-tests",
+        "--exact",
+        "tensor_resultant::tests::constant_quadratic_norm_uses_the_same_nominal_fast_path",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "interpolation-content-20260928-v697-constant_quadratic_norm_uses_the_same_nominal_fast_path-12e6fe7585.log",
+      "elapsed_seconds": 0.0035474251490086317,
+      "target": "hypersolve",
+      "name": "tensor_resultant::tests::constant_quadratic_norm_uses_the_same_nominal_fast_path",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/interpolation-content-20260928-v697-hypersolve-tests",
+        "--exact",
+        "tensor_resultant::tests::constrained_tensor_resultant_uses_strict_constraint_normalization",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "interpolation-content-20260928-v697-constrained_tensor_resultant_uses_strict_constraint_normalization-4d58414748.log",
+      "elapsed_seconds": 0.0035148770548403263,
+      "target": "hypersolve",
+      "name": "tensor_resultant::tests::constrained_tensor_resultant_uses_strict_constraint_normalization",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/interpolation-content-20260928-v697-hypersolve-tests",
+        "--exact",
+        "tensor_resultant::tests::dense_tensor_affine_axis_substitution_expands_exactly",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "interpolation-content-20260928-v697-dense_tensor_affine_axis_substitution_expands_exactly-b576373c3f.log",
+      "elapsed_seconds": 0.0014075629878789186,
+      "target": "hypersolve",
+      "name": "tensor_resultant::tests::dense_tensor_affine_axis_substitution_expands_exactly",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/interpolation-content-20260928-v697-hypersolve-tests",
+        "--exact",
+        "tensor_resultant::tests::dense_tensor_arithmetic_preserves_rank_and_power_axes",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "interpolation-content-20260928-v697-dense_tensor_arithmetic_preserves_rank_and_power_axes-0a762b79f7.log",
+      "elapsed_seconds": 0.0014083529822528362,
+      "target": "hypersolve",
+      "name": "tensor_resultant::tests::dense_tensor_arithmetic_preserves_rank_and_power_axes",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/interpolation-content-20260928-v697-hypersolve-tests",
+        "--exact",
+        "tensor_resultant::tests::dense_tensor_axis_reduction_matches_coordinate_reference_on_every_axis",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "interpolation-content-20260928-v697-dense_tensor_axis_reduction_matches_coordinate_reference_on_every_axis-034cb4761c.log",
+      "elapsed_seconds": 0.003453850978985429,
+      "target": "hypersolve",
+      "name": "tensor_resultant::tests::dense_tensor_axis_reduction_matches_coordinate_reference_on_every_axis",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/interpolation-content-20260928-v697-hypersolve-tests",
+        "--exact",
+        "tensor_resultant::tests::dense_tensor_axis_reduction_preserves_nominal_shape_and_opaque_fibers",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "interpolation-content-20260928-v697-dense_tensor_axis_reduction_preserves_nominal_shape_and_opaque_fibers-7a690e1940.log",
+      "elapsed_seconds": 0.0035110069438815117,
+      "target": "hypersolve",
+      "name": "tensor_resultant::tests::dense_tensor_axis_reduction_preserves_nominal_shape_and_opaque_fibers",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/interpolation-content-20260928-v697-hypersolve-tests",
+        "--exact",
+        "tensor_resultant::tests::dense_tensor_axis_reduction_uses_the_exact_selected_quotient_ring",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "interpolation-content-20260928-v697-dense_tensor_axis_reduction_uses_the_exact_selected_quotient_ring-099e44cc93.log",
+      "elapsed_seconds": 0.003515827003866434,
+      "target": "hypersolve",
+      "name": "tensor_resultant::tests::dense_tensor_axis_reduction_uses_the_exact_selected_quotient_ring",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/interpolation-content-20260928-v697-hypersolve-tests",
+        "--exact",
+        "tensor_resultant::tests::dense_tensor_equal_axis_substitution_adds_source_powers",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "interpolation-content-20260928-v697-dense_tensor_equal_axis_substitution_adds_source_powers-b56ffe74cf.log",
+      "elapsed_seconds": 0.0034857080318033695,
+      "target": "hypersolve",
+      "name": "tensor_resultant::tests::dense_tensor_equal_axis_substitution_adds_source_powers",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/interpolation-content-20260928-v697-hypersolve-tests",
+        "--exact",
+        "tensor_resultant::tests::dense_tensor_exact_axis_substitution_preserves_row_major_layout",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "interpolation-content-20260928-v697-dense_tensor_exact_axis_substitution_preserves_row_major_layout-155f2bd0c8.log",
+      "elapsed_seconds": 0.0034792490769177675,
+      "target": "hypersolve",
+      "name": "tensor_resultant::tests::dense_tensor_exact_axis_substitution_preserves_row_major_layout",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/interpolation-content-20260928-v697-hypersolve-tests",
+        "--exact",
+        "tensor_resultant::tests::dense_tensor_multiplication_does_not_refine_opaque_coefficients_for_zero_pruning",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "interpolation-content-20260928-v697-dense_tensor_multiplication_does_not_refine_opaque_coefficients_for_zero_pruning-68e3d72358.log",
+      "elapsed_seconds": 0.003490329021587968,
+      "target": "hypersolve",
+      "name": "tensor_resultant::tests::dense_tensor_multiplication_does_not_refine_opaque_coefficients_for_zero_pruning",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/interpolation-content-20260928-v697-hypersolve-tests",
+        "--exact",
+        "tensor_resultant::tests::dense_tensor_removes_only_certified_independent_axes",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "interpolation-content-20260928-v697-dense_tensor_removes_only_certified_independent_axes-a6824a39c0.log",
+      "elapsed_seconds": 0.0035299959126859903,
+      "target": "hypersolve",
+      "name": "tensor_resultant::tests::dense_tensor_removes_only_certified_independent_axes",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/interpolation-content-20260928-v697-hypersolve-tests",
+        "--exact",
+        "tensor_resultant::tests::dense_tensor_square_accumulates_symmetric_terms_once",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "interpolation-content-20260928-v697-dense_tensor_square_accumulates_symmetric_terms_once-9a0f79fd51.log",
+      "elapsed_seconds": 0.003494048025459051,
+      "target": "hypersolve",
+      "name": "tensor_resultant::tests::dense_tensor_square_accumulates_symmetric_terms_once",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/interpolation-content-20260928-v697-hypersolve-tests",
+        "--exact",
+        "tensor_resultant::tests::direct_tensor_norm_preserves_a_certified_degree_below_padded_storage",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "interpolation-content-20260928-v697-direct_tensor_norm_preserves_a_certified_degree_below_padded_storage-fc95f8410c.log",
+      "elapsed_seconds": 0.003476209007203579,
+      "target": "hypersolve",
+      "name": "tensor_resultant::tests::direct_tensor_norm_preserves_a_certified_degree_below_padded_storage",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/interpolation-content-20260928-v697-hypersolve-tests",
+        "--exact",
+        "tensor_resultant::tests::direct_tensor_norm_trims_strictly_exact_zero_output_degree",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "interpolation-content-20260928-v697-direct_tensor_norm_trims_strictly_exact_zero_output_degree-719e53b425.log",
+      "elapsed_seconds": 0.0035238261334598064,
+      "target": "hypersolve",
+      "name": "tensor_resultant::tests::direct_tensor_norm_trims_strictly_exact_zero_output_degree",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/interpolation-content-20260928-v697-hypersolve-tests",
+        "--exact",
+        "tensor_resultant::tests::final_axis_quotient_norm_preserves_a_quadratic_source_fiber",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "interpolation-content-20260928-v697-final_axis_quotient_norm_preserves_a_quadratic_source_fiber-132aea905d.log",
+      "elapsed_seconds": 0.0035014080349355936,
+      "target": "hypersolve",
+      "name": "tensor_resultant::tests::final_axis_quotient_norm_preserves_a_quadratic_source_fiber",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/interpolation-content-20260928-v697-hypersolve-tests",
+        "--exact",
+        "tensor_resultant::tests::nominal_linear_quadratic_norm_does_not_require_leading_sign",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "interpolation-content-20260928-v697-nominal_linear_quadratic_norm_does_not_require_leading_sign-8fa52556ae.log",
+      "elapsed_seconds": 0.0035026378463953733,
+      "target": "hypersolve",
+      "name": "tensor_resultant::tests::nominal_linear_quadratic_norm_does_not_require_leading_sign",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/interpolation-content-20260928-v697-hypersolve-tests",
+        "--exact",
+        "tensor_resultant::tests::quadratic_closed_form_compacts_only_structural_padding",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "interpolation-content-20260928-v697-quadratic_closed_form_compacts_only_structural_padding-aef0e77a06.log",
+      "elapsed_seconds": 0.003484798828139901,
+      "target": "hypersolve",
+      "name": "tensor_resultant::tests::quadratic_closed_form_compacts_only_structural_padding",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/interpolation-content-20260928-v697-hypersolve-tests",
+        "--exact",
+        "tensor_resultant::tests::rank_five_eliminates_four_selected_square_roots_without_a_degree_cap",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "interpolation-content-20260928-v697-rank_five_eliminates_four_selected_square_roots_without_a_degree_cap-afe9038bb8.log",
+      "elapsed_seconds": 0.007565825944766402,
+      "target": "hypersolve",
+      "name": "tensor_resultant::tests::rank_five_eliminates_four_selected_square_roots_without_a_degree_cap",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/interpolation-content-20260928-v697-hypersolve-tests",
+        "--exact",
+        "tensor_resultant::tests::sampled_tensor_resultant_skips_only_structural_padding",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "interpolation-content-20260928-v697-sampled_tensor_resultant_skips_only_structural_padding-4b1e5da997.log",
+      "elapsed_seconds": 0.0035070781596004963,
+      "target": "hypersolve",
+      "name": "tensor_resultant::tests::sampled_tensor_resultant_skips_only_structural_padding",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/interpolation-content-20260928-v697-hypersolve-tests",
+        "--exact",
+        "tensor_resultant::tests::tensor_resultant_helpers_complete_strict_exact_boundaries",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "interpolation-content-20260928-v697-tensor_resultant_helpers_complete_strict_exact_boundaries-c5efb25aa2.log",
+      "elapsed_seconds": 0.003483658889308572,
+      "target": "hypersolve",
+      "name": "tensor_resultant::tests::tensor_resultant_helpers_complete_strict_exact_boundaries",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/interpolation-content-20260928-v697-hypersolve-tests",
+        "--exact",
+        "tensor_resultant::tests::tensor_resultant_preserves_a_correlated_product_image",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "interpolation-content-20260928-v697-tensor_resultant_preserves_a_correlated_product_image-10157ce002.log",
+      "elapsed_seconds": 0.003511846996843815,
+      "target": "hypersolve",
+      "name": "tensor_resultant::tests::tensor_resultant_preserves_a_correlated_product_image",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/interpolation-content-20260928-v697-hypersolve-tests",
+        "--exact",
+        "tensor_resultant::tests::tensor_resultant_reports_invalid_axes_and_constraints",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "interpolation-content-20260928-v697-tensor_resultant_reports_invalid_axes_and_constraints-d076f841ba.log",
+      "elapsed_seconds": 0.003498137928545475,
+      "target": "hypersolve",
+      "name": "tensor_resultant::tests::tensor_resultant_reports_invalid_axes_and_constraints",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/interpolation-content-20260928-v697-hypercurve-tests",
+        "--exact",
+        "bezier_offset::structural_overlap_trace_regression::monotone_reparameterization_preserves_structural_pair_crossings_strict",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "interpolation-content-20260928-v697-monotone_reparameterization_preserves_structural_pair_crossings_strict-b1b6dd2839.log",
+      "elapsed_seconds": 46.07450790400617,
+      "target": "hypercurve",
+      "name": "bezier_offset::structural_overlap_trace_regression::monotone_reparameterization_preserves_structural_pair_crossings_strict",
+      "passed": true
+    }
+  ],
+  "checks": [
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "clippy",
+        "--all-targets",
+        "--all-features",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "returncode": 0,
+      "log": "interpolation-content-20260928-v697-hypersolve-clippy.log",
+      "elapsed_seconds": 6.423482111888006,
+      "label": "hypersolve-clippy"
+    },
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "doc",
+        "--no-deps",
+        "--all-features",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "log": "interpolation-content-20260928-v697-hypersolve-documentation.log",
+      "elapsed_seconds": 3.6694267399143428,
+      "label": "hypersolve-documentation"
+    },
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustfmt",
+        "--edition",
+        "2024",
+        "--config",
+        "skip_children=true",
+        "--check",
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/build-workspace-20260925/hypersolve/src/curve_resultant.rs"
+      ],
+      "returncode": 0,
+      "log": "interpolation-content-20260928-v697-hypersolve-format.log",
+      "elapsed_seconds": 0.11393910087645054,
+      "label": "hypersolve-format"
+    }
+  ],
+  "test_listings": {
+    "hypersolve": {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/interpolation-content-20260928-v697-hypersolve-tests",
+        "--list"
+      ],
+      "returncode": 0,
+      "log": "interpolation-content-20260928-v697-hypersolve-list.log",
+      "elapsed_seconds": 0.0036096100229769945
+    },
+    "hypercurve": {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/interpolation-content-20260928-v697-hypercurve-tests",
+        "--list"
+      ],
+      "returncode": 0,
+      "log": "interpolation-content-20260928-v697-hypercurve-list.log",
+      "elapsed_seconds": 0.007611163193359971
+    }
+  },
+  "expected_cases": {
+    "hypersolve": [
+      "algebraic_binary::tests::binary_constructs_difference_of_independent_square_roots",
+      "algebraic_binary::tests::binary_constructs_product_of_independent_cubic_roots",
+      "algebraic_binary::tests::binary_constructs_product_of_independent_square_roots",
+      "algebraic_binary::tests::binary_constructs_quotient_of_independent_square_roots",
+      "algebraic_binary::tests::binary_constructs_sum_of_independent_square_roots",
+      "algebraic_binary::tests::binary_interval_division_reuses_policy_nonzero_endpoints",
+      "algebraic_binary::tests::binary_keeps_the_resultant_cap_after_square_free_reduction",
+      "algebraic_binary::tests::binary_point_images_do_not_change_half_open_ownership",
+      "algebraic_binary::tests::binary_point_images_do_not_promote_approximately_chosen_extrema",
+      "algebraic_binary::tests::binary_point_images_preserve_nonrational_witnesses",
+      "algebraic_binary::tests::binary_point_images_preserve_rational_witnesses",
+      "algebraic_binary::tests::binary_point_images_preserve_zero_products_with_wide_inputs",
+      "algebraic_binary::tests::binary_point_images_require_certified_extrema_for_a_symmetric_product",
+      "algebraic_binary::tests::binary_point_images_require_strict_equality_even_under_approximate_policy",
+      "algebraic_binary::tests::binary_point_images_still_replay_the_polynomial",
+      "algebraic_binary::tests::binary_refuses_division_when_denominator_interval_may_contain_zero",
+      "algebraic_binary::tests::binary_rejects_nonisolating_image_interval",
+      "algebraic_binary::tests::binary_replays_source_validation_instead_of_trusting_stale_status",
+      "algebraic_binary::tests::binary_resultant_clears_source_denominators_before_elimination",
+      "algebraic_binary::tests::binary_reuses_a_shared_square_free_carrier_for_distinct_conjugates",
+      "algebraic_binary::tests::binary_reuses_square_free_sources_beyond_the_stored_degree_cap",
+      "algebraic_binary::tests::exact_rational_resultant_trimming_fails_closed",
+      "algebraic_binary::tests::generated_signed_unit_linear_compositions_evaluate_exactly",
+      "algebraic_binary::tests::generated_square_root_products_match_expected_resultant_shape",
+      "algebraic_binary::zero_factor_tests::division_admits_only_the_reduced_degree_bound",
+      "algebraic_binary::zero_factor_tests::division_deflates_after_shared_oversized_square_free_reduction",
+      "algebraic_binary::zero_factor_tests::division_keeps_zero_interval_and_invalid_payload_guards",
+      "algebraic_binary::zero_factor_tests::division_preserves_signed_nonzero_resultants",
+      "algebraic_binary::zero_factor_tests::division_recovers_unused_common_zero_roots",
+      "algebraic_binary::zero_factor_tests::divisor_deflation_borrows_or_reuses_owned_storage",
+      "algebraic_binary::zero_factor_tests::divisor_deflation_requires_strict_nonzero_and_nonconstant_residual",
+      "algebraic_polynomial_image::tests::generated_constant_source_relations_are_detected_exactly",
+      "algebraic_polynomial_image::tests::generated_interval_horner_contains_endpoint_and_midpoint_values",
+      "algebraic_polynomial_image::tests::generated_rational_witness_polynomial_image_matches_integer_evaluation",
+      "algebraic_polynomial_image::tests::polynomial_image_clears_disparate_denominators_before_elimination",
+      "algebraic_polynomial_image::tests::polynomial_image_constructs_quadratic_expression_of_sqrt_two",
+      "algebraic_polynomial_image::tests::polynomial_image_constructs_square_of_sqrt_two",
+      "algebraic_polynomial_image::tests::polynomial_image_detects_a_constant_source_relation",
+      "algebraic_polynomial_image::tests::polynomial_image_keeps_the_degree_cap_after_square_free_reduction",
+      "algebraic_polynomial_image::tests::polynomial_image_preserves_rational_witnesses",
+      "algebraic_polynomial_image::tests::polynomial_image_refines_a_nonmonotone_source_interval",
+      "algebraic_polynomial_image::tests::polynomial_image_refines_away_a_foreign_resultant_root",
+      "algebraic_polynomial_image::tests::polynomial_image_rejects_empty_and_nonrational_authored_storage",
+      "algebraic_polynomial_image::tests::polynomial_image_replays_cached_source_validation_strictly",
+      "algebraic_polynomial_image::tests::polynomial_image_represents_a_stationary_algebraic_map",
+      "algebraic_polynomial_image::tests::polynomial_image_square_frees_an_oversized_repeated_carrier",
+      "algebraic_rational_image::tests::bounded_rational_image_retains_boundary_touching_enclosures",
+      "algebraic_rational_image::tests::bounded_rational_image_skips_disjoint_elimination",
+      "algebraic_rational_image::tests::generated_rational_image_batches_match_singleton_order",
+      "algebraic_rational_image::tests::generated_rational_witness_rational_image_matches_exact_fraction",
+      "algebraic_rational_image::tests::generated_shared_factors_preserve_the_selected_rational_image",
+      "algebraic_rational_image::tests::rational_image_batch_matches_independent_shared_denominator_transforms",
+      "algebraic_rational_image::tests::rational_image_batch_preserves_invalid_source_reports_and_empty_noop",
+      "algebraic_rational_image::tests::rational_image_batch_shares_strengthened_domain_evidence_exactly",
+      "algebraic_rational_image::tests::rational_image_cancels_a_common_factor_outside_the_isolated_root",
+      "algebraic_rational_image::tests::rational_image_certifies_an_algebraic_pole_before_cancellation",
+      "algebraic_rational_image::tests::rational_image_clears_disparate_denominators_before_elimination",
+      "algebraic_rational_image::tests::rational_image_constructs_linear_fractional_value",
+      "algebraic_rational_image::tests::rational_image_direct_resultant_accepts_nonmonotone_denominator_image",
+      "algebraic_rational_image::tests::rational_image_distinguishes_unsupported_nonlinear_map_coefficients",
+      "algebraic_rational_image::tests::rational_image_divisions_reuse_policy_nonzero_evidence",
+      "algebraic_rational_image::tests::rational_image_norm_keeps_a_shared_scale_when_sample_degree_drops",
+      "algebraic_rational_image::tests::rational_image_preserves_a_refinement_discovered_rational_root",
+      "algebraic_rational_image::tests::rational_image_preserves_partition_ownership_for_reversed_maps",
+      "algebraic_rational_image::tests::rational_image_preserves_rational_witnesses",
+      "algebraic_rational_image::tests::rational_image_promotes_a_repeated_rational_image_root",
+      "algebraic_rational_image::tests::rational_image_reduces_an_oversized_map_before_the_degree_budget",
+      "algebraic_rational_image::tests::rational_image_reduces_both_map_sides_modulo_the_source_relation",
+      "algebraic_rational_image::tests::rational_image_refines_a_dependency_broadened_denominator_interval",
+      "algebraic_rational_image::tests::rational_image_refines_a_nonmonotone_source_interval",
+      "algebraic_rational_image::tests::rational_image_refines_away_a_foreign_resultant_root",
+      "algebraic_rational_image::tests::rational_image_refines_away_an_excluded_endpoint_pole",
+      "algebraic_rational_image::tests::rational_image_represents_a_stationary_algebraic_map",
+      "algebraic_rational_image::tests::rational_image_retains_an_arbitrary_exact_point_witness",
+      "algebraic_rational_image::tests::rational_image_reuses_mobius_support_for_an_exact_real_source",
+      "algebraic_rational_image::tests::rational_image_reuses_mobius_support_for_exact_real_map_coefficients",
+      "algebraic_rational_image::tests::rational_image_supports_degree_twelve_source_with_cubic_map",
+      "algebraic_rational_image::tests::rational_map_caches_a_source_reduced_map_without_forcing_a_resultant",
+      "algebraic_rational_image::tests::rational_map_falls_back_for_a_distinct_source_polynomial",
+      "algebraic_rational_image::tests::rational_map_reuses_elimination_across_source_roots",
+      "algebraic_rational_image::tests::rational_map_target_rejection_keeps_construction_caches_cold",
+      "algebraic_tensor_image::tests::direct_tag_difference_square_matches_tensor_arithmetic",
+      "algebraic_tensor_image::tests::exact_small_rational_image_candidates_require_exact_replay",
+      "algebraic_tensor_image::tests::flat_first_parameter_handoff_matches_public_primitive_component",
+      "algebraic_tensor_image::tests::selected_low_degree_witness_accepts_exact_nonrational_coefficients",
+      "algebraic_tensor_image::tests::selected_low_degree_witness_does_not_depend_on_interval_precision",
+      "algebraic_tensor_image::tests::selected_quadratic_witness_preserves_repeated_and_endpoint_roots",
+      "algebraic_tensor_image::tests::selected_rational_quadratic_witness_eliminates_its_tensor_axis",
+      "algebraic_tensor_image::tests::selected_root_quadratic_compaction_requires_exact_factor",
+      "algebraic_tensor_image::tests::selected_root_rational_compaction_requires_exact_replay",
+      "algebraic_tensor_image::tests::tagged_norm_projects_nonzero_selected_fiber_past_foreign_wide_components",
+      "algebraic_tensor_image::tests::tagged_norm_reuses_a_square_free_exact_witness_carrier",
+      "algebraic_tensor_image::tests::tensor_image_collapses_certified_affine_selected_source_axes",
+      "algebraic_tensor_image::tests::tensor_image_counts_collapsed_axes_before_a_later_elimination_failure",
+      "algebraic_tensor_image::tests::tensor_image_does_not_select_an_extraneous_cardinal_conjugate_image",
+      "algebraic_tensor_image::tests::tensor_image_identifies_duplicate_selected_source_axes_exactly",
+      "algebraic_tensor_image::tests::tensor_image_materializes_a_unique_cardinal_factor_of_a_nonlinear_eliminant",
+      "algebraic_tensor_image::tests::tensor_image_materializes_an_enclosed_exact_linear_eliminant",
+      "algebraic_tensor_image::tests::tensor_image_rejects_nonisolating_and_misshaped_evidence",
+      "algebraic_tensor_image::tests::tensor_image_represents_four_correlated_selected_roots",
+      "algebraic_tensor_image::tests::tensor_image_retains_carriers_for_a_complete_nonrational_point_tuple",
+      "algebraic_tensor_image::tests::tensor_image_retains_exact_real_coefficient_fields",
+      "algebraic_tensor_image::tests::tensor_image_reuses_square_free_constraint_for_selected_conjugates",
+      "algebraic_tensor_image::tests::tensor_image_substitutes_exact_source_axes_before_elimination",
+      "algebraic_tensor_image::tests::tensor_images_remove_irrelevant_wide_rational_content",
+      "algebraic_tensor_image::tests::tensor_images_replay_nonrational_coefficients_after_repeated_arithmetic",
+      "algebraic_tensor_image::tests::translated_quadratic_compaction_preserves_selected_factor_and_ownership",
+      "curve_resultant::tests::axis_saturation_preserves_rootful_fibers_and_closed_boundaries",
+      "curve_resultant::tests::axis_saturation_uses_the_requested_exact_rectangle",
+      "curve_resultant::tests::bivariate_affine_substitution_preserves_ragged_exact_polynomials",
+      "curve_resultant::tests::bivariate_affine_substitution_retains_general_exact_coefficients_and_maps",
+      "curve_resultant::tests::bivariate_axis_factor_preserves_nonrational_coefficient_tower",
+      "curve_resultant::tests::bivariate_axis_factors_extract_both_axes_sequentially",
+      "curve_resultant::tests::bivariate_axis_factors_extract_first_parameter_content_exactly",
+      "curve_resultant::tests::bivariate_axis_factors_leave_primitive_system_unallocated",
+      "curve_resultant::tests::bivariate_axis_factors_reduce_one_zero_equation_without_losing_evidence",
+      "curve_resultant::tests::bivariate_axis_factors_remove_independent_nonrational_equation_scales",
+      "curve_resultant::tests::bivariate_axis_factors_report_zero_and_reduce_transcendental_content",
+      "curve_resultant::tests::bivariate_component_removes_independent_nonrational_equation_scales",
+      "curve_resultant::tests::bivariate_component_retains_an_identically_zero_equation",
+      "curve_resultant::tests::bivariate_component_retains_an_irreducible_quadratic_fiber",
+      "curve_resultant::tests::bivariate_component_retains_degree_four_common_fiber_implicitly",
+      "curve_resultant::tests::bivariate_component_retains_square_free_distinct_cubic_implicitly",
+      "curve_resultant::tests::bivariate_linear_lifts_recover_a_nonlinear_common_root",
+      "curve_resultant::tests::bivariate_linear_lifts_recover_either_parameter_from_adjugate_ratios",
+      "curve_resultant::tests::bivariate_linear_lifts_report_nonlinear_fibers_explicitly",
+      "curve_resultant::tests::bivariate_rational_component_extracts_repeated_cubic_factor",
+      "curve_resultant::tests::bivariate_rational_component_extracts_repeated_quadratic_factor",
+      "curve_resultant::tests::bivariate_rational_component_extracts_triple_cubic_factor",
+      "curve_resultant::tests::bivariate_rational_component_extracts_two_linear_quadratic_factors",
+      "curve_resultant::tests::bivariate_rational_component_handles_unequal_degrees_in_both_orientations",
+      "curve_resultant::tests::bivariate_rational_component_preserves_nonrational_map_coefficients",
+      "curve_resultant::tests::bivariate_rational_component_recovers_primitive_nonlinear_map",
+      "curve_resultant::tests::bivariate_system_eliminates_either_parameter_with_the_same_root",
+      "curve_resultant::tests::bivariate_system_reports_an_identically_degenerate_equation",
+      "curve_resultant::tests::constrained_quadrivariate_fourth_axis_recovers_a_specialized_tangent_gcd",
+      "curve_resultant::tests::constrained_trivariate_resultant_uses_strict_constraint_normalization",
+      "curve_resultant::tests::constrained_trivariate_subresultant_recovers_a_specialized_tangent_gcd",
+      "curve_resultant::tests::curve_resultant_degree_helpers_complete_strict_exact_boundaries",
+      "curve_resultant::tests::curve_resultant_finds_parabola_horizontal_intersections",
+      "curve_resultant::tests::curve_resultant_rejects_empty_inputs_and_degree_over_budget",
+      "curve_resultant::tests::curve_resultant_reports_parallel_disjoint_line_constant",
+      "curve_resultant::tests::curve_resultant_retaining_second_swaps_parameters",
+      "curve_resultant::tests::dense_resultant_preserves_signed_scale_and_repeated_factors",
+      "curve_resultant::tests::equal_degree_bezout_matches_sylvester_through_degree_five",
+      "curve_resultant::tests::equal_degree_bezout_resultant_preserves_exact_orientation_on_either_axis",
+      "curve_resultant::tests::exact_bivariate_division_replays_non_monic_ragged_products",
+      "curve_resultant::tests::exact_bivariate_monomial_division_retains_nonrational_coefficients",
+      "curve_resultant::tests::exact_univariate_gcd_and_division_replay_axis_content",
+      "curve_resultant::tests::generated_exact_bivariate_division_rejects_a_perturbed_product",
+      "curve_resultant::tests::generated_exact_bivariate_division_replays_ragged_products",
+      "curve_resultant::tests::generated_horizontal_line_intersects_parabola_at_exact_height",
+      "curve_resultant::tests::generated_polynomial_determinant_matches_scalar_permutation_expansion",
+      "curve_resultant::tests::generated_rational_weighted_parabola_resultant_cross_multiplies_height",
+      "curve_resultant::tests::interpolation_preserves_arbitrary_exact_values_on_nonuniform_nodes",
+      "curve_resultant::tests::interpolation_preserves_scaled_integer_valued_polynomials",
+      "curve_resultant::tests::nonrational_resultant_preserves_specialized_degree_drop_identity",
+      "curve_resultant::tests::polynomial_determinant_preserves_singular_and_swapped_pivots",
+      "curve_resultant::tests::polynomial_determinant_restores_wide_rational_row_scales",
+      "curve_resultant::tests::quadrivariate_fourth_axis_resultant_retains_all_three_source_axes",
+      "curve_resultant::tests::rational_curve_resultant_cross_multiplies_weighted_parabola",
+      "curve_resultant::tests::rational_curve_resultant_rejects_certified_zero_weight",
+      "curve_resultant::tests::rational_interpolation_preserves_signed_scale_at_degree_drops_on_either_axis",
+      "curve_resultant::tests::rational_resultant_preserves_specialized_degree_drop_identity",
+      "curve_resultant::tests::sampled_fiber_gcd_removes_high_degree_cofactor_scale_exactly",
+      "curve_resultant::tests::trivariate_constraint_resultant_eliminates_every_tensor_axis",
+      "curve_resultant::tests::trivariate_constraint_resultant_obeys_each_retained_degree_budget",
+      "curve_resultant::tests::trivariate_system_resultant_eliminates_every_tensor_axis",
+      "curve_resultant::tests::trivariate_system_resultant_handles_constant_eliminated_operand",
+      "curve_resultant::tests::trivariate_system_resultant_ignores_trailing_zero_storage",
+      "curve_resultant::tests::trivariate_system_resultant_preserves_nominal_degree_at_grid_drop",
+      "curve_resultant::tests::trivariate_system_subresultant_recovers_tangent_selected_pair_gcd",
+      "curve_resultant::tests::zero_dividend_still_requires_a_certified_nonzero_divisor",
+      "resultant::tests::constant_quotient_relation_retains_padded_pseudo_scale",
+      "resultant::tests::constant_resultant_uses_exact_binary_power_for_high_degree",
+      "resultant::tests::flat_integer_bareiss_matches_reported_determinants",
+      "resultant::tests::generated_common_linear_factor_resultant_is_zero",
+      "resultant::tests::generated_exact_rational_scalar_resultants_match_full_reports",
+      "resultant::tests::generated_flat_integer_bareiss_matches_reported_four_by_four",
+      "resultant::tests::generated_linear_resultants_match_root_difference",
+      "resultant::tests::generated_monic_quotient_ring_samples_match_sylvester_up_to_scale",
+      "resultant::tests::generated_resultant_schedule_classifies_linear_pairs",
+      "resultant::tests::generated_subresultant_chain_detects_common_linear_factor",
+      "resultant::tests::polynomial_zero_truth_lets_nonzero_dominate_unknown",
+      "resultant::tests::quotient_ring_samples_match_sylvester_resultants_up_to_one_scale",
+      "resultant::tests::resultant_of_linear_polynomials_is_exact_difference",
+      "resultant::tests::resultant_reports_common_linear_root_as_zero",
+      "resultant::tests::resultant_schedule_classifies_coprime_common_and_bad_pairs",
+      "resultant::tests::resultant_trimming_uses_strict_exact_signs_without_guessing",
+      "resultant::tests::resultant_validates_empty_and_zero_polynomials",
+      "resultant::tests::scalar_integer_resultant_matches_full_report_at_binary_dimension_limit",
+      "resultant::tests::scalar_resultant_preserves_exact_fractional_scale",
+      "resultant::tests::subresultant_and_scheduler_complete_strict_exact_boundaries",
+      "resultant::tests::subresultant_chain_keeps_unknown_lower_coefficients",
+      "resultant::tests::subresultant_chain_reports_common_factor",
+      "resultant::tests::subresultant_chain_reports_coprime_linear_inputs",
+      "resultant::tests::subresultant_chain_still_rejects_unknown_leading_degree",
+      "tensor_resultant::tests::constant_quadratic_norm_uses_the_same_nominal_fast_path",
+      "tensor_resultant::tests::constrained_tensor_resultant_uses_strict_constraint_normalization",
+      "tensor_resultant::tests::dense_tensor_affine_axis_substitution_expands_exactly",
+      "tensor_resultant::tests::dense_tensor_arithmetic_preserves_rank_and_power_axes",
+      "tensor_resultant::tests::dense_tensor_axis_reduction_matches_coordinate_reference_on_every_axis",
+      "tensor_resultant::tests::dense_tensor_axis_reduction_preserves_nominal_shape_and_opaque_fibers",
+      "tensor_resultant::tests::dense_tensor_axis_reduction_uses_the_exact_selected_quotient_ring",
+      "tensor_resultant::tests::dense_tensor_equal_axis_substitution_adds_source_powers",
+      "tensor_resultant::tests::dense_tensor_exact_axis_substitution_preserves_row_major_layout",
+      "tensor_resultant::tests::dense_tensor_multiplication_does_not_refine_opaque_coefficients_for_zero_pruning",
+      "tensor_resultant::tests::dense_tensor_removes_only_certified_independent_axes",
+      "tensor_resultant::tests::dense_tensor_square_accumulates_symmetric_terms_once",
+      "tensor_resultant::tests::direct_tensor_norm_preserves_a_certified_degree_below_padded_storage",
+      "tensor_resultant::tests::direct_tensor_norm_trims_strictly_exact_zero_output_degree",
+      "tensor_resultant::tests::final_axis_quotient_norm_preserves_a_quadratic_source_fiber",
+      "tensor_resultant::tests::nominal_linear_quadratic_norm_does_not_require_leading_sign",
+      "tensor_resultant::tests::quadratic_closed_form_compacts_only_structural_padding",
+      "tensor_resultant::tests::rank_five_eliminates_four_selected_square_roots_without_a_degree_cap",
+      "tensor_resultant::tests::sampled_tensor_resultant_skips_only_structural_padding",
+      "tensor_resultant::tests::tensor_resultant_helpers_complete_strict_exact_boundaries",
+      "tensor_resultant::tests::tensor_resultant_preserves_a_correlated_product_image",
+      "tensor_resultant::tests::tensor_resultant_reports_invalid_axes_and_constraints"
+    ],
+    "hypercurve": [
+      "bezier_offset::structural_overlap_trace_regression::monotone_reparameterization_preserves_structural_pair_crossings_strict"
+    ]
+  },
+  "all_processes_reaped": true,
+  "probe_complete": true,
+  "qualification_complete": false
+}

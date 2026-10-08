@@ -1,0 +1,16 @@
+{
+  "tag": "derivative-app-baseline-strip-arrangement",
+  "started": "2026-09-09T15:38:15.698Z",
+  "finished": "2026-09-09T15:38:15.735Z",
+  "elapsedSeconds": 0.035156916999999996,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "strip",
+  "args": [
+    "--strip-all",
+    "-o",
+    "/tmp/calcium-derivative-apps.5K06wk/baseline-arrangement.stripped",
+    "/tmp/calcium-derivative-apps.5K06wk/baseline-arrangement"
+  ],
+  "code": 0,
+  "signal": null
+}

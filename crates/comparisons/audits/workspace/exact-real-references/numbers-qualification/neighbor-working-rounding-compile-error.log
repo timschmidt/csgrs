@@ -1,0 +1,17 @@
+   Compiling hyperreal v0.13.1 (/home/tim/Documents/GitHub/workspace/hyperreal)
+error[E0282]: type annotations needed
+   --> src/computable/node/tests.rs:268:29
+    |
+268 |                         let sample = base.clone() + rounding;
+    |                             ^^^^^^
+269 |                         let sample_unit = Q::from((1, Integer::from(1) << -operand_precision));
+270 |                         if (Q::from(sample.clone()) * &sample_unit - &q).abs() > sample_unit { continue; }
+    |                                     ------ type must be known at this point
+    |
+help: consider giving `sample` an explicit type
+    |
+268 |                         let sample: /* Type */ = base.clone() + rounding;
+    |                                   ++++++++++++
+
+For more information about this error, try `rustc --explain E0282`.
+error: could not compile `hyperreal` (lib test) due to 1 previous error

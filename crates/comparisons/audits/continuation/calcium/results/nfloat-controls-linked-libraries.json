@@ -1,0 +1,13 @@
+{
+  "tag": "nfloat-controls-linked-libraries",
+  "started": "2026-09-09T16:17:47.357Z",
+  "finished": "2026-09-09T16:17:47.384Z",
+  "elapsedSeconds": 0.024688816000000002,
+  "cwd": "/home/tim/Documents/GitHub/workspace",
+  "command": "ldd",
+  "args": [
+    "/tmp/calcium-nfloat-controls.A4BEA9/nfloat-controls"
+  ],
+  "code": 0,
+  "signal": null
+}

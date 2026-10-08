@@ -1,0 +1,100 @@
+[2 of 9] Compiling Numeric.AERN.IVP.Solver.ShrinkWrap ( /tmp/aern-audit.zp9Mzz/source/aern-ivp/src/Numeric/AERN/IVP/Solver/ShrinkWrap.hs, /tmp/aern-audit.zp9Mzz/source/aern-ivp/src/Numeric/AERN/IVP/Solver/ShrinkWrap.o )
+[6 of 9] Compiling Numeric.AERN.IVP.Solver.Picard.UncertainValue ( /tmp/aern-audit.zp9Mzz/source/aern-ivp/src/Numeric/AERN/IVP/Solver/Picard/UncertainValue.hs, /tmp/aern-audit.zp9Mzz/source/aern-ivp/src/Numeric/AERN/IVP/Solver/Picard/UncertainValue.o )
+
+/tmp/aern-audit.zp9Mzz/source/aern-ivp/src/Numeric/AERN/IVP/Solver/Picard/UncertainValue.hs:295:7: warning: [GHC-53633] [-Woverlapping-patterns]
+    Pattern match is redundant
+    In an equation for ‘getRange’: getRange | otherwise = ...
+    |
+295 |     | otherwise = getRangeFullEval 
+    |       ^^^^^^^^^
+[7 of 9] Compiling Numeric.AERN.IVP.Solver.Events.EventTree ( /tmp/aern-audit.zp9Mzz/source/aern-ivp/src/Numeric/AERN/IVP/Solver/Events/EventTree.hs, /tmp/aern-audit.zp9Mzz/source/aern-ivp/src/Numeric/AERN/IVP/Solver/Events/EventTree.o )
+
+/tmp/aern-audit.zp9Mzz/source/aern-ivp/src/Numeric/AERN/IVP/Solver/Events/EventTree.hs:577:13: warning: [GHC-53633] [-Woverlapping-patterns]
+    Pattern match is redundant
+    In a case alternative: _ -> ...
+    |
+577 |             _ -> error ""
+    |             ^^^^^^^^^^^^^
+[8 of 9] Compiling Main             ( /tmp/aern-audit.zp9Mzz/IVPEventProbe.hs, /tmp/aern-audit.zp9Mzz/IVPEventProbe.o )
+
+/tmp/aern-audit.zp9Mzz/IVPEventProbe.hs:46:46: error: [GHC-83865]
+    • Couldn't match type: R.MixedAddEffortIndicator P (Interval e0)
+                     with: IntPolyEffort (Interval Double)
+      Expected: R.MixedAddEffortIndicator P (Domain P)
+        Actual: R.MixedAddEffortIndicator P (Interval e0)
+        The type variable ‘e0’ is ambiguous
+    • In the 15th argument of ‘solveODEIVPUncertainValueExactTime_UsingPicard_Bisect’, namely
+        ‘(R.mixedAddDefaultEffort sample (cf 0))’
+      In the second argument of ‘($)’, namely
+        ‘solveODEIVPUncertainValueExactTime_UsingPicard_Bisect
+           wrap False limits (sizeLimitsChangeDefaultEffort sample)
+           (compositionDefaultEffort sample) effEval
+           (integrationDefaultEffort sample)
+           (fakeDerivativeDefaultEffort sample)
+           (Q.pCompareDefaultEffort sample) (R.addDefaultEffort sample)
+           (R.multDefaultEffort sample) (R.absDefaultEffort sample)
+           (N.minmaxInOutDefaultEffort sample)
+           (R.mixedDivDefaultEffort sample (0 :: Int))
+           (R.mixedAddDefaultEffort sample (cf 0))
+           (R.mixedMultDefaultEffort sample (cf 0))
+           (R.roundedRealDefaultEffort (cf 0)) (cf 1) 3 (cf 0.125) (cf 0.5)
+           (cf 0) (ivp prune)’
+      In the expression:
+        fst
+          $ solveODEIVPUncertainValueExactTime_UsingPicard_Bisect
+              wrap False limits (sizeLimitsChangeDefaultEffort sample)
+              (compositionDefaultEffort sample) effEval
+              (integrationDefaultEffort sample)
+              (fakeDerivativeDefaultEffort sample)
+              (Q.pCompareDefaultEffort sample) (R.addDefaultEffort sample)
+              (R.multDefaultEffort sample) (R.absDefaultEffort sample)
+              (N.minmaxInOutDefaultEffort sample)
+              (R.mixedDivDefaultEffort sample (0 :: Int))
+              (R.mixedAddDefaultEffort sample (cf 0))
+              (R.mixedMultDefaultEffort sample (cf 0))
+              (R.roundedRealDefaultEffort (cf 0)) (cf 1) 3 (cf 0.125) (cf 0.5)
+              (cf 0) (ivp prune)
+   |
+46 |   (R.mixedDivDefaultEffort sample (0::Int)) (R.mixedAddDefaultEffort sample (cf 0))
+   |                                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+/tmp/aern-audit.zp9Mzz/IVPEventProbe.hs:47:4: error: [GHC-83865]
+    • Couldn't match type: R.MixedMultEffortIndicator P (Interval e1)
+                     with: IntPolyEffort (Interval Double)
+      Expected: R.MixedMultEffortIndicator P (Domain P)
+        Actual: R.MixedMultEffortIndicator P (Interval e1)
+        The type variable ‘e1’ is ambiguous
+    • In the 16th argument of ‘solveODEIVPUncertainValueExactTime_UsingPicard_Bisect’, namely
+        ‘(R.mixedMultDefaultEffort sample (cf 0))’
+      In the second argument of ‘($)’, namely
+        ‘solveODEIVPUncertainValueExactTime_UsingPicard_Bisect
+           wrap False limits (sizeLimitsChangeDefaultEffort sample)
+           (compositionDefaultEffort sample) effEval
+           (integrationDefaultEffort sample)
+           (fakeDerivativeDefaultEffort sample)
+           (Q.pCompareDefaultEffort sample) (R.addDefaultEffort sample)
+           (R.multDefaultEffort sample) (R.absDefaultEffort sample)
+           (N.minmaxInOutDefaultEffort sample)
+           (R.mixedDivDefaultEffort sample (0 :: Int))
+           (R.mixedAddDefaultEffort sample (cf 0))
+           (R.mixedMultDefaultEffort sample (cf 0))
+           (R.roundedRealDefaultEffort (cf 0)) (cf 1) 3 (cf 0.125) (cf 0.5)
+           (cf 0) (ivp prune)’
+      In the expression:
+        fst
+          $ solveODEIVPUncertainValueExactTime_UsingPicard_Bisect
+              wrap False limits (sizeLimitsChangeDefaultEffort sample)
+              (compositionDefaultEffort sample) effEval
+              (integrationDefaultEffort sample)
+              (fakeDerivativeDefaultEffort sample)
+              (Q.pCompareDefaultEffort sample) (R.addDefaultEffort sample)
+              (R.multDefaultEffort sample) (R.absDefaultEffort sample)
+              (N.minmaxInOutDefaultEffort sample)
+              (R.mixedDivDefaultEffort sample (0 :: Int))
+              (R.mixedAddDefaultEffort sample (cf 0))
+              (R.mixedMultDefaultEffort sample (cf 0))
+              (R.roundedRealDefaultEffort (cf 0)) (cf 1) 3 (cf 0.125) (cf 0.5)
+              (cf 0) (ivp prune)
+   |
+47 |   (R.mixedMultDefaultEffort sample (cf 0)) (R.roundedRealDefaultEffort (cf 0))
+   |    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

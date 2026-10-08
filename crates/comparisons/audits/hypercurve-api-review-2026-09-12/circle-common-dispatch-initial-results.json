@@ -1,0 +1,38 @@
+[
+  {
+    "name": "curve_intersection::curve_support_intersection::circle_dispatch_tests::selected_circle_and_analytic_parallel_keep_contact_authority",
+    "returncode": 0,
+    "elapsed_seconds": 0.9649414930026978,
+    "log": "circle-common-dispatch-initial-selected_circle_and_analytic_parallel_keep_contact_authority.log"
+  },
+  {
+    "name": "curve_intersection::curve_support_intersection::circle_dispatch_tests::selected_circle_and_non_ph_parallel_keep_both_crossings",
+    "returncode": 124,
+    "elapsed_seconds": 180.01323529999354,
+    "log": "circle-common-dispatch-initial-selected_circle_and_non_ph_parallel_keep_both_crossings.log"
+  },
+  {
+    "name": "curve_intersection::curve_support_intersection::circle_dispatch_tests::selected_circle_intersects_rational_curves_and_retained_chords",
+    "returncode": 101,
+    "elapsed_seconds": 0.003420145993004553,
+    "log": "circle-common-dispatch-initial-selected_circle_intersects_rational_curves_and_retained_chords.log"
+  },
+  {
+    "name": "curve_intersection::curve_support_intersection::circle_dispatch_tests::selected_circle_overlaps_preserve_oriented_ranges_and_singleton_contacts",
+    "returncode": 101,
+    "elapsed_seconds": 0.06361449700489175,
+    "log": "circle-common-dispatch-initial-selected_circle_overlaps_preserve_oriented_ranges_and_singleton_contacts.log"
+  },
+  {
+    "name": "curve_intersection::curve_support_intersection::circle_dispatch_tests::selected_circle_pairs_replay_crossings_tangencies_and_disjointness",
+    "returncode": 0,
+    "elapsed_seconds": 0.11377580498810858,
+    "log": "circle-common-dispatch-initial-selected_circle_pairs_replay_crossings_tangencies_and_disjointness.log"
+  },
+  {
+    "name": "curve_intersection::curve_support_intersection::circle_dispatch_tests::selected_circle_split_results_reenter_intersections",
+    "returncode": 101,
+    "elapsed_seconds": 0.0034261760010849684,
+    "log": "circle-common-dispatch-initial-selected_circle_split_results_reenter_intersections.log"
+  }
+]

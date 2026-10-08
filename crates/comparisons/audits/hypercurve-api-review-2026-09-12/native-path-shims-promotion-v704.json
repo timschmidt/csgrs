@@ -1,0 +1,18 @@
+{
+  "base": {
+    "hypercurve/src/curve_string.rs": "a605e146ec4251ec2e87aa442555d45f77aa1b386df8c609a72c8695d82ff2a4",
+    "hypercurve/tests/hypercurve_curve_string.rs": "7e535dddf8d6df7e5409c085a491ff50337649469cddce8dff8759e3851fbb03",
+    "hypercurve/benches/editing.rs": "c5a37c0562dd9964172f7fbef4e91e9096b503774376b5da016523f9d0d6e418",
+    "hypercurve/fuzz/fuzz_targets/curve_string_editing.rs": "69b4ccb9e5201d803d4dc0830f70ab587a3c15305d8a37c3fdf94d41ebc84525",
+    "hyperbrep/src/boolean.rs": "c215910c4db6f85dbc7fd01889e94e0b04cac8740fcb82751a8024042bfe48fa"
+  },
+  "promoted": {
+    "hypercurve/src/curve_string.rs": "c8613814c22a228e7c15743613b2e8a26ea2113685b6a90c51d230b204a0007a",
+    "hypercurve/tests/hypercurve_curve_string.rs": "23cf46b1717024b88b81bd2236ccd55ea974c6c68473b342184c27f255411798",
+    "hypercurve/benches/editing.rs": "d7a39130b9bfd6f443a929a202a9be2b3c4f10e00f60dcca8a7d078995348055",
+    "hypercurve/fuzz/fuzz_targets/curve_string_editing.rs": "7d4e93ebfebe847970620bbcdcd4a3fe545e7c8acecb9a6e617b422147e983d8",
+    "hyperbrep/src/boolean.rs": "d7bfd2986bf56dc3c6a2c739b5543c2ac310586402617085e5fc5380fa2b3349"
+  },
+  "candidate": "native-path-shims-candidate-v703",
+  "baseline_repositories": "interpolation-content-20260928-v701-repositories-after.json"
+}

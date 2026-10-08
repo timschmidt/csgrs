@@ -1,0 +1,7 @@
+Consolidate public spline authoring on the retained curves
+
+Make the polynomial and rational B-spline control-net definitions crate-private and remove their three default-periodicity forwarding constructors. PolynomialSplineCurve2 and NurbsCurve2 remain the public authoring and cache owners. Remove duplicate polynomial layout validation; the private definition already performs the same checked validation before all other work.
+
+Migrate all 24 extraction integration cases, the benchmark and the fuzz target directly. Preserve pole, signed/zero homogeneous weight, knot, arbitrary-degree, native-promotion and span-fact coverage. Cold benchmarks now construct fresh public curves and explicitly name that workload; cached queries remain separate. The fuzzer reuses its retained curve for knot edits instead of reconstructing it. No compatibility API remains.
+
+Validation: 156 release tests across five pinned binaries, including complete B-spline, polynomial spline, NURBS and public Curve integration inventories, plus six lint/format/fuzz/docs/downstream checks. Knot extraction, layout validation and standalone span-fact helper bodies are byte-identical.

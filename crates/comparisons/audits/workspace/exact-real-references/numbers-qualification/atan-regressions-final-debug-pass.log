@@ -1,0 +1,9 @@
+   Compiling hyperreal v0.13.1 (/home/tim/Documents/GitHub/workspace/hyperreal)
+error[E0282]: type annotations needed
+  --> src/computable/node/tests.rs:84:25
+   |
+84 |                 assert!((Q::from(coarse) - q.clone() * 16).abs() <= 1);
+   |                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ cannot infer type
+
+For more information about this error, try `rustc --explain E0282`.
+error: could not compile `hyperreal` (lib test) due to 1 previous error

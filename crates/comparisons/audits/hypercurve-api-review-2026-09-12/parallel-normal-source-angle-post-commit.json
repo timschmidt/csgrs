@@ -1,0 +1,10 @@
+{
+  "commit": "5206f58f5b52271ced4eedb3a363202c5595ba7c",
+  "qualified_source_sha256": "ae562404ee1c8ed4d7244adc97e35f7bd09ffd5c4b43274380c0f3d0585f0dd0",
+  "committed_source_matches": true,
+  "remaining_working_files": [
+    "src/bezier_offset.rs",
+    "src/bezier_region.rs",
+    "tests/hypercurve_curve_region_promotion.rs"
+  ]
+}

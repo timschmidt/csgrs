@@ -1,0 +1,30 @@
+{
+  "tag": "qqbar-decisions-compile",
+  "started": "2026-09-10T05:41:01.773Z",
+  "finished": "2026-09-10T05:41:01.902Z",
+  "elapsedSeconds": 0.126976322,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison",
+  "command": "gcc",
+  "args": [
+    "-O2",
+    "-g0",
+    "-Wall",
+    "-Wextra",
+    "-Werror",
+    "-isystem",
+    "../exact-real-references/flint/src",
+    "audits/continuation/calcium/flint-qqbar-decision-controls.c",
+    "-L",
+    "../exact-real-references/flint",
+    "-Wl,-rpath,/home/tim/Documents/GitHub/workspace/exact-real-references/flint",
+    "-lflint",
+    "-lmpfr",
+    "-lgmp",
+    "-lm",
+    "-lpthread",
+    "-o",
+    "/tmp/calcium-qqbar-decisions.xUeflv/controls"
+  ],
+  "code": 0,
+  "signal": null
+}

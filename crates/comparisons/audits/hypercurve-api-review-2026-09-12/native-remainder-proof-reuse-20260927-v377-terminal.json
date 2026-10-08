@@ -1,0 +1,35 @@
+{
+  "source_manifest": "native-remainder-proof-reuse-20260927-v377-sources.json",
+  "source_directory": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/source-archives/native-remainder-proof-reuse-20260927-v377",
+  "workspace_guard": "retained-wide-field-proofs-20260927-v374-sources.json",
+  "parent_commit": "1bd0348bb7b848e85f9085932a30033675f59e2f",
+  "hypersolve_commit": "4ba7f2508b8e38f60e66543af688a885cfaa6a8e",
+  "cases": [
+    {
+      "name": "strict_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions",
+      "returncode": 124,
+      "log": "native-remainder-proof-reuse-20260927-v377-strict_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions.log",
+      "elapsed_seconds": 240.03554107504897
+    }
+  ],
+  "all_processes_reaped": true,
+  "command": [
+    "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+    "test",
+    "--test",
+    "hypercurve_curve_region_promotion",
+    "--release",
+    "--all-features",
+    "--no-run",
+    "--message-format=json",
+    "--locked",
+    "--offline"
+  ],
+  "build_returncode": 0,
+  "build_elapsed_seconds": 94.56481833406724,
+  "binary": {
+    "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/native-remainder-proof-reuse-20260927-v377-hypercurve_curve_region_promotion",
+    "sha256": "4955dea5b357a8c32486c3fc121708dcdaeea491a8d74bab0c73254f2e43ffab"
+  },
+  "all_sources_unchanged": true
+}

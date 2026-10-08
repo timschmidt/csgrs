@@ -1,0 +1,13 @@
+{
+  "tag": "symbolic-boundary-prepare-v83",
+  "started": "2026-09-12T03:35:34.377Z",
+  "finished": "2026-09-12T03:35:35.247Z",
+  "elapsedSeconds": 0.8670532049999999,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "node",
+  "args": [
+    "prepare-symbolic-boundary-v83.mjs"
+  ],
+  "code": 0,
+  "signal": null
+}

@@ -1,0 +1,42 @@
+
+Data/Multinomial.hs:1:17: warning: [-Wdeprecated-flags]
+    -fglasgow-exts is deprecated: Use individual extensions instead
+  |
+1 | {-# OPTIONS_GHC -fglasgow-exts #-}
+  |                 ^^^^^^^^^^^^^^
+
+Data/Interval.hs:1:17: warning: [-Wdeprecated-flags]
+    -fglasgow-exts is deprecated: Use individual extensions instead
+  |
+1 | {-# OPTIONS_GHC -fglasgow-exts #-}
+  |                 ^^^^^^^^^^^^^^
+
+Data/Real/CReal.hs:1:17: warning: [-Wdeprecated-flags]
+    -fglasgow-exts is deprecated: Use individual extensions instead
+  |
+1 | {-# OPTIONS_GHC -fglasgow-exts #-}
+  |                 ^^^^^^^^^^^^^^
+
+Data/Real/Complete.hs:1:17: warning: [-Wdeprecated-flags]
+    -fglasgow-exts is deprecated: Use individual extensions instead
+  |
+1 | {-# OPTIONS_GHC -fglasgow-exts #-}
+  |                 ^^^^^^^^^^^^^^
+[1 of 8] Compiling Combinatorics    ( Combinatorics.hs, nothing )
+[2 of 8] Compiling Data.Interval    ( Data/Interval.hs, nothing )
+
+Data/Interval.hs:65:2: error: [GHC-54721]
+    ‘coarbitrary’ is not a (visible) method of class ‘Arbitrary’
+   |
+65 |  coarbitrary (Interval (x,y)) = coarbitrary x .
+   |  ^^^^^^^^^^^
+[4 of 8] Compiling Data.Real.Complete ( Data/Real/Complete.hs, nothing )
+[5 of 8] Compiling Data.Real.Gauge  ( Data/Real/Gauge.hs, nothing )
+[6 of 8] Compiling Data.Real.Base   ( Data/Real/Base.hs, nothing )
+
+Data/Real/Base.hs:4:1: error:
+    Could not find module ‘Ratio’
+    Use -v (or `:set -v` in ghci) to see a list of the files searched for.
+  |
+4 | import Ratio
+  | ^^^^^^^^^^^^

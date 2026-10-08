@@ -1,0 +1,33 @@
+{
+  "cases": 622,
+  "binaries": 12,
+  "checks": 7,
+  "paths": {
+    "hypercurve": [
+      "benches/bezier_algebraic_parameter.rs",
+      "benches/bezier_arrangement.rs",
+      "benches/bezier_region.rs",
+      "benches/bezier_split_materialization.rs",
+      "benches/curve_region_boolean_batch.rs",
+      "benches/offset.rs",
+      "fuzz/fuzz_targets/bezier_arrangement.rs",
+      "fuzz/fuzz_targets/bezier_region.rs",
+      "fuzz/fuzz_targets/bezier_split_materialization.rs",
+      "src/bezier_offset.rs",
+      "src/bezier_parameter.rs",
+      "src/bezier_region.rs",
+      "src/curve_region_trim.rs",
+      "src/curve_subdivision.rs",
+      "src/curve_support_intersection.rs",
+      "src/rational_bezier_general.rs",
+      "tests/hypercurve_analytic_parallel_region.rs",
+      "tests/hypercurve_bezier_algebraic_parameter.rs",
+      "tests/hypercurve_bezier_arrangement.rs",
+      "tests/hypercurve_bezier_region.rs",
+      "tests/hypercurve_bezier_split_materialization.rs"
+    ],
+    "hypersolve": [
+      "src/algebraic.rs"
+    ]
+  }
+}

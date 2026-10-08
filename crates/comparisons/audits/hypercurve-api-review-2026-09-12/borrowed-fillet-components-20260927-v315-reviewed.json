@@ -1,0 +1,24 @@
+{
+  "source_manifest": "borrowed-fillet-components-20260927-v315-sources.json",
+  "qualification": "borrowed-fillet-components-20260927-v315-terminal.json",
+  "outer_session_reaped": 77805,
+  "validated_files": 2046,
+  "passed_tests": 131,
+  "static_checks": 6,
+  "repos": {
+    "hypercurve": {
+      "parent": "c986e23825bddef1b68cd822b5db53b41c4f406b",
+      "paths": {
+        "src/curve.rs": "84990ecfe77f80ce9959e93db7e8f2d57e558871f8fee1045834ba8911b27b2f",
+        "src/curve_corner_chain.rs": "aef3fd05d30b0c1f591abf2db273bc0974962b8ea2e36557ca690649b1bcaf0e",
+        "src/curve_corner_domain.rs": "a928681117e64ffc01830efcd6fd3d8def8ec0695f0fccd30cf30b11abc6a8a7",
+        "src/curve_fillet.rs": "9b1982b77f43060a70dd3b11466a84962f5c9be392f85604e6e4542b0438c792"
+      }
+    }
+  },
+  "known_unresolved_not_requalified": [
+    "strict_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions",
+    "approximate_512_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions"
+  ],
+  "remaining_constraint_work": "General collapsed selected-circle contacts and native coincident supports"
+}

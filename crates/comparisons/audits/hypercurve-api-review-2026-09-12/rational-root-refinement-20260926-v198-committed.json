@@ -1,0 +1,9 @@
+{
+  "parent": "9370aa67a692d651b46ad32d836fed62f9da726f",
+  "file": "hypercurve/src/bezier_parameter.rs",
+  "sha256": "b80d93e6bd58a3983538c13cf11955f1dd89cb054ea0a3804bad7339485ecc5b",
+  "qualification": "rational-root-refinement-20260926-v198-parameters-terminal.json",
+  "test_count": 49,
+  "all_processes_reaped": true,
+  "commit": "f7bb46a2869097219d316b6af22ae26c2459492c"
+}

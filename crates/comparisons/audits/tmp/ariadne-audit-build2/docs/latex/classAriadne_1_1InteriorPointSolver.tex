@@ -1,0 +1,36 @@
+\doxysubsection{Interior\+Point\+Solver Class Reference}
+\hypertarget{classAriadne_1_1InteriorPointSolver}{}\label{classAriadne_1_1InteriorPointSolver}\index{InteriorPointSolver@{InteriorPointSolver}}
+
+
+{\ttfamily \#include $<$linear\+\_\+programming.\+hpp$>$}
+
+
+
+\doxysubsubsection{Description}
+Solver for linear programming problems using interior point methods. \doxysubsubsubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1InteriorPointSolver_aa263504c0fd0fc2ac005034bb30037bc}\label{classAriadne_1_1InteriorPointSolver_aa263504c0fd0fc2ac005034bb30037bc} 
+\mbox{\hyperlink{namespaceAriadne_a9ba6bbf66028bc5b9a5bcee1c9f7a2ca}{Tuple}}$<$ AX, \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ AX $>$, \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ AX $>$ $>$ {\bfseries minimise} (const \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ X $>$ \&c, const \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ X $>$ \&xl, const \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ X $>$ \&xu, const \mbox{\hyperlink{classAriadne_1_1Matrix}{Matrix}}$<$ X $>$ \&A, const \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ X $>$ \&b) const
+\begin{DoxyCompactList}\small\item\em Find approximate optimal solution of $\min c^T x \text{ s.t. } Ax=b; x\geq0$. Returns the tuple (v,x,y) where v is the optimal value, x is the optimal point, and y the corresponding dual feasible point. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1InteriorPointSolver_aea25b566a70132710e1a1b9e0d37290d}\label{classAriadne_1_1InteriorPointSolver_aea25b566a70132710e1a1b9e0d37290d} 
+\mbox{\hyperlink{namespaceAriadne_a9ba6bbf66028bc5b9a5bcee1c9f7a2ca}{Tuple}}$<$ AX, \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ AX $>$, \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ AX $>$ $>$ {\bfseries hotstarted\+\_\+minimise} (const \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ X $>$ \&c, const \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ X $>$ \&xl, const \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ X $>$ \&xu, const \mbox{\hyperlink{classAriadne_1_1Matrix}{Matrix}}$<$ X $>$ \&A, const \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ X $>$ \&b, \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ AX $>$ \&x, \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ AX $>$ \&y, \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ AX $>$ \&zl, \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ AX $>$ \&zu) const
+\begin{DoxyCompactList}\small\item\em Find approximate optimal solution of $\min c^T x \text{ s.t. } Ax=b; x\geq0$. Returns the triple (v,x,y) where v is the optimal value, x is the optimal point, and y the corresponding dual feasible point. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1InteriorPointSolver_a959c72541489d0c6764a94faebf51b9b}\label{classAriadne_1_1InteriorPointSolver_a959c72541489d0c6764a94faebf51b9b} 
+\mbox{\hyperlink{classAriadne_1_1ValidatedKleenean}{Validated\+Kleenean}} {\bfseries feasible} (const \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ X $>$ \&xl, const \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ X $>$ \&xu, const \mbox{\hyperlink{classAriadne_1_1Matrix}{Matrix}}$<$ X $>$ \&A, const \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ X $>$ \&b) const
+\begin{DoxyCompactList}\small\item\em Test feasibility of the problem $Ax=b; x_l\leq x\leq x_u$. Returns the pair (r,x) where r is the result, and x the (potential) feasible point. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1InteriorPointSolver_a1fe11c236d0decfc8499e305aac814dc}\label{classAriadne_1_1InteriorPointSolver_a1fe11c236d0decfc8499e305aac814dc} 
+\mbox{\hyperlink{classAriadne_1_1ValidatedKleenean}{Validated\+Kleenean}} {\bfseries validate\+\_\+feasibility} (const \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ X $>$ \&xl, const \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ X $>$ \&xu, const \mbox{\hyperlink{classAriadne_1_1Matrix}{Matrix}}$<$ X $>$ \&A, const \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ X $>$ \&b, const \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ AX $>$ \&x, const \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ AX $>$ \&y) const
+\begin{DoxyCompactList}\small\item\em Validate that {\itshape x} is primal feasible and {\itshape y} is dual feasible. Returns the interval of possible optimal values. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1InteriorPointSolver_a2f45d11a312adafda798ea6646f0d6f9}\label{classAriadne_1_1InteriorPointSolver_a2f45d11a312adafda798ea6646f0d6f9} 
+Linear\+Program\+Status {\bfseries \+\_\+minimisation\+\_\+step} (const \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ X $>$ \&c, const \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ X $>$ \&xl, const \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ X $>$ \&xu, const \mbox{\hyperlink{classAriadne_1_1Matrix}{Matrix}}$<$ X $>$ \&A, const \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ X $>$ \&b, \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ AX $>$ \&x, \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ AX $>$ \&y, \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ AX $>$ \&zl, \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ AX $>$ \&zu) const
+\begin{DoxyCompactList}\small\item\em Perform a step of the optimization of $\min c^T x \text{ s.t. } Ax=b; x_l \leq x\leq x_u$. Returns true if a full Newton step (alpha=1) is taken. In this case, the problem is feasible (up to roundoff error). \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1InteriorPointSolver_afb789ee173ede7ad19f201bf1f2ec67a}\label{classAriadne_1_1InteriorPointSolver_afb789ee173ede7ad19f201bf1f2ec67a} 
+Linear\+Program\+Status {\bfseries \+\_\+feasibility\+\_\+step} (const \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ X $>$ \&xl, const \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ X $>$ \&xu, const \mbox{\hyperlink{classAriadne_1_1Matrix}{Matrix}}$<$ X $>$ \&A, const \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ X $>$ \&b, \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ AX $>$ \&x, \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ AX $>$ \&y, \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ AX $>$ \&zl, \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ AX $>$ \&zu) const
+\begin{DoxyCompactList}\small\item\em Perform a step of the feasibility problem $Ax=b,\ x_l \leq x \leq x_u$. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+The documentation for this class was generated from the following files\+:\begin{DoxyCompactItemize}
+\item 
+source/solvers/\mbox{\hyperlink{linear__programming_8hpp}{linear\+\_\+programming.\+hpp}}\item 
+source/solvers/linear\+\_\+programming.\+cpp\end{DoxyCompactItemize}

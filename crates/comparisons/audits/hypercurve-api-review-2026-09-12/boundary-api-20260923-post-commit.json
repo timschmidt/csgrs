@@ -1,0 +1,34 @@
+{
+  "hypercurve": {
+    "commit": "b3d1a134cf09fa9c521a24a74a3f97e75fbcc6ad",
+    "qualified_sources": {
+      "benches/comparative.rs": "16b8ab23c42d029192aad79ee62980c6be863d3de1523cdb56b8a876c1ed4b30",
+      "benches/editing.rs": "b4bce5f3b81476446ccbe70aeac1f3da1a1ec850aaf9bf841fb000af5b7320c3",
+      "src/bezier_region.rs": "d2d5ddee1f0120d01a76bdc54a858794b13904ba51112bd3a442ee5691b9b46c",
+      "tests/hypercurve_adversarial_polygons.rs": "95b036a302252b1ec6d5b06f1c0f4f0cd56c26ded95d09a6710db69408298319",
+      "tests/hypercurve_analytic_parallel_region.rs": "8f44446ab5d23cb34ed20e4584ca2edafe8a069b7c82f6500715a926cead0597",
+      "tests/hypercurve_arc_bezier.rs": "5e6e1c17332baad8c78347832459872462581d96ed597f358c2ace6e26f656f3",
+      "tests/hypercurve_curve.rs": "1b98a36ac07926fe1871a8e2a3a92a796b3a5d3e40f82dd3f0dc37d27d4dbc08",
+      "tests/hypercurve_curve_region_boolean.rs": "c2efabdfd33e769f8e006c7d13ebdb96413be84c1723f4eaf2138373724403e5",
+      "tests/hypercurve_curve_region_promotion.rs": "d086baf77fc1ae8f77189a2b43659d8dc6ab0a1ae9868a4a0a777e5da949cc81",
+      "tests/hypercurve_curve_region_stroke.rs": "fa2ba4e0857f9c603aad8929ed8b3ba15cf8779e2f2e98e08e185c9851ee8579",
+      "tests/hypercurve_svg.rs": "4de5f3cc3a1b46990c541cda69d4f12142f581ea01187da89314a8ca95e03a4f",
+      "src/bezier_offset.rs": "9b565201d6e56aa4582caa921eddca40d66f7cf0702bc8f46a8f94a806e28896"
+    },
+    "status": " M src/bezier_region.rs\n"
+  },
+  "hyperbrep": {
+    "commit": "7874790863d210646338182e548d7eef1aa05c7c",
+    "qualified_sources": {
+      "src/builder.rs": "a9bc668dbfdd12b93c08eb152168ddc42244749bf86f61191a942057a77760a6"
+    },
+    "status": ""
+  },
+  "csgrs": {
+    "commit": "d029e51b5d7324f0df785c5cd3cf2f6c7a3a2cca",
+    "qualified_sources": {
+      "examples/readme_renders.rs": "6530acc8fbfa5dfd8f82f691e76d9f80fe4fbaac58ad72fa8bf56ea35f1cc4cd"
+    },
+    "status": ""
+  }
+}

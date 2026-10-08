@@ -1,0 +1,91 @@
+{
+  "parent_commit": "1daed206b1748b84bfe8e038a1b969c5ea46f703",
+  "source": "finite-selected-point-domains-public.rs",
+  "source_sha256": "c0268b16b9731d8ac7e8a36c8b5a09993d5a68015368d2c4f88ae067e9bb9a6b",
+  "executable": "finite-projective-parameter-public",
+  "executable_sha256": "4490e516322381c55c907e50ee44aa1c4c169ac179395b1b33b791f8f1535f07",
+  "normal_library": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypercurve-1201b30e361703ad.rlib",
+  "normal_library_sha256": "5cc578428c0ecd41b54f2dca195f416779e365698dcb4ad46588dd84bd0ef96a",
+  "compile_command": [
+    "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustc",
+    "--edition=2024",
+    "-O",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-selected-point-domains-public.rs",
+    "--extern",
+    "hypercurve=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypercurve-1201b30e361703ad.rlib",
+    "-L",
+    "dependency=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps",
+    "-o",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-projective-parameter-public"
+  ],
+  "queries": [
+    {
+      "chart": 0,
+      "repeat": false,
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-projective-parameter-public",
+        "0"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.015650916990125552,
+      "log": "finite-projective-parameter-public-chart0-repeat0.log",
+      "counts": {
+        "cases": 4,
+        "successes": 4,
+        "point_replays": 16,
+        "failures": 0
+      }
+    },
+    {
+      "chart": 1,
+      "repeat": false,
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-projective-parameter-public",
+        "1"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.015566473011858761,
+      "log": "finite-projective-parameter-public-chart1-repeat0.log",
+      "counts": {
+        "cases": 4,
+        "successes": 4,
+        "point_replays": 16,
+        "failures": 0
+      }
+    },
+    {
+      "chart": 2,
+      "repeat": false,
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-projective-parameter-public",
+        "2"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.031599634006852284,
+      "log": "finite-projective-parameter-public-chart2-repeat0.log",
+      "counts": {
+        "cases": 4,
+        "successes": 4,
+        "point_replays": 16,
+        "failures": 0
+      }
+    },
+    {
+      "chart": 3,
+      "repeat": false,
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-projective-parameter-public",
+        "3"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.03155907700420357,
+      "log": "finite-projective-parameter-public-chart3-repeat0.log",
+      "counts": {
+        "cases": 4,
+        "successes": 4,
+        "point_replays": 16,
+        "failures": 0
+      }
+    }
+  ]
+}

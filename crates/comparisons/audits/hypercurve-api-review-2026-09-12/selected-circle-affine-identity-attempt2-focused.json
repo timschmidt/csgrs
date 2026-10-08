@@ -1,0 +1,19 @@
+[
+  {
+    "target": "hypercurve_curve_intersection",
+    "filter": "selected_circle_tangency_reuses_independent_affine_line_charts",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve_curve_intersection-e3a50a789eb6a53e",
+      "selected_circle_tangency_reuses_independent_affine_line_charts",
+      "--test-threads=2",
+      "--color",
+      "never",
+      "--nocapture"
+    ],
+    "returncode": 124,
+    "elapsed_seconds": 90.0017470610037,
+    "log": "selected-circle-affine-identity-attempt2-selected_circle_tangency_reuses_independent_affine_line_charts.log",
+    "binary": "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve_curve_intersection-e3a50a789eb6a53e",
+    "sha256": "4adedaa45d4df86b6569df5a6759dd98ec1269f3b81d7876356860c5e68bbef9"
+  }
+]

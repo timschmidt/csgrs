@@ -1,0 +1,39 @@
+{
+  "baseline": "derivative-jet-v841-sources.json",
+  "rlib": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypercurve-85a9105cd1c82df7.rlib",
+  "rlib_sha256": "9f4a0cdf1b9d50e492beac769bb4fc5f6182609a7722c1cb3787198bbaaa6200",
+  "source_sha256": "8c66e27c25a5f01204071e2c32181515aa632460c6976862b6e4431496ec7701",
+  "processes": [
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustc",
+        "--edition=2024",
+        "--crate-name",
+        "derivative_growth_probe",
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/derivative-growth-probe-v829.rs",
+        "--extern",
+        "hypercurve=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypercurve-85a9105cd1c82df7.rlib",
+        "-L",
+        "dependency=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps",
+        "-C",
+        "opt-level=3",
+        "-o",
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/derivative-growth-replay-v842-binary"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.564589275047183,
+      "log": "derivative-growth-replay-v842-compile.log"
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/derivative-growth-replay-v842-binary"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.031758242985233665,
+      "log": "derivative-growth-replay-v842-run.log"
+    }
+  ],
+  "all_processes_reaped": true,
+  "binary_sha256": "bfeef94552c5e765dfca3c50ba41fb2c07642170f23692465de3526b9cb63a13",
+  "probe_complete": true
+}

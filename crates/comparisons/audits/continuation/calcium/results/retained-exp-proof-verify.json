@@ -1,0 +1,14 @@
+{
+  "tag": "retained-exp-proof-verify",
+  "started": "2026-09-08T22:39:52.644Z",
+  "finished": "2026-09-08T22:39:58.220Z",
+  "elapsedSeconds": 5.573498003,
+  "cwd": "/home/tim/Documents/GitHub/workspace",
+  "command": "node",
+  "args": [
+    "exactcore-hyper-comparison/audits/continuation/calcium/verify-retained-exp-proof.mjs",
+    "--live"
+  ],
+  "code": 0,
+  "signal": null
+}

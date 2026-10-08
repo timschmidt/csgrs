@@ -1,0 +1,39 @@
+{
+  "baseline": "nesting-result-removal-v757-sources.json",
+  "rlib": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypercurve-85a9105cd1c82df7.rlib",
+  "rlib_sha256": "9e6b346b029ee63c8fb0d3697152e88d32d446e6c3cade02740e92d00ca980a8",
+  "source_sha256": "cc83e0c73e9cfe0ab97754cc7f15576655cdf99c540ea0e4df62af0895c29d73",
+  "processes": [
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustc",
+        "--edition=2024",
+        "--crate-name",
+        "empty_arrangement_probe",
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/empty-arrangement-probe-v759.rs",
+        "--extern",
+        "hypercurve=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypercurve-85a9105cd1c82df7.rlib",
+        "-L",
+        "dependency=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps",
+        "-C",
+        "opt-level=3",
+        "-o",
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/empty-arrangement-probe-v759-binary"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.1640207020100206,
+      "log": "empty-arrangement-probe-v759-compile.log"
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/empty-arrangement-probe-v759-binary"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.0015038861893117428,
+      "log": "empty-arrangement-probe-v759-run.log"
+    }
+  ],
+  "all_processes_reaped": true,
+  "binary_sha256": "5922503eec6eb21b7a6b3d33f3dd96c2741f0e16e7fddbecb32a20de617b2a4d",
+  "reproduced_empty_input_rejection": true
+}

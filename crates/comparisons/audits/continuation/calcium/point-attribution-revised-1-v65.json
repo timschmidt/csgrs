@@ -1,0 +1,75 @@
+{
+  "pass": 1,
+  "setting": "single",
+  "started": "2026-09-11T02:48:21.287Z",
+  "finished": "2026-09-11T02:48:37.580Z",
+  "status": "pass",
+  "qualification": 48,
+  "measured": 1728,
+  "observations": 1776,
+  "gcs": 222,
+  "planSha256": "494fb1921ace7d7ee4eea454a1ef9036c55d75d2600764cd798537d1484089a7",
+  "files": {
+    "results/point-attribution-revised-1-v65.jsonl": "199134ef482b01df461a8ee2a6f08f2ac224ba9753f97d96c713be614bc218cb",
+    "results/point-attribution-revised-1-controls-v65.jsonl": "78fd74aae6d379ad284b354393a380fd15ec5e0e99ba6ba23308c59b262aaca0",
+    "results/point-attribution-revised-1-failures-v65.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "runtime": {
+    "node": "v22.22.2",
+    "v8": "12.4.254.21-node.39",
+    "execArgv": [
+      "--expose-gc",
+      "--no-liftoff",
+      "--no-wasm-tier-up",
+      "--no-wasm-lazy-compilation",
+      "--single-threaded-gc"
+    ],
+    "affinity": "6",
+    "binaries": [
+      {
+        "variant": "baseline",
+        "path": "/tmp/calcium-point-wasm.jPk2WY/baseline.wasm",
+        "bytes": 1614156,
+        "sha256": "f9dc6f45bdb901e9386de7d8ad509a373bf03ce0babaa1805cb306d059d0e877"
+      },
+      {
+        "variant": "eager",
+        "path": "/tmp/calcium-point-wasm.jPk2WY/eager.wasm",
+        "bytes": 1614371,
+        "sha256": "05ba21965eef756746b54fa05ed38802c7663904cad027a2ed70cd9699c41d1c"
+      },
+      {
+        "variant": "demand",
+        "path": "/tmp/calcium-point-wasm.jPk2WY/demand.wasm",
+        "bytes": 1614858,
+        "sha256": "122381ac7e6cf469605119a8d89f331ab9c3d7dc2faafa0c002efcb2148067c2"
+      }
+    ]
+  },
+  "config": {
+    "blocks": 36,
+    "passes": [
+      "default",
+      "single",
+      "single",
+      "default"
+    ],
+    "cpu": 6,
+    "gcEvery": 8,
+    "qualificationIterations": [
+      1,
+      8
+    ],
+    "emptyControlsPerEnd": 128,
+    "metrics": [
+      "elapsed_ns",
+      "thread_cpu_ns",
+      "process_cpu_ns"
+    ],
+    "cpuCounterZeros": "Legal and preserved. If any paired block median is zero, the whole group/reference/CPU-metric inference is unavailable, without dropping observations.",
+    "primaryComparison": "demand/eager",
+    "statistics": "20,000-replicate corrected v60 bootstrap and separate binomial order-statistic median interval; per pass, unadjusted",
+    "selection": "Eight authored diagnostic groups selected from earlier 59/60 observations before this replay. Not a random sample or confirmation cohort: unchanged-path noisy controls, known Unknown benefit, and three lost-witness retry cases.",
+    "inference": "No exclusion of slow observations; no subtraction of empty-envelope overhead; no pooling passes. GC settings are ABBA at process granularity, not independently randomized interventions. Thread/process CPU envelopes include instrumentation outside the inner wall clock. Resource counters enclose both CPU envelopes. No causal attribution or population-wide performance claim."
+  }
+}

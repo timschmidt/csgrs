@@ -1,0 +1,60 @@
+{
+  "recorded": "2026-09-08T23:33:59.306Z",
+  "artifacts": [
+    {
+      "example": "basic",
+      "baseline": [
+        {
+          "path": "/tmp/calcium-reuse-costs.73SR1w/app-reuse-basic",
+          "bytes": 13490104,
+          "sha256": "150a67b84ee8097e2fd759da26ba736b788bdfd1591cb317530cb7bdef4aa4ed"
+        },
+        {
+          "path": "/tmp/calcium-reuse-costs.73SR1w/app-reuse-basic.stripped",
+          "bytes": 11010376,
+          "sha256": "c7b82a07f022365f3c74fef8488d3c1019b1e1e1c4a0ec55a5c68d2a529c53e8"
+        }
+      ],
+      "facts": [
+        {
+          "path": "/tmp/calcium-polynomial-facts.ZX8NqH/app-facts-basic",
+          "bytes": 13489960,
+          "sha256": "3b83c7708ef0b0c8b8ab87ffb1c78c883973cd3f52d6c7c02b6a4f453fc6b762"
+        },
+        {
+          "path": "/tmp/calcium-polynomial-facts.ZX8NqH/app-facts-basic.stripped",
+          "bytes": 11010952,
+          "sha256": "aa2b3f3b0a4c50e0075256469848314c575f0cbe0813d7097369314055fcb87a"
+        }
+      ]
+    },
+    {
+      "example": "arrangement",
+      "baseline": [
+        {
+          "path": "/tmp/calcium-reuse-costs.73SR1w/app-reuse-arrangement",
+          "bytes": 14176888,
+          "sha256": "a8386eaef98d9896674243e3dfdb3f9b8f92aa628a324492f16441fd0ae0b35e"
+        },
+        {
+          "path": "/tmp/calcium-reuse-costs.73SR1w/app-reuse-arrangement.stripped",
+          "bytes": 11584728,
+          "sha256": "e732fc0c67ce06b88d5392831e9addfb674d86391b6a6c8305940d4f0f637c5a"
+        }
+      ],
+      "facts": [
+        {
+          "path": "/tmp/calcium-polynomial-facts.ZX8NqH/app-facts-arrangement",
+          "bytes": 14176696,
+          "sha256": "3d589961bdd921d26a5834cb51ef9a3a13ef495167f007893fa2046baa057305"
+        },
+        {
+          "path": "/tmp/calcium-polynomial-facts.ZX8NqH/app-facts-arrangement.stripped",
+          "bytes": 11585288,
+          "sha256": "f8956e1db249d16a5313e9a9d33ae432722dda449aef5435e0587e1db54f172a"
+        }
+      ]
+    }
+  ],
+  "limits": "Frozen Hypercurve basic/arrangement examples, default-feature standard release profile and separately stripped copies. Baseline is the previously qualified retained scalar with unchanged Hypersolve. Not complete Alumina, all-feature/LTO/size-optimized binaries or timing benchmarks."
+}

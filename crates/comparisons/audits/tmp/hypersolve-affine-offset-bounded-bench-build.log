@@ -1,0 +1,9 @@
+   Compiling hypersolve v0.3.1 (/home/tim/Documents/GitHub/workspace/hypersolve)
+    Finished `bench` profile [optimized] target(s) in 42.78s
+  Executable benches src/lib.rs (target/release/deps/hypersolve-f165f92bff40da5b)
+  Executable benches/algebraic_fiber.rs (target/release/deps/algebraic_fiber-47d6aa631aa29ae8)
+  Executable benches/certification.rs (target/release/deps/certification-f5c6c0657be0166e)
+  Executable benches/competitive.rs (target/release/deps/competitive-0effa780989c28ee)
+  Executable benches/dispatch_trace.rs (target/release/deps/dispatch_trace-37db7b1c8d3a19b5)
+  Executable benches/representations.rs (target/release/deps/representations-96b179603f7e19c0)
+  Executable benches/retained_fuzz.rs (target/release/deps/retained_fuzz-c5b11f22d488fdc9)

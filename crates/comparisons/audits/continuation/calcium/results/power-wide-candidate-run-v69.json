@@ -1,0 +1,13 @@
+{
+  "tag": "power-wide-candidate-run-v69",
+  "started": "2026-09-11T17:11:24.551Z",
+  "finished": "2026-09-11T17:11:25.299Z",
+  "elapsedSeconds": 0.7454279799999999,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "/tmp/calcium-power-wide.ijyxgC/candidate",
+  "args": [
+    "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/power-wide-input-v69.json"
+  ],
+  "code": 0,
+  "signal": null
+}

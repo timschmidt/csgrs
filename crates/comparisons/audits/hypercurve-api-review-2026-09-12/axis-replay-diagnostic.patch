@@ -1,0 +1,52 @@
+diff --git a/src/bezier_offset.rs b/src/bezier_offset.rs
+index c69b9e9..6bf12b8 100644
+--- a/src/bezier_offset.rs
++++ b/src/bezier_offset.rs
+@@ -72927,8 +72927,45 @@ impl BezierAlgebraicChord2 {
+         let order = match retained_order {
+             Ok(decided @ Classification::Decided(_)) => decided,
+             Ok(Classification::Uncertain(_)) | Err(_) => {
+-                if let Ok(Some(coordinate)) = policy
+-                    .bounded_exact_predicate_pass(|| self.exact_axis_support_coordinate(policy))
++                let coordinate = policy
++                    .bounded_exact_predicate_pass(|| self.exact_axis_support_coordinate(policy));
++                if std::env::var_os("HYPERCURVE_AXIS_REPLAY_DIAGNOSTIC").is_some()
++                    && !policy.has_bounded_exact_predicate_budget()
++                {
++                    let kind = |point: &CurvePoint2| match &point.0 {
++                        CurvePointData2::Exact(_) => "exact",
++                        CurvePointData2::Algebraic(_) => "algebraic",
++                        CurvePointData2::AlgebraicChordPair(_) => "chord-pair",
++                        CurvePointData2::AlgebraicChordParallel(_) => "chord-parallel",
++                        CurvePointData2::AlgebraicCuspChord(_) => "cusp-chord",
++                        CurvePointData2::AlgebraicCuspChordDerived(_) => "cusp-derived",
++                        CurvePointData2::AnalyticParallel(_) => "analytic",
++                        CurvePointData2::Similarity(_) => "similarity",
++                        CurvePointData2::Endpoint(_) => "endpoint",
++                    };
++                    let support = self.retained_support();
++                    eprintln!("AXIS-REPLAY axis={constant_axis:?} point={} start={} end={} support-start={} support-end={} coordinate={coordinate:?}", kind(point), kind(self.start()), kind(self.end()), kind(support.start()), kind(support.end()));
++                    for (label, point) in [("query", point), ("start", self.start()), ("support-start", support.start()), ("support-end", support.end())] {
++                        if let CurvePointData2::AlgebraicChordParallel(p) = &point.0 {
++                            eprintln!("AXIS-PARALLEL {label} source-endpoint={} source-start={} source-end={}", kind(p.source_endpoint()), kind(p.data.source.start()), kind(p.data.source.end()));
++                            if let CurvePointData2::AlgebraicChordPair(p) = &p.source_endpoint().0 {
++                                eprintln!("AXIS-PAIR first=({},{}) second=({},{})", kind(p.data.first.retained_support().start()), kind(p.data.first.retained_support().end()), kind(p.data.second.retained_support().start()), kind(p.data.second.retained_support().end()));
++                            }
++                        }
++                        if let CurvePointData2::AnalyticParallel(point) = &point.0 {
++                            let parameter = match &point.data.parameter {
++                                BezierAnalyticParallelPointParameter2::Bezier(BezierParameter2::Exact(_)) => "exact",
++                                BezierAnalyticParallelPointParameter2::Bezier(_) => "algebraic",
++                                BezierAnalyticParallelPointParameter2::SelectedFiber(_) => "fiber",
++                                BezierAnalyticParallelPointParameter2::RecursiveProjective(p) if p.polynomial_authority().is_some() => "local-polynomial",
++                                BezierAnalyticParallelPointParameter2::RecursiveProjective(p) if p.monotone_authority().is_some() => "monotone",
++                                BezierAnalyticParallelPointParameter2::RecursiveProjective(_) => "projective",
++                            };
++                            eprintln!("AXIS-POINT {label} parameter={parameter} degree={} frame={} distance={:?} tangent={:?}", point.data.parallel.source_degree(), point.data.frame_tangent.is_some(), point.data.parallel.distance(), point.data.tangent_distance);
++                        }
++                    }
++                }
++                if let Ok(Some(coordinate)) = coordinate
+                     && let Ok(Classification::Decided(order)) =
+                         Self::point_axis_order_to_real(point, constant_axis, &coordinate, policy)
+                 {

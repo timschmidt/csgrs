@@ -1,0 +1,14 @@
+{
+  "hypercurve": "dfa3913bffccc885fd3e3245a2ee52e816eb4d55",
+  "hyperreal": "a0e82b27d33eb74fa611677f237a15278289048f",
+  "hyperlimit": "0b3226320a7ad6756c923d0d12cd52eb701f36ee",
+  "hyperlattice": "53427ce89f8c82c016e69a04e035787e2753adc8",
+  "hypersolve": "3d900ee8e426893c0c315b6399e9313ab791538e",
+  "hypertri": "6a2092c066964f3b7528299a72ef0ed1af4b1ff0",
+  "hyperbrep": "7f50f6a9e32a4e6f880a742930d927c9ee344284",
+  "csgrs": "4e5b9ebb59127a559ecda9779d1b8af05ed40fcb",
+  "hypermesh": "d9db5c45a0cecc2307aa66a6f7f1b0396350e4ee",
+  "hyperphysics": "dcbc7cf3489a1299de16a946fd7f5e5658b6f15f",
+  "hypersdf": "b37825900457420cb64da385b8525acab33e31c5",
+  "hypervoxel": "0486b1465a249a04973520a4138a39395ded2f23"
+}

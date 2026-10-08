@@ -1,0 +1,38 @@
+\doxysubsection{source/geometry/function\+\_\+set.hpp File Reference}
+\hypertarget{function__set_8hpp}{}\label{function__set_8hpp}\index{source/geometry/function\_set.hpp@{source/geometry/function\_set.hpp}}
+
+
+\doxysubsubsection{Description}
+Images and preimages of boxes in Euclidean space. 
+
+{\ttfamily \#include $<$iosfwd$>$}\newline
+{\ttfamily \#include $<$memory$>$}\newline
+{\ttfamily \#include "{}utility/macros.\+hpp"{}}\newline
+{\ttfamily \#include "{}utility/container.\+hpp"{}}\newline
+{\ttfamily \#include "{}numeric/numeric.\+hpp"{}}\newline
+{\ttfamily \#include "{}algebra/vector.\+hpp"{}}\newline
+{\ttfamily \#include "{}symbolic/templates.\+hpp"{}}\newline
+{\ttfamily \#include "{}geometry/set\+\_\+interface.\+hpp"{}}\newline
+{\ttfamily \#include "{}function/function.\+hpp"{}}\newline
+{\ttfamily \#include "{}function/function\+\_\+model.\+hpp"{}}\newline
+{\ttfamily \#include "{}function/constraint.\+hpp"{}}\newline
+{\ttfamily \#include "{}io/graphics\+\_\+interface.\+hpp"{}}\newline
+{\ttfamily \#include "{}geometry/box.\+hpp"{}}\newline
+\doxysubsubsubsection*{Classes}
+\begin{DoxyCompactItemize}
+\item 
+class \mbox{\hyperlink{classAriadne_1_1ImageSet}{Image\+Set}}
+\begin{DoxyCompactList}\small\item\em A set defined as the image of a box $D$ under a function $f$. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1ConstraintSet}{Constraint\+Set}}
+\begin{DoxyCompactList}\small\item\em A set defined as the intersection of an exact box with preimage of an exact box (the {\itshape codomain}) under a continuous function. The set is described as $S=D\cap g^{-1}(C) = \{ x\in D \mid g(x)\in C\}$ where $D$ is the domain, $C$ is the codomain and $g$ the function. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1BoundedConstraintSet}{Bounded\+Constraint\+Set}}
+\begin{DoxyCompactList}\small\item\em A set defined as the intersection of an exact box with preimage of an exact box (the {\itshape codomain}) under a continuous function. The set is described as $S=D\cap g^{-1}(C) = \{ x\in D \mid g(x)\in C\}$ where $D$ is the domain, $C$ is the codomain and $g$ the function. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1ConstrainedImageSet}{Constrained\+Image\+Set}}
+\begin{DoxyCompactList}\small\item\em A set defined as the image of the intersection of a box $D$ and a constraint set $g^{-1}(C)$ under a function $f$. In other words, $S=f(D\cap g^{-1}(C))$. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1ValidatedConstrainedImageSet}{Validated\+Constrained\+Image\+Set}}
+\begin{DoxyCompactList}\small\item\em A set defined as the image of the intersection of a box $D$ and a constraint set $g^{-1}(C)$ under a function $f$. In other words, $S=f(D\cap g^{-1}(C))$. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsubsection*{Namespaces}
+\begin{DoxyCompactItemize}
+\item 
+namespace \mbox{\hyperlink{namespaceAriadne}{Ariadne}}
+\begin{DoxyCompactList}\small\item\em Top-\/level Ariadne namespace. \end{DoxyCompactList}\end{DoxyCompactItemize}

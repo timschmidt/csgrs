@@ -1,0 +1,58 @@
+[
+  {
+    "name": "rational_circle_component_adapter_preserves_mixed_evidence_when_clipped",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve-6e6572a45c5b177b",
+      "rational_circle_component_adapter_preserves_mixed_evidence_when_clipped",
+      "--nocapture",
+      "--test-threads=1"
+    ],
+    "binary": "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve-6e6572a45c5b177b",
+    "sha256": "7a802cda5bf4a1623a59a41ac263166f3c9a47f9943f4f04b61fc248c8960eb8",
+    "returncode": 0,
+    "elapsed_seconds": 0.14668115400127135,
+    "log": "circle-closed-clipping-attempt3-rational_circle_component_adapter_preserves_mixed_evidence_when_clipped.log"
+  },
+  {
+    "name": "rational_circle_component_clipping_keeps_shared_boundaries_in_their_cells",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve-6e6572a45c5b177b",
+      "rational_circle_component_clipping_keeps_shared_boundaries_in_their_cells",
+      "--nocapture",
+      "--test-threads=1"
+    ],
+    "binary": "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve-6e6572a45c5b177b",
+    "sha256": "7a802cda5bf4a1623a59a41ac263166f3c9a47f9943f4f04b61fc248c8960eb8",
+    "returncode": 0,
+    "elapsed_seconds": 0.0923262260039337,
+    "log": "circle-closed-clipping-attempt3-rational_circle_component_clipping_keeps_shared_boundaries_in_their_cells.log"
+  },
+  {
+    "name": "clipped_circle_contact_reuses_its_interior_parameter_authority",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve-6e6572a45c5b177b",
+      "clipped_circle_contact_reuses_its_interior_parameter_authority",
+      "--nocapture",
+      "--test-threads=1"
+    ],
+    "binary": "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve-6e6572a45c5b177b",
+    "sha256": "7a802cda5bf4a1623a59a41ac263166f3c9a47f9943f4f04b61fc248c8960eb8",
+    "returncode": 0,
+    "elapsed_seconds": 0.03346085801604204,
+    "log": "circle-closed-clipping-attempt3-clipped_circle_contact_reuses_its_interior_parameter_authority.log"
+  },
+  {
+    "name": "selected_circle_overlaps_preserve_oriented_ranges_and_singleton_contacts",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve-6e6572a45c5b177b",
+      "selected_circle_overlaps_preserve_oriented_ranges_and_singleton_contacts",
+      "--nocapture",
+      "--test-threads=1"
+    ],
+    "binary": "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve-6e6572a45c5b177b",
+    "sha256": "7a802cda5bf4a1623a59a41ac263166f3c9a47f9943f4f04b61fc248c8960eb8",
+    "returncode": 0,
+    "elapsed_seconds": 0.232357975008199,
+    "log": "circle-closed-clipping-attempt3-selected_circle_overlaps_preserve_oriented_ranges_and_singleton_contacts.log"
+  }
+]

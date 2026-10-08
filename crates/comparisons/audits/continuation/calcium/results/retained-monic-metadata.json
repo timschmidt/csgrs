@@ -1,0 +1,18 @@
+{
+  "tag": "retained-monic-metadata",
+  "started": "2026-09-09T01:45:20.760Z",
+  "finished": "2026-09-09T01:45:20.788Z",
+  "elapsedSeconds": 0.025092061000000002,
+  "cwd": "/home/tim/Documents/GitHub/workspace/hypersolve",
+  "command": "cargo",
+  "args": [
+    "metadata",
+    "--offline",
+    "--locked",
+    "--no-deps",
+    "--format-version",
+    "1"
+  ],
+  "code": 0,
+  "signal": null
+}

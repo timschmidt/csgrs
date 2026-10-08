@@ -1,0 +1,26 @@
+{
+  "immutable_source_files": 212,
+  "immutable": true,
+  "repositories": {
+    "hypercurve": {
+      "whitespace": {
+        "returncode": 0,
+        "output": ""
+      },
+      "format": {
+        "returncode": 0,
+        "output": ""
+      }
+    },
+    "hyperbrep": {
+      "whitespace": {
+        "returncode": 0,
+        "output": ""
+      },
+      "format": {
+        "returncode": 0,
+        "output": ""
+      }
+    }
+  }
+}

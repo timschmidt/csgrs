@@ -1,0 +1,309 @@
+diff --git a/audits/continuation/calcium/baseline-hyperreal/src/computable/node/approximation_queries.rs b/audits/continuation/calcium/trial-hyperreal/src/computable/node/approximation_queries.rs
+index 5375e71..7753216 100644
+--- a/audits/continuation/calcium/baseline-hyperreal/src/computable/node/approximation_queries.rs
++++ b/audits/continuation/calcium/trial-hyperreal/src/computable/node/approximation_queries.rs
+@@ -387,6 +387,11 @@ impl Computable {
+                 if !checked_algebraic_bound {
+                     checked_algebraic_bound = true;
+                     algebraic_zero_precision = self.algebraic_zero_precision(min_precision);
++                    if algebraic_zero_precision.is_none() && self.log_relation_is_zero(min_precision) {
++                        self.internal.facts.replace_exact_sign(ExactSignCache::Valid(Sign::NoSign));
++                        crate::trace_dispatch!("computable", "sign_until", "proved-log-relation");
++                        return Some(RealSign::Zero);
++                    }
+                     if algebraic_zero_precision.is_some() {
+                         crate::trace_dispatch!(
+                             "computable",
+diff --git a/audits/continuation/calcium/trial-hyperreal/src/computable/node/log_relation.rs b/audits/continuation/calcium/trial-hyperreal/src/computable/node/log_relation.rs
+new file mode 100644
+index 0000000..1a5b967
+--- /dev/null
++++ b/audits/continuation/calcium/trial-hyperreal/src/computable/node/log_relation.rs
+@@ -0,0 +1,134 @@
++impl Computable {
++    /// A bounded exact zero proof for rational linear combinations of real logs.
++    /// Numeric proximity is never evidence for the identity: after proving all
++    /// arguments positive, clear coefficient denominators and compare the two
++    /// products with an algebraic certificate. No relation search or new node
++    /// representation is needed. Failure means only that this proof is unavailable.
++    fn log_relation_is_zero(&self, min_precision: Precision) -> bool {
++        use num::{Integer, ToPrimitive};
++
++        fn collect(
++            node: &Computable,
++            coefficient: Rational,
++            remaining: &mut usize,
++            terms: &mut Vec<(Computable, Rational)>,
++        ) -> Option<()> {
++            *remaining = remaining.checked_sub(1)?;
++            if coefficient.numerator().bits() > 8 || coefficient.denominator().bits() > 8 {
++                return None;
++            }
++            let argument = match &node.internal.approximation {
++                Approximation::Add(left, right) => {
++                    collect(left, coefficient.clone(), remaining, terms)?;
++                    return collect(right, coefficient, remaining, terms);
++                }
++                Approximation::Negate(child) => {
++                    return collect(child, -coefficient, remaining, terms);
++                }
++                Approximation::Offset(child, shift) if (-8..=8).contains(shift) => {
++                    return collect(child, coefficient * Computable::power_of_two_rational(*shift), remaining, terms);
++                }
++                Approximation::Multiply(left, right) => {
++                    if let Some(scale) = left.exact_rational() {
++                        return collect(right, coefficient * scale, remaining, terms);
++                    }
++                    return collect(left, coefficient * right.exact_rational()?, remaining, terms);
++                }
++                Approximation::LinearCombination3(combination) => {
++                    for (child, scale) in combination.coefficients.iter().zip(&combination.values) {
++                        collect(child, &coefficient * scale, remaining, terms)?;
++                    }
++                    return Some(());
++                }
++                Approximation::PrescaledLn(child) => child.clone().add(Computable::one()),
++                Approximation::PrescaledLnRational(residual) => {
++                    Computable::rational(residual + Rational::one())
++                }
++                Approximation::BinaryScaledLnRational { residual, shift } => {
++                    if *shift != 0 {
++                        collect(&Computable::ln2(), &coefficient * Rational::new(i64::from(*shift)), remaining, terms)?;
++                    }
++                    Computable::rational(residual + Rational::one())
++                }
++                Approximation::Constant(constant) => {
++                    let base = match constant {
++                        SharedConstant::Ln2 => 2,
++                        SharedConstant::Ln3 => 3,
++                        SharedConstant::Ln5 => 5,
++                        SharedConstant::Ln6 => 6,
++                        SharedConstant::Ln7 => 7,
++                        SharedConstant::Ln10 => 10,
++                        _ => return None,
++                    };
++                    Computable::rational(Rational::new(base))
++                }
++                _ => return node.exact_rational().filter(Rational::is_zero).map(|_| ()),
++            };
++            if terms.len() >= 16 {
++                return None;
++            }
++            terms.push((argument, coefficient));
++            Some(())
++        }
++
++        fn power(mut base: Computable, mut exponent: u64) -> Computable {
++            let mut result = Computable::one();
++            while exponent != 0 {
++                if exponent & 1 != 0 {
++                    result = result.multiply(base.clone());
++                }
++                exponent >>= 1;
++                if exponent != 0 {
++                    base = base.square();
++                }
++            }
++            result
++        }
++
++        if should_stop(&self.signal) {
++            return false;
++        }
++        let mut terms = Vec::new();
++        if collect(self, Rational::one(), &mut 128, &mut terms).is_none() || terms.len() < 2 {
++            return false;
++        }
++        let mut denominator = 1_u64;
++        for (_, coefficient) in &terms {
++            let Some(d) = coefficient.denominator().to_u64() else { return false; };
++            let Some(next) = denominator.checked_mul(d / denominator.gcd(&d)) else { return false; };
++            if next > 256 { return false; }
++            denominator = next;
++        }
++        let mut positive = Self::one();
++        let mut negative = Self::one();
++        let mut total_power = 0_u64;
++        for (argument, coefficient) in terms {
++            if argument.algebraic_separation_bound_bits().is_none()
++                || argument.sign_until(min_precision) != Some(RealSign::Positive)
++            {
++                return false;
++            }
++            let Some(exponent) = (coefficient * Rational::new(denominator as i64)).to_integer_i64() else {
++                return false;
++            };
++            let magnitude = exponent.unsigned_abs();
++            if magnitude > 64 { return false; }
++            total_power += magnitude;
++            if total_power > 256 { return false; }
++            let value = power(argument, magnitude);
++            if exponent < 0 {
++                negative = negative.multiply(value);
++            } else {
++                positive = positive.multiply(value);
++            }
++        }
++        let difference = positive.add(negative.negate());
++        // This also excludes nested logs from the recursive sign query, so
++        // trying this certificate cannot create a log-proof recursion cycle.
++        if difference.algebraic_separation_bound_bits().is_none() {
++            return false;
++        }
++        let result = difference.sign_until(min_precision) == Some(RealSign::Zero);
++        result && !should_stop(&self.signal)
++    }
++}
+diff --git a/audits/continuation/calcium/trial-hyperreal/src/computable/node/log_relation_tests.rs b/audits/continuation/calcium/trial-hyperreal/src/computable/node/log_relation_tests.rs
+new file mode 100644
+index 0000000..ce0fb06
+--- /dev/null
++++ b/audits/continuation/calcium/trial-hyperreal/src/computable/node/log_relation_tests.rs
+@@ -0,0 +1,134 @@
++#[cfg(test)]
++mod log_relation_tests {
++    use super::*;
++    use crate::{CertifiedRealEquality, Real};
++    use std::sync::atomic::{AtomicBool, Ordering as AtomicOrdering};
++
++    fn raw(kind: Approximation) -> Computable {
++        Computable {
++            internal: Arc::new(Node::new(kind, BoundCache::Invalid, ExactSignCache::Invalid)),
++            signal: None,
++        }
++    }
++
++    fn raw_difference(left: Computable, right: Computable) -> Computable {
++        raw(Approximation::Add(left, raw(Approximation::Negate(right))))
++    }
++
++    fn field(a: i64, d: i64) -> Real {
++        Real::from(a) + Real::from(d).sqrt().unwrap()
++    }
++
++    #[test]
++    fn log_relations_reject_zero_negative_and_non_algebraic_arguments() {
++        for residual in [-3, -2, -1] {
++            let logarithm = raw(Approximation::PrescaledLn(Computable::rational(Rational::new(residual))));
++            let difference = raw_difference(logarithm.clone(), logarithm);
++            assert!(!difference.log_relation_is_zero(-512), "residual {residual}");
++        }
++        let logarithm = Computable::pi().ln();
++        assert!(!raw_difference(logarithm.clone(), logarithm).log_relation_is_zero(-512));
++        let not_a_log_relation = raw_difference(Computable::pi(), Computable::pi());
++        assert!(!not_a_log_relation.log_relation_is_zero(-512));
++    }
++
++    #[test]
++    fn log_relations_coefficients_and_traversal_are_bounded() {
++        let logarithm = Computable::rational(Rational::fraction(1, 3).unwrap()).ln();
++        let too_large = raw(Approximation::Multiply(logarithm.clone(), Computable::integer(BigInt::from(65))));
++        assert!(!raw_difference(too_large.clone(), too_large).log_relation_is_zero(-512));
++        let mut long = logarithm.clone();
++        for _ in 0..140 {
++            long = raw(Approximation::Add(long, logarithm.clone()));
++        }
++        assert!(!raw_difference(long.clone(), long).log_relation_is_zero(-512));
++        let large_shift = raw(Approximation::Offset(logarithm, i32::MAX));
++        assert!(!raw_difference(large_shift.clone(), large_shift).log_relation_is_zero(-512));
++    }
++
++    #[test]
++    fn log_relations_require_exact_identity_even_below_numeric_resolution() {
++        for d in [2, 3, 5, 7, 11] {
++            for bits in [64_usize, 128, 256, 512] {
++                let x = field(1, d);
++                let square = &x * &x;
++                let epsilon = Real::from(Rational::from_bigint_fraction(BigInt::one(), BigUint::one() << bits).unwrap());
++                let left = Real::from(2) * x.ln().unwrap();
++                let right = (square + epsilon).ln().unwrap();
++                for floor in [-64, -256, -1024] {
++                    assert!(!matches!(left.certified_eq_until(&right, floor), CertifiedRealEquality::Equal { .. }), "d={d}, bits={bits}, floor={floor}");
++                }
++                assert!(matches!(left.certified_eq_until(&right, -2048), CertifiedRealEquality::NotEqual { .. }));
++            }
++        }
++    }
++
++    #[test]
++    fn log_relations_products_quotients_roots_and_rational_coefficients() {
++        for d in [2, 3, 5, 7] {
++            let x = field(1, d);
++            let y = field(2, d);
++            let product = &x * &y;
++            let quotient = (&x / &y).unwrap();
++            let cases = [
++                (x.clone().ln().unwrap() + y.clone().ln().unwrap(), product.ln().unwrap()),
++                (x.clone().ln().unwrap() - y.clone().ln().unwrap(), quotient.ln().unwrap()),
++                (x.clone().ln().unwrap(), Real::from(2) * x.clone().sqrt().unwrap().ln().unwrap()),
++            ];
++            for (left, right) in cases {
++                for (n, den) in [(1, 1), (-1, 1), (2, 3), (-3, 5), (5, 7)] {
++                    let scale = Real::from(Rational::fraction(n, den).unwrap());
++                    let l = &left * &scale;
++                    let r = &right * &scale;
++                    assert!(matches!(l.certified_eq_until(&r, -1024), CertifiedRealEquality::Equal { .. }), "d={d}, scale={n}/{den}");
++                }
++            }
++        }
++    }
++
++    #[test]
++    fn log_relation_query_order_and_concurrent_sharing_are_consistent() {
++        let x = field(1, 2);
++        let expanded = Real::from(3) + Real::from(2) * Real::from(2).sqrt().unwrap();
++        let left = Real::from(2) * x.ln().unwrap();
++        let right = expanded.ln().unwrap();
++        std::thread::scope(|scope| {
++            for order in [[-64, -1024, -16, -256], [-256, -16, -1024, -64]] {
++                let left = &left;
++                let right = &right;
++                scope.spawn(move || {
++                    for floor in order {
++                        assert!(matches!(left.certified_eq_until(right, floor), CertifiedRealEquality::Equal { .. }));
++                    }
++                });
++            }
++        });
++    }
++
++    #[test]
++    fn log_relation_cancellation_does_not_publish_a_proof() {
++        let logarithm = Computable::rational(Rational::fraction(1, 3).unwrap()).ln();
++        let mut difference = raw_difference(logarithm.clone(), logarithm);
++        let stopped = Arc::new(AtomicBool::new(true));
++        difference.abort(stopped.clone());
++        assert!(!difference.log_relation_is_zero(-512));
++        assert!(difference.cached().is_none());
++        stopped.store(false, AtomicOrdering::Relaxed);
++        assert!(difference.log_relation_is_zero(-512));
++    }
++
++    #[cfg(feature = "serde")]
++    #[test]
++    fn log_relation_serialization_reconstructs_the_proof_from_expression() {
++        let x = field(1, 2);
++        let expanded = Real::from(3) + Real::from(2) * Real::from(2).sqrt().unwrap();
++        let left = Real::from(2) * x.ln().unwrap();
++        let right = expanded.ln().unwrap();
++        for _ in 0..2 {
++            let lhs: Real = serde_json::from_str(&serde_json::to_string(&left).unwrap()).unwrap();
++            let rhs: Real = serde_json::from_str(&serde_json::to_string(&right).unwrap()).unwrap();
++            assert!(matches!(lhs.certified_eq_until(&rhs, -512), CertifiedRealEquality::Equal { .. }));
++            assert!(matches!(left.certified_eq_until(&right, -512), CertifiedRealEquality::Equal { .. }));
++        }
++    }
++}
+diff --git a/audits/continuation/calcium/baseline-hyperreal/src/computable/node.rs b/audits/continuation/calcium/trial-hyperreal/src/computable/node.rs
+index 0740192..07e8a5f 100644
+--- a/audits/continuation/calcium/baseline-hyperreal/src/computable/node.rs
++++ b/audits/continuation/calcium/trial-hyperreal/src/computable/node.rs
+@@ -24,6 +24,8 @@ include!("node/bounds.rs");
+ include!("node/representation.rs");
+ include!("node/primitive_constructors.rs");
+ include!("node/structural_analysis.rs");
++include!("node/log_relation.rs");
++include!("node/log_relation_tests.rs");
+ include!("node/exp_trig.rs");
+ include!("node/logarithms.rs");
+ include!("node/roots_inverse_hyperbolic.rs");

@@ -1,0 +1,31 @@
+{
+  "returncode": 0,
+  "elapsed_seconds": 21.542382411978906,
+  "command": [
+    "rustc",
+    "--edition=2024",
+    "-O",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/selected-fillet-region-normalization-explicit.rs",
+    "--extern",
+    "hypercurve=/home/tim/Documents/GitHub/workspace/hypercurve/target/release/libhypercurve.rlib",
+    "-L",
+    "dependency=/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps",
+    "-o",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-region-admission-attempt2-explicit"
+  ],
+  "source": "selected-fillet-region-normalization-explicit.rs",
+  "source_sha256": "20cd460a2d6a7f7b956dcf028a384aa3f29b8f302fb40440a059d4a0ba885dc3",
+  "executable_sha256": "d26f62d9b4d9f85270b983dc6c7afb1d7dbf5d7c4bda6cb20822b1771a6c56cf",
+  "normal_library_sha256": "d3e368f9476d71b64c7dd4366cce32bb96bb681508c7e02933f20bc022f4e146",
+  "library": "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/libhypercurve.rlib",
+  "log": "finite-region-admission-attempt2-explicit.log",
+  "counts": {
+    "queries": 48,
+    "point_replays": 96,
+    "topologies": 48,
+    "splits": 96,
+    "child_queries": 192,
+    "region_queries": 12,
+    "boolean_reentries": 12
+  }
+}

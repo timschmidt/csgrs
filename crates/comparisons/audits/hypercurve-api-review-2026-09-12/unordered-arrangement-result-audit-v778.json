@@ -1,0 +1,164 @@
+{
+  "hypercurve/PERFORMANCE.md": [
+    {
+      "line": 5941,
+      "text": "`CurveRegionArrangement2` follows the same `report()` vocabulary."
+    },
+    {
+      "line": 5973,
+      "text": "operation without entering a second report lifecycle. `CurveRegionArrangement2`"
+    }
+  ],
+  "hypercurve/benches/editing.rs": [
+    {
+      "line": 6,
+      "text": "CurveCornerMode2, CurveCornerSolutions2, CurveRegion2, CurveRegionArrangementStage2,"
+    },
+    {
+      "line": 1804,
+      "text": "CurveRegion2::arrange_unordered_segments(&segments, FillRule::NonZero, &policy)"
+    },
+    {
+      "line": 1815,
+      "text": "black_box((result.stage() == CurveRegionArrangementStage2::CurveArrangement) as usize);"
+    },
+    {
+      "line": 1841,
+      "text": "CurveRegion2::arrange_unordered_segments(&segments, FillRule::NonZero, &policy)"
+    },
+    {
+      "line": 1852,
+      "text": "black_box((result.stage() == CurveRegionArrangementStage2::CurveArrangement) as usize);"
+    },
+    {
+      "line": 1871,
+      "text": "let result = CurveRegion2::arrange_unordered_segments(&segments, FillRule::NonZero, &policy)"
+    }
+  ],
+  "hypercurve/examples/arrangement.rs": [
+    {
+      "line": 24,
+      "text": "let result = CurveRegion2::arrange_unordered_segments("
+    }
+  ],
+  "hypercurve/src/bezier_region.rs": [
+    {
+      "line": 279,
+      "text": "pub enum CurveRegionArrangementStage2 {"
+    },
+    {
+      "line": 288,
+      "text": "pub struct CurveRegionArrangement2 {"
+    },
+    {
+      "line": 292,
+      "text": "stage: CurveRegionArrangementStage2,"
+    },
+    {
+      "line": 326,
+      "text": "impl CurveRegionArrangement2 {"
+    },
+    {
+      "line": 353,
+      "text": "pub const fn stage(&self) -> CurveRegionArrangementStage2 {"
+    },
+    {
+      "line": 1854,
+      "text": ") -> ExactCurveResult<CurveRegionArrangement2> {"
+    },
+    {
+      "line": 1861,
+      "text": "CurveRegionArrangementStage2::EndpointAssembly,"
+    },
+    {
+      "line": 1885,
+      "text": "CurveRegionArrangementStage2::CurveArrangement,"
+    },
+    {
+      "line": 1901,
+      "text": "CurveRegionArrangementStage2::CurveArrangement,"
+    },
+    {
+      "line": 1920,
+      "text": "Ok(CurveRegionArrangement2 {"
+    },
+    {
+      "line": 1924,
+      "text": "stage: CurveRegionArrangementStage2::CurveArrangement,"
+    },
+    {
+      "line": 1936,
+      "text": "stage: CurveRegionArrangementStage2,"
+    },
+    {
+      "line": 1938,
+      "text": ") -> CurveRegionArrangement2 {"
+    },
+    {
+      "line": 1939,
+      "text": "CurveRegionArrangement2 {"
+    },
+    {
+      "line": 10088,
+      "text": "pub fn arrange_unordered_segments("
+    },
+    {
+      "line": 10092,
+      "text": ") -> ExactCurveResult<CurveOutcome<CurveRegionArrangement2>> {"
+    }
+  ],
+  "hypercurve/src/lib.rs": [
+    {
+      "line": 131,
+      "text": "BezierBoundaryLoop2, CurveRegion2, CurveRegionArrangement2, CurveRegionArrangementStage2,"
+    }
+  ],
+  "hypercurve/src/native_region_tests.rs": [
+    {
+      "line": 4,
+      "text": "CurveRegionArrangement2, CurveRegionArrangementStage2, CurveString2, FillRule,"
+    },
+    {
+      "line": 72,
+      "text": "fn arrange_lines(segments: Vec<crate::LineSeg2>, fill_rule: FillRule) -> CurveRegionArrangement2 {"
+    },
+    {
+      "line": 73,
+      "text": "CurveRegion2::arrange_unordered_segments("
+    },
+    {
+      "line": 82,
+      "text": "fn arrange_segments(segments: Vec<Segment2>, fill_rule: FillRule) -> CurveRegionArrangement2 {"
+    },
+    {
+      "line": 83,
+      "text": "CurveRegion2::arrange_unordered_segments(&segments, fill_rule, &policy())"
+    },
+    {
+      "line": 498,
+      "text": "CurveRegionArrangementStage2::EndpointAssembly"
+    },
+    {
+      "line": 528,
+      "text": "CurveRegionArrangementStage2::CurveArrangement"
+    },
+    {
+      "line": 893,
+      "text": "let strict = CurveRegion2::arrange_unordered_segments("
+    },
+    {
+      "line": 903,
+      "text": "let approximate = CurveRegion2::arrange_unordered_segments("
+    },
+    {
+      "line": 1060,
+      "text": "let outcome = CurveRegion2::arrange_unordered_segments(&[], fill_rule, &policy)"
+    }
+  ],
+  "hypercurve/tests/hypercurve_curve_region_promotion.rs": [
+    {
+      "line": 7389,
+      "text": "let result = CurveRegion2::arrange_unordered_segments("
+    }
+  ]
+}

@@ -1,0 +1,8 @@
+O2	grid	PASS process status; numerical classifications in instrumented-grid.log
+O2	extra	PASS process status; numerical classifications in instrumented-extra.log
+O2	demand	PASS process status; numerical classifications in instrumented-demand.tsv
+O2	examples	PASS process status; numerical classifications in instrumented-examples.log
+O0	grid	PASS process status; numerical classifications in instrumented-debug-grid.log
+O0	extra	PASS process status; numerical classifications in instrumented-debug-extra.log
+O0	demand	PASS process status; numerical classifications in instrumented-debug-demand.tsv
+O0	examples	PASS process status; numerical classifications in instrumented-debug-examples.log

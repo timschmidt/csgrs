@@ -1,0 +1,18 @@
+{
+  "base_head": "bfa31c3370dee1cb9d57c246964cbb48d80d0424",
+  "source_manifest": "chord-local-decline-20260924-v1-sources.json",
+  "binary_sha256": "7b788b276206ddf62a7905c801935c3ee6e7a85d8882ca870f05884fc950a120",
+  "command": [
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/chord-local-decline-20260924-v1-libtest",
+    "--exact",
+    "bezier_region::tests::one_fragment_nonzero_parallel_loop_extends_chamfer_cuts_on_one_finite_envelope",
+    "--test-threads=1",
+    "--nocapture"
+  ],
+  "returncode": "timeout",
+  "elapsed_seconds": 20.329191923956387,
+  "limit_seconds": 20,
+  "diagnostic_only": true,
+  "all_owned_processes_reaped": true,
+  "all_sources_unchanged": true
+}

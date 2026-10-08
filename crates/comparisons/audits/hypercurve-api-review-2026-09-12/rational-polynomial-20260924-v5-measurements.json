@@ -1,0 +1,422 @@
+[
+  {
+    "label": "probe-small-1-dyadic",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/rational-polynomial-20260924-v5-probe",
+      "small-1-dyadic"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.2737695010146126,
+    "log": "rational-polynomial-20260924-v5-probe-small-1-dyadic.log",
+    "name": "small-1-dyadic",
+    "reference_us": 0.032355300000000004,
+    "candidate_us": 0.02654515,
+    "speedup": 1.2188780247992572
+  },
+  {
+    "label": "probe-small-1-odd",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/rational-polynomial-20260924-v5-probe",
+      "small-1-odd"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.28400462900754064,
+    "log": "rational-polynomial-20260924-v5-probe-small-1-odd.log",
+    "name": "small-1-odd",
+    "reference_us": 0.036705499999999995,
+    "candidate_us": 0.03517455,
+    "speedup": 1.0435243663387306
+  },
+  {
+    "label": "probe-small-2-dyadic",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/rational-polynomial-20260924-v5-probe",
+      "small-2-dyadic"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.28853745805099607,
+    "log": "rational-polynomial-20260924-v5-probe-small-2-dyadic.log",
+    "name": "small-2-dyadic",
+    "reference_us": 0.0427086,
+    "candidate_us": 0.051869450000000004,
+    "speedup": 0.8233864056781014
+  },
+  {
+    "label": "probe-small-2-odd",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/rational-polynomial-20260924-v5-probe",
+      "small-2-odd"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.288298505009152,
+    "log": "rational-polynomial-20260924-v5-probe-small-2-odd.log",
+    "name": "small-2-odd",
+    "reference_us": 0.0524284,
+    "candidate_us": 0.04129365,
+    "speedup": 1.269647996725889
+  },
+  {
+    "label": "probe-small-4-dyadic",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/rational-polynomial-20260924-v5-probe",
+      "small-4-dyadic"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.29068134096451104,
+    "log": "rational-polynomial-20260924-v5-probe-small-4-dyadic.log",
+    "name": "small-4-dyadic",
+    "reference_us": 0.0846087,
+    "candidate_us": 0.0829288,
+    "speedup": 1.020257136242174
+  },
+  {
+    "label": "probe-small-4-odd",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/rational-polynomial-20260924-v5-probe",
+      "small-4-odd"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.2867324519902468,
+    "log": "rational-polynomial-20260924-v5-probe-small-4-odd.log",
+    "name": "small-4-odd",
+    "reference_us": 0.10260295000000001,
+    "candidate_us": 0.07934855,
+    "speedup": 1.2930664769551556
+  },
+  {
+    "label": "probe-small-8-dyadic",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/rational-polynomial-20260924-v5-probe",
+      "small-8-dyadic"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.3740356939379126,
+    "log": "rational-polynomial-20260924-v5-probe-small-8-dyadic.log",
+    "name": "small-8-dyadic",
+    "reference_us": 0.7452997668009328,
+    "candidate_us": 0.63111263194525,
+    "speedup": 1.180929883313742
+  },
+  {
+    "label": "probe-small-8-odd",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/rational-polynomial-20260924-v5-probe",
+      "small-8-odd"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.32017804798670113,
+    "log": "rational-polynomial-20260924-v5-probe-small-8-odd.log",
+    "name": "small-8-odd",
+    "reference_us": 1.0273938983050848,
+    "candidate_us": 0.3790865973072216,
+    "speedup": 2.710182595752543
+  },
+  {
+    "label": "probe-small-32-dyadic",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/rational-polynomial-20260924-v5-probe",
+      "small-32-dyadic"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.37070885207504034,
+    "log": "rational-polynomial-20260924-v5-probe-small-32-dyadic.log",
+    "name": "small-32-dyadic",
+    "reference_us": 4.522019570944674,
+    "candidate_us": 2.341700401986285,
+    "speedup": 1.9310837403063992
+  },
+  {
+    "label": "probe-small-32-odd",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/rational-polynomial-20260924-v5-probe",
+      "small-32-odd"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.38728445500601083,
+    "log": "rational-polynomial-20260924-v5-probe-small-32-odd.log",
+    "name": "small-32-odd",
+    "reference_us": 4.846484522207268,
+    "candidate_us": 1.6848354843725704,
+    "speedup": 2.876532793355839
+  },
+  {
+    "label": "probe-small-64-dyadic",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/rational-polynomial-20260924-v5-probe",
+      "small-64-dyadic"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.42614038998726755,
+    "log": "rational-polynomial-20260924-v5-probe-small-64-dyadic.log",
+    "name": "small-64-dyadic",
+    "reference_us": 10.15782338511856,
+    "candidate_us": 4.3471142041399,
+    "speedup": 2.3366819706381143
+  },
+  {
+    "label": "probe-small-64-odd",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/rational-polynomial-20260924-v5-probe",
+      "small-64-odd"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.4211421130457893,
+    "log": "rational-polynomial-20260924-v5-probe-small-64-odd.log",
+    "name": "small-64-odd",
+    "reference_us": 20.026322033898303,
+    "candidate_us": 3.340047574626866,
+    "speedup": 5.995819396714895
+  },
+  {
+    "label": "probe-wide-2-128-dyadic",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/rational-polynomial-20260924-v5-probe",
+      "wide-2-128-dyadic"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.2795588949229568,
+    "log": "rational-polynomial-20260924-v5-probe-wide-2-128-dyadic.log",
+    "name": "wide-2-128-dyadic",
+    "reference_us": 0.04446945,
+    "candidate_us": 0.043658,
+    "speedup": 1.0185865133537955
+  },
+  {
+    "label": "probe-wide-2-128-odd",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/rational-polynomial-20260924-v5-probe",
+      "wide-2-128-odd"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.2735428869491443,
+    "log": "rational-polynomial-20260924-v5-probe-wide-2-128-odd.log",
+    "name": "wide-2-128-odd",
+    "reference_us": 0.03834485,
+    "candidate_us": 0.03923935,
+    "speedup": 0.9772040056728769
+  },
+  {
+    "label": "probe-wide-2-512-dyadic",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/rational-polynomial-20260924-v5-probe",
+      "wide-2-512-dyadic"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.2719829040579498,
+    "log": "rational-polynomial-20260924-v5-probe-wide-2-512-dyadic.log",
+    "name": "wide-2-512-dyadic",
+    "reference_us": 0.04365055,
+    "candidate_us": 0.03428465,
+    "speedup": 1.2731805633133195
+  },
+  {
+    "label": "probe-wide-2-512-odd",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/rational-polynomial-20260924-v5-probe",
+      "wide-2-512-odd"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.2741400949889794,
+    "log": "rational-polynomial-20260924-v5-probe-wide-2-512-odd.log",
+    "name": "wide-2-512-odd",
+    "reference_us": 0.03588105,
+    "candidate_us": 0.033579200000000003,
+    "speedup": 1.0685498761137846
+  },
+  {
+    "label": "probe-wide-8-128-dyadic",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/rational-polynomial-20260924-v5-probe",
+      "wide-8-128-dyadic"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.32382690790109336,
+    "log": "rational-polynomial-20260924-v5-probe-wide-8-128-dyadic.log",
+    "name": "wide-8-128-dyadic",
+    "reference_us": 0.11326728110599078,
+    "candidate_us": 1.879864378815377,
+    "speedup": 0.06025290035942261
+  },
+  {
+    "label": "probe-wide-8-128-odd",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/rational-polynomial-20260924-v5-probe",
+      "wide-8-128-odd"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.3190552450250834,
+    "log": "rational-polynomial-20260924-v5-probe-wide-8-128-odd.log",
+    "name": "wide-8-128-odd",
+    "reference_us": 0.12380000000000001,
+    "candidate_us": 1.8910043674933708,
+    "speedup": 0.06546785513991364
+  },
+  {
+    "label": "probe-wide-8-512-dyadic",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/rational-polynomial-20260924-v5-probe",
+      "wide-8-512-dyadic"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.31973813800141215,
+    "log": "rational-polynomial-20260924-v5-probe-wide-8-512-dyadic.log",
+    "name": "wide-8-512-dyadic",
+    "reference_us": 0.14352941176470588,
+    "candidate_us": 3.8654809437386572,
+    "speedup": 0.03713106178862327
+  },
+  {
+    "label": "probe-wide-8-512-odd",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/rational-polynomial-20260924-v5-probe",
+      "wide-8-512-odd"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.37031779799144715,
+    "log": "rational-polynomial-20260924-v5-probe-wide-8-512-odd.log",
+    "name": "wide-8-512-odd",
+    "reference_us": 0.118125,
+    "candidate_us": 4.199874098557692,
+    "speedup": 0.028125843115289127
+  },
+  {
+    "label": "probe-wide-32-128-dyadic",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/rational-polynomial-20260924-v5-probe",
+      "wide-32-128-dyadic"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.37369973701424897,
+    "log": "rational-polynomial-20260924-v5-probe-wide-32-128-dyadic.log",
+    "name": "wide-32-128-dyadic",
+    "reference_us": 0.4385714285714285,
+    "candidate_us": 9.48624812030075,
+    "speedup": 0.046232337907425945
+  },
+  {
+    "label": "probe-wide-32-128-odd",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/rational-polynomial-20260924-v5-probe",
+      "wide-32-128-odd"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.3745795760769397,
+    "log": "rational-polynomial-20260924-v5-probe-wide-32-128-odd.log",
+    "name": "wide-32-128-odd",
+    "reference_us": 0.4542857142857143,
+    "candidate_us": 11.43773925233645,
+    "speedup": 0.03971813872159351
+  },
+  {
+    "label": "probe-wide-32-512-dyadic",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/rational-polynomial-20260924-v5-probe",
+      "wide-32-512-dyadic"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.4277395100798458,
+    "log": "rational-polynomial-20260924-v5-probe-wide-32-512-dyadic.log",
+    "name": "wide-32-512-dyadic",
+    "reference_us": 0.51,
+    "candidate_us": 43.262201814058955,
+    "speedup": 0.011788581685971074
+  },
+  {
+    "label": "probe-wide-32-512-odd",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/rational-polynomial-20260924-v5-probe",
+      "wide-32-512-odd"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.4331266899826005,
+    "log": "rational-polynomial-20260924-v5-probe-wide-32-512-odd.log",
+    "name": "wide-32-512-odd",
+    "reference_us": 0.52,
+    "candidate_us": 52.22198857142857,
+    "speedup": 0.009957491359961344
+  },
+  {
+    "label": "probe-wide-64-128-dyadic",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/rational-polynomial-20260924-v5-probe",
+      "wide-64-128-dyadic"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.441554881981574,
+    "log": "rational-polynomial-20260924-v5-probe-wide-64-128-dyadic.log",
+    "name": "wide-64-128-dyadic",
+    "reference_us": 1.08,
+    "candidate_us": 26.99556127080181,
+    "speedup": 0.040006576976346096
+  },
+  {
+    "label": "probe-wide-64-128-odd",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/rational-polynomial-20260924-v5-probe",
+      "wide-64-128-odd"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.4398954060161486,
+    "log": "rational-polynomial-20260924-v5-probe-wide-64-128-odd.log",
+    "name": "wide-64-128-odd",
+    "reference_us": 1.0750000000000002,
+    "candidate_us": 35.613867803837955,
+    "speedup": 0.030184870846410902
+  },
+  {
+    "label": "probe-wide-64-512-dyadic",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/rational-polynomial-20260924-v5-probe",
+      "wide-64-512-dyadic"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.8313005790114403,
+    "log": "rational-polynomial-20260924-v5-probe-wide-64-512-dyadic.log",
+    "name": "wide-64-512-dyadic",
+    "reference_us": 1.15,
+    "candidate_us": 165.46287931034485,
+    "speedup": 0.00695019937277316
+  },
+  {
+    "label": "probe-wide-64-512-odd",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/rational-polynomial-20260924-v5-probe",
+      "wide-64-512-odd"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.871794949984178,
+    "log": "rational-polynomial-20260924-v5-probe-wide-64-512-odd.log",
+    "name": "wide-64-512-odd",
+    "reference_us": 1.15,
+    "candidate_us": 198.74447,
+    "speedup": 0.005786324520123755
+  },
+  {
+    "label": "probe-cancelled-64-128",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/rational-polynomial-20260924-v5-probe",
+      "cancelled-64-128"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.3708348540822044,
+    "log": "rational-polynomial-20260924-v5-probe-cancelled-64-128.log",
+    "name": "cancelled-64-128",
+    "reference_us": 0.6565773818511249,
+    "candidate_us": 7.5340312004230565,
+    "speedup": 0.08714821645738025
+  },
+  {
+    "label": "probe-cancelled-64-512",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/rational-polynomial-20260924-v5-probe",
+      "cancelled-64-512"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.37774278898723423,
+    "log": "rational-polynomial-20260924-v5-probe-cancelled-64-512.log",
+    "name": "cancelled-64-512",
+    "reference_us": 0.5637027297771099,
+    "candidate_us": 11.761187263078089,
+    "speedup": 0.04792906678280199
+  }
+]

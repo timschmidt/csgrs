@@ -1,0 +1,8 @@
+{
+  "hypercurve_parent": "c13778eb15662d3b12093a54e518e9fb137c39d1",
+  "only_changed_file": "hypercurve/src/bezier_region.rs",
+  "only_changed_function": "algebraic_endpoint_images_reenter_shared_corner_carriers -> independent_field_corner_edits_preserve_normalized_sets",
+  "all_other_source_bytes_identical": true,
+  "bindings": 2044,
+  "immutable_snapshot": "/tmp/hypercurve-independent-field-corners-v1-20260924"
+}

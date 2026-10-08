@@ -1,0 +1,225 @@
+\doxysubsection{Number\texorpdfstring{$<$}{<} P \texorpdfstring{$>$}{>} Class Template Reference}
+\hypertarget{classAriadne_1_1Number}{}\label{classAriadne_1_1Number}\index{Number$<$ P $>$@{Number$<$ P $>$}}
+
+
+{\ttfamily \#include $<$number.\+hpp$>$}
+
+
+
+\doxysubsubsection{Description}
+\subsubsection*{template$<$class P$>$\newline
+class Ariadne\+::\+Number$<$ P $>$}
+Generic numbers with computational paradigm {\itshape P}, which may be Effective\+Tag, Validated\+Tag, Upper\+Tag, Lower\+Tag or Approximate\+Tag. \doxysubsubsubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1Number_a04697a786eb4e0426e71b95163b5fc9d}\label{classAriadne_1_1Number_a04697a786eb4e0426e71b95163b5fc9d} 
+{\footnotesize template$<$Builtin\+Integral N$>$ }\\{\bfseries Number} (const N \&n)
+\begin{DoxyCompactList}\small\item\em Construct from a builtin integer. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Number_a01c6a14ca8b5db9a3dc06d8f139c345d}\label{classAriadne_1_1Number_a01c6a14ca8b5db9a3dc06d8f139c345d} 
+Result\+Float\+Type$<$ \mbox{\hyperlink{classAriadne_1_1DoublePrecision}{Double\+Precision}} $>$ {\bfseries get} (\mbox{\hyperlink{classAriadne_1_1DoublePrecision}{Double\+Precision}} const \&prec) const
+\begin{DoxyCompactList}\small\item\em Get the value of the number as a double-\/precision floating-\/point type. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Number_a4b56f2ee0fb249d34e9210ec82d771b9}\label{classAriadne_1_1Number_a4b56f2ee0fb249d34e9210ec82d771b9} 
+Result\+Float\+Type$<$ \mbox{\hyperlink{classAriadne_1_1MultiplePrecision}{Multiple\+Precision}} $>$ {\bfseries get} (\mbox{\hyperlink{classAriadne_1_1MultiplePrecision}{Multiple\+Precision}} const \&prec) const
+\begin{DoxyCompactList}\small\item\em Get the value of the number as a multiple-\/precision floating-\/point type. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Number_a8e0d75a6c23f39e18dbe205c5494801e}\label{classAriadne_1_1Number_a8e0d75a6c23f39e18dbe205c5494801e} 
+{\footnotesize template$<$class PR, class PRE$>$ \newline
+requires Is\+Precision$<$PR$>$ and Is\+Precision$<$PRE$>$ and Weaker\+Than$<$\mbox{\hyperlink{structAriadne_1_1ValidatedTag}{Validated\+Tag}},P$>$}\\\mbox{\hyperlink{group__NumericModule_ga49fc5a890aaa0ef24118a0b964bbd076}{Float\+Ball}}$<$ PR, PRE $>$ {\bfseries get} (PR const \&prec, PRE const \&errprec) const
+\begin{DoxyCompactList}\small\item\em Get the value of the number as a floating-\/point ball with the given precision and error precision. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Number_abab4306240fe775af1ed83b53c6abc14}\label{classAriadne_1_1Number_abab4306240fe775af1ed83b53c6abc14} 
+{\footnotesize template$<$class X$>$ }\\X {\bfseries extract} () const
+\begin{DoxyCompactList}\small\item\em Try to dynamic\+\_\+cast the object to concrete type {\itshape X}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Number_aaef5a6a022139e6e739ab131d81e0de4}\label{classAriadne_1_1Number_aaef5a6a022139e6e739ab131d81e0de4} 
+\mbox{\hyperlink{classAriadne_1_1String}{String}} {\bfseries class\+\_\+name} () const
+\begin{DoxyCompactList}\small\item\em The name of the dynamic type held by the Number object. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsubsection*{Friends}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1Number_a299dee5cfaf92f74cf636fb4c70b19cb}\label{classAriadne_1_1Number_a299dee5cfaf92f74cf636fb4c70b19cb} 
+\mbox{\hyperlink{classAriadne_1_1Number}{Number}}$<$ P $>$ {\bfseries operator+} (\mbox{\hyperlink{classAriadne_1_1Number}{Number}}$<$ P $>$ const \&y)
+\item 
+\Hypertarget{classAriadne_1_1Number_a2213a2375cf2f7a8839b6f77f8f0c272}\label{classAriadne_1_1Number_a2213a2375cf2f7a8839b6f77f8f0c272} 
+\mbox{\hyperlink{classAriadne_1_1Number}{Number}}$<$ P $>$ {\bfseries operator-\/} (\mbox{\hyperlink{classAriadne_1_1Number}{Number}}$<$ P $>$ const \&y)
+\item 
+\Hypertarget{classAriadne_1_1Number_aa55e77220c037f1c7fd59e0e591648a1}\label{classAriadne_1_1Number_aa55e77220c037f1c7fd59e0e591648a1} 
+\mbox{\hyperlink{classAriadne_1_1Number}{Number}}$<$ P $>$ {\bfseries operator+} (\mbox{\hyperlink{classAriadne_1_1Number}{Number}}$<$ P $>$ const \&y1, \mbox{\hyperlink{classAriadne_1_1Number}{Number}}$<$ P $>$ const \&y2)
+\item 
+\Hypertarget{classAriadne_1_1Number_aa4e63b93866b34c38eb40205d64abfd8}\label{classAriadne_1_1Number_aa4e63b93866b34c38eb40205d64abfd8} 
+\mbox{\hyperlink{classAriadne_1_1Number}{Number}}$<$ P $>$ {\bfseries operator-\/} (\mbox{\hyperlink{classAriadne_1_1Number}{Number}}$<$ P $>$ const \&y1, \mbox{\hyperlink{classAriadne_1_1Number}{Number}}$<$ P $>$ const \&y2)
+\item 
+\Hypertarget{classAriadne_1_1Number_af089c904dc6b64e457fe1760fe2651a7}\label{classAriadne_1_1Number_af089c904dc6b64e457fe1760fe2651a7} 
+\mbox{\hyperlink{classAriadne_1_1Number}{Number}}$<$ P $>$ {\bfseries operator\texorpdfstring{$\ast$}{*}} (\mbox{\hyperlink{classAriadne_1_1Number}{Number}}$<$ P $>$ const \&y1, \mbox{\hyperlink{classAriadne_1_1Number}{Number}}$<$ P $>$ const \&y2)
+\item 
+\Hypertarget{classAriadne_1_1Number_af3ba017fade767d9bbdc67c47ea9aee5}\label{classAriadne_1_1Number_af3ba017fade767d9bbdc67c47ea9aee5} 
+\mbox{\hyperlink{classAriadne_1_1Number}{Number}}$<$ P $>$ {\bfseries operator/} (\mbox{\hyperlink{classAriadne_1_1Number}{Number}}$<$ P $>$ const \&y1, \mbox{\hyperlink{classAriadne_1_1Number}{Number}}$<$ P $>$ const \&y2)
+\item 
+\Hypertarget{classAriadne_1_1Number_ac73b8d3e71ed53d4113dc34d28a3b770}\label{classAriadne_1_1Number_ac73b8d3e71ed53d4113dc34d28a3b770} 
+\mbox{\hyperlink{classAriadne_1_1Number}{Number}}$<$ P $>$ \& {\bfseries operator+=} (\mbox{\hyperlink{classAriadne_1_1Number}{Number}}$<$ P $>$ \&y1, \mbox{\hyperlink{classAriadne_1_1Number}{Number}}$<$ P $>$ const \&y2)
+\item 
+\Hypertarget{classAriadne_1_1Number_abc79cc7c29eecaa16dbee6d0a2b8268e}\label{classAriadne_1_1Number_abc79cc7c29eecaa16dbee6d0a2b8268e} 
+\mbox{\hyperlink{classAriadne_1_1Number}{Number}}$<$ P $>$ \& {\bfseries operator-\/=} (\mbox{\hyperlink{classAriadne_1_1Number}{Number}}$<$ P $>$ \&y1, \mbox{\hyperlink{classAriadne_1_1Number}{Number}}$<$ P $>$ const \&y2)
+\item 
+\Hypertarget{classAriadne_1_1Number_a6bd12c1d527019091228622390c819c0}\label{classAriadne_1_1Number_a6bd12c1d527019091228622390c819c0} 
+\mbox{\hyperlink{classAriadne_1_1Number}{Number}}$<$ P $>$ \& {\bfseries operator\texorpdfstring{$\ast$}{*}=} (\mbox{\hyperlink{classAriadne_1_1Number}{Number}}$<$ P $>$ \&y1, \mbox{\hyperlink{classAriadne_1_1Number}{Number}}$<$ P $>$ const \&y2)
+\item 
+\Hypertarget{classAriadne_1_1Number_a2f8866bf05ce800dab03d4069acf9142}\label{classAriadne_1_1Number_a2f8866bf05ce800dab03d4069acf9142} 
+\mbox{\hyperlink{classAriadne_1_1Number}{Number}}$<$ P $>$ \& {\bfseries operator/=} (\mbox{\hyperlink{classAriadne_1_1Number}{Number}}$<$ P $>$ \&y1, \mbox{\hyperlink{classAriadne_1_1Number}{Number}}$<$ P $>$ const \&y2)
+\item 
+\Hypertarget{classAriadne_1_1Number_aed4856e6a870982ef98d916e93127907}\label{classAriadne_1_1Number_aed4856e6a870982ef98d916e93127907} 
+\mbox{\hyperlink{classAriadne_1_1Number}{Number}}$<$ P $>$ {\bfseries nul} (\mbox{\hyperlink{classAriadne_1_1Number}{Number}}$<$ P $>$ const \&y)
+\item 
+\Hypertarget{classAriadne_1_1Number_a1fa506d41282b16f91d2321de4d95e49}\label{classAriadne_1_1Number_a1fa506d41282b16f91d2321de4d95e49} 
+\mbox{\hyperlink{classAriadne_1_1Number}{Number}}$<$ P $>$ {\bfseries pos} (\mbox{\hyperlink{classAriadne_1_1Number}{Number}}$<$ P $>$ const \&y)
+\item 
+\Hypertarget{classAriadne_1_1Number_ad7f426acd2487d8d4b0fdfbdd45cfa00}\label{classAriadne_1_1Number_ad7f426acd2487d8d4b0fdfbdd45cfa00} 
+\mbox{\hyperlink{classAriadne_1_1Number}{Number}}$<$ P $>$ {\bfseries neg} (\mbox{\hyperlink{classAriadne_1_1Number}{Number}}$<$ P $>$ const \&y)
+\item 
+\Hypertarget{classAriadne_1_1Number_ac4604c013d4696c57bd5f60775eda4e6}\label{classAriadne_1_1Number_ac4604c013d4696c57bd5f60775eda4e6} 
+\mbox{\hyperlink{classAriadne_1_1Number}{Number}}$<$ P $>$ {\bfseries sqr} (\mbox{\hyperlink{classAriadne_1_1Number}{Number}}$<$ P $>$ const \&y)
+\item 
+\Hypertarget{classAriadne_1_1Number_a9e9178bc89ad271bbb80a870f2ba0573}\label{classAriadne_1_1Number_a9e9178bc89ad271bbb80a870f2ba0573} 
+\mbox{\hyperlink{classAriadne_1_1Number}{Number}}$<$ P $>$ {\bfseries hlf} (\mbox{\hyperlink{classAriadne_1_1Number}{Number}}$<$ P $>$ const \&y)
+\item 
+\Hypertarget{classAriadne_1_1Number_a4324adab190c00bc4708d57d90970250}\label{classAriadne_1_1Number_a4324adab190c00bc4708d57d90970250} 
+\mbox{\hyperlink{classAriadne_1_1Number}{Number}}$<$ P $>$ {\bfseries rec} (\mbox{\hyperlink{classAriadne_1_1Number}{Number}}$<$ P $>$ const \&y)
+\item 
+\Hypertarget{classAriadne_1_1Number_a1177c256f050ded6e31d66236f901fb4}\label{classAriadne_1_1Number_a1177c256f050ded6e31d66236f901fb4} 
+\mbox{\hyperlink{classAriadne_1_1Number}{Number}}$<$ P $>$ {\bfseries add} (\mbox{\hyperlink{classAriadne_1_1Number}{Number}}$<$ P $>$ const \&y1, \mbox{\hyperlink{classAriadne_1_1Number}{Number}}$<$ P $>$ const \&y2)
+\item 
+\Hypertarget{classAriadne_1_1Number_aa82ad296fc6e5350cf2542971b3910c8}\label{classAriadne_1_1Number_aa82ad296fc6e5350cf2542971b3910c8} 
+\mbox{\hyperlink{classAriadne_1_1Number}{Number}}$<$ P $>$ {\bfseries sub} (\mbox{\hyperlink{classAriadne_1_1Number}{Number}}$<$ P $>$ const \&y1, \mbox{\hyperlink{classAriadne_1_1Number}{Number}}$<$ P $>$ const \&y2)
+\item 
+\Hypertarget{classAriadne_1_1Number_ac1c7117abd42ff2a5b48068c1c17b85c}\label{classAriadne_1_1Number_ac1c7117abd42ff2a5b48068c1c17b85c} 
+\mbox{\hyperlink{classAriadne_1_1Number}{Number}}$<$ P $>$ {\bfseries mul} (\mbox{\hyperlink{classAriadne_1_1Number}{Number}}$<$ P $>$ const \&y1, \mbox{\hyperlink{classAriadne_1_1Number}{Number}}$<$ P $>$ const \&y2)
+\item 
+\Hypertarget{classAriadne_1_1Number_a014f42aa0678e3e92d47970ca3ae3f42}\label{classAriadne_1_1Number_a014f42aa0678e3e92d47970ca3ae3f42} 
+\mbox{\hyperlink{classAriadne_1_1Number}{Number}}$<$ P $>$ {\bfseries div} (\mbox{\hyperlink{classAriadne_1_1Number}{Number}}$<$ P $>$ const \&y1, \mbox{\hyperlink{classAriadne_1_1Number}{Number}}$<$ P $>$ const \&y2)
+\item 
+\Hypertarget{classAriadne_1_1Number_a05e11cd81d9347fe39026cd270a8e917}\label{classAriadne_1_1Number_a05e11cd81d9347fe39026cd270a8e917} 
+\mbox{\hyperlink{classAriadne_1_1Number}{Number}}$<$ P $>$ {\bfseries sqrt} (\mbox{\hyperlink{classAriadne_1_1Number}{Number}}$<$ P $>$ const \&y)
+\item 
+\Hypertarget{classAriadne_1_1Number_a4d735b8af4764f46f4e1eb467afdd08b}\label{classAriadne_1_1Number_a4d735b8af4764f46f4e1eb467afdd08b} 
+\mbox{\hyperlink{classAriadne_1_1Number}{Number}}$<$ P $>$ {\bfseries exp} (\mbox{\hyperlink{classAriadne_1_1Number}{Number}}$<$ P $>$ const \&y)
+\item 
+\Hypertarget{classAriadne_1_1Number_a00324cccf6e8fb9a46b3ed9c85737d14}\label{classAriadne_1_1Number_a00324cccf6e8fb9a46b3ed9c85737d14} 
+\mbox{\hyperlink{classAriadne_1_1Number}{Number}}$<$ P $>$ {\bfseries log} (\mbox{\hyperlink{classAriadne_1_1Number}{Number}}$<$ P $>$ const \&y)
+\item 
+\Hypertarget{classAriadne_1_1Number_a6b3f3638ba679edae52601b807480864}\label{classAriadne_1_1Number_a6b3f3638ba679edae52601b807480864} 
+\mbox{\hyperlink{classAriadne_1_1Number}{Number}}$<$ P $>$ {\bfseries sin} (\mbox{\hyperlink{classAriadne_1_1Number}{Number}}$<$ P $>$ const \&y)
+\item 
+\Hypertarget{classAriadne_1_1Number_aaad6f6f17ab3c3d68192d6fffafb68fe}\label{classAriadne_1_1Number_aaad6f6f17ab3c3d68192d6fffafb68fe} 
+\mbox{\hyperlink{classAriadne_1_1Number}{Number}}$<$ P $>$ {\bfseries cos} (\mbox{\hyperlink{classAriadne_1_1Number}{Number}}$<$ P $>$ const \&y)
+\item 
+\Hypertarget{classAriadne_1_1Number_a30bbd853492616bbf34896c8fca2c0db}\label{classAriadne_1_1Number_a30bbd853492616bbf34896c8fca2c0db} 
+\mbox{\hyperlink{classAriadne_1_1Number}{Number}}$<$ P $>$ {\bfseries tan} (\mbox{\hyperlink{classAriadne_1_1Number}{Number}}$<$ P $>$ const \&y)
+\item 
+\Hypertarget{classAriadne_1_1Number_a36129e79a5fbe924f12d9378009a0d83}\label{classAriadne_1_1Number_a36129e79a5fbe924f12d9378009a0d83} 
+\mbox{\hyperlink{classAriadne_1_1Number}{Number}}$<$ P $>$ {\bfseries asin} (\mbox{\hyperlink{classAriadne_1_1Number}{Number}}$<$ P $>$ const \&y)
+\item 
+\Hypertarget{classAriadne_1_1Number_adb006f59e704d0d40cb305929b017737}\label{classAriadne_1_1Number_adb006f59e704d0d40cb305929b017737} 
+\mbox{\hyperlink{classAriadne_1_1Number}{Number}}$<$ P $>$ {\bfseries acos} (\mbox{\hyperlink{classAriadne_1_1Number}{Number}}$<$ P $>$ const \&y)
+\item 
+\Hypertarget{classAriadne_1_1Number_abad596825342def992eadeaaba227ec1}\label{classAriadne_1_1Number_abad596825342def992eadeaaba227ec1} 
+\mbox{\hyperlink{classAriadne_1_1Number}{Number}}$<$ P $>$ {\bfseries atan} (\mbox{\hyperlink{classAriadne_1_1Number}{Number}}$<$ P $>$ const \&y)
+\item 
+\Hypertarget{classAriadne_1_1Number_aa10c644fcf53e428b36c32db9529a1e5}\label{classAriadne_1_1Number_aa10c644fcf53e428b36c32db9529a1e5} 
+\mbox{\hyperlink{classAriadne_1_1Number}{Number}}$<$ P $>$ {\bfseries pow} (\mbox{\hyperlink{classAriadne_1_1Number}{Number}}$<$ P $>$ const \&y, \mbox{\hyperlink{namespaceAriadne_aae901a69a841b1a085a0dfe218e38fe9}{Nat}} m)
+\item 
+\Hypertarget{classAriadne_1_1Number_aff0df9a78116936110386dff859f0c11}\label{classAriadne_1_1Number_aff0df9a78116936110386dff859f0c11} 
+\mbox{\hyperlink{classAriadne_1_1Number}{Number}}$<$ P $>$ {\bfseries pow} (\mbox{\hyperlink{classAriadne_1_1Number}{Number}}$<$ P $>$ const \&y, \mbox{\hyperlink{namespaceAriadne_a008e7f6ae8f621fbb1d876061812b9b2}{Int}} n)
+\item 
+\Hypertarget{classAriadne_1_1Number_a7884e4c89e9802d26809b4e9785d3af4}\label{classAriadne_1_1Number_a7884e4c89e9802d26809b4e9785d3af4} 
+\mbox{\hyperlink{classAriadne_1_1Positive}{Positive}}$<$ \mbox{\hyperlink{classAriadne_1_1Number}{Number}}$<$ P $>$ $>$ {\bfseries abs} (\mbox{\hyperlink{classAriadne_1_1Number}{Number}}$<$ P $>$ const \&y)
+\item 
+\Hypertarget{classAriadne_1_1Number_af241c25739e9623f55a2911cdb95db79}\label{classAriadne_1_1Number_af241c25739e9623f55a2911cdb95db79} 
+\mbox{\hyperlink{classAriadne_1_1Number}{Number}}$<$ P $>$ {\bfseries max} (\mbox{\hyperlink{classAriadne_1_1Number}{Number}}$<$ P $>$ const \&y1, \mbox{\hyperlink{classAriadne_1_1Number}{Number}}$<$ P $>$ const \&y2)
+\item 
+\Hypertarget{classAriadne_1_1Number_a439235caf8257b527c9fbfb8e24abdff}\label{classAriadne_1_1Number_a439235caf8257b527c9fbfb8e24abdff} 
+\mbox{\hyperlink{classAriadne_1_1Number}{Number}}$<$ P $>$ {\bfseries min} (\mbox{\hyperlink{classAriadne_1_1Number}{Number}}$<$ P $>$ const \&y1, \mbox{\hyperlink{classAriadne_1_1Number}{Number}}$<$ P $>$ const \&y2)
+\item 
+\Hypertarget{classAriadne_1_1Number_aaae01288555e75697cdf580c9cadb9e6}\label{classAriadne_1_1Number_aaae01288555e75697cdf580c9cadb9e6} 
+Logical\+Type$<$ Less\+Than\+Information$<$ P $>$ $>$ {\bfseries operator$>$} (\mbox{\hyperlink{classAriadne_1_1Number}{Number}}$<$ P $>$ const \&y1, \mbox{\hyperlink{classAriadne_1_1Number}{Number}}$<$ P $>$ const \&y2)
+\item 
+\Hypertarget{classAriadne_1_1Number_ac71e34d3c62ff840e08c7c5aa563861f}\label{classAriadne_1_1Number_ac71e34d3c62ff840e08c7c5aa563861f} 
+Logical\+Negation\+Type$<$ Logical\+Type$<$ Equality\+Information$<$ P $>$ $>$ $>$ {\bfseries operator!=} (\mbox{\hyperlink{classAriadne_1_1Number}{Number}}$<$ P $>$ const \&y1, \mbox{\hyperlink{classAriadne_1_1Number}{Number}}$<$ P $>$ const \&y2)
+\item 
+\Hypertarget{classAriadne_1_1Number_aa8bdd77e1270c53a01f59778d9485d5f}\label{classAriadne_1_1Number_aa8bdd77e1270c53a01f59778d9485d5f} 
+Logical\+Type$<$ Less\+Than\+Information$<$ P $>$ $>$ {\bfseries operator$<$=} (\mbox{\hyperlink{classAriadne_1_1Number}{Number}}$<$ P $>$ const \&y1, \mbox{\hyperlink{classAriadne_1_1Number}{Number}}$<$ P $>$ const \&y2)
+\item 
+\Hypertarget{classAriadne_1_1Number_aeac389760d7621bff65b0e345c0dd1f3}\label{classAriadne_1_1Number_aeac389760d7621bff65b0e345c0dd1f3} 
+Logical\+Type$<$ Less\+Than\+Information$<$ P $>$ $>$ {\bfseries operator$>$=} (\mbox{\hyperlink{classAriadne_1_1Number}{Number}}$<$ P $>$ const \&y1, \mbox{\hyperlink{classAriadne_1_1Number}{Number}}$<$ P $>$ const \&y2)
+\item 
+\Hypertarget{classAriadne_1_1Number_a29364d617f7885db94ea69429bb79fa6}\label{classAriadne_1_1Number_a29364d617f7885db94ea69429bb79fa6} 
+\mbox{\hyperlink{namespaceAriadne_acbb98ddc4385af4599070e65a1a47ec1}{Output\+Stream}} \& {\bfseries operator$<$$<$} (\mbox{\hyperlink{namespaceAriadne_acbb98ddc4385af4599070e65a1a47ec1}{Output\+Stream}} \&os, \mbox{\hyperlink{classAriadne_1_1Number}{Number}}$<$ P $>$ const \&y)
+\begin{DoxyCompactList}\small\item\em Write to an output stream. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsubsection*{Related Types and Functions}
+(Note that these are not member symbols.) \begin{Indent}\textbf{ Type synonyms}\par
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1Number_a817811927ecf9aadb137f93086e00256}\label{classAriadne_1_1Number_a817811927ecf9aadb137f93086e00256} 
+using {\bfseries Exact\+Number} = \mbox{\hyperlink{classAriadne_1_1Number}{Number}}$<$\mbox{\hyperlink{structAriadne_1_1ExactTag}{Exact\+Tag}}$>$
+\begin{DoxyCompactList}\small\item\em Alias for generic exact numbers. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Number_aeb225d7412450fe06bb8fbfe234334cf}\label{classAriadne_1_1Number_aeb225d7412450fe06bb8fbfe234334cf} 
+using {\bfseries Effective\+Number} = \mbox{\hyperlink{classAriadne_1_1Number}{Number}}$<$\mbox{\hyperlink{structAriadne_1_1EffectiveTag}{Effective\+Tag}}$>$
+\begin{DoxyCompactList}\small\item\em Alias for generic effective numbers. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Number_a70caf3305f34adb57482264571d11ec9}\label{classAriadne_1_1Number_a70caf3305f34adb57482264571d11ec9} 
+using {\bfseries Effective\+Upper\+Number} = \mbox{\hyperlink{classAriadne_1_1UpperNumber}{Upper\+Number}}$<$\mbox{\hyperlink{structAriadne_1_1EffectiveTag}{Effective\+Tag}}$>$
+\begin{DoxyCompactList}\small\item\em Alias for generic effective upper numbers. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Number_a71b00b3255c0844265371a4d503ab002}\label{classAriadne_1_1Number_a71b00b3255c0844265371a4d503ab002} 
+using {\bfseries Effective\+Lower\+Number} = \mbox{\hyperlink{classAriadne_1_1LowerNumber}{Lower\+Number}}$<$\mbox{\hyperlink{structAriadne_1_1EffectiveTag}{Effective\+Tag}}$>$
+\begin{DoxyCompactList}\small\item\em Alias for generic effective lower numbers. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Number_a820ba577a94ed1682c33d544f6430ae1}\label{classAriadne_1_1Number_a820ba577a94ed1682c33d544f6430ae1} 
+using {\bfseries Validated\+Number} = \mbox{\hyperlink{classAriadne_1_1Number}{Number}}$<$\mbox{\hyperlink{structAriadne_1_1ValidatedTag}{Validated\+Tag}}$>$
+\begin{DoxyCompactList}\small\item\em Alias for generic validated numbers. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Number_ae543d9ed1eb594df13fbe1c9e16315c7}\label{classAriadne_1_1Number_ae543d9ed1eb594df13fbe1c9e16315c7} 
+using {\bfseries Validated\+Upper\+Number} = \mbox{\hyperlink{classAriadne_1_1UpperNumber}{Upper\+Number}}$<$\mbox{\hyperlink{structAriadne_1_1ValidatedTag}{Validated\+Tag}}$>$
+\begin{DoxyCompactList}\small\item\em Alias for generic validated upper numbers. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Number_a23579b3648f013bbc35aa0a65ee937ef}\label{classAriadne_1_1Number_a23579b3648f013bbc35aa0a65ee937ef} 
+using {\bfseries Validated\+Lower\+Number} = \mbox{\hyperlink{classAriadne_1_1LowerNumber}{Lower\+Number}}$<$\mbox{\hyperlink{structAriadne_1_1ValidatedTag}{Validated\+Tag}}$>$
+\begin{DoxyCompactList}\small\item\em Alias for generic validated lower numbers. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Number_a42388508ed9def8d4ca218d5873e94ee}\label{classAriadne_1_1Number_a42388508ed9def8d4ca218d5873e94ee} 
+using {\bfseries Approximate\+Number} = \mbox{\hyperlink{classAriadne_1_1Number}{Number}}$<$\mbox{\hyperlink{structAriadne_1_1ApproximateTag}{Approximate\+Tag}}$>$
+\begin{DoxyCompactList}\small\item\em Alias for generic approximate numbers. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Number_a81b5ae4f8d2c638f6735226f3bd57f44}\label{classAriadne_1_1Number_a81b5ae4f8d2c638f6735226f3bd57f44} 
+{\footnotesize template$<$class P$>$ }\\using {\bfseries Positive\+Number} = \mbox{\hyperlink{classAriadne_1_1Positive}{Positive}}$<$\mbox{\hyperlink{classAriadne_1_1Number}{Number}}$<$P$>$$>$
+\begin{DoxyCompactList}\small\item\em Alias for positive numbers. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Number_a92e9416c49abf1fa946ca5195eb9b443}\label{classAriadne_1_1Number_a92e9416c49abf1fa946ca5195eb9b443} 
+{\footnotesize template$<$class P$>$ }\\using {\bfseries Positive\+Upper\+Number} = \mbox{\hyperlink{classAriadne_1_1Positive}{Positive}}$<$\mbox{\hyperlink{classAriadne_1_1UpperNumber}{Upper\+Number}}$<$P$>$$>$
+\begin{DoxyCompactList}\small\item\em Alias for positive upper numbers. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Number_a9e903815679017cba4f8968701bff0eb}\label{classAriadne_1_1Number_a9e903815679017cba4f8968701bff0eb} 
+{\footnotesize template$<$class P$>$ }\\using {\bfseries Positive\+Lower\+Number} = \mbox{\hyperlink{classAriadne_1_1Positive}{Positive}}$<$\mbox{\hyperlink{classAriadne_1_1LowerNumber}{Lower\+Number}}$<$P$>$$>$
+\begin{DoxyCompactList}\small\item\em Alias for positive lower numbers. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1Number_ae83cc3c800603f51df85c07f01261acb}\label{classAriadne_1_1Number_ae83cc3c800603f51df85c07f01261acb} 
+using {\bfseries Positive\+Exact\+Number} = \mbox{\hyperlink{classAriadne_1_1Number_a81b5ae4f8d2c638f6735226f3bd57f44}{Positive\+Number}}$<$\mbox{\hyperlink{structAriadne_1_1ExactTag}{Exact\+Tag}}$>$
+\item 
+\Hypertarget{classAriadne_1_1Number_a28212dfdd263feec9684efd7ebd62500}\label{classAriadne_1_1Number_a28212dfdd263feec9684efd7ebd62500} 
+using {\bfseries Positive\+Effective\+Number} = \mbox{\hyperlink{classAriadne_1_1Number_a81b5ae4f8d2c638f6735226f3bd57f44}{Positive\+Number}}$<$\mbox{\hyperlink{structAriadne_1_1EffectiveTag}{Effective\+Tag}}$>$
+\item 
+\Hypertarget{classAriadne_1_1Number_a90d267c75b934fe48ddae0e3416fb90b}\label{classAriadne_1_1Number_a90d267c75b934fe48ddae0e3416fb90b} 
+using {\bfseries Positive\+Effective\+Upper\+Number} = \mbox{\hyperlink{classAriadne_1_1Number_a92e9416c49abf1fa946ca5195eb9b443}{Positive\+Upper\+Number}}$<$\mbox{\hyperlink{structAriadne_1_1EffectiveTag}{Effective\+Tag}}$>$
+\item 
+\Hypertarget{classAriadne_1_1Number_a836cded43c7acd3b1c21cb7d88b65d25}\label{classAriadne_1_1Number_a836cded43c7acd3b1c21cb7d88b65d25} 
+using {\bfseries Positive\+Effective\+Lower\+Number} = \mbox{\hyperlink{classAriadne_1_1Number_a9e903815679017cba4f8968701bff0eb}{Positive\+Lower\+Number}}$<$\mbox{\hyperlink{structAriadne_1_1EffectiveTag}{Effective\+Tag}}$>$
+\item 
+\Hypertarget{classAriadne_1_1Number_a29d084b31187f6be88a4555d2dcbb49a}\label{classAriadne_1_1Number_a29d084b31187f6be88a4555d2dcbb49a} 
+using {\bfseries Positive\+Validated\+Number} = \mbox{\hyperlink{classAriadne_1_1Number_a81b5ae4f8d2c638f6735226f3bd57f44}{Positive\+Number}}$<$\mbox{\hyperlink{structAriadne_1_1ValidatedTag}{Validated\+Tag}}$>$
+\item 
+\Hypertarget{classAriadne_1_1Number_a6b7a7226275414aa484e8929804d154b}\label{classAriadne_1_1Number_a6b7a7226275414aa484e8929804d154b} 
+using {\bfseries Positive\+Validated\+Upper\+Number} = \mbox{\hyperlink{classAriadne_1_1Number_a92e9416c49abf1fa946ca5195eb9b443}{Positive\+Upper\+Number}}$<$\mbox{\hyperlink{structAriadne_1_1ValidatedTag}{Validated\+Tag}}$>$
+\item 
+\Hypertarget{classAriadne_1_1Number_a8e4c0269ff67fa4a2f586259654fef32}\label{classAriadne_1_1Number_a8e4c0269ff67fa4a2f586259654fef32} 
+using {\bfseries Positive\+Validated\+Lower\+Number} = \mbox{\hyperlink{classAriadne_1_1Number_a9e903815679017cba4f8968701bff0eb}{Positive\+Lower\+Number}}$<$\mbox{\hyperlink{structAriadne_1_1ValidatedTag}{Validated\+Tag}}$>$
+\item 
+\Hypertarget{classAriadne_1_1Number_ab2f51591cb8d7e81aa70c0e936b6c9c3}\label{classAriadne_1_1Number_ab2f51591cb8d7e81aa70c0e936b6c9c3} 
+using {\bfseries Positive\+Approximate\+Number} = \mbox{\hyperlink{classAriadne_1_1Number_a81b5ae4f8d2c638f6735226f3bd57f44}{Positive\+Number}}$<$\mbox{\hyperlink{structAriadne_1_1ApproximateTag}{Approximate\+Tag}}$>$
+\item 
+\Hypertarget{classAriadne_1_1Number_a9f465416f1e069dc0c66cd1cd5490a79}\label{classAriadne_1_1Number_a9f465416f1e069dc0c66cd1cd5490a79} 
+using {\bfseries Validated\+Error\+Number} = \mbox{\hyperlink{classAriadne_1_1Number_a6b7a7226275414aa484e8929804d154b}{Positive\+Validated\+Upper\+Number}}
+\begin{DoxyCompactList}\small\item\em Alias for validated error bounds. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\end{Indent}
+
+
+The documentation for this class was generated from the following files\+:\begin{DoxyCompactItemize}
+\item 
+source/numeric/\mbox{\hyperlink{archetypes_8hpp}{archetypes.\+hpp}}\item 
+source/numeric/\mbox{\hyperlink{number_8decl_8hpp}{number.\+decl.\+hpp}}\item 
+source/numeric/\mbox{\hyperlink{number_8hpp}{number.\+hpp}}\end{DoxyCompactItemize}

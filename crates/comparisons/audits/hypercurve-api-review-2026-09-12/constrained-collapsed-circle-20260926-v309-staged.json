@@ -1,0 +1,25 @@
+{
+  "source_manifest": "constrained-collapsed-circle-20260926-v309-sources.json",
+  "qualification": "constrained-collapsed-circle-20260926-v309-terminal.json",
+  "outer_session_reaped": 55400,
+  "validated_files": 2046,
+  "passed_tests": 121,
+  "static_checks": 6,
+  "repos": {
+    "hypercurve": {
+      "parent": "0f1c54deaf26f89c7ff3d3acd92dc4f10d08c52e",
+      "paths": {
+        "src/bezier_region.rs": "2166c0ff43fee5db18688bb9e7d260167be231d264a6f78b325e50cf3009077d",
+        "src/curve.rs": "3ade32c36810d12d9612bde173082f1483502ae054e8964f2263a054e0c27c55",
+        "src/curve_corner_chain.rs": "dc3611d27c3aeaadbd482e5e1e3c576cb6ce80b783ebb549e86ffb71be549433",
+        "src/curve_corner_domain.rs": "56ed710982ca8fd2fc1a1f6091237b074316cba0fa4bcb7db4315811a048a279",
+        "src/curve_fillet.rs": "9a72cb507fd6833a25fb4ea9e22b1255e2d29a5fdf11edd8e6200d6ade196d28"
+      }
+    }
+  },
+  "known_unresolved_not_requalified": [
+    "strict_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions",
+    "approximate_512_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions"
+  ],
+  "remaining_constraint_work": "General collapsed selected-circle and analytic-parallel contact replay; native coincident supports"
+}

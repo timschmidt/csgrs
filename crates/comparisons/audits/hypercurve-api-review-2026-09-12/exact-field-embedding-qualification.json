@@ -1,0 +1,45 @@
+{
+  "status": "implemented, qualified, committed; original goal active",
+  "commit": "496ac88bedec6bf43b9b8f9b4096ac19778216d3",
+  "preceding_hypercurve_commit": "be971cce43b1b3d5b2c4ca33aee1304536f2e1d4",
+  "implementation": "Generator radicand signs and equality replay now run under the caller context with its approximate terminal suppressed. Both same-base field joins and foreign-field embeddings preserve exact evidence; unresolved radicand equality cannot merge distinct roots and an unresolved positive radicand cannot collapse to zero.",
+  "regression": "The exact value 1-cos(2^-600) is positive but unresolved by the scalar STRICT predicate. Generator equality for sqrt(2) and sqrt(2+value) and zero-root construction must retain uncertainty under both contexts. The new regression fails on preceding source and passes after the fix.",
+  "baseline": "exact-field-embedding-baseline.log",
+  "focused": "exact-field-embedding-focused.log: four tests passed in 0.06 seconds.",
+  "tests": {
+    "hypercurve": {
+      "passed": 1449,
+      "ignored": 6,
+      "targets": 13,
+      "log": "exact-field-embedding-hypercurve-tests.log",
+      "exit_code": 0
+    },
+    "hyperbrep": {
+      "passed": 232,
+      "ignored": 0,
+      "targets": 1,
+      "log": "exact-field-embedding-hyperbrep-tests.log",
+      "exit_code": 0
+    }
+  },
+  "freshly_run_total": 1681,
+  "unchanged_qualified_hypersolve": {
+    "commit": "9211d62fe0b2322e60110da19afb95fdbda3704b",
+    "passed": 487,
+    "log": "local-polynomial-remainder-hypersolve-lib.log"
+  },
+  "unique_total_including_unchanged_qualified_hypersolve": 2168,
+  "established_expensive_hypercurve_exclusions": 4,
+  "checks": [
+    "exact-field-embedding-hypercurve-check.log: exit 0",
+    "exact-field-embedding-hyperbrep-check.log: exit 0",
+    "changed-file rustfmt --check and git diff --check: exit 0"
+  ],
+  "source_sha256": {
+    "hypercurve/src/bezier_offset.rs": "6918bb53e035716d2df6edd636070e805f92c0e11cc4363361e1981f504d07c0"
+  },
+  "clean_repository_count": 30,
+  "workspace_state": "exact-field-embedding-workspace-after-commit.json",
+  "goal_status": "active",
+  "remaining_scope": "Inward PH closure remains open. Next: reuse Hypersolve selected-root sign queries before constructing independent filter-root sequences. Investigate whether a complete field join can append an exact source generator when optional equality reuse is undecided, preserving bounded decline and avoiding uncontrolled tower growth."
+}

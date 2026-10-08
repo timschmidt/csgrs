@@ -1,0 +1,11 @@
+# Remaining private finite-domain authority audit
+
+Snapshot: contact-fallback-consolidation-v793 (qualification active; no new production edits). The inventory includes constructor definitions and tests; it is a read-only index, not a claim that all private invariants are proven.
+
+The public rational algebraic point factories reject failed affine images. The contact helper now preserves classified failures, and all five repeated circle fallbacks use the existing rational point helper. Generic Curve2 evaluation separately validates denominator nonzero status, with a common-sign Bernstein certificate on the unit domain and polynomial replay for exterior or mixed-sign cases.
+
+The remaining private parametric constructor intentionally trusts geometry-owned finite-domain evidence. Rechecking every source through independent Cartesian projection would discard valid selected-field results and can multiply reconstruction cost. The conic shortcut contains a common-sign denominator comment, but the initial read did not establish that precondition. V795 subsequently disproved it: mixed-sign weights publish projective poles as affine contacts. V796 adds the missing selected-denominator guard. Mapped circle points and normal-frame centers reuse previously admitted contact/frame evidence. The recursive rational point helper also serves constant-weight affine lines and certified monotone overlap cells, whose domain proof already excludes poles.
+
+Next bounded work: trace each remaining contact/frame constructor to its exact nonzero-domain authority, especially mixed-sign rational sources at recursive parameters. Share validation where independent callers actually repeat the same proof, while retaining operation-owned incidence and pole-partition evidence. A helper-level call with an invalid private precondition is not an independent public operation counterexample.
+
+Projection arithmetic still asks ordinary Real division to validate a denominator after the geometric predicate has decided it. The current change only corrects failure classification. Any reuse of the external proof should preserve the scalar quotient simplifications: Real division includes same-basis cancellation and special symbolic quotient paths. Compare actual point representation, sign reuse and cost before replacing division with unconditional reciprocal multiplication.

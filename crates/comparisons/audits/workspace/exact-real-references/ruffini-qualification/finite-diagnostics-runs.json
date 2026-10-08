@@ -1,0 +1,126 @@
+[
+  {
+    "mode": "build",
+    "command": "javac",
+    "args": [
+      "--release",
+      "16",
+      "-encoding",
+      "UTF-8",
+      "-cp",
+      "/home/tim/Documents/GitHub/workspace/.audit-ruffini-build.LmZgYM/finite-diagnostics-v1:/home/tim/Documents/GitHub/workspace/.audit-ruffini-build.LmZgYM/finite-boundaries-v1:/home/tim/Documents/GitHub/workspace/.audit-ruffini-build.LmZgYM/polynomial:/home/tim/Documents/GitHub/workspace/.audit-ruffini-build.LmZgYM/matrix:/home/tim/Documents/GitHub/workspace/.audit-ruffini-build.LmZgYM/classes:/home/tim/Documents/GitHub/workspace/.audit-ruffini-build.LmZgYM/deps/*",
+      "-d",
+      "/home/tim/Documents/GitHub/workspace/.audit-ruffini-build.LmZgYM/finite-diagnostics-v1",
+      "/home/tim/Documents/GitHub/workspace/exact-real-references/ruffini-qualification/FiniteDiagnostics.java"
+    ],
+    "started": "2026-09-07T03:34:54.184Z",
+    "finished": "2026-09-07T03:34:54.671Z",
+    "status": 0,
+    "error": null,
+    "signal": null,
+    "file": "finite-diagnostics-build.log",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "sourceSha256": "f3c15451e0516c5d7ae88bcd36ca15bce32b072f881c995042f28844f8b8578f",
+    "runnerSha256": "085dc81048115ec58b75842d75203b3ff16704c3b73113bdb3cdb1145236549d",
+    "dependencies": [
+      [
+        "native-build-manifest.json",
+        "00763b9eca620f1ac67486bbe43f087366b2871d767f489110e4045e48096844"
+      ],
+      [
+        "matrix-build-manifest.json",
+        "0ac8a19300c1fe575051ee4975f352a9ce620c5b8e45e1813d9bd4fb1e1b76cd"
+      ],
+      [
+        "polynomial-build-manifest.json",
+        "a3473385f5920dcd88d18c15aedd430b65f8f516424ae12b28e5b65fbbe1dfec"
+      ],
+      [
+        "finite-boundaries-build-manifest.json",
+        "1eb73fb1b087d16dec50a783592f5e5556170f169c340ccdf41eb5876734ae9c"
+      ]
+    ]
+  },
+  {
+    "mode": "jit",
+    "command": "java",
+    "args": [
+      "-ea",
+      "-Xmx256m",
+      "-Xss512k",
+      "-cp",
+      "/home/tim/Documents/GitHub/workspace/.audit-ruffini-build.LmZgYM/finite-diagnostics-v1:/home/tim/Documents/GitHub/workspace/.audit-ruffini-build.LmZgYM/finite-boundaries-v1:/home/tim/Documents/GitHub/workspace/.audit-ruffini-build.LmZgYM/polynomial:/home/tim/Documents/GitHub/workspace/.audit-ruffini-build.LmZgYM/matrix:/home/tim/Documents/GitHub/workspace/.audit-ruffini-build.LmZgYM/classes:/home/tim/Documents/GitHub/workspace/.audit-ruffini-build.LmZgYM/deps/*",
+      "FiniteDiagnostics"
+    ],
+    "started": "2026-09-07T03:34:54.673Z",
+    "finished": "2026-09-07T03:34:55.035Z",
+    "status": 0,
+    "error": null,
+    "signal": null,
+    "file": "finite-diagnostics-jit.log",
+    "sha256": "7897257b55d3b78f397d4eb4b3556cc62ea09e8d99332ee1eee9dc6648e678c4",
+    "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "sourceSha256": "f3c15451e0516c5d7ae88bcd36ca15bce32b072f881c995042f28844f8b8578f",
+    "runnerSha256": "085dc81048115ec58b75842d75203b3ff16704c3b73113bdb3cdb1145236549d",
+    "dependencies": [
+      [
+        "native-build-manifest.json",
+        "00763b9eca620f1ac67486bbe43f087366b2871d767f489110e4045e48096844"
+      ],
+      [
+        "matrix-build-manifest.json",
+        "0ac8a19300c1fe575051ee4975f352a9ce620c5b8e45e1813d9bd4fb1e1b76cd"
+      ],
+      [
+        "polynomial-build-manifest.json",
+        "a3473385f5920dcd88d18c15aedd430b65f8f516424ae12b28e5b65fbbe1dfec"
+      ],
+      [
+        "finite-boundaries-build-manifest.json",
+        "1eb73fb1b087d16dec50a783592f5e5556170f169c340ccdf41eb5876734ae9c"
+      ]
+    ]
+  },
+  {
+    "mode": "interpreter",
+    "command": "java",
+    "args": [
+      "-ea",
+      "-Xmx256m",
+      "-Xss512k",
+      "-Xint",
+      "-cp",
+      "/home/tim/Documents/GitHub/workspace/.audit-ruffini-build.LmZgYM/finite-diagnostics-v1:/home/tim/Documents/GitHub/workspace/.audit-ruffini-build.LmZgYM/finite-boundaries-v1:/home/tim/Documents/GitHub/workspace/.audit-ruffini-build.LmZgYM/polynomial:/home/tim/Documents/GitHub/workspace/.audit-ruffini-build.LmZgYM/matrix:/home/tim/Documents/GitHub/workspace/.audit-ruffini-build.LmZgYM/classes:/home/tim/Documents/GitHub/workspace/.audit-ruffini-build.LmZgYM/deps/*",
+      "FiniteDiagnostics"
+    ],
+    "started": "2026-09-07T03:34:55.036Z",
+    "finished": "2026-09-07T03:34:57.493Z",
+    "status": 0,
+    "error": null,
+    "signal": null,
+    "file": "finite-diagnostics-interpreter.log",
+    "sha256": "df92307b0f999e601ff5b83bc9bfd624fc5dafd662bf4e9832a4aea369a4e5b3",
+    "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "sourceSha256": "f3c15451e0516c5d7ae88bcd36ca15bce32b072f881c995042f28844f8b8578f",
+    "runnerSha256": "085dc81048115ec58b75842d75203b3ff16704c3b73113bdb3cdb1145236549d",
+    "dependencies": [
+      [
+        "native-build-manifest.json",
+        "00763b9eca620f1ac67486bbe43f087366b2871d767f489110e4045e48096844"
+      ],
+      [
+        "matrix-build-manifest.json",
+        "0ac8a19300c1fe575051ee4975f352a9ce620c5b8e45e1813d9bd4fb1e1b76cd"
+      ],
+      [
+        "polynomial-build-manifest.json",
+        "a3473385f5920dcd88d18c15aedd430b65f8f516424ae12b28e5b65fbbe1dfec"
+      ],
+      [
+        "finite-boundaries-build-manifest.json",
+        "1eb73fb1b087d16dec50a783592f5e5556170f169c340ccdf41eb5876734ae9c"
+      ]
+    ]
+  }
+]

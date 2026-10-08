@@ -1,0 +1,527 @@
+[
+  {
+    "path": "hypercurve/src/bezier_offset.rs",
+    "line": 185989,
+    "before": "&point",
+    "after": "&point.clone().into()",
+    "reason": "compiler-resolved CurveRegion2/CurvePath2 point argument"
+  },
+  {
+    "path": "hypercurve/src/bezier_offset.rs",
+    "line": 185984,
+    "before": "&point",
+    "after": "&point.clone().into()",
+    "reason": "compiler-resolved CurveRegion2/CurvePath2 point argument"
+  },
+  {
+    "path": "hypercurve/src/bezier_offset.rs",
+    "line": 183086,
+    "before": "&point",
+    "after": "&point.clone().into()",
+    "reason": "compiler-resolved CurveRegion2/CurvePath2 point argument"
+  },
+  {
+    "path": "hypercurve/src/bezier_offset.rs",
+    "line": 183081,
+    "before": "&point",
+    "after": "&point.clone().into()",
+    "reason": "compiler-resolved CurveRegion2/CurvePath2 point argument"
+  },
+  {
+    "path": "hypercurve/src/bezier_offset.rs",
+    "line": 158897,
+    "before": "&inside",
+    "after": "&inside.clone().into()",
+    "reason": "compiler-resolved CurveRegion2/CurvePath2 point argument"
+  },
+  {
+    "path": "hypercurve/src/bezier_offset.rs",
+    "line": 158797,
+    "before": "&boundary_point",
+    "after": "&boundary_point.clone().into()",
+    "reason": "compiler-resolved CurveRegion2/CurvePath2 point argument"
+  },
+  {
+    "path": "hypercurve/src/bezier_offset.rs",
+    "line": 158791,
+    "before": "&outside",
+    "after": "&outside.clone().into()",
+    "reason": "compiler-resolved CurveRegion2/CurvePath2 point argument"
+  },
+  {
+    "path": "hypercurve/src/bezier_offset.rs",
+    "line": 158785,
+    "before": "&inside",
+    "after": "&inside.clone().into()",
+    "reason": "compiler-resolved CurveRegion2/CurvePath2 point argument"
+  },
+  {
+    "path": "hypercurve/src/bezier_offset.rs",
+    "line": 156307,
+    "before": "&Point2::new(Real::from(8_i8), Real::from(-3_i8))",
+    "after": "&Point2::new(Real::from(8_i8), Real::from(-3_i8)).into()",
+    "reason": "compiler-resolved CurveRegion2/CurvePath2 point argument"
+  },
+  {
+    "path": "hypercurve/src/bezier_offset.rs",
+    "line": 156242,
+    "before": "&Point2::new(Real::zero(), -(Real::one() + &half))",
+    "after": "&Point2::new(Real::zero(), -(Real::one() + &half)).into()",
+    "reason": "compiler-resolved CurveRegion2/CurvePath2 point argument"
+  },
+  {
+    "path": "hypercurve/src/bezier_offset.rs",
+    "line": 153391,
+    "before": "&point",
+    "after": "&point.clone().into()",
+    "reason": "compiler-resolved CurveRegion2/CurvePath2 point argument"
+  },
+  {
+    "path": "hypercurve/src/curve_corner_chain.rs",
+    "line": 4206,
+    "before": "&point",
+    "after": "&point.clone().into()",
+    "reason": "compiler-resolved CurveRegion2/CurvePath2 point argument"
+  },
+  {
+    "path": "hypercurve/src/bezier_region.rs",
+    "line": 33353,
+    "before": "&p(2, 0)",
+    "after": "&p(2, 0).into()",
+    "reason": "compiler-resolved CurveRegion2/CurvePath2 point argument"
+  },
+  {
+    "path": "hypercurve/src/bezier_region.rs",
+    "line": 33347,
+    "before": "&p(-2, 0)",
+    "after": "&p(-2, 0).into()",
+    "reason": "compiler-resolved CurveRegion2/CurvePath2 point argument"
+  },
+  {
+    "path": "hypercurve/src/bezier_region.rs",
+    "line": 33268,
+    "before": "&p(1, 2)",
+    "after": "&p(1, 2).into()",
+    "reason": "compiler-resolved CurveRegion2/CurvePath2 point argument"
+  },
+  {
+    "path": "hypercurve/src/bezier_region.rs",
+    "line": 33262,
+    "before": "&p(1, 1)",
+    "after": "&p(1, 1).into()",
+    "reason": "compiler-resolved CurveRegion2/CurvePath2 point argument"
+  },
+  {
+    "path": "hypercurve/src/bezier_region.rs",
+    "line": 33256,
+    "before": "&point",
+    "after": "&point.clone().into()",
+    "reason": "compiler-resolved CurveRegion2/CurvePath2 point argument"
+  },
+  {
+    "path": "hypercurve/src/bezier_region.rs",
+    "line": 32699,
+    "before": "&Point2::new(Real::one(), (Real::one() / Real::from(2)).unwrap())",
+    "after": "&Point2::new(Real::one(), (Real::one() / Real::from(2)).unwrap()).into()",
+    "reason": "compiler-resolved CurveRegion2/CurvePath2 point argument"
+  },
+  {
+    "path": "hypercurve/src/bezier_region.rs",
+    "line": 31090,
+    "before": "point",
+    "after": "&point.clone().into()",
+    "reason": "compiler-resolved CurveRegion2/CurvePath2 point argument"
+  },
+  {
+    "path": "hypercurve/src/bezier_region.rs",
+    "line": 30329,
+    "before": "&p(5, 5)",
+    "after": "&p(5, 5).into()",
+    "reason": "compiler-resolved CurveRegion2/CurvePath2 point argument"
+  },
+  {
+    "path": "hypercurve/src/bezier_region.rs",
+    "line": 30311,
+    "before": "&p(10, 10)",
+    "after": "&p(10, 10).into()",
+    "reason": "compiler-resolved CurveRegion2/CurvePath2 point argument"
+  },
+  {
+    "path": "hypercurve/src/bezier_region.rs",
+    "line": 29139,
+    "before": "&p(0, 0)",
+    "after": "&p(0, 0).into()",
+    "reason": "compiler-resolved CurveRegion2/CurvePath2 point argument"
+  },
+  {
+    "path": "hypercurve/src/bezier_region.rs",
+    "line": 29132,
+    "before": "&p(1, 1)",
+    "after": "&p(1, 1).into()",
+    "reason": "compiler-resolved CurveRegion2/CurvePath2 point argument"
+  },
+  {
+    "path": "hypercurve/src/bezier_region.rs",
+    "line": 29125,
+    "before": "&Point2::new(tenth.clone(), tenth)",
+    "after": "&Point2::new(tenth.clone(), tenth).into()",
+    "reason": "compiler-resolved CurveRegion2/CurvePath2 point argument"
+  },
+  {
+    "path": "hypercurve/src/bezier_region.rs",
+    "line": 29104,
+    "before": "&p(2, 2)",
+    "after": "&p(2, 2).into()",
+    "reason": "compiler-resolved CurveRegion2/CurvePath2 point argument"
+  },
+  {
+    "path": "hypercurve/src/bezier_region.rs",
+    "line": 29040,
+    "before": "&point",
+    "after": "&point.clone().into()",
+    "reason": "compiler-resolved CurveRegion2/CurvePath2 point argument"
+  },
+  {
+    "path": "hypercurve/src/bezier_region.rs",
+    "line": 28633,
+    "before": "sample",
+    "after": "&sample.clone().into()",
+    "reason": "compiler-resolved CurveRegion2/CurvePath2 point argument"
+  },
+  {
+    "path": "hypercurve/src/bezier_region.rs",
+    "line": 28355,
+    "before": "&exact",
+    "after": "&exact.clone().into()",
+    "reason": "compiler-resolved CurveRegion2/CurvePath2 point argument"
+  },
+  {
+    "path": "hypercurve/src/bezier_region.rs",
+    "line": 27558,
+    "before": "&p(0, 0)",
+    "after": "&p(0, 0).into()",
+    "reason": "compiler-resolved CurveRegion2/CurvePath2 point argument"
+  },
+  {
+    "path": "hypercurve/src/bezier_region.rs",
+    "line": 27465,
+    "before": "&p(0, 0)",
+    "after": "&p(0, 0).into()",
+    "reason": "compiler-resolved CurveRegion2/CurvePath2 point argument"
+  },
+  {
+    "path": "hypercurve/src/bezier_region.rs",
+    "line": 27302,
+    "before": "&p(-1, 0)",
+    "after": "&p(-1, 0).into()",
+    "reason": "compiler-resolved CurveRegion2/CurvePath2 point argument"
+  },
+  {
+    "path": "hypercurve/src/bezier_region.rs",
+    "line": 27295,
+    "before": "&p(0, 0)",
+    "after": "&p(0, 0).into()",
+    "reason": "compiler-resolved CurveRegion2/CurvePath2 point argument"
+  },
+  {
+    "path": "hypercurve/src/bezier_region.rs",
+    "line": 24615,
+    "before": "&p(0, 0)",
+    "after": "&p(0, 0).into()",
+    "reason": "compiler-resolved CurveRegion2/CurvePath2 point argument"
+  },
+  {
+    "path": "hypercurve/src/bezier_region.rs",
+    "line": 24560,
+    "before": "&p(0, 0)",
+    "after": "&p(0, 0).into()",
+    "reason": "compiler-resolved CurveRegion2/CurvePath2 point argument"
+  },
+  {
+    "path": "hypercurve/src/bezier_region.rs",
+    "line": 24475,
+    "before": "&p(0, 0)",
+    "after": "&p(0, 0).into()",
+    "reason": "compiler-resolved CurveRegion2/CurvePath2 point argument"
+  },
+  {
+    "path": "hypercurve/src/bezier_region.rs",
+    "line": 24385,
+    "before": "&p(0, 0)",
+    "after": "&p(0, 0).into()",
+    "reason": "compiler-resolved CurveRegion2/CurvePath2 point argument"
+  },
+  {
+    "path": "hypercurve/src/bezier_region.rs",
+    "line": 24297,
+    "before": "&p(0, 0)",
+    "after": "&p(0, 0).into()",
+    "reason": "compiler-resolved CurveRegion2/CurvePath2 point argument"
+  },
+  {
+    "path": "hypercurve/src/bezier_region.rs",
+    "line": 24162,
+    "before": "&p(0, 0)",
+    "after": "&p(0, 0).into()",
+    "reason": "compiler-resolved CurveRegion2/CurvePath2 point argument"
+  },
+  {
+    "path": "hypercurve/src/bezier_region.rs",
+    "line": 23641,
+    "before": "&Point2::new(q(1, 10), q(1, 10))",
+    "after": "&Point2::new(q(1, 10), q(1, 10)).into()",
+    "reason": "compiler-resolved CurveRegion2/CurvePath2 point argument"
+  },
+  {
+    "path": "hypercurve/src/bezier_region.rs",
+    "line": 23615,
+    "before": "&Point2::new(q(1, 10), q(1, 10))",
+    "after": "&Point2::new(q(1, 10), q(1, 10)).into()",
+    "reason": "compiler-resolved CurveRegion2/CurvePath2 point argument"
+  },
+  {
+    "path": "hypercurve/src/bezier_region.rs",
+    "line": 23385,
+    "before": "&probe",
+    "after": "&probe.clone().into()",
+    "reason": "compiler-resolved CurveRegion2/CurvePath2 point argument"
+  },
+  {
+    "path": "hypercurve/src/bezier_region.rs",
+    "line": 23332,
+    "before": "&p(0, 0)",
+    "after": "&p(0, 0).into()",
+    "reason": "compiler-resolved CurveRegion2/CurvePath2 point argument"
+  },
+  {
+    "path": "hypercurve/src/bezier_region.rs",
+    "line": 23201,
+    "before": "&p(0, 0)",
+    "after": "&p(0, 0).into()",
+    "reason": "compiler-resolved CurveRegion2/CurvePath2 point argument"
+  },
+  {
+    "path": "hypercurve/src/bezier_region.rs",
+    "line": 23145,
+    "before": "&point",
+    "after": "&point.clone().into()",
+    "reason": "compiler-resolved CurveRegion2/CurvePath2 point argument"
+  },
+  {
+    "path": "hypercurve/src/bezier_region.rs",
+    "line": 23143,
+    "before": "&point",
+    "after": "&point.clone().into()",
+    "reason": "compiler-resolved CurveRegion2/CurvePath2 point argument"
+  },
+  {
+    "path": "hypercurve/src/bezier_region.rs",
+    "line": 23109,
+    "before": "&p(5, 5)",
+    "after": "&p(5, 5).into()",
+    "reason": "compiler-resolved CurveRegion2/CurvePath2 point argument"
+  },
+  {
+    "path": "hypercurve/src/bezier_region.rs",
+    "line": 23101,
+    "before": "&point",
+    "after": "&point.clone().into()",
+    "reason": "compiler-resolved CurveRegion2/CurvePath2 point argument"
+  },
+  {
+    "path": "hypercurve/src/bezier_region.rs",
+    "line": 23096,
+    "before": "&point",
+    "after": "&point.clone().into()",
+    "reason": "compiler-resolved CurveRegion2/CurvePath2 point argument"
+  },
+  {
+    "path": "hypercurve/src/bezier_region.rs",
+    "line": 22175,
+    "before": "&p(3, 1)",
+    "after": "&p(3, 1).into()",
+    "reason": "compiler-resolved CurveRegion2/CurvePath2 point argument"
+  },
+  {
+    "path": "hypercurve/src/bezier_region.rs",
+    "line": 21929,
+    "before": "&point",
+    "after": "&point.clone().into()",
+    "reason": "compiler-resolved CurveRegion2/CurvePath2 point argument"
+  },
+  {
+    "path": "hypercurve/src/bezier_region.rs",
+    "line": 21910,
+    "before": "point",
+    "after": "&point.clone().into()",
+    "reason": "compiler-resolved CurveRegion2/CurvePath2 point argument"
+  },
+  {
+    "path": "hypercurve/src/bezier_region.rs",
+    "line": 21281,
+    "before": "point",
+    "after": "&point.clone().into()",
+    "reason": "compiler-resolved CurveRegion2/CurvePath2 point argument"
+  },
+  {
+    "path": "hypercurve/src/bezier_region.rs",
+    "line": 21156,
+    "before": "&p(20, 20)",
+    "after": "&p(20, 20).into()",
+    "reason": "compiler-resolved CurveRegion2/CurvePath2 point argument"
+  },
+  {
+    "path": "hypercurve/src/bezier_region.rs",
+    "line": 21088,
+    "before": "&point",
+    "after": "&point.clone().into()",
+    "reason": "compiler-resolved CurveRegion2/CurvePath2 point argument"
+  },
+  {
+    "path": "hypercurve/src/bezier_region.rs",
+    "line": 21072,
+    "before": "&added_material",
+    "after": "&added_material.clone().into()",
+    "reason": "compiler-resolved CurveRegion2/CurvePath2 point argument"
+  },
+  {
+    "path": "hypercurve/src/bezier_region.rs",
+    "line": 21055,
+    "before": "&p(10, 10)",
+    "after": "&p(10, 10).into()",
+    "reason": "compiler-resolved CurveRegion2/CurvePath2 point argument"
+  },
+  {
+    "path": "hypercurve/src/bezier_region.rs",
+    "line": 21005,
+    "before": "&added_material",
+    "after": "&added_material.clone().into()",
+    "reason": "compiler-resolved CurveRegion2/CurvePath2 point argument"
+  },
+  {
+    "path": "hypercurve/src/bezier_region.rs",
+    "line": 20977,
+    "before": "&exterior",
+    "after": "&exterior.clone().into()",
+    "reason": "compiler-resolved CurveRegion2/CurvePath2 point argument"
+  },
+  {
+    "path": "hypercurve/src/bezier_region.rs",
+    "line": 20968,
+    "before": "&point",
+    "after": "&point.clone().into()",
+    "reason": "compiler-resolved CurveRegion2/CurvePath2 point argument"
+  },
+  {
+    "path": "hypercurve/src/bezier_region.rs",
+    "line": 19879,
+    "before": "&point",
+    "after": "&point.clone().into()",
+    "reason": "compiler-resolved CurveRegion2/CurvePath2 point argument"
+  },
+  {
+    "path": "hypercurve/src/curve_subdivision.rs",
+    "line": 3481,
+    "before": "&query",
+    "after": "&query.clone().into()",
+    "reason": "compiler-resolved CurveRegion2/CurvePath2 point argument"
+  },
+  {
+    "path": "hypercurve/src/curve_subdivision.rs",
+    "line": 3443,
+    "before": "&query",
+    "after": "&query.clone().into()",
+    "reason": "compiler-resolved CurveRegion2/CurvePath2 point argument"
+  },
+  {
+    "path": "hypercurve/src/curve_fillet.rs",
+    "line": 3104,
+    "before": "&p(10, 10)",
+    "after": "&p(10, 10).into()",
+    "reason": "compiler-resolved CurveRegion2/CurvePath2 point argument"
+  },
+  {
+    "path": "hypercurve/src/curve.rs",
+    "line": 14955,
+    "before": "&Point2::new(Real::one(), Real::one())",
+    "after": "&Point2::new(Real::one(), Real::one()).into()",
+    "reason": "compiler-resolved CurveRegion2/CurvePath2 point argument"
+  },
+  {
+    "path": "hypercurve/src/curve.rs",
+    "line": 14940,
+    "before": "&Point2::new(Real::one(), Real::one())",
+    "after": "&Point2::new(Real::one(), Real::one()).into()",
+    "reason": "compiler-resolved CurveRegion2/CurvePath2 point argument"
+  },
+  {
+    "path": "hypercurve/src/curve_support_intersection.rs",
+    "line": 4290,
+    "before": "&point",
+    "after": "&point.clone().into()",
+    "reason": "compiler-resolved CurveRegion2/CurvePath2 point argument"
+  },
+  {
+    "path": "hypercurve/src/curve_region_boolean.rs",
+    "line": 23026,
+    "before": "&point",
+    "after": "&point.clone().into()",
+    "reason": "compiler-resolved CurveRegion2/CurvePath2 point argument"
+  },
+  {
+    "path": "hypercurve/src/curve_region_boolean.rs",
+    "line": 23022,
+    "before": "&point",
+    "after": "&point.clone().into()",
+    "reason": "compiler-resolved CurveRegion2/CurvePath2 point argument"
+  },
+  {
+    "path": "hypercurve/src/curve_region_boolean.rs",
+    "line": 21063,
+    "before": "&Point2::new(q(1, 2), q(3, 10))",
+    "after": "&Point2::new(q(1, 2), q(3, 10)).into()",
+    "reason": "compiler-resolved CurveRegion2/CurvePath2 point argument"
+  },
+  {
+    "path": "hypercurve/src/curve_region_boolean.rs",
+    "line": 21052,
+    "before": "&point",
+    "after": "&point.clone().into()",
+    "reason": "compiler-resolved CurveRegion2/CurvePath2 point argument"
+  },
+  {
+    "path": "hypercurve/src/curve_region_boolean.rs",
+    "line": 20903,
+    "before": "&sample",
+    "after": "&sample.clone().into()",
+    "reason": "compiler-resolved CurveRegion2/CurvePath2 point argument"
+  },
+  {
+    "path": "hypercurve/src/curve_region_boolean.rs",
+    "line": 20859,
+    "before": "&point",
+    "after": "&point.clone().into()",
+    "reason": "compiler-resolved CurveRegion2/CurvePath2 point argument"
+  },
+  {
+    "path": "hypercurve/src/curve_region_trim.rs",
+    "line": 1304,
+    "before": "&point",
+    "after": "&point.clone().into()",
+    "reason": "compiler-resolved CurveRegion2/CurvePath2 point argument"
+  },
+  {
+    "path": "hypercurve/src/native_region_tests.rs",
+    "line": 671,
+    "before": "&p(1, 1)",
+    "after": "&p(1, 1).into()",
+    "reason": "compiler-resolved CurveRegion2/CurvePath2 point argument"
+  },
+  {
+    "path": "hypercurve/src/native_region_tests.rs",
+    "line": 63,
+    "before": "point",
+    "after": "&point.clone().into()",
+    "reason": "compiler-resolved CurveRegion2/CurvePath2 point argument"
+  }
+]

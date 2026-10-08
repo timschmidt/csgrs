@@ -1,0 +1,26 @@
+{
+  "baseline-cpu": {
+    "path": "/tmp/calcium-derivative-endpoint.XO0A0Q/baseline-cpu",
+    "bytes": 9984152,
+    "sha256": "8915e269befbfbd837cd8eca80cd72a8c509074c580580a17fe430dc759fcf6b",
+    "size": "text\t   data\t    bss\t    dec\t    hex\tfilename\n7789978\t 280224\t   3888\t8074090\t 7b336a\t/tmp/calcium-derivative-endpoint.XO0A0Q/baseline-cpu"
+  },
+  "baseline-allocation": {
+    "path": "/tmp/calcium-derivative-endpoint.XO0A0Q/baseline-allocation",
+    "bytes": 9988456,
+    "sha256": "d3e33f2d1fcd2a969ba66c9174bf2f1ce1a5011c1ebcfb8b0b037c6570e9d8a1",
+    "size": "text\t   data\t    bss\t    dec\t    hex\tfilename\n7793382\t 280232\t   4616\t8078230\t 7b4396\t/tmp/calcium-derivative-endpoint.XO0A0Q/baseline-allocation"
+  },
+  "candidate-cpu": {
+    "path": "/tmp/calcium-derivative-endpoint.XO0A0Q/candidate-cpu",
+    "bytes": 9983760,
+    "sha256": "b089157c2dcd4ffbbc16ea8e72833f2ca994df5593d8e2408bedfac47efb5bdc",
+    "size": "text\t   data\t    bss\t    dec\t    hex\tfilename\n7789694\t 280224\t   4176\t8074094\t 7b336e\t/tmp/calcium-derivative-endpoint.XO0A0Q/candidate-cpu"
+  },
+  "candidate-allocation": {
+    "path": "/tmp/calcium-derivative-endpoint.XO0A0Q/candidate-allocation",
+    "bytes": 9988112,
+    "sha256": "0c9be541c0ccb8c82d7d62b98e113049ddde70256d7eb6c75116b2c9adba0a4a",
+    "size": "text\t   data\t    bss\t    dec\t    hex\tfilename\n7793098\t 280232\t   4888\t8078218\t 7b438a\t/tmp/calcium-derivative-endpoint.XO0A0Q/candidate-allocation"
+  }
+}

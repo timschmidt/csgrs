@@ -1,0 +1,245 @@
+{
+  "hypersolve_head": "60a4e609d382c681ee98a1de6b4bdb7673487d37",
+  "diagnostic_only": true,
+  "parent": "63bb381f59bf4b8f375505a05281008d7e19d6e6",
+  "source_manifest": "local-chord-complete-replay-20260924-v99-sources.json",
+  "source_directory": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/source-archives/hypercurve-local-chord-complete-replay-v99-20260924",
+  "build_source_directory": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/build-workspace-20260925",
+  "checks": [
+    {
+      "label": "fmt",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustfmt",
+        "--edition",
+        "2024",
+        "--check",
+        "src/bezier_algebraic_image.rs",
+        "src/bezier_split.rs",
+        "src/bezier_offset.rs",
+        "src/bezier_parameter.rs",
+        "src/bezier_region.rs",
+        "src/curve.rs",
+        "src/curve_corner_chain.rs",
+        "src/curve_region_boolean.rs",
+        "tests/hypercurve_curve.rs"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 3.6344049950130284,
+      "log": "retained-contact-integrated-20260925-v99-fmt.log"
+    },
+    {
+      "label": "clippy-0",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "clippy",
+        "--all-targets",
+        "--all-features",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 23.86626307608094,
+      "log": "retained-contact-integrated-20260925-v99-clippy-0.log"
+    },
+    {
+      "label": "clippy-1",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "clippy",
+        "--all-targets",
+        "--no-default-features",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 23.21339806600008,
+      "log": "retained-contact-integrated-20260925-v99-clippy-1.log"
+    },
+    {
+      "label": "hyperbrep-check-all-targets",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "check",
+        "--manifest-path",
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/build-workspace-20260925/hyperbrep/Cargo.toml",
+        "--all-targets",
+        "--all-features",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 18.25986423296854,
+      "log": "retained-contact-integrated-20260925-v99-hyperbrep-check-all-targets.log"
+    }
+  ],
+  "binaries": {
+    "hypercurve_curve": {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-contact-integrated-20260925-v99-hypercurve_curve",
+      "sha256": "c783c20dbe384d4ca028f477b21f3048f83f7ebb2784d08c1e19253d873667f8"
+    },
+    "hypercurve_analytic_parallel_region": {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-contact-integrated-20260925-v99-hypercurve_analytic_parallel_region",
+      "sha256": "b7be00b73ed824526cf8de1c8b32a08486dfb37033e471a81fe565699d284a5f"
+    }
+  },
+  "cases": [
+    {
+      "label": "direct_bezier_pair_fillet_retains_both_incident_extensions",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-contact-integrated-20260925-v99-hypercurve_curve",
+        "--exact",
+        "direct_bezier_pair_fillet_retains_both_incident_extensions",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 8.677871063002385,
+      "log": "retained-contact-integrated-20260925-v99-direct_bezier_pair_fillet_retains_both_incident_extensions.log",
+      "target": "hypercurve_curve",
+      "name": "direct_bezier_pair_fillet_retains_both_incident_extensions"
+    },
+    {
+      "label": "line_parabola_mixed_exact_algebraic_fillet_is_an_exact_open_path",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-contact-integrated-20260925-v99-hypercurve_curve",
+        "--exact",
+        "line_parabola_mixed_exact_algebraic_fillet_is_an_exact_open_path",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.8447279270039871,
+      "log": "retained-contact-integrated-20260925-v99-line_parabola_mixed_exact_algebraic_fillet_is_an_exact_open_path.log",
+      "target": "hypercurve_curve",
+      "name": "line_parabola_mixed_exact_algebraic_fillet_is_an_exact_open_path"
+    },
+    {
+      "label": "one_curve_closed_spline_extensions_materialize_each_cell_once",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-contact-integrated-20260925-v99-hypercurve_curve",
+        "--exact",
+        "one_curve_closed_spline_extensions_materialize_each_cell_once",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.43065235996618867,
+      "log": "retained-contact-integrated-20260925-v99-one_curve_closed_spline_extensions_materialize_each_cell_once.log",
+      "target": "hypercurve_curve",
+      "name": "one_curve_closed_spline_extensions_materialize_each_cell_once"
+    },
+    {
+      "label": "polynomial_chamfer_materializes_represented_incident_extension",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-contact-integrated-20260925-v99-hypercurve_curve",
+        "--exact",
+        "polynomial_chamfer_materializes_represented_incident_extension",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.40859388292301446,
+      "log": "retained-contact-integrated-20260925-v99-polynomial_chamfer_materializes_represented_incident_extension.log",
+      "target": "hypercurve_curve",
+      "name": "polynomial_chamfer_materializes_represented_incident_extension"
+    },
+    {
+      "label": "rational_chamfer_materializes_the_incident_projective_cell",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-contact-integrated-20260925-v99-hypercurve_curve",
+        "--exact",
+        "rational_chamfer_materializes_the_incident_projective_cell",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.41970855998806655,
+      "log": "retained-contact-integrated-20260925-v99-rational_chamfer_materializes_the_incident_projective_cell.log",
+      "target": "hypercurve_curve",
+      "name": "rational_chamfer_materializes_the_incident_projective_cell"
+    },
+    {
+      "label": "spline_chamfer_materializes_only_the_incident_extension_cell",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-contact-integrated-20260925-v99-hypercurve_curve",
+        "--exact",
+        "spline_chamfer_materializes_only_the_incident_extension_cell",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.42246472102124244,
+      "log": "retained-contact-integrated-20260925-v99-spline_chamfer_materializes_only_the_incident_extension_cell.log",
+      "target": "hypercurve_curve",
+      "name": "spline_chamfer_materializes_only_the_incident_extension_cell"
+    },
+    {
+      "label": "spline_line_fillet_preserves_the_authored_spline_and_adds_its_incident_cell",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-contact-integrated-20260925-v99-hypercurve_curve",
+        "--exact",
+        "spline_line_fillet_preserves_the_authored_spline_and_adds_its_incident_cell",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.4079082190291956,
+      "log": "retained-contact-integrated-20260925-v99-spline_line_fillet_preserves_the_authored_spline_and_adds_its_incident_cell.log",
+      "target": "hypercurve_curve",
+      "name": "spline_line_fillet_preserves_the_authored_spline_and_adds_its_incident_cell"
+    }
+  ],
+  "all_processes_reaped": true,
+  "build_returncode": 0,
+  "selection": [
+    [
+      "hypercurve_curve",
+      "direct_bezier_pair_fillet_retains_both_incident_extensions"
+    ],
+    [
+      "hypercurve_curve",
+      "line_parabola_mixed_exact_algebraic_fillet_is_an_exact_open_path"
+    ],
+    [
+      "hypercurve_curve",
+      "one_curve_closed_spline_extensions_materialize_each_cell_once"
+    ],
+    [
+      "hypercurve_curve",
+      "polynomial_chamfer_materializes_represented_incident_extension"
+    ],
+    [
+      "hypercurve_curve",
+      "rational_chamfer_materializes_the_incident_projective_cell"
+    ],
+    [
+      "hypercurve_curve",
+      "spline_chamfer_materializes_only_the_incident_extension_cell"
+    ],
+    [
+      "hypercurve_curve",
+      "spline_line_fillet_preserves_the_authored_spline_and_adds_its_incident_cell"
+    ]
+  ],
+  "all_sources_unchanged": true
+}

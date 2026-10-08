@@ -1,0 +1,14 @@
+    Checking qqbar-remainder-hyper-v84 v0.0.0 (/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/qqbar-remainder-hyper-v84)
+error: casting to the same type is unnecessary (`i32` -> `i32`)
+  --> src/main.rs:80:33
+   |
+80 |             .map(|i| Real::from(((5 * i + length) % 7) as i32 - 3))
+   |                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ help: try: `((5 * i + length) % 7)`
+   |
+   = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.97.0/index.html#unnecessary_cast
+   = note: `-D clippy::unnecessary-cast` implied by `-D warnings`
+   = help: to override `-D warnings` add `#[allow(clippy::unnecessary_cast)]`
+
+error: could not compile `qqbar-remainder-hyper-v84` (bin "qqbar-remainder-hyper-v84") due to 1 previous error
+warning: build failed, waiting for other jobs to finish...
+error: could not compile `qqbar-remainder-hyper-v84` (bin "qqbar-remainder-hyper-v84" test) due to 1 previous error

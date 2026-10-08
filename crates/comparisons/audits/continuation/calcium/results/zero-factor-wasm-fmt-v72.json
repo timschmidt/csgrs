@@ -1,0 +1,18 @@
+{
+  "tag": "zero-factor-wasm-fmt-v72",
+  "started": "2026-09-11T20:06:35.652Z",
+  "finished": "2026-09-11T20:06:35.677Z",
+  "elapsedSeconds": 0.022719050999999994,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "rustfmt",
+  "args": [
+    "--check",
+    "--edition",
+    "2024",
+    "--config",
+    "skip_children=true",
+    "zero-factor-wasm-v72.rs"
+  ],
+  "code": 0,
+  "signal": null
+}

@@ -1,0 +1,274 @@
+      Grassmannian as Continuous Abstract Data
+          Type with Computable Semantics?
+
+          Seokbin Lee?? , Donghyun Lim, Sewon Park, and Martin Ziegler
+                                   KAIST, School of Computing
+
+
+
+       Abstract. The Grassmannian (over d-dimensional Euclidean space) is the collection of
+       all homogeneous subspaces of Rd , equipped with the operations Minkowski sum (aka
+       join), intersection (aka meet), orthogonal complement, and projection. From dimension
+       d = 2 on, these operations are discontinuous and therefore uncomputable. We show
+       that, when the integral dimension of the join/meet is given as promise, they do become
+       computable: by devising devise algorithms in the Exact Real Computation paradigm.
+
+
+
+1     Introduction
+1.1    Computable Analysis
+In classical theory of algorithms and computation, the choice of computation
+model is not crucial since it does not affect computability and little affects com-
+putational complexity. However, this model-agnosticism does not hold if the prob-
+lems of interest are of continuous nature, as opposed to discrete.
+    There are two major models of computation that deals with continuous data.
+One is the BSS machine, an algebraic model where basic arithmetic operations
+over real numbers are taken to be primitive, being computable in a single time
+step [BSS89]. BSS machine model has one significant limitation: it is not imple-
+mentable. No Turing machine can simulate a BSS machine. Another weakness is
+that the exponential map is not computable by any BSS machine [Bra03].
+    The other model, which we assume as the model, is computable analysis. It is
+an analytic model, where computation over real numbers are defined as arbitrary
+approximation [Wei00]. Unlike BSS machine model, it has the virtue of being
+implementable.
+    Computable analysis defines that a function f : Rm → Rn is computable
+if there exists a Turing machine that, for every x ∈ Rm , given any sequence
+(an ) ⊆ Q satisfying d(x, an ) ≤ 2−n , produces a sequence (bn ) ⊆ Q such that
+d(f (x), bn ) ≤ 2−n .
+    According to this definition, however, the inequality test 6=: R2 → {0, 1} is not
+decidable but only semideciable [Wei00]. In other words, when testing equality of
+two real numbers x and y:
+?
+   Supported by the National Research Foundation of Korea (grant NRF-2017R1E1A1A03071032) and
+   by the International Research & Development Program of the Korean Ministry of Science and ICT
+   (grant NRF-2016K1A3A7A03950702).
+??
+   Corresponding author
+– if actually x = y, then the test will get stuck;
+– if actually x 6= y, then the test will return 0.
+Similarly, when testing x < y,
+ – if actually x < y, then the test will return 1;
+ – if actually x > y, then the test will return 0;
+ – if actually x = y, then the test will get stuck.
+    These are theoretical limitations in the same sense that undecidability of halt-
+ing problem is a theoretical limitation. There is no way to avoid this phenomenon
+by adding more layers to abstractions. A programmer should be well aware of this
+issue when writing a program that deals with real numbers. It is the programmer’s
+responsibility to accept this limitation and still somehow write a program.
+
+1.2     Exact Real Computation
+Exact Real Computation (ERC) is an imperative language based on the philoso-
+phy of computable analysis. The language provides the set of real numbers as its
+primitive datatype R. The datatype is equipped with the operators (+, −, ×, /)
+which represent the field operators of reals. We say that the datatype R represents
+the exact real numbers in the sense that the operators come with no rounding
+errors in their evaluations.
+    ERC provides also a datatype for integers and instructions for conditional
+branching and while loop. The detailed construction of the language can be found
+in [BCK+ 16]. We illustrate in this section only two crucial differences to other
+common languages:
+ – All operations are exact and devoid of rounding errors.
+ – Comparisons “x>0” of real numbers are partial, in that they return true in
+    the case x > 0, false in the case x < 0, but do not return (‘freeze’, get
+    ‘stuck’) in the case x = 0, since this is undecidable as mentioned above.
+ – To write total programs, the multivalued/non-extensional lazy choose op-
+    eration is essential: select(x0 > y0 , . . . , xd > yd ) will return any integer
+    j ∈ {0, . . . , d} satisfying xj > yj , provided such exists — not necessarily
+    reproducibly.
+      By combining both, we can express various multivalued operators:
+Example 1 (Soft Sign). Given a real number x and a positive integer k, select(x <
+2−k , x > −2−k ) returns 0 when x ≤ −2−k , 1 when x ≥ 2−k , and 0 or 1 arbitrar-
+ily when −2−k < x < 2−k . We may interpret k as a tolerance factor that when
+|x| ≥ 2−k , the semantic is exactly the sign of x; but, when |x| is small relative to
+2−k , the semantic contain both 0 and 1. See also [YSS13].
+   Another example, consider a given finite list of real numbers x1 , · · · , xd with
+a promise that at least one of them is not zero. Then we can find some j such
+that xj 6= 0. This provides a computable relaxation of classical but uncomputable
+pivot search to be used in Section 2.3.
+1.3   Grassmannian
+The Grassmannian Gkd is the collection of all k-dimensional homogeneous sub-
+spaces of Rd . G d is the collection of all homogeneous subspaces, equipped with
+operations Minkowski sum, intersection, orthogonal complement, and projection.
+We consider each subspace of Rd represented by some basis. Computation of op-
+erations on the Grassmannian is defined with respect to such a basis representa-
+tion. For example, an algorithm computing the Minkowski sum has the following
+specification:
+INPUT 1 m linearly independent vectors u1 , · · · , um ∈ Rd
+INPUT 2 n linearly independent vectors v 1 , · · · , v n ∈ Rd
+OUTPUT ` linearly independent vectors w1 , · · · , w` ∈ Rd satisfying
+
+                lspan{w1 , · · · , w` } = lspan{u1 , · · · , um , v 1 , · · · , v n }
+
+Other operations on the Grassmannian have similar specifications.
+    These operations, however, as naively specified above, are not computable.
+We can reduce equality testing, which is undecidable, to those operations. For
+a, b ∈ R, we have a = b if and only if the Minkowski sum of {(1, a, 0, 0, · · · , 0)}
+and {(1, b, 0, 0, · · · , 0)} is of dimension 1.
+    One way to make those operations computable is by changing the specification
+so that algorithms be given the dimension of output space as part of input.
+INPUT 1 m linearly independent vectors u1 , · · · , um ∈ Rd
+INPUT 2 n linearly independent vectors v 1 , · · · , v n ∈ Rd
+INPUT 3 a number l = dim(lspan{u1 , · · · , um , v 1 , · · · , v n })
+OUTPUT ` linearly independent vectors w1 , · · · , w` ∈ Rd satisfying
+
+                  lspan{w1 · · · w` } = span{u1 , · · · , um , v 1 , · · · , v n }
+
+  This paper presents algorithms in ERC that compute operations on the Grass-
+mannian with respect to the latter specification.
+
+
+2     Algorithms in ERC
+Class GRASSMANN consists of the following variables:
+– integer d for ambient dimension
+– integer m for subspace dimension
+– d × m-dimensional array of reals with basis of the subspace
+    Furthermore it consists of the following methods, specified and realized by
+algorithms as described in the sequel: constructor, join (Minkowski sum), meet
+(intersection), orthogonal complement, and projection.
+Algorithm 1 Modified Gaussian Elimination
+1: procedure Gaussian(A, k)                                                   . A has dimensions m × n
+2:    for i from 1 to k do                                                . k is the number of iterations
+3:       j ← select(|Ai,i | > 0, . . . , |Ai,n | > 0)
+4:       Swap ci and cj of A                                           . ci denotes the i-th column of A
+5:       for p from i + 1 to d do
+                        A
+6:            cp ← cp − Ai,p
+                          i,i
+                              ci
+      return A
+
+
+    The algorithms avoid undecidability of inequality by cleverly exploiting the
+information of output dimension provided as part of input. They will also heavily
+utilize a modified form of columnwise Gaussian Elimination, described below.
+    We remark that, by “swap c1 and cj ,” we mean that the entries in the re-
+spective columns should be swapped one by one; in actual implementation this
+would require an iteration of n times. For simplicity, we omitted this detail in the
+pseudocode.
+
+2.1    Constructor
+The constructor receives ambient dimension d and non-zero vector u ∈ Rd , verifies
+the latter to be non-zero, and returns lspan(u) ∈ G1d .
+
+2.2    Complement
+This method receives a subspace (object of class GRASSMANNIAN), computes a
+basis of its orthogonal complement using a modification of Gaussian Elimination,
+and returns that subspace.
+   Specifically, let A ∈ Rd×m denote the given matrix whose columns form a
+basis of the subspace under consideration.
+                                              Classical linear algebra augments it
+                                 T
+                               A
+to an (m + d) × d matrix             , where Id denotes the d × d identity matrix;
+                                Id                 
+                                                   B
+transform the latter to column echelon form            : Then those columns of C
+                                                   C
+whose counterparts in B vanish are classically known to constitute a basis of the
+kernel of A, that is, of the orthogonal complement of A’s range.
+
+Algorithm 2 Complement Pseudocode
+   procedure
+            Complement(A,     m, d)
+            AT
+                
+2:    M←                                                                . Id is the d × d identity matrix
+             Id
+      M ← Gaussian(M, m)
+       return M [m + 1 : m + d, m + 1 : d]              . return the last d rows and d − m columns of M
+
+
+
+   We make some remarks. We note that, since it is enough to make the first
+m rows of AT in echelon form, we need only loop the column index i from 1 to
+m. Also, we are guaranteed that the select method used in the pseudocode will
+terminate and return correctly, because of the promise that the rows of A are
+linearly independent and hence A being full rank.
+
+2.3   Join
+This method receives two subspaces (objects of class GRASSMANNIAN) and the
+integer dimension ` of their Minkowski sum. It verifies the subspaces to have
+same ambient dimension, then computes a basis of their Minkowski sum using a
+modification of Zassenhaus’ Algorithm, and returns that subspace.
+    Specifically, let A ∈ Rd×m denote the given matrix whose columns form a basis
+of the first subspace under consideration; and B ∈ Rd×n  similarly
+                                                                   for the second
+                                                         AB
+subspace. Then transform the 2d × (m + n) matrix               to column echelon
+                                                       A0
+        C 0 0
+form              where C is of format d × ` with all columns non-zero. Then the
+        ∗ D0
+columns of C form a basis of the Minkowski sum as sought.
+
+
+Algorithm 3 Join Pseudocode
+   procedure
+            Join(A,
+                       B, l)
+            AB
+      M←
+            A 0
+3:    M ← Gaussian(M, m + n)
+       return M [1 : d, 1 : l]
+
+
+
+   As in Subsection 2.2, pivot search in Gaussian Elimination can be adjusted
+based on the promise that C has the known number ` of columns all non-zero.
+
+2.4   Meet
+Similarly to Subsection 2.3, but now the matrix D of format d×k with all columns
+non-zero constitutes a basis of the intersection of known dimension k of the two
+subspaces. Note that the dimension of the Minkowski sum ` = m+n−k is known
+as well.
+
+Algorithm 4 Meet Pseudocode
+   procedure
+            Meet(A,
+                       B, k)
+            AB
+      M←
+            A 0
+      M ← Gaussian(M, m + n)
+       return M [d + 1 : 2d, m + n − k + 1 : m + n]
+2.5    Projection
+This method receives a subspace (object of class GRASSMANNIAN), represented
+as a matrix A ∈ Rd×m and another subspace B ∈ Rd×n to be projected onto
+A. It verifies that d coincides with the ambient dimension of the subspace. The
+resulting dimension of the projected subspace, l, is also provided.
+
+
+Algorithm 5 Projection Pseudocode
+   procedure Projection(A, B, l)
+                  −1
+      P ← A(AT A) AT         . We are guaranteed the existence of (AT A)−1 because AT A is regular
+   return Gaussian(P B, l)[1 : d, 1 : l]
+
+
+
+     To elaborate, we know that A has full column rank, therefore so does the
+matrix AT A, which implies that it is invertible and therefore an inverse can be
+computed via Gaussian Elimination. Once again, we omit the details for simplic-
+ity.
+
+2.6    Implementation in iRRAM
+The source code is available at
+https://github.com/realcomputation/irramplus/tree/master/GRASSMANN
+
+References
+[BCK+ 16] Franz Brauße, Pieter Collins, Johannes Kanig, SunYoung Kim, Michal Konecny, Gyesik
+          Lee, Norbert Müller, Eike Neumann, Sewon Park, Norbert Preining, and Martin Ziegler.
+          Semantics, logic, and verification of ”exact real computation”, 2016.
+[Bra03]   Vasco Brattka. The emperor’s new recursiveness: The epigraph of the exponential function
+          in two models of computability. In Masami Ito and Teruo Imaoka, editors, Words, Languages
+          & Combinatorics III, pages 63–72, Singapore, 2003. World Scientific Publishing. ICWLC
+          2000, Kyoto, Japan, March 14–18, 2000.
+[BSS89] Lenore Blum, Mike Shub, and Steve Smale. On a theory of computation and complexity
+          over the real numbers: np- completeness, recursive functions and universal machines. Bull.
+          Amer. Math. Soc. (N.S.), 21(1):1–46, 07 1989.
+[Wei00]   Klaus Weihrauch. Computable Analysis. Springer, Berlin, 2000.
+[YSS13] Chee Yap, Michael Sagraloff, and Vikram Sharma. Analytic root clustering: A complete
+          algorithm using soft zero tests. In Conference on Computability in Europe, pages 434–444.
+          Springer, 2013.
+

@@ -1,0 +1,75 @@
+   Compiling hypersolve v0.3.1 (/home/tim/Documents/GitHub/workspace/hypersolve)
+    Finished `release` profile [optimized] target(s) in 0.58s
+     Running `target/release/examples/allocation_profile 4`
+Hypersolve allocation profile (4 iterations per row)
+
+Type sizes: Real=48 Problem=48 Expr=48 SparseResidualTerm=64 bytes
+
+| Certificate | Operation | allocs/op | deallocs/op | bytes/op | reallocs/op | peak live bytes | end live delta |
+| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| One | analysis + certification | 38.00 | 38.00 | 7558.0 | 2.00 | 4904 | 0 |
+| One | dense Bareiss + proof | 10.00 | 10.00 | 816.0 | 0.00 | 720 | 0 |
+| One | sparse exact replay | 7.00 | 7.00 | 1536.0 | 0.00 | 1216 | 0 |
+| Pi | analysis + certification | 102.00 | 102.00 | 12070.0 | 2.00 | 5808 | 0 |
+| Pi | dense Bareiss + proof | 37.00 | 37.00 | 2760.0 | 0.00 | 1624 | 0 |
+| Pi | sparse exact replay | 12.00 | 12.00 | 1896.0 | 0.00 | 1288 | 0 |
+| PiPow | analysis + certification | 212.00 | 212.00 | 19990.0 | 2.00 | 7248 | 0 |
+| PiPow | dense Bareiss + proof | 91.00 | 91.00 | 6536.0 | 0.00 | 3208 | 0 |
+| PiPow | sparse exact replay | 22.00 | 22.00 | 2616.0 | 0.00 | 1552 | 0 |
+| PiInv | analysis + certification | 158.00 | 158.00 | 15710.0 | 2.00 | 6072 | 0 |
+| PiInv | dense Bareiss + proof | 60.00 | 60.00 | 4416.0 | 0.00 | 1696 | 0 |
+| PiInv | sparse exact replay | 17.00 | 17.00 | 2256.0 | 0.00 | 1288 | 0 |
+| PiExp | analysis + certification | 255.00 | 255.00 | 21350.0 | 2.00 | 7264 | 0 |
+| PiExp | dense Bareiss + proof | 83.00 | 83.00 | 6072.0 | 0.00 | 3208 | 0 |
+| PiExp | sparse exact replay | 22.00 | 22.00 | 2616.0 | 0.00 | 1552 | 0 |
+| PiInvExp | analysis + certification | 304.00 | 304.00 | 24878.0 | 2.00 | 7480 | 0 |
+| PiInvExp | dense Bareiss + proof | 106.00 | 106.00 | 7728.0 | 0.00 | 3208 | 0 |
+| PiInvExp | sparse exact replay | 27.00 | 27.00 | 2976.0 | 0.00 | 1552 | 0 |
+| PiSqrt | analysis + certification | 271.00 | 271.00 | 21582.0 | 2.00 | 7100 | 0 |
+| PiSqrt | dense Bareiss + proof | 137.00 | 137.00 | 8392.0 | 0.00 | 4088 | 0 |
+| PiSqrt | sparse exact replay | 32.00 | 32.00 | 3016.0 | 0.00 | 1872 | 0 |
+| ConstProduct | analysis + certification | 410.00 | 410.00 | 29990.0 | 2.00 | 8768 | 0 |
+| ConstProduct | dense Bareiss + proof | 182.00 | 182.00 | 11016.0 | 0.00 | 4968 | 0 |
+| ConstProduct | sparse exact replay | 38.00 | 38.00 | 3432.0 | 0.00 | 2192 | 0 |
+| ConstOffset | analysis + certification | 90.00 | 90.00 | 9046.0 | 2.00 | 5200 | 0 |
+| ConstOffset | dense Bareiss + proof | 624.00 | 624.00 | 34200.0 | 35.00 | 4992 | 0 |
+| ConstOffset | sparse exact replay | 13.00 | 13.00 | 1680.0 | 0.00 | 1240 | 0 |
+| ConstProductSqrt | analysis + certification | 622.00 | 622.00 | 40550.0 | 2.00 | 10032 | 0 |
+| ConstProductSqrt | dense Bareiss + proof | 303.00 | 303.00 | 17104.0 | 0.00 | 7520 | 0 |
+| ConstProductSqrt | sparse exact replay | 63.00 | 63.00 | 4680.0 | 0.00 | 3120 | 0 |
+| Sqrt | analysis + certification | 167.00 | 167.00 | 14094.0 | 2.00 | 5804 | 0 |
+| Sqrt | dense Bareiss + proof | 79.00 | 79.00 | 4312.0 | 0.00 | 2360 | 0 |
+| Sqrt | sparse exact replay | 22.00 | 22.00 | 2296.0 | 0.00 | 1368 | 0 |
+| Exp | analysis + certification | 488.00 | 488.00 | 28886.0 | 2.00 | 6460 | 0 |
+| Exp | dense Bareiss + proof | 233.00 | 233.00 | 11272.0 | 0.00 | 2688 | 0 |
+| Exp | sparse exact replay | 52.00 | 52.00 | 3656.0 | 0.00 | 1536 | 0 |
+| Ln | analysis + certification | 109.00 | 109.00 | 12182.0 | 2.00 | 5856 | 0 |
+| Ln | dense Bareiss + proof | 592.00 | 592.00 | 31272.0 | 37.00 | 5064 | 0 |
+| Ln | sparse exact replay | 12.00 | 12.00 | 1896.0 | 0.00 | 1288 | 0 |
+| LnAffine | analysis + certification | 821.00 | 821.00 | 45494.0 | 2.00 | 7660 | 0 |
+| LnAffine | dense Bareiss + proof | 1116.00 | 1116.00 | 52984.0 | 37.00 | 7784 | 0 |
+| LnAffine | sparse exact replay | 98.00 | 98.00 | 5912.0 | 0.00 | 1984 | 0 |
+| LnProduct | analysis + certification | 219.00 | 219.00 | 17974.0 | 2.00 | 7304 | 0 |
+| LnProduct | dense Bareiss + proof | 796.00 | 796.00 | 42152.0 | 57.00 | 7272 | 0 |
+| LnProduct | sparse exact replay | 28.00 | 28.00 | 2712.0 | 0.00 | 1616 | 0 |
+| Log10 | analysis + certification | 217.00 | 217.00 | 20350.0 | 2.00 | 7916 | 0 |
+| Log10 | dense Bareiss + proof | 1223.00 | 1223.00 | 60528.0 | 76.00 | 8464 | 0 |
+| Log10 | sparse exact replay | 27.00 | 27.00 | 2976.0 | 0.00 | 1840 | 0 |
+| Log2 | analysis + certification | 217.00 | 217.00 | 20350.0 | 2.00 | 7916 | 0 |
+| Log2 | dense Bareiss + proof | 1281.00 | 1281.00 | 61808.0 | 85.00 | 8464 | 0 |
+| Log2 | sparse exact replay | 27.00 | 27.00 | 2976.0 | 0.00 | 1840 | 0 |
+| Pow10 | analysis + certification | 217.00 | 217.00 | 20350.0 | 2.00 | 7916 | 0 |
+| Pow10 | dense Bareiss + proof | 2253.00 | 2253.00 | 143904.0 | 243.00 | 8976 | 0 |
+| Pow10 | sparse exact replay | 27.00 | 27.00 | 2976.0 | 0.00 | 1840 | 0 |
+| Pow2 | analysis + certification | 217.00 | 217.00 | 20350.0 | 2.00 | 7916 | 0 |
+| Pow2 | dense Bareiss + proof | 2039.00 | 2039.00 | 125040.0 | 199.00 | 8976 | 0 |
+| Pow2 | sparse exact replay | 27.00 | 27.00 | 2976.0 | 0.00 | 1840 | 0 |
+| SinPi | analysis + certification | 348.00 | 348.00 | 28174.0 | 2.00 | 8012 | 0 |
+| SinPi | dense Bareiss + proof | 2505.00 | 2505.00 | 126800.0 | 183.00 | 8976 | 0 |
+| SinPi | sparse exact replay | 42.00 | 42.00 | 3816.0 | 0.00 | 1936 | 0 |
+| TanPi | analysis + certification | 227.00 | 227.00 | 21670.0 | 2.00 | 7916 | 0 |
+| TanPi | dense Bareiss + proof | 7816.00 | 7816.00 | 401704.0 | 769.00 | 8976 | 0 |
+| TanPi | sparse exact replay | 27.00 | 27.00 | 2976.0 | 0.00 | 1840 | 0 |
+| Irrational | analysis + certification | 45.00 | 45.00 | 7966.0 | 2.00 | 5048 | 0 |
+| Irrational | dense Bareiss + proof | 721.00 | 721.00 | 38016.0 | 38.00 | 4272 | 0 |
+| Irrational | sparse exact replay | 7.00 | 7.00 | 1536.0 | 0.00 | 1216 | 0 |

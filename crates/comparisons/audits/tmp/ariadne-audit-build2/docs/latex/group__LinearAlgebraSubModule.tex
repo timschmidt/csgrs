@@ -1,0 +1,60 @@
+\doxysubsubsubsection{Linear Algebra Submodule }
+\hypertarget{group__LinearAlgebraSubModule}{}\label{group__LinearAlgebraSubModule}\index{Linear Algebra Submodule@{Linear Algebra Submodule}}
+
+
+\doxysubsubsubsubsection{Description}
+\doxylink{classAriadne_1_1Vector}{Vector\texorpdfstring{$<$}{<}X\texorpdfstring{$>$}{>}}, \doxylink{classAriadne_1_1Matrix}{Matrix\texorpdfstring{$<$}{<}X\texorpdfstring{$>$}{>}} and \doxylink{classAriadne_1_1Tensor}{Tensor\texorpdfstring{$<$}{<}N,X\texorpdfstring{$>$}{>}} classes, solution of linear equations, LU and QR factorisation and singular value decomposition. 
+
+{\itshape For the mathematical theory of computable linear algebra, see the \doxysectlink{linear_algebra_page}{Linear Algebra}{0} Page.}
+
+Basic types are represented by the classes \doxylink{classAriadne_1_1Vector}{Vector} and \doxylink{classAriadne_1_1Matrix}{Matrix}. Specialist types include Permutation\+Matrix and \doxylink{classAriadne_1_1DiagonalMatrix}{Diagonal\+Matrix}. Operations such as vector sums and matrix-\/vector products are accessed using operator overloading. Expression templates and slices are used to improve efficiency.
+
+More complicated matrix operations, such as factorisation, are represented by sub-\/classes which contain the factorised data, from which the factors can easily be extracted.
+
+Currently sparse and structured (e.\+g. triangular, symmetric, banded) matrices are not directly supported, except to the extent needed for the matrix decomposition classes, or for derivative tensors.
+
+All classes support exact arithmetic and interval arithmetic.
+
+We use the following abbreviations for template parameters for classes in this module\+:
+\begin{DoxyItemize}
+\item {\bfseries{SCA\+:}} \doxylink{group__LinearAlgebraSubModule_gae7361678c2db840945614997d06994b4}{Scalar}
+\item {\bfseries{VEC\+:}} \doxylink{classAriadne_1_1Vector}{Vector}
+\item {\bfseries{MX\+:}} \doxylink{classAriadne_1_1Matrix}{Matrix} 
+\end{DoxyItemize}\doxysubsubsubsubsubsection*{Classes}
+\begin{DoxyCompactItemize}
+\item 
+class \mbox{\hyperlink{classAriadne_1_1Covector}{Covector$<$ X $>$}}
+\begin{DoxyCompactList}\small\item\em A covector (dual to a vector, or a row vector) over some type {\itshape X}. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1DiagonalMatrix}{Diagonal\+Matrix$<$ X $>$}}
+\begin{DoxyCompactList}\small\item\em Diagonal matrices over some type {\itshape X}. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1Matrix}{Matrix$<$ X $>$}}
+\begin{DoxyCompactList}\small\item\em Matrices over some type {\itshape X}. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1PivotMatrix}{Pivot\+Matrix}}
+\begin{DoxyCompactList}\small\item\em Permutation matrices defined as a sequence of transpositions. \end{DoxyCompactList}\item 
+struct \mbox{\hyperlink{structAriadne_1_1MatrixRange}{Matrix\+Range$<$ M $>$}}
+\begin{DoxyCompactList}\small\item\em A view into a submatrix of a matrix of class {\itshape M}. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1Range}{Range}}
+\begin{DoxyCompactList}\small\item\em A range of integer values from a {\itshape start} value up to, but not including, a {\itshape stop} value. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1SymmetricMatrix}{Symmetric\+Matrix$<$ X $>$}}
+\begin{DoxyCompactList}\small\item\em Symmetric matrices over some type {\itshape X}. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1Tensor}{Tensor$<$ N, X $>$}}
+\begin{DoxyCompactList}\small\item\em A rank-\/{\itshape N} tensor with elements of type {\itshape X}. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1Vector}{Vector$<$ X $>$}}
+\begin{DoxyCompactList}\small\item\em Vectors over some type {\itshape X}. Corresponds to elements of a {\itshape module} over a mathematical {\itshape ring}, or a {\itshape vector space} over a field. May also be used if {\itshape X} is an {\itshape algebra} {\itshape A} over another field. It must be possible to add and multiply any two elements of the vector. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1VectorRange}{Vector\+Range$<$ V $>$}}
+\begin{DoxyCompactList}\small\item\em A view into a subvector of a vector of class {\itshape V}. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsubsubsubsection*{Typedefs}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{group__LinearAlgebraSubModule_gae7361678c2db840945614997d06994b4}\label{group__LinearAlgebraSubModule_gae7361678c2db840945614997d06994b4} 
+{\footnotesize template$<$class X$>$ }\\using {\bfseries Scalar} = X
+\begin{DoxyCompactList}\small\item\em A scalar of type {\itshape X}; defined as an synonym (typedef) of {\itshape X}. \end{DoxyCompactList}\item 
+\Hypertarget{group__LinearAlgebraSubModule_ga7a29a46d50b613534f91019281b45309}\label{group__LinearAlgebraSubModule_ga7a29a46d50b613534f91019281b45309} 
+using {\bfseries Real\+Scalar} = \mbox{\hyperlink{group__LinearAlgebraSubModule_gae7361678c2db840945614997d06994b4}{Scalar}}$<$\mbox{\hyperlink{classAriadne_1_1Real}{Real}}$>$
+\begin{DoxyCompactList}\small\item\em A scalar real number. Defined as a synomym for \doxylink{classAriadne_1_1Real}{Real}. \end{DoxyCompactList}\item 
+\Hypertarget{group__LinearAlgebraSubModule_ga00e69bf76ffebd1f3ba573f4662134bc}\label{group__LinearAlgebraSubModule_ga00e69bf76ffebd1f3ba573f4662134bc} 
+using {\bfseries Real\+Vector} = \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$\mbox{\hyperlink{classAriadne_1_1Real}{Real}}$>$
+\begin{DoxyCompactList}\small\item\em A vector of real numbers. \end{DoxyCompactList}\item 
+\Hypertarget{group__LinearAlgebraSubModule_ga6fccd4fa3cc59de12abe07c350874406}\label{group__LinearAlgebraSubModule_ga6fccd4fa3cc59de12abe07c350874406} 
+using {\bfseries Real\+Matrix} = \mbox{\hyperlink{classAriadne_1_1Matrix}{Matrix}}$<$\mbox{\hyperlink{classAriadne_1_1Real}{Real}}$>$
+\begin{DoxyCompactList}\small\item\em A matrix of real numbers. \end{DoxyCompactList}\end{DoxyCompactItemize}

@@ -1,0 +1,203 @@
+{
+  "parent": "8b18d3f90252200a6216834e788a8c65ee720581",
+  "coverage": "public-fillet-families-coverage-20260926-v240-terminal.json",
+  "qualification_complete": false,
+  "passed": 635,
+  "unresolved_failures": [
+    {
+      "target": "hypercurve_curve_region_promotion",
+      "name": "approximate_512_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions",
+      "returncode": 101,
+      "log": "public-fillet-families-full-20260926-v236-case-001.log"
+    },
+    {
+      "target": "hypercurve_curve_region_promotion",
+      "name": "strict_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions",
+      "returncode": 101,
+      "log": "public-fillet-families-coverage-20260926-v240-case-014.log"
+    }
+  ],
+  "all_processes_reaped": true,
+  "outer_session_id": 54211,
+  "outer_exit_code": 0,
+  "source_manifest": "public-fillet-families-coverage-20260926-v240-sources.json",
+  "files": {
+    "README.md": "a406424725c08b16f2b6c6c54a43dd2fb19ef50175e31e24cfb3654e816d7944",
+    "benches/editing.rs": "286573c34f53c6154e11ce7a30be49e4304debd357a55ce61da5ed5f9d359c2b",
+    "src/bezier_offset.rs": "22e0799f8f5dad9b0a057cbcbe639b9d54bde1369c39f7c4d66489b13cd1dae8",
+    "src/bezier_region.rs": "d145dce440b928c979078f91f4c582110cd18e5a6609d9c9af015ff2f11a40fe",
+    "src/curve.rs": "e1942ef485a51217110b9df8f6f520dee3ab3e41dae5ebcc32f53329683ae7f5",
+    "src/curve_corner_chain.rs": "07ded1a1bf12e6d6ae19b5724a68191e152b92e3eb852720f0eb3cb10268a4f7",
+    "src/curve_corner_domain.rs": "dddc38d4be87aac4b007ac0354db909decd8d669cc50ad5944c825d1b6253a38",
+    "src/curve_parameter_component.rs": "c6421e5d612b4bb681da0324b441baee3c4154c63182a14bca8c9ccc92b4f97e",
+    "src/curve_subdivision.rs": "cefc8c1826fc118d9331b3b617ec0622dfda30c1aff13f2c1a6a26e697c49927",
+    "src/curve_support_intersection.rs": "c6cd4c562d67e0336599ae178847841dc692a42a846e6b7951763375c51172c3",
+    "src/lib.rs": "2d42beb68b4bde585a2b1fa00fa080ce134f9477e15b75f1afeb8ba56f90c2c6",
+    "tests/hypercurve_analytic_parallel_region.rs": "db8d8d0b526acc0a5688e223fc253bc8ab2ec5c693236d7b06d998857a65a90e",
+    "tests/hypercurve_curve.rs": "22f6e8b6cc8a197db49bb92f406c9e1a70999a245158918cacd16c2f86d70375",
+    "tests/hypercurve_curve_intersection.rs": "027c17a649a4ae042944814d21f79017bfa0f8428c77edacee2b03aa036a5b5f",
+    "tests/hypercurve_curve_region_boolean.rs": "37f9f2efa5a6694a9e4cb4c6088e931a2bb44141f2b7638c153ec272f33e417e",
+    "tests/hypercurve_curve_region_promotion.rs": "dd5c4b31ac5593dd870fd2c19a48b22cdb9f645197446d8752f1bf14cd321ad5",
+    "tests/hypercurve_path_closure.rs": "30f8f05d5628b66c17c24c143f36a2194d90914dface19b69a9270dea837ebfa",
+    "src/curve_fillet.rs": "43ef74df928f0d633cb3291687249898bb74222481a0c6213b8a1a3e61db315e"
+  },
+  "repositories": {
+    "ExactCalculator": {
+      "head": "7265aa3a922a7e7c0389dae4b26cca562aa777a6",
+      "status": ""
+    },
+    "NURBS_BREP_kernel": {
+      "head": "1aef37b12a92c993c2046f7886593bb0a555c414",
+      "status": ""
+    },
+    "alumina-firmware": {
+      "head": "bdee397d0b80841f16bf17e7bcd029b4feb2c212",
+      "status": ""
+    },
+    "alumina-interface": {
+      "head": "b21c9214c59d41e8272b8644dd436b44b7e15e89",
+      "status": ""
+    },
+    "citizen-builder": {
+      "head": "c4230238e28fd88fc8156fceb2c43698e67c27ca",
+      "status": ""
+    },
+    "crcalc": {
+      "head": "4f398d699c9d498deb45520ea7ebb020627bc640",
+      "status": ""
+    },
+    "csgrs": {
+      "head": "d029e51b5d7324f0df785c5cd3cf2f6c7a3a2cca",
+      "status": ""
+    },
+    "csgrs-ffi": {
+      "head": "6057435ce4c0b37bac99aec29922b90e6652c575",
+      "status": ""
+    },
+    "exactcore-hyper-comparison": {
+      "head": "74b90b328f720997d38da80af5620f167b3b0619",
+      "status": ""
+    },
+    "hyperbrep": {
+      "head": "7874790863d210646338182e548d7eef1aa05c7c",
+      "status": ""
+    },
+    "hypercircuit": {
+      "head": "ad421497ce6e88fe936818ec198c8a1b779776c7",
+      "status": ""
+    },
+    "hypercurve": {
+      "head": "8b18d3f90252200a6216834e788a8c65ee720581",
+      "status": " M README.md\n M benches/editing.rs\n M src/bezier_offset.rs\n M src/bezier_region.rs\n M src/curve.rs\n M src/curve_corner_chain.rs\n M src/curve_corner_domain.rs\n M src/curve_parameter_component.rs\n M src/curve_subdivision.rs\n M src/curve_support_intersection.rs\n M src/lib.rs\n M tests/hypercurve_analytic_parallel_region.rs\n M tests/hypercurve_curve.rs\n M tests/hypercurve_curve_intersection.rs\n M tests/hypercurve_curve_region_boolean.rs\n M tests/hypercurve_curve_region_promotion.rs\n M tests/hypercurve_path_closure.rs\n?? src/curve_fillet.rs\n"
+    },
+    "hyperdrc": {
+      "head": "ce49bba5d16f78ae8559a0eabe3e4478b72fd4bf",
+      "status": ""
+    },
+    "hyperevolution": {
+      "head": "99645e3cefb7eea3af86abc15db68f7fcb31ca95",
+      "status": ""
+    },
+    "hypergraphics": {
+      "head": "75219dede7a2387ab30c84664b1293ec71d736d2",
+      "status": ""
+    },
+    "hyperlattice": {
+      "head": "035a8c822ca60e30daf0e3143843a65be0e6aedb",
+      "status": ""
+    },
+    "hyperlimit": {
+      "head": "d80f53329d7cab4130c62c2cbd4ec2d9f73c7c43",
+      "status": ""
+    },
+    "hypermesh": {
+      "head": "55cc20ada8bc502f1b3c1651b422f0a040239060",
+      "status": ""
+    },
+    "hyperpack": {
+      "head": "34857861561d643d7578753b8f8314d0fbca2c5b",
+      "status": ""
+    },
+    "hyperparts": {
+      "head": "d8626e9d36256afc4a8eb0380ae94c9ed5619107",
+      "status": ""
+    },
+    "hyperpath": {
+      "head": "96d03475ba4c5e971943a775898cbc697a132154",
+      "status": ""
+    },
+    "hyperphysics": {
+      "head": "dcbc7cf3489a1299de16a946fd7f5e5658b6f15f",
+      "status": ""
+    },
+    "hyperreal": {
+      "head": "0cb5f29aee065c73e234e0ebb0a9e106398515bb",
+      "status": ""
+    },
+    "hypersdf": {
+      "head": "b37825900457420cb64da385b8525acab33e31c5",
+      "status": ""
+    },
+    "hypersolve": {
+      "head": "42308d704df777b3e627aa344424afa3f215e456",
+      "status": ""
+    },
+    "hypertri": {
+      "head": "6a2092c066964f3b7528299a72ef0ed1af4b1ff0",
+      "status": ""
+    },
+    "hypervoxel": {
+      "head": "0486b1465a249a04973520a4138a39395ded2f23",
+      "status": ""
+    },
+    "openscad-rs": {
+      "head": "f21b39486a6b35403ee8af9e7fba7cb62a045a5a",
+      "status": ""
+    },
+    "synaps-cad": {
+      "head": "da8da78636e573c04f8a5c4cd8cc900162b781ba",
+      "status": ""
+    },
+    "videos": {
+      "head": "4209b983cc0d937981f22a6fa7df384303fcc8bd",
+      "status": ""
+    }
+  },
+  "review_receipt": "public-fillet-families-coverage-20260926-v240-reviewed.json",
+  "index_tree": "d7b3652c4430679de38f3d7e26141a30463e8b63",
+  "commit": "13691647247ae191903c76160c760174cd28e4f0",
+  "repositories_after": {
+    "ExactCalculator": "7265aa3a922a7e7c0389dae4b26cca562aa777a6",
+    "NURBS_BREP_kernel": "1aef37b12a92c993c2046f7886593bb0a555c414",
+    "alumina-firmware": "bdee397d0b80841f16bf17e7bcd029b4feb2c212",
+    "alumina-interface": "b21c9214c59d41e8272b8644dd436b44b7e15e89",
+    "citizen-builder": "c4230238e28fd88fc8156fceb2c43698e67c27ca",
+    "crcalc": "4f398d699c9d498deb45520ea7ebb020627bc640",
+    "csgrs": "d029e51b5d7324f0df785c5cd3cf2f6c7a3a2cca",
+    "csgrs-ffi": "6057435ce4c0b37bac99aec29922b90e6652c575",
+    "exactcore-hyper-comparison": "74b90b328f720997d38da80af5620f167b3b0619",
+    "hyperbrep": "7874790863d210646338182e548d7eef1aa05c7c",
+    "hypercircuit": "ad421497ce6e88fe936818ec198c8a1b779776c7",
+    "hypercurve": "13691647247ae191903c76160c760174cd28e4f0",
+    "hyperdrc": "ce49bba5d16f78ae8559a0eabe3e4478b72fd4bf",
+    "hyperevolution": "99645e3cefb7eea3af86abc15db68f7fcb31ca95",
+    "hypergraphics": "75219dede7a2387ab30c84664b1293ec71d736d2",
+    "hyperlattice": "035a8c822ca60e30daf0e3143843a65be0e6aedb",
+    "hyperlimit": "d80f53329d7cab4130c62c2cbd4ec2d9f73c7c43",
+    "hypermesh": "55cc20ada8bc502f1b3c1651b422f0a040239060",
+    "hyperpack": "34857861561d643d7578753b8f8314d0fbca2c5b",
+    "hyperparts": "d8626e9d36256afc4a8eb0380ae94c9ed5619107",
+    "hyperpath": "96d03475ba4c5e971943a775898cbc697a132154",
+    "hyperphysics": "dcbc7cf3489a1299de16a946fd7f5e5658b6f15f",
+    "hyperreal": "0cb5f29aee065c73e234e0ebb0a9e106398515bb",
+    "hypersdf": "b37825900457420cb64da385b8525acab33e31c5",
+    "hypersolve": "42308d704df777b3e627aa344424afa3f215e456",
+    "hypertri": "6a2092c066964f3b7528299a72ef0ed1af4b1ff0",
+    "hypervoxel": "0486b1465a249a04973520a4138a39395ded2f23",
+    "openscad-rs": "f21b39486a6b35403ee8af9e7fba7cb62a045a5a",
+    "synaps-cad": "da8da78636e573c04f8a5c4cd8cc900162b781ba",
+    "videos": "4209b983cc0d937981f22a6fa7df384303fcc8bd"
+  },
+  "all_repositories_clean": true,
+  "staged_receipt": "public-fillet-families-coverage-20260926-v240-staged.json"
+}

@@ -1,0 +1,1504 @@
+Coverage configuration: no features
+   Compiling hyperreal v0.13.1 (/home/tim/Documents/GitHub/workspace/hyperreal)
+   Compiling hyperlattice v0.6.1 (/home/tim/Documents/GitHub/workspace/hyperlattice)
+   Compiling hyperlimit v0.4.1 (/home/tim/Documents/GitHub/workspace/hyperlimit)
+   Compiling hypersolve v0.3.1 (/home/tim/Documents/GitHub/workspace/hypersolve)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 8.27s
+
+running 426 tests
+....................................................................................... 87/426
+....................................................................................... 174/426
+....................................................................................... 261/426
+....................................................................................... 348/426
+..............................................................................
+test result: ok. 426 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 4.48s
+
+
+running 9 tests
+.........
+test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.09s
+
+
+running 2 tests
+..
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 4 tests
+....
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.11s
+
+
+running 131 tests
+....................................................................................... 87/131
+............................................
+test result: ok. 131 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 5.55s
+
+
+running 211 tests
+....................................................................................... 87/211
+....................................................................................... 174/211
+.....................................
+test result: ok. 211 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.04s
+
+Coverage configuration: dispatch tracing
+   Compiling hyperreal v0.13.1 (/home/tim/Documents/GitHub/workspace/hyperreal)
+   Compiling hyperlattice v0.6.1 (/home/tim/Documents/GitHub/workspace/hyperlattice)
+   Compiling hyperlimit v0.4.1 (/home/tim/Documents/GitHub/workspace/hyperlimit)
+   Compiling hypersolve v0.3.1 (/home/tim/Documents/GitHub/workspace/hypersolve)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 8.25s
+
+running 427 tests
+....................................................................................... 87/427
+....................................................................................... 174/427
+....................................................................................... 261/427
+....................................................................................... 348/427
+...............................................................................
+test result: ok. 427 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 4.51s
+
+
+running 9 tests
+.........
+test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.10s
+
+
+running 2 tests
+..
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 4 tests
+....
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.11s
+
+
+running 131 tests
+....................................................................................... 87/131
+............................................
+test result: ok. 131 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 5.90s
+
+
+running 211 tests
+....................................................................................... 87/211
+....................................................................................... 174/211
+.....................................
+test result: ok. 211 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.05s
+
+Coverage configuration: all-feature targets and benchmark fixtures
+   Compiling hyperreal v0.13.1 (/home/tim/Documents/GitHub/workspace/hyperreal)
+   Compiling hyperlattice v0.6.1 (/home/tim/Documents/GitHub/workspace/hyperlattice)
+   Compiling hyperlimit v0.4.1 (/home/tim/Documents/GitHub/workspace/hyperlimit)
+   Compiling hypersolve v0.3.1 (/home/tim/Documents/GitHub/workspace/hypersolve)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 8.91s
+
+running 427 tests
+....................................................................................... 87/427
+....................................................................................... 174/427
+....................................................................................... 261/427
+....................................................................................... 348/427
+...............................................................................
+test result: ok. 427 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 4.55s
+
+
+running 9 tests
+.........
+test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.10s
+
+
+running 2 tests
+..
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 4 tests
+....
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.11s
+
+
+running 131 tests
+....................................................................................... 87/131
+............................................
+test result: ok. 131 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 6.11s
+
+
+running 211 tests
+....................................................................................... 87/211
+....................................................................................... 174/211
+.....................................
+test result: ok. 211 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.04s
+
+algebraic_fiber_even_multiplicity: 1000 iterations in 116.82452ms (116.824µs/iter), root=1000; refinement=4000
+algebraic_fiber_eight_independent_intervals: 1000 iterations in 805.20799ms (805.207µs/iter), root=4000
+algebraic_fiber_eight_batched_intervals: 1000 iterations in 497.050782ms (497.05µs/iter), root=4000
+algebraic_common_fiber_degree_drop: 1000 iterations in 86.128692ms (86.128µs/iter), root=1000; refinement=4000
+algebraic_image_policy_zero_content: 1000 iterations in 64.25357ms (64.253µs/iter), coefficient=2000
+rational_quadratic_common_fiber_two_components: 1000 iterations in 892.434427ms (892.434µs/iter), component=4000
+implicit_quadratic_common_fiber: 1000 iterations in 503.035992ms (503.035µs/iter), component=5000
+implicit_quadratic_high_cofactor: 1000 iterations in 1.976711427s (1.976711ms/iter), component=7000
+rational_repeated_cubic_common_fiber_three_components: 1000 iterations in 2.139600243s (2.1396ms/iter), component=6000
+Testing solver_block_affine_rows
+Success
+
+Testing sketch_lower_to_problem
+Success
+
+Testing sketch_round_trip_metadata_lowering
+Success
+
+Testing sketch_unit_tolerance_audit
+Success
+
+Testing sketch_range_and_objective_lowering
+Success
+
+Testing sketch_distance_range_lowering
+Success
+
+Testing sketch_equal_length_radius_lowering
+Success
+
+Testing sketch_concentric_lowering
+Success
+
+Testing sketch_projected_point_concentric_lowering
+Success
+
+Testing sketch_projected_line_radius_lowering
+Success
+
+Testing sketch_projected_point_radius_lowering
+Success
+
+Testing sketch_projected_point_line_radius_lowering
+Success
+
+Testing sketch_length_ratio_point_line_lowering
+Success
+
+Testing sketch_length_difference_lowering
+Success
+
+Testing sketch_line_arc_length_lowering
+Success
+
+Testing sketch_line_arc_sweep_length_lowering
+Success
+
+Testing sketch_point_on_arc_lowering
+Success
+
+Testing sketch_point_on_line_lowering
+Success
+
+Testing sketch_projected_line_arc_sweep_length_lowering
+Success
+
+Testing sketch_equal_point_line_distance_lowering
+Success
+
+Testing sketch_line_orientation_lowering
+Success
+
+Testing sketch_equal_angle_lowering
+Success
+
+Testing sketch_oriented_angle_lowering
+Success
+
+Testing sketch_projected_oriented_angle_lowering
+Success
+
+Testing sketch_projected_line_orientation_lowering
+Success
+
+Testing sketch_midpoint_lowering
+Success
+
+Testing sketch_axis_symmetry_lowering
+Success
+
+Testing sketch_line_symmetry_lowering
+Success
+
+Testing sketch_projected_line_symmetry_lowering
+Success
+
+Testing sketch_same_direction_lowering
+Success
+
+Testing sketch_tangent_same_direction_lowering
+Success
+
+Testing sketch_arc_line_tangent_lowering
+Success
+
+Testing sketch_projected_arc_line_tangent_lowering
+Success
+
+Testing sketch_projected_arc_cubic_curve_tangent_lowering
+Success
+
+Testing sketch_projected_arc_cubic_curve_second_order_lowering
+Success
+
+Testing sketch_arc_arc_tangent_lowering
+Success
+
+Testing sketch_circle_circle_tangent_lowering
+Success
+
+Testing sketch_arc_cubic_tangent_lowering
+Success
+
+Testing sketch_arc_cubic_second_order_lowering
+Success
+
+Testing sketch_point_on_cubic_lowering
+Success
+
+Testing sketch_projected_point_on_cubic_lowering
+Success
+
+Testing sketch_projected_point_on_cubic_curve_lowering
+Success
+
+Testing sketch_cubic_line_tangent_lowering
+Success
+
+Testing sketch_projected_cubic_line_tangent_lowering
+Success
+
+Testing sketch_projected_cubic_curve_line_tangent_lowering
+Success
+
+Testing sketch_projected_cubic_curve_cubic_curve_tangent_lowering
+Success
+
+Testing sketch_projected_cubic_curve_cubic_curve_c2_lowering
+Success
+
+Testing sketch_projected_cubic_curve_cubic_curve_g2_lowering
+Success
+
+Testing sketch_cubic_cubic_tangent_lowering
+Success
+
+Testing sketch_cubic_cubic_g2_lowering
+Success
+
+Testing sketch_cubic_cubic_c2_lowering
+Success
+
+Testing sketch_parameter_ordering_lowering
+Success
+
+Testing sketch_parameter_margin_lowering
+Success
+
+Testing sketch_parameter_domain_preflight
+Success
+
+Testing sketch_degeneracy_preflight
+Success
+
+Testing sketch_workplane_frame
+Success
+
+Testing sketch_workplane_point_lifts
+Success
+
+Testing sketch_projected_distance_lowering
+Success
+
+Testing sketch_projected_distance_range_lowering
+Success
+
+Testing sketch_projected_equal_point_distances_lowering
+Success
+
+Testing sketch_projected_point_line_distance_lowering
+Success
+
+Testing sketch_projected_point_on_circle_lowering
+Success
+
+Testing sketch_projected_line_circle_tangent_lowering
+Success
+
+Testing sketch_projected_point_on_arc_lowering
+Success
+
+Testing sketch_projected_point_on_line_lowering
+Success
+
+Testing sketch_projected_point_line_distance_range_lowering
+Success
+
+Testing sketch_projected_equal_length_lowering
+Success
+
+Testing sketch_projected_line_length_range_lowering
+Success
+
+Testing sketch_projected_length_ratio_lowering
+Success
+
+Testing sketch_projected_point_distance_ratio_lowering
+Success
+
+Testing sketch_projected_length_difference_lowering
+Success
+
+Testing sketch_projected_point_distance_difference_lowering
+Success
+
+Testing sketch_projected_length_point_line_distance_lowering
+Success
+
+Testing sketch_projected_point_distance_point_line_distance_lowering
+Success
+
+Testing sketch_projected_equal_point_line_distances_lowering
+Success
+
+Testing sketch_workplane_symmetry_lowering
+Success
+
+Testing sketch_entity_domain_preflight
+Success
+
+Testing sketch_construction_certificate
+Success
+
+Testing sketch_distance_residual_forms
+Success
+
+Testing sketch_concentric_residual_forms
+Success
+
+Testing sketch_projected_point_concentric_residual_forms
+Success
+
+Testing sketch_projected_line_radius_residual_forms
+Success
+
+Testing sketch_projected_point_radius_residual_forms
+Success
+
+Testing sketch_projected_point_line_radius_residual_forms
+Success
+
+Testing sketch_line_arc_length_residual_forms
+Success
+
+Testing sketch_line_arc_sweep_length_residual_forms
+Success
+
+Testing sketch_projected_line_arc_sweep_length_residual_forms
+Success
+
+Testing sketch_circle_incidence_residual_forms
+Success
+
+Testing sketch_point_on_arc_residual_forms
+Success
+
+Testing sketch_point_on_line_residual_forms
+Success
+
+Testing sketch_point_on_cubic_residual_forms
+Success
+
+Testing sketch_projected_point_on_cubic_residual_forms
+Success
+
+Testing sketch_projected_point_on_cubic_curve_residual_forms
+Success
+
+Testing sketch_cubic_line_tangent_residual_forms
+Success
+
+Testing sketch_projected_cubic_line_tangent_residual_forms
+Success
+
+Testing sketch_projected_cubic_curve_line_tangent_residual_forms
+Success
+
+Testing sketch_projected_cubic_curve_cubic_curve_tangent_residual_forms
+Success
+
+Testing sketch_projected_cubic_curve_cubic_curve_c2_residual_forms
+Success
+
+Testing sketch_projected_cubic_curve_cubic_curve_g2_residual_forms
+Success
+
+Testing sketch_cubic_cubic_tangent_residual_forms
+Success
+
+Testing sketch_cubic_cubic_g2_residual_forms
+Success
+
+Testing sketch_cubic_cubic_c2_residual_forms
+Success
+
+Testing sketch_point_line_residual_forms
+Success
+
+Testing sketch_equal_angle_residual_forms
+Success
+
+Testing sketch_oriented_angle_residual_forms
+Success
+
+Testing sketch_projected_oriented_angle_residual_forms
+Success
+
+Testing sketch_projected_line_orientation_residual_forms
+Success
+
+Testing sketch_tangent_residual_forms
+Success
+
+Testing sketch_arc_line_tangent_residual_forms
+Success
+
+Testing sketch_projected_arc_line_tangent_residual_forms
+Success
+
+Testing sketch_projected_arc_cubic_curve_tangent_residual_forms
+Success
+
+Testing sketch_projected_arc_cubic_curve_second_order_residual_forms
+Success
+
+Testing sketch_arc_arc_tangent_residual_forms
+Success
+
+Testing sketch_circle_circle_tangent_residual_forms
+Success
+
+Testing sketch_arc_cubic_tangent_residual_forms
+Success
+
+Testing sketch_arc_cubic_second_order_residual_forms
+Success
+
+Testing sketch_projected_distance_residual_forms
+Success
+
+Testing sketch_projected_distance_range_residual_forms
+Success
+
+Testing sketch_projected_equal_point_distances_residual_forms
+Success
+
+Testing sketch_projected_point_line_distance_residual_forms
+Success
+
+Testing sketch_projected_point_on_circle_residual_forms
+Success
+
+Testing sketch_projected_line_circle_tangent_residual_forms
+Success
+
+Testing sketch_projected_point_on_arc_residual_forms
+Success
+
+Testing sketch_projected_point_on_line_residual_forms
+Success
+
+Testing sketch_projected_point_line_distance_range_residual_forms
+Success
+
+Testing sketch_projected_equal_length_residual_forms
+Success
+
+Testing sketch_projected_line_length_range_residual_forms
+Success
+
+Testing sketch_projected_length_ratio_residual_forms
+Success
+
+Testing sketch_projected_point_distance_ratio_residual_forms
+Success
+
+Testing sketch_projected_length_difference_residual_forms
+Success
+
+Testing sketch_projected_point_distance_difference_residual_forms
+Success
+
+Testing sketch_projected_length_point_line_distance_residual_forms
+Success
+
+Testing sketch_projected_point_distance_point_line_distance_residual_forms
+Success
+
+Testing sketch_projected_equal_point_line_distances_residual_forms
+Success
+
+Testing sketch_projected_line_symmetry_residual_forms
+Success
+
+Testing sketch_workplane_symmetry_residual_forms
+Success
+
+Testing sketch_compatibility_fixture_replay
+Success
+
+Testing certify_affine_krawczyk_box
+Success
+
+Testing solve_direct_affine_system
+Success
+
+Testing analyze_exact_affine_rank
+Success
+
+Testing determinant_bareiss
+Success
+
+Testing determinant_bareiss_pivot_free_terminal_2
+Success
+
+Testing solve_dense_linear_system_bareiss
+Success
+
+Testing solve_dense_bareiss_approximate_terminal_replay
+Success
+
+Testing solve_dense_bareiss_two_rhs_sequential
+Success
+
+Testing solve_dense_bareiss_two_rhs_shared
+Success
+
+Testing solve_dense_linear_system_bareiss_tridiagonal_8
+Success
+
+Testing solve_sparse_linear_system_bareiss
+Success
+
+Testing solve_sparse_linear_system_bareiss_pattern_preserving
+Success
+
+Testing solve_sparse_linear_system_bareiss_pattern_preserving/strict_exact_normal_pivot
+Success
+
+Testing sparse_bareiss_arrowhead_32/authored_order
+Success
+
+Testing sparse_bareiss_arrowhead_32/minimum_degree
+Success
+
+Testing sparse_bareiss_tridiagonal_32/authored_order
+Success
+
+Testing sparse_bareiss_tridiagonal_32/minimum_degree
+Success
+
+Testing analyze_sparse_bareiss_elimination_pattern
+Success
+
+Testing analyze_sparse_bareiss_cyclic_row_swaps_64
+Success
+
+Testing resultant_univariate_polynomials
+Success
+
+Testing resultant_univariate_polynomials/strict_exact_normal_trimming
+Success
+
+Testing resultant_trivariate_polynomial_univariate_constraint
+Success
+
+Testing resultant_trivariate_polynomial_univariate_constraint/strict_exact_normal_constraint
+Success
+
+Testing resultant_tensor_polynomial_univariate_constraint
+Success
+
+Testing resultant_tensor_polynomial_univariate_constraint/direct_real_norm
+Success
+
+Testing resultant_tensor_polynomial_univariate_constraint/padded_direct_norm_1024
+Success
+
+Testing resultant_tensor_polynomial_univariate_constraint/padded_closed_form_norm_1024
+Success
+
+Testing resultant_tensor_polynomial_univariate_constraint/compact_grid_2x2
+Success
+
+Testing resultant_tensor_polynomial_univariate_constraint/padded_grid_64x64
+Success
+
+Testing dense_tensor_reduce_axis_modulo/compact_8x2x2
+Success
+
+Testing dense_tensor_reduce_axis_modulo/padded_8x64x64
+Success
+
+Testing dense_tensor_reduce_axis_modulo/already_reduced_2x64x64
+Success
+
+Testing represent_algebraic_tensor_image/sum_four_roots
+Success
+
+Testing represent_algebraic_tensor_image/sum_four_roots_padded_256
+Success
+
+Testing represent_algebraic_tensor_image/two_conjugate_cubic_roots
+Success
+
+Testing represent_algebraic_tensor_image/two_conjugate_repeated_degree_six_roots
+Success
+
+Testing project_selected_tensor_fiber_via_tagged_norm/opposite_conjugate_cubic
+Success
+
+Testing project_selected_tensor_fiber_via_tagged_norm/distinct_quadratic_carriers
+Success
+
+Testing project_selected_tensor_fiber_via_tagged_norm/repeated_degree_six_carriers
+Success
+
+Testing resultant_tensor_polynomial_univariate_constraint/strict_exact_zero_output_degree
+Success
+
+Testing resultant_tensor_polynomial_univariate_constraint/strict_exact_normal_constraint
+Success
+
+Testing resultant_constant_degree_64
+Success
+
+Testing square_free_part/degree_64_square_free
+Success
+
+Testing square_free_part/degree_64_repeated
+Success
+
+Testing square_free_part/exact_real_repeated_quadratic
+Success
+
+Testing divide_univariate_polynomial_exact/dense_degree_48_by_16
+Success
+
+Testing divide_univariate_polynomial_exact/exact_real_quadratic_by_linear
+Success
+
+Testing subresultant_chain_univariate_polynomials
+Success
+
+Testing divide_bivariate_polynomial_exact
+Success
+
+Testing schedule_univariate_resultant_pairs
+Success
+
+Testing resultant_parametric_curve_intersection
+Success
+
+Testing substitute_bezier_power_basis
+Success
+
+Testing substitute_rational_bezier_power_basis
+Success
+
+Testing substitute_bspline_knot_span_power_basis
+Success
+
+Testing substitute_nurbs_knot_span_power_basis
+Success
+
+Testing resultant_rational_parametric_curve_intersection
+Success
+
+Testing replay_dense_linear_residuals
+Success
+
+Testing replay_sparse_linear_residuals
+Success
+
+Testing sparse_linear_batch_replay
+Success
+
+Testing eliminate_affine_rows_with_substitution_classes
+Success
+
+Testing apply_equality_substitution_classes
+Success
+
+Testing univariate_quadratic_row_forms
+Success
+
+Testing multivariate_quadratic_row_forms
+Success
+
+Testing solve_direct_univariate_quadratic_rows
+Success
+
+Testing competitor_exact_quadratic_roots/hypersolve
+Success
+
+Testing certify_direct_univariate_quadratic_roots
+Success
+
+Testing enumerate_direct_univariate_quadratic_branches
+Success
+
+Testing isolate_univariate_polynomial_roots_sturm
+Success
+
+Testing represent_univariate_algebraic_roots
+Success
+
+Testing deflate_bivariate_fiber_diagonal_root/triple_root
+Success
+
+Testing deflate_bivariate_fiber_diagonal_root/triple_root_second_parameter
+Success
+
+Testing project_bivariate_fiber/retained_first_quadratic
+Success
+
+Testing project_bivariate_fiber/retained_second_quadratic
+Success
+
+Testing isolate_bivariate_fiber_roots/bernstein_rational_deflation
+Success
+
+Testing isolate_bivariate_fiber_roots/repeated_irrational_sturm_fallback
+Success
+
+Testing isolate_bivariate_fiber_roots/partitioned_rational_sturm_fallback
+Success
+
+Testing reduce_bivariate_rational_function/nonmonic_retained_denominator
+Success
+
+Testing reduce_bivariate_rational_function/dense_degree_15_proportional
+Success
+
+Testing count_bivariate_fiber_roots_closed/repeated_endpoints
+Success
+
+Testing project_algebraic_fiber_polynomial_image
+Success
+
+Testing project_algebraic_fiber_polynomial_image/strict_exact_zero_image_degree
+Success
+
+Testing project_algebraic_fiber_polynomial_image/saturated_conjugate_factor
+Success
+
+Testing project_algebraic_fiber_polynomial_image/saturated_fourfold_multicoefficient
+Success
+
+Testing project_algebraic_fiber_polynomial_image/cubic_source_quadratic_image
+Success
+
+Testing count_bivariate_fiber_roots_even_multiplicity
+Success
+
+Testing count_bivariate_fiber_roots_intervals/adjacent_64
+Success
+
+Testing count_bivariate_fiber_roots_intervals/shared_lower_64
+Success
+
+Testing count_bivariate_fiber_roots_intervals/lower_endpoint_64
+Success
+
+Testing count_bivariate_common_fiber_degree_drop
+Success
+
+Testing refine_isolated_univariate_polynomial_interval/quadratic_steps_4
+Success
+
+Testing refine_isolated_univariate_polynomial_interval/repeated_quadratic_steps_4
+Success
+
+Testing refine_isolated_univariate_polynomial_interval/exact_linear_witness
+Success
+
+Testing refine_isolated_univariate_polynomial_interval/exact_quadratic_witness
+Success
+
+Testing refine_isolated_univariate_polynomial_interval/wide_exact_quadratic_witness
+Success
+
+Testing refine_isolated_univariate_polynomial_interval/lower_endpoint_root
+Success
+
+Testing refine_isolated_univariate_polynomial_interval/upper_endpoint_root
+Success
+
+Testing refine_isolated_univariate_polynomial_interval/exact_real_coefficients_steps_4
+Success
+
+Testing refine_isolated_univariate_polynomial_interval/width_already_satisfied
+Success
+
+Testing polynomial_has_one_distinct_root_in_open_interval/quadratic_sign
+Success
+
+Testing polynomial_has_one_distinct_root_in_open_interval/monotone_degree_16
+Success
+
+Testing polynomial_has_one_distinct_root_in_open_interval/bernstein_degree_16
+Success
+
+Testing polynomial_has_one_distinct_root_in_open_interval/repeated_quadratic
+Success
+
+Testing polynomial_has_one_distinct_root_in_open_interval/repeated_exact_real
+Success
+
+Testing polynomial_has_one_distinct_root_in_open_interval/sturm_fallback_cubic
+Success
+
+Testing polynomial_has_one_distinct_root_in_open_interval/endpoint_and_interior
+Success
+
+Testing compare_algebraic_root_representations
+Success
+
+Testing compare_algebraic_root_representations/disjoint_intervals
+Success
+
+Testing compare_algebraic_root_representations_with_refinement
+Success
+
+Testing compare_algebraic_root_representations_with_refinement/one_sided_exact_real_coefficients
+Success
+
+Testing compare_algebraic_root_representations_by_difference
+Success
+
+Testing compare_algebraic_root_representations_by_difference/disjoint_intervals
+Success
+
+Testing compare_algebraic_root_representations/exact_rational_points
+Success
+
+Testing compare_algebraic_root_representations/exact_real_points
+Success
+
+Testing compare_algebraic_root_representations/wide_exact_point
+Success
+
+Testing compare_algebraic_root_representations_with_refinement/exact_point_against_interval
+Success
+
+Testing compare_algebraic_root_representations_by_difference/exact_rational_points
+Success
+
+Testing compare_algebraic_root_representations_by_difference/same_representation
+Success
+
+Testing compare_algebraic_root_representations_by_difference/exact_point_common_root
+Success
+
+Testing represented_root_sign/isolating_interval
+Success
+
+Testing represented_root_sign/exact_rational_point
+Success
+
+Testing represented_root_sign/exact_real_point
+Success
+
+Testing arithmetic_algebraic_root_representations
+Success
+
+Testing arithmetic_algebraic_root_representations_mixed_scalar
+Success
+
+Testing arithmetic_algebraic_root_representations/same_root_multiply
+Success
+
+Testing arithmetic_algebraic_root_representations/same_root_add
+Success
+
+Testing arithmetic_algebraic_root_representations/same_quadratic_affine_square
+Success
+
+Testing arithmetic_algebraic_root_representations/negate
+Success
+
+Testing arithmetic_algebraic_root_representations/zero_dividend
+Success
+
+Testing arithmetic_algebraic_root_representations/same_root_touching_zero_divide
+Success
+
+Testing arithmetic_algebraic_root_representations/exact_real_points
+Success
+
+Testing arithmetic_algebraic_root_representations/mixed_exact_real_scalar
+Success
+
+Testing arithmetic_algebraic_root_representations/exact_normal_point_divide
+Success
+
+Testing evaluate_polynomial_at_algebraic_root
+Success
+
+Testing evaluate_polynomial_at_algebraic_root/exact_rational_point
+Success
+
+Testing evaluate_polynomial_at_algebraic_root/exact_real_point
+Success
+
+Testing evaluate_polynomial_at_algebraic_root/degree_16_interval
+Success
+
+Testing evaluate_polynomial_at_algebraic_root/exact_normal_constant
+Success
+
+Testing evaluate_rational_expression_at_algebraic_root
+Success
+
+Testing evaluate_rational_expression_at_algebraic_root/exact_rational_point
+Success
+
+Testing evaluate_rational_expression_at_algebraic_root/exact_real_point
+Success
+
+Testing evaluate_rational_expression_at_algebraic_root/same_exact_real_value
+Success
+
+Testing evaluate_rational_expression_at_algebraic_root/exact_normal_denominator
+Success
+
+Testing evaluate_rational_expression_at_algebraic_root/zero_over_exact_normal_denominator
+Success
+
+Testing transform_algebraic_root_affine
+Success
+
+Testing transform_algebraic_root_affine/translation
+Success
+
+Testing transform_algebraic_root_affine/scaling
+Success
+
+Testing transform_algebraic_root_affine/negative_scaling
+Success
+
+Testing transform_algebraic_root_affine/negative_scaling_endpoint_refinement
+Success
+
+Testing transform_algebraic_root_affine/exact_witness
+Success
+
+Testing transform_algebraic_root_affine/exact_real_source
+Success
+
+Testing transform_algebraic_root_affine/degree_16
+Success
+
+Testing transform_algebraic_root_affine/degree_16_dense
+Success
+
+Testing transform_algebraic_root_mobius
+Success
+
+Testing transform_algebraic_root_mobius/constant_denominator
+Success
+
+Testing transform_algebraic_root_mobius/reciprocal
+Success
+
+Testing transform_algebraic_root_mobius/reversed_endpoint_refinement
+Success
+
+Testing transform_algebraic_root_mobius/excluded_endpoint_pole_refinement
+Success
+
+Testing transform_algebraic_root_mobius/exact_witness
+Success
+
+Testing transform_algebraic_root_mobius/exact_real_source
+Success
+
+Testing transform_algebraic_root_polynomial_image
+Success
+
+Testing transform_algebraic_root_polynomial_image/constant
+Success
+
+Testing transform_algebraic_root_polynomial_image/exact_witness
+Success
+
+Testing transform_algebraic_root_polynomial_image/rational_modulus_image
+Success
+
+Testing transform_algebraic_root_polynomial_image/repeated_degree_eight_carrier
+Success
+
+Testing transform_algebraic_root_polynomial_image/repeated_degree_six_carrier
+Success
+
+Testing transform_algebraic_root_polynomial_image/square_free_degree_six_carrier
+Success
+
+Testing transform_algebraic_root_polynomial_image/stationary
+Success
+
+Testing transform_algebraic_root_polynomial_image/foreign_root_refinement
+Success
+
+Testing transform_algebraic_root_rational_image
+Success
+
+Testing transform_algebraic_root_rational_images/batch_four_linear
+Success
+
+Testing transform_algebraic_root_rational_images/batch_four_dependency_denominator
+Success
+
+Testing transform_algebraic_root_rational_image/constant_degree_6
+Success
+
+Testing transform_algebraic_root_rational_image/monotone_quadratic
+Success
+
+Testing transform_algebraic_root_rational_image/stationary_cubic
+Success
+
+Testing transform_algebraic_root_rational_image/dependency_broadened_denominator
+Success
+
+Testing transform_algebraic_root_rational_image/certified_algebraic_pole
+Success
+
+Testing transform_algebraic_root_rational_image/shared_linear_factor
+Success
+
+Testing transform_algebraic_root_rational_image/shared_nonmonic_linear_factor
+Success
+
+Testing algebraic_root_rational_map_transform
+Success
+
+Testing transform_algebraic_root_rational_image_degree_12_cubic
+Success
+
+Testing transform_algebraic_roots_binary
+Success
+
+Testing square_root_algebraic_root
+Success
+
+Testing square_root_algebraic_root/repeated_exact_witness
+Success
+
+Testing square_root_algebraic_root/repeated_rational_square_witness
+Success
+
+Testing square_root_algebraic_root/adaptive_neighbor
+Success
+
+Testing transform_algebraic_roots_binary_subtract
+Success
+
+Testing transform_algebraic_roots_binary_multiply
+Success
+
+Testing transform_algebraic_roots_binary_divide
+Success
+
+Testing transform_algebraic_roots_binary/repeated_degree_six_carriers
+Success
+
+Testing transform_algebraic_roots_binary/shared_repeated_degree_six_carrier
+Success
+
+Testing count_descartes_univariate_polynomial_roots
+Success
+
+Testing count_bernstein_univariate_polynomial_interval_roots
+Success
+
+Testing subdivide_bernstein_univariate_polynomial_interval_roots
+Success
+
+Testing certify_quadratic_interval_rows
+Success
+
+Testing certify_interval_box_candidate_report
+Success
+
+Testing certify_univariate_quadratic_alpha_rows
+Success
+
+Testing certify_univariate_quadratic_krawczyk_rows
+Success
+
+Testing certify_multivariate_quadratic_interval_rows
+Success
+
+Testing certify_multivariate_quadratic_krawczyk_square/1
+Success
+
+Testing certify_multivariate_quadratic_krawczyk_square/2
+Success
+
+Testing certify_multivariate_quadratic_krawczyk_square/4
+Success
+
+Testing certify_multivariate_quadratic_krawczyk_square/8
+Success
+
+Testing quadratic_form_candidate_replay
+Success
+
+Testing certify_affine_candidate_exact
+Success
+
+Testing certify_candidate_batch_affine
+Success
+
+Testing diagnose_failed_constraints_affine
+Success
+
+Testing diagnose_sketch_failed_constraints
+Success
+
+Testing search_failed_constraint_single_removals
+Success
+
+Testing search_failed_constraint_pair_removals
+Success
+
+Testing search_failed_constraint_set_removals
+Success
+
+Testing search_failed_constraint_minimal_removals
+Success
+
+Testing schedule_candidate_batch_predicates
+Success
+
+Testing audit_active_set
+Success
+
+Testing propose_active_set_update
+Success
+
+Testing run_active_set_update_loop
+Success
+
+Testing regenerate_active_set_affine_candidate
+Success
+
+Testing regenerate_active_set_quadratic_candidates
+Success
+
+Testing report_lossy_adapter_only_candidate
+Success
+
+Testing solve_levenberg_marquardt_affine
+Success
+
+Testing solve_modified_newton_least_squares_affine
+Success
+
+Testing solve_modified_newton_preprocessing
+Success
+
+Testing solve_modified_newton_affine_seed
+Success
+
+Testing solve_modified_newton_substitution_seed
+Success
+
+Testing solve_modified_newton_bounded_substitution_seed
+Success
+
+Testing solve_modified_newton_quadratic_seed
+Success
+
+Testing solve_modified_newton_bounded_quadratic_seed
+Success
+
+Testing solve_modified_newton_dragged_parameter
+Success
+
+Testing solve_dogleg_affine
+Success
+
+Testing solve_powell_hybrid_affine
+Success
+
+Testing solve_bfgs_affine
+Success
+
+Testing solve_sqp_affine
+Success
+
+Testing certify_candidate_domains
+Success
+
+Testing simplify_unary_endpoint_expression
+Success
+
+Testing build_equality_substitution_classes_exact
+Success
+
+Testing domain_geometry_squared_distance_build
+Success
+
+Testing bernstein_subdivision/outside/degree_1/depth_8
+Success
+Testing bernstein_subdivision/spread/degree_2/depth_8
+Success
+Testing bernstein_subdivision/spread/degree_4/depth_8
+Success
+Testing bernstein_subdivision/spread/degree_8/depth_16
+Success
+Testing bernstein_subdivision/spread/degree_16/depth_16
+Success
+Testing bernstein_subdivision/cluster/degree_2/depth_32
+Success
+Testing bernstein_subdivision/cluster/degree_4/depth_32
+Success
+Testing bernstein_subdivision/cluster/degree_8/depth_32
+Success
+Testing bernstein_subdivision/repeated/degree_2/depth_16
+Success
+Testing bernstein_subdivision/repeated/degree_4/depth_16
+Success
+Testing bernstein_subdivision/endpoint/degree_2/depth_8
+Success
+Testing bernstein_subdivision/endpoint/degree_4/depth_8
+Success
+Testing bernstein_subdivision/endpoint/degree_8/depth_16
+Success
+Testing bernstein_subdivision/positive/degree_2/depth_24
+Success
+Testing bernstein_subdivision/positive/degree_4/depth_24
+Success
+Testing bernstein_subdivision/cluster/degree_4/depth_0
+Success
+
+Testing competitive/quadratic_roots/hypersolve_exact_candidates
+Success
+Testing competitive/quadratic_roots/roots_f64_proposal
+Success
+
+Testing competitive/dense_linear_4x4/hypersolve_exact_with_replay
+Success
+Testing competitive/dense_linear_4x4/nalgebra_f64_lu_proposal
+Success
+
+affine_krawczyk_certification: TraceCorrelationSummary { dispatch_events: 114, predicate_events: 8, linear_algebra_events: 0, object_fact_events: 0, scalar_fact_events: 42, detailed_fact_events: 6, unknown_fact_events: 0, exact_rational_kind_events: 43, sign_or_zero_query_events: 26, exact_reducer_events: 71, approximation_events: 0, approximation_start_events: 0, approximation_cache_events: 0, refinement_events: 0, predicate_decision_stage_events: 8, cache_events: 0, fallback_or_abort_events: 0, rational_temporaries: 41, rational_reductions: 0, rational_gcds: 0 }
+algebraic_comparison: TraceCorrelationSummary { dispatch_events: 639, predicate_events: 75, linear_algebra_events: 0, object_fact_events: 19, scalar_fact_events: 109, detailed_fact_events: 8, unknown_fact_events: 0, exact_rational_kind_events: 156, sign_or_zero_query_events: 182, exact_reducer_events: 435, approximation_events: 0, approximation_start_events: 0, approximation_cache_events: 0, refinement_events: 0, predicate_decision_stage_events: 66, cache_events: 64, fallback_or_abort_events: 6, rational_temporaries: 278, rational_reductions: 0, rational_gcds: 0 }
+algebraic_evaluation: TraceCorrelationSummary { dispatch_events: 91, predicate_events: 7, linear_algebra_events: 0, object_fact_events: 1, scalar_fact_events: 14, detailed_fact_events: 2, unknown_fact_events: 0, exact_rational_kind_events: 9, sign_or_zero_query_events: 18, exact_reducer_events: 63, approximation_events: 0, approximation_start_events: 0, approximation_cache_events: 0, refinement_events: 0, predicate_decision_stage_events: 6, cache_events: 18, fallback_or_abort_events: 1, rational_temporaries: 66, rational_reductions: 0, rational_gcds: 0 }
+algebraic_rational_images: TraceCorrelationSummary { dispatch_events: 945, predicate_events: 113, linear_algebra_events: 0, object_fact_events: 10, scalar_fact_events: 118, detailed_fact_events: 5, unknown_fact_events: 0, exact_rational_kind_events: 237, sign_or_zero_query_events: 227, exact_reducer_events: 783, approximation_events: 0, approximation_start_events: 0, approximation_cache_events: 0, refinement_events: 0, predicate_decision_stage_events: 113, cache_events: 81, fallback_or_abort_events: 0, rational_temporaries: 324, rational_reductions: 0, rational_gcds: 0 }
+candidate_batch_and_active_set: TraceCorrelationSummary { dispatch_events: 3788, predicate_events: 0, linear_algebra_events: 0, object_fact_events: 0, scalar_fact_events: 2072, detailed_fact_events: 794, unknown_fact_events: 0, exact_rational_kind_events: 1514, sign_or_zero_query_events: 798, exact_reducer_events: 2520, approximation_events: 0, approximation_start_events: 0, approximation_cache_events: 0, refinement_events: 0, predicate_decision_stage_events: 0, cache_events: 0, fallback_or_abort_events: 0, rational_temporaries: 1005, rational_reductions: 0, rational_gcds: 0 }
+direct_and_fraction_free_linear: TraceCorrelationSummary { dispatch_events: 447, predicate_events: 0, linear_algebra_events: 0, object_fact_events: 0, scalar_fact_events: 127, detailed_fact_events: 25, unknown_fact_events: 0, exact_rational_kind_events: 105, sign_or_zero_query_events: 86, exact_reducer_events: 306, approximation_events: 0, approximation_start_events: 0, approximation_cache_events: 0, refinement_events: 0, predicate_decision_stage_events: 0, cache_events: 11, fallback_or_abort_events: 0, rational_temporaries: 143, rational_reductions: 0, rational_gcds: 0 }
+domain_certification: TraceCorrelationSummary { dispatch_events: 8, predicate_events: 2, linear_algebra_events: 0, object_fact_events: 0, scalar_fact_events: 2, detailed_fact_events: 0, unknown_fact_events: 0, exact_rational_kind_events: 2, sign_or_zero_query_events: 5, exact_reducer_events: 3, approximation_events: 0, approximation_start_events: 0, approximation_cache_events: 0, refinement_events: 0, predicate_decision_stage_events: 2, cache_events: 0, fallback_or_abort_events: 0, rational_temporaries: 5, rational_reductions: 0, rational_gcds: 0 }
+lossy_proposal_exact_replay_boundary: TraceCorrelationSummary { dispatch_events: 560, predicate_events: 0, linear_algebra_events: 0, object_fact_events: 0, scalar_fact_events: 268, detailed_fact_events: 84, unknown_fact_events: 0, exact_rational_kind_events: 280, sign_or_zero_query_events: 40, exact_reducer_events: 435, approximation_events: 1, approximation_start_events: 1, approximation_cache_events: 0, refinement_events: 0, predicate_decision_stage_events: 0, cache_events: 6, fallback_or_abort_events: 0, rational_temporaries: 123, rational_reductions: 0, rational_gcds: 0 }
+resultants_and_curve_substitution: TraceCorrelationSummary { dispatch_events: 333, predicate_events: 0, linear_algebra_events: 0, object_fact_events: 0, scalar_fact_events: 102, detailed_fact_events: 17, unknown_fact_events: 0, exact_rational_kind_events: 90, sign_or_zero_query_events: 85, exact_reducer_events: 226, approximation_events: 0, approximation_start_events: 0, approximation_cache_events: 0, refinement_events: 0, predicate_decision_stage_events: 0, cache_events: 3, fallback_or_abort_events: 0, rational_temporaries: 119, rational_reductions: 0, rational_gcds: 0 }
+roots_and_interval_certification: TraceCorrelationSummary { dispatch_events: 668, predicate_events: 60, linear_algebra_events: 0, object_fact_events: 0, scalar_fact_events: 167, detailed_fact_events: 4, unknown_fact_events: 1, exact_rational_kind_events: 155, sign_or_zero_query_events: 210, exact_reducer_events: 400, approximation_events: 0, approximation_start_events: 0, approximation_cache_events: 0, refinement_events: 0, predicate_decision_stage_events: 58, cache_events: 31, fallback_or_abort_events: 0, rational_temporaries: 340, rational_reductions: 1, rational_gcds: 0 }
+sketch_lowering_and_preflight: TraceCorrelationSummary { dispatch_events: 1075, predicate_events: 4, linear_algebra_events: 0, object_fact_events: 0, scalar_fact_events: 460, detailed_fact_events: 18, unknown_fact_events: 0, exact_rational_kind_events: 356, sign_or_zero_query_events: 342, exact_reducer_events: 640, approximation_events: 0, approximation_start_events: 0, approximation_cache_events: 0, refinement_events: 0, predicate_decision_stage_events: 4, cache_events: 9, fallback_or_abort_events: 0, rational_temporaries: 455, rational_reductions: 0, rational_gcds: 0 }
+Testing real_representations/full_solver_boundary/One
+Success
+Testing real_representations/full_solver_boundary/Pi
+Success
+Testing real_representations/full_solver_boundary/PiPow
+Success
+Testing real_representations/full_solver_boundary/PiInv
+Success
+Testing real_representations/full_solver_boundary/PiExp
+Success
+Testing real_representations/full_solver_boundary/PiInvExp
+Success
+Testing real_representations/full_solver_boundary/PiSqrt
+Success
+Testing real_representations/full_solver_boundary/ConstProduct
+Success
+Testing real_representations/full_solver_boundary/ConstOffset
+Success
+Testing real_representations/full_solver_boundary/ConstProductSqrt
+Success
+Testing real_representations/full_solver_boundary/Sqrt
+Success
+Testing real_representations/full_solver_boundary/Exp
+Success
+Testing real_representations/full_solver_boundary/Ln
+Success
+Testing real_representations/full_solver_boundary/LnAffine
+Success
+Testing real_representations/full_solver_boundary/LnProduct
+Success
+Testing real_representations/full_solver_boundary/Log10
+Success
+Testing real_representations/full_solver_boundary/Log2
+Success
+Testing real_representations/full_solver_boundary/Pow10
+Success
+Testing real_representations/full_solver_boundary/Pow2
+Success
+Testing real_representations/full_solver_boundary/SinPi
+Success
+Testing real_representations/full_solver_boundary/TanPi
+Success
+Testing real_representations/full_solver_boundary/Irrational
+Success
+
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 2 tests
+..
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+Instrumented Rust source (inline #[cfg(test)] code included):
+Filename                          Regions    Missed Regions     Cover   Functions  Missed Functions  Executed       Lines      Missed Lines     Cover    Branches   Missed Branches     Cover
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+active_set.rs                        1057                68    93.57%          55                 4    92.73%         775                77    90.06%           0                 0         -
+affine.rs                             308                88    71.43%          18                 2    88.89%         214                61    71.50%           0                 0         -
+algebraic.rs                         5456               659    87.92%         187                 8    95.72%        4444               517    88.37%           0                 0         -
+algebraic_binary.rs                   883                54    93.88%          39                 0   100.00%         712                43    93.96%           0                 0         -
+algebraic_fiber.rs                   6683               718    89.26%         211                10    95.26%        4334               517    88.07%           0                 0         -
+algebraic_mobius.rs                  1590               195    87.74%          52                 0   100.00%        1257               162    87.11%           0                 0         -
+algebraic_polynomial_image.rs        1079               140    87.03%          47                 1    97.87%         764                83    89.14%           0                 0         -
+algebraic_rational_image.rs          2742               358    86.94%         115                 5    95.65%        2085               260    87.53%           0                 0         -
+algebraic_sqrt.rs                     523                32    93.88%          24                 0   100.00%         443                26    94.13%           0                 0         -
+algebraic_tensor_image.rs            1813               108    94.04%          72                 2    97.22%        1311                93    92.91%           0                 0         -
+alpha.rs                              140                16    88.57%           6                 0   100.00%         104                16    84.62%           0                 0         -
+analysis.rs                           319                21    93.42%          27                 4    85.19%         223                14    93.72%           0                 0         -
+bareiss.rs                           1933               217    88.77%          84                 9    89.29%        1339               144    89.25%           0                 0         -
+batch.rs                              215                 5    97.67%          24                 1    95.83%         191                 7    96.34%           0                 0         -
+branches.rs                           102                17    83.33%           3                 0   100.00%          92                17    81.52%           0                 0         -
+certification.rs                      219                 2    99.09%          26                 0   100.00%         223                 2    99.10%           0                 0         -
+curve_resultant.rs                   7692              1234    83.96%         295                26    91.19%        5121              1085    78.81%           0                 0         -
+curve_substitution.rs                 900                72    92.00%          39                 0   100.00%         663                70    89.44%           0                 0         -
+diagnostics.rs                          7                 1    85.71%           2                 0   100.00%          22                 1    95.45%           0                 0         -
+direct.rs                             946               129    86.36%          32                 7    78.12%         662                95    85.65%           0                 0         -
+domain/geometry.rs                     90                 0   100.00%          12                 0   100.00%          70                 0   100.00%           0                 0         -
+domain_certification.rs               370                14    96.22%          15                 0   100.00%         363                15    95.87%           0                 0         -
+eval.rs                                77                12    84.42%           7                 1    85.71%          53                 8    84.91%           0                 0         -
+failed_constraints.rs                 504                14    97.22%          37                 0   100.00%         487                 7    98.56%           0                 0         -
+integer_interpolation.rs             1061                50    95.29%          53                 0   100.00%         600                22    96.33%           0                 0         -
+interval.rs                          2063               336    83.71%          61                 3    95.08%        1431               330    76.94%           0                 0         -
+jacobian.rs                           154                68    55.84%           8                 2    75.00%          96                41    57.29%           0                 0         -
+linalg.rs                             413                85    79.42%          28                 2    92.86%         287                65    77.35%           0                 0         -
+model.rs                               42                 7    83.33%           6                 1    83.33%          37                 5    86.49%           0                 0         -
+ordered_field_roots.rs                706               106    84.99%          28                 2    92.86%         438                76    82.65%           0                 0         -
+policy_division.rs                     56                 6    89.29%           7                 1    85.71%          39                 4    89.74%           0                 0         -
+polynomial.rs                         548               111    79.74%          39                 7    82.05%         326                47    85.58%           0                 0         -
+predicates.rs                          13                 3    76.92%           1                 0   100.00%          12                 3    75.00%           0                 0         -
+rank.rs                               219                31    85.84%           8                 1    87.50%         151                34    77.48%           0                 0         -
+residual_replay.rs                    598                 7    98.83%          38                 0   100.00%         504                 8    98.41%           0                 0         -
+resultant.rs                         1999               177    91.15%          86                 8    90.70%        1178                85    92.78%           0                 0         -
+root_isolation.rs                    5117               719    85.95%         180                 5    97.22%        3372               473    85.97%           0                 0         -
+simplex_projection.rs                 325                13    96.00%          19                 0   100.00%         194                13    93.30%           0                 0         -
+sketch.rs                           10456               525    94.98%         241                 2    99.17%        8818               310    96.48%           0                 0         -
+sketch_arc_incidence.rs                95                 1    98.95%           6                 0   100.00%          53                 0   100.00%           0                 0         -
+sketch_arc_length.rs                  119                 0   100.00%           6                 0   100.00%          72                 0   100.00%           0                 0         -
+sketch_arc_tangent.rs                 161                 1    99.38%           7                 0   100.00%         128                 1    99.22%           0                 0         -
+sketch_builders.rs                   1189                 0   100.00%          81                 0   100.00%        1619                 0   100.00%           0                 0         -
+sketch_certificates.rs                120                 0   100.00%           9                 0   100.00%         102                 0   100.00%           0                 0         -
+sketch_circle_tangent.rs               25                 0   100.00%           2                 0   100.00%          21                 0   100.00%           0                 0         -
+sketch_cubic_tangent.rs               137                 0   100.00%           1                 0   100.00%          54                 0   100.00%           0                 0         -
+sketch_degeneracy.rs                  469                97    79.32%          29                 3    89.66%         373                62    83.38%           0                 0         -
+sketch_domains.rs                     184                17    90.76%          13                 0   100.00%         132                17    87.12%           0                 0         -
+sketch_entity_domains.rs              483                66    86.34%          35                 1    97.14%         394                67    82.99%           0                 0         -
+sketch_failed_constraints.rs          147                 2    98.64%          18                 1    94.44%         131                 2    98.47%           0                 0         -
+sketch_fixtures.rs                    368                 6    98.37%          10                 0   100.00%         172                 0   100.00%           0                 0         -
+sketch_oriented_angle.rs               42                 0   100.00%           3                 0   100.00%          22                 0   100.00%           0                 0         -
+sketch_projection.rs                  193                 0   100.00%           8                 0   100.00%          74                 0   100.00%           0                 0         -
+sketch_units.rs                       128                 2    98.44%          13                 0   100.00%         108                 2    98.15%           0                 0         -
+sketch_workplane_symmetry.rs           68                 0   100.00%           3                 0   100.00%          33                 0   100.00%           0                 0         -
+sketch_workplanes.rs                  427                38    91.10%          20                 0   100.00%         292                45    84.59%           0                 0         -
+solver.rs                             837               118    85.90%          38                 3    92.11%         642               151    76.48%           0                 0         -
+solver_block.rs                       133                13    90.23%           8                 1    87.50%         104                13    87.50%           0                 0         -
+sparse_pattern.rs                     323                 1    99.69%          20                 0   100.00%         254                 0   100.00%           0                 0         -
+symbolic.rs                           849               282    66.78%          51                 6    88.24%         413               133    67.80%           0                 0         -
+tensor_resultant.rs                  2804               231    91.76%         110                 0   100.00%        1574               156    90.09%           0                 0         -
+test_support.rs                        38                 0   100.00%           2                 0   100.00%          20                 0   100.00%           0                 0         -
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+TOTAL                               68757              7293    89.39%        2725               129    95.27%       50222              5485    89.08%           0                 0         -
+
+Production executable lines (trailing inline test modules excluded):
+Source                                        Lines      Hit   Missed  Coverage
+src/active_set.rs                               478      403       75    84.31%
+src/affine.rs                                   208      149       59    71.63%
+src/algebraic.rs                               2613     2115      498    80.94%
+src/algebraic_binary.rs                         361      318       43    88.09%
+src/algebraic_fiber.rs                         2687     2178      509    81.06%
+src/algebraic_mobius.rs                         847      685      162    80.87%
+src/algebraic_polynomial_image.rs               513      432       81    84.21%
+src/algebraic_rational_image.rs                1344     1092      252    81.25%
+src/algebraic_sqrt.rs                           248      222       26    89.52%
+src/algebraic_tensor_image.rs                   634      543       91    85.65%
+src/alpha.rs                                    103       87       16    84.47%
+src/analysis.rs                                 220      206       14    93.64%
+src/bareiss.rs                                  934      797      137    85.33%
+src/batch.rs                                    137      130        7    94.89%
+src/branches.rs                                  92       75       17    81.52%
+src/certification.rs                            213      211        2    99.06%
+src/curve_resultant.rs                         3427     2373     1054    69.24%
+src/curve_substitution.rs                       501      431       70    86.03%
+src/diagnostics.rs                               22       21        1    95.45%
+src/direct.rs                                   652      570       82    87.42%
+src/domain/geometry.rs                           70       70        0   100.00%
+src/domain_certification.rs                     359      344       15    95.82%
+src/eval.rs                                      53       45        8    84.91%
+src/failed_constraints.rs                       472      465        7    98.52%
+src/integer_interpolation.rs                    496      474       22    95.56%
+src/interval.rs                                1168      860      308    73.63%
+src/jacobian.rs                                  93       52       41    55.91%
+src/linalg.rs                                   274      211       63    77.01%
+src/model.rs                                     37       32        5    86.49%
+src/ordered_field_roots.rs                      364      304       60    83.52%
+src/policy_division.rs                           39       35        4    89.74%
+src/polynomial.rs                               318      275       43    86.48%
+src/predicates.rs                                12        9        3    75.00%
+src/rank.rs                                     149      115       34    77.18%
+src/residual_replay.rs                          258      250        8    96.90%
+src/resultant.rs                                840      765       75    91.07%
+src/root_isolation.rs                          2267     1801      466    79.44%
+src/simplex_projection.rs                       144      131       13    90.97%
+src/sketch.rs                                  8803     8493      310    96.48%
+src/sketch_arc_incidence.rs                      52       52        0   100.00%
+src/sketch_arc_length.rs                         72       72        0   100.00%
+src/sketch_arc_tangent.rs                       128      127        1    99.22%
+src/sketch_builders.rs                         1619     1619        0   100.00%
+src/sketch_certificates.rs                      100      100        0   100.00%
+src/sketch_circle_tangent.rs                     21       21        0   100.00%
+src/sketch_cubic_tangent.rs                      54       54        0   100.00%
+src/sketch_degeneracy.rs                        365      303       62    83.01%
+src/sketch_domains.rs                           129      112       17    86.82%
+src/sketch_entity_domains.rs                    387      320       67    82.69%
+src/sketch_failed_constraints.rs                120      119        1    99.17%
+src/sketch_fixtures.rs                          171      171        0   100.00%
+src/sketch_oriented_angle.rs                     22       22        0   100.00%
+src/sketch_projection.rs                         74       74        0   100.00%
+src/sketch_units.rs                             102      100        2    98.04%
+src/sketch_workplane_symmetry.rs                 33       33        0   100.00%
+src/sketch_workplanes.rs                        288      243       45    84.38%
+src/solver.rs                                   626      476      150    76.04%
+src/solver_block.rs                             104       91       13    87.50%
+src/sparse_pattern.rs                           132      132        0   100.00%
+src/symbolic.rs                                 413      280      133    67.80%
+src/tensor_resultant.rs                         967      813      154    84.07%
+src/test_support.rs                              20       20        0   100.00%
+TOTAL                                         38449    33123     5326    86.15%
+Production coverage threshold: 85%
+HTML report: /tmp/hypersolve-native-constant-sign-coverage.t7dwlv/html/index.html
+Annotated text report: /tmp/hypersolve-native-constant-sign-coverage.t7dwlv/coverage.txt

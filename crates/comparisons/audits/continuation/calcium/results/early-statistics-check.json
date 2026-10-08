@@ -1,0 +1,13 @@
+{
+  "tag": "early-statistics-check",
+  "started": "2026-09-11T02:19:40.559Z",
+  "finished": "2026-09-11T02:20:00.240Z",
+  "elapsedSeconds": 19.678425210999997,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "node",
+  "args": [
+    "check-early-statistics-v64.mjs"
+  ],
+  "code": 0,
+  "signal": null
+}

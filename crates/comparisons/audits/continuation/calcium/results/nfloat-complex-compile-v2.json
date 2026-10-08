@@ -1,0 +1,30 @@
+{
+  "tag": "nfloat-complex-compile-v2",
+  "started": "2026-09-09T17:04:39.740Z",
+  "finished": "2026-09-09T17:04:39.951Z",
+  "elapsedSeconds": 0.20806729899999998,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison",
+  "command": "gcc",
+  "args": [
+    "-O2",
+    "-g0",
+    "-Wall",
+    "-Wextra",
+    "-Werror",
+    "-isystem",
+    "../exact-real-references/flint/src",
+    "audits/continuation/calcium/flint-nfloat-complex-controls.c",
+    "-L",
+    "../exact-real-references/flint",
+    "-Wl,-rpath,/home/tim/Documents/GitHub/workspace/exact-real-references/flint",
+    "-lflint",
+    "-lmpfr",
+    "-lgmp",
+    "-lm",
+    "-lpthread",
+    "-o",
+    "/tmp/calcium-complex-controls.8yAaAz/nfloat-complex-controls"
+  ],
+  "code": 0,
+  "signal": null
+}

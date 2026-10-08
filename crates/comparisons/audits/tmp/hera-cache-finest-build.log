@@ -1,0 +1,37 @@
+
+finest/Data/Number/MPFR.hs:2:12: warning: [-Wdeprecated-flags]
+    -#include is deprecated: -#include and INCLUDE pragmas are deprecated: They no longer have any effect
+  |
+2 | {-# INCLUDE <mpfr.h> #-}
+  |            ^^^^^^^^^^
+
+finest/Data/Number/MPFR.hs:3:12: warning: [-Wdeprecated-flags]
+    -#include is deprecated: -#include and INCLUDE pragmas are deprecated: They no longer have any effect
+  |
+3 | {-# INCLUDE <hsmpfr.h> #-}
+  |            ^^^^^^^^^^^^
+
+finest/Data/Number/Ball.hs:1:12: warning: [-Wdeprecated-flags]
+    -#include is deprecated: -#include and INCLUDE pragmas are deprecated: They no longer have any effect
+  |
+1 | {-# INCLUDE <mpfr.h> #-}
+  |            ^^^^^^^^^^
+
+finest/Data/Number/Ball.hs:2:12: warning: [-Wdeprecated-flags]
+    -#include is deprecated: -#include and INCLUDE pragmas are deprecated: They no longer have any effect
+  |
+2 | {-# INCLUDE <hsmpfr.h> #-}
+  |            ^^^^^^^^^^^^
+[1 of 9] Compiling Data.Number.FFIhelper ( finest/dist/build/Data/Number/FFIhelper.hs, cache-finest-build/Data/Number/FFIhelper.o )
+
+Data/Number/FFIhelper.hsc:50:1: warning: [GHC-94817] [-Wtabs]
+    Tab character found here, and in two further locations.
+    Suggested fix: Please use spaces instead.
+[2 of 9] Compiling Data.Number.MPFR ( finest/Data/Number/MPFR.hs, cache-finest-build/Data/Number/MPFR.o )
+[3 of 9] Compiling Data.Number.Dyadic ( finest/Data/Number/Dyadic.hs, cache-finest-build/Data/Number/Dyadic.o )
+[4 of 9] Compiling Data.Order       ( finest/Data/Order.hs, cache-finest-build/Data/Order.o )
+[5 of 9] Compiling Data.Number.Ball ( finest/Data/Number/Ball.hs, cache-finest-build/Data/Number/Ball.o )
+[6 of 9] Compiling Data.Number.DyadicInterval ( finest/Data/Number/DyadicInterval.hs, cache-finest-build/Data/Number/DyadicInterval.o )
+[7 of 9] Compiling Data.Number.Real ( finest/Data/Number/Real.hs, cache-finest-build/Data/Number/Real.o )
+[8 of 9] Compiling Main             ( HeraCacheBench.hs, cache-finest-build/Main.o )
+[9 of 9] Linking hera-cache-finest

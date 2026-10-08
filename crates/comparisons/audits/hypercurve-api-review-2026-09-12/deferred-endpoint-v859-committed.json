@@ -1,0 +1,18 @@
+{
+  "repos": {
+    "hypercurve": {
+      "commit": "e4cf1735f3b2f6823e47d902182bc6bdd139c4a1",
+      "parent": "a71dc45d5dadf7486a565d6c1b986117ea7d8edc",
+      "paths": {
+        "src/bezier_arrangement.rs": "581eebe8af5be124dd18570890b8322f0de941dacfd77bcabf42bcb26c721938",
+        "src/bezier_region.rs": "d2bdf92918e89899cdc9c86b5adf1610589590cf7e7fedd88689430a66e8d821",
+        "src/bezier_split.rs": "58f308e17bf6201a89c1aa2d340449f568ae4c91473b69b2e0bfff71f4e92370",
+        "src/bezier_split_endpoint.rs": "55a697164b2b2bfb639868cb09b1e3191d5296fa8863bb982e573ffa4353ef92",
+        "src/curve_support.rs": "a00ba7a9b35f7ab448131795ad751b177c820011504296664e9de054498597e1"
+      }
+    }
+  },
+  "qualification": "deferred-endpoint-v859-terminal.json",
+  "verified_source_files": 2048,
+  "clean_repositories": 30
+}

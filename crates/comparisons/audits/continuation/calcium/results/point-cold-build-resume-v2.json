@@ -1,0 +1,13 @@
+{
+  "tag": "point-cold-build-resume-v2",
+  "started": "2026-09-10T23:08:40.399Z",
+  "finished": "2026-09-10T23:10:02.953Z",
+  "elapsedSeconds": 82.551288156,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "node",
+  "args": [
+    "resume-point-cold-build.mjs"
+  ],
+  "code": 0,
+  "signal": null
+}

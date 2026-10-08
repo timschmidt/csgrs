@@ -1,0 +1,4115 @@
+{
+  "mode": "cpu",
+  "started": "2026-09-09T04:17:17.508Z",
+  "finished": "2026-09-09T04:19:18.050Z",
+  "cpu": 6,
+  "binaries": {
+    "baseline-cpu": {
+      "path": "/tmp/calcium-derivative-costs.FA5c2M/baseline-cpu",
+      "sha256": "7b43d187b3b7861a42dde65e1b6c35fb541ded82a52e5e3f524ea804ef34b06e",
+      "bytes": 3693200,
+      "size": "text\t   data\t    bss\t    dec\t    hex\tfilename\n2595886\t 223416\t   3552\t2822854\t 2b12c6\t/tmp/calcium-derivative-costs.FA5c2M/baseline-cpu"
+    },
+    "baseline-allocation": {
+      "path": "/tmp/calcium-derivative-costs.FA5c2M/baseline-allocation",
+      "sha256": "3da3074f4cfbb43cf4dddc0fd38fbc131ee01afefed151164709f2e747f85829",
+      "bytes": 3701504,
+      "size": "text\t   data\t    bss\t    dec\t    hex\tfilename\n2603362\t 223488\t   4232\t2831082\t 2b32ea\t/tmp/calcium-derivative-costs.FA5c2M/baseline-allocation"
+    },
+    "candidate-cpu": {
+      "path": "/tmp/calcium-derivative-costs.FA5c2M/candidate-cpu",
+      "sha256": "e4cecc2158267fd4c96f25b4680b31cad81e3c71834993846fab63d478643388",
+      "bytes": 3693088,
+      "size": "text\t   data\t    bss\t    dec\t    hex\tfilename\n2595570\t 223416\t   3872\t2822858\t 2b12ca\t/tmp/calcium-derivative-costs.FA5c2M/candidate-cpu"
+    },
+    "candidate-allocation": {
+      "path": "/tmp/calcium-derivative-costs.FA5c2M/candidate-allocation",
+      "sha256": "23ba683b3796d68c2cbf5b81e4a14d0d3748e3fdc1743778a79a37f91bfc9399",
+      "bytes": 3701416,
+      "size": "text\t   data\t    bss\t    dec\t    hex\tfilename\n2603046\t 223488\t   4552\t2831086\t 2b32ee\t/tmp/calcium-derivative-costs.FA5c2M/candidate-allocation"
+    }
+  },
+  "summaries": [
+    {
+      "kind": 0,
+      "degree": 1,
+      "order": 0,
+      "lifecycle": "retained_curve",
+      "iterations": 5000,
+      "observations": 48,
+      "pilots": [
+        {
+          "started": "2026-09-09T04:17:17.509Z",
+          "finished": "2026-09-09T04:17:17.516Z",
+          "mode": "cpu",
+          "variant": "baseline",
+          "kind": 0,
+          "degree": 1,
+          "order": 0,
+          "lifecycle": "retained_curve",
+          "iterations": 2,
+          "elapsed_ns": 1240,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "started": "2026-09-09T04:17:17.516Z",
+          "finished": "2026-09-09T04:17:17.520Z",
+          "mode": "cpu",
+          "variant": "candidate",
+          "kind": 0,
+          "degree": 1,
+          "order": 0,
+          "lifecycle": "retained_curve",
+          "iterations": 2,
+          "elapsed_ns": 1340,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 1.058680791625151,
+      "pairedMedianBootstrap95": [
+        0.9058123731493197,
+        1.0875170285952733
+      ],
+      "nsPerQuery": {
+        "baseline": 344.9375,
+        "candidate": 363.1562
+      }
+    },
+    {
+      "kind": 0,
+      "degree": 1,
+      "order": 0,
+      "lifecycle": "fresh_curve",
+      "iterations": 2532,
+      "observations": 48,
+      "pilots": [
+        {
+          "started": "2026-09-09T04:17:17.811Z",
+          "finished": "2026-09-09T04:17:17.815Z",
+          "mode": "cpu",
+          "variant": "baseline",
+          "kind": 0,
+          "degree": 1,
+          "order": 0,
+          "lifecycle": "fresh_curve",
+          "iterations": 2,
+          "elapsed_ns": 4740,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "started": "2026-09-09T04:17:17.815Z",
+          "finished": "2026-09-09T04:17:17.819Z",
+          "mode": "cpu",
+          "variant": "candidate",
+          "kind": 0,
+          "degree": 1,
+          "order": 0,
+          "lifecycle": "fresh_curve",
+          "iterations": 2,
+          "elapsed_ns": 2739,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 0.9746827327725491,
+      "pairedMedianBootstrap95": [
+        0.964995003426553,
+        0.9887133256429231
+      ],
+      "nsPerQuery": {
+        "baseline": 1183.321682464455,
+        "candidate": 1165.3864533965243
+      }
+    },
+    {
+      "kind": 0,
+      "degree": 1,
+      "order": 1,
+      "lifecycle": "retained_curve",
+      "iterations": 5000,
+      "observations": 48,
+      "pilots": [
+        {
+          "started": "2026-09-09T04:17:18.176Z",
+          "finished": "2026-09-09T04:17:18.180Z",
+          "mode": "cpu",
+          "variant": "baseline",
+          "kind": 0,
+          "degree": 1,
+          "order": 1,
+          "lifecycle": "retained_curve",
+          "iterations": 2,
+          "elapsed_ns": 1900,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "started": "2026-09-09T04:17:18.180Z",
+          "finished": "2026-09-09T04:17:18.184Z",
+          "mode": "cpu",
+          "variant": "candidate",
+          "kind": 0,
+          "degree": 1,
+          "order": 1,
+          "lifecycle": "retained_curve",
+          "iterations": 2,
+          "elapsed_ns": 2109,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 0.8676945379149446,
+      "pairedMedianBootstrap95": [
+        0.792308660361978,
+        0.9648211149192796
+      ],
+      "nsPerQuery": {
+        "baseline": 785.4803999999999,
+        "candidate": 704.9059
+      }
+    },
+    {
+      "kind": 0,
+      "degree": 1,
+      "order": 1,
+      "lifecycle": "fresh_curve",
+      "iterations": 1055,
+      "observations": 48,
+      "pilots": [
+        {
+          "started": "2026-09-09T04:17:18.587Z",
+          "finished": "2026-09-09T04:17:18.591Z",
+          "mode": "cpu",
+          "variant": "baseline",
+          "kind": 0,
+          "degree": 1,
+          "order": 1,
+          "lifecycle": "fresh_curve",
+          "iterations": 2,
+          "elapsed_ns": 3610,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "started": "2026-09-09T04:17:18.591Z",
+          "finished": "2026-09-09T04:17:18.595Z",
+          "mode": "cpu",
+          "variant": "candidate",
+          "kind": 0,
+          "degree": 1,
+          "order": 1,
+          "lifecycle": "fresh_curve",
+          "iterations": 2,
+          "elapsed_ns": 11379,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 0.9691494610147078,
+      "pairedMedianBootstrap95": [
+        0.8627530235704385,
+        1.0734963191522355
+      ],
+      "nsPerQuery": {
+        "baseline": 1682.2781990521328,
+        "candidate": 1681.8279620853082
+      }
+    },
+    {
+      "kind": 0,
+      "degree": 1,
+      "order": 3,
+      "lifecycle": "retained_curve",
+      "iterations": 3226,
+      "observations": 48,
+      "pilots": [
+        {
+          "started": "2026-09-09T04:17:18.893Z",
+          "finished": "2026-09-09T04:17:18.897Z",
+          "mode": "cpu",
+          "variant": "baseline",
+          "kind": 0,
+          "degree": 1,
+          "order": 3,
+          "lifecycle": "retained_curve",
+          "iterations": 2,
+          "elapsed_ns": 3720,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "started": "2026-09-09T04:17:18.897Z",
+          "finished": "2026-09-09T04:17:18.901Z",
+          "mode": "cpu",
+          "variant": "candidate",
+          "kind": 0,
+          "degree": 1,
+          "order": 3,
+          "lifecycle": "retained_curve",
+          "iterations": 2,
+          "elapsed_ns": 2550,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 0.6226850068381495,
+      "pairedMedianBootstrap95": [
+        0.5967526637881144,
+        0.635273192139684
+      ],
+      "nsPerQuery": {
+        "baseline": 1471.7470551766894,
+        "candidate": 907.8440793552386
+      }
+    },
+    {
+      "kind": 0,
+      "degree": 1,
+      "order": 3,
+      "lifecycle": "fresh_curve",
+      "iterations": 2415,
+      "observations": 48,
+      "pilots": [
+        {
+          "started": "2026-09-09T04:17:19.298Z",
+          "finished": "2026-09-09T04:17:19.302Z",
+          "mode": "cpu",
+          "variant": "baseline",
+          "kind": 0,
+          "degree": 1,
+          "order": 3,
+          "lifecycle": "fresh_curve",
+          "iterations": 2,
+          "elapsed_ns": 4680,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "started": "2026-09-09T04:17:19.302Z",
+          "finished": "2026-09-09T04:17:19.306Z",
+          "mode": "cpu",
+          "variant": "candidate",
+          "kind": 0,
+          "degree": 1,
+          "order": 3,
+          "lifecycle": "fresh_curve",
+          "iterations": 2,
+          "elapsed_ns": 4970,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 0.7821064413153542,
+      "pairedMedianBootstrap95": [
+        0.7450773569777389,
+        0.7912851217889421
+      ],
+      "nsPerQuery": {
+        "baseline": 2258.0095238095237,
+        "candidate": 1768.9809523809522
+      }
+    },
+    {
+      "kind": 0,
+      "degree": 1,
+      "order": 24,
+      "lifecycle": "retained_curve",
+      "iterations": 616,
+      "observations": 48,
+      "pilots": [
+        {
+          "started": "2026-09-09T04:17:19.745Z",
+          "finished": "2026-09-09T04:17:19.750Z",
+          "mode": "cpu",
+          "variant": "baseline",
+          "kind": 0,
+          "degree": 1,
+          "order": 24,
+          "lifecycle": "retained_curve",
+          "iterations": 2,
+          "elapsed_ns": 19489,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "started": "2026-09-09T04:17:19.750Z",
+          "finished": "2026-09-09T04:17:19.754Z",
+          "mode": "cpu",
+          "variant": "candidate",
+          "kind": 0,
+          "degree": 1,
+          "order": 24,
+          "lifecycle": "retained_curve",
+          "iterations": 2,
+          "elapsed_ns": 8980,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 0.45019383203943125,
+      "pairedMedianBootstrap95": [
+        0.44530795436534476,
+        0.4604832791367415
+      ],
+      "nsPerQuery": {
+        "baseline": 7905.410714285714,
+        "candidate": 3567.215909090909
+      }
+    },
+    {
+      "kind": 0,
+      "degree": 1,
+      "order": 24,
+      "lifecycle": "fresh_curve",
+      "iterations": 691,
+      "observations": 48,
+      "pilots": [
+        {
+          "started": "2026-09-09T04:17:20.163Z",
+          "finished": "2026-09-09T04:17:20.168Z",
+          "mode": "cpu",
+          "variant": "baseline",
+          "kind": 0,
+          "degree": 1,
+          "order": 24,
+          "lifecycle": "fresh_curve",
+          "iterations": 2,
+          "elapsed_ns": 17379,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "started": "2026-09-09T04:17:20.168Z",
+          "finished": "2026-09-09T04:17:20.172Z",
+          "mode": "cpu",
+          "variant": "candidate",
+          "kind": 0,
+          "degree": 1,
+          "order": 24,
+          "lifecycle": "fresh_curve",
+          "iterations": 2,
+          "elapsed_ns": 9090,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 0.5146903384821602,
+      "pairedMedianBootstrap95": [
+        0.48727002449433915,
+        0.5236158157079248
+      ],
+      "nsPerQuery": {
+        "baseline": 9102.070911722141,
+        "candidate": 4562.625904486252
+      }
+    },
+    {
+      "kind": 0,
+      "degree": 1,
+      "order": 128,
+      "lifecycle": "retained_curve",
+      "iterations": 126,
+      "observations": 48,
+      "pilots": [
+        {
+          "started": "2026-09-09T04:17:20.639Z",
+          "finished": "2026-09-09T04:17:20.687Z",
+          "mode": "cpu",
+          "variant": "baseline",
+          "kind": 0,
+          "degree": 1,
+          "order": 128,
+          "lifecycle": "retained_curve",
+          "iterations": 2,
+          "elapsed_ns": 95564,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "started": "2026-09-09T04:17:20.687Z",
+          "finished": "2026-09-09T04:17:20.732Z",
+          "mode": "cpu",
+          "variant": "candidate",
+          "kind": 0,
+          "degree": 1,
+          "order": 128,
+          "lifecycle": "retained_curve",
+          "iterations": 2,
+          "elapsed_ns": 32027,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 0.34680380148656065,
+      "pairedMedianBootstrap95": [
+        0.3200958720303936,
+        0.3570746092922217
+      ],
+      "nsPerQuery": {
+        "baseline": 46900.329365079364,
+        "candidate": 16172.309523809523
+      }
+    },
+    {
+      "kind": 0,
+      "degree": 1,
+      "order": 128,
+      "lifecycle": "fresh_curve",
+      "iterations": 127,
+      "observations": 48,
+      "pilots": [
+        {
+          "started": "2026-09-09T04:17:23.183Z",
+          "finished": "2026-09-09T04:17:23.229Z",
+          "mode": "cpu",
+          "variant": "baseline",
+          "kind": 0,
+          "degree": 1,
+          "order": 128,
+          "lifecycle": "fresh_curve",
+          "iterations": 2,
+          "elapsed_ns": 94544,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "started": "2026-09-09T04:17:23.229Z",
+          "finished": "2026-09-09T04:17:23.275Z",
+          "mode": "cpu",
+          "variant": "candidate",
+          "kind": 0,
+          "degree": 1,
+          "order": 128,
+          "lifecycle": "fresh_curve",
+          "iterations": 2,
+          "elapsed_ns": 34218,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 0.3592231853381669,
+      "pairedMedianBootstrap95": [
+        0.3541129157497703,
+        0.3635878250248868
+      ],
+      "nsPerQuery": {
+        "baseline": 47186.779527559054,
+        "candidate": 17039.19291338583
+      }
+    },
+    {
+      "kind": 0,
+      "degree": 3,
+      "order": 0,
+      "lifecycle": "retained_curve",
+      "iterations": 5000,
+      "observations": 48,
+      "pilots": [
+        {
+          "started": "2026-09-09T04:17:25.659Z",
+          "finished": "2026-09-09T04:17:25.664Z",
+          "mode": "cpu",
+          "variant": "baseline",
+          "kind": 0,
+          "degree": 3,
+          "order": 0,
+          "lifecycle": "retained_curve",
+          "iterations": 2,
+          "elapsed_ns": 1750,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "started": "2026-09-09T04:17:25.664Z",
+          "finished": "2026-09-09T04:17:25.668Z",
+          "mode": "cpu",
+          "variant": "candidate",
+          "kind": 0,
+          "degree": 3,
+          "order": 0,
+          "lifecycle": "retained_curve",
+          "iterations": 2,
+          "elapsed_ns": 1750,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 0.9844090816639599,
+      "pairedMedianBootstrap95": [
+        0.961367976413726,
+        0.9973440959466693
+      ],
+      "nsPerQuery": {
+        "baseline": 590.0116,
+        "candidate": 580.5123
+      }
+    },
+    {
+      "kind": 0,
+      "degree": 3,
+      "order": 0,
+      "lifecycle": "fresh_curve",
+      "iterations": 2223,
+      "observations": 48,
+      "pilots": [
+        {
+          "started": "2026-09-09T04:17:26.021Z",
+          "finished": "2026-09-09T04:17:26.025Z",
+          "mode": "cpu",
+          "variant": "baseline",
+          "kind": 0,
+          "degree": 3,
+          "order": 0,
+          "lifecycle": "fresh_curve",
+          "iterations": 2,
+          "elapsed_ns": 5240,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "started": "2026-09-09T04:17:26.025Z",
+          "finished": "2026-09-09T04:17:26.029Z",
+          "mode": "cpu",
+          "variant": "candidate",
+          "kind": 0,
+          "degree": 3,
+          "order": 0,
+          "lifecycle": "fresh_curve",
+          "iterations": 2,
+          "elapsed_ns": 5399,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 1.0168036520058539,
+      "pairedMedianBootstrap95": [
+        0.9679751001044298,
+        1.0592559673786042
+      ],
+      "nsPerQuery": {
+        "baseline": 2458.1450742240213,
+        "candidate": 2481.983130904184
+      }
+    },
+    {
+      "kind": 0,
+      "degree": 3,
+      "order": 1,
+      "lifecycle": "retained_curve",
+      "iterations": 3244,
+      "observations": 48,
+      "pilots": [
+        {
+          "started": "2026-09-09T04:17:26.510Z",
+          "finished": "2026-09-09T04:17:26.514Z",
+          "mode": "cpu",
+          "variant": "baseline",
+          "kind": 0,
+          "degree": 3,
+          "order": 1,
+          "lifecycle": "retained_curve",
+          "iterations": 2,
+          "elapsed_ns": 2770,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "started": "2026-09-09T04:17:26.514Z",
+          "finished": "2026-09-09T04:17:26.518Z",
+          "mode": "cpu",
+          "variant": "candidate",
+          "kind": 0,
+          "degree": 3,
+          "order": 1,
+          "lifecycle": "retained_curve",
+          "iterations": 2,
+          "elapsed_ns": 3700,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 0.9343743290605023,
+      "pairedMedianBootstrap95": [
+        0.8136595536602237,
+        0.9729043552853867
+      ],
+      "nsPerQuery": {
+        "baseline": 1258.329839704069,
+        "candidate": 1177.977496917386
+      }
+    },
+    {
+      "kind": 0,
+      "degree": 3,
+      "order": 1,
+      "lifecycle": "fresh_curve",
+      "iterations": 1521,
+      "observations": 48,
+      "pilots": [
+        {
+          "started": "2026-09-09T04:17:26.921Z",
+          "finished": "2026-09-09T04:17:26.925Z",
+          "mode": "cpu",
+          "variant": "baseline",
+          "kind": 0,
+          "degree": 3,
+          "order": 1,
+          "lifecycle": "fresh_curve",
+          "iterations": 2,
+          "elapsed_ns": 7890,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "started": "2026-09-09T04:17:26.925Z",
+          "finished": "2026-09-09T04:17:26.930Z",
+          "mode": "cpu",
+          "variant": "candidate",
+          "kind": 0,
+          "degree": 3,
+          "order": 1,
+          "lifecycle": "fresh_curve",
+          "iterations": 2,
+          "elapsed_ns": 7779,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 0.9813797327529024,
+      "pairedMedianBootstrap95": [
+        0.9748997146515633,
+        0.9859902717634024
+      ],
+      "nsPerQuery": {
+        "baseline": 3087.5834976988826,
+        "candidate": 3038.931623931624
+      }
+    },
+    {
+      "kind": 0,
+      "degree": 3,
+      "order": 3,
+      "lifecycle": "retained_curve",
+      "iterations": 1838,
+      "observations": 48,
+      "pilots": [
+        {
+          "started": "2026-09-09T04:17:27.363Z",
+          "finished": "2026-09-09T04:17:27.367Z",
+          "mode": "cpu",
+          "variant": "baseline",
+          "kind": 0,
+          "degree": 3,
+          "order": 3,
+          "lifecycle": "retained_curve",
+          "iterations": 2,
+          "elapsed_ns": 6529,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "started": "2026-09-09T04:17:27.367Z",
+          "finished": "2026-09-09T04:17:27.372Z",
+          "mode": "cpu",
+          "variant": "candidate",
+          "kind": 0,
+          "degree": 3,
+          "order": 3,
+          "lifecycle": "retained_curve",
+          "iterations": 2,
+          "elapsed_ns": 5460,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 0.7911378691147073,
+      "pairedMedianBootstrap95": [
+        0.7394319167508447,
+        0.8200054307814499
+      ],
+      "nsPerQuery": {
+        "baseline": 2544.9270946681177,
+        "candidate": 2035.291077257889
+      }
+    },
+    {
+      "kind": 0,
+      "degree": 3,
+      "order": 3,
+      "lifecycle": "fresh_curve",
+      "iterations": 1081,
+      "observations": 48,
+      "pilots": [
+        {
+          "started": "2026-09-09T04:17:27.797Z",
+          "finished": "2026-09-09T04:17:27.801Z",
+          "mode": "cpu",
+          "variant": "baseline",
+          "kind": 0,
+          "degree": 3,
+          "order": 3,
+          "lifecycle": "fresh_curve",
+          "iterations": 2,
+          "elapsed_ns": 11109,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "started": "2026-09-09T04:17:27.801Z",
+          "finished": "2026-09-09T04:17:27.805Z",
+          "mode": "cpu",
+          "variant": "candidate",
+          "kind": 0,
+          "degree": 3,
+          "order": 3,
+          "lifecycle": "fresh_curve",
+          "iterations": 2,
+          "elapsed_ns": 9670,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 0.8858979357812633,
+      "pairedMedianBootstrap95": [
+        0.8601274461460521,
+        0.9186180885046473
+      ],
+      "nsPerQuery": {
+        "baseline": 4381.121184088806,
+        "candidate": 3838.7576318223864
+      }
+    },
+    {
+      "kind": 0,
+      "degree": 3,
+      "order": 24,
+      "lifecycle": "retained_curve",
+      "iterations": 465,
+      "observations": 48,
+      "pilots": [
+        {
+          "started": "2026-09-09T04:17:28.244Z",
+          "finished": "2026-09-09T04:17:28.249Z",
+          "mode": "cpu",
+          "variant": "baseline",
+          "kind": 0,
+          "degree": 3,
+          "order": 24,
+          "lifecycle": "retained_curve",
+          "iterations": 2,
+          "elapsed_ns": 25818,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "started": "2026-09-09T04:17:28.249Z",
+          "finished": "2026-09-09T04:17:28.254Z",
+          "mode": "cpu",
+          "variant": "candidate",
+          "kind": 0,
+          "degree": 3,
+          "order": 24,
+          "lifecycle": "retained_curve",
+          "iterations": 2,
+          "elapsed_ns": 9590,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 0.3618339298583795,
+      "pairedMedianBootstrap95": [
+        0.3545420673907288,
+        0.3696813755101732
+      ],
+      "nsPerQuery": {
+        "baseline": 12958.54623655914,
+        "candidate": 4690.0236559139785
+      }
+    },
+    {
+      "kind": 0,
+      "degree": 3,
+      "order": 24,
+      "lifecycle": "fresh_curve",
+      "iterations": 402,
+      "observations": 48,
+      "pilots": [
+        {
+          "started": "2026-09-09T04:17:28.696Z",
+          "finished": "2026-09-09T04:17:28.702Z",
+          "mode": "cpu",
+          "variant": "baseline",
+          "kind": 0,
+          "degree": 3,
+          "order": 24,
+          "lifecycle": "fresh_curve",
+          "iterations": 2,
+          "elapsed_ns": 29858,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "started": "2026-09-09T04:17:28.702Z",
+          "finished": "2026-09-09T04:17:28.707Z",
+          "mode": "cpu",
+          "variant": "candidate",
+          "kind": 0,
+          "degree": 3,
+          "order": 24,
+          "lifecycle": "fresh_curve",
+          "iterations": 2,
+          "elapsed_ns": 13179,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 0.43876473455269605,
+      "pairedMedianBootstrap95": [
+        0.41508455614392625,
+        0.44442637890265885
+      ],
+      "nsPerQuery": {
+        "baseline": 14786.278606965174,
+        "candidate": 6499.232587064676
+      }
+    },
+    {
+      "kind": 0,
+      "degree": 3,
+      "order": 128,
+      "lifecycle": "retained_curve",
+      "iterations": 79,
+      "observations": 48,
+      "pilots": [
+        {
+          "started": "2026-09-09T04:17:29.165Z",
+          "finished": "2026-09-09T04:17:29.211Z",
+          "mode": "cpu",
+          "variant": "baseline",
+          "kind": 0,
+          "degree": 3,
+          "order": 128,
+          "lifecycle": "retained_curve",
+          "iterations": 2,
+          "elapsed_ns": 152830,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "started": "2026-09-09T04:17:29.211Z",
+          "finished": "2026-09-09T04:17:29.255Z",
+          "mode": "cpu",
+          "variant": "candidate",
+          "kind": 0,
+          "degree": 3,
+          "order": 128,
+          "lifecycle": "retained_curve",
+          "iterations": 2,
+          "elapsed_ns": 51646,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 0.22017803246390466,
+      "pairedMedianBootstrap95": [
+        0.21608546717226068,
+        0.22236274933093586
+      ],
+      "nsPerQuery": {
+        "baseline": 77259.91772151898,
+        "candidate": 17110.474683544304
+      }
+    },
+    {
+      "kind": 0,
+      "degree": 3,
+      "order": 128,
+      "lifecycle": "fresh_curve",
+      "iterations": 77,
+      "observations": 48,
+      "pilots": [
+        {
+          "started": "2026-09-09T04:17:31.670Z",
+          "finished": "2026-09-09T04:17:31.719Z",
+          "mode": "cpu",
+          "variant": "baseline",
+          "kind": 0,
+          "degree": 3,
+          "order": 128,
+          "lifecycle": "fresh_curve",
+          "iterations": 2,
+          "elapsed_ns": 156449,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "started": "2026-09-09T04:17:31.719Z",
+          "finished": "2026-09-09T04:17:31.768Z",
+          "mode": "cpu",
+          "variant": "candidate",
+          "kind": 0,
+          "degree": 3,
+          "order": 128,
+          "lifecycle": "fresh_curve",
+          "iterations": 2,
+          "elapsed_ns": 38068,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 0.23814114184888097,
+      "pairedMedianBootstrap95": [
+        0.22003657581805858,
+        0.23905342768587684
+      ],
+      "nsPerQuery": {
+        "baseline": 79865.45454545454,
+        "candidate": 19014.155844155845
+      }
+    },
+    {
+      "kind": 0,
+      "degree": 8,
+      "order": 0,
+      "lifecycle": "retained_curve",
+      "iterations": 3125,
+      "observations": 48,
+      "pilots": [
+        {
+          "started": "2026-09-09T04:17:34.218Z",
+          "finished": "2026-09-09T04:17:34.225Z",
+          "mode": "cpu",
+          "variant": "baseline",
+          "kind": 0,
+          "degree": 8,
+          "order": 0,
+          "lifecycle": "retained_curve",
+          "iterations": 2,
+          "elapsed_ns": 3820,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "started": "2026-09-09T04:17:34.225Z",
+          "finished": "2026-09-09T04:17:34.230Z",
+          "mode": "cpu",
+          "variant": "candidate",
+          "kind": 0,
+          "degree": 8,
+          "order": 0,
+          "lifecycle": "retained_curve",
+          "iterations": 2,
+          "elapsed_ns": 3840,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 0.9955270197906916,
+      "pairedMedianBootstrap95": [
+        0.9522400460131262,
+        1.0249040604799482
+      ],
+      "nsPerQuery": {
+        "baseline": 1108.31952,
+        "candidate": 1099.05136
+      }
+    },
+    {
+      "kind": 0,
+      "degree": 8,
+      "order": 0,
+      "lifecycle": "fresh_curve",
+      "iterations": 680,
+      "observations": 48,
+      "pilots": [
+        {
+          "started": "2026-09-09T04:17:34.630Z",
+          "finished": "2026-09-09T04:17:34.634Z",
+          "mode": "cpu",
+          "variant": "baseline",
+          "kind": 0,
+          "degree": 8,
+          "order": 0,
+          "lifecycle": "fresh_curve",
+          "iterations": 2,
+          "elapsed_ns": 17669,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "started": "2026-09-09T04:17:34.634Z",
+          "finished": "2026-09-09T04:17:34.638Z",
+          "mode": "cpu",
+          "variant": "candidate",
+          "kind": 0,
+          "degree": 8,
+          "order": 0,
+          "lifecycle": "fresh_curve",
+          "iterations": 2,
+          "elapsed_ns": 17609,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 0.982662324860093,
+      "pairedMedianBootstrap95": [
+        0.9210805234899362,
+        1.006492728398003
+      ],
+      "nsPerQuery": {
+        "baseline": 7382.04044117647,
+        "candidate": 7243.65294117647
+      }
+    },
+    {
+      "kind": 0,
+      "degree": 8,
+      "order": 1,
+      "lifecycle": "retained_curve",
+      "iterations": 2144,
+      "observations": 48,
+      "pilots": [
+        {
+          "started": "2026-09-09T04:17:35.108Z",
+          "finished": "2026-09-09T04:17:35.112Z",
+          "mode": "cpu",
+          "variant": "baseline",
+          "kind": 0,
+          "degree": 8,
+          "order": 1,
+          "lifecycle": "retained_curve",
+          "iterations": 2,
+          "elapsed_ns": 5599,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "started": "2026-09-09T04:17:35.112Z",
+          "finished": "2026-09-09T04:17:35.116Z",
+          "mode": "cpu",
+          "variant": "candidate",
+          "kind": 0,
+          "degree": 8,
+          "order": 1,
+          "lifecycle": "retained_curve",
+          "iterations": 2,
+          "elapsed_ns": 5080,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 0.960690883825525,
+      "pairedMedianBootstrap95": [
+        0.9257768541665304,
+        0.9715679034031885
+      ],
+      "nsPerQuery": {
+        "baseline": 2498.8873600746265,
+        "candidate": 2395.8113339552237
+      }
+    },
+    {
+      "kind": 0,
+      "degree": 8,
+      "order": 1,
+      "lifecycle": "fresh_curve",
+      "iterations": 478,
+      "observations": 48,
+      "pilots": [
+        {
+          "started": "2026-09-09T04:17:35.579Z",
+          "finished": "2026-09-09T04:17:35.583Z",
+          "mode": "cpu",
+          "variant": "baseline",
+          "kind": 0,
+          "degree": 8,
+          "order": 1,
+          "lifecycle": "fresh_curve",
+          "iterations": 2,
+          "elapsed_ns": 25138,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "started": "2026-09-09T04:17:35.583Z",
+          "finished": "2026-09-09T04:17:35.588Z",
+          "mode": "cpu",
+          "variant": "candidate",
+          "kind": 0,
+          "degree": 8,
+          "order": 1,
+          "lifecycle": "fresh_curve",
+          "iterations": 2,
+          "elapsed_ns": 20399,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 0.9904220675760484,
+      "pairedMedianBootstrap95": [
+        0.923844615640642,
+        1.0110244420809205
+      ],
+      "nsPerQuery": {
+        "baseline": 10216.425732217573,
+        "candidate": 10207.723849372385
+      }
+    },
+    {
+      "kind": 0,
+      "degree": 8,
+      "order": 3,
+      "lifecycle": "retained_curve",
+      "iterations": 886,
+      "observations": 48,
+      "pilots": [
+        {
+          "started": "2026-09-09T04:17:36.052Z",
+          "finished": "2026-09-09T04:17:36.057Z",
+          "mode": "cpu",
+          "variant": "baseline",
+          "kind": 0,
+          "degree": 8,
+          "order": 3,
+          "lifecycle": "retained_curve",
+          "iterations": 2,
+          "elapsed_ns": 13559,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "started": "2026-09-09T04:17:36.057Z",
+          "finished": "2026-09-09T04:17:36.061Z",
+          "mode": "cpu",
+          "variant": "candidate",
+          "kind": 0,
+          "degree": 8,
+          "order": 3,
+          "lifecycle": "retained_curve",
+          "iterations": 2,
+          "elapsed_ns": 10609,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 0.8990001266863037,
+      "pairedMedianBootstrap95": [
+        0.8736730652026706,
+        0.9494845872929933
+      ],
+      "nsPerQuery": {
+        "baseline": 5517.738148984199,
+        "candidate": 4963.899548532731
+      }
+    },
+    {
+      "kind": 0,
+      "degree": 8,
+      "order": 3,
+      "lifecycle": "fresh_curve",
+      "iterations": 225,
+      "observations": 48,
+      "pilots": [
+        {
+          "started": "2026-09-09T04:17:36.552Z",
+          "finished": "2026-09-09T04:17:36.558Z",
+          "mode": "cpu",
+          "variant": "baseline",
+          "kind": 0,
+          "degree": 8,
+          "order": 3,
+          "lifecycle": "fresh_curve",
+          "iterations": 2,
+          "elapsed_ns": 53467,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "started": "2026-09-09T04:17:36.558Z",
+          "finished": "2026-09-09T04:17:36.564Z",
+          "mode": "cpu",
+          "variant": "candidate",
+          "kind": 0,
+          "degree": 8,
+          "order": 3,
+          "lifecycle": "fresh_curve",
+          "iterations": 2,
+          "elapsed_ns": 46116,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 0.9650633011725541,
+      "pairedMedianBootstrap95": [
+        0.9562107334162898,
+        1.0235660505617359
+      ],
+      "nsPerQuery": {
+        "baseline": 16323.464444444444,
+        "candidate": 15582.246666666666
+      }
+    },
+    {
+      "kind": 0,
+      "degree": 8,
+      "order": 24,
+      "lifecycle": "retained_curve",
+      "iterations": 213,
+      "observations": 48,
+      "pilots": [
+        {
+          "started": "2026-09-09T04:17:36.991Z",
+          "finished": "2026-09-09T04:17:36.996Z",
+          "mode": "cpu",
+          "variant": "baseline",
+          "kind": 0,
+          "degree": 8,
+          "order": 24,
+          "lifecycle": "retained_curve",
+          "iterations": 2,
+          "elapsed_ns": 56376,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "started": "2026-09-09T04:17:36.997Z",
+          "finished": "2026-09-09T04:17:37.002Z",
+          "mode": "cpu",
+          "variant": "candidate",
+          "kind": 0,
+          "degree": 8,
+          "order": 24,
+          "lifecycle": "retained_curve",
+          "iterations": 2,
+          "elapsed_ns": 20198,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 0.37262293777025446,
+      "pairedMedianBootstrap95": [
+        0.35600003254328483,
+        0.3902281539549425
+      ],
+      "nsPerQuery": {
+        "baseline": 27060.291079812207,
+        "candidate": 10258.643192488264
+      }
+    },
+    {
+      "kind": 0,
+      "degree": 8,
+      "order": 24,
+      "lifecycle": "fresh_curve",
+      "iterations": 79,
+      "observations": 48,
+      "pilots": [
+        {
+          "started": "2026-09-09T04:17:37.474Z",
+          "finished": "2026-09-09T04:17:37.481Z",
+          "mode": "cpu",
+          "variant": "baseline",
+          "kind": 0,
+          "degree": 8,
+          "order": 24,
+          "lifecycle": "fresh_curve",
+          "iterations": 2,
+          "elapsed_ns": 152139,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "started": "2026-09-09T04:17:37.481Z",
+          "finished": "2026-09-09T04:17:37.486Z",
+          "mode": "cpu",
+          "variant": "candidate",
+          "kind": 0,
+          "degree": 8,
+          "order": 24,
+          "lifecycle": "fresh_curve",
+          "iterations": 2,
+          "elapsed_ns": 45037,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 0.5716431686753523,
+      "pairedMedianBootstrap95": [
+        0.5559293685579828,
+        0.5792772001740356
+      ],
+      "nsPerQuery": {
+        "baseline": 39271.620253164554,
+        "candidate": 22308.09493670886
+      }
+    },
+    {
+      "kind": 0,
+      "degree": 8,
+      "order": 128,
+      "lifecycle": "retained_curve",
+      "iterations": 40,
+      "observations": 48,
+      "pilots": [
+        {
+          "started": "2026-09-09T04:17:37.876Z",
+          "finished": "2026-09-09T04:17:37.923Z",
+          "mode": "cpu",
+          "variant": "baseline",
+          "kind": 0,
+          "degree": 8,
+          "order": 128,
+          "lifecycle": "retained_curve",
+          "iterations": 2,
+          "elapsed_ns": 300849,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "started": "2026-09-09T04:17:37.923Z",
+          "finished": "2026-09-09T04:17:37.969Z",
+          "mode": "cpu",
+          "variant": "candidate",
+          "kind": 0,
+          "degree": 8,
+          "order": 128,
+          "lifecycle": "retained_curve",
+          "iterations": 2,
+          "elapsed_ns": 45507,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 0.1465421834411432,
+      "pairedMedianBootstrap95": [
+        0.14480812224872888,
+        0.1472496023095829
+      ],
+      "nsPerQuery": {
+        "baseline": 155316.66249999998,
+        "candidate": 22622.725
+      }
+    },
+    {
+      "kind": 0,
+      "degree": 8,
+      "order": 128,
+      "lifecycle": "fresh_curve",
+      "iterations": 36,
+      "observations": 48,
+      "pilots": [
+        {
+          "started": "2026-09-09T04:17:40.471Z",
+          "finished": "2026-09-09T04:17:40.530Z",
+          "mode": "cpu",
+          "variant": "baseline",
+          "kind": 0,
+          "degree": 8,
+          "order": 128,
+          "lifecycle": "fresh_curve",
+          "iterations": 2,
+          "elapsed_ns": 334737,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "started": "2026-09-09T04:17:40.530Z",
+          "finished": "2026-09-09T04:17:40.586Z",
+          "mode": "cpu",
+          "variant": "candidate",
+          "kind": 0,
+          "degree": 8,
+          "order": 128,
+          "lifecycle": "fresh_curve",
+          "iterations": 2,
+          "elapsed_ns": 126532,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 0.2095894062597199,
+      "pairedMedianBootstrap95": [
+        0.20770087665351572,
+        0.21408160169483834
+      ],
+      "nsPerQuery": {
+        "baseline": 169165.81944444444,
+        "candidate": 34891.083333333336
+      }
+    },
+    {
+      "kind": 0,
+      "degree": 24,
+      "order": 0,
+      "lifecycle": "retained_curve",
+      "iterations": 2080,
+      "observations": 48,
+      "pilots": [
+        {
+          "started": "2026-09-09T04:17:43.050Z",
+          "finished": "2026-09-09T04:17:43.056Z",
+          "mode": "cpu",
+          "variant": "baseline",
+          "kind": 0,
+          "degree": 24,
+          "order": 0,
+          "lifecycle": "retained_curve",
+          "iterations": 2,
+          "elapsed_ns": 5770,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "started": "2026-09-09T04:17:43.056Z",
+          "finished": "2026-09-09T04:17:43.063Z",
+          "mode": "cpu",
+          "variant": "candidate",
+          "kind": 0,
+          "degree": 24,
+          "order": 0,
+          "lifecycle": "retained_curve",
+          "iterations": 2,
+          "elapsed_ns": 5680,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 0.9295337073145441,
+      "pairedMedianBootstrap95": [
+        0.9084448386352657,
+        0.9383704572402691
+      ],
+      "nsPerQuery": {
+        "baseline": 2926.3365384615386,
+        "candidate": 2785.634134615385
+      }
+    },
+    {
+      "kind": 0,
+      "degree": 24,
+      "order": 0,
+      "lifecycle": "fresh_curve",
+      "iterations": 102,
+      "observations": 48,
+      "pilots": [
+        {
+          "started": "2026-09-09T04:17:43.661Z",
+          "finished": "2026-09-09T04:17:43.669Z",
+          "mode": "cpu",
+          "variant": "baseline",
+          "kind": 0,
+          "degree": 24,
+          "order": 0,
+          "lifecycle": "fresh_curve",
+          "iterations": 2,
+          "elapsed_ns": 117872,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "started": "2026-09-09T04:17:43.669Z",
+          "finished": "2026-09-09T04:17:43.676Z",
+          "mode": "cpu",
+          "variant": "candidate",
+          "kind": 0,
+          "degree": 24,
+          "order": 0,
+          "lifecycle": "fresh_curve",
+          "iterations": 2,
+          "elapsed_ns": 118451,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 0.9941811950643531,
+      "pairedMedianBootstrap95": [
+        0.9792409214997425,
+        1.0152726510451233
+      ],
+      "nsPerQuery": {
+        "baseline": 40094.078431372545,
+        "candidate": 39996.44117647059
+      }
+    },
+    {
+      "kind": 0,
+      "degree": 24,
+      "order": 1,
+      "lifecycle": "retained_curve",
+      "iterations": 637,
+      "observations": 48,
+      "pilots": [
+        {
+          "started": "2026-09-09T04:17:44.212Z",
+          "finished": "2026-09-09T04:17:44.218Z",
+          "mode": "cpu",
+          "variant": "baseline",
+          "kind": 0,
+          "degree": 24,
+          "order": 1,
+          "lifecycle": "retained_curve",
+          "iterations": 2,
+          "elapsed_ns": 17199,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "started": "2026-09-09T04:17:44.218Z",
+          "finished": "2026-09-09T04:17:44.225Z",
+          "mode": "cpu",
+          "variant": "candidate",
+          "kind": 0,
+          "degree": 24,
+          "order": 1,
+          "lifecycle": "retained_curve",
+          "iterations": 2,
+          "elapsed_ns": 18849,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 0.9917393348114875,
+      "pairedMedianBootstrap95": [
+        0.9600566254779387,
+        1.0479455826989739
+      ],
+      "nsPerQuery": {
+        "baseline": 6547.1514913657775,
+        "candidate": 6471.237833594976
+      }
+    },
+    {
+      "kind": 0,
+      "degree": 24,
+      "order": 1,
+      "lifecycle": "fresh_curve",
+      "iterations": 72,
+      "observations": 48,
+      "pilots": [
+        {
+          "started": "2026-09-09T04:17:44.750Z",
+          "finished": "2026-09-09T04:17:44.757Z",
+          "mode": "cpu",
+          "variant": "baseline",
+          "kind": 0,
+          "degree": 24,
+          "order": 1,
+          "lifecycle": "fresh_curve",
+          "iterations": 2,
+          "elapsed_ns": 167749,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "started": "2026-09-09T04:17:44.757Z",
+          "finished": "2026-09-09T04:17:44.764Z",
+          "mode": "cpu",
+          "variant": "candidate",
+          "kind": 0,
+          "degree": 24,
+          "order": 1,
+          "lifecycle": "fresh_curve",
+          "iterations": 2,
+          "elapsed_ns": 144780,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 0.9771820159585897,
+      "pairedMedianBootstrap95": [
+        0.9519408589023397,
+        1.0819150542924258
+      ],
+      "nsPerQuery": {
+        "baseline": 58526.41666666667,
+        "candidate": 57293.44444444444
+      }
+    },
+    {
+      "kind": 0,
+      "degree": 24,
+      "order": 3,
+      "lifecycle": "retained_curve",
+      "iterations": 274,
+      "observations": 48,
+      "pilots": [
+        {
+          "started": "2026-09-09T04:17:45.327Z",
+          "finished": "2026-09-09T04:17:45.336Z",
+          "mode": "cpu",
+          "variant": "baseline",
+          "kind": 0,
+          "degree": 24,
+          "order": 3,
+          "lifecycle": "retained_curve",
+          "iterations": 2,
+          "elapsed_ns": 43907,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "started": "2026-09-09T04:17:45.336Z",
+          "finished": "2026-09-09T04:17:45.343Z",
+          "mode": "cpu",
+          "variant": "candidate",
+          "kind": 0,
+          "degree": 24,
+          "order": 3,
+          "lifecycle": "retained_curve",
+          "iterations": 2,
+          "elapsed_ns": 28569,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 0.8386931276107772,
+      "pairedMedianBootstrap95": [
+        0.7704291430696067,
+        1.0937599451727327
+      ],
+      "nsPerQuery": {
+        "baseline": 17156.547445255477,
+        "candidate": 15802.240875912408
+      }
+    },
+    {
+      "kind": 0,
+      "degree": 24,
+      "order": 3,
+      "lifecycle": "fresh_curve",
+      "iterations": 49,
+      "observations": 48,
+      "pilots": [
+        {
+          "started": "2026-09-09T04:17:45.971Z",
+          "finished": "2026-09-09T04:17:45.980Z",
+          "mode": "cpu",
+          "variant": "baseline",
+          "kind": 0,
+          "degree": 24,
+          "order": 3,
+          "lifecycle": "fresh_curve",
+          "iterations": 2,
+          "elapsed_ns": 247363,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "started": "2026-09-09T04:17:45.980Z",
+          "finished": "2026-09-09T04:17:45.989Z",
+          "mode": "cpu",
+          "variant": "candidate",
+          "kind": 0,
+          "degree": 24,
+          "order": 3,
+          "lifecycle": "fresh_curve",
+          "iterations": 2,
+          "elapsed_ns": 249033,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 1.0036782070659664,
+      "pairedMedianBootstrap95": [
+        0.9667514619945752,
+        1.0940660667290434
+      ],
+      "nsPerQuery": {
+        "baseline": 104303.89795918367,
+        "candidate": 107527.55102040817
+      }
+    },
+    {
+      "kind": 0,
+      "degree": 24,
+      "order": 24,
+      "lifecycle": "retained_curve",
+      "iterations": 45,
+      "observations": 48,
+      "pilots": [
+        {
+          "started": "2026-09-09T04:17:46.663Z",
+          "finished": "2026-09-09T04:17:46.676Z",
+          "mode": "cpu",
+          "variant": "baseline",
+          "kind": 0,
+          "degree": 24,
+          "order": 24,
+          "lifecycle": "retained_curve",
+          "iterations": 2,
+          "elapsed_ns": 270122,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "started": "2026-09-09T04:17:46.676Z",
+          "finished": "2026-09-09T04:17:46.688Z",
+          "mode": "cpu",
+          "variant": "candidate",
+          "kind": 0,
+          "degree": 24,
+          "order": 24,
+          "lifecycle": "retained_curve",
+          "iterations": 2,
+          "elapsed_ns": 209026,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 0.692274976754325,
+      "pairedMedianBootstrap95": [
+        0.5307329190800429,
+        0.7272092163875541
+      ],
+      "nsPerQuery": {
+        "baseline": 94742.08888888889,
+        "candidate": 63924.63333333333
+      }
+    },
+    {
+      "kind": 0,
+      "degree": 24,
+      "order": 24,
+      "lifecycle": "fresh_curve",
+      "iterations": 17,
+      "observations": 48,
+      "pilots": [
+        {
+          "started": "2026-09-09T04:17:47.562Z",
+          "finished": "2026-09-09T04:17:47.577Z",
+          "mode": "cpu",
+          "variant": "baseline",
+          "kind": 0,
+          "degree": 24,
+          "order": 24,
+          "lifecycle": "fresh_curve",
+          "iterations": 2,
+          "elapsed_ns": 713351,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "started": "2026-09-09T04:17:47.577Z",
+          "finished": "2026-09-09T04:17:47.591Z",
+          "mode": "cpu",
+          "variant": "candidate",
+          "kind": 0,
+          "degree": 24,
+          "order": 24,
+          "lifecycle": "fresh_curve",
+          "iterations": 2,
+          "elapsed_ns": 659755,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 0.9008781570926154,
+      "pairedMedianBootstrap95": [
+        0.8787564416628804,
+        0.9187915727524412
+      ],
+      "nsPerQuery": {
+        "baseline": 339888.85294117645,
+        "candidate": 305295.0294117647
+      }
+    },
+    {
+      "kind": 0,
+      "degree": 24,
+      "order": 128,
+      "lifecycle": "retained_curve",
+      "iterations": 8,
+      "observations": 48,
+      "pilots": [
+        {
+          "started": "2026-09-09T04:17:48.510Z",
+          "finished": "2026-09-09T04:17:48.574Z",
+          "mode": "cpu",
+          "variant": "baseline",
+          "kind": 0,
+          "degree": 24,
+          "order": 128,
+          "lifecycle": "retained_curve",
+          "iterations": 2,
+          "elapsed_ns": 1696295,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "started": "2026-09-09T04:17:48.574Z",
+          "finished": "2026-09-09T04:17:48.637Z",
+          "mode": "cpu",
+          "variant": "candidate",
+          "kind": 0,
+          "degree": 24,
+          "order": 128,
+          "lifecycle": "retained_curve",
+          "iterations": 2,
+          "elapsed_ns": 233745,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 0.2004180652935147,
+      "pairedMedianBootstrap95": [
+        0.19102848645401987,
+        0.2079093597861382
+      ],
+      "nsPerQuery": {
+        "baseline": 446398.9375,
+        "candidate": 88829.5625
+      }
+    },
+    {
+      "kind": 0,
+      "degree": 24,
+      "order": 128,
+      "lifecycle": "fresh_curve",
+      "iterations": 9,
+      "observations": 48,
+      "pilots": [
+        {
+          "started": "2026-09-09T04:17:51.507Z",
+          "finished": "2026-09-09T04:17:51.570Z",
+          "mode": "cpu",
+          "variant": "baseline",
+          "kind": 0,
+          "degree": 24,
+          "order": 128,
+          "lifecycle": "fresh_curve",
+          "iterations": 2,
+          "elapsed_ns": 1379836,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "started": "2026-09-09T04:17:51.570Z",
+          "finished": "2026-09-09T04:17:51.627Z",
+          "mode": "cpu",
+          "variant": "candidate",
+          "kind": 0,
+          "degree": 24,
+          "order": 128,
+          "lifecycle": "fresh_curve",
+          "iterations": 2,
+          "elapsed_ns": 682263,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 0.4849855370349077,
+      "pairedMedianBootstrap95": [
+        0.4758632164692771,
+        0.5251168908628983
+      ],
+      "nsPerQuery": {
+        "baseline": 686985.3888888889,
+        "candidate": 331777.8888888889
+      }
+    },
+    {
+      "kind": 1,
+      "degree": 1,
+      "order": 0,
+      "lifecycle": "retained_curve",
+      "iterations": 5000,
+      "observations": 48,
+      "pilots": [
+        {
+          "started": "2026-09-09T04:17:54.676Z",
+          "finished": "2026-09-09T04:17:54.681Z",
+          "mode": "cpu",
+          "variant": "baseline",
+          "kind": 1,
+          "degree": 1,
+          "order": 0,
+          "lifecycle": "retained_curve",
+          "iterations": 2,
+          "elapsed_ns": 1940,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "started": "2026-09-09T04:17:54.681Z",
+          "finished": "2026-09-09T04:17:54.685Z",
+          "mode": "cpu",
+          "variant": "candidate",
+          "kind": 1,
+          "degree": 1,
+          "order": 0,
+          "lifecycle": "retained_curve",
+          "iterations": 2,
+          "elapsed_ns": 1970,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 1.0420471548695274,
+      "pairedMedianBootstrap95": [
+        1.0166158755982933,
+        1.2226951436153115
+      ],
+      "nsPerQuery": {
+        "baseline": 676.0488,
+        "candidate": 718.8059000000001
+      }
+    },
+    {
+      "kind": 1,
+      "degree": 1,
+      "order": 0,
+      "lifecycle": "fresh_curve",
+      "iterations": 2811,
+      "observations": 48,
+      "pilots": [
+        {
+          "started": "2026-09-09T04:17:55.068Z",
+          "finished": "2026-09-09T04:17:55.072Z",
+          "mode": "cpu",
+          "variant": "baseline",
+          "kind": 1,
+          "degree": 1,
+          "order": 0,
+          "lifecycle": "fresh_curve",
+          "iterations": 2,
+          "elapsed_ns": 4269,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "started": "2026-09-09T04:17:55.072Z",
+          "finished": "2026-09-09T04:17:55.076Z",
+          "mode": "cpu",
+          "variant": "candidate",
+          "kind": 1,
+          "degree": 1,
+          "order": 0,
+          "lifecycle": "fresh_curve",
+          "iterations": 2,
+          "elapsed_ns": 3760,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 0.9785946034332642,
+      "pairedMedianBootstrap95": [
+        0.9152902410348214,
+        1.0224372941566733
+      ],
+      "nsPerQuery": {
+        "baseline": 1607.319992885094,
+        "candidate": 1654.9831020988972
+      }
+    },
+    {
+      "kind": 1,
+      "degree": 1,
+      "order": 1,
+      "lifecycle": "retained_curve",
+      "iterations": 2480,
+      "observations": 48,
+      "pilots": [
+        {
+          "started": "2026-09-09T04:17:55.512Z",
+          "finished": "2026-09-09T04:17:55.517Z",
+          "mode": "cpu",
+          "variant": "baseline",
+          "kind": 1,
+          "degree": 1,
+          "order": 1,
+          "lifecycle": "retained_curve",
+          "iterations": 2,
+          "elapsed_ns": 4839,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "started": "2026-09-09T04:17:55.517Z",
+          "finished": "2026-09-09T04:17:55.521Z",
+          "mode": "cpu",
+          "variant": "candidate",
+          "kind": 1,
+          "degree": 1,
+          "order": 1,
+          "lifecycle": "retained_curve",
+          "iterations": 2,
+          "elapsed_ns": 4050,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 0.9460723726031082,
+      "pairedMedianBootstrap95": [
+        0.9206740586440567,
+        0.9737032208921924
+      ],
+      "nsPerQuery": {
+        "baseline": 1767.5364919354838,
+        "candidate": 1650.5445564516128
+      }
+    },
+    {
+      "kind": 1,
+      "degree": 1,
+      "order": 1,
+      "lifecycle": "fresh_curve",
+      "iterations": 963,
+      "observations": 48,
+      "pilots": [
+        {
+          "started": "2026-09-09T04:17:55.941Z",
+          "finished": "2026-09-09T04:17:55.945Z",
+          "mode": "cpu",
+          "variant": "baseline",
+          "kind": 1,
+          "degree": 1,
+          "order": 1,
+          "lifecycle": "fresh_curve",
+          "iterations": 2,
+          "elapsed_ns": 6000,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "started": "2026-09-09T04:17:55.945Z",
+          "finished": "2026-09-09T04:17:55.950Z",
+          "mode": "cpu",
+          "variant": "candidate",
+          "kind": 1,
+          "degree": 1,
+          "order": 1,
+          "lifecycle": "fresh_curve",
+          "iterations": 2,
+          "elapsed_ns": 12469,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 0.9640702804784884,
+      "pairedMedianBootstrap95": [
+        0.8799216152665654,
+        1.12351922378847
+      ],
+      "nsPerQuery": {
+        "baseline": 2748.654205607477,
+        "candidate": 2624.0160955347874
+      }
+    },
+    {
+      "kind": 1,
+      "degree": 1,
+      "order": 3,
+      "lifecycle": "retained_curve",
+      "iterations": 1094,
+      "observations": 48,
+      "pilots": [
+        {
+          "started": "2026-09-09T04:17:56.294Z",
+          "finished": "2026-09-09T04:17:56.298Z",
+          "mode": "cpu",
+          "variant": "baseline",
+          "kind": 1,
+          "degree": 1,
+          "order": 3,
+          "lifecycle": "retained_curve",
+          "iterations": 2,
+          "elapsed_ns": 10970,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "started": "2026-09-09T04:17:56.298Z",
+          "finished": "2026-09-09T04:17:56.302Z",
+          "mode": "cpu",
+          "variant": "candidate",
+          "kind": 1,
+          "degree": 1,
+          "order": 3,
+          "lifecycle": "retained_curve",
+          "iterations": 2,
+          "elapsed_ns": 9749,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 0.8436577380720509,
+      "pairedMedianBootstrap95": [
+        0.8199289633795246,
+        0.8661776658197032
+      ],
+      "nsPerQuery": {
+        "baseline": 4140.0196526508225,
+        "candidate": 3511.2454296160877
+      }
+    },
+    {
+      "kind": 1,
+      "degree": 1,
+      "order": 3,
+      "lifecycle": "fresh_curve",
+      "iterations": 870,
+      "observations": 48,
+      "pilots": [
+        {
+          "started": "2026-09-09T04:17:56.721Z",
+          "finished": "2026-09-09T04:17:56.725Z",
+          "mode": "cpu",
+          "variant": "baseline",
+          "kind": 1,
+          "degree": 1,
+          "order": 3,
+          "lifecycle": "fresh_curve",
+          "iterations": 2,
+          "elapsed_ns": 13799,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "started": "2026-09-09T04:17:56.725Z",
+          "finished": "2026-09-09T04:17:56.729Z",
+          "mode": "cpu",
+          "variant": "candidate",
+          "kind": 1,
+          "degree": 1,
+          "order": 3,
+          "lifecycle": "fresh_curve",
+          "iterations": 2,
+          "elapsed_ns": 13309,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 0.848674087869296,
+      "pairedMedianBootstrap95": [
+        0.8329359487011336,
+        0.8617444677566694
+      ],
+      "nsPerQuery": {
+        "baseline": 5276.030459770115,
+        "candidate": 4527.409195402299
+      }
+    },
+    {
+      "kind": 1,
+      "degree": 1,
+      "order": 24,
+      "lifecycle": "retained_curve",
+      "iterations": 85,
+      "observations": 48,
+      "pilots": [
+        {
+          "started": "2026-09-09T04:17:57.144Z",
+          "finished": "2026-09-09T04:17:57.151Z",
+          "mode": "cpu",
+          "variant": "baseline",
+          "kind": 1,
+          "degree": 1,
+          "order": 24,
+          "lifecycle": "retained_curve",
+          "iterations": 2,
+          "elapsed_ns": 125561,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "started": "2026-09-09T04:17:57.151Z",
+          "finished": "2026-09-09T04:17:57.157Z",
+          "mode": "cpu",
+          "variant": "candidate",
+          "kind": 1,
+          "degree": 1,
+          "order": 24,
+          "lifecycle": "retained_curve",
+          "iterations": 2,
+          "elapsed_ns": 141291,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 0.8887103416433203,
+      "pairedMedianBootstrap95": [
+        0.8772415159832712,
+        0.9065029493115906
+      ],
+      "nsPerQuery": {
+        "baseline": 47066.611764705885,
+        "candidate": 41840.376470588235
+      }
+    },
+    {
+      "kind": 1,
+      "degree": 1,
+      "order": 24,
+      "lifecycle": "fresh_curve",
+      "iterations": 86,
+      "observations": 48,
+      "pilots": [
+        {
+          "started": "2026-09-09T04:17:57.645Z",
+          "finished": "2026-09-09T04:17:57.651Z",
+          "mode": "cpu",
+          "variant": "baseline",
+          "kind": 1,
+          "degree": 1,
+          "order": 24,
+          "lifecycle": "fresh_curve",
+          "iterations": 2,
+          "elapsed_ns": 122482,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "started": "2026-09-09T04:17:57.651Z",
+          "finished": "2026-09-09T04:17:57.657Z",
+          "mode": "cpu",
+          "variant": "candidate",
+          "kind": 1,
+          "degree": 1,
+          "order": 24,
+          "lifecycle": "fresh_curve",
+          "iterations": 2,
+          "elapsed_ns": 141170,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 0.8880318031497725,
+      "pairedMedianBootstrap95": [
+        0.8673001290931408,
+        0.9170020983897451
+      ],
+      "nsPerQuery": {
+        "baseline": 48656.91279069768,
+        "candidate": 43630.56395348837
+      }
+    },
+    {
+      "kind": 1,
+      "degree": 1,
+      "order": 128,
+      "lifecycle": "retained_curve",
+      "iterations": 17,
+      "observations": 48,
+      "pilots": [
+        {
+          "started": "2026-09-09T04:17:58.140Z",
+          "finished": "2026-09-09T04:17:58.295Z",
+          "mode": "cpu",
+          "variant": "baseline",
+          "kind": 1,
+          "degree": 1,
+          "order": 128,
+          "lifecycle": "retained_curve",
+          "iterations": 2,
+          "elapsed_ns": 743779,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "started": "2026-09-09T04:17:58.295Z",
+          "finished": "2026-09-09T04:17:58.450Z",
+          "mode": "cpu",
+          "variant": "candidate",
+          "kind": 1,
+          "degree": 1,
+          "order": 128,
+          "lifecycle": "retained_curve",
+          "iterations": 2,
+          "elapsed_ns": 676384,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 0.924230948610915,
+      "pairedMedianBootstrap95": [
+        0.9163596004254759,
+        0.9316665534933034
+      ],
+      "nsPerQuery": {
+        "baseline": 355200.1764705882,
+        "candidate": 326060.9705882353
+      }
+    },
+    {
+      "kind": 1,
+      "degree": 1,
+      "order": 128,
+      "lifecycle": "fresh_curve",
+      "iterations": 17,
+      "observations": 48,
+      "pilots": [
+        {
+          "started": "2026-09-09T04:18:06.137Z",
+          "finished": "2026-09-09T04:18:06.290Z",
+          "mode": "cpu",
+          "variant": "baseline",
+          "kind": 1,
+          "degree": 1,
+          "order": 128,
+          "lifecycle": "fresh_curve",
+          "iterations": 2,
+          "elapsed_ns": 711372,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "started": "2026-09-09T04:18:06.290Z",
+          "finished": "2026-09-09T04:18:06.440Z",
+          "mode": "cpu",
+          "variant": "candidate",
+          "kind": 1,
+          "degree": 1,
+          "order": 128,
+          "lifecycle": "fresh_curve",
+          "iterations": 2,
+          "elapsed_ns": 672304,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 0.9239967934485067,
+      "pairedMedianBootstrap95": [
+        0.9215245160403743,
+        0.9367165110693535
+      ],
+      "nsPerQuery": {
+        "baseline": 361295.0588235294,
+        "candidate": 332171.1176470588
+      }
+    },
+    {
+      "kind": 1,
+      "degree": 3,
+      "order": 0,
+      "lifecycle": "retained_curve",
+      "iterations": 3961,
+      "observations": 48,
+      "pilots": [
+        {
+          "started": "2026-09-09T04:18:14.056Z",
+          "finished": "2026-09-09T04:18:14.061Z",
+          "mode": "cpu",
+          "variant": "baseline",
+          "kind": 1,
+          "degree": 3,
+          "order": 0,
+          "lifecycle": "retained_curve",
+          "iterations": 2,
+          "elapsed_ns": 2560,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "started": "2026-09-09T04:18:14.061Z",
+          "finished": "2026-09-09T04:18:14.065Z",
+          "mode": "cpu",
+          "variant": "candidate",
+          "kind": 1,
+          "degree": 3,
+          "order": 0,
+          "lifecycle": "retained_curve",
+          "iterations": 2,
+          "elapsed_ns": 3030,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 1.0096059057663702,
+      "pairedMedianBootstrap95": [
+        0.9545756091333738,
+        1.115383626387234
+      ],
+      "nsPerQuery": {
+        "baseline": 1101.2970209543046,
+        "candidate": 1079.6635950517546
+      }
+    },
+    {
+      "kind": 1,
+      "degree": 3,
+      "order": 0,
+      "lifecycle": "fresh_curve",
+      "iterations": 780,
+      "observations": 48,
+      "pilots": [
+        {
+          "started": "2026-09-09T04:18:14.516Z",
+          "finished": "2026-09-09T04:18:14.521Z",
+          "mode": "cpu",
+          "variant": "baseline",
+          "kind": 1,
+          "degree": 3,
+          "order": 0,
+          "lifecycle": "fresh_curve",
+          "iterations": 2,
+          "elapsed_ns": 8199,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "started": "2026-09-09T04:18:14.521Z",
+          "finished": "2026-09-09T04:18:14.525Z",
+          "mode": "cpu",
+          "variant": "candidate",
+          "kind": 1,
+          "degree": 3,
+          "order": 0,
+          "lifecycle": "fresh_curve",
+          "iterations": 2,
+          "elapsed_ns": 15389,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 0.9909398564079818,
+      "pairedMedianBootstrap95": [
+        0.911368408620897,
+        1.0939109362956334
+      ],
+      "nsPerQuery": {
+        "baseline": 3212.04358974359,
+        "candidate": 3024.075641025641
+      }
+    },
+    {
+      "kind": 1,
+      "degree": 3,
+      "order": 1,
+      "lifecycle": "retained_curve",
+      "iterations": 1427,
+      "observations": 48,
+      "pilots": [
+        {
+          "started": "2026-09-09T04:18:14.867Z",
+          "finished": "2026-09-09T04:18:14.871Z",
+          "mode": "cpu",
+          "variant": "baseline",
+          "kind": 1,
+          "degree": 3,
+          "order": 1,
+          "lifecycle": "retained_curve",
+          "iterations": 2,
+          "elapsed_ns": 8380,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "started": "2026-09-09T04:18:14.871Z",
+          "finished": "2026-09-09T04:18:14.876Z",
+          "mode": "cpu",
+          "variant": "candidate",
+          "kind": 1,
+          "degree": 3,
+          "order": 1,
+          "lifecycle": "retained_curve",
+          "iterations": 2,
+          "elapsed_ns": 8410,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 0.981222456333704,
+      "pairedMedianBootstrap95": [
+        0.9288724187430448,
+        1.09451480623932
+      ],
+      "nsPerQuery": {
+        "baseline": 3098.9649614576033,
+        "candidate": 3043.590399439383
+      }
+    },
+    {
+      "kind": 1,
+      "degree": 3,
+      "order": 1,
+      "lifecycle": "fresh_curve",
+      "iterations": 893,
+      "observations": 48,
+      "pilots": [
+        {
+          "started": "2026-09-09T04:18:15.312Z",
+          "finished": "2026-09-09T04:18:15.316Z",
+          "mode": "cpu",
+          "variant": "baseline",
+          "kind": 1,
+          "degree": 3,
+          "order": 1,
+          "lifecycle": "fresh_curve",
+          "iterations": 2,
+          "elapsed_ns": 13309,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "started": "2026-09-09T04:18:15.316Z",
+          "finished": "2026-09-09T04:18:15.320Z",
+          "mode": "cpu",
+          "variant": "candidate",
+          "kind": 1,
+          "degree": 3,
+          "order": 1,
+          "lifecycle": "fresh_curve",
+          "iterations": 2,
+          "elapsed_ns": 13449,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 0.9211752169785907,
+      "pairedMedianBootstrap95": [
+        0.8664743866283521,
+        1.0149815289057034
+      ],
+      "nsPerQuery": {
+        "baseline": 5402.996080627099,
+        "candidate": 5025.183090705487
+      }
+    },
+    {
+      "kind": 1,
+      "degree": 3,
+      "order": 3,
+      "lifecycle": "retained_curve",
+      "iterations": 689,
+      "observations": 48,
+      "pilots": [
+        {
+          "started": "2026-09-09T04:18:15.771Z",
+          "finished": "2026-09-09T04:18:15.775Z",
+          "mode": "cpu",
+          "variant": "baseline",
+          "kind": 1,
+          "degree": 3,
+          "order": 3,
+          "lifecycle": "retained_curve",
+          "iterations": 2,
+          "elapsed_ns": 17419,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "started": "2026-09-09T04:18:15.775Z",
+          "finished": "2026-09-09T04:18:15.779Z",
+          "mode": "cpu",
+          "variant": "candidate",
+          "kind": 1,
+          "degree": 3,
+          "order": 3,
+          "lifecycle": "retained_curve",
+          "iterations": 2,
+          "elapsed_ns": 13349,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 0.9006866446130879,
+      "pairedMedianBootstrap95": [
+        0.825066451712592,
+        0.9310371754327484
+      ],
+      "nsPerQuery": {
+        "baseline": 6976.432510885341,
+        "candidate": 6277.815674891146
+      }
+    },
+    {
+      "kind": 1,
+      "degree": 3,
+      "order": 3,
+      "lifecycle": "fresh_curve",
+      "iterations": 481,
+      "observations": 48,
+      "pilots": [
+        {
+          "started": "2026-09-09T04:18:16.231Z",
+          "finished": "2026-09-09T04:18:16.235Z",
+          "mode": "cpu",
+          "variant": "baseline",
+          "kind": 1,
+          "degree": 3,
+          "order": 3,
+          "lifecycle": "fresh_curve",
+          "iterations": 2,
+          "elapsed_ns": 18599,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "started": "2026-09-09T04:18:16.235Z",
+          "finished": "2026-09-09T04:18:16.240Z",
+          "mode": "cpu",
+          "variant": "candidate",
+          "kind": 1,
+          "degree": 3,
+          "order": 3,
+          "lifecycle": "fresh_curve",
+          "iterations": 2,
+          "elapsed_ns": 24989,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 0.9289667285458074,
+      "pairedMedianBootstrap95": [
+        0.9093146027364623,
+        0.9753447939278357
+      ],
+      "nsPerQuery": {
+        "baseline": 9275.35446985447,
+        "candidate": 8695.592515592514
+      }
+    },
+    {
+      "kind": 1,
+      "degree": 3,
+      "order": 24,
+      "lifecycle": "retained_curve",
+      "iterations": 103,
+      "observations": 48,
+      "pilots": [
+        {
+          "started": "2026-09-09T04:18:16.678Z",
+          "finished": "2026-09-09T04:18:16.684Z",
+          "mode": "cpu",
+          "variant": "baseline",
+          "kind": 1,
+          "degree": 3,
+          "order": 24,
+          "lifecycle": "retained_curve",
+          "iterations": 2,
+          "elapsed_ns": 117032,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "started": "2026-09-09T04:18:16.684Z",
+          "finished": "2026-09-09T04:18:16.690Z",
+          "mode": "cpu",
+          "variant": "candidate",
+          "kind": 1,
+          "degree": 3,
+          "order": 24,
+          "lifecycle": "retained_curve",
+          "iterations": 2,
+          "elapsed_ns": 95713,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 0.7558023331131862,
+      "pairedMedianBootstrap95": [
+        0.7081225554076466,
+        0.8387025277989428
+      ],
+      "nsPerQuery": {
+        "baseline": 62474.51941747573,
+        "candidate": 46906.019417475734
+      }
+    },
+    {
+      "kind": 1,
+      "degree": 3,
+      "order": 24,
+      "lifecycle": "fresh_curve",
+      "iterations": 66,
+      "observations": 48,
+      "pilots": [
+        {
+          "started": "2026-09-09T04:18:17.276Z",
+          "finished": "2026-09-09T04:18:17.282Z",
+          "mode": "cpu",
+          "variant": "baseline",
+          "kind": 1,
+          "degree": 3,
+          "order": 24,
+          "lifecycle": "fresh_curve",
+          "iterations": 2,
+          "elapsed_ns": 117752,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "started": "2026-09-09T04:18:17.282Z",
+          "finished": "2026-09-09T04:18:17.289Z",
+          "mode": "cpu",
+          "variant": "candidate",
+          "kind": 1,
+          "degree": 3,
+          "order": 24,
+          "lifecycle": "fresh_curve",
+          "iterations": 2,
+          "elapsed_ns": 182517,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 0.8215962014443079,
+      "pairedMedianBootstrap95": [
+        0.8101389540991835,
+        0.8409702442228796
+      ],
+      "nsPerQuery": {
+        "baseline": 58975.82575757576,
+        "candidate": 49917.204545454544
+      }
+    },
+    {
+      "kind": 1,
+      "degree": 3,
+      "order": 128,
+      "lifecycle": "retained_curve",
+      "iterations": 16,
+      "observations": 48,
+      "pilots": [
+        {
+          "started": "2026-09-09T04:18:17.769Z",
+          "finished": "2026-09-09T04:18:17.921Z",
+          "mode": "cpu",
+          "variant": "baseline",
+          "kind": 1,
+          "degree": 3,
+          "order": 128,
+          "lifecycle": "retained_curve",
+          "iterations": 2,
+          "elapsed_ns": 788086,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "started": "2026-09-09T04:18:17.921Z",
+          "finished": "2026-09-09T04:18:18.078Z",
+          "mode": "cpu",
+          "variant": "candidate",
+          "kind": 1,
+          "degree": 3,
+          "order": 128,
+          "lifecycle": "retained_curve",
+          "iterations": 2,
+          "elapsed_ns": 697642,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 0.8479610988138073,
+      "pairedMedianBootstrap95": [
+        0.8409339844047093,
+        0.852208169897041
+      ],
+      "nsPerQuery": {
+        "baseline": 398482.15625,
+        "candidate": 337531.65625
+      }
+    },
+    {
+      "kind": 1,
+      "degree": 3,
+      "order": 128,
+      "lifecycle": "fresh_curve",
+      "iterations": 15,
+      "observations": 48,
+      "pilots": [
+        {
+          "started": "2026-09-09T04:18:25.856Z",
+          "finished": "2026-09-09T04:18:26.010Z",
+          "mode": "cpu",
+          "variant": "baseline",
+          "kind": 1,
+          "degree": 3,
+          "order": 128,
+          "lifecycle": "fresh_curve",
+          "iterations": 2,
+          "elapsed_ns": 800706,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "started": "2026-09-09T04:18:26.010Z",
+          "finished": "2026-09-09T04:18:26.164Z",
+          "mode": "cpu",
+          "variant": "candidate",
+          "kind": 1,
+          "degree": 3,
+          "order": 128,
+          "lifecycle": "fresh_curve",
+          "iterations": 2,
+          "elapsed_ns": 684534,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 0.8532249384752142,
+      "pairedMedianBootstrap95": [
+        0.8365921732405417,
+        0.8543298057321022
+      ],
+      "nsPerQuery": {
+        "baseline": 401433.93333333335,
+        "candidate": 340384.76666666666
+      }
+    },
+    {
+      "kind": 1,
+      "degree": 8,
+      "order": 0,
+      "lifecycle": "retained_curve",
+      "iterations": 2386,
+      "observations": 48,
+      "pilots": [
+        {
+          "started": "2026-09-09T04:18:33.883Z",
+          "finished": "2026-09-09T04:18:33.888Z",
+          "mode": "cpu",
+          "variant": "baseline",
+          "kind": 1,
+          "degree": 8,
+          "order": 0,
+          "lifecycle": "retained_curve",
+          "iterations": 2,
+          "elapsed_ns": 5030,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "started": "2026-09-09T04:18:33.888Z",
+          "finished": "2026-09-09T04:18:33.892Z",
+          "mode": "cpu",
+          "variant": "candidate",
+          "kind": 1,
+          "degree": 8,
+          "order": 0,
+          "lifecycle": "retained_curve",
+          "iterations": 2,
+          "elapsed_ns": 4879,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 0.981944182939479,
+      "pairedMedianBootstrap95": [
+        0.976423969844016,
+        1.0008690096050712
+      ],
+      "nsPerQuery": {
+        "baseline": 1841.3704945515506,
+        "candidate": 1815.6075020955573
+      }
+    },
+    {
+      "kind": 1,
+      "degree": 8,
+      "order": 0,
+      "lifecycle": "fresh_curve",
+      "iterations": 512,
+      "observations": 48,
+      "pilots": [
+        {
+          "started": "2026-09-09T04:18:34.318Z",
+          "finished": "2026-09-09T04:18:34.322Z",
+          "mode": "cpu",
+          "variant": "baseline",
+          "kind": 1,
+          "degree": 8,
+          "order": 0,
+          "lifecycle": "fresh_curve",
+          "iterations": 2,
+          "elapsed_ns": 23478,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "started": "2026-09-09T04:18:34.322Z",
+          "finished": "2026-09-09T04:18:34.326Z",
+          "mode": "cpu",
+          "variant": "candidate",
+          "kind": 1,
+          "degree": 8,
+          "order": 0,
+          "lifecycle": "fresh_curve",
+          "iterations": 2,
+          "elapsed_ns": 23099,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 0.9931778265676909,
+      "pairedMedianBootstrap95": [
+        0.977643464959776,
+        1.015299610052338
+      ],
+      "nsPerQuery": {
+        "baseline": 11026.6884765625,
+        "candidate": 10982.98046875
+      }
+    },
+    {
+      "kind": 1,
+      "degree": 8,
+      "order": 1,
+      "lifecycle": "retained_curve",
+      "iterations": 1056,
+      "observations": 48,
+      "pilots": [
+        {
+          "started": "2026-09-09T04:18:34.833Z",
+          "finished": "2026-09-09T04:18:34.837Z",
+          "mode": "cpu",
+          "variant": "baseline",
+          "kind": 1,
+          "degree": 8,
+          "order": 1,
+          "lifecycle": "retained_curve",
+          "iterations": 2,
+          "elapsed_ns": 11039,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "started": "2026-09-09T04:18:34.837Z",
+          "finished": "2026-09-09T04:18:34.841Z",
+          "mode": "cpu",
+          "variant": "candidate",
+          "kind": 1,
+          "degree": 8,
+          "order": 1,
+          "lifecycle": "retained_curve",
+          "iterations": 2,
+          "elapsed_ns": 11369,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 0.9482818455973785,
+      "pairedMedianBootstrap95": [
+        0.9392277586417261,
+        0.9582049905998409
+      ],
+      "nsPerQuery": {
+        "baseline": 6971.754261363636,
+        "candidate": 6789.697443181818
+      }
+    },
+    {
+      "kind": 1,
+      "degree": 8,
+      "order": 1,
+      "lifecycle": "fresh_curve",
+      "iterations": 341,
+      "observations": 48,
+      "pilots": [
+        {
+          "started": "2026-09-09T04:18:35.455Z",
+          "finished": "2026-09-09T04:18:35.459Z",
+          "mode": "cpu",
+          "variant": "baseline",
+          "kind": 1,
+          "degree": 8,
+          "order": 1,
+          "lifecycle": "fresh_curve",
+          "iterations": 2,
+          "elapsed_ns": 35227,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "started": "2026-09-09T04:18:35.459Z",
+          "finished": "2026-09-09T04:18:35.464Z",
+          "mode": "cpu",
+          "variant": "candidate",
+          "kind": 1,
+          "degree": 8,
+          "order": 1,
+          "lifecycle": "fresh_curve",
+          "iterations": 2,
+          "elapsed_ns": 34768,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 0.988776635642343,
+      "pairedMedianBootstrap95": [
+        0.9687968317798192,
+        1.0141827677669653
+      ],
+      "nsPerQuery": {
+        "baseline": 16761.142228739,
+        "candidate": 16698.802052785926
+      }
+    },
+    {
+      "kind": 1,
+      "degree": 8,
+      "order": 3,
+      "lifecycle": "retained_curve",
+      "iterations": 439,
+      "observations": 48,
+      "pilots": [
+        {
+          "started": "2026-09-09T04:18:35.971Z",
+          "finished": "2026-09-09T04:18:35.976Z",
+          "mode": "cpu",
+          "variant": "baseline",
+          "kind": 1,
+          "degree": 8,
+          "order": 3,
+          "lifecycle": "retained_curve",
+          "iterations": 2,
+          "elapsed_ns": 27378,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "started": "2026-09-09T04:18:35.976Z",
+          "finished": "2026-09-09T04:18:35.981Z",
+          "mode": "cpu",
+          "variant": "candidate",
+          "kind": 1,
+          "degree": 8,
+          "order": 3,
+          "lifecycle": "retained_curve",
+          "iterations": 2,
+          "elapsed_ns": 25048,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 0.9200950969476609,
+      "pairedMedianBootstrap95": [
+        0.9139644478765707,
+        0.9220207581276147
+      ],
+      "nsPerQuery": {
+        "baseline": 12455.995444191343,
+        "candidate": 11508.563781321183
+      }
+    },
+    {
+      "kind": 1,
+      "degree": 8,
+      "order": 3,
+      "lifecycle": "fresh_curve",
+      "iterations": 203,
+      "observations": 48,
+      "pilots": [
+        {
+          "started": "2026-09-09T04:18:36.455Z",
+          "finished": "2026-09-09T04:18:36.460Z",
+          "mode": "cpu",
+          "variant": "baseline",
+          "kind": 1,
+          "degree": 8,
+          "order": 3,
+          "lifecycle": "fresh_curve",
+          "iterations": 2,
+          "elapsed_ns": 59116,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "started": "2026-09-09T04:18:36.460Z",
+          "finished": "2026-09-09T04:18:36.465Z",
+          "mode": "cpu",
+          "variant": "candidate",
+          "kind": 1,
+          "degree": 8,
+          "order": 3,
+          "lifecycle": "fresh_curve",
+          "iterations": 2,
+          "elapsed_ns": 56076,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 0.9677872521628119,
+      "pairedMedianBootstrap95": [
+        0.922652151419438,
+        0.9740103991245472
+      ],
+      "nsPerQuery": {
+        "baseline": 28393.80049261084,
+        "candidate": 27171.445812807884
+      }
+    },
+    {
+      "kind": 1,
+      "degree": 8,
+      "order": 24,
+      "lifecycle": "retained_curve",
+      "iterations": 81,
+      "observations": 48,
+      "pilots": [
+        {
+          "started": "2026-09-09T04:18:36.980Z",
+          "finished": "2026-09-09T04:18:36.986Z",
+          "mode": "cpu",
+          "variant": "baseline",
+          "kind": 1,
+          "degree": 8,
+          "order": 24,
+          "lifecycle": "retained_curve",
+          "iterations": 2,
+          "elapsed_ns": 149980,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "started": "2026-09-09T04:18:36.986Z",
+          "finished": "2026-09-09T04:18:36.992Z",
+          "mode": "cpu",
+          "variant": "candidate",
+          "kind": 1,
+          "degree": 8,
+          "order": 24,
+          "lifecycle": "retained_curve",
+          "iterations": 2,
+          "elapsed_ns": 112873,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 0.7615658997022731,
+      "pairedMedianBootstrap95": [
+        0.7423311199291698,
+        0.8096327489646328
+      ],
+      "nsPerQuery": {
+        "baseline": 76717.41358024691,
+        "candidate": 57703.27777777778
+      }
+    },
+    {
+      "kind": 1,
+      "degree": 8,
+      "order": 24,
+      "lifecycle": "fresh_curve",
+      "iterations": 36,
+      "observations": 48,
+      "pilots": [
+        {
+          "started": "2026-09-09T04:18:37.596Z",
+          "finished": "2026-09-09T04:18:37.604Z",
+          "mode": "cpu",
+          "variant": "baseline",
+          "kind": 1,
+          "degree": 8,
+          "order": 24,
+          "lifecycle": "fresh_curve",
+          "iterations": 2,
+          "elapsed_ns": 335037,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "started": "2026-09-09T04:18:37.604Z",
+          "finished": "2026-09-09T04:18:37.610Z",
+          "mode": "cpu",
+          "variant": "candidate",
+          "kind": 1,
+          "degree": 8,
+          "order": 24,
+          "lifecycle": "fresh_curve",
+          "iterations": 2,
+          "elapsed_ns": 153159,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 0.8371340140503611,
+      "pairedMedianBootstrap95": [
+        0.7666331432625775,
+        0.881421193835694
+      ],
+      "nsPerQuery": {
+        "baseline": 98177.04166666666,
+        "candidate": 78639.76388888889
+      }
+    },
+    {
+      "kind": 1,
+      "degree": 8,
+      "order": 128,
+      "lifecycle": "retained_curve",
+      "iterations": 13,
+      "observations": 48,
+      "pilots": [
+        {
+          "started": "2026-09-09T04:18:38.124Z",
+          "finished": "2026-09-09T04:18:38.286Z",
+          "mode": "cpu",
+          "variant": "baseline",
+          "kind": 1,
+          "degree": 8,
+          "order": 128,
+          "lifecycle": "retained_curve",
+          "iterations": 2,
+          "elapsed_ns": 958674,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "started": "2026-09-09T04:18:38.286Z",
+          "finished": "2026-09-09T04:18:38.446Z",
+          "mode": "cpu",
+          "variant": "candidate",
+          "kind": 1,
+          "degree": 8,
+          "order": 128,
+          "lifecycle": "retained_curve",
+          "iterations": 2,
+          "elapsed_ns": 690743,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 0.7125549187491593,
+      "pairedMedianBootstrap95": [
+        0.7035283815979041,
+        0.7271788921365707
+      ],
+      "nsPerQuery": {
+        "baseline": 477891.57692307694,
+        "candidate": 345482.5384615385
+      }
+    },
+    {
+      "kind": 1,
+      "degree": 8,
+      "order": 128,
+      "lifecycle": "fresh_curve",
+      "iterations": 12,
+      "observations": 48,
+      "pilots": [
+        {
+          "started": "2026-09-09T04:18:46.459Z",
+          "finished": "2026-09-09T04:18:46.636Z",
+          "mode": "cpu",
+          "variant": "baseline",
+          "kind": 1,
+          "degree": 8,
+          "order": 128,
+          "lifecycle": "fresh_curve",
+          "iterations": 2,
+          "elapsed_ns": 1001941,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "started": "2026-09-09T04:18:46.636Z",
+          "finished": "2026-09-09T04:18:46.790Z",
+          "mode": "cpu",
+          "variant": "candidate",
+          "kind": 1,
+          "degree": 8,
+          "order": 128,
+          "lifecycle": "fresh_curve",
+          "iterations": 2,
+          "elapsed_ns": 745249,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 0.7382961947846685,
+      "pairedMedianBootstrap95": [
+        0.7068530629285383,
+        0.7554268803613388
+      ],
+      "nsPerQuery": {
+        "baseline": 512045.875,
+        "candidate": 380086.5416666666
+      }
+    },
+    {
+      "kind": 1,
+      "degree": 24,
+      "order": 0,
+      "lifecycle": "retained_curve",
+      "iterations": 1358,
+      "observations": 48,
+      "pilots": [
+        {
+          "started": "2026-09-09T04:18:54.763Z",
+          "finished": "2026-09-09T04:18:54.770Z",
+          "mode": "cpu",
+          "variant": "baseline",
+          "kind": 1,
+          "degree": 24,
+          "order": 0,
+          "lifecycle": "retained_curve",
+          "iterations": 2,
+          "elapsed_ns": 8840,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "started": "2026-09-09T04:18:54.770Z",
+          "finished": "2026-09-09T04:18:54.776Z",
+          "mode": "cpu",
+          "variant": "candidate",
+          "kind": 1,
+          "degree": 24,
+          "order": 0,
+          "lifecycle": "retained_curve",
+          "iterations": 2,
+          "elapsed_ns": 8790,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 0.9848558666133116,
+      "pairedMedianBootstrap95": [
+        0.9424246253767394,
+        0.9964797498449912
+      ],
+      "nsPerQuery": {
+        "baseline": 4456.19440353461,
+        "candidate": 4406.43703976436
+      }
+    },
+    {
+      "kind": 1,
+      "degree": 24,
+      "order": 0,
+      "lifecycle": "fresh_curve",
+      "iterations": 85,
+      "observations": 48,
+      "pilots": [
+        {
+          "started": "2026-09-09T04:18:55.418Z",
+          "finished": "2026-09-09T04:18:55.425Z",
+          "mode": "cpu",
+          "variant": "baseline",
+          "kind": 1,
+          "degree": 24,
+          "order": 0,
+          "lifecycle": "fresh_curve",
+          "iterations": 2,
+          "elapsed_ns": 142700,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "started": "2026-09-09T04:18:55.425Z",
+          "finished": "2026-09-09T04:18:55.433Z",
+          "mode": "cpu",
+          "variant": "candidate",
+          "kind": 1,
+          "degree": 24,
+          "order": 0,
+          "lifecycle": "fresh_curve",
+          "iterations": 2,
+          "elapsed_ns": 140130,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 0.991950173179025,
+      "pairedMedianBootstrap95": [
+        0.974368256172174,
+        1.0225526586327989
+      ],
+      "nsPerQuery": {
+        "baseline": 52511.117647058825,
+        "candidate": 51739.882352941175
+      }
+    },
+    {
+      "kind": 1,
+      "degree": 24,
+      "order": 1,
+      "lifecycle": "retained_curve",
+      "iterations": 485,
+      "observations": 48,
+      "pilots": [
+        {
+          "started": "2026-09-09T04:18:56.040Z",
+          "finished": "2026-09-09T04:18:56.047Z",
+          "mode": "cpu",
+          "variant": "baseline",
+          "kind": 1,
+          "degree": 24,
+          "order": 1,
+          "lifecycle": "retained_curve",
+          "iterations": 2,
+          "elapsed_ns": 24778,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "started": "2026-09-09T04:18:56.047Z",
+          "finished": "2026-09-09T04:18:56.054Z",
+          "mode": "cpu",
+          "variant": "candidate",
+          "kind": 1,
+          "degree": 24,
+          "order": 1,
+          "lifecycle": "retained_curve",
+          "iterations": 2,
+          "elapsed_ns": 24619,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 0.9938448785070336,
+      "pairedMedianBootstrap95": [
+        0.9914026936076704,
+        0.9966475914852002
+      ],
+      "nsPerQuery": {
+        "baseline": 12419.30618556701,
+        "candidate": 12351.084536082475
+      }
+    },
+    {
+      "kind": 1,
+      "degree": 24,
+      "order": 1,
+      "lifecycle": "fresh_curve",
+      "iterations": 37,
+      "observations": 48,
+      "pilots": [
+        {
+          "started": "2026-09-09T04:18:56.699Z",
+          "finished": "2026-09-09T04:18:56.707Z",
+          "mode": "cpu",
+          "variant": "baseline",
+          "kind": 1,
+          "degree": 24,
+          "order": 1,
+          "lifecycle": "fresh_curve",
+          "iterations": 2,
+          "elapsed_ns": 193137,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "started": "2026-09-09T04:18:56.707Z",
+          "finished": "2026-09-09T04:18:56.715Z",
+          "mode": "cpu",
+          "variant": "candidate",
+          "kind": 1,
+          "degree": 24,
+          "order": 1,
+          "lifecycle": "fresh_curve",
+          "iterations": 2,
+          "elapsed_ns": 329408,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 1.0076590159911682,
+      "pairedMedianBootstrap95": [
+        0.992759535106498,
+        1.0188418473265726
+      ],
+      "nsPerQuery": {
+        "baseline": 74631.66216216216,
+        "candidate": 74675.58108108108
+      }
+    },
+    {
+      "kind": 1,
+      "degree": 24,
+      "order": 3,
+      "lifecycle": "retained_curve",
+      "iterations": 200,
+      "observations": 48,
+      "pilots": [
+        {
+          "started": "2026-09-09T04:18:57.228Z",
+          "finished": "2026-09-09T04:18:57.235Z",
+          "mode": "cpu",
+          "variant": "baseline",
+          "kind": 1,
+          "degree": 24,
+          "order": 3,
+          "lifecycle": "retained_curve",
+          "iterations": 2,
+          "elapsed_ns": 60116,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "started": "2026-09-09T04:18:57.235Z",
+          "finished": "2026-09-09T04:18:57.243Z",
+          "mode": "cpu",
+          "variant": "candidate",
+          "kind": 1,
+          "degree": 24,
+          "order": 3,
+          "lifecycle": "retained_curve",
+          "iterations": 2,
+          "elapsed_ns": 55566,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 0.9407919545069607,
+      "pairedMedianBootstrap95": [
+        0.8794468329265102,
+        0.961206417203541
+      ],
+      "nsPerQuery": {
+        "baseline": 29873.335,
+        "candidate": 28173.475
+      }
+    },
+    {
+      "kind": 1,
+      "degree": 24,
+      "order": 3,
+      "lifecycle": "fresh_curve",
+      "iterations": 23,
+      "observations": 48,
+      "pilots": [
+        {
+          "started": "2026-09-09T04:18:57.906Z",
+          "finished": "2026-09-09T04:18:57.915Z",
+          "mode": "cpu",
+          "variant": "baseline",
+          "kind": 1,
+          "degree": 24,
+          "order": 3,
+          "lifecycle": "fresh_curve",
+          "iterations": 2,
+          "elapsed_ns": 531254,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "started": "2026-09-09T04:18:57.915Z",
+          "finished": "2026-09-09T04:18:57.924Z",
+          "mode": "cpu",
+          "variant": "candidate",
+          "kind": 1,
+          "degree": 24,
+          "order": 3,
+          "lifecycle": "fresh_curve",
+          "iterations": 2,
+          "elapsed_ns": 302239,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 1.0033328828857102,
+      "pairedMedianBootstrap95": [
+        0.994317350347478,
+        1.0192956130969684
+      ],
+      "nsPerQuery": {
+        "baseline": 132443.1304347826,
+        "candidate": 134674.5
+      }
+    },
+    {
+      "kind": 1,
+      "degree": 24,
+      "order": 24,
+      "lifecycle": "retained_curve",
+      "iterations": 24,
+      "observations": 48,
+      "pilots": [
+        {
+          "started": "2026-09-09T04:18:58.490Z",
+          "finished": "2026-09-09T04:18:58.504Z",
+          "mode": "cpu",
+          "variant": "baseline",
+          "kind": 1,
+          "degree": 24,
+          "order": 24,
+          "lifecycle": "retained_curve",
+          "iterations": 2,
+          "elapsed_ns": 504076,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "started": "2026-09-09T04:18:58.504Z",
+          "finished": "2026-09-09T04:18:58.519Z",
+          "mode": "cpu",
+          "variant": "candidate",
+          "kind": 1,
+          "degree": 24,
+          "order": 24,
+          "lifecycle": "retained_curve",
+          "iterations": 2,
+          "elapsed_ns": 391353,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 0.8168713061426951,
+      "pairedMedianBootstrap95": [
+        0.7974145160695474,
+        0.8301021572774049
+      ],
+      "nsPerQuery": {
+        "baseline": 189961.60416666666,
+        "candidate": 155795.8125
+      }
+    },
+    {
+      "kind": 1,
+      "degree": 24,
+      "order": 24,
+      "lifecycle": "fresh_curve",
+      "iterations": 14,
+      "observations": 48,
+      "pilots": [
+        {
+          "started": "2026-09-09T04:18:59.365Z",
+          "finished": "2026-09-09T04:18:59.380Z",
+          "mode": "cpu",
+          "variant": "baseline",
+          "kind": 1,
+          "degree": 24,
+          "order": 24,
+          "lifecycle": "fresh_curve",
+          "iterations": 2,
+          "elapsed_ns": 921637,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "started": "2026-09-09T04:18:59.380Z",
+          "finished": "2026-09-09T04:18:59.395Z",
+          "mode": "cpu",
+          "variant": "candidate",
+          "kind": 1,
+          "degree": 24,
+          "order": 24,
+          "lifecycle": "fresh_curve",
+          "iterations": 2,
+          "elapsed_ns": 845202,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 0.9491031836038506,
+      "pairedMedianBootstrap95": [
+        0.9231102191477984,
+        0.9712473847665127
+      ],
+      "nsPerQuery": {
+        "baseline": 449953.9285714286,
+        "candidate": 419293.85714285716
+      }
+    },
+    {
+      "kind": 1,
+      "degree": 24,
+      "order": 128,
+      "lifecycle": "retained_curve",
+      "iterations": 8,
+      "observations": 48,
+      "pilots": [
+        {
+          "started": "2026-09-09T04:19:00.419Z",
+          "finished": "2026-09-09T04:19:00.590Z",
+          "mode": "cpu",
+          "variant": "baseline",
+          "kind": 1,
+          "degree": 24,
+          "order": 128,
+          "lifecycle": "retained_curve",
+          "iterations": 2,
+          "elapsed_ns": 1703704,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "started": "2026-09-09T04:19:00.590Z",
+          "finished": "2026-09-09T04:19:00.758Z",
+          "mode": "cpu",
+          "variant": "candidate",
+          "kind": 1,
+          "degree": 24,
+          "order": 128,
+          "lifecycle": "retained_curve",
+          "iterations": 2,
+          "elapsed_ns": 973833,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 0.5622745122863249,
+      "pairedMedianBootstrap95": [
+        0.5613957654521617,
+        0.5755269995723574
+      ],
+      "nsPerQuery": {
+        "baseline": 822630.6875,
+        "candidate": 463418.375
+      }
+    },
+    {
+      "kind": 1,
+      "degree": 24,
+      "order": 128,
+      "lifecycle": "fresh_curve",
+      "iterations": 6,
+      "observations": 48,
+      "pilots": [
+        {
+          "started": "2026-09-09T04:19:09.178Z",
+          "finished": "2026-09-09T04:19:09.354Z",
+          "mode": "cpu",
+          "variant": "baseline",
+          "kind": 1,
+          "degree": 24,
+          "order": 128,
+          "lifecycle": "fresh_curve",
+          "iterations": 2,
+          "elapsed_ns": 2137914,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "started": "2026-09-09T04:19:09.354Z",
+          "finished": "2026-09-09T04:19:09.524Z",
+          "mode": "cpu",
+          "variant": "candidate",
+          "kind": 1,
+          "degree": 24,
+          "order": 128,
+          "lifecycle": "fresh_curve",
+          "iterations": 2,
+          "elapsed_ns": 1434972,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 0.6797174994821825,
+      "pairedMedianBootstrap95": [
+        0.6670353482273953,
+        0.6922499368817392
+      ],
+      "nsPerQuery": {
+        "baseline": 1077414.8333333335,
+        "candidate": 726763.75
+      }
+    }
+  ],
+  "limits": "80 groups: rational polynomial and pi-scaled nonconstant-denominator curves, four degrees, five derivative orders, retained/fresh curve lifecycles. Each process prechecks every result against BigRational Bernstein expansion/direct monomial derivatives and the standard quotient formula, then warms eight queries. Fresh curve clones prebuilt controls/weights and builds its power basis, not cold scalar construction. Timed queries include public derivative-vector construction and dropping. Generic parameter is exactly 1/3; no endpoint-helper CPU claim. Uninstrumented CPU, separately counted Rust allocation requests/bytes/live/peak; not RSS, stacks or allocator/native overhead. Per-group bootstrap estimates are not multiplicity-adjusted or universal. No production retention decision at this checkpoint."
+}

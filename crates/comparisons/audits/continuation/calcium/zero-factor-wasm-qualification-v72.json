@@ -1,0 +1,176 @@
+{
+  "checkpoint": 72,
+  "status": "wasm-full-record-qualified",
+  "counts": {
+    "full": 33384,
+    "cost": 1824,
+    "history": 3072
+  },
+  "statuses": {
+    "baseline:Transformed": 13888,
+    "candidate:Transformed": 14072,
+    "baseline:DenominatorMayContainZero": 570,
+    "candidate:DenominatorMayContainZero": 570,
+    "baseline:Undecided": 152,
+    "baseline:NonIsolatingImageInterval": 130,
+    "candidate:NonIsolatingImageInterval": 130,
+    "baseline:UnsupportedDegree": 1952,
+    "candidate:UnsupportedDegree": 1920
+  },
+  "extendedChecks": 89984,
+  "runtime": {
+    "metadata": [
+      {
+        "variant": "baseline",
+        "kind": "rational",
+        "path": "/tmp/calcium-zero-wasm.ATQP07/baseline-rational.wasm",
+        "bytes": 1292409,
+        "sha256": "24738af2d865c2c7c8a7fe4d494b358ea34d3467483c0eb0c03fa352d792b06b",
+        "imports": [],
+        "exports": [
+          {
+            "name": "memory",
+            "kind": "memory"
+          },
+          {
+            "name": "zf_batch",
+            "kind": "function"
+          },
+          {
+            "name": "zf_finish",
+            "kind": "function"
+          },
+          {
+            "name": "zf_init",
+            "kind": "function"
+          },
+          {
+            "name": "zf_input",
+            "kind": "function"
+          },
+          {
+            "name": "zf_output_ptr",
+            "kind": "function"
+          },
+          {
+            "name": "zf_prepare",
+            "kind": "function"
+          }
+        ]
+      },
+      {
+        "variant": "baseline",
+        "kind": "history",
+        "path": "/tmp/calcium-zero-wasm.ATQP07/baseline-history.wasm",
+        "bytes": 1615521,
+        "sha256": "1046d83678faa2f3383d8848fef7ea6c4cf71fec17bea67b68f8b97005fb668f",
+        "imports": [],
+        "exports": [
+          {
+            "name": "memory",
+            "kind": "memory"
+          },
+          {
+            "name": "history_batch",
+            "kind": "function"
+          },
+          {
+            "name": "history_finish",
+            "kind": "function"
+          },
+          {
+            "name": "history_output_ptr",
+            "kind": "function"
+          },
+          {
+            "name": "history_prepare",
+            "kind": "function"
+          }
+        ]
+      },
+      {
+        "variant": "candidate",
+        "kind": "rational",
+        "path": "/tmp/calcium-zero-wasm.ATQP07/candidate-rational.wasm",
+        "bytes": 1293885,
+        "sha256": "3f65f1b98fb8fc3d11fa7d56538633937e1288ab750c52ac2a447313ca771215",
+        "imports": [],
+        "exports": [
+          {
+            "name": "memory",
+            "kind": "memory"
+          },
+          {
+            "name": "zf_batch",
+            "kind": "function"
+          },
+          {
+            "name": "zf_finish",
+            "kind": "function"
+          },
+          {
+            "name": "zf_init",
+            "kind": "function"
+          },
+          {
+            "name": "zf_input",
+            "kind": "function"
+          },
+          {
+            "name": "zf_output_ptr",
+            "kind": "function"
+          },
+          {
+            "name": "zf_prepare",
+            "kind": "function"
+          }
+        ]
+      },
+      {
+        "variant": "candidate",
+        "kind": "history",
+        "path": "/tmp/calcium-zero-wasm.ATQP07/candidate-history.wasm",
+        "bytes": 1617066,
+        "sha256": "77cf0377cca08648a1a32ba2ce9d28c9bb212bfb8f698785cbfe29326d7a44e9",
+        "imports": [],
+        "exports": [
+          {
+            "name": "memory",
+            "kind": "memory"
+          },
+          {
+            "name": "history_batch",
+            "kind": "function"
+          },
+          {
+            "name": "history_finish",
+            "kind": "function"
+          },
+          {
+            "name": "history_output_ptr",
+            "kind": "function"
+          },
+          {
+            "name": "history_prepare",
+            "kind": "function"
+          }
+        ]
+      }
+    ],
+    "compiled": "2026-09-11T20:46:24.625Z",
+    "node": "v22.22.2",
+    "v8": "12.4.254.21-node.39",
+    "flags": [
+      "--expose-gc",
+      "--no-liftoff",
+      "--no-wasm-tier-up",
+      "--no-wasm-lazy-compilation"
+    ],
+    "affinity": "2"
+  },
+  "gcs": 4786,
+  "observations": 38280,
+  "sourceOriginSha256": "f091d405949fc56477918dde083a027f1c9f0263b8c0559396bc2f97a658462b",
+  "finished": "2026-09-11T20:50:12.519Z",
+  "limits": "Persistent rational corpus plus fresh cost/history instances. Qualification timings are not a cost campaign; memory samples are linear-memory sizes, not allocation/peak/RSS. No live edit or retention."
+}

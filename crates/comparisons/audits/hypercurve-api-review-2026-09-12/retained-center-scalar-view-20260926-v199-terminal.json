@@ -1,0 +1,195 @@
+{
+  "parents": {
+    "hypercurve": "f7bb46a2869097219d316b6af22ae26c2459492c",
+    "hypersolve": "42308d704df777b3e627aa344424afa3f215e456",
+    "hyperreal": "0cb5f29aee065c73e234e0ebb0a9e106398515bb"
+  },
+  "source_manifest": "retained-center-scalar-view-20260926-v199-sources.json",
+  "source_directory": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/source-archives/retained-center-scalar-view-20260926-v199",
+  "build_source_directory": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/build-workspace-20260925",
+  "workspace_guard": "retained-center-scalar-view-20260926-v199-workspace.json",
+  "checks": [],
+  "cases": [
+    {
+      "repo": "hypercurve",
+      "label": "case-00",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-center-scalar-view-20260926-v199-hypercurve",
+        "--exact",
+        "bezier_offset::conversion_tests::recursive_projective_bounds_enclose_scaled_nested_radicals",
+        "--test-threads=1",
+        "--nocapture",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.003468603012152016,
+      "log": "retained-center-scalar-view-20260926-v199-case-00.log",
+      "name": "bezier_offset::conversion_tests::recursive_projective_bounds_enclose_scaled_nested_radicals"
+    },
+    {
+      "repo": "hypercurve",
+      "label": "case-01",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-center-scalar-view-20260926-v199-hypercurve",
+        "--exact",
+        "bezier_offset::conversion_tests::recursive_projective_bounds_keep_unwitnessed_source_fallback",
+        "--test-threads=1",
+        "--nocapture",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.0034888109657913446,
+      "log": "retained-center-scalar-view-20260926-v199-case-01.log",
+      "name": "bezier_offset::conversion_tests::recursive_projective_bounds_keep_unwitnessed_source_fallback"
+    },
+    {
+      "repo": "hypercurve",
+      "label": "case-02",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-center-scalar-view-20260926-v199-hypercurve",
+        "--exact",
+        "bezier_offset::conversion_tests::recursive_projective_bounds_reuse_positive_denominator_certificate",
+        "--test-threads=1",
+        "--nocapture",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.015633879927918315,
+      "log": "retained-center-scalar-view-20260926-v199-case-02.log",
+      "name": "bezier_offset::conversion_tests::recursive_projective_bounds_reuse_positive_denominator_certificate"
+    },
+    {
+      "repo": "hypercurve",
+      "label": "case-03",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-center-scalar-view-20260926-v199-hypercurve",
+        "--exact",
+        "bezier_offset::conversion_tests::retained_circle_centers_reuse_correlated_exact_scalar_views",
+        "--test-threads=1",
+        "--nocapture",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.00756082299631089,
+      "log": "retained-center-scalar-view-20260926-v199-case-03.log",
+      "name": "bezier_offset::conversion_tests::retained_circle_centers_reuse_correlated_exact_scalar_views"
+    },
+    {
+      "repo": "hypercurve",
+      "label": "case-04",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-center-scalar-view-20260926-v199-hypercurve",
+        "--exact",
+        "bezier_offset::conversion_tests::retained_normal_contact_requires_its_undisplaced_regular_source",
+        "--test-threads=1",
+        "--nocapture",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.0035022699739784002,
+      "log": "retained-center-scalar-view-20260926-v199-case-04.log",
+      "name": "bezier_offset::conversion_tests::retained_normal_contact_requires_its_undisplaced_regular_source"
+    },
+    {
+      "repo": "hypercurve",
+      "label": "case-05",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-center-scalar-view-20260926-v199-hypercurve",
+        "--exact",
+        "bezier_offset::conversion_tests::retained_parallel_normal_contacts_preserve_native_roots_and_sheets",
+        "--test-threads=1",
+        "--nocapture",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.5142736439593136,
+      "log": "retained-center-scalar-view-20260926-v199-case-05.log",
+      "name": "bezier_offset::conversion_tests::retained_parallel_normal_contacts_preserve_native_roots_and_sheets"
+    },
+    {
+      "repo": "hypercurve",
+      "label": "case-06",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-center-scalar-view-20260926-v199-hypercurve",
+        "--exact",
+        "bezier_offset::conversion_tests::chord_normal_parallel_contacts_reuse_the_retained_center_field",
+        "--test-threads=1",
+        "--nocapture",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.015696036047302186,
+      "log": "retained-center-scalar-view-20260926-v199-case-06.log",
+      "name": "bezier_offset::conversion_tests::chord_normal_parallel_contacts_reuse_the_retained_center_field"
+    },
+    {
+      "repo": "hypercurve",
+      "label": "case-07",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-center-scalar-view-20260926-v199-hypercurve",
+        "--exact",
+        "bezier_offset::conversion_tests::chord_normal_recursive_frame_retains_center_and_oriented_unit_normal",
+        "--test-threads=1",
+        "--nocapture",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.031770115019753575,
+      "log": "retained-center-scalar-view-20260926-v199-case-07.log",
+      "name": "bezier_offset::conversion_tests::chord_normal_recursive_frame_retains_center_and_oriented_unit_normal"
+    },
+    {
+      "repo": "hypercurve",
+      "label": "case-08",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-center-scalar-view-20260926-v199-hypercurve",
+        "--exact",
+        "bezier_offset::conversion_tests::selected_source_range_retains_incident_endpoint_and_contacts_locally",
+        "--test-threads=1",
+        "--nocapture",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.007532924995757639,
+      "log": "retained-center-scalar-view-20260926-v199-case-08.log",
+      "name": "bezier_offset::conversion_tests::selected_source_range_retains_incident_endpoint_and_contacts_locally"
+    },
+    {
+      "repo": "hypercurve",
+      "label": "case-09",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-center-scalar-view-20260926-v199-hypercurve",
+        "--exact",
+        "curve_region_boolean::certified_successor_tests::selected_parallel_arrangement_splits_interior_cusps",
+        "--test-threads=1",
+        "--nocapture",
+        "--color",
+        "never"
+      ],
+      "returncode": "timeout",
+      "elapsed_seconds": 180.00237863697112,
+      "log": "retained-center-scalar-view-20260926-v199-case-09.log",
+      "name": "curve_region_boolean::certified_successor_tests::selected_parallel_arrangement_splits_interior_cusps"
+    }
+  ],
+  "binaries": {
+    "hypercurve": {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-center-scalar-view-20260926-v199-hypercurve",
+      "sha256": "8fde016d746291aa29fdd9243b4ca4357f9bb9647220473fc6b6cec6fcd855fd"
+    }
+  },
+  "all_processes_reaped": true,
+  "diagnostic_only": false,
+  "hypercurve_build_returncode": 0,
+  "all_sources_unchanged": true,
+  "qualification_complete": false
+}

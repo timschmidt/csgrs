@@ -1,0 +1,6 @@
+FAIL ln 2/1 bits=8 got=0.62890625 expected=0.6931471805599453
+FAIL ln 2/1 bits=24 got=0.6250000596046448 expected=0.6931471805599453
+FAIL ln 2/1 bits=64 got=0.625 expected=0.6931471805599453
+FAIL ln 8/1 bits=24 got=2.080078125 expected=2.0794415416798357
+ln	checks=24	failures=14
+TOTAL	checks=24	failures=14

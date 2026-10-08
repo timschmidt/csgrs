@@ -1,0 +1,9 @@
+{
+  "returncode": 0,
+  "passed": 506,
+  "elapsed_seconds": 3.4240259440848604,
+  "binary_sha256": "9d5da45240a6f03bcd13425ed53744314cac017ed73f51f328eb5e51cb1bda97",
+  "bindings": "chord-normal-witness-20260923-focused2-sources.json",
+  "all_sources_unchanged": true,
+  "all_processes_reaped": true
+}

@@ -1,0 +1,292 @@
+{
+  "reused_focused": [
+    {
+      "target": "hypercurve",
+      "name": "bezier_region::tests::one_fragment_materialized_loop_chamfers_to_one_middle_interval",
+      "returncode": 0,
+      "passed": true,
+      "ignored": false,
+      "elapsed_seconds": 0.6332103700842708,
+      "limit_seconds": 75,
+      "log": "retained-coordinate-identity-20260924-v4-one_fragment_materialized_loop_chamfers_to_one_middle_interval.log",
+      "reused_from": "retained-coordinate-identity-20260924-v4-terminal.json"
+    },
+    {
+      "target": "hypercurve",
+      "name": "bezier_region::tests::one_fragment_selected_loop_chamfers_from_one_interval",
+      "returncode": 0,
+      "passed": true,
+      "ignored": false,
+      "elapsed_seconds": 0.5275646450463682,
+      "limit_seconds": 75,
+      "log": "retained-coordinate-identity-20260924-v4-one_fragment_selected_loop_chamfers_from_one_interval.log",
+      "reused_from": "retained-coordinate-identity-20260924-v4-terminal.json"
+    },
+    {
+      "target": "hypercurve",
+      "name": "bezier_offset::conversion_tests::analytic_axis_order_replays_a_local_root_in_the_other_points_field",
+      "returncode": 0,
+      "passed": true,
+      "ignored": false,
+      "elapsed_seconds": 0.2667024920228869,
+      "limit_seconds": 75,
+      "log": "retained-coordinate-identity-20260924-v4-analytic_axis_order_replays_a_local_root_in_the_other_points_field.log",
+      "reused_from": "retained-coordinate-identity-20260924-v4-terminal.json"
+    },
+    {
+      "target": "hypercurve",
+      "name": "bezier_offset::conversion_tests::retained_chord_coordinate_and_linear_queries_observe_requested_policy",
+      "returncode": 0,
+      "passed": true,
+      "ignored": false,
+      "elapsed_seconds": 0.3775429390370846,
+      "limit_seconds": 75,
+      "log": "retained-coordinate-identity-20260924-v4-retained_chord_coordinate_and_linear_queries_observe_requested_policy.log",
+      "reused_from": "retained-coordinate-identity-20260924-v4-terminal.json"
+    },
+    {
+      "target": "hypercurve",
+      "name": "bezier_offset::conversion_tests::algebraic_chord_source_incidence_deflates_only_the_retained_contact",
+      "returncode": 0,
+      "passed": true,
+      "ignored": false,
+      "elapsed_seconds": 0.27573733997996897,
+      "limit_seconds": 75,
+      "log": "retained-coordinate-identity-20260924-v4-algebraic_chord_source_incidence_deflates_only_the_retained_contact.log",
+      "reused_from": "retained-coordinate-identity-20260924-v4-terminal.json"
+    },
+    {
+      "target": "hypercurve",
+      "name": "bezier_offset::conversion_tests::recursive_projective_kernel_imports_similarity_of_algebraic_endpoints",
+      "returncode": 0,
+      "passed": true,
+      "ignored": false,
+      "elapsed_seconds": 0.2751890979707241,
+      "limit_seconds": 75,
+      "log": "retained-coordinate-identity-20260924-v4-recursive_projective_kernel_imports_similarity_of_algebraic_endpoints.log",
+      "reused_from": "retained-coordinate-identity-20260924-v4-terminal.json"
+    },
+    {
+      "target": "hypercurve",
+      "name": "bezier_offset::conversion_tests::algebraic_chord_retains_independent_endpoint_fields_under_both_policies",
+      "returncode": 0,
+      "passed": true,
+      "ignored": false,
+      "elapsed_seconds": 0.28082642995286733,
+      "limit_seconds": 75,
+      "log": "retained-coordinate-identity-20260924-v4-algebraic_chord_retains_independent_endpoint_fields_under_both_policies.log",
+      "reused_from": "retained-coordinate-identity-20260924-v4-terminal.json"
+    },
+    {
+      "target": "hypercurve",
+      "name": "bezier_region::tests::independent_field_corner_edits_preserve_normalized_sets",
+      "returncode": 0,
+      "passed": true,
+      "ignored": false,
+      "elapsed_seconds": 0.9043589249486104,
+      "limit_seconds": 75,
+      "log": "retained-coordinate-identity-20260924-v4-independent_field_corner_edits_preserve_normalized_sets.log",
+      "reused_from": "retained-coordinate-identity-20260924-v4-terminal.json"
+    }
+  ],
+  "isolated_jobs": [
+    [
+      640,
+      [
+        "hypercurve",
+        "bezier_region::curve_corner_chain::tests::extended_fillet_region_classifies_both_sides_of_its_companion"
+      ]
+    ],
+    [
+      705,
+      [
+        "hypercurve",
+        "bezier_region::tests::nonrepresented_chord_and_selected_circle_complete_the_fillet_kernel"
+      ]
+    ],
+    [
+      732,
+      [
+        "hypercurve",
+        "bezier_region::tests::recursive_selected_radial_projective_chamfer_reenters_corner_kernel"
+      ]
+    ]
+  ],
+  "remaining_workers": 2,
+  "checks": [
+    {
+      "label": "fmt",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustfmt",
+        "--edition",
+        "2024",
+        "--check",
+        "src/bezier_offset.rs"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 2.6026843159925193,
+      "log": "retained-coordinate-identity-20260924-v4-fmt.log"
+    },
+    {
+      "label": "clippy-1",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "clippy",
+        "--all-targets",
+        "--all-features",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 27.789602872915566,
+      "log": "retained-coordinate-identity-20260924-v4-clippy-1.log"
+    },
+    {
+      "label": "clippy-2",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "clippy",
+        "--all-targets",
+        "--no-default-features",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 28.31691709300503,
+      "log": "retained-coordinate-identity-20260924-v4-clippy-2.log"
+    }
+  ],
+  "command": [
+    "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+    "test",
+    "--release",
+    "--all-features",
+    "--no-run",
+    "--message-format=json",
+    "--locked",
+    "--offline",
+    "--test",
+    "hypercurve_path_closure",
+    "--test",
+    "hypercurve_curve_region_boolean",
+    "--test",
+    "hypercurve_bezier_arrangement",
+    "--test",
+    "hypercurve_curve_region_boolean_fuzz",
+    "--test",
+    "hypercurve_pcb_boolean_regressions",
+    "--test",
+    "hypercurve_curve",
+    "--test",
+    "hypercurve_curve_intersection",
+    "--test",
+    "hypercurve_curve_point",
+    "--test",
+    "hypercurve_curve_range"
+  ],
+  "binaries": {
+    "hypercurve": {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-coordinate-identity-20260924-v4-libtest",
+      "sha256": "b3712e4d6b99810698a7b1a3362f416a6ea1f4af547f0236d3c1917ac547d100"
+    },
+    "hypercurve_curve_range": {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-coordinate-identity-20260924-v4-full-hypercurve_curve_range",
+      "sha256": "896eb01792842285a1486640189e69a507df4f305a9a82561a8f9e4741d94e78"
+    },
+    "hypercurve_curve_region_boolean": {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-coordinate-identity-20260924-v4-full-hypercurve_curve_region_boolean",
+      "sha256": "ba182997e5c51223e8665610875f659cfff581ef0229f18d3e087c8474092170"
+    },
+    "hypercurve_bezier_arrangement": {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-coordinate-identity-20260924-v4-full-hypercurve_bezier_arrangement",
+      "sha256": "9d84dd58bbfcde6865666564b6cec81c908090b1e14a89d779198ccba49ca0c5"
+    },
+    "hypercurve_path_closure": {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-coordinate-identity-20260924-v4-full-hypercurve_path_closure",
+      "sha256": "624652ceb90797bae92f500969820c94ccc28c9671c7938a7a76be2882775582"
+    },
+    "hypercurve_pcb_boolean_regressions": {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-coordinate-identity-20260924-v4-full-hypercurve_pcb_boolean_regressions",
+      "sha256": "a605b0de2bc9d2df497b3d663b1513ae0d90ba8eeb596b8d29b3d1e3ab42390a"
+    },
+    "hypercurve_curve_intersection": {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-coordinate-identity-20260924-v4-full-hypercurve_curve_intersection",
+      "sha256": "fa8056a72674bb284d1a83bc20d01fe6e93d19767d658bde23fffe685609b5a3"
+    },
+    "hypercurve_curve_point": {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-coordinate-identity-20260924-v4-full-hypercurve_curve_point",
+      "sha256": "c6dd87f69da1ae4679a2b9e7a731b8f47c9cd3a7bf0a47940e5fd39f10f22e1e"
+    },
+    "hypercurve_curve": {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-coordinate-identity-20260924-v4-full-hypercurve_curve",
+      "sha256": "6541f3b2293b713885aa5a0cac8888a0826ec61a4839ceb366edc4bb33db2696"
+    },
+    "hypercurve_curve_region_boolean_fuzz": {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-coordinate-identity-20260924-v4-full-hypercurve_curve_region_boolean_fuzz",
+      "sha256": "45ad5798b9695656348727912abf60a9c7e53164fe56abdb70b15cbcc98692ec"
+    }
+  },
+  "attempted": 1467,
+  "passed": 1456,
+  "ignored": 6,
+  "nonpasses": [
+    {
+      "target": "hypercurve",
+      "name": "bezier_offset::conversion_tests::selected_parallel_normal_circle_intersects_genuinely_analytic_parallel_in_one_fiber",
+      "returncode": "timeout",
+      "passed": false,
+      "ignored": false,
+      "elapsed_seconds": 75.05507573997602,
+      "limit_seconds": 75,
+      "log": "retained-coordinate-identity-20260924-v4-full-case-0552.log"
+    },
+    {
+      "target": "hypercurve",
+      "name": "bezier_region::tests::one_fragment_materialized_loop_extends_algebraic_chamfer_cuts_once",
+      "returncode": 101,
+      "passed": false,
+      "ignored": false,
+      "elapsed_seconds": 0.5159227850381285,
+      "limit_seconds": 75,
+      "log": "retained-coordinate-identity-20260924-v4-full-case-0710.log"
+    },
+    {
+      "target": "hypercurve",
+      "name": "bezier_region::tests::nonlinear_algebraic_endpoint_fillet_uses_complete_incident_domain",
+      "returncode": "timeout",
+      "passed": false,
+      "ignored": false,
+      "elapsed_seconds": 75.00330304005183,
+      "limit_seconds": 75,
+      "log": "retained-coordinate-identity-20260924-v4-full-case-0699.log"
+    },
+    {
+      "target": "hypercurve",
+      "name": "bezier_region::tests::one_fragment_nonzero_parallel_loop_extends_chamfer_cuts_on_one_finite_envelope",
+      "returncode": "timeout",
+      "passed": false,
+      "ignored": false,
+      "elapsed_seconds": 75.0247246370418,
+      "limit_seconds": 75,
+      "log": "retained-coordinate-identity-20260924-v4-full-case-0711.log"
+    },
+    {
+      "target": "hypercurve",
+      "name": "bezier_region::tests::pair_native_boolean_algebraic_chord_corner_publishes_a_third_generation_fillet",
+      "returncode": "timeout",
+      "passed": false,
+      "ignored": false,
+      "elapsed_seconds": 75.00355989194941,
+      "limit_seconds": 75,
+      "log": "retained-coordinate-identity-20260924-v4-full-case-0720.log"
+    }
+  ],
+  "all_sources_unchanged": true,
+  "all_processes_reaped": true
+}

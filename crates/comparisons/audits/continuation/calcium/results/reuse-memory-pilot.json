@@ -1,0 +1,15 @@
+{
+  "tag": "reuse-memory-pilot",
+  "started": "2026-09-08T21:48:05.566Z",
+  "finished": "2026-09-08T21:48:05.587Z",
+  "elapsedSeconds": 0.017027541999999996,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison",
+  "command": "/tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/release/calcium-reuse-live-memory-reuse",
+  "args": [
+    "1",
+    "64",
+    "1"
+  ],
+  "code": 0,
+  "signal": null
+}

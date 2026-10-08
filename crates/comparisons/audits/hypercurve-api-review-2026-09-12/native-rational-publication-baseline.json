@@ -1,0 +1,20 @@
+{
+  "command": [
+    "rustc",
+    "--edition=2024",
+    "-O",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/native-rational-publication-baseline.rs",
+    "--extern",
+    "hypercurve=/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/libhypercurve-2c7ff6f3fbe07653.rlib",
+    "-L",
+    "dependency=/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps",
+    "-o",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/native-rational-publication-baseline"
+  ],
+  "returncode": 0,
+  "elapsed_seconds": 0.003474391996860504,
+  "source_sha256": "fa11bfd69e864c476e8a85d6b492cf0fb7735117df64f15485b7d3591accbde1",
+  "normal_library_sha256": "753cd385d54a9dbe53b75a77087725e01ed2991bb50149378019aba36897b54a",
+  "executable_sha256": "e9bf772110e859eb193091fc7d2fbc83607084533aff0191e4a03e8c69798970",
+  "head": "32ec37755656425b56142cd1f787c88abe78007e"
+}

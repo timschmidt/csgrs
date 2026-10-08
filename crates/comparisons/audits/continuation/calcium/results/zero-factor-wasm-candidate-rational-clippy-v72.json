@@ -1,0 +1,26 @@
+{
+  "tag": "zero-factor-wasm-candidate-rational-clippy-v72",
+  "started": "2026-09-11T20:06:31.817Z",
+  "finished": "2026-09-11T20:06:34.100Z",
+  "elapsedSeconds": 2.2805256289999996,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/zero-factor-wasm-candidate-rational-v72",
+  "command": "env",
+  "args": [
+    "CARGO_TARGET_DIR=/tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse",
+    "CARGO_INCREMENTAL=0",
+    "CARGO_PROFILE_DEV_DEBUG=0",
+    "CARGO_BUILD_JOBS=2",
+    "cargo",
+    "clippy",
+    "--offline",
+    "--locked",
+    "--target",
+    "wasm32-unknown-unknown",
+    "--lib",
+    "--",
+    "-D",
+    "warnings"
+  ],
+  "code": 0,
+  "signal": null
+}

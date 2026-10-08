@@ -1,0 +1,7 @@
+{
+  "outer_session_reaped": 2653,
+  "formatter_session_reaped": 55917,
+  "path": "hypercurve/src/bezier_offset.rs",
+  "before": "d89fd5372110757754f7a5808958ea8dc7cab45b890d81117b4a0c559f5dfa25",
+  "after": "5f887a1afe3ee81a37cc39b22bfbbe66a3f8c5f978a5e05b77f9a9a6df23111d"
+}

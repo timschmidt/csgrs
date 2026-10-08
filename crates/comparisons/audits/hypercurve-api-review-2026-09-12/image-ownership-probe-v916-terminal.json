@@ -1,0 +1,44 @@
+{
+  "baseline": "affine-field-v910-sources.json",
+  "source_sha256": "d3a862c125b936c3898ad674a38674fa430df33d0a3c069f0ad61f4c3cdb9d1e",
+  "processes": [
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustc",
+        "--edition=2024",
+        "--crate-name",
+        "image_ownership_probe",
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/image-ownership-probe-v916.rs",
+        "--extern",
+        "hyperreal=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperreal-dff9c97d38a41830.rlib",
+        "--extern",
+        "hypersolve=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypersolve-dab45c0236e67f19.rlib",
+        "-L",
+        "dependency=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps",
+        "-C",
+        "opt-level=3",
+        "-o",
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/image-ownership-probe-v916-binary"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.4143318240530789,
+      "log": "image-ownership-probe-v916-compile.log"
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/image-ownership-probe-v916-binary"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.0035464370157569647,
+      "log": "image-ownership-probe-v916-cases.log"
+    }
+  ],
+  "all_processes_reaped": true,
+  "rlibs": {
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperreal-dff9c97d38a41830.rlib": "56fb2078969b2f3bc96e91071dfe71819628635181836527b0fea48d29ee79c3",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypersolve-dab45c0236e67f19.rlib": "da7ddfb2f0f04ad0b406e18e57656a77a0e2928b0dedb44ccf13eb324445723f"
+  },
+  "binary_sha256": "0b1a9ea34f74af651106aa1c4fb3645ca0107293ebf944fa0e6f60ce4dcab395",
+  "output": "premise selected_source_is_one=true cached_witness=false exact_image_is_zero=true\ncase=0:0 transform=Transformed\ncase=0:0 comparison=Compared ordering=Some(Greater)\ncase=0:1 transform=Transformed\ncase=0:1 comparison=Compared ordering=Some(Greater)\npremise selected_source_is_one=true cached_witness=false exact_image_is_zero=true\ncase=1:0 transform=Transformed\ncase=1:0 comparison=Compared ordering=Some(Greater)\ncase=1:1 transform=Transformed\ncase=1:1 comparison=Compared ordering=Some(Greater)\ncomplete cases=4 wrong=4 blocked=0\n",
+  "probe_complete": true
+}

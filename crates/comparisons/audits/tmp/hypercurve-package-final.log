@@ -1,0 +1,9 @@
+   Packaging hypercurve v0.3.1 (/home/tim/Documents/GitHub/workspace/hypercurve)
+    Updating crates.io index
+error: failed to prepare local package for uploading
+
+Caused by:
+  failed to select a version for the requirement `hyperlimit = "^0.4.1"`
+  candidate versions found which didn't match: 0.4.0, 0.3.0, 0.2.0
+  location searched: crates.io index
+  required by package `hypercurve v0.3.1 (/home/tim/Documents/GitHub/workspace/hypercurve)`

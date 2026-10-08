@@ -1,0 +1,16 @@
+Preserve exact bounds and winding for extended fillets
+
+Gate selected-circle source boxes on a certified center parameter in the
+source domain. Extended centers reuse the existing center enclosure, so ray
+classification cannot prune a valid fillet crossing. Convert boundary
+crossing certificates before replay on reversed source charts.
+
+Test independent circle extents, signed quarter-disk windings, exact curve
+coverage and exported endpoint bounds. The complement-arc regression now
+reenters Boolean operations. The stronger line/parabola composition test
+retains its newly exposed native line/arc ordering blocker.
+
+Validation: 2,173 passes across 49 Hypercurve/HyperBREP targets, seven known
+promotion failures (down from eight), no new failures or timeouts. Nine
+ignored and eight previously unqualified expensive cases remain. Both
+all-target checks and immutable-source/format checks pass.

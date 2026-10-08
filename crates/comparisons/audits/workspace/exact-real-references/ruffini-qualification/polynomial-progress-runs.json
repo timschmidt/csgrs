@@ -1,0 +1,18 @@
+[
+  {
+    "mode": "jit",
+    "status": 0,
+    "error": null,
+    "signal": null,
+    "file": "jit-polynomial-progress.log",
+    "sha256": "d3eccd50fb7e86c1c9ad06e7a65cdbd2fc25b0ab8156b333e21447fb139f8092"
+  },
+  {
+    "mode": "interpreter",
+    "status": 0,
+    "error": null,
+    "signal": null,
+    "file": "interpreter-polynomial-progress.log",
+    "sha256": "d3eccd50fb7e86c1c9ad06e7a65cdbd2fc25b0ab8156b333e21447fb139f8092"
+  }
+]

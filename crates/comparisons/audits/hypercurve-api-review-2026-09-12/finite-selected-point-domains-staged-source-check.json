@@ -1,0 +1,10 @@
+{
+  "files": [
+    "src/bezier_offset.rs",
+    "src/bezier_region.rs",
+    "src/curve.rs",
+    "tests/hypercurve_path_closure.rs"
+  ],
+  "all_staged_bytes_match_tested_source": true,
+  "parent": "34ae22f1ca9059356b2a6a1fcb3f9263b2c46577"
+}

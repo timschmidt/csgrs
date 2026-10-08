@@ -1,0 +1,50 @@
+{
+  "parents": {
+    "hypercurve": "f06e89f37c52befbdab6a6f664165fffab6888f9",
+    "hypersolve": "5df3f496c7c2c5620381ac7a4e00fcdf27060ba8",
+    "hyperreal": "0cb5f29aee065c73e234e0ebb0a9e106398515bb"
+  },
+  "workspace_guard": "local-chord-complete-replay-20260924-v119-sources.json",
+  "source_manifest": "bivariate-affine-isolated-20260926-v120-sources.json",
+  "source_directory": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/source-archives/bivariate-affine-isolated-20260926-v120",
+  "build_source_directory": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/build-workspace-20260925",
+  "patch": "bivariate-affine-isolated-20260926-v120.patch",
+  "checks": [
+    {
+      "repo": "hypercurve",
+      "label": "hypercurve-fmt",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustfmt",
+        "--edition",
+        "2024",
+        "--check",
+        "src/bezier_offset.rs"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 2.1671321749454364,
+      "log": "bivariate-affine-isolated-20260926-v120-hypercurve-fmt.log"
+    },
+    {
+      "repo": "hypercurve",
+      "label": "hypercurve-clippy-0",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "clippy",
+        "--all-targets",
+        "--all-features",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "returncode": 101,
+      "elapsed_seconds": 17.641938267974183,
+      "log": "bivariate-affine-isolated-20260926-v120-hypercurve-clippy-0.log"
+    }
+  ],
+  "cases": [],
+  "binaries": {},
+  "all_processes_reaped": true,
+  "all_sources_unchanged": true
+}

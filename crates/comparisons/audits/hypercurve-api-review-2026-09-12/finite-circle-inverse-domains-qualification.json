@@ -1,0 +1,163 @@
+{
+  "status": "passed within the recorded broad qualification scope",
+  "goal_status": "active",
+  "previous_commit": "537070d1615695af7dbdb8357f0906fb7d6e20bd",
+  "commit": "08ca2e24c2658d2b50d2c10f1e2e0e2779dab417",
+  "targets": 49,
+  "passed": 2309,
+  "passed_by_repo": {
+    "hypercurve": 2077,
+    "hyperbrep": 232
+  },
+  "known_failed": [
+    "approximate_512_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions",
+    "non_ph_bezier_pair_projective_fillet_retains_algebraic_extensions",
+    "nonconvex_algebraic_chord_expansion_is_exact_and_local_collapse_is_explicit",
+    "strict_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions",
+    "unified_mixed_line_arc_erosion_splits_after_a_curved_neck_collapse"
+  ],
+  "new_failures": [],
+  "ignored": 9,
+  "expensive_previously_unqualified_exclusions": 8,
+  "timeouts_in_broad_run": 0,
+  "builds": [
+    {
+      "repository": "hypercurve",
+      "kind": "check",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "check",
+        "--all-targets",
+        "--no-default-features",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 10.630430289980723,
+      "log": "finite-circle-inverse-domains-check.log"
+    },
+    {
+      "repository": "hypercurve",
+      "kind": "test-build",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "test",
+        "--release",
+        "--all-features",
+        "--locked",
+        "--offline",
+        "--lib",
+        "--tests",
+        "--no-run",
+        "--message-format=json"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 226.34285881498363,
+      "log": "finite-circle-inverse-domains-test-build.log"
+    },
+    {
+      "repository": "hyperbrep",
+      "kind": "check",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "check",
+        "--all-targets",
+        "--no-default-features",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 8.075508314010222,
+      "log": "finite-circle-inverse-domains-hyperbrep-check.log"
+    },
+    {
+      "repository": "hyperbrep",
+      "kind": "test-build",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "test",
+        "--release",
+        "--all-features",
+        "--locked",
+        "--offline",
+        "--lib",
+        "--tests",
+        "--no-run",
+        "--message-format=json"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 112.77444608299993,
+      "log": "finite-circle-inverse-domains-hyperbrep-test-build.log"
+    }
+  ],
+  "focused_checks": 13,
+  "public_matrices_and_probes": [
+    "finite-circle-inverse-domains-admission-region-entry.json",
+    "finite-circle-inverse-domains-affine-parallel-replay.json",
+    "finite-circle-inverse-domains-affine-public.json",
+    "finite-circle-inverse-domains-analytic-probe.json",
+    "finite-circle-inverse-domains-analytic-public.json",
+    "finite-circle-inverse-domains-baseline-recheck.json",
+    "finite-circle-inverse-domains-bounds-public.json",
+    "finite-circle-inverse-domains-circle-matrix.json",
+    "finite-circle-inverse-domains-completed-probe.json",
+    "finite-circle-inverse-domains-completed.json",
+    "finite-circle-inverse-domains-constant-image-trim-matrix.json",
+    "finite-circle-inverse-domains-constructor-public.json",
+    "finite-circle-inverse-domains-cubic-replay.json",
+    "finite-circle-inverse-domains-endpoint-probe.json",
+    "finite-circle-inverse-domains-exterior-completed.json",
+    "finite-circle-inverse-domains-family-matrix.json",
+    "finite-circle-inverse-domains-finite-circle-probe.json",
+    "finite-circle-inverse-domains-finite-matrix.json",
+    "finite-circle-inverse-domains-general-trim-matrix.json",
+    "finite-circle-inverse-domains-native-poles-public.json",
+    "finite-circle-inverse-domains-poles-public.json",
+    "finite-circle-inverse-domains-previous-pairs.json",
+    "finite-circle-inverse-domains-probe-final.json",
+    "finite-circle-inverse-domains-public-replay.json",
+    "finite-circle-inverse-domains-rational-public.json",
+    "finite-circle-inverse-domains-region-carrier-matrix.json",
+    "finite-circle-inverse-domains-region-entry.json",
+    "finite-circle-inverse-domains-region-explicit.json",
+    "finite-circle-inverse-domains-region-public.json",
+    "finite-circle-inverse-domains-replay-matrix-run.json",
+    "finite-circle-inverse-domains-retained-chord-matrix.json",
+    "finite-circle-inverse-domains-retrace-public.json",
+    "finite-circle-inverse-domains-self-public.json",
+    "finite-circle-inverse-domains-tangent-matrix.json",
+    "finite-circle-inverse-domains-trim-public.json",
+    "finite-circle-inverse-domains-unit-replay.json",
+    "finite-circle-inverse-domains-winding-public.json"
+  ],
+  "parent_private_baseline": "finite-circle-inverse-baseline-audit.json",
+  "independent_circle_inverse_cases": 24,
+  "selected_domain_cases": 60,
+  "public_chart_cases": 16,
+  "public_chart_point_replays": 64,
+  "public_integration_cases": 16,
+  "additional_public_chart_executions": 4,
+  "previous_fixed_distance_cases": 32,
+  "previous_fixed_distance_point_replays": 176,
+  "attempts": [
+    "finite-circle-inverse-baseline-compile-attempt1",
+    "finite-circle-inverse-candidate1",
+    "finite-circle-inverse-domains-attempt1"
+  ],
+  "computational_scope": "Circle tangent inverse queries pass the actual finite target chart to existing scalar and compact selected-fiber projection workers, preserving the resultant-first algebraic dispatch. Duplicate scalar specialization and isolation are removed. Component branch ranking explicitly retains the normalized unit chart before clipping. No general throughput, allocation or complete closure claim.",
+  "source_files_verified": {
+    "working": 396,
+    "isolated": 1005
+  },
+  "dependency_commits": "finite-parallel-pruning-isolated-sources.json",
+  "isolated_dependency_sources": true,
+  "workspace_clean_claim": false,
+  "other_session_owns": "Hyperreal verified/ and verification/ changes; left untouched",
+  "normal_library": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypercurve-96f69e9a655f1fb5.rlib",
+  "normal_library_sha256": "4ae0b00c4bf9f0a4ee9000958e1f829e194b27d588a0b848d0c353038c6ecff5",
+  "archived_library": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-circle-inverse-domains-libraries/libhypercurve-96f69e9a655f1fb5.rlib",
+  "libtest_sha256": "b9d1633a9dae572e695da865791e8ed3a83d31d14d92aeb17bb04a6c78b78769",
+  "toolchain": "finite-parallel-pruning-toolchain.json",
+  "evidence_audit": "finite-circle-inverse-domains-worklog.md",
+  "remaining": "General point-to-carrier inverse domain migration, unsupported retained point kinds, source-cusp frames, normalized public-region construction, finite/extension corner degeneracies, known failures/exclusions and broader algebraic/computational consolidation."
+}

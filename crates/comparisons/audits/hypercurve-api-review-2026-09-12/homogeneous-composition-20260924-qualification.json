@@ -1,0 +1,225 @@
+{
+  "parent_head": "68bc4f1a5abae015f1908e40d4ea28a226db1502",
+  "snapshot": "/tmp/hypercurve-homogeneous-v3-2026-09-24",
+  "source_manifest": "homogeneous-composition-20260924-v3-sources.json",
+  "files": {
+    "benches/editing.rs": "0f3b9be77038e3992814f2013d7c15436d59e42165f0ec94ca71b7a64aa25f88",
+    "src/bezier_offset.rs": "d6f478a75d5364bd589d390f337800d936e2273430d376f21e23f1902dd73d7a",
+    "src/bezier_parameter.rs": "cf674ff7e1ad50c8737ba7d059f7682582fea7add5d2f9d44e4a1f3a4b7688df",
+    "src/bezier_region.rs": "4626b527975fb51fafed4f480bd66ad24e4657a20033d3fb7eb659b8e11e3993",
+    "src/contour.rs": "6446130d8a3cccdf06086c6cb1d3d76e1f429d6b2dbf74f8c8b8a5366ba40dec",
+    "src/curve.rs": "6633fd92e7e56618afcf84f6f644118772eb9b5f29874f147fc5561c7e975074",
+    "src/curve_corner_chain.rs": "6b30cd383963ad20309c17775507dbb37d5181577977220f65acdd43e2c06746",
+    "src/curve_region_boolean.rs": "bebac59f8e68d8a6fffaf59db8f2ecaeb42a64448b01ba5e3c6d1dafb4dcd152",
+    "src/curve_string.rs": "62f9b03f5787c5e1f25e78beca03285ca0ace27af63dc4273091b7ed73e84f88",
+    "src/curve_support.rs": "04415b74c8f86090457b3c791d85436d9513605bd74b24e00fca37421b6cb7b3",
+    "src/events.rs": "53d6fb2c66a9961491e54c7beef3ec26469612c8e7d8a7cda25f0ddc03e5c14b",
+    "src/prepared.rs": "1b97af2067d18d08bb47e67cd1d561c7b8aa2a29e3e071842229419e4010ca95",
+    "src/rational_bezier_general.rs": "dab7d0acb95f2f389a2994ff8d32fa1637d7c259d0208f396feff38257be30d5",
+    "src/self_intersect.rs": "5bb80c8a77d39b0e2c45505b459c30abd4912ea53a18008ed5c7582564bb21b1",
+    "tests/hypercurve_curve_intersection.rs": "bbbd52f629cbaafef3c830981e6e65b780d1a2bfd9262d2dfb2dd7db32bfe79e",
+    "tests/hypercurve_curve_region_promotion.rs": "63253737c006554507196a433c685a9572d07d99fc92b3febd17d359f6171ee9",
+    "tests/hypercurve_path_closure.rs": "cff0472ae34ec25b943d3520eb6570a298545317ee142858d914ebc56d8c7d92"
+  },
+  "checks": [
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "clippy",
+        "--all-targets",
+        "--all-features",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "returncode": 0,
+      "log": "homogeneous-composition-20260924-v3-qualification-check-0.log"
+    },
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "clippy",
+        "--all-targets",
+        "--no-default-features",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "returncode": 0,
+      "log": "homogeneous-composition-20260924-v3-qualification-check-1.log"
+    }
+  ],
+  "library_passed": 1207,
+  "library_ignored": 6,
+  "library_nonpasses_match_parent": [
+    {
+      "target": "hypercurve",
+      "name": "bezier_offset::conversion_tests::selected_parallel_normal_circle_intersects_genuinely_analytic_parallel_in_one_fiber",
+      "returncode": "timeout",
+      "passed": false,
+      "ignored": false,
+      "elapsed_seconds": 75.04577383492142,
+      "limit_seconds": 75,
+      "log": "homogeneous-composition-20260924-v3-qualification-case-0659.log"
+    },
+    {
+      "target": "hypercurve",
+      "name": "bezier_region::tests::algebraic_endpoint_images_reenter_shared_corner_carriers",
+      "returncode": 101,
+      "passed": false,
+      "ignored": false,
+      "elapsed_seconds": 0.06517012999393046,
+      "limit_seconds": 75,
+      "log": "homogeneous-composition-20260924-v3-qualification-case-0750.log"
+    },
+    {
+      "target": "hypercurve",
+      "name": "bezier_region::curve_corner_chain::tests::extended_fillet_region_classifies_both_sides_of_its_companion",
+      "returncode": "timeout",
+      "passed": false,
+      "ignored": false,
+      "elapsed_seconds": 75.00510785309598,
+      "limit_seconds": 75,
+      "log": "homogeneous-composition-20260924-v3-qualification-case-0746.log"
+    },
+    {
+      "target": "hypercurve",
+      "name": "bezier_region::tests::nonlinear_algebraic_endpoint_fillet_uses_complete_incident_domain",
+      "returncode": "timeout",
+      "passed": false,
+      "ignored": false,
+      "elapsed_seconds": 75.01164773502387,
+      "limit_seconds": 75,
+      "log": "homogeneous-composition-20260924-v3-qualification-case-0804.log"
+    },
+    {
+      "target": "hypercurve",
+      "name": "bezier_region::tests::nonlinear_selected_corner_chamfers_through_retained_fixed_distance_image",
+      "returncode": "timeout",
+      "passed": false,
+      "ignored": false,
+      "elapsed_seconds": 75.9820599158993,
+      "limit_seconds": 75,
+      "log": "homogeneous-composition-20260924-v3-qualification-case-0807.log"
+    },
+    {
+      "target": "hypercurve",
+      "name": "bezier_region::tests::one_fragment_materialized_loop_chamfers_to_one_middle_interval",
+      "returncode": "timeout",
+      "passed": false,
+      "ignored": false,
+      "elapsed_seconds": 75.03159053204581,
+      "limit_seconds": 75,
+      "log": "homogeneous-composition-20260924-v3-qualification-case-0814.log"
+    },
+    {
+      "target": "hypercurve",
+      "name": "bezier_region::tests::one_fragment_materialized_loop_extends_algebraic_chamfer_cuts_once",
+      "returncode": "timeout",
+      "passed": false,
+      "ignored": false,
+      "elapsed_seconds": 75.02978900098242,
+      "limit_seconds": 75,
+      "log": "homogeneous-composition-20260924-v3-qualification-case-0815.log"
+    },
+    {
+      "target": "hypercurve",
+      "name": "bezier_region::tests::one_fragment_ph_loop_projective_corners_retain_one_extended_interval",
+      "returncode": 101,
+      "passed": false,
+      "ignored": false,
+      "elapsed_seconds": 0.06546963006258011,
+      "limit_seconds": 75,
+      "log": "homogeneous-composition-20260924-v3-qualification-case-0818.log"
+    },
+    {
+      "target": "hypercurve",
+      "name": "bezier_region::tests::one_fragment_nonzero_parallel_loop_extends_chamfer_cuts_on_one_finite_envelope",
+      "returncode": "timeout",
+      "passed": false,
+      "ignored": false,
+      "elapsed_seconds": 75.02106772002298,
+      "limit_seconds": 75,
+      "log": "homogeneous-composition-20260924-v3-qualification-case-0816.log"
+    },
+    {
+      "target": "hypercurve",
+      "name": "bezier_region::tests::one_fragment_selected_loop_chamfers_from_one_interval",
+      "returncode": "timeout",
+      "passed": false,
+      "ignored": false,
+      "elapsed_seconds": 75.03385631099809,
+      "limit_seconds": 75,
+      "log": "homogeneous-composition-20260924-v3-qualification-case-0820.log"
+    },
+    {
+      "target": "hypercurve",
+      "name": "bezier_region::tests::one_fragment_selected_loop_extends_chamfer_cuts_on_its_analytic_carrier",
+      "returncode": "timeout",
+      "passed": false,
+      "ignored": false,
+      "elapsed_seconds": 75.03885003901087,
+      "limit_seconds": 75,
+      "log": "homogeneous-composition-20260924-v3-qualification-case-0821.log"
+    },
+    {
+      "target": "hypercurve",
+      "name": "bezier_region::tests::pair_native_boolean_algebraic_chord_corner_publishes_a_third_generation_fillet",
+      "returncode": "timeout",
+      "passed": false,
+      "ignored": false,
+      "elapsed_seconds": 75.00344326696359,
+      "limit_seconds": 75,
+      "log": "homogeneous-composition-20260924-v3-qualification-case-0826.log"
+    },
+    {
+      "target": "hypercurve",
+      "name": "bezier_region::tests::retained_analytic_multifragment_corner_extends_chamfer_and_fillet",
+      "returncode": 101,
+      "passed": false,
+      "ignored": false,
+      "elapsed_seconds": 0.009036269970238209,
+      "limit_seconds": 75,
+      "log": "homogeneous-composition-20260924-v3-qualification-case-0851.log"
+    },
+    {
+      "target": "hypercurve",
+      "name": "bezier_region::tests::selected_parallel_companion_fillets_without_range_promotion",
+      "returncode": "timeout",
+      "passed": false,
+      "ignored": false,
+      "elapsed_seconds": 75.00296306994278,
+      "limit_seconds": 75,
+      "log": "homogeneous-composition-20260924-v3-qualification-case-0885.log"
+    }
+  ],
+  "public_integrations_passed": 121,
+  "probe": {
+    "command": [
+      "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustc",
+      "--edition=2024",
+      "-O",
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/homogeneous-composition-20260924-probe1.rs",
+      "-L",
+      "dependency=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps",
+      "--extern",
+      "hypercurve=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypercurve-aba61d18fd1fc3f0.rlib",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/homogeneous-composition-20260924-final-probe"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.4492721649585292,
+    "limit_seconds": 150,
+    "source_sha256": "883fc8f5e7c3c249d4e030f291c54a31c4f111330e3526b862c72ff0803f9472",
+    "binary_sha256": "b22b9e7f0caa66573b4c31202abc7086cda3f8bc4fff2d82ffd0a8d2ce58016c",
+    "library_sha256": "e562105e6a50a34f37b57b608cf05157301c5768672e6ed211d2117e675eeea2",
+    "all_sources_unchanged": true,
+    "all_processes_reaped": true
+  },
+  "all_2044_inputs_unchanged": true,
+  "all_owned_processes_reaped": true
+}

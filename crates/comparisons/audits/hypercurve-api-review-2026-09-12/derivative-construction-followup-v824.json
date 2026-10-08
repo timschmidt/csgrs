@@ -1,0 +1,13 @@
+{
+  "baseline": "classified-derivative-v823-sources.json",
+  "invariants": [
+    "Differentiate the full rational numerator recurrence before reducing a selected-root image; equality only at one root is not a derivative identity.",
+    "Cache parameter-owned derivative images only when they do not own the same source parameter. Endpoint-owned expression images do not have that ownership cycle.",
+    "A batch requests every order through max_order. Its classified result now requires all requested values; max_order=0 remains an empty decided batch."
+  ],
+  "open_audit": [
+    "Eager rational endpoint construction requests three derivative orders even though the second and third are optional in storage. Trace whether a valid first-order image can coexist with a later undecided denominator proof before changing admission or demand. No such runtime failure has been reproduced.",
+    "The source denominator finite-domain proof logically establishes all positive integer powers. Assess sharing that proof if measurements or an exact counterexample show redundant or lost admission; preserve original pole exclusion before algebraic cancellation."
+  ],
+  "candidate_prepared": false
+}

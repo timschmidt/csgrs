@@ -1,0 +1,20 @@
+case 0 gcd/free/separable (True,True,True)
+case 1 gcd/free/separable (True,True,True)
+case 2 gcd/free/separable (True,True,True)
+case 3 gcd/free/separable (True,True,True)
+case 4 gcd/free/separable (True,True,True)
+case 5 gcd/free/separable (True,True,True)
+case 6 gcd/free/separable (True,True,True)
+case 7 gcd/free/separable (True,True,True)
+case 8 gcd/free/separable (True,True,True)
+case 9 gcd/free/separable (True,True,True)
+case 10 gcd/free/separable (True,True,True)
+case 11 gcd/free/separable (True,True,True)
+case 12 gcd/free/separable (True,True,True)
+case 13 gcd/free/separable (True,True,True)
+s j is 6
+s j is 0
+first: 0
+second: 36
+s: fromList [(1,0),(2,0),(3,0),(4,0),(5,0),(6,0)]
+subresultant-check: divide by zero

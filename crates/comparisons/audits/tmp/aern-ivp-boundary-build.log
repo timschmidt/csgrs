@@ -1,0 +1,15 @@
+[1 of 6] Compiling Numeric.AERN.IVP.Solver.Events.Locate ( /tmp/aern-audit.zp9Mzz/source/aern-ivp/src/Numeric/AERN/IVP/Solver/Events/Locate.hs, /tmp/aern-audit.zp9Mzz/source/aern-ivp/src/Numeric/AERN/IVP/Solver/Events/Locate.o )
+ccache: error: Read-only file system
+
+<no location info>: error:
+    `gcc' failed in phase `Assembler'. (Exit code: 1)
+[2 of 6] Compiling Numeric.AERN.IVP.Specification.Hybrid ( /tmp/aern-audit.zp9Mzz/source/aern-ivp/src/Numeric/AERN/IVP/Specification/Hybrid.hs, /tmp/aern-audit.zp9Mzz/source/aern-ivp/src/Numeric/AERN/IVP/Specification/Hybrid.o )
+ccache: error: Read-only file system
+
+<no location info>: error:
+    `gcc' failed in phase `Assembler'. (Exit code: 1)
+[3 of 6] Compiling Numeric.AERN.IVP.Specification.ODE ( /tmp/aern-audit.zp9Mzz/source/aern-ivp/src/Numeric/AERN/IVP/Specification/ODE.hs, /tmp/aern-audit.zp9Mzz/source/aern-ivp/src/Numeric/AERN/IVP/Specification/ODE.o )
+ccache: error: Read-only file system
+
+<no location info>: error:
+    `gcc' failed in phase `Assembler'. (Exit code: 1)

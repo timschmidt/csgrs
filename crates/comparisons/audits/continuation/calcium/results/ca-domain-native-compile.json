@@ -1,0 +1,30 @@
+{
+  "tag": "ca-domain-native-compile",
+  "started": "2026-09-09T03:00:55.699Z",
+  "finished": "2026-09-09T03:00:55.775Z",
+  "elapsedSeconds": 0.07340112900000001,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison",
+  "command": "gcc",
+  "args": [
+    "-O2",
+    "-g0",
+    "-Wall",
+    "-Wextra",
+    "-Werror",
+    "-isystem",
+    "../exact-real-references/flint/src",
+    "audits/continuation/calcium/flint-ca-domain-probe.c",
+    "-L",
+    "../exact-real-references/flint",
+    "-Wl,-rpath,/home/tim/Documents/GitHub/workspace/exact-real-references/flint",
+    "-lflint",
+    "-lmpfr",
+    "-lgmp",
+    "-lm",
+    "-lpthread",
+    "-o",
+    "/tmp/calcium-charpoly-solves.lbZlN8/flint-ca-domain"
+  ],
+  "code": 1,
+  "signal": null
+}

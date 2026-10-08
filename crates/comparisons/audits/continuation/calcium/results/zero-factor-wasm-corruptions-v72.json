@@ -1,0 +1,13 @@
+{
+  "tag": "zero-factor-wasm-corruptions-v72",
+  "started": "2026-09-11T21:01:20.060Z",
+  "finished": "2026-09-11T21:01:20.686Z",
+  "elapsedSeconds": 0.623689056,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "node",
+  "args": [
+    "check-zero-factor-wasm-corruptions-v72.mjs"
+  ],
+  "code": 0,
+  "signal": null
+}

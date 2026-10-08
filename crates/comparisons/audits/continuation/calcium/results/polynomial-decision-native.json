@@ -1,0 +1,11 @@
+{
+  "tag": "polynomial-decision-native",
+  "started": "2026-09-08T22:53:22.126Z",
+  "finished": "2026-09-08T22:53:22.139Z",
+  "elapsedSeconds": 0.01065177,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison",
+  "command": "/tmp/calcium-polynomial-decision.ItisYX/flint-polynomial-decision-probe",
+  "args": [],
+  "code": 0,
+  "signal": null
+}

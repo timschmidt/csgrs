@@ -1,0 +1,16 @@
+{
+  "command": [
+    "rustc",
+    "--edition=2024",
+    "-O",
+    "conic-exact-parameter-matrix-diagnostic.rs",
+    "--extern",
+    "hypercurve=/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/libhypercurve-2c7ff6f3fbe07653.rlib",
+    "-L",
+    "dependency=/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps",
+    "-o",
+    "conic-exact-parameter-matrix-build1"
+  ],
+  "library_sha256": "6cc6d0c6d148566b365c8dbb25af7a48dc4f13982f1b8e7667fab1e18109a003",
+  "returncode": 0
+}

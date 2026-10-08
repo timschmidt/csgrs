@@ -1,0 +1,83 @@
+\doxysubsection{source/hybrid/hybrid\+\_\+evolver.hpp File Reference}
+\hypertarget{hybrid__evolver_8hpp}{}\label{hybrid__evolver_8hpp}\index{source/hybrid/hybrid\_evolver.hpp@{source/hybrid/hybrid\_evolver.hpp}}
+
+
+\doxysubsubsection{Description}
+Hybrid evolver classes. 
+
+{\ttfamily \#include $<$string$>$}\newline
+{\ttfamily \#include $<$vector$>$}\newline
+{\ttfamily \#include $<$list$>$}\newline
+{\ttfamily \#include $<$iostream$>$}\newline
+{\ttfamily \#include "{}utility/tuple.\+hpp"{}}\newline
+{\ttfamily \#include "{}betterthreads/workload.\+hpp"{}}\newline
+{\ttfamily \#include "{}hybrid/hybrid\+\_\+time.\+hpp"{}}\newline
+{\ttfamily \#include "{}hybrid/hybrid\+\_\+set.\+hpp"{}}\newline
+{\ttfamily \#include "{}solvers/configuration\+\_\+interface.\+hpp"{}}\newline
+{\ttfamily \#include "{}hybrid/hybrid\+\_\+enclosure.\+hpp"{}}\newline
+{\ttfamily \#include "{}hybrid/hybrid\+\_\+orbit.\+hpp"{}}\newline
+{\ttfamily \#include "{}hybrid/hybrid\+\_\+automaton\+\_\+interface.\+hpp"{}}\newline
+{\ttfamily \#include "{}hybrid/hybrid\+\_\+evolver\+\_\+interface.\+hpp"{}}\newline
+{\ttfamily \#include "{}conclog/logging.\+hpp"{}}\newline
+\doxysubsubsubsection*{Classes}
+\begin{DoxyCompactItemize}
+\item 
+class \mbox{\hyperlink{classAriadne_1_1FlowFunctionModel}{Flow\+Function\+Model}}
+\begin{DoxyCompactList}\small\item\em A class representing the flow $\phi(x,t)$ of a differential equation $\frac{dx}{dt}=f(x)$. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1HybridEvolverBase}{Hybrid\+Evolver\+Base}}
+\begin{DoxyCompactList}\small\item\em Base routines for hybrid evolution. Includes routines for extracting system information in a mode, applying initial events, computing crossing times, computing the evolution time, and applying a time step. \end{DoxyCompactList}\item 
+struct \mbox{\hyperlink{structAriadne_1_1TransitionData}{Transition\+Data}}
+\begin{DoxyCompactList}\small\item\em A data type used to store information about a transition of a hybrid system. \end{DoxyCompactList}\item 
+struct \mbox{\hyperlink{structAriadne_1_1CrossingData}{Crossing\+Data}}
+\begin{DoxyCompactList}\small\item\em A data type used to store information about the way flow lines cross a guard $g(x)=0$. \end{DoxyCompactList}\item 
+struct \mbox{\hyperlink{structAriadne_1_1TimingData}{Timing\+Data}}
+\begin{DoxyCompactList}\small\item\em A data type used to store information about the kind of time step taken during hybrid evolution. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1HybridEvolverBaseConfiguration}{Hybrid\+Evolver\+Base\+Configuration}}
+\begin{DoxyCompactList}\small\item\em Configuration for \doxylink{classAriadne_1_1HybridEvolverBase}{Hybrid\+Evolver\+Base}, for controlling the accuracy of continuous evolution methods. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1GeneralHybridEvolver}{General\+Hybrid\+Evolver}}
+\begin{DoxyCompactList}\small\item\em A class for computing the evolution of a general hybrid system as efficiently as possible. In particular, crossing times are computed explicitly, and the number of additional constraints is minimised. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1GeneralHybridEvolverConfiguration}{General\+Hybrid\+Evolver\+Configuration}}
+\begin{DoxyCompactList}\small\item\em Configuration for \doxylink{classAriadne_1_1GeneralHybridEvolver}{General\+Hybrid\+Evolver}, for controlling the accuracy of continuous evolution methods. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1GeneralHybridEvolverFactory}{General\+Hybrid\+Evolver\+Factory}}
+\begin{DoxyCompactList}\small\item\em Factory for \doxylink{classAriadne_1_1GeneralHybridEvolver}{General\+Hybrid\+Evolver} objects. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsubsection*{Namespaces}
+\begin{DoxyCompactItemize}
+\item 
+namespace \mbox{\hyperlink{namespaceAriadne}{Ariadne}}
+\begin{DoxyCompactList}\small\item\em Top-\/level Ariadne namespace. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsubsection*{Enumerations}
+\begin{DoxyCompactItemize}
+\item 
+enum class \mbox{\hyperlink{group__HybridDynamicsSubModule_ga4179a1dd2049e4cb6ee977ee268d8470}{Crossing\+Kind}} \+: std\+::uint8\+\_\+t \{ \newline
+\mbox{\hyperlink{group__HybridDynamicsSubModule_gga4179a1dd2049e4cb6ee977ee268d8470a6084ee8bb30ae219127db8b7aece408a}{DEGENERATE}}
+, \mbox{\hyperlink{group__HybridDynamicsSubModule_gga4179a1dd2049e4cb6ee977ee268d8470a50546bf973283065b6ccf09faf7a580a}{NEGATIVE}}
+, \mbox{\hyperlink{group__HybridDynamicsSubModule_gga4179a1dd2049e4cb6ee977ee268d8470aab6c31432785221bae58327ef5f6ea58}{POSITIVE}}
+, \mbox{\hyperlink{group__HybridDynamicsSubModule_gga4179a1dd2049e4cb6ee977ee268d8470a0f9e8e3552c7f87e044893e7620b476d}{MONOTONE}}
+, \newline
+\mbox{\hyperlink{group__HybridDynamicsSubModule_gga4179a1dd2049e4cb6ee977ee268d8470af0e494a5b9821b6ae99ecc9cc4413e42}{INCREASING}}
+, \mbox{\hyperlink{group__HybridDynamicsSubModule_gga4179a1dd2049e4cb6ee977ee268d8470aeb1a1f88661e1da8ddf15d8c9818daad}{DECREASING}}
+, \mbox{\hyperlink{group__HybridDynamicsSubModule_gga4179a1dd2049e4cb6ee977ee268d8470afd60c95517f30f940fb63c6dcfd10181}{CONCAVE}}
+, \mbox{\hyperlink{group__HybridDynamicsSubModule_gga4179a1dd2049e4cb6ee977ee268d8470a87f945db7c7f9bb3f6b4931ae074a2ca}{CONVEX}}
+, \newline
+\mbox{\hyperlink{group__HybridDynamicsSubModule_gga4179a1dd2049e4cb6ee977ee268d8470aad3af5e9770232d2363f9875000c16ec}{TRANSVERSE}}
+, \mbox{\hyperlink{group__HybridDynamicsSubModule_gga4179a1dd2049e4cb6ee977ee268d8470aabc4b89db06cd86d6bf2704a06ec92d4}{GRAZING}}
+ \}
+\begin{DoxyCompactList}\small\item\em The way trajectories of the flow $\phi(x_0,t)$ of $\frac{dx}{dt}=f(x)$ cross the guard set $g(x)=0$. The rate of change of the guard function changes along flow lines is given by $d g(x(t))/dt = L_{f}g(x(t))$ where the Lie derivative $L_{f}g$ is defined by $L_{f}g(x) = (\nabla g\cdot f)(x)$. \end{DoxyCompactList}\item 
+enum class \mbox{\hyperlink{group__HybridDynamicsSubModule_ga79c7231766d05a92d72e027f2a7e9e46}{Step\+Kind}} \+: std\+::uint8\+\_\+t \{ \newline
+\mbox{\hyperlink{group__HybridDynamicsSubModule_gga79c7231766d05a92d72e027f2a7e9e46a56c1707c709ac0c044a926f60cc6f3ec}{CONSTANT\+\_\+\+EVOLUTION\+\_\+\+TIME}}
+, \mbox{\hyperlink{group__HybridDynamicsSubModule_gga79c7231766d05a92d72e027f2a7e9e46a5adf289f0fe7f1801f53f316d7fbe04f}{SPACE\+\_\+\+DEPENDENT\+\_\+\+EVOLUTION\+\_\+\+TIME}}
+, \mbox{\hyperlink{group__HybridDynamicsSubModule_gga79c7231766d05a92d72e027f2a7e9e46a31e31bf3e1720f5854ebd63e689dc243}{TIME\+\_\+\+DEPENDENT\+\_\+\+EVOLUTION\+\_\+\+TIME}}
+, \mbox{\hyperlink{group__HybridDynamicsSubModule_gga79c7231766d05a92d72e027f2a7e9e46a62c64e571d01851aa966babdab2b2418}{SPACETIME\+\_\+\+DEPENDENT\+\_\+\+EVOLUTION\+\_\+\+TIME}}
+, \newline
+\mbox{\hyperlink{group__HybridDynamicsSubModule_gga79c7231766d05a92d72e027f2a7e9e46a3b70d13b6e7e24d62e1678ddce114a4a}{PARAMETER\+\_\+\+DEPENDENT\+\_\+\+EVOLUTION\+\_\+\+TIME}}
+, \mbox{\hyperlink{group__HybridDynamicsSubModule_gga79c7231766d05a92d72e027f2a7e9e46aa91d18a1713aa8dad91c5a9d996a3358}{PARAMETER\+\_\+\+DEPENDENT\+\_\+\+FINISHING\+\_\+\+TIME}}
+, \mbox{\hyperlink{group__HybridDynamicsSubModule_gga79c7231766d05a92d72e027f2a7e9e46ad965ec4b14c3909e86d99ac6e15b5114}{SPACETIME\+\_\+\+DEPENDENT\+\_\+\+FINISHING\+\_\+\+TIME}}
+, \mbox{\hyperlink{group__HybridDynamicsSubModule_gga79c7231766d05a92d72e027f2a7e9e46ad075f5666ea37977e1f323f57560968a}{CONSTANT\+\_\+\+FINISHING\+\_\+\+TIME}}
+ \}
+\begin{DoxyCompactList}\small\item\em The kind of step taken in the evolution. Determines how the evolution time is specified. \end{DoxyCompactList}\item 
+enum class \mbox{\hyperlink{group__HybridDynamicsSubModule_gaab38dcc1842690eb2fb23b9ef2930954}{Finishing\+Kind}} \+: std\+::uint8\+\_\+t \{ \mbox{\hyperlink{group__HybridDynamicsSubModule_ggaab38dcc1842690eb2fb23b9ef2930954a3141a879c1130120e8287ec5c420c1a9}{BEFORE\+\_\+\+FINAL\+\_\+\+TIME}}
+, \mbox{\hyperlink{group__HybridDynamicsSubModule_ggaab38dcc1842690eb2fb23b9ef2930954af1e826c3c262937b0a2a8469be37e912}{AT\+\_\+\+FINAL\+\_\+\+TIME}}
+, \mbox{\hyperlink{group__HybridDynamicsSubModule_ggaab38dcc1842690eb2fb23b9ef2930954a8089fa4c7fd0faf6d6a7ceb2f2df7e76}{AFTER\+\_\+\+FINAL\+\_\+\+TIME}}
+, \mbox{\hyperlink{group__HybridDynamicsSubModule_ggaab38dcc1842690eb2fb23b9ef2930954a7fd663deae4100e4162f0f9fd7b2b879}{STRADDLE\+\_\+\+FINAL\+\_\+\+TIME}}
+ \}
+\begin{DoxyCompactList}\small\item\em The way in which the step interacts with the final evolution time. \end{DoxyCompactList}\end{DoxyCompactItemize}

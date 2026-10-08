@@ -1,0 +1,29 @@
+{
+  "returncode": 0,
+  "elapsed_seconds": 1.5158212770038517,
+  "normal_library_sha256": "0546f89b7cd883affba68150e6bab6683dd4d4d6efb69d670ed8d75a38bb20dd",
+  "log": "native-point-components-region-carrier-matrix.log",
+  "source": "region-carrier-evidence-matrix.rs",
+  "command": [
+    "rustc",
+    "--edition=2024",
+    "-O",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/region-carrier-evidence-matrix.rs",
+    "--extern",
+    "hypercurve=/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/libhypercurve-2c7ff6f3fbe07653.rlib",
+    "-L",
+    "dependency=/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps",
+    "-o",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/native-point-components-region-carrier-matrix"
+  ],
+  "source_sha256": "534305b163a1294bba39e595f2cefa9ea01cbf82f4fb9be426a652e37733d682",
+  "executable_sha256": "4193d7cd866b4ed48322474bad0e0a3724177dea61a6aaf300c083c36615e59c",
+  "counts": {
+    "boundary_replays": 2016,
+    "analytic_replays": 432,
+    "queries": 448,
+    "endpoint_replays": 2208,
+    "repeated_path_trims": 1008,
+    "certainty": "Certified"
+  }
+}

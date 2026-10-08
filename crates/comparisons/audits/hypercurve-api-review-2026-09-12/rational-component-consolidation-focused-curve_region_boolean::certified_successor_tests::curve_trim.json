@@ -1,0 +1,29 @@
+{
+  "repo": "hypercurve",
+  "target": "lib",
+  "binary": "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve-6e6572a45c5b177b",
+  "filter": "curve_region_boolean::certified_successor_tests::curve_trim",
+  "command": [
+    "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve-6e6572a45c5b177b",
+    "--test-threads=4",
+    "--color",
+    "never",
+    "curve_region_boolean::certified_successor_tests::curve_trim"
+  ],
+  "sha256": "1d5a6b9f4a9296b03fb9c47e9dc260a2197e09ad33153145a1414e5c69100a5f",
+  "returncode": 0,
+  "timed_out": false,
+  "elapsed_seconds": 0.11385508200328331,
+  "log": "rational-component-consolidation-focused-curve_region_boolean::certified_successor_tests::curve_trim.log",
+  "passed": [
+    "curve_region_boolean::certified_successor_tests::curve_trim_retains_selected_field_algebraic_chord_boundaries",
+    "curve_region_boolean::certified_successor_tests::curve_trim_retains_selected_field_algebraic_chord_overlaps"
+  ],
+  "failed": [],
+  "ignored": [],
+  "summaries": [
+    "test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 1126 filtered out; finished in 0.07s"
+  ],
+  "new_failures": [],
+  "known_failures": []
+}

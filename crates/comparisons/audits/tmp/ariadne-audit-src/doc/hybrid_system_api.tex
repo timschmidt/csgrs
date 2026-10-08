@@ -1,0 +1,127 @@
+\documentclass[a4paper,11pt]{article}
+\usepackage{amsfonts,amssymb,amsmath,amsthm}
+\usepackage{enumerate}
+
+\setlength{\oddsidemargin}{-0.4mm}
+\setlength{\textwidth}{160mm}
+
+% Title Page
+\title{\textsc{\Large Ariadne-0.5}\\[\baselineskip]HybridSystem --- Data Structure and API}
+\author{Bert van Beek, Davide Bresolin and Pieter Collins}
+\date{Draft \today}
+
+\newcommand{\B}{\mathbb{B}}
+\newcommand{\N}{\mathbb{N}}
+\newcommand{\Z}{\mathbb{Z}}
+\newcommand{\Q}{\mathbb{Q}}
+\newcommand{\R}{\mathbb{R}}
+
+\begin{document}
+\maketitle
+
+\newpage
+
+
+
+
+\section{The Hybrid System Data Type}
+
+\subsection*{Auxiliary data types}
+
+The \texttt{HybridSystem} data type makes use of the following data types.
+\begin{description}
+ \item[\rm Numerical:] Core numerical types \texttt{Bool}, \texttt{Integer}, \texttt{Rational}, \texttt{Float}, \texttt{Interval}.
+ \item[\tt StaticType:]: An enumerated type with values \texttt{\{boolean,integer,real\}}.
+ \item[\tt Event:] A structure with field \texttt{String name} representing a discrete event.
+ \item[\tt Variable:] A structure with fields \texttt{String name}. Subtypes \texttt{BooleanVariable}, \texttt{IntegerVariable} and \texttt{RealVariable}. A variable is \emph{discrete} if it is either Boolean or Integer.
+ \item[\tt BooleanExpression:] An abstract type representing a function $f:\B^n\longrightarrow\B$.
+ \item[\tt IntegerExpression:] An abstract type representing a function $f:\Z^n\longrightarrow\Z$.
+ \item[\tt RealExpression:] An abstract type representing a continuous function $f:\Z^m\times\R^n\longrightarrow\R$.
+ \item[\tt RealPredicate:] A boolean predicate on basic predicates of the form $f(x)\gtrless0$.
+\end{description}
+
+\subsection*{Composite data types}
+The following composite data types are used
+
+\begin{description}
+ \item[\tt Locations:] A pair \texttt{<List<BooleanVariable>,BooleanPredicate>}.
+ \item[\tt IntegerArguments:] A pair \texttt{<IntegerVariable,List<IntegerVariable>>} giving the result and argument variables of an integer expression.
+ \item[\tt RealArguments:] A triple \texttt{<RealVariable,List<IntegerVariable>,List<RealVariable>>} giving the result and argument variables of an real expression.
+\end{description}
+
+\subsection*{The Hybrid System data type}
+
+The \texttt{HybridSystem} data type consists of the following fields
+\begin{enumerate}[(H1)]
+ \item \texttt{List<Event> events:} A list consisting of all the events used in the system.
+ \item \texttt{List<Boolean/Integer/RealVariable> boolean/integer/real\_variables:} Lists consisting of all the variables used in the system.
+ \item \texttt{Set<Locations,IntegerArguments,IntegerExpression> integer\_equations:} A set consisting of all the integer algebraic formulae used in the system.
+ \item \texttt{Set<Locations,RealArguments,RealExpression> algebraic\_equations:} A set consisting of all the real algebraic formulae used in the system.
+ \item \texttt{Set<Locations,RealArguments,RealExpression> differential\_equations:} A set consisting of all the real differential formulae used in the system.
+ \item \texttt{Set<Locations,RealVariable,Interval> constraints:} Interval constraints on the variables.
+ \item \texttt{Set<Locations,RealArguments,RealPredicate> invariants:} A set consisting of all the invariants of the system.
+ \item \texttt{Set<Event,Locations,RealArguments,RealPredicate> guards:} A set consisting of all the guards for a given event.
+ \item \texttt{Set<Event,Locations,IntegerArguments,RealPredicate> boolean\_updates:} A set consisting of all the boolean update equations for a given event.
+ \item \texttt{Set<Event,Locations,IntegerArguments,RealPredicate> integer\_updates:} A set consisting of all the integer update equations for a given event.
+ \item \texttt{Set<Event,Locations,RealArguments,RealPredicate> real\_updates:} A set consisting of all the real update equations for a given event.
+\end{enumerate}
+
+Possible generalisations of the definition could be
+\begin{enumerate}[(G1)]
+ \item To allow the location to depend on all discrete variables, not just the boolean variables. This could make certain well-formedness checks harder, since an integer variable may be used in auxiliary equations as well as in defining the location.
+ \item To allow boolean variables in the definition of integer (and real) equations.
+ \item To allow the use of enumerated types as logical variables.
+\end{enumerate}
+
+\subsection*{Rationale}
+
+\begin{enumerate}[(R1)]
+ \item The discrete location consists of all valuations of the Boolean variables. 
+ \begin{enumerate}
+  \item Real variables cannot be used in definition of location, since their values change continuously. 
+  \item Integer variables are not used in order that the form of the equations only depends on the values of the boolean variables.
+  \item Boolean predicates are used to define sets of locations to facilitate compositional definitions.
+  \item Each equation has (potentially) a different set of locations on which it is valid. This is to allow flexibility in compositional definitions. 
+ \end{enumerate}
+ As an alternative, we could allow different behaviour depending on the Integer variables as well. This should not cause any problems, but will change the API, and means that the form of the equations depends on some integer variables.
+ 
+ \item If no update rule is given, and no algebraic equation can be used to determine the value of a variable, then the value is undefined. This is to ensure compositionality. The alternative of implicitly assuming that a variable remains constant in an update, can easily cause problems with compositional reasoning.
+ 
+ \item The Boolean variables only affect the other variables by specifying the location. This is because we do not allow implicit conversion from Boolean variables to Integer or Real variables. 
+
+ \item The ``type'' of a variable (input, state, output etc) is not defined explicitly. This is because the type is deduced from the form of the equations, and may depend on the location.
+ 
+ \item Urgent events are defined by putting the negation of the guard predicate in the invariant. This is valid, even with lower semantics, since the predicates are defined using referential equality on the elementary guard predicates $g(x) \gtrless 0$.
+\end{enumerate}
+
+
+\subsection*{Hybrid System semantics}
+
+The semantics of a hybrid system is as follows:
+\begin{enumerate}[(S1)]
+ \item In each location, a real variable may be specified by either an algebraic equation or a differential equation. If a real variable is specified by more than one equation, then it is \emph{over-specified}, and the system is invalid if the logical state enters that location. If a real variable is unspecified but is constrained, then the variable is a \emph{disturbance} input, and varies measurably within its constraints. The system is \emph{nondeterministic}. If a variable is unspecified and unconstrained, then the system is \emph{under-specified} in that location, and is invalid. If a variable is specified and constrained, then the system is \emph{ill-constrained} if the constraint is violated, and is invalid.
+ 
+ \item A variable is a \emph{state variable} in a given location if it is either discrete and not defined by an integer equation, or real and defined by a differential equation. A real variable is an \emph{input} if it is constrained but not specified. A variable is an \emph{auxiliary variable} in a location if it is determined by an integer or algebraic equation from other variables.
+
+ \item Whenever an event occurs, the value of a variable is given by the update rules valid in the \emph{source} location for the given event, and by the integer and algebraic equations valid in the \emph{target} location. All update rules are applied simultaneously, and are applied before all integer and algebraic equations in the target location. 
+
+ If a real variable is defined more than once in a transition, either by the update rules or by the algebraic equations in the target location, then it is over-specified, and it is a design error for the transition to occur. If a discrete variable is defined more than once, then the definitions must agree. If a variable is not specified and not constrained, then it may not be used in the new mode.
+
+ An alternative semantics in a transition is to insist that discrete variables also have a single definition.
+
+ \item An event may occur whenever its guard predicate is true, and must occur whenever an invariant predicate is true. 
+  
+  When considering lower semantics, we use strict inequalities for elementary predicates used in invariants and guards. When the same elementary predicate is used in an invariant and guard, we allow \emph{crossing semantics}, which means that the event occurs at the crossing time as long as it can be proved symbolically that the state can be reached taking $\leq$ inequations for the invariants and $<$ inequalities for the guards.
+
+  TODO: Give details of lower semantics.
+
+ \item There may be no algebraic loops in the definitions of the dynamic or transition rules. This is to avoid needing a semantics to solve equations.
+\end{enumerate}
+
+
+\newpage
+
+\section{The Hybrid System API}
+
+
+\end{document}          

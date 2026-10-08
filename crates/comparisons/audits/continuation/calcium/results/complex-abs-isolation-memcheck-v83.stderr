@@ -1,0 +1,182 @@
+==508256== Memcheck, a memory error detector
+==508256== Copyright (C) 2002-2026, and GNU GPL'd, by Julian Seward et al.
+==508256== Using Valgrind-3.27.1 and LibVEX; rerun with -h for copyright info
+==508256== Command: /tmp/calcium-symbolic-boundary-v83.JuGH8X/isolated-abs
+==508256== 
+before abs
+isolated-abs: /home/tim/Documents/GitHub/workspace/exact-real-references/flint/src/fmpz_lll/is_reduced_d.c:813: fmpz_lll_is_reduced_d: Assertion `(fl->rt == Z_BASIS ? fmpz_mat_is_reduced(B, fl->delta, fl->eta) : fmpz_mat_is_reduced_gram(B, fl->delta, fl->eta))' failed.
+==508256== 
+==508256== Process terminating with default action of signal 6 (SIGABRT)
+==508256==    at 0x590B32C: __pthread_kill_implementation (pthread_kill.c:44)
+==508256==    by 0x58B115D: raise (raise.c:26)
+==508256==    by 0x58986CF: abort (abort.c:77)
+==508256==    by 0x5898638: __assert_fail_base.cold (assert.c:118)
+==508256==    by 0x489189D: fmpz_lll_is_reduced_d.cold (in /home/tim/Documents/GitHub/workspace/exact-real-references/flint/libflint.so.25.0.0)
+==508256==    by 0x4BC419D: fmpz_lll_is_reduced (in /home/tim/Documents/GitHub/workspace/exact-real-references/flint/libflint.so.25.0.0)
+==508256==    by 0x4BDFE59: fmpz_lll_wrapper_with_removal_knapsack (in /home/tim/Documents/GitHub/workspace/exact-real-references/flint/libflint.so.25.0.0)
+==508256==    by 0x4BDD534: fmpz_lll_with_removal_ulll (in /home/tim/Documents/GitHub/workspace/exact-real-references/flint/libflint.so.25.0.0)
+==508256==    by 0x51A5179: _qqbar_acb_lindep (in /home/tim/Documents/GitHub/workspace/exact-real-references/flint/libflint.so.25.0.0)
+==508256==    by 0x51B0769: qqbar_guess (in /home/tim/Documents/GitHub/workspace/exact-real-references/flint/libflint.so.25.0.0)
+==508256==    by 0x51A937F: qqbar_binary_op (in /home/tim/Documents/GitHub/workspace/exact-real-references/flint/libflint.so.25.0.0)
+==508256==    by 0x51A489C: qqbar_abs (in /home/tim/Documents/GitHub/workspace/exact-real-references/flint/libflint.so.25.0.0)
+==508256== 
+==508256== HEAP SUMMARY:
+==508256==     in use at exit: 168,112 bytes in 4,076 blocks
+==508256==   total heap usage: 4,289 allocs, 213 frees, 212,765 bytes allocated
+==508256== 
+==508256== 16 bytes in 1 blocks are still reachable in loss record 1 of 14
+==508256==    at 0x48486CD: calloc (vg_replace_malloc.c:1616)
+==508256==    by 0x48DCE09: flint_calloc (in /home/tim/Documents/GitHub/workspace/exact-real-references/flint/libflint.so.25.0.0)
+==508256==    by 0x4AC5624: fmpz_poly_realloc (in /home/tim/Documents/GitHub/workspace/exact-real-references/flint/libflint.so.25.0.0)
+==508256==    by 0x4AC8A47: fmpz_poly_set_coeff_si (in /home/tim/Documents/GitHub/workspace/exact-real-references/flint/libflint.so.25.0.0)
+==508256==    by 0x51B0D4A: qqbar_init (in /home/tim/Documents/GitHub/workspace/exact-real-references/flint/libflint.so.25.0.0)
+==508256==    by 0x4004AB: main (in /tmp/calcium-symbolic-boundary-v83.JuGH8X/isolated-abs)
+==508256== 
+==508256== 16 bytes in 1 blocks are still reachable in loss record 2 of 14
+==508256==    at 0x48486CD: calloc (vg_replace_malloc.c:1616)
+==508256==    by 0x48DCE09: flint_calloc (in /home/tim/Documents/GitHub/workspace/exact-real-references/flint/libflint.so.25.0.0)
+==508256==    by 0x4AC5624: fmpz_poly_realloc (in /home/tim/Documents/GitHub/workspace/exact-real-references/flint/libflint.so.25.0.0)
+==508256==    by 0x4AC8A47: fmpz_poly_set_coeff_si (in /home/tim/Documents/GitHub/workspace/exact-real-references/flint/libflint.so.25.0.0)
+==508256==    by 0x51B0D4A: qqbar_init (in /home/tim/Documents/GitHub/workspace/exact-real-references/flint/libflint.so.25.0.0)
+==508256==    by 0x51A902E: qqbar_binary_op (in /home/tim/Documents/GitHub/workspace/exact-real-references/flint/libflint.so.25.0.0)
+==508256==    by 0x51A489C: qqbar_abs (in /home/tim/Documents/GitHub/workspace/exact-real-references/flint/libflint.so.25.0.0)
+==508256==    by 0x400516: main (in /tmp/calcium-symbolic-boundary-v83.JuGH8X/isolated-abs)
+==508256== 
+==508256== 16 bytes in 1 blocks are still reachable in loss record 3 of 14
+==508256==    at 0x48486CD: calloc (vg_replace_malloc.c:1616)
+==508256==    by 0x48DCE09: flint_calloc (in /home/tim/Documents/GitHub/workspace/exact-real-references/flint/libflint.so.25.0.0)
+==508256==    by 0x4AC5624: fmpz_poly_realloc (in /home/tim/Documents/GitHub/workspace/exact-real-references/flint/libflint.so.25.0.0)
+==508256==    by 0x4AC8A47: fmpz_poly_set_coeff_si (in /home/tim/Documents/GitHub/workspace/exact-real-references/flint/libflint.so.25.0.0)
+==508256==    by 0x51B0D4A: qqbar_init (in /home/tim/Documents/GitHub/workspace/exact-real-references/flint/libflint.so.25.0.0)
+==508256==    by 0x51A9036: qqbar_binary_op (in /home/tim/Documents/GitHub/workspace/exact-real-references/flint/libflint.so.25.0.0)
+==508256==    by 0x51A489C: qqbar_abs (in /home/tim/Documents/GitHub/workspace/exact-real-references/flint/libflint.so.25.0.0)
+==508256==    by 0x400516: main (in /tmp/calcium-symbolic-boundary-v83.JuGH8X/isolated-abs)
+==508256== 
+==508256== 16 bytes in 1 blocks are still reachable in loss record 4 of 14
+==508256==    at 0x48486CD: calloc (vg_replace_malloc.c:1616)
+==508256==    by 0x48DCE09: flint_calloc (in /home/tim/Documents/GitHub/workspace/exact-real-references/flint/libflint.so.25.0.0)
+==508256==    by 0x4AB0A59: fmpz_poly_init2 (in /home/tim/Documents/GitHub/workspace/exact-real-references/flint/libflint.so.25.0.0)
+==508256==    by 0x51B06AC: qqbar_guess (in /home/tim/Documents/GitHub/workspace/exact-real-references/flint/libflint.so.25.0.0)
+==508256==    by 0x51A937F: qqbar_binary_op (in /home/tim/Documents/GitHub/workspace/exact-real-references/flint/libflint.so.25.0.0)
+==508256==    by 0x51A489C: qqbar_abs (in /home/tim/Documents/GitHub/workspace/exact-real-references/flint/libflint.so.25.0.0)
+==508256==    by 0x400516: main (in /tmp/calcium-symbolic-boundary-v83.JuGH8X/isolated-abs)
+==508256== 
+==508256== 48 bytes in 1 blocks are still reachable in loss record 5 of 14
+==508256==    at 0x48486CD: calloc (vg_replace_malloc.c:1616)
+==508256==    by 0x48DCE09: flint_calloc (in /home/tim/Documents/GitHub/workspace/exact-real-references/flint/libflint.so.25.0.0)
+==508256==    by 0x4A7C05B: fmpz_mat_init (in /home/tim/Documents/GitHub/workspace/exact-real-references/flint/libflint.so.25.0.0)
+==508256==    by 0x51A4AE0: _qqbar_acb_lindep (in /home/tim/Documents/GitHub/workspace/exact-real-references/flint/libflint.so.25.0.0)
+==508256==    by 0x51B0769: qqbar_guess (in /home/tim/Documents/GitHub/workspace/exact-real-references/flint/libflint.so.25.0.0)
+==508256==    by 0x51A937F: qqbar_binary_op (in /home/tim/Documents/GitHub/workspace/exact-real-references/flint/libflint.so.25.0.0)
+==508256==    by 0x51A489C: qqbar_abs (in /home/tim/Documents/GitHub/workspace/exact-real-references/flint/libflint.so.25.0.0)
+==508256==    by 0x400516: main (in /tmp/calcium-symbolic-boundary-v83.JuGH8X/isolated-abs)
+==508256== 
+==508256== 48 bytes in 1 blocks are still reachable in loss record 6 of 14
+==508256==    at 0x48486CD: calloc (vg_replace_malloc.c:1616)
+==508256==    by 0x48DCE09: flint_calloc (in /home/tim/Documents/GitHub/workspace/exact-real-references/flint/libflint.so.25.0.0)
+==508256==    by 0x4A7C05B: fmpz_mat_init (in /home/tim/Documents/GitHub/workspace/exact-real-references/flint/libflint.so.25.0.0)
+==508256==    by 0x4BDD513: fmpz_lll_with_removal_ulll (in /home/tim/Documents/GitHub/workspace/exact-real-references/flint/libflint.so.25.0.0)
+==508256==    by 0x51A5179: _qqbar_acb_lindep (in /home/tim/Documents/GitHub/workspace/exact-real-references/flint/libflint.so.25.0.0)
+==508256==    by 0x51B0769: qqbar_guess (in /home/tim/Documents/GitHub/workspace/exact-real-references/flint/libflint.so.25.0.0)
+==508256==    by 0x51A937F: qqbar_binary_op (in /home/tim/Documents/GitHub/workspace/exact-real-references/flint/libflint.so.25.0.0)
+==508256==    by 0x51A489C: qqbar_abs (in /home/tim/Documents/GitHub/workspace/exact-real-references/flint/libflint.so.25.0.0)
+==508256==    by 0x400516: main (in /tmp/calcium-symbolic-boundary-v83.JuGH8X/isolated-abs)
+==508256== 
+==508256== 72 bytes in 1 blocks are still reachable in loss record 7 of 14
+==508256==    at 0x48488E1: realloc (vg_replace_malloc.c:1741)
+==508256==    by 0x48DCDCE: flint_realloc (in /home/tim/Documents/GitHub/workspace/exact-real-references/flint/libflint.so.25.0.0)
+==508256==    by 0x4AC564C: fmpz_poly_realloc (in /home/tim/Documents/GitHub/workspace/exact-real-references/flint/libflint.so.25.0.0)
+==508256==    by 0x4AA3345: fmpz_poly_cyclotomic (in /home/tim/Documents/GitHub/workspace/exact-real-references/flint/libflint.so.25.0.0)
+==508256==    by 0x51B3847: qqbar_root_of_unity (in /home/tim/Documents/GitHub/workspace/exact-real-references/flint/libflint.so.25.0.0)
+==508256==    by 0x4004BD: main (in /tmp/calcium-symbolic-boundary-v83.JuGH8X/isolated-abs)
+==508256== 
+==508256== 72 bytes in 1 blocks are still reachable in loss record 8 of 14
+==508256==    at 0x48488E1: realloc (vg_replace_malloc.c:1741)
+==508256==    by 0x48DCDCE: flint_realloc (in /home/tim/Documents/GitHub/workspace/exact-real-references/flint/libflint.so.25.0.0)
+==508256==    by 0x4AC564C: fmpz_poly_realloc (in /home/tim/Documents/GitHub/workspace/exact-real-references/flint/libflint.so.25.0.0)
+==508256==    by 0x4AC8480: fmpz_poly_set (in /home/tim/Documents/GitHub/workspace/exact-real-references/flint/libflint.so.25.0.0)
+==508256==    by 0x51A93E0: qqbar_conj (in /home/tim/Documents/GitHub/workspace/exact-real-references/flint/libflint.so.25.0.0)
+==508256==    by 0x51A488E: qqbar_abs (in /home/tim/Documents/GitHub/workspace/exact-real-references/flint/libflint.so.25.0.0)
+==508256==    by 0x400516: main (in /tmp/calcium-symbolic-boundary-v83.JuGH8X/isolated-abs)
+==508256== 
+==508256== 80 bytes in 1 blocks are still reachable in loss record 9 of 14
+==508256==    at 0x48486CD: calloc (vg_replace_malloc.c:1616)
+==508256==    by 0x48DCE09: flint_calloc (in /home/tim/Documents/GitHub/workspace/exact-real-references/flint/libflint.so.25.0.0)
+==508256==    by 0x4A7C05B: fmpz_mat_init (in /home/tim/Documents/GitHub/workspace/exact-real-references/flint/libflint.so.25.0.0)
+==508256==    by 0x4BDD4F8: fmpz_lll_with_removal_ulll (in /home/tim/Documents/GitHub/workspace/exact-real-references/flint/libflint.so.25.0.0)
+==508256==    by 0x51A5179: _qqbar_acb_lindep (in /home/tim/Documents/GitHub/workspace/exact-real-references/flint/libflint.so.25.0.0)
+==508256==    by 0x51B0769: qqbar_guess (in /home/tim/Documents/GitHub/workspace/exact-real-references/flint/libflint.so.25.0.0)
+==508256==    by 0x51A937F: qqbar_binary_op (in /home/tim/Documents/GitHub/workspace/exact-real-references/flint/libflint.so.25.0.0)
+==508256==    by 0x51A489C: qqbar_abs (in /home/tim/Documents/GitHub/workspace/exact-real-references/flint/libflint.so.25.0.0)
+==508256==    by 0x400516: main (in /tmp/calcium-symbolic-boundary-v83.JuGH8X/isolated-abs)
+==508256== 
+==508256== 128 bytes in 1 blocks are possibly lost in loss record 10 of 14
+==508256==    at 0x48488E1: realloc (vg_replace_malloc.c:1741)
+==508256==    by 0x56FC578: __gmp_default_reallocate (memory.c:101)
+==508256==    by 0x570CDD5: __gmpz_realloc (realloc.c:59)
+==508256==    by 0x5718ADF: __gmpz_set_d (set_d.c:67)
+==508256==    by 0x4A6635B: fmpz_set_d (in /home/tim/Documents/GitHub/workspace/exact-real-references/flint/libflint.so.25.0.0)
+==508256==    by 0x4A75919: fmpz_mat_get_d_mat_transpose (in /home/tim/Documents/GitHub/workspace/exact-real-references/flint/libflint.so.25.0.0)
+==508256==    by 0x4BC44E9: fmpz_lll_is_reduced_d (in /home/tim/Documents/GitHub/workspace/exact-real-references/flint/libflint.so.25.0.0)
+==508256==    by 0x4BC419D: fmpz_lll_is_reduced (in /home/tim/Documents/GitHub/workspace/exact-real-references/flint/libflint.so.25.0.0)
+==508256==    by 0x4BDFE59: fmpz_lll_wrapper_with_removal_knapsack (in /home/tim/Documents/GitHub/workspace/exact-real-references/flint/libflint.so.25.0.0)
+==508256==    by 0x4BDD534: fmpz_lll_with_removal_ulll (in /home/tim/Documents/GitHub/workspace/exact-real-references/flint/libflint.so.25.0.0)
+==508256==    by 0x51A5179: _qqbar_acb_lindep (in /home/tim/Documents/GitHub/workspace/exact-real-references/flint/libflint.so.25.0.0)
+==508256==    by 0x51B0769: qqbar_guess (in /home/tim/Documents/GitHub/workspace/exact-real-references/flint/libflint.so.25.0.0)
+==508256== 
+==508256== 192 bytes in 1 blocks are still reachable in loss record 11 of 14
+==508256==    at 0x4840AE6: malloc (vg_replace_malloc.c:447)
+==508256==    by 0x48DCD79: flint_malloc (in /home/tim/Documents/GitHub/workspace/exact-real-references/flint/libflint.so.25.0.0)
+==508256==    by 0x4F200D8: _acb_vec_init (in /home/tim/Documents/GitHub/workspace/exact-real-references/flint/libflint.so.25.0.0)
+==508256==    by 0x51B0725: qqbar_guess (in /home/tim/Documents/GitHub/workspace/exact-real-references/flint/libflint.so.25.0.0)
+==508256==    by 0x51A937F: qqbar_binary_op (in /home/tim/Documents/GitHub/workspace/exact-real-references/flint/libflint.so.25.0.0)
+==508256==    by 0x51A489C: qqbar_abs (in /home/tim/Documents/GitHub/workspace/exact-real-references/flint/libflint.so.25.0.0)
+==508256==    by 0x400516: main (in /tmp/calcium-symbolic-boundary-v83.JuGH8X/isolated-abs)
+==508256== 
+==508256== 32,768 bytes in 1 blocks are still reachable in loss record 12 of 14
+==508256==    at 0x48488E1: realloc (vg_replace_malloc.c:1741)
+==508256==    by 0x48DCDCE: flint_realloc (in /home/tim/Documents/GitHub/workspace/exact-real-references/flint/libflint.so.25.0.0)
+==508256==    by 0x4A5977F: _fmpz_new_mpz (in /home/tim/Documents/GitHub/workspace/exact-real-references/flint/libflint.so.25.0.0)
+==508256==    by 0x4A59AC5: _fmpz_promote (in /home/tim/Documents/GitHub/workspace/exact-real-references/flint/libflint.so.25.0.0)
+==508256==    by 0x4EA765C: arf_get_fmpz (in /home/tim/Documents/GitHub/workspace/exact-real-references/flint/libflint.so.25.0.0)
+==508256==    by 0x51A502C: _qqbar_acb_lindep (in /home/tim/Documents/GitHub/workspace/exact-real-references/flint/libflint.so.25.0.0)
+==508256==    by 0x51B0769: qqbar_guess (in /home/tim/Documents/GitHub/workspace/exact-real-references/flint/libflint.so.25.0.0)
+==508256==    by 0x51A937F: qqbar_binary_op (in /home/tim/Documents/GitHub/workspace/exact-real-references/flint/libflint.so.25.0.0)
+==508256==    by 0x51A489C: qqbar_abs (in /home/tim/Documents/GitHub/workspace/exact-real-references/flint/libflint.so.25.0.0)
+==508256==    by 0x400516: main (in /tmp/calcium-symbolic-boundary-v83.JuGH8X/isolated-abs)
+==508256== 
+==508256== 65,008 bytes in 4,063 blocks are possibly lost in loss record 13 of 14
+==508256==    at 0x4840AE6: malloc (vg_replace_malloc.c:447)
+==508256==    by 0x56FC524: __gmp_default_allocate (memory.c:53)
+==508256==    by 0x570CD67: __gmpz_init2 (init2.c:47)
+==508256==    by 0x4A5970A: _fmpz_new_mpz (in /home/tim/Documents/GitHub/workspace/exact-real-references/flint/libflint.so.25.0.0)
+==508256==    by 0x4A59AC5: _fmpz_promote (in /home/tim/Documents/GitHub/workspace/exact-real-references/flint/libflint.so.25.0.0)
+==508256==    by 0x4EA765C: arf_get_fmpz (in /home/tim/Documents/GitHub/workspace/exact-real-references/flint/libflint.so.25.0.0)
+==508256==    by 0x51A502C: _qqbar_acb_lindep (in /home/tim/Documents/GitHub/workspace/exact-real-references/flint/libflint.so.25.0.0)
+==508256==    by 0x51B0769: qqbar_guess (in /home/tim/Documents/GitHub/workspace/exact-real-references/flint/libflint.so.25.0.0)
+==508256==    by 0x51A937F: qqbar_binary_op (in /home/tim/Documents/GitHub/workspace/exact-real-references/flint/libflint.so.25.0.0)
+==508256==    by 0x51A489C: qqbar_abs (in /home/tim/Documents/GitHub/workspace/exact-real-references/flint/libflint.so.25.0.0)
+==508256==    by 0x400516: main (in /tmp/calcium-symbolic-boundary-v83.JuGH8X/isolated-abs)
+==508256== 
+==508256== 69,632 bytes in 1 blocks are possibly lost in loss record 14 of 14
+==508256==    at 0x4840AE6: malloc (vg_replace_malloc.c:447)
+==508256==    by 0x48DCD79: flint_malloc (in /home/tim/Documents/GitHub/workspace/exact-real-references/flint/libflint.so.25.0.0)
+==508256==    by 0x4A59651: _fmpz_new_mpz (in /home/tim/Documents/GitHub/workspace/exact-real-references/flint/libflint.so.25.0.0)
+==508256==    by 0x4A59AC5: _fmpz_promote (in /home/tim/Documents/GitHub/workspace/exact-real-references/flint/libflint.so.25.0.0)
+==508256==    by 0x4EA765C: arf_get_fmpz (in /home/tim/Documents/GitHub/workspace/exact-real-references/flint/libflint.so.25.0.0)
+==508256==    by 0x51A502C: _qqbar_acb_lindep (in /home/tim/Documents/GitHub/workspace/exact-real-references/flint/libflint.so.25.0.0)
+==508256==    by 0x51B0769: qqbar_guess (in /home/tim/Documents/GitHub/workspace/exact-real-references/flint/libflint.so.25.0.0)
+==508256==    by 0x51A937F: qqbar_binary_op (in /home/tim/Documents/GitHub/workspace/exact-real-references/flint/libflint.so.25.0.0)
+==508256==    by 0x51A489C: qqbar_abs (in /home/tim/Documents/GitHub/workspace/exact-real-references/flint/libflint.so.25.0.0)
+==508256==    by 0x400516: main (in /tmp/calcium-symbolic-boundary-v83.JuGH8X/isolated-abs)
+==508256== 
+==508256== LEAK SUMMARY:
+==508256==    definitely lost: 0 bytes in 0 blocks
+==508256==    indirectly lost: 0 bytes in 0 blocks
+==508256==      possibly lost: 134,768 bytes in 4,065 blocks
+==508256==    still reachable: 33,344 bytes in 11 blocks
+==508256==         suppressed: 0 bytes in 0 blocks
+==508256== 
+==508256== For lists of detected and suppressed errors, rerun with: -s
+==508256== ERROR SUMMARY: 3 errors from 3 contexts (suppressed: 0 from 0)
+timeout: the monitored command dumped core

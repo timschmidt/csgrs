@@ -1,0 +1,40 @@
+{
+  "baseline": "polynomial-zero-jet-v874-sources.json",
+  "rlib": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypercurve-85a9105cd1c82df7.rlib",
+  "rlib_sha256": "bbc951073e268f7a76e4926dc0856ee93f56c5f90b7351ca65a4bca35b15a61a",
+  "source_sha256": "c2dffe142a0df20f4356e9c72358b5a305bbdf4938b2bd9ec9bdca1d360bae1a",
+  "processes": [
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustc",
+        "--edition=2024",
+        "--crate-name",
+        "mixed_endpoint_order_probe",
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/mixed-endpoint-order-probe-v876.rs",
+        "--extern",
+        "hypercurve=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypercurve-85a9105cd1c82df7.rlib",
+        "-L",
+        "dependency=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps",
+        "-C",
+        "opt-level=3",
+        "-o",
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/mixed-endpoint-order-probe-v876-binary"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.46441287896595895,
+      "log": "mixed-endpoint-order-probe-v876-compile.log"
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/mixed-endpoint-order-probe-v876-binary"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.003587694140151143,
+      "log": "mixed-endpoint-order-probe-v876-cases.log"
+    }
+  ],
+  "all_processes_reaped": true,
+  "binary_sha256": "ec410cb34fa3c82e6f03cb3a19b030bf8c1ad81939336d0d47ef3e5066900cbb",
+  "output": "policy=0 family=0 order=2 selected_first=false swapped=false blocked=Boundary\npolicy=0 family=0 order=2 selected_first=false swapped=true blocked=Boundary\npolicy=0 family=0 order=2 selected_first=true swapped=false blocked=Boundary\npolicy=0 family=0 order=2 selected_first=true swapped=true blocked=Boundary\npolicy=0 family=0 order=3 selected_first=false swapped=false blocked=Boundary\npolicy=0 family=0 order=3 selected_first=false swapped=true blocked=Boundary\npolicy=0 family=0 order=3 selected_first=true swapped=false blocked=Boundary\npolicy=0 family=0 order=3 selected_first=true swapped=true blocked=Boundary\npolicy=0 family=1 order=2 selected_first=false swapped=false blocked=Boundary\npolicy=0 family=1 order=2 selected_first=false swapped=true blocked=Boundary\npolicy=0 family=1 order=2 selected_first=true swapped=false blocked=Boundary\npolicy=0 family=1 order=2 selected_first=true swapped=true blocked=Boundary\npolicy=0 family=1 order=3 selected_first=false swapped=false blocked=Boundary\npolicy=0 family=1 order=3 selected_first=false swapped=true blocked=Boundary\npolicy=0 family=1 order=3 selected_first=true swapped=false blocked=Boundary\npolicy=0 family=1 order=3 selected_first=true swapped=true blocked=Boundary\npolicy=0 family=2 order=2 selected_first=false swapped=false blocked=Boundary\npolicy=0 family=2 order=2 selected_first=false swapped=true blocked=Boundary\npolicy=0 family=2 order=2 selected_first=true swapped=false blocked=Boundary\npolicy=0 family=2 order=2 selected_first=true swapped=true blocked=Boundary\npolicy=0 family=2 order=3 selected_first=false swapped=false blocked=Boundary\npolicy=0 family=2 order=3 selected_first=false swapped=true blocked=Boundary\npolicy=0 family=2 order=3 selected_first=true swapped=false blocked=Boundary\npolicy=0 family=2 order=3 selected_first=true swapped=true blocked=Boundary\npolicy=1 family=0 order=2 selected_first=false swapped=false blocked=Boundary\npolicy=1 family=0 order=2 selected_first=false swapped=true blocked=Boundary\npolicy=1 family=0 order=2 selected_first=true swapped=false blocked=Boundary\npolicy=1 family=0 order=2 selected_first=true swapped=true blocked=Boundary\npolicy=1 family=0 order=3 selected_first=false swapped=false blocked=Boundary\npolicy=1 family=0 order=3 selected_first=false swapped=true blocked=Boundary\npolicy=1 family=0 order=3 selected_first=true swapped=false blocked=Boundary\npolicy=1 family=0 order=3 selected_first=true swapped=true blocked=Boundary\npolicy=1 family=1 order=2 selected_first=false swapped=false blocked=Boundary\npolicy=1 family=1 order=2 selected_first=false swapped=true blocked=Boundary\npolicy=1 family=1 order=2 selected_first=true swapped=false blocked=Boundary\npolicy=1 family=1 order=2 selected_first=true swapped=true blocked=Boundary\npolicy=1 family=1 order=3 selected_first=false swapped=false blocked=Boundary\npolicy=1 family=1 order=3 selected_first=false swapped=true blocked=Boundary\npolicy=1 family=1 order=3 selected_first=true swapped=false blocked=Boundary\npolicy=1 family=1 order=3 selected_first=true swapped=true blocked=Boundary\npolicy=1 family=2 order=2 selected_first=false swapped=false blocked=Boundary\npolicy=1 family=2 order=2 selected_first=false swapped=true blocked=Boundary\npolicy=1 family=2 order=2 selected_first=true swapped=false blocked=Boundary\npolicy=1 family=2 order=2 selected_first=true swapped=true blocked=Boundary\npolicy=1 family=2 order=3 selected_first=false swapped=false blocked=Boundary\npolicy=1 family=2 order=3 selected_first=false swapped=true blocked=Boundary\npolicy=1 family=2 order=3 selected_first=true swapped=false blocked=Boundary\npolicy=1 family=2 order=3 selected_first=true swapped=true blocked=Boundary\ncomplete requests=48 blocked=48\n",
+  "probe_complete": true
+}

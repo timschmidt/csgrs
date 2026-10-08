@@ -1,0 +1,127 @@
+\doxysubsection{Dense\+Differential\texorpdfstring{$<$}{<} X \texorpdfstring{$>$}{>} Class Template Reference}
+\hypertarget{classAriadne_1_1DenseDifferential}{}\label{classAriadne_1_1DenseDifferential}\index{DenseDifferential$<$ X $>$@{DenseDifferential$<$ X $>$}}
+
+
+{\ttfamily \#include $<$dense\+\_\+differential.\+hpp$>$}
+
+
+
+\doxysubsubsection{Description}
+\subsubsection*{template$<$class X$>$\newline
+class Ariadne\+::\+Dense\+Differential$<$ X $>$}
+The partial derivatives of a variable with respect to other variables. \doxysubsubsubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1DenseDifferential_ae9fcec82bf95b995730d083a79bcb628}\label{classAriadne_1_1DenseDifferential_ae9fcec82bf95b995730d083a79bcb628} 
+{\bfseries Dense\+Differential} ()
+\begin{DoxyCompactList}\small\item\em Default constructor constructs a constant of degree zero. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1DenseDifferential_a60381eb9e8e9ce90991e237f79cb73f1}\label{classAriadne_1_1DenseDifferential_a60381eb9e8e9ce90991e237f79cb73f1} 
+{\bfseries Dense\+Differential} (\mbox{\hyperlink{namespaceAriadne_acd8b5f68421eb22a84277ef7c9c0ee2a}{Size\+Type}} a, \mbox{\hyperlink{namespaceAriadne_a80311bc831cfc870fd65158180330a77}{Degree\+Type}} d)
+\begin{DoxyCompactList}\small\item\em The constant zero of degree {\itshape d} in {\itshape a} arguments. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1DenseDifferential_aef1e008e034c24bbefa7351e3026640d}\label{classAriadne_1_1DenseDifferential_aef1e008e034c24bbefa7351e3026640d} 
+{\footnotesize template$<$class XX$>$ }\\{\bfseries Dense\+Differential} (\mbox{\hyperlink{namespaceAriadne_acd8b5f68421eb22a84277ef7c9c0ee2a}{Size\+Type}} a, \mbox{\hyperlink{namespaceAriadne_a80311bc831cfc870fd65158180330a77}{Degree\+Type}} d, const XX \texorpdfstring{$\ast$}{*}ptr)
+\begin{DoxyCompactList}\small\item\em A taylor variable of degree {\itshape d} in {\itshape arguments}, with values given by the \doxylink{classAriadne_1_1Array}{Array} based at {\itshape ptr}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1DenseDifferential_ab5382419aa5a85aa95c7f54307e4a607}\label{classAriadne_1_1DenseDifferential_ab5382419aa5a85aa95c7f54307e4a607} 
+{\footnotesize template$<$class XX$>$ }\\{\bfseries Dense\+Differential} (const \mbox{\hyperlink{classAriadne_1_1DenseDifferential}{Dense\+Differential}}$<$ XX $>$ \&x)
+\begin{DoxyCompactList}\small\item\em A taylor variable of degree {\itshape d} in {\itshape arguments}, with values given by the \doxylink{classAriadne_1_1Array}{Array} based at {\itshape ptr}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1DenseDifferential_a73c133502aac7bcd7767c4e24f82c3c8}\label{classAriadne_1_1DenseDifferential_a73c133502aac7bcd7767c4e24f82c3c8} 
+\mbox{\hyperlink{classAriadne_1_1DenseDifferential}{Dense\+Differential}}$<$ X $>$ \& {\bfseries operator=} (const X \&c)
+\begin{DoxyCompactList}\small\item\em Assign from a constant. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1DenseDifferential_ae9b8fb496e223c29f261edff47fdad79}\label{classAriadne_1_1DenseDifferential_ae9b8fb496e223c29f261edff47fdad79} 
+\mbox{\hyperlink{namespaceAriadne_a76a8b016e5ad61faf9062cc387df5016}{Bool}} {\bfseries operator==} (const \mbox{\hyperlink{classAriadne_1_1DenseDifferential}{Dense\+Differential}}$<$ X $>$ \&other) const
+\begin{DoxyCompactList}\small\item\em Equality operator. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1DenseDifferential_a14628a149ee77bbbeeaf0aa4cca5fd33}\label{classAriadne_1_1DenseDifferential_a14628a149ee77bbbeeaf0aa4cca5fd33} 
+\mbox{\hyperlink{namespaceAriadne_a76a8b016e5ad61faf9062cc387df5016}{Bool}} {\bfseries operator!=} (const \mbox{\hyperlink{classAriadne_1_1DenseDifferential}{Dense\+Differential}}$<$ X $>$ \&other) const
+\begin{DoxyCompactList}\small\item\em Inequality operator. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1DenseDifferential_ac553426d3e8c493742606dbe03855b08}\label{classAriadne_1_1DenseDifferential_ac553426d3e8c493742606dbe03855b08} 
+\mbox{\hyperlink{namespaceAriadne_acd8b5f68421eb22a84277ef7c9c0ee2a}{Size\+Type}} {\bfseries argument\+\_\+size} () const
+\begin{DoxyCompactList}\small\item\em The number of variables of the argument. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1DenseDifferential_a84847fadf9927f5cafdc5d68331bb74c}\label{classAriadne_1_1DenseDifferential_a84847fadf9927f5cafdc5d68331bb74c} 
+\mbox{\hyperlink{namespaceAriadne_a80311bc831cfc870fd65158180330a77}{Degree\+Type}} {\bfseries degree} () const
+\begin{DoxyCompactList}\small\item\em The degree (number of derivatives computed). \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1DenseDifferential_a3bf892ca4d5c0b4498db4bf3cf965542}\label{classAriadne_1_1DenseDifferential_a3bf892ca4d5c0b4498db4bf3cf965542} 
+const X \& {\bfseries value} () const
+\begin{DoxyCompactList}\small\item\em The value of the quantity. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1DenseDifferential_a1ef1b5edcefb3d0f8801cd8fa7cd29da}\label{classAriadne_1_1DenseDifferential_a1ef1b5edcefb3d0f8801cd8fa7cd29da} 
+X \& {\bfseries value} ()
+\begin{DoxyCompactList}\small\item\em A reference to the value of the quantity. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1DenseDifferential_a62c1815f07bbe8430d65a9c0f9339a9e}\label{classAriadne_1_1DenseDifferential_a62c1815f07bbe8430d65a9c0f9339a9e} 
+\mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} {\bfseries set\+\_\+value} (const X \&)
+\begin{DoxyCompactList}\small\item\em \doxylink{classAriadne_1_1Set}{Set} the value of the quantity. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1DenseDifferential_a7be09d8878928dfe4be626f6acddb84f}\label{classAriadne_1_1DenseDifferential_a7be09d8878928dfe4be626f6acddb84f} 
+const X \& {\bfseries gradient} (\mbox{\hyperlink{namespaceAriadne_acd8b5f68421eb22a84277ef7c9c0ee2a}{Size\+Type}} j) const
+\begin{DoxyCompactList}\small\item\em The variation of the quantity with respect to the {\itshape j\textsuperscript{th}} argument. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1DenseDifferential_a570556560d3d6d5f12eb925a32e83d2e}\label{classAriadne_1_1DenseDifferential_a570556560d3d6d5f12eb925a32e83d2e} 
+const \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ X $>$ \& {\bfseries data} () const
+\begin{DoxyCompactList}\small\item\em The \doxylink{classAriadne_1_1Array}{Array} of derivative values. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1DenseDifferential_adf988f7557f59927d4e422bc860b2c61}\label{classAriadne_1_1DenseDifferential_adf988f7557f59927d4e422bc860b2c61} 
+\mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ X $>$ \& {\bfseries data} ()
+\begin{DoxyCompactList}\small\item\em A reference to the \doxylink{classAriadne_1_1Array}{Array} of derivative values. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1DenseDifferential_a2d4bbed27f8826b01f7655d8b8f57341}\label{classAriadne_1_1DenseDifferential_a2d4bbed27f8826b01f7655d8b8f57341} 
+X \& {\bfseries operator\mbox{[}$\,$\mbox{]}} (const Multi\+Index \&a)
+\begin{DoxyCompactList}\small\item\em A reference to the {\itshape i\textsuperscript{th}} derivative $D^af=d^{|a|}f/dx_1^{a_1}\cdots dx_n^{a_n}$. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1DenseDifferential_abe84f59e0597523d39d90b78553d4458}\label{classAriadne_1_1DenseDifferential_abe84f59e0597523d39d90b78553d4458} 
+const X \& {\bfseries operator\mbox{[}$\,$\mbox{]}} (const Multi\+Index \&a) const
+\begin{DoxyCompactList}\small\item\em The {\itshape i\textsuperscript{th}} derivative $D^af=d^{|a|}f/dx_1^{a_1}\cdots dx_n^{a_n}$. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1DenseDifferential_ae14c08775ee1121097e25e633550956a}\label{classAriadne_1_1DenseDifferential_ae14c08775ee1121097e25e633550956a} 
+\mbox{\hyperlink{classAriadne_1_1DenseDifferential}{Dense\+Differential}}$<$ X $>$ \& {\bfseries assign} (const \mbox{\hyperlink{classAriadne_1_1DenseDifferential}{Dense\+Differential}}$<$ X $>$ \&x)
+\begin{DoxyCompactList}\small\item\em Assign all elements of degree less than the degree of {\itshape x} to those of {\itshape x} . \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1DenseDifferential_a9f018229c13a1713eeaa39dcb577a6f2}\label{classAriadne_1_1DenseDifferential_a9f018229c13a1713eeaa39dcb577a6f2} 
+\mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} {\bfseries cleanup} ()
+\begin{DoxyCompactList}\small\item\em Remove any unnecessary entries. (Only needed for compatibility with other \doxylink{classAriadne_1_1Differential}{Differential} classes.) \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1DenseDifferential_a8360b01498b45617a96254548dea8173}\label{classAriadne_1_1DenseDifferential_a8360b01498b45617a96254548dea8173} 
+\mbox{\hyperlink{classAriadne_1_1DenseDifferential}{Dense\+Differential}}$<$ X $>$ \& {\bfseries operator+=} (const \mbox{\hyperlink{classAriadne_1_1DenseDifferential}{Dense\+Differential}}$<$ X $>$ \&x)
+\begin{DoxyCompactList}\small\item\em Add another variable. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1DenseDifferential_ab4167d877251a256bb097b2c6967679e}\label{classAriadne_1_1DenseDifferential_ab4167d877251a256bb097b2c6967679e} 
+\mbox{\hyperlink{classAriadne_1_1DenseDifferential}{Dense\+Differential}}$<$ X $>$ \& {\bfseries operator-\/=} (const \mbox{\hyperlink{classAriadne_1_1DenseDifferential}{Dense\+Differential}}$<$ X $>$ \&x)
+\begin{DoxyCompactList}\small\item\em Subtract another variable. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1DenseDifferential_aed66cee313b05d5a74db42e4b9d3c1a5}\label{classAriadne_1_1DenseDifferential_aed66cee313b05d5a74db42e4b9d3c1a5} 
+\mbox{\hyperlink{classAriadne_1_1DenseDifferential}{Dense\+Differential}}$<$ X $>$ \& {\bfseries operator+=} (const X \&c)
+\begin{DoxyCompactList}\small\item\em Add a constant. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1DenseDifferential_ac51d5153a7879f715858e141a4dbe1e6}\label{classAriadne_1_1DenseDifferential_ac51d5153a7879f715858e141a4dbe1e6} 
+\mbox{\hyperlink{classAriadne_1_1DenseDifferential}{Dense\+Differential}}$<$ X $>$ \& {\bfseries operator-\/=} (const X \&c)
+\begin{DoxyCompactList}\small\item\em Subtract a constant. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1DenseDifferential_a3bf28fdd763c4a1517424eaf9256ae8d}\label{classAriadne_1_1DenseDifferential_a3bf28fdd763c4a1517424eaf9256ae8d} 
+\mbox{\hyperlink{classAriadne_1_1DenseDifferential}{Dense\+Differential}}$<$ X $>$ \& {\bfseries operator\texorpdfstring{$\ast$}{*}=} (const X \&c)
+\begin{DoxyCompactList}\small\item\em Multiply by a constant. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1DenseDifferential_a69c698e3a7167dc52b2807ebc1dd2818}\label{classAriadne_1_1DenseDifferential_a69c698e3a7167dc52b2807ebc1dd2818} 
+\mbox{\hyperlink{classAriadne_1_1DenseDifferential}{Dense\+Differential}}$<$ X $>$ \& {\bfseries operator/=} (const X \&c)
+\begin{DoxyCompactList}\small\item\em Divide by a constant. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsubsection*{Static Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1DenseDifferential_ad53ce5cd2f95d1d0bf0894926bd01358}\label{classAriadne_1_1DenseDifferential_ad53ce5cd2f95d1d0bf0894926bd01358} 
+static \mbox{\hyperlink{classAriadne_1_1DenseDifferential}{Dense\+Differential}}$<$ X $>$ {\bfseries constant} (\mbox{\hyperlink{namespaceAriadne_acd8b5f68421eb22a84277ef7c9c0ee2a}{Size\+Type}} as, \mbox{\hyperlink{namespaceAriadne_a80311bc831cfc870fd65158180330a77}{Degree\+Type}} d, const X \&c)
+\begin{DoxyCompactList}\small\item\em A constant differential in {\itshape as} variables at degree {\itshape d} with value {\itshape c}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1DenseDifferential_a61bd30b86b0c55d6791a11b8f5c6492c}\label{classAriadne_1_1DenseDifferential_a61bd30b86b0c55d6791a11b8f5c6492c} 
+static \mbox{\hyperlink{classAriadne_1_1DenseDifferential}{Dense\+Differential}}$<$ X $>$ {\bfseries variable} (\mbox{\hyperlink{namespaceAriadne_acd8b5f68421eb22a84277ef7c9c0ee2a}{Size\+Type}} as, \mbox{\hyperlink{namespaceAriadne_a80311bc831cfc870fd65158180330a77}{Degree\+Type}} d, const X \&x, \mbox{\hyperlink{namespaceAriadne_acd8b5f68421eb22a84277ef7c9c0ee2a}{Size\+Type}} i)
+\begin{DoxyCompactList}\small\item\em The {\itshape i\textsuperscript{th}} variable of {\itshape as} at degree {\itshape d} with value {\itshape x}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1DenseDifferential_af8cd43072c173dc1e1bd99e190a6e26f}\label{classAriadne_1_1DenseDifferential_af8cd43072c173dc1e1bd99e190a6e26f} 
+static \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ \mbox{\hyperlink{classAriadne_1_1DenseDifferential}{Dense\+Differential}}$<$ X $>$ $>$ {\bfseries constants} (\mbox{\hyperlink{namespaceAriadne_acd8b5f68421eb22a84277ef7c9c0ee2a}{Size\+Type}} rs, \mbox{\hyperlink{namespaceAriadne_acd8b5f68421eb22a84277ef7c9c0ee2a}{Size\+Type}} as, \mbox{\hyperlink{namespaceAriadne_a80311bc831cfc870fd65158180330a77}{Degree\+Type}} d, const \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ X $>$ \&c)
+\begin{DoxyCompactList}\small\item\em A vector of constant differentials of size {\itshape rs} in {\itshape as} variables at degree {\itshape d} and value {\itshape c}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1DenseDifferential_a69111844081322d2064b54e6d6f2c5f9}\label{classAriadne_1_1DenseDifferential_a69111844081322d2064b54e6d6f2c5f9} 
+static \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ \mbox{\hyperlink{classAriadne_1_1DenseDifferential}{Dense\+Differential}}$<$ X $>$ $>$ {\bfseries variables} (\mbox{\hyperlink{namespaceAriadne_acd8b5f68421eb22a84277ef7c9c0ee2a}{Size\+Type}} rs, \mbox{\hyperlink{namespaceAriadne_acd8b5f68421eb22a84277ef7c9c0ee2a}{Size\+Type}} as, \mbox{\hyperlink{namespaceAriadne_a80311bc831cfc870fd65158180330a77}{Degree\+Type}} d, const \mbox{\hyperlink{classAriadne_1_1Vector}{Vector}}$<$ X $>$ \&x)
+\begin{DoxyCompactList}\small\item\em A vector of differential variables of size {\itshape rs} in {\itshape as} variables (with {\itshape rs} equal to {\itshape as}) at degree {\itshape d} and value {\itshape x}. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsubsection*{Friends}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1DenseDifferential_a1d8f7c6bc54c628af13c00102b5bf3aa}\label{classAriadne_1_1DenseDifferential_a1d8f7c6bc54c628af13c00102b5bf3aa} 
+\mbox{\hyperlink{classAriadne_1_1DenseDifferential}{Dense\+Differential}}$<$ X $>$ {\bfseries rec} (const \mbox{\hyperlink{classAriadne_1_1DenseDifferential}{Dense\+Differential}}$<$ X $>$ \&x)
+\begin{DoxyCompactList}\small\item\em Reciprocal. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1DenseDifferential_a9f36e9d31871ca47e2abde09d95b9fda}\label{classAriadne_1_1DenseDifferential_a9f36e9d31871ca47e2abde09d95b9fda} 
+\mbox{\hyperlink{classAriadne_1_1DenseDifferential}{Dense\+Differential}}$<$ X $>$ {\bfseries pow} (const \mbox{\hyperlink{classAriadne_1_1DenseDifferential}{Dense\+Differential}}$<$ X $>$ \&x, \mbox{\hyperlink{namespaceAriadne_a008e7f6ae8f621fbb1d876061812b9b2}{Int}} k)
+\begin{DoxyCompactList}\small\item\em Power. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1DenseDifferential_add2f256495eeb48d37eeda4042cb0e1a}\label{classAriadne_1_1DenseDifferential_add2f256495eeb48d37eeda4042cb0e1a} 
+\mbox{\hyperlink{classAriadne_1_1DenseDifferential}{Dense\+Differential}}$<$ X $>$ {\bfseries sqrt} (const \mbox{\hyperlink{classAriadne_1_1DenseDifferential}{Dense\+Differential}}$<$ X $>$ \&x)
+\begin{DoxyCompactList}\small\item\em Square root. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1DenseDifferential_a124a29cda9d8a20cecfcadf53a273e66}\label{classAriadne_1_1DenseDifferential_a124a29cda9d8a20cecfcadf53a273e66} 
+\mbox{\hyperlink{classAriadne_1_1DenseDifferential}{Dense\+Differential}}$<$ X $>$ {\bfseries exp} (const \mbox{\hyperlink{classAriadne_1_1DenseDifferential}{Dense\+Differential}}$<$ X $>$ \&x)
+\begin{DoxyCompactList}\small\item\em Exponential. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1DenseDifferential_a52581db8518887a3713c353ed775281b}\label{classAriadne_1_1DenseDifferential_a52581db8518887a3713c353ed775281b} 
+\mbox{\hyperlink{classAriadne_1_1DenseDifferential}{Dense\+Differential}}$<$ X $>$ {\bfseries log} (const \mbox{\hyperlink{classAriadne_1_1DenseDifferential}{Dense\+Differential}}$<$ X $>$ \&x)
+\begin{DoxyCompactList}\small\item\em \doxylink{classAriadne_1_1Natural}{Natural} logarithm. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+The documentation for this class was generated from the following file\+:\begin{DoxyCompactItemize}
+\item 
+source/algebra/\mbox{\hyperlink{dense__differential_8hpp}{dense\+\_\+differential.\+hpp}}\end{DoxyCompactItemize}

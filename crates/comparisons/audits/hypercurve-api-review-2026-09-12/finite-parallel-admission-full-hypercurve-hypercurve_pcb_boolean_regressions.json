@@ -1,0 +1,31 @@
+{
+  "repo": "hypercurve",
+  "target": "hypercurve_pcb_boolean_regressions",
+  "binary": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve_pcb_boolean_regressions-1c3bf40f201d1db5",
+  "command": [
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve_pcb_boolean_regressions-1c3bf40f201d1db5",
+    "--test-threads=4",
+    "--color",
+    "never",
+    "--skip",
+    "easyduino_scale_process_image_containment_corpus",
+    "--skip",
+    "easyduino_uno_scale_process_image_with_holes_corpus"
+  ],
+  "sha256": "c7403d8a63b0b1b9890f61054ca03fe3d2817aba362935828880b5bb3295c178",
+  "returncode": 0,
+  "timed_out": false,
+  "elapsed_seconds": 28.05439138499787,
+  "log": "finite-parallel-admission-full-hypercurve-hypercurve_pcb_boolean_regressions.log",
+  "passed": [
+    "pcb_process_image_hole_ownership_culls_sparse_materials",
+    "pcb_process_image_containment_regression_decides_exactly"
+  ],
+  "failed": [],
+  "ignored": [],
+  "summaries": [
+    "test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 2 filtered out; finished in 28.01s"
+  ],
+  "new_failures": [],
+  "known_failures": []
+}

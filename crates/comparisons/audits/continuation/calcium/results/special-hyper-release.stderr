@@ -1,0 +1,4 @@
+     Locking 9 packages to latest Rust 1.97.0 compatible versions
+   Compiling calcium-hyper-special-probe v0.1.0 (/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/special-probe)
+    Finished `release` profile [optimized] target(s) in 0.26s
+     Running `/home/tim/Documents/GitHub/workspace/.audit-builds/calcium-baseline/release/calcium-hyper-special-probe`

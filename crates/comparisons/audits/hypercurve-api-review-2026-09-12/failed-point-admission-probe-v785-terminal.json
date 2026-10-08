@@ -1,0 +1,39 @@
+{
+  "baseline": "boundary-provenance-admission-v783-sources.json",
+  "rlib": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypercurve-85a9105cd1c82df7.rlib",
+  "rlib_sha256": "c8896fc83f92954248408f8ed57a0dd8bb80035c1cee234538af0e4a4198bf52",
+  "source_sha256": "3593b973e6da3ef301f52ef6a63e0c347123f181b649eedbe689a66f254cb723",
+  "processes": [
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustc",
+        "--edition=2024",
+        "--crate-name",
+        "failed_point_admission_probe",
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/failed-point-admission-probe-v785.rs",
+        "--extern",
+        "hypercurve=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypercurve-85a9105cd1c82df7.rlib",
+        "-L",
+        "dependency=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps",
+        "-C",
+        "opt-level=3",
+        "-o",
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/failed-point-admission-probe-v785-binary"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.514596926048398,
+      "log": "failed-point-admission-probe-v785-compile.log"
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/failed-point-admission-probe-v785-binary"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.0035904429387301207,
+      "log": "failed-point-admission-probe-v785-run.log"
+    }
+  ],
+  "all_processes_reaped": true,
+  "binary_sha256": "af909db7e7bc962f80000cdb44607d1b7826e71e3c84e9dc61ff49e74adbc75c",
+  "probe_complete": true
+}

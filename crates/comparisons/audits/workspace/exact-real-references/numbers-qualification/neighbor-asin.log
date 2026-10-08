@@ -1,0 +1,2 @@
+constructed asin terms=740 input~0.9909229225916945
+FAIL asin terms=740 precision=32 error_ulps=-10.397938251107329

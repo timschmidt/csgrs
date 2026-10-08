@@ -1,0 +1,23 @@
+{
+  "repos": {
+    "hypercurve": {
+      "parent": "420991cf2ee2fff43266979ac6b4fe8031f9219f",
+      "paths": {
+        "src/bezier_offset.rs": "2166835a8085d8010e8c0f65b2a526d84047b237a6e0defd9ec3f6f0e52ffb38",
+        "src/bezier_retained_overlap.rs": "cc41f6bd9e04e18403f62766f8d9ef3559f8204324e3e0798f68680cfeb9e5bc",
+        "src/curve_intersection.rs": "f8248aa4e54b9697420a5635318855e1eff8a805582e3bfdcdd9cfb7af859b1c",
+        "src/curve_region_boolean.rs": "3ba4da80aad62fbf1ebe6a0810dd469f1c550d7ecde9f4b82dd4e5b50edf54a6",
+        "src/curve_support_intersection.rs": "397e1f3bf2472cf4b97e7142a7c0ba4220b0c05c13fee4823799f622ca8f339a",
+        "src/lib.rs": "7730cc0cf3b7ce518dfa88a56fc5e638adca5a03bf8325766f4813b065e5ba18",
+        "src/rational_bezier_general.rs": "4a8bc67a75c5691c450d810a283424cee3d57bfcc7400070b08e1547124da8ff",
+        "tests/hypercurve_bezier_arrangement.rs": "d998f89a6e0dd57520c0e6c6e8ea27b8b07f664492d3e1c2f4b2a77e5cd2d598",
+        "tests/hypercurve_bezier_fit_offset.rs": "04a60e57c3b05ceb91650d4d6f547ade5adfe322047e67f355c31a58ec0479b8",
+        "tests/hypercurve_curve.rs": "38a64443a31825b7dbf395a3437f6005c67ebbace69a0b6df236b47a34c6164b",
+        "tests/hypercurve_curve_intersection.rs": "fd6074c8f2962a2c0f16a63ede50b23e86bfbb60e03cc6305361f9af30b57543",
+        "tests/hypercurve_rational_bezier.rs": "9e5aca1480ea1cae0a2b3e3d1609e87c12d96c24067163eb0a6d83ec06a3105b"
+      }
+    }
+  },
+  "qualification": "overlap-orientation-20260928-v709-terminal.json",
+  "verified_source_files": 2047
+}

@@ -1,0 +1,29 @@
+{
+  "source_manifest": "point-incidence-evidence-20260926-v292-sources.json",
+  "source_directory": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/source-archives/point-incidence-evidence-20260926-v292",
+  "cases": [],
+  "builds": [
+    {
+      "crate": "hypercurve",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "test",
+        "--lib",
+        "--release",
+        "--all-features",
+        "--no-run",
+        "--message-format=json",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 101,
+      "log": "point-incidence-evidence-20260926-v292-hypercurve-build.log",
+      "elapsed_seconds": 18.19011382490862
+    }
+  ],
+  "all_processes_reaped": true,
+  "checks": [],
+  "qualification_scope": "Retained point-incidence parameter visitation and demand-driven existence checks; all-preimage, collapsed-circle, correlated exterior, membership, component and fillet controls; both feature Clippy checks",
+  "failure": "build failure",
+  "qualification_complete": false
+}

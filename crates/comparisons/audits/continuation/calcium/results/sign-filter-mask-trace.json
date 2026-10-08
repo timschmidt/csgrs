@@ -1,0 +1,11 @@
+{
+  "tag": "sign-filter-mask-trace",
+  "started": "2026-09-09T19:09:57.909Z",
+  "finished": "2026-09-09T19:09:57.925Z",
+  "elapsedSeconds": 0.012971020999999994,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "/tmp/calcium-sign-filter-mask.ctu9Hl/candidate-trace",
+  "args": [],
+  "code": 0,
+  "signal": null
+}

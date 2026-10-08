@@ -1,0 +1,161 @@
+{
+  "status": "passed within the recorded broad qualification scope",
+  "goal_status": "active",
+  "previous_commit": "34ae22f1ca9059356b2a6a1fcb3f9263b2c46577",
+  "commit": "537070d1615695af7dbdb8357f0906fb7d6e20bd",
+  "targets": 49,
+  "passed": 2307,
+  "passed_by_repo": {
+    "hypercurve": 2075,
+    "hyperbrep": 232
+  },
+  "known_failed": [
+    "approximate_512_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions",
+    "non_ph_bezier_pair_projective_fillet_retains_algebraic_extensions",
+    "nonconvex_algebraic_chord_expansion_is_exact_and_local_collapse_is_explicit",
+    "strict_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions",
+    "unified_mixed_line_arc_erosion_splits_after_a_curved_neck_collapse"
+  ],
+  "new_failures": [],
+  "ignored": 9,
+  "expensive_previously_unqualified_exclusions": 8,
+  "timeouts_in_broad_run": 0,
+  "builds": [
+    {
+      "repository": "hypercurve",
+      "kind": "check",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "check",
+        "--all-targets",
+        "--no-default-features",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 5.622753506992012,
+      "log": "finite-selected-point-domains-check.log"
+    },
+    {
+      "repository": "hypercurve",
+      "kind": "test-build",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "test",
+        "--release",
+        "--all-features",
+        "--locked",
+        "--offline",
+        "--lib",
+        "--tests",
+        "--no-run",
+        "--message-format=json"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 230.5325151399884,
+      "log": "finite-selected-point-domains-test-build.log"
+    },
+    {
+      "repository": "hyperbrep",
+      "kind": "check",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "check",
+        "--all-targets",
+        "--no-default-features",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 3.4189599270175677,
+      "log": "finite-selected-point-domains-hyperbrep-check.log"
+    },
+    {
+      "repository": "hyperbrep",
+      "kind": "test-build",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "test",
+        "--release",
+        "--all-features",
+        "--locked",
+        "--offline",
+        "--lib",
+        "--tests",
+        "--no-run",
+        "--message-format=json"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 110.4192239639815,
+      "log": "finite-selected-point-domains-hyperbrep-test-build.log"
+    }
+  ],
+  "focused_checks": 24,
+  "public_matrices_and_probes": [
+    "finite-selected-point-domains-admission-region-entry.json",
+    "finite-selected-point-domains-affine-parallel-replay.json",
+    "finite-selected-point-domains-affine-public.json",
+    "finite-selected-point-domains-analytic-probe.json",
+    "finite-selected-point-domains-analytic-public.json",
+    "finite-selected-point-domains-baseline-recheck.json",
+    "finite-selected-point-domains-bounds-public.json",
+    "finite-selected-point-domains-circle-matrix.json",
+    "finite-selected-point-domains-completed-probe.json",
+    "finite-selected-point-domains-completed.json",
+    "finite-selected-point-domains-constant-image-trim-matrix.json",
+    "finite-selected-point-domains-constructor-public.json",
+    "finite-selected-point-domains-cubic-replay.json",
+    "finite-selected-point-domains-endpoint-probe.json",
+    "finite-selected-point-domains-exterior-completed.json",
+    "finite-selected-point-domains-family-matrix.json",
+    "finite-selected-point-domains-finite-circle-probe.json",
+    "finite-selected-point-domains-finite-matrix.json",
+    "finite-selected-point-domains-general-trim-matrix.json",
+    "finite-selected-point-domains-native-poles-public.json",
+    "finite-selected-point-domains-poles-public.json",
+    "finite-selected-point-domains-previous-pairs.json",
+    "finite-selected-point-domains-probe-final.json",
+    "finite-selected-point-domains-public-replay.json",
+    "finite-selected-point-domains-rational-public.json",
+    "finite-selected-point-domains-region-carrier-matrix.json",
+    "finite-selected-point-domains-region-entry.json",
+    "finite-selected-point-domains-region-explicit.json",
+    "finite-selected-point-domains-region-public.json",
+    "finite-selected-point-domains-replay-matrix-run.json",
+    "finite-selected-point-domains-retained-chord-matrix.json",
+    "finite-selected-point-domains-retrace-public.json",
+    "finite-selected-point-domains-self-public.json",
+    "finite-selected-point-domains-tangent-matrix.json",
+    "finite-selected-point-domains-trim-public.json",
+    "finite-selected-point-domains-unit-replay.json",
+    "finite-selected-point-domains-winding-public.json"
+  ],
+  "parent_public_baseline": "finite-selected-point-baseline.json",
+  "public_chart_cases": 16,
+  "public_chart_point_replays": 64,
+  "public_integration_cases": 16,
+  "additional_public_chart_executions": 4,
+  "previous_fixed_distance_cases": 32,
+  "previous_fixed_distance_point_replays": 176,
+  "attempts": [
+    "finite-selected-point-domains-initial-attempt1",
+    "finite-selected-point-domains-attempt2",
+    "finite-selected-point-domains-attempt3"
+  ],
+  "computational_scope": "Finite/incident domains replace native-interval substitution in exact and selected-point membership and retained winding. One consumed-domain proof serves algebraic rays and recursive chord/parallel queries. Correlated points reuse an affine inverse in their retained field, or one formal support system per defining line. Zero-offset equations retain the unsquared source relation, share the cold projection authority and reuse unit speed without adjoining sqrt(1). No general throughput, memory or complete closure claim.",
+  "source_files_verified": {
+    "working": 396,
+    "isolated": 1005
+  },
+  "dependency_commits": "finite-parallel-pruning-isolated-sources.json",
+  "isolated_dependency_sources": true,
+  "workspace_clean_claim": false,
+  "other_session_owns": "Hyperreal verified/ and verification/ changes; left untouched",
+  "normal_library": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypercurve-9eb8c540d8ca7826.rlib",
+  "normal_library_sha256": "5ab0beb19caab2b6ecaf12007a8f07af332a198e59837ce063f5b418f4003187",
+  "archived_library": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-selected-point-domains-libraries/libhypercurve-9eb8c540d8ca7826.rlib",
+  "libtest_sha256": "bdab4c08389cbc7823d88e4b25a766bca1e8225f530645dbbe81b6158ba64a9b",
+  "toolchain": "finite-parallel-pruning-toolchain.json",
+  "evidence_audit": "finite-selected-point-domains-worklog.md",
+  "remaining": "Unsupported recursive point kinds, one-sided source-cusp frames, normalized public-region construction, independent inverse replay, known failures/exclusions and broader algebraic/computational consolidation."
+}

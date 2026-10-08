@@ -1,0 +1,7 @@
+heaptrack output will be written to "/tmp/hypercurve-native-constant-sign-admitted-raw.heap.raw.zst"
+starting application, this might take some time...
+
+running 1 test
+test bezier_offset::conversion_tests::selected_fiber_genuinely_analytic_contacts_complete_region_booleans ... Heaptrack finished! Now run the following to investigate the data:
+
+  zstd -dc < "/tmp/hypercurve-native-constant-sign-admitted-raw.heap.raw.zst" | /usr/lib64/heaptrack/libexec/heaptrack_interpret | zstd -c > "/tmp/hypercurve-native-constant-sign-admitted-raw.heap.zst"

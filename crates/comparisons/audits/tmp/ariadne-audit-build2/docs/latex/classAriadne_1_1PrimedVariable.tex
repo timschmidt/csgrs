@@ -1,0 +1,59 @@
+\doxysubsection{Primed\+Variable\texorpdfstring{$<$}{<} T \texorpdfstring{$>$}{>} Class Template Reference}
+\hypertarget{classAriadne_1_1PrimedVariable}{}\label{classAriadne_1_1PrimedVariable}\index{PrimedVariable$<$ T $>$@{PrimedVariable$<$ T $>$}}
+
+
+{\ttfamily \#include $<$variable.\+hpp$>$}
+
+
+
+\doxysubsubsection{Description}
+\subsubsection*{template$<$class T$>$\newline
+class Ariadne\+::\+Primed\+Variable$<$ T $>$}
+A named variable of type {\itshape T} decorated by a prime representing a value after a discrete jump. 
+
+\begin{DoxyParagraph}{{\bfseries{Example}} }
+
+\begin{DoxyCodeInclude}{0}
+
+\end{DoxyCodeInclude}
+ 
+\end{DoxyParagraph}
+\begin{DoxySeeAlso}{See also}
+\doxylink{classAriadne_1_1Variable}{Variable}, \doxylink{classAriadne_1_1Assignment}{Assignment} 
+\end{DoxySeeAlso}
+\doxysubsubsubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1PrimedVariable_aee9223600bf6302174192885bc44ddd3}\label{classAriadne_1_1PrimedVariable_aee9223600bf6302174192885bc44ddd3} 
+\mbox{\hyperlink{classAriadne_1_1Assignment}{Assignment}}$<$ \mbox{\hyperlink{classAriadne_1_1PrimedVariable}{Primed\+Variable}}$<$ T $>$, \mbox{\hyperlink{classAriadne_1_1Expression}{Expression}}$<$ T $>$ $>$ {\bfseries operator=} (const \mbox{\hyperlink{classAriadne_1_1Expression}{Expression}}$<$ T $>$ \&e) const
+\begin{DoxyCompactList}\small\item\em Construct an assignment statement representing the difference equation {\itshape var\textquotesingle{}} \+:= {\itshape expr}. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsubsection*{Friends}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1PrimedVariable_ad71f2c8fbf19bb2d66935d28497c0051}\label{classAriadne_1_1PrimedVariable_ad71f2c8fbf19bb2d66935d28497c0051} 
+\mbox{\hyperlink{classAriadne_1_1PrimedVariable}{Primed\+Variable}}$<$ T $>$ {\bfseries prime} (const \mbox{\hyperlink{classAriadne_1_1Variable}{Variable}}$<$ T $>$ \&var)
+\begin{DoxyCompactList}\small\item\em Decorate a simple variable with a prime. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1PrimedVariable_adf04e369e5fc35776063548246d3522e}\label{classAriadne_1_1PrimedVariable_adf04e369e5fc35776063548246d3522e} 
+\mbox{\hyperlink{classAriadne_1_1PrimedVariable}{Primed\+Variable}}$<$ T $>$ {\bfseries next} (const \mbox{\hyperlink{classAriadne_1_1Variable}{Variable}}$<$ T $>$ \&var)
+\begin{DoxyCompactList}\small\item\em Synonym for \doxylink{classAriadne_1_1PrimedVariable_ad71f2c8fbf19bb2d66935d28497c0051}{prime()}. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsubsection*{Related Types and Functions}
+(Note that these are not member symbols.) \begin{Indent}\textbf{ Type synonyms}\par
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1PrimedVariable_a252254d5f65f4a13b80508a07c82f8fa}\label{classAriadne_1_1PrimedVariable_a252254d5f65f4a13b80508a07c82f8fa} 
+using {\bfseries Primed\+String\+Variable} = \mbox{\hyperlink{classAriadne_1_1PrimedVariable}{Primed\+Variable}}$<$\mbox{\hyperlink{classAriadne_1_1String}{String}}$>$
+\item 
+\Hypertarget{classAriadne_1_1PrimedVariable_a60cd28e02049961a07c563702b1aea60}\label{classAriadne_1_1PrimedVariable_a60cd28e02049961a07c563702b1aea60} 
+using {\bfseries Primed\+Integer\+Variable} = \mbox{\hyperlink{classAriadne_1_1PrimedVariable}{Primed\+Variable}}$<$\mbox{\hyperlink{classAriadne_1_1Integer}{Integer}}$>$
+\item 
+\Hypertarget{classAriadne_1_1PrimedVariable_a73f602f504268b896d079d08c8d39c5f}\label{classAriadne_1_1PrimedVariable_a73f602f504268b896d079d08c8d39c5f} 
+using {\bfseries Primed\+Real\+Variable} = \mbox{\hyperlink{classAriadne_1_1PrimedVariable}{Primed\+Variable}}$<$\mbox{\hyperlink{classAriadne_1_1Real}{Real}}$>$
+\end{DoxyCompactItemize}
+\end{Indent}
+
+
+The documentation for this class was generated from the following files\+:\begin{DoxyCompactItemize}
+\item 
+source/symbolic/\mbox{\hyperlink{expression_8decl_8hpp}{expression.\+decl.\+hpp}}\item 
+source/symbolic/\mbox{\hyperlink{variable_8hpp}{variable.\+hpp}}\item 
+source/symbolic/\mbox{\hyperlink{assignment_8hpp}{assignment.\+hpp}}\end{DoxyCompactItemize}

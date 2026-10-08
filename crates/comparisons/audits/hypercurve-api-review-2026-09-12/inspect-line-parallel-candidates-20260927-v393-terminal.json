@@ -1,0 +1,36 @@
+{
+  "source_manifest": "coincident-circular-constraints-20260927-v390-sources.json",
+  "source_directory": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/source-archives/trace-coincident-line-parallel-20260927-v392",
+  "trial": {
+    "hypercurve/src/error.rs": "5be51eaf83039d74ea77cba5ffa5cd9af04dcb09dc7b54b9a42f62c2d32f76a3"
+  },
+  "probe_sha256": "b12ad633145a0fe657dca78887435a2ad4a545616dec12a3190c408fa89da3b1",
+  "records": [
+    {
+      "label": "probe-build",
+      "returncode": 1,
+      "elapsed_seconds": 0.06392106111161411,
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustc",
+        "--edition=2024",
+        "-C",
+        "opt-level=3",
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/inspect-line-parallel-candidates-20260927-v393.rs",
+        "--extern",
+        "hypercurve=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/libhypercurve.rlib",
+        "-L",
+        "dependency=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps",
+        "-o",
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/inspect-line-parallel-candidates-20260927-v393"
+      ],
+      "log": "inspect-line-parallel-candidates-20260927-v393-probe-build.log"
+    }
+  ],
+  "all_processes_reaped": true,
+  "library": {
+    "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/libhypercurve.rlib",
+    "sha256": "32925cb47cad856c7e028c24598b274ef9f0ad188d21c8b2675c7ee770f60e5f"
+  },
+  "failure": "probe-build",
+  "diagnostic_complete": false
+}

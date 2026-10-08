@@ -1,0 +1,10 @@
+Retain finite selected-field values across arithmetic batches
+
+Expose owned rational functions through the existing local-field arithmetic.
+Certify denominator domains and selected-root identity strictly, allow exact
+constants across fields, and retain reduced coefficients and root refinement
+without retaining temporary sign or inverse caches. Reduce older values when
+division removes foreign factors from the selected-root polynomial.
+
+Validation: 63 release fiber tests, Clippy and documentation with warnings
+denied, and the integrated 409-case Hypercurve/Hypersolve qualification.

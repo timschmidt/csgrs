@@ -1,0 +1,237 @@
+--- a/src/bezier_offset.rs
++++ b/src/bezier_offset.rs
+@@ -292,6 +292,7 @@
+     source: BezierParallelSource2,
+     polynomial_power_basis: OnceLock<(Vec<Real>, Vec<Real>)>,
+     differential: OnceLock<BezierParallelDifferential2>,
++    primitive_tangent: OnceLock<Option<BezierParallelPrimitiveTangent2>>,
+     unit_ph_speed: OnceLock<Option<Arc<BezierParameterPolynomial>>>,
+ }
+ 
+@@ -308,6 +309,16 @@
+     tangent_y: Vec<Real>,
+     tangent_derivative_x: Vec<Real>,
+     tangent_derivative_y: Vec<Real>,
++}
++
++/// Successful exact factorization of the source hodograph. The factor sign
++/// selects its normal sheet; the primitive field is shared across ranges,
++/// retained point witnesses, and all offsets of this source.
++#[derive(Debug)]
++struct BezierParallelPrimitiveTangent2 {
++    factor: Vec<Real>,
++    field: Arc<BezierAnalyticParallelTangentField2>,
++    reversed_field: OnceLock<Arc<BezierAnalyticParallelTangentField2>>,
+ }
+ 
+ struct BezierParallelPowerBasisRef<'a> {
+@@ -112366,6 +112377,7 @@
+                 source,
+                 polynomial_power_basis: OnceLock::new(),
+                 differential: OnceLock::new(),
++                primitive_tangent: OnceLock::new(),
+                 unit_ph_speed: OnceLock::new(),
+             }),
+             distance,
+@@ -112384,7 +112396,7 @@
+ 
+     /// Returns the same exact source kernel at another signed normal distance.
+     ///
+-    /// Source power-basis, differential and unit PH speed proofs are
++    /// Source power-basis, differential, primitive tangent and unit PH speed proofs are
+     /// distance-independent and remain clone-shared. PH materialization keeps its
+     /// own cache in the new one-word carrier.
+     pub(crate) fn with_distance(&self, distance: Real) -> Self {
+@@ -112634,56 +112646,78 @@
+         policy: &CurveContext,
+     ) -> CurveResult<Classification<Option<Arc<BezierAnalyticParallelTangentField2>>>> {
+         let differential = self.differential()?;
+-        let Some(common_factor) = greatest_common_divisor_univariate_polynomials_exact(
+-            &differential.tangent_x,
+-            &differential.tangent_y,
+-        ) else {
+-            return Ok(
+-                match self.source_constant_tangent_field_at_interior(
+-                    differential,
+-                    interior,
+-                    policy,
+-                )? {
+-                    Classification::Decided(Some(field)) => Classification::Decided(Some(field)),
+-                    Classification::Decided(None) => {
+-                        Classification::Uncertain(UncertaintyReason::Unsupported)
+-                    }
+-                    Classification::Uncertain(reason) => Classification::Uncertain(reason),
+-                },
+-            );
+-        };
+-        if common_factor.len() <= 1 {
++        if self.data.source.primitive_tangent.get().is_none() {
++            let Some(common_factor) = greatest_common_divisor_univariate_polynomials_exact(
++                &differential.tangent_x,
++                &differential.tangent_y,
++            ) else {
++                // Unavailable monic normalization does not prove absence of
++                // a common factor. Keep the independent exact rank-one
++                // fallback available and allow later queries to retry.
++                return Ok(
++                    match self.source_constant_tangent_field_at_interior(
++                        differential,
++                        interior,
++                        policy,
++                    )? {
++                        Classification::Decided(Some(field)) => {
++                            Classification::Decided(Some(field))
++                        }
++                        Classification::Decided(None) => {
++                            Classification::Uncertain(UncertaintyReason::Unsupported)
++                        }
++                        Classification::Uncertain(reason) => Classification::Uncertain(reason),
++                    },
++                );
++            };
++            let primitive = if common_factor.len() <= 1 {
++                None
++            } else {
++                let (Some(x), Some(y)) = (
++                    divide_univariate_polynomial_exact(&differential.tangent_x, &common_factor),
++                    divide_univariate_polynomial_exact(&differential.tangent_y, &common_factor),
++                ) else {
++                    return Err(CurveError::Topology(
++                        "source hodograph gcd did not divide both coordinates".into(),
++                    ));
++                };
++                Some(BezierParallelPrimitiveTangent2 {
++                    factor: common_factor,
++                    field: Arc::new(BezierAnalyticParallelTangentField2 { x, y }),
++                    reversed_field: OnceLock::new(),
++                })
++            };
++            // Hypersolve's GCD and division certify all coefficients under
++            // STRICT. Retain only that successful factorization evidence.
++            let _ = self.data.source.primitive_tangent.set(primitive);
++        }
++        let Some(primitive) = self
++            .data
++            .source
++            .primitive_tangent
++            .get()
++            .expect("successful source hodograph factorization was retained")
++        else {
+             return Ok(Classification::Decided(None));
+-        }
+-        let (Some(mut tangent_x), Some(mut tangent_y)) = (
+-            divide_univariate_polynomial_exact(&differential.tangent_x, &common_factor),
+-            divide_univariate_polynomial_exact(&differential.tangent_y, &common_factor),
+-        ) else {
+-            return Err(CurveError::Topology(
+-                "source hodograph gcd did not divide both coordinates".into(),
+-            ));
+         };
+         let strict = policy.strict_counterpart();
+-        match real_sign(&Real::eval_poly(&common_factor, interior), &strict) {
+-            Some(RealSign::Positive) => {}
+-            Some(RealSign::Negative) => {
++        let field = match real_sign(&Real::eval_poly(&primitive.factor, interior), &strict) {
++            Some(RealSign::Positive) => &primitive.field,
++            Some(RealSign::Negative) => primitive.reversed_field.get_or_init(|| {
+                 let negative_one = Real::from(-1_i8);
+-                tangent_x = polynomial_scale(&tangent_x, &negative_one);
+-                tangent_y = polynomial_scale(&tangent_y, &negative_one);
+-            }
++                Arc::new(BezierAnalyticParallelTangentField2 {
++                    x: polynomial_scale(&primitive.field.x, &negative_one),
++                    y: polynomial_scale(&primitive.field.y, &negative_one),
++                })
++            }),
+             Some(RealSign::Zero) => {
+                 return Err(CurveError::Topology(
+                     "regular source branch interior remained singular".into(),
+                 ));
+             }
+             None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
+-        }
+-        Ok(Classification::Decided(Some(Arc::new(
+-            BezierAnalyticParallelTangentField2 {
+-                x: tangent_x,
+-                y: tangent_y,
+-            },
+-        ))))
++        };
++        Ok(Classification::Decided(Some(Arc::clone(field))))
+     }
+ 
+     /// Recovers a constant oriented tangent when monic hodograph GCD
+@@ -194323,6 +194357,73 @@
+         }
+     }
+     #[test]
++    fn primitive_source_frames_share_factorization_across_distances_and_branches() {
++        // C(t)=(t²,t³), t=2u-1. Its one-sided normals at u=1/2
++        // point in opposite vertical directions.
++        let source = CubicBezier2::new(
++            p(1, -1),
++            Point2::new(q(-1, 3), Real::one()),
++            Point2::new(q(-1, 3), -Real::one()),
++            p(1, 1),
++        )
++        .parallel_left(Real::one())
++        .unwrap();
++        let cusp: CurveParameter2 = q(1, 2).into();
++        let ranges = [
++            CurveParameterRange2::new_validated(Real::zero().into(), cusp.clone()),
++            CurveParameterRange2::new_validated(cusp.clone(), Real::one().into()),
++        ];
++        // An approximate caller still obtains a STRICT factorization proof
++        // that a later strict query can reuse.
++        let mut previous_frames: Option<[Arc<BezierAnalyticParallelTangentField2>; 2]> = None;
++        for policy in [CurveContext::APPROXIMATE_512, CurveContext::STRICT] {
++            let shifted = source.with_distance(q(7, 5));
++            let frames = ranges.each_ref().map(|range| {
++                decided(
++                    source
++                        .source_oriented_regularized_tangent_field(range, &policy)
++                        .unwrap(),
++                )
++                .expect("a stationary cubic has a nonconstant tangent factor")
++            });
++            assert!(!Arc::ptr_eq(&frames[0], &frames[1]));
++            for axis in 0..2 {
++                let reversed = CurveParameterRange2::new_validated(
++                    ranges[axis].end().clone(),
++                    ranges[axis].start().clone(),
++                );
++                let reused = decided(
++                    shifted
++                        .source_oriented_regularized_tangent_field(&reversed, &policy)
++                        .unwrap(),
++                )
++                .unwrap();
++                assert!(
++                    Arc::ptr_eq(&frames[axis], &reused),
++                    "the same source sheet must share its field across distances and range reversal"
++                );
++                if let Some(prior) = &previous_frames {
++                    assert!(Arc::ptr_eq(&prior[axis], &reused));
++                }
++                let point = decided(
++                    shifted
++                        .point_evidence_on_regular_range(&cusp, &ranges[axis], &policy)
++                        .unwrap(),
++                );
++                let expected = CurvePoint2::from(Point2::new(
++                    Real::zero(),
++                    if axis == 0 { q(-7, 5) } else { q(7, 5) },
++                ));
++                assert_eq!(
++                    point.same_point(&expected, &policy),
++                    Classification::Decided(true)
++                );
++            }
++            previous_frames = Some(frames);
++        }
++    }
++
++    #[test]
+     fn regular_source_cells_preserve_reversed_and_algebraic_range_boundaries() {
+         let source = CubicBezier2::new(
+             p(1, -1),

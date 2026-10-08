@@ -1,0 +1,182 @@
+[
+  {
+    "target": "hypercurve_analytic_parallel_region",
+    "name": "analytic_parallel_fragments_retain_exact_region_evidence_under_both_policies",
+    "returncode": 0,
+    "passed": true,
+    "elapsed_seconds": 0.03226393600925803,
+    "limit_seconds": 90,
+    "log": "direct-endpoints-20260924-v2-integrations-case-00.log"
+  },
+  {
+    "target": "hypercurve_analytic_parallel_region",
+    "name": "cusp_split_analytic_self_crossing_normalizes_at_admission",
+    "returncode": 0,
+    "passed": true,
+    "elapsed_seconds": 5.3724263679469,
+    "limit_seconds": 90,
+    "log": "direct-endpoints-20260924-v2-integrations-case-01.log"
+  },
+  {
+    "target": "hypercurve_analytic_parallel_region",
+    "name": "general_boundary_paths_preserve_analytic_carriers_and_boolean_reentry",
+    "returncode": 0,
+    "passed": true,
+    "elapsed_seconds": 0.03198936500120908,
+    "limit_seconds": 90,
+    "log": "direct-endpoints-20260924-v2-integrations-case-02.log"
+  },
+  {
+    "target": "hypercurve_analytic_parallel_region",
+    "name": "radical_parallel_cusp_spans_connect_under_both_policies",
+    "returncode": 0,
+    "passed": true,
+    "elapsed_seconds": 0.015823915018700063,
+    "limit_seconds": 90,
+    "log": "direct-endpoints-20260924-v2-integrations-case-03.log"
+  },
+  {
+    "target": "hypercurve_path_closure",
+    "name": "boundary_admission_rejects_disconnected_spline_spans",
+    "returncode": 0,
+    "passed": true,
+    "elapsed_seconds": 0.0036611389368772507,
+    "limit_seconds": 90,
+    "log": "direct-endpoints-20260924-v2-integrations-case-04.log"
+  },
+  {
+    "target": "hypercurve_path_closure",
+    "name": "finite_fixed_distance_domains::finite_chamfers_preserve_equivalent_source_charts",
+    "returncode": 0,
+    "passed": true,
+    "elapsed_seconds": 0.03187983203679323,
+    "limit_seconds": 90,
+    "log": "direct-endpoints-20260924-v2-integrations-case-05.log"
+  },
+  {
+    "target": "hypercurve_path_closure",
+    "name": "finite_fixed_distance_domains::repeated_finite_chamfers_preserve_selected_cuts",
+    "returncode": 0,
+    "passed": true,
+    "elapsed_seconds": 31.960407303995453,
+    "limit_seconds": 90,
+    "log": "direct-endpoints-20260924-v2-integrations-case-06.log"
+  },
+  {
+    "target": "hypercurve_path_closure",
+    "name": "finite_selected_point_domains::collapsed_circle_fillet_preserves_finite_parallel_domains",
+    "returncode": 0,
+    "passed": true,
+    "elapsed_seconds": 0.11433165392372757,
+    "limit_seconds": 90,
+    "log": "direct-endpoints-20260924-v2-integrations-case-07.log"
+  },
+  {
+    "target": "hypercurve_path_closure",
+    "name": "homogeneous_boundary_closes_through_boolean_corners_and_offset",
+    "returncode": "timeout",
+    "passed": false,
+    "elapsed_seconds": 90.10940316296183,
+    "limit_seconds": 90,
+    "log": "direct-endpoints-20260924-v2-integrations-case-08.log"
+  },
+  {
+    "target": "hypercurve_path_closure",
+    "name": "selected_chamfers_preserve_all_major_arc_contacts",
+    "returncode": 0,
+    "passed": true,
+    "elapsed_seconds": 0.0038585650036111474,
+    "limit_seconds": 90,
+    "log": "direct-endpoints-20260924-v2-integrations-case-09.log"
+  },
+  {
+    "target": "hypercurve_path_closure",
+    "name": "selected_major_arc_fillets_keep_the_complete_authored_sweep",
+    "returncode": 0,
+    "passed": true,
+    "elapsed_seconds": 0.4144278699532151,
+    "limit_seconds": 90,
+    "log": "direct-endpoints-20260924-v2-integrations-case-10.log"
+  },
+  {
+    "target": "hypercurve_path_closure",
+    "name": "selected_open_chamfers_reenter_the_public_path_api",
+    "returncode": 0,
+    "passed": true,
+    "elapsed_seconds": 0.007805534056387842,
+    "limit_seconds": 90,
+    "log": "direct-endpoints-20260924-v2-integrations-case-11.log"
+  },
+  {
+    "target": "hypercurve_path_closure",
+    "name": "selected_open_fillets_accept_a_subsequent_chamfer",
+    "returncode": 0,
+    "passed": true,
+    "elapsed_seconds": 0.007725269999355078,
+    "limit_seconds": 90,
+    "log": "direct-endpoints-20260924-v2-integrations-case-12.log"
+  },
+  {
+    "target": "hypercurve_path_closure",
+    "name": "selected_path_chamfers_close_through_all_region_booleans",
+    "returncode": 0,
+    "passed": true,
+    "elapsed_seconds": 0.01577643700875342,
+    "limit_seconds": 90,
+    "log": "direct-endpoints-20260924-v2-integrations-case-13.log"
+  },
+  {
+    "target": "hypercurve_path_closure",
+    "name": "selected_spline_chamfers_keep_every_untrimmed_span",
+    "returncode": 0,
+    "passed": true,
+    "elapsed_seconds": 0.003625461016781628,
+    "limit_seconds": 90,
+    "log": "direct-endpoints-20260924-v2-integrations-case-14.log"
+  },
+  {
+    "target": "hypercurve_path_closure",
+    "name": "selected_spline_fillets_preserve_knot_charts_and_other_spans",
+    "returncode": 0,
+    "passed": true,
+    "elapsed_seconds": 0.015739090042188764,
+    "limit_seconds": 90,
+    "log": "direct-endpoints-20260924-v2-integrations-case-15.log"
+  },
+  {
+    "target": "hypercurve_curve_point",
+    "name": "coordinate_view_accepts_arbitrary_exact_reals_and_preserves_certainty",
+    "returncode": 0,
+    "passed": true,
+    "elapsed_seconds": 0.0036715780152007937,
+    "limit_seconds": 90,
+    "log": "direct-endpoints-20260924-v2-integrations-case-16.log"
+  },
+  {
+    "target": "hypercurve_curve_point",
+    "name": "independent_selected_charts_share_the_general_point_queries",
+    "returncode": 0,
+    "passed": true,
+    "elapsed_seconds": 0.003625991055741906,
+    "limit_seconds": 90,
+    "log": "direct-endpoints-20260924-v2-integrations-case-17.log"
+  },
+  {
+    "target": "hypercurve_curve_region_promotion",
+    "name": "boundary_paths_obey_terminal_policy_once",
+    "returncode": 0,
+    "passed": true,
+    "elapsed_seconds": 0.003570444998331368,
+    "limit_seconds": 90,
+    "log": "direct-endpoints-20260924-v2-integrations-case-18.log"
+  },
+  {
+    "target": "hypercurve_curve_region_promotion",
+    "name": "selected_boundary_paths_retain_domains_through_repeated_region_roundtrips",
+    "returncode": 0,
+    "passed": true,
+    "elapsed_seconds": 0.007644755998626351,
+    "limit_seconds": 90,
+    "log": "direct-endpoints-20260924-v2-integrations-case-19.log"
+  }
+]

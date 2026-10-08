@@ -1,0 +1,22 @@
+{
+  "tag": "root-exp-proof-numeric-build-cpu",
+  "started": "2026-09-08T12:26:00.183Z",
+  "finished": "2026-09-08T12:26:07.469Z",
+  "elapsedSeconds": 7.283338132,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison",
+  "command": "env",
+  "args": [
+    "TMPDIR=/home/tim/Documents/GitHub/workspace/calcium-build-tmp.gVX5v4",
+    "CARGO_INCREMENTAL=0",
+    "cargo",
+    "build",
+    "--offline",
+    "--release",
+    "--manifest-path",
+    "audits/continuation/calcium/root-exp-proof-bench/Cargo.toml",
+    "--target-dir",
+    "/home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype"
+  ],
+  "code": 0,
+  "signal": null
+}

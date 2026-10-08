@@ -1,0 +1,27 @@
+{
+  "status": "demonstrated exactness defect repaired, qualified and committed",
+  "observed_in_commit": "bb9744b59e34a3adb1aae703be588a2ff7d84aa1",
+  "function": "BezierAlgebraicChord2::exact_axis_support_coordinate, src/bezier_offset.rs",
+  "finding": "The AlgebraicCuspChord endpoint arm recursively asks the contact map chord for its constant coordinate without checking whether that chord has the same constant axis as the outer queried chord. That coordinate may belong to the other axis.",
+  "candidate_regression": "Reuse the selected semicircle fixture centered at (sqrt(1/2),0), radius 2, and its horizontal y=1 contact at x=sqrt(1/2)+sqrt(3). Construct a certified vertical support from that contact to its translation by (0,1), preserving the selected point carrier. The vertical support constant coordinate is x>2. Its source contact map chord is horizontal and has constant coordinate y=1. The current lookup appears able to return Some(1) as the vertical x coordinate when the translated endpoint lookup declines. Check both contexts and reversed support traversal. An optional coordinate lookup must either provide the requested exact coordinate or decline; it must not substitute the perpendicular coordinate.",
+  "repair_direction": "Verify the regression before editing. Preserve the requested axis through shared point-coordinate lookup or guard that the retained contact support owns that axis. Keep arbitrary exact Real values, optional conversion semantics and all native point predicates. Do not infer that an unrelated whole-point conversion is necessary.",
+  "related_test": "algebraic_cusp_semicircle_intersects_finite_axis_chords_exactly contains the selected-circle construction and contacts.",
+  "commit": "4e2507f3bba5919a4572d8d83812e9ba21056ad4",
+  "qualification": "owned-axis-coordinate-qualification.json",
+  "baselines": [
+    {
+      "log": "owned-axis-coordinate-baseline.log",
+      "exit_code": 0,
+      "finding": "The original algebraic-support fixture declines its optional coordinate lookup, so it does not reproduce the defect. Its missed constant-coordinate conversion is recorded separately."
+    },
+    {
+      "log": "owned-axis-coordinate-exact-support-baseline.log",
+      "exit_code": 101,
+      "finding": "The stronger exact-support fixture returns the horizontal contact coordinate y=1 as the new vertical support coordinate x, although the selected contact has x=sqrt(1/2)+sqrt(3)>2."
+    }
+  ],
+  "repair": [
+    "Replaced the implicit exact_axis_support_coordinate API with constant_axis_coordinate(axis, policy). Every nested contact-support lookup retains the requested axis; the monotone parameter axis declines. All eight production call sites migrate directly, without an alias or compatibility interface.",
+    "Fillet support preparation first obtains a certified cardinal direction, avoiding an unnecessary coordinate query for noncardinal chords. Arbitrary exact Real coordinate payloads remain accepted."
+  ]
+}

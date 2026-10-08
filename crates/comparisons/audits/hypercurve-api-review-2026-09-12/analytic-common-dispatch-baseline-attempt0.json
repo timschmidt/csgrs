@@ -1,0 +1,18 @@
+{
+  "source_sha256": "33cf6e3b62c5a9bda40fb72b7df9945e1934975205dfb95598d8f0a34ceeb339",
+  "normal_library_sha256": "d30bc1c78a473adc5480b8cb0ff1c0cc20d813d9061281132a4c8019872fa30a",
+  "compile_returncode": 1,
+  "command": [
+    "rustc",
+    "--edition=2024",
+    "-O",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/analytic-common-dispatch-baseline.rs",
+    "--extern",
+    "hypercurve=/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/libhypercurve-2c7ff6f3fbe07653.rlib",
+    "-L",
+    "dependency=/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps",
+    "-o",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/analytic-common-dispatch-baseline"
+  ],
+  "baseline_commit": "8b3573224c5b13fcf2a953e0f8cdae5c70d322a0"
+}

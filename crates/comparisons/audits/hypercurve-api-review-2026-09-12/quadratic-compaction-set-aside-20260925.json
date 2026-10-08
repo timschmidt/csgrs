@@ -1,0 +1,25 @@
+{
+  "hyperreal": {
+    "head": "0cb5f29aee065c73e234e0ebb0a9e106398515bb",
+    "patch": "quadratic-compaction-set-aside-20260925-hyperreal.patch",
+    "sha256": "376e1dca2b7294bb27e6b34048a3f4cb87eef4cdab362918336416f5c5801471",
+    "files": [
+      "src/real/arithmetic/add_sub.rs",
+      "src/real/arithmetic/inversion.rs",
+      "src/real/arithmetic/mul_div.rs",
+      "src/real/arithmetic/representation.rs",
+      "tests/exact_quadratic_normal_form.rs"
+    ]
+  },
+  "hypersolve": {
+    "head": "60a4e609d382c681ee98a1de6b4bdb7673487d37",
+    "patch": "quadratic-compaction-set-aside-20260925-hypersolve.patch",
+    "sha256": "b7a60d4abe954b06a9c29551d1cf30fa7d6dae8c01928fc11bcdb5597db381d3",
+    "files": [
+      "src/algebraic.rs",
+      "src/algebraic_fiber.rs",
+      "src/algebraic_polynomial_image.rs",
+      "src/root_isolation.rs"
+    ]
+  }
+}

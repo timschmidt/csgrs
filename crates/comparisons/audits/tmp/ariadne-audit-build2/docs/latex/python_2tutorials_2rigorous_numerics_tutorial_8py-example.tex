@@ -1,0 +1,147 @@
+\doxysubsection{python/tutorials/rigorous\+\_\+numerics\+\_\+tutorial.\+py}
+\hypertarget{python_2tutorials_2rigorous_numerics_tutorial_8py-example}{}\label{python_2tutorials_2rigorous_numerics_tutorial_8py-example}A tutorial on using the Python interface.
+
+
+\begin{DoxyCodeInclude}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{\#!/usr/bin/python3}}
+\DoxyCodeLine{00002\ }
+\DoxyCodeLine{00003\ }
+\DoxyCodeLine{00008\ }
+\DoxyCodeLine{00009\ \textcolor{comment}{\#\ This\ file\ is\ part\ of\ Ariadne.}}
+\DoxyCodeLine{00010\ }
+\DoxyCodeLine{00011\ \textcolor{comment}{\#\ Ariadne\ is\ free\ software:\ you\ can\ redistribute\ it\ and/or\ modify}}
+\DoxyCodeLine{00012\ \textcolor{comment}{\#\ it\ under\ the\ terms\ of\ the\ GNU\ General\ Public\ License\ as\ published\ by}}
+\DoxyCodeLine{00013\ \textcolor{comment}{\#\ the\ Free\ Software\ Foundation,\ either\ version\ 3\ of\ the\ License,\ or}}
+\DoxyCodeLine{00014\ \textcolor{comment}{\#\ (at\ your\ option)\ any\ later\ version.}}
+\DoxyCodeLine{00015\ }
+\DoxyCodeLine{00016\ \textcolor{comment}{\#\ Ariadne\ is\ distributed\ in\ the\ hope\ that\ it\ will\ be\ useful,}}
+\DoxyCodeLine{00017\ \textcolor{comment}{\#\ but\ WITHOUT\ ANY\ WARRANTY;\ without\ even\ the\ implied\ warranty\ of}}
+\DoxyCodeLine{00018\ \textcolor{comment}{\#\ MERCHANTABILITY\ or\ FITNESS\ FOR\ A\ PARTICULAR\ PURPOSE.\ \ See\ the}}
+\DoxyCodeLine{00019\ \textcolor{comment}{\#\ GNU\ General\ Public\ License\ for\ more\ details.}}
+\DoxyCodeLine{00020\ }
+\DoxyCodeLine{00021\ \textcolor{comment}{\#\ You\ should\ have\ received\ a\ copy\ of\ the\ GNU\ General\ Public\ License}}
+\DoxyCodeLine{00022\ \textcolor{comment}{\#\ along\ with\ Ariadne.\ If\ not,\ see\ <https://www.gnu.org/licenses/>.}}
+\DoxyCodeLine{00023\ }
+\DoxyCodeLine{00024\ \textcolor{comment}{\#\ Import\ all\ classes\ in\ the\ ariadne\ module}}
+\DoxyCodeLine{00025\ \textcolor{keyword}{from}\ pyariadne\ \textcolor{keyword}{import}\ *}
+\DoxyCodeLine{00026\ }
+\DoxyCodeLine{00027\ \textcolor{keyword}{def\ }bits(n):}
+\DoxyCodeLine{00028\ \ \ \ \ \textcolor{keywordflow}{return}\ n}
+\DoxyCodeLine{00029\ }
+\DoxyCodeLine{00030\ \textcolor{keyword}{def\ }PRINT(expr):}
+\DoxyCodeLine{00031\ \ \ \ \ print(expr,\textcolor{stringliteral}{"{}:"{}},eval(expr),type(eval(expr)))}
+\DoxyCodeLine{00032\ }
+\DoxyCodeLine{00033\ \textcolor{keywordflow}{if}\ \_\_name\_\_==\textcolor{stringliteral}{'\_\_main\_\_'}:}
+\DoxyCodeLine{00034\ }
+\DoxyCodeLine{00035\ \ \ \ \ \textcolor{keyword}{from}\ sys\ \textcolor{keyword}{import}\ argv}
+\DoxyCodeLine{00036\ \ \ \ \ \textcolor{keywordflow}{if}\ \textcolor{keywordflow}{not}\ CommandLineInterface.instance().acquire(argv):}
+\DoxyCodeLine{00037\ \ \ \ \ \ \ \ \ exit()}
+\DoxyCodeLine{00038\ }
+\DoxyCodeLine{00039\ \textcolor{comment}{\#!\ [numeric\_demonstration]}}
+\DoxyCodeLine{00040\ \ \ \ \ print(\textcolor{stringliteral}{"{}Numeric"{}})}
+\DoxyCodeLine{00041\ \ \ \ \ r\ =\ 6\ *\ atan(1/sqrt(Real(3)))}
+\DoxyCodeLine{00042\ \ \ \ \ print(r)}
+\DoxyCodeLine{00043\ \ \ \ \ xdp=r.get(double\_precision)}
+\DoxyCodeLine{00044\ \ \ \ \ print(\textcolor{stringliteral}{"{}xdp="{}},xdp,type(xdp))}
+\DoxyCodeLine{00045\ \ \ \ \ PRINT(\textcolor{stringliteral}{"{}xdp"{}})}
+\DoxyCodeLine{00046\ \ \ \ \ xmp=r.get(precision(128))}
+\DoxyCodeLine{00047\ \ \ \ \ print(\textcolor{stringliteral}{"{}xmp="{}},xmp,type(xmp))}
+\DoxyCodeLine{00048\ \ \ \ \ print(xmp.error());\ print(xmp-\/xmp);\ print(xmp-\/xmp+1)}
+\DoxyCodeLine{00049\ \ \ \ \ ymp=r.compute(Effort(128))}
+\DoxyCodeLine{00050\ \ \ \ \ print(\textcolor{stringliteral}{"{}ymp="{}},ymp,type(ymp))}
+\DoxyCodeLine{00051\ \ \ \ \ zmp=Ball[FloatMP](r.compute(Accuracy(128)).get(precision(128)))}
+\DoxyCodeLine{00052\ \ \ \ \ print(\textcolor{stringliteral}{"{}zmp="{}},zmp,type(zmp))}
+\DoxyCodeLine{00053\ \ \ \ \ print(zmp.error());\ print(zmp-\/zmp);\ print(zmp-\/zmp+1)}
+\DoxyCodeLine{00054\ }
+\DoxyCodeLine{00055\ \ \ \ \ y=EffectiveNumber(r)}
+\DoxyCodeLine{00056\ \ \ \ \ print(\textcolor{stringliteral}{"{}y:"{}},y,type(y))}
+\DoxyCodeLine{00057\ \textcolor{comment}{\#!\ [numeric\_demonstration]}}
+\DoxyCodeLine{00058\ }
+\DoxyCodeLine{00059\ }
+\DoxyCodeLine{00060\ \textcolor{comment}{\#!\ [expression\_demonstration]}}
+\DoxyCodeLine{00061\ \ \ \ \ print(\textcolor{stringliteral}{"{}Expression"{}})}
+\DoxyCodeLine{00062\ \ \ \ \ x=Variable[Real](\textcolor{stringliteral}{"{}x"{}})}
+\DoxyCodeLine{00063\ \ \ \ \ y=Variable[Real](\textcolor{stringliteral}{"{}y"{}})}
+\DoxyCodeLine{00064\ \ \ \ \ c=Constant[Real](\textcolor{stringliteral}{"{}c"{}},dy\_(3.75))}
+\DoxyCodeLine{00065\ \ \ \ \ e\ =\ c\ *\ x\ *\ (1-\/x)}
+\DoxyCodeLine{00066\ \ \ \ \ print(x);\ print(c);\ print(e)}
+\DoxyCodeLine{00067\ \ \ \ \ x0=Rational(1,2)}
+\DoxyCodeLine{00068\ \ \ \ \ y0=Rational(-\/2,3)}
+\DoxyCodeLine{00069\ \ \ \ \ v=Valuation[Real](\{x:x0,y:y0\})}
+\DoxyCodeLine{00070\ \ \ \ \ print(v)}
+\DoxyCodeLine{00071\ \ \ \ \ x1=evaluate(e,v)}
+\DoxyCodeLine{00072\ \ \ \ \ print(\textcolor{stringliteral}{"{}x1:"{}},x1,\textcolor{stringliteral}{"{}="{}},x1.get(double\_precision))}
+\DoxyCodeLine{00073\ \textcolor{comment}{\#!\ [expression\_demonstration]}}
+\DoxyCodeLine{00074\ }
+\DoxyCodeLine{00075\ \textcolor{comment}{\#!\ [linear\_algebra\_demonstration]}}
+\DoxyCodeLine{00076\ \ \ \ \ print(\textcolor{stringliteral}{"{}Linear\ Algebra"{}})}
+\DoxyCodeLine{00077\ \ \ \ \ A=FloatMPApproximationMatrix([[4,1,0],[1,4,1],[0,1,4]],precision(bits(128)))}
+\DoxyCodeLine{00078\ \ \ \ \ v=FloatMPApproximationVector([2.0,3,5],precision(bits(128)))}
+\DoxyCodeLine{00079\ \ \ \ \ print(inverse(A))}
+\DoxyCodeLine{00080\ \ \ \ \ FloatMPApproximation.set\_output\_places(30)}
+\DoxyCodeLine{00081\ \ \ \ \ print(inverse(A))}
+\DoxyCodeLine{00082\ \ \ \ \ print(solve(A,v))}
+\DoxyCodeLine{00083\ }
+\DoxyCodeLine{00084\ \ \ \ \ A\_approx=FloatDPBoundsMatrix([[4,1,0],[1,4,1],[0,1,4]],double\_precision)}
+\DoxyCodeLine{00085\ \ \ \ \ v\_approx=FloatDPBoundsVector([exact(2.0),3,5],double\_precision)}
+\DoxyCodeLine{00086\ \ \ \ \ print(A\_approx)}
+\DoxyCodeLine{00087\ \ \ \ \ print(inverse(A\_approx))}
+\DoxyCodeLine{00088\ \ \ \ \ print(solve(A\_approx,v\_approx))}
+\DoxyCodeLine{00089\ \ \ \ \ print(gs\_solve(A\_approx,v\_approx))}
+\DoxyCodeLine{00090\ \textcolor{comment}{\#!\ [linear\_algebra\_demonstration]}}
+\DoxyCodeLine{00091\ }
+\DoxyCodeLine{00092\ \textcolor{comment}{\#!\ [function\_demonstration]}}
+\DoxyCodeLine{00093\ \ \ \ \ print(\textcolor{stringliteral}{"{}Function"{}})}
+\DoxyCodeLine{00094\ \ \ \ \ a=Real(dy\_(1.875))}
+\DoxyCodeLine{00095\ \ \ \ \ b=Real(dec\_(0.3))}
+\DoxyCodeLine{00096\ \ \ \ \ id=EffectiveVectorMultivariateFunction.identity(EuclideanDomain(2))}
+\DoxyCodeLine{00097\ \ \ \ \ x=id[0]}
+\DoxyCodeLine{00098\ \ \ \ \ y=id[1]}
+\DoxyCodeLine{00099\ \ \ \ \ h=EffectiveVectorMultivariateFunction([a-\/x*x-\/b*y,x])}
+\DoxyCodeLine{00100\ \ \ \ \ v=FloatDPVector([exact(0.5),exact(1.0)],double\_precision)}
+\DoxyCodeLine{00101\ \ \ \ \ print(v)}
+\DoxyCodeLine{00102\ \ \ \ \ print(h(v))}
+\DoxyCodeLine{00103\ \ \ \ \ print(evaluate(h,v))}
+\DoxyCodeLine{00104\ \ \ \ \ print(h.jacobian(v))}
+\DoxyCodeLine{00105\ \ \ \ \ print(jacobian(h,v))}
+\DoxyCodeLine{00106\ \ \ \ \ print(h.differential(v,3))}
+\DoxyCodeLine{00107\ }
+\DoxyCodeLine{00108\ \ \ \ \ dom=BoxDomainType([(0,1),(exact(0.5),exact(1.5))])}
+\DoxyCodeLine{00109\ \ \ \ \ th\ =\ ValidatedVectorMultivariateTaylorFunctionModelDP(dom,h,ThresholdSweeperDP(double\_precision,1e-\/4))}
+\DoxyCodeLine{00110\ \ \ \ \ print(th)}
+\DoxyCodeLine{00111\ \ \ \ \ thh=compose(h,th)}
+\DoxyCodeLine{00112\ \ \ \ \ print(thh)}
+\DoxyCodeLine{00113\ \ \ \ \ print(evaluate(thh,v))}
+\DoxyCodeLine{00114\ \ \ \ \ print(h(h(v)))}
+\DoxyCodeLine{00115\ \textcolor{comment}{\#!\ [function\_demonstration]}}
+\DoxyCodeLine{00116\ }
+\DoxyCodeLine{00117\ \textcolor{comment}{\#!\ [geometry\_demonstration]}}
+\DoxyCodeLine{00118\ \ \ \ \ print(\textcolor{stringliteral}{"{}Geometry"{}})}
+\DoxyCodeLine{00119\ \ \ \ \ x=EffectiveScalarMultivariateFunction.coordinate(EuclideanDomain(2),0)}
+\DoxyCodeLine{00120\ \ \ \ \ y=EffectiveScalarMultivariateFunction.coordinate(EuclideanDomain(2),1)}
+\DoxyCodeLine{00121\ \ \ \ \ g\ =\ sqr(x)+4*sqr(y)}
+\DoxyCodeLine{00122\ \ \ \ \ h\ =\ EffectiveVectorMultivariateFunction([1+x+y*y,2+x-\/y])}
+\DoxyCodeLine{00123\ \ \ \ \ c=EffectiveConstraint(g<=1)}
+\DoxyCodeLine{00124\ \ \ \ \ cs=ConstraintSet([c])}
+\DoxyCodeLine{00125\ \ \ \ \ bx=RealBox([(-\/2,+2),(-\/2,+2)])}
+\DoxyCodeLine{00126\ }
+\DoxyCodeLine{00127\ \ \ \ \ assert(type(g<=1)==EffectiveConstraint)}
+\DoxyCodeLine{00128\ }
+\DoxyCodeLine{00129\ \ \ \ \ bbx=FloatDPApproximateBox([(-\/2,+4),(-\/2,+4)])}
+\DoxyCodeLine{00130\ \ \ \ \ bcs=BoundedConstraintSet([(-\/2,+2),(-\/2,+2)],[g<=1])}
+\DoxyCodeLine{00131\ \ \ \ \ bcs=intersection(bx,cs)}
+\DoxyCodeLine{00132\ \ \ \ \ cis=ConstrainedImageSet=image(bcs,h)}
+\DoxyCodeLine{00133\ \ \ \ \ print(cis)}
+\DoxyCodeLine{00134\ \ \ \ \ fig=Figure(bbx,Projection2d(2,0,1))\ \textcolor{comment}{\#\ Set\ up\ a\ figure\ for\ a\ space\ restricted\ to\ the\ bounding\ box,\ drawing\ first\ two\ coordinates}}
+\DoxyCodeLine{00135\ \ \ \ \ fig.set\_fill\_colour(0.0,0.5,0.5)}
+\DoxyCodeLine{00136\ \ \ \ \ fig.draw(bbx)}
+\DoxyCodeLine{00137\ \ \ \ \ fig.set\_fill\_colour(0,1,1)}
+\DoxyCodeLine{00138\ \ \ \ \ fig.draw(cis)\ \textcolor{comment}{\#\ Use\ chained\ methods\ to\ control\ graphics}}
+\DoxyCodeLine{00139\ \ \ \ \ fig.write(\textcolor{stringliteral}{"{}rigorous\_numerics\_tutorial"{}})\ \textcolor{comment}{\#}}
+\DoxyCodeLine{00140\ \textcolor{comment}{\#\ \ \ \ plot("{}rigorous\_numerics\_tutorial"{},Projection2d(2,0,1),bbx,[(Colour(1,0.5,0.5),bbx),(Colour(0,1,1),cis)])\ \#\ Plot\ in\ one\ command}}
+\DoxyCodeLine{00141\ \ \ \ \ plot(\textcolor{stringliteral}{"{}rigorous\_numerics\_tutorial"{}},Projection2d(2,0,1),bbx,[(Colour(0,1,1),cis)])\ \textcolor{comment}{\#\ Plot\ in\ one\ command}}
+\DoxyCodeLine{00142\ \textcolor{comment}{\#!\ [geometry\_demonstration]}}
+\DoxyCodeLine{00143\ }
+
+\end{DoxyCodeInclude}
+ 

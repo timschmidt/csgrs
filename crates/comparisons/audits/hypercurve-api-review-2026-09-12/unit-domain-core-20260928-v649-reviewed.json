@@ -1,0 +1,35 @@
+{
+  "qualification": "unit-domain-core-20260928-v649-terminal.json",
+  "source_manifest": "unit-domain-core-20260928-v649-sources.json",
+  "outer_session_reaped": 1375,
+  "validated_files": 2047,
+  "selected_geometry_tests": 637,
+  "checks": 6,
+  "repos": {
+    "hypercurve": {
+      "parent": "d0a90d53507d11aff1e1e04339f3bde615a38beb",
+      "paths": {
+        "src/bezier_offset.rs": "5527228c8dde12e5d61cfbb3b17d460a9627a87744c2263f6047428956233629"
+      }
+    }
+  },
+  "scope": "One domain-aware parallel component projection; full implementation goal remains active",
+  "performance_changes": [],
+  "actual_build_artifacts": {
+    "hypercurve": [
+      "hypercurve",
+      "hypercurve_analytic_parallel_region",
+      "hypercurve_bezier_algebraic_parameter",
+      "hypercurve_bezier_arrangement",
+      "hypercurve_bezier_region",
+      "hypercurve_bezier_split_materialization",
+      "hypercurve_curve",
+      "hypercurve_curve_intersection",
+      "hypercurve_curve_region_boolean",
+      "hypercurve_curve_region_promotion",
+      "hypercurve_path_closure",
+      "hypercurve_stationary_fillets"
+    ]
+  },
+  "unresolved": "The independent monotone reparameterization probes still time out in resultant construction, with and without a regular source frame. Finite conic subdivision and constrained incident-cusp fillets also remain confirmed follow-up defects."
+}

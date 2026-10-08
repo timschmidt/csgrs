@@ -1,0 +1,32 @@
+{
+  "repo": "hypercurve",
+  "target": "hypercurve_adversarial_polygons",
+  "binary": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve_adversarial_polygons-be93916344257a7b",
+  "command": [
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve_adversarial_polygons-be93916344257a7b",
+    "--test-threads=4",
+    "--color",
+    "never"
+  ],
+  "sha256": "567f195d61217ea5cbf945a90d241ec35eb4c5903c89c822a94600be71e2a391",
+  "returncode": 0,
+  "timed_out": false,
+  "elapsed_seconds": 2.2168700479960535,
+  "log": "opposed-endpoint-contact-full1-full-hypercurve-hypercurve_adversarial_polygons.log",
+  "passed": [
+    "polygon_with_hole_cut_through_slender_concavity_stays_structurally_valid",
+    "reconstructed_collapsed_comb_offsets_through_authoritative_region",
+    "reconstructed_slender_concavity_offsets_through_authoritative_region",
+    "self_intersecting_closed_polyline_reconstruction_evidence_contacts",
+    "adversarial_regions_with_holes_support_clipping",
+    "adversarial_closed_polyline_reconstruction_feeds_topology_safely",
+    "adversarial_concave_polygons_keep_offset_outputs_finite"
+  ],
+  "failed": [],
+  "ignored": [],
+  "summaries": [
+    "test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.21s"
+  ],
+  "new_failures": [],
+  "known_failures": []
+}

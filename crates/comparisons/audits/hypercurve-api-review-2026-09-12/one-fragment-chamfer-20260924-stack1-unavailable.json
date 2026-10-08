@@ -1,0 +1,8 @@
+{
+  "sample_obtained": false,
+  "reason": "The sandbox denied ptrace of the debugger-owned child; the inferior exited 127 before the test began.",
+  "debugger_and_driver_reaped": true,
+  "source_bytes_unchanged": true,
+  "original_log": "one-fragment-chamfer-20260924-stack1.log",
+  "separate_retry_driver": "trace-one-fragment-chamfer2-20260924.py"
+}

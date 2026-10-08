@@ -1,0 +1,44 @@
+{
+  "repos": {
+    "hypercurve": {
+      "commit": "d0a90d53507d11aff1e1e04339f3bde615a38beb",
+      "parent": "a35264c98ac8c027cb93c4e8a8ce14c008bde60f",
+      "paths": {
+        "benches/bezier_algebraic_parameter.rs": "193c964818bc0c53390c095e2e5cc09e92b14a1bd9dc5b89c7f9ff45c014644b",
+        "benches/bezier_arrangement.rs": "c593a34083a77bcbf45d0f53e7f8014a8de4c42c2dbe0baed088797df07c8dcb",
+        "benches/bezier_region.rs": "1e9760f6ad77d4355ac8afc8eb4380a0b0839b02993118fa85d84f9be47bbd46",
+        "benches/bezier_split_materialization.rs": "fe78f75f02513f51d97d39611ec8bb4af700d43529670ca03f1d804f4d6ac196",
+        "benches/curve_region_boolean_batch.rs": "29cc0c773954abbb24f1c29f96eb9282e8cbbbe3ffac3e5c8c1e5cd5d5f167c3",
+        "benches/offset.rs": "e1455d495f8dfa161dd331731a0063a85dbae1167b27f55c6cfe705b846412f5",
+        "fuzz/fuzz_targets/bezier_arrangement.rs": "affa7ce164b7261fb4a8c68161e8c316e13ce9ce6d9af15e2b82f375c46773f1",
+        "fuzz/fuzz_targets/bezier_region.rs": "a3181e87862f10d8305daa78ebcef6dadebc47ce570530ee29e4a15df8b71855",
+        "fuzz/fuzz_targets/bezier_split_materialization.rs": "271f9f558863a1cde866ec9f3fa388a7a6452749bee23efb20b57b36cdd0c960",
+        "src/bezier_offset.rs": "9649b7ae0ae26a2827e988097c326ae6838976c983a8dbfebe59daf3fccdfe47",
+        "src/bezier_parameter.rs": "68b0f73d8bbac78b9b4f3c134c7345151d38f42668ff80e2099e68cfd1c8171a",
+        "src/bezier_region.rs": "1e3615825e353fd71c3ff271da824186d7c40db8ba6852ade1f4c7afbffa1046",
+        "src/bezier_split.rs": "a20b0fad185fb60c7892601b5ce4a64fa10335720b0ef210aa681f0f1b0fe6d3",
+        "src/curve_region_trim.rs": "1c675a02f39b889c8cef215bea6a14c833bf12881119097a5686f1b217cdbbdd",
+        "src/curve_subdivision.rs": "b8ce7487b17b7ad96c09c60d85753408d968ed74b85b0adb9629c5d3afc87ff9",
+        "src/curve_support_intersection.rs": "b647474f6aa7e7c76b067d010f91b22f3ede6904e4dc926e5d3079d79946ee95",
+        "src/rational_bezier.rs": "d4c3019c1a3614bb18442cc652e230f31673c1961dcd8d2b3764d410d70a8c1c",
+        "src/rational_bezier_general.rs": "45f299230728350c718d4d7d64474b1fe87a57d6184a1e10c6c12040d553f451",
+        "tests/hypercurve_analytic_parallel_region.rs": "ff47b3a22f1b2b241bdb82d91f21a81469868e6bf3cf79d5be1334bee84535f7",
+        "tests/hypercurve_bezier_algebraic_parameter.rs": "5cb10bfa8c9796ee12ec6ac67b8f7c3bdf6f1b78ecc0e5ec54015856a27d67d5",
+        "tests/hypercurve_bezier_arrangement.rs": "3d0e1743b4c2f2afa65e87e87b6f6312bf9b9648c52b791d2b46914addc39b80",
+        "tests/hypercurve_bezier_region.rs": "501fb7aee466f7d106378be4a669771de0318c973143e640ca3b109cd87d737f",
+        "tests/hypercurve_bezier_split_materialization.rs": "5ab34004ecb4acba3dba8c0ffc5374433202a789adf93484517964d625db381e"
+      }
+    },
+    "hypersolve": {
+      "commit": "6f983ba91cf6566411e6a10bbf8a389b8a203abd",
+      "parent": "ca60d398173f5b90b4bd6487a487c3183d86c153",
+      "paths": {
+        "src/algebraic.rs": "2747a1fd09fd56c6a5e1c8aa75a462ea725c97c30e42c60c857b3081d87bfa0c",
+        "src/root_isolation.rs": "732630e59a5d85d71e22ec4ea1392d71657740c6ad76727b1f3eb362a38b203d"
+      }
+    }
+  },
+  "qualification": "parameter-root-closure-20260928-v638-terminal.json",
+  "verified_source_files": 2047,
+  "clean_repositories": 30
+}

@@ -1,0 +1,15 @@
+
+running 10 tests
+test computable::node::twelfth_relation_tests::descendant_queries_and_unknown_children_do_not_hide_proof ... ok
+test computable::node::twelfth_relation_tests::proof_preserves_nodes_and_numeric_caches ... ok
+test computable::node::twelfth_relation_tests::exact_angle_arithmetic_and_nonzero_rational_remainders ... ok
+test computable::node::twelfth_relation_tests::rejects_unproved_angles_domains_and_excessive_work ... ok
+test computable::node::twelfth_relation_tests::warmed_approximations_are_unchanged_and_failed_proofs_can_refine ... ok
+test computable::node::twelfth_relation_reference_tests::direct_tangent_matches_quotients_and_exact_poles ... ok
+test computable::node::twelfth_relation_reference_tests::sparse_arithmetic_matches_frozen_dense_reference ... ok
+test computable::node::twelfth_relation_reference_tests::revised_evaluation_preserves_frozen_domain_and_values ... ok
+test computable::node::twelfth_relation_tests::close_conjugates_and_rational_sqrt_membership ... ok
+test computable::node::twelfth_relation_tests::independent_polynomial_matrix_and_interval_oracles ... ok
+
+test result: ok. 10 passed; 0 failed; 0 ignored; 0 measured; 698 filtered out; finished in 3.01s
+

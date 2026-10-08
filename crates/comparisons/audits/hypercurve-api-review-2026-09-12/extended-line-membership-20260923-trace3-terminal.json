@@ -1,0 +1,15 @@
+{
+  "cases": [
+    {
+      "name": "bezier_region::tests::selected_circle_and_analytic_parallel_extend_on_full_supports",
+      "returncode": 0,
+      "passed": true,
+      "limit_seconds": 75,
+      "elapsed_seconds": 1.6034645909676328,
+      "log": "extended-line-membership-20260923-trace3-case-0.log"
+    }
+  ],
+  "binary_sha256": "ffcf6b68a8a6b16a3fd54ee51320c31bc0009b3771d3f2d00748ed9a9c0046e5",
+  "all_sources_unchanged": true,
+  "all_processes_reaped": true
+}

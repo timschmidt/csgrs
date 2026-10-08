@@ -1,0 +1,6 @@
+{
+  "outer_session": 16824,
+  "outer_exit_code": 1,
+  "failure": "test fixture used half after consuming it with sqrt; cloned half",
+  "cases": 0
+}

@@ -1,0 +1,33 @@
+{
+  "tag": "scalar-boundary-compile-v81",
+  "started": "2026-09-12T02:22:58.333Z",
+  "finished": "2026-09-12T02:22:58.567Z",
+  "elapsedSeconds": 0.231850533,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "gcc",
+  "args": [
+    "-O2",
+    "-g0",
+    "-ffunction-sections",
+    "-fdata-sections",
+    "-Wall",
+    "-Wextra",
+    "-Werror",
+    "-isystem",
+    "/home/tim/Documents/GitHub/workspace/exact-real-references/flint/src",
+    "flint-scalar-boundary-v81.c",
+    "-L",
+    "/home/tim/Documents/GitHub/workspace/exact-real-references/flint",
+    "-Wl,-rpath,/home/tim/Documents/GitHub/workspace/exact-real-references/flint",
+    "-Wl,--gc-sections",
+    "-lflint",
+    "-lmpfr",
+    "-lgmp",
+    "-lm",
+    "-lpthread",
+    "-o",
+    "/tmp/calcium-scalar-boundary-v81.nLhDoT/controls"
+  ],
+  "code": 0,
+  "signal": null
+}

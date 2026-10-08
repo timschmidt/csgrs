@@ -1,0 +1,27 @@
+\doxysection{Functional Analysis }
+\hypertarget{functional_analysis_page}{}\label{functional_analysis_page}\index{Functional Analysis@{Functional Analysis}}
+This page describes the theory of computable functional analysis For details on how this is implemented in Ariadne, see the \doxylink{group__FunctionModule}{Function Module} documentation.\hypertarget{functional_analysis_page_continuous_functions}{}\doxysubsection{\texorpdfstring{Continuous functions}{Continuous functions}}\label{functional_analysis_page_continuous_functions}
+There are many kinds of functions arising in continuous mathematics. The most basic are the continuous functions between topological spaces. In computability theory, there is always a type of continuous functions $\X\to\Y$, also denoted $\mathcal{C}(\X;\Y)$. The function type is defined by the {\itshape evaluation} or function {\itshape call}, so the information on a function $f$ is precisely enough to compute $f(x)$ for any $x:\X$, or equivalently, to support the evaluation operator $\varepsilon:\mathcal{C}(\X;\Y)\times\X\to\Y$ given by $\varepsilon(f,x):=f(x)$.
+
+When objects in $X,Y$ are represented as infinite intersections of objects in $\hatX\subset \mathcal{P}(X)$ and $\hatY\subset\mathcal{P}(Y)$, a continuous function $f$ can be specified by, and specifies, a function $\hat{f}:\hatX\to\hatY$ with the properties\+:
+\begin{DoxyItemize}
+\item validity\+: $x\in\hat{x} \implies f(x)\in \hat{f}(\hat{x})$,
+\item convergence\+: $\bigcap_{n=0}^{\infty}\hat{x}_n=\{x\} \implies \bigcap_{n=0}^{\infty} \hat{f}(\hat{x}_n)=\{y\}$, and
+\item monotonicity (optionally) $\hat{x}_1\subset\hat{x}_2 \implies \hat{f}(\hat{x}_1)\subset \hat{f}(\hat{x}_1)$
+\end{DoxyItemize}
+
+We have the following basic constructions\+:
+\begin{DoxyItemize}
+\item If $f_1:\X\to\Y_1$ and $f_2:\X\to\Y_2$, then the function $f_{1,2}:\X\to\Y_1\times\Y_2$ given by $f_{1,2}(x)=(f_1(x),f_2(x))$ is computable from $f_1,f_2$.
+\item If $f_1:\X_1\to\Y_1$ and $f_2:\X_2\to\Y_2$, then the function $f_{1;2}:\X_1\times\X_2\to\Y_1\times\Y_2$ given by $f_{1;2}(x_1,x_2)=(f_1(x_1),f_2(x_2))$ is computable from $f_1,f_2$.
+\item If $f:\X\to\Y$ and $g:\Y\to\Z$, then the composition $(f,g)\mapsto g\circ f$, where $g\circ f:\X\to\Z:x\mapsto g(f(x))$, is computable given $f$ and $g$.
+\end{DoxyItemize}
+
+From these basic constructions, we can easily see that e.\+g. if $f_1,f_2:\X\to\R$, then the function $f_1+f_2$ defined by $[f_1+f_2](x)=f_1(x)+f_2(x)$ is computable, and if $f:\X\to\R$, then e.\+g. $\exp(f)$ given by $[\exp(f)](x)=\exp(f(x))$ is computable from $f$.
+
+Definite and indefinite integrals of real-\/valued functions are computable; in particular, given $f:\R\to\R$, and fixed $a:\R$ the function $\tilde{f}$ given by $\tilde{f}(x)=\int_a^x f(\xi)\,d\xi$ is computable.\hypertarget{functional_analysis_page_differentiable_functions}{}\doxysubsection{\texorpdfstring{Differentiable functions}{Differentiable functions}}\label{functional_analysis_page_differentiable_functions}
+The operation of differentiation is {\itshape un}computable, since it is not continuous. This can by seen by considering $f_n(x)=\frac{1}{n}\sin(n^2x)$. Then $f_n\to0$ uniformly on $\R$, but since $f_n\textnormal{\textquotesingle}(x)=n\cos(n^2x)$, the sequence $f_n\textnormal{\textquotesingle}$ diverges.
+
+In order to differentiate a function, we therefore need more information. The type of continuously differentiable functions $C^1(\R;\R)$ consists of pairs $(f,f\textnormal{\textquotesingle})$ where $f$ is an antiderivative of $f\textnormal{\textquotesingle}$. In other words, to specify a differentiable function, we need to explicitly provide the derivative. Since integration is computable, it suffices to give a single value of $f$ e.\+g. $f(x)=f_a$ when $x=a$. If symbolic information about a function is available, then we can of course compute the derivative(s) from this.\hypertarget{functional_analysis_page_function_patches}{}\doxysubsection{\texorpdfstring{Functions on bounded domains}{Functions on bounded domains}}\label{functional_analysis_page_function_patches}
+Functions $f:D\to\R$ where $D$ is a regular compact subset of $R^n$ are particularly nice to work with computationally. Any continuous function $f:D\to\R$ has a finite {\itshape supremum norm} $\|f\|_{D,\infty} := \sup_{x \in D} |f(x)|$. By the Weierstrass approximation theorem, $f$ can be approximated arbitrarily accurately in the uniform norm by a polynomial $p$ with (dyadic) rational coefficients.\hypertarget{functional_analysis_page_measurable_functions}{}\doxysubsection{\texorpdfstring{Measurable functions}{Measurable functions}}\label{functional_analysis_page_measurable_functions}
+Classically, if $(X,E)$ is a measure space with sigma-\/algebra $E$, and $(Y,\tau)$ is a topological space, then a function $f:X\to Y$ is {\itshape measurable} if $f^{-1}(V)$ is a measurable set in $E$ whenever $V$ is an open set in $\tau$. 

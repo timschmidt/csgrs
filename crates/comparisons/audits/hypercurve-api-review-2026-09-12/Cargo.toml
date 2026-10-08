@@ -1,0 +1,30 @@
+[package]
+name = "hypercurve-api-review-probe"
+version = "0.0.0"
+edition = "2024"
+publish = false
+
+[[bin]]
+name = "probe"
+path = "probe.rs"
+
+[[bin]]
+name = "evaluation-replay"
+path = "evaluation-replay.rs"
+
+[dependencies]
+hypercurve = { path = "../../../hypercurve", default-features = false }
+hyperreal = { path = "../../../hyperreal", default-features = false }
+
+[features]
+default = []
+dispatch-trace = ["hypercurve/dispatch-trace"]
+
+[patch.crates-io]
+hyperreal = { path = "../../../hyperreal" }
+hyperlattice = { path = "../../../hyperlattice" }
+hyperlimit = { path = "../../../hyperlimit" }
+hypersolve = { path = "../../../hypersolve" }
+
+# Archived next to its audit results; build it standalone.
+[workspace]

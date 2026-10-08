@@ -1,0 +1,18 @@
+{
+  "tag": "zero-factor-memory-extended-v70",
+  "started": "2026-09-11T19:08:30.734Z",
+  "finished": "2026-09-11T19:08:35.084Z",
+  "elapsedSeconds": 4.347284876000001,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "valgrind",
+  "args": [
+    "--leak-check=full",
+    "--show-leak-kinds=all",
+    "--errors-for-leak-kinds=definite,indirect,possible",
+    "--error-exitcode=99",
+    "/tmp/calcium-zero-factor.1YCn5a/extended",
+    "check"
+  ],
+  "code": 0,
+  "signal": null
+}

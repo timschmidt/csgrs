@@ -1,0 +1,14 @@
+{
+  "args": [
+    "printed",
+    "+RTS",
+    "-M256m",
+    "-RTS"
+  ],
+  "timeout": 60000,
+  "status": 0,
+  "signal": null,
+  "error": "EPERM",
+  "stdout": "PRINTED 51 32 34 32\nPASS exact dyadic nonclosure counterexample 4/3\n",
+  "stderr": ""
+}

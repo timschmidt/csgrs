@@ -1,0 +1,43 @@
+{
+  "probesPerMode": 1672,
+  "families": {
+    "affine-negate": {
+      "EXCEPTION/NullPointerException": 3,
+      "PASS": 25
+    },
+    "projective-conversion": {
+      "PASS": 206
+    },
+    "jacobian-conversion": {
+      "PASS": 54,
+      "WRONG": 152
+    },
+    "projective-doubling": {
+      "PASS": 206
+    },
+    "affine-add": {
+      "PASS": 302
+    },
+    "projective-add": {
+      "PASS": 228,
+      "WRONG": 74
+    },
+    "projective-invalid-equality": {
+      "WRONG": 3
+    },
+    "montgomery-negate": {
+      "EXCEPTION/NullPointerException": 3,
+      "PASS": 29
+    },
+    "montgomery-add": {
+      "PASS": 384
+    },
+    "montgomery-invariant": {
+      "WRONG": 3
+    }
+  },
+  "unchangedDonorSourceFiles": 7,
+  "originalJUnitRun": false,
+  "scope": "local small-field coordinate and group-law controls; not whole-module or cryptographic qualification",
+  "newProductionChanges": 0
+}

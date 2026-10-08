@@ -1,0 +1,89 @@
+\doxysubsection{Constraint\+Set Class Reference}
+\hypertarget{classAriadne_1_1ConstraintSet}{}\label{classAriadne_1_1ConstraintSet}\index{ConstraintSet@{ConstraintSet}}
+
+
+{\ttfamily \#include $<$function\+\_\+set.\+hpp$>$}
+
+
+
+\doxysubsubsection{Description}
+A set defined as the intersection of an exact box with preimage of an exact box (the {\itshape codomain}) under a continuous function. The set is described as $S=D\cap g^{-1}(C) = \{ x\in D \mid g(x)\in C\}$ where $D$ is the domain, $C$ is the codomain and $g$ the function. \begin{Desc}
+\item[Examples]\par
+\mbox{\hyperlink{tutorials_2rigorous_numerics_2rigorous_numerics_tutorial_8cpp-example}{tutorials/rigorous\+\_\+numerics/rigorous\+\_\+numerics\+\_\+tutorial.\+cpp}}.\end{Desc}
+Inheritance diagram for Constraint\+Set\+:\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[height=4.682274cm]{classAriadne_1_1ConstraintSet}
+\end{center}
+\end{figure}
+\doxysubsubsubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1ConstraintSet_ae096c753dea5b059655d0d830dbebb60}\label{classAriadne_1_1ConstraintSet_ae096c753dea5b059655d0d830dbebb60} 
+{\bfseries Constraint\+Set} (const Effective\+Vector\+Multivariate\+Function \&g, const Real\+Box \&C)
+\begin{DoxyCompactList}\small\item\em Construct the preimage of {\itshape C} under {\itshape g}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1ConstraintSet_a360b6c5277d5953707ef89afdf08067a}\label{classAriadne_1_1ConstraintSet_a360b6c5277d5953707ef89afdf08067a} 
+{\bfseries Constraint\+Set} (const \mbox{\hyperlink{classAriadne_1_1List}{List}}$<$ \mbox{\hyperlink{classAriadne_1_1Constraint}{Effective\+Constraint}} $>$ \&c)
+\begin{DoxyCompactList}\small\item\em Construct the restriction of {\itshape D} under the constraints {\itshape c}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1ConstraintSet_a7bfaea8f1e4bc113ab6e507ae31c754f}\label{classAriadne_1_1ConstraintSet_a7bfaea8f1e4bc113ab6e507ae31c754f} 
+const Real\+Box {\bfseries codomain} () const
+\begin{DoxyCompactList}\small\item\em The codomain of the set. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1ConstraintSet_a50022eadfb89034caf815236b0bed721}\label{classAriadne_1_1ConstraintSet_a50022eadfb89034caf815236b0bed721} 
+const Effective\+Vector\+Multivariate\+Function {\bfseries constraint\+\_\+function} () const
+\begin{DoxyCompactList}\small\item\em The function used to define the constraints. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1ConstraintSet_a5fe41d1bf1aab1b1297a10548f1e6b70}\label{classAriadne_1_1ConstraintSet_a5fe41d1bf1aab1b1297a10548f1e6b70} 
+const Real\+Box {\bfseries constraint\+\_\+bounds} () const
+\begin{DoxyCompactList}\small\item\em The bounds of the constraints. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1ConstraintSet_a4ee2c18be0864ad8e866ccc167b2a63a}\label{classAriadne_1_1ConstraintSet_a4ee2c18be0864ad8e866ccc167b2a63a} 
+Size\+Type {\bfseries number\+\_\+of\+\_\+constraints} () const
+\begin{DoxyCompactList}\small\item\em The number of constraints. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1ConstraintSet_ab88a41ce8cf7769c242020ac684147a9}\label{classAriadne_1_1ConstraintSet_ab88a41ce8cf7769c242020ac684147a9} 
+\mbox{\hyperlink{classAriadne_1_1List}{List}}$<$ \mbox{\hyperlink{classAriadne_1_1Constraint}{Effective\+Constraint}} $>$ const \& {\bfseries constraints} () const
+\begin{DoxyCompactList}\small\item\em The constraints. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1ConstraintSet_a4066d7eeb4042850d20201f763059783}\label{classAriadne_1_1ConstraintSet_a4066d7eeb4042850d20201f763059783} 
+\mbox{\hyperlink{classAriadne_1_1Constraint}{Effective\+Constraint}} const \& {\bfseries constraint} (Size\+Type i) const
+\begin{DoxyCompactList}\small\item\em The {\itshape i\textsuperscript{th}} constraint. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1ConstraintSet_a5a300f7aac7ca5700b0cdb8104c8b971}\label{classAriadne_1_1ConstraintSet_a5a300f7aac7ca5700b0cdb8104c8b971} 
+virtual \mbox{\hyperlink{classAriadne_1_1ConstraintSet}{Constraint\+Set}} \texorpdfstring{$\ast$}{*} {\bfseries clone} () const override
+\begin{DoxyCompactList}\small\item\em Construct a dynamically-\/allocated copy. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1ConstraintSet_a92c497b6e7ed3bafb7f483c87a8bf85b}\label{classAriadne_1_1ConstraintSet_a92c497b6e7ed3bafb7f483c87a8bf85b} 
+virtual \mbox{\hyperlink{namespaceAriadne_a4b06015a4986ef014fb6643680cb04d2}{Dimension\+Type}} {\bfseries dimension} () const override
+\begin{DoxyCompactList}\small\item\em The dimension of the set. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxyparagraph*{Public Member Functions inherited from \mbox{\hyperlink{classAriadne_1_1OpenSetInterface}{Open\+Set\+Interface$<$ Effective\+Tag, Real\+Vector $>$}}}
+\begin{DoxyCompactItemize}
+\item 
+virtual Lower\+Kleenean\+Type$<$ \mbox{\hyperlink{structAriadne_1_1EffectiveTag}{Effective\+Tag}} $>$ {\bfseries covers} (const \mbox{\hyperlink{classAriadne_1_1SetInterfaceBase_a621a6488ff988ea56df9398b55b4241f}{Basic\+Set\+Type}} \&bx) const=0
+\begin{DoxyCompactList}\small\item\em Tests if the set covers of {\itshape bx}. A set {\itshape A} {\itshape covers} {\itshape B} if the interiors of {\itshape A} is a superset of the closure of {\itshape B}. A set $A$ {\itshape covers} $B$ if $A^\circ \supset \overline{B}$. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxyparagraph*{Public Member Functions inherited from \mbox{\hyperlink{classAriadne_1_1OvertSetInterface}{Overt\+Set\+Interface$<$ Effective\+Tag, Real\+Vector $>$}}}
+\begin{DoxyCompactItemize}
+\item 
+virtual Lower\+Kleenean\+Type$<$ \mbox{\hyperlink{structAriadne_1_1EffectiveTag}{Effective\+Tag}} $>$ {\bfseries overlaps} (const \mbox{\hyperlink{classAriadne_1_1SetInterfaceBase_a621a6488ff988ea56df9398b55b4241f}{Basic\+Set\+Type}} \&bx) const=0
+\begin{DoxyCompactList}\small\item\em Tests if the set overlaps {\itshape bx}. Sets {\itshape A} and {\itshape B} {\itshape overlap} if the interiors of {\itshape A} and {\itshape B} intersect. Sets $A$ and $B$ {\itshape overlap} if $A^\circ \cap B^\circ \neq \emptyset$. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxyparagraph*{Public Member Functions inherited from \mbox{\hyperlink{classAriadne_1_1SetInterfaceBase}{Set\+Interface\+Base$<$ Real\+Vector $>$}}}
+\begin{DoxyCompactItemize}
+\item 
+virtual {\bfseries \texorpdfstring{$\sim$}{\string~}\+Set\+Interface\+Base} ()=default
+\begin{DoxyCompactList}\small\item\em Virtual destructor. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxyparagraph*{Public Member Functions inherited from \mbox{\hyperlink{classAriadne_1_1ClosedSetInterface}{Closed\+Set\+Interface$<$ Effective\+Tag, Real\+Vector $>$}}}
+\begin{DoxyCompactItemize}
+\item 
+virtual Lower\+Kleenean\+Type$<$ \mbox{\hyperlink{structAriadne_1_1EffectiveTag}{Effective\+Tag}} $>$ {\bfseries separated} (const \mbox{\hyperlink{classAriadne_1_1SetInterfaceBase_a621a6488ff988ea56df9398b55b4241f}{Basic\+Set\+Type}} \&bx) const=0
+\begin{DoxyCompactList}\small\item\em Tests if the set is separated from {\itshape bx}. A set {\itshape A} is {\itshape separated} from {\itshape B} if the closures of {\itshape A} and {\itshape B} are disjoint. A set $A$ is {\itshape separated} from $B$ if $\,\overline{\!A} \cap \overline{B} = \emptyset$. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsubsection*{Additional Inherited Members}
+\doxyparagraph*{Public Types inherited from \mbox{\hyperlink{classAriadne_1_1SetInterfaceBase}{Set\+Interface\+Base$<$ Real\+Vector $>$}}}
+\begin{DoxyCompactItemize}
+\item 
+typedef \mbox{\hyperlink{group__LinearAlgebraSubModule_ga00e69bf76ffebd1f3ba573f4662134bc}{Real\+Vector}} {\bfseries Element\+Type}
+\begin{DoxyCompactList}\small\item\em The type of element of the set. \end{DoxyCompactList}\item 
+typedef Set\+Traits$<$ \mbox{\hyperlink{group__LinearAlgebraSubModule_ga00e69bf76ffebd1f3ba573f4662134bc}{Real\+Vector}} $>$\+::\+Dimension\+Type {\bfseries Dimension\+Type}
+\begin{DoxyCompactList}\small\item\em The type representing the dimension of the set. \end{DoxyCompactList}\item 
+typedef Set\+Traits$<$ \mbox{\hyperlink{group__LinearAlgebraSubModule_ga00e69bf76ffebd1f3ba573f4662134bc}{Real\+Vector}} $>$\+::\+Basic\+Set\+Type {\bfseries Basic\+Set\+Type}
+\begin{DoxyCompactList}\small\item\em The type of basic set in the space. \end{DoxyCompactList}\item 
+typedef Set\+Traits$<$ \mbox{\hyperlink{group__LinearAlgebraSubModule_ga00e69bf76ffebd1f3ba573f4662134bc}{Real\+Vector}} $>$\+::\+Bounding\+Set\+Type {\bfseries Bounding\+Set\+Type}
+\begin{DoxyCompactList}\small\item\em The type of basic set in the space. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+The documentation for this class was generated from the following files\+:\begin{DoxyCompactItemize}
+\item 
+source/geometry/\mbox{\hyperlink{function__set_8hpp}{function\+\_\+set.\+hpp}}\item 
+source/geometry/function\+\_\+set.\+cpp\end{DoxyCompactItemize}

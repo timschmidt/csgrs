@@ -1,0 +1,8 @@
+{
+  "returncode": 124,
+  "elapsed_seconds": 20.00145694099774,
+  "normal_library_sha256": "bae5b52c7d71a66c83f87c99bb1613ca5ac16ddb2bbc543cf14c2da4f460f7c6",
+  "source": "finite-circle-domain-stages.rs",
+  "executable_sha256": "203e109a1b3e924b7bc207c10eadf3c2de128b25557896aade0b5409cd82dcae",
+  "log": "selected-circle-tangent-identity-diagnostic.log"
+}

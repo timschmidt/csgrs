@@ -1,0 +1,548 @@
+[
+  {
+    "path": "hypercurve/src/curve_region_boolean.rs",
+    "line": 3622,
+    "function": "fn algebraic_chord_parallel_pair_result(",
+    "context": "        for overlap in intersections.overlaps() {\n            let chord_endpoint = |parameter: &BezierParameter2| {\n                let point =\n                    exact_contact_point_evidence(&rational_line, parameter, &self.data.policy)\n                        .map_err(|cause| self.invalid(chord_index, cause))?\n                        .ok_or_else(|| {\n                            self.invalid(\n                                chord_index,\n                                CurveError::Topology("
+  },
+  {
+    "path": "hypercurve/src/curve_region_boolean.rs",
+    "line": 12793,
+    "function": "fn selected_fiber_event_point(",
+    "context": "    };\n    match source {\n        BezierSelectedFiberSource2::Rational(curve) => {\n            exact_contact_point_evidence(curve, &parameter, policy)?.ok_or_else(|| {\n                CurveError::Topology(\n                    \"a selected-fiber rational boundary could not retain its exact point\".into(),\n                )\n            })\n        }"
+  },
+  {
+    "path": "hypercurve/src/curve_region_boolean.rs",
+    "line": 17911,
+    "function": "fn source_related_algebraic_chord_contact_enters_split_topology() {",
+    "context": "            );\n            let source_fragment = materialization.fragments()[0].clone();\n            let selected_point =\n                exact_contact_point_evidence(&source_rational, &source_parameter, &policy)\n                    .expect(\"exact selected point construction\")\n                    .expect(\"selected point evidence\");\n            let chord = decided(\n                crate::BezierAlgebraicChord2::try_new(\n                    selected_point,"
+  },
+  {
+    "path": "hypercurve/src/curve_region_boolean.rs",
+    "line": 18066,
+    "function": "fn nonadjacent_source_chord_pair_replays_endpoint_and_residual_contacts() {",
+    "context": "            .fragments()[0]\n                .clone();\n            let selected_point =\n                exact_contact_point_evidence(&source_rational, &source_parameter, &policy)\n                    .expect(\"exact selected point construction\")\n                    .expect(\"selected point evidence\");\n            let chord = decided(\n                crate::BezierAlgebraicChord2::try_new(\n                    selected_point,"
+  },
+  {
+    "path": "hypercurve/src/curve_region_boolean.rs",
+    "line": 18181,
+    "function": "fn independent_field_algebraic_chord_uses_general_boolean_pair_engine() {",
+    "context": "                RationalBezier2::try_from_subcurve(&x_axis).expect(\"valid rational x axis\");\n            let y_rational =\n                RationalBezier2::try_from_subcurve(&y_axis).expect(\"valid rational y axis\");\n            let start = exact_contact_point_evidence(&x_rational, &first_parameter, &policy)\n                .expect(\"exact first endpoint\")\n                .expect(\"first endpoint evidence\");\n            let end = exact_contact_point_evidence(&y_rational, &second_parameter, &policy)\n                .expect(\"exact second endpoint\")\n                .expect(\"second endpoint evidence\");"
+  },
+  {
+    "path": "hypercurve/src/curve_region_boolean.rs",
+    "line": 18184,
+    "function": "fn independent_field_algebraic_chord_uses_general_boolean_pair_engine() {",
+    "context": "            let start = exact_contact_point_evidence(&x_rational, &first_parameter, &policy)\n                .expect(\"exact first endpoint\")\n                .expect(\"first endpoint evidence\");\n            let end = exact_contact_point_evidence(&y_rational, &second_parameter, &policy)\n                .expect(\"exact second endpoint\")\n                .expect(\"second endpoint evidence\");\n            let chord = decided(\n                crate::BezierAlgebraicChord2::try_new(start, end, &policy)\n                    .expect(\"valid independent-field chord\"),"
+  },
+  {
+    "path": "hypercurve/src/curve_region_boolean.rs",
+    "line": 18349,
+    "function": "fn independent_field_collinear_chord_overlap_enters_all_boolean_topology() {",
+    "context": "                RationalBezier2::try_from_subcurve(&half_source).expect(\"valid half source\");\n            let third_rational =\n                RationalBezier2::try_from_subcurve(&third_source).expect(\"valid third source\");\n            let half_point = exact_contact_point_evidence(&half_rational, &half_parameter, &policy)\n                .expect(\"exact half endpoint\")\n                .expect(\"half endpoint evidence\");\n            let third_point =\n                exact_contact_point_evidence(&third_rational, &third_parameter, &policy)\n                    .expect(\"exact third endpoint\")"
+  },
+  {
+    "path": "hypercurve/src/curve_region_boolean.rs",
+    "line": 18353,
+    "function": "fn independent_field_collinear_chord_overlap_enters_all_boolean_topology() {",
+    "context": "                .expect(\"exact half endpoint\")\n                .expect(\"half endpoint evidence\");\n            let third_point =\n                exact_contact_point_evidence(&third_rational, &third_parameter, &policy)\n                    .expect(\"exact third endpoint\")\n                    .expect(\"third endpoint evidence\");\n            let chord = decided(\n                crate::BezierAlgebraicChord2::try_new(\n                    half_point.clone(),"
+  },
+  {
+    "path": "hypercurve/src/curve_region_boolean.rs",
+    "line": 18561,
+    "function": "fn algebraic_chord_pair_overlap_enters_region_intersection_evidence() {",
+    "context": "            let horizontal = rational_line(0, 1);\n            let first_parameter = BezierParameter2::Algebraic(sqrt_half_parameter(&policy));\n            let second_parameter = BezierParameter2::Algebraic(sqrt_third_parameter(&policy));\n            let first_point = exact_contact_point_evidence(&horizontal, &first_parameter, &policy)\n                .expect(\"exact first endpoint\")\n                .expect(\"first endpoint evidence\");\n            let second_point =\n                exact_contact_point_evidence(&horizontal, &second_parameter, &policy)\n                    .expect(\"exact second endpoint\")"
+  },
+  {
+    "path": "hypercurve/src/curve_region_boolean.rs",
+    "line": 18565,
+    "function": "fn algebraic_chord_pair_overlap_enters_region_intersection_evidence() {",
+    "context": "                .expect(\"exact first endpoint\")\n                .expect(\"first endpoint evidence\");\n            let second_point =\n                exact_contact_point_evidence(&horizontal, &second_parameter, &policy)\n                    .expect(\"exact second endpoint\")\n                    .expect(\"second endpoint evidence\");\n            let first = decided(\n                crate::BezierAlgebraicChord2::try_new(first_point, second_point, &policy)\n                    .expect(\"valid independent-field chord\"),"
+  },
+  {
+    "path": "hypercurve/src/curve_region_boolean.rs",
+    "line": 19694,
+    "function": "fn algebraic_chord_analytic_parallel_pair_replays_contacts_and_overlap() {",
+    "context": "            )\n            .expect(\"valid diagonal parameter source\");\n            let selected_point = |parameter: &BezierParameter2| {\n                crate::rational_bezier_general::exact_contact_point_evidence(\n                    &diagonal, parameter, &policy,\n                )\n                .expect(\"exact independent endpoint\")\n                .expect(\"retained independent endpoint evidence\")\n            };"
+  },
+  {
+    "path": "hypercurve/src/curve_region_boolean.rs",
+    "line": 19800,
+    "function": "fn algebraic_chord_analytic_parallel_pair_replays_contacts_and_overlap() {",
+    "context": "                let source =\n                    RationalBezier2::try_new(vec![start, end], vec![Real::one(), Real::one()])\n                        .expect(\"valid selected line source\");\n                exact_contact_point_evidence(&source, &selected, &policy)\n                    .expect(\"exact selected line point\")\n                    .expect(\"selected line point evidence\")\n            };\n            let retracing_chord = decided(\n                crate::BezierAlgebraicChord2::try_new("
+  },
+  {
+    "path": "hypercurve/src/curve_region_boolean.rs",
+    "line": 20288,
+    "function": "fn strict_interior_algebraic_chord_pair_contact_splits_both_carriers() {",
+    "context": "                ))\n            };\n            let horizontal = rational_line(0, 1);\n            let first_start = exact_contact_point_evidence(\n                &horizontal,\n                &BezierParameter2::Algebraic(sqrt_half_parameter(&policy)),\n                &policy,\n            )\n            .expect(\"exact first start\")"
+  },
+  {
+    "path": "hypercurve/src/curve_region_boolean.rs",
+    "line": 20295,
+    "function": "fn strict_interior_algebraic_chord_pair_contact_splits_both_carriers() {",
+    "context": "            )\n            .expect(\"exact first start\")\n            .expect(\"first start evidence\");\n            let first_end = exact_contact_point_evidence(\n                &horizontal,\n                &BezierParameter2::Algebraic(sqrt_third_parameter(&policy)),\n                &policy,\n            )\n            .expect(\"exact first end\")"
+  },
+  {
+    "path": "hypercurve/src/curve_region_boolean.rs",
+    "line": 20313,
+    "function": "fn strict_interior_algebraic_chord_pair_contact_splits_both_carriers() {",
+    "context": "            let second_start_parameter = sqrt_parameter(2, 5);\n            let second_end_parameter = sqrt_parameter(1, 5);\n            let second_start =\n                exact_contact_point_evidence(&vertical, &second_start_parameter, &policy)\n                    .expect(\"exact second start\")\n                    .expect(\"second start evidence\");\n            let second_end =\n                exact_contact_point_evidence(&vertical, &second_end_parameter, &policy)\n                    .expect(\"exact second end\")"
+  },
+  {
+    "path": "hypercurve/src/curve_region_boolean.rs",
+    "line": 20317,
+    "function": "fn strict_interior_algebraic_chord_pair_contact_splits_both_carriers() {",
+    "context": "                    .expect(\"exact second start\")\n                    .expect(\"second start evidence\");\n            let second_end =\n                exact_contact_point_evidence(&vertical, &second_end_parameter, &policy)\n                    .expect(\"exact second end\")\n                    .expect(\"second end evidence\");\n            let first = decided(\n                crate::BezierAlgebraicChord2::try_new(\n                    first_start.clone(),"
+  },
+  {
+    "path": "hypercurve/src/curve_region_boolean.rs",
+    "line": 20591,
+    "function": "fn noninjective_preimages_survive_curve_queries_and_cancel_from_regions() {",
+    "context": "            let second_parameter = BezierParameter2::Algebraic(sqrt_third_parameter(&policy));\n            let horizontal = rational_line(0, 1);\n            let first_endpoint =\n                exact_contact_point_evidence(&horizontal, &first_parameter, &policy)\n                    .expect(\"exact first endpoint\")\n                    .expect(\"first endpoint evidence\");\n            let second_endpoint =\n                exact_contact_point_evidence(&horizontal, &second_parameter, &policy)\n                    .expect(\"exact second endpoint\")"
+  },
+  {
+    "path": "hypercurve/src/curve_region_boolean.rs",
+    "line": 20595,
+    "function": "fn noninjective_preimages_survive_curve_queries_and_cancel_from_regions() {",
+    "context": "                    .expect(\"exact first endpoint\")\n                    .expect(\"first endpoint evidence\");\n            let second_endpoint =\n                exact_contact_point_evidence(&horizontal, &second_parameter, &policy)\n                    .expect(\"exact second endpoint\")\n                    .expect(\"second endpoint evidence\");\n            let bottom = CurvePoint2::from(Point2::from_values(0, -1));\n            let chord = decided(\n                crate::BezierAlgebraicChord2::try_new("
+  },
+  {
+    "path": "hypercurve/src/curve_region_boolean.rs",
+    "line": 21026,
+    "function": "fn regularization_orders_all_branches_at_a_pinched_algebraic_corner() {",
+    "context": "                Point2::new(q(-1, 2), Real::zero()),\n                Point2::from_values(0, 0),\n            ));\n            let cut_point = exact_contact_point_evidence(\n                &RationalBezier2::try_from_subcurve(&source).unwrap(),\n                &cut,\n                &policy,\n            )\n            .unwrap()"
+  },
+  {
+    "path": "hypercurve/src/curve_region_boolean.rs",
+    "line": 21429,
+    "function": "fn adjacent_general_chord_fallback_excludes_the_authored_endpoint() {",
+    "context": "            let source_rational =\n                RationalBezier2::try_from_subcurve(&source_curve).expect(\"valid parabola\");\n            let shared_endpoint =\n                exact_contact_point_evidence(&source_rational, &source_parameter, &policy)\n                    .expect(\"exact shared endpoint\")\n                    .expect(\"shared endpoint evidence\");\n            let y_axis = BezierSubcurve2::Quadratic(QuadraticBezier2::from_line_segment(\n                LineSeg2::try_new(Point2::from_values(0, 0), Point2::from_values(0, 1))\n                    .expect(\"valid y axis\"),"
+  },
+  {
+    "path": "hypercurve/src/curve_region_boolean.rs",
+    "line": 21439,
+    "function": "fn adjacent_general_chord_fallback_excludes_the_authored_endpoint() {",
+    "context": "            let y_rational =\n                RationalBezier2::try_from_subcurve(&y_axis).expect(\"valid rational y axis\");\n            let independent_endpoint =\n                exact_contact_point_evidence(&y_rational, &independent_parameter, &policy)\n                    .expect(\"exact independent endpoint\")\n                    .expect(\"independent endpoint evidence\");\n            let chord = decided(\n                crate::BezierAlgebraicChord2::try_new(\n                    shared_endpoint,"
+  },
+  {
+    "path": "hypercurve/src/curve_region_boolean.rs",
+    "line": 21802,
+    "function": "fn boolean_topology_seeds_a_general_cusp_run_from_an_adjacent_carrier() {",
+    "context": "            )\n            .unwrap();\n            let distant_algebraic_point =\n                RationalBezierAlgebraicPointImage2::from_parametric_source(\n                    rational_line(100, 101),\n                    sqrt_half_parameter(&policy),\n                    &policy,\n                );\n            assert_eq!("
+  },
+  {
+    "path": "hypercurve/src/curve_region_boolean.rs",
+    "line": 21887,
+    "function": "fn affine_region_classifies_a_general_algebraic_cusp_point_in_its_source_field() {",
+    "context": "            );\n\n            let parameter = sqrt_half_parameter(&policy);\n            let boundary = RationalBezierAlgebraicPointImage2::from_parametric_source(\n                rational_line(0, 1),\n                parameter.clone(),\n                &policy,\n            );\n            assert_eq!("
+  },
+  {
+    "path": "hypercurve/src/curve_region_boolean.rs",
+    "line": 21907,
+    "function": "fn affine_region_classifies_a_general_algebraic_cusp_point_in_its_source_field() {",
+    "context": "                vec![Real::one(); 3],\n            )\n            .unwrap();\n            let parabola_boundary = RationalBezierAlgebraicPointImage2::from_parametric_source(\n                parabola.clone(),\n                parameter.clone(),\n                &policy,\n            );\n            let parabola_region = CurveRegion2::try_from_boundary_paths_with_loop_semantics("
+  },
+  {
+    "path": "hypercurve/src/curve_region_boolean.rs",
+    "line": 21942,
+    "function": "fn affine_region_classifies_a_general_algebraic_cusp_point_in_its_source_field() {",
+    "context": "                parabola_classification.value,\n                Classification::Decided(RegionPointLocation::Boundary),\n            );\n            let dyadic_ray_point = RationalBezierAlgebraicPointImage2::from_parametric_source(\n                rational_line(0, 1),\n                parameter.clone(),\n                &policy,\n            );\n            let lower_left = Point2::from_values(-2, -1);"
+  },
+  {
+    "path": "hypercurve/src/curve_region_boolean.rs",
+    "line": 22011,
+    "function": "fn affine_region_classifies_a_general_algebraic_cusp_point_in_its_source_field() {",
+    "context": "                    .unwrap(),\n                Classification::Decided(RegionPointLocation::Outside),\n            );\n            let line_extension = RationalBezierAlgebraicPointImage2::from_parametric_source(\n                rational_line(2, 4),\n                parameter.clone(),\n                &policy,\n            );\n            assert_eq!("
+  },
+  {
+    "path": "hypercurve/src/curve_region_boolean.rs",
+    "line": 23295,
+    "function": "fn contact_point_bounds_reject_disjoint_lazy_sources() {",
+    "context": "        let parameter = sqrt_half_parameter(&policy);\n        let first_curve = rational_line(0, 1);\n        let second_curve = rational_line(2, 3);\n        let first = CurvePoint2::from(RationalBezierAlgebraicPointImage2::from_parametric_source(\n            first_curve.clone(),\n            parameter.clone(),\n            &policy,\n        ));\n        let second = CurvePoint2::from(RationalBezierAlgebraicPointImage2::from_parametric_source("
+  },
+  {
+    "path": "hypercurve/src/curve_region_boolean.rs",
+    "line": 23300,
+    "function": "fn contact_point_bounds_reject_disjoint_lazy_sources() {",
+    "context": "            parameter.clone(),\n            &policy,\n        ));\n        let second = CurvePoint2::from(RationalBezierAlgebraicPointImage2::from_parametric_source(\n            second_curve.clone(),\n            parameter.clone(),\n            &policy,\n        ));\n"
+  },
+  {
+    "path": "hypercurve/src/curve_region_boolean.rs",
+    "line": 23337,
+    "function": "fn identical_injective_source_parameters_compare_without_materialization() {",
+    "context": "        let policy = CurveContext::STRICT;\n        let parameter = sqrt_half_parameter(&policy);\n        let curve = rational_line(0, 1);\n        let first = CurvePoint2::from(RationalBezierAlgebraicPointImage2::from_parametric_source(\n            curve.clone(),\n            parameter.clone(),\n            &policy,\n        ));\n        let second = CurvePoint2::from(RationalBezierAlgebraicPointImage2::from_parametric_source("
+  },
+  {
+    "path": "hypercurve/src/curve_region_boolean.rs",
+    "line": 23342,
+    "function": "fn identical_injective_source_parameters_compare_without_materialization() {",
+    "context": "            parameter.clone(),\n            &policy,\n        ));\n        let second = CurvePoint2::from(RationalBezierAlgebraicPointImage2::from_parametric_source(\n            curve.clone(),\n            parameter.clone(),\n            &policy,\n        ));\n"
+  },
+  {
+    "path": "hypercurve/src/bezier_algebraic_image.rs",
+    "line": 366,
+    "function": "fn retained_constant_coordinates_do_not_require_scalar_parameter_images() {",
+    "context": "                vec![Real::one(); 2],\n            )\n            .unwrap();\n            let image = RationalBezierAlgebraicPointImage2::from_parametric_source(\n                curve,\n                parameter.clone(),\n                &policy,\n            );\n            assert_eq!("
+  },
+  {
+    "path": "hypercurve/src/bezier_offset.rs",
+    "line": 10644,
+    "function": "fn algebraic_point_image(",
+    "context": "            return Ok(None);\n        };\n        Ok(Some(\n            RationalBezierAlgebraicPointImage2::from_parametric_source(\n                curve,\n                parameter.clone(),\n                policy,\n            ),\n        ))"
+  },
+  {
+    "path": "hypercurve/src/bezier_offset.rs",
+    "line": 10724,
+    "function": "fn represented_coordinates(",
+    "context": "                                ]\n                            })),\n                        BezierParameter2::Algebraic(parameter) => {\n                            Ok(RationalBezierAlgebraicPointImage2::from_parametric_source(\n                                curve.clone(),\n                                parameter.clone(),\n                                policy,\n                            )\n                            .represented_coordinates(policy)"
+  },
+  {
+    "path": "hypercurve/src/bezier_offset.rs",
+    "line": 17245,
+    "function": "pub(crate) fn exact_center(&self, policy: &CurveContext) -> CurveResult<Option<Point2>> {",
+    "context": "                            return Ok(None);\n                        }\n                    };\n                    Ok(RationalBezierAlgebraicPointImage2::from_parametric_source(\n                        curve,\n                        parameter.clone(),\n                        policy,\n                    )\n                    .exact_point(&CurveContext::STRICT))"
+  },
+  {
+    "path": "hypercurve/src/bezier_offset.rs",
+    "line": 37879,
+    "function": "fn selected_parallel_normal_rational_intersections_internal(",
+    "context": "                    }\n                }\n            };\n            let point = match exact_contact_point_evidence(other, &candidate, policy)? {\n                Some(point) => point,\n                None => match &candidate {\n                    BezierParameter2::Algebraic(parameter) => CurvePoint2::from(\n                        RationalBezierAlgebraicPointImage2::from_parametric_source(\n                            other.clone(),"
+  },
+  {
+    "path": "hypercurve/src/bezier_offset.rs",
+    "line": 37883,
+    "function": "fn selected_parallel_normal_rational_intersections_internal(",
+    "context": "                Some(point) => point,\n                None => match &candidate {\n                    BezierParameter2::Algebraic(parameter) => CurvePoint2::from(\n                        RationalBezierAlgebraicPointImage2::from_parametric_source(\n                            other.clone(),\n                            parameter.clone(),\n                            policy,\n                        ),\n                    ),"
+  },
+  {
+    "path": "hypercurve/src/bezier_offset.rs",
+    "line": 40642,
+    "function": "fn rational_intersections_internal(",
+    "context": "                Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),\n            }\n        {\n            let point = match exact_contact_point_evidence(other, &cusp_parameter, policy)? {\n                Some(point) => point,\n                None => {\n                    CurvePoint2::from(RationalBezierAlgebraicPointImage2::from_parametric_source(\n                        other.clone(),\n                        self.cusp_parameter().clone(),"
+  },
+  {
+    "path": "hypercurve/src/bezier_offset.rs",
+    "line": 40645,
+    "function": "fn rational_intersections_internal(",
+    "context": "            let point = match exact_contact_point_evidence(other, &cusp_parameter, policy)? {\n                Some(point) => point,\n                None => {\n                    CurvePoint2::from(RationalBezierAlgebraicPointImage2::from_parametric_source(\n                        other.clone(),\n                        self.cusp_parameter().clone(),\n                        policy,\n                    ))\n                }"
+  },
+  {
+    "path": "hypercurve/src/bezier_offset.rs",
+    "line": 40725,
+    "function": "fn rational_intersections_internal(",
+    "context": "                    return Ok(Classification::Uncertain(reason));\n                }\n            };\n            let point = match exact_contact_point_evidence(other, &candidate, policy)? {\n                Some(point) => point,\n                None => match &candidate {\n                    BezierParameter2::Algebraic(parameter) => CurvePoint2::from(\n                        RationalBezierAlgebraicPointImage2::from_parametric_source(\n                            other.clone(),"
+  },
+  {
+    "path": "hypercurve/src/bezier_offset.rs",
+    "line": 40729,
+    "function": "fn rational_intersections_internal(",
+    "context": "                Some(point) => point,\n                None => match &candidate {\n                    BezierParameter2::Algebraic(parameter) => CurvePoint2::from(\n                        RationalBezierAlgebraicPointImage2::from_parametric_source(\n                            other.clone(),\n                            parameter.clone(),\n                            policy,\n                        ),\n                    ),"
+  },
+  {
+    "path": "hypercurve/src/bezier_offset.rs",
+    "line": 41065,
+    "function": "fn publish_partitioned_rational_circle_component(",
+    "context": "            if location == BezierAlgebraicCuspSemicircleContactLocation2::Interior {\n                continue;\n            }\n            let point = match exact_contact_point_evidence(other, &boundary.parameter, policy)? {\n                Some(point) => point,\n                None => match &boundary.parameter {\n                    BezierParameter2::Algebraic(parameter) => CurvePoint2::from(\n                        RationalBezierAlgebraicPointImage2::from_parametric_source(\n                            other.clone(),"
+  },
+  {
+    "path": "hypercurve/src/bezier_offset.rs",
+    "line": 41069,
+    "function": "fn publish_partitioned_rational_circle_component(",
+    "context": "                Some(point) => point,\n                None => match &boundary.parameter {\n                    BezierParameter2::Algebraic(parameter) => CurvePoint2::from(\n                        RationalBezierAlgebraicPointImage2::from_parametric_source(\n                            other.clone(),\n                            parameter.clone(),\n                            policy,\n                        ),\n                    ),"
+  },
+  {
+    "path": "hypercurve/src/bezier_offset.rs",
+    "line": 44377,
+    "function": "pub(crate) fn rational_point_evidence_for_contact(",
+    "context": "        };\n        let mut points = Vec::with_capacity(parameters.len());\n        for parameter in parameters {\n            if let Some(point) = exact_contact_point_evidence(target, &parameter, policy)? {\n                points.push(point);\n                continue;\n            }\n            match parameter {\n                BezierParameter2::Algebraic(parameter) => points.push(CurvePoint2::from("
+  },
+  {
+    "path": "hypercurve/src/bezier_offset.rs",
+    "line": 44383,
+    "function": "pub(crate) fn rational_point_evidence_for_contact(",
+    "context": "            }\n            match parameter {\n                BezierParameter2::Algebraic(parameter) => points.push(CurvePoint2::from(\n                    RationalBezierAlgebraicPointImage2::from_parametric_source(\n                        target.clone(),\n                        parameter,\n                        policy,\n                    ),\n                )),"
+  },
+  {
+    "path": "hypercurve/src/bezier_offset.rs",
+    "line": 51646,
+    "function": "fn coincident_point_image(",
+    "context": "            };\n            return Ok(match other_parameter {\n                BezierParameter2::Algebraic(parameter) => Classification::Decided(Some(\n                    RationalBezierAlgebraicPointImage2::from_parametric_source(\n                        map.data.curve.clone(),\n                        parameter.clone(),\n                        policy,\n                    ),\n                )),"
+  },
+  {
+    "path": "hypercurve/src/bezier_offset.rs",
+    "line": 51776,
+    "function": "pub(crate) fn coincident_point_evidence(",
+    "context": "            && parallel.distance().zero_status() == ZeroKnowledge::Zero\n        {\n            let source = parallel.source().to_rational_bezier()?;\n            if let Some(point) = exact_contact_point_evidence(&source, parameter, policy)? {\n                return Ok(Classification::Decided(Some(point)));\n            }\n        }\n        if semicircle.data.frame.rational().is_none()\n            && let Self::Mapped(data) = self"
+  },
+  {
+    "path": "hypercurve/src/bezier_offset.rs",
+    "line": 83499,
+    "function": "fn rational_point_evidence_at_parameter(",
+    "context": "    parameter: &BezierParameter2,\n    policy: &CurveContext,\n) -> CurveResult<Classification<CurvePoint2>> {\n    if let Some(point) = exact_contact_point_evidence(source, parameter, policy)? {\n        return Ok(Classification::Decided(point));\n    }\n    match parameter {\n        BezierParameter2::Algebraic(parameter) => Ok(Classification::Decided(CurvePoint2::from(\n            RationalBezierAlgebraicPointImage2::from_parametric_source("
+  },
+  {
+    "path": "hypercurve/src/bezier_offset.rs",
+    "line": 83504,
+    "function": "fn rational_point_evidence_at_parameter(",
+    "context": "    }\n    match parameter {\n        BezierParameter2::Algebraic(parameter) => Ok(Classification::Decided(CurvePoint2::from(\n            RationalBezierAlgebraicPointImage2::from_parametric_source(\n                source.clone(),\n                parameter.clone(),\n                policy,\n            ),\n        ))),"
+  },
+  {
+    "path": "hypercurve/src/bezier_offset.rs",
+    "line": 96510,
+    "function": "fn predicate_point_evidence(",
+    "context": "            .all(|value| real_sign(value, &CurveContext::STRICT) == Some(RealSign::Zero))\n        {\n            let source = self.data.parallel.source().to_rational_bezier()?;\n            if let Some(point) = crate::rational_bezier_general::exact_contact_point_evidence(\n                &source, parameter, policy,\n            )? {\n                return Ok(Classification::Decided(Some(point)));\n            }\n        }"
+  },
+  {
+    "path": "hypercurve/src/bezier_offset.rs",
+    "line": 121576,
+    "function": "fn rational_quadratic_circle_intersections_fast_path_with_tangent_field(",
+    "context": "                continue;\n            };\n            let Some(point) =\n                exact_contact_point_evidence(&rational_conic, &canonical_parameter, policy)?\n            else {\n                return Ok(no_fast_path());\n            };\n            let other_parameter =\n                match RationalBezierOverlapParameterCorrespondence2::map_parameter_between_curves("
+  },
+  {
+    "path": "hypercurve/src/bezier_offset.rs",
+    "line": 121814,
+    "function": "fn intersections_with_tangent_field(",
+    "context": "            tangent_field,\n            retained_parallel_range,\n            |parameter| {\n                crate::rational_bezier_general::exact_contact_point_evidence(\n                    other, parameter, policy,\n                )\n            },\n            policy,\n        )"
+  },
+  {
+    "path": "hypercurve/src/bezier_offset.rs",
+    "line": 159325,
+    "function": "fn algebraic_cusp_disk_classifies_an_independent_selected_root_directly() {",
+    "context": "                ))\n                .unwrap()\n            };\n            let inside = RationalBezierAlgebraicPointImage2::from_parametric_source(\n                query_line(0, 1),\n                query_parameter.clone(),\n                &policy,\n            );\n            assert!(inside.exact_point(&policy).is_none());"
+  },
+  {
+    "path": "hypercurve/src/bezier_offset.rs",
+    "line": 159338,
+    "function": "fn algebraic_cusp_disk_classifies_an_independent_selected_root_directly() {",
+    "context": "                Classification::Decided(crate::RegionPointLocation::Inside),\n            );\n\n            let outside = RationalBezierAlgebraicPointImage2::from_parametric_source(\n                query_line(2, 3),\n                query_parameter,\n                &policy,\n            );\n            assert_eq!("
+  },
+  {
+    "path": "hypercurve/src/bezier_offset.rs",
+    "line": 159517,
+    "function": "fn distinct_mapped_algebraic_cusp_endpoint_fields_classify_directly() {",
+    "context": "                ))\n                .unwrap()\n            };\n            let inside = RationalBezierAlgebraicPointImage2::from_parametric_source(\n                query_line(0, 1),\n                query_parameter.clone(),\n                &policy,\n            );\n            assert_eq!("
+  },
+  {
+    "path": "hypercurve/src/bezier_offset.rs",
+    "line": 159528,
+    "function": "fn distinct_mapped_algebraic_cusp_endpoint_fields_classify_directly() {",
+    "context": "                    .unwrap(),\n                Classification::Decided(crate::RegionPointLocation::Inside),\n            );\n            let outside = RationalBezierAlgebraicPointImage2::from_parametric_source(\n                query_line(2, 3),\n                query_parameter,\n                &policy,\n            );\n            assert_eq!("
+  },
+  {
+    "path": "hypercurve/src/bezier_offset.rs",
+    "line": 159544,
+    "function": "fn distinct_mapped_algebraic_cusp_endpoint_fields_classify_directly() {",
+    "context": "            else {\n                panic!(\"the middle-cell boundary query must remain algebraic\");\n            };\n            let boundary = RationalBezierAlgebraicPointImage2::from_parametric_source(\n                rational_quarter.clone(),\n                boundary_parameter,\n                &policy,\n            );\n            assert_eq!("
+  },
+  {
+    "path": "hypercurve/src/bezier_offset.rs",
+    "line": 172669,
+    "function": "fn recursive_projective_chord_rejects_constant_conjugate_norm_component() {",
+    "context": "            )\n            .unwrap();\n            let endpoint = |parameter: &BezierParameter2| {\n                exact_contact_point_evidence(&diagonal, parameter, &policy)\n                    .unwrap()\n                    .expect(\"the diagonal selected point must retain exact evidence\")\n            };\n            let chord =\n                match BezierAlgebraicChord2::try_new(endpoint(start), endpoint(end), &policy)"
+  },
+  {
+    "path": "hypercurve/src/bezier_offset.rs",
+    "line": 172726,
+    "function": "fn recursive_projective_chord_retains_positive_degree_selected_conjugate_fiber() {",
+    "context": "            )\n            .unwrap();\n            let endpoint = |parameter: &BezierParameter2| {\n                exact_contact_point_evidence(&diagonal, parameter, &policy)\n                    .unwrap()\n                    .expect(\"the diagonal selected point must retain exact evidence\")\n            };\n            let chord =\n                match BezierAlgebraicChord2::try_new(endpoint(start), endpoint(end), &policy)"
+  },
+  {
+    "path": "hypercurve/src/bezier_offset.rs",
+    "line": 180019,
+    "function": "fn finite_one_field_point_inverse_preserves_analytic_domain_and_sheet() {",
+    "context": "                        )\n                        .unwrap();\n                        let image: CurvePoint2 =\n                            RationalBezierAlgebraicPointImage2::from_parametric_source(\n                                source,\n                                selected_alpha.clone(),\n                                &policy,\n                            )\n                            .into();"
+  },
+  {
+    "path": "hypercurve/src/bezier_offset.rs",
+    "line": 180075,
+    "function": "fn finite_one_field_point_inverse_handles_folds_poles_and_constant_fibers() {",
+    "context": "                vec![Real::one(); 2],\n            )\n            .unwrap();\n            let point: CurvePoint2 = RationalBezierAlgebraicPointImage2::from_parametric_source(\n                line,\n                alpha.clone(),\n                &policy,\n            )\n            .into();"
+  },
+  {
+    "path": "hypercurve/src/bezier_offset.rs",
+    "line": 180137,
+    "function": "fn finite_one_field_point_inverse_handles_folds_poles_and_constant_fibers() {",
+    "context": "                    vec![Real::from(-1); 2],\n                )\n                .unwrap();\n                let query = RationalBezierAlgebraicPointImage2::from_parametric_source(\n                    query,\n                    alpha.clone(),\n                    &policy,\n                )\n                .into();"
+  },
+  {
+    "path": "hypercurve/src/bezier_offset.rs",
+    "line": 180196,
+    "function": "fn finite_one_field_point_inverse_handles_folds_poles_and_constant_fibers() {",
+    "context": "            let constant_query =\n                RationalBezier2::try_new(vec![origin.clone(); 2], vec![Real::one(); 2]).unwrap();\n            let selected_origin: CurvePoint2 =\n                RationalBezierAlgebraicPointImage2::from_parametric_source(\n                    constant_query,\n                    alpha.clone(),\n                    &policy,\n                )\n                .into();"
+  },
+  {
+    "path": "hypercurve/src/rational_bezier_general.rs",
+    "line": 3710,
+    "function": "fn implicit_conic_intersection_contacts(",
+    "context": "                Classification::Decided(Some(conic_parameter)) => {\n                    let point = match parameter {\n                        BezierParameter2::Exact(_) => {\n                            match exact_contact_point_evidence(other, parameter, policy)? {\n                                Some(point) => point,\n                                None => {\n                                    let Some(point) = exact_contact_point_evidence(\n                                        self,\n                                        &conic_parameter,"
+  },
+  {
+    "path": "hypercurve/src/rational_bezier_general.rs",
+    "line": 3713,
+    "function": "fn implicit_conic_intersection_contacts(",
+    "context": "                            match exact_contact_point_evidence(other, parameter, policy)? {\n                                Some(point) => point,\n                                None => {\n                                    let Some(point) = exact_contact_point_evidence(\n                                        self,\n                                        &conic_parameter,\n                                        policy,\n                                    )?\n                                    else {"
+  },
+  {
+    "path": "hypercurve/src/rational_bezier_general.rs",
+    "line": 3728,
+    "function": "fn implicit_conic_intersection_contacts(",
+    "context": "                            }\n                        }\n                        BezierParameter2::Algebraic(parameter) => CurvePoint2::from(\n                            RationalBezierAlgebraicPointImage2::from_parametric_source(\n                                other.clone(),\n                                parameter.clone(),\n                                policy,\n                            ),\n                        ),"
+  },
+  {
+    "path": "hypercurve/src/rational_bezier_general.rs",
+    "line": 4090,
+    "function": "fn exact_line_image_intersection_contacts(",
+    "context": "                let Some(mapped) = mapped else {\n                    continue;\n                };\n                let point = match exact_contact_point_evidence(other, &mapped, policy)? {\n                    Some(point) => Some(point),\n                    None => exact_contact_point_evidence(self, &parameter, policy)?,\n                };\n                let Some(point) = point else {\n                    return Ok(None);"
+  },
+  {
+    "path": "hypercurve/src/rational_bezier_general.rs",
+    "line": 4092,
+    "function": "fn exact_line_image_intersection_contacts(",
+    "context": "                };\n                let point = match exact_contact_point_evidence(other, &mapped, policy)? {\n                    Some(point) => Some(point),\n                    None => exact_contact_point_evidence(self, &parameter, policy)?,\n                };\n                let Some(point) = point else {\n                    return Ok(None);\n                };\n                replayed.push(RationalBezierIntersectionContact2 {"
+  },
+  {
+    "path": "hypercurve/src/rational_bezier_general.rs",
+    "line": 5026,
+    "function": "fn replay_intersection_candidates_with_pair_filter(",
+    "context": "                    None\n                };\n                if projected_pair == Some(true) {\n                    let point = match exact_contact_point_evidence(\n                        self,\n                        &first_parameters[first_index],\n                        policy,\n                    )? {\n                        Some(point) => Some(point),"
+  },
+  {
+    "path": "hypercurve/src/rational_bezier_general.rs",
+    "line": 5206,
+    "function": "fn replay_candidates_through_polynomial_graph(",
+    "context": "                    }\n                }\n            };\n            let Some(point) = exact_contact_point_evidence(other, &mapped, policy)? else {\n                return Ok(None);\n            };\n            contacts.push(RationalBezierIntersectionContact2 {\n                first_parameter: first_parameter.clone(),\n                second_parameter: mapped,"
+  },
+  {
+    "path": "hypercurve/src/rational_bezier_general.rs",
+    "line": 8625,
+    "function": "pub(crate) fn exact_contact_point_evidence(",
+    "context": "    Some(())\n}\n\npub(crate) fn exact_contact_point_evidence(\n    curve: &RationalBezier2,\n    parameter: &BezierParameter2,\n    policy: &CurveContext,\n) -> CurveResult<Option<CurvePoint2>> {\n    match parameter {"
+  },
+  {
+    "path": "hypercurve/src/rational_bezier_general.rs",
+    "line": 10783,
+    "function": "fn deferred_parametric_point_reuses_source_polynomials_for_exact_equality() {",
+    "context": "            vec![Real::one(); 3],\n        )\n        .unwrap();\n        let deferred = RationalBezierAlgebraicPointImage2::from_parametric_source(\n            curve.clone(),\n            parameter.clone(),\n            &policy,\n        );\n        let resolved = crate::tests::decided("
+  },
+  {
+    "path": "hypercurve/src/rational_bezier_general.rs",
+    "line": 10843,
+    "function": "fn exact_contact_evidence_reuses_a_retained_high_degree_image() {",
+    "context": "        );\n        assert_eq!(retained_image.retained_parameter(), Some(&parameter));\n\n        let evidence = exact_contact_point_evidence(\n            &curve,\n            &BezierParameter2::Algebraic(parameter.clone()),\n            &policy,\n        )\n        .unwrap()"
+  },
+  {
+    "path": "hypercurve/src/curve_evaluation.rs",
+    "line": 276,
+    "function": "pub(super) fn rational_point(",
+    "context": "                    .map(CurvePoint2::from)\n            }\n            BezierParameter2::Algebraic(parameter) => Ok(CurvePoint2::from(\n                crate::RationalBezierAlgebraicPointImage2::from_parametric_source(\n                    source.clone(),\n                    parameter.clone(),\n                    policy,\n                ),\n            )),"
+  },
+  {
+    "path": "hypercurve/src/curve.rs",
+    "line": 11042,
+    "function": "fn bezier_parallel_source_point_evidence(",
+    "context": "        };\n    }\n    let rational_source = bezier_parallel_rational_source(parallel, operation, family)?;\n    if let Some(point) = crate::rational_bezier_general::exact_contact_point_evidence(\n        &rational_source,\n        parameter,\n        policy,\n    )\n    .map_err(|cause| ExactCurveError::invalid(operation, family, cause))?"
+  },
+  {
+    "path": "hypercurve/src/curve.rs",
+    "line": 13755,
+    "function": "fn native_arc_and_nonrepresented_chord_share_extension_projection() {",
+    "context": "                vec![Real::one(); 2],\n            )\n            .unwrap();\n            let corner = crate::rational_bezier_general::exact_contact_point_evidence(\n                &diagonal,\n                &selected_parameter,\n                &policy,\n            )\n            .unwrap()"
+  },
+  {
+    "path": "hypercurve/src/bezier_region.rs",
+    "line": 1458,
+    "function": "pub(crate) fn curve_fragment_endpoint_point(",
+    "context": "                end\n            };\n            let source = RationalBezier2::try_from_subcurve(source_curve)?;\n            return crate::rational_bezier_general::exact_contact_point_evidence(\n                &source, parameter, policy,\n            )\n            .map(Classification::Decided);\n        }\n        BezierSplitFragment2::AnalyticParallel(fragment) => {"
+  },
+  {
+    "path": "hypercurve/src/bezier_region.rs",
+    "line": 3860,
+    "function": "fn exact_rational_endpoint_evidence(",
+    "context": "    policy: &CurveContext,\n) -> CurveResult<Classification<CurvePoint2>> {\n    Ok(\n        match crate::rational_bezier_general::exact_contact_point_evidence(\n            curve, parameter, policy,\n        )? {\n            Some(point) => Classification::Decided(point),\n            None => Classification::Uncertain(UncertaintyReason::Unsupported),\n        },"
+  },
+  {
+    "path": "hypercurve/src/bezier_region.rs",
+    "line": 19947,
+    "function": "fn retained_straight_extension_region(reversed: bool, policy: &CurveContext) -> CurveRegion2 {",
+    "context": "        let source =\n            RationalBezier2::try_new(vec![p(0, 0), p(1, 0)], vec![Real::one(), Real::one()])\n                .expect(\"the algebraic endpoint source is finite\");\n        let lower_left = crate::rational_bezier_general::exact_contact_point_evidence(\n            &source, &parameter, policy,\n        )\n        .expect(\"the algebraic endpoint has exact evidence\")\n        .expect(\"the algebraic endpoint remains representable by retained evidence\");\n        let upper_left = match crate::BezierAlgebraicChord2::translated_endpoint("
+  },
+  {
+    "path": "hypercurve/src/bezier_region.rs",
+    "line": 22227,
+    "function": "fn correlated_chord_pair_normal_circle(",
+    "context": "        let selected_point = |start: Point2, end: Point2, denominator| {\n            let source = RationalBezier2::try_new(vec![start, end], vec![Real::one(), Real::one()])\n                .expect(\"the selected chord endpoint source is finite\");\n            crate::rational_bezier_general::exact_contact_point_evidence(\n                &source,\n                &positive_inverse_sqrt_parameter(denominator, policy),\n                policy,\n            )\n            .expect(\"the selected chord endpoint has exact evidence\")"
+  },
+  {
+    "path": "hypercurve/src/bezier_region.rs",
+    "line": 28003,
+    "function": "fn independent_field_algebraic_chord_region(",
+    "context": "        };\n        let point_evidence = |source: &BezierSubcurve2, parameter: &BezierParameter2| {\n            let source = RationalBezier2::try_from_subcurve(source).unwrap();\n            crate::rational_bezier_general::exact_contact_point_evidence(&source, parameter, policy)\n                .unwrap()\n                .expect(\"the algebraic line endpoint must retain point evidence\")\n        };\n        let chord = match crate::BezierAlgebraicChord2::try_new(\n            point_evidence(&x_source, &x_parameter),"
+  },
+  {
+    "path": "hypercurve/src/bezier_region.rs",
+    "line": 28227,
+    "function": "fn nonlinear_algebraic_endpoint_region(policy: &CurveContext, reversed: bool) -> CurveRegion2 {",
+    "context": "        ));\n        let rational = RationalBezier2::try_from_subcurve(&source).unwrap();\n        let corner =\n            crate::rational_bezier_general::exact_contact_point_evidence(&rational, &alpha, policy)\n                .unwrap()\n                .expect(\"the nonlinear algebraic endpoint retains point evidence\");\n        let chord = match crate::BezierAlgebraicChord2::try_new(\n            CurvePoint2::from(p(0, 0)),\n            corner.clone(),"
+  },
+  {
+    "path": "hypercurve/src/bezier_region.rs",
+    "line": 28675,
+    "function": "fn independent_field_chord_publishes_nonzero_parallel_line_overlap() {",
+    "context": "            let lower_parameter = positive_inverse_sqrt_parameter(3, &policy);\n            let upper_parameter = positive_inverse_sqrt_parameter(2, &policy);\n            let algebraic_point = |parameter: &BezierParameter2| {\n                crate::rational_bezier_general::exact_contact_point_evidence(\n                    &y_rational,\n                    parameter,\n                    &policy,\n                )\n                .unwrap()"
+  },
+  {
+    "path": "hypercurve/src/bezier_region.rs",
+    "line": 29142,
+    "function": "fn nonrepresented_chord_line_corner_region(",
+    "context": "            vec![Real::one(); 3],\n        )\n        .unwrap();\n        let selected_point = crate::rational_bezier_general::exact_contact_point_evidence(\n            &source,\n            &selected_parameter,\n            policy,\n        )\n        .unwrap()"
+  },
+  {
+    "path": "hypercurve/src/bezier_region.rs",
+    "line": 29213,
+    "function": "fn nonrepresented_cardinal_chord_pair_corner_region(",
+    "context": "        let selected_parameter = positive_inverse_sqrt_parameter(2, policy);\n        let diagonal =\n            RationalBezier2::try_new(vec![p(0, 0), p(1, 1)], vec![Real::one(); 2]).unwrap();\n        let corner = crate::rational_bezier_general::exact_contact_point_evidence(\n            &diagonal,\n            &selected_parameter,\n            policy,\n        )\n        .unwrap()"
+  },
+  {
+    "path": "hypercurve/src/bezier_region.rs",
+    "line": 29296,
+    "function": "fn independent_oblique_chord_pair_corner_region(",
+    "context": "    ) -> CurveRegion2 {\n        let selected = |start: Point2, end: Point2, radicand| {\n            let source = RationalBezier2::try_new(vec![start, end], vec![Real::one(); 2]).unwrap();\n            crate::rational_bezier_general::exact_contact_point_evidence(\n                &source,\n                &positive_inverse_sqrt_parameter(radicand, policy),\n                policy,\n            )\n            .unwrap()"
+  },
+  {
+    "path": "hypercurve/src/bezier_region.rs",
+    "line": 29360,
+    "function": "fn nonrepresented_chord_rational_arc_corner_region(",
+    "context": "        let selected_parameter = positive_inverse_sqrt_parameter(2, policy);\n        let diagonal =\n            RationalBezier2::try_new(vec![p(0, 0), p(1, 1)], vec![Real::one(); 2]).unwrap();\n        let corner = crate::rational_bezier_general::exact_contact_point_evidence(\n            &diagonal,\n            &selected_parameter,\n            policy,\n        )\n        .unwrap()"
+  },
+  {
+    "path": "hypercurve/src/bezier_region.rs",
+    "line": 29487,
+    "function": "fn nonrepresented_chord_selected_circle_corner_region(",
+    "context": "        let center_source =\n            RationalBezier2::try_new(vec![p(0, 0), p(1, 0)], vec![Real::one(); 2]).unwrap();\n        let center_parameter = positive_inverse_sqrt_parameter(2, policy);\n        let center = crate::rational_bezier_general::exact_contact_point_evidence(\n            &center_source,\n            &center_parameter,\n            policy,\n        )\n        .unwrap()"
+  },
+  {
+    "path": "hypercurve/src/bezier_region.rs",
+    "line": 29523,
+    "function": "fn nonrepresented_chord_selected_circle_corner_region(",
+    "context": "            RationalBezier2::try_new(vec![p(0, 0), p(1, -1), p(2, -3)], vec![Real::one(); 3])\n                .unwrap();\n        let independent_parameter = positive_inverse_sqrt_parameter(3, policy);\n        let independent = crate::rational_bezier_general::exact_contact_point_evidence(\n            &independent_source,\n            &independent_parameter,\n            policy,\n        )\n        .unwrap()"
+  },
+  {
+    "path": "hypercurve/src/bezier_region.rs",
+    "line": 29981,
+    "function": "fn independent_oblique_chord_pair_fillet_crosses_algebraic_chords_exactly() {",
+    "context": "                            vec![Real::one(); 2],\n                        )\n                        .unwrap();\n                        crate::rational_bezier_general::exact_contact_point_evidence(\n                            &source, &parameter, &policy,\n                        )\n                        .unwrap()\n                        .expect(\"the algebraic chord endpoint retains exact evidence\")\n                    };"
+  },
+  {
+    "path": "hypercurve/src/bezier_region.rs",
+    "line": 30592,
+    "function": "fn selected_circle_extension_reconstructs_every_half_chart_path() {",
+    "context": "            let center_source =\n                RationalBezier2::try_new(vec![p(0, 0), p(1, 0)], vec![Real::one(); 2]).unwrap();\n            let center_parameter = positive_inverse_sqrt_parameter(2, &policy);\n            let center = crate::rational_bezier_general::exact_contact_point_evidence(\n                &center_source,\n                &center_parameter,\n                &policy,\n            )\n            .unwrap()"
+  },
+  {
+    "path": "hypercurve/src/curve_fillet.rs",
+    "line": 3797,
+    "function": "fn coincident_retained_line_fillet_keeps_independent_endpoint_fields() {",
+    "context": "                    vec![Real::one(); 2],\n                )\n                .unwrap();\n                crate::rational_bezier_general::exact_contact_point_evidence(\n                    &source, &roots[0], &policy,\n                )\n                .unwrap()\n                .unwrap()\n            };"
+  }
+]

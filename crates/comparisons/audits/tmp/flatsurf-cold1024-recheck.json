@@ -1,0 +1,102 @@
+{
+  "context": {
+    "date": "2026-09-04T18:47:19-04:00",
+    "host_name": "fedora",
+    "executable": "/tmp/.libs/lt-flatsurf-performance",
+    "num_cpus": 16,
+    "mhz_per_cpu": 4553,
+    "cpu_scaling_enabled": true,
+    "caches": [
+      {
+        "type": "Data",
+        "level": 1,
+        "size": 32768,
+        "num_sharing": 2
+      },
+      {
+        "type": "Instruction",
+        "level": 1,
+        "size": 32768,
+        "num_sharing": 2
+      },
+      {
+        "type": "Unified",
+        "level": 2,
+        "size": 524288,
+        "num_sharing": 2
+      },
+      {
+        "type": "Unified",
+        "level": 3,
+        "size": 100663296,
+        "num_sharing": 16
+      }
+    ],
+    "load_avg": [4.86328,4.34375,3.77539],
+    "library_version": "v1.9.1",
+    "library_build_type": "release",
+    "json_schema_version": 1
+  },
+  "benchmarks": [
+    {
+      "name": "create_and_refine_random/1024_mean",
+      "family_index": 0,
+      "per_family_instance_index": 0,
+      "run_name": "create_and_refine_random/1024",
+      "run_type": "aggregate",
+      "repetitions": 11,
+      "threads": 1,
+      "aggregate_name": "mean",
+      "aggregate_unit": "time",
+      "iterations": 11,
+      "real_time": 1.5457520929345115e+04,
+      "cpu_time": 1.4999941069399752e+04,
+      "time_unit": "ns"
+    },
+    {
+      "name": "create_and_refine_random/1024_median",
+      "family_index": 0,
+      "per_family_instance_index": 0,
+      "run_name": "create_and_refine_random/1024",
+      "run_type": "aggregate",
+      "repetitions": 11,
+      "threads": 1,
+      "aggregate_name": "median",
+      "aggregate_unit": "time",
+      "iterations": 11,
+      "real_time": 1.2599464993833741e+04,
+      "cpu_time": 1.2553720899038144e+04,
+      "time_unit": "ns"
+    },
+    {
+      "name": "create_and_refine_random/1024_stddev",
+      "family_index": 0,
+      "per_family_instance_index": 0,
+      "run_name": "create_and_refine_random/1024",
+      "run_type": "aggregate",
+      "repetitions": 11,
+      "threads": 1,
+      "aggregate_name": "stddev",
+      "aggregate_unit": "time",
+      "iterations": 11,
+      "real_time": 5.3705846981716322e+03,
+      "cpu_time": 4.5557557851659813e+03,
+      "time_unit": "ns"
+    },
+    {
+      "name": "create_and_refine_random/1024_cv",
+      "family_index": 0,
+      "per_family_instance_index": 0,
+      "run_name": "create_and_refine_random/1024",
+      "run_type": "aggregate",
+      "repetitions": 11,
+      "threads": 1,
+      "aggregate_name": "cv",
+      "aggregate_unit": "percentage",
+      "iterations": 11,
+      "real_time": 3.4744152847795412e-01,
+      "cpu_time": 3.0371824556429988e-01,
+      "time_unit": "ns"
+    }
+  ]
+}

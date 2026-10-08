@@ -1,0 +1,6 @@
+{
+  "name": "curve_intersection::curve_support_intersection::circle_dispatch_tests::selected_circle_overlaps_preserve_oriented_ranges_and_singleton_contacts",
+  "returncode": 0,
+  "elapsed_seconds": 0.16373961200588383,
+  "log": "circle-common-dispatch-reduced-norm-selected_circle_overlaps_preserve_oriented_ranges_and_singleton_contacts.log"
+}

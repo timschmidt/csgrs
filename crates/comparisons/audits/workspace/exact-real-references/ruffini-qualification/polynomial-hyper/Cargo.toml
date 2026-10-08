@@ -1,0 +1,15 @@
+[package]
+name = "ruffini_polynomial_hyper"
+version = "0.0.0"
+edition = "2024"
+publish = false
+
+[[bin]]
+name = "ruffini_polynomial_hyper"
+path = "controls.rs"
+
+[dependencies]
+hyperreal = { path = "../../../hyperreal" }
+hypersolve = { path = "../../../hypersolve" }
+
+[workspace]

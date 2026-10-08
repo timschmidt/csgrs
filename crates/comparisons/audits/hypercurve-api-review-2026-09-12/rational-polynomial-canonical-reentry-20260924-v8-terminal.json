@@ -1,0 +1,11 @@
+{
+  "returncode": 0,
+  "stdout": "numeric_equal=true, canonical_parts=true, equal_hashes=true\n",
+  "stderr": "",
+  "source_sha256": "a26a24895e682d32ce21eb1d00acb115afcbb9cd571f8e140a45c3edf6d81d49",
+  "library": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/libhyperreal.rlib",
+  "library_sha256": "1f79c5055df2b43aabecc06fbc78cd8d419c6cf8b8f46788e4c76d6f073ba17b",
+  "binary_sha256": "ba360f828abf114d089a523f74354d93d8720cd9edf1382921814b26fb4ba41d",
+  "all_processes_reaped": true,
+  "all_sources_unchanged": true
+}

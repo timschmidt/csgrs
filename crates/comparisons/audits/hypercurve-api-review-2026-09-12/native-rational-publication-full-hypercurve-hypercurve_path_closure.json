@@ -1,0 +1,34 @@
+{
+  "repo": "hypercurve",
+  "target": "hypercurve_path_closure",
+  "binary": "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve_path_closure-1e8cc8b5b9aae096",
+  "command": [
+    "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve_path_closure-1e8cc8b5b9aae096",
+    "--test-threads=4",
+    "--color",
+    "never"
+  ],
+  "sha256": "77cfbbc4b21c7c56d489a6654e45bc717a675ed513ae4785055eba1643cffbe9",
+  "returncode": 0,
+  "timed_out": false,
+  "elapsed_seconds": 0.4141836220078403,
+  "log": "native-rational-publication-full-hypercurve-hypercurve_path_closure.log",
+  "passed": [
+    "boundary_admission_rejects_disconnected_spline_spans",
+    "selected_chamfers_preserve_all_major_arc_contacts",
+    "selected_open_chamfers_reenter_the_public_path_api",
+    "selected_open_fillets_accept_a_subsequent_chamfer",
+    "selected_spline_chamfers_keep_every_untrimmed_span",
+    "selected_spline_fillets_preserve_knot_charts_and_other_spans",
+    "selected_path_chamfers_close_through_all_region_booleans",
+    "homogeneous_boundary_closes_through_boolean_corners_and_offset",
+    "selected_major_arc_fillets_keep_the_complete_authored_sweep"
+  ],
+  "failed": [],
+  "ignored": [],
+  "summaries": [
+    "test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.40s"
+  ],
+  "new_failures": [],
+  "known_failures": []
+}

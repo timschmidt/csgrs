@@ -1,0 +1,71 @@
+Name:           aern-interval
+Version:        0.5.0
+Cabal-Version:  >= 1.8
+Build-Type:     Simple
+License:        BSD3
+License-File:   LICENCE
+Author:         Michal Konecny
+Copyright:      (c) 2012 Michal Konecny, Jan Duracz
+Maintainer:     mikkonecny@gmail.com
+Homepage:       http://code.google.com/p/aern/
+Stability:      experimental
+Category:       Data, Math
+Synopsis:       arbitrary precision real interval arithmetic
+Tested-with:
+                GHC==7.6.3
+Description:
+    A concrete implementation for the refinement-order type classes from aern-real in the form
+    of interval arithmetic.  The arithmetic supports also anti-consistent
+    intervals (ie @[l,r]@ with @l >= r@) and maintains monotonicity in the
+    refinement order so that both inner and outer approximations of exact interval
+    expressions can be safely computed.
+    .
+    The package aern-double makes it possible to use ordinary
+    machine 'Double' values as endpoints, although limited to its fixed precision. 
+    The package aern-mpfr facilitates (via package hmpfr) 
+    the use of the MPFR arbitrary precision floating-point numbers as endpoints.
+    . 
+    /This package does not compile with ghc 7.0.* due to a/
+    /compiler bug that has been fixed for the 7.2.1 release./
+
+source-repository head
+  type:     mercurial
+  location: http://code.google.com/p/aern/aern-interval
+
+source-repository this
+  type:     mercurial
+  location: http://code.google.com/p/aern/aern-interval
+  tag:      release-0.5.0
+
+
+Library
+  hs-source-dirs: src
+  Build-Depends:
+        base >= 4.4,
+        QuickCheck >= 2.4,
+        test-framework >= 0.3.3, 
+        test-framework-quickcheck2 >= 0.2,
+        deepseq >= 1.1,
+        aern-order == 0.5.*,
+        aern-real == 0.5.*
+  Exposed-modules:
+    Numeric.AERN.Basics.Interval,
+    Numeric.AERN.Basics.Interval.Arbitrary,
+    Numeric.AERN.Basics.Interval.Basics,
+    Numeric.AERN.Basics.Interval.Consistency,
+    Numeric.AERN.Basics.Interval.NumericOrder,
+    Numeric.AERN.Basics.Interval.RefinementOrder,
+    Numeric.AERN.RealArithmetic.Interval,
+    Numeric.AERN.RealArithmetic.Interval.Conversion,
+    Numeric.AERN.RealArithmetic.Interval.Effort,
+    Numeric.AERN.RealArithmetic.Interval.ElementaryFromBasis,
+    Numeric.AERN.RealArithmetic.Interval.ElementaryFromFieldOps,
+    Numeric.AERN.RealArithmetic.Interval.ExactOps,
+    Numeric.AERN.RealArithmetic.Interval.FieldOps,
+    Numeric.AERN.RealArithmetic.Interval.Floating,
+    Numeric.AERN.RealArithmetic.Interval.Measures,
+    Numeric.AERN.RealArithmetic.Interval.MixedFieldOps,
+    Numeric.AERN.RealArithmetic.Interval.SpecialConst,
+    Numeric.AERN.RealArithmetic.Interval.UpDnConversion
+  ghc-options:    -Wall
+

@@ -1,0 +1,20 @@
+{
+  "tag": "complex-abs-isolation-none-v83",
+  "started": "2026-09-12T03:52:19.534Z",
+  "finished": "2026-09-12T03:52:20.205Z",
+  "elapsedSeconds": 0.668470636,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "timeout",
+  "args": [
+    "60s",
+    "prlimit",
+    "--core=0",
+    "--cpu=30",
+    "--",
+    "valgrind",
+    "--tool=none",
+    "/tmp/calcium-symbolic-boundary-v83.JuGH8X/isolated-abs"
+  ],
+  "code": null,
+  "signal": "SIGABRT"
+}

@@ -1,0 +1,13 @@
+{
+  "commit": "7af48343b93c7f2110e60d26a94c316aad996795",
+  "files": {
+    "src/bezier_region.rs": "637f235aff3aaf23017f44d2ec5b23225eac32e571916fd60301ff0b6112fc14"
+  },
+  "status": {
+    "hyperreal": "",
+    "hypercurve": "",
+    "hypersolve": ""
+  },
+  "all_owned_processes_reaped": true,
+  "full_goal_complete": false
+}

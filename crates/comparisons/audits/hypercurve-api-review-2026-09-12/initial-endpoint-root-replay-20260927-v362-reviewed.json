@@ -1,0 +1,39 @@
+{
+  "qualification": "initial-endpoint-root-replay-20260927-v362-terminal.json",
+  "source_manifest": "initial-endpoint-root-replay-20260927-v362-sources.json",
+  "outer_session_reaped": 75007,
+  "reused_runtime_outer_session_reaped": 11942,
+  "runtime_qualification_reused_from": "initial-endpoint-root-replay-20260927-v360-terminal.json",
+  "runtime_source_difference": "Only angle brackets around the existing module-level documentation URL; every executable source byte is identical.",
+  "validated_files": 2046,
+  "selected_geometry_tests": 63,
+  "suite_pass_counts": {
+    "hypersolve-full-lib": [
+      528
+    ],
+    "hypersolve-integration": [
+      2,
+      9,
+      7,
+      2,
+      4,
+      131,
+      211,
+      1,
+      1
+    ]
+  },
+  "checks": 7,
+  "repos": {
+    "hypersolve": {
+      "parent": "539eb997d21c2193b759172862667f4bb4e555bd",
+      "paths": {
+        "src/root_sign.rs": "3ab259aff92e68035091d0991fd849299bb80122dc6d2f21a011fccf167b59ab"
+      }
+    }
+  },
+  "known_unresolved": [
+    "strict_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions",
+    "approximate_512_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions"
+  ]
+}

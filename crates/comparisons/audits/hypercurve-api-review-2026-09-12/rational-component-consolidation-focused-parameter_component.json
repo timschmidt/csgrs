@@ -1,0 +1,47 @@
+{
+  "repo": "hypercurve",
+  "target": "lib",
+  "binary": "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve-6e6572a45c5b177b",
+  "filter": "parameter_component",
+  "command": [
+    "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve-6e6572a45c5b177b",
+    "--test-threads=4",
+    "--color",
+    "never",
+    "parameter_component"
+  ],
+  "sha256": "1d5a6b9f4a9296b03fb9c47e9dc260a2197e09ad33153145a1414e5c69100a5f",
+  "returncode": 0,
+  "timed_out": false,
+  "elapsed_seconds": 1.2658961859997362,
+  "log": "rational-component-consolidation-focused-parameter_component.log",
+  "passed": [
+    "bezier_offset::conversion_tests::implicit_parameter_component_transports_a_boundary_fold",
+    "bezier_offset::conversion_tests::mapped_point_inversion_maps_zero_image_parameter_components_directly",
+    "bezier_offset::conversion_tests::nonlinear_parameter_component_maps_and_clips_its_exact_branch",
+    "bezier_offset::conversion_tests::nonrational_rational_parameter_component_uses_exact_real_coefficients",
+    "bezier_offset::conversion_tests::nonlinear_parameter_component_maps_recursive_projective_scalars_locally",
+    "bezier_offset::conversion_tests::regular_implicit_parameter_component_discards_the_opposite_branch",
+    "bezier_offset::conversion_tests::nonrational_implicit_parameter_component_uses_exact_real_coefficients",
+    "bezier_offset::conversion_tests::regular_implicit_parameter_component_partitions_at_an_isolated_branch_zero",
+    "bezier_offset::conversion_tests::regular_implicit_parameter_component_partitions_multiple_turning_graphs",
+    "bezier_offset::conversion_tests::regular_implicit_parameter_component_partitions_turning_events",
+    "bezier_offset::conversion_tests::regular_implicit_parameter_component_pairs_coupled_algebraic_turning_event",
+    "bezier_offset::conversion_tests::regular_implicit_parameter_component_retains_a_lifted_boundary_tangency",
+    "bezier_offset::conversion_tests::regular_implicit_parameter_component_sorts_multiple_turning_events",
+    "bezier_offset::conversion_tests::regular_implicit_parameter_component_transports_multiple_monotone_graphs",
+    "bezier_offset::conversion_tests::regular_implicit_parameter_components_transport_monotone_graphs",
+    "curve_intersection::curve_support_intersection::analytic_dispatch_tests::common_parameter_components_survive_paths_cuts_and_cloning",
+    "curve_region_boolean::certified_successor_tests::selected_parameter_component_overlap_clips_in_both_boolean_orders",
+    "bezier_offset::conversion_tests::regular_implicit_parameter_component_ranks_algebraic_multi_graph_turns",
+    "bezier_offset::conversion_tests::parameter_component_domains_own_selected_events_once",
+    "bezier_offset::conversion_tests::nonlinear_parameter_component_maps_a_degree_135_selected_scalar_locally"
+  ],
+  "failed": [],
+  "ignored": [],
+  "summaries": [
+    "test result: ok. 20 passed; 0 failed; 0 ignored; 0 measured; 1108 filtered out; finished in 1.24s"
+  ],
+  "new_failures": [],
+  "known_failures": []
+}

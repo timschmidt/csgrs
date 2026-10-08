@@ -1,0 +1,14 @@
+   Compiling hyperreal v0.13.1 (/home/tim/Documents/GitHub/workspace/hyperreal)
+   Compiling hyperlattice v0.6.1 (/home/tim/Documents/GitHub/workspace/hyperlattice)
+   Compiling hyperlimit v0.4.1 (/home/tim/Documents/GitHub/workspace/hyperlimit)
+   Compiling hypersolve v0.3.1 (/home/tim/Documents/GitHub/workspace/hypersolve)
+   Compiling hypercurve v0.3.1 (/home/tim/Documents/GitHub/workspace/hypercurve)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 40.20s
+     Running unittests src/lib.rs (target/debug/deps/hypercurve-9c41c5e0b21271d9)
+
+running 2 tests
+test events::tests::aabb_candidates_preserve_unknown_queries_and_visitor_errors ... ok
+test curve_region_boolean::certified_successor_tests::retained_aabb_candidates_match_cartesian_pairs_in_authored_order ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 868 filtered out; finished in 0.08s
+

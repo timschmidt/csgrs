@@ -1,0 +1,10 @@
+{
+  "hypercurve/src/bezier_region.rs": "42d661260908fc914b2304f8f6f8431eaf2fb246aab55199933c4a7ec0e25397",
+  "hypercurve/src/lib.rs": "6f76ec1b8c3dcd2ed81da67307539536dddee7c81caee561162602c555a6954e",
+  "hypercurve/src/native_region_tests.rs": "8c3037b0228c442ff4cfc140729f5d9708e4b60d15c0505f2f2a9e8112ca8a4f",
+  "hypercurve/examples/arrangement.rs": "c593bfc2366ff721dd3f0611ef4e610b5ce42d533aba0c8b313f33e33edf6cbf",
+  "hypercurve/benches/editing.rs": "9a77316fff581dc16ec411c42c292e03d378d5b01a4cfa31a663458abbd3ed74",
+  "hypercurve/tests/hypercurve_curve_region_promotion.rs": "ea236b39213b3b59af6ebe3767ec2f8097d5f30cc98b97d0d5fd3f57065fe4af",
+  "hypercurve/README.md": "dd39dccbf081a0e6460f02d777c472e44a07439d24f0811b95c90214393bac69",
+  "hypercurve/PERFORMANCE.md": "d1442644c9001a6f69fcf80748e4d64ed2ff0c472e361d2d3281d37eff5b6d2e"
+}

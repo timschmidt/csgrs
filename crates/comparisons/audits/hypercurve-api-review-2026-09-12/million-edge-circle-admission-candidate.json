@@ -1,0 +1,27 @@
+{
+  "name": "million-edge-circle-admission-candidate",
+  "command": [
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/million-edge-circle-admission-candidate",
+    "1000000"
+  ],
+  "timeout": 90,
+  "library": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/material-components-candidate1-libraries/libhypercurve-bacb55d5ec235376.rlib",
+  "library_sha256": "ed110ff14e04eb225360c3917d2d82af6ec6fb90823ed526f7e6268991e6dc44",
+  "binary_sha256": "d17761c138c97ec210b0d555b09e2cd84b27e7887ec39a3617b0eb4086cf32ca",
+  "source_sha256": "0e231bda114ad43eb21a6a3f527315255c12f075bfadc2b6cc5519fb666b9155",
+  "compile_command": [
+    "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustc",
+    "--edition=2024",
+    "-O",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/million-edge-circle-admission-public.rs",
+    "--extern",
+    "hypercurve=/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/material-components-candidate1-libraries/libhypercurve-bacb55d5ec235376.rlib",
+    "-L",
+    "dependency=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps",
+    "-o",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/million-edge-circle-admission-candidate"
+  ],
+  "returncode": 124,
+  "timed_out": true,
+  "elapsed_seconds": 90.59631964500295
+}

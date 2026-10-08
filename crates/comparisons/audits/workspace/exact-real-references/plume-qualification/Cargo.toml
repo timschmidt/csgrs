@@ -1,0 +1,39 @@
+[package]
+name = "plume-qualification"
+version = "0.0.0"
+edition = "2024"
+publish = false
+autobins = false
+
+[dependencies]
+hyperreal = { path = "../../hyperreal" }
+rug = { version = "1.30.0", default-features = false, features = ["float", "integer", "rational", "std"] }
+
+[[bin]]
+name = "plume_oracle"
+path = "plume_oracle.rs"
+
+[[bin]]
+name = "instrumented_hyper_controls"
+path = "instrumented_hyper_controls.rs"
+
+[[bin]]
+name = "report_fixture_controls"
+path = "report_fixture_controls.rs"
+
+[[bin]]
+name = "late_oracle"
+path = "late_oracle.rs"
+
+[[bin]]
+name = "boundary_hyper_controls"
+path = "boundary_hyper_controls.rs"
+
+[[bin]]
+name = "boundary_format_bench"
+path = "boundary_format_bench.rs"
+
+[profile.release]
+debug = 0
+incremental = false
+codegen-units = 16

@@ -1,0 +1,18 @@
+{
+  "tag": "scalar-boundary-native-v81",
+  "started": "2026-09-12T02:22:59.359Z",
+  "finished": "2026-09-12T02:23:01.713Z",
+  "elapsedSeconds": 2.352458234,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "timeout",
+  "args": [
+    "120s",
+    "prlimit",
+    "--as=1073741824",
+    "--cpu=90",
+    "--",
+    "/tmp/calcium-scalar-boundary-v81.nLhDoT/controls"
+  ],
+  "code": 0,
+  "signal": null
+}

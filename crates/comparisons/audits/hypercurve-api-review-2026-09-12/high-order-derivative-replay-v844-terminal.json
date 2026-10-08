@@ -1,0 +1,39 @@
+{
+  "baseline": "derivative-jet-v841-sources.json",
+  "rlib": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypercurve-85a9105cd1c82df7.rlib",
+  "rlib_sha256": "9f4a0cdf1b9d50e492beac769bb4fc5f6182609a7722c1cb3787198bbaaa6200",
+  "source_sha256": "580d45c8d0a4e2c010902ea55682e493dc437b53b633260f47deeba1f34113a2",
+  "processes": [
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustc",
+        "--edition=2024",
+        "--crate-name",
+        "high_order_derivative_probe",
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/high-order-derivative-probe-v839.rs",
+        "--extern",
+        "hypercurve=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypercurve-85a9105cd1c82df7.rlib",
+        "-L",
+        "dependency=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps",
+        "-C",
+        "opt-level=3",
+        "-o",
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/high-order-derivative-replay-v844-binary"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.5144932200200856,
+      "log": "high-order-derivative-replay-v844-compile.log"
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/high-order-derivative-replay-v844-binary"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.0035691161174327135,
+      "log": "high-order-derivative-replay-v844-run.log"
+    }
+  ],
+  "all_processes_reaped": true,
+  "binary_sha256": "b563ba5cb2ebb3f7d73c7d09300e28b7097b71a25030098e2df7322f42ec89e0",
+  "probe_complete": true
+}

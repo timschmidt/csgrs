@@ -1,0 +1,47 @@
+{
+  "status": "implemented, qualified against baseline and committed; original goal active",
+  "preceding_stage": "interval-arithmetic-policy-followup.json",
+  "goal_status": "active",
+  "baseline_source": "box-construction-policy-audit.rs",
+  "baseline_binary": "box-construction-policy-audit",
+  "baseline_binary_sha256": "555f9531303fae6dde3aa38f90ed54dddcc20d6df30788de61c3353cc96c9645",
+  "baseline_log": "box-construction-policy-audit.log",
+  "findings": [
+    "Aabb2::from_points under APPROXIMATE_512 returns a box whose max_x is strictly below an input coordinate 1-cos(2^-607). Its STRICT contains_point rejects that input.",
+    "The edge-preview from_arc branch uses rounded f64 cardinal coordinates. An arc on the radius-squared-3 circle returns max_y strictly below sqrt(3), excluding its swept top cardinal point.",
+    "has_valid_ordering under APPROXIMATE_512 accepts min_x=1-cos(2^-619), max_x=0.",
+    "singleton_intersection under APPROXIMATE_512 constructs the origin as the intersection of two distinct point boxes, at x=0 and x=1-cos(2^-619)."
+  ],
+  "intended_migration": "Remove geometry context arguments from Aabb2 constructors, hull expansion/union, ordering validation and singleton construction. Use certified scalar comparisons and native arc sweep decisions; retain conservative full-circle fallback on uncertainty. Migrate all callers and now-contextless control-hull helpers directly, with no aliases.",
+  "constraints": [
+    "Do not silently weaken smallest-hull promises or narrow arbitrary exact Real payloads to rationals.",
+    "Pure bound construction may decline when exact order is unresolved; no approximation can become enclosure evidence.",
+    "Preserve explicit geometry operation policy and retained-object identity outside the context-free arithmetic/construction APIs.",
+    "Audit predicate-only box queries separately: their topology policy and preview behavior are different contracts.",
+    "Test both contexts, fresh near-zero expressions, reversed corners, distinct singleton boxes, irrational arc extrema and preview adapters."
+  ],
+  "baseline_tests": {
+    "log": "box-construction-policy-baseline.log",
+    "exit_code": 101,
+    "failed": 4,
+    "finding": "All four independent regressions fail on the old construction/evidence APIs."
+  },
+  "migration": {
+    "context_parameters_removed": 32,
+    "compiler_selected_argument_removals": 133,
+    "scope": "Aabb2 constructors, hull expansion/union, ordering and singleton evidence; control-hull and prepared-bound helpers; native structural facts. Owning geometry operations keep their contexts.",
+    "caller_validation": "All-target checks for Hypercurve and HyperBREP, plus workspace source scan. One HyperBREP builder caller migrated directly.",
+    "aliases_added": 0,
+    "source_snapshot": "box-construction-policy-source-before-tests.json",
+    "production_semantics": "Only strict scalar/sweep decisions can construct evidence. Rounded preview arc-bound branch removed; full-circle uncertainty fallback retained. Topology-only query contracts remain separate."
+  },
+  "commits": {
+    "hypercurve": "39a0c88c6fd4e013c3ba4302f050a29aae4dd522",
+    "hyperbrep": "c117ae1bdcaff2be4b1a02c01539c316ed9e5a99",
+    "hypersolve": "3ac2e7510936a11c7bf2eac5dfbe3f9f851afe55",
+    "hyperreal": "a2da8e2b5de9a1a4653d3662f2f05cb6533fd7ef"
+  },
+  "production_hypercurve_commit": "0c6fb0425ec000413d3f912c01f28eac42055a28",
+  "qualification": "box-construction-policy-qualification.json",
+  "next": "bezier-certified-bounds-policy-followup.json"
+}

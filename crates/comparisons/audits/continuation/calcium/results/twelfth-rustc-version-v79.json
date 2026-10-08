@@ -1,0 +1,14 @@
+{
+  "tag": "twelfth-rustc-version-v79",
+  "started": "2026-09-12T00:33:39.750Z",
+  "finished": "2026-09-12T00:33:39.775Z",
+  "elapsedSeconds": 0.022940911,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "rustc",
+  "args": [
+    "--version",
+    "--verbose"
+  ],
+  "code": 0,
+  "signal": null
+}

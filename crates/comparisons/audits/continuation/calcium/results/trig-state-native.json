@@ -1,0 +1,11 @@
+{
+  "tag": "trig-state-native",
+  "started": "2026-09-08T11:36:40.827Z",
+  "finished": "2026-09-08T11:36:40.840Z",
+  "elapsedSeconds": 0.011052741999999996,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison",
+  "command": "/home/tim/Documents/GitHub/workspace/.audit-builds/calcium-flint-trig-state-probe",
+  "args": [],
+  "code": 1,
+  "signal": null
+}

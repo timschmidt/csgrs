@@ -1,0 +1,16 @@
+{
+  "parent": "b9c3618d86f7deb29847140750bf538fecf51867",
+  "source_manifest": "local-chord-complete-replay-20260924-v51-sources.json",
+  "files": [
+    "src/algebraic.rs"
+  ],
+  "pending_hypercurve_files": [
+    "src/bezier_offset.rs",
+    "src/bezier_parameter.rs",
+    "src/bezier_region.rs",
+    "src/curve.rs",
+    "src/curve_corner_chain.rs",
+    "src/curve_region_boolean.rs",
+    "tests/hypercurve_curve.rs"
+  ]
+}

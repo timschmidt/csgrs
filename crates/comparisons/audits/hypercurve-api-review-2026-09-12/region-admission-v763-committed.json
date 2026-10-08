@@ -1,0 +1,18 @@
+{
+  "repos": {
+    "hypercurve": {
+      "commit": "6266048a3f744381d4bf31226801a733ccbd11a8",
+      "parent": "9b78893482470bd54bf8051d11434df6ed2c2177",
+      "paths": {
+        "README.md": "803c2bcbb6322c7c06805a90a4b527cd4f0be91e2de37d7bc2521640ed1791b6",
+        "src/bezier_region.rs": "0faf72d5039cfeb3b2e95d4050490f4b4b89bf6f9831dd4cbee0f349f5ccd72f",
+        "src/native_region_tests.rs": "ee4fe9ffa794392550f3899badbf0a0a775ae716c4297c513960b2b3fc927c80",
+        "src/reconstruct.rs": "9427c7f68dec527fadd82e0283c191e2319dfdec1a85aefa8c16443cfc6f5561",
+        "tests/hypercurve_reconstruct.rs": "242c11e26929de3be20923dd6aa12671ee81a6e7a19ad87c9790ce2a20057883"
+      }
+    }
+  },
+  "qualification": "region-admission-v763-terminal.json",
+  "verified_source_files": 2048,
+  "clean_repositories": 30
+}

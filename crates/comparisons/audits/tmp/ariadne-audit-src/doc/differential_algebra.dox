@@ -1,0 +1,107 @@
+/***************************************************************************
+ *            documentation/differential_algebra.dox
+ *
+ *  Copyright  2020  Pieter Collins
+ *
+ ****************************************************************************/
+
+/*
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; either version 2 of the License, or
+ *  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Library General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program; if not, write to the Free Software
+ *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+ */
+
+
+/*!
+
+\file differential_algebra.dox
+\brief Documentation on differential algebra and automatic differentiation
+
+
+\page differential_algebra_page Differential Algebra and Automatic Differentiation
+
+This page describes the mathematical framework of differential algebra, and the algorithms of automatic differentiation.
+For details on how this is implemented in %Ariadne, see the \ref DifferentiationSubModule documentation.
+
+\b References
+- Andreas Griewank and Andrea Walther, <em>Evaluating Derivatives: Principles and Techniques of Algorithmic Differentiation</em> , SIAM, 2008. ISBN 0-89871-659-4
+
+
+\section automatic_differentiation Automatic Differentiation
+
+Automatic differentiation (AD) is an approach to computing derivatives which (using exact arithmetic) yields the exact values from symbolic formulae and iterative/recursive programming constructs, without the need to construct explicit symbolic formulae for the derivatives.
+
+Consider quantities \f$u\f$, \f$v\f$, \f$y\f$ which depend on independent quantities \f$x_1,\ldots,x_n\f$.
+If we know the values of \f$u\f$ and \f$v\f$, and their partial derivatives with respect to the \f$x_i\f$, and if \f$y=u\times v\f$, then we can compute the value of \f$y\f$ and its partial derivatives:
+\f[ \begin{gathered} y=u\times v, \qquad \frac{\partial{y}}{\partial{x_i}} = \frac{\partial{u}}{\partial{x_i}} \times  v + u \times \frac{\partial{v}}{\partial{x_i}} \\ \frac{\partial^2{y}}{\partial{x_i}\partial{x_j}} = \frac{\partial{u}}{\partial{x_i}\partial{x_j}} \times v + \frac{\partial{u}}{\partial{x_i}}\times\frac{\partial{v}}{\partial{x_j}} + \frac{\partial{u}}{\partial{x_j}}\times\frac{\partial{v}}{\partial{x_i}} + u \times \frac{\partial^2{v}}{\partial{x_i}\partial{x_j}}  \end{gathered} \f]
+More generally, for a multi-index \f$\alpha=(\alpha_1,\alpha_n,\ldots,\alpha_n)\in\N^n\f$ with \f$|\alpha|=\sum_{i=1}^{n}\alpha_i\f$, we define \f$\alpha! = \prod_{i=1}^{n}\alpha_i!\f$ and the notation
+\f[ \frac{\partial^{|\alpha|}{y}}{\partial{x}^\alpha} = \frac{\partial^{|\alpha|}{y}}{\partial{x_1^{\alpha_1}}\partial{x_2^{\alpha_2}}\cdots\partial{x_n^{\alpha_n}}} . \f]
+Then we can write
+\f[ \frac{\partial^{|\alpha|}{(u\times v)}}{\partial{x}^\alpha} = \sum_{\beta+\gamma=\alpha} \frac{\alpha!}{\beta!\,\gamma!} \frac{\partial^{|\beta|}{u}}{\partial{x}^{\beta}} \times \frac{\partial^{|\gamma|}v}{\partial{x}^{\gamma}} . \f]
+The formulae for addition and subtraction are straightforward:
+\f[ \frac{\partial^{|\alpha|}{(u+v)}}{\partial{x}^\alpha} = \frac{\partial^{|\alpha|}{u}}{\partial{x}^\alpha} + \frac{\partial^{|\alpha|}{v}}{\partial{x}^\alpha}; \qquad \frac{\partial^{|\alpha|}{(u-v)}}{\partial{x}^\alpha} = \frac{\partial^{|\alpha|}{u}}{\partial{x}^\alpha} - \frac{\partial^{|\alpha|}{v}}{\partial{x}^\alpha} . \f]
+The formula for division is more complicated. Further, efficient computations of the partial derivatives of \f$y=u\div v\f$:
+\f[ \frac{\partial^{|\alpha|}{(u\div v)}}{\partial{x}^\alpha} = \biggl( \frac{\partial^{|\alpha|}{u}}{\partial{x}^\alpha}-\sum_{\beta+\gamma=\alpha\\\ \ \ \gamma\neq\alpha} \frac{\alpha!}{\beta!\,\gamma!} \frac{\partial^{|\beta|}{v}}{\partial{x}^{\beta}} \times \frac{\partial^{|\gamma|}y}{\partial{x}^{\gamma}}\biggr)\div v . \f]
+If \f$y=f(u)\f$ for some smooth function \f$f:\R\to\R\f$, then
+\f[ y=f(u); \qquad \frac{\partial{y}}{\partial{x_i}} = f'(u) \frac{\partial{u}}{\partial{x_i}} ; \qquad \frac{\partial^2{y}}{\partial{x_i}\partial{x_j}} = f''(u) \frac{\partial{u}}{\partial{x_i}}\frac{\partial{u}}{\partial{x_j}} + f'(u) \frac{\partial^2{u}}{\partial{x_i}\partial{x_j}} . \f]
+A general formula for higher-order derivatives is:
+\f[ \frac{\partial^{|\alpha|}{f(u)}}{\partial{x}^\alpha} = \sum_{\beta+\gamma=\alpha\\\ \ \ \beta\neq0} \frac{\alpha!}{\beta!\,\gamma!} \frac{\partial^{|\beta|}{u}}{\partial{x}^\beta} \frac{\partial^{|\gamma|}f'(u)}{\partial{x}^\gamma} .  \f]
+This can be efficiently computed recursively.
+A similar approach works for functions \f$f:\R^n\to\R\f$.
+An explicit form is <em>Faà di Bruno's formula</em>.
+
+Automatic differentiation is especially useful in programming languages support for polymorphism, since the same code used for evaluating the function can be applied to a data type storing the value of \f$y\f$ and its partial derivatives.
+
+\section differential_algebra Differential Algebra
+
+A <em>differential algebra</em> is an associative algebra \f$\A\f$ over a field \f$\X\f$, together with a collection of <em>derivative</em> operators \f$\partial_i\f$ satisfying the <em>Leibnitz rule</em>
+\f[  \partial (a_1 \times a_2) = (\partial a_1) \times a_2 + a_1 \times (\partial a_2) \f]
+and the commutation rule
+\f[  \partial_i (\partial_j a) = \partial_j (\partial i a)  . \f]
+
+The canonical example of a differential algebra is the algebra of smooth functions \f$f:\R^n\to\R\f$, with the operator \f$\partial_i\f$ being the \f$i^\text{th}\f$ partial derivative \f$\partial_i{f}(x) = \partial{f(x)}/\partial{x_i}\f$.
+
+Differential algebras provide a natural abstraction for defining the operations of automatic differentiation.
+
+*/
+
+/*
+Differential<X> Differential<X>::_compose(const UnivariateDifferential<X>& f, const Differential<X>& u)
+    Differential<X> w=u;
+    if(w.begin()->index().degree()==0) { w.begin()->coefficient()=0; }
+    Differential<X> y(as,d,u.zero_coefficient());
+    y[MultiIndex(as)]=f[d];
+    for(SizeType n=1; n<=d; ++n) {
+        y=y*(u-u0);
+        y+=f[d-n];
+    }
+    return r;
+
+y=f(u)
+y'=f'(u)u'
+y''=f''(u)u'u'+f'(u)u''
+y'''=f'''(u)u'u'u'+3f''(u)u''u'+f'(u)u'''
+
+
+w=[0,u',u'',u''']
+
+[f'',f'''u']
+[f',f''u',2f'''u'u'+f''u'']
+[f,f'u',f''u'u'+f'u'',f'''u'u'u'+2f''u''u'+f''u''u'+f'u'''
+
+
+y''''=f''''(u)u'u'u'u'+3f'''(u)u''u'u' + 3f'''(u)u''u'+3f''(u)u'''u+3f''(u)u''u'' + f''(u)u'''u'+f'(u)u''''
+     =f''''(u)u'u'u'u'+6f'''(u)u''u'u'+4f''(u)u'''u'+3f''(u)u''u''+f'(u)u''''
+
+*/
+

@@ -1,0 +1,23 @@
+{
+  "tag": "qqbar-monomial-0-256-1-v84",
+  "started": "2026-09-12T04:36:35.514Z",
+  "finished": "2026-09-12T04:36:35.588Z",
+  "elapsedSeconds": 0.07275401499999999,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "timeout",
+  "args": [
+    "20s",
+    "prlimit",
+    "--core=0",
+    "--as=1073741824",
+    "--cpu=10",
+    "--",
+    "/tmp/calcium-qqbar-remainder-v84.1aubRO/controls",
+    "monomial",
+    "0",
+    "256",
+    "1"
+  ],
+  "code": null,
+  "signal": "SIGABRT"
+}

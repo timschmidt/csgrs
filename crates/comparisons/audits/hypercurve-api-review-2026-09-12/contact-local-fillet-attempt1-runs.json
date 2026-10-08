@@ -1,0 +1,109 @@
+{
+  "head": "5206f58f5b52271ced4eedb3a363202c5595ba7c",
+  "working": {
+    "src/bezier_offset.rs": "69c2deb89866e63848dd82dc2cc609eb8545c84c45fb7eff8b2f2d14eadf601f",
+    "src/bezier_region.rs": "0fed4dac5d90477eb4582db0734e205666e532f64a7d94b3adfc3d0180dc3562",
+    "tests/hypercurve_curve_region_promotion.rs": "9a23bb1ef8a2d1571a53242d345a9db8d545c1a8efbbeec4870192512ea25f86",
+    "src/curve_region_boolean.rs": "0de4a41c4bb8205d7fc9c6c64e3ad6d4f5a14752f135819eab80b6f239518ecf",
+    "src/curve.rs": "ac818e9b30c98a6c8382126c7c2248e21fc79187abf206672f8ab8efd5fe0873",
+    "src/curve_corner_chain.rs": "09b5e9add7df82e46ea65273c0de516764a022e8283d34146c229f4b9ad5fb69"
+  },
+  "runs": [
+    {
+      "label": "parent-build",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "test",
+        "--release",
+        "--all-features",
+        "--lib",
+        "--no-run",
+        "--message-format=json",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 119.73513397801435,
+      "binary": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/contact-local-fillet-attempt1-libraries/parent-libtest",
+      "sha256": "00dc7461fce1e77e8346d48ad72ae3189db475e627ff0048e989b22e12664ac9"
+    },
+    {
+      "label": "parent-regression",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/contact-local-fillet-attempt1-libraries/parent-libtest",
+        "--exact",
+        "curve::tests::fillet_center_contacts_keep_source_orientation_across_support_cusps",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 101,
+      "elapsed_seconds": 0.0034835609840229154
+    },
+    {
+      "label": "check",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "check",
+        "--all-targets",
+        "--no-default-features",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 16.838817779003875
+    },
+    {
+      "label": "candidate-build",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "test",
+        "--release",
+        "--all-features",
+        "--lib",
+        "--no-run",
+        "--message-format=json",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 121.64203009699122,
+      "binary": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/contact-local-fillet-attempt1-libraries/candidate-libtest",
+      "sha256": "96d1593f646bd154fe8b0c33b16fd5e513d7d25bdcd543f85144ac5331b9010d"
+    },
+    {
+      "label": "candidate-regression",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/contact-local-fillet-attempt1-libraries/candidate-libtest",
+        "--exact",
+        "curve::tests::fillet_center_contacts_keep_source_orientation_across_support_cusps",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.007602190016768873
+    },
+    {
+      "label": "candidate-library",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/contact-local-fillet-attempt1-libraries/candidate-libtest",
+        "--test-threads=2",
+        "--color",
+        "never",
+        "--skip",
+        "bezier_offset::conversion_tests::selected_parallel_normal_circle_intersects_genuinely_analytic_parallel_in_one_fiber",
+        "--skip",
+        "bezier_region::tests::independent_oblique_chord_pair_fillets_extend_on_infinite_supports",
+        "--skip",
+        "bezier_region::tests::selected_circle_and_analytic_parallel_extend_on_full_supports",
+        "--skip",
+        "bezier_region::tests::pair_native_boolean_algebraic_chord_corner_publishes_a_third_generation_fillet"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 237.79058199501014
+    }
+  ]
+}

@@ -1,0 +1,56 @@
+{
+  "builds": [
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "check",
+        "--all-targets",
+        "--no-default-features",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 1.5665170770080294
+    },
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "test",
+        "--release",
+        "--all-features",
+        "--locked",
+        "--offline",
+        "--lib",
+        "--test",
+        "hypercurve_curve_region_promotion",
+        "--test",
+        "hypercurve_exact_closure",
+        "--test",
+        "hypercurve_curve_region_boolean",
+        "--test",
+        "hypercurve_curve_region_boolean_fuzz",
+        "--test",
+        "hypercurve_svg",
+        "--no-run",
+        "--message-format=json"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 191.28229613299482
+    }
+  ],
+  "source_files": {
+    "src/bezier_region.rs": "0d15c898b0b5bb63aade5681d1c2d173a1610ffae95e1dbf3e8cb1f569fcd7e2",
+    "src/curve_region_boolean.rs": "4b341ff107d61bb5064774d1d605e822645872894a374cb91f31ec9a0ce62f90",
+    "src/curve_region_trim.rs": "baf1c017363cd72c1790298122518293c8c1ba9e544275185fe8c20057c51a78",
+    "src/finite_projection.rs": "94ef4af432aa6bf0682db86284e802e901129c7ee215884a6366f30a552ef551",
+    "src/native_region_tests.rs": "b7693a383a1177e33c548d5555f7b04b6c30b6531a6a33a8c92b61fa9b6a0f51",
+    "src/svg.rs": "010fc0d15c0f7a327b3941a6ecb75ae3dd39e91168c4ac92debfa97a14c99e37",
+    "tests/hypercurve_curve_region_boolean.rs": "4aba23a0abcbdabdf8ba5fd75459f5d179bdc5e5dcfd5f28010f2dc84bd4ebc4",
+    "tests/hypercurve_curve_region_boolean_fuzz.rs": "18b9961bcab64ecffe94796a906a2db83629f96e3e362a7d7dbad522d2b082bb",
+    "tests/hypercurve_curve_region_promotion.rs": "850a264a1778de472cea083b577c7802bfcdcdab2c2c0b792c30d0f49272064d",
+    "tests/hypercurve_exact_closure.rs": "73e044088dac8f81d856fdabc3bfb31b1895d8886e180d51f5c86e6e91dd339f",
+    "tests/hypercurve_svg.rs": "952a96aff9445480d6ebd7937d411d498c28dc374642353bd57b56414ffd8add"
+  },
+  "excluded_working_source": "src/bezier_offset.rs",
+  "excluded_scope": "Unfinished mapped-point consolidation; this snapshot uses the committed offset implementation."
+}

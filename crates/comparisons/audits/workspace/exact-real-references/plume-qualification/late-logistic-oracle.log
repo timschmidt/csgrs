@@ -1,0 +1,11 @@
+FAIL logistic: dy-stream	greedy	1	4	1	12	1	16	1	4096	0	12; expected interval [3/4,3/4]
+FAIL logistic: dy-stream	greedy	1	4	2	12	15	512	1	4096	0	12; expected interval [3/4,3/4]
+FAIL logistic: dy-stream	greedy	1	4	3	12	29	2048	1	4096	0	12; expected interval [3/4,3/4]
+cross-float	checks=44	failures=0
+cross-stream	checks=56	failures=0
+dy-float	checks=38	failures=0
+dy-stream	checks=56	failures=28
+sb-float	checks=44	failures=0
+sb-stream	checks=56	failures=0
+sb-unnormalized	checks=56	failures=0
+TOTAL logistic	checks=350	failures=28

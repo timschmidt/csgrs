@@ -1,0 +1,33 @@
+\doxysubsection{source/hybrid/hybrid\+\_\+automaton.hpp File Reference}
+\hypertarget{hybrid__automaton_8hpp}{}\label{hybrid__automaton_8hpp}\index{source/hybrid/hybrid\_automaton.hpp@{source/hybrid/hybrid\_automaton.hpp}}
+
+
+\doxysubsubsection{Description}
+Main hybrid automaton class. 
+
+{\ttfamily \#include $<$string$>$}\newline
+{\ttfamily \#include $<$iostream$>$}\newline
+{\ttfamily \#include $<$vector$>$}\newline
+{\ttfamily \#include $<$set$>$}\newline
+{\ttfamily \#include $<$map$>$}\newline
+{\ttfamily \#include "{}function/function.\+hpp"{}}\newline
+{\ttfamily \#include "{}hybrid/discrete\+\_\+location.\+hpp"{}}\newline
+{\ttfamily \#include "{}hybrid/discrete\+\_\+event.\+hpp"{}}\newline
+{\ttfamily \#include "{}symbolic/assignment.\+hpp"{}}\newline
+{\ttfamily \#include "{}symbolic/expression.\+hpp"{}}\newline
+{\ttfamily \#include "{}conclog/logging.\+hpp"{}}\newline
+{\ttfamily \#include "{}hybrid/hybrid\+\_\+automaton\+\_\+interface.\+hpp"{}}\newline
+\doxysubsubsubsection*{Classes}
+\begin{DoxyCompactItemize}
+\item 
+class \mbox{\hyperlink{classAriadne_1_1DiscreteTransition}{Discrete\+Transition}}
+\begin{DoxyCompactList}\small\item\em A discrete transition of a hybrid automaton, representing an instantaneous jump from one discrete mode to another, governed by an activation set and a reset map. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1DiscreteMode}{Discrete\+Mode}}
+\begin{DoxyCompactList}\small\item\em A discrete mode of a hybrid automaton, comprising continuous evolution given by a vector field within and invariant constraint set. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classAriadne_1_1HybridAutomaton}{Hybrid\+Automaton}}
+\begin{DoxyCompactList}\small\item\em A hybrid automaton, comprising continuous-\/time behaviour at each discrete mode, coupled by instantaneous discrete transitions. The state space is given by a hybrid set. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsubsection*{Namespaces}
+\begin{DoxyCompactItemize}
+\item 
+namespace \mbox{\hyperlink{namespaceAriadne}{Ariadne}}
+\begin{DoxyCompactList}\small\item\em Top-\/level Ariadne namespace. \end{DoxyCompactList}\end{DoxyCompactItemize}

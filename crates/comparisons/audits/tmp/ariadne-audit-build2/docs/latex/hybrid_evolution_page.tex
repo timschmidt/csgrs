@@ -1,0 +1,274 @@
+\doxysection{Hybrid Evolution Methods }
+\hypertarget{hybrid_evolution_page}{}\label{hybrid_evolution_page}\index{Hybrid Evolution Methods@{Hybrid Evolution Methods}}
+\hypertarget{hybrid_evolution_page_hybrid_evolution_constraints}{}\doxysubsection{\texorpdfstring{Evolution of a hybrid system with constraints}{Evolution of a hybrid system with constraints}}\label{hybrid_evolution_page_hybrid_evolution_constraints}
+Given an initial state $x_0$, we wish to compute the set of all points reachable at times up to time $t$, and all points reached at exactly time $t$. We denote by $\Psi(x_0,t)$ the set of points reached starting at $x_0$ at time $t$.
+
+Suppose we start at a given initial state $(q_0,x_0)$ at time $t_0$ (which may depend on $x_0$), and undergo a sequence of $n$ events $e_{i}$ with guards $g_i$ and resets $r_i$. Let $\phi_i(x,t)$ denote the solution of the differential equation $ \dot{x}=f_i(x) $ valid after the $i^\mathrm{th}$ event. Let $t_i$ be the time of the $i^\mathrm{th}$ event, and $x_i$ the state immediately after the $i^\mathrm{th}$ event.
+
+Then the state at time $t$ is given by \[ y(t) = \phi_{n}(x_n,t-t_n) \] where \[ x_{m+1} = r_{m+1}(\phi_{m}(x_m,t_{m+1}-t_m)  \] and the times $t_m$ satisfy \[ t_0 \leq t_1 \leq \cdots \leq t_m \leq t . \] If $p_m(x)\leq0$ is a progress (time-\/can-\/pass,tcp) predicate valid in mode $m$, then we must have \[ p_m(\phi_{m}(x_m,[0,t_{m+1}-t_{m}])) \leq 0 \] and if $a_m(x)\geq0$ is the activation predicate of the $m^\mathrm{th}$ event, then we must have \[ a_{m}( \phi_{m-1}(x_{m-1},t_{m}-t_{m-1}) ) \geq 0 . \] If the event $e_{m}$ is urgent, then we have \[ g_{m}( \phi(x_{m-1},[0,t_{m}-t_{m-1}]))\leq 0 \wedge g_{m}( \phi(x_{m-1},t_{m}-t_{m-1})) = 0 . \]\hypertarget{hybrid_evolution_page_hybrid_evolution_dwell_time}{}\doxysubsubsection{\texorpdfstring{Dwell time}{Dwell time}}\label{hybrid_evolution_page_hybrid_evolution_dwell_time}
+If we set $\delta_m=t_{m+1}-t_m$, the dwell time in the $i^\mathrm{th}$ location, then the equations reduce to    \[ \begin{aligned}
+        y_n(t) &= \phi_{n}(x_n,t-(t_0+\delta_0+\cdots+\delta_n)) \\
+        x_{m+1} &= r_{m+1}(\phi_{m}(x_m,\delta_m)) \\
+\end{aligned} \] with constraints      \[ \begin{aligned}
+        \delta_i &\geq 0; \\
+        t-(t_0+\delta_0+\cdots+\delta_n) &\geq 0; \\[1px]
+        p_m\circ\phi_m(x_m,[0,\delta_{m}]) &\leq 0 \\
+        g_{m}\circ\phi(x_{m-1},\delta_{m-1}) &= 0 .
+\end{aligned} \] This is useful, as a constraint of the form $\delta_m\geq0$ can be encoded directly in the domain of a Constrained\+Image\+Set, but a constraint of the form $t_{m+1}\geq t_m$ cannot be.
+
+In the case of two events, both of which are urgent, and maximum time $T$, we can expand the conditions \[ y(t) = \phi_2\bigl(r_2\circ\phi_1\bigl(r_1\circ\phi_0(x_0,\delta_0),\delta_1\bigr),t-(t_0(x_0)+\delta_0+\delta_1)\bigr) \] with constraints        \[ \begin{aligned}
+        x_0\in B,\ t,\delta_0,\delta_1 &\in [0,T]; \\[1px]
+        t-(t_0(x_0)+\delta_0+\delta_1) &\geq 0; \\[1px]
+        g_1\circ\phi_0(x_0,[0,\delta_0]) &\leq 0; \\
+        g_1\circ\phi_0(x_0,\delta_0) &= 0; \\[1px]
+        g_2\circ\phi_1(r_1\circ\phi_0(x_0,\delta_0),[0,\delta_1]) &\leq 0; \\
+        g_2\circ\phi_1(r_1\circ\phi_0(x_0,\delta_0),\delta_1) &= 0.
+\end{aligned} \]
+
+If we can solve for the crossing time $t_1$ (equivalently, the dwell time $\delta_0$) as a function of $x_0$, then we can eliminate the constraints involving $g_1$ from the system of equations.       \[ \begin{aligned}
+        x_0\in B,\ t,\delta_1 &\in [0,T]; \\[1px]
+        \delta_0(x_0) &\geq 0; \\[1px]
+        t-(t_0(x_0)+\delta_0(x_0)+\delta_1) &\geq 0; \\[1px]
+        g_2\circ\phi_1(r_1\circ\phi_0(x_0,\delta_0(x_0)),[0,\delta_1]) &\leq 0; \\
+        g_2\circ\phi_1(r_1\circ\phi_0(x_0,\delta_0(x_0)),\delta_1) &= 0.
+\end{aligned} \] Alternatively, if we can solve for $t_2$ in terms of $x_1$, then we can eliminate the constraints involving $g_2$.       \[ \begin{aligned}
+        x_0\in B,\ t,\delta_0 &\in [0,T]; \\[1px]
+        \delta_1(r_1\circ\phi_0(x_0,\delta_0)) &\geq 0; \\[1px]
+        t-(t_0+\delta_0+\delta_1(r_1\circ\phi_0(x_0,\delta_0))) &\geq 0; \\[1px]
+        g_1\circ\phi_0(x_0,[0,\delta_0]) &\leq 0; \\
+        g_1\circ\phi_0(x_0,\delta_0) &= 0; \\[1px]
+\end{aligned} \] In general, if we can solve for $t_{m+1}$ in terms of $x_{m}$, we have \[ x_{m+1} = \phi_m(x_m,\delta_m(x_m)) = \phi_{m}(x_{m}(x_0,\ldots),\delta_m(x_0,\ldots)) . \]\hypertarget{hybrid_evolution_page_hybrid_evolution_constrained_image_set}{}\doxysubsection{\texorpdfstring{The Constrained\+Image\+Set class}{The Constrained\+Image\+Set class}}\label{hybrid_evolution_page_hybrid_evolution_constrained_image_set}
+A \doxylink{classAriadne_1_1ConstrainedImageSet}{Constrained\+Image\+Set} is the image of a restricted subset of a compact box under a continuous function. \[ S = \{ h(s) \mid s\in D \mid g(s) \in C \} . \] Alternatively, expressing the set in terms of inequality and equality constraints, we have \[ S = \{ h(s) \mid s\in D \mid c(s)\leq0 \wedge e(s)=0 \} . \]\hypertarget{hybrid_evolution_page_hybrid_evolution_constrained_image_set_operations}{}\doxysubsubsection{\texorpdfstring{Operations on constrained image sets}{Operations on constrained image sets}}\label{hybrid_evolution_page_hybrid_evolution_constrained_image_set_operations}
+The intersection of $S=\{ h(s) \mid s\in D \mid g(s) \in C \}$ with $R=\{ x\mid f(x) \in B \}$ is then \[  S\cap R = \{ h(s) \mid s\in D \mid g(s) \in C \wedge (f\!\circ\! h)(s) \in B \} . \] The image of $S$ under a continuous function $f$ is then \[ f(S) = \{ (f\circ h)(s) \mid s\in D \mid g(s) \in C \} . \] However, the preimage cannot be easily computed.\hypertarget{hybrid_evolution_page_hybrid_evolution_timed_constrained_image_set}{}\doxysubsubsection{\texorpdfstring{Timed constrained image sets}{Timed constrained image sets}}\label{hybrid_evolution_page_hybrid_evolution_timed_constrained_image_set}
+When computing the evolution of a hybrid system, we have two additional considerations. Firstly, the functions describing the sets might not be know exactly, so are represented by an interval extension of the exact function. Secondly, the evolution time as well as the evolved point may depend on the parameter, and so the set needs to be described as a {\itshape timed} constrained image set. We write a timed constrained image set as \[ S = \{ \xi(s);\;\tau(s) \mid s\in D \mid \rho(s)\in C \} \] where $x=\xi(s)$ and $t=\tau(s)$.\hypertarget{hybrid_evolution_page_hybrid_evolution_extended_predicates}{}\doxysubsubsection{\texorpdfstring{Extended predicates for constrained image sets}{Extended predicates for constrained image sets}}\label{hybrid_evolution_page_hybrid_evolution_extended_predicates}
+It is sometimes useful to extend the class of predicates allowed to simplify the representation of guards and invariants. Suppose $T=[0,t_{\max}]$ is a time interval, $D$ is an initial state set, and $\phi(x,t)$ denotes the flow. Then the flow restricted to the invariant $p(x(t))\leq 0$ can be represented as \[ S = \{ \phi(x_0,t) \mid x_0\in D,\ t\in T \text{ and } p\circ\phi(x_0,[0,t])\leq 0 \} \] where $p\circ\phi(x_0,[0,t])\leq 0$ is a shorthand for \[ \sup\{ p(\phi(x_0,s)) \mid s\in[0,t] \} \leq 0 . \] If the set is supposed to represent the state after a discrete transition, then we have \[ S = \{ \phi_1(r_1\circ\phi_0(x_0,\delta_0),t-(t_0+\delta_0)) \mid x_0\in D,\ \delta_0,t\in T,\ t-(t_0+\delta_0)\geq 0, \ \text{ and } p_0\circ\phi_0(x_0,[0,\delta_0])\leq 0 \} . \] Note that here, the condition $p_0\circ\phi_0(x_0,[0,\delta_0])\leq 0$ is independent of the variable $t$, and can be most simply written as a function of the $n+1$ variables $x_0,\delta_0$ rather than the $n+2$ variables $x_0,\delta_0,t$.
+
+We therefore order the independent variables of a constrained image set representing the evolution of a hybrid system as \[ x_{0} \in D \subset \R^n,\ \delta_0,\ldots,\delta_k\in[0,t_{\max}],\ t\in[0,t_{\max}] . \] Then, if a constraint function depends on $n+j$ variables, these are assumed to be $x_{0,1},\ldots,x_{0,n},\delta_0,\ldots,\delta_j$. Note that in practice, some of the dwell-\/times $\delta_i$ may be missing if they can be solved for explicitly.
+
+\begin{DoxyNote}{Note}
+The extended constrained image set type is not currently available in Ariadne. This is due to the complexity of computing the maximum of the guard functions over the time interval.
+\end{DoxyNote}
+\hypertarget{hybrid_evolution_page_hybrid_evolution_simplifying}{}\doxysubsubsection{\texorpdfstring{Simplifying constrained image sets}{Simplifying constrained image sets}}\label{hybrid_evolution_page_hybrid_evolution_simplifying}
+\hypertarget{hybrid_evolution_page_hybrid_evolution_initial_events}{}\doxysubsection{\texorpdfstring{Processing initial events}{Processing initial events}}\label{hybrid_evolution_page_hybrid_evolution_initial_events}
+At the beginning of the evolution, or immediately after a jump, it may be the case that some events are possible immediately, or that some invariants are unsatisfied. Before computing the continuous evolution, we first process these initial events starting from the initial set $ S = \{ \xi(s),\,\tau(s)\mid s\in D \mid \rho(s)\in C \} $ .
+\begin{DoxyEnumerate}
+\item Restrict by invariants $i_e\leq0$\+: \[ R = S \cap i^{-1}(\R^-) = \{ \xi(s),\,\tau(s) \mid s\in D \mid \rho(s)\in C \wedge i(\xi(s))\leq 0 \} \]
+\item Apply initially active events $x\textnormal{\textquotesingle}=r_e(x)$ when $a_e(x)\geq0$.  \[ J_e  = r_e(R\cap a^{-1}(\R^+) = \{ r_e(\xi(s)),\,\tau(s) \mid s\in D \mid
+            \rho(s)\in C \wedge i(\xi(s))\leq 0 \wedge a_e(\xi(s)) \geq 0 \} \]
+\item Restrict by progress predicates $p_e\leq 0$ (including guards $g_e\leq0$).  \[ F = R\cap p^{-1}(\R^-) = \{ \xi(s),\,\tau(s) \mid s\in D \mid \rho(s)\in C \wedge
+        i(\xi(s))\leq 0 \wedge p(\xi(s))\leq 0 \} \]
+\end{DoxyEnumerate}This functionality is provided by the Hybrid\+Evolver\+Base\+::\+\_\+process\+\_\+initial\+\_\+events() method.
+
+Note that
+\begin{DoxyItemize}
+\item hitting events should be treated as invariants for the initial state, but during the evolution the identity $h_e(x)\geq0$ always holds after a reset.
+\item urgent events do not prevent other events occuring instantaneously, and are treated as introducing a progress predicate $p_e(x)\leq0$ and an activation $g_e(x)\geq0$.
+\end{DoxyItemize}
+
+Once the initial set the been processed, the resulting {\itshape flowable set} is such that all points in the interior can undergo continuous evolution for a strictly positive time (assuming nondegeneracy of invariant/progress predicates).\hypertarget{hybrid_evolution_page_hybrid_evolution_evolution_step}{}\doxysubsection{\texorpdfstring{A hybrid evolution step}{A hybrid evolution step}}\label{hybrid_evolution_page_hybrid_evolution_evolution_step}
+ 
+\begin{DoxyImageNoCaption}
+  \mbox{\includegraphics[width=\textwidth,height=\textheight/2,keepaspectratio=true]{hybridevolution}}
+\end{DoxyImageNoCaption}
+
+
+In principle, the evolution of a hybrid system can be represented by the formula  \[ x(t) = \phi_{q_m}(t-t_m,r_{q_{m-1},e_{m}}(\phi_{q_{m-1}}(t_m-t_{m-1},\cdots
+             \phi_{q_1}(t_2-t_1,r_{q_0,e_1}(\phi_{q_0}(t_1-t_0,x_0)))\cdots))) \] under the constraints  \[ p(x(t,n))\leq 0 \text{ whenever } t<t_n \text{ and }
+      a_{q_n,e_n}(x(t,n))\geq0 \text{ whenever } t=t_{n+1} \] Computing the evolution over a set of points is not so straightforward since different initial points in the set may have qualitatively different trajectories, and it may not be possible to effectively compute the flow over an entire inter-\/ event time interval. Further, in order to avoid unnecessary growth in the number of enclosure sets used, it is advantageous to ensure that events occur over a single time step wherever possible.
+
+
+\begin{DoxyEnumerate}
+\item Compute the flow $\phi:D\times[0,h]\rightarrow \R^n$ of $\dot{x}=f_{q}(x)$ where $S\subset D\subset\R^n$. Let box $B$ be such that $\phi(D,[0,h])\subset B$. ~\newline
+ This functionality is implemented in the \doxylink{classAriadne_1_1HybridEvolverBase_ac49e420cf3c8d2bc0d31d2c36a190250}{Hybrid\+Evolver\+Base\+::\+\_\+compute\+\_\+flow()} method.
+\item Compute the possibly active events. An event $e$ is active if $c_e(\phi(x,t))\geq0$ for some $x\in S$ and $t\in[0,h]$; the set of possibly active events must include the set of active events, but may be larger. ~\newline
+ This functionality is implemented in the \doxylink{classAriadne_1_1HybridEvolverBase_a0b25810b33462ec26cb713ebbeb092d1}{Hybrid\+Evolver\+Base\+::\+\_\+compute\+\_\+active\+\_\+events()} method.
+\item For each possibly active event, determine how the guard function $c_e$ varies over trajectories.
+\item If a guard function of an urgent or hitting event is strictly increasing at crossings with the guard set, attempt to compute the crossing time function $\gamma_e(x)$ satisfying $g_e(\phi(x,\gamma_e(x))) = 0$. The crossing time function $\gamma_e$ must be a continuous function such that
+\begin{DoxyItemize}
+\item If $g_e(\phi(x,t))=0$ for $x\in S$ and $t\in[0,h]$, then $\gamma_e(x)=t$.
+\item If $x\in S$ and $\gamma(x)\in[0,h]$, then $g_e(\phi(x,\gamma(x)))=0$ and $(\nabla g\!\cdot\!f)(\phi(x,\gamma(x)))>0$.
+\end{DoxyItemize}In particular, $\gamma_e$ must represent crossing times over the entire set $S$. For points not in $S$, the value of $\gamma_e$ is arbritrary (since these points are prohibited by other constraints). ~\newline
+ This functionality is implemented in the \doxylink{classAriadne_1_1HybridEvolverBase_ad72a7db88e2c02585d680c5f95044214}{Hybrid\+Evolver\+Base\+::\+\_\+compute\+\_\+crossings()} method.
+\item Compute the timing information of the continuous evolution. ~\newline
+ The straightforward choice is to use the step size {\itshape h} of the flow as the time over which the evolution step occurs. This may not always be best choice, or even possible choice, depending on the situation.
+\begin{DoxyEnumerate}
+\item "{}\+Creep"{}
+\item "{}\+Unwind"{}
+\item "{}\+Final"{}
+\end{DoxyEnumerate}~\newline
+ Step wrt parameters or space\texorpdfstring{$\ast$}{*}\texorpdfstring{$\ast$}{*} ~\newline
+ This functionality is provided by the Hybrid\+Evolver\+Base\+::\+\_\+compute\+\_\+timing() method.
+\item Apply the computed transitions to find the {\itshape jump}, {\itshape reach}, {\itshape intermediate} and {\itshape evolve} sets. This functionality is provided by the Hybrid\+Evolver\+Base\+::\+\_\+apply\+\_\+transitions() method.
+\end{DoxyEnumerate}\hypertarget{hybrid_evolution_page_section_hybrid_evolution_formulae}{}\doxysubsection{\texorpdfstring{SUMMARY OF FORMULAE FOR HYBRID EVOLUTION}{SUMMARY OF FORMULAE FOR HYBRID EVOLUTION}}\label{hybrid_evolution_page_section_hybrid_evolution_formulae}
+\hypertarget{hybrid_evolution_page_hybrid_evolution_objects}{}\doxysubsection{\texorpdfstring{Classes and objects}{Classes and objects}}\label{hybrid_evolution_page_hybrid_evolution_objects}
+
+\begin{DoxyItemize}
+\item {\ttfamily Timed\+Enclosure} $ S = \{ \xi(s);\;\tau(s) \mid s\in D \mid \rho(s) \in C \} . $
+\item {\ttfamily Hybrid\+System} $ H = \bigl( (f_q)_{q\in Q},(k_{q,e}, g_{q,e})_{q,e\in Q\times E} \bigr) $
+\item Events kinds {\ttfamily invariant}, {\ttfamily progress}, {\ttfamily permissive}, {\ttfamily urgent} or {\ttfamily imact}.
+\item Crossing kinds {\ttfamily increasing}, {\ttfamily decreasing}, {\ttfamily convex}, {\ttfamily concave}, or {\ttfamily degenerate}.
+\item Flow $\phi:\R^n\times\R \fto \R^n$ satisfying $\dot{\phi}(x,t) = f(\phi(x,t)),\ \phi(x,0)=x$.
+\begin{DoxyItemize}
+\item Lie derivative $L_fg = \nabla g \cdot f$.
+\end{DoxyItemize}
+\item Crossing time $\gamma_e:\R^n\fto\R$ satisfying $ g_e(\phi(x,\gamma_e(x)))=0$
+\begin{DoxyItemize}
+\item A crossing is increasing if $L_f g_e > 0$, and convex if $L_f^2 g_e > 0$.
+\end{DoxyItemize}
+\item Critical time $\mu_e:\R^n\fto\R$ satisfying $L_fg_e(\phi(x,\mu_e(x)))=0 $.
+\end{DoxyItemize}\hypertarget{hybrid_evolution_page_initialisation}{}\doxysubsection{\texorpdfstring{Initialisation}{Initialisation}}\label{hybrid_evolution_page_initialisation}
+\[\begin{aligned}
+ A_e &= \{ \xi(s); \tau(s) \mid s\in D \mid i_{e\textnormal{\textquotesingle}}(x) \leq 0 \wedge g_e(x) \geq 0 \} \\
+ F &= \{ \xi(s); \tau(s) \mid s\in D \mid i_{e}(x) \leq 0 \wedge p_e(x) \leq 0 \wedge g_e(x) \leq 0 \}
+\end{aligned}
+\]\hypertarget{hybrid_evolution_page_single_crossing}{}\doxysubsection{\texorpdfstring{Formulae for a single crossing}{Formulae for a single crossing}}\label{hybrid_evolution_page_single_crossing}
+Assume that for all invariants, progress and urgent constraint $c(x)$, we have $c(x)\leq 0$ for all $x\in S$. We take $x\in S$, $t\in[0,h]$ and $y=\phi(x,t)$ \doxylink{classAriadne_1_1Set}{Set} $H=[0,h]$.
+
+If $g$ is decreasing, then no new constraints are needed. However, we can write   \[ E = \{ \phi(x,t) \mid t=\varepsilon(x) \} = \{ \phi(x,\varepsilon(x)) \}
+\]
+
+If $g$ is increasing, then      \[\begin{aligned}
+ R &= \{ \phi(x,t) \mid g(\phi(x,t)) \leq 0 \} \\
+ E &= \{ \phi(x,t) \mid g(\phi(x,t))\leq 0 \wedge t=\varepsilon(x) \} \\
+   &= \{ \phi(x,\varepsilon(x)) \mid g(\phi(x,\varepsilon(x))) \leq 0 \} \\[1px]
+ J &= \{ \phi(x,t) \mid g(\phi(x,t))=0 \} \\
+\end{aligned}\] If the crossing time $\gamma(t)$ is known then     \[\begin{aligned}
+ R &= \{ \phi(x,t) \mid t\leq\varepsilon(x) \wedge t \leq \gamma(x) \} \\
+ E &= \{ \phi(x,\varepsilon(x)) \mid \varepsilon(x) \leq \gamma(x) \} \\[1px]
+ J &= \{ \phi(x,\gamma(x)) \mid \gamma(x) \leq \varepsilon(x) \}
+\end{aligned}\] In the formula for $J$, we do not need the constraint $\gamma(x)\geq0$ since this is implied by the initial constraint $g(x)\leq 0$.
+
+If $g$ is increasing, then the best formulae in terms of the number of constraints are     \[\begin{aligned}
+ R &= \{ \phi(x,t) \mid g(\phi(x,t)) \leq 0 \} = \{ \phi(x,t) \mid t\leq\varepsilon(x) \wedge t \leq \gamma(x) \} \\
+ E &= \{ \phi(x,\varepsilon(x)) \mid g(\phi(x,\varepsilon(x))) \leq 0 \}= \{ \phi(x,\varepsilon(x)) \mid \varepsilon(x) \leq \gamma(x) \} \\[1px]
+ J &= \{ \phi(x,\gamma(x)) \mid \gamma(x)\leq \varepsilon(x) \}
+\end{aligned}\] If $\varepsilon(x)=h$, then     \[\begin{aligned}
+ R &= \{ \phi(x,t) \mid g(\phi(x,t)) \leq 0 \} = \{ \phi(x,t) \mid t \leq \gamma(x) \} \\
+ E &= \{ \phi(x,h) \mid g(\phi(x,h)) \leq 0 \}= \{ \phi(x,h) \mid h \leq \gamma(x) \} \\[1px]
+ J &= \{ \phi(x,\gamma(x)) \mid \gamma(x)\leq h \}
+\end{aligned}\]
+
+If $g$ is convex, then     \[\begin{aligned}
+ R &= \{ \phi(x,t) \mid t\leq\mu(x) \wedge g(\phi(x,t)) \leq 0 \} \\[1px]
+ E &= \{ \phi(x,\varepsilon(x)) \mid \varepsilon(x) \leq \mu(x) \wedge g(\phi(x,\varepsilon(x))) \leq 0  \} \\[1px]
+ J &= \{ \phi(x,t) \mid g(\phi(x,t)) = 0  \}
+\end{aligned}\]
+
+If $g$ is concave, then            \[\begin{aligned}
+ R &= \{ \phi(x,t) \mid t\leq\mu(x) \wedge g(\phi(x,t)) \leq 0 \} \\
+       &\qquad \cup \{ \phi(x,t) \mid t\geq\mu(x) \wedge g(\phi(x,\mu(x))) \leq 0  \} \\[1px]
+   &= \{ \phi(x,t) \mid L_fg(\phi(x,t))\geq0 \wedge g(\phi(x,t)) \leq 0 \} \\
+       &\qquad \cup \{ \phi(x,t) \mid L_fg(\phi(x,t))\leq0 \wedge g(\phi(x,\mu(x))) \leq 0  \} \\[1px]
+ E &= \{ \phi(x,\varepsilon(x)) \mid \varepsilon(x) \leq \mu(x) \wedge g(\phi(x,\varepsilon(x))) \leq 0  \} \\
+       &\qquad \cup \{ \phi(x,\varepsilon(x)) \mid \varepsilon(x)\geq\mu(x) \wedge g(\phi(x,\mu(x))) \leq 0  \} \\[1px]
+   &= \{ \phi(x,\varepsilon(x)) \mid L_fg(\phi(x,\varepsilon(x)))\geq0 \wedge g(\phi(x,\varepsilon(x))) \leq 0  \} \\
+       &\qquad \cup \{ \phi(x,\varepsilon(x)) \mid L_fg(\phi(x,\varepsilon(x)))\leq0 \wedge g(\phi(x,\mu(x))) \leq 0  \} \\[1px]
+ J &= \{ \phi(x,t) \mid t\leq\mu(x) \wedge g(\phi(x,t)) = 0 \}  \\
+   &= \{ \phi(x,t) \mid L_fg(\phi(x,t)) \geq 0 \wedge g(\phi(x,t)) = 0 \}
+\end{aligned}\] Note that $\mu(x)$ is {\itshape required} for $R$ and $E$, but not for $J$. Also, is is {\itshape required} to split $R$ and $E$ into two separate sets.
+
+By creeping up to the zero set and maximum set of a concave predicate, it may be possible to obtain $\mu(x)\leq \varepsilon(x)$, in which case we can simplify $E$ to a single set with a single constraint\+:   \[\begin{aligned}
+ E &= \{ \phi(x,\varepsilon(x)) \mid g(\phi(x,\mu(x))) \leq 0  \}
+\end{aligned}\]
+
+If $g$ is indeterminate, then     \[\begin{aligned}
+ R &= \{ \phi(x,t) \mid \textstyle{\max_{u\in[0,t]}} g(\phi(x,u)) \leq 0 \} \\
+ E &= \{ \phi(x,\varepsilon(x)) \mid \textstyle{\max_{u\in[0,\varepsilon(x)]}} g(\phi(x,u)) \leq 0 \} \\
+ J &= \{ \phi(x,t) \mid g(\phi(x,t)) = 0 \wedge \textstyle{\max_{u\in[0,t]}} g(\phi(x,u)) \leq 0 \}
+\end{aligned}\] which can be approximated by     \[\begin{aligned}
+ R &\subset \{ \phi(x,t) \mid g(\phi(x,t/2)) \leq 0 \wedge g(\phi(x,t))\leq 0 \} \\
+ E &\subset \{ \phi(x,\varepsilon(x)) \mid g(\phi(x,\varepsilon(x)/2)) \leq 0 \wedge g(\phi(x,\varepsilon(x)))\leq 0 \} \\
+ J &\subset \{ \phi(x,t) \mid g(\phi(x,t)) = 0 \wedge g(\phi(x,t/2)) \leq 0 \}
+\end{aligned}\]
+
+For a progress predicate, $R$ and $E$ are the same as for a guard, and $J$ is empty.
+
+For a pure activation     \[\begin{aligned}
+ R &= \{ \phi(x,t) \mid t\leq\varepsilon(x) \} \\
+ E &= \{ \phi(x,t) \mid t = \varepsilon(x) \} \\ &= \{ \phi(x,\varepsilon(x)) \} \\
+ J &= \{ \phi(x,t) \mid t\leq\varepsilon(x) \wedge g(\phi(x,t)) \geq 0 \}
+\end{aligned}\]
+
+If $e$ and $e\textnormal{\textquotesingle}$ are increasing events, then    \[\begin{aligned}
+ J_e &= \{ \phi(x,t) \mid t\leq\varepsilon(x) \wedge g_e(\phi(x,t)) = 0 \wedge g_{e\textnormal{\textquotesingle}}(\phi(x,t)) \leq 0 \} \\
+     &= \{ \phi(x,\gamma_e(x)) \mid \gamma_e(x)\leq\varepsilon(x) \wedge \gamma_e(x) \leq \gamma_{e\textnormal{\textquotesingle}}(x) \}
+\end{aligned}\] If $e$ is an increasing event, and $e\textnormal{\textquotesingle}$ a concave event, then    \[\begin{aligned}
+ J_e &= \{ \phi(x,t) \mid t\leq\varepsilon(x) \wedge g_e(\phi(x,t)) = 0 \wedge g_{e\textnormal{\textquotesingle}}(\phi(x,t)) \leq 0 \} \\
+     &= \{ \phi(x,\gamma_e(x)) \mid \gamma_e(x)\leq\varepsilon(x) \wedge g_{e\textnormal{\textquotesingle}}(\phi(x,\gamma_e(x))) \leq 0 \}
+\end{aligned}\] If $e\textnormal{\textquotesingle}$ is convex, then    \[\begin{aligned}
+ J_e &= \{ \phi(x,\gamma_e(x)) \mid \gamma_e(x)\leq\varepsilon(x) \wedge \gamma_e(x)\leq\mu_{e\textnormal{\textquotesingle}}(x) \wedge g_{e\textnormal{\textquotesingle}}(\phi(x,\gamma_e(x)) \leq 0 \} \\
+     &\quad  \cup \{ \phi(x,\gamma_e(x)) \mid \gamma_e(x)\leq\varepsilon(x) \wedge \gamma_e(x)\geq\mu_{e\textnormal{\textquotesingle}}(x) \wedge g_{e\textnormal{\textquotesingle}}(\phi(x,\mu_{e\textnormal{\textquotesingle}}(x)) \leq 0 \}
+\end{aligned}\]
+
+If $e$ is convex and $e\textnormal{\textquotesingle}$ is increasing, then    \[\begin{aligned}
+ J_e &= \{ \phi(x,t) \mid t\leq\varepsilon(x) \wedge g_{e\textnormal{\textquotesingle}}(\phi(x,t))\leq 0 \wedge g_e(\phi(x,t)) = 0 \wedge L_fg_e(\phi(x,t)) \geq 0 \} \\
+     &= \{ \phi(x,t) \mid t\leq\varepsilon(x) \wedge t\leq \gamma_{e\textnormal{\textquotesingle}}(x) \wedge t\leq\mu_e(x) \wedge g_e(\phi(x,t)) = 0 \}
+\end{aligned}\]
+
+If both $e$ and $e\textnormal{\textquotesingle}$ are convex, then (ignoring constraints $t\leq\varepsilon(x)$), we have    \[\begin{aligned}
+ J_e &= \{ \phi(x,t) \mid g_e(\phi(x,t)) = 0 \wedge t \leq \mu_e(x) \wedge t\leq\mu_{e\textnormal{\textquotesingle}}(x) \wedge g_{e\textnormal{\textquotesingle}}(\phi(x,t))\leq 0 \} \\
+     &\quad \cup \{ \phi(x,t) \mid g_e(\phi(x,t)) = 0 \wedge t \leq \mu_e(x) \wedge t\geq\mu_{e\textnormal{\textquotesingle}}(x) \wedge g_{e\textnormal{\textquotesingle}}(\phi(x,\mu_{e\textnormal{\textquotesingle}}(x)))\leq 0 \} \\
+\end{aligned}\] with      \[\begin{aligned}
+ R &= \{ \phi(x,t) \mid t \leq \mu_e(x) \wedge g_e(\phi(x,t)) \leq 0 \wedge t\leq\mu_{e\textnormal{\textquotesingle}}(x) \wedge g_{e\textnormal{\textquotesingle}}(\phi(x,t))\leq 0 \} \\
+   &\quad \cup \{ \phi(x,t) \mid t \leq \mu_e(x) \wedge g_e(\phi(x,t)) \leq 0 \wedge t\geq\mu_{e\textnormal{\textquotesingle}}(x) \wedge g_{e\textnormal{\textquotesingle}}(\phi(x,\mu_{e\textnormal{\textquotesingle}}(x)))\leq 0 \} \\
+   &\quad \cup \{ \phi(x,t) \mid t \geq \mu_e(x) \wedge g_e(\phi(x,\mu_{e}(x))) \leq 0 \wedge t\leq\mu_{e\textnormal{\textquotesingle}}(x) \wedge g_{e\textnormal{\textquotesingle}}(\phi(x,t))\leq 0 \} \\
+   &\quad \cup \{ \phi(x,t) \mid t \geq \mu_e(x) \wedge g_e(\phi(x,\mu_{e}(x))) \leq 0 \wedge t\geq\mu_{e\textnormal{\textquotesingle}}(x) \wedge g_{e\textnormal{\textquotesingle}}(\phi(x,\mu_{e\textnormal{\textquotesingle}}(x)))\leq 0 \} \\
+\end{aligned}\] and      \[\begin{aligned}
+ E &= \{ \phi(x,\varepsilon(x)) \mid \varepsilon(x) \leq \mu_e(x) \wedge g_e(\phi(x,\varepsilon(x))) \leq 0 \wedge \varepsilon(x)\leq\mu_{e\textnormal{\textquotesingle}}(x) \wedge g_{e\textnormal{\textquotesingle}}(\phi(x,\varepsilon(x)))\leq 0 \} \\
+   &\quad \cup \{ \phi(x,\varepsilon(x)) \mid \varepsilon(x) \leq \mu_e(x) \wedge g_e(\phi(x,\varepsilon(x))) \leq 0 \wedge \varepsilon(x)\geq\mu_{e\textnormal{\textquotesingle}}(x) \wedge g_{e\textnormal{\textquotesingle}}(\phi(x,\mu_{e\textnormal{\textquotesingle}}(x)))\leq 0 \} \\
+   &\quad \cup \{ \phi(x,\varepsilon(x)) \mid \varepsilon(x) \geq \mu_e(x) \wedge g_e(\phi(x,\mu_{e}(x))) \leq 0 \wedge \varepsilon(x)\leq\mu_{e\textnormal{\textquotesingle}}(x) \wedge g_{e\textnormal{\textquotesingle}}(\phi(x,\varepsilon(x)))\leq 0 \} \\
+   &\quad \cup \{ \phi(x,\varepsilon(x)) \mid \varepsilon(x) \geq \mu_e(x) \wedge g_e(\phi(x,\mu_{e}(x))) \leq 0 \wedge \varepsilon(x)\geq\mu_{e\textnormal{\textquotesingle}}(x) \wedge g_{e\textnormal{\textquotesingle}}(\phi(x,\mu_{e\textnormal{\textquotesingle}}(x)))\leq 0 \} \\
+\end{aligned}\]
+
+For a progress predicate $p(x)\leq 0$ and activation $a(x)\leq0$, the reach sets are determined purely by the progress predicates, and the jump sets just include the predicate $a(y)\geq0$ where $y=\phi(x,t)$.
+
+If $c$ is increasing and has a crossing when $t=\gamma(x)$, then   \[\begin{aligned}
+  c(\phi(x,t)) \leq 0 \iff t\leq\gamma(x)
+\end{aligned}\]
+
+\[\begin{aligned}
+  R &= \{ y \mid x\in S\wedge t\in[0,h] \mid y=\phi(x,t) \}
+\end{aligned}\] If $p$ is increasing or concave, then   \[\begin{aligned}
+  R &= \{ y \mid p(y)\leq 0 \}
+\end{aligned}\] If $p$ is increasing, then   \[\begin{aligned}
+  R &= \{ y \mid t\leq\gamma(x) \}
+\end{aligned}\] If $p$ is concave, then   \[\begin{aligned}
+  R &= \{ y \mid t\leq \mu(x) \wedge p(y)\leq 0 \} \cup \{ y \mid t\geq \mu(x) \wedge p(\phi(x,\mu(x)))\leq 0 \}
+\end{aligned}\] If $p$ is degenerate, then   \[\begin{aligned}
+  R &\subset \{ y \mid p(\phi(x,t/2))\leq 0 \wedge p(y) \leq 0 \}
+\end{aligned}\]
+
+If a progress predicate is replaced by an urgent guard, then the jump set $J_e$ is obtained by    \[\begin{gathered}
+     p_e(y) \leq 0 \ \longrightarrow\  g_e(y) = 0  \\
+     t \leq \gamma_e(x) \ \longrightarrow\  t=\gamma_e(x)  \\
+\end{gathered}\] However, since we also have the condition $t=0 \vee L_fg(y)\geq0$ at the jump point $y$, then   \[\begin{aligned}
+  J &= \{ y \mid t\leq \mu(x) \wedge p(y)=0 \}
+\end{aligned}\]
+
+If $g$ has a zero along trajectories when $t=\gamma(x)$, then the conditions   \[\begin{gathered}
+  t=\gamma(x) \implies g(\phi(x,\gamma(x))) = 0
+\end{gathered}\] If $g$ has a maximum along trajectories when $t=\mu(x)$, then the conditions   \[\begin{gathered}
+  s\leq t\leq \mu(x) \implies g(\phi(x,s))\leq g(\phi(x,t)) \leq g(\phi(x,\mu(x)))
+\end{gathered}\] If $g$ is concave, then   \[\begin{gathered}
+  t\leq \mu(x) \iff (\nabla g\!\cdot\!f)(\phi(x,t)) \geq 0
+\end{gathered}\]\hypertarget{hybrid_evolution_page_progress_predicates}{}\doxysubsection{\texorpdfstring{Progress predicates}{Progress predicates}}\label{hybrid_evolution_page_progress_predicates}
+A progress predicate is a condition that must be satisfied whenever further continuous evolution is allowed. The {\itshape progress set} has the form   \[\begin{aligned}
+P &= \{ x \mid p(x) \leq 0 \} \
+\end{aligned}\] Since it must be satisfied at all points on a flow, we have   \[\begin{aligned}
+ R = \{ \phi(x,t) \mid (x,t)\in S\times [0,h] \mid \textstyle{\sup_{u\in[0,t]}} p(\phi(x,u)) \leq 0 \}
+\end{aligned}\]\hypertarget{hybrid_evolution_page_invariants}{}\doxysubsection{\texorpdfstring{Invariants}{Invariants}}\label{hybrid_evolution_page_invariants}
+In invariant is similar to a progress predicate, except it also holds for the initial set and directly after a jump. In particular, points which do not satisfy the invariant are not allowed to jump. The {\itshape invariant set} $I$ is the set of allowable points.   \[\begin{aligned}
+I &= \{ x \mid i(x) \leq 0 \} \
+\end{aligned}\]\hypertarget{hybrid_evolution_page_urgent_guards}{}\doxysubsection{\texorpdfstring{Urgent guards}{Urgent guards}}\label{hybrid_evolution_page_urgent_guards}
+An urgent guard is a combination of a progress predicate and a permissive guard/activation predicate. The main property of urgent guards is that by solving for the event time $\gamma(x)$ satisfying $g(\phi(x,\gamma(x)))=0$, it is possible to avoid introducing an extra parameter into the enclosure set.    \[\begin{aligned}
+P &= \{ x \mid h(x) \leq 0 \} \\
+A &= \{ x \mid h(x) \geq 0  \}
+\end{aligned}\] Unless the event occurs immediately after a jump, then we have   \[\begin{aligned}
+A &= \{ x \mid h(x) \geq 0  \}
+\end{aligned}\]\hypertarget{hybrid_evolution_page_impacts}{}\doxysubsection{\texorpdfstring{Impacts}{Impacts}}\label{hybrid_evolution_page_impacts}
+An impact is an event for which an invariant $h(x)\leq 0$ always holds, and with the activation condition $h(x)=0\wedge L_fh(x)\geq0$. In typical usage, the invariant $h(x)\leq0$ is enforced as a consequence of the reset, and does not need to be explicitly introduced. In principle, we could check $h(x)>0$ to discover a modeling error, or the need to adjoin the constraints $h(x)\leq0$ explicitly.
+
+The basic constraints for an impact are    \[\begin{aligned}
+I/P &= \{ x \mid h(x) \leq 0 \} \\
+A &= \{ x \mid h(x) = 0 \wedge L_fh(x) \geq 0 \}
+\end{aligned}\] 

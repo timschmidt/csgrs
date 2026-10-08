@@ -1,0 +1,18 @@
+{
+  "qualification": "contact-fallback-consolidation-v793-terminal.json",
+  "source_manifest": "contact-fallback-consolidation-v793-sources.json",
+  "outer_session_reaped": 87648,
+  "validated_files": 2048,
+  "tests": 166,
+  "checks": 7,
+  "repos": {
+    "hypercurve": {
+      "parent": "e3b97452c514d346bf7844e0e7451ee849774d0c",
+      "paths": {
+        "src/bezier_offset.rs": "5eb38301fb0d1e5d0ae5ea9f61b10547948335eb643f1e4f2c170fcc410b5b2c"
+      }
+    }
+  },
+  "scope": "Consolidate five identical rational contact point fallbacks through their existing authority, preserve exact scalar blockers instead of inventing Boundary, and remove repeated private parametric construction without changing candidate or branch equations",
+  "unresolved": "The full exact-geometry implementation goal remains active; this cleanup does not claim full spatial BREP closure or a measured speedup."
+}

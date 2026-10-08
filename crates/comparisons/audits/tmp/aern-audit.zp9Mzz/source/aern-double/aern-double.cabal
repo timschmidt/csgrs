@@ -1,0 +1,137 @@
+Name:           aern-double
+Version:        0.5.0
+Cabal-Version:  >= 1.8
+Build-Type:     Simple
+License:        BSD3
+License-File:   LICENCE
+Author:         Michal Konecny
+Copyright:      (c) 2012 Michal Konecny, Jan Duracz
+Maintainer:     mikkonecny@gmail.com
+Homepage:       http://code.google.com/p/aern/
+Stability:      experimental
+Category:       Data, Math
+Synopsis:       arbitrary precision real interval arithmetic
+Tested-with:
+                GHC==7.4.2
+Description:
+    This package provides bindings and tests for using machine 'Double'
+    values as endpoints for the interval arithmetic defined in the package 
+    aern-interval, which implements the real number approximation abstractions
+    provided by packages aern-order and aern-real. 
+    .
+    Most users of this package will only need to import one end-user API module.
+    There is a choice of three such modules, each providing a different
+    level of abstraction for the type of intervals with Double endpoints:
+    .
+    * "Numeric.AERN.DoubleBasis.RealApprox" gives RealApprox - an abstract data type
+      limited to operations that interpret each interval strictly as an
+      approximation to a single real number.  As an instance of Fractional, 
+      the numerical operations safely overapproximate
+      the exact real operations by rounding the intervals outwards.
+    .
+    * "Numeric.AERN.DoubleBasis.RealIntervalApprox" gives RealIntervalApprox - an abstract
+      data type limited to operations that interpret each interval strictly as an
+      approximation to a /set/ of real numbers.  All RealApprox operations are
+      available also for RealIntervalApprox.  Additionally, one can create approximations that
+      certainly cover two given approximations and one can perform all
+      operations rounding /inwards/ to allow safe semi-deciding of set inclusions.
+      As a consequence of inner rounding, anti-consistent intervals such as [1,0] may arise
+      and are treated using Kaucher arithmetic.
+    .
+    * "Numeric.AERN.DoubleBasis.Interval" gives full access to the interval type,
+      including the Double endpoints.
+    .
+    The accompanying modules "Numeric.AERN.DoubleBasis.MRealApprox", "Numeric.AERN.DoubleBasis.MRealIntervalApprox"
+    and "Numeric.AERN.DoubleBasis.MInterval" add in-place versions of most of the pure operations
+    provided by the respective above module.
+    .
+    For further information, please refer to the documentation of these six modules
+    and the sample programs in the demo folder.
+    .   
+    /This package does not compile with ghc 7.0.* due to a/
+    /compiler bug that has been fixed for the 7.2.1 release./
+
+source-repository head
+  type:     mercurial
+  location: http://code.google.com/p/aern/aern-double
+
+source-repository this
+  type:     mercurial
+  location: http://code.google.com/p/aern/aern-double
+  tag:      release-0.5.0
+
+Library
+  hs-source-dirs: src
+  Build-Depends:
+        base >= 4.4,
+        QuickCheck >= 2.4,
+        ieee-utils-tempfix >= 0.4,
+        aern-order == 0.5.*,
+        aern-real == 0.5.*,
+        aern-interval == 0.5.*
+  Exposed-modules:
+    Numeric.AERN.DoubleBasis.Interval,
+    Numeric.AERN.DoubleBasis.RealApprox,
+    Numeric.AERN.DoubleBasis.RealIntervalApprox,
+    Numeric.AERN.RealArithmetic.Basis.Double,
+    Numeric.AERN.RealArithmetic.Interval.Double
+
+  Other-modules:
+    Numeric.AERN.RealArithmetic.Basis.Double.Conversion,
+    Numeric.AERN.RealArithmetic.Basis.Double.NumericOrder,
+    Numeric.AERN.RealArithmetic.Basis.Double.FieldOps,
+    Numeric.AERN.RealArithmetic.Basis.Double.MixedFieldOps,
+    Numeric.AERN.RealArithmetic.Basis.Double.Measures,
+    Numeric.AERN.RealArithmetic.Basis.Double.ShowInternals,
+    Numeric.AERN.RealArithmetic.Basis.Double.SpecialConst
+
+Executable testAERN-Real-Double
+  hs-source-dirs: src, tests
+  main-is: Main.hs
+  Build-Depends:
+        base >= 4.4,
+        QuickCheck >= 2.4,
+        test-framework >= 0.3.3, 
+        test-framework-quickcheck2 >= 0.2,
+        ieee-utils-tempfix >= 0.4,
+        aern-order == 0.5.*,
+        aern-real == 0.5.*,
+        aern-interval == 0.5.*
+
+Executable benchAERN-Real-Double
+  hs-source-dirs: src, bench
+  main-is: Main.hs
+  Build-Depends:
+        base >= 4.4,
+        QuickCheck >= 2.4,
+        test-framework >= 0.3.3, 
+        test-framework-quickcheck2 >= 0.2,
+        criterion >= 0.5,
+        ieee-utils-tempfix >= 0.4,
+        aern-order == 0.5.*,
+        aern-real == 0.5.*,
+        aern-interval == 0.5.*
+
+--Executable demoAERN-Real-Double-Quadratic
+--  hs-source-dirs: src, demos
+--  main-is: Quadratic.hs
+--  Build-Depends:
+
+--Executable demoAERN-Real-Double-Riemann
+--  hs-source-dirs: src, demos
+--  main-is: Riemann.hs
+--  Build-Depends:
+--
+--Executable demoAERN-Real-Double-Zero
+--  hs-source-dirs: src, demos
+--  main-is: Zero.hs
+--  Build-Depends:
+--        base == 4.2.* || == 4.4.* || == 4.5.*,
+--        ieee-utils-tempfix >= 0.4 && < 0.5,
+--        QuickCheck >= 2.4 && < 2.5,
+--        aern-order == 0.5.*,
+--        aern-real == 0.5.*,
+--        aern-interval == 0.5.*
+
+    
+    

@@ -1,0 +1,200 @@
+==46== Memcheck, a memory error detector
+==46== Copyright (C) 2002-2026, and GNU GPL'd, by Julian Seward et al.
+==46== Using Valgrind-3.27.1 and LibVEX; rerun with -h for copyright info
+==46== Command: /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/release/calcium-root-exp-opaque-reuse-bench identity-128 fresh 100
+==46== 
+==46== 
+==46== HEAP SUMMARY:
+==46==     in use at exit: 1,928 bytes in 14 blocks
+==46==   total heap usage: 35,674,293 allocs, 35,674,279 frees, 1,089,147,697 bytes allocated
+==46== 
+==46== 40 bytes in 1 blocks are still reachable in loss record 1 of 14
+==46==    at 0x49C4AE6: malloc (vg_replace_malloc.c:447)
+==46==    by 0x409944E: <hyperreal::computable::node::Computable>::approx_signal (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/release/calcium-root-exp-opaque-reuse-bench)
+==46==    by 0x40E3485: hyperreal::computable::approximation::cos (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/release/calcium-root-exp-opaque-reuse-bench)
+==46==    by 0x40C6480: <hyperreal::computable::approximation::Approximation>::approximate (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/release/calcium-root-exp-opaque-reuse-bench)
+==46==    by 0x4098A44: <hyperreal::computable::node::Computable>::approx_signal (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/release/calcium-root-exp-opaque-reuse-bench)
+==46==    by 0x40E3485: hyperreal::computable::approximation::cos (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/release/calcium-root-exp-opaque-reuse-bench)
+==46==    by 0x40C6480: <hyperreal::computable::approximation::Approximation>::approximate (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/release/calcium-root-exp-opaque-reuse-bench)
+==46==    by 0x4098A44: <hyperreal::computable::node::Computable>::approx_signal (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/release/calcium-root-exp-opaque-reuse-bench)
+==46==    by 0x40E3485: hyperreal::computable::approximation::cos (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/release/calcium-root-exp-opaque-reuse-bench)
+==46==    by 0x40C6480: <hyperreal::computable::approximation::Approximation>::approximate (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/release/calcium-root-exp-opaque-reuse-bench)
+==46==    by 0x409963B: <hyperreal::computable::node::Computable>::approx_signal (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/release/calcium-root-exp-opaque-reuse-bench)
+==46==    by 0x40E4C60: hyperreal::computable::approximation::sin (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/release/calcium-root-exp-opaque-reuse-bench)
+==46== 
+==46== 56 bytes in 1 blocks are still reachable in loss record 2 of 14
+==46==    at 0x49C4AE6: malloc (vg_replace_malloc.c:447)
+==46==    by 0x40BB3E3: <hyperreal::computable::node::ApproximationCache>::store (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/release/calcium-root-exp-opaque-reuse-bench)
+==46==    by 0x409F97B: <hyperreal::computable::node::Computable>::store_cache_value (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/release/calcium-root-exp-opaque-reuse-bench)
+==46==    by 0x4099541: <hyperreal::computable::node::Computable>::approx_signal (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/release/calcium-root-exp-opaque-reuse-bench)
+==46==    by 0x40E3485: hyperreal::computable::approximation::cos (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/release/calcium-root-exp-opaque-reuse-bench)
+==46==    by 0x40C6480: <hyperreal::computable::approximation::Approximation>::approximate (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/release/calcium-root-exp-opaque-reuse-bench)
+==46==    by 0x409963B: <hyperreal::computable::node::Computable>::approx_signal (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/release/calcium-root-exp-opaque-reuse-bench)
+==46==    by 0x40A7F24: <hyperreal::computable::node::Computable>::sin (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/release/calcium-root-exp-opaque-reuse-bench)
+==46==    by 0x40753A0: <hyperreal::real::arithmetic::Real>::make_computable::<<hyperreal::computable::node::Computable>::sin> (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/release/calcium-root-exp-opaque-reuse-bench)
+==46==    by 0x407DEE1: <hyperreal::real::arithmetic::Real>::sin (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/release/calcium-root-exp-opaque-reuse-bench)
+==46==    by 0x404E468: calcium_root_exp_opaque_reuse_bench::pair (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/release/calcium-root-exp-opaque-reuse-bench)
+==46==    by 0x404DA78: calcium_root_exp_opaque_reuse_bench::main (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/release/calcium-root-exp-opaque-reuse-bench)
+==46== 
+==46== 104 bytes in 1 blocks are still reachable in loss record 3 of 14
+==46==    at 0x49C4AE6: malloc (vg_replace_malloc.c:447)
+==46==    by 0x40F4174: <std::sync::once::Once>::call_once_force::<<std::sync::once_lock::OnceLock<hyperreal::rational::arithmetic::Rational>>::initialize<<std::sync::once_lock::OnceLock<hyperreal::rational::arithmetic::Rational>>::get_or_init<<hyperreal::rational::arithmetic::Rational>::small_integer::{closure#0}>::{closure#0}, !>::{closure#0}>::{closure#0} (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/release/calcium-root-exp-opaque-reuse-bench)
+==46==    by 0x4124448: <std::sys::sync::once::futex::Once>::call (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/release/calcium-root-exp-opaque-reuse-bench)
+==46==    by 0x40F36C4: <std::sync::once_lock::OnceLock<hyperreal::rational::arithmetic::Rational>>::initialize::<<std::sync::once_lock::OnceLock<hyperreal::rational::arithmetic::Rational>>::get_or_init<<hyperreal::rational::arithmetic::Rational>::small_integer::{closure#0}>::{closure#0}, !> (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/release/calcium-root-exp-opaque-reuse-bench)
+==46==    by 0x4062DDD: <hyperreal::rational::arithmetic::Rational>::from_primitive_integer (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/release/calcium-root-exp-opaque-reuse-bench)
+==46==    by 0x404E3C4: calcium_root_exp_opaque_reuse_bench::pair (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/release/calcium-root-exp-opaque-reuse-bench)
+==46==    by 0x404DA78: calcium_root_exp_opaque_reuse_bench::main (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/release/calcium-root-exp-opaque-reuse-bench)
+==46==    by 0x404B662: std::sys::backtrace::__rust_begin_short_backtrace::<fn(), ()> (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/release/calcium-root-exp-opaque-reuse-bench)
+==46==    by 0x404B738: std::rt::lang_start::<()>::{closure#0} (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/release/calcium-root-exp-opaque-reuse-bench)
+==46==    by 0x4131BC6: std::rt::lang_start_internal (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/release/calcium-root-exp-opaque-reuse-bench)
+==46==    by 0x404EF64: main (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/release/calcium-root-exp-opaque-reuse-bench)
+==46== 
+==46== 104 bytes in 1 blocks are still reachable in loss record 4 of 14
+==46==    at 0x49C4AE6: malloc (vg_replace_malloc.c:447)
+==46==    by 0x4075052: <hyperreal::rational::arithmetic::RATIONAL_ONE::{closure#0} as core::ops::function::FnOnce<()>>::call_once (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/release/calcium-root-exp-opaque-reuse-bench)
+==46==    by 0x405027A: <std::sync::once::Once>::call_once_force::<<std::sync::lazy_lock::LazyLock<hyperreal::rational::arithmetic::Rational>>::force::{closure#0}>::{closure#0} (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/release/calcium-root-exp-opaque-reuse-bench)
+==46==    by 0x4124448: <std::sys::sync::once::futex::Once>::call (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/release/calcium-root-exp-opaque-reuse-bench)
+==46==    by 0x4096B43: <hyperreal::computable::node::Computable>::pi_laurent_polynomial_with_memo::{closure#1} (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/release/calcium-root-exp-opaque-reuse-bench)
+==46==    by 0x40B55A3: <hyperreal::computable::node::Computable>::pi_laurent_polynomial_with_memo (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/release/calcium-root-exp-opaque-reuse-bench)
+==46==    by 0x40B410B: <hyperreal::computable::node::Computable>::pi_laurent_polynomial (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/release/calcium-root-exp-opaque-reuse-bench)
+==46==    by 0x40B3C8C: <hyperreal::computable::node::Computable>::pi_rational_multiple (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/release/calcium-root-exp-opaque-reuse-bench)
+==46==    by 0x407DE65: <hyperreal::real::arithmetic::Real>::sin (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/release/calcium-root-exp-opaque-reuse-bench)
+==46==    by 0x404E468: calcium_root_exp_opaque_reuse_bench::pair (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/release/calcium-root-exp-opaque-reuse-bench)
+==46==    by 0x404DA78: calcium_root_exp_opaque_reuse_bench::main (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/release/calcium-root-exp-opaque-reuse-bench)
+==46==    by 0x404B662: std::sys::backtrace::__rust_begin_short_backtrace::<fn(), ()> (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/release/calcium-root-exp-opaque-reuse-bench)
+==46== 
+==46== 104 bytes in 1 blocks are still reachable in loss record 5 of 14
+==46==    at 0x49C4AE6: malloc (vg_replace_malloc.c:447)
+==46==    by 0x4075189: <hyperreal::rational::arithmetic::RATIONAL_ZERO::{closure#0} as core::ops::function::FnOnce<()>>::call_once (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/release/calcium-root-exp-opaque-reuse-bench)
+==46==    by 0x405027A: <std::sync::once::Once>::call_once_force::<<std::sync::lazy_lock::LazyLock<hyperreal::rational::arithmetic::Rational>>::force::{closure#0}>::{closure#0} (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/release/calcium-root-exp-opaque-reuse-bench)
+==46==    by 0x4124448: <std::sys::sync::once::futex::Once>::call (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/release/calcium-root-exp-opaque-reuse-bench)
+==46==    by 0x4096B90: <hyperreal::computable::node::Computable>::pi_laurent_polynomial_with_memo::{closure#1} (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/release/calcium-root-exp-opaque-reuse-bench)
+==46==    by 0x40B55A3: <hyperreal::computable::node::Computable>::pi_laurent_polynomial_with_memo (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/release/calcium-root-exp-opaque-reuse-bench)
+==46==    by 0x40B410B: <hyperreal::computable::node::Computable>::pi_laurent_polynomial (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/release/calcium-root-exp-opaque-reuse-bench)
+==46==    by 0x40B3C8C: <hyperreal::computable::node::Computable>::pi_rational_multiple (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/release/calcium-root-exp-opaque-reuse-bench)
+==46==    by 0x407DE65: <hyperreal::real::arithmetic::Real>::sin (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/release/calcium-root-exp-opaque-reuse-bench)
+==46==    by 0x404E468: calcium_root_exp_opaque_reuse_bench::pair (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/release/calcium-root-exp-opaque-reuse-bench)
+==46==    by 0x404DA78: calcium_root_exp_opaque_reuse_bench::main (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/release/calcium-root-exp-opaque-reuse-bench)
+==46==    by 0x404B662: std::sys::backtrace::__rust_begin_short_backtrace::<fn(), ()> (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/release/calcium-root-exp-opaque-reuse-bench)
+==46== 
+==46== 104 bytes in 1 blocks are still reachable in loss record 6 of 14
+==46==    at 0x49C4AE6: malloc (vg_replace_malloc.c:447)
+==46==    by 0x40752C2: <hyperreal::rational::arithmetic::RATIONAL_MINUS_ONE::{closure#0} as core::ops::function::FnOnce<()>>::call_once (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/release/calcium-root-exp-opaque-reuse-bench)
+==46==    by 0x405027A: <std::sync::once::Once>::call_once_force::<<std::sync::lazy_lock::LazyLock<hyperreal::rational::arithmetic::Rational>>::force::{closure#0}>::{closure#0} (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/release/calcium-root-exp-opaque-reuse-bench)
+==46==    by 0x4124448: <std::sys::sync::once::futex::Once>::call (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/release/calcium-root-exp-opaque-reuse-bench)
+==46==    by 0x40658A1: <hyperreal::rational::arithmetic::Rational>::minus_one (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/release/calcium-root-exp-opaque-reuse-bench)
+==46==    by 0x40C1DEE: <hyperreal::rational::arithmetic::Rational as core::ops::arith::Neg>::neg (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/release/calcium-root-exp-opaque-reuse-bench)
+==46==    by 0x40B8959: <hyperreal::computable::node::Computable>::negate (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/release/calcium-root-exp-opaque-reuse-bench)
+==46==    by 0x40A5B8D: <hyperreal::computable::node::Computable>::sin_reduced_by_half_pi (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/release/calcium-root-exp-opaque-reuse-bench)
+==46==    by 0x40A7FD5: <hyperreal::computable::node::Computable>::sin (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/release/calcium-root-exp-opaque-reuse-bench)
+==46==    by 0x40753A0: <hyperreal::real::arithmetic::Real>::make_computable::<<hyperreal::computable::node::Computable>::sin> (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/release/calcium-root-exp-opaque-reuse-bench)
+==46==    by 0x407DEE1: <hyperreal::real::arithmetic::Real>::sin (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/release/calcium-root-exp-opaque-reuse-bench)
+==46==    by 0x404E468: calcium_root_exp_opaque_reuse_bench::pair (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/release/calcium-root-exp-opaque-reuse-bench)
+==46== 
+==46== 104 bytes in 1 blocks are still reachable in loss record 7 of 14
+==46==    at 0x49C4AE6: malloc (vg_replace_malloc.c:447)
+==46==    by 0x4054652: <hyperreal::rational::arithmetic::Rational>::extract_square_reduced (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/release/calcium-root-exp-opaque-reuse-bench)
+==46==    by 0x4055149: <hyperreal::rational::arithmetic::Rational>::extract_square_reduced_retained (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/release/calcium-root-exp-opaque-reuse-bench)
+==46==    by 0x40803BF: <hyperreal::real::arithmetic::Real>::sqrt (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/release/calcium-root-exp-opaque-reuse-bench)
+==46==    by 0x404E631: calcium_root_exp_opaque_reuse_bench::pair (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/release/calcium-root-exp-opaque-reuse-bench)
+==46==    by 0x404DA78: calcium_root_exp_opaque_reuse_bench::main (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/release/calcium-root-exp-opaque-reuse-bench)
+==46==    by 0x404B662: std::sys::backtrace::__rust_begin_short_backtrace::<fn(), ()> (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/release/calcium-root-exp-opaque-reuse-bench)
+==46==    by 0x404B738: std::rt::lang_start::<()>::{closure#0} (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/release/calcium-root-exp-opaque-reuse-bench)
+==46==    by 0x4131BC6: std::rt::lang_start_internal (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/release/calcium-root-exp-opaque-reuse-bench)
+==46==    by 0x404EF64: main (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/release/calcium-root-exp-opaque-reuse-bench)
+==46== 
+==46== 104 bytes in 1 blocks are still reachable in loss record 8 of 14
+==46==    at 0x49C4AE6: malloc (vg_replace_malloc.c:447)
+==46==    by 0x40547C5: <hyperreal::rational::arithmetic::Rational>::extract_square_reduced (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/release/calcium-root-exp-opaque-reuse-bench)
+==46==    by 0x4055149: <hyperreal::rational::arithmetic::Rational>::extract_square_reduced_retained (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/release/calcium-root-exp-opaque-reuse-bench)
+==46==    by 0x40803BF: <hyperreal::real::arithmetic::Real>::sqrt (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/release/calcium-root-exp-opaque-reuse-bench)
+==46==    by 0x404E631: calcium_root_exp_opaque_reuse_bench::pair (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/release/calcium-root-exp-opaque-reuse-bench)
+==46==    by 0x404DA78: calcium_root_exp_opaque_reuse_bench::main (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/release/calcium-root-exp-opaque-reuse-bench)
+==46==    by 0x404B662: std::sys::backtrace::__rust_begin_short_backtrace::<fn(), ()> (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/release/calcium-root-exp-opaque-reuse-bench)
+==46==    by 0x404B738: std::rt::lang_start::<()>::{closure#0} (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/release/calcium-root-exp-opaque-reuse-bench)
+==46==    by 0x4131BC6: std::rt::lang_start_internal (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/release/calcium-root-exp-opaque-reuse-bench)
+==46==    by 0x404EF64: main (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/release/calcium-root-exp-opaque-reuse-bench)
+==46== 
+==46== 104 bytes in 1 blocks are still reachable in loss record 9 of 14
+==46==    at 0x49C4AE6: malloc (vg_replace_malloc.c:447)
+==46==    by 0x406333F: <hyperreal::rational::arithmetic::Rational>::from_fraction_parts_reduced (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/release/calcium-root-exp-opaque-reuse-bench)
+==46==    by 0x40C3EDD: <hyperreal::computable::node::HALF_RATIONAL::{closure#0} as core::ops::function::FnOnce<()>>::call_once (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/release/calcium-root-exp-opaque-reuse-bench)
+==46==    by 0x40959BA: <std::sync::once::Once>::call_once_force::<<std::sync::lazy_lock::LazyLock<hyperreal::rational::arithmetic::Rational>>::force::{closure#0}>::{closure#0} (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/release/calcium-root-exp-opaque-reuse-bench)
+==46==    by 0x4124448: <std::sys::sync::once::futex::Once>::call (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/release/calcium-root-exp-opaque-reuse-bench)
+==46==    by 0x40A3001: <hyperreal::computable::node::ExpRelationForm>::logarithm (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/release/calcium-root-exp-opaque-reuse-bench)
+==46==    by 0x409D2E9: <hyperreal::computable::node::Computable>::exact_sign (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/release/calcium-root-exp-opaque-reuse-bench)
+==46==    by 0x4099EC1: <hyperreal::computable::node::Computable>::structural_facts (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/release/calcium-root-exp-opaque-reuse-bench)
+==46==    by 0x404EDF0: <hyperreal::real::arithmetic::Real>::structural_facts (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/release/calcium-root-exp-opaque-reuse-bench)
+==46==    by 0x404EAB8: calcium_root_exp_opaque_reuse_bench::equal (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/release/calcium-root-exp-opaque-reuse-bench)
+==46==    by 0x404DAC4: calcium_root_exp_opaque_reuse_bench::main (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/release/calcium-root-exp-opaque-reuse-bench)
+==46==    by 0x404B662: std::sys::backtrace::__rust_begin_short_backtrace::<fn(), ()> (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/release/calcium-root-exp-opaque-reuse-bench)
+==46== 
+==46== 104 bytes in 1 blocks are still reachable in loss record 10 of 14
+==46==    at 0x49C4AE6: malloc (vg_replace_malloc.c:447)
+==46==    by 0x40702E4: <&hyperreal::rational::arithmetic::Rational as core::ops::arith::Neg>::neg (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/release/calcium-root-exp-opaque-reuse-bench)
+==46==    by 0x40713AA: <&hyperreal::rational::arithmetic::Rational as core::ops::arith::Mul>::mul (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/release/calcium-root-exp-opaque-reuse-bench)
+==46==    by 0x40717F2: <hyperreal::rational::arithmetic::Rational as core::ops::arith::Mul>::mul (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/release/calcium-root-exp-opaque-reuse-bench)
+==46==    by 0x40A2A72: <hyperreal::computable::node::ExpRelationForm>::linear (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/release/calcium-root-exp-opaque-reuse-bench)
+==46==    by 0x40A2DF7: <hyperreal::computable::node::ExpRelationForm>::logarithm (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/release/calcium-root-exp-opaque-reuse-bench)
+==46==    by 0x409D30F: <hyperreal::computable::node::Computable>::exact_sign (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/release/calcium-root-exp-opaque-reuse-bench)
+==46==    by 0x4099EC1: <hyperreal::computable::node::Computable>::structural_facts (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/release/calcium-root-exp-opaque-reuse-bench)
+==46==    by 0x404EDF0: <hyperreal::real::arithmetic::Real>::structural_facts (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/release/calcium-root-exp-opaque-reuse-bench)
+==46==    by 0x404DAD9: calcium_root_exp_opaque_reuse_bench::main (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/release/calcium-root-exp-opaque-reuse-bench)
+==46==    by 0x404B662: std::sys::backtrace::__rust_begin_short_backtrace::<fn(), ()> (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/release/calcium-root-exp-opaque-reuse-bench)
+==46==    by 0x404B738: std::rt::lang_start::<()>::{closure#0} (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/release/calcium-root-exp-opaque-reuse-bench)
+==46== 
+==46== 104 bytes in 1 blocks are still reachable in loss record 11 of 14
+==46==    at 0x49C4AE6: malloc (vg_replace_malloc.c:447)
+==46==    by 0x40702E4: <&hyperreal::rational::arithmetic::Rational as core::ops::arith::Neg>::neg (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/release/calcium-root-exp-opaque-reuse-bench)
+==46==    by 0x40713AA: <&hyperreal::rational::arithmetic::Rational as core::ops::arith::Mul>::mul (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/release/calcium-root-exp-opaque-reuse-bench)
+==46==    by 0x40717F2: <hyperreal::rational::arithmetic::Rational as core::ops::arith::Mul>::mul (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/release/calcium-root-exp-opaque-reuse-bench)
+==46==    by 0x40A2A72: <hyperreal::computable::node::ExpRelationForm>::linear (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/release/calcium-root-exp-opaque-reuse-bench)
+==46==    by 0x40A2DF7: <hyperreal::computable::node::ExpRelationForm>::logarithm (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/release/calcium-root-exp-opaque-reuse-bench)
+==46==    by 0x409D30F: <hyperreal::computable::node::Computable>::exact_sign (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/release/calcium-root-exp-opaque-reuse-bench)
+==46==    by 0x4099EC1: <hyperreal::computable::node::Computable>::structural_facts (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/release/calcium-root-exp-opaque-reuse-bench)
+==46==    by 0x404EDF0: <hyperreal::real::arithmetic::Real>::structural_facts (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/release/calcium-root-exp-opaque-reuse-bench)
+==46==    by 0x404EAB8: calcium_root_exp_opaque_reuse_bench::equal (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/release/calcium-root-exp-opaque-reuse-bench)
+==46==    by 0x404DB89: calcium_root_exp_opaque_reuse_bench::main (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/release/calcium-root-exp-opaque-reuse-bench)
+==46==    by 0x404B662: std::sys::backtrace::__rust_begin_short_backtrace::<fn(), ()> (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/release/calcium-root-exp-opaque-reuse-bench)
+==46== 
+==46== 176 bytes in 1 blocks are still reachable in loss record 12 of 14
+==46==    at 0x49C4AE6: malloc (vg_replace_malloc.c:447)
+==46==    by 0x4054D58: <hyperreal::rational::arithmetic::Rational>::retain_square_reduction (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/release/calcium-root-exp-opaque-reuse-bench)
+==46==    by 0x4055165: <hyperreal::rational::arithmetic::Rational>::extract_square_reduced_retained (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/release/calcium-root-exp-opaque-reuse-bench)
+==46==    by 0x40803BF: <hyperreal::real::arithmetic::Real>::sqrt (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/release/calcium-root-exp-opaque-reuse-bench)
+==46==    by 0x404E631: calcium_root_exp_opaque_reuse_bench::pair (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/release/calcium-root-exp-opaque-reuse-bench)
+==46==    by 0x404DA78: calcium_root_exp_opaque_reuse_bench::main (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/release/calcium-root-exp-opaque-reuse-bench)
+==46==    by 0x404B662: std::sys::backtrace::__rust_begin_short_backtrace::<fn(), ()> (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/release/calcium-root-exp-opaque-reuse-bench)
+==46==    by 0x404B738: std::rt::lang_start::<()>::{closure#0} (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/release/calcium-root-exp-opaque-reuse-bench)
+==46==    by 0x4131BC6: std::rt::lang_start_internal (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/release/calcium-root-exp-opaque-reuse-bench)
+==46==    by 0x404EF64: main (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/release/calcium-root-exp-opaque-reuse-bench)
+==46== 
+==46== 176 bytes in 1 blocks are still reachable in loss record 13 of 14
+==46==    at 0x49C4AE6: malloc (vg_replace_malloc.c:447)
+==46==    by 0x40577D2: <hyperreal::rational::arithmetic::Rational>::retain_linear (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/release/calcium-root-exp-opaque-reuse-bench)
+==46==    by 0x4057A34: <hyperreal::rational::arithmetic::Rational>::retain_sum_pair (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/release/calcium-root-exp-opaque-reuse-bench)
+==46==    by 0x405A855: <hyperreal::rational::arithmetic::Rational>::add_ref (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/release/calcium-root-exp-opaque-reuse-bench)
+==46==    by 0x40A23DF: <hyperreal::computable::node::ExpRelationForm>::term (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/release/calcium-root-exp-opaque-reuse-bench)
+==46==    by 0x40A2A4B: <hyperreal::computable::node::ExpRelationForm>::linear (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/release/calcium-root-exp-opaque-reuse-bench)
+==46==    by 0x40A2A80: <hyperreal::computable::node::ExpRelationForm>::linear (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/release/calcium-root-exp-opaque-reuse-bench)
+==46==    by 0x40A2DF7: <hyperreal::computable::node::ExpRelationForm>::logarithm (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/release/calcium-root-exp-opaque-reuse-bench)
+==46==    by 0x409D30F: <hyperreal::computable::node::Computable>::exact_sign (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/release/calcium-root-exp-opaque-reuse-bench)
+==46==    by 0x4099EC1: <hyperreal::computable::node::Computable>::structural_facts (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/release/calcium-root-exp-opaque-reuse-bench)
+==46==    by 0x404EDF0: <hyperreal::real::arithmetic::Real>::structural_facts (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/release/calcium-root-exp-opaque-reuse-bench)
+==46==    by 0x404DAD9: calcium_root_exp_opaque_reuse_bench::main (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/release/calcium-root-exp-opaque-reuse-bench)
+==46== 
+==46== 544 bytes in 1 blocks are still reachable in loss record 14 of 14
+==46==    at 0x49C4AE6: malloc (vg_replace_malloc.c:447)
+==46==    by 0x4134C59: std::sys::pal::unix::stack_overflow::thread_info::set_current_info (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/release/calcium-root-exp-opaque-reuse-bench)
+==46==    by 0x4131AFF: std::rt::lang_start_internal (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/release/calcium-root-exp-opaque-reuse-bench)
+==46==    by 0x404EF64: main (in /tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/release/calcium-root-exp-opaque-reuse-bench)
+==46== 
+==46== LEAK SUMMARY:
+==46==    definitely lost: 0 bytes in 0 blocks
+==46==    indirectly lost: 0 bytes in 0 blocks
+==46==      possibly lost: 0 bytes in 0 blocks
+==46==    still reachable: 1,928 bytes in 14 blocks
+==46==         suppressed: 0 bytes in 0 blocks
+==46== 
+==46== For lists of detected and suppressed errors, rerun with: -s
+==46== ERROR SUMMARY: 0 errors from 0 contexts (suppressed: 0 from 0)

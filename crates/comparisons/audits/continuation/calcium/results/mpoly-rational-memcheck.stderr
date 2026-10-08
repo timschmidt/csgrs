@@ -1,0 +1,14 @@
+==3366729== Memcheck, a memory error detector
+==3366729== Copyright (C) 2002-2026, and GNU GPL'd, by Julian Seward et al.
+==3366729== Using Valgrind-3.27.1 and LibVEX; rerun with -h for copyright info
+==3366729== Command: /tmp/calcium-mpoly-rational.Hmk8Is/controls
+==3366729== 
+==3366729== 
+==3366729== HEAP SUMMARY:
+==3366729==     in use at exit: 0 bytes in 0 blocks
+==3366729==   total heap usage: 2,797,045 allocs, 2,797,045 frees, 75,163,303 bytes allocated
+==3366729== 
+==3366729== All heap blocks were freed -- no leaks are possible
+==3366729== 
+==3366729== For lists of detected and suppressed errors, rerun with: -s
+==3366729== ERROR SUMMARY: 0 errors from 0 contexts (suppressed: 0 from 0)

@@ -1,0 +1,401 @@
+[
+  {
+    "repo": "calcium",
+    "path": "ca_mat/test/t-nonsingular_solve.c",
+    "newRanges": [
+      [
+        1,
+        99
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "src/ca_mat/test/t-nonsingular_solve.c",
+    "newRanges": [
+      [
+        1,
+        90
+      ]
+    ]
+  },
+  {
+    "repo": "calcium",
+    "path": "ca_mat/test/t-nonsingular_solve_adjugate.c",
+    "newRanges": [
+      [
+        1,
+        99
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "src/ca_mat/test/t-nonsingular_solve_adjugate.c",
+    "newRanges": [
+      [
+        1,
+        90
+      ]
+    ]
+  },
+  {
+    "repo": "calcium",
+    "path": "ca_mat/test/t-nonsingular_solve_fflu.c",
+    "newRanges": [
+      [
+        1,
+        99
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "src/ca_mat/test/t-nonsingular_solve_fflu.c",
+    "newRanges": [
+      [
+        1,
+        90
+      ]
+    ]
+  },
+  {
+    "repo": "calcium",
+    "path": "ca_mat/test/t-nonsingular_solve_lu.c",
+    "newRanges": [
+      [
+        1,
+        99
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "src/ca_mat/test/t-nonsingular_solve_lu.c",
+    "newRanges": [
+      [
+        1,
+        90
+      ]
+    ]
+  },
+  {
+    "repo": "calcium",
+    "path": "ca_mat/test/t-solve_tril.c",
+    "newRanges": [
+      [
+        1,
+        98
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "src/ca_mat/test/t-solve_tril.c",
+    "newRanges": [
+      [
+        1,
+        90
+      ]
+    ]
+  },
+  {
+    "repo": "calcium",
+    "path": "ca_mat/test/t-solve_triu.c",
+    "newRanges": [
+      [
+        1,
+        97
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "src/ca_mat/test/t-solve_triu.c",
+    "newRanges": [
+      [
+        1,
+        89
+      ]
+    ]
+  },
+  {
+    "repo": "calcium",
+    "path": "ca_mat/charpoly_danilevsky.c",
+    "newRanges": [
+      [
+        1,
+        239
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "src/ca_mat/charpoly_danilevsky.c",
+    "newRanges": [
+      [
+        1,
+        49
+      ]
+    ]
+  },
+  {
+    "repo": "calcium",
+    "path": "ca_mat/test/t-charpoly.c",
+    "newRanges": [
+      [
+        1,
+        64
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "src/ca_mat/test/t-charpoly.c",
+    "newRanges": [
+      [
+        1,
+        56
+      ]
+    ]
+  },
+  {
+    "repo": "calcium",
+    "path": "ca_mat/test/t-charpoly_danilevsky.c",
+    "newRanges": [
+      [
+        1,
+        65
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "src/ca_mat/test/t-charpoly_danilevsky.c",
+    "newRanges": [
+      [
+        1,
+        57
+      ]
+    ]
+  },
+  {
+    "repo": "calcium",
+    "path": "ca_mat/companion.c",
+    "newRanges": [
+      [
+        1,
+        65
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "src/ca_mat/companion.c",
+    "newRanges": [
+      [
+        1,
+        65
+      ]
+    ]
+  },
+  {
+    "repo": "calcium",
+    "path": "ca_mat/test/t-companion.c",
+    "newRanges": [
+      [
+        1,
+        71
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "src/ca_mat/test/t-companion.c",
+    "newRanges": [
+      [
+        1,
+        63
+      ]
+    ]
+  },
+  {
+    "repo": "calcium",
+    "path": "ca_mat/eigenvalues.c",
+    "newRanges": [
+      [
+        1,
+        24
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "src/ca_mat/eigenvalues.c",
+    "newRanges": [
+      [
+        1,
+        25
+      ]
+    ]
+  },
+  {
+    "repo": "calcium",
+    "path": "ca_mat/diagonalization.c",
+    "newRanges": [
+      [
+        1,
+        100
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "src/ca_mat/diagonalization.c",
+    "newRanges": [
+      [
+        1,
+        101
+      ]
+    ]
+  },
+  {
+    "repo": "calcium",
+    "path": "ca_mat/test/t-diagonalization.c",
+    "newRanges": [
+      [
+        1,
+        96
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "src/ca_mat/test/t-diagonalization.c",
+    "newRanges": [
+      [
+        1,
+        88
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "src/gr_mat/charpoly_danilevsky.c",
+    "newRanges": [
+      [
+        1,
+        214
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "src/gr/ca.c",
+    "newRanges": [
+      [
+        1,
+        1831
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "src/gr/test/t-ca.c",
+    "newRanges": [
+      [
+        1,
+        37
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "src/gr_vec.h",
+    "newRanges": [
+      [
+        1,
+        250
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "doc/source/gr.rst",
+    "newRanges": [
+      [
+        1,
+        220
+      ],
+      [
+        530,
+        600
+      ],
+      [
+        820,
+        910
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "doc/source/gr_special.rst",
+    "newRanges": [
+      [
+        1,
+        90
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "doc/source/gr_domains.rst",
+    "newRanges": [
+      [
+        1,
+        92
+      ],
+      [
+        225,
+        275
+      ]
+    ]
+  },
+  {
+    "repo": "flint",
+    "path": "src/gr_generic/generic.c",
+    "newRanges": [
+      [
+        1980,
+        2275
+      ],
+      [
+        2390,
+        2582
+      ],
+      [
+        3034,
+        3152
+      ]
+    ],
+    "previous": {
+      "repo": "flint",
+      "path": "src/gr_generic/generic.c",
+      "ranges": [
+        [
+          1,
+          43
+        ],
+        [
+          2776,
+          2790
+        ],
+        [
+          3170,
+          3233
+        ]
+      ],
+      "note": "Only recorded ranges read: generic context cleanup is no-op, default method table and bounded table initialization. Resolves qqbar cleanup-skip question as no leak in this pinned implementation, not whole generic-ring qualification."
+    }
+  }
+]

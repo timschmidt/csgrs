@@ -1,0 +1,888 @@
+{
+  "schema": 1,
+  "recorded": "2026-09-09T03:42:00.829Z",
+  "files": {
+    "bind-spectral.mjs": "317c5ae85a4cb5e9d333e2fd214934c14c6c9423be892e3aa49ff7c131c2b2ed",
+    "verify-spectral.mjs": "8c595032caea66c9f236e53edbc17e43353829bf30443f142c1ec64e867197fb",
+    "capture.mjs": "aaf6df6bbd73025a8541617ce83731ae5ea3fd2272bd98c15e3c4c12b713ce23",
+    "charpoly-domain-experiment.json": "9076544568ef5d89863a8d119bb42760eda3939ee8965a78addba1495ad52853",
+    "record-spectral-reads.mjs": "6a9d185c20c7b54aea0aded07133ab128075a4bfa38f54d40903b9b9f9cd9b75",
+    "spectral-read-selection.json": "f050cb03a64881ec1e93ca9d2034e04c76b7c4aca454bd69fe7579fe2b1f1289",
+    "effective-coverage.mjs": "b884fd5eb462ede70cb9b3c2bed2cfad14d5700301e92e37156c7ec5104b17e0",
+    "spectral-corpus.h": "2de807c2997839e4cc7ae55706986572da44d689ab843b74c76d892fc3bc3d6b",
+    "flint-spectral-probe.c": "4671e2f2ddc576a8a14d87c3ea609d210dc603aebc7db17b6c0469f71c2713e0",
+    "flint-matrix-function-probe.c": "44b54577271850ad0059e7965d081440bd4ad9f069e471f0e344bdc7260aa161",
+    "results/spectral-native-compile.json": "f23aa1c27e3dbca85262211479c03c837ec37e256bbb6da3bab31e723304ad7a",
+    "results/spectral-native-compile.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/spectral-native-compile.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/spectral-native.json": "ea9f3094ac8ac314dd53df7b7b6915f6aa06c94757403b262b7c5c33c01d8b5b",
+    "results/spectral-native.stdout": "f66089e5a031858c2181b59d5a9cd5029f040d5386c18339ae4dac504bb9bf1b",
+    "results/spectral-native.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/spectral-memcheck.json": "913d5e936b95aa521013a1de8bf8b08f0ab9250da5903a61fe8cc0f7ace0efa2",
+    "results/spectral-memcheck.stdout": "f66089e5a031858c2181b59d5a9cd5029f040d5386c18339ae4dac504bb9bf1b",
+    "results/spectral-memcheck.stderr": "0987d4c36b7c8b607c400dee2c693a7c80f1ea97943f8dcab509a4a44069f655",
+    "results/matrix-function-native-compile.json": "f8b7f08dd3ca45c744a37c8cc1d64c39957a94f4321d36944fffc2ef0be62b14",
+    "results/matrix-function-native-compile.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/matrix-function-native-compile.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/matrix-function-native.json": "7ed043957ee47064a9f823b885afa4676114dbbb518ae2fff49d2900d60f20c4",
+    "results/matrix-function-native.stdout": "742cff49e3ff3ac08a633a87bcd954738604a066ff93a2553c3e959a700341fd",
+    "results/matrix-function-native.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/matrix-function-memcheck.json": "00a1cf29978f4cfefad84b58a7d46e59633d7944cf97d895911c0ede839256cc",
+    "results/matrix-function-memcheck.stdout": "4aa4f2b5e311bc1aaff3ddd764ec232ab581a1548a4caad016a92c7291f9b9df",
+    "results/matrix-function-memcheck.stderr": "2c0005dc915b2da212d414a2b0d5cc06bc175933557380c1acfb470ba3e70161"
+  },
+  "gates": [
+    {
+      "tag": "spectral-native-compile",
+      "code": 0,
+      "signal": null
+    },
+    {
+      "tag": "spectral-native",
+      "code": 0,
+      "signal": null
+    },
+    {
+      "tag": "spectral-memcheck",
+      "code": 0,
+      "signal": null
+    },
+    {
+      "tag": "matrix-function-native-compile",
+      "code": 0,
+      "signal": null
+    },
+    {
+      "tag": "matrix-function-native",
+      "code": 1,
+      "signal": null
+    },
+    {
+      "tag": "matrix-function-memcheck",
+      "code": null,
+      "signal": "SIGABRT"
+    }
+  ],
+  "reads": [
+    {
+      "repo": "calcium",
+      "path": "ca_mat/jordan_blocks.c",
+      "ranges": [
+        [
+          1,
+          153
+        ]
+      ],
+      "note": "Complete independent calcium read: Checks square and block-size sum for construction, writes diagonal eigenvalues/superdiagonal ones. Decomposition obtains distinct eigenvalues/multiplicities, then ranks powers of A-lambda I and transposes rank differences as a Ferrers partition; multiplicity-one shortcut. No failed-rank output is a certificate. Current wrapper delegates to generic implementation. No mutable rank-state transfer to Hyper."
+    },
+    {
+      "repo": "flint",
+      "path": "src/ca_mat/jordan_blocks.c",
+      "ranges": [
+        [
+          1,
+          32
+        ]
+      ],
+      "note": "Complete independent flint read: Checks square and block-size sum for construction, writes diagonal eigenvalues/superdiagonal ones. Decomposition obtains distinct eigenvalues/multiplicities, then ranks powers of A-lambda I and transposes rank differences as a Ferrers partition; multiplicity-one shortcut. No failed-rank output is a certificate. Current wrapper delegates to generic implementation. No mutable rank-state transfer to Hyper."
+    },
+    {
+      "repo": "calcium",
+      "path": "ca_mat/jordan_form.c",
+      "ranges": [
+        [
+          1,
+          51
+        ]
+      ],
+      "note": "Complete independent calcium read: Copies input if J or P aliases A, permits null P, obtains blocks then transformation and only writes J after success. Does not promise J/P simultaneous output alias. Current generic forwarding preserves these steps; read the implementation separately."
+    },
+    {
+      "repo": "flint",
+      "path": "src/ca_mat/jordan_form.c",
+      "ranges": [
+        [
+          1,
+          23
+        ]
+      ],
+      "note": "Complete independent flint read: Copies input if J or P aliases A, permits null P, obtains blocks then transformation and only writes J after success. Does not promise J/P simultaneous output alias. Current generic forwarding preserves these steps; read the implementation separately."
+    },
+    {
+      "repo": "calcium",
+      "path": "ca_mat/jordan_transformation.c",
+      "ranges": [
+        [
+          1,
+          330
+        ]
+      ],
+      "note": "Complete independent calcium read: Sage-derived chain construction: distinct eigenvalue nullspace shortcut, otherwise group block sizes, find vectors in ker(B^s) outside ker(B^(s-1)) plus existing chains using RREF, build powers/chains and reverse into P columns. Unknown residual stops candidate search; metadata validity assumed. Precomputed output alias remains TODO. Repeated powers/nullspaces/concatenations expose reuse ideas, not a cost-qualified Hyper transfer."
+    },
+    {
+      "repo": "flint",
+      "path": "src/ca_mat/jordan_transformation.c",
+      "ranges": [
+        [
+          1,
+          24
+        ]
+      ],
+      "note": "Complete independent flint read: Sage-derived chain construction: distinct eigenvalue nullspace shortcut, otherwise group block sizes, find vectors in ker(B^s) outside ker(B^(s-1)) plus existing chains using RREF, build powers/chains and reverse into P columns. Unknown residual stops candidate search; metadata validity assumed. Precomputed output alias remains TODO. Repeated powers/nullspaces/concatenations expose reuse ideas, not a cost-qualified Hyper transfer."
+    },
+    {
+      "repo": "calcium",
+      "path": "ca_mat/exp.c",
+      "ranges": [
+        [
+          1,
+          95
+        ]
+      ],
+      "note": "Complete independent calcium read: Archived Jordan decomposition plus certified inverse P, computes each eigenvalue exponential and finite factorial-scaled upper-triangular block, conjugates back. Current forwards to generic MAT_EXP. Source assumes scalar operations and does not provide a general arbitrary-real matrix-function certificate; evaluated structure can fail even though exp exists."
+    },
+    {
+      "repo": "flint",
+      "path": "src/ca_mat/exp.c",
+      "ranges": [
+        [
+          1,
+          27
+        ]
+      ],
+      "note": "Complete independent flint read: Archived Jordan decomposition plus certified inverse P, computes each eigenvalue exponential and finite factorial-scaled upper-triangular block, conjugates back. Current forwards to generic MAT_EXP. Source assumes scalar operations and does not provide a general arbitrary-real matrix-function certificate; evaluated structure can fail even though exp exists."
+    },
+    {
+      "repo": "calcium",
+      "path": "ca_mat/log.c",
+      "ranges": [
+        [
+          1,
+          128
+        ]
+      ],
+      "note": "Complete independent calcium read: Archive requires every eigenvalue provably nonzero, distinguishes False from Unknown, uses principal scalar log and signed inverse-power/k jets before conjugating back. Current wrapper maps GR_UNABLE before GR_DOMAIN. Matrix logarithm branch is explicitly defined by eigenvalue principal values, not arbitrary log(exp(A)) identity."
+    },
+    {
+      "repo": "flint",
+      "path": "src/ca_mat/log.c",
+      "ranges": [
+        [
+          1,
+          28
+        ]
+      ],
+      "note": "Complete independent flint read: Archive requires every eigenvalue provably nonzero, distinguishes False from Unknown, uses principal scalar log and signed inverse-power/k jets before conjugating back. Current wrapper maps GR_UNABLE before GR_DOMAIN. Matrix logarithm branch is explicitly defined by eigenvalue principal values, not arbitrary log(exp(A)) identity."
+    },
+    {
+      "repo": "calcium",
+      "path": "ca_mat/test/t-jordan_blocks.c",
+      "ranges": [
+        [
+          1,
+          244
+        ]
+      ],
+      "note": "Complete independent calcium read: Rational known-block similarity family requires decomposition success, but block matching accepts Unknown equality. Generic/random family dimensions 0..5 (generic <=3) checks only if both decompositions succeed. Similarity is actually tested here; current counts are one tenth archived. Not independent spectrum arithmetic or guaranteed generic success."
+    },
+    {
+      "repo": "flint",
+      "path": "src/ca_mat/test/t-jordan_blocks.c",
+      "ranges": [
+        [
+          1,
+          236
+        ]
+      ],
+      "note": "Complete independent flint read: Rational known-block similarity family requires decomposition success, but block matching accepts Unknown equality. Generic/random family dimensions 0..5 (generic <=3) checks only if both decompositions succeed. Similarity is actually tested here; current counts are one tenth archived. Not independent spectrum arithmetic or guaranteed generic success."
+    },
+    {
+      "repo": "calcium",
+      "path": "ca_mat/test/t-jordan_form.c",
+      "ranges": [
+        [
+          1,
+          196
+        ]
+      ],
+      "note": "Complete independent calcium read: Known-block family builds dense B=PAP^-1 but calls jordan_form on A, leaving that intended dense case unused. Success is conditional; inverse rejects False but not Unknown, followed by same-backend reconstruction equality accepting Unknown. Random dimensions 0..4 (generic <=2) include P/input alias, not J/input. No required-True full chain or block-structure oracle."
+    },
+    {
+      "repo": "flint",
+      "path": "src/ca_mat/test/t-jordan_form.c",
+      "ranges": [
+        [
+          1,
+          188
+        ]
+      ],
+      "note": "Complete independent flint read: Known-block family builds dense B=PAP^-1 but calls jordan_form on A, leaving that intended dense case unused. Success is conditional; inverse rejects False but not Unknown, followed by same-backend reconstruction equality accepting Unknown. Random dimensions 0..4 (generic <=2) include P/input alias, not J/input. No required-True full chain or block-structure oracle."
+    },
+    {
+      "repo": "calcium",
+      "path": "ca_mat/test/t-exp.c",
+      "ranges": [
+        [
+          1,
+          136
+        ]
+      ],
+      "note": "Complete independent calcium read: Dimensions only 0..2, occasional generic inputs, optional exp whole alias. Conditional trace/determinant and similarity identities accept Unknown; log check is conditional exp(log(A)) roundtrip accepting Unknown, not direct coefficients or branch oracle. Current nominal iterations 10 versus archived 1000. High-order Jordan jets are not exercised by these dimensions."
+    },
+    {
+      "repo": "flint",
+      "path": "src/ca_mat/test/t-exp.c",
+      "ranges": [
+        [
+          1,
+          128
+        ]
+      ],
+      "note": "Complete independent flint read: Dimensions only 0..2, occasional generic inputs, optional exp whole alias. Conditional trace/determinant and similarity identities accept Unknown; log check is conditional exp(log(A)) roundtrip accepting Unknown, not direct coefficients or branch oracle. Current nominal iterations 10 versus archived 1000. High-order Jordan jets are not exercised by these dimensions."
+    },
+    {
+      "repo": "calcium",
+      "path": "ca_mat/dft.c",
+      "ranges": [
+        [
+          1,
+          80
+        ]
+      ],
+      "note": "Complete independent calcium read: Builds 2n powers of exp(2*pi*i/n), n=min(rows,cols), sign by type, modulo 2n lookup, then inverse or unitary scaling. Includes rectangular periodic extension and empty early return. Caching n instead of 2n powers is a donor memory idea only; Hyper has no demonstrated matching hot DFT matrix constructor needing this transfer."
+    },
+    {
+      "repo": "flint",
+      "path": "src/ca_mat/dft.c",
+      "ranges": [
+        [
+          1,
+          81
+        ]
+      ],
+      "note": "Complete independent flint read: Builds 2n powers of exp(2*pi*i/n), n=min(rows,cols), sign by type, modulo 2n lookup, then inverse or unitary scaling. Includes rectangular periodic extension and empty early return. Caching n instead of 2n powers is a donor memory idea only; Hyper has no demonstrated matching hot DFT matrix constructor needing this transfer."
+    },
+    {
+      "repo": "calcium",
+      "path": "ca_mat/test/t-dft.c",
+      "ranges": [
+        [
+          1,
+          77
+        ]
+      ],
+      "note": "Complete independent calcium read: Both versions require True for forward/inverse and unitary inverse products in square dimensions 0..16. Fresh outputs, no rectangular coefficient oracle; product uses same backend. Stronger than merely overlap/Unknown acceptance, but not full constructor coverage."
+    },
+    {
+      "repo": "flint",
+      "path": "src/ca_mat/test/t-dft.c",
+      "ranges": [
+        [
+          1,
+          68
+        ]
+      ],
+      "note": "Complete independent flint read: Both versions require True for forward/inverse and unitary inverse products in square dimensions 0..16. Fresh outputs, no rectangular coefficient oracle; product uses same backend. Stronger than merely overlap/Unknown acceptance, but not full constructor coverage."
+    },
+    {
+      "repo": "calcium",
+      "path": "ca_mat/hilbert.c",
+      "ranges": [
+        [
+          1,
+          32
+        ]
+      ],
+      "note": "Complete independent calcium read: Archive writes each reciprocal of i+j+1; current delegates to generic Hilbert construction. Empty dimensions naturally no-op. Generic implementation still recomputes equal antidiagonal values; no Hyper workload requiring a Hilbert API or qualified reuse gain established."
+    },
+    {
+      "repo": "flint",
+      "path": "src/ca_mat/hilbert.c",
+      "ranges": [
+        [
+          1,
+          22
+        ]
+      ],
+      "note": "Complete independent flint read: Archive writes each reciprocal of i+j+1; current delegates to generic Hilbert construction. Empty dimensions naturally no-op. Generic implementation still recomputes equal antidiagonal values; no Hyper workload requiring a Hilbert API or qualified reuse gain established."
+    },
+    {
+      "repo": "calcium",
+      "path": "ca_mat/pascal.c",
+      "ranges": [
+        [
+          1,
+          75
+        ]
+      ],
+      "note": "Complete independent calcium read: Upper/lower/symmetric rectangular Pascal recurrences with explicit zeros/ones and empty handling. Archive treats any other triangular selector as symmetric; generic current accepts only -1,0,1. No behavior inferred for invalid selector inputs. Exact integer combinatorics already exist in Hyper basis conversion."
+    },
+    {
+      "repo": "flint",
+      "path": "src/ca_mat/pascal.c",
+      "ranges": [
+        [
+          1,
+          22
+        ]
+      ],
+      "note": "Complete independent flint read: Upper/lower/symmetric rectangular Pascal recurrences with explicit zeros/ones and empty handling. Archive treats any other triangular selector as symmetric; generic current accepts only -1,0,1. No behavior inferred for invalid selector inputs. Exact integer combinatorics already exist in Hyper basis conversion."
+    },
+    {
+      "repo": "calcium",
+      "path": "ca_mat/stirling.c",
+      "ranges": [
+        [
+          1,
+          116
+        ]
+      ],
+      "note": "Complete independent calcium read: Three descending-row recurrences: unsigned first kind, signed first kind and second kind, explicit zero tail/diagonal and empty dimensions. Archive uses row pointers; current generic entry/stride helpers and status aggregation. Current rejects selectors outside 0..2. No finite-word factorial substitution for Hyper exact coefficients."
+    },
+    {
+      "repo": "flint",
+      "path": "src/ca_mat/stirling.c",
+      "ranges": [
+        [
+          1,
+          22
+        ]
+      ],
+      "note": "Complete independent flint read: Three descending-row recurrences: unsigned first kind, signed first kind and second kind, explicit zero tail/diagonal and empty dimensions. Archive uses row pointers; current generic entry/stride helpers and status aggregation. Current rejects selectors outside 0..2. No finite-word factorial substitution for Hyper exact coefficients."
+    },
+    {
+      "repo": "calcium",
+      "path": "ca_mat/add.c",
+      "ranges": [
+        [
+          1,
+          25
+        ]
+      ],
+      "note": "Complete independent calcium read: Elementwise scalar addition over first input dimensions, trusting valid matching shapes. Whole-input alias is scalar-local; overlapping windows are not inferred safe. No new representation or fused kernel."
+    },
+    {
+      "repo": "flint",
+      "path": "src/ca_mat/add.c",
+      "ranges": [
+        [
+          1,
+          25
+        ]
+      ],
+      "note": "Complete independent flint read: Elementwise scalar addition over first input dimensions, trusting valid matching shapes. Whole-input alias is scalar-local; overlapping windows are not inferred safe. No new representation or fused kernel."
+    },
+    {
+      "repo": "calcium",
+      "path": "ca_mat/sub.c",
+      "ranges": [
+        [
+          1,
+          25
+        ]
+      ],
+      "note": "Complete independent calcium read: Independent elementwise subtraction read, matching-shape preconditions, scalar-local whole alias. No status/refinement or new Hyper algorithm."
+    },
+    {
+      "repo": "flint",
+      "path": "src/ca_mat/sub.c",
+      "ranges": [
+        [
+          1,
+          25
+        ]
+      ],
+      "note": "Complete independent flint read: Independent elementwise subtraction read, matching-shape preconditions, scalar-local whole alias. No status/refinement or new Hyper algorithm."
+    },
+    {
+      "repo": "calcium",
+      "path": "ca_mat/neg.c",
+      "ranges": [
+        [
+          1,
+          23
+        ]
+      ],
+      "note": "Complete independent calcium read: Independent scalar negation loop over source dimensions. Output already initialized/sized; no allocation schedule beyond scalar operations."
+    },
+    {
+      "repo": "flint",
+      "path": "src/ca_mat/neg.c",
+      "ranges": [
+        [
+          1,
+          23
+        ]
+      ],
+      "note": "Complete independent flint read: Independent scalar negation loop over source dimensions. Output already initialized/sized; no allocation schedule beyond scalar operations."
+    },
+    {
+      "repo": "calcium",
+      "path": "ca_mat/conj.c",
+      "ranges": [
+        [
+          1,
+          29
+        ]
+      ],
+      "note": "Complete independent calcium read: Validates matching shape then scalar conjugation per entry; current throws versus archive abort. Inherits scalar branch-cut semantics already audited; no numerical representation replacement."
+    },
+    {
+      "repo": "flint",
+      "path": "src/ca_mat/conj.c",
+      "ranges": [
+        [
+          1,
+          28
+        ]
+      ],
+      "note": "Complete independent flint read: Validates matching shape then scalar conjugation per entry; current throws versus archive abort. Inherits scalar branch-cut semantics already audited; no numerical representation replacement."
+    },
+    {
+      "repo": "calcium",
+      "path": "ca_mat/conj_transpose.c",
+      "ranges": [
+        [
+          1,
+          19
+        ]
+      ],
+      "note": "Complete independent calcium read: Two passes: transpose then inplace elementwise conjugation. Whole square alias follows transpose semantics; no arbitrary overlap guarantee. Fusion is a donor idea only, not a demonstrated current real-only Hyper bottleneck."
+    },
+    {
+      "repo": "flint",
+      "path": "src/ca_mat/conj_transpose.c",
+      "ranges": [
+        [
+          1,
+          19
+        ]
+      ],
+      "note": "Complete independent flint read: Two passes: transpose then inplace elementwise conjugation. Whole square alias follows transpose semantics; no arbitrary overlap guarantee. Fusion is a donor idea only, not a demonstrated current real-only Hyper bottleneck."
+    },
+    {
+      "repo": "calcium",
+      "path": "ca_mat/set.c",
+      "ranges": [
+        [
+          1,
+          26
+        ]
+      ],
+      "note": "Complete independent calcium read: Skips exact self-copy and zero-column matrices, otherwise scalar copies across source dimensions. Assumes valid sized destination. No mutable C header ownership port to immutable shared Real."
+    },
+    {
+      "repo": "flint",
+      "path": "src/ca_mat/set.c",
+      "ranges": [
+        [
+          1,
+          26
+        ]
+      ],
+      "note": "Complete independent flint read: Skips exact self-copy and zero-column matrices, otherwise scalar copies across source dimensions. Assumes valid sized destination. No mutable C header ownership port to immutable shared Real."
+    },
+    {
+      "repo": "calcium",
+      "path": "ca_mat/set_fmpq_mat.c",
+      "ranges": [
+        [
+          1,
+          26
+        ]
+      ],
+      "note": "Complete independent calcium read: Copies exact rational entries over destination shape, no shape conversion or approximation. Different source/destination domains, not in-place ownership alias. Hyper already exact rational import."
+    },
+    {
+      "repo": "flint",
+      "path": "src/ca_mat/set_fmpq_mat.c",
+      "ranges": [
+        [
+          1,
+          27
+        ]
+      ],
+      "note": "Complete independent flint read: Copies exact rational entries over destination shape, no shape conversion or approximation. Different source/destination domains, not in-place ownership alias. Hyper already exact rational import."
+    },
+    {
+      "repo": "calcium",
+      "path": "ca_mat/set_fmpz_mat.c",
+      "ranges": [
+        [
+          1,
+          26
+        ]
+      ],
+      "note": "Complete independent calcium read: Independent exact integer matrix import loop over destination shape, initialized correctly sized objects assumed. No floating conversion; no missing Hyper scalar import capability."
+    },
+    {
+      "repo": "flint",
+      "path": "src/ca_mat/set_fmpz_mat.c",
+      "ranges": [
+        [
+          1,
+          27
+        ]
+      ],
+      "note": "Complete independent flint read: Independent exact integer matrix import loop over destination shape, initialized correctly sized objects assumed. No floating conversion; no missing Hyper scalar import capability."
+    },
+    {
+      "repo": "calcium",
+      "path": "ca_mat/transfer.c",
+      "ranges": [
+        [
+          1,
+          29
+        ]
+      ],
+      "note": "Complete independent calcium read: Same-context fast copy, otherwise ca_transfer per element reconstructing into destination context. Context-local extension identities cannot be shallow-moved across contexts. Hyper synchronized immutable expressions are not replaced by this ownership model."
+    },
+    {
+      "repo": "flint",
+      "path": "src/ca_mat/transfer.c",
+      "ranges": [
+        [
+          1,
+          29
+        ]
+      ],
+      "note": "Complete independent flint read: Same-context fast copy, otherwise ca_transfer per element reconstructing into destination context. Context-local extension identities cannot be shallow-moved across contexts. Hyper synchronized immutable expressions are not replaced by this ownership model."
+    },
+    {
+      "repo": "calcium",
+      "path": "ca_mat/randops.c",
+      "ranges": [
+        [
+          1,
+          49
+        ]
+      ],
+      "note": "Complete independent calcium read: Random row/column addition or subtraction between distinct indices, preserving rank; empty early return and same-index draws skipped. Test helper only, not a numerical oracle."
+    },
+    {
+      "repo": "flint",
+      "path": "src/ca_mat/randops.c",
+      "ranges": [
+        [
+          1,
+          49
+        ]
+      ],
+      "note": "Complete independent flint read: Random row/column addition or subtraction between distinct indices, preserving rank; empty early return and same-index draws skipped. Test helper only, not a numerical oracle."
+    },
+    {
+      "repo": "calcium",
+      "path": "ca_mat/randtest.c",
+      "ranges": [
+        [
+          1,
+          42
+        ]
+      ],
+      "note": "Complete independent calcium read: Random per-matrix density 0..99, elementwise generic/rational generation or explicit zero. Sparse mix does not systematically cover storage histories, alias shapes or proof-Unknown placements."
+    },
+    {
+      "repo": "flint",
+      "path": "src/ca_mat/randtest.c",
+      "ranges": [
+        [
+          1,
+          42
+        ]
+      ],
+      "note": "Complete independent flint read: Random per-matrix density 0..99, elementwise generic/rational generation or explicit zero. Sparse mix does not systematically cover storage histories, alias shapes or proof-Unknown placements."
+    },
+    {
+      "repo": "calcium",
+      "path": "ca_mat/inlines.c",
+      "ranges": [
+        [
+          1,
+          14
+        ]
+      ],
+      "note": "Complete independent calcium read: Defines the inlines-instantiation macro and includes ca_mat.h; no additional algorithm. Header implementation coverage is tracked separately."
+    },
+    {
+      "repo": "flint",
+      "path": "src/ca_mat/inlines.c",
+      "ranges": [
+        [
+          1,
+          13
+        ]
+      ],
+      "note": "Complete independent flint read: Defines the inlines-instantiation macro and includes ca_mat.h; no additional algorithm. Header implementation coverage is tracked separately."
+    },
+    {
+      "repo": "calcium",
+      "path": "ca_mat/get_fexpr.c",
+      "ranges": [
+        [
+          1,
+          97
+        ]
+      ],
+      "note": "Complete independent calcium read: Collects extensions across all entries, one shared variable/Where definition scope, builds Row/Matrix expressions, and clears temporaries. Sharing helps exported expression size, but it is not a serialized numeric-state roundtrip or a demonstrated gap in Hyper serialization."
+    },
+    {
+      "repo": "flint",
+      "path": "src/ca_mat/get_fexpr.c",
+      "ranges": [
+        [
+          1,
+          84
+        ]
+      ],
+      "note": "Complete independent flint read: Collects extensions across all entries, one shared variable/Where definition scope, builds Row/Matrix expressions, and clears temporaries. Sharing helps exported expression size, but it is not a serialized numeric-state roundtrip or a demonstrated gap in Hyper serialization."
+    },
+    {
+      "repo": "calcium",
+      "path": "ca_mat/print.c",
+      "ranges": [
+        [
+          1,
+          67
+        ]
+      ],
+      "note": "Complete independent calcium read: Diagnostic exact per-entry printing and compact requested-digit rendering with row punctuation, including empty shapes. No proof parser, no exact numeric roundtrip guarantee, no formatting performance claim."
+    },
+    {
+      "repo": "flint",
+      "path": "src/ca_mat/print.c",
+      "ranges": [
+        [
+          1,
+          67
+        ]
+      ],
+      "note": "Complete independent flint read: Diagnostic exact per-entry printing and compact requested-digit rendering with row punctuation, including empty shapes. No proof parser, no exact numeric roundtrip guarantee, no formatting performance claim."
+    },
+    {
+      "repo": "flint",
+      "path": "src/gr_mat/jordan_blocks.c",
+      "ranges": [
+        [
+          1,
+          165
+        ]
+      ],
+      "note": "Complete current generic read: Generic block constructor and rank-power Ferrers decomposition, square/sum validation and status propagation. Multiplicity storage is fmpz but bounded by matrix dimension in valid decomposition. Failure outputs not used by our probes; no failure-state memory reproduction."
+    },
+    {
+      "repo": "flint",
+      "path": "src/gr_mat/jordan_form.c",
+      "ranges": [
+        [
+          1,
+          52
+        ]
+      ],
+      "note": "Complete current generic read: Full generic wrapper read, including input copy for J/A or P/A alias, nullable P and final J publication only after successful blocks/transformation. Does not assert simultaneous output alias."
+    },
+    {
+      "repo": "flint",
+      "path": "src/gr_mat/jordan_transformation.c",
+      "ranges": [
+        [
+          1,
+          356
+        ]
+      ],
+      "note": "Complete current generic read: Full generic chain implementation, row-space difference RREF, shared temporary scalar/vector storage, exact status checks, matrix-ring generic powering helper, distinct-eigenvalue shortcut and generalized nullspace chains. Called matrix-ring implementation remains supporting scope, not credited by this wrapper read."
+    },
+    {
+      "repo": "flint",
+      "path": "src/gr_mat/exp.c",
+      "ranges": [
+        [
+          1,
+          47
+        ]
+      ],
+      "note": "Complete current generic read: Exponential jet recursively divides exp(x) by 1..n-1; default MAT_EXP method dispatcher and Jordan wrapper. No matrix-specific approximation kernel or Hyper type-layout replacement."
+    },
+    {
+      "repo": "flint",
+      "path": "src/gr_mat/log.c",
+      "ranges": [
+        [
+          1,
+          57
+        ]
+      ],
+      "note": "Complete current generic read: Log jet computes inverse powers by balanced index split then divides by order and negates even orders, reducing dependency depth relative to archive sequential powers. Scalar-expression/cache consequences need measurement before any Hyper transfer."
+    },
+    {
+      "repo": "flint",
+      "path": "src/gr_mat/func_jordan.c",
+      "ranges": [
+        [
+          1,
+          153
+        ]
+      ],
+      "note": "Complete current generic read: Shared function evaluator owns P/Q/J, requires field or real precision, uses approximate distinct-eigenvalue diagonalization fallback only for precision contexts. Exact path obtains Jordan data/inverse; evaluates one maximal jet per distinct eigenvalue and copies prefixes to repeated blocks. Output failure status invalidates values. Read does not cover approximate diagonalization implementation."
+    },
+    {
+      "repo": "flint",
+      "path": "src/gr_mat/hilbert.c",
+      "ranges": [
+        [
+          1,
+          37
+        ]
+      ],
+      "note": "Complete current generic read: Generic reciprocal construction with aggregated statuses and symmetry TODO; exact dimension loops. Read independently of the CA forwarding wrapper."
+    },
+    {
+      "repo": "flint",
+      "path": "src/gr_mat/pascal.c",
+      "ranges": [
+        [
+          1,
+          85
+        ]
+      ],
+      "note": "Complete current generic read: Generic triangular/symmetric rectangular recurrence with zeros/ones, empty fast return and invalid selector GR_DOMAIN. Dynamic method dispatch per scalar, no fmpz specialization yet."
+    },
+    {
+      "repo": "flint",
+      "path": "src/gr_mat/stirling.c",
+      "ranges": [
+        [
+          1,
+          147
+        ]
+      ],
+      "note": "Complete current generic read: All three generic row recurrences, descending order and explicit zero tails; status aggregation and valid-kind dispatch. Full independent read of wrapper and private helpers."
+    },
+    {
+      "repo": "flint",
+      "path": "doc/source/gr_mat.rst",
+      "ranges": [
+        [
+          952,
+          1008
+        ]
+      ],
+      "note": "Only 952..1008 read: diagonalization domain/status contract, nullable left/right outputs, precomputed eigenvalue requirements, Jordan declarations and normalized jet callback definition. Range starts/ends within broader documentation sections."
+    },
+    {
+      "repo": "flint",
+      "path": "src/gr_generic/generic.c",
+      "ranges": [
+        [
+          1,
+          43
+        ],
+        [
+          1980,
+          2275
+        ],
+        [
+          2390,
+          2582
+        ],
+        [
+          2776,
+          2790
+        ],
+        [
+          3034,
+          3152
+        ],
+        [
+          3153,
+          3169
+        ],
+        [
+          3170,
+          3233
+        ]
+      ],
+      "note": "Only recorded ranges read: generic context cleanup is no-op, default method table and bounded table initialization. Resolves qqbar cleanup-skip question as no leak in this pinned implementation, not whole generic-ring qualification. Additional recorded ranges: vector/scalar binary-op macros, addmul/submul single temporary and status aggregation, contiguous/reversed/strided generic dot implementations and vector method registrations. Strided optimized-dot path gathers shallow headers only when a specialized contiguous dot exists; CA has none and falls through to a scalar loop. Output cannot alias later input elements. Range beginning 1980 is inside normalization, not full-function coverage. Read 3153..3169 additionally: default polynomial and matrix method registrations, including MAT_EXP/MAT_LOG pointing to the Jordan evaluators."
+    },
+    {
+      "repo": "flint",
+      "path": "src/fmpz_lll/is_reduced_d.c",
+      "ranges": [
+        [
+          765,
+          821
+        ]
+      ],
+      "note": "Only 765..821 read after the instrumented matrix-function abort: final directed-rounding bounds, rounding-mode restoration, exact reduced-basis assertion and return. Earlier function/setup and recursively called reduced-basis checks remain unread; root cause and native reproducibility are not established by this tail."
+    }
+  ],
+  "binaries": {
+    "/tmp/calcium-spectral.nqRkRT/flint-spectral": {
+      "sha256": "7a6228b59d0b09572279a824c66684cff1c442e5b4ff0c8d6fcbd1165d5b3dea",
+      "bytes": 22640
+    },
+    "/tmp/calcium-spectral.nqRkRT/flint-matrix-function": {
+      "sha256": "ab935ea14fdc0347e1b5750e71a41c8de7e4f058f07b7188a589dca67c987131",
+      "bytes": 18096
+    }
+  },
+  "status": "Both ca_mat source directories are complete at the pinned versions, not all called support or the ecosystem. No new production/donor change. Jordan certificates pass. Native matrix exp/log has 14 unresolved exact comparisons, no observed incorrect result; its instrumented run aborts in an internal LLL assertion and is not a clean memory gate. Rank v1 remains unselected; demand-bounded Hyper polynomial derivative work is an untested follow-up idea.",
+  "limits": "Known finite Jordan recipes, shifts and dense similarities are not arbitrary spectra or full branch coverage. Explicit scalar chain sums avoid CA matrix multiplication and an exact rational determinant checks P, but scalar arithmetic and the FLINT rational subsystem remain shared. Function coefficient formulas avoid matrix exp/log/Jordan calls but share scalar elementary functions and the standard exponential factorial recurrence. Unknown equality is not an incorrect value or a proved identity. One Valgrind abort does not establish native reproduction or its floating-point/root cause; aborted-process possible losses do not establish normal-exit leaks. Buffered output is only a prefix and does not locate the precise failing case. No new Hyper candidate, CPU/allocation campaign or size-improvement claim. Preserve all prior failures and user edits.",
+  "extensions": [
+    {
+      "repo": "flint",
+      "path": "doc/source/ca_mat.rst",
+      "ranges": [
+        [
+          515,
+          624
+        ]
+      ],
+      "note": "Additional actual read after checkpoint 22: companion status, eigenvalue multiplicities/arbitrary order, Jordan block metadata and arbitrary failure outputs, nullable P, optional direct precomputed work, exp existence versus algorithmic failure and matrix log eigenvalue-principal branch. Earlier checkpoint binds the old partial entry exactly; preserve it and extend via this append-only ledger."
+    }
+  ],
+  "coverageAtBinding": [
+    {
+      "repo": "calcium",
+      "reviewed": 375,
+      "complete": 374,
+      "partial": 1,
+      "readLines": 37085
+    },
+    {
+      "repo": "flint",
+      "reviewed": 400,
+      "complete": 388,
+      "partial": 12,
+      "readLines": 42953
+    }
+  ],
+  "hyperReadRanges": {
+    "hypersolve/src/integer_interpolation.rs": [
+      [
+        500,
+        605
+      ]
+    ],
+    "hypercurve/src/rational_bezier_general.rs": [
+      [
+        9450,
+        9555
+      ]
+    ],
+    "hyperlattice/src/matrix/core.rs": [
+      [
+        315,
+        435
+      ]
+    ]
+  },
+  "failureCore": {
+    "path": "results/matrix-function-memcheck.vgcore",
+    "sha256": "ff5687f6b91deed4521af57254548d86409821240fdac060b0507eba23d44671",
+    "bytes": 78024704
+  },
+  "nativeLibrary": {
+    "path": "/home/tim/Documents/GitHub/workspace/exact-real-references/flint/libflint.so",
+    "sha256": "8dcdbb4aa08d67712b14febd006d1392d07737b1ad8c1f8f5930a152701e0032"
+  }
+}

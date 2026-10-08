@@ -1,0 +1,21 @@
+{
+  "tag": "polynomial-facts-probe-debug",
+  "started": "2026-09-08T23:13:07.641Z",
+  "finished": "2026-09-08T23:13:15.881Z",
+  "elapsedSeconds": 8.237534827,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison",
+  "command": "env",
+  "args": [
+    "CARGO_TARGET_DIR=/tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse",
+    "CARGO_INCREMENTAL=0",
+    "CARGO_PROFILE_DEV_DEBUG=0",
+    "CARGO_BUILD_JOBS=2",
+    "cargo",
+    "run",
+    "--offline",
+    "--manifest-path",
+    "audits/continuation/calcium/polynomial-facts-probe/Cargo.toml"
+  ],
+  "code": 0,
+  "signal": null
+}

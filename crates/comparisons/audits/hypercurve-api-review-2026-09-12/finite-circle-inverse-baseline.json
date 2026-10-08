@@ -1,0 +1,17 @@
+{
+  "command": [
+    "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+    "test",
+    "--release",
+    "--all-features",
+    "--locked",
+    "--offline",
+    "--lib",
+    "finite_circle_tangent_inverse_replays_independent_cuts",
+    "--",
+    "--nocapture"
+  ],
+  "returncode": 101,
+  "elapsed_seconds": 120.54545539297396,
+  "log": "finite-circle-inverse-baseline.log"
+}

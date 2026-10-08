@@ -1,0 +1,3518 @@
+#![allow(dead_code, unused_variables)]
+
+mod benchmark_report;
+mod dispatch_trace;
+
+use criterion::{BenchmarkId, Criterion, black_box};
+use dispatch_trace::{begin_dispatch_trace_run, trace_dispatch_cases, write_dispatch_trace_report};
+use hyperlimit::{
+    CoplanarProjection, CoplanarTriangleRelation, LineSide, Plane3, PlaneSide, Point2, Point3,
+    PredicateOutcome, Segment3Intersection, SegmentPlaneRelation, Sign, SupportDopRelation,
+    TriangleDegeneracy, TriangleTriangleIntersection, aabb2_facts, affine_independent_d,
+    certified_ball_sign, classify_aabb2_intersection_with_facts, classify_aabb3_intersection,
+    classify_aabb3_sphere_intersection, classify_circle_line2, classify_circle_segment2,
+    classify_coplanar_triangles, classify_halfspace_feasibility3, classify_homogeneous_point_plane,
+    classify_plane_aabb3_report, classify_plane_segment, classify_plane_triangle,
+    classify_point_aabb3, classify_point_convex_planes3, classify_point_convex_polygon2,
+    classify_point_line, classify_point_line_with_orientation, classify_point_oriented_plane,
+    classify_point_oriented_plane_with_evidence, classify_point_plane,
+    classify_point_plane_with_evidence, classify_point_ring_even_odd_report,
+    classify_point_segment_with_facts, classify_point_segment3, classify_point_sphere3,
+    classify_point_triangle_with_orientation, classify_point_triangle3_with_orientation,
+    classify_ray_triangle3_intersection, classify_ray_triangle3_intersection_report,
+    classify_real_sign, classify_real_sign_pair, classify_segment_intersection_with_facts,
+    classify_segment_triangle3_intersection, classify_segment_triangle3_intersection_report,
+    classify_segment3_intersection, classify_sphere3_intersection,
+    classify_triangle_against_oriented_plane, classify_triangle_triangle3,
+    classify_triangle3_degeneracy, compare_point_line3_distance_squared,
+    compare_point_plane_distance_squared, compare_point_segment3_distance_squared,
+    compare_point2_distance_squared, compare_point3_distance_squared, incircle2 as incircle2d,
+    incircle2_evidence, incircle2_with_evidence as incircle2d_with_evidence, insphere_d,
+    insphere3 as insphere3d, insphere3_evidence,
+    insphere3_with_evidence as insphere3d_with_evidence, intersect_segment_with_oriented_plane,
+    intersect_three_planes, intersect_two_planes, line2_orientation,
+    ordered_aabb2s_intersect_coordinates, ordered_aabb3_contains, ordered_aabb3s_intersect,
+    orient_d, orient2 as orient2d, orient3 as orient3d, oriented_plane3_evidence, plane3_evidence,
+    point_in_ordered_aabb2_coordinates, point_in_ordered_aabb3_relative_interior,
+    point2_displacement_facts, point2_equal, projected_line_parameter3,
+    projected_segment_parameter3, ring_area_sign, segment2_facts, support_dop3_from_points,
+    triangle3_orientation,
+};
+use robust::{Coord, Coord3D};
+
+const BATCH: usize = 512;
+const APPROX: hyperlimit::PredicatePolicy = hyperlimit::PredicatePolicy::APPROXIMATE_512;
+
+type Orient2Case = (Point2, Point2, Point2);
+type Orient3Case = (Point3, Point3, Point3, Point3);
+type Incircle2Case = (Point2, Point2, Point2, Point2);
+type Insphere3Case = (Point3, Point3, Point3, Point3, Point3);
+type Segment3Case = (Point3, Point3, Point3, Point3);
+type SegmentTriangle3Case = (Point3, Point3, Point3, Point3, Point3);
+type RawPoint2 = [f64; 2];
+type RawPoint3 = [f64; 3];
+type RawOrient2Case = (RawPoint2, RawPoint2, RawPoint2);
+type RawOrient3Case = (RawPoint3, RawPoint3, RawPoint3, RawPoint3);
+type RawIncircle2Case = (RawPoint2, RawPoint2, RawPoint2, RawPoint2);
+type RawInsphere3Case = (RawPoint3, RawPoint3, RawPoint3, RawPoint3, RawPoint3);
+
+#[derive(Clone, Copy)]
+enum Workload {
+    Easy,
+    NearDegenerate,
+}
+
+impl Workload {
+    const ALL: [Self; 2] = [Self::Easy, Self::NearDegenerate];
+
+    const fn name(self) -> &'static str {
+        match self {
+            Self::Easy => "easy",
+            Self::NearDegenerate => "near_degenerate",
+        }
+    }
+}
+
+fn bench_predicates(c: &mut Criterion) {
+    bench_real_sign_pair(c);
+    bench_point2_equality(c);
+    bench_aabb_immediate(c);
+    bench_explicit_sphere_immediate(c);
+    bench_line2_immediate(c);
+    bench_lifted_predicate_immediate(c);
+    bench_halfspace_immediate(c);
+    bench_segment2_immediate(c);
+    bench_segment3_immediate(c);
+    bench_triangle2_immediate(c);
+    bench_triangle3_immediate(c);
+    bench_representation(c, "hyperreal", hyperreal_real);
+    bench_robust_predicates(c);
+    bench_filter_cost_breakdown(c);
+    bench_certified_filters(c);
+    bench_evidence_derivation(c);
+    bench_plane_composition_filters(c);
+    bench_exact_rational_kernels(c);
+    bench_nd_symbolic_scale(c);
+    bench_shared_scale_views(c);
+    bench_transformed_predicates(c);
+    bench_hypermesh_port_helpers(c);
+    #[cfg(feature = "parallel")]
+    bench_parallel_batches(c);
+}
+
+fn bench_point2_equality(c: &mut Criterion) {
+    let left = rational_point2(17, 3, -29, 7);
+    let equal = left.clone();
+    let unequal = rational_point2(17, 3, -30, 7);
+    let mut group = c.benchmark_group("point2_equality");
+    group.bench_function("equal_exact_rational", |bench| {
+        bench.iter(|| point2_equal(black_box(&left), black_box(&equal), APPROX))
+    });
+    group.bench_function("unequal_y_exact_rational", |bench| {
+        bench.iter(|| point2_equal(black_box(&left), black_box(&unequal), APPROX))
+    });
+    group.finish();
+}
+
+fn bench_real_sign_pair(c: &mut Criterion) {
+    let left = hyperreal_real(-7.0);
+    let right = hyperreal_real(11.0);
+    let mut group = c.benchmark_group("real_sign_pair");
+    group.bench_function("composed_scalar_cascades", |bench| {
+        bench.iter(|| {
+            (
+                classify_real_sign(black_box(&left), APPROX),
+                classify_real_sign(black_box(&right), APPROX),
+            )
+        })
+    });
+    group.bench_function("paired_cascade", |bench| {
+        bench.iter(|| classify_real_sign_pair(black_box(&left), black_box(&right), APPROX))
+    });
+    group.finish();
+}
+
+fn bench_line2_immediate(c: &mut Criterion) {
+    let from = rational_point2(0, 1, 0, 1);
+    let to = rational_point2(4, 1, 1, 1);
+    let query = rational_point2(1, 1, 2, 1);
+    let orientation = line2_orientation(&from, &to);
+
+    let mut group = c.benchmark_group("line2_immediate");
+    group.bench_function("point_with_orientation", |bench| {
+        bench.iter(|| {
+            classify_point_line_with_orientation(
+                &from,
+                &to,
+                black_box(&query),
+                &orientation,
+                APPROX,
+            )
+        })
+    });
+    group.finish();
+}
+
+fn bench_lifted_predicate_immediate(c: &mut Criterion) {
+    let circle_a = rational_point2(1, 1, 0, 1);
+    let circle_b = rational_point2(0, 1, 1, 1);
+    let circle_c = rational_point2(-1, 1, 0, 1);
+    let circle_query = rational_point2(0, 1, 0, 1);
+    let circle_evidence = incircle2_evidence(&circle_a, &circle_b, &circle_c);
+
+    let mut circle_group = c.benchmark_group("incircle2_immediate");
+    circle_group.bench_function("point_with_evidence", |bench| {
+        bench.iter(|| {
+            incircle2d_with_evidence(
+                &circle_a,
+                &circle_b,
+                &circle_c,
+                black_box(&circle_query),
+                &circle_evidence,
+                APPROX,
+            )
+        })
+    });
+    circle_group.finish();
+
+    let sphere_a = rational_point3(1, 1, 0, 1, 0, 1);
+    let sphere_b = rational_point3(0, 1, 1, 1, 0, 1);
+    let sphere_c = rational_point3(0, 1, 0, 1, 1, 1);
+    let sphere_d = rational_point3(-1, 1, 0, 1, 0, 1);
+    let sphere_query = rational_point3(0, 1, 0, 1, 0, 1);
+    let sphere_evidence = insphere3_evidence(&sphere_a, &sphere_b, &sphere_c, &sphere_d);
+
+    let mut sphere_group = c.benchmark_group("insphere3_immediate");
+    sphere_group.bench_function("point_with_evidence", |bench| {
+        bench.iter(|| {
+            insphere3d_with_evidence(
+                &sphere_a,
+                &sphere_b,
+                &sphere_c,
+                &sphere_d,
+                black_box(&sphere_query),
+                &sphere_evidence,
+                APPROX,
+            )
+        })
+    });
+    sphere_group.finish();
+}
+
+fn bench_halfspace_immediate(c: &mut Criterion) {
+    let feasible = exact_rational_shifted_box_planes3();
+    let infeasible = vec![
+        Plane3::new(rational_point3(1, 1, 0, 1, 0, 1), rational_real(1, 1)),
+        Plane3::new(rational_point3(-1, 1, 0, 1, 0, 1), rational_real(0, 1)),
+    ];
+    let mut group = c.benchmark_group("halfspace3_immediate");
+    group.bench_function("feasible", |bench| {
+        bench.iter(|| classify_halfspace_feasibility3(black_box(&feasible), APPROX))
+    });
+    group.bench_function("infeasible", |bench| {
+        bench.iter(|| classify_halfspace_feasibility3(black_box(&infeasible), APPROX))
+    });
+    group.finish();
+}
+
+fn bench_triangle3_immediate(c: &mut Criterion) {
+    let a = rational_point3(0, 1, 0, 1, 0, 1);
+    let b = rational_point3(4, 1, 0, 1, 0, 1);
+    let vertex_c = rational_point3(0, 1, 4, 1, 0, 1);
+    let query = rational_point3(1, 1, 1, 1, 0, 1);
+    let orientation = triangle3_orientation(&a, &b, &vertex_c, APPROX);
+
+    let mut group = c.benchmark_group("triangle3_immediate");
+    group.bench_function("point_with_orientation", |bench| {
+        bench.iter(|| {
+            classify_point_triangle3_with_orientation(
+                &a,
+                &b,
+                &vertex_c,
+                black_box(&query),
+                &orientation,
+                APPROX,
+            )
+        })
+    });
+    group.finish();
+}
+
+fn bench_triangle2_immediate(c: &mut Criterion) {
+    let a = rational_point2(0, 1, 0, 1);
+    let b = rational_point2(4, 1, 0, 1);
+    let vertex_c = rational_point2(0, 1, 4, 1);
+    let query = rational_point2(1, 1, 1, 1);
+    let orientation = orient2d(&a, &b, &vertex_c, APPROX);
+
+    let mut group = c.benchmark_group("triangle2_immediate");
+    group.bench_function("point_with_orientation", |bench| {
+        bench.iter(|| {
+            classify_point_triangle_with_orientation(
+                &a,
+                &b,
+                &vertex_c,
+                black_box(&query),
+                orientation,
+                APPROX,
+            )
+        })
+    });
+    group.finish();
+}
+
+fn bench_segment2_immediate(c: &mut Criterion) {
+    let start = rational_point2(0, 1, 0, 1);
+    let end = rational_point2(4, 1, 0, 1);
+    let query = rational_point2(2, 1, 0, 1);
+    let point_start = rational_point2(2, 1, 0, 1);
+    let point_end = rational_point2(2, 1, 0, 1);
+    let facts = segment2_facts(&start, &end);
+    let point_facts = segment2_facts(&point_start, &point_end);
+
+    let mut group = c.benchmark_group("segment2_immediate");
+    group.bench_function("point_with_facts", |bench| {
+        bench.iter(|| {
+            classify_point_segment_with_facts(&start, &end, black_box(&query), facts, APPROX)
+        })
+    });
+    group.bench_function("intersection_with_facts", |bench| {
+        bench.iter(|| {
+            classify_segment_intersection_with_facts(
+                &start,
+                &end,
+                black_box(&point_start),
+                black_box(&point_end),
+                facts,
+                point_facts,
+                APPROX,
+            )
+        })
+    });
+    group.finish();
+}
+
+fn bench_segment3_immediate(c: &mut Criterion) {
+    let first_start = rational_point3(0, 1, 0, 1, 0, 1);
+    let first_end = rational_point3(4, 1, 0, 1, 0, 1);
+    let second_start = rational_point3(2, 1, -1, 1, 0, 1);
+    let second_end = rational_point3(2, 1, 1, 1, 0, 1);
+    let query = rational_point3(3, 1, 0, 1, 0, 1);
+
+    let mut group = c.benchmark_group("segment3_immediate");
+    group.bench_function("point", |bench| {
+        bench.iter(|| classify_point_segment3(&first_start, &first_end, black_box(&query), APPROX))
+    });
+    group.bench_function("intersection", |bench| {
+        bench.iter(|| {
+            classify_segment3_intersection(
+                &first_start,
+                &first_end,
+                black_box(&second_start),
+                black_box(&second_end),
+                APPROX,
+            )
+        })
+    });
+    group.finish();
+}
+
+fn bench_explicit_sphere_immediate(c: &mut Criterion) {
+    let center = rational_point3(0, 1, 0, 1, 0, 1);
+    let radius_squared = hyperreal::Real::from(25);
+    let query = rational_point3(3, 1, 4, 1, 0, 1);
+
+    let mut group = c.benchmark_group("explicit_sphere_immediate");
+    group.bench_function("point", |bench| {
+        bench.iter(|| classify_point_sphere3(&center, &radius_squared, black_box(&query), APPROX))
+    });
+    group.bench_function("point2_distance_ordering_dyadic", |bench| {
+        let anchor = rational_point2(0, 1, 0, 1);
+        let left = rational_point2(3, 1, 4, 1);
+        let right = rational_point2(5, 1, 1, 1);
+        bench.iter(|| {
+            compare_point2_distance_squared(
+                black_box(&anchor),
+                black_box(&left),
+                black_box(&right),
+                APPROX,
+            )
+        })
+    });
+    group.bench_function("point3_distance_ordering_dyadic", |bench| {
+        let anchor = rational_point3(0, 1, 0, 1, 0, 1);
+        let left = rational_point3(3, 1, 4, 1, 1, 1);
+        let right = rational_point3(5, 1, 1, 1, 2, 1);
+        bench.iter(|| {
+            compare_point3_distance_squared(
+                black_box(&anchor),
+                black_box(&left),
+                black_box(&right),
+                APPROX,
+            )
+        })
+    });
+    group.finish();
+}
+
+fn bench_aabb_immediate(c: &mut Criterion) {
+    let first_2d_min = rational_point2(0, 1, 0, 1);
+    let first_2d_max = rational_point2(8, 1, 0, 1);
+    let second_2d_min = rational_point2(2, 1, -1, 1);
+    let second_2d_max = rational_point2(6, 1, 1, 1);
+    let first_2d_facts = aabb2_facts(&first_2d_min, &first_2d_max);
+    let second_2d_facts = aabb2_facts(&second_2d_min, &second_2d_max);
+    let first_3d_min = rational_point3(0, 1, 0, 1, 0, 1);
+    let first_3d_max = rational_point3(4, 1, 4, 1, 4, 1);
+    let second_3d_min = rational_point3(4, 1, 1, 1, 1, 1);
+    let second_3d_max = rational_point3(6, 1, 3, 1, 3, 1);
+    let contained_3d_min = rational_point3(1, 1, 1, 1, 1, 1);
+    let contained_3d_max = rational_point3(3, 1, 3, 1, 3, 1);
+    let query_3d = rational_point3(2, 1, 2, 1, 2, 1);
+    let query_2d = rational_point2(4, 1, 0, 1);
+
+    let mut group = c.benchmark_group("aabb_immediate");
+    group.bench_function("2d/intersection_with_facts", |bench| {
+        bench.iter(|| {
+            classify_aabb2_intersection_with_facts(
+                black_box(&first_2d_min),
+                black_box(&first_2d_max),
+                black_box(&second_2d_min),
+                black_box(&second_2d_max),
+                black_box(first_2d_facts),
+                black_box(second_2d_facts),
+                APPROX,
+            )
+        })
+    });
+    group.bench_function("2d/ordered_intersection_coordinates", |bench| {
+        bench.iter(|| {
+            ordered_aabb2s_intersect_coordinates(
+                black_box([&first_2d_min.x, &first_2d_min.y]),
+                black_box([&first_2d_max.x, &first_2d_max.y]),
+                black_box([&second_2d_min.x, &second_2d_min.y]),
+                black_box([&second_2d_max.x, &second_2d_max.y]),
+                APPROX,
+            )
+        })
+    });
+    group.bench_function("2d/ordered_point_coordinates", |bench| {
+        bench.iter(|| {
+            point_in_ordered_aabb2_coordinates(
+                black_box([&first_2d_min.x, &first_2d_min.y]),
+                black_box([&first_2d_max.x, &first_2d_max.y]),
+                black_box([&query_2d.x, &query_2d.y]),
+                APPROX,
+            )
+        })
+    });
+    group.bench_function("3d/intersection", |bench| {
+        bench.iter(|| {
+            classify_aabb3_intersection(
+                black_box(&first_3d_min),
+                black_box(&first_3d_max),
+                black_box(&second_3d_min),
+                black_box(&second_3d_max),
+                APPROX,
+            )
+        })
+    });
+    group.bench_function("3d/point", |bench| {
+        bench.iter(|| {
+            classify_point_aabb3(
+                black_box(&first_3d_min),
+                black_box(&first_3d_max),
+                black_box(&query_3d),
+                APPROX,
+            )
+        })
+    });
+    group.bench_function("3d/ordered_intersection", |bench| {
+        bench.iter(|| {
+            ordered_aabb3s_intersect(
+                black_box(&first_3d_min),
+                black_box(&first_3d_max),
+                black_box(&second_3d_min),
+                black_box(&second_3d_max),
+                APPROX,
+            )
+        })
+    });
+    group.bench_function("3d/ordered_contains", |bench| {
+        bench.iter(|| {
+            ordered_aabb3_contains(
+                black_box(&first_3d_min),
+                black_box(&first_3d_max),
+                black_box(&contained_3d_min),
+                black_box(&contained_3d_max),
+                APPROX,
+            )
+        })
+    });
+    group.bench_function("3d/relative_interior", |bench| {
+        bench.iter(|| {
+            point_in_ordered_aabb3_relative_interior(
+                black_box(&first_3d_min),
+                black_box(&first_3d_max),
+                black_box(&query_3d),
+                APPROX,
+            )
+        })
+    });
+    group.finish();
+}
+
+fn bench_filter_cost_breakdown(c: &mut Criterion) {
+    let raw_cases = raw_orient2d_cases(Workload::Easy);
+    let cases = orient2d_cases(Workload::Easy, hyperreal_real);
+    let mut group = c.benchmark_group("filter_cost_breakdown");
+
+    group.bench_function("orient2d/robust_arithmetic", |bench| {
+        bench.iter(|| {
+            let mut score = 0_i64;
+            for &(a, b, c) in &raw_cases {
+                score += determinant_score(robust::orient2d(
+                    black_box(coord2(a)),
+                    black_box(coord2(b)),
+                    black_box(coord2(c)),
+                ));
+            }
+            black_box(score)
+        });
+    });
+    group.bench_function("orient2d/exact_view_6", |bench| {
+        bench.iter(|| {
+            let mut bits = 0_u64;
+            for (a, b, c) in &cases {
+                for value in [&a.x, &a.y, &b.x, &b.y, &c.x, &c.y] {
+                    bits ^= black_box(value)
+                        .to_f64_exact_dyadic()
+                        .expect("benchmark points retain exact binary64 views")
+                        .to_bits();
+                }
+            }
+            black_box(bits)
+        });
+    });
+    group.bench_function("orient2d/lossy_cached_view_6", |bench| {
+        bench.iter(|| {
+            let mut bits = 0_u64;
+            for (a, b, c) in &cases {
+                for value in [&a.x, &a.y, &b.x, &b.y, &c.x, &c.y] {
+                    bits ^= black_box(value)
+                        .to_f64_lossy()
+                        .expect("benchmark points have finite binary64 views")
+                        .to_bits();
+                }
+            }
+            black_box(bits)
+        });
+    });
+    group.bench_function("orient2d/certified_filter", |bench| {
+        bench.iter(|| {
+            let mut score = 0_i64;
+            for (a, b, c) in &cases {
+                score += real_sign_score(
+                    hyperreal::Real::certified_affine_det2_sign(
+                        [&a.x, &a.y],
+                        [&b.x, &b.y],
+                        [&c.x, &c.y],
+                    )
+                    .expect("easy benchmark determinant is certified"),
+                );
+            }
+            black_box(score)
+        });
+    });
+    group.bench_function("orient2d/public_predicate", |bench| {
+        bench.iter(|| {
+            let mut score = 0_i64;
+            for (a, b, c) in &cases {
+                score += sign_score(black_box(orient2d(
+                    black_box(a),
+                    black_box(b),
+                    black_box(c),
+                    APPROX,
+                )));
+            }
+            black_box(score)
+        });
+    });
+    group.finish();
+}
+
+fn bench_robust_predicates(c: &mut Criterion) {
+    let mut orient2_group = c.benchmark_group("orient2d");
+    for workload in Workload::ALL {
+        let cases = raw_orient2d_cases(workload);
+        orient2_group.bench_with_input(
+            BenchmarkId::new("robust", workload.name()),
+            &cases,
+            |bench, cases| {
+                bench.iter(|| {
+                    let mut score = 0_i64;
+                    for &(a, b, c) in cases {
+                        score += determinant_score(robust::orient2d(
+                            black_box(coord2(a)),
+                            black_box(coord2(b)),
+                            black_box(coord2(c)),
+                        ));
+                    }
+                    black_box(score)
+                });
+            },
+        );
+        orient2_group.bench_with_input(
+            BenchmarkId::new("geometry_predicates", workload.name()),
+            &cases,
+            |bench, cases| {
+                bench.iter(|| {
+                    let mut score = 0_i64;
+                    for &(a, b, c) in cases {
+                        score += determinant_score(geometry_predicates::orient2d(
+                            black_box(a),
+                            black_box(b),
+                            black_box(c),
+                        ));
+                    }
+                    black_box(score)
+                });
+            },
+        );
+        let apfp_cases: Vec<_> = cases
+            .iter()
+            .map(|&(a, b, c)| (apfp_coord2(a), apfp_coord2(b), apfp_coord2(c)))
+            .collect();
+        orient2_group.bench_with_input(
+            BenchmarkId::new("apfp", workload.name()),
+            &apfp_cases,
+            |bench, cases| {
+                bench.iter(|| {
+                    let mut score = 0_i64;
+                    for (a, b, c) in cases {
+                        score += apfp_orientation_score(apfp::geometry::f64::orient2d(
+                            black_box(a),
+                            black_box(b),
+                            black_box(c),
+                        ));
+                    }
+                    black_box(score)
+                });
+            },
+        );
+    }
+    orient2_group.finish();
+
+    let mut orient3_group = c.benchmark_group("orient3d");
+    for workload in Workload::ALL {
+        let cases = raw_orient3d_cases(workload);
+        orient3_group.bench_with_input(
+            BenchmarkId::new("robust", workload.name()),
+            &cases,
+            |bench, cases| {
+                bench.iter(|| {
+                    let mut score = 0_i64;
+                    for &(a, b, c, d) in cases {
+                        score += determinant_score(robust::orient3d(
+                            black_box(coord3(a)),
+                            black_box(coord3(b)),
+                            black_box(coord3(c)),
+                            black_box(coord3(d)),
+                        ));
+                    }
+                    black_box(score)
+                });
+            },
+        );
+        orient3_group.bench_with_input(
+            BenchmarkId::new("geometry_predicates", workload.name()),
+            &cases,
+            |bench, cases| {
+                bench.iter(|| {
+                    let mut score = 0_i64;
+                    for &(a, b, c, d) in cases {
+                        score += determinant_score(geometry_predicates::orient3d(
+                            black_box(a),
+                            black_box(b),
+                            black_box(c),
+                            black_box(d),
+                        ));
+                    }
+                    black_box(score)
+                });
+            },
+        );
+    }
+    orient3_group.finish();
+
+    let mut incircle_group = c.benchmark_group("incircle2d");
+    for workload in Workload::ALL {
+        let cases = raw_incircle2d_cases(workload);
+        incircle_group.bench_with_input(
+            BenchmarkId::new("robust", workload.name()),
+            &cases,
+            |bench, cases| {
+                bench.iter(|| {
+                    let mut score = 0_i64;
+                    for &(a, b, c, d) in cases {
+                        score += determinant_score(robust::incircle(
+                            black_box(coord2(a)),
+                            black_box(coord2(b)),
+                            black_box(coord2(c)),
+                            black_box(coord2(d)),
+                        ));
+                    }
+                    black_box(score)
+                });
+            },
+        );
+        incircle_group.bench_with_input(
+            BenchmarkId::new("geometry_predicates", workload.name()),
+            &cases,
+            |bench, cases| {
+                bench.iter(|| {
+                    let mut score = 0_i64;
+                    for &(a, b, c, d) in cases {
+                        score += determinant_score(geometry_predicates::incircle(
+                            black_box(a),
+                            black_box(b),
+                            black_box(c),
+                            black_box(d),
+                        ));
+                    }
+                    black_box(score)
+                });
+            },
+        );
+        let apfp_cases: Vec<_> = cases
+            .iter()
+            .map(|&(a, b, c, d)| {
+                (
+                    apfp_coord2(a),
+                    apfp_coord2(b),
+                    apfp_coord2(c),
+                    apfp_coord2(d),
+                )
+            })
+            .collect();
+        incircle_group.bench_with_input(
+            BenchmarkId::new("apfp", workload.name()),
+            &apfp_cases,
+            |bench, cases| {
+                bench.iter(|| {
+                    let mut score = 0_i64;
+                    for (a, b, c, d) in cases {
+                        score += apfp_orientation_score(apfp::geometry::f64::incircle(
+                            black_box(a),
+                            black_box(b),
+                            black_box(c),
+                            black_box(d),
+                        ));
+                    }
+                    black_box(score)
+                });
+            },
+        );
+    }
+    incircle_group.finish();
+
+    let mut insphere_group = c.benchmark_group("insphere3d");
+    for workload in Workload::ALL {
+        let cases = raw_insphere3d_cases(workload);
+        insphere_group.bench_with_input(
+            BenchmarkId::new("robust", workload.name()),
+            &cases,
+            |bench, cases| {
+                bench.iter(|| {
+                    let mut score = 0_i64;
+                    for &(a, b, c, d, e) in cases {
+                        score += determinant_score(robust::insphere(
+                            black_box(coord3(a)),
+                            black_box(coord3(b)),
+                            black_box(coord3(c)),
+                            black_box(coord3(d)),
+                            black_box(coord3(e)),
+                        ));
+                    }
+                    black_box(score)
+                });
+            },
+        );
+        insphere_group.bench_with_input(
+            BenchmarkId::new("geometry_predicates", workload.name()),
+            &cases,
+            |bench, cases| {
+                bench.iter(|| {
+                    let mut score = 0_i64;
+                    for &(a, b, c, d, e) in cases {
+                        score += determinant_score(geometry_predicates::insphere(
+                            black_box(a),
+                            black_box(b),
+                            black_box(c),
+                            black_box(d),
+                            black_box(e),
+                        ));
+                    }
+                    black_box(score)
+                });
+            },
+        );
+    }
+    insphere_group.finish();
+}
+
+fn bench_plane_composition_filters(c: &mut Criterion) {
+    let mut group = c.benchmark_group("plane_composition_filters");
+    let plane = Plane3::new(
+        point3(0.5, -0.75, 1.25, hyperreal_real),
+        hyperreal_real(-0.25),
+    );
+    let cases: Vec<_> = (0..BATCH)
+        .map(|index| {
+            let x = (index as f64 - 256.0) / 16.0;
+            (
+                point3(x, 0.5, -0.25, hyperreal_real),
+                point3(x + 0.5, -0.25, 0.75, hyperreal_real),
+                point3(x - 0.25, 1.0, 0.5, hyperreal_real),
+            )
+        })
+        .collect();
+    group.bench_function("segment/dyadic", |bench| {
+        bench.iter(|| {
+            let mut score = 0_i64;
+            for (a, b, _) in &cases {
+                score += i64::from(
+                    classify_plane_segment(black_box(&plane), black_box(a), black_box(b), APPROX)
+                        .value()
+                        .is_some(),
+                );
+            }
+            black_box(score)
+        })
+    });
+    group.bench_function("triangle/dyadic", |bench| {
+        bench.iter(|| {
+            let mut score = 0_i64;
+            for (a, b, c) in &cases {
+                score += i64::from(
+                    classify_plane_triangle(
+                        black_box(&plane),
+                        black_box(a),
+                        black_box(b),
+                        black_box(c),
+                        APPROX,
+                    )
+                    .value()
+                    .is_some(),
+                );
+            }
+            black_box(score)
+        })
+    });
+    let rational_plane = Plane3::new(rational_point3(1, 3, -2, 5, 4, 7), rational_real(-3, 11));
+    let rational_cases: Vec<_> = (0..BATCH)
+        .map(|index| {
+            let value = index as i64 - 256;
+            (
+                rational_point3(value, 17, 1, 3, -2, 5),
+                rational_point3(value + 1, 19, -3, 7, 4, 9),
+                rational_point3(value - 1, 23, 5, 11, -6, 13),
+            )
+        })
+        .collect();
+    group.bench_function("segment/exact_rational", |bench| {
+        bench.iter(|| {
+            let mut score = 0_i64;
+            for (a, b, _) in &rational_cases {
+                score += i64::from(
+                    classify_plane_segment(
+                        black_box(&rational_plane),
+                        black_box(a),
+                        black_box(b),
+                        APPROX,
+                    )
+                    .value()
+                    .is_some(),
+                );
+            }
+            black_box(score)
+        })
+    });
+    group.bench_function("triangle/exact_rational", |bench| {
+        bench.iter(|| {
+            let mut score = 0_i64;
+            for (a, b, c) in &rational_cases {
+                score += i64::from(
+                    classify_plane_triangle(
+                        black_box(&rational_plane),
+                        black_box(a),
+                        black_box(b),
+                        black_box(c),
+                        APPROX,
+                    )
+                    .value()
+                    .is_some(),
+                );
+            }
+            black_box(score)
+        })
+    });
+    group.finish();
+}
+
+fn bench_nd_symbolic_scale(c: &mut Criterion) {
+    let mut group = c.benchmark_group("nd_symbolic_scale");
+    let (simplex, center) = symbolic_orthogonal_simplex4();
+    group.bench_function("orient_d/4d_dense_pi", |bench| {
+        bench.iter(|| black_box(orient_d(black_box(&simplex), APPROX)))
+    });
+    group.bench_function("insphere_d/4d_dense_pi_center", |bench| {
+        bench.iter(|| black_box(insphere_d(black_box(&simplex), black_box(&center), APPROX)))
+    });
+    group.finish();
+}
+
+fn bench_hypermesh_port_helpers(c: &mut Criterion) {
+    let mut group = c.benchmark_group("hypermesh_port_helpers");
+    let points = vec![
+        rational_point3(0, 1, 0, 1, 0, 1),
+        rational_point3(4, 1, 0, 1, 0, 1),
+        rational_point3(0, 1, 4, 1, 0, 1),
+        rational_point3(1, 1, 1, 1, 0, 1),
+        rational_point3(5, 1, 1, 1, 0, 1),
+        rational_point3(1, 1, 5, 1, 0, 1),
+    ];
+    let segment_start = rational_point3(0, 1, 0, 1, -1, 1);
+    let segment_end = rational_point3(0, 1, 0, 1, 1, 1);
+    let noncoplanar_left = [
+        rational_point3(0, 1, 0, 1, 0, 1),
+        rational_point3(4, 1, 0, 1, 0, 1),
+        rational_point3(0, 1, 4, 1, 0, 1),
+    ];
+    let noncoplanar_right = [
+        rational_point3(1, 1, 1, 1, -1, 1),
+        rational_point3(1, 1, 3, 1, 1, 1),
+        rational_point3(3, 1, 1, 1, 1, 1),
+    ];
+    trace_dispatch_cases(
+        "hypermesh_port_helpers/triangle_triangle3/noncoplanar_report_replay",
+        &[()],
+        |_| {
+            black_box(classify_triangle_triangle3(
+                &noncoplanar_left[0],
+                &noncoplanar_left[1],
+                &noncoplanar_left[2],
+                &noncoplanar_right[0],
+                &noncoplanar_right[1],
+                &noncoplanar_right[2],
+                APPROX,
+            ));
+        },
+    );
+
+    // These rows track construction and coplanar helpers lifted from hypermesh.
+    // Topology is classified by retained exact predicates, and split parameters
+    // remain exact determinant-ratio constructions.
+    group.bench_function("triangle3_degeneracy/projected_orientations", |bench| {
+        bench.iter(|| {
+            let result = classify_triangle3_degeneracy(
+                black_box(&points[0]),
+                black_box(&points[1]),
+                black_box(&points[2]),
+                APPROX,
+            );
+            black_box(match result.value() {
+                Some(TriangleDegeneracy::NonDegenerate) => 1_i64,
+                Some(TriangleDegeneracy::Degenerate) => 0,
+                None => -1,
+            })
+        });
+    });
+    group.bench_function("segment_plane/determinant_ratio", |bench| {
+        bench.iter(|| {
+            let event = intersect_segment_with_oriented_plane(
+                black_box(&points[0]),
+                black_box(&points[1]),
+                black_box(&points[2]),
+                black_box(&segment_start),
+                black_box(&segment_end),
+                APPROX,
+            );
+            black_box(match event.relation {
+                SegmentPlaneRelation::ProperCrossing => 3_i64,
+                SegmentPlaneRelation::EndpointOnPlane => 2,
+                SegmentPlaneRelation::Coplanar => 1,
+                SegmentPlaneRelation::Disjoint => 0,
+                SegmentPlaneRelation::Unknown => -1,
+                SegmentPlaneRelation::ConstructionFailed => -2,
+            })
+        });
+    });
+    group.bench_function("triangle_plane/report_replay", |bench| {
+        bench.iter(|| {
+            let report = classify_triangle_against_oriented_plane(
+                [
+                    black_box(&points[0]),
+                    black_box(&points[1]),
+                    black_box(&points[2]),
+                ],
+                [
+                    black_box(&points[3]),
+                    black_box(&points[4]),
+                    black_box(&points[5]),
+                ],
+                APPROX,
+            );
+            black_box((report.relation, report.vertex_sides))
+        });
+    });
+    group.bench_function("coplanar_triangles/projected_overlap", |bench| {
+        bench.iter(|| {
+            let classification =
+                classify_coplanar_triangles(black_box(&points), [0, 1, 2], [3, 4, 5], APPROX);
+            black_box(match classification.relation {
+                CoplanarTriangleRelation::Disjoint => 0_i64,
+                CoplanarTriangleRelation::Touching => 1,
+                CoplanarTriangleRelation::Overlapping => 2,
+                CoplanarTriangleRelation::Unknown => -1,
+            })
+        });
+    });
+    group.bench_function("triangle_triangle3/report_replay", |bench| {
+        bench.iter(|| {
+            let classification = classify_triangle_triangle3(
+                black_box(&points[0]),
+                black_box(&points[1]),
+                black_box(&points[2]),
+                black_box(&points[3]),
+                black_box(&points[4]),
+                black_box(&points[5]),
+                APPROX,
+            );
+            black_box(match classification.value().map(|report| report.relation) {
+                Some(TriangleTriangleIntersection::Degenerate) => -2_i64,
+                Some(TriangleTriangleIntersection::Disjoint) => 0,
+                Some(TriangleTriangleIntersection::BoundaryTouch) => 1,
+                Some(TriangleTriangleIntersection::NonCoplanarIntersection) => 2,
+                Some(TriangleTriangleIntersection::CoplanarDisjoint) => 3,
+                Some(TriangleTriangleIntersection::CoplanarTouching) => 4,
+                Some(TriangleTriangleIntersection::CoplanarOverlapping) => 5,
+                None => -1,
+            })
+        });
+    });
+    group.bench_function("triangle_triangle3/noncoplanar_report_replay", |bench| {
+        bench.iter(|| {
+            let classification = classify_triangle_triangle3(
+                black_box(&noncoplanar_left[0]),
+                black_box(&noncoplanar_left[1]),
+                black_box(&noncoplanar_left[2]),
+                black_box(&noncoplanar_right[0]),
+                black_box(&noncoplanar_right[1]),
+                black_box(&noncoplanar_right[2]),
+                APPROX,
+            );
+            black_box(match classification.value().map(|report| report.relation) {
+                Some(TriangleTriangleIntersection::NonCoplanarIntersection) => 1_i64,
+                Some(_) => 0,
+                None => -1,
+            })
+        });
+    });
+    group.bench_function("projected_parameters/exact_ratio", |bench| {
+        let midpoint = rational_point3(2, 1, 0, 1, 0, 1);
+        bench.iter(|| {
+            let segment_t = projected_segment_parameter3(
+                black_box(&midpoint),
+                black_box(&points[0]),
+                black_box(&points[1]),
+                CoplanarProjection::Xy,
+                APPROX,
+            );
+            let line_t = projected_line_parameter3(
+                black_box(&segment_start),
+                black_box(&segment_end),
+                black_box(&points[0]),
+                black_box(&points[1]),
+                CoplanarProjection::Xy,
+                APPROX,
+            );
+            black_box((segment_t, line_t))
+        });
+    });
+    group.bench_function("support_dop3/build_and_aabb_project", |bench| {
+        let axes = vec![
+            rational_point3(1, 1, 0, 1, 0, 1),
+            rational_point3(0, 1, 1, 1, 0, 1),
+            rational_point3(0, 1, 0, 1, 1, 1),
+            rational_point3(1, 1, 1, 1, 1, 1),
+            rational_point3(1, 1, -1, 1, 0, 1),
+            rational_point3(0, 1, 1, 1, -1, 1),
+        ];
+        let cloud = vec![
+            rational_point3(0, 1, 0, 1, 0, 1),
+            rational_point3(4, 1, 0, 1, 0, 1),
+            rational_point3(0, 1, 4, 1, 0, 1),
+            rational_point3(0, 1, 0, 1, 4, 1),
+            rational_point3(1, 2, 3, 2, 5, 2),
+            rational_point3(-1, 2, 7, 2, 1, 2),
+        ];
+        let query_min = rational_point3(1, 1, 1, 1, 1, 1);
+        let query_max = rational_point3(2, 1, 2, 1, 2, 1);
+        bench.iter(|| {
+            let dop = support_dop3_from_points(black_box(&axes), black_box(&cloud), APPROX)
+                .value()
+                .expect("benchmark support DOP should decide");
+            black_box(
+                match dop
+                    .classify_aabb3(black_box(&query_min), black_box(&query_max), APPROX)
+                    .value()
+                {
+                    Some(SupportDopRelation::Degenerate) => -2,
+                    Some(SupportDopRelation::Separated) => 0_i64,
+                    Some(SupportDopRelation::BoundaryTouch) => 1,
+                    Some(SupportDopRelation::ConservativeOverlap) => 2,
+                    None => -1,
+                },
+            )
+        });
+    });
+    group.bench_function("support_dop3/build_and_aabb_report", |bench| {
+        let axes = vec![
+            rational_point3(1, 1, 0, 1, 0, 1),
+            rational_point3(0, 1, 1, 1, 0, 1),
+            rational_point3(0, 1, 0, 1, 1, 1),
+            rational_point3(1, 1, 1, 1, 1, 1),
+            rational_point3(1, 1, -1, 1, 0, 1),
+            rational_point3(0, 1, 1, 1, -1, 1),
+        ];
+        let cloud = vec![
+            rational_point3(0, 1, 0, 1, 0, 1),
+            rational_point3(4, 1, 0, 1, 0, 1),
+            rational_point3(0, 1, 4, 1, 0, 1),
+            rational_point3(0, 1, 0, 1, 4, 1),
+            rational_point3(1, 2, 3, 2, 5, 2),
+            rational_point3(-1, 2, 7, 2, 1, 2),
+        ];
+        let query_min = rational_point3(1, 1, 1, 1, 1, 1);
+        let query_max = rational_point3(2, 1, 2, 1, 2, 1);
+        bench.iter(|| {
+            let dop = support_dop3_from_points(black_box(&axes), black_box(&cloud), APPROX)
+                .value()
+                .expect("benchmark support DOP should decide");
+            let report = dop
+                .classify_aabb3_report(black_box(&query_min), black_box(&query_max), APPROX)
+                .value()
+                .expect("benchmark support DOP report should decide");
+            black_box(match report.validate(APPROX) {
+                Ok(()) => report.slab_reports.len() as i64,
+                Err(_) => -1,
+            })
+        });
+    });
+    group.bench_function("support_dop3/build_and_plane_report", |bench| {
+        let axes = vec![
+            rational_point3(1, 1, 0, 1, 0, 1),
+            rational_point3(0, 1, 1, 1, 0, 1),
+            rational_point3(0, 1, 0, 1, 1, 1),
+            rational_point3(1, 1, 1, 1, 1, 1),
+            rational_point3(1, 1, -1, 1, 0, 1),
+            rational_point3(0, 1, 1, 1, -1, 1),
+        ];
+        let cloud = vec![
+            rational_point3(0, 1, 0, 1, 0, 1),
+            rational_point3(4, 1, 0, 1, 0, 1),
+            rational_point3(0, 1, 4, 1, 0, 1),
+            rational_point3(0, 1, 0, 1, 4, 1),
+            rational_point3(1, 2, 3, 2, 5, 2),
+            rational_point3(-1, 2, 7, 2, 1, 2),
+        ];
+        let plane = hyperlimit::Plane3::new(rational_point3(1, 1, 1, 1, 0, 1), (-3).into());
+        bench.iter(|| {
+            let dop = support_dop3_from_points(black_box(&axes), black_box(&cloud), APPROX)
+                .value()
+                .expect("benchmark support DOP should decide");
+            let report = dop
+                .classify_plane3_report(black_box(&plane), APPROX)
+                .value()
+                .expect("benchmark support DOP plane report should decide");
+            black_box(match report.validate(APPROX) {
+                Ok(()) => report.slab_halfspaces.len() as i64,
+                Err(_) => -1,
+            })
+        });
+    });
+    group.finish();
+}
+
+fn bench_certified_filters(c: &mut Criterion) {
+    let mut group = c.benchmark_group("certified_filters");
+    let balls = certified_ball_cases();
+    group.bench_function("ball_sign/rational", |bench| {
+        bench.iter(|| {
+            let mut score = 0_i64;
+            for (center, radius) in &balls {
+                score += maybe_sign_score(black_box(certified_ball_sign(
+                    black_box(center),
+                    black_box(radius),
+                    APPROX,
+                )));
+            }
+            black_box(score)
+        });
+    });
+    group.finish();
+}
+
+fn bench_evidence_derivation(c: &mut Criterion) {
+    let mut group = c.benchmark_group("evidence_derivation");
+    let line_a = point2(-1.0, -1.0, hyperreal_real);
+    let line_b = point2(1.0, 1.0, hyperreal_real);
+    group.bench_function("point2/displacement_facts", |bench| {
+        bench.iter(|| point2_displacement_facts(black_box(&line_a), black_box(&line_b)))
+    });
+    group.bench_function("affine_det2_filter_only", |bench| {
+        bench.iter(|| {
+            hyperreal::AffineDet2Filter::from_reals(
+                [black_box(&line_a.x), black_box(&line_a.y)],
+                [black_box(&line_b.x), black_box(&line_b.y)],
+            )
+        })
+    });
+    group.bench_function("line2/dyadic_filter", |bench| {
+        bench.iter(|| line2_orientation(black_box(&line_a), black_box(&line_b)))
+    });
+    let rational_line_a = rational_point2(1, 3, 2, 5);
+    let rational_line_b = rational_point2(7, 11, -3, 7);
+    group.bench_function("affine_det2_exact_word_filter_only", |bench| {
+        bench.iter(|| {
+            hyperreal::AffineDet2ExactWordFilter::from_reals(
+                [black_box(&rational_line_a.x), black_box(&rational_line_a.y)],
+                [black_box(&rational_line_b.x), black_box(&rational_line_b.y)],
+            )
+        })
+    });
+    group.bench_function("line2/exact_rational_word_filter", |bench| {
+        bench.iter(|| line2_orientation(black_box(&rational_line_a), black_box(&rational_line_b)))
+    });
+
+    let plane_a = point3(-0.85, -0.7, -0.25, hyperreal_real);
+    let plane_b = point3(0.9, -0.35, 0.35, hyperreal_real);
+    let plane_c = point3(-0.35, 0.85, 0.05, hyperreal_real);
+    group.bench_function("affine_det3_filter_only", |bench| {
+        bench.iter(|| {
+            hyperreal::AffineDet3Filter::from_reals(
+                [
+                    black_box(&plane_a.x),
+                    black_box(&plane_a.y),
+                    black_box(&plane_a.z),
+                ],
+                [
+                    black_box(&plane_b.x),
+                    black_box(&plane_b.y),
+                    black_box(&plane_b.z),
+                ],
+                [
+                    black_box(&plane_c.x),
+                    black_box(&plane_c.y),
+                    black_box(&plane_c.z),
+                ],
+            )
+        })
+    });
+    group.bench_function("oriented_plane3/dyadic_filter", |bench| {
+        bench.iter(|| {
+            oriented_plane3_evidence(
+                black_box(&plane_a),
+                black_box(&plane_b),
+                black_box(&plane_c),
+            )
+        })
+    });
+    let rational_plane_a = rational_point3(1, 3, 2, 5, -1, 7);
+    let rational_plane_b = rational_point3(5, 11, -3, 7, 2, 13);
+    let rational_plane_c = rational_point3(-2, 17, 7, 19, 3, 23);
+    group.bench_function("affine_det3_exact_word_filter_only", |bench| {
+        bench.iter(|| {
+            hyperreal::AffineDet3ExactWordFilter::from_reals(
+                [
+                    black_box(&rational_plane_a.x),
+                    black_box(&rational_plane_a.y),
+                    black_box(&rational_plane_a.z),
+                ],
+                [
+                    black_box(&rational_plane_b.x),
+                    black_box(&rational_plane_b.y),
+                    black_box(&rational_plane_b.z),
+                ],
+                [
+                    black_box(&rational_plane_c.x),
+                    black_box(&rational_plane_c.y),
+                    black_box(&rational_plane_c.z),
+                ],
+            )
+        })
+    });
+    group.bench_function("oriented_plane3/exact_rational_word_filter", |bench| {
+        bench.iter(|| {
+            oriented_plane3_evidence(
+                black_box(&rational_plane_a),
+                black_box(&rational_plane_b),
+                black_box(&rational_plane_c),
+            )
+        })
+    });
+    let explicit_plane = Plane3::new(
+        Point3::new(
+            hyperreal_real(0.5),
+            hyperreal_real(-0.75),
+            hyperreal_real(1.25),
+        ),
+        hyperreal_real(-0.25),
+    );
+    group.bench_function("linear_form3_filter_only", |bench| {
+        bench.iter(|| {
+            hyperreal::LinearForm3Filter::from_reals([
+                black_box(&explicit_plane.normal.x),
+                black_box(&explicit_plane.normal.y),
+                black_box(&explicit_plane.normal.z),
+                black_box(&explicit_plane.offset),
+            ])
+        })
+    });
+    group.bench_function("plane3/dyadic_filter", |bench| {
+        bench.iter(|| plane3_evidence(black_box(&explicit_plane)))
+    });
+
+    let circle_a = point2(1.0, 0.0, hyperreal_real);
+    let circle_b = point2(0.0, 1.0, hyperreal_real);
+    let circle_c = point2(-1.0, 0.0, hyperreal_real);
+    group.bench_function("incircle2d_filter_only", |bench| {
+        bench.iter(|| {
+            hyperreal::Incircle2Filter::from_reals(
+                [black_box(&circle_a.x), black_box(&circle_a.y)],
+                [black_box(&circle_b.x), black_box(&circle_b.y)],
+                [black_box(&circle_c.x), black_box(&circle_c.y)],
+            )
+        })
+    });
+    group.bench_function("incircle2/dyadic_filter", |bench| {
+        bench.iter(|| {
+            incircle2_evidence(
+                black_box(&circle_a),
+                black_box(&circle_b),
+                black_box(&circle_c),
+            )
+        })
+    });
+
+    let sphere_a = point3(1.0, 0.0, 0.0, hyperreal_real);
+    let sphere_b = point3(0.0, 1.0, 0.0, hyperreal_real);
+    let sphere_c = point3(0.0, 0.0, 1.0, hyperreal_real);
+    let sphere_d = point3(-1.0, 0.0, 0.0, hyperreal_real);
+    group.bench_function("insphere3d_filter_only", |bench| {
+        bench.iter(|| {
+            hyperreal::Insphere3Filter::from_reals(
+                [
+                    black_box(&sphere_a.x),
+                    black_box(&sphere_a.y),
+                    black_box(&sphere_a.z),
+                ],
+                [
+                    black_box(&sphere_b.x),
+                    black_box(&sphere_b.y),
+                    black_box(&sphere_b.z),
+                ],
+                [
+                    black_box(&sphere_c.x),
+                    black_box(&sphere_c.y),
+                    black_box(&sphere_c.z),
+                ],
+                [
+                    black_box(&sphere_d.x),
+                    black_box(&sphere_d.y),
+                    black_box(&sphere_d.z),
+                ],
+            )
+        })
+    });
+    group.bench_function("insphere3/dyadic_filter", |bench| {
+        bench.iter(|| {
+            insphere3_evidence(
+                black_box(&sphere_a),
+                black_box(&sphere_b),
+                black_box(&sphere_c),
+                black_box(&sphere_d),
+            )
+        })
+    });
+    group.finish();
+}
+
+fn bench_representation(c: &mut Criterion, label: &'static str, real: fn(f64) -> hyperreal::Real) {
+    bench_orient2d(c, label, real);
+    bench_line_side(c, label, real);
+    bench_fixed_line_side(c, label, real);
+    bench_orient3d(c, label, real);
+    bench_explicit_plane(c, label, real);
+    bench_oriented_plane(c, label, real);
+    bench_incircle2d(c, label, real);
+    bench_insphere3d(c, label, real);
+}
+
+#[cfg(feature = "parallel")]
+fn bench_parallel_batches(c: &mut Criterion) {
+    const PARALLEL_BATCH: usize = 8_192;
+
+    bench_batch_pair(
+        c,
+        "batch_parallel/orient2d/near_degenerate",
+        repeat_cases(
+            orient2d_cases(Workload::NearDegenerate, hyperreal_real),
+            PARALLEL_BATCH,
+        ),
+        |cases| hyperlimit::orient2_batch(cases, APPROX),
+        |cases| hyperlimit::orient2_batch_parallel(cases, APPROX),
+    );
+    bench_batch_pair(
+        c,
+        "batch_parallel/orient3d/near_degenerate",
+        repeat_cases(
+            orient3d_cases(Workload::NearDegenerate, hyperreal_real),
+            PARALLEL_BATCH,
+        ),
+        |cases| hyperlimit::orient3_batch(cases, APPROX),
+        |cases| hyperlimit::orient3_batch_parallel(cases, APPROX),
+    );
+    bench_batch_pair(
+        c,
+        "batch_parallel/incircle2d/near_degenerate",
+        repeat_cases(
+            incircle2d_cases(Workload::NearDegenerate, hyperreal_real),
+            PARALLEL_BATCH,
+        ),
+        |cases| hyperlimit::incircle2_batch(cases, APPROX),
+        |cases| hyperlimit::incircle2_batch_parallel(cases, APPROX),
+    );
+    bench_batch_pair(
+        c,
+        "batch_parallel/insphere3d/near_degenerate",
+        repeat_cases(
+            insphere3d_cases(Workload::NearDegenerate, hyperreal_real),
+            PARALLEL_BATCH,
+        ),
+        |cases| hyperlimit::insphere3_batch(cases, APPROX),
+        |cases| hyperlimit::insphere3_batch_parallel(cases, APPROX),
+    );
+}
+
+#[cfg(feature = "parallel")]
+fn bench_batch_pair<T, O>(
+    c: &mut Criterion,
+    name: &str,
+    cases: Vec<T>,
+    sequential: impl Fn(&[T]) -> Vec<O>,
+    parallel: impl Fn(&[T]) -> Vec<O>,
+) {
+    let mut group = c.benchmark_group(name);
+    group.sample_size(20);
+    group.throughput(criterion::Throughput::Elements(cases.len() as u64));
+    group.bench_function("sequential", |bench| {
+        bench.iter(|| black_box(sequential(black_box(&cases))))
+    });
+    group.bench_function("rayon", |bench| {
+        bench.iter(|| black_box(parallel(black_box(&cases))))
+    });
+    group.finish();
+}
+
+#[cfg(feature = "parallel")]
+fn repeat_cases<T: Clone>(base: Vec<T>, count: usize) -> Vec<T> {
+    assert!(!base.is_empty());
+    let mut repeated = Vec::with_capacity(count);
+    while repeated.len() < count {
+        let remaining = count - repeated.len();
+        repeated.extend(base.iter().take(remaining).cloned());
+    }
+    repeated
+}
+
+fn bench_exact_rational_kernels(c: &mut Criterion) {
+    let mut group = c.benchmark_group("exact_rational_kernels");
+
+    let orient2 = exact_rational_orient2d_cases();
+    group.bench_function("orient2d/common_denominator", |b| {
+        b.iter(|| {
+            let mut score = 0_i64;
+            for (a, b, c) in &orient2 {
+                score += sign_score(black_box(orient2d(
+                    black_box(a),
+                    black_box(b),
+                    black_box(c),
+                    APPROX,
+                )));
+            }
+            black_box(score)
+        });
+    });
+
+    // Larger near-degenerate exact rationals ensure the benchmark preserves the
+    // algebraic decision rather than a nearby primitive-float surrogate.
+    let orient2_large = large_rational_near_degenerate_orient2d_cases();
+    group.bench_function("orient2d/larger_rational_near_degenerate", |b| {
+        b.iter(|| {
+            let mut score = 0_i64;
+            for (a, b, c) in &orient2_large {
+                score += sign_score(black_box(orient2d(
+                    black_box(a),
+                    black_box(b),
+                    black_box(c),
+                    APPROX,
+                )));
+            }
+            black_box(score)
+        });
+    });
+
+    let orient3 = exact_rational_orient3d_cases();
+    group.bench_function("orient3d/common_denominator", |b| {
+        b.iter(|| {
+            let mut score = 0_i64;
+            for (a, b, c, d) in &orient3 {
+                score += sign_score(black_box(orient3d(
+                    black_box(a),
+                    black_box(b),
+                    black_box(c),
+                    black_box(d),
+                    APPROX,
+                )));
+            }
+            black_box(score)
+        });
+    });
+
+    let incircle = exact_rational_incircle2d_cases();
+    group.bench_function("incircle2d/common_denominator", |b| {
+        b.iter(|| {
+            let mut score = 0_i64;
+            for (a, b, c, d) in &incircle {
+                score += sign_score(black_box(incircle2d(
+                    black_box(a),
+                    black_box(b),
+                    black_box(c),
+                    black_box(d),
+                    APPROX,
+                )));
+            }
+            black_box(score)
+        });
+    });
+
+    let incircle_large = large_rational_near_degenerate_incircle2d_cases();
+    group.bench_function("incircle2d/larger_rational_near_degenerate", |b| {
+        b.iter(|| {
+            let mut score = 0_i64;
+            for (a, b, c, d) in &incircle_large {
+                score += sign_score(black_box(incircle2d(
+                    black_box(a),
+                    black_box(b),
+                    black_box(c),
+                    black_box(d),
+                    APPROX,
+                )));
+            }
+            black_box(score)
+        });
+    });
+
+    let insphere = exact_rational_insphere3d_cases();
+    group.bench_function("insphere3d/common_denominator", |b| {
+        b.iter(|| {
+            let mut score = 0_i64;
+            for (a, b, c, d, e) in &insphere {
+                score += sign_score(black_box(insphere3d(
+                    black_box(a),
+                    black_box(b),
+                    black_box(c),
+                    black_box(d),
+                    black_box(e),
+                    APPROX,
+                )));
+            }
+            black_box(score)
+        });
+    });
+
+    let plane_triples = exact_rational_coordinate_plane_cases();
+    group.bench_function("homogeneous/three_plane_coordinate_triples", |b| {
+        b.iter(|| {
+            let mut score = 0_i64;
+            for (x_plane, y_plane, z_plane) in &plane_triples {
+                let point = black_box(intersect_three_planes(
+                    black_box(x_plane),
+                    black_box(y_plane),
+                    black_box(z_plane),
+                ));
+                score += i64::from(point.coordinate_facts().all_exact_rational);
+                score += bool_score(classify_homogeneous_point_plane(&point, x_plane, APPROX));
+                score += bool_score(classify_homogeneous_point_plane(&point, y_plane, APPROX));
+                score += bool_score(classify_homogeneous_point_plane(&point, z_plane, APPROX));
+            }
+            black_box(score)
+        });
+    });
+    group.bench_function("homogeneous/two_plane_line_then_plane", |b| {
+        b.iter(|| {
+            let mut score = 0_i64;
+            for (x_plane, y_plane, z_plane) in &plane_triples {
+                let line = black_box(intersect_two_planes(black_box(x_plane), black_box(y_plane)));
+                let point = black_box(line.intersect_plane(black_box(z_plane)));
+                score += i64::from(line.coordinate_facts().all_exact_rational);
+                score += bool_score(classify_homogeneous_point_plane(&point, z_plane, APPROX));
+            }
+            black_box(score)
+        });
+    });
+
+    // This mixed relation row keeps the exact 3D segment classifier visible for
+    // mesh-kernel edge and topology workloads without replacing skew or
+    // coplanar cases by primitive-float tolerances.
+    let segment3 = exact_rational_segment3_cases();
+    group.bench_function("segment3_intersection/mixed_exact_rational", |b| {
+        b.iter(|| {
+            let mut score = 0_i64;
+            for (a, b, c, d) in &segment3 {
+                score += segment3_intersection_score(black_box(classify_segment3_intersection(
+                    black_box(a),
+                    black_box(b),
+                    black_box(c),
+                    black_box(d),
+                    APPROX,
+                )));
+            }
+            black_box(score)
+        });
+    });
+
+    let distance3 = exact_rational_point_feature_distance_cases();
+    let threshold = rational_real(25, 121);
+    group.bench_function("distance_ordering/point2_non_dyadic", |b| {
+        let anchor = rational_point2(1, 3, -2, 5);
+        let left = rational_point2(7, 11, 13, 17);
+        let right = rational_point2(-19, 23, 29, 31);
+        b.iter(|| {
+            compare_point2_distance_squared(
+                black_box(&anchor),
+                black_box(&left),
+                black_box(&right),
+                APPROX,
+            )
+        });
+    });
+    group.bench_function("distance_ordering/point3_non_dyadic", |b| {
+        let anchor = rational_point3(1, 3, -2, 5, 3, 7);
+        let left = rational_point3(7, 11, 13, 17, -19, 23);
+        let right = rational_point3(29, 31, -37, 41, 43, 47);
+        b.iter(|| {
+            compare_point3_distance_squared(
+                black_box(&anchor),
+                black_box(&left),
+                black_box(&right),
+                APPROX,
+            )
+        });
+    });
+    group.bench_function("distance3/point_feature_scaled_thresholds", |b| {
+        b.iter(|| {
+            let mut score = 0_i64;
+            for (point, a, b, plane) in &distance3 {
+                score += ordering_score(black_box(compare_point_line3_distance_squared(
+                    black_box(point),
+                    black_box(a),
+                    black_box(b),
+                    black_box(&threshold),
+                    APPROX,
+                )));
+                score += ordering_score(black_box(compare_point_segment3_distance_squared(
+                    black_box(point),
+                    black_box(a),
+                    black_box(b),
+                    black_box(&threshold),
+                    APPROX,
+                )));
+                score += ordering_score(black_box(compare_point_plane_distance_squared(
+                    black_box(point),
+                    black_box(plane),
+                    black_box(&threshold),
+                    APPROX,
+                )));
+                score += i64::from(
+                    black_box(classify_sphere3_intersection(
+                        black_box(a),
+                        black_box(&threshold),
+                        black_box(b),
+                        black_box(&threshold),
+                        APPROX,
+                    ))
+                    .value()
+                    .is_some_and(|relation| relation.intersects()),
+                );
+                score += i64::from(
+                    black_box(classify_aabb3_sphere_intersection(
+                        black_box(a),
+                        black_box(b),
+                        black_box(point),
+                        black_box(&threshold),
+                        APPROX,
+                    ))
+                    .value()
+                    .is_some_and(|relation| relation.intersects()),
+                );
+            }
+            black_box(score)
+        });
+    });
+
+    let plane_aabb_cases = exact_rational_plane_aabb3_cases();
+    group.bench_function("plane/aabb3_reports", |b| {
+        b.iter(|| {
+            let mut score = 0_i64;
+            for (plane, min, max) in &plane_aabb_cases {
+                score += i64::from(
+                    classify_plane_aabb3_report(
+                        black_box(plane),
+                        black_box(min),
+                        black_box(max),
+                        APPROX,
+                    )
+                    .value()
+                    .is_some_and(|report| report.validate(APPROX).is_ok()),
+                );
+            }
+            black_box(score)
+        });
+    });
+
+    let triangle_hits = exact_rational_segment_triangle3_cases();
+    group.bench_function("triangle3/segment_and_ray_intersections", |b| {
+        b.iter(|| {
+            let mut score = 0_i64;
+            for (p, q, a, b, c) in &triangle_hits {
+                let direction = Point3::new(&q.x - &p.x, &q.y - &p.y, &q.z - &p.z);
+                score += i64::from(
+                    classify_segment_triangle3_intersection(
+                        black_box(p),
+                        black_box(q),
+                        black_box(a),
+                        black_box(b),
+                        black_box(c),
+                        APPROX,
+                    )
+                    .value()
+                    .is_some_and(|relation| relation.intersects()),
+                );
+                score += i64::from(
+                    classify_ray_triangle3_intersection(
+                        black_box(p),
+                        black_box(&direction),
+                        black_box(a),
+                        black_box(b),
+                        black_box(c),
+                        APPROX,
+                    )
+                    .value()
+                    .is_some_and(|relation| relation.intersects()),
+                );
+            }
+            black_box(score)
+        });
+    });
+    group.bench_function("triangle3/segment_intersection_reports", |b| {
+        b.iter(|| {
+            let mut score = 0_i64;
+            for (p, q, a, b, c) in &triangle_hits {
+                score += i64::from(
+                    classify_segment_triangle3_intersection_report(
+                        black_box(p),
+                        black_box(q),
+                        black_box(a),
+                        black_box(b),
+                        black_box(c),
+                        APPROX,
+                    )
+                    .value()
+                    .is_some_and(|report| {
+                        report.relation.intersects() && report.validate(APPROX).is_ok()
+                    }),
+                );
+            }
+            black_box(score)
+        });
+    });
+    group.bench_function("triangle3/ray_intersection_reports", |b| {
+        b.iter(|| {
+            let mut score = 0_i64;
+            for (p, q, a, b, c) in &triangle_hits {
+                let direction = Point3::new(&q.x - &p.x, &q.y - &p.y, &q.z - &p.z);
+                score += i64::from(
+                    classify_ray_triangle3_intersection_report(
+                        black_box(p),
+                        black_box(&direction),
+                        black_box(a),
+                        black_box(b),
+                        black_box(c),
+                        APPROX,
+                    )
+                    .value()
+                    .is_some_and(|report| {
+                        report.relation.intersects() && report.validate(APPROX).is_ok()
+                    }),
+                );
+            }
+            black_box(score)
+        });
+    });
+
+    let circle2 = exact_rational_circle2_line_segment_cases();
+    group.bench_function("circle2/line_and_segment_relations", |b| {
+        b.iter(|| {
+            let mut score = 0_i64;
+            for (center, radius_squared, a, b) in &circle2 {
+                score += i64::from(
+                    classify_circle_line2(
+                        black_box(center),
+                        black_box(radius_squared),
+                        black_box(a),
+                        black_box(b),
+                        APPROX,
+                    )
+                    .value()
+                    .is_some(),
+                );
+                score += i64::from(
+                    classify_circle_segment2(
+                        black_box(center),
+                        black_box(radius_squared),
+                        black_box(a),
+                        black_box(b),
+                        APPROX,
+                    )
+                    .value()
+                    .is_some(),
+                );
+            }
+            black_box(score)
+        });
+    });
+
+    let polygon = exact_rational_convex_polygon2();
+    group.bench_function("ring/area_sign_non_dyadic", |b| {
+        b.iter(|| {
+            let mut score = 0_i64;
+            for _ in 0..64 {
+                score += sign_score(black_box(ring_area_sign(black_box(&polygon), APPROX)));
+            }
+            black_box(score)
+        });
+    });
+    let planes = exact_rational_convex_box_planes3();
+    let orient2_points = exact_rational_orient2d_cases();
+    let orient3_points = exact_rational_orient3d_cases();
+    group.bench_function("convex/point_halfspace_composition", |b| {
+        b.iter(|| {
+            let mut score = 0_i64;
+            for (_, _, point) in &orient2_points {
+                score += i64::from(
+                    classify_point_convex_polygon2(black_box(&polygon), black_box(point), APPROX)
+                        .value()
+                        .is_some_and(|location| location.is_inside_or_boundary()),
+                );
+            }
+            for (_, _, _, point) in &orient3_points {
+                score += i64::from(
+                    classify_point_convex_planes3(black_box(&planes), black_box(point), APPROX)
+                        .value()
+                        .is_some_and(|location| location.is_inside_or_boundary()),
+                );
+            }
+            black_box(score)
+        });
+    });
+    group.bench_function("ring/even_odd_reports", |b| {
+        b.iter(|| {
+            let mut score = 0_i64;
+            for (_, _, point) in &orient2_points {
+                score += i64::from(
+                    classify_point_ring_even_odd_report(
+                        black_box(&polygon),
+                        black_box(point),
+                        APPROX,
+                    )
+                    .value()
+                    .is_some_and(|report| {
+                        report.location.is_inside_or_boundary() && report.validate().is_ok()
+                    }),
+                );
+            }
+            black_box(score)
+        });
+    });
+
+    group.bench_function("convex/halfspace_feasibility3_active_sets", |b| {
+        let feasible = exact_rational_shifted_box_planes3();
+        let infeasible = vec![
+            Plane3::new(rational_point3(1, 1, 0, 1, 0, 1), rational_real(1, 1)),
+            Plane3::new(rational_point3(-1, 1, 0, 1, 0, 1), rational_real(0, 1)),
+        ];
+        b.iter(|| {
+            let feasible_status = classify_halfspace_feasibility3(black_box(&feasible), APPROX)
+                .value()
+                .map(|report| report.is_feasible())
+                .unwrap_or(false);
+            let infeasible_status = classify_halfspace_feasibility3(black_box(&infeasible), APPROX)
+                .value()
+                .map(|report| report.infeasibility_certificate.is_some())
+                .unwrap_or(true);
+            black_box((feasible_status, infeasible_status))
+        });
+    });
+
+    // These rows keep the intentionally generic D-dimensional predicate
+    // boundary visible before `hypertri` or mesh crates add retained
+    // common-scale schedules.
+    let orient_d_cases = exact_rational_orient_d_cases();
+    group.bench_function("orient_d/4d_common_denominator", |b| {
+        b.iter(|| {
+            let mut score = 0_i64;
+            for case in &orient_d_cases {
+                score += sign_score(black_box(orient_d(black_box(case), APPROX)));
+            }
+            black_box(score)
+        });
+    });
+
+    let insphere_d_cases = exact_rational_insphere_d_cases();
+    group.bench_function("insphere_d/4d_common_denominator", |b| {
+        b.iter(|| {
+            let mut score = 0_i64;
+            for (simplex, query) in &insphere_d_cases {
+                score += sign_score(black_box(insphere_d(
+                    black_box(simplex),
+                    black_box(query),
+                    APPROX,
+                )));
+            }
+            black_box(score)
+        });
+    });
+
+    group.bench_function("affine_independent_d/4d_common_denominator", |b| {
+        b.iter(|| {
+            let mut score = 0_i64;
+            for case in &orient_d_cases {
+                score += bool_score(black_box(affine_independent_d(black_box(case), APPROX)));
+            }
+            black_box(score)
+        });
+    });
+
+    group.finish();
+}
+
+fn bench_shared_scale_views(c: &mut Criterion) {
+    let mut group = c.benchmark_group("shared_scale_views");
+    let point2 = rational_point2(1, 7, -2, 7);
+    group.bench_function("point2/common_denominator", |bench| {
+        bench.iter(|| black_box(point2.shared_scale_view()))
+    });
+
+    let point3 = rational_point3(1, 11, -2, 11, 3, 11);
+    group.bench_function("point3/common_denominator", |bench| {
+        bench.iter(|| black_box(point3.shared_scale_view()))
+    });
+
+    // These predicate rows retain nonzero common-denominator coordinates while
+    // the point-view rows measure metadata collection itself. Predicate timing
+    // guards the compact translated rational kernels selected after benchmarks
+    // showed that expanding homogeneous shared-scale schedules costs more than
+    // direct exact arithmetic for these low-dimensional determinants.
+    let incircle_cases = shared_scale_incircle2d_cases();
+    group.bench_function("incircle2d/common_denominator_predicate", |bench| {
+        bench.iter(|| {
+            let mut score = 0_i64;
+            for (a, b, c, d) in &incircle_cases {
+                score += sign_score(black_box(incircle2d(
+                    black_box(a),
+                    black_box(b),
+                    black_box(c),
+                    black_box(d),
+                    APPROX,
+                )));
+            }
+            black_box(score)
+        });
+    });
+    if let Some((a, b, c, _)) = incircle_cases.first() {
+        let evidence = incircle2_evidence(a, b, c);
+        group.bench_function("incircle2d/common_denominator_evidence", |bench| {
+            bench.iter(|| {
+                let mut score = 0_i64;
+                for (_, _, _, d) in &incircle_cases {
+                    score += sign_score(black_box(incircle2d_with_evidence(
+                        a,
+                        b,
+                        c,
+                        black_box(d),
+                        &evidence,
+                        APPROX,
+                    )));
+                }
+                black_box(score)
+            });
+        });
+    }
+
+    let insphere_cases = shared_scale_insphere3d_cases();
+    group.bench_function("insphere3d/common_denominator_predicate", |bench| {
+        bench.iter(|| {
+            let mut score = 0_i64;
+            for (a, b, c, d, e) in &insphere_cases {
+                score += sign_score(black_box(insphere3d(
+                    black_box(a),
+                    black_box(b),
+                    black_box(c),
+                    black_box(d),
+                    black_box(e),
+                    APPROX,
+                )));
+            }
+            black_box(score)
+        });
+    });
+    if let Some((a, b, c, d, _)) = insphere_cases.first() {
+        let evidence = insphere3_evidence(a, b, c, d);
+        group.bench_function("insphere3d/common_denominator_evidence", |bench| {
+            bench.iter(|| {
+                let mut score = 0_i64;
+                for (_, _, _, _, e) in &insphere_cases {
+                    score += sign_score(black_box(insphere3d_with_evidence(
+                        a,
+                        b,
+                        c,
+                        d,
+                        black_box(e),
+                        &evidence,
+                        APPROX,
+                    )));
+                }
+                black_box(score)
+            });
+        });
+    }
+    group.finish();
+}
+
+fn bench_transformed_predicates(c: &mut Criterion) {
+    let mut group = c.benchmark_group("transformed_predicates");
+
+    // Keep transformed exact-rational workloads visible as first-class cases so
+    // future affine or common-scale carriers can be measured before expansion.
+    let orient_cases = transformed_orient2d_cases();
+    trace_dispatch_cases(
+        "transformed_predicates/orient2d/exact_rational_affine",
+        &orient_cases,
+        |(a, b, c)| {
+            black_box(sign_score(orient2d(a, b, c, APPROX)));
+        },
+    );
+    group.bench_function("orient2d/exact_rational_affine", |bench| {
+        bench.iter(|| {
+            let mut score = 0_i64;
+            for (a, b, c) in &orient_cases {
+                score += sign_score(black_box(orient2d(
+                    black_box(a),
+                    black_box(b),
+                    black_box(c),
+                    APPROX,
+                )));
+            }
+            black_box(score)
+        });
+    });
+
+    let line_cases = transformed_line_cases();
+    if let Some((a, b, _)) = line_cases.first() {
+        let orientation = line2_orientation(a, b);
+        trace_dispatch_cases(
+            "transformed_predicates/classify_point_line/oriented_exact_rational_affine",
+            &line_cases,
+            |(_, _, point)| {
+                black_box(line_score(classify_point_line_with_orientation(
+                    a,
+                    b,
+                    point,
+                    &orientation,
+                    APPROX,
+                )));
+            },
+        );
+        group.bench_function(
+            "classify_point_line/oriented_exact_rational_affine",
+            |bench| {
+                bench.iter(|| {
+                    let mut score = 0_i64;
+                    for (_, _, point) in &line_cases {
+                        score += line_score(black_box(classify_point_line_with_orientation(
+                            a,
+                            b,
+                            black_box(point),
+                            &orientation,
+                            APPROX,
+                        )));
+                    }
+                    black_box(score)
+                });
+            },
+        );
+    }
+
+    let oriented_plane_cases = transformed_oriented_plane_cases();
+    if let Some((a, b, c, _)) = oriented_plane_cases.first() {
+        let evidence = oriented_plane3_evidence(a, b, c);
+        trace_dispatch_cases(
+            "transformed_predicates/classify_point_oriented_plane/evidence_exact_rational_affine",
+            &oriented_plane_cases,
+            |(_, _, _, point)| {
+                black_box(plane_score(classify_point_oriented_plane_with_evidence(
+                    point, &evidence, APPROX,
+                )));
+            },
+        );
+        group.bench_function(
+            "classify_point_oriented_plane/evidence_exact_rational_affine",
+            |bench| {
+                bench.iter(|| {
+                    let mut score = 0_i64;
+                    for (_, _, _, point) in &oriented_plane_cases {
+                        score +=
+                            plane_score(black_box(classify_point_oriented_plane_with_evidence(
+                                black_box(point),
+                                &evidence,
+                                APPROX,
+                            )));
+                    }
+                    black_box(score)
+                });
+            },
+        );
+    }
+
+    // The in-circle determinant is especially sensitive to expansion strategy.
+    // Cold and evidence-aware transformed rows reveal whether lifted-circle
+    // coefficient reuse preserves the exact determinant sign.
+    let incircle_cases = transformed_incircle2d_cases();
+    trace_dispatch_cases(
+        "transformed_predicates/incircle2d/exact_rational_affine",
+        &incircle_cases,
+        |(a, b, c, d)| {
+            black_box(sign_score(incircle2d(a, b, c, d, APPROX)));
+        },
+    );
+    group.bench_function("incircle2d/exact_rational_affine", |bench| {
+        bench.iter(|| {
+            let mut score = 0_i64;
+            for (a, b, c, d) in &incircle_cases {
+                score += sign_score(black_box(incircle2d(
+                    black_box(a),
+                    black_box(b),
+                    black_box(c),
+                    black_box(d),
+                    APPROX,
+                )));
+            }
+            black_box(score)
+        });
+    });
+    if let Some((a, b, c, _)) = incircle_cases.first() {
+        let evidence = incircle2_evidence(a, b, c);
+        trace_dispatch_cases(
+            "transformed_predicates/incircle2d/evidence_exact_rational_affine",
+            &incircle_cases,
+            |(_, _, _, d)| {
+                black_box(sign_score(incircle2d_with_evidence(
+                    a, b, c, d, &evidence, APPROX,
+                )));
+            },
+        );
+        group.bench_function("incircle2d/evidence_exact_rational_affine", |bench| {
+            bench.iter(|| {
+                let mut score = 0_i64;
+                for (_, _, _, d) in &incircle_cases {
+                    score += sign_score(black_box(incircle2d_with_evidence(
+                        a,
+                        b,
+                        c,
+                        black_box(d),
+                        &evidence,
+                        APPROX,
+                    )));
+                }
+                black_box(score)
+            });
+        });
+    }
+
+    group.finish();
+}
+
+fn bench_orient2d(c: &mut Criterion, label: &'static str, real: fn(f64) -> hyperreal::Real) {
+    let mut group = c.benchmark_group("orient2d");
+    for workload in Workload::ALL {
+        let cases = orient2d_cases(workload, real);
+        trace_dispatch_cases(
+            format!("orient2d/{label}/{}", workload.name()),
+            &cases,
+            |(a, b, d)| {
+                black_box(sign_score(orient2d(a, b, d, APPROX)));
+            },
+        );
+        group.bench_with_input(
+            BenchmarkId::new(label, workload.name()),
+            &cases,
+            |b, cases| {
+                b.iter(|| {
+                    let mut score = 0_i64;
+                    for (a, b, d) in cases {
+                        score += sign_score(black_box(orient2d(
+                            black_box(a),
+                            black_box(b),
+                            black_box(d),
+                            APPROX,
+                        )));
+                    }
+                    black_box(score)
+                });
+            },
+        );
+    }
+    group.finish();
+}
+
+fn bench_line_side(c: &mut Criterion, label: &'static str, real: fn(f64) -> hyperreal::Real) {
+    let mut group = c.benchmark_group("classify_point_line");
+    for workload in Workload::ALL {
+        let cases = orient2d_cases(workload, real);
+        trace_dispatch_cases(
+            format!("classify_point_line/{label}/{}", workload.name()),
+            &cases,
+            |(a, b, d)| {
+                black_box(line_score(classify_point_line(a, b, d, APPROX)));
+            },
+        );
+        group.bench_with_input(
+            BenchmarkId::new(label, workload.name()),
+            &cases,
+            |b, cases| {
+                b.iter(|| {
+                    let mut score = 0_i64;
+                    for (a, b, d) in cases {
+                        score += line_score(black_box(classify_point_line(
+                            black_box(a),
+                            black_box(b),
+                            black_box(d),
+                            APPROX,
+                        )));
+                    }
+                    black_box(score)
+                });
+            },
+        );
+    }
+    group.finish();
+}
+
+fn bench_fixed_line_side(c: &mut Criterion, label: &'static str, real: fn(f64) -> hyperreal::Real) {
+    let mut group = c.benchmark_group("classify_point_line_fixed");
+    for workload in Workload::ALL {
+        let cases = fixed_line_cases(workload, real);
+        trace_dispatch_cases(
+            format!("classify_point_line_fixed/{label}/{}", workload.name()),
+            &cases,
+            |(a, b, point)| {
+                black_box(line_score(classify_point_line(a, b, point, APPROX)));
+            },
+        );
+        group.bench_with_input(
+            BenchmarkId::new(label, workload.name()),
+            &cases,
+            |b, cases| {
+                b.iter(|| {
+                    let mut score = 0_i64;
+                    for (a, b, point) in cases {
+                        score += line_score(black_box(classify_point_line(
+                            black_box(a),
+                            black_box(b),
+                            black_box(point),
+                            APPROX,
+                        )));
+                    }
+                    black_box(score)
+                });
+            },
+        );
+        if let Some((line_a, line_b, _)) = cases.first() {
+            let orientation = line2_orientation(line_a, line_b);
+            trace_dispatch_cases(
+                format!(
+                    "classify_point_line_fixed/{label}_oriented/{}",
+                    workload.name()
+                ),
+                &cases,
+                |(_, _, point)| {
+                    black_box(line_score(classify_point_line_with_orientation(
+                        line_a,
+                        line_b,
+                        point,
+                        &orientation,
+                        APPROX,
+                    )));
+                },
+            );
+            group.bench_with_input(
+                BenchmarkId::new(format!("{label}_oriented"), workload.name()),
+                &cases,
+                |bencher, cases| {
+                    bencher.iter(|| {
+                        let mut score = 0_i64;
+                        for (_, _, point) in cases {
+                            score += line_score(black_box(classify_point_line_with_orientation(
+                                line_a,
+                                line_b,
+                                black_box(point),
+                                &orientation,
+                                APPROX,
+                            )));
+                        }
+                        black_box(score)
+                    });
+                },
+            );
+        }
+    }
+
+    group.finish();
+}
+
+fn bench_orient3d(c: &mut Criterion, label: &'static str, real: fn(f64) -> hyperreal::Real) {
+    let mut group = c.benchmark_group("orient3d");
+    for workload in Workload::ALL {
+        let cases = orient3d_cases(workload, real);
+        trace_dispatch_cases(
+            format!("orient3d/{label}/{}", workload.name()),
+            &cases,
+            |(a, b, c, d)| {
+                black_box(sign_score(orient3d(a, b, c, d, APPROX)));
+            },
+        );
+        group.bench_with_input(
+            BenchmarkId::new(label, workload.name()),
+            &cases,
+            |b, cases| {
+                b.iter(|| {
+                    let mut score = 0_i64;
+                    for (a, b, c, d) in cases {
+                        score += sign_score(black_box(orient3d(
+                            black_box(a),
+                            black_box(b),
+                            black_box(c),
+                            black_box(d),
+                            APPROX,
+                        )));
+                    }
+                    black_box(score)
+                });
+            },
+        );
+    }
+    group.finish();
+}
+
+fn bench_explicit_plane(c: &mut Criterion, label: &'static str, real: fn(f64) -> hyperreal::Real) {
+    let mut group = c.benchmark_group("classify_point_plane");
+    for workload in Workload::ALL {
+        let cases = explicit_plane_cases(workload, real);
+        trace_dispatch_cases(
+            format!("classify_point_plane/{label}/{}", workload.name()),
+            &cases,
+            |(point, plane)| {
+                black_box(plane_score(classify_point_plane(point, plane, APPROX)));
+            },
+        );
+        group.bench_with_input(
+            BenchmarkId::new(label, workload.name()),
+            &cases,
+            |b, cases| {
+                b.iter(|| {
+                    let mut score = 0_i64;
+                    for (point, plane) in cases {
+                        score += plane_score(black_box(classify_point_plane(
+                            black_box(point),
+                            black_box(plane),
+                            APPROX,
+                        )));
+                    }
+                    black_box(score)
+                });
+            },
+        );
+        if let Some((_, plane)) = cases.first() {
+            let evidence = plane3_evidence(plane);
+            trace_dispatch_cases(
+                format!("classify_point_plane/{label}_evidence/{}", workload.name()),
+                &cases,
+                |(point, _)| {
+                    black_box(plane_score(classify_point_plane_with_evidence(
+                        point, plane, &evidence, APPROX,
+                    )));
+                },
+            );
+            group.bench_with_input(
+                BenchmarkId::new(format!("{label}_evidence"), workload.name()),
+                &cases,
+                |b, cases| {
+                    b.iter(|| {
+                        let mut score = 0_i64;
+                        for (point, _) in cases {
+                            score += plane_score(black_box(classify_point_plane_with_evidence(
+                                black_box(point),
+                                plane,
+                                &evidence,
+                                APPROX,
+                            )));
+                        }
+                        black_box(score)
+                    });
+                },
+            );
+        }
+    }
+    group.finish();
+}
+
+fn bench_oriented_plane(c: &mut Criterion, label: &'static str, real: fn(f64) -> hyperreal::Real) {
+    let mut group = c.benchmark_group("classify_point_oriented_plane");
+    for workload in Workload::ALL {
+        let cases = oriented_plane_cases(workload, real);
+        trace_dispatch_cases(
+            format!("classify_point_oriented_plane/{label}/{}", workload.name()),
+            &cases,
+            |(a, b, c, point)| {
+                black_box(plane_score(classify_point_oriented_plane(
+                    a, b, c, point, APPROX,
+                )));
+            },
+        );
+        group.bench_with_input(
+            BenchmarkId::new(label, workload.name()),
+            &cases,
+            |b, cases| {
+                b.iter(|| {
+                    let mut score = 0_i64;
+                    for (a, b, c, point) in cases {
+                        score += plane_score(black_box(classify_point_oriented_plane(
+                            black_box(a),
+                            black_box(b),
+                            black_box(c),
+                            black_box(point),
+                            APPROX,
+                        )));
+                    }
+                    black_box(score)
+                });
+            },
+        );
+        if let Some((a, b, c, _)) = cases.first() {
+            let evidence = oriented_plane3_evidence(a, b, c);
+            trace_dispatch_cases(
+                format!(
+                    "classify_point_oriented_plane/{label}_evidence/{}",
+                    workload.name()
+                ),
+                &cases,
+                |(_, _, _, point)| {
+                    black_box(plane_score(classify_point_oriented_plane_with_evidence(
+                        point, &evidence, APPROX,
+                    )));
+                },
+            );
+            group.bench_with_input(
+                BenchmarkId::new(format!("{label}_evidence"), workload.name()),
+                &cases,
+                |b, cases| {
+                    b.iter(|| {
+                        let mut score = 0_i64;
+                        for (_, _, _, point) in cases {
+                            score += plane_score(black_box(
+                                classify_point_oriented_plane_with_evidence(
+                                    black_box(point),
+                                    &evidence,
+                                    APPROX,
+                                ),
+                            ));
+                        }
+                        black_box(score)
+                    });
+                },
+            );
+        }
+    }
+    group.finish();
+}
+
+fn bench_incircle2d(c: &mut Criterion, label: &'static str, real: fn(f64) -> hyperreal::Real) {
+    let mut group = c.benchmark_group("incircle2d");
+    for workload in Workload::ALL {
+        let cases = incircle2d_cases(workload, real);
+        trace_dispatch_cases(
+            format!("incircle2d/{label}/{}", workload.name()),
+            &cases,
+            |(a, b, c, d)| {
+                black_box(sign_score(incircle2d(a, b, c, d, APPROX)));
+            },
+        );
+        group.bench_with_input(
+            BenchmarkId::new(label, workload.name()),
+            &cases,
+            |b, cases| {
+                b.iter(|| {
+                    let mut score = 0_i64;
+                    for (a, b, c, d) in cases {
+                        score += sign_score(black_box(incircle2d(
+                            black_box(a),
+                            black_box(b),
+                            black_box(c),
+                            black_box(d),
+                            APPROX,
+                        )));
+                    }
+                    black_box(score)
+                });
+            },
+        );
+        if let Some((source_a, source_b, source_c, _)) = cases.first() {
+            let evidence = incircle2_evidence(source_a, source_b, source_c);
+            trace_dispatch_cases(
+                format!("incircle2d/{label}_evidence/{}", workload.name()),
+                &cases,
+                |(_, _, _, d)| {
+                    black_box(sign_score(incircle2d_with_evidence(
+                        source_a, source_b, source_c, d, &evidence, APPROX,
+                    )));
+                },
+            );
+            group.bench_with_input(
+                BenchmarkId::new(format!("{label}_evidence"), workload.name()),
+                &cases,
+                |bencher, cases| {
+                    bencher.iter(|| {
+                        let mut score = 0_i64;
+                        for (_, _, _, d) in cases {
+                            score += sign_score(black_box(incircle2d_with_evidence(
+                                source_a,
+                                source_b,
+                                source_c,
+                                black_box(d),
+                                &evidence,
+                                APPROX,
+                            )));
+                        }
+                        black_box(score)
+                    });
+                },
+            );
+        }
+    }
+    group.finish();
+}
+
+fn bench_insphere3d(c: &mut Criterion, label: &'static str, real: fn(f64) -> hyperreal::Real) {
+    let mut group = c.benchmark_group("insphere3d");
+    for workload in Workload::ALL {
+        let cases = insphere3d_cases(workload, real);
+        trace_dispatch_cases(
+            format!("insphere3d/{label}/{}", workload.name()),
+            &cases,
+            |(a, b, c, d, e)| {
+                black_box(sign_score(insphere3d(a, b, c, d, e, APPROX)));
+            },
+        );
+        group.bench_with_input(
+            BenchmarkId::new(label, workload.name()),
+            &cases,
+            |b, cases| {
+                b.iter(|| {
+                    let mut score = 0_i64;
+                    for (a, b, c, d, e) in cases {
+                        score += sign_score(black_box(insphere3d(
+                            black_box(a),
+                            black_box(b),
+                            black_box(c),
+                            black_box(d),
+                            black_box(e),
+                            APPROX,
+                        )));
+                    }
+                    black_box(score)
+                });
+            },
+        );
+        if let Some((source_a, source_b, source_c, source_d, _)) = cases.first() {
+            let evidence = insphere3_evidence(source_a, source_b, source_c, source_d);
+            trace_dispatch_cases(
+                format!("insphere3d/{label}_evidence/{}", workload.name()),
+                &cases,
+                |(_, _, _, _, e)| {
+                    black_box(sign_score(insphere3d_with_evidence(
+                        source_a, source_b, source_c, source_d, e, &evidence, APPROX,
+                    )));
+                },
+            );
+            group.bench_with_input(
+                BenchmarkId::new(format!("{label}_evidence"), workload.name()),
+                &cases,
+                |bencher, cases| {
+                    bencher.iter(|| {
+                        let mut score = 0_i64;
+                        for (_, _, _, _, e) in cases {
+                            score += sign_score(black_box(insphere3d_with_evidence(
+                                source_a,
+                                source_b,
+                                source_c,
+                                source_d,
+                                black_box(e),
+                                &evidence,
+                                APPROX,
+                            )));
+                        }
+                        black_box(score)
+                    });
+                },
+            );
+        }
+    }
+    group.finish();
+}
+
+fn orient2d_cases(
+    workload: Workload,
+    real: fn(f64) -> hyperreal::Real,
+) -> Vec<(Point2, Point2, Point2)> {
+    raw_orient2d_cases(workload)
+        .into_iter()
+        .map(|(a, b, c)| {
+            (
+                point2(a[0], a[1], real),
+                point2(b[0], b[1], real),
+                point2(c[0], c[1], real),
+            )
+        })
+        .collect()
+}
+
+fn raw_orient2d_cases(workload: Workload) -> Vec<RawOrient2Case> {
+    let mut cases = Vec::with_capacity(BATCH);
+    for i in 0..BATCH {
+        let t = unit(i);
+        let u = unit(i.wrapping_mul(17).wrapping_add(3));
+        let (a, b, c) = match workload {
+            Workload::Easy => (
+                [-0.75 + 0.2 * t, -0.35 + 0.1 * u],
+                [0.85 - 0.15 * u, -0.25 + 0.2 * t],
+                [-0.15 + 0.9 * u, 0.8 - 0.4 * t],
+            ),
+            Workload::NearDegenerate => {
+                let x = -0.9 + 1.8 * t;
+                let eps = alternating_eps(i, 1.0e-13);
+                ([-1.0, -1.0], [1.0, 1.0], [x, x + eps])
+            }
+        };
+        cases.push((a, b, c));
+    }
+    cases
+}
+
+fn fixed_line_cases(
+    workload: Workload,
+    real: fn(f64) -> hyperreal::Real,
+) -> Vec<(Point2, Point2, Point2)> {
+    let a = point2(-1.0, -1.0, real);
+    let b = point2(1.0, 1.0, real);
+    let mut cases = Vec::with_capacity(BATCH);
+    for i in 0..BATCH {
+        let x = -0.9 + 1.8 * unit(i);
+        let y = match workload {
+            Workload::Easy => -0.5 + 1.1 * unit(i.wrapping_mul(17).wrapping_add(3)),
+            Workload::NearDegenerate => x + alternating_eps(i, 1.0e-13),
+        };
+        cases.push((a.clone(), b.clone(), point2(x, y, real)));
+    }
+    cases
+}
+
+fn orient3d_cases(workload: Workload, real: fn(f64) -> hyperreal::Real) -> Vec<Orient3Case> {
+    raw_orient3d_cases(workload)
+        .into_iter()
+        .map(|(a, b, c, d)| {
+            (
+                point3(a[0], a[1], a[2], real),
+                point3(b[0], b[1], b[2], real),
+                point3(c[0], c[1], c[2], real),
+                point3(d[0], d[1], d[2], real),
+            )
+        })
+        .collect()
+}
+
+fn raw_orient3d_cases(workload: Workload) -> Vec<RawOrient3Case> {
+    let mut cases = Vec::with_capacity(BATCH);
+    for i in 0..BATCH {
+        let t = unit(i);
+        let u = unit(i.wrapping_mul(13).wrapping_add(5));
+        let v = unit(i.wrapping_mul(29).wrapping_add(11));
+        let (a, b, c, d) = match workload {
+            Workload::Easy => (
+                [-0.4 + 0.2 * t, -0.7, -0.2 + 0.1 * u],
+                [0.8, -0.25 + 0.2 * u, 0.1],
+                [-0.2, 0.75, 0.25 + 0.1 * v],
+                [-0.1 + 0.5 * v, -0.05 + 0.3 * t, 0.95],
+            ),
+            Workload::NearDegenerate => {
+                let x = -0.8 + 1.6 * t;
+                let y = -0.8 + 1.6 * u;
+                let eps = alternating_eps(i, 1.0e-13);
+                (
+                    [0.0, 0.0, 0.0],
+                    [1.0, 0.0, 0.0],
+                    [0.0, 1.0, 0.0],
+                    [x, y, eps],
+                )
+            }
+        };
+        cases.push((a, b, c, d));
+    }
+    cases
+}
+
+fn explicit_plane_cases(
+    workload: Workload,
+    real: fn(f64) -> hyperreal::Real,
+) -> Vec<(Point3, Plane3)> {
+    let mut cases = Vec::with_capacity(BATCH);
+    for i in 0..BATCH {
+        let t = unit(i);
+        let u = unit(i.wrapping_mul(19).wrapping_add(7));
+        let z = match workload {
+            Workload::Easy => -0.8 + 1.6 * unit(i.wrapping_mul(31).wrapping_add(2)),
+            Workload::NearDegenerate => {
+                let on_plane = 0.05 - 0.8 * t + 0.55 * u;
+                on_plane + alternating_eps(i, 1.0e-13)
+            }
+        };
+        cases.push((
+            point3(t, u, z, real),
+            Plane3::new(point3(0.8, -0.55, 1.0, real), real(-0.05)),
+        ));
+    }
+    cases
+}
+
+fn oriented_plane_cases(workload: Workload, real: fn(f64) -> hyperreal::Real) -> Vec<Orient3Case> {
+    let a = point3(-0.85, -0.7, -0.25, real);
+    let b = point3(0.9, -0.35, 0.35, real);
+    let c = point3(-0.35, 0.85, 0.05, real);
+    let mut cases = Vec::with_capacity(BATCH);
+    for i in 0..BATCH {
+        let t = -0.9 + 1.8 * unit(i);
+        let u = -0.9 + 1.8 * unit(i.wrapping_mul(23).wrapping_add(17));
+        let point = match workload {
+            Workload::Easy => point3(t, u, 0.5 + 0.4 * unit(i.wrapping_add(9)), real),
+            Workload::NearDegenerate => point3(
+                t,
+                u,
+                0.38 * t + 0.24 * u + alternating_eps(i, 1.0e-13),
+                real,
+            ),
+        };
+        cases.push((a.clone(), b.clone(), c.clone(), point));
+    }
+    cases
+}
+
+fn incircle2d_cases(workload: Workload, real: fn(f64) -> hyperreal::Real) -> Vec<Incircle2Case> {
+    raw_incircle2d_cases(workload)
+        .into_iter()
+        .map(|(a, b, c, d)| {
+            (
+                point2(a[0], a[1], real),
+                point2(b[0], b[1], real),
+                point2(c[0], c[1], real),
+                point2(d[0], d[1], real),
+            )
+        })
+        .collect()
+}
+
+fn raw_incircle2d_cases(workload: Workload) -> Vec<RawIncircle2Case> {
+    let a = [0.82, 0.0];
+    let b = [0.0, 0.82];
+    let c = [-0.82, 0.0];
+    let mut cases = Vec::with_capacity(BATCH);
+    for i in 0..BATCH {
+        let theta = std::f64::consts::TAU * unit(i);
+        let r = match workload {
+            Workload::Easy => 0.35 + 0.45 * unit(i.wrapping_mul(11).wrapping_add(1)),
+            Workload::NearDegenerate => 0.82 + alternating_eps(i, 1.0e-12),
+        };
+        let d = [r * theta.cos(), r * theta.sin()];
+        cases.push((a, b, c, d));
+    }
+    cases
+}
+
+fn insphere3d_cases(workload: Workload, real: fn(f64) -> hyperreal::Real) -> Vec<Insphere3Case> {
+    raw_insphere3d_cases(workload)
+        .into_iter()
+        .map(|(a, b, c, d, e)| {
+            (
+                point3(a[0], a[1], a[2], real),
+                point3(b[0], b[1], b[2], real),
+                point3(c[0], c[1], c[2], real),
+                point3(d[0], d[1], d[2], real),
+                point3(e[0], e[1], e[2], real),
+            )
+        })
+        .collect()
+}
+
+fn raw_insphere3d_cases(workload: Workload) -> Vec<RawInsphere3Case> {
+    let a = [0.82, 0.0, 0.0];
+    let b = [-0.82, 0.0, 0.0];
+    let c = [0.0, 0.82, 0.0];
+    let d = [0.0, 0.0, 0.82];
+    let mut cases = Vec::with_capacity(BATCH);
+    for i in 0..BATCH {
+        let theta = std::f64::consts::TAU * unit(i);
+        let z = -0.6 + 1.2 * unit(i.wrapping_mul(37).wrapping_add(13));
+        let r = match workload {
+            Workload::Easy => 0.25 + 0.35 * unit(i.wrapping_mul(7).wrapping_add(1)),
+            Workload::NearDegenerate => {
+                (0.82_f64.powi(2) - z * z).max(0.0).sqrt() + alternating_eps(i, 1.0e-12)
+            }
+        };
+        let e = [r * theta.cos(), r * theta.sin(), z];
+        cases.push((a, b, c, d, e));
+    }
+    cases
+}
+
+fn exact_rational_orient2d_cases() -> Vec<Orient2Case> {
+    let mut cases = Vec::with_capacity(BATCH);
+    for i in 0..BATCH {
+        let j = i as i64;
+        cases.push((
+            rational_point2(j - 40, 7, j % 17 - 8, 7),
+            rational_point2(j % 31 + 2, 7, 19 - j % 23, 7),
+            rational_point2(j % 13 - 6, 7, j % 29 - 14, 7),
+        ));
+    }
+    cases
+}
+
+fn exact_rational_orient3d_cases() -> Vec<Orient3Case> {
+    let mut cases = Vec::with_capacity(BATCH);
+    for i in 0..BATCH {
+        let j = i as i64;
+        cases.push((
+            rational_point3(j % 11 - 5, 9, j % 13 - 6, 9, j % 17 - 8, 9),
+            rational_point3(j % 19 + 1, 9, j % 23 - 11, 9, 3 - j % 7, 9),
+            rational_point3(j % 29 - 14, 9, j % 5 + 2, 9, j % 31 - 15, 9),
+            rational_point3(j % 37 - 18, 9, j % 41 - 20, 9, j % 43 - 21, 9),
+        ));
+    }
+    cases
+}
+
+fn exact_rational_incircle2d_cases() -> Vec<Incircle2Case> {
+    let a = rational_point2(0, 11, 0, 11);
+    let b = rational_point2(8, 11, 0, 11);
+    let c = rational_point2(0, 11, 8, 11);
+    let mut cases = Vec::with_capacity(BATCH);
+    for i in 0..BATCH {
+        let j = i as i64;
+        cases.push((
+            a.clone(),
+            b.clone(),
+            c.clone(),
+            rational_point2(j % 17 + 1, 11, j % 19 + 1, 11),
+        ));
+    }
+    cases
+}
+
+fn exact_rational_insphere3d_cases() -> Vec<Insphere3Case> {
+    let a = rational_point3(0, 13, 0, 13, 0, 13);
+    let b = rational_point3(9, 13, 0, 13, 0, 13);
+    let c = rational_point3(0, 13, 9, 13, 0, 13);
+    let d = rational_point3(0, 13, 0, 13, 9, 13);
+    let mut cases = Vec::with_capacity(BATCH);
+    for i in 0..BATCH {
+        let j = i as i64;
+        cases.push((
+            a.clone(),
+            b.clone(),
+            c.clone(),
+            d.clone(),
+            rational_point3(j % 17 + 1, 13, j % 19 + 1, 13, j % 23 + 1, 13),
+        ));
+    }
+    cases
+}
+
+fn exact_rational_coordinate_plane_cases() -> Vec<(Plane3, Plane3, Plane3)> {
+    let mut cases = Vec::with_capacity(BATCH);
+    for i in 0..BATCH {
+        let j = i as i64;
+        cases.push((
+            coordinate_plane(0, rational_real(j % 31 - 15, 17)),
+            coordinate_plane(1, rational_real(j % 37 - 18, 17)),
+            coordinate_plane(2, rational_real(j % 41 - 20, 17)),
+        ));
+    }
+    cases
+}
+
+fn exact_rational_segment3_cases() -> Vec<Segment3Case> {
+    let mut cases = Vec::with_capacity(BATCH);
+    for i in 0..BATCH {
+        let j = i as i64;
+        match i % 6 {
+            0 => cases.push((
+                rational_point3(0, 11, 0, 11, 0, 11),
+                rational_point3(8, 11, 0, 11, 0, 11),
+                rational_point3(4, 11, -2, 11, 0, 11),
+                rational_point3(4, 11, 2, 11, 0, 11),
+            )),
+            1 => cases.push((
+                rational_point3(0, 11, 0, 11, 0, 11),
+                rational_point3(8, 11, 0, 11, 0, 11),
+                rational_point3(9, 11, 1, 11, 0, 11),
+                rational_point3(12, 11, 1, 11, 0, 11),
+            )),
+            2 => cases.push((
+                rational_point3(0, 11, 0, 11, 0, 11),
+                rational_point3(8, 11, 0, 11, 0, 11),
+                rational_point3(4, 11, -2, 11, 1, 11),
+                rational_point3(4, 11, 2, 11, 1, 11),
+            )),
+            3 => cases.push((
+                rational_point3(0, 11, 0, 11, 0, 11),
+                rational_point3(8, 11, 8, 11, 8, 11),
+                rational_point3(4, 11, 4, 11, 4, 11),
+                rational_point3(10, 11, 10, 11, 10, 11),
+            )),
+            4 => cases.push((
+                rational_point3(j % 5, 11, 0, 11, 0, 11),
+                rational_point3(j % 5 + 8, 11, 0, 11, 0, 11),
+                rational_point3(j % 5 + 8, 11, 0, 11, 0, 11),
+                rational_point3(j % 5 + 8, 11, 2, 11, 0, 11),
+            )),
+            _ => cases.push((
+                rational_point3(1, 11, 1, 11, 1, 11),
+                rational_point3(7, 11, 7, 11, 7, 11),
+                rational_point3(7, 11, 7, 11, 7, 11),
+                rational_point3(1, 11, 1, 11, 1, 11),
+            )),
+        }
+    }
+    cases
+}
+
+fn exact_rational_point_feature_distance_cases() -> Vec<(Point3, Point3, Point3, Plane3)> {
+    let mut cases = Vec::with_capacity(BATCH);
+    for i in 0..BATCH {
+        let j = i as i64;
+        let point = rational_point3(j % 13 - 6, 11, j % 17 - 8, 11, j % 19 - 9, 11);
+        let a = rational_point3(-4, 11, j % 5 - 2, 11, 0, 11);
+        let b = rational_point3(8, 11, j % 7 - 3, 11, j % 3 + 1, 11);
+        let plane = Plane3::new(
+            rational_point3(1, 11, -2, 11, 3, 11),
+            rational_real(j % 23 - 11, 11),
+        );
+        cases.push((point, a, b, plane));
+    }
+    cases
+}
+
+fn exact_rational_plane_aabb3_cases() -> Vec<(Plane3, Point3, Point3)> {
+    let mut cases = Vec::with_capacity(BATCH);
+    for i in 0..BATCH {
+        let j = i as i64;
+        let plane = Plane3::new(
+            rational_point3(1, 11, -2, 11, 1, 11),
+            rational_real(j % 9 - 4, 11),
+        );
+        let min = rational_point3(j % 7 - 3, 11, j % 5 - 2, 11, j % 3 - 1, 11);
+        let max = rational_point3(j % 7 + 1, 11, j % 5 + 2, 11, j % 3 + 3, 11);
+        cases.push((plane, min, max));
+    }
+    cases
+}
+
+fn exact_rational_segment_triangle3_cases() -> Vec<SegmentTriangle3Case> {
+    let a = rational_point3(0, 11, 0, 11, 0, 11);
+    let b = rational_point3(40, 11, 0, 11, 0, 11);
+    let c = rational_point3(0, 11, 40, 11, 0, 11);
+    let mut cases = Vec::with_capacity(BATCH);
+    for i in 0..BATCH {
+        let j = i as i64;
+        let x = j % 31;
+        let y = (j * 7) % 31;
+        cases.push((
+            rational_point3(x, 11, y, 11, -5, 11),
+            rational_point3(x, 11, y, 11, 5, 11),
+            a.clone(),
+            b.clone(),
+            c.clone(),
+        ));
+    }
+    cases
+}
+
+fn exact_rational_circle2_line_segment_cases() -> Vec<(Point2, hyperreal::Real, Point2, Point2)> {
+    let center = rational_point2(0, 11, 0, 11);
+    let radius_squared = rational_real(25, 121);
+    let mut cases = Vec::with_capacity(BATCH);
+    for i in 0..BATCH {
+        let j = i as i64;
+        cases.push((
+            center.clone(),
+            radius_squared.clone(),
+            rational_point2(-10, 11, j % 15 - 7, 11),
+            rational_point2(10, 11, j % 15 - 7, 11),
+        ));
+    }
+    cases
+}
+
+fn exact_rational_convex_polygon2() -> Vec<Point2> {
+    vec![
+        rational_point2(0, 11, 0, 11),
+        rational_point2(40, 11, 0, 11),
+        rational_point2(40, 11, 40, 11),
+        rational_point2(0, 11, 40, 11),
+    ]
+}
+
+fn exact_rational_convex_box_planes3() -> Vec<Plane3> {
+    vec![
+        Plane3::new(rational_point3(-1, 11, 0, 11, 0, 11), rational_real(0, 11)),
+        Plane3::new(
+            rational_point3(1, 11, 0, 11, 0, 11),
+            rational_real(-40, 121),
+        ),
+        Plane3::new(rational_point3(0, 11, -1, 11, 0, 11), rational_real(0, 11)),
+        Plane3::new(
+            rational_point3(0, 11, 1, 11, 0, 11),
+            rational_real(-40, 121),
+        ),
+        Plane3::new(rational_point3(0, 11, 0, 11, -1, 11), rational_real(0, 11)),
+        Plane3::new(
+            rational_point3(0, 11, 0, 11, 1, 11),
+            rational_real(-40, 121),
+        ),
+    ]
+}
+
+fn exact_rational_shifted_box_planes3() -> Vec<Plane3> {
+    vec![
+        Plane3::new(rational_point3(-1, 1, 0, 1, 0, 1), rational_real(2, 1)),
+        Plane3::new(rational_point3(1, 1, 0, 1, 0, 1), rational_real(-5, 1)),
+        Plane3::new(rational_point3(0, 1, -1, 1, 0, 1), rational_real(3, 1)),
+        Plane3::new(rational_point3(0, 1, 1, 1, 0, 1), rational_real(-6, 1)),
+        Plane3::new(rational_point3(0, 1, 0, 1, -1, 1), rational_real(1, 1)),
+        Plane3::new(rational_point3(0, 1, 0, 1, 1, 1), rational_real(-4, 1)),
+    ]
+}
+
+fn exact_rational_orient_d_cases() -> Vec<Vec<Vec<hyperreal::Real>>> {
+    let mut cases = Vec::with_capacity(BATCH);
+    for i in 0..BATCH {
+        let j = i as i64;
+        cases.push(vec![
+            rational_point_d(&[0, 0, 0, 0], 17),
+            rational_point_d(&[9, 0, 0, 0], 17),
+            rational_point_d(&[0, 9, 0, 0], 17),
+            rational_point_d(&[0, 0, 9, 0], 17),
+            rational_point_d(&[j % 5, j % 7, j % 11, 9 + j % 3], 17),
+        ]);
+    }
+    cases
+}
+
+fn symbolic_orthogonal_simplex4() -> (Vec<Vec<hyperreal::Real>>, Vec<hyperreal::Real>) {
+    let half = hyperreal::Real::from(hyperreal::Rational::fraction(1, 2).unwrap());
+    let half_pi = half * hyperreal::Real::pi();
+    let signs = [
+        [1_i32, 1, 1, 1],
+        [1_i32, -1, 1, -1],
+        [1_i32, 1, -1, -1],
+        [1_i32, -1, -1, 1],
+    ];
+    let mut simplex = vec![vec![hyperreal::Real::zero(); 4]];
+    simplex.extend(signs.map(|column| {
+        column
+            .map(|sign| if sign > 0 { half_pi.clone() } else { -&half_pi })
+            .into_iter()
+            .collect()
+    }));
+    let center = vec![
+        hyperreal::Real::pi(),
+        hyperreal::Real::zero(),
+        hyperreal::Real::zero(),
+        hyperreal::Real::zero(),
+    ];
+    (simplex, center)
+}
+
+fn exact_rational_insphere_d_cases() -> Vec<(Vec<Vec<hyperreal::Real>>, Vec<hyperreal::Real>)> {
+    let simplex = vec![
+        rational_point_d(&[0, 0, 0, 0], 19),
+        rational_point_d(&[8, 0, 0, 0], 19),
+        rational_point_d(&[0, 8, 0, 0], 19),
+        rational_point_d(&[0, 0, 8, 0], 19),
+        rational_point_d(&[0, 0, 0, 8], 19),
+    ];
+    let mut cases = Vec::with_capacity(BATCH);
+    for i in 0..BATCH {
+        let j = i as i64;
+        cases.push((
+            simplex.clone(),
+            rational_point_d(&[j % 13 + 1, j % 17 + 1, j % 19 + 1, j % 23 + 1], 19),
+        ));
+    }
+    cases
+}
+
+fn large_rational_near_degenerate_orient2d_cases() -> Vec<Orient2Case> {
+    let den = 1_000_003_u64;
+    let den_sq = den * den;
+    let mut cases = Vec::with_capacity(BATCH);
+    for i in 0..BATCH {
+        let x_num = i as i64 % 1_003 - 501;
+        let y_num = x_num * den as i64 + signed_jitter(i as i64);
+        cases.push((
+            rational_point2(-1, 1, -1, 1),
+            rational_point2(1, 1, 1, 1),
+            rational_point2(x_num, den, y_num, den_sq),
+        ));
+    }
+    cases
+}
+
+fn large_rational_near_degenerate_incircle2d_cases() -> Vec<Incircle2Case> {
+    let den = 1_000_003_u64;
+    let a = rational_point2(1, 1, 0, 1);
+    let b = rational_point2(0, 1, 1, 1);
+    let c = rational_point2(-1, 1, 0, 1);
+    let mut cases = Vec::with_capacity(BATCH);
+    for i in 0..BATCH {
+        let t_num = i as i64 % 1_003 - 501;
+        let circle_den = den * den + (t_num * t_num) as u64;
+        let x_num = 2 * t_num * den as i64;
+        let y_num = den as i128 * den as i128 - t_num as i128 * t_num as i128;
+        let y_den = circle_den * den;
+        let y_final_num = y_num * den as i128 + signed_jitter(i as i64) as i128;
+        cases.push((
+            a.clone(),
+            b.clone(),
+            c.clone(),
+            Point2::new(
+                rational_real(x_num, den),
+                rational_real(
+                    y_final_num
+                        .try_into()
+                        .expect("benchmark numerator fits in i64"),
+                    y_den,
+                ),
+            ),
+        ));
+    }
+    cases
+}
+
+fn shared_scale_incircle2d_cases() -> Vec<Incircle2Case> {
+    let a = rational_point2(1, 7, 1, 7);
+    let b = rational_point2(4, 7, 1, 7);
+    let c = rational_point2(1, 7, 4, 7);
+    let mut cases = Vec::with_capacity(BATCH);
+    for i in 0..BATCH {
+        let j = i as i64;
+        cases.push((
+            a.clone(),
+            b.clone(),
+            c.clone(),
+            rational_point2(j % 3 + 2, 7, (j / 3) % 3 + 2, 7),
+        ));
+    }
+    cases
+}
+
+fn shared_scale_insphere3d_cases() -> Vec<Insphere3Case> {
+    let a = rational_point3(1, 7, 1, 7, 1, 7);
+    let b = rational_point3(4, 7, 1, 7, 1, 7);
+    let c = rational_point3(1, 7, 4, 7, 1, 7);
+    let d = rational_point3(1, 7, 1, 7, 4, 7);
+    let mut cases = Vec::with_capacity(BATCH);
+    for i in 0..BATCH {
+        let j = i as i64;
+        cases.push((
+            a.clone(),
+            b.clone(),
+            c.clone(),
+            d.clone(),
+            rational_point3(j % 3 + 2, 7, (j / 3) % 3 + 2, 7, (j / 9) % 3 + 2, 7),
+        ));
+    }
+    cases
+}
+
+fn transformed_orient2d_cases() -> Vec<Orient2Case> {
+    let mut cases = Vec::with_capacity(BATCH);
+    let scale = rational_real(5, 3);
+    let tx = rational_real(-17, 11);
+    let ty = rational_real(23, 13);
+    for (a, b, c) in exact_rational_orient2d_cases() {
+        cases.push((
+            transform_point2(&a, &scale, &tx, &ty),
+            transform_point2(&b, &scale, &tx, &ty),
+            transform_point2(&c, &scale, &tx, &ty),
+        ));
+    }
+    cases
+}
+
+fn transformed_line_cases() -> Vec<Orient2Case> {
+    let base_a = rational_point2(-1, 5, -1, 5);
+    let base_b = rational_point2(7, 5, 7, 5);
+    let scale = rational_real(7, 4);
+    let tx = rational_real(31, 17);
+    let ty = rational_real(-29, 19);
+    let a = transform_point2(&base_a, &scale, &tx, &ty);
+    let b = transform_point2(&base_b, &scale, &tx, &ty);
+    let mut cases = Vec::with_capacity(BATCH);
+    for i in 0..BATCH {
+        let j = i as i64;
+        let point = rational_point2(j % 23 - 11, 23, j % 23 - 11 + signed_jitter(j), 23);
+        cases.push((
+            a.clone(),
+            b.clone(),
+            transform_point2(&point, &scale, &tx, &ty),
+        ));
+    }
+    cases
+}
+
+fn transformed_incircle2d_cases() -> Vec<Incircle2Case> {
+    let scale = rational_real(9, 5);
+    let tx = rational_real(-41, 29);
+    let ty = rational_real(37, 31);
+    let mut cases = Vec::with_capacity(BATCH);
+    for (a, b, c, d) in exact_rational_incircle2d_cases() {
+        cases.push((
+            transform_point2(&a, &scale, &tx, &ty),
+            transform_point2(&b, &scale, &tx, &ty),
+            transform_point2(&c, &scale, &tx, &ty),
+            transform_point2(&d, &scale, &tx, &ty),
+        ));
+    }
+    cases
+}
+
+fn transformed_oriented_plane_cases() -> Vec<Orient3Case> {
+    let scale = rational_real(11, 7);
+    let tx = rational_real(-13, 17);
+    let ty = rational_real(19, 23);
+    let tz = rational_real(-29, 31);
+    let a = transform_point3(&rational_point3(0, 1, 0, 1, 0, 1), &scale, &tx, &ty, &tz);
+    let b = transform_point3(&rational_point3(1, 1, 0, 1, 0, 1), &scale, &tx, &ty, &tz);
+    let c = transform_point3(&rational_point3(0, 1, 1, 1, 0, 1), &scale, &tx, &ty, &tz);
+    let mut cases = Vec::with_capacity(BATCH);
+    for i in 0..BATCH {
+        let j = i as i64;
+        let point = rational_point3(j % 17 - 8, 17, (j / 17) % 19 - 9, 19, signed_jitter(j), 37);
+        cases.push((
+            a.clone(),
+            b.clone(),
+            c.clone(),
+            transform_point3(&point, &scale, &tx, &ty, &tz),
+        ));
+    }
+    cases
+}
+
+fn transform_point2(
+    point: &Point2,
+    scale: &hyperreal::Real,
+    tx: &hyperreal::Real,
+    ty: &hyperreal::Real,
+) -> Point2 {
+    let scaled_x = &point.x * scale;
+    let scaled_y = &point.y * scale;
+    Point2::new(&scaled_x + tx, &scaled_y + ty)
+}
+
+fn transform_point3(
+    point: &Point3,
+    scale: &hyperreal::Real,
+    tx: &hyperreal::Real,
+    ty: &hyperreal::Real,
+    tz: &hyperreal::Real,
+) -> Point3 {
+    let scaled_x = &point.x * scale;
+    let scaled_y = &point.y * scale;
+    let scaled_z = &point.z * scale;
+    Point3::new(&scaled_x + tx, &scaled_y + ty, &scaled_z + tz)
+}
+
+fn signed_jitter(index: i64) -> i64 {
+    if index % 2 == 0 { 1 } else { -1 }
+}
+
+fn point2(x: f64, y: f64, real: fn(f64) -> hyperreal::Real) -> Point2 {
+    Point2::new(real(x), real(y))
+}
+
+fn point3(x: f64, y: f64, z: f64, real: fn(f64) -> hyperreal::Real) -> Point3 {
+    Point3::new(real(x), real(y), real(z))
+}
+
+#[inline]
+fn coord2(point: [f64; 2]) -> Coord<f64> {
+    Coord {
+        x: point[0],
+        y: point[1],
+    }
+}
+
+#[inline]
+fn apfp_coord2(point: [f64; 2]) -> apfp::geometry::f64::Coord {
+    apfp::geometry::f64::Coord::new(point[0], point[1])
+}
+
+#[inline]
+fn coord3(point: [f64; 3]) -> Coord3D<f64> {
+    Coord3D {
+        x: point[0],
+        y: point[1],
+        z: point[2],
+    }
+}
+
+fn hyperreal_real(value: f64) -> hyperreal::Real {
+    hyperreal::Real::try_from(value).expect("finite benchmark real")
+}
+
+fn rational_point2(x_num: i64, x_den: u64, y_num: i64, y_den: u64) -> Point2 {
+    Point2::new(rational_real(x_num, x_den), rational_real(y_num, y_den))
+}
+
+fn rational_point3(
+    x_num: i64,
+    x_den: u64,
+    y_num: i64,
+    y_den: u64,
+    z_num: i64,
+    z_den: u64,
+) -> Point3 {
+    Point3::new(
+        rational_real(x_num, x_den),
+        rational_real(y_num, y_den),
+        rational_real(z_num, z_den),
+    )
+}
+
+fn rational_point_d(numerators: &[i64], denominator: u64) -> Vec<hyperreal::Real> {
+    numerators
+        .iter()
+        .map(|&numerator| rational_real(numerator, denominator))
+        .collect()
+}
+
+fn rational_real(numerator: i64, denominator: u64) -> hyperreal::Real {
+    hyperreal::Real::new(hyperreal::Rational::fraction(numerator, denominator).unwrap())
+}
+
+fn coordinate_plane(axis: usize, coordinate: hyperreal::Real) -> Plane3 {
+    let normal = match axis {
+        0 => Point3::new(1.into(), 0.into(), 0.into()),
+        1 => Point3::new(0.into(), 1.into(), 0.into()),
+        2 => Point3::new(0.into(), 0.into(), 1.into()),
+        _ => unreachable!("benchmark helper only builds 3D coordinate planes"),
+    };
+    Plane3::new(normal, -coordinate)
+}
+
+fn certified_ball_cases() -> Vec<(hyperreal::Real, hyperreal::Real)> {
+    let mut cases = Vec::with_capacity(BATCH);
+    for i in 0..BATCH {
+        let magnitude = (i % 17 + 3) as i64;
+        let radius = (i % 5 + 1) as i64;
+        let sign = if i.is_multiple_of(2) { 1 } else { -1 };
+        cases.push((
+            rational_real(sign * magnitude, 7),
+            rational_real(radius, 14),
+        ));
+    }
+    cases
+}
+
+fn unit(index: usize) -> f64 {
+    let mut x = index as u64;
+    x = x.wrapping_mul(6_364_136_223_846_793_005).wrapping_add(1);
+    ((x >> 11) as f64) * (1.0 / ((1_u64 << 53) as f64))
+}
+
+fn alternating_eps(index: usize, magnitude: f64) -> f64 {
+    if index.is_multiple_of(2) {
+        magnitude
+    } else {
+        -magnitude
+    }
+}
+
+fn sign_score(outcome: PredicateOutcome<Sign>) -> i64 {
+    match outcome {
+        PredicateOutcome::Decided { value, .. } => match value {
+            Sign::Negative => -1,
+            Sign::Zero => 0,
+            Sign::Positive => 1,
+        },
+        PredicateOutcome::Unknown { .. } => 7,
+    }
+}
+
+#[inline]
+fn determinant_score(determinant: f64) -> i64 {
+    if determinant > 0.0 {
+        1
+    } else if determinant < 0.0 {
+        -1
+    } else {
+        0
+    }
+}
+
+#[inline]
+fn apfp_orientation_score(orientation: apfp::geometry::Orientation) -> i64 {
+    match orientation {
+        apfp::geometry::Orientation::Clockwise => -1,
+        apfp::geometry::Orientation::CoLinear => 0,
+        apfp::geometry::Orientation::CounterClockwise => 1,
+    }
+}
+
+#[inline]
+fn real_sign_score(sign: hyperreal::RealSign) -> i64 {
+    match sign {
+        hyperreal::RealSign::Negative => -1,
+        hyperreal::RealSign::Zero => 0,
+        hyperreal::RealSign::Positive => 1,
+    }
+}
+
+fn bool_score(outcome: PredicateOutcome<bool>) -> i64 {
+    match outcome {
+        PredicateOutcome::Decided { value, .. } => i64::from(value),
+        PredicateOutcome::Unknown { .. } => 7,
+    }
+}
+
+fn maybe_sign_score(outcome: Option<PredicateOutcome<Sign>>) -> i64 {
+    outcome.map_or(11, sign_score)
+}
+
+fn line_score(outcome: PredicateOutcome<LineSide>) -> i64 {
+    match outcome {
+        PredicateOutcome::Decided { value, .. } => match value {
+            LineSide::Right => -1,
+            LineSide::On => 0,
+            LineSide::Left => 1,
+        },
+        PredicateOutcome::Unknown { .. } => 7,
+    }
+}
+
+fn plane_score(outcome: PredicateOutcome<PlaneSide>) -> i64 {
+    match outcome {
+        PredicateOutcome::Decided { value, .. } => match value {
+            PlaneSide::Below => -1,
+            PlaneSide::On => 0,
+            PlaneSide::Above => 1,
+        },
+        PredicateOutcome::Unknown { .. } => 7,
+    }
+}
+
+fn ordering_score(outcome: PredicateOutcome<std::cmp::Ordering>) -> i64 {
+    match outcome {
+        PredicateOutcome::Decided { value, .. } => match value {
+            std::cmp::Ordering::Less => -1,
+            std::cmp::Ordering::Equal => 0,
+            std::cmp::Ordering::Greater => 1,
+        },
+        PredicateOutcome::Unknown { .. } => 7,
+    }
+}
+
+fn segment3_intersection_score(outcome: PredicateOutcome<Segment3Intersection>) -> i64 {
+    match outcome {
+        PredicateOutcome::Decided { value, .. } => match value {
+            Segment3Intersection::SkewDisjoint => -3,
+            Segment3Intersection::CoplanarDisjoint => -2,
+            Segment3Intersection::Proper => 1,
+            Segment3Intersection::EndpointTouch => 2,
+            Segment3Intersection::CollinearOverlap => 3,
+            Segment3Intersection::Identical => 4,
+        },
+        PredicateOutcome::Unknown { .. } => 7,
+    }
+}
+
+fn main() {
+    let trace_only = std::env::args()
+        .any(|arg| arg == "--write-dispatch-trace-md" || arg == "--dispatch-trace-only");
+    if trace_only {
+        begin_dispatch_trace_run();
+    }
+
+    let mut criterion = if trace_only {
+        Criterion::default().with_filter("$^")
+    } else {
+        Criterion::default().configure_from_args()
+    };
+    bench_predicates(&mut criterion);
+    if trace_only {
+        write_dispatch_trace_report();
+    } else {
+        criterion.final_summary();
+
+        match benchmark_report::write_benchmarks_md() {
+            Ok(summary) => eprintln!(
+                "updated {} from {} Criterion benchmark results",
+                summary.path.display(),
+                summary.rows
+            ),
+            Err(error) => eprintln!("failed to update benchmarks.md: {error}"),
+        }
+    }
+}

@@ -1,0 +1,43 @@
+   Compiling hyperreal v0.13.1 (/home/tim/Documents/GitHub/workspace/hyperreal)
+    Finished `release` profile [optimized] target(s) in 10.21s
+     Running unittests src/lib.rs (target/release/deps/hyperreal-f3a6d4fcdbc4d626)
+
+running 4 tests
+case=test real::arithmetic::tests::polynomial_evaluation_preserves_endpoint_and_zero_leading_forms ... 0ok,
+0,0: [Some(Zero), Some(Zero), Some(Zero)]
+case=0,0,1: [Some(Zero), Some(Zero), Some(Zero)]
+test real::arithmetic::tests::long_polynomial_evaluation_matches_exact_even_odd_decomposition ... ok
+test real::arithmetic::tests::polynomial_evaluation_retains_nested_quadratic_root_certificates ... ok
+case=0,1,0: [None, None, None]
+case=0,1,1: [None, None, None]
+case=0,2,0: [Some(Zero), Some(Zero), Some(Zero)]
+case=0,2,1: [Some(Zero), Some(Zero), Some(Zero)]
+case=1,0,0: [None, None, None]
+case=1,0,1: [None, None, None]
+case=1,1,0: [None, None, None]
+case=1,1,1: [None, None, None]
+case=1,2,0: [Some(Zero), Some(Zero), Some(Zero)]
+case=1,2,1: [Some(Zero), Some(Zero), Some(Zero)]
+case=2,0,0: [Some(Zero), Some(Zero), Some(Zero)]
+case=2,0,1: [None, None, None]
+case=2,1,0: [None, None, None]
+case=2,1,1: [None, None, None]
+case=2,2,0: [Some(Zero), Some(Zero), Some(Zero)]
+case=2,2,1: [Some(Zero), Some(Zero), Some(Zero)]
+case=3,0,0: [None, None, None]
+case=3,0,1: [None, None, None]
+case=3,1,0: [None, None, None]
+case=3,1,1: [None, None, None]
+case=3,2,0: [Some(Zero), Some(Zero), Some(Zero)]
+case=3,2,1: [Some(Zero), Some(Zero), Some(Zero)]
+case=4,0,0: [None, None, None]
+case=4,0,1: [None, None, None]
+case=4,1,0: [None, None, None]
+case=4,1,1: [None, None, None]
+case=4,2,0: [Some(Zero), Some(Zero), Some(Zero)]
+case=4,2,1: [Some(Zero), Some(Zero), Some(Zero)]
+certified expanded,fused,actual=[13, 13, 13]
+test real::arithmetic::tests::polynomial_evaluation_preserves_factored_root_cancellation ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 620 filtered out; finished in 0.00s
+

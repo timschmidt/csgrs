@@ -1,0 +1,108 @@
+{
+  "normal_production_build": true,
+  "source_manifest": "rational-image-scalar-view-20260928-v606-sources.json",
+  "source_directory": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/source-archives/rational-image-scalar-view-20260928-v606",
+  "builds": [
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "test",
+        "--lib",
+        "--release",
+        "--all-features",
+        "--locked",
+        "--offline",
+        "--no-run",
+        "--message-format=json"
+      ],
+      "returncode": 0,
+      "log": "rational-image-scalar-view-20260928-v606-build.log",
+      "elapsed_seconds": 137.71741349995136,
+      "binaries": {
+        "hypercurve": {
+          "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/rational-image-scalar-view-20260928-v606-hypercurve-tests",
+          "sha256": "0bda851f8b76fdc562f868cd7bd4ca935eb862a68b3c87c803c6779add0c13a8"
+        }
+      }
+    }
+  ],
+  "cases": [
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/rational-image-scalar-view-20260928-v606-hypercurve-tests",
+        "--exact",
+        "rational_bezier_general::tests::rational_image_selection_reuses_learned_exact_scalar_views",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 0,
+      "log": "rational-image-scalar-view-20260928-v606-rational_image_selection_reuses_learned_exact_scalar_views.log",
+      "elapsed_seconds": 0.0034872409887611866,
+      "target": "hypercurve",
+      "name": "rational_bezier_general::tests::rational_image_selection_reuses_learned_exact_scalar_views",
+      "passed": true
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/rational-image-scalar-view-20260928-v606-hypercurve-tests",
+        "--exact",
+        "rational_bezier_general::tests::conic_rational_image_separation_refines_past_the_old_limit",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "returncode": 101,
+      "log": "rational-image-scalar-view-20260928-v606-conic_rational_image_separation_refines_past_the_old_limit.log",
+      "elapsed_seconds": 0.003505948930978775,
+      "target": "hypercurve",
+      "name": "rational_bezier_general::tests::conic_rational_image_separation_refines_past_the_old_limit",
+      "passed": false
+    }
+  ],
+  "checks": [],
+  "expected_cases": {
+    "hypercurve": [
+      "rational_bezier_general::tests::rational_image_selection_reuses_learned_exact_scalar_views",
+      "rational_bezier_general::tests::conic_rational_image_separation_refines_past_the_old_limit",
+      "rational_bezier_general::tests::affine_subcurve_rejects_a_crossed_projective_pole",
+      "rational_bezier_general::tests::conic_parameter_primary_map_defers_fallback_image_polynomial",
+      "rational_bezier_general::tests::conic_parameter_refines_primary_map_before_constructing_fallback",
+      "rational_bezier_general::tests::endpoint_projective_cubic_correspondence_maps_both_orientations",
+      "rational_bezier_general::tests::exact_degree_elevated_line_recovers_linear_parameter_transport",
+      "rational_bezier_general::tests::exact_high_degree_rational_elevation_recovers_its_minimal_parameter_frame",
+      "rational_bezier_general::tests::implicit_conic_certificate_is_parameterization_independent_and_shared",
+      "rational_bezier_general::tests::implicit_conic_contacts_retain_source_parameter_point_image_first",
+      "rational_bezier_general::tests::injectivity_scope_preserves_every_parameter_of_a_collapsed_chart",
+      "rational_bezier_general::tests::mixed_weight_projective_overlap_preserves_the_finite_parameter_domain",
+      "rational_bezier_general::tests::range_projective_correspondence_maps_and_inverts_oriented_ranges",
+      "rational_bezier_general::tests::rational_parameter_image_map_reuses_quotient_authority_across_isolators",
+      "rational_bezier_general::tests::unit_weight_degree_one_curve_exposes_its_exact_line_parameterization",
+      "rational_bezier_general::tests::conic_dual_coordinate_sum_maps_endpoints_without_a_pole",
+      "rational_bezier_general::tests::exact_line_image_route_replays_algebraic_conic_contact",
+      "rational_bezier_general::tests::implicit_conic_route_replays_quadratic_line_contact",
+      "rational_bezier_general::tests::retained_circle_line_contacts_fall_back_at_an_omitted_chart_point",
+      "rational_bezier_general::tests::quotient_ring_rational_image_matches_exact_resultant_samples",
+      "rational_bezier_general::tests::quotient_ring_rational_image_retains_nonrational_source_coefficients",
+      "rational_bezier_general::tests::quotient_ring_rational_image_reuses_nonrational_source_scale",
+      "bezier_parameter::finite_interval_import_regression::represented_root_imports_admit_exact_values_in_the_requested_domain",
+      "bezier_parameter::conversion_tests::nonlinear_and_approximate_zeroes_do_not_create_scalar_witnesses",
+      "bezier_parameter::conversion_tests::progressive_refinement_matches_one_pass_proof_budget",
+      "bezier_parameter::conversion_tests::strict_linear_queries_retain_witnesses_after_rational_reconstruction_declines",
+      "bezier_parameter::conversion_tests::strict_scalar_equalities_retain_arbitrary_real_parameter_witnesses"
+    ]
+  },
+  "all_processes_reaped": true,
+  "probe_complete": false,
+  "qualification_complete": false,
+  "test_listings": {
+    "hypercurve": {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/rational-image-scalar-view-20260928-v606-hypercurve-tests",
+        "--list"
+      ],
+      "returncode": 0,
+      "log": "rational-image-scalar-view-20260928-v606-hypercurve-test-list.log",
+      "elapsed_seconds": 0.00763911590911448
+    }
+  },
+  "failure": "parameter construction regression failed"
+}

@@ -1,0 +1,12 @@
+{
+  "repos": {
+    "hypersolve": {
+      "parent": "924762a75f2dbb0a0061ee78601f2d7e50c70b72",
+      "paths": {
+        "src/root_sign.rs": "5b96a801e18e3a0759632d838f3fec032e90ba90cb35b225ec6325ace3ee9d26"
+      }
+    }
+  },
+  "qualification": "rational-root-dispatch-20260927-v468-terminal.json",
+  "verified_source_files": 2046
+}

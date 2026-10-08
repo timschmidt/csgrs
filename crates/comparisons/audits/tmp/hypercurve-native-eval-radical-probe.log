@@ -1,0 +1,6 @@
+direct: old=None, native=Some(Zero), difference=Some(Zero)
+average: old=None, native=None, difference=Some(Zero)
+average_plus_zero: old=None, native=None, difference=Some(Zero)
+zero_plus_average: old=None, native=None, difference=Some(Zero)
+distributed_average: old=None, native=None, difference=Some(Zero)
+fused_average: old=None, native=None, difference=Some(Zero)

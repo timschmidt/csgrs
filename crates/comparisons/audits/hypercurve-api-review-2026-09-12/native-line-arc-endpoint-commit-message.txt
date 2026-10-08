@@ -1,0 +1,7 @@
+Retain certified line and circle endpoint evidence
+
+Normalized fillets could lose a known endpoint while reconstructing circle roots and block later Boolean operations. Deflate certified endpoint contacts, reuse the ordered point/parameter pairs, and consolidate arc endpoint membership. Remove redundant root comparisons and point evaluation.
+
+Require strict proof from optional domain, shared-image endpoint, and contact-box filters before terminal approximation can preempt exact replay. The extended line/parabola fillet now closes through normalization, union, subtraction, and exact XOR under both policies and traversals.
+
+Validation: 2,177 passes across 49 Hypercurve/HyperBREP targets; six known promotion failures, no new failures or timeouts. Nine ignored and eight previously unqualified expensive cases remain. Both all-target checks pass. Independent probes certify 900 curve-pair queries, 12 region intersections, and four empty XORs.

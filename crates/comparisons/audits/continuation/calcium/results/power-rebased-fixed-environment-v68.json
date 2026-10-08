@@ -1,0 +1,13 @@
+{
+  "tag": "power-rebased-fixed-environment-v68",
+  "started": "2026-09-11T16:56:49.094Z",
+  "finished": "2026-09-11T16:56:49.246Z",
+  "elapsedSeconds": 0.15034946500000002,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "node",
+  "args": [
+    "point-qualified-environment.mjs"
+  ],
+  "code": 0,
+  "signal": null
+}

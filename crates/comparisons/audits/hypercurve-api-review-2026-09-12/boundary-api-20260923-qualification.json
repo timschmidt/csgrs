@@ -1,0 +1,75 @@
+{
+  "scope": "Borrowed shared Curve2 boundary view, direct caller migration, planar conversion consolidation, and obsolete adapter removal.",
+  "checks": "boundary-api-20260923-check5-runs.json",
+  "sources": "boundary-api-20260923-check5-sources.json",
+  "stage_sources": "boundary-api-20260923-stage-sources.json",
+  "hypercurve": {
+    "passed": 253,
+    "focused_library_passed": 5,
+    "ignored": [
+      "exact_path_stroke_preserves_an_even_multiplicity_stationary_source",
+      "exact_path_stroke_splits_a_nonuniform_rational_source_cusp",
+      "exact_path_stroke_splits_an_interior_source_cusp"
+    ],
+    "excluded": [
+      [
+        "hypercurve_analytic_parallel_region",
+        "radical_parallel_cusp_offsets_exactly_under_both_policies"
+      ],
+      [
+        "hypercurve_analytic_parallel_region",
+        "retained_rational_arc_and_analytic_parallel_fillet_exactly"
+      ]
+    ],
+    "not_passed": [
+      {
+        "name": "approximate_512_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions",
+        "candidate": 101,
+        "parent": 101,
+        "identical_assertion": true
+      },
+      {
+        "name": "non_ph_bezier_pair_projective_fillet_retains_algebraic_extensions",
+        "candidate": "timeout",
+        "parent": 101,
+        "identical_assertion": null
+      },
+      {
+        "name": "nonconvex_algebraic_chord_expansion_is_exact_and_local_collapse_is_explicit",
+        "candidate": 101,
+        "parent": 101,
+        "identical_assertion": true
+      },
+      {
+        "name": "strict_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions",
+        "candidate": 101,
+        "parent": 101,
+        "identical_assertion": true
+      },
+      {
+        "name": "unified_mixed_line_arc_erosion_splits_after_a_curved_neck_collapse",
+        "candidate": 101,
+        "parent": 101,
+        "identical_assertion": true
+      },
+      {
+        "name": "algebraic_endpoint_analytic_parallel_chamfers_replay_selected_distance",
+        "candidate": "timeout",
+        "parent": "timeout",
+        "identical_assertion": null
+      }
+    ]
+  },
+  "hyperbrep": {
+    "passed": 232,
+    "not_passed": []
+  },
+  "nonph_comparison": {
+    "record": "boundary-api-20260923-nonph-results.json",
+    "identical_phase_and_domain_output": true,
+    "result": "Both committed parent and candidate exceed 75 seconds in Boolean reentry after the same exact curve-level selection. The old parent test failed earlier by requiring the RetainedBezier storage variant; the migrated test correctly accepts the selected rational domains and exposes this pre-existing later closure gap."
+  },
+  "all_owned_processes_reaped": true,
+  "all_bound_sources_unchanged": true,
+  "remaining": "The existing single-loop selected-circle normalization exception is unchanged by this increment. Its removal remains working, unqualified code. Full closure and existing failures/heldouts remain open."
+}

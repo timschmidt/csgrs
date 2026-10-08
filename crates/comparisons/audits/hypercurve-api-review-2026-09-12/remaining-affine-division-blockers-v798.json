@@ -1,0 +1,51 @@
+[
+  {
+    "path": "hypercurve/src/rational_bezier_general.rs",
+    "line": 2053,
+    "function": "pub(crate) fn derivative_at_affine_classified(",
+    "source_sha256": "a805de6ec680c0fb4ef351d89bbbc531e7c072a9507246cfe21b3e9b7cd64315",
+    "context": "        let Ok(dx) = (&dx * &weight - &x * &dweight) / &denominator else {\n            return Classification::Uncertain(UncertaintyReason::Boundary);\n        };\n        let Ok(dy) = (&dy * &weight - &y * &dweight) / denominator else {\n            return Classification::Uncertain(UncertaintyReason::Boundary);\n        };"
+  },
+  {
+    "path": "hypercurve/src/rational_bezier_general.rs",
+    "line": 2056,
+    "function": "pub(crate) fn derivative_at_affine_classified(",
+    "source_sha256": "a805de6ec680c0fb4ef351d89bbbc531e7c072a9507246cfe21b3e9b7cd64315",
+    "context": "        let Ok(dy) = (&dy * &weight - &y * &dweight) / denominator else {\n            return Classification::Uncertain(UncertaintyReason::Boundary);\n        };\n        Classification::Decided(CurveDerivative2::new(dx, dy))\n    }\n"
+  },
+  {
+    "path": "hypercurve/src/rational_bezier_general.rs",
+    "line": 4757,
+    "function": "fn affine_derivative_values_at_with_endpoint(",
+    "source_sha256": "a805de6ec680c0fb4ef351d89bbbc531e7c072a9507246cfe21b3e9b7cd64315",
+    "context": "            let Ok(x) = x / &denominator[0] else {\n                return Classification::Uncertain(UncertaintyReason::Boundary);\n            };\n            let Ok(y) = y / &denominator[0] else {\n                return Classification::Uncertain(UncertaintyReason::Boundary);\n            };"
+  },
+  {
+    "path": "hypercurve/src/rational_bezier_general.rs",
+    "line": 4760,
+    "function": "fn affine_derivative_values_at_with_endpoint(",
+    "source_sha256": "a805de6ec680c0fb4ef351d89bbbc531e7c072a9507246cfe21b3e9b7cd64315",
+    "context": "            let Ok(y) = y / &denominator[0] else {\n                return Classification::Uncertain(UncertaintyReason::Boundary);\n            };\n            derivatives.push((x, y));\n        }\n        Classification::Decided(derivatives)"
+  },
+  {
+    "path": "hypercurve/src/rational_bezier_general.rs",
+    "line": 5658,
+    "function": "fn endpoint_parameter_relation(",
+    "source_sha256": "a805de6ec680c0fb4ef351d89bbbc531e7c072a9507246cfe21b3e9b7cd64315",
+    "context": "        let Ok(scale) = scale_numerator / scale_denominator else {\n            return Classification::Uncertain(UncertaintyReason::Boundary);\n        };\n        match real_sign(&scale, policy) {\n            Some(RealSign::Positive) => {}\n            Some(_) if affine_unresolved => {"
+  },
+  {
+    "path": "hypercurve/src/rational_bezier.rs",
+    "line": 288,
+    "function": "pub fn point_at(&self, t: Real, policy: &CurveContext) -> Classification<Point2> {",
+    "source_sha256": "002cebbafe25928e508388619b17b9bd6c64da797a2be5f402ab6bc1f34e034c",
+    "context": "        let Ok(x) = numerator_x / &denominator else {\n            return Classification::Uncertain(UncertaintyReason::Boundary);\n        };\n        let Ok(y) = numerator_y / denominator else {\n            return Classification::Uncertain(UncertaintyReason::Boundary);\n        };"
+  },
+  {
+    "path": "hypercurve/src/rational_bezier.rs",
+    "line": 291,
+    "function": "pub fn point_at(&self, t: Real, policy: &CurveContext) -> Classification<Point2> {",
+    "source_sha256": "002cebbafe25928e508388619b17b9bd6c64da797a2be5f402ab6bc1f34e034c",
+    "context": "        let Ok(y) = numerator_y / denominator else {\n            return Classification::Uncertain(UncertaintyReason::Boundary);\n        };\n        Classification::Decided(Point2::new(x, y))\n    }\n"
+  }
+]

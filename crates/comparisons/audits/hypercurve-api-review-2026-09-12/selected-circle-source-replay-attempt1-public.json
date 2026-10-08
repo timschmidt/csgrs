@@ -1,0 +1,19 @@
+{
+  "returncode": 0,
+  "elapsed_seconds": 1.3655718430090928,
+  "normal_library_sha256": "329860e670308e2a985212aa60e048a600959fc1ac8bfa4420321c843ea85909",
+  "source_sha256": "243f0e99c291657d58152b2c26b145c425b1e323f7f7c2a733b5b240e68dabba",
+  "executable_sha256": "0a36fb456ae806a1ed374e8547642dafa00df304fdd0136d990b4e4044080bb2",
+  "command": [
+    "rustc",
+    "--edition=2024",
+    "-O",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/selected-circle-source-replay-public.rs",
+    "--extern",
+    "hypercurve=/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/libhypercurve-2c7ff6f3fbe07653.rlib",
+    "-L",
+    "dependency=/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps",
+    "-o",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/selected-circle-source-replay-attempt1-public"
+  ]
+}

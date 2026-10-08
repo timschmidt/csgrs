@@ -1,0 +1,14 @@
+PROGRESS	rational-degree	0	162
+PROGRESS	rational-degree	1	378
+PROGRESS	rational-degree	2	594
+PROGRESS	rational-degree	3	810
+PROGRESS	rational-degree	4	1026
+PROGRESS	rational-degree	7	1242
+PROGRESS	rational-degree	8	1458
+PROGRESS	rational-degree	15	1674
+PROGRESS	rational-degree	16	1890
+PASS	rational-grid	1890
+PASS	high-degree-cost	33
+PASS	zero-domain-boundaries	15
+PASS	symbolic-boundaries	18
+SUMMARY	1956

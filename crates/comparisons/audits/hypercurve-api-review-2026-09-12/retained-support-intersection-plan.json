@@ -1,0 +1,41 @@
+{
+  "status": "committed; original goal remains active",
+  "goal_status": "active",
+  "base_commit": "349c4bad9c5e0a1355fce05d7e8d096d4a1e30b5",
+  "implemented": [
+    "Prepare native, retained-fragment and restricted-source spans as support, active range, affine public chart and traversal.",
+    "Reuse the existing rational intersection replay on retained unit-chart supports; clip both parameter domains and preserve exact contact/overlap witnesses.",
+    "Retain singleton overlap intersections as open-curve contacts; keep regularized region positive-length semantics in the region consumer.",
+    "Retain original overlap chart ranges with their correspondence so later clipping cannot reinterpret the map basis.",
+    "Use the common correspondence clipping authority in the region consumer; remove the obsolete projective_reversal accessor and update its test.",
+    "Reuse certified paired overlap boundaries before reconstructing a parameter image over independent exact fields.",
+    "Preserve chart reversal, traversal cross signs and cross-span contact deduplication.",
+    "Replay off-diagonal contacts for full-domain projectively corresponding non-injective supports through the existing diagonal-deflated self-contact solver; retain its evidence once per prepared source span.",
+    "Keep continuously retraced or partial non-injective shared components explicitly incomplete until their whole parameter correspondence is replayed."
+  ],
+  "new_regression_tests": {
+    "retained_source_intersections_clip_contacts_and_reuse_selected_locations": "192 primary curve/open-path queries across polynomial, elevated rational, B-spline and NURBS sources, both policies, reversal, operand order; independent crossing/exclusion/endpoint expectations, evaluation and subdivision.",
+    "retained_source_overlaps_preserve_independent_ranges_and_singleton_contacts": "24 queries covering independently authored full/partial overlaps and a singleton prefix/tail intersection.",
+    "generated_chamfer_tails_reuse_paired_overlap_boundaries": "8 queries using a quartic setback root and independently authored radical controls; both operand orders and traversal directions.",
+    "reversed_retained_spline_charts_deduplicate_seams_and_map_interior_contacts": "32 queries on multi-span B-splines/NURBS, including descending affine span charts and seam deduplication.",
+    "retained_noninjective_domains_keep_off_diagonal_contacts_and_traversal_signs": "32 queries on a cubic whose selected prefix/tail meet at both the shared cut and a crossing with different parameters. Includes independent source construction, both policies, both traversal directions and operand order; checks the crossing parameters, point and tangent cross certificate.",
+    "retained_retraced_domains_cannot_certify_a_missing_positive_overlap": "Both policies must not label the diagonal-only intersection of a retraced quadratic as complete when a positive image overlap exists."
+  },
+  "remaining": [
+    "18 incomplete chord pairs remain in the final generated chamfer diagnostic (both policies), reduced from 44 baseline unresolved pairs; all eight independent generated/readmitted region XOR checks are exact and empty.",
+    "Generated circle and analytic parallel pair dispatch remains unimplemented in the common support resolver.",
+    "Exterior rational source domains explicitly block because the reused resultant context isolates only the unit source chart. Complete finite-domain replay and expose its chart semantics before lifting this guard.",
+    "Curve/path topology still requests native Bezier split materializations; migrate to general curve pieces and their proof-bearing arrangement.",
+    "The original nine promotion failures and eight expensive unqualified cases remain tracked; no full-suite or original-goal completion claim.",
+    "Partial non-injective and continuously retraced rational coincidences still need complete component/branch coverage in the common retained-domain resolver."
+  ],
+  "next_chord_work": [
+    "Extract shared chord/rational replay from region orchestration, preserving source-related deflation with authored endpoint inclusion for open paths.",
+    "Keep RegionPair adjacency omissions and filled-side logic outside geometry pair kernels.",
+    "Retain BezierAlgebraicChordRationalOverlap2 as an overlap correspondence authority rather than discarding its source-point transport.",
+    "Reuse finite chord/chord replay for actual chords and the exact-linear rational specialization; preserve parameters in each published support chart.",
+    "Move common active-domain clipping out of region-specific adapters, keeping singleton contact publication specific to open paths.",
+    "Complete non-injective overlap component coverage; reuse exact no-self-contact certificates when axis injectivity is unavailable."
+  ],
+  "commit": "ef0354f60e200c64c52e609ded7dadd63cb24f70"
+}

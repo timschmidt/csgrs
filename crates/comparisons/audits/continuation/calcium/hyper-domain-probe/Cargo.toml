@@ -1,0 +1,12 @@
+[package]
+name = "calcium-hyper-domain-probe"
+version = "0.1.0"
+edition = "2024"
+publish = false
+[workspace]
+[dependencies]
+hyperreal = { path = "../polynomial-monic-qualified-trial/hyperreal", features = ["serde"] }
+serde_json = "1.0.149"
+[[bin]]
+name = "calcium-hyper-domain-probe"
+path = "../hyper-domain-probe.rs"

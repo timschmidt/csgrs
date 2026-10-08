@@ -1,0 +1,67 @@
+
+sbMul (a:  x) y      | a == 0  = (0:sbMul x y)
+sbMul x       (c: y) | c == 0  = (0:sbMul x y)
+
+sbMul ( a: b: x) y  | a==1 && b == -1  = sbMul (0: 1: x) y
+sbMul x ( c: d: y)  | c==1 && d == -1  = sbMul x (0: 1: y)
+sbMul ( a: b: x) y  | a== -1 && b == 1 = sbMul (0: -1: x) y
+sbMul x ( c: d: y)  | c== -1 && d == 1 = sbMul x (0: -1: y)
+
+sbMul (a:b:x) (c:d:y) 
+	| a == 1 && b == 0 && c == -1 && d ==  -1 = 
+	 sbAv (sbAv ((g -1 l): (g 0 l): x') (sbAv x' y)) ((g -1 l): (g 0 l): (g 0 l): sbMul x y)
+
+	| a == 1 && b == 0 && c == -1 && d == 0 =
+	 sbAv ((g -1 l): sbAv (sbNegate x) y) ((g 0 l): (g 0 l): (g 0 l): sbMul x y)
+	
+	| a == 1 && b == 0 && c == 1 && d == 0 =
+	 sbAv ((g 1 l): sbAv x y) ((g 0 l): (g 0 l): (g 0 l): sbMul x y)
+
+	| a == 1 && b == 0 && c == 1 && d == 1 = 
+	  sbAv (sbAv ((g 1 l): (g 0 l): x) (sbAv x y)) ((g 1 l): (g 0 l): (g 0 l): sbMul x y)
+
+	| a == -1 && b == 0 && c == -1 && d == -1 = 
+	  sbAv (sbAv ((g 1 l): (g 0 l): (sbNegate x)) (sbNegate (sbAv x y))) 
+	       ((g 1 l): (g 0 l): (g 0 l): sbMul x y)
+	| a == -1 && b == 0 && c == -1 && d == 0 = 
+	  sbAv ( (g 1 l): sbNegate (sbAv x y)) ((g 0 l): (g 0 l): (g 0 l): sbMul x y)
+
+	| a == -1 && b ==  0 && c == 1 && d == 0 =
+	  sbAv ((g -1 l): sbAv x (sbNegate y)) ((g 0 l): (g 0 l): (g 0 l): sbMul x y)
+
+	| a == -1 && b ==  0 && c == 1 && d ==  1 = 
+	sbAv (sbAv ( (g -1 l): (g 0 l): x) (sbAv x (sbNegate y))) ((g -1 l):(g 0 l):(g 0 l):sbMul x y)
+
+	| a == 1 && b == 1 && c == 1 && d ==   1 =
+	sbAv (sbAv ((g 1 l): xavy) xavy) ((g 1 l): (g 1 l): (g 1 l): sbMul x y)
+
+	| a ==  1 && b ==  1 && c ==  1 && d ==  0 = 
+	  sbAv (sbAv ((g 1 l): (g 0 l): y) (sbAv x y)) ((g 1 l): (g 0 l): (g 0 l): sbMul x y)
+
+	| a ==  1 && b == 1 && c == -1 && d ==  0 = 
+	sbAv (sbAv ( (g -1 l): (g 0 l): y) (sbAv (sbNegate x) y)) ((g -1 l):(g 0 l):(g 0 l):sbMul x y)
+
+	| a == 1 && b == 1 && c == -1 && d ==  -1 =
+	sbAv (sbAv ((g -1 l): nxavy) nxavy) ((g -1 l): (g -1 l): (g -1 l): sbMul x y)
+
+
+	| a ==  -1 && b ==  -1 && c ==  -1 && d ==  -1 =
+	sbAv (sbAv ((g 1 l): nxavny) nxavny) ((g 1 l): (g 1 l): (g 1 l): sbMul x y)
+	
+	| a == -1 && b ==  -1 && c == -1 && d ==  0 =
+	 sbAv (sbAv ((g 1 l): (g 0 l): (sbNegate y)) (sbNegate (sbAv x y))) 
+  	     ((g 1 l): (g 0 l): (g 0 l): sbMul x y)
+
+	| a ==  -1 && b ==  -1 && c ==  1 && d ==  0 = 
+  	 sbAv (sbAv ((g -1 l): (g 0 l): y') (sbAv x y')) ((g -1 l): (g 0 l): (g 0 l): sbMul x y)
+
+	| a == -1 && b ==  -1 && c ==  1 && d ==  1 =
+	sbAv (sbAv ((g -1 l): xavny) xavny) ((g -1 l): (g -1 l): (g -1 l): sbMul x y)
+	where {x'     = sbNegate x;
+	       y'     = sbNegate y;
+	       xavy   = sbAv x y;
+       	       xavny  = sbAv x (sbNegate y);
+	       nxavy  = sbAv (sbNegate x) y;
+	       nxavny = sbNegate (sbAv x y);
+               l      = max (e a) (max (e b) (max (e c) (e d)))}
+

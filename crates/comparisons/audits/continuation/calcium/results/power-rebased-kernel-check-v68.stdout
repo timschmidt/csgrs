@@ -1,0 +1,1 @@
+{"status":"pass","counts":{"rows":4840,"baseline":4840,"candidate":4840,"direct":4704,"fallback":136,"zeroResultant":32},"independentDeterminants":1210,"failures":[],"limits":"Exact signed full-polynomial oracle on the authored bounded carrier corpus. Covers kernel outputs/fallback, not public root isolation, all rational heights, performance or production retention."}

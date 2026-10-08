@@ -1,0 +1,156 @@
+[
+  {
+    "command": [
+      "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve-e54c4b79a7c62e9a",
+      "--exact",
+      "bezier_offset::conversion_tests::selected_circle_domains_reject_consumed_poles_and_undefined_normals",
+      "--test-threads=1",
+      "--nocapture"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 1.1157683420169633,
+    "binary": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve-e54c4b79a7c62e9a",
+    "sha256": "2f629f847c57a807c97ddd2db40646ec4da063c7c998fc169911eade53e3ef7a",
+    "log": "finite-circle-source-domain-focused-selected_circle_domains_reject_consumed_poles_and_undefined_normals.log"
+  },
+  {
+    "command": [
+      "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve_curve_intersection-ac6baf8ac716dd99",
+      "--exact",
+      "finite_selected_circle_domains::retained_fillet_intersects_finite_analytic_parallel_in_all_charts",
+      "--test-threads=1",
+      "--nocapture"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 7.928952223999659,
+    "binary": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve_curve_intersection-ac6baf8ac716dd99",
+    "sha256": "4f53b68f69e60a8941223316ebfab3039a1b25672ccc70012c728c7fb573e75b",
+    "log": "finite-circle-source-domain-focused-retained_fillet_intersects_finite_analytic_parallel_in_all_charts.log"
+  },
+  {
+    "command": [
+      "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve-e54c4b79a7c62e9a",
+      "--exact",
+      "bezier_offset::conversion_tests::algebraic_cusp_semicircle_intersects_a_general_analytic_parallel_exactly",
+      "--test-threads=1",
+      "--nocapture"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.007679064990952611,
+    "binary": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve-e54c4b79a7c62e9a",
+    "sha256": "2f629f847c57a807c97ddd2db40646ec4da063c7c998fc169911eade53e3ef7a",
+    "log": "finite-circle-source-domain-focused-algebraic_cusp_semicircle_intersects_a_general_analytic_parallel_exactly.log"
+  },
+  {
+    "command": [
+      "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve-e54c4b79a7c62e9a",
+      "--exact",
+      "bezier_offset::conversion_tests::pair_radial_circle_intersects_a_general_analytic_parallel_exactly",
+      "--test-threads=1",
+      "--nocapture"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.16415217600297183,
+    "binary": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve-e54c4b79a7c62e9a",
+    "sha256": "2f629f847c57a807c97ddd2db40646ec4da063c7c998fc169911eade53e3ef7a",
+    "log": "finite-circle-source-domain-focused-pair_radial_circle_intersects_a_general_analytic_parallel_exactly.log"
+  },
+  {
+    "command": [
+      "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve-e54c4b79a7c62e9a",
+      "--exact",
+      "bezier_offset::conversion_tests::dense_chord_normal_circle_extends_over_an_independent_analytic_speed",
+      "--test-threads=1",
+      "--nocapture"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.01587215400650166,
+    "binary": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve-e54c4b79a7c62e9a",
+    "sha256": "2f629f847c57a807c97ddd2db40646ec4da063c7c998fc169911eade53e3ef7a",
+    "log": "finite-circle-source-domain-focused-dense_chord_normal_circle_extends_over_an_independent_analytic_speed.log"
+  },
+  {
+    "command": [
+      "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve-e54c4b79a7c62e9a",
+      "--exact",
+      "bezier_offset::conversion_tests::dense_chord_normal_incident_circle_retains_its_component",
+      "--test-threads=1",
+      "--nocapture"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.015726032987004146,
+    "binary": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve-e54c4b79a7c62e9a",
+    "sha256": "2f629f847c57a807c97ddd2db40646ec4da063c7c998fc169911eade53e3ef7a",
+    "log": "finite-circle-source-domain-focused-dense_chord_normal_incident_circle_retains_its_component.log"
+  },
+  {
+    "command": [
+      "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve-e54c4b79a7c62e9a",
+      "--exact",
+      "bezier_offset::conversion_tests::selected_projection_replays_selected_boundaries_under_the_original_policy",
+      "--test-threads=1",
+      "--nocapture"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.007652706000953913,
+    "binary": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve-e54c4b79a7c62e9a",
+    "sha256": "2f629f847c57a807c97ddd2db40646ec4da063c7c998fc169911eade53e3ef7a",
+    "log": "finite-circle-source-domain-focused-selected_projection_replays_selected_boundaries_under_the_original_policy.log"
+  },
+  {
+    "command": [
+      "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve-e54c4b79a7c62e9a",
+      "--exact",
+      "bezier_offset::conversion_tests::selected_analytic_point_replays_reduced_and_opposite_frames_locally",
+      "--test-threads=1",
+      "--nocapture"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.0076371080067474395,
+    "binary": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve-e54c4b79a7c62e9a",
+    "sha256": "2f629f847c57a807c97ddd2db40646ec4da063c7c998fc169911eade53e3ef7a",
+    "log": "finite-circle-source-domain-focused-selected_analytic_point_replays_reduced_and_opposite_frames_locally.log"
+  },
+  {
+    "command": [
+      "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve-e54c4b79a7c62e9a",
+      "--exact",
+      "bezier_offset::conversion_tests::algebraic_cusp_semicircle_replays_a_selected_circle_component",
+      "--test-threads=1",
+      "--nocapture"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 24.654446114989696,
+    "binary": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve-e54c4b79a7c62e9a",
+    "sha256": "2f629f847c57a807c97ddd2db40646ec4da063c7c998fc169911eade53e3ef7a",
+    "log": "finite-circle-source-domain-focused-algebraic_cusp_semicircle_replays_a_selected_circle_component.log"
+  },
+  {
+    "command": [
+      "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve-e54c4b79a7c62e9a",
+      "--exact",
+      "bezier_offset::conversion_tests::selected_parallel_normal_circle_reuses_rationalized_analytic_parallel_components",
+      "--test-threads=1",
+      "--nocapture"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.46465539099881425,
+    "binary": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve-e54c4b79a7c62e9a",
+    "sha256": "2f629f847c57a807c97ddd2db40646ec4da063c7c998fc169911eade53e3ef7a",
+    "log": "finite-circle-source-domain-focused-selected_parallel_normal_circle_reuses_rationalized_analytic_parallel_components.log"
+  },
+  {
+    "command": [
+      "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve-e54c4b79a7c62e9a",
+      "--exact",
+      "bezier_offset::conversion_tests::selected_third_axis_incident_domain_stops_before_the_regular_barrier",
+      "--test-threads=1",
+      "--nocapture"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.0035697850107681006,
+    "binary": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve-e54c4b79a7c62e9a",
+    "sha256": "2f629f847c57a807c97ddd2db40646ec4da063c7c998fc169911eade53e3ef7a",
+    "log": "finite-circle-source-domain-focused-selected_third_axis_incident_domain_stops_before_the_regular_barrier.log"
+  }
+]

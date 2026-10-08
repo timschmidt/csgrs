@@ -1,0 +1,157 @@
+{
+  "candidates": {
+    "hypercurve/src/bezier_region.rs": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/region-admission-candidate-v762/hypercurve/src/bezier_region.rs",
+    "hypercurve/src/native_region_tests.rs": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/region-admission-candidate-v762/hypercurve/src/native_region_tests.rs",
+    "hypercurve/src/reconstruct.rs": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/region-admission-candidate-v762/hypercurve/src/reconstruct.rs",
+    "hypercurve/tests/hypercurve_reconstruct.rs": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/region-admission-candidate-v762/hypercurve/tests/hypercurve_reconstruct.rs",
+    "hypercurve/README.md": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/region-admission-candidate-v762/hypercurve/README.md"
+  },
+  "base": {
+    "hypercurve/src/bezier_region.rs": "9d9aa33c3a15a52f3df285935e26b23aba883185cdd9fbbe8804e96756eedf48",
+    "hypercurve/src/native_region_tests.rs": "debc88eaec2019c3f294a26a5e2703b890600fa7e6dcd4777cf142d6a0be152d",
+    "hypercurve/src/reconstruct.rs": "857ab572fea41f0fed90cb9689199c690306665b51a54a1d24ef7114b8d029f7",
+    "hypercurve/tests/hypercurve_reconstruct.rs": "da7ca30682868bd5a11331556deeaa7d62a3f09149c95612ea04daca3b3ce0dd",
+    "hypercurve/README.md": "17a9387158be1a73213b38c9f5742331a58f3305eef0b7ea471e4d5e9defdde5"
+  },
+  "promoted": {
+    "hypercurve/src/bezier_region.rs": "0faf72d5039cfeb3b2e95d4050490f4b4b89bf6f9831dd4cbee0f349f5ccd72f",
+    "hypercurve/src/native_region_tests.rs": "ee4fe9ffa794392550f3899badbf0a0a775ae716c4297c513960b2b3fc927c80",
+    "hypercurve/src/reconstruct.rs": "9427c7f68dec527fadd82e0283c191e2319dfdec1a85aefa8c16443cfc6f5561",
+    "hypercurve/tests/hypercurve_reconstruct.rs": "242c11e26929de3be20923dd6aa12671ee81a6e7a19ad87c9790ce2a20057883",
+    "hypercurve/README.md": "803c2bcbb6322c7c06805a90a4b527cd4f0be91e2de37d7bc2521640ed1791b6"
+  },
+  "parents": {
+    "ExactCalculator": {
+      "head": "7265aa3a922a7e7c0389dae4b26cca562aa777a6",
+      "status": ""
+    },
+    "NURBS_BREP_kernel": {
+      "head": "1aef37b12a92c993c2046f7886593bb0a555c414",
+      "status": ""
+    },
+    "alumina-firmware": {
+      "head": "bdee397d0b80841f16bf17e7bcd029b4feb2c212",
+      "status": ""
+    },
+    "alumina-interface": {
+      "head": "b21c9214c59d41e8272b8644dd436b44b7e15e89",
+      "status": ""
+    },
+    "citizen-builder": {
+      "head": "c4230238e28fd88fc8156fceb2c43698e67c27ca",
+      "status": ""
+    },
+    "crcalc": {
+      "head": "4f398d699c9d498deb45520ea7ebb020627bc640",
+      "status": ""
+    },
+    "csgrs": {
+      "head": "febe9defca99565ee29ab65f4f822d9489352e7e",
+      "status": ""
+    },
+    "csgrs-ffi": {
+      "head": "6057435ce4c0b37bac99aec29922b90e6652c575",
+      "status": ""
+    },
+    "exactcore-hyper-comparison": {
+      "head": "74b90b328f720997d38da80af5620f167b3b0619",
+      "status": ""
+    },
+    "hyperbrep": {
+      "head": "1c00d39cbd8491908561eeb0115f4bb3aa740ed8",
+      "status": ""
+    },
+    "hypercircuit": {
+      "head": "ad421497ce6e88fe936818ec198c8a1b779776c7",
+      "status": ""
+    },
+    "hypercurve": {
+      "head": "9b78893482470bd54bf8051d11434df6ed2c2177",
+      "status": ""
+    },
+    "hyperdrc": {
+      "head": "ce49bba5d16f78ae8559a0eabe3e4478b72fd4bf",
+      "status": ""
+    },
+    "hyperevolution": {
+      "head": "99645e3cefb7eea3af86abc15db68f7fcb31ca95",
+      "status": ""
+    },
+    "hypergraphics": {
+      "head": "75219dede7a2387ab30c84664b1293ec71d736d2",
+      "status": ""
+    },
+    "hyperlattice": {
+      "head": "035a8c822ca60e30daf0e3143843a65be0e6aedb",
+      "status": ""
+    },
+    "hyperlimit": {
+      "head": "d80f53329d7cab4130c62c2cbd4ec2d9f73c7c43",
+      "status": ""
+    },
+    "hypermesh": {
+      "head": "55cc20ada8bc502f1b3c1651b422f0a040239060",
+      "status": ""
+    },
+    "hyperpack": {
+      "head": "34857861561d643d7578753b8f8314d0fbca2c5b",
+      "status": ""
+    },
+    "hyperparts": {
+      "head": "d8626e9d36256afc4a8eb0380ae94c9ed5619107",
+      "status": ""
+    },
+    "hyperpath": {
+      "head": "96d03475ba4c5e971943a775898cbc697a132154",
+      "status": ""
+    },
+    "hyperphysics": {
+      "head": "dcbc7cf3489a1299de16a946fd7f5e5658b6f15f",
+      "status": ""
+    },
+    "hyperreal": {
+      "head": "a4b5a570155cb3bccbbe4679522b5cd3f962c174",
+      "status": ""
+    },
+    "hypersdf": {
+      "head": "b37825900457420cb64da385b8525acab33e31c5",
+      "status": ""
+    },
+    "hypersolve": {
+      "head": "106130aa5c45672fe170386635ad7e94741097d7",
+      "status": ""
+    },
+    "hypertri": {
+      "head": "6a2092c066964f3b7528299a72ef0ed1af4b1ff0",
+      "status": ""
+    },
+    "hypervoxel": {
+      "head": "0486b1465a249a04973520a4138a39395ded2f23",
+      "status": ""
+    },
+    "openscad-rs": {
+      "head": "f21b39486a6b35403ee8af9e7fba7cb62a045a5a",
+      "status": ""
+    },
+    "synaps-cad": {
+      "head": "da8da78636e573c04f8a5c4cd8cc900162b781ba",
+      "status": ""
+    },
+    "videos": {
+      "head": "4209b983cc0d937981f22a6fa7df384303fcc8bd",
+      "status": ""
+    }
+  },
+  "formatter_exit_code": 0,
+  "formatter_command": [
+    "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustfmt",
+    "--edition",
+    "2024",
+    "--config",
+    "skip_children=true",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/region-admission-candidate-v762/hypercurve/src/bezier_region.rs",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/region-admission-candidate-v762/hypercurve/src/native_region_tests.rs",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/region-admission-candidate-v762/hypercurve/src/reconstruct.rs",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/region-admission-candidate-v762/hypercurve/tests/hypercurve_reconstruct.rs"
+  ]
+}

@@ -1,0 +1,77 @@
+Preprocessing library for FewDigits-0.5.0..
+Building library for FewDigits-0.5.0..
+
+Data/Real/CReal.hs:1:17: warning: [-Wdeprecated-flags]
+    -fglasgow-exts is deprecated: Use individual extensions instead
+  |
+1 | {-# OPTIONS_GHC -fglasgow-exts #-}
+  |                 ^^^^^^^^^^^^^^
+
+Data/Interval.hs:1:17: warning: [-Wdeprecated-flags]
+    -fglasgow-exts is deprecated: Use individual extensions instead
+  |
+1 | {-# OPTIONS_GHC -fglasgow-exts #-}
+  |                 ^^^^^^^^^^^^^^
+
+Data/Multinomial.hs:1:17: warning: [-Wdeprecated-flags]
+    -fglasgow-exts is deprecated: Use individual extensions instead
+  |
+1 | {-# OPTIONS_GHC -fglasgow-exts #-}
+  |                 ^^^^^^^^^^^^^^
+
+Data/Real/Complete.hs:1:17: warning: [-Wdeprecated-flags]
+    -fglasgow-exts is deprecated: Use individual extensions instead
+  |
+1 | {-# OPTIONS_GHC -fglasgow-exts #-}
+  |                 ^^^^^^^^^^^^^^
+
+<no location info>: warning: [GHC-32850] [-Wmissing-home-modules]
+    These modules are needed for compilation but not listed in your .cabal file's other-modules for ‘FewDigits-0.5.0-DFmnsTYcZrR7u2D1SKYGGJ’ :
+        Combinatorics Data.Real.Base Data.Real.Complete Data.Real.Gauge
+[1 of 8] Compiling Combinatorics    ( Combinatorics.hs, dist/build/Combinatorics.o, dist/build/Combinatorics.dyn_o )
+
+Combinatorics.hs:1:8: error:
+    Could not load module ‘Prelude’
+    It is a member of the hidden package ‘base-4.18.3.0’.
+    Perhaps you need to add ‘base’ to the build-depends in your .cabal file.
+    Use -v (or `:set -v` in ghci) to see a list of the files searched for.
+  |
+1 | module Combinatorics where
+  |        ^^^^^^^^^^^^^
+[2 of 8] Compiling Data.Interval    ( Data/Interval.hs, dist/build/Data/Interval.o, dist/build/Data/Interval.dyn_o )
+
+Data/Interval.hs:2:8: error:
+    Could not load module ‘Prelude’
+    It is a member of the hidden package ‘base-4.18.3.0’.
+    Perhaps you need to add ‘base’ to the build-depends in your .cabal file.
+    Use -v (or `:set -v` in ghci) to see a list of the files searched for.
+  |
+2 | module Data.Interval 
+  |        ^^^^^^^^^^^^^
+
+Data/Interval.hs:10:1: error:
+    Could not find module ‘Test.QuickCheck’
+    Use -v (or `:set -v` in ghci) to see a list of the files searched for.
+   |
+10 | import Test.QuickCheck
+   | ^^^^^^^^^^^^^^^^^^^^^^
+[4 of 8] Compiling Data.Real.Complete ( Data/Real/Complete.hs, dist/build/Data/Real/Complete.o, dist/build/Data/Real/Complete.dyn_o )
+
+Data/Real/Complete.hs:2:8: error:
+    Could not load module ‘Prelude’
+    It is a member of the hidden package ‘base-4.18.3.0’.
+    Perhaps you need to add ‘base’ to the build-depends in your .cabal file.
+    Use -v (or `:set -v` in ghci) to see a list of the files searched for.
+  |
+2 | module Data.Real.Complete 
+  |        ^^^^^^^^^^^^^^^^^^
+[5 of 8] Compiling Data.Real.Gauge  ( Data/Real/Gauge.hs, dist/build/Data/Real/Gauge.o, dist/build/Data/Real/Gauge.dyn_o )
+
+Data/Real/Gauge.hs:1:8: error:
+    Could not load module ‘Prelude’
+    It is a member of the hidden package ‘base-4.18.3.0’.
+    Perhaps you need to add ‘base’ to the build-depends in your .cabal file.
+    Use -v (or `:set -v` in ghci) to see a list of the files searched for.
+  |
+1 | module Data.Real.Gauge (Gauge) where
+  |        ^^^^^^^^^^^^^^^

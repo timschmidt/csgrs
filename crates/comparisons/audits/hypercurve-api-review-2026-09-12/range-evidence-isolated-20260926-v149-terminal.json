@@ -1,0 +1,34 @@
+{
+  "parents": {
+    "hypercurve": "7dbb1b89aadd491ed1b4de27c3761392dd617162",
+    "hypersolve": "41855c3604cbd18605a020d60758c8e5c489b629",
+    "hyperreal": "0cb5f29aee065c73e234e0ebb0a9e106398515bb"
+  },
+  "workspace_guard": "local-chord-complete-replay-20260924-v148-sources.json",
+  "source_manifest": "range-evidence-isolated-20260926-v149-sources.json",
+  "source_directory": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/source-archives/range-evidence-isolated-20260926-v149",
+  "build_source_directory": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/build-workspace-20260925",
+  "patch": "range-evidence-isolated-20260926-v149.patch",
+  "checks": [
+    {
+      "repo": "hypercurve",
+      "label": "hypercurve-fmt",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustfmt",
+        "--edition",
+        "2024",
+        "--check",
+        "src/bezier_offset.rs",
+        "src/curve_region_boolean.rs",
+        "src/curve_support.rs"
+      ],
+      "returncode": 1,
+      "elapsed_seconds": 2.4675115869613364,
+      "log": "range-evidence-isolated-20260926-v149-hypercurve-fmt.log"
+    }
+  ],
+  "cases": [],
+  "binaries": {},
+  "all_processes_reaped": true,
+  "all_sources_unchanged": true
+}

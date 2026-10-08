@@ -1,0 +1,4 @@
+[1 of 4] Compiling Numeric.AERN.Poly.IntPoly.Config ( /tmp/aern-audit.zp9Mzz/source/aern-poly/src/Numeric/AERN/Poly/IntPoly/Config.hs, /tmp/aern-audit.zp9Mzz/source/aern-poly/src/Numeric/AERN/Poly/IntPoly/Config.o )
+[2 of 4] Compiling Numeric.AERN.Poly.IntPoly.IntPoly ( /tmp/aern-audit.zp9Mzz/source/aern-poly/src/Numeric/AERN/Poly/IntPoly/IntPoly.hs, /tmp/aern-audit.zp9Mzz/source/aern-poly/src/Numeric/AERN/Poly/IntPoly/IntPoly.o )
+[3 of 4] Compiling Main             ( /tmp/aern-audit.zp9Mzz/PolyStructureProbe.hs, /tmp/aern-audit.zp9Mzz/PolyStructureProbe.o )
+[4 of 4] Linking /tmp/aern-audit.zp9Mzz/poly-structure-probe

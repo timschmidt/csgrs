@@ -1,0 +1,4011 @@
+{
+  "parents": {
+    "hypercurve": "5b1d0785125e7eb260dd81343e8030182751b869",
+    "hypersolve": "42308d704df777b3e627aa344424afa3f215e456",
+    "hyperreal": "0cb5f29aee065c73e234e0ebb0a9e106398515bb"
+  },
+  "workspace_guard": "retained-fillet-components-full-20260926-v218-sources.json",
+  "source_manifest": "retained-fillet-components-full-20260926-v218-sources.json",
+  "source_directory": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/source-archives/retained-fillet-components-full-20260926-v218",
+  "build_source_directory": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/build-workspace-20260925",
+  "checks": [
+    {
+      "repo": "hypercurve",
+      "label": "hypercurve-fmt",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustfmt",
+        "--edition",
+        "2024",
+        "--check",
+        "src/bezier_offset.rs",
+        "src/curve.rs",
+        "src/curve_intersection.rs",
+        "src/curve_support_intersection.rs",
+        "src/curve_parameter_component.rs"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 2.5169473061105236,
+      "log": "retained-fillet-components-full-20260926-v218-hypercurve-fmt.log"
+    },
+    {
+      "repo": "hypercurve",
+      "label": "hypercurve-clippy-all",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "clippy",
+        "--all-targets",
+        "--all-features",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 19.892399856005795,
+      "log": "retained-fillet-components-full-20260926-v218-hypercurve-clippy-all.log"
+    },
+    {
+      "repo": "hypercurve",
+      "label": "hypercurve-clippy-default",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "clippy",
+        "--all-targets",
+        "--no-default-features",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 19.04069316701498,
+      "log": "retained-fillet-components-full-20260926-v218-hypercurve-clippy-default.log"
+    },
+    {
+      "repo": "hyperbrep",
+      "label": "hyperbrep-check",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "check",
+        "--all-targets",
+        "--all-features",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 14.232816018979065,
+      "log": "retained-fillet-components-full-20260926-v218-hyperbrep-check.log"
+    }
+  ],
+  "cases": [
+    {
+      "repo": "hypercurve",
+      "label": "case-000",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-fillet-components-full-20260926-v218-hypercurve",
+        "--exact",
+        "bezier_offset::conversion_tests::axis_components_keep_exact_clipped_ends_and_open_selector_events",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.003558016032911837,
+      "log": "retained-fillet-components-full-20260926-v218-case-000.log",
+      "target": "hypercurve",
+      "name": "bezier_offset::conversion_tests::axis_components_keep_exact_clipped_ends_and_open_selector_events"
+    },
+    {
+      "repo": "hypercurve",
+      "label": "case-001",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-fillet-components-full-20260926-v218-hypercurve",
+        "--exact",
+        "bezier_offset::conversion_tests::complete_component_queries_keep_split_cells_and_residual_contacts",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.003481970983557403,
+      "log": "retained-fillet-components-full-20260926-v218-case-001.log",
+      "target": "hypercurve",
+      "name": "bezier_offset::conversion_tests::complete_component_queries_keep_split_cells_and_residual_contacts"
+    },
+    {
+      "repo": "hypercurve",
+      "label": "case-002",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-fillet-components-full-20260926-v218-hypercurve",
+        "--exact",
+        "bezier_offset::conversion_tests::domain_component_normal_constraints_follow_swapped_operands",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.007555441930890083,
+      "log": "retained-fillet-components-full-20260926-v218-case-002.log",
+      "target": "hypercurve",
+      "name": "bezier_offset::conversion_tests::domain_component_normal_constraints_follow_swapped_operands"
+    },
+    {
+      "repo": "hypercurve",
+      "label": "case-003",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-fillet-components-full-20260926-v218-hypercurve",
+        "--exact",
+        "bezier_offset::conversion_tests::original_parallel_normal_constraints_clip_finite_and_incident_components",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.063758882926777,
+      "log": "retained-fillet-components-full-20260926-v218-case-003.log",
+      "target": "hypercurve",
+      "name": "bezier_offset::conversion_tests::original_parallel_normal_constraints_clip_finite_and_incident_components"
+    },
+    {
+      "repo": "hypercurve",
+      "label": "case-004",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-fillet-components-full-20260926-v218-hypercurve",
+        "--exact",
+        "bezier_offset::parameter_component::tests::incident_charts_keep_poles_and_finite_ownership_excluded",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.003519549034535885,
+      "log": "retained-fillet-components-full-20260926-v218-case-004.log",
+      "target": "hypercurve",
+      "name": "bezier_offset::parameter_component::tests::incident_charts_keep_poles_and_finite_ownership_excluded"
+    },
+    {
+      "repo": "hypercurve",
+      "label": "case-005",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-fillet-components-full-20260926-v218-hypercurve",
+        "--exact",
+        "bezier_offset::parameter_component::tests::product_components_keep_fixed_axes_and_operand_roles",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.0035134790232405066,
+      "log": "retained-fillet-components-full-20260926-v218-case-005.log",
+      "target": "hypercurve",
+      "name": "bezier_offset::parameter_component::tests::product_components_keep_fixed_axes_and_operand_roles"
+    },
+    {
+      "repo": "hypercurve",
+      "label": "case-006",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-fillet-components-full-20260926-v218-hypercurve",
+        "--exact",
+        "curve::tests::distinct_parallel_sources_keep_a_shared_fillet_center_family",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.0316826649941504,
+      "log": "retained-fillet-components-full-20260926-v218-case-006.log",
+      "target": "hypercurve",
+      "name": "curve::tests::distinct_parallel_sources_keep_a_shared_fillet_center_family"
+    },
+    {
+      "repo": "hypercurve",
+      "label": "case-007",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-fillet-components-full-20260926-v218-hypercurve",
+        "--exact",
+        "curve::tests::fillet_center_contacts_keep_source_orientation_across_support_cusps",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.007553511997684836,
+      "log": "retained-fillet-components-full-20260926-v218-case-007.log",
+      "target": "hypercurve",
+      "name": "curve::tests::fillet_center_contacts_keep_source_orientation_across_support_cusps"
+    },
+    {
+      "repo": "hypercurve",
+      "label": "case-008",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-fillet-components-full-20260926-v218-hypercurve",
+        "--exact",
+        "curve::tests::selected_parallel_fillet_clips_a_positive_dimensional_center_component_locally",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.06374993408098817,
+      "log": "retained-fillet-components-full-20260926-v218-case-008.log",
+      "target": "hypercurve",
+      "name": "curve::tests::selected_parallel_fillet_clips_a_positive_dimensional_center_component_locally"
+    },
+    {
+      "repo": "hypercurve",
+      "label": "case-009",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-fillet-components-full-20260926-v218-hypercurve",
+        "--exact",
+        "curve::tests::selected_parallel_fillet_keeps_contacts_beyond_interior_cusps",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.007570459973067045,
+      "log": "retained-fillet-components-full-20260926-v218-case-009.log",
+      "target": "hypercurve",
+      "name": "curve::tests::selected_parallel_fillet_keeps_contacts_beyond_interior_cusps"
+    },
+    {
+      "repo": "hypercurve",
+      "label": "case-010",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-fillet-components-full-20260926-v218-hypercurve",
+        "--exact",
+        "arc_bezier::tests::arc_clones_share_sweep_and_decomposition_caches",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.0034935210132971406,
+      "log": "retained-fillet-components-full-20260926-v218-case-010.log",
+      "target": "hypercurve",
+      "name": "arc_bezier::tests::arc_clones_share_sweep_and_decomposition_caches"
+    },
+    {
+      "repo": "hypercurve",
+      "label": "case-011",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-fillet-components-full-20260926-v218-hypercurve",
+        "--exact",
+        "arc_bezier::tests::independent_algebraic_quarter_circle_recovers_minimal_center",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.003498520003631711,
+      "log": "retained-fillet-components-full-20260926-v218-case-011.log",
+      "target": "hypercurve",
+      "name": "arc_bezier::tests::independent_algebraic_quarter_circle_recovers_minimal_center"
+    },
+    {
+      "repo": "hypercurve",
+      "label": "case-012",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-fillet-components-full-20260926-v218-hypercurve",
+        "--exact",
+        "arc_bezier::tests::mixed_weight_conic_with_a_projective_pole_is_not_a_regular_arc",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.003481580992229283,
+      "log": "retained-fillet-components-full-20260926-v218-case-012.log",
+      "target": "hypercurve",
+      "name": "arc_bezier::tests::mixed_weight_conic_with_a_projective_pole_is_not_a_regular_arc"
+    },
+    {
+      "repo": "hypercurve",
+      "label": "case-013",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-fillet-components-full-20260926-v218-hypercurve",
+        "--exact",
+        "arc_bezier::tests::mixed_weight_major_circle_is_recognized_without_a_projective_pole",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.0034834309481084347,
+      "log": "retained-fillet-components-full-20260926-v218-case-013.log",
+      "target": "hypercurve",
+      "name": "arc_bezier::tests::mixed_weight_major_circle_is_recognized_without_a_projective_pole"
+    },
+    {
+      "repo": "hypercurve",
+      "label": "case-014",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-fillet-components-full-20260926-v218-hypercurve",
+        "--exact",
+        "arc_bezier::tests::one_arc_decomposition_shares_exact_conic_provenance",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.003508319961838424,
+      "log": "retained-fillet-components-full-20260926-v218-case-014.log",
+      "target": "hypercurve",
+      "name": "arc_bezier::tests::one_arc_decomposition_shares_exact_conic_provenance"
+    },
+    {
+      "repo": "hypercurve",
+      "label": "case-015",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-fillet-components-full-20260926-v218-hypercurve",
+        "--exact",
+        "bezier_algebraic_image::policy_tests::arithmetic_adapter_replays_close_nonrational_bounds_strictly",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.003446953953243792,
+      "log": "retained-fillet-components-full-20260926-v218-case-015.log",
+      "target": "hypercurve",
+      "name": "bezier_algebraic_image::policy_tests::arithmetic_adapter_replays_close_nonrational_bounds_strictly"
+    },
+    {
+      "repo": "hypercurve",
+      "label": "case-016",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-fillet-components-full-20260926-v218-hypercurve",
+        "--exact",
+        "bezier_algebraic_image::policy_tests::coordinate_images_preserve_native_polynomial_point_values",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.00347183202393353,
+      "log": "retained-fillet-components-full-20260926-v218-case-016.log",
+      "target": "hypercurve",
+      "name": "bezier_algebraic_image::policy_tests::coordinate_images_preserve_native_polynomial_point_values"
+    },
+    {
+      "repo": "hypercurve",
+      "label": "case-017",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-fillet-components-full-20260926-v218-hypercurve",
+        "--exact",
+        "bezier_algebraic_image::policy_tests::exact_real_representation_preserves_native_point_payloads",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.0035447069676592946,
+      "log": "retained-fillet-components-full-20260926-v218-case-017.log",
+      "target": "hypercurve",
+      "name": "bezier_algebraic_image::policy_tests::exact_real_representation_preserves_native_point_payloads"
+    },
+    {
+      "repo": "hypercurve",
+      "label": "case-018",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-fillet-components-full-20260926-v218-hypercurve",
+        "--exact",
+        "bezier_algebraic_image::policy_tests::retained_constant_coordinates_do_not_require_scalar_parameter_images",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.003479651059024036,
+      "log": "retained-fillet-components-full-20260926-v218-case-018.log",
+      "target": "hypercurve",
+      "name": "bezier_algebraic_image::policy_tests::retained_constant_coordinates_do_not_require_scalar_parameter_images"
+    },
+    {
+      "repo": "hypercurve",
+      "label": "case-019",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-fillet-components-full-20260926-v218-hypercurve",
+        "--exact",
+        "bezier_offset::conversion_tests::algebraic_chord_source_incidence_deflates_only_the_retained_contact",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.007512473966926336,
+      "log": "retained-fillet-components-full-20260926-v218-case-019.log",
+      "target": "hypercurve",
+      "name": "bezier_offset::conversion_tests::algebraic_chord_source_incidence_deflates_only_the_retained_contact"
+    },
+    {
+      "repo": "hypercurve",
+      "label": "case-020",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-fillet-components-full-20260926-v218-hypercurve",
+        "--exact",
+        "bezier_offset::conversion_tests::algebraic_cusp_semicircle_intersects_exact_oblique_chords_exactly",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.007556451018899679,
+      "log": "retained-fillet-components-full-20260926-v218-case-020.log",
+      "target": "hypercurve",
+      "name": "bezier_offset::conversion_tests::algebraic_cusp_semicircle_intersects_exact_oblique_chords_exactly"
+    },
+    {
+      "repo": "hypercurve",
+      "label": "case-021",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-fillet-components-full-20260926-v218-hypercurve",
+        "--exact",
+        "bezier_offset::conversion_tests::algebraic_cusp_semicircle_intersects_finite_axis_chords_exactly",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.06374625395983458,
+      "log": "retained-fillet-components-full-20260926-v218-case-021.log",
+      "target": "hypercurve",
+      "name": "bezier_offset::conversion_tests::algebraic_cusp_semicircle_intersects_finite_axis_chords_exactly"
+    },
+    {
+      "repo": "hypercurve",
+      "label": "case-022",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-fillet-components-full-20260926-v218-hypercurve",
+        "--exact",
+        "bezier_offset::conversion_tests::algebraic_cusp_semicircle_intersects_independent_field_oblique_chords_exactly",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.03171238291542977,
+      "log": "retained-fillet-components-full-20260926-v218-case-022.log",
+      "target": "hypercurve",
+      "name": "bezier_offset::conversion_tests::algebraic_cusp_semicircle_intersects_independent_field_oblique_chords_exactly"
+    },
+    {
+      "repo": "hypercurve",
+      "label": "case-023",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-fillet-components-full-20260926-v218-hypercurve",
+        "--exact",
+        "bezier_offset::conversion_tests::algebraic_cusp_semicircle_reoffsets_independent_field_oblique_chord_cap",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.11384038394317031,
+      "log": "retained-fillet-components-full-20260926-v218-case-023.log",
+      "target": "hypercurve",
+      "name": "bezier_offset::conversion_tests::algebraic_cusp_semicircle_reoffsets_independent_field_oblique_chord_cap"
+    },
+    {
+      "repo": "hypercurve",
+      "label": "case-024",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-fillet-components-full-20260926-v218-hypercurve",
+        "--exact",
+        "bezier_offset::conversion_tests::algebraic_selected_fiber_incident_chart_preserves_affine_authority",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.0034850400406867266,
+      "log": "retained-fillet-components-full-20260926-v218-case-024.log",
+      "target": "hypercurve",
+      "name": "bezier_offset::conversion_tests::algebraic_selected_fiber_incident_chart_preserves_affine_authority"
+    },
+    {
+      "repo": "hypercurve",
+      "label": "case-025",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-fillet-components-full-20260926-v218-hypercurve",
+        "--exact",
+        "bezier_offset::conversion_tests::analytic_axis_order_replays_a_local_root_in_the_other_points_field",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.007564140949398279,
+      "log": "retained-fillet-components-full-20260926-v218-case-025.log",
+      "target": "hypercurve",
+      "name": "bezier_offset::conversion_tests::analytic_axis_order_replays_a_local_root_in_the_other_points_field"
+    },
+    {
+      "repo": "hypercurve",
+      "label": "case-026",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-fillet-components-full-20260926-v218-hypercurve",
+        "--exact",
+        "bezier_offset::conversion_tests::analytic_axis_order_reuses_polynomial_speed_across_reduced_tangent_fields",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.03170523408334702,
+      "log": "retained-fillet-components-full-20260926-v218-case-026.log",
+      "target": "hypercurve",
+      "name": "bezier_offset::conversion_tests::analytic_axis_order_reuses_polynomial_speed_across_reduced_tangent_fields"
+    },
+    {
+      "repo": "hypercurve",
+      "label": "case-027",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-fillet-components-full-20260926-v218-hypercurve",
+        "--exact",
+        "bezier_offset::conversion_tests::analytic_axis_predicates_replay_local_polynomial_roots",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.007566701038740575,
+      "log": "retained-fillet-components-full-20260926-v218-case-027.log",
+      "target": "hypercurve",
+      "name": "bezier_offset::conversion_tests::analytic_axis_predicates_replay_local_polynomial_roots"
+    },
+    {
+      "repo": "hypercurve",
+      "label": "case-028",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-fillet-components-full-20260926-v218-hypercurve",
+        "--exact",
+        "bezier_offset::conversion_tests::analytic_parallel_classifies_correlated_chord_pair_points",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.007534031989052892,
+      "log": "retained-fillet-components-full-20260926-v218-case-028.log",
+      "target": "hypercurve",
+      "name": "bezier_offset::conversion_tests::analytic_parallel_classifies_correlated_chord_pair_points"
+    },
+    {
+      "repo": "hypercurve",
+      "label": "case-029",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-fillet-components-full-20260926-v218-hypercurve",
+        "--exact",
+        "bezier_offset::conversion_tests::analytic_parallel_self_intersection_removes_the_parameter_diagonal",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 1.0149208039510995,
+      "log": "retained-fillet-components-full-20260926-v218-case-029.log",
+      "target": "hypercurve",
+      "name": "bezier_offset::conversion_tests::analytic_parallel_self_intersection_removes_the_parameter_diagonal"
+    },
+    {
+      "repo": "hypercurve",
+      "label": "case-030",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-fillet-components-full-20260926-v218-hypercurve",
+        "--exact",
+        "bezier_offset::conversion_tests::analytic_predicate_image_keeps_its_native_field_after_scalar_cache_warms",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.0035712450044229627,
+      "log": "retained-fillet-components-full-20260926-v218-case-030.log",
+      "target": "hypercurve",
+      "name": "bezier_offset::conversion_tests::analytic_predicate_image_keeps_its_native_field_after_scalar_cache_warms"
+    },
+    {
+      "repo": "hypercurve",
+      "label": "case-031",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-fillet-components-full-20260926-v218-hypercurve",
+        "--exact",
+        "bezier_offset::conversion_tests::analytic_tangent_unit_direction_cancels_shared_point_fields",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.007702111033722758,
+      "log": "retained-fillet-components-full-20260926-v218-case-031.log",
+      "target": "hypercurve",
+      "name": "bezier_offset::conversion_tests::analytic_tangent_unit_direction_cancels_shared_point_fields"
+    },
+    {
+      "repo": "hypercurve",
+      "label": "case-032",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-fillet-components-full-20260926-v218-hypercurve",
+        "--exact",
+        "bezier_offset::conversion_tests::bivariate_bernstein_sign_excludes_only_strict_unit_square_misses",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.00356522505171597,
+      "log": "retained-fillet-components-full-20260926-v218-case-032.log",
+      "target": "hypercurve",
+      "name": "bezier_offset::conversion_tests::bivariate_bernstein_sign_excludes_only_strict_unit_square_misses"
+    },
+    {
+      "repo": "hypercurve",
+      "label": "case-033",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-fillet-components-full-20260926-v218-hypercurve",
+        "--exact",
+        "bezier_offset::conversion_tests::bivariate_parameter_box_sign_keeps_boundary_zeros_and_bernstein_fallback",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.0035115990322083235,
+      "log": "retained-fillet-components-full-20260926-v218-case-033.log",
+      "target": "hypercurve",
+      "name": "bezier_offset::conversion_tests::bivariate_parameter_box_sign_keeps_boundary_zeros_and_bernstein_fallback"
+    },
+    {
+      "repo": "hypercurve",
+      "label": "case-034",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-fillet-components-full-20260926-v218-hypercurve",
+        "--exact",
+        "bezier_offset::conversion_tests::bounded_point_import_preserves_a_cached_local_field",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.01561625802423805,
+      "log": "retained-fillet-components-full-20260926-v218-case-034.log",
+      "target": "hypercurve",
+      "name": "bezier_offset::conversion_tests::bounded_point_import_preserves_a_cached_local_field"
+    },
+    {
+      "repo": "hypercurve",
+      "label": "case-035",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-fillet-components-full-20260926-v218-hypercurve",
+        "--exact",
+        "bezier_offset::conversion_tests::bounded_point_import_reuses_certified_native_fiber_parameters",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.007587148924358189,
+      "log": "retained-fillet-components-full-20260926-v218-case-035.log",
+      "target": "hypercurve",
+      "name": "bezier_offset::conversion_tests::bounded_point_import_reuses_certified_native_fiber_parameters"
+    },
+    {
+      "repo": "hypercurve",
+      "label": "case-036",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-fillet-components-full-20260926-v218-hypercurve",
+        "--exact",
+        "bezier_offset::conversion_tests::certified_circle_chord_endpoint_factor_preserves_roots_and_field",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.003522748942486942,
+      "log": "retained-fillet-components-full-20260926-v218-case-036.log",
+      "target": "hypercurve",
+      "name": "bezier_offset::conversion_tests::certified_circle_chord_endpoint_factor_preserves_roots_and_field"
+    },
+    {
+      "repo": "hypercurve",
+      "label": "case-037",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-fillet-components-full-20260926-v218-hypercurve",
+        "--exact",
+        "bezier_offset::conversion_tests::certified_circle_tangent_remains_nontransverse_after_residual_deflation",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.003505888977088034,
+      "log": "retained-fillet-components-full-20260926-v218-case-037.log",
+      "target": "hypercurve",
+      "name": "bezier_offset::conversion_tests::certified_circle_tangent_remains_nontransverse_after_residual_deflation"
+    },
+    {
+      "repo": "hypercurve",
+      "label": "case-038",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-fillet-components-full-20260926-v218-hypercurve",
+        "--exact",
+        "bezier_offset::conversion_tests::chord_normal_and_parallel_contacts_share_native_point_identity",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.0034980400232598186,
+      "log": "retained-fillet-components-full-20260926-v218-case-038.log",
+      "target": "hypercurve",
+      "name": "bezier_offset::conversion_tests::chord_normal_and_parallel_contacts_share_native_point_identity"
+    },
+    {
+      "repo": "hypercurve",
+      "label": "case-039",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-fillet-components-full-20260926-v218-hypercurve",
+        "--exact",
+        "bezier_offset::conversion_tests::chord_normal_parallel_contacts_reuse_the_retained_center_field",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.015602038940414786,
+      "log": "retained-fillet-components-full-20260926-v218-case-039.log",
+      "target": "hypercurve",
+      "name": "bezier_offset::conversion_tests::chord_normal_parallel_contacts_reuse_the_retained_center_field"
+    },
+    {
+      "repo": "hypercurve",
+      "label": "case-040",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-fillet-components-full-20260926-v218-hypercurve",
+        "--exact",
+        "bezier_offset::conversion_tests::chord_normal_recursive_frame_retains_center_and_oriented_unit_normal",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.06376135197933763,
+      "log": "retained-fillet-components-full-20260926-v218-case-040.log",
+      "target": "hypercurve",
+      "name": "bezier_offset::conversion_tests::chord_normal_recursive_frame_retains_center_and_oriented_unit_normal"
+    },
+    {
+      "repo": "hypercurve",
+      "label": "case-041",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-fillet-components-full-20260926-v218-hypercurve",
+        "--exact",
+        "bezier_offset::conversion_tests::chord_parallel_extension_keeps_target_and_chord_domains_independent",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.007536142016761005,
+      "log": "retained-fillet-components-full-20260926-v218-case-041.log",
+      "target": "hypercurve",
+      "name": "bezier_offset::conversion_tests::chord_parallel_extension_keeps_target_and_chord_domains_independent"
+    },
+    {
+      "repo": "hypercurve",
+      "label": "case-042",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-fillet-components-full-20260926-v218-hypercurve",
+        "--exact",
+        "bezier_offset::conversion_tests::circle_incidence_retains_oriented_transverse_signs",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.0034815010149031878,
+      "log": "retained-fillet-components-full-20260926-v218-case-042.log",
+      "target": "hypercurve",
+      "name": "bezier_offset::conversion_tests::circle_incidence_retains_oriented_transverse_signs"
+    },
+    {
+      "repo": "hypercurve",
+      "label": "case-043",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-fillet-components-full-20260926-v218-hypercurve",
+        "--exact",
+        "bezier_offset::conversion_tests::closed_parallel_secants_retain_endpoints_and_both_seam_parameters",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.11384775396436453,
+      "log": "retained-fillet-components-full-20260926-v218-case-043.log",
+      "target": "hypercurve",
+      "name": "bezier_offset::conversion_tests::closed_parallel_secants_retain_endpoints_and_both_seam_parameters"
+    },
+    {
+      "repo": "hypercurve",
+      "label": "case-044",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-fillet-components-full-20260926-v218-hypercurve",
+        "--exact",
+        "bezier_offset::conversion_tests::closed_parallel_turn_certificate_rejects_multiple_traversal",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.031712342984974384,
+      "log": "retained-fillet-components-full-20260926-v218-case-044.log",
+      "target": "hypercurve",
+      "name": "bezier_offset::conversion_tests::closed_parallel_turn_certificate_rejects_multiple_traversal"
+    },
+    {
+      "repo": "hypercurve",
+      "label": "case-045",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-fillet-components-full-20260926-v218-hypercurve",
+        "--exact",
+        "bezier_offset::conversion_tests::closed_parallel_turn_certificate_retains_only_the_seam",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.015731880092062056,
+      "log": "retained-fillet-components-full-20260926-v218-case-045.log",
+      "target": "hypercurve",
+      "name": "bezier_offset::conversion_tests::closed_parallel_turn_certificate_retains_only_the_seam"
+    },
+    {
+      "repo": "hypercurve",
+      "label": "case-046",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-fillet-components-full-20260926-v218-hypercurve",
+        "--exact",
+        "bezier_offset::conversion_tests::closed_source_diagonal_is_removed_before_residual_component_scan",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.0035487759159877896,
+      "log": "retained-fillet-components-full-20260926-v218-case-046.log",
+      "target": "hypercurve",
+      "name": "bezier_offset::conversion_tests::closed_source_diagonal_is_removed_before_residual_component_scan"
+    },
+    {
+      "repo": "hypercurve",
+      "label": "case-047",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-fillet-components-full-20260926-v218-hypercurve",
+        "--exact",
+        "bezier_offset::conversion_tests::coefficient_precision_uses_certified_dyadic_bounds_for_signed_surds",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.0035141779808327556,
+      "log": "retained-fillet-components-full-20260926-v218-case-047.log",
+      "target": "hypercurve",
+      "name": "bezier_offset::conversion_tests::coefficient_precision_uses_certified_dyadic_bounds_for_signed_surds"
+    },
+    {
+      "repo": "hypercurve",
+      "label": "case-048",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-fillet-components-full-20260926-v218-hypercurve",
+        "--exact",
+        "bezier_offset::conversion_tests::dense_chord_normal_circle_extends_over_an_independent_analytic_speed",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.031704184017144144,
+      "log": "retained-fillet-components-full-20260926-v218-case-048.log",
+      "target": "hypercurve",
+      "name": "bezier_offset::conversion_tests::dense_chord_normal_circle_extends_over_an_independent_analytic_speed"
+    },
+    {
+      "repo": "hypercurve",
+      "label": "case-049",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-fillet-components-full-20260926-v218-hypercurve",
+        "--exact",
+        "bezier_offset::conversion_tests::dense_chord_normal_incident_circle_retains_its_component",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.0637798709794879,
+      "log": "retained-fillet-components-full-20260926-v218-case-049.log",
+      "target": "hypercurve",
+      "name": "bezier_offset::conversion_tests::dense_chord_normal_incident_circle_retains_its_component"
+    },
+    {
+      "repo": "hypercurve",
+      "label": "case-050",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-fillet-components-full-20260926-v218-hypercurve",
+        "--exact",
+        "bezier_offset::conversion_tests::dense_chord_normal_independent_anchor_uses_rank_independent_fallback",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.3140642490470782,
+      "log": "retained-fillet-components-full-20260926-v218-case-050.log",
+      "target": "hypercurve",
+      "name": "bezier_offset::conversion_tests::dense_chord_normal_independent_anchor_uses_rank_independent_fallback"
+    },
+    {
+      "repo": "hypercurve",
+      "label": "case-051",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-fillet-components-full-20260926-v218-hypercurve",
+        "--exact",
+        "bezier_offset::conversion_tests::dense_chord_normal_rejects_disjoint_and_finitely_clipped_chords",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.03170828300062567,
+      "log": "retained-fillet-components-full-20260926-v218-case-051.log",
+      "target": "hypercurve",
+      "name": "bezier_offset::conversion_tests::dense_chord_normal_rejects_disjoint_and_finitely_clipped_chords"
+    },
+    {
+      "repo": "hypercurve",
+      "label": "case-052",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-fillet-components-full-20260926-v218-hypercurve",
+        "--exact",
+        "bezier_offset::conversion_tests::dense_chord_normal_retains_rational_contacts_and_circle_components",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.2139478619210422,
+      "log": "retained-fillet-components-full-20260926-v218-case-052.log",
+      "target": "hypercurve",
+      "name": "bezier_offset::conversion_tests::dense_chord_normal_retains_rational_contacts_and_circle_components"
+    },
+    {
+      "repo": "hypercurve",
+      "label": "case-053",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-fillet-components-full-20260926-v218-hypercurve",
+        "--exact",
+        "bezier_offset::conversion_tests::dense_chord_normal_tangency_retains_a_finite_endpoint",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.003523107967339456,
+      "log": "retained-fillet-components-full-20260926-v218-case-053.log",
+      "target": "hypercurve",
+      "name": "bezier_offset::conversion_tests::dense_chord_normal_tangency_retains_a_finite_endpoint"
+    },
+    {
+      "repo": "hypercurve",
+      "label": "case-054",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-fillet-components-full-20260926-v218-hypercurve",
+        "--exact",
+        "bezier_offset::conversion_tests::exterior_chord_contact_deflation_preserves_other_contacts",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.007580009056255221,
+      "log": "retained-fillet-components-full-20260926-v218-case-054.log",
+      "target": "hypercurve",
+      "name": "bezier_offset::conversion_tests::exterior_chord_contact_deflation_preserves_other_contacts"
+    },
+    {
+      "repo": "hypercurve",
+      "label": "case-055",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-fillet-components-full-20260926-v218-hypercurve",
+        "--exact",
+        "bezier_offset::conversion_tests::exterior_rational_analytic_points_use_the_selected_denominator_sign",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.003497480065561831,
+      "log": "retained-fillet-components-full-20260926-v218-case-055.log",
+      "target": "hypercurve",
+      "name": "bezier_offset::conversion_tests::exterior_rational_analytic_points_use_the_selected_denominator_sign"
+    },
+    {
+      "repo": "hypercurve",
+      "label": "case-056",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-fillet-components-full-20260926-v218-hypercurve",
+        "--exact",
+        "bezier_offset::conversion_tests::finite_analytic_self_components_retain_original_parameter_filters",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 3.518180129933171,
+      "log": "retained-fillet-components-full-20260926-v218-case-056.log",
+      "target": "hypercurve",
+      "name": "bezier_offset::conversion_tests::finite_analytic_self_components_retain_original_parameter_filters"
+    },
+    {
+      "repo": "hypercurve",
+      "label": "case-057",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-fillet-components-full-20260926-v218-hypercurve",
+        "--exact",
+        "bezier_offset::conversion_tests::finite_component_charts_accept_nonrational_exact_scalar_bounds",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.015714060980826616,
+      "log": "retained-fillet-components-full-20260926-v218-case-057.log",
+      "target": "hypercurve",
+      "name": "bezier_offset::conversion_tests::finite_component_charts_accept_nonrational_exact_scalar_bounds"
+    },
+    {
+      "repo": "hypercurve",
+      "label": "case-058",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-fillet-components-full-20260926-v218-hypercurve",
+        "--exact",
+        "bezier_offset::conversion_tests::finite_domain_admits_one_sided_source_cusp_contacts",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.6144729650113732,
+      "log": "retained-fillet-components-full-20260926-v218-case-058.log",
+      "target": "hypercurve",
+      "name": "bezier_offset::conversion_tests::finite_domain_admits_one_sided_source_cusp_contacts"
+    },
+    {
+      "repo": "hypercurve",
+      "label": "case-059",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-fillet-components-full-20260926-v218-hypercurve",
+        "--exact",
+        "bezier_offset::conversion_tests::finite_parallel_pair_components_obey_exact_domain_boundaries",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.31410254701040685,
+      "log": "retained-fillet-components-full-20260926-v218-case-059.log",
+      "target": "hypercurve",
+      "name": "bezier_offset::conversion_tests::finite_parallel_pair_components_obey_exact_domain_boundaries"
+    },
+    {
+      "repo": "hypercurve",
+      "label": "case-060",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-fillet-components-full-20260926-v218-hypercurve",
+        "--exact",
+        "bezier_offset::conversion_tests::fixed_distance_retains_selected_candidates_in_both_range_orientations",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.007656364003196359,
+      "log": "retained-fillet-components-full-20260926-v218-case-060.log",
+      "target": "hypercurve",
+      "name": "bezier_offset::conversion_tests::fixed_distance_retains_selected_candidates_in_both_range_orientations"
+    },
+    {
+      "repo": "hypercurve",
+      "label": "case-061",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-fillet-components-full-20260926-v218-hypercurve",
+        "--exact",
+        "bezier_offset::conversion_tests::formula_roots_compare_in_their_existing_native_coefficient_field",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.11381545709446073,
+      "log": "retained-fillet-components-full-20260926-v218-case-061.log",
+      "target": "hypercurve",
+      "name": "bezier_offset::conversion_tests::formula_roots_compare_in_their_existing_native_coefficient_field"
+    },
+    {
+      "repo": "hypercurve",
+      "label": "case-062",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-fillet-components-full-20260926-v218-hypercurve",
+        "--exact",
+        "bezier_offset::conversion_tests::incident_component_charts_clip_exact_regular_barriers",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.007588188978843391,
+      "log": "retained-fillet-components-full-20260926-v218-case-062.log",
+      "target": "hypercurve",
+      "name": "bezier_offset::conversion_tests::incident_component_charts_clip_exact_regular_barriers"
+    },
+    {
+      "repo": "hypercurve",
+      "label": "case-063",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-fillet-components-full-20260926-v218-hypercurve",
+        "--exact",
+        "bezier_offset::conversion_tests::incident_component_charts_transport_an_isolated_selected_event",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.007556570926681161,
+      "log": "retained-fillet-components-full-20260926-v218-case-063.log",
+      "target": "hypercurve",
+      "name": "bezier_offset::conversion_tests::incident_component_charts_transport_an_isolated_selected_event"
+    },
+    {
+      "repo": "hypercurve",
+      "label": "case-064",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-fillet-components-full-20260926-v218-hypercurve",
+        "--exact",
+        "bezier_offset::conversion_tests::incident_non_source_parallel_overlap_reaches_the_common_projection",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.007544231950305402,
+      "log": "retained-fillet-components-full-20260926-v218-case-064.log",
+      "target": "hypercurve",
+      "name": "bezier_offset::conversion_tests::incident_non_source_parallel_overlap_reaches_the_common_projection"
+    },
+    {
+      "repo": "hypercurve",
+      "label": "case-065",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-fillet-components-full-20260926-v218-hypercurve",
+        "--exact",
+        "bezier_offset::conversion_tests::incident_pair_projection_accepts_a_non_source_radical_component",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.007574790040962398,
+      "log": "retained-fillet-components-full-20260926-v218-case-065.log",
+      "target": "hypercurve",
+      "name": "bezier_offset::conversion_tests::incident_pair_projection_accepts_a_non_source_radical_component"
+    },
+    {
+      "repo": "hypercurve",
+      "label": "case-066",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-fillet-components-full-20260926-v218-hypercurve",
+        "--exact",
+        "bezier_offset::conversion_tests::incident_source_component_with_unequal_distances_retains_its_residual_system",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.015636315918527544,
+      "log": "retained-fillet-components-full-20260926-v218-case-066.log",
+      "target": "hypercurve",
+      "name": "bezier_offset::conversion_tests::incident_source_component_with_unequal_distances_retains_its_residual_system"
+    },
+    {
+      "repo": "hypercurve",
+      "label": "case-067",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-fillet-components-full-20260926-v218-hypercurve",
+        "--exact",
+        "bezier_offset::conversion_tests::local_parallel_endpoint_clipping_reuses_a_coefficient_root",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.007567529915831983,
+      "log": "retained-fillet-components-full-20260926-v218-case-067.log",
+      "target": "hypercurve",
+      "name": "bezier_offset::conversion_tests::local_parallel_endpoint_clipping_reuses_a_coefficient_root"
+    },
+    {
+      "repo": "hypercurve",
+      "label": "case-068",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-fillet-components-full-20260926-v218-hypercurve",
+        "--exact",
+        "bezier_offset::conversion_tests::mapped_chord_angle_query_observes_requested_policy",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.007561311009339988,
+      "log": "retained-fillet-components-full-20260926-v218-case-068.log",
+      "target": "hypercurve",
+      "name": "bezier_offset::conversion_tests::mapped_chord_angle_query_observes_requested_policy"
+    },
+    {
+      "repo": "hypercurve",
+      "label": "case-069",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-fillet-components-full-20260926-v218-hypercurve",
+        "--exact",
+        "bezier_offset::conversion_tests::mixed_zero_parallel_pairs_replay_both_exterior_domain_roles",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.11380486702546477,
+      "log": "retained-fillet-components-full-20260926-v218-case-069.log",
+      "target": "hypercurve",
+      "name": "bezier_offset::conversion_tests::mixed_zero_parallel_pairs_replay_both_exterior_domain_roles"
+    },
+    {
+      "repo": "hypercurve",
+      "label": "case-070",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-fillet-components-full-20260926-v218-hypercurve",
+        "--exact",
+        "bezier_offset::conversion_tests::nested_procedural_chord_reversals_match_exact_side_and_winding",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.007594287977553904,
+      "log": "retained-fillet-components-full-20260926-v218-case-070.log",
+      "target": "hypercurve",
+      "name": "bezier_offset::conversion_tests::nested_procedural_chord_reversals_match_exact_side_and_winding"
+    },
+    {
+      "repo": "hypercurve",
+      "label": "case-071",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-fillet-components-full-20260926-v218-hypercurve",
+        "--exact",
+        "bezier_offset::conversion_tests::non_source_parallel_overlap_replays_the_radical_component",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.0034947500098496675,
+      "log": "retained-fillet-components-full-20260926-v218-case-071.log",
+      "target": "hypercurve",
+      "name": "bezier_offset::conversion_tests::non_source_parallel_overlap_replays_the_radical_component"
+    },
+    {
+      "repo": "hypercurve",
+      "label": "case-072",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-fillet-components-full-20260926-v218-hypercurve",
+        "--exact",
+        "bezier_offset::conversion_tests::nonzero_parallel_domains_exclude_undefined_normals_and_poles",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.031720831990242004,
+      "log": "retained-fillet-components-full-20260926-v218-case-072.log",
+      "target": "hypercurve",
+      "name": "bezier_offset::conversion_tests::nonzero_parallel_domains_exclude_undefined_normals_and_poles"
+    },
+    {
+      "repo": "hypercurve",
+      "label": "case-073",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-fillet-components-full-20260926-v218-hypercurve",
+        "--exact",
+        "bezier_offset::conversion_tests::nonzero_parallel_domains_partition_poles_on_components",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.0075700999004766345,
+      "log": "retained-fillet-components-full-20260926-v218-case-073.log",
+      "target": "hypercurve",
+      "name": "bezier_offset::conversion_tests::nonzero_parallel_domains_partition_poles_on_components"
+    },
+    {
+      "repo": "hypercurve",
+      "label": "case-074",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-fillet-components-full-20260926-v218-hypercurve",
+        "--exact",
+        "bezier_offset::conversion_tests::nonzero_parallel_pairs_replay_exterior_weight_signs",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.03170756297186017,
+      "log": "retained-fillet-components-full-20260926-v218-case-074.log",
+      "target": "hypercurve",
+      "name": "bezier_offset::conversion_tests::nonzero_parallel_pairs_replay_exterior_weight_signs"
+    },
+    {
+      "repo": "hypercurve",
+      "label": "case-075",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-fillet-components-full-20260926-v218-hypercurve",
+        "--exact",
+        "bezier_offset::conversion_tests::ordered_ph_parallel_domains_do_not_reuse_the_wrong_speed_sheet",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.11382909491658211,
+      "log": "retained-fillet-components-full-20260926-v218-case-075.log",
+      "target": "hypercurve",
+      "name": "bezier_offset::conversion_tests::ordered_ph_parallel_domains_do_not_reuse_the_wrong_speed_sheet"
+    },
+    {
+      "repo": "hypercurve",
+      "label": "case-076",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-fillet-components-full-20260926-v218-hypercurve",
+        "--exact",
+        "bezier_offset::conversion_tests::ordered_ph_parallel_domains_reject_a_cached_opposite_normal_contact",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.03169225400779396,
+      "log": "retained-fillet-components-full-20260926-v218-case-076.log",
+      "target": "hypercurve",
+      "name": "bezier_offset::conversion_tests::ordered_ph_parallel_domains_reject_a_cached_opposite_normal_contact"
+    },
+    {
+      "repo": "hypercurve",
+      "label": "case-077",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-fillet-components-full-20260926-v218-hypercurve",
+        "--exact",
+        "bezier_offset::conversion_tests::ordered_ph_parallel_domains_retain_same_sheet_exterior_contacts",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.11380424804519862,
+      "log": "retained-fillet-components-full-20260926-v218-case-077.log",
+      "target": "hypercurve",
+      "name": "bezier_offset::conversion_tests::ordered_ph_parallel_domains_retain_same_sheet_exterior_contacts"
+    },
+    {
+      "repo": "hypercurve",
+      "label": "case-078",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-fillet-components-full-20260926-v218-hypercurve",
+        "--exact",
+        "bezier_offset::conversion_tests::ordered_self_contact_domains_retain_axis_roles_after_restriction",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.015637355973012745,
+      "log": "retained-fillet-components-full-20260926-v218-case-078.log",
+      "target": "hypercurve",
+      "name": "bezier_offset::conversion_tests::ordered_self_contact_domains_retain_axis_roles_after_restriction"
+    },
+    {
+      "repo": "hypercurve",
+      "label": "case-079",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-fillet-components-full-20260926-v218-hypercurve",
+        "--exact",
+        "bezier_offset::conversion_tests::ordered_zero_parallel_domains_retain_exterior_loop_contacts",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.015628147055394948,
+      "log": "retained-fillet-components-full-20260926-v218-case-079.log",
+      "target": "hypercurve",
+      "name": "bezier_offset::conversion_tests::ordered_zero_parallel_domains_retain_exterior_loop_contacts"
+    },
+    {
+      "repo": "hypercurve",
+      "label": "case-080",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-fillet-components-full-20260926-v218-hypercurve",
+        "--exact",
+        "bezier_offset::conversion_tests::ordered_zero_parallel_domains_select_folded_components_and_exclude_poles",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.007572429953143001,
+      "log": "retained-fillet-components-full-20260926-v218-case-080.log",
+      "target": "hypercurve",
+      "name": "bezier_offset::conversion_tests::ordered_zero_parallel_domains_select_folded_components_and_exclude_poles"
+    },
+    {
+      "repo": "hypercurve",
+      "label": "case-081",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-fillet-components-full-20260926-v218-hypercurve",
+        "--exact",
+        "bezier_offset::conversion_tests::pair_radial_circle_intersects_a_general_analytic_parallel_exactly",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.16388895804993808,
+      "log": "retained-fillet-components-full-20260926-v218-case-081.log",
+      "target": "hypercurve",
+      "name": "bezier_offset::conversion_tests::pair_radial_circle_intersects_a_general_analytic_parallel_exactly"
+    },
+    {
+      "repo": "hypercurve",
+      "label": "case-082",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-fillet-components-full-20260926-v218-hypercurve",
+        "--exact",
+        "bezier_offset::conversion_tests::pair_radial_circle_intersects_independent_field_chord_exactly",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 3.017561528016813,
+      "log": "retained-fillet-components-full-20260926-v218-case-082.log",
+      "target": "hypercurve",
+      "name": "bezier_offset::conversion_tests::pair_radial_circle_intersects_independent_field_chord_exactly"
+    },
+    {
+      "repo": "hypercurve",
+      "label": "case-083",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-fillet-components-full-20260926-v218-hypercurve",
+        "--exact",
+        "bezier_offset::conversion_tests::pair_radial_circle_rejects_disjoint_and_finitely_clipped_four_field_chords",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.0076221569906920195,
+      "log": "retained-fillet-components-full-20260926-v218-case-083.log",
+      "target": "hypercurve",
+      "name": "bezier_offset::conversion_tests::pair_radial_circle_rejects_disjoint_and_finitely_clipped_four_field_chords"
+    },
+    {
+      "repo": "hypercurve",
+      "label": "case-084",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-fillet-components-full-20260926-v218-hypercurve",
+        "--exact",
+        "bezier_offset::conversion_tests::pair_radial_circle_retains_independent_field_chord_tangency",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 1.3153893460985273,
+      "log": "retained-fillet-components-full-20260926-v218-case-084.log",
+      "target": "hypercurve",
+      "name": "bezier_offset::conversion_tests::pair_radial_circle_retains_independent_field_chord_tangency"
+    },
+    {
+      "repo": "hypercurve",
+      "label": "case-085",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-fillet-components-full-20260926-v218-hypercurve",
+        "--exact",
+        "bezier_offset::conversion_tests::parallel_contact_domains_keep_independent_extensions_and_components",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.015717661008238792,
+      "log": "retained-fillet-components-full-20260926-v218-case-085.log",
+      "target": "hypercurve",
+      "name": "bezier_offset::conversion_tests::parallel_contact_domains_keep_independent_extensions_and_components"
+    },
+    {
+      "repo": "hypercurve",
+      "label": "case-086",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-fillet-components-full-20260926-v218-hypercurve",
+        "--exact",
+        "bezier_offset::conversion_tests::parallel_pair_component_selector_owns_a_selected_tangent_event",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.0035123289562761784,
+      "log": "retained-fillet-components-full-20260926-v218-case-086.log",
+      "target": "hypercurve",
+      "name": "bezier_offset::conversion_tests::parallel_pair_component_selector_owns_a_selected_tangent_event"
+    },
+    {
+      "repo": "hypercurve",
+      "label": "case-087",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-fillet-components-full-20260926-v218-hypercurve",
+        "--exact",
+        "bezier_offset::conversion_tests::parallel_pair_selector_splits_a_reducible_boundary_factor",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.007583820028230548,
+      "log": "retained-fillet-components-full-20260926-v218-case-087.log",
+      "target": "hypercurve",
+      "name": "bezier_offset::conversion_tests::parallel_pair_selector_splits_a_reducible_boundary_factor"
+    },
+    {
+      "repo": "hypercurve",
+      "label": "case-088",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-fillet-components-full-20260926-v218-hypercurve",
+        "--exact",
+        "bezier_offset::conversion_tests::parallel_self_component_selector_keeps_one_ordered_half",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.0035324570490047336,
+      "log": "retained-fillet-components-full-20260926-v218-case-088.log",
+      "target": "hypercurve",
+      "name": "bezier_offset::conversion_tests::parallel_self_component_selector_keeps_one_ordered_half"
+    },
+    {
+      "repo": "hypercurve",
+      "label": "case-089",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-fillet-components-full-20260926-v218-hypercurve",
+        "--exact",
+        "bezier_offset::conversion_tests::parameter_component_domains_own_selected_events_once",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 101,
+      "elapsed_seconds": 0.03170402301475406,
+      "log": "retained-fillet-components-full-20260926-v218-case-089.log"
+    }
+  ],
+  "binaries": {
+    "hypercurve": {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-fillet-components-full-20260926-v218-hypercurve",
+      "sha256": "a7530a1922b9dda9ec36e72b653330783b243969799299ecdab2da346dfada2f"
+    },
+    "hypercurve_analytic_parallel_region": {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-fillet-components-full-20260926-v218-hypercurve_analytic_parallel_region",
+      "sha256": "81bc011bd0f0befd043de2682ec3e176eed701cb1444265b9a123e55d9f04697"
+    },
+    "hypercurve_arc_bezier": {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-fillet-components-full-20260926-v218-hypercurve_arc_bezier",
+      "sha256": "39024fa78457a83fe528246089cebecc95f71f339919f14d6658db803df633b7"
+    },
+    "hypercurve_bezier_arrangement": {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-fillet-components-full-20260926-v218-hypercurve_bezier_arrangement",
+      "sha256": "99e7088214cc79230a84fb053831c68b478b9c78787321bd5ba4feae47615a22"
+    },
+    "hypercurve_curve": {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-fillet-components-full-20260926-v218-hypercurve_curve",
+      "sha256": "1a44d37cbf0b04d1c37c7c48e338a6685f4dafcbb2dafa23299ba95328a5efc9"
+    },
+    "hypercurve_curve_region_boolean": {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-fillet-components-full-20260926-v218-hypercurve_curve_region_boolean",
+      "sha256": "3b67087a497b4400abc58acc7cb8cec22bee5cf8e3deade053aafa2668c22db5"
+    },
+    "hypercurve_curve_region_boolean_fuzz": {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-fillet-components-full-20260926-v218-hypercurve_curve_region_boolean_fuzz",
+      "sha256": "c9271ab4a90701d56ac5e4f625fcff5f05e0c4d429e8f68121dd38012996d9d5"
+    },
+    "hypercurve_pcb_boolean_regressions": {
+      "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-fillet-components-full-20260926-v218-hypercurve_pcb_boolean_regressions",
+      "sha256": "d8f85d296d4cf6927bf3cd73dcd8304101602f91ee155f76d649827cd6643fa1"
+    }
+  },
+  "all_processes_reaped": true,
+  "all_sources_unchanged": true,
+  "hypercurve_build_returncode": 0,
+  "selection": [
+    [
+      "hypercurve",
+      "bezier_offset::conversion_tests::axis_components_keep_exact_clipped_ends_and_open_selector_events"
+    ],
+    [
+      "hypercurve",
+      "bezier_offset::conversion_tests::complete_component_queries_keep_split_cells_and_residual_contacts"
+    ],
+    [
+      "hypercurve",
+      "bezier_offset::conversion_tests::domain_component_normal_constraints_follow_swapped_operands"
+    ],
+    [
+      "hypercurve",
+      "bezier_offset::conversion_tests::original_parallel_normal_constraints_clip_finite_and_incident_components"
+    ],
+    [
+      "hypercurve",
+      "bezier_offset::parameter_component::tests::incident_charts_keep_poles_and_finite_ownership_excluded"
+    ],
+    [
+      "hypercurve",
+      "bezier_offset::parameter_component::tests::product_components_keep_fixed_axes_and_operand_roles"
+    ],
+    [
+      "hypercurve",
+      "curve::tests::distinct_parallel_sources_keep_a_shared_fillet_center_family"
+    ],
+    [
+      "hypercurve",
+      "curve::tests::fillet_center_contacts_keep_source_orientation_across_support_cusps"
+    ],
+    [
+      "hypercurve",
+      "curve::tests::selected_parallel_fillet_clips_a_positive_dimensional_center_component_locally"
+    ],
+    [
+      "hypercurve",
+      "curve::tests::selected_parallel_fillet_keeps_contacts_beyond_interior_cusps"
+    ],
+    [
+      "hypercurve",
+      "arc_bezier::tests::arc_clones_share_sweep_and_decomposition_caches"
+    ],
+    [
+      "hypercurve",
+      "arc_bezier::tests::independent_algebraic_quarter_circle_recovers_minimal_center"
+    ],
+    [
+      "hypercurve",
+      "arc_bezier::tests::mixed_weight_conic_with_a_projective_pole_is_not_a_regular_arc"
+    ],
+    [
+      "hypercurve",
+      "arc_bezier::tests::mixed_weight_major_circle_is_recognized_without_a_projective_pole"
+    ],
+    [
+      "hypercurve",
+      "arc_bezier::tests::one_arc_decomposition_shares_exact_conic_provenance"
+    ],
+    [
+      "hypercurve",
+      "bezier_algebraic_image::policy_tests::arithmetic_adapter_replays_close_nonrational_bounds_strictly"
+    ],
+    [
+      "hypercurve",
+      "bezier_algebraic_image::policy_tests::coordinate_images_preserve_native_polynomial_point_values"
+    ],
+    [
+      "hypercurve",
+      "bezier_algebraic_image::policy_tests::exact_real_representation_preserves_native_point_payloads"
+    ],
+    [
+      "hypercurve",
+      "bezier_algebraic_image::policy_tests::retained_constant_coordinates_do_not_require_scalar_parameter_images"
+    ],
+    [
+      "hypercurve",
+      "bezier_offset::conversion_tests::algebraic_chord_source_incidence_deflates_only_the_retained_contact"
+    ],
+    [
+      "hypercurve",
+      "bezier_offset::conversion_tests::algebraic_cusp_semicircle_intersects_exact_oblique_chords_exactly"
+    ],
+    [
+      "hypercurve",
+      "bezier_offset::conversion_tests::algebraic_cusp_semicircle_intersects_finite_axis_chords_exactly"
+    ],
+    [
+      "hypercurve",
+      "bezier_offset::conversion_tests::algebraic_cusp_semicircle_intersects_independent_field_oblique_chords_exactly"
+    ],
+    [
+      "hypercurve",
+      "bezier_offset::conversion_tests::algebraic_cusp_semicircle_reoffsets_independent_field_oblique_chord_cap"
+    ],
+    [
+      "hypercurve",
+      "bezier_offset::conversion_tests::algebraic_selected_fiber_incident_chart_preserves_affine_authority"
+    ],
+    [
+      "hypercurve",
+      "bezier_offset::conversion_tests::analytic_axis_order_replays_a_local_root_in_the_other_points_field"
+    ],
+    [
+      "hypercurve",
+      "bezier_offset::conversion_tests::analytic_axis_order_reuses_polynomial_speed_across_reduced_tangent_fields"
+    ],
+    [
+      "hypercurve",
+      "bezier_offset::conversion_tests::analytic_axis_predicates_replay_local_polynomial_roots"
+    ],
+    [
+      "hypercurve",
+      "bezier_offset::conversion_tests::analytic_parallel_classifies_correlated_chord_pair_points"
+    ],
+    [
+      "hypercurve",
+      "bezier_offset::conversion_tests::analytic_parallel_self_intersection_removes_the_parameter_diagonal"
+    ],
+    [
+      "hypercurve",
+      "bezier_offset::conversion_tests::analytic_predicate_image_keeps_its_native_field_after_scalar_cache_warms"
+    ],
+    [
+      "hypercurve",
+      "bezier_offset::conversion_tests::analytic_tangent_unit_direction_cancels_shared_point_fields"
+    ],
+    [
+      "hypercurve",
+      "bezier_offset::conversion_tests::bivariate_bernstein_sign_excludes_only_strict_unit_square_misses"
+    ],
+    [
+      "hypercurve",
+      "bezier_offset::conversion_tests::bivariate_parameter_box_sign_keeps_boundary_zeros_and_bernstein_fallback"
+    ],
+    [
+      "hypercurve",
+      "bezier_offset::conversion_tests::bounded_point_import_preserves_a_cached_local_field"
+    ],
+    [
+      "hypercurve",
+      "bezier_offset::conversion_tests::bounded_point_import_reuses_certified_native_fiber_parameters"
+    ],
+    [
+      "hypercurve",
+      "bezier_offset::conversion_tests::certified_circle_chord_endpoint_factor_preserves_roots_and_field"
+    ],
+    [
+      "hypercurve",
+      "bezier_offset::conversion_tests::certified_circle_tangent_remains_nontransverse_after_residual_deflation"
+    ],
+    [
+      "hypercurve",
+      "bezier_offset::conversion_tests::chord_normal_and_parallel_contacts_share_native_point_identity"
+    ],
+    [
+      "hypercurve",
+      "bezier_offset::conversion_tests::chord_normal_parallel_contacts_reuse_the_retained_center_field"
+    ],
+    [
+      "hypercurve",
+      "bezier_offset::conversion_tests::chord_normal_recursive_frame_retains_center_and_oriented_unit_normal"
+    ],
+    [
+      "hypercurve",
+      "bezier_offset::conversion_tests::chord_parallel_extension_keeps_target_and_chord_domains_independent"
+    ],
+    [
+      "hypercurve",
+      "bezier_offset::conversion_tests::circle_incidence_retains_oriented_transverse_signs"
+    ],
+    [
+      "hypercurve",
+      "bezier_offset::conversion_tests::closed_parallel_secants_retain_endpoints_and_both_seam_parameters"
+    ],
+    [
+      "hypercurve",
+      "bezier_offset::conversion_tests::closed_parallel_turn_certificate_rejects_multiple_traversal"
+    ],
+    [
+      "hypercurve",
+      "bezier_offset::conversion_tests::closed_parallel_turn_certificate_retains_only_the_seam"
+    ],
+    [
+      "hypercurve",
+      "bezier_offset::conversion_tests::closed_source_diagonal_is_removed_before_residual_component_scan"
+    ],
+    [
+      "hypercurve",
+      "bezier_offset::conversion_tests::coefficient_precision_uses_certified_dyadic_bounds_for_signed_surds"
+    ],
+    [
+      "hypercurve",
+      "bezier_offset::conversion_tests::dense_chord_normal_circle_extends_over_an_independent_analytic_speed"
+    ],
+    [
+      "hypercurve",
+      "bezier_offset::conversion_tests::dense_chord_normal_incident_circle_retains_its_component"
+    ],
+    [
+      "hypercurve",
+      "bezier_offset::conversion_tests::dense_chord_normal_independent_anchor_uses_rank_independent_fallback"
+    ],
+    [
+      "hypercurve",
+      "bezier_offset::conversion_tests::dense_chord_normal_rejects_disjoint_and_finitely_clipped_chords"
+    ],
+    [
+      "hypercurve",
+      "bezier_offset::conversion_tests::dense_chord_normal_retains_rational_contacts_and_circle_components"
+    ],
+    [
+      "hypercurve",
+      "bezier_offset::conversion_tests::dense_chord_normal_tangency_retains_a_finite_endpoint"
+    ],
+    [
+      "hypercurve",
+      "bezier_offset::conversion_tests::exterior_chord_contact_deflation_preserves_other_contacts"
+    ],
+    [
+      "hypercurve",
+      "bezier_offset::conversion_tests::exterior_rational_analytic_points_use_the_selected_denominator_sign"
+    ],
+    [
+      "hypercurve",
+      "bezier_offset::conversion_tests::finite_analytic_self_components_retain_original_parameter_filters"
+    ],
+    [
+      "hypercurve",
+      "bezier_offset::conversion_tests::finite_component_charts_accept_nonrational_exact_scalar_bounds"
+    ],
+    [
+      "hypercurve",
+      "bezier_offset::conversion_tests::finite_domain_admits_one_sided_source_cusp_contacts"
+    ],
+    [
+      "hypercurve",
+      "bezier_offset::conversion_tests::finite_parallel_pair_components_obey_exact_domain_boundaries"
+    ],
+    [
+      "hypercurve",
+      "bezier_offset::conversion_tests::fixed_distance_retains_selected_candidates_in_both_range_orientations"
+    ],
+    [
+      "hypercurve",
+      "bezier_offset::conversion_tests::formula_roots_compare_in_their_existing_native_coefficient_field"
+    ],
+    [
+      "hypercurve",
+      "bezier_offset::conversion_tests::incident_component_charts_clip_exact_regular_barriers"
+    ],
+    [
+      "hypercurve",
+      "bezier_offset::conversion_tests::incident_component_charts_transport_an_isolated_selected_event"
+    ],
+    [
+      "hypercurve",
+      "bezier_offset::conversion_tests::incident_non_source_parallel_overlap_reaches_the_common_projection"
+    ],
+    [
+      "hypercurve",
+      "bezier_offset::conversion_tests::incident_pair_projection_accepts_a_non_source_radical_component"
+    ],
+    [
+      "hypercurve",
+      "bezier_offset::conversion_tests::incident_source_component_with_unequal_distances_retains_its_residual_system"
+    ],
+    [
+      "hypercurve",
+      "bezier_offset::conversion_tests::local_parallel_endpoint_clipping_reuses_a_coefficient_root"
+    ],
+    [
+      "hypercurve",
+      "bezier_offset::conversion_tests::mapped_chord_angle_query_observes_requested_policy"
+    ],
+    [
+      "hypercurve",
+      "bezier_offset::conversion_tests::mixed_zero_parallel_pairs_replay_both_exterior_domain_roles"
+    ],
+    [
+      "hypercurve",
+      "bezier_offset::conversion_tests::nested_procedural_chord_reversals_match_exact_side_and_winding"
+    ],
+    [
+      "hypercurve",
+      "bezier_offset::conversion_tests::non_source_parallel_overlap_replays_the_radical_component"
+    ],
+    [
+      "hypercurve",
+      "bezier_offset::conversion_tests::nonzero_parallel_domains_exclude_undefined_normals_and_poles"
+    ],
+    [
+      "hypercurve",
+      "bezier_offset::conversion_tests::nonzero_parallel_domains_partition_poles_on_components"
+    ],
+    [
+      "hypercurve",
+      "bezier_offset::conversion_tests::nonzero_parallel_pairs_replay_exterior_weight_signs"
+    ],
+    [
+      "hypercurve",
+      "bezier_offset::conversion_tests::ordered_ph_parallel_domains_do_not_reuse_the_wrong_speed_sheet"
+    ],
+    [
+      "hypercurve",
+      "bezier_offset::conversion_tests::ordered_ph_parallel_domains_reject_a_cached_opposite_normal_contact"
+    ],
+    [
+      "hypercurve",
+      "bezier_offset::conversion_tests::ordered_ph_parallel_domains_retain_same_sheet_exterior_contacts"
+    ],
+    [
+      "hypercurve",
+      "bezier_offset::conversion_tests::ordered_self_contact_domains_retain_axis_roles_after_restriction"
+    ],
+    [
+      "hypercurve",
+      "bezier_offset::conversion_tests::ordered_zero_parallel_domains_retain_exterior_loop_contacts"
+    ],
+    [
+      "hypercurve",
+      "bezier_offset::conversion_tests::ordered_zero_parallel_domains_select_folded_components_and_exclude_poles"
+    ],
+    [
+      "hypercurve",
+      "bezier_offset::conversion_tests::pair_radial_circle_intersects_a_general_analytic_parallel_exactly"
+    ],
+    [
+      "hypercurve",
+      "bezier_offset::conversion_tests::pair_radial_circle_intersects_independent_field_chord_exactly"
+    ],
+    [
+      "hypercurve",
+      "bezier_offset::conversion_tests::pair_radial_circle_rejects_disjoint_and_finitely_clipped_four_field_chords"
+    ],
+    [
+      "hypercurve",
+      "bezier_offset::conversion_tests::pair_radial_circle_retains_independent_field_chord_tangency"
+    ],
+    [
+      "hypercurve",
+      "bezier_offset::conversion_tests::parallel_contact_domains_keep_independent_extensions_and_components"
+    ],
+    [
+      "hypercurve",
+      "bezier_offset::conversion_tests::parallel_pair_component_selector_owns_a_selected_tangent_event"
+    ],
+    [
+      "hypercurve",
+      "bezier_offset::conversion_tests::parallel_pair_selector_splits_a_reducible_boundary_factor"
+    ],
+    [
+      "hypercurve",
+      "bezier_offset::conversion_tests::parallel_self_component_selector_keeps_one_ordered_half"
+    ],
+    [
+      "hypercurve",
+      "bezier_offset::conversion_tests::parameter_component_domains_own_selected_events_once"
+    ],
+    [
+      "hypercurve",
+      "bezier_offset::conversion_tests::parameter_domains_limit_component_charts"
+    ],
+    [
+      "hypercurve",
+      "bezier_offset::conversion_tests::parameter_domains_retain_chart_events_and_closed_finite_boundaries"
+    ],
+    [
+      "hypercurve",
+      "bezier_offset::conversion_tests::parameter_domains_retain_finite_residuals_without_unowned_components"
+    ],
+    [
+      "hypercurve",
+      "bezier_offset::conversion_tests::parameter_domains_retain_isolated_constraints"
+    ],
+    [
+      "hypercurve",
+      "bezier_offset::conversion_tests::poincare_miranda_preconditions_rotated_transverse_system_exactly"
+    ],
+    [
+      "hypercurve",
+      "bezier_offset::conversion_tests::procedural_endpoint_chord_replays_complete_parallel_contacts"
+    ],
+    [
+      "hypercurve",
+      "bezier_offset::conversion_tests::projective_quadratic_conic_inverse_survives_elevation_and_reversal"
+    ],
+    [
+      "hypercurve",
+      "bezier_offset::conversion_tests::quadratic_conic_inverse_reuses_retained_point_field"
+    ],
+    [
+      "hypercurve",
+      "bezier_offset::conversion_tests::recursive_chord_parallel_local_roots_reject_conjugates_and_clip_exactly"
+    ],
+    [
+      "hypercurve",
+      "bezier_offset::conversion_tests::recursive_chord_parallel_retains_owned_roots_across_exterior_ranges"
+    ],
+    [
+      "hypercurve",
+      "bezier_offset::conversion_tests::recursive_chord_parallel_zero_norm_midpoint_is_not_a_component"
+    ],
+    [
+      "hypercurve",
+      "bezier_offset::conversion_tests::recursive_local_isolation_reuses_exact_signs_below_interval_precision"
+    ],
+    [
+      "hypercurve",
+      "bezier_offset::conversion_tests::recursive_ordered_field_isolation_does_not_guess_polynomial_degree"
+    ],
+    [
+      "hypercurve",
+      "bezier_offset::conversion_tests::recursive_parallel_expression_signs_keep_the_selected_speed_sheet"
+    ],
+    [
+      "hypercurve",
+      "bezier_offset::conversion_tests::recursive_parallel_expression_signs_reject_poles_and_zero_speed"
+    ],
+    [
+      "hypercurve",
+      "bezier_offset::conversion_tests::recursive_parallel_interval_filter_preserves_exact_zeros"
+    ],
+    [
+      "hypercurve",
+      "bezier_offset::conversion_tests::recursive_parameter_projection_preserves_roots_through_refinement_and_charts"
+    ],
+    [
+      "hypercurve",
+      "bezier_offset::conversion_tests::recursive_polynomial_isolators_keep_the_selected_root_after_endpoint_deflation"
+    ],
+    [
+      "hypercurve",
+      "bezier_offset::conversion_tests::recursive_polynomial_predicates_reuse_the_retained_field_relation"
+    ],
+    [
+      "hypercurve",
+      "bezier_offset::conversion_tests::recursive_polynomial_queries_reuse_a_selected_proper_factor"
+    ],
+    [
+      "hypercurve",
+      "bezier_offset::conversion_tests::recursive_projective_bounds_enclose_scaled_nested_radicals"
+    ],
+    [
+      "hypercurve",
+      "bezier_offset::conversion_tests::recursive_projective_bounds_keep_unwitnessed_source_fallback"
+    ],
+    [
+      "hypercurve",
+      "bezier_offset::conversion_tests::recursive_projective_bounds_reuse_positive_denominator_certificate"
+    ],
+    [
+      "hypercurve",
+      "bezier_offset::conversion_tests::recursive_projective_center_projects_complete_nonlinear_fixed_distance"
+    ],
+    [
+      "hypercurve",
+      "bezier_offset::conversion_tests::recursive_projective_chord_rejects_constant_conjugate_norm_component"
+    ],
+    [
+      "hypercurve",
+      "bezier_offset::conversion_tests::recursive_projective_chord_replays_nonzero_analytic_parallel"
+    ],
+    [
+      "hypercurve",
+      "bezier_offset::conversion_tests::recursive_quadratic_endpoint_roots_keep_the_original_field"
+    ],
+    [
+      "hypercurve",
+      "bezier_offset::conversion_tests::recursive_selected_radial_diameter_chord_intersects_a_rational_quadratic_approximate"
+    ],
+    [
+      "hypercurve",
+      "bezier_offset::conversion_tests::recursive_selected_radial_diameter_chord_intersects_a_rational_quadratic_strict"
+    ],
+    [
+      "hypercurve",
+      "bezier_offset::conversion_tests::recursively_pair_radial_center_retains_exact_point"
+    ],
+    [
+      "hypercurve",
+      "bezier_offset::conversion_tests::recursively_pair_radial_circle_intersects_a_genuine_analytic_parallel"
+    ],
+    [
+      "hypercurve",
+      "bezier_offset::conversion_tests::recursively_pair_radial_circle_intersects_a_rational_quadratic_without_representation"
+    ],
+    [
+      "hypercurve",
+      "bezier_offset::conversion_tests::regular_parallel_orientation_reuse_rejects_ranges_crossing_cusps"
+    ],
+    [
+      "hypercurve",
+      "bezier_offset::conversion_tests::represented_scalar_images_and_quotients_refine_past_the_old_limit"
+    ],
+    [
+      "hypercurve",
+      "bezier_offset::conversion_tests::retained_chord_coordinate_and_linear_queries_observe_requested_policy"
+    ],
+    [
+      "hypercurve",
+      "bezier_offset::conversion_tests::retained_chord_derived_queries_match_exact_affine_oracles_and_requested_policy"
+    ],
+    [
+      "hypercurve",
+      "bezier_offset::conversion_tests::retained_chord_incidence_replays_independently_allocated_coefficient_fields"
+    ],
+    [
+      "hypercurve",
+      "bezier_offset::conversion_tests::retained_circle_centers_reuse_correlated_exact_scalar_views"
+    ],
+    [
+      "hypercurve",
+      "bezier_offset::conversion_tests::retained_circle_crossing_proofs_keep_circle_and_parallel_orientation"
+    ],
+    [
+      "hypercurve",
+      "bezier_offset::conversion_tests::retained_normal_contact_requires_its_undisplaced_regular_source"
+    ],
+    [
+      "hypercurve",
+      "bezier_offset::conversion_tests::retained_parallel_contact_keeps_local_root_through_angular_and_point_queries"
+    ],
+    [
+      "hypercurve",
+      "bezier_offset::conversion_tests::retained_parallel_normal_contacts_preserve_native_roots_and_sheets"
+    ],
+    [
+      "hypercurve",
+      "bezier_offset::conversion_tests::retained_parameter_import_keeps_original_axes_and_tower"
+    ],
+    [
+      "hypercurve",
+      "bezier_offset::conversion_tests::selected_center_line_contact_stays_in_recursive_quadratic_solver"
+    ],
+    [
+      "hypercurve",
+      "bezier_offset::conversion_tests::selected_circle_partition_coalescing_obeys_terminal_policy"
+    ],
+    [
+      "hypercurve",
+      "bezier_offset::conversion_tests::selected_fiber_affine_chart_round_trip_avoids_global_projection"
+    ],
+    [
+      "hypercurve",
+      "bezier_offset::conversion_tests::selected_fiber_comparison_reuses_high_degree_affine_root_identity"
+    ],
+    [
+      "hypercurve",
+      "bezier_offset::conversion_tests::selected_fiber_norm_isolation_refines_past_the_old_limit"
+    ],
+    [
+      "hypercurve",
+      "bezier_offset::conversion_tests::selected_fiber_points_reuse_projective_roots_without_global_promotion"
+    ],
+    [
+      "hypercurve",
+      "bezier_offset::conversion_tests::selected_fiber_rational_component_publishes_its_isolated_endpoint"
+    ],
+    [
+      "hypercurve",
+      "bezier_offset::conversion_tests::selected_fiber_rational_component_rejects_the_conjugate_circle"
+    ],
+    [
+      "hypercurve",
+      "bezier_offset::conversion_tests::selected_fiber_rational_overlap_keeps_exact_center"
+    ],
+    [
+      "hypercurve",
+      "bezier_offset::conversion_tests::selected_fiber_rational_overlap_replays_certified_policy"
+    ],
+    [
+      "hypercurve",
+      "bezier_offset::conversion_tests::selected_frame_import_preserves_every_independent_point"
+    ],
+    [
+      "hypercurve",
+      "bezier_offset::conversion_tests::selected_norm_carriers_exclude_foreign_endpoint_roots"
+    ],
+    [
+      "hypercurve",
+      "bezier_offset::conversion_tests::selected_norm_carriers_preserve_repeated_interior_roots"
+    ],
+    [
+      "hypercurve",
+      "bezier_offset::conversion_tests::selected_norm_isolation_preserves_exterior_exact_and_algebraic_roots"
+    ],
+    [
+      "hypercurve",
+      "bezier_offset::conversion_tests::selected_parallel_normal_circle_intersects_genuinely_analytic_parallel_in_one_fiber"
+    ],
+    [
+      "hypercurve",
+      "bezier_offset::conversion_tests::selected_parallel_normal_radial_tangent_excludes_the_complementary_half"
+    ],
+    [
+      "hypercurve",
+      "bezier_offset::conversion_tests::selected_radial_frame_joins_an_equivalent_recursive_point_base"
+    ],
+    [
+      "hypercurve",
+      "bezier_offset::conversion_tests::selected_source_range_retains_incident_endpoint_and_contacts_locally"
+    ],
+    [
+      "hypercurve",
+      "bezier_offset::conversion_tests::selected_structural_parallel_overlap_replays_off_diagonal_contacts"
+    ],
+    [
+      "hypercurve",
+      "bezier_offset::conversion_tests::split_chord_linear_tangents_reuse_the_oriented_support"
+    ],
+    [
+      "hypercurve",
+      "bezier_offset::conversion_tests::translated_parallel_endpoint_does_not_certify_source_incidence"
+    ],
+    [
+      "hypercurve",
+      "bezier_offset::conversion_tests::translated_selected_contact_import_omits_the_unused_center"
+    ],
+    [
+      "hypercurve",
+      "bezier_offset::conversion_tests::unseeded_circle_tangency_reuses_multiplicity_only_on_regular_branches"
+    ],
+    [
+      "hypercurve",
+      "bezier_offset::conversion_tests::unused_positive_radicals_do_not_block_recursive_enclosures"
+    ],
+    [
+      "hypercurve",
+      "bezier_offset::conversion_tests::weighted_selected_center_tangent_line_stays_recursive"
+    ],
+    [
+      "hypercurve",
+      "bezier_offset::conversion_tests::zero_distance_parallel_pairs_keep_exterior_contacts"
+    ],
+    [
+      "hypercurve",
+      "bezier_offset::conversion_tests::zero_parallel_domains_exclude_projective_poles"
+    ],
+    [
+      "hypercurve",
+      "bezier_parameter::conversion_tests::algebraic_sign_filter_has_no_fixed_refinement_cap"
+    ],
+    [
+      "hypercurve",
+      "bezier_parameter::conversion_tests::algebraic_sign_filter_preserves_selected_root_and_boundary_ownership"
+    ],
+    [
+      "hypercurve",
+      "bezier_parameter::conversion_tests::algebraic_sign_queries_reuse_the_singleton_for_tiny_separations"
+    ],
+    [
+      "hypercurve",
+      "bezier_parameter::conversion_tests::algebraic_unit_complement_preserves_the_exact_singleton_root"
+    ],
+    [
+      "hypercurve",
+      "bezier_parameter::conversion_tests::arbitrary_degree_nonrational_bernstein_isolates_every_simple_root"
+    ],
+    [
+      "hypercurve",
+      "bezier_parameter::conversion_tests::authoritative_sturm_sequence_has_no_historical_degree_cap"
+    ],
+    [
+      "hypercurve",
+      "bezier_parameter::conversion_tests::bernstein_simple_root_certificates_avoid_multiplicity_sturm_rebuilds"
+    ],
+    [
+      "hypercurve",
+      "bezier_parameter::conversion_tests::bernstein_to_power_remains_exact_beyond_u64_binomials"
+    ],
+    [
+      "hypercurve",
+      "bezier_parameter::conversion_tests::cached_scalar_refinement_preserves_the_selected_root_authority"
+    ],
+    [
+      "hypercurve",
+      "bezier_parameter::conversion_tests::carried_sturm_variations_match_partition_root_counts"
+    ],
+    [
+      "hypercurve",
+      "bezier_parameter::conversion_tests::collapsed_exact_real_representation_imports_as_an_exact_parameter"
+    ],
+    [
+      "hypercurve",
+      "bezier_parameter::conversion_tests::composed_projective_charts_share_one_root_without_growing_history_or_scale"
+    ],
+    [
+      "hypercurve",
+      "bezier_parameter::conversion_tests::decreasing_root_charts_preserve_owned_and_excluded_endpoints"
+    ],
+    [
+      "hypercurve",
+      "bezier_parameter::conversion_tests::finite_interval_isolation_has_no_fixed_dyadic_depth_limit"
+    ],
+    [
+      "hypercurve",
+      "bezier_parameter::conversion_tests::imported_root_comparisons_preserve_owned_and_excluded_endpoints"
+    ],
+    [
+      "hypercurve",
+      "bezier_parameter::conversion_tests::incident_ray_isolation_orders_exact_roots_away_from_the_anchor"
+    ],
+    [
+      "hypercurve",
+      "bezier_parameter::conversion_tests::incident_ray_isolation_retains_irrational_exterior_root_authority"
+    ],
+    [
+      "hypercurve",
+      "bezier_parameter::conversion_tests::independent_singleton_charts_reuse_nested_root_identity"
+    ],
+    [
+      "hypercurve",
+      "bezier_parameter::conversion_tests::interior_probes_do_not_embed_endpoint_expressions"
+    ],
+    [
+      "hypercurve",
+      "bezier_parameter::conversion_tests::interval_root_isolation_uses_original_polynomial_and_closed_boundaries"
+    ],
+    [
+      "hypercurve",
+      "bezier_parameter::conversion_tests::isolation_retains_large_rational_roots_until_projection_is_requested"
+    ],
+    [
+      "hypercurve",
+      "bezier_parameter::conversion_tests::modular_sieve_rejects_only_rootless_rational_reductions"
+    ],
+    [
+      "hypercurve",
+      "bezier_parameter::conversion_tests::modular_sieve_retains_polynomials_with_known_rational_roots"
+    ],
+    [
+      "hypercurve",
+      "bezier_parameter::conversion_tests::native_small_modulus_matches_bigint_floor_remainder"
+    ],
+    [
+      "hypercurve",
+      "bezier_parameter::conversion_tests::nested_nonrational_quadratic_root_materializes_exactly"
+    ],
+    [
+      "hypercurve",
+      "bezier_parameter::conversion_tests::nonlinear_and_approximate_zeroes_do_not_create_scalar_witnesses"
+    ],
+    [
+      "hypercurve",
+      "bezier_parameter::conversion_tests::nonrational_low_degree_roots_materialize_without_sturm_work"
+    ],
+    [
+      "hypercurve",
+      "bezier_parameter::conversion_tests::nonrational_power_evaluation_uses_exact_endpoint_identities"
+    ],
+    [
+      "hypercurve",
+      "bezier_parameter::conversion_tests::polynomial_sign_queries_do_not_require_a_known_degree"
+    ],
+    [
+      "hypercurve",
+      "bezier_parameter::conversion_tests::polynomial_signs_use_the_retained_interval_before_algebraic_replay"
+    ],
+    [
+      "hypercurve",
+      "bezier_parameter::conversion_tests::progressive_refinement_matches_one_pass_proof_budget"
+    ],
+    [
+      "hypercurve",
+      "bezier_parameter::conversion_tests::projective_images_preserve_exterior_singletons_across_unused_poles"
+    ],
+    [
+      "hypercurve",
+      "bezier_parameter::conversion_tests::rational_basis_subdivision_matches_the_shared_bernstein_kernel"
+    ],
+    [
+      "hypercurve",
+      "bezier_parameter::conversion_tests::rational_reconstruction_reuses_sturm_ownership_across_both_children"
+    ],
+    [
+      "hypercurve",
+      "bezier_parameter::conversion_tests::refinement_to_an_exact_root_precedes_touching_interval_order"
+    ],
+    [
+      "hypercurve",
+      "bezier_parameter::conversion_tests::retained_refinement_matches_square_free_reference_and_shares_sturm_work"
+    ],
+    [
+      "hypercurve",
+      "bezier_parameter::conversion_tests::retained_sturm_certificate_classifies_mixed_root_multiplicity"
+    ],
+    [
+      "hypercurve",
+      "bezier_parameter::conversion_tests::root_refinement_does_not_embed_irrational_isolator_bounds"
+    ],
+    [
+      "hypercurve",
+      "bezier_parameter::conversion_tests::simple_root_certificate_accepts_an_endpoint_deflated_algebraic_carrier"
+    ],
+    [
+      "hypercurve",
+      "bezier_parameter::conversion_tests::simple_root_certificate_distinguishes_algebraic_multiplicity"
+    ],
+    [
+      "hypercurve",
+      "bezier_parameter::conversion_tests::simple_root_certificate_distinguishes_exact_multiplicity"
+    ],
+    [
+      "hypercurve",
+      "bezier_parameter::conversion_tests::solver_owned_root_refinement_excludes_repeated_lower_endpoints"
+    ],
+    [
+      "hypercurve",
+      "bezier_parameter::conversion_tests::square_free_bernstein_preserves_wide_signed_scale_certificates"
+    ],
+    [
+      "hypercurve",
+      "bezier_parameter::conversion_tests::square_free_bernstein_scaled_endpoint_and_midpoint_roots_keep_fallback"
+    ],
+    [
+      "hypercurve",
+      "bezier_parameter::conversion_tests::square_free_degree_128_bernstein_isolates_every_unit_root"
+    ],
+    [
+      "hypercurve",
+      "bezier_parameter::conversion_tests::strict_gap_preserves_irrational_and_repeated_root_ownership"
+    ],
+    [
+      "hypercurve",
+      "bezier_parameter::conversion_tests::strict_gap_refines_both_overlapping_algebraic_parameters"
+    ],
+    [
+      "hypercurve",
+      "bezier_parameter::conversion_tests::strict_linear_queries_retain_witnesses_after_rational_reconstruction_declines"
+    ],
+    [
+      "hypercurve",
+      "bezier_parameter::conversion_tests::strict_scalar_equalities_retain_arbitrary_real_parameter_witnesses"
+    ],
+    [
+      "hypercurve",
+      "bezier_region::curve_corner_chain::tests::extended_fillet_circle_endpoints_obey_the_exact_radius_bound"
+    ],
+    [
+      "hypercurve",
+      "bezier_region::curve_corner_chain::tests::extended_fillet_region_classifies_both_sides_of_its_companion"
+    ],
+    [
+      "hypercurve",
+      "bezier_region::curve_corner_chain::tests::open_fillet_keeps_terminal_endpoints_and_exact_connectivity"
+    ],
+    [
+      "hypercurve",
+      "bezier_region::tests::algebraic_native_ray_vertices_use_spatial_endpoint_ownership"
+    ],
+    [
+      "hypercurve",
+      "bezier_region::tests::algebraic_query_winding_mixes_genuine_parallel_and_native_fragments"
+    ],
+    [
+      "hypercurve",
+      "bezier_region::tests::algebraic_ray_queries_keep_exterior_roots_and_denominator_orientation"
+    ],
+    [
+      "hypercurve",
+      "bezier_region::tests::algebraic_ray_retains_selected_endpoint_ownership"
+    ],
+    [
+      "hypercurve",
+      "bezier_region::tests::algebraic_retained_range_ray_winding_handles_crossing_multiplicity"
+    ],
+    [
+      "hypercurve",
+      "bezier_region::tests::algebraic_retained_ray_vertices_use_spatial_endpoint_ownership"
+    ],
+    [
+      "hypercurve",
+      "bezier_region::tests::algebraic_side_ray_skips_coincident_chords_across_loops"
+    ],
+    [
+      "hypercurve",
+      "bezier_region::tests::algebraic_side_ray_skips_genuine_parallel_contacts_across_loops"
+    ],
+    [
+      "hypercurve",
+      "bezier_region::tests::algebraic_side_ray_skips_retained_rational_contacts_across_loops"
+    ],
+    [
+      "hypercurve",
+      "bezier_region::tests::boundary_side_rays_preserve_winding_through_reversed_source_charts"
+    ],
+    [
+      "hypercurve",
+      "bezier_region::tests::boundary_side_rays_skip_retained_cusp_contacts_across_loops"
+    ],
+    [
+      "hypercurve",
+      "bezier_region::tests::boundary_tangent_does_not_assign_a_direction_to_a_stationary_endpoint"
+    ],
+    [
+      "hypercurve",
+      "bezier_region::tests::collapsed_concentric_offsets_compare_retained_and_represented_centers"
+    ],
+    [
+      "hypercurve",
+      "bezier_region::tests::collapsed_pair_radial_fillet_retains_its_recursive_center"
+    ],
+    [
+      "hypercurve",
+      "bezier_region::tests::collapsed_rational_arc_offset_tests_selected_circle_incidence_exactly"
+    ],
+    [
+      "hypercurve",
+      "bezier_region::tests::collapsed_selected_circle_offset_retains_its_exact_center"
+    ],
+    [
+      "hypercurve",
+      "bezier_region::tests::direct_mixed_and_retained_parallel_pairs_share_the_fillet_kernel"
+    ],
+    [
+      "hypercurve",
+      "bezier_region::tests::even_multiplicity_stationary_source_coalesces_one_offset_span"
+    ],
+    [
+      "hypercurve",
+      "bezier_region::tests::general_nonrepresented_chord_and_retained_rational_arc_complete_the_fillet_kernel"
+    ],
+    [
+      "hypercurve",
+      "bezier_region::tests::independent_oblique_chord_pair_fillet_crosses_a_rational_line_exactly"
+    ],
+    [
+      "hypercurve",
+      "bezier_region::tests::independent_oblique_chord_pair_fillet_crosses_algebraic_chords_exactly"
+    ],
+    [
+      "hypercurve",
+      "bezier_region::tests::independent_oblique_chord_pair_fillets_extend_on_infinite_supports"
+    ],
+    [
+      "hypercurve",
+      "bezier_region::tests::independent_pair_native_fillet_crosses_a_boolean_cutter"
+    ],
+    [
+      "hypercurve",
+      "bezier_region::tests::independent_selected_circle_pair_fillet_retains_pair_native_circle"
+    ],
+    [
+      "hypercurve",
+      "bezier_region::tests::independent_selected_circle_pair_fillets_extend_over_both_full_supports"
+    ],
+    [
+      "hypercurve",
+      "bezier_region::tests::major_retained_rational_arc_and_general_chord_share_the_fillet_kernel"
+    ],
+    [
+      "hypercurve",
+      "bezier_region::tests::noncollapsed_pair_radial_fillet_reenters_the_corner_kernel"
+    ],
+    [
+      "hypercurve",
+      "bezier_region::tests::nonlinear_algebraic_endpoint_chamfer_uses_complete_incident_ray"
+    ],
+    [
+      "hypercurve",
+      "bezier_region::tests::nonlinear_algebraic_endpoint_fillet_uses_complete_incident_domain"
+    ],
+    [
+      "hypercurve",
+      "bezier_region::tests::nonlinear_algebraic_endpoint_images_reenter_exact_offset_kernel"
+    ],
+    [
+      "hypercurve",
+      "bezier_region::tests::nonrepresented_cardinal_chord_pair_fillets_through_shared_carriers"
+    ],
+    [
+      "hypercurve",
+      "bezier_region::tests::nonrepresented_chord_and_retained_rational_arc_share_the_fillet_kernel"
+    ],
+    [
+      "hypercurve",
+      "bezier_region::tests::nonrepresented_chord_and_selected_circle_complete_the_fillet_kernel"
+    ],
+    [
+      "hypercurve",
+      "bezier_region::tests::nonrepresented_chord_line_corner_fillets_through_shared_carriers"
+    ],
+    [
+      "hypercurve",
+      "bezier_region::tests::nonrepresented_chord_parallel_corner_fillets_without_reintersection"
+    ],
+    [
+      "hypercurve",
+      "bezier_region::tests::one_fragment_materialized_loop_extends_algebraic_chamfer_cuts_once"
+    ],
+    [
+      "hypercurve",
+      "bezier_region::tests::one_fragment_ph_loop_fillets_through_rational_self_contact"
+    ],
+    [
+      "hypercurve",
+      "bezier_region::tests::one_fragment_retained_ph_loop_extends_fillet_on_one_analytic_carrier"
+    ],
+    [
+      "hypercurve",
+      "bezier_region::tests::one_fragment_selected_loop_extends_chamfer_cuts_on_its_analytic_carrier"
+    ],
+    [
+      "hypercurve",
+      "bezier_region::tests::one_fragment_selected_loop_fillets_from_one_interval"
+    ],
+    [
+      "hypercurve",
+      "bezier_region::tests::one_fragment_selected_native_extensions_keep_the_local_fiber"
+    ],
+    [
+      "hypercurve",
+      "bezier_region::tests::one_fragment_selected_projective_extensions_keep_the_local_fiber"
+    ],
+    [
+      "hypercurve",
+      "bezier_region::tests::pair_native_boolean_algebraic_chord_corner_publishes_a_third_generation_fillet"
+    ],
+    [
+      "hypercurve",
+      "bezier_region::tests::pair_native_boolean_analytic_corner_publishes_a_third_generation_fillet"
+    ],
+    [
+      "hypercurve",
+      "bezier_region::tests::pair_native_boolean_boundary_offset_remains_certified_under_approximate_policy_forward"
+    ],
+    [
+      "hypercurve",
+      "bezier_region::tests::pair_native_boolean_boundary_offset_remains_certified_under_approximate_policy_reversed"
+    ],
+    [
+      "hypercurve",
+      "bezier_region::tests::pair_native_boolean_boundary_offsets_exactly_strict_forward"
+    ],
+    [
+      "hypercurve",
+      "bezier_region::tests::pair_native_boolean_boundary_offsets_exactly_strict_reversed"
+    ],
+    [
+      "hypercurve",
+      "bezier_region::tests::pair_native_boolean_corner_publishes_a_third_generation_fillet"
+    ],
+    [
+      "hypercurve",
+      "bezier_region::tests::pair_native_offset_join_tangents_remain_exact"
+    ],
+    [
+      "hypercurve",
+      "bezier_region::tests::recursively_nested_selected_radial_public_offset_regularizes_approximate_512"
+    ],
+    [
+      "hypercurve",
+      "bezier_region::tests::recursively_nested_selected_radial_public_offset_regularizes_strict"
+    ],
+    [
+      "hypercurve",
+      "bezier_region::tests::resource_blocked_selected_boundary_fillets_and_reconstructs_in_place"
+    ],
+    [
+      "hypercurve",
+      "bezier_region::tests::resource_blocked_selected_corner_chamfers_in_its_affine_fiber"
+    ],
+    [
+      "hypercurve",
+      "bezier_region::tests::resource_blocked_selected_offset_span_completes_its_cold_projection"
+    ],
+    [
+      "hypercurve",
+      "bezier_region::tests::resource_blocked_selected_range_enters_shared_fillet_kernel_directly"
+    ],
+    [
+      "hypercurve",
+      "bezier_region::tests::retained_algebraic_straights_trim_or_extend_chamfer_and_fillet"
+    ],
+    [
+      "hypercurve",
+      "bezier_region::tests::retained_analytic_corners_preserve_normalized_sets"
+    ],
+    [
+      "hypercurve",
+      "bezier_region::tests::retained_offset_independent_chord_crosses_a_genuine_analytic_parallel"
+    ],
+    [
+      "hypercurve",
+      "bezier_region::tests::retained_parallel_offset_coalesces_non_cusp_algebraic_arrangement_partitions"
+    ],
+    [
+      "hypercurve",
+      "bezier_region::tests::retained_parallel_offset_composition_respects_traversal_orientation"
+    ],
+    [
+      "hypercurve",
+      "bezier_region::tests::retained_parallel_offset_composition_splits_new_cusps_in_traversal_order"
+    ],
+    [
+      "hypercurve",
+      "bezier_region::tests::retained_parallel_offset_preserves_algebraic_cusp_partition"
+    ],
+    [
+      "hypercurve",
+      "bezier_region::tests::retained_polynomial_chamfer_extends_exact_and_algebraic_incident_roots"
+    ],
+    [
+      "hypercurve",
+      "bezier_region::tests::retained_rational_chamfer_extends_exact_and_algebraic_pre_pole_roots"
+    ],
+    [
+      "hypercurve",
+      "bezier_region::tests::retained_stationary_endpoint_composition_keeps_source_and_tangent_anchor"
+    ],
+    [
+      "hypercurve",
+      "bezier_region::tests::selected_circle_and_analytic_parallel_fillet_exactly"
+    ],
+    [
+      "hypercurve",
+      "bezier_region::tests::selected_circle_and_direct_bezier_share_the_parallel_fillet_kernel"
+    ],
+    [
+      "hypercurve",
+      "bezier_region::tests::selected_circle_and_major_retained_rational_arc_fillet_exactly"
+    ],
+    [
+      "hypercurve",
+      "bezier_region::tests::selected_circle_and_retained_rational_arc_fillet_exactly"
+    ],
+    [
+      "hypercurve",
+      "bezier_region::tests::selected_circle_fillet_crosses_an_independently_reframed_run"
+    ],
+    [
+      "hypercurve",
+      "bezier_region::tests::selected_circle_fillet_owns_exact_smooth_run_seam_endpoint"
+    ],
+    [
+      "hypercurve",
+      "bezier_region::tests::selected_circle_mixed_fillet_crosses_one_sided_smooth_run_seam"
+    ],
+    [
+      "hypercurve",
+      "bezier_region::tests::selected_circle_pair_fillets_extend_over_both_full_supports"
+    ],
+    [
+      "hypercurve",
+      "bezier_region::tests::selected_circle_pair_with_rationalizable_support_fillet_exactly"
+    ],
+    [
+      "hypercurve",
+      "bezier_region::tests::selected_parallel_coalescing_requires_regular_cells"
+    ],
+    [
+      "hypercurve",
+      "bezier_region::tests::selected_parallel_companion_fillets_without_range_promotion"
+    ],
+    [
+      "hypercurve",
+      "bezier_region::tests::selected_parallel_endpoint_tangents_use_the_incident_branch"
+    ],
+    [
+      "hypercurve",
+      "bezier_region::tests::selected_parallel_normal_circle_and_line_fillet_retains_recursive_contact"
+    ],
+    [
+      "hypercurve",
+      "bezier_region::tests::selected_parallel_offset_partitions_existing_cusps_before_composition"
+    ],
+    [
+      "hypercurve",
+      "bezier_region::tests::selected_parallel_offset_preserves_stationary_branch_frames"
+    ],
+    [
+      "hypercurve",
+      "bezier_region::tests::selected_parallel_ray_vertices_use_spatial_endpoint_ownership"
+    ],
+    [
+      "hypercurve",
+      "bezier_region::tests::translated_pair_native_circles_fillet_after_boolean_crossing"
+    ],
+    [
+      "hypercurve",
+      "curve::curve_subdivision::tests::circular_spline_extensions_preserve_complements_and_closed_endpoint_ownership"
+    ],
+    [
+      "hypercurve",
+      "curve::curve_subdivision::tests::finite_parallel_pair_fillets_keep_exterior_source_domains"
+    ],
+    [
+      "hypercurve",
+      "curve::curve_subdivision::tests::selected_circular_chart_fillets_continue_across_projective_infinity"
+    ],
+    [
+      "hypercurve",
+      "curve::curve_subdivision::tests::source_domain_fillets_continue_circular_splines_across_projective_infinity"
+    ],
+    [
+      "hypercurve",
+      "curve::curve_subdivision::tests::source_domain_fillets_map_selected_line_contacts_into_spline_charts"
+    ],
+    [
+      "hypercurve",
+      "curve::curve_subdivision::tests::source_domain_fillets_own_surviving_spline_tangents_and_reenter_chamfers"
+    ],
+    [
+      "hypercurve",
+      "curve::curve_subdivision::tests::source_domain_fillets_preserve_all_selected_major_arc_contacts"
+    ],
+    [
+      "hypercurve",
+      "curve::curve_subdivision::tests::source_domain_fillets_preserve_one_closed_authored_interval"
+    ],
+    [
+      "hypercurve",
+      "curve::curve_subdivision::tests::source_domain_fillets_preserve_unmarked_affine_bezier_contacts"
+    ],
+    [
+      "hypercurve",
+      "curve::curve_subdivision::tests::source_domain_nonlinear_fillet_crosses_circular_chart_infinity"
+    ],
+    [
+      "hypercurve",
+      "curve::tests::fillet_domains_control_each_circular_contact_independently"
+    ],
+    [
+      "hypercurve",
+      "curve::tests::fillet_parallel_domains_expand_only_the_authorized_source"
+    ],
+    [
+      "hypercurve",
+      "curve::tests::parallel_fillet_extension_keeps_contacts_across_source_cusps"
+    ],
+    [
+      "hypercurve",
+      "curve::tests::parallel_fillet_frame_retains_selected_normal_and_radial_distance"
+    ],
+    [
+      "hypercurve",
+      "curve::tests::resource_blocked_selected_parallel_parameter_retains_local_fillet_frame"
+    ],
+    [
+      "hypercurve",
+      "curve::tests::retained_arc_selected_circle_endpoint_contact_uses_exact_fallback_frame"
+    ],
+    [
+      "hypercurve",
+      "curve::tests::retained_parallel_and_direct_bezier_share_projective_fillet_extension"
+    ],
+    [
+      "hypercurve",
+      "curve::tests::selected_circle_and_direct_bezier_share_projective_fillet_extension"
+    ],
+    [
+      "hypercurve",
+      "curve::tests::selected_circle_and_native_line_share_projective_fillet_extension"
+    ],
+    [
+      "hypercurve",
+      "curve::tests::selected_circular_fillet_overlap_is_clipped_to_the_finite_fragment"
+    ],
+    [
+      "hypercurve",
+      "curve::tests::selected_spline_fillet_cuts_reenter_the_authored_parameter_domain"
+    ],
+    [
+      "hypercurve",
+      "curve_intersection::curve_support_intersection::circle_dispatch_tests::selected_fillet_tangency_replays_an_exterior_affine_source_chart"
+    ],
+    [
+      "hypercurve",
+      "curve_region_boolean::certified_successor_tests::adjacent_general_chord_fallback_excludes_the_authored_endpoint"
+    ],
+    [
+      "hypercurve",
+      "curve_region_boolean::certified_successor_tests::affine_region_classifies_a_general_algebraic_cusp_point_in_its_source_field"
+    ],
+    [
+      "hypercurve",
+      "curve_region_boolean::certified_successor_tests::algebraic_chord_analytic_parallel_pair_replays_contacts_and_overlap"
+    ],
+    [
+      "hypercurve",
+      "curve_region_boolean::certified_successor_tests::algebraic_chord_carrier_retains_ordered_interior_splits"
+    ],
+    [
+      "hypercurve",
+      "curve_region_boolean::certified_successor_tests::algebraic_chord_exact_linear_bezier_pair_replays_all_line_relations"
+    ],
+    [
+      "hypercurve",
+      "curve_region_boolean::certified_successor_tests::algebraic_chord_pair_overlap_enters_region_intersection_evidence"
+    ],
+    [
+      "hypercurve",
+      "curve_region_boolean::certified_successor_tests::algebraic_chord_parallel_boolean_keeps_exterior_and_selected_ranges"
+    ],
+    [
+      "hypercurve",
+      "curve_region_boolean::certified_successor_tests::authored_parallel_support_contact_classifies_perpendicular_and_tangent_joins"
+    ],
+    [
+      "hypercurve",
+      "curve_region_boolean::certified_successor_tests::boolean_topology_seeds_a_general_cusp_run_from_an_adjacent_carrier"
+    ],
+    [
+      "hypercurve",
+      "curve_region_boolean::certified_successor_tests::boundary_probe_reuses_endpoint_incidence_and_keeps_residual_contacts"
+    ],
+    [
+      "hypercurve",
+      "curve_region_boolean::certified_successor_tests::certified_branch_order_matches_exact_vector_order"
+    ],
+    [
+      "hypercurve",
+      "curve_region_boolean::certified_successor_tests::classified_crossing_side_recovers_oriented_tangent_cross"
+    ],
+    [
+      "hypercurve",
+      "curve_region_boolean::certified_successor_tests::contact_point_bounds_reject_disjoint_lazy_sources"
+    ],
+    [
+      "hypercurve",
+      "curve_region_boolean::certified_successor_tests::curve_trim_retains_selected_field_algebraic_chord_boundaries"
+    ],
+    [
+      "hypercurve",
+      "curve_region_boolean::certified_successor_tests::curve_trim_retains_selected_field_algebraic_chord_overlaps"
+    ],
+    [
+      "hypercurve",
+      "curve_region_boolean::certified_successor_tests::curved_face_windings_preserve_crossings_tangencies_overlaps_and_nested_holes"
+    ],
+    [
+      "hypercurve",
+      "curve_region_boolean::certified_successor_tests::cusp_chord_pair_retains_an_independent_field_oblique_contact"
+    ],
+    [
+      "hypercurve",
+      "curve_region_boolean::certified_successor_tests::cusp_chord_pair_retains_an_interior_axis_contact"
+    ],
+    [
+      "hypercurve",
+      "curve_region_boolean::certified_successor_tests::cusp_chord_pair_retains_an_interior_exact_oblique_contact"
+    ],
+    [
+      "hypercurve",
+      "curve_region_boolean::certified_successor_tests::cusp_overlap_clipping_maps_partial_carriers_in_both_orientations"
+    ],
+    [
+      "hypercurve",
+      "curve_region_boolean::certified_successor_tests::cusp_separated_parallel_contacts_are_not_declared_distinct"
+    ],
+    [
+      "hypercurve",
+      "curve_region_boolean::certified_successor_tests::exact_retained_chord_uses_the_canonical_boolean_carrier"
+    ],
+    [
+      "hypercurve",
+      "curve_region_boolean::certified_successor_tests::exact_subfragment_of_algebraic_chord_retains_selected_field_witness"
+    ],
+    [
+      "hypercurve",
+      "curve_region_boolean::certified_successor_tests::extended_conic_retains_certified_tangency_in_its_interior"
+    ],
+    [
+      "hypercurve",
+      "curve_region_boolean::certified_successor_tests::exterior_circular_split_preserves_major_arc_and_algebraic_endpoints"
+    ],
+    [
+      "hypercurve",
+      "curve_region_boolean::certified_successor_tests::finite_parallel_self_contacts_retain_active_domain"
+    ],
+    [
+      "hypercurve",
+      "curve_region_boolean::certified_successor_tests::finite_self_crossing_regions_retain_boundary_ownership_on_reentry"
+    ],
+    [
+      "hypercurve",
+      "curve_region_boolean::certified_successor_tests::identical_injective_source_parameters_compare_without_materialization"
+    ],
+    [
+      "hypercurve",
+      "curve_region_boolean::certified_successor_tests::independent_field_algebraic_chord_uses_general_boolean_pair_engine"
+    ],
+    [
+      "hypercurve",
+      "curve_region_boolean::certified_successor_tests::independent_field_collinear_chord_overlap_enters_all_boolean_topology"
+    ],
+    [
+      "hypercurve",
+      "curve_region_boolean::certified_successor_tests::injective_carrier_topology_vertex_canonicalizes_unorderable_parameter_aliases"
+    ],
+    [
+      "hypercurve",
+      "curve_region_boolean::certified_successor_tests::isolated_circle_endpoint_contacts_retain_transverse_signs"
+    ],
+    [
+      "hypercurve",
+      "curve_region_boolean::certified_successor_tests::monotone_parallel_ranges_remove_only_proven_unary_pairs"
+    ],
+    [
+      "hypercurve",
+      "curve_region_boolean::certified_successor_tests::native_region_fast_path_matches_forced_general_arrangement"
+    ],
+    [
+      "hypercurve",
+      "curve_region_boolean::certified_successor_tests::nonadjacent_source_chord_pair_replays_endpoint_and_residual_contacts"
+    ],
+    [
+      "hypercurve",
+      "curve_region_boolean::certified_successor_tests::noninjective_carrier_retains_distinct_branches_at_one_topology_vertex"
+    ],
+    [
+      "hypercurve",
+      "curve_region_boolean::certified_successor_tests::noninjective_collinear_chord_dispatch_retains_contacts_and_overlaps"
+    ],
+    [
+      "hypercurve",
+      "curve_region_boolean::certified_successor_tests::noninjective_preimages_survive_curve_queries_and_cancel_from_regions"
+    ],
+    [
+      "hypercurve",
+      "curve_region_boolean::certified_successor_tests::nontransverse_point_touch_certifies_authored_loop_successors"
+    ],
+    [
+      "hypercurve",
+      "curve_region_boolean::certified_successor_tests::operand_bounds_are_lazy_shared_and_policy_neutral"
+    ],
+    [
+      "hypercurve",
+      "curve_region_boolean::certified_successor_tests::parallel_arc_contacts_retain_conic_parameters_across_elevation_and_reversal"
+    ],
+    [
+      "hypercurve",
+      "curve_region_boolean::certified_successor_tests::parallel_arc_contacts_use_the_requested_exterior_range"
+    ],
+    [
+      "hypercurve",
+      "curve_region_boolean::certified_successor_tests::parameter_order_uses_exact_translation_before_approximate_512_terminal"
+    ],
+    [
+      "hypercurve",
+      "curve_region_boolean::certified_successor_tests::polynomial_control_polygon_certifies_only_monotone_injective_axis"
+    ],
+    [
+      "hypercurve",
+      "curve_region_boolean::certified_successor_tests::rational_circle_contact_certificate_keeps_coincident_supports_in_general_replay"
+    ],
+    [
+      "hypercurve",
+      "curve_region_boolean::certified_successor_tests::regularization_orders_all_branches_at_a_pinched_algebraic_corner"
+    ],
+    [
+      "hypercurve",
+      "curve_region_boolean::certified_successor_tests::regularization_removes_symmetric_polynomial_and_rational_retracing"
+    ],
+    [
+      "hypercurve",
+      "curve_region_boolean::certified_successor_tests::represented_parallel_arc_tangencies_retain_certified_crossing_evidence"
+    ],
+    [
+      "hypercurve",
+      "curve_region_boolean::certified_successor_tests::retained_aabb_candidates_match_cartesian_pairs_in_authored_order"
+    ],
+    [
+      "hypercurve",
+      "curve_region_boolean::certified_successor_tests::selected_general_overlap_clips_through_exact_projection"
+    ],
+    [
+      "hypercurve",
+      "curve_region_boolean::certified_successor_tests::selected_parameter_component_overlap_clips_in_both_boolean_orders"
+    ],
+    [
+      "hypercurve",
+      "curve_region_boolean::certified_successor_tests::selected_projective_overlap_clips_without_global_parameter_projection"
+    ],
+    [
+      "hypercurve",
+      "curve_region_boolean::certified_successor_tests::shared_chord_splits_contacts_from_independent_selected_circles_in_order"
+    ],
+    [
+      "hypercurve",
+      "curve_region_boolean::certified_successor_tests::sibling_circle_tangency_preserves_half_chart_and_finite_range_ownership"
+    ],
+    [
+      "hypercurve",
+      "curve_region_boolean::certified_successor_tests::source_related_algebraic_chord_contact_enters_split_topology"
+    ],
+    [
+      "hypercurve",
+      "curve_region_boolean::certified_successor_tests::strict_interior_algebraic_chord_pair_contact_splits_both_carriers"
+    ],
+    [
+      "hypercurve",
+      "curve_region_boolean::certified_successor_tests::transitive_topology_merge_canonicalizes_deferred_injective_aliases"
+    ],
+    [
+      "hypercurve",
+      "curve_region_boolean::certified_successor_tests::transverse_contact_certificates_seed_both_operand_faces"
+    ],
+    [
+      "hypercurve",
+      "curve_region_boolean::certified_successor_tests::unary_cusp_regularization_samples_sides_in_the_selected_field"
+    ],
+    [
+      "hypercurve",
+      "curve_region_boolean::certified_successor_tests::unsupported_parameter_order_obeys_strict_and_approximate_512_policies"
+    ],
+    [
+      "hypercurve",
+      "curve_region_boolean::certified_successor_tests::xor_composition_fallback_removes_coincident_seams"
+    ],
+    [
+      "hypercurve",
+      "curve_region_boolean::regularization_successor_tests::colliding_contact_claims_remain_unselected"
+    ],
+    [
+      "hypercurve",
+      "curve_region_boolean::regularization_successor_tests::face_sector_claim_forces_the_unmaterialized_complement"
+    ],
+    [
+      "hypercurve",
+      "curve_region_boolean::regularized_face_winding_tests::contradiction_preserves_independent_winding_components"
+    ],
+    [
+      "hypercurve",
+      "curve_region_boolean::regularized_face_winding_tests::contradictory_winding_accelerator_is_disabled"
+    ],
+    [
+      "hypercurve",
+      "curve_region_boolean::regularized_face_winding_tests::contradictory_winding_propagation_is_transactional"
+    ],
+    [
+      "hypercurve",
+      "curve_region_boolean::regularized_face_winding_tests::winding_propagation_publishes_only_a_consistent_component"
+    ],
+    [
+      "hypercurve",
+      "curve_support::tests::certified_bezier_ranges_preserve_source_chart_and_traversal"
+    ],
+    [
+      "hypercurve",
+      "curve_support::tests::exterior_bounds_include_interior_extrema_and_parallel_displacement"
+    ],
+    [
+      "hypercurve",
+      "curve_support::tests::finite_bounds_exclude_poles_elsewhere_in_the_native_chart"
+    ],
+    [
+      "hypercurve",
+      "curve_support::tests::finite_parallel_cusp_derivatives_retain_the_selected_normal_sheet"
+    ],
+    [
+      "hypercurve",
+      "curve_support::tests::finite_parallel_derivatives_preserve_affine_charts_and_gauges"
+    ],
+    [
+      "hypercurve",
+      "curve_support::tests::injectivity_certificates_own_their_domain_and_circle_chart"
+    ],
+    [
+      "hypercurve",
+      "curve_support::tests::parallel_injectivity_requires_regularity_on_the_requested_range"
+    ],
+    [
+      "hypercurve",
+      "curve_support::tests::parallel_source_tangents_exclude_poles_and_undefined_normals"
+    ],
+    [
+      "hypercurve",
+      "curve_support::tests::retained_parallel_representatives_use_their_finite_support_range"
+    ],
+    [
+      "hypercurve",
+      "rational_bezier_general::tests::denominator_sign_tracks_the_requested_range_and_keeps_unit_cache_scope"
+    ],
+    [
+      "hypercurve",
+      "rational_bezier_general::tests::discovery_envelopes_keep_endpoint_expressions_out_of_fiber_bounds"
+    ],
+    [
+      "hypercurve",
+      "rational_bezier_general::tests::rational_discovery_envelopes_clip_newly_enclosed_poles"
+    ],
+    [
+      "hypercurve",
+      "segment::policy_cache_tests::approximate_sweep_fragment_does_not_gain_certified_cache_facts"
+    ],
+    [
+      "hypercurve",
+      "segment::policy_cache_tests::sweep_membership_uses_a_decisive_half_plane"
+    ],
+    [
+      "hypercurve_analytic_parallel_region",
+      "analytic_parallel_chamfers_retain_normalized_cut_points"
+    ],
+    [
+      "hypercurve_analytic_parallel_region",
+      "analytic_parallel_circle_fast_path_excludes_other_support_contacts"
+    ],
+    [
+      "hypercurve_analytic_parallel_region",
+      "analytic_parallel_circle_tangency_retains_zero_cross_evidence"
+    ],
+    [
+      "hypercurve_analytic_parallel_region",
+      "analytic_parallel_fragments_retain_exact_region_evidence_under_both_policies"
+    ],
+    [
+      "hypercurve_analytic_parallel_region",
+      "analytic_parallel_intersects_independently_parameterized_circles_exactly"
+    ],
+    [
+      "hypercurve_analytic_parallel_region",
+      "boundary_curves_reenter_boolean_without_native_conversion"
+    ],
+    [
+      "hypercurve_analytic_parallel_region",
+      "curve_trim_intersects_analytic_parallel_region_boundaries"
+    ],
+    [
+      "hypercurve_analytic_parallel_region",
+      "curve_trim_retains_an_analytic_parallel_boundary_overlap"
+    ],
+    [
+      "hypercurve_analytic_parallel_region",
+      "cusp_split_analytic_self_crossing_normalizes_at_admission"
+    ],
+    [
+      "hypercurve_analytic_parallel_region",
+      "general_boundary_paths_preserve_analytic_carriers_and_boolean_reentry"
+    ],
+    [
+      "hypercurve_analytic_parallel_region",
+      "radical_parallel_cusp_offsets_exactly_under_both_policies"
+    ],
+    [
+      "hypercurve_analytic_parallel_region",
+      "radical_parallel_cusp_spans_connect_under_both_policies"
+    ],
+    [
+      "hypercurve_analytic_parallel_region",
+      "retained_arc_fillet_preserves_past_center_tangent_orientation"
+    ],
+    [
+      "hypercurve_analytic_parallel_region",
+      "retained_rational_arc_and_analytic_parallel_fillet_exactly"
+    ],
+    [
+      "hypercurve_analytic_parallel_region",
+      "retained_rational_arc_and_analytic_parallel_fillet_extends_exactly"
+    ],
+    [
+      "hypercurve_arc_bezier",
+      "angular_inverse_selects_unequal_major_arc_charts"
+    ],
+    [
+      "hypercurve_arc_bezier",
+      "directed_sweep_evaluation_round_trips_minor_major_and_full_arcs"
+    ],
+    [
+      "hypercurve_arc_bezier",
+      "full_circle_uses_four_quarter_spans"
+    ],
+    [
+      "hypercurve_arc_bezier",
+      "inverse_sweep_witness_replays_exact_point_across_existing_clone"
+    ],
+    [
+      "hypercurve_arc_bezier",
+      "major_arc_preserves_rational_charts_and_requested_orientation"
+    ],
+    [
+      "hypercurve_arc_bezier",
+      "public_arc_native_topology_obeys_terminal_policy_once"
+    ],
+    [
+      "hypercurve_arc_bezier",
+      "quarter_arc_decomposes_to_one_exact_conic"
+    ],
+    [
+      "hypercurve_arc_bezier",
+      "rationally_trimmed_semicircle_redecomposes_exactly"
+    ],
+    [
+      "hypercurve_arc_bezier",
+      "semicircle_uses_two_quarter_spans_with_exact_join"
+    ],
+    [
+      "hypercurve_arc_bezier",
+      "sweep_fraction_orders_full_circle_cardinal_points_exactly"
+    ],
+    [
+      "hypercurve_arc_bezier",
+      "sweep_fraction_orders_major_arc_cardinal_points_exactly"
+    ],
+    [
+      "hypercurve_arc_bezier",
+      "top_level_arc_reuses_promotion_and_builds_mixed_boundary"
+    ],
+    [
+      "hypercurve_bezier_arrangement",
+      "algebraic_split_boundary_blocks_graph_traversal"
+    ],
+    [
+      "hypercurve_bezier_arrangement",
+      "arrangement_graph_accepts_adjacent_reused_source_fragment_ranges"
+    ],
+    [
+      "hypercurve_bezier_arrangement",
+      "arrangement_graph_rejects_duplicate_source_fragment_evidence"
+    ],
+    [
+      "hypercurve_bezier_arrangement",
+      "arrangement_graph_rejects_forged_algebraic_endpoint_image_evidence"
+    ],
+    [
+      "hypercurve_bezier_arrangement",
+      "arrangement_graph_rejects_invalid_unique_source_fragment_ranges"
+    ],
+    [
+      "hypercurve_bezier_arrangement",
+      "arrangement_graph_rejects_overlapping_reused_source_fragment_ranges"
+    ],
+    [
+      "hypercurve_bezier_arrangement",
+      "branch_vertex_is_explicit_uncertainty_not_arbitrary_successor"
+    ],
+    [
+      "hypercurve_bezier_arrangement",
+      "certified_overlap_evidence_replays_across_graph_clones"
+    ],
+    [
+      "hypercurve_bezier_arrangement",
+      "contact_parameters_follow_their_carrier_domains"
+    ],
+    [
+      "hypercurve_bezier_arrangement",
+      "empty_overlap_refinement_preserves_exact_unit_fragment"
+    ],
+    [
+      "hypercurve_bezier_arrangement",
+      "exact_endpoint_buckets_retain_symbolic_matches"
+    ],
+    [
+      "hypercurve_bezier_arrangement",
+      "exact_split_fragments_traverse_as_one_closed_bezier_chain"
+    ],
+    [
+      "hypercurve_bezier_arrangement",
+      "monotone_span_rejects_reversed_parameter_evidence"
+    ],
+    [
+      "hypercurve_bezier_arrangement",
+      "open_quadratic_chain_stays_one_nonclosed_chain"
+    ],
+    [
+      "hypercurve_bezier_arrangement",
+      "retained_arrangement_traversal_constructors_validate_fragment_ownership"
+    ],
+    [
+      "hypercurve_bezier_arrangement",
+      "retained_linear_overlap_refinement_evidence_reversed_span_orientation"
+    ],
+    [
+      "hypercurve_bezier_arrangement",
+      "retained_linear_overlap_split_graph_rejects_forged_orientation"
+    ],
+    [
+      "hypercurve_bezier_arrangement",
+      "retained_linear_overlap_split_graph_rejects_forged_resolved_provenance"
+    ],
+    [
+      "hypercurve_bezier_arrangement",
+      "retained_linear_overlap_split_graph_rejects_forged_split_evidence_geometry"
+    ],
+    [
+      "hypercurve_bezier_arrangement",
+      "retained_linear_overlap_split_graph_rejects_missing_refined_provenance"
+    ],
+    [
+      "hypercurve_bezier_arrangement",
+      "retained_linear_overlap_split_graph_rejects_missing_split_evidence_evidence"
+    ],
+    [
+      "hypercurve_bezier_arrangement",
+      "retained_linear_overlap_traversal_cancels_reversed_internal_span_in_loop"
+    ],
+    [
+      "hypercurve_bezier_arrangement",
+      "retained_linear_overlap_traversal_rejects_incomplete_refined_partition"
+    ],
+    [
+      "hypercurve_bezier_arrangement",
+      "retained_linear_overlap_traversal_rejects_indices_outside_refinement"
+    ],
+    [
+      "hypercurve_bezier_arrangement",
+      "retained_linear_overlap_traversal_splits_and_consumes_duplicate_span_in_loop"
+    ],
+    [
+      "hypercurve_bezier_arrangement",
+      "retained_overlap_evidence_constructor_rejects_unsorted_or_duplicate_pairs"
+    ],
+    [
+      "hypercurve_bezier_arrangement",
+      "retained_overlap_evidence_does_not_call_same_curve_image_a_line_split"
+    ],
+    [
+      "hypercurve_bezier_arrangement",
+      "retained_overlap_evidence_extracts_partial_line_image_split_ranges"
+    ],
+    [
+      "hypercurve_bezier_arrangement",
+      "retained_overlap_evidence_finds_identical_materialized_fragments"
+    ],
+    [
+      "hypercurve_bezier_arrangement",
+      "retained_overlap_evidence_finds_reversed_degree_elevated_same_image"
+    ],
+    [
+      "hypercurve_bezier_arrangement",
+      "retained_overlap_evidence_preserves_strict_rational_overlap_ranges"
+    ],
+    [
+      "hypercurve_bezier_arrangement",
+      "retained_overlap_evidence_recognizes_projectively_reversed_rational_fragments"
+    ],
+    [
+      "hypercurve_bezier_arrangement",
+      "retained_overlap_evidence_rejects_nonlinear_line_image_bezier_ranges"
+    ],
+    [
+      "hypercurve_bezier_arrangement",
+      "retained_overlap_evidence_separates_endpoint_touch_from_overlap"
+    ],
+    [
+      "hypercurve_bezier_arrangement",
+      "retained_overlap_pair_constructor_rejects_non_overlap_line_evidence"
+    ],
+    [
+      "hypercurve_bezier_arrangement",
+      "retained_overlap_pair_constructor_rejects_unordered_indices"
+    ],
+    [
+      "hypercurve_bezier_arrangement",
+      "retained_overlap_refined_fragment_constructor_validates_local_range"
+    ],
+    [
+      "hypercurve_bezier_arrangement",
+      "retained_overlap_split_constructors_reject_unordered_indices"
+    ],
+    [
+      "hypercurve_bezier_arrangement",
+      "retained_overlap_split_constructors_validate_range_evidence"
+    ],
+    [
+      "hypercurve_bezier_arrangement",
+      "retained_overlap_traversal_deduplicates_oriented_duplicate_loop_edges"
+    ],
+    [
+      "hypercurve_bezier_arrangement",
+      "retained_overlap_traversal_rejects_reversed_duplicate_as_ownership_boundary"
+    ],
+    [
+      "hypercurve_bezier_arrangement",
+      "retained_rational_overlap_promotes_represented_incidence_root"
+    ],
+    [
+      "hypercurve_bezier_arrangement",
+      "retained_rational_overlap_refinement_cancels_reversed_span"
+    ],
+    [
+      "hypercurve_bezier_arrangement",
+      "retained_resolved_overlap_constructor_rejects_unordered_indices"
+    ],
+    [
+      "hypercurve_bezier_arrangement",
+      "retained_tangent_order_rejects_equal_algebraic_successors"
+    ],
+    [
+      "hypercurve_bezier_arrangement",
+      "retained_tangent_order_transforms_reversed_algebraic_endpoints_and_tangents"
+    ],
+    [
+      "hypercurve_bezier_arrangement",
+      "retained_tangent_order_traverses_algebraic_branch_vertex"
+    ],
+    [
+      "hypercurve_bezier_arrangement",
+      "retained_tangent_order_uses_algebraic_second_order_for_equal_successors"
+    ],
+    [
+      "hypercurve_bezier_arrangement",
+      "retained_tangent_order_uses_algebraic_third_order_for_cubic_same_tangent_inflections"
+    ],
+    [
+      "hypercurve_bezier_arrangement",
+      "retained_tangent_order_uses_rational_algebraic_second_order_for_equal_successors"
+    ],
+    [
+      "hypercurve_bezier_arrangement",
+      "tangent_ordered_traversal_rejects_equal_rational_second_order_successors"
+    ],
+    [
+      "hypercurve_bezier_arrangement",
+      "tangent_ordered_traversal_rejects_equal_second_order_outgoing_tangents"
+    ],
+    [
+      "hypercurve_bezier_arrangement",
+      "tangent_ordered_traversal_rejects_equal_third_order_cubic_successors"
+    ],
+    [
+      "hypercurve_bezier_arrangement",
+      "tangent_ordered_traversal_resolves_simple_branch_vertex"
+    ],
+    [
+      "hypercurve_bezier_arrangement",
+      "tangent_ordered_traversal_uses_rational_second_order_for_equal_outgoing_tangents"
+    ],
+    [
+      "hypercurve_bezier_arrangement",
+      "tangent_ordered_traversal_uses_second_order_for_equal_outgoing_tangents"
+    ],
+    [
+      "hypercurve_bezier_arrangement",
+      "tangent_ordered_traversal_uses_third_order_for_cubic_same_tangent_inflections"
+    ],
+    [
+      "hypercurve_curve",
+      "direct_bezier_pair_fillet_retains_both_incident_extensions"
+    ],
+    [
+      "hypercurve_curve",
+      "exact_line_arc_fillets_retain_rational_radius_across_source_scales"
+    ],
+    [
+      "hypercurve_curve",
+      "exact_native_arc_fillet_solver_classifies_collapsed_and_coincident_offsets"
+    ],
+    [
+      "hypercurve_curve",
+      "exact_native_arc_fillet_solver_handles_every_native_pair_order"
+    ],
+    [
+      "hypercurve_curve",
+      "exact_native_arc_fillet_uses_only_the_shared_approximate_terminal"
+    ],
+    [
+      "hypercurve_curve",
+      "independently_parameterized_bezier_continuation_is_an_incident_fillet_component"
+    ],
+    [
+      "hypercurve_curve",
+      "line_corner_solvers_derive_unique_trimmed_fillet_and_chamfer"
+    ],
+    [
+      "hypercurve_curve",
+      "line_parabola_mixed_exact_algebraic_fillet_is_an_exact_open_path"
+    ],
+    [
+      "hypercurve_curve",
+      "mixed_curve_path_fillet_accepts_every_non_arc_family_pair"
+    ],
+    [
+      "hypercurve_curve",
+      "mixed_curve_path_fillet_preserves_arc_family_and_exact_tangency"
+    ],
+    [
+      "hypercurve_curve",
+      "one_curve_closed_spline_extensions_materialize_each_cell_once"
+    ],
+    [
+      "hypercurve_curve",
+      "polynomial_chamfer_materializes_represented_incident_extension"
+    ],
+    [
+      "hypercurve_curve",
+      "radical_line_image_fillets_preserve_retained_families"
+    ],
+    [
+      "hypercurve_curve",
+      "rational_chamfer_materializes_the_incident_projective_cell"
+    ],
+    [
+      "hypercurve_curve",
+      "represented_arc_bezier_fillets_use_circle_incidence"
+    ],
+    [
+      "hypercurve_curve",
+      "represented_bezier_pairs_use_independent_chamfer_and_exact_ph_fillet_routes"
+    ],
+    [
+      "hypercurve_curve",
+      "same_bezier_support_fillet_removes_the_projective_parameter_diagonal"
+    ],
+    [
+      "hypercurve_curve",
+      "same_ph_bezier_support_fillet_reuses_rational_projective_self_contact"
+    ],
+    [
+      "hypercurve_curve",
+      "spline_chamfer_materializes_only_the_incident_extension_cell"
+    ],
+    [
+      "hypercurve_curve",
+      "spline_incident_span_pairs_reuse_exact_ph_fillet_fast_path"
+    ],
+    [
+      "hypercurve_curve",
+      "spline_line_fillet_preserves_the_authored_spline_and_adds_its_incident_cell"
+    ],
+    [
+      "hypercurve_curve_region_boolean",
+      "affine_line_batch_preserves_material_and_hole_roles"
+    ],
+    [
+      "hypercurve_curve_region_boolean",
+      "affine_line_batch_reuses_the_authoritative_arrangement_topology"
+    ],
+    [
+      "hypercurve_curve_region_boolean",
+      "algebraic_curved_region_output_can_feed_another_boolean"
+    ],
+    [
+      "hypercurve_curve_region_boolean",
+      "approximate_offset_reports_a_consumed_terminal_for_symbolic_zero_distance"
+    ],
+    [
+      "hypercurve_curve_region_boolean",
+      "approximate_policy_reports_a_consumed_terminal_instead_of_relabeling_it_exact"
+    ],
+    [
+      "hypercurve_curve_region_boolean",
+      "boolean_batch_short_circuits_empty_and_identical_operands"
+    ],
+    [
+      "hypercurve_curve_region_boolean",
+      "circular_boolean_outputs_publish_native_boundaries_under_both_policies"
+    ],
+    [
+      "hypercurve_curve_region_boolean",
+      "circular_conic_batch_obeys_the_approximate_512_terminal"
+    ],
+    [
+      "hypercurve_curve_region_boolean",
+      "circular_conic_batch_reuses_one_authoritative_topology"
+    ],
+    [
+      "hypercurve_curve_region_boolean",
+      "conic_general_batch_obeys_the_approximate_512_terminal"
+    ],
+    [
+      "hypercurve_curve_region_boolean",
+      "curve_path_construction_obeys_the_approximate_512_terminal"
+    ],
+    [
+      "hypercurve_curve_region_boolean",
+      "curved_region_boolean_output_can_feed_another_boolean"
+    ],
+    [
+      "hypercurve_curve_region_boolean",
+      "curved_region_boolean_respects_nested_hole_roles"
+    ],
+    [
+      "hypercurve_curve_region_boolean",
+      "elevated_circular_boolean_outputs_publish_native_boundaries"
+    ],
+    [
+      "hypercurve_curve_region_boolean",
+      "empty_output_does_not_certify_an_approximate_normalization"
+    ],
+    [
+      "hypercurve_curve_region_boolean",
+      "finite_bezier_charts_preserve_bounds_boundary_and_winding"
+    ],
+    [
+      "hypercurve_curve_region_boolean",
+      "general_curve_batch_obeys_the_approximate_512_terminal"
+    ],
+    [
+      "hypercurve_curve_region_boolean",
+      "independent_nonlinear_line_parameters_compact_to_reusable_regions"
+    ],
+    [
+      "hypercurve_curve_region_boolean",
+      "line_general_batch_obeys_the_approximate_512_terminal"
+    ],
+    [
+      "hypercurve_curve_region_boolean",
+      "mixed_line_circular_conic_batch_obeys_the_approximate_512_terminal"
+    ],
+    [
+      "hypercurve_curve_region_boolean",
+      "mixed_line_circular_conic_batch_reuses_one_authoritative_topology"
+    ],
+    [
+      "hypercurve_curve_region_boolean",
+      "mixed_line_circular_conic_degeneracy_matrix_matches_native_results"
+    ],
+    [
+      "hypercurve_curve_region_boolean",
+      "native_chart_poles_do_not_block_finite_region_queries"
+    ],
+    [
+      "hypercurve_curve_region_boolean",
+      "noncircular_conic_boolean_output_is_not_mislabeled_as_native_arc"
+    ],
+    [
+      "hypercurve_curve_region_boolean",
+      "point_query_reports_when_approximate_policy_decides_a_symbolic_boundary"
+    ],
+    [
+      "hypercurve_curve_region_boolean",
+      "region_intersection_carriers_replay_prepared_charts_and_outlive_inputs"
+    ],
+    [
+      "hypercurve_curve_region_boolean",
+      "region_intersection_removes_authored_internal_and_canceled_boundaries"
+    ],
+    [
+      "hypercurve_curve_region_boolean",
+      "regularized_affine_contacts_discard_lower_dimensional_intersections"
+    ],
+    [
+      "hypercurve_curve_region_boolean",
+      "regularized_conic_tangencies_preserve_regions_but_not_point_intersections"
+    ],
+    [
+      "hypercurve_curve_region_boolean",
+      "regularized_partial_shared_edges_resolve_exact_side_ownership"
+    ],
+    [
+      "hypercurve_curve_region_boolean",
+      "regularized_topology_does_not_upgrade_terminal_connectivity"
+    ],
+    [
+      "hypercurve_curve_region_boolean",
+      "regularized_topology_retains_only_the_policy_actually_consumed"
+    ],
+    [
+      "hypercurve_curve_region_boolean",
+      "retained_regions_clip_degree_equivalent_shared_images_to_carrier_ranges"
+    ],
+    [
+      "hypercurve_curve_region_boolean",
+      "retained_regions_clip_mobius_reparameterized_conics_to_carrier_ranges"
+    ],
+    [
+      "hypercurve_curve_region_boolean",
+      "retained_regions_clip_non_axis_monotone_mobius_cubic_components"
+    ],
+    [
+      "hypercurve_curve_region_boolean",
+      "retained_regions_clip_shared_source_components_to_carrier_ranges"
+    ],
+    [
+      "hypercurve_curve_region_boolean",
+      "selected_fillet_region_intersection_closes_through_exterior_cap_booleans"
+    ],
+    [
+      "hypercurve_curve_region_boolean_fuzz",
+      "algebraic_polyline_contacts_preserve_exact_contact_distinction"
+    ],
+    [
+      "hypercurve_curve_region_boolean_fuzz",
+      "conic_endpoint_root_isolation_completes"
+    ],
+    [
+      "hypercurve_curve_region_boolean_fuzz",
+      "deterministic_coincident_curve_family_images_complete"
+    ],
+    [
+      "hypercurve_curve_region_boolean_fuzz",
+      "deterministic_endpoint_curve_family_pair_matrix_completes"
+    ],
+    [
+      "hypercurve_curve_region_boolean_fuzz",
+      "deterministic_tangent_curve_family_pair_matrix_completes"
+    ],
+    [
+      "hypercurve_curve_region_boolean_fuzz",
+      "deterministic_transverse_curve_family_pair_matrix_completes"
+    ],
+    [
+      "hypercurve_curve_region_boolean_fuzz",
+      "explicit_loop_topology_supports_reversed_nonuniform_rational_regions"
+    ],
+    [
+      "hypercurve_curve_region_boolean_fuzz",
+      "generated_exact_curve_region_booleans_complete_and_match_immediate_results"
+    ],
+    [
+      "hypercurve_curve_region_boolean_fuzz",
+      "retired_candidate_interval_pruning_completes"
+    ],
+    [
+      "hypercurve_curve_region_boolean_fuzz",
+      "retired_exact_curve_region_boolean_failures_remain_in_the_corpus"
+    ],
+    [
+      "hypercurve_curve_region_boolean_fuzz",
+      "shared_endpoint_xor_completes"
+    ],
+    [
+      "hypercurve_pcb_boolean_regressions",
+      "easyduino_scale_process_image_containment_corpus"
+    ],
+    [
+      "hypercurve_pcb_boolean_regressions",
+      "easyduino_uno_scale_process_image_with_holes_corpus"
+    ],
+    [
+      "hypercurve_pcb_boolean_regressions",
+      "pcb_process_image_containment_regression_decides_exactly"
+    ],
+    [
+      "hypercurve_pcb_boolean_regressions",
+      "pcb_process_image_hole_ownership_culls_sparse_materials"
+    ],
+    [
+      "hypercurve",
+      "bezier_region::tests::one_fragment_nonzero_parallel_loop_extends_chamfer_cuts_on_one_finite_envelope"
+    ],
+    [
+      "hypercurve",
+      "curve_region_boolean::certified_successor_tests::selected_parallel_arrangement_splits_interior_cusps"
+    ],
+    [
+      "hypercurve_analytic_parallel_region",
+      "algebraic_endpoint_analytic_parallel_chamfers_replay_selected_distance"
+    ]
+  ],
+  "changed_test_suffixes": [
+    "analytic_parallel_self_intersection_removes_the_parameter_diagonal",
+    "axis_components_keep_exact_clipped_ends_and_open_selector_events",
+    "complete_component_queries_keep_split_cells_and_residual_contacts",
+    "distinct_parallel_sources_keep_a_shared_fillet_center_family",
+    "domain_component_normal_constraints_follow_swapped_operands",
+    "finite_analytic_self_components_retain_original_parameter_filters",
+    "finite_component_charts_accept_nonrational_exact_scalar_bounds",
+    "finite_domain_admits_one_sided_source_cusp_contacts",
+    "finite_parallel_pair_components_obey_exact_domain_boundaries",
+    "incident_charts_keep_poles_and_finite_ownership_excluded",
+    "incident_component_charts_clip_exact_regular_barriers",
+    "incident_component_charts_transport_an_isolated_selected_event",
+    "incident_non_source_parallel_overlap_reaches_the_common_projection",
+    "incident_pair_projection_accepts_a_non_source_radical_component",
+    "incident_source_component_with_unequal_distances_retains_its_residual_system",
+    "mixed_zero_parallel_pairs_replay_both_exterior_domain_roles",
+    "nonzero_parallel_domains_exclude_undefined_normals_and_poles",
+    "nonzero_parallel_domains_partition_poles_on_components",
+    "nonzero_parallel_pairs_replay_exterior_weight_signs",
+    "ordered_ph_parallel_domains_do_not_reuse_the_wrong_speed_sheet",
+    "ordered_ph_parallel_domains_reject_a_cached_opposite_normal_contact",
+    "ordered_ph_parallel_domains_retain_same_sheet_exterior_contacts",
+    "ordered_self_contact_domains_retain_axis_roles_after_restriction",
+    "ordered_zero_parallel_domains_retain_exterior_loop_contacts",
+    "ordered_zero_parallel_domains_select_folded_components_and_exclude_poles",
+    "original_parallel_normal_constraints_clip_finite_and_incident_components",
+    "parallel_contact_domains_keep_independent_extensions_and_components",
+    "parameter_component_domains_own_selected_events_once",
+    "parameter_domains_limit_component_charts",
+    "parameter_domains_retain_chart_events_and_closed_finite_boundaries",
+    "parameter_domains_retain_finite_residuals_without_unowned_components",
+    "parameter_domains_retain_isolated_constraints",
+    "product_components_keep_fixed_axes_and_operand_roles",
+    "selected_parallel_fillet_clips_a_positive_dimensional_center_component_locally",
+    "zero_distance_parallel_pairs_keep_exterior_contacts",
+    "zero_parallel_domains_exclude_projective_poles"
+  ]
+}

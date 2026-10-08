@@ -1,0 +1,10 @@
+Reuse certified face windings and selected circle endpoint contacts.
+
+Consume freshly seeded exact face actions during regularization. Transport
+retained endpoint parameters between sibling circle charts and reuse the
+concentric-source tangency certificate instead of reconstructing a double
+root. Consolidate chord and rational-circle endpoint transport.
+
+Add exact winding membership and corner normalization regressions. This
+step retains the existing selected-circle publication exception; removing
+that exception still needs the broader corner replay fixes.

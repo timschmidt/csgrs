@@ -1,0 +1,271 @@
+kind,a,d,precision,outcome,elapsed_ns
+algebraic_control,1,2,-64,Equal { certificate: DifferenceStructuralFacts },25923706
+log_identity,1,2,-64,Unknown { min_precision: -64 },52299141
+perturbed_control,1,2,-64,NotEqual { certificate: BoundedRefinement { min_precision: -64 } },3610603
+algebraic_control,1,2,-256,Equal { certificate: DifferenceStructuralFacts },718431
+log_identity,1,2,-256,Unknown { min_precision: -256 },12350965
+perturbed_control,1,2,-256,NotEqual { certificate: BoundedRefinement { min_precision: -256 } },1048809
+algebraic_control,1,2,-512,Equal { certificate: DifferenceStructuralFacts },462939
+log_identity,1,2,-512,Unknown { min_precision: -512 },8030620
+perturbed_control,1,2,-512,NotEqual { certificate: BoundedRefinement { min_precision: -512 } },108532
+algebraic_control,1,3,-64,Equal { certificate: DifferenceStructuralFacts },365885
+log_identity,1,3,-64,Unknown { min_precision: -64 },4637152
+perturbed_control,1,3,-64,NotEqual { certificate: BoundedRefinement { min_precision: -64 } },248862
+algebraic_control,1,3,-256,Equal { certificate: DifferenceStructuralFacts },126221
+log_identity,1,3,-256,Unknown { min_precision: -256 },3947200
+perturbed_control,1,3,-256,NotEqual { certificate: BoundedRefinement { min_precision: -256 } },102493
+algebraic_control,1,3,-512,Equal { certificate: DifferenceStructuralFacts },121892
+log_identity,1,3,-512,Unknown { min_precision: -512 },5559140
+perturbed_control,1,3,-512,NotEqual { certificate: BoundedRefinement { min_precision: -512 } },103963
+algebraic_control,1,5,-64,Equal { certificate: DifferenceStructuralFacts },125321
+log_identity,1,5,-64,Unknown { min_precision: -64 },1411234
+perturbed_control,1,5,-64,NotEqual { certificate: BoundedRefinement { min_precision: -64 } },244593
+algebraic_control,1,5,-256,Equal { certificate: DifferenceStructuralFacts },132811
+log_identity,1,5,-256,Unknown { min_precision: -256 },3529818
+perturbed_control,1,5,-256,NotEqual { certificate: BoundedRefinement { min_precision: -256 } },99883
+algebraic_control,1,5,-512,Equal { certificate: DifferenceStructuralFacts },142610
+log_identity,1,5,-512,Unknown { min_precision: -512 },4293496
+perturbed_control,1,5,-512,NotEqual { certificate: BoundedRefinement { min_precision: -512 } },103573
+algebraic_control,1,6,-64,Equal { certificate: DifferenceStructuralFacts },125231
+log_identity,1,6,-64,Unknown { min_precision: -64 },1144482
+perturbed_control,1,6,-64,NotEqual { certificate: BoundedRefinement { min_precision: -64 } },226774
+algebraic_control,1,6,-256,Equal { certificate: DifferenceStructuralFacts },150240
+log_identity,1,6,-256,Unknown { min_precision: -256 },3607713
+perturbed_control,1,6,-256,NotEqual { certificate: BoundedRefinement { min_precision: -256 } },101643
+algebraic_control,1,6,-512,Equal { certificate: DifferenceStructuralFacts },121912
+log_identity,1,6,-512,Unknown { min_precision: -512 },3874055
+perturbed_control,1,6,-512,NotEqual { certificate: BoundedRefinement { min_precision: -512 } },107663
+algebraic_control,1,7,-64,Equal { certificate: DifferenceStructuralFacts },122121
+log_identity,1,7,-64,Unknown { min_precision: -64 },1356407
+perturbed_control,1,7,-64,NotEqual { certificate: BoundedRefinement { min_precision: -64 } },220765
+algebraic_control,1,7,-256,Equal { certificate: DifferenceStructuralFacts },124072
+log_identity,1,7,-256,Unknown { min_precision: -256 },3529739
+perturbed_control,1,7,-256,NotEqual { certificate: BoundedRefinement { min_precision: -256 } },101493
+algebraic_control,1,7,-512,Equal { certificate: DifferenceStructuralFacts },121362
+log_identity,1,7,-512,Unknown { min_precision: -512 },3697507
+perturbed_control,1,7,-512,NotEqual { certificate: BoundedRefinement { min_precision: -512 } },139880
+algebraic_control,1,10,-64,Equal { certificate: DifferenceStructuralFacts },124781
+log_identity,1,10,-64,Unknown { min_precision: -64 },1416883
+perturbed_control,1,10,-64,NotEqual { certificate: BoundedRefinement { min_precision: -64 } },541943
+algebraic_control,1,10,-256,Equal { certificate: DifferenceStructuralFacts },142431
+log_identity,1,10,-256,Unknown { min_precision: -256 },2440943
+perturbed_control,1,10,-256,NotEqual { certificate: BoundedRefinement { min_precision: -256 } },107283
+algebraic_control,1,10,-512,Equal { certificate: DifferenceStructuralFacts },121202
+log_identity,1,10,-512,Unknown { min_precision: -512 },2463192
+perturbed_control,1,10,-512,NotEqual { certificate: BoundedRefinement { min_precision: -512 } },105003
+algebraic_control,1,11,-64,Equal { certificate: DifferenceStructuralFacts },122842
+log_identity,1,11,-64,Unknown { min_precision: -64 },803155
+perturbed_control,1,11,-64,NotEqual { certificate: BoundedRefinement { min_precision: -64 } },212765
+algebraic_control,1,11,-256,Equal { certificate: DifferenceStructuralFacts },132131
+log_identity,1,11,-256,Unknown { min_precision: -256 },2482071
+perturbed_control,1,11,-256,NotEqual { certificate: BoundedRefinement { min_precision: -256 } },101263
+algebraic_control,1,11,-512,Equal { certificate: DifferenceStructuralFacts },127002
+log_identity,1,11,-512,Unknown { min_precision: -512 },2680147
+perturbed_control,1,11,-512,NotEqual { certificate: BoundedRefinement { min_precision: -512 } },120962
+algebraic_control,1,13,-64,Equal { certificate: DifferenceStructuralFacts },122201
+log_identity,1,13,-64,Unknown { min_precision: -64 },846762
+perturbed_control,1,13,-64,NotEqual { certificate: BoundedRefinement { min_precision: -64 } },222405
+algebraic_control,1,13,-256,Equal { certificate: DifferenceStructuralFacts },121332
+log_identity,1,13,-256,Unknown { min_precision: -256 },2788549
+perturbed_control,1,13,-256,NotEqual { certificate: BoundedRefinement { min_precision: -256 } },101263
+algebraic_control,1,13,-512,Equal { certificate: DifferenceStructuralFacts },133141
+log_identity,1,13,-512,Unknown { min_precision: -512 },3003204
+perturbed_control,1,13,-512,NotEqual { certificate: BoundedRefinement { min_precision: -512 } },103453
+algebraic_control,1,17,-64,Equal { certificate: DifferenceStructuralFacts },121072
+log_identity,1,17,-64,Unknown { min_precision: -64 },916308
+perturbed_control,1,17,-64,NotEqual { certificate: BoundedRefinement { min_precision: -64 } },267862
+algebraic_control,1,17,-256,Equal { certificate: DifferenceStructuralFacts },122072
+log_identity,1,17,-256,Unknown { min_precision: -256 },3439285
+perturbed_control,1,17,-256,NotEqual { certificate: BoundedRefinement { min_precision: -256 } },113392
+algebraic_control,1,17,-512,Equal { certificate: DifferenceStructuralFacts },131551
+log_identity,1,17,-512,Unknown { min_precision: -512 },5833991
+perturbed_control,1,17,-512,NotEqual { certificate: BoundedRefinement { min_precision: -512 } },136321
+algebraic_control,1,19,-64,Equal { certificate: DifferenceStructuralFacts },138860
+log_identity,1,19,-64,Unknown { min_precision: -64 },951304
+perturbed_control,1,19,-64,NotEqual { certificate: BoundedRefinement { min_precision: -64 } },245763
+algebraic_control,1,19,-256,Equal { certificate: DifferenceStructuralFacts },123671
+log_identity,1,19,-256,Unknown { min_precision: -256 },2962767
+perturbed_control,1,19,-256,NotEqual { certificate: BoundedRefinement { min_precision: -256 } },159349
+algebraic_control,1,19,-512,Equal { certificate: DifferenceStructuralFacts },187077
+log_identity,1,19,-512,Unknown { min_precision: -512 },3351010
+perturbed_control,1,19,-512,NotEqual { certificate: BoundedRefinement { min_precision: -512 } },116202
+algebraic_control,2,2,-64,Equal { certificate: DifferenceStructuralFacts },528954
+log_identity,2,2,-64,Unknown { min_precision: -64 },1265244
+perturbed_control,2,2,-64,NotEqual { certificate: BoundedRefinement { min_precision: -64 } },250783
+algebraic_control,2,2,-256,Equal { certificate: DifferenceStructuralFacts },168649
+log_identity,2,2,-256,Unknown { min_precision: -256 },4810411
+perturbed_control,2,2,-256,NotEqual { certificate: BoundedRefinement { min_precision: -256 } },131571
+algebraic_control,2,2,-512,Equal { certificate: DifferenceStructuralFacts },167329
+log_identity,2,2,-512,Unknown { min_precision: -512 },4631603
+perturbed_control,2,2,-512,NotEqual { certificate: BoundedRefinement { min_precision: -512 } },142900
+algebraic_control,2,3,-64,Equal { certificate: DifferenceStructuralFacts },165449
+log_identity,2,3,-64,Unknown { min_precision: -64 },1179559
+perturbed_control,2,3,-64,NotEqual { certificate: BoundedRefinement { min_precision: -64 } },229434
+algebraic_control,2,3,-256,Equal { certificate: DifferenceStructuralFacts },131481
+log_identity,2,3,-256,Unknown { min_precision: -256 },3397587
+perturbed_control,2,3,-256,NotEqual { certificate: BoundedRefinement { min_precision: -256 } },100863
+algebraic_control,2,3,-512,Equal { certificate: DifferenceStructuralFacts },135870
+log_identity,2,3,-512,Unknown { min_precision: -512 },3564586
+perturbed_control,2,3,-512,NotEqual { certificate: BoundedRefinement { min_precision: -512 } },132881
+algebraic_control,2,5,-64,Equal { certificate: DifferenceStructuralFacts },130361
+log_identity,2,5,-64,Unknown { min_precision: -64 },2228838
+perturbed_control,2,5,-64,NotEqual { certificate: BoundedRefinement { min_precision: -64 } },278300
+algebraic_control,2,5,-256,Equal { certificate: DifferenceStructuralFacts },136280
+log_identity,2,5,-256,Unknown { min_precision: -256 },2455501
+perturbed_control,2,5,-256,NotEqual { certificate: BoundedRefinement { min_precision: -256 } },103813
+algebraic_control,2,5,-512,Equal { certificate: DifferenceStructuralFacts },129521
+log_identity,2,5,-512,Unknown { min_precision: -512 },2369478
+perturbed_control,2,5,-512,NotEqual { certificate: BoundedRefinement { min_precision: -512 } },100193
+algebraic_control,2,6,-64,Equal { certificate: DifferenceStructuralFacts },129801
+log_identity,2,6,-64,Unknown { min_precision: -64 },823104
+perturbed_control,2,6,-64,NotEqual { certificate: BoundedRefinement { min_precision: -64 } },209436
+algebraic_control,2,6,-256,Equal { certificate: DifferenceStructuralFacts },131001
+log_identity,2,6,-256,Unknown { min_precision: -256 },2585693
+perturbed_control,2,6,-256,NotEqual { certificate: BoundedRefinement { min_precision: -256 } },102503
+algebraic_control,2,6,-512,Equal { certificate: DifferenceStructuralFacts },127292
+log_identity,2,6,-512,Unknown { min_precision: -512 },2730183
+perturbed_control,2,6,-512,NotEqual { certificate: BoundedRefinement { min_precision: -512 } },100794
+algebraic_control,2,7,-64,Equal { certificate: DifferenceStructuralFacts },128081
+log_identity,2,7,-64,Unknown { min_precision: -64 },825063
+perturbed_control,2,7,-64,NotEqual { certificate: BoundedRefinement { min_precision: -64 } },212035
+algebraic_control,2,7,-256,Equal { certificate: DifferenceStructuralFacts },129882
+log_identity,2,7,-256,Unknown { min_precision: -256 },2770980
+perturbed_control,2,7,-256,NotEqual { certificate: BoundedRefinement { min_precision: -256 } },102423
+algebraic_control,2,7,-512,Equal { certificate: DifferenceStructuralFacts },142120
+log_identity,2,7,-512,Unknown { min_precision: -512 },3024553
+perturbed_control,2,7,-512,NotEqual { certificate: BoundedRefinement { min_precision: -512 } },105213
+algebraic_control,2,10,-64,Equal { certificate: DifferenceStructuralFacts },128371
+log_identity,2,10,-64,Unknown { min_precision: -64 },899109
+perturbed_control,2,10,-64,NotEqual { certificate: BoundedRefinement { min_precision: -64 } },229904
+algebraic_control,2,10,-256,Equal { certificate: DifferenceStructuralFacts },129862
+log_identity,2,10,-256,Unknown { min_precision: -256 },2885213
+perturbed_control,2,10,-256,NotEqual { certificate: BoundedRefinement { min_precision: -256 } },104423
+algebraic_control,2,10,-512,Equal { certificate: DifferenceStructuralFacts },139760
+log_identity,2,10,-512,Unknown { min_precision: -512 },3989157
+perturbed_control,2,10,-512,NotEqual { certificate: BoundedRefinement { min_precision: -512 } },127941
+algebraic_control,2,11,-64,Equal { certificate: DifferenceStructuralFacts },163938
+log_identity,2,11,-64,Unknown { min_precision: -64 },1013551
+perturbed_control,2,11,-64,NotEqual { certificate: BoundedRefinement { min_precision: -64 } },236744
+algebraic_control,2,11,-256,Equal { certificate: DifferenceStructuralFacts },131431
+log_identity,2,11,-256,Unknown { min_precision: -256 },3119686
+perturbed_control,2,11,-256,NotEqual { certificate: BoundedRefinement { min_precision: -256 } },130711
+algebraic_control,2,11,-512,Equal { certificate: DifferenceStructuralFacts },152519
+log_identity,2,11,-512,Unknown { min_precision: -512 },3065990
+perturbed_control,2,11,-512,NotEqual { certificate: BoundedRefinement { min_precision: -512 } },100193
+algebraic_control,2,13,-64,Equal { certificate: DifferenceStructuralFacts },133391
+log_identity,2,13,-64,Unknown { min_precision: -64 },1516196
+perturbed_control,2,13,-64,NotEqual { certificate: BoundedRefinement { min_precision: -64 } },244413
+algebraic_control,2,13,-256,Equal { certificate: DifferenceStructuralFacts },133491
+log_identity,2,13,-256,Unknown { min_precision: -256 },2690446
+perturbed_control,2,13,-256,NotEqual { certificate: BoundedRefinement { min_precision: -256 } },118072
+algebraic_control,2,13,-512,Equal { certificate: DifferenceStructuralFacts },129311
+log_identity,2,13,-512,Unknown { min_precision: -512 },2825037
+perturbed_control,2,13,-512,NotEqual { certificate: BoundedRefinement { min_precision: -512 } },138320
+algebraic_control,2,17,-64,Equal { certificate: DifferenceStructuralFacts },130381
+log_identity,2,17,-64,Unknown { min_precision: -64 },951275
+perturbed_control,2,17,-64,NotEqual { certificate: BoundedRefinement { min_precision: -64 } },247913
+algebraic_control,2,17,-256,Equal { certificate: DifferenceStructuralFacts },134991
+log_identity,2,17,-256,Unknown { min_precision: -256 },4019485
+perturbed_control,2,17,-256,NotEqual { certificate: BoundedRefinement { min_precision: -256 } },107062
+algebraic_control,2,17,-512,Equal { certificate: DifferenceStructuralFacts },130781
+log_identity,2,17,-512,Unknown { min_precision: -512 },3388368
+perturbed_control,2,17,-512,NotEqual { certificate: BoundedRefinement { min_precision: -512 } },133811
+algebraic_control,2,19,-64,Equal { certificate: DifferenceStructuralFacts },164199
+log_identity,2,19,-64,Unknown { min_precision: -64 },1129763
+perturbed_control,2,19,-64,NotEqual { certificate: BoundedRefinement { min_precision: -64 } },471198
+algebraic_control,2,19,-256,Equal { certificate: DifferenceStructuralFacts },135310
+log_identity,2,19,-256,Unknown { min_precision: -256 },3420336
+perturbed_control,2,19,-256,NotEqual { certificate: BoundedRefinement { min_precision: -256 } },116852
+algebraic_control,2,19,-512,Equal { certificate: DifferenceStructuralFacts },131361
+log_identity,2,19,-512,Unknown { min_precision: -512 },3371199
+perturbed_control,2,19,-512,NotEqual { certificate: BoundedRefinement { min_precision: -512 } },120001
+algebraic_control,3,2,-64,Equal { certificate: DifferenceStructuralFacts },266792
+log_identity,3,2,-64,Unknown { min_precision: -64 },904728
+perturbed_control,3,2,-64,NotEqual { certificate: BoundedRefinement { min_precision: -64 } },208056
+algebraic_control,3,2,-256,Equal { certificate: DifferenceStructuralFacts },133461
+log_identity,3,2,-256,Unknown { min_precision: -256 },2899871
+perturbed_control,3,2,-256,NotEqual { certificate: BoundedRefinement { min_precision: -256 } },130841
+algebraic_control,3,2,-512,Equal { certificate: DifferenceStructuralFacts },167898
+log_identity,3,2,-512,Unknown { min_precision: -512 },3179313
+perturbed_control,3,2,-512,NotEqual { certificate: BoundedRefinement { min_precision: -512 } },100533
+algebraic_control,3,3,-64,Equal { certificate: DifferenceStructuralFacts },131741
+log_identity,3,3,-64,Unknown { min_precision: -64 },888699
+perturbed_control,3,3,-64,NotEqual { certificate: BoundedRefinement { min_precision: -64 } },277921
+algebraic_control,3,3,-256,Equal { certificate: DifferenceStructuralFacts },146860
+log_identity,3,3,-256,Unknown { min_precision: -256 },2915371
+perturbed_control,3,3,-256,NotEqual { certificate: BoundedRefinement { min_precision: -256 } },101903
+algebraic_control,3,3,-512,Equal { certificate: DifferenceStructuralFacts },128712
+log_identity,3,3,-512,Unknown { min_precision: -512 },3681528
+perturbed_control,3,3,-512,NotEqual { certificate: BoundedRefinement { min_precision: -512 } },101043
+algebraic_control,3,5,-64,Equal { certificate: DifferenceStructuralFacts },137790
+log_identity,3,5,-64,Unknown { min_precision: -64 },953935
+perturbed_control,3,5,-64,NotEqual { certificate: BoundedRefinement { min_precision: -64 } },235054
+algebraic_control,3,5,-256,Equal { certificate: DifferenceStructuralFacts },130091
+log_identity,3,5,-256,Unknown { min_precision: -256 },3108257
+perturbed_control,3,5,-256,NotEqual { certificate: BoundedRefinement { min_precision: -256 } },104453
+algebraic_control,3,5,-512,Equal { certificate: DifferenceStructuralFacts },146810
+log_identity,3,5,-512,Unknown { min_precision: -512 },3265307
+perturbed_control,3,5,-512,NotEqual { certificate: BoundedRefinement { min_precision: -512 } },98823
+algebraic_control,3,6,-64,Equal { certificate: DifferenceStructuralFacts },132551
+log_identity,3,6,-64,Unknown { min_precision: -64 },958295
+perturbed_control,3,6,-64,NotEqual { certificate: BoundedRefinement { min_precision: -64 } },234604
+algebraic_control,3,6,-256,Equal { certificate: DifferenceStructuralFacts },128751
+log_identity,3,6,-256,Unknown { min_precision: -256 },3000365
+perturbed_control,3,6,-256,NotEqual { certificate: BoundedRefinement { min_precision: -256 } },102903
+algebraic_control,3,6,-512,Equal { certificate: DifferenceStructuralFacts },220345
+log_identity,3,6,-512,Unknown { min_precision: -512 },3086679
+perturbed_control,3,6,-512,NotEqual { certificate: BoundedRefinement { min_precision: -512 } },104533
+algebraic_control,3,7,-64,Equal { certificate: DifferenceStructuralFacts },135711
+log_identity,3,7,-64,Unknown { min_precision: -64 },956055
+perturbed_control,3,7,-64,NotEqual { certificate: BoundedRefinement { min_precision: -64 } },223975
+algebraic_control,3,7,-256,Equal { certificate: DifferenceStructuralFacts },132301
+log_identity,3,7,-256,Unknown { min_precision: -256 },3233179
+perturbed_control,3,7,-256,NotEqual { certificate: BoundedRefinement { min_precision: -256 } },131061
+algebraic_control,3,7,-512,Equal { certificate: DifferenceStructuralFacts },172578
+log_identity,3,7,-512,Unknown { min_precision: -512 },3188911
+perturbed_control,3,7,-512,NotEqual { certificate: BoundedRefinement { min_precision: -512 } },105982
+algebraic_control,3,10,-64,Equal { certificate: DifferenceStructuralFacts },132761
+log_identity,3,10,-64,Unknown { min_precision: -64 },1050499
+perturbed_control,3,10,-64,NotEqual { certificate: BoundedRefinement { min_precision: -64 } },223055
+algebraic_control,3,10,-256,Equal { certificate: DifferenceStructuralFacts },425291
+log_identity,3,10,-256,Unknown { min_precision: -256 },3060700
+perturbed_control,3,10,-256,NotEqual { certificate: BoundedRefinement { min_precision: -256 } },102613
+algebraic_control,3,10,-512,Equal { certificate: DifferenceStructuralFacts },255582
+log_identity,3,10,-512,Unknown { min_precision: -512 },3232239
+perturbed_control,3,10,-512,NotEqual { certificate: BoundedRefinement { min_precision: -512 } },111752
+algebraic_control,3,11,-64,Equal { certificate: DifferenceStructuralFacts },131261
+log_identity,3,11,-64,Unknown { min_precision: -64 },1026609
+perturbed_control,3,11,-64,NotEqual { certificate: BoundedRefinement { min_precision: -64 } },363835
+algebraic_control,3,11,-256,Equal { certificate: DifferenceStructuralFacts },163219
+log_identity,3,11,-256,Unknown { min_precision: -256 },3209591
+perturbed_control,3,11,-256,NotEqual { certificate: BoundedRefinement { min_precision: -256 } },123072
+algebraic_control,3,11,-512,Equal { certificate: DifferenceStructuralFacts },135421
+log_identity,3,11,-512,Unknown { min_precision: -512 },3435575
+perturbed_control,3,11,-512,NotEqual { certificate: BoundedRefinement { min_precision: -512 } },117342
+algebraic_control,3,13,-64,Equal { certificate: DifferenceStructuralFacts },130591
+log_identity,3,13,-64,Unknown { min_precision: -64 },1014600
+perturbed_control,3,13,-64,NotEqual { certificate: BoundedRefinement { min_precision: -64 } },323957
+algebraic_control,3,13,-256,Equal { certificate: DifferenceStructuralFacts },130712
+log_identity,3,13,-256,Unknown { min_precision: -256 },3077040
+perturbed_control,3,13,-256,NotEqual { certificate: BoundedRefinement { min_precision: -256 } },113253
+algebraic_control,3,13,-512,Equal { certificate: DifferenceStructuralFacts },127931
+log_identity,3,13,-512,Unknown { min_precision: -512 },5203184
+perturbed_control,3,13,-512,NotEqual { certificate: BoundedRefinement { min_precision: -512 } },217306
+algebraic_control,3,17,-64,Equal { certificate: DifferenceStructuralFacts },133141
+log_identity,3,17,-64,Unknown { min_precision: -64 },1031009
+perturbed_control,3,17,-64,NotEqual { certificate: BoundedRefinement { min_precision: -64 } },350286
+algebraic_control,3,17,-256,Equal { certificate: DifferenceStructuralFacts },137251
+log_identity,3,17,-256,Unknown { min_precision: -256 },2924300
+perturbed_control,3,17,-256,NotEqual { certificate: BoundedRefinement { min_precision: -256 } },117722
+algebraic_control,3,17,-512,Equal { certificate: DifferenceStructuralFacts },129482
+log_identity,3,17,-512,Unknown { min_precision: -512 },3086439
+perturbed_control,3,17,-512,NotEqual { certificate: BoundedRefinement { min_precision: -512 } },113093
+algebraic_control,3,19,-64,Equal { certificate: DifferenceStructuralFacts },147510
+log_identity,3,19,-64,Unknown { min_precision: -64 },972013
+perturbed_control,3,19,-64,NotEqual { certificate: BoundedRefinement { min_precision: -64 } },345496
+algebraic_control,3,19,-256,Equal { certificate: DifferenceStructuralFacts },132481
+log_identity,3,19,-256,Unknown { min_precision: -256 },2807378
+perturbed_control,3,19,-256,NotEqual { certificate: BoundedRefinement { min_precision: -256 } },113232
+algebraic_control,3,19,-512,Equal { certificate: DifferenceStructuralFacts },128762
+log_identity,3,19,-512,Unknown { min_precision: -512 },3254367
+perturbed_control,3,19,-512,NotEqual { certificate: BoundedRefinement { min_precision: -512 } },189977

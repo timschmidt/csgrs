@@ -1,0 +1,18 @@
+{
+  "tag": "twelfth-isolated-allocation-0-0-candidate-v78",
+  "started": "2026-09-11T23:59:21.326Z",
+  "finished": "2026-09-11T23:59:21.339Z",
+  "elapsedSeconds": 0.011024174999999999,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "taskset",
+  "args": [
+    "-c",
+    "2",
+    "/tmp/calcium-twelfth-cost-v78.5Fhn5H/candidate-allocation",
+    "allocation",
+    "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/twelfth-cost-input-v78.json",
+    "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/twelfth-isolated-allocation-0-0-candidate-v78-plan.json"
+  ],
+  "code": 0,
+  "signal": null
+}

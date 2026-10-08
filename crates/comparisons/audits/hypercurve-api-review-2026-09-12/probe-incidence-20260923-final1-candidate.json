@@ -1,0 +1,5 @@
+{
+  "src/bezier_offset.rs": "5dd4e977dd884b6bc39a41d7019f2721e9dcf922e8702af78937c64ba9a187c7",
+  "src/curve_region_boolean.rs": "a1d9266a0ecd061aa3b07f9f01bc278818d391a0334d370e3fa99c8340a31979",
+  "src/bezier_region.rs": "d2d5ddee1f0120d01a76bdc54a858794b13904ba51112bd3a442ee5691b9b46c"
+}

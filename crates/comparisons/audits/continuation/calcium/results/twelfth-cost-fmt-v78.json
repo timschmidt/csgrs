@@ -1,0 +1,19 @@
+{
+  "tag": "twelfth-cost-fmt-v78",
+  "started": "2026-09-11T23:48:10.373Z",
+  "finished": "2026-09-11T23:48:10.399Z",
+  "elapsedSeconds": 0.024008854,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "rustfmt",
+  "args": [
+    "--edition",
+    "2024",
+    "--check",
+    "twelfth-cost-v78.rs",
+    "twelfth-cost-cpu-v78.rs",
+    "twelfth-cost-allocation-v78.rs",
+    "twelfth-counting-allocator-v78.rs"
+  ],
+  "code": 0,
+  "signal": null
+}

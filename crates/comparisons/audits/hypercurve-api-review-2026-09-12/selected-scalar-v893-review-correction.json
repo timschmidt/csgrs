@@ -1,0 +1,8 @@
+{
+  "first_review_exit_code": 1,
+  "first_review_reaped": true,
+  "old_driver_sha256": "a64c6f1636652744f961a807921b283cd5ed93e28fb108869a34b3ad129240e3",
+  "new_driver_sha256": "ac29ad8823f3220a7686bba3cb7a4a990ecb7535b2a55d861a7ef325ea382926",
+  "reason": "The unqualified substring rational_coefficients matched pre-existing private normalized_local_field_rational_coefficients and an existing nonrational-coefficient regression. Restrict the removal guard to the new public method signature. The preceding byte comparison already verifies the existing private field core is unchanged.",
+  "production_changed": false
+}

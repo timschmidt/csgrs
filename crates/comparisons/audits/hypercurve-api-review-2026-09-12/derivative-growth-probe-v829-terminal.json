@@ -1,0 +1,39 @@
+{
+  "baseline": "tangent-extraction-v825-sources.json",
+  "rlib": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypercurve-85a9105cd1c82df7.rlib",
+  "rlib_sha256": "c81b4678d629ab8356cf2c19f11b8a4429896dc706a836ba7341089be38afc0b",
+  "source_sha256": "8c66e27c25a5f01204071e2c32181515aa632460c6976862b6e4431496ec7701",
+  "processes": [
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustc",
+        "--edition=2024",
+        "--crate-name",
+        "derivative_growth_probe",
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/derivative-growth-probe-v829.rs",
+        "--extern",
+        "hypercurve=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypercurve-85a9105cd1c82df7.rlib",
+        "-L",
+        "dependency=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps",
+        "-C",
+        "opt-level=3",
+        "-o",
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/derivative-growth-probe-v829-binary"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.5645403240341693,
+      "log": "derivative-growth-probe-v829-compile.log"
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/derivative-growth-probe-v829-binary"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.11387485498562455,
+      "log": "derivative-growth-probe-v829-run.log"
+    }
+  ],
+  "all_processes_reaped": true,
+  "binary_sha256": "590c37b3f059725f45c068f54f83fce420b0074daef1a25761ef3d343f0ece96",
+  "probe_complete": true
+}

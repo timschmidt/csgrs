@@ -1,0 +1,11 @@
+{
+  "tag": "sign-filter-baseline-trace",
+  "started": "2026-09-09T17:32:39.438Z",
+  "finished": "2026-09-09T17:32:39.451Z",
+  "elapsedSeconds": 0.010610152,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "/tmp/calcium-sign-filter.TCGoGs/baseline-trace",
+  "args": [],
+  "code": 0,
+  "signal": null
+}

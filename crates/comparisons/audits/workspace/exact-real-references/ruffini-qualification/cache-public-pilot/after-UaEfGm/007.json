@@ -1,0 +1,22 @@
+{
+  "command": "cargo",
+  "args": [
+    "test",
+    "--offline",
+    "--locked",
+    "--manifest-path",
+    "source/hyperreal/Cargo.toml",
+    "--release",
+    "--lib",
+    "cache_rescale_",
+    "--",
+    "--test-threads=1"
+  ],
+  "begin": "2026-09-07T05:49:03.496Z",
+  "end": "2026-09-07T05:49:24.700Z",
+  "status": 0,
+  "signal": null,
+  "error": null,
+  "stdout": "\nrunning 5 tests\ntest computable::node::cache_rescale_tests::cache_rescale_concurrent_monotone_publication ... ok\ntest computable::node::cache_rescale_tests::cache_rescale_extreme_gaps ... ok\ntest computable::node::cache_rescale_tests::cache_rescale_limb_and_halfway_boundaries ... ok\ntest computable::node::cache_rescale_tests::cache_rescale_public_warmed_extreme ... ok\ntest computable::node::cache_rescale_tests::cache_rescale_rounding_and_misses ... ok\n\ntest result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 674 filtered out; finished in 0.02s\n\n",
+  "stderr": "   Compiling proc-macro2 v1.0.106\n   Compiling libc v0.2.186\n   Compiling quote v1.0.45\n   Compiling unicode-ident v1.0.24\n   Compiling cfg-if v1.0.4\n   Compiling zerocopy v0.8.48\n   Compiling getrandom v0.3.4\n   Compiling serde_core v1.0.228\n   Compiling crossbeam-utils v0.8.21\n   Compiling zmij v1.0.21\n   Compiling serde v1.0.228\n   Compiling getrandom v0.4.2\n   Compiling rustix v1.1.4\n   Compiling serde_json v1.0.149\n   Compiling either v1.15.0\n   Compiling num-traits v0.2.19\n   Compiling once_cell v1.21.4\n   Compiling rayon-core v1.13.0\n   Compiling gmp-mpfr-sys v1.7.1\n   Compiling bitflags v2.11.1\n   Compiling regex-syntax v0.8.10\n   Compiling linux-raw-sys v0.12.1\n   Compiling memchr v2.8.0\n   Compiling clap_lex v1.1.0\n   Compiling plotters-backend v0.3.7\n   Compiling libm v0.2.16\n   Compiling anstyle v1.0.14\n   Compiling itoa v1.0.18\n   Compiling ciborium-io v0.2.2\n   Compiling fastrand v2.4.1\n   Compiling clap_builder v4.6.0\n   Compiling plotters-svg v0.3.7\n   Compiling itertools v0.10.5\n   Compiling rug v1.30.0\n   Compiling bit-vec v0.8.0\n   Compiling fnv v1.0.7\n   Compiling same-file v1.0.6\n   Compiling crossbeam-epoch v0.9.18\n   Compiling quick-error v1.2.3\n   Compiling cast v0.3.0\n   Compiling bit-set v0.8.0\n   Compiling walkdir v2.5.0\n   Compiling syn v2.0.117\n   Compiling crossbeam-deque v0.8.6\n   Compiling az v1.3.0\n   Compiling anes v0.1.6\n   Compiling oorandom v11.1.5\n   Compiling num-integer v0.1.46\n   Compiling plotters v0.3.7\n   Compiling num-complex v0.4.6\n   Compiling unarray v0.1.4\n   Compiling rand_core v0.9.5\n   Compiling num-bigint v0.4.6\n   Compiling wait-timeout v0.2.1\n   Compiling num-iter v0.1.45\n   Compiling is-terminal v0.4.17\n   Compiling rand_xorshift v0.4.0\n   Compiling rand v0.9.4\n   Compiling rayon v1.12.0\n   Compiling criterion-plot v0.5.0\n   Compiling regex-automata v0.4.14\n   Compiling tempfile v3.27.0\n   Compiling clap v4.6.1\n   Compiling rusty-fork v0.3.1\n   Compiling num-rational v0.4.2\n   Compiling num v0.4.3\n   Compiling regex v1.12.3\n   Compiling zerocopy-derive v0.8.48\n   Compiling serde_derive v1.0.228\n   Compiling tinytemplate v1.2.1\n   Compiling half v2.7.1\n   Compiling ppv-lite86 v0.2.21\n   Compiling ciborium-ll v0.2.2\n   Compiling rand_chacha v0.9.0\n   Compiling ciborium v0.2.2\n   Compiling proptest v1.11.0\n   Compiling criterion v0.5.1\n   Compiling hyperreal v0.13.1 (/home/tim/Documents/GitHub/workspace/exact-real-references/ruffini-qualification/cache-public-pilot/source/hyperreal)\n    Finished `release` profile [optimized] target(s) in 21.16s\n     Running unittests src/lib.rs (target/release/deps/hyperreal-c3155383c66788f0)\n"
+}

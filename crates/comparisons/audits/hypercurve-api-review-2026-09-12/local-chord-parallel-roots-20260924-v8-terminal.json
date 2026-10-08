@@ -1,0 +1,121 @@
+{
+  "checks": [
+    {
+      "label": "fmt",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustfmt",
+        "--edition",
+        "2024",
+        "--check",
+        "src/bezier_offset.rs",
+        "src/bezier_region.rs",
+        "src/curve.rs",
+        "src/curve_corner_chain.rs",
+        "src/curve_region_boolean.rs",
+        "src/curve_support_intersection.rs"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 3.282168834004551,
+      "log": "local-chord-parallel-roots-20260924-v8-fmt.log"
+    },
+    {
+      "label": "clippy-1",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "clippy",
+        "--all-targets",
+        "--all-features",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 25.48430942906998,
+      "log": "local-chord-parallel-roots-20260924-v8-clippy-1.log"
+    },
+    {
+      "label": "clippy-2",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "clippy",
+        "--all-targets",
+        "--no-default-features",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 24.666877527954057,
+      "log": "local-chord-parallel-roots-20260924-v8-clippy-2.log"
+    }
+  ],
+  "cases": [
+    {
+      "label": "retained_parallel_contact_keeps_local_root_through_angular_and_point_queries",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/local-chord-parallel-roots-20260924-v8-libtest",
+        "--exact",
+        "bezier_offset::conversion_tests::retained_parallel_contact_keeps_local_root_through_angular_and_point_queries",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.27485130296554416,
+      "log": "local-chord-parallel-roots-20260924-v8-retained_parallel_contact_keeps_local_root_through_angular_and_point_queries.log"
+    },
+    {
+      "label": "recursive_chord_parallel_zero_norm_midpoint_is_not_a_component",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/local-chord-parallel-roots-20260924-v8-libtest",
+        "--exact",
+        "bezier_offset::conversion_tests::recursive_chord_parallel_zero_norm_midpoint_is_not_a_component",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.27754979708697647,
+      "log": "local-chord-parallel-roots-20260924-v8-recursive_chord_parallel_zero_norm_midpoint_is_not_a_component.log"
+    },
+    {
+      "label": "recursive_chord_parallel_local_roots_reject_conjugates_and_clip_exactly",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/local-chord-parallel-roots-20260924-v8-libtest",
+        "--exact",
+        "bezier_offset::conversion_tests::recursive_chord_parallel_local_roots_reject_conjugates_and_clip_exactly",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.3010393159929663,
+      "log": "local-chord-parallel-roots-20260924-v8-recursive_chord_parallel_local_roots_reject_conjugates_and_clip_exactly.log"
+    },
+    {
+      "label": "nonrepresented_chord_parallel_corner_fillets_without_reintersection",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/local-chord-parallel-roots-20260924-v8-libtest",
+        "--exact",
+        "bezier_region::tests::nonrepresented_chord_parallel_corner_fillets_without_reintersection",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": "timeout",
+      "elapsed_seconds": 75.27649464888964,
+      "log": "local-chord-parallel-roots-20260924-v8-nonrepresented_chord_parallel_corner_fillets_without_reintersection.log"
+    }
+  ],
+  "all_processes_reaped": true,
+  "binary_sha256": "fcff7f2899465d77661e9c3c7760de315d87735791f9d7f34d83aa987dd53e9d",
+  "all_sources_unchanged": true
+}

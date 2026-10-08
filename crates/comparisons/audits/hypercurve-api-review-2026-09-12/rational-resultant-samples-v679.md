@@ -1,0 +1,9 @@
+# Exact rational resultant sampling candidate
+
+Production remains clean at HC a5994a40 and HS 6f983ba9. Candidate V679 has two HS files plus the unchanged four-case HC degree-six fixture appended to a copy of current bezier_offset.rs; it is not promoted. Candidate formatter outer 49315 exactly reaped 0 before driver creation.
+
+The V640 stack identifies hypersolve::resultant::resultant_univariate_polynomials inside bivariate interpolation, then repeated Real/report-backed Bareiss updates. Bivariate input rationality is already certified. Reuse the existing private resultant value kernel there; normalize each rational input polynomial once to primitive integer content, run the existing flat integer determinant, and restore each signed content to the other polynomial degree. Nonrational coefficient behavior retains the existing report/predicate cascade and specialized-degree samples remain excluded. No new public type or algorithm cap.
+
+The existing scalar property now samples distinct fractional denominators and compares against the public full-report determinant. One independent interpolation regression uses F=c(t u^7-(t+2)), G=d((t-1)u^6-(t+3)), c=2/3,d=-5/7: the exact resultant is c^6 d^7 ((t-1)^7(t+2)^6-t^6(t+3)^7). Both retained-axis conventions are checked at 19 distinct rational parameters, including both degree-drop fibers. It compares signed values, not only roots or proportional coefficients. Existing nonrational, binary/tensor/image and resultant suites remain required.
+
+V680 first builds/runs the affected Hypersolve modules and three checks, then builds the four unchanged Hypercurve monotone/reversed stress cases and stops on first failure with the existing 180-second case bound. No performance fix is claimed before measurement. If the stress case still times out, preserve that evidence and evaluate whether further algebraic reduction is needed; never publish overlap-only completeness.

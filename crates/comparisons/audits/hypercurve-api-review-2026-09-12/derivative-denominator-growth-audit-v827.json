@@ -1,0 +1,15 @@
+{
+  "baseline": "tangent-extraction-v825-sources.json",
+  "source": "hypercurve/src/bezier_algebraic_image.rs",
+  "sha256": "24f797e1180c6cf63878d35054fe20b13eb5eff7767c61eab4b9cbc6268f3943",
+  "finding": "rational_derivative_images_from_power_basis retains a full denominator_power = D^(order+1), multiplies it again each iteration, and reduces only a cloned publication image modulo the selected source polynomial. Unlike the numerator recurrence, this denominator_power is never differentiated.",
+  "candidate_identity": "If P(alpha)=0, ((D^k mod P)*D) mod P and D^(k+1) mod P have the same value at alpha. Reducing the retained denominator power after each multiplication can bound its degree by the selected source degree when reduction is certified. Do not reduce numerator recurrence before differentiation.",
+  "conditions": [
+    "Keep original denominator pole admission before any rational-function cancellation.",
+    "Use existing exact reduction and its uncertainty/error fallback; do not introduce a degree cap or truncate coefficients.",
+    "Verify independent high-order derivative values and image/source identity; evaluate growth/refinement costs with a bounded same-input comparison before claiming a speedup.",
+    "Investigate whether one retained source nonzero certificate can establish every positive denominator power without creating an unchecked authoring hint."
+  ],
+  "runtime_counterexample": false,
+  "candidate_prepared": false
+}

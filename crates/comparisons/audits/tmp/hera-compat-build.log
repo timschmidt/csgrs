@@ -1,0 +1,131 @@
+Preprocessing library for HERA-0.2..
+Building library for HERA-0.2..
+
+on the commandline: warning: [-Wdeprecated-flags]
+    -fvia-C is deprecated: The -fvia-C flag does nothing; it will be removed in a future GHC release
+
+Data/Number/Ball.hs:1:12: warning: [-Wdeprecated-flags]
+    -#include is deprecated: -#include and INCLUDE pragmas are deprecated: They no longer have any effect
+  |
+1 | {-# INCLUDE <mpfr.h> #-}
+  |            ^^^^^^^^^^
+
+Data/Number/Ball.hs:2:12: warning: [-Wdeprecated-flags]
+    -#include is deprecated: -#include and INCLUDE pragmas are deprecated: They no longer have any effect
+  |
+2 | {-# INCLUDE <hsmpfr.h> #-}
+  |            ^^^^^^^^^^^^
+
+Data/Number/MPFR.hs:2:12: warning: [-Wdeprecated-flags]
+    -#include is deprecated: -#include and INCLUDE pragmas are deprecated: They no longer have any effect
+  |
+2 | {-# INCLUDE <mpfr.h> #-}
+  |            ^^^^^^^^^^
+
+Data/Number/MPFR.hs:3:12: warning: [-Wdeprecated-flags]
+    -#include is deprecated: -#include and INCLUDE pragmas are deprecated: They no longer have any effect
+  |
+3 | {-# INCLUDE <hsmpfr.h> #-}
+  |            ^^^^^^^^^^^^
+[1 of 7] Compiling Data.Number.FFIhelper ( dist/build/Data/Number/FFIhelper.hs, dist/build/Data/Number/FFIhelper.o, dist/build/Data/Number/FFIhelper.dyn_o )
+
+Data/Number/FFIhelper.hsc:12:57: warning: [-Wunused-imports]
+    The import of ‘CUInt’ from module ‘Foreign.C.Types’ is redundant
+   |
+12 | import Foreign.C.Types(CULong(..), CLong(..), CInt(..), CUInt(..), CDouble(..), CChar(..), CSize(..))
+   |                                                         ^^^^^^^^^
+
+Data/Number/FFIhelper.hsc:50:1: warning: [GHC-94817] [-Wtabs]
+    Tab character found here, and in two further locations.
+    Suggested fix: Please use spaces instead.
+   |
+50 |                 r21 <- #{peek __mpfr_struct, _mpfr_sign} p
+   | ^^^^^^^^
+[2 of 7] Compiling Data.Number.MPFR ( Data/Number/MPFR.hs, dist/build/Data/Number/MPFR.o, dist/build/Data/Number/MPFR.dyn_o )
+
+Data/Number/MPFR.hs:84:1: warning: [-Wunused-imports]
+    The import of ‘Data.Word’ is redundant
+      except perhaps to import instances from ‘Data.Word’
+    To import instances alone, use: import Data.Word()
+   |
+84 | import Data.Word(Word)
+   | ^^^^^^^^^^^^^^^^^^^^^^
+
+Data/Number/MPFR.hs:837:1: warning: [GHC-90177] [-Worphans]
+    Orphan instance: instance Eq Dyadic
+    Suggested fix:
+      Move the instance declaration to the module of the class or of the type, or
+      wrap the type with a newtype and declare the instance on the new type.
+    |
+837 | instance Eq Dyadic where
+    | ^^^^^^^^^^^^^^^^^^^^^^^^...
+
+Data/Number/MPFR.hs:840:1: warning: [GHC-90177] [-Worphans]
+    Orphan instance: instance Ord Dyadic
+    Suggested fix:
+      Move the instance declaration to the module of the class or of the type, or
+      wrap the type with a newtype and declare the instance on the new type.
+    |
+840 | instance Ord Dyadic where
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^...
+
+Data/Number/MPFR.hs:846:1: warning: [GHC-90177] [-Worphans]
+    Orphan instance: instance Show Dyadic
+    Suggested fix:
+      Move the instance declaration to the module of the class or of the type, or
+      wrap the type with a newtype and declare the instance on the new type.
+    |
+846 | instance Show Dyadic where
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^...
+
+Data/Number/MPFR.hs:850:1: warning: [GHC-90177] [-Worphans]
+    Orphan instance: instance Num Dyadic
+    Suggested fix:
+      Move the instance declaration to the module of the class or of the type, or
+      wrap the type with a newtype and declare the instance on the new type.
+    |
+850 | instance Num Dyadic where
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^...
+[3 of 7] Compiling Data.Number.Dyadic ( Data/Number/Dyadic.hs, dist/build/Data/Number/Dyadic.o, dist/build/Data/Number/Dyadic.dyn_o )
+[4 of 7] Compiling Data.Order       ( Data/Order.hs, dist/build/Data/Order.o, dist/build/Data/Order.dyn_o )
+[5 of 7] Compiling Data.Number.Ball ( Data/Number/Ball.hs, dist/build/Data/Number/Ball.o, dist/build/Data/Number/Ball.dyn_o )
+
+Data/Number/Ball.hs:20:1: warning: [-Wunused-imports]
+    The import of ‘Data.Word’ is redundant
+      except perhaps to import instances from ‘Data.Word’
+    To import instances alone, use: import Data.Word()
+   |
+20 | import Data.Word(Word)
+   | ^^^^^^^^^^^^^^^^^^^^^^
+[6 of 7] Compiling Data.Number.DyadicInterval ( Data/Number/DyadicInterval.hs, dist/build/Data/Number/DyadicInterval.o, dist/build/Data/Number/DyadicInterval.dyn_o )
+
+Data/Number/DyadicInterval.hs:19:1: warning: [-Wunused-imports]
+    The import of ‘Data.Word’ is redundant
+      except perhaps to import instances from ‘Data.Word’
+    To import instances alone, use: import Data.Word()
+   |
+19 | import Data.Word(Word)
+   | ^^^^^^^^^^^^^^^^^^^^^^
+
+Data/Number/DyadicInterval.hs:21:1: warning: [-Wunused-imports]
+    The import of ‘Control.Monad’ is redundant
+      except perhaps to import instances from ‘Control.Monad’
+    To import instances alone, use: import Control.Monad()
+   |
+21 | import Control.Monad
+   | ^^^^^^^^^^^^^^^^^^^^
+[7 of 7] Compiling Data.Number.Real ( Data/Number/Real.hs, dist/build/Data/Number/Real.o, dist/build/Data/Number/Real.dyn_o )
+
+Data/Number/Real.hs:24:1: warning: [-Wunused-imports]
+    The import of ‘Data.Word’ is redundant
+      except perhaps to import instances from ‘Data.Word’
+    To import instances alone, use: import Data.Word()
+   |
+24 | import Data.Word(Word)
+   | ^^^^^^^^^^^^^^^^^^^^^^
+
+on the commandline: warning: [-Wdeprecated-flags]
+    -fvia-C is deprecated: The -fvia-C flag does nothing; it will be removed in a future GHC release
+
+on the commandline: warning: [-Wdeprecated-flags]
+    -fvia-C is deprecated: The -fvia-C flag does nothing; it will be removed in a future GHC release

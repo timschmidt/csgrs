@@ -1,0 +1,98 @@
+--- a/src/bezier_region.rs
++++ b/src/bezier_region.rs
+@@ -12415,21 +12415,10 @@
+                 ));
+             }
+         };
+-        // Selected-circle chains on one loop already carry the corner solver's
+-        // certified contacts. Re-arranging them repeats that algebraic probe.
+-        // Every other edit can meet another boundary or split one loop, so
+-        // publish the regularized set.
+-        let selected_circle_chain = edited_loop
+-            .fragments()
+-            .iter()
+-            .any(|fragment| matches!(fragment, BezierSplitFragment2::AlgebraicCuspSemicircle(_)));
+         let mut loops = self.data.boundary_loops.clone();
+         loops[loop_index] = edited_loop;
+         let edited = Self::try_new_with_loop_topology(loops, roles, fill_rules, interior_sides)
+             .map_err(|cause| curve_region_edit_error(operation, cause))?;
+-        if self.data.boundary_loops.len() == 1 && selected_circle_chain {
+-            return Ok(edited);
+-        }
+         edited
+             .regularized_region_raw(policy)
+             .map_err(|error| error.with_operation(operation))
+@@ -32486,3 +32475,73 @@
+         );
+     }
+ }
++
++#[cfg(test)]
++mod single_loop_corner_publication_tests {
++    use super::*;
++
++    #[test]
++    fn selected_circle_corner_candidates_publish_normalized_single_loops() {
++        let p = Point2::from_values;
++        let path = CurvePath2::try_new(vec![
++            LineSeg2::try_new(p(2, 0), p(4, 0)).unwrap().into(),
++            crate::QuadraticBezier2::new(p(4, 0), p(3, 4), p(2, 0)).into(),
++        ])
++        .unwrap();
++        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
++            let source =
++                CurveRegion2::try_from_boundary_paths(std::slice::from_ref(&path), &policy)
++                    .unwrap()
++                    .into_value();
++            assert_eq!(source.len(), 1);
++            let Classification::Decided(paths) =
++                source.boundary_paths(&policy).unwrap().into_value()
++            else {
++                panic!("the cap has an exact connected boundary");
++            };
++            let corner = paths[0]
++                .curves()
++                .iter()
++                .position(|curve| curve.start().coordinates() == Some(&p(4, 0)))
++                .unwrap();
++            let outcome = source
++                .fillet_loop_vertex_by_radius(
++                    0,
++                    corner,
++                    (Real::one() / Real::from(2)).unwrap(),
++                    CurveCornerMode2::TrimOnly,
++                    &policy,
++                )
++                .unwrap();
++            assert_eq!(outcome.certainty, crate::CurveCertainty::Certified);
++            let crate::CurveCornerSolutions2::Multiple(candidates) = outcome.value else {
++                panic!("both finite cap contacts must survive");
++            };
++            assert_eq!(candidates.len(), 2);
++            for candidate in candidates {
++                assert!(
++                    candidate
++                        .boundary_loops()
++                        .iter()
++                        .flat_map(|boundary| boundary.fragments())
++                        .any(|fragment| matches!(
++                            fragment,
++                            BezierSplitFragment2::AlgebraicCuspSemicircle(_)
++                        ))
++                );
++                assert!(
++                    candidate.has_regularized_filled_left_topology(&policy),
++                    "corner contact connectivity does not certify a simple or regularized loop"
++                );
++                assert_eq!(
++                    candidate.regularized_region_raw(&policy).unwrap(),
++                    candidate
++                );
++                assert_eq!(
++                    candidate.classify_point_raw(&p(10, 10), &policy).unwrap(),
++                    Classification::Decided(crate::RegionPointLocation::Outside)
++                );
++            }
++        }
++    }
++}

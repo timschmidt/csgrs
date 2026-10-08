@@ -1,0 +1,26 @@
+==11== Memcheck, a memory error detector
+==11== Copyright (C) 2002-2026, and GNU GPL'd, by Julian Seward et al.
+==11== Using Valgrind-3.27.1 and LibVEX; rerun with -h for copyright info
+==11== Command: .audit-numbers.rjcbha/numbers-oracle-before hyper exact-real-references/numbers-qualification/elementary-O2.log
+==11== 
+acos	checks=112	failures=0
+acosh	checks=64	failures=0
+asin	checks=112	failures=0
+asinh	checks=80	failures=0
+atan	checks=208	failures=0
+atanh	checks=80	failures=0
+cos	checks=112	failures=0
+exp	checks=112	failures=0
+log	checks=112	failures=0
+sin	checks=112	failures=0
+sqrt	checks=80	failures=0
+TOTAL hyper	checks=1184	failures=0
+==11== 
+==11== HEAP SUMMARY:
+==11==     in use at exit: 12,968 bytes in 110 blocks
+==11==   total heap usage: 65,307 allocs, 65,197 frees, 12,645,116 bytes allocated
+==11== 
+==11== For a detailed leak analysis, rerun with: --leak-check=full
+==11== 
+==11== For lists of detected and suppressed errors, rerun with: -s
+==11== ERROR SUMMARY: 0 errors from 0 contexts (suppressed: 0 from 0)

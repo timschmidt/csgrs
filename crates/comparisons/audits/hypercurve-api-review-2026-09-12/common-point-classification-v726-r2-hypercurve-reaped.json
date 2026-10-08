@@ -1,0 +1,6 @@
+{
+  "outer_session": 26073,
+  "outer_exit_code": 1,
+  "terminal": "common-point-classification-v726-r2-hypercurve-terminal.json",
+  "cause": "New policy fixture used tuple syntax for a struct variant; corrected."
+}

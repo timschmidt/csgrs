@@ -1,0 +1,15 @@
+{
+  "cases": [
+    {
+      "name": "bezier_region::tests::major_retained_rational_arc_and_general_chord_share_the_fillet_kernel",
+      "returncode": 101,
+      "passed": false,
+      "limit_seconds": 60,
+      "elapsed_seconds": 2.909830020973459,
+      "log": "corner-publication-decision-sites-20260923-trace8-case-0.log"
+    }
+  ],
+  "binary_sha256": "61c83a3e1f99783d281828e2597097649bb140e22d5a7ac743b57a359911a41b",
+  "all_sources_unchanged": true,
+  "all_processes_reaped": true
+}

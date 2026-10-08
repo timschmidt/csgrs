@@ -1,0 +1,10 @@
+Retain selected-field scalars through tangent normalization
+
+Normalize curvature and both third-order witnesses in the selected source
+field when independent scalar roots are unavailable. Retain one exact scalar
+definition, expose explicit represented/selected views, and migrate callers
+directly. Replay exact constant payloads strictly before source arithmetic.
+
+Validation: 346 Hypercurve and 63 Hypersolve release cases, nine caller/lint/
+fuzz/documentation checks, and the unchanged public curvature-order probe.
+Both probe policies now decide while all four source tangents stay unprojected.

@@ -1,0 +1,17 @@
+Share exact derivative images across polynomial and rational Beziers
+
+Native quadratic and cubic derivatives now use the existing rational-function
+image carrier with a unit denominator and selected-source polynomial reduction.
+This retains arbitrary exact coefficients and repairs eight independently
+reproduced derivative/endpoint image failures.
+
+Remove the redundant polynomial coordinate/tangent types and endpoint tangent
+enum, update every active caller directly, and store optional shared derivative
+handles without extra boxes. Preserve derivative-order demand, rational quotient
+recurrence, and parameter-cache ownership rules.
+
+Validation: 321 release cases across 12 pinned executables, the unchanged public
+counterexample probe, both Hypercurve Clippy configurations, formatting, four
+fuzz-target builds, documentation, Hyperbrep Clippy, and csgrs all-target checks.
+The new regression independently checks quadratic/cubic derivatives through
+third order for sqrt(2) and pi coefficients under both policies.

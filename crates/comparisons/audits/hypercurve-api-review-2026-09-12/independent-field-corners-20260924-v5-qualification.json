@@ -1,0 +1,235 @@
+{
+  "parent": "c13778eb15662d3b12093a54e518e9fb137c39d1",
+  "files": {
+    "src/bezier_offset.rs": "894e6c47e7bdc7d96cf695b6089f292b629543bff9ebeb186728ad5ebd136039",
+    "src/bezier_region.rs": "4ad84e3b01c967d9d9ed3d8b097ffd76091376aeb7b2f1a3b07216ebd347c6f0",
+    "src/curve.rs": "5c9d342ffd12f5b194e122aff057ce32f2861c904c1a6636040be771d5157ec9",
+    "src/curve_region_boolean.rs": "f3c1e255a6857e49a34677ebe44f3ef5e7a2403fd26d58f950e146d52559a910"
+  },
+  "repositories": [
+    {
+      "name": "ExactCalculator",
+      "head": "7265aa3a922a7e7c0389dae4b26cca562aa777a6"
+    },
+    {
+      "name": "NURBS_BREP_kernel",
+      "head": "1aef37b12a92c993c2046f7886593bb0a555c414"
+    },
+    {
+      "name": "alumina-firmware",
+      "head": "bdee397d0b80841f16bf17e7bcd029b4feb2c212"
+    },
+    {
+      "name": "alumina-interface",
+      "head": "59a18251cdfe2312e40b194e857d85cd59b6087f"
+    },
+    {
+      "name": "citizen-builder",
+      "head": "c4230238e28fd88fc8156fceb2c43698e67c27ca"
+    },
+    {
+      "name": "crcalc",
+      "head": "4f398d699c9d498deb45520ea7ebb020627bc640"
+    },
+    {
+      "name": "csgrs",
+      "head": "d029e51b5d7324f0df785c5cd3cf2f6c7a3a2cca"
+    },
+    {
+      "name": "csgrs-ffi",
+      "head": "6057435ce4c0b37bac99aec29922b90e6652c575"
+    },
+    {
+      "name": "exactcore-hyper-comparison",
+      "head": "74b90b328f720997d38da80af5620f167b3b0619"
+    },
+    {
+      "name": "hyperbrep",
+      "head": "7874790863d210646338182e548d7eef1aa05c7c"
+    },
+    {
+      "name": "hypercircuit",
+      "head": "ad421497ce6e88fe936818ec198c8a1b779776c7"
+    },
+    {
+      "name": "hypercurve",
+      "head": "c13778eb15662d3b12093a54e518e9fb137c39d1"
+    },
+    {
+      "name": "hyperdrc",
+      "head": "ce49bba5d16f78ae8559a0eabe3e4478b72fd4bf"
+    },
+    {
+      "name": "hyperevolution",
+      "head": "99645e3cefb7eea3af86abc15db68f7fcb31ca95"
+    },
+    {
+      "name": "hypergraphics",
+      "head": "75219dede7a2387ab30c84664b1293ec71d736d2"
+    },
+    {
+      "name": "hyperlattice",
+      "head": "53427ce89f8c82c016e69a04e035787e2753adc8"
+    },
+    {
+      "name": "hyperlimit",
+      "head": "0b3226320a7ad6756c923d0d12cd52eb701f36ee"
+    },
+    {
+      "name": "hypermesh",
+      "head": "d9db5c45a0cecc2307aa66a6f7f1b0396350e4ee"
+    },
+    {
+      "name": "hyperpack",
+      "head": "34857861561d643d7578753b8f8314d0fbca2c5b"
+    },
+    {
+      "name": "hyperparts",
+      "head": "d8626e9d36256afc4a8eb0380ae94c9ed5619107"
+    },
+    {
+      "name": "hyperpath",
+      "head": "cfe50de3e370ea75a49b916eb70a7b19d31a58fa"
+    },
+    {
+      "name": "hyperphysics",
+      "head": "dcbc7cf3489a1299de16a946fd7f5e5658b6f15f"
+    },
+    {
+      "name": "hyperreal",
+      "head": "a1a8637b59bf036d9d68dbd34a0279df4626ab49"
+    },
+    {
+      "name": "hypersdf",
+      "head": "b37825900457420cb64da385b8525acab33e31c5"
+    },
+    {
+      "name": "hypersolve",
+      "head": "e6d6cf56f7c8d27aaa75699bf095feeadcca6aa0"
+    },
+    {
+      "name": "hypertri",
+      "head": "6a2092c066964f3b7528299a72ef0ed1af4b1ff0"
+    },
+    {
+      "name": "hypervoxel",
+      "head": "0486b1465a249a04973520a4138a39395ded2f23"
+    },
+    {
+      "name": "openscad-rs",
+      "head": "f21b39486a6b35403ee8af9e7fba7cb62a045a5a"
+    },
+    {
+      "name": "synaps-cad",
+      "head": "da8da78636e573c04f8a5c4cd8cc900162b781ba"
+    },
+    {
+      "name": "videos",
+      "head": "4209b983cc0d937981f22a6fa7df384303fcc8bd"
+    }
+  ],
+  "manifest": "independent-field-corners-20260924-v5-sources.json",
+  "all_2044_inputs_match": true,
+  "all_owned_processes_reaped": true,
+  "focused": "independent-field-corners-20260924-v5-terminal.json",
+  "full": "independent-field-corners-20260924-v5-full-resumed-terminal.json",
+  "attempted": 1361,
+  "passed": 1346,
+  "ignored": 6,
+  "unchanged_nonpasses": [
+    {
+      "target": "hypercurve",
+      "name": "bezier_offset::conversion_tests::selected_parallel_normal_circle_intersects_genuinely_analytic_parallel_in_one_fiber",
+      "returncode": "timeout",
+      "passed": false,
+      "ignored": false,
+      "elapsed_seconds": 75.04914312495384,
+      "limit_seconds": 75,
+      "log": "independent-field-corners-20260924-v5-full-resumed-case-0550.log"
+    },
+    {
+      "target": "hypercurve",
+      "name": "bezier_region::tests::nonlinear_algebraic_endpoint_fillet_uses_complete_incident_domain",
+      "returncode": "timeout",
+      "passed": false,
+      "ignored": false,
+      "elapsed_seconds": 75.00328727101441,
+      "limit_seconds": 75,
+      "log": "independent-field-corners-20260924-v5-full-resumed-case-0697.log"
+    },
+    {
+      "target": "hypercurve",
+      "name": "bezier_region::tests::one_fragment_materialized_loop_chamfers_to_one_middle_interval",
+      "returncode": "timeout",
+      "passed": false,
+      "ignored": false,
+      "elapsed_seconds": 75.03194388502743,
+      "limit_seconds": 75,
+      "log": "independent-field-corners-20260924-v5-full-resumed-case-0707.log"
+    },
+    {
+      "target": "hypercurve",
+      "name": "bezier_region::tests::one_fragment_materialized_loop_extends_algebraic_chamfer_cuts_once",
+      "returncode": "timeout",
+      "passed": false,
+      "ignored": false,
+      "elapsed_seconds": 75.03909869492054,
+      "limit_seconds": 75,
+      "log": "independent-field-corners-20260924-v5-full-resumed-case-0708.log"
+    },
+    {
+      "target": "hypercurve",
+      "name": "bezier_region::tests::one_fragment_nonzero_parallel_loop_extends_chamfer_cuts_on_one_finite_envelope",
+      "returncode": "timeout",
+      "passed": false,
+      "ignored": false,
+      "elapsed_seconds": 75.02286402904429,
+      "limit_seconds": 75,
+      "log": "independent-field-corners-20260924-v5-full-resumed-case-0709.log"
+    },
+    {
+      "target": "hypercurve",
+      "name": "bezier_region::tests::one_fragment_selected_loop_chamfers_from_one_interval",
+      "returncode": "timeout",
+      "passed": false,
+      "ignored": false,
+      "elapsed_seconds": 75.0381129620364,
+      "limit_seconds": 75,
+      "log": "independent-field-corners-20260924-v5-full-resumed-case-0712.log"
+    },
+    {
+      "target": "hypercurve",
+      "name": "bezier_region::tests::one_fragment_selected_loop_extends_chamfer_cuts_on_its_analytic_carrier",
+      "returncode": "timeout",
+      "passed": false,
+      "ignored": false,
+      "elapsed_seconds": 75.03493803006131,
+      "limit_seconds": 75,
+      "log": "independent-field-corners-20260924-v5-full-resumed-case-0713.log"
+    },
+    {
+      "target": "hypercurve",
+      "name": "bezier_region::tests::pair_native_boolean_algebraic_chord_corner_publishes_a_third_generation_fillet",
+      "returncode": "timeout",
+      "passed": false,
+      "ignored": false,
+      "elapsed_seconds": 75.00297564303037,
+      "limit_seconds": 75,
+      "log": "independent-field-corners-20260924-v5-full-resumed-case-0718.log"
+    },
+    {
+      "target": "hypercurve",
+      "name": "bezier_region::tests::retained_analytic_multifragment_corner_extends_chamfer_and_fillet",
+      "returncode": 101,
+      "passed": false,
+      "ignored": false,
+      "elapsed_seconds": 0.009358227020129561,
+      "limit_seconds": 75,
+      "log": "independent-field-corners-20260924-v5-full-resumed-case-0743.log"
+    }
+  ],
+  "newly_passing": [],
+  "resolved_regression": "bezier_region::tests::independent_field_corner_edits_preserve_normalized_sets",
+  "public_integration_passes": 121,
+  "full_goal_complete": false
+}

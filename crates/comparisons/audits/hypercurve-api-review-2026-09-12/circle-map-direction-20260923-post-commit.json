@@ -1,0 +1,9 @@
+{
+  "commit": "d00fa186b720f4224e512d9185bc859c624b4608",
+  "files": {
+    "src/bezier_offset.rs": "cbdb8cfc30d03362c3e3b723a57bad3bdd322ec3e7b019f959eb4866ca92e871"
+  },
+  "qualification": "circle-map-direction-20260923-qualification.json",
+  "only_unqualified_region_dirty": true,
+  "all_owned_processes_reaped": true
+}

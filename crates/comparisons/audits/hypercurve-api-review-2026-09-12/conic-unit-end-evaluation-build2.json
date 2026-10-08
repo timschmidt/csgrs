@@ -1,0 +1,16 @@
+{
+  "command": [
+    "rustc",
+    "--edition=2024",
+    "-O",
+    "conic-unit-end-evaluation-diagnostic.rs",
+    "--extern",
+    "hypercurve=/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/libhypercurve-2c7ff6f3fbe07653.rlib",
+    "-L",
+    "dependency=/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps",
+    "-o",
+    "conic-unit-end-evaluation-build2"
+  ],
+  "library_sha256": "a2cc79078bf5e304d4fa23424f8b5356def74b2eae6ce9a0d424ce4bd33852a2",
+  "returncode": 0
+}

@@ -1,0 +1,365 @@
+{
+  "checkpoint": 65,
+  "inventorySha256": "9fc47b900bf70aec47e487c60c7a43c5e708ba6fb682ebe4a2a12599b456c3aa",
+  "previousSha256": "dadd0345a27592330d364aa82c08b4cdf7e5053b452095bb5104ae173b744296",
+  "files": [
+    {
+      "path": "bind-complex-product-v2.mjs",
+      "sha256": "ce92ee4993d9704a372c252e7f992da8d296f0ce7a9e65cd1475518803af97f3",
+      "readRanges": [
+        [
+          1,
+          49
+        ]
+      ],
+      "lines": 49,
+      "matchedLines": [
+        32,
+        33,
+        44
+      ],
+      "additionalEstimator": false,
+      "correctedAt": 63,
+      "note": "Calls the v2 checker; classifies existing selected/bypass intervals; historical limits prose."
+    },
+    {
+      "path": "bind-e-qualified.initial.mjs",
+      "sha256": "7f6ca08fa652b89da5b4d54baa75da731f2e439743498dd872653b5e4d653a5c",
+      "readRanges": [
+        [
+          1,
+          55
+        ]
+      ],
+      "lines": 55,
+      "matchedLines": [
+        51
+      ],
+      "additionalEstimator": false,
+      "correctedAt": 61,
+      "note": "Calls checkEQualified; bootstrap match is historical comparison/limits prose."
+    },
+    {
+      "path": "bind-e-qualified.mjs",
+      "sha256": "a63c29d9d93ccbb9fc4dbd3b9f5ff5f7277d4510b99f82108b4fa640aba0378d",
+      "readRanges": [
+        [
+          1,
+          58
+        ]
+      ],
+      "lines": 58,
+      "matchedLines": [
+        54
+      ],
+      "additionalEstimator": false,
+      "correctedAt": 61,
+      "note": "Calls checkEQualified; bootstrap match is historical comparison/limits prose."
+    },
+    {
+      "path": "bind-rank-costs.mjs",
+      "sha256": "b1caeaa5b2bf79d6a563c167940e6f8b47f5545dbf678a5fbc94dc10dd1d9da6",
+      "readRanges": [
+        [
+          1,
+          46
+        ]
+      ],
+      "lines": 46,
+      "matchedLines": [
+        12
+      ],
+      "additionalEstimator": false,
+      "correctedAt": 63,
+      "note": "Binds existing rank data; bootstrap match is limits prose, not an estimator."
+    },
+    {
+      "path": "bind-sign-filter-mask.mjs",
+      "sha256": "5b589270f48980bd3dca33b782b139d5d1b49ee1227d65b4b6f01d19bdac0dcd",
+      "readRanges": [
+        [
+          1,
+          37
+        ]
+      ],
+      "lines": 37,
+      "matchedLines": [
+        30
+      ],
+      "additionalEstimator": false,
+      "correctedAt": 63,
+      "note": "Calls checkSignFilterMask; bootstrap match is historical limits prose."
+    },
+    {
+      "path": "bind-sign-filter.mjs",
+      "sha256": "4e9cf908027be2e83ff284c20bec3ef4f4dc752cdc88f25d031985a17ae92260",
+      "readRanges": [
+        [
+          1,
+          36
+        ]
+      ],
+      "lines": 36,
+      "matchedLines": [
+        30
+      ],
+      "additionalEstimator": false,
+      "correctedAt": 63,
+      "note": "Calls checkSignFilter; bootstrap match is historical limits prose."
+    },
+    {
+      "path": "check-point-cold.mjs",
+      "sha256": "a8dd516600d13eb6dcd41e5ad168eded3005e05dce37631040e772897fc2af37",
+      "readRanges": [
+        [
+          1,
+          135
+        ]
+      ],
+      "lines": 135,
+      "matchedLines": [
+        131
+      ],
+      "additionalEstimator": false,
+      "correctedAt": null,
+      "note": "Seed refers to constructor/refinement cache state; full-record semantic checks, no timing estimator."
+    },
+    {
+      "path": "check-point-demand-costs.mjs",
+      "sha256": "64be1ba3ae9c2631fb0462443d19eab5df9388b9048b917759fd200f9c58f2e6",
+      "readRanges": [
+        [
+          1,
+          102
+        ]
+      ],
+      "lines": 102,
+      "matchedLines": [
+        77,
+        79
+      ],
+      "additionalEstimator": false,
+      "correctedAt": 60,
+      "note": "Calls point-demand-cost-protocol summarizer and classifies existing intervals."
+    },
+    {
+      "path": "check-point-history.mjs",
+      "sha256": "7e7842b114f00a2d3be110b03541b0c68ac61da622e014a5f48bb20af952622f",
+      "readRanges": [
+        [
+          1,
+          118
+        ]
+      ],
+      "lines": 118,
+      "matchedLines": [
+        96,
+        108
+      ],
+      "additionalEstimator": false,
+      "correctedAt": 60,
+      "note": "Calls point-history-statistics summarizer and classifies existing intervals."
+    },
+    {
+      "path": "check-point-image-costs.mjs",
+      "sha256": "07dc13901c3208483b99d26b9b58f8ee675f6468f812f5954a917145ea2df02d",
+      "readRanges": [
+        [
+          1,
+          59
+        ]
+      ],
+      "lines": 59,
+      "matchedLines": [
+        37,
+        52,
+        53,
+        57
+      ],
+      "additionalEstimator": false,
+      "correctedAt": 60,
+      "note": "Calls point-image-cost-statistics summarizer and classifies existing intervals."
+    },
+    {
+      "path": "check-point-wasm-costs.mjs",
+      "sha256": "0e73d745e6d93e2a4f7bdc566ad62cff6ea3f30a8b2ad9f284340cc72065e16c",
+      "readRanges": [
+        [
+          1,
+          83
+        ]
+      ],
+      "lines": 83,
+      "matchedLines": [
+        68,
+        70,
+        73
+      ],
+      "additionalEstimator": false,
+      "correctedAt": 60,
+      "note": "Calls point-wasm-protocol re-export of point-demand-cost-protocol summarizer; classifies existing intervals."
+    },
+    {
+      "path": "prototype-statistics-v63-inventory.mjs",
+      "sha256": "56a1740f34253cd1834697507252f43d5e6e9dfac4bc340a3646f673c4e8894b",
+      "readRanges": [
+        [
+          1,
+          36
+        ]
+      ],
+      "lines": 36,
+      "matchedLines": [
+        6
+      ],
+      "additionalEstimator": false,
+      "correctedAt": null,
+      "note": "Matches its own scanning patterns; hashes and text inventory, no sampling."
+    },
+    {
+      "path": "run-point-demand-costs.mjs",
+      "sha256": "49d5e7bcb6eb3e2ff20d92ee02ba2bb2483ab6c58a4b1845fff5dbb230e7042c",
+      "readRanges": [
+        [
+          1,
+          42
+        ]
+      ],
+      "lines": 42,
+      "matchedLines": [
+        40
+      ],
+      "additionalEstimator": false,
+      "correctedAt": 60,
+      "note": "Collects measurements and delegates statistics to point-demand-cost-protocol; limits prose."
+    },
+    {
+      "path": "run-point-history-costs.mjs",
+      "sha256": "e3244ce95f090e75ebb409ed1a74f8659944d0525b3dc45ce2cef244de1fc32b",
+      "readRanges": [
+        [
+          1,
+          41
+        ]
+      ],
+      "lines": 41,
+      "matchedLines": [
+        39
+      ],
+      "additionalEstimator": false,
+      "correctedAt": 60,
+      "note": "Collects measurements and delegates statistics to point-history-statistics; limits prose."
+    },
+    {
+      "path": "run-point-image-costs.mjs",
+      "sha256": "12bab02b5371caa4687baecc8985f7caf135389db9c2e2151e57d9f87e624de5",
+      "readRanges": [
+        [
+          1,
+          52
+        ]
+      ],
+      "lines": 52,
+      "matchedLines": [
+        50
+      ],
+      "additionalEstimator": false,
+      "correctedAt": 60,
+      "note": "Collects measurements and delegates statistics to point-image-cost-statistics; limits prose."
+    },
+    {
+      "path": "run-point-wasm-costs.mjs",
+      "sha256": "b16b74795a015a4e26292cf8966300bc20a5930c377219c5cb2ab5ffa762e449",
+      "readRanges": [
+        [
+          1,
+          31
+        ]
+      ],
+      "lines": 31,
+      "matchedLines": [
+        29
+      ],
+      "additionalEstimator": false,
+      "correctedAt": 60,
+      "note": "Collects measurements and uses point-wasm-protocol re-exported demand summarizer; limits prose."
+    },
+    {
+      "path": "snapshot-v43-verify-complex-product-v2.mjs",
+      "sha256": "99d43badc4c17a20d0c9dea4df615eed322764909bbf5df8a55775de842301eb",
+      "readRanges": [
+        [
+          1,
+          46
+        ]
+      ],
+      "lines": 46,
+      "matchedLines": [
+        34,
+        35
+      ],
+      "additionalEstimator": false,
+      "correctedAt": 63,
+      "note": "Snapshot-bound checker call and existing-interval endpoint classifier, not a new sampler."
+    },
+    {
+      "path": "verify-charpoly-domain.mjs",
+      "sha256": "09748fcff9c3d0174d9c8e0875d2e4908a5ce64851887cbec9b8572e1ed55605",
+      "readRanges": [
+        [
+          1,
+          172
+        ]
+      ],
+      "lines": 172,
+      "matchedLines": [
+        78,
+        81,
+        82
+      ],
+      "additionalEstimator": false,
+      "correctedAt": null,
+      "note": "Seed is a deterministic fixture dimension (0,1), reconstructing correctness records."
+    },
+    {
+      "path": "verify-complex-product-v2.mjs",
+      "sha256": "e0b58c9b77dfb8e933136b7aa84becdf75aa281add679e869f5b96828a7035bd",
+      "readRanges": [
+        [
+          1,
+          46
+        ]
+      ],
+      "lines": 46,
+      "matchedLines": [
+        34,
+        35
+      ],
+      "additionalEstimator": false,
+      "correctedAt": 63,
+      "note": "Calls checkComplexProduct and classifies existing selected/bypass intervals."
+    },
+    {
+      "path": "verify-matrix-solves.mjs",
+      "sha256": "a64d14bc6542fb6f5867c34186ca25d6107e5ac57873e00e9359227e1078fef1",
+      "readRanges": [
+        [
+          1,
+          127
+        ]
+      ],
+      "lines": 127,
+      "matchedLines": [
+        54,
+        56,
+        57
+      ],
+      "additionalEstimator": false,
+      "correctedAt": null,
+      "note": "Seed is a deterministic fixture dimension (0,1,2), reconstructing correctness records."
+    }
+  ],
+  "readLines": 1371,
+  "additionalEstimators": 0,
+  "scope": "All 20 additional text matches in the frozen 370-file inventory. Together with 45 known matches mapped in 60–64 this resolves 65 matched files. The 305 nonmatches were not thereby semantically reviewed; subdirectories and the whole workspace are not covered. Historical bound scripts remain unchanged; their old outputs are superseded only by scoped 60–64 corrections. No donor read credit."
+}

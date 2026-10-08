@@ -1,0 +1,47 @@
+{
+  "status": "committed; original goal remains active",
+  "goal_status": "active",
+  "base_commit": "a3c843cbfa3ded3acd388dbd81371055fc40a633",
+  "cause": "One exact overlap endpoint is replayed through both curve charts. Structural inequality of equivalent parameter expressions admitted duplicate contacts; exact shared-component replay then treated one interval as unresolved multiplicity.",
+  "change": "Deduplicate parameter pairs through existing same_value proofs under STRICT. Uncertain identities remain separate. No new scalar representation, cache, compatibility API, or rational-payload requirement.",
+  "regressions": {
+    "curve_overlap_cases": 16,
+    "curve_overlap_coverage": "Independently authored nested-radical quadratic tails, exact parameter ranges and overlap orientation, both axes, both traversal directions, both operand orders, both policies.",
+    "independent_region_probe_cases": 8,
+    "region_oracle": "Q(t)=(t^2,2t); s=sqrt(sqrt(5)-2). Independently authored tail controls are (s^2,2s),(s,1+s),(1,2); the second parabola is its x reflection. Each generated/readmitted chamfer must match exact region classification and have certified empty XOR with the independent region.",
+    "fixed_promotion_tests": [
+      "unified_region_chamfer_retains_algebraic_bezier_cut",
+      "unified_region_chamfer_joins_two_algebraic_bezier_cuts"
+    ],
+    "probe": "parabola-chamfer-independent-region-dedup1.json"
+  },
+  "qualification": {
+    "results": "parabola-overlap-dedup-full-results.json",
+    "targets": 49,
+    "passed": 2155,
+    "hypercurve_passed": 1923,
+    "hyperbrep_passed": 232,
+    "failed": 9,
+    "remaining_failures": [
+      "approximate_512_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions",
+      "arc_parabola_fillet_recovers_exact_complement_contacts",
+      "axis_aligned_algebraic_chords_reenter_exact_region_offsets",
+      "line_parabola_fillet_extends_the_regular_incident_cell_exactly",
+      "nonconvex_algebraic_chord_expansion_is_exact_and_local_collapse_is_explicit",
+      "non_ph_bezier_pair_projective_fillet_retains_algebraic_extensions",
+      "strict_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions",
+      "unified_mixed_line_arc_erosion_splits_after_a_curved_neck_collapse",
+      "unified_region_non_miter_erosions_split_after_neck_collapse"
+    ],
+    "ignored": 9,
+    "previously_unqualified_expensive_cases": 8,
+    "new_failures": [],
+    "full_suite_passing": false,
+    "all_target_checks": true,
+    "source_manifest": "parabola-overlap-dedup-source-before-tests.json",
+    "immutable_sources": true,
+    "formatting_and_whitespace_checks": true
+  },
+  "next": "Address general curve/path intersection location and carrier closure documented in general-curve-intersection-closure-followup.json; continue the remaining promotion, expensive-test and broader review work.",
+  "commit": "d4eda85eb95ee167efaad463ace09b93e589b1a0"
+}

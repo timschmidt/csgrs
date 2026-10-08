@@ -1,0 +1,26 @@
+{
+  "returncode": 0,
+  "elapsed_seconds": 3.568846198992105,
+  "normal_library_sha256": "1408b5d764fd133df5fa4e8ddf9e8fe723f5f9a783b9b017a1e6e1c1dcdfe153",
+  "log": "circle-common-dispatch-matrix.log",
+  "source": "circle-common-dispatch-matrix.rs",
+  "command": [
+    "rustc",
+    "--edition=2024",
+    "-O",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/circle-common-dispatch-matrix.rs",
+    "--extern",
+    "hypercurve=/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/libhypercurve-2c7ff6f3fbe07653.rlib",
+    "-L",
+    "dependency=/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps",
+    "-o",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/circle-common-dispatch-matrix"
+  ],
+  "counts": {
+    "cases": 48,
+    "pair_queries": 912,
+    "point_replays": 1536,
+    "topology_queries": 96,
+    "repeated_intersections": 384
+  }
+}

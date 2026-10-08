@@ -1,0 +1,40 @@
+   Compiling hypersolve v0.3.1 (/tmp/aern-quadratic-fix.fsxgfP/hypersolve-candidate)
+    Finished `bench` profile [optimized] target(s) in 18.17s
+     Running benches/certification.rs (target/release/deps/certification-9bb4a0e93fad48b8)
+Testing quadratic_extraction/uni_square
+Success
+Testing quadratic_extraction/uni_factored
+Success
+Testing quadratic_extraction/uni_wide
+Success
+Testing quadratic_extraction/uni_pi
+Success
+Testing quadratic_extraction/uni_cancellation
+Success
+Testing quadratic_extraction/uni_scaled_cancellation
+Success
+Testing quadratic_extraction/uni_bad_degree
+Success
+Testing quadratic_extraction/multi_square
+Success
+Testing quadratic_extraction/multi_cross
+Success
+Testing quadratic_extraction/multi_dense8
+Success
+Testing quadratic_extraction/multi_dense32
+Success
+Testing quadratic_extraction/multi_zero_terms
+Success
+Testing quadratic_extraction/multi_pi
+Success
+Testing quadratic_extraction/multi_bad_degree
+Success
+Testing quadratic_extraction/multi_bad_monomial
+Success
+Testing quadratic_extraction/multi_cancellation
+Success
+Testing quadratic_extraction/analyze_uni16
+Success
+Testing quadratic_extraction/analyze_multi16
+Success
+

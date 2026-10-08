@@ -1,0 +1,13 @@
+{
+  "command": "size",
+  "args": [
+    "/home/tim/Documents/GitHub/workspace/exact-real-references/ruffini-qualification/cache-public-pilot/after-UaEfGm/release"
+  ],
+  "begin": "2026-09-07T05:49:24.722Z",
+  "end": "2026-09-07T05:49:24.726Z",
+  "status": 0,
+  "signal": null,
+  "error": null,
+  "stdout": "   text\t   data\t    bss\t    dec\t    hex\tfilename\n1075989\t 217688\t    608\t1294285\t 13bfcd\t/home/tim/Documents/GitHub/workspace/exact-real-references/ruffini-qualification/cache-public-pilot/after-UaEfGm/release\n",
+  "stderr": ""
+}

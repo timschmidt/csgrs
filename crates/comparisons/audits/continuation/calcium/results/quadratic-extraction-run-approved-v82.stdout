@@ -1,0 +1,5 @@
+{"reusedGate":"quadratic-extraction-compile-v82","finished":"2026-09-12T03:11:34.130Z"}
+{"reusedGate":"quadratic-extraction-linkage-v82","finished":"2026-09-12T03:11:34.525Z"}
+{"reusedGate":"quadratic-extraction-native-v82","finished":"2026-09-12T03:11:35.249Z"}
+{"reusedGate":"quadratic-extraction-memcheck-v82","finished":"2026-09-12T03:11:48.787Z"}
+{"checkpoint":82,"status":"native-collected","expectedRows":4651,"productionChanges":0}

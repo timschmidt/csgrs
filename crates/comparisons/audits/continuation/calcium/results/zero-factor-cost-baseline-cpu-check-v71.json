@@ -1,0 +1,18 @@
+{
+  "tag": "zero-factor-cost-baseline-cpu-check-v71",
+  "started": "2026-09-11T19:27:24.894Z",
+  "finished": "2026-09-11T19:27:25.204Z",
+  "elapsedSeconds": 0.308473872,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "taskset",
+  "args": [
+    "-c",
+    "2",
+    "/tmp/calcium-zero-cost.cEHSth/baseline-cpu",
+    "check",
+    "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/zero-factor-cost-input-v71.json",
+    "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/zero-factor-cost-check-plan-v71.json"
+  ],
+  "code": 0,
+  "signal": null
+}

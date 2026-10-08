@@ -1,0 +1,13 @@
+{
+  "tag": "point-cold-build",
+  "started": "2026-09-10T23:06:15.644Z",
+  "finished": "2026-09-10T23:06:17.679Z",
+  "elapsedSeconds": 2.032567426,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "node",
+  "args": [
+    "build-point-cold.mjs"
+  ],
+  "code": 1,
+  "signal": null
+}

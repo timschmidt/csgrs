@@ -1,0 +1,23 @@
+{
+  "goal_turn_classification": "progress",
+  "completed_commits": {
+    "polynomial-derivative-v817": "55d2cfbef91a09f57b13a6e853069ab1727a420f",
+    "classified-derivative-v823": "e3fbb1ede41edb94ec86ae77dc16541234749ecb",
+    "tangent-extraction-v825": "b770f24e37982b32c14cda4c2e7bc4c45876a2fd"
+  },
+  "latest_baseline": "tangent-extraction-v825",
+  "tests": 323,
+  "pinned_executables": 12,
+  "checks": 7,
+  "source_files_verified": 2048,
+  "clean_repositories": 30,
+  "active_driver": null,
+  "uncommitted_production_changes": false,
+  "next_audits": [
+    "derivative-denominator-growth-audit-v827.json",
+    "derivative-construction-followup-v824.json",
+    "tangent-order-carrier-audit-v821.json"
+  ],
+  "full_goal_complete": false,
+  "next_unused_artifact": 829
+}

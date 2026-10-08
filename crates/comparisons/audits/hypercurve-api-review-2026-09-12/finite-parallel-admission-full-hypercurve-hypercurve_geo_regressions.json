@@ -1,0 +1,31 @@
+{
+  "repo": "hypercurve",
+  "target": "hypercurve_geo_regressions",
+  "binary": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve_geo_regressions-1a30a9d21ce49441",
+  "command": [
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve_geo_regressions-1a30a9d21ce49441",
+    "--test-threads=4",
+    "--color",
+    "never"
+  ],
+  "sha256": "85a4d224fc4d2e78db5801cda978c120984e30e04a12d06f91c1a3985867b148",
+  "returncode": 0,
+  "timed_out": false,
+  "elapsed_seconds": 0.007478178013116121,
+  "log": "finite-parallel-admission-full-hypercurve-hypercurve_geo_regressions.log",
+  "passed": [
+    "geo_contains_boundary_and_hole_point_cases_match_region_classification",
+    "geo_jts_line_intersection_regressions_are_classified",
+    "geo_line_intersection_examples_match_hypercurve_topology",
+    "geo_boolean_triangle_pair_matches_geo_samples",
+    "geo_issue_913_polygon_union_pair_matches_geo_samples",
+    "geo_boolean_issue_867_shared_vertex_triangles_match_geo_samples"
+  ],
+  "failed": [],
+  "ignored": [],
+  "summaries": [
+    "test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s"
+  ],
+  "new_failures": [],
+  "known_failures": []
+}

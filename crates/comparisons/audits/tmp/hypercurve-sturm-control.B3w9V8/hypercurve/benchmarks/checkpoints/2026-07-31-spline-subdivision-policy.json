@@ -1,0 +1,419 @@
+{
+  "schema": 1,
+  "captured_on": "2026-07-31",
+  "checkpoint": "spline-subdivision-policy",
+  "source_revision": "5a3c9914a4dc722803835916ad72c3cf989d9351",
+  "parent_revision": "1fdcd06994577d61e41b0a21e3eebc828a5d67a6",
+  "implementation_revisions": [
+    "5a3c9914a4dc722803835916ad72c3cf989d9351"
+  ],
+  "frozen_baseline_revision": "dfc4ec5f9546560765bd33d4a88292581869adb8",
+  "baseline": "../baselines/2026-07-31/baseline.json",
+  "semantic_evidence": {
+    "policy_explicit_public_apis": [
+      "Curve2::{split_at,subcurve,clamped_subcurve}",
+      "CurveView2::{split_at,subcurve,clamped_subcurve}",
+      "NurbsCurve2::{split_at,subcurve,clamped_subcurve}",
+      "PolynomialSplineCurve2::{split_at,subcurve,clamped_subcurve}"
+    ],
+    "return_contract": "ExactCurveResult<CurveOutcome<T>>",
+    "internal_composition_uses_raw_policy_kernels": true,
+    "complete_public_operation_observes_terminal_consumption_once": true,
+    "nurbs_policy_propagation": [
+      "parameter-range validation",
+      "knot insertion",
+      "reconstructed carrier validation",
+      "clamped piecewise-Bezier reconstruction"
+    ],
+    "polynomial_policy_propagation": [
+      "unit-weight NURBS subdivision",
+      "polynomial carrier reconstruction"
+    ],
+    "top_level_curve2_preserves_lineage_and_policy": true,
+    "terminal_parameter": "1 + ((pi + e) - (e + pi))",
+    "strict_terminal_results": [
+      "Subdivision blocker",
+      "Ordering blocker"
+    ],
+    "approximate_512_terminal_result": "exact split, subcurve, and clamped spline geometry with Approximate512Consumed",
+    "later_strict_query_on_same_source_still_blocks": true,
+    "approximate_first_cache_cannot_certify_later_strict": true,
+    "polynomial_source_interval_preserves_uncertain_ordering_for_terminal_replay": true,
+    "full_domain_structural_subcurve_fast_path_certainty": "Certified",
+    "returned_geometry_is_not_sampled_or_rounded": true,
+    "compatibility_overload_deref_or_implicit_value_shim_added": false,
+    "hypermesh_modified": false
+  },
+  "layout_and_memory_evidence": {
+    "NurbsCurve2_bytes": 8,
+    "NurbsData2_historical_synthetic_bytes": 520,
+    "NurbsData2_candidate_bytes": 512,
+    "NurbsData2_delta_bytes": -8,
+    "PolynomialSplineCurve2_bytes": 8,
+    "PolynomialSplineData2_parent_bytes": 288,
+    "PolynomialSplineData2_candidate_bytes": 288,
+    "public_handles_remain_one_word": true,
+    "decomposition_native_and_rational_evaluator_caches_use": "PolicyEvaluationCache",
+    "strict_fast_path_uses_existing_bounded_knot_refinement_cache": true,
+    "approximate_refinement_is_uncached_to_prevent_strict_cache_contamination": true,
+    "heap_cache_or_buffer_added": false
+  },
+  "matched_curve_path_benchmarks": {
+    "command": "eleven interleaved parent/candidate executions of matched default-feature release curve_path artifacts pinned to CPU 9",
+    "benchmark_harness": "benches/curve_path.rs",
+    "parent_revision": "1fdcd06994577d61e41b0a21e3eebc828a5d67a6",
+    "candidate_revision": "5a3c9914a4dc722803835916ad72c3cf989d9351",
+    "full_domain_subcurve": {
+      "iterations_per_process": 20000,
+      "parent_process_totals_ns": [
+        412992,
+        411112,
+        413352,
+        400133,
+        440490,
+        492336,
+        423940,
+        406982,
+        454069,
+        419071,
+        419551
+      ],
+      "candidate_process_totals_ns": [
+        355745,
+        436410,
+        368834,
+        374135,
+        359745,
+        353565,
+        365565,
+        351576,
+        352056,
+        370414,
+        375635
+      ],
+      "parent_median_ns_per_call": 20.95355,
+      "candidate_median_ns_per_call": 18.27825,
+      "median_change_percent": -12.7678,
+      "paired_geomean_change_percent": -13.4360
+    },
+    "native_exact_split": {
+      "iterations_per_process": 5000,
+      "parent_process_totals_ns": [
+        12009666,
+        11845897,
+        11959159,
+        12686060,
+        12833420,
+        11903443,
+        11969639,
+        11927912,
+        11778412,
+        12015276,
+        12067262
+      ],
+      "candidate_process_totals_ns": [
+        13254801,
+        12522071,
+        12012766,
+        11850267,
+        13200305,
+        12219892,
+        11855766,
+        12148756,
+        12260609,
+        13037596,
+        12293726
+      ],
+      "parent_median_ns_per_call": 2393.9278,
+      "candidate_median_ns_per_call": 2452.1218,
+      "median_change_percent": 2.4309,
+      "paired_geomean_change_percent": 2.7094
+    },
+    "nurbs_exact_split": {
+      "iterations_per_process": 1000,
+      "parent_process_totals_ns": [
+        7264322,
+        7066725,
+        7084404,
+        7080565,
+        7176137,
+        7064575,
+        7205586,
+        7242203,
+        7142790,
+        7269191,
+        7182727
+      ],
+      "candidate_process_totals_ns": [
+        7085244,
+        7282750,
+        7104652,
+        7152809,
+        7193947,
+        7188287,
+        7249022,
+        7179817,
+        7146020,
+        7817133,
+        7209705
+      ],
+      "parent_median_ns_per_call": 7176.137,
+      "candidate_median_ns_per_call": 7188.287,
+      "median_change_percent": 0.1693,
+      "paired_geomean_change_percent": 1.0255
+    },
+    "interpretation": "full-domain structural extraction is 12.77 percent faster; the real NURBS subdivision path is neutral, while the native split control carries a visible 2.71 percent paired cost that remains a sentinel"
+  },
+  "matched_competitive_nurbs_evaluation": {
+    "command": "eleven interleaved parent/candidate executions of the comparative NURBS evaluation group pinned to CPU 9",
+    "hypercurve_parent_ns_per_iteration": [
+      1122.6,
+      1103.4,
+      1109.8,
+      1202.7,
+      1098.7,
+      1110.8,
+      1107.5,
+      1122.8,
+      1181.7,
+      1141.3,
+      1185.7
+    ],
+    "hypercurve_candidate_ns_per_iteration": [
+      1103.6,
+      1114.4,
+      1109.5,
+      1098.3,
+      1133.4,
+      1122.6,
+      1114.4,
+      1116.9,
+      1096.3,
+      1159.7,
+      1124.8
+    ],
+    "hypercurve_parent_median_ns_per_iteration": 1122.6,
+    "hypercurve_candidate_median_ns_per_iteration": 1114.4,
+    "hypercurve_median_change_percent": -0.7305,
+    "hypercurve_paired_geomean_change_percent": -1.5100,
+    "curvo_parent_ns_per_iteration": [
+      57.8,
+      57.7,
+      58.0,
+      70.6,
+      57.7,
+      58.7,
+      59.6,
+      58.0,
+      58.1,
+      60.3,
+      60.5
+    ],
+    "curvo_candidate_ns_per_iteration": [
+      57.3,
+      57.6,
+      57.5,
+      57.4,
+      58.9,
+      57.3,
+      57.3,
+      57.5,
+      57.5,
+      58.6,
+      58.7
+    ],
+    "curvo_parent_median_ns_per_iteration": 58.1,
+    "curvo_candidate_median_ns_per_iteration": 57.5,
+    "curvo_median_change_percent": -1.0327,
+    "curvo_paired_geomean_change_percent": -3.1037,
+    "interpretation": "Hypercurve exact NURBS evaluation is neutral to slightly faster after the policy/cache cut; Curvo remains much faster under a weaker and numerically different evaluation contract and is not an exactness-parity claim"
+  },
+  "comparative_candidate_snapshot": {
+    "command": "one seven-sample comparative release process pinned to CPU 9",
+    "rectangles_ns_per_iteration": {
+      "hypercurve": 4760.7,
+      "cavalier_contours": 950.4,
+      "i_overlay": 1016.7,
+      "geo": 1263.1
+    },
+    "star_64_ns_per_iteration": {
+      "hypercurve": 35467.0,
+      "cavalier_contours": 27576.7,
+      "i_overlay": 34427.0,
+      "geo": 36659.3
+    },
+    "star_256_ns_per_iteration": {
+      "hypercurve": 431817.5,
+      "cavalier_contours": 488948.7,
+      "i_overlay": 512953.4,
+      "geo": 526117.7
+    },
+    "star_1024_ns_per_iteration": {
+      "hypercurve": 5106945.0,
+      "cavalier_contours": 33765776.7,
+      "i_overlay": 14778306.2,
+      "geo": 15193855.6
+    },
+    "capsule_inward_offset_ns_per_iteration": {
+      "hypercurve": 38398.7,
+      "cavalier_contours": 1713.4
+    },
+    "certified_cubic_offset_ns_per_iteration": {
+      "hypercurve_certified": 56171656.5,
+      "hypercurve_chord_fallback": 1493590.9,
+      "curvo_heuristic": 14969.7
+    },
+    "interpretation": "the exact 256- and 1024-vertex Boolean lanes remain faster than the measured finite peers; small Boolean, offset, and NURBS rows remain optimization targets, and offset/evaluation peers do not provide Hypercurve's exact topology and terminal-policy guarantees"
+  },
+  "matched_pathological_curve_region2": {
+    "command": "one warm-up pair followed by eight measured interleaved parent/candidate executions of matched default-feature release pathological_regions artifacts pinned to CPU 9 with HYPERCURVE_PATHOLOGICAL_MODE=boolean and HYPERCURVE_PATHOLOGICAL_CELL_LIMIT=67",
+    "cells": 67,
+    "operations": 268,
+    "completed_operations": 268,
+    "blockers": 0,
+    "checksum": 6,
+    "candidate_pairs": 603,
+    "retained_fragments": 3248,
+    "point_classifications": 134,
+    "parent_build_ms": [
+      73.520007,
+      74.264655,
+      79.046837,
+      75.576536,
+      73.898191,
+      74.937499,
+      77.287927,
+      74.191980
+    ],
+    "candidate_build_ms": [
+      77.052114,
+      74.818527,
+      79.100754,
+      73.782018,
+      78.652944,
+      74.778870,
+      74.894082,
+      73.664877
+    ],
+    "parent_build_median_ms": 74.601077,
+    "candidate_build_median_ms": 74.856305,
+    "build_median_change_percent": 0.3421,
+    "build_paired_geomean_change_percent": 0.6603,
+    "parent_boolean_ms": [
+      471.668722,
+      475.285294,
+      492.035115,
+      474.790849,
+      468.196861,
+      471.854610,
+      471.069353,
+      471.686532
+    ],
+    "candidate_boolean_ms": [
+      468.130055,
+      469.608454,
+      468.780450,
+      468.254726,
+      467.713734,
+      480.134642,
+      467.630110,
+      470.746496
+    ],
+    "parent_boolean_median_ms": 471.770571,
+    "candidate_boolean_median_ms": 468.517588,
+    "boolean_median_change_percent": -0.6895,
+    "boolean_paired_geomean_change_percent": -0.9304,
+    "parent_peak_rss_mib": [
+      34.5,
+      34.5,
+      34.4,
+      34.5,
+      34.3,
+      34.4,
+      34.4,
+      34.4
+    ],
+    "candidate_peak_rss_mib": [
+      34.5,
+      34.4,
+      34.5,
+      34.4,
+      34.5,
+      34.4,
+      34.5,
+      34.4
+    ],
+    "median_peak_rss_mib": 34.4,
+    "interpretation": "all topology and checksums are identical; exact Boolean execution improves 0.93 percent by paired geometric mean, construction is within noise, and process-scale memory is unchanged"
+  },
+  "release_pathological_binary": {
+    "measurement": "matched default-feature release executables measured with GNU size and copied then stripped with strip --strip-all",
+    "parent_text_bytes": 5233697,
+    "candidate_text_bytes": 5234157,
+    "text_delta_bytes": 460,
+    "text_delta_percent": 0.0088,
+    "parent_data_bytes": 266656,
+    "candidate_data_bytes": 264936,
+    "data_delta_bytes": -1720,
+    "parent_bss_bytes": 2320,
+    "candidate_bss_bytes": 3560,
+    "parent_total_loadable_bytes": 5500353,
+    "candidate_total_loadable_bytes": 5499093,
+    "total_loadable_delta_bytes": -1260,
+    "total_loadable_delta_percent": -0.0229,
+    "parent_file_bytes": 6929840,
+    "candidate_file_bytes": 6927440,
+    "file_delta_bytes": -2400,
+    "parent_stripped_bytes": 5504224,
+    "candidate_stripped_bytes": 5502984,
+    "stripped_delta_bytes": -1240,
+    "stripped_delta_percent": -0.0225,
+    "frozen_baseline_total_loadable_bytes": 5531293,
+    "delta_from_frozen_baseline_total_loadable_bytes": -32200,
+    "delta_from_frozen_baseline_total_loadable_percent": -0.5821,
+    "frozen_baseline_stripped_bytes": 5532504,
+    "delta_from_frozen_baseline_stripped_bytes": -29520,
+    "delta_from_frozen_baseline_stripped_percent": -0.5336,
+    "interpretation": "the policy-aware spline cache and explicit public outcomes reduce both loadable and stripped artifact size and remain about 30 kilobytes below the frozen consolidation baseline"
+  },
+  "caller_audit": {
+    "hypercurve_tests_benches_and_ui_example": "all migrated and warning-clean",
+    "workspace_old_signature_search": "one direct old NurbsCurve2 clamped_subcurve call and accumulated old native-fragment calls remain in Hyperbrep; other similarly named subcurve calls there belong to Hyperbrep's own pcurve and spatial-curve types",
+    "hyperbrep_direct_old_spline_calls": 1,
+    "caller_cutover_deferred_until_remaining_phase_1_public_policy_surfaces_stabilize": true,
+    "compatibility_shim_added": false,
+    "hypermesh_modified": false
+  },
+  "remaining_policy_audit": {
+    "public_curve_spline_subdivision_is_a_strict_wrapper": false,
+    "public_spline_construction_evaluation_edit_and_decomposition_strict_surfaces_remain": true,
+    "next_action": "inventory every remaining hard-coded STRICT public spline path and migrate the next cohesive operation family without introducing policy-free compatibility entry points"
+  },
+  "static_callgraph": {
+    "command": "/home/tim/Documents/GitHub/workspace/tools/hyper-callgraph/target/release/hyper-callgraph --root /home/tim/Documents/GitHub/workspace --out-dir /tmp/hypercurve-spline-policy-callgraph --crate-name hypercurve --include-examples --include-tests --include-bench --include-fuzz --format json",
+    "nodes": 22635,
+    "edges": 38791,
+    "artifact": "/tmp/hypercurve-spline-policy-callgraph/callgraph.json",
+    "curve2_policy_subdivision_nodes_present": true,
+    "nurbs_raw_policy_subdivision_nodes_present": true,
+    "polynomial_raw_policy_subdivision_nodes_present": true,
+    "policy_evaluation_cache_nodes_present": true
+  },
+  "verification": {
+    "cargo_test_all_features": "pass",
+    "unit_tests": 262,
+    "all_integration_tests": "pass except two explicitly ignored release-scale PCB performance corpora",
+    "generated_curve_region_boolean_tests": 7,
+    "generated_curve_region_boolean_corpus_seconds": 165.86,
+    "pathological_operations": "268/268 decided with no blockers",
+    "terminal_nurbs_policy_integration_test": "pass",
+    "terminal_polynomial_spline_policy_integration_test": "pass",
+    "cargo_clippy_all_features_all_targets_deny_warnings": "pass",
+    "cargo_clippy_no_default_features_all_targets_deny_warnings": "pass",
+    "cargo_check_fuzz_all_targets": "pass",
+    "cargo_doc_all_features_deny_warnings": "pass",
+    "hypercurve_ui_cargo_clippy_all_targets_deny_warnings": "pass",
+    "cargo_fmt_all_check": "pass",
+    "git_diff_check": "pass"
+  }
+}

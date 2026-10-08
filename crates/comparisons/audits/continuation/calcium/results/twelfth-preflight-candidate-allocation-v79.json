@@ -1,0 +1,18 @@
+{
+  "tag": "twelfth-preflight-candidate-allocation-v79",
+  "started": "2026-09-12T00:50:05.075Z",
+  "finished": "2026-09-12T00:50:05.164Z",
+  "elapsedSeconds": 0.08634809900000001,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "taskset",
+  "args": [
+    "-c",
+    "2",
+    "/tmp/calcium-twelfth-revision-v79.BSucfi/candidate-allocation",
+    "check",
+    "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/twelfth-cost-input-v78.json",
+    "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/twelfth-cost-check-plan-v78.json"
+  ],
+  "code": 0,
+  "signal": null
+}

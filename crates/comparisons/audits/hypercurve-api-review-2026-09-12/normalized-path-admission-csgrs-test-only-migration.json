@@ -1,0 +1,6 @@
+{
+  "previous_source_sha256": "753e6edd40260d3454434649691dc991390059d83d65bed7beb8d45dc76f7214",
+  "final_source_sha256": "64348a9f70275987d5fa98b527faa0713dc93ec8c75b55315e83c7c0d2f652fd",
+  "production_source_sha256": "a9a9c18913ddac933b76b35ff43b2856ab4e5ca1dfd7441e02d1444325465078",
+  "scope": "Only cfg(test) rack boundary queries changed after Hypercircuit candidate5 build; production CSGrs bytes are identical."
+}

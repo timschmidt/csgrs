@@ -1,0 +1,49 @@
+{
+  "commit": "3eabc047e4e826385aa6ab7720cdc966dc06f1a1",
+  "charts": [
+    {
+      "chart": 3,
+      "returncode": 101,
+      "elapsed_seconds": 0.007594599999720231,
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-circle-native-poles-charts-baseline",
+        "3"
+      ],
+      "log": "finite-circle-native-poles-charts-baseline-3.log",
+      "counts": {
+        "cases": 16,
+        "contacts": 0,
+        "point_replays": 0,
+        "failures": 16
+      }
+    },
+    {
+      "chart": 2,
+      "returncode": 124,
+      "elapsed_seconds": 60.005472169985296,
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-circle-native-poles-charts-baseline",
+        "2"
+      ],
+      "log": "finite-circle-native-poles-charts-baseline-2.log"
+    }
+  ],
+  "source": "finite-circle-native-poles-charts-public.rs",
+  "source_sha256": "5db37216d54f7ee63711e8d0d36396d4923d626d1f77f9e79d0ef4fdc7b8b6b9",
+  "normal_library": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-circle-domains-libraries/libhypercurve-ee303709bdb4cb6a.rlib",
+  "normal_library_sha256": "8eb7cd1fbaa241bf01e599e07ca251959c800c77c62a8091232bad9d52006638",
+  "executable": "finite-circle-native-poles-charts-baseline",
+  "executable_sha256": "b97e00ec94fb8cda2510c103a336100b2d3ddef8aa7a71c410719d18cd529dd5",
+  "compile_command": [
+    "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustc",
+    "--edition=2024",
+    "-O",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-circle-native-poles-charts-public.rs",
+    "--extern",
+    "hypercurve=/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-circle-domains-libraries/libhypercurve-ee303709bdb4cb6a.rlib",
+    "-L",
+    "dependency=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps",
+    "-o",
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/finite-circle-native-poles-charts-baseline"
+  ]
+}

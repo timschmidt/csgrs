@@ -1,0 +1,1057 @@
+\documentclass[a4paper,12pt]{article}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{graphicx}
+\parskip=10pt%
+\newcommand{\vdist}{\vrule width0pt height2.5ex depth1.0ex\relax}
+\title{Using the IC Reals Library}
+\author{Lindsay Errington and Reinhold Heckmann}
+\newenvironment{funlist}{\begin{list}%
+   {}%
+   {\topsep=0pt%
+        \leftmargin=0cm%
+        \rightmargin=0cm%
+        \listparindent=0cm%
+        \parskip=10pt%
+        \partopsep=0pt%
+        \itemsep=0pt%
+        \parsep=0pt}}%
+   {\end{list}}
+\begin{document}
+\maketitle
+\newcommand{\Type}[1]{\texttt{#1}}
+\newcommand{\Name}[1]{\texttt{#1}}
+\newcommand{\Var}[1]{\textit{#1}}
+\newcommand{\File}[1]{\textsf{#1}}
+
+\section{Introduction}
+The Imperial College Exact Real Arithmetic Library
+is a collection of C types and functions
+which implement exact real arithmetic. The functions
+allow one to construct objects representing real numbers
+and then to demand information, for example some number
+of decimal digits, from those objects. The user need not specify a precision
+in advance. All the digits retrieved are correct and further digits
+can be demanded.
+
+The library includes arithmetic operations as
+well as a suite of analytic functions on reals.
+In addition to a real type, the library also includes a lazy boolean
+type and a collection of predicates on reals, boolean operations
+and a conditional construct.
+
+The representation of reals is based on \emph{linear fractional
+transformations} (LFTs).  The underlying theory was developed by
+Abbas Edalat, Martin Escardo, Reinhold Heckmann, Peter Potts, Philipp
+S\"{u}nderhauf and Lindsay Errington (lazy booleans).
+
+The library was written by Lindsay Errington with contributions from Marko
+Krznaric and Reinhold Heckmann.
+
+% \cite{}.
+
+This document describes the types and functions provided by the
+library. It is not an introduction to
+exact real arithmetic nor does it describe the details of
+the LFT approach.
+
+\section{Copyright}
+
+All software in this distribution comes under the following copyright notice:
+
+Copyright \copyright\ 1998-2000 by Imperial College of Science, Technology
+and Medicine
+
+Permission to use, copy, modify, and distribute this software and its
+documentation for any non-commercial purpose and without fee is hereby
+granted, provided that this copyright notice appears in all copies.
+The library cannot be used directly or indirectly for any commercial
+application without a licence from Imperial College.
+
+Neither Imperial College nor Lindsay Errington make representations about
+the suitability of this software for any purpose.  It is provided ``as is''
+without express or implied warranty.
+
+\section{Installation}
+
+To install the library it is necessary to
+edit the Makefile and change \texttt{REALDIR} to point to the
+root of the Real Library source tree.
+
+Also, the library requires the GNU Multiple Precision Arithmetic Library
+(GMP) (Version 3.1). The Makefile defines a variable
+\texttt{GMPDIR} which is assumed to be the root directory of the
+GMP installation.
+
+Assuming the Makefile has been edited such that \texttt{REALDIR}
+and \texttt{GMPDIR} point to the respective directories,
+then the command
+\begin{quote}
+\texttt{make}
+\end{quote}
+will create the real library. To remove the library
+and all binaries, type:
+\begin{quote}
+\texttt{make clean}
+\end{quote}
+
+\section{Using the library}
+
+All applications which call functions in the library must include
+the file \texttt{real.h}. This file defines all the types
+and prototypes for all functions exported from the library.
+In particular
+the file defines the types \Type{Real} and \Type{Bool} corresponding
+to lazy reals and lazy booleans. The file \texttt{real.h} includes
+\texttt{gmp.h}.
+
+The user must call the function
+\begin{quote}
+\texttt{initReals();}
+\end{quote}
+before invoking any other functions in the library.
+This function should be called only once.
+
+\section{Types}
+
+The main purpose of the library is to provide
+a type \Type{Real} of real numbers.
+Since it requires
+the GNU Multiple Precision Arithmetic Library (GMP) as well,
+it also provides GMP's big integer type \Type{mpz{\_}t} as a byproduct.
+Most of the functions defined by the library come in
+a number of instances for different types.
+These instances are named using suffixes
+abbreviating type names; e.g.\ the suffix \Name{R}
+indicates the type \Type{Real}.
+The full list is given by the following table.
+
+\begin{tabular}{|l|l|l|}
+\hline
+\vdist Abbreviation & Prototype & Denotation \\
+\hline
+\hline
+\vdist \Name{R}
+  & \Type{Real} \Var{x}
+  & $\mbox{\Var{x}} : \mathbb{R}$ \\
+\hline
+\vdist \Name{Int}
+  & \Type{int} \Var{x}
+  & $x : \mathbb{Z}$, $x$ machine integer \\ 
+\hline
+\vdist \Name{Z}
+  & \Type{mpz{\_}t} \Var{x}
+  & $x : \mathbb{Z}$, $x$ GMP integer \\ 
+\hline
+\vdist \Name{QInt}
+  & \Type{int} \Var{a}, \Type{int} \Var{b}
+  & $\frac{a}{b} : \mathbb{Q}$, $a$, $b$ machine integers \\ 
+\hline
+\vdist \Name{QZ}
+  & \Type{mpz{\_}t} \Var{a}, \Type{mpz{\_}t} \Var{b}
+  & $\frac{a}{b} : \mathbb{Q}$, $a$, $b$ GMP integers \\ 
+\hline
+\end{tabular}
+
+Usually, the specialised functions are more efficient
+than the general ones.
+The possibility of using machine integers
+is particularly useful
+since these integers are readily available
+and need not be set up specially.
+\vspace{-2ex}
+
+\section{Arithmetic}
+\vspace{-2ex}
+The basic functions for addition, subtraction,
+multiplication and division occur in a general form
+operating on two reals, and in various specialised forms
+involving integers.
+The available functions are listed in Table~\ref{arith-table}.
+
+\begin{table}[htp]
+\begin{center}
+\begin{tabular}{|l|c|}
+\hline
+\begin{tabular}{l}
+\vdist\Type{Real} \Name{neg{\_}R}(%
+  \Type{Real} \Var{x})
+\end{tabular}
+& $-x$ \\
+\begin{tabular}{l}
+\vdist\Type{Real} \Name{abs{\_}R}(%
+  \Type{Real} \Var{x})
+\end{tabular}
+& $|x|$ \\
+\hline
+\begin{tabular}{l}
+\vdist\Type{Real} \Name{add{\_}R{\_}R}(%
+  \Type{Real} \Var{x},
+  \Type{Real} \Var{y}) \\
+\vdist\Type{Real} \Name{add{\_}R{\_}Int}(%
+  \Type{Real} \Var{x},
+  \Type{int} \Var{y}) \\
+\vdist\Type{Real} \Name{add{\_}R{\_}Z}(%
+  \Type{Real} \Var{x},
+  \Type{mpz{\_}t} \Var{y})
+\end{tabular}
+& $x + y$ \\
+\hline
+\begin{tabular}{l}
+ \vdist\Type{Real} \Name{add{\_}R{\_}QInt}(%
+   \Type{Real} \Var{x},
+   \Type{int} \Var{a},
+   \Type{int} \Var{b}) \\
+ \vdist\Type{Real} \Name{add{\_}R{\_}QZ}(%
+   \Type{Real} \Var{x},
+   \Type{mpz{\_}t} \Var{a},
+   \Type{mpz{\_}t} \Var{b}) \\
+\end{tabular}
+& $x + \frac{a}{b}$ \\
+\hline
+\begin{tabular}{l}
+\vdist\Type{Real} \Name{sub{\_}R{\_}R}(%
+  \Type{Real} \Var{x},
+  \Type{Real} \Var{y}) \\
+\vdist\Type{Real} \Name{sub{\_}R{\_}Int}(%
+  \Type{Real} \Var{x},
+  \Type{int} \Var{y}) \\
+\vdist\Type{Real} \Name{sub{\_}Int{\_}R}(%
+  \Type{int} \Var{x},
+  \Type{Real} \Var{y})
+\end{tabular}
+& $x - y$ \\
+\hline
+\begin{tabular}{l}
+\vdist\Type{Real} \Name{sub{\_}R{\_}QInt}(%
+  \Type{Real} \Var{x},
+  \Type{int} \Var{a},
+  \Type{int} \Var{b})
+\end{tabular}
+& $x - \frac{a}{b}$ \\
+\begin{tabular}{l}
+\vdist\Type{Real} \Name{sub{\_}QInt{\_}R}(%
+  \Type{int} \Var{a},
+  \Type{int} \Var{b},
+  \Type{Real} \Var{x})
+\end{tabular}
+& $\frac{a}{b} - x$ \\
+\hline
+\begin{tabular}{l}
+\vdist\Type{Real} \Name{mul{\_}R{\_}R}(%
+  \Type{Real} \Var{x},
+  \Type{Real} \Var{y}) \\
+\vdist\Type{Real} \Name{mul{\_}R{\_}Int}(%
+  \Type{Real} \Var{x},
+  \Type{int} \Var{y}) \\
+\vdist\Type{Real} \Name{mul{\_}R{\_}Z}(%
+  \Type{Real} \Var{x},
+  \Type{mpz{\_}t} \Var{y}) \\
+\end{tabular}
+& $x \times y$ \\
+\hline
+\begin{tabular}{l}
+\vdist\Type{Real} \Name{mul{\_}R{\_}QInt}(%
+  \Type{Real} \Var{x},
+  \Type{int} \Var{a},
+  \Type{int} \Var{b}) \\
+\vdist\Type{Real} \Name{mul{\_}R{\_}QZ}(%
+  \Type{Real} \Var{x},
+  \Type{mpz{\_}t} \Var{a},
+  \Type{mpz{\_}t} \Var{b}) \\
+\end{tabular}
+& $x \times \frac{a}{b}$ \\
+\hline
+\begin{tabular}{l}
+\vdist\Type{Real} \Name{div{\_}R{\_}R}(%
+  \Type{Real} \Var{x},
+  \Type{Real} \Var{y}) \\
+\vdist\Type{Real} \Name{div{\_}R{\_}Int}(% 
+  \Type{Real} \Var{x},
+  \Type{int} \Var{y}) \\
+\vdist\Type{Real} \Name{div{\_}Int{\_}R}(%
+  \Type{int} \Var{x},
+  \Type{Real} \Var{y})
+\end{tabular}
+& $\frac{x}{y}$ \\
+\hline
+\begin{tabular}{l}
+\vdist\Type{Real} \Name{div{\_}R{\_}QInt}(%
+  \Type{Real} \Var{x},
+  \Type{int} \Var{a},
+  \Type{int} \Var{b})
+\end{tabular}
+& $x / \frac{a}{b} = \frac{b x}{a}$ \\[0.5ex]
+\begin{tabular}{l}
+\vdist\Type{Real} \Name{div{\_}QInt{\_}R}(%
+  \Type{int} \Var{a},
+  \Type{int} \Var{b},
+  \Type{Real} \Var{x})
+\end{tabular}
+& $\frac{a}{b} / x = \frac{a}{bx}$ \\
+\hline
+\begin{tabular}{l}
+\vdist\Type{Real} \Name{pow{\_}R{\_}R}(%
+  \Type{Real} \Var{x},
+  \Type{Real} \Var{y})
+\end{tabular}
+& $x^y$ \\
+\hline
+\end{tabular}
+\end{center}
+\caption{Primitive arithmetic functions}\label{arith-table}
+\end{table}
+
+The following two functions define the rational number $\frac{a}{b}$,
+considered as a real:
+\begin{funlist}
+\item \Type{Real} \Name{real{\_}QInt}(%
+  \Type{int} \Var{a},
+  \Type{int} \Var{b})
+\item \Type{Real} \Name{real{\_}QZ}(%
+  \Type{mpz{\_}t} \Var{a},
+  \Type{mpz{\_}t} \Var{b})
+\end{funlist}
+
+Real numbers are implemented using \emph{linear fractional
+transformations} (LFTs). Users can construct
+LFT functions explicitly.
+The following two functions compute the expression
+$\frac{ax+b}{cx+d}$:
+\begin{funlist}
+\item \Type{Real} \Name{lft{\_}R{\_}Int}(%
+  \Type{Real} \Var{x},
+  \Type{int} \Var{a},
+  \Type{int} \Var{b},
+  \Type{int} \Var{c},
+  \Type{int} \Var{d})
+\item \Type{Real} \Name{lft{\_}R{\_}Z}(%
+  \Type{Real} \Var{x},
+  \Type{mpz{\_}t} \Var{a},
+  \Type{mpz{\_}t} \Var{b},
+  \Type{mpz{\_}t} \Var{c},
+  \Type{mpz{\_}t} \Var{d})
+\end{funlist}
+
+\noindent The next two functions yield the even more complicated expression
+$\frac{axy + bx + cy + d}{exy + fx + gy + h}$:
+\begin{funlist}
+\item \Type{Real} \Name{lft{\_}R{\_}R{\_}Int}(%
+  \Type{Real} \Var{x},
+  \Type{Real} \Var{y},
+  \Type{int} \Var{a},
+  \Type{int} \Var{b}, 
+\ldots,
+  % \Type{int} \Var{c},
+  % \Type{int} \Var{d},
+  % \Type{int} \Var{e},
+  % \Type{int} \Var{f},
+  % \Type{int} \Var{g},
+  \Type{int} \Var{h})
+\item \Type{Real} \Name{lft{\_}R{\_}R{\_}Z}(%
+  \Type{Real} \Var{x},
+  \Type{Real} \Var{y},
+  \Type{mpz{\_}t} \Var{a},
+  \Type{mpz{\_}t} \Var{b}, 
+\ldots,
+  % \Type{mpz{\_}t} \Var{c},
+  % \Type{mpz{\_}t} \Var{d},
+  % \Type{mpz{\_}t} \Var{e},
+  % \Type{mpz{\_}t} \Var{f},
+  % \Type{mpz{\_}t} \Var{g},
+  \Type{mpz{\_}t} \Var{h})
+\end{funlist}
+
+\noindent \textbf{Examples:}
+\vspace{-1.0ex}
+\begin{itemize}
+\item   To compute $y = x+1$ ($x$ real), use\quad
+        \verb|   y = add_R_Int (x, 1);|\\[0.5ex]
+        This is both simpler and more efficient than to use\\[0.5ex]
+        \verb|   one = real_QInt (1, 1);  y = add_R_R (x, one);|
+\item   To compute $y = \frac{x+1}{x-1}$, use\\[0.5ex]
+        \verb|   y = lft_R_Int (x, 1, 1, 1, -1);|\\[0.5ex]
+        This is both simpler and more efficient than to use\\[0.5ex]
+        \verb|   y = div_R_R (add_R_Int (x, 1), sub_R_Int (x, 1));|
+\item   To compute $z = \frac{2x+y}{xy-1}$, use\\[0.5ex]
+        \verb|   z = lft_R_R_Int (x, y, 0, 2, 1,  0,|\\
+        \verb|                          1, 0, 0, -1);|\\[0.5ex]
+        This is both shorter and more efficient than to use\\[0.5ex]
+        \verb|   num = add_R_R (mul_R_Int (x, 2), y);|\\
+        \verb|   den = sub_R_Int (mul_R_R (x, y), 1);|\\
+        \verb|   z = div_R_R (num, den);|\\[0.5ex]
+        (We admit that both versions are not quite readable.)
+\end{itemize}
+
+\section{Special functions}
+
+There are the usual standard functions,
+each existing in three versions,
+one for a real argument, one for a rational argument made from machine integers,
+and one for a rational argument made from GMP integers.
+Often, the rational version will be more efficient
+(sometimes, it is just mapped to the real version,
+ but it is offered anyway for uniformity and convenience).
+The general pattern is illustrated at the square root function:
+
+\begin{funlist}
+\item \makebox[6.2cm][l]{\Type{Real} \Name{sqrt{\_}R}(%
+  \Type{Real} \Var{x})}
+  to compute $\sqrt{x}$;
+\item \makebox[6.2cm][l]{\Type{Real} \Name{sqrt{\_}QInt}(%
+  \Type{int} \Var{a},
+  \Type{int} \Var{b})}
+  to compute $\sqrt{\frac{a}{b}}$;
+\item \makebox[6.2cm][l]{\Type{Real} \Name{sqrt{\_}QZ}(%
+  \Type{mpz{\_}t} \Var{a},
+  \Type{mpz{\_}t} \Var{b})}
+  to compute $\sqrt{\frac{a}{b}}$.
+\end{funlist}
+\vspace{-1ex}
+
+\begin{tabbing}
+In the following list of functions,
+we enumerate only the `R' versions.\\[0.5ex]
+Basic:\quad  \Name{sqrt{\_}R} for $\sqrt{x}$,\quad
+             \Name{exp{\_}R} for $e^x$,\quad
+             \Name{log{\_}R} for natural logarithm;\\[0.5ex]
+Inverse trigonometric:
+M \= \Name{asinh{\_}R},
+  \= \Name{acosh{\_}R},
+  \= \Name{atanh{\_}R},
+  \= \Name{asech{\_}R},
+  \= \Name{acosech{\_}R},
+  \= \Name{acotanh{\_}R} \kill
+Trigonometric:          
+  \> \Name{sin{\_}R},    
+  \> \Name{cos{\_}R},    
+  \> \Name{tan{\_}R},
+  \> \Name{sec{\_}R},
+  \> \Name{cosec{\_}R},
+  \> \Name{cotan{\_}R}
+  \\[0.5ex]
+Inverse trigonometric:  
+  \> \Name{asin{\_}R},   
+  \> \Name{acos{\_}R},   
+  \> \Name{atan{\_}R},
+  \> \Name{asec{\_}R},
+  \> \Name{acosec{\_}R},
+  \> \Name{acotan{\_}R}
+  \\[0.5ex]
+Hyperbolic:             
+  \> \Name{sinh{\_}R},   
+  \> \Name{cosh{\_}R},   
+  \> \Name{tanh{\_}R},
+  \> \Name{sech{\_}R},
+  \> \Name{cosech{\_}R},
+  \> \Name{cotanh{\_}R}
+  \\[0.5ex]
+Inverse hyperbolic:     
+  \> \Name{asinh{\_}R},  
+  \> \Name{acosh{\_}R},  
+  \> \Name{atanh{\_}R},
+  \> \Name{asech{\_}R},
+  \> \Name{acosech{\_}R},
+  \> \Name{acotanh{\_}R}
+  \\[0.5ex]
+\end{tabbing}
+\vspace{-1ex}
+
+\noindent In addition, there are the two predefined constants
+\Type{Real} \Name{Pi} and \Type{Real} \Name{E}.
+
+\section{Forcing, printing and conversion}
+
+When working with the library,
+it is best to think of real numbers as infinite digit streams
+(but these digit expansions do not correspond directly
+ to any familiar binary or decimal system).
+Each finite prefix corresponds to a rational interval
+(much as the finite prefix 3.14 of 3.14159\ldots\
+corresponds to the interval [3.14, 3.15]).
+Thus, if more and more digits of the stream are computed,
+the result is a nested sequence of intervals
+$[a_1, b_1] \supseteq [a_2, b_2] \supseteq \cdots$
+which provide increasingly better approximations to the real number.
+
+If a real number is set up and assigned to a variable,
+an object is created which records the way the number was constructed,
+but no digits are actually calculated.
+It is only when the number is ``forced''
+that a finite prefix of the digit stream is computed.
+
+There are two ways to specify the amount of forcing:
+the first, \Name{force{\_}R{\_}Digs},
+is by indicating the number of digits to be computed.
+Unfortunately, there is no simple rule telling
+the size of the resulting interval.
+This is the reason why there is a second force function, \Name{force{\_}R{\_}Dec},
+which forces a real number until an interval is obtained
+which guarantees a certain decimal precision.
+
+\begin{funlist}
+\item \Type{void} \Name{force{\_}R{\_}Digs}(%
+\Type{Real} \Var{x}, \Type{int} \Var{n})\\
+This computes at least the first $n$ digits
+of the digit stream describing the value of the argument \Var{x}.
+\vspace{1ex}
+%
+\item \Type{void} \Name{force{\_}R{\_}Dec}(%
+\Type{Real} \Var{x}, \Type{int} \Var{n})\\
+This computes an approximating interval for $x$
+whose size is at most $10^{-n}$.
+\vspace{1ex}
+%
+\item \Type{void} \Name{print{\_}R}(\Type{Real} \Var{x})\\
+This takes whatever information about the value of \Var{x}
+is currently available and prints it as an interval (no forcing).
+\vspace{1ex}
+%
+\item \Type{void} \Name{print{\_}R{\_}Digs}(\Type{Real} \Var{x}, \Type{int} \Var{n})\\
+This first calls \Name{force{\_}R{\_}Digs}(\Var{x}, \Var{n})
+and prints the interval which results from this forcing.
+\vspace{1ex}
+%
+\item \Type{void} \Name{print{\_}R{\_}Dec}(\Type{Real} \Var{x}, \Type{int} \Var{n})\\
+This first calls \Name{force{\_}R{\_}Dec}(\Var{x}, \Var{n})
+and prints the resulting interval.
+\vspace{1ex}
+%
+\item \Type{double} \Name{realToDouble}(\Type{Real} \Var{x})\\
+This takes whatever information about the value of \Var{x} is currently available,
+and converts one of the end-points of this interval
+to a double precision floating point value.
+\vspace{1ex}
+%
+\item \Type{void} \Name{force{\_}B}(%
+\Type{Bool} \Var{b}, \Type{int} \Var{n})\\
+This can be called to force the evaluation of a boolean. When $b$
+is viewed as a stream, the argument $n$ indicates the maximum depth in the
+stream to examine to determine the value of the boolean.
+\vspace{1ex}
+\item \Type{Boolean} \Name{boolValue}(\Type{Bool} \Var{b}) \\
+This is a macro which returns the value of a boolean. This may be
+one of three constants:
+\Name{LAZY{\_}TRUE},
+\Name{LAZY{\_}FALSE} or
+\Name{LAZY{\_}UNKNOWN}
+\vspace{1ex}
+\item \Type{Real} \Name{realError}(\Type{char}\verb|*| \Var{string})\\
+This function ``computes'' and returns a kind of placeholder
+for a real number which is fine as long as it is not forced.
+But if this placeholder is forced to produce some digits,
+then it causes the program to be aborted.
+The argument string provided in the call of \Name{realError}
+is printed as an error message.
+\item \Type{Real} \Name{realDelay}(\Type{Delay{\_}Fun} \Var{f},
+\Type{Delay{\_}Arg} \Var{x})\\
+This function yields a \emph{closure} for the function
+\Var{f} applied to \Var{x}. In other words, it denotes the real
+\Var{f}(\Var{x}) but the function call is not made until
+the closure is forced. An example of its use is given
+in the next section.
+\end{funlist}
+
+\section{Predicates, Boolean operations and conditionals}
+
+The library introduces a new type \Type{Bool} for Boolean values
+which serves as the result type of predicates.
+Therefore, it must also introduce its own versions
+of Boolean operations and its own conditional,
+which is a function reminiscent of Dijkstra's guarded commands.
+We shall shortly see why this was done,
+but first we introduce the corresponding functions.
+
+Table~\ref{pred} shows the available predicates:
+
+\begin{table}[htp]
+\begin{center}
+\begin{tabular}{|l|l|}
+\hline
+\begin{tabular}{l}
+\vdist\Type{Bool} \Name{lt{\_}R{\_}0}(\Type{Real} \Var{x})
+\end{tabular}
+& $x < 0$ \\
+\begin{tabular}{l}
+\vdist\Type{Bool} \Name{lt{\_}R{\_}QInt}(\Type{Real} \Var{x},
+                                \Type{int} \Var{a}, \Type{int} \Var{b})
+\end{tabular}
+& $x < \frac{a}{b}$ \\
+\begin{tabular}{l}
+\vdist\Type{Bool} \Name{lt{\_}R{\_}R}(\Type{Real} \Var{x}, \Type{Real} \Var{y})
+\end{tabular}
+& $x < y$ \\
+\hline
+\begin{tabular}{l}
+\vdist\Type{Bool} \Name{ltEq{\_}R{\_}0}(\Type{Real} \Var{x})
+\end{tabular}
+& $x \leq 0$ \\
+\begin{tabular}{l}
+\vdist\Type{Bool} \Name{ltEq{\_}R{\_}QInt}(\Type{Real} \Var{x},
+                                \Type{int} \Var{a}, \Type{int} \Var{b})
+\end{tabular}
+& $x \leq \frac{a}{b}$ \\
+\begin{tabular}{l}
+\vdist\Type{Bool} \Name{ltEq{\_}R{\_}R}(\Type{Real} \Var{x}, \Type{Real} \Var{y})
+\end{tabular}
+& $x \leq y$ \\
+\hline
+\begin{tabular}{l}
+\vdist\Type{Bool} \Name{gt{\_}R{\_}0}(\Type{Real} \Var{x})
+\end{tabular}
+& $x > 0$ \\
+\begin{tabular}{l}
+\vdist\Type{Bool} \Name{gt{\_}R{\_}QInt}(\Type{Real} \Var{x},
+                                \Type{int} \Var{a}, \Type{int} \Var{b})
+\end{tabular}
+& $x > \frac{a}{b}$ \\
+\begin{tabular}{l}
+\vdist\Type{Bool} \Name{gt{\_}R{\_}R}(\Type{Real} \Var{x}, \Type{Real} \Var{y})
+\end{tabular}
+& $x > y$ \\
+\hline
+\begin{tabular}{l}
+\vdist\Type{Bool} \Name{gtEq{\_}R{\_}0}(\Type{Real} \Var{x})
+\end{tabular}
+& $x \geq 0$ \\
+\begin{tabular}{l}
+\vdist\Type{Bool} \Name{gtEq{\_}R{\_}QInt}(\Type{Real} \Var{x},
+                                \Type{int} \Var{a}, \Type{int} \Var{b})
+\end{tabular}
+& $x \geq \frac{a}{b}$ \\
+\begin{tabular}{l}
+\vdist\Type{Bool} \Name{gtEq{\_}R{\_}R}(\Type{Real} \Var{x}, \Type{Real} \Var{y})
+\end{tabular}
+& $x \geq y$ \\
+\hline
+\end{tabular}
+\end{center}
+\caption{Predicates on reals}\label{pred}
+\end{table}
+
+Boolean values may be combined with the operators presented in Table~\ref{Bool-Ops}:
+\newpage
+
+\begin{table}[htp]
+\begin{center}
+\begin{tabular}{|l|l|}
+\hline
+\begin{tabular}{l}
+\vdist\Type{Bool} \Name{and{\_}B{\_}B}(\Type{Bool} \Var{x}, Bool \Var{y})
+\end{tabular}
+& $x \wedge y$ \\
+\hline
+\begin{tabular}{l}
+\vdist\Type{Bool} \Name{or{\_}B{\_}B}(\Type{Bool} \Var{x}, Bool \Var{y})
+\end{tabular}
+& $x \vee y$ \\
+\hline
+\begin{tabular}{l}
+\vdist\Type{Bool} \Name{not{\_}B}(\Type{Bool} \Var{x})
+\end{tabular}
+& $\neg x$ \\
+\hline
+\end{tabular}
+\end{center}
+\caption{Boolean operators}\label{Bool-Ops}
+\end{table}
+
+Finally, the conditional is a function with a variable number of arguments:
+
+\begin{funlist}
+\item \Type{Real} \Name{realIf}(%
+\Type{int}  \Var{n},
+\Type{Bool} $b_1$,
+\Type{Real} $x_1$, 
+\ldots,
+\Type{Bool} $b_n$,
+\Type{Real} $x_n$) 
+\end{funlist}
+
+This function takes an integer as its first argument,
+followed by a variable number of guard/value pairs.
+The integer argument should tell the number of these pairs.
+The variable argument list is implemented with stdarg(3).
+
+Roughly spoken, the function evaluates the guards $b_1$, \ldots, $b_n$,
+then chooses non-deterministically one of the guards which happened to be true,
+and returns the corresponding value.
+Before we can provide a more detailed description,
+we must say more about the type \Type{Bool}
+and the behaviour of the predicates.
+
+Recall that an element of \Type{Real} is implemented as a digit stream,
+whose initial prefixes provide a shrinking sequence of intervals
+approximating a real number.
+Correspondingly, the elements of type \Type{Bool} are implemented
+as sequences of ``truth intervals''.
+These sequences usually start out with the interval
+\Name{Unknown} = [\Name{False}, \Name{True}],
+which may at some later stage be refined to either \Name{False} or \Name{True}.\\[0.5ex]
+\textbf{Example:}
+Table~\ref{Truth-values} shows how nested sequences of intervals
+are mapped to sequences of truth values by the predicate \Name{gtEq{\_}R{\_}0}.
+
+\begin{table}[htp]
+\begin{center}
+\begin{tabular}{|c|c||c|c|}
+\hline
+\vdist$[-3,2]$       & \Name{Unknown} & $[-2,3]$       & \Name{Unknown} \\
+\vdist$[-2,1]$       & \Name{Unknown} & $[-1,2]$       & \Name{Unknown} \\
+\vdist$[-1.5,0.5]$   & \Name{Unknown} & $[-0.5, 1.5]$  & \Name{Unknown} \\
+\vdist$[-1,0]$       & \Name{Unknown} & $[0, 1]$       & \Name{True} \\
+\vdist$[-0.8,-0.2]$  & \Name{False}   & $[0.2, 0.8]$   & \Name{True} \\
+\vdist$[-0.7,-0.3]$  & \Name{False}   & $[0.3, 0.7]$   & \Name{True} \\
+\vdist$\vdots$       & $\vdots$       & $\vdots$       & $\vdots$ \\
+\hline
+\end{tabular}
+\end{center}
+\caption{Action of the predicate \Name{gtEq{\_}R{\_}0}}\label{Truth-values}
+\end{table}
+
+Thus, the sequence of truth values computed by \Name{gtEq{\_}R{\_}0}(\Var{x})
+will eventually reach \Name{True} if $x > 0$,
+and will eventually reach \Name{False} if $x < 0$.
+If the exact value of $x$ happens to be 0,
+it is possible that the sequence of truth values
+remains \Name{Unknown} for ever---%
+this happens if all the intervals $[a,b]$ approximating $x$
+have the property $a < 0 < b$.
+Yet it is also possible that the sequence switches to \Name{True}---%
+this happens if there is an approximating interval $[a,b]$ with $a = 0$.
+Which of these two possibilities occur depends on the way
+how $x$ was set up, and on implementation details.
+But it should be remembered that \Name{gtEq{\_}R{\_}0}
+may remain undecided for ever when applied to $0$.
+
+The Boolean operations produce their output stream by acting
+on their input stream(s) element by element,
+i.e.\ to produce the $n$th element of the output stream,
+the $n$th input element(s) of the input stream(s) are combined
+according to Table~\ref{op-action},
+where the truth values have been abbreviated by U, F, and T,
+and the operations by logical symbols.
+
+\begin{table}[htp]
+\begin{center}
+\begin{tabular}{c|ccc}
+$x$      & T & F & U \\
+\hline
+$\neg x$ & F & T & U
+\end{tabular}\hspace{2em}
+\begin{tabular}{c|ccc}
+$\land$  & T & F & U \\
+\hline
+      T  & T & F & U \\
+      F  & F & F & F \\
+      U  & U & F & U
+\end{tabular}\hspace{2em}
+\begin{tabular}{c|ccc}
+$\lor$   & T & F & U \\
+\hline
+      T  & T & T & T \\
+      F  & T & F & U \\
+      U  & T & U & U
+\end{tabular}
+\end{center}
+\caption{Action of the Boolean operators}\label{op-action}
+\end{table}
+
+Now, we can return to the conditional
+\begin{funlist}
+\item \Type{Real} \Name{realIf}(%
+\Type{int}  $n$,
+\Type{Bool} $b_1$,
+\Type{Real} $x_1$, 
+\ldots,
+\Type{Bool} $b_n$,
+\Type{Real} $x_n$) 
+\end{funlist}
+This function behaves as follows:
+It constructs a cyclic list of guard/value pairs.
+Starting with the first pair, \Name{realIf} forces the guard
+to compute an element of the resulting Boolean stream.
+If the value of this element is \Name{True},
+the real number associated with this guard is returned.
+If the value is \Name{False}, the pair is removed from the list.
+If the value remains \Name{Unknown}, then \Name{realIf} tries the next pair.
+In this way, the function cycles through the list forcing each guard in turn
+until a guard becomes \Name{True}.
+If the list becomes empty (all the guards are \Name{False}),
+then \Name{realIf} issues an error message.
+If some guards are remaining \Name{Unknown} for ever,
+\Name{realIf} will not terminate.
+Some examples will clarify the situation.
+
+\verb|realIf (2,  lt_R_QInt (x, 1, 1), 0,  gt_R_0(x), 1)|\\[0.3ex]
+means  $x < 1 \to 0 \;[\!]\; x > 0 \to 1$.
+For $x = \frac12$, the result is unpredictable;
+it depends on the actual sequence of intervals
+which approximate $\frac12$.
+On the other hand, there is no risk of non-termination or error
+since at least one guard will eventually yield \Name{True} 
+for any $x$.
+
+\verb|realIf (2,  ltEq_R_0(x), neg_R(x),  gtEq_R_0(x), x)|\\[0.3ex]
+means  $x \leq 0 \to -x \;[\!]\; x \geq 0 \to x$.
+As an implementation of $|x|$, this works well for all $x \neq 0$,
+while there is a considerable risk of non-termination for $x = 0$.
+(Fortunately, there is the predefined function \Name{abs{\_}R}).
+
+Suppose you have an implementation \Name{sqrt1} for square root
+which works only for arguments in the interval $(\frac14,4)$,
+but not for arguments near 0 or very big arguments.
+With this knowledge, you can set up the following function:
+\[ \begin{array}{ r l @{\;\;\to\;\;} l l }
+ \sqrt{x} \;=\; (\! & x > \frac14 \land x < 4    & \Name{sqrt1}(x)   & \;[\!] \\[0.5ex]
+                    & x \geq 0 \land x < \frac12 & \frac12 \sqrt{4x} & \;[\!] \\[0.5ex]
+                    & x > 2                      & 2 \sqrt{x/4}      & \;[\!] \\[0.5ex]
+                    & x < 0                      & ???               & \;)
+   \end{array}
+\]
+Notice how the guards overlap:
+if the second guard were $x \geq 0 \land x \leq \frac14$,
+then there would be a considerable risk of non-termination
+for $x = \frac14$.
+By the overlap, this non-termination is prevented---%
+without introducing non-determinism
+since the values following these guards
+are semantically equal in the overlap region.
+Similarly, the first and third guard overlap
+to prevent non-termination for $x = 4$.
+Yet notice that the function does not terminate for $x = 0$ \ldots\\[0.5ex]
+As a C program, the above function appears in figure \ref{fig:conditionals}.
+Note the use of delays to prevent endless eager recursion.
+
+\begin{figure}[htp]
+\begin{verbatim}
+  Real sqrt (Real x) {
+    return realIf (4,
+      and_B_B (gt_R_QInt (x, 1, 4), lt_R_QInt (x, 4, 1)),
+          sqrt1 (x),
+      and_B_B (gtEq_R_0, lt_R_QInt (x, 1, 2)),
+          div_R_Int (
+            realDelay(
+              (Delay_Fun) sqrt,
+              (Delay_Arg) mul_R_Int (x, 4)),
+            2),
+      gt_R_QInt (x, 2, 1),
+          mul_R_Int (
+            realDelay(
+              (Delay_Fun) sqrt,
+              (Delay_Arg) div_R_Int (x, 4)),
+            2),
+      lt_R_0 (x),
+          realError ("Square root of negative number")
+    );
+  }
+\end{verbatim}
+\caption{Example of conditional with delays.}\label{fig:conditionals}
+\end{figure}
+
+As the last example,
+suppose you want to iterate a function \Name{f}
+until the difference between two consecutive values in the iteration
+is smaller than some threshold \Var{eps}.
+This can be done by the following recursive function:
+\begin{verbatim}
+  Real iter (Real x) {
+    Real y = f(x);
+    Real d = abs_R (sub_R_R (x, y));   /* d = |x - y| */
+    return realIf (2,
+      lt_R_R (d, eps),
+        y,
+      gt_R_R (d, eps2),
+        realDelay((Delay_Fun) iter, (Delay_Arg) y));
+  }
+\end{verbatim}
+where \Var{eps2} is $\Var{eps}/2$.
+By using \Var{eps2}, the two guards overlap non-trivially,
+and non-termination at \Var{d} = \Var{eps} is prevented
+(of course, the iteration still fails to terminate
+ if \Var{d} never gets small).
+
+\section{Extracting digits following forcing}
+
+The functions in this section provide access to the internal representation
+of real numbers.
+They are not very useful for ordinary users of the library.
+
+\begin{funlist}
+\item \Type{void} \Name{retrieveInfo}(%
+\Type{Real} \Var{x}, \Type{Sign} $\ast$\Var{sign}, \Type{int} $\ast$\Var{count},
+   \Type{mpz{\_}t} digits)
+\end{funlist}
+This function retrieves the information that is currently available on \Var{x}.
+The sign of \Var{x} is stored in \Var{sign},
+the number of digits calculated so far is stored in \Var{count},
+and a compressed representation of all these digits is deposited in \Var{digits}.
+The variable \Var{digits} must be initialised 
+with the GMP function \Name{mpz{\_}init} prior to calling \Name{retrieveInfo}.
+The real argument \Var{x} is unchanged by the call.
+
+From a compressed digit representation as it is provided by \Name{retrieveInfo},
+the individual digits can be extracted by means of
+\begin{funlist}
+\item \Type{Digit} \Name{takeDigit}(\Type{int} $\ast$\Var{count},
+   \Type{mpz{\_}t} \Var{digits})
+\end{funlist}
+This function should only be called if \Var{digits}
+contains at least one digit.
+It returns the most significant digit contained in \Var{digits},
+removes this digit from \Var{digits},
+and decreases the counter \Var{count} by 1.
+Thus, successive calls yield successive digits.
+
+\noindent An example of the use of these two functions is given in Figure
+\ref{fig:digits-info}.
+
+\begin{figure}[htp]
+\begin{verbatim}
+  Real x;
+  mpz_t digits;
+  Sign sign;
+  Digit digit;
+  int count;
+  ...
+  x = tan_R(y);
+  force_R_Digs(x, 20);
+  mpz_init(digits);
+  retrieveInfo(x, &sign, &count, digits);
+  printf("%s ", signToString(sign));
+  while (count > 0) {
+    digit = takeDigit(&count, digits);
+    printf("%s ", digitToString(digit));
+  }
+  printf("\n");
+\end{verbatim}
+\caption{Taking digits one-by-one.}
+\label{fig:digits-info}
+\end{figure}
+
+Note the two functions \Name{signToString} and \Name{digitToString}
+which convert signs and digits to strings for output.
+
+\section{Environment variables}
+
+The library uses three environment variables to control its runtime behaviour.
+These variables are as follows:
+
+\begin{description}
+\item[\texttt{ICR{\_}STACK{\_}SIZE}=$n$]
+\quad This sets the runtime stack to
+$n \times k$ words. The default is $n = 20$ for $20k$ words.
+It is unlikely that the stack size needs to be adjusted.
+If you get a ``stack overflow'' at runtime, it is more likely that the
+algorithm for some function is not sufficiently converging for a given
+argument. Assuming the default has been set to something other than 1,
+try setting the
+environment variable \texttt{ICR{\_}DEFAULT{\_}FORCE{\_}COUNT=1} and executing
+your program again.
+\item[\texttt{ICR{\_}DEFAULT{\_}FORCE{\_}COUNT}=$n$]
+\quad Sometimes it
+is necessary to force
+an arbitrary number of digits from an LFT. This can happen, for example,
+when a predicate is forced which in turn must force some number of digits
+from its real argument. In theory, one would always want to force as
+few digits as possible (i.e.\ 1 digit) 
+to avoid unnecessary computation. In practice, it
+is more efficient to demand more than one digit. The value
+of \texttt{ICR{\_}DEFAULT{\_}FORCE{\_}COUNT}
+is the number of digits forced in such
+circumstances. It is also the number of digits forced from an argument
+to a linear fractional transformation when $\epsilon-\delta$ analysis
+for the transformation yields a value $\leq 0$. The default is $n = 1$.
+The maximum reasonable value is $n = 4$.
+\item[\texttt{ICR{\_}FORCE{\_}DEC{\_}UPPER{\_}BOUND}=$n$] 
+\quad
+When extracting information from reals, the library works with
+``digits''. Each digit gives a fixed amount of information. Usually, however,
+a user wishes to extract enough information to ensure some decimal precision.
+The functions \Name{force{\_}R{\_}Dec} and \Name{print{\_}R{\_}Dec}
+are provided to
+retrieve information from a real to a specified decimal precision.
+Unfortunately, there is not always a direct correspondence between a number of
+digits and a decimal precision. As a number approaches infinity, more
+digits are needed to bound it above. This variable sets a bound
+on the number of digits to retrieve from a real to bound it above before
+giving up.
+The default is $n = 10000$.
+\end{description}
+
+\section{The daVinci interface}
+
+For debugging and instruction, the library is instrumented to
+work with the graph visualisation tool daVinci.
+But be warned that much of this visualisation
+is only comprehensible to insiders.
+When a program has been compiled with daVinci enabled,
+a separate daVinci window will be created
+when \Name{init\-Reals} is called.
+Thereafter, any calls to \Name{force{\_}R{\_}Digs} or \Name{force{\_}R{\_}Dec}
+will lead to control being transferred to the daVinci window.
+
+Once started the daVinci window provides a collection of buttons
+to control the execution of a real program. The buttons are as follows:
+
+\begin{description}
+\item[\includegraphics{stop.eps}] Stops execution.
+\item[\includegraphics{go.eps}] Enabled when there is work on the
+stack. This button starts execution.
+\item[\includegraphics{step.eps}] Enabled when there is work on the stack. This
+single steps execution.
+\item[\includegraphics{continue.eps}] When enabled, it means the stack
+is empty. This button returns control to the C program.
+\item[\includegraphics{collect.eps}] This button is not implemented.
+Ultimately it will be used to invoke the garbage collector.
+\end{description}
+
+In addition, when the program is stopped, the user can click the right
+button over any object in the heap. This gives a popup menu
+of which only the first entry is implemented. It can be used
+to print (in the main program window) the contents of the selected
+heap object. This is typically a linear fractional transformation
+(nearly all functions in the library are implemented
+ as compositions of linear fractional transformations).
+
+\section{Compilation flags}
+
+There are a number of compilation flags in the Makefile. With the exception
+of those listed below, it is unwise to change these flags.
+
+\begin{description}
+\item[\texttt{-DDAVINCI}]\quad When set, the library will connect to the daVinci
+graph visualisation tool. In this mode, all objects in the heap and
+all information flow is displayed in a separate daVinci window.
+Computation is controlled from the daVinci window. The user can run, stop
+and single-step the activities of the program,
+which mainly consist of emission and absorption of LFTs,
+and examine the contents of objects in the heap.
+\item[\texttt{-DDEFAULT{\_}FORCE{\_}COUNT}=$n$]
+\quad This sets the default force count to use when it is not given by
+the environment variable
+\texttt{ICR{\_}DEFAULT{\_}FORCE{\_}COUNT}.
+\item[\texttt{-DTRACE}=\textit{val}]\quad This enables tracing of force methods.
+When set to $0$, tracing is disabled. When set to $1$, tracing is enabled. 
+Finally, when set to \texttt{traceOn}, tracing can be enabled
+and disabled at runtime under software control via the function
+\Name{debugTrace}(\Type{int} \Var{b}) where \Var{b} is $1$ to enable
+tracing and $0$ to stop tracing.
+\item[\texttt{-DSTACK{\_}SIZE=$n$}]
+\quad This sets stack size to use when it is not given by
+the environment variable 
+\texttt{ICR{\_}STACK{\_}SIZE}.
+\item[\texttt{-DFORCE{\_}DEC{\_}UPPER{\_}BOUND=$n$}]
+\quad This is the default value used when the environment variable
+\texttt{ICR{\_}FORCE{\_}DEC{\_}UPPER{\_}BOUND} is absent.
+\end{description}
+
+\section{Problems}
+
+The library is still under development. Future versions of the library
+will have specialized versions of the analytic functions
+for rational arguments. A document describing the implementation
+is also planned. The most serious omission from the present
+version of the library is a garbage collector.
+
+\end{document}

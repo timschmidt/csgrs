@@ -1,0 +1,68 @@
+%!PS-Adobe-2.0 EPSF-2.0
+%%Title: /home/le/Work/reals/blue/5-c-reals/icons/step.ps
+%%Creator: XV Version 3.10a  Rev: 12/29/94 (PNG patch 1.2)  -  by John Bradley
+%%BoundingBox: 289 418 301 430
+%%Pages: 1
+%%DocumentFonts:
+%%EndComments
+%%EndProlog
+
+%%Page: 1 1
+
+% remember original state
+/origstate save def
+
+% build a temporary dictionary
+20 dict begin
+
+% define string to hold a scanline's worth of data
+/pix 3 string def
+
+% define space for color conversions
+/grays 18 string def  % space for gray scale line
+/npixls 0 def
+/rgbindx 0 def
+
+% lower left corner
+289 418 translate
+
+% size of image (on paper, in 1/72inch coords)
+11.59200 11.59200 scale
+
+% dimensions of data
+18 18 1
+
+% mapping matrix
+[18 0 0 -18 0 18]
+
+{currentfile pix readhexstring pop}
+image
+ffffff
+ffffff
+ff3fff
+fe3fff
+fc3fff
+fc3fff
+ff3fff
+ff3fff
+ff3fff
+ff3fff
+ff3fff
+ff3fff
+ff3fff
+ff3fff
+fc0fff
+fc0fff
+ffffff
+ffffff
+
+
+showpage
+
+% stop using temporary dictionary
+end
+
+% restore original state
+origstate restore
+
+%%Trailer

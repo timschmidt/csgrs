@@ -1,0 +1,11 @@
+[package]
+name = "calcium-e-qualified-wasm-baseline"
+version = "0.0.0"
+edition = "2024"
+[workspace]
+[dependencies]
+hyperreal = { path = "../derivative-demand-candidate/hyperreal", features = ["serde"] }
+num = "0.4.3"
+[lib]
+crate-type = ["cdylib"]
+path = "../e-qualified-wasm.rs"

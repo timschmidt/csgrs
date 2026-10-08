@@ -1,0 +1,265 @@
+{
+  "scope": {
+    "changed": [
+      "hypercurve/src/bezier_region.rs"
+    ],
+    "only_changed_function": "closed_ph_corner_edits_preserve_both_normalized_source_lobes",
+    "all_other_function_and_production_source_bytes_identical": true,
+    "production_qualification": "rational-polynomial-20260924-v8-qualification.json",
+    "hypercurve_parent": "04b524382cdf80457c06f02c2bd2d0fa222d21b8"
+  },
+  "checks": [
+    {
+      "label": "fmt",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustfmt",
+        "--edition",
+        "2024",
+        "--check",
+        "src/bezier_region.rs"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.744559693033807,
+      "log": "normalized-ph-corner-20260924-v1-fmt.log"
+    },
+    {
+      "label": "clippy-1",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "clippy",
+        "--all-targets",
+        "--all-features",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 26.243835153989494,
+      "log": "normalized-ph-corner-20260924-v1-clippy-1.log"
+    },
+    {
+      "label": "clippy-2",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "clippy",
+        "--all-targets",
+        "--no-default-features",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 24.982439229963347,
+      "log": "normalized-ph-corner-20260924-v1-clippy-2.log"
+    }
+  ],
+  "cases": [
+    {
+      "label": "closed_ph_corner_edits_preserve_both_normalized_source_lobes",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/normalized-ph-corner-20260924-v1-libtest",
+        "--exact",
+        "bezier_region::tests::closed_ph_corner_edits_preserve_both_normalized_source_lobes",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.3788741839816794,
+      "log": "normalized-ph-corner-20260924-v1-closed_ph_corner_edits_preserve_both_normalized_source_lobes.log"
+    },
+    {
+      "label": "one_fragment_ph_loop_fillets_through_rational_self_contact",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/normalized-ph-corner-20260924-v1-libtest",
+        "--exact",
+        "bezier_region::tests::one_fragment_ph_loop_fillets_through_rational_self_contact",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 3.6927344080759212,
+      "log": "normalized-ph-corner-20260924-v1-one_fragment_ph_loop_fillets_through_rational_self_contact.log"
+    },
+    {
+      "label": "one_fragment_retained_ph_loop_extends_fillet_on_one_analytic_carrier",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/normalized-ph-corner-20260924-v1-libtest",
+        "--exact",
+        "bezier_region::tests::one_fragment_retained_ph_loop_extends_fillet_on_one_analytic_carrier",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.48842543095815927,
+      "log": "normalized-ph-corner-20260924-v1-one_fragment_retained_ph_loop_extends_fillet_on_one_analytic_carrier.log"
+    },
+    {
+      "label": "ordered_ph_parallel_domains_retain_same_sheet_exterior_contacts",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/normalized-ph-corner-20260924-v1-libtest",
+        "--exact",
+        "bezier_offset::conversion_tests::ordered_ph_parallel_domains_retain_same_sheet_exterior_contacts",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.5764022370567545,
+      "log": "normalized-ph-corner-20260924-v1-ordered_ph_parallel_domains_retain_same_sheet_exterior_contacts.log"
+    },
+    {
+      "label": "ordered_ph_parallel_domains_reject_a_cached_opposite_normal_contact",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/normalized-ph-corner-20260924-v1-libtest",
+        "--exact",
+        "bezier_offset::conversion_tests::ordered_ph_parallel_domains_reject_a_cached_opposite_normal_contact",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.43136506399605423,
+      "log": "normalized-ph-corner-20260924-v1-ordered_ph_parallel_domains_reject_a_cached_opposite_normal_contact.log"
+    }
+  ],
+  "files": {
+    "src/bezier_region.rs": "efc75b174a49db2523072ba3b5d2cb45ecd03eb23385baf4178fc11ce95de4d1"
+  },
+  "repositories": [
+    {
+      "name": "ExactCalculator",
+      "head": "7265aa3a922a7e7c0389dae4b26cca562aa777a6"
+    },
+    {
+      "name": "NURBS_BREP_kernel",
+      "head": "1aef37b12a92c993c2046f7886593bb0a555c414"
+    },
+    {
+      "name": "alumina-firmware",
+      "head": "bdee397d0b80841f16bf17e7bcd029b4feb2c212"
+    },
+    {
+      "name": "alumina-interface",
+      "head": "59a18251cdfe2312e40b194e857d85cd59b6087f"
+    },
+    {
+      "name": "citizen-builder",
+      "head": "c4230238e28fd88fc8156fceb2c43698e67c27ca"
+    },
+    {
+      "name": "crcalc",
+      "head": "4f398d699c9d498deb45520ea7ebb020627bc640"
+    },
+    {
+      "name": "csgrs",
+      "head": "d029e51b5d7324f0df785c5cd3cf2f6c7a3a2cca"
+    },
+    {
+      "name": "csgrs-ffi",
+      "head": "6057435ce4c0b37bac99aec29922b90e6652c575"
+    },
+    {
+      "name": "exactcore-hyper-comparison",
+      "head": "74b90b328f720997d38da80af5620f167b3b0619"
+    },
+    {
+      "name": "hyperbrep",
+      "head": "7874790863d210646338182e548d7eef1aa05c7c"
+    },
+    {
+      "name": "hypercircuit",
+      "head": "ad421497ce6e88fe936818ec198c8a1b779776c7"
+    },
+    {
+      "name": "hypercurve",
+      "head": "04b524382cdf80457c06f02c2bd2d0fa222d21b8"
+    },
+    {
+      "name": "hyperdrc",
+      "head": "ce49bba5d16f78ae8559a0eabe3e4478b72fd4bf"
+    },
+    {
+      "name": "hyperevolution",
+      "head": "99645e3cefb7eea3af86abc15db68f7fcb31ca95"
+    },
+    {
+      "name": "hypergraphics",
+      "head": "75219dede7a2387ab30c84664b1293ec71d736d2"
+    },
+    {
+      "name": "hyperlattice",
+      "head": "53427ce89f8c82c016e69a04e035787e2753adc8"
+    },
+    {
+      "name": "hyperlimit",
+      "head": "0b3226320a7ad6756c923d0d12cd52eb701f36ee"
+    },
+    {
+      "name": "hypermesh",
+      "head": "d9db5c45a0cecc2307aa66a6f7f1b0396350e4ee"
+    },
+    {
+      "name": "hyperpack",
+      "head": "34857861561d643d7578753b8f8314d0fbca2c5b"
+    },
+    {
+      "name": "hyperparts",
+      "head": "d8626e9d36256afc4a8eb0380ae94c9ed5619107"
+    },
+    {
+      "name": "hyperpath",
+      "head": "cfe50de3e370ea75a49b916eb70a7b19d31a58fa"
+    },
+    {
+      "name": "hyperphysics",
+      "head": "dcbc7cf3489a1299de16a946fd7f5e5658b6f15f"
+    },
+    {
+      "name": "hyperreal",
+      "head": "a1a8637b59bf036d9d68dbd34a0279df4626ab49"
+    },
+    {
+      "name": "hypersdf",
+      "head": "b37825900457420cb64da385b8525acab33e31c5"
+    },
+    {
+      "name": "hypersolve",
+      "head": "e6d6cf56f7c8d27aaa75699bf095feeadcca6aa0"
+    },
+    {
+      "name": "hypertri",
+      "head": "6a2092c066964f3b7528299a72ef0ed1af4b1ff0"
+    },
+    {
+      "name": "hypervoxel",
+      "head": "0486b1465a249a04973520a4138a39395ded2f23"
+    },
+    {
+      "name": "openscad-rs",
+      "head": "f21b39486a6b35403ee8af9e7fba7cb62a045a5a"
+    },
+    {
+      "name": "synaps-cad",
+      "head": "da8da78636e573c04f8a5c4cd8cc900162b781ba"
+    },
+    {
+      "name": "videos",
+      "head": "4209b983cc0d937981f22a6fa7df384303fcc8bd"
+    }
+  ],
+  "all_2044_inputs_match": true,
+  "all_owned_processes_reaped": true,
+  "full_production_qualification": "rational-polynomial-20260924-v8-qualification.json"
+}

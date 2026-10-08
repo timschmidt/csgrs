@@ -1,0 +1,547 @@
+--- a/src/bezier_offset.rs
++++ b/src/bezier_offset.rs
+@@ -26497,28 +26497,14 @@
+                 return Ok(Classification::Uncertain(reason));
+             }
+         };
+-        let (authority, start) =
+-            match embed_recursive_projective_point_source(authority, start, policy)? {
++        let (authority, [start, end]) =
++            match embed_recursive_projective_point_sources(authority, [start, end], policy)? {
+                 Classification::Decided(Some(embedded)) => embedded,
+                 Classification::Decided(None) => return Ok(Classification::Decided(None)),
+                 Classification::Uncertain(reason) => {
+                     return Ok(Classification::Uncertain(reason));
+                 }
+             };
+-        let (authority, end) =
+-            match embed_recursive_projective_point_source(authority, end, policy)? {
+-                Classification::Decided(Some(embedded)) => embedded,
+-                Classification::Decided(None) => return Ok(Classification::Decided(None)),
+-                Classification::Uncertain(reason) => {
+-                    return Ok(Classification::Uncertain(reason));
+-                }
+-            };
+-        let Some(start) = start.lifted_to(&authority.field) else {
+-            return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+-        };
+-        let Some(end) = end.lifted_to(&authority.field) else {
+-            return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+-        };
+         let start = match positive_recursive_projective_point(start)? {
+             Classification::Decided(point) => point,
+             Classification::Uncertain(reason) => {
+@@ -48203,18 +48189,35 @@
+                     if Arc::ptr_eq(&point.data, &self.data)
+             )
+         {
+-            let center = match self
+-                .data
+-                .source
+-                .semicircle()
+-                .center_point_evidence(policy)?
++            // Q = C + a(P-C) + b J(P-C) + T has no dependence on C
++            // when a=1 and b=0. Import only the points that survive that
++            // cancellation, preserving P's field and positive denominator.
++            let center = if self.data.radial_scale == Real::one()
++                && self.data.perpendicular_scale.zero_status() == ZeroKnowledge::Zero
+             {
+-                Classification::Decided(center) => center,
+-                Classification::Uncertain(reason) => {
+-                    return Ok(Classification::Uncertain(reason));
+-                }
+-            };
+-            let points = match recursive_projective_evidence_points(&[source, &center], policy)? {
++                None
++            } else {
++                match self
++                    .data
++                    .source
++                    .semicircle()
++                    .center_point_evidence(policy)?
++                {
++                    Classification::Decided(center) => Some(center),
++                    Classification::Uncertain(reason) => {
++                        return Ok(Classification::Uncertain(reason));
++                    }
++                }
++            };
++            let pair;
++            let inputs = match &center {
++                Some(center) => {
++                    pair = [source, center];
++                    pair.as_slice()
++                }
++                None => std::slice::from_ref(&source),
++            };
++            let points = match recursive_projective_evidence_points(inputs, policy)? {
+                 Classification::Decided(Some(points)) => points,
+                 Classification::Decided(None) => {
+                     return Ok(Classification::Decided(None));
+@@ -48223,33 +48226,42 @@
+                     return Ok(Classification::Uncertain(reason));
+                 }
+             };
+-            let [source, center]: [BezierRecursiveQuadraticProjectivePoint2; 2] = points
+-                .try_into()
+-                .expect("a recursive derived point retains its source and center");
++            let mut points = points.into_iter();
++            let source = points.next().expect("a derived point retains its source");
+             let source = match positive_recursive_projective_point(source)? {
+                 Classification::Decided(point) => point,
+                 Classification::Uncertain(reason) => {
+                     return Ok(Classification::Uncertain(reason));
+                 }
+             };
+-            let center = match positive_recursive_projective_point(center)? {
+-                Classification::Decided(point) => point,
+-                Classification::Uncertain(reason) => {
+-                    return Ok(Classification::Uncertain(reason));
+-                }
+-            };
+-            return Ok(
+-                match source.rotated_radial_image(
++            let transformed = if let Some(center) = points.next() {
++                let center = match positive_recursive_projective_point(center)? {
++                    Classification::Decided(point) => point,
++                    Classification::Uncertain(reason) => {
++                        return Ok(Classification::Uncertain(reason));
++                    }
++                };
++                source.rotated_radial_image(
+                     &center,
+                     &self.data.radial_scale,
+                     &self.data.perpendicular_scale,
+                     &self.data.translation_x,
+                     &self.data.translation_y,
+-                ) {
+-                    Some(point) => Classification::Decided(Some(point)),
+-                    None => Classification::Uncertain(UncertaintyReason::Unsupported),
+-                },
+-            );
++                )
++            } else {
++                source.transformed_affine(
++                    &Real::one(),
++                    &Real::zero(),
++                    &Real::zero(),
++                    &Real::one(),
++                    &self.data.translation_x,
++                    &self.data.translation_y,
++                )
++            };
++            return Ok(match transformed {
++                Some(point) => Classification::Decided(Some(point)),
++                None => Classification::Uncertain(UncertaintyReason::Unsupported),
++            });
+         }
+         let Some((map, contact, first)) = self.data.source.coincident_pair_map_contact() else {
+             return Ok(Classification::Decided(None));
+@@ -63104,57 +63116,6 @@
+         })))
+     }
+ 
+-    /// Joins one correlated point field to this frame without constructing a
+-    /// primitive element. Shared ancestors merely lift zero coefficients;
+-    /// divergent descendants append their existing positive generators.
+-    fn joined_with_point(
+-        self,
+-        point: BezierRecursiveQuadraticProjectivePoint2,
+-        policy: &CurveContext,
+-    ) -> CurveResult<Classification<Option<(Self, BezierRecursiveQuadraticProjectivePoint2)>>> {
+-        if let Some(point) = point.lifted_to(&self.field) {
+-            return Ok(Classification::Decided(Some((self, point))));
+-        }
+-        let point_field = point.denominator.field();
+-        if let (Some(center), Some(support_center)) = (
+-            self.center.lifted_to(&point_field),
+-            self.support_center.lifted_to(&point_field),
+-        ) {
+-            return Ok(Classification::Decided(Some((
+-                Self {
+-                    field: point_field,
+-                    center,
+-                    support_center,
+-                    normal_denominator: self.normal_denominator,
+-                },
+-                point,
+-            ))));
+-        }
+-        let (field, embeddings) = match self.field.joined_with(&point_field, policy)? {
+-            Classification::Decided(Some(joined)) => joined,
+-            Classification::Decided(None) => return Ok(Classification::Decided(None)),
+-            Classification::Uncertain(reason) => {
+-                return Ok(Classification::Uncertain(reason));
+-            }
+-        };
+-        let (Some(center), Some(support_center), Some(point)) = (
+-            self.center.lifted_to(&field),
+-            self.support_center.lifted_to(&field),
+-            point.embedded_to(&field, &embeddings),
+-        ) else {
+-            return Ok(Classification::Decided(None));
+-        };
+-        Ok(Classification::Decided(Some((
+-            Self {
+-                center,
+-                support_center,
+-                field: field.clone(),
+-                normal_denominator: self.normal_denominator,
+-            },
+-            point,
+-        ))))
+-    }
+-
+     fn lifted_to(&self, field: &BezierRecursiveQuadraticField2) -> Option<Self> {
+         Some(Self {
+             field: field.clone(),
+@@ -63338,62 +63299,96 @@
+     }
+ }
+ 
+-fn embed_recursive_projective_point_source(
++/// Imports all participating points together. A base-field merge must rebase
++/// the frame and every earlier point, not just the newest incoming point.
++fn embed_recursive_projective_point_sources<const N: usize>(
+     authority: BezierRecursiveCircleFrame2,
+-    source: BezierRecursiveProjectivePointSource2,
++    sources: [BezierRecursiveProjectivePointSource2; N],
+     policy: &CurveContext,
+ ) -> CurveResult<
+     Classification<
+         Option<(
+             BezierRecursiveCircleFrame2,
+-            BezierRecursiveQuadraticProjectivePoint2,
++            [BezierRecursiveQuadraticProjectivePoint2; N],
+         )>,
+     >,
+ > {
+-    if let Some(point) = recursive_projective_point_source_in_field(&authority.field, &source) {
+-        return Ok(Classification::Decided(Some((authority, point))));
+-    }
+-    let point = match source {
+-        BezierRecursiveProjectivePointSource2::Exact(_) => {
+-            return Ok(Classification::Decided(None));
+-        }
+-        BezierRecursiveProjectivePointSource2::Algebraic(algebraic) => {
+-            let Some(point) = recursive_projective_algebraic_point_source(&algebraic) else {
++    let mut field = authority.field;
++    let mut represented = Vec::with_capacity(N + 2);
++    represented.extend([authority.center, authority.support_center]);
++    for source in sources {
++        if let Some(point) = recursive_projective_point_source_in_field(&field, &source) {
++            represented.push(point);
++            continue;
++        }
++        let point = match source {
++            BezierRecursiveProjectivePointSource2::Exact(_) => {
+                 return Ok(Classification::Decided(None));
+-            };
+-            point
+-        }
+-        BezierRecursiveProjectivePointSource2::Recursive(point) => point,
+-    };
+-    match authority.clone().joined_with_point(point.clone(), policy)? {
+-        Classification::Decided(Some(joined)) => {
+-            return Ok(Classification::Decided(Some(joined)));
+-        }
+-        Classification::Decided(None) => {}
+-        Classification::Uncertain(reason) => {
+-            return Ok(Classification::Uncertain(reason));
+-        }
+-    }
+-    let represented = [authority.center.clone(), authority.support_center.clone()];
+-    match recursive_merge_projective_point_fields(&authority.field, &represented, &point, policy)? {
+-        Classification::Decided(Some((field, represented, point))) => {
+-            let [center, support_center]: [BezierRecursiveQuadraticProjectivePoint2; 2] =
+-                represented
+-                    .try_into()
+-                    .expect("a selected-radial frame retains two projective points");
+-            Ok(Classification::Decided(Some((
+-                BezierRecursiveCircleFrame2 {
+-                    field,
+-                    center,
+-                    support_center,
+-                    normal_denominator: authority.normal_denominator,
+-                },
+-                point,
+-            ))))
+-        }
+-        Classification::Decided(None) => Ok(Classification::Decided(None)),
+-        Classification::Uncertain(reason) => Ok(Classification::Uncertain(reason)),
+-    }
++            }
++            BezierRecursiveProjectivePointSource2::Algebraic(algebraic) => {
++                let Some(point) = recursive_projective_algebraic_point_source(&algebraic) else {
++                    return Ok(Classification::Decided(None));
++                };
++                point
++            }
++            BezierRecursiveProjectivePointSource2::Recursive(point) => point,
++        };
++        let point_field = point.denominator.field();
++        if let Some(lifted) = represented
++            .iter()
++            .map(|point| point.lifted_to(&point_field))
++            .collect::<Option<Vec<_>>>()
++        {
++            field = point_field;
++            represented = lifted;
++            represented.push(point);
++            continue;
++        }
++        let joined = match field.joined_with(&point_field, policy)? {
++            Classification::Decided(joined) => joined,
++            Classification::Uncertain(reason) => {
++                return Ok(Classification::Uncertain(reason));
++            }
++        };
++        if let Some((joined, embeddings)) = joined
++            && let Some(lifted) = represented
++                .iter()
++                .map(|point| point.lifted_to(&joined))
++                .collect::<Option<Vec<_>>>()
++            && let Some(point) = point.embedded_to(&joined, &embeddings)
++        {
++            field = joined;
++            represented = lifted;
++            represented.push(point);
++            continue;
++        }
++        match recursive_merge_projective_point_fields(&field, &represented, &point, policy)? {
++            Classification::Decided(Some((joined, lifted, point))) => {
++                field = joined;
++                represented = lifted;
++                represented.push(point);
++            }
++            Classification::Decided(None) => return Ok(Classification::Decided(None)),
++            Classification::Uncertain(reason) => {
++                return Ok(Classification::Uncertain(reason));
++            }
++        }
++    }
++    let points = represented.split_off(2).try_into().unwrap_or_else(|_| {
++        unreachable!("a frame import preserves the number of participating points")
++    });
++    let [center, support_center] = represented
++        .try_into()
++        .unwrap_or_else(|_| unreachable!("a circle frame retains its center and radial anchor"));
++    Ok(Classification::Decided(Some((
++        BezierRecursiveCircleFrame2 {
++            field,
++            center,
++            support_center,
++            normal_denominator: authority.normal_denominator,
++        },
++        points,
++    ))))
+ }
+ 
+ /// Embeds an exact, singly selected, or ancestral recursive point in an
+@@ -99762,27 +99757,14 @@
+             return Ok(Some(Classification::Uncertain(reason)));
+         }
+     };
+-    let (authority, first) =
+-        match embed_recursive_projective_point_source(authority, first, policy)? {
++    let (authority, [first, second]) =
++        match embed_recursive_projective_point_sources(authority, [first, second], policy)? {
+             Classification::Decided(Some(embedded)) => embedded,
+             Classification::Decided(None) => return Ok(None),
+             Classification::Uncertain(reason) => {
+                 return Ok(Some(Classification::Uncertain(reason)));
+             }
+         };
+-    let (authority, second) =
+-        match embed_recursive_projective_point_source(authority, second, policy)? {
+-            Classification::Decided(Some(embedded)) => embedded,
+-            Classification::Decided(None) => return Ok(None),
+-            Classification::Uncertain(reason) => {
+-                return Ok(Some(Classification::Uncertain(reason)));
+-            }
+-        };
+-    let Some(first) = first.lifted_to(&authority.field) else {
+-        return Ok(Some(Classification::Uncertain(
+-            UncertaintyReason::Unsupported,
+-        )));
+-    };
+     let Some((first_x, first_y, _)) = first.difference_numerators(&authority.center) else {
+         return Ok(Some(Classification::Uncertain(
+             UncertaintyReason::Unsupported,
+@@ -136904,6 +136886,49 @@
+             panic!("the selected rational quarter must retain one overlap");
+         };
+         (circle, quarter, overlap.clone())
++    }
++
++    #[test]
++    fn translated_selected_contact_import_omits_the_unused_center() {
++        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
++            let (_, quarter, overlap) = selected_fiber_rational_quarter_overlap(&policy);
++            let point = overlap
++                .map
++                .contact(
++                    overlap.other_end.clone(),
++                    BezierAlgebraicCuspSemicircleContactLocation2::Interior,
++                    RealSign::Zero,
++                )
++                .point_evidence();
++            let CurvePoint2(CurvePointData2::AlgebraicCuspChordDerived(point)) = point else {
++                panic!("the selected contact must retain its mapped source");
++            };
++            for (tx, ty) in [(Real::zero(), Real::zero()), (Real::pi(), Real::from(-2))] {
++                let translated = point.translated(&tx, &ty);
++                let imported = policy
++                    .bounded_exact_predicate_pass(|| translated.recursive_projective_point(&policy))
++                    .unwrap();
++                let Classification::Decided(Some(imported)) = imported else {
++                    panic!("a translated source must import without joining its unused center");
++                };
++                let (base, extensions) = imported.denominator.field().base_and_extension_path();
++                assert_eq!(base.sources.len(), 1);
++                assert!(extensions.is_empty());
++                assert_eq!(base.sources[0].exact_point_witness(), Some(&Real::one()));
++                for (coordinate, expected) in [
++                    (&imported.x, quarter.end().x() + &tx),
++                    (&imported.y, quarter.end().y() + &ty),
++                ] {
++                    let residual = coordinate
++                        .subtract(&imported.denominator.scale(&expected).unwrap())
++                        .unwrap();
++                    assert_eq!(
++                        residual.sign(&CurveContext::STRICT).unwrap(),
++                        Classification::Decided(RealSign::Zero),
++                    );
++                }
++            }
++        }
+     }
+ 
+     fn check_selected_fiber_rational_overlap(exact_center: bool) {
+@@ -166034,6 +166059,107 @@
+     }
+ 
+     #[test]
++    fn selected_frame_import_preserves_every_independent_point() {
++        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
++            for denominators in [[2, 3], [3, 2]] {
++                let origin = CurvePoint2::from(Point2::from_values(0, 0));
++                let anchor = CurvePoint2::from(Point2::from_values(1, 0));
++                let Classification::Decided(Some(authority)) =
++                    BezierRecursiveCircleFrame2::from_point_evidence(
++                        &origin,
++                        &anchor,
++                        Real::one(),
++                        &policy,
++                    )
++                    .unwrap()
++                else {
++                    panic!("the represented frame must import");
++                };
++                let sources = denominators.map(|denominator| {
++                    let square = (Real::one() / Real::from(denominator)).unwrap();
++                    let parameter = algebraic_parameter(vec![-square, Real::zero(), Real::one()]);
++                    let one =
++                        DenseTensorPolynomial::from_axis_polynomial(1, 0, &[Real::one()]).unwrap();
++                    let field = BezierRecursiveQuadraticField2::base(
++                        vec![bezier_parameter_root_representation(&parameter)],
++                        one.clone(),
++                        one,
++                    )
++                    .unwrap();
++                    let BezierRecursiveQuadraticField2::Base(base) = &field else {
++                        unreachable!("an independent point begins at its base");
++                    };
++                    let axis = DenseTensorPolynomial::from_axis_polynomial(
++                        1,
++                        0,
++                        &[Real::zero(), Real::one()],
++                    )
++                    .unwrap();
++                    BezierRecursiveProjectivePointSource2::Recursive(
++                        BezierRecursiveQuadraticProjectivePoint2 {
++                            x: recursive_quadratic_rational_value(base, axis).unwrap(),
++                            y: field.constant(Real::from(denominator)).unwrap(),
++                            denominator: field.constant(Real::one()).unwrap(),
++                        },
++                    )
++                });
++                let result = policy
++                    .bounded_exact_predicate_pass(|| {
++                        embed_recursive_projective_point_sources(authority, sources, &policy)
++                    })
++                    .unwrap();
++                let Classification::Decided(Some((authority, points))) = result else {
++                    panic!("all imported points must survive subsequent base changes");
++                };
++                for (point, denominator) in points.iter().zip(denominators) {
++                    assert!(authority.field.same_field(&point.denominator.field()));
++                    let square = (Real::one() / Real::from(denominator)).unwrap();
++                    let residual = point
++                        .x
++                        .square()
++                        .unwrap()
++                        .subtract(&point.denominator.square().unwrap().scale(&square).unwrap())
++                        .unwrap();
++                    assert_eq!(
++                        residual.sign(&CurveContext::STRICT).unwrap(),
++                        Classification::Decided(RealSign::Zero)
++                    );
++                    assert_eq!(
++                        point.x.sign(&CurveContext::STRICT).unwrap(),
++                        Classification::Decided(RealSign::Positive)
++                    );
++                    let residual = point
++                        .y
++                        .subtract(&point.denominator.scale(&Real::from(denominator)).unwrap())
++                        .unwrap();
++                    assert_eq!(
++                        residual.sign(&CurveContext::STRICT).unwrap(),
++                        Classification::Decided(RealSign::Zero)
++                    );
++                }
++                for (point, x) in [
++                    (&authority.center, Real::zero()),
++                    (&authority.support_center, Real::one()),
++                ] {
++                    assert!(authority.field.same_field(&point.denominator.field()));
++                    assert_eq!(
++                        point.y.sign(&CurveContext::STRICT).unwrap(),
++                        Classification::Decided(RealSign::Zero)
++                    );
++                    let residual = point
++                        .x
++                        .subtract(&point.denominator.scale(&x).unwrap())
++                        .unwrap();
++                    assert_eq!(
++                        residual.sign(&CurveContext::STRICT).unwrap(),
++                        Classification::Decided(RealSign::Zero)
++                    );
++                }
++            }
++        }
++    }
++
++    #[test]
+     fn selected_radial_frame_joins_an_equivalent_recursive_point_base() {
+         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+             let circle = independent_pair_radial_unit_circle(&policy);
+@@ -166058,14 +166184,14 @@
+                 .rebased_to_equivalent_base(independent_base)
+                 .expect("the retained point must replay over the equivalent base");
+             assert!(!authority.field.same_field(&point.denominator.field()));
+-            let result = embed_recursive_projective_point_source(
++            let result = embed_recursive_projective_point_sources(
+                 authority,
+-                BezierRecursiveProjectivePointSource2::Recursive(point),
++                [BezierRecursiveProjectivePointSource2::Recursive(point)],
+                 &policy,
+             )
+             .unwrap();
+-            let Classification::Decided(Some((authority, point))) = result else {
+-                panic!("equivalent recursive bases must join exactly: {result:?}");
++            let Classification::Decided(Some((authority, [point]))) = result else {
++                panic!("equivalent recursive bases must join exactly");
+             };
+             let Some((dx, dy, _)) = point.difference_numerators(&authority.center) else {
+                 panic!("the merged points must share one recursive field");

@@ -1,0 +1,37 @@
+{
+  "checks": [
+    {
+      "label": "fmt",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustfmt",
+        "--edition",
+        "2024",
+        "--check",
+        "src/bezier_offset.rs"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 2.3282644719583914,
+      "log": "represented-circle-incidence-20260924-v1-fmt.log"
+    }
+  ],
+  "cases": [
+    {
+      "label": "represented_circle_incidence_replays_retained_similarity_points",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/represented-circle-incidence-20260924-v1-libtest",
+        "--exact",
+        "bezier_offset::conversion_tests::represented_circle_incidence_replays_retained_similarity_points",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 101,
+      "elapsed_seconds": 0.2814848950365558,
+      "log": "represented-circle-incidence-20260924-v1-represented_circle_incidence_replays_retained_similarity_points.log"
+    }
+  ],
+  "all_processes_reaped": true,
+  "binary_sha256": "8fce8a938391262db8d037b40f99abccc6d44a253ebbe5616f9336a26340b856",
+  "all_sources_unchanged": true
+}

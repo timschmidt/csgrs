@@ -1,0 +1,19 @@
+{
+  "tag": "complex-product-v2-memcheck-candidate",
+  "started": "2026-09-09T22:02:14.293Z",
+  "finished": "2026-09-09T22:03:24.894Z",
+  "elapsedSeconds": 70.599161211,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "valgrind",
+  "args": [
+    "--vgdb=no",
+    "--tool=memcheck",
+    "--error-exitcode=97",
+    "--leak-check=full",
+    "--show-leak-kinds=all",
+    "--errors-for-leak-kinds=definite,indirect,possible",
+    "/tmp/calcium-complex-product-v2.jy5gpf/candidate-check"
+  ],
+  "code": 0,
+  "signal": null
+}

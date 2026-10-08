@@ -1,0 +1,16 @@
+{
+  "name": "bezier_region::tests::nonrepresented_chord_and_retained_rational_arc_share_the_fillet_kernel",
+  "command": [
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/single-loop-corner-20260923-attempt1-libraries/parent-libtest",
+    "--exact",
+    "bezier_region::tests::nonrepresented_chord_and_retained_rational_arc_share_the_fillet_kernel",
+    "--test-threads=1",
+    "--nocapture",
+    "--color",
+    "never"
+  ],
+  "returncode": 101,
+  "elapsed_seconds": 0.1652999910293147,
+  "binary_sha256": "08949cda980234983841e1696c33c6ccd16d2e2ff642ece106c6a09d6445c752",
+  "log": "corner-normalization-20260923-parent-replay2-nonrepresented_chord_and_retained_rational_arc_share_the_fillet_kernel.log"
+}

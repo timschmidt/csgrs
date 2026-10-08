@@ -1,0 +1,55 @@
+\doxysubsection{Validated\+Real Class Reference}
+\hypertarget{classAriadne_1_1ValidatedReal}{}\label{classAriadne_1_1ValidatedReal}\index{ValidatedReal@{ValidatedReal}}
+
+
+{\ttfamily \#include $<$validated\+\_\+real.\+hpp$>$}
+
+
+
+\doxysubsubsection{Description}
+A generic class representing rigorous bounds on a real number. 
+
+\begin{DoxySeeAlso}{See also}
+\doxylink{classAriadne_1_1Real}{Real} 
+\end{DoxySeeAlso}
+\begin{Desc}
+\item[Examples]\par
+\mbox{\hyperlink{tutorials_2rigorous_numerics_2rigorous_numerics_tutorial_8cpp-example}{tutorials/rigorous\+\_\+numerics/rigorous\+\_\+numerics\+\_\+tutorial.\+cpp}}.\end{Desc}
+\doxysubsubsubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+Dyadic\+Bounds \mbox{\hyperlink{classAriadne_1_1ValidatedReal_a2b75898ae43fc3fe0c3c3356818edd2b}{get}} () const
+\begin{DoxyCompactList}\small\item\em Get dyadic bounds for the number. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1ValidatedReal_ad3340b32d1e442edd201bfcfa1055460}\label{classAriadne_1_1ValidatedReal_ad3340b32d1e442edd201bfcfa1055460} 
+Float\+DPBounds {\bfseries get} (\mbox{\hyperlink{classAriadne_1_1DoublePrecision}{Double\+Precision}}) const
+\begin{DoxyCompactList}\small\item\em Get the bounds for the number, representing in double precision. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1ValidatedReal_a1913534d85422b1c9157fb720bde753d}\label{classAriadne_1_1ValidatedReal_a1913534d85422b1c9157fb720bde753d} 
+\mbox{\hyperlink{classAriadne_1_1Bounds}{Float\+MPBounds}} {\bfseries get} (\mbox{\hyperlink{classAriadne_1_1MultiplePrecision}{Multiple\+Precision}} pr) const
+\begin{DoxyCompactList}\small\item\em Get the bounds for the number, representing to precision {\itshape pr}. Note that increasing the accuracy typically does not yield arbitrarily tight bounds, as the object is already an approximation to finite accuracy. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsubsection*{Friends}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1ValidatedReal_ab083368a00a4a8ad93a731c5be40ddf9}\label{classAriadne_1_1ValidatedReal_ab083368a00a4a8ad93a731c5be40ddf9} 
+\mbox{\hyperlink{namespaceAriadne_acbb98ddc4385af4599070e65a1a47ec1}{Output\+Stream}} \& {\bfseries operator$<$$<$} (\mbox{\hyperlink{namespaceAriadne_acbb98ddc4385af4599070e65a1a47ec1}{Output\+Stream}} \&os, \mbox{\hyperlink{classAriadne_1_1ValidatedReal}{Validated\+Real}} const \&vr)
+\begin{DoxyCompactList}\small\item\em Write to an output stream. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\label{doc-func-members}
+\Hypertarget{classAriadne_1_1ValidatedReal_doc-func-members}
+\doxysubsubsection{Member Function Documentation}
+\Hypertarget{classAriadne_1_1ValidatedReal_a2b75898ae43fc3fe0c3c3356818edd2b}\index{ValidatedReal@{ValidatedReal}!get@{get}}
+\index{get@{get}!ValidatedReal@{ValidatedReal}}
+\doxyparagraph{\texorpdfstring{get()}{get()}}
+{\footnotesize\ttfamily \label{classAriadne_1_1ValidatedReal_a2b75898ae43fc3fe0c3c3356818edd2b} 
+Dyadic\+Bounds get (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption}) const}
+
+
+
+Get dyadic bounds for the number. 
+
+It is not always clear how this function can be implemented, and it may be removed or modified in future versions. 
+
+The documentation for this class was generated from the following files\+:\begin{DoxyCompactItemize}
+\item 
+source/numeric/\mbox{\hyperlink{validated__real_8hpp}{validated\+\_\+real.\+hpp}}\item 
+source/numeric/\mbox{\hyperlink{real_8cpp}{real.\+cpp}}\end{DoxyCompactItemize}

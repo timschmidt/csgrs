@@ -1,0 +1,110 @@
+{
+  "date": "2026-10-08",
+  "scope": "Current native comparison harness and pinned archive import integrity. Benchmark --test is execution coverage, not new timing or memory measurements. Historical numerical claims are not revalidated by the import.",
+  "toolchain": "rustc 1.98.1 (48a229cea 2026-09-01)",
+  "oracle_inputs": "../exactcore-inputs.json",
+  "checks": [
+    {
+      "name": "tests",
+      "command": "cargo test --offline --locked --all-features -- --test-threads=1",
+      "exit_code": 0,
+      "log": "tests.log",
+      "sha256": "36193b49491e17557fc9124e0d7a7d49882d8203d09235269ab8ab28efa846bf",
+      "tests": {
+        "passed": 78,
+        "failed": 0,
+        "ignored": 19
+      }
+    },
+    {
+      "name": "clippy",
+      "command": "cargo clippy --offline --locked --all-features --all-targets -- -D warnings",
+      "exit_code": 0,
+      "log": "clippy.log",
+      "sha256": "a5f4c585ee974ca44916ac30a98bbc189e067a7e0a6bc6d2e8d6bc525be724af"
+    },
+    {
+      "name": "fmt",
+      "command": "cargo fmt -- --check",
+      "exit_code": 0,
+      "log": "fmt.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "benchmark-smoke",
+      "command": "cargo bench --offline --locked --features curve,mesh,path -- --test",
+      "exit_code": 0,
+      "log": "benchmark-smoke.log",
+      "sha256": "0f09c57e8ec2b08f17dd20a67066c08952fb9adef3a8a2b7dd84a0199c3af84c",
+      "tests": {
+        "passed": 3,
+        "failed": 0,
+        "ignored": 0
+      },
+      "criterion_fixture_runs": 480
+    },
+    {
+      "name": "migration-tests",
+      "command": "python3 -B scripts/test-consolidate-audits.py",
+      "exit_code": 0,
+      "log": "migration-tests.log",
+      "sha256": "fc23540c8545d4075fe2f0420accd022e74e5566176c3bd4c597964ff02c2e14"
+    },
+    {
+      "name": "import-tests",
+      "command": "python3 -B scripts/test-verify-import.py",
+      "exit_code": 0,
+      "log": "import-tests.log",
+      "sha256": "baf49b59538192f3e136ca0404cac516ecb8dd2fe5ba1416604056f3080fa49c"
+    },
+    {
+      "name": "workflow-security",
+      "command": "zizmor --pedantic --strict-collection . (from repository root)",
+      "exit_code": 0,
+      "log": "workflow-security.log",
+      "sha256": "2d66fb167ad74419020130f3ecdb508129c111032d13afa4526fc3892fffe4f9"
+    },
+    {
+      "name": "minimal-clippy",
+      "command": "cargo clippy --offline --locked --no-default-features --all-targets -- -D warnings",
+      "exit_code": 0,
+      "log": "minimal-clippy.log",
+      "sha256": "97a0b01e207a250294ab5c899fb1df5e324c213d3cc214fc3cb8a3b393a7bf1a"
+    },
+    {
+      "name": "minimal-tests",
+      "command": "cargo test --offline --locked --no-default-features -- --test-threads=1",
+      "exit_code": 0,
+      "log": "minimal-tests.log",
+      "sha256": "fa9342b661a5c98a358e5bc4012a0221204b1fef1ac01b1010f2878aefc669f2",
+      "tests": {
+        "passed": 53,
+        "failed": 0,
+        "ignored": 13
+      }
+    },
+    {
+      "name": "docs",
+      "command": "RUSTDOCFLAGS='-D warnings' cargo doc --offline --locked --all-features --no-deps",
+      "exit_code": 0,
+      "log": "docs.log",
+      "sha256": "df8e72a47efbbf662435bc753c55bc96d5d22492a9135ed11ec19737a642ddab"
+    }
+  ],
+  "remaining": [
+    "Historical campaign re-execution and claim-by-claim reconciliation.",
+    "Instrumented coverage, ASan/fuzz/lexicase campaigns, and proof obligations.",
+    "19 known ignored comparison tests remain excluded from the passing all-feature count.",
+    "New matched timing and memory campaigns; prior reports remain historical."
+  ],
+  "integrity_checks": [
+    {
+      "command": "python3 scripts/verify-import.py",
+      "result": "import-integrity.json"
+    },
+    {
+      "command": "python3 scripts/verify-import.py --staged",
+      "result": "staged-integrity.json"
+    }
+  ]
+}

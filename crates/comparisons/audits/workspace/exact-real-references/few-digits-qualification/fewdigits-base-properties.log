@@ -1,0 +1,4 @@
++++ OK, passed 1000 tests; 111 discarded.
++++ OK, passed 1000 tests.
+*** Failed! Exception: 'arithmetic overflow' (after 1 test):
+0

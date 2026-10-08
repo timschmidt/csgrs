@@ -1,0 +1,7 @@
+Replay exact parallel contacts at constrained fillet centers
+
+Resolve fixed-center fillets against direct, retained, and selected parallel sources while preserving all contact preimages and original normal branches. Reuse authored parameter transport and incidence evidence, and exclude contradictory native center supports before general elimination.
+
+Check source regularity at isolated point-incidence candidates; unrelated stationary parameters no longer block regular contacts. Keep Boundary uncertainty at stationary candidates and retain global regularity for whole-domain incidence.
+
+Validation: 131 selected release tests across seven binaries; both all-target Clippy feature configurations, formatting, editing fuzz, documentation, and Hyperbrep checks. The two known extended-fillet re-offset timeouts remain unresolved and were excluded.

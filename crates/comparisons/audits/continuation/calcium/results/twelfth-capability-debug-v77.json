@@ -1,0 +1,19 @@
+{
+  "tag": "twelfth-capability-debug-v77",
+  "started": "2026-09-11T22:53:23.834Z",
+  "finished": "2026-09-11T22:53:26.486Z",
+  "elapsedSeconds": 2.6505748060000003,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/twelfth-capability-v77",
+  "command": "env",
+  "args": [
+    "CARGO_TARGET_DIR=/tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse",
+    "CARGO_INCREMENTAL=0",
+    "CARGO_PROFILE_DEV_DEBUG=0",
+    "CARGO_BUILD_JOBS=2",
+    "cargo",
+    "run",
+    "--offline"
+  ],
+  "code": 0,
+  "signal": null
+}

@@ -1,0 +1,24 @@
+   Compiling hyperreal v0.13.1 (/home/tim/Documents/GitHub/workspace/hyperreal)
+    Finished `release` profile [optimized] target(s) in 6.88s
+     Running `target/release/examples/allocation_profile 64`
+representation,iterations,allocations,deallocations,reallocations,allocated_bytes,deallocated_bytes,peak_live_delta_bytes,retained_bytes
+One,64,514,512,0,41072,40960,752,112
+Pi,64,709,704,0,36824,36352,880,472
+PiPow,64,1408,1408,0,75264,75264,656,0
+PiInv,64,768,768,0,40448,40448,408,0
+PiExp,64,1219,1216,0,65144,65024,776,120
+PiInvExp,64,1216,1216,0,64512,64512,648,0
+PiSqrt,64,3790,3778,128,166792,165904,1704,888
+ConstProduct,64,2816,2816,0,141312,141312,1096,0
+ConstOffset,64,832,832,0,38400,38400,360,0
+ConstProductSqrt,64,4544,4544,0,219648,219648,1448,0
+Sqrt,64,2176,2176,128,74240,74240,568,0
+Exp,64,1796,1792,0,81192,80896,880,296
+Ln,64,768,768,0,37888,37888,408,0
+LnAffine,64,2304,2304,0,106496,106496,728,0
+LnProduct,64,1472,1472,0,68608,68608,664,0
+Log10,64,1920,1920,64,85504,85504,800,0
+Log2,64,1920,1920,64,87552,87552,808,0
+SinPi,64,4992,4992,0,193536,193536,1000,0
+TanPi,64,13120,13120,256,432640,432640,1000,0
+Irrational,64,3712,3712,0,130048,130048,480,0

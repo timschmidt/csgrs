@@ -1,0 +1,5 @@
+orientation: construction Certified
+orientation: area Ok(CurveOutcome { value: Decided(None), certainty: Certified })
+orientation: filled side Ok(CurveOutcome { value: Uncertain(Unsupported), certainty: Certified })
+orientation: offset: Err(Blocked(ExactCurveBlocker { operation: Offset, family: Line, reason: Unsupported }))
+orientation: supplied side Ok(CurveOutcome { value: Decided([false]), certainty: Certified })

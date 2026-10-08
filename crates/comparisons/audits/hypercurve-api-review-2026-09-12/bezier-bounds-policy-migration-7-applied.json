@@ -1,0 +1,26 @@
+[
+  {
+    "file": "hypercurve/src/bezier_region.rs",
+    "before_sha256": "25182f01ec343c3ad65167e98da8e6f2e4f62cbeac2e12683bf0766da96ca729",
+    "after_sha256": "f2443917ab4afdaca2018f3e691599db98a2adf6aec159d1c5cbd77d46c74802",
+    "deletions": [
+      {
+        "byte_start": 740407,
+        "byte_end": 740413,
+        "old": "policy"
+      }
+    ]
+  },
+  {
+    "file": "hypercurve/src/bezier_retained_measure.rs",
+    "before_sha256": "3f3da92fd4fcfe8dd6a54ae047763528e5643f2172c6ba7e95459fd700aec22b",
+    "after_sha256": "7dc625484ee4d1d7aaf7a1ed9e6e1958f9651407fec94416a5c3138351a8a109",
+    "deletions": [
+      {
+        "byte_start": 13612,
+        "byte_end": 13618,
+        "old": "policy"
+      }
+    ]
+  }
+]

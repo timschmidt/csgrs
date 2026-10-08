@@ -1,0 +1,23 @@
+{
+  "tag": "complex-product-build-candidate",
+  "started": "2026-09-09T21:31:08.208Z",
+  "finished": "2026-09-09T21:31:23.316Z",
+  "elapsedSeconds": 15.105296884000001,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "env",
+  "args": [
+    "CARGO_TARGET_DIR=/tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse",
+    "CARGO_INCREMENTAL=0",
+    "CARGO_PROFILE_DEV_DEBUG=0",
+    "CARGO_BUILD_JOBS=2",
+    "cargo",
+    "build",
+    "--release",
+    "--offline",
+    "--manifest-path",
+    "complex-product-app-candidate/Cargo.toml",
+    "--bins"
+  ],
+  "code": 0,
+  "signal": null
+}

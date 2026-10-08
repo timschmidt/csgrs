@@ -1,0 +1,19 @@
+{
+  "tag": "hyper-proof-frozen-release",
+  "started": "2026-09-08T08:35:54.628Z",
+  "finished": "2026-09-08T08:35:54.658Z",
+  "elapsedSeconds": 0.027638818,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison",
+  "command": "cargo",
+  "args": [
+    "run",
+    "--manifest-path",
+    "audits/continuation/calcium/hyper-probe/Cargo.toml",
+    "--release",
+    "--offline",
+    "--target-dir",
+    "/tmp/calcium-hyper-proof-target"
+  ],
+  "code": 101,
+  "signal": null
+}

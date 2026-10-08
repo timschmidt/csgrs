@@ -1,0 +1,13 @@
+{
+  "tag": "point-retained-environment-v67",
+  "started": "2026-09-11T03:28:55.318Z",
+  "finished": "2026-09-11T03:28:55.473Z",
+  "elapsedSeconds": 0.15299246,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "node",
+  "args": [
+    "point-qualified-environment.mjs"
+  ],
+  "code": 0,
+  "signal": null
+}

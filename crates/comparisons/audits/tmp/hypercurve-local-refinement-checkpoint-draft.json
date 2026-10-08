@@ -1,0 +1,489 @@
+{
+  "schema_version": 1,
+  "title": "Preserve local-field selected-root ownership and exact-point metadata",
+  "status": "two native exactness fixes committed; native and downstream gates passed; matched comparisons running",
+  "commits": {
+    "hypersolve_baseline": "1841884f175254460cf15facd83f8c4947315ff5",
+    "hypersolve_candidate": "8bd17304631bdea0f9a68bde58e98cfac1d8d961",
+    "hypercurve": "9e2796c"
+  },
+  "change": {
+    "production_line_delta": -8,
+    "test_line_delta": 111,
+    "total_rust_line_delta": 103,
+    "public_api_changes": false,
+    "new_cache_fields": 0,
+    "summary": "Only the included upper endpoint may supply a new point witness. Excluded lower-endpoint roots use the existing square-free/Sturm refiner; known exact points retain authority. Fast and fallback refinements share one metadata/validation update. Rational kind requires an exact rational payload. Midpoints use Real::average_pair.",
+    "source_hashes": {
+      "hashes": [
+        {
+          "path": "hypersolve/src/algebraic_fiber.rs",
+          "current": "94e596ff79ad43529c44370b1f2804cf40b5da3540e34a8c3b4b5e6d25a2534d",
+          "frozen": "f24ee42241f221d2229e9332d510e63d50c280d251238d2de19f4304ad42a5e4"
+        },
+        {
+          "path": "hypersolve/src/root_isolation.rs",
+          "current": "25ef14f3f50bdbf713dd5c353a53da75f11aba90da5601d5574f4806c5476cbf",
+          "frozen": "25ef14f3f50bdbf713dd5c353a53da75f11aba90da5601d5574f4806c5476cbf"
+        },
+        {
+          "path": "hyperreal/src/computable/approximation/exp_sqrt.rs",
+          "current": "9ab63125e810fb8dc2401d1c217827f51c971be5eeb695bc1cc0ef90ad760658",
+          "frozen": "9ab63125e810fb8dc2401d1c217827f51c971be5eeb695bc1cc0ef90ad760658"
+        },
+        {
+          "path": "hyperreal/src/computable/node/exp_trig.rs",
+          "current": "28d4e515eb4f3412ff4936c06b327ab27399087d349b18694436caae14277b1d",
+          "frozen": "28d4e515eb4f3412ff4936c06b327ab27399087d349b18694436caae14277b1d"
+        },
+        {
+          "path": "hyperreal/src/rational/arithmetic/queries_conversion.rs",
+          "current": "7ffc050aff312c793b8d46176524228eff06b5dcb84e2dc5e76417b54e608112",
+          "frozen": "12c5324dea14aab668fb6be5050d183cf4a4b3b9144912336b644da6a7d430f2"
+        },
+        {
+          "path": "hypercurve/benches/bezier_region.rs",
+          "current": "2b13d3562d5f9b08c13e5c4e968b29f62f375ce1840998e75c00731daec97c91",
+          "frozen": "2b13d3562d5f9b08c13e5c4e968b29f62f375ce1840998e75c00731daec97c91"
+        }
+      ],
+      "production_lines_before": 3820,
+      "production_lines_after": 3812,
+      "test_line_delta": 111
+    }
+  },
+  "exactness": {
+    "pre_fix_failures": [
+      {
+        "test": "local_refinement_preserves_half_open_selected_root_ownership",
+        "actual": "Ok(Less)",
+        "expected": "Ok(Greater)"
+      },
+      {
+        "test": "local_fiber_count_preserves_half_open_selected_root_ownership",
+        "actual": "Some(0)",
+        "expected": "Some(1)"
+      },
+      {
+        "test": "local_refinement_preserves_nonrational_exact_point_kind",
+        "actual": "ExactRationalWitness",
+        "expected": "IsolatingInterval"
+      }
+    ],
+    "cases": {
+      "ownership": "x(x-alpha) on (0,1], alpha=1 or 1/2; both policies; independent shared-refiner oracle and exact sign query",
+      "public_count_queries": 16,
+      "public_count_scope": "Both parameter orientations and policies; count the selected diagonal root and exclude the foreign zero root.",
+      "metadata_and_point_authority_cases": 24,
+      "metadata_scope": "Rational 1/2, sqrt(2) and pi; upper endpoint, midpoint, repeated-root fallback and already-known exact point; both policies."
+    },
+    "admission_scope": "Structural/witness replay continues to trust the producer's unit-root certificate; this change does not add independent full root isolation to admission."
+  },
+  "native_validation": {
+    "status": "passed",
+    "local_field_tests_passed": 36,
+    "debug_minimal_passed": 783,
+    "debug_all_targets_passed": 786,
+    "release_all_features_passed": 784,
+    "representation_layouts": 4,
+    "representation_checks": 16,
+    "allocation_iterations": 4,
+    "scoped_live_allocation_growth": 0,
+    "script": "/tmp/hypersolve-local-refinement-gates.sh",
+    "additional_checks": [
+      "fmt including fuzz target",
+      "all-target/all-feature check",
+      "sanitizer fuzz-bin check",
+      "strict all-target/all-feature and fuzz clippy",
+      "strict rustdoc",
+      "all-benchmark compilation"
+    ],
+    "coverage": {
+      "status": "passed",
+      "percent": 86.15,
+      "threshold_percent": 85,
+      "executable_lines": 38449,
+      "hit_lines": 33123,
+      "missed_lines": 5326,
+      "log": "/tmp/hypersolve-local-refinement-coverage.log"
+    },
+    "concurrent_dependency_scope": "Current-workspace gates include ongoing Hyperreal queries_conversion.rs edits after d219a35. Paired timing artifacts instead freeze d219a35 production dependencies on both sides."
+  },
+  "profile": {
+    "status": "passed; diagnostic lead only",
+    "source": "current pre-fix Hypercurve with Hypersolve 1841884 and Hyperreal d219a35",
+    "path": "/tmp/hypercurve-current-selected-fiber-20260905.perf",
+    "fixture": "bezier_offset::conversion_tests::selected_fiber_genuinely_analytic_contacts_complete_region_booleans",
+    "elapsed_seconds": 52.08,
+    "samples": 5162,
+    "lost_samples": 0,
+    "recorded_megabytes": 81.858,
+    "self_percent": {
+      "biguint_div_rem_core": 13.85,
+      "rational_gcd_wide_magnitudes": 12.83,
+      "biguint_shl2": 10.68,
+      "malloc_internal": 6.02
+    },
+    "caveat": "Optimized Rust call-chain unwinding is incomplete. Self samples identify arithmetic/allocation cost, but do not establish which caller should be changed."
+  },
+  "frozen_comparison": {
+    "status": "intermediate first-stage artifacts retained; final comparisons use the original frozen baseline and owned_singleton candidate artifacts",
+    "workspace": "/tmp/hypercurve-dyadic-bernstein-control.a5ZKq2",
+    "hyperreal_production_revision": "d219a350462357af07d035fd316cba3b1cc339c9",
+    "script": "/tmp/hypercurve-local-refinement-matched.sh",
+    "build_script": "/tmp/hypercurve-local-refinement-frozen-build.sh",
+    "cpu": 7,
+    "order": [
+      "baseline-1",
+      "candidate-1",
+      "candidate-2",
+      "baseline-2",
+      "baseline-3",
+      "candidate-3"
+    ],
+    "artifacts": [
+      {
+        "role": "baseline-test",
+        "path": "/tmp/hypercurve-local-refinement-frozen-baseline-test",
+        "bytes": 27845336,
+        "sha256": "5805a22c4e8cd783a1a8b63b257cc027c67c8dc94693e2256e95323a5daf3f78"
+      },
+      {
+        "role": "candidate-test",
+        "path": "/tmp/hypercurve-local-refinement-frozen-candidate-test",
+        "bytes": 27852504,
+        "sha256": "5d8a815f75ac76bd64cd117bf5ad82091292158d24503a60077ea5c1408aecf8"
+      },
+      {
+        "role": "baseline-region",
+        "path": "/tmp/hypercurve-local-refinement-frozen-baseline-region",
+        "bytes": 15415528,
+        "sha256": "8bc685afe160400491ccc3d8ffdcf9aec13b6bb1738a9e31ea5fa953b30650af",
+        "text": 12306974,
+        "data": 321624,
+        "bss": 5392,
+        "combined": 12633990
+      },
+      {
+        "role": "candidate-region",
+        "path": "/tmp/hypercurve-local-refinement-frozen-candidate-region",
+        "bytes": 15422704,
+        "sha256": "9b99bf01c9c9009ee14dce92c51a3cfb19d917ac54d5444a767f9b178bae3b89",
+        "text": 12310526,
+        "data": 321616,
+        "bss": 1848,
+        "combined": 12633990
+      }
+    ],
+    "size_interpretation": "Region executable grows 7176 file bytes while text/data/BSS total is unchanged. Retained for the proven exactness fixes; no size or speed gain is claimed."
+  },
+  "downstream_validation": {
+    "status": "first-stage checks passed",
+    "script": "/tmp/hypercurve-local-refinement-gates.sh",
+    "all_features": {
+      "passed": 1731,
+      "failed": 0,
+      "ignored": 9,
+      "targets": 45
+    },
+    "minimal": {
+      "passed": 1702,
+      "failed": 0,
+      "ignored": 4,
+      "targets": 45
+    },
+    "ignored_units": {
+      "passed": 6,
+      "manual_drivers_complete": 5,
+      "elapsed_seconds": 54.55
+    },
+    "ignored_stroke": {
+      "passed": 3,
+      "elapsed_seconds": 54.77
+    },
+    "ui_tests": {
+      "passed": 37,
+      "elapsed_seconds": 36.32
+    },
+    "benchmark_executables_built": 25,
+    "additional_checks": [
+      "strict all-target/all-feature clippy",
+      "fuzz-bin check",
+      "strict docs",
+      "fmt",
+      "strict UI clippy",
+      "release UI WASM build"
+    ],
+    "scope": "Core matrices and opt-in fixtures preceded the second production change; ancillary builds spanned it. The final second-stage matrix is being refreshed separately."
+  },
+  "remaining": [
+    "Finish downstream gates and quiet frozen matched comparisons; preserve competing workers.",
+    "Root-kind tag appears to have no independent decision consumers in the workspace. Audit all 24 referring Rust files before a later removal; no compatibility shim is wanted.",
+    "Investigate native Real::eval_poly reuse and identical sign_at/refinement_sign_at helpers after current qualification.",
+    "ExactCorelib mining/uplift remains closed; global Hypercurve release readiness and uniformly competitive performance remain unproven."
+  ],
+  "owned_singleton": {
+    "status": "committed; native gates and coverage passed",
+    "commit": "d897ff0a5d416daa16c83f1bfe32334077fd07de",
+    "source_sha256": "ddda9aaad71dc60375ca959f13b2c7bc274aed39b79583cae6eca47b192b7f27",
+    "production_line_delta": -3,
+    "test_line_delta": 76,
+    "change": "All three local-field identity sites use polynomial_vanishes_at_owned_root, the existing selected-root identity kernel. A zero-width singleton without an optional point witness is no longer misread as an empty half-open interval.",
+    "red_failures": [
+      {
+        "test": "local_field_zero_test_recognizes_an_uncached_singleton",
+        "actual": "Ok(false)",
+        "expected": "Ok(true)"
+      },
+      {
+        "test": "local_fiber_count_preserves_uncached_singleton_identities",
+        "actual": "Counted; distinct_root_count=Some(0); certainty=Exact",
+        "expected": "IdenticallyZeroFiber; distinct_root_count=None; certainty=Exact"
+      }
+    ],
+    "cases": {
+      "points": [
+        "1/2",
+        "sqrt(2)",
+        "pi"
+      ],
+      "policies": 2,
+      "local_zero_and_nonzero_queries": 12,
+      "public_uncached_count_queries": 24,
+      "public_explicit_witness_controls": 24,
+      "parameter_orientations": 2
+    },
+    "native_validation": {
+      "status": "passed",
+      "local_field_tests_passed": 38,
+      "debug_minimal_passed": 785,
+      "debug_all_targets_passed": 788,
+      "release_all_features_passed": 786,
+      "representation_layouts": 4,
+      "representation_checks": 16,
+      "allocation_iterations": 4,
+      "script": "/tmp/hypersolve-owned-singleton-gates.sh",
+      "additional_checks": [
+        "fmt including fuzz target",
+        "all-target/all-feature check",
+        "sanitizer fuzz-bin check",
+        "strict all-target/all-feature and fuzz clippy",
+        "strict rustdoc",
+        "all-benchmark compilation"
+      ],
+      "coverage": {
+        "status": "passed",
+        "percent": 86.19,
+        "threshold_percent": 85,
+        "executable_lines": 38446,
+        "hit_lines": 33138,
+        "missed_lines": 5308,
+        "log": "/tmp/hypersolve-owned-singleton-coverage.log"
+      }
+    },
+    "downstream_validation": {
+      "status": "passed",
+      "script": "/tmp/hypercurve-owned-singleton-gates.sh",
+      "all_features": {
+        "passed": 1731,
+        "failed": 0,
+        "ignored": 9,
+        "targets": 45
+      },
+      "minimal": {
+        "passed": 1702,
+        "failed": 0,
+        "ignored": 4,
+        "targets": 45
+      },
+      "ignored_units": {
+        "passed": 6,
+        "manual_drivers_complete": 5,
+        "elapsed_seconds": 52.8
+      },
+      "ignored_stroke": {
+        "passed": 3,
+        "elapsed_seconds": 54.41
+      },
+      "ui_tests": {
+        "passed": 37,
+        "elapsed_seconds": 35.29
+      },
+      "benchmark_executables_built": 25,
+      "additional_checks": [
+        "strict all-target/all-feature clippy",
+        "fuzz-bin check",
+        "strict docs",
+        "fmt",
+        "strict UI clippy",
+        "release UI WASM build"
+      ],
+      "scope": "Final full native, Hypercurve and UI/WASM gates on the committed combined changes. Concurrent Hyperreal conversion edits remain separate from the frozen timing artifacts."
+    },
+    "frozen_candidate_artifacts": [
+      {
+        "kind": "test",
+        "path": "/tmp/hypercurve-owned-singleton-frozen-candidate-test",
+        "bytes": 27852504,
+        "sha256": "7b3fcff3f8556322519e8d08c17d64c2c644f2e5f4bbc72bc91071a301d6ca1b"
+      },
+      {
+        "kind": "region",
+        "path": "/tmp/hypercurve-owned-singleton-frozen-candidate-region",
+        "bytes": 15422704,
+        "sha256": "79a00f7222b9ffd3dae4585587b95af5f8d9cc600ac7b43749854cfd459e0f15"
+      }
+    ],
+    "region_sections": {
+      "text": 12310494,
+      "data": 321616,
+      "bss": 1880,
+      "combined": 12633990
+    },
+    "matched_script": "/tmp/hypercurve-owned-singleton-matched.sh",
+    "analysis_script": "/tmp/hypercurve-owned-singleton-analyze.mjs",
+    "combined_changes": {
+      "production_line_delta": -11,
+      "test_line_delta": 187,
+      "total_rust_line_delta": 176
+    },
+    "allocation_control": {
+      "fixture": "bezier_offset::conversion_tests::specialized_common_fiber_counts_even_multiplicity_in_a_coupled_system",
+      "script": "/tmp/hypercurve-owned-singleton-small-heap-control.sh",
+      "baseline": {
+        "allocations": 11671,
+        "temporary_allocations": 471,
+        "reported_peak_heap": "243.57K",
+        "reported_end_live": "90.14K",
+        "log": "/tmp/hypercurve-owned-singleton-baseline-small-heap-summary.log"
+      },
+      "candidate": {
+        "allocations": 11668,
+        "temporary_allocations": 471,
+        "reported_peak_heap": "243.57K",
+        "reported_end_live": "89.98K",
+        "log": "/tmp/hypercurve-owned-singleton-candidate-small-heap-summary.log"
+      },
+      "scope": "Small unchanged fixture including process startup. This tiny difference is not allocation accounting for the full Boolean fixture or a scoped leak-freedom claim."
+    },
+    "matched_comparison": {
+      "status": "resumed; only missing/contended groups rerun",
+      "original_quiet_start_utc": "2026-09-05 19:39:42 UTC",
+      "resumed_quiet_start_utc": "2026-09-05 19:53:50 UTC",
+      "pre_run_competing_workers": 0,
+      "session_id": 16938,
+      "resumed_script": "/tmp/hypercurve-owned-singleton-remaining-matched.sh",
+      "retained_clean_groups": [
+        "baseline-1",
+        "candidate-1",
+        "candidate-2"
+      ],
+      "remaining_groups": [
+        "baseline-2",
+        "baseline-3",
+        "candidate-3"
+      ],
+      "interruption": "Independent Cargo/test/compiler jobs appeared around 19:45:42 UTC during baseline-2. The owned comparison script was stopped with exit 130 at 19:48:07 UTC. No competing workers were stopped. Original group order is preserved across the pause.",
+      "excluded_logs": [
+        "/tmp/hypercurve-owned-singleton-selected-baseline-2-contended-1945.log",
+        "/tmp/hypercurve-owned-singleton-chord-baseline-2-contended-1945.log",
+        "/tmp/hypercurve-owned-singleton-radial-baseline-2-contended-1945.log",
+        "/tmp/hypercurve-owned-singleton-region-baseline-2-contended-1945.log",
+        "/tmp/hypercurve-owned-singleton-selected-baseline-3-interrupted-1948.log"
+      ]
+    },
+    "local_pages": {
+      "status": "passed",
+      "dist": "/tmp/hypercurve-pages-local-ownership.6KQQbz",
+      "build_log": "/tmp/hypercurve-owned-singleton-trunk.log",
+      "trunk_version": "0.21.14",
+      "build_command": "env -u NO_COLOR trunk --skip-version-check build index.html --release --locked --dist /tmp/hypercurve-pages-local-ownership.6KQQbz --public-url /hypercurve/",
+      "script": "/tmp/hypercurve-owned-singleton-pages-startup.mjs",
+      "report": {
+        "passed": true,
+        "dist": "/tmp/hypercurve-pages-local-ownership.6KQQbz",
+        "profile": "/tmp/hypercurve-browser-profile.ZEzuwV",
+        "state": {
+          "ready": true,
+          "title": "hypercurve UI",
+          "pathname": "/hypercurve/",
+          "baseURI": "http://127.0.0.1:45823/hypercurve/",
+          "width": 1100,
+          "height": 617
+        },
+        "requests": [
+          {
+            "pathname": "/hypercurve/",
+            "status": 200,
+            "bytes": 1691
+          },
+          {
+            "pathname": "/hypercurve/hypercurve_ui.js",
+            "status": 200,
+            "bytes": 72209
+          },
+          {
+            "pathname": "/hypercurve/hypercurve_ui_bg.wasm",
+            "status": 200,
+            "bytes": 12430851
+          }
+        ],
+        "exceptions": [],
+        "failures": [],
+        "consoleErrors": [],
+        "screenshot": "/tmp/hypercurve-owned-singleton-pages-startup.png"
+      },
+      "assets": [
+        {
+          "name": "index.html",
+          "bytes": 1691,
+          "sha256": "f6c1d5197fcca75fceb06fced0b76466bedc9a16943afbbe92aa4c56fa139c94"
+        },
+        {
+          "name": "hypercurve_ui.js",
+          "bytes": 72209,
+          "sha256": "941b5ce35852e0398c32572a64d5d6cd1e0044d8fe70907e739bd26868a37e7a"
+        },
+        {
+          "name": "hypercurve_ui_bg.wasm",
+          "bytes": 12430851,
+          "sha256": "4866d9dd9d982a6659a158c290da6dbcc871078da373bb9efb3e5699c5081aee"
+        }
+      ],
+      "screenshot_sha256": "70c7e48325ca9476f30710cc805d6fbed8db6ef2c6f975204b5a854c99db2cb1",
+      "script_sha256": "6ff7fa1414a23b99b96e743dee66d40546b37b77d9f9ee8646bafba468ddb53c",
+      "visual_inspection": "Default polyline/curved-region scene, controls and grid render correctly. Screenshot matches the previously inspected startup image byte-for-byte.",
+      "scope": "Local startup only, not interactive all-tab or hosted-deployment qualification."
+    }
+  },
+  "repository_audit": {
+    "hyperlattice": {
+      "head": "d783af0b5ba52cacfeac62b1b25e1f9e36a8e7b0 Add retained fuzz and benchmark reporting",
+      "status": "## main...origin/main"
+    },
+    "hyperreal": {
+      "head": "2808bc886db969d487263ea073eb1cf9df562eac Preserve finite rational enclosures and avoid exact binade comparisons",
+      "status": "## main...origin/main"
+    },
+    "hyperlimit": {
+      "head": "0f1a32d54a1c063d134b0476082e49168516102a Test retained sign stages and certified primitive export bounds",
+      "status": "## main...origin/main"
+    },
+    "hypertri": {
+      "head": "6a2092c066964f3b7528299a72ef0ed1af4b1ff0 Reuse predicate policy for constraint intersections",
+      "status": "## main...origin/main"
+    },
+    "hypermesh": {
+      "head": "d9db5c45a0cecc2307aa66a6f7f1b0396350e4ee Remove lossy GPU zero fallbacks",
+      "status": "## main...origin/main"
+    },
+    "hypersolve": {
+      "head": "d897ff0a5d416daa16c83f1bfe32334077fd07de Use the owned-root identity kernel for local algebraic fields",
+      "status": "## main...origin/main"
+    },
+    "hypercurve": {
+      "head": "9e2796cbf36dde2f56087a717b34d31edbf80f51 Record native sign and single projection API qualification",
+      "status": "## main...origin/main"
+    }
+  }
+}

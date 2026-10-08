@@ -1,0 +1,9 @@
+{
+  "source": "hypercurve/src/bezier_offset.rs",
+  "before": "9649b7ae0ae26a2827e988097c326ae6838976c983a8dbfebe59daf3fccdfe47",
+  "after": "5527228c8dde12e5d61cfbb3b17d460a9627a87744c2263f6047428956233629",
+  "candidate": "unit-domain-projection-candidate-v643.rs",
+  "focused_receipt": "unit-domain-projection-20260928-v644-terminal.json",
+  "focused_existing_guards_passed": 18,
+  "unresolved": "All reparameterized offset stress cases remain outside production tests as independent failing/timeout probes. Neither consolidation nor the regular-source frame resolved their resultant cost; no such repair is claimed."
+}

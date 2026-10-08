@@ -1,0 +1,75 @@
+{
+  "lib": {
+    "reason": "compiler-artifact",
+    "package_id": "path+file:///home/tim/Documents/GitHub/workspace/synaps-cad#0.10.1",
+    "manifest_path": "/home/tim/Documents/GitHub/workspace/synaps-cad/Cargo.toml",
+    "target": {
+      "kind": [
+        "lib"
+      ],
+      "crate_types": [
+        "lib"
+      ],
+      "name": "synaps_cad",
+      "src_path": "/home/tim/Documents/GitHub/workspace/synaps-cad/src/lib.rs",
+      "edition": "2024",
+      "doc": true,
+      "doctest": true,
+      "test": true
+    },
+    "profile": {
+      "opt_level": "0",
+      "debuginfo": 2,
+      "debug_assertions": true,
+      "overflow_checks": true,
+      "test": false
+    },
+    "features": [
+      "default",
+      "dispatch-trace",
+      "fuzz-bounded-campaign"
+    ],
+    "filenames": [
+      "/home/tim/Documents/GitHub/workspace/synaps-cad/target/debug/libsynaps_cad.rlib",
+      "/home/tim/Documents/GitHub/workspace/synaps-cad/target/debug/deps/libsynaps_cad-c136af3fb06d6df3.rmeta"
+    ],
+    "executable": null,
+    "fresh": false
+  },
+  "tests": {
+    "reason": "compiler-artifact",
+    "package_id": "path+file:///home/tim/Documents/GitHub/workspace/synaps-cad#0.10.1",
+    "manifest_path": "/home/tim/Documents/GitHub/workspace/synaps-cad/Cargo.toml",
+    "target": {
+      "kind": [
+        "lib"
+      ],
+      "crate_types": [
+        "lib"
+      ],
+      "name": "synaps_cad",
+      "src_path": "/home/tim/Documents/GitHub/workspace/synaps-cad/src/lib.rs",
+      "edition": "2024",
+      "doc": true,
+      "doctest": true,
+      "test": true
+    },
+    "profile": {
+      "opt_level": "0",
+      "debuginfo": 2,
+      "debug_assertions": true,
+      "overflow_checks": true,
+      "test": true
+    },
+    "features": [
+      "default",
+      "dispatch-trace",
+      "fuzz-bounded-campaign"
+    ],
+    "filenames": [
+      "/home/tim/Documents/GitHub/workspace/synaps-cad/target/debug/deps/synaps_cad-00909fe76a6ccedb"
+    ],
+    "executable": "/home/tim/Documents/GitHub/workspace/synaps-cad/target/debug/deps/synaps_cad-00909fe76a6ccedb",
+    "fresh": false
+  }
+}

@@ -1,0 +1,38 @@
+{
+  "date": "2026-09-14",
+  "status": "qualified_interface_cleanup_goal_active",
+  "commits": {
+    "hypercurve": "23891bf",
+    "hyperbrep": "d82bc14"
+  },
+  "scope": "Remove the test-only Bezier incident-membership adapter, keep one common CurveParameter2 method, and migrate production/test callers directly. Predicate arithmetic is unchanged.",
+  "tests": {
+    "focused_passed": 18,
+    "failed": 0,
+    "new_tests": 0
+  },
+  "checks": {
+    "hypercurve_all_targets_all_features": "passed",
+    "hyperbrep_all_targets_all_features": "passed",
+    "hypercurve_ui_offline_all_targets": "passed",
+    "hypercurve_docs_broken_links_denied": "passed",
+    "changed_rust_files_formatting": "passed",
+    "staged_whitespace": "passed"
+  },
+  "behavioral_parent_qualification": {
+    "commit": "b7060f6",
+    "record": "native-scalar-order-qualification.json",
+    "total_passed": 1224,
+    "status": "passed",
+    "note": "The broad gate qualifies the unchanged predicate implementation before this private interface/test-adapter cleanup; the current commit was checked separately with 18 focused tests and all affected compiler/UI/docs checks."
+  },
+  "logs": [
+    "incident-membership-api-focused.log",
+    "incident-membership-api-all-targets.log",
+    "incident-membership-api-hyperbrep-check.log",
+    "incident-membership-api-ui-check.log",
+    "incident-membership-api-docs.log"
+  ],
+  "performance_claim": "None.",
+  "pushed": false
+}

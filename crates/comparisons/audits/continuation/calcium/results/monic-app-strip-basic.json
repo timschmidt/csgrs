@@ -1,0 +1,16 @@
+{
+  "tag": "monic-app-strip-basic",
+  "started": "2026-09-09T01:15:13.828Z",
+  "finished": "2026-09-09T01:15:13.865Z",
+  "elapsedSeconds": 0.03430439,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "strip",
+  "args": [
+    "--strip-all",
+    "-o",
+    "/tmp/calcium-monic-state.rk70Kr/app-monic-basic.stripped",
+    "/tmp/calcium-monic-state.rk70Kr/app-monic-basic"
+  ],
+  "code": 0,
+  "signal": null
+}

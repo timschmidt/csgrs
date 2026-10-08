@@ -1,0 +1,204 @@
+{
+  "objective": "Resolve native affine midpoint certificates without adding API; qualify and measure before committing on main.",
+  "time": "2026-09-05 23:46:10 UTC",
+  "status": "Native and cross-stack gates passed; Hypercurve final gates still running; timings not started; changes uncommitted.",
+  "active_sessions": {
+    "hypercurve_final_gates": 6798
+  },
+  "completed_sessions": {
+    "hyperreal_gates": 93991,
+    "hypersolve_gates": 9036,
+    "frozen_build": 87211,
+    "cross_stack_gates": 1978,
+    "hyperreal_final_default": 33959,
+    "hyperreal_final_debug": 50913
+  },
+  "failed_session": {
+    "hypercurve_initial_gates": 59638,
+    "reason": "Stale Unknown assertion became NonZero; fixture strengthened and focused test passed, full final run underway."
+  },
+  "source_rows": [
+    {
+      "file": "hyperreal/src/computable/node/algebra.rs",
+      "before_sha256": "a7cff21f30cc6ba38c39ef1f0a3c16eee7aa64aee869719c735647bb8b25c719",
+      "candidate_sha256": "6afdb063a795b1bb91f6939d1b823c30cb6bfb8c42a950edb4a0ee72de4bd3e5",
+      "production_line_delta": 24,
+      "total_line_delta": 24
+    },
+    {
+      "file": "hyperreal/src/computable/node/tests.rs",
+      "before_sha256": "7bee5d14dd380f680a4b293bb15aefe6df791058b28198add2e502f2bb8b2731",
+      "candidate_sha256": "1c917bf993c304d885d366fa7c3e03d71714977cb12324b8f0afbb32c3e08213",
+      "production_line_delta": 0,
+      "total_line_delta": 58
+    },
+    {
+      "file": "hyperreal/src/real/arithmetic/tests.rs",
+      "before_sha256": "456bc575a2234aa7d7332489939b156bfdbcd9ce4664caf229406c4affeb884a",
+      "candidate_sha256": "e9b314fff49a867fb9e2390b2f4ab044eb37a77e077a4183455dcb950fa6605a",
+      "production_line_delta": 0,
+      "total_line_delta": 55
+    },
+    {
+      "file": "hypersolve/src/algebraic_fiber.rs",
+      "before_sha256": "f4c567e821e175ff61d35ae1e2bc3357a0bab597458717cdc88596239615b96c",
+      "candidate_sha256": "2ec1ccb96feeb2dff2f62753964ac666f840b6ca24a3b75ed8113dcff0b0c966",
+      "production_line_delta": 0,
+      "total_line_delta": 2
+    },
+    {
+      "file": "hypercurve/src/bezier_offset.rs",
+      "before_sha256": "f1b06bf7ffe770aabcea223bf98c63a6be5111e685d58d5843b897b3bfbfe561",
+      "candidate_sha256": "a69348fb7ac4b88ddc5175b22081b48988aaddbbab4caec487872a5d0c779376",
+      "production_line_delta": 0,
+      "total_line_delta": 1
+    }
+  ],
+  "frozen_workspace": "/tmp/hypercurve-affine-offset-control.JVwgaq",
+  "baseline_lineage": "2026-09-05-native-polynomial-kernel.json",
+  "frozen_production_scope": "Only Hyperreal computable/node/algebra.rs production differs. Frozen test snapshots inherit older inline coverage; node/tests.rs synchronized to live candidate. Hypercurve bezier_offset.rs production prefixes match exactly (77e774fb31673f9a925d1ce05ae69dcbb73270e9c050aa33507157544e720f49); its strengthened retained-denominator test was absent in the inherited frozen test module and is qualified live.",
+  "concurrent_scope": "Live qualification includes Hypercurve d978852 derivative completeness. New Hyperreal additive-depth changes observed 23:43 UTC are preserved and excluded from all frozen comparisons. Native/cross-stack qualification finished before those edits.",
+  "artifacts": {
+    "binaries": {
+      "baseline": {
+        "test": {
+          "path": "/tmp/hypercurve-native-horner-frozen-candidate-test",
+          "bytes": 27859088,
+          "sha256": "1192c498330a54cec720455173368da2d0cb26a33ba3cecf51f1b240ea7d5a6f"
+        },
+        "region": {
+          "path": "/tmp/hypercurve-native-horner-frozen-candidate-region",
+          "bytes": 15418440,
+          "sha256": "c9945608f6f08de1656261aeda586c744c26ff8f02c60751ba53da0d9d41b7c6"
+        },
+        "rational": {
+          "path": "/tmp/hypercurve-native-horner-frozen-candidate-rational",
+          "bytes": 10960104,
+          "sha256": "c2ae6de960df0446a3739c3c7634e8631339ef4c1a816a5dabff50dd96044b71"
+        }
+      },
+      "candidate": {
+        "test": {
+          "path": "/tmp/hypercurve-affine-offset-frozen-candidate-test",
+          "bytes": 27852952,
+          "sha256": "92c4ceb5f63131d8387f3761f492e2e40ea166718cb9ea77b80bf83b6ca3b512"
+        },
+        "region": {
+          "path": "/tmp/hypercurve-affine-offset-frozen-candidate-region",
+          "bytes": 15421264,
+          "sha256": "e7ae9fd16ac8ada89602e8524b708643108b566403132f8d8bf0e3843e6f2976"
+        },
+        "rational": {
+          "path": "/tmp/hypercurve-affine-offset-frozen-candidate-rational",
+          "bytes": 10962688,
+          "sha256": "d64955502cb6457dcbeab9ba5e550cc273223f7229e804ea0d35616c38db4ff1"
+        }
+      }
+    },
+    "memory": {
+      "small": {
+        "baseline": {
+          "allocations": 11963,
+          "temporary_allocations": 473,
+          "peak_heap_reported": "243.72K",
+          "end_live_heap_reported": "92.47K",
+          "recording": "/tmp/hypercurve-affine-offset-baseline-small.heap.zst",
+          "recording_sha256": "977d4f40a4968dcdbf0c5c708e2b8955a3923fda10ab37f89504c4db3fe2136e",
+          "summary": "/tmp/hypercurve-affine-offset-baseline-small-heap-summary.log"
+        },
+        "candidate": {
+          "allocations": 11963,
+          "temporary_allocations": 473,
+          "peak_heap_reported": "243.72K",
+          "end_live_heap_reported": "92.47K",
+          "recording": "/tmp/hypercurve-affine-offset-candidate-small.heap.zst",
+          "recording_sha256": "704a73b7a43234dea73c33f0208a74da063e9f7800dc431e2559ecf5cada6f02",
+          "summary": "/tmp/hypercurve-affine-offset-candidate-small-heap-summary.log"
+        }
+      },
+      "rational": {
+        "baseline": {
+          "allocations": 6192,
+          "temporary_allocations": 425,
+          "peak_heap_reported": "272.53K",
+          "end_live_heap_reported": "166.57K",
+          "recording": "/tmp/hypercurve-affine-offset-baseline-rational.heap.zst",
+          "recording_sha256": "b898308710743e251c4fcbc716045041c3cd85be439053b06ff51614e8430a98",
+          "summary": "/tmp/hypercurve-affine-offset-baseline-rational-heap-summary.log"
+        },
+        "candidate": {
+          "allocations": 6192,
+          "temporary_allocations": 425,
+          "peak_heap_reported": "272.53K",
+          "end_live_heap_reported": "166.57K",
+          "recording": "/tmp/hypercurve-affine-offset-candidate-rational.heap.zst",
+          "recording_sha256": "a9a039f7dbb3b2eefb6cbd8373e19b3582f146781f18da02c9021b4adfa57c43",
+          "summary": "/tmp/hypercurve-affine-offset-candidate-rational-heap-summary.log"
+        }
+      }
+    },
+    "micro_memory": {
+      "4": {
+        "baseline": {
+          "allocations": 1132,
+          "temporary_allocations": 152,
+          "peak_heap_reported": "81.48K",
+          "end_live_heap_reported": "3.41K",
+          "recording": "/tmp/hyperreal-affine-offset-baseline-micro.heap.zst",
+          "recording_sha256": "eb495cd9189fd3acc262ce65749648ff6991de0476fb7642be9b6e8a624bb02d",
+          "summary": "/tmp/hyperreal-affine-offset-baseline-micro-heap-summary.log"
+        },
+        "candidate": {
+          "allocations": 1208,
+          "temporary_allocations": 167,
+          "peak_heap_reported": "81.80K",
+          "end_live_heap_reported": "3.58K",
+          "recording": "/tmp/hyperreal-affine-offset-candidate-micro.heap.zst",
+          "recording_sha256": "65677a6f499df440119ed3ecaaab23cd3038ab6800cf4de034c79a727a643bc7",
+          "summary": "/tmp/hyperreal-affine-offset-candidate-micro-heap-summary.log"
+        }
+      },
+      "16": {
+        "baseline": {
+          "allocations": 1720,
+          "temporary_allocations": 320,
+          "peak_heap_reported": "81.48K",
+          "end_live_heap_reported": "3.41K",
+          "recording": "/tmp/hyperreal-affine-offset-baseline-micro16.heap.zst",
+          "recording_sha256": "79014f56f07471e47715a0deeca2b5709979d006adf7b362efc85819f00da745",
+          "summary": "/tmp/hyperreal-affine-offset-baseline-micro16-heap-summary.log"
+        },
+        "candidate": {
+          "allocations": 2060,
+          "temporary_allocations": 371,
+          "peak_heap_reported": "81.80K",
+          "end_live_heap_reported": "3.58K",
+          "recording": "/tmp/hyperreal-affine-offset-candidate-micro16.heap.zst",
+          "recording_sha256": "0557f72a62ac25e69806822c2668141a49836d5bff4cefa2da883a8d0cfbe79b",
+          "summary": "/tmp/hyperreal-affine-offset-candidate-micro16-heap-summary.log"
+        }
+      },
+      "64": {
+        "baseline": {
+          "allocations": 4072,
+          "temporary_allocations": 992,
+          "peak_heap_reported": "81.48K",
+          "end_live_heap_reported": "3.41K",
+          "recording": "/tmp/hyperreal-affine-offset-baseline-micro64.heap.zst",
+          "recording_sha256": "b30df82137a361500842917238b1c2caf96495f4ec5e9d04adcea879b0f85efe",
+          "summary": "/tmp/hyperreal-affine-offset-baseline-micro64-heap-summary.log"
+        },
+        "candidate": {
+          "allocations": 5468,
+          "temporary_allocations": 1187,
+          "peak_heap_reported": "81.80K",
+          "end_live_heap_reported": "3.58K",
+          "recording": "/tmp/hyperreal-affine-offset-candidate-micro64.heap.zst",
+          "recording_sha256": "ba3d2676c7f7a09cf12cfe0353496c77495e8f7390d52a6e7006660b51bd2e99",
+          "summary": "/tmp/hyperreal-affine-offset-candidate-micro64-heap-summary.log"
+        }
+      }
+    }
+  },
+  "next": "Poll session 6798, verify current source/concurrent scope, wait for quiet host, then run micro matched comparison, extended rational matched and broad matched scripts. Do not start timing while build/test workers remain. Review performance before committing only owned files; write evidence checkpoint and append root audit."
+}

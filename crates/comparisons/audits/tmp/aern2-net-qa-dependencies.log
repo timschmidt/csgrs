@@ -1,0 +1,645 @@
+attoparsec           > configure
+attoparsec           > Configuring attoparsec-0.14.4...
+base-compat          > configure
+data-fix             > configure
+dlist                > configure
+generically          > configure
+semialign            > configure
+base-compat          > Configuring base-compat-0.13.1...
+data-fix             > Configuring data-fix-0.3.4...
+text-short           > configure
+generically          > Configuring generically-0.1.1...
+dlist                > Configuring dlist-1.0...
+semialign            > Configuring semialign-1.3.1...
+time-compat          > configure
+text-short           > Configuring text-short-0.1.6...
+uuid-types           > configure
+witherable           > configure
+time-compat          > Configuring time-compat-1.9.6.1...
+uuid-types           > Configuring uuid-types-1.0.5.1...
+witherable           > Configuring witherable-0.4.2...
+text-short           > build with ghc-9.6.7
+attoparsec           > build with ghc-9.6.7
+base-compat          > build with ghc-9.6.7
+generically          > build with ghc-9.6.7
+uuid-types           > build with ghc-9.6.7
+semialign            > build with ghc-9.6.7
+witherable           > build with ghc-9.6.7
+data-fix             > build with ghc-9.6.7
+generically          > Preprocessing library for generically-0.1.1..
+generically          > Building library for generically-0.1.1..
+text-short           > Preprocessing library for text-short-0.1.6..
+text-short           > Building library for text-short-0.1.6..
+attoparsec           > Preprocessing library 'attoparsec-internal' for attoparsec-0.14.4..
+attoparsec           > Building library 'attoparsec-internal' for attoparsec-0.14.4..
+dlist                > build with ghc-9.6.7
+witherable           > Preprocessing library for witherable-0.4.2..
+witherable           > Building library for witherable-0.4.2..
+uuid-types           > Preprocessing library for uuid-types-1.0.5.1..
+uuid-types           > Building library for uuid-types-1.0.5.1..
+semialign            > Preprocessing library for semialign-1.3.1..
+semialign            > Building library for semialign-1.3.1..
+time-compat          > build with ghc-9.6.7
+base-compat          > Preprocessing library for base-compat-0.13.1..
+base-compat          > Building library for base-compat-0.13.1..
+data-fix             > Preprocessing library for data-fix-0.3.4..
+data-fix             > Building library for data-fix-0.3.4..
+dlist                > Preprocessing library for dlist-1.0..
+dlist                > Building library for dlist-1.0..
+generically          > [1 of 1] Compiling GHC.Generics.Generically
+time-compat          > Preprocessing library for time-compat-1.9.6.1..
+time-compat          > Building library for time-compat-1.9.6.1..
+text-short           > [1 of 5] Compiling PrimOps
+attoparsec           > [1 of 6] Compiling Data.Attoparsec.ByteString.FastSet
+data-fix             > [1 of 1] Compiling Data.Fix
+semialign            > [1 of 6] Compiling Data.Semialign.Internal
+witherable           > [1 of 2] Compiling Witherable
+uuid-types           > [1 of 3] Compiling Data.UUID.Types.Internal.Builder
+text-short           > [2 of 5] Compiling Data.Text.Short.Internal
+attoparsec           > 
+attoparsec           > /tmp/stack-bc734b4e07c8e952/attoparsec-0.14.4/internal/Data/Attoparsec/ByteString/FastSet.hs:97:18: warning: [GHC-68441] [-Wdeprecations]
+attoparsec           >     In the use of ‘memset’
+attoparsec           >     (imported from Data.ByteString.Internal, but defined in Data.ByteString.Internal.Type):
+attoparsec           >     Deprecated: "Use Foreign.Marshal.Utils.fillBytes instead"
+attoparsec           >    |
+attoparsec           > 97 |             _ <- I.memset t 0 32
+attoparsec           >    |                  ^^^^^^^^
+dlist                > [1 of 5] Compiling Data.DList.Internal
+uuid-types           > [2 of 3] Compiling Data.UUID.Types.Internal
+generically          > copy/register
+dlist                > 
+dlist                > /tmp/stack-bc734b4e07c8e952/dlist-1.0/Data/DList/Internal.hs:642:12: warning: [GHC-58520] [-Wtype-equality-requires-operators]
+dlist                >     The use of ‘~’ without TypeOperators
+dlist                >     will become an error in a future GHC release.
+dlist                >     Suggested fix: Perhaps you intended to use TypeOperators
+dlist                >     |
+dlist                > 642 | instance a ~ Char => IsString (DList a) where
+dlist                >     |            ^
+attoparsec           > [2 of 6] Compiling Data.Attoparsec.Internal.Compat
+generically          > Installing library in /tmp/aern2-stack.ryVCFK/snapshots/x86_64-linux-tinfo6/b592dd4acb73086f74d238dd1c126581e2a5d5fe389f24cb377ec81a833f3622/9.6.7/lib/x86_64-linux-ghc-9.6.7/generically-0.1.1-FsEVxmTYOKp6lYk37PdWW4
+time-compat          > [ 1 of 20] Compiling Data.Format
+attoparsec           > [3 of 6] Compiling Data.Attoparsec.Internal.Fhthagn
+attoparsec           > [4 of 6] Compiling Data.Attoparsec.ByteString.Buffer
+attoparsec           > 
+attoparsec           > /tmp/stack-bc734b4e07c8e952/attoparsec-0.14.4/internal/Data/Attoparsec/ByteString/Buffer.hs:62:1: warning: [-Wunused-imports]
+attoparsec           >     The import of ‘Data.Semigroup’ is redundant
+attoparsec           >       except perhaps to import instances from ‘Data.Semigroup’
+attoparsec           >     To import instances alone, use: import Data.Semigroup()
+attoparsec           >    |
+attoparsec           > 62 | import Data.Semigroup (Semigroup(..))
+attoparsec           >    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+attoparsec           > 
+attoparsec           > /tmp/stack-bc734b4e07c8e952/attoparsec-0.14.4/internal/Data/Attoparsec/ByteString/Buffer.hs:121:11: warning: [GHC-68441] [-Wdeprecations]
+attoparsec           >     In the use of ‘memcpy’
+attoparsec           >     (imported from Data.ByteString.Internal, but defined in Data.ByteString.Internal.Type):
+attoparsec           >     Deprecated: "Use Foreign.Marshal.Utils.copyBytes instead"
+attoparsec           >     |
+attoparsec           > 121 |           memcpy (ptr0 `plusPtr` (off0+len0))
+attoparsec           >     |           ^^^^^^
+attoparsec           > 
+attoparsec           > /tmp/stack-bc734b4e07c8e952/attoparsec-0.14.4/internal/Data/Attoparsec/ByteString/Buffer.hs:132:13: warning: [GHC-68441] [-Wdeprecations]
+attoparsec           >     In the use of ‘memcpy’
+attoparsec           >     (imported from Data.ByteString.Internal, but defined in Data.ByteString.Internal.Type):
+attoparsec           >     Deprecated: "Use Foreign.Marshal.Utils.copyBytes instead"
+attoparsec           >     |
+attoparsec           > 132 |             memcpy ptr (ptr0 `plusPtr` off0) (fromIntegral len0)
+attoparsec           >     |             ^^^^^^
+attoparsec           > 
+attoparsec           > /tmp/stack-bc734b4e07c8e952/attoparsec-0.14.4/internal/Data/Attoparsec/ByteString/Buffer.hs:133:13: warning: [GHC-68441] [-Wdeprecations]
+attoparsec           >     In the use of ‘memcpy’
+attoparsec           >     (imported from Data.ByteString.Internal, but defined in Data.ByteString.Internal.Type):
+attoparsec           >     Deprecated: "Use Foreign.Marshal.Utils.copyBytes instead"
+attoparsec           >     |
+attoparsec           > 133 |             memcpy (ptr `plusPtr` len0) (ptr1 `plusPtr` off1)
+attoparsec           >     |             ^^^^^^
+generically          > Registering library for generically-0.1.1..
+uuid-types           > 
+uuid-types           > /tmp/stack-bc734b4e07c8e952/uuid-types-1.0.5.1/src/Data/UUID/Types/Internal.hs:54:1: warning: [-Wunused-imports]
+uuid-types           >     The import of ‘Control.Applicative’ is redundant
+uuid-types           >       except perhaps to import instances from ‘Control.Applicative’
+uuid-types           >     To import instances alone, use: import Control.Applicative()
+uuid-types           >    |
+uuid-types           > 54 | import           Control.Applicative              ((<*>))
+uuid-types           >    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+uuid-types           > 
+uuid-types           > /tmp/stack-bc734b4e07c8e952/uuid-types-1.0.5.1/src/Data/UUID/Types/Internal.hs:60:1: warning: [-Wunused-imports]
+uuid-types           >     The import of ‘Data.Functor’ is redundant
+uuid-types           >       except perhaps to import instances from ‘Data.Functor’
+uuid-types           >     To import instances alone, use: import Data.Functor()
+uuid-types           >    |
+uuid-types           > 60 | import           Data.Functor                     ((<$>))
+uuid-types           >    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+attoparsec           > [5 of 6] Compiling Data.Attoparsec.Text.Buffer
+attoparsec           > 
+attoparsec           > /tmp/stack-bc734b4e07c8e952/attoparsec-0.14.4/internal/Data/Attoparsec/Text/Buffer.hs:44:1: warning: [-Wunused-imports]
+attoparsec           >     The import of ‘Data.Semigroup’ is redundant
+attoparsec           >       except perhaps to import instances from ‘Data.Semigroup’
+attoparsec           >     To import instances alone, use: import Data.Semigroup()
+attoparsec           >    |
+attoparsec           > 44 | import Data.Semigroup (Semigroup(..))
+attoparsec           >    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+attoparsec           > [6 of 6] Compiling Data.Attoparsec.Text.FastSet
+time-compat          > [ 2 of 20] Compiling Data.Time.Calendar.Month.Compat
+time-compat          > [ 3 of 20] Compiling Data.Time.Calendar.Quarter.Compat
+dlist                > [2 of 5] Compiling Data.DList
+time-compat          > [ 4 of 20] Compiling Data.Time.Calendar.Types
+dlist                > [3 of 5] Compiling Data.DList.DNonEmpty.Internal
+time-compat          > [ 5 of 20] Compiling Data.Time.Orphans
+dlist                > 
+dlist                > /tmp/stack-bc734b4e07c8e952/dlist-1.0/Data/DList/DNonEmpty/Internal.hs:459:12: warning: [GHC-58520] [-Wtype-equality-requires-operators]
+dlist                >     The use of ‘~’ without TypeOperators
+dlist                >     will become an error in a future GHC release.
+dlist                >     Suggested fix: Perhaps you intended to use TypeOperators
+dlist                >     |
+dlist                > 459 | instance a ~ Char => IsString (DNonEmpty a) where
+dlist                >     |            ^
+time-compat          > [ 6 of 20] Compiling Data.Time.Format.ISO8601.Compat
+time-compat          > [ 7 of 20] Compiling Data.Time.Format.Compat
+time-compat          > [ 8 of 20] Compiling Data.Time.Clock.System.Compat
+data-fix             > copy/register
+time-compat          > [ 9 of 20] Compiling Data.Time.Clock.POSIX.Compat
+time-compat          > [10 of 20] Compiling Data.Time.Clock.Compat
+dlist                > [4 of 5] Compiling Data.DList.DNonEmpty
+data-fix             > Installing library in /tmp/aern2-stack.ryVCFK/snapshots/x86_64-linux-tinfo6/b592dd4acb73086f74d238dd1c126581e2a5d5fe389f24cb377ec81a833f3622/9.6.7/lib/x86_64-linux-ghc-9.6.7/data-fix-0.3.4-KnFA8jUaAb7ASH3GdquNhp
+time-compat          > [11 of 20] Compiling Data.Time.Calendar.WeekDate.Compat
+dlist                > [5 of 5] Compiling Data.DList.Unsafe
+attoparsec           > Preprocessing library for attoparsec-0.14.4..
+attoparsec           > Building library for attoparsec-0.14.4..
+time-compat          > [12 of 20] Compiling Data.Time.Calendar.Private
+time-compat          > [13 of 20] Compiling Data.Time.Calendar.OrdinalDate.Compat
+data-fix             > Registering library for data-fix-0.3.4..
+time-compat          > [14 of 20] Compiling Data.Time.Calendar.MonthDay.Compat
+time-compat          > [15 of 20] Compiling Data.Time.Calendar.Easter.Compat
+time-compat          > [16 of 20] Compiling Data.Time.Calendar.Compat
+time-compat          > [17 of 20] Compiling Data.Time.LocalTime.Compat
+time-compat          > [18 of 20] Compiling Data.Time.Compat
+attoparsec           > [ 1 of 16] Compiling Data.Attoparsec.Internal.Types
+time-compat          > [19 of 20] Compiling Data.Time.Clock.TAI.Compat
+time-compat          > [20 of 20] Compiling Data.Time.Calendar.Julian.Compat
+dlist                > copy/register
+dlist                > Installing library in /tmp/aern2-stack.ryVCFK/snapshots/x86_64-linux-tinfo6/b592dd4acb73086f74d238dd1c126581e2a5d5fe389f24cb377ec81a833f3622/9.6.7/lib/x86_64-linux-ghc-9.6.7/dlist-1.0-2hTtgfcMjYnK5ageOgmEVo
+attoparsec           > 
+attoparsec           > /tmp/stack-bc734b4e07c8e952/attoparsec-0.14.4/Data/Attoparsec/Internal/Types.hs:28:53: warning: [-Wunused-imports]
+attoparsec           >     The import of ‘<$>’ from module ‘Control.Applicative’ is redundant
+attoparsec           >    |
+attoparsec           > 28 | import Control.Applicative as App (Applicative(..), (<$>))
+attoparsec           >    |                                                     ^^^^^
+attoparsec           > 
+attoparsec           > /tmp/stack-bc734b4e07c8e952/attoparsec-0.14.4/Data/Attoparsec/Internal/Types.hs:34:1: warning: [-Wunused-imports]
+attoparsec           >     The import of ‘Data.Semigroup’ is redundant
+attoparsec           >       except perhaps to import instances from ‘Data.Semigroup’
+attoparsec           >     To import instances alone, use: import Data.Semigroup()
+attoparsec           >    |
+attoparsec           > 34 | import Data.Semigroup  (Semigroup(..))
+attoparsec           >    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+dlist                > Registering library for dlist-1.0..
+text-short           > [3 of 5] Compiling Data.Text.Short.Unsafe
+text-short           > [4 of 5] Compiling Data.Text.Short
+base-compat          > [  1 of 130] Compiling Control.Concurrent.Compat
+text-short           > [5 of 5] Compiling Data.Text.Short.Partial
+uuid-types           > [3 of 3] Compiling Data.UUID.Types
+base-compat          > [  2 of 130] Compiling Control.Concurrent.Compat.Repl
+base-compat          > [  3 of 130] Compiling Control.Concurrent.MVar.Compat
+base-compat          > [  4 of 130] Compiling Control.Concurrent.MVar.Compat.Repl
+time-compat          > copy/register
+base-compat          > [  5 of 130] Compiling Control.Exception.Compat
+base-compat          > [  6 of 130] Compiling Control.Exception.Compat.Repl
+time-compat          > Installing library in /tmp/aern2-stack.ryVCFK/snapshots/x86_64-linux-tinfo6/b592dd4acb73086f74d238dd1c126581e2a5d5fe389f24cb377ec81a833f3622/9.6.7/lib/x86_64-linux-ghc-9.6.7/time-compat-1.9.6.1-3dIPkhB3spHIV4JxEgAjmq
+base-compat          > [  7 of 130] Compiling Control.Monad.Compat
+base-compat          > [  8 of 130] Compiling Control.Monad.Compat.Repl
+base-compat          > [  9 of 130] Compiling Control.Monad.Fail.Compat
+base-compat          > [ 10 of 130] Compiling Control.Monad.Fail.Compat.Repl
+base-compat          > [ 11 of 130] Compiling Control.Monad.IO.Class.Compat
+base-compat          > [ 12 of 130] Compiling Control.Monad.IO.Class.Compat.Repl
+base-compat          > [ 13 of 130] Compiling Control.Monad.ST.Lazy.Unsafe.Compat
+base-compat          > [ 14 of 130] Compiling Control.Monad.ST.Lazy.Unsafe.Compat.Repl
+time-compat          > Registering library for time-compat-1.9.6.1..
+base-compat          > [ 15 of 130] Compiling Control.Monad.ST.Unsafe.Compat
+base-compat          > [ 16 of 130] Compiling Control.Monad.ST.Unsafe.Compat.Repl
+base-compat          > [ 17 of 130] Compiling Data.Bifoldable.Compat
+attoparsec           > [ 2 of 16] Compiling Data.Attoparsec.Internal
+base-compat          > [ 18 of 130] Compiling Data.Bifoldable.Compat.Repl
+uuid-types           > copy/register
+base-compat          > [ 19 of 130] Compiling Data.Bifoldable1.Compat
+base-compat          > [ 20 of 130] Compiling Data.Bifoldable1.Compat.Repl
+uuid-types           > Installing library in /tmp/aern2-stack.ryVCFK/snapshots/x86_64-linux-tinfo6/b592dd4acb73086f74d238dd1c126581e2a5d5fe389f24cb377ec81a833f3622/9.6.7/lib/x86_64-linux-ghc-9.6.7/uuid-types-1.0.5.1-FvvKJSQWKpc7vvKCPzxGpR
+base-compat          > [ 21 of 130] Compiling Data.Bifunctor.Compat
+base-compat          > [ 22 of 130] Compiling Data.Bifunctor.Compat.Repl
+base-compat          > [ 23 of 130] Compiling Data.Bitraversable.Compat
+base-compat          > [ 24 of 130] Compiling Data.Bitraversable.Compat.Repl
+base-compat          > [ 25 of 130] Compiling Data.Bits.Compat
+base-compat          > [ 26 of 130] Compiling Data.Bits.Compat.Repl
+uuid-types           > Registering library for uuid-types-1.0.5.1..
+base-compat          > [ 27 of 130] Compiling Data.Bool.Compat
+base-compat          > [ 28 of 130] Compiling Data.Bool.Compat.Repl
+base-compat          > [ 29 of 130] Compiling Data.Complex.Compat
+base-compat          > [ 30 of 130] Compiling Data.Complex.Compat.Repl
+base-compat          > [ 31 of 130] Compiling Data.Either.Compat
+attoparsec           > [ 3 of 16] Compiling Data.Attoparsec.Number
+base-compat          > [ 32 of 130] Compiling Data.Either.Compat.Repl
+base-compat          > [ 33 of 130] Compiling Data.Foldable.Compat
+text-short           > copy/register
+base-compat          > [ 34 of 130] Compiling Data.Foldable.Compat.Repl
+base-compat          > [ 35 of 130] Compiling Data.Foldable1.Compat
+text-short           > Installing library in /tmp/aern2-stack.ryVCFK/snapshots/x86_64-linux-tinfo6/b592dd4acb73086f74d238dd1c126581e2a5d5fe389f24cb377ec81a833f3622/9.6.7/lib/x86_64-linux-ghc-9.6.7/text-short-0.1.6-E2OZFU3qxfa6SVrnqXcN7f
+base-compat          > [ 36 of 130] Compiling Data.Foldable1.Compat.Repl
+base-compat          > [ 37 of 130] Compiling Data.Function.Compat
+base-compat          > [ 38 of 130] Compiling Data.Function.Compat.Repl
+base-compat          > [ 39 of 130] Compiling Data.Functor.Compat
+base-compat          > [ 40 of 130] Compiling Data.Functor.Compat.Repl
+base-compat          > [ 41 of 130] Compiling Data.Functor.Compose.Compat
+base-compat          > [ 42 of 130] Compiling Data.Functor.Compose.Compat.Repl
+base-compat          > [ 43 of 130] Compiling Data.Functor.Const.Compat
+text-short           > Registering library for text-short-0.1.6..
+base-compat          > [ 44 of 130] Compiling Data.Functor.Const.Compat.Repl
+base-compat          > [ 45 of 130] Compiling Data.Functor.Contravariant.Compat
+base-compat          > [ 46 of 130] Compiling Data.Functor.Contravariant.Compat.Repl
+attoparsec           > [ 4 of 16] Compiling Data.Attoparsec.Types
+base-compat          > [ 47 of 130] Compiling Data.Functor.Identity.Compat
+attoparsec           > [ 5 of 16] Compiling Data.Attoparsec.Zepto
+base-compat          > [ 48 of 130] Compiling Data.Functor.Identity.Compat.Repl
+attoparsec           > 
+attoparsec           > /tmp/stack-bc734b4e07c8e952/attoparsec-0.14.4/Data/Attoparsec/Zepto.hs:46:1: warning: [-Wunused-imports]
+attoparsec           >     The import of ‘Data.Semigroup’ is redundant
+attoparsec           >       except perhaps to import instances from ‘Data.Semigroup’
+attoparsec           >     To import instances alone, use: import Data.Semigroup()
+attoparsec           >    |
+attoparsec           > 46 | import Data.Semigroup (Semigroup(..))
+attoparsec           >    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+base-compat          > [ 49 of 130] Compiling Data.Functor.Product.Compat
+base-compat          > [ 50 of 130] Compiling Data.Functor.Product.Compat.Repl
+base-compat          > [ 51 of 130] Compiling Data.Functor.Sum.Compat
+base-compat          > [ 52 of 130] Compiling Data.Functor.Sum.Compat.Repl
+base-compat          > [ 53 of 130] Compiling Data.IORef.Compat
+base-compat          > [ 54 of 130] Compiling Data.IORef.Compat.Repl
+base-compat          > [ 55 of 130] Compiling Data.List.NonEmpty.Compat
+base-compat          > [ 56 of 130] Compiling Data.List.NonEmpty.Compat.Repl
+base-compat          > [ 57 of 130] Compiling Data.Monoid.Compat
+base-compat          > [ 58 of 130] Compiling Data.Monoid.Compat.Repl
+base-compat          > [ 59 of 130] Compiling Data.Proxy.Compat
+base-compat          > [ 60 of 130] Compiling Data.Proxy.Compat.Repl
+base-compat          > [ 61 of 130] Compiling Data.Ratio.Compat
+attoparsec           > [ 6 of 16] Compiling Data.Attoparsec.Combinator
+base-compat          > [ 62 of 130] Compiling Data.Ratio.Compat.Repl
+attoparsec           > 
+attoparsec           > /tmp/stack-bc734b4e07c8e952/attoparsec-0.14.4/Data/Attoparsec/Combinator.hs:46:46: warning: [-Wunused-imports]
+attoparsec           >     The import of ‘liftA2’
+attoparsec           >     from module ‘Control.Applicative’ is redundant
+attoparsec           >    |
+attoparsec           > 46 | import Control.Applicative (Alternative(..), liftA2, many, (<|>))
+attoparsec           >    |                                              ^^^^^^
+base-compat          > [ 63 of 130] Compiling Data.STRef.Compat
+base-compat          > [ 64 of 130] Compiling Data.STRef.Compat.Repl
+base-compat          > [ 65 of 130] Compiling Data.Semigroup.Compat
+base-compat          > [ 66 of 130] Compiling Data.Semigroup.Compat.Repl
+base-compat          > [ 67 of 130] Compiling Data.String.Compat
+base-compat          > [ 68 of 130] Compiling Data.String.Compat.Repl
+base-compat          > [ 69 of 130] Compiling Data.Traversable.Compat
+base-compat          > [ 70 of 130] Compiling Data.Traversable.Compat.Repl
+base-compat          > [ 71 of 130] Compiling Data.Tuple.Compat
+base-compat          > [ 72 of 130] Compiling Data.Tuple.Compat.Repl
+base-compat          > [ 73 of 130] Compiling Data.Type.Coercion.Compat
+base-compat          > [ 74 of 130] Compiling Data.Type.Coercion.Compat.Repl
+base-compat          > [ 75 of 130] Compiling Data.Type.Equality.Compat
+base-compat          > [ 76 of 130] Compiling Data.Type.Equality.Compat.Repl
+base-compat          > [ 77 of 130] Compiling Data.Version.Compat
+base-compat          > [ 78 of 130] Compiling Data.Version.Compat.Repl
+base-compat          > [ 79 of 130] Compiling Data.Void.Compat
+base-compat          > [ 80 of 130] Compiling Data.Void.Compat.Repl
+base-compat          > [ 81 of 130] Compiling Data.Word.Compat
+base-compat          > [ 82 of 130] Compiling Data.Word.Compat.Repl
+base-compat          > [ 83 of 130] Compiling Debug.Trace.Compat
+base-compat          > [ 84 of 130] Compiling Debug.Trace.Compat.Repl
+semialign            > [2 of 6] Compiling Data.Semialign.Indexed
+base-compat          > [ 85 of 130] Compiling Foreign.ForeignPtr.Compat
+semialign            > [3 of 6] Compiling Data.Semialign
+base-compat          > [ 86 of 130] Compiling Foreign.ForeignPtr.Compat.Repl
+attoparsec           > [ 7 of 16] Compiling Data.Attoparsec.Text.Internal
+semialign            > [4 of 6] Compiling Data.Align
+base-compat          > [ 87 of 130] Compiling Foreign.ForeignPtr.Safe.Compat
+attoparsec           > 
+attoparsec           > /tmp/stack-bc734b4e07c8e952/attoparsec-0.14.4/Data/Attoparsec/Text/Internal.hs:68:1: warning: [-Wunused-imports]
+attoparsec           >     The import of ‘*>, <$>, pure’
+attoparsec           >     from module ‘Control.Applicative’ is redundant
+attoparsec           >    |
+attoparsec           > 68 | import Control.Applicative ((<|>), (<$>), pure, (*>))
+attoparsec           >    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+attoparsec           > 
+attoparsec           > /tmp/stack-bc734b4e07c8e952/attoparsec-0.14.4/Data/Attoparsec/Text/Internal.hs:91:13: warning: [GHC-58520] [-Wtype-equality-requires-operators]
+attoparsec           >     The use of ‘~’ without TypeOperators
+attoparsec           >     will become an error in a future GHC release.
+attoparsec           >     Suggested fix: Perhaps you intended to use TypeOperators
+attoparsec           >    |
+attoparsec           > 91 | instance (a ~ Text) => IsString (Parser a) where
+attoparsec           >    |             ^
+semialign            > [5 of 6] Compiling Data.Crosswalk
+base-compat          > [ 88 of 130] Compiling Foreign.ForeignPtr.Safe.Compat.Repl
+base-compat          > [ 89 of 130] Compiling Foreign.ForeignPtr.Unsafe.Compat
+base-compat          > [ 90 of 130] Compiling Foreign.ForeignPtr.Unsafe.Compat.Repl
+base-compat          > [ 91 of 130] Compiling Foreign.Marshal.Alloc.Compat
+base-compat          > [ 92 of 130] Compiling Foreign.Marshal.Alloc.Compat.Repl
+base-compat          > [ 93 of 130] Compiling Foreign.Marshal.Array.Compat
+base-compat          > [ 94 of 130] Compiling Foreign.Marshal.Array.Compat.Repl
+base-compat          > [ 95 of 130] Compiling Foreign.Marshal.Safe.Compat
+base-compat          > [ 96 of 130] Compiling Foreign.Marshal.Safe.Compat.Repl
+base-compat          > [ 97 of 130] Compiling Foreign.Marshal.Unsafe.Compat
+semialign            > [6 of 6] Compiling Data.Zip
+base-compat          > [ 98 of 130] Compiling Foreign.Marshal.Unsafe.Compat.Repl
+base-compat          > [ 99 of 130] Compiling Foreign.Marshal.Utils.Compat
+base-compat          > [100 of 130] Compiling Foreign.Marshal.Compat
+base-compat          > [101 of 130] Compiling Foreign.Marshal.Compat.Repl
+base-compat          > [102 of 130] Compiling Foreign.Compat
+base-compat          > [103 of 130] Compiling Foreign.Compat.Repl
+base-compat          > [104 of 130] Compiling Foreign.Marshal.Utils.Compat.Repl
+base-compat          > [105 of 130] Compiling Numeric.Compat
+base-compat          > [106 of 130] Compiling Numeric.Compat.Repl
+base-compat          > [107 of 130] Compiling Numeric.Natural.Compat
+base-compat          > [108 of 130] Compiling Numeric.Natural.Compat.Repl
+base-compat          > [109 of 130] Compiling Prelude.Compat
+base-compat          > [110 of 130] Compiling Data.List.Compat
+base-compat          > [111 of 130] Compiling Data.List.Compat.Repl
+base-compat          > [112 of 130] Compiling Prelude.Compat.Repl
+base-compat          > [113 of 130] Compiling System.Environment.Compat
+base-compat          > [114 of 130] Compiling System.Environment.Compat.Repl
+witherable           > [2 of 2] Compiling Data.Witherable
+witherable           > 
+witherable           > /tmp/stack-bc734b4e07c8e952/witherable-0.4.2/src/Data/Witherable.hs:48:1: warning: [-Wunused-imports]
+witherable           >     The import of ‘Control.Applicative’ is redundant
+witherable           >       except perhaps to import instances from ‘Control.Applicative’
+witherable           >     To import instances alone, use: import Control.Applicative()
+witherable           >    |
+witherable           > 48 | import Control.Applicative
+witherable           >    | ^^^^^^^^^^^^^^^^^^^^^^^^^^
+base-compat          > [115 of 130] Compiling System.Exit.Compat
+base-compat          > [116 of 130] Compiling System.Exit.Compat.Repl
+base-compat          > [117 of 130] Compiling System.IO.Compat
+base-compat          > [118 of 130] Compiling System.IO.Compat.Repl
+base-compat          > [119 of 130] Compiling System.IO.Error.Compat
+base-compat          > [120 of 130] Compiling System.IO.Error.Compat.Repl
+semialign            > copy/register
+base-compat          > [121 of 130] Compiling System.IO.Unsafe.Compat
+base-compat          > [122 of 130] Compiling System.IO.Unsafe.Compat.Repl
+base-compat          > [123 of 130] Compiling Text.Read.Compat
+semialign            > Installing library in /tmp/aern2-stack.ryVCFK/snapshots/x86_64-linux-tinfo6/b592dd4acb73086f74d238dd1c126581e2a5d5fe389f24cb377ec81a833f3622/9.6.7/lib/x86_64-linux-ghc-9.6.7/semialign-1.3.1-7AVLRDUMYxo1LUYCpMaX2s
+base-compat          > [124 of 130] Compiling Text.Read.Compat.Repl
+base-compat          > [125 of 130] Compiling Text.Read.Lex.Compat
+base-compat          > [126 of 130] Compiling Text.Read.Lex.Compat.Repl
+base-compat          > [127 of 130] Compiling Type.Reflection.Compat
+base-compat          > [128 of 130] Compiling Data.Typeable.Compat
+base-compat          > [129 of 130] Compiling Data.Typeable.Compat.Repl
+semialign            > Registering library for semialign-1.3.1..
+base-compat          > [130 of 130] Compiling Type.Reflection.Compat.Repl
+witherable           > copy/register
+witherable           > Installing library in /tmp/aern2-stack.ryVCFK/snapshots/x86_64-linux-tinfo6/b592dd4acb73086f74d238dd1c126581e2a5d5fe389f24cb377ec81a833f3622/9.6.7/lib/x86_64-linux-ghc-9.6.7/witherable-0.4.2-9lbEF3x1Qwr8pX0Jm3TSFW
+witherable           > Registering library for witherable-0.4.2..
+base-compat          > copy/register
+base-compat          > Installing library in /tmp/aern2-stack.ryVCFK/snapshots/x86_64-linux-tinfo6/b592dd4acb73086f74d238dd1c126581e2a5d5fe389f24cb377ec81a833f3622/9.6.7/lib/x86_64-linux-ghc-9.6.7/base-compat-0.13.1-CKvqZK5UBV2GlzeHjNRwiz
+base-compat          > Registering library for base-compat-0.13.1..
+base-compat-batteries> configure
+base-compat-batteries> Configuring base-compat-batteries-0.13.1...
+base-compat-batteries> build with ghc-9.6.7
+attoparsec           > [ 8 of 16] Compiling Data.Attoparsec.Text
+base-compat-batteries> Preprocessing library for base-compat-batteries-0.13.1..
+base-compat-batteries> Building library for base-compat-batteries-0.13.1..
+base-compat-batteries> [  1 of 130] Compiling Control.Concurrent.Compat
+base-compat-batteries> [  2 of 130] Compiling Control.Concurrent.Compat.Repl.Batteries
+base-compat-batteries> [  3 of 130] Compiling Control.Concurrent.MVar.Compat
+base-compat-batteries> [  4 of 130] Compiling Control.Concurrent.MVar.Compat.Repl.Batteries
+base-compat-batteries> [  5 of 130] Compiling Control.Exception.Compat
+base-compat-batteries> [  6 of 130] Compiling Control.Exception.Compat.Repl.Batteries
+base-compat-batteries> [  7 of 130] Compiling Control.Monad.Compat
+base-compat-batteries> [  8 of 130] Compiling Control.Monad.Compat.Repl.Batteries
+base-compat-batteries> [  9 of 130] Compiling Control.Monad.Fail.Compat
+base-compat-batteries> [ 10 of 130] Compiling Control.Monad.Fail.Compat.Repl.Batteries
+base-compat-batteries> [ 11 of 130] Compiling Control.Monad.IO.Class.Compat
+base-compat-batteries> [ 12 of 130] Compiling Control.Monad.IO.Class.Compat.Repl.Batteries
+base-compat-batteries> [ 13 of 130] Compiling Control.Monad.ST.Lazy.Unsafe.Compat
+base-compat-batteries> [ 14 of 130] Compiling Control.Monad.ST.Lazy.Unsafe.Compat.Repl.Batteries
+base-compat-batteries> [ 15 of 130] Compiling Control.Monad.ST.Unsafe.Compat
+base-compat-batteries> [ 16 of 130] Compiling Control.Monad.ST.Unsafe.Compat.Repl.Batteries
+base-compat-batteries> [ 17 of 130] Compiling Data.Bifoldable.Compat
+base-compat-batteries> [ 18 of 130] Compiling Data.Bifoldable.Compat.Repl.Batteries
+base-compat-batteries> [ 19 of 130] Compiling Data.Bifoldable1.Compat
+base-compat-batteries> [ 20 of 130] Compiling Data.Bifoldable1.Compat.Repl.Batteries
+base-compat-batteries> [ 21 of 130] Compiling Data.Bifunctor.Compat
+base-compat-batteries> [ 22 of 130] Compiling Data.Bifunctor.Compat.Repl.Batteries
+base-compat-batteries> [ 23 of 130] Compiling Data.Bitraversable.Compat
+base-compat-batteries> [ 24 of 130] Compiling Data.Bitraversable.Compat.Repl.Batteries
+base-compat-batteries> [ 25 of 130] Compiling Data.Bits.Compat
+base-compat-batteries> [ 26 of 130] Compiling Data.Bits.Compat.Repl.Batteries
+base-compat-batteries> [ 27 of 130] Compiling Data.Bool.Compat
+base-compat-batteries> [ 28 of 130] Compiling Data.Bool.Compat.Repl.Batteries
+base-compat-batteries> [ 29 of 130] Compiling Data.Complex.Compat
+base-compat-batteries> [ 30 of 130] Compiling Data.Complex.Compat.Repl.Batteries
+base-compat-batteries> [ 31 of 130] Compiling Data.Either.Compat
+base-compat-batteries> [ 32 of 130] Compiling Data.Either.Compat.Repl.Batteries
+base-compat-batteries> [ 33 of 130] Compiling Data.Foldable.Compat
+base-compat-batteries> [ 34 of 130] Compiling Data.Foldable.Compat.Repl.Batteries
+base-compat-batteries> [ 35 of 130] Compiling Data.Foldable1.Compat
+base-compat-batteries> [ 36 of 130] Compiling Data.Foldable1.Compat.Repl.Batteries
+base-compat-batteries> [ 37 of 130] Compiling Data.Function.Compat
+base-compat-batteries> [ 38 of 130] Compiling Data.Function.Compat.Repl.Batteries
+base-compat-batteries> [ 39 of 130] Compiling Data.Functor.Compat
+base-compat-batteries> [ 40 of 130] Compiling Data.Functor.Compat.Repl.Batteries
+base-compat-batteries> [ 41 of 130] Compiling Data.Functor.Compose.Compat
+base-compat-batteries> [ 42 of 130] Compiling Data.Functor.Compose.Compat.Repl.Batteries
+base-compat-batteries> [ 43 of 130] Compiling Data.Functor.Const.Compat
+base-compat-batteries> [ 44 of 130] Compiling Data.Functor.Const.Compat.Repl.Batteries
+base-compat-batteries> [ 45 of 130] Compiling Data.Functor.Contravariant.Compat
+base-compat-batteries> [ 46 of 130] Compiling Data.Functor.Contravariant.Compat.Repl.Batteries
+base-compat-batteries> [ 47 of 130] Compiling Data.Functor.Identity.Compat
+base-compat-batteries> [ 48 of 130] Compiling Data.Functor.Identity.Compat.Repl.Batteries
+base-compat-batteries> [ 49 of 130] Compiling Data.Functor.Product.Compat
+base-compat-batteries> [ 50 of 130] Compiling Data.Functor.Product.Compat.Repl.Batteries
+base-compat-batteries> [ 51 of 130] Compiling Data.Functor.Sum.Compat
+base-compat-batteries> [ 52 of 130] Compiling Data.Functor.Sum.Compat.Repl.Batteries
+base-compat-batteries> [ 53 of 130] Compiling Data.IORef.Compat
+base-compat-batteries> [ 54 of 130] Compiling Data.IORef.Compat.Repl.Batteries
+base-compat-batteries> [ 55 of 130] Compiling Data.List.Compat
+base-compat-batteries> [ 56 of 130] Compiling Data.List.Compat.Repl.Batteries
+base-compat-batteries> [ 57 of 130] Compiling Data.List.NonEmpty.Compat
+base-compat-batteries> [ 58 of 130] Compiling Data.List.NonEmpty.Compat.Repl.Batteries
+base-compat-batteries> [ 59 of 130] Compiling Data.Monoid.Compat
+base-compat-batteries> [ 60 of 130] Compiling Data.Monoid.Compat.Repl.Batteries
+base-compat-batteries> [ 61 of 130] Compiling Data.Proxy.Compat
+base-compat-batteries> [ 62 of 130] Compiling Data.Proxy.Compat.Repl.Batteries
+base-compat-batteries> [ 63 of 130] Compiling Data.Ratio.Compat
+base-compat-batteries> [ 64 of 130] Compiling Data.Ratio.Compat.Repl.Batteries
+base-compat-batteries> [ 65 of 130] Compiling Data.STRef.Compat
+base-compat-batteries> [ 66 of 130] Compiling Data.STRef.Compat.Repl.Batteries
+base-compat-batteries> [ 67 of 130] Compiling Data.Semigroup.Compat
+base-compat-batteries> [ 68 of 130] Compiling Data.Semigroup.Compat.Repl.Batteries
+base-compat-batteries> [ 69 of 130] Compiling Data.String.Compat
+base-compat-batteries> [ 70 of 130] Compiling Data.String.Compat.Repl.Batteries
+base-compat-batteries> [ 71 of 130] Compiling Data.Traversable.Compat
+base-compat-batteries> [ 72 of 130] Compiling Data.Traversable.Compat.Repl.Batteries
+base-compat-batteries> [ 73 of 130] Compiling Data.Tuple.Compat
+base-compat-batteries> [ 74 of 130] Compiling Data.Tuple.Compat.Repl.Batteries
+base-compat-batteries> [ 75 of 130] Compiling Data.Type.Coercion.Compat
+base-compat-batteries> [ 76 of 130] Compiling Data.Type.Coercion.Compat.Repl.Batteries
+base-compat-batteries> [ 77 of 130] Compiling Data.Type.Equality.Compat
+base-compat-batteries> [ 78 of 130] Compiling Data.Type.Equality.Compat.Repl.Batteries
+base-compat-batteries> [ 79 of 130] Compiling Data.Typeable.Compat
+base-compat-batteries> [ 80 of 130] Compiling Data.Typeable.Compat.Repl.Batteries
+base-compat-batteries> [ 81 of 130] Compiling Data.Version.Compat
+base-compat-batteries> [ 82 of 130] Compiling Data.Version.Compat.Repl.Batteries
+base-compat-batteries> [ 83 of 130] Compiling Data.Void.Compat
+base-compat-batteries> [ 84 of 130] Compiling Data.Void.Compat.Repl.Batteries
+base-compat-batteries> [ 85 of 130] Compiling Data.Word.Compat
+base-compat-batteries> [ 86 of 130] Compiling Data.Word.Compat.Repl.Batteries
+base-compat-batteries> [ 87 of 130] Compiling Debug.Trace.Compat
+base-compat-batteries> [ 88 of 130] Compiling Debug.Trace.Compat.Repl.Batteries
+base-compat-batteries> [ 89 of 130] Compiling Foreign.Compat
+base-compat-batteries> [ 90 of 130] Compiling Foreign.Compat.Repl.Batteries
+base-compat-batteries> [ 91 of 130] Compiling Foreign.ForeignPtr.Compat
+base-compat-batteries> [ 92 of 130] Compiling Foreign.ForeignPtr.Compat.Repl.Batteries
+base-compat-batteries> [ 93 of 130] Compiling Foreign.ForeignPtr.Safe.Compat
+base-compat-batteries> [ 94 of 130] Compiling Foreign.ForeignPtr.Safe.Compat.Repl.Batteries
+base-compat-batteries> [ 95 of 130] Compiling Foreign.ForeignPtr.Unsafe.Compat
+base-compat-batteries> [ 96 of 130] Compiling Foreign.ForeignPtr.Unsafe.Compat.Repl.Batteries
+base-compat-batteries> [ 97 of 130] Compiling Foreign.Marshal.Alloc.Compat
+base-compat-batteries> [ 98 of 130] Compiling Foreign.Marshal.Alloc.Compat.Repl.Batteries
+base-compat-batteries> [ 99 of 130] Compiling Foreign.Marshal.Array.Compat
+base-compat-batteries> [100 of 130] Compiling Foreign.Marshal.Array.Compat.Repl.Batteries
+base-compat-batteries> [101 of 130] Compiling Foreign.Marshal.Compat
+base-compat-batteries> [102 of 130] Compiling Foreign.Marshal.Compat.Repl.Batteries
+base-compat-batteries> [103 of 130] Compiling Foreign.Marshal.Safe.Compat
+base-compat-batteries> [104 of 130] Compiling Foreign.Marshal.Safe.Compat.Repl.Batteries
+base-compat-batteries> [105 of 130] Compiling Foreign.Marshal.Unsafe.Compat
+base-compat-batteries> [106 of 130] Compiling Foreign.Marshal.Unsafe.Compat.Repl.Batteries
+base-compat-batteries> [107 of 130] Compiling Foreign.Marshal.Utils.Compat
+base-compat-batteries> [108 of 130] Compiling Foreign.Marshal.Utils.Compat.Repl.Batteries
+base-compat-batteries> [109 of 130] Compiling Numeric.Compat
+base-compat-batteries> [110 of 130] Compiling Numeric.Compat.Repl.Batteries
+base-compat-batteries> [111 of 130] Compiling Numeric.Natural.Compat
+base-compat-batteries> [112 of 130] Compiling Numeric.Natural.Compat.Repl.Batteries
+base-compat-batteries> [113 of 130] Compiling Prelude.Compat
+base-compat-batteries> [114 of 130] Compiling Prelude.Compat.Repl.Batteries
+base-compat-batteries> [115 of 130] Compiling System.Environment.Compat
+base-compat-batteries> [116 of 130] Compiling System.Environment.Compat.Repl.Batteries
+base-compat-batteries> [117 of 130] Compiling System.Exit.Compat
+base-compat-batteries> [118 of 130] Compiling System.Exit.Compat.Repl.Batteries
+base-compat-batteries> [119 of 130] Compiling System.IO.Compat
+base-compat-batteries> [120 of 130] Compiling System.IO.Compat.Repl.Batteries
+base-compat-batteries> [121 of 130] Compiling System.IO.Error.Compat
+base-compat-batteries> [122 of 130] Compiling System.IO.Error.Compat.Repl.Batteries
+base-compat-batteries> [123 of 130] Compiling System.IO.Unsafe.Compat
+base-compat-batteries> [124 of 130] Compiling System.IO.Unsafe.Compat.Repl.Batteries
+base-compat-batteries> [125 of 130] Compiling Text.Read.Compat
+base-compat-batteries> [126 of 130] Compiling Text.Read.Compat.Repl.Batteries
+base-compat-batteries> [127 of 130] Compiling Text.Read.Lex.Compat
+base-compat-batteries> [128 of 130] Compiling Text.Read.Lex.Compat.Repl.Batteries
+base-compat-batteries> [129 of 130] Compiling Type.Reflection.Compat
+base-compat-batteries> [130 of 130] Compiling Type.Reflection.Compat.Repl.Batteries
+base-compat-batteries> copy/register
+base-compat-batteries> Installing library in /tmp/aern2-stack.ryVCFK/snapshots/x86_64-linux-tinfo6/b592dd4acb73086f74d238dd1c126581e2a5d5fe389f24cb377ec81a833f3622/9.6.7/lib/x86_64-linux-ghc-9.6.7/base-compat-batteries-0.13.1-9iZICZIUEjL29rQggHw70F
+base-compat-batteries> Registering library for base-compat-batteries-0.13.1..
+attoparsec           > [ 9 of 16] Compiling Data.Attoparsec.Text.Lazy
+attoparsec           > [10 of 16] Compiling Data.Attoparsec.ByteString.Internal
+attoparsec           > [11 of 16] Compiling Data.Attoparsec.ByteString
+attoparsec           > [12 of 16] Compiling Data.Attoparsec.ByteString.Lazy
+attoparsec           > [13 of 16] Compiling Data.Attoparsec.Lazy
+attoparsec           > [14 of 16] Compiling Data.Attoparsec.ByteString.Char8
+attoparsec           > 
+attoparsec           > /tmp/stack-bc734b4e07c8e952/attoparsec-0.14.4/Data/Attoparsec/ByteString/Char8.hs:154:13: warning: [GHC-58520] [-Wtype-equality-requires-operators]
+attoparsec           >     The use of ‘~’ without TypeOperators
+attoparsec           >     will become an error in a future GHC release.
+attoparsec           >     Suggested fix: Perhaps you intended to use TypeOperators
+attoparsec           >     |
+attoparsec           > 154 | instance (a ~ B.ByteString) => IsString (Parser a) where
+attoparsec           >     |             ^
+attoparsec           > [15 of 16] Compiling Data.Attoparsec.Char8
+attoparsec           > [16 of 16] Compiling Data.Attoparsec
+attoparsec           > copy/register
+attoparsec           > Installing internal library attoparsec-internal in /tmp/aern2-stack.ryVCFK/snapshots/x86_64-linux-tinfo6/b592dd4acb73086f74d238dd1c126581e2a5d5fe389f24cb377ec81a833f3622/9.6.7/lib/x86_64-linux-ghc-9.6.7/attoparsec-0.14.4-Dg0twWEhgGOCwyhdzYOlls-attoparsec-internal
+attoparsec           > Installing library in /tmp/aern2-stack.ryVCFK/snapshots/x86_64-linux-tinfo6/b592dd4acb73086f74d238dd1c126581e2a5d5fe389f24cb377ec81a833f3622/9.6.7/lib/x86_64-linux-ghc-9.6.7/attoparsec-0.14.4-CcLQC2pWegBDz0UgMGzg1N
+attoparsec           > Registering library 'attoparsec-internal' for attoparsec-0.14.4..
+attoparsec           > Registering library for attoparsec-0.14.4..
+aeson                > configure
+aeson                > Configuring aeson-2.1.2.1...
+aeson                > build with ghc-9.6.7
+aeson                > Preprocessing library for aeson-2.1.2.1..
+aeson                > Building library for aeson-2.1.2.1..
+aeson                > [ 1 of 35] Compiling Data.Aeson.Internal.ByteString
+aeson                > [ 2 of 35] Compiling Data.Aeson.Internal.Functions
+aeson                > [ 3 of 35] Compiling Data.Aeson.Internal.TH
+aeson                > [ 4 of 35] Compiling Data.Aeson.Internal.Text
+aeson                > [ 5 of 35] Compiling Data.Aeson.Internal.Word8
+aeson                > [ 6 of 35] Compiling Data.Aeson.Internal.Integer
+aeson                > [ 7 of 35] Compiling Data.Aeson.Key
+aeson                > [ 8 of 35] Compiling Data.Aeson.Decoding.Tokens
+aeson                > [ 9 of 35] Compiling Data.Aeson.Decoding.Internal
+aeson                > [10 of 35] Compiling Data.Aeson.KeyMap
+aeson                > [11 of 35] Compiling Data.Aeson.Parser.UnescapePure
+aeson                > [12 of 35] Compiling Data.Aeson.Parser.Unescape
+aeson                > [13 of 35] Compiling Data.Aeson.Decoding.ByteString.Lazy
+aeson                > [14 of 35] Compiling Data.Aeson.Decoding.ByteString
+aeson                > [15 of 35] Compiling Data.Aeson.Types.Generic
+aeson                > [16 of 35] Compiling Data.Aeson.Types.Internal
+aeson                > [17 of 35] Compiling Data.Aeson.Parser.Internal
+aeson                > [18 of 35] Compiling Data.Aeson.Parser
+aeson                > [19 of 35] Compiling Data.Attoparsec.Time.Internal
+aeson                > [20 of 35] Compiling Data.Attoparsec.Time
+aeson                > 
+aeson                > /tmp/stack-bc734b4e07c8e952/aeson-2.1.2.1/attoparsec-iso8601/src/Data/Attoparsec/Time.hs:132:21: warning: [GHC-68441] [-Wdeprecations]
+aeson                >     In the use of ‘toPico’
+aeson                >     (imported from Data.Attoparsec.Time.Internal):
+aeson                >     Deprecated: "Use MkFixed"
+aeson                >     |
+aeson                > 132 |   parsePicos a0 t = toPico (fromIntegral (t' * 10^n))
+aeson                >     |                     ^^^^^^
+aeson                > [21 of 35] Compiling Data.Aeson.Parser.Time
+aeson                > [22 of 35] Compiling Data.Aeson.Types.FromJSON
+aeson                > 
+aeson                > /tmp/stack-bc734b4e07c8e952/aeson-2.1.2.1/src/Data/Aeson/Types/FromJSON.hs:81:47: warning: [-Wunused-imports]
+aeson                >     The import of ‘liftA2’
+aeson                >     from module ‘Control.Applicative’ is redundant
+aeson                >    |
+aeson                > 81 | import Control.Applicative ((<|>), Const(..), liftA2)
+aeson                >    |                                               ^^^^^^
+aeson                > [23 of 35] Compiling Data.Aeson.Internal
+aeson                > [24 of 35] Compiling Data.Aeson.Internal.Time
+aeson                > [25 of 35] Compiling Data.Aeson.Encoding.Builder
+aeson                > [26 of 35] Compiling Data.Aeson.Encoding.Internal
+aeson                > [27 of 35] Compiling Data.Aeson.Encoding
+aeson                > [28 of 35] Compiling Data.Aeson.Types.ToJSON
+aeson                > [29 of 35] Compiling Data.Aeson.Types.Class
+aeson                > [30 of 35] Compiling Data.Aeson.Types
+aeson                > [31 of 35] Compiling Data.Aeson.Text
+aeson                > [32 of 35] Compiling Data.Aeson
+aeson                > 
+aeson                > /tmp/stack-bc734b4e07c8e952/aeson-2.1.2.1/src/Data/Aeson.hs:166:35: warning: [-Wunused-imports]
+aeson                >     The import of ‘ifromJSON’
+aeson                >     from module ‘Data.Aeson.Types.FromJSON’ is redundant
+aeson                >     |
+aeson                > 166 | import Data.Aeson.Types.FromJSON (ifromJSON, parseIndexedJSON)
+aeson                >     |                                   ^^^^^^^^^
+aeson                > 
+aeson                > /tmp/stack-bc734b4e07c8e952/aeson-2.1.2.1/src/Data/Aeson.hs:170:1: warning: [-Wunused-imports]
+aeson                >     The import of ‘Data.Aeson.Types.Internal’ is redundant
+aeson                >       except perhaps to import instances from ‘Data.Aeson.Types.Internal’
+aeson                >     To import instances alone, use: import Data.Aeson.Types.Internal()
+aeson                >     |
+aeson                > 170 | import Data.Aeson.Types.Internal (formatError)
+aeson                >     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+aeson                > [33 of 35] Compiling Data.Aeson.TH
+aeson                > 
+aeson                > /tmp/stack-bc734b4e07c8e952/aeson-2.1.2.1/src/Data/Aeson/TH.hs:984:7: warning: [GHC-62161] [-Wincomplete-uni-patterns]
+aeson                >     Pattern match(es) are non-exhaustive
+aeson                >     In a pattern binding: Patterns of type ‘[Q Exp]’ not matched: []
+aeson                >     |
+aeson                > 984 |       x:xs = [ [|lookupField|]
+aeson                >     |       ^^^^^^^^^^^^^^^^^^^^^^^^...
+aeson                > 
+aeson                > /tmp/stack-bc734b4e07c8e952/aeson-2.1.2.1/src/Data/Aeson/TH.hs:1100:14: warning: [GHC-62161] [-Wincomplete-uni-patterns]
+aeson                >     Pattern match(es) are non-exhaustive
+aeson                >     In a pattern binding: Patterns of type ‘[Q Exp]’ not matched: []
+aeson                >      |
+aeson                > 1100 |          let x:xs = [ dispatchParseJSON jc conName tvMap argTy
+aeson                >      |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^...
+aeson                > [34 of 35] Compiling Data.Aeson.QQ.Simple
+aeson                > [35 of 35] Compiling Data.Aeson.Decoding
+aeson                > copy/register
+aeson                > Installing library in /tmp/aern2-stack.ryVCFK/snapshots/x86_64-linux-tinfo6/b592dd4acb73086f74d238dd1c126581e2a5d5fe389f24cb377ec81a833f3622/9.6.7/lib/x86_64-linux-ghc-9.6.7/aeson-2.1.2.1-9IKR24LsbQlKwAhcR1THGC
+aeson                > Registering library for aeson-2.1.2.1..
+Completed 12 action(s).

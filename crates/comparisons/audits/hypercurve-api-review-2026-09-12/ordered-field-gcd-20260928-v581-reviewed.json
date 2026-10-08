@@ -1,0 +1,15 @@
+{
+  "outer_session": 44697,
+  "outer_exit_code": 0,
+  "qualification": "ordered-field-gcd-20260928-v581-terminal.json",
+  "source_manifest": "ordered-field-gcd-20260928-v581-sources.json",
+  "repos": {
+    "hypersolve": {
+      "parent": "547b0d4e9a1b3fe656f50957e5f89c17877ab53b",
+      "paths": {
+        "src/lib.rs": "5cb684e89230189154ac91c81c1b7399594f4707115ac1810867c320ef1dbc3c",
+        "src/ordered_field_roots.rs": "89b7be0543b94dd67d459ef285a2b0894272c4958bf00f1bff6b61706a927f10"
+      }
+    }
+  }
+}

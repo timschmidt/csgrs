@@ -1,0 +1,18 @@
+[
+  {
+    "prefix": "corner-publication-blocker-sites-20260923-trace1",
+    "session": 78466,
+    "exit_code": 1,
+    "reason": "Disk quota exceeded during cargo build",
+    "source_bindings_unchanged": true,
+    "process_reaped": true
+  },
+  {
+    "prefix": "fillet-composition-callers-20260923-final1",
+    "session": 26984,
+    "exit_code": 1,
+    "reason": "Disk quota exceeded during cargo build",
+    "source_bindings_unchanged": true,
+    "process_reaped": true
+  }
+]

@@ -1,0 +1,25 @@
+[package]
+name = "calcium-complex-product-v2-candidate"
+version = "0.0.0"
+edition = "2024"
+[workspace]
+[features]
+trace = ["hyperreal/dispatch-trace", "hyperlattice/hyperreal-dispatch-trace"]
+[dependencies]
+hyperreal = { path = "../complex-product-v2-candidate/hyperreal" }
+hyperlattice = { path = "../complex-product-v2-candidate/hyperlattice" }
+num = "0.4.3"
+rug = { version = "1.30.0", default-features = false, features = ["integer", "rational", "std"] }
+[[bin]]
+name = "complex-product-v2-candidate-cpu"
+path = "../complex-product-cpu.rs"
+[[bin]]
+name = "complex-product-v2-candidate-allocation"
+path = "../complex-product-allocation.rs"
+[[bin]]
+name = "complex-product-v2-candidate-check"
+path = "../complex-product-check.rs"
+[[bin]]
+name = "complex-product-v2-candidate-trace"
+path = "../complex-product-trace.rs"
+required-features = ["trace"]

@@ -1,0 +1,5 @@
+{
+  "outer_session": null,
+  "outer_exit_code": 1,
+  "observation": "exec_command completed synchronously; standalone probe fixture used the outcome wrapper instead of the path value."
+}

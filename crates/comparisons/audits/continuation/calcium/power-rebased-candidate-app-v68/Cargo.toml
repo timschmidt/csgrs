@@ -1,0 +1,26 @@
+[package]
+name = "calcium-power-rebased-v68"
+version = "0.0.0"
+edition = "2024"
+[workspace]
+[dependencies]
+hyperreal = { path = "../e-plan-qualified-candidate/hyperreal", features = ["serde"] }
+hyperlimit = { path = "../e-plan-qualified-candidate/hyperlimit" }
+hypersolve = { path = "../power-rebased-v68/hypersolve" }
+serde_json = "1.0"
+
+[[bin]]
+name = "power-rebased-cpu-v68"
+path = "../power-sums-cpu.rs"
+
+[[bin]]
+name = "power-rebased-allocation-v68"
+path = "../power-sums-allocation.rs"
+
+[[bin]]
+name = "power-rebased-approx-v68"
+path = "../point-qualified-approx.rs"
+
+[[bin]]
+name = "power-rebased-extended-v68"
+path = "../point-demand-extended.rs"

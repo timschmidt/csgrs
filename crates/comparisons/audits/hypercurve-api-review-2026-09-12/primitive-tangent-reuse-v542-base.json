@@ -1,0 +1,5 @@
+{
+  "path": "hypercurve/src/bezier_offset.rs",
+  "sha256": "e29e35c16dcb23e8f620e64e8696252a67f5691dcb97f7916b6ffd197149c84d",
+  "status": "UNAPPLIED, UNTESTED; first reap/commit V540 and run the V541 composition probe"
+}

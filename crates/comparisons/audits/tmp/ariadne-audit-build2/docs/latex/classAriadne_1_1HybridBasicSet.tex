@@ -1,0 +1,89 @@
+\doxysubsection{Hybrid\+Basic\+Set\texorpdfstring{$<$}{<} EBS \texorpdfstring{$>$}{>} Class Template Reference}
+\hypertarget{classAriadne_1_1HybridBasicSet}{}\label{classAriadne_1_1HybridBasicSet}\index{HybridBasicSet$<$ EBS $>$@{HybridBasicSet$<$ EBS $>$}}
+
+
+{\ttfamily \#include $<$hybrid\+\_\+set.\+hpp$>$}
+
+
+
+\doxysubsubsection{Description}
+\subsubsection*{template$<$class EBS$>$\newline
+class Ariadne\+::\+Hybrid\+Basic\+Set$<$ EBS $>$}
+A hybrid set defined in a single location obtained from a Euclidean set by naming variables. Inheritance diagram for Hybrid\+Basic\+Set\texorpdfstring{$<$}{<} EBS \texorpdfstring{$>$}{>}\+:\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[height=0.794326cm]{classAriadne_1_1HybridBasicSet}
+\end{center}
+\end{figure}
+\doxysubsubsubsection*{Public Types}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1HybridBasicSet_a526f82a2bdd80a5af44a2d8774287d15}\label{classAriadne_1_1HybridBasicSet_a526f82a2bdd80a5af44a2d8774287d15} 
+typedef EBS {\bfseries Continuous\+Set\+Type}
+\begin{DoxyCompactList}\small\item\em The type of the Euclidean set used to describe the hybrid set. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1HybridBasicSet_abfaeeffbda98a00e59063202b35c9f2e}\label{classAriadne_1_1HybridBasicSet_abfaeeffbda98a00e59063202b35c9f2e} 
+{\bfseries Hybrid\+Basic\+Set} (const \mbox{\hyperlink{classAriadne_1_1DiscreteLocation}{Discrete\+Location}} \&loc, const \mbox{\hyperlink{classAriadne_1_1Space}{Real\+Space}} \&spc, const \mbox{\hyperlink{classAriadne_1_1HybridBasicSet_a526f82a2bdd80a5af44a2d8774287d15}{Continuous\+Set\+Type}} \&ebs)
+\begin{DoxyCompactList}\small\item\em Construct a set in location {\itshape loc}, with variables ordered by {\itshape spc}, defined by Euclidean set {\itshape ebs}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1HybridBasicSet_abde80e9f0d89bb12d4a6c3df1504c26f}\label{classAriadne_1_1HybridBasicSet_abde80e9f0d89bb12d4a6c3df1504c26f} 
+const \mbox{\hyperlink{classAriadne_1_1DiscreteLocation}{Discrete\+Location}} \& {\bfseries location} () const
+\begin{DoxyCompactList}\small\item\em The location the set is contained in. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1HybridBasicSet_af4e82d2643547c9737ee1be581a0cdc0}\label{classAriadne_1_1HybridBasicSet_af4e82d2643547c9737ee1be581a0cdc0} 
+const \mbox{\hyperlink{classAriadne_1_1Set}{Set}}$<$ \mbox{\hyperlink{classAriadne_1_1Variable}{Real\+Variable}} $>$ {\bfseries variables} () const
+\begin{DoxyCompactList}\small\item\em A continuous set in terms of named variables in the discrete location. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1HybridBasicSet_a36d82a12e339d6c745661d24d82ff867}\label{classAriadne_1_1HybridBasicSet_a36d82a12e339d6c745661d24d82ff867} 
+const \mbox{\hyperlink{classAriadne_1_1LabelledSet}{Labelled\+Set}}$<$ EBS $>$ \& {\bfseries continuous\+\_\+set} () const
+\begin{DoxyCompactList}\small\item\em A continuous set in terms of named variables in the discrete location. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1HybridBasicSet_ae9ff8f23fad7b15ea46372341309de3f}\label{classAriadne_1_1HybridBasicSet_ae9ff8f23fad7b15ea46372341309de3f} 
+const \mbox{\hyperlink{classAriadne_1_1Space}{Real\+Space}} \& {\bfseries space} () const
+\begin{DoxyCompactList}\small\item\em The ordering of variables used to define the set. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1HybridBasicSet_af5054e5db8bd54c06deed03723c10ea8}\label{classAriadne_1_1HybridBasicSet_af5054e5db8bd54c06deed03723c10ea8} 
+const \mbox{\hyperlink{classAriadne_1_1HybridBasicSet_a526f82a2bdd80a5af44a2d8774287d15}{Continuous\+Set\+Type}} \& {\bfseries euclidean\+\_\+set} () const
+\begin{DoxyCompactList}\small\item\em The continuous Euclidean subset. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1HybridBasicSet_a3c1a15a3831a647991a6a2c5bbe1e029}\label{classAriadne_1_1HybridBasicSet_a3c1a15a3831a647991a6a2c5bbe1e029} 
+\mbox{\hyperlink{namespaceAriadne_a4b06015a4986ef014fb6643680cb04d2}{Dimension\+Type}} {\bfseries dimension} () const
+\begin{DoxyCompactList}\small\item\em The dimension of the continuous Euclidean subset. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1HybridBasicSet_a9870f8fb4ce4685df3c6378aab82b78f}\label{classAriadne_1_1HybridBasicSet_a9870f8fb4ce4685df3c6378aab82b78f} 
+{\footnotesize template$<$class IVL$>$ }\\decltype(auto) {\bfseries inside} (\mbox{\hyperlink{classAriadne_1_1HybridBoxes}{Hybrid\+Boxes}}$<$ IVL $>$ const \&hbxs) const
+\begin{DoxyCompactList}\small\item\em Test if the set is inside a union of hybrid boxes, at most one for each location. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1HybridBasicSet_a6c751e1ae0dba2da5f5fa8116c4161fd}\label{classAriadne_1_1HybridBasicSet_a6c751e1ae0dba2da5f5fa8116c4161fd} 
+{\footnotesize template$<$class IVL$>$ }\\decltype(auto) {\bfseries inside} (\mbox{\hyperlink{classAriadne_1_1HybridBox}{Hybrid\+Box}}$<$ IVL $>$ const \&hbx) const
+\begin{DoxyCompactList}\small\item\em Test if the set is inside a hybrid box. Returns true if the set is empty when the locations do not match. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1HybridBasicSet_addc9a3229e03ba2856bd63e199ef141b}\label{classAriadne_1_1HybridBasicSet_addc9a3229e03ba2856bd63e199ef141b} 
+{\footnotesize template$<$class IVL$>$ }\\decltype(auto) {\bfseries separated} (\mbox{\hyperlink{classAriadne_1_1HybridBox}{Hybrid\+Box}}$<$ IVL $>$ const \&hbx) const
+\begin{DoxyCompactList}\small\item\em Test if the set is separated from a hybrid box. i.\+e. the closures are disjoint. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1HybridBasicSet_a0b6ec0bdeaf2110939273c611685b458}\label{classAriadne_1_1HybridBasicSet_a0b6ec0bdeaf2110939273c611685b458} 
+{\footnotesize template$<$class IVL$>$ }\\decltype(auto) {\bfseries overlaps} (\mbox{\hyperlink{classAriadne_1_1HybridBox}{Hybrid\+Box}}$<$ IVL $>$ const \&hbx) const
+\begin{DoxyCompactList}\small\item\em Test if the set intersects the interior of a hybrid box. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1HybridBasicSet_a63f9ef3a7d1cd738c2dd8dbabfe9782f}\label{classAriadne_1_1HybridBasicSet_a63f9ef3a7d1cd738c2dd8dbabfe9782f} 
+{\footnotesize template$<$class IVL$>$ }\\decltype(auto) {\bfseries covers} (\mbox{\hyperlink{classAriadne_1_1HybridBox}{Hybrid\+Box}}$<$ IVL $>$ const \&hbx) const
+\begin{DoxyCompactList}\small\item\em Test if interior of the set is a superset of a hybrid box. Returns true if the box is empty. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1HybridBasicSet_acdd30732377aed5814a0c7b5a244d10b}\label{classAriadne_1_1HybridBasicSet_acdd30732377aed5814a0c7b5a244d10b} 
+{\footnotesize template$<$class IVL$>$ }\\decltype(auto) {\bfseries is\+\_\+empty} () const
+\begin{DoxyCompactList}\small\item\em Test if the set is empty. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1HybridBasicSet_ae18358a416ab46e242de2819ab91b197}\label{classAriadne_1_1HybridBasicSet_ae18358a416ab46e242de2819ab91b197} 
+\mbox{\hyperlink{classAriadne_1_1HybridBox}{Hybrid\+Upper\+Box}} {\bfseries bounding\+\_\+box} () const
+\begin{DoxyCompactList}\small\item\em A bounding box for the continuous set in the given location. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1HybridBasicSet_a8218fd733ed5e114c53921cd33fcc9b2}\label{classAriadne_1_1HybridBasicSet_a8218fd733ed5e114c53921cd33fcc9b2} 
+\mbox{\hyperlink{classAriadne_1_1HybridBoxes}{Hybrid\+Upper\+Boxes}} {\bfseries bounding\+\_\+boxes} () const
+\begin{DoxyCompactList}\small\item\em A singleton list of the bounding box. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1HybridBasicSet_aec9f37ad410bdd83f53e1a04c8ef0533}\label{classAriadne_1_1HybridBasicSet_aec9f37ad410bdd83f53e1a04c8ef0533} 
+\mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} {\bfseries adjoin\+\_\+outer\+\_\+approximation\+\_\+to} (\mbox{\hyperlink{classAriadne_1_1HybridGridTreePaving}{Hybrid\+Grid\+Tree\+Paving}} \&paving, \mbox{\hyperlink{namespaceAriadne_aae901a69a841b1a085a0dfe218e38fe9}{Nat}} fineness) const
+\begin{DoxyCompactList}\small\item\em Adjoin an outer approximation of the set to {\itshape paving} using a given {\itshape fineness} of subdividing the paving cells. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1HybridBasicSet_aa30ab84b5f3875d5a781549d6356a3eb}\label{classAriadne_1_1HybridBasicSet_aa30ab84b5f3875d5a781549d6356a3eb} 
+\mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} {\bfseries draw} (\mbox{\hyperlink{classAriadne_1_1CanvasInterface}{Canvas\+Interface}} \&c, const \mbox{\hyperlink{classAriadne_1_1Set}{Set}}$<$ \mbox{\hyperlink{classAriadne_1_1DiscreteLocation}{Discrete\+Location}} $>$ \&q, const Variables2d \&v) const
+\begin{DoxyCompactList}\small\item\em Draw to a canvas. Only draws if the set of locations {\itshape q} is empty, or contains the set\textquotesingle{}s actual location. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsubsection*{Friends}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1HybridBasicSet_a39b9f8cdb46637ac70ba2e122969c616}\label{classAriadne_1_1HybridBasicSet_a39b9f8cdb46637ac70ba2e122969c616} 
+\mbox{\hyperlink{namespaceAriadne_acbb98ddc4385af4599070e65a1a47ec1}{Output\+Stream}} \& {\bfseries operator$<$$<$} (\mbox{\hyperlink{namespaceAriadne_acbb98ddc4385af4599070e65a1a47ec1}{Output\+Stream}} \&os, const \mbox{\hyperlink{classAriadne_1_1HybridBasicSet}{Hybrid\+Basic\+Set}}$<$ EBS $>$ \&hbs)
+\begin{DoxyCompactList}\small\item\em Write to an output stream. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+The documentation for this class was generated from the following files\+:\begin{DoxyCompactItemize}
+\item 
+source/hybrid/\mbox{\hyperlink{hybrid__set_8hpp}{hybrid\+\_\+set.\+hpp}}\item 
+source/hybrid/hybrid\+\_\+set.\+cpp\end{DoxyCompactItemize}

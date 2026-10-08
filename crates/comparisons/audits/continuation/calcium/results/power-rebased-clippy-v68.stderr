@@ -1,0 +1,46 @@
+    Checking hypersolve v0.3.1 (/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/power-rebased-v68/hypersolve)
+error: this expression creates a reference which is immediately dereferenced by the compiler
+   --> src/algebraic_binary.rs:350:49
+    |
+350 |                 compose_with_signed_unit_linear(&right_polynomial, y, true)
+    |                                                 ^^^^^^^^^^^^^^^^^ help: change this to: `right_polynomial`
+    |
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.97.0/index.html#needless_borrow
+    = note: `-D clippy::needless-borrow` implied by `-D warnings`
+    = help: to override `-D warnings` add `#[allow(clippy::needless_borrow)]`
+
+error: this expression creates a reference which is immediately dereferenced by the compiler
+   --> src/algebraic_binary.rs:353:49
+    |
+353 |                 compose_with_signed_unit_linear(&right_polynomial, -y, false)
+    |                                                 ^^^^^^^^^^^^^^^^^ help: change this to: `right_polynomial`
+    |
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.97.0/index.html#needless_borrow
+
+error: this expression creates a reference which is immediately dereferenced by the compiler
+   --> src/algebraic_binary.rs:356:47
+    |
+356 |                 reciprocal_product_polynomial(&right_polynomial, &y)
+    |                                               ^^^^^^^^^^^^^^^^^ help: change this to: `right_polynomial`
+    |
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.97.0/index.html#needless_borrow
+
+error: this expression creates a reference which is immediately dereferenced by the compiler
+   --> src/algebraic_binary.rs:358:78
+    |
+358 |             AlgebraicRootArithmeticOp::Divide => quotient_product_polynomial(&right_polynomial, &y),
+    |                                                                              ^^^^^^^^^^^^^^^^^ help: change this to: `right_polynomial`
+    |
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.97.0/index.html#needless_borrow
+
+error: this expression creates a reference which is immediately dereferenced by the compiler
+   --> src/algebraic_binary.rs:362:56
+    |
+362 |             resultant_exact_rational_polynomials_value(&left_polynomial, &right_in_x, -64).ok()?;
+    |                                                        ^^^^^^^^^^^^^^^^ help: change this to: `left_polynomial`
+    |
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.97.0/index.html#needless_borrow
+
+error: could not compile `hypersolve` (lib) due to 5 previous errors
+warning: build failed, waiting for other jobs to finish...
+error: could not compile `hypersolve` (lib test) due to 5 previous errors

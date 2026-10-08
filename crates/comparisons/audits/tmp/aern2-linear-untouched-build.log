@@ -1,0 +1,853 @@
+aern2-mp-0.2.16.2: unregistering (local file changes:
+.stack-work/dist/x86_64-linux-tinfo6/ghc-9.6.7/build/autogen/Paths_aern2_mp.hs)
+aern2-mp                     > build (lib) with ghc-9.6.7
+aern2-mp                     > Preprocessing library for aern2-mp-0.2.16.2..
+aern2-mp                     > Building library for aern2-mp-0.2.16.2..
+aern2-mp                     > copy/register
+aern2-mp                     > Installing library in /tmp/aern2-audit/.stack-work/install/x86_64-linux-tinfo6/b592dd4acb73086f74d238dd1c126581e2a5d5fe389f24cb377ec81a833f3622/9.6.7/lib/x86_64-linux-ghc-9.6.7/aern2-mp-0.2.16.2-L9cPC97WbwHJ4MCKfOtnJU
+aern2-mp                     > Registering library for aern2-mp-0.2.16.2..
+aern2-real                   > configure (lib)
+aern2-real                   > Configuring aern2-real-0.2.16.1...
+aern2-real                   > build (lib) with ghc-9.6.7
+aern2-real                   > Preprocessing library for aern2-real-0.2.16.1..
+aern2-real                   > Building library for aern2-real-0.2.16.1..
+aern2-real                   > [14 of 14] Compiling Paths_aern2_real [Source file changed]
+aern2-real                   > copy/register
+aern2-real                   > Installing library in /tmp/aern2-audit/.stack-work/install/x86_64-linux-tinfo6/b592dd4acb73086f74d238dd1c126581e2a5d5fe389f24cb377ec81a833f3622/9.6.7/lib/x86_64-linux-ghc-9.6.7/aern2-real-0.2.16.1-fCPoCRXwTk3LnFd3rYPB9
+aern2-real                   > Registering library for aern2-real-0.2.16.1..
+OneTuple                     > configure
+StateVar                     > configure
+OneTuple                     > Configuring OneTuple-0.4.2...
+assoc                        > configure
+StateVar                     > Configuring StateVar-1.2.2...
+base-orphans                 > configure
+binary-orphans               > configure
+assoc                        > Configuring assoc-1.1.1...
+cereal                       > configure
+indexed-traversable          > configure
+base-orphans                 > Configuring base-orphans-0.9.3...
+parallel                     > configure
+binary-orphans               > Configuring binary-orphans-1.0.5...
+cereal                       > Configuring cereal-0.5.8.3...
+indexed-traversable          > Configuring indexed-traversable-0.1.4...
+parallel                     > Configuring parallel-3.2.2.0...
+scientific                   > configure
+semigroups                   > configure
+tagged                       > configure
+th-abstraction               > configure
+scientific                   > Configuring scientific-0.3.7.0...
+transformers-compat          > configure
+tagged                       > Configuring tagged-0.8.8...
+th-abstraction               > Configuring th-abstraction-0.5.0.0...
+unordered-containers         > configure
+vector-stream                > configure
+semigroups                   > Configuring semigroups-0.20...
+transformers-compat          > Configuring transformers-compat-0.7.2...
+vector-stream                > Configuring vector-stream-0.1.0.1...
+unordered-containers         > Configuring unordered-containers-0.2.20...
+void                         > configure
+void                         > Configuring void-0.7.3...
+StateVar                     > build with ghc-9.6.7
+parallel                     > build with ghc-9.6.7
+binary-orphans               > build with ghc-9.6.7
+cereal                       > build with ghc-9.6.7
+assoc                        > build with ghc-9.6.7
+StateVar                     > Preprocessing library for StateVar-1.2.2..
+StateVar                     > Building library for StateVar-1.2.2..
+parallel                     > Preprocessing library for parallel-3.2.2.0..
+parallel                     > Building library for parallel-3.2.2.0..
+binary-orphans               > Preprocessing library for binary-orphans-1.0.5..
+binary-orphans               > Building library for binary-orphans-1.0.5..
+cereal                       > Preprocessing library for cereal-0.5.8.3..
+cereal                       > Building library for cereal-0.5.8.3..
+assoc                        > Preprocessing library for assoc-1.1.1..
+assoc                        > Building library for assoc-1.1.1..
+indexed-traversable          > build with ghc-9.6.7
+base-orphans                 > build with ghc-9.6.7
+OneTuple                     > build with ghc-9.6.7
+indexed-traversable          > Preprocessing library for indexed-traversable-0.1.4..
+indexed-traversable          > Building library for indexed-traversable-0.1.4..
+base-orphans                 > Preprocessing library for base-orphans-0.9.3..
+base-orphans                 > Building library for base-orphans-0.9.3..
+assoc                        > [1 of 2] Compiling Data.Bifunctor.Assoc
+OneTuple                     > Preprocessing library for OneTuple-0.4.2..
+OneTuple                     > Building library for OneTuple-0.4.2..
+StateVar                     > [1 of 1] Compiling Data.StateVar
+binary-orphans               > [1 of 1] Compiling Data.Binary.Orphans
+parallel                     > [1 of 3] Compiling Control.Parallel
+vector-stream                > build with ghc-9.6.7
+unordered-containers         > build with ghc-9.6.7
+tagged                       > build with ghc-9.6.7
+cereal                       > [1 of 4] Compiling Data.Serialize.Get
+th-abstraction               > build with ghc-9.6.7
+vector-stream                > Preprocessing library for vector-stream-0.1.0.1..
+vector-stream                > Building library for vector-stream-0.1.0.1..
+semigroups                   > build with ghc-9.6.7
+OneTuple                     > [1 of 3] Compiling Data.Tuple.Solo
+transformers-compat          > build with ghc-9.6.7
+assoc                        > [2 of 2] Compiling Data.Bifunctor.Swap
+tagged                       > Preprocessing library for tagged-0.8.8..
+tagged                       > Building library for tagged-0.8.8..
+semigroups                   > Preprocessing library for semigroups-0.20..
+semigroups                   > Building library for semigroups-0.20..
+parallel                     > [2 of 3] Compiling Control.Seq
+unordered-containers         > Preprocessing library for unordered-containers-0.2.20..
+unordered-containers         > Building library for unordered-containers-0.2.20..
+scientific                   > build with ghc-9.6.7
+transformers-compat          > Preprocessing library for transformers-compat-0.7.2..
+transformers-compat          > Building library for transformers-compat-0.7.2..
+th-abstraction               > Preprocessing library for th-abstraction-0.5.0.0..
+th-abstraction               > Building library for th-abstraction-0.5.0.0..
+OneTuple                     > [2 of 3] Compiling Data.Tuple.OneTuple
+base-orphans                 > [1 of 2] Compiling Data.Orphans.Prelude
+void                         > build with ghc-9.6.7
+scientific                   > Preprocessing library for scientific-0.3.7.0..
+scientific                   > Building library for scientific-0.3.7.0..
+vector-stream                > [1 of 1] Compiling Data.Stream.Monadic
+OneTuple                     > [3 of 3] Compiling Data.Tuple.Solo.TH
+void                         > Preprocessing library for void-0.7.3..
+void                         > Building library for void-0.7.3..
+indexed-traversable          > [1 of 7] Compiling CoerceCompat
+tagged                       > [1 of 2] Compiling Data.Proxy.TH
+unordered-containers         > 
+unordered-containers         > /tmp/stack-9db56f56fe8a43ac/unordered-containers-0.2.20/Data/HashMap/Internal.hs:12:14-23: warning: [-Wdeprecated-flags]
+unordered-containers         >     -XTypeInType is deprecated: use -XDataKinds and -XPolyKinds instead
+unordered-containers         >    |
+unordered-containers         > 12 | {-# LANGUAGE TypeInType            #-}
+unordered-containers         >    |              ^^^^^^^^^^
+semigroups                   > [1 of 1] Compiling Data.Semigroup.Generic
+parallel                     > [3 of 3] Compiling Control.Parallel.Strategies
+StateVar                     > 
+StateVar                     > /tmp/stack-9db56f56fe8a43ac/StateVar-1.2.2/src/Data/StateVar.hs:220:33: warning: [GHC-58520] [-Wtype-equality-requires-operators]
+StateVar                     >     The use of ‘~’ without TypeOperators
+StateVar                     >     will become an error in a future GHC release.
+StateVar                     >     Suggested fix: Perhaps you intended to use TypeOperators
+StateVar                     >     |
+StateVar                     > 220 |   default ($~) :: (MonadIO m, a ~ b, HasGetter t a) => t -> (a -> b) -> m ()
+StateVar                     >     |                                 ^
+StateVar                     > 
+StateVar                     > /tmp/stack-9db56f56fe8a43ac/StateVar-1.2.2/src/Data/StateVar.hs:226:34: warning: [GHC-58520] [-Wtype-equality-requires-operators]
+StateVar                     >     The use of ‘~’ without TypeOperators
+StateVar                     >     will become an error in a future GHC release.
+StateVar                     >     Suggested fix: Perhaps you intended to use TypeOperators
+StateVar                     >     |
+StateVar                     > 226 |   default ($~!) :: (MonadIO m, a ~ b, HasGetter t a) => t -> (a -> b) -> m ()
+StateVar                     >     |                                  ^
+StateVar                     > 
+StateVar                     > /tmp/stack-9db56f56fe8a43ac/StateVar-1.2.2/src/Data/StateVar.hs:230:32: warning: [GHC-58520] [-Wtype-equality-requires-operators]
+StateVar                     >     The use of ‘~’ without TypeOperators
+StateVar                     >     will become an error in a future GHC release.
+StateVar                     >     Suggested fix: Perhaps you intended to use TypeOperators
+StateVar                     >     |
+StateVar                     > 230 | defaultUpdate :: (MonadIO m, a ~ b, HasGetter t a, HasSetter t a) => t -> (a -> b) -> m ()
+StateVar                     >     |                                ^
+StateVar                     > 
+StateVar                     > /tmp/stack-9db56f56fe8a43ac/StateVar-1.2.2/src/Data/StateVar.hs:235:38: warning: [GHC-58520] [-Wtype-equality-requires-operators]
+StateVar                     >     The use of ‘~’ without TypeOperators
+StateVar                     >     will become an error in a future GHC release.
+StateVar                     >     Suggested fix: Perhaps you intended to use TypeOperators
+StateVar                     >     |
+StateVar                     > 235 | defaultUpdateStrict :: (MonadIO m, a ~ b, HasGetter t a, HasSetter t a) => t -> (a -> b) -> m ()
+StateVar                     >     |                                      ^
+th-abstraction               > [1 of 3] Compiling Language.Haskell.TH.Datatype.Internal
+void                         > [1 of 1] Compiling Data.Void.Unsafe
+indexed-traversable          > [2 of 7] Compiling GhcList
+indexed-traversable          > [3 of 7] Compiling WithIndex
+scientific                   > [1 of 5] Compiling GHC.Integer.Compat
+th-abstraction               > [2 of 3] Compiling Language.Haskell.TH.Datatype.TyVarBndr
+unordered-containers         > [1 of 9] Compiling Data.HashMap.Internal.Array
+tagged                       > [2 of 2] Compiling Data.Tagged
+scientific                   > [2 of 5] Compiling Utils
+base-orphans                 > [2 of 2] Compiling Data.Orphans
+assoc                        > copy/register
+transformers-compat          > [1 of 4] Compiling Control.Monad.Trans.Instances
+assoc                        > Installing library in /tmp/aern2-stack.ryVCFK/snapshots/x86_64-linux-tinfo6/b592dd4acb73086f74d238dd1c126581e2a5d5fe389f24cb377ec81a833f3622/9.6.7/lib/x86_64-linux-ghc-9.6.7/assoc-1.1.1-Hk0NF38QxbfFWQZTs5YYxb
+transformers-compat          > [2 of 4] Compiling Data.Functor.Classes.Generic.Internal
+unordered-containers         > 
+unordered-containers         > /tmp/stack-9db56f56fe8a43ac/unordered-containers-0.2.20/Data/HashMap/Internal/Array.hs:83:1-35: warning: [-Wunused-imports]
+unordered-containers         >     The import of ‘Control.Applicative’ is redundant
+unordered-containers         >       except perhaps to import instances from ‘Control.Applicative’
+unordered-containers         >     To import instances alone, use: import Control.Applicative()
+unordered-containers         >    |
+unordered-containers         > 83 | import Control.Applicative (liftA2)
+unordered-containers         >    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+assoc                        > Registering library for assoc-1.1.1..
+OneTuple                     > copy/register
+th-abstraction               > [3 of 3] Compiling Language.Haskell.TH.Datatype
+OneTuple                     > Installing library in /tmp/aern2-stack.ryVCFK/snapshots/x86_64-linux-tinfo6/b592dd4acb73086f74d238dd1c126581e2a5d5fe389f24cb377ec81a833f3622/9.6.7/lib/x86_64-linux-ghc-9.6.7/OneTuple-0.4.2-5nfd6UkCUuP3TDN2ZHHcQS
+scientific                   > [3 of 5] Compiling Data.Scientific
+these                        > configure
+OneTuple                     > Registering library for OneTuple-0.4.2..
+these                        > Configuring these-1.2.1...
+void                         > copy/register
+void                         > Installing library in /tmp/aern2-stack.ryVCFK/snapshots/x86_64-linux-tinfo6/b592dd4acb73086f74d238dd1c126581e2a5d5fe389f24cb377ec81a833f3622/9.6.7/lib/x86_64-linux-ghc-9.6.7/void-0.7.3-AAyPjWxpL8R2YjpUwnLovC
+scientific                   > 
+void                         > Registering library for void-0.7.3..
+scientific                   > /tmp/stack-9db56f56fe8a43ac/scientific-0.3.7.0/src/Data/Scientific.hs:1063:16: warning: [GHC-62161] [-Wincomplete-uni-patterns]
+scientific                   >     Pattern match(es) are non-exhaustive
+scientific                   >     In a pattern binding:
+scientific                   >         Patterns of type ‘[Char]’ not matched:
+scientific                   >             []
+scientific                   >             []
+scientific                   >             []
+scientific                   >      |
+scientific                   > 1063 |                (d:ds') = map intToDigit (if ei > 0 then init is' else is')
+scientific                   >      |                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+scientific                   > 
+scientific                   > /tmp/stack-9db56f56fe8a43ac/scientific-0.3.7.0/src/Data/Scientific.hs:1079:11: warning: [GHC-62161] [-Wincomplete-uni-patterns]
+scientific                   >     Pattern match(es) are non-exhaustive
+scientific                   >     In a pattern binding: Patterns of type ‘[Char]’ not matched: []
+scientific                   >      |
+scientific                   > 1079 |           d:ds' = map intToDigit (if ei > 0 then is' else 0:is')
+scientific                   >      |           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+binary-orphans               > copy/register
+binary-orphans               > Installing library in /tmp/aern2-stack.ryVCFK/snapshots/x86_64-linux-tinfo6/b592dd4acb73086f74d238dd1c126581e2a5d5fe389f24cb377ec81a833f3622/9.6.7/lib/x86_64-linux-ghc-9.6.7/binary-orphans-1.0.5-3ratR8WQhaX7qzXmdUNsCA
+unordered-containers         > [2 of 9] Compiling Data.HashMap.Internal.List
+binary-orphans               > Registering library for binary-orphans-1.0.5..
+unordered-containers         > [3 of 9] Compiling Data.HashMap.Internal
+semigroups                   > copy/register
+semigroups                   > Installing library in /tmp/aern2-stack.ryVCFK/snapshots/x86_64-linux-tinfo6/b592dd4acb73086f74d238dd1c126581e2a5d5fe389f24cb377ec81a833f3622/9.6.7/lib/x86_64-linux-ghc-9.6.7/semigroups-0.20-2E7i1HdFCsr2qH0vD6OKQy
+semigroups                   > Registering library for semigroups-0.20..
+StateVar                     > copy/register
+StateVar                     > Installing library in /tmp/aern2-stack.ryVCFK/snapshots/x86_64-linux-tinfo6/b592dd4acb73086f74d238dd1c126581e2a5d5fe389f24cb377ec81a833f3622/9.6.7/lib/x86_64-linux-ghc-9.6.7/StateVar-1.2.2-E0yfTmnQDKI1BXBWlDfERx
+these                        > build with ghc-9.6.7
+these                        > Preprocessing library for these-1.2.1..
+these                        > Building library for these-1.2.1..
+these                        > [1 of 3] Compiling Data.Functor.These
+StateVar                     > Registering library for StateVar-1.2.2..
+parallel                     > copy/register
+parallel                     > Installing library in /tmp/aern2-stack.ryVCFK/snapshots/x86_64-linux-tinfo6/b592dd4acb73086f74d238dd1c126581e2a5d5fe389f24cb377ec81a833f3622/9.6.7/lib/x86_64-linux-ghc-9.6.7/parallel-3.2.2.0-1WmOVBnIr281FxwaAYcL5u
+transformers-compat          > [3 of 4] Compiling Data.Functor.Classes.Generic
+transformers-compat          > [4 of 4] Compiling Paths_transformers_compat
+parallel                     > Registering library for parallel-3.2.2.0..
+tagged                       > copy/register
+tagged                       > Installing library in /tmp/aern2-stack.ryVCFK/snapshots/x86_64-linux-tinfo6/b592dd4acb73086f74d238dd1c126581e2a5d5fe389f24cb377ec81a833f3622/9.6.7/lib/x86_64-linux-ghc-9.6.7/tagged-0.8.8-HPEc3VpXn0m6pkmCcWNTEL
+contravariant                > configure
+contravariant                > Configuring contravariant-1.5.5...
+tagged                       > Registering library for tagged-0.8.8..
+base-orphans                 > copy/register
+base-orphans                 > Installing library in /tmp/aern2-stack.ryVCFK/snapshots/x86_64-linux-tinfo6/b592dd4acb73086f74d238dd1c126581e2a5d5fe389f24cb377ec81a833f3622/9.6.7/lib/x86_64-linux-ghc-9.6.7/base-orphans-0.9.3-AsDpZFVRqkOGf8e26fQ2O7
+base-orphans                 > Registering library for base-orphans-0.9.3..
+transformers-compat          > copy/register
+these                        > [2 of 3] Compiling Data.These
+transformers-compat          > Installing library in /tmp/aern2-stack.ryVCFK/snapshots/x86_64-linux-tinfo6/b592dd4acb73086f74d238dd1c126581e2a5d5fe389f24cb377ec81a833f3622/9.6.7/lib/x86_64-linux-ghc-9.6.7/transformers-compat-0.7.2-Gt8KxspbTpUIHfKPq3SCp6
+transformers-compat          > Registering library for transformers-compat-0.7.2..
+distributive                 > configure
+contravariant                > build with ghc-9.6.7
+distributive                 > Configuring distributive-0.6.2.1...
+indexed-traversable          > [4 of 7] Compiling Data.Traversable.WithIndex
+contravariant                > Preprocessing library for contravariant-1.5.5..
+contravariant                > Building library for contravariant-1.5.5..
+indexed-traversable          > [5 of 7] Compiling Data.Functor.WithIndex
+indexed-traversable          > [6 of 7] Compiling Data.Foldable1.WithIndex
+indexed-traversable          > [7 of 7] Compiling Data.Foldable.WithIndex
+transformers-base            > configure
+transformers-base            > Configuring transformers-base-0.4.6...
+contravariant                > [1 of 3] Compiling Data.Functor.Contravariant.Divisible
+indexed-traversable          > copy/register
+indexed-traversable          > Installing library in /tmp/aern2-stack.ryVCFK/snapshots/x86_64-linux-tinfo6/b592dd4acb73086f74d238dd1c126581e2a5d5fe389f24cb377ec81a833f3622/9.6.7/lib/x86_64-linux-ghc-9.6.7/indexed-traversable-0.1.4-4WgKtUu7swysftQ0x7OdR
+indexed-traversable          > Registering library for indexed-traversable-0.1.4..
+distributive                 > build with ghc-9.6.7
+these                        > [3 of 3] Compiling Data.These.Combinators
+distributive                 > Preprocessing library for distributive-0.6.2.1..
+distributive                 > Building library for distributive-0.6.2.1..
+distributive                 > [1 of 2] Compiling Data.Distributive
+transformers-base            > build with ghc-9.6.7
+scientific                   > [4 of 5] Compiling Data.Text.Lazy.Builder.Scientific
+scientific                   > 
+scientific                   > /tmp/stack-9db56f56fe8a43ac/scientific-0.3.7.0/src/Data/Text/Lazy/Builder/Scientific.hs:20:1: warning: [-Wunused-imports]
+scientific                   >     The import of ‘Data.Monoid’ is redundant
+scientific                   >       except perhaps to import instances from ‘Data.Monoid’
+scientific                   >     To import instances alone, use: import Data.Monoid()
+scientific                   >    |
+scientific                   > 20 | import Data.Monoid                  ((<>))
+scientific                   >    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+scientific                   > 
+scientific                   > /tmp/stack-9db56f56fe8a43ac/scientific-0.3.7.0/src/Data/Text/Lazy/Builder/Scientific.hs:67:12: warning: [GHC-62161] [-Wincomplete-uni-patterns]
+scientific                   >     Pattern match(es) are non-exhaustive
+scientific                   >     In a pattern binding:
+scientific                   >         Patterns of type ‘[Char]’ not matched:
+scientific                   >             []
+scientific                   >             []
+scientific                   >             []
+scientific                   >    |
+scientific                   > 67 |            (d:ds') = map i2d (if ei > 0 then init is' else is')
+scientific                   >    |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+scientific                   > 
+scientific                   > /tmp/stack-9db56f56fe8a43ac/scientific-0.3.7.0/src/Data/Text/Lazy/Builder/Scientific.hs:95:11: warning: [GHC-62161] [-Wincomplete-uni-patterns]
+scientific                   >     Pattern match(es) are non-exhaustive
+scientific                   >     In a pattern binding: Patterns of type ‘[Char]’ not matched: []
+transformers-base            > Preprocessing library for transformers-base-0.4.6..
+scientific                   >    |
+transformers-base            > Building library for transformers-base-0.4.6..
+scientific                   > 95 |           d:ds' = map i2d (if ei > 0 then is' else 0:is')
+scientific                   >    |           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+transformers-base            > [1 of 1] Compiling Control.Monad.Base
+these                        > copy/register
+distributive                 > 
+distributive                 > /tmp/stack-9db56f56fe8a43ac/distributive-0.6.2.1/src/Data/Distributive.hs:157:26: warning: [GHC-47082] [-Woperator-whitespace-ext-conflict]
+distributive                 >     The prefix use of a ‘$’ would denote an untyped splice
+distributive                 >       were the TemplateHaskell extension enabled.
+distributive                 >     Suggested fix: Add whitespace after the ‘$’.
+distributive                 >     |
+distributive                 > 157 |   distribute a e = fmap ($e) a
+distributive                 >     |                          ^
+these                        > Installing library in /tmp/aern2-stack.ryVCFK/snapshots/x86_64-linux-tinfo6/b592dd4acb73086f74d238dd1c126581e2a5d5fe389f24cb377ec81a833f3622/9.6.7/lib/x86_64-linux-ghc-9.6.7/these-1.2.1-2x8tdkgPq437ISCaQJonUx
+contravariant                > [2 of 3] Compiling Data.Functor.Contravariant.Compose
+cereal                       > [2 of 4] Compiling Data.Serialize.Put
+these                        > Registering library for these-1.2.1..
+contravariant                > [3 of 3] Compiling Data.Functor.Contravariant.Generic
+strict                       > configure
+strict                       > Configuring strict-0.5...
+transformers-base            > copy/register
+transformers-base            > Installing library in /tmp/aern2-stack.ryVCFK/snapshots/x86_64-linux-tinfo6/b592dd4acb73086f74d238dd1c126581e2a5d5fe389f24cb377ec81a833f3622/9.6.7/lib/x86_64-linux-ghc-9.6.7/transformers-base-0.4.6-EiSx8lCeZBo6Rmrq11fHUh
+distributive                 > [2 of 2] Compiling Data.Distributive.Generic
+transformers-base            > Registering library for transformers-base-0.4.6..
+vector-stream                > copy/register
+vector-stream                > Installing library in /tmp/aern2-stack.ryVCFK/snapshots/x86_64-linux-tinfo6/b592dd4acb73086f74d238dd1c126581e2a5d5fe389f24cb377ec81a833f3622/9.6.7/lib/x86_64-linux-ghc-9.6.7/vector-stream-0.1.0.1-7qX9oQxWHCz9yDWW5CqJnq
+scientific                   > [5 of 5] Compiling Data.ByteString.Builder.Scientific
+scientific                   > 
+scientific                   > /tmp/stack-9db56f56fe8a43ac/scientific-0.3.7.0/src/Data/ByteString/Builder/Scientific.hs:25:1: warning: [-Wunused-imports]
+scientific                   >     The import of ‘Data.Monoid’ is redundant
+scientific                   >       except perhaps to import instances from ‘Data.Monoid’
+scientific                   >     To import instances alone, use: import Data.Monoid()
+scientific                   >    |
+scientific                   > 25 | import Data.Monoid                  ((<>))
+scientific                   >    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+scientific                   > 
+scientific                   > /tmp/stack-9db56f56fe8a43ac/scientific-0.3.7.0/src/Data/ByteString/Builder/Scientific.hs:75:12: warning: [GHC-62161] [-Wincomplete-uni-patterns]
+scientific                   >     Pattern match(es) are non-exhaustive
+scientific                   >     In a pattern binding:
+scientific                   >         Patterns of type ‘[Char]’ not matched:
+scientific                   >             []
+scientific                   >             []
+scientific                   >             []
+scientific                   >    |
+scientific                   > 75 |            (d:ds') = map i2d (if ei > 0 then init is' else is')
+scientific                   >    |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+scientific                   > 
+scientific                   > /tmp/stack-9db56f56fe8a43ac/scientific-0.3.7.0/src/Data/ByteString/Builder/Scientific.hs:105:11: warning: [GHC-62161] [-Wincomplete-uni-patterns]
+scientific                   >     Pattern match(es) are non-exhaustive
+scientific                   >     In a pattern binding: Patterns of type ‘[Char]’ not matched: []
+scientific                   >     |
+scientific                   > 105 |           d:ds' = map i2d (if ei > 0 then is' else 0:is')
+scientific                   >     |           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+vector-stream                > Registering library for vector-stream-0.1.0.1..
+contravariant                > copy/register
+contravariant                > Installing library in /tmp/aern2-stack.ryVCFK/snapshots/x86_64-linux-tinfo6/b592dd4acb73086f74d238dd1c126581e2a5d5fe389f24cb377ec81a833f3622/9.6.7/lib/x86_64-linux-ghc-9.6.7/contravariant-1.5.5-Ke1HrXDwqQ6D0n94ptkMg
+cereal                       > [3 of 4] Compiling Data.Serialize.IEEE754
+strict                       > build with ghc-9.6.7
+contravariant                > Registering library for contravariant-1.5.5..
+strict                       > Preprocessing library for strict-0.5..
+strict                       > Building library for strict-0.5..
+distributive                 > copy/register
+distributive                 > Installing library in /tmp/aern2-stack.ryVCFK/snapshots/x86_64-linux-tinfo6/b592dd4acb73086f74d238dd1c126581e2a5d5fe389f24cb377ec81a833f3622/9.6.7/lib/x86_64-linux-ghc-9.6.7/distributive-0.6.2.1-EzCxRUUPF2z3rhpp70V96o
+cereal                       > [4 of 4] Compiling Data.Serialize
+cereal                       > 
+cereal                       > /tmp/stack-9db56f56fe8a43ac/cereal-0.5.8.3/src/Data/Serialize.hs:702:22: warning: [GHC-39567] [-Wstar-is-type]
+cereal                       >     Using ‘*’ (or its Unicode variant) to mean ‘Data.Kind.Type’
+cereal                       >     relies on the StarIsType extension, which will become
+cereal                       >     deprecated in the future.
+cereal                       >     Suggested fix: Use ‘Type’ from ‘Data.Kind’ instead.
+cereal                       >     |
+cereal                       > 702 | newtype Tagged (s :: * -> *) b = Tagged {unTagged :: b}
+cereal                       >     |                      ^
+cereal                       > 
+cereal                       > /tmp/stack-9db56f56fe8a43ac/cereal-0.5.8.3/src/Data/Serialize.hs:702:27: warning: [GHC-39567] [-Wstar-is-type]
+cereal                       >     Using ‘*’ (or its Unicode variant) to mean ‘Data.Kind.Type’
+cereal                       >     relies on the StarIsType extension, which will become
+cereal                       >     deprecated in the future.
+cereal                       >     Suggested fix: Use ‘Type’ from ‘Data.Kind’ instead.
+cereal                       >     |
+cereal                       > 702 | newtype Tagged (s :: * -> *) b = Tagged {unTagged :: b}
+cereal                       >     |                           ^
+strict                       > [1 of 7] Compiling Data.Strict.Either
+distributive                 > Registering library for distributive-0.6.2.1..
+scientific                   > copy/register
+vector                       > configure
+vector                       > Configuring vector-0.13.1.0...
+scientific                   > Installing library in /tmp/aern2-stack.ryVCFK/snapshots/x86_64-linux-tinfo6/b592dd4acb73086f74d238dd1c126581e2a5d5fe389f24cb377ec81a833f3622/9.6.7/lib/x86_64-linux-ghc-9.6.7/scientific-0.3.7.0-9d0KMulMrajEUgpbTQlWxU
+scientific                   > Registering library for scientific-0.3.7.0..
+th-abstraction               > copy/register
+comonad                      > configure
+th-abstraction               > Installing library in /tmp/aern2-stack.ryVCFK/snapshots/x86_64-linux-tinfo6/b592dd4acb73086f74d238dd1c126581e2a5d5fe389f24cb377ec81a833f3622/9.6.7/lib/x86_64-linux-ghc-9.6.7/th-abstraction-0.5.0.0-JZUv7luqGYXIX6vHGniH2t
+comonad                      > Configuring comonad-5.0.9...
+th-abstraction               > Registering library for th-abstraction-0.5.0.0..
+vector                       > build with ghc-9.6.7
+vector                       > Preprocessing library for vector-0.13.1.0..
+vector                       > Building library for vector-0.13.1.0..
+strict                       > [2 of 7] Compiling Data.Strict.Maybe
+comonad                      > build with ghc-9.6.7
+vector                       > [ 1 of 21] Compiling Data.Vector.Fusion.Stream.Monadic
+comonad                      > Preprocessing library for comonad-5.0.9..
+comonad                      > Building library for comonad-5.0.9..
+vector                       > [ 2 of 21] Compiling Data.Vector.Fusion.Util
+vector                       > [ 3 of 21] Compiling Data.Vector.Fusion.Bundle.Size
+comonad                      > [ 1 of 15] Compiling Control.Comonad
+vector                       > [ 4 of 21] Compiling Data.Vector.Generic.Mutable.Base
+strict                       > [3 of 7] Compiling Data.Strict.These
+vector                       > [ 5 of 21] Compiling Data.Vector.Generic.Base
+vector                       > [ 6 of 21] Compiling Data.Vector.Internal.Check
+vector                       > [ 7 of 21] Compiling Data.Vector.Fusion.Bundle.Monadic
+comonad                      > [ 2 of 15] Compiling Control.Comonad.Hoist.Class
+comonad                      > [ 3 of 15] Compiling Control.Comonad.Trans.Class
+comonad                      > [ 4 of 15] Compiling Control.Comonad.Trans.Env
+comonad                      > [ 5 of 15] Compiling Control.Comonad.Trans.Identity
+comonad                      > [ 6 of 15] Compiling Control.Comonad.Identity
+comonad                      > [ 7 of 15] Compiling Control.Comonad.Trans.Store
+strict                       > [4 of 7] Compiling Data.Strict.Tuple
+strict                       > 
+strict                       > /tmp/stack-9db56f56fe8a43ac/strict-0.5/src/Data/Strict/Tuple.hs:171:3: warning: [-Wnoncanonical-monoid-instances]
+strict                       >     Noncanonical ‘mappend’ definition detected
+strict                       >     in the instance declaration for ‘Monoid (Pair a b)’.
+strict                       >     ‘mappend’ will eventually be removed in favour of ‘(<>)’
+strict                       >     Either remove definition for ‘mappend’ (recommended) or define as ‘mappend = (<>)’
+strict                       >     See also: https://gitlab.haskell.org/ghc/ghc/-/wikis/proposal/semigroup-monoid
+strict                       >     |
+strict                       > 171 |   (x1 :!: y1) `mappend` (x2 :!: y2) = (x1 `mappend` x2) :!: (y1 `mappend` y2)
+strict                       >     |   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+comonad                      > [ 8 of 15] Compiling Control.Comonad.Trans.Traced
+comonad                      > [ 9 of 15] Compiling Control.Comonad.Traced.Class
+comonad                      > [10 of 15] Compiling Control.Comonad.Traced
+comonad                      > [11 of 15] Compiling Control.Comonad.Store.Class
+comonad                      > [12 of 15] Compiling Control.Comonad.Store
+comonad                      > [13 of 15] Compiling Control.Comonad.Env.Class
+comonad                      > [14 of 15] Compiling Control.Comonad.Env
+comonad                      > [15 of 15] Compiling Data.Functor.Composition
+strict                       > [5 of 7] Compiling Data.Strict.Classes
+strict                       > [6 of 7] Compiling Data.Strict
+strict                       > [7 of 7] Compiling System.IO.Strict
+comonad                      > copy/register
+comonad                      > Installing library in /tmp/aern2-stack.ryVCFK/snapshots/x86_64-linux-tinfo6/b592dd4acb73086f74d238dd1c126581e2a5d5fe389f24cb377ec81a833f3622/9.6.7/lib/x86_64-linux-ghc-9.6.7/comonad-5.0.9-6f0EyvBAlro1CKLeMEUDTH
+comonad                      > Registering library for comonad-5.0.9..
+strict                       > copy/register
+strict                       > Installing library in /tmp/aern2-stack.ryVCFK/snapshots/x86_64-linux-tinfo6/b592dd4acb73086f74d238dd1c126581e2a5d5fe389f24cb377ec81a833f3622/9.6.7/lib/x86_64-linux-ghc-9.6.7/strict-0.5-64NhwwNnWkUKky2aTDC6pJ
+strict                       > Registering library for strict-0.5..
+bifunctors                   > configure
+bifunctors                   > Configuring bifunctors-5.6.2...
+cereal                       > copy/register
+cereal                       > Installing library in /tmp/aern2-stack.ryVCFK/snapshots/x86_64-linux-tinfo6/b592dd4acb73086f74d238dd1c126581e2a5d5fe389f24cb377ec81a833f3622/9.6.7/lib/x86_64-linux-ghc-9.6.7/cereal-0.5.8.3-1CQKCNk8EbGDGHmdDPBAYO
+cereal                       > Registering library for cereal-0.5.8.3..
+bifunctors                   > build with ghc-9.6.7
+bifunctors                   > Preprocessing library for bifunctors-5.6.2..
+bifunctors                   > Building library for bifunctors-5.6.2..
+bifunctors                   > [ 1 of 15] Compiling Data.Biapplicative
+unordered-containers         > [4 of 9] Compiling Data.HashMap.Internal.Debug
+unordered-containers         > [5 of 9] Compiling Data.HashMap.Internal.Strict
+bifunctors                   > [ 2 of 15] Compiling Data.Bifunctor.Biap
+bifunctors                   > [ 3 of 15] Compiling Data.Bifunctor.Biff
+bifunctors                   > [ 4 of 15] Compiling Data.Bifunctor.Clown
+bifunctors                   > [ 5 of 15] Compiling Data.Bifunctor.Fix
+bifunctors                   > [ 6 of 15] Compiling Data.Bifunctor.Functor
+bifunctors                   > [ 7 of 15] Compiling Data.Bifunctor.Flip
+unordered-containers         > [6 of 9] Compiling Data.HashSet.Internal
+bifunctors                   > [ 8 of 15] Compiling Data.Bifunctor.Join
+bifunctors                   > [ 9 of 15] Compiling Data.Bifunctor.Joker
+unordered-containers         > [7 of 9] Compiling Data.HashSet
+unordered-containers         > [8 of 9] Compiling Data.HashMap.Strict
+unordered-containers         > [9 of 9] Compiling Data.HashMap.Lazy
+unordered-containers         > copy/register
+unordered-containers         > Installing library in /tmp/aern2-stack.ryVCFK/snapshots/x86_64-linux-tinfo6/b592dd4acb73086f74d238dd1c126581e2a5d5fe389f24cb377ec81a833f3622/9.6.7/lib/x86_64-linux-ghc-9.6.7/unordered-containers-0.2.20-IWwOmlwGGgxATBahJJaYiE
+bifunctors                   > [10 of 15] Compiling Data.Bifunctor.Product
+unordered-containers         > Registering library for unordered-containers-0.2.20..
+bytes                        > configure
+bytes                        > Configuring bytes-0.17.4...
+vector                       > [ 8 of 21] Compiling Data.Vector.Fusion.Bundle
+bifunctors                   > [11 of 15] Compiling Data.Bifunctor.Sum
+bifunctors                   > [12 of 15] Compiling Data.Bifunctor.TH.Internal
+bytes                        > build with ghc-9.6.7
+bytes                        > Preprocessing library for bytes-0.17.4..
+bytes                        > Building library for bytes-0.17.4..
+bytes                        > [1 of 5] Compiling Data.Bytes.Get
+bifunctors                   > [13 of 15] Compiling Data.Bifunctor.TH
+bifunctors                   > [14 of 15] Compiling Data.Bifunctor.Tannen
+bifunctors                   > [15 of 15] Compiling Data.Bifunctor.Wrapped
+bytes                        > [2 of 5] Compiling Data.Bytes.Put
+bifunctors                   > copy/register
+bifunctors                   > Installing library in /tmp/aern2-stack.ryVCFK/snapshots/x86_64-linux-tinfo6/b592dd4acb73086f74d238dd1c126581e2a5d5fe389f24cb377ec81a833f3622/9.6.7/lib/x86_64-linux-ghc-9.6.7/bifunctors-5.6.2-2qa0vSxzOSZ5yNYqWQsJTC
+bifunctors                   > Registering library for bifunctors-5.6.2..
+vector                       > [ 9 of 21] Compiling Data.Vector.Generic.Mutable
+bytes                        > [3 of 5] Compiling Data.Bytes.Signed
+bytes                        > [4 of 5] Compiling Data.Bytes.VarInt
+bytes                        > [5 of 5] Compiling Data.Bytes.Serial
+profunctors                  > configure
+semigroupoids                > configure
+profunctors                  > Configuring profunctors-5.6.2...
+semigroupoids                > Configuring semigroupoids-6.0.1...
+profunctors                  > build with ghc-9.6.7
+semigroupoids                > build with ghc-9.6.7
+profunctors                  > Preprocessing library for profunctors-5.6.2..
+profunctors                  > Building library for profunctors-5.6.2..
+semigroupoids                > Preprocessing library for semigroupoids-6.0.1..
+semigroupoids                > Building library for semigroupoids-6.0.1..
+profunctors                  > [ 1 of 16] Compiling Data.Profunctor.Unsafe
+semigroupoids                > [ 1 of 27] Compiling Data.Functor.Extend
+profunctors                  > [ 2 of 16] Compiling Data.Profunctor.Types
+semigroupoids                > [ 2 of 27] Compiling Data.Semigroup.Foldable.Class
+semigroupoids                > [ 3 of 27] Compiling Data.Traversable.Instances
+semigroupoids                > [ 4 of 27] Compiling Semigroupoids.Internal
+semigroupoids                > [ 5 of 27] Compiling Data.Functor.Bind.Class
+profunctors                  > [ 3 of 16] Compiling Data.Profunctor.Monad
+profunctors                  > [ 4 of 16] Compiling Data.Profunctor.Adjunction
+profunctors                  > [ 5 of 16] Compiling Data.Profunctor.Strong
+bytes                        > copy/register
+bytes                        > Installing library in /tmp/aern2-stack.ryVCFK/snapshots/x86_64-linux-tinfo6/b592dd4acb73086f74d238dd1c126581e2a5d5fe389f24cb377ec81a833f3622/9.6.7/lib/x86_64-linux-ghc-9.6.7/bytes-0.17.4-Jsh35osFHNYJnZIF2k3sEz
+bytes                        > Registering library for bytes-0.17.4..
+vector                       > [10 of 21] Compiling Data.Vector.Generic.New
+profunctors                  > [ 6 of 16] Compiling Data.Profunctor.Closed
+vector                       > [11 of 21] Compiling Data.Vector.Generic
+profunctors                  > [ 7 of 16] Compiling Data.Profunctor.Choice
+profunctors                  > [ 8 of 16] Compiling Data.Profunctor.Traversing
+semigroupoids                > [ 6 of 27] Compiling Data.Functor.Apply
+semigroupoids                > [ 7 of 27] Compiling Data.Semigroup.Bifoldable
+semigroupoids                > [ 8 of 27] Compiling Data.Functor.Contravariant.Divise
+profunctors                  > [ 9 of 16] Compiling Data.Profunctor.Mapping
+semigroupoids                > [ 9 of 27] Compiling Data.Functor.Contravariant.Decide
+profunctors                  > [10 of 16] Compiling Data.Profunctor
+semigroupoids                > [10 of 27] Compiling Data.Functor.Contravariant.Conclude
+profunctors                  > [11 of 16] Compiling Data.Profunctor.Sieve
+profunctors                  > [12 of 16] Compiling Data.Profunctor.Rep
+profunctors                  > 
+profunctors                  > /tmp/stack-9db56f56fe8a43ac/profunctors-5.6.2/src/Data/Profunctor/Rep.hs:199:3: warning: [-Wnoncanonical-monad-instances]
+profunctors                  >     Noncanonical ‘return’ definition detected
+profunctors                  >     in the instance declaration for ‘Monad (Prep p)’.
+profunctors                  >     ‘return’ will eventually be removed in favour of ‘pure’
+profunctors                  >     Either remove definition for ‘return’ (recommended) or define as ‘return = pure’
+profunctors                  >     See also: https://gitlab.haskell.org/ghc/ghc/-/wikis/proposal/monad-of-no-return
+profunctors                  >     |
+profunctors                  > 199 |   return a = Prep () $ tabulate $ const $ return a
+profunctors                  >     |   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+semigroupoids                > [11 of 27] Compiling Data.Functor.Bind
+semigroupoids                > [12 of 27] Compiling Data.Semigroupoid
+semigroupoids                > [13 of 27] Compiling Data.Semigroupoid.Ob
+profunctors                  > [13 of 16] Compiling Data.Profunctor.Composition
+semigroupoids                > [14 of 27] Compiling Data.Semigroupoid.Dual
+semigroupoids                > [15 of 27] Compiling Data.Semigroupoid.Categorical
+semigroupoids                > [16 of 27] Compiling Data.Groupoid
+semigroupoids                > [17 of 27] Compiling Data.Isomorphism
+semigroupoids                > [18 of 27] Compiling Data.Functor.Bind.Trans
+semigroupoids                > [19 of 27] Compiling Data.Bifunctor.Apply
+semigroupoids                > [20 of 27] Compiling Data.Functor.Alt
+profunctors                  > [14 of 16] Compiling Data.Profunctor.Ran
+profunctors                  > [15 of 16] Compiling Data.Profunctor.Cayley
+profunctors                  > [16 of 16] Compiling Data.Profunctor.Yoneda
+semigroupoids                > [21 of 27] Compiling Data.Semigroup.Foldable
+semigroupoids                > [22 of 27] Compiling Data.Semigroup.Traversable.Class
+profunctors                  > copy/register
+profunctors                  > Installing library in /tmp/aern2-stack.ryVCFK/snapshots/x86_64-linux-tinfo6/b592dd4acb73086f74d238dd1c126581e2a5d5fe389f24cb377ec81a833f3622/9.6.7/lib/x86_64-linux-ghc-9.6.7/profunctors-5.6.2-HZRsOJmMGi681OSoMkYa5e
+profunctors                  > Registering library for profunctors-5.6.2..
+semigroupoids                > [23 of 27] Compiling Data.Semigroup.Traversable
+invariant                    > configure
+semigroupoids                > [24 of 27] Compiling Data.Semigroup.Bitraversable
+invariant                    > Configuring invariant-0.6.4...
+semigroupoids                > [25 of 27] Compiling Data.Functor.Plus
+semigroupoids                > [26 of 27] Compiling Semigroupoids.Do
+semigroupoids                > [27 of 27] Compiling Data.Semigroupoid.Static
+invariant                    > build with ghc-9.6.7
+invariant                    > Preprocessing library for invariant-0.6.4..
+invariant                    > Building library for invariant-0.6.4..
+semigroupoids                > copy/register
+semigroupoids                > Installing library in /tmp/aern2-stack.ryVCFK/snapshots/x86_64-linux-tinfo6/b592dd4acb73086f74d238dd1c126581e2a5d5fe389f24cb377ec81a833f3622/9.6.7/lib/x86_64-linux-ghc-9.6.7/semigroupoids-6.0.1-KJzMDWS5vHv1IsjMfeuVJj
+invariant                    > [1 of 4] Compiling Data.Functor.Invariant
+semigroupoids                > Registering library for semigroupoids-6.0.1..
+free                         > configure
+free                         > Configuring free-5.2...
+free                         > build with ghc-9.6.7
+free                         > Preprocessing library for free-5.2..
+free                         > Building library for free-5.2..
+invariant                    > [2 of 4] Compiling Data.Functor.Invariant.TH.Internal
+free                         > [ 1 of 19] Compiling Control.Alternative.Free
+invariant                    > [3 of 4] Compiling Data.Functor.Invariant.TH
+free                         > [ 2 of 19] Compiling Control.Alternative.Free.Final
+free                         > [ 3 of 19] Compiling Control.Applicative.Free
+free                         > [ 4 of 19] Compiling Control.Applicative.Free.Fast
+free                         > [ 5 of 19] Compiling Control.Applicative.Free.Final
+free                         > [ 6 of 19] Compiling Control.Applicative.Trans.Free
+invariant                    > [4 of 4] Compiling Paths_invariant
+free                         > [ 7 of 19] Compiling Control.Comonad.Cofree.Class
+free                         > [ 8 of 19] Compiling Control.Comonad.Cofree
+invariant                    > copy/register
+invariant                    > Installing library in /tmp/aern2-stack.ryVCFK/snapshots/x86_64-linux-tinfo6/b592dd4acb73086f74d238dd1c126581e2a5d5fe389f24cb377ec81a833f3622/9.6.7/lib/x86_64-linux-ghc-9.6.7/invariant-0.6.4-AlJkJf8sYoW18ETf5CblDS
+invariant                    > Registering library for invariant-0.6.4..
+free                         > [ 9 of 19] Compiling Control.Comonad.Trans.Cofree
+free                         > [10 of 19] Compiling Control.Comonad.Trans.Coiter
+vector                       > [12 of 21] Compiling Data.Vector.Mutable
+free                         > [11 of 19] Compiling Control.Monad.Free.Class
+free                         > [12 of 19] Compiling Control.Monad.Free.TH
+free                         > [13 of 19] Compiling Control.Monad.Trans.Free
+vector                       > [13 of 21] Compiling Data.Vector
+free                         > [14 of 19] Compiling Control.Monad.Free
+free                         > [15 of 19] Compiling Control.Monad.Free.Church
+free                         > [16 of 19] Compiling Control.Monad.Trans.Free.Ap
+free                         > [17 of 19] Compiling Control.Monad.Free.Ap
+free                         > [18 of 19] Compiling Control.Monad.Trans.Free.Church
+free                         > [19 of 19] Compiling Control.Monad.Trans.Iter
+free                         > copy/register
+free                         > Installing library in /tmp/aern2-stack.ryVCFK/snapshots/x86_64-linux-tinfo6/b592dd4acb73086f74d238dd1c126581e2a5d5fe389f24cb377ec81a833f3622/9.6.7/lib/x86_64-linux-ghc-9.6.7/free-5.2-1JaiFEGOjqY11PRcgTzlAw
+free                         > Registering library for free-5.2..
+adjunctions                  > configure
+adjunctions                  > Configuring adjunctions-4.4.3...
+adjunctions                  > build with ghc-9.6.7
+adjunctions                  > Preprocessing library for adjunctions-4.4.3..
+adjunctions                  > Building library for adjunctions-4.4.3..
+adjunctions                  > [ 1 of 11] Compiling Control.Monad.Trans.Conts
+adjunctions                  > [ 2 of 11] Compiling Data.Functor.Contravariant.Rep
+adjunctions                  > [ 3 of 11] Compiling Data.Functor.Contravariant.Adjunction
+adjunctions                  > [ 4 of 11] Compiling Control.Monad.Trans.Contravariant.Adjoint
+adjunctions                  > [ 5 of 11] Compiling Data.Functor.Rep
+adjunctions                  > [ 6 of 11] Compiling Data.Functor.Adjunction
+vector                       > [14 of 21] Compiling Data.Vector.Primitive.Mutable
+adjunctions                  > [ 7 of 11] Compiling Control.Monad.Trans.Adjoint
+adjunctions                  > [ 8 of 11] Compiling Control.Comonad.Trans.Adjoint
+adjunctions                  > [ 9 of 11] Compiling Control.Monad.Representable.State
+adjunctions                  > [10 of 11] Compiling Control.Monad.Representable.Reader
+vector                       > [15 of 21] Compiling Data.Vector.Primitive
+adjunctions                  > [11 of 11] Compiling Control.Comonad.Representable.Store
+adjunctions                  > copy/register
+adjunctions                  > Installing library in /tmp/aern2-stack.ryVCFK/snapshots/x86_64-linux-tinfo6/b592dd4acb73086f74d238dd1c126581e2a5d5fe389f24cb377ec81a833f3622/9.6.7/lib/x86_64-linux-ghc-9.6.7/adjunctions-4.4.3-4yn2VXTu1My7nEddaLNtnk
+adjunctions                  > Registering library for adjunctions-4.4.3..
+kan-extensions               > configure
+kan-extensions               > Configuring kan-extensions-5.2.6...
+kan-extensions               > build with ghc-9.6.7
+kan-extensions               > Preprocessing library for kan-extensions-5.2.6..
+kan-extensions               > Building library for kan-extensions-5.2.6..
+kan-extensions               > [ 1 of 13] Compiling Data.Functor.Contravariant.Coyoneda
+kan-extensions               > [ 2 of 13] Compiling Data.Functor.Contravariant.Day
+kan-extensions               > [ 3 of 13] Compiling Data.Functor.Contravariant.Yoneda
+kan-extensions               > [ 4 of 13] Compiling Data.Functor.Day
+kan-extensions               > [ 5 of 13] Compiling Data.Functor.Day.Curried
+kan-extensions               > [ 6 of 13] Compiling Data.Functor.Invariant.Day
+kan-extensions               > [ 7 of 13] Compiling Data.Functor.Kan.Lan
+kan-extensions               > [ 8 of 13] Compiling Data.Functor.Coyoneda
+kan-extensions               > [ 9 of 13] Compiling Control.Comonad.Density
+kan-extensions               > [10 of 13] Compiling Control.Monad.Co
+kan-extensions               > [11 of 13] Compiling Data.Functor.Kan.Ran
+kan-extensions               > [12 of 13] Compiling Control.Monad.Codensity
+kan-extensions               > [13 of 13] Compiling Data.Functor.Yoneda
+kan-extensions               > copy/register
+kan-extensions               > Installing library in /tmp/aern2-stack.ryVCFK/snapshots/x86_64-linux-tinfo6/b592dd4acb73086f74d238dd1c126581e2a5d5fe389f24cb377ec81a833f3622/9.6.7/lib/x86_64-linux-ghc-9.6.7/kan-extensions-5.2.6-8yIDLd3kWWc2Zk9mFFOcWJ
+kan-extensions               > Registering library for kan-extensions-5.2.6..
+vector                       > [16 of 21] Compiling Data.Vector.Storable.Internal
+vector                       > [17 of 21] Compiling Data.Vector.Storable.Mutable
+vector                       > [18 of 21] Compiling Data.Vector.Storable
+vector                       > [19 of 21] Compiling Data.Vector.Unboxed.Base
+vector                       > [20 of 21] Compiling Data.Vector.Unboxed
+vector                       > [21 of 21] Compiling Data.Vector.Unboxed.Mutable
+vector                       > copy/register
+vector                       > Installing library in /tmp/aern2-stack.ryVCFK/snapshots/x86_64-linux-tinfo6/b592dd4acb73086f74d238dd1c126581e2a5d5fe389f24cb377ec81a833f3622/9.6.7/lib/x86_64-linux-ghc-9.6.7/vector-0.13.1.0-FNU884bBtC844Pca26xD71
+vector                       > Registering library for vector-0.13.1.0..
+indexed-traversable-instances> configure
+indexed-traversable-instances> Configuring indexed-traversable-instances-0.1.2...
+indexed-traversable-instances> build with ghc-9.6.7
+indexed-traversable-instances> Preprocessing library for indexed-traversable-instances-0.1.2..
+indexed-traversable-instances> Building library for indexed-traversable-instances-0.1.2..
+indexed-traversable-instances> [1 of 1] Compiling Data.Functor.WithIndex.Instances
+indexed-traversable-instances> copy/register
+indexed-traversable-instances> Installing library in /tmp/aern2-stack.ryVCFK/snapshots/x86_64-linux-tinfo6/b592dd4acb73086f74d238dd1c126581e2a5d5fe389f24cb377ec81a833f3622/9.6.7/lib/x86_64-linux-ghc-9.6.7/indexed-traversable-instances-0.1.2-8Yy3aya4ixdHFGDBsvczBo
+indexed-traversable-instances> Registering library for indexed-traversable-instances-0.1.2..
+lens                         > configure
+lens                         > Configuring lens-5.2.3...
+lens                         > build with ghc-9.6.7
+lens                         > Preprocessing library for lens-5.2.3..
+lens                         > Building library for lens-5.2.3..
+lens                         > [ 1 of 85] Compiling Control.Lens.Internal.CTypes
+lens                         > [ 2 of 85] Compiling Control.Lens.Internal.Doctest
+lens                         > [ 3 of 85] Compiling Control.Lens.Internal.Instances
+lens                         > [ 4 of 85] Compiling Control.Lens.Internal.Iso
+lens                         > [ 5 of 85] Compiling Control.Lens.Internal.List
+lens                         > [ 6 of 85] Compiling Control.Lens.Internal.Prelude
+lens                         > [ 7 of 85] Compiling Control.Lens.Internal.Level
+lens                         > [ 8 of 85] Compiling Control.Lens.Internal.Indexed
+lens                         > [ 9 of 85] Compiling Control.Lens.Internal.Getter
+lens                         > [10 of 85] Compiling Control.Lens.Internal.Fold
+lens                         > [11 of 85] Compiling Control.Lens.Internal.Context
+lens                         > [12 of 85] Compiling Control.Lens.Internal.Bazaar
+lens                         > [13 of 85] Compiling Control.Lens.Internal.Magma
+lens                         > [14 of 85] Compiling Control.Lens.Internal.Prism
+lens                         > [15 of 85] Compiling Control.Lens.Internal.Profunctor
+lens                         > [16 of 85] Compiling Control.Lens.Internal.Review
+lens                         > [17 of 85] Compiling Control.Lens.Internal.Setter
+lens                         > [18 of 85] Compiling Control.Lens.Internal.Zoom
+lens                         > [19 of 85] Compiling Control.Lens.Internal
+lens                         > [20 of 85] Compiling Control.Lens.Type
+lens                         > [21 of 85] Compiling Control.Lens.Setter
+lens                         > [22 of 85] Compiling Control.Lens.Lens
+lens                         > [23 of 85] Compiling Control.Lens.Tuple
+lens                         > [24 of 85] Compiling Control.Lens.Getter
+lens                         > [25 of 85] Compiling Control.Lens.Review
+lens                         > [26 of 85] Compiling Control.Lens.Prism
+lens                         > [27 of 85] Compiling Control.Lens.Fold
+lens                         > [28 of 85] Compiling Control.Lens.Traversal
+lens                         > [29 of 85] Compiling Control.Lens.Level
+lens                         > [30 of 85] Compiling Control.Lens.Reified
+lens                         > [31 of 85] Compiling Control.Lens.Internal.Exception
+lens                         > [32 of 85] Compiling Control.Lens.Indexed
+lens                         > [33 of 85] Compiling Control.Lens.Internal.ByteString
+lens                         > [34 of 85] Compiling Control.Lens.Equality
+lens                         > [35 of 85] Compiling Control.Lens.Iso
+lens                         > [36 of 85] Compiling Control.Lens.Empty
+lens                         > [37 of 85] Compiling Control.Lens.Cons
+lens                         > [38 of 85] Compiling Control.Lens.Internal.Deque
+lens                         > [39 of 85] Compiling Control.Lens.Wrapped
+lens                         > [40 of 85] Compiling Control.Lens.Internal.TH
+lens                         > [41 of 85] Compiling Control.Lens.Zoom
+lens                         > [42 of 85] Compiling Data.Data.Lens
+lens                         > [43 of 85] Compiling Control.Lens.Plated
+lens                         > [44 of 85] Compiling Data.HashSet.Lens
+lens                         > [45 of 85] Compiling Data.List.Lens
+lens                         > [46 of 85] Compiling Data.Map.Lens
+lens                         > [47 of 85] Compiling Data.Set.Lens
+lens                         > [48 of 85] Compiling Data.Text.Lazy.Lens
+lens                         > [49 of 85] Compiling Data.Text.Strict.Lens
+lens                         > [50 of 85] Compiling Data.Text.Lens
+lens                         > [51 of 85] Compiling Data.Vector.Generic.Lens
+lens                         > [52 of 85] Compiling Control.Lens.Each
+lens                         > [53 of 85] Compiling Control.Lens.At
+lens                         > [54 of 85] Compiling Language.Haskell.TH.Lens
+lens                         > [55 of 85] Compiling Control.Lens.Internal.PrismTH
+lens                         > [56 of 85] Compiling Control.Lens.Internal.FieldTH
+lens                         > [57 of 85] Compiling Control.Lens.TH
+lens                         > [58 of 85] Compiling Control.Lens
+lens                         > [59 of 85] Compiling GHC.Generics.Lens
+lens                         > [60 of 85] Compiling Data.Vector.Lens
+lens                         > [61 of 85] Compiling Data.Typeable.Lens
+lens                         > [62 of 85] Compiling Data.Tree.Lens
+lens                         > [63 of 85] Compiling Data.Sequence.Lens
+lens                         > [64 of 85] Compiling Data.IntSet.Lens
+lens                         > [65 of 85] Compiling Data.Complex.Lens
+lens                         > [66 of 85] Compiling Data.ByteString.Strict.Lens
+lens                         > [67 of 85] Compiling Data.ByteString.Lazy.Lens
+lens                         > [68 of 85] Compiling Data.ByteString.Lens
+lens                         > [69 of 85] Compiling Data.Bits.Lens
+lens                         > [70 of 85] Compiling Data.Array.Lens
+lens                         > [71 of 85] Compiling Control.Seq.Lens
+lens                         > [72 of 85] Compiling Control.Parallel.Strategies.Lens
+lens                         > [73 of 85] Compiling Control.Monad.Error.Lens
+lens                         > [74 of 85] Compiling Control.Lens.Unsound
+lens                         > [75 of 85] Compiling Control.Lens.Profunctor
+lens                         > [76 of 85] Compiling Control.Lens.Operators
+lens                         > [77 of 85] Compiling Control.Lens.Extras
+lens                         > [78 of 85] Compiling Control.Lens.Combinators
+lens                         > [79 of 85] Compiling Control.Exception.Lens
+lens                         > [80 of 85] Compiling Data.Dynamic.Lens
+lens                         > [81 of 85] Compiling Numeric.Lens
+lens                         > [82 of 85] Compiling Numeric.Natural.Lens
+lens                         > [83 of 85] Compiling System.Exit.Lens
+lens                         > [84 of 85] Compiling System.FilePath.Lens
+lens                         > [85 of 85] Compiling System.IO.Error.Lens
+lens                         > copy/register
+lens                         > Installing library in /tmp/aern2-stack.ryVCFK/snapshots/x86_64-linux-tinfo6/b592dd4acb73086f74d238dd1c126581e2a5d5fe389f24cb377ec81a833f3622/9.6.7/lib/x86_64-linux-ghc-9.6.7/lens-5.2.3-23VosdrJu60IOypyih5u0f
+lens                         > Registering library for lens-5.2.3..
+linear                       > configure
+linear                       > Configuring linear-1.22...
+linear                       > build with ghc-9.6.7
+linear                       > Preprocessing library for linear-1.22..
+linear                       > Building library for linear-1.22..
+linear                       > [ 1 of 22] Compiling Linear.Binary
+linear                       > [ 2 of 22] Compiling Linear.Conjugate
+linear                       > [ 3 of 22] Compiling Linear.Epsilon
+linear                       > [ 4 of 22] Compiling Linear.Instances
+linear                       > [ 5 of 22] Compiling Linear.Vector
+linear                       > [ 6 of 22] Compiling Linear.Metric
+linear                       > [ 7 of 22] Compiling Linear.V
+linear                       > [ 8 of 22] Compiling Linear.V1
+linear                       > [ 9 of 22] Compiling Linear.V2
+linear                       > [10 of 22] Compiling Linear.V3
+linear                       > 
+linear                       > /tmp/stack-9db56f56fe8a43ac/linear-1.22/src/Linear/V3.hs:48:1: warning: [-Wunused-imports]
+linear                       >     The import of ‘Control.Applicative’ is redundant
+linear                       >       except perhaps to import instances from ‘Control.Applicative’
+linear                       >     To import instances alone, use: import Control.Applicative()
+linear                       >    |
+linear                       > 48 | import Control.Applicative
+linear                       >    | ^^^^^^^^^^^^^^^^^^^^^^^^^^
+linear                       > [11 of 22] Compiling Linear.V4
+linear                       > 
+linear                       > /tmp/stack-9db56f56fe8a43ac/linear-1.22/src/Linear/V4.hs:54:1: warning: [-Wunused-imports]
+linear                       >     The import of ‘Control.Applicative’ is redundant
+linear                       >       except perhaps to import instances from ‘Control.Applicative’
+linear                       >     To import instances alone, use: import Control.Applicative()
+linear                       >    |
+linear                       > 54 | import Control.Applicative
+linear                       >    | ^^^^^^^^^^^^^^^^^^^^^^^^^^
+linear                       > [12 of 22] Compiling Linear.V0
+linear                       > [13 of 22] Compiling Linear.Quaternion
+linear                       > [14 of 22] Compiling Linear.Plucker
+linear                       > 
+linear                       > /tmp/stack-9db56f56fe8a43ac/linear-1.22/src/Linear/Plucker.hs:56:1: warning: [-Wunused-imports]
+linear                       >     The import of ‘Control.Applicative’ is redundant
+linear                       >       except perhaps to import instances from ‘Control.Applicative’
+linear                       >     To import instances alone, use: import Control.Applicative()
+linear                       >    |
+linear                       > 56 | import Control.Applicative
+linear                       >    | ^^^^^^^^^^^^^^^^^^^^^^^^^^
+linear                       > [15 of 22] Compiling Linear.Trace
+linear                       > [16 of 22] Compiling Linear.Plucker.Coincides
+linear                       > [17 of 22] Compiling Linear.Matrix
+linear                       > [18 of 22] Compiling Linear.Projection
+linear                       > [19 of 22] Compiling Linear.Algebra
+linear                       > [20 of 22] Compiling Linear.Covector
+linear                       > [21 of 22] Compiling Linear.Affine
+linear                       > [22 of 22] Compiling Linear
+linear                       > copy/register
+linear                       > Installing library in /tmp/aern2-stack.ryVCFK/snapshots/x86_64-linux-tinfo6/b592dd4acb73086f74d238dd1c126581e2a5d5fe389f24cb377ec81a833f3622/9.6.7/lib/x86_64-linux-ghc-9.6.7/linear-1.22-B7OoGL3ofZrH3Xy4rsKQv1
+linear                       > Registering library for linear-1.22..
+aern2-linear                 > configure (lib + exe)
+Configuring aern2-linear-0.2.9.0...
+aern2-linear                 > build (lib + exe) with ghc-9.6.7
+Preprocessing library for aern2-linear-0.2.9.0..
+Building library for aern2-linear-0.2.9.0..
+[1 of 5] Compiling AERN2.Linear.AdaptedLinear
+[2 of 5] Compiling AERN2.Linear.Vector
+
+/home/tim/Documents/GitHub/workspace/exact-real-references/aern2/aern2-linear/src/AERN2/Linear/Vector.hs:28:1: warning: [-Wunused-imports]
+    The import of ‘Control.Applicative’ is redundant
+      except perhaps to import instances from ‘Control.Applicative’
+    To import instances alone, use: import Control.Applicative()
+   |
+28 | import Control.Applicative (Applicative(liftA2))
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[3 of 5] Compiling AERN2.Linear.Matrix
+
+/home/tim/Documents/GitHub/workspace/exact-real-references/aern2/aern2-linear/src/AERN2/Linear/Matrix.hs:204:19: error: [GHC-39999]
+    • No instance for ‘ConvertibleExactly (MPFloat, MPFloat) MPBall’
+        arising from a use of ‘mpBall’
+    • In the expression: mpBall (m, r)
+      In the first argument of ‘lift2’, namely ‘(\ m r -> mpBall (m, r))’
+      In the expression: lift2 (\ m r -> mpBall (m, r)) mC_Up rC
+    |
+204 |   lift2 (\ m r -> mpBall (m,r)) mC_Up rC
+    |                   ^^^^^^
+
+/home/tim/Documents/GitHub/workspace/exact-real-references/aern2/aern2-linear/src/AERN2/Linear/Matrix.hs:324:23: error: [GHC-39999]
+    • Could not deduce ‘ConvertibleWithPrecision
+                          (Rational, Rational) MPBall’
+        arising from a use of ‘mpBallP’
+      from the context: KnownNat n
+        bound by a pattern with constructor:
+                   VN :: forall e (n :: GHC.TypeNats.Nat).
+                         KnownNat n =>
+                         V n e -> VN e,
+                 in an equation for ‘solveBViaFP’
+        at src/AERN2/Linear/Matrix.hs:294:20-24
+    • In the expression: mpBallP p (0.9, 1.1)
+      In the first argument of ‘(.)’, namely ‘(* (mpBallP p (0.9, 1.1)))’
+      In the expression:
+        (* (mpBallP p (0.9, 1.1))) . updateRadius (+ eps)
+    |
+324 |     widenCentre = (* (mpBallP p (0.9,1.1))) . updateRadius (+ eps)
+    |                       ^^^^^^^
+[4 of 5] Compiling AERN2.TestApprox
+[5 of 5] Compiling Paths_aern2_linear
+Completed 37 action(s).
+
+Error: [S-7282]
+       Stack failed to execute the build plan.
+       
+       While executing the build plan, Stack encountered the error:
+       
+       [S-7011]
+       While building package aern2-linear-0.2.9.0 (scroll up to its section to see the error)
+       using:
+       /tmp/aern2-stack.ryVCFK/setup-exe-cache/x86_64-linux-tinfo6/Cabal-simple_O_vy6YIf_3.10.3.0_ghc-9.6.7 --verbose=1 --builddir=.stack-work/dist/x86_64-linux-tinfo6/ghc-9.6.7 build lib:aern2-linear exe:aern2-linear-matrix-benchmark --ghc-options ""
+       Process exited with code: ExitFailure 1 

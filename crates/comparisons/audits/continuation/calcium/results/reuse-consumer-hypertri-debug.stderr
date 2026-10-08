@@ -1,0 +1,15 @@
+   Compiling hyperlimit v0.4.1 (/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/reuse-consumers/hyperlimit)
+   Compiling itertools v0.14.0
+   Compiling criterion v0.5.1
+   Compiling delaunator v1.1.0
+   Compiling earcutr v0.5.0
+   Compiling hypertri v0.4.1 (/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/reuse-consumers/hypertri)
+    Finished `test` profile [unoptimized] target(s) in 6.28s
+     Running unittests src/lib.rs (/tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/debug/deps/hypertri-f6917a324b987b20)
+     Running tests/adversarial.rs (/tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/debug/deps/adversarial-fa58e8c26a2cd535)
+     Running tests/api_surface_coverage.rs (/tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/debug/deps/api_surface_coverage-540c904660696460)
+     Running tests/earcutr_differential.rs (/tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/debug/deps/earcutr_differential-12143ed8742fce78)
+     Running tests/fuzz_properties.rs (/tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/debug/deps/fuzz_properties-80bc537eb71ff674)
+     Running tests/predicate_policy.rs (/tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/debug/deps/predicate_policy-f1128c4f5764dedf)
+     Running tests/readme.rs (/tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/debug/deps/readme-2f9f29e47afd2b1f)
+     Running tests/real_representations.rs (/tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse/debug/deps/real_representations-0e52037d9fced34d)

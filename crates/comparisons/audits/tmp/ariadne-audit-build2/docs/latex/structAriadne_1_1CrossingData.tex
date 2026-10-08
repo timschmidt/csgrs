@@ -1,0 +1,35 @@
+\doxysubsection{Crossing\+Data Struct Reference}
+\hypertarget{structAriadne_1_1CrossingData}{}\label{structAriadne_1_1CrossingData}\index{CrossingData@{CrossingData}}
+
+
+{\ttfamily \#include $<$hybrid\+\_\+evolver.\+hpp$>$}
+
+
+
+\doxysubsubsection{Description}
+A data type used to store information about the way flow lines cross a guard $g(x)=0$. \doxysubsubsubsection*{Public Attributes}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{structAriadne_1_1CrossingData_afb282ba579d0286f37a55a2eeacd9d68}\label{structAriadne_1_1CrossingData_afb282ba579d0286f37a55a2eeacd9d68} 
+\mbox{\hyperlink{group__HybridDynamicsSubModule_ga4179a1dd2049e4cb6ee977ee268d8470}{Crossing\+Kind}} {\bfseries crossing\+\_\+kind}
+\begin{DoxyCompactList}\small\item\em The way in which the guard function changes along trajectories during a crossing. e.\+g. increasing. \end{DoxyCompactList}\item 
+\Hypertarget{structAriadne_1_1CrossingData_ae14bd65a242dec9d3d30a9ce747769ca}\label{structAriadne_1_1CrossingData_ae14bd65a242dec9d3d30a9ce747769ca} 
+\mbox{\hyperlink{group__FunctionModule_ga7b38f183a458f335ba2f31e0bcdbadc9}{Upper\+Interval\+Type}} {\bfseries crossing\+\_\+time\+\_\+range}
+\begin{DoxyCompactList}\small\item\em The range of times at which the crossing may occur. \end{DoxyCompactList}\item 
+\Hypertarget{structAriadne_1_1CrossingData_ae1f16790143e37b94e7d210eba9daa0e}\label{structAriadne_1_1CrossingData_ae1f16790143e37b94e7d210eba9daa0e} 
+\mbox{\hyperlink{classAriadne_1_1FunctionPatch}{Validated\+Scalar\+Multivariate\+Function\+Patch}} {\bfseries crossing\+\_\+time}
+\begin{DoxyCompactList}\small\item\em The time $\gamma(x)$ at which the crossing occurs, as a function of the initial point in space. Satisfies $g(\phi(x,\gamma(x)))=0$. \end{DoxyCompactList}\item 
+\Hypertarget{structAriadne_1_1CrossingData_aa1bae58d9caad2c5b51b11f1065f0172}\label{structAriadne_1_1CrossingData_aa1bae58d9caad2c5b51b11f1065f0172} 
+\mbox{\hyperlink{classAriadne_1_1FunctionPatch}{Validated\+Scalar\+Multivariate\+Function\+Patch}} {\bfseries critical\+\_\+time}
+\begin{DoxyCompactList}\small\item\em The time $\mu(x)$ at which the guard function reaches a maximum or minimum i.\+e. $L_{f}g(\phi(x,\mu(x))) = 0$. \end{DoxyCompactList}\item 
+\Hypertarget{structAriadne_1_1CrossingData_a1246d567afcf0532283a42f48111cc8e}\label{structAriadne_1_1CrossingData_a1246d567afcf0532283a42f48111cc8e} 
+\mbox{\hyperlink{group__FunctionModule_ga7b38f183a458f335ba2f31e0bcdbadc9}{Upper\+Interval\+Type}} {\bfseries guard\+\_\+range\+\_\+at\+\_\+critical\+\_\+time}
+\begin{DoxyCompactList}\small\item\em The range of values of the guard function at the critical time. \end{DoxyCompactList}\item 
+\Hypertarget{structAriadne_1_1CrossingData_ae15fec7164d37305a1e56e98936beb60}\label{structAriadne_1_1CrossingData_ae15fec7164d37305a1e56e98936beb60} 
+\mbox{\hyperlink{group__FunctionModule_gadb510bd9aa076e5ae44245b498901ca6}{Upper\+Box\+Type}} {\bfseries evolve\+\_\+bounds\+\_\+at\+\_\+critical\+\_\+time}
+\begin{DoxyCompactList}\small\item\em The range of values of the guard function at the critical time. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+The documentation for this struct was generated from the following file\+:\begin{DoxyCompactItemize}
+\item 
+source/hybrid/\mbox{\hyperlink{hybrid__evolver_8hpp}{hybrid\+\_\+evolver.\+hpp}}\end{DoxyCompactItemize}

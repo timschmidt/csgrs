@@ -1,0 +1,39 @@
+{
+  "turn_status": "progress",
+  "full_goal_status": "active",
+  "commits": [
+    "d78a8b30fc4a07fb799e32495b759cbfa923d97b",
+    "d81a9f7d1aae65360c94bce2d89e03bad691807a"
+  ],
+  "latest_baseline": "derivative-jet-v841",
+  "verified_source_files": 2048,
+  "clean_repositories": 30,
+  "release_cases": 325,
+  "pinned_test_binaries": 12,
+  "checks": 7,
+  "active_drivers": [],
+  "outstanding_production_edits": [],
+  "next_unused_version": 847,
+  "receipts": {
+    "derivative-denominator-v836-committed.json": "b7e13419bfd6555f4355f62da9d00dd21253696c43bba5cc533b95effc842e50",
+    "derivative-jet-v841-committed.json": "d88895a101a88b72df1edaa59885a3231e816dc6b4e945d916f25e763707ad39",
+    "derivative-jet-v841-reviewed.json": "b81d6cf39853cf31266cbec53719eb5b690e02e5badb43e71faba9fff587263e",
+    "derivative-jet-v841-reaped.json": "55dddd281fe6ae167ccf9dd1b826eb3f1480ad270fab22891d5022b469ce68ac",
+    "derivative-jet-v841-review-reaped.json": "ab6bb3f6f295651d23101e15dd28a0d3290052b5aa4993f70f295cb31479038e",
+    "derivative-growth-replay-v842-reaped.json": "5184f372d397a1b37b00fc293a5f95cc70ff59a84679220deccd212129c3a13c",
+    "derivative-domain-replay-v843-reaped.json": "93493b5ab28fd3bcea7a08146668c107576d78af8ac972741a475bd3e0385024",
+    "high-order-derivative-replay-v844-reaped.json": "2d343df563fdeb9081b6252e6ea2745d266b2b7f0f73be218a1b9da1880d3514",
+    "derivative-growth-comparison-v845.json": "49a0a14191d5c2f5c64eda846aa81b5af6718ab6a3f7e5182813994a69f78a9c"
+  },
+  "limits": [
+    "No universal curve-operation closure claim.",
+    "Allocation counters measure Rust requests and requested bytes, not peak memory or native-library allocation.",
+    "Degree-one measured workloads use about 2-5% more allocation requests; no uniform speedup claim.",
+    "The V839 final tool exit observation was lost; V840 independently observed unchanged-source replay supplies the high-order baseline."
+  ],
+  "next_work": [
+    "Review low-order derivative demand, finite-domain proof reuse and unnecessary temporary retention without duplicate compatibility machinery.",
+    "Continue V821 tangent-order representation/report audit.",
+    "Resolve the previously recorded degree-six monotone reparameterization overlap growth."
+  ]
+}

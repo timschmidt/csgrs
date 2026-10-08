@@ -1,0 +1,12 @@
+{
+  "parent": "2bbdba5e27935d8963d6344ab468218c70864b51",
+  "paths": {
+    "src/bspline.rs": "d43697e16db3f6319fb9e6bb81a4de50e1ba816e3491fd3d1e40a29b2bbc3ed5",
+    "src/lib.rs": "f73740cf66a18a7ef15ff34d73c3070664fd8e3123e0eabde68b96a46daf6b45",
+    "src/nurbs.rs": "85ddb2b3974134446d3391d791ec13202df0fe34c04d0d18b49c5fd269bd70ae",
+    "src/polynomial_spline.rs": "1a497ce1b0099cf3aad209337cb9f8603e08c515f2c754ee523a1207f36f47f7",
+    "tests/hypercurve_bspline.rs": "b23781e1c416176158c803222b7e0f91cfbf3f1f4a0824bf4e11e7624f871a78",
+    "benches/bspline.rs": "132b7aa48528e7bef7cd1bdff19810c264108cc875cb059c89df6be7b17f8458",
+    "fuzz/fuzz_targets/bspline.rs": "d211b59ef44d7693bbb0ab8149588eb759695087bbe4dfa67dd09ee3a2c8aef5"
+  }
+}

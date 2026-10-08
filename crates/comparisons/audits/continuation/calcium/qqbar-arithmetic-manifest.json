@@ -1,0 +1,806 @@
+{
+  "schema": 1,
+  "checkpoint": 51,
+  "recorded": "2026-09-10T18:07:21.208Z",
+  "files": {
+    "flint-qqbar-arithmetic-controls.c": "b0950a99d15b07f8bd801d2d82a9bea154c4ea52efe7b6d3d010105c8ad00693",
+    "check-qqbar-arithmetic.mjs": "316e30a8006d056cc32b51816a3195d3c7e01396a810e9889eb676483706bfcf",
+    "record-qqbar-arithmetic.mjs": "53895e20c7bbaaaca64268db468667683c850f3bd4d36e387b0f9e7a5a23d387",
+    "verify-qqbar-arithmetic.mjs": "e6df55d7ddf36cd6cf40d491c146f429db28417431834ac7d5edcbe6b1f114d4",
+    "qqbar-arithmetic-findings.md": "fa93e01c982383890d0504feadf72c04fedd26615ffd03080fca159362be5b68",
+    "qqbar-arithmetic-read-records.json": "95a4fc86c4db28cdf61b2aa33f5f762609dbbc602b006816e1b2ef3de2dd6f96",
+    "capture.mjs": "aaf6df6bbd73025a8541617ce83731ae5ea3fd2272bd98c15e3c4c12b713ce23",
+    "inventory.json": "5f9ef82294df7476427acc0acfc72ce525808dcaf47ea9162c9abc2733162f95",
+    "effective-coverage.mjs": "b884fd5eb462ede70cb9b3c2bed2cfad14d5700301e92e37156c7ec5104b17e0",
+    "qqbar-decisions-manifest.json": "9a840ce099d339279f841ff69d6feed72d78bb77e89f01b40609e0fe23ffbf83",
+    "results/qqbar-decisions-verify.json": "942c3674f42c6a1ba91801f81bc0347955a127b8d3b9a1433020e7b306ff460d",
+    "results/qqbar-decisions-verify.stdout": "27a42eee5f5553cdbc1429e0c8ed331430725638ebfb4f99fe5f97145da38b6a",
+    "results/qqbar-decisions-verify.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/qqbar-arithmetic-compile.json": "f88425127facb246aa446bcbd1c4e9847944649b9a9dd17313542cb73cde9f8c",
+    "results/qqbar-arithmetic-compile.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/qqbar-arithmetic-compile.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/qqbar-arithmetic-native.json": "2566e84a28679be356a9c47fd79bf338cc77e0f9bf7416304735424ecdb07acd",
+    "results/qqbar-arithmetic-native.stdout": "15fe5d67b47835f8ed0ef765f2f0ba0a744f72560ed789ad92e3cc55ed4d837f",
+    "results/qqbar-arithmetic-native.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/qqbar-arithmetic-check.json": "f503c9f2cff0ff28886e149ea75841b38d2a188029bb562811c7fad41f374266",
+    "results/qqbar-arithmetic-check.stdout": "650c8d21185407613e75ff0a035a01e3b6e891db40d6a68ebf9226eb11806f0c",
+    "results/qqbar-arithmetic-check.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/qqbar-arithmetic-memcheck.json": "fc2e73f479f15df9dd506c1a83612f3bfebf1a6d3f8db5dc32cc0cf45c97932c",
+    "results/qqbar-arithmetic-memcheck.stdout": "15fe5d67b47835f8ed0ef765f2f0ba0a744f72560ed789ad92e3cc55ed4d837f",
+    "results/qqbar-arithmetic-memcheck.stderr": "e2a44701703a8ef9fadbcf9fafe53ac692eae2383cc5de26dae5f61cc0972ea1",
+    "results/qqbar-arithmetic-linked.json": "d069c9337d24c4c119331b202a8a8031ad0a4944160560f02687cfb843b0760d",
+    "results/qqbar-arithmetic-linked.stdout": "e99c9d41b1f0ba0ec93692a4eee17968c186998f62438ffe9e1766269921936e",
+    "results/qqbar-arithmetic-linked.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "donorSources": {
+    "calcium:qqbar/affine_transform.c": "bc7f36bb4b624bdda50473fc02d86084f24114b7741eda45ae797d5d336dcd90",
+    "calcium:qqbar/composed_op.c": "82c766b58d44b53284ad7834063ba4de8c172f700d4108b370e8ecd0d76f982a",
+    "calcium:qqbar/add.c": "f5683adcb552bb6162cad5a65f94c325552b441e5d1abc2af1c2373331b7f3a2",
+    "calcium:qqbar/sub.c": "af27842b6ae603a3a7393c310349e215623d2f4ccd97f22bbdc15a139c6ef435",
+    "calcium:qqbar/mul.c": "edfaad4b4e2f34f6bfcc47f923207e23b6729fb8301036dba7f7ca569f034575",
+    "calcium:qqbar/div.c": "374dcf362d89e59c0bbdccb315184e51862bdae1390b92ea114ca78d6c83f22f",
+    "calcium:qqbar/inv.c": "478b961fe2d74623d11215006d07d879d03a7871e23361758787469e4d6f2b37",
+    "calcium:qqbar/mul_2exp_si.c": "3e5cece35c93ef1b8824d17a7f5844f2d3364a99ddcb760972c0f22646d9f52c",
+    "calcium:qqbar/pow.c": "011e00f850be0102193437f510975635b996fa98c44be3b87b00f733102fca77",
+    "calcium:qqbar/fmpq_pow_si_ui.c": "3bbc72743116ab1d7a03cafb0abca4b130ec6a14f22765a2ec8c480eda28ceb0",
+    "calcium:qqbar/evaluate_fmpq_poly.c": "b4e0063238755242f7b7589f2f4df860ab1784f3dd6123e0e2f1dd403178ab28",
+    "calcium:qqbar/evaluate_fmpz_poly.c": "0ee5f4cef32261715031ee8cdff4ff598f8885dba41cffb0ef9a2d3cb174bc50",
+    "calcium:qqbar/equal_fmpq_poly_val.c": "c061a0591d2d75c82345995305eb3919792f859bfe51b4553e922cf4955eaa33",
+    "calcium:qqbar/express_in_field.c": "b011e4b8ccc4d4dc39a4ebe4c2f96b21b8bb69c49a4743f83c833b870e78d245",
+    "calcium:qqbar/guess.c": "7b115acb73e938fc2c392c46ab4de409b3183bf852a1fab9ffb6ef6ca03583a0",
+    "calcium:qqbar/acb_lindep.c": "e8e32e2a3fb5f918190d5284f4af080577526ab7bedc816603470f53f198c6c1",
+    "calcium:qqbar/test/t-add.c": "363cfab00b68df72d670aab236552c21ab4f212d6daf416ac2ec2d60f72dc018",
+    "calcium:qqbar/test/t-sub.c": "4ea354cbf96cd97966c55110f7af538d7515d4d578ed33def1e06291e6414018",
+    "calcium:qqbar/test/t-mul.c": "875c52de56263104817d1459997f84ee79a2381e677ba255ac1d1df3bba03be3",
+    "calcium:qqbar/test/t-div.c": "b267032a945c80b0674af360b61a6189ab3854d6a3375f0c8d5b339672a57a25",
+    "calcium:qqbar/test/t-inv.c": "7bf1d6c30f686677746d3462e747ca138a3a14c94bd893bf86d9bfc3edde5a7a",
+    "calcium:qqbar/test/t-mul_2exp_si.c": "e8201e60a62f5c4e2109c7e9d45eff35eef9998e30fd2fe14420fcb2bef59041",
+    "calcium:qqbar/test/t-pow.c": "05e2fd6e59c27b24faa56732204451713b9dd95de1ed11032206a3bcc88ef021",
+    "calcium:qqbar/test/t-evaluate_fmpq_poly.c": "fd966e1211fe553661d13c30838d290bd84bc514108ed9dedd57b7cc343bdf85",
+    "calcium:qqbar/test/t-equal_fmpq_poly_val.c": "1b170d395c4902fc3e6ad349b037205f24ee4f87bfe8ddd9c3a73b042599ea9d",
+    "calcium:qqbar/test/t-express_in_field.c": "7ae247e439cf71c9192f597efe9ce36a9b1ec26b733f08a11f0125bf7d350e43",
+    "calcium:qqbar/test/t-guess.c": "708efbb93db7771935da267c0811995887e0694978bd8b55abc21384c946f8a0",
+    "flint:src/qqbar/affine_transform.c": "9d07c33a5554fae1e4338bf2c36843cbfeb66520f9f239a8e78758a40cdc3ccc",
+    "flint:src/qqbar/composed_op.c": "166f453262273997fe4761661bf95b6d3907354defd7f0e247fc9ebfb9f82915",
+    "flint:src/qqbar/add.c": "bb4774cc79f90269defdd04029912090f3e217463fc5726f3e1efd121457b4b3",
+    "flint:src/qqbar/sub.c": "72406da66026b1a78c7dce46af045d833facd6df80c33c0da299afc8dd57d9f4",
+    "flint:src/qqbar/mul.c": "4d7a9b749670abd1f008e33847ba4fddff8f343ca078cb6250e8c9fe0f6aa3db",
+    "flint:src/qqbar/div.c": "7a5c020bf692220320c515edc813239b3e3dd78f6782a8b20f67fe1d24ff59e9",
+    "flint:src/qqbar/inv.c": "e4856057ee9714e62c2f1e7b3622a8a4eb057ebb6bf1e5b056d1305d1c2f698f",
+    "flint:src/qqbar/mul_2exp_si.c": "805c091457bf4f69a198715b2f6fd9893a21a68f840674b5c6d232e688a181ba",
+    "flint:src/qqbar/pow.c": "ec05584a17bf6cb5de58645de0488a299a1c47e15f86257e0cf9b1d67b9794da",
+    "flint:src/qqbar/fmpq_pow_si_ui.c": "bd7b251cc2ad3ce67b7126eb71974869700326b3db9f125f8c1f1ede244f2517",
+    "flint:src/qqbar/evaluate_fmpq_poly.c": "42c3867cf774bdb402c6cb4938e1c4184c756775b9ec6560a028d5521bde39a0",
+    "flint:src/qqbar/evaluate_fmpz_poly.c": "3624889b5ae425a4d99fe405f129c88605a59017fbfb149750f49b3031e5e88d",
+    "flint:src/qqbar/equal_fmpq_poly_val.c": "464f67ee23823ffffd6624289c8457f2db42ac169ec7d7b83b21e7a4efbc6aba",
+    "flint:src/qqbar/express_in_field.c": "fac301766475922a040497376ddee03d262a729d3140a66e21d59b963e50cb97",
+    "flint:src/qqbar/guess.c": "261418600d66d896677378e81f3b7bf3beeb48fdf289e3969cf0ebba7f8b64da",
+    "flint:src/qqbar/acb_lindep.c": "3261c0779a279a9f4d6bc987876aec760bfdde3ed84232483fb55c1a1d976e99",
+    "flint:src/qqbar/test/t-add.c": "d339dff76443e33352b97e4447cd7d6d971a66b11cebf805e57d3001c2d49ce2",
+    "flint:src/qqbar/test/t-sub.c": "d3470b35afc02acf210e3b9fc3792c7d9dc3a1a406b4c0d143ac1b594f89fb9b",
+    "flint:src/qqbar/test/t-mul.c": "e5008f008f91335c543486b85e3e41e0030307c7dba63d0c036a53ef92bb79a7",
+    "flint:src/qqbar/test/t-div.c": "662a1ad1e87e195149c56bf37b4635bc91a2a2e0a5de3b756efb8e7fb49ac1ef",
+    "flint:src/qqbar/test/t-inv.c": "c4b143f1f0f6302a0cfcdec1129f24f5735b20e854282f879f6e562b3cd02536",
+    "flint:src/qqbar/test/t-mul_2exp_si.c": "772d0c6ab885dcd789522f6088d424554d408e74e94067c5a57a290c4282b552",
+    "flint:src/qqbar/test/t-pow.c": "78975627bb7d094a53889175aef2b86d346d5890787d3df4faaa169e7adb7a18",
+    "flint:src/qqbar/test/t-evaluate_fmpq_poly.c": "e0071c96d27c4ab34aab4c3d2482b8bcf8d501a10dde118f7782e094e2d121ae",
+    "flint:src/qqbar/test/t-equal_fmpq_poly_val.c": "c78b10335e3b22cf0d0d9afd56594a4399ec75f4dd9e203200963f310f74ae81",
+    "flint:src/qqbar/test/t-express_in_field.c": "a70951149516cc5cf941183b57e9c6b8cc26f775154c9e23f7acad1ef5731d10",
+    "flint:src/qqbar/test/t-guess.c": "22d9e692c714f03aad7fc9dffb22314c96b508a5af9aaa01e6f0f3fb66dbc4eb"
+  },
+  "readRecords": [
+    {
+      "repo": "calcium",
+      "path": "qqbar/affine_transform.c",
+      "ranges": [
+        [
+          1,
+          170
+        ]
+      ],
+      "note": "Checkpoint51: Full affine substitution, primitive normalization, rational/zero-slope paths and selected-root enclosure validation."
+    },
+    {
+      "repo": "calcium",
+      "path": "qqbar/composed_op.c",
+      "ranges": [
+        [
+          1,
+          364
+        ]
+      ],
+      "note": "Checkpoint51: Full power-sum/log-derivative, Borel/Hadamard reconstruction, factor/unique-root selection and exactly checked rational-guess fast path; disabled branches also read."
+    },
+    {
+      "repo": "calcium",
+      "path": "qqbar/add.c",
+      "ranges": [
+        [
+          1,
+          96
+        ]
+      ],
+      "note": "Checkpoint51: Full zero/rational/fused-affine and generic algebraic addition dispatch."
+    },
+    {
+      "repo": "calcium",
+      "path": "qqbar/sub.c",
+      "ranges": [
+        [
+          1,
+          145
+        ]
+      ],
+      "note": "Checkpoint51: Full zero/rational/fused-affine and generic algebraic subtraction dispatch."
+    },
+    {
+      "repo": "calcium",
+      "path": "qqbar/mul.c",
+      "ranges": [
+        [
+          1,
+          149
+        ]
+      ],
+      "note": "Checkpoint51: Full zero/unit/rational/equal-input square, positive-surd and general product paths."
+    },
+    {
+      "repo": "calcium",
+      "path": "qqbar/div.c",
+      "ranges": [
+        [
+          1,
+          191
+        ]
+      ],
+      "note": "Checkpoint51: Full nonzero-divisor precondition, zero/unit/rational/inverse/surd and general division paths; no invalid-input probes."
+    },
+    {
+      "repo": "calcium",
+      "path": "qqbar/inv.c",
+      "ranges": [
+        [
+          1,
+          79
+        ]
+      ],
+      "note": "Checkpoint51: Full rational inversion, coefficient reversal/sign normalization and reciprocal-enclosure certification."
+    },
+    {
+      "repo": "calcium",
+      "path": "qqbar/mul_2exp_si.c",
+      "ranges": [
+        [
+          1,
+          64
+        ]
+      ],
+      "note": "Checkpoint51: Full exact dyadic coefficient scaling and common two-valuation removal; resource guards read, not probed."
+    },
+    {
+      "repo": "calcium",
+      "path": "qqbar/pow.c",
+      "ranges": [
+        [
+          1,
+          337
+        ]
+      ],
+      "note": "Checkpoint51: Full rational/root-of-unity/deflation/square/surd/polynomial-evaluation paths and partial algebraic-exponent admission."
+    },
+    {
+      "repo": "calcium",
+      "path": "qqbar/fmpq_pow_si_ui.c",
+      "ranges": [
+        [
+          1,
+          49
+        ]
+      ],
+      "note": "Checkpoint51: Full rational-power helper, root/power order and sign-dependent reciprocal construction."
+    },
+    {
+      "repo": "calcium",
+      "path": "qqbar/evaluate_fmpq_poly.c",
+      "ranges": [
+        [
+          1,
+          177
+        ]
+      ],
+      "note": "Checkpoint51: Full rational/constant/affine/remainder and number-field multiplication-matrix minimal polynomial evaluation; enclosure selection and lifetime review."
+    },
+    {
+      "repo": "calcium",
+      "path": "qqbar/evaluate_fmpz_poly.c",
+      "ranges": [
+        [
+          1,
+          30
+        ]
+      ],
+      "note": "Checkpoint51: Full integer-polynomial evaluation wrapper with exact unit denominator."
+    },
+    {
+      "repo": "calcium",
+      "path": "qqbar/equal_fmpq_poly_val.c",
+      "ranges": [
+        [
+          1,
+          111
+        ]
+      ],
+      "note": "Checkpoint51: Full modular polynomial-composition identity check and interval-uniqueness embedding certificate."
+    },
+    {
+      "repo": "calcium",
+      "path": "qqbar/express_in_field.c",
+      "ranges": [
+        [
+          1,
+          64
+        ]
+      ],
+      "note": "Checkpoint51: Full numeric relation candidate, structural field filters and exact polynomial-value certificate; unused size/flags source observation, no direct LLL execution."
+    },
+    {
+      "repo": "calcium",
+      "path": "qqbar/guess.c",
+      "ranges": [
+        [
+          1,
+          124
+        ]
+      ],
+      "note": "Checkpoint51: Full numerical relation guessing, factor/height filters, existence/uniqueness attempt and overlap selection; heuristic result requires caller certification."
+    },
+    {
+      "repo": "calcium",
+      "path": "qqbar/acb_lindep.c",
+      "ranges": [
+        [
+          1,
+          150
+        ]
+      ],
+      "note": "Checkpoint51: Full finite-input/accuracy scaling, rounded lattice construction, LLL invocation and heuristic residual test; direct LLL qualification not performed."
+    },
+    {
+      "repo": "calcium",
+      "path": "qqbar/test/t-add.c",
+      "ranges": [
+        [
+          1,
+          185
+        ]
+      ],
+      "note": "Checkpoint51: Full upstream test source, including shared-backend identities, conditional assertions, alias calls and cleanup. Read only, not newly executed."
+    },
+    {
+      "repo": "calcium",
+      "path": "qqbar/test/t-sub.c",
+      "ranges": [
+        [
+          1,
+          185
+        ]
+      ],
+      "note": "Checkpoint51: Full upstream test source, including shared-backend identities, conditional assertions, alias calls and cleanup. Read only, not newly executed."
+    },
+    {
+      "repo": "calcium",
+      "path": "qqbar/test/t-mul.c",
+      "ranges": [
+        [
+          1,
+          236
+        ]
+      ],
+      "note": "Checkpoint51: Full upstream test source, including shared-backend identities, conditional assertions, alias calls and cleanup. Read only, not newly executed."
+    },
+    {
+      "repo": "calcium",
+      "path": "qqbar/test/t-div.c",
+      "ranges": [
+        [
+          1,
+          209
+        ]
+      ],
+      "note": "Checkpoint51: Full upstream test source, including shared-backend identities, conditional assertions, alias calls and cleanup. Read only, not newly executed."
+    },
+    {
+      "repo": "calcium",
+      "path": "qqbar/test/t-inv.c",
+      "ranges": [
+        [
+          1,
+          58
+        ]
+      ],
+      "note": "Checkpoint51: Full upstream test source, including shared-backend identities, conditional assertions, alias calls and cleanup. Read only, not newly executed."
+    },
+    {
+      "repo": "calcium",
+      "path": "qqbar/test/t-mul_2exp_si.c",
+      "ranges": [
+        [
+          1,
+          68
+        ]
+      ],
+      "note": "Checkpoint51: Full upstream test source, including shared-backend identities, conditional assertions, alias calls and cleanup. Read only, not newly executed."
+    },
+    {
+      "repo": "calcium",
+      "path": "qqbar/test/t-pow.c",
+      "ranges": [
+        [
+          1,
+          88
+        ]
+      ],
+      "note": "Checkpoint51: Full upstream test source, including shared-backend identities, conditional assertions, alias calls and cleanup. Read only, not newly executed."
+    },
+    {
+      "repo": "calcium",
+      "path": "qqbar/test/t-evaluate_fmpq_poly.c",
+      "ranges": [
+        [
+          1,
+          81
+        ]
+      ],
+      "note": "Checkpoint51: Full upstream test source, including shared-backend identities, conditional assertions, alias calls and cleanup. Read only, not newly executed."
+    },
+    {
+      "repo": "calcium",
+      "path": "qqbar/test/t-equal_fmpq_poly_val.c",
+      "ranges": [
+        [
+          1,
+          95
+        ]
+      ],
+      "note": "Checkpoint51: Full upstream test source, including shared-backend identities, conditional assertions, alias calls and cleanup. Read only, not newly executed."
+    },
+    {
+      "repo": "calcium",
+      "path": "qqbar/test/t-express_in_field.c",
+      "ranges": [
+        [
+          1,
+          81
+        ]
+      ],
+      "note": "Checkpoint51: Full upstream test source, including shared-backend identities, conditional assertions, alias calls and cleanup. Read only, not newly executed."
+    },
+    {
+      "repo": "calcium",
+      "path": "qqbar/test/t-guess.c",
+      "ranges": [
+        [
+          1,
+          68
+        ]
+      ],
+      "note": "Checkpoint51: Full upstream test source, including shared-backend identities, conditional assertions, alias calls and cleanup. Read only, not newly executed."
+    },
+    {
+      "repo": "flint",
+      "path": "src/qqbar/affine_transform.c",
+      "ranges": [
+        [
+          1,
+          171
+        ]
+      ],
+      "note": "Checkpoint51: Full affine substitution, primitive normalization, rational/zero-slope paths and selected-root enclosure validation."
+    },
+    {
+      "repo": "flint",
+      "path": "src/qqbar/composed_op.c",
+      "ranges": [
+        [
+          1,
+          364
+        ]
+      ],
+      "note": "Checkpoint51: Full power-sum/log-derivative, Borel/Hadamard reconstruction, factor/unique-root selection and exactly checked rational-guess fast path; disabled branches also read."
+    },
+    {
+      "repo": "flint",
+      "path": "src/qqbar/add.c",
+      "ranges": [
+        [
+          1,
+          95
+        ]
+      ],
+      "note": "Checkpoint51: Full zero/rational/fused-affine and generic algebraic addition dispatch."
+    },
+    {
+      "repo": "flint",
+      "path": "src/qqbar/sub.c",
+      "ranges": [
+        [
+          1,
+          145
+        ]
+      ],
+      "note": "Checkpoint51: Full zero/rational/fused-affine and generic algebraic subtraction dispatch."
+    },
+    {
+      "repo": "flint",
+      "path": "src/qqbar/mul.c",
+      "ranges": [
+        [
+          1,
+          150
+        ]
+      ],
+      "note": "Checkpoint51: Full zero/unit/rational/equal-input square, positive-surd and general product paths."
+    },
+    {
+      "repo": "flint",
+      "path": "src/qqbar/div.c",
+      "ranges": [
+        [
+          1,
+          191
+        ]
+      ],
+      "note": "Checkpoint51: Full nonzero-divisor precondition, zero/unit/rational/inverse/surd and general division paths; no invalid-input probes."
+    },
+    {
+      "repo": "flint",
+      "path": "src/qqbar/inv.c",
+      "ranges": [
+        [
+          1,
+          78
+        ]
+      ],
+      "note": "Checkpoint51: Full rational inversion, coefficient reversal/sign normalization and reciprocal-enclosure certification."
+    },
+    {
+      "repo": "flint",
+      "path": "src/qqbar/mul_2exp_si.c",
+      "ranges": [
+        [
+          1,
+          63
+        ]
+      ],
+      "note": "Checkpoint51: Full exact dyadic coefficient scaling and common two-valuation removal; resource guards read, not probed."
+    },
+    {
+      "repo": "flint",
+      "path": "src/qqbar/pow.c",
+      "ranges": [
+        [
+          1,
+          338
+        ]
+      ],
+      "note": "Checkpoint51: Full rational/root-of-unity/deflation/square/surd/polynomial-evaluation paths and partial algebraic-exponent admission."
+    },
+    {
+      "repo": "flint",
+      "path": "src/qqbar/fmpq_pow_si_ui.c",
+      "ranges": [
+        [
+          1,
+          50
+        ]
+      ],
+      "note": "Checkpoint51: Full rational-power helper, root/power order and sign-dependent reciprocal construction."
+    },
+    {
+      "repo": "flint",
+      "path": "src/qqbar/evaluate_fmpq_poly.c",
+      "ranges": [
+        [
+          1,
+          182
+        ]
+      ],
+      "note": "Checkpoint51: Full rational/constant/affine/remainder and number-field multiplication-matrix minimal polynomial evaluation; enclosure selection and lifetime review."
+    },
+    {
+      "repo": "flint",
+      "path": "src/qqbar/evaluate_fmpz_poly.c",
+      "ranges": [
+        [
+          1,
+          29
+        ]
+      ],
+      "note": "Checkpoint51: Full integer-polynomial evaluation wrapper with exact unit denominator."
+    },
+    {
+      "repo": "flint",
+      "path": "src/qqbar/equal_fmpq_poly_val.c",
+      "ranges": [
+        [
+          1,
+          112
+        ]
+      ],
+      "note": "Checkpoint51: Full modular polynomial-composition identity check and interval-uniqueness embedding certificate."
+    },
+    {
+      "repo": "flint",
+      "path": "src/qqbar/express_in_field.c",
+      "ranges": [
+        [
+          1,
+          65
+        ]
+      ],
+      "note": "Checkpoint51: Full numeric relation candidate, structural field filters and exact polynomial-value certificate; unused size/flags source observation, no direct LLL execution."
+    },
+    {
+      "repo": "flint",
+      "path": "src/qqbar/guess.c",
+      "ranges": [
+        [
+          1,
+          125
+        ]
+      ],
+      "note": "Checkpoint51: Full numerical relation guessing, factor/height filters, existence/uniqueness attempt and overlap selection; heuristic result requires caller certification."
+    },
+    {
+      "repo": "flint",
+      "path": "src/qqbar/acb_lindep.c",
+      "ranges": [
+        [
+          1,
+          151
+        ]
+      ],
+      "note": "Checkpoint51: Full finite-input/accuracy scaling, rounded lattice construction, LLL invocation and heuristic residual test; direct LLL qualification not performed."
+    },
+    {
+      "repo": "flint",
+      "path": "src/qqbar/test/t-add.c",
+      "ranges": [
+        [
+          1,
+          176
+        ]
+      ],
+      "note": "Checkpoint51: Full upstream test source, including shared-backend identities, conditional assertions, alias calls and cleanup. Read only, not newly executed."
+    },
+    {
+      "repo": "flint",
+      "path": "src/qqbar/test/t-sub.c",
+      "ranges": [
+        [
+          1,
+          176
+        ]
+      ],
+      "note": "Checkpoint51: Full upstream test source, including shared-backend identities, conditional assertions, alias calls and cleanup. Read only, not newly executed."
+    },
+    {
+      "repo": "flint",
+      "path": "src/qqbar/test/t-mul.c",
+      "ranges": [
+        [
+          1,
+          227
+        ]
+      ],
+      "note": "Checkpoint51: Full upstream test source, including shared-backend identities, conditional assertions, alias calls and cleanup. Read only, not newly executed."
+    },
+    {
+      "repo": "flint",
+      "path": "src/qqbar/test/t-div.c",
+      "ranges": [
+        [
+          1,
+          200
+        ]
+      ],
+      "note": "Checkpoint51: Full upstream test source, including shared-backend identities, conditional assertions, alias calls and cleanup. Read only, not newly executed."
+    },
+    {
+      "repo": "flint",
+      "path": "src/qqbar/test/t-inv.c",
+      "ranges": [
+        [
+          1,
+          49
+        ]
+      ],
+      "note": "Checkpoint51: Full upstream test source, including shared-backend identities, conditional assertions, alias calls and cleanup. Read only, not newly executed."
+    },
+    {
+      "repo": "flint",
+      "path": "src/qqbar/test/t-mul_2exp_si.c",
+      "ranges": [
+        [
+          1,
+          59
+        ]
+      ],
+      "note": "Checkpoint51: Full upstream test source, including shared-backend identities, conditional assertions, alias calls and cleanup. Read only, not newly executed."
+    },
+    {
+      "repo": "flint",
+      "path": "src/qqbar/test/t-pow.c",
+      "ranges": [
+        [
+          1,
+          79
+        ]
+      ],
+      "note": "Checkpoint51: Full upstream test source, including shared-backend identities, conditional assertions, alias calls and cleanup. Read only, not newly executed."
+    },
+    {
+      "repo": "flint",
+      "path": "src/qqbar/test/t-evaluate_fmpq_poly.c",
+      "ranges": [
+        [
+          1,
+          73
+        ]
+      ],
+      "note": "Checkpoint51: Full upstream test source, including shared-backend identities, conditional assertions, alias calls and cleanup. Read only, not newly executed."
+    },
+    {
+      "repo": "flint",
+      "path": "src/qqbar/test/t-equal_fmpq_poly_val.c",
+      "ranges": [
+        [
+          1,
+          88
+        ]
+      ],
+      "note": "Checkpoint51: Full upstream test source, including shared-backend identities, conditional assertions, alias calls and cleanup. Read only, not newly executed."
+    },
+    {
+      "repo": "flint",
+      "path": "src/qqbar/test/t-express_in_field.c",
+      "ranges": [
+        [
+          1,
+          74
+        ]
+      ],
+      "note": "Checkpoint51: Full upstream test source, including shared-backend identities, conditional assertions, alias calls and cleanup. Read only, not newly executed."
+    },
+    {
+      "repo": "flint",
+      "path": "src/qqbar/test/t-guess.c",
+      "ranges": [
+        [
+          1,
+          59
+        ]
+      ],
+      "note": "Checkpoint51: Full upstream test source, including shared-backend identities, conditional assertions, alias calls and cleanup. Read only, not newly executed."
+    }
+  ],
+  "newDonorLines": 7223,
+  "coverageBefore": [
+    {
+      "repo": "calcium",
+      "reviewed": 525,
+      "complete": 525,
+      "partial": 0,
+      "readLines": 56632
+    },
+    {
+      "repo": "flint",
+      "reviewed": 856,
+      "complete": 836,
+      "partial": 20,
+      "readLines": 119798
+    }
+  ],
+  "coverageAtBinding": [
+    {
+      "repo": "calcium",
+      "reviewed": 552,
+      "complete": 552,
+      "partial": 0,
+      "readLines": 60286
+    },
+    {
+      "repo": "flint",
+      "reviewed": 883,
+      "complete": 863,
+      "partial": 20,
+      "readLines": 123367
+    }
+  ],
+  "previousManifest": "qqbar-decisions-manifest.json",
+  "liveSourceManifest": "mpoly-bridge-experiment.json",
+  "liveFileCount": 956,
+  "hyperReadRanges": {
+    "hypersolve/src/algebraic_binary.rs": [
+      [
+        1,
+        1089
+      ]
+    ],
+    "hypersolve/src/integer_interpolation.rs": [
+      [
+        1,
+        750
+      ]
+    ],
+    "hypersolve/src/resultant.rs": [
+      [
+        185,
+        340
+      ],
+      [
+        640,
+        740
+      ],
+      [
+        1215,
+        1275
+      ]
+    ]
+  },
+  "libraries": {
+    "/home/tim/Documents/GitHub/workspace/exact-real-references/flint/libflint.so.25": "8dcdbb4aa08d67712b14febd006d1392d07737b1ad8c1f8f5930a152701e0032",
+    "/lib64/libmpfr.so.6": "62278d7f4fe622b139cefe5888092ae658dbbc56269cf70c70a25d9556ed4844",
+    "/lib64/libgmp.so.10": "8f1fc44cabf3551e781faa4cfda37999059a7107bafecf81c2e7a6741001b648",
+    "/lib64/libm.so.6": "3606f83c1488dc9c5ce0ae3e7ba2184f9d3c1a60cd5435c68b2898fd556920b4",
+    "/lib64/libc.so.6": "72e64de106dd417510a2e23a9168edd46868f7cf80abdd6913378ab6c2b2845b"
+  },
+  "configurationFiles": {
+    "/home/tim/Documents/GitHub/workspace/exact-real-references/flint/src/flint-config.h": "6ef577733c03e8e569f0987b203a97b3db17e33318931657f2bc7c2219f687f0"
+  },
+  "binaries": [
+    {
+      "path": "/tmp/calcium-qqbar-arithmetic.oUgkCO/controls",
+      "sha256": "6852225233a77921f4c5bdd58e726e3a7ef082b078f1ff2783417df9dae0a518",
+      "bytes": 22960
+    }
+  ],
+  "gates": [
+    "qqbar-arithmetic-compile",
+    "qqbar-arithmetic-native",
+    "qqbar-arithmetic-check",
+    "qqbar-arithmetic-memcheck",
+    "qqbar-arithmetic-linked"
+  ],
+  "checks": {
+    "status": "pass",
+    "records": 10945,
+    "counts": {
+      "value": 7344,
+      "composed": 1008,
+      "relation": 2560,
+      "preserved": 32,
+      "terminal": 1
+    },
+    "checks": {
+      "minimal-polynomial": 7344,
+      "ordered-endpoints": 7344,
+      "root-enclosure": 7344,
+      "absolute-width-2^-96": 7344,
+      "exact-real-axis": 7344,
+      "full-composed-polynomial": 1008,
+      "polynomial-value-relation": 2560,
+      "readonly-polynomial": 32,
+      "readonly-enclosure": 32
+    },
+    "totalChecks": 40352,
+    "positiveRelations": 44,
+    "negativeRelations": 2516,
+    "failures": [],
+    "limits": "Small real biquadratic corpus only; full coefficients and selected roots, not branch coverage, general algebraic closure, archived execution, direct LLL qualification, or performance measurement."
+  },
+  "qualification": "Independent biquadratic field oracle passes 40352 mathematical/state assertions including full minimal/composed polynomials and root enclosures. Focused Memcheck clean; no direct LLL, archived runtime, upstream test execution or performance claim.",
+  "production": "No production/donor change or retained transfer. One small executable reuses existing native libraries; no Rust/dependency build, source copy, cleanup/deletion, external report, commit or push.",
+  "candidate": "Power-sum/Newton construction is a genuine alternative to Hyper binary resultant sampling, but no Hyper prototype or matched benchmark yet. Preserve reducible/repeated carriers, zero-root divisor fallback, degree/policy/evidence contracts and qualify full public queries before retention.",
+  "scope": "54 full selected arithmetic/relation/test reads, not all qqbar or recursive support; full original ecosystem inventory remains incomplete."
+}

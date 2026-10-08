@@ -1,0 +1,4568 @@
+bezier_region::   79849 840397.012900:   10101010 cpu-clock:u: 
+	    561b9de0af61 <num_bigint::biguint::BigUint>::normalized+0x21 (/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/local-chord-complete-replay-20260924-v23-libtest)
+	    561b9dd40950 <num_bigint::bigint::BigInt as core::ops::arith::Add<&num_bigint::bigint::BigInt>>::add+0x2a0 (/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/local-chord-complete-replay-20260924-v23-libtest)
+
+bezier_region::   79849 840397.033369:   10101010 cpu-clock:u: 
+	    561b9de18390 num_bigint::biguint::shift::biguint_shr2+0x300 (/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/local-chord-complete-replay-20260924-v23-libtest)
+
+bezier_region::   79849 840397.043559:   10101010 cpu-clock:u: 
+	    561b9dd11253 <hyperreal::rational::arithmetic::Rational>::eval_polynomial::<core::iter::adapters::map::Map<core::slice::iter::Iter<hyperreal::real::arithmetic::Real>, <hyperreal::real::arithmetic::Real>::eval_poly::{closure#1}>>::{closure#1}+0x83 (/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/local-chord-complete-replay-20260924-v23-libtest)
+
+bezier_region::   79849 840397.053889:   10101010 cpu-clock:u: 
+	    561b9de0b8d4 <&num_bigint::biguint::BigUint as core::ops::arith::Sub<num_bigint::biguint::BigUint>>::sub+0x294 (/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/local-chord-complete-replay-20260924-v23-libtest)
+	               1 [unknown] ([unknown])
+
+bezier_region::   79849 840397.064061:   10101010 cpu-clock:u: 
+	    561b9de0b034 <num_bigint::biguint::BigUint>::normalized+0xf4 (/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/local-chord-complete-replay-20260924-v23-libtest)
+	              97 [unknown] ([unknown])
+
+bezier_region::   79849 840397.075018:   10101010 cpu-clock:u: 
+	    561b9de14a11 num_bigint::biguint::division::div_rem_ref+0x1a1 (/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/local-chord-complete-replay-20260924-v23-libtest)
+	               7 [unknown] ([unknown])
+
+bezier_region::   79849 840397.095426:   10101010 cpu-clock:u: 
+	    561b9de72f44 __umodti3+0x94 (/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/local-chord-complete-replay-20260924-v23-libtest)
+
+bezier_region::   79849 840397.105568:   10101010 cpu-clock:u: 
+	    561b9de0fbd4 num_bigint::biguint::multiplication::mac3+0x2a4 (/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/local-chord-complete-replay-20260924-v23-libtest)
+	    7efee84c228b realloc+0x12b (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840397.115795:   10101010 cpu-clock:u: 
+	    561b9dd097b0 <hyperreal::rational::arithmetic::Rational>::eval_polynomial::<core::iter::adapters::map::Map<core::slice::iter::Iter<hyperreal::real::arithmetic::Real>, <hyperreal::real::arithmetic::Real>::eval_poly::{closure#1}>>+0x680 (/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/local-chord-complete-replay-20260924-v23-libtest)
+	              2f [unknown] ([unknown])
+
+bezier_region::   79849 840397.125984:   10101010 cpu-clock:u: 
+	    561b9dd11085 num_bigint::biguint::shift::biguint_shr::<usize>+0x65 (/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/local-chord-complete-replay-20260924-v23-libtest)
+
+bezier_region::   79849 840397.136150:   10101010 cpu-clock:u: 
+	    561b9de0fa02 num_bigint::biguint::multiplication::mac3+0xd2 (/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/local-chord-complete-replay-20260924-v23-libtest)
+	    7efee84c228b realloc+0x12b (/usr/lib64/libc.so.6)
+	              7f [unknown] ([unknown])
+
+bezier_region::   79849 840397.146291:   10101010 cpu-clock:u: 
+	    561b9de14753 <num_bigint::biguint::BigUint>::normalized+0x43 (/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/local-chord-complete-replay-20260924-v23-libtest)
+	               1 [unknown] ([unknown])
+
+bezier_region::   79849 840397.156469:   10101010 cpu-clock:u: 
+	    561b9dd36507 <hyperreal::rational::arithmetic::Rational>::from_reduced_word_parts+0x557 (/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/local-chord-complete-replay-20260924-v23-libtest)
+
+bezier_region::   79849 840397.167023:   10101010 cpu-clock:u: 
+	    561b9de148c2 num_bigint::biguint::division::div_rem_ref+0x52 (/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/local-chord-complete-replay-20260924-v23-libtest)
+	               7 [unknown] ([unknown])
+
+bezier_region::   79849 840397.177407:   10101010 cpu-clock:u: 
+	    561b9d1a3216 core::ptr::drop_glue::<hyperreal::real::arithmetic::Real>+0x66 (/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/local-chord-complete-replay-20260924-v23-libtest)
+
+bezier_region::   79849 840397.195236:   10101010 cpu-clock:u: 
+	    561b9dd31930 <hyperreal::rational::arithmetic::Rational>::gcd_wide_magnitudes+0x1190 (/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/local-chord-complete-replay-20260924-v23-libtest)
+	    561b9dd3d4e2 <hyperreal::rational::arithmetic::Rational>::gcd_magnitudes_with_mixed_width_fast_path+0x1502 (/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/local-chord-complete-replay-20260924-v23-libtest)
+	    561b9dd2bfbe <hyperreal::rational::arithmetic::Rational>::reduce+0x18e (/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/local-chord-complete-replay-20260924-v23-libtest)
+
+bezier_region::   79849 840397.205345:   10101010 cpu-clock:u: 
+	    561b9dd16a05 <hyperreal::rational::arithmetic::Rational>::perfect_nth_root+0x175 (/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/local-chord-complete-replay-20260924-v23-libtest)
+
+bezier_region::   79849 840397.215460:   10101010 cpu-clock:u: 
+	    561b9dd20670 <hyperreal::rational::arithmetic::Rational>::add_ref+0x0 (/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/local-chord-complete-replay-20260924-v23-libtest)
+
+bezier_region::   79849 840397.225561:   10101010 cpu-clock:u: 
+	    561b9dcd1a77 <alloc::vec::into_iter::IntoIter<num_bigint::bigint::BigInt> as core::iter::traits::iterator::Iterator>::fold::<(), core::iter::adapters::map::map_fold<num_bigint::bigint::BigInt, hyperreal::rational::arithmetic::Rational, (), <hyperreal::rational::arithmetic::Rational>::from_bigint, core::iter::adapters::map::map_fold<hyperreal::rational::arithmetic::Rational, hyperreal::real::arithmetic::Real, (), <hyperreal::real::arithmetic::Real as core::convert::From<hyperreal::rational::arithmetic::Rational>>::from, core::iter::traits::iterator::Iterator::for_each::call<hyperreal::real::arithmetic::Real, <alloc::vec::Vec<hyperreal::real::arithmetic::Real>>::extend_trusted<core::iter::adapters::map::Map<core::iter::adapters::map::Map<alloc::vec::into_iter::IntoIter<num_bigint::bigint::BigInt>, <hyperreal::rational::arithmetic::Rational>::from_bigint>, <hyperreal::real::arithmetic::Real as core::convert::From<hyperreal::rational::arithmetic::Rational>>::from>>::{closure#0}>::{closure#0}>::{closure#0}>::{closure#0}>+0x77 (/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/local-chord-complete-replay-20260924-v23-libtest)
+
+bezier_region::   79849 840397.235662:   10101010 cpu-clock:u: 
+	    561b9de0fbd8 num_bigint::biguint::multiplication::mac3+0x2a8 (/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/local-chord-complete-replay-20260924-v23-libtest)
+	               1 [unknown] ([unknown])
+
+bezier_region::   79849 840397.245763:   10101010 cpu-clock:u: 
+	    561b9db7fef0 __rustc::__rust_alloc+0x0 (/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/local-chord-complete-replay-20260924-v23-libtest)
+
+bezier_region::   79849 840397.255867:   10101010 cpu-clock:u: 
+	    561b9dd097b8 <hyperreal::rational::arithmetic::Rational>::eval_polynomial::<core::iter::adapters::map::Map<core::slice::iter::Iter<hyperreal::real::arithmetic::Real>, <hyperreal::real::arithmetic::Real>::eval_poly::{closure#1}>>+0x688 (/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/local-chord-complete-replay-20260924-v23-libtest)
+
+bezier_region::   79849 840397.266481:   10101010 cpu-clock:u: 
+	    561b9de0f7a2 num_bigint::biguint::multiplication::scalar_mul+0x122 (/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/local-chord-complete-replay-20260924-v23-libtest)
+
+bezier_region::   79849 840397.283085:   10101010 cpu-clock:u: 
+	    7efee84c044a _int_malloc+0xc5a (/usr/lib64/libc.so.6)
+	    7efee84c0fa9 _int_realloc+0xe9 (/usr/lib64/libc.so.6)
+	    7efee84c228b realloc+0x12b (/usr/lib64/libc.so.6)
+	    561b9de177be <alloc::raw_vec::RawVecInner>::finish_grow+0x5e (/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/local-chord-complete-replay-20260924-v23-libtest)
+	               7 [unknown] ([unknown])
+
+bezier_region::   79849 840397.297842:   10101010 cpu-clock:u: 
+	    561b9de0f9b0 num_bigint::biguint::multiplication::mac3+0x80 (/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/local-chord-complete-replay-20260924-v23-libtest)
+
+bezier_region::   79849 840397.307943:   10101010 cpu-clock:u: 
+	    561b9de15008 num_bigint::biguint::division::div_rem_core+0x218 (/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/local-chord-complete-replay-20260924-v23-libtest)
+
+bezier_region::   79849 840397.318044:   10101010 cpu-clock:u: 
+	    561b9de0fbb9 num_bigint::biguint::multiplication::mac3+0x289 (/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/local-chord-complete-replay-20260924-v23-libtest)
+	    7efee84c228b realloc+0x12b (/usr/lib64/libc.so.6)
+	    7efee84bebbd _int_free_merge_chunk+0xad (/usr/lib64/libc.so.6)
+	    7efee84c100a _int_realloc+0x14a (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840397.328145:   10101010 cpu-clock:u: 
+	    7efee84bd5d5 unlink_chunk.isra.0+0x5 (/usr/lib64/libc.so.6)
+	    7efee84bd822 malloc_consolidate+0x182 (/usr/lib64/libc.so.6)
+	    7efee84bfde7 _int_malloc+0x5f7 (/usr/lib64/libc.so.6)
+	    7efee84c0898 __libc_malloc2+0x48 (/usr/lib64/libc.so.6)
+	    561b9dcd467c <alloc::raw_vec::RawVecInner>::finish_grow+0x7c (/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/local-chord-complete-replay-20260924-v23-libtest)
+
+bezier_region::   79849 840397.338245:   10101010 cpu-clock:u: 
+	    7efee8584520 __memcmp_avx2_movbe+0x0 (/usr/lib64/libc.so.6)
+	    561b9dd11229 <hyperreal::rational::arithmetic::Rational>::eval_polynomial::<core::iter::adapters::map::Map<core::slice::iter::Iter<hyperreal::real::arithmetic::Real>, <hyperreal::real::arithmetic::Real>::eval_poly::{closure#1}>>::{closure#1}+0x59 (/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/local-chord-complete-replay-20260924-v23-libtest)
+	    561b9dd47d60 <num_bigint::biguint::BigUint as core::ops::arith::MulAssign<&num_bigint::biguint::BigUint>>::mul_assign+0xc0 (/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/local-chord-complete-replay-20260924-v23-libtest)
+	    7efe00000001 [unknown] ([unknown])
+
+bezier_region::   79849 840397.348347:   10101010 cpu-clock:u: 
+	    561b9dd2ea31 <hyperreal::rational::arithmetic::Rational>::gcd_magnitudes+0x1 (/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/local-chord-complete-replay-20260924-v23-libtest)
+
+bezier_region::   79849 840397.358447:   10101010 cpu-clock:u: 
+	    561b9dd6ffa0 <hyperreal::real::arithmetic::Real>::new+0x0 (/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/local-chord-complete-replay-20260924-v23-libtest)
+
+bezier_region::   79849 840397.368548:   10101010 cpu-clock:u: 
+	    561b9dbfefe0 <alloc::vec::Vec<hyperreal::real::arithmetic::Real>>::extend_with+0x70 (/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/local-chord-complete-replay-20260924-v23-libtest)
+
+bezier_region::   79849 840397.378649:   10101010 cpu-clock:u: 
+	    561b9de14fa3 num_bigint::biguint::division::div_rem_core+0x1b3 (/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/local-chord-complete-replay-20260924-v23-libtest)
+
+bezier_region::   79849 840397.388750:   10101010 cpu-clock:u: 
+	    561b9de15275 num_bigint::biguint::division::div_rem_core+0x485 (/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/local-chord-complete-replay-20260924-v23-libtest)
+
+bezier_region::   79849 840397.398851:   10101010 cpu-clock:u: 
+	    561b9de1501b num_bigint::biguint::division::div_rem_core+0x22b (/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/local-chord-complete-replay-20260924-v23-libtest)
+	               7 [unknown] ([unknown])
+
+bezier_region::   79849 840397.408952:   10101010 cpu-clock:u: 
+	    561b9de15008 num_bigint::biguint::division::div_rem_core+0x218 (/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/local-chord-complete-replay-20260924-v23-libtest)
+	               7 [unknown] ([unknown])
+
+bezier_region::   79849 840397.419052:   10101010 cpu-clock:u: 
+	    561b9de17e71 num_bigint::biguint::shift::biguint_shl2+0x291 (/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/local-chord-complete-replay-20260924-v23-libtest)
+	               7 [unknown] ([unknown])
+
+bezier_region::   79849 840397.429153:   10101010 cpu-clock:u: 
+	    561b9de31180 __rustc::__rdl_dealloc+0x0 (/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/local-chord-complete-replay-20260924-v23-libtest)
+	    561b9de1838f num_bigint::biguint::shift::biguint_shr2+0x2ff (/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/local-chord-complete-replay-20260924-v23-libtest)
+
+bezier_region::   79849 840397.439254:   10101010 cpu-clock:u: 
+	    561b9de1772e <alloc::raw_vec::RawVec<u64>>::grow_one+0x3e (/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/local-chord-complete-replay-20260924-v23-libtest)
+
+bezier_region::   79849 840397.449355:   10101010 cpu-clock:u: 
+	    561b9de14f05 num_bigint::biguint::division::div_rem_core+0x115 (/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/local-chord-complete-replay-20260924-v23-libtest)
+
+bezier_region::   79849 840397.459457:   10101010 cpu-clock:u: 
+	    7efee84c1e2e cfree@GLIBC_2.2.5+0x8e (/usr/lib64/libc.so.6)
+	    561b9dd47fa2 <&num_bigint::biguint::BigUint as core::ops::arith::Rem>::rem+0xd2 (/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/local-chord-complete-replay-20260924-v23-libtest)
+	 e4ea4af4bdb22c3 [unknown] ([unknown])
+
+bezier_region::   79849 840397.469557:   10101010 cpu-clock:u: 
+	    561b9dcce905 <&num_bigint::bigint::BigInt as core::ops::arith::Mul>::mul+0x145 (/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/local-chord-complete-replay-20260924-v23-libtest)
+	               1 [unknown] ([unknown])
+
+bezier_region::   79849 840397.479658:   10101010 cpu-clock:u: 
+	    561b9ddfd368 <hyperreal::dispatch_trace::ActiveDispatchKey as core::hash::Hash>::hash::<hyperreal::dispatch_trace::DispatchHasher>+0x108 (/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/local-chord-complete-replay-20260924-v23-libtest)
+	    561b9c687f07 [unknown] (/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/local-chord-complete-replay-20260924-v23-libtest)
+
+bezier_region::   79849 840397.489759:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840397.499860:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840397.509960:   10101010 cpu-clock:u: 
+	    7efee84becc2 _int_free_chunk+0x42 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840397.520061:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840397.530162:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840397.540263:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840397.550364:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840397.560465:   10101010 cpu-clock:u: 
+	    7efee84c1853 malloc+0x73 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840397.570565:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840397.580666:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840397.590767:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840397.600869:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840397.610969:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840397.621069:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840397.631170:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840397.641271:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840397.651372:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840397.661473:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840397.671574:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840397.681675:   10101010 cpu-clock:u: 
+	    7efee84c1853 malloc+0x73 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840397.691776:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840397.701876:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840397.711977:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840397.722078:   10101010 cpu-clock:u: 
+	    7efee84c183f malloc+0x5f (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840397.732179:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840397.742280:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840397.752381:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840397.762482:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840397.772583:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840397.782684:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840397.792785:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840397.802885:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840397.812986:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840397.823087:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840397.833188:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840397.843288:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840397.853389:   10101010 cpu-clock:u: 
+	    7efee84c22b9 realloc+0x159 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840397.863490:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840397.873591:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840397.883692:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840397.893793:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840397.903894:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840397.913994:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840397.924096:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840397.934197:   10101010 cpu-clock:u: 
+	    7efee84bf8fb _int_malloc+0x10b (/usr/lib64/libc.so.6)
+	    7efee84c0b7f __libc_calloc2+0x3f (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840397.944297:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840397.954398:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840397.964499:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840397.974600:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840397.984701:   10101010 cpu-clock:u: 
+	    7efee84bfd63 _int_malloc+0x573 (/usr/lib64/libc.so.6)
+	    7efee84c0898 __libc_malloc2+0x48 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840397.994833:   10101010 cpu-clock:u: 
+	    7efee84c013e _int_malloc+0x94e (/usr/lib64/libc.so.6)
+	    7efee84c0898 __libc_malloc2+0x48 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840398.004934:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840398.015034:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840398.025135:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840398.035236:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840398.045337:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840398.055438:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840398.065539:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840398.075640:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840398.085741:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840398.095841:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840398.105942:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840398.116043:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840398.126144:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840398.136245:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840398.146346:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840398.156447:   10101010 cpu-clock:u: 
+	    7efee84bed91 _int_free_chunk+0x111 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840398.166548:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840398.176648:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840398.186749:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840398.196850:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840398.206951:   10101010 cpu-clock:u: 
+	    7efee84bfa35 _int_malloc+0x245 (/usr/lib64/libc.so.6)
+	    7efee84c0898 __libc_malloc2+0x48 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840398.217052:   10101010 cpu-clock:u: 
+	    7efee84c03cc _int_malloc+0xbdc (/usr/lib64/libc.so.6)
+	    7efee84c0898 __libc_malloc2+0x48 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840398.227153:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840398.237253:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840398.247354:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840398.257455:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840398.267557:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840398.277657:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840398.287758:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840398.297858:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840398.307960:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840398.318060:   10101010 cpu-clock:u: 
+	    7efee84c0f88 _int_realloc+0xc8 (/usr/lib64/libc.so.6)
+	    7efee84c228b realloc+0x12b (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840398.328161:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840398.338262:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840398.348363:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840398.358464:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840398.368565:   10101010 cpu-clock:u: 
+	    7efee84c0fba _int_realloc+0xfa (/usr/lib64/libc.so.6)
+	    7efee84c228b realloc+0x12b (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840398.378666:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840398.388766:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840398.398867:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840398.408968:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840398.419069:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840398.429170:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840398.439270:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840398.449371:   10101010 cpu-clock:u: 
+	    7efee84bedd4 _int_free_chunk+0x154 (/usr/lib64/libc.so.6)
+	    7efee84c100a _int_realloc+0x14a (/usr/lib64/libc.so.6)
+	    7efee84c228b realloc+0x12b (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840398.459473:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840398.469573:   10101010 cpu-clock:u: 
+	    7efee84c21e8 realloc+0x88 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840398.479674:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840398.489775:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840398.499876:   10101010 cpu-clock:u: 
+	    7efee8584c91 __memmove_avx_unaligned_erms+0x11 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840398.520077:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840398.530178:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840398.540279:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840398.550380:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840398.560481:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840398.570582:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840398.580683:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840398.600885:   10101010 cpu-clock:u: 
+	    7efee84bfaa3 _int_malloc+0x2b3 (/usr/lib64/libc.so.6)
+	    7efee84c0898 __libc_malloc2+0x48 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840398.610985:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840398.621086:   10101010 cpu-clock:u: 
+	    7efee84beda0 _int_free_chunk+0x120 (/usr/lib64/libc.so.6)
+	    7efee84c100a _int_realloc+0x14a (/usr/lib64/libc.so.6)
+	    7efee84c228b realloc+0x12b (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840398.631187:   10101010 cpu-clock:u: 
+	    7efee8584ce6 __memmove_avx_unaligned_erms+0x66 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840398.641288:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840398.651389:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840398.661490:   10101010 cpu-clock:u: 
+	    7efee84bd5fb unlink_chunk.isra.0+0x2b (/usr/lib64/libc.so.6)
+	    7efee84c03fc _int_malloc+0xc0c (/usr/lib64/libc.so.6)
+	    7efee84c0898 __libc_malloc2+0x48 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840398.671591:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840398.681691:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840398.691792:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840398.701893:   10101010 cpu-clock:u: 
+	    7efee84bfa95 _int_malloc+0x2a5 (/usr/lib64/libc.so.6)
+	    7efee84c0898 __libc_malloc2+0x48 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840398.711994:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840398.722095:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840398.732199:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840398.742297:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840398.752398:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840398.762499:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840398.772599:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840398.782700:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840398.792801:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840398.802902:   10101010 cpu-clock:u: 
+	    7efee84c1819 malloc+0x39 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840398.813003:   10101010 cpu-clock:u: 
+	    7efee8584536 __memcmp_avx2_movbe+0x16 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840398.823104:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840398.833204:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840398.843305:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840398.853406:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840398.863507:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840398.873608:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840398.883709:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840398.893810:   10101010 cpu-clock:u: 
+	    7efee84bf8d8 _int_malloc+0xe8 (/usr/lib64/libc.so.6)
+	    7efee84c0fa9 _int_realloc+0xe9 (/usr/lib64/libc.so.6)
+	    7efee84c228b realloc+0x12b (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840398.903910:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840398.914012:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840398.924112:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840398.934213:   10101010 cpu-clock:u: 
+	    7efee84bedc5 _int_free_chunk+0x145 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840398.944314:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840398.954415:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840398.964516:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840398.974617:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840398.984718:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840398.994818:   10101010 cpu-clock:u: 
+	    7efee84bfc43 _int_malloc+0x453 (/usr/lib64/libc.so.6)
+	    7efee84c0898 __libc_malloc2+0x48 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840399.004919:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840399.015029:   10101010 cpu-clock:u: 
+	    7efee84bfc23 _int_malloc+0x433 (/usr/lib64/libc.so.6)
+	    7efee84c0fa9 _int_realloc+0xe9 (/usr/lib64/libc.so.6)
+	    7efee84c228b realloc+0x12b (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840399.025130:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840399.035231:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840399.045332:   10101010 cpu-clock:u: 
+	    7efee84c1e04 cfree@GLIBC_2.2.5+0x64 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840399.055433:   10101010 cpu-clock:u: 
+	    7efee84c0f88 _int_realloc+0xc8 (/usr/lib64/libc.so.6)
+	    7efee84c228b realloc+0x12b (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840399.065534:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840399.075634:   10101010 cpu-clock:u: 
+	    7efee84c183c malloc+0x5c (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840399.085735:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840399.095836:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840399.105937:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840399.116038:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840399.126139:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840399.136239:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840399.146340:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840399.156441:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840399.166542:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840399.176643:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840399.186744:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840399.196848:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840399.206946:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840399.217046:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840399.227147:   10101010 cpu-clock:u: 
+	    7efee84bfde8 _int_malloc+0x5f8 (/usr/lib64/libc.so.6)
+	    7efee84c0898 __libc_malloc2+0x48 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840399.237248:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840399.247349:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840399.257450:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840399.267551:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840399.277651:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840399.287753:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840399.297856:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840399.307954:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840399.318063:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840399.328164:   10101010 cpu-clock:u: 
+	    7efee84bfa15 _int_malloc+0x225 (/usr/lib64/libc.so.6)
+	    7efee84c0898 __libc_malloc2+0x48 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840399.338265:   10101010 cpu-clock:u: 
+	    7efee84bfa77 _int_malloc+0x287 (/usr/lib64/libc.so.6)
+	    7efee84c0898 __libc_malloc2+0x48 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840399.348366:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840399.358467:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840399.368568:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840399.378669:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840399.388769:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840399.398870:   10101010 cpu-clock:u: 
+	    7efee84c1dc9 cfree@GLIBC_2.2.5+0x29 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840399.408971:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840399.419072:   10101010 cpu-clock:u: 
+	    7efee84c0888 __libc_malloc2+0x38 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840399.429173:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840399.439274:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840399.449375:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840399.459476:   10101010 cpu-clock:u: 
+	    7efee84bedbe _int_free_chunk+0x13e (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840399.469577:   10101010 cpu-clock:u: 
+	    7efee8584823 __memcmp_avx2_movbe+0x303 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840399.479693:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840399.489794:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840399.499894:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840399.509995:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840399.520096:   10101010 cpu-clock:u: 
+	    7efee84c1dd6 cfree@GLIBC_2.2.5+0x36 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840399.530197:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840399.540298:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840399.550404:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840399.560500:   10101010 cpu-clock:u: 
+	    7efee84bfb9a _int_malloc+0x3aa (/usr/lib64/libc.so.6)
+	    7efee84c0fa9 _int_realloc+0xe9 (/usr/lib64/libc.so.6)
+	    7efee84c228b realloc+0x12b (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840399.570601:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840399.580702:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840399.590804:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840399.600903:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840399.611004:   10101010 cpu-clock:u: 
+	    7efee84c28c4 __libc_calloc+0x164 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840399.621105:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840399.631206:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840399.641315:   10101010 cpu-clock:u: 
+	    7efee84c225c realloc+0xfc (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840399.651408:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840399.661509:   10101010 cpu-clock:u: 
+	    7efee84c1853 malloc+0x73 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840399.671610:   10101010 cpu-clock:u: 
+	    7efee84c183c malloc+0x5c (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840399.681710:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840399.691811:   10101010 cpu-clock:u: 
+	    7efee84c2269 realloc+0x109 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840399.701912:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840399.712013:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840399.722113:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840399.732214:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840399.742316:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840399.752416:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840399.762517:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840399.772832:   10101010 cpu-clock:u: 
+	    7efee84c1033 _int_realloc+0x173 (/usr/lib64/libc.so.6)
+	    7efee84c228b realloc+0x12b (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840399.782933:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840399.793034:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840399.803134:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840399.813235:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840399.823336:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840399.833437:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840399.843538:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840399.853639:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840399.863740:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840399.873840:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840399.883941:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840399.894042:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840399.904143:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840399.914244:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840399.924345:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840399.934446:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840399.944546:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840399.954648:   10101010 cpu-clock:u: 
+	    7efee84c1dc9 cfree@GLIBC_2.2.5+0x29 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840399.964748:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840399.974860:   10101010 cpu-clock:u: 
+	    7efee84c1853 malloc+0x73 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840399.984961:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840399.995062:   10101010 cpu-clock:u: 
+	    7efee84c0851 __libc_malloc2+0x1 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840400.005162:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840400.015263:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840400.025364:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840400.035465:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840400.045570:   10101010 cpu-clock:u: 
+	    7efee84c042a _int_malloc+0xc3a (/usr/lib64/libc.so.6)
+	    7efee84c0898 __libc_malloc2+0x48 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840400.055667:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840400.065768:   10101010 cpu-clock:u: 
+	    7efee8584c80 __memmove_avx_unaligned_erms+0x0 (/usr/lib64/libc.so.6)
+	    7efee84c0ff1 _int_realloc+0x131 (/usr/lib64/libc.so.6)
+	    7efee84c228b realloc+0x12b (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840400.075868:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840400.085969:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840400.096070:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840400.106171:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840400.116272:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840400.126373:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840400.136474:   10101010 cpu-clock:u: 
+	    7efee84c2269 realloc+0x109 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840400.146597:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840400.156717:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840400.166835:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840400.176936:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840400.187037:   10101010 cpu-clock:u: 
+	    7efee84c075f _int_malloc+0xf6f (/usr/lib64/libc.so.6)
+	    7efee84c0898 __libc_malloc2+0x48 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840400.197138:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840400.207238:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840400.217339:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840400.227440:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840400.237541:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840400.247642:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840400.257743:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840400.267844:   10101010 cpu-clock:u: 
+	    7efee84bec95 _int_free_chunk+0x15 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840400.277944:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840400.288045:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840400.298146:   10101010 cpu-clock:u: 
+	    7efee84c1e5a cfree@GLIBC_2.2.5+0xba (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840400.308248:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840400.318348:   10101010 cpu-clock:u: 
+	    7efee8584819 __memcmp_avx2_movbe+0x2f9 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840400.328449:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840400.338550:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840400.348651:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840400.358752:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840400.368852:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840400.378961:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840400.389344:   10101010 cpu-clock:u: 
+	    7efee8584c80 __memmove_avx_unaligned_erms+0x0 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840400.399444:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840400.409545:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840400.419646:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840400.429747:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840400.439857:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840400.449958:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840400.460066:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840400.470167:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840400.480268:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840400.490369:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840400.500470:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840400.510570:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840400.520680:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840400.530772:   10101010 cpu-clock:u: 
+	    7efee84c1853 malloc+0x73 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840400.540873:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840400.550974:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840400.561075:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840400.571176:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840400.581276:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840400.591377:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840400.601478:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840400.611579:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840400.621680:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840400.631781:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840400.641881:   10101010 cpu-clock:u: 
+	    7efee84c100f _int_realloc+0x14f (/usr/lib64/libc.so.6)
+	    7efee84c228b realloc+0x12b (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840400.651982:   10101010 cpu-clock:u: 
+	    7efee84c1dbe cfree@GLIBC_2.2.5+0x1e (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840400.662084:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840400.672186:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840400.682285:   10101010 cpu-clock:u: 
+	    7efee84c0fba _int_realloc+0xfa (/usr/lib64/libc.so.6)
+	    7efee84c228b realloc+0x12b (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840400.692386:   10101010 cpu-clock:u: 
+	    7efee84c0888 __libc_malloc2+0x38 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840400.702487:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840400.712588:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840400.722689:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840400.732791:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840400.742890:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840400.752991:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840400.763092:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840400.773193:   10101010 cpu-clock:u: 
+	    7efee84c1853 malloc+0x73 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840400.783294:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840400.793395:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840400.803496:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840400.813596:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840400.823698:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840400.833798:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840400.843899:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840400.854000:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840400.864101:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840400.874202:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840400.884302:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840400.894403:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840400.904504:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840400.914605:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840400.924706:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840400.934807:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840400.944908:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840400.955009:   10101010 cpu-clock:u: 
+	    7efee84c183c malloc+0x5c (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840400.965109:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840400.975210:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840400.985311:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840400.995412:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840401.005522:   10101010 cpu-clock:u: 
+	    7efee84c1dd6 cfree@GLIBC_2.2.5+0x36 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840401.015623:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840401.025724:   10101010 cpu-clock:u: 
+	    7efee84bfa77 _int_malloc+0x287 (/usr/lib64/libc.so.6)
+	    7efee84c0898 __libc_malloc2+0x48 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840401.035825:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840401.045926:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840401.056027:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840401.066128:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840401.076228:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840401.086329:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840401.096430:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840401.106531:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840401.116632:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840401.126733:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840401.136834:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840401.146934:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840401.157035:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840401.167136:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840401.177237:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840401.187338:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840401.197439:   10101010 cpu-clock:u: 
+	    7efee84bfa68 _int_malloc+0x278 (/usr/lib64/libc.so.6)
+	    7efee84c0898 __libc_malloc2+0x48 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840401.207540:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840401.217640:   10101010 cpu-clock:u: 
+	    7efee84bd5fb unlink_chunk.isra.0+0x2b (/usr/lib64/libc.so.6)
+	    7efee84c03fc _int_malloc+0xc0c (/usr/lib64/libc.so.6)
+	    7efee84c0898 __libc_malloc2+0x48 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840401.227742:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840401.237842:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840401.247943:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840401.258044:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840401.268145:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840401.278246:   10101010 cpu-clock:u: 
+	    7efee8584c80 __memmove_avx_unaligned_erms+0x0 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840401.288347:   10101010 cpu-clock:u: 
+	    7efee84c1dbb cfree@GLIBC_2.2.5+0x1b (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840401.298447:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840401.308548:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840401.318649:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840401.328750:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840401.338851:   10101010 cpu-clock:u: 
+	    7efee84bd755 malloc_consolidate+0xb5 (/usr/lib64/libc.so.6)
+	    7efee84bfde7 _int_malloc+0x5f7 (/usr/lib64/libc.so.6)
+	    7efee84c0fa9 _int_realloc+0xe9 (/usr/lib64/libc.so.6)
+	    7efee84c228b realloc+0x12b (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840401.348952:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840401.359053:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840401.369153:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840401.379254:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840401.389355:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840401.399456:   10101010 cpu-clock:u: 
+	    7efee84bfb84 _int_malloc+0x394 (/usr/lib64/libc.so.6)
+	    7efee84c0898 __libc_malloc2+0x48 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840401.409557:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840401.419658:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840401.429758:   10101010 cpu-clock:u: 
+	    7efee8584823 __memcmp_avx2_movbe+0x303 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840401.439859:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840401.449960:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840401.460061:   10101010 cpu-clock:u: 
+	    7efee84c1853 malloc+0x73 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840401.470162:   10101010 cpu-clock:u: 
+	    7efee84c183c malloc+0x5c (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840401.480263:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840401.490364:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840401.500465:   10101010 cpu-clock:u: 
+	    7efee84bd755 malloc_consolidate+0xb5 (/usr/lib64/libc.so.6)
+	    7efee84bfde7 _int_malloc+0x5f7 (/usr/lib64/libc.so.6)
+	    7efee84c0898 __libc_malloc2+0x48 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840401.510566:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840401.520666:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840401.530767:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840401.540868:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840401.550969:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840401.561070:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840401.571170:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840401.581272:   10101010 cpu-clock:u: 
+	    7efee84c2269 realloc+0x109 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840401.591372:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840401.601473:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840401.611574:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840401.621675:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840401.631776:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840401.641877:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840401.651978:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840401.662078:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840401.672179:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840401.682280:   10101010 cpu-clock:u: 
+	    7efee84bf84d _int_malloc+0x5d (/usr/lib64/libc.so.6)
+	    7efee84c0fa9 _int_realloc+0xe9 (/usr/lib64/libc.so.6)
+	    7efee84c228b realloc+0x12b (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840401.692381:   10101010 cpu-clock:u: 
+	    7efee8584ce6 __memmove_avx_unaligned_erms+0x66 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840401.702482:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840401.712583:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840401.722684:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840401.732784:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840401.742885:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840401.752986:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840401.763087:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840401.773188:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840401.783288:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840401.793389:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840401.803534:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840401.813591:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840401.823692:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840401.833793:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840401.843894:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840401.853995:   10101010 cpu-clock:u: 
+	    7efee84c1dfe cfree@GLIBC_2.2.5+0x5e (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840401.864096:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840401.874197:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840401.884298:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840401.894398:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840401.904499:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840401.914600:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840401.924701:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840401.934802:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840401.944903:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840401.955003:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840401.965115:   10101010 cpu-clock:u: 
+	    7efee84c011c _int_malloc+0x92c (/usr/lib64/libc.so.6)
+	    7efee84c0898 __libc_malloc2+0x48 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840401.975216:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840401.985316:   10101010 cpu-clock:u: 
+	    7efee84c181c malloc+0x3c (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840401.995417:   10101010 cpu-clock:u: 
+	    7efee84c1e0f cfree@GLIBC_2.2.5+0x6f (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840402.005519:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840402.015620:   10101010 cpu-clock:u: 
+	    7efee84bedae _int_free_chunk+0x12e (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840402.025720:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840402.035821:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840402.045921:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840402.056022:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840402.066123:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840402.076224:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840402.086325:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840402.096426:   10101010 cpu-clock:u: 
+	    7efee84bfa77 _int_malloc+0x287 (/usr/lib64/libc.so.6)
+	    7efee84c0898 __libc_malloc2+0x48 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840402.106527:   10101010 cpu-clock:u: 
+	    7efee84bfa68 _int_malloc+0x278 (/usr/lib64/libc.so.6)
+	    7efee84c0898 __libc_malloc2+0x48 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840402.116652:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840402.126753:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840402.136853:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840402.146955:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840402.157055:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840402.167157:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840402.177257:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840402.187358:   10101010 cpu-clock:u: 
+	    7efee84c03cc _int_malloc+0xbdc (/usr/lib64/libc.so.6)
+	    7efee84c0fa9 _int_realloc+0xe9 (/usr/lib64/libc.so.6)
+	    7efee84c228b realloc+0x12b (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840402.197459:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840402.207560:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840402.217660:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840402.227761:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840402.237862:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840402.247963:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840402.258064:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840402.268165:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840402.278266:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840402.288367:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840402.298468:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840402.308569:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840402.318670:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840402.328770:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840402.338871:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840402.348972:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840402.359073:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840402.369173:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840402.379274:   10101010 cpu-clock:u: 
+	    7efee8584d10 __memmove_avx_unaligned_erms+0x90 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840402.389375:   10101010 cpu-clock:u: 
+	    7efee84c1e07 cfree@GLIBC_2.2.5+0x67 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840402.399476:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840402.409577:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840402.419678:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840402.429778:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840402.439880:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840402.449980:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840402.460081:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840402.470182:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840402.481060:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840402.491161:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840402.501262:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840402.511363:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840402.521464:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840402.531564:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840402.541665:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840402.551766:   10101010 cpu-clock:u: 
+	    7efee8584ce6 __memmove_avx_unaligned_erms+0x66 (/usr/lib64/libc.so.6)
+	    7efee84c0ff1 _int_realloc+0x131 (/usr/lib64/libc.so.6)
+	    7efee84c228b realloc+0x12b (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840402.561867:   10101010 cpu-clock:u: 
+	    7efee84c2997 __libc_calloc+0x237 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840402.571968:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840402.582069:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840402.592169:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840402.602280:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840402.612381:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840402.622482:   10101010 cpu-clock:u: 
+	    7efee8584c80 __memmove_avx_unaligned_erms+0x0 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840402.632583:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840402.642684:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840402.652784:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840402.662885:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840402.672986:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840402.683087:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840402.693188:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840402.703289:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840402.713390:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840402.723491:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840402.733591:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840402.743692:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840402.753793:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840402.763894:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840402.773995:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840402.784095:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840402.794196:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840402.804297:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840402.814399:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840402.824499:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840402.834600:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840402.844701:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840402.854801:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840402.864902:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840402.875004:   10101010 cpu-clock:u: 
+	    7efee84c1805 malloc+0x25 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840402.885104:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840402.895205:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840402.905306:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840402.915407:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840402.925508:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840402.935608:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840402.945710:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840402.955810:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840402.965911:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840402.976012:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840402.992257:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840403.002357:   10101010 cpu-clock:u: 
+	    7efee84bfd63 _int_malloc+0x573 (/usr/lib64/libc.so.6)
+	    7efee84c0b7f __libc_calloc2+0x3f (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840403.012462:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840403.022559:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840403.034854:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840403.044953:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840403.055053:   10101010 cpu-clock:u: 
+	    7efee84bedc5 _int_free_chunk+0x145 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840403.065155:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840403.075255:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840403.085357:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840403.088980:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840403.099081:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840403.109182:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840403.119295:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840403.129396:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840403.139497:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840403.149598:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840403.159699:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840403.169815:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840403.179916:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840403.190018:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840403.200117:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840403.210218:   10101010 cpu-clock:u: 
+	    7efee84bffe3 _int_malloc+0x7f3 (/usr/lib64/libc.so.6)
+	    7efee84c0898 __libc_malloc2+0x48 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840403.220319:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840403.230420:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840403.240528:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840403.250622:   10101010 cpu-clock:u: 
+	    7efee84bedc5 _int_free_chunk+0x145 (/usr/lib64/libc.so.6)
+	    7efee84c100a _int_realloc+0x14a (/usr/lib64/libc.so.6)
+	    7efee84c228b realloc+0x12b (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840403.260723:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840403.270824:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840403.280924:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840403.291025:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840403.301126:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840403.311227:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840403.321328:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840403.331429:   10101010 cpu-clock:u: 
+	    7efee84c21d7 realloc+0x77 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840403.341536:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840403.351631:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840403.361731:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840403.371832:   10101010 cpu-clock:u: 
+	    7efee84c0856 __libc_malloc2+0x6 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840403.381933:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840403.392034:   10101010 cpu-clock:u: 
+	    7efee84bfc23 _int_malloc+0x433 (/usr/lib64/libc.so.6)
+	    7efee84c0fa9 _int_realloc+0xe9 (/usr/lib64/libc.so.6)
+	    7efee84c228b realloc+0x12b (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840403.402134:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840403.412235:   10101010 cpu-clock:u: 
+	    7efee84bd7d5 malloc_consolidate+0x135 (/usr/lib64/libc.so.6)
+	    7efee84bfde7 _int_malloc+0x5f7 (/usr/lib64/libc.so.6)
+	    7efee84c0898 __libc_malloc2+0x48 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840403.422336:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840403.432438:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840403.442538:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840403.452639:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840403.462740:   10101010 cpu-clock:u: 
+	    7efee84c21bb realloc+0x5b (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840403.472841:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840403.482942:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840403.493042:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840403.503143:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840403.513245:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840403.523345:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840403.533446:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840403.543547:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840403.553648:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840403.563750:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840403.573849:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840403.583950:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840403.594051:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840403.604152:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840403.614253:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840403.624354:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840403.634455:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840403.644556:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840403.654656:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840403.664757:   10101010 cpu-clock:u: 
+	    7efee84bedc5 _int_free_chunk+0x145 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840403.674858:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840403.684959:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840403.695063:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840403.705161:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840403.715262:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840403.725362:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840403.735463:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840403.745564:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840403.755666:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840403.765766:   10101010 cpu-clock:u: 
+	    7efee84c06f8 _int_malloc+0xf08 (/usr/lib64/libc.so.6)
+	    7efee84c0898 __libc_malloc2+0x48 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840403.775867:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840403.785968:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840403.796068:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840403.806169:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840403.816270:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840403.826371:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840403.836472:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840403.846573:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840403.856673:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840403.866774:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840403.876875:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840403.886976:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840403.897077:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840403.907178:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840403.917278:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840403.927379:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840403.937480:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840403.947581:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840403.957682:   10101010 cpu-clock:u: 
+	    7efee84bd5d1 unlink_chunk.isra.0+0x1 (/usr/lib64/libc.so.6)
+	    7efee84c03fc _int_malloc+0xc0c (/usr/lib64/libc.so.6)
+	    7efee84c0898 __libc_malloc2+0x48 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840403.967783:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840403.977884:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840403.987984:   10101010 cpu-clock:u: 
+	    7efee84bedc5 _int_free_chunk+0x145 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840403.998085:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840404.008197:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840404.018298:   10101010 cpu-clock:u: 
+	    7efee84bedc5 _int_free_chunk+0x145 (/usr/lib64/libc.so.6)
+	    7efee84c100a _int_realloc+0x14a (/usr/lib64/libc.so.6)
+	    7efee84c228b realloc+0x12b (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840404.028399:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840404.038500:   10101010 cpu-clock:u: 
+	    7efee84c2299 realloc+0x139 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840404.048601:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840404.058701:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840404.068802:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840404.078903:   10101010 cpu-clock:u: 
+	    7efee84c0c53 __libc_calloc2+0x113 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840404.106009:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840404.107310:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840404.117410:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840404.127511:   10101010 cpu-clock:u: 
+	    7efee8584c80 __memmove_avx_unaligned_erms+0x0 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840404.137612:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840404.147713:   10101010 cpu-clock:u: 
+	    7efee84c27c1 __libc_calloc+0x61 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840404.157814:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840404.167914:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840404.178016:   10101010 cpu-clock:u: 
+	    7efee84bd5fb unlink_chunk.isra.0+0x2b (/usr/lib64/libc.so.6)
+	    7efee84bd822 malloc_consolidate+0x182 (/usr/lib64/libc.so.6)
+	    7efee84bfde7 _int_malloc+0x5f7 (/usr/lib64/libc.so.6)
+	    7efee84c0898 __libc_malloc2+0x48 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840404.188116:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840404.198217:   10101010 cpu-clock:u: 
+	    7efee84bfaa3 _int_malloc+0x2b3 (/usr/lib64/libc.so.6)
+	    7efee84c0898 __libc_malloc2+0x48 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840404.208318:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840404.218419:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840404.228520:   10101010 cpu-clock:u: 
+	    7efee84bff24 _int_malloc+0x734 (/usr/lib64/libc.so.6)
+	    7efee84c0898 __libc_malloc2+0x48 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840404.238621:   10101010 cpu-clock:u: 
+	    7efee84c0888 __libc_malloc2+0x38 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840404.248741:   10101010 cpu-clock:u: 
+	    7efee84c1853 malloc+0x73 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840404.258842:   10101010 cpu-clock:u: 
+	    7efee8584604 __memcmp_avx2_movbe+0xe4 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840404.268943:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840404.279044:   10101010 cpu-clock:u: 
+	    7efee84c0c67 __libc_calloc2+0x127 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840404.289145:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840404.299245:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840404.309346:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840404.319448:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840404.329548:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840404.339649:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840404.349750:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840404.359851:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840404.369951:   10101010 cpu-clock:u: 
+	    7efee84bff1e _int_malloc+0x72e (/usr/lib64/libc.so.6)
+	    7efee84c0898 __libc_malloc2+0x48 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840404.380052:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840404.390153:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840404.400254:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840404.410355:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840404.420455:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840404.430556:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840404.440657:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840404.450758:   10101010 cpu-clock:u: 
+	    7efee84c1e38 cfree@GLIBC_2.2.5+0x98 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840404.460867:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840404.470968:   10101010 cpu-clock:u: 
+	    7efee84c09c6 __libc_malloc2+0x176 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840404.481068:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840404.491169:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840404.501270:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840404.511371:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840404.521472:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840404.531573:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840404.541674:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840404.551775:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840404.561876:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840404.571976:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840404.582077:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840404.592187:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840404.602288:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840404.612389:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840404.622490:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840404.632591:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840404.642692:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840404.652795:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840404.662894:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840404.672994:   10101010 cpu-clock:u: 
+	    7efee8584ce6 __memmove_avx_unaligned_erms+0x66 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840404.683096:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840404.693196:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840404.703305:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840404.713412:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840404.723513:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840404.733614:   10101010 cpu-clock:u: 
+	    7efee84becc2 _int_free_chunk+0x42 (/usr/lib64/libc.so.6)
+	    7efee84c1062 _int_realloc+0x1a2 (/usr/lib64/libc.so.6)
+	    7efee84c228b realloc+0x12b (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840404.743714:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840404.753815:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840404.763916:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840404.774017:   10101010 cpu-clock:u: 
+	    7efee84c1df0 cfree@GLIBC_2.2.5+0x50 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840404.784118:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840404.794219:   10101010 cpu-clock:u: 
+	    7efee84c1dbb cfree@GLIBC_2.2.5+0x1b (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840404.804379:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840404.814514:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840404.824628:   10101010 cpu-clock:u: 
+	    7efee84c0f99 _int_realloc+0xd9 (/usr/lib64/libc.so.6)
+	    7efee84c228b realloc+0x12b (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840404.835765:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840404.845903:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840404.856035:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840404.867090:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840404.877219:   10101010 cpu-clock:u: 
+	    7efee84bfc1c _int_malloc+0x42c (/usr/lib64/libc.so.6)
+	    7efee84c0b7f __libc_calloc2+0x3f (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840404.887453:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840404.898443:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840404.908574:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840404.918893:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840404.929021:   10101010 cpu-clock:u: 
+	    7efee84c1dc9 cfree@GLIBC_2.2.5+0x29 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840404.946018:   10101010 cpu-clock:u: 
+	    7efee84c183c malloc+0x5c (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840404.956118:   10101010 cpu-clock:u: 
+	    7efee84c0f88 _int_realloc+0xc8 (/usr/lib64/libc.so.6)
+	    7efee84c228b realloc+0x12b (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840404.966235:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840404.976529:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840404.986638:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840404.996761:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840405.006862:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840405.016963:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840405.027064:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840405.037165:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840405.047266:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840405.065971:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840405.076071:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840405.086172:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840405.096273:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840405.110139:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840405.120239:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840405.130340:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840405.140441:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840405.150542:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840405.167216:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840405.177317:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840405.187426:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840405.197519:   10101010 cpu-clock:u: 
+	    7efee84bd5e3 unlink_chunk.isra.0+0x13 (/usr/lib64/libc.so.6)
+	    7efee84c03fc _int_malloc+0xc0c (/usr/lib64/libc.so.6)
+	    7efee84c0898 __libc_malloc2+0x48 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840405.207619:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840405.217722:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840405.227820:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840405.237921:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840405.248023:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840405.258123:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840405.268224:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840405.278324:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840405.288426:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840405.298526:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840405.308651:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840405.318751:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840405.328853:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840405.338953:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840405.349054:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840405.359155:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840405.370201:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840405.380302:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840405.390403:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840405.400504:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840405.414343:   10101010 cpu-clock:u: 
+	    7efee84c1e13 cfree@GLIBC_2.2.5+0x73 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840405.424444:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840405.434545:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840405.444646:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840405.454746:   10101010 cpu-clock:u: 
+	    7efee84c183c malloc+0x5c (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840405.464847:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840405.474947:   10101010 cpu-clock:u: 
+	    7efee84c1e5a cfree@GLIBC_2.2.5+0xba (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840405.485049:   10101010 cpu-clock:u: 
+	    7efee84c17e0 malloc+0x0 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840405.495149:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840405.505250:   10101010 cpu-clock:u: 
+	    7efee84c1853 malloc+0x73 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840405.515351:   10101010 cpu-clock:u: 
+	    7efee84c183c malloc+0x5c (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840405.525463:   10101010 cpu-clock:u: 
+	    7efee8584ce6 __memmove_avx_unaligned_erms+0x66 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840405.535553:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840405.548009:   10101010 cpu-clock:u: 
+	    7efee84becf5 _int_free_chunk+0x75 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840405.558133:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840405.568258:   10101010 cpu-clock:u: 
+	    7efee845c230 getenv+0x70 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840405.578359:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840405.588482:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840405.592760:   10101010 cpu-clock:u: 
+	    7efee858481d __memcmp_avx2_movbe+0x2fd (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840405.602861:   10101010 cpu-clock:u: 
+	    7efee84c011c _int_malloc+0x92c (/usr/lib64/libc.so.6)
+	    7efee84c0898 __libc_malloc2+0x48 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840405.615760:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840405.625860:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840405.635961:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840405.646062:   10101010 cpu-clock:u: 
+	    7efee84c011c _int_malloc+0x92c (/usr/lib64/libc.so.6)
+	    7efee84c0898 __libc_malloc2+0x48 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840405.656163:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840405.666264:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840405.676366:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840405.686466:   10101010 cpu-clock:u: 
+	    7efee84bd5fb unlink_chunk.isra.0+0x2b (/usr/lib64/libc.so.6)
+	    7efee84c03fc _int_malloc+0xc0c (/usr/lib64/libc.so.6)
+	    7efee84c0fa9 _int_realloc+0xe9 (/usr/lib64/libc.so.6)
+	    7efee84c228b realloc+0x12b (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840405.696567:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840405.706668:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840405.716768:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840405.726869:   10101010 cpu-clock:u: 
+	    7efee84c183c malloc+0x5c (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840405.736970:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840405.747071:   10101010 cpu-clock:u: 
+	    7efee84c1dbb cfree@GLIBC_2.2.5+0x1b (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840405.757172:   10101010 cpu-clock:u: 
+	    7efee84c1853 malloc+0x73 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840405.767364:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840405.777465:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840405.787566:   10101010 cpu-clock:u: 
+	    7efee84bed50 _int_free_chunk+0xd0 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840405.797666:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840405.807767:   10101010 cpu-clock:u: 
+	    7efee84c2295 realloc+0x135 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840405.817868:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840405.827969:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840405.838070:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840405.848170:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840405.858272:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840405.868372:   10101010 cpu-clock:u: 
+	    7efee84c1853 malloc+0x73 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840405.878473:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840405.888574:   10101010 cpu-clock:u: 
+	    7efee84bf8ca _int_malloc+0xda (/usr/lib64/libc.so.6)
+	    7efee84c0fa9 _int_realloc+0xe9 (/usr/lib64/libc.so.6)
+	    7efee84c228b realloc+0x12b (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840405.898675:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840405.908776:   10101010 cpu-clock:u: 
+	    7efee84c225c realloc+0xfc (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840405.918976:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840405.929077:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840405.939183:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840405.949279:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840405.959380:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840405.969480:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840405.979582:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840405.989682:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840405.999792:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840406.009893:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840406.019994:   10101010 cpu-clock:u: 
+	    7efee84c08a4 __libc_malloc2+0x54 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840406.030094:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840406.040195:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840406.050296:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840406.060397:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840406.070498:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840406.080599:   10101010 cpu-clock:u: 
+	    7efee84c0f10 _int_realloc+0x50 (/usr/lib64/libc.so.6)
+	    7efee84c228b realloc+0x12b (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840406.090700:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840406.100800:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840406.110901:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840406.121002:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840406.131103:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840406.141204:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840406.151305:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840406.161406:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840406.171507:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840406.181608:   10101010 cpu-clock:u: 
+	    7efee84c0ecd _int_realloc+0xd (/usr/lib64/libc.so.6)
+	    7efee84c228b realloc+0x12b (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840406.191708:   10101010 cpu-clock:u: 
+	    7efee84c1e04 cfree@GLIBC_2.2.5+0x64 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840406.201809:   10101010 cpu-clock:u: 
+	    7efee84c1dc9 cfree@GLIBC_2.2.5+0x29 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840406.211910:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840406.222011:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840406.232112:   10101010 cpu-clock:u: 
+	    7efee84c011c _int_malloc+0x92c (/usr/lib64/libc.so.6)
+	    7efee84c0898 __libc_malloc2+0x48 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840406.242222:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840406.252570:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840406.262689:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840406.272806:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840406.282907:   10101010 cpu-clock:u: 
+	    7efee84c21c9 realloc+0x69 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840406.293008:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840406.303109:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840406.313223:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840406.323323:   10101010 cpu-clock:u: 
+	    7efee84c1dbb cfree@GLIBC_2.2.5+0x1b (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840406.333424:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840406.343525:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840406.353626:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840406.363727:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840406.373828:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840406.383928:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840406.394029:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840406.404130:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840406.414231:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840406.424332:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840406.434433:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840406.444533:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840406.454634:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840406.464735:   10101010 cpu-clock:u: 
+	    7efee84bd79e malloc_consolidate+0xfe (/usr/lib64/libc.so.6)
+	    7efee84bfde7 _int_malloc+0x5f7 (/usr/lib64/libc.so.6)
+	    7efee84c0898 __libc_malloc2+0x48 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840406.474836:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840406.484937:   10101010 cpu-clock:u: 
+	    7efee84c1853 malloc+0x73 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840406.495038:   10101010 cpu-clock:u: 
+	    7efee84c074c _int_malloc+0xf5c (/usr/lib64/libc.so.6)
+	    7efee84c0898 __libc_malloc2+0x48 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840406.505139:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840406.515239:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840406.525340:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840406.535447:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840406.545543:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840406.555643:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840406.565744:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840406.575845:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840406.585945:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840406.596047:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840406.606147:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840406.616248:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840406.626350:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840406.636451:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840406.646551:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840406.656652:   10101010 cpu-clock:u: 
+	    7efee84c0ee1 _int_realloc+0x21 (/usr/lib64/libc.so.6)
+	    7efee84c228b realloc+0x12b (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840406.666752:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840406.676854:   10101010 cpu-clock:u: 
+	    7efee84c072f _int_malloc+0xf3f (/usr/lib64/libc.so.6)
+	    7efee84c0898 __libc_malloc2+0x48 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840406.686954:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840406.697055:   10101010 cpu-clock:u: 
+	    7efee84bfc43 _int_malloc+0x453 (/usr/lib64/libc.so.6)
+	    7efee84c0898 __libc_malloc2+0x48 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840406.707156:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840406.717257:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840406.727358:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840406.737459:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840406.747559:   10101010 cpu-clock:u: 
+	    7efee84c0876 __libc_malloc2+0x26 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840406.757660:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840406.767761:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840406.777862:   10101010 cpu-clock:u: 
+	    7efee84c1e04 cfree@GLIBC_2.2.5+0x64 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840406.787963:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840406.798064:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840406.808164:   10101010 cpu-clock:u: 
+	    7efee84c1853 malloc+0x73 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840406.818266:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840406.828366:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840406.838467:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840406.848568:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840406.858669:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840406.868770:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840406.878871:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840406.888972:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840406.899073:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840406.909173:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840406.919274:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840406.929375:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840406.939476:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840406.949577:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840406.959753:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840406.970144:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840406.980245:   10101010 cpu-clock:u: 
+	    7efee84c183c malloc+0x5c (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840406.990502:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840407.000603:   10101010 cpu-clock:u: 
+	    7efee84bedc5 _int_free_chunk+0x145 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840407.010703:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840407.020813:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840407.030914:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840407.041015:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840407.051116:   10101010 cpu-clock:u: 
+	    7efee84c1dcb cfree@GLIBC_2.2.5+0x2b (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840407.061217:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840407.071318:   10101010 cpu-clock:u: 
+	    7efee84c1df3 cfree@GLIBC_2.2.5+0x53 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840407.081434:   10101010 cpu-clock:u: 
+	    7efee84c1e38 cfree@GLIBC_2.2.5+0x98 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840407.091535:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840407.101636:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840407.111736:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840407.121837:   10101010 cpu-clock:u: 
+	    7efee845c228 getenv+0x68 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840407.131938:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840407.142299:   10101010 cpu-clock:u: 
+	    7efee8584d10 __memmove_avx_unaligned_erms+0x90 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840407.152400:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840407.162501:   10101010 cpu-clock:u: 
+	    7efee84bd87e _int_free_create_chunk+0x1e (/usr/lib64/libc.so.6)
+	    7efee84bebbd _int_free_merge_chunk+0xad (/usr/lib64/libc.so.6)
+	    7efee84bee40 _int_free_chunk+0x1c0 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840407.172602:   10101010 cpu-clock:u: 
+	    7efee8584ce6 __memmove_avx_unaligned_erms+0x66 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840407.182702:   10101010 cpu-clock:u: 
+	    7efee84c1dc9 cfree@GLIBC_2.2.5+0x29 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840407.192803:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840407.202904:   10101010 cpu-clock:u: 
+	    7efee84c1819 malloc+0x39 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840407.213005:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840407.223106:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840407.233207:   10101010 cpu-clock:u: 
+	    7efee84c1853 malloc+0x73 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840407.243307:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840407.253409:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840407.263509:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840407.273610:   10101010 cpu-clock:u: 
+	    7efee84c011c _int_malloc+0x92c (/usr/lib64/libc.so.6)
+	    7efee84c0898 __libc_malloc2+0x48 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840407.283711:   10101010 cpu-clock:u: 
+	    7efee84c1e2e cfree@GLIBC_2.2.5+0x8e (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840407.293812:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840407.303913:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840407.314014:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840407.324115:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840407.334216:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840407.344316:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840407.354417:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840407.364518:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840407.374619:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840407.384719:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840407.394820:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840407.404939:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840407.415040:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840407.425140:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840407.435242:   10101010 cpu-clock:u: 
+	    7efee84bedc5 _int_free_chunk+0x145 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840407.445342:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840407.455443:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840407.465544:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840407.475645:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840407.485746:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840407.495847:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840407.505948:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840407.516049:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840407.526150:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840407.536254:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840407.546351:   10101010 cpu-clock:u: 
+	    7efee84c183c malloc+0x5c (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840407.556452:   10101010 cpu-clock:u: 
+	    7efee84c1853 malloc+0x73 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840407.566553:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840407.576654:   10101010 cpu-clock:u: 
+	    7efee84bd755 malloc_consolidate+0xb5 (/usr/lib64/libc.so.6)
+	    7efee84bfde7 _int_malloc+0x5f7 (/usr/lib64/libc.so.6)
+	    7efee84c0898 __libc_malloc2+0x48 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840407.586755:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840407.596855:   10101010 cpu-clock:u: 
+	    7efee84bfaa3 _int_malloc+0x2b3 (/usr/lib64/libc.so.6)
+	    7efee84c0898 __libc_malloc2+0x48 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840407.606956:   10101010 cpu-clock:u: 
+	    7efee84bf8ef _int_malloc+0xff (/usr/lib64/libc.so.6)
+	    7efee84c0898 __libc_malloc2+0x48 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840407.617057:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840407.627158:   10101010 cpu-clock:u: 
+	    7efee84bfc1e _int_malloc+0x42e (/usr/lib64/libc.so.6)
+	    7efee84c0fa9 _int_realloc+0xe9 (/usr/lib64/libc.so.6)
+	    7efee84c228b realloc+0x12b (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840407.637259:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840407.647360:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840407.657471:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840407.667571:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840407.677672:   10101010 cpu-clock:u: 
+	    7efee84bf8ef _int_malloc+0xff (/usr/lib64/libc.so.6)
+	    7efee84c0898 __libc_malloc2+0x48 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840407.687773:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840407.697874:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840407.707975:   10101010 cpu-clock:u: 
+	    7efee84c1853 malloc+0x73 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840407.718076:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840407.728177:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840407.738278:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840407.748379:   10101010 cpu-clock:u: 
+	    7efee84bfc23 _int_malloc+0x433 (/usr/lib64/libc.so.6)
+	    7efee84c0fa9 _int_realloc+0xe9 (/usr/lib64/libc.so.6)
+	    7efee84c228b realloc+0x12b (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840407.758479:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840407.768580:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840407.778681:   10101010 cpu-clock:u: 
+	    7efee84c0fb6 _int_realloc+0xf6 (/usr/lib64/libc.so.6)
+	    7efee84c228b realloc+0x12b (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840407.788794:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840407.798895:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840407.808995:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840407.819096:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840407.829197:   10101010 cpu-clock:u: 
+	    7efee84c17e0 malloc+0x0 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840407.839298:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840407.849399:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840407.859500:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840407.869601:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840407.879701:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840407.889802:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840407.899903:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840407.910004:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840407.920105:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840407.930231:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840407.940332:   10101010 cpu-clock:u: 
+	    7efee84bd7b8 malloc_consolidate+0x118 (/usr/lib64/libc.so.6)
+	    7efee84bfde7 _int_malloc+0x5f7 (/usr/lib64/libc.so.6)
+	    7efee84c0898 __libc_malloc2+0x48 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840407.950433:   10101010 cpu-clock:u: 
+	    7efee84bd60c unlink_chunk.isra.0+0x3c (/usr/lib64/libc.so.6)
+	    7efee84bd724 malloc_consolidate+0x84 (/usr/lib64/libc.so.6)
+	    7efee84bfde7 _int_malloc+0x5f7 (/usr/lib64/libc.so.6)
+	    7efee84c0898 __libc_malloc2+0x48 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840407.960533:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840407.970634:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840407.980743:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840407.990844:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840408.000945:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840408.011046:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840408.021146:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840408.031247:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840408.042374:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840408.052650:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840408.062751:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840408.072852:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840408.078589:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840408.088713:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840408.098835:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840408.108960:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840408.119110:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840408.129236:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840408.139361:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840408.149486:   10101010 cpu-clock:u: 
+	    7efee84bf7fd _int_malloc+0xd (/usr/lib64/libc.so.6)
+	    7efee84c0fa9 _int_realloc+0xe9 (/usr/lib64/libc.so.6)
+	    7efee84c228b realloc+0x12b (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840408.159587:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840408.169712:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840408.179839:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840408.189961:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840408.200087:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840408.210210:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840408.220335:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840408.230464:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840408.240595:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840408.246015:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840408.256116:   10101010 cpu-clock:u: 
+	    7efee84bf933 _int_malloc+0x143 (/usr/lib64/libc.so.6)
+	    7efee84c0fa9 _int_realloc+0xe9 (/usr/lib64/libc.so.6)
+	    7efee84c228b realloc+0x12b (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840408.266217:   10101010 cpu-clock:u: 
+	    7efee858481d __memcmp_avx2_movbe+0x2fd (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840408.276318:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840408.286419:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840408.297530:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840408.307631:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840408.317731:   10101010 cpu-clock:u: 
+	    7efee84bf8fe _int_malloc+0x10e (/usr/lib64/libc.so.6)
+	    7efee84c0fa9 _int_realloc+0xe9 (/usr/lib64/libc.so.6)
+	    7efee84c228b realloc+0x12b (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840408.327832:   10101010 cpu-clock:u: 
+	    7efee84bedc5 _int_free_chunk+0x145 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840408.337934:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840408.344301:   10101010 cpu-clock:u: 
+	    7efee84bedd4 _int_free_chunk+0x154 (/usr/lib64/libc.so.6)
+	    7efee84c100a _int_realloc+0x14a (/usr/lib64/libc.so.6)
+	    7efee84c228b realloc+0x12b (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840408.354432:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840408.364559:   10101010 cpu-clock:u: 
+	    7efee84c011c _int_malloc+0x92c (/usr/lib64/libc.so.6)
+	    7efee84c0898 __libc_malloc2+0x48 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840408.374686:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840408.384815:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840408.394941:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840408.405042:   10101010 cpu-clock:u: 
+	    7efee84bf8ef _int_malloc+0xff (/usr/lib64/libc.so.6)
+	    7efee84c0fa9 _int_realloc+0xe9 (/usr/lib64/libc.so.6)
+	    7efee84c228b realloc+0x12b (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840408.415169:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840408.425297:   10101010 cpu-clock:u: 
+	    7efee84c292d __libc_calloc+0x1cd (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840408.435426:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840408.445555:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840408.455684:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840408.465817:   10101010 cpu-clock:u: 
+	    7efee84c1805 malloc+0x25 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840408.475944:   10101010 cpu-clock:u: 
+	    7efee84c182d malloc+0x4d (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840408.486072:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840408.496200:   10101010 cpu-clock:u: 
+	    7efee84bf855 _int_malloc+0x65 (/usr/lib64/libc.so.6)
+	    7efee84c0fa9 _int_realloc+0xe9 (/usr/lib64/libc.so.6)
+	    7efee84c228b realloc+0x12b (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840408.506028:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840408.516128:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840408.526229:   10101010 cpu-clock:u: 
+	    7efee84c1819 malloc+0x39 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840408.536330:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840408.546431:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840408.556532:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840408.566633:   10101010 cpu-clock:u: 
+	    7efee84c1853 malloc+0x73 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840408.584816:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840408.594917:   10101010 cpu-clock:u: 
+	    7efee84c21c9 realloc+0x69 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840408.605018:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840408.615119:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840408.625220:   10101010 cpu-clock:u: 
+	    7efee84c182d malloc+0x4d (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840408.635321:   10101010 cpu-clock:u: 
+	    7efee84c011c _int_malloc+0x92c (/usr/lib64/libc.so.6)
+	    7efee84c0b7f __libc_calloc2+0x3f (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840408.645441:   10101010 cpu-clock:u: 
+	    7efee84c1819 malloc+0x39 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840408.655542:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840408.665642:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840408.675743:   10101010 cpu-clock:u: 
+	    7efee84c011c _int_malloc+0x92c (/usr/lib64/libc.so.6)
+	    7efee84c0898 __libc_malloc2+0x48 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840408.685844:   10101010 cpu-clock:u: 
+	    7efee84c2904 __libc_calloc+0x1a4 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840408.695945:   10101010 cpu-clock:u: 
+	    7efee8584c91 __memmove_avx_unaligned_erms+0x11 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840408.706046:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840408.716146:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840408.726248:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840408.736349:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840408.746449:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840408.756550:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840408.766651:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840408.776752:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840408.786853:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840408.796954:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840408.807055:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840408.817155:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840408.827256:   10101010 cpu-clock:u: 
+	    7efee84bed98 _int_free_chunk+0x118 (/usr/lib64/libc.so.6)
+	    7efee84c100a _int_realloc+0x14a (/usr/lib64/libc.so.6)
+	    7efee84c228b realloc+0x12b (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840408.837357:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840408.847458:   10101010 cpu-clock:u: 
+	    7efee84bf8ef _int_malloc+0xff (/usr/lib64/libc.so.6)
+	    7efee84c0fa9 _int_realloc+0xe9 (/usr/lib64/libc.so.6)
+	    7efee84c228b realloc+0x12b (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840408.857559:   10101010 cpu-clock:u: 
+	    7efee84c1e13 cfree@GLIBC_2.2.5+0x73 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840408.867660:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840408.877760:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840408.887861:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840408.897962:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840408.908063:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840408.918164:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840408.928265:   10101010 cpu-clock:u: 
+	    7efee84bedc5 _int_free_chunk+0x145 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840408.938365:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840408.948466:   10101010 cpu-clock:u: 
+	    7efee84c28e9 __libc_calloc+0x189 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840408.958567:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840408.968668:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840408.978769:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840408.988870:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840408.998983:   10101010 cpu-clock:u: 
+	    7efee84c2295 realloc+0x135 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840409.009083:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840409.019184:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840409.029285:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840409.039386:   10101010 cpu-clock:u: 
+	    7efee8584520 __memcmp_avx2_movbe+0x0 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840409.049487:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840409.059588:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840409.069688:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840409.079789:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840409.089890:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840409.099991:   10101010 cpu-clock:u: 
+	    7efee8584c91 __memmove_avx_unaligned_erms+0x11 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840409.110092:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840409.120193:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840409.130294:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840409.140394:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840409.150495:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840409.160596:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840409.170697:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840409.180798:   10101010 cpu-clock:u: 
+	    7efee84c1dbb cfree@GLIBC_2.2.5+0x1b (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840409.190899:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840409.201000:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840409.211100:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840409.221201:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840409.231302:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840409.241403:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840409.251504:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840409.261605:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840409.271705:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840409.281806:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840409.291907:   10101010 cpu-clock:u: 
+	    7efee84bf7f0 _int_malloc+0x0 (/usr/lib64/libc.so.6)
+	    7efee84c0fa9 _int_realloc+0xe9 (/usr/lib64/libc.so.6)
+	    7efee84c228b realloc+0x12b (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840409.302008:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840409.312109:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840409.322210:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840409.332311:   10101010 cpu-clock:u: 
+	    7efee84c1e1f cfree@GLIBC_2.2.5+0x7f (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840409.342412:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840409.352513:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840409.362613:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840409.372714:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840409.382826:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840409.392928:   10101010 cpu-clock:u: 
+	    7efee84bedc5 _int_free_chunk+0x145 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840409.403029:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840409.413129:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840409.423230:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840409.433331:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840409.443432:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840409.453533:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840409.463634:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840409.473734:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840409.483835:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840409.493936:   10101010 cpu-clock:u: 
+	    7efee84c0851 __libc_malloc2+0x1 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840409.504037:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840409.514138:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840409.524239:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840409.534340:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840409.544441:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840409.554542:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840409.564642:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840409.574743:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840409.584844:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840409.594945:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840409.605046:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840409.615147:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840409.625248:   10101010 cpu-clock:u: 
+	    7efee84bfc9b _int_malloc+0x4ab (/usr/lib64/libc.so.6)
+	    7efee84c0898 __libc_malloc2+0x48 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840409.635348:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840409.645460:   10101010 cpu-clock:u: 
+	    7efee84c011c _int_malloc+0x92c (/usr/lib64/libc.so.6)
+	    7efee84c0898 __libc_malloc2+0x48 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840409.655561:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840409.665662:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840409.675763:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840409.685863:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840409.695964:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840409.706065:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840409.716166:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840409.726268:   10101010 cpu-clock:u: 
+	    7efee84c0f14 _int_realloc+0x54 (/usr/lib64/libc.so.6)
+	    7efee84c228b realloc+0x12b (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840409.736368:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840409.746469:   10101010 cpu-clock:u: 
+	    7efee84c011c _int_malloc+0x92c (/usr/lib64/libc.so.6)
+	    7efee84c0898 __libc_malloc2+0x48 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840409.756570:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840409.766670:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840409.776771:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840409.786872:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840409.797004:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840409.807074:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840409.817175:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840409.827276:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840409.837377:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840409.847478:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840409.857579:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840409.867679:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840409.877780:   10101010 cpu-clock:u: 
+	    7efee84bfc1c _int_malloc+0x42c (/usr/lib64/libc.so.6)
+	    7efee84c0fa9 _int_realloc+0xe9 (/usr/lib64/libc.so.6)
+	    7efee84c228b realloc+0x12b (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840409.887881:   10101010 cpu-clock:u: 
+	    7efee84c1853 malloc+0x73 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840409.897982:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840409.908083:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840409.918184:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840409.928285:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840409.938385:   10101010 cpu-clock:u: 
+	    7efee84c1853 malloc+0x73 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840409.948487:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840409.958587:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840409.968688:   10101010 cpu-clock:u: 
+	    7efee84bfd40 _int_malloc+0x550 (/usr/lib64/libc.so.6)
+	    7efee84c0898 __libc_malloc2+0x48 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840409.978789:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840409.988889:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840409.998990:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840410.009092:   10101010 cpu-clock:u: 
+	    7efee84c1853 malloc+0x73 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840410.019192:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840410.029303:   10101010 cpu-clock:u: 
+	    7efee84c1e38 cfree@GLIBC_2.2.5+0x98 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840410.039404:   10101010 cpu-clock:u: 
+	    7efee84bfc97 _int_malloc+0x4a7 (/usr/lib64/libc.so.6)
+	    7efee84c0fa9 _int_realloc+0xe9 (/usr/lib64/libc.so.6)
+	    7efee84c228b realloc+0x12b (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840410.049504:   10101010 cpu-clock:u: 
+	    7efee84c1e1f cfree@GLIBC_2.2.5+0x7f (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840410.059606:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840410.069714:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840410.079807:   10101010 cpu-clock:u: 
+	    7efee84bfa8e _int_malloc+0x29e (/usr/lib64/libc.so.6)
+	    7efee84c0898 __libc_malloc2+0x48 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840410.089908:   10101010 cpu-clock:u: 
+	    7efee84c013e _int_malloc+0x94e (/usr/lib64/libc.so.6)
+	    7efee84c0fa9 _int_realloc+0xe9 (/usr/lib64/libc.so.6)
+	    7efee84c228b realloc+0x12b (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840410.100009:   10101010 cpu-clock:u: 
+	    7efee84c1df0 cfree@GLIBC_2.2.5+0x50 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840410.110115:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840410.120210:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840410.130321:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840410.140412:   10101010 cpu-clock:u: 
+	    7efee84bfc9b _int_malloc+0x4ab (/usr/lib64/libc.so.6)
+	    7efee84c0fa9 _int_realloc+0xe9 (/usr/lib64/libc.so.6)
+	    7efee84c228b realloc+0x12b (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840410.150513:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840410.160614:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840410.170715:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840410.180816:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840410.190917:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840410.201023:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840410.211118:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840410.221219:   10101010 cpu-clock:u: 
+	    7efee84bf8ef _int_malloc+0xff (/usr/lib64/libc.so.6)
+	    7efee84c0b7f __libc_calloc2+0x3f (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840410.231320:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840410.241421:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840410.251522:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840410.261623:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840410.271723:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840410.281836:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840410.291937:   10101010 cpu-clock:u: 
+	    7efee84c1805 malloc+0x25 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840410.302038:   10101010 cpu-clock:u: 
+	    7efee84c1e38 cfree@GLIBC_2.2.5+0x98 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840410.312138:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840410.322239:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840410.332340:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840410.342441:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840410.352551:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840410.362652:   10101010 cpu-clock:u: 
+	    7efee84c011c _int_malloc+0x92c (/usr/lib64/libc.so.6)
+	    7efee84c0898 __libc_malloc2+0x48 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840410.372752:   10101010 cpu-clock:u: 
+	    7efee84c1e04 cfree@GLIBC_2.2.5+0x64 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840410.382853:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840410.392954:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840410.403055:   10101010 cpu-clock:u: 
+	    7efee84c0fba _int_realloc+0xfa (/usr/lib64/libc.so.6)
+	    7efee84c228b realloc+0x12b (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840410.413156:   10101010 cpu-clock:u: 
+	    7efee84c1853 malloc+0x73 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840410.423257:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840410.433358:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840410.443459:   10101010 cpu-clock:u: 
+	    7efee84c2170 realloc+0x10 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840410.453560:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840410.463661:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840410.473761:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840410.483863:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840410.493964:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840410.504064:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840410.514165:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840410.524265:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840410.534366:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840410.544467:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840410.554568:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840410.564669:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840410.574771:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840410.584871:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840410.594972:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840410.605072:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840410.615173:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840410.625274:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840410.635375:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840410.645476:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840410.655577:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840410.665678:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840410.675778:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840410.685879:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840410.695981:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840410.706081:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840410.716182:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840410.726283:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840410.736384:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840410.746494:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840410.756585:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840410.766686:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840410.776788:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840410.786889:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840410.796989:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840410.807090:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840410.817191:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840410.827291:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840410.837392:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840410.847494:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840410.857594:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840410.867695:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840410.877798:   10101010 cpu-clock:u: 
+	    7efee84c182d malloc+0x4d (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840410.887897:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840410.897998:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840410.908098:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840410.918199:   10101010 cpu-clock:u: 
+	    7efee84c21c9 realloc+0x69 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840410.928301:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840410.938402:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840410.948502:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840410.958603:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840410.968704:   10101010 cpu-clock:u: 
+	    7efee858481d __memcmp_avx2_movbe+0x2fd (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840410.980584:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840410.990879:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840411.001199:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840411.011313:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840411.021414:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840411.031602:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840411.041702:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840411.051803:   10101010 cpu-clock:u: 
+	    7efee84bfc43 _int_malloc+0x453 (/usr/lib64/libc.so.6)
+	    7efee84c0fa9 _int_realloc+0xe9 (/usr/lib64/libc.so.6)
+	    7efee84c228b realloc+0x12b (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840411.061904:   10101010 cpu-clock:u: 
+	    7efee84c1e04 cfree@GLIBC_2.2.5+0x64 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840411.072005:   10101010 cpu-clock:u: 
+	    7efee84c1dbb cfree@GLIBC_2.2.5+0x1b (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840411.082106:   10101010 cpu-clock:u: 
+	    7efee8584819 __memcmp_avx2_movbe+0x2f9 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840411.092206:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840411.102307:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840411.112408:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840411.127420:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840411.137532:   10101010 cpu-clock:u: 
+	    7efee84c0122 _int_malloc+0x932 (/usr/lib64/libc.so.6)
+	    7efee84c0898 __libc_malloc2+0x48 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840411.142767:   10101010 cpu-clock:u: 
+	    7efee84bfd63 _int_malloc+0x573 (/usr/lib64/libc.so.6)
+	    7efee84c0898 __libc_malloc2+0x48 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840411.152884:   10101010 cpu-clock:u: 
+	    7efee84c1865 malloc+0x85 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840411.162984:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840411.173085:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840411.183186:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840411.204223:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840411.214354:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840411.224469:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840411.234621:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840411.244733:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840411.254873:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840411.264974:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840411.275075:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840411.285176:   10101010 cpu-clock:u: 
+	    7efee84c1dc9 cfree@GLIBC_2.2.5+0x29 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840411.295381:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840411.311978:   10101010 cpu-clock:u: 
+	    7efee84c0f88 _int_realloc+0xc8 (/usr/lib64/libc.so.6)
+	    7efee84c228b realloc+0x12b (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840411.322264:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840411.332425:   10101010 cpu-clock:u: 
+	    7efee84c0f88 _int_realloc+0xc8 (/usr/lib64/libc.so.6)
+	    7efee84c228b realloc+0x12b (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840411.342534:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840411.352709:   10101010 cpu-clock:u: 
+	    7efee84c17e0 malloc+0x0 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840411.362816:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840411.372917:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840411.383133:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840411.393241:   10101010 cpu-clock:u: 
+	    7efee8584ce6 __memmove_avx_unaligned_erms+0x66 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840411.403341:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840411.413442:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840411.423543:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840411.433643:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840411.443744:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840411.444721:   10101010 cpu-clock:u: 
+	    7efee84c182d malloc+0x4d (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840411.454822:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840411.464930:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840411.475031:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840411.485132:   10101010 cpu-clock:u: 
+	    7efee84c1e13 cfree@GLIBC_2.2.5+0x73 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840411.495233:   10101010 cpu-clock:u: 
+	    7efee84bfd63 _int_malloc+0x573 (/usr/lib64/libc.so.6)
+	    7efee84c0898 __libc_malloc2+0x48 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840411.505333:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840411.515434:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840411.532428:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840411.536528:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840411.546630:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840411.556729:   10101010 cpu-clock:u: 
+	    7efee84bd5fb unlink_chunk.isra.0+0x2b (/usr/lib64/libc.so.6)
+	    7efee84bd724 malloc_consolidate+0x84 (/usr/lib64/libc.so.6)
+	    7efee84bfde7 _int_malloc+0x5f7 (/usr/lib64/libc.so.6)
+	    7efee84c0898 __libc_malloc2+0x48 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840411.566830:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840411.576931:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840411.587032:   10101010 cpu-clock:u: 
+	    7efee858481d __memcmp_avx2_movbe+0x2fd (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840411.597133:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840411.607233:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840411.617334:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840411.626799:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840411.636900:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840411.647000:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840411.658127:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840411.666085:   10101010 cpu-clock:u: 
+	    7efee84c1853 malloc+0x73 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840411.676186:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840411.686309:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840411.694485:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840411.704586:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840411.714687:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840411.724788:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840411.734889:   10101010 cpu-clock:u: 
+	    7efee84c1df0 cfree@GLIBC_2.2.5+0x50 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840411.744990:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840411.755090:   10101010 cpu-clock:u: 
+	    7efee84c2295 realloc+0x135 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840411.765191:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840411.775292:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840411.785393:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840411.795494:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840411.805595:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840411.815705:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840411.825806:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840411.835253:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840411.845353:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840411.855454:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840411.865555:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840411.875656:   10101010 cpu-clock:u: 
+	    7efee84bfa77 _int_malloc+0x287 (/usr/lib64/libc.so.6)
+	    7efee84c0898 __libc_malloc2+0x48 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840411.891949:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840411.902494:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840411.912595:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840411.922696:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840411.932803:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840411.942898:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840411.952998:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840411.963099:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840411.985829:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840411.994824:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840412.004932:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840412.015039:   10101010 cpu-clock:u: 
+	    7efee84c0888 __libc_malloc2+0x38 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840412.025140:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840412.035240:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840412.045341:   10101010 cpu-clock:u: 
+	    7efee84bd75b malloc_consolidate+0xbb (/usr/lib64/libc.so.6)
+	    7efee84bfde7 _int_malloc+0x5f7 (/usr/lib64/libc.so.6)
+	    7efee84c0898 __libc_malloc2+0x48 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840412.055442:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840412.065543:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840412.075268:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840412.085396:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840412.095497:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840412.105621:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840412.115747:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840412.125874:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840412.136004:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840412.146136:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840412.156262:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840412.166387:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840412.176513:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840412.186638:   10101010 cpu-clock:u: 
+	    7efee84bd810 malloc_consolidate+0x170 (/usr/lib64/libc.so.6)
+	    7efee84bfde7 _int_malloc+0x5f7 (/usr/lib64/libc.so.6)
+	    7efee84c0898 __libc_malloc2+0x48 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840412.196763:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840412.206889:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840412.217014:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840412.227138:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840412.237265:   10101010 cpu-clock:u: 
+	    7efee84c013e _int_malloc+0x94e (/usr/lib64/libc.so.6)
+	    7efee84c0898 __libc_malloc2+0x48 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840412.247392:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840412.257519:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840412.267644:   10101010 cpu-clock:u: 
+	    7efee84bfc9b _int_malloc+0x4ab (/usr/lib64/libc.so.6)
+	    7efee84c0898 __libc_malloc2+0x48 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840412.277770:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840412.287896:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840412.297997:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840412.308125:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840412.318252:   10101010 cpu-clock:u: 
+	    7efee84bf8ef _int_malloc+0xff (/usr/lib64/libc.so.6)
+	    7efee84c0898 __libc_malloc2+0x48 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840412.328378:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840412.338504:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840412.348629:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840412.358755:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840412.368885:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840412.379013:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840412.389139:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840412.399266:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840412.409392:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840412.419520:   10101010 cpu-clock:u: 
+	    7efee84bed91 _int_free_chunk+0x111 (/usr/lib64/libc.so.6)
+	    7efee84c100a _int_realloc+0x14a (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840412.429646:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840412.439772:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840412.449898:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840412.460029:   10101010 cpu-clock:u: 
+	    7efee84c1853 malloc+0x73 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840412.470156:   10101010 cpu-clock:u: 
+	    7efee84c1e13 cfree@GLIBC_2.2.5+0x73 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840412.480283:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840412.490383:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840412.500511:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840412.510638:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840412.520770:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840412.530896:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840412.541023:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840412.551149:   10101010 cpu-clock:u: 
+	    7efee8584c80 __memmove_avx_unaligned_erms+0x0 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840412.561275:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840412.571401:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840412.581526:   10101010 cpu-clock:u: 
+	    7efee8584830 __memcmp_avx2_movbe+0x310 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840412.591652:   10101010 cpu-clock:u: 
+	    7efee84bf8fb _int_malloc+0x10b (/usr/lib64/libc.so.6)
+	    7efee84c0b7f __libc_calloc2+0x3f (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840412.601777:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840412.611902:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840412.622026:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840412.632149:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840412.642273:   10101010 cpu-clock:u: 
+	    7efee8584c84 __memmove_avx_unaligned_erms+0x4 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840412.652397:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840412.662521:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840412.672649:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840412.682775:   10101010 cpu-clock:u: 
+	    7efee84bf8ef _int_malloc+0xff (/usr/lib64/libc.so.6)
+	    7efee84c0898 __libc_malloc2+0x48 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840412.692876:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840412.703001:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840412.713147:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840412.723278:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840412.733413:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840412.743585:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840412.753722:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840412.763897:   10101010 cpu-clock:u: 
+	    7efee84c0c53 __libc_calloc2+0x113 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840412.774070:   10101010 cpu-clock:u: 
+	    7efee84bedc5 _int_free_chunk+0x145 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840412.784296:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840412.794542:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840412.804742:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840412.814943:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840412.825155:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840412.835398:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840412.845596:   10101010 cpu-clock:u: 
+	    7efee84c1e09 cfree@GLIBC_2.2.5+0x69 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840412.855789:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840412.865991:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840412.876185:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840412.886386:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840412.896599:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840412.906700:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840412.916829:   10101010 cpu-clock:u: 
+	    7efee84c013e _int_malloc+0x94e (/usr/lib64/libc.so.6)
+	    7efee84c0898 __libc_malloc2+0x48 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840412.926991:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840412.937159:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840412.947354:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840412.957753:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840412.970155:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840412.980326:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840412.990546:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840413.000651:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840413.010748:   10101010 cpu-clock:u: 
+	    7efee84c011c _int_malloc+0x92c (/usr/lib64/libc.so.6)
+	    7efee84c0898 __libc_malloc2+0x48 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840413.020849:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840413.026137:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840413.036268:   10101010 cpu-clock:u: 
+	    7efee84bfc1c _int_malloc+0x42c (/usr/lib64/libc.so.6)
+	    7efee84c0898 __libc_malloc2+0x48 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840413.046480:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840413.056618:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840413.066723:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840413.076873:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840413.087073:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840413.097227:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840413.107328:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840413.117437:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840413.125603:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840413.135704:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840413.145805:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840413.156034:   10101010 cpu-clock:u: 
+	    7efee84bece2 _int_free_chunk+0x62 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840413.166134:   10101010 cpu-clock:u: 
+	    7efee84bfc9b _int_malloc+0x4ab (/usr/lib64/libc.so.6)
+	    7efee84c0fa9 _int_realloc+0xe9 (/usr/lib64/libc.so.6)
+	    7efee84c228b realloc+0x12b (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840413.176235:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840413.186336:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840413.196437:   10101010 cpu-clock:u: 
+	    7efee84bfaa3 _int_malloc+0x2b3 (/usr/lib64/libc.so.6)
+	    7efee84c0898 __libc_malloc2+0x48 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840413.206785:   10101010 cpu-clock:u: 
+	    7efee84c1853 malloc+0x73 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840413.216918:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840413.227036:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840413.237148:   10101010 cpu-clock:u: 
+	    7efee84bfc9b _int_malloc+0x4ab (/usr/lib64/libc.so.6)
+	    7efee84c0fa9 _int_realloc+0xe9 (/usr/lib64/libc.so.6)
+	    7efee84c228b realloc+0x12b (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840413.247249:   10101010 cpu-clock:u: 
+	    7efee84bec9f _int_free_chunk+0x1f (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840413.257350:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840413.267450:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840413.277558:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840413.287652:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840413.297753:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840413.307854:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840413.317957:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840413.328056:   10101010 cpu-clock:u: 
+	    7efee84bfa77 _int_malloc+0x287 (/usr/lib64/libc.so.6)
+	    7efee84c0898 __libc_malloc2+0x48 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840413.333827:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840413.343927:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840413.354126:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840413.364227:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840413.374329:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840413.384429:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840413.394567:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840413.404668:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840413.414815:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840413.424916:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840413.435017:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840413.445118:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840413.453637:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840413.463779:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840413.473895:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840413.483995:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840413.494121:   10101010 cpu-clock:u: 
+	    7efee84bfea1 _int_malloc+0x6b1 (/usr/lib64/libc.so.6)
+	    7efee84c0898 __libc_malloc2+0x48 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840413.504927:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840413.515119:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840413.525324:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840413.535420:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840413.545521:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840413.555621:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840413.565770:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840413.575871:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840413.585972:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840413.596073:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840413.606174:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840413.616275:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840413.627295:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840413.637712:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840413.647813:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840413.658435:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840413.668533:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840413.678633:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840413.688735:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840413.698835:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840413.708936:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840413.719037:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840413.729138:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840413.739238:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840413.749340:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840413.759440:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840413.769541:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840413.779642:   10101010 cpu-clock:u: 
+	    7efee84c0850 __libc_malloc2+0x0 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840413.789743:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840413.799844:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840413.810060:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840413.820156:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840413.832194:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840413.842295:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840413.852396:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840413.862497:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840413.872600:   10101010 cpu-clock:u: 
+	    7efee84c1dc2 cfree@GLIBC_2.2.5+0x22 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840413.882698:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840413.892872:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840413.903124:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840413.913225:   10101010 cpu-clock:u: 
+	    7efee84c1805 malloc+0x25 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840413.923326:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840413.933444:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840413.943544:   10101010 cpu-clock:u: 
+	    7efee84c1853 malloc+0x73 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840413.953645:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840413.963745:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840413.973847:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840413.983947:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840413.994056:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840414.004158:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840414.014258:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840414.024359:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840414.034460:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840414.044561:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840414.054661:   10101010 cpu-clock:u: 
+	    7efee84bfd63 _int_malloc+0x573 (/usr/lib64/libc.so.6)
+	    7efee84c0b7f __libc_calloc2+0x3f (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840414.064763:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840414.074863:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840414.084964:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840414.095065:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840414.105166:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840414.115267:   10101010 cpu-clock:u: 
+	    7efee84bd755 malloc_consolidate+0xb5 (/usr/lib64/libc.so.6)
+	    7efee84bfde7 _int_malloc+0x5f7 (/usr/lib64/libc.so.6)
+	    7efee84c0898 __libc_malloc2+0x48 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840414.125368:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840414.135469:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840414.145570:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840414.155670:   10101010 cpu-clock:u: 
+	    7efee84c011c _int_malloc+0x92c (/usr/lib64/libc.so.6)
+	    7efee84c0898 __libc_malloc2+0x48 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840414.165771:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840414.175872:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840414.185973:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840414.196074:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840414.206174:   10101010 cpu-clock:u: 
+	    7efee8584c80 __memmove_avx_unaligned_erms+0x0 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840414.216276:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840414.226377:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840414.236478:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840414.246578:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840414.256679:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840414.266780:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840414.276881:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840414.286982:   10101010 cpu-clock:u: 
+	    7efee84c2256 realloc+0xf6 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840414.297083:   10101010 cpu-clock:u: 
+	    7efee84c0fb6 _int_realloc+0xf6 (/usr/lib64/libc.so.6)
+	    7efee84c228b realloc+0x12b (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840414.307183:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840414.317284:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840414.327385:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840414.337486:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840414.347589:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840414.357687:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840414.367788:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840414.377889:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840414.387990:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840414.398091:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840414.408192:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840414.418293:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840414.428394:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840414.438494:   10101010 cpu-clock:u: 
+	    7efee84c013e _int_malloc+0x94e (/usr/lib64/libc.so.6)
+	    7efee84c0898 __libc_malloc2+0x48 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840414.448595:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840414.458696:   10101010 cpu-clock:u: 
+	    7efee84c0f88 _int_realloc+0xc8 (/usr/lib64/libc.so.6)
+	    7efee84c228b realloc+0x12b (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840414.468797:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840414.478898:   10101010 cpu-clock:u: 
+	    7efee84c1dcb cfree@GLIBC_2.2.5+0x2b (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840414.488999:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840414.499100:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840414.509201:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840414.519302:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840414.529402:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840414.539503:   10101010 cpu-clock:u: 
+	    7efee84c09c3 __libc_malloc2+0x173 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840414.549604:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840414.559705:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840414.569843:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840414.579944:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840414.590044:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840414.600146:   10101010 cpu-clock:u: 
+	    7efee84bfc9b _int_malloc+0x4ab (/usr/lib64/libc.so.6)
+	    7efee84c0fa9 _int_realloc+0xe9 (/usr/lib64/libc.so.6)
+	    7efee84c228b realloc+0x12b (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840414.610246:   10101010 cpu-clock:u: 
+	    7efee84bfc97 _int_malloc+0x4a7 (/usr/lib64/libc.so.6)
+	    7efee84c0fa9 _int_realloc+0xe9 (/usr/lib64/libc.so.6)
+	    7efee84c228b realloc+0x12b (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840414.620347:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840414.630448:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840414.640549:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840414.650650:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840414.660751:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840414.670851:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840414.672845:   10101010 cpu-clock:u: 
+	    7efee84c1e38 cfree@GLIBC_2.2.5+0x98 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840414.682946:   10101010 cpu-clock:u: 
+	    7efee84c1e0c cfree@GLIBC_2.2.5+0x6c (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840414.693047:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840414.703158:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840414.713259:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840414.723359:   10101010 cpu-clock:u: 
+	    7efee84bfc04 _int_malloc+0x414 (/usr/lib64/libc.so.6)
+	    7efee84c0fa9 _int_realloc+0xe9 (/usr/lib64/libc.so.6)
+	    7efee84c228b realloc+0x12b (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840414.733460:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840414.743561:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840414.753662:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840414.763762:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840414.773863:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840414.783964:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840414.794065:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840414.804166:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840414.814267:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840414.824368:   10101010 cpu-clock:u: 
+	    7efee8584c91 __memmove_avx_unaligned_erms+0x11 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840414.834469:   10101010 cpu-clock:u: 
+	    7efee8584c84 __memmove_avx_unaligned_erms+0x4 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840414.844569:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840414.854670:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840414.873022:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840414.883122:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840414.893223:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840414.903324:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840414.913425:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840414.923525:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840414.933626:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840414.943728:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840414.953829:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840414.963929:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840414.974030:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840414.983619:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840414.993720:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840415.003820:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840415.013921:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840415.024031:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840415.034132:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840415.044232:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840415.054333:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840415.064434:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840415.074535:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840415.084636:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840415.094737:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840415.104848:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840415.114949:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840415.125049:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840415.135150:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840415.145251:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840415.155352:   10101010 cpu-clock:u: 
+	    7efee84bedc5 _int_free_chunk+0x145 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840415.165453:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840415.175554:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840415.185654:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840415.195755:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840415.205856:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840415.215957:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840415.226057:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840415.236158:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840415.246260:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840415.256364:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840415.266461:   10101010 cpu-clock:u: 
+	    7efee84bfd63 _int_malloc+0x573 (/usr/lib64/libc.so.6)
+	    7efee84c0898 __libc_malloc2+0x48 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840415.276570:   10101010 cpu-clock:u: 
+	    7efee84bedc5 _int_free_chunk+0x145 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840415.286671:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840415.296772:   10101010 cpu-clock:u: 
+	    7efee84bfc9b _int_malloc+0x4ab (/usr/lib64/libc.so.6)
+	    7efee84c0fa9 _int_realloc+0xe9 (/usr/lib64/libc.so.6)
+	    7efee84c228b realloc+0x12b (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840415.306872:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840415.316973:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840415.327074:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840415.337175:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840415.347276:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840415.357377:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840415.367478:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840415.377578:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840415.387679:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840415.397780:   10101010 cpu-clock:u: 
+	    7efee84bf8f3 _int_malloc+0x103 (/usr/lib64/libc.so.6)
+	    7efee84c0898 __libc_malloc2+0x48 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840415.407891:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840415.417992:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840415.428093:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840415.438198:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840415.448295:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840415.458396:   10101010 cpu-clock:u: 
+	    7efee84c0f88 _int_realloc+0xc8 (/usr/lib64/libc.so.6)
+	    7efee84c228b realloc+0x12b (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840415.468497:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840415.478597:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840415.488698:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840415.498799:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840415.508900:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840415.519001:   10101010 cpu-clock:u: 
+	    7efee84c183c malloc+0x5c (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840415.529102:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840415.539203:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840415.549304:   10101010 cpu-clock:u: 
+	    7efee84becad _int_free_chunk+0x2d (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840415.559404:   10101010 cpu-clock:u: 
+	    7efee84c2283 realloc+0x123 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840415.569505:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840415.579767:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840415.589868:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840415.599969:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840415.610181:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840415.620282:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840415.630382:   10101010 cpu-clock:u: 
+	    7efee84c1853 malloc+0x73 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840415.640483:   10101010 cpu-clock:u: 
+	    7efee8584cf6 __memmove_avx_unaligned_erms+0x76 (/usr/lib64/libc.so.6)
+	    7efee84c0ff1 _int_realloc+0x131 (/usr/lib64/libc.so.6)
+	    7efee84c228b realloc+0x12b (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840415.650584:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840415.660718:   10101010 cpu-clock:u: 
+	    7efee84c1853 malloc+0x73 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840415.670818:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840415.680919:   10101010 cpu-clock:u: 
+	    7efee84c1853 malloc+0x73 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840415.691020:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840415.701121:   10101010 cpu-clock:u: 
+	    7efee84beca9 _int_free_chunk+0x29 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840415.711222:   10101010 cpu-clock:u: 
+	    7efee84c21a9 realloc+0x49 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840415.721323:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840415.731423:   10101010 cpu-clock:u: 
+	    7efee84c2798 __libc_calloc+0x38 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840415.741524:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840415.751625:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840415.761726:   10101010 cpu-clock:u: 
+	    7efee84c013e _int_malloc+0x94e (/usr/lib64/libc.so.6)
+	    7efee84c0898 __libc_malloc2+0x48 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840415.771827:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840415.781928:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840415.792064:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840415.802182:   10101010 cpu-clock:u: 
+	    7efee84c2863 __libc_calloc+0x103 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840415.812283:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840415.822384:   10101010 cpu-clock:u: 
+	    7efee84c21c9 realloc+0x69 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840415.832484:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840415.842586:   10101010 cpu-clock:u: 
+	    7efee84c183f malloc+0x5f (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840415.852687:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840415.862787:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840415.872888:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840415.882989:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840415.893259:   10101010 cpu-clock:u: 
+	    7efee84c011c _int_malloc+0x92c (/usr/lib64/libc.so.6)
+	    7efee84c0898 __libc_malloc2+0x48 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840415.903360:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840415.913461:   10101010 cpu-clock:u: 
+	    7efee8584c80 __memmove_avx_unaligned_erms+0x0 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840415.923561:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840415.933662:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840415.943763:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840415.953864:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840415.963965:   10101010 cpu-clock:u: 
+	    7efee8584c91 __memmove_avx_unaligned_erms+0x11 (/usr/lib64/libc.so.6)
+	    7efee84c0ff1 _int_realloc+0x131 (/usr/lib64/libc.so.6)
+	    7efee84c228b realloc+0x12b (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840415.974065:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840415.984177:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840415.994278:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840416.004379:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840416.014480:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840416.024580:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840416.034681:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840416.044782:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840416.054883:   10101010 cpu-clock:u: 
+	    7efee84becf9 _int_free_chunk+0x79 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840416.064984:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840416.075085:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840416.085186:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840416.095287:   10101010 cpu-clock:u: 
+	    7efee84bd87e _int_free_create_chunk+0x1e (/usr/lib64/libc.so.6)
+	    7efee84bebbd _int_free_merge_chunk+0xad (/usr/lib64/libc.so.6)
+	    7efee84bee40 _int_free_chunk+0x1c0 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840416.105387:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840416.115488:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840416.125589:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840416.135690:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840416.145791:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840416.155892:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840416.166155:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840416.176256:   10101010 cpu-clock:u: 
+	    7efee84c1e04 cfree@GLIBC_2.2.5+0x64 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840416.186357:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840416.196458:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840416.206561:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840416.216660:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840416.226761:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840416.236861:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840416.246962:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840416.257063:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840416.267164:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840416.277265:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840416.287366:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840416.297479:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840416.307580:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840416.317681:   10101010 cpu-clock:u: 
+	    7efee84bd74a malloc_consolidate+0xaa (/usr/lib64/libc.so.6)
+	    7efee84bfde7 _int_malloc+0x5f7 (/usr/lib64/libc.so.6)
+	    7efee84c0898 __libc_malloc2+0x48 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840416.327781:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840416.337882:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840416.347983:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840416.358084:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840416.368185:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840416.388387:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840416.398489:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840416.408603:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840416.418717:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840416.428817:   10101010 cpu-clock:u: 
+	    7efee84c183c malloc+0x5c (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840416.437100:   10101010 cpu-clock:u: 
+	    7efee84bfa50 _int_malloc+0x260 (/usr/lib64/libc.so.6)
+	    7efee84c0898 __libc_malloc2+0x48 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840416.450104:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840416.460244:   10101010 cpu-clock:u: 
+	    7efee84bfa26 _int_malloc+0x236 (/usr/lib64/libc.so.6)
+	    7efee84c0898 __libc_malloc2+0x48 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840416.480460:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840416.490561:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840416.500661:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840416.520863:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840416.530971:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840416.541065:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840416.551268:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840416.561369:   10101010 cpu-clock:u: 
+	    7efee8584c80 __memmove_avx_unaligned_erms+0x0 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840416.571470:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840416.581570:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840416.591671:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840416.601772:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840416.611885:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840416.621986:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840416.632087:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840416.642187:   10101010 cpu-clock:u: 
+	    7efee84bd91b _int_free_create_chunk+0xbb (/usr/lib64/libc.so.6)
+	    7efee84bebbd _int_free_merge_chunk+0xad (/usr/lib64/libc.so.6)
+	    7efee84bee40 _int_free_chunk+0x1c0 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840416.652288:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840416.662389:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840416.672490:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840416.682603:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840416.692704:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840416.702805:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840416.712906:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840416.723006:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840416.733107:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840416.743208:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840416.753309:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840416.763410:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840416.773511:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840416.783616:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840416.793712:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840416.803813:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840416.813914:   10101010 cpu-clock:u: 
+	    7efee84bfc9b _int_malloc+0x4ab (/usr/lib64/libc.so.6)
+	    7efee84c0898 __libc_malloc2+0x48 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840416.834116:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840416.844217:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840416.854318:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840416.864418:   10101010 cpu-clock:u: 
+	    7efee84bf115 sysmalloc+0x175 (/usr/lib64/libc.so.6)
+	    7efee84c0772 _int_malloc+0xf82 (/usr/lib64/libc.so.6)
+	    7efee84c0898 __libc_malloc2+0x48 (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840416.874519:   10101010 cpu-clock:u: 
+	    7efee84bed68 _int_free_chunk+0xe8 (/usr/lib64/libc.so.6)
+	    7efee84c1062 _int_realloc+0x1a2 (/usr/lib64/libc.so.6)
+	    7efee84c228b realloc+0x12b (/usr/lib64/libc.so.6)
+
+bezier_region::   79849 840416.884620:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840416.894721:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840416.904822:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840416.914923:   10101010 cpu-clock:u: 
+
+bezier_region::   79849 840416.925024:   10101010 cpu-clock:u: 
+

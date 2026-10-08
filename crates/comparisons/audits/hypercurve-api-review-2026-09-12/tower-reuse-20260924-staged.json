@@ -1,0 +1,11 @@
+{
+  "parent": "071fa18a40e0c36b7ae103af647c7438a3cfa3df",
+  "files": {
+    "src/computable/node/bounds.rs": "fe98a730f5da97e168cf6a8d68b3a8c42f1e623af445146795d0a0ba56af3948",
+    "src/computable/node/cache_rescale_tests.rs": "759110f39c1c689ef6e22b16741d669d116a6fca3aa7126e530b5c665e53918d",
+    "src/computable/node/quadratic_tower.rs": "8ca2144878a22e6c985448aa5b8d5d53804007863ab05738032b9e5de8ce00ba",
+    "src/computable/node/representation.rs": "93e020c8b2edeba0e42f2fd64e1a06cdfea1a17139eb73e0604616b10a6fd215",
+    "src/real/arithmetic/quadratic_tower_sign.rs": "27dd28b21a8e25e4f18b112c6c5ddbe8eff1673d811d8611a9e5c3681c537131"
+  },
+  "all_owned_processes_reaped": true
+}

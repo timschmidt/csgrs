@@ -1,0 +1,12 @@
+{
+  "normal_production_documentation": true,
+  "source_manifest": "composition-evidence-20260928-v711-sources.json",
+  "source_directory": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/source-archives/composition-evidence-20260928-v711",
+  "all_processes_reaped": true,
+  "qualification_complete": true,
+  "checks": [],
+  "cases": [],
+  "builds": [],
+  "evidence_runs": 12,
+  "note": "Documentation only; audited prior exact test logs, timings, source snapshots and executable hashes. No repeated build/test."
+}

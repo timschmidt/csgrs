@@ -1,0 +1,20 @@
+exact Rational memoized Laplace: 60/60
+exact Rational LU determinant: 60/60
+adapted Rational LU determinant: 60/60
+exact Rational LU solve: 60/60
+adapted Rational LU solve: 60/60
+directed matrix products p=10: 48/48
+ball matrix products p=10: 96/96
+wide ball matrix products p=10: 864/864
+directed matrix products p=24: 48/48
+ball matrix products p=24: 96/96
+wide ball matrix products p=24: 864/864
+interval solve p=24: 60/60
+directed matrix products p=53: 48/48
+ball matrix products p=53: 96/96
+wide ball matrix products p=53: 864/864
+interval solve p=53: 60/60
+directed matrix products p=100: 48/48
+ball matrix products p=100: 96/96
+wide ball matrix products p=100: 864/864
+interval solve p=100: 60/60

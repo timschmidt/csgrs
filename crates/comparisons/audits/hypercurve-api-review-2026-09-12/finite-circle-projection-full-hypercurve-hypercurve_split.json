@@ -1,0 +1,31 @@
+{
+  "repo": "hypercurve",
+  "target": "hypercurve_split",
+  "binary": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve_split-94281f8981905143",
+  "command": [
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve_split-94281f8981905143",
+    "--test-threads=4",
+    "--color",
+    "never"
+  ],
+  "sha256": "6e925df29a38a6302876ae80259df711e3b70a0900291441b2d3b38466a68009",
+  "returncode": 0,
+  "timed_out": false,
+  "elapsed_seconds": 0.0034087069798260927,
+  "log": "finite-circle-projection-full-hypercurve-hypercurve_split.log",
+  "passed": [
+    "split_constructors_reject_unnormalized_evidence",
+    "split_map_includes_endpoints_and_sorted_point_events",
+    "split_map_deduplicates_overlap_endpoints",
+    "split_map_preserves_same_circle_arc_overlap_endpoints",
+    "split_points_flatten_in_segment_order",
+    "split_map_sorts_reversed_overlap_parameters_for_second_operand"
+  ],
+  "failed": [],
+  "ignored": [],
+  "summaries": [
+    "test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s"
+  ],
+  "new_failures": [],
+  "known_failures": []
+}

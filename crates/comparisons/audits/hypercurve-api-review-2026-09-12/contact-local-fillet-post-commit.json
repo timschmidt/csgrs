@@ -1,0 +1,10 @@
+{
+  "commit": "13b193f1c4903b1ce78b99bad8b6cd38a4a0eb1b",
+  "files": {
+    "src/bezier_offset.rs": "82d8af5f3876840a913abc3381544667bd6ee807a40a7c7fabf6404516c03381",
+    "src/curve.rs": "ac818e9b30c98a6c8382126c7c2248e21fc79187abf206672f8ab8efd5fe0873",
+    "src/bezier_region.rs": "ed44bfd5f1e2725e85a1f4adcd9c106c511a3d8b525d4aa2bc5ba28b5ca3e445",
+    "src/curve_corner_chain.rs": "09b5e9add7df82e46ea65273c0de516764a022e8283d34146c229f4b9ad5fb69"
+  },
+  "working_status": " M src/bezier_offset.rs\n M src/bezier_region.rs\n M tests/hypercurve_curve_region_promotion.rs\n"
+}

@@ -1,0 +1,22 @@
+Keep exact higher derivatives on rational endpoint images
+
+Rational conic and general Bezier endpoints discarded second and third
+source-expression derivatives even though construction returned valid exact
+images. Remove that materialization filter and keep all constructed evidence.
+
+Make optional higher-derivative coordinate extraction nonblocking during
+arrangement endpoint setup. Actual tangent ordering still requests its needed
+derivative from the retained source and must certify its predicates. Keep
+first-order admission, source matching, finite-domain checks and parameter
+cache ownership unchanged.
+
+Validate analytic derivative signs under both policies and a stationary
+rational endpoint with an unprojected second derivative. The unchanged public
+probe now retains all eight formerly missing higher derivatives with the same
+exact images as direct construction.
+
+Validation: 327 release cases across 12 pinned binaries; all-target Clippy
+with/without defaults, formatting, four fuzz targets, rustdoc with warnings
+denied, Hyperbrep Clippy, and csgrs checks. This preserves endpoint evidence;
+it does not claim complete retained-expression tangent ordering or universal
+curve-operation closure.

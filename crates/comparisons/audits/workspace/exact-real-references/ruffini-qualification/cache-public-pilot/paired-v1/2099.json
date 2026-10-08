@@ -1,0 +1,21 @@
+{
+  "args": [
+    "-c",
+    "6",
+    "/home/tim/Documents/GitHub/workspace/exact-real-references/ruffini-qualification/cache-public-pilot/after-UaEfGm/memory",
+    "bench",
+    "rational",
+    "positive",
+    "warm",
+    "65536",
+    "65408",
+    "100"
+  ],
+  "begin": "2026-09-07T05:51:08.867Z",
+  "end": "2026-09-07T05:51:08.870Z",
+  "status": 0,
+  "signal": null,
+  "error": null,
+  "stdout": "{\"family\":\"rational\",\"negative\":false,\"mode\":\"warm\",\"bits\":65536,\"gap\":65408,\"reps\":100,\"cpu_ns\":8929,\"wall_ns\":10249,\"checksum\":12700,\"expected\":\"113427455640312821154458202477256070485\",\"memory\":{\"calls\":100,\"bytes\":2400,\"peak_extra_requested\":24,\"retained_delta\":0}}\n",
+  "stderr": ""
+}

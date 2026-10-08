@@ -1,0 +1,315 @@
+{
+  "status": "implemented, qualified, committed; original goal active",
+  "commits": {
+    "hypercurve": "6c6fdad97a46d5f6efcd653c631b058b6db29ae9",
+    "hypersolve": "e5139b46c707768bdcb40164cefc990753a70f6e",
+    "hyperbrep": "8a84ee7db02fd2720ac89a1a6a227ee4ec2a8171"
+  },
+  "preceding_hypersolve_commit": "9fa774c843b32f7a9f423e2784f0e3376df16e5a",
+  "implementation": [
+    "One sign-preserving primitive coefficient conversion now prepares rational arithmetic, Sturm chains and selected-root signed remainder chains. The redundant local closure and duplicate rational-input preparation were removed.",
+    "Hyperreal primitive_bigint_ratio already certifies positive primitive content. Hypersolve now shares degree/zero-shape trimming instead of recomputing that content. Positive-leading normalization remains at GCD output; raw derivatives and pseudo-remainders still remove content where it is not already certified.",
+    "Exact quotient, modular product/remainder and inverse paths retain their actual-value scale. Explicit exact_rational_ref guards preserve arbitrary exact Real fallbacks. No new carrier, compatibility interface or cache was introduced; production code shrinks by one line."
+  ],
+  "baseline": "primitive-coefficient-reduction-baseline.json",
+  "arithmetic_measurement": {
+    "status": "all exact coefficient assertions pass",
+    "timing_scope": "Three interleaved baseline/current process pairs after all qualification and held-out retry processes ended. Each process evaluates both positive and negative modulus gauges; medians pool those six exact reductions per input size. Setup is excluded.",
+    "runs": [
+      {
+        "iteration": 0,
+        "variant": "baseline",
+        "samples": [
+          {
+            "steps": 2000,
+            "seconds": 0.000400362,
+            "exact": true
+          },
+          {
+            "steps": 2000,
+            "seconds": 0.000368045,
+            "exact": true
+          },
+          {
+            "steps": 8000,
+            "seconds": 0.002289133,
+            "exact": true
+          },
+          {
+            "steps": 8000,
+            "seconds": 0.002385866,
+            "exact": true
+          },
+          {
+            "steps": 32000,
+            "seconds": 0.018420836000000003,
+            "exact": true
+          },
+          {
+            "steps": 32000,
+            "seconds": 0.018578926,
+            "exact": true
+          }
+        ]
+      },
+      {
+        "iteration": 0,
+        "variant": "current",
+        "samples": [
+          {
+            "steps": 2000,
+            "seconds": 8.5534e-05,
+            "exact": true
+          },
+          {
+            "steps": 2000,
+            "seconds": 7.1595e-05,
+            "exact": true
+          },
+          {
+            "steps": 8000,
+            "seconds": 0.000271642,
+            "exact": true
+          },
+          {
+            "steps": 8000,
+            "seconds": 0.00022551499999999997,
+            "exact": true
+          },
+          {
+            "steps": 32000,
+            "seconds": 0.001194138,
+            "exact": true
+          },
+          {
+            "steps": 32000,
+            "seconds": 0.001142882,
+            "exact": true
+          }
+        ]
+      },
+      {
+        "iteration": 1,
+        "variant": "current",
+        "samples": [
+          {
+            "steps": 2000,
+            "seconds": 7.9084e-05,
+            "exact": true
+          },
+          {
+            "steps": 2000,
+            "seconds": 7.1456e-05,
+            "exact": true
+          },
+          {
+            "steps": 8000,
+            "seconds": 0.000279611,
+            "exact": true
+          },
+          {
+            "steps": 8000,
+            "seconds": 0.000225895,
+            "exact": true
+          },
+          {
+            "steps": 32000,
+            "seconds": 0.001187829,
+            "exact": true
+          },
+          {
+            "steps": 32000,
+            "seconds": 0.0011413120000000002,
+            "exact": true
+          }
+        ]
+      },
+      {
+        "iteration": 1,
+        "variant": "baseline",
+        "samples": [
+          {
+            "steps": 2000,
+            "seconds": 0.00039089299999999996,
+            "exact": true
+          },
+          {
+            "steps": 2000,
+            "seconds": 0.000365095,
+            "exact": true
+          },
+          {
+            "steps": 8000,
+            "seconds": 0.002222667,
+            "exact": true
+          },
+          {
+            "steps": 8000,
+            "seconds": 0.001918038,
+            "exact": true
+          },
+          {
+            "steps": 32000,
+            "seconds": 0.018638802,
+            "exact": true
+          },
+          {
+            "steps": 32000,
+            "seconds": 0.020526673,
+            "exact": true
+          }
+        ]
+      },
+      {
+        "iteration": 2,
+        "variant": "baseline",
+        "samples": [
+          {
+            "steps": 2000,
+            "seconds": 0.00038032399999999997,
+            "exact": true
+          },
+          {
+            "steps": 2000,
+            "seconds": 0.00036801499999999997,
+            "exact": true
+          },
+          {
+            "steps": 8000,
+            "seconds": 0.002072208,
+            "exact": true
+          },
+          {
+            "steps": 8000,
+            "seconds": 0.001904799,
+            "exact": true
+          },
+          {
+            "steps": 32000,
+            "seconds": 0.019023166,
+            "exact": true
+          },
+          {
+            "steps": 32000,
+            "seconds": 0.018722936000000003,
+            "exact": true
+          }
+        ]
+      },
+      {
+        "iteration": 2,
+        "variant": "current",
+        "samples": [
+          {
+            "steps": 2000,
+            "seconds": 8.3444e-05,
+            "exact": true
+          },
+          {
+            "steps": 2000,
+            "seconds": 7.1535e-05,
+            "exact": true
+          },
+          {
+            "steps": 8000,
+            "seconds": 0.00028319099999999997,
+            "exact": true
+          },
+          {
+            "steps": 8000,
+            "seconds": 0.000224085,
+            "exact": true
+          },
+          {
+            "steps": 32000,
+            "seconds": 0.0011918789999999999,
+            "exact": true
+          },
+          {
+            "steps": 32000,
+            "seconds": 0.00116226,
+            "exact": true
+          }
+        ]
+      }
+    ],
+    "median_seconds": {
+      "2000": {
+        "baseline": 0.0003741845,
+        "current": 7.53395e-05,
+        "baseline_over_current": 4.966644323362911
+      },
+      "8000": {
+        "baseline": 0.0021474375,
+        "current": 0.00024876849999999997,
+        "baseline_over_current": 8.632272574702988
+      },
+      "32000": {
+        "baseline": 0.018680869000000003,
+        "current": 0.0011750445,
+        "baseline_over_current": 15.898009820053625
+      }
+    }
+  },
+  "measurement_scope": "The measured 4.97x, 8.63x and 15.90x factors apply to the exact tensor-reduction fixture, not to complete offsets. Existing generated and wide-coefficient tests validate sign, scale, root and quotient invariants; no implementation-mirroring unit test was added.",
+  "tests": {
+    "hypercurve": {
+      "passed": 1459,
+      "targets": 13,
+      "ignored": 6,
+      "log": "primitive-coefficient-reduction-hypercurve-tests.log",
+      "exit_code": 0,
+      "fresh": true
+    },
+    "hyperbrep": {
+      "passed": 232,
+      "targets": 1,
+      "ignored": 0,
+      "log": "primitive-coefficient-reduction-hyperbrep-tests.log",
+      "exit_code": 0,
+      "fresh": true
+    },
+    "hypersolve": {
+      "passed": 491,
+      "targets": 1,
+      "ignored": 0,
+      "log": "primitive-coefficient-reduction-hypersolve-tests.log",
+      "exit_code": 0,
+      "fresh": true
+    }
+  },
+  "freshly_run_total": 2182,
+  "established_expensive_hypercurve_exclusions": 4,
+  "checks": [
+    "primitive-coefficient-reduction-hypercurve-check.log: exit 0",
+    "primitive-coefficient-reduction-hyperbrep-check.log: exit 0",
+    "primitive-coefficient-reduction-hypersolve-check.log: exit 0",
+    "changed-file rustfmt --check, git diff --check and source hashes: pass"
+  ],
+  "source_sha256": {
+    "hypersolve/src/integer_interpolation.rs": "2093dcffbfef7738117d7b0a9702365c4422f5e9c5d5a5852e9b3732f764e40d"
+  },
+  "diagnostics": {
+    "binary": "stationary-ph-offset-primitive-coefficient-reduction",
+    "binary_sha256": "2fccc25f8cf69e6f80a9d933e595bab22c6f17ac06ae745de916387a8108e1f8",
+    "log": "stationary-ph-offset-primitive-coefficient-reduction.log",
+    "timeout_seconds": 60,
+    "exit_code": 124,
+    "first_offset": "Certified with degree-five analytic source, 3.780000297s",
+    "second_offset": "No result before total timeout; full inward composition closure is not claimed.",
+    "stack": "stationary-ph-primitive-coefficient-reduction-stack.log",
+    "finding": "The current sample is in wide rational interval multiplication inside RecursiveQuadraticValue2.sign, called by the native ordered-field selected-root query. Later coefficient growth remains; no end-to-end speedup is claimed.",
+    "timing_scope": "The final unloaded probe ran after all qualification, held-out retry and arithmetic comparison processes ended. The separate GDB profile ran after the probe and commit, with no source changes."
+  },
+  "held_out_retry": {
+    "test": "bezier_region::tests::pair_native_boolean_algebraic_chord_corner_publishes_a_third_generation_fillet",
+    "log": "primitive-coefficient-reduction-third-generation-fillet.log",
+    "timeout_seconds": 60,
+    "exit_code": 124,
+    "result": "Still unqualified; no result before timeout. The other three expensive exclusions were not rerun in this stage."
+  },
+  "next_work": "ordered-field-chain-growth-followup.json records a bounded public-API coefficient-growth fixture and the existing field normalization machinery to consolidate next.",
+  "clean_repository_count": 30,
+  "workspace_state": "primitive-coefficient-reduction-workspace-after-commit.json",
+  "goal_status": "active"
+}

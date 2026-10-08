@@ -1,0 +1,756 @@
+impl Computable {
+    pub(super) fn square_operand(&self) -> Option<&Computable> {
+        match &self.internal.approximation {
+            Approximation::Square(child) => Some(child),
+            _ => None,
+        }
+    }
+
+    pub(crate) const MAX_DIRECT_NTH_ROOT_DEGREE: u32 = 9;
+
+    pub(crate) fn sqrt_rational(r: Rational) -> Self {
+        // Preserve the rational leaf so sqrt can still collapse perfect
+        // rational squares before allocating a generic Sqrt node.
+        let rational = Self::rational(r);
+        Self::sqrt(rational)
+    }
+
+    pub(crate) fn sqrt_squarefree_rational(radicand: Rational) -> Self {
+        debug_assert!(radicand.sign() != Sign::Minus);
+        let child = Self::rational(radicand);
+        let exact_sign = match child.internal.facts.exact_sign() {
+            ExactSignCache::Valid(Sign::NoSign) => ExactSignCache::Valid(Sign::NoSign),
+            _ => ExactSignCache::Valid(Sign::Plus),
+        };
+        Self {
+            internal: Arc::new(Node::new(Approximation::Sqrt(child), BoundCache::Invalid, exact_sign)),
+            signal: None,
+        }
+    }
+
+    /// Square root of this number.
+    pub fn sqrt(self) -> Computable {
+        if let Approximation::Square(child) = &self.internal.approximation {
+            // sqrt(x^2) can collapse to abs(x) when the sign is structurally known.
+            match child.exact_sign() {
+                Some(Sign::Plus) => {
+                    crate::trace_dispatch!("computable", "sqrt", "square-positive-collapse");
+                    return child.clone();
+                }
+                Some(Sign::Minus) => {
+                    crate::trace_dispatch!("computable", "sqrt", "square-negative-abs-collapse");
+                    return child.clone().negate();
+                }
+                Some(Sign::NoSign) => {
+                    crate::trace_dispatch!("computable", "sqrt", "square-zero-collapse");
+                    return Self::zero();
+                }
+                None => {}
+            }
+        }
+        if let Approximation::Multiply(left, right) = &self.internal.approximation {
+            let reduced = |scale: Rational, square_side: &Computable| {
+                // Recognize c*x^2 where c is an exact square, preserving the symbolic x
+                // instead of introducing a generic sqrt node.
+                let (root, rest) = scale.extract_square_reduced();
+                if !rest.is_one() {
+                    return None;
+                }
+                let Approximation::Square(child) = &square_side.internal.approximation else {
+                    return None;
+                };
+                match child.exact_sign() {
+                    Some(Sign::Plus) => Some(child.clone().multiply(Self::rational(root))),
+                    Some(Sign::Minus) => {
+                        Some(child.clone().negate().multiply(Self::rational(root)))
+                    }
+                    Some(Sign::NoSign) => Some(Self::zero()),
+                    None => None,
+                }
+            };
+
+            if let Some(scale) = left.exact_rational()
+                && let Some(value) = reduced(scale, right)
+            {
+                crate::trace_dispatch!("computable", "sqrt", "scaled-square-collapse");
+                return value;
+            }
+            if let Some(scale) = right.exact_rational()
+                && let Some(value) = reduced(scale, left)
+            {
+                crate::trace_dispatch!("computable", "sqrt", "scaled-square-collapse");
+                return value;
+            }
+        }
+        if let Some(rational) = self.exact_rational()
+            && rational.sign() != Sign::Minus
+            && rational.extract_square_will_succeed()
+        {
+            // Perfect rational squares stay exact. For scaled sqrt(2)/sqrt(3)
+            // residuals, keep the irrational part shared and the exact scale
+            // symbolic. Plain sqrt(2) and sqrt(3) deliberately stay on the
+            // generic node because repeated cached approximation of a single
+            // node is faster than a thread-local shared-cache lookup.
+            let (root, rest) = rational.extract_square_reduced();
+            if rest.is_one() {
+                crate::trace_dispatch!("computable", "sqrt", "exact-rational-square");
+                return Self::rational(root);
+            }
+            if !root.is_one()
+                && let Some(shared_radicand @ (2 | 3)) = rest.to_integer_i64()
+            {
+                // For scaled sqrt(2)/sqrt(3), reuse the shared constant cache
+                // for the irrational factor and keep the exact rational scale
+                // separate. This is a measured construction-time win for scaled
+                // square-free inputs without changing the single-node path for
+                // plain sqrt(2)/sqrt(3).
+                crate::trace_dispatch!("computable", "sqrt", "shared-squarefree-rational");
+                let constant = Self::sqrt_constant(shared_radicand)
+                    .expect("sqrt(2) and sqrt(3) are shared constants");
+                return constant.multiply(Self::rational(root));
+            }
+        }
+        crate::trace_dispatch!("computable", "sqrt", "generic-sqrt-node");
+        let exact_sign = match self.internal.facts.exact_sign() {
+            // Square roots are nonnegative where defined and preserve structural zero.
+            ExactSignCache::Valid(Sign::NoSign) => ExactSignCache::Valid(Sign::NoSign),
+            ExactSignCache::Valid(Sign::Plus) | ExactSignCache::Valid(Sign::Minus) => {
+                ExactSignCache::Valid(Sign::Plus)
+            }
+            _ => ExactSignCache::Invalid,
+        };
+        Self {
+            internal: Arc::new(Node::new(Approximation::Sqrt(self), BoundCache::Invalid, exact_sign)),
+            signal: None,
+        }
+    }
+
+    pub(crate) fn nth_root(self, degree: u32) -> Computable {
+        debug_assert!((3..=Self::MAX_DIRECT_NTH_ROOT_DEGREE).contains(&degree));
+        let exact_sign = match self.internal.facts.exact_sign() {
+            ExactSignCache::Valid(Sign::NoSign) => ExactSignCache::Valid(Sign::NoSign),
+            ExactSignCache::Valid(Sign::Plus) => ExactSignCache::Valid(Sign::Plus),
+            _ => ExactSignCache::Invalid,
+        };
+        Self {
+            internal: Arc::new(Node::new(
+                Approximation::NthRoot(self, degree),
+                BoundCache::Invalid,
+                exact_sign,
+            )),
+            signal: None,
+        }
+    }
+
+    pub(crate) fn prescaled_atan(n: BigInt) -> Self {
+        // atan(1/n) kernel used by pi and atan reduction constants. Passing the
+        // denominator as an integer keeps the series loop division-only.
+        Self {
+            internal: Arc::new(Node::new(Approximation::IntegralAtan(n), BoundCache::Invalid, ExactSignCache::Invalid)),
+            signal: None,
+        }
+    }
+
+    fn atan_rational_deferred(rational: Rational) -> Self {
+        // Exact rational atan reductions used to allocate intermediate
+        // add/multiply/inverse nodes before reaching the small atan series. This
+        // deferred node keeps the public constructor compact and performs the
+        // same range reductions directly in the approximation kernel.
+        crate::trace_dispatch!("computable", "constructor", "atan-rational-deferred");
+        Self {
+            internal: Arc::new(Node::new(Approximation::AtanRational(rational), BoundCache::Invalid, ExactSignCache::Invalid)),
+            signal: None,
+        }
+    }
+
+    fn atan_deferred(value: Computable) -> Self {
+        crate::trace_dispatch!("computable", "constructor", "atan-deferred");
+        let sign = value.exact_sign();
+        Self {
+            internal: Arc::new(Node::new(
+                Approximation::AtanDeferred(value),
+                BoundCache::Invalid,
+                sign.map_or(ExactSignCache::Invalid, ExactSignCache::Valid),
+            )),
+            signal: None,
+        }
+    }
+
+    fn asin_rational_deferred(rational: Rational) -> Self {
+        // Exact rational asin stores the signed input directly. Tiny values use
+        // the odd series, while larger values select the endpoint-stable acos
+        // complement inside the approximation kernel. Keeping both schedules
+        // behind one node avoids constructing and then negating a pi/2 graph.
+        crate::trace_dispatch!("computable", "constructor", "asin-rational-deferred");
+        let sign = rational.sign();
+        Self {
+            internal: Arc::new(Node::new(Approximation::AsinRational(rational), BoundCache::Invalid, ExactSignCache::Valid(sign))),
+            signal: None,
+        }
+    }
+
+    /// Arctangent of this number.
+    pub fn atan(self) -> Computable {
+        if let Some((scale, radicand)) = self.exact_pure_quadratic_surd()
+            && radicand == Rational::new(35)
+        {
+            let magnitude = if scale.sign() == Sign::Minus {
+                scale.clone().neg()
+            } else {
+                scale.clone()
+            };
+            if magnitude == Rational::fraction(1, 35).expect("thirty-five is nonzero") {
+                let argument = Rational::fraction(
+                    if scale.sign() == Sign::Minus { -1 } else { 1 },
+                    6,
+                )
+                .expect("six is nonzero");
+                crate::trace_dispatch!("computable", "atan", "quadratic-surd-asin-anchor");
+                return Self::asin_rational_deferred(argument);
+            }
+        }
+        if let Some((scale, radicand)) = self.exact_pure_quadratic_surd()
+            && radicand == Rational::new(3)
+        {
+            let magnitude = if scale.sign() == Sign::Minus {
+                scale.clone().neg()
+            } else {
+                scale.clone()
+            };
+            let denominator = if magnitude.is_one() {
+                Some(3)
+            } else if magnitude == Rational::fraction(1, 3).expect("three is nonzero") {
+                Some(6)
+            } else {
+                None
+            };
+            if let Some(denominator) = denominator {
+                let numerator = if scale.sign() == Sign::Minus { -1 } else { 1 };
+                crate::trace_dispatch!("computable", "atan", "quadratic-surd-pi-anchor");
+                return Self::pi().multiply_rational(
+                    Rational::fraction(numerator, denominator).expect("denominator is nonzero"),
+                );
+            }
+        }
+        if let Some(rational) = self
+            .exact_rational()
+            .or_else(|| self.bounded_laurent_rational(48))
+        {
+            if rational.sign() == Sign::NoSign {
+                crate::trace_dispatch!("computable", "atan", "exact-zero");
+                return Self::zero();
+            }
+            if rational.is_one() || rational.is_minus_one() {
+                crate::trace_dispatch!("computable", "atan", "exact-quarter-turn");
+                let quarter_turn = Self::pi().shift_right(2);
+                return if rational.sign() == Sign::Minus {
+                    quarter_turn.negate()
+                } else {
+                    quarter_turn
+                };
+            }
+            match rational.sign() {
+                Sign::Plus => {
+                    crate::trace_dispatch!("computable", "atan", "exact-rational-deferred");
+                    return Self::atan_rational_deferred(rational);
+                }
+                Sign::Minus => {
+                    crate::trace_dispatch!("computable", "atan", "negative-rational-deferred");
+                    return Self::atan_rational_deferred(rational.neg()).negate();
+                }
+                Sign::NoSign => unreachable!("zero rational returned above"),
+            }
+        }
+        Self::atan_deferred(self)
+    }
+
+    pub(crate) fn atan_reduced(self) -> Computable {
+        if self.exact_rational().is_some() {
+            return self.atan();
+        }
+        let bound = self.cheap_bound();
+        let known_sign = bound.known_sign();
+        if known_sign == Some(Sign::Minus) {
+            crate::trace_dispatch!("computable", "atan", "known-negative-symmetry");
+            return self.negate().atan().negate();
+        }
+        if known_sign.is_none() && self.exact_sign() == Some(Sign::Minus) {
+            crate::trace_dispatch!("computable", "atan", "known-negative-symmetry-fallback");
+            return self.negate().atan().negate();
+        }
+        // An estimated magnitude is a scheduling hint, not a series-domain
+        // certificate: repeated additions can outgrow the retained estimate.
+        if let Some(msd) = bound.known_msd().flatten() {
+            if msd < -1 {
+                crate::trace_dispatch!("computable", "atan", "structural-small-prescaled");
+                return Self {
+                    internal: Arc::new(Node::new(Approximation::PrescaledAtan(self), BoundCache::Invalid, ExactSignCache::Invalid)),
+                    signal: None,
+                };
+            }
+            if msd >= 5 && known_sign == Some(Sign::Plus) {
+                crate::trace_dispatch!("computable", "atan", "large-reciprocal-structural");
+                return Self::pi()
+                    .shift_right(1)
+                    .add(self.inverse().atan().negate());
+            }
+        }
+
+        let rough_appr = self.approx(-4);
+        if rough_appr.magnitude() < signed::EIGHT.magnitude() {
+            // |approx(-4)| <= 7 and its one-unit error prove |self| <= 1/2.
+            crate::trace_dispatch!("computable", "atan", "rough-small-prescaled");
+            return Self {
+                internal: Arc::new(Node::new(Approximation::PrescaledAtan(self), BoundCache::Invalid, ExactSignCache::Invalid)),
+                signal: None,
+            };
+        }
+        if rough_appr.sign() == Sign::Minus {
+            // The small branch handled the possible-zero interval. Here the
+            // rough sample certifies negativity, so odd symmetry reaches the
+            // positive range reductions without asking for an exact comparison.
+            crate::trace_dispatch!("computable", "atan", "rough-negative-symmetry");
+            return self.negate().atan().negate();
+        }
+
+        let one = Self::one();
+        let half = one.clone().shift_right(1);
+        if rough_appr <= *signed::SIXTEEN {
+            // For middle-sized arguments, subtract atan(1/2) before recursing. This keeps
+            // the residual small without jumping all the way to the reciprocal identity.
+            let numerator = self.clone().add(half.clone().negate());
+            let denominator = one.add(self.multiply(half));
+            crate::trace_dispatch!("computable", "atan", "medium-atan-half-reduction");
+            return Self::prescaled_atan(BigInt::from(2_u8))
+                .add(numerator.multiply(denominator.inverse()).atan());
+        }
+
+        // Large positive atan uses pi/2 - atan(1/x), which converges faster.
+        crate::trace_dispatch!("computable", "atan", "large-reciprocal");
+        Self::pi()
+            .shift_right(1)
+            .add(self.inverse().atan().negate())
+    }
+
+    /// Two-argument arctangent of `(self, x)`, returning the angle of the
+    /// point `(x, self)` measured counterclockwise from the positive `x`
+    /// axis in the principal range `(-pi, pi]`.
+    ///
+    /// `self` is the `y` coordinate and `x` is the `x` coordinate, matching
+    /// the IEEE 754 `atan2(y, x)` convention. The implementation reduces to
+    /// the single-argument [`Computable::atan`] kernel after a quadrant
+    /// correction:
+    /// - `x > 0`: returns `atan(self / x)`.
+    /// - `x < 0` and `self >= 0`: returns `atan(self / x) + pi`.
+    /// - `x < 0` and `self < 0`: returns `atan(self / x) - pi`.
+    /// - axes return exact constants: `pi/2`, `-pi/2`, `pi`, or zero.
+    /// - the origin `(0, 0)` returns zero, matching `f64::atan2`.
+    ///
+    /// # Panics
+    ///
+    /// Panics when the default bounded refinement cannot certify a required
+    /// axis or quadrant. Use [`Computable::try_atan2_until`] to preserve that
+    /// uncertainty.
+    #[inline]
+    pub fn atan2(self, x: Computable) -> Computable {
+        self.try_atan2_until(x, ATAN2_SIGN_REFINEMENT_FLOOR).expect(
+            "atan2 quadrant could not be certified; use Computable::try_atan2_until to handle uncertainty",
+        )
+    }
+
+    /// Checked `atan2` construction with a caller-selected exact-refinement floor.
+    ///
+    /// Returns `None` rather than treating an unresolved sign as an axis value.
+    #[inline]
+    pub fn try_atan2_until(
+        self,
+        x: Computable,
+        min_precision: Precision,
+    ) -> Option<Computable> {
+        let y_sign = self.structural_facts().sign.map(private_sign);
+        let x_sign = x.structural_facts().sign.map(private_sign);
+        match (y_sign, x_sign) {
+            (Some(Sign::NoSign), Some(Sign::NoSign)) | (Some(Sign::NoSign), Some(Sign::Plus)) => {
+                crate::trace_dispatch!("computable", "atan2", "axis-zero-y");
+                return Some(Self::zero());
+            }
+            (Some(Sign::NoSign), Some(Sign::Minus)) => {
+                crate::trace_dispatch!("computable", "atan2", "axis-negative-x");
+                return Some(Self::pi());
+            }
+            (Some(Sign::Plus), Some(Sign::NoSign)) => {
+                crate::trace_dispatch!("computable", "atan2", "axis-positive-y");
+                return Some(Self::pi().shift_right(1));
+            }
+            (Some(Sign::Minus), Some(Sign::NoSign)) => {
+                crate::trace_dispatch!("computable", "atan2", "axis-negative-y");
+                return Some(Self::pi().shift_right(1).negate());
+            }
+            _ => {}
+        }
+
+        let x_sign = x_sign.or_else(|| x.sign_until(min_precision).map(private_sign));
+        match x_sign {
+            Some(Sign::Plus) => {
+                crate::trace_dispatch!("computable", "atan2", "quadrant-right");
+                Some(self.multiply(x.inverse()).atan())
+            }
+            Some(Sign::Minus) => {
+                let y_sign =
+                    y_sign.or_else(|| self.sign_until(min_precision).map(private_sign))?;
+                let base = self.multiply(x.inverse()).atan();
+                match y_sign {
+                    Sign::NoSign => {
+                        crate::trace_dispatch!("computable", "atan2", "axis-negative-x");
+                        Some(Self::pi())
+                    }
+                    Sign::Plus => {
+                        crate::trace_dispatch!("computable", "atan2", "quadrant-upper-left");
+                        Some(base.add(Self::pi()))
+                    }
+                    Sign::Minus => {
+                        crate::trace_dispatch!("computable", "atan2", "quadrant-lower-left");
+                        Some(base.add(Self::pi().negate()))
+                    }
+                }
+            }
+            Some(Sign::NoSign) => {
+                let y_sign =
+                    y_sign.or_else(|| self.sign_until(min_precision).map(private_sign))?;
+                match y_sign {
+                    Sign::NoSign => Some(Self::zero()),
+                    Sign::Plus => Some(Self::pi().shift_right(1)),
+                    Sign::Minus => Some(Self::pi().shift_right(1).negate()),
+                }
+            }
+            None if y_sign == Some(Sign::Plus) => {
+                crate::trace_dispatch!("computable", "atan2", "half-angle-positive-y");
+                Some(Self::atan2_half_angle(self, x))
+            }
+            None if y_sign == Some(Sign::Minus) => {
+                crate::trace_dispatch!("computable", "atan2", "half-angle-negative-y");
+                Some(Self::atan2_half_angle(self, x))
+            }
+            None => None,
+        }
+    }
+
+    fn atan2_half_angle(y: Computable, x: Computable) -> Computable {
+        let radius = x.clone().square().add(y.clone().square()).sqrt();
+        y.multiply(radius.add(x).inverse()).atan().shift_left(1)
+    }
+
+    /// Inverse sine of this number.
+    pub fn asin(self) -> Computable {
+        if let Some(rational) = self.exact_rational() {
+            match rational.sign() {
+                Sign::NoSign => {
+                    crate::trace_dispatch!("computable", "asin", "exact-zero");
+                    return Self::zero();
+                }
+                Sign::Minus => {
+                    crate::trace_dispatch!("computable", "asin", "signed-rational-deferred");
+                    return Self::asin_rational_deferred(rational);
+                }
+                Sign::Plus => {
+                    if rational.msd_exact().is_some_and(|msd| msd <= -4) {
+                        // Tiny asin(x) is handled by its dedicated series; the generic
+                        // atan transform builds extra sqrt/division nodes.
+                        crate::trace_dispatch!("computable", "asin", "exact-tiny-rational-series");
+                        return Self::asin_rational_deferred(rational);
+                    }
+                    if rational >= *INVERSE_ENDPOINT_RATIONAL_THRESHOLD {
+                        crate::trace_dispatch!("computable", "asin", "endpoint-rational-deferred");
+                        return Self::asin_rational_deferred(rational);
+                    }
+                    crate::trace_dispatch!("computable", "asin", "positive-rational-deferred");
+                    return Self::asin_rational_deferred(rational);
+                }
+            }
+        }
+        if self.exact_sign() == Some(Sign::Minus) {
+            crate::trace_dispatch!("computable", "asin", "known-negative-symmetry");
+            return self.negate().asin().negate();
+        }
+        let (_, planned_msd) = self.planning_sign_and_msd();
+        if planned_msd.flatten().is_some_and(|msd| msd <= -4) {
+            crate::trace_dispatch!("computable", "asin", "structural-tiny-prescaled");
+            return Self::prescaled_asin(self);
+        }
+
+        crate::trace_dispatch!("computable", "asin", "generic-atan-sqrt-transform");
+        Self::asin_deferred(self)
+    }
+
+    /// Inverse cosine of this number.
+    pub fn acos(self) -> Computable {
+        if let Some(rational) = self.exact_rational() {
+            if rational.is_one() {
+                crate::trace_dispatch!("computable", "acos", "exact-one-zero");
+                return Self::zero();
+            }
+            if rational.is_minus_one() {
+                crate::trace_dispatch!("computable", "acos", "exact-minus-one-pi");
+                return Self::pi();
+            }
+            if rational.sign() == Sign::NoSign {
+                crate::trace_dispatch!("computable", "acos", "exact-zero-half-pi");
+                return Self::pi().shift_right(1);
+            }
+            let rational_sign = rational.sign();
+            let magnitude = if rational_sign == Sign::Minus {
+                rational.neg()
+            } else {
+                rational
+            };
+            if magnitude.msd_exact().is_some_and(|msd| msd <= -4) {
+                crate::trace_dispatch!("computable", "acos", "tiny-via-asin");
+                return Self::pi().shift_right(1).add(self.asin().negate());
+            }
+            if rational_sign == Sign::Minus {
+                // Every negative rational uses acos(-x) = pi - acos(x). Store
+                // the magnitude directly so mid-range values do not expand
+                // through nested half-pi-minus-asin identities before trig
+                // composition can inspect their exact [pi/2, pi] range.
+                crate::trace_dispatch!("computable", "acos", "negative-rational-deferred");
+                return Self::acos_negative_rational_deferred(magnitude);
+            }
+            if rational_sign == Sign::Plus {
+                crate::trace_dispatch!("computable", "acos", "positive-rational-deferred");
+                return Self::acos_positive_rational_deferred(magnitude);
+            }
+        }
+
+        if let Some(rational) = self.bounded_laurent_rational(48) {
+            crate::trace_dispatch!("computable", "acos", "exact-normal-form");
+            return Self::rational(rational).acos();
+        }
+
+        if self.exact_sign() == Some(Sign::Plus) {
+            // For positive values, acos(x) = 2 atan(sqrt((1-x)/(1+x))). This is the
+            // endpoint-friendly path for values near 1.
+            crate::trace_dispatch!("computable", "acos", "positive-endpoint-deferred");
+            return Self::acos_positive(self);
+        }
+
+        crate::trace_dispatch!("computable", "acos", "generic-half-pi-minus-asin");
+        Self::pi().shift_right(1).add(self.asin().negate())
+    }
+
+    /// Inverse hyperbolic sine of this number.
+    pub fn asinh(self) -> Computable {
+        let exact_rational = self.exact_rational();
+        if exact_rational
+            .as_ref()
+            .is_some_and(|r| r.sign() == Sign::NoSign)
+        {
+            crate::trace_dispatch!("computable", "asinh", "exact-zero");
+            return Self::zero();
+        }
+        let (known_sign, planned_msd) = self.planning_sign_and_msd();
+        if exact_rational
+            .as_ref()
+            .is_some_and(|r| r.sign() == Sign::Minus)
+            || known_sign == Some(Sign::Minus)
+        {
+            crate::trace_dispatch!("computable", "asinh", "known-negative-symmetry");
+            return self.negate().asinh().negate();
+        }
+        let exact_small = exact_rational
+            .as_ref()
+            .and_then(Rational::msd_exact)
+            .is_some_and(|msd| msd <= -2);
+        let exact_large = exact_rational
+            .as_ref()
+            .and_then(Rational::msd_exact)
+            .is_some_and(|msd| msd >= 3);
+        if exact_small {
+            crate::trace_dispatch!("computable", "asinh", "exact-small-rational-series");
+            if let Some(rational) = exact_rational {
+                return Self::asinh_rational_deferred(rational);
+            }
+            return Self::prescaled_asinh(self);
+        }
+        if exact_large {
+            let radicand = self.clone().square().add(Self::one());
+            crate::trace_dispatch!("computable", "asinh", "exact-large-direct-ln-sqrt");
+            return self.add(radicand.sqrt()).ln();
+        }
+        let known_msd = planned_msd.flatten();
+        let is_near_zero = match known_msd {
+            Some(msd) => msd < 3,
+            None => self.approx(-4) <= BigInt::from(64_u8),
+        };
+        if is_near_zero {
+            // Direct Computable approximation benches include construction in
+            // the measured work, and the eager graph caches its children better
+            // than a deferred Real-only wrapper.
+            let square = self.clone().square();
+            let one = Self::one();
+            let denominator = square.clone().add(one.clone()).sqrt().add(one);
+            crate::trace_dispatch!("computable", "asinh", "near-zero-ln1p-transform");
+            return self.add(square.multiply(denominator.inverse())).ln_1p();
+        }
+
+        let radicand = self.clone().square().add(Self::one());
+        crate::trace_dispatch!("computable", "asinh", "generic-direct-ln-sqrt");
+        self.add(radicand.sqrt()).ln()
+    }
+
+    /// Inverse hyperbolic cosine of this number. The caller is responsible for
+    /// ensuring the input is in-domain.
+    pub fn acosh(self) -> Computable {
+        let exact_rational_msd = match &self.internal.approximation {
+            Approximation::One => {
+                crate::trace_dispatch!("computable", "acosh", "exact-one-zero");
+                return Self::zero();
+            }
+            Approximation::Ratio(r) => {
+                if r.is_one() {
+                    crate::trace_dispatch!("computable", "acosh", "exact-one-zero");
+                    return Self::zero();
+                }
+                if r == &Rational::new(2) {
+                    crate::trace_dispatch!("computable", "acosh", "exact-two-constant");
+                    return Self::acosh2_constant();
+                }
+                if r >= &Rational::new(2) {
+                    let radicand = r.clone() * r.clone() - Rational::one();
+                    crate::trace_dispatch!(
+                        "computable",
+                        "acosh",
+                        "exact-rational-at-least-two-direct-radicand"
+                    );
+                    return self.add(Self::sqrt_rational(radicand)).ln();
+                }
+                r.msd_exact()
+            }
+            Approximation::Int(n) => {
+                if n == signed::ONE.deref() {
+                    crate::trace_dispatch!("computable", "acosh", "exact-one-zero");
+                    return Self::zero();
+                }
+                if n == signed::TWO.deref() {
+                    crate::trace_dispatch!("computable", "acosh", "exact-two-constant");
+                    return Self::acosh2_constant();
+                }
+                if n >= signed::TWO.deref() {
+                    let r = Rational::from_bigint(n.clone());
+                    let radicand = r.clone() * r - Rational::one();
+                    crate::trace_dispatch!(
+                        "computable",
+                        "acosh",
+                        "exact-integer-at-least-two-direct-radicand"
+                    );
+                    return self.add(Self::sqrt_rational(radicand)).ln();
+                }
+                if n.sign() == Sign::NoSign {
+                    None
+                } else {
+                    Some(n.magnitude().bits() as Precision - 1)
+                }
+            }
+            _ => None,
+        };
+        if let Approximation::Sqrt(child) = &self.internal.approximation
+            && child
+                .exact_rational()
+                .is_some_and(|r| r == Rational::new(2))
+        {
+            crate::trace_dispatch!("computable", "acosh", "sqrt-two-asinh-one");
+            return Self::asinh1_constant();
+        }
+        if exact_rational_msd.is_some_and(|msd| msd >= 3) {
+            // Large exact rationals skip the low-precision near-one probe and
+            // use the direct acosh identity.
+            let one = Self::one();
+            let radicand = self.clone().square().add(one.negate());
+            crate::trace_dispatch!("computable", "acosh", "exact-large-direct-ln-sqrt");
+            return self.add(radicand.sqrt()).ln();
+        }
+        let known_msd = self.planning_sign_and_msd().1.flatten();
+        let is_near_one = match known_msd {
+            Some(msd) => msd < 3,
+            None => self.approx(-4) <= BigInt::from(64_u8),
+        };
+        if is_near_one {
+            // Keep the public Computable kernel eager for approximation-heavy
+            // benches; Real uses a deferred wrapper when construction alone is
+            // the hot path.
+            let one = Self::one();
+            let shifted = self.clone().add(one.clone().negate());
+            let radicand = self.square().add(one.negate());
+            crate::trace_dispatch!("computable", "acosh", "near-one-ln1p-transform");
+            return shifted.add(radicand.sqrt()).ln_1p();
+        }
+
+        // Generic identity for already validated large inputs.
+        let one = Self::one();
+        let radicand = self.clone().square().add(one.negate());
+        crate::trace_dispatch!("computable", "acosh", "generic-direct-ln-sqrt");
+        self.add(radicand.sqrt()).ln()
+    }
+
+    /// Inverse hyperbolic tangent of this number. The caller is responsible for
+    /// ensuring the input is in-domain.
+    pub fn atanh(self) -> Computable {
+        if let Some(rational) = self.exact_rational() {
+            match rational.sign() {
+                Sign::NoSign => {
+                    crate::trace_dispatch!("computable", "atanh", "exact-zero");
+                    return Self::zero();
+                }
+                Sign::Minus => {
+                    crate::trace_dispatch!("computable", "atanh", "exact-negative-symmetry");
+                    return self.negate().atanh().negate();
+                }
+                Sign::Plus => {
+                    if rational.msd_exact().is_some_and(|msd| msd <= -4) {
+                        // Tiny atanh(x) is best served by the direct odd series.
+                        crate::trace_dispatch!("computable", "atanh", "exact-tiny-prescaled");
+                        return Self::atanh_rational_deferred(rational);
+                    }
+                    if rational.is_one_half() {
+                        crate::trace_dispatch!("computable", "atanh", "exact-half-ln3");
+                        return Self::ln_constant(3)
+                            .expect("ln3 is a shared log constant")
+                            .multiply(Self::half());
+                    }
+                    if !rational.is_one() {
+                        // For exact rationals, atanh(x) is one exact ln ratio.
+                        // That keeps common factors in the logarithm constructor
+                        // instead of building a generic quotient Computable first.
+                        // The final multiply uses the cached exact 1/2 leaf so
+                        // construction does not allocate a new rational after
+                        // the symbolic reduction has already succeeded.
+                        let one = Rational::one();
+                        let ratio = (one.clone() + rational.clone()) / (one - rational);
+                        crate::trace_dispatch!("computable", "atanh", "exact-log-ratio");
+                        return Self::ln_exact_rational(ratio).multiply(Self::half());
+                    }
+                }
+            }
+        }
+        if self.exact_sign() == Some(Sign::Minus) {
+            crate::trace_dispatch!("computable", "atanh", "known-negative-symmetry");
+            return self.negate().atanh().negate();
+        }
+        let (_, planned_msd) = self.planning_sign_and_msd();
+        if planned_msd.flatten().is_some_and(|msd| msd <= -4) {
+            crate::trace_dispatch!("computable", "atanh", "structural-tiny-prescaled");
+            return Self::prescaled_atanh(self);
+        }
+
+        // General formula 1/2 * ln((1+x)/(1-x)). Tiny exact rationals avoid
+        // this path because the odd atanh series has much less setup.
+        crate::trace_dispatch!("computable", "atanh", "generic-log-ratio");
+        let one = Self::one();
+        let numerator = one.clone().add(self.clone());
+        let denominator = one.add(self.negate());
+        numerator
+            .multiply(denominator.inverse())
+            .ln()
+            .multiply(Self::half())
+    }
+
+}

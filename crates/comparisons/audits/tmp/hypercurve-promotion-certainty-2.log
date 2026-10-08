@@ -1,0 +1,290 @@
+   Compiling hypercurve v0.3.1 (/home/tim/Documents/GitHub/workspace/hypercurve)
+    Finished `release` profile [optimized] target(s) in 1m 06s
+     Running tests/hypercurve_curve_region_promotion.rs (target/release/deps/hypercurve_curve_region_promotion-2922d8dd6e249918)
+
+running 100 tests
+test affine_line_fast_path_preserves_nonzero_and_even_odd_fill_rules ... ok
+test authored_line_arc_paths_use_the_unified_offset_engine ... ok
+test authored_loop_semantics_drive_nonzero_and_even_odd_classification ... ok
+test authored_nested_material_roles_certify_filled_sides_directly ... ok
+test algebraic_chamfer_participates_in_a_disjoint_boolean_batch ... ok
+test authoritative_curve_region_arrangement_regularizes_self_crossing_walks ... ok
+test all_family_nesting_rejects_crossing_loops_before_role_assignment ... ok
+test authoritative_curve_region_arrangement_honors_coincident_winding_multiplicity ... ok
+test authoritative_curve_region_arrangement_regularizes_signed_loop_composition ... ok
+test canonical_exact_chord_regions_fillet_without_line_demotion ... ok
+test authoritative_curve_region_arrangement_regularizes_nonlinear_winding ... ok
+test empty_region_promotion_is_decided_and_reusable ... ok
+test algebraic_chords_survive_nonsingular_exact_affine_transforms ... ok
+test exact_profiles_assign_holes_to_the_smallest_containing_material ... ok
+test authoritative_curve_region_regularizes_polynomial_and_rational_self_crossings ... ok
+test algebraic_chords_and_round_centers_survive_exact_similarities ... ok
+approximate-512 consumed caller=src/classify.rs:183
+   0: <hypercurve::policy::CurveContext>::observe_approximate_512
+   1: hypercurve::classify::real_sign
+   2: hypercurve::curve::curve_path_is_closed
+   3: <hypercurve::bezier_region::CurveRegion2>::try_from_boundary_paths_raw
+   4: <hypercurve::bezier_region::CurveRegion2>::try_from_boundary_paths
+   5: <hypercurve_curve_region_promotion::materialized_boundary_paths_obey_terminal_policy_once::{closure#0} as core::ops::function::FnOnce<()>>::call_once
+   6: test::__rust_begin_short_backtrace::<core::result::Result<(), alloc::string::String>, fn() -> core::result::Result<(), alloc::string::String>>
+   7: test::run_test::{closure#0}
+   8: std::sys::backtrace::__rust_begin_short_backtrace::<test::run_test::{closure#1}, ()>
+   9: <std::thread::lifecycle::spawn_unchecked<test::run_test::{closure#1}, ()>::{closure#1} as core::ops::function::FnOnce<()>>::call_once::{shim:vtable#0}
+  10: <std::sys::thread::unix::Thread>::new::thread_start
+  11: start_thread
+  12: __clone3
+
+approximate-512 consumed caller=src/classify.rs:183
+   0: <hypercurve::policy::CurveContext>::observe_approximate_512
+   1: hypercurve::classify::real_sign
+   2: hypercurve::curve::curve_path_is_closed
+   3: <hypercurve::bezier_region::CurveRegion2>::materialized_boundary_paths_for_edit
+   4: <hypercurve::bezier_region::CurveRegion2>::materialized_boundary_paths
+   5: <hypercurve_curve_region_promotion::materialized_boundary_paths_obey_terminal_policy_once::{closure#0} as core::ops::function::FnOnce<()>>::call_once
+   6: test::__rust_begin_short_backtrace::<core::result::Result<(), alloc::string::String>, fn() -> core::result::Result<(), alloc::string::String>>
+   7: test::run_test::{closure#0}
+   8: std::sys::backtrace::__rust_begin_short_backtrace::<test::run_test::{closure#1}, ()>
+   9: <std::thread::lifecycle::spawn_unchecked<test::run_test::{closure#1}, ()>::{closure#1} as core::ops::function::FnOnce<()>>::call_once::{shim:vtable#0}
+  10: <std::sys::thread::unix::Thread>::new::thread_start
+  11: start_thread
+  12: __clone3
+
+approximate-512 consumed caller=src/classify.rs:183
+   0: <hypercurve::policy::CurveContext>::observe_approximate_512
+   1: hypercurve::classify::real_sign
+   2: hypercurve::curve::curve_path_is_closed
+   3: <hypercurve::bezier_region::CurveRegion2>::materialized_boundary_paths_for_edit
+   4: <hypercurve::bezier_region::CurveRegion2>::materialized_boundary_paths
+   5: <hypercurve_curve_region_promotion::materialized_boundary_paths_obey_terminal_policy_once::{closure#0} as core::ops::function::FnOnce<()>>::call_once
+   6: test::__rust_begin_short_backtrace::<core::result::Result<(), alloc::string::String>, fn() -> core::result::Result<(), alloc::string::String>>
+   7: test::run_test::{closure#0}
+   8: std::sys::backtrace::__rust_begin_short_backtrace::<test::run_test::{closure#1}, ()>
+   9: <std::thread::lifecycle::spawn_unchecked<test::run_test::{closure#1}, ()>::{closure#1} as core::ops::function::FnOnce<()>>::call_once::{shim:vtable#0}
+  10: <std::sys::thread::unix::Thread>::new::thread_start
+  11: start_thread
+  12: __clone3
+
+test materialized_boundary_paths_obey_terminal_policy_once ... ok
+test analytic_parallel_miter_tangent_legs_have_no_nondegenerate_fillet ... ok
+test native_contour_constructors_and_signed_depth_need_no_region_wrapper ... ok
+test native_self_crossing_walk_regularizes_with_both_fill_rules ... ok
+test native_self_overlap_regularization_honors_winding_multiplicity ... ok
+test analytic_parallel_rejected_miters_remain_transverse_fillet_candidates ... ok
+test correlated_chord_pair_endpoints_survive_transform_and_offset ... ok
+test nonlinear_curved_winding_honors_authored_fill_rules_exactly ... ok
+test nonperiodic_self_contact_does_not_claim_a_green_integral_as_filled_area ... ok
+test cusp_chord_boolean_boundary_reoffsets_with_exact_bevels ... ok
+test one_field_algebraic_chamfer_regularizes_without_rebuilding_its_solver ... ok
+test region_promotion_retains_explicit_roles_and_line_fast_path ... ok
+test region_promotion_retains_hole_role_for_projection ... ok
+test line_parabola_fillet_extends_the_regular_incident_cell_exactly ... ok
+test retained_circular_regions_chamfer_over_the_full_support ... ok
+test approximate_512_trim_only_analytic_parallel_support_corners_retain_algebraic_fillet_centers ... ok
+test one_chord_orders_contacts_from_two_selected_round_corners ... ok
+test selected_algebraic_cusp_chamfers_use_the_unified_retained_kernel ... ok
+test selected_algebraic_round_join_retains_a_general_minor_cut ... ok
+
+thread 'rotated_algebraic_round_regions_boolean_through_oblique_three_field_contacts' (195) panicked at tests/hypercurve_curve_region_promotion.rs:2918:13:
+oblique offset chords must replay sides in their compact exact authority: TraceSnapshot { dispatch: [DispatchCount { layer: "computable", operation: "add", path: "nested-left-cancellation", count: 2 }, DispatchCount { layer: "computable", operation: "add", path: "nested-left-rational-fold", count: 24 }, DispatchCount { layer: "computable", operation: "add", path: "nested-right-rational-fold", count: 348 }, DispatchCount { layer: "computable", operation: "constructor", path: "one", count: 20 }, DispatchCount { layer: "computable", operation: "constructor", path: "rational-integer-canonicalized", count: 13046 }, DispatchCount { layer: "computable", operation: "constructor", path: "rational-node", count: 5391 }, DispatchCount { layer: "computable", operation: "constructor", path: "rational-zero-canonicalized", count: 5 }, DispatchCount { layer: "computable", operation: "constructor", path: "shared-constant-wrapper", count: 120 }, DispatchCount { layer: "computable", operation: "constructor", path: "shared-sqrt-constant-probe", count: 120 }, DispatchCount { layer: "computable", operation: "constructor", path: "zero", count: 5 }, DispatchCount { layer: "computable", operation: "negate", path: "exact-scale-fold", count: 271 }, DispatchCount { layer: "computable", operation: "sign_until", path: "algebraic-separation-unavailable", count: 14 }, DispatchCount { layer: "computable", operation: "sign_until", path: "precision-refinement", count: 233 }, DispatchCount { layer: "computable", operation: "sign_until", path: "unknown", count: 6 }, DispatchCount { layer: "computable", operation: "sign_until_attempt_precision", path: "-128<=p<-64", count: 18 }, DispatchCount { layer: "computable", operation: "sign_until_attempt_precision", path: "-256<=p<-128", count: 24 }, DispatchCount { layer: "computable", operation: "sign_until_attempt_precision", path: "-32<=p<0", count: 233 }, DispatchCount { layer: "computable", operation: "sign_until_attempt_precision", path: "-512<=p<-256", count: 16 }, DispatchCount { layer: "computable", operation: "sign_until_attempt_precision", path: "-64<=p<-32", count: 27 }, DispatchCount { layer: "computable", operation: "sign_until_attempt_precision", path: "p>=0", count: 233 }, DispatchCount { layer: "computable", operation: "sign_until_decision_precision", path: "-128<=p<-64", count: 4 }, DispatchCount { layer: "computable", operation: "sign_until_decision_precision", path: "-256<=p<-128", count: 4 }, DispatchCount { layer: "computable", operation: "sign_until_decision_precision", path: "-32<=p<0", count: 206 }, DispatchCount { layer: "computable", operation: "sign_until_decision_precision", path: "-512<=p<-256", count: 4 }, DispatchCount { layer: "computable", operation: "sign_until_decision_precision", path: "-64<=p<-32", count: 9 }, DispatchCount { layer: "computable", operation: "sign_until_unresolved_precision", path: "-512<=p<-256", count: 6 }, DispatchCount { layer: "computable", operation: "sqrt", path: "generic-sqrt-node", count: 12 }, DispatchCount { layer: "computable", operation: "structural", path: "quadratic-surd", count: 1183 }, DispatchCount { layer: "computable", operation: "structural_facts", path: "exact-sign-cache", count: 3379 }, DispatchCount { layer: "computable", operation: "zero_status", path: "exact-sign-cache", count: 214 }, DispatchCount { layer: "computable", operation: "zero_status", path: "unknown", count: 2 }, DispatchCount { layer: "hypercurve", operation: "algebraic-chord-axis-direction", path: "certified-unit-tangent", count: 12 }, DispatchCount { layer: "hypercurve", operation: "algebraic-chord-pair", path: "chord-contact-complete", count: 10 }, DispatchCount { layer: "hypercurve", operation: "algebraic-chord-pair-side-kernel", path: "refined-chord-box-disjointness", count: 4 }, DispatchCount { layer: "hypercurve", operation: "algebraic-chord-parameter-axis", path: "cross-axis-interval-separated", count: 7 }, DispatchCount { layer: "hypercurve", operation: "algebraic-chord-support-line", path: "procedural-endpoints-canonicalized", count: 6 }, DispatchCount { layer: "hypercurve", operation: "algebraic-chord-tangent-relation", path: "retained-construction-cross", count: 13 }, DispatchCount { layer: "hypercurve", operation: "algebraic-chord-tangent-relation", path: "retained-direction-authority", count: 13 }, DispatchCount { layer: "hypercurve", operation: "algebraic-circle-chord-kernel", path: "recursive-finite-incidence-disjoint", count: 4 }, DispatchCount { layer: "hypercurve", operation: "algebraic-circle-chord-kernel", path: "recursive-projective-retained-chord", count: 14 }, DispatchCount { layer: "hypercurve", operation: "algebraic-circle-fragment-location", path: "endpoint-chord-decision", count: 6 }, DispatchCount { layer: "hypercurve", operation: "curve-region-carrier-parameter-location", path: "authored-strict-interior", count: 3 }, DispatchCount { layer: "hypercurve", operation: "recursive-chord-displacement-speed", path: "exact-real-witness", count: 8 }, DispatchCount { layer: "hypercurve", operation: "recursive-projective-axis-order", path: "interval-separated", count: 110 }, DispatchCount { layer: "hypercurve", operation: "recursive-projective-parameter", path: "certified-unit-bounds", count: 4 }, DispatchCount { layer: "hypercurve", operation: "recursive-projective-point", path: "cardinal-displacement-canonicalized", count: 62 }, DispatchCount { layer: "hypercurve", operation: "represented-chord-normal-frame", path: "center-represented", count: 4 }, DispatchCount { layer: "hypercurve", operation: "represented-chord-normal-frame", path: "normal-represented", count: 4 }, DispatchCount { layer: "hypercurve", operation: "represented-chord-unit-direction", path: "independent-quotients", count: 4 }, DispatchCount { layer: "hypercurve", operation: "represented-circle-pair-translation", path: "retained-similarity-point", count: 2 }, DispatchCount { layer: "hypercurve", operation: "selected-circle-represented-frame", path: "compact-low-degree-cusp", count: 8 }, DispatchCount { layer: "hyperlimit", operation: "compare_reals", path: "certified-real-ordering", count: 2487 }, DispatchCount { layer: "hyperlimit", operation: "compare_reals", path: "difference-sign-cascade", count: 2 }, DispatchCount { layer: "hyperlimit", operation: "compare_reals", path: "exact-rational", count: 8966 }, DispatchCount { layer: "hyperlimit", operation: "ordered_aabb2s_intersect_coordinates", path: "exact-rational", count: 130 }, DispatchCount { layer: "hyperlimit", operation: "real_op", path: "sub-ref", count: 2 }, DispatchCount { layer: "hyperlimit", operation: "resolve_real_sign_direct", path: "structural-real-facts", count: 19823 }, DispatchCount { layer: "hyperlimit", operation: "resolve_real_sign_direct", path: "unknown", count: 4 }, DispatchCount { layer: "rational", operation: "add", path: "wide-dyadic", count: 16 }, DispatchCount { layer: "rational", operation: "add", path: "word-sized", count: 11396 }, DispatchCount { layer: "rational", operation: "arithmetic-reuse", path: "first-observation", count: 10302 }, DispatchCount { layer: "rational", operation: "average_pair", path: "arbitrary-precision", count: 8248 }, DispatchCount { layer: "rational", operation: "average_pair", path: "word-sized", count: 9130 }, DispatchCount { layer: "rational", operation: "common-scale", path: "primitive-bigint-ratio", count: 142 }, DispatchCount { layer: "rational", operation: "comparison", path: "biguint-cross-product", count: 311 }, DispatchCount { layer: "rational", operation: "comparison", path: "dyadic-borrowed-digits", count: 2349 }, DispatchCount { layer: "rational", operation: "comparison", path: "leading-bits-interval", count: 22 }, DispatchCount { layer: "rational", operation: "comparison", path: "magnitude-bits", count: 213 }, DispatchCount { layer: "rational", operation: "comparison", path: "word-sized", count: 4173 }, DispatchCount { layer: "rational", operation: "div", path: "word-sized", count: 847 }, DispatchCount { layer: "rational", operation: "dot_product", path: "word-sized", count: 16 }, DispatchCount { layer: "rational", operation: "inverse", path: "retained", count: 2229 }, DispatchCount { layer: "rational", operation: "linear", path: "retained-difference", count: 1171 }, DispatchCount { layer: "rational", operation: "linear", path: "retained-sum", count: 1706 }, DispatchCount { layer: "rational", operation: "mul", path: "dyadic-general-cross-cancel", count: 1655 }, DispatchCount { layer: "rational", operation: "mul", path: "retained-product", count: 3428 }, DispatchCount { layer: "rational", operation: "mul", path: "retained-secondary-product", count: 1298 }, DispatchCount { layer: "rational", operation: "mul", path: "wide-dyadic-cross-cancel", count: 39 }, DispatchCount { layer: "rational", operation: "mul", path: "wide-dyadic-word-numerators", count: 43 }, DispatchCount { layer: "rational", operation: "mul", path: "wide-dyadic-word-numerators-word-result", count: 10 }, DispatchCount { layer: "rational", operation: "mul", path: "word-dyadic-general-cross-cancel", count: 8785 }, DispatchCount { layer: "rational", operation: "mul", path: "word-sized", count: 20354 }, DispatchCount { layer: "rational", operation: "mul-div", path: "proven-reduced-word-product", count: 4045 }, DispatchCount { layer: "rational", operation: "neg", path: "retained", count: 4257 }, DispatchCount { layer: "rational", operation: "product_sum", path: "all-zero", count: 264 }, DispatchCount { layer: "rational", operation: "product_sum", path: "dyadic-shared-denominator", count: 11328 }, DispatchCount { layer: "rational", operation: "product_sum", path: "fixed-two-by-two-fallback", count: 19568 }, DispatchCount { layer: "rational", operation: "product_sum", path: "fixed-two-by-two-word-sized", count: 16158 }, DispatchCount { layer: "rational", operation: "product_sum", path: "single-term-product", count: 8240 }, DispatchCount { layer: "rational", operation: "product_sum", path: "word-sized", count: 967 }, DispatchCount { layer: "rational", operation: "retained-facts", path: "dyadic-hit", count: 4164 }, DispatchCount { layer: "rational", operation: "retained-facts", path: "dyadic-learned", count: 1846 }, DispatchCount { layer: "rational", operation: "retained-facts", path: "non-dyadic-hit", count: 6008 }, DispatchCount { layer: "rational", operation: "square_extraction", path: "large-power-of-two", count: 72 }, DispatchCount { layer: "rational", operation: "square_extraction", path: "mod63-reject", count: 176 }, DispatchCount { layer: "rational", operation: "square_extraction", path: "retained-reduction", count: 4757 }, DispatchCount { layer: "rational", operation: "square_extraction", path: "reuse-observed", count: 349 }, DispatchCount { layer: "rational", operation: "square_extraction", path: "shared-divisor-remainder", count: 280 }, DispatchCount { layer: "rational", operation: "square_extraction", path: "shared-small-factor-remainder", count: 280 }, DispatchCount { layer: "rational", operation: "sub", path: "word-sized", count: 1327 }, DispatchCount { layer: "rational", operation: "word-reduction", path: "mixed-357-smooth-denominator", count: 809 }, DispatchCount { layer: "rational", operation: "word-reduction", path: "other-small-odd-denominator", count: 2338 }, DispatchCount { layer: "rational", operation: "word-reduction", path: "other-wide-odd-denominator", count: 100 }, DispatchCount { layer: "rational", operation: "word-reduction", path: "other-word-odd-denominator", count: 457 }, DispatchCount { layer: "rational", operation: "word-reduction", path: "power-of-five-denominator", count: 12711 }, DispatchCount { layer: "rational", operation: "word-reduction", path: "power-of-seven-denominator", count: 96 }, DispatchCount { layer: "rational", operation: "word-reduction", path: "power-of-three-denominator", count: 209 }, DispatchCount { layer: "rational", operation: "word-result", path: "cached-small-dyadic", count: 9449 }, DispatchCount { layer: "rational", operation: "word-result", path: "cached-small-general-fraction", count: 10596 }, DispatchCount { layer: "rational", operation: "word-result", path: "cached-small-integer", count: 599 }, DispatchCount { layer: "rational", operation: "word-result", path: "dyadic-fraction", count: 19527 }, DispatchCount { layer: "rational", operation: "word-result", path: "small-general-fraction", count: 17075 }, DispatchCount { layer: "rational", operation: "word-result", path: "uncached-integer-1024-4095", count: 29 }, DispatchCount { layer: "rational", operation: "word-result", path: "uncached-integer-128-255", count: 9 }, DispatchCount { layer: "rational", operation: "word-result", path: "uncached-integer-256-1023", count: 2 }, DispatchCount { layer: "rational", operation: "word-result", path: "uncached-integer-65-127", count: 5 }, DispatchCount { layer: "rational", operation: "word-result", path: "uncached-integer-wide", count: 227 }, DispatchCount { layer: "rational", operation: "word-result", path: "unit", count: 863 }, DispatchCount { layer: "rational", operation: "word-result", path: "wide-general-fraction", count: 399 }, DispatchCount { layer: "rational", operation: "word-result", path: "zero", count: 1421 }, DispatchCount { layer: "rational_algorithm", operation: "division-cross-denominator", path: "backend-basecase", count: 102 }, DispatchCount { layer: "rational_algorithm", operation: "division-cross-numerator", path: "backend-basecase", count: 102 }, DispatchCount { layer: "rational_algorithm", operation: "gcd", path: "binary-fixed-256", count: 2929 }, DispatchCount { layer: "rational_algorithm", operation: "gcd", path: "binary-fixed-512", count: 463 }, DispatchCount { layer: "rational_algorithm", operation: "gcd", path: "binary-word", count: 4596 }, DispatchCount { layer: "rational_algorithm", operation: "gcd", path: "equal-wide", count: 97 }, DispatchCount { layer: "rational_algorithm", operation: "gcd", path: "euclidean-wide-remainder", count: 250 }, DispatchCount { layer: "rational_algorithm", operation: "gcd", path: "euclidean-wide-word", count: 3698 }, DispatchCount { layer: "rational_algorithm", operation: "gcd", path: "identity-wide", count: 71 }, DispatchCount { layer: "rational_algorithm", operation: "gcd", path: "lehmer-leading-limb", count: 171 }, DispatchCount { layer: "rational_algorithm", operation: "gcd", path: "power-of-two-wide", count: 8311 }, DispatchCount { layer: "rational_algorithm", operation: "multiplication-denominator", path: "backend-basecase", count: 1311 }, DispatchCount { layer: "rational_algorithm", operation: "multiplication-dyadic-general", path: "backend-basecase", count: 1655 }, DispatchCount { layer: "rational_algorithm", operation: "multiplication-numerator", path: "backend-basecase", count: 1311 }, DispatchCount { layer: "rational_algorithm", operation: "multiplication-wide-dyadic", path: "backend-basecase", count: 39 }, DispatchCount { layer: "rational_algorithm", operation: "reduction-denominator", path: "backend-knuth-basecase", count: 278 }, DispatchCount { layer: "rational_algorithm", operation: "reduction-denominator", path: "backend-single-limb", count: 2076 }, DispatchCount { layer: "rational_algorithm", operation: "reduction-numerator", path: "backend-knuth-basecase", count: 278 }, DispatchCount { layer: "rational_algorithm", operation: "reduction-numerator", path: "backend-single-limb", count: 724 }, DispatchCount { layer: "rational_algorithm", operation: "reduction-numerator", path: "backend-trivial-or-small-quotient", count: 1352 }, DispatchCount { layer: "rational_algorithm", operation: "root-extraction", path: "newton-nth-root", count: 120 }, DispatchCount { layer: "rational_algorithm", operation: "root-extraction", path: "newton-square-root", count: 64 }, DispatchCount { layer: "real", operation: "abs", path: "known-negative", count: 101 }, DispatchCount { layer: "real", operation: "add", path: "exact-rational-assign", count: 16298 }, DispatchCount { layer: "real", operation: "add", path: "generic-computable", count: 1906 }, DispatchCount { layer: "real", operation: "add", path: "lhs-zero", count: 772 }, DispatchCount { layer: "real", operation: "add", path: "rhs-zero", count: 4998 }, DispatchCount { layer: "real", operation: "add", path: "same-symbolic-basis", count: 27177 }, DispatchCount { layer: "real", operation: "average_pair", path: "mixed-symbolic-basis", count: 56 }, DispatchCount { layer: "real", operation: "average_pair", path: "same-symbolic-basis", count: 17378 }, DispatchCount { layer: "real", operation: "certified_cmp_until", path: "difference-sign", count: 832 }, DispatchCount { layer: "real", operation: "certified_cmp_until", path: "structural-equality", count: 314 }, DispatchCount { layer: "real", operation: "certified_cmp_until", path: "structural-facts", count: 1341 }, DispatchCount { layer: "real", operation: "certified_cmp_until", path: "unknown", count: 2 }, DispatchCount { layer: "real", operation: "certified_sign_until", path: "computable-refine", count: 233 }, DispatchCount { layer: "real", operation: "certified_sign_until", path: "structural-facts", count: 25743 }, DispatchCount { layer: "real", operation: "certified_sign_until", path: "unknown", count: 6 }, DispatchCount { layer: "real", operation: "constructor", path: "one", count: 8816 }, DispatchCount { layer: "real", operation: "constructor", path: "rational", count: 109111 }, DispatchCount { layer: "real", operation: "constructor", path: "zero", count: 62185 }, DispatchCount { layer: "real", operation: "definitely_zero", path: "rational-sign", count: 575 }, DispatchCount { layer: "real", operation: "div", path: "lhs-rational-symbolic-inverse", count: 1024 }, DispatchCount { layer: "real", operation: "div", path: "rhs-one", count: 24 }, DispatchCount { layer: "real", operation: "div", path: "same-class", count: 4891 }, DispatchCount { layer: "real", operation: "div", path: "zero", count: 52 }, DispatchCount { layer: "real", operation: "dot_product", path: "dot2-exact-rational-shared-denom", count: 8 }, DispatchCount { layer: "real", operation: "dot_product", path: "dot3-exact-rational-shared-denom", count: 8 }, DispatchCount { layer: "real", operation: "inverse_ref", path: "externally-certified-nonzero", count: 30 }, DispatchCount { layer: "real", operation: "inverse_ref", path: "generic", count: 72 }, DispatchCount { layer: "real", operation: "inverse_ref", path: "prechecked-one", count: 1096 }, DispatchCount { layer: "real", operation: "inverse_ref", path: "prechecked-sqrt-rational-radical", count: 1004 }, DispatchCount { layer: "real", operation: "mul", path: "exact-rational", count: 36428 }, DispatchCount { layer: "real", operation: "mul", path: "exact-rational-assign", count: 8 }, DispatchCount { layer: "real", operation: "mul", path: "lhs-rational-scale", count: 1562 }, DispatchCount { layer: "real", operation: "mul", path: "rhs-rational-scale", count: 2621 }, DispatchCount { layer: "real", operation: "mul", path: "symbolic-class-table", count: 1523 }, DispatchCount { layer: "real", operation: "mul", path: "zero", count: 2277 }, DispatchCount { layer: "real", operation: "polynomial", path: "eval-poly-exact-rational", count: 138 }, DispatchCount { layer: "real", operation: "polynomial", path: "eval-poly-horner", count: 132 }, DispatchCount { layer: "real", operation: "polynomial", path: "eval-poly-rational-x-split", count: 46 }, DispatchCount { layer: "real", operation: "product_sum", path: "diff-of-products-exact-rational", count: 25 }, DispatchCount { layer: "real", operation: "product_sum", path: "exact-rational-known-shared-denom", count: 1206 }, DispatchCount { layer: "real", operation: "product_sum", path: "mul-add", count: 212 }, DispatchCount { layer: "real", operation: "product_sum", path: "mul-add-zero-offset", count: 56 }, DispatchCount { layer: "real", operation: "product_sum", path: "mul-add-zero-product", count: 16 }, DispatchCount { layer: "real", operation: "root_n", path: "rational-perfect-root", count: 8 }, DispatchCount { layer: "real", operation: "sqrt", path: "computable-rational-promotion", count: 34 }, DispatchCount { layer: "real", operation: "sqrt", path: "generic-computable", count: 12 }, DispatchCount { layer: "real", operation: "sqrt", path: "rational-perfect-square", count: 4705 }, DispatchCount { layer: "real", operation: "sqrt", path: "rational-sqrt-special-form", count: 286 }, DispatchCount { layer: "real", operation: "sqrt", path: "scaled-shared-sqrt-constant", count: 120 }, DispatchCount { layer: "real", operation: "structural_facts", path: "exact-rational", count: 26621 }, DispatchCount { layer: "real", operation: "structural_facts", path: "scaled-computable", count: 3534 }, DispatchCount { layer: "real", operation: "structural_facts", path: "symbolic-nonzero-scale", count: 171 }, DispatchCount { layer: "real", operation: "sub", path: "exact-rational-assign", count: 82 }, DispatchCount { layer: "real", operation: "sub", path: "generic-computable", count: 1558 }, DispatchCount { layer: "real", operation: "sub", path: "lhs-zero", count: 102 }, DispatchCount { layer: "real", operation: "sub", path: "rhs-zero", count: 742 }, DispatchCount { layer: "real", operation: "sub", path: "same-symbolic-basis", count: 3880 }, DispatchCount { layer: "real", operation: "zero_status", path: "scaled-computable", count: 216 }, DispatchCount { layer: "real", operation: "zero_status", path: "symbolic-nonzero-scale", count: 19311 }, DispatchCount { layer: "real", operation: "zero_status", path: "zero-scale", count: 134 }], rational: RationalTraceStats { temporary_rationals: 250230, reductions: 37993, gcds: 20479, common_factors: CommonFactorBuckets { none: 37951, power_of_two: 9434, small: 1993, medium: 1046, large: 906 }, gcd_operand_widths: GcdOperandWidthBuckets { both_u64: 4318, mixed_u64_u128: 102, both_u128: 69, arbitrary_precision: 15990 }, peak_operand_bits: 2062 } }
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+test rotated_algebraic_round_regions_boolean_through_oblique_three_field_contacts ... FAILED
+test exact_support_cutter_reenters_correlated_chord_collinearly ... ok
+test selected_endpoint_chord_pairs_share_the_linear_fillet_kernel ... ok
+test selected_endpoint_chords_share_linear_arc_fillet_incidence ... ok
+test selected_endpoint_chords_share_linear_bezier_fillet_incidence ... ok
+test selected_circle_support_chord_corners_retain_algebraic_fillet_centers ... ok
+test similarity_rotation_preserves_unified_region_semantics_and_fast_path ... ok
+test algebraic_chord_expansion_merges_coupled_material_loops_exactly ... ok
+test strict_trim_only_analytic_parallel_support_corners_retain_algebraic_fillet_centers ... ok
+test transformed_promotion_retains_explicit_roles_without_the_source_fast_path ... ok
+test arc_parabola_fillet_recovers_exact_complement_contacts ... ok
+test repeated_region_offsets_compose_retained_exact_parallels_under_both_policies ... ok
+test translated_algebraic_round_regions_boolean_through_cusp_chord_contacts ... ok
+test unified_curved_erosion_opens_a_hole_through_the_material_boundary ... ok
+test unified_curved_erosion_resolves_simultaneous_hole_and_material_tangencies ... ok
+test unified_curved_erosion_retains_the_exact_hole_boundary_contact ... ok
+test unified_native_arrangement_exposes_immediate_evidence ... ok
+test unified_native_constructor_retains_zero_signed_area_boundary_for_diagnostics ... ok
+test unified_region_bounds_cover_native_and_higher_order_carriers_exactly ... ok
+test unified_region_chamfer_and_fillet_edit_higher_order_loops ... ok
+test unified_region_chamfer_joins_two_algebraic_bezier_cuts ... ok
+test unified_curved_erosion_composes_merging_holes_and_material_crossings ... ok
+test unified_region_chamfer_retains_algebraic_bezier_cut ... ok
+test unified_region_chamfer_reenters_general_algebraic_chords ... ok
+test unified_region_contracts_nonconvex_material_before_its_medial_collapse ... ok
+test unified_region_convex_contraction_decides_collapse_and_over_contraction ... ok
+test unified_region_convex_erosion_handles_orientation_and_redundant_edges ... ok
+test unified_region_contraction_preserves_non_miter_corner_styles ... ok
+test axis_aligned_algebraic_chords_reenter_exact_region_offsets ... ok
+approximate-512 consumed caller=src/curve.rs:4064
+   0: <hypercurve::policy::CurveContext>::observe_approximate_512
+   1: hypercurve::classify::real_sign
+   2: <hypercurve::bezier_region::CurveRegion2>::fillet_loop_vertex_by_radius::{closure#0}
+   3: <hypercurve::bezier_region::CurveRegion2>::fillet_loop_vertex_by_radius
+   4: <hypercurve_curve_region_promotion::unified_region_corner_solver_obeys_terminal_policy_once::{closure#0} as core::ops::function::FnOnce<()>>::call_once
+   5: test::__rust_begin_short_backtrace::<core::result::Result<(), alloc::string::String>, fn() -> core::result::Result<(), alloc::string::String>>
+   6: test::run_test::{closure#0}
+   7: std::sys::backtrace::__rust_begin_short_backtrace::<test::run_test::{closure#1}, ()>
+   8: <std::thread::lifecycle::spawn_unchecked<test::run_test::{closure#1}, ()>::{closure#1} as core::ops::function::FnOnce<()>>::call_once::{shim:vtable#0}
+   9: <std::sys::thread::unix::Thread>::new::thread_start
+  10: start_thread
+  11: __clone3
+
+test unified_region_corner_solver_obeys_terminal_policy_once ... ok
+test unified_region_corners_use_canonical_spline_bezier_spans ... ok
+test unified_region_corners_use_represented_bezier_incidence ... ok
+test unified_region_corners_use_rational_circular_carriers ... ok
+test unified_mixed_line_arc_erosion_splits_after_a_curved_neck_collapse ... ok
+test unified_region_discards_nonconvex_material_after_wavefront_collapse ... ok
+test unified_region_expansion_regularizes_a_closed_concavity ... ok
+test unified_region_native_chamfer_uses_arc_sweep_evidence ... ok
+test unified_region_native_fillet_retains_certified_arc_contacts ... ok
+test unified_region_erosion_splits_when_a_hole_reaches_the_material_boundary ... ok
+test unified_region_nonconvex_erosion_splits_at_a_collapsed_neck ... ok
+test unified_region_convex_erosion_keeps_symbolic_diagonal_offsets_and_collapse_exact ... ok
+approximate-512 consumed caller=src/offset.rs:33
+   0: <hypercurve::policy::CurveContext>::observe_approximate_512
+   1: hypercurve::classify::real_sign
+   2: <hypercurve::bezier_region::CurveRegion2>::offset::{closure#0}
+   3: <hypercurve::bezier_region::CurveRegion2>::offset
+   4: <hypercurve_curve_region_promotion::unified_region_offset_corner_options_obey_the_terminal_policy::{closure#0} as core::ops::function::FnOnce<()>>::call_once
+   5: test::__rust_begin_short_backtrace::<core::result::Result<(), alloc::string::String>, fn() -> core::result::Result<(), alloc::string::String>>
+   6: test::run_test::{closure#0}
+   7: std::sys::backtrace::__rust_begin_short_backtrace::<test::run_test::{closure#1}, ()>
+   8: <std::thread::lifecycle::spawn_unchecked<test::run_test::{closure#1}, ()>::{closure#1} as core::ops::function::FnOnce<()>>::call_once::{shim:vtable#0}
+   9: <std::sys::thread::unix::Thread>::new::thread_start
+  10: start_thread
+  11: __clone3
+
+test unified_region_offset_corner_options_obey_the_terminal_policy ... ok
+test unified_region_offset_corner_styles_have_exact_area_and_miter_fallback ... ok
+test unified_region_offset_expands_material_and_contracts_holes ... ok
+test unified_region_offset_regularizes_overlapping_expanded_components ... ok
+test unified_region_offset_regularizes_overlapping_expanded_voids ... ok
+test unified_region_offsets_general_rational_boundary_identically_under_both_policies ... ok
+test unified_region_offsets_quadratic_boundary_through_exact_parallel_arrangement ... ok
+test unified_region_positive_offset_removes_exactly_collapsed_convex_hole ... ok
+test unified_region_reuses_design_parameter_corner_solvers ... ok
+test strict_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions ... ok
+approximate-512 consumed caller=src/classify.rs:183
+   0: <hypercurve::policy::CurveContext>::observe_approximate_512
+   1: hypercurve::classify::real_sign
+   2: hypercurve::rational_bezier_general::quadratic_conic_homogeneous_point_parameters
+   3: hypercurve::rational_bezier_general::quadratic_conic_point_parameters
+   4: <hypercurve::rational_bezier_general::RationalBezier2>::relation_to_line_with_contacts
+   5: <hypercurve::rational_bezier::RationalQuadraticBezier2>::relation_to_line_with_contacts
+   6: hypercurve::bezier_region::classify_point_with_retained_ray_skipping_origin
+   7: hypercurve::bezier_region::classify_point_against_retained_loop_with_fill_rule
+   8: hypercurve::bezier_region::classify_point_against_retained_loops
+   9: <hypercurve::bezier_region::CurveRegion2>::classify_point_raw
+  10: <hypercurve::curve_region_boolean::CurveRegionBooleanContext>::classify_point_evidence_off_boundary
+  11: <hypercurve::curve_region_boolean::CurveRegionBooleanContext>::fragment_location
+  12: <hypercurve::curve_region_boolean::CurveRegionBooleanContext>::build_boolean_topology
+  13: <hypercurve::curve_region_boolean::CurveRegionBooleanContext>::build_boolean_region
+  14: <hypercurve::bezier_region::CurveRegion2>::boolean_region_raw
+  15: <hypercurve::bezier_region::CurveRegion2>::offset::{closure#0}
+  16: <hypercurve::bezier_region::CurveRegion2>::offset
+  17: <hypercurve_curve_region_promotion::unified_region_non_miter_erosions_split_after_neck_collapse::{closure#0} as core::ops::function::FnOnce<()>>::call_once
+  18: test::__rust_begin_short_backtrace::<core::result::Result<(), alloc::string::String>, fn() -> core::result::Result<(), alloc::string::String>>
+  19: test::run_test::{closure#0}
+  20: std::sys::backtrace::__rust_begin_short_backtrace::<test::run_test::{closure#1}, ()>
+  21: <std::thread::lifecycle::spawn_unchecked<test::run_test::{closure#1}, ()>::{closure#1} as core::ops::function::FnOnce<()>>::call_once::{shim:vtable#0}
+  22: <std::sys::thread::unix::Thread>::new::thread_start
+  23: start_thread
+  24: __clone3
+
+
+thread 'unified_region_non_miter_erosions_split_after_neck_collapse' (236) panicked at tests/hypercurve_curve_region_promotion.rs:6498:13:
+assertion `left == right` failed
+  left: Approximate512Consumed
+ right: Certified
+test unified_region_non_miter_erosions_split_after_neck_collapse ... FAILED
+test exact_high_degree_elevations_reenter_the_quadratic_corner_kernel ... ok
+test nonconvex_algebraic_chord_expansion_is_exact_and_local_collapse_is_explicit ... ok
+test unified_region_exact_neck_event_uses_post_event_topology ... ok
+test unified_region_nonorthogonal_erosion_splits_through_the_exact_wavefront ... ok
+approximate-512 consumed caller=src/bezier_offset.rs:49890
+   0: <hypercurve::policy::CurveContext>::observe_approximate_512
+   1: <hypercurve::bezier_offset::BezierAlgebraicCuspChordDerivedPoint2>::linear_order_to_real
+   2: <hypercurve::bezier_offset::BezierAlgebraicCuspChordDerivedPoint2>::axis_coordinate_order_to_real
+   3: hypercurve::bezier_offset::algebraic_chord_point_coordinate_order
+   4: <hypercurve::bezier_offset::BezierAlgebraicChord2>::point_axis_order_to_real
+   5: hypercurve::bezier_offset::algebraic_chord_point_linear_order_to_exact
+   6: <hypercurve::bezier_offset::BezierAlgebraicCuspSemicircleFragment2>::forward_ray_winding_delta_with_origin_contact
+   7: <hypercurve::bezier_offset::BezierAlgebraicCuspSemicircleFragment2>::contains_point
+   8: hypercurve::bezier_region::classify_point_with_retained_ray_skipping_origin
+   9: <hypercurve::bezier_region::CurveRegion2>::classify_point_from_boundary_side_ray_with_windings
+  10: <hypercurve::curve_region_boolean::CurveRegionBooleanContext>::fragment_side_classification_with_reference_tangent
+  11: <hypercurve::curve_region_boolean::CurveRegionBooleanContext>::regularized_fragment_geometric_decision
+  12: <hypercurve::curve_region_boolean::CurveRegionBooleanContext>::regularized_fragment_actions
+  13: <hypercurve::curve_region_boolean::CurveRegionBooleanContext>::build_regularized_region
+  14: <hypercurve::bezier_region::CurveRegion2>::regularized_region_raw
+  15: hypercurve::bezier_region::regularized_exact_offset_band_arrangement
+  16: <hypercurve::bezier_region::CurveRegion2>::offset::{closure#0}
+  17: <hypercurve::bezier_region::CurveRegion2>::offset
+  18: hyperreal::dispatch_trace::with_recording::<core::result::Result<hypercurve::policy::CurveOutcome<hypercurve::bezier_region::CurveRegion2>, hypercurve::error::ExactCurveError>, hypercurve_curve_region_promotion::selected_algebraic_round_joins_reenter_exact_region_offsets::{closure#0}>
+  19: <hypercurve_curve_region_promotion::selected_algebraic_round_joins_reenter_exact_region_offsets::{closure#0} as core::ops::function::FnOnce<()>>::call_once
+  20: test::__rust_begin_short_backtrace::<core::result::Result<(), alloc::string::String>, fn() -> core::result::Result<(), alloc::string::String>>
+  21: test::run_test::{closure#0}
+  22: std::sys::backtrace::__rust_begin_short_backtrace::<test::run_test::{closure#1}, ()>
+  23: <std::thread::lifecycle::spawn_unchecked<test::run_test::{closure#1}, ()>::{closure#1} as core::ops::function::FnOnce<()>>::call_once::{shim:vtable#0}
+  24: <std::sys::thread::unix::Thread>::new::thread_start
+  25: start_thread
+  26: __clone3
+
+
+thread 'selected_algebraic_round_joins_reenter_exact_region_offsets' (198) panicked at tests/hypercurve_curve_region_promotion.rs:2336:9:
+assertion `left == right` failed
+  left: Approximate512Consumed
+ right: Certified
+test selected_algebraic_round_joins_reenter_exact_region_offsets ... FAILED
+test algebraic_chord_erosion_splits_a_collapsed_neck_exactly ... ok
+test non_ph_bezier_pair_fillet_retains_general_selected_circle ... ok
+test algebraic_chord_material_hole_contact_and_hole_collapse_are_exact ... ok
+test sheared_algebraic_chord_erosion_splits_a_collapsed_neck_exactly ... ok
+test rotated_algebraic_chord_erosion_splits_a_collapsed_neck_exactly ... ok
+test algebraic_chord_non_miter_erosions_split_a_collapsed_neck_exactly ... ok
+test non_ph_bezier_pair_projective_fillet_retains_algebraic_extensions ... ok
+test approximate_512_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions has been running for over 60 seconds
+approximate-512 consumed caller=src/bezier_parameter.rs:2623
+   0: <hypercurve::policy::CurveContext>::observe_approximate_512
+   1: hypercurve::classify::real_sign
+   2: <hypercurve::bezier_parameter::BezierParameter2>::refined_isolating_interval
+   3: <hypercurve::bezier_parameter::BezierParameterRefinement2>::refine_to
+   4: <hypercurve::bezier_offset::BezierAlgebraicCuspSemicircle2>::represented_oblique_chord_intersections_in_domain
+   5: <hypercurve::bezier_offset::BezierAlgebraicCuspSemicircle2>::retained_represented_oblique_chord_intersections_in_domain
+   6: <hypercurve::bezier_offset::BezierAlgebraicCuspSemicircle2>::chord_intersections_in_domain_once
+   7: <hypercurve::bezier_offset::BezierAlgebraicCuspSemicircle2>::chord_intersections_in_domain_with_exact_line_preference
+   8: <hypercurve::curve_region_boolean::CurveRegionBooleanContext>::pair_result
+   9: <hypercurve::curve_region_boolean::CurveRegionBooleanContext>::build_split_topology
+  10: <hypercurve::curve_region_boolean::CurveRegionBooleanContext>::build_regularized_region
+  11: <hypercurve::bezier_region::CurveRegion2>::regularized_region_raw
+  12: <hypercurve::bezier_region::CurveRegion2>::offset_exact_boundary_walk_raw
+  13: <hypercurve::bezier_region::CurveRegion2>::offset::{closure#0}
+  14: <hypercurve::bezier_region::CurveRegion2>::offset
+  15: hypercurve_curve_region_promotion::assert_analytic_parallel_support_corners_retain_algebraic_fillet_centers_and_extensions
+  16: <hypercurve_curve_region_promotion::approximate_512_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions::{closure#0} as core::ops::function::FnOnce<()>>::call_once
+  17: test::__rust_begin_short_backtrace::<core::result::Result<(), alloc::string::String>, fn() -> core::result::Result<(), alloc::string::String>>
+  18: test::run_test::{closure#0}
+  19: std::sys::backtrace::__rust_begin_short_backtrace::<test::run_test::{closure#1}, ()>
+  20: <std::thread::lifecycle::spawn_unchecked<test::run_test::{closure#1}, ()>::{closure#1} as core::ops::function::FnOnce<()>>::call_once::{shim:vtable#0}
+  21: <std::sys::thread::unix::Thread>::new::thread_start
+  22: start_thread
+  23: __clone3
+
+
+thread 'approximate_512_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions' (160) panicked at tests/hypercurve_curve_region_promotion.rs:4751:17:
+the retained analytic fillet must re-enter the offset kernel: policy=CurveContext(1), mode=TrimOrExtend, corner=0, candidate=1, source_fragments=["analytic-parallel", "materialized", "chord", "materialized", "chord", "materialized", "chord", "materialized"], fragments=["selected-circle", "selected-circle", "analytic-parallel", "materialized", "chord", "materialized", "chord", "materialized", "chord", "chord"], error=Blocked(ExactCurveBlocker { operation: Offset, family: RationalBezier, reason: Unsupported })
+test approximate_512_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions ... FAILED
+
+failures:
+
+failures:
+    approximate_512_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions
+    rotated_algebraic_round_regions_boolean_through_oblique_three_field_contacts
+    selected_algebraic_round_joins_reenter_exact_region_offsets
+    unified_region_non_miter_erosions_split_after_neck_collapse
+
+test result: FAILED. 96 passed; 4 failed; 0 ignored; 0 measured; 0 filtered out; finished in 97.42s
+
+error: test failed, to rerun pass `--test hypercurve_curve_region_promotion`

@@ -1,0 +1,20 @@
+   Compiling serde_core v1.0.228
+   Compiling serde v1.0.228
+   Compiling num-complex v0.4.6
+   Compiling num-bigint v0.4.6
+   Compiling num-rational v0.4.2
+   Compiling num v0.4.3
+   Compiling hyperreal v0.13.1 (/tmp/aern-hyper-finite.cYctjI/hyperreal-candidate)
+   Compiling serde_json v1.0.149
+   Compiling ciborium v0.2.2
+   Compiling tinytemplate v1.2.1
+   Compiling criterion v0.5.1
+    Finished `bench` profile [optimized] target(s) in 9.28s
+     Running benches/float_convert.rs (target/release/deps/float_convert-a7e0643461fddbc5)
+Testing float_convert/f64_enclosure_exact
+Success
+Testing float_convert/f64_enclosure_rounded
+Success
+Testing float_convert/f64_enclosure_near_max
+Success
+

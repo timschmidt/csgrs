@@ -1,0 +1,117 @@
+{
+  "parent": "07d6b300c109eaa304371ba61898b29cd262bc6d",
+  "scope": "Use source tangent signs for selected-circle normal angles; factor traversal scale from the shared chord/parallel predicate; remove duplicate angular sign cancellation.",
+  "source_sha256": "ae562404ee1c8ed4d7244adc97e35f7bd09ffd5c4b43274380c0f3d0585f0dd0",
+  "regression_cases": 32,
+  "independent_point_checks": 64,
+  "exact_angular_comparisons": 96,
+  "library_summary": "test result: ok. 1188 passed; 0 failed; 6 ignored; 0 measured; 4 filtered out; finished in 231.83s",
+  "runs": [
+    {
+      "label": "parent-build",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "test",
+        "--release",
+        "--all-features",
+        "--lib",
+        "--no-run",
+        "--message-format=json",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 121.28882172101294,
+      "binary": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/parallel-normal-source-angle-attempt1-libraries/parent-libtest",
+      "sha256": "d3f0d4608bf07d6f142de64630931f36f775ecc8d5ba054b9404138b1e80f5f1"
+    },
+    {
+      "label": "parent-regression",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/parallel-normal-source-angle-attempt1-libraries/parent-libtest",
+        "--exact",
+        "bezier_offset::parallel_normal_source_angle_tests::selected_chord_parallel_normal_angles_use_source_direction",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 101,
+      "elapsed_seconds": 0.007615078007802367
+    },
+    {
+      "label": "check",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "check",
+        "--all-targets",
+        "--no-default-features",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 16.588656018982874
+    },
+    {
+      "label": "candidate-build",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "test",
+        "--release",
+        "--all-features",
+        "--lib",
+        "--no-run",
+        "--message-format=json",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 121.08776296599535,
+      "binary": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/parallel-normal-source-angle-attempt1-libraries/candidate-libtest",
+      "sha256": "f1d4ecdfe745b24f9278be2ba38b450ace412b10184818d8c9f9c5f67f1d35b3"
+    },
+    {
+      "label": "candidate-regression",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/parallel-normal-source-angle-attempt1-libraries/candidate-libtest",
+        "--exact",
+        "bezier_offset::parallel_normal_source_angle_tests::selected_chord_parallel_normal_angles_use_source_direction",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.015614871983416378
+    },
+    {
+      "label": "candidate-library",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/parallel-normal-source-angle-attempt1-libraries/candidate-libtest",
+        "--test-threads=2",
+        "--color",
+        "never",
+        "--skip",
+        "bezier_offset::conversion_tests::selected_parallel_normal_circle_intersects_genuinely_analytic_parallel_in_one_fiber",
+        "--skip",
+        "bezier_region::tests::independent_oblique_chord_pair_fillets_extend_on_infinite_supports",
+        "--skip",
+        "bezier_region::tests::selected_circle_and_analytic_parallel_extend_on_full_supports",
+        "--skip",
+        "bezier_region::tests::pair_native_boolean_algebraic_chord_corner_publishes_a_third_generation_fillet"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 231.91861490998417
+    }
+  ],
+  "source_manifest": "parallel-normal-source-angle-attempt1-candidate-sources.json",
+  "working_source_manifest": "parallel-normal-source-angle-attempt1-runs.json",
+  "patch": "parallel-normal-source-angle.patch",
+  "unqualified_inverse_preserved_by_reverse_patch": true,
+  "limitations": [
+    "Four previously held-out expensive library cases remain unresolved and were not run.",
+    "Six existing library tests remain ignored.",
+    "Corner publication changes in bezier_region.rs and the promotion test are excluded from this qualified source.",
+    "The other session owns working Hyperreal changes; builds use pinned a2da8e2b5de9a1a4653d3662f2f05cb6533fd7ef."
+  ]
+}

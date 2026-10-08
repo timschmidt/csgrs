@@ -1,0 +1,15 @@
+[
+  {
+    "args": [
+      "grid",
+      "+RTS",
+      "-M256m",
+      "-RTS"
+    ],
+    "timeout": 60000,
+    "status": 0,
+    "signal": null,
+    "stdout": "FAIL dy-normal-cap (2,1) Right False\nFAIL dy-normal-cap (3,1) Right False\nFAIL dy-normal-cap (3,2) Right False\nFAIL dy-normal-cap (4,1) Right False\noperation checks failures exceptions\nbounded-extra 1620 0 0\nbounded-normal 1620 0 0\nclipped-add-one 270 0 0\nclipped-sub-one 270 0 0\ndy-normal-cap 32 17 0\ndy-normal-value 32 0 0\nprefix-clipped-extension 810 0 0\nprefix-valid-identity 474 0 0\nTOTAL (5128,17,0)\n",
+    "stderr": ""
+  }
+]

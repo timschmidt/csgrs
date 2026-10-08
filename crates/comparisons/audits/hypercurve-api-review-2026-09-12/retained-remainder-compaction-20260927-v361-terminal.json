@@ -1,0 +1,35 @@
+{
+  "source_manifest": "retained-remainder-compaction-20260927-v361-sources.json",
+  "source_directory": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/source-archives/retained-remainder-compaction-20260927-v361",
+  "workspace_guard": "initial-endpoint-root-replay-20260927-v362-sources.json",
+  "parent_commit": "1bd0348bb7b848e85f9085932a30033675f59e2f",
+  "hypersolve_commit": "4ba7f2508b8e38f60e66543af688a885cfaa6a8e",
+  "cases": [
+    {
+      "name": "strict_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions",
+      "returncode": 124,
+      "log": "retained-remainder-compaction-20260927-v361-strict_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions.log",
+      "elapsed_seconds": 240.07293591497
+    }
+  ],
+  "all_processes_reaped": true,
+  "command": [
+    "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+    "test",
+    "--test",
+    "hypercurve_curve_region_promotion",
+    "--release",
+    "--all-features",
+    "--no-run",
+    "--message-format=json",
+    "--locked",
+    "--offline"
+  ],
+  "build_returncode": 0,
+  "build_elapsed_seconds": 95.21793168201111,
+  "binary": {
+    "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-remainder-compaction-20260927-v361-hypercurve_curve_region_promotion",
+    "sha256": "1b9374f2e44c0eeaa4deb50d1ad89a897b4d8bc5685dcbff5b720fac5d269d47"
+  },
+  "all_sources_unchanged": true
+}

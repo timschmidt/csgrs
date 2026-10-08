@@ -1,0 +1,57 @@
+\doxysubsection{Declare\+Directed\+Group\+Operations\texorpdfstring{$<$}{<} X, NX, R, NR \texorpdfstring{$>$}{>} Struct Template Reference}
+\hypertarget{structAriadne_1_1DeclareDirectedGroupOperations}{}\label{structAriadne_1_1DeclareDirectedGroupOperations}\index{DeclareDirectedGroupOperations$<$ X, NX, R, NR $>$@{DeclareDirectedGroupOperations$<$ X, NX, R, NR $>$}}
+
+
+{\ttfamily \#include $<$arithmetic.\+hpp$>$}
+
+
+
+\doxysubsubsection{Description}
+\subsubsection*{template$<$class X, class NX, class R = X, class NR = NX$>$\newline
+struct Ariadne\+::\+Declare\+Directed\+Group\+Operations$<$ X, NX, R, NR $>$}
+Declare operators corresponding to {\itshape X} being a (mathematical) ring. 
+
+\begin{DoxySeeAlso}{See also}
+Declare\+Ordered\+Operations, Declare\+Comparisons
+\end{DoxySeeAlso}
+Inheriting from this class declares operators which are found by argument-\/dependent lookup. \doxysubsubsubsection*{Friends}
+\begin{Indent}\textbf{ Named operations.}\par
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{structAriadne_1_1DeclareDirectedGroupOperations_ac725ab8546aaf3ef7ff84cd98e81c099}\label{structAriadne_1_1DeclareDirectedGroupOperations_ac725ab8546aaf3ef7ff84cd98e81c099} 
+X {\bfseries nul} (X const \&x)
+\begin{DoxyCompactList}\small\item\em Zero {\itshape 0}. Preserves accuracy parameters. \end{DoxyCompactList}\item 
+\Hypertarget{structAriadne_1_1DeclareDirectedGroupOperations_a6cf9241f06a563c80fda2e263b1894ee}\label{structAriadne_1_1DeclareDirectedGroupOperations_a6cf9241f06a563c80fda2e263b1894ee} 
+X {\bfseries pos} (X const \&x)
+\begin{DoxyCompactList}\small\item\em \doxylink{classAriadne_1_1Positive}{Positive} {\itshape +x}. Usually constructs a direct copy. \end{DoxyCompactList}\item 
+\Hypertarget{structAriadne_1_1DeclareDirectedGroupOperations_a589f0fdb652b7f5fbe2b5e0d6168a9bc}\label{structAriadne_1_1DeclareDirectedGroupOperations_a589f0fdb652b7f5fbe2b5e0d6168a9bc} 
+NX {\bfseries neg} (X const \&x)
+\begin{DoxyCompactList}\small\item\em Negative {\itshape -\/x}. Usually constructs a direct copy with reversed sign. \end{DoxyCompactList}\item 
+\Hypertarget{structAriadne_1_1DeclareDirectedGroupOperations_a3a6436b1f92cb6078b616cdf935f9af7}\label{structAriadne_1_1DeclareDirectedGroupOperations_a3a6436b1f92cb6078b616cdf935f9af7} 
+R {\bfseries add} (X const \&x1, X const \&x2)
+\begin{DoxyCompactList}\small\item\em Sum {\itshape x1+x2}. \end{DoxyCompactList}\item 
+\Hypertarget{structAriadne_1_1DeclareDirectedGroupOperations_a3e95f4859eea84bc16967c3be796dff9}\label{structAriadne_1_1DeclareDirectedGroupOperations_a3e95f4859eea84bc16967c3be796dff9} 
+R {\bfseries sub} (X const \&x1, NX const \&x2)
+\begin{DoxyCompactList}\small\item\em Difference {\itshape x1-\/x2}. May be implemented in terms of \doxylink{structAriadne_1_1DeclareDirectedGroupOperations_a3a6436b1f92cb6078b616cdf935f9af7}{add()} and \doxylink{structAriadne_1_1DeclareDirectedGroupOperations_a589f0fdb652b7f5fbe2b5e0d6168a9bc}{neg()} as {\ttfamily add(x1,neg(x2))}. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\end{Indent}
+\begin{Indent}\textbf{ Standard overloadable operators.}\par
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{structAriadne_1_1DeclareDirectedGroupOperations_a5808840f7e2f4433e5223f87f7e734ad}\label{structAriadne_1_1DeclareDirectedGroupOperations_a5808840f7e2f4433e5223f87f7e734ad} 
+X {\bfseries operator+} (X const \&x)
+\begin{DoxyCompactList}\small\item\em \doxylink{classAriadne_1_1Positive}{Positive} {\itshape +x}. Usually dispatches to {\ttfamily pos(x)} \end{DoxyCompactList}\item 
+\Hypertarget{structAriadne_1_1DeclareDirectedGroupOperations_a22dab97816a9849a7b801b26dbe555d6}\label{structAriadne_1_1DeclareDirectedGroupOperations_a22dab97816a9849a7b801b26dbe555d6} 
+NX {\bfseries operator-\/} (X const \&x)
+\begin{DoxyCompactList}\small\item\em Negative {\itshape -\/x}. Usually dispatches to {\ttfamily neg(x)} \end{DoxyCompactList}\item 
+\Hypertarget{structAriadne_1_1DeclareDirectedGroupOperations_a364a1c79da735f3a0f437605df8dc176}\label{structAriadne_1_1DeclareDirectedGroupOperations_a364a1c79da735f3a0f437605df8dc176} 
+R {\bfseries operator+} (X const \&x1, X const \&x2)
+\begin{DoxyCompactList}\small\item\em Sum {\itshape x1+x2}. Usually dispatches to {\ttfamily sum(x1,x2)} \end{DoxyCompactList}\item 
+\Hypertarget{structAriadne_1_1DeclareDirectedGroupOperations_a9df7e90444be5256415807213b15492f}\label{structAriadne_1_1DeclareDirectedGroupOperations_a9df7e90444be5256415807213b15492f} 
+R {\bfseries operator-\/} (X const \&x1, NX const \&x2)
+\begin{DoxyCompactList}\small\item\em Difference {\itshape x1-\/x2}. Usually dispatches to {\ttfamily sub(x1,x2)} \end{DoxyCompactList}\end{DoxyCompactItemize}
+\end{Indent}
+
+
+The documentation for this struct was generated from the following file\+:\begin{DoxyCompactItemize}
+\item 
+source/numeric/\mbox{\hyperlink{arithmetic_8hpp}{arithmetic.\+hpp}}\end{DoxyCompactItemize}

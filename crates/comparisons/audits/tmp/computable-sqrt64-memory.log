@@ -1,0 +1,38 @@
+==2== Memcheck, a memory error detector
+==2== Copyright (C) 2002-2026, and GNU GPL'd, by Julian Seward et al.
+==2== Using Valgrind-3.27.1 and LibVEX; rerun with -h for copyright info
+==2== Command: target/release/performance donor sqrt 64 100
+==2== Parent PID: 1
+==2== 
+==2== 
+==2== HEAP SUMMARY:
+==2==     in use at exit: 592 bytes in 2 blocks
+==2==   total heap usage: 45,010 allocs, 45,008 frees, 4,980,820 bytes allocated
+==2== 
+==2== 48 bytes in 1 blocks are possibly lost in loss record 1 of 2
+==2==    at 0x49D6AE6: malloc (vg_replace_malloc.c:447)
+==2==    by 0x4133E8E: <std::thread::thread::Thread>::new (in /tmp/interval-computable-audit/target/release/performance)
+==2==    by 0x413C889: std::thread::current::init_current (in /tmp/interval-computable-audit/target/release/performance)
+==2==    by 0x404F238: std::thread::scoped::scope::<<computable::refinement::RefinementGraph>::refine_to<192>::{closure#0}, ()> (in /tmp/interval-computable-audit/target/release/performance)
+==2==    by 0x405402F: <computable::computable::Computable>::refine_to::<192> (in /tmp/interval-computable-audit/target/release/performance)
+==2==    by 0x4057B6C: performance::main::{closure#4} (in /tmp/interval-computable-audit/target/release/performance)
+==2==    by 0x4058AF7: performance::main (in /tmp/interval-computable-audit/target/release/performance)
+==2==    by 0x4054772: std::sys::backtrace::__rust_begin_short_backtrace::<fn(), ()> (in /tmp/interval-computable-audit/target/release/performance)
+==2==    by 0x4054B98: std::rt::lang_start::<()>::{closure#0} (in /tmp/interval-computable-audit/target/release/performance)
+==2==    by 0x413B226: std::rt::lang_start_internal (in /tmp/interval-computable-audit/target/release/performance)
+==2==    by 0x405A1E4: main (in /tmp/interval-computable-audit/target/release/performance)
+==2== 
+==2== LEAK SUMMARY:
+==2==    definitely lost: 0 bytes in 0 blocks
+==2==    indirectly lost: 0 bytes in 0 blocks
+==2==      possibly lost: 48 bytes in 1 blocks
+==2==    still reachable: 544 bytes in 1 blocks
+==2==         suppressed: 0 bytes in 0 blocks
+==2== Reachable blocks (those to which a pointer was found) are not shown.
+==2== To see them, rerun with: --leak-check=full --show-leak-kinds=all
+==2== 
+==2== For lists of detected and suppressed errors, rerun with: -s
+==2== ERROR SUMMARY: 1 errors from 1 contexts (suppressed: 0 from 0)
+==2== could not unlink /tmp/vgdb-pipe-from-vgdb-to-2-by-tim-on-fedora
+==2== could not unlink /tmp/vgdb-pipe-to-vgdb-from-2-by-tim-on-fedora
+==2== could not unlink /tmp/vgdb-pipe-shared-mem-vgdb-2-by-tim-on-fedora

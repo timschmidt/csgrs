@@ -1,0 +1,15 @@
+{"allocations":144,"bytes":6448,"calls":13,"kind":"dense","method":"old","n":1}
+{"allocations":534,"bytes":56040,"calls":13,"kind":"dense","method":"old","n":2}
+{"allocations":4504,"bytes":587392,"calls":13,"kind":"dense","method":"old","n":4}
+{"allocations":141772,"bytes":9753712,"calls":13,"kind":"dense","method":"old","n":8}
+{"allocations":1466458,"bytes":72560168,"calls":13,"kind":"dense","method":"old","n":12}
+{"allocations":105,"bytes":8008,"calls":13,"kind":"dense","method":"joint","n":1}
+{"allocations":360,"bytes":45728,"calls":13,"kind":"dense","method":"joint","n":2}
+{"allocations":2239,"bytes":312112,"calls":13,"kind":"dense","method":"joint","n":4}
+{"allocations":60998,"bytes":3391280,"calls":13,"kind":"dense","method":"joint","n":8}
+{"allocations":348962,"bytes":16966952,"calls":13,"kind":"dense","method":"joint","n":12}
+{"allocations":262,"bytes":16432,"calls":13,"kind":"dense","method":"bareiss","n":1}
+{"allocations":766,"bytes":80216,"calls":13,"kind":"dense","method":"bareiss","n":2}
+{"allocations":4562,"bytes":585280,"calls":13,"kind":"dense","method":"bareiss","n":4}
+{"allocations":80117,"bytes":4988832,"calls":13,"kind":"dense","method":"bareiss","n":8}
+{"allocations":606392,"bytes":29098432,"calls":13,"kind":"dense","method":"bareiss","n":12}

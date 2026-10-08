@@ -1,0 +1,13 @@
+{
+  "tag": "symbolic-cleanup-control-check-v83",
+  "started": "2026-09-12T03:50:37.569Z",
+  "finished": "2026-09-12T03:50:37.681Z",
+  "elapsedSeconds": 0.11042754300000002,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "node",
+  "args": [
+    "check-symbolic-cleanup-control-v83.mjs"
+  ],
+  "code": 0,
+  "signal": null
+}

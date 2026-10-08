@@ -1,0 +1,44 @@
+[
+  {
+    "name": "finite_circle_components_replay_one_field_and_selected_inverses",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve-6e6572a45c5b177b",
+      "finite_circle_components_replay_one_field_and_selected_inverses",
+      "--nocapture",
+      "--test-threads=1"
+    ],
+    "binary": "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve-6e6572a45c5b177b",
+    "sha256": "264d410482a6f939e58c2dad810a5f1ce041b0d3c837618fc19f8a3692bd7836",
+    "returncode": 0,
+    "elapsed_seconds": 0.09517180701368488,
+    "log": "finite-circle-nonlinear-domain-attempt7-finite_circle_components_replay_one_field_and_selected_inverses.log"
+  },
+  {
+    "name": "finite_circle_components_replay_chord_normal_and_represented_inverses",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve-6e6572a45c5b177b",
+      "finite_circle_components_replay_chord_normal_and_represented_inverses",
+      "--nocapture",
+      "--test-threads=1"
+    ],
+    "binary": "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve-6e6572a45c5b177b",
+    "sha256": "264d410482a6f939e58c2dad810a5f1ce041b0d3c837618fc19f8a3692bd7836",
+    "returncode": 0,
+    "elapsed_seconds": 3.548688417999074,
+    "log": "finite-circle-nonlinear-domain-attempt7-finite_circle_components_replay_chord_normal_and_represented_inverses.log"
+  },
+  {
+    "name": "finite_circle_components_replay_pair_radial_and_recursive_inverses",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve-6e6572a45c5b177b",
+      "finite_circle_components_replay_pair_radial_and_recursive_inverses",
+      "--nocapture",
+      "--test-threads=1"
+    ],
+    "binary": "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/hypercurve-6e6572a45c5b177b",
+    "sha256": "264d410482a6f939e58c2dad810a5f1ce041b0d3c837618fc19f8a3692bd7836",
+    "returncode": 0,
+    "elapsed_seconds": 0.48506308198557235,
+    "log": "finite-circle-nonlinear-domain-attempt7-finite_circle_components_replay_pair_radial_and_recursive_inverses.log"
+  }
+]

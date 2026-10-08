@@ -1,0 +1,56 @@
+   Compiling hyperlimit v0.4.1 (/home/tim/Documents/GitHub/workspace/hyperlimit)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.32s
+     Running tests/real_representations.rs (target/debug/deps/real_representations-9cdc3bb64aa26604)
+
+running 4 tests
+test exact_rational_storage_and_primitive_origin_matrix_crosses_predicates ... ok
+test unresolved_opaque_terminal_form_respects_policy_boundary ... ok
+test every_public_kind_and_optimized_certificate_crosses_predicate_families ... ok
+test sign_scale_cache_and_abort_states_preserve_predicate_results ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.03s
+
+   Compiling hyperreal v0.13.1 (/home/tim/Documents/GitHub/workspace/hyperreal)
+   Compiling hyperlattice v0.6.1 (/home/tim/Documents/GitHub/workspace/hyperlattice)
+   Compiling hyperlimit v0.4.1 (/home/tim/Documents/GitHub/workspace/hyperlimit)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 5.71s
+     Running tests/real_representations.rs (target/debug/deps/real_representations-991917356419f69a)
+
+running 4 tests
+test exact_rational_storage_and_primitive_origin_matrix_crosses_predicates ... ok
+test unresolved_opaque_terminal_form_respects_policy_boundary ... ok
+test every_public_kind_and_optimized_certificate_crosses_predicate_families ... ok
+test sign_scale_cache_and_abort_states_preserve_predicate_results ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.03s
+
+   Compiling hyperreal v0.13.1 (/home/tim/Documents/GitHub/workspace/hyperreal)
+   Compiling hyperlattice v0.6.1 (/home/tim/Documents/GitHub/workspace/hyperlattice)
+   Compiling hyperlimit v0.4.1 (/home/tim/Documents/GitHub/workspace/hyperlimit)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 5.63s
+     Running tests/real_representations.rs (target/debug/deps/real_representations-3e52c9532298dbe4)
+
+running 4 tests
+test exact_rational_storage_and_primitive_origin_matrix_crosses_predicates ... ok
+test unresolved_opaque_terminal_form_respects_policy_boundary ... ok
+test every_public_kind_and_optimized_certificate_crosses_predicate_families ... ok
+test sign_scale_cache_and_abort_states_preserve_predicate_results ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.03s
+
+   Compiling hyperreal v0.13.1 (/home/tim/Documents/GitHub/workspace/hyperreal)
+   Compiling hyperlattice v0.6.1 (/home/tim/Documents/GitHub/workspace/hyperlattice)
+   Compiling hyperlimit v0.4.1 (/home/tim/Documents/GitHub/workspace/hyperlimit)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 7.26s
+     Running tests/real_representations.rs (target/debug/deps/real_representations-8c7184f70e36f67f)
+
+running 6 tests
+test exact_rational_storage_and_primitive_origin_matrix_crosses_predicates ... ok
+test unresolved_opaque_terminal_form_respects_policy_boundary ... ok
+test every_public_kind_and_optimized_certificate_crosses_predicate_families ... ok
+test every_optimized_certificate_survives_serialized_representation ... ok
+test sign_scale_cache_and_abort_states_preserve_predicate_results ... ok
+test every_computable_node_and_shared_constant_representation_crosses_predicates ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.04s
+

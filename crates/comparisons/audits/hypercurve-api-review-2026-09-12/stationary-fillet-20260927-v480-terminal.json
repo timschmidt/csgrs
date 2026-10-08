@@ -1,0 +1,36 @@
+{
+  "source_manifest": "stationary-fillet-20260927-v480-sources.json",
+  "source_directory": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/source-archives/stationary-fillet-20260927-v480",
+  "fixture_sha256": "abd7af6502bad5d9169e68dacd71d4fa75c7e03462b4570c57fd5676ac0db45b",
+  "checks": [
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "build",
+        "--lib",
+        "--release",
+        "--all-features",
+        "--locked",
+        "--offline",
+        "--message-format=json"
+      ],
+      "returncode": 101,
+      "log": "stationary-fillet-20260927-v480-library-build.log",
+      "elapsed_seconds": 11.578920072177425
+    }
+  ],
+  "cases": [],
+  "expected_cases": [
+    "regular_parabola_strict",
+    "stationary_reparameterization_strict",
+    "one_sided_cusp_strict",
+    "regular_parabola_approximate",
+    "stationary_reparameterization_approximate",
+    "one_sided_cusp_approximate",
+    "interior_stationary_contact_strict",
+    "interior_stationary_contact_approximate"
+  ],
+  "all_processes_reaped": true,
+  "probe_complete": false,
+  "failure": "library build failed"
+}

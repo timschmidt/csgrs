@@ -1,0 +1,3769 @@
+{
+  "checkpoint": 72,
+  "status": "record-corruptions-pass",
+  "accepted": 2,
+  "rejected": 21,
+  "scripts": {
+    "check-zero-factor-wasm-corruptions-v72.mjs": "322fbd305111d97bf74bb4eba12a9d926b7ebfa4badd8258fdf2860f89b493e9",
+    "check-zero-factor-wasm-records-v72.mjs": "ff9cb66745b8754b47a2c2850404bdd1883aa216a6e82fb93c8ebe05b3098e16"
+  },
+  "results": [
+    {
+      "kind": "rational",
+      "name": "valid",
+      "accepted": true,
+      "row": {
+        "case": 0,
+        "checksum": 2,
+        "expected": {
+          "message": null,
+          "operation": "Add",
+          "root": {
+            "constraint": 0,
+            "count": 1,
+            "exact": "2/1",
+            "intervalIndex": 0,
+            "lower": "2/1",
+            "polynomial": [
+              "-2/1",
+              "1/1"
+            ],
+            "symbol": 0,
+            "upper": "2/1",
+            "validation": "Valid",
+            "validationMessage": null
+          },
+          "status": "Transformed"
+        },
+        "final_matches": true,
+        "iterations": 1,
+        "lifecycle": "retained",
+        "policy": 0,
+        "sources_unchanged": true,
+        "platform": "wasm",
+        "kind": "rational",
+        "mode": "qualification",
+        "sequence": 0,
+        "started": "2026-09-11T20:46:27.397Z",
+        "finished": "2026-09-11T20:46:27.397Z",
+        "qualification_batch_ns": 9549,
+        "host_checksum": 2,
+        "initialMemory": 1245184,
+        "initializedMemory": 33816576,
+        "memoryBeforePrepare": 33816576,
+        "memoryAfterPrepare": 33816576,
+        "memoryAfterBatch": 33816576,
+        "memoryAfterFinish": 33816576,
+        "outputBytes": 366,
+        "variant": "baseline",
+        "corpus": "full",
+        "instanceMode": "persistent"
+      },
+      "spec": {
+        "corpus": "full",
+        "variant": "baseline",
+        "case": 0,
+        "policy": 0,
+        "lifecycle": "retained",
+        "iterations": 1
+      }
+    },
+    {
+      "kind": "history",
+      "name": "valid",
+      "accepted": true,
+      "row": {
+        "actual": {
+          "message": null,
+          "operation": "Add",
+          "root": {
+            "constraint": 7,
+            "count": 1,
+            "exact": {
+              "class": {
+                "Sqrt": {
+                  "denominator": [
+                    1
+                  ],
+                  "numerator": [
+                    2
+                  ],
+                  "sign": 1
+                }
+              },
+              "computable": {
+                "internal": {
+                  "Sqrt": {
+                    "internal": {
+                      "Int": [
+                        1,
+                        [
+                          2
+                        ]
+                      ]
+                    }
+                  }
+                }
+              },
+              "rational": {
+                "denominator": [
+                  1
+                ],
+                "numerator": [
+                  2
+                ],
+                "sign": 1
+              }
+            },
+            "intervalIndex": 3,
+            "lower": {
+              "class": {
+                "Sqrt": {
+                  "denominator": [
+                    1
+                  ],
+                  "numerator": [
+                    2
+                  ],
+                  "sign": 1
+                }
+              },
+              "computable": {
+                "internal": {
+                  "Sqrt": {
+                    "internal": {
+                      "Int": [
+                        1,
+                        [
+                          2
+                        ]
+                      ]
+                    }
+                  }
+                }
+              },
+              "rational": {
+                "denominator": [
+                  1
+                ],
+                "numerator": [
+                  2
+                ],
+                "sign": 1
+              }
+            },
+            "polynomial": [
+              {
+                "class": "One",
+                "computable": null,
+                "rational": {
+                  "denominator": [
+                    1
+                  ],
+                  "numerator": [],
+                  "sign": 0
+                }
+              },
+              {
+                "class": "One",
+                "computable": null,
+                "rational": {
+                  "denominator": [
+                    1
+                  ],
+                  "numerator": [],
+                  "sign": 0
+                }
+              },
+              {
+                "class": "One",
+                "computable": null,
+                "rational": {
+                  "denominator": [
+                    1
+                  ],
+                  "numerator": [
+                    8
+                  ],
+                  "sign": -1
+                }
+              },
+              {
+                "class": "One",
+                "computable": null,
+                "rational": {
+                  "denominator": [
+                    1
+                  ],
+                  "numerator": [],
+                  "sign": 0
+                }
+              },
+              {
+                "class": "One",
+                "computable": null,
+                "rational": {
+                  "denominator": [
+                    1
+                  ],
+                  "numerator": [
+                    1
+                  ],
+                  "sign": 1
+                }
+              }
+            ],
+            "symbol": 11,
+            "upper": {
+              "class": {
+                "Sqrt": {
+                  "denominator": [
+                    1
+                  ],
+                  "numerator": [
+                    2
+                  ],
+                  "sign": 1
+                }
+              },
+              "computable": {
+                "internal": {
+                  "Sqrt": {
+                    "internal": {
+                      "Int": [
+                        1,
+                        [
+                          2
+                        ]
+                      ]
+                    }
+                  }
+                }
+              },
+              "rational": {
+                "denominator": [
+                  1
+                ],
+                "numerator": [
+                  2
+                ],
+                "sign": 1
+              }
+            },
+            "validation": "Valid",
+            "validationMessage": null
+          },
+          "status": "Transformed"
+        },
+        "case": 0,
+        "checksum": 5,
+        "final_matches_preconditioned": true,
+        "history": 0,
+        "input_records_unchanged": true,
+        "iterations": 1,
+        "left": {
+          "constraint": 7,
+          "count": 1,
+          "exact": {
+            "class": {
+              "Sqrt": {
+                "denominator": [
+                  1
+                ],
+                "numerator": [
+                  2
+                ],
+                "sign": 1
+              }
+            },
+            "computable": {
+              "internal": {
+                "Sqrt": {
+                  "internal": {
+                    "Int": [
+                      1,
+                      [
+                        2
+                      ]
+                    ]
+                  }
+                }
+              }
+            },
+            "rational": {
+              "denominator": [
+                1
+              ],
+              "numerator": [
+                1
+              ],
+              "sign": 1
+            }
+          },
+          "intervalIndex": 3,
+          "lower": {
+            "class": {
+              "Sqrt": {
+                "denominator": [
+                  1
+                ],
+                "numerator": [
+                  2
+                ],
+                "sign": 1
+              }
+            },
+            "computable": {
+              "internal": {
+                "Sqrt": {
+                  "internal": {
+                    "Int": [
+                      1,
+                      [
+                        2
+                      ]
+                    ]
+                  }
+                }
+              }
+            },
+            "rational": {
+              "denominator": [
+                1
+              ],
+              "numerator": [
+                1
+              ],
+              "sign": 1
+            }
+          },
+          "polynomial": [
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  1
+                ],
+                "numerator": [
+                  2
+                ],
+                "sign": -1
+              }
+            },
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  1
+                ],
+                "numerator": [],
+                "sign": 0
+              }
+            },
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  1
+                ],
+                "numerator": [
+                  1
+                ],
+                "sign": 1
+              }
+            }
+          ],
+          "symbol": 11,
+          "upper": {
+            "class": {
+              "Sqrt": {
+                "denominator": [
+                  1
+                ],
+                "numerator": [
+                  2
+                ],
+                "sign": 1
+              }
+            },
+            "computable": {
+              "internal": {
+                "Sqrt": {
+                  "internal": {
+                    "Int": [
+                      1,
+                      [
+                        2
+                      ]
+                    ]
+                  }
+                }
+              }
+            },
+            "rational": {
+              "denominator": [
+                1
+              ],
+              "numerator": [
+                1
+              ],
+              "sign": 1
+            }
+          },
+          "validation": "Valid",
+          "validationMessage": null
+        },
+        "lifecycle": "retained",
+        "policy": 0,
+        "right": {
+          "constraint": 7,
+          "count": 1,
+          "exact": {
+            "class": {
+              "Sqrt": {
+                "denominator": [
+                  1
+                ],
+                "numerator": [
+                  2
+                ],
+                "sign": 1
+              }
+            },
+            "computable": {
+              "internal": {
+                "Sqrt": {
+                  "internal": {
+                    "Int": [
+                      1,
+                      [
+                        2
+                      ]
+                    ]
+                  }
+                }
+              }
+            },
+            "rational": {
+              "denominator": [
+                1
+              ],
+              "numerator": [
+                1
+              ],
+              "sign": 1
+            }
+          },
+          "intervalIndex": 3,
+          "lower": {
+            "class": {
+              "Sqrt": {
+                "denominator": [
+                  1
+                ],
+                "numerator": [
+                  2
+                ],
+                "sign": 1
+              }
+            },
+            "computable": {
+              "internal": {
+                "Sqrt": {
+                  "internal": {
+                    "Int": [
+                      1,
+                      [
+                        2
+                      ]
+                    ]
+                  }
+                }
+              }
+            },
+            "rational": {
+              "denominator": [
+                1
+              ],
+              "numerator": [
+                1
+              ],
+              "sign": 1
+            }
+          },
+          "polynomial": [
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  1
+                ],
+                "numerator": [
+                  2
+                ],
+                "sign": -1
+              }
+            },
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  1
+                ],
+                "numerator": [],
+                "sign": 0
+              }
+            },
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  1
+                ],
+                "numerator": [
+                  1
+                ],
+                "sign": 1
+              }
+            }
+          ],
+          "symbol": 11,
+          "upper": {
+            "class": {
+              "Sqrt": {
+                "denominator": [
+                  1
+                ],
+                "numerator": [
+                  2
+                ],
+                "sign": 1
+              }
+            },
+            "computable": {
+              "internal": {
+                "Sqrt": {
+                  "internal": {
+                    "Int": [
+                      1,
+                      [
+                        2
+                      ]
+                    ]
+                  }
+                }
+              }
+            },
+            "rational": {
+              "denominator": [
+                1
+              ],
+              "numerator": [
+                1
+              ],
+              "sign": 1
+            }
+          },
+          "validation": "Valid",
+          "validationMessage": null
+        },
+        "platform": "wasm",
+        "kind": "history",
+        "mode": "qualification",
+        "started": "2026-09-11T20:49:34.508Z",
+        "finished": "2026-09-11T20:49:34.509Z",
+        "qualification_batch_ns": 20818,
+        "host_checksum": 5,
+        "initialMemory": 1245184,
+        "memoryAfterPrepare": 1376256,
+        "memoryAfterBatch": 1376256,
+        "memoryAfterFinish": 1376256,
+        "outputBytes": 3310,
+        "variant": "baseline",
+        "corpus": "history",
+        "instanceMode": "fresh"
+      },
+      "spec": {
+        "corpus": "history",
+        "variant": "baseline",
+        "case": 0,
+        "policy": 0,
+        "history": 0,
+        "lifecycle": "retained",
+        "iterations": 1
+      }
+    },
+    {
+      "kind": "rational",
+      "name": "signed-polynomial",
+      "accepted": false,
+      "error": "Expected values to be strictly deep-equal:\n+ actual - expected\n... Skipped lines\n\n  {\n    message: null,\n    operation: 'Add',\n    root: {\n      constraint: 0,\n...\n      polynomial: [\n+       '2/1',\n-       '-2/1',\n        '1/1'\n      ],\n      symbol: 0,\n      upper: '2/1',\n      validation: 'Valid',\n",
+      "row": {
+        "case": 0,
+        "checksum": 2,
+        "expected": {
+          "message": null,
+          "operation": "Add",
+          "root": {
+            "constraint": 0,
+            "count": 1,
+            "exact": "2/1",
+            "intervalIndex": 0,
+            "lower": "2/1",
+            "polynomial": [
+              "2/1",
+              "1/1"
+            ],
+            "symbol": 0,
+            "upper": "2/1",
+            "validation": "Valid",
+            "validationMessage": null
+          },
+          "status": "Transformed"
+        },
+        "final_matches": true,
+        "iterations": 1,
+        "lifecycle": "retained",
+        "policy": 0,
+        "sources_unchanged": true,
+        "platform": "wasm",
+        "kind": "rational",
+        "mode": "qualification",
+        "sequence": 0,
+        "started": "2026-09-11T20:46:27.397Z",
+        "finished": "2026-09-11T20:46:27.397Z",
+        "qualification_batch_ns": 9549,
+        "host_checksum": 2,
+        "initialMemory": 1245184,
+        "initializedMemory": 33816576,
+        "memoryBeforePrepare": 33816576,
+        "memoryAfterPrepare": 33816576,
+        "memoryAfterBatch": 33816576,
+        "memoryAfterFinish": 33816576,
+        "outputBytes": 366,
+        "variant": "baseline",
+        "corpus": "full",
+        "instanceMode": "persistent"
+      },
+      "spec": {
+        "corpus": "full",
+        "variant": "baseline",
+        "case": 0,
+        "policy": 0,
+        "lifecycle": "retained",
+        "iterations": 1
+      }
+    },
+    {
+      "kind": "rational",
+      "name": "endpoint",
+      "accepted": false,
+      "error": "Expected values to be strictly deep-equal:\n+ actual - expected\n... Skipped lines\n\n  {\n    message: null,\n    operation: 'Add',\n    root: {\n      constraint: 0,\n...\n      intervalIndex: 0,\n+     lower: '987654321',\n-     lower: '2/1',\n      polynomial: [\n        '-2/1',\n        '1/1'\n      ],\n      symbol: 0,\n",
+      "row": {
+        "case": 0,
+        "checksum": 2,
+        "expected": {
+          "message": null,
+          "operation": "Add",
+          "root": {
+            "constraint": 0,
+            "count": 1,
+            "exact": "2/1",
+            "intervalIndex": 0,
+            "lower": "987654321",
+            "polynomial": [
+              "-2/1",
+              "1/1"
+            ],
+            "symbol": 0,
+            "upper": "2/1",
+            "validation": "Valid",
+            "validationMessage": null
+          },
+          "status": "Transformed"
+        },
+        "final_matches": true,
+        "iterations": 1,
+        "lifecycle": "retained",
+        "policy": 0,
+        "sources_unchanged": true,
+        "platform": "wasm",
+        "kind": "rational",
+        "mode": "qualification",
+        "sequence": 0,
+        "started": "2026-09-11T20:46:27.397Z",
+        "finished": "2026-09-11T20:46:27.397Z",
+        "qualification_batch_ns": 9549,
+        "host_checksum": 2,
+        "initialMemory": 1245184,
+        "initializedMemory": 33816576,
+        "memoryBeforePrepare": 33816576,
+        "memoryAfterPrepare": 33816576,
+        "memoryAfterBatch": 33816576,
+        "memoryAfterFinish": 33816576,
+        "outputBytes": 366,
+        "variant": "baseline",
+        "corpus": "full",
+        "instanceMode": "persistent"
+      },
+      "spec": {
+        "corpus": "full",
+        "variant": "baseline",
+        "case": 0,
+        "policy": 0,
+        "lifecycle": "retained",
+        "iterations": 1
+      }
+    },
+    {
+      "kind": "rational",
+      "name": "status",
+      "accepted": false,
+      "error": "Expected values to be strictly deep-equal:\n+ actual - expected\n... Skipped lines\n\n  {\n    message: null,\n    operation: 'Add',\n    root: {\n      constraint: 0,\n...\n    },\n+   status: 'Undecided'\n-   status: 'Transformed'\n  }\n",
+      "row": {
+        "case": 0,
+        "checksum": 2,
+        "expected": {
+          "message": null,
+          "operation": "Add",
+          "root": {
+            "constraint": 0,
+            "count": 1,
+            "exact": "2/1",
+            "intervalIndex": 0,
+            "lower": "2/1",
+            "polynomial": [
+              "-2/1",
+              "1/1"
+            ],
+            "symbol": 0,
+            "upper": "2/1",
+            "validation": "Valid",
+            "validationMessage": null
+          },
+          "status": "Undecided"
+        },
+        "final_matches": true,
+        "iterations": 1,
+        "lifecycle": "retained",
+        "policy": 0,
+        "sources_unchanged": true,
+        "platform": "wasm",
+        "kind": "rational",
+        "mode": "qualification",
+        "sequence": 0,
+        "started": "2026-09-11T20:46:27.397Z",
+        "finished": "2026-09-11T20:46:27.397Z",
+        "qualification_batch_ns": 9549,
+        "host_checksum": 2,
+        "initialMemory": 1245184,
+        "initializedMemory": 33816576,
+        "memoryBeforePrepare": 33816576,
+        "memoryAfterPrepare": 33816576,
+        "memoryAfterBatch": 33816576,
+        "memoryAfterFinish": 33816576,
+        "outputBytes": 366,
+        "variant": "baseline",
+        "corpus": "full",
+        "instanceMode": "persistent"
+      },
+      "spec": {
+        "corpus": "full",
+        "variant": "baseline",
+        "case": 0,
+        "policy": 0,
+        "lifecycle": "retained",
+        "iterations": 1
+      }
+    },
+    {
+      "kind": "rational",
+      "name": "source-completion",
+      "accepted": false,
+      "error": "Expected values to be strictly equal:\n\nfalse !== true\n",
+      "row": {
+        "case": 0,
+        "checksum": 2,
+        "expected": {
+          "message": null,
+          "operation": "Add",
+          "root": {
+            "constraint": 0,
+            "count": 1,
+            "exact": "2/1",
+            "intervalIndex": 0,
+            "lower": "2/1",
+            "polynomial": [
+              "-2/1",
+              "1/1"
+            ],
+            "symbol": 0,
+            "upper": "2/1",
+            "validation": "Valid",
+            "validationMessage": null
+          },
+          "status": "Transformed"
+        },
+        "final_matches": true,
+        "iterations": 1,
+        "lifecycle": "retained",
+        "policy": 0,
+        "sources_unchanged": false,
+        "platform": "wasm",
+        "kind": "rational",
+        "mode": "qualification",
+        "sequence": 0,
+        "started": "2026-09-11T20:46:27.397Z",
+        "finished": "2026-09-11T20:46:27.397Z",
+        "qualification_batch_ns": 9549,
+        "host_checksum": 2,
+        "initialMemory": 1245184,
+        "initializedMemory": 33816576,
+        "memoryBeforePrepare": 33816576,
+        "memoryAfterPrepare": 33816576,
+        "memoryAfterBatch": 33816576,
+        "memoryAfterFinish": 33816576,
+        "outputBytes": 366,
+        "variant": "baseline",
+        "corpus": "full",
+        "instanceMode": "persistent"
+      },
+      "spec": {
+        "corpus": "full",
+        "variant": "baseline",
+        "case": 0,
+        "policy": 0,
+        "lifecycle": "retained",
+        "iterations": 1
+      }
+    },
+    {
+      "kind": "rational",
+      "name": "result-completion",
+      "accepted": false,
+      "error": "Expected values to be strictly equal:\n\nfalse !== true\n",
+      "row": {
+        "case": 0,
+        "checksum": 2,
+        "expected": {
+          "message": null,
+          "operation": "Add",
+          "root": {
+            "constraint": 0,
+            "count": 1,
+            "exact": "2/1",
+            "intervalIndex": 0,
+            "lower": "2/1",
+            "polynomial": [
+              "-2/1",
+              "1/1"
+            ],
+            "symbol": 0,
+            "upper": "2/1",
+            "validation": "Valid",
+            "validationMessage": null
+          },
+          "status": "Transformed"
+        },
+        "final_matches": false,
+        "iterations": 1,
+        "lifecycle": "retained",
+        "policy": 0,
+        "sources_unchanged": true,
+        "platform": "wasm",
+        "kind": "rational",
+        "mode": "qualification",
+        "sequence": 0,
+        "started": "2026-09-11T20:46:27.397Z",
+        "finished": "2026-09-11T20:46:27.397Z",
+        "qualification_batch_ns": 9549,
+        "host_checksum": 2,
+        "initialMemory": 1245184,
+        "initializedMemory": 33816576,
+        "memoryBeforePrepare": 33816576,
+        "memoryAfterPrepare": 33816576,
+        "memoryAfterBatch": 33816576,
+        "memoryAfterFinish": 33816576,
+        "outputBytes": 366,
+        "variant": "baseline",
+        "corpus": "full",
+        "instanceMode": "persistent"
+      },
+      "spec": {
+        "corpus": "full",
+        "variant": "baseline",
+        "case": 0,
+        "policy": 0,
+        "lifecycle": "retained",
+        "iterations": 1
+      }
+    },
+    {
+      "kind": "rational",
+      "name": "checksum",
+      "accepted": false,
+      "error": "Expected values to be strictly equal:\n\n2 !== 3\n",
+      "row": {
+        "case": 0,
+        "checksum": 3,
+        "expected": {
+          "message": null,
+          "operation": "Add",
+          "root": {
+            "constraint": 0,
+            "count": 1,
+            "exact": "2/1",
+            "intervalIndex": 0,
+            "lower": "2/1",
+            "polynomial": [
+              "-2/1",
+              "1/1"
+            ],
+            "symbol": 0,
+            "upper": "2/1",
+            "validation": "Valid",
+            "validationMessage": null
+          },
+          "status": "Transformed"
+        },
+        "final_matches": true,
+        "iterations": 1,
+        "lifecycle": "retained",
+        "policy": 0,
+        "sources_unchanged": true,
+        "platform": "wasm",
+        "kind": "rational",
+        "mode": "qualification",
+        "sequence": 0,
+        "started": "2026-09-11T20:46:27.397Z",
+        "finished": "2026-09-11T20:46:27.397Z",
+        "qualification_batch_ns": 9549,
+        "host_checksum": 2,
+        "initialMemory": 1245184,
+        "initializedMemory": 33816576,
+        "memoryBeforePrepare": 33816576,
+        "memoryAfterPrepare": 33816576,
+        "memoryAfterBatch": 33816576,
+        "memoryAfterFinish": 33816576,
+        "outputBytes": 366,
+        "variant": "baseline",
+        "corpus": "full",
+        "instanceMode": "persistent"
+      },
+      "spec": {
+        "corpus": "full",
+        "variant": "baseline",
+        "case": 0,
+        "policy": 0,
+        "lifecycle": "retained",
+        "iterations": 1
+      }
+    },
+    {
+      "kind": "rational",
+      "name": "host-checksum",
+      "accepted": false,
+      "error": "Expected values to be strictly equal:\n\n3 !== 2\n",
+      "row": {
+        "case": 0,
+        "checksum": 2,
+        "expected": {
+          "message": null,
+          "operation": "Add",
+          "root": {
+            "constraint": 0,
+            "count": 1,
+            "exact": "2/1",
+            "intervalIndex": 0,
+            "lower": "2/1",
+            "polynomial": [
+              "-2/1",
+              "1/1"
+            ],
+            "symbol": 0,
+            "upper": "2/1",
+            "validation": "Valid",
+            "validationMessage": null
+          },
+          "status": "Transformed"
+        },
+        "final_matches": true,
+        "iterations": 1,
+        "lifecycle": "retained",
+        "policy": 0,
+        "sources_unchanged": true,
+        "platform": "wasm",
+        "kind": "rational",
+        "mode": "qualification",
+        "sequence": 0,
+        "started": "2026-09-11T20:46:27.397Z",
+        "finished": "2026-09-11T20:46:27.397Z",
+        "qualification_batch_ns": 9549,
+        "host_checksum": 3,
+        "initialMemory": 1245184,
+        "initializedMemory": 33816576,
+        "memoryBeforePrepare": 33816576,
+        "memoryAfterPrepare": 33816576,
+        "memoryAfterBatch": 33816576,
+        "memoryAfterFinish": 33816576,
+        "outputBytes": 366,
+        "variant": "baseline",
+        "corpus": "full",
+        "instanceMode": "persistent"
+      },
+      "spec": {
+        "corpus": "full",
+        "variant": "baseline",
+        "case": 0,
+        "policy": 0,
+        "lifecycle": "retained",
+        "iterations": 1
+      }
+    },
+    {
+      "kind": "rational",
+      "name": "iterations",
+      "accepted": false,
+      "error": "iterations\n\n2 !== 1\n",
+      "row": {
+        "case": 0,
+        "checksum": 2,
+        "expected": {
+          "message": null,
+          "operation": "Add",
+          "root": {
+            "constraint": 0,
+            "count": 1,
+            "exact": "2/1",
+            "intervalIndex": 0,
+            "lower": "2/1",
+            "polynomial": [
+              "-2/1",
+              "1/1"
+            ],
+            "symbol": 0,
+            "upper": "2/1",
+            "validation": "Valid",
+            "validationMessage": null
+          },
+          "status": "Transformed"
+        },
+        "final_matches": true,
+        "iterations": 2,
+        "lifecycle": "retained",
+        "policy": 0,
+        "sources_unchanged": true,
+        "platform": "wasm",
+        "kind": "rational",
+        "mode": "qualification",
+        "sequence": 0,
+        "started": "2026-09-11T20:46:27.397Z",
+        "finished": "2026-09-11T20:46:27.397Z",
+        "qualification_batch_ns": 9549,
+        "host_checksum": 2,
+        "initialMemory": 1245184,
+        "initializedMemory": 33816576,
+        "memoryBeforePrepare": 33816576,
+        "memoryAfterPrepare": 33816576,
+        "memoryAfterBatch": 33816576,
+        "memoryAfterFinish": 33816576,
+        "outputBytes": 366,
+        "variant": "baseline",
+        "corpus": "full",
+        "instanceMode": "persistent"
+      },
+      "spec": {
+        "corpus": "full",
+        "variant": "baseline",
+        "case": 0,
+        "policy": 0,
+        "lifecycle": "retained",
+        "iterations": 1
+      }
+    },
+    {
+      "kind": "rational",
+      "name": "wrong-policy",
+      "accepted": false,
+      "error": "policy\n\n1 !== 0\n",
+      "row": {
+        "case": 0,
+        "checksum": 2,
+        "expected": {
+          "message": null,
+          "operation": "Add",
+          "root": {
+            "constraint": 0,
+            "count": 1,
+            "exact": "2/1",
+            "intervalIndex": 0,
+            "lower": "2/1",
+            "polynomial": [
+              "-2/1",
+              "1/1"
+            ],
+            "symbol": 0,
+            "upper": "2/1",
+            "validation": "Valid",
+            "validationMessage": null
+          },
+          "status": "Transformed"
+        },
+        "final_matches": true,
+        "iterations": 1,
+        "lifecycle": "retained",
+        "policy": 1,
+        "sources_unchanged": true,
+        "platform": "wasm",
+        "kind": "rational",
+        "mode": "qualification",
+        "sequence": 0,
+        "started": "2026-09-11T20:46:27.397Z",
+        "finished": "2026-09-11T20:46:27.397Z",
+        "qualification_batch_ns": 9549,
+        "host_checksum": 2,
+        "initialMemory": 1245184,
+        "initializedMemory": 33816576,
+        "memoryBeforePrepare": 33816576,
+        "memoryAfterPrepare": 33816576,
+        "memoryAfterBatch": 33816576,
+        "memoryAfterFinish": 33816576,
+        "outputBytes": 366,
+        "variant": "baseline",
+        "corpus": "full",
+        "instanceMode": "persistent"
+      },
+      "spec": {
+        "corpus": "full",
+        "variant": "baseline",
+        "case": 0,
+        "policy": 0,
+        "lifecycle": "retained",
+        "iterations": 1
+      }
+    },
+    {
+      "kind": "rational",
+      "name": "wrong-variant",
+      "accepted": false,
+      "error": "variant\n+ actual - expected\n\n+ 'candidate'\n- 'baseline'\n",
+      "row": {
+        "case": 0,
+        "checksum": 2,
+        "expected": {
+          "message": null,
+          "operation": "Add",
+          "root": {
+            "constraint": 0,
+            "count": 1,
+            "exact": "2/1",
+            "intervalIndex": 0,
+            "lower": "2/1",
+            "polynomial": [
+              "-2/1",
+              "1/1"
+            ],
+            "symbol": 0,
+            "upper": "2/1",
+            "validation": "Valid",
+            "validationMessage": null
+          },
+          "status": "Transformed"
+        },
+        "final_matches": true,
+        "iterations": 1,
+        "lifecycle": "retained",
+        "policy": 0,
+        "sources_unchanged": true,
+        "platform": "wasm",
+        "kind": "rational",
+        "mode": "qualification",
+        "sequence": 0,
+        "started": "2026-09-11T20:46:27.397Z",
+        "finished": "2026-09-11T20:46:27.397Z",
+        "qualification_batch_ns": 9549,
+        "host_checksum": 2,
+        "initialMemory": 1245184,
+        "initializedMemory": 33816576,
+        "memoryBeforePrepare": 33816576,
+        "memoryAfterPrepare": 33816576,
+        "memoryAfterBatch": 33816576,
+        "memoryAfterFinish": 33816576,
+        "outputBytes": 366,
+        "variant": "candidate",
+        "corpus": "full",
+        "instanceMode": "persistent"
+      },
+      "spec": {
+        "corpus": "full",
+        "variant": "baseline",
+        "case": 0,
+        "policy": 0,
+        "lifecycle": "retained",
+        "iterations": 1
+      }
+    },
+    {
+      "kind": "rational",
+      "name": "wrong-instance-mode",
+      "accepted": false,
+      "error": "Expected values to be strictly equal:\n+ actual - expected\n\n+ 'fresh'\n- 'persistent'\n",
+      "row": {
+        "case": 0,
+        "checksum": 2,
+        "expected": {
+          "message": null,
+          "operation": "Add",
+          "root": {
+            "constraint": 0,
+            "count": 1,
+            "exact": "2/1",
+            "intervalIndex": 0,
+            "lower": "2/1",
+            "polynomial": [
+              "-2/1",
+              "1/1"
+            ],
+            "symbol": 0,
+            "upper": "2/1",
+            "validation": "Valid",
+            "validationMessage": null
+          },
+          "status": "Transformed"
+        },
+        "final_matches": true,
+        "iterations": 1,
+        "lifecycle": "retained",
+        "policy": 0,
+        "sources_unchanged": true,
+        "platform": "wasm",
+        "kind": "rational",
+        "mode": "qualification",
+        "sequence": 0,
+        "started": "2026-09-11T20:46:27.397Z",
+        "finished": "2026-09-11T20:46:27.397Z",
+        "qualification_batch_ns": 9549,
+        "host_checksum": 2,
+        "initialMemory": 1245184,
+        "initializedMemory": 33816576,
+        "memoryBeforePrepare": 33816576,
+        "memoryAfterPrepare": 33816576,
+        "memoryAfterBatch": 33816576,
+        "memoryAfterFinish": 33816576,
+        "outputBytes": 366,
+        "variant": "baseline",
+        "corpus": "full",
+        "instanceMode": "fresh"
+      },
+      "spec": {
+        "corpus": "full",
+        "variant": "baseline",
+        "case": 0,
+        "policy": 0,
+        "lifecycle": "retained",
+        "iterations": 1
+      }
+    },
+    {
+      "kind": "rational",
+      "name": "wrong-sequence",
+      "accepted": false,
+      "error": "Expected values to be strictly equal:\n\n1 !== 0\n",
+      "row": {
+        "case": 0,
+        "checksum": 2,
+        "expected": {
+          "message": null,
+          "operation": "Add",
+          "root": {
+            "constraint": 0,
+            "count": 1,
+            "exact": "2/1",
+            "intervalIndex": 0,
+            "lower": "2/1",
+            "polynomial": [
+              "-2/1",
+              "1/1"
+            ],
+            "symbol": 0,
+            "upper": "2/1",
+            "validation": "Valid",
+            "validationMessage": null
+          },
+          "status": "Transformed"
+        },
+        "final_matches": true,
+        "iterations": 1,
+        "lifecycle": "retained",
+        "policy": 0,
+        "sources_unchanged": true,
+        "platform": "wasm",
+        "kind": "rational",
+        "mode": "qualification",
+        "sequence": 1,
+        "started": "2026-09-11T20:46:27.397Z",
+        "finished": "2026-09-11T20:46:27.397Z",
+        "qualification_batch_ns": 9549,
+        "host_checksum": 2,
+        "initialMemory": 1245184,
+        "initializedMemory": 33816576,
+        "memoryBeforePrepare": 33816576,
+        "memoryAfterPrepare": 33816576,
+        "memoryAfterBatch": 33816576,
+        "memoryAfterFinish": 33816576,
+        "outputBytes": 366,
+        "variant": "baseline",
+        "corpus": "full",
+        "instanceMode": "persistent"
+      },
+      "spec": {
+        "corpus": "full",
+        "variant": "baseline",
+        "case": 0,
+        "policy": 0,
+        "lifecycle": "retained",
+        "iterations": 1
+      }
+    },
+    {
+      "kind": "rational",
+      "name": "zero-duration",
+      "accepted": false,
+      "error": "The expression evaluated to a falsy value:\n\n  assert(Number.isSafeInteger(row.qualification_batch_ns)&&row.qualification_batch_ns>0)\n",
+      "row": {
+        "case": 0,
+        "checksum": 2,
+        "expected": {
+          "message": null,
+          "operation": "Add",
+          "root": {
+            "constraint": 0,
+            "count": 1,
+            "exact": "2/1",
+            "intervalIndex": 0,
+            "lower": "2/1",
+            "polynomial": [
+              "-2/1",
+              "1/1"
+            ],
+            "symbol": 0,
+            "upper": "2/1",
+            "validation": "Valid",
+            "validationMessage": null
+          },
+          "status": "Transformed"
+        },
+        "final_matches": true,
+        "iterations": 1,
+        "lifecycle": "retained",
+        "policy": 0,
+        "sources_unchanged": true,
+        "platform": "wasm",
+        "kind": "rational",
+        "mode": "qualification",
+        "sequence": 0,
+        "started": "2026-09-11T20:46:27.397Z",
+        "finished": "2026-09-11T20:46:27.397Z",
+        "qualification_batch_ns": 0,
+        "host_checksum": 2,
+        "initialMemory": 1245184,
+        "initializedMemory": 33816576,
+        "memoryBeforePrepare": 33816576,
+        "memoryAfterPrepare": 33816576,
+        "memoryAfterBatch": 33816576,
+        "memoryAfterFinish": 33816576,
+        "outputBytes": 366,
+        "variant": "baseline",
+        "corpus": "full",
+        "instanceMode": "persistent"
+      },
+      "spec": {
+        "corpus": "full",
+        "variant": "baseline",
+        "case": 0,
+        "policy": 0,
+        "lifecycle": "retained",
+        "iterations": 1
+      }
+    },
+    {
+      "kind": "rational",
+      "name": "backward-clock",
+      "accepted": false,
+      "error": "The expression evaluated to a falsy value:\n\n  assert(Date.parse(row.finished)>=Date.parse(row.started))\n",
+      "row": {
+        "case": 0,
+        "checksum": 2,
+        "expected": {
+          "message": null,
+          "operation": "Add",
+          "root": {
+            "constraint": 0,
+            "count": 1,
+            "exact": "2/1",
+            "intervalIndex": 0,
+            "lower": "2/1",
+            "polynomial": [
+              "-2/1",
+              "1/1"
+            ],
+            "symbol": 0,
+            "upper": "2/1",
+            "validation": "Valid",
+            "validationMessage": null
+          },
+          "status": "Transformed"
+        },
+        "final_matches": true,
+        "iterations": 1,
+        "lifecycle": "retained",
+        "policy": 0,
+        "sources_unchanged": true,
+        "platform": "wasm",
+        "kind": "rational",
+        "mode": "qualification",
+        "sequence": 0,
+        "started": "2026-09-11T20:46:27.397Z",
+        "finished": "1970-01-01T00:00:00.000Z",
+        "qualification_batch_ns": 9549,
+        "host_checksum": 2,
+        "initialMemory": 1245184,
+        "initializedMemory": 33816576,
+        "memoryBeforePrepare": 33816576,
+        "memoryAfterPrepare": 33816576,
+        "memoryAfterBatch": 33816576,
+        "memoryAfterFinish": 33816576,
+        "outputBytes": 366,
+        "variant": "baseline",
+        "corpus": "full",
+        "instanceMode": "persistent"
+      },
+      "spec": {
+        "corpus": "full",
+        "variant": "baseline",
+        "case": 0,
+        "policy": 0,
+        "lifecycle": "retained",
+        "iterations": 1
+      }
+    },
+    {
+      "kind": "rational",
+      "name": "memory-decrease",
+      "accepted": false,
+      "error": "The expression evaluated to a falsy value:\n\n  assert(row.initialMemory>0&&row.memoryAfterPrepare>=row.initialMemory&&row.memoryAfterBatch>=row.memoryAfterPrepare&&row.memoryAfterFinish>=row.memoryAfterBatch)\n",
+      "row": {
+        "case": 0,
+        "checksum": 2,
+        "expected": {
+          "message": null,
+          "operation": "Add",
+          "root": {
+            "constraint": 0,
+            "count": 1,
+            "exact": "2/1",
+            "intervalIndex": 0,
+            "lower": "2/1",
+            "polynomial": [
+              "-2/1",
+              "1/1"
+            ],
+            "symbol": 0,
+            "upper": "2/1",
+            "validation": "Valid",
+            "validationMessage": null
+          },
+          "status": "Transformed"
+        },
+        "final_matches": true,
+        "iterations": 1,
+        "lifecycle": "retained",
+        "policy": 0,
+        "sources_unchanged": true,
+        "platform": "wasm",
+        "kind": "rational",
+        "mode": "qualification",
+        "sequence": 0,
+        "started": "2026-09-11T20:46:27.397Z",
+        "finished": "2026-09-11T20:46:27.397Z",
+        "qualification_batch_ns": 9549,
+        "host_checksum": 2,
+        "initialMemory": 1245184,
+        "initializedMemory": 33816576,
+        "memoryBeforePrepare": 33816576,
+        "memoryAfterPrepare": 33816576,
+        "memoryAfterBatch": 0,
+        "memoryAfterFinish": 33816576,
+        "outputBytes": 366,
+        "variant": "baseline",
+        "corpus": "full",
+        "instanceMode": "persistent"
+      },
+      "spec": {
+        "corpus": "full",
+        "variant": "baseline",
+        "case": 0,
+        "policy": 0,
+        "lifecycle": "retained",
+        "iterations": 1
+      }
+    },
+    {
+      "kind": "rational",
+      "name": "fractional-memory",
+      "accepted": false,
+      "error": "memoryAfterFinish",
+      "row": {
+        "case": 0,
+        "checksum": 2,
+        "expected": {
+          "message": null,
+          "operation": "Add",
+          "root": {
+            "constraint": 0,
+            "count": 1,
+            "exact": "2/1",
+            "intervalIndex": 0,
+            "lower": "2/1",
+            "polynomial": [
+              "-2/1",
+              "1/1"
+            ],
+            "symbol": 0,
+            "upper": "2/1",
+            "validation": "Valid",
+            "validationMessage": null
+          },
+          "status": "Transformed"
+        },
+        "final_matches": true,
+        "iterations": 1,
+        "lifecycle": "retained",
+        "policy": 0,
+        "sources_unchanged": true,
+        "platform": "wasm",
+        "kind": "rational",
+        "mode": "qualification",
+        "sequence": 0,
+        "started": "2026-09-11T20:46:27.397Z",
+        "finished": "2026-09-11T20:46:27.397Z",
+        "qualification_batch_ns": 9549,
+        "host_checksum": 2,
+        "initialMemory": 1245184,
+        "initializedMemory": 33816576,
+        "memoryBeforePrepare": 33816576,
+        "memoryAfterPrepare": 33816576,
+        "memoryAfterBatch": 33816576,
+        "memoryAfterFinish": 33816576.5,
+        "outputBytes": 366,
+        "variant": "baseline",
+        "corpus": "full",
+        "instanceMode": "persistent"
+      },
+      "spec": {
+        "corpus": "full",
+        "variant": "baseline",
+        "case": 0,
+        "policy": 0,
+        "lifecycle": "retained",
+        "iterations": 1
+      }
+    },
+    {
+      "kind": "rational",
+      "name": "allocation-field",
+      "accepted": false,
+      "error": "The expression evaluated to a falsy value:\n\n  assert(!('requests'in row))\n",
+      "row": {
+        "case": 0,
+        "checksum": 2,
+        "expected": {
+          "message": null,
+          "operation": "Add",
+          "root": {
+            "constraint": 0,
+            "count": 1,
+            "exact": "2/1",
+            "intervalIndex": 0,
+            "lower": "2/1",
+            "polynomial": [
+              "-2/1",
+              "1/1"
+            ],
+            "symbol": 0,
+            "upper": "2/1",
+            "validation": "Valid",
+            "validationMessage": null
+          },
+          "status": "Transformed"
+        },
+        "final_matches": true,
+        "iterations": 1,
+        "lifecycle": "retained",
+        "policy": 0,
+        "sources_unchanged": true,
+        "platform": "wasm",
+        "kind": "rational",
+        "mode": "qualification",
+        "sequence": 0,
+        "started": "2026-09-11T20:46:27.397Z",
+        "finished": "2026-09-11T20:46:27.397Z",
+        "qualification_batch_ns": 9549,
+        "host_checksum": 2,
+        "initialMemory": 1245184,
+        "initializedMemory": 33816576,
+        "memoryBeforePrepare": 33816576,
+        "memoryAfterPrepare": 33816576,
+        "memoryAfterBatch": 33816576,
+        "memoryAfterFinish": 33816576,
+        "outputBytes": 366,
+        "variant": "baseline",
+        "corpus": "full",
+        "instanceMode": "persistent",
+        "requests": 0
+      },
+      "spec": {
+        "corpus": "full",
+        "variant": "baseline",
+        "case": 0,
+        "policy": 0,
+        "lifecycle": "retained",
+        "iterations": 1
+      }
+    },
+    {
+      "kind": "history",
+      "name": "source-metadata",
+      "accepted": false,
+      "error": "Expected values to be strictly deep-equal:\n+ actual - expected\n\n  {\n+   constraint: 987654321,\n-   constraint: 7,\n    count: 1,\n    exact: {\n      class: {\n        Sqrt: {\n          denominator: [\n",
+      "row": {
+        "actual": {
+          "message": null,
+          "operation": "Add",
+          "root": {
+            "constraint": 7,
+            "count": 1,
+            "exact": {
+              "class": {
+                "Sqrt": {
+                  "denominator": [
+                    1
+                  ],
+                  "numerator": [
+                    2
+                  ],
+                  "sign": 1
+                }
+              },
+              "computable": {
+                "internal": {
+                  "Sqrt": {
+                    "internal": {
+                      "Int": [
+                        1,
+                        [
+                          2
+                        ]
+                      ]
+                    }
+                  }
+                }
+              },
+              "rational": {
+                "denominator": [
+                  1
+                ],
+                "numerator": [
+                  2
+                ],
+                "sign": 1
+              }
+            },
+            "intervalIndex": 3,
+            "lower": {
+              "class": {
+                "Sqrt": {
+                  "denominator": [
+                    1
+                  ],
+                  "numerator": [
+                    2
+                  ],
+                  "sign": 1
+                }
+              },
+              "computable": {
+                "internal": {
+                  "Sqrt": {
+                    "internal": {
+                      "Int": [
+                        1,
+                        [
+                          2
+                        ]
+                      ]
+                    }
+                  }
+                }
+              },
+              "rational": {
+                "denominator": [
+                  1
+                ],
+                "numerator": [
+                  2
+                ],
+                "sign": 1
+              }
+            },
+            "polynomial": [
+              {
+                "class": "One",
+                "computable": null,
+                "rational": {
+                  "denominator": [
+                    1
+                  ],
+                  "numerator": [],
+                  "sign": 0
+                }
+              },
+              {
+                "class": "One",
+                "computable": null,
+                "rational": {
+                  "denominator": [
+                    1
+                  ],
+                  "numerator": [],
+                  "sign": 0
+                }
+              },
+              {
+                "class": "One",
+                "computable": null,
+                "rational": {
+                  "denominator": [
+                    1
+                  ],
+                  "numerator": [
+                    8
+                  ],
+                  "sign": -1
+                }
+              },
+              {
+                "class": "One",
+                "computable": null,
+                "rational": {
+                  "denominator": [
+                    1
+                  ],
+                  "numerator": [],
+                  "sign": 0
+                }
+              },
+              {
+                "class": "One",
+                "computable": null,
+                "rational": {
+                  "denominator": [
+                    1
+                  ],
+                  "numerator": [
+                    1
+                  ],
+                  "sign": 1
+                }
+              }
+            ],
+            "symbol": 11,
+            "upper": {
+              "class": {
+                "Sqrt": {
+                  "denominator": [
+                    1
+                  ],
+                  "numerator": [
+                    2
+                  ],
+                  "sign": 1
+                }
+              },
+              "computable": {
+                "internal": {
+                  "Sqrt": {
+                    "internal": {
+                      "Int": [
+                        1,
+                        [
+                          2
+                        ]
+                      ]
+                    }
+                  }
+                }
+              },
+              "rational": {
+                "denominator": [
+                  1
+                ],
+                "numerator": [
+                  2
+                ],
+                "sign": 1
+              }
+            },
+            "validation": "Valid",
+            "validationMessage": null
+          },
+          "status": "Transformed"
+        },
+        "case": 0,
+        "checksum": 5,
+        "final_matches_preconditioned": true,
+        "history": 0,
+        "input_records_unchanged": true,
+        "iterations": 1,
+        "left": {
+          "constraint": 987654321,
+          "count": 1,
+          "exact": {
+            "class": {
+              "Sqrt": {
+                "denominator": [
+                  1
+                ],
+                "numerator": [
+                  2
+                ],
+                "sign": 1
+              }
+            },
+            "computable": {
+              "internal": {
+                "Sqrt": {
+                  "internal": {
+                    "Int": [
+                      1,
+                      [
+                        2
+                      ]
+                    ]
+                  }
+                }
+              }
+            },
+            "rational": {
+              "denominator": [
+                1
+              ],
+              "numerator": [
+                1
+              ],
+              "sign": 1
+            }
+          },
+          "intervalIndex": 3,
+          "lower": {
+            "class": {
+              "Sqrt": {
+                "denominator": [
+                  1
+                ],
+                "numerator": [
+                  2
+                ],
+                "sign": 1
+              }
+            },
+            "computable": {
+              "internal": {
+                "Sqrt": {
+                  "internal": {
+                    "Int": [
+                      1,
+                      [
+                        2
+                      ]
+                    ]
+                  }
+                }
+              }
+            },
+            "rational": {
+              "denominator": [
+                1
+              ],
+              "numerator": [
+                1
+              ],
+              "sign": 1
+            }
+          },
+          "polynomial": [
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  1
+                ],
+                "numerator": [
+                  2
+                ],
+                "sign": -1
+              }
+            },
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  1
+                ],
+                "numerator": [],
+                "sign": 0
+              }
+            },
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  1
+                ],
+                "numerator": [
+                  1
+                ],
+                "sign": 1
+              }
+            }
+          ],
+          "symbol": 11,
+          "upper": {
+            "class": {
+              "Sqrt": {
+                "denominator": [
+                  1
+                ],
+                "numerator": [
+                  2
+                ],
+                "sign": 1
+              }
+            },
+            "computable": {
+              "internal": {
+                "Sqrt": {
+                  "internal": {
+                    "Int": [
+                      1,
+                      [
+                        2
+                      ]
+                    ]
+                  }
+                }
+              }
+            },
+            "rational": {
+              "denominator": [
+                1
+              ],
+              "numerator": [
+                1
+              ],
+              "sign": 1
+            }
+          },
+          "validation": "Valid",
+          "validationMessage": null
+        },
+        "lifecycle": "retained",
+        "policy": 0,
+        "right": {
+          "constraint": 7,
+          "count": 1,
+          "exact": {
+            "class": {
+              "Sqrt": {
+                "denominator": [
+                  1
+                ],
+                "numerator": [
+                  2
+                ],
+                "sign": 1
+              }
+            },
+            "computable": {
+              "internal": {
+                "Sqrt": {
+                  "internal": {
+                    "Int": [
+                      1,
+                      [
+                        2
+                      ]
+                    ]
+                  }
+                }
+              }
+            },
+            "rational": {
+              "denominator": [
+                1
+              ],
+              "numerator": [
+                1
+              ],
+              "sign": 1
+            }
+          },
+          "intervalIndex": 3,
+          "lower": {
+            "class": {
+              "Sqrt": {
+                "denominator": [
+                  1
+                ],
+                "numerator": [
+                  2
+                ],
+                "sign": 1
+              }
+            },
+            "computable": {
+              "internal": {
+                "Sqrt": {
+                  "internal": {
+                    "Int": [
+                      1,
+                      [
+                        2
+                      ]
+                    ]
+                  }
+                }
+              }
+            },
+            "rational": {
+              "denominator": [
+                1
+              ],
+              "numerator": [
+                1
+              ],
+              "sign": 1
+            }
+          },
+          "polynomial": [
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  1
+                ],
+                "numerator": [
+                  2
+                ],
+                "sign": -1
+              }
+            },
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  1
+                ],
+                "numerator": [],
+                "sign": 0
+              }
+            },
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  1
+                ],
+                "numerator": [
+                  1
+                ],
+                "sign": 1
+              }
+            }
+          ],
+          "symbol": 11,
+          "upper": {
+            "class": {
+              "Sqrt": {
+                "denominator": [
+                  1
+                ],
+                "numerator": [
+                  2
+                ],
+                "sign": 1
+              }
+            },
+            "computable": {
+              "internal": {
+                "Sqrt": {
+                  "internal": {
+                    "Int": [
+                      1,
+                      [
+                        2
+                      ]
+                    ]
+                  }
+                }
+              }
+            },
+            "rational": {
+              "denominator": [
+                1
+              ],
+              "numerator": [
+                1
+              ],
+              "sign": 1
+            }
+          },
+          "validation": "Valid",
+          "validationMessage": null
+        },
+        "platform": "wasm",
+        "kind": "history",
+        "mode": "qualification",
+        "started": "2026-09-11T20:49:34.508Z",
+        "finished": "2026-09-11T20:49:34.509Z",
+        "qualification_batch_ns": 20818,
+        "host_checksum": 5,
+        "initialMemory": 1245184,
+        "memoryAfterPrepare": 1376256,
+        "memoryAfterBatch": 1376256,
+        "memoryAfterFinish": 1376256,
+        "outputBytes": 3310,
+        "variant": "baseline",
+        "corpus": "history",
+        "instanceMode": "fresh"
+      },
+      "spec": {
+        "corpus": "history",
+        "variant": "baseline",
+        "case": 0,
+        "policy": 0,
+        "history": 0,
+        "lifecycle": "retained",
+        "iterations": 1
+      }
+    },
+    {
+      "kind": "history",
+      "name": "source-completion",
+      "accepted": false,
+      "error": "Expected values to be strictly equal:\n\nfalse !== true\n",
+      "row": {
+        "actual": {
+          "message": null,
+          "operation": "Add",
+          "root": {
+            "constraint": 7,
+            "count": 1,
+            "exact": {
+              "class": {
+                "Sqrt": {
+                  "denominator": [
+                    1
+                  ],
+                  "numerator": [
+                    2
+                  ],
+                  "sign": 1
+                }
+              },
+              "computable": {
+                "internal": {
+                  "Sqrt": {
+                    "internal": {
+                      "Int": [
+                        1,
+                        [
+                          2
+                        ]
+                      ]
+                    }
+                  }
+                }
+              },
+              "rational": {
+                "denominator": [
+                  1
+                ],
+                "numerator": [
+                  2
+                ],
+                "sign": 1
+              }
+            },
+            "intervalIndex": 3,
+            "lower": {
+              "class": {
+                "Sqrt": {
+                  "denominator": [
+                    1
+                  ],
+                  "numerator": [
+                    2
+                  ],
+                  "sign": 1
+                }
+              },
+              "computable": {
+                "internal": {
+                  "Sqrt": {
+                    "internal": {
+                      "Int": [
+                        1,
+                        [
+                          2
+                        ]
+                      ]
+                    }
+                  }
+                }
+              },
+              "rational": {
+                "denominator": [
+                  1
+                ],
+                "numerator": [
+                  2
+                ],
+                "sign": 1
+              }
+            },
+            "polynomial": [
+              {
+                "class": "One",
+                "computable": null,
+                "rational": {
+                  "denominator": [
+                    1
+                  ],
+                  "numerator": [],
+                  "sign": 0
+                }
+              },
+              {
+                "class": "One",
+                "computable": null,
+                "rational": {
+                  "denominator": [
+                    1
+                  ],
+                  "numerator": [],
+                  "sign": 0
+                }
+              },
+              {
+                "class": "One",
+                "computable": null,
+                "rational": {
+                  "denominator": [
+                    1
+                  ],
+                  "numerator": [
+                    8
+                  ],
+                  "sign": -1
+                }
+              },
+              {
+                "class": "One",
+                "computable": null,
+                "rational": {
+                  "denominator": [
+                    1
+                  ],
+                  "numerator": [],
+                  "sign": 0
+                }
+              },
+              {
+                "class": "One",
+                "computable": null,
+                "rational": {
+                  "denominator": [
+                    1
+                  ],
+                  "numerator": [
+                    1
+                  ],
+                  "sign": 1
+                }
+              }
+            ],
+            "symbol": 11,
+            "upper": {
+              "class": {
+                "Sqrt": {
+                  "denominator": [
+                    1
+                  ],
+                  "numerator": [
+                    2
+                  ],
+                  "sign": 1
+                }
+              },
+              "computable": {
+                "internal": {
+                  "Sqrt": {
+                    "internal": {
+                      "Int": [
+                        1,
+                        [
+                          2
+                        ]
+                      ]
+                    }
+                  }
+                }
+              },
+              "rational": {
+                "denominator": [
+                  1
+                ],
+                "numerator": [
+                  2
+                ],
+                "sign": 1
+              }
+            },
+            "validation": "Valid",
+            "validationMessage": null
+          },
+          "status": "Transformed"
+        },
+        "case": 0,
+        "checksum": 5,
+        "final_matches_preconditioned": true,
+        "history": 0,
+        "input_records_unchanged": false,
+        "iterations": 1,
+        "left": {
+          "constraint": 7,
+          "count": 1,
+          "exact": {
+            "class": {
+              "Sqrt": {
+                "denominator": [
+                  1
+                ],
+                "numerator": [
+                  2
+                ],
+                "sign": 1
+              }
+            },
+            "computable": {
+              "internal": {
+                "Sqrt": {
+                  "internal": {
+                    "Int": [
+                      1,
+                      [
+                        2
+                      ]
+                    ]
+                  }
+                }
+              }
+            },
+            "rational": {
+              "denominator": [
+                1
+              ],
+              "numerator": [
+                1
+              ],
+              "sign": 1
+            }
+          },
+          "intervalIndex": 3,
+          "lower": {
+            "class": {
+              "Sqrt": {
+                "denominator": [
+                  1
+                ],
+                "numerator": [
+                  2
+                ],
+                "sign": 1
+              }
+            },
+            "computable": {
+              "internal": {
+                "Sqrt": {
+                  "internal": {
+                    "Int": [
+                      1,
+                      [
+                        2
+                      ]
+                    ]
+                  }
+                }
+              }
+            },
+            "rational": {
+              "denominator": [
+                1
+              ],
+              "numerator": [
+                1
+              ],
+              "sign": 1
+            }
+          },
+          "polynomial": [
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  1
+                ],
+                "numerator": [
+                  2
+                ],
+                "sign": -1
+              }
+            },
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  1
+                ],
+                "numerator": [],
+                "sign": 0
+              }
+            },
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  1
+                ],
+                "numerator": [
+                  1
+                ],
+                "sign": 1
+              }
+            }
+          ],
+          "symbol": 11,
+          "upper": {
+            "class": {
+              "Sqrt": {
+                "denominator": [
+                  1
+                ],
+                "numerator": [
+                  2
+                ],
+                "sign": 1
+              }
+            },
+            "computable": {
+              "internal": {
+                "Sqrt": {
+                  "internal": {
+                    "Int": [
+                      1,
+                      [
+                        2
+                      ]
+                    ]
+                  }
+                }
+              }
+            },
+            "rational": {
+              "denominator": [
+                1
+              ],
+              "numerator": [
+                1
+              ],
+              "sign": 1
+            }
+          },
+          "validation": "Valid",
+          "validationMessage": null
+        },
+        "lifecycle": "retained",
+        "policy": 0,
+        "right": {
+          "constraint": 7,
+          "count": 1,
+          "exact": {
+            "class": {
+              "Sqrt": {
+                "denominator": [
+                  1
+                ],
+                "numerator": [
+                  2
+                ],
+                "sign": 1
+              }
+            },
+            "computable": {
+              "internal": {
+                "Sqrt": {
+                  "internal": {
+                    "Int": [
+                      1,
+                      [
+                        2
+                      ]
+                    ]
+                  }
+                }
+              }
+            },
+            "rational": {
+              "denominator": [
+                1
+              ],
+              "numerator": [
+                1
+              ],
+              "sign": 1
+            }
+          },
+          "intervalIndex": 3,
+          "lower": {
+            "class": {
+              "Sqrt": {
+                "denominator": [
+                  1
+                ],
+                "numerator": [
+                  2
+                ],
+                "sign": 1
+              }
+            },
+            "computable": {
+              "internal": {
+                "Sqrt": {
+                  "internal": {
+                    "Int": [
+                      1,
+                      [
+                        2
+                      ]
+                    ]
+                  }
+                }
+              }
+            },
+            "rational": {
+              "denominator": [
+                1
+              ],
+              "numerator": [
+                1
+              ],
+              "sign": 1
+            }
+          },
+          "polynomial": [
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  1
+                ],
+                "numerator": [
+                  2
+                ],
+                "sign": -1
+              }
+            },
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  1
+                ],
+                "numerator": [],
+                "sign": 0
+              }
+            },
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  1
+                ],
+                "numerator": [
+                  1
+                ],
+                "sign": 1
+              }
+            }
+          ],
+          "symbol": 11,
+          "upper": {
+            "class": {
+              "Sqrt": {
+                "denominator": [
+                  1
+                ],
+                "numerator": [
+                  2
+                ],
+                "sign": 1
+              }
+            },
+            "computable": {
+              "internal": {
+                "Sqrt": {
+                  "internal": {
+                    "Int": [
+                      1,
+                      [
+                        2
+                      ]
+                    ]
+                  }
+                }
+              }
+            },
+            "rational": {
+              "denominator": [
+                1
+              ],
+              "numerator": [
+                1
+              ],
+              "sign": 1
+            }
+          },
+          "validation": "Valid",
+          "validationMessage": null
+        },
+        "platform": "wasm",
+        "kind": "history",
+        "mode": "qualification",
+        "started": "2026-09-11T20:49:34.508Z",
+        "finished": "2026-09-11T20:49:34.509Z",
+        "qualification_batch_ns": 20818,
+        "host_checksum": 5,
+        "initialMemory": 1245184,
+        "memoryAfterPrepare": 1376256,
+        "memoryAfterBatch": 1376256,
+        "memoryAfterFinish": 1376256,
+        "outputBytes": 3310,
+        "variant": "baseline",
+        "corpus": "history",
+        "instanceMode": "fresh"
+      },
+      "spec": {
+        "corpus": "history",
+        "variant": "baseline",
+        "case": 0,
+        "policy": 0,
+        "history": 0,
+        "lifecycle": "retained",
+        "iterations": 1
+      }
+    },
+    {
+      "kind": "history",
+      "name": "result-completion",
+      "accepted": false,
+      "error": "Expected values to be strictly equal:\n\nfalse !== true\n",
+      "row": {
+        "actual": {
+          "message": null,
+          "operation": "Add",
+          "root": {
+            "constraint": 7,
+            "count": 1,
+            "exact": {
+              "class": {
+                "Sqrt": {
+                  "denominator": [
+                    1
+                  ],
+                  "numerator": [
+                    2
+                  ],
+                  "sign": 1
+                }
+              },
+              "computable": {
+                "internal": {
+                  "Sqrt": {
+                    "internal": {
+                      "Int": [
+                        1,
+                        [
+                          2
+                        ]
+                      ]
+                    }
+                  }
+                }
+              },
+              "rational": {
+                "denominator": [
+                  1
+                ],
+                "numerator": [
+                  2
+                ],
+                "sign": 1
+              }
+            },
+            "intervalIndex": 3,
+            "lower": {
+              "class": {
+                "Sqrt": {
+                  "denominator": [
+                    1
+                  ],
+                  "numerator": [
+                    2
+                  ],
+                  "sign": 1
+                }
+              },
+              "computable": {
+                "internal": {
+                  "Sqrt": {
+                    "internal": {
+                      "Int": [
+                        1,
+                        [
+                          2
+                        ]
+                      ]
+                    }
+                  }
+                }
+              },
+              "rational": {
+                "denominator": [
+                  1
+                ],
+                "numerator": [
+                  2
+                ],
+                "sign": 1
+              }
+            },
+            "polynomial": [
+              {
+                "class": "One",
+                "computable": null,
+                "rational": {
+                  "denominator": [
+                    1
+                  ],
+                  "numerator": [],
+                  "sign": 0
+                }
+              },
+              {
+                "class": "One",
+                "computable": null,
+                "rational": {
+                  "denominator": [
+                    1
+                  ],
+                  "numerator": [],
+                  "sign": 0
+                }
+              },
+              {
+                "class": "One",
+                "computable": null,
+                "rational": {
+                  "denominator": [
+                    1
+                  ],
+                  "numerator": [
+                    8
+                  ],
+                  "sign": -1
+                }
+              },
+              {
+                "class": "One",
+                "computable": null,
+                "rational": {
+                  "denominator": [
+                    1
+                  ],
+                  "numerator": [],
+                  "sign": 0
+                }
+              },
+              {
+                "class": "One",
+                "computable": null,
+                "rational": {
+                  "denominator": [
+                    1
+                  ],
+                  "numerator": [
+                    1
+                  ],
+                  "sign": 1
+                }
+              }
+            ],
+            "symbol": 11,
+            "upper": {
+              "class": {
+                "Sqrt": {
+                  "denominator": [
+                    1
+                  ],
+                  "numerator": [
+                    2
+                  ],
+                  "sign": 1
+                }
+              },
+              "computable": {
+                "internal": {
+                  "Sqrt": {
+                    "internal": {
+                      "Int": [
+                        1,
+                        [
+                          2
+                        ]
+                      ]
+                    }
+                  }
+                }
+              },
+              "rational": {
+                "denominator": [
+                  1
+                ],
+                "numerator": [
+                  2
+                ],
+                "sign": 1
+              }
+            },
+            "validation": "Valid",
+            "validationMessage": null
+          },
+          "status": "Transformed"
+        },
+        "case": 0,
+        "checksum": 5,
+        "final_matches_preconditioned": false,
+        "history": 0,
+        "input_records_unchanged": true,
+        "iterations": 1,
+        "left": {
+          "constraint": 7,
+          "count": 1,
+          "exact": {
+            "class": {
+              "Sqrt": {
+                "denominator": [
+                  1
+                ],
+                "numerator": [
+                  2
+                ],
+                "sign": 1
+              }
+            },
+            "computable": {
+              "internal": {
+                "Sqrt": {
+                  "internal": {
+                    "Int": [
+                      1,
+                      [
+                        2
+                      ]
+                    ]
+                  }
+                }
+              }
+            },
+            "rational": {
+              "denominator": [
+                1
+              ],
+              "numerator": [
+                1
+              ],
+              "sign": 1
+            }
+          },
+          "intervalIndex": 3,
+          "lower": {
+            "class": {
+              "Sqrt": {
+                "denominator": [
+                  1
+                ],
+                "numerator": [
+                  2
+                ],
+                "sign": 1
+              }
+            },
+            "computable": {
+              "internal": {
+                "Sqrt": {
+                  "internal": {
+                    "Int": [
+                      1,
+                      [
+                        2
+                      ]
+                    ]
+                  }
+                }
+              }
+            },
+            "rational": {
+              "denominator": [
+                1
+              ],
+              "numerator": [
+                1
+              ],
+              "sign": 1
+            }
+          },
+          "polynomial": [
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  1
+                ],
+                "numerator": [
+                  2
+                ],
+                "sign": -1
+              }
+            },
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  1
+                ],
+                "numerator": [],
+                "sign": 0
+              }
+            },
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  1
+                ],
+                "numerator": [
+                  1
+                ],
+                "sign": 1
+              }
+            }
+          ],
+          "symbol": 11,
+          "upper": {
+            "class": {
+              "Sqrt": {
+                "denominator": [
+                  1
+                ],
+                "numerator": [
+                  2
+                ],
+                "sign": 1
+              }
+            },
+            "computable": {
+              "internal": {
+                "Sqrt": {
+                  "internal": {
+                    "Int": [
+                      1,
+                      [
+                        2
+                      ]
+                    ]
+                  }
+                }
+              }
+            },
+            "rational": {
+              "denominator": [
+                1
+              ],
+              "numerator": [
+                1
+              ],
+              "sign": 1
+            }
+          },
+          "validation": "Valid",
+          "validationMessage": null
+        },
+        "lifecycle": "retained",
+        "policy": 0,
+        "right": {
+          "constraint": 7,
+          "count": 1,
+          "exact": {
+            "class": {
+              "Sqrt": {
+                "denominator": [
+                  1
+                ],
+                "numerator": [
+                  2
+                ],
+                "sign": 1
+              }
+            },
+            "computable": {
+              "internal": {
+                "Sqrt": {
+                  "internal": {
+                    "Int": [
+                      1,
+                      [
+                        2
+                      ]
+                    ]
+                  }
+                }
+              }
+            },
+            "rational": {
+              "denominator": [
+                1
+              ],
+              "numerator": [
+                1
+              ],
+              "sign": 1
+            }
+          },
+          "intervalIndex": 3,
+          "lower": {
+            "class": {
+              "Sqrt": {
+                "denominator": [
+                  1
+                ],
+                "numerator": [
+                  2
+                ],
+                "sign": 1
+              }
+            },
+            "computable": {
+              "internal": {
+                "Sqrt": {
+                  "internal": {
+                    "Int": [
+                      1,
+                      [
+                        2
+                      ]
+                    ]
+                  }
+                }
+              }
+            },
+            "rational": {
+              "denominator": [
+                1
+              ],
+              "numerator": [
+                1
+              ],
+              "sign": 1
+            }
+          },
+          "polynomial": [
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  1
+                ],
+                "numerator": [
+                  2
+                ],
+                "sign": -1
+              }
+            },
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  1
+                ],
+                "numerator": [],
+                "sign": 0
+              }
+            },
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  1
+                ],
+                "numerator": [
+                  1
+                ],
+                "sign": 1
+              }
+            }
+          ],
+          "symbol": 11,
+          "upper": {
+            "class": {
+              "Sqrt": {
+                "denominator": [
+                  1
+                ],
+                "numerator": [
+                  2
+                ],
+                "sign": 1
+              }
+            },
+            "computable": {
+              "internal": {
+                "Sqrt": {
+                  "internal": {
+                    "Int": [
+                      1,
+                      [
+                        2
+                      ]
+                    ]
+                  }
+                }
+              }
+            },
+            "rational": {
+              "denominator": [
+                1
+              ],
+              "numerator": [
+                1
+              ],
+              "sign": 1
+            }
+          },
+          "validation": "Valid",
+          "validationMessage": null
+        },
+        "platform": "wasm",
+        "kind": "history",
+        "mode": "qualification",
+        "started": "2026-09-11T20:49:34.508Z",
+        "finished": "2026-09-11T20:49:34.509Z",
+        "qualification_batch_ns": 20818,
+        "host_checksum": 5,
+        "initialMemory": 1245184,
+        "memoryAfterPrepare": 1376256,
+        "memoryAfterBatch": 1376256,
+        "memoryAfterFinish": 1376256,
+        "outputBytes": 3310,
+        "variant": "baseline",
+        "corpus": "history",
+        "instanceMode": "fresh"
+      },
+      "spec": {
+        "corpus": "history",
+        "variant": "baseline",
+        "case": 0,
+        "policy": 0,
+        "history": 0,
+        "lifecycle": "retained",
+        "iterations": 1
+      }
+    },
+    {
+      "kind": "history",
+      "name": "wrong-history",
+      "accepted": false,
+      "error": "history\n\n1 !== 0\n",
+      "row": {
+        "actual": {
+          "message": null,
+          "operation": "Add",
+          "root": {
+            "constraint": 7,
+            "count": 1,
+            "exact": {
+              "class": {
+                "Sqrt": {
+                  "denominator": [
+                    1
+                  ],
+                  "numerator": [
+                    2
+                  ],
+                  "sign": 1
+                }
+              },
+              "computable": {
+                "internal": {
+                  "Sqrt": {
+                    "internal": {
+                      "Int": [
+                        1,
+                        [
+                          2
+                        ]
+                      ]
+                    }
+                  }
+                }
+              },
+              "rational": {
+                "denominator": [
+                  1
+                ],
+                "numerator": [
+                  2
+                ],
+                "sign": 1
+              }
+            },
+            "intervalIndex": 3,
+            "lower": {
+              "class": {
+                "Sqrt": {
+                  "denominator": [
+                    1
+                  ],
+                  "numerator": [
+                    2
+                  ],
+                  "sign": 1
+                }
+              },
+              "computable": {
+                "internal": {
+                  "Sqrt": {
+                    "internal": {
+                      "Int": [
+                        1,
+                        [
+                          2
+                        ]
+                      ]
+                    }
+                  }
+                }
+              },
+              "rational": {
+                "denominator": [
+                  1
+                ],
+                "numerator": [
+                  2
+                ],
+                "sign": 1
+              }
+            },
+            "polynomial": [
+              {
+                "class": "One",
+                "computable": null,
+                "rational": {
+                  "denominator": [
+                    1
+                  ],
+                  "numerator": [],
+                  "sign": 0
+                }
+              },
+              {
+                "class": "One",
+                "computable": null,
+                "rational": {
+                  "denominator": [
+                    1
+                  ],
+                  "numerator": [],
+                  "sign": 0
+                }
+              },
+              {
+                "class": "One",
+                "computable": null,
+                "rational": {
+                  "denominator": [
+                    1
+                  ],
+                  "numerator": [
+                    8
+                  ],
+                  "sign": -1
+                }
+              },
+              {
+                "class": "One",
+                "computable": null,
+                "rational": {
+                  "denominator": [
+                    1
+                  ],
+                  "numerator": [],
+                  "sign": 0
+                }
+              },
+              {
+                "class": "One",
+                "computable": null,
+                "rational": {
+                  "denominator": [
+                    1
+                  ],
+                  "numerator": [
+                    1
+                  ],
+                  "sign": 1
+                }
+              }
+            ],
+            "symbol": 11,
+            "upper": {
+              "class": {
+                "Sqrt": {
+                  "denominator": [
+                    1
+                  ],
+                  "numerator": [
+                    2
+                  ],
+                  "sign": 1
+                }
+              },
+              "computable": {
+                "internal": {
+                  "Sqrt": {
+                    "internal": {
+                      "Int": [
+                        1,
+                        [
+                          2
+                        ]
+                      ]
+                    }
+                  }
+                }
+              },
+              "rational": {
+                "denominator": [
+                  1
+                ],
+                "numerator": [
+                  2
+                ],
+                "sign": 1
+              }
+            },
+            "validation": "Valid",
+            "validationMessage": null
+          },
+          "status": "Transformed"
+        },
+        "case": 0,
+        "checksum": 5,
+        "final_matches_preconditioned": true,
+        "history": 1,
+        "input_records_unchanged": true,
+        "iterations": 1,
+        "left": {
+          "constraint": 7,
+          "count": 1,
+          "exact": {
+            "class": {
+              "Sqrt": {
+                "denominator": [
+                  1
+                ],
+                "numerator": [
+                  2
+                ],
+                "sign": 1
+              }
+            },
+            "computable": {
+              "internal": {
+                "Sqrt": {
+                  "internal": {
+                    "Int": [
+                      1,
+                      [
+                        2
+                      ]
+                    ]
+                  }
+                }
+              }
+            },
+            "rational": {
+              "denominator": [
+                1
+              ],
+              "numerator": [
+                1
+              ],
+              "sign": 1
+            }
+          },
+          "intervalIndex": 3,
+          "lower": {
+            "class": {
+              "Sqrt": {
+                "denominator": [
+                  1
+                ],
+                "numerator": [
+                  2
+                ],
+                "sign": 1
+              }
+            },
+            "computable": {
+              "internal": {
+                "Sqrt": {
+                  "internal": {
+                    "Int": [
+                      1,
+                      [
+                        2
+                      ]
+                    ]
+                  }
+                }
+              }
+            },
+            "rational": {
+              "denominator": [
+                1
+              ],
+              "numerator": [
+                1
+              ],
+              "sign": 1
+            }
+          },
+          "polynomial": [
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  1
+                ],
+                "numerator": [
+                  2
+                ],
+                "sign": -1
+              }
+            },
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  1
+                ],
+                "numerator": [],
+                "sign": 0
+              }
+            },
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  1
+                ],
+                "numerator": [
+                  1
+                ],
+                "sign": 1
+              }
+            }
+          ],
+          "symbol": 11,
+          "upper": {
+            "class": {
+              "Sqrt": {
+                "denominator": [
+                  1
+                ],
+                "numerator": [
+                  2
+                ],
+                "sign": 1
+              }
+            },
+            "computable": {
+              "internal": {
+                "Sqrt": {
+                  "internal": {
+                    "Int": [
+                      1,
+                      [
+                        2
+                      ]
+                    ]
+                  }
+                }
+              }
+            },
+            "rational": {
+              "denominator": [
+                1
+              ],
+              "numerator": [
+                1
+              ],
+              "sign": 1
+            }
+          },
+          "validation": "Valid",
+          "validationMessage": null
+        },
+        "lifecycle": "retained",
+        "policy": 0,
+        "right": {
+          "constraint": 7,
+          "count": 1,
+          "exact": {
+            "class": {
+              "Sqrt": {
+                "denominator": [
+                  1
+                ],
+                "numerator": [
+                  2
+                ],
+                "sign": 1
+              }
+            },
+            "computable": {
+              "internal": {
+                "Sqrt": {
+                  "internal": {
+                    "Int": [
+                      1,
+                      [
+                        2
+                      ]
+                    ]
+                  }
+                }
+              }
+            },
+            "rational": {
+              "denominator": [
+                1
+              ],
+              "numerator": [
+                1
+              ],
+              "sign": 1
+            }
+          },
+          "intervalIndex": 3,
+          "lower": {
+            "class": {
+              "Sqrt": {
+                "denominator": [
+                  1
+                ],
+                "numerator": [
+                  2
+                ],
+                "sign": 1
+              }
+            },
+            "computable": {
+              "internal": {
+                "Sqrt": {
+                  "internal": {
+                    "Int": [
+                      1,
+                      [
+                        2
+                      ]
+                    ]
+                  }
+                }
+              }
+            },
+            "rational": {
+              "denominator": [
+                1
+              ],
+              "numerator": [
+                1
+              ],
+              "sign": 1
+            }
+          },
+          "polynomial": [
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  1
+                ],
+                "numerator": [
+                  2
+                ],
+                "sign": -1
+              }
+            },
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  1
+                ],
+                "numerator": [],
+                "sign": 0
+              }
+            },
+            {
+              "class": "One",
+              "computable": null,
+              "rational": {
+                "denominator": [
+                  1
+                ],
+                "numerator": [
+                  1
+                ],
+                "sign": 1
+              }
+            }
+          ],
+          "symbol": 11,
+          "upper": {
+            "class": {
+              "Sqrt": {
+                "denominator": [
+                  1
+                ],
+                "numerator": [
+                  2
+                ],
+                "sign": 1
+              }
+            },
+            "computable": {
+              "internal": {
+                "Sqrt": {
+                  "internal": {
+                    "Int": [
+                      1,
+                      [
+                        2
+                      ]
+                    ]
+                  }
+                }
+              }
+            },
+            "rational": {
+              "denominator": [
+                1
+              ],
+              "numerator": [
+                1
+              ],
+              "sign": 1
+            }
+          },
+          "validation": "Valid",
+          "validationMessage": null
+        },
+        "platform": "wasm",
+        "kind": "history",
+        "mode": "qualification",
+        "started": "2026-09-11T20:49:34.508Z",
+        "finished": "2026-09-11T20:49:34.509Z",
+        "qualification_batch_ns": 20818,
+        "host_checksum": 5,
+        "initialMemory": 1245184,
+        "memoryAfterPrepare": 1376256,
+        "memoryAfterBatch": 1376256,
+        "memoryAfterFinish": 1376256,
+        "outputBytes": 3310,
+        "variant": "baseline",
+        "corpus": "history",
+        "instanceMode": "fresh"
+      },
+      "spec": {
+        "corpus": "history",
+        "variant": "baseline",
+        "case": 0,
+        "policy": 0,
+        "history": 0,
+        "lifecycle": "retained",
+        "iterations": 1
+      }
+    }
+  ]
+}

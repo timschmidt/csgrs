@@ -1,0 +1,21 @@
+Use one exact point carrier for polynomial and rational Beziers
+
+Polynomial algebraic evaluation could return failed point and endpoint
+objects for sqrt(2) or pi coefficients even when the identical unit-weight
+rational curve produced an exact point. Feed the native coordinate
+polynomials through the existing shared point machinery with denominator
+one, retaining exact expressions when Cartesian projection is unavailable.
+
+Remove BezierAlgebraicPointImage2 and BezierEndpointPointImage2 and migrate
+all callers directly. Endpoint storage, arrangement keys, point queries,
+region classification, benchmarks, and fuzz consumers use the common
+point carrier. Preserve constant-remainder tightening for unit-denominator
+endpoint bounds and leave the rational replay kernels unchanged.
+
+Validation: 320 release cases across 12 test binaries, including exact
+coordinate counterexamples, nonrational source roots, retained bounds,
+arrangement admission, recursive hole ownership, and constrained fillet
+compositions. Both Hypercurve Clippy configurations, formatting, three
+fuzz targets, rustdoc, Hyperbrep Clippy, and csgrs all-target checks pass.
+A standalone replay preserves the original counterexample inputs and
+checks all eight previously failed polynomial and endpoint evaluations.

@@ -1,0 +1,41 @@
+[
+  {
+    "name": "jit-extensions",
+    "command": "java",
+    "args": [
+      "-ea",
+      "-Xmx256m",
+      "-Xss512k",
+      "-Djava.util.concurrent.ForkJoinPool.common.parallelism=1",
+      "-cp",
+      "/home/tim/Documents/GitHub/workspace/.audit-ruffini-build.LmZgYM/finite-boundaries-v1:/home/tim/Documents/GitHub/workspace/.audit-ruffini-build.LmZgYM/polynomial:/home/tim/Documents/GitHub/workspace/.audit-ruffini-build.LmZgYM/matrix:/home/tim/Documents/GitHub/workspace/.audit-ruffini-build.LmZgYM/classes:/home/tim/Documents/GitHub/workspace/.audit-ruffini-build.LmZgYM/deps/*",
+      "FiniteBoundaries",
+      "extensions"
+    ],
+    "started": "2026-09-07T03:18:55.118Z",
+    "finished": "2026-09-07T03:18:55.162Z",
+    "capMs": 60000,
+    "status": 1,
+    "error": null,
+    "signal": null,
+    "file": "finite-boundaries-check01-jit-extensions.log",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderrSha256": "6fbbb55c861a82580bf0451ecedccd6eac81fdf873f28dee455fba5316075953",
+    "sourceSha256": "b6a56b55b22950a410ff1062eecf730f73b977c4c7bb3bced5fabfe9a6abe9d5",
+    "runnerSha256": "b43925f3d47c8ca800ab6c8a974ec6df2e3336342cc8c5a0303ae4a9fa995d83",
+    "dependencies": [
+      [
+        "native-build-manifest.json",
+        "00763b9eca620f1ac67486bbe43f087366b2871d767f489110e4045e48096844"
+      ],
+      [
+        "matrix-build-manifest.json",
+        "0ac8a19300c1fe575051ee4975f352a9ce620c5b8e45e1813d9bd4fb1e1b76cd"
+      ],
+      [
+        "polynomial-build-manifest.json",
+        "a3473385f5920dcd88d18c15aedd430b65f8f516424ae12b28e5b65fbbe1dfec"
+      ]
+    ]
+  }
+]

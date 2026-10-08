@@ -1,0 +1,12 @@
+{
+  "command": [
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve-bd62b509c70a3efd",
+    "--exact",
+    "bezier_offset::conversion_tests::recursive_projective_chord_retains_positive_degree_selected_conjugate_fiber",
+    "--test-threads=1",
+    "--nocapture"
+  ],
+  "returncode": 0,
+  "elapsed_seconds": 0.0637039199937135,
+  "binary_sha256": "bdab4c08389cbc7823d88e4b25a766bca1e8225f530645dbbe81b6158ba64a9b"
+}

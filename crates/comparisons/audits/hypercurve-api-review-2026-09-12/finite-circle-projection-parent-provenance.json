@@ -1,0 +1,7 @@
+{
+  "parent": "8228394f174be2ae607694682defb167f030f540",
+  "root": "/tmp/hypercurve-circle-projection-baseline",
+  "source_sha256": "f43334b9e56db425e1a5bcfdfc4495d6e77d91d9f7d94bd72a819255184e6633",
+  "test_source_sha256": "4bc4d430031728bbfa4a3fccd9a3f2bed7a5a3d1b659beb49c4c59e8764793f6",
+  "dependencies": "finite-parallel-pruning-isolated-sources.json"
+}

@@ -1,0 +1,11 @@
+{
+  "tag": "ca-domain-native",
+  "started": "2026-09-09T03:01:56.287Z",
+  "finished": "2026-09-09T03:01:56.306Z",
+  "elapsedSeconds": 0.016539747000000004,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison",
+  "command": "/tmp/calcium-charpoly-solves.lbZlN8/flint-ca-domain",
+  "args": [],
+  "code": 1,
+  "signal": null
+}

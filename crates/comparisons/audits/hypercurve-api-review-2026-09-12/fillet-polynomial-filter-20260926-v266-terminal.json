@@ -1,0 +1,35 @@
+{
+  "source_manifest": "fillet-polynomial-filter-20260926-v266-sources.json",
+  "source_directory": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/source-archives/fillet-polynomial-filter-20260926-v266",
+  "workspace_guard": "center-locus-cusp-20260926-v260-sources.json",
+  "parent_commit": "69f75cf5349fa938c2f5b35532c036ac13fee0c0",
+  "hypersolve_commit": "8af4c7f48a4da6d61db8b49b74bb3370d6e89057",
+  "cases": [
+    {
+      "name": "approximate_512_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions",
+      "returncode": 124,
+      "log": "fillet-polynomial-filter-20260926-v266-approximate_512_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions.log",
+      "elapsed_seconds": 60.01452142104972
+    }
+  ],
+  "all_processes_reaped": true,
+  "command": [
+    "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+    "test",
+    "--test",
+    "hypercurve_curve_region_promotion",
+    "--release",
+    "--all-features",
+    "--no-run",
+    "--message-format=json",
+    "--locked",
+    "--offline"
+  ],
+  "build_returncode": 0,
+  "build_elapsed_seconds": 82.57416656089481,
+  "binary": {
+    "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/fillet-polynomial-filter-20260926-v266-hypercurve_curve_region_promotion",
+    "sha256": "4ed19892efcbcdf37b3de955985af289e9402b0d4dc329e689c79178c3b87f67"
+  },
+  "all_sources_unchanged": true
+}

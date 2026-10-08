@@ -1,0 +1,13 @@
+{
+  "tag": "power-wide-evidence-canonical-v69",
+  "started": "2026-09-11T18:16:27.021Z",
+  "finished": "2026-09-11T18:16:29.151Z",
+  "elapsedSeconds": 2.127960114,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "node",
+  "args": [
+    "power-wide-evidence-v69.mjs"
+  ],
+  "code": 0,
+  "signal": null
+}

@@ -1,0 +1,7 @@
+# Independent finite chamfer fixture
+
+P(t)=(-1/8+t^2,t), d=1/64, t in [0,1/8]. With S=1+4t^2, the left parallel is Q(t)=P(t)+d(-1,2t)/sqrt(S), and Q(0)=(-9/64,0) is rational. Its derivative is Q'(t)=(2t,1)*(1+2d/S^(3/2)). Both coordinates strictly increase on (0,1/8]. Therefore D(t)=|Q(t)-Q(0)|^2 is strictly increasing for t>0, D(0)=0, and D(1/8)>(1/8)^2=1/64. Every radius r=1/128 has exactly one interior chord-setback cut.
+
+An incoming horizontal unit segment ends at Q(0); its unique setback point is Q(0)-(1/128,0)=(-19/128,0). The resulting trim-only chamfer therefore has exactly one solution, unchanged by reversing the path or reparameterizing the curved source. Four equivalent increasing charts use the unchanged independently expanded fixtures in finite-circle-native-poles-public.rs; the fourth has the genuine native pole s=1/2 outside [2,5/2].
+
+Repeated chamfer: the first cut parameter beta is strictly positive and less than 1/128, since Q_y(t)>t and |Q(t)-Q(0)|=1/128. From beta forward, both Q coordinates strictly increase, so distance from Q(beta) is strictly increasing. At b=1/8 its y displacement exceeds b-beta > 15/128, greater than 1/256. Thus there is exactly one next curved cut at setback 1/256. The first chamfer chord connects Q(0)-(r,0) to Q(beta), has x displacement greater than r, and hence length greater than r=1/128. Its setback 1/256 is strictly interior. The repeated trim-only chamfer also has exactly one solution. This is an independent monotonicity certificate; no implementation output sets expected candidate counts.

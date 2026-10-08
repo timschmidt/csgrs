@@ -1,0 +1,296 @@
+{
+  "phase": "query",
+  "mode": "cpu",
+  "cpu": 6,
+  "started": "2026-09-08T20:33:35.990Z",
+  "binaries": {
+    "baseline": {
+      "path": "/home/tim/Documents/GitHub/workspace/.audit-builds/calcium-baseline/release/calcium-root-exp-opaque-baseline-bench",
+      "bytes": 1880296,
+      "sha256": "247adbe964de205c3aafa16a8e72637bbaf1892f683a4f0c2c0f9bfd51a38537",
+      "size": "text\t   data\t    bss\t    dec\t    hex\tfilename\n1345877\t 218728\t   1168\t1565773\t 17e44d\t/home/tim/Documents/GitHub/workspace/.audit-builds/calcium-baseline/release/calcium-root-exp-opaque-baseline-bench"
+    },
+    "sign": {
+      "path": "/home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype/release/calcium-root-exp-opaque-sign-bench",
+      "bytes": 1888992,
+      "sha256": "747ee28902743e8c06fa7115b4a2c5a72e7f3fc5f5bc9c45782be6dcf5c48c9b",
+      "size": "text\t   data\t    bss\t    dec\t    hex\tfilename\n1353081\t 218792\t   2096\t1573969\t 180451\t/home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype/release/calcium-root-exp-opaque-sign-bench"
+    }
+  },
+  "finished": "2026-09-08T20:34:44.285Z",
+  "summaries": [
+    {
+      "name": "identity-1",
+      "lifecycle": "warm-pair",
+      "iterations": 2476,
+      "observations": 48,
+      "baseline_ns": 2161.2310177705976,
+      "sign_ns": 944.6867932148627,
+      "pairedMedianRatio": 0.43634978872886643,
+      "pairedMedianBootstrap95": [
+        0.4035712262530943,
+        0.4460716189605263
+      ],
+      "baseline_alloc_calls": 0,
+      "sign_alloc_calls": 0,
+      "baseline_alloc_bytes": 0,
+      "sign_alloc_bytes": 0
+    },
+    {
+      "name": "identity-1",
+      "lifecycle": "warm-difference",
+      "iterations": 39301,
+      "observations": 48,
+      "baseline_ns": 215.60630772753873,
+      "sign_ns": 20.206877687590648,
+      "pairedMedianRatio": 0.09583131034222134,
+      "pairedMedianBootstrap95": [
+        0.09310159218798345,
+        0.11141893888900885
+      ],
+      "baseline_alloc_calls": 0,
+      "sign_alloc_calls": 0,
+      "baseline_alloc_bytes": 0,
+      "sign_alloc_bytes": 0
+    },
+    {
+      "name": "identity-8",
+      "lifecycle": "warm-pair",
+      "iterations": 4589,
+      "observations": 48,
+      "baseline_ns": 2142.7435171061234,
+      "sign_ns": 671.4237306602746,
+      "pairedMedianRatio": 0.3110893223671187,
+      "pairedMedianBootstrap95": [
+        0.30944918671214405,
+        0.3166480216289979
+      ],
+      "baseline_alloc_calls": 0,
+      "sign_alloc_calls": 0,
+      "baseline_alloc_bytes": 0,
+      "sign_alloc_bytes": 0
+    },
+    {
+      "name": "identity-8",
+      "lifecycle": "warm-difference",
+      "iterations": 42284,
+      "observations": 48,
+      "baseline_ns": 212.25225853750828,
+      "sign_ns": 20.02688960363258,
+      "pairedMedianRatio": 0.0953707340198488,
+      "pairedMedianBootstrap95": [
+        0.09443618544581003,
+        0.09580002371384441
+      ],
+      "baseline_alloc_calls": 0,
+      "sign_alloc_calls": 0,
+      "baseline_alloc_bytes": 0,
+      "sign_alloc_bytes": 0
+    },
+    {
+      "name": "identity-32",
+      "lifecycle": "warm-pair",
+      "iterations": 4502,
+      "observations": 48,
+      "baseline_ns": 2177.1783651710352,
+      "sign_ns": 731.0382052421146,
+      "pairedMedianRatio": 0.333182785350587,
+      "pairedMedianBootstrap95": [
+        0.3316968216997098,
+        0.33653393967717465
+      ],
+      "baseline_alloc_calls": 0,
+      "sign_alloc_calls": 0,
+      "baseline_alloc_bytes": 0,
+      "sign_alloc_bytes": 0
+    },
+    {
+      "name": "identity-32",
+      "lifecycle": "warm-difference",
+      "iterations": 40405,
+      "observations": 48,
+      "baseline_ns": 213.38010147259,
+      "sign_ns": 20.036851874767976,
+      "pairedMedianRatio": 0.09427412229191282,
+      "pairedMedianBootstrap95": [
+        0.0921133763397619,
+        0.09602521854114587
+      ],
+      "baseline_alloc_calls": 0,
+      "sign_alloc_calls": 0,
+      "baseline_alloc_bytes": 0,
+      "sign_alloc_bytes": 0
+    },
+    {
+      "name": "identity-128",
+      "lifecycle": "warm-pair",
+      "iterations": 1062,
+      "observations": 48,
+      "baseline_ns": 2163.0527306967983,
+      "sign_ns": 7095.1016949152545,
+      "pairedMedianRatio": 3.3016953109927183,
+      "pairedMedianBootstrap95": [
+        3.2631762540153573,
+        3.367505992792268
+      ],
+      "baseline_alloc_calls": 0,
+      "sign_alloc_calls": 0,
+      "baseline_alloc_bytes": 0,
+      "sign_alloc_bytes": 0
+    },
+    {
+      "name": "identity-128",
+      "lifecycle": "warm-difference",
+      "iterations": 35907,
+      "observations": 48,
+      "baseline_ns": 213.1445122121035,
+      "sign_ns": 20.022864622497007,
+      "pairedMedianRatio": 0.09490149371258408,
+      "pairedMedianBootstrap95": [
+        0.09401514393568157,
+        0.09517492635921286
+      ],
+      "baseline_alloc_calls": 0,
+      "sign_alloc_calls": 0,
+      "baseline_alloc_bytes": 0,
+      "sign_alloc_bytes": 0
+    },
+    {
+      "name": "unresolved-1",
+      "lifecycle": "warm-pair",
+      "iterations": 1726,
+      "observations": 48,
+      "baseline_ns": 2157.531865585168,
+      "sign_ns": 2940.19235225956,
+      "pairedMedianRatio": 1.3734367249711512,
+      "pairedMedianBootstrap95": [
+        1.3608585146192511,
+        1.3773052348306358
+      ],
+      "baseline_alloc_calls": 0,
+      "sign_alloc_calls": 0,
+      "baseline_alloc_bytes": 0,
+      "sign_alloc_bytes": 0
+    },
+    {
+      "name": "unresolved-1",
+      "lifecycle": "warm-difference",
+      "iterations": 30586,
+      "observations": 48,
+      "baseline_ns": 218.53974040410645,
+      "sign_ns": 225.3693683384555,
+      "pairedMedianRatio": 1.0273106872360385,
+      "pairedMedianBootstrap95": [
+        1.010437667276006,
+        1.0395234849245683
+      ],
+      "baseline_alloc_calls": 0,
+      "sign_alloc_calls": 0,
+      "baseline_alloc_bytes": 0,
+      "sign_alloc_bytes": 0
+    },
+    {
+      "name": "unresolved-8",
+      "lifecycle": "warm-pair",
+      "iterations": 3667,
+      "observations": 48,
+      "baseline_ns": 2181.157894736842,
+      "sign_ns": 2712.8831469866377,
+      "pairedMedianRatio": 1.2486634471523406,
+      "pairedMedianBootstrap95": [
+        1.225259774019143,
+        1.2863773327283796
+      ],
+      "baseline_alloc_calls": 0,
+      "sign_alloc_calls": 0,
+      "baseline_alloc_bytes": 0,
+      "sign_alloc_bytes": 0
+    },
+    {
+      "name": "unresolved-8",
+      "lifecycle": "warm-difference",
+      "iterations": 38544,
+      "observations": 48,
+      "baseline_ns": 215.04452054794518,
+      "sign_ns": 225.5001816106268,
+      "pairedMedianRatio": 1.0524779006945617,
+      "pairedMedianBootstrap95": [
+        1.0361176779383203,
+        1.1097540458557096
+      ],
+      "baseline_alloc_calls": 0,
+      "sign_alloc_calls": 0,
+      "baseline_alloc_bytes": 0,
+      "sign_alloc_bytes": 0
+    },
+    {
+      "name": "unresolved-32",
+      "lifecycle": "warm-pair",
+      "iterations": 3492,
+      "observations": 48,
+      "baseline_ns": 2160.828178694158,
+      "sign_ns": 2785.7909507445593,
+      "pairedMedianRatio": 1.2876563693889853,
+      "pairedMedianBootstrap95": [
+        1.264329777452119,
+        1.388671187722143
+      ],
+      "baseline_alloc_calls": 0,
+      "sign_alloc_calls": 0,
+      "baseline_alloc_bytes": 0,
+      "sign_alloc_bytes": 0
+    },
+    {
+      "name": "unresolved-32",
+      "lifecycle": "warm-difference",
+      "iterations": 39063,
+      "observations": 48,
+      "baseline_ns": 230.2439136779049,
+      "sign_ns": 229.58285333947725,
+      "pairedMedianRatio": 1.0121852036951962,
+      "pairedMedianBootstrap95": [
+        0.9495068891194146,
+        1.0215243996066676
+      ],
+      "baseline_alloc_calls": 0,
+      "sign_alloc_calls": 0,
+      "baseline_alloc_bytes": 0,
+      "sign_alloc_bytes": 0
+    },
+    {
+      "name": "unresolved-128",
+      "lifecycle": "warm-pair",
+      "iterations": 777,
+      "observations": 48,
+      "baseline_ns": 2159.967824967825,
+      "sign_ns": 9233.182110682112,
+      "pairedMedianRatio": 4.327540519161343,
+      "pairedMedianBootstrap95": [
+        4.258824221679464,
+        4.4895849805327135
+      ],
+      "baseline_alloc_calls": 0,
+      "sign_alloc_calls": 0,
+      "baseline_alloc_bytes": 0,
+      "sign_alloc_bytes": 0
+    },
+    {
+      "name": "unresolved-128",
+      "lifecycle": "warm-difference",
+      "iterations": 33962,
+      "observations": 48,
+      "baseline_ns": 212.49970555326541,
+      "sign_ns": 218.13369353983865,
+      "pairedMedianRatio": 1.0300689339571818,
+      "pairedMedianBootstrap95": [
+        1.017159808740425,
+        1.0663779727979985
+      ],
+      "baseline_alloc_calls": 0,
+      "sign_alloc_calls": 0,
+      "baseline_alloc_bytes": 0,
+      "sign_alloc_bytes": 0
+    }
+  ],
+  "limits": "Identity rows compare additional decisions with baseline Unknown, not equal work. Unresolved controls require Unknown in both variants. CPU and allocation binaries differ; requested bytes are cumulative, not peak heap. Fixed process preconditioning; host/session bootstrap intervals only. Opaque nested-sine depths are1,8,32,128; both variants use the same independently reconstructed graphs. Collector visit caps do not bound all opaque descendants. Not a whole-program resource bound."
+}

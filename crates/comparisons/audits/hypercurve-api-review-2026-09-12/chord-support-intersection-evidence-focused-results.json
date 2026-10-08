@@ -1,0 +1,26 @@
+[
+  {
+    "test": "bezier_offset::conversion_tests::independent_field_chord_retains_a_third_contact_in_its_recursive_field",
+    "returncode": 0,
+    "seconds": 0.00760098900354933,
+    "log": "chord-support-intersection-evidence-focused-independent_field_chord_retains_a_third_contact_in_its_recursive_field.log"
+  },
+  {
+    "test": "bezier_offset::conversion_tests::oblique_retained_offset_chord_reuses_exact_line_contacts",
+    "returncode": 0,
+    "seconds": 8.224887117001344,
+    "log": "chord-support-intersection-evidence-focused-oblique_retained_offset_chord_reuses_exact_line_contacts.log"
+  },
+  {
+    "test": "curve_region_boolean::certified_successor_tests::curve_trim_retains_selected_field_algebraic_chord_boundaries",
+    "returncode": 0,
+    "seconds": 0.015658836011425592,
+    "log": "chord-support-intersection-evidence-focused-curve_trim_retains_selected_field_algebraic_chord_boundaries.log"
+  },
+  {
+    "test": "curve_region_boolean::certified_successor_tests::curve_trim_retains_selected_field_algebraic_chord_overlaps",
+    "returncode": 0,
+    "seconds": 0.06372078300046269,
+    "log": "chord-support-intersection-evidence-focused-curve_trim_retains_selected_field_algebraic_chord_overlaps.log"
+  }
+]

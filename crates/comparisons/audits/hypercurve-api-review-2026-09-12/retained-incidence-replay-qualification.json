@@ -1,0 +1,60 @@
+{
+  "status": "implemented, qualified, committed; original goal active",
+  "commit": "be971cce43b1b3d5b2c4ca33aee1304536f2e1d4",
+  "preceding_hypercurve_commit": "b62c2fbf7ea92fe5dafca86491a36e93b5444e86",
+  "implementation": "Extract the existing point-specific field embedding into a reusable field embedding and migrate all callers. Native local polynomial signs replay independently allocated equivalent coefficient fields and polynomial-valued speed generators. Chord incidence uses this joined replay. A short interval prefix precedes bounded exact incidence; cumulative complete refinement remains available. Removed the old point embedding helper and monotone-only side method names without aliases.",
+  "regressions": [
+    "Independent coefficient field allocations: beta^3=alpha with alpha^3=1/2; chord incidence certifies equality and +/-2^-600, negative radical homogeneous gauges, reversal and both contexts without global query coordinates.",
+    "Raw and reduced PH tangent fields now also sign foreign polynomial coefficients through the existing local selected root.",
+    "Both established recursive exact tangency workloads pass."
+  ],
+  "baseline": "retained-incidence-replay-baseline.log: new incidence regression fails on the preceding implementation with Uncertain(Unsupported), expected Zero.",
+  "focused": "retained-incidence-replay-focused.log: six tests pass in 39.69 seconds.",
+  "tests": {
+    "hypercurve": {
+      "passed": 1448,
+      "ignored": 6,
+      "targets": 13,
+      "exit_code": 0,
+      "log": "retained-incidence-replay-hypercurve-tests.log"
+    },
+    "hyperbrep": {
+      "passed": 232,
+      "ignored": 0,
+      "targets": 1,
+      "exit_code": 0,
+      "log": "retained-incidence-replay-hyperbrep-tests.log"
+    }
+  },
+  "freshly_run_total": 1680,
+  "unchanged_qualified_hypersolve": {
+    "commit": "9211d62fe0b2322e60110da19afb95fdbda3704b",
+    "passed": 487,
+    "log": "local-polynomial-remainder-hypersolve-lib.log"
+  },
+  "unique_total_including_unchanged_qualified_hypersolve": 2167,
+  "established_expensive_hypercurve_exclusions": 4,
+  "checks": [
+    "retained-incidence-replay-hypercurve-check.log: exit 0",
+    "retained-incidence-replay-hyperbrep-check.log: exit 0",
+    "changed-file rustfmt --check and git diff --check: exit 0"
+  ],
+  "source_sha256": {
+    "hypercurve/src/bezier_offset.rs": "cc17fada0a5dbc3fa13d62309511138a0f59affb582b649c920c27e8993444f1"
+  },
+  "diagnostics": {
+    "binary": "stationary-ph-offset-retained-incidence",
+    "binary_sha256": "d1c773bc96b9b0ba983cf47e71bfebceecb923e700e4e0f0ac4b688f9fd286ce",
+    "log": "stationary-ph-offset-retained-incidence.log",
+    "timeout_seconds": 60,
+    "exit_code": 124,
+    "first_offset": "Certified with degree-five analytic source, about 3.72 seconds.",
+    "second_offset": "No result before total timeout; no inward closure repair or application speedup claimed.",
+    "stack": "stationary-ph-retained-incidence-stack.log",
+    "finding": "The sample reaches native retained axis comparison, local polynomial refinement, defining_sign_at_real, and a rebuilt integer Sturm sequence for an existing selected source. Investigate retaining signed root brackets and reusable source sign authority. This sample does not prove later global promotion is absent.",
+    "library_duration_seconds": 98.84
+  },
+  "clean_repository_count": 30,
+  "workspace_state": "retained-incidence-replay-workspace-after-commit.json",
+  "goal_status": "active"
+}

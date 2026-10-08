@@ -1,0 +1,20 @@
+{
+  "status": "location API migration committed; generated-carrier dispatch and broader goal remain active",
+  "base_commit": "d4eda85eb95ee167efaad463ace09b93e589b1a0",
+  "scope": [
+    "Replace intersection-specific Bezier-only locations with CurveLocation2 retaining CurveParameter2 evidence.",
+    "Replace optional scalar-only authored parameter access with demand-driven exact chart transport.",
+    "Use CurveParameterRange2 for public overlap ranges; migrate region/path/native split consumers directly.",
+    "Migrate HyperBREP seam checks to general parameter equality; keep explicit scalar checks only for existing 3D mappings.",
+    "Test public intersection locations through independent exact point evaluation and selected subdivision, with affine spline charts and reversed traversal."
+  ],
+  "not_yet_complete": [
+    "General generated-carrier pair dispatch remains unsupported.",
+    "Curve/path topology still uses Bezier split materialization.",
+    "Original larger implementation goal remains active."
+  ],
+  "commits": {
+    "hypercurve": "349c4bad9c5e0a1355fce05d7e8d096d4a1e30b5",
+    "hyperbrep": "d7fa29cee735ba430caaef0a0e587687a6660abd"
+  }
+}

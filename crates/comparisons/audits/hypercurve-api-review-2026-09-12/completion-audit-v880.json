@@ -1,0 +1,74 @@
+{
+  "turn_status": "progress",
+  "full_goal_status": "active",
+  "commits": {
+    "equal-curvature-v871": "dadd0ade7aefe1a060aad81c15edd4e3244977e3",
+    "polynomial-zero-jet-v874": "aabcd7946bc212912136203f1e2664ce41a5997b",
+    "mixed-endpoint-order-v877": "7cdde2aff667aaf1fb19e0472f3efddd9592396f"
+  },
+  "latest_baseline": "mixed-endpoint-order-v877",
+  "verified_source_files": 2048,
+  "clean_repositories": 30,
+  "release_cases": 340,
+  "pinned_test_binaries": 12,
+  "checks": 7,
+  "repaired_public_probe_requests": {
+    "equal_nonzero_curvature": 4,
+    "polynomial_zero_derivative": 6,
+    "mixed_native_selected_endpoints": 48
+  },
+  "unchanged_public_replay_requests": {
+    "equal_curvature_traversal": 4,
+    "equal_curvature_booleans": 8,
+    "equal_curvature_exact_memberships": 24,
+    "polynomial_carrier_equivalence": 18,
+    "mixed_endpoints": 48
+  },
+  "active_drivers": [],
+  "outstanding_production_edits": [],
+  "next_unused_version": 881,
+  "receipts": {
+    "equal-curvature-v871-committed.json": "e5e24eeb9d44b2b32436f9124f4dc4bff3e9c654c1a9739595852ef44e87ddbf",
+    "equal-curvature-v871-reviewed.json": "d3e93e1e11eda1086ef586d3b592feea113eacbd896f1b55314b9a815a055cde",
+    "equal-curvature-v871-reaped.json": "0df15126645ca3be5cc7e9539d20b89172668edf8877e67cf5cbe98ec4862b06",
+    "equal-curvature-v871-review-reaped.json": "0932c4cb87a21e32426dd5620b6283d76850984a62c8a0776687f6c722929a40",
+    "polynomial-zero-jet-v874-committed.json": "06624840e471696c71fd0a063eae180e11851082850133e3494f7a8b87045085",
+    "polynomial-zero-jet-v874-reviewed.json": "67c538708988959132f8e8cbd84ee6513acb3e470c2504dcea5170fc6c459d26",
+    "polynomial-zero-jet-v874-reaped.json": "8a842cf1e7b2bb9c4e23a75b37d677f7b73e6dd6a5cf540dbe0ab72d173215d5",
+    "polynomial-zero-jet-v874-review-reaped.json": "065bbc0397dfbd0ebc8ac7b7fe009b06d0983252d04fa48ab703f648610df2b2",
+    "mixed-endpoint-order-v877-committed.json": "8273661dd4263a674ac0663e7be7bfdcdf98ae4426a558205c6eb91901c046ed",
+    "mixed-endpoint-order-v877-reviewed.json": "665df32bb403bb7e258f30a9a1150bdf25c4f2a1b3422a6bf95ae0f8254d2a77",
+    "mixed-endpoint-order-v877-reaped.json": "a8bf8a876d90d8c67a9c6788c90d5ba1224c2bd08a9350b2c2d1c4fde3483713",
+    "mixed-endpoint-order-v877-review-reaped.json": "2b5f6129ab505e211d80135460ea8953e19146025d8157a8c0922bc135a61008",
+    "equal-curvature-probe-v870-terminal.json": "95c7765f40649e2671af1c1ba8c029780cfd784e0967e2b8cba7e6cbb8a8036d",
+    "equal-curvature-probe-v870-reaped.json": "bc723cf2c92017a77105c332c803840d30f617b43d94d1fb971ccbe95213dc62",
+    "equal-curvature-replay-v872-terminal.json": "7e95789dc5a325a426a273e2c1675f5f79d9c6f8330bcf23644b31edda51ef5d",
+    "equal-curvature-replay-v872-reaped.json": "83ebb093d9d934b25c361dbc28d34ca8013ae1eb55e248ef74d794da1fc0f435",
+    "quadratic-zero-jet-probe-v873-terminal.json": "72e9b7b2a12fdfbee42fcdedea716bea1beefff192a5ab5b15573ec3934c8b35",
+    "quadratic-zero-jet-probe-v873-reaped.json": "e73228ee0f35470f0a9eba8b38b68512cf2d2cb27642b498e989fdf47ee538cd",
+    "quadratic-zero-jet-replay-v875-terminal.json": "d0112051400d979959e5e13746a9e16c25839a7236a716984005029f7c87d4b7",
+    "quadratic-zero-jet-replay-v875-reaped.json": "b5d9e94ce790b93b139eb1c4e5c446db9f0b78f69ba07e03e8058b37b91b1e16",
+    "mixed-endpoint-order-probe-v876-terminal.json": "76007af819ec34f01d8aabdf2d4162b21056549cc0b3b9f5093cdb572f1ea83a",
+    "mixed-endpoint-order-probe-v876-reaped.json": "55d2e4dc7e5f1092d489944c06f31ec29a35a0f7089e09dc7b74bb3ffdc939ed",
+    "mixed-endpoint-order-replay-v878-terminal.json": "1163a82a36371e060cfc7dddbebe480d7f7601b59c1deac62e4cfca8ade491d6",
+    "mixed-endpoint-order-replay-v878-reaped.json": "8b2dc6bb012bf215582e33eed7272a25ffc2349f7a7811e76befe13d2440767f",
+    "equal-curvature-proof-v871.md": "b564f65831dbf2997fe8cb6a35f4c4b74019e062da2aa24325e69bfcfa64adf7",
+    "polynomial-zero-jet-proof-v874.md": "d0dc6eae6ef97c475c5b6f79d3b410d784c6c1428ea33a157fdcd47ec9f87136",
+    "mixed-endpoint-order-proof-v877.md": "2b26d0e96194837a0e3a878e96a0ea82ebb125c4cc50e39163635f5300bda3d8",
+    "retained-vector-source-followup-v879.json": "894351c8248d514ec32930d18369c1e5c38da1ca48282f238190495b878bd546"
+  },
+  "qualification_corrections": [
+    "V871 reviewer whitespace normalization corrected after a synchronous assertion failure; no production change or repeated qualification was needed."
+  ],
+  "limits": [
+    "The full exact geometry implementation goal remains active. These commits repair bounded public traversal counterexamples and preserve tested region compositions; they do not establish universal composition closure.",
+    "Full retained-expression tangent/branch ordering and stationary or arbitrary equal-jet cases remain open.",
+    "The earlier degree-six monotone reparameterization overlap computational issue remains open.",
+    "Borrowing represented root vectors removes structural clone work; no measured uniform speedup is claimed."
+  ],
+  "next_work": [
+    "Use the symbolic fixture recorded in retained-vector-source-followup-v879.json to test a public traversal with represented endpoint positions and a retained-expression tangent. Confirm its representation premises before asserting a failure.",
+    "Extend the existing exact tangent carrier and source-domain predicates if the gap is confirmed, preserving selected-root identity, denominator domains, independent-field fallbacks and lazy derivative demand.",
+    "Continue the earlier degree-six monotone reparameterization overlap computational work."
+  ]
+}

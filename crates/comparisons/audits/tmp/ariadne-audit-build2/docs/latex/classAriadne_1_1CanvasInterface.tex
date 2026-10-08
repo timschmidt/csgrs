@@ -1,0 +1,68 @@
+\doxysubsection{Canvas\+Interface Class Reference}
+\hypertarget{classAriadne_1_1CanvasInterface}{}\label{classAriadne_1_1CanvasInterface}\index{CanvasInterface@{CanvasInterface}}
+
+
+{\ttfamily \#include $<$graphics\+\_\+interface.\+hpp$>$}
+
+
+
+\doxysubsubsection{Description}
+Interface to two-\/dimensional drawing canvas with the ability to draw polyhedra. Inheritance diagram for Canvas\+Interface\+:\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[height=2.000000cm]{classAriadne_1_1CanvasInterface}
+\end{center}
+\end{figure}
+\doxysubsubsubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1CanvasInterface_af2a6294d6b646991b8cfe3b3327e062c}\label{classAriadne_1_1CanvasInterface_af2a6294d6b646991b8cfe3b3327e062c} 
+virtual {\bfseries \texorpdfstring{$\sim$}{\string~}\+Canvas\+Interface} ()=default
+\begin{DoxyCompactList}\small\item\em Destructor. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1CanvasInterface_a1f93faa2bcd796d95c60dd0f2f299c20}\label{classAriadne_1_1CanvasInterface_a1f93faa2bcd796d95c60dd0f2f299c20} 
+virtual \mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} {\bfseries move\+\_\+to} (double x, double y)=0
+\begin{DoxyCompactList}\small\item\em Move the current initial point for a line to the point {\itshape }(x,y). \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1CanvasInterface_a6988245282906ff8450d3f4518af7a04}\label{classAriadne_1_1CanvasInterface_a6988245282906ff8450d3f4518af7a04} 
+virtual \mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} {\bfseries line\+\_\+to} (double x, double y)=0
+\begin{DoxyCompactList}\small\item\em Create a line segment from the current point to the point {\itshape }(x,y). \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1CanvasInterface_af6338353d7323c2480373734493ae473}\label{classAriadne_1_1CanvasInterface_af6338353d7323c2480373734493ae473} 
+virtual \mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} {\bfseries circle} (double x, double y, double r)=0
+\begin{DoxyCompactList}\small\item\em Draw a circle with centre {\itshape }(x,y) and radius {\itshape r}. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1CanvasInterface_ab4ffcb224d0032a20ebad94f5ee78d20}\label{classAriadne_1_1CanvasInterface_ab4ffcb224d0032a20ebad94f5ee78d20} 
+virtual \mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} {\bfseries dot} (double x, double y)=0
+\begin{DoxyCompactList}\small\item\em Draw a dot with centre {\itshape }(x,y). \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1CanvasInterface_a459cc97ec4cc919c6a122a2a0403e06c}\label{classAriadne_1_1CanvasInterface_a459cc97ec4cc919c6a122a2a0403e06c} 
+virtual \mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} {\bfseries stroke} ()=0
+\begin{DoxyCompactList}\small\item\em Draw the working line. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1CanvasInterface_a50e59b60194caa791503e69309746b3a}\label{classAriadne_1_1CanvasInterface_a50e59b60194caa791503e69309746b3a} 
+virtual \mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} {\bfseries fill} ()=0
+\begin{DoxyCompactList}\small\item\em Draw and fill the working line. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1CanvasInterface_a3e7e7d9fa60e74b09d69468ed34bb5a4}\label{classAriadne_1_1CanvasInterface_a3e7e7d9fa60e74b09d69468ed34bb5a4} 
+virtual \mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} {\bfseries fill\+\_\+boundary} (\mbox{\hyperlink{classAriadne_1_1List}{List}}$<$ Point2d $>$ const \&boundary)=0
+\begin{DoxyCompactList}\small\item\em Draw the lines from the {\itshape boundary} and fill the corresponding closed polytope. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1CanvasInterface_aa685ca4686f944ad6b118e06618dc095}\label{classAriadne_1_1CanvasInterface_aa685ca4686f944ad6b118e06618dc095} 
+virtual \mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} {\bfseries set\+\_\+line\+\_\+width} (double lw)=0
+\begin{DoxyCompactList}\small\item\em \doxylink{classAriadne_1_1Set}{Set} the width of the lines bounding shapes, in pixels. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1CanvasInterface_ab507746977125b8c006d253092d7b368}\label{classAriadne_1_1CanvasInterface_ab507746977125b8c006d253092d7b368} 
+virtual \mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} {\bfseries set\+\_\+line\+\_\+colour} (double r, double g, double b)=0
+\begin{DoxyCompactList}\small\item\em \doxylink{classAriadne_1_1Set}{Set} the colour of subsequent line to be drawn. The {\itshape r}, {\itshape g} and {\itshape b} arguments are intensities of red, green and blue on a scale of 0.\+0 to 1.\+0. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1CanvasInterface_ac4e4b034dafa57f0d07ca1ec08258837}\label{classAriadne_1_1CanvasInterface_ac4e4b034dafa57f0d07ca1ec08258837} 
+virtual \mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} {\bfseries set\+\_\+fill\+\_\+opacity} (double fo)=0
+\begin{DoxyCompactList}\small\item\em \doxylink{classAriadne_1_1Set}{Set} the colour of the next regions to be filled. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1CanvasInterface_a5d46262fc329dcda9f4e31296b4c7b2e}\label{classAriadne_1_1CanvasInterface_a5d46262fc329dcda9f4e31296b4c7b2e} 
+virtual \mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} {\bfseries set\+\_\+fill\+\_\+colour} (double r, double g, double b)=0
+\begin{DoxyCompactList}\small\item\em \doxylink{classAriadne_1_1Set}{Set} the colour of subsequent regions to be filled. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1CanvasInterface_a76891834705f7d62c28d3f5070c9242f}\label{classAriadne_1_1CanvasInterface_a76891834705f7d62c28d3f5070c9242f} 
+virtual \mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} {\bfseries set\+\_\+colour\+\_\+palette} ()=0
+\begin{DoxyCompactList}\small\item\em \doxylink{classAriadne_1_1Set}{Set} the colour palette. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1CanvasInterface_af5a741ca3cec72005dacba728dd48194}\label{classAriadne_1_1CanvasInterface_af5a741ca3cec72005dacba728dd48194} 
+virtual \mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} {\bfseries fill\+\_\+3d} ()=0
+\begin{DoxyCompactList}\small\item\em Draw and fill a 3d image. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1CanvasInterface_a80afb837be0ed7c8846265043bf1c354}\label{classAriadne_1_1CanvasInterface_a80afb837be0ed7c8846265043bf1c354} 
+virtual \mbox{\hyperlink{namespaceAriadne_a45f7a0ea77aa5c634f9358057324ce67}{Void}} {\bfseries set\+\_\+heat\+\_\+map} (\mbox{\hyperlink{namespaceAriadne_a76a8b016e5ad61faf9062cc387df5016}{Bool}} b)=0
+\begin{DoxyCompactList}\small\item\em \doxylink{classAriadne_1_1Set}{Set} a heatmap projection. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+The documentation for this class was generated from the following file\+:\begin{DoxyCompactItemize}
+\item 
+source/io/\mbox{\hyperlink{graphics__interface_8hpp}{graphics\+\_\+interface.\+hpp}}\end{DoxyCompactItemize}

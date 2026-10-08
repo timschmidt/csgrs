@@ -1,0 +1,803 @@
+{
+  "mode": "cpu",
+  "started": "2026-09-09T15:42:41.222Z",
+  "finished": "2026-09-09T15:42:54.093Z",
+  "cpu": 6,
+  "binaries": {
+    "baseline-cpu": {
+      "path": "/tmp/calcium-derivative-endpoint.XO0A0Q/baseline-cpu",
+      "bytes": 9984152,
+      "sha256": "8915e269befbfbd837cd8eca80cd72a8c509074c580580a17fe430dc759fcf6b",
+      "size": "text\t   data\t    bss\t    dec\t    hex\tfilename\n7789978\t 280224\t   3888\t8074090\t 7b336a\t/tmp/calcium-derivative-endpoint.XO0A0Q/baseline-cpu"
+    },
+    "baseline-allocation": {
+      "path": "/tmp/calcium-derivative-endpoint.XO0A0Q/baseline-allocation",
+      "bytes": 9988456,
+      "sha256": "d3e33f2d1fcd2a969ba66c9174bf2f1ce1a5011c1ebcfb8b0b037c6570e9d8a1",
+      "size": "text\t   data\t    bss\t    dec\t    hex\tfilename\n7793382\t 280232\t   4616\t8078230\t 7b4396\t/tmp/calcium-derivative-endpoint.XO0A0Q/baseline-allocation"
+    },
+    "candidate-cpu": {
+      "path": "/tmp/calcium-derivative-endpoint.XO0A0Q/candidate-cpu",
+      "bytes": 9983760,
+      "sha256": "b089157c2dcd4ffbbc16ea8e72833f2ca994df5593d8e2408bedfac47efb5bdc",
+      "size": "text\t   data\t    bss\t    dec\t    hex\tfilename\n7789694\t 280224\t   4176\t8074094\t 7b336e\t/tmp/calcium-derivative-endpoint.XO0A0Q/candidate-cpu"
+    },
+    "candidate-allocation": {
+      "path": "/tmp/calcium-derivative-endpoint.XO0A0Q/candidate-allocation",
+      "bytes": 9988112,
+      "sha256": "0c9be541c0ccb8c82d7d62b98e113049ddde70256d7eb6c75116b2c9adba0a4a",
+      "size": "text\t   data\t    bss\t    dec\t    hex\tfilename\n7793098\t 280232\t   4888\t8078218\t 7b438a\t/tmp/calcium-derivative-endpoint.XO0A0Q/candidate-allocation"
+    }
+  },
+  "summaries": [
+    {
+      "kind": 0,
+      "degree": 1,
+      "lifecycle": "retained_graph",
+      "iterations": 500,
+      "observations": 48,
+      "pilots": [
+        {
+          "started": "2026-09-09T15:42:41.227Z",
+          "finished": "2026-09-09T15:42:41.234Z",
+          "mode": "cpu",
+          "variant": "baseline",
+          "kind": 0,
+          "degree": 1,
+          "lifecycle": "retained_graph",
+          "iterations": 2,
+          "elapsed_ns": 13349,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "started": "2026-09-09T15:42:41.234Z",
+          "finished": "2026-09-09T15:42:41.238Z",
+          "mode": "cpu",
+          "variant": "candidate",
+          "kind": 0,
+          "degree": 1,
+          "lifecycle": "retained_graph",
+          "iterations": 2,
+          "elapsed_ns": 13030,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 0.9123256754761822,
+      "pairedMedianBootstrap95": [
+        0.8936535539000652,
+        0.9486494076129828
+      ],
+      "nsPerQuery": {
+        "baseline": 5378.691000000001,
+        "candidate": 5013.626
+      }
+    },
+    {
+      "kind": 0,
+      "degree": 1,
+      "lifecycle": "fresh_graph",
+      "iterations": 500,
+      "observations": 48,
+      "pilots": [
+        {
+          "started": "2026-09-09T15:42:41.579Z",
+          "finished": "2026-09-09T15:42:41.583Z",
+          "mode": "cpu",
+          "variant": "baseline",
+          "kind": 0,
+          "degree": 1,
+          "lifecycle": "fresh_graph",
+          "iterations": 2,
+          "elapsed_ns": 21539,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "started": "2026-09-09T15:42:41.583Z",
+          "finished": "2026-09-09T15:42:41.587Z",
+          "mode": "cpu",
+          "variant": "candidate",
+          "kind": 0,
+          "degree": 1,
+          "lifecycle": "fresh_graph",
+          "iterations": 2,
+          "elapsed_ns": 21459,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 0.9649669796048699,
+      "pairedMedianBootstrap95": [
+        0.8959170651087982,
+        0.9723961176849456
+      ],
+      "nsPerQuery": {
+        "baseline": 8808.825,
+        "candidate": 8480.318
+      }
+    },
+    {
+      "kind": 0,
+      "degree": 3,
+      "lifecycle": "retained_graph",
+      "iterations": 500,
+      "observations": 48,
+      "pilots": [
+        {
+          "started": "2026-09-09T15:42:42.013Z",
+          "finished": "2026-09-09T15:42:42.017Z",
+          "mode": "cpu",
+          "variant": "baseline",
+          "kind": 0,
+          "degree": 3,
+          "lifecycle": "retained_graph",
+          "iterations": 2,
+          "elapsed_ns": 26298,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "started": "2026-09-09T15:42:42.017Z",
+          "finished": "2026-09-09T15:42:42.022Z",
+          "mode": "cpu",
+          "variant": "candidate",
+          "kind": 0,
+          "degree": 3,
+          "lifecycle": "retained_graph",
+          "iterations": 2,
+          "elapsed_ns": 19079,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 0.998477869902777,
+      "pairedMedianBootstrap95": [
+        0.9757808858069046,
+        1.0491621540169542
+      ],
+      "nsPerQuery": {
+        "baseline": 7536.993,
+        "candidate": 7405.402
+      }
+    },
+    {
+      "kind": 0,
+      "degree": 3,
+      "lifecycle": "fresh_graph",
+      "iterations": 500,
+      "observations": 48,
+      "pilots": [
+        {
+          "started": "2026-09-09T15:42:42.421Z",
+          "finished": "2026-09-09T15:42:42.425Z",
+          "mode": "cpu",
+          "variant": "baseline",
+          "kind": 0,
+          "degree": 3,
+          "lifecycle": "fresh_graph",
+          "iterations": 2,
+          "elapsed_ns": 46097,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "started": "2026-09-09T15:42:42.425Z",
+          "finished": "2026-09-09T15:42:42.429Z",
+          "mode": "cpu",
+          "variant": "candidate",
+          "kind": 0,
+          "degree": 3,
+          "lifecycle": "fresh_graph",
+          "iterations": 2,
+          "elapsed_ns": 39487,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 1.0033775096761672,
+      "pairedMedianBootstrap95": [
+        0.9473168893786994,
+        1.025801825600456
+      ],
+      "nsPerQuery": {
+        "baseline": 18510.91,
+        "candidate": 18372.41
+      }
+    },
+    {
+      "kind": 0,
+      "degree": 8,
+      "lifecycle": "retained_graph",
+      "iterations": 500,
+      "observations": 48,
+      "pilots": [
+        {
+          "started": "2026-09-09T15:42:43.095Z",
+          "finished": "2026-09-09T15:42:43.099Z",
+          "mode": "cpu",
+          "variant": "baseline",
+          "kind": 0,
+          "degree": 8,
+          "lifecycle": "retained_graph",
+          "iterations": 2,
+          "elapsed_ns": 31178,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "started": "2026-09-09T15:42:43.099Z",
+          "finished": "2026-09-09T15:42:43.103Z",
+          "mode": "cpu",
+          "variant": "candidate",
+          "kind": 0,
+          "degree": 8,
+          "lifecycle": "retained_graph",
+          "iterations": 2,
+          "elapsed_ns": 20379,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 0.9585841198082283,
+      "pairedMedianBootstrap95": [
+        0.90755742492643,
+        0.9828675116768684
+      ],
+      "nsPerQuery": {
+        "baseline": 10325.082,
+        "candidate": 9953.908
+      }
+    },
+    {
+      "kind": 0,
+      "degree": 8,
+      "lifecycle": "fresh_graph",
+      "iterations": 260,
+      "observations": 48,
+      "pilots": [
+        {
+          "started": "2026-09-09T15:42:43.585Z",
+          "finished": "2026-09-09T15:42:43.592Z",
+          "mode": "cpu",
+          "variant": "baseline",
+          "kind": 0,
+          "degree": 8,
+          "lifecycle": "fresh_graph",
+          "iterations": 2,
+          "elapsed_ns": 154380,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "started": "2026-09-09T15:42:43.592Z",
+          "finished": "2026-09-09T15:42:43.597Z",
+          "mode": "cpu",
+          "variant": "candidate",
+          "kind": 0,
+          "degree": 8,
+          "lifecycle": "fresh_graph",
+          "iterations": 2,
+          "elapsed_ns": 130691,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 0.9946032267109471,
+      "pairedMedianBootstrap95": [
+        0.9856459432317538,
+        1.0171797747840396
+      ],
+      "nsPerQuery": {
+        "baseline": 37829.36730769231,
+        "candidate": 36595.79807692308
+      }
+    },
+    {
+      "kind": 0,
+      "degree": 24,
+      "lifecycle": "retained_graph",
+      "iterations": 500,
+      "observations": 48,
+      "pilots": [
+        {
+          "started": "2026-09-09T15:42:44.376Z",
+          "finished": "2026-09-09T15:42:44.381Z",
+          "mode": "cpu",
+          "variant": "baseline",
+          "kind": 0,
+          "degree": 24,
+          "lifecycle": "retained_graph",
+          "iterations": 2,
+          "elapsed_ns": 38797,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "started": "2026-09-09T15:42:44.381Z",
+          "finished": "2026-09-09T15:42:44.386Z",
+          "mode": "cpu",
+          "variant": "candidate",
+          "kind": 0,
+          "degree": 24,
+          "lifecycle": "retained_graph",
+          "iterations": 2,
+          "elapsed_ns": 38147,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 0.9949321009374841,
+      "pairedMedianBootstrap95": [
+        0.9809092108771156,
+        1.0026734202062488
+      ],
+      "nsPerQuery": {
+        "baseline": 18546.727,
+        "candidate": 18511.18
+      }
+    },
+    {
+      "kind": 0,
+      "degree": 24,
+      "lifecycle": "fresh_graph",
+      "iterations": 92,
+      "observations": 48,
+      "pilots": [
+        {
+          "started": "2026-09-09T15:42:45.099Z",
+          "finished": "2026-09-09T15:42:45.106Z",
+          "mode": "cpu",
+          "variant": "baseline",
+          "kind": 0,
+          "degree": 24,
+          "lifecycle": "fresh_graph",
+          "iterations": 2,
+          "elapsed_ns": 386784,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "started": "2026-09-09T15:42:45.106Z",
+          "finished": "2026-09-09T15:42:45.113Z",
+          "mode": "cpu",
+          "variant": "candidate",
+          "kind": 0,
+          "degree": 24,
+          "lifecycle": "fresh_graph",
+          "iterations": 2,
+          "elapsed_ns": 438160,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 0.971356670726529,
+      "pairedMedianBootstrap95": [
+        0.9310599135710642,
+        1.0424785777732608
+      ],
+      "nsPerQuery": {
+        "baseline": 152258.52717391305,
+        "candidate": 153759.28804347827
+      }
+    },
+    {
+      "kind": 1,
+      "degree": 1,
+      "lifecycle": "retained_graph",
+      "iterations": 500,
+      "observations": 48,
+      "pilots": [
+        {
+          "started": "2026-09-09T15:42:46.226Z",
+          "finished": "2026-09-09T15:42:46.231Z",
+          "mode": "cpu",
+          "variant": "baseline",
+          "kind": 1,
+          "degree": 1,
+          "lifecycle": "retained_graph",
+          "iterations": 2,
+          "elapsed_ns": 35297,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "started": "2026-09-09T15:42:46.231Z",
+          "finished": "2026-09-09T15:42:46.236Z",
+          "mode": "cpu",
+          "variant": "candidate",
+          "kind": 1,
+          "degree": 1,
+          "lifecycle": "retained_graph",
+          "iterations": 2,
+          "elapsed_ns": 34637,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 0.9860800133047407,
+      "pairedMedianBootstrap95": [
+        0.9684262909313952,
+        1.0218171935075506
+      ],
+      "nsPerQuery": {
+        "baseline": 13956.093,
+        "candidate": 13900.306
+      }
+    },
+    {
+      "kind": 1,
+      "degree": 1,
+      "lifecycle": "fresh_graph",
+      "iterations": 500,
+      "observations": 48,
+      "pilots": [
+        {
+          "started": "2026-09-09T15:42:46.802Z",
+          "finished": "2026-09-09T15:42:46.806Z",
+          "mode": "cpu",
+          "variant": "baseline",
+          "kind": 1,
+          "degree": 1,
+          "lifecycle": "fresh_graph",
+          "iterations": 2,
+          "elapsed_ns": 46886,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "started": "2026-09-09T15:42:46.806Z",
+          "finished": "2026-09-09T15:42:46.811Z",
+          "mode": "cpu",
+          "variant": "candidate",
+          "kind": 1,
+          "degree": 1,
+          "lifecycle": "fresh_graph",
+          "iterations": 2,
+          "elapsed_ns": 40727,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 1.0069859549790388,
+      "pairedMedianBootstrap95": [
+        0.9935029643020543,
+        1.0728580592967325
+      ],
+      "nsPerQuery": {
+        "baseline": 19670.171000000002,
+        "candidate": 19735.906
+      }
+    },
+    {
+      "kind": 1,
+      "degree": 3,
+      "lifecycle": "retained_graph",
+      "iterations": 500,
+      "observations": 48,
+      "pilots": [
+        {
+          "started": "2026-09-09T15:42:47.578Z",
+          "finished": "2026-09-09T15:42:47.583Z",
+          "mode": "cpu",
+          "variant": "baseline",
+          "kind": 1,
+          "degree": 3,
+          "lifecycle": "retained_graph",
+          "iterations": 2,
+          "elapsed_ns": 43937,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "started": "2026-09-09T15:42:47.583Z",
+          "finished": "2026-09-09T15:42:47.587Z",
+          "mode": "cpu",
+          "variant": "candidate",
+          "kind": 1,
+          "degree": 3,
+          "lifecycle": "retained_graph",
+          "iterations": 2,
+          "elapsed_ns": 43917,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 0.9853284380070886,
+      "pairedMedianBootstrap95": [
+        0.9556966474924209,
+        1.0045313865479464
+      ],
+      "nsPerQuery": {
+        "baseline": 22471.467,
+        "candidate": 21902.077
+      }
+    },
+    {
+      "kind": 1,
+      "degree": 3,
+      "lifecycle": "fresh_graph",
+      "iterations": 464,
+      "observations": 48,
+      "pilots": [
+        {
+          "started": "2026-09-09T15:42:48.385Z",
+          "finished": "2026-09-09T15:42:48.390Z",
+          "mode": "cpu",
+          "variant": "baseline",
+          "kind": 1,
+          "degree": 3,
+          "lifecycle": "fresh_graph",
+          "iterations": 2,
+          "elapsed_ns": 86374,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "started": "2026-09-09T15:42:48.390Z",
+          "finished": "2026-09-09T15:42:48.394Z",
+          "mode": "cpu",
+          "variant": "candidate",
+          "kind": 1,
+          "degree": 3,
+          "lifecycle": "fresh_graph",
+          "iterations": 2,
+          "elapsed_ns": 75085,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 0.9924028998949279,
+      "pairedMedianBootstrap95": [
+        0.9776293055392481,
+        1.0004899823343452
+      ],
+      "nsPerQuery": {
+        "baseline": 35888.485991379304,
+        "candidate": 35488.330818965514
+      }
+    },
+    {
+      "kind": 1,
+      "degree": 8,
+      "lifecycle": "retained_graph",
+      "iterations": 500,
+      "observations": 48,
+      "pilots": [
+        {
+          "started": "2026-09-09T15:42:49.429Z",
+          "finished": "2026-09-09T15:42:49.434Z",
+          "mode": "cpu",
+          "variant": "baseline",
+          "kind": 1,
+          "degree": 8,
+          "lifecycle": "retained_graph",
+          "iterations": 2,
+          "elapsed_ns": 64456,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "started": "2026-09-09T15:42:49.434Z",
+          "finished": "2026-09-09T15:42:49.439Z",
+          "mode": "cpu",
+          "variant": "candidate",
+          "kind": 1,
+          "degree": 8,
+          "lifecycle": "retained_graph",
+          "iterations": 2,
+          "elapsed_ns": 54867,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 0.9576896120010685,
+      "pairedMedianBootstrap95": [
+        0.8965391398190732,
+        0.9828345381291486
+      ],
+      "nsPerQuery": {
+        "baseline": 26277.477,
+        "candidate": 25630.161
+      }
+    },
+    {
+      "kind": 1,
+      "degree": 8,
+      "lifecycle": "fresh_graph",
+      "iterations": 291,
+      "observations": 48,
+      "pilots": [
+        {
+          "started": "2026-09-09T15:42:50.326Z",
+          "finished": "2026-09-09T15:42:50.331Z",
+          "mode": "cpu",
+          "variant": "baseline",
+          "kind": 1,
+          "degree": 8,
+          "lifecycle": "fresh_graph",
+          "iterations": 2,
+          "elapsed_ns": 137670,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "started": "2026-09-09T15:42:50.331Z",
+          "finished": "2026-09-09T15:42:50.337Z",
+          "mode": "cpu",
+          "variant": "candidate",
+          "kind": 1,
+          "degree": 8,
+          "lifecycle": "fresh_graph",
+          "iterations": 2,
+          "elapsed_ns": 111232,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 1.0120882919010334,
+      "pairedMedianBootstrap95": [
+        0.992269865351074,
+        1.016649183490723
+      ],
+      "nsPerQuery": {
+        "baseline": 56844.72508591066,
+        "candidate": 56988.6323024055
+      }
+    },
+    {
+      "kind": 1,
+      "degree": 24,
+      "lifecycle": "retained_graph",
+      "iterations": 500,
+      "observations": 48,
+      "pilots": [
+        {
+          "started": "2026-09-09T15:42:51.394Z",
+          "finished": "2026-09-09T15:42:51.401Z",
+          "mode": "cpu",
+          "variant": "baseline",
+          "kind": 1,
+          "degree": 24,
+          "lifecycle": "retained_graph",
+          "iterations": 2,
+          "elapsed_ns": 71545,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "started": "2026-09-09T15:42:51.401Z",
+          "finished": "2026-09-09T15:42:51.406Z",
+          "mode": "cpu",
+          "variant": "candidate",
+          "kind": 1,
+          "degree": 24,
+          "lifecycle": "retained_graph",
+          "iterations": 2,
+          "elapsed_ns": 70075,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 0.9673054565201048,
+      "pairedMedianBootstrap95": [
+        0.9413913743315184,
+        0.9871447190203408
+      ],
+      "nsPerQuery": {
+        "baseline": 36784.666,
+        "candidate": 36253.772
+      }
+    },
+    {
+      "kind": 1,
+      "degree": 24,
+      "lifecycle": "fresh_graph",
+      "iterations": 104,
+      "observations": 48,
+      "pilots": [
+        {
+          "started": "2026-09-09T15:42:52.563Z",
+          "finished": "2026-09-09T15:42:52.570Z",
+          "mode": "cpu",
+          "variant": "baseline",
+          "kind": 1,
+          "degree": 24,
+          "lifecycle": "fresh_graph",
+          "iterations": 2,
+          "elapsed_ns": 341956,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        },
+        {
+          "started": "2026-09-09T15:42:52.570Z",
+          "finished": "2026-09-09T15:42:52.576Z",
+          "mode": "cpu",
+          "variant": "candidate",
+          "kind": 1,
+          "degree": 24,
+          "lifecycle": "fresh_graph",
+          "iterations": 2,
+          "elapsed_ns": 385643,
+          "requests": 0,
+          "requested_bytes": 0,
+          "live_delta": 0,
+          "peak_delta": 0
+        }
+      ],
+      "pairedMedianRatio": 0.992570823836733,
+      "pairedMedianBootstrap95": [
+        0.982683820468084,
+        1.0712291098875641
+      ],
+      "nsPerQuery": {
+        "baseline": 176231.94711538462,
+        "candidate": 176412.22115384616
+      }
+    }
+  ],
+  "limits": "Sixteen known closed-square four-fragment public tangent-order traversal workloads: degrees 1/3/8/24, rational and pi-scaled positive-weight curves, retained/fresh graphs from shared prebuilt input controls. Every result must certify the known single closed chain. Eight warm traversals after a precheck. End endpoint requests order one, start requests order three and is unchanged by candidate. Thus this measures the complete consumer, not an isolated high-order endpoint helper. Uninstrumented pinned CPU; separate Rust allocation counts, not RSS. Per-group bootstrap intervals are not multiplicity-adjusted or universal."
+}

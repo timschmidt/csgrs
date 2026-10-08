@@ -1,0 +1,26 @@
+{
+  "baseline-cpu": {
+    "path": "/tmp/calcium-sign-filter.TCGoGs/baseline-cpu",
+    "sha256": "87b00bf9c1b8206dd9fb9ab2668b8527b3ee0c06e17212cef9c36fcece0cb61d",
+    "bytes": 2063408,
+    "size": "text\t   data\t    bss\t    dec\t    hex\tfilename\n1458722\t 219640\t   1472\t1679834\t 19a1da\t/tmp/calcium-sign-filter.TCGoGs/baseline-cpu"
+  },
+  "baseline-allocation": {
+    "path": "/tmp/calcium-sign-filter.TCGoGs/baseline-allocation",
+    "sha256": "7548b4521df8aad43f3cab6bac710f352b17a77075fc414aa2faeab6deab0d9a",
+    "bytes": 2067568,
+    "size": "text\t   data\t    bss\t    dec\t    hex\tfilename\n1462530\t 219648\t   1816\t1683994\t 19b21a\t/tmp/calcium-sign-filter.TCGoGs/baseline-allocation"
+  },
+  "candidate-cpu": {
+    "path": "/tmp/calcium-sign-filter.TCGoGs/candidate-cpu",
+    "sha256": "7d644b1d379e3e98b79792027a278eed3fd55a5b35ff3897d72404a76aa385ac",
+    "bytes": 2065944,
+    "size": "text\t   data\t    bss\t    dec\t    hex\tfilename\n1460642\t 219632\t   3704\t1683978\t 19b20a\t/tmp/calcium-sign-filter.TCGoGs/candidate-cpu"
+  },
+  "candidate-allocation": {
+    "path": "/tmp/calcium-sign-filter.TCGoGs/candidate-allocation",
+    "sha256": "44253a0c5db8257184659d8592a990826fdf36141c3e79229abfb45da52b8b34",
+    "bytes": 2070120,
+    "size": "text\t   data\t    bss\t    dec\t    hex\tfilename\n1464442\t 219640\t   3984\t1688066\t 19c202\t/tmp/calcium-sign-filter.TCGoGs/candidate-allocation"
+  }
+}

@@ -1,0 +1,13 @@
+[Thread debugging using libthread_db enabled]
+Using host libthread_db library "/lib64/libthread_db.so.1".
+
+Program received signal SIGILL, Illegal instruction.
+qqbar_roots_squarefree_sanitized_v84 () at /home/tim/Documents/GitHub/workspace/exact-real-references/flint/src/qqbar/roots_poly_squarefree.c:158
+158	    deg_bound = conjugations * deg;
+#0  qqbar_roots_squarefree_sanitized_v84 () at /home/tim/Documents/GitHub/workspace/exact-real-references/flint/src/qqbar/roots_poly_squarefree.c:158
+#1  0x0000000000400ba4 in root_limit () at flint-qqbar-remainder-fixed-v84.c:37
+#2  main () at flint-qqbar-remainder-fixed-v84.c:76
+=> 0x40280d <qqbar_roots_squarefree_sanitized_v84+3981>:	ud2
+   0x40280f <qqbar_roots_squarefree_sanitized_v84+3983>:	ud2
+   0x402811 <qqbar_roots_squarefree_sanitized_v84+3985>:	ud2
+   0x402813 <qqbar_roots_squarefree_sanitized_v84+3987>:	ud2

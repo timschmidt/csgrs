@@ -1,0 +1,281 @@
+[
+  {
+    "repo": "calcium",
+    "path": "calcium.h",
+    "ranges": [
+      [
+        1,
+        75
+      ],
+      [
+        109,
+        183
+      ]
+    ],
+    "note": "Checkpoint49: Complete archived global/version, stream lifecycle, three-valued truth, function-code enum and integer hash header. Previously read76..108 excluded from new credit."
+  },
+  {
+    "repo": "calcium",
+    "path": "calcium/func_name.c",
+    "ranges": [
+      [
+        1,
+        69
+      ]
+    ],
+    "note": "Checkpoint49: Entire function-code/name switch and unknown fallback; separate from the474-entry expression vocabulary."
+  },
+  {
+    "repo": "calcium",
+    "path": "calcium/test_multiplier.c",
+    "ranges": [
+      [
+        1,
+        38
+      ]
+    ],
+    "note": "Checkpoint49: Archived lazy environment test multiplier, accepted0..1000 range and default1 fallback. Source-read only; no tests newly executed."
+  },
+  {
+    "repo": "calcium",
+    "path": "calcium/version.c",
+    "ranges": [
+      [
+        1,
+        20
+      ]
+    ],
+    "note": "Checkpoint49: Archived version string access; header patchlevel and version text differ, no runtime compatibility claim."
+  },
+  {
+    "repo": "calcium",
+    "path": "calcium/write.c",
+    "ranges": [
+      [
+        1,
+        39
+      ]
+    ],
+    "note": "Checkpoint49: File-backed formatting API versus geometrically growing literal string buffer; do not transplant as arbitrary-text-safe output. No runtime issue reproduction."
+  },
+  {
+    "repo": "calcium",
+    "path": "calcium/write_acb.c",
+    "ranges": [
+      [
+        1,
+        115
+      ]
+    ],
+    "note": "Checkpoint49: Real/imaginary display and sign extraction, exact/NO_RADIUS distinctions. Archived compatibility text rewrite versus current direct Arb string API; no new numerical or formatting accuracy gate."
+  },
+  {
+    "repo": "calcium",
+    "path": "calcium/write_si.c",
+    "ranges": [
+      [
+        1,
+        30
+      ]
+    ],
+    "note": "Checkpoint49: Machine-integer file formatting and22-byte stack temporary for string route, current WORD_FMT versus archived size dispatch."
+  },
+  {
+    "repo": "calcium",
+    "path": "doc/source/fexpr_builtin.rst",
+    "ranges": [
+      [
+        1,
+        1293
+      ]
+    ],
+    "note": "Checkpoint49: Entire builtin manual: binding forms, logic/equality/cases, exact and extended number vocabulary, declaration-only calculus/special functions, nonsemantic display markup and explicit normalization-cost warning."
+  },
+  {
+    "repo": "calcium",
+    "path": "fexpr/write_latex.c",
+    "ranges": [
+      [
+        1,
+        4096
+      ]
+    ],
+    "note": "Checkpoint49: Entire formatter: structural precedence/signs/powers, calculus/logic/collections/matrices, endpoint substitutions, decimal text, polynomial/root notation, explicit normal-form evaluation, symbol and generic dispatch, optional derivatives and stream entry points. Display is not proof/serialization; source ownership/text-output concerns unexecuted."
+  },
+  {
+    "repo": "calcium",
+    "path": "fexpr_builtin.h",
+    "ranges": [
+      [
+        1,
+        551
+      ]
+    ],
+    "note": "Checkpoint49: Entire alphabetical symbol enum, table record layout, display callback pointer, inline name/length and packed arithmetic identifiers. Vocabulary is not implemented semantic support."
+  },
+  {
+    "repo": "calcium",
+    "path": "fexpr_builtin/inlines.c",
+    "ranges": [
+      [
+        1,
+        14
+      ]
+    ],
+    "note": "Checkpoint49: Complete translation-unit inline-definition emission."
+  },
+  {
+    "repo": "calcium",
+    "path": "fexpr_builtin/lookup.c",
+    "ranges": [
+      [
+        1,
+        38
+      ]
+    ],
+    "note": "Checkpoint49: Entire alphabetically indexed binary string search returning-1 for absent names. Immutable metadata, no retained mutable lookup cache."
+  },
+  {
+    "repo": "calcium",
+    "path": "fexpr_builtin/table.c",
+    "ranges": [
+      [
+        1,
+        490
+      ]
+    ],
+    "note": "Checkpoint49: Every474 table rows read, including display text and callback mapping. Lookup and presentation share one static metadata table; no measured binary-size claim."
+  },
+  {
+    "repo": "flint",
+    "path": "doc/source/fexpr_builtin.rst",
+    "ranges": [
+      [
+        1,
+        1293
+      ]
+    ],
+    "note": "Checkpoint49: Entire builtin manual: binding forms, logic/equality/cases, exact and extended number vocabulary, declaration-only calculus/special functions, nonsemantic display markup and explicit normalization-cost warning."
+  },
+  {
+    "repo": "flint",
+    "path": "src/calcium/fmpz_hash.c",
+    "ranges": [
+      [
+        1,
+        26
+      ]
+    ],
+    "note": "Checkpoint49: Current immediate/least-limb signed integer hash; no semantic or adversarial hash-performance claim."
+  },
+  {
+    "repo": "flint",
+    "path": "src/calcium/func_name.c",
+    "ranges": [
+      [
+        1,
+        68
+      ]
+    ],
+    "note": "Checkpoint49: Entire function-code/name switch and unknown fallback; separate from the474-entry expression vocabulary."
+  },
+  {
+    "repo": "flint",
+    "path": "src/calcium/io.c",
+    "ranges": [
+      [
+        1,
+        19
+      ]
+    ],
+    "note": "Checkpoint49: Current file-stream initialization with opaque FILE pointer and null string owner."
+  },
+  {
+    "repo": "flint",
+    "path": "src/calcium/write.c",
+    "ranges": [
+      [
+        1,
+        40
+      ]
+    ],
+    "note": "Checkpoint49: File-backed formatting API versus geometrically growing literal string buffer; do not transplant as arbitrary-text-safe output. No runtime issue reproduction."
+  },
+  {
+    "repo": "flint",
+    "path": "src/calcium/write_acb.c",
+    "ranges": [
+      [
+        1,
+        55
+      ]
+    ],
+    "note": "Checkpoint49: Real/imaginary display and sign extraction, exact/NO_RADIUS distinctions. Archived compatibility text rewrite versus current direct Arb string API; no new numerical or formatting accuracy gate."
+  },
+  {
+    "repo": "flint",
+    "path": "src/calcium/write_si.c",
+    "ranges": [
+      [
+        1,
+        28
+      ]
+    ],
+    "note": "Checkpoint49: Machine-integer file formatting and22-byte stack temporary for string route, current WORD_FMT versus archived size dispatch."
+  },
+  {
+    "repo": "flint",
+    "path": "src/fexpr/write_latex.c",
+    "ranges": [
+      [
+        1,
+        4103
+      ]
+    ],
+    "note": "Checkpoint49: Entire formatter: structural precedence/signs/powers, calculus/logic/collections/matrices, endpoint substitutions, decimal text, polynomial/root notation, explicit normal-form evaluation, symbol and generic dispatch, optional derivatives and stream entry points. Display is not proof/serialization; source ownership/text-output concerns unexecuted."
+  },
+  {
+    "repo": "flint",
+    "path": "src/fexpr_builtin.h",
+    "ranges": [
+      [
+        1,
+        550
+      ]
+    ],
+    "note": "Checkpoint49: Entire alphabetical symbol enum, table record layout, display callback pointer, inline name/length and packed arithmetic identifiers. Vocabulary is not implemented semantic support."
+  },
+  {
+    "repo": "flint",
+    "path": "src/fexpr_builtin/inlines.c",
+    "ranges": [
+      [
+        1,
+        13
+      ]
+    ],
+    "note": "Checkpoint49: Complete translation-unit inline-definition emission."
+  },
+  {
+    "repo": "flint",
+    "path": "src/fexpr_builtin/lookup.c",
+    "ranges": [
+      [
+        1,
+        39
+      ]
+    ],
+    "note": "Checkpoint49: Entire alphabetically indexed binary string search returning-1 for absent names. Immutable metadata, no retained mutable lookup cache."
+  },
+  {
+    "repo": "flint",
+    "path": "src/fexpr_builtin/table.c",
+    "ranges": [
+      [
+        1,
+        490
+      ]
+    ],
+    "note": "Checkpoint49: Every474 table rows read, including display text and callback mapping. Lookup and presentation share one static metadata table; no measured binary-size claim."
+  }
+]

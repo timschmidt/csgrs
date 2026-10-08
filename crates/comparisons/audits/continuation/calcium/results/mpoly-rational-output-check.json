@@ -1,0 +1,14 @@
+{
+  "tag": "mpoly-rational-output-check",
+  "started": "2026-09-10T03:39:04.885Z",
+  "finished": "2026-09-10T03:39:05.872Z",
+  "elapsedSeconds": 0.984458588,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "node",
+  "args": [
+    "check-mpoly-rational.mjs",
+    "--mpoly-rational-summary"
+  ],
+  "code": 0,
+  "signal": null
+}

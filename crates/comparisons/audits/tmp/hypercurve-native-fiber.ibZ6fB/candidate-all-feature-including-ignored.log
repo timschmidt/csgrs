@@ -1,0 +1,44 @@
+   Compiling hypercurve v0.3.1 (/home/tim/Documents/GitHub/workspace/hypercurve)
+    Finished `release` profile [optimized] target(s) in 1m 21s
+     Running unittests src/lib.rs (target/release/deps/hypercurve-6e6572a45c5b177b)
+
+running 899 tests
+test arc_bezier::tests::arc_clones_share_sweep_and_decomposition_caches ... ok
+test arc_bezier::tests::independent_algebraic_quarter_circle_recovers_minimal_center ... ok
+test arc_bezier::tests::mixed_weight_conic_with_a_projective_pole_is_not_a_regular_arc ... ok
+test arc_bezier::tests::one_arc_decomposition_shares_exact_conic_provenance ... ok
+test arc_bezier::tests::mixed_weight_major_circle_is_recognized_without_a_projective_pole ... ok
+test bezier_algebraic_image::policy_tests::coordinate_images_preserve_native_polynomial_point_values ... ok
+test bezier_algebraic_image::policy_tests::exact_real_representation_preserves_native_point_payloads ... ok
+test bezier_algebraic_image::policy_tests::arithmetic_adapter_rejects_evidence_that_does_not_replay_strictly ... ok
+test bezier_arrangement::endpoint_adjacency_tests::certified_branch_free_traversal_defers_unused_zero_tangent ... ok
+test bezier_arrangement::endpoint_adjacency_tests::certified_topology_can_close_one_fragment_at_a_self_contact ... ok
+test bezier_arrangement::endpoint_adjacency_tests::complete_topology_traversal_defers_unused_endpoint_coordinates ... ok
+test bezier_arrangement::endpoint_adjacency_tests::partial_successor_evidence_rebuilds_higher_order_tangents ... ok
+test bezier_arrangement::endpoint_adjacency_tests::represented_tangent_negation_accepts_an_exact_real_result ... ok
+test bezier_arrangement::endpoint_adjacency_tests::retained_index_combines_topology_vertices_and_exact_coordinate_fallback ... ok
+test bezier_arrangement::endpoint_adjacency_tests::lazy_polynomial_endpoint_derivatives_match_eager_images ... ok
+test bezier_arrangement::rational_quadratic_endpoint_derivative_tests::polynomial_endpoint_tangent_keeps_its_structural_zero_evidence ... ok
+test bezier_flatten::tests::cubic_half_split_keeps_exact_de_casteljau_values ... ok
+test bezier_flatten::tests::flatten_certificate_evidence_actual_depth_used ... ok
+test bezier_arrangement::rational_quadratic_endpoint_derivative_tests::specialized_endpoint_jets_match_general_rational_quotient_derivatives ... ok
+test bezier_metric::tests::degree_elevated_linear_certificate_checks_parameters_exactly ... ok
+test bezier_metric::tests::inverse_length_linear_image_keeps_exact_parameter_certificate ... ok
+test bezier_metric::tests::inverse_length_zero_target_returns_zero_parameter_certificate ... ok
+test bezier_metric::tests::metric_subdivision_rejects_empty_controls ... ok
+test bezier_moment::tests::area_moments_accept_constant_control ... ok
+test bezier_moment::tests::area_moments_reject_empty_controls ... ok
+test bezier_moment::tests::bernstein_to_power_handles_supported_higher_degree ... ok
+test bezier_moment::tests::cubic_weight_moments_with_one_real_root_are_exactly_additive ... ok
+test bezier_moment::tests::cubic_weight_moments_with_three_real_roots_are_exactly_additive ... ok
+test bezier_moment::tests::distinct_irreducible_quadratic_weight_moments_are_exactly_additive ... ok
+test bezier_moment::tests::fully_split_quartic_weight_moments_are_exactly_additive ... ok
+test bezier_moment::tests::general_rational_bezier_uses_exact_polynomial_and_low_degree_weight_moments ... ok
+test bezier_moment::tests::genuinely_cubic_rational_quadratic_weight_moments_are_exactly_additive ... ok
+test bezier_moment::tests::mixed_linear_quadratic_quartic_weight_moments_are_exactly_additive ... ok
+test bezier_moment::tests::moment_subdivision_rejects_empty_controls ... ok
+test bezier_moment::tests::rational_quadratic_area_cache_reuses_equal_weight_integrals ... ok
+test bezier_moment::tests::rational_quadratic_first_moments_are_exactly_additive_under_subdivision ... ok
+test bezier_moment::tests::rational_quadratic_linear_weight_denominator_keeps_geometric_line_moments ... ok
+test bezier_moment::tests::rational_quadratic_quarter_circle_has_exact_green_first_moments ... ok
+test bezier_mom

@@ -1,0 +1,25 @@
+{
+  "tag": "point-image-focused-debug",
+  "started": "2026-09-10T18:58:04.918Z",
+  "finished": "2026-09-10T18:58:16.006Z",
+  "elapsedSeconds": 11.085598959999999,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "env",
+  "args": [
+    "CARGO_TARGET_DIR=/tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse",
+    "CARGO_INCREMENTAL=0",
+    "CARGO_PROFILE_DEV_DEBUG=0",
+    "CARGO_BUILD_JOBS=2",
+    "cargo",
+    "test",
+    "--offline",
+    "--manifest-path",
+    "point-image-candidate/hypersolve/Cargo.toml",
+    "--lib",
+    "algebraic_binary::",
+    "--",
+    "--test-threads=1"
+  ],
+  "code": 0,
+  "signal": null
+}

@@ -1,0 +1,11 @@
+{
+  "head": "3276fb05c176e045e4e24b7b8052b1342c198a46",
+  "files": {
+    "src/bezier_region.rs": "46adf87145d48d59f4598c3cffb433bdbb4714b57b2a562579bdd3655a6d2a16",
+    "src/curve_support_intersection.rs": "54b27dda872f5c7eec0aee83ccae26eb7c8900a641eab716a7e8ad45510b4ad0",
+    "src/rational_bezier_general.rs": "7285bce8d61a843d9e451029b5ac2e613e88c5cc27d7e2466bd9797f0dc44cc1"
+  },
+  "remaining_worktree_status": "",
+  "all_owned_processes_reaped": true,
+  "full_goal_complete": false
+}

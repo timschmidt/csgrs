@@ -1,0 +1,11 @@
+{
+  "tag": "gamma-special-native",
+  "started": "2026-09-08T10:39:29.543Z",
+  "finished": "2026-09-08T10:39:29.556Z",
+  "elapsedSeconds": 0.010769531999999998,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison",
+  "command": "/home/tim/Documents/GitHub/workspace/.audit-builds/calcium-flint-gamma-special-probe",
+  "args": [],
+  "code": 1,
+  "signal": null
+}

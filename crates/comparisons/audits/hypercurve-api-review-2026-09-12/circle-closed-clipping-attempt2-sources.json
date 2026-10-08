@@ -1,0 +1,7 @@
+{
+  "src/bezier_offset.rs": "a5fbeb569c4bcbe408897950b728bea6b061c8c5a802b183dead47af6727c5a6",
+  "src/curve.rs": "6fad455f0704237de44da750b190a2cff34957390e7bf9e577bf548437be5538",
+  "src/curve_intersection.rs": "ab737989da9d575994215b02b7d4f08678ae9814d43ca2938452f3b2de076fe0",
+  "src/curve_region_boolean.rs": "d7497df8c07d64f5bc34068d28b3267e022474551bd895316ec17252da8a4d0b",
+  "src/curve_support_intersection.rs": "793f826c26dfa1f65dc0e9b2350f4cd39421373dfb05df60e210f124f25e87f8"
+}

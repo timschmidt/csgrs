@@ -1,0 +1,13 @@
+[
+  "bezier_offset::conversion_tests::correlated_algebraic_point_oblique_projection_is_exact",
+  "bezier_offset::conversion_tests::displaced_algebraic_point_incidence_reuses_its_retained_field",
+  "bezier_offset::conversion_tests::independent_algebraic_point_oblique_projections_compare_exactly",
+  "bezier_region::tests::algebraic_retained_ray_vertices_use_spatial_endpoint_ownership",
+  "bezier_region::tests::raw_crossing_loops_need_arrangement_before_nesting",
+  "bezier_region::tests::regularized_analytic_loop_roles_follow_exact_nesting",
+  "bezier_region::tests::regularized_composite_chord_roles_preserve_nested_islands_and_profiles",
+  "bezier_region::tests::retained_subcurve_point_query_preserves_projective_denominator_uncertainty",
+  "bezier_region::tests::single_loop_filled_side_uses_area_without_constructing_nesting_bounds",
+  "curve_region_boolean::certified_successor_tests::boundary_probe_reuses_endpoint_incidence_and_keeps_residual_contacts",
+  "curve_region_boolean::certified_successor_tests::curved_face_windings_preserve_crossings_tangencies_overlaps_and_nested_holes"
+]

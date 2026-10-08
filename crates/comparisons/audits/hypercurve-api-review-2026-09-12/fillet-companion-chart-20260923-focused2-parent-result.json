@@ -1,0 +1,22 @@
+{
+  "label": "parent",
+  "cases": [
+    {
+      "name": "bezier_region::curve_corner_chain::tests::extended_fillet_circle_endpoints_obey_the_exact_radius_bound",
+      "returncode": 101,
+      "passed": false,
+      "elapsed_seconds": 5.320822029025294,
+      "log": "fillet-companion-chart-20260923-focused2-parent-case-0.log"
+    },
+    {
+      "name": "bezier_region::curve_corner_chain::tests::extended_fillet_region_classifies_both_sides_of_its_companion",
+      "returncode": 101,
+      "passed": false,
+      "elapsed_seconds": 5.321412378922105,
+      "log": "fillet-companion-chart-20260923-focused2-parent-case-1.log"
+    }
+  ],
+  "binary_sha256": "11b50944711eca877c3ae67f56401768de87735380814373ca1e325c797ee5a8",
+  "sources_unchanged": true,
+  "all_processes_reaped": true
+}

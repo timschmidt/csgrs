@@ -1,0 +1,11 @@
+{
+  "tag": "flint-proof-native",
+  "started": "2026-09-08T08:31:32.546Z",
+  "finished": "2026-09-08T08:31:32.566Z",
+  "elapsedSeconds": 0.01775108499999999,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison",
+  "command": "/tmp/calcium-flint-proof-probe",
+  "args": [],
+  "code": 0,
+  "signal": null
+}

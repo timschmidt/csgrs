@@ -1,0 +1,160 @@
+\doxysubsection{python/tutorials/numeric\+\_\+demonstration.\+py}
+\hypertarget{python_2tutorials_2numeric_demonstration_8py-example}{}\label{python_2tutorials_2numeric_demonstration_8py-example}A demonstration of the functionality of the Numeric module.
+
+
+\begin{DoxyCodeInclude}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{\#!/usr/bin/python3}}
+\DoxyCodeLine{00002\ }
+\DoxyCodeLine{00003\ }
+\DoxyCodeLine{00008\ }
+\DoxyCodeLine{00009\ \textcolor{comment}{\#\ This\ file\ is\ part\ of\ Ariadne.}}
+\DoxyCodeLine{00010\ }
+\DoxyCodeLine{00011\ \textcolor{comment}{\#\ Ariadne\ is\ free\ software:\ you\ can\ redistribute\ it\ and/or\ modify}}
+\DoxyCodeLine{00012\ \textcolor{comment}{\#\ it\ under\ the\ terms\ of\ the\ GNU\ General\ Public\ License\ as\ published\ by}}
+\DoxyCodeLine{00013\ \textcolor{comment}{\#\ the\ Free\ Software\ Foundation,\ either\ version\ 3\ of\ the\ License,\ or}}
+\DoxyCodeLine{00014\ \textcolor{comment}{\#\ (at\ your\ option)\ any\ later\ version.}}
+\DoxyCodeLine{00015\ }
+\DoxyCodeLine{00016\ \textcolor{comment}{\#\ Ariadne\ is\ distributed\ in\ the\ hope\ that\ it\ will\ be\ useful,}}
+\DoxyCodeLine{00017\ \textcolor{comment}{\#\ but\ WITHOUT\ ANY\ WARRANTY;\ without\ even\ the\ implied\ warranty\ of}}
+\DoxyCodeLine{00018\ \textcolor{comment}{\#\ MERCHANTABILITY\ or\ FITNESS\ FOR\ A\ PARTICULAR\ PURPOSE.\ \ See\ the}}
+\DoxyCodeLine{00019\ \textcolor{comment}{\#\ GNU\ General\ Public\ License\ for\ more\ details.}}
+\DoxyCodeLine{00020\ }
+\DoxyCodeLine{00021\ \textcolor{comment}{\#\ You\ should\ have\ received\ a\ copy\ of\ the\ GNU\ General\ Public\ License}}
+\DoxyCodeLine{00022\ \textcolor{comment}{\#\ along\ with\ Ariadne.\ If\ not,\ see\ <https://www.gnu.org/licenses/>.}}
+\DoxyCodeLine{00023\ }
+\DoxyCodeLine{00024\ \textcolor{comment}{\#\ Import\ all\ classes\ in\ the\ ariadne\ module}}
+\DoxyCodeLine{00025\ \textcolor{keyword}{from}\ pyariadne\ \textcolor{keyword}{import}\ *}
+\DoxyCodeLine{00026\ }
+\DoxyCodeLine{00027\ \textcolor{comment}{\#\ Print\ a\ list\ of\ all\ available\ classes\ and\ functions}}
+\DoxyCodeLine{00028\ print(dir())}
+\DoxyCodeLine{00029\ }
+\DoxyCodeLine{00030\ }
+\DoxyCodeLine{00031\ \textcolor{keyword}{def\ }\mbox{\hyperlink{namespacenumeric__demonstration}{numeric\_demonstration}}():}
+\DoxyCodeLine{00032\ \ \ \ \ \textcolor{comment}{\#!\ [Numeric\ demonstration]}}
+\DoxyCodeLine{00033\ }
+\DoxyCodeLine{00034\ \ \ \ \ \textcolor{comment}{\#\ Number\ classes\ and\ their\ constructors}}
+\DoxyCodeLine{00035\ }
+\DoxyCodeLine{00036\ \ \ \ \ \textcolor{comment}{\#\ Create\ an\ integer}}
+\DoxyCodeLine{00037\ \ \ \ \ z=Integer(5)}
+\DoxyCodeLine{00038\ \ \ \ \ print(\textcolor{stringliteral}{"{}Integer(5):"{}},z)}
+\DoxyCodeLine{00039\ }
+\DoxyCodeLine{00040\ \ \ \ \ \textcolor{comment}{\#\ Create\ a\ dyadic;\ can\ convert\ from\ Integer}}
+\DoxyCodeLine{00041\ \ \ \ \ w=Dyadic(z)}
+\DoxyCodeLine{00042\ \ \ \ \ w=Dyadic(5)}
+\DoxyCodeLine{00043\ \ \ \ \ w=Dyadic(11,3)\ \textcolor{comment}{\#\ Constructs\ the\ number\ 11/2\string^3=11/8}}
+\DoxyCodeLine{00044\ \ \ \ \ w=11/two**3\ \ \ \ \textcolor{comment}{\#\ Alternative\ syntax\ for\ 11/2\string^3}}
+\DoxyCodeLine{00045\ \ \ \ \ print(\textcolor{stringliteral}{"{}Dyadic(11,3):"{}},w)}
+\DoxyCodeLine{00046\ }
+\DoxyCodeLine{00047\ \ \ \ \ \textcolor{comment}{\#\ Create\ a\ decimal\ number;\ can\ convert\ from\ Dyadic}}
+\DoxyCodeLine{00048\ \ \ \ \ g=Decimal(w)}
+\DoxyCodeLine{00049\ \ \ \ \ g=Decimal(9.81)}
+\DoxyCodeLine{00050\ \ \ \ \ g=Decimal(\textcolor{stringliteral}{"{}9.81"{}})}
+\DoxyCodeLine{00051\ \ \ \ \ print(\textcolor{stringliteral}{"{}Decimal(9.81):"{}},g,type(g))}
+\DoxyCodeLine{00052\ }
+\DoxyCodeLine{00053\ \ \ \ \ \textcolor{comment}{\#\ Create\ a\ rational;\ can\ convert\ from\ Dyadic,\ Decimal}}
+\DoxyCodeLine{00054\ \ \ \ \ q=Rational(w);}
+\DoxyCodeLine{00055\ \ \ \ \ q=Rational(5);}
+\DoxyCodeLine{00056\ \ \ \ \ q=Rational(11,8);}
+\DoxyCodeLine{00057\ \ \ \ \ print(\textcolor{stringliteral}{"{}Rational(11,8):"{}},q,type(q))}
+\DoxyCodeLine{00058\ }
+\DoxyCodeLine{00059\ \ \ \ \ \textcolor{comment}{\#\ Create\ a\ real\ number}}
+\DoxyCodeLine{00060\ \ \ \ \ r=Real(q)}
+\DoxyCodeLine{00061\ \ \ \ \ print(\textcolor{stringliteral}{"{}Real(4*atan(1)):"{}},r)}
+\DoxyCodeLine{00062\ \ \ \ \ print()}
+\DoxyCodeLine{00063\ }
+\DoxyCodeLine{00064\ \ \ \ \ \textcolor{comment}{\#\ Operations\ on\ real\ numbers}}
+\DoxyCodeLine{00065\ \ \ \ \ \textcolor{comment}{\#\ Arithmetic\ operators}}
+\DoxyCodeLine{00066\ \ \ \ \ +r;\ -\/r;\ r+r;\ r-\/r;\ r*r;\ r/r}
+\DoxyCodeLine{00067\ \ \ \ \ \textcolor{comment}{\#\ Aliases\ for\ arithmetic\ operators\ (currently\ not\ fully\ supported)}}
+\DoxyCodeLine{00068\ \ \ \ \ pos(r);\ neg(r);\ \textcolor{comment}{\#\ add(r,r);\ sub(r,r);\ mul(r,r);\ div(r,r);}}
+\DoxyCodeLine{00069\ \ \ \ \ \textcolor{comment}{\#\ Other\ arithmetic\ operations}}
+\DoxyCodeLine{00070\ \ \ \ \ nul(r);\ sqr(r);\ hlf(r);\ rec(r);\ pow(r,-\/3)}
+\DoxyCodeLine{00071\ \ \ \ \ \textcolor{comment}{\#\ Algebraic\ and\ transcendental\ operations}}
+\DoxyCodeLine{00072\ \ \ \ \ sqrt(r);\ exp(r);\ log(r);\ sin(r);\ cos(r);\ tan(r);\ atan(r)}
+\DoxyCodeLine{00073\ \ \ \ \ \textcolor{comment}{\#\ Lattice\ operations}}
+\DoxyCodeLine{00074\ \ \ \ \ abs(r);\ max(r,r);\ min(r,r)}
+\DoxyCodeLine{00075\ \ \ \ \ \textcolor{comment}{\#\ Comparison\ operators}}
+\DoxyCodeLine{00076\ \ \ \ \ k=(r<=r)}
+\DoxyCodeLine{00077\ \ \ \ \ \textcolor{comment}{\#\ Metric}}
+\DoxyCodeLine{00078\ \ \ \ \ dist(r,r)}
+\DoxyCodeLine{00079\ }
+\DoxyCodeLine{00080\ }
+\DoxyCodeLine{00081\ \ \ \ \ \textcolor{comment}{\#\ Store\ a\ double-\/precision\ floating-\/point\ number}}
+\DoxyCodeLine{00082\ \ \ \ \ d=ExactDouble(1.375)}
+\DoxyCodeLine{00083\ \ \ \ \ d=cast\_exact(1.375)}
+\DoxyCodeLine{00084\ \ \ \ \ d=x\_(1.375)}
+\DoxyCodeLine{00085\ \ \ \ \ print(\textcolor{stringliteral}{"{}ExactDouble(1.375):"{}},d)}
+\DoxyCodeLine{00086\ \ \ \ \ print(\textcolor{stringliteral}{"{}cast\_exact(1.375):"{}},d)}
+\DoxyCodeLine{00087\ \ \ \ \ print(\textcolor{stringliteral}{"{}x\_(1.375):"{}},d)}
+\DoxyCodeLine{00088\ \ \ \ \ \textcolor{comment}{\#\ Can\ convert\ an\ ExactDouble\ to\ a\ Dyadic\ number.}}
+\DoxyCodeLine{00089\ \ \ \ \ w=Dyadic(d)}
+\DoxyCodeLine{00090\ \ \ \ \ print(\textcolor{stringliteral}{"{}Dyadic(ExactDouble(1.375))"{}},w)}
+\DoxyCodeLine{00091\ \ \ \ \ print()}
+\DoxyCodeLine{00092\ }
+\DoxyCodeLine{00093\ \ \ \ \ \textcolor{comment}{\#\ Define\ shorthands\ for\ defining\ Ariadne\ values\ from\ input}}
+\DoxyCodeLine{00094\ \ \ \ \ \textcolor{keyword}{def\ }dec(x):\ \textcolor{keywordflow}{return}\ Decimal(x)}
+\DoxyCodeLine{00095\ \ \ \ \ \textcolor{keyword}{def\ }ex(x):\ \textcolor{keywordflow}{return}\ ExactDouble(x)}
+\DoxyCodeLine{00096\ \ \ \ \ \textcolor{keyword}{def\ }dy(x):\ \textcolor{keywordflow}{return}\ Dyadic(ExactDouble(x))}
+\DoxyCodeLine{00097\ }
+\DoxyCodeLine{00098\ }
+\DoxyCodeLine{00099\ \ \ \ \ \textcolor{comment}{\#\ Specify\ precisions\ of\ floating-\/point\ number\ types}}
+\DoxyCodeLine{00100\ \ \ \ \ dp=DoublePrecision()}
+\DoxyCodeLine{00101\ \ \ \ \ dp=double\_precision}
+\DoxyCodeLine{00102\ \ \ \ \ mp=MultiplePrecision(128)}
+\DoxyCodeLine{00103\ }
+\DoxyCodeLine{00104\ \ \ \ \ \textcolor{comment}{\#\ Create\ a\ raw\ double-\/precision\ number}}
+\DoxyCodeLine{00105\ \ \ \ \ xdp=FloatDP(exact(1.75),dp)}
+\DoxyCodeLine{00106\ \ \ \ \ \textcolor{comment}{\#\ Create\ a\ raw\ double-\/precision\ number\ using\ generic\ Float\ type}}
+\DoxyCodeLine{00107\ \ \ \ \ xdp=Float[DP](exact(1.75),dp)}
+\DoxyCodeLine{00108\ \ \ \ \ \textcolor{comment}{\#\ Create\ a\ raw\ multiple-\/precision\ number}}
+\DoxyCodeLine{00109\ \ \ \ \ xmp=FloatMP(exact(1.75),mp)}
+\DoxyCodeLine{00110\ \ \ \ \ xmp=Float[MP](exact(1.75),mp)}
+\DoxyCodeLine{00111\ }
+\DoxyCodeLine{00112\ \ \ \ \ \textcolor{comment}{\#\ Create\ double-\/precision\ bounds\ for\ a\ value}}
+\DoxyCodeLine{00113\ \ \ \ \ xdpb=FloatDPBounds(Decimal(1.2),dp)\ \textcolor{comment}{\#\ Creates\ the\ interval\ [1.19999999999999996:1.20000000000000018]}}
+\DoxyCodeLine{00114\ \ \ \ \ print(\textcolor{stringliteral}{"{}FloatDPBounds(1.2):"{}},xdpb)}
+\DoxyCodeLine{00115\ \ \ \ \ \textcolor{comment}{\#\ Create\ double-\/precision\ bounds\ for\ a\ value\ using\ generic\ Bounds\ type}}
+\DoxyCodeLine{00116\ \ \ \ \ xdpb=Bounds[FloatDP](Decimal(1.2),dp)\ \textcolor{comment}{\#\ Creates\ the\ interval\ [1.19999999999999996:1.20000000000000018]}}
+\DoxyCodeLine{00117\ \ \ \ \ print(\textcolor{stringliteral}{"{}Bounds[FloatDP](1.2):"{}},xdpb)}
+\DoxyCodeLine{00118\ \ \ \ \ xdpb=Bounds[Float[DP]](Decimal(1.2),dp)\ \textcolor{comment}{\#\ Creates\ the\ interval\ [1.19999999999999996:1.20000000000000018]}}
+\DoxyCodeLine{00119\ \ \ \ \ print(\textcolor{stringliteral}{"{}Bounds[Float[DP]](1.2):"{}},xdpb)}
+\DoxyCodeLine{00120\ }
+\DoxyCodeLine{00121\ \ \ \ \ \textcolor{comment}{\#\ Create\ double-\/precision\ bounds\ for\ a\ range\ of\ values}}
+\DoxyCodeLine{00122\ \ \ \ \ xdpb=FloatDPBounds(Rational(11,10),Rational(14,10),dp)\ \textcolor{comment}{\#\ Creates\ the\ interval\ [1.09999999999999987:1.40000000000000013]}}
+\DoxyCodeLine{00123\ \ \ \ \ print(\textcolor{stringliteral}{"{}FloatDPBounds(11/10,14/10,dp):"{}},xdpb)}
+\DoxyCodeLine{00124\ }
+\DoxyCodeLine{00125\ \ \ \ \ \textcolor{comment}{\#\ Create\ multiple-\/precision\ bounds\ for\ a\ value}}
+\DoxyCodeLine{00126\ \ \ \ \ xmpb=FloatMPBounds(dec(\textcolor{stringliteral}{"{}1.2"{}}),mp)\ \textcolor{comment}{\#\ Creates\ the\ interval\ [1.19999999999999996:19999999999999996]}}
+\DoxyCodeLine{00127\ \ \ \ \ print(\textcolor{stringliteral}{"{}FloatMPBounds(1.2,mp):"{}},xmpb)}
+\DoxyCodeLine{00128\ }
+\DoxyCodeLine{00129\ \ \ \ \ \textcolor{comment}{\#\ Create\ multiple-\/precision\ bounds\ for\ a\ range\ of\ values}}
+\DoxyCodeLine{00130\ \ \ \ \ xmpb=FloatMPBounds(dec(1.5),dec(2.25),mp)\ \textcolor{comment}{\#\ Creates\ the\ interval\ [1.5,2.25]}}
+\DoxyCodeLine{00131\ \ \ \ \ print(\textcolor{stringliteral}{"{}FloatMPBounds(1.5,2.25,mp):"{}},xmpb)}
+\DoxyCodeLine{00132\ }
+\DoxyCodeLine{00133\ \ \ \ \ \textcolor{comment}{\#\ Create\ multiple-\/precision\ bounds\ for\ a\ range\ of\ values}}
+\DoxyCodeLine{00134\ \ \ \ \ xmpb=FloatMPBounds(Rational(11,10),Rational(14,10),mp)\ \textcolor{comment}{\#\ Creates\ the\ interval\ [1.10000000000000009:1.39999999999999991]}}
+\DoxyCodeLine{00135\ \ \ \ \ print(\textcolor{stringliteral}{"{}FloatMPBounds(11/10,14/10,mp):"{}},xmpb)}
+\DoxyCodeLine{00136\ }
+\DoxyCodeLine{00137\ \ \ \ \ \textcolor{comment}{\#\ Create\ a\ double-\/precision\ approximation}}
+\DoxyCodeLine{00138\ \ \ \ \ xdpa=FloatDPApproximation(1.23,dp)}
+\DoxyCodeLine{00139\ \ \ \ \ print(\textcolor{stringliteral}{"{}FloatDPApproximation(1.23,dp):"{}},xdpa)}
+\DoxyCodeLine{00140\ \ \ \ \ \textcolor{comment}{\#\ Create\ a\ double-\/precision\ approximation\ using\ generic\ Approximation\ type}}
+\DoxyCodeLine{00141\ \ \ \ \ xdpa=Approximation[FloatDP](1.23,dp)}
+\DoxyCodeLine{00142\ \ \ \ \ print(\textcolor{stringliteral}{"{}Approximation[FloatDP](1.23,dp):"{}},xdpa)}
+\DoxyCodeLine{00143\ \ \ \ \ xdpa=Approximation[Float[DP]](1.23,dp)}
+\DoxyCodeLine{00144\ \ \ \ \ print(\textcolor{stringliteral}{"{}Approximation[Float[DP]](1.23,dp):"{}},xdpa)}
+\DoxyCodeLine{00145\ }
+\DoxyCodeLine{00146\ \ \ \ \ xmpa=FloatMPApproximation(1.23,mp)}
+\DoxyCodeLine{00147\ \ \ \ \ print(\textcolor{stringliteral}{"{}FloatMPApproximation(1.23,dp):"{}},xmpa)}
+\DoxyCodeLine{00148\ \ \ \ \ xmpa=FloatMPApproximation(Decimal(\textcolor{stringliteral}{"{}1.23"{}}),mp)}
+\DoxyCodeLine{00149\ \ \ \ \ print(\textcolor{stringliteral}{"{}FloatMPApproximation(Decimal(\(\backslash\)"{}1.23\(\backslash\)"{}),dp):"{}},xmpa)}
+\DoxyCodeLine{00150\ \ \ \ \ \textcolor{comment}{\#!\ [Numeric\ demonstration]}}
+\DoxyCodeLine{00151\ }
+\DoxyCodeLine{00152\ }
+\DoxyCodeLine{00153\ }
+\DoxyCodeLine{00154\ }
+\DoxyCodeLine{00155\ \textcolor{keywordflow}{if}\ \_\_name\_\_==\textcolor{stringliteral}{'\_\_main\_\_'}:}
+\DoxyCodeLine{00156\ \ \ \ \ \mbox{\hyperlink{namespacenumeric__demonstration}{numeric\_demonstration}}()}
+
+\end{DoxyCodeInclude}
+ 

@@ -1,0 +1,6 @@
+path	read_ranges	status
+.gitignore	1-6	complete
+LICENSE	1-121	complete
+README.md	1-240;241-510;511-790;791-1040;1041-1291	complete
+fun2011.hs	1-280;281-541	complete
+mdtohs.hs	1-36	complete

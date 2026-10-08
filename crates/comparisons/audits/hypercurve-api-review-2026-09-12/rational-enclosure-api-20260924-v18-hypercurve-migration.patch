@@ -1,0 +1,209 @@
+--- a/benches/bezier_evaluation.rs
++++ b/benches/bezier_evaluation.rs
+@@ -79,7 +79,7 @@
+             power = &power * &parameter;
+         }
+         let expected = Real::sum_refs(&terms)
+-            .certified_dyadic_interval(-160)
++            .certified_rational_interval(-160)
+             .unwrap();
+         let Classification::Decided(polynomial) =
+             BezierParameterPolynomial::try_new_power_basis(coefficients, &CurveContext::STRICT)
+@@ -91,7 +91,7 @@
+         let mut certified = 0_usize;
+         for _ in 0..iterations {
+             let value = polynomial.evaluate(black_box(&parameter));
+-            let interval = black_box(value.certified_dyadic_interval(-128).unwrap());
++            let interval = black_box(value.certified_rational_interval(-128).unwrap());
+             assert!(
+                 interval[0] <= expected[1] && expected[0] <= interval[1],
+                 "{label}"
+--- a/fuzz/fuzz_targets/hyperreal_representations.rs
++++ b/fuzz/fuzz_targets/hyperreal_representations.rs
+@@ -55,10 +55,10 @@
+         return;
+     }
+     let [left_lower, left_upper] = left
+-        .certified_dyadic_interval(precision)
++        .certified_rational_interval(precision)
+         .expect("bounded left value");
+     let [right_lower, right_upper] = right
+-        .certified_dyadic_interval(precision)
++        .certified_rational_interval(precision)
+         .expect("bounded right value");
+     assert!(left_lower <= right_upper && right_lower <= left_upper);
+ }
+--- a/src/bbox.rs
++++ b/src/bbox.rs
+@@ -349,10 +349,10 @@
+     ) -> Option<Self> {
+         let precision = -i32::try_from(refinement_steps.max(32)).ok()?;
+ 
+-        let [min_x, _] = self.min_x().certified_dyadic_interval(precision)?;
+-        let [min_y, _] = self.min_y().certified_dyadic_interval(precision)?;
+-        let [_, max_x] = self.max_x().certified_dyadic_interval(precision)?;
+-        let [_, max_y] = self.max_y().certified_dyadic_interval(precision)?;
++        let [min_x, _] = self.min_x().certified_rational_interval(precision)?;
++        let [min_y, _] = self.min_y().certified_rational_interval(precision)?;
++        let [_, max_x] = self.max_x().certified_rational_interval(precision)?;
++        let [_, max_y] = self.max_y().certified_rational_interval(precision)?;
+         Some(Self::new_unchecked(
+             Point2::new(Real::new(min_x), Real::new(min_y)),
+             Point2::new(Real::new(max_x), Real::new(max_y)),
+--- a/src/bezier_offset.rs
++++ b/src/bezier_offset.rs
+@@ -7194,7 +7194,8 @@
+                 && interval.lower.exact_rational_normal_form().is_none()
+             {
+                 let precision = refinement_steps.max(64).min(i32::MAX as usize) as i32;
+-                if let Some([lower, upper]) = interval.lower.certified_dyadic_interval(-precision) {
++                if let Some([lower, upper]) = interval.lower.certified_rational_interval(-precision)
++                {
+                     interval = RealInterval {
+                         lower: Real::new(lower),
+                         upper: Real::new(upper),
+@@ -7491,7 +7492,7 @@
+                 // even when its certified magnitude is far too small to affect
+                 // the result. Dyadic bounds are exact enclosures, not an
+                 // approximate equality decision.
+-                let [lower, upper] = coefficient.certified_dyadic_interval(precision)?;
++                let [lower, upper] = coefficient.certified_rational_interval(precision)?;
+                 return Some(RealInterval {
+                     lower: Real::new(lower),
+                     upper: Real::new(upper),
+@@ -60830,8 +60831,8 @@
+             let precision = -(refinement_steps.max(64).min(i32::MAX as usize) as i32);
+             let x = self.x.exact_real_value_with_retained_witnesses()? * &inverse;
+             let y = self.y.exact_real_value_with_retained_witnesses()? * inverse;
+-            let [x_lower, x_upper] = x.certified_dyadic_interval(precision)?.map(Real::new);
+-            let [y_lower, y_upper] = y.certified_dyadic_interval(precision)?.map(Real::new);
++            let [x_lower, x_upper] = x.certified_rational_interval(precision)?.map(Real::new);
++            let [y_lower, y_upper] = y.certified_rational_interval(precision)?.map(Real::new);
+             Some(Aabb2::new_unchecked(
+                 Point2::new(x_lower, y_lower),
+                 Point2::new(x_upper, y_upper),
+@@ -61854,7 +61855,7 @@
+                 upper: value,
+             });
+         }
+-        let [lower, upper] = parameter.certified_dyadic_interval(self.precision)?;
++        let [lower, upper] = parameter.certified_rational_interval(self.precision)?;
+         Some(RealInterval {
+             lower: Real::new(lower),
+             upper: Real::new(upper),
+@@ -90811,7 +90812,7 @@
+             let Some(precision) = precision else {
+                 return Some(root);
+             };
+-            let bounds = root.certified_dyadic_interval(precision)?;
++            let bounds = root.certified_rational_interval(precision)?;
+             Some(Real::new(if lower {
+                 bounds[0].clone()
+             } else {
+@@ -137224,8 +137225,8 @@
+             let [x, y] = [Axis2::X, Axis2::Y].map(|axis| {
+                 let interval = RealInterval::from_axis(&bounds, axis);
+                 [
+-                    Real::new(interval.lower.certified_dyadic_interval(-16).unwrap()[0].clone()),
+-                    Real::new(interval.upper.certified_dyadic_interval(-16).unwrap()[1].clone()),
++                    Real::new(interval.lower.certified_rational_interval(-16).unwrap()[0].clone()),
++                    Real::new(interval.upper.certified_rational_interval(-16).unwrap()[1].clone()),
+                 ]
+             });
+             let lower = Real::from(2_i8) * &x[0] - Real::from(3_i8) * &y[1] - Real::one();
+@@ -138918,7 +138919,7 @@
+                                     // A separately requested tighter scalar enclosure must
+                                     // lie inside the chord's conservative coordinate band.
+                                     let [inner_lower, inner_upper] = exact
+-                                        .certified_dyadic_interval(-((gap_bits + 96) as i32))
++                                        .certified_rational_interval(-((gap_bits + 96) as i32))
+                                         .unwrap();
+                                     assert!(lower <= &Real::new(inner_lower));
+                                     assert!(upper >= &Real::new(inner_upper));
+--- a/src/bezier_parameter.rs
++++ b/src/bezier_parameter.rs
+@@ -788,7 +788,7 @@
+             // it with an unrelated scalar-only parameter.
+             let strict = CurveContext::STRICT;
+             for precision in [-16, -32, -64, -128, -256, -512] {
+-                let Some([lower, upper]) = mapped.certified_dyadic_interval(precision) else {
++                let Some([lower, upper]) = mapped.certified_rational_interval(precision) else {
+                     break;
+                 };
+                 if lower == upper {
+@@ -2780,7 +2780,7 @@
+         power_to_bernstein_coefficients(coefficients, coefficients.len().saturating_sub(1))?;
+     let mut bounds = controls
+         .into_iter()
+-        .map(|control| control.certified_dyadic_interval(precision));
++        .map(|control| control.certified_rational_interval(precision));
+     let Some(Some([mut lower, mut upper])) = bounds.next() else {
+         return Ok(None);
+     };
+@@ -3588,7 +3588,7 @@
+ fn coefficient_intervals(coefficients: &[Real], precision: i32) -> Option<CoefficientIntervals> {
+     coefficients
+         .iter()
+-        .map(|coefficient| coefficient.certified_dyadic_interval(precision))
++        .map(|coefficient| coefficient.certified_rational_interval(precision))
+         .collect()
+ }
+ 
+--- a/src/curve_string.rs
++++ b/src/curve_string.rs
+@@ -1641,12 +1641,12 @@
+     Some([
+         bbox.min_x().exact_rational_ref().cloned().or_else(|| {
+             bbox.min_x()
+-                .certified_dyadic_interval(CURVE_STRING_X_SWEEP_PRECISION)
++                .certified_rational_interval(CURVE_STRING_X_SWEEP_PRECISION)
+                 .map(|interval| interval[0].clone())
+         })?,
+         bbox.max_x().exact_rational_ref().cloned().or_else(|| {
+             bbox.max_x()
+-                .certified_dyadic_interval(CURVE_STRING_X_SWEEP_PRECISION)
++                .certified_rational_interval(CURVE_STRING_X_SWEEP_PRECISION)
+                 .map(|interval| interval[1].clone())
+         })?,
+     ])
+--- a/src/rational_bezier_general.rs
++++ b/src/rational_bezier_general.rs
+@@ -7968,7 +7968,7 @@
+ ) -> Option<(Vec<RealSign>, RealSign)> {
+     let enclose = |value: &Real| {
+         value
+-            .certified_dyadic_interval(precision)
++            .certified_rational_interval(precision)
+             .map(|interval| CertifiedRationalInterval {
+                 lower: interval[0].clone(),
+                 upper: interval[1].clone(),
+@@ -8183,13 +8183,13 @@
+         };
+         let Some(lower_enclosure) = image_interval
+             .lower
+-            .certified_dyadic_interval(enclosure_precision)
++            .certified_rational_interval(enclosure_precision)
+         else {
+             continue;
+         };
+         let Some(upper_enclosure) = image_interval
+             .upper
+-            .certified_dyadic_interval(enclosure_precision)
++            .certified_rational_interval(enclosure_precision)
+         else {
+             continue;
+         };
+--- a/src/self_intersect.rs
++++ b/src/self_intersect.rs
+@@ -90,9 +90,9 @@
+         .map(|bbox| {
+             Some([
+                 bbox.min_x()
+-                    .certified_dyadic_interval(ENCLOSURE_PRECISION)?,
++                    .certified_rational_interval(ENCLOSURE_PRECISION)?,
+                 bbox.max_x()
+-                    .certified_dyadic_interval(ENCLOSURE_PRECISION)?,
++                    .certified_rational_interval(ENCLOSURE_PRECISION)?,
+             ])
+         })
+         .collect::<Option<Vec<_>>>()?;

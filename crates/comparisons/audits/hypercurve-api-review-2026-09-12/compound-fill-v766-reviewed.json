@@ -1,0 +1,85 @@
+{
+  "qualification": "compound-fill-v766-terminal.json",
+  "source_manifest": "compound-fill-v766-sources.json",
+  "outer_session_reaped": 67842,
+  "validated_files": 2048,
+  "tests": 459,
+  "checks": 8,
+  "mechanically_verified_files": [
+    "csgrs/src/curve/native.rs",
+    "hyperbrep/src/builder.rs",
+    "hypercurve/benches/arc.rs",
+    "hypercurve/benches/bezier_region.rs",
+    "hypercurve/benches/common/pathological.rs",
+    "hypercurve/benches/curve_region_boolean_batch.rs",
+    "hypercurve/benches/editing.rs",
+    "hypercurve/benches/finite_projection.rs",
+    "hypercurve/examples/hypercurve_ui/src/corner_scenes.rs",
+    "hypercurve/examples/hypercurve_ui/src/torture_scene.rs",
+    "hypercurve/fuzz/fuzz_targets/bezier_region.rs",
+    "hypercurve/src/bezier_offset.rs",
+    "hypercurve/src/curve.rs",
+    "hypercurve/src/curve_corner_chain.rs",
+    "hypercurve/src/curve_fillet.rs",
+    "hypercurve/src/curve_subdivision.rs",
+    "hypercurve/src/finite_projection.rs",
+    "hypercurve/tests/hypercurve_analytic_parallel_region.rs",
+    "hypercurve/tests/hypercurve_bezier_region.rs",
+    "hypercurve/tests/hypercurve_bspline.rs",
+    "hypercurve/tests/hypercurve_curve.rs",
+    "hypercurve/tests/hypercurve_curve_region_boolean.rs",
+    "hypercurve/tests/hypercurve_curve_region_boolean_fuzz.rs",
+    "hypercurve/tests/hypercurve_curve_region_promotion.rs",
+    "hypercurve/tests/hypercurve_path_closure.rs"
+  ],
+  "migrated_call_sites": 104,
+  "repos": {
+    "csgrs": {
+      "parent": "febe9defca99565ee29ab65f4f822d9489352e7e",
+      "paths": {
+        "src/curve/native.rs": "c57922a2d5200db05a318554aca638ac65580303fbfe873f7d8d8727ea84bbfb"
+      }
+    },
+    "hyperbrep": {
+      "parent": "1c00d39cbd8491908561eeb0115f4bb3aa740ed8",
+      "paths": {
+        "src/builder.rs": "4b5fcd2e8ff267a14c0ecba5f803c79fde81bc8c6cdf9a74f29c4090191c27b8"
+      }
+    },
+    "hypercurve": {
+      "parent": "6266048a3f744381d4bf31226801a733ccbd11a8",
+      "paths": {
+        "README.md": "f21786668743903e2ab8cebcc72168829cd7c085dbbc11ccb63335f01430c705",
+        "benches/arc.rs": "dac616e3285de9efdcda3d094d8bdaf07d26e0a38710afb141a10a90409fc0b9",
+        "benches/bezier_region.rs": "5faf6095a3e729123a9bbcd4fb75a5fa5ca6c4c46ddc8a4748ea2d0dadf33410",
+        "benches/common/pathological.rs": "de2051a72dfafd9801bab415a8715677ab6532d3466d2a1d4defabd0a39d19f5",
+        "benches/curve_region_boolean_batch.rs": "db707b49823f9854fb1138829e241dbc708ca4d9a00d16a5867475a0538c5390",
+        "benches/editing.rs": "6f7735e63b8569ee38e416b62171e1e44861cfe2871d77e271d1da43a835cc6a",
+        "benches/finite_projection.rs": "ab1539502d8307a29c54b205ad8699ba839526cffb1906e44b7f120e70573df6",
+        "examples/hypercurve_ui/src/corner_scenes.rs": "f54e5c748f69aed36805ff0cb1c4881c02b0e844c350e136351fb2abc995ef6f",
+        "examples/hypercurve_ui/src/torture_scene.rs": "f6ac90cd3c3dcbbbbe02c7b371de5a87aa3bb5419ab0b9a59e113b6cda9edea9",
+        "fuzz/fuzz_targets/bezier_region.rs": "554f733481fb8df2011ce9a302da922d7558bdb462d81069dc5c100a6e74b8b9",
+        "src/bezier_offset.rs": "81ac6e6b0ec7c2081b94841be51e71903af9d542a174b64e2d2cf264af639a05",
+        "src/bezier_region.rs": "f40395306e3164ecb72e046323e4096cf5b9c107f093170312c2bc47158b016f",
+        "src/curve.rs": "6bd21bdb0dcea48e62299db7c83b4feb37349d49c0e6009f61df6fdae5eb997c",
+        "src/curve_corner_chain.rs": "eb2034a44d5e9d9728509b0d476fb15a097740a5b16e3645aa8ab64135c988f0",
+        "src/curve_fillet.rs": "5a8463049f24554018f3e24c38e339b7b5318a7134f576fe4b4386dca8ebd6e3",
+        "src/curve_region_boolean.rs": "8dab39b80747380017117e7250b4090214ed23e79764e017a26280d8f9573b1e",
+        "src/curve_subdivision.rs": "c4dde6c677d94007eda19ec7b2a0e80ca519ee24304bf91a9d85d04c7e3d4d8d",
+        "src/finite_projection.rs": "1d357b6bc3ed4ce0d82e6a89f1f9514e7a84bd1a9604c8e3706ee75f4fb7f7d8",
+        "src/svg.rs": "c70589a9e49f898a8ca7347eec6572e19f8206160581fa236c21550fc89e9558",
+        "tests/hypercurve_analytic_parallel_region.rs": "e57b69490893122980dfd9d9becaa03ad8be81f0cb020a33145ca771e51b68ff",
+        "tests/hypercurve_bezier_region.rs": "05265cf0478b3864fc77e56a81c03b92ac4200bce063e4156a303555d063905d",
+        "tests/hypercurve_bspline.rs": "cefa37ad33fa39f37cd16f723f6c78d9cf372797cb0f210d3a33fe7acbd0e1e0",
+        "tests/hypercurve_curve.rs": "947e52cf3f3da1fcbc34f9922d3025cb9c0eec7e7b9cea59589eb6ec9561a638",
+        "tests/hypercurve_curve_region_boolean.rs": "3c573635fe01046d8140fc2a9e7baac4a85de33f865c0761f294ac22480b128a",
+        "tests/hypercurve_curve_region_boolean_fuzz.rs": "a8925a496b1936ff5a5d49f89addc428ce10bd96a6ba7a56d8b4bb54b34e314d",
+        "tests/hypercurve_curve_region_promotion.rs": "5b3c78ccd200ed0ad6a3138f320c94ccaad333b37647ad34cdcde43369d432e9",
+        "tests/hypercurve_path_closure.rs": "6747089e270c5708a7c701b80fc8f261f4e3b57015809e25304c49cb7ad90837",
+        "tests/hypercurve_svg.rs": "7bc3fc7a015b26107a394ce3ca45d5e858b78dd6eae7bd229997ad38c45612c5"
+      }
+    }
+  },
+  "scope": "Apply global compound winding at canonical path admission, retain raw winding evidence for shared face selection and migrate all callers directly",
+  "unresolved": "Full exact-geometry goal remains active. No measured speedup or full spatial BREP closure claim."
+}

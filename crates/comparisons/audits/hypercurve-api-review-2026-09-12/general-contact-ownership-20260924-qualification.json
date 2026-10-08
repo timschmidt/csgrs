@@ -1,0 +1,158 @@
+{
+  "candidate": "general-contact-ownership-20260924-v2-terminal.json",
+  "source_manifest": "general-contact-ownership-20260924-v2-sources.json",
+  "source_count": 2044,
+  "no_new_nonpasses": true,
+  "repositories": [
+    {
+      "name": "ExactCalculator",
+      "head": "7265aa3a922a7e7c0389dae4b26cca562aa777a6",
+      "status": ""
+    },
+    {
+      "name": "NURBS_BREP_kernel",
+      "head": "1aef37b12a92c993c2046f7886593bb0a555c414",
+      "status": ""
+    },
+    {
+      "name": "alumina-firmware",
+      "head": "bdee397d0b80841f16bf17e7bcd029b4feb2c212",
+      "status": ""
+    },
+    {
+      "name": "alumina-interface",
+      "head": "59a18251cdfe2312e40b194e857d85cd59b6087f",
+      "status": ""
+    },
+    {
+      "name": "citizen-builder",
+      "head": "c4230238e28fd88fc8156fceb2c43698e67c27ca",
+      "status": ""
+    },
+    {
+      "name": "crcalc",
+      "head": "4f398d699c9d498deb45520ea7ebb020627bc640",
+      "status": ""
+    },
+    {
+      "name": "csgrs",
+      "head": "d029e51b5d7324f0df785c5cd3cf2f6c7a3a2cca",
+      "status": ""
+    },
+    {
+      "name": "csgrs-ffi",
+      "head": "6057435ce4c0b37bac99aec29922b90e6652c575",
+      "status": ""
+    },
+    {
+      "name": "exactcore-hyper-comparison",
+      "head": "74b90b328f720997d38da80af5620f167b3b0619",
+      "status": ""
+    },
+    {
+      "name": "hyperbrep",
+      "head": "7874790863d210646338182e548d7eef1aa05c7c",
+      "status": ""
+    },
+    {
+      "name": "hypercircuit",
+      "head": "ad421497ce6e88fe936818ec198c8a1b779776c7",
+      "status": ""
+    },
+    {
+      "name": "hypercurve",
+      "head": "20f15803ebaf16b702af07a2fb3ab6f89c1f8fc6",
+      "status": " M src/bezier_offset.rs\n M src/curve_region_boolean.rs\n"
+    },
+    {
+      "name": "hyperdrc",
+      "head": "ce49bba5d16f78ae8559a0eabe3e4478b72fd4bf",
+      "status": ""
+    },
+    {
+      "name": "hyperevolution",
+      "head": "99645e3cefb7eea3af86abc15db68f7fcb31ca95",
+      "status": ""
+    },
+    {
+      "name": "hypergraphics",
+      "head": "75219dede7a2387ab30c84664b1293ec71d736d2",
+      "status": ""
+    },
+    {
+      "name": "hyperlattice",
+      "head": "53427ce89f8c82c016e69a04e035787e2753adc8",
+      "status": ""
+    },
+    {
+      "name": "hyperlimit",
+      "head": "0b3226320a7ad6756c923d0d12cd52eb701f36ee",
+      "status": ""
+    },
+    {
+      "name": "hypermesh",
+      "head": "d9db5c45a0cecc2307aa66a6f7f1b0396350e4ee",
+      "status": ""
+    },
+    {
+      "name": "hyperpack",
+      "head": "34857861561d643d7578753b8f8314d0fbca2c5b",
+      "status": ""
+    },
+    {
+      "name": "hyperparts",
+      "head": "d8626e9d36256afc4a8eb0380ae94c9ed5619107",
+      "status": ""
+    },
+    {
+      "name": "hyperpath",
+      "head": "cfe50de3e370ea75a49b916eb70a7b19d31a58fa",
+      "status": ""
+    },
+    {
+      "name": "hyperphysics",
+      "head": "dcbc7cf3489a1299de16a946fd7f5e5658b6f15f",
+      "status": ""
+    },
+    {
+      "name": "hyperreal",
+      "head": "28eaac35e8c24006c532b25a393b7d430d03823c",
+      "status": ""
+    },
+    {
+      "name": "hypersdf",
+      "head": "b37825900457420cb64da385b8525acab33e31c5",
+      "status": ""
+    },
+    {
+      "name": "hypersolve",
+      "head": "d7cd3d9ffe33e6ef26c0c409dda986a88f16f7ef",
+      "status": ""
+    },
+    {
+      "name": "hypertri",
+      "head": "6a2092c066964f3b7528299a72ef0ed1af4b1ff0",
+      "status": ""
+    },
+    {
+      "name": "hypervoxel",
+      "head": "0486b1465a249a04973520a4138a39395ded2f23",
+      "status": ""
+    },
+    {
+      "name": "openscad-rs",
+      "head": "f21b39486a6b35403ee8af9e7fba7cb62a045a5a",
+      "status": ""
+    },
+    {
+      "name": "synaps-cad",
+      "head": "da8da78636e573c04f8a5c4cd8cc900162b781ba",
+      "status": ""
+    },
+    {
+      "name": "videos",
+      "head": "4209b983cc0d937981f22a6fa7df384303fcc8bd",
+      "status": ""
+    }
+  ]
+}

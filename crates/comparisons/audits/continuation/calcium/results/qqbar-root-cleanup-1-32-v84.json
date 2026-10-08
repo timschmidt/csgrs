@@ -1,0 +1,22 @@
+{
+  "tag": "qqbar-root-cleanup-1-32-v84",
+  "started": "2026-09-12T04:36:46.296Z",
+  "finished": "2026-09-12T04:36:46.310Z",
+  "elapsedSeconds": 0.011550207999999998,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "timeout",
+  "args": [
+    "20s",
+    "prlimit",
+    "--core=0",
+    "--as=1073741824",
+    "--cpu=10",
+    "--",
+    "/tmp/calcium-qqbar-remainder-v84.1aubRO/controls",
+    "cleanup",
+    "1",
+    "32"
+  ],
+  "code": 0,
+  "signal": null
+}

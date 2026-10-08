@@ -1,0 +1,24 @@
+{
+  "tag": "sign-consumer-probe-sign-build",
+  "started": "2026-09-08T20:04:09.320Z",
+  "finished": "2026-09-08T20:04:09.421Z",
+  "elapsedSeconds": 0.09704471200000003,
+  "cwd": "/home/tim/Documents/GitHub/workspace",
+  "command": "env",
+  "args": [
+    "TMPDIR=/home/tim/Documents/GitHub/workspace/calcium-build-tmp.gVX5v4",
+    "CARGO_INCREMENTAL=0",
+    "CARGO_PROFILE_DEV_DEBUG=0",
+    "CARGO_BUILD_JOBS=2",
+    "cargo",
+    "build",
+    "--release",
+    "--offline",
+    "--manifest-path",
+    "exactcore-hyper-comparison/audits/continuation/calcium/sign-consumer-probe-sign/Cargo.toml",
+    "--target-dir",
+    ".audit-builds/calcium-prototype"
+  ],
+  "code": 101,
+  "signal": null
+}

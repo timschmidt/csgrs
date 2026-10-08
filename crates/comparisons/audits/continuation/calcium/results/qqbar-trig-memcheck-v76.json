@@ -1,0 +1,17 @@
+{
+  "tag": "qqbar-trig-memcheck-v76",
+  "started": "2026-09-11T22:24:06.041Z",
+  "finished": "2026-09-11T22:24:10.509Z",
+  "elapsedSeconds": 4.464702118,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "valgrind",
+  "args": [
+    "--leak-check=full",
+    "--show-leak-kinds=all",
+    "--errors-for-leak-kinds=definite,indirect,possible",
+    "--error-exitcode=99",
+    "/tmp/calcium-qqbar-trig-v76.xvGytz/controls"
+  ],
+  "code": 0,
+  "signal": null
+}

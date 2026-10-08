@@ -1,0 +1,161 @@
+[
+  {
+    "repository": "ExactCalculator",
+    "matches": []
+  },
+  {
+    "repository": "NURBS_BREP_kernel",
+    "matches": []
+  },
+  {
+    "repository": "alumina-firmware",
+    "matches": []
+  },
+  {
+    "repository": "alumina-interface",
+    "matches": []
+  },
+  {
+    "repository": "citizen-builder",
+    "matches": []
+  },
+  {
+    "repository": "crcalc",
+    "matches": []
+  },
+  {
+    "repository": "csgrs",
+    "matches": []
+  },
+  {
+    "repository": "csgrs-ffi",
+    "matches": []
+  },
+  {
+    "repository": "exactcore-hyper-comparison",
+    "matches": []
+  },
+  {
+    "repository": "hyperbrep",
+    "matches": []
+  },
+  {
+    "repository": "hypercircuit",
+    "matches": []
+  },
+  {
+    "repository": "hypercurve",
+    "matches": [
+      "benches/curve_path.rs:276:                + topology.arrangement_graph_view().unwrap().len(),",
+      "benches/rational_bezier.rs:571:                + topology.arrangement_graph_view().unwrap().len(),",
+      "tests/hypercurve_curve_region_boolean.rs:1774:                .flat_map(|split| split.materializations())",
+      "tests/hypercurve_curve_region_boolean.rs:1809:                    .flat_map(|split| split.materializations())",
+      "src/curve_path_intersection.rs:57:pub struct CurvePathSplit2 {",
+      "src/curve_path_intersection.rs:71:    first: Arc<[CurvePathSplit2]>,",
+      "src/curve_path_intersection.rs:72:    second: Arc<[CurvePathSplit2]>,",
+      "src/curve_path_intersection.rs:298:            first.iter().chain(&second).map(CurvePathSplit2::curves),",
+      "src/curve_path_intersection.rs:400:impl CurvePathSplit2 {",
+      "src/curve_path_intersection.rs:419:    pub fn first(&self) -> &[CurvePathSplit2] {",
+      "src/curve_path_intersection.rs:424:    pub fn second(&self) -> &[CurvePathSplit2] {",
+      "src/curve_path_intersection.rs:438:) -> ExactCurveResult<Vec<CurvePathSplit2>> {",
+      "src/curve_path_intersection.rs:448:            Ok(CurvePathSplit2 {",
+      "tests/hypercurve_curve_intersection.rs:174:    assert_eq!(topology.arrangement_graph_view().unwrap().len(), 4);",
+      "tests/hypercurve_curve_intersection.rs:175:    assert_eq!(topology.arrangement_graph_view().unwrap().len(), 4);",
+      "tests/hypercurve_curve_intersection.rs:266:    assert_eq!(topology.arrangement_graph_view().unwrap().len(), 4);",
+      "tests/hypercurve_curve_intersection.rs:1506:    let graph = topology.arrangement_graph_view().unwrap();",
+      "tests/hypercurve_curve_intersection.rs:1547:    assert_eq!(topology.arrangement_graph_view().unwrap().len(), 3);",
+      "tests/hypercurve_curve_intersection.rs:1556:        path_topology.first()[0].materializations()[0]",
+      "tests/hypercurve_curve_intersection.rs:1562:        path_topology.second()[0].materializations()[0]",
+      "tests/hypercurve_curve_intersection.rs:2238:            .flat_map(|curve| curve.materializations())",
+      "tests/hypercurve_curve_intersection.rs:2247:            .flat_map(|curve| curve.materializations())",
+      "tests/hypercurve_curve_intersection.rs:2252:    assert_eq!(topology.arrangement_graph_view().unwrap().len(), 12);",
+      "tests/hypercurve_curve_intersection.rs:2253:    assert_eq!(topology.arrangement_graph_view().unwrap().len(), 12);",
+      "tests/hypercurve_curve_intersection.rs:2589:            .flat_map(|split| split.materializations())",
+      "src/lib.rs:189:    CurveIntersectionPairBlockerKind2, CurveIntersectionResult2, CurveIntersectionTopology2,",
+      "src/lib.rs:194:    CurvePathIntersectionResult2, CurvePathIntersectionTopology2, CurvePathSplit2,",
+      "src/rational_bezier_general.rs:857:    pub fn arrangement_graph_view(&self) -> CurveResult<&BezierArrangementGraph2> {",
+      "src/rational_bezier_general.rs:871:        self.arrangement_graph_view().cloned()",
+      "tests/hypercurve_rational_bezier.rs:1064:    assert_eq!(topology.arrangement_graph_view().unwrap().len(), 4);",
+      "tests/hypercurve_rational_bezier.rs:1065:    assert_eq!(topology.arrangement_graph_view().unwrap().len(), 4);",
+      "src/curve_intersection.rs:255:pub struct CurveIntersectionTopology2 {",
+      "src/curve_intersection.rs:1650:    ) -> ExactCurveResult<CurveOutcome<CurveIntersectionTopology2>> {",
+      "src/curve_intersection.rs:1660:    ) -> ExactCurveResult<CurveIntersectionTopology2> {",
+      "src/curve_intersection.rs:1833:    pub(crate) fn topology(&self) -> ExactCurveResult<CurveIntersectionTopology2> {",
+      "src/curve_intersection.rs:2109:    fn build_topology(&self) -> ExactCurveResult<CurveIntersectionTopology2> {",
+      "src/curve_intersection.rs:2173:        Ok(CurveIntersectionTopology2 {",
+      "src/curve_intersection.rs:2334:impl CurveIntersectionTopology2 {"
+    ]
+  },
+  {
+    "repository": "hyperdrc",
+    "matches": []
+  },
+  {
+    "repository": "hyperevolution",
+    "matches": []
+  },
+  {
+    "repository": "hypergraphics",
+    "matches": []
+  },
+  {
+    "repository": "hyperlattice",
+    "matches": []
+  },
+  {
+    "repository": "hyperlimit",
+    "matches": []
+  },
+  {
+    "repository": "hypermesh",
+    "matches": []
+  },
+  {
+    "repository": "hyperpack",
+    "matches": []
+  },
+  {
+    "repository": "hyperparts",
+    "matches": []
+  },
+  {
+    "repository": "hyperpath",
+    "matches": []
+  },
+  {
+    "repository": "hyperphysics",
+    "matches": []
+  },
+  {
+    "repository": "hyperreal",
+    "matches": []
+  },
+  {
+    "repository": "hypersdf",
+    "matches": []
+  },
+  {
+    "repository": "hypersolve",
+    "matches": []
+  },
+  {
+    "repository": "hypertri",
+    "matches": []
+  },
+  {
+    "repository": "hypervoxel",
+    "matches": []
+  },
+  {
+    "repository": "openscad-rs",
+    "matches": []
+  },
+  {
+    "repository": "synaps-cad",
+    "matches": []
+  },
+  {
+    "repository": "videos",
+    "matches": []
+  }
+]

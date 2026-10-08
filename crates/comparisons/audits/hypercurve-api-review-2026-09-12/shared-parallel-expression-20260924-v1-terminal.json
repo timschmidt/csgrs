@@ -1,0 +1,311 @@
+{
+  "checks": [
+    {
+      "label": "fmt",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustfmt",
+        "--edition",
+        "2024",
+        "--check",
+        "src/bezier_offset.rs"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 2.3311381870880723,
+      "log": "shared-parallel-expression-20260924-v1-fmt.log"
+    },
+    {
+      "label": "clippy-1",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "clippy",
+        "--all-targets",
+        "--all-features",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 25.417723782011308,
+      "log": "shared-parallel-expression-20260924-v1-clippy-1.log"
+    },
+    {
+      "label": "clippy-2",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "clippy",
+        "--all-targets",
+        "--no-default-features",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 24.581836045952514,
+      "log": "shared-parallel-expression-20260924-v1-clippy-2.log"
+    }
+  ],
+  "cases": [
+    {
+      "label": "recursive_circle_queries_preserve_tangent_scale_and_local_roots",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/shared-parallel-expression-20260924-v1-libtest",
+        "--exact",
+        "bezier_offset::conversion_tests::recursive_circle_queries_preserve_tangent_scale_and_local_roots",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 2.680343340965919,
+      "log": "shared-parallel-expression-20260924-v1-recursive_circle_queries_preserve_tangent_scale_and_local_roots.log"
+    },
+    {
+      "label": "recursive_parallel_expression_signs_keep_the_selected_speed_sheet",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/shared-parallel-expression-20260924-v1-libtest",
+        "--exact",
+        "bezier_offset::conversion_tests::recursive_parallel_expression_signs_keep_the_selected_speed_sheet",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.27895659301429987,
+      "log": "shared-parallel-expression-20260924-v1-recursive_parallel_expression_signs_keep_the_selected_speed_sheet.log"
+    },
+    {
+      "label": "recursive_parallel_expression_signs_reject_poles_and_zero_speed",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/shared-parallel-expression-20260924-v1-libtest",
+        "--exact",
+        "bezier_offset::conversion_tests::recursive_parallel_expression_signs_reject_poles_and_zero_speed",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.3290623959619552,
+      "log": "shared-parallel-expression-20260924-v1-recursive_parallel_expression_signs_reject_poles_and_zero_speed.log"
+    },
+    {
+      "label": "analytic_axis_and_circle_predicates_keep_positive_frame_sheet_and_weight_sign",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/shared-parallel-expression-20260924-v1-libtest",
+        "--exact",
+        "bezier_offset::conversion_tests::analytic_axis_and_circle_predicates_keep_positive_frame_sheet_and_weight_sign",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.26903211406897753,
+      "log": "shared-parallel-expression-20260924-v1-analytic_axis_and_circle_predicates_keep_positive_frame_sheet_and_weight_sign.log"
+    },
+    {
+      "label": "analytic_scalar_predicates_distinguish_stationary_points_from_source_poles",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/shared-parallel-expression-20260924-v1-libtest",
+        "--exact",
+        "bezier_offset::conversion_tests::analytic_scalar_predicates_distinguish_stationary_points_from_source_poles",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.2729195069987327,
+      "log": "shared-parallel-expression-20260924-v1-analytic_scalar_predicates_distinguish_stationary_points_from_source_poles.log"
+    },
+    {
+      "label": "recursive_polynomial_predicates_reuse_the_retained_field_relation",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/shared-parallel-expression-20260924-v1-libtest",
+        "--exact",
+        "bezier_offset::conversion_tests::recursive_polynomial_predicates_reuse_the_retained_field_relation",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.27824792196042836,
+      "log": "shared-parallel-expression-20260924-v1-recursive_polynomial_predicates_reuse_the_retained_field_relation.log"
+    },
+    {
+      "label": "recursive_polynomial_queries_reuse_a_selected_proper_factor",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/shared-parallel-expression-20260924-v1-libtest",
+        "--exact",
+        "bezier_offset::conversion_tests::recursive_polynomial_queries_reuse_a_selected_proper_factor",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.307412359979935,
+      "log": "shared-parallel-expression-20260924-v1-recursive_polynomial_queries_reuse_a_selected_proper_factor.log"
+    },
+    {
+      "label": "pair_radial_circle_intersects_a_general_analytic_parallel_exactly",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/shared-parallel-expression-20260924-v1-libtest",
+        "--exact",
+        "bezier_offset::conversion_tests::pair_radial_circle_intersects_a_general_analytic_parallel_exactly",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.43632756697479635,
+      "log": "shared-parallel-expression-20260924-v1-pair_radial_circle_intersects_a_general_analytic_parallel_exactly.log"
+    },
+    {
+      "label": "represented_circle_retained_point_incidence_observes_requested_policy",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/shared-parallel-expression-20260924-v1-libtest",
+        "--exact",
+        "bezier_offset::conversion_tests::represented_circle_retained_point_incidence_observes_requested_policy",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.27211098303087056,
+      "log": "shared-parallel-expression-20260924-v1-represented_circle_retained_point_incidence_observes_requested_policy.log"
+    },
+    {
+      "label": "independent_field_corner_edits_preserve_normalized_sets",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/shared-parallel-expression-20260924-v1-libtest",
+        "--exact",
+        "bezier_region::tests::independent_field_corner_edits_preserve_normalized_sets",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.8319283070741221,
+      "log": "shared-parallel-expression-20260924-v1-independent_field_corner_edits_preserve_normalized_sets.log"
+    },
+    {
+      "label": "retained_chord_incidence_replays_independently_allocated_coefficient_fields",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/shared-parallel-expression-20260924-v1-libtest",
+        "--exact",
+        "bezier_offset::conversion_tests::retained_chord_incidence_replays_independently_allocated_coefficient_fields",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.30051718407776207,
+      "log": "shared-parallel-expression-20260924-v1-retained_chord_incidence_replays_independently_allocated_coefficient_fields.log"
+    },
+    {
+      "label": "dense_projection_does_not_square_an_absent_radical",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/shared-parallel-expression-20260924-v1-libtest",
+        "--exact",
+        "bezier_offset::conversion_tests::dense_projection_does_not_square_an_absent_radical",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.2726881119888276,
+      "log": "shared-parallel-expression-20260924-v1-dense_projection_does_not_square_an_absent_radical.log"
+    },
+    {
+      "label": "dense_projection_single_radical_replays_the_authored_sheet",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/shared-parallel-expression-20260924-v1-libtest",
+        "--exact",
+        "bezier_offset::conversion_tests::dense_projection_single_radical_replays_the_authored_sheet",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.27165297395549715,
+      "log": "shared-parallel-expression-20260924-v1-dense_projection_single_radical_replays_the_authored_sheet.log"
+    },
+    {
+      "label": "chord_parallel_monotonicity_covers_the_retained_parameter_range",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/shared-parallel-expression-20260924-v1-libtest",
+        "--exact",
+        "bezier_offset::conversion_tests::chord_parallel_monotonicity_covers_the_retained_parameter_range",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.28546461602672935,
+      "log": "shared-parallel-expression-20260924-v1-chord_parallel_monotonicity_covers_the_retained_parameter_range.log"
+    },
+    {
+      "label": "recursive_chord_kernel_retains_all_cubic_crossings_with_opposite_endpoint_sides",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/shared-parallel-expression-20260924-v1-libtest",
+        "--exact",
+        "bezier_offset::conversion_tests::recursive_chord_kernel_retains_all_cubic_crossings_with_opposite_endpoint_sides",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.2848920760443434,
+      "log": "shared-parallel-expression-20260924-v1-recursive_chord_kernel_retains_all_cubic_crossings_with_opposite_endpoint_sides.log"
+    },
+    {
+      "label": "independent_field_chord_replays_a_genuine_parallel_endpoint_contact",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/shared-parallel-expression-20260924-v1-libtest",
+        "--exact",
+        "bezier_region::tests::independent_field_chord_replays_a_genuine_parallel_endpoint_contact",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.3826633580029011,
+      "log": "shared-parallel-expression-20260924-v1-independent_field_chord_replays_a_genuine_parallel_endpoint_contact.log"
+    },
+    {
+      "label": "recursive_chord_unrotated_derived_linear_and_equality_queries_are_complete",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/shared-parallel-expression-20260924-v1-libtest",
+        "--exact",
+        "bezier_offset::conversion_tests::recursive_chord_unrotated_derived_linear_and_equality_queries_are_complete",
+        "--nocapture",
+        "--test-threads=1",
+        "--color",
+        "never"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.43728762096725404,
+      "log": "shared-parallel-expression-20260924-v1-recursive_chord_unrotated_derived_linear_and_equality_queries_are_complete.log"
+    }
+  ],
+  "all_processes_reaped": true,
+  "binary_sha256": "498de117480b62b2f2d8d175e72737af47b54afa538f1fd8d6b6616247a2ad2e",
+  "all_sources_unchanged": true
+}

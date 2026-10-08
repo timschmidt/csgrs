@@ -1,0 +1,29 @@
+{
+  "command": [
+    "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+    "test",
+    "--release",
+    "--all-features",
+    "--locked",
+    "--offline",
+    "--lib",
+    "--test",
+    "hypercurve_curve_region_promotion",
+    "--test",
+    "hypercurve_exact_closure",
+    "--test",
+    "hypercurve_curve_region_boolean",
+    "--test",
+    "hypercurve_curve_region_boolean_fuzz",
+    "--test",
+    "hypercurve_svg",
+    "--test",
+    "hypercurve_bbox",
+    "--test",
+    "hypercurve_pcb_boolean_regressions",
+    "--no-run",
+    "--message-format=json"
+  ],
+  "returncode": 0,
+  "elapsed_seconds": 205.7795668579929
+}

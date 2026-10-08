@@ -1,0 +1,661 @@
+{
+  "checkpoint": 70,
+  "status": "isolated-zero-factor-numerical-qualified",
+  "recorded": "2026-09-11T19:13:29.834Z",
+  "files": {
+    "capture.mjs": "aaf6df6bbd73025a8541617ce83731ae5ea3fd2272bd98c15e3c4c12b713ce23",
+    "check-point-extended.mjs": "925384f7417d82a808907b34b7866bee5239559d42c08fb86daf284255cc09b1",
+    "check-zero-factor-v70.mjs": "54515bfcd5e21a970a678ad4b658459b5db0c887801a775ad62da5eb026bb7bb",
+    "point-demand-extended.rs": "af497132221fe575e74f7a66bc9db9593c7e32f544b657efa0e47375d6154f3e",
+    "point-extended-field.mjs": "795154da44b1502c04db4aaa880adb470eec16a4970e2d928410d44ffa6b6424",
+    "point-extended.rs": "1e884bd64d0c9cf744d7fac8a2af8eff0a995f34f5124c8e7f87ba177eb3b152",
+    "point-history-base.rs": "5db127b416d4cb39a2faed2426f883a3d2b3cb5d8e74ca014f3de28f4e4df9a6",
+    "point-qualified-approx.rs": "598aef2b96d4d2c9f56bebd865f7cda53c6fb1c3b84216c626fa0b17fc8d5923",
+    "point-qualified-capture.mjs": "8b574f18a85c470ef47f9eafc780c462a93e811ebe15695f0950cfef17ada66e",
+    "point-qualified-environment.mjs": "51947315ab10dc3618c03e296e3c64ceed5ead142691ae9553460a016352efbb",
+    "point-retained-sources-v67.mjs": "b6eae97607c90db54509998d9486d2c3365d0467a2256d0073df6c22ac699c5b",
+    "power-rational-oracle-v69.mjs": "54b42d8af861f589b2c399c7b3d3d555d6dc69e6df98c4eca3c8007a1ed5c645",
+    "power-rebased-fixed-sources-v68.mjs": "ed2d5e2049f72172f48911d121786568d406b58baa52a4c9faa4a4d5b97823a5",
+    "power-sums-cpu.rs": "629f9ec1038d10037557bbb38181575643169b0f0254d28a8207dfb71d82a3a6",
+    "power-sums-polynomial-oracle.mjs": "91a277ede6c566a0d6e74e368ef989a3f9fe842f10a495347efc1b4f8a73efb7",
+    "power-sums-public.rs": "68abb7309ae0a23ffa4e53a48e91002a1e047cff3b4dcc78a71dcc7340e7643e",
+    "power-wide-binaries-v69.json": "c9af55fd82e32c846c655201293204253c280a24525d7b9bdd491320564d6af8",
+    "power-wide-cases-v69.mjs": "87e0ff4443dfb9390681c3f4ccd5f50ed1810f385eb221930b9fc9fc37ef5905",
+    "power-wide-input-v69.json": "3fe69641fcee2e2822d027113fc541888ed9fc03e02fc6fae8c2e8ec96597700",
+    "power-wide-origin-v69.json": "e5f493e180c2a73ea0d2b8d7d86a4a60ec57547aee0fa253ecd1ad238a8e209a",
+    "power-wide-v69-manifest.json": "b9cc90c617ab1c9cfc263b6d363bd83e7fbcb237773d04aac830519dbbba3df7",
+    "power-wide-v69.rs": "57c6f7dc8e333d6649d3b5d4ebfd9a906da3b7660c57ed10e2e538fdf51c659e",
+    "prepare-zero-factor-v70.mjs": "5d0b00865bfcb34201c75f7fc3d4b82652a893574014b435194f95b10bbf7bde",
+    "results/point-retained-debug-v67.stdout": "33c2d8f28042ae8e5210bbcba39561dc6a57131cb8aeb536543230079fa92e96",
+    "results/power-rebased-baseline-approx-v68.stdout": "7b628db1453275c3ad4700523e7bdf36d1384904dd92f1afc78ad651a81ae350",
+    "results/power-rebased-baseline-extended-v68.stdout": "fa94ed3ec2891b612b14e7ccb61c52802b5a4fef7c28aeb7f18b8ab51f23e2c8",
+    "results/power-rebased-baseline-metadata-v68.stdout": "124ae6c801abea15cbf360ff60a310fbd757113f4409ecd55b3555e638a4680f",
+    "results/power-rebased-baseline-public-v68.stdout": "7b628db1453275c3ad4700523e7bdf36d1384904dd92f1afc78ad651a81ae350",
+    "results/power-wide-baseline-run-v69.stdout": "e4787cc908c2d16f68e8d27fffed8d37716743f058defdd3ba57559007048396",
+    "results/power-wide-verify-canonical-v69.json": "5f43a31bac8a6604a5655067e9ad4be79a134a423de44b70e82500cf0e8d9821",
+    "results/power-wide-verify-canonical-v69.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/power-wide-verify-canonical-v69.stdout": "4bbab0e4429ac98f66135469008a3ff5cd123eda12e8f671cac5dfe5c6b60d59",
+    "results/zero-factor-all-features-v70.json": "49c152cf0bb17792c61e646d9fdc2f2086303b5486209915e887b6df5b6e141e",
+    "results/zero-factor-all-features-v70.stderr": "b8f1762f3b5be38143c7804c38bceaa2cbdb7fae329010d8f3e666118ea345dc",
+    "results/zero-factor-all-features-v70.stdout": "6b8f4f9ad2f1838f93f8ca213f0e73126643ccd81ec0daf16152118c08fd8a05",
+    "results/zero-factor-app-clippy-v70.json": "88bed651ca3228f33886370d91b4ba092c2bc761ccc2d864f2f1b97a87ff071d",
+    "results/zero-factor-app-clippy-v70.stderr": "dd828e7c70e511896aa9992d7a7a1b5bcea6775ab03f7004bca3bdf2f7333158",
+    "results/zero-factor-app-clippy-v70.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/zero-factor-approx-run-v70.json": "095e319e3ff11e672c6fa96854a3f25142542158c78683344e4d0b169ccfe7bc",
+    "results/zero-factor-approx-run-v70.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/zero-factor-approx-run-v70.stdout": "bfa5c87bac36bc866b9f1954eb2c4cf3ed4c0739528266780f8aa250e56eadf5",
+    "results/zero-factor-build-v70.json": "f8addeef1327726f93997ab927e0c704d70a44666ac74bd4a9dd55d285b962a0",
+    "results/zero-factor-build-v70.stderr": "974ecefa687ebd15857980d86f275de68fe3d27260b8a29665ea91d5ff08e52a",
+    "results/zero-factor-build-v70.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/zero-factor-check-v70.json": "676f7dc3d832d1ba1123eeb62c30f178a2d0325baf18944973e76244d9bfe529",
+    "results/zero-factor-check-v70.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/zero-factor-check-v70.stdout": "6689467ca80777490159a67619429932340759bc1b54bc628708d45eb1e7269c",
+    "results/zero-factor-clippy-v70.json": "647a90a4e59a235e70d27022dfaceb1f9d9fb248500ced6ee6687528459de940",
+    "results/zero-factor-clippy-v70.stderr": "434e373b03980048ca20c10c26478668308a7f4a0e653210c22bff861d841d67",
+    "results/zero-factor-clippy-v70.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/zero-factor-default-v70.json": "4fade41c6894895644524317e4f01fe96a344b0e72b57aefdfae2e2d8bcf0aa1",
+    "results/zero-factor-default-v70.stderr": "96a5ac4556b09794f86d489b525fd4937ebc6508905368e538da47566894fa77",
+    "results/zero-factor-default-v70.stdout": "6b7b3f2c97ca93e8e457f9c82c8a8806ebc41a39b1724467a3a4177a8aa5fbc8",
+    "results/zero-factor-degree-baseline-v70.json": "b3314fd7b460d2892b622d5c51c9a01c531f179f5456cbc874544484cb19c0a5",
+    "results/zero-factor-degree-baseline-v70.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/zero-factor-degree-baseline-v70.stdout": "ce061edb360c39addf2ea68d6d639029fc2acf451bca43ccec29ad9131958fc8",
+    "results/zero-factor-degree-run-v70.json": "e86d9170dbbfe7e8c5f331b92ccfef04a0cdb80f3832470d8bc552622f3736ec",
+    "results/zero-factor-degree-run-v70.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/zero-factor-degree-run-v70.stdout": "623a952bf55a541a74722e6b978b8867f0134af2e0879defc2248138e76cd3af",
+    "results/zero-factor-environment-v70.json": "ea4a77586f2fee779b17dd80bec29225d0dc3ab93ebf380a3699f9e354ea5fdb",
+    "results/zero-factor-environment-v70.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/zero-factor-environment-v70.stdout": "723593375e4e7e30c3f890cd5987b46e0a143ce369deda15032277ce0c236098",
+    "results/zero-factor-evidence-v70.json": "9690f44fd731de8ab8a90ab668fc49d8583a5edccff4c03cc0a494b494f9eb99",
+    "results/zero-factor-evidence-v70.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/zero-factor-evidence-v70.stdout": "4509e012ef9e3a793329f53712732dffd2fddf798f4c21610a507003342705ca",
+    "results/zero-factor-extended-run-v70.json": "a9970f4a2ad22f5a7288ad233f6c48e76854c8a6cf9f0512244809b69f7398a7",
+    "results/zero-factor-extended-run-v70.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/zero-factor-extended-run-v70.stdout": "fa94ed3ec2891b612b14e7ccb61c52802b5a4fef7c28aeb7f18b8ab51f23e2c8",
+    "results/zero-factor-extra-v70.json": "91730b7f27ac06602978cea17efdcfb1a81135cf171c426290ea6071ac2fb388",
+    "results/zero-factor-extra-v70.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/zero-factor-extra-v70.stdout": "763346c1abc804143234862d9005e5daaccc2808d16bffd65e164141c62af1de",
+    "results/zero-factor-final-all-features-v70.json": "a1f6a396b1ab3a0c90c3fa0481a9eae596c61e3f21a5d379c9bd83bc2b9352dc",
+    "results/zero-factor-final-all-features-v70.stderr": "4b2e15135c83cab330f9cfb44cbcbbb83bbd3e4099f8ae0f73a67bec5b4c7261",
+    "results/zero-factor-final-all-features-v70.stdout": "d3f3de0faee9a7ab78c350f42696ec8a7060a77f4373b6ad665587631477a434",
+    "results/zero-factor-final-clippy-v70.json": "de16175d9d6a6375d33a67415b026a642ce978cd0504fa3c36849a1af68874b5",
+    "results/zero-factor-final-clippy-v70.stderr": "5bdbe3c195618144ae4fbd7bd854465eba0a80fd4bf9852ff55893cf95d5ccc8",
+    "results/zero-factor-final-clippy-v70.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/zero-factor-final-default-v70.json": "5d5f7dfed6bc3f6f76f7d4a73071edd0b46b01f6f496f0c82840aacbc0c4016e",
+    "results/zero-factor-final-default-v70.stderr": "36a8522d2c77a92ee9b186d21e2508cdf97caced0a58fe232034415d1cf5d2bc",
+    "results/zero-factor-final-default-v70.stdout": "cf6af75fbbdae98bcab52d8d17e15d167283863e190249c4be7705afedc645f8",
+    "results/zero-factor-final-fmt-v70.json": "1fa630e9319eb5dcfee03ad621d0ddda5e01580b2e7ef00a64fdeba1d5ff6bed",
+    "results/zero-factor-final-fmt-v70.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/zero-factor-final-fmt-v70.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/zero-factor-final-gates-v70.json": "676db5546c1b3bd696ae6161ffb9781533be86bf8da9e46386b923cb68849c81",
+    "results/zero-factor-final-gates-v70.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/zero-factor-final-gates-v70.stdout": "e206ac231dd60f91fac2e3faee1d8565678e0f603d3b1bed0cf5a5c551c5ed5f",
+    "results/zero-factor-final-release-v70.json": "ab88ba069defd2d4609ded2a9c9e29901bf80513e126b0f381f9992afdb5e0be",
+    "results/zero-factor-final-release-v70.stderr": "8541dccb031e555efba3ed9d0182379b2b1eb82f73a908f65642b4be18abe307",
+    "results/zero-factor-final-release-v70.stdout": "4fcb8e511bd9415bf571e3d55a22f09971593ac91153b3fe83cf20406de32c58",
+    "results/zero-factor-final-wasm-v70.json": "aeae19ec8e006a91e08e612e631ee1599da20e5cef55b0ae9c1c9f97b3c47328",
+    "results/zero-factor-final-wasm-v70.stderr": "07e9b1be36be76e01eba05fa9a6dc66ba740ae77d9de751b20c9046a4440cc8b",
+    "results/zero-factor-final-wasm-v70.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/zero-factor-fmt-v70.json": "4f1b53b30eac6fce5d2e4b85e115cc82ba1d500c0ebfb03191d38dda1b695bba",
+    "results/zero-factor-fmt-v70.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/zero-factor-fmt-v70.stdout": "875d0bb973c75b01d9c061118737a837c3903208535655ae0615fe3a4c4bd991",
+    "results/zero-factor-gates-v70.json": "fff11bc53e3bdcac3e501c4a3861a05928a2b52921232b4292e4f7ff23a0f7d7",
+    "results/zero-factor-gates-v70.stderr": "e32cbe7d682dd91c9b53f06e5db306e39fbcfb92e9a412d4eeaa2042d3e8ec94",
+    "results/zero-factor-gates-v70.stdout": "6059eac066244fed463355bdf66bd8af6a324c2e3f15e9a89a83812053074bff",
+    "results/zero-factor-lock-v70.json": "2dc24ec00169f092a52bef6aa7a8adf7b10afa6cf6f11e4dad4159e2d37efe71",
+    "results/zero-factor-lock-v70.stderr": "e6be2fc21f61ee2ca9174470fbbef09ec82d1768d4642489a358e3e3a667848a",
+    "results/zero-factor-lock-v70.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/zero-factor-memory-extended-v70.json": "37ebd6c0c51268d96deca7f8fc7011364177bbdd0de422d4f4cbb083fe1e9459",
+    "results/zero-factor-memory-extended-v70.stderr": "d8fd4b542133235f03d492b73adbcab5b19ff1e818bad5b23b8d0f6b59b7b968",
+    "results/zero-factor-memory-extended-v70.stdout": "fa94ed3ec2891b612b14e7ccb61c52802b5a4fef7c28aeb7f18b8ab51f23e2c8",
+    "results/zero-factor-memory-public-v70.json": "850130fb45453c27dbefa679960ec44dcbfcc2e399d086fba9cb5ba2b0e7f154",
+    "results/zero-factor-memory-public-v70.stderr": "482b226a926ffbacc92a5912d51a8f4caf1c9dc56e36d166223bfa33ac5d1f1f",
+    "results/zero-factor-memory-public-v70.stdout": "bfa5c87bac36bc866b9f1954eb2c4cf3ed4c0739528266780f8aa250e56eadf5",
+    "results/zero-factor-memory-wide-v70.json": "4bb65a8f10d55b359cfa1df4e2199654a1f7cc92448c6f1ce3ae861d1a4ebd6c",
+    "results/zero-factor-memory-wide-v70.stderr": "8a193485d94b63fbf48c6b1111650334c598524acf54a6530842b8fb26375f37",
+    "results/zero-factor-memory-wide-v70.stdout": "623a952bf55a541a74722e6b978b8867f0134af2e0879defc2248138e76cd3af",
+    "results/zero-factor-metadata-v70.json": "1316d8c7d9aab8e2476f6aebcf21067aa28806bfccbc6e3f7af0a203fabd1f56",
+    "results/zero-factor-metadata-v70.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/zero-factor-metadata-v70.stdout": "8ad47d86f946acec50cde596c1fce44d54fb9dcc4ef87987fa6d6f38d5efa4f3",
+    "results/zero-factor-public-run-v70.json": "583d8dbead7448df17b02ae9cd16948715d3acafe90c3555f60db27da1ac3262",
+    "results/zero-factor-public-run-v70.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/zero-factor-public-run-v70.stdout": "bfa5c87bac36bc866b9f1954eb2c4cf3ed4c0739528266780f8aa250e56eadf5",
+    "results/zero-factor-unit-v70.json": "50020d4d8a934b500b0489da094a512692c2842e650da3b08e1981b7de55c974",
+    "results/zero-factor-unit-v70.stderr": "a4adabf17e87c067ffa9c3529c44a35d2b3981a31278574f498bc0f4d146a440",
+    "results/zero-factor-unit-v70.stdout": "4fba5cf69de8972327bc7e00bd7c4caf1f05ae1556a10978c62c56654ad48fda",
+    "results/zero-factor-wide-run-v70.json": "fe55e88723ab607ed9507e51d71353b2e75d4b5a279aa6776090918af2a12c3f",
+    "results/zero-factor-wide-run-v70.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "results/zero-factor-wide-run-v70.stdout": "033c5ca9fd33b391a1ae95fcc6cfb5204367593f62080fb5718a1a9340cf656c",
+    "run-zero-factor-extra-v70.mjs": "eb0a0f40dc227e4cd564b6e1be79d66f332fa62488eaa07227b4828f3eb93356",
+    "run-zero-factor-final-v70.mjs": "4f799b754aa07bf57ab53f53dfdff4ace1d7cdb39e521f939a3d426577b4eb44",
+    "run-zero-factor-v70.mjs": "683655ccc0ad98e02b151b7acc165736eb3a9b9db594e6f58e00bbbb0400a2d9",
+    "verify-zero-factor-v70.mjs": "3d2915ac41ecc56c96b294fb4c8a9cee97da3fe9794f9106f0456dcf985c1a3b",
+    "zero-factor-binaries-v70.json": "35bfc4221018daa623599a7f4ea9f9745ee1f03754c6a7e6bda8e0e17676f343",
+    "zero-factor-binding-v70.json": "cd3b4ac9ea53f740743716a8572400a216b9421e52fcb3e79a5cc99e3f0a264f",
+    "zero-factor-candidate-app-v70/Cargo.lock": "0b5061002c0abe3fbd5b2eb7471094d2f4caee1514e076b3b1831745a940218e",
+    "zero-factor-candidate-app-v70/Cargo.toml": "659b3fd3e134abd37d1afb9070b7cdaf707a3ec78019652f343db4a9dd26068d",
+    "zero-factor-degree-cases-v70.mjs": "8679a91b2c6d770214f528174e9cc3206c0658b656cc2901bd1ed44e903995af",
+    "zero-factor-degree-input-v70.json": "fbf4fcd31bb2fb0bdab126c00828ca3d50bf9158e689063a6844dfed62122d69",
+    "zero-factor-evidence-v70.mjs": "62be3b27c04e833e2e14d3a9d0ca1c561c270ba0590879e9f2cf3a1c32f5d766",
+    "zero-factor-final-binding-v70.json": "93a8b6de487f3a85f877e5f74a79e1cd118831c434c4fc08ce864c933f8817c3",
+    "zero-factor-final-gates-origin-v70.json": "326f1abbe7e270a5b3d33d3d6128a3e17a786288d545ea014677b2e17a4dff8f",
+    "zero-factor-final-sources-v70.mjs": "98163e8deb534c27a02af157c69708e74cca0936cbd7a90f17fdfc677d980c40",
+    "zero-factor-fixed-binding-v70.json": "a8d82b30f286f12ce43833f1d92153607cbe1aa2dc5922de42cb182ebd41117d",
+    "zero-factor-fixed-sources-v70.mjs": "231e1a1da61b2702adab9c8d9574fe7ff14052365596e5a67a5ba75dbb9bf7f5",
+    "zero-factor-gates-origin-v70.json": "8f9f586d0df9be0106dbf9508df5c44883d7f501d4b20425967b0f4ed88d9e4c",
+    "zero-factor-origin-v70.json": "9f4ad266fdcacfea8b882b4424ed3c02330a21a6b8ef8f561af94bfd86200f32",
+    "zero-factor-polynomial-v70.mjs": "7ffbe327450d46ce39cc2edbc9762d347c8766e5eb511b3de7595303238ad7b7",
+    "zero-factor-sources-v70.mjs": "ddb6e51f44b57b56df91eeca91340ab576c8cb378869482c7c5afd73a33c0d36",
+    "zero-factor-tests-initial-v70.rs": "575b2ebfbab0fd31689e7852763d4023d67504a1171ce50ac835093e5c69ae88",
+    "zero-factor-tests-signed-v70.rs": "d46541feb05fc57e2b4ad00205a2afcc4b56431c16863374ea507a1aa65c8f14",
+    "zero-factor-v70-findings.md": "2009633a7a0d5412e94ead372fd041d54cc0034bfabe0de4b3de41cd704bde1d"
+  },
+  "gates": [
+    "zero-factor-unit-v70",
+    "zero-factor-default-v70",
+    "zero-factor-all-features-v70",
+    "zero-factor-clippy-v70",
+    "zero-factor-fmt-v70",
+    "zero-factor-gates-v70",
+    "zero-factor-final-default-v70",
+    "zero-factor-final-all-features-v70",
+    "zero-factor-final-release-v70",
+    "zero-factor-final-clippy-v70",
+    "zero-factor-final-fmt-v70",
+    "zero-factor-final-wasm-v70",
+    "zero-factor-lock-v70",
+    "zero-factor-metadata-v70",
+    "zero-factor-build-v70",
+    "zero-factor-wide-run-v70",
+    "zero-factor-degree-run-v70",
+    "zero-factor-public-run-v70",
+    "zero-factor-approx-run-v70",
+    "zero-factor-extended-run-v70",
+    "zero-factor-app-clippy-v70",
+    "zero-factor-degree-baseline-v70",
+    "zero-factor-final-gates-v70",
+    "zero-factor-check-v70",
+    "zero-factor-memory-public-v70",
+    "zero-factor-memory-extended-v70",
+    "zero-factor-memory-wide-v70",
+    "zero-factor-environment-v70",
+    "zero-factor-extra-v70",
+    "zero-factor-evidence-v70"
+  ],
+  "evidence": {
+    "checkpoint": 70,
+    "status": "isolated-zero-factor-numerical-qualified",
+    "sourceBindingSha256": "93a8b6de487f3a85f877e5f74a79e1cd118831c434c4fc08ce864c933f8817c3",
+    "liveFiles": 956,
+    "candidateFiles": 176,
+    "productionDiff": {
+      "added": 56,
+      "removed": 1,
+      "newTestLines": 260,
+      "newTests": 7
+    },
+    "tests": {
+      "default": {
+        "total": 817,
+        "suites": [
+          [
+            453,
+            0,
+            0
+          ],
+          [
+            9,
+            0,
+            0
+          ],
+          [
+            7,
+            0,
+            0
+          ],
+          [
+            2,
+            0,
+            0
+          ],
+          [
+            4,
+            0,
+            0
+          ],
+          [
+            131,
+            0,
+            0
+          ],
+          [
+            211,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0
+          ]
+        ]
+      },
+      "allFeatures": {
+        "total": 818,
+        "suites": [
+          [
+            454,
+            0,
+            0
+          ],
+          [
+            9,
+            0,
+            0
+          ],
+          [
+            7,
+            0,
+            0
+          ],
+          [
+            2,
+            0,
+            0
+          ],
+          [
+            4,
+            0,
+            0
+          ],
+          [
+            131,
+            0,
+            0
+          ],
+          [
+            211,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0
+          ]
+        ]
+      },
+      "release": {
+        "total": 818,
+        "suites": [
+          [
+            454,
+            0,
+            0
+          ],
+          [
+            9,
+            0,
+            0
+          ],
+          [
+            7,
+            0,
+            0
+          ],
+          [
+            2,
+            0,
+            0
+          ],
+          [
+            4,
+            0,
+            0
+          ],
+          [
+            131,
+            0,
+            0
+          ],
+          [
+            211,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0
+          ]
+        ]
+      }
+    },
+    "featureOnly": [
+      "tensor_resultant::tests::dense_tensor_multiplication_does_not_refine_opaque_coefficients_for_zero_pruning"
+    ],
+    "addedTests": [
+      "algebraic_binary::zero_factor_tests::division_admits_only_the_reduced_degree_bound",
+      "algebraic_binary::zero_factor_tests::division_deflates_after_shared_oversized_square_free_reduction",
+      "algebraic_binary::zero_factor_tests::division_keeps_zero_interval_and_invalid_payload_guards",
+      "algebraic_binary::zero_factor_tests::division_preserves_signed_nonzero_resultants",
+      "algebraic_binary::zero_factor_tests::division_recovers_unused_common_zero_roots",
+      "algebraic_binary::zero_factor_tests::divisor_deflation_borrows_or_reuses_owned_storage",
+      "algebraic_binary::zero_factor_tests::divisor_deflation_requires_strict_nonzero_and_nonconstant_residual"
+    ],
+    "dependencyGraph": {
+      "packages": 33,
+      "nodes": 33,
+      "unchangedDependencyPackages": 32,
+      "unchangedDependencyNodes": 32,
+      "rootDependenciesEqual": true,
+      "lockEqualAfterAppName": true,
+      "note": "Collector package/binary targets differ intentionally; dependency packages/nodes agree after the one solver-path normalization."
+    },
+    "gates": [
+      "zero-factor-unit-v70",
+      "zero-factor-default-v70",
+      "zero-factor-all-features-v70",
+      "zero-factor-clippy-v70",
+      "zero-factor-fmt-v70",
+      "zero-factor-gates-v70",
+      "zero-factor-final-default-v70",
+      "zero-factor-final-all-features-v70",
+      "zero-factor-final-release-v70",
+      "zero-factor-final-clippy-v70",
+      "zero-factor-final-fmt-v70",
+      "zero-factor-final-wasm-v70",
+      "zero-factor-lock-v70",
+      "zero-factor-metadata-v70",
+      "zero-factor-build-v70",
+      "zero-factor-wide-run-v70",
+      "zero-factor-degree-run-v70",
+      "zero-factor-public-run-v70",
+      "zero-factor-approx-run-v70",
+      "zero-factor-extended-run-v70",
+      "zero-factor-app-clippy-v70",
+      "zero-factor-degree-baseline-v70",
+      "zero-factor-final-gates-v70",
+      "zero-factor-check-v70",
+      "zero-factor-memory-public-v70",
+      "zero-factor-memory-extended-v70",
+      "zero-factor-memory-wide-v70",
+      "zero-factor-environment-v70",
+      "zero-factor-extra-v70"
+    ],
+    "captures": [
+      {
+        "tag": "zero-factor-gates-v70",
+        "started": "2026-09-11T19:01:11.160Z",
+        "finished": "2026-09-11T19:02:03.010Z",
+        "code": 1,
+        "records": 8
+      },
+      {
+        "tag": "zero-factor-final-gates-v70",
+        "started": "2026-09-11T19:05:12.648Z",
+        "finished": "2026-09-11T19:07:41.047Z",
+        "code": 0,
+        "records": 33
+      },
+      {
+        "tag": "zero-factor-extra-v70",
+        "started": "2026-09-11T19:08:14.656Z",
+        "finished": "2026-09-11T19:08:36.656Z",
+        "code": 0,
+        "records": 9
+      }
+    ],
+    "successfulCaptures": 26,
+    "preservedFailedCaptures": 3,
+    "numerical": {
+      "checkpoint": 70,
+      "status": "pass",
+      "summaries": {
+        "public": {
+          "queries": 6440,
+          "unchanged": 6388,
+          "changed": 52,
+          "transitions": {
+            "Undecided -> Transformed": 40,
+            "UnsupportedDegree -> Transformed": 12
+          },
+          "baseline": {
+            "Transformed": 5126,
+            "DenominatorMayContainZero": 241,
+            "Undecided": 40,
+            "NonIsolatingImageInterval": 65,
+            "UnsupportedDegree": 968
+          },
+          "candidate": {
+            "Transformed": 5178,
+            "DenominatorMayContainZero": 241,
+            "NonIsolatingImageInterval": 65,
+            "UnsupportedDegree": 956
+          }
+        },
+        "approx": {
+          "queries": 6440,
+          "unchanged": 6388,
+          "changed": 52,
+          "transitions": {
+            "Undecided -> Transformed": 40,
+            "UnsupportedDegree -> Transformed": 12
+          },
+          "baseline": {
+            "Transformed": 5126,
+            "DenominatorMayContainZero": 241,
+            "Undecided": 40,
+            "NonIsolatingImageInterval": 65,
+            "UnsupportedDegree": 968
+          },
+          "candidate": {
+            "Transformed": 5178,
+            "DenominatorMayContainZero": 241,
+            "NonIsolatingImageInterval": 65,
+            "UnsupportedDegree": 956
+          }
+        },
+        "wide": {
+          "queries": 3680,
+          "unchanged": 3620,
+          "changed": 60,
+          "transitions": {
+            "Undecided -> Transformed": 60
+          },
+          "baseline": {
+            "Transformed": 3540,
+            "DenominatorMayContainZero": 80,
+            "Undecided": 60
+          },
+          "candidate": {
+            "Transformed": 3600,
+            "DenominatorMayContainZero": 80
+          }
+        },
+        "degree": {
+          "queries": 132,
+          "unchanged": 112,
+          "changed": 20,
+          "transitions": {
+            "Undecided -> Transformed": 12,
+            "UnsupportedDegree -> Transformed": 8
+          },
+          "baseline": {
+            "Undecided": 12,
+            "UnsupportedDegree": 16,
+            "DenominatorMayContainZero": 8,
+            "Transformed": 96
+          },
+          "candidate": {
+            "Transformed": 116,
+            "UnsupportedDegree": 8,
+            "DenominatorMayContainZero": 8
+          }
+        }
+      },
+      "counts": {
+        "source-selected-root": 28596,
+        "source-half-open-owner": 28596,
+        "certified-result": 14168,
+        "complete-signed-polynomial": 14168,
+        "result-metadata": 14168,
+        "contained-unique-root": 14168,
+        "exact-witness-replay": 7448,
+        "selected-point": 4500,
+        "exact-guard-or-zero-resultant": 2526,
+        "change-only-certified-unused-divisor-zero": 184,
+        "nonisolating-image": 130
+      },
+      "totalChecks": 128652,
+      "independentDeterminants": 6441,
+      "failures": [],
+      "limits": "Rational point and interval corpora, signed full-polynomial comparisons, preserved guard/ownership/proof checks. New answers and degree admissions are not equal-work speedups. No exhaustive completeness or performance/consumer/size/retention claim."
+    },
+    "extended": {
+      "queries": 384,
+      "unchanged": true,
+      "checks": {
+        "left-exact-rational-carrier": 384,
+        "left-metadata": 384,
+        "left-ordered": 384,
+        "left-selected-value-contained": 384,
+        "left-full-polynomial": 384,
+        "left-polynomial-vanishing": 384,
+        "left-exact-witness": 160,
+        "left-witness-vanishing": 160,
+        "left-distinct-root-count": 384,
+        "right-exact-rational-carrier": 384,
+        "right-metadata": 384,
+        "right-ordered": 384,
+        "right-selected-value-contained": 384,
+        "right-full-polynomial": 384,
+        "right-polynomial-vanishing": 384,
+        "right-exact-witness": 288,
+        "right-witness-vanishing": 288,
+        "right-distinct-root-count": 384,
+        "left-authored-interval": 384,
+        "right-authored-interval": 384,
+        "operation": 384,
+        "successful-report": 316,
+        "nonzero-divisor": 316,
+        "output-exact-rational-carrier": 316,
+        "output-metadata": 316,
+        "output-ordered": 316,
+        "output-selected-value-contained": 316,
+        "output-full-polynomial": 316,
+        "output-polynomial-vanishing": 316,
+        "output-exact-witness": 252,
+        "output-witness-vanishing": 252,
+        "output-distinct-root-count": 316,
+        "refined-image-contained": 316,
+        "no-result-on-failure": 68,
+        "known-failure-status": 68,
+        "denominator-guard": 24
+      },
+      "statuses": {
+        "Transformed": 316,
+        "DenominatorMayContainZero": 24,
+        "Undecided": 6,
+        "NonIsolatingImageInterval": 6,
+        "InvalidEvidence": 32
+      },
+      "totalChecks": 11248
+    },
+    "memory": {
+      "public": {
+        "errors": 0,
+        "definite": 0,
+        "indirect": 0,
+        "possible": 0,
+        "reachableBytes": 1843616,
+        "reachableBlocks": 15342,
+        "allocations": 2915836,
+        "frees": 2900494,
+        "cumulativeRequestedBytes": 215513184
+      },
+      "extended": {
+        "errors": 0,
+        "definite": 0,
+        "indirect": 0,
+        "possible": 0,
+        "reachableBytes": 48648,
+        "reachableBlocks": 353,
+        "allocations": 727683,
+        "frees": 727330,
+        "cumulativeRequestedBytes": 130905028
+      },
+      "wide": {
+        "errors": 0,
+        "definite": 0,
+        "indirect": 0,
+        "possible": 0,
+        "reachableBytes": 28424,
+        "reachableBlocks": 222,
+        "allocations": 50380,
+        "frees": 50158,
+        "cumulativeRequestedBytes": 2637388
+      }
+    },
+    "binaries": {
+      "newFiles": 4,
+      "newBytes": 11393464,
+      "reusedFiles": 1,
+      "dir": "/tmp/calcium-zero-factor.1YCn5a"
+    },
+    "environment": {
+      "recorded": "2026-09-11T19:08:36.429Z",
+      "node": "v22.22.2",
+      "v8": "12.4.254.21-node.39",
+      "platform": "linux",
+      "arch": "x64",
+      "kernel": "7.1.8-100.fc43.x86_64",
+      "versions": [
+        {
+          "command": "rustc",
+          "args": [
+            "-vV"
+          ],
+          "stdout": "rustc 1.97.0 (2d8144b78 2026-07-07)\nbinary: rustc\ncommit-hash: 2d8144b7880597b6e6d3dfd63a9a9efae3f533d3\ncommit-date: 2026-07-07\nhost: x86_64-unknown-linux-gnu\nrelease: 1.97.0\nLLVM version: 22.1.6\n"
+        },
+        {
+          "command": "cargo",
+          "args": [
+            "-vV"
+          ],
+          "stdout": "cargo 1.97.0 (c980f4866 2026-06-30)\nrelease: 1.97.0\ncommit-hash: c980f4866141969fab6254a680546a277789d6f0\ncommit-date: 2026-06-30\nhost: x86_64-unknown-linux-gnu\nlibgit2: 1.9.2 (sys:0.20.4 vendored)\nlibcurl: 8.20.0-DEV (sys:0.4.88+curl-8.20.0 vendored ssl:OpenSSL/3.6.2)\nssl: OpenSSL 3.6.2 7 Apr 2026\nos: Fedora 43.0.0 (FortyThree) [64-bit]\n"
+        },
+        {
+          "command": "strip",
+          "args": [
+            "--version"
+          ],
+          "stdout": "GNU strip version 2.45.1-5.fc43\nCopyright (C) 2025 Free Software Foundation, Inc.\nThis program is free software; you may redistribute it under the terms of\nthe GNU General Public License version 3 or (at your option) any later version.\nThis program has absolutely no warranty.\n"
+        },
+        {
+          "command": "size",
+          "args": [
+            "--version"
+          ],
+          "stdout": "GNU size version 2.45.1-5.fc43\nCopyright (C) 2025 Free Software Foundation, Inc.\nThis program is free software; you may redistribute it under the terms of\nthe GNU General Public License version 3 or (at your option) any later version.\nThis program has absolutely no warranty.\n"
+        }
+      ],
+      "volumes": [
+        {
+          "path": "/tmp",
+          "totalBytes": 67488174080,
+          "availableBytes": 15054901248
+        },
+        {
+          "path": "/home/tim/Documents/GitHub/workspace",
+          "totalBytes": 1966167244800,
+          "availableBytes": 122518474752
+        }
+      ],
+      "limits": "Build/runtime identity and a post-build filesystem-capacity snapshot. No timing, allocator, peak-memory, fixed-frequency or idle-machine claim."
+    },
+    "limits": "No production algorithm change after initial trial. One sign expectation corrected and formatted; three failed captures preserved. WASM compile only. Native Memcheck totals include setup/collector/output, not matched costs, peak/RSS or boundedness. No timing, representative consumer/size gate, live edit or seventh retention. Full ecosystem audit remains open."
+  },
+  "retainedContinuationTransfers": 6,
+  "newDonorLines": 0,
+  "scope": "Isolated divisor-carrier completeness trial, not a production retention, performance campaign or full ecosystem completion."
+}

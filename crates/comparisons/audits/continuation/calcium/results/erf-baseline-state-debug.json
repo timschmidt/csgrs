@@ -1,0 +1,13 @@
+{
+  "tag": "erf-baseline-state-debug",
+  "started": "2026-09-08T10:52:10.055Z",
+  "finished": "2026-09-08T10:52:10.111Z",
+  "elapsedSeconds": 0.054049774999999994,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison",
+  "command": "/home/tim/Documents/GitHub/workspace/.audit-builds/calcium-baseline/debug/calcium-erf-baseline-qualification",
+  "args": [
+    "state"
+  ],
+  "code": 0,
+  "signal": null
+}

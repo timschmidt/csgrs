@@ -1,0 +1,17 @@
+{
+  "test": "curve::curve_fillet::tests::joined_path_selects_and_replays_a_continuous_fillet_family",
+  "fixtures": {
+    "finite-domain-ownership-20260927-v527": {
+      "joined_path_selects_and_replays_a_continuous_fillet_family": "fd5550b06cd5c6a058c640332bc458e34eab5a6ff21282fecacf3b5ed205e238",
+      "joined_parallel_path": "5605beb6ff3723049095b2e9745d3fbdac6216be1ef01fc80ef6d2ba6b4578af",
+      "same": "ba1611c486f6d74c1289aa8e1349559313b1eef7c5e78c89d2ecaa12cd8b8583",
+      "q": "ee2dc94c7bb922f090fcf966fe52b9cb9c745ed0e75eaa7663fd0cf884d695cc"
+    },
+    "native-path-shims-20260928-v707": {
+      "joined_path_selects_and_replays_a_continuous_fillet_family": "d763b0f409312b01d2fa4cd3d6a534fa598d0f30610abb8199f161c2e148bf1d",
+      "joined_parallel_path": "5605beb6ff3723049095b2e9745d3fbdac6216be1ef01fc80ef6d2ba6b4578af",
+      "same": "ba1611c486f6d74c1289aa8e1349559313b1eef7c5e78c89d2ecaa12cd8b8583",
+      "q": "ee2dc94c7bb922f090fcf966fe52b9cb9c745ed0e75eaa7663fd0cf884d695cc"
+    }
+  }
+}

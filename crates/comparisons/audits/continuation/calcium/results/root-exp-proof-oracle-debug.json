@@ -1,0 +1,24 @@
+{
+  "tag": "root-exp-proof-oracle-debug",
+  "started": "2026-09-08T13:01:10.419Z",
+  "finished": "2026-09-08T13:01:15.051Z",
+  "elapsedSeconds": 4.6296466469999995,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison",
+  "command": "env",
+  "args": [
+    "TMPDIR=/home/tim/Documents/GitHub/workspace/calcium-build-tmp.gVX5v4",
+    "CARGO_INCREMENTAL=0",
+    "CARGO_PROFILE_DEV_DEBUG=0",
+    "cargo",
+    "run",
+    "--offline",
+    "--manifest-path",
+    "audits/continuation/calcium/root-exp-proof-qualification/Cargo.toml",
+    "--target-dir",
+    "/home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype",
+    "--",
+    "oracle"
+  ],
+  "code": 0,
+  "signal": null
+}

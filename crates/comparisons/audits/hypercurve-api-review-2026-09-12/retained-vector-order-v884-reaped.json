@@ -1,0 +1,5 @@
+{
+  "outer_session": 15284,
+  "outer_exit_code": 0,
+  "observed": "write_stdin returned exit_code 0; 342 cases and 7 checks passed"
+}

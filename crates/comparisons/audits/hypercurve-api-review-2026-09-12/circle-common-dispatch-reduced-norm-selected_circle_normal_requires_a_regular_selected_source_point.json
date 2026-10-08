@@ -1,0 +1,6 @@
+{
+  "name": "curve_intersection::curve_support_intersection::circle_dispatch_tests::selected_circle_normal_requires_a_regular_selected_source_point",
+  "returncode": 0,
+  "elapsed_seconds": 0.0034068969980580732,
+  "log": "circle-common-dispatch-reduced-norm-selected_circle_normal_requires_a_regular_selected_source_point.log"
+}

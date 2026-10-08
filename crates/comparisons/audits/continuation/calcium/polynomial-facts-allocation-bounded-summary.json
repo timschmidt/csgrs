@@ -1,0 +1,1565 @@
+{
+  "started": "2026-09-08T23:29:58.222Z",
+  "finished": "2026-09-08T23:30:18.816Z",
+  "binaries": {
+    "baseline": {
+      "path": "/tmp/calcium-polynomial-facts.ZX8NqH/polynomial-allocation-baseline",
+      "bytes": 2452336,
+      "sha256": "a5c75fd1f9c26bb7a6aa4e59696a1aa0061b0c8a4f0959587792381371085abf"
+    },
+    "trial": {
+      "path": "/tmp/calcium-polynomial-facts.ZX8NqH/polynomial-allocation-trial",
+      "bytes": 2452360,
+      "sha256": "fff2d1eec3197da775b0172d32c2d99193e69e8da50d6f3f4ef4eb0717b0c56a"
+    },
+    "facts": {
+      "path": "/tmp/calcium-polynomial-facts.ZX8NqH/polynomial-allocation-facts",
+      "bytes": 2451704,
+      "sha256": "ee740be193462a7cff7840aeaa7065c0ba817daf2634b09edeaa3d690879d574"
+    }
+  },
+  "summaries": [
+    {
+      "name": "rational-self",
+      "degree": 1,
+      "lifecycle": "fresh",
+      "iterations": 100,
+      "observations": 18,
+      "measurements": {
+        "baseline": {
+          "callsPerQuery": 12,
+          "bytesPerQuery": 1328,
+          "retainedByteDeltaRange": [
+            0,
+            0
+          ]
+        },
+        "trial": {
+          "callsPerQuery": 12,
+          "bytesPerQuery": 1328,
+          "retainedByteDeltaRange": [
+            0,
+            0
+          ]
+        },
+        "facts": {
+          "callsPerQuery": 12,
+          "bytesPerQuery": 1328,
+          "retainedByteDeltaRange": [
+            0,
+            0
+          ]
+        }
+      }
+    },
+    {
+      "name": "rational-self",
+      "degree": 1,
+      "lifecycle": "retained",
+      "iterations": 100,
+      "observations": 18,
+      "measurements": {
+        "baseline": {
+          "callsPerQuery": 10,
+          "bytesPerQuery": 1136,
+          "retainedByteDeltaRange": [
+            0,
+            0
+          ]
+        },
+        "trial": {
+          "callsPerQuery": 10,
+          "bytesPerQuery": 1136,
+          "retainedByteDeltaRange": [
+            0,
+            0
+          ]
+        },
+        "facts": {
+          "callsPerQuery": 10,
+          "bytesPerQuery": 1136,
+          "retainedByteDeltaRange": [
+            0,
+            0
+          ]
+        }
+      }
+    },
+    {
+      "name": "rational-self",
+      "degree": 8,
+      "lifecycle": "fresh",
+      "iterations": 100,
+      "observations": 18,
+      "measurements": {
+        "baseline": {
+          "callsPerQuery": 12,
+          "bytesPerQuery": 4016,
+          "retainedByteDeltaRange": [
+            0,
+            0
+          ]
+        },
+        "trial": {
+          "callsPerQuery": 12,
+          "bytesPerQuery": 4016,
+          "retainedByteDeltaRange": [
+            0,
+            0
+          ]
+        },
+        "facts": {
+          "callsPerQuery": 12,
+          "bytesPerQuery": 4016,
+          "retainedByteDeltaRange": [
+            0,
+            0
+          ]
+        }
+      }
+    },
+    {
+      "name": "rational-self",
+      "degree": 8,
+      "lifecycle": "retained",
+      "iterations": 100,
+      "observations": 18,
+      "measurements": {
+        "baseline": {
+          "callsPerQuery": 10,
+          "bytesPerQuery": 3152,
+          "retainedByteDeltaRange": [
+            0,
+            0
+          ]
+        },
+        "trial": {
+          "callsPerQuery": 10,
+          "bytesPerQuery": 3152,
+          "retainedByteDeltaRange": [
+            0,
+            0
+          ]
+        },
+        "facts": {
+          "callsPerQuery": 10,
+          "bytesPerQuery": 3152,
+          "retainedByteDeltaRange": [
+            0,
+            0
+          ]
+        }
+      }
+    },
+    {
+      "name": "rational-self",
+      "degree": 16,
+      "lifecycle": "fresh",
+      "iterations": 100,
+      "observations": 18,
+      "measurements": {
+        "baseline": {
+          "callsPerQuery": 12,
+          "bytesPerQuery": 7088,
+          "retainedByteDeltaRange": [
+            0,
+            0
+          ]
+        },
+        "trial": {
+          "callsPerQuery": 12,
+          "bytesPerQuery": 7088,
+          "retainedByteDeltaRange": [
+            0,
+            0
+          ]
+        },
+        "facts": {
+          "callsPerQuery": 12,
+          "bytesPerQuery": 7088,
+          "retainedByteDeltaRange": [
+            0,
+            0
+          ]
+        }
+      }
+    },
+    {
+      "name": "rational-self",
+      "degree": 16,
+      "lifecycle": "retained",
+      "iterations": 100,
+      "observations": 18,
+      "measurements": {
+        "baseline": {
+          "callsPerQuery": 10,
+          "bytesPerQuery": 5456,
+          "retainedByteDeltaRange": [
+            0,
+            0
+          ]
+        },
+        "trial": {
+          "callsPerQuery": 10,
+          "bytesPerQuery": 5456,
+          "retainedByteDeltaRange": [
+            0,
+            0
+          ]
+        },
+        "facts": {
+          "callsPerQuery": 10,
+          "bytesPerQuery": 5456,
+          "retainedByteDeltaRange": [
+            0,
+            0
+          ]
+        }
+      }
+    },
+    {
+      "name": "radical-self",
+      "degree": 1,
+      "lifecycle": "fresh",
+      "iterations": 100,
+      "observations": 18,
+      "measurements": {
+        "baseline": {
+          "callsPerQuery": 38.03,
+          "bytesPerQuery": 3203.84,
+          "retainedByteDeltaRange": [
+            384,
+            384
+          ]
+        },
+        "trial": {
+          "callsPerQuery": 38.03,
+          "bytesPerQuery": 3203.84,
+          "retainedByteDeltaRange": [
+            384,
+            384
+          ]
+        },
+        "facts": {
+          "callsPerQuery": 38.03,
+          "bytesPerQuery": 3203.84,
+          "retainedByteDeltaRange": [
+            384,
+            384
+          ]
+        }
+      }
+    },
+    {
+      "name": "radical-self",
+      "degree": 1,
+      "lifecycle": "retained",
+      "iterations": 100,
+      "observations": 18,
+      "measurements": {
+        "baseline": {
+          "callsPerQuery": 30,
+          "bytesPerQuery": 2576,
+          "retainedByteDeltaRange": [
+            0,
+            0
+          ]
+        },
+        "trial": {
+          "callsPerQuery": 30,
+          "bytesPerQuery": 2576,
+          "retainedByteDeltaRange": [
+            0,
+            0
+          ]
+        },
+        "facts": {
+          "callsPerQuery": 30,
+          "bytesPerQuery": 2576,
+          "retainedByteDeltaRange": [
+            0,
+            0
+          ]
+        }
+      }
+    },
+    {
+      "name": "radical-self",
+      "degree": 8,
+      "lifecycle": "fresh",
+      "iterations": 100,
+      "observations": 18,
+      "measurements": {
+        "baseline": {
+          "callsPerQuery": 206.03,
+          "bytesPerQuery": 17987.84,
+          "retainedByteDeltaRange": [
+            384,
+            384
+          ]
+        },
+        "trial": {
+          "callsPerQuery": 206.03,
+          "bytesPerQuery": 17987.84,
+          "retainedByteDeltaRange": [
+            384,
+            384
+          ]
+        },
+        "facts": {
+          "callsPerQuery": 206.03,
+          "bytesPerQuery": 17987.84,
+          "retainedByteDeltaRange": [
+            384,
+            384
+          ]
+        }
+      }
+    },
+    {
+      "name": "radical-self",
+      "degree": 8,
+      "lifecycle": "retained",
+      "iterations": 100,
+      "observations": 18,
+      "measurements": {
+        "baseline": {
+          "callsPerQuery": 170,
+          "bytesPerQuery": 14672,
+          "retainedByteDeltaRange": [
+            0,
+            0
+          ]
+        },
+        "trial": {
+          "callsPerQuery": 170,
+          "bytesPerQuery": 14672,
+          "retainedByteDeltaRange": [
+            0,
+            0
+          ]
+        },
+        "facts": {
+          "callsPerQuery": 170,
+          "bytesPerQuery": 14672,
+          "retainedByteDeltaRange": [
+            0,
+            0
+          ]
+        }
+      }
+    },
+    {
+      "name": "radical-self",
+      "degree": 16,
+      "lifecycle": "fresh",
+      "iterations": 100,
+      "observations": 18,
+      "measurements": {
+        "baseline": {
+          "callsPerQuery": 398.03,
+          "bytesPerQuery": 34883.84,
+          "retainedByteDeltaRange": [
+            384,
+            384
+          ]
+        },
+        "trial": {
+          "callsPerQuery": 398.03,
+          "bytesPerQuery": 34883.84,
+          "retainedByteDeltaRange": [
+            384,
+            384
+          ]
+        },
+        "facts": {
+          "callsPerQuery": 398.03,
+          "bytesPerQuery": 34883.84,
+          "retainedByteDeltaRange": [
+            384,
+            384
+          ]
+        }
+      }
+    },
+    {
+      "name": "radical-self",
+      "degree": 16,
+      "lifecycle": "retained",
+      "iterations": 100,
+      "observations": 18,
+      "measurements": {
+        "baseline": {
+          "callsPerQuery": 330,
+          "bytesPerQuery": 28496,
+          "retainedByteDeltaRange": [
+            0,
+            0
+          ]
+        },
+        "trial": {
+          "callsPerQuery": 330,
+          "bytesPerQuery": 28496,
+          "retainedByteDeltaRange": [
+            0,
+            0
+          ]
+        },
+        "facts": {
+          "callsPerQuery": 330,
+          "bytesPerQuery": 28496,
+          "retainedByteDeltaRange": [
+            0,
+            0
+          ]
+        }
+      }
+    },
+    {
+      "name": "log-self",
+      "degree": 1,
+      "lifecycle": "fresh",
+      "iterations": 100,
+      "observations": 18,
+      "measurements": {
+        "baseline": {
+          "callsPerQuery": 2250.01,
+          "bytesPerQuery": 110145.76,
+          "retainedByteDeltaRange": [
+            384,
+            384
+          ]
+        },
+        "trial": {
+          "callsPerQuery": 2304.01,
+          "bytesPerQuery": 118817.76,
+          "retainedByteDeltaRange": [
+            384,
+            384
+          ]
+        },
+        "facts": {
+          "callsPerQuery": 284.01,
+          "bytesPerQuery": 12217.76,
+          "retainedByteDeltaRange": [
+            384,
+            384
+          ]
+        }
+      }
+    },
+    {
+      "name": "log-self",
+      "degree": 1,
+      "lifecycle": "retained",
+      "iterations": 100,
+      "observations": 18,
+      "measurements": {
+        "baseline": {
+          "callsPerQuery": 28,
+          "bytesPerQuery": 4344,
+          "retainedByteDeltaRange": [
+            0,
+            0
+          ]
+        },
+        "trial": {
+          "callsPerQuery": 82,
+          "bytesPerQuery": 13016,
+          "retainedByteDeltaRange": [
+            0,
+            0
+          ]
+        },
+        "facts": {
+          "callsPerQuery": 13,
+          "bytesPerQuery": 3440,
+          "retainedByteDeltaRange": [
+            0,
+            0
+          ]
+        }
+      }
+    },
+    {
+      "name": "log-self",
+      "degree": 8,
+      "lifecycle": "fresh",
+      "iterations": 100,
+      "observations": 18,
+      "measurements": {
+        "baseline": {
+          "callsPerQuery": 2250.01,
+          "bytesPerQuery": 112161.76,
+          "retainedByteDeltaRange": [
+            384,
+            384
+          ]
+        },
+        "trial": {
+          "callsPerQuery": 2787.01,
+          "bytesPerQuery": 188537.76,
+          "retainedByteDeltaRange": [
+            384,
+            384
+          ]
+        },
+        "facts": {
+          "callsPerQuery": 284.01,
+          "bytesPerQuery": 14905.76,
+          "retainedByteDeltaRange": [
+            384,
+            384
+          ]
+        }
+      }
+    },
+    {
+      "name": "log-self",
+      "degree": 8,
+      "lifecycle": "retained",
+      "iterations": 100,
+      "observations": 18,
+      "measurements": {
+        "baseline": {
+          "callsPerQuery": 28,
+          "bytesPerQuery": 5688,
+          "retainedByteDeltaRange": [
+            0,
+            0
+          ]
+        },
+        "trial": {
+          "callsPerQuery": 565,
+          "bytesPerQuery": 82064,
+          "retainedByteDeltaRange": [
+            0,
+            0
+          ]
+        },
+        "facts": {
+          "callsPerQuery": 13,
+          "bytesPerQuery": 5456,
+          "retainedByteDeltaRange": [
+            0,
+            0
+          ]
+        }
+      }
+    },
+    {
+      "name": "log-self",
+      "degree": 16,
+      "lifecycle": "fresh",
+      "iterations": 100,
+      "observations": 18,
+      "measurements": {
+        "baseline": {
+          "callsPerQuery": 2250.01,
+          "bytesPerQuery": 114465.76,
+          "retainedByteDeltaRange": [
+            384,
+            384
+          ]
+        },
+        "trial": {
+          "callsPerQuery": 3339.01,
+          "bytesPerQuery": 268217.76,
+          "retainedByteDeltaRange": [
+            384,
+            384
+          ]
+        },
+        "facts": {
+          "callsPerQuery": 284.01,
+          "bytesPerQuery": 17977.76,
+          "retainedByteDeltaRange": [
+            384,
+            384
+          ]
+        }
+      }
+    },
+    {
+      "name": "log-self",
+      "degree": 16,
+      "lifecycle": "retained",
+      "iterations": 100,
+      "observations": 18,
+      "measurements": {
+        "baseline": {
+          "callsPerQuery": 28,
+          "bytesPerQuery": 7224,
+          "retainedByteDeltaRange": [
+            0,
+            0
+          ]
+        },
+        "trial": {
+          "callsPerQuery": 1117,
+          "bytesPerQuery": 160976,
+          "retainedByteDeltaRange": [
+            0,
+            0
+          ]
+        },
+        "facts": {
+          "callsPerQuery": 13,
+          "bytesPerQuery": 7760,
+          "retainedByteDeltaRange": [
+            0,
+            0
+          ]
+        }
+      }
+    },
+    {
+      "name": "log-plus-one",
+      "degree": 1,
+      "lifecycle": "fresh",
+      "iterations": 100,
+      "observations": 18,
+      "measurements": {
+        "baseline": {
+          "callsPerQuery": 2227.01,
+          "bytesPerQuery": 110073.76,
+          "retainedByteDeltaRange": [
+            384,
+            384
+          ]
+        },
+        "trial": {
+          "callsPerQuery": 2238.01,
+          "bytesPerQuery": 111305.76,
+          "retainedByteDeltaRange": [
+            384,
+            384
+          ]
+        },
+        "facts": {
+          "callsPerQuery": 264.01,
+          "bytesPerQuery": 11089.76,
+          "retainedByteDeltaRange": [
+            384,
+            384
+          ]
+        }
+      }
+    },
+    {
+      "name": "log-plus-one",
+      "degree": 1,
+      "lifecycle": "retained",
+      "iterations": 100,
+      "observations": 18,
+      "measurements": {
+        "baseline": {
+          "callsPerQuery": 29,
+          "bytesPerQuery": 4440,
+          "retainedByteDeltaRange": [
+            0,
+            0
+          ]
+        },
+        "trial": {
+          "callsPerQuery": 40,
+          "bytesPerQuery": 5672,
+          "retainedByteDeltaRange": [
+            0,
+            0
+          ]
+        },
+        "facts": {
+          "callsPerQuery": 17,
+          "bytesPerQuery": 2480,
+          "retainedByteDeltaRange": [
+            0,
+            0
+          ]
+        }
+      }
+    },
+    {
+      "name": "log-plus-one",
+      "degree": 8,
+      "lifecycle": "fresh",
+      "iterations": 100,
+      "observations": 18,
+      "measurements": {
+        "baseline": {
+          "callsPerQuery": 2227.01,
+          "bytesPerQuery": 112425.76,
+          "retainedByteDeltaRange": [
+            384,
+            384
+          ]
+        },
+        "trial": {
+          "callsPerQuery": 2399.01,
+          "bytesPerQuery": 136337.76,
+          "retainedByteDeltaRange": [
+            384,
+            384
+          ]
+        },
+        "facts": {
+          "callsPerQuery": 264.01,
+          "bytesPerQuery": 13777.76,
+          "retainedByteDeltaRange": [
+            384,
+            384
+          ]
+        }
+      }
+    },
+    {
+      "name": "log-plus-one",
+      "degree": 8,
+      "lifecycle": "retained",
+      "iterations": 100,
+      "observations": 18,
+      "measurements": {
+        "baseline": {
+          "callsPerQuery": 29,
+          "bytesPerQuery": 6120,
+          "retainedByteDeltaRange": [
+            0,
+            0
+          ]
+        },
+        "trial": {
+          "callsPerQuery": 201,
+          "bytesPerQuery": 30032,
+          "retainedByteDeltaRange": [
+            0,
+            0
+          ]
+        },
+        "facts": {
+          "callsPerQuery": 17,
+          "bytesPerQuery": 4496,
+          "retainedByteDeltaRange": [
+            0,
+            0
+          ]
+        }
+      }
+    },
+    {
+      "name": "log-plus-one",
+      "degree": 16,
+      "lifecycle": "fresh",
+      "iterations": 100,
+      "observations": 18,
+      "measurements": {
+        "baseline": {
+          "callsPerQuery": 2227.01,
+          "bytesPerQuery": 115113.76,
+          "retainedByteDeltaRange": [
+            384,
+            384
+          ]
+        },
+        "trial": {
+          "callsPerQuery": 2583.01,
+          "bytesPerQuery": 164945.76,
+          "retainedByteDeltaRange": [
+            384,
+            384
+          ]
+        },
+        "facts": {
+          "callsPerQuery": 264.01,
+          "bytesPerQuery": 16849.76,
+          "retainedByteDeltaRange": [
+            384,
+            384
+          ]
+        }
+      }
+    },
+    {
+      "name": "log-plus-one",
+      "degree": 16,
+      "lifecycle": "retained",
+      "iterations": 100,
+      "observations": 18,
+      "measurements": {
+        "baseline": {
+          "callsPerQuery": 29,
+          "bytesPerQuery": 8040,
+          "retainedByteDeltaRange": [
+            0,
+            0
+          ]
+        },
+        "trial": {
+          "callsPerQuery": 385,
+          "bytesPerQuery": 57872,
+          "retainedByteDeltaRange": [
+            0,
+            0
+          ]
+        },
+        "facts": {
+          "callsPerQuery": 17,
+          "bytesPerQuery": 6800,
+          "retainedByteDeltaRange": [
+            0,
+            0
+          ]
+        }
+      }
+    },
+    {
+      "name": "tiny-self",
+      "degree": 1,
+      "lifecycle": "fresh",
+      "iterations": 100,
+      "observations": 18,
+      "measurements": {
+        "baseline": {
+          "callsPerQuery": 1886,
+          "bytesPerQuery": 107952,
+          "retainedByteDeltaRange": [
+            2304,
+            2304
+          ]
+        },
+        "trial": {
+          "callsPerQuery": 1918,
+          "bytesPerQuery": 114720,
+          "retainedByteDeltaRange": [
+            2304,
+            2304
+          ]
+        },
+        "facts": {
+          "callsPerQuery": 212,
+          "bytesPerQuery": 11504,
+          "retainedByteDeltaRange": [
+            2304,
+            2304
+          ]
+        }
+      }
+    },
+    {
+      "name": "tiny-self",
+      "degree": 1,
+      "lifecycle": "retained",
+      "iterations": 100,
+      "observations": 18,
+      "measurements": {
+        "baseline": {
+          "callsPerQuery": 17,
+          "bytesPerQuery": 3392,
+          "retainedByteDeltaRange": [
+            0,
+            0
+          ]
+        },
+        "trial": {
+          "callsPerQuery": 49,
+          "bytesPerQuery": 10160,
+          "retainedByteDeltaRange": [
+            0,
+            0
+          ]
+        },
+        "facts": {
+          "callsPerQuery": 13,
+          "bytesPerQuery": 3440,
+          "retainedByteDeltaRange": [
+            0,
+            0
+          ]
+        }
+      }
+    },
+    {
+      "name": "tiny-self",
+      "degree": 8,
+      "lifecycle": "fresh",
+      "iterations": 100,
+      "observations": 18,
+      "measurements": {
+        "baseline": {
+          "callsPerQuery": 1886,
+          "bytesPerQuery": 109968,
+          "retainedByteDeltaRange": [
+            2304,
+            2304
+          ]
+        },
+        "trial": {
+          "callsPerQuery": 2170,
+          "bytesPerQuery": 164448,
+          "retainedByteDeltaRange": [
+            2304,
+            2304
+          ]
+        },
+        "facts": {
+          "callsPerQuery": 212,
+          "bytesPerQuery": 14192,
+          "retainedByteDeltaRange": [
+            2160,
+            2304
+          ]
+        }
+      }
+    },
+    {
+      "name": "tiny-self",
+      "degree": 8,
+      "lifecycle": "retained",
+      "iterations": 100,
+      "observations": 18,
+      "measurements": {
+        "baseline": {
+          "callsPerQuery": 17,
+          "bytesPerQuery": 4736,
+          "retainedByteDeltaRange": [
+            0,
+            0
+          ]
+        },
+        "trial": {
+          "callsPerQuery": 301,
+          "bytesPerQuery": 59216,
+          "retainedByteDeltaRange": [
+            0,
+            0
+          ]
+        },
+        "facts": {
+          "callsPerQuery": 13,
+          "bytesPerQuery": 5456,
+          "retainedByteDeltaRange": [
+            0,
+            0
+          ]
+        }
+      }
+    },
+    {
+      "name": "tiny-self",
+      "degree": 16,
+      "lifecycle": "fresh",
+      "iterations": 100,
+      "observations": 18,
+      "measurements": {
+        "baseline": {
+          "callsPerQuery": 1886,
+          "bytesPerQuery": 112272,
+          "retainedByteDeltaRange": [
+            2304,
+            2304
+          ]
+        },
+        "trial": {
+          "callsPerQuery": 2458,
+          "bytesPerQuery": 221280,
+          "retainedByteDeltaRange": [
+            2304,
+            2304
+          ]
+        },
+        "facts": {
+          "callsPerQuery": 212,
+          "bytesPerQuery": 17264,
+          "retainedByteDeltaRange": [
+            2160,
+            2304
+          ]
+        }
+      }
+    },
+    {
+      "name": "tiny-self",
+      "degree": 16,
+      "lifecycle": "retained",
+      "iterations": 100,
+      "observations": 18,
+      "measurements": {
+        "baseline": {
+          "callsPerQuery": 17,
+          "bytesPerQuery": 6272,
+          "retainedByteDeltaRange": [
+            0,
+            0
+          ]
+        },
+        "trial": {
+          "callsPerQuery": 589,
+          "bytesPerQuery": 115280,
+          "retainedByteDeltaRange": [
+            0,
+            0
+          ]
+        },
+        "facts": {
+          "callsPerQuery": 13,
+          "bytesPerQuery": 7760,
+          "retainedByteDeltaRange": [
+            0,
+            0
+          ]
+        }
+      }
+    },
+    {
+      "name": "unknown-leading",
+      "degree": 1,
+      "lifecycle": "fresh",
+      "iterations": 100,
+      "observations": 18,
+      "measurements": {
+        "baseline": {
+          "callsPerQuery": 2246.01,
+          "bytesPerQuery": 109761.76,
+          "retainedByteDeltaRange": [
+            384,
+            384
+          ]
+        },
+        "trial": {
+          "callsPerQuery": 2246.01,
+          "bytesPerQuery": 109761.76,
+          "retainedByteDeltaRange": [
+            384,
+            384
+          ]
+        },
+        "facts": {
+          "callsPerQuery": 2246.01,
+          "bytesPerQuery": 109761.76,
+          "retainedByteDeltaRange": [
+            384,
+            384
+          ]
+        }
+      }
+    },
+    {
+      "name": "unknown-leading",
+      "degree": 1,
+      "lifecycle": "retained",
+      "iterations": 100,
+      "observations": 18,
+      "measurements": {
+        "baseline": {
+          "callsPerQuery": 24,
+          "bytesPerQuery": 3960,
+          "retainedByteDeltaRange": [
+            0,
+            0
+          ]
+        },
+        "trial": {
+          "callsPerQuery": 24,
+          "bytesPerQuery": 3960,
+          "retainedByteDeltaRange": [
+            0,
+            0
+          ]
+        },
+        "facts": {
+          "callsPerQuery": 24,
+          "bytesPerQuery": 3960,
+          "retainedByteDeltaRange": [
+            0,
+            0
+          ]
+        }
+      }
+    },
+    {
+      "name": "unknown-leading",
+      "degree": 8,
+      "lifecycle": "fresh",
+      "iterations": 100,
+      "observations": 18,
+      "measurements": {
+        "baseline": {
+          "callsPerQuery": 2246.01,
+          "bytesPerQuery": 110433.76,
+          "retainedByteDeltaRange": [
+            384,
+            384
+          ]
+        },
+        "trial": {
+          "callsPerQuery": 2246.01,
+          "bytesPerQuery": 110433.76,
+          "retainedByteDeltaRange": [
+            384,
+            384
+          ]
+        },
+        "facts": {
+          "callsPerQuery": 2246.01,
+          "bytesPerQuery": 110433.76,
+          "retainedByteDeltaRange": [
+            384,
+            384
+          ]
+        }
+      }
+    },
+    {
+      "name": "unknown-leading",
+      "degree": 8,
+      "lifecycle": "retained",
+      "iterations": 100,
+      "observations": 18,
+      "measurements": {
+        "baseline": {
+          "callsPerQuery": 24,
+          "bytesPerQuery": 3960,
+          "retainedByteDeltaRange": [
+            0,
+            0
+          ]
+        },
+        "trial": {
+          "callsPerQuery": 24,
+          "bytesPerQuery": 3960,
+          "retainedByteDeltaRange": [
+            0,
+            0
+          ]
+        },
+        "facts": {
+          "callsPerQuery": 24,
+          "bytesPerQuery": 3960,
+          "retainedByteDeltaRange": [
+            0,
+            0
+          ]
+        }
+      }
+    },
+    {
+      "name": "unknown-leading",
+      "degree": 16,
+      "lifecycle": "fresh",
+      "iterations": 100,
+      "observations": 18,
+      "measurements": {
+        "baseline": {
+          "callsPerQuery": 2246.01,
+          "bytesPerQuery": 111201.76,
+          "retainedByteDeltaRange": [
+            384,
+            384
+          ]
+        },
+        "trial": {
+          "callsPerQuery": 2246.01,
+          "bytesPerQuery": 111201.76,
+          "retainedByteDeltaRange": [
+            384,
+            384
+          ]
+        },
+        "facts": {
+          "callsPerQuery": 2246.01,
+          "bytesPerQuery": 111201.76,
+          "retainedByteDeltaRange": [
+            384,
+            384
+          ]
+        }
+      }
+    },
+    {
+      "name": "unknown-leading",
+      "degree": 16,
+      "lifecycle": "retained",
+      "iterations": 100,
+      "observations": 18,
+      "measurements": {
+        "baseline": {
+          "callsPerQuery": 24,
+          "bytesPerQuery": 3960,
+          "retainedByteDeltaRange": [
+            0,
+            0
+          ]
+        },
+        "trial": {
+          "callsPerQuery": 24,
+          "bytesPerQuery": 3960,
+          "retainedByteDeltaRange": [
+            0,
+            0
+          ]
+        },
+        "facts": {
+          "callsPerQuery": 24,
+          "bytesPerQuery": 3960,
+          "retainedByteDeltaRange": [
+            0,
+            0
+          ]
+        }
+      }
+    }
+  ],
+  "churn": [
+    {
+      "repeat": 0,
+      "variant": "baseline",
+      "case": "tiny-self",
+      "degree": 16,
+      "lifecycle": "fresh",
+      "iterations": 100,
+      "known": 0,
+      "elapsed_ns": 23163262,
+      "alloc_calls": 188600,
+      "allocated_bytes": 11227200,
+      "retained_bytes": 2304
+    },
+    {
+      "repeat": 0,
+      "variant": "trial",
+      "case": "tiny-self",
+      "degree": 16,
+      "lifecycle": "fresh",
+      "iterations": 100,
+      "known": 100,
+      "elapsed_ns": 24250127,
+      "alloc_calls": 245800,
+      "allocated_bytes": 22128000,
+      "retained_bytes": 2304
+    },
+    {
+      "repeat": 0,
+      "variant": "facts",
+      "case": "tiny-self",
+      "degree": 16,
+      "lifecycle": "fresh",
+      "iterations": 100,
+      "known": 100,
+      "elapsed_ns": 4030473,
+      "alloc_calls": 21200,
+      "allocated_bytes": 1726400,
+      "retained_bytes": 2304
+    },
+    {
+      "repeat": 1,
+      "variant": "baseline",
+      "case": "tiny-self",
+      "degree": 16,
+      "lifecycle": "fresh",
+      "iterations": 100,
+      "known": 0,
+      "elapsed_ns": 19395680,
+      "alloc_calls": 188600,
+      "allocated_bytes": 11227200,
+      "retained_bytes": 2304
+    },
+    {
+      "repeat": 1,
+      "variant": "trial",
+      "case": "tiny-self",
+      "degree": 16,
+      "lifecycle": "fresh",
+      "iterations": 100,
+      "known": 100,
+      "elapsed_ns": 23460442,
+      "alloc_calls": 245800,
+      "allocated_bytes": 22128000,
+      "retained_bytes": 2304
+    },
+    {
+      "repeat": 1,
+      "variant": "facts",
+      "case": "tiny-self",
+      "degree": 16,
+      "lifecycle": "fresh",
+      "iterations": 100,
+      "known": 100,
+      "elapsed_ns": 4257358,
+      "alloc_calls": 21200,
+      "allocated_bytes": 1726400,
+      "retained_bytes": 2304
+    },
+    {
+      "repeat": 2,
+      "variant": "baseline",
+      "case": "tiny-self",
+      "degree": 16,
+      "lifecycle": "fresh",
+      "iterations": 100,
+      "known": 0,
+      "elapsed_ns": 21538503,
+      "alloc_calls": 188600,
+      "allocated_bytes": 11227200,
+      "retained_bytes": 2304
+    },
+    {
+      "repeat": 2,
+      "variant": "trial",
+      "case": "tiny-self",
+      "degree": 16,
+      "lifecycle": "fresh",
+      "iterations": 100,
+      "known": 100,
+      "elapsed_ns": 25815690,
+      "alloc_calls": 245800,
+      "allocated_bytes": 22128000,
+      "retained_bytes": 2304
+    },
+    {
+      "repeat": 2,
+      "variant": "facts",
+      "case": "tiny-self",
+      "degree": 16,
+      "lifecycle": "fresh",
+      "iterations": 100,
+      "known": 100,
+      "elapsed_ns": 3480762,
+      "alloc_calls": 21200,
+      "allocated_bytes": 1726400,
+      "retained_bytes": 2304
+    },
+    {
+      "repeat": 0,
+      "variant": "baseline",
+      "case": "tiny-self",
+      "degree": 16,
+      "lifecycle": "fresh",
+      "iterations": 1000,
+      "known": 0,
+      "elapsed_ns": 198211940,
+      "alloc_calls": 1886000,
+      "allocated_bytes": 112272000,
+      "retained_bytes": 2304
+    },
+    {
+      "repeat": 0,
+      "variant": "trial",
+      "case": "tiny-self",
+      "degree": 16,
+      "lifecycle": "fresh",
+      "iterations": 1000,
+      "known": 1000,
+      "elapsed_ns": 247505641,
+      "alloc_calls": 2458000,
+      "allocated_bytes": 221280000,
+      "retained_bytes": 2304
+    },
+    {
+      "repeat": 0,
+      "variant": "facts",
+      "case": "tiny-self",
+      "degree": 16,
+      "lifecycle": "fresh",
+      "iterations": 1000,
+      "known": 1000,
+      "elapsed_ns": 36057577,
+      "alloc_calls": 212000,
+      "allocated_bytes": 17264000,
+      "retained_bytes": 2304
+    },
+    {
+      "repeat": 1,
+      "variant": "baseline",
+      "case": "tiny-self",
+      "degree": 16,
+      "lifecycle": "fresh",
+      "iterations": 1000,
+      "known": 0,
+      "elapsed_ns": 204208829,
+      "alloc_calls": 1886000,
+      "allocated_bytes": 112272000,
+      "retained_bytes": 2304
+    },
+    {
+      "repeat": 1,
+      "variant": "trial",
+      "case": "tiny-self",
+      "degree": 16,
+      "lifecycle": "fresh",
+      "iterations": 1000,
+      "known": 1000,
+      "elapsed_ns": 238453632,
+      "alloc_calls": 2458000,
+      "allocated_bytes": 221280000,
+      "retained_bytes": 2304
+    },
+    {
+      "repeat": 1,
+      "variant": "facts",
+      "case": "tiny-self",
+      "degree": 16,
+      "lifecycle": "fresh",
+      "iterations": 1000,
+      "known": 1000,
+      "elapsed_ns": 40782174,
+      "alloc_calls": 212000,
+      "allocated_bytes": 17264000,
+      "retained_bytes": 2304
+    },
+    {
+      "repeat": 2,
+      "variant": "baseline",
+      "case": "tiny-self",
+      "degree": 16,
+      "lifecycle": "fresh",
+      "iterations": 1000,
+      "known": 0,
+      "elapsed_ns": 188090334,
+      "alloc_calls": 1886000,
+      "allocated_bytes": 112272000,
+      "retained_bytes": 2304
+    },
+    {
+      "repeat": 2,
+      "variant": "trial",
+      "case": "tiny-self",
+      "degree": 16,
+      "lifecycle": "fresh",
+      "iterations": 1000,
+      "known": 1000,
+      "elapsed_ns": 240179724,
+      "alloc_calls": 2458000,
+      "allocated_bytes": 221280000,
+      "retained_bytes": 2304
+    },
+    {
+      "repeat": 2,
+      "variant": "facts",
+      "case": "tiny-self",
+      "degree": 16,
+      "lifecycle": "fresh",
+      "iterations": 1000,
+      "known": 1000,
+      "elapsed_ns": 36524476,
+      "alloc_calls": 212000,
+      "allocated_bytes": 17264000,
+      "retained_bytes": 2304
+    },
+    {
+      "repeat": 0,
+      "variant": "baseline",
+      "case": "tiny-self",
+      "degree": 16,
+      "lifecycle": "fresh",
+      "iterations": 10000,
+      "known": 0,
+      "elapsed_ns": 1816385680,
+      "alloc_calls": 18860000,
+      "allocated_bytes": 1122720000,
+      "retained_bytes": 2304
+    },
+    {
+      "repeat": 0,
+      "variant": "trial",
+      "case": "tiny-self",
+      "degree": 16,
+      "lifecycle": "fresh",
+      "iterations": 10000,
+      "known": 10000,
+      "elapsed_ns": 2371847858,
+      "alloc_calls": 24580000,
+      "allocated_bytes": 2212800000,
+      "retained_bytes": 2304
+    },
+    {
+      "repeat": 0,
+      "variant": "facts",
+      "case": "tiny-self",
+      "degree": 16,
+      "lifecycle": "fresh",
+      "iterations": 10000,
+      "known": 10000,
+      "elapsed_ns": 351530369,
+      "alloc_calls": 2120000,
+      "allocated_bytes": 172640000,
+      "retained_bytes": 2304
+    },
+    {
+      "repeat": 1,
+      "variant": "baseline",
+      "case": "tiny-self",
+      "degree": 16,
+      "lifecycle": "fresh",
+      "iterations": 10000,
+      "known": 0,
+      "elapsed_ns": 1833361607,
+      "alloc_calls": 18860000,
+      "allocated_bytes": 1122720000,
+      "retained_bytes": 2304
+    },
+    {
+      "repeat": 1,
+      "variant": "trial",
+      "case": "tiny-self",
+      "degree": 16,
+      "lifecycle": "fresh",
+      "iterations": 10000,
+      "known": 10000,
+      "elapsed_ns": 2344233441,
+      "alloc_calls": 24580000,
+      "allocated_bytes": 2212800000,
+      "retained_bytes": 2304
+    },
+    {
+      "repeat": 1,
+      "variant": "facts",
+      "case": "tiny-self",
+      "degree": 16,
+      "lifecycle": "fresh",
+      "iterations": 10000,
+      "known": 10000,
+      "elapsed_ns": 344745055,
+      "alloc_calls": 2120000,
+      "allocated_bytes": 172640000,
+      "retained_bytes": 2304
+    },
+    {
+      "repeat": 2,
+      "variant": "baseline",
+      "case": "tiny-self",
+      "degree": 16,
+      "lifecycle": "fresh",
+      "iterations": 10000,
+      "known": 0,
+      "elapsed_ns": 1855142403,
+      "alloc_calls": 18860000,
+      "allocated_bytes": 1122720000,
+      "retained_bytes": 2304
+    },
+    {
+      "repeat": 2,
+      "variant": "trial",
+      "case": "tiny-self",
+      "degree": 16,
+      "lifecycle": "fresh",
+      "iterations": 10000,
+      "known": 10000,
+      "elapsed_ns": 2403032550,
+      "alloc_calls": 24580000,
+      "allocated_bytes": 2212800000,
+      "retained_bytes": 2304
+    },
+    {
+      "repeat": 2,
+      "variant": "facts",
+      "case": "tiny-self",
+      "degree": 16,
+      "lifecycle": "fresh",
+      "iterations": 10000,
+      "known": 10000,
+      "elapsed_ns": 349997124,
+      "alloc_calls": 2120000,
+      "allocated_bytes": 172640000,
+      "retained_bytes": 2304
+    }
+  ],
+  "limits": "Rust successful allocation/reallocation request totals and live requested-byte deltas, not peak RSS, allocator overhead, native allocations or CPU measurements. Prepared operands remain alive after eight preconditioning queries. Live-byte occupancy is address-dependent and summarized as a range; request totals must still agree. Three fresh-churn lengths independently check the existing native32-by72-byte weak-cache bound. Other test processes do not share this process-private allocator."
+}

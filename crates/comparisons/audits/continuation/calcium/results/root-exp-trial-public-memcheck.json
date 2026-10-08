@@ -1,0 +1,17 @@
+{
+  "tag": "root-exp-trial-public-memcheck",
+  "started": "2026-09-08T11:37:14.194Z",
+  "finished": "2026-09-08T11:37:14.769Z",
+  "elapsedSeconds": 0.5722793420000001,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison",
+  "command": "valgrind",
+  "args": [
+    "--leak-check=full",
+    "--show-leak-kinds=all",
+    "--errors-for-leak-kinds=definite,indirect,possible",
+    "--error-exitcode=99",
+    "/home/tim/Documents/GitHub/workspace/.audit-builds/calcium-prototype/release/calcium-root-exp-trial-probe"
+  ],
+  "code": 0,
+  "signal": null
+}

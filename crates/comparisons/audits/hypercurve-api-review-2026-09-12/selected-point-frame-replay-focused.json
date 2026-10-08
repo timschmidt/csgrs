@@ -1,0 +1,86 @@
+[
+  {
+    "command": [
+      "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve-955a1d8ebf71c855",
+      "--exact",
+      "bezier_offset::conversion_tests::selected_analytic_point_replays_reduced_and_opposite_frames_locally",
+      "--test-threads=1",
+      "--nocapture"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.007585430983453989,
+    "binary": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve-955a1d8ebf71c855",
+    "sha256": "e90f7bb5aac4c6ca2cd8b9e7f629bd71bc410f3f7023f22c4cd3a28268c4894f",
+    "log": "selected-point-frame-replay-focused-selected_analytic_point_replays_reduced_and_opposite_frames_locally.log"
+  },
+  {
+    "command": [
+      "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve_curve_intersection-5c8799dfc9452b37",
+      "--exact",
+      "finite_selected_circle_domains::retained_fillet_intersects_finite_analytic_parallel_in_all_charts",
+      "--test-threads=1",
+      "--nocapture"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 4.421181470010197,
+    "binary": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve_curve_intersection-5c8799dfc9452b37",
+    "sha256": "0e40a30573c95ed02cb15a9f3005db5dc61ee0433b69819f2674e417d8c1142a",
+    "log": "selected-point-frame-replay-focused-retained_fillet_intersects_finite_analytic_parallel_in_all_charts.log"
+  },
+  {
+    "command": [
+      "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve-955a1d8ebf71c855",
+      "--exact",
+      "bezier_offset::conversion_tests::analytic_axis_order_reuses_polynomial_speed_across_reduced_tangent_fields",
+      "--test-threads=1",
+      "--nocapture"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.015667937987018377,
+    "binary": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve-955a1d8ebf71c855",
+    "sha256": "e90f7bb5aac4c6ca2cd8b9e7f629bd71bc410f3f7023f22c4cd3a28268c4894f",
+    "log": "selected-point-frame-replay-focused-analytic_axis_order_reuses_polynomial_speed_across_reduced_tangent_fields.log"
+  },
+  {
+    "command": [
+      "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve-955a1d8ebf71c855",
+      "--exact",
+      "bezier_offset::conversion_tests::analytic_point_equality_replays_algebraic_source_and_normal_sheet",
+      "--test-threads=1",
+      "--nocapture"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.031757377000758424,
+    "binary": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve-955a1d8ebf71c855",
+    "sha256": "e90f7bb5aac4c6ca2cd8b9e7f629bd71bc410f3f7023f22c4cd3a28268c4894f",
+    "log": "selected-point-frame-replay-focused-analytic_point_equality_replays_algebraic_source_and_normal_sheet.log"
+  },
+  {
+    "command": [
+      "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve-955a1d8ebf71c855",
+      "--exact",
+      "bezier_offset::conversion_tests::selected_projection_replays_selected_boundaries_under_the_original_policy",
+      "--test-threads=1",
+      "--nocapture"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 0.007572172005893663,
+    "binary": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve-955a1d8ebf71c855",
+    "sha256": "e90f7bb5aac4c6ca2cd8b9e7f629bd71bc410f3f7023f22c4cd3a28268c4894f",
+    "log": "selected-point-frame-replay-focused-selected_projection_replays_selected_boundaries_under_the_original_policy.log"
+  },
+  {
+    "command": [
+      "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve-955a1d8ebf71c855",
+      "--exact",
+      "bezier_offset::conversion_tests::resource_blocked_selected_analytic_point_materializes_at_cold_boundary",
+      "--test-threads=1",
+      "--nocapture"
+    ],
+    "returncode": 0,
+    "elapsed_seconds": 2.8680347480112687,
+    "binary": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve-955a1d8ebf71c855",
+    "sha256": "e90f7bb5aac4c6ca2cd8b9e7f629bd71bc410f3f7023f22c4cd3a28268c4894f",
+    "log": "selected-point-frame-replay-focused-resource_blocked_selected_analytic_point_materializes_at_cold_boundary.log"
+  }
+]

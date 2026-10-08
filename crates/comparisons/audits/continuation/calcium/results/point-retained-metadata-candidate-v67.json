@@ -1,0 +1,23 @@
+{
+  "tag": "point-retained-metadata-candidate-v67",
+  "started": "2026-09-11T03:28:54.900Z",
+  "finished": "2026-09-11T03:28:55.030Z",
+  "elapsedSeconds": 0.12695626399999999,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/point-demand-candidate/hypersolve",
+  "command": "env",
+  "args": [
+    "CARGO_TARGET_DIR=/tmp/calcium-consumer-builds.X7kU2Y/calcium-reuse",
+    "CARGO_INCREMENTAL=0",
+    "CARGO_PROFILE_DEV_DEBUG=0",
+    "CARGO_BUILD_JOBS=2",
+    "cargo",
+    "metadata",
+    "--offline",
+    "--locked",
+    "--format-version",
+    "1",
+    "--all-features"
+  ],
+  "code": 0,
+  "signal": null
+}

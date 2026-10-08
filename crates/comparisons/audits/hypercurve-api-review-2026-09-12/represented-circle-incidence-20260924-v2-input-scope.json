@@ -1,0 +1,7 @@
+{
+  "parent": "1cf070a5d1ec2ebf2796177da784a2d5a0494ee2",
+  "baseline_manifest": "chord-point-containment-20260924-v3-sources.json",
+  "diagnostic": "represented-circle-incidence-20260924-v1-terminal.json",
+  "diagnostic_regression_unchanged": true,
+  "physical_snapshot": "/tmp/hypercurve-represented-circle-incidence-v2-20260924"
+}

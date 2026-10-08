@@ -1,0 +1,19 @@
+{
+  "tag": "mpoly-rational-memcheck",
+  "started": "2026-09-10T03:35:57.127Z",
+  "finished": "2026-09-10T03:36:05.203Z",
+  "elapsedSeconds": 8.073669135,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison",
+  "command": "valgrind",
+  "args": [
+    "--vgdb=no",
+    "--tool=memcheck",
+    "--error-exitcode=97",
+    "--leak-check=full",
+    "--show-leak-kinds=all",
+    "--errors-for-leak-kinds=definite,indirect,possible",
+    "/tmp/calcium-mpoly-rational.Hmk8Is/controls"
+  ],
+  "code": 0,
+  "signal": null
+}

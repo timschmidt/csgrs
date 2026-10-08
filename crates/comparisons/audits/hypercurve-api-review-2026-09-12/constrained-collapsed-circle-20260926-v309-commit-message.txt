@@ -1,0 +1,19 @@
+Preserve collapsed circle contacts during fillet solving
+
+A radius equal to a source circle radius collapses its center locus, but
+leaves tangency contacts free. Retain the prepared source by borrowing it
+and resolve exact contact constraints before general center intersection.
+Native arcs and circular NURBS now select nonzero exact fillets instead of
+reporting a degenerate candidate. A fixed center alone remains insufficient.
+
+Share contact comparison and cut reconstruction with isolated fillets.
+Use retained circle and parallel domain evidence to reject excluded contacts
+before demanding constraints; distinguish that trim exclusion from an arc
+that is proved to collapse. General mixed collapsed contact replay remains
+blocked where the required inverse evidence is not yet available.
+
+Validation: 121 selected release tests, both all-target Clippy feature
+configurations, formatting, editing fuzz, documentation and Hyperbrep checks.
+Tests cover both policies and orientations, authored NURBS knot parameters,
+exact irrational contacts, contradictory requests and half-disk XOR identity.
+The two known extended-fillet re-offset performance cases remain open.

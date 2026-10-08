@@ -1,0 +1,11 @@
+{
+  "tag": "mpoly-rational-native",
+  "started": "2026-09-10T03:35:34.133Z",
+  "finished": "2026-09-10T03:35:34.255Z",
+  "elapsedSeconds": 0.119613512,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison",
+  "command": "/tmp/calcium-mpoly-rational.Hmk8Is/controls",
+  "args": [],
+  "code": 0,
+  "signal": null
+}

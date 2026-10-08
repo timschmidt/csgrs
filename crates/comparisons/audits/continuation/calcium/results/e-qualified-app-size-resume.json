@@ -1,0 +1,13 @@
+{
+  "tag": "e-qualified-app-size-resume",
+  "started": "2026-09-10T01:40:04.593Z",
+  "finished": "2026-09-10T01:41:39.804Z",
+  "elapsedSeconds": 95.209279999,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "node",
+  "args": [
+    "measure-e-qualified-app-size.mjs"
+  ],
+  "code": 0,
+  "signal": null
+}

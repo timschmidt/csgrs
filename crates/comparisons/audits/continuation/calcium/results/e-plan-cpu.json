@@ -1,0 +1,14 @@
+{
+  "tag": "e-plan-cpu",
+  "started": "2026-09-10T00:38:29.603Z",
+  "finished": "2026-09-10T00:38:59.644Z",
+  "elapsedSeconds": 30.038377949999997,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium",
+  "command": "node",
+  "args": [
+    "run-e-plan-costs.mjs",
+    "cpu"
+  ],
+  "code": 0,
+  "signal": null
+}

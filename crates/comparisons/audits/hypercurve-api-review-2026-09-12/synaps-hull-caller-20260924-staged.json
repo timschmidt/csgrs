@@ -1,0 +1,9 @@
+{
+  "parent": "355abf16c3aaef73fb1f3e1b94e021d658c88ed5",
+  "files": {
+    "src/compiler/evaluator/booleans.rs": "3c748331bc4d08ad86b8d5924f9f9f270fd1a14327852db3f43a8f624a39973b",
+    "src/compiler/evaluator/tests.rs": "41448aabb16cbc334d8a7311f9d0c9f029b1d276b74ff448395cdb90617b9768",
+    "src/compiler/geometry/conversions.rs": "6d1a1e86778fbe6275716576c425268a5157136b3a6ce0519a50ee0b9ad61b1f"
+  },
+  "staged_matches_qualified_sources": true
+}

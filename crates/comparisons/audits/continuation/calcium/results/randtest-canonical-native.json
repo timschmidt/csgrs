@@ -1,0 +1,11 @@
+{
+  "tag": "randtest-canonical-native",
+  "started": "2026-09-08T21:13:32.063Z",
+  "finished": "2026-09-08T21:13:32.076Z",
+  "elapsedSeconds": 0.010467180999999997,
+  "cwd": "/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison",
+  "command": "../.audit-builds/calcium-randtest-canonical-probe",
+  "args": [],
+  "code": 1,
+  "signal": null
+}

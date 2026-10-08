@@ -1,0 +1,327 @@
+diff --git a/src/bezier_offset.rs b/src/bezier_offset.rs
+--- a/src/bezier_offset.rs
++++ b/src/bezier_offset.rs
+@@ -106817,12 +106817,27 @@
+                     }
+                 }
+             }
+-            parameters.push(BezierParameter2::Algebraic(
+-                BezierAlgebraicParameter2::from_certified_singleton(
+-                    norm.clone(),
+-                    parameter_interval,
++            // The open-interval proof excludes both bounds, but the norm may
++            // also vanish there on another sheet. Remove those factors before
++            // publishing a native isolator, whose endpoints must not be roots.
++            let polynomial = match norm.clone().without_roots_at(
++                &[parameter_interval.start(), parameter_interval.end()],
++                policy,
++            )? {
++                Classification::Decided(polynomial) => polynomial,
++                Classification::Uncertain(reason) => {
++                    return Ok(Classification::Uncertain(reason));
++                }
++            };
++            parameters.push(match polynomial.coefficients() {
++                [constant, slope] => BezierParameter2::Exact((-constant / slope)?),
++                _ => BezierParameter2::Algebraic(
++                    BezierAlgebraicParameter2::from_certified_singleton(
++                        polynomial,
++                        parameter_interval,
++                    ),
+                 ),
+-            ));
++            });
+         }
+         if !retry {
+             #[cfg(feature = "dispatch-trace")]
+@@ -176061,6 +176076,215 @@
+     }
+ 
+     #[test]
++    fn selected_norm_carriers_exclude_foreign_endpoint_roots() {
++        let half = (Real::one() / Real::from(2)).unwrap();
++        let alpha = half.clone().sqrt().unwrap();
++        let BezierParameter2::Algebraic(retained) =
++            algebraic_parameter(vec![-half, Real::zero(), Real::one()])
++        else {
++            panic!("the selected identity fiber has an irrational source root");
++        };
++        let incidence =
++            BivariatePolynomial::new(vec![vec![Real::zero(), Real::one()], vec![-Real::one()]]);
++        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
++            policy.strict_predicate_pass(|| {
++                let source = parameter_representation(&retained, &policy);
++                // Use the very same discovery seed as the projection, so
++                // extra carrier roots lie exactly at its excluded bounds.
++                let seed = isolate_bivariate_fiber_roots_at_algebraic_parameter_complete(
++                    &incidence,
++                    CurveResultantParameter::First,
++                    &source,
++                    &Real::zero(),
++                    &Real::one(),
++                    AlgebraicFiberRootIsolationConfig {
++                        max_subdivision_depth: 256,
++                        refinement_steps: 8,
++                    },
++                    hypersolve::PredicatePolicy::STRICT,
++                );
++                let [seed] = seed.intervals.as_slice() else {
++                    panic!("the identity fiber must have one selected root");
++                };
++                assert!(seed.exact_root.is_none());
++                assert_eq!(
++                    compare_reals(&seed.lower, &alpha, &policy),
++                    Some(std::cmp::Ordering::Less)
++                );
++                assert_eq!(
++                    compare_reals(&alpha, &seed.upper, &policy),
++                    Some(std::cmp::Ordering::Less)
++                );
++                for excluded in [
++                    vec![seed.lower.clone()],
++                    vec![seed.upper.clone()],
++                    vec![seed.lower.clone(), seed.upper.clone()],
++                ] {
++                    // This annihilating carrier has exactly one interior
++                    // root, alpha, plus the deliberately foreign endpoints.
++                    let coefficients = excluded.iter().fold(
++                        vec![-alpha.clone(), Real::one()],
++                        |coefficients, endpoint| {
++                            polynomial_multiply(&coefficients, &[-endpoint.clone(), Real::one()])
++                        },
++                    );
++                    let Classification::Decided(norm) =
++                        BezierParameterPolynomial::try_new_power_basis(coefficients, &policy)
++                            .unwrap()
++                    else {
++                        panic!("the exact annihilating carrier must construct");
++                    };
++                    assert_eq!(
++                        hypersolve::polynomial_has_one_distinct_root_in_open_interval(
++                            norm.coefficients(),
++                            &seed.lower,
++                            &seed.upper,
++                            hypersolve::PredicatePolicy::STRICT,
++                        ),
++                        Some(true)
++                    );
++                    let Classification::Decided(ResultantParameterProjection::SelectedParameters(
++                        parameters,
++                    )) = algebraic_selected_parameters_from_norm(
++                        &incidence,
++                        &source,
++                        norm,
++                        &CurveParameterRange2::unit(),
++                        &policy,
++                    )
++                    .unwrap()
++                    else {
++                        panic!("the selected root must remain representable");
++                    };
++                    let [parameter] = parameters.as_slice() else {
++                        panic!("only the identity fiber root belongs to the projection");
++                    };
++                    assert_eq!(
++                        parameter
++                            .same_value(&BezierParameter2::Exact(alpha.clone()), &policy)
++                            .unwrap(),
++                        Classification::Decided(true)
++                    );
++                    for endpoint in excluded {
++                        assert_eq!(
++                            parameter
++                                .same_value(&BezierParameter2::Exact(endpoint.clone()), &policy)
++                                .unwrap(),
++                            Classification::Decided(false),
++                            "an open-interval proof cannot admit an endpoint root"
++                        );
++                        assert_eq!(
++                            parameter
++                                .unit_complement()
++                                .same_value(
++                                    &BezierParameter2::Exact(Real::one() - endpoint),
++                                    &policy,
++                                )
++                                .unwrap(),
++                            Classification::Decided(false)
++                        );
++                    }
++                }
++            });
++        }
++    }
++
++    #[test]
++    fn selected_norm_carriers_preserve_repeated_interior_roots() {
++        let defining = vec![
++            -(Real::one() / Real::from(2)).unwrap(),
++            Real::zero(),
++            Real::one(),
++        ];
++        let selected = algebraic_parameter(defining.clone());
++        let BezierParameter2::Algebraic(retained) = &selected else {
++            panic!("the selected identity fiber has an irrational source root");
++        };
++        let incidence =
++            BivariatePolynomial::new(vec![vec![Real::zero(), Real::one()], vec![-Real::one()]]);
++        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
++            policy.strict_predicate_pass(|| {
++                let source = parameter_representation(retained, &policy);
++                let seed = isolate_bivariate_fiber_roots_at_algebraic_parameter_complete(
++                    &incidence,
++                    CurveResultantParameter::First,
++                    &source,
++                    &Real::zero(),
++                    &Real::one(),
++                    AlgebraicFiberRootIsolationConfig {
++                        max_subdivision_depth: 256,
++                        refinement_steps: 8,
++                    },
++                    hypersolve::PredicatePolicy::STRICT,
++                );
++                let [seed] = seed.intervals.as_slice() else {
++                    panic!("the identity fiber must have one selected root");
++                };
++                assert!(seed.exact_root.is_none());
++                let mut coefficients = polynomial_multiply(&defining, &defining);
++                for (endpoint, multiplicity) in [(&seed.lower, 2), (&seed.upper, 3)] {
++                    for _ in 0..multiplicity {
++                        coefficients =
++                            polynomial_multiply(&coefficients, &[-endpoint.clone(), Real::one()]);
++                    }
++                }
++                let Classification::Decided(norm) =
++                    BezierParameterPolynomial::try_new_power_basis(coefficients, &policy).unwrap()
++                else {
++                    panic!("the repeated carrier must construct");
++                };
++                let Classification::Decided(ResultantParameterProjection::SelectedParameters(
++                    parameters,
++                )) = algebraic_selected_parameters_from_norm(
++                    &incidence,
++                    &source,
++                    norm,
++                    &CurveParameterRange2::unit(),
++                    &policy,
++                )
++                .unwrap()
++                else {
++                    panic!("the repeated selected root must remain representable");
++                };
++                let [parameter] = parameters.as_slice() else {
++                    panic!("only the selected interior root belongs to the projection");
++                };
++                assert_eq!(
++                    parameter.same_value(&selected, &policy).unwrap(),
++                    Classification::Decided(true)
++                );
++                for (endpoint, sign) in [
++                    (&seed.lower, RealSign::Positive),
++                    (&seed.upper, RealSign::Negative),
++                ] {
++                    assert_eq!(
++                        parameter
++                            .same_value(&BezierParameter2::Exact(endpoint.clone()), &policy)
++                            .unwrap(),
++                        Classification::Decided(false)
++                    );
++                    assert_eq!(
++                        signed_coefficients_at_parameter(
++                            &[-endpoint.clone(), Real::one()],
++                            parameter,
++                            &policy,
++                        )
++                        .unwrap(),
++                        Classification::Decided(sign)
++                    );
++                    assert_eq!(
++                        parameter
++                            .unit_complement()
++                            .same_value(&BezierParameter2::Exact(Real::one() - endpoint), &policy,)
++                            .unwrap(),
++                        Classification::Decided(false)
++                    );
++                }
++            });
++        }
++    }
++
++    #[test]
+     fn selected_fiber_norm_isolation_refines_past_the_old_limit() {
+         let half = (Real::one() / Real::from(2_i8)).unwrap();
+         let alpha = half.clone().sqrt().unwrap();
+diff --git a/src/bezier_parameter.rs b/src/bezier_parameter.rs
+--- a/src/bezier_parameter.rs
++++ b/src/bezier_parameter.rs
+@@ -259,6 +259,32 @@
+     /// Evaluates the polynomial through the shared exact-real kernel.
+     pub fn evaluate(&self, parameter: &Real) -> Real {
+         Real::eval_poly(&self.coefficients, parameter)
++    }
++
++    /// Removes every factor at the supplied exact values. Callers retaining a
++    /// selected root must certify that these values are excluded from it.
++    /// Synthetic division preserves the certified nonzero leading coefficient.
++    pub(crate) fn without_roots_at(
++        mut self,
++        excluded: &[&Real],
++        policy: &CurveContext,
++    ) -> CurveResult<Classification<Self>> {
++        let strict = policy.strict_counterpart();
++        for root in excluded {
++            loop {
++                match real_sign(&self.evaluate(root), &strict) {
++                    Some(RealSign::Zero) if self.degree() > 0 => {
++                        self.coefficients = divide_by_linear_root(&self.coefficients, root);
++                    }
++                    Some(RealSign::Positive | RealSign::Negative) => break,
++                    Some(RealSign::Zero) => {
++                        return Err(CurveError::InvalidBezierAlgebraicParameter);
++                    }
++                    None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
++                }
++            }
++        }
++        Ok(Classification::Decided(self))
+     }
+ 
+     /// Reduces a power-basis expression modulo this defining polynomial.
+@@ -2072,7 +2098,7 @@
+         // field are unchanged, and decreasing charts can then transport the
+         // endpoint-free isolator without reversing an ownership convention.
+         let strict = policy.strict_counterpart();
+-        let mut coefficients = representation.polynomial_coefficients.clone();
++        let coefficients = representation.polynomial_coefficients.clone();
+         match real_sign(
+             &Real::eval_poly(&coefficients, &representation.interval.upper),
+             &strict,
+@@ -2088,22 +2114,15 @@
+             Some(RealSign::Positive | RealSign::Negative) => {}
+             None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
+         }
+-        loop {
+-            match real_sign(
+-                &Real::eval_poly(&coefficients, &representation.interval.lower),
+-                &strict,
+-            ) {
+-                Some(RealSign::Zero) if coefficients.len() > 1 => {
+-                    coefficients =
+-                        divide_by_linear_root(&coefficients, &representation.interval.lower);
+-                }
+-                Some(RealSign::Positive | RealSign::Negative) => break,
+-                Some(RealSign::Zero) => return Err(CurveError::InvalidBezierAlgebraicParameter),
+-                None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
+-            }
+-        }
+         let polynomial =
+             match BezierParameterPolynomial::try_new_power_basis(coefficients, &strict)? {
++                Classification::Decided(polynomial) => polynomial,
++                Classification::Uncertain(reason) => {
++                    return Ok(Classification::Uncertain(reason));
++                }
++            };
++        let polynomial =
++            match polynomial.without_roots_at(&[&representation.interval.lower], &strict)? {
+                 Classification::Decided(polynomial) => polynomial,
+                 Classification::Uncertain(reason) => {
+                     return Ok(Classification::Uncertain(reason));

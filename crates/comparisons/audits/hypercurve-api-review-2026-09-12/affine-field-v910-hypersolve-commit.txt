@@ -1,0 +1,18 @@
+Transport selected field values through certified affine maps
+
+Infer affine selected-root relations over exact Real coefficients, normalize
+proved rational scale powers, and require strict selected-root replay. Remove
+the affine API policy argument and migrate controlled callers directly.
+
+Substitute foreign finite field values with reduced Horner arithmetic. Keep
+successful transport proofs in the temporary context, preserve pole checks,
+and retain reduced coefficients without calculation history. Normalize tensor
+content before affine substitution; richer coefficients can retain much
+smaller exact image polynomials.
+
+Validate exact shifts and scales, distinct conjugates, poles, repeated reuse,
+strict selected-value replay, and wide content removal. The paired Hypercurve
+change uses these transports for retained source tangent ordering.
+
+Reuse both original and retained factor presentations, caching a proved
+transport across their owned selected-root identity for later imports.

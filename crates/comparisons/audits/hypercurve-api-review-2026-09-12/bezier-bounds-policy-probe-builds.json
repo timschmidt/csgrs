@@ -1,0 +1,57 @@
+{
+  "library": "/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/libhypercurve-2c7ff6f3fbe07653.rlib",
+  "library_sha256": "f51ec1040402d6e33eab91b5badbb1271c5b509a9f23fee2c8caa1ffa342bb6c",
+  "builds": [
+    {
+      "source": "bezier-extrema-certified-bounds-probe.rs",
+      "binary": "bezier-extrema-certified-bounds-probe",
+      "sha256": "14fcc429902a82b50da325ef75a29529a000b096418d2eecd048d9e79ad3f21a",
+      "command": [
+        "rustc",
+        "--edition=2024",
+        "-O",
+        "bezier-extrema-certified-bounds-probe.rs",
+        "--extern",
+        "hypercurve=/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/libhypercurve-2c7ff6f3fbe07653.rlib",
+        "-L",
+        "dependency=/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps",
+        "-o",
+        "bezier-extrema-certified-bounds-probe"
+      ]
+    },
+    {
+      "source": "stationary-ph-offset-inspect.rs",
+      "binary": "stationary-ph-offset-bezier-bounds-policy",
+      "sha256": "bd627358a580c9b20eff20f82481a79ea0531e9451ddc62c88d22b546a56f9a1",
+      "command": [
+        "rustc",
+        "--edition=2024",
+        "-O",
+        "stationary-ph-offset-inspect.rs",
+        "--extern",
+        "hypercurve=/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/libhypercurve-2c7ff6f3fbe07653.rlib",
+        "-L",
+        "dependency=/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps",
+        "-o",
+        "stationary-ph-offset-bezier-bounds-policy"
+      ]
+    },
+    {
+      "source": "stationary-ph-offset-approximate-inspect.rs",
+      "binary": "stationary-ph-offset-bezier-bounds-policy-approximate",
+      "sha256": "9c74bb00f588c7798ed64e17a16eb8724068dd52ff0109a41d695f18986197f2",
+      "command": [
+        "rustc",
+        "--edition=2024",
+        "-O",
+        "stationary-ph-offset-approximate-inspect.rs",
+        "--extern",
+        "hypercurve=/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps/libhypercurve-2c7ff6f3fbe07653.rlib",
+        "-L",
+        "dependency=/home/tim/Documents/GitHub/workspace/hypercurve/target/release/deps",
+        "-o",
+        "stationary-ph-offset-bezier-bounds-policy-approximate"
+      ]
+    }
+  ]
+}

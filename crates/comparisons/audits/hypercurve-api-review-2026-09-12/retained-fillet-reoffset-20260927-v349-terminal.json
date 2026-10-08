@@ -1,0 +1,18 @@
+{
+  "source_manifest": "selected-generator-order-20260927-v348-sources.json",
+  "binary": {
+    "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/selected-generator-order-20260927-v348-hypercurve_curve_region_promotion",
+    "sha256": "ead04de7123d70eb90527103a84d1516e33b2dcf22fdad43682b43046ea088f7"
+  },
+  "command": [
+    "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/selected-generator-order-20260927-v348-hypercurve_curve_region_promotion",
+    "--exact",
+    "strict_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions",
+    "--nocapture",
+    "--test-threads=1"
+  ],
+  "name": "strict_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions",
+  "returncode": 124,
+  "elapsed_seconds": 240.07330061704852,
+  "all_processes_reaped": true
+}

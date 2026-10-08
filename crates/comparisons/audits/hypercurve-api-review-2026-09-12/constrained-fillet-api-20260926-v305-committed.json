@@ -1,0 +1,40 @@
+{
+  "source_manifest": "constrained-fillet-api-20260926-v305-sources.json",
+  "qualification": "constrained-fillet-api-20260926-v305-terminal.json",
+  "outer_session_reaped": 83446,
+  "validated_files": 2046,
+  "passed_tests": 119,
+  "static_checks": 6,
+  "repos": {
+    "hypercurve": {
+      "parent": "3ffa46d0c48ebc61c5b14826b6a1c896ced4581d",
+      "paths": {
+        "README.md": "977cdb4ff08381b2b44a5db03da11600ab67da69070508ae284f26f87cb3528a",
+        "benches/editing.rs": "c5a37c0562dd9964172f7fbef4e91e9096b503774376b5da016523f9d0d6e418",
+        "fuzz/fuzz_targets/curve_string_editing.rs": "69b4ccb9e5201d803d4dc0830f70ab587a3c15305d8a37c3fdf94d41ebc84525",
+        "src/bezier_offset.rs": "2c5305533257551344e1c3431a2eda5c3816ab43d614d8244155104507f05fd2",
+        "src/bezier_region.rs": "498a3c65a4bcd26873e0e379e9ad3f89cc9856c1f1aafb06d41ee5eeb8c5629e",
+        "src/curve.rs": "32e3e86fd91a09fefe6f641cb2dba7d3d19a2b0f9a8c1aa39de99927191eb9ca",
+        "src/curve_corner_chain.rs": "a339184746647082537a639175f6ecd6f3e970bd226bb8eb72f5f944a156d87c",
+        "src/curve_corner_domain.rs": "842785d642afb820ee4c7359f0bf278f0f4dc35027ba434872be1c14eea5b790",
+        "src/curve_fillet.rs": "e21ac0518a5134af3af855d203f04be2a79ea9d6b7a5fe64e0e358b23c51d4b8",
+        "src/curve_subdivision.rs": "d8263c47ce8f36536e844e602d09a78a4ea5390be32bf5ecf2ee669b28d713b9",
+        "src/curve_support_intersection.rs": "a0aa5fe028f0a807c776225e9039f318156aeed141d9d100e78df4f2ad70d1e7",
+        "src/error.rs": "35756ac3016f6d3d047180787c76ca8c6b6ec86295fa2099ec4127c042e41a1f",
+        "src/lib.rs": "beeb7d560c672222abb99cd7a1f0aa5c0971c97a68a916aef15679811959308d",
+        "tests/hypercurve_analytic_parallel_region.rs": "586bf40a127f7a4164374acda5b8d278fe48a959744e0b2176bfc98cc9b95eb2",
+        "tests/hypercurve_curve.rs": "e67e9a52ed7400c9709d1e976da910f166ce11da8c87034a0ef359993c8e0e0d",
+        "tests/hypercurve_curve_intersection.rs": "b11618ecd2db192744c34c72ca4e85d293dd4d5c8a80e3b4a1220199a7797bbb",
+        "tests/hypercurve_curve_region_boolean.rs": "7ca48cb6ecb94c320b50436a58163f0d74abf0e94f037e62b71edf2a15ef89d5",
+        "tests/hypercurve_curve_region_promotion.rs": "1cf1b14dcacf7e06fa0593834f1d3317d25d993a367191b62ef046012367f48f",
+        "tests/hypercurve_path_closure.rs": "50b52181fbb0fb3a40c47c4dc3ca12ffcfffdee83eae9731bbba6038a1147a11"
+      },
+      "commit": "0f1c54deaf26f89c7ff3d3acd92dc4f10d08c52e"
+    }
+  },
+  "known_unresolved_not_requalified": [
+    "strict_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions",
+    "approximate_512_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions"
+  ],
+  "repositories_clean": 30
+}

@@ -1,0 +1,58 @@
+[
+  {
+    "name": "bezier_offset::conversion_tests::chord_normal_recursive_frame_retains_center_and_oriented_unit_normal",
+    "returncode": 101,
+    "passed": false,
+    "limit_seconds": 75,
+    "elapsed_seconds": 0.20223663607612252,
+    "log": "chord-normal-witness-20260923-focused2-hypercurve-case-0.log"
+  },
+  {
+    "name": "bezier_offset::conversion_tests::parallel_normal_recursive_frame_preserves_source_parameter_and_positive_speed",
+    "returncode": 0,
+    "passed": true,
+    "limit_seconds": 75,
+    "elapsed_seconds": 0.2032051789574325,
+    "log": "chord-normal-witness-20260923-focused2-hypercurve-case-1.log"
+  },
+  {
+    "name": "bezier_offset::conversion_tests::rank_independent_chord_normal_circle_publishes_rational_overlap",
+    "returncode": 0,
+    "passed": true,
+    "limit_seconds": 75,
+    "elapsed_seconds": 0.20996107498649508,
+    "log": "chord-normal-witness-20260923-focused2-hypercurve-case-2.log"
+  },
+  {
+    "name": "bezier_offset::conversion_tests::dense_chord_normal_independent_anchor_uses_rank_independent_fallback",
+    "returncode": 0,
+    "passed": true,
+    "limit_seconds": 75,
+    "elapsed_seconds": 29.289150862954557,
+    "log": "chord-normal-witness-20260923-focused2-hypercurve-case-3.log"
+  },
+  {
+    "name": "bezier_region::tests::nonrepresented_chord_and_selected_circle_complete_the_fillet_kernel",
+    "returncode": "timeout",
+    "passed": false,
+    "limit_seconds": 75,
+    "elapsed_seconds": 75.13702195696533,
+    "log": "chord-normal-witness-20260923-focused2-hypercurve-case-4.log"
+  },
+  {
+    "name": "bezier_region::tests::nonrepresented_chord_and_retained_rational_arc_share_the_fillet_kernel",
+    "returncode": 101,
+    "passed": false,
+    "limit_seconds": 75,
+    "elapsed_seconds": 0.2510150669841096,
+    "log": "chord-normal-witness-20260923-focused2-hypercurve-case-5.log"
+  },
+  {
+    "name": "bezier_region::tests::selected_circle_and_promoted_line_extend_through_the_chord_support_cell",
+    "returncode": 0,
+    "passed": true,
+    "limit_seconds": 75,
+    "elapsed_seconds": 6.509089358034544,
+    "log": "chord-normal-witness-20260923-focused2-hypercurve-case-6.log"
+  }
+]

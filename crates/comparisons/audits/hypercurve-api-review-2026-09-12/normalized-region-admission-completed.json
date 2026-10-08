@@ -1,0 +1,24 @@
+{
+  "command": [
+    "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustc",
+    "--edition=2024",
+    "-O",
+    "normalized-region-admission-completed.rs",
+    "--extern",
+    "hypercurve=/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/normalized-path-admission-candidate5-libraries/libhypercurve-bacb55d5ec235376.rlib",
+    "-L",
+    "dependency=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps",
+    "-o",
+    "normalized-region-admission-completed"
+  ],
+  "returncode": 0,
+  "elapsed_seconds": 0.005936963018029928,
+  "source_sha256": "942615d90a8844189e0ab77f98209724a73078f4a5b8d8688488d565fc772850",
+  "binary_sha256": "b41613004f979dfb0389ddd52891e1eb86b72350fc7c7a29e40d8c708deb502a",
+  "library_sha256": "fd1203e4eb3e6fa064be46977d35d871e0185d2eed992d795a23ca191d56afdf",
+  "result": {
+    "cases": 8,
+    "construction_failures": 0,
+    "normalized_point_replays": 18
+  }
+}

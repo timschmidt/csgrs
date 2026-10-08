@@ -1,0 +1,30 @@
+{
+  "cases": [
+    {
+      "input": "query-000.json",
+      "sha256": "cae1f2a3bc739c4aa4727e4ac71f6064b0776075711c2305a0fe63392b0edf23",
+      "root_count": 1,
+      "sign": 1,
+      "complete": true,
+      "elapsed_seconds": 6.14208679809235
+    },
+    {
+      "input": "query-001.json",
+      "sha256": "b86b96c587ea34a526140c5668898b8702eaf0931925c777201291ddb5c41f68",
+      "root_count": 1,
+      "sign": -1,
+      "complete": true,
+      "elapsed_seconds": 6.089116682065651
+    },
+    {
+      "input": "query-002.json",
+      "sha256": "1465469220cf7281acc15f74c7984ecedf342e4ec2f5ecd1903a03a79086f37d",
+      "root_count": 1,
+      "sign": 1,
+      "complete": true,
+      "elapsed_seconds": 22.88007943890989
+    }
+  ],
+  "complete": true,
+  "method": "Exact Q(sqrt(5),sqrt(50-20sqrt(5))) arithmetic with positive rational polynomial content removal"
+}

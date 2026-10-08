@@ -1,0 +1,39 @@
+\doxysubsection{Discrete\+Transition Class Reference}
+\hypertarget{classAriadne_1_1DiscreteTransition}{}\label{classAriadne_1_1DiscreteTransition}\index{DiscreteTransition@{DiscreteTransition}}
+
+
+{\ttfamily \#include $<$hybrid\+\_\+automaton.\+hpp$>$}
+
+
+
+\doxysubsubsection{Description}
+A discrete transition of a hybrid automaton, representing an instantaneous jump from one discrete mode to another, governed by an activation set and a reset map. 
+
+A Discrete\+Transition can only be created using the new\+\_\+transition() method in the Hybrid\+Automaton class.
+
+An invariant is modelled by a discrete transition with negative event id and null reset pointer.
+
+\begin{DoxySeeAlso}{See also}
+\doxylink{classAriadne_1_1HybridAutomaton}{Hybrid\+Automaton}, \doxylink{classAriadne_1_1DiscreteMode}{Discrete\+Mode} 
+\end{DoxySeeAlso}
+\doxysubsubsubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classAriadne_1_1DiscreteTransition_a2a7d59bfb0d9d49fd8ca9d693ff4ce9e}\label{classAriadne_1_1DiscreteTransition_a2a7d59bfb0d9d49fd8ca9d693ff4ce9e} 
+\mbox{\hyperlink{classAriadne_1_1DiscreteLocation}{Discrete\+Location}} {\bfseries source} () const
+\begin{DoxyCompactList}\small\item\em The source mode of the discrete transition. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1DiscreteTransition_a79c7caaf690e052b80108a8c0daf1af9}\label{classAriadne_1_1DiscreteTransition_a79c7caaf690e052b80108a8c0daf1af9} 
+\mbox{\hyperlink{classAriadne_1_1DiscreteEvent}{Discrete\+Event}} {\bfseries event} () const
+\begin{DoxyCompactList}\small\item\em The discrete event associated with the discrete transition. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1DiscreteTransition_a5281a603acd4ecef42d0429dc3a6d39d}\label{classAriadne_1_1DiscreteTransition_a5281a603acd4ecef42d0429dc3a6d39d} 
+\mbox{\hyperlink{classAriadne_1_1DiscreteLocation}{Discrete\+Location}} {\bfseries target} () const
+\begin{DoxyCompactList}\small\item\em The target mode of the discrete transition. \end{DoxyCompactList}\item 
+\Hypertarget{classAriadne_1_1DiscreteTransition_aec3050510f58e6f3fece416706247410}\label{classAriadne_1_1DiscreteTransition_aec3050510f58e6f3fece416706247410} 
+\mbox{\hyperlink{namespaceAriadne_acbb98ddc4385af4599070e65a1a47ec1}{Output\+Stream}} \& {\bfseries \+\_\+write} (\mbox{\hyperlink{namespaceAriadne_acbb98ddc4385af4599070e65a1a47ec1}{Output\+Stream}} \&os) const
+\begin{DoxyCompactList}\small\item\em Write to an output stream. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+The documentation for this class was generated from the following files\+:\begin{DoxyCompactItemize}
+\item 
+source/hybrid/\mbox{\hyperlink{hybrid__automaton_8hpp}{hybrid\+\_\+automaton.\+hpp}}\item 
+source/hybrid/hybrid\+\_\+automaton.\+cpp\end{DoxyCompactItemize}

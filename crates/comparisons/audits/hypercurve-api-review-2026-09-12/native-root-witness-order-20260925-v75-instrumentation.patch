@@ -1,0 +1,78 @@
+--- /home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/source-archives/hypercurve-local-chord-complete-replay-v74-20260924/hypercurve/src/bezier_offset.rs	2026-09-25 03:46:26.812353366 -0400
++++ /home/tim/Documents/GitHub/workspace/hypercurve/src/bezier_offset.rs	2026-09-25 04:45:30.562607544 -0400
+@@ -52737,9 +52737,16 @@
+         if let Classification::Decided(order) = cosine_order {
+             return Ok(Classification::Decided(order));
+         }
+-        if let Some(Classification::Decided(order)) = policy
+-            .bounded_exact_predicate_pass(|| self.recursive_projective_order(other, policy))?
+-        {
++        let recursive_order = policy
++            .bounded_exact_predicate_pass(|| self.recursive_projective_order(other, policy))?;
++        if std::env::var_os("HYPERCURVE_DIAG_CIRCLE_ORDER").is_some() {
++            let kind = |parameter: &Self| match parameter {
++                Self::Exact(_) => None,
++                Self::Mapped(data) => Some(std::mem::discriminant(data.as_ref())),
++            };
++            eprintln!("circle order: first={:?} second={:?} recursive={recursive_order:?}", kind(self), kind(other));
++        }
++        if let Some(Classification::Decided(order)) = recursive_order {
+             return Ok(Classification::Decided(order));
+         }
+         const MAX_REFINEMENT_STEPS: usize =
+@@ -99769,6 +99776,7 @@
+     certify_distinct: impl FnOnce() -> CurveResult<bool>,
+     policy: &CurveContext,
+ ) -> CurveResult<Option<Classification<std::cmp::Ordering>>> {
++    if std::env::var_os("HYPERCURVE_DIAG_CIRCLE_ORDER").is_some() { eprintln!("circle incident stage: first-point"); }
+     let first = match recursive_projective_point_source(first, policy)? {
+         Classification::Decided(Some(point)) => point,
+         Classification::Decided(None) => return Ok(None),
+@@ -99776,6 +99784,7 @@
+             return Ok(Some(Classification::Uncertain(reason)));
+         }
+     };
++    if std::env::var_os("HYPERCURVE_DIAG_CIRCLE_ORDER").is_some() { eprintln!("circle incident stage: second-point"); }
+     let second = match recursive_projective_point_source(second, policy)? {
+         Classification::Decided(Some(point)) => point,
+         Classification::Decided(None) => return Ok(None),
+@@ -99783,6 +99792,7 @@
+             return Ok(Some(Classification::Uncertain(reason)));
+         }
+     };
++    if std::env::var_os("HYPERCURVE_DIAG_CIRCLE_ORDER").is_some() { eprintln!("circle incident stage: circle-authority"); }
+     let authority = match semicircle.recursive_circle_frame_authority(policy)? {
+         Classification::Decided(Some(authority)) => authority,
+         Classification::Decided(None) => return Ok(None),
+@@ -99790,6 +99800,7 @@
+             return Ok(Some(Classification::Uncertain(reason)));
+         }
+     };
++    if std::env::var_os("HYPERCURVE_DIAG_CIRCLE_ORDER").is_some() { eprintln!("circle incident stage: embed-first"); }
+     let (authority, first) =
+         match embed_recursive_projective_point_source(authority, first, policy)? {
+             Classification::Decided(Some(embedded)) => embedded,
+@@ -99798,6 +99809,7 @@
+                 return Ok(Some(Classification::Uncertain(reason)));
+             }
+         };
++    if std::env::var_os("HYPERCURVE_DIAG_CIRCLE_ORDER").is_some() { eprintln!("circle incident stage: embed-second"); }
+     let (authority, second) =
+         match embed_recursive_projective_point_source(authority, second, policy)? {
+             Classification::Decided(Some(embedded)) => embedded,
+@@ -99806,6 +99818,7 @@
+                 return Ok(Some(Classification::Uncertain(reason)));
+             }
+         };
++    if std::env::var_os("HYPERCURVE_DIAG_CIRCLE_ORDER").is_some() { eprintln!("circle incident stage: lift-first"); }
+     let Some(first) = first.lifted_to(&authority.field) else {
+         return Ok(Some(Classification::Uncertain(
+             UncertaintyReason::Unsupported,
+@@ -99837,6 +99850,7 @@
+                 .and_then(|other| value.add(&other))
+         })
+     };
++    if std::env::var_os("HYPERCURVE_DIAG_CIRCLE_ORDER").is_some() { eprintln!("circle incident stage: cross-sign"); }
+     let cross = if let Some(sign) = cross.bounded_interval_sign(0..=512) {
+         #[cfg(feature = "dispatch-trace")]
+         hyperreal::dispatch_trace::record(

@@ -1,0 +1,28 @@
+{
+  "qualification": "affine-field-v910-terminal.json",
+  "source_manifest": "affine-field-v910-sources.json",
+  "outer_session_reaped": 94737,
+  "validated_files": 2048,
+  "tests": 504,
+  "checks": 9,
+  "repos": {
+    "hypercurve": {
+      "parent": "68e72280b1200871d0f539d90bdb3d1450958b99",
+      "paths": {
+        "src/bezier_offset.rs": "f759961166d9ff7241ba9551cf41829f29d36b7f71feb22a499c132a82510a70",
+        "src/bezier_tangent_order.rs": "5b5de1a0d743ee96cebe4464ef90378c83a5afe39d62bb782414e4c0462c30fc",
+        "tests/hypercurve_bezier_arrangement.rs": "a68c6fd3c77a0030e94ca3e161166b270e3bef2dd15f2563bb644cb37de64d32"
+      }
+    },
+    "hypersolve": {
+      "parent": "0befc6a22ee866cd0364cd8aac7127f703bce453",
+      "paths": {
+        "src/algebraic.rs": "1bf3d6296328f2857061cf057e37e0ba9c482ad28d3f557b3b535c5db070a58a",
+        "src/algebraic_fiber.rs": "b93541474e4ecbfecbc300568f2cf1bab31166d6494f1601f63d622121c054bc",
+        "src/algebraic_tensor_image.rs": "d87e9bf0f601a07efe7d2317a45ac6baf5a0737af1a6cfdfa8a92cb19e93724e"
+      }
+    }
+  },
+  "scope": "Certify affine parameter transport over arbitrary exact Real coefficients in Hypersolve; normalize exact rational candidate powers without restricting nonrational values. Transport finite field coefficients with reduced Horner substitution, selected-root replay, strict pole checks and scoped successful-proof caches. Hypercurve reuses field arithmetic for unresolved source bilinear signs; native and represented kernels and all derivative normalization formulas stay unchanged. All controlled callers use the strict affine API directly. The unchanged public V895 probe repairs both traversal blockers without scalar projection.",
+  "unresolved": "The full exact-geometry goal remains active. Nonaffine selected-parameter embeddings, stationary/arbitrary higher-jet ordering and general Boolean/offset/fillet/chamfer composition closure remain unproved; no universal coefficient-size bound or measured speedup is claimed."
+}

@@ -1,0 +1,49 @@
+{
+  "source_manifest": "retained-linear-component-replay-20260927-v406-sources.json",
+  "source_directory": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/source-archives/retained-linear-component-replay-20260927-v406",
+  "cases": [
+    {
+      "binary": "retained-linear-component-replay-20260927-v406-hypercurve",
+      "name": "curve::curve_fillet::tests::nonlinear_linear_fillet_components_retain_unique_contacts_and_tangents",
+      "returncode": 0,
+      "log": "retained-linear-component-replay-20260927-v406-case-000.log",
+      "elapsed_seconds": 5.921315636020154
+    }
+  ],
+  "builds": [
+    {
+      "crate": "hypercurve",
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "test",
+        "--lib",
+        "--release",
+        "--all-features",
+        "--no-run",
+        "--message-format=json",
+        "--locked",
+        "--offline"
+      ],
+      "returncode": 0,
+      "log": "retained-linear-component-replay-20260927-v406-hypercurve-build.log",
+      "elapsed_seconds": 129.3915176941082,
+      "binary": {
+        "path": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/retained-linear-component-replay-20260927-v406-hypercurve",
+        "sha256": "e5fbd45899a80162aebde89f471ce57701c0ecf4313bb04499a7c4c96aec6216"
+      }
+    }
+  ],
+  "all_processes_reaped": true,
+  "checks": [],
+  "qualification_scope": "Retained chords use an exact affine solve chart and retain original output locations",
+  "expected_cases": {
+    "hypercurve": [
+      "curve::curve_fillet::tests::nonlinear_linear_fillet_components_retain_unique_contacts_and_tangents"
+    ]
+  },
+  "known_unresolved": [
+    "strict_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions",
+    "approximate_512_trim_or_extend_analytic_parallel_support_corners_retain_algebraic_fillet_extensions"
+  ],
+  "qualification_complete": true
+}

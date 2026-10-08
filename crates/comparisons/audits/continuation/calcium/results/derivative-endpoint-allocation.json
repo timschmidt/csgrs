@@ -1,0 +1,14 @@
+{
+  "tag": "derivative-endpoint-allocation",
+  "started": "2026-09-09T15:43:55.084Z",
+  "finished": "2026-09-09T15:43:56.523Z",
+  "elapsedSeconds": 1.436849178,
+  "cwd": "/home/tim/Documents/GitHub/workspace",
+  "command": "node",
+  "args": [
+    "exactcore-hyper-comparison/audits/continuation/calcium/run-derivative-endpoint.mjs",
+    "allocation"
+  ],
+  "code": 0,
+  "signal": null
+}

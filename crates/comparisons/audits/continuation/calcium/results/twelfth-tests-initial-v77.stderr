@@ -1,0 +1,39 @@
+   Compiling hyperreal v0.13.1 (/home/tim/Documents/GitHub/workspace/exactcore-hyper-comparison/audits/continuation/calcium/twelfth-relation-candidate-v77/hyperreal)
+error[E0599]: no associated function or constant named `sqrt2` found for struct `node::Computable` in the current scope
+   --> src/computable/node/twelfth_relation_tests.rs:24:25
+    |
+ 24 |             Computable::sqrt2()).shift_right(2)
+    |                         ^^^^^ associated function or constant not found in `node::Computable`
+    |
+   ::: src/computable/node/representation.rs:8:1
+    |
+  8 | pub struct Computable {
+    | --------------------- associated function or constant `sqrt2` not found for this struct
+    |
+note: if you're trying to build a new `node::Computable` consider using one of the following associated functions:
+      node::Computable::half
+      node::Computable::zero
+      node::Computable::one
+      node::Computable::pi
+      and 65 others
+   --> src/computable/node/primitive_constructors.rs:3:5
+    |
+  3 |     fn half() -> Self {
+    |     ^^^^^^^^^^^^^^^^^
+...
+283 |     pub fn zero() -> Computable {
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+...
+292 |     pub fn one() -> Computable {
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^
+...
+301 |     pub fn pi() -> Computable {
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^
+help: there is a method `sqrt` with a similar name
+    |
+ 24 -             Computable::sqrt2()).shift_right(2)
+ 24 +             Computable::sqrt()).shift_right(2)
+    |
+
+For more information about this error, try `rustc --explain E0599`.
+error: could not compile `hyperreal` (lib test) due to 1 previous error

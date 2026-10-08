@@ -1,0 +1,4 @@
+Warning: HERA.cabal:0:0: A package using 'cabal-version: >=1.2' must use
+section syntax. See the Cabal user guide for details.
+Warning: HERA.cabal:15:1: Tabs used as indentation at 15:1
+Configuring HERA-0.2...

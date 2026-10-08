@@ -1,0 +1,18 @@
+{
+  "parents": {
+    "hypercurve": "0974ff85ec7f47320d2dbd20d7d59ebbc340d2b3",
+    "hypersolve": "41855c3604cbd18605a020d60758c8e5c489b629",
+    "hyperreal": "0cb5f29aee065c73e234e0ebb0a9e106398515bb"
+  },
+  "source_manifest": "selected-cusp-arrangement-20260926-v156-sources.json",
+  "source_directory": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/source-archives/selected-cusp-arrangement-20260926-v156",
+  "build_source_directory": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/build-workspace-20260925",
+  "workspace_guard": "local-chord-complete-replay-20260924-v156-sources.json",
+  "checks": [],
+  "cases": [],
+  "binaries": {},
+  "all_processes_reaped": true,
+  "diagnostic_only": false,
+  "hypercurve_build_returncode": 101,
+  "all_sources_unchanged": true
+}

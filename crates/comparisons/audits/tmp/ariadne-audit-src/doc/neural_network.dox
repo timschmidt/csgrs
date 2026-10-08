@@ -1,0 +1,170 @@
+/***************************************************************************
+ *            python_example_tutorials.dox
+ *
+ *  Copyright  2009-21  Pieter Collins
+ *
+ ****************************************************************************/
+
+/*
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; either version 2 of the License, or
+ *  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Library General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program; if not, write to the Free Software
+ *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+ */
+
+namespace Ariadne {
+
+/*!
+
+\page python_neural_network_page Neural Networks
+
+\dontinclude python/tutorials/neural_network.py
+
+In this tutorial, we'll look at the analysis of a simple neural network with a single hidden layer.
+We will use two input variables, three hidden nodes, and a single output variable, and take a sigmoid activation function.
+
+Before starting, let's take a look at the documentation for the C++ \ref Function "Function<P,SIG>" class.
+The class has two template parameters, the <em>information</em> or <em>computational paradigm</em> parameter <tt>P</tt>, which was explained in the \ref InformationSubModule, and a <em>signature</em> parameter <tt>SIG</tt>, which is explained in \ref function_signature_section.
+
+Hence the C++ template instantiation \ref Function "Function<EffectiveTag,RealVector(Real)>" has Python name \ref Function::EffectiveVectorUnivariateFunction "EffectiveVectorUnivariateFunction". This name is also a C++ type alias, so can also be used in C++ code.
+
+
+\subsection python_symbolic_function_tutorial Symbolic Functions
+
+We first create the activation function \f$\sigma(y)=1/(1+e^{-y})\f$.
+Since the function has a single argument, and returns a single result, it is a \ref ScalarUnivariateFunction.
+Since it is exactly specified and can be evaluated arbitrarily accurately, it is <tt>Effective</tt>.
+Hence the Python class name is \ref Function::EffectiveScalarUnivariateFunction "EffectiveScalarUnivariateFunction". (The C++ template class is \ref Function "Function<EffectiveTag,Real(Real)>".)
+
+There are two main ways of doing this.
+We show how to define \f$\sigma\f$ in terms of the identity function \f$\mathrm{id}(y)=y\f$:
+\skipline Create activation function from the identity function
+\skipline y=
+\skipline sigma=
+As a slightly more efficient alternative to \f$1/x\f$, we can use %Ariadne's builtin <em>reciprocal</em> function <tt>rec</tt>:
+\skipline sigma=
+Alternatively, we can define \f$\sigma\f$ in terms of a variable \f$y\f$.
+Using \f$\lambda\f$-calculus syntax \f$\sigma=\lambda{y}.1/(1+e^{y})\f$ (in pure Python we would write <code>lambda y : 1/(1+exp(-y))</code> ) we have:
+\skipline Variable
+\skipline sigma=
+
+We next create the functions representing the layers.
+
+The first layer is a function which takes two input arguments, \f$x_{0,0}\f$ and \f$x_{0,1}\f$, and returns three output arguments, \f$x_{1,0},x_{1,1},x_{1,2}\f$.
+Hence the function is an \ref Function::EffectiveVectorMultivariateFunction "EffectiveVectorMultivariateFunction",
+To define the layer, we use a matrix \f$A_0\f$ and vector \f$b_0\f$, taking \f$x_{1,i} = \sigma(\sum_{j=0}^{1}A_{0;i,j}x_j+b_{0;i})\f$.
+We define the coefficient matrix and bias vector:
+\skipline A0
+\skipline b0
+Note that the non-integer numbers must be prefixed with the modifier \ref Decimal::dec_ "dec_", which indicates that the writted values should be interpreted exactly as decimal numbers.
+
+Then define the function \f$f_0\f$ in terms of the identity function on the two coordinates \f$x_{0,0}\f$ and \f$x_{0,1}\f$.
+\skipline x0=
+\skipline compose
+\skipline compose
+\skipline compose
+
+The second layer is a function which takes two input arguments, \f$x_{1,0}\f$, \f$x_{1,1}\f$ and \f$x_{1,2}\f$, and returns a single output \f$y=x_2\f$.
+Hence the function is an \ref Function::EffectiveScalarMultivaluedFunction "EffectiveScalarMultivaluedFunction",
+To define the layer, we use a <em>covecter</em> \f$A_1\f$ (a covector is a row-vector, or a matrix with a single row) and scalar \f$b_1\f$, taking \f$x_{2} = \sigma(\sum_{j=0}^{2}A_{1;j}x_j+b_{1})\f$.
+We define the coefficient covector and bias scalar:
+\skipline A1=
+\skipline b1
+Then define the function \f$f_1\f$ in terms of the identity function on the three coordinates:
+\skipline x1=
+\skipline f1=
+
+\subsection python_polynomial_model_tutorial Polynomial function models
+
+The main way of working with functions is to convert to a polynomial approximation.
+The domain of the approximation must be a bounded set, which we take to be an \ref Interval in the case of <tt>Univariate</tt> functions, and a coordinate-aligned \ref Box in the case of <tt>Multivariate</tt> functions.
+
+\skipline dom=
+Note that the non-integer numbers must be prefixed with the modifier \ref Dyadic::dy_ "dy_", which indicates that the written values should be interpreted exactly as <em>dyadic</em> numbers, which have an finite <em>binary</em> expansion; equivalently can be written as \f$p/2^q\f$ for integers \f$p\f$, \f$q\f$; see the \ref Dyadic class for more details. It is an error to use a non-dyadic number.
+\note The requirement that the bounds of the domain type must be exact dyadic numbers may be dropped in a future release of %Ariadne.
+
+To control the accuracy of the approximation, we use a \ref Sweeper class. A general-purpose sweeper is the <em>threshold sweeper</em> \ref ThresholdSweeper, which discards terms of the polynomial if they fall below a certain threshold.
+\skipline swp=
+We can then approximate the model function \a f over \a dom.
+We use a <tt>TaylorFunctionModel</tt> class, where <tt>SIG</tt> is the signature, which must match that of the function itsef, and <tt>PR</tt> is the precision of the floating-point type used in the approximation.
+Here we need a <tt>ScalarMultivariate</tt> function, and use double precision, abbreviated <tt>DP</tt>, and want a <tt>Validated</tt> approximation with known error bound, so the class name to use is \ref ValidatedScalarMultivariateTaylorFunctionModelDP.
+\skipline model_f=
+We can evaluate \f$ f \f$ using either the original function, or the polynomial model.
+\skipline x=
+\skipline f(x)
+\skipline model_f(x)
+
+
+\subsection python_computing_derivatives_tutorial Computing derivatives
+
+Define a point x at which to compute the derivatives of f:
+\skipline x=
+Specify the degree of the highest derivative required:
+\skipline deg=
+
+Compute the derivates of f at x up to the requested degree:
+\skipline dfx=
+\skipline dfx=
+\line dfx:
+
+Extract the gradient of f from the differential:
+\skipline gfx=
+Or compute the gradient directly from f:
+\skipline gfx=
+\line gfx:
+
+Extract the partial derivatve \f$\partial{f}/\partial{x_0}\f$.
+We can either extract from the differential object by saying we want to
+differentiate 1 time with respect to \f$x_0\f$, and 0 times with respect to \f$x_1\f$,
+or extract the 0-th component of the gradient covector:
+\skipline dfx1=
+\skipline dfx1=
+
+Extract the Hessian of f from the differential:
+\skipline hfx=
+\line hfx:
+
+Extract the partial derivatve ddf/dx0dx0.
+We can either extract from the differential object by saying we want to
+differentiate 2 times with respect to \f$x_0\f$, and 0 times with respect to \f$x_1\f$,
+or extract the (0,0)-th component of the hessian symmetric matrix.
+Note that due to the scaling of the Differential class, we need to divide the raw element by 2!*0!.
+(This may be changed in a future version of %Ariadne.)
+\skipline ddfx0x0=
+\skipline ddfx0x0=
+
+Extract the partial derivatve \f$\partial^2{f}/\partial{x_0}\partial{x_1}\f$.
+We can either extract from the differential object by saying we want to
+differentiate 1 time with respect to \f$x_0\f$ and with respect to \f$x_1\f$,
+or extract the (0,1)-th or (1,0)-component of the gradient symmetric matrix
+Due to the scaling of the Differential class, we need to divide the raw element by \f$1!*1!\f$, but this is 1 in this case.
+\skipline ddfx0x1=
+\skipline ddfx0x1=
+\skipline ddfx0x1=
+
+Extract the partial derivatve \f$\partial^3{f}/\partial{x_0}^3\f$:
+\skipline dddfx0x0x0=
+Extract the partial derivatve \f$\partial^3{f}/\partial{x_0}^2\partial{x_1}\f$:
+\skipline dddfx0x0x1=
+
+Differentiate the entire function \f$f\f$ with respect to \f$x_0\f$:
+\skipline df0=
+Evaluate the derivative function at \f$x\f$:
+\skipline df0x=
+Compare results:
+\skipline dfx0:
+\line df0x:
+
+*/
+
+} // namespace Ariadne
+

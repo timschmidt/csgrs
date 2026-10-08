@@ -1,0 +1,40 @@
+{
+  "status": "regression demonstrated, repaired, qualified and committed",
+  "profile": "stationary-ph-shared-integer-gcd-stack.log",
+  "finding": "The current sample reaches Real zero_status and PiLaurentPolynomial reconstruction while Aabb2::union merges the two endpoint bounds in BezierAlgebraicChord2::conservative_bounds_refined_impl. This is conservative scheduling work, but the nonlocal path attempts a tight scalar union before the existing rational enclosure fallback.",
+  "existing_machinery": "Aabb2::certified_rational_outer_envelope already obtains certified Hyperreal dyadic intervals; the local-only chord path uses it before union. The nonlocal path waits until a direct strict union returns uncertainty, which does not bound the cost of the preceding scalar equality work.",
+  "important_constraint": "The existing enclosure precision is fixed at -32. Moving it unconditionally ahead of all complete/refined queries would risk capping geometric refinement. A replacement must honor requested precision or otherwise prove that complete callers do not rely on continued tightening. Do not change the public smallest-box contract of Aabb2::union.",
+  "next_action": [
+    "Audit consumers of conservative_bounds_refined and conservative_local_bounds_refined, including complete point/chord ordering loops.",
+    "Verify a regression that keeps conservative bounds rational and demand-driven while continuing to tighten beyond 32 and 512 bits. Include exact nonrational endpoints, near-coincident coordinates, both axes, reversed chords and both exact execution contexts.",
+    "Reuse the existing certified envelope machinery, migrate its callers directly if a precision parameter is needed, and remove duplicated local/nonlocal union dispatch where justified.",
+    "Keep failure conservative: unavailable finite bounds must retain candidates or rejoin complete geometry. Never use an approximate equality as topology evidence."
+  ],
+  "implementation_sites": [
+    "hypercurve/src/bezier_offset.rs: BezierAlgebraicChord2::conservative_bounds_refined_impl (near 75094)",
+    "hypercurve/src/bbox.rs: Aabb2::certified_rational_outer_envelope (near 395)",
+    "11 live call sites in bezier_offset.rs and curve_region_boolean.rs"
+  ],
+  "scope": "A sampled stack does not prove chronological progress or account for the complete inward timeout. Do not add an eager global scalar normalization or a new point/curve carrier.",
+  "observed_in_commits": {
+    "hyperreal": "a2da8e2b5de9a1a4653d3662f2f05cb6533fd7ef",
+    "hypersolve": "3ac2e7510936a11c7bf2eac5dfbe3f9f851afe55",
+    "hypercurve": "6a69c9c71d96ac13a77c32aa7bf0281718ec7514",
+    "hyperbrep": "8a84ee7db02fd2720ac89a1a6a227ee4ec2a8171"
+  },
+  "qualification_preceding_followup": "shared-integer-gcd-qualification.json",
+  "final_unloaded_probe": {
+    "first_offset_seconds": 3.935060758,
+    "total_limit_seconds": 60,
+    "exit_code": 124,
+    "second_result": null
+  },
+  "commits": {
+    "hypercurve": "025dcd123335ace6426c2ed4903607d2cc33a6ea",
+    "hypersolve": "3ac2e7510936a11c7bf2eac5dfbe3f9f851afe55",
+    "hyperreal": "a2da8e2b5de9a1a4653d3662f2f05cb6533fd7ef",
+    "hyperbrep": "8a84ee7db02fd2720ac89a1a6a227ee4ec2a8171"
+  },
+  "qualification": "refined-chord-envelope-qualification.json",
+  "next": "mixed-point-axis-order-followup.json"
+}

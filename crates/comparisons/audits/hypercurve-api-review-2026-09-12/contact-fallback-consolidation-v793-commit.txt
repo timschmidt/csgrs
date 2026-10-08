@@ -1,0 +1,13 @@
+Share the retained rational contact fallback across circle kernels
+
+Use the existing classified point authority in five circle contact and
+contact-map paths. Remove repeated source construction and preserve exact
+scalar failure reasons instead of relabeling them as affine poles.
+
+Selected roots, circle incidence, branch checks and lazy point definitions
+are unchanged. No compatibility adapter or new representation is added.
+
+Validation: 166 release cases across eight pinned binaries, including
+12 additional existing circle, overlap, pole-partition and composition
+regressions. Both Hypercurve Clippy configurations, formatting, three fuzz
+targets, rustdoc, Hyperbrep Clippy and Csgrs all-target check pass.

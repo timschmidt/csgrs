@@ -1,0 +1,815 @@
+   Compiling hyperreal v0.13.1 (/home/tim/Documents/GitHub/workspace/hyperreal)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1.88s
+     Running unittests src/lib.rs (.audit-targets/ireal-derivative-18555/debug/deps/hyperreal-a346315a45113d5d)
+
+running 651 tests
+test computable::approximation::chudnovsky_pi_tests::high_precision_pi_honors_a_preexisting_abort ... ok
+test computable::format::tests::actual_zero ... ok
+test computable::format::tests::digits_round_exp_false ... ok
+test computable::format::tests::digits_round_zero_true ... ok
+test computable::format::tests::almost ... ok
+test computable::format::tests::disp_big ... ok
+test computable::format::tests::disp_almost_one_exp ... ok
+test computable::format::tests::disp_almost_one ... ok
+test computable::format::tests::disp_one ... ok
+test computable::format::tests::disp_one_third ... ok
+test computable::format::tests::disp_small ... ok
+test computable::format::tests::disp_tiny ... ok
+test computable::format::tests::disp_too_small ... ok
+test computable::format::tests::disp_cancellation_zero_has_bounded_demand ... ok
+test computable::format::tests::disp_two_thirds ... ok
+test computable::format::tests::exp_smol ... ok
+test computable::format::tests::disp_sixty_pi ... ok
+test computable::format::tests::pinch ... ok
+test computable::format::tests::exp_huge_neg ... ok
+test computable::node::linear_demand_tests::linear_demand_hint_saturates_and_accounts_for_binary_scaling ... ok
+test computable::node::linear_demand_tests::linear_demand_hint_survives_independent_fact_updates ... ok
+test computable::format::tests::exp_two_thirds ... ok
+test computable::node::tests::aborted_approximation_is_not_shared_through_cache ... ok
+test computable::format::tests::exp_pi ... ok
+test computable::node::tests::add ... ok
+test computable::node::tests::add_ignores_tiny_term_at_target_precision ... ok
+test computable::node::tests::add_cancels_a_commuted_exact_pair_without_general_reordering ... ok
+test computable::node::inverse_trig_presence_survives_bound_cache_updates ... ok
+test computable::node::tests::add_cancels_structurally_shared_term_across_nested_sum ... ok
+test computable::node::tests::add_does_not_ignore_tiny_opposite_sign_term ... ok
+test computable::format::tests::exp_bigger ... ok
+test computable::node::tests::add_folds_rational_terms_across_nested_sum ... ok
+test computable::node::tests::add_with_dominant_term_has_structural_bound ... ok
+test computable::node::linear_demand_tests::linear_demand_schedule_does_not_publish_aborted_results ... ok
+test computable::node::tests::affine_offset_scaling_keeps_extreme_binary_exponents_exact ... ok
+test computable::node::tests::approximation_bounds_preserve_the_unit_error_boundary ... ok
+test computable::node::tests::asinh_uses_series_only_below_the_half_boundary ... ok
+test computable::node::tests::approximation_cache_does_not_weaken_exact_structural_bound ... ok
+test computable::node::tests::bigger ... ok
+test computable::node::tests::binary64_filter_constant_enclosures_cover_mpfr_values ... ok
+test computable::node::tests::atan_reduction_aborted_evaluation_does_not_poison_the_cache ... ok
+test computable::format::tests::disp_tiny_computable_has_bounded_demand ... ok
+test computable::node::tests::atan_reduction_rejects_large_negative_rough_inputs ... ok
+test computable::node::tests::atan_reduction_requires_a_positive_sign_for_large_reciprocal_shortcut ... ok
+test computable::node::tests::certified_compare_cascade_matches_separated_full_evaluation_corpus ... ok
+test computable::node::tests::algebraic_separation_bounds_certify_archived_radical_identities ... ok
+test computable::node::tests::atan_reduction_does_not_certify_domain_from_an_estimated_magnitude ... ok
+test computable::node::tests::cloned_expression_can_be_refined_concurrently ... ok
+test computable::node::tests::affine_offsets_preserve_shared_bases_through_exact_scaling ... ok
+test computable::node::tests::clones_share_immutable_expression_nodes ... ok
+test computable::node::tests::compare_absolute_orders_mixed_exact_leaf_kinds_by_signed_value ... ok
+test computable::node::tests::compare_absolute_orders_zero_and_signed_irrationals_by_value ... ok
+test computable::node::tests::compare_absolute_uses_exact_msd_gap_shortcut ... ok
+test computable::node::tests::compare_absolute_uses_exact_shortcuts ... ok
+test computable::node::tests::compare_to_accepts_clone_shared_composite_expression ... ok
+test computable::node::tests::compare_to_orders_structurally_shared_signed_perturbations ... ok
+test computable::node::tests::compare_to_retains_exact_perturbation_sign_below_refinement_floor ... ok
+test computable::node::tests::compare ... ok
+test computable::node::tests::cos_one ... ok
+test computable::node::tests::compare_to_uses_exact_msd_gap_shortcut ... ok
+test computable::node::tests::cos_zero ... ok
+test computable::node::tests::compare_to_uses_exact_sign_and_rational_shortcuts ... ok
+test computable::node::tests::computable_is_send_and_sync ... ok
+test computable::node::tests::deferred_exp_does_not_cache_an_aborted_range_check ... ok
+test computable::node::tests::deep_multiply_chain_of_ones_stays_exact ... ok
+test computable::node::tests::deep_multiply_chain_by_one_preserves_irrational ... ok
+test computable::node::tests::double_negate_collapses_at_construction ... ok
+test computable::node::tests::e_constant_cache_is_shared ... ok
+test computable::node::tests::endpoint_inverse_trig_computable_kernels_approximate_expected_values ... ok
+test computable::format::tests::disp_threes ... ok
+test computable::node::tests::exact_endpoint_replays_do_not_gain_nonzero_certificates ... ok
+test computable::node::tests::exact_huge_rational_trig_uses_correct_quadrant ... ok
+test computable::node::tests::exact_large_rational_trig_uses_correct_quadrant ... ok
+test computable::node::tests::exact_sign_orders_nonzero_quadratic_surds ... ok
+test computable::node::tests::erf_known_values ... ok
+test computable::node::tests::exact_sign_reduces_quadratic_surd_field_identities ... ok
+test computable::node::tests::exact_transcendental_identities ... ok
+test computable::node::tests::exp_and_ln_round_trip ... ok
+test computable::node::tests::deep_add_chain_approximates_without_recursive_walk ... ok
+test computable::node::tests::exp_large_argument_reduces_by_ln2 ... ok
+test computable::node::tests::exp_near_prescaled_limit_round_trip ... ok
+test computable::node::tests::deep_structural_bound_chain ... ok
+test computable::node::tests::exp_negative_is_inverse ... ok
+test computable::node::tests::exp_range_filter_requires_exact_cached_magnitude ... ok
+test computable::node::tests::exp_one_uses_dedicated_e_constant ... ok
+test computable::node::tests::expm1_coarse_shortcut_requires_a_proven_range ... ok
+test computable::node::tests::expm1_preserves_small_argument_and_sign ... ok
+test computable::node::tests::huge_trig_arguments_reduce_correctly ... ok
+test computable::node::tests::independently_expanded_quadratic_products_cancel_exactly ... ok
+test computable::node::tests::exp_of_shared_and_inexact_magnitude_nodes_matches_directed_mpfr ... ok
+test computable::node::tests::integer_exp_uses_binary_power_only_through_the_retained_limit ... ok
+test computable::node::tests::integer_pi_atan_replay_survives_nested_half_pi_cancellation ... ok
+test computable::node::tests::inverse_atan_linear_sign_includes_the_argument_sign ... ok
+test computable::node::tests::inverse_hyperbolic_computable_kernels_approximate_expected_values ... ok
+test computable::node::tests::inverse_of_inverse_of_nonzero_value_collapses_at_construction ... ok
+test computable::node::tests::inverse_of_negative_nonzero_value_normalizes_sign ... ok
+test computable::node::tests::inverse_of_exact_fraction_has_structural_bound ... ok
+test computable::node::tests::inverse_of_shifted_nonzero_value_collapses_to_shifted_inverse ... ok
+test computable::node::tests::inverse_of_square_of_nonzero_value_collapses_at_construction ... ok
+test computable::node::tests::inverse_of_scaled_irrational_uses_structural_msd ... ok
+test computable::node::tests::demand_sized_sqrt_seeds_match_directed_mpfr ... ok
+test computable::node::tests::inverse_trig_computable_kernels_approximate_expected_values ... ok
+test computable::node::tests::iter_msd ... ok
+test computable::node::tests::ln_constant_cache_is_shared ... ok
+test computable::node::tests::ln_exact_binary_scaled_rational ... ok
+test computable::node::tests::layout_sizes ... ok
+test computable::node::tests::ln ... ok
+test computable::node::tests::ln_large_power_of_two ... ok
+test computable::node::tests::ln_sqrt_pi ... ok
+test computable::node::tests::ln_near_prescaled_limit_round_trip ... ok
+test computable::node::tests::ln_smooth_rational_reuses_shared_prime_logs ... ok
+test computable::node::tests::ln_tiny_power_of_two ... ok
+test computable::node::tests::msd_refines_ambiguous_unit_approximations_at_binary_boundaries ... ok
+test computable::node::tests::msd ... ok
+test computable::node::tests::multiply ... ok
+test computable::node::tests::multiply_by_negative_one_collapses_to_negate ... ok
+test computable::node::tests::multiply_by_negative_power_of_two_fraction_collapses_to_shift_and_negate ... ok
+test computable::node::tests::multiply_combines_exact_scales ... ok
+test computable::node::tests::multiply_by_power_of_two_fraction_collapses_to_shift ... ok
+test computable::node::tests::multiply_opposite ... ok
+test computable::node::tests::nested_offsets_collapse_at_construction ... ok
+test computable::node::tests::negate ... ok
+test computable::node::tests::normal_density_and_cdf_known_values ... ok
+test computable::node::tests::normal_tail_nodes_have_structural_signs ... ok
+test computable::node::tests::normalized_half_pi_complement_retains_its_atan_argument ... ok
+test computable::node::tests::opposite_sign_quadratic_surd_is_certified_nonzero ... ok
+test computable::node::tests::owned_rational_trig_helpers_match_generic_paths ... ok
+test computable::node::tests::normal_quantile_inverts_cdf ... ok
+test computable::node::tests::pi_cache_is_shared ... ok
+test computable::node::tests::pi_laurent_arithmetic_canonicalizes_nested_parameter_replay ... ok
+test computable::node::tests::algebraic_generator_dependencies_and_perturbations_are_exact ... ok
+test computable::node::tests::pi_cache_reuses_warmed_tau_cache ... ok
+test computable::node::tests::prec ... ok
+test computable::node::tests::prec_atan_239 ... ok
+test computable::node::tests::prec_atan_5 ... ok
+test computable::node::tests::prec_pi ... ok
+test computable::format::tests::disp_pi ... ok
+test computable::node::tests::quadratic_surd_atan_anchors_survive_computable_composition ... ok
+test computable::node::tests::rational ... ok
+test computable::node::tests::rational_msd_exact_for_small_fraction ... ok
+test computable::node::tests::rational_zero_and_one_use_dedicated_nodes ... ok
+test computable::node::tests::algebraic_separation_resource_caps_fail_closed ... ok
+test computable::node::tests::rational_normal_form_retains_only_successful_sign_proofs ... ok
+test computable::node::tests::scale_up ... ok
+test computable::node::tests::scaled_ln1 ... ok
+test computable::node::tests::scaled_ln1_4 ... ok
+test computable::node::tests::shared_pi_reciprocals_cancel_across_a_product ... ok
+test computable::node::tests::shifted ... ok
+test computable::node::tests::shared_constant_cache_reuses_work_across_threads ... ok
+test computable::node::tests::sign_until_respects_precision_floor ... ok
+test computable::node::tests::sign_normalization_exposes_scaled_product_cancellation ... ok
+test computable::node::tests::sign_until_uses_structural_bounds_without_refinement ... ok
+test computable::node::tests::sin_large_arguments ... ok
+test computable::node::tests::sin_medium_arguments ... ok
+test computable::node::tests::sin_cos_direct_medium_exact_rationals_match_reduced_forms ... ok
+test computable::node::tests::sin_near_half_pi ... ok
+test computable::node::tests::sin_matches_shifted_cos_identity ... ok
+test computable::node::tests::sin_near_pi_multiples ... ok
+test computable::node::tests::sin_negative_arguments ... ok
+test computable::node::tests::pi_laurent_normal_form_declines_wide_opaque_expression_dags ... ok
+test computable::node::tests::sqrt_of_exact_rational_square_is_exact ... ok
+test computable::node::tests::sin_small_arguments ... ok
+test computable::node::tests::sqrt_of_exactly_scaled_square_collapses_at_construction ... ok
+test computable::node::tests::sqrt_of_scaled_square_tracks_structural_msd ... ok
+test computable::node::tests::sqrt_square_round_trip ... ok
+test computable::node::tests::sqrt_of_square_of_negative_value_returns_absolute_value ... ok
+test computable::node::tests::square_of_negative_fraction_has_structural_bound ... ok
+test computable::node::tests::sqrt_squarefree_two_three_reuses_shared_constants ... ok
+test computable::node::tests::sqrt_square_unresolved_sign_reuses_one_child_and_does_not_cache_aborts ... ok
+test computable::node::tests::square_of_power_of_two_scaled_value_collapses_to_shifted_square ... ok
+test computable::node::tests::square_of_negative_value_collapses_to_square_of_positive_value ... ok
+test computable::node::tests::square_of_sqrt_of_positive_value_collapses_at_construction ... ok
+test computable::node::tests::structural_bound_walk_reuses_shared_dag_subtrees ... ok
+test computable::node::tests::sqrt_square_raw_nodes_preserve_exact_prefix_bounds_and_history ... ok
+test computable::node::tests::square_of_scaled_irrational_reuses_exact_scale ... ok
+test computable::node::tests::structural_facts_for_constant_rational_offset_certificates ... ok
+test computable::node::tests::structural_facts_for_shared_constant ... ok
+test computable::node::tests::structural_facts_for_exact_rationals ... ok
+test computable::node::tests::tau_cache_is_shared ... ok
+test computable::node::tests::tan_near_half_pi ... ok
+test computable::node::tests::tan_small_and_medium_arguments ... ok
+test computable::node::tests::structural_equality_visits_shared_dag_pairs_once ... ok
+test computable::node::tests::try_compare_to_handles_identical_symbolic_values ... ok
+test computable::node::tests::tiny_non_rational_asin_uses_prescaled_series ... ok
+test computable::node::tests::tiny_non_rational_atanh_uses_prescaled_series ... ok
+test computable::node::tests::tau_cache_reuses_warmed_pi_cache ... ok
+test computable::node::tests::warmed_zero_sum_product_stays_zero ... ok
+test computable::node::tests::zero_status_uses_structural_facts_without_refinement ... ok
+test rational::arithmetic::tests::add_and_subtract_one_helpers_match_generic_arithmetic ... ok
+test computable::node::tests::unsigned_magnitude_facts_do_not_determine_signed_order ... ok
+test rational::arithmetic::tests::affine_plane3_dyadic_stack_matches_expanded_determinants_and_falls_back ... ok
+test rational::arithmetic::tests::backend_division_classifier_matches_locked_num_bigint_thresholds ... ok
+test rational::arithmetic::tests::average_pair_matches_expanded_exact_arithmetic ... ok
+test rational::arithmetic::tests::backend_radix_classifier_matches_locked_num_bigint_threshold ... ok
+test rational::arithmetic::tests::backend_multiplication_classifier_matches_locked_num_bigint_thresholds ... ok
+test rational::arithmetic::tests::borrowed_linear_operations_retain_only_after_reuse_evidence ... ok
+test rational::arithmetic::tests::block_wise_barrett_batch_reuses_one_reciprocal ... ok
+test rational::arithmetic::tests::checked_exact_integer_quotient_requires_divisible_integers ... ok
+test computable::format::tests::disp_ninth ... ok
+test rational::arithmetic::tests::clear_common_denominator_preserves_one_positive_shared_scale ... ok
+test computable::node::tests::signed_rational_asin_deferred_node_matches_acos_complement ... ok
+test rational::arithmetic::tests::clear_common_denominator_slice_preserves_empty_input ... ok
+test rational::arithmetic::tests::clones_share_storage_without_sharing_arithmetic_results ... ok
+test rational::arithmetic::tests::checked_exact_integer_scaled_difference_matches_small_integers ... ok
+test rational::arithmetic::tests::compact_once_box_publishes_one_value_and_drops_every_candidate ... ok
+test rational::arithmetic::tests::compare ... ok
+test rational::arithmetic::tests::decimal ... ok
+test rational::arithmetic::tests::decimals ... ok
+test rational::arithmetic::tests::direct_shifted_stack_products_match_biguint_boundaries ... ok
+test rational::arithmetic::tests::direct_shifted_wide_narrow_product_matches_biguint ... ok
+test rational::arithmetic::tests::display ... ok
+test rational::arithmetic::tests::divide_by_zero ... ok
+test computable::node::tests::atan_reduction_boundary_accepts_every_valid_coarse_cache_rounding ... ok
+test rational::arithmetic::tests::binary_word_gcd_matches_euclidean_reference ... ok
+test rational::arithmetic::tests::divide_conquer_decimal_parser_matches_backend_reference ... ok
+test computable::node::tests::direct_nth_root_approximations_match_mpfr ... ok
+test rational::arithmetic::tests::dot_products_preserve_dyadic_exactness ... ok
+test rational::arithmetic::tests::dyadic_add_sub_stay_reduced ... ok
+test rational::arithmetic::tests::direct_binary64_words_match_canonical_rational_words ... ok
+test computable::node::tests::certified_small_angle_quotients_match_mpfr ... ok
+test rational::arithmetic::tests::dyadic_difference_numerator_query_is_reduced_and_unsigned ... ok
+test rational::arithmetic::tests::dyadic_dot_stack_accumulator_handles_wide_products_alignment_and_borrow ... ok
+test rational::arithmetic::tests::dyadic_dot_stack_accumulator_preserves_arbitrary_precision_fallback ... ok
+test rational::arithmetic::tests::dyadic_dot_word_accumulator_handles_wide_denominators_and_falls_back ... ok
+test rational::arithmetic::tests::dynamic_signed_product_sum_ordering_matches_materialized_result ... ok
+test computable::node::tests::bounded_integer_exp_matches_ln2_reduction ... ok
+test rational::arithmetic::tests::exact_dyadic_f64_view_rejects_unrepresentable_values ... ok
+test rational::arithmetic::tests::equality_cross_multiplies_unequal_denominators ... ok
+test rational::arithmetic::tests::exact_msd_handles_large_shift_boundaries_without_rounding ... ok
+test rational::arithmetic::tests::exact_word_dyadic_view_is_bit_exact_across_the_fast_path ... ok
+test rational::arithmetic::tests::dyadic_comparison_handles_unequal_denominators_without_cross_products ... ok
+test rational::arithmetic::tests::dot_products_match_pairwise_arithmetic ... ok
+test rational::arithmetic::tests::dot_products_handle_equal_non_dyadic_denominators ... ok
+test rational::arithmetic::tests::f64_enclosure_contains_wide_non_dyadic_rationals ... ok
+test rational::arithmetic::tests::finite_float_imports_reuse_small_canonical_storage ... ok
+test rational::arithmetic::tests::f64_enclosure_stays_finite_at_both_overflow_boundaries ... ok
+test rational::arithmetic::tests::fract ... ok
+test rational::arithmetic::tests::f64_enclosure_contains_varied_exact_rational_corpus ... ok
+test rational::arithmetic::tests::fused_unplanned_signs_preserve_zero_single_and_mixed_product_ordering ... ok
+test rational::arithmetic::tests::general_perfect_power_detection_matches_integer_definition ... ok
+test rational::arithmetic::tests::half_plus_one_times_two ... ok
+test rational::arithmetic::tests::identity_constructors_share_canonical_storage ... ok
+test rational::arithmetic::tests::integer_add_sub_preserves_reduced_fraction_denominator ... ok
+test rational::arithmetic::tests::inverse_first_cache_still_retains_two_linear_results ... ok
+test rational::arithmetic::tests::dyadic_denominator_shift_is_retained ... ok
+test rational::arithmetic::tests::large_power_of_two_square_extraction_splits_the_exponent ... ok
+test rational::arithmetic::tests::checked_exact_integer_cross_difference_quotient_matches_small_integers ... ok
+test rational::arithmetic::tests::block_wise_barrett_matches_backend_div_rem ... ok
+test rational::arithmetic::tests::large_square_factor_schedule_preserves_canonical_residuals ... ok
+test rational::arithmetic::tests::lazy_internal_fraction_is_canonical_at_observable_boundaries ... ok
+test rational::arithmetic::tests::leading_bit_interval_comparison_matches_large_cross_products ... ok
+test rational::arithmetic::tests::leading_significand_cross_products_certify_exact_order ... ok
+test rational::arithmetic::tests::lossy_dyadic_view_handles_wide_geometry_coefficients ... ok
+test rational::arithmetic::tests::lazy_internal_canonicalization_is_shared_across_threads ... ok
+test rational::arithmetic::tests::lossy_view_preserves_every_retained_dyadic_fact_path ... ok
+test rational::arithmetic::tests::magnitude_at_least_power_of_two_handles_threshold_boundaries ... ok
+test rational::arithmetic::tests::mean3_refs_matches_expanded_exact_arithmetic ... ok
+test rational::arithmetic::tests::mean_refs_matches_expanded_exact_arithmetic ... ok
+test rational::arithmetic::tests::negation_first_cache_still_retains_inverse_and_two_linear_results ... ok
+test computable::node::linear_demand_tests::linear_demand_schedule_matches_independent_signed_root_enclosures ... ok
+test rational::arithmetic::tests::exact_msd_matches_f64_floor_for_small_rationals ... ok
+test rational::arithmetic::tests::numerator_magnitude_gcd_ignores_signs_and_denominators ... ok
+test rational::arithmetic::tests::observed_linear_operations_retain_exact_results_without_competing_for_one_slot ... ok
+test rational::arithmetic::tests::observed_operand_retains_two_distinct_linear_results ... ok
+test rational::arithmetic::tests::normal_dyadic_view_matches_gmp_rounding ... ok
+test rational::arithmetic::tests::observed_right_operand_can_retain_a_directed_difference ... ok
+test rational::arithmetic::tests::one_plus_two ... ok
+test rational::arithmetic::tests::operations_work_on_refs ... ok
+test rational::arithmetic::tests::paired_complex_product_matches_independent_exact_arithmetic ... ok
+test rational::arithmetic::tests::operations_work_on_refs_on_rhs ... ok
+test rational::arithmetic::tests::parse ... ok
+test rational::arithmetic::tests::parse_fraction_rejects_zero_denominator_and_reduces ... ok
+test rational::arithmetic::tests::paired_complex_quotient_matches_independent_exact_arithmetic ... ok
+test rational::arithmetic::tests::parse_fractions ... ok
+test rational::arithmetic::tests::perfect_nth_root_detects_exact_rational_roots ... ok
+test rational::arithmetic::tests::power ... ok
+test rational::arithmetic::tests::power_of_two_shift_detects_only_power_of_two_ratios ... ok
+test rational::arithmetic::tests::primitive_bigint_ratio_matches_rational_components ... ok
+test rational::arithmetic::tests::primitive_integer_ratio_clears_denominators_and_content ... ok
+test rational::arithmetic::tests::primitive_small_integer_constructors_share_canonical_storage ... ok
+test rational::arithmetic::tests::product_retention_occupies_only_one_primary_slot ... ok
+test rational::arithmetic::tests::perfect_square_residue_filter_never_rejects_a_square ... ok
+test rational::arithmetic::tests::products_retain_exact_results_in_both_operand_orders ... ok
+test rational::arithmetic::tests::rational_data_layout_stays_bounded ... ok
+test rational::arithmetic::tests::rational_operation_gcd_dispatch_handles_mixed_width_and_zero_operands ... ok
+test rational::arithmetic::tests::reduced_dyadic_shift_probe_preserves_every_representation_path ... ok
+test rational::arithmetic::tests::reduced_word_construction_preserves_narrow_and_wide_parts ... ok
+test rational::arithmetic::tests::repeated_negation_reuses_exact_storage_without_a_cycle ... ok
+test rational::arithmetic::tests::repeated_small_power_reuses_the_retained_product_chain ... ok
+test rational::arithmetic::tests::repeated_square_reduction_reuses_exact_factors_without_a_cycle ... ok
+test rational::arithmetic::tests::exact_dyadic_f64_view_round_trips_finite_binary64_values ... ok
+test rational::arithmetic::tests::iterator_products_balance_exact_factors_and_preserve_semantics ... ok
+test rational::arithmetic::tests::recursive_half_gcd_preserves_matrix_and_stop_invariants ... ok
+test rational::arithmetic::tests::f64_enclosure_bit_length_scaling_matches_gmp ... ok
+test rational::arithmetic::tests::same ... ok
+test rational::arithmetic::tests::same_denominator_reports_reduced_common_scale ... ok
+test rational::arithmetic::tests::scientific_notation_parses_as_an_exact_rational ... ok
+test rational::arithmetic::tests::native_word_product_sums_match_stack_accumulation ... ok
+test rational::arithmetic::tests::secondary_product_retention_handles_two_occupied_primary_slots ... ok
+test rational::arithmetic::tests::self_dot_admits_after_observation_and_reuses_result ... ok
+test rational::arithmetic::tests::scientific_notation_validates_grammar_and_bounds_expansion ... ok
+test rational::arithmetic::tests::shared_inverse_is_retained_with_weak_reverse_link ... ok
+test rational::arithmetic::tests::shared_owned_negation_reuses_retained_storage ... ok
+test rational::arithmetic::tests::sign_queries_are_strict ... ok
+test rational::arithmetic::tests::signed_product_sum_cross_cancels_before_word_overflow ... ok
+test rational::arithmetic::tests::signed_product_sum_dyadic_word_accumulator_materializes_a_wide_denominator ... ok
+test rational::arithmetic::tests::signed_product_sum_falls_back_when_dyadic_alignment_exceeds_a_word ... ok
+test rational::arithmetic::tests::signed_product_sum_handles_equal_non_dyadic_denominators ... ok
+test rational::arithmetic::tests::signed_product_sum_matches_pairwise_arithmetic ... ok
+test rational::arithmetic::tests::signed_product_sum_ordering_four_products_preserves_wide_dyadic_fallbacks ... ok
+test rational::arithmetic::tests::signed_product_sum_ordering_matches_materialized_result_and_overflow_fallback ... ok
+test rational::arithmetic::tests::compact_dyadic_parameter_comparison_matches_biguint_cross_products ... ok
+test rational::arithmetic::tests::signed_product_sum_ordering_six_products_preserves_all_fallbacks ... ok
+test rational::arithmetic::tests::signed_product_sum_preserves_dyadic_exactness ... ok
+test rational::arithmetic::tests::signed_product_sum_shared_denominator_consumes_common_scale ... ok
+test rational::arithmetic::tests::signed_product_sum_word_overflow_falls_back_to_biguint ... ok
+test rational::arithmetic::tests::signs ... ok
+test rational::arithmetic::tests::small_dyadic_products_share_canonical_storage ... ok
+test rational::arithmetic::tests::small_general_products_share_canonical_storage ... ok
+test rational::arithmetic::tests::sqrt_trouble ... ok
+test rational::arithmetic::tests::square_reduced ... ok
+test rational::arithmetic::tests::square_reduction_first_cache_retains_both_unary_and_linear_pairs ... ok
+test rational::arithmetic::tests::square_reduction_rationalizes_the_residual_denominator ... ok
+test rational::arithmetic::tests::three_divided_by_six ... ok
+test rational::arithmetic::tests::trunc ... ok
+test rational::arithmetic::tests::two_minus_one ... ok
+test rational::arithmetic::tests::two_times_three ... ok
+test rational::arithmetic::tests::unique_owned_negation_discards_results_for_the_old_sign ... ok
+test rational::arithmetic::tests::unsigned_lehmer_matrix_application_matches_signed_magnitudes ... ok
+test rational::arithmetic::tests::wide_dyadic_add_sub_matches_fraction_construction ... ok
+test rational::arithmetic::tests::wide_dyadic_comparison_reuses_retained_denominator_shifts ... ok
+test rational::arithmetic::tests::wide_dyadic_multiplication_cross_cancels_before_products ... ok
+test rational::arithmetic::tests::wide_dyadic_word_numerator_product_matches_biguint_reference ... ok
+test rational::arithmetic::tests::unplanned_four_and_six_term_dyadic_word_totals_match_two_pass_alignment ... ok
+test rational::arithmetic::tests::wide_magnitude_gcd_handles_balanced_and_wide_word_operands ... ok
+test rational::arithmetic::tests::word_comparison_falls_back_exactly_when_cross_products_overflow ... ok
+test rational::arithmetic::tests::word_sized_add_sub_matches_arbitrary_precision_fallback ... ok
+test rational::arithmetic::tests::word_multiplication_cross_cancellation_stays_reduced ... ok
+test rational::arithmetic::tests::word_sized_mul_div_matches_arbitrary_precision_fallback ... ok
+test rational::arithmetic::tests::word_sized_square_extraction_preserves_exact_product ... ok
+test rational::convert::tests::f64_import_retains_exact_view_for_normal_subnormal_and_integer_values ... ok
+test rational::convert::tests::half_from_float ... ok
+test rational::convert::tests::huge ... ok
+test rational::convert::tests::negative ... ok
+test rational::convert::tests::dyadic_arithmetic_stays_reduced ... ok
+test rational::convert::tests::not_int ... ok
+test rational::convert::tests::nines ... ok
+test rational::convert::tests::reduced_subnormal_f64 ... ok
+test rational::convert::tests::reduced_binary_fraction_f64 ... ok
+test rational::convert::tests::repr_f32 ... ok
+test rational::convert::tests::repr_f64 ... ok
+test rational::arithmetic::tests::shifted_biguint_comparison_matches_materialized_shifts ... ok
+test rational::convert::tests::unsigned_integers ... ok
+test rational::convert::tests::signed_integers ... ok
+test real::arithmetic::tests::affine_det2_exact_word_filter_handles_unrelated_denominators ... ok
+test real::arithmetic::tests::abs_and_angle_conversions_preserve_exact_real_structure ... ok
+test rational::convert::tests::zero ... ok
+test real::arithmetic::tests::affine_det2_filter_matches_one_shot_filter ... ok
+test real::arithmetic::tests::affine_det2_pair_filter_matches_one_shot_directions ... ok
+test real::arithmetic::tests::affine_det3_filter_matches_one_shot_filter ... ok
+test real::arithmetic::tests::aggregate_helpers_keep_values_in_real_space ... ok
+test real::arithmetic::tests::average_pair_preserves_exact_and_symbolic_fast_paths ... ok
+test real::arithmetic::tests::certified_affine_det2_sign_bounds_subnormal_products_absolutely ... ok
+test rational::arithmetic::tests::normalized_significand_intervals_match_biguint_reference ... ok
+test real::arithmetic::tests::certified_affine_det2_sign_only_returns_exact_signs ... ok
+test computable::node::tests::binary64_filter_respects_floor_and_matches_fine_certified_signs ... ok
+test real::arithmetic::tests::certified_affine_det3_sign_only_returns_exact_signs ... ok
+test rational::arithmetic::tests::rust_native_ntt_matches_backend_products ... ok
+test rational::arithmetic::tests::rust_native_toom8_matches_backend_products ... ok
+test real::arithmetic::tests::certified_incircle2_sign_only_returns_exact_signs ... ok
+test rational::arithmetic::tests::lehmer_magnitude_gcd_matches_backend_reference ... ok
+test real::arithmetic::tests::certified_insphere3_sign_only_returns_exact_signs ... ok
+test real::arithmetic::tests::certified_integer_helpers_make_discontinuous_decisions ... ok
+test real::arithmetic::tests::certified_linear_form3_filter_only_returns_exact_signs ... ok
+test real::arithmetic::tests::certified_affine_det3_sign_matches_exact_randomized_determinants ... ok
+test real::arithmetic::tests::dominant_affine_cross_axis_word_path_is_exact ... ok
+test real::arithmetic::tests::hypot_helpers_preserve_exact_lengths ... ok
+test real::arithmetic::tests::incircle2_filter_matches_one_shot_filter ... ok
+test real::arithmetic::tests::insphere3_filter_matches_one_shot_filter ... ok
+test real::arithmetic::tests::layout_sizes ... ok
+test rational::arithmetic::tests::half_gcd_candidate_matches_lehmer_baseline ... ok
+test real::arithmetic::tests::linear_form3_filter_only_returns_exact_signs ... ok
+test rational::arithmetic::tests::rust_native_toom6_matches_backend_products ... ok
+test real::arithmetic::tests::long_homogeneous_symbolic_sums_preserve_one_scaled_basis ... ok
+test real::arithmetic::tests::long_homogeneous_sums_collapse_to_the_exact_rational ... ok
+test real::arithmetic::tests::long_polynomial_evaluation_matches_exact_even_odd_decomposition ... ok
+test real::arithmetic::tests::operations_work_on_refs ... ok
+test real::arithmetic::tests::polynomial_evaluation_keeps_horner_for_ill_conditioned_nonroots ... ok
+test real::arithmetic::tests::long_symbolic_sums_enclose_an_independent_dyadic_reference ... ok
+test real::arithmetic::tests::polynomial_evaluation_preserves_endpoint_and_zero_leading_forms ... ok
+test real::arithmetic::tests::polynomial_evaluation_preserves_factored_root_cancellation ... ok
+test real::arithmetic::tests::polynomial_evaluation_retains_nested_quadratic_root_certificates ... ok
+test real::arithmetic::tests::certified_affine_det2_sign_matches_exact_randomized_determinants ... ok
+test real::arithmetic::tests::polynomial_helpers_preserve_evaluation_forms ... ok
+test real::arithmetic::tests::product_sum_helpers_preserve_exact_geometry_kernels ... ok
+test real::arithmetic::tests::rational_line2_filter_preserves_exact_signs ... ok
+test real::arithmetic::tests::rational_linear_form4_filter_exposes_positive_scale_normalization ... ok
+test real::arithmetic::tests::rational_linear_form4_filter_preserves_exact_signs ... ok
+test real::arithmetic::tests::rational_linear_form4_filter_rejects_unsafe_f64_ranges ... ok
+test real::arithmetic::tests::rational_linear_form4_normalization_handles_every_normal_exponent ... ok
+test real::arithmetic::tests::rational_linear_form4_relative_conversion_normalizes_minimum_normal ... ok
+test real::arithmetic::tests::polynomial_evaluation_retains_reconstructed_quadratic_midpoints ... ok
+test real::arithmetic::tests::rational_linear_form4_segment_intersection_enclosure_declines_every_unsafe_boundary ... ok
+test real::arithmetic::tests::rational_storage_class_is_a_conservative_exact_cost_fact ... ok
+test real::arithmetic::tests::same_basis_assignments_match_borrowed_arithmetic ... ok
+test real::arithmetic::tests::structural_negation_query_certifies_shared_exact_bases ... ok
+test real::convert::tests::abort_invalidates_primitive_approx_cache ... ok
+test real::convert::tests::almost_two ... ok
+test real::convert::tests::arbitrary_roundtrip ... ok
+test real::convert::tests::big_roundtrip ... ok
+test real::convert::tests::bit_conversion ... ok
+test real::convert::tests::borrowed_f64_lossy_finite_values ... ok
+test real::convert::tests::borrowed_f64_lossy_keeps_positive_translation_over_negative_symbolic_tail ... ok
+test real::convert::tests::borrowed_f64_lossy_tracks_negative_finite_values ... ok
+test real::convert::tests::borrowed_f64_lossy_underflow_and_overflow ... ok
+test real::convert::tests::borrowed_f64_preserves_values_with_large_denominators ... ok
+test real::convert::tests::borrowed_lossy_float_exports_are_repeatable ... ok
+test real::convert::tests::certified_primitive_view_rejects_non_dyadic_rationals ... ok
+test real::convert::tests::exact_f64_import_seeds_and_reuses_the_certified_primitive_view ... ok
+test real::convert::tests::exact_real_abort_signal_survives_materialization_clone_and_fold ... ok
+test real::convert::tests::fold_nine ... ok
+test real::convert::tests::half_from_float ... ok
+test real::convert::tests::half_to_float ... ok
+test real::convert::tests::infinity ... ok
+test real::convert::tests::max_u64_f32 ... ok
+test real::convert::tests::max_u64_f64 ... ok
+test real::convert::tests::nans ... ok
+test real::arithmetic::tests::affine_det2_exact_word_filter_matches_randomized_rationals ... ok
+test real::convert::tests::pi ... ok
+test real::convert::tests::primitive_approx_cache_keeps_overflow_state ... ok
+test real::convert::tests::rational ... ok
+test real::convert::tests::repr_f32 ... ok
+test real::convert::tests::repr_f64 ... ok
+test real::convert::tests::small_roundtrip ... ok
+test real::convert::tests::subnormal_roundtrip ... ok
+test real::convert::tests::negative_half ... ok
+test real::convert::tests::too_small ... ok
+test real::convert::tests::zero ... ok
+test real::convert::tests::zero_roundtrip ... ok
+test real::tests::tests::active_dot2_refs_matches_dot2_refs_when_all_lanes_active ... ok
+test real::tests::tests::active_dot3_retains_symbolic_by_rational_linear_combination ... ok
+test real::tests::tests::adding_one_works ... ok
+test real::tests::tests::adversarial_inverse_trig_endpoint_and_symmetry_cases ... ok
+test real::tests::tests::adversarial_inverse_hyperbolic_endpoint_cases ... ok
+test real::tests::tests::adversarial_trig_tiny_huge_and_near_pole_cases ... ok
+test real::tests::tests::asinh_large_negative_and_float_do_not_panic ... ok
+test real::tests::tests::asinh_large_positive_does_not_panic ... ok
+test real::tests::tests::atan2_generic_quadrants_match_f64 ... ok
+test real::tests::tests::atan2_negative_x_axis_is_pi ... ok
+test real::tests::tests::atan2_negative_y_axis_is_minus_half_pi ... ok
+test real::tests::tests::atan2_is_consistent_under_uniform_positive_scaling ... ok
+test real::tests::tests::atan2_positive_x_axis_is_zero ... ok
+test real::tests::tests::atan2_positive_y_axis_is_half_pi ... ok
+test real::tests::tests::atan2_quadrant_four_uses_negative_atan ... ok
+test real::tests::tests::atan2_quadrant_one_uses_atan_special_form ... ok
+test real::tests::tests::atan2_quadrant_three_uses_atan_minus_pi ... ok
+test real::tests::tests::atan2_quadrant_two_uses_atan_plus_pi ... ok
+test real::tests::tests::atan2_origin_returns_zero ... ok
+test real::tests::tests::atan2_shared_cancellation_resolves_positive_y_below_refinement_floor ... ok
+test real::tests::tests::atan2_sqrt_three_anchor_matches_pi_third ... ok
+test real::tests::tests::base_two_and_ten_exponentials_match_binary64_for_irrational_exponents ... ok
+test real::tests::tests::base_two_and_ten_exponentials_preserve_exact_rational_powers ... ok
+test real::tests::tests::base_two_and_ten_logarithm_round_trips_are_exact ... ok
+test real::tests::tests::borrowed_exact_rational_preserves_lazy_storage_until_numeric_observation ... ok
+test real::tests::tests::certified_cmp_until_reports_structural_exact_and_refined_ordering ... ok
+test real::tests::tests::certified_cmp_until_uses_operand_sign_and_magnitude_facts ... ok
+test real::tests::tests::certified_dyadic_interval_is_exact_for_rationals_and_bounds_symbolic_values ... ok
+test real::tests::tests::certified_eq_until_proves_semantic_equality_through_difference ... ok
+test real::tests::tests::certified_eq_until_reports_structural_and_exact_rational_results ... ok
+test real::tests::tests::certified_eq_until_structurally_separates_nearby_rational_and_irrational_values ... ok
+test real::tests::tests::certified_equality_separates_irrational_from_nearby_rational ... ok
+test real::tests::tests::certified_sign_refines_mixed_pi_atan_terms ... ok
+test real::tests::tests::certified_sign_until_reports_proof_source_without_lossy_approximation ... ok
+test real::tests::tests::computable_atan2_axes ... ok
+test real::tests::tests::computable_atan2_quadrants_match_f64 ... ok
+test real::tests::tests::computable_atan2_shared_cancellation_resolves_negative_y ... ok
+test real::tests::tests::computable_atan2_shared_cancellation_resolves_positive_y ... ok
+test real::tests::tests::const_offsets_certify_simple_pi_and_e_gaps ... ok
+test real::tests::tests::cos_easy ... ok
+test real::tests::tests::cos_pi_rational_multiples_shift_through_sin ... ok
+test real::tests::tests::cosh_is_even_symmetry ... ok
+test real::tests::tests::cosh_of_integer_ln_is_exact_rational ... ok
+test real::tests::tests::cosh_of_irrational_argument_matches_f64 ... ok
+test real::tests::tests::cosh_of_zero_is_exact_one ... ok
+test real::tests::tests::cosh_rational_matches_f64 ... ok
+test real::tests::tests::cosh_squared_minus_sinh_squared_is_one ... ok
+test real::tests::tests::cotangent_preserves_exact_turns_poles_and_inverse_trig_images ... ok
+test real::tests::tests::curves ... ok
+test real::arithmetic::tests::linear_form3_filter_matches_exact_randomized_values ... ok
+test real::tests::tests::dense_self_dot_reuses_exact_result_after_observation ... ok
+test real::tests::tests::distinct_opaque_irrationals_do_not_share_an_algebraic_basis ... ok
+test real::tests::tests::cycloidal_root_angles_compare_in_geometric_order ... ok
+test real::tests::tests::division_checks_the_denominator_before_identity_rewrites ... ok
+test real::tests::tests::dot2_refs_handles_symbolic_lanes ... ok
+test real::tests::tests::dot2_refs_all_zero_returns_zero ... ok
+test real::tests::tests::dot2_refs_zero_lane_shortcut ... ok
+test real::tests::tests::dot2_refs_matches_pairwise_rational_arithmetic ... ok
+test real::tests::tests::dot_products_handle_mixed_symbolic_structural_terms ... ok
+test real::tests::tests::dot_products_match_generic_real_arithmetic ... ok
+test real::tests::tests::exact_dyadic_parameterized_point_matches_expanded_arithmetic ... ok
+test real::tests::tests::exact_dyadic_parameterized_point_reduces_wide_affine_numerators_exactly ... ok
+test real::tests::tests::exact_dyadic_interpolated_point3_matches_expanded_arithmetic ... ok
+test real::tests::tests::exact_normal_form_cancels_shared_opaque_affine_atoms ... ok
+test real::tests::tests::exact_rational_is_owned_and_public ... ok
+test real::tests::tests::exact_rational_matrix3_inverse_uses_shared_exact_aggregate ... ok
+test real::tests::tests::exact_rational_matrix4_inverse_uses_shared_exact_aggregate ... ok
+test real::tests::tests::exact_rational_normalize_cancels_common_denominator ... ok
+test real::tests::tests::exact_rational_reuse_evidence_distinguishes_isolated_and_shared_storage ... ok
+test real::tests::tests::exact_rational_signed_product_sum_matches_generic_arithmetic ... ok
+test real::tests::tests::exact_rational_signed_product_sum_rejects_symbolic_terms ... ok
+test real::tests::tests::exact_set_facts_report_dyadic_and_shared_denominator_routes ... ok
+test real::tests::tests::exp_pi ... ok
+test real::tests::tests::forward_hyperbolics_stay_stable_for_tiny_and_large_rationals ... ok
+test real::tests::tests::fused_dyadic_line_intersection_defers_wide_inputs ... ok
+test real::tests::tests::balanced_gamma_and_beta_products_match_sequential_closed_forms ... ok
+test real::tests::tests::fused_exact_rational_line_intersection_matches_expanded_exact_arithmetic ... ok
+test real::tests::tests::fused_dyadic_line_intersection_matches_expanded_exact_arithmetic ... ok
+test real::tests::tests::fused_wide_dyadic_line_intersection_retains_large_determinants ... ok
+test real::tests::tests::generic_power_uses_exact_retained_base_logarithm_certificates ... ok
+test real::tests::tests::homogeneous_quadratic_interpolation_division_preserves_nonzero_numerator ... ok
+test real::tests::tests::immediate_sign_never_walks_or_refines_an_opaque_expression ... ok
+test real::tests::tests::integer_logs ... ok
+test real::tests::tests::integer_pi_shifted_atan_trig_replays_exactly ... ok
+test real::tests::tests::exact_dyadic_quotient_matches_general_division_across_scales ... ok
+test real::tests::tests::inverse_hyperbolic_values ... ok
+test real::tests::tests::inverse_trig_compositions_retain_exact_structural_images ... ok
+test real::tests::tests::inverse_trig_domain_boundaries ... ok
+test real::tests::tests::inverse_trig_exact_principal_branches ... ok
+test real::tests::tests::inverse_trig_exact_values ... ok
+test real::tests::tests::inverse_trig_general_values ... ok
+test real::tests::tests::inverse_hyperbolic_domain_boundaries ... ok
+test real::tests::tests::large_rational_powers_use_the_exact_lazy_fallback ... ok
+test real::arithmetic::tests::exact_rational_det3_word_sign_matches_randomized_rationals ... ok
+test real::tests::tests::ln_division ... ok
+test real::tests::tests::ln_large_computable_positive_does_not_panic ... ok
+test real::tests::tests::ln_large_positive_does_not_panic ... ok
+test real::tests::tests::ln_scaled_exp_reduces_to_log_scale_plus_exponent ... ok
+test real::tests::tests::ln_zero ... ok
+test real::tests::tests::log2_ln_quotient_folds_to_log2_class ... ok
+test real::tests::tests::log2_ln_quotient_ignores_warmed_numerator_cache ... ok
+test real::tests::tests::log2_ln_quotient_preserves_exact_scaled_logs ... ok
+test real::tests::tests::log2_matches_ln_div_ln2 ... ok
+test real::tests::tests::log2_of_fractional_non_power_rational_matches_f64 ... ok
+test real::tests::tests::log2_of_inverse_power_of_two_is_negative_integer ... ok
+test real::tests::tests::log2_of_irrational_argument_matches_f64 ... ok
+test real::tests::tests::log2_of_negative_errors ... ok
+test real::tests::tests::log2_of_one_half_is_negative_one ... ok
+test real::tests::tests::log2_of_one_is_zero ... ok
+test real::tests::tests::log2_of_powers_of_two_is_exact_integer ... ok
+test real::tests::tests::log2_of_rational_matches_f64 ... ok
+test real::tests::tests::log2_of_sqrt_two_is_half ... ok
+test real::tests::tests::log2_of_zero_errors ... ok
+test real::tests::tests::large_signed_rational_powers_match_mpfr ... ok
+test real::tests::tests::nested_half_pi_reduction_preserves_rational_atan_trig ... ok
+test real::tests::tests::fused_wide_dyadic_line_intersection_matches_expanded_exact_arithmetic ... ok
+test real::tests::tests::non_tabulated_cos_pi_reuses_direct_sin_pi_certificates ... ok
+test real::tests::tests::normal_exact_cases ... ok
+test real::tests::tests::normal_domain_errors ... ok
+test rational::arithmetic::tests::rust_native_toom4_matches_backend_products ... ok
+test real::tests::tests::nth_roots_and_rational_powers_preserve_exact_cases ... ok
+test real::tests::tests::one_constructor_matches_integer_conversion ... ok
+test real::tests::tests::one_over_e ... ok
+test real::tests::tests::opposite_sign_sum_does_not_certify_sign_from_inexact_msd ... ok
+test real::tests::tests::oversized_rational_sqrt_retains_exact_computable_without_recursive_reconstruction ... ok
+test real::tests::tests::parse ... ok
+test real::tests::tests::parse_extreme_scientific_notation_as_a_lazy_exact_real ... ok
+test real::tests::tests::parse_fraction ... ok
+test real::tests::tests::parse_large ... ok
+test real::tests::tests::parse_scientific_notation_exactly ... ok
+test real::tests::tests::partial_ord_uses_certified_real_comparison ... ok
+test real::tests::tests::perfect_square ... ok
+test real::tests::tests::pi_exp_products_remain_symbolically_combinable ... ok
+test real::tests::tests::pow_fract ... ok
+test real::tests::tests::pow_of_sine ... ok
+test real::tests::tests::pow_pi ... ok
+test real::tests::tests::powi ... ok
+test real::tests::tests::powi_i64_matches_arbitrary_precision_exponents ... ok
+test real::tests::tests::powi_negative_one_reuses_symbolic_inverse ... ok
+test real::tests::tests::powi_negative_unknown_sign_matches_inverse ... ok
+test real::tests::tests::public_pi_scaled_trig_uses_exact_rational_turns ... ok
+test real::tests::tests::quadratic_surd_weight_discriminant_retains_its_positive_sign ... ok
+test real::tests::tests::rational ... ok
+test real::tests::tests::rational_atan2_axes_and_origin ... ok
+test real::arithmetic::tests::certified_enclosure_line_filter_matches_exact_randomized_rationals ... ok
+test real::tests::tests::iterator_products_balance_exact_prefixes_and_preserve_mixed_order ... ok
+test real::tests::tests::rational_base_power_logarithm_round_trips_are_exact ... ok
+test real::tests::tests::normal_known_values ... ok
+test real::tests::tests::rational_linear_form4_filter_normalizes_representable_spans_and_bounds_underflow ... ok
+test real::tests::tests::rational_offsets_retain_strict_sin_pi_endpoint_signs ... ok
+test real::tests::tests::real_detailed_facts_report_cheap_rational_and_symbolic_structure ... ok
+test real::tests::tests::real_domain_accessors_expose_structural_certificates_without_refinement ... ok
+test real::tests::tests::real_refine_sign_until_handles_refined_and_unresolved_cases ... ok
+test real::tests::tests::real_structural_facts_for_rational_and_constants ... ok
+test real::tests::tests::retained_classes_conservatively_certify_irrationality ... ok
+test real::tests::tests::normal_round_trips_and_symmetry ... ok
+test real::tests::tests::root_divide ... ok
+test real::tests::tests::rational_linear_form4_filter_never_disagrees_across_wide_exponent_spans ... ok
+test real::tests::tests::retained_roots_and_rational_powers_have_exact_log_exp_round_trips ... ok
+test real::tests::tests::scaled_irrational_magnitude_does_not_claim_an_exact_product_binade ... ok
+test real::tests::tests::signed_product_sum_certifies_complementary_sin_pi_squares ... ok
+test real::tests::tests::signed_product_sum_certifies_orthonormal_trig_zero_polynomial ... ok
+test real::tests::tests::signed_product_sum_preserves_mixed_symbolic_products ... ok
+test real::tests::tests::sin_easy ... ok
+test real::tests::tests::sin_pi_rational_multiples ... ok
+test real::tests::tests::sin_pi_rational_multiples_fold_to_same_curve ... ok
+test real::tests::tests::sinh_is_odd_symmetry ... ok
+test real::tests::tests::sinh_of_integer_ln_is_exact_rational ... ok
+test real::tests::tests::sinh_of_irrational_argument_matches_f64 ... ok
+test real::tests::tests::sinh_of_zero_is_exact_zero ... ok
+test real::arithmetic::tests::affine_det3_exact_word_filter_matches_randomized_rationals ... ok
+test real::tests::tests::sinh_rational_matches_f64 ... ok
+test real::tests::tests::sqrt_3045512 ... ok
+test real::tests::tests::rational_linear_form4_filter_never_disagrees_at_low_normal_scales ... ok
+test real::tests::tests::sqrt_exact ... ok
+test real::tests::tests::sqrt_rational_denominator_uses_the_canonical_quadratic_surd ... ok
+test real::tests::tests::sqrt_recovers_quadratic_surds_with_perfect_square_norms ... ok
+test real::tests::tests::sqrt_scaled_squarefree_reuses_symbolic_residual ... ok
+test real::tests::tests::square_sqrt ... ok
+test real::tests::tests::small_angle_helpers_remove_zero_singularities ... ok
+test real::tests::tests::scaled_acos_trig_composition_remains_bounded ... ok
+test real::tests::tests::symbolic_constant_multiplication_and_division_reduce ... ok
+test real::tests::tests::tan_irrational_argument ... ok
+test real::tests::tests::symbolic_facts_report_dependency_families_and_degree ... ok
+test real::tests::tests::row_scaled_dyadic_matrix4_inverse_matches_general_exact_kernel ... ok
+test real::tests::tests::tanh_is_odd_symmetry ... ok
+test real::tests::tests::tanh_matches_sinh_over_cosh ... ok
+test real::tests::tests::tanh_of_integer_ln_is_exact_rational ... ok
+test real::tests::tests::tanh_of_irrational_argument_matches_f64 ... ok
+test real::tests::tests::tanh_of_zero_is_exact_zero ... ok
+test real::tests::tests::trig_integer_pi_offsets_reduce_to_residual ... ok
+test real::tests::tests::unlike_sqrts ... ok
+test real::tests::tests::tanh_rational_matches_f64 ... ok
+test real::tests::tests::zero ... ok
+test real::tests::tests::zero_one_or_minus_one_reports_signed_unit_identity ... ok
+test real::tests::tests::zero_pi ... ok
+test real::tests::tests::zero_status_uses_structural_facts_without_refinement ... ok
+test real::tests::tests::trig_retains_atan_after_pi_reciprocal_cancellation ... ok
+test real::tests::tests::rational_linear_form4_filter_never_disagrees_with_exact_sum ... ok
+test real::tests::tests::sqrt_sum_and_difference_identity_is_certified_for_rational_pairs ... ok
+test real::tests::tests::stable_substrate_functions ... ok
+test real::arithmetic::tests::certified_incircle2_sign_matches_exact_randomized_determinants ... ok
+test real::tests::tests::unresolved_opaque_sign_is_not_treated_as_exact_zero ... ok
+test real::arithmetic::tests::certified_insphere3_sign_matches_exact_randomized_determinants ... ok
+test computable::node::tests::many_digits_exact_integer_trig_uses_one_high_precision_pi_pass ... ok
+test real::arithmetic::tests::rational_linear_form4_segment_intersection_enclosure_contains_exact_coordinates ... ok
+test rational::arithmetic::tests::fixed_512_gcd_matches_biguint_reference ... ok
+test computable::node::tests::expm1_range_guard_and_cache_orders_match_directed_mpfr ... ok
+test computable::approximation::chudnovsky_pi_tests::chudnovsky_pi_matches_mpfr_from_one_bit_through_many_digits ... ok
+test computable::node::tests::exp_constructor_and_deferred_kernel_match_directed_mpfr ... ok
+test real::tests::tests::normal_against_mpmath_references ... ok
+test real::arithmetic::tests::polynomial_evaluation_matches_independent_rational_power_sum ... ok
+
+test result: ok. 651 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 4.87s
+
+     Running tests/adversarial_props.rs (.audit-targets/ireal-derivative-18555/debug/deps/adversarial_props-0339953862243d24)
+
+running 6 tests
+test cache_warming_does_not_change_refinement_answers ... ok
+test rational_ring_identities_preserve_exact_real_facts ... ok
+test nonzero_rational_division_and_inverse_are_exact ... ok
+test square_root_of_exact_square_preserves_principal_sign ... ok
+test float_import_exactness_has_stable_zero_sign_and_roundtrip ... ok
+test signed_product_sum_matches_expanded_3x3_determinant ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.04s
+
+     Running tests/adversarial_regressions.rs (.audit-targets/ireal-derivative-18555/debug/deps/adversarial_regressions-fb664bd2a650775b)
+
+running 8 tests
+test cancellation_chains_collapse_to_exact_zero_without_forcing_approximation ... ok
+test inverse_inverse_and_division_identities_preserve_exact_rationals ... ok
+test inverse_trig_domain_edges_are_exact_and_outside_edges_fail ... ok
+test exact_trig_special_forms_and_neighbors_are_distinguished ... ok
+test rump_polynomial_retains_exact_large_integer_cancellation ... ok
+test compare_and_equality_do_not_conflate_nearby_cancellation_values ... ok
+test scheinerman_radical_sums_receive_the_correct_certified_order ... ok
+test archived_nested_radical_identities_receive_exact_zero_certificates ... ok
+
+test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+     Running tests/adversarial_semantics.rs (.audit-targets/ireal-derivative-18555/debug/deps/adversarial_semantics-1e7ce142d4c487c9)
+
+running 5 tests
+test domain_boundaries_do_not_poison_later_valid_queries ... ok
+test float_import_preserves_dyadic_exactness_and_zero_facts ... ok
+test refinement_order_is_cache_coherent_for_cancellation_adversaries ... ok
+test scalar_fact_queries_are_stable_across_repeated_and_warmed_access ... ok
+test equivalent_structural_forms_keep_same_public_semantics ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/cli.rs (.audit-targets/ireal-derivative-18555/debug/deps/cli-0d739a178c260195)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/gmp_api_coverage.rs (.audit-targets/ireal-derivative-18555/debug/deps/gmp_api_coverage-f3d05f728d7a9192)
+
+running 1 test
+test every_public_numeric_api_is_benchmarked_or_explicitly_classified ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.04s
+
+     Running tests/numeric_roundtrip_formats.rs (.audit-targets/ireal-derivative-18555/debug/deps/numeric_roundtrip_formats-4b407aab56fcf6b6)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/numerical_cross_reference.rs (.audit-targets/ireal-derivative-18555/debug/deps/numerical_cross_reference-9b5af51dbde31289)
+
+running 16 tests
+test direct_computable_atan_quarter_matches_reference ... ok
+test core_compare_nested_radical_identity_is_certified_exactly ... ok
+test cotangent_refines_near_zero_and_preserves_odd_symmetry ... ok
+test magnitude_detection_refines_ambiguous_unit_approximations ... ok
+test core_heron_needle_triangles_match_exact_kahan_rearrangement_and_mpfr ... ok
+test tangent_matches_reference_across_certified_two_half_pi_interval ... ok
+test core2_zimmermann_exp_inputs_match_mpfr_at_256_bits ... ok
+test tangent_preserves_odd_symmetry_across_medium_reduction ... ok
+test tangent_refines_for_a_finite_rational_extremely_close_to_a_pole ... ok
+test real_atan_is_stable_after_sibling_inverse_trig_calls ... ok
+test atan2_matches_f64_in_every_quadrant_and_under_scaling ... ok
+test stable_small_argument_functions_match_cancellation_free_references ... ok
+test inverse_trig_and_hyperbolic_functions_match_principal_branches ... ok
+test elementary_functions_match_f64_on_moderate_rational_grid ... ok
+test rational_pi_turns_match_all_f64_quadrants_and_periods ... ok
+test rational_radian_trig_matches_f64_over_multiple_periods ... ok
+
+test result: ok. 16 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.96s
+
+     Running tests/public_numeric_semantics.rs (.audit-targets/ireal-derivative-18555/debug/deps/public_numeric_semantics-871d64dca72e70a6)
+
+running 9 tests
+test angle_and_aggregate_helpers_preserve_exact_results ... ok
+test certified_integer_operations_cover_signs_and_half_ties ... ok
+test exact_product_sum_entry_points_agree ... ok
+test hypot_helpers_match_exact_pythagorean_values ... ok
+test public_linear_algebra_helpers_match_expanded_arithmetic ... ok
+test public_aliases_and_structural_accessors_are_consistent ... ok
+test certified_integer_operations_handle_irrational_values ... ok
+test euclidean_remainder_is_nonnegative_and_reconstructs_input ... ok
+test near_integer_is_a_total_adjacent_integer_choice ... ok
+
+test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.03s
+
+     Running tests/rational_oracle.rs (.audit-targets/ireal-derivative-18555/debug/deps/rational_oracle-37fe9a181e9b462c)
+
+running 5 tests
+test alternate_decimal_format_honors_zero_precision ... ok
+test truncating_proper_fractions_returns_canonical_zero ... ok
+test remaining_public_rational_helpers_cover_boundaries ... ok
+test integer_powers_match_big_rational ... ok
+test construction_and_arithmetic_match_big_rational ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.54s
+
+     Running tests/readme.rs (.audit-targets/ireal-derivative-18555/debug/deps/readme-3382b71c5bece298)
+
+running 2 tests
+test readme_quickstart_matches_the_runnable_example ... ok
+test readme_release_metadata_matches_the_manifest ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/readme_metadata.rs (.audit-targets/ireal-derivative-18555/debug/deps/readme_metadata-2f896ccca369441c)
+
+running 2 tests
+test readme_version_matches_crate_version ... ok
+test gmp_binding_remains_a_development_only_dependency ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/real_representations.rs (.audit-targets/ireal-derivative-18555/debug/deps/real_representations-a83f20d535bb34cd)
+
+running 4 tests
+test ownership_float_assignment_and_iterator_forms_match_borrowed_arithmetic ... ok
+test exact_rational_storage_and_primitive_status_matrix_is_exhaustive ... ok
+test cache_scale_and_abort_state_space_preserves_certificates ... ok
+test every_public_kind_and_private_optimized_certificate_crosses_scalar_dispatch ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.24s
+
+   Doc-tests hyperreal
+
+running 19 tests
+test src/rational/arithmetic/queries_conversion.rs - rational::arithmetic::Rational::fract (line 151) ... ok
+test src/rational/arithmetic/queries_conversion.rs - rational::arithmetic::Rational::shifted_big_integer (line 659) ... ok
+test src/computable/node/approximation_queries.rs - computable::node::Computable::approx (line 60) ... ok
+test src/rational/arithmetic/representation.rs - rational::arithmetic::Rational (line 33) ... ok
+test src/real/arithmetic/elementary_functions.rs - real::arithmetic::Real::atan2 (line 3203) ... ok
+test src/rational/arithmetic/queries_conversion.rs - rational::arithmetic::Rational::trunc (line 115) ... ok
+test src/rational/arithmetic/representation.rs - rational::arithmetic::Rational (line 26) ... ok
+test src/computable/node/approximation_queries.rs - computable::node::Computable::approx (line 70) ... ok
+test src/rational/arithmetic/queries_conversion.rs - rational::arithmetic::Rational::trunc (line 125) ... ok
+test src/rational/arithmetic/queries_conversion.rs - rational::arithmetic::Rational::fract (line 158) ... ok
+test src/rational/arithmetic/construction.rs - rational::arithmetic::Rational::inverse (line 663) ... ok
+test src/rational/arithmetic/representation.rs - rational::arithmetic::Rational (line 20) ... ok
+test src/rational/arithmetic/construction.rs - rational::arithmetic::Rational::is_integer (line 704) ... ok
+test src/rational/arithmetic/queries_conversion.rs - rational::arithmetic::Rational::prefer_fraction (line 632) ... ok
+test src/real/arithmetic/inversion.rs - real::arithmetic::Real::inverse (line 302) ... ok
+test src/real/arithmetic/representation.rs - real::arithmetic::Real (line 19) ... ok
+test src/rational/arithmetic/representation.rs - rational::arithmetic::Rational (line 14) ... ok
+test src/real/arithmetic/representation.rs - real::arithmetic::Real (line 26) ... ok
+test src/real/arithmetic/representation.rs - real::arithmetic::Real (line 37) ... ok
+
+test result: ok. 19 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+all doctests ran in 0.26s; merged doctests compilation took 0.25s

@@ -1,0 +1,433 @@
+Content-type: text/html
+
+<HTML><HEAD><TITLE>Manpage of xr-1.1</TITLE>
+</HEAD><BODY>
+<H1>xr-1.1</H1>
+Section: Misc. Reference Manual Pages (C library)<BR>Updated: Keith Briggs<BR><A HREF="#index">Index</A>
+<A HREF="http://localhost/cgi-bin/man/man2html">Return to Main Contents</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>NAME</H2>
+
+<P>
+xr - C library of exact real functions
+<P>
+<A NAME="lbAC">&nbsp;</A>
+<H2>SYNOPSIS</H2>
+
+<P>
+<B>#include xr.h </B>
+
+<P>
+<B>int xr_get_b ();</B>
+
+<BR>
+
+<B>void xr_set_b (int b);</B>
+
+<P>
+<B>xr_t xr_init (long a, long b);</B>
+
+<BR>
+
+<B>xr_t xr_set (const xr_t a);</B>
+
+<BR>
+
+<B>void xr_free (const xr_t x);</B>
+
+<P>
+<B>xr_t xr_abs (const xr_t x);</B>
+
+<BR>
+
+<B>xr_t xr_neg (const xr_t x);</B>
+
+<BR>
+
+<B>xr_t xr_recip (const xr_t x);</B>
+
+<BR>
+
+<B>xr_t xr_sqrt (const xr_t x);</B>
+
+<BR>
+
+<B>xr_t xr_sqr (const xr_t x);</B>
+
+<BR>
+
+<P>
+<B>xr_t xr_iadd (const long x, const xr_t y);</B>
+
+<BR>
+
+<B>xr_t xr_isub (const long x, const xr_t y);</B>
+
+<BR>
+
+<B>xr_t xr_imul (const long x, const xr_t y);</B>
+
+<BR>
+
+<P>
+<B>xr_t xr_subi (const xr_t x, const long y);</B>
+
+<BR>
+
+<B>xr_t xr_divi (const xr_t x, const long y);</B>
+
+<BR>
+
+<B>xr_t xr_powi (const xr_t xx, long n);</B>
+
+<BR>
+
+<B>xr_t xr_root (const xr_t xx, long n);</B>
+
+<P>
+<B>xr_t xr_add (const xr_t x, const xr_t y);</B>
+
+<BR>
+
+<B>xr_t xr_sub (const xr_t x, const xr_t y);</B>
+
+<BR>
+
+<B>xr_t xr_mul (const xr_t x, const xr_t y);</B>
+
+<BR>
+
+<B>xr_t xr_div (const xr_t x, const xr_t y);</B>
+
+<P>
+<B>xr_t xr_pi (void);</B>
+
+<BR>
+
+<B>xr_t xr_exp (const xr_t x);</B>
+
+<P>
+<BR>
+
+<B>int xr_cmp (xr_t a, xr_t b);</B>
+
+<BR>
+
+<B>long xr_log2_bound(xr_t x);</B>
+
+<BR>
+
+<B>xr_t xr_near_int(const xr_t x);</B>
+
+<BR>
+
+<B>void xr_dotdump (const char* dotfilename, const xr_t x, const int showcache);</B>
+
+<BR>
+
+<B>double xr_get_d (const xr_t x, int n);</B>
+
+<BR>
+
+<B>int xr_print (const xr_t x, const int n);</B>
+
+<BR>
+
+<B>int xr_print_nl (const xr_t x, const int n);</B>
+
+<BR>
+
+<B>void xr_timing (int k);</B>
+
+<P>
+<A NAME="lbAD">&nbsp;</A>
+<H2>DESCRIPTION</H2>
+
+<P>
+The functions in the
+<B>xr</B>
+
+family manipulate
+<I>exact real numbers</I>
+
+using the scaled-integer representation invented by Boehm et al. [1] and
+developed further by Mnissier-Morain [2].  They are intended for
+proving inequalities between quantities computed from exact (i.e. rational)
+data, something impossible with floating-point arithmetic.  In this system a
+real
+
+x  hat
+
+is represented internally by a function
+
+x: {Z sup +} -&gt; Z 
+
+which satisfies (for all
+
+n&gt;=0
+
+and for some fixed integer
+
+b&gt;0
+
+)
+<CENTER>
+
+<BR>
+</CENTER>
+
+size 12 { left |  2 sup {b n} {x  hat} - <A HREF="http://localhost/cgi-bin/man/man2html?n+x">x</A>(n) right | &lt; 1 }
+
+The various arithmetic functions maintain this inequality through all
+operations.
+<P>
+All computations depend on the parameter b (the `granularity')
+which by default is 2.   It can be set with xr_set_b(b) before
+initialization any exact reals, but should then not be changed again
+until the end of the computation.   Values of b such as 1,3,4,5 may be faster
+on some problems, but all output should be the same.
+<P>
+<A NAME="lbAE">&nbsp;</A>
+<H2>FUNCTIONS</H2>
+
+<P>
+<A NAME="lbAF">&nbsp;</A>
+<H3>Initialization and clearing</H3>
+
+<DL COMPACT>
+<DT><B>xr_set_b(b), xr_get_b(), xr_init(n,d)</B>
+
+<DD>
+Set and get the parameter b (typically 2,3,4; default if not set is 2) and 
+initialize an exact real to the rational n/d.
+<DT><B>xr_free(x)</B>
+
+<DD>
+frees x but not the exact reals it depends on.   This can lead
+to unreferenced and hence unreclaimable memory.
+</DL>
+<A NAME="lbAG">&nbsp;</A>
+<H3>Unary arithmetic operations</H3>
+
+<DL COMPACT>
+<DT><B>xr_abs(x), xr_neg(x), xr_recip(x), xr_sqr(x), xr_sqrt(x), xr_root(x,n)</B>
+
+<DD>
+Absolute value, negative, reciprocal, square, square root, 
+<I>
+n
+</I>
+th root 
+</DL>
+<A NAME="lbAH">&nbsp;</A>
+<H3>Bunary arithmetic operations</H3>
+
+(i.e. Semi-unary: first argument long, second argument xr_t)
+<DL COMPACT>
+<DT><B>xr_iadd(n,x), xr_isub(n,s), xr_imul(n,s)</B>
+
+<DD>
+e.g. iadd adds a long to an xr_t, and will be faster than converting the long to an xr.
+</DL>
+<A NAME="lbAI">&nbsp;</A>
+<H3>Ubnary arithmetic operations</H3>
+
+(i.e. first argument xr_t, second argument long)
+<DL COMPACT>
+<DT><B>xr_divi(x,y), xr_powi(x,n), xr_root(x,n)</B>
+
+<DD>
+Divide by integer, integer power, integer root.
+</DL>
+<A NAME="lbAJ">&nbsp;</A>
+<H3>Binary arithmetic operations</H3>
+
+<DL COMPACT>
+<DT><B>xr_add(x,y), xr_sub(x,y), xr_mul(x,y), xr_div(x,y)</B>
+
+<DD>
+Add, subtract, multiply, divide two exact reals.   
+</DL>
+<A NAME="lbAK">&nbsp;</A>
+<H3>Other arithmetic operations</H3>
+
+<DL COMPACT>
+<DT><B>xr_cmp(x,y)</B>
+
+<DD>
+Initiates evaluation of x and y, and terminates when it can decide that 
+they are unequal, returning 1 for x&gt;y and -1 for x&lt;y.   It 
+<B>never</B>
+
+terminates if x=y.    
+<DT><B>xr_log2_bound(x)</B>
+
+<DD>
+returns an integer k such that 
+
+| x / {2 sup k} | &lt; 1
+
+It is safe to call with any argument.
+<DT><B>xr_near_int(x)</B>
+
+<DD>
+return either the floor or ceiling of an xr_t (this is a typical 
+multivalued exact real function - the floor and ceiling themselves 
+are not computable).  It is safe to call with any argument.
+</DL>
+<A NAME="lbAL">&nbsp;</A>
+<H3>Transcendental functions</H3>
+
+<DL COMPACT>
+<DT><B>xr_exp(x), xr_pi(void)</B>
+
+<DD>
+Others are under development.
+</DL>
+<A NAME="lbAM">&nbsp;</A>
+<H3>Output</H3>
+
+<DL COMPACT>
+<DT><B>xr_get_d(x,n), char* xr_get_str(x,n), xr_print(x,n), xr_print_nl(x,n)</B>
+
+<DD>
+These functions try to get n correct decimals of x, but do not 
+guarantee correctness.   xr_get_d uses double-precision arithmetic
+internally and so is subject to exponent range limitations.
+These functions do not terminate if x=0.
+<DT><B>xr_dotdump(dotfilename,x,showcache)</B>
+
+<DD>
+writes a file 
+<B>dotfilename.dot</B>
+
+in the graphviz [4] dot format, for conversion to a 
+graphic represention of the internal data structure.
+</DL>
+<A NAME="lbAN">&nbsp;</A>
+<H2>NOTES</H2>
+
+<P>
+The underlying large-integer arithmetic is done with the gmp library [3].
+There is no floating-point arithmetic used anywhere except in the xr_get_d and 
+pi functions.
+See the programs ..._test.c for examples.
+A simple C++ interface is defined in
+<B>xr++.h</B>
+
+It just defines one class xr and overloads the basic operators.
+The function names are the same, but without the xr_ prefix.
+<P>
+<A NAME="lbAO">&nbsp;</A>
+<H2>EXAMPLE C APPLICATION</H2>
+
+<I>
+/* gcc -O example.c xr.o -lm -lgmp -o example */
+<BR>
+
+#include &quot;xr.h&quot;  
+<BR>
+
+int main() { /* test whether exp(pi*sqrt(163)) is integral */ 
+<BR>&nbsp;&nbsp;xr_t&nbsp;x;
+<BR>&nbsp;&nbsp;x=xr_exp(xr_mul(xr_pi(),xr_sqrt(xr_init(163,1))));
+<BR>&nbsp;&nbsp;printf(&quot;%d\n&quot;,xr_cmp(x,xr_near_int(x)));
+<BR>&nbsp;&nbsp;return&nbsp;0;
+<BR>
+
+}
+</I>
+<A NAME="lbAP">&nbsp;</A>
+<H2>EXAMPLE C++ APPLICATION</H2>
+
+<I>
+// g++ -O example.cc xr.o -lm -lgmp -o example
+<BR>
+
+#include &quot;xr++.h&quot;  
+<BR>
+
+int main() { // test whether exp(pi*sqrt(163)) is integral
+<BR>&nbsp;&nbsp;xr&nbsp;x;
+<BR>&nbsp;&nbsp;x=exp(pi()*sqrt(xr(163)));
+<BR>&nbsp;&nbsp;cout&lt;&lt;(x&gt;near_int(x))&lt;&lt;endl;
+<BR>&nbsp;&nbsp;return&nbsp;0;
+<BR>
+
+}
+</I>
+<A NAME="lbAQ">&nbsp;</A>
+<H2>CONFORMING TO</H2>
+
+<P>
+ANSI C (I hope)
+<P>
+<A NAME="lbAR">&nbsp;</A>
+<H2>AUTHOR</H2>
+
+<P>
+Keith Briggs (<A HREF="mailto:Keith.Briggs@bt.com">Keith.Briggs@bt.com</A>)
+<P>
+<A NAME="lbAS">&nbsp;</A>
+<H2>HISTORY</H2>
+
+<P>
+Version 1.0 2003 March 31.    I have written other implementations in python
+and C++.   The aim of this C version is faster performance and greater
+ease of integration into existing code.
+<P>
+<A NAME="lbAT">&nbsp;</A>
+<H2>BUGS</H2>
+
+Of course.
+<P>
+<A NAME="lbAU">&nbsp;</A>
+<H2>REFERENCES</H2>
+
+<P>
+[1] <A HREF="http://portal.acm.org/citation.cfm?doid=319838.319860">http://portal.acm.org/citation.cfm?doid=319838.319860</A>
+<BR>
+
+[2] <A HREF="http://www-calfor.lip6.fr/~vmm/arith_english.html">http://www-calfor.lip6.fr/~vmm/arith_english.html</A>
+<BR>
+
+[3] <A HREF="http://www.swox.com/gmp">http://www.swox.com/gmp</A>
+<BR>
+
+[4] <A HREF="http://www.research.att.com/sw/tools/graphviz/">http://www.research.att.com/sw/tools/graphviz/</A>
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">NAME</A><DD>
+<DT><A HREF="#lbAC">SYNOPSIS</A><DD>
+<DT><A HREF="#lbAD">DESCRIPTION</A><DD>
+<DT><A HREF="#lbAE">FUNCTIONS</A><DD>
+<DL>
+<DT><A HREF="#lbAF">Initialization and clearing</A><DD>
+<DT><A HREF="#lbAG">Unary arithmetic operations</A><DD>
+<DT><A HREF="#lbAH">Bunary arithmetic operations</A><DD>
+<DT><A HREF="#lbAI">Ubnary arithmetic operations</A><DD>
+<DT><A HREF="#lbAJ">Binary arithmetic operations</A><DD>
+<DT><A HREF="#lbAK">Other arithmetic operations</A><DD>
+<DT><A HREF="#lbAL">Transcendental functions</A><DD>
+<DT><A HREF="#lbAM">Output</A><DD>
+</DL>
+<DT><A HREF="#lbAN">NOTES</A><DD>
+<DT><A HREF="#lbAO">EXAMPLE C APPLICATION</A><DD>
+<DT><A HREF="#lbAP">EXAMPLE C++ APPLICATION</A><DD>
+<DT><A HREF="#lbAQ">CONFORMING TO</A><DD>
+<DT><A HREF="#lbAR">AUTHOR</A><DD>
+<DT><A HREF="#lbAS">HISTORY</A><DD>
+<DT><A HREF="#lbAT">BUGS</A><DD>
+<DT><A HREF="#lbAU">REFERENCES</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
+using the manual pages.<BR>
+Time: 10:04:59 GMT, July 27, 2006
+</BODY>
+</HTML>

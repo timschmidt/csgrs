@@ -1,0 +1,18 @@
+   Compiling hypercurve v0.3.1 (/home/tim/Documents/GitHub/workspace/hypercurve)
+   Compiling hypercurve-api-review-probe v0.0.0 (/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12)
+    Finished `release` profile [optimized] target(s) in 58.99s
+     Running `../hypercurve/target/release/probe normalization offset`
+normalization: Certified, 1 loops
+normalization: filled side Ok(CurveOutcome { value: Decided([true]), certainty: Certified })
+normalization: area Ok(CurveOutcome { value: Decided(None), certainty: Certified })
+normalization: offset: Err(Blocked(ExactCurveBlocker { operation: Offset, family: Line, reason: Predicate }))
+dispatch/hypercurve/algebraic-chord-finite-parameter/strict-retained-endpoint=1
+dispatch/hypercurve/algebraic-chord-pair/adjacent-source-complete=1
+dispatch/hypercurve/algebraic-chord-pair/general-rational=1
+dispatch/hypercurve/algebraic-chord-side-kernel/cardinal-coordinate-precedence=1
+dispatch/hypercurve/curve-region-exact-offset-blocker/join=1
+dispatch/hypercurve/curve-region-exact-offset-join/round-outer=1
+dispatch/hypercurve/curve-region-exact-offset-span/retained-oblique-algebraic-chord=1
+dispatch/hypercurve/regularization-fragment-side/single-boundary-winding-jump=1
+dispatch/hypercurve/regularization-successor/forced-bijection=2
+dispatch/hypercurve/retained-endpoint-scope/topology-connectivity-first=1

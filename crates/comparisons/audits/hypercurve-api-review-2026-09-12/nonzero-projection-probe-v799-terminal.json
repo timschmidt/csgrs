@@ -1,0 +1,39 @@
+{
+  "baseline": "conic-contact-domain-v796-sources.json",
+  "rlib": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypercurve-85a9105cd1c82df7.rlib",
+  "rlib_sha256": "43025e28a04d9606ad8aac33473266af6aeea519344c8c4922e2f74fab43f850",
+  "source_sha256": "9fb4298dd6e3fccbc7c1bb0ed18bc7da6f9613674d1de4211d5d2ce6c2692c5b",
+  "processes": [
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustc",
+        "--edition=2024",
+        "--crate-name",
+        "nonzero_projection_probe",
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/nonzero-projection-probe-v799.rs",
+        "--extern",
+        "hypercurve=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypercurve-85a9105cd1c82df7.rlib",
+        "-L",
+        "dependency=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps",
+        "-C",
+        "opt-level=3",
+        "-o",
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/nonzero-projection-probe-v799-binary"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.5144990310072899,
+      "log": "nonzero-projection-probe-v799-compile.log"
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/nonzero-projection-probe-v799-binary"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.0035705449990928173,
+      "log": "nonzero-projection-probe-v799-run.log"
+    }
+  ],
+  "all_processes_reaped": true,
+  "binary_sha256": "9ee47f8eeaa4384e137ddb9aabc4582a3023495f3f33e3f0b031f71788695c03",
+  "probe_complete": true
+}

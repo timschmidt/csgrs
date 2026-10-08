@@ -1,0 +1,29 @@
+   Compiling hypercurve v0.3.1 (/home/tim/Documents/GitHub/workspace/hypercurve)
+    Finished `release` profile [optimized] target(s) in 1m 05s
+     Running unittests src/lib.rs (target/release/deps/hypercurve-6e6572a45c5b177b)
+
+running 3 tests
+
+thread 'bezier_offset::conversion_tests::dense_projection_keeps_roots_of_vanishing_radicands' (109) panicked at src/bezier_offset.rs:146753:13:
+assertion `left == right` failed
+  left: Some(DenseTensorPolynomial { dimensions: [3], coefficients: [Real { rational: Rational { sign: NoSign, numerator: 0, denominator: 1 }, class: One, computable: None, primitive_approx_cache: Empty }, Real { rational: Rational { sign: NoSign, numerator: 0, denominator: 1 }, class: One, computable: None, primitive_approx_cache: Empty }, Real { rational: Rational { sign: Plus, numerator: 1, denominator: 1 }, class: One, computable: None, primitive_approx_cache: Empty }] })
+ right: Some(DenseTensorPolynomial { dimensions: [2], coefficients: [Real { rational: Rational { sign: NoSign, numerator: 0, denominator: 1 }, class: One, computable: None, primitive_approx_cache: Empty }, Real { rational: Rational { sign: Minus, numerator: 1, denominator: 1 }, class: One, computable: None, primitive_approx_cache: Empty }] })
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+thread 'bezier_offset::conversion_tests::dense_projection_does_not_square_an_absent_radical' (108) panicked at src/bezier_offset.rs:146699:13:
+assertion `left == right` failed
+  left: Some(DenseTensorPolynomial { dimensions: [9], coefficients: [Real { rational: Rational { sign: Plus, numerator: 1, denominator: 1 }, class: One, computable: None, primitive_approx_cache: Empty }, Real { rational: Rational { sign: Minus, numerator: 16, denominator: 1 }, class: One, computable: None, primitive_approx_cache: Empty }, Real { rational: Rational { sign: Plus, numerator: 112, denominator: 1 }, class: One, computable: None, primitive_approx_cache: Empty }, Real { rational: Rational { sign: Minus, numerator: 448, denominator: 1 }, class: One, computable: None, primitive_approx_cache: Empty }, Real { rational: Rational { sign: Plus, numerator: 1120, denominator: 1 }, class: One, computable: None, primitive_approx_cache: Empty }, Real { rational: Rational { sign: Minus, numerator: 1792, denominator: 1 }, class: One, computable: None, primitive_approx_cache: Empty }, Real { rational: Rational { sign: Plus, numerator: 1792, denominator: 1 }, class: One, computable: None, primitive_approx_cache: Empty }, Real { rational: Rational { sign: Minus, numerator: 1024, denominator: 1 }, class: One, computable: None, primitive_approx_cache: Empty }, Real { rational: Rational { sign: Plus, numerator: 256, denominator: 1 }, class: One, computable: None, primitive_approx_cache: Empty }] })
+ right: Some(DenseTensorPolynomial { dimensions: [3], coefficients: [Real { rational: Rational { sign: Plus, numerator: 1, denominator: 1 }, class: One, computable: None, primitive_approx_cache: Empty }, Real { rational: Rational { sign: Minus, numerator: 4, denominator: 1 }, class: One, computable: None, primitive_approx_cache: Empty }, Real { rational: Rational { sign: Plus, numerator: 4, denominator: 1 }, class: One, computable: None, primitive_approx_cache: Empty }] })
+test bezier_offset::conversion_tests::dense_projection_keeps_roots_of_vanishing_radicands ... FAILED
+test bezier_offset::conversion_tests::dense_projection_does_not_square_an_absent_radical ... FAILED
+test bezier_offset::conversion_tests::dense_projection_single_radical_replays_the_authored_sheet ... ok
+
+failures:
+
+failures:
+    bezier_offset::conversion_tests::dense_projection_does_not_square_an_absent_radical
+    bezier_offset::conversion_tests::dense_projection_keeps_roots_of_vanishing_radicands
+
+test result: FAILED. 1 passed; 2 failed; 0 ignored; 0 measured; 887 filtered out; finished in 0.00s
+
+error: test failed, to rerun pass `--lib`

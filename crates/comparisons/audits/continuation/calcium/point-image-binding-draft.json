@@ -1,0 +1,8 @@
+{
+  "files": {
+    "point-image-evidence-bind-draft.mjs": "05d65d913e3d614c047ef27c8d79fa2abcb268040b71d639b0ea2b7ed847a805",
+    "record-point-image-bind-draft.mjs": "2f7c312bc2a4d624b25cf46e6edd0126ccd2b4ea7ae1fd06b5d44226ad801f3c",
+    "point-image-findings-bind-draft.md": "e5a7afb3283123e8c663c42b6726fa36a2191ea43e9942226a1b8b51cedbfcf4"
+  },
+  "classification": "Bookkeeping assertion too strong: candidate and guarded collectors have equal errors/lost/reachable/allocation counts, but cumulative requested bytes differ by six. No mathematical oracle or measured output is changed; preserve both exact totals."
+}

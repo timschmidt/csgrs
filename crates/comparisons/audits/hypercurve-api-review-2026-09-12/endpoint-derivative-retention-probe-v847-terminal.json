@@ -1,0 +1,39 @@
+{
+  "baseline": "derivative-jet-v841-sources.json",
+  "rlib": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypercurve-85a9105cd1c82df7.rlib",
+  "rlib_sha256": "9f4a0cdf1b9d50e492beac769bb4fc5f6182609a7722c1cb3787198bbaaa6200",
+  "source_sha256": "acc243d0e9e94971d63587958f0919bc669fa4b92be96709ae80af1982aec9da",
+  "processes": [
+    {
+      "command": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustc",
+        "--edition=2024",
+        "--crate-name",
+        "endpoint_derivative_retention_probe",
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/endpoint-derivative-retention-probe-v847.rs",
+        "--extern",
+        "hypercurve=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypercurve-85a9105cd1c82df7.rlib",
+        "-L",
+        "dependency=/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps",
+        "-C",
+        "opt-level=3",
+        "-o",
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/endpoint-derivative-retention-probe-v847-binary"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.46441384381614625,
+      "log": "endpoint-derivative-retention-probe-v847-compile.log"
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/endpoint-derivative-retention-probe-v847-binary"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.003589944215491414,
+      "log": "endpoint-derivative-retention-probe-v847-run.log"
+    }
+  ],
+  "all_processes_reaped": true,
+  "binary_sha256": "a65d0cd099f1229e88ad9b43749a80c7d2f8c33abe8599fc0aaca3304a45ea79",
+  "probe_complete": true
+}

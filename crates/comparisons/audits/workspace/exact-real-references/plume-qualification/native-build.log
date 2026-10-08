@@ -1,0 +1,60 @@
+[ 1 of 21] Compiling Alex             ( /home/tim/Documents/GitHub/workspace/exact-real-references/Plume/versioned/v1.2/Alex.hs, /home/tim/Documents/GitHub/workspace/.audit-plume.SZHOs8/native-build/Alex.o )
+
+/home/tim/Documents/GitHub/workspace/exact-real-references/Plume/versioned/v1.2/Alex.hs:28:1: error:
+    Could not find module ‘Array’
+    Use -v (or `:set -v` in ghci) to see a list of the files searched for.
+   |
+28 | import Array
+   | ^^^^^^^^^^^^
+[ 2 of 21] Compiling DyDigit          ( /home/tim/Documents/GitHub/workspace/exact-real-references/Plume/versioned/v1.2/DyDigit.hs, /home/tim/Documents/GitHub/workspace/.audit-plume.SZHOs8/native-build/DyDigit.o )
+
+/home/tim/Documents/GitHub/workspace/exact-real-references/Plume/versioned/v1.2/DyDigit.hs:79:1: warning: [GHC-94817] [-Wtabs]
+    Tab character found here, and in 33 further locations.
+    Suggested fix: Please use spaces instead.
+   |
+79 |                    | otherwise = dydNormalise (a `div` 2, b - 1)
+   | ^^^^^^^^
+[ 3 of 21] Compiling DyStream         ( /home/tim/Documents/GitHub/workspace/exact-real-references/Plume/versioned/v1.2/DyStream.hs, /home/tim/Documents/GitHub/workspace/.audit-plume.SZHOs8/native-build/DyStream.o )
+
+/home/tim/Documents/GitHub/workspace/exact-real-references/Plume/versioned/v1.2/DyStream.hs:51:1: warning: [GHC-53633] [-Woverlapping-patterns]
+    Pattern match is redundant
+    In an equation for ‘dysDigAdd’: dysDigAdd d (h : x) = ...
+   |
+51 | dysDigAdd d    (h:x) = (a:dysDigAdd b x)
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^...
+
+/home/tim/Documents/GitHub/workspace/exact-real-references/Plume/versioned/v1.2/DyStream.hs:77:1: warning: [GHC-94817] [-Wtabs]
+    Tab character found here, and in 8 further locations.
+    Suggested fix: Please use spaces instead.
+   |
+77 |                           else (n,x)
+   | ^^^^^^^^
+[ 4 of 21] Compiling DyFloat          ( /home/tim/Documents/GitHub/workspace/exact-real-references/Plume/versioned/v1.2/DyFloat.hs, /home/tim/Documents/GitHub/workspace/.audit-plume.SZHOs8/native-build/DyFloat.o )
+
+/home/tim/Documents/GitHub/workspace/exact-real-references/Plume/versioned/v1.2/DyFloat.hs:43:35: warning: [GHC-94817] [-Wtabs]
+    Tab character found here, and in 11 further locations.
+    Suggested fix: Please use spaces instead.
+   |
+43 | dyf_Half           = (0, dys_Half)         :: DyFloat
+   |                                   ^^^^^^
+[ 5 of 21] Compiling Interact         ( /home/tim/Documents/GitHub/workspace/exact-real-references/Plume/versioned/v1.2/Interact.hs, /home/tim/Documents/GitHub/workspace/.audit-plume.SZHOs8/native-build/Interact.o )
+
+/home/tim/Documents/GitHub/workspace/exact-real-references/Plume/versioned/v1.2/Interact.hs:8:1: warning: [GHC-94817] [-Wtabs]
+    Tab character found here, and in six further locations.
+    Suggested fix: Please use spaces instead.
+  |
+8 |         Interact(..),
+  | ^^^^^^^^
+[10 of 21] Compiling Utils            ( /home/tim/Documents/GitHub/workspace/exact-real-references/Plume/versioned/v1.2/Utils.hs, /home/tim/Documents/GitHub/workspace/.audit-plume.SZHOs8/native-build/Utils.o )
+
+/home/tim/Documents/GitHub/workspace/exact-real-references/Plume/versioned/v1.2/Utils.hs:63:26: error: [GHC-88464]
+    Variable not in scope: toInt :: a -> Int
+   |
+63 | take_integer n x = take (toInt n) x
+   |                          ^^^^^
+
+/home/tim/Documents/GitHub/workspace/exact-real-references/Plume/versioned/v1.2/Utils.hs:66:26: error: [GHC-88464]
+    Variable not in scope: toInt :: a -> Int
+   |
+66 | drop_integer n x = drop (toInt n) x
+   |                          ^^^^^

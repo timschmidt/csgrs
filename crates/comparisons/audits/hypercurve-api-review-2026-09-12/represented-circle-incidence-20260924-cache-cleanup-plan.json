@@ -1,0 +1,4112 @@
+{
+  "reason": "New physical snapshot copy failed with EDQUOT before any build or test.",
+  "failed_path": "/tmp/hypercurve-represented-circle-incidence-v1-20260924/hyperreal/benchmarks/checkpoints/2026-09-17-verus-clone-profiles.tar.gz",
+  "all_owned_processes_reaped": true,
+  "protected_artifact_logs": [
+    "chord-point-containment-20260924-v3-build.jsonl",
+    "chord-point-containment-20260924-v3-full-build.jsonl"
+  ],
+  "protected_paths": [
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/build/anyhow-5ef11852e1e213e9/build-script-build",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/build/crossbeam-utils-fa2cfc8b52e72392/build-script-build",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/build/getrandom-1c15d80178aa580e/build-script-build",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/build/getrandom-53bd315625ba7c40/build-script-build",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/build/heapless-4be78e408591b7f7/build-script-build",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/build/libc-ec0fd9186200e546/build-script-build",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/build/libm-6371be4d7617e851/build-script-build",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/build/matrixmultiply-5feb2819f0372361/build-script-build",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/build/num-traits-8059512e980eaf74/build-script-build",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/build/paste-2d8a2f723f699066/build-script-build",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/build/proc-macro2-c0170a9e7fc3d1ae/build-script-build",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/build/quote-856b2b884ec83184/build-script-build",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/build/rayon-core-755b5972d00887e6/build-script-build",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/build/rustix-d5c8e1d2552fb7a3/build-script-build",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/build/serde-a01c15b4ad450f5d/build-script-build",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/build/serde_core-b78431a8a6b681cd/build-script-build",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/build/serde_json-346c14d640a024b3/build-script-build",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/build/thiserror-b2aaa4963712047d/build-script-build",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/build/zerocopy-cd6e79b8aac852da/build-script-build",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/build/zmij-ac54d8c03a0dca30/build-script-build",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve-243982ed3b7e5dd7",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve_bezier_arrangement-eaba18ef3fb8cef5",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve_curve-7bd75fb7e20ffb82",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve_curve_intersection-951ccf85bbbf5f71",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve_curve_point-3d4784dea0096414",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve_curve_range-0adc11f5c8b1651d",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve_curve_region_boolean-1ae70491d91d25ef",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve_curve_region_boolean_fuzz-485399792b209ef3",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve_path_closure-4d48f5916f861893",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve_pcb_boolean_regressions-3d319efe18b5c006",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/liballocator_api2-b57e365424b8bdc0.rlib",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/liballocator_api2-b57e365424b8bdc0.rmeta",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libanyhow-4dc6abed9c3a9789.rlib",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libanyhow-4dc6abed9c3a9789.rmeta",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libapprox-d190458fcb5ea2df.rlib",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libapprox-d190458fcb5ea2df.rmeta",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libargmin-cdc34a046c6d2264.rlib",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libargmin-cdc34a046c6d2264.rmeta",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libargmin_math-ec3f0b1484c2bb71.rlib",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libargmin_math-ec3f0b1484c2bb71.rmeta",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libarrayvec-75018c429b7a36af.rlib",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libarrayvec-75018c429b7a36af.rmeta",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libautocfg-ded163ee8f45b174.rlib",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libautocfg-ded163ee8f45b174.rmeta",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libbit_set-ce93f3a3745a7e16.rlib",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libbit_set-ce93f3a3745a7e16.rmeta",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libbit_vec-fd05013907a0be63.rlib",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libbit_vec-fd05013907a0be63.rmeta",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libbitflags-1663fe7f36eab4dd.rlib",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libbitflags-1663fe7f36eab4dd.rmeta",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libbytemuck-a192453a00c5a237.rlib",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libbytemuck-a192453a00c5a237.rmeta",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libbyteorder-9c6ee3ea82366640.rlib",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libbyteorder-9c6ee3ea82366640.rmeta",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libcavalier_contours-f12892d7605b8dd4.rlib",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libcavalier_contours-f12892d7605b8dd4.rmeta",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libcfg_if-ddd3ad37e1f30421.rlib",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libcfg_if-ddd3ad37e1f30421.rmeta",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libchacha20-41b7422cd360eb8f.rlib",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libchacha20-41b7422cd360eb8f.rmeta",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libciborium-bcf8c4f9fdab2230.rlib",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libciborium-bcf8c4f9fdab2230.rmeta",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libciborium_io-3a4adaa66b7f5966.rlib",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libciborium_io-3a4adaa66b7f5966.rmeta",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libciborium_ll-fa68134683d9e0c4.rlib",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libciborium_ll-fa68134683d9e0c4.rmeta",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libcpufeatures-3c5078cf2a4da093.rlib",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libcpufeatures-3c5078cf2a4da093.rmeta",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libcrossbeam_deque-e128e67f36f7fab0.rlib",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libcrossbeam_deque-e128e67f36f7fab0.rmeta",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libcrossbeam_epoch-b70daeb83ab0d69c.rlib",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libcrossbeam_epoch-b70daeb83ab0d69c.rmeta",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libcrossbeam_utils-0a37f1b2434861c0.rlib",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libcrossbeam_utils-0a37f1b2434861c0.rmeta",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libcurvo-b11cf7da44b10336.rlib",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libcurvo-b11cf7da44b10336.rmeta",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libearcut-1d15ee0c66db1655.rlib",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libearcut-1d15ee0c66db1655.rmeta",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libeither-e58080a0e0075e75.rlib",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libeither-e58080a0e0075e75.rmeta",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libequivalent-5e451087648a3feb.rlib",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libequivalent-5e451087648a3feb.rmeta",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libfastrand-39334d1171504676.rlib",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libfastrand-39334d1171504676.rmeta",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libfloat_next_after-f4552e06b1912e9f.rlib",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libfloat_next_after-f4552e06b1912e9f.rmeta",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libfnv-e72efd1d19e2f9e3.rlib",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libfnv-e72efd1d19e2f9e3.rmeta",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libfoldhash-da3805bb81549e60.rlib",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libfoldhash-da3805bb81549e60.rmeta",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libgauss_quad-0a10ce9d84978aa4.rlib",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libgauss_quad-0a10ce9d84978aa4.rmeta",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libgeo-17243d418bc58655.rlib",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libgeo-17243d418bc58655.rmeta",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libgeo_types-9fb91ca71f867acf.rlib",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libgeo_types-9fb91ca71f867acf.rmeta",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libgeographiclib_rs-6dba723a24ccaae0.rlib",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libgeographiclib_rs-6dba723a24ccaae0.rmeta",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libgetrandom-23403a4e1e6c2844.rlib",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libgetrandom-23403a4e1e6c2844.rmeta",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libgetrandom-ecf81f68669c4657.rlib",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libgetrandom-ecf81f68669c4657.rmeta",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhalf-556a4bce13b13adf.rlib",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhalf-556a4bce13b13adf.rmeta",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhash32-4b7bdc7edbab9c9e.rlib",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhash32-4b7bdc7edbab9c9e.rmeta",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhashbrown-506653b815c78808.rlib",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhashbrown-506653b815c78808.rmeta",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhashbrown-5652b262c2dfbab3.rlib",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhashbrown-5652b262c2dfbab3.rmeta",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libheapless-10cb2d152816f42f.rlib",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libheapless-10cb2d152816f42f.rmeta",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypercurve-00aec7710fd995f6.rlib",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypercurve-00aec7710fd995f6.rmeta",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlattice-40d810b4f1b43271.rlib",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlattice-40d810b4f1b43271.rmeta",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlimit-6f53ca8534a5bf26.rlib",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlimit-6f53ca8534a5bf26.rmeta",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperreal-11b2395d893cafc1.rlib",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperreal-11b2395d893cafc1.rmeta",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypersolve-fee25d201e1a37c4.rlib",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypersolve-fee25d201e1a37c4.rmeta",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypertri-73a9607f59bb545c.rlib",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypertri-73a9607f59bb545c.rmeta",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libi_float-136e028562d65e4a.rlib",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libi_float-136e028562d65e4a.rmeta",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libi_float-5ee708541d0de7af.rlib",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libi_float-5ee708541d0de7af.rmeta",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libi_key_sort-d415ab4434bb7ba9.rlib",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libi_key_sort-d415ab4434bb7ba9.rmeta",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libi_overlay-1dd0128ad8dfd356.rlib",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libi_overlay-1dd0128ad8dfd356.rmeta",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libi_overlay-bb7c9722f8554bfb.rlib",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libi_overlay-bb7c9722f8554bfb.rmeta",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libi_shape-0ae16e34c7ca986b.rlib",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libi_shape-0ae16e34c7ca986b.rmeta",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libi_shape-7a7de4b229ba5281.rlib",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libi_shape-7a7de4b229ba5281.rmeta",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libi_tree-372bdcdc4bd25f27.rlib",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libi_tree-372bdcdc4bd25f27.rmeta",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libi_tree-cca0be30925626d8.rlib",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libi_tree-cca0be30925626d8.rmeta",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libitertools-773d7334307ce37d.rlib",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libitertools-773d7334307ce37d.rmeta",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libitoa-3f1e1c9af425c136.rlib",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libitoa-3f1e1c9af425c136.rmeta",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libkurbo-bda4c631ba97967c.rlib",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libkurbo-bda4c631ba97967c.rmeta",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/liblibc-909f3e1349433593.rlib",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/liblibc-909f3e1349433593.rmeta",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/liblibm-d113e8549636a9de.rlib",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/liblibm-d113e8549636a9de.rmeta",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/liblinux_raw_sys-3f74a0a0ff56bd99.rlib",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/liblinux_raw_sys-3f74a0a0ff56bd99.rmeta",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/liblog-c34fa4a937c92699.rlib",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/liblog-c34fa4a937c92699.rmeta",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libmatrixmultiply-06f005494b635704.rlib",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libmatrixmultiply-06f005494b635704.rmeta",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libmemchr-e7a14f89332e2d06.rlib",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libmemchr-e7a14f89332e2d06.rmeta",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libnalgebra-0005f57aa76b8a19.rlib",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libnalgebra-0005f57aa76b8a19.rmeta",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libnalgebra-89daa43b6ff604de.rlib",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libnalgebra-89daa43b6ff604de.rmeta",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libnalgebra_macros-b0378afe8984612d.so",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libnum-3f13fa42f92eed91.rlib",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libnum-3f13fa42f92eed91.rmeta",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libnum_bigint-a1cd195a6b313474.rlib",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libnum_bigint-a1cd195a6b313474.rmeta",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libnum_complex-91f7d41949b6330c.rlib",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libnum_complex-91f7d41949b6330c.rmeta",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libnum_integer-98d9278d5a8f83ad.rlib",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libnum_integer-98d9278d5a8f83ad.rmeta",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libnum_iter-c2004d84d89dc398.rlib",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libnum_iter-c2004d84d89dc398.rmeta",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libnum_rational-4265b5bdf9b2408d.rlib",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libnum_rational-4265b5bdf9b2408d.rmeta",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libnum_traits-425baf489a184607.rlib",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libnum_traits-425baf489a184607.rmeta",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libonce_cell-5e0cf96ce3281499.rlib",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libonce_cell-5e0cf96ce3281499.rmeta",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libordered_float-7b1c6546137cfcb5.rlib",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libordered_float-7b1c6546137cfcb5.rmeta",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libpaste-cbd7c0b1bd99b8ff.so",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libpolycool-56cf42eaa85a9b36.rlib",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libpolycool-56cf42eaa85a9b36.rmeta",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libppv_lite86-a7e8d5c3c419910b.rlib",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libppv_lite86-a7e8d5c3c419910b.rmeta",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libproc_macro2-3de5473919060a64.rlib",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libproc_macro2-3de5473919060a64.rmeta",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libproptest-5fbfd9af07765a6f.rlib",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libproptest-5fbfd9af07765a6f.rmeta",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libquick_error-966b8f35574fa7f0.rlib",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libquick_error-966b8f35574fa7f0.rmeta",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libquote-bafce241cc407be8.rlib",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libquote-bafce241cc407be8.rmeta",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/librand-192e5e12a8b12917.rlib",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/librand-192e5e12a8b12917.rmeta",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/librand-6ef13af77fb7eddf.rlib",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/librand-6ef13af77fb7eddf.rmeta",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/librand_chacha-57fcacad9bd8ca26.rlib",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/librand_chacha-57fcacad9bd8ca26.rmeta",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/librand_core-2bed0b96ace7300e.rlib",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/librand_core-2bed0b96ace7300e.rmeta",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/librand_core-3af13fe8574a9eb1.rlib",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/librand_core-3af13fe8574a9eb1.rmeta",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/librand_pcg-c57309534aecf95e.rlib",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/librand_pcg-c57309534aecf95e.rmeta",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/librand_xorshift-682dae62f374f32d.rlib",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/librand_xorshift-682dae62f374f32d.rmeta",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/librand_xoshiro-5d083a611a2eb916.rlib",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/librand_xoshiro-5d083a611a2eb916.rmeta",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/librawpointer-85c8b4af85a8f93b.rlib",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/librawpointer-85c8b4af85a8f93b.rmeta",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/librayon-326ee3fed1eb1920.rlib",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/librayon-326ee3fed1eb1920.rmeta",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/librayon_core-7332ef3ffc493223.rlib",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/librayon_core-7332ef3ffc493223.rmeta",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libregex_syntax-feac10da1cd75a6b.rlib",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libregex_syntax-feac10da1cd75a6b.rmeta",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/librobust-7632fd2f6552a98b.rlib",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/librobust-7632fd2f6552a98b.rmeta",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/librstar-f67b325b62445046.rlib",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/librstar-f67b325b62445046.rmeta",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/librustix-253d356f9f606750.rlib",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/librustix-253d356f9f606750.rmeta",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/librusty_fork-b0403c5a16fcba36.rlib",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/librusty_fork-b0403c5a16fcba36.rmeta",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libsafe_arch-c6c7be9b98a6ba64.rlib",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libsafe_arch-c6c7be9b98a6ba64.rmeta",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libserde-84969463ebf1e798.rlib",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libserde-84969463ebf1e798.rmeta",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libserde_core-b63e7008cd4ae304.rlib",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libserde_core-b63e7008cd4ae304.rmeta",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libserde_derive-1828989534a3d075.so",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libserde_json-5014cdedc53ad9a3.rlib",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libserde_json-5014cdedc53ad9a3.rmeta",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libsif_itree-0fa01ee1eabfbd84.rlib",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libsif_itree-0fa01ee1eabfbd84.rmeta",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libsimba-eb45eaa3c46407e7.rlib",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libsimba-eb45eaa3c46407e7.rmeta",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libsimba-fc4785cf281a1114.rlib",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libsimba-fc4785cf281a1114.rmeta",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libsiphasher-e8a105a2280716a4.rlib",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libsiphasher-e8a105a2280716a4.rmeta",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libsmallvec-d9136e7e12eec2b6.rlib",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libsmallvec-d9136e7e12eec2b6.rmeta",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libspade-163de4b30c06eae9.rlib",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libspade-163de4b30c06eae9.rmeta",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libstable_deref_trait-41871b6e7daf3e61.rlib",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libstable_deref_trait-41871b6e7daf3e61.rmeta",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libstatic_aabb2d_index-5e1192b54dc6dd90.rlib",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libstatic_aabb2d_index-5e1192b54dc6dd90.rmeta",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libsvg-dcc41acfcbb529f9.rlib",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libsvg-dcc41acfcbb529f9.rmeta",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libsvgtypes-2cbe279fa9921165.rlib",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libsvgtypes-2cbe279fa9921165.rmeta",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libsyn-0624a937a2a6e1f1.rlib",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libsyn-0624a937a2a6e1f1.rmeta",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libtempfile-bf3b38b0ca00d4ae.rlib",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libtempfile-bf3b38b0ca00d4ae.rmeta",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libthiserror-f949da3c06676406.rlib",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libthiserror-f949da3c06676406.rmeta",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libthiserror_impl-2c7c6a45bb1a1f28.so",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libtypenum-a8ec867d80e1943c.rlib",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libtypenum-a8ec867d80e1943c.rmeta",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libunarray-285b94ca9b6fbde1.rlib",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libunarray-285b94ca9b6fbde1.rmeta",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libunicode_ident-87e84a1744c48854.rlib",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libunicode_ident-87e84a1744c48854.rmeta",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libwait_timeout-67204f6d643e4574.rlib",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libwait_timeout-67204f6d643e4574.rmeta",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libweb_time-c64e7f4c5474d4d5.rlib",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libweb_time-c64e7f4c5474d4d5.rmeta",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libwide-ab0009a04770f5d1.rlib",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libwide-ab0009a04770f5d1.rmeta",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libzerocopy-758d35ae994ef4a7.rlib",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libzerocopy-758d35ae994ef4a7.rmeta",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libzerocopy_derive-817e70bf86a2d1e6.so",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libzmij-6a067c35437a9e4c.rlib",
+    "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libzmij-6a067c35437a9e4c.rmeta"
+  ],
+  "candidates": [
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve-26b3323ee2bec1d9",
+      "bytes": 34129096,
+      "mtime_ns": 1790255957742941818
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypersolve-237dab44fbba1c4d.rlib",
+      "bytes": 14188280,
+      "mtime_ns": 1790255831841100565
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypersolve-237dab44fbba1c4d.rmeta",
+      "bytes": 5827295,
+      "mtime_ns": 1790255818371568188
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperreal-b810df7c79b3378a.rlib",
+      "bytes": 11036044,
+      "mtime_ns": 1790255816305873369
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlimit-86d3c4da69c942b2.rlib",
+      "bytes": 3989568,
+      "mtime_ns": 1790255814371845085
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlimit-86d3c4da69c942b2.rmeta",
+      "bytes": 1695120,
+      "mtime_ns": 1790255807487836546
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlattice-d8e91dded9d5688e.rlib",
+      "bytes": 4667870,
+      "mtime_ns": 1790255806508730090
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlattice-d8e91dded9d5688e.rmeta",
+      "bytes": 1398026,
+      "mtime_ns": 1790255798004164416
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperreal-b810df7c79b3378a.rmeta",
+      "bytes": 4496203,
+      "mtime_ns": 1790255796897403141
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve_pcb_boolean_regressions-480502fd726a4096",
+      "bytes": 16746904,
+      "mtime_ns": 1790254602392116319
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve_path_closure-6413847a5697e62c",
+      "bytes": 19273904,
+      "mtime_ns": 1790254602365115923
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve_curve_region_boolean-8fb8c781543e6376",
+      "bytes": 18785152,
+      "mtime_ns": 1790254601993110476
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve_bezier_arrangement-3d236c6cac0187d6",
+      "bytes": 13660008,
+      "mtime_ns": 1790254598257055773
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve_curve_region_boolean_fuzz-6188352d9eb05837",
+      "bytes": 17662560,
+      "mtime_ns": 1790254597900050545
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypercurve-219c57ea902a8fe1.rlib",
+      "bytes": 48733140,
+      "mtime_ns": 1790254594518001025
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypercurve-219c57ea902a8fe1.rmeta",
+      "bytes": 12646816,
+      "mtime_ns": 1790254530531497707
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve-5634f09f321aaa25",
+      "bytes": 34120904,
+      "mtime_ns": 1790254237797777897
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypersolve-d2130ca2c072a099.rlib",
+      "bytes": 14187604,
+      "mtime_ns": 1790254094570680754
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypersolve-d2130ca2c072a099.rmeta",
+      "bytes": 5826893,
+      "mtime_ns": 1790254079255687534
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperreal-e6e1a9b0573249c7.rlib",
+      "bytes": 11035838,
+      "mtime_ns": 1790254076353414015
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlimit-444de21934b1fbfb.rlib",
+      "bytes": 3991526,
+      "mtime_ns": 1790254074485386664
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlimit-444de21934b1fbfb.rmeta",
+      "bytes": 1694922,
+      "mtime_ns": 1790254066537540817
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlattice-0b9bd41b67d3c494.rlib",
+      "bytes": 4667664,
+      "mtime_ns": 1790254065406253726
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlattice-0b9bd41b67d3c494.rmeta",
+      "bytes": 1397948,
+      "mtime_ns": 1790254055647375726
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperreal-e6e1a9b0573249c7.rmeta",
+      "bytes": 4495645,
+      "mtime_ns": 1790254054397761430
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve-570bc6a6abe9efdc",
+      "bytes": 34119528,
+      "mtime_ns": 1790253229298009666
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypersolve-6b89306fc0d634f9.rlib",
+      "bytes": 14187262,
+      "mtime_ns": 1790253097693082236
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypersolve-6b89306fc0d634f9.rmeta",
+      "bytes": 5826893,
+      "mtime_ns": 1790253083423458546
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperreal-b5071fbae73e7854.rlib",
+      "bytes": 11035804,
+      "mtime_ns": 1790253079389814174
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlimit-5753fb9eb9af90b4.rlib",
+      "bytes": 3991500,
+      "mtime_ns": 1790253077473786113
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlimit-5753fb9eb9af90b4.rmeta",
+      "bytes": 1694922,
+      "mtime_ns": 1790253070315372610
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlattice-8511aa19d64fd1dd.rlib",
+      "bytes": 4667834,
+      "mtime_ns": 1790253069287666222
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlattice-8511aa19d64fd1dd.rmeta",
+      "bytes": 1397948,
+      "mtime_ns": 1790253060365974464
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperreal-b5071fbae73e7854.rmeta",
+      "bytes": 4495645,
+      "mtime_ns": 1790253059158994679
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve-c05936ac01344ab0",
+      "bytes": 34127296,
+      "mtime_ns": 1790252476207980366
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypersolve-1de5989899adc699.rlib",
+      "bytes": 14187720,
+      "mtime_ns": 1790252348918116222
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypersolve-1de5989899adc699.rmeta",
+      "bytes": 5826893,
+      "mtime_ns": 1790252335059276409
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperreal-27d8a6f4b93cbf4e.rlib",
+      "bytes": 11035762,
+      "mtime_ns": 1790252332698878694
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlimit-35d5a5b62f7c4509.rlib",
+      "bytes": 3991516,
+      "mtime_ns": 1790252330862851805
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlimit-35d5a5b62f7c4509.rmeta",
+      "bytes": 1694922,
+      "mtime_ns": 1790252323912750022
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlattice-8248fc5ca252cf44.rlib",
+      "bytes": 4667752,
+      "mtime_ns": 1790252322888735025
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlattice-8248fc5ca252cf44.rmeta",
+      "bytes": 1397948,
+      "mtime_ns": 1790252314353944332
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperreal-27d8a6f4b93cbf4e.rmeta",
+      "bytes": 4495645,
+      "mtime_ns": 1790252313144621818
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve_curve_region_boolean-3afef784ff60a3c3",
+      "bytes": 18782584,
+      "mtime_ns": 1790251104200887225
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve_curve_region_boolean_fuzz-6cbe1d268f47c97b",
+      "bytes": 17658648,
+      "mtime_ns": 1790251103308874161
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve_path_closure-050be5353921bb32",
+      "bytes": 19271376,
+      "mtime_ns": 1790251100991840227
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve_bezier_arrangement-8e70a54a730baaf9",
+      "bytes": 13659544,
+      "mtime_ns": 1790251099729821745
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve_pcb_boolean_regressions-ccdde75a8b288c06",
+      "bytes": 16743032,
+      "mtime_ns": 1790251096389772828
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypercurve-f67be5b286dc39ba.rlib",
+      "bytes": 48727994,
+      "mtime_ns": 1790251095971766706
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypercurve-f67be5b286dc39ba.rmeta",
+      "bytes": 12645577,
+      "mtime_ns": 1790251030867859000
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve-28fa2a0d968dafad",
+      "bytes": 34104776,
+      "mtime_ns": 1790250700231970950
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypersolve-1d50d7650489f51a.rlib",
+      "bytes": 14186866,
+      "mtime_ns": 1790250572378098399
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypersolve-1d50d7650489f51a.rmeta",
+      "bytes": 5826491,
+      "mtime_ns": 1790250558282094361
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperreal-cf8a0e614b31e79a.rlib",
+      "bytes": 11035348,
+      "mtime_ns": 1790250555741854719
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlimit-a6272c516d47d2a5.rlib",
+      "bytes": 3988776,
+      "mtime_ns": 1790250553818826552
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlimit-a6272c516d47d2a5.rmeta",
+      "bytes": 1694724,
+      "mtime_ns": 1790250546792643283
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlattice-8c0638b36b28a37e.rlib",
+      "bytes": 4663950,
+      "mtime_ns": 1790250545775708740
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlattice-8c0638b36b28a37e.rmeta",
+      "bytes": 1397870,
+      "mtime_ns": 1790250537102387245
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperreal-cf8a0e614b31e79a.rmeta",
+      "bytes": 4495087,
+      "mtime_ns": 1790250535965422145
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve-30becbc5c2ed0c70",
+      "bytes": 34067136,
+      "mtime_ns": 1790249946621932661
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypersolve-3b173952c18727a4.rlib",
+      "bytes": 14186558,
+      "mtime_ns": 1790249819700073574
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypersolve-3b173952c18727a4.rmeta",
+      "bytes": 5825888,
+      "mtime_ns": 1790249805892704228
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperreal-27a23050d596b0a1.rlib",
+      "bytes": 11034276,
+      "mtime_ns": 1790249803693839122
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlimit-3e33b11243894d89.rlib",
+      "bytes": 3991012,
+      "mtime_ns": 1790249801764810867
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlimit-3e33b11243894d89.rmeta",
+      "bytes": 1694427,
+      "mtime_ns": 1790249794722698571
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlattice-1a30674d57955d65.rlib",
+      "bytes": 4667422,
+      "mtime_ns": 1790249793660692162
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlattice-1a30674d57955d65.rmeta",
+      "bytes": 1397753,
+      "mtime_ns": 1790249785143505945
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperreal-27a23050d596b0a1.rmeta",
+      "bytes": 4494250,
+      "mtime_ns": 1790249784013881922
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve_bezier_arrangement-e588d29098a8224e",
+      "bytes": 13659152,
+      "mtime_ns": 1790248929400990740
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve_curve_region_boolean-695c3a9ad82c9fc7",
+      "bytes": 18780360,
+      "mtime_ns": 1790248928977984517
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve_path_closure-8d40793e643e7426",
+      "bytes": 19269224,
+      "mtime_ns": 1790248926173943263
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve_pcb_boolean_regressions-a5c758fad33b421d",
+      "bytes": 16740616,
+      "mtime_ns": 1790248925448932596
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve_curve_region_boolean_fuzz-2ad5134f3d358c4d",
+      "bytes": 17656280,
+      "mtime_ns": 1790248925076927123
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypercurve-c1313dda33199368.rlib",
+      "bytes": 48724014,
+      "mtime_ns": 1790248921892880278
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypercurve-c1313dda33199368.rmeta",
+      "bytes": 12644642,
+      "mtime_ns": 1790248862514704006
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypersolve-71032dd91d98338d.rlib",
+      "bytes": 14178180,
+      "mtime_ns": 1790248806833187482
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypersolve-71032dd91d98338d.rmeta",
+      "bytes": 5820634,
+      "mtime_ns": 1790248792770842587
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlattice-84fe5f2f903d856b.rlib",
+      "bytes": 5604074,
+      "mtime_ns": 1790248769639640278
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlattice-84fe5f2f903d856b.rmeta",
+      "bytes": 1461159,
+      "mtime_ns": 1790248764286690160
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hyperreal-bb914c711672ec30",
+      "bytes": 1079408,
+      "mtime_ns": 1790248755122426696
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hyperreal-5201066d56ca47e6",
+      "bytes": 2663424,
+      "mtime_ns": 1790248755033425386
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperreal-3339bc19692958ea.rlib",
+      "bytes": 11323796,
+      "mtime_ns": 1790248747340312202
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperreal-3339bc19692958ea.rmeta",
+      "bytes": 4576259,
+      "mtime_ns": 1790248736857679973
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve-e24834da85d72ef8",
+      "bytes": 34072304,
+      "mtime_ns": 1790248368952734343
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypersolve-b2f4bab4cf438be5.rlib",
+      "bytes": 14186066,
+      "mtime_ns": 1790248234363746032
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypersolve-b2f4bab4cf438be5.rmeta",
+      "bytes": 5825687,
+      "mtime_ns": 1790248220012732573
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperreal-20a2117808d8f159.rlib",
+      "bytes": 11033784,
+      "mtime_ns": 1790248217345494618
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlimit-bcb5b2408aaa3f87.rlib",
+      "bytes": 3990654,
+      "mtime_ns": 1790248215545468026
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlimit-bcb5b2408aaa3f87.rmeta",
+      "bytes": 1694328,
+      "mtime_ns": 1790248208240560106
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlattice-0e3b0b76e774c41e.rlib",
+      "bytes": 4667446,
+      "mtime_ns": 1790248207178344416
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlattice-0e3b0b76e774c41e.rmeta",
+      "bytes": 1397714,
+      "mtime_ns": 1790248198143972427
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperreal-20a2117808d8f159.rmeta",
+      "bytes": 4493971,
+      "mtime_ns": 1790248196883165403
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypersolve-b4fd8cfd7d3c1a58",
+      "bytes": 11645840,
+      "mtime_ns": 1790248120541064504
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlimit-2f21090eba02446b.rlib",
+      "bytes": 3986448,
+      "mtime_ns": 1790248084584533310
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperreal-d5879cab17708e59.rlib",
+      "bytes": 8860078,
+      "mtime_ns": 1790248082113496805
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlimit-2f21090eba02446b.rmeta",
+      "bytes": 1686967,
+      "mtime_ns": 1790248079585143584
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlattice-d993f7c06268f4f7.rlib",
+      "bytes": 5518876,
+      "mtime_ns": 1790248078539444005
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlattice-d993f7c06268f4f7.rmeta",
+      "bytes": 1404865,
+      "mtime_ns": 1790248067649790528
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperreal-d5879cab17708e59.rmeta",
+      "bytes": 3758432,
+      "mtime_ns": 1790248066274648042
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hyperlimit-07e6fbce10416239",
+      "bytes": 6034768,
+      "mtime_ns": 1790248037100831824
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperreal-9e1eeb27223f6f56.rlib",
+      "bytes": 11034252,
+      "mtime_ns": 1790248027895695835
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlattice-a95d638978174a25.rlib",
+      "bytes": 4708056,
+      "mtime_ns": 1790248022611617772
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlattice-a95d638978174a25.rmeta",
+      "bytes": 1436908,
+      "mtime_ns": 1790248013660485535
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperreal-9e1eeb27223f6f56.rmeta",
+      "bytes": 4493971,
+      "mtime_ns": 1790248012426186144
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hyperlattice-f152aec4b933f73d",
+      "bytes": 2904464,
+      "mtime_ns": 1790247998179256827
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperreal-ad9c25d24acfbff0.rlib",
+      "bytes": 11033756,
+      "mtime_ns": 1790247881731536519
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperreal-ad9c25d24acfbff0.rmeta",
+      "bytes": 4493971,
+      "mtime_ns": 1790247861070661291
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperreal-2d10caa855a663c9.rlib",
+      "bytes": 7678656,
+      "mtime_ns": 1790247692165736022
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperreal-2d10caa855a663c9.rmeta",
+      "bytes": 3546682,
+      "mtime_ns": 1790247685248524622
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hyperreal-81853cfd7f56b408",
+      "bytes": 9938720,
+      "mtime_ns": 1790247677619521127
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve_curve_region_boolean_fuzz-1f791f16dd86d6d8",
+      "bytes": 17656336,
+      "mtime_ns": 1790246084245978483
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve_bezier_arrangement-4e04f5b23473a0d0",
+      "bytes": 13659160,
+      "mtime_ns": 1790246083859972790
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve_pcb_boolean_regressions-4d02e12b0910d13d",
+      "bytes": 16740928,
+      "mtime_ns": 1790246080694926105
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve_path_closure-9f4ac6af13c16111",
+      "bytes": 19269320,
+      "mtime_ns": 1790246080173918421
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve_curve_region_boolean-fe77e315e60665b0",
+      "bytes": 18780472,
+      "mtime_ns": 1790246079336906075
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypercurve-cb5818e5fef10613.rlib",
+      "bytes": 48727280,
+      "mtime_ns": 1790246074964841587
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypersolve-543dd444ab36c192.rlib",
+      "bytes": 14186868,
+      "mtime_ns": 1790246007785850699
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypercurve-cb5818e5fef10613.rmeta",
+      "bytes": 12644642,
+      "mtime_ns": 1790246000004139789
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypersolve-543dd444ab36c192.rmeta",
+      "bytes": 5825687,
+      "mtime_ns": 1790245974794425015
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperreal-11b4f38b724fc4f1.rlib",
+      "bytes": 11028434,
+      "mtime_ns": 1790245971693318337
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlimit-6f0f675572e9b388.rlib",
+      "bytes": 3989912,
+      "mtime_ns": 1790245969807290518
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlimit-6f0f675572e9b388.rmeta",
+      "bytes": 1694328,
+      "mtime_ns": 1790245960721990852
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlattice-6ae2a6e1653a2153.rlib",
+      "bytes": 4666778,
+      "mtime_ns": 1790245959562139401
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlattice-6ae2a6e1653a2153.rmeta",
+      "bytes": 1397714,
+      "mtime_ns": 1790245948648156247
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperreal-11b4f38b724fc4f1.rmeta",
+      "bytes": 4490591,
+      "mtime_ns": 1790245947262637293
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypersolve-7ff38c29c29df257.rlib",
+      "bytes": 14178436,
+      "mtime_ns": 1790245565147321797
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypersolve-7ff38c29c29df257.rmeta",
+      "bytes": 5820634,
+      "mtime_ns": 1790245551151482959
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve-3c8bec1c0e7225b0",
+      "bytes": 34012264,
+      "mtime_ns": 1790245266064931629
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypersolve-bb3842834bdde871.rlib",
+      "bytes": 14186298,
+      "mtime_ns": 1790245138606065523
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypersolve-bb3842834bdde871.rmeta",
+      "bytes": 5825687,
+      "mtime_ns": 1790245124707605761
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperreal-8610392638fd0e41.rlib",
+      "bytes": 11028104,
+      "mtime_ns": 1790245122180825044
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlimit-fdc2a3c62217b7a3.rlib",
+      "bytes": 3990070,
+      "mtime_ns": 1790245120497800403
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlimit-fdc2a3c62217b7a3.rmeta",
+      "bytes": 1694328,
+      "mtime_ns": 1790245113455729533
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlattice-a048bf154dfb7e45.rlib",
+      "bytes": 4666726,
+      "mtime_ns": 1790245112393681752
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlattice-a048bf154dfb7e45.rmeta",
+      "bytes": 1397714,
+      "mtime_ns": 1790245103700992742
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperreal-8610392638fd0e41.rmeta",
+      "bytes": 4490591,
+      "mtime_ns": 1790245102485759529
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypersolve-aa33ccbb63540655",
+      "bytes": 11644008,
+      "mtime_ns": 1790245042836663378
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlimit-81a3284f7d0bab75.rlib",
+      "bytes": 3985520,
+      "mtime_ns": 1790245008568161658
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperreal-fe6bd93b6a1ec361.rlib",
+      "bytes": 8854104,
+      "mtime_ns": 1790245006236127515
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlimit-81a3284f7d0bab75.rmeta",
+      "bytes": 1686967,
+      "mtime_ns": 1790245003590560339
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlattice-2561e45d6cddf192.rlib",
+      "bytes": 5518246,
+      "mtime_ns": 1790245002548073518
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlattice-2561e45d6cddf192.rmeta",
+      "bytes": 1404865,
+      "mtime_ns": 1790244991847645424
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperreal-fe6bd93b6a1ec361.rmeta",
+      "bytes": 3755044,
+      "mtime_ns": 1790244990611401042
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hyperlimit-89c3b019da753a14",
+      "bytes": 6034584,
+      "mtime_ns": 1790244969596591081
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperreal-d207197cf0040b44.rlib",
+      "bytes": 11027854,
+      "mtime_ns": 1790244960742461448
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlattice-32bff50051726813.rlib",
+      "bytes": 4703814,
+      "mtime_ns": 1790244955817389341
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlattice-32bff50051726813.rmeta",
+      "bytes": 1436908,
+      "mtime_ns": 1790244947221776686
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperreal-d207197cf0040b44.rmeta",
+      "bytes": 4490591,
+      "mtime_ns": 1790244946033838360
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hyperlimit-f6735a77557431e5",
+      "bytes": 6034952,
+      "mtime_ns": 1790244751719401176
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperreal-c2a4019ae9da7df1.rlib",
+      "bytes": 11028498,
+      "mtime_ns": 1790244742786270387
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlattice-a54deb3ee0a42e13.rlib",
+      "bytes": 4707402,
+      "mtime_ns": 1790244737805197460
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlattice-a54deb3ee0a42e13.rmeta",
+      "bytes": 1436908,
+      "mtime_ns": 1790244729161905169
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperreal-c2a4019ae9da7df1.rmeta",
+      "bytes": 4490585,
+      "mtime_ns": 1790244727937333276
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hyperlimit-0f4543691c840d71",
+      "bytes": 6033480,
+      "mtime_ns": 1790244471204294197
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperreal-1bcda445da638f24.rlib",
+      "bytes": 11021668,
+      "mtime_ns": 1790244462166161870
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlattice-31b38424ba0e4831.rlib",
+      "bytes": 4704948,
+      "mtime_ns": 1790244457177088826
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlattice-31b38424ba0e4831.rmeta",
+      "bytes": 1436908,
+      "mtime_ns": 1790244448510322156
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperreal-1bcda445da638f24.rmeta",
+      "bytes": 4490585,
+      "mtime_ns": 1790244447291301623
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve_pcb_boolean_regressions-cb1d080d42fd90d3",
+      "bytes": 16732312,
+      "mtime_ns": 1790243094282983594
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve_curve_region_boolean_fuzz-0afde47ceae7130e",
+      "bytes": 17647712,
+      "mtime_ns": 1790243094218982650
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve_bezier_arrangement-f897ba77fd3a8a1b",
+      "bytes": 13650896,
+      "mtime_ns": 1790243093895977884
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve_path_closure-0c18843213bc7051",
+      "bytes": 19260696,
+      "mtime_ns": 1790243090970934725
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve_curve_region_boolean-592a60cfc76d28c8",
+      "bytes": 18771808,
+      "mtime_ns": 1790243090274924455
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypercurve-2d04731ee5d60fc7.rlib",
+      "bytes": 48723608,
+      "mtime_ns": 1790243086684871483
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypercurve-2d04731ee5d60fc7.rmeta",
+      "bytes": 12644782,
+      "mtime_ns": 1790243027143414928
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve-1b51e173d2706b20",
+      "bytes": 34005496,
+      "mtime_ns": 1790242764686120351
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypersolve-7b5e78da11b846c1.rlib",
+      "bytes": 14187260,
+      "mtime_ns": 1790242636511229115
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypersolve-7b5e78da11b846c1.rmeta",
+      "bytes": 5826414,
+      "mtime_ns": 1790242622634424393
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperreal-64041ce974d08e8d.rlib",
+      "bytes": 11013142,
+      "mtime_ns": 1790242620321990239
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlimit-e57af14f2dafade3.rlib",
+      "bytes": 3990084,
+      "mtime_ns": 1790242618462962809
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlimit-e57af14f2dafade3.rmeta",
+      "bytes": 1694427,
+      "mtime_ns": 1790242611318796835
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlattice-609a90a733b916df.rlib",
+      "bytes": 4666640,
+      "mtime_ns": 1790242610209841033
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlattice-609a90a733b916df.rmeta",
+      "bytes": 1397753,
+      "mtime_ns": 1790242601573371162
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperreal-64041ce974d08e8d.rmeta",
+      "bytes": 4489118,
+      "mtime_ns": 1790242600357737807
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve_bezier_arrangement-ed8e4d3ebfefada2",
+      "bytes": 13643672,
+      "mtime_ns": 1790242105218389823
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve_curve_region_boolean-05888b4dd019a91d",
+      "bytes": 18760432,
+      "mtime_ns": 1790242104768383182
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve_path_closure-17198174f29b6958",
+      "bytes": 19248560,
+      "mtime_ns": 1790242101884340628
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve_curve_region_boolean_fuzz-b447e4c1b174fc5f",
+      "bytes": 17637296,
+      "mtime_ns": 1790242101141329665
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve_pcb_boolean_regressions-950c7a567cd1b11b",
+      "bytes": 16722680,
+      "mtime_ns": 1790242097932282315
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypercurve-24e3e8e8bef9b0ef.rlib",
+      "bytes": 48678736,
+      "mtime_ns": 1790242097544276590
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypercurve-24e3e8e8bef9b0ef.rmeta",
+      "bytes": 12644776,
+      "mtime_ns": 1790242037385607135
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve-43f93909d1990f11",
+      "bytes": 34003696,
+      "mtime_ns": 1790241814608101833
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypersolve-c7556e78d7fea153.rlib",
+      "bytes": 14186962,
+      "mtime_ns": 1790241685504196889
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypersolve-c7556e78d7fea153.rmeta",
+      "bytes": 5826414,
+      "mtime_ns": 1790241671523530161
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperreal-84c78b5e69375227.rlib",
+      "bytes": 11012792,
+      "mtime_ns": 1790241669141955460
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlimit-61e46d096fa88017.rlib",
+      "bytes": 3990122,
+      "mtime_ns": 1790241667318928561
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlimit-61e46d096fa88017.rmeta",
+      "bytes": 1694427,
+      "mtime_ns": 1790241660276378614
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlattice-f4b18a4876cc4d04.rlib",
+      "bytes": 4666720,
+      "mtime_ns": 1790241659181808497
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlattice-f4b18a4876cc4d04.rmeta",
+      "bytes": 1397753,
+      "mtime_ns": 1790241650466063774
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperreal-84c78b5e69375227.rmeta",
+      "bytes": 4489118,
+      "mtime_ns": 1790241649253281324
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve_bezier_arrangement-cc6bdce999df8789",
+      "bytes": 13651192,
+      "mtime_ns": 1790240934345148786
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve_curve_region_boolean_fuzz-e553cc58177783d4",
+      "bytes": 17648000,
+      "mtime_ns": 1790240933969143274
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve_path_closure-49c221c3fc38b55f",
+      "bytes": 19260984,
+      "mtime_ns": 1790240931089101052
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve_curve_region_boolean-c7c633a24a19f0c8",
+      "bytes": 18772104,
+      "mtime_ns": 1790240930828097225
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve_pcb_boolean_regressions-9885541253a4b5d1",
+      "bytes": 16732568,
+      "mtime_ns": 1790240927320045795
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypercurve-11dae64d69eb26a2.rlib",
+      "bytes": 48723812,
+      "mtime_ns": 1790240926942040253
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypercurve-11dae64d69eb26a2.rmeta",
+      "bytes": 12644602,
+      "mtime_ns": 1790240869080436625
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve-4f601178ba3f250a",
+      "bytes": 34005520,
+      "mtime_ns": 1790240809428317456
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypersolve-ee7a426f564366df.rlib",
+      "bytes": 14187186,
+      "mtime_ns": 1790240686630517191
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypersolve-ee7a426f564366df.rmeta",
+      "bytes": 5826213,
+      "mtime_ns": 1790240673223356745
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperreal-e0ec0f9c4f5b5614.rlib",
+      "bytes": 11013250,
+      "mtime_ns": 1790240670972287635
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlimit-b8fc8672f2ce888f.rlib",
+      "bytes": 3989966,
+      "mtime_ns": 1790240669295263049
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlimit-b8fc8672f2ce888f.rmeta",
+      "bytes": 1694328,
+      "mtime_ns": 1790240662447878179
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlattice-20a1db45d0d29ca7.rlib",
+      "bytes": 4666624,
+      "mtime_ns": 1790240661492148652
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlattice-20a1db45d0d29ca7.rmeta",
+      "bytes": 1397714,
+      "mtime_ns": 1790240653102836633
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperreal-e0ec0f9c4f5b5614.rmeta",
+      "bytes": 4488839,
+      "mtime_ns": 1790240651983258056
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve-50830e11068a14ce",
+      "bytes": 34057512,
+      "mtime_ns": 1790240351743607628
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypersolve-9f224207971b5eb1.rlib",
+      "bytes": 14187318,
+      "mtime_ns": 1790240229612817358
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypersolve-9f224207971b5eb1.rmeta",
+      "bytes": 5826213,
+      "mtime_ns": 1790240216150589179
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperreal-5c6d9dc474dc64bf.rlib",
+      "bytes": 11012910,
+      "mtime_ns": 1790240212143561324
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlimit-8033c4d844046914.rlib",
+      "bytes": 3989978,
+      "mtime_ns": 1790240210522537566
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlimit-8033c4d844046914.rmeta",
+      "bytes": 1694328,
+      "mtime_ns": 1790240203710207353
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlattice-62e128479c0382c1.rlib",
+      "bytes": 4666552,
+      "mtime_ns": 1790240202728423333
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlattice-62e128479c0382c1.rmeta",
+      "bytes": 1397714,
+      "mtime_ns": 1790240194344683530
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperreal-5c6d9dc474dc64bf.rmeta",
+      "bytes": 4488839,
+      "mtime_ns": 1790240193170450586
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve-edb7a084b0038fc0",
+      "bytes": 34024168,
+      "mtime_ns": 1790239758731916015
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypersolve-9952fee845dde104.rlib",
+      "bytes": 14187474,
+      "mtime_ns": 1790239632263062452
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypersolve-9952fee845dde104.rmeta",
+      "bytes": 5826213,
+      "mtime_ns": 1790239618489435891
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperreal-2da70bee8b2b4a8d.rlib",
+      "bytes": 11014720,
+      "mtime_ns": 1790239616004824167
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlimit-77838c84740575a5.rlib",
+      "bytes": 3989796,
+      "mtime_ns": 1790239614421800966
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlimit-77838c84740575a5.rmeta",
+      "bytes": 1694328,
+      "mtime_ns": 1790239607325264366
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlattice-8da3707b404c82b9.rlib",
+      "bytes": 4666602,
+      "mtime_ns": 1790239606278681618
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlattice-8da3707b404c82b9.rmeta",
+      "bytes": 1397714,
+      "mtime_ns": 1790239597396021821
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperreal-2da70bee8b2b4a8d.rmeta",
+      "bytes": 4488839,
+      "mtime_ns": 1790239596235892670
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve-f9743484c79a98f9",
+      "bytes": 34045496,
+      "mtime_ns": 1790239276297845328
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypersolve-687a22b166b331cc.rlib",
+      "bytes": 14187640,
+      "mtime_ns": 1790239144341911346
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypersolve-687a22b166b331cc.rmeta",
+      "bytes": 5826213,
+      "mtime_ns": 1790239130023759393
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperreal-ea9717cd125f7634.rlib",
+      "bytes": 11014770,
+      "mtime_ns": 1790239127556665337
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlimit-ecd829705c2b1d9b.rlib",
+      "bytes": 3989842,
+      "mtime_ns": 1790239125701638149
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlimit-ecd829705c2b1d9b.rmeta",
+      "bytes": 1694328,
+      "mtime_ns": 1790239118550509064
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlattice-565c59ccf90e30ba.rlib",
+      "bytes": 4662990,
+      "mtime_ns": 1790239117513518142
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlattice-565c59ccf90e30ba.rmeta",
+      "bytes": 1397714,
+      "mtime_ns": 1790239108636396211
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperreal-ea9717cd125f7634.rmeta",
+      "bytes": 4488839,
+      "mtime_ns": 1790239107398706930
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve-2d2da9d6522b7926",
+      "bytes": 34009928,
+      "mtime_ns": 1790238898637310231
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypersolve-d962a1f75da8c7e8.rlib",
+      "bytes": 14177562,
+      "mtime_ns": 1790238770537432763
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypersolve-d962a1f75da8c7e8.rmeta",
+      "bytes": 5826213,
+      "mtime_ns": 1790238756823522452
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperreal-0e43b834b7094b77.rlib",
+      "bytes": 11015034,
+      "mtime_ns": 1790238754542198333
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlimit-d51eb78ac040435f.rlib",
+      "bytes": 3990032,
+      "mtime_ns": 1790238752607169972
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlimit-d51eb78ac040435f.rmeta",
+      "bytes": 1694328,
+      "mtime_ns": 1790238745540725622
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlattice-d5489c72fd205db1.rlib",
+      "bytes": 4666632,
+      "mtime_ns": 1790238744526051534
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlattice-d5489c72fd205db1.rmeta",
+      "bytes": 1397714,
+      "mtime_ns": 1790238735822614399
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperreal-0e43b834b7094b77.rmeta",
+      "bytes": 4488839,
+      "mtime_ns": 1790238734596887797
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve-d03125a389d5d3c1",
+      "bytes": 34009728,
+      "mtime_ns": 1790238251327823084
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypersolve-5d9c1ec4ce209cba.rlib",
+      "bytes": 14177276,
+      "mtime_ns": 1790238119821898519
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypersolve-5d9c1ec4ce209cba.rmeta",
+      "bytes": 5826213,
+      "mtime_ns": 1790238105704188445
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperreal-156a0f5a97499a79.rlib",
+      "bytes": 11014686,
+      "mtime_ns": 1790238103232655841
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlimit-02981a4eb8dc58d2.rlib",
+      "bytes": 3990032,
+      "mtime_ns": 1790238101387628850
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlimit-02981a4eb8dc58d2.rmeta",
+      "bytes": 1694328,
+      "mtime_ns": 1790238094278477711
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlattice-b321dbb6e60bf7a8.rlib",
+      "bytes": 4666548,
+      "mtime_ns": 1790238093244509727
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlattice-b321dbb6e60bf7a8.rmeta",
+      "bytes": 1397714,
+      "mtime_ns": 1790238084525744691
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperreal-156a0f5a97499a79.rmeta",
+      "bytes": 4488839,
+      "mtime_ns": 1790238083295333744
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve_curve_region_boolean-dd8e51c096c6b0cd",
+      "bytes": 18780152,
+      "mtime_ns": 1790237175554084286
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve_path_closure-052e7ddcfac7a960",
+      "bytes": 19265904,
+      "mtime_ns": 1790237175496083432
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve_pcb_boolean_regressions-76519a6dddca19e2",
+      "bytes": 16734856,
+      "mtime_ns": 1790237171924030861
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve_bezier_arrangement-d6978cde9de9da76",
+      "bytes": 13656760,
+      "mtime_ns": 1790237171534025121
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve_curve_region_boolean_fuzz-0f4740b9b106082b",
+      "bytes": 17650688,
+      "mtime_ns": 1790237171135019249
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypercurve-6209b193409b0826.rlib",
+      "bytes": 48774208,
+      "mtime_ns": 1790237167881971373
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypercurve-6209b193409b0826.rmeta",
+      "bytes": 12642817,
+      "mtime_ns": 1790237108207179656
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve-b3a8648032b2eaa9",
+      "bytes": 33747264,
+      "mtime_ns": 1790236678969775928
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypersolve-9f8243d8c767cfb1.rlib",
+      "bytes": 14189166,
+      "mtime_ns": 1790236549304867619
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypersolve-9f8243d8c767cfb1.rmeta",
+      "bytes": 5827620,
+      "mtime_ns": 1790236535312045928
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperreal-9059800f73976333.rlib",
+      "bytes": 11017242,
+      "mtime_ns": 1790236531268602175
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlimit-78da5a3d8952080a.rlib",
+      "bytes": 3991064,
+      "mtime_ns": 1790236529544576802
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlimit-78da5a3d8952080a.rmeta",
+      "bytes": 1695021,
+      "mtime_ns": 1790236522433256722
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlattice-16f784d39d7bd7e4.rlib",
+      "bytes": 4667024,
+      "mtime_ns": 1790236521386456737
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlattice-16f784d39d7bd7e4.rmeta",
+      "bytes": 1397987,
+      "mtime_ns": 1790236512618045659
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperreal-9059800f73976333.rmeta",
+      "bytes": 4490792,
+      "mtime_ns": 1790236511416293879
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve-1551b2b86aea7fb7",
+      "bytes": 33942568,
+      "mtime_ns": 1790235142347161077
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve_bezier_arrangement-b4a1a522c894caac",
+      "bytes": 13642016,
+      "mtime_ns": 1790235091013404009
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve_curve_region_boolean-1caea5b23d33c328",
+      "bytes": 18763448,
+      "mtime_ns": 1790235087395350449
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve_curve_region_boolean_fuzz-225360430653a97b",
+      "bytes": 17636216,
+      "mtime_ns": 1790235083766296726
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve_path_closure-dca54ca0b34740cf",
+      "bytes": 19247400,
+      "mtime_ns": 1790235080575249487
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve_pcb_boolean_regressions-bace5fa9a64f57e3",
+      "bytes": 16720144,
+      "mtime_ns": 1790235076257185565
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypercurve-ed74219190aa6cb2.rlib",
+      "bytes": 48689120,
+      "mtime_ns": 1790235075873179880
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypersolve-7a393bf80cc9d1e6.rlib",
+      "bytes": 14188856,
+      "mtime_ns": 1790234965102540079
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypercurve-ed74219190aa6cb2.rmeta",
+      "bytes": 12636390,
+      "mtime_ns": 1790234958898634975
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypersolve-7a393bf80cc9d1e6.rmeta",
+      "bytes": 5827419,
+      "mtime_ns": 1790234937489747465
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperreal-d1d6b6893509cf10.rlib",
+      "bytes": 11016760,
+      "mtime_ns": 1790234933434071272
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlimit-0aec46555d5feb44.rlib",
+      "bytes": 3990774,
+      "mtime_ns": 1790234931544043293
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlimit-0aec46555d5feb44.rmeta",
+      "bytes": 1694922,
+      "mtime_ns": 1790234924371937120
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlattice-e4bd1c46c9b35672.rlib",
+      "bytes": 4667082,
+      "mtime_ns": 1790234923305921340
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlattice-e4bd1c46c9b35672.rmeta",
+      "bytes": 1397948,
+      "mtime_ns": 1790234914494503751
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperreal-d1d6b6893509cf10.rmeta",
+      "bytes": 4490513,
+      "mtime_ns": 1790234913262048749
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve-8151c98a88acc936",
+      "bytes": 33932680,
+      "mtime_ns": 1790234072762330460
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve_curve_region_boolean_fuzz-0735a9451f321cb9",
+      "bytes": 17636080,
+      "mtime_ns": 1790234021711577212
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve_curve_region_boolean-5e24b878bb88a0ea",
+      "bytes": 18763360,
+      "mtime_ns": 1790234018447529051
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve_path_closure-fe6941834379dc55",
+      "bytes": 19246032,
+      "mtime_ns": 1790234014755474575
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve_bezier_arrangement-188f58cf2f4dd076",
+      "bytes": 13642304,
+      "mtime_ns": 1790234010306408929
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve_pcb_boolean_regressions-e1a925fe50a4b112",
+      "bytes": 16720016,
+      "mtime_ns": 1790234006688355545
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypercurve-b162a13dc7c5b2d7.rlib",
+      "bytes": 48686848,
+      "mtime_ns": 1790234006288349643
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypersolve-03c0c58be80d2170.rlib",
+      "bytes": 14188052,
+      "mtime_ns": 1790233896440728850
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypercurve-b162a13dc7c5b2d7.rmeta",
+      "bytes": 12635654,
+      "mtime_ns": 1790233890093327109
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypersolve-03c0c58be80d2170.rmeta",
+      "bytes": 5826615,
+      "mtime_ns": 1790233868916738744
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperreal-4ffc2c86a2aa7b16.rlib",
+      "bytes": 11015736,
+      "mtime_ns": 1790233866460286492
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlimit-cae3985ce337b0ef.rlib",
+      "bytes": 3990360,
+      "mtime_ns": 1790233864484257336
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlimit-cae3985ce337b0ef.rmeta",
+      "bytes": 1694526,
+      "mtime_ns": 1790233857407531504
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlattice-20e40bdfda09a8c9.rlib",
+      "bytes": 4666846,
+      "mtime_ns": 1790233856393137951
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlattice-20e40bdfda09a8c9.rmeta",
+      "bytes": 1397792,
+      "mtime_ns": 1790233847594040893
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperreal-4ffc2c86a2aa7b16.rmeta",
+      "bytes": 4489397,
+      "mtime_ns": 1790233846410547058
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve-e544bd3d9ba16312",
+      "bytes": 33912880,
+      "mtime_ns": 1790233682001564819
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypersolve-b39fef35775326fa.rlib",
+      "bytes": 14189040,
+      "mtime_ns": 1790233552069647686
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypersolve-b39fef35775326fa.rmeta",
+      "bytes": 5827620,
+      "mtime_ns": 1790233538091796117
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperreal-7451010e73ac8461.rlib",
+      "bytes": 11017508,
+      "mtime_ns": 1790233534119382832
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlimit-88dda9d08df508c0.rlib",
+      "bytes": 3990844,
+      "mtime_ns": 1790233532333356480
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlimit-88dda9d08df508c0.rmeta",
+      "bytes": 1695021,
+      "mtime_ns": 1790233525127917483
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlattice-ba5d06cdbedc80c0.rlib",
+      "bytes": 4667054,
+      "mtime_ns": 1790233524092234882
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlattice-ba5d06cdbedc80c0.rmeta",
+      "bytes": 1397987,
+      "mtime_ns": 1790233515321945967
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperreal-7451010e73ac8461.rmeta",
+      "bytes": 4490792,
+      "mtime_ns": 1790233514106414945
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve-702c08de074c4a6a",
+      "bytes": 33920512,
+      "mtime_ns": 1790233060665397052
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypersolve-4427b52b3e528773.rlib",
+      "bytes": 14189144,
+      "mtime_ns": 1790232930904494517
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypersolve-4427b52b3e528773.rmeta",
+      "bytes": 5828022,
+      "mtime_ns": 1790232916835913181
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperreal-fe46985964b48cec.rlib",
+      "bytes": 11016000,
+      "mtime_ns": 1790232912601226442
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlimit-21ad8f870ff45201.rlib",
+      "bytes": 3991286,
+      "mtime_ns": 1790232910711198761
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlimit-21ad8f870ff45201.rmeta",
+      "bytes": 1695219,
+      "mtime_ns": 1790232903608965519
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlattice-58166bc94e3347e0.rlib",
+      "bytes": 4667050,
+      "mtime_ns": 1790232902612080139
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlattice-58166bc94e3347e0.rmeta",
+      "bytes": 1398065,
+      "mtime_ns": 1790232893829698058
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperreal-fe46985964b48cec.rmeta",
+      "bytes": 4491350,
+      "mtime_ns": 1790232892562854757
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve-4fb4adcb411ed77b",
+      "bytes": 33913384,
+      "mtime_ns": 1790231539509116052
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve_curve_region_boolean_fuzz-271bcb3b25f84693",
+      "bytes": 17635328,
+      "mtime_ns": 1790231489227379639
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve_path_closure-9ecb595cdd375d4a",
+      "bytes": 19246440,
+      "mtime_ns": 1790231485985332157
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve_pcb_boolean_regressions-ae3cd81f63dc34b0",
+      "bytes": 16719280,
+      "mtime_ns": 1790231481688269223
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve_bezier_arrangement-eb5a813b6b818d5f",
+      "bytes": 13641352,
+      "mtime_ns": 1790231481299263526
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve_curve_region_boolean-79c4b72eb4e82bad",
+      "bytes": 18762608,
+      "mtime_ns": 1790231477665210303
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypercurve-aba61d18fd1fc3f0.rlib",
+      "bytes": 48685894,
+      "mtime_ns": 1790231473989156464
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypersolve-92a90afc9e0e6b7b.rlib",
+      "bytes": 14185406,
+      "mtime_ns": 1790231366709585276
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypercurve-aba61d18fd1fc3f0.rmeta",
+      "bytes": 12633571,
+      "mtime_ns": 1790231359975538181
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypersolve-92a90afc9e0e6b7b.rmeta",
+      "bytes": 5825007,
+      "mtime_ns": 1790231339882876334
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperreal-53e2283e59ad9308.rlib",
+      "bytes": 11012980,
+      "mtime_ns": 1790231337574158567
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlimit-7ebb56338d034775.rlib",
+      "bytes": 3989216,
+      "mtime_ns": 1790231335852133346
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlimit-7ebb56338d034775.rmeta",
+      "bytes": 1693734,
+      "mtime_ns": 1790231328902712776
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlattice-247f28f556f2b681.rlib",
+      "bytes": 4666262,
+      "mtime_ns": 1790231327905016956
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlattice-247f28f556f2b681.rmeta",
+      "bytes": 1397480,
+      "mtime_ns": 1790231319503845998
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperreal-53e2283e59ad9308.rmeta",
+      "bytes": 4487165,
+      "mtime_ns": 1790231318346919770
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve_path_closure-4794aa4948a357c4",
+      "bytes": 19253704,
+      "mtime_ns": 1790230847129977202
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypercurve-3000478cfe83ce74.rlib",
+      "bytes": 48732068,
+      "mtime_ns": 1790230844855943923
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypersolve-fa0a5343c4836e03.rlib",
+      "bytes": 14185794,
+      "mtime_ns": 1790230791525163474
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypercurve-3000478cfe83ce74.rmeta",
+      "bytes": 12636326,
+      "mtime_ns": 1790230784589784783
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypersolve-fa0a5343c4836e03.rmeta",
+      "bytes": 5825007,
+      "mtime_ns": 1790230764823664858
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperreal-d91bfac1e4004ce4.rlib",
+      "bytes": 11010772,
+      "mtime_ns": 1790230761037717318
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlimit-ea08325eeaf71003.rlib",
+      "bytes": 3989142,
+      "mtime_ns": 1790230759266691401
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlimit-ea08325eeaf71003.rmeta",
+      "bytes": 1693734,
+      "mtime_ns": 1790230752479015870
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlattice-5db51eaec9ba1895.rlib",
+      "bytes": 4666364,
+      "mtime_ns": 1790230751520578043
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlattice-5db51eaec9ba1895.rmeta",
+      "bytes": 1397480,
+      "mtime_ns": 1790230743030604781
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperreal-d91bfac1e4004ce4.rmeta",
+      "bytes": 4487165,
+      "mtime_ns": 1790230741927314307
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve_path_closure-9ac458d270a690d8",
+      "bytes": 19260808,
+      "mtime_ns": 1790230590871227098
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypercurve-70eb8bfc79f19e2a.rlib",
+      "bytes": 48751206,
+      "mtime_ns": 1790230588625194229
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypersolve-8aa1ad0da3b6849c.rlib",
+      "bytes": 14186360,
+      "mtime_ns": 1790230535943423278
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypercurve-70eb8bfc79f19e2a.rmeta",
+      "bytes": 12659118,
+      "mtime_ns": 1790230529182017212
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypersolve-8aa1ad0da3b6849c.rmeta",
+      "bytes": 5825811,
+      "mtime_ns": 1790230509603640647
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperreal-2be23cb6fa7af685.rlib",
+      "bytes": 11012448,
+      "mtime_ns": 1790230507342004721
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlimit-c108ae5015732722.rlib",
+      "bytes": 3989380,
+      "mtime_ns": 1790230505589979082
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlimit-c108ae5015732722.rmeta",
+      "bytes": 1694130,
+      "mtime_ns": 1790230498706324842
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlattice-3cf6852c24a954cd.rlib",
+      "bytes": 4662754,
+      "mtime_ns": 1790230497731864085
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlattice-3cf6852c24a954cd.rmeta",
+      "bytes": 1397636,
+      "mtime_ns": 1790230489378032713
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperreal-2be23cb6fa7af685.rmeta",
+      "bytes": 4488281,
+      "mtime_ns": 1790230488227573314
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve_curve_region_promotion-14cff2dbef444ebd",
+      "bytes": 20274448,
+      "mtime_ns": 1790228352702476097
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve_path_closure-1d08b35837201e32",
+      "bytes": 19247920,
+      "mtime_ns": 1790228347553400777
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve_analytic_parallel_region-7cf85112a22e0675",
+      "bytes": 19088048,
+      "mtime_ns": 1790228345651372954
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve_curve_point-d474ed4f88edf49e",
+      "bytes": 11671864,
+      "mtime_ns": 1790228343257337935
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypercurve-7d9cc06b3b9115fd.rlib",
+      "bytes": 48709386,
+      "mtime_ns": 1790228342097320966
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypercurve-7d9cc06b3b9115fd.rmeta",
+      "bytes": 12636350,
+      "mtime_ns": 1790228282406910805
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve-9cfc27cf4a11b24c",
+      "bytes": 33902504,
+      "mtime_ns": 1790228237477790608
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypersolve-1668285c3d44778a.rlib",
+      "bytes": 14186756,
+      "mtime_ns": 1790228110480932918
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypersolve-1668285c3d44778a.rmeta",
+      "bytes": 5826012,
+      "mtime_ns": 1790228096646043659
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperreal-5ff19429b79969b5.rlib",
+      "bytes": 11014052,
+      "mtime_ns": 1790228094297696192
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlimit-dad662266c507bbd.rlib",
+      "bytes": 3989592,
+      "mtime_ns": 1790228092652672129
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlimit-dad662266c507bbd.rmeta",
+      "bytes": 1694229,
+      "mtime_ns": 1790228085629149557
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlattice-3d577e9a827cfeb4.rlib",
+      "bytes": 4662886,
+      "mtime_ns": 1790228084638554900
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlattice-3d577e9a827cfeb4.rmeta",
+      "bytes": 1397675,
+      "mtime_ns": 1790228076032530044
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperreal-5ff19429b79969b5.rmeta",
+      "bytes": 4488560,
+      "mtime_ns": 1790228074838798492
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve_path_closure-fd3451ac9ee05933",
+      "bytes": 19261712,
+      "mtime_ns": 1790227383594309294
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypercurve-48332fe4ef51e319.rlib",
+      "bytes": 48763984,
+      "mtime_ns": 1790227381174273939
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypercurve-48332fe4ef51e319.rmeta",
+      "bytes": 12662438,
+      "mtime_ns": 1790227320289528079
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve_curve_region_promotion-37009db28f219570",
+      "bytes": 20273432,
+      "mtime_ns": 1790227143051795133
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve_curve_point-1b6b817fa2cd8e5f",
+      "bytes": 11671736,
+      "mtime_ns": 1790227142011779939
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve_path_closure-669c2b88ee737cd3",
+      "bytes": 19246968,
+      "mtime_ns": 1790227140885763489
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve_analytic_parallel_region-8817805e8f30022b",
+      "bytes": 19087000,
+      "mtime_ns": 1790227136569700434
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypercurve-5ea48995826b8eaf.rlib",
+      "bytes": 48705476,
+      "mtime_ns": 1790227132991648161
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypercurve-5ea48995826b8eaf.rmeta",
+      "bytes": 12636269,
+      "mtime_ns": 1790227072150246110
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve-aa7ef26e268fe0c6",
+      "bytes": 33901856,
+      "mtime_ns": 1790227031498165414
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypersolve-8adfe3dccbeb9f96.rlib",
+      "bytes": 14187134,
+      "mtime_ns": 1790226904585311304
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypersolve-8adfe3dccbeb9f96.rmeta",
+      "bytes": 5826012,
+      "mtime_ns": 1790226890644285555
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperreal-6c6f40a35af60adc.rlib",
+      "bytes": 11015016,
+      "mtime_ns": 1790226886623048887
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlimit-929653e04a9836bd.rlib",
+      "bytes": 3989936,
+      "mtime_ns": 1790226884722021114
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlimit-929653e04a9836bd.rmeta",
+      "bytes": 1694229,
+      "mtime_ns": 1790226877746407128
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlattice-f30f3607164bb3ac.rlib",
+      "bytes": 4666544,
+      "mtime_ns": 1790226876661903361
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlattice-f30f3607164bb3ac.rmeta",
+      "bytes": 1397675,
+      "mtime_ns": 1790226868063689682
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperreal-6c6f40a35af60adc.rmeta",
+      "bytes": 4488560,
+      "mtime_ns": 1790226866882708286
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve-6d3f25431a68c7ae",
+      "bytes": 33861296,
+      "mtime_ns": 1790225782931922556
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypersolve-374fb3db6369c3ab.rlib",
+      "bytes": 14190582,
+      "mtime_ns": 1790225654039039254
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypersolve-374fb3db6369c3ab.rmeta",
+      "bytes": 5828223,
+      "mtime_ns": 1790225639838766882
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperreal-f23b9f5373508cde.rlib",
+      "bytes": 11015750,
+      "mtime_ns": 1790225635589769685
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlimit-0774c24c74acbe42.rlib",
+      "bytes": 3991414,
+      "mtime_ns": 1790225633794743457
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlimit-0774c24c74acbe42.rmeta",
+      "bytes": 1695318,
+      "mtime_ns": 1790225626621896460
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlattice-a721106dcacb604c.rlib",
+      "bytes": 4666992,
+      "mtime_ns": 1790225625587623540
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlattice-a721106dcacb604c.rmeta",
+      "bytes": 1398104,
+      "mtime_ns": 1790225616704835605
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperreal-f23b9f5373508cde.rmeta",
+      "bytes": 4491629,
+      "mtime_ns": 1790225615510251931
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypersolve-ec07d4670a9dbee9",
+      "bytes": 11636824,
+      "mtime_ns": 1790224613367833621
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlimit-d1b41ececc49cab7.rlib",
+      "bytes": 3984822,
+      "mtime_ns": 1790224576609296529
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperreal-01a322f9737c2a1a.rlib",
+      "bytes": 8833080,
+      "mtime_ns": 1790224574232261797
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlimit-d1b41ececc49cab7.rmeta",
+      "bytes": 1686373,
+      "mtime_ns": 1790224571543143440
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlattice-3acf463fd66bef24.rlib",
+      "bytes": 5517880,
+      "mtime_ns": 1790224570431206258
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlattice-3acf463fd66bef24.rmeta",
+      "bytes": 1404631,
+      "mtime_ns": 1790224559278715808
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperreal-01a322f9737c2a1a.rmeta",
+      "bytes": 3751628,
+      "mtime_ns": 1790224557983660078
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hyperlimit-13d4e44f31da593c",
+      "bytes": 6034264,
+      "mtime_ns": 1790224538155734669
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperreal-ff831d1a7eb1eb4e.rlib",
+      "bytes": 11012658,
+      "mtime_ns": 1790224528438592688
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlattice-ec0a6d8fa257dd5f.rlib",
+      "bytes": 4707026,
+      "mtime_ns": 1790224523050513961
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlattice-ec0a6d8fa257dd5f.rmeta",
+      "bytes": 1436674,
+      "mtime_ns": 1790224513991957358
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperreal-ff831d1a7eb1eb4e.rmeta",
+      "bytes": 4487165,
+      "mtime_ns": 1790224512718777007
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve-4eae17da9428266a",
+      "bytes": 33852080,
+      "mtime_ns": 1790224482732924866
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypersolve-7049046703868d90.rlib",
+      "bytes": 14185628,
+      "mtime_ns": 1790224356931086731
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypersolve-7049046703868d90.rmeta",
+      "bytes": 5825007,
+      "mtime_ns": 1790224343280437377
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperreal-6ab8c5ec65974840.rlib",
+      "bytes": 11010788,
+      "mtime_ns": 1790224339400830590
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlimit-7eadee9513113f6b.rlib",
+      "bytes": 3989318,
+      "mtime_ns": 1790224337618804552
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlimit-7eadee9513113f6b.rmeta",
+      "bytes": 1693734,
+      "mtime_ns": 1790224330689174683
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlattice-29101441b067f6c5.rlib",
+      "bytes": 4666154,
+      "mtime_ns": 1790224329706688945
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlattice-29101441b067f6c5.rmeta",
+      "bytes": 1397480,
+      "mtime_ns": 1790224321190615000
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperreal-6ab8c5ec65974840.rmeta",
+      "bytes": 4487165,
+      "mtime_ns": 1790224320012748559
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve-78aa67156bc0b6f0",
+      "bytes": 33845200,
+      "mtime_ns": 1790224026792262982
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypersolve-929ec9d09a72d80f.rlib",
+      "bytes": 14181376,
+      "mtime_ns": 1790223901899438127
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypersolve-929ec9d09a72d80f.rmeta",
+      "bytes": 5825007,
+      "mtime_ns": 1790223887633664084
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperreal-2577cacf0455b2c2.rlib",
+      "bytes": 11003090,
+      "mtime_ns": 1790223885183193880
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlimit-d4454a5722bd11c0.rlib",
+      "bytes": 3987876,
+      "mtime_ns": 1790223883456168645
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlimit-d4454a5722bd11c0.rmeta",
+      "bytes": 1693734,
+      "mtime_ns": 1790223876347750794
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlattice-41d6048317d8df1d.rlib",
+      "bytes": 4663862,
+      "mtime_ns": 1790223875340050058
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlattice-41d6048317d8df1d.rmeta",
+      "bytes": 1397480,
+      "mtime_ns": 1790223866777509080
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperreal-2577cacf0455b2c2.rmeta",
+      "bytes": 4486671,
+      "mtime_ns": 1790223865615526659
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve-e97751423aaaeb68",
+      "bytes": 33854144,
+      "mtime_ns": 1790223520061858968
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypersolve-c5896f047a23ddfe.rlib",
+      "bytes": 14187084,
+      "mtime_ns": 1790223394547025025
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypersolve-c5896f047a23ddfe.rmeta",
+      "bytes": 5825811,
+      "mtime_ns": 1790223380924143596
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperreal-fd4142ac7f3c309f.rlib",
+      "bytes": 11017588,
+      "mtime_ns": 1790223376886766985
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlimit-874fd683e60f7f1e.rlib",
+      "bytes": 3989736,
+      "mtime_ns": 1790223375233742832
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlimit-874fd683e60f7f1e.rmeta",
+      "bytes": 1694130,
+      "mtime_ns": 1790223368279602178
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlattice-ffd7c8d7e43b9a84.rlib",
+      "bytes": 4666512,
+      "mtime_ns": 1790223367269626465
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlattice-ffd7c8d7e43b9a84.rmeta",
+      "bytes": 1397636,
+      "mtime_ns": 1790223358760114501
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperreal-fd4142ac7f3c309f.rmeta",
+      "bytes": 4489161,
+      "mtime_ns": 1790223357597005167
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve-9673d4b28310de24",
+      "bytes": 33847792,
+      "mtime_ns": 1790223244447831875
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypersolve-a45bff1f05e0bdc7.rlib",
+      "bytes": 14185682,
+      "mtime_ns": 1790223119355004097
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypersolve-a45bff1f05e0bdc7.rmeta",
+      "bytes": 5825007,
+      "mtime_ns": 1790223105825177466
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperreal-d497d8e5f3efc0eb.rlib",
+      "bytes": 11015518,
+      "mtime_ns": 1790223103320769815
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlimit-4a3a61552020433c.rlib",
+      "bytes": 3989102,
+      "mtime_ns": 1790223101692746027
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlimit-4a3a61552020433c.rmeta",
+      "bytes": 1693734,
+      "mtime_ns": 1790223094702945873
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlattice-d80478320f2691a0.rlib",
+      "bytes": 4666258,
+      "mtime_ns": 1790223093684629018
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlattice-d80478320f2691a0.rmeta",
+      "bytes": 1397480,
+      "mtime_ns": 1790223085163231264
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperreal-d497d8e5f3efc0eb.rmeta",
+      "bytes": 4486531,
+      "mtime_ns": 1790223083999185994
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve-4e040a504695d95a",
+      "bytes": 33849000,
+      "mtime_ns": 1790222750123609146
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypersolve-f1f882f96c3327fa.rlib",
+      "bytes": 14185400,
+      "mtime_ns": 1790222623885764624
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypersolve-f1f882f96c3327fa.rmeta",
+      "bytes": 5825007,
+      "mtime_ns": 1790222610330796940
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperreal-2ccc3db9a7085f81.rlib",
+      "bytes": 11030184,
+      "mtime_ns": 1790222606280507383
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlimit-ea62034b2355f575.rlib",
+      "bytes": 3986922,
+      "mtime_ns": 1790222604591482704
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlimit-ea62034b2355f575.rmeta",
+      "bytes": 1693734,
+      "mtime_ns": 1790222597785609292
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlattice-376695ded2c06d22.rlib",
+      "bytes": 4666252,
+      "mtime_ns": 1790222596753368176
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlattice-376695ded2c06d22.rmeta",
+      "bytes": 1397480,
+      "mtime_ns": 1790222588397864622
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperreal-2ccc3db9a7085f81.rmeta",
+      "bytes": 4485710,
+      "mtime_ns": 1790222587253122927
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve-7c60858e7921bd4d",
+      "bytes": 33854544,
+      "mtime_ns": 1790221752333029903
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypersolve-79e61d2b95466048.rlib",
+      "bytes": 14178448,
+      "mtime_ns": 1790221624296158865
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypersolve-79e61d2b95466048.rmeta",
+      "bytes": 5826816,
+      "mtime_ns": 1790221610488559111
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperreal-cc9ba6818e27c51a.rlib",
+      "bytes": 11025626,
+      "mtime_ns": 1790221607923919562
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlimit-10c0abaaf8eb1cb4.rlib",
+      "bytes": 3990494,
+      "mtime_ns": 1790221606257895211
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlimit-10c0abaaf8eb1cb4.rmeta",
+      "bytes": 1694625,
+      "mtime_ns": 1790221599086688340
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlattice-4009a38e49e07b43.rlib",
+      "bytes": 4666802,
+      "mtime_ns": 1790221598042775135
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlattice-4009a38e49e07b43.rmeta",
+      "bytes": 1397831,
+      "mtime_ns": 1790221589309648178
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperreal-cc9ba6818e27c51a.rmeta",
+      "bytes": 4486549,
+      "mtime_ns": 1790221588100527165
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve-8fd56eaa7935a6a8",
+      "bytes": 33867384,
+      "mtime_ns": 1790221266110923510
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypersolve-d4bfdfa873a8d934.rlib",
+      "bytes": 14187344,
+      "mtime_ns": 1790221138842063295
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypersolve-d4bfdfa873a8d934.rmeta",
+      "bytes": 5826615,
+      "mtime_ns": 1790221124966930688
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperreal-f71311a1b9b61d32.rlib",
+      "bytes": 11024988,
+      "mtime_ns": 1790221122365822471
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlimit-87b3f2b2084c6432.rlib",
+      "bytes": 3990194,
+      "mtime_ns": 1790221120815799816
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlimit-87b3f2b2084c6432.rmeta",
+      "bytes": 1694526,
+      "mtime_ns": 1790221113761045240
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlattice-6c2c214555b72a2d.rlib",
+      "bytes": 4666698,
+      "mtime_ns": 1790221112730681640
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlattice-6c2c214555b72a2d.rmeta",
+      "bytes": 1397792,
+      "mtime_ns": 1790221104023174749
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperreal-f71311a1b9b61d32.rmeta",
+      "bytes": 4485187,
+      "mtime_ns": 1790221102811367051
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve-a9888cc40dedab3c",
+      "bytes": 33854104,
+      "mtime_ns": 1790220865088062002
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypersolve-fd69e5f504b862d5.rlib",
+      "bytes": 14188502,
+      "mtime_ns": 1790220738184207122
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypersolve-fd69e5f504b862d5.rmeta",
+      "bytes": 5826816,
+      "mtime_ns": 1790220724392170470
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperreal-fa5a0ff70265abad.rlib",
+      "bytes": 11025358,
+      "mtime_ns": 1790220721798967628
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlimit-228014a78eeaee66.rlib",
+      "bytes": 3990582,
+      "mtime_ns": 1790220720257945104
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlimit-228014a78eeaee66.rmeta",
+      "bytes": 1694625,
+      "mtime_ns": 1790220713194581192
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlattice-f4e7e35145bd5830.rlib",
+      "bytes": 4666662,
+      "mtime_ns": 1790220712163826797
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlattice-f4e7e35145bd5830.rmeta",
+      "bytes": 1397831,
+      "mtime_ns": 1790220703461662953
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperreal-fa5a0ff70265abad.rmeta",
+      "bytes": 4485466,
+      "mtime_ns": 1790220702240362345
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve-801ace2e2813dbab",
+      "bytes": 33848592,
+      "mtime_ns": 1790220532922206636
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypersolve-39a026f9392b68bf.rlib",
+      "bytes": 14188714,
+      "mtime_ns": 1790220406845363492
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypersolve-39a026f9392b68bf.rmeta",
+      "bytes": 5827218,
+      "mtime_ns": 1790220392934271603
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperreal-c9c576a59fe8721e.rlib",
+      "bytes": 11025902,
+      "mtime_ns": 1790220388947101834
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlimit-4d50a47524899355.rlib",
+      "bytes": 3990726,
+      "mtime_ns": 1790220387522081000
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlimit-4d50a47524899355.rmeta",
+      "bytes": 1694823,
+      "mtime_ns": 1790220380456544791
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlattice-49af536e7695e258.rlib",
+      "bytes": 4666724,
+      "mtime_ns": 1790220379479963431
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlattice-49af536e7695e258.rmeta",
+      "bytes": 1397909,
+      "mtime_ns": 1790220370758333272
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperreal-c9c576a59fe8721e.rmeta",
+      "bytes": 4486024,
+      "mtime_ns": 1790220369579259214
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve-966cad85a7d7fdf6",
+      "bytes": 33846992,
+      "mtime_ns": 1790220189508186198
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypersolve-f99c94c8d4b6810b.rlib",
+      "bytes": 14187410,
+      "mtime_ns": 1790220062795333755
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypersolve-f99c94c8d4b6810b.rmeta",
+      "bytes": 5826213,
+      "mtime_ns": 1790220048906220116
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperreal-a9ea1825001047c1.rlib",
+      "bytes": 11024812,
+      "mtime_ns": 1790220044786070474
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlimit-f757f72b52da6f83.rlib",
+      "bytes": 3990030,
+      "mtime_ns": 1790220043162046732
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlimit-f757f72b52da6f83.rmeta",
+      "bytes": 1694328,
+      "mtime_ns": 1790220036091178388
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlattice-1d4980dde518c20c.rlib",
+      "bytes": 4666592,
+      "mtime_ns": 1790220035080928592
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlattice-1d4980dde518c20c.rmeta",
+      "bytes": 1397714,
+      "mtime_ns": 1790220026459917875
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperreal-a9ea1825001047c1.rmeta",
+      "bytes": 4484629,
+      "mtime_ns": 1790220025310821031
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve-0940510f9f4f2826",
+      "bytes": 33856768,
+      "mtime_ns": 1790219797680457985
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypersolve-5e2ed4bffdfd5a43.rlib",
+      "bytes": 14186744,
+      "mtime_ns": 1790219669179579404
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypersolve-5e2ed4bffdfd5a43.rmeta",
+      "bytes": 5826213,
+      "mtime_ns": 1790219655429093887
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperreal-daa605973b39a37a.rlib",
+      "bytes": 11022860,
+      "mtime_ns": 1790219652614337233
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlimit-1b33e7348b545e88.rlib",
+      "bytes": 3989994,
+      "mtime_ns": 1790219651267317541
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlimit-1b33e7348b545e88.rmeta",
+      "bytes": 1694328,
+      "mtime_ns": 1790219644148210943
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlattice-3e6e0380a82be261.rlib",
+      "bytes": 4666574,
+      "mtime_ns": 1790219643080197852
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlattice-3e6e0380a82be261.rmeta",
+      "bytes": 1397714,
+      "mtime_ns": 1790219634393675610
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperreal-daa605973b39a37a.rmeta",
+      "bytes": 4484629,
+      "mtime_ns": 1790219633204993052
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve-1746865d886b18a1",
+      "bytes": 33840696,
+      "mtime_ns": 1790219108282377813
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypersolve-689863696bac5704.rlib",
+      "bytes": 14187446,
+      "mtime_ns": 1790218982603540049
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypersolve-689863696bac5704.rmeta",
+      "bytes": 5826213,
+      "mtime_ns": 1790218968998427453
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperreal-ce2e329e2922b77d.rlib",
+      "bytes": 11024612,
+      "mtime_ns": 1790218964887280990
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlimit-63c4943218169769.rlib",
+      "bytes": 3989894,
+      "mtime_ns": 1790218963346258456
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlimit-63c4943218169769.rmeta",
+      "bytes": 1694328,
+      "mtime_ns": 1790218956328749397
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlattice-e5c0e218b3bcba61.rlib",
+      "bytes": 4666536,
+      "mtime_ns": 1790218955294140713
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlattice-e5c0e218b3bcba61.rmeta",
+      "bytes": 1397714,
+      "mtime_ns": 1790218946693137540
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperreal-ce2e329e2922b77d.rmeta",
+      "bytes": 4484629,
+      "mtime_ns": 1790218945497902287
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypersolve-917df410f86fce75",
+      "bytes": 11627512,
+      "mtime_ns": 1790218880476046672
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlimit-55dd8c1942686b7d.rlib",
+      "bytes": 3985738,
+      "mtime_ns": 1790218846807554348
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperreal-96c32f5f2a8a8f1e.rlib",
+      "bytes": 8808656,
+      "mtime_ns": 1790218844365518639
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlimit-55dd8c1942686b7d.rmeta",
+      "bytes": 1686967,
+      "mtime_ns": 1790218841960483471
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlattice-066f04fb441872e9.rlib",
+      "bytes": 5518256,
+      "mtime_ns": 1790218840941468570
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlattice-066f04fb441872e9.rmeta",
+      "bytes": 1404865,
+      "mtime_ns": 1790218830661053583
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperreal-96c32f5f2a8a8f1e.rmeta",
+      "bytes": 3749070,
+      "mtime_ns": 1790218829475817124
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hyperlimit-d2a2a4c2d3bb9b7d",
+      "bytes": 6031040,
+      "mtime_ns": 1790218811204033729
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperreal-9698b7539640a052.rlib",
+      "bytes": 11024666,
+      "mtime_ns": 1790218802397904960
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlattice-cc558cb208baf02c.rlib",
+      "bytes": 4707514,
+      "mtime_ns": 1790218797585834594
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlattice-cc558cb208baf02c.rmeta",
+      "bytes": 1436908,
+      "mtime_ns": 1790218789071162463
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperreal-9698b7539640a052.rmeta",
+      "bytes": 4484629,
+      "mtime_ns": 1790218787878006477
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperreal-bf29082dfeafe4af.rlib",
+      "bytes": 11279972,
+      "mtime_ns": 1790218520578784325
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperreal-bf29082dfeafe4af.rmeta",
+      "bytes": 4566900,
+      "mtime_ns": 1790218510588080814
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve-1c5748181a1ffa07",
+      "bytes": 33827488,
+      "mtime_ns": 1790218208911228895
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypersolve-08f82eeecba996a0.rlib",
+      "bytes": 14177568,
+      "mtime_ns": 1790218086402438245
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypersolve-08f82eeecba996a0.rmeta",
+      "bytes": 5826213,
+      "mtime_ns": 1790218072709243128
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperreal-46927406e465a069.rlib",
+      "bytes": 11024646,
+      "mtime_ns": 1790218068854181751
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlimit-1dbd8203ff2eaccb.rlib",
+      "bytes": 3989912,
+      "mtime_ns": 1790218067266158539
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlimit-1dbd8203ff2eaccb.rmeta",
+      "bytes": 1694328,
+      "mtime_ns": 1790218060369608964
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlattice-3e53469519fd4ccd.rlib",
+      "bytes": 4666626,
+      "mtime_ns": 1790218059388043389
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlattice-3e53469519fd4ccd.rmeta",
+      "bytes": 1397714,
+      "mtime_ns": 1790218051021973416
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperreal-46927406e465a069.rmeta",
+      "bytes": 4484619,
+      "mtime_ns": 1790218049910444016
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypersolve-414c6970f2bb83d5",
+      "bytes": 11627000,
+      "mtime_ns": 1790217930391157919
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlimit-c62517f540f6ef78.rlib",
+      "bytes": 3985786,
+      "mtime_ns": 1790217896794666855
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperreal-f874e129a0d274bb.rlib",
+      "bytes": 8811772,
+      "mtime_ns": 1790217894352631161
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlimit-c62517f540f6ef78.rmeta",
+      "bytes": 1686967,
+      "mtime_ns": 1790217892086777047
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlattice-3153f6ce85d54db1.rlib",
+      "bytes": 5518260,
+      "mtime_ns": 1790217891105583701
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlattice-3153f6ce85d54db1.rmeta",
+      "bytes": 1404865,
+      "mtime_ns": 1790217880548230034
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperreal-f874e129a0d274bb.rmeta",
+      "bytes": 3749060,
+      "mtime_ns": 1790217879318011518
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hyperlimit-9b9d6913404418c8",
+      "bytes": 6030896,
+      "mtime_ns": 1790217861793155256
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperreal-976e86a89f5102fb.rlib",
+      "bytes": 11023342,
+      "mtime_ns": 1790217853075027827
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlattice-4ccac3475a104a05.rlib",
+      "bytes": 4707358,
+      "mtime_ns": 1790217848323958383
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlattice-4ccac3475a104a05.rmeta",
+      "bytes": 1436908,
+      "mtime_ns": 1790217839872502444
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperreal-976e86a89f5102fb.rmeta",
+      "bytes": 4484619,
+      "mtime_ns": 1790217838697813168
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve-746755b378dc4b2f",
+      "bytes": 33896288,
+      "mtime_ns": 1790217006934663983
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypersolve-c6d2fdd52d55fe52.rlib",
+      "bytes": 14242238,
+      "mtime_ns": 1790216880871822278
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypersolve-c6d2fdd52d55fe52.rmeta",
+      "bytes": 5833027,
+      "mtime_ns": 1790216866650749932
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperreal-4ded4d348b4a42bb.rlib",
+      "bytes": 11005956,
+      "mtime_ns": 1790216863863573797
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlimit-0454cf6435dcf66e.rlib",
+      "bytes": 3991400,
+      "mtime_ns": 1790216862323551298
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlimit-0454cf6435dcf66e.rmeta",
+      "bytes": 1695318,
+      "mtime_ns": 1790216855267134099
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlattice-e7ac8cfa7ddb298b.rlib",
+      "bytes": 4667040,
+      "mtime_ns": 1790216854267433602
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlattice-e7ac8cfa7ddb298b.rmeta",
+      "bytes": 1398104,
+      "mtime_ns": 1790216845574652622
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperreal-4ded4d348b4a42bb.rmeta",
+      "bytes": 4484186,
+      "mtime_ns": 1790216844390469866
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve-1904df28c6bdf098",
+      "bytes": 33851976,
+      "mtime_ns": 1790216625470091019
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypersolve-fe3f5eaf79573744.rlib",
+      "bytes": 14234814,
+      "mtime_ns": 1790216500462264726
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypersolve-fe3f5eaf79573744.rmeta",
+      "bytes": 5832491,
+      "mtime_ns": 1790216486839338766
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperreal-48c41bbbd50bcdbb.rlib",
+      "bytes": 11001702,
+      "mtime_ns": 1790216482998009591
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlimit-09cdbf3b1907b3e3.rlib",
+      "bytes": 3990998,
+      "mtime_ns": 1790216481364985735
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlimit-09cdbf3b1907b3e3.rmeta",
+      "bytes": 1695120,
+      "mtime_ns": 1790216474440843071
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlattice-1be0caa3865e5e5c.rlib",
+      "bytes": 4667064,
+      "mtime_ns": 1790216473501870868
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlattice-1be0caa3865e5e5c.rmeta",
+      "bytes": 1398026,
+      "mtime_ns": 1790216464988490545
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperreal-48c41bbbd50bcdbb.rmeta",
+      "bytes": 4483628,
+      "mtime_ns": 1790216463828831077
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve-608bea093a670eb6",
+      "bytes": 33823824,
+      "mtime_ns": 1790215987550771943
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypersolve-84dd078b19428c8e.rlib",
+      "bytes": 14188856,
+      "mtime_ns": 1790215864241970600
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypersolve-84dd078b19428c8e.rmeta",
+      "bytes": 5827486,
+      "mtime_ns": 1790215850839938770
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperreal-3de52c85253168d2.rlib",
+      "bytes": 11005772,
+      "mtime_ns": 1790215848181735985
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlimit-4269646c179b10e9.rlib",
+      "bytes": 3990752,
+      "mtime_ns": 1790215846895717199
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlimit-4269646c179b10e9.rmeta",
+      "bytes": 1694658,
+      "mtime_ns": 1790215839975392517
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlattice-31037bf2011e0a05.rlib",
+      "bytes": 4666842,
+      "mtime_ns": 1790215839017602112
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlattice-31037bf2011e0a05.rmeta",
+      "bytes": 1397844,
+      "mtime_ns": 1790215830556845911
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperreal-3de52c85253168d2.rmeta",
+      "bytes": 4484000,
+      "mtime_ns": 1790215829397095330
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve-13449905096398c7",
+      "bytes": 33845576,
+      "mtime_ns": 1790215710415723454
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypersolve-83091a6ab1622708.rlib",
+      "bytes": 14241324,
+      "mtime_ns": 1790215587067921540
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypersolve-83091a6ab1622708.rmeta",
+      "bytes": 5830843,
+      "mtime_ns": 1790215573250771395
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperreal-b626f6d5b691907e.rlib",
+      "bytes": 10999630,
+      "mtime_ns": 1790215569197660485
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlimit-975c9b2dc052a5cd.rlib",
+      "bytes": 3990142,
+      "mtime_ns": 1790215567667638133
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlimit-975c9b2dc052a5cd.rmeta",
+      "bytes": 1694427,
+      "mtime_ns": 1790215560657071447
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlattice-0333e109528b02aa.rlib",
+      "bytes": 4666698,
+      "mtime_ns": 1790215559700521747
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlattice-0333e109528b02aa.rmeta",
+      "bytes": 1397753,
+      "mtime_ns": 1790215551128514210
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperreal-b626f6d5b691907e.rmeta",
+      "bytes": 4481675,
+      "mtime_ns": 1790215550004244824
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve-8be2f0d62e498b91",
+      "bytes": 33838592,
+      "mtime_ns": 1790215333658220032
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypersolve-1567b7176cf99ada.rlib",
+      "bytes": 14188992,
+      "mtime_ns": 1790215210444420452
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypersolve-1567b7176cf99ada.rmeta",
+      "bytes": 5827486,
+      "mtime_ns": 1790215196908998784
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperreal-242a4d73e38c2467.rlib",
+      "bytes": 11002886,
+      "mtime_ns": 1790215194306184748
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlimit-ccc8fea762e32494.rlib",
+      "bytes": 3990642,
+      "mtime_ns": 1790215192896164154
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlimit-ccc8fea762e32494.rmeta",
+      "bytes": 1694658,
+      "mtime_ns": 1790215186011597060
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlattice-96d9934a4821c966.rlib",
+      "bytes": 4666972,
+      "mtime_ns": 1790215185014049033
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlattice-96d9934a4821c966.rmeta",
+      "bytes": 1397844,
+      "mtime_ns": 1790215176560990613
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperreal-242a4d73e38c2467.rmeta",
+      "bytes": 4484000,
+      "mtime_ns": 1790215175439388017
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve-f8b23c7b23ee9714",
+      "bytes": 33616056,
+      "mtime_ns": 1790214799509418650
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypersolve-ebdd6d92b20a1162.rlib",
+      "bytes": 14187076,
+      "mtime_ns": 1790214677351634493
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypersolve-ebdd6d92b20a1162.rmeta",
+      "bytes": 5826414,
+      "mtime_ns": 1790214663786751584
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperreal-36b3524685c89a96.rlib",
+      "bytes": 11001128,
+      "mtime_ns": 1790214659843378779
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlimit-f10215dbe3855d82.rlib",
+      "bytes": 3987422,
+      "mtime_ns": 1790214658276355892
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlimit-f10215dbe3855d82.rmeta",
+      "bytes": 1694130,
+      "mtime_ns": 1790214651357532936
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlattice-859565f00445665d.rlib",
+      "bytes": 4666594,
+      "mtime_ns": 1790214650389240698
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlattice-859565f00445665d.rmeta",
+      "bytes": 1397636,
+      "mtime_ns": 1790214641880302237
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperreal-36b3524685c89a96.rmeta",
+      "bytes": 4482512,
+      "mtime_ns": 1790214640760367476
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve-03ae831d56770a03",
+      "bytes": 33819360,
+      "mtime_ns": 1790214544166689288
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypersolve-bd380a108ead64fb.rlib",
+      "bytes": 14189510,
+      "mtime_ns": 1790214421047891096
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypersolve-bd380a108ead64fb.rmeta",
+      "bytes": 5827486,
+      "mtime_ns": 1790214407418192971
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperreal-38196231e4f926ea.rlib",
+      "bytes": 11006116,
+      "mtime_ns": 1790214403381633075
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlimit-eb8045fbb1f36b1d.rlib",
+      "bytes": 3990604,
+      "mtime_ns": 1790214401808610100
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlimit-eb8045fbb1f36b1d.rmeta",
+      "bytes": 1694658,
+      "mtime_ns": 1790214394853855106
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlattice-5e9c9162c08ba4cd.rlib",
+      "bytes": 4666928,
+      "mtime_ns": 1790214393850493869
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlattice-5e9c9162c08ba4cd.rmeta",
+      "bytes": 1397844,
+      "mtime_ns": 1790214385421366246
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperreal-38196231e4f926ea.rmeta",
+      "bytes": 4484000,
+      "mtime_ns": 1790214384244603416
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve-b0c24d6574a5bcd9",
+      "bytes": 33794928,
+      "mtime_ns": 1790214146202876907
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypersolve-abdf67ea9859ca84.rlib",
+      "bytes": 14189680,
+      "mtime_ns": 1790214022218066068
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypersolve-abdf67ea9859ca84.rmeta",
+      "bytes": 5827486,
+      "mtime_ns": 1790214008725122811
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperreal-48233bbeb767d619.rlib",
+      "bytes": 11006022,
+      "mtime_ns": 1790214004638809317
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlimit-18aeb77348ec763b.rlib",
+      "bytes": 3990596,
+      "mtime_ns": 1790214003288789600
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlimit-18aeb77348ec763b.rmeta",
+      "bytes": 1694658,
+      "mtime_ns": 1790213996394502896
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlattice-11ded690b0bde9fb.rlib",
+      "bytes": 4666810,
+      "mtime_ns": 1790213995370673953
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlattice-11ded690b0bde9fb.rmeta",
+      "bytes": 1397844,
+      "mtime_ns": 1790213986980170059
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperreal-48233bbeb767d619.rmeta",
+      "bytes": 4484000,
+      "mtime_ns": 1790213985823187632
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve-971282e178c68f66",
+      "bytes": 33623616,
+      "mtime_ns": 1790213786934629693
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypersolve-ea5934527f3e622b.rlib",
+      "bytes": 14182628,
+      "mtime_ns": 1790213664451840791
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypersolve-ea5934527f3e622b.rmeta",
+      "bytes": 5826414,
+      "mtime_ns": 1790213650787784899
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperreal-437763ff7a3272d3.rlib",
+      "bytes": 10996690,
+      "mtime_ns": 1790213646690581382
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlimit-b093b8ef51fcfe4f.rlib",
+      "bytes": 3988458,
+      "mtime_ns": 1790213645181559342
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlimit-b093b8ef51fcfe4f.rmeta",
+      "bytes": 1694130,
+      "mtime_ns": 1790213638205985512
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlattice-161bc54c53c7aeec.rlib",
+      "bytes": 4663944,
+      "mtime_ns": 1790213637242443389
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlattice-161bc54c53c7aeec.rmeta",
+      "bytes": 1397636,
+      "mtime_ns": 1790213628790280270
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperreal-437763ff7a3272d3.rmeta",
+      "bytes": 4482512,
+      "mtime_ns": 1790213627677321081
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve-b645ba32ea0ec260",
+      "bytes": 33818720,
+      "mtime_ns": 1790213512531621956
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypersolve-a01bc0e9848af66c.rlib",
+      "bytes": 14189440,
+      "mtime_ns": 1790213389257821501
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypersolve-a01bc0e9848af66c.rmeta",
+      "bytes": 5827486,
+      "mtime_ns": 1790213375844006115
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperreal-e6e32b68486844c7.rlib",
+      "bytes": 11005780,
+      "mtime_ns": 1790213371935568520
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlimit-045431a6476b1329.rlib",
+      "bytes": 3990600,
+      "mtime_ns": 1790213370395546030
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlimit-045431a6476b1329.rmeta",
+      "bytes": 1694658,
+      "mtime_ns": 1790213363576256338
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlattice-fb0d5867e361784c.rlib",
+      "bytes": 4666794,
+      "mtime_ns": 1790213362629432618
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlattice-fb0d5867e361784c.rmeta",
+      "bytes": 1397844,
+      "mtime_ns": 1790213354161220088
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperreal-e6e32b68486844c7.rmeta",
+      "bytes": 4484000,
+      "mtime_ns": 1790213353026780736
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve-462cd35602b77847",
+      "bytes": 33829336,
+      "mtime_ns": 1790213236152585631
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypersolve-a74e1791a5ad68b1.rlib",
+      "bytes": 14189474,
+      "mtime_ns": 1790213113406793124
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypersolve-a74e1791a5ad68b1.rmeta",
+      "bytes": 5827754,
+      "mtime_ns": 1790213099947265129
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperreal-553a8e5ba74c78ee.rlib",
+      "bytes": 11003650,
+      "mtime_ns": 1790213097305557991
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlimit-daec0868d06f2cc1.rlib",
+      "bytes": 3990996,
+      "mtime_ns": 1790213095853536787
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlimit-daec0868d06f2cc1.rmeta",
+      "bytes": 1694790,
+      "mtime_ns": 1790213088935564229
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlattice-935083db71e01035.rlib",
+      "bytes": 4667024,
+      "mtime_ns": 1790213087954421433
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlattice-935083db71e01035.rmeta",
+      "bytes": 1397896,
+      "mtime_ns": 1790213079474692885
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperreal-553a8e5ba74c78ee.rmeta",
+      "bytes": 4484372,
+      "mtime_ns": 1790213078323618484
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve-5b7e9cb6cdfd72b0",
+      "bytes": 33581008,
+      "mtime_ns": 1790213022790469825
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypersolve-945d32346d50a536.rlib",
+      "bytes": 14187816,
+      "mtime_ns": 1790212899283666203
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypersolve-945d32346d50a536.rmeta",
+      "bytes": 5826816,
+      "mtime_ns": 1790212885759980721
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperreal-c76d9c6b3d607f51.rlib",
+      "bytes": 11001290,
+      "mtime_ns": 1790212883305432866
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlimit-a8c5f03f2ee01e74.rlib",
+      "bytes": 3990052,
+      "mtime_ns": 1790212881822411209
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlimit-a8c5f03f2ee01e74.rmeta",
+      "bytes": 1694328,
+      "mtime_ns": 1790212874913135197
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlattice-13183f09d5030074.rlib",
+      "bytes": 4666598,
+      "mtime_ns": 1790212873921295825
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlattice-13183f09d5030074.rmeta",
+      "bytes": 1397714,
+      "mtime_ns": 1790212865548009942
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperreal-c76d9c6b3d607f51.rmeta",
+      "bytes": 4483070,
+      "mtime_ns": 1790212864427593197
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve-a5b237bbcd60b368",
+      "bytes": 33829792,
+      "mtime_ns": 1790212796539165789
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypersolve-99b49ad76d6f5cc9.rlib",
+      "bytes": 14188526,
+      "mtime_ns": 1790212673537369544
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypersolve-99b49ad76d6f5cc9.rmeta",
+      "bytes": 5826950,
+      "mtime_ns": 1790212660009021917
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperreal-39b411f0b53e8aff.rlib",
+      "bytes": 11004846,
+      "mtime_ns": 1790212656004113498
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlimit-1bf2f4c0378cf211.rlib",
+      "bytes": 3990190,
+      "mtime_ns": 1790212654361089505
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlimit-1bf2f4c0378cf211.rmeta",
+      "bytes": 1694394,
+      "mtime_ns": 1790212647505998439
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlattice-f90c38922ad251c3.rlib",
+      "bytes": 4666778,
+      "mtime_ns": 1790212646542975334
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlattice-f90c38922ad251c3.rmeta",
+      "bytes": 1397740,
+      "mtime_ns": 1790212638129049675
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperreal-39b411f0b53e8aff.rmeta",
+      "bytes": 4483256,
+      "mtime_ns": 1790212636963927868
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve-6e0332d4db77df51",
+      "bytes": 33827808,
+      "mtime_ns": 1790212176229107141
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypersolve-5573dbe8aa931593.rlib",
+      "bytes": 14188634,
+      "mtime_ns": 1790212050045264426
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypersolve-5573dbe8aa931593.rmeta",
+      "bytes": 5826950,
+      "mtime_ns": 1790212036407493940
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperreal-61cb3745ed0c2020.rlib",
+      "bytes": 11002256,
+      "mtime_ns": 1790212033600024269
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlimit-6d622eec4880f5ef.rlib",
+      "bytes": 3990264,
+      "mtime_ns": 1790212032266004788
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlimit-6d622eec4880f5ef.rmeta",
+      "bytes": 1694394,
+      "mtime_ns": 1790212025379911070
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlattice-4a7834a89d0e9e44.rlib",
+      "bytes": 4666738,
+      "mtime_ns": 1790212024359889332
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlattice-4a7834a89d0e9e44.rmeta",
+      "bytes": 1397740,
+      "mtime_ns": 1790212015840677754
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperreal-61cb3745ed0c2020.rmeta",
+      "bytes": 4483256,
+      "mtime_ns": 1790212014646054672
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve-e13b8aad01fd2b5f",
+      "bytes": 33783936,
+      "mtime_ns": 1790211054947732967
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypersolve-50727d9700682cbe.rlib",
+      "bytes": 14188750,
+      "mtime_ns": 1790210930423914630
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypersolve-50727d9700682cbe.rmeta",
+      "bytes": 5826950,
+      "mtime_ns": 1790210916491864326
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperreal-c16ae08299f662c0.rlib",
+      "bytes": 11002154,
+      "mtime_ns": 1790210912544653550
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlimit-9ca3bf8c89c6bf4a.rlib",
+      "bytes": 3990198,
+      "mtime_ns": 1790210910932630011
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlimit-9ca3bf8c89c6bf4a.rmeta",
+      "bytes": 1694394,
+      "mtime_ns": 1790210903942849097
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlattice-0eb6c0d7a522c371.rlib",
+      "bytes": 4666698,
+      "mtime_ns": 1790210902957513555
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlattice-0eb6c0d7a522c371.rmeta",
+      "bytes": 1397740,
+      "mtime_ns": 1790210894388797758
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperreal-c16ae08299f662c0.rmeta",
+      "bytes": 4483256,
+      "mtime_ns": 1790210893256907722
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve-d50f0f52cfa2581f",
+      "bytes": 33607728,
+      "mtime_ns": 1790210363554637041
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypersolve-652e2e8e4454ab4e.rlib",
+      "bytes": 14186886,
+      "mtime_ns": 1790210239750830580
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypersolve-652e2e8e4454ab4e.rmeta",
+      "bytes": 5825878,
+      "mtime_ns": 1790210226024551768
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperreal-cd8af933f0bbaaf0.rlib",
+      "bytes": 10999742,
+      "mtime_ns": 1790210221997571800
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlimit-6ed557759f7d320d.rlib",
+      "bytes": 3989366,
+      "mtime_ns": 1790210220584551203
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlimit-6ed557759f7d320d.rmeta",
+      "bytes": 1693866,
+      "mtime_ns": 1790210213509088959
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlattice-27ffd0882d9652f1.rlib",
+      "bytes": 4666398,
+      "mtime_ns": 1790210212529433787
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlattice-27ffd0882d9652f1.rmeta",
+      "bytes": 1397532,
+      "mtime_ns": 1790210203850253981
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperreal-cd8af933f0bbaaf0.rmeta",
+      "bytes": 4481768,
+      "mtime_ns": 1790210202695268720
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve-e70f6b36f6cca870",
+      "bytes": 33807064,
+      "mtime_ns": 1790209809392557455
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypersolve-dc2d656eb6244ad3.rlib",
+      "bytes": 14186932,
+      "mtime_ns": 1790209685008744373
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypersolve-dc2d656eb6244ad3.rmeta",
+      "bytes": 5826012,
+      "mtime_ns": 1790209671360095318
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperreal-040f0ae56c7ee786.rlib",
+      "bytes": 11003102,
+      "mtime_ns": 1790209668922509892
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlimit-f73fa188c3cebb8b.rlib",
+      "bytes": 3989586,
+      "mtime_ns": 1790209667357487079
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlimit-f73fa188c3cebb8b.rmeta",
+      "bytes": 1693932,
+      "mtime_ns": 1790209660394836966
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlattice-93f1ba23ceb9582f.rlib",
+      "bytes": 4666484,
+      "mtime_ns": 1790209659400371092
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlattice-93f1ba23ceb9582f.rmeta",
+      "bytes": 1397558,
+      "mtime_ns": 1790209650930333796
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperreal-040f0ae56c7ee786.rmeta",
+      "bytes": 4481954,
+      "mtime_ns": 1790209649786037580
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypersolve-e420588329ab2d20.rlib",
+      "bytes": 14176854,
+      "mtime_ns": 1790209534920556609
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypersolve-e420588329ab2d20.rmeta",
+      "bytes": 5825610,
+      "mtime_ns": 1790209521258824585
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperreal-7d3703135de89d7b.rlib",
+      "bytes": 10999406,
+      "mtime_ns": 1790209518832322099
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlimit-33caa8945c01cf8a.rlib",
+      "bytes": 3989212,
+      "mtime_ns": 1790209517262299214
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlimit-33caa8945c01cf8a.rmeta",
+      "bytes": 1693734,
+      "mtime_ns": 1790209510350595338
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlattice-6a9645b57a3b8069.rlib",
+      "bytes": 4666392,
+      "mtime_ns": 1790209509366184116
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlattice-6a9645b57a3b8069.rmeta",
+      "bytes": 1397480,
+      "mtime_ns": 1790209500880548688
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperreal-7d3703135de89d7b.rmeta",
+      "bytes": 4481396,
+      "mtime_ns": 1790209499704879416
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve-f008f79a5ddc099e",
+      "bytes": 33824640,
+      "mtime_ns": 1790209301657156445
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypersolve-e717a18084f6dbed.rlib",
+      "bytes": 14187908,
+      "mtime_ns": 1790209175842322990
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypersolve-e717a18084f6dbed.rmeta",
+      "bytes": 5826548,
+      "mtime_ns": 1790209162210769640
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperreal-aae06938d2d0b69e.rlib",
+      "bytes": 11000948,
+      "mtime_ns": 1790209158198065902
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlimit-1f5992087e87db9b.rlib",
+      "bytes": 3989862,
+      "mtime_ns": 1790209156885046771
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlimit-1f5992087e87db9b.rmeta",
+      "bytes": 1694196,
+      "mtime_ns": 1790209149857505459
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlattice-dc272edd74dfbef7.rlib",
+      "bytes": 4666710,
+      "mtime_ns": 1790209148852929738
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlattice-dc272edd74dfbef7.rmeta",
+      "bytes": 1397662,
+      "mtime_ns": 1790209140189237407
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperreal-aae06938d2d0b69e.rmeta",
+      "bytes": 4482698,
+      "mtime_ns": 1790209139052431084
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve-4b3449293879ef34",
+      "bytes": 33793512,
+      "mtime_ns": 1790209078953911274
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypersolve-1ee9366b3c81d093.rlib",
+      "bytes": 14186194,
+      "mtime_ns": 1790208955550113213
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypersolve-1ee9366b3c81d093.rmeta",
+      "bytes": 5825610,
+      "mtime_ns": 1790208941479303545
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperreal-d77977851e454b54.rlib",
+      "bytes": 10999378,
+      "mtime_ns": 1790208937315847529
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlimit-45ff60997007c391.rlib",
+      "bytes": 3989208,
+      "mtime_ns": 1790208935693823896
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlimit-45ff60997007c391.rmeta",
+      "bytes": 1693734,
+      "mtime_ns": 1790208928493193587
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlattice-27e0d62987619bcb.rlib",
+      "bytes": 4666208,
+      "mtime_ns": 1790208927476704168
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlattice-27e0d62987619bcb.rmeta",
+      "bytes": 1397480,
+      "mtime_ns": 1790208918668727370
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperreal-d77977851e454b54.rmeta",
+      "bytes": 4481396,
+      "mtime_ns": 1790208917445549817
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve-695ae061aae478b6",
+      "bytes": 33811648,
+      "mtime_ns": 1790207538552460320
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypersolve-e47dcc9506e97d77.rlib",
+      "bytes": 14187576,
+      "mtime_ns": 1790207415483665993
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypersolve-e47dcc9506e97d77.rmeta",
+      "bytes": 5826414,
+      "mtime_ns": 1790207401720541856
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperreal-8a30271e07b8f0b2.rlib",
+      "bytes": 11000912,
+      "mtime_ns": 1790207397754407503
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlimit-b502f94498ca24ff.rlib",
+      "bytes": 3989696,
+      "mtime_ns": 1790207396225385210
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlimit-b502f94498ca24ff.rmeta",
+      "bytes": 1694130,
+      "mtime_ns": 1790207389252953859
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlattice-6e40a22588e15f1c.rlib",
+      "bytes": 4666634,
+      "mtime_ns": 1790207388255269007
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlattice-6e40a22588e15f1c.rmeta",
+      "bytes": 1397636,
+      "mtime_ns": 1790207379692025687
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperreal-8a30271e07b8f0b2.rmeta",
+      "bytes": 4482512,
+      "mtime_ns": 1790207378539367302
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypercurve-b24ea8add497c53d",
+      "bytes": 33794208,
+      "mtime_ns": 1790206244126581374
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypersolve-49774b3d636d4972.rlib",
+      "bytes": 14161872,
+      "mtime_ns": 1790206120575779251
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhypersolve-49774b3d636d4972.rmeta",
+      "bytes": 5827373,
+      "mtime_ns": 1790206106790476494
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlimit-8cddc2a1e42b5ece.rlib",
+      "bytes": 3990582,
+      "mtime_ns": 1790206092134364436
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlimit-8cddc2a1e42b5ece.rmeta",
+      "bytes": 1694658,
+      "mtime_ns": 1790206085167816702
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperreal-774e7bb8c8115ed0.rlib",
+      "bytes": 11005342,
+      "mtime_ns": 1790206078002158319
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlattice-6327462a6d5871e1.rlib",
+      "bytes": 4666862,
+      "mtime_ns": 1790206068494019644
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlattice-6327462a6d5871e1.rmeta",
+      "bytes": 1397844,
+      "mtime_ns": 1790206059910941906
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperreal-774e7bb8c8115ed0.rmeta",
+      "bytes": 4484000,
+      "mtime_ns": 1790206058624929909
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypersolve-0482f8dc3953c267",
+      "bytes": 11595368,
+      "mtime_ns": 1790204018206117407
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlimit-22eabb50363ef336.rlib",
+      "bytes": 3985900,
+      "mtime_ns": 1790203984048619184
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperreal-4702908268e33a33.rlib",
+      "bytes": 8786232,
+      "mtime_ns": 1790203981592583360
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlimit-22eabb50363ef336.rmeta",
+      "bytes": 1686967,
+      "mtime_ns": 1790203979347823970
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlattice-70f5f7ace7478070.rlib",
+      "bytes": 5518304,
+      "mtime_ns": 1790203978328535751
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlattice-70f5f7ace7478070.rmeta",
+      "bytes": 1404865,
+      "mtime_ns": 1790203967933028793
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperreal-4702908268e33a33.rmeta",
+      "bytes": 3744868,
+      "mtime_ns": 1790203966738492346
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/hypersolve-e69aacb553b08ce4",
+      "bytes": 11617504,
+      "mtime_ns": 1790203930093832199
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlimit-2ff26913a385dd64.rlib",
+      "bytes": 3986256,
+      "mtime_ns": 1790203895905333524
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlimit-2ff26913a385dd64.rmeta",
+      "bytes": 1687165,
+      "mtime_ns": 1790203890646374802
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlattice-e3ec3d0b9ce8d590.rlib",
+      "bytes": 5518146,
+      "mtime_ns": 1790203883881158139
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperlattice-e3ec3d0b9ce8d590.rmeta",
+      "bytes": 1404943,
+      "mtime_ns": 1790203873578697904
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperreal-4a56a896f428432b.rlib",
+      "bytes": 8783580,
+      "mtime_ns": 1790203872393990586
+    },
+    {
+      "path": "/tmp/hypercurve-pruning-qualification/hyperbrep/target/release/deps/libhyperreal-4a56a896f428432b.rmeta",
+      "bytes": 3745420,
+      "mtime_ns": 1790203857455565936
+    }
+  ],
+  "bytes_to_reclaim": 7677565323,
+  "completed_snapshots_untouched": true,
+  "copied_audit_executables_untouched": true
+}

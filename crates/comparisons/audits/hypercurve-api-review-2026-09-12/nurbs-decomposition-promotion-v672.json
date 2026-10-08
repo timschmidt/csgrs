@@ -1,0 +1,16 @@
+{
+  "base_commit": "632f6bc0aca136058413c68d604e48fcffaf9a42",
+  "changed_files": {
+    "hypercurve/src/nurbs.rs": {
+      "before": "390e388c9f933e80af9cbe4b0f6462b75eab8f8fbdd9bd379ed5acced3913d9b",
+      "after": "85ddb2b3974134446d3391d791ec13202df0fe34c04d0d18b49c5fd269bd70ae"
+    },
+    "hypercurve/src/lib.rs": {
+      "before": "beeb7d560c672222abb99cd7a1f0aa5c0971c97a68a916aef15679811959308d",
+      "after": "05738e6ebd1a406561371042b9c5fb8517761c892bed76908c813227f7eff191"
+    }
+  },
+  "candidate": "/home/tim/Documents/GitHub/workspace/hypercurve-api-review-2026-09-12/nurbs-decomposition-candidate-v660/hypercurve",
+  "formatted": true,
+  "formatter_reaped_exit": 0
+}

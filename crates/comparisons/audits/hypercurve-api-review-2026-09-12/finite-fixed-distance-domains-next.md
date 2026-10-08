@@ -1,0 +1,41 @@
+Implemented and qualified in Hypercurve `34ae22f1ca9059356b2a6a1fcb3f9263b2c46577`. The audit and baseline below are historical; current results are in `finite-fixed-distance-domains-qualification.json`.
+
+# Fixed-distance parameter domains and local centers
+
+Next implementation after qualified Hypercurve `fedd740a91a89456b7e655db32f94dd8f702136c`. The circle target-domain migration is committed; the 64-case public matrix passes, along with 2,301 tests and 37 public probes (unchanged known failures/exclusions). Keep Hyperreal verification/ and src/verified/ plus associated changes owned by the other session untouched; continue with pinned dependencies.
+
+The public fixed-distance entry already receives CurveParameter2 plus an explicit CurveParameterRange2, but lower paths still lose it. This is an unexecuted source audit, not a demonstrated runtime defect or completed closure claim.
+
+- fixed_distance_incidence converts ordinary endpoints only when both are ordinary; otherwise it substitutes the unit range. Preserve the original generic boundaries through the common finite/ray domain.
+- selected_fiber_image_parameters and selected_fiber_positive_fixed_distance_candidates discover on the unit range. Propagate the consuming finite range into both ordinary/global schedules and retained-fiber schedules, including positive-dimensional branch replay.
+- recursive fixed-distance incidence and its builder currently lack the finite range. Its selected-axis scheduler explicitly constructs a unit domain.
+- The common parallel_fixed_distance_system now takes an explicit candidate range. Selected/recursive chamfer callers still state unit because their discovery workers remain unit-only; the ordinary worker passes its isolation range. Do not merely change those two arguments without moving the enumeration and component evidence as well.
+- parallel_source_fixed_distance_incidence still checks both complete native sources, even though the center is one retained exact point. The common two-normal builder's None center branch likewise checks native center finiteness and regularity. A selected center needs weight and, for nonzero displacement, source-frame proof at the actual retained parameter. Ordinary, selected-fiber and recursive CurveParameter2 already own polynomial-sign replay.
+- Keep circle-frame and fixed-distance semantics distinct: a circle oriented by a selected normal can require a regular tangent, whereas point-to-point setback distance does not require the center's parallel derivative to be nonzero. Zero displacement must preserve stationary finite source points.
+- Preserve the existing incident anchor bridge, open first pole/speed barrier, original policy identity and finite endpoint ownership. Formal equations/caches may remain domain independent; geometric consumers must own every denominator/normal-sheet premise.
+
+Derive an independent public chamfer/setback fixture on the native and rational exterior charts before changing code. The existing pole chart t=(s-2)/(2s-1), s in [2,5/2], preserves the oriented image P(t)=(-1/8+t^2,t); its native pole s=1/2 is outside the requested range. Exact endpoint distance monotonicity can certify unique setback cuts without relying on the implementation to set expected answers. Include selected/recursive centers, source reversal, both policies, consumed-pole rejection, zero-distance stationary sources and positive-dimensional circles.
+
+Source-cusp one-sided frame admission, normalized public region construction, independent inverse replay, known failures/exclusions and broader computational consolidation also remain required by the full active goal.
+
+
+## Executed independent public baseline
+
+`finite-fixed-distance-public.rs` is now frozen and executed against the archived normal library from fedd740. `finite-fixed-distance-certificate.md` proves unique first and repeated trim-only chamfers by coordinate and distance monotonicity, with a rational initial corner Q(0)=(-9/64,0). Both policies and both path directions are exercised on all four equivalent charts.
+
+`finite-fixed-distance-baseline.json` records all eight chart/repetition runs: 32 cases, 16 successful cases, 88 exact point/parameter replays and 16 failures, no timeouts. Native polynomial and rational charts pass both operations. Every exterior polynomial request returns a **certified NoSolution(OutsideTrimDomain)** for the first chamfer, contradicting the independent unique-cut proof. Every exterior rational request returns Boundary for the first chamfer despite its source pole being outside the active domain. Repeated exterior runs never reach their second operation, so they are not evidence about a second-stage failure. Native repeated polynomial/rational processes take about 1.37 and 11.68 seconds respectively; this is a local observation, not a general performance claim.
+
+The public path and finite curve admission succeed before each failed operation. The initial center is represented and rational, so the ordinary helper reaches `source_circle_incidence`/`circle_incidence`, whose finite root discovery remains unit-only. The latter also checks native weight and normal regularity. These geometric circle workers must migrate alongside the selected/recursive fixed-distance schedulers; passing only a range into the common equation builder does not repair enumeration.
+
+All probe compile/run sessions were reaped; Hypercurve and HyperBREP remain clean at the recorded commits. No new production code or implementation commit exists for this fixed-distance stage yet. The next turn should implement from this executed baseline without rebuilding the unchanged parent fixture.
+
+## Implementation boundary found during source audit
+
+- The existing `selected_fiber_parameters_in_range` already preserves generic selected endpoints and strict decisions under the original policy. Reuse it; do not reconstruct ordinary endpoints or substitute a fresh strict context for retained evidence. Extending the common domain authority can replace the repeated bridge/ray loops in selected/ordinary fixed-distance projection.
+- Build a regular incident domain once for the retained center when direction is requested; validate and use its expanded finite bridge and open first barrier. `selected_axis_parameters_in_domain` can replace the recursive worker's unrestricted affine-line projection plus unit-range filtering.
+- The selected positive-dimensional fixed-distance worker samples a polynomial speed at 1/2. Its chosen sign must come from the consumed regular range (and connected incident cell), not an unrelated native sample. Its only `unit_interval_positive_polynomial_speed` caller is this worker, so migrate that helper directly.
+- Public ordinary circle-incidence workers and their tangent-field variant need explicit generic ranges and finite-domain root isolation. Scope construction-certified tangent roots to that range before publishing them. Their call sites include fillets, Booleans and native rational-circle accelerators; migrate actual ranges and retain legitimate unit discovery explicitly.
+- Keep algebraic equation construction independent of source-domain admission where its consumers already have exact frame/point proofs. The selected-normal circle backend needs a local oriented source frame; a fixed-distance center needs a point, not a nonzero parallel derivative.
+- **Mixed zero-displacement caution:** the generic two-normal relation is obtained by multiplying by both positive source speeds. Merely skipping a zero-distance operand's raw-speed proof is unsound if that speed can be zero: the unsquared expression can collapse to zero on both sheets. Either retain the required nonzero premise until a correct specialization is implemented, or remove the unused speed factor consistently from both projection and replay. Do not globally replace the circle backend's frame speed by one: its angular/half-plane expressions still depend on that normalized direction even when its center offset is zero. The both-zero branch already has an independent unsquared rational-source relation.
+
+The full goal and its priorities are unchanged. The semantic NoSolution counterexample is the next repair target, with repeated-operation closure and all retained parameter kinds remaining in scope.

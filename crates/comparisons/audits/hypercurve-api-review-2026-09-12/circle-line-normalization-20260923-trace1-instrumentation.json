@@ -1,0 +1,9 @@
+{
+  "base_commit": "e7d575be40d87445f1d936ecdef5946aa24839c5",
+  "base_sources": "consumed-corner-ranges-20260923-focused2-sources.json",
+  "files": {
+    "hypercurve/src/bezier_offset.rs": "79ff86c1586db3d3801b83a8861f4e772bdac4a6556ee023f9e472b4e60c9a58",
+    "hypercurve/src/bezier_region.rs": "c715d02059e2122432590d7f74fb190d3101402a4fb3c2d5c04d63ea6cbf5f19",
+    "hypercurve/src/curve_region_boolean.rs": "3cfdd532eacd54594985bba0a082167c1fc8542555bcdaa49b4aa4082178d823"
+  }
+}
